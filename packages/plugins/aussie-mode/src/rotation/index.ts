@@ -13,19 +13,35 @@ const UPSIDE_DOWN = 180;
  * @param report Called with an error when the rotation fails.
  * @returns A function that turns Discord the right way up again.
  */
-export function startRotation(
+export async function startRotation(
 	native: NativePluginBridge,
 	report: (error: unknown) => void,
-): () => void {
-	const rotate = (degrees: number) => void rotateScreen(native, degrees).catch(report);
+): Promise<() => Promise<void>> {
+	let stopped = false;
+	let pending = Promise.resolve();
+	const rotate = (degrees: number) => {
+		const operation = pending
+			.then(async () => {
+				if (stopped && degrees !== 0) return;
+
+				await rotateScreen(native, degrees);
+			})
+			.catch(report);
+
+		pending = operation;
+
+		return operation;
+	};
 	const subscription = AppState.addEventListener('change', (state) => {
-		if (state === 'active') rotate(UPSIDE_DOWN);
+		if (state === 'active') void rotate(UPSIDE_DOWN);
 	});
 
-	rotate(UPSIDE_DOWN);
+	await rotate(UPSIDE_DOWN);
 
-	return () => {
+	return async () => {
+		stopped = true;
 		subscription.remove();
-		rotate(0);
+		await pending;
+		await rotate(0);
 	};
 }

@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :brackets-curly: A **View Raw** row opens a sheet with the data as JSON, keys sorted alphabetically.

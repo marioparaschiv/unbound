@@ -1,10 +1,9 @@
-import { metro, patcher } from '@unbound-app/api';
+import { patcher } from '@unbound-app/api';
 
 import { flipUpsideDown } from '~/text/flip';
+import { Messages } from '~/text/modules';
 
 type Message = { content: string };
-
-const Messages = metro.api.Messages;
 
 function isMessage(argument: unknown): argument is Message {
 	return (
@@ -23,14 +22,10 @@ function flipOutgoing({ args }: { args: unknown[] }) {
 /**
  * @description Turns each message the user sends or edits upside down before Discord sends it.
  * Patches `sendMessage` and `editMessage` on Discord's message actions, which both platforms share.
- * @returns A function that removes the patches.
+ * The Addon scope removes the patches when the plugin stops.
  */
-export function startUpsideDownText(): () => void {
-	const unpatches = (['sendMessage', 'editMessage'] as const)
-		.filter((method) => typeof Messages[method] === 'function')
-		.map((method) => patcher.before(Messages, method, flipOutgoing));
-
-	return () => {
-		for (const unpatch of unpatches) unpatch();
-	};
+export function startUpsideDownText(): void {
+	for (const method of ['sendMessage', 'editMessage'] as const) {
+		if (typeof Messages[method] === 'function') patcher.before(Messages, method, flipOutgoing);
+	}
 }

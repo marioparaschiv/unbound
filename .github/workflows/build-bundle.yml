@@ -8,6 +8,7 @@ name: Build Bundle
 # Configure in the repository settings:
 #   vars:    S3_ENDPOINT, S3_REGION, S3_PUBLIC_BUCKET
 #   secrets: S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY
+#   vars:    UNBOUND_API_URL and secrets: UNBOUND_API_KEY, to record each bundle's minimum loader
 
 on:
     workflow_dispatch:
@@ -17,9 +18,9 @@ on:
         paths:
             - packages/client/src/**
             - packages/client/scripts/build/**
+            - packages/rollup-plugin-hermes/src/**
     repository_dispatch:
         types:
-            - rollup-plugin-updated
             - hermesc-published
     workflow_call:
         inputs:
@@ -34,6 +35,8 @@ on:
                 required: true
             UNBOUND_BUNDLE_SIGNING_KEY:
                 required: true
+            UNBOUND_API_KEY:
+                required: false
 
 permissions:
     contents: write
@@ -69,6 +72,14 @@ jobs:
 
             - name: Check every bundle and the manifest are signed
               run: bun run --cwd packages/client verify-signatures
+
+            # The loader downloads the DevTools backend for `loader.devtools` by the manifest's hash.
+            - name: Check the DevTools backend is built for every bytecode version
+              run: |
+                  for version in $(jq -r '.bytecodeVersions[]' packages/client/scripts/build/hermes.json); do
+                      jq -e --arg file "devtools.$version.bundle" '.sha512[$file]' packages/client/dist/manifest.json > /dev/null \
+                          || { echo "::error::manifest.json lists no devtools.$version.bundle"; exit 1; }
+                  done
 
             - name: Check every bundle has a source map
               run: |
@@ -132,3 +143,25 @@ jobs:
                   S3_PUBLIC_BUCKET: ${{ vars.S3_PUBLIC_BUCKET }}
                   S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
                   S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+
+            # Records the oldest loader this bundle runs on, so the update check tells older loaders to update.
+            - name: Record the bundle's minimum loader
+              if: ${{ vars.UNBOUND_API_URL != '' }}
+              env:
+                  UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
+                  UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
+                  UNBOUND_CHANNEL: ${{ inputs.version && 'stable' || 'beta' }}
+                  UNBOUND_VERSION: ${{ inputs.version || github.sha }}
+              run: |
+                  set -euo pipefail
+                  : "${UNBOUND_API_KEY:?UNBOUND_API_KEY is required to record the bundle}"
+                  jq -n \
+                      --arg channel "$UNBOUND_CHANNEL" \
+                      --arg version "$UNBOUND_VERSION" \
+                      --arg minLoaderVersion "$(jq -r '.minLoaderVersion' packages/client/dist/manifest.json)" \
+                      '{channel: $channel, version: $version, minLoaderVersion: $minLoaderVersion}' \
+                  | curl --fail-with-body --silent --show-error --request POST \
+                      --header 'Content-Type: application/json' \
+                      --header "X-API-Key: $UNBOUND_API_KEY" \
+                      --data @- \
+                      "${UNBOUND_API_URL%/}/api/v1/loader/bundles"

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4] - 2026-11-04
+
+### Changed
+
+- The "Server Owner" label on the crown can now be translated. The plugin works the same as before.
+
 ## [1.0.3] - 2026-11-03
 
 ### Changed

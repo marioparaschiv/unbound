@@ -11,6 +11,7 @@
 #include "LoaderBundleSignature.h"
 #include "LoaderCrypto.h"
 #include "LoaderFiles.h"
+#include "LoaderRequiredLoader.h"
 #include "LoaderVersion.h"
 #include "UnboundNativeBridge.h"
 
@@ -239,6 +240,10 @@ int main()
     assert(provider.getLoader() == nlohmann::json({{"origin", "Unbound.dylib"},
                                                    {"version", loader::loaderVersion()},
                                                    {"bytecodeVersion", 98}}));
+    loader::recordRequiredLoader(root.string(), "9.0.0");
+    assert(provider.getLoader()["requiredVersion"] == "9.0.0");
+    loader::recordRequiredLoader(root.string(), "");
+    assert(!provider.getLoader().contains("requiredVersion"));
     assert(provider.getPlugins()[0]["manifest"]["id"] == "a.good");
     assert(provider.getThemes()[0]["bundle"] == R"({"semantic":{}})");
     assert(provider.getFonts()[0]["name"] == "Inter");

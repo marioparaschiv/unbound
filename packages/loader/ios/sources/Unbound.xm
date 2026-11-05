@@ -26,11 +26,6 @@ using unbound::ios::toStdString;
 
 using namespace facebook;
 
-@interface NSObject (RuntimeExecutor)
-- (void)callFunctionOnBufferedRuntimeExecutor:
-    (std::function<void(facebook::jsi::Runtime &)> &&)executor;
-@end
-
 #pragma mark - Pre/post bundle injection
 
 static nlohmann::json platformFontNames(void)
@@ -76,7 +71,7 @@ static void applyPendingBrowserLogin(void)
 
     std::string tokenValue = *pending;
 
-    [instance callFunctionOnBufferedRuntimeExecutor:[tokenValue](jsi::Runtime &runtime) {
+    bool scheduled = loader::runOnNativePluginRuntime([tokenValue](jsi::Runtime &runtime) {
         BOOL applied = NO;
         if (auto login = loader::bootstrap::function(runtime, loader::bootstrap::kBrowserLogin))
         {
@@ -116,7 +111,12 @@ static void applyPendingBrowserLogin(void)
                     return;
             }
         });
-    }];
+    });
+    if (!scheduled)
+    {
+        // The instance is reloading; onBundleExecuted retries once the next runtime is up.
+        pendingBrowserLogin().finish(tokenValue, NO);
+    }
 }
 
 void CompleteBrowserLogin(NSString *token)
@@ -230,6 +230,17 @@ static void prepareLoading(id instance)
     prepareLoading(instance);
     // The last point before Discord's bundle is read, so Unbound's bundle runs first.
     pipeline().onRuntimeCreated(runtime);
+    %orig;
+}
+
+%end
+
+%hook RCTInstance
+
+- (void)invalidate
+{
+    // Before %orig: it queues the JS-thread block that resets the ReactInstance.
+    loader::retireNativePluginRuntimeExecutor(self);
     %orig;
 }
 

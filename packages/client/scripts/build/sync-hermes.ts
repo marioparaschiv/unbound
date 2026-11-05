@@ -1,28 +1,23 @@
+import type { HermesManifest, ManifestContext } from '@unbound-app/rollup-plugin-hermes/manifest';
 import { parse, Type, type StaticDecode } from '@unbound-app/contracts/schema';
+import { fetchManifest } from '@unbound-app/rollup-plugin-hermes/manifest';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-export const HERMESC_MANIFEST_URL =
-	'https://raw.githubusercontent.com/unbound-app/hermesc/main/manifest.json';
-
 const hermesJson = resolve(__dirname, 'hermes.json');
 
-const hermescPackageSchema = Type.Object({ npm: Type.String() });
-
-const hermescManifestSchema = Type.Object({
-	latest: Type.Array(Type.Number()),
-	versions: Type.Record(Type.String(), hermescPackageSchema),
-});
+const scriptContext: ManifestContext = {
+	warn: (message) => console.warn(message),
+	error: (message) => {
+		throw new Error(message);
+	},
+};
 
 // Keys other than `bytecodeVersions` are written back untouched.
 const hermesConfigSchema = Type.Object(
 	{ bytecodeVersions: Type.Array(Type.Number()) },
 	{ additionalProperties: true },
 );
-
-export type HermescPackage = StaticDecode<typeof hermescPackageSchema>;
-
-export type HermescManifest = StaticDecode<typeof hermescManifestSchema>;
 
 export type HermesConfig = StaticDecode<typeof hermesConfigSchema>;
 
@@ -34,7 +29,7 @@ export type HermesConfig = StaticDecode<typeof hermesConfigSchema>;
  * @param current The bytecode versions `hermes.json` declares.
  * @returns The versions `hermes.json` should declare, newest first.
  */
-export function nextBytecodeVersions(manifest: HermescManifest, current: number[]): number[] {
+export function nextBytecodeVersions(manifest: HermesManifest, current: number[]): number[] {
 	const published = manifest.latest.filter((version) => manifest.versions[String(version)]);
 	const oldest = current.length ? Math.min(...current) : (published[0] ?? 0);
 	const newer = published.filter((version) => version > Math.max(...current, 0));
@@ -73,13 +68,7 @@ export function sameVersions(left: number[], right: number[]): boolean {
 }
 
 async function main(): Promise<void> {
-	const response = await fetch(HERMESC_MANIFEST_URL);
-
-	if (!response.ok) {
-		throw new Error(`Fetching the hermesc manifest failed with ${response.status}.`);
-	}
-
-	const manifest = parse(hermescManifestSchema, await response.json());
+	const manifest = await fetchManifest(scriptContext);
 	const config = parse(hermesConfigSchema, JSON.parse(readFileSync(hermesJson, 'utf8')));
 	const next = nextBytecodeVersions(manifest, config.bytecodeVersions);
 

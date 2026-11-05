@@ -3699,6 +3699,52 @@ export type NativeAddonVerification = {
 	/** Why verification did not succeed, when the loader can say. */
 	readonly problem?: string;
 };
+/** Where a running install is: `confirming` waits on the system prompt; `failed` carries `error`. */
+export type NativeAndroidInstallPhase =
+	| 'idle'
+	| 'downloading'
+	| 'installing'
+	| 'confirming'
+	| 'failed';
+/** How far the running install is. */
+export type NativeAndroidInstallProgress = {
+	/** What the installer is doing now. */
+	readonly phase: NativeAndroidInstallPhase;
+	/** Gzipped bytes downloaded so far, of `total`. */
+	readonly downloaded: number;
+	/** Gzipped bytes the install downloads in all. */
+	readonly total: number;
+	/** Why the last install failed, or `null`. */
+	readonly error: string | null;
+};
+/** One gzipped split APK of a build to install. */
+export type NativeAndroidInstallSplit = {
+	/** The split's name: `base` or a config split such as `config.arm64_v8a`. */
+	readonly name: string;
+	/** Where the gzipped APK downloads from. */
+	readonly url: string;
+	/** SHA-256 of the APK after it is gunzipped. */
+	readonly sha256: string;
+	/** Size of the APK in bytes. */
+	readonly size: number;
+	/** Size of the gzipped download in bytes. */
+	readonly compressedSize: number;
+};
+/** Whether Discord can install another patched build of itself: not patched with LSPatch, patched before in-app installs, waiting on the "Install unknown apps" permission, or ready. */
+export type NativeAndroidInstallerAvailability =
+	| 'unpatched'
+	| 'unsupported'
+	| 'needs-permission'
+	| 'ready';
+/** The Discord install the installer would replace. */
+export type NativeAndroidInstallerStatus = {
+	/** Whether in-app installs work, or what blocks them. */
+	readonly availability: NativeAndroidInstallerAvailability;
+	/** Discord's version name, such as `352.17 - Stable`. */
+	readonly versionName: string;
+	/** The installed split names, `base` first. */
+	readonly splits: string[];
+};
 /** A key from `objc.createAssociationKey` that names one associated object. */
 export type NativeAssociationKey = NativeHandle;
 /** Refers to an earlier step's result inside `objc.batch`, as a target or an argument. */
@@ -4396,6 +4442,26 @@ export type NativePlatformAddons = {
 	/** Reads an installed plugin's source, for one the loader handed over without it, if its signature still holds. */
 	readSource(folder: string): string | undefined;
 };
+/** Android-only helpers; missing on iOS. */
+export type NativePlatformAndroidBridge = {
+	/** Installs patched Discord builds over this one. */
+	readonly installer: NativePlatformAndroidInstaller;
+};
+/** Installs another patched Discord build over this one, upgrade or downgrade, downloading only the splits that differ. */
+export type NativePlatformAndroidInstaller = {
+	/** Reads whether in-app installs work and which Discord is installed. */
+	status(): NativeAndroidInstallerStatus;
+	/** Opens the system's "Install unknown apps" screen for Discord. */
+	requestPermission(): boolean;
+	/** SHA-256 of each installed split APK, `null` where it cannot be read. */
+	installedSplits(): Promise<Record<string, string | null>>;
+	/** Starts installing a build in the background; false when an install is already running. Poll `progress`. */
+	install(splits: readonly NativeAndroidInstallSplit[]): boolean;
+	/** Reads how far the running install is. */
+	progress(): NativeAndroidInstallProgress;
+	/** Stops a running download or abandons the install session. */
+	cancel(): boolean;
+};
 /** Facts about the Discord install the loader runs in. */
 export type NativePlatformApp = {
 	/** Where Discord was installed from, such as `App Store` or `Google Play`. */
@@ -4431,6 +4497,8 @@ export type NativePlatformBridge = {
 	readonly profiler: NativePlatformProfiler;
 	/** iOS-only helpers; missing on Android. */
 	readonly ios?: NativePlatformIOSBridge;
+	/** Android-only helpers; missing on iOS and on loaders without the in-app installer. */
+	readonly android?: NativePlatformAndroidBridge;
 };
 /** The loader's record of which addon was starting or running when Discord crashed, kept across launches. */
 export type NativePlatformCrashGuard = {
@@ -4966,6 +5034,13 @@ export type NitroGem9LottieComponent = React$1.ComponentType<
 export type NitroGem9LottieProps = Omit<LottieIconProps, 'ref'> & {
 	ref?: LottieIconProps['ref'];
 };
+/** A notice row: it stores nothing, and shows `title` and `subtitle` as a message of its `tone`. */
+export type NoticeSchema = SettingCommon & {
+	kind: 'notice';
+	displayAs: 'notice';
+	/** How the message reads: `info` plain, `warning` cautious, `danger` for something that cannot be undone. */
+	tone: 'info' | 'warning' | 'danger';
+};
 export type NotificationsTabLottieComponent = React$1.ComponentType<
 	NotificationsTabLottieProps & Record<string, unknown>
 >;
@@ -5415,7 +5490,7 @@ export type SettingsEntry = {
 export type SettingsGroupSchema = SettingCommon & {
 	kind: 'section';
 	displayAs: 'group' | 'collapsible';
-	properties: Record<string, SettingSchema | ButtonSchema>;
+	properties: Record<string, SettingSchema | StorelessSchema>;
 };
 /** A settings store, or a nested group of settings within one. */
 export type SettingsObject = {
@@ -5427,8 +5502,8 @@ export type SettingsSchema = {
 	kind: 'settings';
 	/** The message key of the title of the section holding the top-level settings. */
 	title?: string;
-	/** The settings, buttons and sections by key, in the order they are drawn. */
-	properties: Record<string, SettingSchema | ButtonSchema | SettingsGroupSchema>;
+	/** The settings, buttons, notices and sections by key, in the order they are drawn. */
+	properties: Record<string, SettingSchema | StorelessSchema | SettingsGroupSchema>;
 };
 /** The screen descriptor a settings route entry renders. */
 export type SettingsScreen = {
@@ -5665,6 +5740,8 @@ export type StickyWrapperProps = {
 	pointerEvents?: React$1.ComponentProps<typeof RN.View>['pointerEvents'];
 	style?: React$1.ComponentProps<typeof RN.View>['style'];
 };
+/** A row that stores nothing: a button or a notice. */
+export type StorelessSchema = ButtonSchema | NoticeSchema;
 /** How a `string` setting displays; each validates the text its own way. */
 export type StringDisplay =
 	| 'input'

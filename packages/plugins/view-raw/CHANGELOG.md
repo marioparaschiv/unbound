@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.5] - 2026-11-05
+
+### Changed
+
+- The View Raw row, the raw data sheet and its copy notices can now be translated.
+- The View Raw item in a profile's overflow menu now shows in every language, not just English. If Discord's translation of "View Main Profile" cannot be read, the plugin falls back to the English label.
+
 ## [1.0.4] - 2026-11-03
 
 ### Changed

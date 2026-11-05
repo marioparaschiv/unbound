@@ -128,6 +128,9 @@ object NativeBridge {
     fun isVerifiedBuild(): Boolean = Attestation.current().verified
 
     @JvmStatic
+    fun installer(action: String, argument: String?): String? = DiscordInstaller.call(action, argument)
+
+    @JvmStatic
     fun scheduleMainWork() {
         Handler(Looper.getMainLooper()).post { nativeDrainMainWork() }
     }

@@ -24,7 +24,7 @@ describe('the testing preset', () => {
 		const { code, output } = await run([process.execPath, 'test']);
 
 		expect(output).toContain(' 0 fail');
-		expect(output).toMatch(/\b12 pass\b/);
+		expect(output).toMatch(/\b49 pass\b/);
 		expect(code).toBe(0);
 	}, 30_000);
 

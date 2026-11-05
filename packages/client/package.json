@@ -40,5 +40,8 @@
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"
+	},
+	"unbound": {
+		"minLoaderVersion": "1.0.0"
 	}
 }

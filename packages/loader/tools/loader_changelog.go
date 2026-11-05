@@ -1,14 +1,20 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 )
+
+// loaderChangelogLimit caps the commits one changelog lists, keeping it under the API's changelog length.
+const loaderChangelogLimit = 50
 
 var loaderConventionalCommitPattern = regexp.MustCompile("(?i)^([a-z]+)(?:\\(([^)]*)\\))?(!)?:\\s*(.+)$")
 
@@ -24,6 +30,7 @@ func runGenerateLoaderChangelog(args []string) error {
 	root := set.String("root", ".", "loader repository root")
 	version := set.String("version", "", "loader semantic version")
 	output := set.String("output", "", "output changelog path")
+	apiURL := set.String("api-url", "", "loader release endpoint (/api/v1/loader/releases); lists the changes since its latest iOS release instead of the last loader commit alone")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
@@ -34,7 +41,15 @@ func runGenerateLoaderChangelog(args []string) error {
 		return errors.New("loader changelog output path is required")
 	}
 
-	changelog, err := generateLoaderChangelog(*root, *version)
+	previous := ""
+	if *apiURL != "" {
+		latest, _, err := latestLoaderReleaseVersion(context.Background(), *apiURL, "ios", lookupClient(30*time.Second))
+		if err != nil {
+			return err
+		}
+		previous = latest
+	}
+	changelog, err := generateLoaderChangelog(*root, *version, previous)
 	if err != nil {
 		return err
 	}
@@ -48,45 +63,33 @@ func runGenerateLoaderChangelog(args []string) error {
 	return nil
 }
 
-func generateLoaderChangelog(root string, version string) (string, error) {
+// generateLoaderChangelog lists the loader commits since previous, whose patch is its loader commit count. Without a
+// usable previous version (none, 1.0.0 or not older) it lists the commit that made this version alone.
+func generateLoaderChangelog(root string, version string, previous string) (string, error) {
 	if _, err := parseSemanticVersion(version); err != nil {
 		return "", fmt.Errorf("invalid loader changelog version: %w", err)
 	}
-	currentVersion, err := packageVersion(root)
+	currentVersion, err := loaderVersion(root)
 	if err != nil {
-		return "", fmt.Errorf("read loader package version: %w", err)
+		return "", fmt.Errorf("read loader version: %w", err)
 	}
 	if currentVersion != version {
-		return "", fmt.Errorf("requested loader changelog version %s does not match package version %s", version, currentVersion)
+		return "", fmt.Errorf("requested loader changelog version %s does not match the checkout's loader version %s", version, currentVersion)
 	}
+	parsed, _ := parseSemanticVersion(version)
+	count, _ := strconv.Atoi(parsed.patch)
 
-	versionCommits, err := gitOutput(root, defaultRunner, "log", "--format=%H", "-G", "^Version:", "--", "ios/control")
+	since := count - 1
+	if previousVersion, err := parseSemanticVersion(previous); err == nil {
+		if patch, _ := strconv.Atoi(previousVersion.patch); patch >= 1 && patch < count {
+			since = patch
+		}
+	}
+	limit := min(count-since, loaderChangelogLimit)
+	arguments := append([]string{"log", "--format=%s", "-n", strconv.Itoa(limit), "HEAD", "--"}, loaderVersionPathspec...)
+	subjects, err := gitOutput(root, defaultRunner, arguments...)
 	if err != nil {
-		return "", fmt.Errorf("read loader version history: %w", err)
-	}
-	commits := strings.Fields(versionCommits)
-	if len(commits) == 0 {
-		return "", errors.New("loader semantic version history is unavailable")
-	}
-	versionAtCommit, err := gitOutput(root, defaultRunner, "show", commits[0]+":./ios/control")
-	if err != nil {
-		return "", fmt.Errorf("read loader version commit: %w", err)
-	}
-	historicalVersion, err := packageVersionFromControl(versionAtCommit)
-	if err != nil {
-		return "", fmt.Errorf("read loader version commit metadata: %w", err)
-	}
-	if historicalVersion != version {
-		return "", fmt.Errorf("latest loader version commit contains %s, expected %s", historicalVersion, version)
-	}
-
-	baseCommit := commits[0]
-	if len(commits) > 1 {
-		baseCommit = commits[1]
-	}
-	subjects, err := gitOutput(root, defaultRunner, "log", "--format=%s", "--no-merges", baseCommit+"..HEAD")
-	if err != nil {
-		return "", fmt.Errorf("read loader changes since the previous semantic version: %w", err)
+		return "", fmt.Errorf("read loader changes since %d: %w", since, err)
 	}
 
 	return renderLoaderChangelog(version, strings.Split(strings.TrimSpace(subjects), "\n")), nil

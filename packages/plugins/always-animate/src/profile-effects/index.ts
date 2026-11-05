@@ -1,13 +1,10 @@
-import { native } from '@unbound-app/api';
-
-import { PROFILE_EFFECT_LAYER_PATH as android } from '~/profile-effects/android/layer-path';
-import { PROFILE_EFFECT_LAYER_PATH as ios } from '~/profile-effects/ios/layer-path';
+import { ProfileEffectLayer } from '~/profile-effects/modules';
 import { forceProps } from '~/force/patches';
 
 /**
- * @description Animates profile effects by setting `animate` on every `ProfileEffectLayer`.
+ * @description Animates profile effects by setting `animate` on every `ProfileEffectLayer`, the iOS or Android layer file.
  * @returns A function that removes the patch.
  */
 export function animateProfileEffects(): () => void {
-	return forceProps(native.definePlatform({ ios, android }), { animate: true });
+	return forceProps(ProfileEffectLayer, { animate: true });
 }

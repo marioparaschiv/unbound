@@ -3,6 +3,8 @@ run-name: >-
     ${{
       inputs.only_app_repo == true && 'app-repo deploy' ||
       inputs.only_apt_repo == true && 'apt-repo deploy' ||
+      inputs.android_publish_only == true && format('In-app Android {0} build', inputs.android_channel) ||
+      inputs.loader_publish_only == true && 'Loader publish' ||
       format('{0} for {1}', (inputs.release == true && 'Release' || 'Build'), (inputs.version != '' && inputs.version || inputs.ipa_url != '' && inputs.ipa_url || inputs.android_channel != '' && format('latest Android {0}', inputs.android_channel) || 'latest stable'))
     }}
 
@@ -42,6 +44,14 @@ on:
                 description: "Exact Discord Android version code for an Android channel build; leave empty for the channel's latest"
                 required: false
                 type: string
+            android_publish_only:
+                default: false
+                description: "Build only Android for android_channel (stable, beta or alpha) against that channel's released Discord and publish it as an in-app build; publishes only from main"
+                type: boolean
+            loader_publish_only:
+                default: false
+                description: 'Build iOS and Android against the released Discord, then publish the deb and module as loader 1.0.<loader commits> and the in-app Android stable build; publishes only from main'
+                type: boolean
             authenticated_source:
                 default: false
                 description: 'Authenticate direct IPA source downloads with the dkrypt API key'
@@ -78,6 +88,10 @@ on:
                 required: false
             UNBOUND_API_KEY:
                 required: false
+            S3_ACCESS_KEY_ID:
+                required: false
+            S3_SECRET_ACCESS_KEY:
+                required: false
             ATTESTATION_PK:
                 required: false
             DKRYPT_API_KEY:
@@ -108,6 +122,12 @@ on:
             android_code:
                 default: ''
                 type: string
+            android_publish_only:
+                default: false
+                type: boolean
+            loader_publish_only:
+                default: false
+                type: boolean
             authenticated_source:
                 default: false
                 type: boolean
@@ -167,7 +187,7 @@ on:
 permissions: {}
 
 concurrency:
-    group: ${{ inputs.release == true && 'loader-release' || format('build-{0}-{1}-{2}', github.workflow, github.ref, github.event_name) }}
+    group: ${{ inputs.release == true && 'loader-release' || format('build-{0}-{1}-{2}-{3}', github.workflow, github.ref, github.event_name, inputs.android_channel) }}
     cancel-in-progress: false
 
 defaults:
@@ -179,6 +199,8 @@ jobs:
         if: inputs.only_app_repo != true && inputs.only_apt_repo != true
         runs-on: ubuntu-26.04
         timeout-minutes: 50
+        permissions:
+            contents: read
         outputs:
             version: ${{ steps.resolve.outputs.version || steps.select.outputs.version }}
             release_version: ${{ steps.resolve.outputs.release_version || steps.select.outputs.release_version }}
@@ -189,14 +211,28 @@ jobs:
             android_release_tag: ${{ steps.names.outputs.android_release_tag }}
             android_release_title: ${{ steps.names.outputs.android_release_title }}
             ipa_available: ${{ steps.source.outputs.missing != 'true' }}
+            loader_version: ${{ steps.loader-version.outputs.version }}
         steps:
+            # The loader version counts the loader's commits, so it needs the full history; blobs are not needed to count.
             - name: Checkout resolver
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
                   persist-credentials: false
+                  fetch-depth: 0
+                  filter: blob:none
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
+
+            # Every build of this run stamps the same version into ios/control, so the deb, the module and the releases agree.
+            - name: Version the loader
+              id: loader-version
+              run: |
+                  set -euo pipefail
+                  version=$(unbound-tools loader-version)
+                  unbound-tools loader-version --set "$version"
+                  echo "version=$version" >> "$GITHUB_OUTPUT"
+                  echo "::notice title=Loader version::$version"
 
             - name: Select the source
               id: select
@@ -208,12 +244,45 @@ jobs:
                   INPUT_ANDROID_TRACKER: https://tracker.vendetta.rocks/tracker
                   INPUT_ANDROID_CHANNEL: ${{ inputs.android_channel }}
                   INPUT_ANDROID_CODE: ${{ inputs.android_code }}
+                  INPUT_ANDROID_PUBLISH_ONLY: ${{ inputs.android_publish_only }}
+                  INPUT_LOADER_PUBLISH_ONLY: ${{ inputs.loader_publish_only }}
                   DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
+                  GITHUB_TOKEN: ${{ github.token }}
               run: |
                   set -euo pipefail
+                  if [ "$INPUT_ANDROID_PUBLISH_ONLY" = true ]; then
+                    case "$INPUT_ANDROID_CHANNEL" in
+                      stable|beta|alpha) ;;
+                      *) echo "::error::An in-app Android build needs android_channel stable, beta or alpha, not '$INPUT_ANDROID_CHANNEL'"; exit 1 ;;
+                    esac
+                    if [ "$INPUT_RELEASE" = true ]; then
+                      echo "::error::An in-app Android build publishes no release; leave release off"
+                      exit 1
+                    fi
+                    # Patch the Discord the channel's latest Unbound release uses, never a newer one: new Discord versions stay the release poll's job.
+                    if [ -z "$INPUT_ANDROID_CODE" ]; then INPUT_ANDROID_CODE=$(unbound-tools released-android-code --channel "$INPUT_ANDROID_CHANNEL"); fi
+                    echo "::notice::Building the in-app Android $INPUT_ANDROID_CHANNEL build for Discord version code $INPUT_ANDROID_CODE"
+                  fi
+                  if [ "$INPUT_LOADER_PUBLISH_ONLY" = true ]; then
+                    if [ "$INPUT_RELEASE" = true ] || [ "$INPUT_ANDROID_PUBLISH_ONLY" = true ] || [ -n "$INPUT_ANDROID_CHANNEL" ] || [ "$INPUT_IS_TESTFLIGHT" = true ]; then
+                      echo "::error::A loader publish builds iOS and Android stable and publishes no release; leave release, android_publish_only, android_channel and is_testflight unset"
+                      exit 1
+                    fi
+                    # Test the loader against the Discord the latest Unbound releases use, as the in-app Android builds do.
+                    if [ -z "$INPUT_VERSION" ]; then
+                      ios_tag=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --exclude-drafts --exclude-pre-releases --json tagName --jq '[.[] | select(.tagName | test("^discord-[0-9]+\\.[0-9]+-ios$"))][0].tagName // empty')
+                      if [ -z "$ios_tag" ]; then echo "::error::$GITHUB_REPOSITORY has no published iOS release to test the loader against"; exit 1; fi
+                      INPUT_VERSION=${ios_tag#discord-}
+                      INPUT_VERSION=${INPUT_VERSION%-ios}
+                    fi
+                    if [ -z "$INPUT_ANDROID_CODE" ]; then INPUT_ANDROID_CODE=$(unbound-tools released-android-code --channel stable); fi
+                    echo "code=$INPUT_ANDROID_CODE" >> "$GITHUB_OUTPUT"
+                    echo "::notice::Building the loader against Discord $INPUT_VERSION for iOS and version code $INPUT_ANDROID_CODE for Android"
+                  fi
                   if [ -n "$INPUT_ANDROID_CHANNEL" ]; then
                     case "$INPUT_ANDROID_CHANNEL" in
                       beta|alpha) ;;
+                      stable) if [ "$INPUT_ANDROID_PUBLISH_ONLY" != true ]; then echo "::error::Only in-app Android builds take the stable channel"; exit 1; fi ;;
                       *) echo "::error::Android channel builds are beta or alpha, not $INPUT_ANDROID_CHANNEL"; exit 1 ;;
                     esac
                     if [ "$INPUT_IS_TESTFLIGHT" = true ]; then
@@ -266,7 +335,7 @@ jobs:
               id: decrypt
               if: steps.select.outputs.platform == 'ios' && inputs.ipa_url == '' && steps.ipa-cache.outputs.cache-hit != 'true'
               continue-on-error: true
-              timeout-minutes: 12
+              timeout-minutes: 36
               uses: castdrian/dkrypt@90e77358afff7fc913376dd732d30b222f922e0d
               with:
                   api-url: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
@@ -275,14 +344,14 @@ jobs:
                   channel: ${{ inputs.is_testflight && 'testflight' || 'appstore' }}
                   version: ${{ steps.select.outputs.requested_version }}
                   output: packages/loader/source.ipa
-                  timeout-seconds: '420'
+                  timeout-seconds: '1800'
                   download-timeout-seconds: '240'
 
             - name: Decrypt the latest source IPA for a dry run
               id: decrypt-latest
               if: steps.decrypt.outcome == 'failure' && inputs.release_dry_run == true && steps.select.outputs.requested_version != ''
               continue-on-error: true
-              timeout-minutes: 12
+              timeout-minutes: 36
               uses: castdrian/dkrypt@90e77358afff7fc913376dd732d30b222f922e0d
               with:
                   api-url: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
@@ -290,7 +359,7 @@ jobs:
                   bundle-id: com.hammerandchisel.discord
                   channel: ${{ inputs.is_testflight && 'testflight' || 'appstore' }}
                   output: packages/loader/source.ipa
-                  timeout-seconds: '420'
+                  timeout-seconds: '1800'
                   download-timeout-seconds: '240'
 
             - name: Settle the source IPA
@@ -342,6 +411,13 @@ jobs:
             - name: Skip iOS without a source IPA
               if: steps.source.outputs.missing == 'true'
               run: echo "::warning title=No iOS source::dkrypt could not provide the Discord IPA, so this build skips iOS and still builds Android."
+
+            # The in-app Android stable build still publishes; only the loader, which needs a smoke-tested deb, waits.
+            - name: Skip the loader publish without a source IPA
+              if: steps.source.outputs.missing == 'true' && inputs.loader_publish_only == true
+              env:
+                  LOADER_VERSION: ${{ steps.loader-version.outputs.version }}
+              run: echo "::warning title=Loader not published::Without the iOS source the deb cannot be smoke tested, so loader $LOADER_VERSION is not published. Rerun this workflow to retry."
 
             - name: Resolve source version
               id: resolve
@@ -577,10 +653,11 @@ jobs:
         uses: ./.github/workflows/loader-android.yml
         with:
             ios_version: ${{ needs.resolve-source.outputs.version }}
-            release: ${{ inputs.release || false }}
+            release: ${{ inputs.release || inputs.android_publish_only || inputs.loader_publish_only || false }}
             discord_channel: ${{ inputs.android_channel || 'stable' }}
             android_code: ${{ needs.resolve-source.outputs.android_code }}
             pr_number: ${{ inputs.pr_number || '' }}
+            loader_version: ${{ needs.resolve-source.outputs.loader_version }}
         secrets:
             ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
             ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
@@ -612,6 +689,7 @@ jobs:
             only_apt_repo: ${{ inputs.only_apt_repo || false }}
             caller_workflow: ${{ inputs.caller_workflow || '' }}
             pr_number: ${{ inputs.pr_number || '' }}
+            loader_version: ${{ needs.resolve-source.outputs.loader_version }}
         secrets:
             ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
             DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
@@ -823,6 +901,7 @@ jobs:
                   release_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download"
                   unbound-tools generate-loader-changelog \
                     --version "$loader_version" \
+                    --api-url "$api_url" \
                     --output release-assets/loader-changelog.md
                   dry_run=()
                   if [ "$RELEASE_DRY_RUN" = true ]; then dry_run=(--dry-run); fi
@@ -878,6 +957,71 @@ jobs:
                   fail_on_unmatched_files: true
                   token: ${{ github.token }}
 
+    android-builds:
+        name: Publish in-app Android builds
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && inputs.release_dry_run != true && needs.android.result == 'success' && needs.android.outputs.attested == 'true' && (inputs.android_publish_only == true || inputs.loader_publish_only == true || (inputs.release == true && (needs.release.result == 'success' || needs['android-prerelease'].result == 'success'))) }}
+        needs: [android, release, android-prerelease]
+        runs-on: ubuntu-26.04
+        timeout-minutes: 20
+        permissions:
+            contents: read
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+                  fetch-depth: 1
+
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
+              with:
+                  prebuilt: 'true'
+
+            - name: Download patched Android Discord package
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: patched discord
+                  path: packages/loader/android-build
+
+            - name: Download the emulator split
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: patched discord emulator split
+                  path: packages/loader/android-build/emulator
+
+            - name: Note the unconfigured public bucket
+              if: ${{ vars.S3_PUBLIC_BUCKET == '' }}
+              run: echo "The public bucket is not configured (vars S3_ENDPOINT, S3_REGION, S3_PUBLIC_BUCKET; secrets S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY), so the in-app Android builds are not published." >> "$GITHUB_STEP_SUMMARY"
+
+            # Uploads each gzipped split under android/{channel}/{discord versionCode}/{commit}/, build.json last, then records the build so Discord's Updates screen can install it.
+            # Off main it only stages and checks the splits, so a branch build never reaches users.
+            - name: Publish the in-app Android build
+              if: ${{ vars.S3_PUBLIC_BUCKET != '' }}
+              env:
+                  S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+                  S3_REGION: ${{ vars.S3_REGION }}
+                  S3_PUBLIC_BUCKET: ${{ vars.S3_PUBLIC_BUCKET }}
+                  S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+                  S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+                  UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
+                  UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
+                  DISCORD_CHANNEL: ${{ inputs.android_channel || 'stable' }}
+                  PATCHED_FILENAME: ${{ needs.android.outputs.patched_filename }}
+              run: |
+                  set -euo pipefail
+                  : "${UNBOUND_API_URL:?UNBOUND_API_URL is required to record the build}"
+                  dry_run=()
+                  if [ "$GITHUB_REF" != refs/heads/main ]; then
+                    dry_run=(--dry-run)
+                    echo "::notice title=Not published::$GITHUB_REF is not main, so the in-app Android build is staged and checked but not published."
+                  fi
+                  unbound-tools publish-android-build "${dry_run[@]}" \
+                    --apks "android-build/$PATCHED_FILENAME" \
+                    --split android-build/emulator/*.apk \
+                    --channel "$DISCORD_CHANNEL" \
+                    --commit "$GITHUB_SHA" \
+                    --api-url "$UNBOUND_API_URL"
+
     publish-app-repo:
         if: ${{ !cancelled() && inputs.release == true && inputs.release_dry_run != true && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && needs.release.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success') }}
         needs: [resolve-source, ios, android, release]
@@ -896,3 +1040,78 @@ jobs:
             ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
             DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
             GPG_KEY: ${{ secrets.GPG_KEY }}
+
+    # Publishes the smoke-tested deb and module of this loader commit for jailbroken iOS and rooted Android, without a GitHub release.
+    # The Android smoke test ran when the module is attested, and the same attestation key signed the deb.
+    loader-publish:
+        name: Publish the loader
+        if: ${{ !cancelled() && inputs.loader_publish_only == true && github.event_name != 'pull_request' && inputs.release_dry_run != true && inputs.skip_ios_smoke != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && needs.android.result == 'success' && needs.android.outputs.attested == 'true' }}
+        needs: [resolve-source, ios, android]
+        runs-on: ubuntu-26.04
+        timeout-minutes: 15
+        permissions:
+            contents: read
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+                  fetch-depth: 0
+                  filter: blob:none
+
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
+              with:
+                  prebuilt: 'true'
+
+            - name: Download iOS tweak
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: rootless package
+                  path: packages/loader/loader-build
+
+            - name: Download Android Xposed module
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: android module
+                  path: packages/loader/loader-build
+
+            - name: Note the unconfigured public bucket
+              if: ${{ vars.S3_PUBLIC_BUCKET == '' }}
+              run: echo "The public bucket is not configured (vars S3_ENDPOINT, S3_REGION, S3_PUBLIC_BUCKET, CDN_URL; secrets S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY), so the loader is not published." >> "$GITHUB_STEP_SUMMARY"
+
+            # Uploads the deb and the module under loader/{version}/, build.json last, then records the release so the Updates screen offers it.
+            # Off main it only stages the build and checks it against the published versions, so a branch build never reaches users.
+            - name: Publish the loader
+              if: ${{ vars.S3_PUBLIC_BUCKET != '' }}
+              env:
+                  S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+                  S3_REGION: ${{ vars.S3_REGION }}
+                  S3_PUBLIC_BUCKET: ${{ vars.S3_PUBLIC_BUCKET }}
+                  S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+                  S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+                  CDN_URL: ${{ vars.CDN_URL }}
+                  UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
+                  UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
+                  LOADER_VERSION: ${{ needs.resolve-source.outputs.loader_version }}
+                  DEB_FILENAME: ${{ needs.ios.outputs.deb_filename }}
+                  MODULE_FILENAME: ${{ needs.android.outputs.module_filename }}
+              run: |
+                  set -euo pipefail
+                  : "${UNBOUND_API_URL:?UNBOUND_API_URL is required to record the loader}"
+                  dry_run=()
+                  if [ "$GITHUB_REF" != refs/heads/main ]; then
+                    dry_run=(--dry-run)
+                    echo "::notice title=Not published::$GITHUB_REF is not main, so loader $LOADER_VERSION is staged and checked but not published."
+                  fi
+                  unbound-tools generate-loader-changelog \
+                    --version "$LOADER_VERSION" \
+                    --api-url "${UNBOUND_API_URL%/}/api/v1/loader/releases" \
+                    --output loader-build/changelog.md
+                  unbound-tools publish-loader-build "${dry_run[@]}" \
+                    --version "$LOADER_VERSION" \
+                    --deb "loader-build/$DEB_FILENAME" \
+                    --module "loader-build/$MODULE_FILENAME" \
+                    --commit "$GITHUB_SHA" \
+                    --changelog-file loader-build/changelog.md \
+                    --api-url "$UNBOUND_API_URL"

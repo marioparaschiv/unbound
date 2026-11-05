@@ -1,14 +1,16 @@
-import type { LoaderUpdate } from '@unbound-app/contracts/loader';
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 import toError from '@unbound-app/utils/to-error';
 import { Platform } from 'react-native';
 import { create } from 'zustand';
 
+import { fetchLoaderUpdate, resolveRequiredLoader } from '~/updates/loader-updates';
+import { API_URL, BUILD_CHANNEL, CLIENT_VERSION } from '~/core/constants';
 import { automaticUpdates, fetchUpdates } from '~/updates/addon-updates';
+import { checkDiscordBuilds } from '~/updates/discord-builds';
+import type { DiscordBuilds } from '~/updates/discord-builds';
 import type { PendingUpdate } from '~/updates/addon-updates';
-import { fetchLoaderUpdate } from '~/updates/loader-updates';
-import { API_URL, CLIENT_VERSION } from '~/core/constants';
+import type { LoaderCheck } from '~/updates/loader-updates';
 import { installsFromManifest } from '~/addons/addons';
 import { getLoader } from '~/native/unbound-native';
 import { Manager } from '~/addons/manager';
@@ -19,7 +21,16 @@ const logger = createLogger('Updater');
 export type UpdatesState =
 	| { status: 'idle' }
 	| { status: 'checking' }
-	| { status: 'ready'; checkedAt: string; updates: PendingUpdate[]; loader: LoaderUpdate | null }
+	| {
+			status: 'ready';
+			checkedAt: string;
+			updates: PendingUpdate[];
+			loader: LoaderCheck['update'];
+			/** The loader version the newest bundle needs while the installed loader is older. */
+			requiredLoader: string | null;
+			/** The patched Discord's installable builds; `null` where Discord cannot install them. */
+			discord: DiscordBuilds | null;
+	  }
 	| { status: 'error'; checkedAt: string; error: string };
 
 /** An update being applied, or one whose last attempt failed. Absent once it succeeds. */
@@ -46,18 +57,36 @@ function checkInstalled(): Promise<PendingUpdate[]> {
 }
 
 /**
- * @description Asks the update server whether a newer loader is available for this device.
- * @returns The loader update, or `null` when there is none or the check failed.
+ * @description Asks the update server whether a newer loader is available for this device, and whether the
+ * newest bundle needs one.
+ * @returns The check; when it failed, no update and only the native loader's own requirement.
  */
-export async function findLoaderUpdate(): Promise<LoaderUpdate | null> {
+export async function findLoaderUpdate(): Promise<LoaderCheck> {
+	const loader = getLoader();
+
 	try {
 		return await fetchLoaderUpdate({
 			baseUrl: API_URL,
 			platform: Platform.OS,
-			loader: getLoader(),
+			loader,
+			channel: BUILD_CHANNEL,
 		});
 	} catch (error) {
 		logger.error('Failed to check for a loader update:', error);
+
+		return { update: null, requiredVersion: resolveRequiredLoader(loader) };
+	}
+}
+
+/**
+ * @description Reads the in-app installer's state and the installed channel's patched Discord builds.
+ * @returns The builds, or `null` where the installer does not apply or the check failed.
+ */
+export async function findDiscordBuilds(): Promise<DiscordBuilds | null> {
+	try {
+		return await checkDiscordBuilds(API_URL);
+	} catch (error) {
+		logger.error('Failed to list the patched Discord builds:', error);
 
 		return null;
 	}
@@ -82,9 +111,10 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 				set({ state: { status: 'checking' } });
 
 				try {
-					const [updates, loader] = await Promise.all([
+					const [updates, loader, discord] = await Promise.all([
 						checkInstalled(),
 						findLoaderUpdate(),
+						findDiscordBuilds(),
 					]);
 
 					set({
@@ -92,7 +122,9 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 							status: 'ready',
 							checkedAt: new Date().toISOString(),
 							updates,
-							loader,
+							loader: loader.update,
+							requiredLoader: loader.requiredVersion,
+							discord,
 						},
 					});
 				} catch (error) {

@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :ban: Messages from blocked users don't appear in the chat at all, not even as a placeholder row.

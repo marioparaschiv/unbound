@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :timer: Shows the timeout icon next to members in chat whose timeout hasn't ended yet.

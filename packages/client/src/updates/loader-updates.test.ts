@@ -2,7 +2,7 @@ import type { LoaderUpdateResponse } from '@unbound-app/contracts/loader';
 import type { UnboundLoaderInfo } from '@unbound-app/types';
 import { afterAll, describe, expect, test } from 'bun:test';
 
-import { buildLoaderUpdateQuery, fetchLoaderUpdate } from './loader-updates';
+import { buildLoaderUpdateQuery, fetchLoaderUpdate, resolveRequiredLoader } from './loader-updates';
 
 const UPDATE: LoaderUpdateResponse = {
 	update: {
@@ -19,6 +19,7 @@ const UPDATE: LoaderUpdateResponse = {
 			},
 		],
 	},
+	requiredVersion: '3.2.0',
 };
 
 const requested: URL[] = [];
@@ -36,8 +37,13 @@ const server = Bun.serve({
 
 afterAll(() => server.stop(true));
 
-function loader(version: string): UnboundLoaderInfo {
-	return { origin: 'unbound-app/loader-ios', version, bytecodeVersion: 96 };
+function loader(version: string, requiredVersion?: string): UnboundLoaderInfo {
+	return {
+		origin: 'unbound-app/loader-ios',
+		version,
+		bytecodeVersion: 96,
+		...(requiredVersion ? { requiredVersion } : {}),
+	};
 }
 
 describe('buildLoaderUpdateQuery', () => {
@@ -49,6 +55,18 @@ describe('buildLoaderUpdateQuery', () => {
 		expect(buildLoaderUpdateQuery('android', loader('1.2.0-beta.1'))).toEqual({
 			platform: 'android',
 			version: '1.2.0-beta.1',
+		});
+	});
+
+	test('names the channel only when the server publishes bundles to it', () => {
+		expect(buildLoaderUpdateQuery('ios', loader('3.0.0'), 'beta')).toEqual({
+			platform: 'ios',
+			version: '3.0.0',
+			channel: 'beta',
+		});
+		expect(buildLoaderUpdateQuery('ios', loader('3.0.0'), 'local')).toEqual({
+			platform: 'ios',
+			version: '3.0.0',
 		});
 	});
 
@@ -68,10 +86,13 @@ describe('fetchLoaderUpdate', () => {
 	test('sends no request when the loader cannot be checked', async () => {
 		requested.length = 0;
 
-		expect(await fetchLoaderUpdate({ baseUrl, platform: 'ios', loader: undefined })).toBeNull();
+		expect(await fetchLoaderUpdate({ baseUrl, platform: 'ios', loader: undefined })).toEqual({
+			update: null,
+			requiredVersion: null,
+		});
 		expect(
-			await fetchLoaderUpdate({ baseUrl, platform: 'ios', loader: loader('dev') }),
-		).toBeNull();
+			await fetchLoaderUpdate({ baseUrl, platform: 'ios', loader: loader('dev', '3.2.0') }),
+		).toEqual({ update: null, requiredVersion: '3.2.0' });
 		expect(requested).toEqual([]);
 	});
 
@@ -79,10 +100,28 @@ describe('fetchLoaderUpdate', () => {
 		requested.length = 0;
 
 		expect(
-			await fetchLoaderUpdate({ baseUrl, platform: 'ios', loader: loader('3.0.0') }),
-		).toEqual(UPDATE.update);
+			await fetchLoaderUpdate({
+				baseUrl,
+				platform: 'ios',
+				loader: loader('3.0.0'),
+				channel: 'stable',
+			}),
+		).toEqual(UPDATE);
 		expect(requested.map((url) => Object.fromEntries(url.searchParams))).toEqual([
-			{ platform: 'ios', version: '3.0.0' },
+			{ platform: 'ios', version: '3.0.0', channel: 'stable' },
 		]);
+	});
+});
+
+describe('resolveRequiredLoader', () => {
+	test("prefers the server's requirement, then the loader's own refusal", () => {
+		expect(resolveRequiredLoader(loader('3.0.0', '3.1.0'), '3.2.0')).toBe('3.2.0');
+		expect(resolveRequiredLoader(loader('3.0.0', '3.1.0'), null)).toBe('3.1.0');
+		expect(resolveRequiredLoader(loader('3.0.0'), null)).toBeNull();
+	});
+
+	test('drops a requirement the installed loader already meets', () => {
+		expect(resolveRequiredLoader(loader('3.2.0', '3.1.0'))).toBeNull();
+		expect(resolveRequiredLoader(loader('3.2.0'), '3.2.0')).toBeNull();
 	});
 });

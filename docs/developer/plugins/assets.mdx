@@ -6,6 +6,24 @@ icon: 'photo'
 
 Import an image like a module. A PNG, JPEG, WebP or GIF import is the image's asset id, for `source` props. An SVG import is an icon component, for `IconComponent` and `icon` props; see [SVGs](#svgs).
 
+## Reference
+
+| Import or call | Gives |
+| --- | --- |
+| `import id from './star.png'`, and `.jpg`, `.jpeg`, `.webp`, `.gif` | The image's asset id, a `number`, for `source` props |
+| `import Star from './star.svg'` | An icon component, for `IconComponent` and `icon` props |
+| `assets.getIdByName(name, type?)` | The id of the asset with that name, or `undefined`. Finds your plugin's own names first, then Discord's |
+| `assets.getByName(name, type?)` | The asset record, or `undefined` |
+| `assets.getById(id)` | The asset record, or `undefined` |
+| `assets.find(filter)` | The first asset that `filter` accepts |
+| `assets.getAll()` | Every registered asset |
+| `assets.register(options)` | Registers an image you make at runtime. Returns `{ id, unregister }` |
+| `assets.onAssetRegistered(listener)` | Calls `listener(asset, id)` for each asset registered afterwards. Returns a function that removes it |
+
+The scope removes every asset your plugin registered, and every listener, when the plugin stops.
+
+## Import an image
+
 ```tsx
 import { Image } from 'react-native';
 import star from '../assets/icons/star.png';
@@ -65,6 +83,7 @@ Unbound's own APIs take any icon: an asset id, an element or a component.
 
 ```tsx
 import { toasts, ui } from '@unbound-app/api';
+import Star from '../assets/star.svg';
 
 toasts.show({ title: 'Starred', icon: Star });
 <ui.Row label='Favourites' icon={Star} />;
@@ -108,8 +127,9 @@ Inside your plugin, `getIdByName` and `getByName` find your own names first, the
 
 `assets.register` registers an image your plugin creates while it runs, such as a `data:` URI or a file you wrote with `fs`. It returns the id and a function that unregisters it.
 
-```ts
+```tsx
 import { assets, fs } from '@unbound-app/api';
+import { Image } from 'react-native';
 
 const avatar = assets.register({
 	name: 'avatar',

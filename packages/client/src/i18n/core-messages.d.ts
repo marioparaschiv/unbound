@@ -16,10 +16,18 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_UPDATES_CHECKED: { date: string | number };
 		UNBOUND_UPDATES_CHECK_FAILED: { error: string | number };
 		UNBOUND_UPDATES_ALL: { count: string | number };
+		UNBOUND_UPDATES_NOTIFY_TITLE: { count: number };
+		UNBOUND_UPDATES_LOADER_REQUIRED_DESC: { required: string | number; installed: string | number };
 		UNBOUND_UPDATES_UPDATE_TO: { version: string | number };
 		UNBOUND_UPDATES_DOWNLOAD_VERSION: { version: string | number };
 		UNBOUND_INSTALL_FAILED: { name: string | number };
 		UNBOUND_UPDATES_HELD: { version: string | number };
+		UNBOUND_DISCORD_VERSION: { version: string | number };
+		UNBOUND_DISCORD_UPDATE_AVAILABLE: { version: string | number };
+		UNBOUND_DISCORD_BUILD_DETAILS: { commit: string | number; date: string | number };
+		UNBOUND_DISCORD_DOWNLOADING: { percent: string | number };
+		UNBOUND_DISCORD_INSTALL_FAILED: { error: string | number };
+		UNBOUND_DISCORD_DOWNGRADE_DESC: { version: string | number };
 		UNBOUND_INSTALL_VERSION: { version: string | number };
 		UNBOUND_UPDATE_TO_VERSION: { version: string | number };
 		UNBOUND_VERSIONS_TITLE: { name: string | number };

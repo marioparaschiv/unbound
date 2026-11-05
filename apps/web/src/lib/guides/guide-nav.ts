@@ -34,34 +34,32 @@ export const GUIDE_NAV: Record<GuideTab, GuideTabNav> = {
 		groups: [
 			{ label: 'Start Here', slugs: ['concepts', 'addons/creating'] },
 			{
-				label: 'Addons',
-				slugs: [
-					'addons/manifest',
-					'addons/standards',
-					'addons/store-page',
-					'addons/page-icons',
-				],
+				label: 'Plugin Basics',
+				slugs: ['plugins/introduction', 'plugins/anatomy', 'addons/standards'],
 			},
 			{
-				label: 'Plugins',
+				label: 'Plugin APIs',
 				slugs: [
-					'plugins/introduction',
 					'plugins/metro',
 					'plugins/patching',
 					'plugins/react-patching',
 					'plugins/flux',
+					'plugins/settings',
+					'plugins/i18n',
+					'plugins/assets',
+					'plugins/commands',
+					'plugins/feedback',
+					'plugins/ui-thread',
 				],
 			},
 			{
-				label: 'Plugin Features',
+				label: 'Test and Publish',
 				slugs: [
-					'plugins/settings',
-					'plugins/commands',
-					'plugins/feedback',
-					'plugins/assets',
-					'plugins/i18n',
-					'plugins/ui-thread',
 					'plugins/testing',
+					'plugins/testing-native',
+					'addons/manifest',
+					'addons/store-page',
+					'addons/page-icons',
 				],
 			},
 			{

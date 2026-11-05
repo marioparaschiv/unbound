@@ -5,6 +5,7 @@
 	"scripts": {
 		"validate": "bun src/validate-plugins.ts",
 		"catalog": "bun src/generate-plugins-readme.ts",
+		"banners": "bun src/generate-plugin-banners.ts",
 		"sync-icons": "bun src/sync-plugin-icons.ts",
 		"device-matrix": "bun src/device-matrix.ts",
 		"collect-device-matrix": "bun src/collect-device-matrix.ts",
@@ -16,9 +17,16 @@
 		"typecheck": "tsc --noEmit -p ."
 	},
 	"devDependencies": {
+		"@mdx-js/mdx": "^3.1.1",
+		"@resvg/resvg-js": "^2.6.2",
 		"@types/bun": "catalog:",
+		"@types/react": "catalog:react",
+		"@unbound-app/api": "workspace:*",
 		"@unbound-app/contracts": "workspace:*",
 		"@unbound-app/types": "workspace:*",
+		"react": "catalog:react",
+		"react-native": "catalog:react",
+		"remark-frontmatter": "^5.0.0",
 		"typescript": "catalog:"
 	}
 }

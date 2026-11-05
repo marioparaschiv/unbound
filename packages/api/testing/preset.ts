@@ -20,11 +20,23 @@ import { createFakeReactNative, type HostPropsByName } from './fake-react-native
 import { installAddonGlobals, type FakeUnbound } from './install-addon-globals';
 import { createFakeLocales, SOURCE_LOCALE } from './fake-locales';
 import { createFakeAssets, createFakeFlux } from './fake-api';
+import { createJsxRuntimes } from './unfrozen-elements';
 import { resetSession, startSession } from './session';
+import { createFakePlugins } from './fake-plugins';
 import { forgetPlugin } from './plugin-lifecycle';
+import { createFakeUi } from './fake-components';
+import { createFakeNative } from './fake-native';
+import { createFakeUtils } from './fake-utils';
 import { unmountAll } from './test-renderer';
+import { createFakeFs } from './fake-fs';
 
 type SvgProps = Omit<HostPropsByName['SvgXml'], 'xml' | 'asset'>;
+
+// The namespaces that serve nested modules, as `unbound.metro.components` is `@unbound-app/api/metro/components`.
+const NESTED = new Map([
+	['metro', ['api', 'common', 'components', 'filters', 'stores']],
+	['utils', ['react']],
+]);
 
 const IMAGE = /\.(png|jpe?g|webp|gif)$/i;
 const SVG = /\.svg$/i;
@@ -58,6 +70,25 @@ function trackedNamespaces(unbound: FakeUnbound, listeners: ListenerRegistry) {
 				listeners.track('metro.onModuleLoaded', metro.onModuleLoaded(...args)),
 		},
 	};
+}
+
+// Runs the export of the plugin's src/actions.ts a settings button names, as the client's panel does.
+async function runAction(pluginRoot: string, name: string): Promise<void> {
+	const path = join(pluginRoot, 'src', 'actions.ts');
+
+	if (!existsSync(path)) {
+		throw new Error(`Failed to run action ${name}: ${pluginRoot} has no src/actions.ts.`);
+	}
+
+	const actions: unknown = await import(path);
+	const action =
+		typeof actions === 'object' && actions !== null ? Reflect.get(actions, name) : void 0;
+
+	if (typeof action !== 'function') {
+		throw new Error(`Failed to run action ${name}: src/actions.ts exports no such function.`);
+	}
+
+	await action();
 }
 
 function resolveImport(root: string, path: string, importer: string): string {
@@ -105,17 +136,53 @@ const toasts = createFakeToasts(() => lookup);
 const dialogs = createFakeDialogs(() => lookup);
 const flux = createFakeFlux(listeners);
 const assets = createFakeAssets(listeners);
-const scope = installAddonGlobals({ manifest, unbound: { toasts, dialogs, flux, assets } });
+const native = createFakeNative();
+const fs = createFakeFs();
+const reactNative = createFakeReactNative(() => native.state.platform);
+const scope = installAddonGlobals({
+	manifest,
+	unbound: {
+		toasts,
+		dialogs,
+		flux,
+		assets,
+		native: native.namespace,
+		ui: createFakeUi(),
+		utils: createFakeUtils(),
+		fs,
+	},
+});
 
+const plugins = createFakePlugins(scope.addon.manifest);
+
+scope.unbound.plugins = plugins.namespace;
 Object.assign(scope.unbound, trackedNamespaces(scope.unbound, listeners));
 // On device the scope's `React` is Discord's real one; the fake one cannot re-render.
 Reflect.set(globalThis, 'React', React);
+Object.assign(scope.metro.common, { React, ReactNative: reactNative });
+Object.assign(scope.metro.stores, {
+	Accessibility: flux.getStore('Accessibility'),
+	Theme: flux.getStore('Theme'),
+	Users: flux.getStore('User'),
+	Guilds: flux.getStore('Guild'),
+});
 
-mock.module('react-native', () => createFakeReactNative());
+mock.module('react-native', () => reactNative);
 mock.module('@unbound-app/api', () => scope.unbound);
 
 for (const [name, namespace] of Object.entries(scope.unbound)) {
 	mock.module(`@unbound-app/api/${name}`, () => namespace);
+
+	// A namespace that nests others serves each one at its own path, such as `@unbound-app/api/metro/components`.
+	for (const [nested, members] of Object.entries(namespace)) {
+		if (NESTED.get(name)?.includes(nested)) {
+			mock.module(`@unbound-app/api/${name}/${nested}`, () => members);
+		}
+	}
+}
+
+for (const [specifier, runtime] of Object.entries(createJsxRuntimes())) {
+	mock.module(specifier, () => runtime);
 }
 
 if (locales) {
@@ -133,7 +200,12 @@ mock.module('@unbound-app/settings/schema', () => ({
 }));
 
 const schema = await readSettings(root);
-const settings = schema ? createFakeSettings(schema, scope.storage, scope.addon.id) : undefined;
+const settings = schema
+	? createFakeSettings(schema, scope.storage, scope.addon.id, {
+			translate: (key) => locales?.messages[key] ?? key,
+			runAction: (name) => runAction(root, name),
+		})
+	: undefined;
 
 if (settings) {
 	mock.module('@unbound-app/settings', () => ({
@@ -178,6 +250,9 @@ startSession({
 	assets,
 	locales,
 	settings,
+	native,
+	plugins,
+	fs,
 });
 
 beforeEach(() => {

@@ -81,7 +81,7 @@ export function parseNativeBridgeVersion(header: string): NativeBridgeVersion {
 	function read(name: string): string {
 		const match = header.match(new RegExp(`${name}\\[\\]\\s*=\\s*"(\\d+\\.\\d+\\.\\d+)"`));
 
-		if (!match) {
+		if (!match?.[1]) {
 			throw new Error(`NativePluginVersion.h does not declare ${name}.`);
 		}
 
@@ -123,12 +123,14 @@ export type ManifestOptions = {
 	lenient: boolean;
 	/** The channel the build is published to. */
 	channel: string;
+	/** The oldest loader that runs the bundles. */
+	minLoaderVersion: string;
 };
 
 /**
  * @description Writes `manifest.json` next to the bundles, listing the revision, channel, build time,
- * bytecode versions and each bundle's SHA-512.
- * @param options The build's revision, declared bytecode versions, leniency and channel.
+ * bytecode versions, oldest loader that runs them and each bundle's SHA-512.
+ * @param options The build's revision, declared bytecode versions, leniency, channel and minimum loader.
  * @returns Why the manifest was not written, or `null` once it is.
  */
 export function writeManifest(options: ManifestOptions): string | null {
@@ -151,6 +153,7 @@ export function writeManifest(options: ManifestOptions): string | null {
 		buildTime: new Date().toISOString(),
 		bytecodeVersions,
 		nativeBridge: parseNativeBridgeVersion(readFileSync(nativePluginVersionHeader, 'utf8')),
+		minLoaderVersion: options.minLoaderVersion,
 		sha512: bundleHashes(dist),
 	};
 
@@ -166,6 +169,7 @@ export function writeManifest(options: ManifestOptions): string | null {
  * @param declared The bytecode versions `hermes.json` declares.
  * @param lenient Whether a mismatch with `declared` only warns instead of failing the build.
  * @param channel The channel the build is published to.
+ * @param minLoaderVersion The oldest loader that runs the bundles.
  * @returns A rolldown plugin writing the manifest after the bundle.
  */
 export default function generateManifest(
@@ -173,11 +177,18 @@ export default function generateManifest(
 	declared: number[],
 	lenient: boolean,
 	channel: string,
+	minLoaderVersion: string,
 ): Plugin {
 	return {
 		name: 'generate-manifest',
 		writeBundle() {
-			const problem = writeManifest({ revision, declared, lenient, channel });
+			const problem = writeManifest({
+				revision,
+				declared,
+				lenient,
+				channel,
+				minLoaderVersion,
+			});
 
 			if (problem) {
 				this.error(problem);

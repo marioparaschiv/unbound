@@ -13,6 +13,7 @@
 #include "LoaderFreezeWatchdog.h"
 #include "LoaderJSI.h"
 #include "LoaderJSON.h"
+#include "NativePlatformAndroid.h"
 #include "NativePluginRuntime.h"
 #include "NativeResourceBudget.h"
 
@@ -398,6 +399,11 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
             runtime, "getEntitlementsAsPlist",
             stringGetter(runtime, "getEntitlementsAsPlist", provider->entitlementsAsPlist));
         platform.setProperty(runtime, "ios", std::move(ios));
+    }
+
+    if (provider->platform == "android" && provider->androidInstaller)
+    {
+        platform.setProperty(runtime, "android", androidPlatformObject(runtime, provider));
     }
 
     jsi::Object app(runtime);

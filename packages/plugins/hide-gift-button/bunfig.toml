@@ -1,0 +1,3 @@
+[test]
+# Serves the plugin's manifest, translations, settings and a fake Unbound API to every test.
+preload = ["@unbound-app/api/testing/preset"]

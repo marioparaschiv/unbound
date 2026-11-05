@@ -66,7 +66,7 @@ jobs:
                   else
                       echo "ios=false" >> "$GITHUB_OUTPUT"
                   fi
-                  if grep -Eq '^(packages/loader/tools/(release|loader_release|loader_changelog|sbom|http_retry)[a-z_]*\.go|\.github/workflows/(loader-build|loader-release-poll|release-dry-run)\.yml)$' <<< "$files"; then
+                  if grep -Eq '^(packages/loader/tools/(release|loader_release|loader_changelog|loader_version|loader_build|sbom|http_retry)[a-z_]*\.go|\.github/workflows/(loader-build|loader-publish|loader-release-poll|release-dry-run)\.yml)$' <<< "$files"; then
                       echo "release=true" >> "$GITHUB_OUTPUT"
                   else
                       echo "release=false" >> "$GITHUB_OUTPUT"
@@ -121,14 +121,18 @@ jobs:
                   set -euo pipefail
                   out="$RUNNER_TEMP/release"
                   mkdir -p "$out"
-                  version=$(sed -n 's/^Version: *//p' ios/control)
+                  version=$(unbound-tools loader-version)
+                  unbound-tools loader-version --set "$version"
+                  grep -qx "Version: $version" ios/control
                   unbound-tools release-pairing --ios-version 351.0 --android-code 351011 --output "$out/pairing"
                   grep -qx 'android_version=351.11' "$out/pairing"
                   GITHUB_OUTPUT="$out/names" unbound-tools release-names --release-version 351.0 --android-version 351.11
                   cat "$out/names"
                   unbound-tools sbom --version "$version" --commit "$GITHUB_SHA" --output "$out/sbom.spdx.json"
                   jq -e '.spdxVersion and (.packages | length > 0)' "$out/sbom.spdx.json" > /dev/null
-                  unbound-tools generate-loader-changelog --version "$version" --output "$out/changelog.md"
+                  changelog_args=()
+                  if [ -n "$UNBOUND_API_URL" ]; then changelog_args=(--api-url "${UNBOUND_API_URL%/}/api/v1/loader/releases"); fi
+                  unbound-tools generate-loader-changelog --version "$version" "${changelog_args[@]}" --output "$out/changelog.md"
                   test -s "$out/changelog.md"
                   if [ -n "$UNBOUND_API_URL" ]; then
                       unbound-tools publish-loader-releases --dry-run \
@@ -263,6 +267,8 @@ jobs:
             ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
             ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
             UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
+            S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+            S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
             ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
             DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
             GPG_KEY: ${{ secrets.GPG_KEY }}

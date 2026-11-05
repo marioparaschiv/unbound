@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4] - 2026-11-05
+
+### Changed
+
+- The button labels, the Spotify attachment button and the messages it shows are now translatable. The plugin works the same as before.
+
 ## [1.0.3] - 2026-11-03
 
 ### Changed

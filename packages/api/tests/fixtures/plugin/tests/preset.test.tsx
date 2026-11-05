@@ -152,6 +152,7 @@ describe('recorders', () => {
 	});
 
 	test('skip the greeting when the setting is off', async () => {
+		metro.register({ sendMessage: (content: string) => content });
 		settings.greetOnStart = false;
 		await startPlugin();
 
@@ -161,9 +162,11 @@ describe('recorders', () => {
 });
 
 describe('stopPlugin', () => {
-	test('fails on a listener the plugin leaves behind, and removes it', async () => {
+	test('fails on a Flux store listener added directly, which Unbound does not remove', async () => {
+		flux.seed({ User: { getCurrentUser: () => user } });
+		metro.register({ sendMessage: (content: string) => content });
 		await startPlugin();
-		pluginFlux.onAction('CHANNEL_SELECT', () => {});
+		pluginFlux.getStore('User').addChangeListener(() => {});
 
 		const error = await stopPlugin().then(
 			() => undefined,
@@ -171,7 +174,7 @@ describe('stopPlugin', () => {
 		);
 
 		expect(error?.message).toBe(
-			'Fixture Plugin left 1 thing(s) behind after stop():\n  - flux.onAction(CHANNEL_SELECT)',
+			'Fixture Plugin left 1 thing(s) behind after stop():\n  - UserStore.addChangeListener',
 		);
 	});
 });

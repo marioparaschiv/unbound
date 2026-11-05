@@ -4,33 +4,30 @@ description: 'The lifecycle of a plugin, the Addon scope that cleans up after it
 icon: 'plug'
 ---
 
-A plugin is a bundle of JavaScript that Unbound loads and runs inside Discord. It finds Discord's code with Metro, changes it with the patcher, and saves options with storage. This page covers what happens to that bundle from the moment the user turns it on.
+A plugin is a bundle of JavaScript that Unbound loads and runs inside Discord. It finds Discord's code with Metro, changes it with the patcher, and saves options with storage. This page covers what happens to that bundle from the moment the user turns it on. [Anatomy of a Plugin](/docs/developer/plugins/anatomy) then shows the files that make one.
 
-## The shape of a plugin
+## Reference
 
 A plugin's entry file exports its lifecycle as named functions. Every export is optional: a plugin that only patches at the top level of its files needs none.
 
-```tsx src/index.tsx
-export function start() {
-	// set up patches, listeners and commands
-}
-
-export function stop() {
-	// undo what the Addon scope can't see
-}
-
-export function SettingsPanel() {
-	return <Settings />;
-}
-```
-
 | Export | Type | When Unbound uses it |
 | --- | --- | --- |
-| `start` | `(context) => void \| Promise<void>` | When the plugin is turned on, and at launch if it was on. A rejected promise counts as a failed start |
-| `stop` | `() => void \| Promise<void>` | When the plugin is turned off. A returned promise is awaited |
+| `start` | `(context: PluginContext) => void \| Promise<void>` | When the plugin is turned on, and at launch if it was on. A rejected promise counts as a failed start |
+| `stop` | `() => void \| Promise<void>` | When the plugin is turned off. A returned promise is awaited. The Addon scope is disposed after it returns, even if it throws |
 | `SettingsPanel` | A React component | Rendered as `<SettingsPanel />` when the user opens the plugin's settings. See [Settings and Storage](/docs/developer/plugins/settings) |
+| `selfTest` | `() => { ok: boolean; detail: string } \| Promise<…>` | After a restart, when the device matrix checks that the plugin works. See [Anatomy of a Plugin](/docs/developer/plugins/anatomy#the-entry) |
 
-The build checks the entry against this table:
+Each plugin runs with these globals from its Addon scope:
+
+| Global | What it is |
+| --- | --- |
+| `unbound` | The API. Its `patcher`, `commands`, `metro`, `storage`, `flux`, `settings` and `assets` are the plugin's own versions |
+| `addon` | The plugin's handle: `id`, `name`, `version`, `manifest` and its state |
+| `logger` | A logger that prefixes every line with the plugin's name |
+| `setTimeout`, `setInterval` | Timers that are cleared when the plugin stops |
+| `React` | React |
+
+The build checks the entry against the exports table:
 
 - A default export fails the build. Export `start` and `stop` as named functions instead, or run `ubd migrate entry` to rewrite an old `export default { start, stop, getSettingsPanel }` entry.
 - A misspelt lifecycle name, such as `Start`, `onStart` or `getSettingsPanel`, fails the build with the name to use.
@@ -56,20 +53,12 @@ Each time the plugin starts, Unbound evaluates its bundle again with a fresh Add
 The top level of your files runs during evaluation, before `start`. At launch, that delays Discord itself, so keep it cheap.
 
 <Warning>
-	Make no eager [Metro](/docs/developer/plugins/metro) search at the top level. Any search with `{ lazy: false }` walks every module right away. `metro.find`, the `findBy*` helpers and `flux.getStore` are lazy by default, so they're safe there.
+	Make no eager [Metro](/docs/developer/plugins/metro) search at the top level. A search with `{ lazy: false }` walks every module right away. `metro.find`, the `findBy*` helpers and `flux.getStore` are lazy by default, so they are safe there.
 </Warning>
 
 ## The Addon scope
 
 Each plugin runs with its own **Addon scope**: a set of globals that belong to it. Everything the plugin registers through them is recorded. After `stop` returns, the scope removes it all, newest first. So `stop` only has to undo what the scope can't see.
-
-| Global | What it is |
-| --- | --- |
-| `unbound` | The API. Its `patcher`, `commands`, `metro`, `storage`, `flux`, `settings` and `assets` are the plugin's own versions |
-| `addon` | The plugin's handle: `id`, `name`, `version`, `manifest` and its state |
-| `logger` | A logger that prefixes every line with the plugin's name |
-| `setTimeout`, `setInterval` | Timers that are cleared when the plugin stops |
-| `React` | React |
 
 Imports from `@unbound-app/api` read from the scoped `unbound`. So `import { patcher } from '@unbound-app/api'` gives the plugin its own patcher. The scope removes:
 
@@ -88,6 +77,8 @@ const settings = storage.getBucket();
 
 export function startChannelLog() {
 	flux.onAction('CHANNEL_SELECT', ({ channelId }) => {
+		if (!channelId) return;
+
 		settings.set('lastChannel', channelId);
 		logger.log('Selected', channelId);
 	});
@@ -103,9 +94,42 @@ The scope only sees what went through it. Undo these yourself:
 - A listener you added straight to a Discord module.
 - A built-in you registered with `builtins.register`.
 - A settings section of Discord's or Unbound's that you removed. The scope can't restore it.
-- A change a patch callback made outside the render, such as a value it wrote onto a Discord object. Mounted components re-render on their own, as [Undoing a component patch](/docs/developer/plugins/react-patching#undoing-a-component-patch) explains.
+- A change a patch callback made outside the render, such as a value it wrote onto a Discord object.
 
 Themes, icon packs and fonts ship no code, so they have no scope.
+
+### Remove your own patch before you redraw
+
+The scope removes patches after `stop` returns, not before. A `stop` that asks Discord to draw again therefore draws with your patch still in place. In the example below, `emitChange` tells every screen that reads the user store to read it again. If `stop` called it first, the screens would read the patched user and keep the plugin's answer.
+
+Call the function the patch returned first, then redraw:
+
+```ts src/premium-badge/index.ts
+import { flux, patcher } from '@unbound-app/api';
+
+const UserStore = flux.getStore('User');
+let unpatch: (() => void) | undefined;
+
+export function startPremiumBadge() {
+	unpatch = patcher.after(UserStore, 'getCurrentUser', ({ result }) => {
+		return result && { ...result, premiumType: 2 };
+	});
+	UserStore.emitChange();
+}
+
+export function stopPremiumBadge() {
+	// The scope removes the patch only after stop returns, so remove it here first.
+	unpatch?.();
+	unpatch = undefined;
+	UserStore.emitChange();
+}
+```
+
+A component patch needs no such care. Mounted components draw again with Discord's original render when the scope removes the patch, as [Undoing a component patch](/docs/developer/plugins/react-patching#undoing-a-component-patch) explains.
+
+## Starting features
+
+A plugin with one feature calls its start function from `start`, as [Anatomy of a Plugin](/docs/developer/plugins/anatomy#the-entry) shows. A plugin with several features starts each one on its own, so one that throws does not stop the others. First-party plugins use `startFeatures` from `@unbound-plugins/shared` for this, and `applyFeatures` when the features depend on each other. A third-party plugin writes the same loop in a few lines: a `try` and `catch` around each start function, and a `logger.error` in the `catch`.
 
 ## Keeping a plugin fast
 
@@ -113,14 +137,16 @@ A plugin should cost almost nothing until it's used. Two habits get you there.
 
 <Steps>
 	<Step title='Keep lookups lazy' icon='clock'>
-		Declare Metro lookups with the lazy `findBy*` helpers. The search runs the first time you read from the result, inside `start` or later in a handler.
-
-		```ts
-		const Messages = metro.findByProps('sendMessage', 'receiveMessage');
-		```
+		Declare Metro lookups with the lazy `findBy*` helpers. The search runs the first time you read from the result, inside `start` or later in a handler. [Finding Modules](/docs/developer/plugins/metro#searches-are-lazy) explains what a lazy lookup lets you do, and what makes it load.
 	</Step>
 	<Step title='Load heavy code on demand' icon='code-branch'>
 		Move code that pulls in many modules into its own file, and `import()` it inside `start`. That code then loads only when the plugin runs.
+
+		```ts src/editor/index.ts
+		export function startEditor() {
+			logger.log('Editor ready');
+		}
+		```
 
 		```ts src/index.tsx
 		export async function start() {
@@ -135,10 +161,10 @@ A plugin should cost almost nothing until it's used. Two habits get you there.
 ## Where to go next
 
 <CardGroup cols={2}>
+	<Card title='Anatomy of a Plugin' icon='folder-tree' href='/docs/developer/plugins/anatomy'>
+		Every file of a real plugin, and why it is there.
+	</Card>
 	<Card title='Finding Modules' icon='magnifier' href='/docs/developer/plugins/metro'>
 		Search Metro for the Discord code you want to change.
-	</Card>
-	<Card title='Patching Functions' icon='layers' href='/docs/developer/plugins/patching'>
-		Run your code before, after or instead of Discord's.
 	</Card>
 </CardGroup>

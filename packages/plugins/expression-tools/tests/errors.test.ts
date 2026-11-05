@@ -1,0 +1,19 @@
+import { expect, test } from 'bun:test';
+
+import { getErrorMessage } from '~/expression-actions/errors';
+
+test('prefers the API message, then the error message, then the response text', () => {
+	expect(getErrorMessage(new Error('boom'))).toBe('boom');
+	expect(getErrorMessage({ body: { message: 'Maximum stickers reached' } })).toBe(
+		'Maximum stickers reached',
+	);
+	expect(getErrorMessage({ message: 'offline' })).toBe('offline');
+	expect(getErrorMessage({ text: 'Bad Gateway' })).toBe('Bad Gateway');
+});
+
+test('falls back to a generic sentence', () => {
+	const fallback = getErrorMessage(null);
+
+	expect(fallback).toMatch(/^[A-Z].*\.$/);
+	expect(getErrorMessage({ body: {} })).toBe(fallback);
+});

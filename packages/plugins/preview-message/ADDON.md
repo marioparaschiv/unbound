@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :eye: Adds an eye button to the chat input once your draft has text or a staged sticker.

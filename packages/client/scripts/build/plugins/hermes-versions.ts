@@ -1,18 +1,9 @@
-import type { NormalizedOutputOptions, OutputBundle, Plugin, PluginContext } from 'rolldown';
-import hermesManifest from '@unbound-app/rollup-plugin-hermes/dist/manifest.js';
+import { fetchManifest } from '@unbound-app/rollup-plugin-hermes/manifest';
+import type { HermesPlugin } from '@unbound-app/rollup-plugin-hermes';
 import hermes from '@unbound-app/rollup-plugin-hermes';
+import type { Plugin } from 'rolldown';
 
 import { hermescCount } from '../sync-hermes';
-
-type HermesPlugin = {
-	generateBundle(
-		this: PluginContext,
-		options: NormalizedOutputOptions,
-		bundle: OutputBundle,
-		isWrite: boolean,
-	): Promise<void>;
-	buildEnd(this: PluginContext): Promise<void>;
-};
 
 /**
  * @description Compiles the bundle with hermesc for every bytecode version the client ships, resolving
@@ -27,12 +18,12 @@ export default function hermesVersions(versions: number[], flags: string[]): Plu
 	return {
 		name: 'hermes-versions',
 		async generateBundle(options, bundle, isWrite) {
-			const { latest } = await hermesManifest.fetchManifest(this);
+			const { latest } = await fetchManifest(this);
 
 			compiler ??= hermes({
 				versions: hermescCount(latest, versions),
 				flags,
-			}) as HermesPlugin;
+			});
 			await compiler.generateBundle.call(this, options, bundle, isWrite);
 		},
 		async buildEnd() {

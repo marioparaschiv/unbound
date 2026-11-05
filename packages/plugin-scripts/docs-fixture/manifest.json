@@ -1,0 +1,8 @@
+{
+	"id": "my-plugin",
+	"name": "My Plugin",
+	"description": "The plugin the developer guide's examples are typechecked inside.",
+	"authors": [{ "name": "unbound", "id": "1234567890" }],
+	"version": "1.0.0",
+	"main": "index.tsx"
+}

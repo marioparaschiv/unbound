@@ -1,28 +1,29 @@
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import startFeatures from '@unbound-plugins/shared/lifecycle/start-features';
 
-import { interceptGifRequests } from '~/requests';
-import { patchGifPickerHeader } from '~/picker';
-import SettingsPanel from '~/settings';
-import { PickerRunning } from '~/modules';
-import { PLUGIN_NAME } from '~/constants';
+import { startRequests, stopRequests } from '~/requests';
+import { startPicker, stopPicker } from '~/picker';
 
-let dispose: () => Promise<void> | undefined = () => undefined;
+let stopFeatures = async () => {};
 
 export function start() {
-	dispose = applyFeatures(PLUGIN_NAME, [
-		PickerRunning.markRunning,
-		interceptGifRequests,
-		patchGifPickerHeader,
+	// One feature throwing must not cost the other.
+	stopFeatures = startFeatures('GIF Provider Switcher', [
+		() => {
+			startPicker();
+
+			return stopPicker;
+		},
+		() => {
+			startRequests();
+
+			return stopRequests;
+		},
 	]);
 }
 
 export function stop() {
-	const pending = dispose();
-
-	dispose = () => undefined;
-
-	return pending;
+	return stopFeatures();
 }
 
-export { featureSelfTest as selfTest, SettingsPanel };
+export { featureSelfTest as selfTest };

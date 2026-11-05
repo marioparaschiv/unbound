@@ -10,6 +10,6 @@
 	],
 	"version": "1.0.4",
 	"icon": "GifIcon",
-	"main": "index.ts",
+	"main": "index.tsx",
 	"startAfterFirstFrame": true
 }

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.5] - 2026-11-05
+
+### Changed
+
+- The settings screen's text, and the notice for an invalid user ID, can now be translated. The plugin works the same as before.
+
 ## [1.0.4] - 2026-11-03
 
 ### Changed

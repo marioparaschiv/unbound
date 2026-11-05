@@ -44,6 +44,8 @@ UpdaterSettings updaterSettings(SettingsStore &store);
 
 constexpr const char *kBundleTrustSuffix     = ".trust";
 constexpr const char *kBundleBaselineSetting = "loader.update.baseline";
+// The loader version that last checked for a bundle, so a loader update is noticed once.
+constexpr const char *kCheckedLoaderSetting = "loader.update.checkedBy";
 
 class BundleUpdater
 {
@@ -56,6 +58,11 @@ public:
                                const std::optional<std::string> &updateURL,
                                uint32_t                          bytecodeVersion);
     std::string downloadURL(const std::optional<std::string> &updateURL, uint32_t bytecodeVersion);
+
+    // The DevTools backend the bundle at `bundlePath` was built with, verified against that
+    // bundle's manifest and cached beside it; downloads it on first use.
+    std::optional<std::string> devtoolsScript(const std::string &bundlePath,
+                                              uint32_t           bytecodeVersion);
 
     bool markBundleAttempted(const std::string &path);
     bool acceptBundle(const std::string &path);

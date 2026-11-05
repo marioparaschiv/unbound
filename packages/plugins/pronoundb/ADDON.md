@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :msg-user: Shows pronouns from PronounDB and from the author's Discord profile in the message header.

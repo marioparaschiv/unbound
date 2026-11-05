@@ -21,6 +21,8 @@ mock.module('~/metro/components', () => ({
 	Discord: discord,
 	SafeArea: named,
 	BottomSheets: named,
+	HelpMessage: named,
+	HelpMessageTypes: named,
 }));
 mock.module('~/metro/search', () => ({
 	findByName: () => undefined,
@@ -212,6 +214,13 @@ const schema: SettingsSchema = {
 			default: 1,
 			disabledWhen: 'showBadge',
 		},
+		warn: {
+			kind: 'notice',
+			displayAs: 'notice',
+			title: 'G',
+			tone: 'warning',
+			visibleWhen: 'showBadge',
+		},
 		seen: { kind: 'boolean', displayAs: 'switch', hidden: true, default: false },
 		style: { kind: 'choice', displayAs: 'radio', title: 'D', default: 'cozy', options },
 		badge: {
@@ -241,11 +250,30 @@ describe('schemaLayout', () => {
 				false,
 				[
 					[true, ['showBadge', 'size', 'limit']],
+					[false, ['warn']],
 					[false, ['style']],
 				],
 			],
 			['badge', true, [[true, ['badge.clear']]]],
 		]);
+	});
+});
+
+describe('notices', () => {
+	test('lay out as rows of their own and store nothing', () => {
+		const settings = createDefinedSettings(
+			schema,
+			storage.getBucket('schema-panel-notice'),
+			() => () => {},
+		);
+		const [top] = schemaLayout(schema);
+		const warn = top?.blocks
+			.flatMap((block) => block.items)
+			.find((item) => item.path === 'warn');
+
+		expect(warn).toMatchObject({ kind: 'notice', field: { tone: 'warning' } });
+		expect(Object.keys(settings.values)).not.toContain('warn');
+		expect(evaluateCondition(settings, 'warn', 'visibleWhen', 'showBadge', {})).toBe(true);
 	});
 });
 

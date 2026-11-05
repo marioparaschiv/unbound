@@ -6,6 +6,7 @@ import useConditions from '~/ui/settings-kit/use-conditions';
 import StoredField from '~/ui/settings-kit/stored-field';
 import type { DefinedSettings } from '~/storage/define';
 import ButtonRow from '~/ui/settings-kit/button-row';
+import NoticeRow from '~/ui/settings-kit/notice-row';
 
 type SchemaFieldProps = {
 	settings: DefinedSettings;
@@ -19,7 +20,7 @@ type SchemaFieldProps = {
 };
 
 /**
- * @description One row of a generated settings panel: a setting, which re-renders only when it changes, or an action.
+ * @description One row of a generated settings panel: a setting, which re-renders only when it changes, an action or a notice.
  * Its `visibleWhen` and `disabledWhen` hide or disable it live.
  * @param props The plugin's settings, the row, the plugin's message lookup, predicates and actions.
  * @returns The row, or `null` while it is hidden.
@@ -47,6 +48,18 @@ function SchemaField({
 				confirmation={field.confirm === undefined ? undefined : translate(field.confirm)}
 				disabled={disabled}
 				onPress={() => runAction(field.action)}
+			/>
+		);
+	}
+
+	if (item.kind === 'notice') {
+		const { field } = item;
+
+		return (
+			<NoticeRow
+				title={field.title === undefined ? item.path : translate(field.title)}
+				subtitle={field.subtitle === undefined ? undefined : translate(field.subtitle)}
+				tone={field.tone}
 			/>
 		);
 	}

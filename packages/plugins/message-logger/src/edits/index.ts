@@ -1,11 +1,11 @@
+import { settings } from '@unbound-app/settings';
 import { flux } from '@unbound-app/api';
 
 import { keepRemovedAttachments, type AttachmentLike } from '~/edits/attachments';
 import { filterContext } from '~/log/filter-context';
 import { shouldIgnore } from '~/log/filters';
 import type { MessageLog } from '~/log';
-import { MessageStore } from '~/discord/modules';
-import { readSettings } from '~/log/read-settings';
+import { MessageStore } from '~/log/modules';
 import { CLEARING_FLAG } from '~/history/actions';
 
 type UpdatedMessage = {
@@ -20,10 +20,11 @@ type UpdatedMessage = {
 /**
  * @description Records each edit's previous text, and keeps attachments an edit removed so they show as deleted.
  * @param log The message log.
- * @returns A function that removes the interceptor.
+ * Reads the previous version from `MessageStore`. The Addon scope removes the interceptor on `MESSAGE_UPDATE` when the plugin stops.
+ * @returns A function with nothing to undo, for `applyFeatures`.
  */
-export function interceptEdits(log: MessageLog): () => void {
-	return flux.interceptAction('MESSAGE_UPDATE', (action) => {
+export function startEdits(log: MessageLog): () => void {
+	flux.interceptAction('MESSAGE_UPDATE', (action) => {
 		const next = (action as { message?: UpdatedMessage }).message;
 
 		if (!next?.id || !next.channel_id || (action as Record<string, unknown>)[CLEARING_FLAG]) {
@@ -31,7 +32,6 @@ export function interceptEdits(log: MessageLog): () => void {
 		}
 
 		const previous = MessageStore.getMessage(next.channel_id, next.id);
-		const settings = readSettings();
 
 		if (
 			!previous ||
@@ -71,6 +71,6 @@ export function interceptEdits(log: MessageLog): () => void {
 
 		return false;
 	});
-}
 
-export default interceptEdits;
+	return () => {};
+}

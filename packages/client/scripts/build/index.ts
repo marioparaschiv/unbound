@@ -18,6 +18,7 @@ import {
 	IGNORED_WARNINGS,
 	DEBUGGER_ADDRESS,
 	MINIMUM_DISCORD_VERSIONS,
+	MIN_LOADER_VERSION,
 } from './constants';
 import downlevel, {
 	GLOBAL_BANNER,
@@ -31,6 +32,7 @@ import hermesVersions from './plugins/hermes-versions';
 import releaseModules from './plugins/release-modules';
 import staticAssets from './plugins/static-assets';
 import { bytecodeVersions } from './hermes.json';
+import { buildDevtools } from './devtools';
 import worklets from './plugins/worklets';
 import libraries from './shim-libraries';
 import refresh from './plugins/refresh';
@@ -129,6 +131,7 @@ function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 				preventAssignment: true,
 				$$VERSION$$: GIT_REVISION,
 				$$CLIENT_VERSION$$: CLIENT_VERSION,
+				$$BUILD_CHANNEL$$: BUILD_CHANNEL,
 				$$API_URL$$: API_URL,
 				$$I18N_BASE_URL$$: I18N_BASE_URL,
 				$$DEBUGGER_ADDRESS$$: DEBUGGER_ADDRESS,
@@ -157,7 +160,15 @@ function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 			// The shipped JavaScript is the loader's fallback on other bytecode versions; hermesc compiled first.
 			lowerSourceFallback(),
 			...(manifest
-				? [generateManifest(GIT_REVISION, bytecodeVersions, IS_DEV_BUILD, BUILD_CHANNEL)]
+				? [
+						generateManifest(
+							GIT_REVISION,
+							bytecodeVersions,
+							IS_DEV_BUILD,
+							BUILD_CHANNEL,
+							MIN_LOADER_VERSION,
+						),
+					]
 				: []),
 			// Both flavours share the static files and locale tables, so the default build copies them once.
 			...(flavour === DEFAULT_FLAVOUR ? [staticAssets(root)] : []),
@@ -261,11 +272,14 @@ async function build() {
 			await writeFlavour(flavour);
 		}
 
+		await buildDevtools();
+
 		const problem = writeManifest({
 			revision: GIT_REVISION,
 			declared: bytecodeVersions,
 			lenient: IS_DEV_BUILD,
 			channel: BUILD_CHANNEL,
+			minLoaderVersion: MIN_LOADER_VERSION,
 		});
 
 		if (problem) {

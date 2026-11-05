@@ -13,11 +13,17 @@ import remarkGuideHeadings, { collectGuideHeadings } from './remark-guide-headin
 
 const META_SUFFIX = '.mdx?meta';
 
+// The words `packages/plugin-scripts/src/docs-examples.ts` reads after a fence's language. They are not part of the title.
+const FENCE_FLAGS = new Set(['partial', 'quoted', 'excerpt']);
+
 // A fence's info string after the language, such as `index.ts` in ```ts index.ts, is its title.
 const codeTitle: ShikiTransformer = {
 	name: 'guide-code-title',
 	pre(node) {
-		const title = this.options.meta?.__raw?.trim();
+		const title = this.options.meta?.__raw
+			?.split(' ')
+			.filter((word) => word && !FENCE_FLAGS.has(word))
+			.join(' ');
 
 		node.properties['data-language'] = this.options.lang;
 

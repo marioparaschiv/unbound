@@ -1,5 +1,7 @@
 import type {
 	ButtonSchema,
+	NoticeSchema,
+	StorelessSchema,
 	SettingsObject,
 	SettingsValue,
 	EntityDisplay,
@@ -34,7 +36,7 @@ type JsonValue = SettingsValue | undefined;
 type Spec = { displays: string[]; keys: string[] };
 
 const BUILDERS =
-	"setting.boolean/number/integer/string/choice/array/section/button from '@unbound-app/settings/schema'";
+	"setting.boolean/number/integer/string/choice/array/section/button/notice from '@unbound-app/settings/schema'";
 const ENTITIES = ['user', 'channel', 'guild', 'role'];
 const COMMON = [
 	'kind',
@@ -88,6 +90,7 @@ const SPEC: Record<string, Spec> = {
 		keys: ['of', 'minItems', 'maxItems'],
 	},
 	button: { displays: ['button', 'danger'], keys: ['action', 'confirm'] },
+	notice: { displays: ['notice'], keys: ['tone'] },
 };
 // Options only some displays take.
 const DISPLAY_KEYS: Record<string, string[]> = {
@@ -118,7 +121,7 @@ function isObject(value: unknown): value is JsonObject {
  * @returns Whether it is a section.
  */
 export function isSettingsGroup(
-	node: SettingSchema | ButtonSchema | SettingsGroupSchema,
+	node: SettingSchema | StorelessSchema | SettingsGroupSchema,
 ): node is SettingsGroupSchema {
 	return node.kind === 'section';
 }
@@ -128,8 +131,26 @@ export function isSettingsGroup(
  * @param node A property of a settings schema or section.
  * @returns Whether it is an action.
  */
-export function isButton(node: SettingSchema | ButtonSchema): node is ButtonSchema {
+export function isButton(node: SettingSchema | StorelessSchema): node is ButtonSchema {
 	return node.kind === 'button';
+}
+
+/**
+ * @description Tells a notice from a stored setting or an action.
+ * @param node A property of a settings schema or section.
+ * @returns Whether it is a notice.
+ */
+export function isNotice(node: SettingSchema | StorelessSchema): node is NoticeSchema {
+	return node.kind === 'notice';
+}
+
+/**
+ * @description Tells a stored setting from a row that stores nothing, a button or a notice.
+ * @param node A property of a settings schema or section.
+ * @returns Whether it is a stored setting.
+ */
+export function isStored(node: SettingSchema | StorelessSchema): node is SettingSchema {
+	return !isButton(node) && !isNotice(node);
 }
 
 /**
@@ -231,7 +252,7 @@ export function isSettingValue(field: SettingSchema, value: unknown): value is S
 }
 
 /**
- * @description Lists every stored setting of a schema with its Bucket key, sections flattened to `section.key`; actions are left out.
+ * @description Lists every stored setting of a schema with its Bucket key, sections flattened to `section.key`; buttons and notices are left out.
  * @param schema The schema.
  * @returns The settings, in declaration order.
  */
@@ -246,7 +267,7 @@ export function settingEntries(schema: SettingsSchema): SettingEntry[] {
 			: [[key, node] as const];
 
 		for (const [path, field] of children) {
-			if (!isButton(field)) {
+			if (isStored(field)) {
 				entries.push({ path, field });
 			}
 		}
@@ -387,6 +408,15 @@ function readDisplay(node: JsonObject, path: string, reader: Reader) {
 		}
 	}
 
+	if (node.kind === 'notice' && !['info', 'warning', 'danger'].includes(textOf(node.tone))) {
+		issue(
+			reader,
+			path,
+			`has the tone ${textOf(node.tone)}`,
+			"set `tone` to 'info', 'warning' or 'danger'",
+		);
+	}
+
 	if (node.kind === 'button' && (typeof node.action !== 'string' || !node.action)) {
 		issue(
 			reader,
@@ -405,7 +435,7 @@ function readField(
 	node: JsonValue,
 	path: string,
 	reader: Reader,
-): SettingSchema | ButtonSchema | undefined {
+): SettingSchema | StorelessSchema | undefined {
 	const spec = isObject(node) && typeof node.kind === 'string' ? SPEC[node.kind] : undefined;
 
 	if (!isObject(node) || !spec) {
@@ -442,9 +472,9 @@ function readField(
 	}
 
 	// The keys were checked against the builder's spec above, so the copy has its shape.
-	const field = kept as SettingSchema | ButtonSchema;
+	const field = kept as SettingSchema | StorelessSchema;
 
-	if (isButton(field)) {
+	if (!isStored(field)) {
 		return field;
 	}
 
@@ -571,4 +601,12 @@ export function readSettingsSchema(value: unknown): SettingsSchemaResult {
 	};
 }
 
-export default { isButton, isSettingsGroup, isSettingValue, readSettingsSchema, settingEntries };
+export default {
+	isButton,
+	isNotice,
+	isStored,
+	isSettingsGroup,
+	isSettingValue,
+	readSettingsSchema,
+	settingEntries,
+};

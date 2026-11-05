@@ -1,7 +1,6 @@
 // usage: [DEPTH=n] [WIDTH=n] [TICK_MS=n] bun device.mjs [port=8097] [host=127.0.0.1]
 // DEPTH nests the app n components deep (function, memo, host View in turn) and WIDTH adds n sibling
 // rows at the bottom, to mimic Discord-scale trees.
-import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import WebSocket from 'ws';
 
@@ -11,11 +10,10 @@ const require = createRequire(import.meta.url);
 
 globalThis.window = globalThis;
 globalThis.WebSocket = WebSocket;
-const src = readFileSync(
-	new URL('../../../packages/loader/bootstrap/devtools.js', import.meta.url),
-	'utf8',
-);
-new Function(src).call(globalThis);
+// The same backend the client build ships as `devtools.<bytecode>.bundle`, set up the way its entry does.
+const backend = require('react-devtools-core/dist/backend.js');
+backend.initialize();
+window.DevTools = { connect: backend.connectToDevTools };
 
 const React = require('react');
 const TestRenderer = require('react-test-renderer');

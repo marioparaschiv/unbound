@@ -1,5 +1,6 @@
 import { createRule, type TextReplaceRule } from '@unbound-plugins/shared/text-replace/rules';
 import { Discord } from '@unbound-app/api/metro/components';
+import { messages } from '@unbound-app/i18n';
 import { storage, ui } from '@unbound-app/api';
 import { useState } from 'react';
 
@@ -7,7 +8,7 @@ import RulesetTransfer from '~/components/ruleset-transfer';
 import type { RuleKind } from '~/constants';
 import RuleEditor from '~/components/rule-editor';
 import RuleTester from '~/components/rule-tester';
-import { readRuleset } from '~/stored-rules';
+import { readRuleset } from '~/replace/stored-rules';
 import RuleList from '~/components/rule-list';
 
 type Editing = {
@@ -29,16 +30,16 @@ function SettingsPanel() {
 	return (
 		<ui.Page>
 			<Discord.Stack spacing={8}>
-				<Discord.Text variant='heading-xl/bold'>Text Replace</Discord.Text>
+				<Discord.Text variant='heading-xl/bold'>{messages.PLUGIN_NAME}</Discord.Text>
 				<Discord.Text variant='text-md/normal' color='text-muted'>
-					Automatically rewrite messages before you send them.
+					{messages.PLUGIN_TAGLINE}
 				</Discord.Text>
 			</Discord.Stack>
 			<RuleTester ruleset={ruleset} />
 			<RulesetTransfer ruleset={ruleset} />
-			<Discord.TableRadioGroup title='Rule type' value={kind} onChange={setKind}>
-				<Discord.TableRadioRow label='Text' value='stringRules' />
-				<Discord.TableRadioRow label='Regex' value='regexRules' />
+			<Discord.TableRadioGroup title={messages.RULE_TYPE} value={kind} onChange={setKind}>
+				<Discord.TableRadioRow label={messages.RULE_TYPE_TEXT} value='stringRules' />
+				<Discord.TableRadioRow label={messages.RULE_TYPE_REGEX} value='regexRules' />
 			</Discord.TableRadioGroup>
 			<RuleList
 				kind={kind}

@@ -1,5 +1,6 @@
 import { Discord } from '@unbound-app/api/metro/components';
 import { assets } from '@unbound-app/api';
+import { messages } from '@unbound-app/i18n';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
@@ -27,7 +28,7 @@ export function ListenAlongRow({ activity, children }: ListenAlongRowProps) {
 				size='md'
 				variant='secondary'
 				icon={assets.getIdByName('HeadphonesIcon')}
-				accessibilityLabel='Listen Along'
+				accessibilityLabel={messages.LISTEN_ALONG}
 				loading={loading && !disabled}
 				style={disabled ? { opacity: 0.5 } : undefined}
 				onPress={() => {

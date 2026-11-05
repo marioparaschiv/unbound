@@ -1,0 +1,104 @@
+name: Loader Publish loader changes
+
+# Every loader change on main publishes the deb and the Xposed module as loader 1.0.<loader commits> and republishes each channel's patched
+# Discord, so the Updates screen offers loader fixes on every platform without a new Discord version.
+on:
+    push:
+        branches: [main]
+        paths:
+            - 'packages/loader/**'
+            - '!packages/loader/docs/**'
+            - '!packages/loader/workflow-tests/**'
+            - '!**/*.md'
+            - '!**/*.mdx'
+    workflow_dispatch:
+
+permissions: {}
+
+# A newer push replaces a queued run, so only the latest loader is published; a running publish always finishes.
+concurrency:
+    group: loader-publish-${{ github.ref }}
+    cancel-in-progress: false
+
+jobs:
+    # The calls run one after another: calls in one run share artifact names, and a download takes the newest artifact of a name.
+    # contents: write only satisfies loader-build's release jobs, which GitHub checks before skipping them; publish-only modes create no release.
+    # The stable call builds the deb and the module once for the loader publish and publishes the in-app Android stable build from the same run.
+    stable:
+        if: github.repository == 'marioparaschiv/unbound'
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+            actions: read
+        uses: ./.github/workflows/loader-build.yml
+        with:
+            loader_publish_only: true
+            skip_core: true
+        secrets:
+            ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+            ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+            ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+            ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+            UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
+            S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+            S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+            GPG_KEY: ${{ secrets.GPG_KEY }}
+            GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+    beta:
+        needs: stable
+        if: ${{ !cancelled() && github.repository == 'marioparaschiv/unbound' }}
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+            actions: read
+        uses: ./.github/workflows/loader-build.yml
+        with:
+            android_channel: beta
+            android_publish_only: true
+            skip_core: true
+        secrets:
+            ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+            ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+            ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+            ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+            UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
+            S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+            S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+            GPG_KEY: ${{ secrets.GPG_KEY }}
+            GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+    alpha:
+        needs: beta
+        if: ${{ !cancelled() && github.repository == 'marioparaschiv/unbound' }}
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+            actions: read
+        uses: ./.github/workflows/loader-build.yml
+        with:
+            android_channel: alpha
+            android_publish_only: true
+            skip_core: true
+        secrets:
+            ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+            ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+            ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+            ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+            UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
+            S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+            S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+            GPG_KEY: ${{ secrets.GPG_KEY }}
+            GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}

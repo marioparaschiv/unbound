@@ -4,8 +4,8 @@ import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import createSubmissionEndpoint from '~/endpoints/create-submission';
+import { addonVersion, submission, user } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
-import { submission, user } from '~/db/schema';
 import { sweepStaging } from '~/lib/staging';
 
 import {
@@ -91,6 +91,35 @@ describe('sweepStaging', () => {
 		expect(await staged(pending.stagingKey)).toBe(true);
 		expect(await staged(approved.stagingKey)).toBe(false);
 		expect(await staged(orphan)).toBe(false);
+	});
+
+	test('keeps the bundle of an approved version until its files are published', async () => {
+		const { userId } = await signUp();
+		const unpublished = await seedApprovedAddon(ctx, userId, manifest('sweep.unpublished'));
+		const published = await seedApprovedAddon(ctx, userId, manifest('sweep.published'));
+
+		await ctx.db
+			.update(addonVersion)
+			.set({ filesPendingSince: ctx.now() })
+			.where(eq(addonVersion.submissionId, unpublished.id));
+		await Promise.all(
+			[unpublished.stagingKey, published.stagingKey].map((key) =>
+				ctx.storage.staging.write(key, 'bundle'),
+			),
+		);
+
+		await sweepAfter(grace + MINUTE_MS);
+
+		expect(await staged(unpublished.stagingKey)).toBe(true);
+		expect(await staged(published.stagingKey)).toBe(false);
+
+		await ctx.db
+			.update(addonVersion)
+			.set({ filesPendingSince: null })
+			.where(eq(addonVersion.submissionId, unpublished.id));
+		await sweepAfter(grace + MINUTE_MS);
+
+		expect(await staged(unpublished.stagingKey)).toBe(false);
 	});
 
 	test('keeps an orphan younger than STAGING_ORPHAN_GRACE_SECONDS, as create stages before inserting', async () => {

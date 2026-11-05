@@ -155,6 +155,7 @@ describe('the OpenAPI document', () => {
 		).toEqual([
 			['platform', 'query', true],
 			['version', 'query', true],
+			['channel', 'query', false],
 		]);
 		expect(loader?.requestBody).toBeUndefined();
 		expect(updates?.requestBody?.content['application/json'].schema).toEqual(

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4] - 2026-11-05
+
+### Changed
+
+- The preview's title, its error message and the button's accessibility label can now be translated. The plugin works the same as before.
+
 ## [1.0.3] - 2026-11-03
 
 ### Changed

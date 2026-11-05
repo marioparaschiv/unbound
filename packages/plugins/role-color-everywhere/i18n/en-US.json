@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Color Mentions",
+	"COLOR_MENTIONS_SUBTITLE": "Show the mentioned member’s role colors in chat and the composer",
+	"COLOR_MESSAGE_CONTENT": "Color Message Content",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Tint message text with the author’s role color",
+	"MESSAGE_COLOR_INTENSITY": "Message color intensity",
+	"TYPING_NAMES": "Typing Names",
+	"TYPING_NAMES_SUBTITLE": "Color names in the channel typing indicator",
+	"MEMBER_LIST_ROLE_HEADERS": "Member List Role Headers",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "Color role section titles in the member list",
+	"REACTION_USERS": "Reaction Users",
+	"REACTION_USERS_SUBTITLE": "Color names in the reaction details list",
+	"POLL_VOTERS": "Poll Voters",
+	"POLL_VOTERS_SUBTITLE": "Color names in poll result details",
+	"VOICE_USERS": "Voice Users",
+	"VOICE_USERS_SUBTITLE": "Color members’ names in voice user lists"
+}

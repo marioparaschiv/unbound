@@ -1,4 +1,4 @@
-import { ChannelStore, Constants, PermissionStore } from '~/discord/modules';
+import { ChannelStore, Constants, PermissionStore } from '~/uploads/modules';
 
 /**
  * @description Tells whether you may send and attach files in a channel. DMs and group DMs always allow it.

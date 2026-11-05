@@ -1,4 +1,5 @@
 import { toasts } from '@unbound-app/api';
+import { messages } from '@unbound-app/i18n';
 
 import {
 	DraftActions,
@@ -6,7 +7,7 @@ import {
 	MessageActions,
 	SelectedChannelStore,
 	SpotifyStore,
-} from '~/discord/modules';
+} from '~/invite/modules';
 import type { SpotifyActivity } from '~/types';
 import { ACTIVITY_ACTION_LISTEN, DRAFT_TYPE_CHANNEL_MESSAGE, PLUGIN_NAME } from '~/constants';
 
@@ -28,7 +29,7 @@ export function sendListenAlongInvite() {
 	const channelId = SelectedChannelStore.getChannelId?.();
 
 	if (!activity || !channelId) {
-		toasts.show({ title: PLUGIN_NAME, content: 'Play something on Spotify first.' });
+		toasts.show({ title: PLUGIN_NAME, content: messages.PLAY_SOMETHING });
 
 		return;
 	}

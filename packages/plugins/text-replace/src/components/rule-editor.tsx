@@ -1,10 +1,12 @@
 import type { TextReplaceRule } from '@unbound-plugins/shared/text-replace/rules';
 import { Discord } from '@unbound-app/api/metro/components';
+import { messages } from '@unbound-app/i18n';
 import { ui } from '@unbound-app/api';
 import { useState } from 'react';
 
-import { RuleKinds, type RuleKind } from '~/constants';
-import { deleteRule, saveRule } from '~/stored-rules';
+import { ruleKindMessages } from '~/components/rule-kind-messages';
+import type { RuleKind } from '~/constants';
+import { deleteRule, saveRule } from '~/replace/stored-rules';
 
 type RuleEditorProps = {
 	kind: RuleKind;
@@ -17,7 +19,7 @@ type RuleField = 'find' | 'replace' | 'onlyIfIncludes';
 
 function RuleEditor({ kind, rule, isNew, onClose }: RuleEditorProps) {
 	const [draft, setDraft] = useState(rule);
-	const { noun, findLabel, findPlaceholder, help } = RuleKinds[kind];
+	const { findLabel, findPlaceholder, help, newRule } = ruleKindMessages(kind);
 
 	function update(field: RuleField, value: string) {
 		setDraft((current) => ({ ...current, [field]: value }));
@@ -37,13 +39,13 @@ function RuleEditor({ kind, rule, isNew, onClose }: RuleEditorProps) {
 		<ui.Page>
 			<Discord.Stack spacing={8} align='start'>
 				<Discord.Button
-					text='‹ Back to rules'
+					text={messages.BACK_TO_RULES}
 					variant='tertiary'
 					size='sm'
 					onPress={onClose}
 				/>
 				<Discord.Text variant='heading-xl/bold'>
-					{isNew ? `New ${noun} rule` : 'Edit rule'}
+					{isNew ? newRule : messages.EDIT_RULE}
 				</Discord.Text>
 				<Discord.Text variant='text-md/normal' color='text-muted'>
 					{help}
@@ -58,8 +60,8 @@ function RuleEditor({ kind, rule, isNew, onClose }: RuleEditorProps) {
 				onChange={(value) => update('find', value)}
 			/>
 			<Discord.TextInput
-				label='Replace with'
-				placeholder='What should it become? Use \\n for a new line.'
+				label={messages.REPLACE_WITH}
+				placeholder={messages.REPLACE_PLACEHOLDER}
 				autoCapitalize='none'
 				autoCorrect={false}
 				multiline
@@ -67,18 +69,26 @@ function RuleEditor({ kind, rule, isNew, onClose }: RuleEditorProps) {
 				onChange={(value) => update('replace', value)}
 			/>
 			<Discord.TextInput
-				label='Only when the message contains'
-				placeholder='Optional condition'
-				description='Leave this blank to apply the rule everywhere.'
+				label={messages.ONLY_WHEN_CONTAINS}
+				placeholder={messages.CONDITION_PLACEHOLDER}
+				description={messages.CONDITION_DESCRIPTION}
 				autoCapitalize='none'
 				autoCorrect={false}
 				value={draft.onlyIfIncludes}
 				onChange={(value) => update('onlyIfIncludes', value)}
 			/>
 			<Discord.Stack spacing={12}>
-				<Discord.Button text='Save rule' disabled={!draft.find.trim()} onPress={save} />
+				<Discord.Button
+					text={messages.SAVE_RULE}
+					disabled={!draft.find.trim()}
+					onPress={save}
+				/>
 				{isNew ? null : (
-					<Discord.Button text='Delete rule' variant='destructive' onPress={remove} />
+					<Discord.Button
+						text={messages.DELETE_RULE}
+						variant='destructive'
+						onPress={remove}
+					/>
 				)}
 			</Discord.Stack>
 		</ui.Page>

@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :msgs: Wraps each message's text and media in a rounded bubble with a small margin.

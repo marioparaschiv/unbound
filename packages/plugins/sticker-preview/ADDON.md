@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :sticker: Tapping a sticker in the picker shows it above the chat input instead of sending it. Tap the preview to remove it.

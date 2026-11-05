@@ -1,44 +1,52 @@
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
 import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
-import { interceptNonceReplacements } from '~/nonces';
-import { interceptDeletes } from '~/deletions';
-import { interceptEdits } from '~/edits';
-import { patchActionSheets } from '~/history';
-import { patchChatManager } from '~/rows/change-type';
-import { patchRowManager } from '~/rows';
-import SettingsPanel from '~/settings';
-import { ActionSheets, ChatManager, MessageStore, RowManager } from '~/discord/modules';
-import { PLUGIN_NAME } from '~/constants';
-import { createMessageLog } from '~/log';
+import { ChatManager, RowManager } from '~/rows/modules';
+import { createMessageLog, type MessageLog } from '~/log';
+import { ActionSheets } from '~/history/modules';
+import { startDeletions } from '~/deletions';
+import { MessageStore } from '~/log/modules';
 import { purgeLog } from '~/history/actions';
+import { startHistory } from '~/history';
+import { startNonces } from '~/nonces';
+import { startEdits } from '~/edits';
+import { startRows } from '~/rows';
+import { PLUGIN_NAME } from '~/constants';
 
-let dispose: () => Promise<void> | undefined = () => undefined;
+let log: MessageLog | undefined;
+let disposeHistory: (() => unknown) | undefined;
+let disposeRows: (() => unknown) | undefined;
 
 export function start() {
-	if (!ensureModules(PLUGIN_NAME, { ActionSheets, ChatManager, MessageStore, RowManager }))
+	if (!ensureModules(PLUGIN_NAME, { ActionSheets, ChatManager, MessageStore, RowManager })) {
 		return;
+	}
 
-	const log = createMessageLog();
+	const current = createMessageLog();
 
-	dispose = applyFeatures(PLUGIN_NAME, [
-		() => () => purgeLog(log),
-		() => patchRowManager(log),
-		() => patchChatManager(log),
-		() => interceptDeletes(log),
-		() => interceptEdits(log),
-		() => interceptNonceReplacements(),
-		() => patchActionSheets(log),
+	log = current;
+
+	// Rows and history keep their stop for `stop`; the interceptors stay on until the Addon scope removes them.
+	disposeRows = startFeatures(PLUGIN_NAME, [() => startRows(current)]);
+	startFeatures(PLUGIN_NAME, [
+		() => startDeletions(current),
+		() => startEdits(current),
+		startNonces,
 	]);
+	disposeHistory = startFeatures(PLUGIN_NAME, [() => startHistory(current)]);
 }
 
 export function stop() {
-	const pending = dispose();
+	disposeHistory?.();
+	// The row patches go before the purge, which makes Discord draw the rows again; the interceptors stay for it.
+	disposeRows?.();
 
-	dispose = () => undefined;
+	if (log) purgeLog(log);
 
-	return pending;
+	log = undefined;
+	disposeHistory = undefined;
+	disposeRows = undefined;
 }
 
-export { featureSelfTest as selfTest, SettingsPanel };
+export { featureSelfTest as selfTest };

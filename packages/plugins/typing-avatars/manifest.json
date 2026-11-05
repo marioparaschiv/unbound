@@ -18,5 +18,5 @@
 	],
 	"version": "1.0.2",
 	"icon": "KeyboardIcon",
-	"main": "index.ts"
+	"main": "index.tsx"
 }

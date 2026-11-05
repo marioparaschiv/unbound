@@ -1,12 +1,14 @@
-import { createElement, useEffect, useState } from 'react';
+import { createElement, useEffect, useState, type ReactElement } from 'react';
 
 import type { SettingsPayload } from '../src/storage';
 import type { MemoryStorage } from './memory-storage';
 import type { FakeModule } from './fake-metro';
 
+import { createSettingsPanel } from './fake-settings-panel';
+
 /**
  * One node of a settings schema, as `@unbound-app/settings/schema`'s builders produce it once read as JSON. The
- * options a builder copies that only the panel reads, such as `placeholder` or `run`, stay untyped.
+ * options a builder copies that only the panel reads, such as `placeholder` or `action`, stay untyped.
  */
 export type SchemaNode = FakeModule & {
 	kind: string;
@@ -54,8 +56,8 @@ export type FakeSettings = {
 	resetSettings: () => void;
 	/** Saves a setting by dot-separated key; throws when the schema rejects the value. */
 	set: (key: string, value: SettingValue) => void;
-	SettingsPanel: () => ReturnType<typeof createElement>;
-	getSettingsPanel: () => ReturnType<typeof createElement>;
+	SettingsPanel: () => ReactElement;
+	getSettingsPanel: () => ReactElement;
 };
 
 /** A builder's options: the plugin's generated typings check them; here they are read as plain JSON. */
@@ -79,7 +81,11 @@ function meta(kind: string, displayAs: string, options: Options, keys: string[] 
 		const condition = options[key];
 
 		if (condition !== undefined) {
-			picked[key] = typeof condition === 'function' ? { predicate: true } : condition;
+			// The panel runs the predicate the schema JSON drops: it rides on the marker, out of sight of equality and JSON.
+			picked[key] =
+				typeof condition === 'function'
+					? Object.defineProperty({ predicate: true }, 'run', { value: condition })
+					: condition;
 		}
 	}
 
@@ -107,7 +113,7 @@ function choices(options: Options): SchemaChoice[] {
 	);
 }
 
-/** The `setting` builders of `@unbound-app/settings/schema`, one per stored primitive; `displayAs` picks the widget. */
+/** The `setting` builders of `@unbound-app/settings/schema`: one per stored primitive, `section`, `button` and `notice`; `displayAs` picks the widget. */
 export const setting = createSettingBuilders();
 
 function createSettingBuilders() {
@@ -139,8 +145,12 @@ function createSettingBuilders() {
 			...meta('section', options.displayAs ?? 'group', options),
 			properties,
 		}),
-		action: (options: Options) =>
-			meta('action', options.displayAs ?? 'button', options, ['run', 'confirm']),
+		button: (options: Options) =>
+			meta('button', options.displayAs ?? 'button', options, ['action', 'confirm']),
+		notice: (options: Options) => ({
+			...meta('notice', 'notice', options, ['tone']),
+			tone: options.tone ?? 'info',
+		}),
 	};
 }
 
@@ -226,7 +236,7 @@ function entries(schema: SettingsSchema): [string, SchemaNode][] {
 					])
 				: [[key, node]],
 		)
-		.filter(([, field]) => field.kind !== 'action');
+		.filter(([, field]) => field.kind !== 'button' && field.kind !== 'notice');
 }
 
 function affects(payload: SettingsPayload, key: string): boolean {
@@ -238,18 +248,28 @@ function affects(payload: SettingsPayload, key: string): boolean {
 	);
 }
 
+/** What the generated panel reads besides the settings: message lookup and actions. */
+export type PanelOptions = {
+	/** Looks a message key up in the active locale, re-rendering when it changes. Defaults to the key. */
+	translate?: (key: string) => string;
+	/** Runs the export of the plugin's src/actions.ts a button names. Defaults to throwing, naming the action. */
+	runAction?: (name: string) => Promise<void>;
+};
+
 /**
  * @description Binds a settings schema to a memory Bucket, as the client's `storage.define` does: defaults apply on
  * read, and each write is checked against the schema.
  * @param schema The schema settings.ts evaluated to.
  * @param storage The memory storage holding the Bucket.
  * @param bucketName The Bucket, the plugin's id.
+ * @param panel How the generated panel translates titles and runs buttons.
  * @returns The settings, their hook, reset and panel.
  */
 export function createFakeSettings(
 	schema: SettingsSchema,
 	storage: MemoryStorage,
 	bucketName: string,
+	panel: PanelOptions = {},
 ): FakeSettings {
 	const bucket = storage.getBucket(bucketName);
 	const fields = new Map(entries(schema));
@@ -284,8 +304,12 @@ export function createFakeSettings(
 	function view(prefix: string, properties: Record<string, SchemaNode>): SettingsValues {
 		const sections = new Map<string, SettingsValues>();
 		const pathOf = (key: PropertyKey) => (prefix ? `${prefix}.${String(key)}` : String(key));
+		// A button or notice stores nothing, so it is not one of the settings.
 		const owns = (key: PropertyKey) =>
-			typeof key === 'string' && Object.hasOwn(properties, key);
+			typeof key === 'string' &&
+			Object.hasOwn(properties, key) &&
+			properties[key]?.kind !== 'button' &&
+			properties[key]?.kind !== 'notice';
 
 		function read(key: string) {
 			const node = properties[key];
@@ -322,7 +346,7 @@ export function createFakeSettings(
 					return true;
 				},
 				has: (_target, key) => owns(key),
-				ownKeys: () => Object.keys(properties),
+				ownKeys: () => Object.keys(properties).filter(owns),
 				getOwnPropertyDescriptor: (_target, key) =>
 					owns(key)
 						? {
@@ -352,9 +376,30 @@ export function createFakeSettings(
 		return section;
 	}
 
-	function SettingsPanel() {
-		return createElement('SettingsPanel', { schema });
-	}
+	const SettingsPanel = createSettingsPanel({
+		schema,
+		values,
+		read,
+		write: set,
+		translate: panel.translate ?? ((key) => key),
+		runAction:
+			panel.runAction ??
+			(async (name) => {
+				throw new Error(`Failed to run action ${name}: the plugin has no src/actions.ts.`);
+			}),
+		useChange() {
+			const [, forceUpdate] = useState({});
+
+			useEffect(
+				() =>
+					storage.onChange(
+						(payload) => payload.store === bucketName,
+						() => forceUpdate({}),
+					),
+				[],
+			);
+		},
+	});
 
 	return {
 		schema,

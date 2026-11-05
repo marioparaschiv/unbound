@@ -51,6 +51,12 @@ export default defineSettings(
 			displayAs: 'danger',
 			confirm: 'CLEAR_CACHE',
 		}),
+		cacheNotice: setting.notice({
+			title: 'CACHE_NOTICE',
+			subtitle: 'CACHE_NOTICE_SUBTITLE',
+			tone: 'warning',
+			visibleWhen: 'compact',
+		}),
 		appearance: setting.section(
 			{ title: 'APPEARANCE', displayAs: 'collapsible' },
 			{

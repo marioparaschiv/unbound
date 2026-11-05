@@ -18,6 +18,6 @@
 	],
 	"version": "1.0.4",
 	"icon": "LinkIcon",
-	"main": "index.ts",
+	"main": "index.tsx",
 	"startAfterFirstFrame": true
 }

@@ -19,12 +19,12 @@ export function checkContext(addon: DiscoveredAddon, emit = true): CheckContext 
 }
 
 /**
- * @description Keeps the diagnostic lines of a printed report, dropping blank lines and the summary.
+ * @description Keeps the diagnostic lines of a printed report, without the colour CI forces, dropping blank lines and the summary.
  * @param output What `ubd build` or `ubd check` printed.
  * @returns The diagnostic lines, in order.
  */
 export function reportLines(output: string): string[] {
-	return output
+	return Bun.stripANSI(output)
 		.split('\n')
 		.filter((line) => line.startsWith('error') || line.startsWith('warning'));
 }

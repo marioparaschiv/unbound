@@ -6,6 +6,40 @@ icon: 'toggle'
 
 Declare your plugin's settings once, in `settings.ts` beside `src/`. The build reads that file, types your settings, and draws a settings panel from it. TypeBox, the schema library under the builders, runs only while you build. It never ships in your plugin.
 
+## Reference
+
+Three modules hold the settings API. Only `settings.ts` may import the first, and plugin code reads the second.
+
+| Export of `@unbound-app/settings/schema` | Declares |
+| --- | --- |
+| `defineSettings(properties, options?)` | The plugin's settings. The default export of `settings.ts`. `options.title` names the section that holds the top-level settings |
+| `setting.boolean(options)` | A `boolean`: a switch or a checkbox |
+| `setting.number(options)`, `setting.integer(options)` | A number: an input, a slider, a stepper or a duration in milliseconds |
+| `setting.string(options)` | A string: an input, a multiline input, a secret, a URL, a color, an image, a font, an emoji or a Discord entity. `setting.string()` with no options is an item of an array |
+| `setting.choice({ options, default, ... })` | One of the keys of `options`. `setting.choice({ options })` with no `default` is an item of an array |
+| `setting.array({ of, default?, ... })` | A list of `of`: strings as an editable list or an entity picker, choices as checkboxes |
+| `setting.section(options, properties)` | A titled group of settings, one level deep |
+| `setting.button({ action, ... })` | A row that runs a function of `src/actions.ts`. It stores nothing |
+| `setting.notice({ title, subtitle?, tone?, visibleWhen? })` | A message row. It stores nothing |
+
+| Export of `@unbound-app/settings` | What it is |
+| --- | --- |
+| `settings` | Every setting, typed. Reads apply defaults. Assign a property, a section's too, to save it |
+| `useSetting(key)` | Reads a setting or a section by its dot-separated key, and re-renders when it changes |
+| `resetSettings()` | Puts every setting back to its default |
+| `SettingsPanel` | The generated panel, for a custom panel to render |
+| `Settings`, `SettingKey`, `SettingsEntry<K>`, `ActionName` | The types of your settings. See [Types](#types) |
+
+| Export of `storage` | What it does |
+| --- | --- |
+| `storage.getBucket(name?)` | Returns a [Bucket](#buckets): your plugin's, or the one called `name` |
+| `storage.onChange(predicate, callback)` | Calls `callback` for each change that `predicate` accepts. Returns a function that removes it |
+| `storage.snapshot(options?)` | Reads every Bucket, with `secret` settings masked unless `includeSecrets` is set |
+
+## A first settings file
+
+Declare the settings once. Each `title` and `subtitle` is a key of `i18n/en-US.json`.
+
 ```ts settings.ts
 import { defineSettings, setting } from '@unbound-app/settings/schema';
 
@@ -65,13 +99,6 @@ function Badge() {
 }
 ```
 
-| Export | What it does |
-| --- | --- |
-| `settings` | Every setting, typed. Assign a property, a section's too, to save it |
-| `useSetting(key)` | Reads a setting or a section by its dot-separated key, and re-renders when it changes |
-| `resetSettings()` | Puts every setting back to its default |
-| `SettingsPanel` | The generated panel, for a custom panel to render |
-
 A stored value the schema rejects, such as one an older version saved, is logged once and reset to its default.
 
 ## Builders
@@ -87,6 +114,7 @@ Each builder is a primitive: what is stored. `displayAs` picks how it is drawn, 
 | `array` | a list of `of` | `of: setting.string()`: `list`, or `user`/`channel`/`guild`/`role`; `of: setting.choice({ options })`: `checkboxes` (Discord's checkbox group, the default) | `minItems`, `maxItems` |
 | `section` | an object of settings | `group`, `collapsible` | |
 | `button` | nothing | `button`, `danger` | `action`: the name of a function `src/actions.ts` exports; `confirm`: a question to ask first |
+| `notice` | nothing | `notice` | `tone`: `info` (the default), `warning` or `danger`. Takes only `title`, `subtitle`, `tone` and `visibleWhen` |
 
 Each display is drawn with Discord's own components, as its settings screens draw them:
 
@@ -99,6 +127,7 @@ Each display is drawn with Discord's own components, as its settings screens dra
 | `color` | A swatch row opening Discord's own colour picker sheet |
 | `checkboxes` | Discord's checkbox group, with each option's subtitle |
 | `button`, `danger` | Discord's full-width Row Button; `danger` leads with a red trash icon |
+| `notice` | Discord's message box, in the style of its `tone`, with the title and subtitle as its text |
 | `stepper` | Unbound's own stepper, since Discord has none |
 
 The stored type follows the display: a `color` is a `` `#${string}` ``, a `url` is an http or https URL (or empty), an entity display holds a Discord id (or empty), and an `emoji` holds its `name`, or `name:id` for a custom emoji. Sections nest one level deep.
@@ -118,12 +147,26 @@ Every builder takes these.
 
 `visibleWhen` and `disabledWhen` take a boolean setting's key, or a predicate of every setting:
 
-```ts
-size: setting.integer({
-	default: 14, min: 10, max: 24, title: 'BADGE_SIZE',
-	visibleWhen: (settings) => settings.showBadge && settings.style !== 'compact',
-	disabledWhen: 'locked',
-}),
+```ts settings.ts
+import { defineSettings, setting } from '@unbound-app/settings/schema';
+
+export default defineSettings({
+	showBadge: setting.boolean({ default: true, title: 'SHOW_BADGE' }),
+	style: setting.choice({
+		default: 'roomy',
+		title: 'STYLE',
+		options: { compact: 'STYLE_COMPACT', roomy: 'STYLE_ROOMY' },
+	}),
+	locked: setting.boolean({ default: false, title: 'LOCKED' }),
+	size: setting.integer({
+		default: 14,
+		min: 10,
+		max: 24,
+		title: 'BADGE_SIZE',
+		visibleWhen: (settings) => settings.showBadge && settings.style !== 'compact',
+		disabledWhen: 'locked',
+	}),
+});
 ```
 
 The build lifts each predicate out of `settings.ts` into your plugin, so it must be pure: it reads only its parameter, its own variables and built-ins such as `Math` and `Number`, and it assigns, constructs and imports nothing. The panel runs it again on every settings change. A predicate that throws is logged once, and its row stays shown and enabled.
@@ -141,10 +184,39 @@ export function clearStarred() {
 ```
 
 ```ts settings.ts
-clear: setting.button({ title: 'CLEAR_STARRED', action: 'clearStarred', displayAs: 'danger', confirm: 'CLEAR_CONFIRM' }),
+import { defineSettings, setting } from '@unbound-app/settings/schema';
+
+export default defineSettings({
+	clear: setting.button({
+		title: 'CLEAR_STARRED',
+		action: 'clearStarred',
+		displayAs: 'danger',
+		confirm: 'CLEAR_CONFIRM',
+	}),
+});
 ```
 
 The action runs in your plugin, with its own `unbound`. One that throws is logged as `Failed to run settings action <name> for <plugin id>:` and shown in a toast.
+
+## Notices
+
+A `setting.notice` shows a message in the panel and stores nothing, so it is not in `settings`. Use it to warn about a setting, and show it only while the warning applies:
+
+```ts settings.ts
+import { defineSettings, setting } from '@unbound-app/settings/schema';
+
+export default defineSettings({
+	size: setting.integer({ default: 14, min: 10, max: 24, title: 'BADGE_SIZE' }),
+	sizeWarning: setting.notice({
+		title: 'SIZE_WARNING',
+		subtitle: 'SIZE_WARNING_DETAIL',
+		tone: 'warning',
+		visibleWhen: (settings) => settings.size > 20,
+	}),
+});
+```
+
+`tone` is `info`, `warning` or `danger`, and picks the icon and colours of Discord's message box. A notice has no `hidden`, `disabledWhen` or `requiresRestart`. A notice stands alone in its section, not inside a shared group of rows.
 
 ## Types
 
@@ -153,14 +225,14 @@ The action runs in your plugin, with its own `unbound`. One that throws is logge
 | Type | What it is |
 | --- | --- |
 | `Settings` | The whole settings object, what `settings` is |
-| `SettingKey` | Every setting's and section's dot-separated key, hidden ones included; buttons are not settings |
+| `SettingKey` | Every setting's and section's dot-separated key, hidden ones included; buttons and notices are not settings |
 | `SettingsEntry<K>` | The value at `K`, such as a `` `#${string}` `` for a color or the union of a choice's keys |
 | `ActionName` | The functions `src/actions.ts` exports |
 
 ```ts
 import type { SettingsEntry } from '@unbound-app/settings';
 
-function paint(color: SettingsEntry<'badge.color'>) {}
+function paint(color: SettingsEntry<'appearance.accent'>) {}
 ```
 
 ## The generated panel

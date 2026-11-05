@@ -143,11 +143,29 @@ static void checksTheNativeBridge()
     assert(loader::nativeBridgeProblem(bridgeManifest("", "1.0.0"), "1.0.0", "1.0.0"));
 }
 
+static loader::BundleManifest loaderManifest(const std::string &version)
+{
+    return *loader::parseBundleManifest(R"({"minLoaderVersion":")" + version + R"("})");
+}
+
+static void checksTheLoaderVersion()
+{
+    assert(loaderManifest("1.2.0").minLoaderVersion == "1.2.0");
+
+    assert(!loader::loaderVersionProblem(*loader::parseBundleManifest("{}"), "1.0.0"));
+    assert(!loader::loaderVersionProblem(loaderManifest("1.2.0"), "1.2.0"));
+    assert(!loader::loaderVersionProblem(loaderManifest("1.2.0"), "2.0.0"));
+    assert(!loader::loaderVersionProblem(loaderManifest("1.2.0"), "dev"));
+    assert(loader::loaderVersionProblem(loaderManifest("1.2.0"), "1.1.9"));
+    assert(loader::loaderVersionProblem(loaderManifest("1.2"), "1.0.0"));
+}
+
 int main()
 {
     parsesBuildTimes();
     parsesManifests();
     enforcesTheBaseline();
     checksTheNativeBridge();
+    checksTheLoaderVersion();
     return 0;
 }

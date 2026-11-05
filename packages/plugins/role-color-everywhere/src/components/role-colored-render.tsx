@@ -2,7 +2,7 @@ import type { RoleColorAppearance } from '@unbound-plugins/shared/colors/role-co
 import type { ReactNode } from 'react';
 import { Text } from 'react-native';
 
-import { paintRoleTextTree } from '~/role-text';
+import { paintRoleTextTree } from '~/shared/role-text';
 
 type RoleColoredRenderProps<T> = {
 	render: (props: T) => ReactNode;

@@ -1,3 +1,4 @@
+import { format, messages } from '@unbound-app/i18n';
 import { Discord } from '@unbound-app/api/metro/components';
 import { ScrollView, View } from 'react-native';
 
@@ -26,7 +27,7 @@ function Version({ label, content }: VersionProps) {
 				{label}
 			</Discord.Text>
 			<Discord.Text variant='text-md/normal' selectable>
-				{content || '(empty)'}
+				{content || messages.EMPTY_MESSAGE}
 			</Discord.Text>
 		</View>
 	);
@@ -41,15 +42,15 @@ export function HistorySheet({ current, edits }: HistorySheetProps) {
 	return (
 		<Discord.ActionSheet startExpanded>
 			<ScrollView style={{ maxHeight: 520 }} contentContainerStyle={{ gap: 16, padding: 16 }}>
-				<Discord.Text variant='text-lg/semibold'>Message History</Discord.Text>
+				<Discord.Text variant='text-lg/semibold'>{messages.HISTORY_TITLE}</Discord.Text>
 				{edits.map((edit, index) => (
 					<Version
 						key={`${edit.timestamp}-${index}`}
-						label={`Before the edit at ${formatTime(edit.timestamp)}`}
+						label={format('BEFORE_EDIT', { time: formatTime(edit.timestamp) })}
 						content={edit.content}
 					/>
 				))}
-				<Version label='Current' content={current} />
+				<Version label={messages.CURRENT_VERSION} content={current} />
 			</ScrollView>
 		</Discord.ActionSheet>
 	);

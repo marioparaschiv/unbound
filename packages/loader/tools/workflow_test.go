@@ -404,10 +404,12 @@ func TestStableReleasePublishesLoaderUpdateRecords(t *testing.T) {
 			t.Fatalf("stable release workflow is missing loader update publishing detail %q", required)
 		}
 	}
+	// The loader version counts loader commits (unbound-tools loader-version), never anything from the Discord build.
+	if !strings.Contains(contents, "version=$(unbound-tools loader-version)") || !strings.Contains(contents, "loader_version: ${{ steps.loader-version.outputs.version }}") {
+		t.Fatal("resolve-source must compute the loader version from the loader's commits")
+	}
 	for _, forbidden := range []string{
-		"loader_version=$(unbound-tools loader-version",
 		"IOS_BUILD:",
-		"LOADER_VERSION:",
 		"resolve.outputs.loader_version",
 		"targets Discord",
 		"generated-release-notes.md",
@@ -422,8 +424,8 @@ func TestStableReleasePublishesLoaderUpdateRecords(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if strings.Contains(string(workflow), "loader_version") || strings.Contains(string(workflow), "LOADER_PACKAGE_VERSION") {
-			t.Fatalf("%s must read the loader package semver instead of a Discord-derived override", workflowName)
+		if strings.Contains(string(workflow), "LOADER_PACKAGE_VERSION") || strings.Count(string(workflow), "LOADER_VERSION: ${{ inputs.loader_version }}") != strings.Count(string(workflow), "LOADER_VERSION:") {
+			t.Fatalf("%s must stamp only the loader version resolve-source computed, not a Discord-derived override", workflowName)
 		}
 	}
 	publisher, err := os.ReadFile(filepath.Join(root, "tools", "loader_release.go"))

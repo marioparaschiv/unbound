@@ -73,10 +73,21 @@ export const PUBLIC_OPERATIONS = {
 	'GET /api/v1/loader/updates': {
 		tag: 'Updates',
 		summary: 'Check for loader updates',
-		description: 'The newest loader release, or `null` when current. Rate limited per IP.',
+		description:
+			'The newest loader release, or `null` when current, and the loader version the newest bundle on `channel` needs when the installed loader is older. Rate limited per IP.',
 		parameters: {
 			platform: 'The platform the loader runs on.',
 			version: 'The installed loader version.',
+			channel: 'The bundle channel the client runs.',
+		},
+	},
+	'GET /api/v1/loader/android-builds': {
+		tag: 'Updates',
+		summary: 'List patched Android Discord builds',
+		description:
+			"A channel's patched Discord builds with each gzipped split's URL, newest Discord first. Rate limited per IP.",
+		parameters: {
+			channel: 'The Google Play channel the builds were made from.',
 		},
 	},
 	'GET /api/v1/users/$id/badges': {

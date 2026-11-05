@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :bell-slash: New replies don't mention the author of the message you reply to.

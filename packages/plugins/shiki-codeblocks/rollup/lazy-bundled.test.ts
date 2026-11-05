@@ -3,7 +3,12 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { BUNDLED_LANGUAGES, BUNDLED_THEMES, bundledThemes, grammarOrder } from '../src/bundled';
+import {
+	BUNDLED_LANGUAGES,
+	BUNDLED_THEMES,
+	bundledThemes,
+	grammarOrder,
+} from '../src/codeblocks/bundled';
 import { generateLazyBundled } from './lazy-bundled.mjs';
 
 const directory = mkdtempSync(join(tmpdir(), 'shiki-lazy-bundled-'));
@@ -11,7 +16,7 @@ const directory = mkdtempSync(join(tmpdir(), 'shiki-lazy-bundled-'));
 afterAll(() => rmSync(directory, { recursive: true, force: true }));
 
 async function loadGenerated() {
-	const source = readFileSync(new URL('../src/bundled.ts', import.meta.url), 'utf8');
+	const source = readFileSync(new URL('../src/codeblocks/bundled.ts', import.meta.url), 'utf8');
 	const file = join(directory, 'bundled.mjs');
 
 	writeFileSync(file, await generateLazyBundled(source));
@@ -38,7 +43,10 @@ describe('the bundled grammar index', () => {
 	});
 
 	test('leave the grammars out of the bundle and parse the themes once', async () => {
-		const source = readFileSync(new URL('../src/bundled.ts', import.meta.url), 'utf8');
+		const source = readFileSync(
+			new URL('../src/codeblocks/bundled.ts', import.meta.url),
+			'utf8',
+		);
 		const generated = await loadGenerated();
 
 		expect(await generateLazyBundled(source)).not.toContain('repository');

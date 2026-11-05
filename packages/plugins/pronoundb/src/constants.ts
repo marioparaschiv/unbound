@@ -1,13 +1,16 @@
-export const PronounLabels: Record<string, string> = {
-	any: 'Any pronouns',
-	ask: 'Ask me my pronouns',
-	avoid: 'Avoid pronouns, use my name',
-	he: 'He/Him',
-	it: 'It/Its',
-	other: 'Other pronouns',
-	she: 'She/Her',
-	they: 'They/Them',
-	unspecified: 'No pronouns specified.',
+import { messages } from '@unbound-app/i18n';
+
+// Each entry returns its label when called, so the label follows the language the user has at that moment.
+export const PRONOUN_LABELS: Record<string, () => string> = {
+	any: () => messages.PRONOUN_ANY,
+	ask: () => messages.PRONOUN_ASK,
+	avoid: () => messages.PRONOUN_AVOID,
+	he: () => messages.PRONOUN_HE,
+	it: () => messages.PRONOUN_IT,
+	other: () => messages.PRONOUN_OTHER,
+	she: () => messages.PRONOUN_SHE,
+	they: () => messages.PRONOUN_THEY,
+	unspecified: () => messages.PRONOUN_UNSPECIFIED,
 };
 
 // These labels are sentences, so they keep their capitals in the lowercase format.

@@ -1,24 +1,22 @@
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import type { PluginContext } from '@unbound-app/api/native';
 
 import { isAussieDevice } from '~/locale';
 import { startRotation } from '~/rotation';
 import { startUpsideDownText } from '~/text';
 
-let dispose = () => {};
+let stopRotation: () => Promise<void> = async () => {};
 
-function start(context: PluginContext) {
+export async function start(context: PluginContext): Promise<void> {
 	if (!isAussieDevice()) return;
 
-	dispose = applyFeatures('Aussie Mode', [
-		() => startRotation(context.native, (error) => console.error('[Aussie Mode]', error)),
-		startUpsideDownText,
-	]);
+	startUpsideDownText();
+	stopRotation = await startRotation(context.native, (error) =>
+		console.error('[Aussie Mode]', error),
+	);
 }
 
-function stop() {
-	dispose();
-	dispose = () => {};
+export async function stop(): Promise<void> {
+	const cleanup = stopRotation;
+	stopRotation = async () => {};
+	await cleanup();
 }
-
-export default { start, stop };

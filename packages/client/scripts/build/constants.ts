@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { resolveDevServerUrl, resolveDevHost } from '../dev-host';
-import { version } from '../../package.json';
+import { version, unbound } from '../../package.json';
 
 export const GIT_REVISION = (() => {
 	try {
@@ -17,6 +17,9 @@ export const GIT_REVISION = (() => {
 })();
 
 export const CLIENT_VERSION = parse(semverSchema, version);
+
+/** The oldest loader that runs this bundle; raise it in `package.json` when the bundle needs a newer loader. */
+export const MIN_LOADER_VERSION = parse(semverSchema, unbound.minLoaderVersion);
 
 export const API_URL = parse(apiUrlSchema, process.env.UNBOUND_API_URL);
 

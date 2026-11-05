@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :pen: While you edit a message, pick a photo, video or file, take a picture, or paste an image, and it goes onto that message.

@@ -885,3 +885,152 @@ func TestToolchainVersionsLiveInOnePlace(t *testing.T) {
 		}
 	}
 }
+
+func TestParsedLoaderChangesOnMainPublishTheLoaderAndEveryChannelsInAppBuild(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "loader-publish.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var trigger struct {
+		On struct {
+			Push struct {
+				Branches []string `yaml:"branches"`
+				Paths    []string `yaml:"paths"`
+			} `yaml:"push"`
+		} `yaml:"on"`
+	}
+	if err := yaml.Unmarshal(data, &trigger); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(trigger.On.Push.Branches, []string{"main"}) || !slices.Contains(trigger.On.Push.Paths, "packages/loader/**") {
+		t.Fatalf("every loader change on main must publish, push trigger is %+v", trigger.On.Push)
+	}
+	publish := loadWorkflow(t, "loader-publish.yml")
+	stable := publish.job(t, "stable")
+	if stable.Uses != "./.github/workflows/loader-build.yml" || stable.With["loader_publish_only"] != "true" || stable.With["android_channel"] != "" || stable.With["android_publish_only"] != "" {
+		t.Fatalf("the stable job must run loader-build's loader publish, which builds the deb and module once and the stable in-app build, got %+v", stable)
+	}
+	previous := "stable"
+	for _, channel := range []string{"beta", "alpha"} {
+		job := publish.job(t, channel)
+		if job.Uses != "./.github/workflows/loader-build.yml" || job.With["android_channel"] != channel || job.With["android_publish_only"] != "true" {
+			t.Fatalf("the %s job must run loader-build's publish-only mode for its channel, got %+v", channel, job)
+		}
+		if !slices.Equal(job.Needs, []string{previous}) || !strings.Contains(job.If, "!cancelled()") {
+			t.Fatalf("calls share artifact names, so %s must run after %s whatever its result, needs %v if %q", channel, previous, job.Needs, job.If)
+		}
+		previous = channel
+	}
+	for _, name := range []string{"stable", "beta", "alpha"} {
+		job := publish.job(t, name)
+		if job.With["release"] != "" || job.With["version"] != "" || job.With["android_code"] != "" || !strings.Contains(job.If, "github.repository == 'marioparaschiv/unbound'") {
+			t.Fatalf("the %s job must run only upstream, create no release and build against the released Discord, got if %q with %+v", name, job.If, job.With)
+		}
+	}
+	poll := string(mustReadWorkflow(t, "loader-release-poll.yml"))
+	if strings.Contains(poll, "android_publish_only") || strings.Contains(poll, "loader_publish_only") {
+		t.Fatal("the release poll must keep publishing releases, not publish-only builds")
+	}
+}
+
+func TestParsedInAppAndroidBuildsPublishOnlySignedSmokeTestedMainBuilds(t *testing.T) {
+	build := loadWorkflow(t, "loader-build.yml")
+	source := build.job(t, "resolve-source").step(t, "Select the source")
+	if !strings.Contains(source.Run, `unbound-tools released-android-code --channel "$INPUT_ANDROID_CHANNEL"`) || !strings.Contains(source.Run, "unbound-tools released-android-code --channel stable") {
+		t.Fatal("publish-only modes must patch the Discord the channel's latest release uses")
+	}
+	if got := build.job(t, "android").With["release"]; got != "${{ inputs.release || inputs.android_publish_only || inputs.loader_publish_only || false }}" {
+		t.Fatalf("publish-only builds must require the release signing key, release is %q", got)
+	}
+	publish := build.job(t, "android-builds")
+	for _, guard := range []string{
+		"github.event_name != 'pull_request'",
+		"inputs.release_dry_run != true",
+		"needs.android.result == 'success'",
+		"needs.android.outputs.attested == 'true'",
+		"inputs.android_publish_only == true",
+		"inputs.loader_publish_only == true",
+	} {
+		if !strings.Contains(publish.If, guard) {
+			t.Fatalf("the in-app build publisher must check %q, runs if %q", guard, publish.If)
+		}
+	}
+	run := publish.step(t, "Publish the in-app Android build").Run
+	if !strings.Contains(run, `if [ "$GITHUB_REF" != refs/heads/main ]; then`) || !strings.Contains(run, `publish-android-build "${dry_run[@]}"`) {
+		t.Fatalf("only main may publish in-app builds, runs %q", run)
+	}
+	if strings.Contains(run, "gh release") || publish.stepUsing(t, "actions/download-artifact@").With["name"] != "patched discord" {
+		t.Fatal("the publisher must upload this run's splits and touch no release")
+	}
+	android := loadWorkflow(t, "loader-android.yml")
+	data := string(mustReadWorkflow(t, "loader-android.yml"))
+	if !strings.Contains(data, "value: ${{ jobs.build-module.outputs.attested }}") || android.job(t, "smoke").If != "needs.build-module.outputs.attested == 'true'" {
+		t.Fatal("the Android build must report whether its smoke test ran")
+	}
+}
+
+func TestParsedLoaderPublishShipsOnlySignedSmokeTestedMainBuilds(t *testing.T) {
+	build := loadWorkflow(t, "loader-build.yml")
+	publish := build.job(t, "loader-publish")
+	for _, guard := range []string{
+		"inputs.loader_publish_only == true",
+		"github.event_name != 'pull_request'",
+		"inputs.release_dry_run != true",
+		"inputs.skip_ios_smoke != true",
+		"needs.ios.result == 'success'",
+		"needs.android.result == 'success'",
+		"needs.android.outputs.attested == 'true'",
+	} {
+		if !strings.Contains(publish.If, guard) {
+			t.Fatalf("the loader publisher must check %q, runs if %q", guard, publish.If)
+		}
+	}
+	run := publish.step(t, "Publish the loader").Run
+	for _, want := range []string{
+		`if [ "$GITHUB_REF" != refs/heads/main ]; then`,
+		`publish-loader-build "${dry_run[@]}"`,
+		`--version "$LOADER_VERSION"`,
+		"unbound-tools generate-loader-changelog",
+	} {
+		if !strings.Contains(run, want) {
+			t.Fatalf("the loader publisher must run %q, runs %q", want, run)
+		}
+	}
+	if strings.Contains(run, "gh release") {
+		t.Fatal("the loader publisher must create no GitHub release")
+	}
+}
+
+func TestParsedEveryBuildCarriesTheComputedLoaderVersion(t *testing.T) {
+	build := loadWorkflow(t, "loader-build.yml")
+	resolve := build.job(t, "resolve-source")
+	checkout := resolve.stepUsing(t, "actions/checkout@")
+	if checkout.With["fetch-depth"] != "0" {
+		t.Fatal("the loader version counts commits, so resolve-source needs the full history")
+	}
+	if run := resolve.step(t, "Version the loader").Run; !strings.Contains(run, "version=$(unbound-tools loader-version)") || !strings.Contains(run, `unbound-tools loader-version --set "$version"`) {
+		t.Fatalf("resolve-source must compute and stamp the loader version before naming releases, runs %q", run)
+	}
+	for _, job := range []string{"android", "ios"} {
+		if got := build.job(t, job).With["loader_version"]; got != "${{ needs.resolve-source.outputs.loader_version }}" {
+			t.Fatalf("the %s build must stamp the computed loader version, passes %q", job, got)
+		}
+	}
+	for workflow, jobs := range map[string][]string{"loader-ios.yml": {"build-tweak", "build-ipa"}, "loader-android.yml": {"build-module"}} {
+		parsed := loadWorkflow(t, workflow)
+		for _, name := range jobs {
+			if run := parsed.job(t, name).step(t, "Stamp the loader version").Run; run != `unbound-tools loader-version --set "$LOADER_VERSION"` {
+				t.Fatalf("%s %s must stamp the loader version before building, runs %q", workflow, name, run)
+			}
+		}
+	}
+}
+
+func mustReadWorkflow(t *testing.T, name string) []byte {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), name))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
+}

@@ -13,7 +13,7 @@ Unbound Loader injects [Unbound](https://github.com/marioparaschiv/unbound) into
 | `core/`      | Shared C++20 core: settings store, addon scanning, bundle updater, load pipeline, `NativePlatform` and `UnboundNative` JSI bridges, native plugin async runtime |
 | `ios/`       | The Theos tweak (ElleKit, rootless) and its iOS app-extension submodules                                                                                        |
 | `android/`   | The Xposed module (modern libxposed API) and its NDK library, built with Gradle                                                                                 |
-| `bootstrap/` | The shared optional React DevTools bundle (`devtools.js`) for both platforms                                                                                    |
+| `bootstrap/` | Small JavaScript helpers the loader evaluates on both platforms                                                                                                 |
 | `vendor/`    | Third-party code: the pinned libffi submodule, nlohmann/json, the React Native JSI headers, Monocypher and a BearSSL subset                                     |
 | `apt-repo/`  | Debian package and SideStore-compatible iOS distribution feeds                                                                                                  |
 | `tools/`     | Go build, test, validation and packaging commands for the monorepo                                                                                              |
@@ -156,6 +156,29 @@ The module APK is written to `android/module/build/outputs/apk/release/`. To pro
 java -jar lspatch.jar base.apk config.*.apk -m android/module/build/outputs/apk/release/module-release.apk -l 2 -o patched
 ```
 
+Then pin every split to the shared versionCode `2000000000`, so any patched build installs over any other in either direction without uninstalling, and let the base request package installs for the in-app updater. `patch-apk` edits each APK in place and re-signs it with APK Signature Scheme v2 using a PEM file holding the private key and its certificate (`openssl pkcs12 -nodes` output). Do not re-sign with `apksigner`: it copies the entries LSPatch stores inside `origin.apk` a second time and nearly doubles the base.
+
+```bash
+go run ./tools patch-apk --signer signer.pem patched/*.apk
+```
+
+Discord does not report this versionCode to its servers: `client_build_number` and `client_version` are constants compiled into its bundle and `BuildConfig`. Bundled SDKs that read `PackageInfo` (Sentry, AppsFlyer, Play Billing) see `2000000000`.
+
+A release also publishes each split for Discord's in-app updater. `publish-android-build` gzips every split of the `.apks` plus the emulator's `config.x86_64`, uploads them to the public bucket under `android/{channel}/{discord versionCode}/{commit}/` with `build.json` last, and records the build at `POST /api/v1/loader/android-builds`. A build already in the bucket is never overwritten. `--dry-run` prints the record without uploading:
+
+```bash
+go run ./tools publish-android-build --apks Unbound.apks --split emulator/config.x86_64.apk --channel stable --commit "$(git rev-parse HEAD)" --dry-run
+```
+
+Loader changes reach every platform without a new Discord version. Every push to `main` that touches `packages/loader` runs `loader-publish.yml`, which calls `loader-build.yml` three times, one after another:
+
+- **stable**, with `loader_publish_only`: builds the deb and the Xposed module once, against the Discord the latest iOS and Android stable releases use, and runs both smoke tests. `publish-loader-build` then uploads the deb and the module to the public bucket under `loader/{version}/` with `build.json` last, and records them at `POST /api/v1/loader/releases`, so jailbroken iOS and rooted Android users see the update. The same run publishes the in-app Android stable build.
+- **beta** and **alpha**, with `android_publish_only`: each patches the Discord that the channel's latest Unbound release uses (`released-android-code --channel <beta|alpha>`) and publishes the in-app build.
+
+Each call signs with the release key and publishes only smoke-tested builds. None creates a GitHub release or changes `Unbound.apks` or Obtainium. Off `main`, the publish steps run with `--dry-run`. A loader version already in the bucket is never overwritten.
+
+The loader version is `<major>.<minor>.<loader commits>`: the major and minor come from `ios/control`, and the patch is `unbound-tools loader-version`, which counts the commits up to `HEAD` that touch `packages/loader`, except `docs/`, `workflow-tests/` and Markdown. These are the paths that trigger `loader-publish.yml`, so every published change gets a higher version, and every build of one commit gets the same one. `resolve-source` computes it from the full history and every build in the run stamps it into `ios/control` (`loader-version --set`), so the deb, the module, the attestation, the release titles and the update record all carry it. The changelog of a version lists the loader commits since the newest published release.
+
 </details>
 
 </details>
@@ -279,7 +302,7 @@ Browser login (`LoaderBrowserLogin`) and the loader's attestation digest (`Loade
 }
 ```
 
-`channel` comes from `UNBOUND_CHANNEL` (`build-bundle.yml` sets `beta` for pushes to main and `stable` for releases; local builds write `local`, dev builds `dev`). `buildTime` is ISO 8601 in UTC. `sha512` holds the lowercase hex SHA-512 of every bundle in the build. `nativeBridge` holds the native bridge `api` and `abi` versions from `core/include/NativePluginVersion.h` that the bundle was built against.
+`channel` comes from `UNBOUND_CHANNEL` (`build-bundle.yml` sets `beta` for pushes to main and `stable` for releases; local builds write `local`, dev builds `dev`). `buildTime` is ISO 8601 in UTC. `sha512` holds the lowercase hex SHA-512 of every bundle in the build. `nativeBridge` holds the native bridge `api` and `abi` versions from `core/include/NativePluginVersion.h` that the bundle was built against. `minLoaderVersion` is the oldest loader that runs the bundle, from `unbound.minLoaderVersion` in `packages/client/package.json`.
 
 When `UNBOUND_BUNDLE_SIGNING_KEY` holds a PEM PKCS#8 Ed25519 key, the build refreshes `sha512` and writes a base64 Ed25519 signature of the manifest's exact bytes to `manifest.json.sig`. The bundles are covered by their SHA-512 in the signed manifest. Without the key, the build writes no signatures and still succeeds, so local and fork builds keep working.
 
@@ -290,7 +313,7 @@ To sign a build that already exists, run `bun run --cwd packages/client sign [--
 The loader compiles in `core/keys/bundle-signing.pub`, the production public key (raw 32 bytes as base64). CMake and the iOS Makefile log at configure time whether verification is on. Every update check then works like this:
 
 1. Fetch `manifest.json` and `manifest.json.sig` from the update URL and verify the signature with the vendored Monocypher Ed25519 implementation (`vendor/monocypher`).
-2. Refuse the manifest if it lacks `buildTime`, `revision`, `channel` or a hash for the bundle the loader picked, if anti-rollback (below) rejects it, or if its `nativeBridge` needs a different ABI major version or a newer API than the loader provides. A refused update keeps the current bundle running; the log names the version to update the loader to. A manifest without `nativeBridge` is accepted.
+2. Refuse the manifest if it lacks `buildTime`, `revision`, `channel` or a hash for the bundle the loader picked, if anti-rollback (below) rejects it, if its `minLoaderVersion` is newer than the loader, or if its `nativeBridge` needs a different ABI major version or a newer API than the loader provides. A refused update keeps the current bundle running; the log names the version to update the loader to. A manifest without `nativeBridge` is accepted. A `minLoaderVersion` refusal also writes that version to `unbound.required-loader` in the documents folder, which `UnboundNative.getLoader().requiredVersion` reports to the client until a bundle fits again. The first launch after the loader version changes waits for the update check, so a bundle the new loader unlocks runs without a second restart.
 3. Download the bundle and compare its SHA-512 with the manifest. A mismatch rejects the candidate, and the current bundle keeps running.
 4. Store the signed manifest and its signature beside the candidate as `<candidate>.trust`.
 

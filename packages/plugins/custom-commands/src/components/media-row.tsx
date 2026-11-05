@@ -1,9 +1,10 @@
 import { Discord } from '@unbound-app/api/metro/components';
+import { format, messages } from '@unbound-app/i18n';
 import { assets } from '@unbound-app/api';
 import { Image } from 'react-native';
 
-import { isSaved, mediaUri } from '~/media';
-import type { DraftMedia } from '~/media';
+import { isSaved, mediaUri } from '~/commands/media';
+import type { DraftMedia } from '~/commands/media';
 
 type MediaRowProps = {
 	media: DraftMedia;
@@ -13,7 +14,7 @@ type MediaRowProps = {
 function MediaRow({ media, onRemove }: MediaRowProps) {
 	const mimeType = isSaved(media) ? media.mimeType : media.type;
 	const uri = isSaved(media) ? mediaUri(media) : media.uri;
-	const kind = mimeType.startsWith('video/') ? 'Video' : 'Image';
+	const kind = mimeType.startsWith('video/') ? messages.MEDIA_VIDEO : messages.MEDIA_IMAGE;
 	const size = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(
 		media.fileSize / 1024,
 	);
@@ -22,7 +23,7 @@ function MediaRow({ media, onRemove }: MediaRowProps) {
 		<Discord.TableRow
 			label={media.fileName}
 			labelLineClamp={1}
-			subLabel={`${kind} · ${size} KB`}
+			subLabel={format('MEDIA_DETAILS', { kind, size })}
 			icon={
 				mimeType.startsWith('image/') ? (
 					<Image source={{ uri }} style={{ borderRadius: 8, height: 48, width: 48 }} />
@@ -35,7 +36,7 @@ function MediaRow({ media, onRemove }: MediaRowProps) {
 					size='sm'
 					variant='secondary'
 					icon={assets.getIdByName('XSmallIcon')}
-					accessibilityLabel={`Remove ${media.fileName}`}
+					accessibilityLabel={format('REMOVE_MEDIA_LABEL', { name: media.fileName })}
 					onPress={onRemove}
 				/>
 			}
