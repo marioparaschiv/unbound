@@ -32,8 +32,8 @@ func trackerServer(t *testing.T, available ...int) *httptest.Server {
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		for _, code := range available {
 			if request.URL.Path == fmt.Sprintf("/download/%d/base", code) {
-				writer.WriteHeader(http.StatusPartialContent)
-				fmt.Fprint(writer, "x")
+				// The real tracker redirects to the download host, which must not be fetched.
+				http.Redirect(writer, request, "http://127.0.0.1:1/stalled-download", http.StatusFound)
 				return
 			}
 		}

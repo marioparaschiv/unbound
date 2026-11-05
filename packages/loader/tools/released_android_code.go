@@ -105,7 +105,7 @@ func latestReleasedAndroidVersion(ctx context.Context, client *http.Client, apiU
 func releasedAndroidCode(ctx context.Context, client *http.Client, trackerURL, channel string, version releasedAndroidVersion) (int, error) {
 	for track := discordAndroidChannelRank(channel); track > 0; track-- {
 		code := version.Major*1000 + track*100 + version.Minor
-		available, err := verifyAndroidBasePackage(ctx, client, trackerURL, code)
+		available, err := trackerServesBase(ctx, client, trackerURL, code)
 		if err != nil {
 			return 0, err
 		}
@@ -114,4 +114,30 @@ func releasedAndroidCode(ctx context.Context, client *http.Client, trackerURL, c
 		}
 	}
 	return version.Major*1000 + version.Minor, nil
+}
+
+// trackerServesBase asks the tracker for a code's base APK without following its redirect to the download host,
+// which can stall on a large file.
+func trackerServesBase(ctx context.Context, client *http.Client, trackerURL string, code int) (bool, error) {
+	endpoint := fmt.Sprintf("%s/download/%d/base", trackerURL, code)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return false, err
+	}
+	request.Header.Set("Range", "bytes=0-0")
+	request.Header.Set("User-Agent", releasePollUserAgent)
+	noRedirect := *client
+	noRedirect.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	response, err := noRedirect.Do(request)
+	if err != nil {
+		return false, fmt.Errorf("Failed to check Android version %d on the tracker: %w", code, err)
+	}
+	response.Body.Close()
+	switch {
+	case response.StatusCode == http.StatusNotFound:
+		return false, nil
+	case response.StatusCode < 400:
+		return true, nil
+	}
+	return false, fmt.Errorf("Failed to check Android version %d on the tracker: HTTP %d", code, response.StatusCode)
 }
