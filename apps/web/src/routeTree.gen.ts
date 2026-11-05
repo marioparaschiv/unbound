@@ -61,6 +61,7 @@ import { Route as ApiV1FirstPartyAddonsRouteImport } from './routes/api/v1/first
 import { Route as ApiV1FirstPartyPublishRouteImport } from './routes/api/v1/first-party/publish'
 import { Route as ApiV1GithubAddonsRouteImport } from './routes/api/v1/github/addons'
 import { Route as ApiV1GithubRepositoriesRouteImport } from './routes/api/v1/github/repositories'
+import { Route as ApiV1LoaderAndroidBuildsRouteImport } from './routes/api/v1/loader/android-builds'
 import { Route as ApiV1LoaderReleasesRouteImport } from './routes/api/v1/loader/releases'
 import { Route as ApiV1LoaderUpdatesRouteImport } from './routes/api/v1/loader/updates'
 import { Route as ApiV1MeAddonsRouteImport } from './routes/api/v1/me/addons'
@@ -347,6 +348,12 @@ const ApiV1GithubRepositoriesRoute = ApiV1GithubRepositoriesRouteImport.update({
   path: '/api/v1/github/repositories',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1LoaderAndroidBuildsRoute =
+  ApiV1LoaderAndroidBuildsRouteImport.update({
+    id: '/api/v1/loader/android-builds',
+    path: '/api/v1/loader/android-builds',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiV1LoaderReleasesRoute = ApiV1LoaderReleasesRouteImport.update({
   id: '/api/v1/loader/releases',
   path: '/api/v1/loader/releases',
@@ -528,6 +535,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
   '/api/v1/github/repositories': typeof ApiV1GithubRepositoriesRoute
+  '/api/v1/loader/android-builds': typeof ApiV1LoaderAndroidBuildsRoute
   '/api/v1/loader/releases': typeof ApiV1LoaderReleasesRouteWithChildren
   '/api/v1/loader/updates': typeof ApiV1LoaderUpdatesRoute
   '/api/v1/me/addons': typeof ApiV1MeAddonsRoute
@@ -602,6 +610,7 @@ export interface FileRoutesByTo {
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
   '/api/v1/github/repositories': typeof ApiV1GithubRepositoriesRoute
+  '/api/v1/loader/android-builds': typeof ApiV1LoaderAndroidBuildsRoute
   '/api/v1/loader/releases': typeof ApiV1LoaderReleasesRouteWithChildren
   '/api/v1/loader/updates': typeof ApiV1LoaderUpdatesRoute
   '/api/v1/me/addons': typeof ApiV1MeAddonsRoute
@@ -682,6 +691,7 @@ export interface FileRoutesById {
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
   '/api/v1/github/repositories': typeof ApiV1GithubRepositoriesRoute
+  '/api/v1/loader/android-builds': typeof ApiV1LoaderAndroidBuildsRoute
   '/api/v1/loader/releases': typeof ApiV1LoaderReleasesRouteWithChildren
   '/api/v1/loader/updates': typeof ApiV1LoaderUpdatesRoute
   '/api/v1/me/addons': typeof ApiV1MeAddonsRoute
@@ -761,6 +771,7 @@ export interface FileRouteTypes {
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
     | '/api/v1/github/repositories'
+    | '/api/v1/loader/android-builds'
     | '/api/v1/loader/releases'
     | '/api/v1/loader/updates'
     | '/api/v1/me/addons'
@@ -835,6 +846,7 @@ export interface FileRouteTypes {
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
     | '/api/v1/github/repositories'
+    | '/api/v1/loader/android-builds'
     | '/api/v1/loader/releases'
     | '/api/v1/loader/updates'
     | '/api/v1/me/addons'
@@ -914,6 +926,7 @@ export interface FileRouteTypes {
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
     | '/api/v1/github/repositories'
+    | '/api/v1/loader/android-builds'
     | '/api/v1/loader/releases'
     | '/api/v1/loader/updates'
     | '/api/v1/me/addons'
@@ -967,6 +980,7 @@ export interface RootRouteChildren {
   ApiV1FirstPartyPublishRoute: typeof ApiV1FirstPartyPublishRoute
   ApiV1GithubAddonsRoute: typeof ApiV1GithubAddonsRoute
   ApiV1GithubRepositoriesRoute: typeof ApiV1GithubRepositoriesRoute
+  ApiV1LoaderAndroidBuildsRoute: typeof ApiV1LoaderAndroidBuildsRoute
   ApiV1LoaderReleasesRoute: typeof ApiV1LoaderReleasesRouteWithChildren
   ApiV1LoaderUpdatesRoute: typeof ApiV1LoaderUpdatesRoute
   ApiV1ReviewQueueRoute: typeof ApiV1ReviewQueueRoute
@@ -1338,6 +1352,13 @@ declare module '@tanstack/react-router' {
       path: '/api/v1/github/repositories'
       fullPath: '/api/v1/github/repositories'
       preLoaderRoute: typeof ApiV1GithubRepositoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/loader/android-builds': {
+      id: '/api/v1/loader/android-builds'
+      path: '/api/v1/loader/android-builds'
+      fullPath: '/api/v1/loader/android-builds'
+      preLoaderRoute: typeof ApiV1LoaderAndroidBuildsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/v1/loader/releases': {
@@ -1766,6 +1787,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiV1FirstPartyPublishRoute: ApiV1FirstPartyPublishRoute,
   ApiV1GithubAddonsRoute: ApiV1GithubAddonsRoute,
   ApiV1GithubRepositoriesRoute: ApiV1GithubRepositoriesRoute,
+  ApiV1LoaderAndroidBuildsRoute: ApiV1LoaderAndroidBuildsRoute,
   ApiV1LoaderReleasesRoute: ApiV1LoaderReleasesRouteWithChildren,
   ApiV1LoaderUpdatesRoute: ApiV1LoaderUpdatesRoute,
   ApiV1ReviewQueueRoute: ApiV1ReviewQueueRoute,

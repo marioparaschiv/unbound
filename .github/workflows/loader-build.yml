@@ -78,6 +78,10 @@ on:
                 required: false
             UNBOUND_API_KEY:
                 required: false
+            S3_ACCESS_KEY_ID:
+                required: false
+            S3_SECRET_ACCESS_KEY:
+                required: false
             ATTESTATION_PK:
                 required: false
             DKRYPT_API_KEY:
@@ -877,6 +881,65 @@ jobs:
                   make_latest: false
                   fail_on_unmatched_files: true
                   token: ${{ github.token }}
+
+    android-builds:
+        name: Publish in-app Android builds
+        if: ${{ !cancelled() && inputs.release == true && inputs.release_dry_run != true && needs.android.result == 'success' && (needs.release.result == 'success' || needs['android-prerelease'].result == 'success') }}
+        needs: [android, release, android-prerelease]
+        runs-on: ubuntu-26.04
+        timeout-minutes: 20
+        permissions:
+            contents: read
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+                  fetch-depth: 1
+
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
+              with:
+                  prebuilt: 'true'
+
+            - name: Download patched Android Discord package
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: patched discord
+                  path: packages/loader/android-build
+
+            - name: Download the emulator split
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: patched discord emulator split
+                  path: packages/loader/android-build/emulator
+
+            - name: Note the unconfigured public bucket
+              if: ${{ vars.S3_PUBLIC_BUCKET == '' }}
+              run: echo "The public bucket is not configured (vars S3_ENDPOINT, S3_REGION, S3_PUBLIC_BUCKET; secrets S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY), so the in-app Android builds are not published." >> "$GITHUB_STEP_SUMMARY"
+
+            # Uploads each gzipped split under android/{channel}/{discord versionCode}/{commit}/, build.json last, then records the build so Discord's Updates screen can install it.
+            - name: Publish the in-app Android build
+              if: ${{ vars.S3_PUBLIC_BUCKET != '' }}
+              env:
+                  S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+                  S3_REGION: ${{ vars.S3_REGION }}
+                  S3_PUBLIC_BUCKET: ${{ vars.S3_PUBLIC_BUCKET }}
+                  S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+                  S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+                  UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
+                  UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
+                  DISCORD_CHANNEL: ${{ inputs.android_channel || 'stable' }}
+                  PATCHED_FILENAME: ${{ needs.android.outputs.patched_filename }}
+              run: |
+                  set -euo pipefail
+                  : "${UNBOUND_API_URL:?UNBOUND_API_URL is required to record the build}"
+                  unbound-tools publish-android-build \
+                    --apks "android-build/$PATCHED_FILENAME" \
+                    --split android-build/emulator/*.apk \
+                    --channel "$DISCORD_CHANNEL" \
+                    --commit "$GITHUB_SHA" \
+                    --api-url "$UNBOUND_API_URL"
 
     publish-app-repo:
         if: ${{ !cancelled() && inputs.release == true && inputs.release_dry_run != true && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && needs.release.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success') }}

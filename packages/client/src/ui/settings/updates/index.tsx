@@ -9,6 +9,7 @@ import { Moment } from '~/metro/common';
 import Page from '~/ui/components/page';
 import { icons } from '~/assets/api';
 
+import DiscordBuildGroup from './discord-build-group';
 import LoaderUpdateRow from './loader-update-row';
 import UpdateRow from './update-row';
 
@@ -34,6 +35,7 @@ function UpdatesPage() {
 	const { check, applyAll } = UpdatesStore.getState();
 	const updates = state.status === 'ready' ? state.updates : [];
 	const loader = state.status === 'ready' ? state.loader : null;
+	const discord = state.status === 'ready' ? state.discord : null;
 	const pending = updates.length > 0 || loader !== null;
 	// Held addons keep their own Update button but sit out Update all.
 	const automatic = automaticUpdates(updates, (kind) => Manager.for(kind));
@@ -68,7 +70,7 @@ function UpdatesPage() {
 					title={messages.UNBOUND_UPDATES_AVAILABLE}
 					helperText={pending ? messages.UNBOUND_UPDATES_AVAILABLE_DESC : undefined}
 				>
-					{loader ? <LoaderUpdateRow update={loader} /> : null}
+					{loader ? <LoaderUpdateRow update={loader} discord={discord} /> : null}
 					{updates.map((entry) => (
 						<UpdateRow key={entry.id} entry={entry} />
 					))}
@@ -81,6 +83,8 @@ function UpdatesPage() {
 					)}
 				</Discord.TableRowGroup>
 			) : null}
+
+			{discord ? <DiscordBuildGroup discord={discord} /> : null}
 		</Page>
 	);
 }

@@ -409,6 +409,8 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
     gCallbacks.scheduleMain    = env->GetStaticMethodID(bridge, "scheduleMainWork", "()V");
     gCallbacks.isMainThread    = env->GetStaticMethodID(bridge, "isMainThread", "()Z");
     gCallbacks.isVerifiedBuild = env->GetStaticMethodID(bridge, "isVerifiedBuild", "()Z");
+    gCallbacks.installer       = env->GetStaticMethodID(
+        bridge, "installer", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaGetClass =
         env->GetStaticMethodID(bridge, "javaGetClass", "(Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaClassName =
@@ -491,13 +493,13 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
     gCallbacks.onBundleExecuted = env->GetStaticMethodID(bridge, "onBundleExecuted", "()V");
 
     return !clearPendingException(env) && gCallbacks.scheduleRuntime && gCallbacks.scheduleMain &&
-           gCallbacks.isMainThread && gCallbacks.isVerifiedBuild && gCallbacks.javaGetClass &&
-           gCallbacks.javaClassName && gCallbacks.javaDescribe && gCallbacks.javaConstruct &&
-           gCallbacks.javaRespondsTo && gCallbacks.javaInvoke && gCallbacks.javaPrepare &&
-           gCallbacks.javaInvokePrepared && gCallbacks.javaDisposePlan && gCallbacks.javaGetField &&
-           gCallbacks.javaSetField && gCallbacks.javaRelease && gCallbacks.javaLiveHandles &&
-           gCallbacks.hooksInstall && gCallbacks.hooksRemove && gCallbacks.runtimeReplaced &&
-           gCallbacks.javaBatch && gCallbacks.javaFindViews &&
+           gCallbacks.isMainThread && gCallbacks.isVerifiedBuild && gCallbacks.installer &&
+           gCallbacks.javaGetClass && gCallbacks.javaClassName && gCallbacks.javaDescribe &&
+           gCallbacks.javaConstruct && gCallbacks.javaRespondsTo && gCallbacks.javaInvoke &&
+           gCallbacks.javaPrepare && gCallbacks.javaInvokePrepared && gCallbacks.javaDisposePlan &&
+           gCallbacks.javaGetField && gCallbacks.javaSetField && gCallbacks.javaRelease &&
+           gCallbacks.javaLiveHandles && gCallbacks.hooksInstall && gCallbacks.hooksRemove &&
+           gCallbacks.runtimeReplaced && gCallbacks.javaBatch && gCallbacks.javaFindViews &&
            gCallbacks.javaCreateAssociationKey && gCallbacks.javaGetAssociatedObject &&
            gCallbacks.javaSetAssociatedObject && gCallbacks.fabricMount &&
            gCallbacks.fabricUpdate && gCallbacks.fabricUnmount && gCallbacks.fabricSetSize &&

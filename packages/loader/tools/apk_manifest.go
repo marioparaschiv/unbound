@@ -44,6 +44,10 @@ func readAPKManifest(path string) (apkManifest, error) {
 		return apkManifest{}, err
 	}
 	defer archive.Close()
+	return zipAPKManifest(&archive.Reader)
+}
+
+func zipAPKManifest(archive *zip.Reader) (apkManifest, error) {
 	for _, file := range archive.File {
 		if file.Name != "AndroidManifest.xml" {
 			continue

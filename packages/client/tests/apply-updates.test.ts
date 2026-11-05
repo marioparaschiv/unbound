@@ -58,6 +58,7 @@ test('leaves an addon deleted after the update check deleted when updates apply'
 			checkedAt: new Date().toISOString(),
 			updates: [{ kind: 'plugin', id: ID, name: ID, from: '1.0.0', update: release(DIGEST) }],
 			loader: null,
+			discord: null,
 		},
 	});
 

@@ -64,6 +64,30 @@ static bool verifiedBuild(const JavaCallbacks &callbacks)
     return !clearPendingException(env) && verified == JNI_TRUE;
 }
 
+static std::optional<std::string> installerCall(const JavaCallbacks &callbacks,
+                                                const std::string   &action,
+                                                const std::string   &argument)
+{
+    JNIEnv *env = currentEnvironment();
+    if (!env)
+    {
+        return std::nullopt;
+    }
+    jstring javaAction   = toJavaString(env, action);
+    jstring javaArgument = toJavaString(env, argument);
+    auto    result       = static_cast<jstring>(env->CallStaticObjectMethod(
+        callbacks.bridgeClass, callbacks.installer, javaAction, javaArgument));
+    env->DeleteLocalRef(javaAction);
+    env->DeleteLocalRef(javaArgument);
+    if (clearPendingException(env) || !result)
+    {
+        return std::nullopt;
+    }
+    std::string text = toStdString(env, result);
+    env->DeleteLocalRef(result);
+    return text;
+}
+
 static std::shared_ptr<loader::NativePlatformProvider>
 platformProvider(const LoaderConfiguration &configuration, const JavaCallbacks &callbacks,
                  loader::SettingsStore &settings)
@@ -97,6 +121,10 @@ platformProvider(const LoaderConfiguration &configuration, const JavaCallbacks &
         return host != info.end() && host->is_string()
                    ? std::optional<std::string>(host->get<std::string>())
                    : std::nullopt;
+    };
+    provider->androidInstaller = [callbacks](const std::string &action,
+                                             const std::string &argument) {
+        return installerCall(callbacks, action, argument);
     };
     provider->documents = configuration.documents;
     provider->settings  = &settings;

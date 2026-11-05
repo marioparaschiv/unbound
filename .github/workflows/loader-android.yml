@@ -442,6 +442,20 @@ jobs:
                       signing=(-k "$ANDROID_SIGNING_STORE_FILE" "$ANDROID_SIGNING_STORE_PASSWORD" "$ANDROID_SIGNING_KEY_ALIAS" "$ANDROID_SIGNING_KEY_PASSWORD")
                   fi
                   java -jar "$LSPATCH_JAR" discord/*.apk -m module/*.apk -l 2 -o patched -f "${signing[@]}"
+                  # patch-apk pins every split to one versionCode, so any build installs over any other, and re-signs in place; apksigner would duplicate LSPatch's shared origin.apk bytes.
+                  signer="$RUNNER_TEMP/apk-signer.pem"
+                  if [ -n "${ANDROID_SIGNING_STORE_FILE:-}" ]; then
+                      keytool -importkeystore -noprompt -srckeystore "$ANDROID_SIGNING_STORE_FILE" -srcstorepass "$ANDROID_SIGNING_STORE_PASSWORD" \
+                        -srcalias "$ANDROID_SIGNING_KEY_ALIAS" -srckeypass "$ANDROID_SIGNING_KEY_PASSWORD" \
+                        -destkeystore "$RUNNER_TEMP/apk-signer.p12" -deststoretype PKCS12 -deststorepass "$ANDROID_SIGNING_STORE_PASSWORD" > /dev/null
+                      openssl pkcs12 -in "$RUNNER_TEMP/apk-signer.p12" -passin env:ANDROID_SIGNING_STORE_PASSWORD -nodes -out "$signer"
+                      rm "$RUNNER_TEMP/apk-signer.p12"
+                  else
+                      openssl req -x509 -newkey rsa:2048 -nodes -subj '/CN=Unbound PR' -days 30 -keyout "$signer" -out "$RUNNER_TEMP/apk-signer.crt" 2> /dev/null
+                      cat "$RUNNER_TEMP/apk-signer.crt" >> "$signer"
+                  fi
+                  unbound-tools patch-apk --signer "$signer" patched/*.apk
+                  rm "$signer"
                   if [ -n "${ANDROID_SIGNING_STORE_FILE:-}" ]; then
                       build_tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
                       for apk in patched/*.apk; do

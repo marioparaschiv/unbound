@@ -30,6 +30,79 @@ export type NativePlatformIOSBridge = {
 	getEntitlementsAsPlist(): string;
 };
 
+/** Whether Discord can install another patched build of itself: not patched with LSPatch, patched before in-app installs, waiting on the "Install unknown apps" permission, or ready. */
+export type NativeAndroidInstallerAvailability =
+	| 'unpatched'
+	| 'unsupported'
+	| 'needs-permission'
+	| 'ready';
+
+/** The Discord install the installer would replace. */
+export type NativeAndroidInstallerStatus = {
+	/** Whether in-app installs work, or what blocks them. */
+	readonly availability: NativeAndroidInstallerAvailability;
+	/** Discord's version name, such as `352.17 - Stable`. */
+	readonly versionName: string;
+	/** The installed split names, `base` first. */
+	readonly splits: string[];
+};
+
+/** One gzipped split APK of a build to install. */
+export type NativeAndroidInstallSplit = {
+	/** The split's name: `base` or a config split such as `config.arm64_v8a`. */
+	readonly name: string;
+	/** Where the gzipped APK downloads from. */
+	readonly url: string;
+	/** SHA-256 of the APK after it is gunzipped. */
+	readonly sha256: string;
+	/** Size of the APK in bytes. */
+	readonly size: number;
+	/** Size of the gzipped download in bytes. */
+	readonly compressedSize: number;
+};
+
+/** Where a running install is: `confirming` waits on the system prompt; `failed` carries `error`. */
+export type NativeAndroidInstallPhase =
+	| 'idle'
+	| 'downloading'
+	| 'installing'
+	| 'confirming'
+	| 'failed';
+
+/** How far the running install is. */
+export type NativeAndroidInstallProgress = {
+	/** What the installer is doing now. */
+	readonly phase: NativeAndroidInstallPhase;
+	/** Gzipped bytes downloaded so far, of `total`. */
+	readonly downloaded: number;
+	/** Gzipped bytes the install downloads in all. */
+	readonly total: number;
+	/** Why the last install failed, or `null`. */
+	readonly error: string | null;
+};
+
+/** Installs another patched Discord build over this one, upgrade or downgrade, downloading only the splits that differ. */
+export type NativePlatformAndroidInstaller = {
+	/** Reads whether in-app installs work and which Discord is installed. */
+	status(): NativeAndroidInstallerStatus;
+	/** Opens the system's "Install unknown apps" screen for Discord. */
+	requestPermission(): boolean;
+	/** SHA-256 of each installed split APK, `null` where it cannot be read. */
+	installedSplits(): Promise<Record<string, string | null>>;
+	/** Starts installing a build in the background; false when an install is already running. Poll `progress`. */
+	install(splits: readonly NativeAndroidInstallSplit[]): boolean;
+	/** Reads how far the running install is. */
+	progress(): NativeAndroidInstallProgress;
+	/** Stops a running download or abandons the install session. */
+	cancel(): boolean;
+};
+
+/** Android-only helpers; missing on iOS. */
+export type NativePlatformAndroidBridge = {
+	/** Installs patched Discord builds over this one. */
+	readonly installer: NativePlatformAndroidInstaller;
+};
+
 /** Facts about the Discord install the loader runs in. */
 export type NativePlatformApp = {
 	/** Where Discord was installed from, such as `App Store` or `Google Play`. */
@@ -174,4 +247,6 @@ export type NativePlatformBridge = {
 	readonly profiler: NativePlatformProfiler;
 	/** iOS-only helpers; missing on Android. */
 	readonly ios?: NativePlatformIOSBridge;
+	/** Android-only helpers; missing on iOS and on loaders without the in-app installer. */
+	readonly android?: NativePlatformAndroidBridge;
 };
