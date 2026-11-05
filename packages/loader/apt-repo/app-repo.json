@@ -1,13 +1,13 @@
 {
   "name": "Unbound App Repo",
   "identifier": "app.unbound.ios.repo",
-  "iconURL": "https://assets.unbound.rip/logo/logo.png",
+  "iconURL": "https://builds.unbound.rip/repo/icon.png",
   "apps": [
     {
       "name": "Unbound",
       "bundleIdentifier": "com.hammerandchisel.discord",
       "developerName": "Unbound Team",
-      "iconURL": "https://assets.unbound.rip/logo/logo.png",
+      "iconURL": "https://builds.unbound.rip/repo/icon.png",
       "localizedDescription": "A client modification for Discord on mobile. Install plugins, themes, fonts, and icon packs on the official Discord app.",
       "subtitle": "A client modification for Discord on mobile.",
       "tintColor": "aa454d",
@@ -19,7 +19,7 @@
       "bundleIdentifier": "com.hammerandchisel.discord.testflight",
       "developerName": "Unbound Team",
       "beta": true,
-      "iconURL": "https://assets.unbound.rip/logo/logo.png",
+      "iconURL": "https://builds.unbound.rip/repo/icon.png",
       "localizedDescription": "A client modification for Discord on mobile, built on Discord's TestFlight beta. Install plugins, themes, fonts, and icon packs on the official Discord app.",
       "subtitle": "A client modification for Discord on mobile (TestFlight builds).",
       "tintColor": "aa454d",

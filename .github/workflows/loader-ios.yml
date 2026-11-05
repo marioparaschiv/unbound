@@ -714,7 +714,8 @@ jobs:
                   fi
 
                   NAME=$(grep '^Name:' ios/control | cut -d ' ' -f 2)
-                  DATE=$(date -u +"%Y-%m-%d")
+                  # A full timestamp, so sources show when the build landed instead of midnight UTC.
+                  DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
                   IPA_SIZE=$(stat -c%s "$APP_FILE")
                   RELEASE_TAG="discord-$VERSION-ios"
                   if [[ "$IS_TESTFLIGHT" == true ]]; then RELEASE_TAG="discord-$VERSION-ios-testflight"; fi
