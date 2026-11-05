@@ -9,7 +9,7 @@ import confirmRestart from './confirm-restart';
 import QuickAction from './quick-action';
 
 /**
- * @description The row of tiles under the Unbound banner: restart, check for updates and report an issue.
+ * @description The row of tiles under the Unbound logo: restart, check for updates and report an issue.
  */
 function QuickActions() {
 	const navigation = Discord.useNavigation();

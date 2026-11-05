@@ -1,6 +1,6 @@
 import { Screens, SOCIAL_LINKS, DISCORD_INVITE } from '~/core/constants';
 import { useUnboundSettings } from '~/settings/unbound';
-import AccountGroup from '~/ui/account/account-group';
+import AccountEntry from '~/ui/account/account-entry';
 import useSignIn from '~/ui/account/use-sign-in';
 import { Linking, Invites } from '~/metro/api';
 import { Discord } from '~/metro/components';
@@ -113,9 +113,11 @@ function GeneralPage() {
 				</Discord.TableRowGroup>
 			</Discord.Stack>
 
-			<AccountGroup />
-
 			<SponsorCard />
+
+			<Discord.TableRowGroup>
+				<AccountEntry />
+			</Discord.TableRowGroup>
 
 			<Discord.TableRowGroup title={messages.UNBOUND_PREFERENCES}>
 				<Discord.TableRow
@@ -137,15 +139,13 @@ function GeneralPage() {
 			<Discord.TableRowGroup title={messages.UNBOUND_ADVANCED}>
 				<Discord.TableSwitchRow
 					label={messages.UNBOUND_DEVELOPER_MODE}
-					subLabel={messages.UNBOUND_DEVELOPER_MODE_DESC}
 					icon={<Discord.TableRowIcon source={icons.WrenchIcon} />}
 					value={settings.get('developer-mode')}
 					onValueChange={setDeveloperMode}
 				/>
 				<Discord.TableSwitchRow
 					label={messages.UNBOUND_STAFF_MODE}
-					subLabel={messages.UNBOUND_STAFF_MODE_DESC}
-					icon={<Discord.TableRowIcon source={icons.EyeIcon} />}
+					icon={<Discord.TableRowIcon source={icons.StaffBadgeIcon ?? icons.EyeIcon} />}
 					value={settings.get('staff-mode')}
 					onValueChange={() => settings.toggle('staff-mode')}
 				/>
