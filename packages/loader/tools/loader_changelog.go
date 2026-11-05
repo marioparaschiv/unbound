@@ -18,6 +18,9 @@ const loaderChangelogLimit = 50
 var loaderConventionalCommitPattern = regexp.MustCompile("(?i)^([a-z]+)(?:\\(([^)]*)\\))?(!)?:\\s*(.+)$")
 var loaderChangelogPathspec = []string{".", ":(exclude)docs", ":(exclude)workflow-tests", ":(exclude)version.json", ":(exclude,glob)**/*.md", ":(exclude,glob)**/*.mdx"}
 
+// maxLoaderChangelogLength matches MAX_CHANGELOG_LENGTH in @unbound-app/contracts; the release API rejects longer changelogs.
+const maxLoaderChangelogLength = 10_000
+
 type loaderChangelogEntry struct {
 	category string
 	scope    string
@@ -179,7 +182,34 @@ func renderLoaderChangelog(version string, subjects []string) string {
 	if len(entries) == 0 {
 		result = append(result, "", "No conventional loader changes were recorded for this version.")
 	}
-	return strings.Join(result, "\n")
+	return joinLoaderChangelog(result, maxLoaderChangelogLength)
+}
+
+// joinLoaderChangelog joins lines within limit bytes, dropping the entries that overflow and noting how many.
+func joinLoaderChangelog(lines []string, limit int) string {
+	changelog := strings.Join(lines, "\n")
+	if len(changelog) <= limit {
+		return changelog
+	}
+
+	const noteReserve = 64
+	kept := []string{}
+	size := 0
+	omitted := 0
+	for _, line := range lines {
+		if omitted == 0 && size+len(line)+1 <= limit-noteReserve {
+			kept = append(kept, line)
+			size += len(line) + 1
+			continue
+		}
+		if strings.HasPrefix(line, "- ") {
+			omitted++
+		}
+	}
+	for len(kept) > 0 && (kept[len(kept)-1] == "" || strings.HasPrefix(kept[len(kept)-1], "## ")) {
+		kept = kept[:len(kept)-1]
+	}
+	return strings.Join(append(kept, "", fmt.Sprintf("...and %d more changes.", omitted)), "\n")
 }
 
 func loaderChangeCategory(commitType string) string {
