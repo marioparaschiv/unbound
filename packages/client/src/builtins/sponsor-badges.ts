@@ -45,7 +45,8 @@ function patchDisplayProfile(DisplayProfile: MetroExport) {
 	Patcher.after(DisplayProfile.prototype, 'getBadges', ({ this: self, result }) => {
 		const badges = badgesFor(self.userId);
 
-		return badges.profile.length ? [...(result ?? []), ...badges.profile] : result;
+		// First, because the profile row shows only the first few badges.
+		return badges.profile.length ? [...badges.profile, ...(result ?? [])] : result;
 	});
 }
 
@@ -56,7 +57,7 @@ function patchBadgeDirectory(Store: MetroExport) {
 	Patcher.after(Store, 'getBadges', ({ args: [userId], result }) => {
 		const badges = badgesFor(userId ?? Users.getCurrentUser()?.id);
 
-		return badges.catalog.length ? [...(result ?? []), ...badges.catalog] : result;
+		return badges.catalog.length ? [...badges.catalog, ...(result ?? [])] : result;
 	});
 
 	Patcher.after(Store, 'getBadgeById', ({ args: [badgeId, userId], result }) => {
