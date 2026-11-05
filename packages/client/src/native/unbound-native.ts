@@ -47,6 +47,14 @@ export function getThemes(): UnboundAddonBundle[] {
 }
 
 /**
+ * @description Has the loader rescan the installed addons, so native views see themes installed, updated or deleted since
+ * launch. Does nothing on a loader from before `rescanAddons`.
+ */
+export function rescanAddons(): void {
+	read('rescanAddons', (bridge) => bridge.rescanAddons?.());
+}
+
+/**
  * @description Reads the loader's font store bridge.
  * @returns `UnboundNative.fonts`, or `undefined` on a loader from before the font store.
  */

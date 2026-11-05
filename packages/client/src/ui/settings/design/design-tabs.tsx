@@ -11,13 +11,14 @@ import DeferredPage, { ActiveTab } from './deferred-page';
 import { HeaderElements } from './navigation';
 import useStyles from './design-tabs.style';
 import HeaderInset from './header-inset';
+import IconsTab from './icons-tab';
 import ChatTab from './chat-tab';
 import FontsTab from './fonts';
 
 export type DesignTab = (typeof TABS)[number]['id'];
 
 type DesignTabsProps = {
-	/** Renders the Themes or Icons page; called once per tab, the first time it is shown. */
+	/** Renders the Themes page; called once, the first time it is shown. */
 	renderPage: (kind: PickerKind) => ReactNode;
 	onTabChange?: (tab: DesignTab) => void;
 };
@@ -29,14 +30,32 @@ const TABS = [
 	{ id: 'chat', label: () => messages.UNBOUND_CHAT },
 ] as const;
 
-function renderSettingsTab(id: 'font' | 'chat') {
-	return <HeaderInset>{id === 'font' ? <FontsTab /> : <ChatTab />}</HeaderInset>;
+function renderTab(id: DesignTab, renderPage: DesignTabsProps['renderPage']) {
+	switch (id) {
+		case 'theme':
+			return renderPage(id);
+		case 'icon-pack':
+			return <IconsTab />;
+		case 'font':
+			return (
+				<HeaderInset>
+					<FontsTab />
+				</HeaderInset>
+			);
+		case 'chat':
+			return (
+				<HeaderInset>
+					<ChatTab />
+				</HeaderInset>
+			);
+	}
 }
 
 /**
  * @description The Design page's frame: Discord's large segmented control over Themes, Fonts, Icons and Chat, floating
  * below a transparent header over full-screen pages, which inset past both through the header height. Each page
- * mounts the first time its tab opens. Fonts is the shared override list; Chat holds the chat's look, such as its background.
+ * mounts the first time its tab opens. Fonts is the shared override list; Icons is a placeholder; Chat holds the chat's
+ * look, such as its background.
  */
 function DesignTabs({ renderPage, onTabChange = noop }: DesignTabsProps) {
 	const styles = useStyles();
@@ -50,11 +69,7 @@ function DesignTabs({ renderPage, onTabChange = noop }: DesignTabsProps) {
 			TABS.map(({ id, label }, index) => ({
 				id,
 				label: label(),
-				page: (
-					<DeferredPage index={index}>
-						{id === 'font' || id === 'chat' ? renderSettingsTab(id) : renderPage(id)}
-					</DeferredPage>
-				),
+				page: <DeferredPage index={index}>{renderTab(id, renderPage)}</DeferredPage>,
 			})),
 		[],
 	);
