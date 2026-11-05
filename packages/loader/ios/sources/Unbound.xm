@@ -141,9 +141,16 @@ public:
 
     loader::UnboundNativeProvider unboundNativeProvider() override
     {
-        return loader::makeUnboundNativeProvider(
+        loader::UnboundNativeProvider provider = loader::makeUnboundNativeProvider(
             UnboundAddonState(), UnboundFonts(), toStdString([Utilities getCurrentDylibName]),
             runtimeBytecodeVersion(), toStdString(FileSystem.documents), UnboundDownload);
+        // The scan finishes before the call returns, so the client's next `getThemes` lists the
+        // theme; recolouring runs on main.
+        provider.rescanAddons = [] {
+            [CoreBridge scanAddons];
+            dispatch_async(dispatch_get_main_queue(), ^{ [Themes refreshThemes]; });
+        };
+        return provider;
     }
 
     void installNativeModules(jsi::Runtime &runtime) override
