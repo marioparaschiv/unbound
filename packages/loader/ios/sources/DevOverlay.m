@@ -6,6 +6,13 @@
 @end
 
 @implementation DevOverlayPassthroughWindow
+// Touches would make this window key, and React Native then sizes Discord's layout to it.
+// Its menus present on Discord's window, so it never needs key status.
+- (BOOL)canBecomeKeyWindow
+{
+    return NO;
+}
+
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event
 {
     UIView *hitView = [super hitTest:point withEvent:event];

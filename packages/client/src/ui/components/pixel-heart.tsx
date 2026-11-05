@@ -5,6 +5,7 @@ import { SVG } from '~/metro/common';
 import { HEART_COLUMNS, HEART_EDGE, HEART_PIXELS, HEART_ROWS } from './pixel-heart-pixels';
 import usePixelHeartMotion from './use-pixel-heart-motion';
 import PixelHeartLayer from './pixel-heart-layer';
+import useStyles from './pixel-heart.style';
 
 /** The glint's width in heart pixels. */
 const GLINT_WIDTH = 3;
@@ -29,6 +30,7 @@ type PixelHeartProps = {
  * edge-on; the two faces hide when turned away.
  */
 function PixelHeart({ size }: PixelHeartProps) {
+	const styles = useStyles();
 	const { spin, glintRef } = usePixelHeartMotion(-GLINT_WIDTH * 2, HEART_COLUMNS + GLINT_WIDTH);
 	const height = (size / HEART_COLUMNS) * HEART_ROWS;
 	const depth = (size / HEART_COLUMNS) * HALF_THICKNESS;
@@ -61,13 +63,10 @@ function PixelHeart({ size }: PixelHeartProps) {
 				</Animated.View>
 			))}
 			<Animated.View
-				style={{
-					position: 'absolute',
-					left: size / 2 - depth,
-					width: depth * 2,
-					height,
-					opacity: edgeOpacity,
-				}}
+				style={[
+					styles.edge,
+					{ left: size / 2 - depth, width: depth * 2, height, opacity: edgeOpacity },
+				]}
 			>
 				<SVG.Svg
 					width={depth * 2}
@@ -80,10 +79,10 @@ function PixelHeart({ size }: PixelHeartProps) {
 					))}
 				</SVG.Svg>
 			</Animated.View>
-			<Animated.View style={[slice(-1, 180), { backfaceVisibility: 'hidden' as const }]}>
+			<Animated.View style={[slice(-1, 180), styles.face]}>
 				<PixelHeartLayer size={size} />
 			</Animated.View>
-			<Animated.View style={[slice(1, 0), { backfaceVisibility: 'hidden' as const }]}>
+			<Animated.View style={[slice(1, 0), styles.face]}>
 				<PixelHeartLayer size={size} />
 				<SVG.Svg
 					width={size}

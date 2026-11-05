@@ -1,18 +1,8 @@
 import { Discord } from '~/metro/components';
 
 export default Discord.createStyles({
+	// Discord's empty state paints the screen's lower background; the page's own shows through instead.
 	container: {
-		flex: 1,
-		alignItems: 'center',
-		justifyContent: 'center',
-		gap: 12,
-		padding: 32,
-	},
-	image: {
-		width: 220,
-		height: 220,
-	},
-	text: {
-		textAlign: 'center',
+		backgroundColor: 'transparent',
 	},
 });

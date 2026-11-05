@@ -2,6 +2,8 @@ import type { DesignModule } from '@unbound-app/types/components';
 import type { ComponentProps } from 'react';
 import { View } from 'react-native';
 
+import useStyles from './fallback-card.style';
+
 type CardProps = ComponentProps<DesignModule['Card']>;
 
 /**
@@ -22,15 +24,14 @@ function FallbackCard({
 	accessibilityRole: _accessibilityRole,
 	...rest
 }: CardProps) {
+	const styles = useStyles();
+
 	return (
 		<View
 			{...rest}
 			style={[
-				{
-					padding: 16,
-					borderRadius: typeof radius === 'number' ? radius : 16,
-					overflow: 'hidden',
-				},
+				styles.card,
+				typeof radius === 'number' ? { borderRadius: radius } : null,
 				style,
 			]}
 		>

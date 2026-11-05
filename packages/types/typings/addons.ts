@@ -212,8 +212,8 @@ export type Theme = {
 	semantic: Record<PropertyKey, ThemeSemanticColor>;
 	/** Overrides for Discord's raw palette colours, keyed by raw colour name. */
 	raw: Record<PropertyKey, string>;
-	/** The Discord base theme the bundle declares; parsed as `darker` when absent or unknown. */
-	type: 'midnight' | 'darker' | 'light';
+	/** The Discord base theme the bundle builds on: `light`, `dark` (Ash), `darker` (Dark) or `midnight` (Onyx); parsed as `darker` when absent or unknown. */
+	type: 'light' | 'dark' | 'darker' | 'midnight';
 	/** A background image by `url`, with optional `blur` and `opacity`; dropped when `url` is not a string. */
 	background?: {
 		blur?: number;

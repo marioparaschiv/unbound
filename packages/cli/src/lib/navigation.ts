@@ -18,6 +18,7 @@ export type CurrentRoute = { name: string; params: ScreenParams; path: string[] 
  * @param name A route key, or a name matching one ignoring case, underscores and `UNBOUND_` (`Marketplace` → `UNBOUND_MARKETPLACE`), or the end of an Unbound one (`Sync` → `UNBOUND_CLOUD_SYNC`).
  * @param params Route parameters for the screen.
  * @returns The route key it opened. Throws, listing Unbound's screens, when nothing matches.
+ * Discord's own entries name their route apart from their key (`APPEARANCE_THEME_PICKER` → `Appearance Theme Picker`), so it navigates to `screen.route`.
  */
 export function openScreen(unbound: UnboundGlobal, name: string, params: ScreenParams): string {
 	const { SETTING_RENDERER_CONFIG } = unbound.metro.findByProps('SETTING_RENDERER_CONFIG');
@@ -43,7 +44,9 @@ export function openScreen(unbound: UnboundGlobal, name: string, params: ScreenP
 		throw new Error(`No settings screen matches ${name}. Unbound screens: ${own.join(', ')}`);
 	}
 
-	getRootNavigationRef().navigate('settings', { screen: route, params });
+	const screen: string = SETTING_RENDERER_CONFIG[route]?.screen?.route ?? route;
+
+	getRootNavigationRef().navigate('settings', { screen, params });
 
 	return route;
 }

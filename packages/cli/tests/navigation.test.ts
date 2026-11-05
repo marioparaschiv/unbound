@@ -11,11 +11,13 @@ function isDevice(value: FakeDevice): value is FakeDevice & UnboundGlobal {
 	return 'metro' in value;
 }
 
-function deviceWith(routes: string[]) {
+function deviceWith(routes: string[], names: Record<string, string> = {}) {
 	const opened: Navigated[] = [];
 	const modules = {
 		SETTING_RENDERER_CONFIG: {
-			SETTING_RENDERER_CONFIG: Object.fromEntries(routes.map((route) => [route, {}])),
+			SETTING_RENDERER_CONFIG: Object.fromEntries(
+				routes.map((route) => [route, { screen: { route: names[route] ?? route } }]),
+			),
 		},
 		getRootNavigationRef: {
 			getRootNavigationRef: () => ({
@@ -48,5 +50,14 @@ describe('openScreen', () => {
 		const { unbound } = deviceWith(['UNBOUND_CLOUD_SYNC', 'UNBOUND_SYNC']);
 
 		expect(openScreen(unbound, 'Sync', {})).toBe('UNBOUND_SYNC');
+	});
+
+	test('navigates to the route name of a Discord screen, not its key', () => {
+		const { unbound, opened } = deviceWith(['APPEARANCE_THEME_PICKER'], {
+			APPEARANCE_THEME_PICKER: 'Appearance Theme Picker',
+		});
+
+		expect(openScreen(unbound, 'APPEARANCE_THEME_PICKER', {})).toBe('APPEARANCE_THEME_PICKER');
+		expect(opened).toEqual([{ screen: 'Appearance Theme Picker', params: {} }]);
 	});
 });

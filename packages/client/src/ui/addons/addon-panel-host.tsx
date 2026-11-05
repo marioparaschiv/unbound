@@ -1,7 +1,6 @@
 import useAddonPhase, { type PhaseSource } from '~/ui/hooks/use-addon-phase';
 import { Discord } from '~/metro/components';
 import type { Addon } from '~/addons/addon';
-import { Theme } from '~/metro/common';
 import { messages } from '~/i18n/api';
 
 import useStyles from './addon-panel-host.style';
@@ -24,10 +23,7 @@ function AddonPanelHost({ addon }: AddonPanelHostProps) {
 	return Panel ? (
 		<Panel />
 	) : (
-		<Discord.Text
-			variant='text-md/medium'
-			style={[styles.notice, { color: Theme.colors.TEXT_MUTED }]}
-		>
+		<Discord.Text variant='text-md/medium' style={styles.notice}>
 			{messages.UNBOUND_PLUGIN_NOT_RUNNING}
 		</Discord.Text>
 	);

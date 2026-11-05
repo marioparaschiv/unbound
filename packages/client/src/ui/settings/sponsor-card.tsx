@@ -26,15 +26,19 @@ function SponsorCard() {
 	const styles = useStyles();
 
 	return (
-		<View style={styles.card}>
-			<View style={styles.heading}>
+		<Discord.Card style={styles.card}>
+			<Discord.Stack direction='horizontal' spacing={10} align='center'>
 				<View style={styles.heart}>
-					<TintedIcon source={icons.HeartIcon ?? 0} size={18} tint='#FFFFFF' />
+					<TintedIcon source={icons.HeartIcon ?? 0} size={18} style={styles.heartIcon} />
 				</View>
-				<Discord.Text variant='heading-md/bold' color='mobile-text-heading-primary'>
+				<Discord.Text
+					variant='heading-md/bold'
+					color='mobile-text-heading-primary'
+					style={styles.title}
+				>
 					{messages.UNBOUND_SPONSOR_TITLE}
 				</Discord.Text>
-			</View>
+			</Discord.Stack>
 			<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.body}>
 				{messages.UNBOUND_SPONSOR_BODY}
 			</Discord.Text>
@@ -57,7 +61,7 @@ function SponsorCard() {
 					/>
 				</View>
 			</View>
-		</View>
+		</Discord.Card>
 	);
 }
 

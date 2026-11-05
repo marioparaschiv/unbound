@@ -2,10 +2,9 @@ import type { GestureEvent, PanGestureHandlerEventPayload } from 'react-native-g
 import type { InternalToastOptions } from '@unbound-app/types/toasts';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import Animated, { withSpring } from 'react-native-reanimated';
-import { View, Pressable } from 'react-native';
 import { memo, useCallback } from 'react';
+import { View } from 'react-native';
 
-import TintedIcon from '~/metro/fallbacks/tinted-icon';
 import { Discord } from '~/metro/components';
 import useToastStore from '~/toasts/state';
 import { icons } from '~/assets/api';
@@ -75,21 +74,25 @@ function Toast({ id }: ToastProps) {
 
 	return (
 		<PanGestureHandler onGestureEvent={onGestureEvent}>
-			<Animated.View style={[style, { zIndex: closing ? 0 : 10 }]} pointerEvents='box-none'>
+			<Animated.View
+				style={[style, closing ? styles.closing : styles.open]}
+				pointerEvents='box-none'
+			>
 				<ToastSurface onLayout={onLayout}>
 					<View style={styles.wrapper}>
 						{options.icon ? (
 							<ToastIcon icon={options.icon} tinted={options.tintedIcon ?? true} />
 						) : null}
 						<ToastContent title={options.title} content={options.content} />
-						<Pressable
+						<Discord.IconButton
+							size='sm'
+							variant='tertiary'
+							icon={icons['XSmallIcon'] ?? 0}
 							style={styles.closeButton}
 							hitSlop={10}
 							onPress={leave}
 							onLongPress={dismissAll}
-						>
-							<TintedIcon source={icons['ic_close'] ?? 0} />
-						</Pressable>
+						/>
 					</View>
 					{Array.isArray(options.buttons) && options.buttons.length ? (
 						<View style={styles.buttons}>

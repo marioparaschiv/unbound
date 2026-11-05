@@ -8,8 +8,17 @@ import type { AlertDialogProps } from '~/dialogs/api';
 // The rows read Discord's components and Unbound's strings only when they render, which these tests never do.
 const named = new Proxy({}, { get: (_target, key) => String(key) });
 
+// Style sheets call `createStyles` as they load; it hands back a hook returning the sheet as written.
+const discord = new Proxy(
+	{},
+	{
+		get: (_target, key) =>
+			key === 'createStyles' ? (sheet: Record<string, unknown>) => () => sheet : String(key),
+	},
+);
+
 mock.module('~/metro/components', () => ({
-	Discord: named,
+	Discord: discord,
 	SafeArea: named,
 	BottomSheets: named,
 	HelpMessage: named,

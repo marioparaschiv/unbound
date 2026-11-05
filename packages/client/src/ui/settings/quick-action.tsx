@@ -1,6 +1,3 @@
-import type { PressableStateCallbackType } from 'react-native';
-import { Pressable } from 'react-native';
-
 import { Discord } from '~/metro/components';
 import { icons } from '~/assets/api';
 
@@ -14,26 +11,18 @@ type QuickActionProps = {
 };
 
 /**
- * @description One tile of the Unbound page's quick actions: an icon over a label.
+ * @description One tile of the Unbound page's quick actions: an icon over a label, on Discord's pressable card.
  */
 function QuickAction({ label, icon, onPress }: QuickActionProps) {
 	const styles = useStyles();
 
 	return (
-		<Pressable
-			accessibilityRole='button'
-			accessibilityLabel={label}
-			onPress={onPress}
-			style={({ pressed }: PressableStateCallbackType) => [
-				styles.tile,
-				pressed ? styles.pressed : null,
-			]}
-		>
+		<Discord.Card accessibilityLabel={label} onPress={onPress} style={styles.tile}>
 			<Discord.TableRowIcon source={icons[icon]} />
 			<Discord.Text variant='text-sm/semibold' color='mobile-text-heading-primary'>
 				{label}
 			</Discord.Text>
-		</Pressable>
+		</Discord.Card>
 	);
 }
 

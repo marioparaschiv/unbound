@@ -39,5 +39,6 @@ Test: everything rendered comes from props, a hook, or a selector.
 - Compose styles as arrays: `style={[styles.base, active ? styles.active : null]}`.
 - `<component>.style.ts` default-exports `Discord.createStyles({ … })`, camelCase keys.
 - Colours, shadows and fonts come from `Theme` and `Constants` in `~/metro/common`.
+- Every style lives in the sibling `.style.ts`: no static inline objects, `Theme.colors` or `useToken` in components; React Native drops an inline theme token. Only per-render values (`[styles.bar, { width }]`) stay inline; a colour prop reads a resolved key (`styles.spinner.color`). Lint: `unbound/no-inline-styles`.
 
 Test: style files hold only theme tokens and layout numbers.

@@ -1,17 +1,18 @@
 import { Discord } from '~/metro/components';
+import { Theme } from '~/metro/common';
 
 export default Discord.createStyles({
-	container: {
+	page: {
 		flex: 1,
+	},
+	controls: {
+		paddingHorizontal: 16,
+		paddingTop: 12,
+		paddingBottom: 12,
+		borderBottomWidth: 1,
+		borderBottomColor: Theme.colors.BORDER_SUBTLE,
+	},
+	content: {
 		padding: 16,
-		gap: 12,
-	},
-	search: {
-		flexGrow: 0,
-		flexShrink: 0,
-	},
-	thumbnail: {
-		width: 24,
-		height: 24,
 	},
 });

@@ -38,16 +38,12 @@ export default Discord.createStyles({
 	},
 	text: {
 		flex: 1,
+		minWidth: 0,
 		gap: 6,
 	},
 	title: {
 		color: '#FFFFFF',
 		letterSpacing: -0.8,
-	},
-	meta: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 10,
 	},
 	version: {
 		color: 'rgba(255, 255, 255, 0.75)',
@@ -59,6 +55,7 @@ export default Discord.createStyles({
 		backgroundColor: 'rgba(255, 255, 255, 0.2)',
 	},
 	revision: {
+		flexShrink: 1,
 		color: 'rgba(255, 255, 255, 0.4)',
 		letterSpacing: 0.5,
 	},

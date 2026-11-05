@@ -5,6 +5,7 @@ import noImportOutsidePackage from './rules/no-import-outside-package.ts';
 import noPassThroughWrapper from './rules/no-pass-through-wrapper.ts';
 import addonRules from '../../packages/cli/src/oxlint/plugin.ts';
 import noUpwardImports from './rules/no-upward-imports.ts';
+import noInlineStyles from './rules/no-inline-styles.ts';
 import noEnvMutation from './rules/no-env-mutation.ts';
 import maxFileBytes from './rules/max-file-bytes.ts';
 
@@ -17,6 +18,7 @@ export default {
 		'no-asserted-external-data': noAssertedExternalData,
 		'no-pass-through-wrapper': noPassThroughWrapper,
 		'no-upward-imports': noUpwardImports,
+		'no-inline-styles': noInlineStyles,
 		'no-env-mutation': noEnvMutation,
 		'max-file-bytes': maxFileBytes,
 	},

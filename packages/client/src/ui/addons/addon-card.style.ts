@@ -6,19 +6,19 @@ export default Discord.createStyles({
 		gap: 14,
 		padding: 16,
 	},
-	top: {
-		flexDirection: 'row',
-		alignItems: 'flex-start',
-		gap: 12,
-	},
 	heading: {
 		flex: 1,
+		minWidth: 0,
 		gap: 2,
 	},
+	// Discord's Stack sets `width: '100%'`; inside a row it would squeeze its flexible siblings.
 	actions: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 8,
+		width: 'auto',
+		flexShrink: 0,
+	},
+	badges: {
+		width: 'auto',
+		flexShrink: 0,
 	},
 	bottom: {
 		flexDirection: 'row',
@@ -28,26 +28,19 @@ export default Discord.createStyles({
 	},
 	description: {
 		flex: 1,
+		minWidth: 0,
 		alignSelf: 'flex-start',
 		lineHeight: 19,
+		color: Theme.colors.TEXT_DEFAULT,
 	},
 	spacer: {
 		flex: 1,
-	},
-	badges: {
-		flexDirection: 'row',
-		gap: 6,
-	},
-	version: {
-		paddingHorizontal: 6,
-		paddingVertical: 2,
-		borderRadius: 6,
-		backgroundColor: Theme.colors.BACKGROUND_SURFACE_HIGH,
 	},
 	failed: {
 		opacity: 0.5,
 	},
 	error: {
 		marginTop: 4,
+		color: Theme.colors.TEXT_FEEDBACK_CRITICAL,
 	},
 });

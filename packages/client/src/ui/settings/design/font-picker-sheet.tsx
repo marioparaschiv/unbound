@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 
-import SearchIcon from '~/ui/components/search-icon';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
 import { format } from '~/i18n/api';
@@ -37,14 +36,11 @@ function FontPickerSheet({ family, onClose }: FontPickerSheetProps) {
 
 	return (
 		<Discord.ActionSheet>
-			<Discord.TextField
+			<Discord.SearchBar
 				size='md'
 				value={query}
 				onChange={setQuery}
-				isClearable
-				isRound
 				placeholder={format('UNBOUND_SEARCH', { type: format('UNBOUND_FONTS') })}
-				leadingIcon={SearchIcon}
 			/>
 			<Discord.ActionSheetRow label={format('UNBOUND_RESET')} onPress={reset} />
 			{names.map((name) => (

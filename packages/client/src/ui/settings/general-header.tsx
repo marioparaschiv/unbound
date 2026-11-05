@@ -37,15 +37,19 @@ function GeneralHeader() {
 				<Discord.Text variant='heading-xxl/bold' style={styles.title}>
 					{CLIENT_NAME}
 				</Discord.Text>
-				<View style={styles.meta}>
+				<Discord.Stack direction='horizontal' spacing={10} align='center'>
 					<Discord.Text variant='text-xs/semibold' style={styles.version}>
 						v{CLIENT_VERSION}
 					</Discord.Text>
 					<View style={styles.divider} />
-					<Discord.Text variant='text-xs/medium' style={styles.revision}>
+					<Discord.Text
+						variant='text-xs/medium'
+						style={styles.revision}
+						numberOfLines={1}
+					>
 						{VERSION}
 					</Discord.Text>
-				</View>
+				</Discord.Stack>
 			</View>
 		</Pressable>
 	);

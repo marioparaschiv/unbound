@@ -4,7 +4,6 @@ import { View } from 'react-native';
 import { memo } from 'react';
 
 import { Discord } from '~/metro/components';
-import { Theme } from '~/metro/common';
 
 import useStyles from './addon-card-header.style';
 import AddonTitle from './addon-title';
@@ -29,29 +28,22 @@ function AddonCardHeader({ id, kind, manifest }: AddonCardHeaderProps) {
 	const author = authors?.map((a) => a.name).join(', ');
 
 	return (
-		<View style={styles.container}>
+		<Discord.Stack direction='horizontal' spacing={12} align='flex-start'>
 			<AddonIcon id={id} kind={kind} />
 			<View style={styles.content}>
 				<AddonTitle name={name} version={version} />
 				{author ? (
-					<Discord.Text
-						variant='text-xs/medium'
-						style={{ color: Theme.colors.TEXT_MUTED }}
-						numberOfLines={1}
-					>
+					<Discord.Text variant='text-xs/medium' style={styles.author} numberOfLines={1}>
 						by {author}
 					</Discord.Text>
 				) : null}
 				{description ? (
-					<Discord.Text
-						variant='text-sm/normal'
-						style={[styles.description, { color: Theme.colors.TEXT_DEFAULT }]}
-					>
+					<Discord.Text variant='text-sm/normal' style={styles.description}>
 						{description}
 					</Discord.Text>
 				) : null}
 			</View>
-		</View>
+		</Discord.Stack>
 	);
 }
 

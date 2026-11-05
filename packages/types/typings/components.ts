@@ -25,8 +25,15 @@ export type DiscordIconProps = {
 /** An icon a row or toast draws: an asset id, an element such as `<Star />`, or an icon component such as `Star`. */
 export type IconInput = number | ReactElement | ComponentType<DiscordIconProps>;
 
+/** The design components Discord added after the build the generated types describe; see {@link NewerDesignComponents}. */
+export const NEWER_DESIGN_COMPONENTS = [
+	'SearchBar',
+	'Badge',
+] as const satisfies readonly (keyof NewerDesignComponents)[];
+
 /** The components of Discord's design module, each of which Unbound can stand in for when Discord drops it. */
 export const DESIGN_COMPONENTS = [
+	...NEWER_DESIGN_COMPONENTS,
 	'Text',
 	'Heading',
 	'TableRow',
@@ -71,7 +78,40 @@ export type DesignComponentName = (typeof DESIGN_COMPONENTS)[number];
  * Every component the `design/native.tsx` barrel exports, typed by `bun run generate-discord-types` and made
  * {@link LooseModule | loose}: known props optional and checked where concrete, unknown props allowed.
  */
-export type DesignComponents = LooseModule<DesignBarrelComponents>;
+export type DesignComponents = LooseModule<DesignBarrelComponents & NewerDesignComponents>;
+
+/** The colours of Discord's `Badge`; with none, it is grey. `primary` is the brand colour. */
+export type BadgeVariant =
+	| 'primary'
+	| 'secondary'
+	| 'expressive'
+	| 'premium'
+	| 'inverted'
+	| 'notification'
+	| 'rarity-common'
+	| 'rarity-rare'
+	| 'rarity-epic'
+	| 'rarity-mythic';
+
+/** The props of Discord's `Badge`, read from Discord 352's `design/components/Badge/native/Badge.native.tsx`. */
+export type BadgeProps = {
+	/** A built-in label, or `{ text }` for custom text. */
+	type: 'new' | 'beta' | 'early_access' | 'free_trial' | { text: string };
+	variant?: BadgeVariant;
+	/** A leading icon component, such as `StarIcon`, drawn at `xxs`. */
+	icon?: ComponentType<DiscordIconProps>;
+};
+
+/**
+ * Design components newer than the Discord build the generated types describe, typed by hand from Discord 352's
+ * sources. Regenerating the types from 352 or later makes these generated; then drop them here.
+ */
+export type NewerDesignComponents = {
+	/** Discord's search field: a `TextField` with a search icon, clear button and search return key. */
+	SearchBar: DesignBarrelComponents['TextField'];
+	/** Discord's status label, such as New or Beta, or custom text. */
+	Badge: ComponentType<BadgeProps>;
+};
 
 /**
  * The Discord mobile design system module (keyed by `createStyles` / `dismissAlerts` / `ContextMenu`).

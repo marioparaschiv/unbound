@@ -231,7 +231,8 @@
 				"react/jsx-no-constructed-context-values": "error",
 				"react/no-object-type-as-default-prop": "error",
 				"react/function-component-definition": "error",
-				"import/no-cycle": "error"
+				"import/no-cycle": "error",
+				"unbound/no-inline-styles": "error"
 			}
 		},
 		{

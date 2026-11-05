@@ -7,6 +7,8 @@ import { findByName } from '~/metro/search';
 import { ActionSheets } from '~/metro/api';
 import { messages } from '~/i18n/api';
 
+import useStyles from './color-row.style';
+
 /** Props for `ColorRow`. */
 export type ColorRowProps = {
 	/** The row's title. */
@@ -64,6 +66,7 @@ function ColorRow({
 	fallbackLabel,
 	onChange,
 }: ColorRowProps): ReactElement {
+	const styles = useStyles();
 	const [typing, setTyping] = useState(false);
 	const [draft, setDraft] = useState(color ?? '');
 	const state = typedColorState(draft);
@@ -85,12 +88,12 @@ function ColorRow({
 		<Discord.TableRow
 			label={label}
 			subLabel={
-				<View style={{ gap: 8, alignItems: 'flex-start' }}>
+				<Discord.Stack spacing={8} align='flex-start'>
 					<Discord.Text variant='text-sm/medium' color='text-muted'>
 						{color ?? fallbackLabel}
 					</Discord.Text>
 					{typing ? (
-						<View style={{ alignSelf: 'stretch' }}>
+						<View style={styles.input}>
 							<Discord.TextInput
 								value={draft}
 								onChange={setDraft}
@@ -117,13 +120,18 @@ function ColorRow({
 							onPress={() => setTyping(true)}
 						/>
 					)}
-				</View>
+				</Discord.Stack>
 			}
 			onPress={() => openPicker(shown, onChange)}
 			trailing={
-				<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+				<Discord.Stack
+					direction='horizontal'
+					spacing={8}
+					align='center'
+					style={styles.trailing}
+				>
 					<View
-						style={{ opacity: color ? 1 : 0 }}
+						style={color ? null : styles.hidden}
 						pointerEvents={color ? 'auto' : 'none'}
 						accessibilityElementsHidden={!color}
 						importantForAccessibility={color ? 'auto' : 'no-hide-descendants'}
@@ -135,17 +143,8 @@ function ColorRow({
 							onPress={() => onChange(undefined)}
 						/>
 					</View>
-					<View
-						style={{
-							width: 28,
-							height: 28,
-							borderRadius: 14,
-							backgroundColor: shown,
-							borderWidth: 1,
-							borderColor: 'rgba(255, 255, 255, 0.24)',
-						}}
-					/>
-				</View>
+					<View style={[styles.swatch, { backgroundColor: shown }]} />
+				</Discord.Stack>
 			}
 		/>
 	);

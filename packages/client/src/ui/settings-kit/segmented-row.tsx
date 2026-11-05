@@ -4,6 +4,8 @@ import { Dimensions, View } from 'react-native';
 import type { ChoiceOption } from '~/ui/settings-kit/radio-row';
 import { Discord } from '~/metro/components';
 
+import useStyles from './segmented-row.style';
+
 /** Props for `SegmentedRow`. */
 export type SegmentedRowProps = {
 	/** The row's label. */
@@ -34,6 +36,7 @@ function SegmentedRow({
 	disabled = false,
 	onChange,
 }: SegmentedRowProps): ReactElement {
+	const styles = useStyles();
 	const items = useMemo(
 		() => options.map((option) => ({ id: option.value, label: option.label })),
 		[options],
@@ -65,7 +68,7 @@ function SegmentedRow({
 		<Discord.TableRow
 			label={label}
 			subLabel={
-				<View style={{ gap: 8 }}>
+				<Discord.Stack spacing={8}>
 					{subLabel ? (
 						<Discord.Text variant='text-sm/medium' color='text-muted'>
 							{subLabel}
@@ -73,11 +76,11 @@ function SegmentedRow({
 					) : null}
 					<View
 						pointerEvents={disabled ? 'none' : 'auto'}
-						style={disabled ? { opacity: 0.5 } : null}
+						style={disabled ? styles.disabled : null}
 					>
 						<Discord.SegmentedControl state={state} />
 					</View>
-				</View>
+				</Discord.Stack>
 			}
 		/>
 	);

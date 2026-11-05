@@ -8,6 +8,7 @@ import { Discord, isRenderable, registerDesignFallback } from '~/metro/design';
 import type { HelpMessageProps } from '~/metro/fallbacks/help-message';
 import FallbackHeading from '~/metro/fallbacks/fallback-heading';
 import FallbackSwitch from '~/metro/fallbacks/fallback-switch';
+import FallbackBadge from '~/metro/fallbacks/fallback-badge';
 import FallbackStack from '~/metro/fallbacks/fallback-stack';
 import FallbackCard from '~/metro/fallbacks/fallback-card';
 import FallbackText from '~/metro/fallbacks/fallback-text';
@@ -17,6 +18,7 @@ import { findByPropsLazy } from '~/metro/wrappers';
 /** The props of Discord's `FormSwitch`, which the switch fallback accepts. */
 type SwitchProps = ComponentProps<DesignModule['FormSwitch']>;
 type SearchFieldProps = ComponentProps<DesignModule['SearchField']>;
+type SearchBarProps = ComponentProps<DesignModule['SearchBar']>;
 
 export type { DesignComponentName, DesignModule } from '@unbound-app/types/components';
 export { Discord, isRenderable, registerDesignFallback } from '~/metro/design';
@@ -96,15 +98,27 @@ export const BottomSheets = findByPropsLazy('BottomSheetTitleHeader', 'ActionShe
 
 /**
  * @description Unbound's stand-in for Discord's `SearchField`, which some builds no longer ship: Discord's
- * round text field with the same props.
+ * round, clearable text field with the same props.
  * @param props The search field props.
  * @returns The search field element.
  */
 function FallbackSearchField(props: SearchFieldProps) {
-	return createElement(Discord.TextField, { isRound: true, ...props });
+	return createElement(Discord.TextField, { isRound: true, isClearable: true, ...props });
+}
+
+/**
+ * @description Unbound's stand-in for Discord's `SearchBar`, which builds before 352 lack: their `SearchField`,
+ * itself a search-styled text field.
+ * @param props The search bar props.
+ * @returns The search bar element.
+ */
+function FallbackSearchBar(props: SearchBarProps) {
+	return createElement(Discord.SearchField, props);
 }
 
 registerDesignFallback('SearchField', FallbackSearchField);
+registerDesignFallback('SearchBar', FallbackSearchBar);
+registerDesignFallback('Badge', FallbackBadge);
 registerDesignFallback('Text', FallbackText);
 registerDesignFallback('Heading', FallbackHeading);
 registerDesignFallback('FormSwitch', FallbackSwitch);

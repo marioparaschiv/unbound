@@ -7,6 +7,7 @@ import { messages } from '~/i18n/api';
 import type { InputVariant, InputKeyboard } from './input-row';
 
 import useInputDraft from './use-input-draft';
+import useStyles from './input-sheet.style';
 
 /** What Discord's `TextArea` passes `onChange`: on device a plain string, typed as React Native's change event. */
 type TextChange = string | TextInputChangeEvent;
@@ -46,6 +47,7 @@ function InputSheet({
 	onChange,
 	onClose,
 }: InputSheetProps): ReactElement {
+	const styles = useStyles();
 	const { ActionSheet, BottomSheetTitleHeader } = BottomSheets;
 	const { draft, error, setDraft, save } = useInputDraft(value, onChange, validate);
 
@@ -69,7 +71,7 @@ function InputSheet({
 	return (
 		<ActionSheet>
 			<BottomSheetTitleHeader title={label} subtitle={subLabel} />
-			<View style={{ gap: 16, padding: 16 }}>
+			<View style={styles.content}>
 				{variant === 'multiline' && Discord.TextArea ? (
 					<Discord.TextArea
 						{...props}
