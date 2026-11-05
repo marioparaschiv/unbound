@@ -34,6 +34,9 @@ export const VERSION = '$$VERSION$$';
 /** Semantic version of this client, sent to the addon updater. Replaced at build time from `package.json`. */
 export const CLIENT_VERSION = '$$CLIENT_VERSION$$';
 
+/** The channel this bundle was published to (`stable`, `beta`, or `local`, `dev` or `pr` off CI). Replaced at build time. */
+export const BUILD_CHANNEL = '$$BUILD_CHANNEL$$';
+
 /** Origin of the Unbound web API. Replaced at build time from `UNBOUND_API_URL`, defaulting to production. */
 export const API_URL = '$$API_URL$$';
 

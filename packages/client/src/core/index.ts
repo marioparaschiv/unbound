@@ -17,6 +17,7 @@ import type { BuiltInEntry } from '~/builtins/registry';
 import type { SectionEntry } from '~/settings/section';
 import errorBoundary from '~/builtins/error-boundary';
 import sponsorBadges from '~/builtins/sponsor-badges';
+import promiseRejections from '~/diagnostics/builtin';
 import { assetsSection } from '~/assets/builtin.dev';
 import coreCommands from '~/commands/core-commands';
 import hotRefresh from '~/hot-refresh/builtin.dev';
@@ -77,6 +78,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	['i18n', i18n],
 	['links', links],
 	['nativeConsent', nativeConsent],
+	['promiseRejections', promiseRejections],
 	['settings', createSettings(SECTIONS_IN_OVERVIEW_ORDER)],
 	['sponsorBadges', sponsorBadges],
 	['staffMode', staffMode],

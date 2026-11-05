@@ -5,6 +5,7 @@
 
 #include "LoaderLog.h"
 #include "LoaderPipeline.h"
+#include "LoaderVersion.h"
 #include "bundle_test_server.h"
 
 namespace {
@@ -58,8 +59,17 @@ public:
     }
 };
 
+// Marks the running loader as having checked before, so a launch models a loader that was not just
+// updated.
+bool checkedBy(bundle_test::Server &server, const std::string &version)
+{
+    server.settings.set("unbound", loader::kCheckedLoaderSetting, version);
+    return true;
+}
+
 struct Launch {
     bundle_test::Server           server;
+    bool                          checked = checkedBy(server, loader::loaderVersion());
     loader::BundleUpdater         updater = server.updater(bundle_test::productionTrust());
     std::shared_ptr<CountingHost> host    = std::make_shared<CountingHost>();
     loader::LoaderPipeline        pipeline{host, loader::updaterSettings(server.settings), updater};
@@ -90,7 +100,7 @@ void keepsTheSavedBundleUntilTheNextLaunch()
     assert(loader::readTextFile(launch.server.candidate()) == "next");
 }
 
-void reloadsForAnUpdateWithHotReloadOn()
+void runsAHotReloadUpdateWithoutReloading()
 {
     Launch launch;
     launch.server.settings.set("unbound", "loader.update.hmr", true);
@@ -100,7 +110,23 @@ void reloadsForAnUpdateWithHotReloadOn()
 
     launch.pipeline.prepare();
 
-    assert(launch.host->reloads == 1);
+    std::optional<loader::LoaderPipeline::SavedBundle> bundle = launch.pipeline.takeSavedBundle();
+    assert(bundle && bundle->bundle == "next");
+    assert(launch.host->reloads == 0);
+}
+
+void runsTheSavedBundleWithHotReloadOnAndNoUpdate()
+{
+    Launch launch;
+    launch.server.settings.set("unbound", "loader.update.hmr", true);
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+
+    launch.pipeline.prepare();
+
+    std::optional<loader::LoaderPipeline::SavedBundle> bundle = launch.pipeline.takeSavedBundle();
+    assert(bundle && bundle->bundle == "current");
+    assert(launch.host->reloads == 0);
 }
 
 void runsTheSavedBundleWhenItsFlavourMatches()
@@ -185,6 +211,23 @@ void logsTheRuntimeBeforeAddonsLoadForIt()
     assert(runtime < prepared);
 }
 
+void runsTheNewBundleOnTheFirstLaunchAfterALoaderUpdate()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    checkedBy(launch.server, "0.0.1");
+    launch.server.publish(kBase, "2026-10-03T00:00:00.000Z", {{kBundle, "next"}});
+
+    launch.pipeline.prepare();
+
+    std::optional<loader::LoaderPipeline::SavedBundle> bundle = launch.pipeline.takeSavedBundle();
+    assert(bundle && bundle->bundle == "next");
+    assert(launch.server.settings.getString("unbound", loader::kCheckedLoaderSetting, "") ==
+           loader::loaderVersion());
+    assert(launch.host->reloads == 0);
+}
+
 void doesNothingWhenDisabled()
 {
     Launch launch;
@@ -203,12 +246,14 @@ int main()
 {
     leavesAFirstDownloadForTheRuntime();
     keepsTheSavedBundleUntilTheNextLaunch();
-    reloadsForAnUpdateWithHotReloadOn();
+    runsAHotReloadUpdateWithoutReloading();
+    runsTheSavedBundleWithHotReloadOnAndNoUpdate();
     runsTheSavedBundleWhenItsFlavourMatches();
     runsTheDevBundleItDownloadedForTheSwitch();
     fallsBackToTheSavedBundleWhenTheSwitchDownloadFails();
     runsTheSavedBundleWhenNoDevBundleIsPublished();
     logsTheRuntimeBeforeAddonsLoadForIt();
+    runsTheNewBundleOnTheFirstLaunchAfterALoaderUpdate();
     doesNothingWhenDisabled();
     return 0;
 }

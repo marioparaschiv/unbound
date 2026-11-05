@@ -44,6 +44,8 @@ UpdaterSettings updaterSettings(SettingsStore &store);
 
 constexpr const char *kBundleTrustSuffix     = ".trust";
 constexpr const char *kBundleBaselineSetting = "loader.update.baseline";
+// The loader version that last checked for a bundle, so a loader update is noticed once.
+constexpr const char *kCheckedLoaderSetting = "loader.update.checkedBy";
 
 class BundleUpdater
 {

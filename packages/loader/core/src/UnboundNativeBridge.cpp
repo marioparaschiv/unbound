@@ -8,6 +8,7 @@
 
 #include "LoaderCrypto.h"
 #include "LoaderFiles.h"
+#include "LoaderRequiredLoader.h"
 #include "LoaderVersion.h"
 #include "NativePlatformBridge.h"
 #include "NativePluginRuntime.h"
@@ -45,9 +46,15 @@ UnboundNativeProvider makeUnboundNativeProvider(const AddonState               &
                                                 std::string documents, FileDownloader download)
 {
     UnboundNativeProvider provider;
-    provider.getLoader = [origin = std::move(origin), bytecodeVersion]() -> nlohmann::json {
-        return {
+    provider.getLoader = [origin = std::move(origin), bytecodeVersion,
+                          documents]() -> nlohmann::json {
+        nlohmann::json loader{
             {"origin", origin}, {"version", loaderVersion()}, {"bytecodeVersion", bytecodeVersion}};
+        if (std::optional<std::string> required = requiredLoaderVersion(documents))
+        {
+            loader["requiredVersion"] = *required;
+        }
+        return loader;
     };
     provider.getPlugins = [&addons] {
         return addons.plugins();

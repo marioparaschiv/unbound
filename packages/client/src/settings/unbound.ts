@@ -23,6 +23,7 @@ const DEFAULTS = {
 	'toasts.maxOnScreen': 3,
 	'plugins.showLibraries': false,
 	'updater.auto': true,
+	'updater.notify': true,
 	/** The loader reads the `loader.*` keys at launch; an empty URL means the default bundle. */
 	'loader.update.url': '',
 	'loader.update.force': false,
