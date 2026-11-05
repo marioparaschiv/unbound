@@ -7,6 +7,7 @@ import { createLogger } from '@unbound-app/logger';
 
 import { createSettings, generalSection, panelHostSection } from '~/settings/builtin';
 import { marketplaceSection, storePageSection } from '~/marketplace/builtin';
+import promiseRejections from '~/builtins/promise-rejections';
 import cloudSync, { cloudSyncSection } from '~/sync/builtin';
 import updater, { updatesSection } from '~/updates/builtin';
 import { developerSection } from '~/settings/builtin.dev';
@@ -77,6 +78,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	['i18n', i18n],
 	['links', links],
 	['nativeConsent', nativeConsent],
+	['promiseRejections', promiseRejections],
 	['settings', createSettings(SECTIONS_IN_OVERVIEW_ORDER)],
 	['sponsorBadges', sponsorBadges],
 	['staffMode', staffMode],

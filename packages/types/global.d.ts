@@ -65,6 +65,19 @@ declare global {
 	 */
 	type HermesInternalObject = {
 		getRuntimeProperties(): Record<string, string | number | boolean>;
+		/** Replaces the Promise polyfill's rejection tracker; each call drops the previous options. */
+		enablePromiseRejectionTracker?(options: PromiseRejectionTrackerOptions): void;
+	};
+
+	/**
+	 * Options for Hermes' Promise rejection tracker.
+	 * @internal
+	 */
+	type PromiseRejectionTrackerOptions = {
+		allRejections?: boolean;
+		// UNKNOWN: a promise can be rejected with any value.
+		onUnhandled?: (id: number, error: unknown) => void;
+		onHandled?: (id: number) => void;
 	};
 
 	/** @internal */
