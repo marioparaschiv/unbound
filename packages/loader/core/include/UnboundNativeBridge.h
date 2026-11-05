@@ -18,9 +18,9 @@ struct UnboundNativeProvider {
     std::function<nlohmann::json()> getLoader;
     std::function<nlohmann::json()> getPlugins;
     std::function<nlohmann::json()> getThemes;
-    // Rescans the installed addons and reapplies the selected theme; left out of the bridge when
+    // Rereads the installed themes and reapplies the selected one; left out of the bridge when
     // empty. The platform sets it, as only it can recolour native views.
-    std::function<void()> rescanAddons;
+    std::function<void()> rescanThemes;
     // Saves `url` to `path`, relative to Unbound's folder. Runs off the JS thread; throws what
     // failed.
     std::function<void(const std::string &url, const std::string &path)> downloadFile;

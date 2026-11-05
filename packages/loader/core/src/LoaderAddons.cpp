@@ -374,6 +374,14 @@ void AddonState::scan(const std::string &documents, uint32_t bytecodeVersion)
     themes_  = std::move(scanned.themes);
 }
 
+void AddonState::rescanThemes(const std::string &documents)
+{
+    nlohmann::json themes = scanThemes(documents);
+
+    std::lock_guard<std::mutex> lock(mutex_);
+    themes_ = std::move(themes);
+}
+
 nlohmann::json AddonState::plugins() const
 {
     std::lock_guard<std::mutex> lock(mutex_);

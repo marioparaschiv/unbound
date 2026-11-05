@@ -47,11 +47,11 @@ export function getThemes(): UnboundAddonBundle[] {
 }
 
 /**
- * @description Has the loader rescan the installed addons, so native views see themes installed, updated or deleted since
- * launch. Does nothing on a loader from before `rescanAddons`.
+ * @description Has the loader reread the installed themes, so native views see ones installed, updated or deleted since
+ * launch. Does nothing on a loader from before `rescanThemes`.
  */
-export function rescanAddons(): void {
-	read('rescanAddons', (bridge) => bridge.rescanAddons?.());
+export function rescanThemes(): void {
+	read('rescanThemes', (bridge) => bridge.rescanThemes?.());
 }
 
 /**

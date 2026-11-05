@@ -190,10 +190,10 @@ export type UnboundNativeBridge = {
 	 */
 	getThemes(): UnboundAddonBundle[];
 	/**
-	 * Rescans the installed addons, so `getPlugins` and `getThemes` list ones installed, updated or deleted since launch,
-	 * and native views take the applied theme's new colours. Missing on a loader from before it.
+	 * Rereads only the installed themes, so `getThemes` lists ones installed, updated or deleted since launch and native
+	 * views take the applied theme's new colours. Missing on a loader from before it.
 	 */
-	rescanAddons?(): void;
+	rescanThemes?(): void;
 	/** The font store; missing on a loader from before it. */
 	fonts?: UnboundNativeFonts;
 	/**

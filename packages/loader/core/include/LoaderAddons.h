@@ -21,6 +21,8 @@ class AddonState
 public:
     void prescan(const std::string &documents, uint32_t bytecodeVersion);
     void scan(const std::string &documents, uint32_t bytecodeVersion = 0);
+    // Rereads only the themes, leaving the plugins from the last scan.
+    void rescanThemes(const std::string &documents);
 
     nlohmann::json                plugins() const;
     nlohmann::json                themes() const;

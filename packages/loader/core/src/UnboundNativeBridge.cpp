@@ -87,7 +87,7 @@ static jsi::Function getter(jsi::Runtime &runtime, const char *name,
 
 static jsi::Function rescanFunction(jsi::Runtime &runtime, std::function<void()> rescan)
 {
-    return native::makeFunction(runtime, "rescanAddons", 0,
+    return native::makeFunction(runtime, "rescanThemes", 0,
                                 [rescan = std::move(rescan)](jsi::Runtime &, const jsi::Value &,
                                                              const jsi::Value *,
                                                              size_t) -> jsi::Value {
@@ -152,10 +152,10 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
                        getter(runtime, "getPlugins", std::move(provider.getPlugins), none));
     bridge.setProperty(runtime, "getThemes",
                        getter(runtime, "getThemes", std::move(provider.getThemes), none));
-    if (provider.rescanAddons)
+    if (provider.rescanThemes)
     {
-        bridge.setProperty(runtime, "rescanAddons",
-                           rescanFunction(runtime, std::move(provider.rescanAddons)));
+        bridge.setProperty(runtime, "rescanThemes",
+                           rescanFunction(runtime, std::move(provider.rescanThemes)));
     }
     if (provider.fonts)
     {
