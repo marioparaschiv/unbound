@@ -388,8 +388,12 @@ static std::mutex                                                            gHo
 static std::unordered_map<std::string, std::shared_ptr<HookDispatcher>>      gDispatchers;
 static std::unordered_map<HookDispatcher *, std::shared_ptr<HookDispatcher>> gClosureDispatchers;
 static std::atomic_uint64_t                                                  gNextHookIdentifier{1};
-static __weak id gRuntimeExecutorInstance = nil;
-static __weak id gFabricHostInstance      = nil;
+// RCTInstance resets its ReactInstance on the JS thread after -invalidate, and
+// callFunctionOnBufferedRuntimeExecutor: dereferences it unchecked, so the instance is only
+// messaged under this mutex and retired before -invalidate runs.
+static std::mutex gRuntimeExecutorMutex;
+static __weak id  gRuntimeExecutorInstance = nil;
+static __weak id  gFabricHostInstance      = nil;
 
 static os_log_t nativePerformanceLog()
 {
@@ -495,15 +499,8 @@ private:
 
     void scheduleRuntimeDrain()
     {
-        id instance = gRuntimeExecutorInstance;
-        if (!instance)
-        {
-            runtimeQueue_.retryScheduling();
-            return;
-        }
-
-        auto owner = shared_from_this();
-        [instance callFunctionOnBufferedRuntimeExecutor:[owner](Runtime &runtime) {
+        auto owner     = shared_from_this();
+        bool scheduled = loader::runOnNativePluginRuntime([owner](Runtime &runtime) {
             @autoreleasepool
             {
                 bool remaining = owner->runtimeQueue_.drain(
@@ -531,7 +528,11 @@ private:
                                    ^{ owner->scheduleRuntimeDrain(); });
                 }
             }
-        }];
+        });
+        if (!scheduled)
+        {
+            runtimeQueue_.retryScheduling();
+        }
     }
 
     loader::native::NativeWorkQueue<std::function<void(Runtime &)>> runtimeQueue_;
@@ -5507,8 +5508,32 @@ namespace loader {
 
 void setNativePluginRuntimeExecutor(id instance)
 {
-    gRuntimeExecutorInstance = instance;
+    {
+        std::lock_guard<std::mutex> lock(gRuntimeExecutorMutex);
+        gRuntimeExecutorInstance = instance;
+    }
     loader::native::setExecutor(std::make_shared<IOSNativePluginExecutor>());
+}
+
+void retireNativePluginRuntimeExecutor(id instance)
+{
+    std::lock_guard<std::mutex> lock(gRuntimeExecutorMutex);
+    if (gRuntimeExecutorInstance == instance)
+    {
+        gRuntimeExecutorInstance = nil;
+    }
+}
+
+bool runOnNativePluginRuntime(std::function<void(Runtime &)> work)
+{
+    std::lock_guard<std::mutex> lock(gRuntimeExecutorMutex);
+    id                          instance = gRuntimeExecutorInstance;
+    if (!instance)
+    {
+        return false;
+    }
+    [instance callFunctionOnBufferedRuntimeExecutor:std::move(work)];
+    return true;
 }
 
 void setNativePluginFabricHost(id instance)
