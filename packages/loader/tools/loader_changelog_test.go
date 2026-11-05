@@ -8,33 +8,15 @@ import (
 	"testing"
 )
 
-func TestGenerateLoaderChangelogUsesLoaderVersionChanges(t *testing.T) {
-	root := t.TempDir()
-	runGit(t, root, "init", "-q")
-	runGit(t, root, "config", "user.name", "Codex")
-	runGit(t, root, "config", "user.email", "codex@example.com")
+func TestGenerateLoaderChangelogListsTheChangesSinceThePreviousVersion(t *testing.T) {
+	root := newLoaderRepo(t, "chore(build): add the loader", "feat(native): add Android UI handles", "fix(plugins): reject stale UI snapshots")
 
-	controlPath := filepath.Join(root, "ios", "control")
-	if err := os.MkdirAll(filepath.Dir(controlPath), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	writeLoaderControl(t, controlPath, "0.9.0")
-	commitGit(t, root, "chore(release): loader 0.9.0")
-
-	writeLoaderChange(t, root, "feat(native): add Android UI handles")
-	commitGit(t, root, "feat(native): add Android UI handles")
-	writeLoaderChange(t, root, "fix(plugins): reject stale UI snapshots")
-	commitGit(t, root, "fix(plugins): reject stale UI snapshots")
-
-	writeLoaderControl(t, controlPath, "1.0.0")
-	commitGit(t, root, "chore(release): loader 1.0.0")
-
-	changelog, err := generateLoaderChangelog(root, "1.0.0")
+	changelog, err := generateLoaderChangelog(root, "1.0.3", "1.0.1")
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, expected := range []string{
-		"# Loader 1.0.0",
+		"# Loader 1.0.3",
 		"## Features",
 		"**native:** Add Android UI handles",
 		"## Fixes",
@@ -44,25 +26,30 @@ func TestGenerateLoaderChangelogUsesLoaderVersionChanges(t *testing.T) {
 			t.Fatalf("loader changelog omitted %q: %s", expected, changelog)
 		}
 	}
-	if strings.Contains(changelog, "Discord") || strings.Contains(changelog, "0.9.0") {
-		t.Fatalf("loader changelog contains a Discord version or previous release: %s", changelog)
+	if strings.Contains(changelog, "Add the loader") || strings.Contains(changelog, "Document") {
+		t.Fatalf("loader changelog lists a change from before 1.0.1 or outside the loader: %s", changelog)
 	}
 }
 
-func TestGenerateLoaderChangelogRequiresPackageSemver(t *testing.T) {
-	root := t.TempDir()
-	controlPath := filepath.Join(root, "ios", "control")
-	if err := os.MkdirAll(filepath.Dir(controlPath), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	writeLoaderControl(t, controlPath, "1.0.0")
-	runGit(t, root, "init", "-q")
-	runGit(t, root, "config", "user.name", "Codex")
-	runGit(t, root, "config", "user.email", "codex@example.com")
-	commitGit(t, root, "chore(release): loader 1.0.0")
+func TestGenerateLoaderChangelogListsTheLastChangeWithoutAnOlderPreviousVersion(t *testing.T) {
+	root := newLoaderRepo(t, "feat(native): add Android UI handles", "fix(plugins): reject stale UI snapshots")
 
-	if _, err := generateLoaderChangelog(root, "1.0.1"); err == nil || !strings.Contains(err.Error(), "does not match package version") {
-		t.Fatalf("expected a package version mismatch, got %v", err)
+	for _, previous := range []string{"", "1.0.0", "1.0.2", "not a version"} {
+		changelog, err := generateLoaderChangelog(root, "1.0.2", previous)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(changelog, "Reject stale UI snapshots") || strings.Contains(changelog, "Add Android UI handles") {
+			t.Fatalf("previous %q: changelog = %s", previous, changelog)
+		}
+	}
+}
+
+func TestGenerateLoaderChangelogRequiresTheCheckoutsVersion(t *testing.T) {
+	root := newLoaderRepo(t, "feat(native): add Android UI handles")
+
+	if _, err := generateLoaderChangelog(root, "1.0.2", ""); err == nil || !strings.Contains(err.Error(), "does not match the checkout's loader version 1.0.1") {
+		t.Fatalf("expected a loader version mismatch, got %v", err)
 	}
 }
 
