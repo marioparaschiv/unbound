@@ -3,10 +3,10 @@
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>app.unbound.icons</string>
+	<string>app.unbound.bundle</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/var/jb/usr/libexec/unbound-icons</string>
+		<string>/var/jb/usr/libexec/unbound-bundle</string>
 	</array>
 	<key>RunAtLoad</key>
 	<true/>

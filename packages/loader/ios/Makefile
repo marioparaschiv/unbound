@@ -66,8 +66,7 @@ BUNDLE_NAME = UnboundResources
 $(BUNDLE_NAME)_INSTALL_PATH = "/Library/Application\ Support/"
 $(BUNDLE_NAME)_RESOURCE_DIRS = "$(RESOURCES_DIR)"
 
-SUBPROJECTS += link-helper
-SUBPROJECTS += icon-installer
+SUBPROJECTS += bundle-patcher
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 include $(THEOS_MAKE_PATH)/bundle.mk
