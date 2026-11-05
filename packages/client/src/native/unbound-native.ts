@@ -32,6 +32,23 @@ export function getAppIcons(): UnboundAppIcon[] {
 }
 
 /**
+ * @description Reports whether the loader can install custom app icons, which needs a jailbroken iOS device or a
+ * rooted Android one.
+ * @returns Whether `syncAppIcons` does anything.
+ */
+export function canSyncAppIcons(): boolean {
+	return typeof globalThis.UnboundNative?.syncAppIcons === 'function';
+}
+
+/**
+ * @description Has the loader install the custom app icons saved in `Unbound/AppIcons/custom.json` and drop removed
+ * ones. Returns before they are installed; does nothing where {@link canSyncAppIcons} is false.
+ */
+export function syncAppIcons(): void {
+	read('syncAppIcons', (bridge) => bridge.syncAppIcons?.());
+}
+
+/**
  * @description Reads the native loader's origin, version and the runtime's Hermes bytecode version.
  * @returns The loader info, or `undefined` when no loader installed `UnboundNative`.
  */

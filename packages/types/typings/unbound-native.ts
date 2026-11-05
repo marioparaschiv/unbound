@@ -209,6 +209,11 @@ export type UnboundNativeBridge = {
 	 * views take the applied theme's new colours. Missing on a loader from before it.
 	 */
 	rescanThemes?(): void;
+	/**
+	 * Installs the custom app icons saved in `Unbound/AppIcons/custom.json` and drops removed ones; `getAppIcons` lists
+	 * them once installed. Missing where the app cannot add icons, such as a sideloaded iOS install.
+	 */
+	syncAppIcons?(): void;
 	/** The font store; missing on a loader from before it. */
 	fonts?: UnboundNativeFonts;
 	/**

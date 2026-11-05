@@ -9,7 +9,7 @@ include $(THEOS)/makefiles/common.mk
 TOOL_NAME = unbound-bundle
 unbound-bundle_FILES = $(wildcard sources/*.m)
 unbound-bundle_CFLAGS = -fobjc-arc
-unbound-bundle_FRAMEWORKS = Foundation MobileCoreServices
+unbound-bundle_FRAMEWORKS = Foundation MobileCoreServices CoreGraphics ImageIO
 unbound-bundle_CODESIGN_FLAGS = -Sentitlements.plist
 unbound-bundle_INSTALL_PATH = /usr/libexec
 

@@ -85,13 +85,14 @@ static jsi::Function getter(jsi::Runtime &runtime, const char *name,
         });
 }
 
-static jsi::Function rescanFunction(jsi::Runtime &runtime, std::function<void()> rescan)
+static jsi::Function actionFunction(jsi::Runtime &runtime, const char *name,
+                                    std::function<void()> action)
 {
-    return native::makeFunction(runtime, "rescanThemes", 0,
-                                [rescan = std::move(rescan)](jsi::Runtime &, const jsi::Value &,
+    return native::makeFunction(runtime, name, 0,
+                                [action = std::move(action)](jsi::Runtime &, const jsi::Value &,
                                                              const jsi::Value *,
                                                              size_t) -> jsi::Value {
-                                    rescan();
+                                    action();
                                     return jsi::Value::undefined();
                                 });
 }
@@ -156,8 +157,15 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
                        getter(runtime, "getAppIcons", std::move(provider.getAppIcons), none));
     if (provider.rescanThemes)
     {
-        bridge.setProperty(runtime, "rescanThemes",
-                           rescanFunction(runtime, std::move(provider.rescanThemes)));
+        bridge.setProperty(
+            runtime, "rescanThemes",
+            actionFunction(runtime, "rescanThemes", std::move(provider.rescanThemes)));
+    }
+    if (provider.syncAppIcons)
+    {
+        bridge.setProperty(
+            runtime, "syncAppIcons",
+            actionFunction(runtime, "syncAppIcons", std::move(provider.syncAppIcons)));
     }
     if (provider.fonts)
     {

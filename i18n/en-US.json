@@ -342,5 +342,15 @@
 	"UNBOUND_COMMAND_PLUGINS_DESC": "Open the Unbound plugins settings",
 	"UNBOUND_COMMAND_THEMES_DESC": "Open the Unbound themes settings",
 	"UNBOUND_COMMAND_DEBUGGER_DESC": "Turn the WebSocket debugger on or off, or connect it to an address",
-	"UNBOUND_COMMAND_DEBUGGER_ADDRESS_DESC": "The bridge address, such as 192.168.1.2:9090"
+	"UNBOUND_COMMAND_DEBUGGER_ADDRESS_DESC": "The bridge address, such as 192.168.1.2:9090",
+	"UNBOUND_APP_ICON_CUSTOM": "Custom icons",
+	"UNBOUND_APP_ICON_ADD_TILE": "Add or remove custom icons",
+	"UNBOUND_APP_ICON_ADD": "Add an icon from Photos",
+	"UNBOUND_APP_ICON_NAME": "Icon name",
+	"UNBOUND_APP_ICON_NAME_EMPTY": "Give the icon a name.",
+	"UNBOUND_APP_ICON_REMOVE": "Remove {name}",
+	"UNBOUND_APP_ICON_INSTALLING": "Installing {name}…",
+	"UNBOUND_APP_ICON_ADDED": "Added {name} to your app icons.",
+	"UNBOUND_APP_ICON_REMOVED": "Removed {name}.",
+	"UNBOUND_APP_ICON_PENDING": "{name} is taking longer than usual; reopen the app icon picker in a moment."
 }

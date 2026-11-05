@@ -8,13 +8,26 @@
 	<array>
 		<string>/var/jb/usr/libexec/unbound-bundle</string>
 	</array>
+	<key>UserName</key>
+	<string>root</string>
 	<key>RunAtLoad</key>
 	<true/>
 	<key>WatchPaths</key>
 	<array>
 		<string>/var/containers/Bundle/Application</string>
 	</array>
+	<key>LaunchEvents</key>
+	<dict>
+		<key>com.apple.notifyd.matching</key>
+		<dict>
+			<key>app.unbound.bundle.sync</key>
+			<dict>
+				<key>Notification</key>
+				<string>app.unbound.bundle.sync</string>
+			</dict>
+		</dict>
+	</dict>
 	<key>ThrottleInterval</key>
-	<integer>10</integer>
+	<integer>2</integer>
 </dict>
 </plist>

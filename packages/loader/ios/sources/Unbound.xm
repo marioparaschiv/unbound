@@ -1,6 +1,7 @@
 #import "Unbound.h"
 
 #import <jsi/jsi.h>
+#import <notify.h>
 
 #import "AddonsCore.h"
 #import "CoreBridge.h"
@@ -157,11 +158,32 @@ public:
         return "";
     }
 
+    // Read from disk: the jailbreak bundle patcher adds custom icons while Discord runs, after
+    // `infoDictionary` was cached.
+    static NSDictionary *installedInfo()
+    {
+        NSString *path =
+            [NSBundle.mainBundle.bundlePath stringByAppendingPathComponent:@"Info.plist"];
+        return [NSDictionary dictionaryWithContentsOfFile:path]
+                   ?: NSBundle.mainBundle.infoDictionary;
+    }
+
+    static NSString *iconName(NSString *iconId, NSDictionary *names)
+    {
+        if ([iconId isEqualToString:@"UnboundIcon"])
+        {
+            return @"Unbound";
+        }
+        NSString *name = names[iconId];
+        return [name isKindOfClass:NSString.class] && name.length ? name : iconId;
+    }
+
     static nlohmann::json declaredUnboundIcons()
     {
-        nlohmann::json icons = nlohmann::json::array();
-        NSDictionary  *alternate =
-            NSBundle.mainBundle.infoDictionary[@"CFBundleIcons"][@"CFBundleAlternateIcons"];
+        nlohmann::json icons     = nlohmann::json::array();
+        NSDictionary  *info      = installedInfo();
+        NSDictionary  *alternate = info[@"CFBundleIcons"][@"CFBundleAlternateIcons"];
+        NSDictionary  *names     = info[@"UnboundIconNames"];
         for (NSString *iconId in [alternate.allKeys sortedArrayUsingSelector:@selector(compare:)])
         {
             if (![iconId hasPrefix:@"Unbound"])
@@ -173,11 +195,17 @@ public:
             {
                 continue;
             }
-            NSString *name = [iconId isEqualToString:@"UnboundIcon"] ? @"Unbound" : iconId;
-            icons.push_back(
-                {{"id", toStdString(iconId)}, {"name", toStdString(name)}, {"image", image}});
+            icons.push_back({{"id", toStdString(iconId)},
+                             {"name", toStdString(iconName(iconId, names))},
+                             {"image", image}});
         }
         return icons;
+    }
+
+    static BOOL canPatchBundle()
+    {
+        return
+            [NSFileManager.defaultManager fileExistsAtPath:@"/var/jb/usr/libexec/unbound-bundle"];
     }
 
     loader::UnboundNativeProvider unboundNativeProvider() override
@@ -190,6 +218,12 @@ public:
         provider.getAppIcons = [] {
             return declaredUnboundIcons();
         };
+        if (canPatchBundle())
+        {
+            provider.syncAppIcons = [] {
+                notify_post("app.unbound.bundle.sync");
+            };
+        }
         provider.rescanThemes = [] {
             [CoreBridge rescanThemes];
             dispatch_async(dispatch_get_main_queue(), ^{ [Themes refreshThemes]; });

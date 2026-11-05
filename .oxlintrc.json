@@ -79,6 +79,7 @@
 							"packages/client/src/updates",
 							"packages/client/src/sync",
 							"packages/client/src/account",
+							"packages/client/src/app-icons",
 							"packages/client/src/builtins",
 							"packages/client/src/debugger",
 							"packages/client/src/hot-refresh",
@@ -90,6 +91,7 @@
 						"deny": ["~/ui"],
 						"except": [
 							"packages/client/src/account/builtin.ts",
+							"packages/client/src/app-icons/builtin.ts",
 							"packages/client/src/assets/builtin.dev.ts",
 							"packages/client/src/commands/builtin.ts",
 							"packages/client/src/debugger/builtin.dev.ts",
@@ -128,6 +130,7 @@
 							"~/settings/builtin",
 							"~/sync/builtin",
 							"~/account/builtin",
+							"~/app-icons/builtin",
 							"~/themes/builtin",
 							"~/toasts/builtin",
 							"~/updates/builtin"
