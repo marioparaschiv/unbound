@@ -1,0 +1,21 @@
+{
+  "revision": "d7c5fa70",
+  "channel": "beta",
+  "buildTime": "2026-11-05T12:05:01.552Z",
+  "bytecodeVersions": [
+    98
+  ],
+  "nativeBridge": {
+    "api": "1.1.0",
+    "abi": "1.0.0"
+  },
+  "minLoaderVersion": "1.0.0",
+  "sha512": {
+    "devtools.98.bundle": "44960ffb006fcebf62a414584cf002bd3636529655ba7efd1a052794d8b8dd18d74e908902b5507fc97f7e283fa25f7eda66169ca6b0ef645a6487fa97483143",
+    "devtools.js": "3c566477654b701dc923e50faf2538eeae7bbc0c5c5bdef2fa7ec0cb441c6621bf7ab59f86fa3a5926c28f2039cc4dc8a1fe1cd47a07dbc48587a090a5d8be89",
+    "unbound-dev.98.bundle": "400bfc168f9eb883706382fe6158337feb1837a21288418ef9af373106a3812ea9e8a937d0beba716a227c92897ed29e123ce585f865241071fad96400f3d4a8",
+    "unbound-dev.js": "c70e4cca89c2ed39eb218f5632e53a6bf471a3eb5d1790b237def4c17aecd9c1117b16dbd4ac1281a1b2ef65e2c36e23c5e7572c956fba3b0018be0bf53258b2",
+    "unbound.98.bundle": "8f58d3bd93aba3b85cbd812efbfec57fd27f27d651e05c98eaf97bd792c08516b555669a71842364554cfec7f540f6faf8d58d355a8c7da534e9225f60527da1",
+    "unbound.js": "b1f8e8128e68b1471743aa01bb3c2aacdf3f4f9d08b187f960b68d3c69d23893c68969f5dae8dab2e920495c93c43ebae171f1b4455ee3579f0ae4274dbb4379"
+  }
+}

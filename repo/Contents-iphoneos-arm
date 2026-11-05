@@ -1,0 +1,18 @@
+.							    app.unbound.ios
+Application Support					    app.unbound.ios
+Applications						    app.unbound.ios
+DynamicLibraries					    app.unbound.ios
+Info.plist						    app.unbound.ios
+Library							    app.unbound.ios
+MobileSubstrate						    app.unbound.ios
+Unbound.dylib						    app.unbound.ios
+Unbound.plist						    app.unbound.ios
+UnboundLink						    app.unbound.ios
+UnboundLink.app						    app.unbound.ios
+UnboundResources.bundle					    app.unbound.ios
+browser-login.js					    app.unbound.ios
+catching-call.js					    app.unbound.ios
+jb							    app.unbound.ios
+native-failure-guard.js					    app.unbound.ios
+native-ui-scope-cache.js				    app.unbound.ios
+var							    app.unbound.ios
