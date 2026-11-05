@@ -128,6 +128,7 @@ jobs:
                   grep -qx "Version: $version" ios/control
                   unbound-tools release-pairing --ios-version 351.0 --android-code 351011 --output "$out/pairing"
                   grep -qx 'android_version=351.11' "$out/pairing"
+                  : > "$out/names"
                   GITHUB_OUTPUT="$out/names" unbound-tools release-names --release-version 351.0 --android-version 351.11
                   cat "$out/names"
                   unbound-tools sbom --version "$version" --commit "$GITHUB_SHA" --output "$out/sbom.spdx.json"
