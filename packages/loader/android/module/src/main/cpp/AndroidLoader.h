@@ -26,6 +26,7 @@ struct JavaCallbacks {
     jmethodID scheduleMain             = nullptr;
     jmethodID isMainThread             = nullptr;
     jmethodID isVerifiedBuild          = nullptr;
+    jmethodID installer                = nullptr;
     jmethodID javaGetClass             = nullptr;
     jmethodID javaClassName            = nullptr;
     jmethodID javaDescribe             = nullptr;
