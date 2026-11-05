@@ -1,3 +1,6 @@
 #!/bin/sh
 uicache -p /var/jb/Applications/UnboundLink.app || true
+/var/jb/usr/libexec/unbound-icons || true
+launchctl unload /var/jb/Library/LaunchDaemons/app.unbound.icons.plist 2>/dev/null || true
+launchctl load /var/jb/Library/LaunchDaemons/app.unbound.icons.plist || true
 exit 0
