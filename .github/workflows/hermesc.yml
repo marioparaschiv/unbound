@@ -87,7 +87,7 @@ jobs:
         needs: check
         if: needs.check.outputs.should_build == 'true'
         runs-on: windows-2022
-        timeout-minutes: 90
+        timeout-minutes: 60
         steps:
             - name: Setup sccache
               uses: hendrikmuhs/ccache-action@f09c25b45002a07be2955cbe52e8cee55643f89d
