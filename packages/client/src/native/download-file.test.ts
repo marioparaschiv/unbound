@@ -18,8 +18,6 @@ function bridge(downloads: [string, string][]): UnboundNativeBridge {
 		getLoader: () => ({ origin: 'test', version: '2.0.0', bytecodeVersion: 96 }),
 		getPlugins: () => [],
 		getThemes: () => [],
-		getFonts: () => [],
-		getAvailableFonts: () => [],
 		getSha256: () => '',
 		downloadFile: async (url, path) => {
 			downloads.push([url, path]);

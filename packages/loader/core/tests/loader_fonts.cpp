@@ -90,13 +90,6 @@ int main()
         assert(loader::fontFullName(arial) == std::optional<std::string>("Arial"));
     }
 
-    nlohmann::json overrides = {{"*", "Ginto"}, {"Whitney", "Arial"}};
-    assert(loader::fontOverrideFor(overrides, "Whitney") == std::optional<std::string>("Ginto"));
-    overrides.erase("*");
-    assert(loader::fontOverrideFor(overrides, "Whitney") == std::optional<std::string>("Arial"));
-    assert(!loader::fontOverrideFor(overrides, "Other"));
-    assert(!loader::fontOverrideFor(nlohmann::json::array(), "Whitney"));
-
     const auto directory = std::filesystem::temp_directory_path() / "loader-fonts-test";
     std::filesystem::create_directories(directory);
     const auto first  = (directory / "Parity-Bold.ttf").string();
@@ -122,9 +115,6 @@ int main()
     nlohmann::json entry = loader::fontEntry(named, "app");
     assert(entry["name"] == "ggsans-Bold" && entry["displayName"] == "gg sans Bold" &&
            entry["family"] == "gg sans");
-    assert(loader::resolveFontTarget(nlohmann::json::array(), nlohmann::json::array({entry}),
-                                     "gg sans Bold")
-               ->name == "ggsans-Bold");
 
     nlohmann::json fromData =
         loader::fontEntryFromData(syntheticFont("gg sans Bold", "ggsans-Bold", "gg sans"),
@@ -137,21 +127,7 @@ int main()
     nlohmann::json catalog = loader::fontCatalog(nlohmann::json::array({entry}),
                                                  nlohmann::json::array({entry, "Helvetica"}));
     assert(catalog.size() == 2 && catalog[1]["name"] == "Helvetica");
-    assert(loader::fontNamesOf(catalog) == nlohmann::json::array({"ggsans-Bold", "Helvetica"}));
-
-    nlohmann::json custom =
-        nlohmann::json::array({{{"name", "Ginto"}, {"path", "/fonts/Ginto.otf"}}});
-    auto ginto = loader::resolveFontTarget(custom, system, "Ginto");
-    assert(ginto && ginto->path == std::optional<std::string>("/fonts/Ginto.otf"));
-    auto parity = loader::resolveFontTarget(custom, system, "Parity Sans Bold");
-    assert(parity && parity->path == std::optional<std::string>(second));
-    auto family = loader::resolveFontTarget(custom, nlohmann::json::array({"Helvetica Neue"}),
-                                            "Helvetica Neue");
-    assert(family && family->name == "Helvetica Neue" && !family->path);
-    assert(!loader::resolveFontTarget(custom, system, "Missing"));
-    assert(!loader::resolveFontTarget(custom, system, ""));
-    assert(loader::fontUnavailableMessage("Whitney", "Missing") ==
-           "Failed to replace \"Whitney\" with \"Missing\". The requested font isn't loaded.");
+    assert(catalog[0]["name"] == "ggsans-Bold" && catalog[1]["source"] == "system");
 
     std::filesystem::remove_all(directory);
     return 0;

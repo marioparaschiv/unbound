@@ -79,7 +79,8 @@ target_compile_options(unbound_bearssl PRIVATE -fvisibility=hidden)
 file(GLOB UNBOUND_CORE_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp)
 list(APPEND UNBOUND_CORE_SOURCES
     ${UNBOUND_VENDOR_DIR}/monocypher/monocypher.c
-    ${UNBOUND_VENDOR_DIR}/monocypher/monocypher-ed25519.c)
+    ${UNBOUND_VENDOR_DIR}/monocypher/monocypher-ed25519.c
+    ${UNBOUND_VENDOR_DIR}/miniz/miniz_unbound.c)
 if(UNBOUND_CORE_BUNDLE_JSI)
     list(APPEND UNBOUND_CORE_SOURCES ${UNBOUND_VENDOR_DIR}/react/jsi/jsi.cpp)
 endif()
@@ -139,6 +140,10 @@ if(UNBOUND_CORE_FUZZ)
     target_link_libraries(native_bridge_libfuzzer PRIVATE unbound_core)
     target_compile_options(native_bridge_libfuzzer PRIVATE -fsanitize=fuzzer,address,undefined)
     target_link_options(native_bridge_libfuzzer PRIVATE -fsanitize=fuzzer,address,undefined)
+    add_executable(font_files_libfuzzer ${CMAKE_CURRENT_LIST_DIR}/tests/fuzz/font_files_libfuzzer.cpp)
+    target_link_libraries(font_files_libfuzzer PRIVATE unbound_core)
+    target_compile_options(font_files_libfuzzer PRIVATE -fsanitize=fuzzer,address,undefined)
+    target_link_options(font_files_libfuzzer PRIVATE -fsanitize=fuzzer,address,undefined)
 endif()
 
 if(UNBOUND_CORE_JSI_FUZZ)

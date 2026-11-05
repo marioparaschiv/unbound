@@ -171,8 +171,6 @@ export function installUnboundNative(plugins: UnboundPluginBundle[], bytecodeVer
 		getLoader: () => ({ origin: 'test', version: '1.0.0', bytecodeVersion }),
 		getPlugins: () => plugins,
 		getThemes: () => [],
-		getFonts: () => [],
-		getAvailableFonts: () => [],
 		getSha256: (text) => sha256(text),
 		downloadFile: async () => undefined,
 	};

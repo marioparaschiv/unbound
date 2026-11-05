@@ -44,8 +44,17 @@ object Fonts {
         else -> Source.File(path)
     }
 
+    /**
+     * Drops every cached lookup and typeface, React Native's included: its font manager outlives a
+     * JS reload, so without this the restart the client offers would keep the old fonts.
+     */
+    fun changed() {
+        resolutions.clear()
+        typefaces.clear()
+        ReactFontCache.clear()
+    }
+
     fun install(xposed: XposedInterface, classLoader: ClassLoader) {
-        SettingsWatcher.onChange { resolutions.clear() }
         val manager = FONT_MANAGER.find(classLoader)
         if (manager == null) {
             hookTypefaces(xposed)
@@ -76,6 +85,7 @@ object Fonts {
             .setExceptionMode(ExceptionMode.PROTECTIVE)
             .intercept { chain ->
                 val font = assetFont(chain.getArg(1) as String) ?: return@intercept chain.proceed()
+                ReactFontCache.discover()
                 val replacement = guarded { resolve(font.family, chain.getArg(0) as AssetManager) }
                     ?: return@intercept chain.proceed()
                 styled(replacement, font.style)
@@ -102,6 +112,7 @@ object Fonts {
             .setExceptionMode(ExceptionMode.PROTECTIVE)
             .intercept { chain ->
                 val font = assetFont(chain.getArg(1) as String)
+                if (font != null) ReactFontCache.discover()
                 pendingFallback.set(
                     font?.let { found ->
                         guarded { resolve(found.family, chain.getArg(0) as AssetManager) }?.let { styled(it, found.style) }

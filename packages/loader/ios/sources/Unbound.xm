@@ -1,6 +1,5 @@
 #import "Unbound.h"
 
-#import <CoreText/CoreText.h>
 #import <jsi/jsi.h>
 
 #import "AddonsCore.h"
@@ -11,7 +10,6 @@
 #include "LoaderBootstrap.h"
 #include "LoaderBrowserLogin.h"
 #include "LoaderDiagnostics.h"
-#include "LoaderFonts.h"
 #import "LoaderJSI.h"
 #import "LoaderPipeline.h"
 #import "LoaderShared.h"
@@ -27,21 +25,6 @@ using unbound::ios::toStdString;
 using namespace facebook;
 
 #pragma mark - Pre/post bundle injection
-
-static nlohmann::json platformFontNames(void)
-{
-    NSArray *available = CFBridgingRelease(CTFontManagerCopyAvailablePostScriptNames());
-    std::vector<std::string> names;
-    names.reserve(available.count);
-    for (id name in available)
-    {
-        if ([name isKindOfClass:[NSString class]])
-        {
-            names.push_back(toStdString(name));
-        }
-    }
-    return loader::platformFontNames(std::move(names), UnboundAddonState().fonts());
-}
 
 static jsi::Runtime *gRuntime  = nullptr;
 static __weak id     gInstance = nil;
@@ -159,7 +142,7 @@ public:
     loader::UnboundNativeProvider unboundNativeProvider() override
     {
         return loader::makeUnboundNativeProvider(
-            UnboundAddonState(), platformFontNames, toStdString([Utilities getCurrentDylibName]),
+            UnboundAddonState(), UnboundFonts(), toStdString([Utilities getCurrentDylibName]),
             runtimeBytecodeVersion(), toStdString(FileSystem.documents), UnboundDownload);
     }
 

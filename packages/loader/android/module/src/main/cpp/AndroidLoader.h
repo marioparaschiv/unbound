@@ -12,6 +12,7 @@
 
 #include "DeadlineTimer.h"
 #include "LoaderAddons.h"
+#include "LoaderFontService.h"
 #include "LoaderHotReload.h"
 #include "LoaderPipeline.h"
 #include "LoaderSettings.h"
@@ -65,6 +66,7 @@ struct JavaCallbacks {
     jmethodID appFontBytes             = nullptr;
     jmethodID alert                    = nullptr;
     jmethodID onBundleExecuted         = nullptr;
+    jmethodID fontsChanged             = nullptr;
 };
 
 struct LoaderConfiguration {
@@ -125,7 +127,7 @@ private:
                                download(const std::string &url, const std::string &destination,
                                         const std::map<std::string, std::string> &headers,
                                         const loader::DownloadPolicy             &policy);
-    nlohmann::json             availableFonts();
+    void                       openFonts();
     const nlohmann::json      &systemFonts();
     nlohmann::json             appFonts();
     nlohmann::json             fontCatalog();
@@ -141,12 +143,13 @@ private:
     loader::native::NativeWorkQueue<std::function<void(facebook::jsi::Runtime &)>> runtimeQueue_;
     std::mutex                                                                     mainQueueMutex_;
     std::deque<std::function<void()>>                                              mainQueue_;
-    bool                          mainDrainScheduled_ = false;
-    std::atomic<bool>             schedulerDrainLive_ = false;
-    DeadlineTimer                 timer_;
-    loader::AddonState            addons_;
-    std::mutex                    systemFontsMutex_;
-    std::optional<nlohmann::json> systemFonts_;
+    bool                                        mainDrainScheduled_ = false;
+    std::atomic<bool>                           schedulerDrainLive_ = false;
+    DeadlineTimer                               timer_;
+    loader::AddonState                          addons_;
+    std::shared_ptr<loader::fonts::FontService> fonts_;
+    std::mutex                                  systemFontsMutex_;
+    std::optional<nlohmann::json>               systemFonts_;
 };
 
 std::shared_ptr<AndroidLoader> currentLoader();

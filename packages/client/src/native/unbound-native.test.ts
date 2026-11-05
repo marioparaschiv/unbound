@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import sha256 from '@unbound-app/utils/sha256';
 
-import { getAvailableFonts, getFonts, getLoader, getPlugins, getSha256 } from './unbound-native';
+import { getLoader, getNativeFonts, getPlugins, getSha256 } from './unbound-native';
 
 afterEach(() => {
 	globalThis.UnboundNative = undefined;
@@ -11,7 +11,7 @@ describe('UnboundNative', () => {
 	test('reads nothing without a loader', () => {
 		expect(getLoader()).toBeUndefined();
 		expect(getPlugins()).toEqual([]);
-		expect(getAvailableFonts()).toEqual([]);
+		expect(getNativeFonts()).toBeUndefined();
 	});
 
 	test('reads the bridge installed after import', () => {
@@ -19,15 +19,13 @@ describe('UnboundNative', () => {
 			getLoader: () => ({ origin: 'test', version: '2.0.0', bytecodeVersion: 96 }),
 			getPlugins: () => [],
 			getThemes: () => [],
-			getFonts: () => [{ name: 'Inter', file: 'Inter.ttf', path: '/Fonts/Inter.ttf' }],
-			getAvailableFonts: () => ['System'],
 			getSha256: () => 'native',
 			downloadFile: async () => undefined,
 		};
 
 		expect(getLoader()?.bytecodeVersion).toBe(96);
-		expect(getFonts()[0]?.name).toBe('Inter');
-		expect(getAvailableFonts()).toEqual(['System']);
+		// A loader from before the font store has no `fonts`; the UI asks for an update.
+		expect(getNativeFonts()).toBeUndefined();
 	});
 
 	test('a throwing getter reads as empty', () => {
@@ -39,8 +37,6 @@ describe('UnboundNative', () => {
 				throw new Error('native failure');
 			},
 			getThemes: () => [],
-			getFonts: () => [],
-			getAvailableFonts: () => [],
 			getSha256: () => {
 				throw new Error('native failure');
 			},
@@ -61,8 +57,6 @@ describe('UnboundNative', () => {
 			getLoader: () => ({ origin: 'test', version: '2.0.0', bytecodeVersion: 96 }),
 			getPlugins: () => [],
 			getThemes: () => [],
-			getFonts: () => [],
-			getAvailableFonts: () => [],
 			getSha256: (text) => `native:${text}`,
 			downloadFile: async () => undefined,
 		};

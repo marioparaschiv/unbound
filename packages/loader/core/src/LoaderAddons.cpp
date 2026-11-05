@@ -7,7 +7,6 @@
 #include "LoaderBundleSignature.h"
 #include "LoaderDigestCache.h"
 #include "LoaderFiles.h"
-#include "LoaderFonts.h"
 #include "LoaderJSON.h"
 #include "LoaderLog.h"
 #include "LoaderThemes.h"
@@ -320,30 +319,10 @@ nlohmann::json scanThemes(const std::string &documents)
     return themes;
 }
 
-nlohmann::json scanFonts(const std::string &documents)
-{
-    nlohmann::json fonts = nlohmann::json::array();
-
-    scanAddonDirectory(documents, "Fonts", "fonts",
-                       [&](const std::string &file, const std::string &path) {
-                           if (isDirectory(path))
-                           {
-                               return;
-                           }
-
-                           nlohmann::json entry = fontEntry(path, "custom");
-                           entry["file"]        = file;
-                           log(LogLevel::Info, LOG_CATEGORY_FONTS, "Registering font: " + path);
-                           fonts.push_back(std::move(entry));
-                       });
-
-    return fonts;
-}
-
 AddonState::Scanned AddonState::scanAll(const std::string &documents, uint32_t bytecodeVersion)
 {
     return {documents, bytecodeVersion, scanPlugins(documents, bytecodeVersion),
-            scanThemes(documents), scanFonts(documents)};
+            scanThemes(documents)};
 }
 
 void AddonState::prescan(const std::string &documents, uint32_t bytecodeVersion)
@@ -379,7 +358,6 @@ bool AddonState::adoptPrescan(const std::string &documents, uint32_t bytecodeVer
     std::lock_guard<std::mutex> lock(mutex_);
     plugins_ = scanned.plugins;
     themes_  = scanned.themes;
-    fonts_   = scanned.fonts;
     return true;
 }
 
@@ -394,7 +372,6 @@ void AddonState::scan(const std::string &documents, uint32_t bytecodeVersion)
     std::lock_guard<std::mutex> lock(mutex_);
     plugins_ = std::move(scanned.plugins);
     themes_  = std::move(scanned.themes);
-    fonts_   = std::move(scanned.fonts);
 }
 
 nlohmann::json AddonState::plugins() const
@@ -407,12 +384,6 @@ nlohmann::json AddonState::themes() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
     return themes_;
-}
-
-nlohmann::json AddonState::fonts() const
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    return fonts_;
 }
 
 std::optional<nlohmann::json> AddonState::theme(const std::string &id) const

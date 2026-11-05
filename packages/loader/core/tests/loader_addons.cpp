@@ -178,29 +178,16 @@ int main()
     assert(themes[0]["manifest"]["path"] == (root / "Themes" / "dark").string());
     assert(themes[0]["bundle"] == R"({"semantic":{}})");
 
-    write(root / "Fonts" / "Inter.ttf", "font");
-    nlohmann::json fonts = loader::scanFonts(root.string());
-    assert(fonts.size() == 1);
-    assert(fonts[0]["name"] == "Inter");
-    assert(fonts[0]["displayName"] == "Inter");
-    assert(fonts[0]["source"] == "custom");
-    assert(fonts[0]["file"] == "Inter.ttf");
-
     loader::AddonState addons;
     assert(addons.plugins().empty() && !addons.theme("t.dark"));
     addons.scan(root.string());
-    assert(addons.plugins().size() == 1 && addons.themes().size() == 1 &&
-           addons.fonts().size() == 1);
+    assert(addons.plugins().size() == 1 && addons.themes().size() == 1);
     assert(addons.theme("t.dark") && (*addons.theme("t.dark"))["manifest"]["id"] == "t.dark");
     assert((*addons.theme("t.dark"))["bundle"] == nlohmann::json::parse(R"({"semantic":{}})"));
     assert(!addons.theme("t.none"));
 
     loader::UnboundNativeProvider provider = loader::makeUnboundNativeProvider(
-        addons,
-        [] {
-            return nlohmann::json::array({"Ginto"});
-        },
-        "Unbound.dylib", 98, root.string(),
+        addons, nullptr, "Unbound.dylib", 98, root.string(),
         [](const std::string &url, const std::string &destination,
            const std::map<std::string, std::string> &,
            const loader::DownloadPolicy &) -> std::optional<loader::DownloadResult> {
@@ -246,8 +233,7 @@ int main()
     assert(!provider.getLoader().contains("requiredVersion"));
     assert(provider.getPlugins()[0]["manifest"]["id"] == "a.good");
     assert(provider.getThemes()[0]["bundle"] == R"({"semantic":{}})");
-    assert(provider.getFonts()[0]["name"] == "Inter");
-    assert(provider.getAvailableFonts() == nlohmann::json::array({"Ginto"}));
+    assert(!provider.fonts);
 
     std::filesystem::remove_all(root);
     return 0;

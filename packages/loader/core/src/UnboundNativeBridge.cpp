@@ -12,6 +12,7 @@
 #include "LoaderVersion.h"
 #include "NativePlatformBridge.h"
 #include "NativePluginRuntime.h"
+#include "UnboundNativeFonts.h"
 
 namespace loader {
 namespace jsi = facebook::jsi;
@@ -40,8 +41,8 @@ static void downloadInside(const std::string &documents, const FileDownloader &d
     }
 }
 
-UnboundNativeProvider makeUnboundNativeProvider(const AddonState               &addons,
-                                                std::function<nlohmann::json()> availableFonts,
+UnboundNativeProvider makeUnboundNativeProvider(const AddonState                   &addons,
+                                                std::shared_ptr<fonts::FontService> fonts,
                                                 std::string origin, uint32_t bytecodeVersion,
                                                 std::string documents, FileDownloader download)
 {
@@ -62,10 +63,7 @@ UnboundNativeProvider makeUnboundNativeProvider(const AddonState               &
     provider.getThemes = [&addons] {
         return addons.themes();
     };
-    provider.getFonts = [&addons] {
-        return addons.fonts();
-    };
-    provider.getAvailableFonts = std::move(availableFonts);
+    provider.fonts = std::move(fonts);
     if (!documents.empty() && download)
     {
         provider.downloadFile = [documents = std::move(documents), download = std::move(download)](
@@ -85,22 +83,6 @@ static jsi::Function getter(jsi::Runtime &runtime, const char *name,
             jsi::Runtime &rt, const jsi::Value &, const jsi::Value *, size_t) -> jsi::Value {
             return toJSIValue(rt, read ? read() : fallback);
         });
-}
-
-static std::function<nlohmann::json()> cachedOnce(std::function<nlohmann::json()> read)
-{
-    if (!read)
-    {
-        return read;
-    }
-    auto cache = std::make_shared<std::optional<nlohmann::json>>();
-    return [read = std::move(read), cache] {
-        if (!*cache)
-        {
-            *cache = read();
-        }
-        return **cache;
-    };
 }
 
 static jsi::Function sha256Function(jsi::Runtime &runtime)
@@ -159,11 +141,10 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
                        getter(runtime, "getPlugins", std::move(provider.getPlugins), none));
     bridge.setProperty(runtime, "getThemes",
                        getter(runtime, "getThemes", std::move(provider.getThemes), none));
-    bridge.setProperty(runtime, "getFonts",
-                       getter(runtime, "getFonts", std::move(provider.getFonts), none));
-    bridge.setProperty(runtime, "getAvailableFonts",
-                       getter(runtime, "getAvailableFonts",
-                              cachedOnce(std::move(provider.getAvailableFonts)), none));
+    if (provider.fonts)
+    {
+        bridge.setProperty(runtime, "fonts", makeFontsBridge(runtime, std::move(provider.fonts)));
+    }
     bridge.setProperty(runtime, "getSha256", sha256Function(runtime));
     bridge.setProperty(runtime, "downloadFile",
                        downloadFunction(runtime, std::move(provider.downloadFile)));

@@ -51,6 +51,18 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_SETTING_NOT_A_MULTIPLE: { step: string | number };
 		UNBOUND_SETTING_ACTION_FAILED: { name: string | number };
 		UNBOUND_SETTING_TOO_SHORT: { minLength: number };
+		UNBOUND_FONTS_INSTALL_COUNT: { count: number };
+		UNBOUND_FONTS_VARIANT: { weight: string | number };
+		UNBOUND_FONTS_VARIANT_ITALIC: { weight: string | number };
+		UNBOUND_FONTS_STYLES: { count: number };
+		UNBOUND_FONTS_INSTALLED_TOAST: { count: number; family: string | number };
+		UNBOUND_FONTS_REMOVE_CONFIRM: { family: string | number };
+		UNBOUND_FONTS_PRESET_SAVED: { name: string | number };
+		UNBOUND_FONTS_PRESET_COPIED: { name: string | number };
+		UNBOUND_FONTS_PRESET_COPIED_DROPPED: { name: string | number; families: string | number };
+		UNBOUND_FONTS_PRESET_APPLIED: { name: string | number };
+		UNBOUND_FONTS_PRESET_APPLIED_PARTIAL: { name: string | number; unavailable: string | number; skipped: string | number };
+		UNBOUND_FONTS_PRESET_FONTS: { count: number };
 		UNBOUND_FFI_CONSENT_BODY: { name: string | number };
 		UNBOUND_SHARE_PICK: { count: number };
 		UNBOUND_SHARE_ADDED: { count: number; destination: string | number };

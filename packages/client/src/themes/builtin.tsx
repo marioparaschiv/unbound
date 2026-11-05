@@ -6,6 +6,7 @@ import { byFilePath, byFluxStore, byProps } from '~/metro/filters';
 import { clearGuardUnderlay } from '~/themes/clear-guard-underlay';
 import { resolveChatBackground } from '~/themes/chat-background';
 import { resolveThemeColor, withOpacity } from '~/themes/colors';
+import FontGroupPage from '~/ui/settings/design/font-group-page';
 import { clearDMGreeting } from '~/themes/clear-dm-greeting';
 import { createPatcher } from '~/patcher/create-patcher';
 import type { SectionEntry } from '~/settings/section';
@@ -283,4 +284,12 @@ export const designSection: SectionEntry = {
 	icon: 'PaintPaletteIcon',
 };
 
-export default { start, stop, designSection };
+/** One font group's page, opened from the Fonts tab; its title is the group. */
+export const fontGroupSection: SectionEntry = {
+	key: Screens.FontGroup,
+	titleKey: 'UNBOUND_FONTS',
+	component: FontGroupPage,
+	hidden: true,
+};
+
+export default { start, stop, designSection, fontGroupSection };

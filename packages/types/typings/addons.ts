@@ -6,6 +6,7 @@ import type {
 	NativePluginPlatform,
 	PluginContext,
 } from './native';
+import type { UnboundInstalledFont } from './unbound-native';
 
 /** The kinds of addon, as a manifest's `type` declares them. One manager governs each, in this start order. */
 export const ADDON_KINDS = ['plugin', 'theme', 'icon-pack', 'font'] as const;
@@ -236,15 +237,5 @@ export type IconPack = {
 	manifest: IconPackManifest;
 };
 
-/** A custom font the native loader has registered, as `UnboundNative.getFonts()` returns it. */
-export type FontDescriptor = {
-	/** The font's PostScript name, else its full name, else its file name without extension; the Fonts manager keys by it. */
-	name: string;
-	/** The font's file name in Unbound's `Fonts` directory. */
-	file: string;
-	/** The absolute path to the font file on the device. */
-	path: string;
-};
-
-/** A font managed by the Fonts manager: currently identical to its {@link FontDescriptor}. */
-export type FontEntity = FontDescriptor;
+/** A font face managed by the Fonts manager, as `UnboundNative.fonts.list()` returns it. */
+export type FontEntity = UnboundInstalledFont;

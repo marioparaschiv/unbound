@@ -21,6 +21,7 @@ const API_ERROR_STATUS: Record<ApiErrorCode, number> = {
 	github_not_linked: 403,
 	github_no_push_access: 403,
 	github_unavailable: 502,
+	font_source_unavailable: 502,
 	repository_not_found: 404,
 	ref_not_found: 404,
 	source_changed: 409,

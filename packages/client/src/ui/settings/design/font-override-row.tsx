@@ -1,42 +1,32 @@
 import { memo } from 'react';
 
-import { useUnboundSettings } from '~/settings/unbound';
 import { Discord } from '~/metro/components';
-import { findByProps } from '~/metro/search';
-import { Manager } from '~/addons/manager';
+import { Screens } from '~/core/constants';
 import { format } from '~/i18n/api';
 
-import FontPickerSheet from './font-picker-sheet';
+import useFonts from './use-fonts';
 
 type FontOverrideRowProps = {
 	group: string;
-	families: string[];
 };
 
 /**
- * @description One font override target row. Shows the target group and its current override (or the
- * default), and opens the picker on press. Reads its override from the Fonts manager.
+ * @description One Discord font group, such as PRIMARY, with the installed families its weights use,
+ * or Default. Pressing it opens the group's page, which sets every family of the group at once.
  */
-function FontOverrideRow({ group, families }: FontOverrideRowProps) {
-	const fonts = Manager.for('font');
+function FontOverrideRow({ group }: FontOverrideRowProps) {
+	const fonts = useFonts();
+	const navigation = Discord.useNavigation();
+	const current = fonts.getGroupFamilies(group).join(', ') || format('UNBOUND_DEFAULT');
 
-	useUnboundSettings(({ key }) => key === 'font-states');
-	const overrides = fonts.getOverrides();
-	const current =
-		families.map((family) => overrides[family]).find(Boolean) ?? format('UNBOUND_DEFAULT');
-
-	function open() {
-		const family = families[0];
-		const sheets = findByProps('openLazy', 'hideActionSheet');
-		const key = `unbound-font-picker-${family}`;
-
-		sheets.openLazy(Promise.resolve({ default: FontPickerSheet }), key, {
-			family,
-			onClose: () => sheets.hideActionSheet(key),
-		});
-	}
-
-	return <Discord.TableRow label={group} subLabel={current} arrow onPress={open} />;
+	return (
+		<Discord.TableRow
+			label={group}
+			trailing={<Discord.TableRow.TrailingText text={current} />}
+			arrow
+			onPress={() => navigation.push(Screens.FontGroup, { group })}
+		/>
+	);
 }
 
 export default memo(FontOverrideRow);

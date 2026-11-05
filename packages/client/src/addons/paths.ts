@@ -1,8 +1,5 @@
 import { isAddonId, isAddonMain } from '@unbound-app/contracts/manifest-patterns';
 
-const FONT_EXTENSION = /\.(?:ttf|otf|ttc|woff2?)$/i;
-const FONT_NAME_UNSAFE = /[^\w .()-]+/g;
-
 /**
  * @description Names the bundle compiled to Hermes bytecode beside a source bundle, as the loader looks it up.
  * @param path The source bundle's path or URL, such as `dist/index.js`.
@@ -69,28 +66,4 @@ export function safeRelativePath(path: string): string | undefined {
 	}
 
 	return path;
-}
-
-/**
- * @description Names an installed font file after its URL, keeping only characters that are safe in a file name.
- * @param url The font's URL.
- * @param fallback The name to use when the URL has none.
- * @returns A file name with no path separators that does not start with a dot.
- */
-export function safeFontFileName(url: string, fallback: string): string {
-	const last = url.split(/[?#]/)[0]?.split('/').pop() ?? '';
-	let decoded = last;
-
-	try {
-		decoded = decodeURIComponent(last);
-	} catch {
-		decoded = last;
-	}
-
-	const cleaned = decoded
-		.replaceAll(FONT_NAME_UNSAFE, '-')
-		.replace(/^[.\s-]+/, '')
-		.slice(0, 120);
-
-	return cleaned && FONT_EXTENSION.test(cleaned) ? cleaned : fallback;
 }

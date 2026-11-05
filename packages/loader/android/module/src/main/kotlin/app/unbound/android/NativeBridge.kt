@@ -361,4 +361,10 @@ object NativeBridge {
     fun onBundleExecuted() {
         Logger.info(LogCategory.DEFAULT, "Bundle executed.")
     }
+
+    /** Called by the font store after each write, from the thread that wrote. */
+    @JvmStatic
+    fun fontsChanged() {
+        Fonts.changed()
+    }
 }
