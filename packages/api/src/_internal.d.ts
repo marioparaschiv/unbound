@@ -39,6 +39,8 @@ export declare const ADDON_SCOPE_GLOBALS: readonly [
 export declare const CORE_SETTINGS_STORE = 'unbound';
 /** The components of Discord's design module, each of which Unbound can stand in for when Discord drops it. */
 export declare const DESIGN_COMPONENTS: readonly [
+	'SearchBar',
+	'Badge',
 	'Text',
 	'Heading',
 	'TableRow',
@@ -213,6 +215,8 @@ export declare const NATIVE_PLUGIN_PLATFORM_CAPABILITIES: {
 		'native.runtime.events',
 	];
 };
+/** The design components Discord added after the build the generated types describe; see {@link NewerDesignComponents}. */
+export declare const NEWER_DESIGN_COMPONENTS: readonly ['SearchBar', 'Badge'];
 /**
  * Props of `AIGlyphText` (function). Exports: AIGlyphText.
  * @see design/visual-identities/ai/AIGlyphText.native.tsx
@@ -678,6 +682,33 @@ export type BackgroundBlurViewComponentProps = Omit<
 	ref?: React$1.Ref<any>;
 	style?: React$1.ComponentProps<typeof RN.View>['style'];
 };
+/** The props of Discord's `Badge`, read from Discord 352's `design/components/Badge/native/Badge.native.tsx`. */
+export type BadgeProps = {
+	/** A built-in label, or `{ text }` for custom text. */
+	type:
+		| 'new'
+		| 'beta'
+		| 'early_access'
+		| 'free_trial'
+		| {
+				text: string;
+		  };
+	variant?: BadgeVariant;
+	/** A leading icon component, such as `StarIcon`, drawn at `xxs`. */
+	icon?: React$1.ComponentType<DiscordIconProps>;
+};
+/** The colours of Discord's `Badge`; with none, it is grey. `primary` is the brand colour. */
+export type BadgeVariant =
+	| 'primary'
+	| 'secondary'
+	| 'expressive'
+	| 'premium'
+	| 'inverted'
+	| 'notification'
+	| 'rarity-common'
+	| 'rarity-rare'
+	| 'rarity-epic'
+	| 'rarity-mythic';
 /**
  * Props of `BaseIconButton` (function). Exports: BaseIconButton.
  * @see design/components/Button/native/BaseIconButton.native.tsx
@@ -1308,7 +1339,7 @@ export type DesignComponentName = (typeof DESIGN_COMPONENTS)[number];
  * Every component the `design/native.tsx` barrel exports, typed by `bun run generate-discord-types` and made
  * {@link LooseModule | loose}: known props optional and checked where concrete, unknown props allowed.
  */
-export type DesignComponents = LooseModule<DesignBarrelComponents>;
+export type DesignComponents = LooseModule<DesignBarrelComponents & NewerDesignComponents>;
 /** The design module's non-component exports (hooks, functions, constants), which the generator does not type. */
 export type DesignHelpers = {
 	/** Discord's theme-aware style factory; see {@link CreateStyles}. */
@@ -4944,6 +4975,16 @@ export type NewInlineNoticeProps = {
 	title?: DesignTextProps['children'];
 	type?: 'info' | 'warning' | (string & {});
 };
+/**
+ * Design components newer than the Discord build the generated types describe, typed by hand from Discord 352's
+ * sources. Regenerating the types from 352 or later makes these generated; then drop them here.
+ */
+export type NewerDesignComponents = {
+	/** Discord's search field: a `TextField` with a search icon, clear button and search return key. */
+	SearchBar: DesignBarrelComponents['TextField'];
+	/** Discord's status label, such as New or Beta, or custom text. */
+	Badge: React$1.ComponentType<BadgeProps>;
+};
 export type NitroGem12LottieComponent = React$1.ComponentType<
 	NitroGem12LottieProps & Record<string, unknown>
 >;
@@ -6211,9 +6252,9 @@ export type Theme = {
 	semantic: Record<PropertyKey, ThemeSemanticColor>;
 	/** Overrides for Discord's raw palette colours, keyed by raw colour name. */
 	raw: Record<PropertyKey, string>;
-	/** The Discord base theme the bundle declares; parsed as `darker` when absent or unknown. */
-	type: 'midnight' | 'darker' | 'light';
-	/** A background image by `url`, with optional `blur` and `opacity`; dropped when `url` is not a string. */
+	/** The Discord base theme the bundle builds on: `light`, `dark` (Ash), `darker` (Dark) or `midnight` (Onyx); parsed as `darker` when absent or unknown. */
+	type: 'light' | 'dark' | 'darker' | 'midnight';
+	/** The chat background the theme recommends: an image `url`, a `blur` radius and an `opacity` from 0 to 1; dropped when `url` is not a string. */
 	background?: {
 		blur?: number;
 		opacity?: number;

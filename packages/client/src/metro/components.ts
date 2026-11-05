@@ -27,6 +27,8 @@ export { DESIGN_COMPONENTS } from '@unbound-app/types/components';
 export const BackdropFilters = findByPropsLazy('BackgroundBlurFill');
 /** Discord's safe area components, with `SafeAreaPaddingView`; found on first access. */
 export const SafeArea = findByPropsLazy('SafeAreaPaddingView');
+/** `react-native-safe-area-context`, with `useSafeAreaInsets`; found on first access. */
+export const SafeAreaContext = findByPropsLazy('useSafeAreaInsets');
 /** Discord's portal components, `Portal` and `PortalHost`, for rendering outside the tree; found on first access. */
 export const Portal = findByPropsLazy('PortalHost', 'Portal');
 /** Discord's media viewer module, with `openMediaModal`; found on first access. */

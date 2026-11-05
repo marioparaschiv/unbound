@@ -11,6 +11,7 @@ import DeferredPage, { ActiveTab } from './deferred-page';
 import { HeaderElements } from './navigation';
 import useStyles from './design-tabs.style';
 import HeaderInset from './header-inset';
+import ChatTab from './chat-tab';
 import FontsTab from './fonts';
 
 export type DesignTab = (typeof TABS)[number]['id'];
@@ -25,12 +26,17 @@ const TABS = [
 	{ id: 'theme', label: () => messages.UNBOUND_THEMES },
 	{ id: 'font', label: () => messages.UNBOUND_FONTS },
 	{ id: 'icon-pack', label: () => messages.UNBOUND_ICONS },
+	{ id: 'chat', label: () => messages.UNBOUND_CHAT },
 ] as const;
 
+function renderSettingsTab(id: 'font' | 'chat') {
+	return <HeaderInset>{id === 'font' ? <FontsTab /> : <ChatTab />}</HeaderInset>;
+}
+
 /**
- * @description The Design page's frame: Discord's large segmented control over Themes, Fonts and Icons, floating
+ * @description The Design page's frame: Discord's large segmented control over Themes, Fonts, Icons and Chat, floating
  * below a transparent header over full-screen pages, which inset past both through the header height. Each page
- * mounts the first time its tab opens. Fonts is the shared override list.
+ * mounts the first time its tab opens. Fonts is the shared override list; Chat holds the chat's look, such as its background.
  */
 function DesignTabs({ renderPage, onTabChange = noop }: DesignTabsProps) {
 	const styles = useStyles();
@@ -46,13 +52,7 @@ function DesignTabs({ renderPage, onTabChange = noop }: DesignTabsProps) {
 				label: label(),
 				page: (
 					<DeferredPage index={index}>
-						{id === 'font' ? (
-							<HeaderInset>
-								<FontsTab />
-							</HeaderInset>
-						) : (
-							renderPage(id)
-						)}
+						{id === 'font' || id === 'chat' ? renderSettingsTab(id) : renderPage(id)}
 					</DeferredPage>
 				),
 			})),

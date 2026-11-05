@@ -103,7 +103,7 @@
 							"packages/client/src/settings/builtin.dev.ts",
 							"packages/client/src/settings/builtin.tsx",
 							"packages/client/src/sync/builtin.ts",
-							"packages/client/src/themes/builtin.ts",
+							"packages/client/src/themes/builtin.tsx",
 							"packages/client/src/toasts/builtin.tsx",
 							"packages/client/src/updates/builtin.ts",
 							"packages/client/src/builtins/error-boundary.tsx",

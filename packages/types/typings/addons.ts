@@ -214,7 +214,7 @@ export type Theme = {
 	raw: Record<PropertyKey, string>;
 	/** The Discord base theme the bundle builds on: `light`, `dark` (Ash), `darker` (Dark) or `midnight` (Onyx); parsed as `darker` when absent or unknown. */
 	type: 'light' | 'dark' | 'darker' | 'midnight';
-	/** A background image by `url`, with optional `blur` and `opacity`; dropped when `url` is not a string. */
+	/** The chat background the theme recommends: an image `url`, a `blur` radius and an `opacity` from 0 to 1; dropped when `url` is not a string. */
 	background?: {
 		blur?: number;
 		opacity?: number;

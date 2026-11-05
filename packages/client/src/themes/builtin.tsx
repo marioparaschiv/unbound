@@ -1,14 +1,19 @@
 import { createLogger } from '@unbound-app/logger';
 import type { ReactNode } from 'react';
 
+import { getSetting, useUnboundSettings } from '~/settings/unbound';
+import { byFilePath, byFluxStore, byProps } from '~/metro/filters';
+import { resolveChatBackground } from '~/themes/chat-background';
+import { resolveThemeColor, withOpacity } from '~/themes/colors';
+import { clearDMGreeting } from '~/themes/clear-dm-greeting';
 import { createPatcher } from '~/patcher/create-patcher';
-import { byFluxStore, byProps } from '~/metro/filters';
 import type { SectionEntry } from '~/settings/section';
-import { resolveThemeColor } from '~/themes/colors';
+import ChatBackdrop from '~/ui/themes/chat-backdrop';
 import { onModuleLoaded } from '~/metro/wait';
 import DesignPage from '~/ui/settings/design';
 import { Screens } from '~/core/constants';
 import { findStore } from '~/metro/search';
+import { onChange } from '~/storage/api';
 import ThemeStore from '~/themes/state';
 
 const Patcher = createPatcher('unbound::themes');
@@ -21,16 +26,38 @@ type ThemedTokenValue = {
 
 type SemanticToken = Record<string, ThemedTokenValue>;
 
+type ResolveOptions = {
+	/** Set while colouring a user profile with its owner's profile theme. */
+	isProfileTheme?: boolean;
+};
+
 type ColorTokens = {
 	colors: Record<string, SemanticToken>;
 	unsafe_rawColors: Record<string, string>;
 	internal: {
 		getSemanticColorName(color: SemanticToken): string | undefined;
-		resolveSemanticColor(theme: string, color: SemanticToken, saturation?: number): string;
+		resolveSemanticColor(theme: string, color: SemanticToken, options?: ResolveOptions): string;
 	};
 };
 
+// The patch reads only the rendered result, so the chat view's props stay untyped.
+type ChatViewModule = { default: { type: () => ReactNode } };
+
+/** Discord's chat screen; the chat colour behind its messages is `CHANNEL_BACKGROUND_DEFAULT`, used nowhere else. */
+const CHAT_VIEW_PATH = 'modules/chat/native/ChatView.tsx';
+const CHAT_COLOR = 'CHANNEL_BACKGROUND_DEFAULT';
+/** The bar under the chat input: the bottom safe area, and the gap above an open keyboard. Tinted like the chat colour. */
+const KEYBOARD_GAP_COLOR = 'MOBILE_KEYBOARD_GAP_BACKGROUND';
+/** The fade Discord draws behind the chat input, over the bottom of the messages. */
+const INPUT_SCRIM_PATH = 'modules/chat_input/native/ChatInputScrimGradient.tsx';
+
+type InputScrimModule = { ChatInputScrimGradient: () => ReactNode };
+
 let stopWaiting: (() => void) | null = null;
+let stopWaitingForChat: (() => void) | null = null;
+let stopWaitingForInputScrim: (() => void) | null = null;
+let restoreDMGreeting: (() => void) | null = null;
+let stopFollowingBackground: (() => void) | null = null;
 let stopWaitingForStore: (() => void) | null = null;
 let stopWaitingForProvider: (() => void) | null = null;
 let unsubscribe: (() => void) | null = null;
@@ -55,6 +82,35 @@ function applyRawColors(raw: Record<string, string>) {
 	restoreRaw = () => {
 		for (const [name, value] of originals) raw[name] = value;
 	};
+}
+
+function syncBackground() {
+	const { data, background, setBackground } = ThemeStore.getState();
+	const next =
+		resolveChatBackground(data, {
+			source: getSetting('chat-background.source'),
+			url: getSetting('chat-background.url'),
+			blur: getSetting('chat-background.blur'),
+			opacity: getSetting('chat-background.opacity'),
+		}) ?? null;
+
+	if (JSON.stringify(next) !== JSON.stringify(background)) {
+		setBackground(next);
+	}
+}
+
+// The chat view draws the image under its messages; the chat colour above it turns translucent to show it.
+function drawChatBackground(mdl: ChatViewModule) {
+	Patcher.after(mdl.default, 'type', ({ result }) => <ChatBackdrop>{result}</ChatBackdrop>);
+}
+
+// The original always renders, so its hooks run on every render whichever way the setting flips.
+function hideInputShadow(mdl: InputScrimModule) {
+	Patcher.after(mdl, 'ChatInputScrimGradient', ({ result }) => {
+		const settings = useUnboundSettings(({ key }) => key === 'chat-input.shadow');
+
+		return settings.get('chat-input.shadow') ? result : null;
+	});
 }
 
 function refreshDiscordTheme() {
@@ -110,14 +166,19 @@ function tagExperiments(experiments: string[] = noExperiments, id: string) {
 }
 
 // Two themes on one base share Discord's theme name, so the applied id tags the root theme context instead.
+// The chat background changes the chat colour, so it tags the context too.
 function tagThemeContext(mdl: ThemeContextModule) {
 	Patcher.before(mdl, 'RootThemeContextProvider', ({ args }) => {
 		const id = ThemeStore((state) => state.applied);
+		const background = ThemeStore((state) => state.background);
 		const [props] = args;
+		const tag = [id, background && `${background.url}@${background.opacity}`]
+			.filter(Boolean)
+			.join(':');
 
-		if (!id) return;
+		if (!tag) return;
 
-		args[0] = { ...props, enabledExperiments: tagExperiments(props.enabledExperiments, id) };
+		args[0] = { ...props, enabledExperiments: tagExperiments(props.enabledExperiments, tag) };
 	});
 }
 
@@ -132,6 +193,14 @@ export function start() {
 		byProps('RootThemeContextProvider', 'DisableCustomTheme'),
 		tagThemeContext,
 	);
+	stopWaitingForChat = onModuleLoaded(byFilePath(CHAT_VIEW_PATH), drawChatBackground);
+	stopWaitingForInputScrim = onModuleLoaded(byFilePath(INPUT_SCRIM_PATH), hideInputShadow);
+	restoreDMGreeting = clearDMGreeting();
+	syncBackground();
+	stopFollowingBackground = onChange(
+		({ key }) => Boolean(key?.startsWith('chat-background.')),
+		syncBackground,
+	);
 }
 
 function recolor(tokens: ColorTokens | undefined) {
@@ -144,19 +213,33 @@ function recolor(tokens: ColorTokens | undefined) {
 	}
 
 	Patcher.instead(resolver, 'resolveSemanticColor', ({ args, original, this: self }) => {
-		const [base, token] = args;
-		const theme = ThemeStore.getState().data;
-		// Another base, such as the picker previewing a light theme over a dark one, keeps Discord's colours for it:
-		// the theme's text would be unreadable there.
-		const name = theme?.type === base ? resolver.getSemanticColorName(token) : undefined;
-		const color = name ? resolveThemeColor(theme, name, tokens.unsafe_rawColors) : undefined;
+		const [base, token, options] = args;
+		const { data: theme, background } = ThemeStore.getState();
+		const name = resolver.getSemanticColorName(token);
+		// Another base, such as the picker previewing a light theme, keeps Discord's colours: the theme's text
+		// would be unreadable there. A profile theme keeps its owner's colours.
+		const themed =
+			name && theme?.type === base && !options?.isProfileTheme
+				? resolveThemeColor(theme, name, tokens.unsafe_rawColors)
+				: undefined;
+		const color = themed ?? original.apply(self, args);
 
-		return color ?? original.apply(self, args);
+		if (!background) {
+			return color;
+		}
+
+		return name === CHAT_COLOR || name === KEYBOARD_GAP_COLOR
+			? withOpacity(color, 1 - background.opacity)
+			: color;
 	});
 
 	applyRawColors(tokens.unsafe_rawColors);
-	unsubscribe = ThemeStore.subscribe(() => {
-		applyRawColors(tokens.unsafe_rawColors);
+	unsubscribe = ThemeStore.subscribe((state, previous) => {
+		if (state.data !== previous.data) {
+			applyRawColors(tokens.unsafe_rawColors);
+			syncBackground();
+		}
+
 		refreshDiscordTheme();
 	});
 }
@@ -169,6 +252,15 @@ export function stop() {
 	stopWaitingForStore = null;
 	stopWaitingForProvider?.();
 	stopWaitingForProvider = null;
+	stopWaitingForChat?.();
+	stopWaitingForChat = null;
+	stopWaitingForInputScrim?.();
+	stopWaitingForInputScrim = null;
+	restoreDMGreeting?.();
+	restoreDMGreeting = null;
+	stopFollowingBackground?.();
+	stopFollowingBackground = null;
+	ThemeStore.getState().setBackground(null);
 	restoreBaseTheme?.();
 	restoreBaseTheme = null;
 	refreshDiscordTheme();
