@@ -98,9 +98,7 @@ All keys below are inside the `unbound` store.
 </ParamField>
 
 <ParamField path="font-states" type="object" default="{}">
-	Maps a font state name to the name of the font that replaces it. The native font layer looks up each override in both your installed custom fonts and the system fonts. If an override's font isn't loaded, it logs an error and leaves that state unchanged.
-
-	Unbound's font settings normally manage this key for you. See [theme colors](/docs/developer/themes/types) and the [addon manifest](/docs/developer/addons/manifest) for how fonts are declared.
+	Legacy. Older loaders mapped a font name to the font that replaced it here. The loader now keeps font overrides in `Fonts/state.json`: on its first launch it moves the overrides that name an installed font file there, and Unbound then removes this key. Overrides that named a system font are dropped.
 </ParamField>
 
 <ParamField path="toolbox.shake" type="boolean" default="true">

@@ -5,8 +5,6 @@ import { DEFAULT_BACKGROUND_OPACITY, type ChatBackgroundSource } from '~/themes/
 import type { SettingsPayload } from '~/storage/api';
 import { getBucket, useBucket } from '~/storage/api';
 
-const NO_FONT_OVERRIDES: Record<string, string> = {};
-
 /** Every key of the core `unbound` settings store with its default. The keys are persisted as-is. */
 const DEFAULTS = {
 	recovery: false,
@@ -39,8 +37,6 @@ const DEFAULTS = {
 	'loader.update.unsigned': false,
 	'loader.devtools': false,
 	'discord-support.warned': '',
-	/** The font override map the loader applies, `{ [family]: overrideName }`. Treat it as read-only. */
-	'font-states': NO_FONT_OVERRIDES,
 };
 
 /** The value type of every core setting. */

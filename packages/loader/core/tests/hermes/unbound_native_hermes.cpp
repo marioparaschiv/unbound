@@ -151,10 +151,12 @@ static const char *const kUnboundNativeChecks = R"JS((function () {
 	check(themes[0].bundle === expectedThemeBundle, 'a theme bundle arrives as its file text, got ' + JSON.stringify(themes[0].bundle));
 	check(NativePlatform.settings.get('unbound', 'answer') === 42, 'a setting is read lazily');
 	check(NativePlatform.settings.get('名前', 'ü') === 1, 'unicode settings keys are read intact');
-	check(Array.isArray(UnboundNative.getFonts()), 'getFonts returns an array');
-	var available = UnboundNative.getAvailableFonts();
-	check(Array.isArray(available) && available[0] === 'System', 'available fonts arrive');
-	check(UnboundNative.getAvailableFonts()[0] === 'System', 'available fonts arrive again from the cache');
+	var fonts = UnboundNative.fonts.list();
+	check(Array.isArray(fonts.fonts) && fonts.fonts.length === 0, 'fonts.list has no fonts yet');
+	UnboundNative.fonts.setTargets({ PRIMARY_SEMIBOLD: 'ggsans-Semibold' });
+	var families = UnboundNative.fonts.list().families;
+	check(families['ggsans-Semibold'].groups[0] === 'PRIMARY' && families['ggsans-Semibold'].weight === 600, 'setTargets groups the families at once');
+	check(Array.isArray(UnboundNative.fonts.listPresets()), 'fonts.listPresets returns an array');
 	var loader = UnboundNative.getLoader();
 	check(loader.origin === 'https://example.invalid' && typeof loader.version === 'string', 'loader info arrives');
 	var version = loader.bytecodeVersion;
@@ -254,14 +256,10 @@ int main()
     settings.load();
     loader::AddonState addons;
     addons.scan(documents.string());
-    int  fontReads  = 0;
+    auto fontService = std::make_shared<loader::fonts::FontService>(documents.string(), nullptr);
+    fontService->store().open(nlohmann::json::object());
     auto launchData = loader::makeUnboundNativeProvider(
-        addons,
-        [&fontReads] {
-            fontReads++;
-            return nlohmann::json::array({"System"});
-        },
-        "https://example.invalid", version, documents.string(),
+        addons, fontService, "https://example.invalid", version, documents.string(),
         [](const std::string &url, const std::string &destination,
            const std::map<std::string, std::string> &,
            const loader::DownloadPolicy &) -> std::optional<loader::DownloadResult> {
@@ -293,7 +291,6 @@ int main()
     digests.setProperty(*runtime, "surrogate",
                         loader::crypto::hex(loader::crypto::sha256("a\xEF\xBF\xBDz")));
     runtime->global().setProperty(*runtime, "expectedDigests", digests);
-    require(fontReads == 0, "installing UnboundNative reads no fonts");
 
     requireChecks(*runtime, kUnboundNativeChecks, "unbound-native-checks.js");
     executor->drain(*runtime, 3);
@@ -302,7 +299,6 @@ int main()
                 "https://fonts.invalid/a.ttf",
             "downloadFile writes the response to the path");
     require(!fs::exists(documents.parent_path() / "a.ttf"), "a refused path writes nothing");
-    require(fontReads == 1, "getAvailableFonts reads its provider once across two calls");
     fs::remove_all(documents);
     std::printf("UnboundNative: the real scan and the bridge agree on Hermes\n");
     return 0;

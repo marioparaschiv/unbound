@@ -20,7 +20,6 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)prescanAddons;
 + (void)scanAddons;
 + (NSArray *)themes;
-+ (NSArray<NSDictionary *> *)fonts;
 + (NSDictionary *)fontOverridePlan;
 + (NSString *)everyFontFamily;
 

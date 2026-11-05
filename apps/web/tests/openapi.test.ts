@@ -209,6 +209,7 @@ describe('the HTTP reference', () => {
 			'Addons',
 			'Updates',
 			'Users',
+			'Fonts',
 		]);
 		expect(operations).toHaveLength(Object.keys(PUBLIC_OPERATIONS).length);
 	});

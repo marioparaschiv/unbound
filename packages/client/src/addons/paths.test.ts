@@ -5,7 +5,6 @@ import {
 	isSafeAddonId,
 	isSafeAddonMain,
 	isSafeIconPackMain,
-	safeFontFileName,
 	safeRelativePath,
 } from './paths';
 
@@ -43,20 +42,6 @@ describe('addon paths', () => {
 		for (const path of ['', '/abs', '../up', 'a/../b', 'a/./b', 'a//b', 'a\\b', 'a\0b']) {
 			expect(safeRelativePath(path)).toBeUndefined();
 		}
-	});
-
-	test('font file names lose paths, queries and unsafe characters', () => {
-		expect(safeFontFileName('https://cdn.example/fonts/Inter-Bold.ttf', 'f.ttf')).toBe(
-			'Inter-Bold.ttf',
-		);
-		expect(safeFontFileName('https://cdn.example/Inter.otf?v=2#x', 'f.ttf')).toBe('Inter.otf');
-		expect(safeFontFileName('https://cdn.example/..%2F..%2Fsettings.ttf', 'f.ttf')).toBe(
-			'settings.ttf',
-		);
-		expect(safeFontFileName('https://cdn.example/%2e%2e', 'f.ttf')).toBe('f.ttf');
-		expect(safeFontFileName('https://cdn.example/fonts/', 'f.ttf')).toBe('f.ttf');
-		expect(safeFontFileName('https://cdn.example/not-a-font.js', 'f.ttf')).toBe('f.ttf');
-		expect(safeFontFileName('https://cdn.example/%E0%A4%A', 'f.ttf')).toBe('f.ttf');
 	});
 });
 

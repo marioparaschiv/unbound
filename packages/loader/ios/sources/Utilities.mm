@@ -82,6 +82,10 @@ static NSString *bundle = nil;
     }
 
     NSString *path = [bundle pathForResource:file ofType:ext];
+    if (path == nil)
+    {
+        return nil;
+    }
 
     return [NSData dataWithContentsOfFile:path options:0 error:nil];
 }

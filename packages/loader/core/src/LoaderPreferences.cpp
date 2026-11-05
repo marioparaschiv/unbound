@@ -2,8 +2,6 @@
 
 #include <cstdio>
 
-#include "LoaderFonts.h"
-
 namespace loader::preferences {
 static constexpr const char *kRecovery      = "recovery";
 static constexpr const char *kDeveloperMode = "developer-mode";
@@ -160,14 +158,6 @@ std::string perform(SettingsStore &settings, const std::string &action, const st
     if (action == "applied-theme")
     {
         return appliedThemeId(settings).value_or("");
-    }
-    if (action == "font-overrides")
-    {
-        return fontOverrides(settings).dump();
-    }
-    if (action == "font-override")
-    {
-        return fontOverrideFor(fontOverrides(settings), argument).value_or("");
     }
     if (action == "gesture" || action == "set-gesture")
     {

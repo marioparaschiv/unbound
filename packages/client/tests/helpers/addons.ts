@@ -12,6 +12,9 @@ import type { Addon, AddonState } from '~/addons/addon';
 
 import { coreI18nMock } from './core-i18n';
 
+// The Fonts manager reads the API origin from core/constants, which the build defines `$$DEV$$` for.
+Reflect.set(globalThis, '$$DEV$$', false);
+
 // The base Addons manager reaches native FS and storage through these modules, which pull in
 // react-native. Stub both so the pure lifecycle logic loads under bun with no device harness.
 export const writes: string[] = [];
@@ -171,8 +174,6 @@ export function installUnboundNative(plugins: UnboundPluginBundle[], bytecodeVer
 		getLoader: () => ({ origin: 'test', version: '1.0.0', bytecodeVersion }),
 		getPlugins: () => plugins,
 		getThemes: () => [],
-		getFonts: () => [],
-		getAvailableFonts: () => [],
 		getSha256: (text) => sha256(text),
 		downloadFile: async () => undefined,
 	};

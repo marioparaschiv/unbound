@@ -22,6 +22,7 @@
 #import "Logger.h"
 #import "SettingsCore.h"
 #import "Unbound.h"
+#include "UnboundNativeFonts.h"
 #import "UpdaterCore.h"
 
 using unbound::ios::jsonFromObject;
@@ -163,9 +164,26 @@ const nlohmann::json &UnboundPlatformFonts()
     return fonts;
 }
 
+std::shared_ptr<loader::fonts::FontService> UnboundFonts()
+{
+    static std::shared_ptr<loader::fonts::FontService> service;
+    static dispatch_once_t                             onceToken;
+    dispatch_once(&onceToken, ^{
+        service = std::make_shared<loader::fonts::FontService>(toStdString(FileSystem.documents),
+                                                               UnboundDownload);
+        service->store().open(loader::preferences::fontOverrides(UnboundSettingsStore()));
+        // Text laid out from now on, such as after the restart the client offers, uses the new
+        // table.
+        service->store().setOnChange([] {
+            dispatch_async(dispatch_get_main_queue(), ^{ [Fonts apply]; });
+        });
+    });
+    return service;
+}
+
 nlohmann::json UnboundFontCatalog()
 {
-    return loader::fontCatalog(UnboundAddonState().fonts(), UnboundPlatformFonts());
+    return loader::fontCatalog(UnboundFonts()->catalogEntries(), UnboundPlatformFonts());
 }
 
 + (NSDictionary *)themeColorsForId:(NSString *)themeId
@@ -237,12 +255,8 @@ static loader::FontOverrideRegistry &UnboundFontOverrides()
 
 + (NSDictionary *)fontOverridePlan
 {
-    nlohmann::json targets = loader::lazyFontOverrideTargets(
-        loader::preferences::fontOverrides(UnboundSettingsStore()), UnboundAddonState().fonts(),
-        []() -> const nlohmann::json & {
-            return UnboundPlatformFonts();
-        });
-    id converted =
+    nlohmann::json targets = UnboundFonts()->store().overrideTargets();
+    id             converted =
         objectFromJSON(loader::fontOverridePlanJSON(UnboundFontOverrides().plan(targets)));
     return [converted isKindOfClass:[NSDictionary class]] ? converted : @{};
 }
@@ -250,11 +264,6 @@ static loader::FontOverrideRegistry &UnboundFontOverrides()
 + (NSString *)everyFontFamily
 {
     return @(loader::kAllFontFamilies);
-}
-
-+ (NSArray<NSDictionary *> *)fonts
-{
-    return arrayFromJSON(UnboundAddonState().fonts());
 }
 
 + (NSString *)toolbox:(NSString *)action argument:(NSString *)argument

@@ -5,6 +5,10 @@ export const OPERATION_TAGS = [
 	{ name: 'Addons', description: 'Read the addon store: listings, versions and maintainers.' },
 	{ name: 'Updates', description: 'Check installed addons and the native loader for updates.' },
 	{ name: 'Users', description: 'Read what a user shows on their profile.' },
+	{
+		name: 'Fonts',
+		description: 'Find the files behind a font link. Unbound hosts no font files.',
+	},
 ] as const;
 
 export type OperationTag = (typeof OPERATION_TAGS)[number]['name'];
@@ -96,6 +100,15 @@ export const PUBLIC_OPERATIONS = {
 		description: 'The sponsor badges a user shows on their profile, in order.',
 		parameters: {
 			id: "The user's id, as the maintainers list returns it, or the Discord id of their linked Discord account.",
+		},
+	},
+	'GET /api/v1/fonts/resolve': {
+		tag: 'Fonts',
+		summary: 'Resolve a font',
+		description:
+			"A font's files at its provider: Google Fonts, Fontsource, Bunny Fonts, Fontshare, Font Squirrel, dafont, GitHub, or a direct link. Rate limited per IP.",
+		parameters: {
+			input: 'A Google Fonts family name, a font page link, or a direct `.ttf`, `.otf` or `.zip` link.',
 		},
 	},
 } satisfies Partial<Record<PublicOperationKey, PublicOperation>>;

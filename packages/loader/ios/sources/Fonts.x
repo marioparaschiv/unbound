@@ -3,19 +3,14 @@
 @implementation Fonts
 static NSDictionary<NSString *, NSString *> *overrides   = nil;
 static NSString                             *everyFamily = nil;
+// PostScript name -> the CGFont registered under it, so a reinstalled face replaces the old one.
+static NSMutableDictionary<NSString *, id> *registered = nil;
+// Set while a hook builds its replacement, whose own UIFont calls must reach the originals.
+static _Thread_local BOOL replacing = NO;
 
 + (void)init
 {
     everyFamily = [CoreBridge everyFontFamily];
-
-    static dispatch_once_t observeOnce;
-    dispatch_once(&observeOnce, ^{
-        [[NSNotificationCenter defaultCenter]
-            addObserverForName:SettingsDidChangeNotification
-                        object:nil
-                         queue:[NSOperationQueue mainQueue]
-                    usingBlock:^(NSNotification *notification) { [Fonts apply]; }];
-    });
 
     @try
     {
@@ -70,8 +65,33 @@ static NSString                             *everyFamily = nil;
         return;
     }
 
-    CTFontManagerRegisterGraphicsFont(ref, nil);
-    [Logger info:LOG_CATEGORY_FONTS format:@"Loaded font: %@.", [Fonts getFontNameByRef:ref]];
+    NSString *postScriptName = CFBridgingRelease(CGFontCopyPostScriptName(ref));
+    @synchronized([Fonts class])
+    {
+        registered  = registered ?: [NSMutableDictionary dictionary];
+        id previous = postScriptName ? registered[postScriptName] : nil;
+        if (previous)
+        {
+            CTFontManagerUnregisterGraphicsFont((__bridge CGFontRef) previous, nil);
+        }
+
+        CFErrorRef error = nil;
+        if (CTFontManagerRegisterGraphicsFont(ref, &error))
+        {
+            if (postScriptName)
+            {
+                registered[postScriptName] = (__bridge id) ref;
+            }
+            [Logger info:LOG_CATEGORY_FONTS
+                  format:@"Loaded font: %@.", [Fonts getFontNameByRef:ref]];
+        }
+        else
+        {
+            NSError *reason = CFBridgingRelease(error);
+            [Logger error:LOG_CATEGORY_FONTS
+                   format:@"Failed to register font %@. (%@)", path, reason.localizedDescription];
+        }
+    }
 
     CGFontRelease(ref);
 }
@@ -93,19 +113,58 @@ static NSString                             *everyFamily = nil;
         return overrides ?: @{};
     }
 }
+
++ (UIFont *)replacementFor:(NSString *)name size:(CGFloat)size original:(UIFontDescriptor *)original
+{
+    NSDictionary *table       = [Fonts overrides];
+    NSString     *replacement = table[everyFamily] ?: table[name];
+    if (!name || !replacement || [replacement isEqualToString:name])
+    {
+        return nil;
+    }
+
+    // Glyphs the replacement lacks fall back to the original font, not the system one.
+    UIFontDescriptor *fallback =
+        original ?: [UIFontDescriptor fontDescriptorWithName:name size:size];
+    UIFontDescriptor *descriptor = [[UIFontDescriptor fontDescriptorWithName:replacement size:size]
+        fontDescriptorByAddingAttributes:@{UIFontDescriptorCascadeListAttribute : @[ fallback ]}];
+
+    replacing    = YES;
+    UIFont *font = [UIFont fontWithDescriptor:descriptor size:size];
+    replacing    = NO;
+
+    // An unregistered name resolves to a system font; keep Discord's instead.
+    if (![font.fontName isEqualToString:replacement])
+    {
+        return nil;
+    }
+    return font;
+}
+
 @end
 
 %hook UIFont
 + (UIFont *)fontWithName:(NSString *)name size:(CGFloat)size
 {
-    NSDictionary *overrides   = [Fonts overrides];
-    NSString     *replacement = overrides[everyFamily] ?: overrides[name];
-
-    if (replacement)
+    if (replacing)
     {
-        return %orig(replacement, size);
+        return %orig;
     }
+    return [Fonts replacementFor:name size:size original:nil] ?: %orig;
+}
 
-    return %orig;
++ (UIFont *)fontWithDescriptor:(UIFontDescriptor *)descriptor size:(CGFloat)size
+{
+    if (replacing)
+    {
+        return %orig;
+    }
+    // Only a named descriptor: resolving `postscriptName` on a traits-only one matches fonts.
+    NSString *name = [descriptor objectForKey:UIFontDescriptorNameAttribute];
+    if (![name isKindOfClass:[NSString class]])
+    {
+        return %orig;
+    }
+    return [Fonts replacementFor:name size:size original:descriptor] ?: %orig;
 }
 %end

@@ -7,6 +7,7 @@ import {
 	SYNC_LOCAL_STORE_PREFIX,
 } from '@unbound-app/contracts/sync-stores';
 import type {
+	JsonValue,
 	SyncDocument,
 	SyncKind,
 	SyncKindDocument,
@@ -38,6 +39,18 @@ type KindAdapter = {
 };
 
 const LOCAL_KEYS = new Set<string>(SYNC_LOCAL_KEYS);
+
+/** The core-store key font overrides sync under; the loader's font store owns them on the device. */
+const FONT_OVERRIDES = 'font-states';
+
+function isOverrideMap(value: JsonValue | undefined): value is Record<string, string> {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		!Array.isArray(value) &&
+		Object.values(value).every((id) => typeof id === 'string')
+	);
+}
 
 const RESERVED_STORES = new Set<string>(SYNC_KINDS);
 
@@ -100,19 +113,18 @@ const adapters: Record<SyncKind, KindAdapter> = {
 		recordSource: (id, url) => icons.recordSource(id, url),
 		forgetSource: (id) => icons.forgetSource(id),
 	},
+	// The loader's font store records each face's source; overrides sync as `FONT_OVERRIDES`.
 	fonts: {
 		getApplied: noApplied,
 		isEnabled: () => true,
-		// A new font only registers natively after a relaunch, so its recorded source counts too.
-		isInstalled: (id) =>
-			id in fonts.getSources() || fonts.getEntities().some((font) => font.file === id),
+		isInstalled: (id) => Boolean(fonts.getEntity(id)),
 		install: (url) => fonts.install(url),
 		delete: (id) => fonts.delete(id),
 		setEnabled: ignored,
 		apply: ignored,
 		getSources: () => fonts.getSources(),
-		recordSource: (id, url) => fonts.recordSource(id, url),
-		forgetSource: (id) => fonts.forgetSource(id),
+		recordSource: ignored,
+		forgetSource: ignored,
 	},
 };
 
@@ -167,6 +179,10 @@ export function collectLocalDocument(): SyncDocument {
 
 			for (const key of LOCAL_KEYS) {
 				delete core[key];
+			}
+
+			if (fonts.isSupported()) {
+				core[FONT_OVERRIDES] = { ...fonts.getOverrides() };
 			}
 
 			synced[name] = core;
@@ -226,6 +242,12 @@ async function applyAction(action: SyncAction): Promise<boolean> {
 		}
 
 		case 'set-setting': {
+			if (action.store === SYNC_CORE_STORE && action.key === FONT_OVERRIDES) {
+				await fonts.replaceOverrides(isOverrideMap(action.value) ? action.value : {});
+
+				return true;
+			}
+
 			if (action.value !== undefined) {
 				getBucket(action.store).set(action.key, action.value);
 			} else {

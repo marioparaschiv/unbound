@@ -7,10 +7,10 @@ import { createLogger } from '@unbound-app/logger';
 
 import { createSettings, generalSection, panelHostSection } from '~/settings/builtin';
 import { marketplaceSection, storePageSection } from '~/marketplace/builtin';
+import themes, { designSection, fontGroupSection } from '~/themes/builtin';
 import cloudSync, { cloudSyncSection } from '~/sync/builtin';
 import updater, { updatesSection } from '~/updates/builtin';
 import { developerSection } from '~/settings/builtin.dev';
-import themes, { designSection } from '~/themes/builtin';
 import toasts, { toastsSection } from '~/toasts/builtin';
 import discordSupport from '~/builtins/discord-support';
 import type { BuiltInEntry } from '~/builtins/registry';
@@ -62,6 +62,7 @@ const SECTIONS_IN_OVERVIEW_ORDER: SectionEntry[] = [
 	...(import.meta.env.DEV_TOOLS ? [assetsSection] : []),
 	panelHostSection,
 	storePageSection,
+	fontGroupSection,
 ];
 
 // The account starts first: it takes over Sync's session before Sync reads it.

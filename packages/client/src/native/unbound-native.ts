@@ -1,8 +1,8 @@
 import type {
 	UnboundAddonBundle,
-	UnboundFontFile,
 	UnboundLoaderInfo,
 	UnboundNativeBridge,
+	UnboundNativeFonts,
 	UnboundPluginBundle,
 } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
@@ -47,19 +47,11 @@ export function getThemes(): UnboundAddonBundle[] {
 }
 
 /**
- * @description Reads the custom font files the loader registered.
- * @returns The fonts, empty when no loader installed `UnboundNative`.
+ * @description Reads the loader's font store bridge.
+ * @returns `UnboundNative.fonts`, or `undefined` on a loader from before the font store.
  */
-export function getFonts(): UnboundFontFile[] {
-	return read('getFonts', (bridge) => bridge.getFonts()) ?? [];
-}
-
-/**
- * @description Reads the font names Discord can already use; the loader lists them on the first call.
- * @returns The font names, empty when no loader installed `UnboundNative`.
- */
-export function getAvailableFonts(): string[] {
-	return read('getAvailableFonts', (bridge) => bridge.getAvailableFonts()) ?? [];
+export function getNativeFonts(): UnboundNativeFonts | undefined {
+	return globalThis.UnboundNative?.fonts;
 }
 
 /**

@@ -20,6 +20,7 @@ export const API_ERROR_CODES = [
 	'github_not_linked',
 	'github_no_push_access',
 	'github_unavailable',
+	'font_source_unavailable',
 	'repository_not_found',
 	'ref_not_found',
 	'source_changed',

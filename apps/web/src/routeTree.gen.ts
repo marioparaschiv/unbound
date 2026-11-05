@@ -59,6 +59,7 @@ import { Route as SiteDocsUserSplatRouteImport } from './routes/_site/docs/user/
 import { Route as ApiV1AuthDiscordRouteImport } from './routes/api/v1/auth/discord'
 import { Route as ApiV1FirstPartyAddonsRouteImport } from './routes/api/v1/first-party/addons'
 import { Route as ApiV1FirstPartyPublishRouteImport } from './routes/api/v1/first-party/publish'
+import { Route as ApiV1FontsResolveRouteImport } from './routes/api/v1/fonts/resolve'
 import { Route as ApiV1GithubAddonsRouteImport } from './routes/api/v1/github/addons'
 import { Route as ApiV1GithubRepositoriesRouteImport } from './routes/api/v1/github/repositories'
 import { Route as ApiV1LoaderAndroidBuildsRouteImport } from './routes/api/v1/loader/android-builds'
@@ -339,6 +340,11 @@ const ApiV1FirstPartyPublishRoute = ApiV1FirstPartyPublishRouteImport.update({
   path: '/api/v1/first-party/publish',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1FontsResolveRoute = ApiV1FontsResolveRouteImport.update({
+  id: '/api/v1/fonts/resolve',
+  path: '/api/v1/fonts/resolve',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1GithubAddonsRoute = ApiV1GithubAddonsRouteImport.update({
   id: '/api/v1/github/addons',
   path: '/api/v1/github/addons',
@@ -355,12 +361,11 @@ const ApiV1LoaderAndroidBuildsRoute =
     path: '/api/v1/loader/android-builds',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiV1LoaderBundlesRoute =
-  ApiV1LoaderBundlesRouteImport.update({
-    id: '/api/v1/loader/bundles',
-    path: '/api/v1/loader/bundles',
-    getParentRoute: () => rootRouteImport,
-  } as any)
+const ApiV1LoaderBundlesRoute = ApiV1LoaderBundlesRouteImport.update({
+  id: '/api/v1/loader/bundles',
+  path: '/api/v1/loader/bundles',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1LoaderReleasesRoute = ApiV1LoaderReleasesRouteImport.update({
   id: '/api/v1/loader/releases',
   path: '/api/v1/loader/releases',
@@ -540,6 +545,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/auth/discord': typeof ApiV1AuthDiscordRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
+  '/api/v1/fonts/resolve': typeof ApiV1FontsResolveRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
   '/api/v1/github/repositories': typeof ApiV1GithubRepositoriesRoute
   '/api/v1/loader/android-builds': typeof ApiV1LoaderAndroidBuildsRoute
@@ -616,6 +622,7 @@ export interface FileRoutesByTo {
   '/api/v1/auth/discord': typeof ApiV1AuthDiscordRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
+  '/api/v1/fonts/resolve': typeof ApiV1FontsResolveRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
   '/api/v1/github/repositories': typeof ApiV1GithubRepositoriesRoute
   '/api/v1/loader/android-builds': typeof ApiV1LoaderAndroidBuildsRoute
@@ -698,6 +705,7 @@ export interface FileRoutesById {
   '/api/v1/auth/discord': typeof ApiV1AuthDiscordRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
+  '/api/v1/fonts/resolve': typeof ApiV1FontsResolveRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
   '/api/v1/github/repositories': typeof ApiV1GithubRepositoriesRoute
   '/api/v1/loader/android-builds': typeof ApiV1LoaderAndroidBuildsRoute
@@ -779,6 +787,7 @@ export interface FileRouteTypes {
     | '/api/v1/auth/discord'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
+    | '/api/v1/fonts/resolve'
     | '/api/v1/github/addons'
     | '/api/v1/github/repositories'
     | '/api/v1/loader/android-builds'
@@ -855,6 +864,7 @@ export interface FileRouteTypes {
     | '/api/v1/auth/discord'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
+    | '/api/v1/fonts/resolve'
     | '/api/v1/github/addons'
     | '/api/v1/github/repositories'
     | '/api/v1/loader/android-builds'
@@ -936,6 +946,7 @@ export interface FileRouteTypes {
     | '/api/v1/auth/discord'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
+    | '/api/v1/fonts/resolve'
     | '/api/v1/github/addons'
     | '/api/v1/github/repositories'
     | '/api/v1/loader/android-builds'
@@ -991,6 +1002,7 @@ export interface RootRouteChildren {
   ApiV1AuthDiscordRoute: typeof ApiV1AuthDiscordRoute
   ApiV1FirstPartyAddonsRoute: typeof ApiV1FirstPartyAddonsRoute
   ApiV1FirstPartyPublishRoute: typeof ApiV1FirstPartyPublishRoute
+  ApiV1FontsResolveRoute: typeof ApiV1FontsResolveRoute
   ApiV1GithubAddonsRoute: typeof ApiV1GithubAddonsRoute
   ApiV1GithubRepositoriesRoute: typeof ApiV1GithubRepositoriesRoute
   ApiV1LoaderAndroidBuildsRoute: typeof ApiV1LoaderAndroidBuildsRoute
@@ -1352,6 +1364,13 @@ declare module '@tanstack/react-router' {
       path: '/api/v1/first-party/publish'
       fullPath: '/api/v1/first-party/publish'
       preLoaderRoute: typeof ApiV1FirstPartyPublishRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/fonts/resolve': {
+      id: '/api/v1/fonts/resolve'
+      path: '/api/v1/fonts/resolve'
+      fullPath: '/api/v1/fonts/resolve'
+      preLoaderRoute: typeof ApiV1FontsResolveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/v1/github/addons': {
@@ -1806,6 +1825,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiV1AuthDiscordRoute: ApiV1AuthDiscordRoute,
   ApiV1FirstPartyAddonsRoute: ApiV1FirstPartyAddonsRoute,
   ApiV1FirstPartyPublishRoute: ApiV1FirstPartyPublishRoute,
+  ApiV1FontsResolveRoute: ApiV1FontsResolveRoute,
   ApiV1GithubAddonsRoute: ApiV1GithubAddonsRoute,
   ApiV1GithubRepositoriesRoute: ApiV1GithubRepositoriesRoute,
   ApiV1LoaderAndroidBuildsRoute: ApiV1LoaderAndroidBuildsRoute,

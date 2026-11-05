@@ -33,7 +33,6 @@ int main()
     assert(appliedThemeId(settings) == std::optional<std::string>("adrian.theme"));
     assert(!activeThemeId(settings));
     assert(fontOverrides(settings)["*"] == "Ginto");
-    assert(perform(settings, "font-override", "Whitney") == "Ginto");
 
     assert(gestureEnabled(settings, ToolboxGesture::Shake));
     assert(setGestureEnabled(settings, ToolboxGesture::Shake, false));

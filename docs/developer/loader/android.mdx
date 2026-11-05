@@ -58,8 +58,7 @@ Just before Unbound's bundle runs, the loader installs the native modules and co
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `getPlugins()`        | The installed plugins. Each entry has a `manifest` and a `bundle` string with the plugin's code.                                         |
 | `getThemes()`         | The installed themes. Each entry has a `manifest` and the theme's `bundle.json` text.                                                    |
-| `getFonts()`          | The font files in `Fonts`.                                                                                                               |
-| `getAvailableFonts()` | The font names Discord can already use. The loader lists them on the first call only, so a launch that never opens the font picker skips it. |
+| `fonts`               | The font store: `list`, `resolve`, `install`, `remove`, `setOverride`, `setTargets` and the preset methods. See [Themes and fonts](#themes-and-fonts). |
 | `getLoader()`         | `origin` (`libunbound.so`), the loader `version`, and the runtime's `bytecodeVersion`.                                                   |
 | `getSha256(text)`     | The SHA-256 of the text's UTF-8 bytes, in hex. Update checks and installs use it to check bundles.                                        |
 | `downloadFile(url, path)` | Saves the response to `path` inside the Unbound folder on a background thread. Fonts and icon packs install through it.             |
@@ -175,7 +174,9 @@ The loader also adds a long-press shortcut to Discord's launcher icon that toggl
 
 The loader applies the theme whose id is in the `themes` store's `applied` key, unless recovery mode is on. It replaces Discord's color resources with the theme's `raw` colors and overrides Discord's semantic color getters with its `semantic` colors. On Discord builds whose theme classes are obfuscated, semantic colors are applied through the matching color resources instead. Changing the applied theme takes effect without a restart.
 
-Fonts in `Fonts` replace the font states named in `font-states`, through React Native's font manager, or where Android creates typefaces when that manager is obfuscated.
+The loader owns fonts. It keeps installed faces, overrides and presets in `Fonts/state.json`, and is its only writer. `UnboundNative.fonts.install` resolves a name or link through `GET /api/v1/fonts/resolve`, downloads each file from its provider, checks its first bytes, unpacks `.zip` files within size limits, rejects WOFF and variable fonts, and moves the checked faces into `Fonts/files` in one step. An override maps a Discord family such as `ggsans-Semibold` to a face; overriding a group such as `PRIMARY` sets each of its weights to the closest face of the chosen family. The loader replaces the overridden families through React Native's font manager, or where Android creates typefaces when that manager is obfuscated. A change clears the loader's and React Native's cached typefaces, so text laid out afterwards uses the new fonts. Text already on screen keeps the font and the measurements it was laid out with: React Native caches measurements by content and style. The Fonts settings tab offers a restart once the overrides change.
+
+On its first launch with the font store, the loader adopts the font files already in `Fonts` and moves the old `font-states` setting into `state.json`.
 
 ## Hot reload
 

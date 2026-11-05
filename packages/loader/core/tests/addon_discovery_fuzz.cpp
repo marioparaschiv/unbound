@@ -298,11 +298,6 @@ static void scanRound(Generator &generator, const fs::path &base)
                 "a loaded theme lives in the Themes folder",
                 theme["manifest"]["path"].get<std::string>());
     }
-    for (const nlohmann::json &font : state.fonts())
-    {
-        require(font.contains("file") && font["file"].is_string(), "a font entry names its file",
-                "font");
-    }
 }
 
 int main()
