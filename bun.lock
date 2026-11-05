@@ -157,7 +157,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "0.12.0-0082044d1fc3b48654784022a336b811221f169a06d81c1c7ad20d5634d7cba9",
+      "version": "0.12.0-dd61aac4bc6d8aaeaa3875da39f17ebb50bc27a908ae477dae6d0a17924d3de6",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -187,7 +187,7 @@
         "@rollup/plugin-node-resolve": "^16.0.3",
         "@unbound-app/contracts": "workspace:*",
         "@unbound-app/debugger-protocol": "workspace:*",
-        "@unbound-app/rollup-plugin-hermes": "^1.3.0",
+        "@unbound-app/rollup-plugin-hermes": "workspace:*",
         "better-auth": "catalog:",
         "cleye": "^2.7.0",
         "magic-string": "^1.4.5",
@@ -259,7 +259,7 @@
         "@rollup/plugin-replace": "^6.0.3",
         "@types/babel__core": "^7.20.5",
         "@types/bun": "catalog:",
-        "@unbound-app/rollup-plugin-hermes": "^1.3.0",
+        "@unbound-app/rollup-plugin-hermes": "workspace:*",
         "react-devtools-core": "8.0.0",
         "rolldown": "^1.2.16",
         "rollup-plugin-swc3": "^0.12.1",
@@ -1294,6 +1294,17 @@
         "@unbound-app/cli": "workspace:*",
         "react-native": "^0.86.0",
         "rollup": "^4.67.5",
+      },
+    },
+    "packages/rollup-plugin-hermes": {
+      "name": "@unbound-app/rollup-plugin-hermes",
+      "version": "1.3.0",
+      "devDependencies": {
+        "@types/bun": "catalog:",
+        "tsdown": "^0.23.5",
+      },
+      "peerDependencies": {
+        "typescript": "catalog:",
       },
     },
     "packages/types": {
@@ -2455,7 +2466,7 @@
 
     "@unbound-app/plugins": ["@unbound-app/plugins@workspace:packages/plugins"],
 
-    "@unbound-app/rollup-plugin-hermes": ["@unbound-app/rollup-plugin-hermes@1.3.0", "", {}, "sha512-CycxxLOhiYCDUxN/G3tw1OZ+BDgU62U49iA+6SilHjNfoUZYt8mYW2iO17LAgoS2p73k9SVvpSVJa8QEbYqfAg=="],
+    "@unbound-app/rollup-plugin-hermes": ["@unbound-app/rollup-plugin-hermes@workspace:packages/rollup-plugin-hermes"],
 
     "@unbound-app/sdk-generator": ["@unbound-app/sdk-generator@workspace:apps/sdk-generator"],
 

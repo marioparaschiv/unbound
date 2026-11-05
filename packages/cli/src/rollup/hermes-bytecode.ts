@@ -1,4 +1,5 @@
-import hermesManifest from '@unbound-app/rollup-plugin-hermes/dist/manifest.js';
+import { fetchManifest, resolveHermesTargets } from '@unbound-app/rollup-plugin-hermes/manifest';
+import type { HermesTarget } from '@unbound-app/rollup-plugin-hermes/manifest';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { ADDON_SCOPE_GLOBALS } from '@unbound-app/types/addons';
 import { execFile } from 'node:child_process';
@@ -7,12 +8,9 @@ import { promisify } from 'node:util';
 import type { Plugin } from 'rollup';
 import { tmpdir } from 'node:os';
 
-type HermesTarget = { version: number; dir: string | null };
-
 type BytecodeOptions = { versions: number[]; sourceName: string };
 
 const run = promisify(execFile);
-const { fetchManifest, resolveHermesTargets } = hermesManifest;
 
 const FALL_BACK_TO_GLOBAL = new Set([
 	'unbound',
@@ -108,9 +106,9 @@ export function hermesBytecode({ versions, sourceName }: BytecodeOptions): Plugi
 		name: 'hermes-bytecode',
 		async generateBundle(_outputOptions, bundle) {
 			targets ??= (
-				(await resolveHermesTargets(this, {
+				await resolveHermesTargets(this, {
 					versions: hermescCount((await fetchManifest(this)).latest, versions),
-				})) as HermesTarget[]
+				})
 			).filter((target) => versions.includes(target.version));
 
 			const executable = process.platform === 'win32' ? 'hermesc.exe' : 'hermesc';

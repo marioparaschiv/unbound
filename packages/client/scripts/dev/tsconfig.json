@@ -26,5 +26,5 @@
 		"noUnusedParameters": false,
 		"noPropertyAccessFromIndexSignature": false
 	},
-	"include": ["**/*", "../build/plugins/rollup-plugin-hermes.d.ts"]
+	"include": ["**/*"]
 }

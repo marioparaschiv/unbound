@@ -18,6 +18,7 @@
 			"packages/plugin-test",
 			"packages/utils",
 			"packages/logger",
+			"packages/rollup-plugin-hermes",
 			"packages/client/scripts/build",
 			"packages/client/scripts/serve",
 			"packages/client/scripts/dev",
