@@ -5,36 +5,104 @@
 
 using namespace loader::dynamicisland;
 
-static bool near(double left, double right)
+static bool near(double left, double right, double tolerance = 1e-6)
 {
-    return std::fabs(left - right) < 1e-9;
+    return std::fabs(left - right) < tolerance;
 }
 
-static void detectsTheIslandFromTheTopInset()
+static bool sameFrame(const Frame &left, const Frame &right)
 {
-    assert(hasDynamicIsland(true, 59.0));
-    assert(hasDynamicIsland(true, 59.09));
-    assert(hasDynamicIsland(true, 58.91));
-    assert(!hasDynamicIsland(true, 59.1));
-    assert(!hasDynamicIsland(true, 47.0));
-    assert(!hasDynamicIsland(true, 20.0));
-    assert(!hasDynamicIsland(true, std::nullopt));
-    assert(!hasDynamicIsland(false, 59.0));
+    return near(left.x, right.x) && near(left.y, right.y) && near(left.width, right.width) &&
+           near(left.height, right.height);
 }
 
-static void placesTheOverlayOverTheIsland()
+static void readsIslandsFromTheSystemCutout()
 {
-    const Frame frame = overlayFrame(393);
-    assert(near(frame.x, 133.5) && near(frame.y, 11) && near(frame.width, 126) &&
-           near(frame.height, 37.33));
-    assert(near(overlayFrame(430).x, 152));
-    assert(near(cornerRadius(), 18.665));
+    const Frame proMax{157.333, 14, 125.333, 36.6667};
+    const Frame air{147.333, 20, 125.333, 36.6667};
+    const Frame smaller{163.5, 14, 86, 30};
 
-    const Frame square = logoFrame(1.0);
-    assert(near(square.height, 37.33 * 0.99) && near(square.width, square.height));
-    assert(near(square.x, (126 - square.width) / 2) && near(square.y, (37.33 - square.height) / 2));
-    const Frame wide = logoFrame(2.0);
-    assert(near(wide.width, wide.height * 2));
+    for (const Frame &frame : {proMax, air, smaller})
+    {
+        const std::optional<Cutout> cutout = cutoutFromSystem(frame);
+        assert(cutout && cutout->kind == CutoutKind::Island && sameFrame(cutout->frame, frame));
+        assert(near(cornerRadius(*cutout), frame.height / 2));
+    }
+}
+
+static void readsNotchesFromTheSystemCutout()
+{
+    const Frame                 notch{90, 0, 210, 32};
+    const std::optional<Cutout> cutout = cutoutFromSystem(notch);
+    assert(cutout && cutout->kind == CutoutKind::Notch && sameFrame(cutout->frame, notch));
+    assert(near(cornerRadius(*cutout), 32 * kNotchCornerRatio));
+}
+
+static void rejectsMissingCutouts()
+{
+    assert(!cutoutFromSystem(Frame{0, 0, 0, 0}));
+    assert(!cutoutFromSystem(Frame{150, 14, 30, 30}));
+    assert(!cutoutFromSystem(std::nullopt));
+}
+
+static void fitsTheLogoInsideTheCutout()
+{
+    const Frame island{157.333, 14, 125.333, 36.6667};
+    const Frame logo = logoFrame(island);
+    assert(near(logo.height, 36.6667 * kLogoHeightRatio));
+    assert(near(logo.width / logo.height, kLogoAspect));
+    assert(near(logo.x, (island.width - logo.width) / 2));
+    assert(near(logo.y, (island.height - logo.height) / 2));
+
+    const Frame narrow = logoFrame(Frame{100, 14, 30, 30});
+    assert(near(narrow.width, 30) && near(narrow.width / narrow.height, kLogoAspect));
+}
+
+static void drawsTheLogoLayersInOrder()
+{
+    const std::vector<Pixel> pixels = logoPixels();
+
+    int  counts[5] = {};
+    Ink  previous  = Ink::Shadow;
+    bool ordered   = true;
+    for (const Pixel &pixel : pixels)
+    {
+        counts[static_cast<int>(pixel.ink)]++;
+        ordered  = ordered && static_cast<int>(pixel.ink) >= static_cast<int>(previous);
+        previous = pixel.ink;
+    }
+
+    assert(ordered);
+    assert(counts[static_cast<int>(Ink::White)] == 140);
+    assert(counts[static_cast<int>(Ink::Shadow)] == 140);
+    assert(counts[static_cast<int>(Ink::Red)] == 24);
+    assert(counts[static_cast<int>(Ink::Cyan)] == 24);
+
+    bool hasCornerCell = false;
+    bool hasSparkle    = false;
+    for (const Pixel &pixel : pixels)
+    {
+        if (pixel.ink != Ink::White)
+        {
+            continue;
+        }
+        hasCornerCell =
+            hasCornerCell || (near(pixel.frame.x, 39.6, 0.02) && near(pixel.frame.y, 116.15, 0.02));
+        hasSparkle = hasSparkle || sameFrame(pixel.frame, Frame{192.82, 64.84, 8.73, 8.73});
+    }
+    assert(hasCornerCell && hasSparkle);
+
+    for (const Pixel &pixel : pixels)
+    {
+        if (pixel.ink == Ink::Scanline && near(pixel.frame.x, 39.6, 0.02) &&
+            near(pixel.frame.y, 116.15, 0.02))
+        {
+            assert(near(pixel.frame.height, 1.45, 0.02));
+        }
+        assert(pixel.frame.x >= kLogoMinX - 1e-6 && pixel.frame.y >= kLogoMinY - 1e-6);
+        assert(pixel.frame.x + pixel.frame.width <= kLogoMinX + kLogoWidth + 1e-6);
+        assert(pixel.frame.y + pixel.frame.height <= kLogoMinY + kLogoHeight + 1e-6);
+    }
 }
 
 static void startsOnceOnIslandDevices()
@@ -75,8 +143,11 @@ static void plansShowAndHide()
 
 int main()
 {
-    detectsTheIslandFromTheTopInset();
-    placesTheOverlayOverTheIsland();
+    readsIslandsFromTheSystemCutout();
+    readsNotchesFromTheSystemCutout();
+    rejectsMissingCutouts();
+    fitsTheLogoInsideTheCutout();
+    drawsTheLogoLayersInOrder();
     startsOnceOnIslandDevices();
     plansShowAndHide();
     return 0;

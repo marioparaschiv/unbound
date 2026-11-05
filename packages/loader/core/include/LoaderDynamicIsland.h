@@ -1,23 +1,51 @@
 #pragma once
 
 #include <optional>
+#include <vector>
 
 namespace loader::dynamicisland {
-constexpr double kTopInset           = 59.0;
-constexpr double kTopInsetTolerance  = 0.1;
-constexpr double kWidth              = 126.0;
-constexpr double kHeight             = 37.33;
-constexpr double kTop                = 11.0;
-constexpr double kLogoHeightRatio    = 0.99;
+constexpr double kLogoHeightRatio    = 0.92;
+constexpr double kNotchCornerRatio   = 0.65;
 constexpr double kRevealSeconds      = 0.2;
 constexpr double kCreateDelaySeconds = 1.0;
 constexpr double kShowDelaySeconds   = 0.5;
+
+constexpr double kLogoMinX   = 37.0;
+constexpr double kLogoMinY   = 54.83;
+constexpr double kLogoWidth  = 191.19;
+constexpr double kLogoHeight = 152.94;
+constexpr double kLogoAspect = kLogoWidth / kLogoHeight;
 
 struct Frame {
     double x      = 0;
     double y      = 0;
     double width  = 0;
     double height = 0;
+};
+
+enum class Ink
+{
+    Shadow,
+    Red,
+    Cyan,
+    White,
+    Scanline,
+};
+
+enum class CutoutKind
+{
+    Island,
+    Notch,
+};
+
+struct Cutout {
+    CutoutKind kind;
+    Frame      frame;
+};
+
+struct Pixel {
+    Ink   ink;
+    Frame frame;
 };
 
 struct ViewState {
@@ -45,15 +73,15 @@ enum class Lifecycle
     WillResignActive,
 };
 
-bool   hasDynamicIsland(bool isPhone, std::optional<double> topInset);
-Frame  overlayFrame(double screenWidth);
-double cornerRadius();
-Frame  logoFrame(double logoAspectRatio);
+std::optional<Cutout> cutoutFromSystem(std::optional<Frame> rect);
+double                cornerRadius(const Cutout &cutout);
+Frame                 logoFrame(const Frame &cutout);
+std::vector<Pixel>    logoPixels();
 
 class Presentation
 {
 public:
-    Start start(bool hasIsland);
+    Start start(bool hasCutout);
     Plan  show(const ViewState &view) const;
     Plan  hide(const ViewState &view) const;
     Plan  on(Lifecycle event, const ViewState &view) const;

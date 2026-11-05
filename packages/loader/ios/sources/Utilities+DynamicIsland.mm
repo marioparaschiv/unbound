@@ -1,3 +1,5 @@
+#import <objc/message.h>
+
 #include "LoaderDynamicIsland.h"
 #import "Utilities+DynamicIsland.h"
 
@@ -20,119 +22,91 @@ static island::ViewState islandViewState(void)
     return {true, (bool) islandOverlayView.hidden, islandOverlayView.alpha};
 }
 
+static std::optional<island::Frame> systemCutout(void)
+{
+    UIScreen *screen         = UIScreen.mainScreen;
+    SEL       cutoutSelector = NSSelectorFromString(@"_exclusionArea");
+    if (![screen respondsToSelector:cutoutSelector])
+    {
+        return std::nullopt;
+    }
+
+    id  shape        = ((id (*)(id, SEL)) objc_msgSend)(screen, cutoutSelector);
+    SEL rectSelector = NSSelectorFromString(@"rect");
+    if (![shape respondsToSelector:rectSelector])
+    {
+        return std::nullopt;
+    }
+
+    CGRect rect = ((CGRect (*)(id, SEL)) objc_msgSend)(shape, rectSelector);
+    return island::Frame{rect.origin.x, rect.origin.y, rect.size.width, rect.size.height};
+}
+
+static std::optional<island::Cutout> deviceCutout(void)
+{
+    if (UIDevice.currentDevice.userInterfaceIdiom != UIUserInterfaceIdiomPhone)
+    {
+        return std::nullopt;
+    }
+    return island::cutoutFromSystem(systemCutout());
+}
+
+static UIRectCorner roundedCorners(island::CutoutKind kind)
+{
+    return kind == island::CutoutKind::Island ? UIRectCornerAllCorners
+                                              : UIRectCornerBottomLeft | UIRectCornerBottomRight;
+}
+
+static UIColor *inkColor(island::Ink ink)
+{
+    switch (ink)
+    {
+        case island::Ink::Shadow:
+            return [UIColor colorWithWhite:0 alpha:0.5];
+        case island::Ink::Red:
+            return [UIColor colorWithRed:1.0 green:46 / 255.0 blue:99 / 255.0 alpha:1];
+        case island::Ink::Cyan:
+            return [UIColor colorWithRed:33 / 255.0 green:230 / 255.0 blue:1.0 alpha:1];
+        case island::Ink::White:
+            return UIColor.whiteColor;
+        case island::Ink::Scanline:
+            return [UIColor colorWithWhite:0 alpha:0.22];
+    }
+    return UIColor.clearColor;
+}
+
 @implementation Utilities (DynamicIsland)
 
 + (BOOL)deviceHasDynamicIsland
 {
-    if ([[UIDevice currentDevice] userInterfaceIdiom] != UIUserInterfaceIdiomPhone)
-    {
-        [Logger debug:LOG_CATEGORY_UTILITIES format:@"Not an iPhone, no Dynamic Island"];
-        return NO;
-    }
+    std::optional<island::Cutout> cutout = deviceCutout();
 
-    UIWindow *keyWindow = [self keyWindow];
+    [Logger
+         debug:LOG_CATEGORY_UTILITIES
+        format:@"Screen cutout: %@", cutout ? NSStringFromCGRect(rectOf(cutout->frame)) : @"none"];
 
-    if (!keyWindow)
-    {
-        [Logger debug:LOG_CATEGORY_UTILITIES
-               format:@"No key window found, cannot determine Dynamic Island"];
-        return NO;
-    }
-
-    CGFloat topInset         = keyWindow.safeAreaInsets.top;
-    BOOL    hasDynamicIsland = island::hasDynamicIsland(true, topInset);
-
-    [Logger debug:LOG_CATEGORY_UTILITIES
-           format:@"Key window top safe area inset: %.1f, Dynamic Island: %@", topInset,
-                  hasDynamicIsland ? @"YES" : @"NO"];
-
-    return hasDynamicIsland;
+    return cutout.has_value();
 }
 
 + (UIImage *)createLogoImage
 {
-    CGFloat size = 512.0;
-    UIGraphicsBeginImageContextWithOptions(CGSizeMake(size, size), NO, 0);
+    CGSize                         size   = CGSizeMake(island::kLogoWidth, island::kLogoHeight);
+    UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat preferredFormat];
+    format.opaque                         = NO;
 
-    [[UIColor whiteColor] setFill];
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size
+                                                                               format:format];
 
-    UIBezierPath *rightPath = [UIBezierPath bezierPath];
-    [rightPath moveToPoint:CGPointMake(272.52, 177.27)];
-    [rightPath addLineToPoint:CGPointMake(277.81, 215.63)];
-    [rightPath addLineToPoint:CGPointMake(338.67, 215.74)];
-    [rightPath addLineToPoint:CGPointMake(338.67, 215.83)];
-    [rightPath addCurveToPoint:CGPointMake(373.01, 240.88)
-                 controlPoint1:CGPointMake(345.73, 216.18)
-                 controlPoint2:CGPointMake(359.97, 225.73)];
-    [rightPath addLineToPoint:CGPointMake(349.25, 240.88)];
-    [rightPath addCurveToPoint:CGPointMake(333.37, 260.06)
-                 controlPoint1:CGPointMake(345.04, 240.88)
-                 controlPoint2:CGPointMake(333.37, 249.47)];
-    [rightPath addCurveToPoint:CGPointMake(349.25, 279.24)
-                 controlPoint1:CGPointMake(333.37, 270.65)
-                 controlPoint2:CGPointMake(345.04, 279.24)];
-    [rightPath addLineToPoint:CGPointMake(376.41, 279.24)];
-    [rightPath addCurveToPoint:CGPointMake(338.67, 313.64)
-                 controlPoint1:CGPointMake(373.86, 288.78)
-                 controlPoint2:CGPointMake(357.41, 308.18)];
-    [rightPath addLineToPoint:CGPointMake(338.67, 313.75)];
-    [rightPath addLineToPoint:CGPointMake(297.66, 313.64)];
-    [rightPath addLineToPoint:CGPointMake(302.95, 351.9)];
-    [rightPath addLineToPoint:CGPointMake(338.67, 352.01)];
-    [rightPath addCurveToPoint:CGPointMake(416.94, 279.23)
-                 controlPoint1:CGPointMake(378, 352.01)
-                 controlPoint2:CGPointMake(410.64, 320.52)];
-    [rightPath addLineToPoint:CGPointMake(473.61, 279.14)];
-    [rightPath addLineToPoint:CGPointMake(489.48, 240.77)];
-    [rightPath addLineToPoint:CGPointMake(415.05, 240.88)];
-    [rightPath addCurveToPoint:CGPointMake(338.67, 177.38)
-                 controlPoint1:CGPointMake(405.63, 204.23)
-                 controlPoint2:CGPointMake(375, 177.38)];
-    [rightPath addLineToPoint:CGPointMake(272.52, 177.27)];
-    [rightPath closePath];
-
-    UIBezierPath *leftPath = [UIBezierPath bezierPath];
-    [leftPath moveToPoint:CGPointMake(164.04, 160.07)];
-    [leftPath addCurveToPoint:CGPointMake(87.66, 223.57)
-                controlPoint1:CGPointMake(127.71, 160.07)
-                controlPoint2:CGPointMake(97.08, 186.92)];
-    [leftPath addLineToPoint:CGPointMake(41.01, 223.57)];
-    [leftPath addLineToPoint:CGPointMake(25.14, 261.94)];
-    [leftPath addLineToPoint:CGPointMake(85.77, 261.94)];
-    [leftPath addCurveToPoint:CGPointMake(164.04, 334.7)
-                controlPoint1:CGPointMake(92.07, 303.24)
-                controlPoint2:CGPointMake(124.7, 334.7)];
-    [leftPath addLineToPoint:CGPointMake(243.41, 334.7)];
-    [leftPath addLineToPoint:CGPointMake(238.12, 296.34)];
-    [leftPath addLineToPoint:CGPointMake(164.04, 296.34)];
-    [leftPath addLineToPoint:CGPointMake(164.04, 296.26)];
-    [leftPath addCurveToPoint:CGPointMake(126.3, 261.94)
-                controlPoint1:CGPointMake(145.3, 296.01)
-                controlPoint2:CGPointMake(128.85, 271.48)];
-    [leftPath addLineToPoint:CGPointMake(153.46, 261.94)];
-    [leftPath addCurveToPoint:CGPointMake(169.33, 242.76)
-                controlPoint1:CGPointMake(157.67, 261.94)
-                controlPoint2:CGPointMake(169.33, 253.35)];
-    [leftPath addCurveToPoint:CGPointMake(153.46, 223.57)
-                controlPoint1:CGPointMake(169.33, 232.17)
-                controlPoint2:CGPointMake(157.67, 223.57)];
-    [leftPath addLineToPoint:CGPointMake(129.7, 223.57)];
-    [leftPath addCurveToPoint:CGPointMake(164.04, 198.44)
-                controlPoint1:CGPointMake(133.15, 216.35)
-                controlPoint2:CGPointMake(147.27, 198.89)];
-    [leftPath addLineToPoint:CGPointMake(164.04, 198.44)];
-    [leftPath addLineToPoint:CGPointMake(219.6, 198.44)];
-    [leftPath addLineToPoint:CGPointMake(214.3, 160.07)];
-    [leftPath addLineToPoint:CGPointMake(164.04, 160.07)];
-    [leftPath closePath];
-
-    [rightPath fill];
-    [leftPath fill];
-
-    UIImage *result = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-
-    return result;
+    return [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+        for (const island::Pixel &pixel : island::logoPixels())
+        {
+            [inkColor(pixel.ink) setFill];
+            UIRectFillUsingBlendMode(CGRectMake(pixel.frame.x - island::kLogoMinX,
+                                                pixel.frame.y - island::kLogoMinY,
+                                                pixel.frame.width, pixel.frame.height),
+                                     kCGBlendModeNormal);
+        }
+    }];
 }
 
 + (void)showDynamicIslandOverlay
@@ -188,7 +162,13 @@ static island::ViewState islandViewState(void)
         return;
     }
 
-    island::Frame frame = island::overlayFrame(keyWindow.bounds.size.width);
+    std::optional<island::Cutout> cutout = deviceCutout();
+    if (!cutout)
+    {
+        [Logger error:LOG_CATEGORY_UTILITIES format:@"No screen cutout to cover"];
+        return;
+    }
+    island::Frame frame = cutout->frame;
 
     [Logger debug:LOG_CATEGORY_UTILITIES
            format:@"Creating Dynamic Island overlay view at x:%f y:%f width:%f height:%f", frame.x,
@@ -201,10 +181,11 @@ static island::ViewState islandViewState(void)
 
     islandOverlayView.userInteractionEnabled = NO;
 
-    UIBezierPath *path = [UIBezierPath
-        bezierPathWithRoundedRect:islandOverlayView.bounds
-                byRoundingCorners:UIRectCornerAllCorners
-                      cornerRadii:CGSizeMake(island::cornerRadius(), island::cornerRadius())];
+    UIBezierPath *path =
+        [UIBezierPath bezierPathWithRoundedRect:islandOverlayView.bounds
+                              byRoundingCorners:roundedCorners(cutout->kind)
+                                    cornerRadii:CGSizeMake(island::cornerRadius(*cutout),
+                                                           island::cornerRadius(*cutout))];
 
     CAShapeLayer *maskLayer      = [CAShapeLayer layer];
     maskLayer.path               = path.CGPath;
@@ -217,7 +198,7 @@ static island::ViewState islandViewState(void)
     logoView.image        = logoImage;
     logoView.contentMode  = UIViewContentModeScaleAspectFit;
 
-    logoView.frame = rectOf(island::logoFrame(logoImage.size.width / logoImage.size.height));
+    logoView.frame = rectOf(island::logoFrame(frame));
 
     [islandOverlayView addSubview:logoView];
 
@@ -229,13 +210,13 @@ static island::ViewState islandViewState(void)
 
 + (void)initializeDynamicIslandOverlay
 {
-    [Logger info:LOG_CATEGORY_UTILITIES format:@"Checking if device has Dynamic Island..."];
+    [Logger info:LOG_CATEGORY_UTILITIES format:@"Checking for a screen cutout..."];
 
     switch (islandPresentation.start([self deviceHasDynamicIsland]))
     {
         case island::Start::NoIsland:
             [Logger info:LOG_CATEGORY_UTILITIES
-                  format:@"Device does not have Dynamic Island, skipping overlay"];
+                  format:@"Device has no Dynamic Island or notch, skipping overlay"];
             return;
         case island::Start::AlreadyStarted:
             [Logger info:LOG_CATEGORY_UTILITIES
