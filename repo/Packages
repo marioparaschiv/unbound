@@ -38,3 +38,23 @@ Author: Unbound Team
 SileoDepiction: https://builds.unbound.rip/repo/depictions/unbound.json
 Icon: https://builds.unbound.rip/repo/icon.png
 
+Package: app.unbound.ios
+Architecture: iphoneos-arm64
+Version: 1.0.971
+Section: Tweaks
+Maintainer: eternal, acquitelol, Adrian Castro
+Installed-Size: 2536
+Depends: ellekit, uikittools
+Conflicts: app.enmity, mod.vendetta, app.pyoncord
+Filename: ./debs/app.unbound.ios_1.0.971_iphoneos-arm64.deb
+Size: 677476
+MD5sum: 999bda1623950a62de263ed24a4a9484
+SHA1: 2d4085b6ff0db100880f8335249023876a7969a6
+SHA256: 2d6a9500801009675979b961e060bc56573ca55edf1445b2ff5c0e906abd38e6
+SHA512: 8aedb4cb94a066a8cd5bd70e18838a2e945345b0706bf1537d75abf94a1a195b8decd297f51c0e9e4416b9a7c90f47a3176010c9a08ae1e5bf336ab6e0ff7da0
+Description: A client modification for Discord on mobile. Install plugins, themes, fonts, and icon packs on the official Discord app.
+Name: Unbound
+Author: Unbound Team
+SileoDepiction: https://builds.unbound.rip/repo/depictions/unbound.json
+Icon: https://builds.unbound.rip/repo/icon.png
+
