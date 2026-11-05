@@ -85,6 +85,17 @@ static jsi::Function getter(jsi::Runtime &runtime, const char *name,
         });
 }
 
+static jsi::Function rescanFunction(jsi::Runtime &runtime, std::function<void()> rescan)
+{
+    return native::makeFunction(runtime, "rescanAddons", 0,
+                                [rescan = std::move(rescan)](jsi::Runtime &, const jsi::Value &,
+                                                             const jsi::Value *,
+                                                             size_t) -> jsi::Value {
+                                    rescan();
+                                    return jsi::Value::undefined();
+                                });
+}
+
 static jsi::Function sha256Function(jsi::Runtime &runtime)
 {
     return native::makeFunction(
@@ -141,6 +152,11 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
                        getter(runtime, "getPlugins", std::move(provider.getPlugins), none));
     bridge.setProperty(runtime, "getThemes",
                        getter(runtime, "getThemes", std::move(provider.getThemes), none));
+    if (provider.rescanAddons)
+    {
+        bridge.setProperty(runtime, "rescanAddons",
+                           rescanFunction(runtime, std::move(provider.rescanAddons)));
+    }
     if (provider.fonts)
     {
         bridge.setProperty(runtime, "fonts", makeFontsBridge(runtime, std::move(provider.fonts)));

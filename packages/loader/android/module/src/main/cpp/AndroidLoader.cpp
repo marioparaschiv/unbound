@@ -515,13 +515,19 @@ uint32_t AndroidLoader::runtimeBytecodeVersion()
 
 loader::UnboundNativeProvider AndroidLoader::unboundNativeProvider()
 {
-    return loader::makeUnboundNativeProvider(
+    loader::UnboundNativeProvider provider = loader::makeUnboundNativeProvider(
         addons_, fonts_, configuration_.origin, runtimeBytecodeVersion(), configuration_.documents,
         [self = shared_from_this()](const std::string &url, const std::string &destination,
                                     const std::map<std::string, std::string> &headers,
                                     const loader::DownloadPolicy             &policy) {
             return self->download(url, destination, headers, policy);
         });
+    // Themes.kt reads a theme's colours when the selection changes, so a rescan before then is
+    // enough.
+    provider.rescanAddons = [self = shared_from_this()] {
+        self->addons_.scan(self->configuration_.documents, self->runtimeBytecodeVersion());
+    };
+    return provider;
 }
 
 void AndroidLoader::installNativeModules(jsi::Runtime &runtime)

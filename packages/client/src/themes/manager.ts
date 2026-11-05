@@ -1,12 +1,14 @@
 import toError from '@unbound-app/utils/to-error';
 import type { Theme } from '@unbound-app/types';
 
-import { getLoader, getThemes } from '~/native/unbound-native';
+import { getLoader, getThemes, rescanAddons } from '~/native/unbound-native';
 import type { AddonResolveable } from '~/addons/addon';
 import { parseThemeBundle } from '~/themes/bundle';
 import { Manager } from '~/addons/manager';
 import { Addons } from '~/addons/addons';
 import ThemeStore from '~/themes/state';
+
+const DISK_EVENTS = ['installed', 'updated', 'deleted'] as const;
 
 /**
  * @description Manages user themes, layering theme-specific application on top of the base {@link Addons} manager.
@@ -24,6 +26,11 @@ export class Themes extends Addons<Theme> {
 		});
 
 		Manager.register('theme', this);
+
+		// The loader recolours native views from the theme files it scanned, so each change on disk rescans them.
+		for (const event of DISK_EVENTS) {
+			this.on(event, rescanAddons);
+		}
 	}
 
 	/**
@@ -72,8 +79,8 @@ export class Themes extends Addons<Theme> {
 	}
 
 	/**
-	 * @description Reports whether a theme reaches native views only after a restart. Applying is live, but the
-	 * loader recolours native views from the theme files it scanned at launch, so a theme installed or changed since lags.
+	 * @description Reports whether a theme reaches native views only after a restart. Applying is live, but a loader
+	 * without `rescanAddons` recolours native views from the theme files it scanned at launch, so a theme installed or changed since lags.
 	 * @param entity The theme id or entity.
 	 * @returns Whether the loader's launch copy of the theme is missing or differs.
 	 */
