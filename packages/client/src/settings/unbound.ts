@@ -25,8 +25,6 @@ const DEFAULTS = {
 	'chat-background.url': '',
 	'chat-background.blur': 0,
 	'chat-background.opacity': DEFAULT_BACKGROUND_OPACITY,
-	/** Whether Discord's fade behind the chat input shows. */
-	'chat-input.shadow': true,
 	'plugins.showLibraries': false,
 	'updater.auto': true,
 	'updater.notify': true,
