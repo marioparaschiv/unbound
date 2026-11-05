@@ -39,6 +39,7 @@ export type NativeAndroidInstallerAvailability =
 
 /** The Discord install the installer would replace. */
 export type NativeAndroidInstallerStatus = {
+	/** Whether in-app installs work, or what blocks them. */
 	readonly availability: NativeAndroidInstallerAvailability;
 	/** Discord's version name, such as `352.17 - Stable`. */
 	readonly versionName: string;
@@ -48,11 +49,15 @@ export type NativeAndroidInstallerStatus = {
 
 /** One gzipped split APK of a build to install. */
 export type NativeAndroidInstallSplit = {
+	/** The split's name: `base` or a config split such as `config.arm64_v8a`. */
 	readonly name: string;
+	/** Where the gzipped APK downloads from. */
 	readonly url: string;
 	/** SHA-256 of the APK after it is gunzipped. */
 	readonly sha256: string;
+	/** Size of the APK in bytes. */
 	readonly size: number;
+	/** Size of the gzipped download in bytes. */
 	readonly compressedSize: number;
 };
 
@@ -64,16 +69,21 @@ export type NativeAndroidInstallPhase =
 	| 'confirming'
 	| 'failed';
 
+/** How far the running install is. */
 export type NativeAndroidInstallProgress = {
+	/** What the installer is doing now. */
 	readonly phase: NativeAndroidInstallPhase;
 	/** Gzipped bytes downloaded so far, of `total`. */
 	readonly downloaded: number;
+	/** Gzipped bytes the install downloads in all. */
 	readonly total: number;
+	/** Why the last install failed, or `null`. */
 	readonly error: string | null;
 };
 
 /** Installs another patched Discord build over this one, upgrade or downgrade, downloading only the splits that differ. */
 export type NativePlatformAndroidInstaller = {
+	/** Reads whether in-app installs work and which Discord is installed. */
 	status(): NativeAndroidInstallerStatus;
 	/** Opens the system's "Install unknown apps" screen for Discord. */
 	requestPermission(): boolean;
@@ -81,6 +91,7 @@ export type NativePlatformAndroidInstaller = {
 	installedSplits(): Promise<Record<string, string | null>>;
 	/** Starts installing a build in the background; false when an install is already running. Poll `progress`. */
 	install(splits: readonly NativeAndroidInstallSplit[]): boolean;
+	/** Reads how far the running install is. */
 	progress(): NativeAndroidInstallProgress;
 	/** Stops a running download or abandons the install session. */
 	cancel(): boolean;
@@ -88,6 +99,7 @@ export type NativePlatformAndroidInstaller = {
 
 /** Android-only helpers; missing on iOS. */
 export type NativePlatformAndroidBridge = {
+	/** Installs patched Discord builds over this one. */
 	readonly installer: NativePlatformAndroidInstaller;
 };
 
