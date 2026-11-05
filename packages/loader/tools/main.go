@@ -35,6 +35,8 @@ func run(args []string) error {
 		return runDiscordVersion(args[1:])
 	case "discord-apk":
 		return runDiscordAPK(args[1:])
+	case "patch-apk":
+		return runPatchAPK(args[1:])
 	case "release-candidate":
 		return runReleaseCandidate(args[1:])
 	case "release-names":
@@ -119,6 +121,7 @@ func printUsage() {
 	fmt.Println("       go run ./tools ipa-icons [--root <path>]")
 	fmt.Println("       go run ./tools discord-version --version <version> | --android-code <code>")
 	fmt.Println("       go run ./tools discord-apk --channel <stable|beta|alpha> [--code <code>] [--output-dir <dir> --split <name>...]")
+	fmt.Println("       go run ./tools patch-apk --signer <pem> <apk>...")
 	fmt.Println("       go run ./tools release-candidate --channel <stable|testflight|android-beta|android-alpha>")
 	fmt.Println("       go run ./tools publish-loader-releases --version <semver> --ios-url <release-url> --android-url <release-url> [--changelog-file <path>]")
 	fmt.Println("       go run ./tools generate-loader-changelog --version <semver> --output <path>")

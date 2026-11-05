@@ -156,6 +156,14 @@ The module APK is written to `android/module/build/outputs/apk/release/`. To pro
 java -jar lspatch.jar base.apk config.*.apk -m android/module/build/outputs/apk/release/module-release.apk -l 2 -o patched
 ```
 
+Then pin every split to the shared versionCode `2000000000`, so any patched build installs over any other in either direction without uninstalling, and let the base request package installs for the in-app updater. `patch-apk` edits each APK in place and re-signs it with APK Signature Scheme v2 using a PEM file holding the private key and its certificate (`openssl pkcs12 -nodes` output). Do not re-sign with `apksigner`: it copies the entries LSPatch stores inside `origin.apk` a second time and nearly doubles the base.
+
+```bash
+go run ./tools patch-apk --signer signer.pem patched/*.apk
+```
+
+Discord does not report this versionCode to its servers: `client_build_number` and `client_version` are constants compiled into its bundle and `BuildConfig`. Bundled SDKs that read `PackageInfo` (Sentry, AppsFlyer, Play Billing) see `2000000000`.
+
 </details>
 
 </details>
