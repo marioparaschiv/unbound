@@ -1,6 +1,7 @@
-import { logRejection } from '~/diagnostics/promise-rejections';
 import { createPatcher } from '~/patcher/create-patcher';
 import { findByProps } from '~/metro/search';
+
+import { logRejection } from './promise-rejections';
 
 const Patcher = createPatcher('unbound::promise-rejections');
 

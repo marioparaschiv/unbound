@@ -7,7 +7,6 @@ import { createLogger } from '@unbound-app/logger';
 
 import { createSettings, generalSection, panelHostSection } from '~/settings/builtin';
 import { marketplaceSection, storePageSection } from '~/marketplace/builtin';
-import promiseRejections from '~/builtins/promise-rejections';
 import cloudSync, { cloudSyncSection } from '~/sync/builtin';
 import updater, { updatesSection } from '~/updates/builtin';
 import { developerSection } from '~/settings/builtin.dev';
@@ -18,6 +17,7 @@ import type { BuiltInEntry } from '~/builtins/registry';
 import type { SectionEntry } from '~/settings/section';
 import errorBoundary from '~/builtins/error-boundary';
 import sponsorBadges from '~/builtins/sponsor-badges';
+import promiseRejections from '~/diagnostics/builtin';
 import { assetsSection } from '~/assets/builtin.dev';
 import coreCommands from '~/commands/core-commands';
 import hotRefresh from '~/hot-refresh/builtin.dev';
