@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { toVersionKey } from '~/lib/version-key';
 
-// The SemVer 2.0.0 precedence example, plus multi-digit and mixed-identifier cases.
+// The SemVer 2.0.0 precedence example, plus multi-digit and mixed-identifier cases and loader commit-count patches.
 const ascending = [
 	'0.9.0',
 	'1.0.0-alpha',
@@ -15,6 +15,9 @@ const ascending = [
 	'1.0.0-rc.1',
 	'1.0.0',
 	'1.0.1',
+	'1.0.99',
+	'1.0.962',
+	'1.0.1003',
 	'1.2.0',
 	'1.10.0',
 	'2.0.0-0',
