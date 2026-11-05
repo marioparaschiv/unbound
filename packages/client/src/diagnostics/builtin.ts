@@ -1,33 +1,18 @@
-import { createPatcher } from '~/patcher/create-patcher';
-import { findByProps } from '~/metro/search';
+import noop from '@unbound-app/utils/noop';
 
-import { logRejection } from './promise-rejections';
-
-const Patcher = createPatcher('unbound::promise-rejections');
-
-// @sentry/core: Sentry's rejection tracker reports each unhandled rejection through its captureException.
-const SentryCore = findByProps('captureException', 'createEventEnvelope', { lazy: true });
-
-type SentryHint = { data?: { id?: number }; mechanism?: { type?: string } };
+import { setRejectionTracker } from './promise-rejections';
 
 /**
- * Logs the unhandled rejections Sentry's tracker reports. Sentry replaces Unbound's early tracker while
- * Discord starts, and its reports go nowhere since Unbound blocks the Sentry SDK.
+ * Takes Hermes' rejection tracker back once Discord's main module has run. Discord replaces the one
+ * installed before its bundle while it starts, and each call replaces the last.
  */
 export function start() {
-	// UNKNOWN: Sentry captures whatever the promise was rejected with.
-	Patcher.before(SentryCore, 'captureException', ({ args: [error, hint] }) => {
-		const { data, mechanism } = (hint ?? {}) as SentryHint;
-
-		if (mechanism?.type !== 'onunhandledrejection') return;
-
-		logRejection(data?.id, error);
-	});
+	setRejectionTracker();
 }
 
-/** Stops logging the rejections Sentry reports. */
+/** Stops logging rejections; Hermes cannot remove a tracker, so a silent one replaces it. */
 export function stop() {
-	Patcher.unpatchAll();
+	setRejectionTracker(noop);
 }
 
 export default { start, stop };
