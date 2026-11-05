@@ -1,57 +1,32 @@
-import { createLogger } from '@unbound-app/logger';
-import noop from '@unbound-app/utils/noop';
+import { logRejection } from '~/diagnostics/promise-rejections';
+import { createPatcher } from '~/patcher/create-patcher';
+import { findByProps } from '~/metro/search';
 
-import { afterFirstFrame } from '~/core/first-frame';
+const Patcher = createPatcher('unbound::promise-rejections');
 
-const Logger = createLogger('Core', 'PromiseRejections');
+// @sentry/core: Sentry's rejection tracker reports each unhandled rejection through its captureException.
+const SentryCore = findByProps('captureException', 'createEventEnvelope', { lazy: true });
 
-let active = false;
-
-function setRejectionTracker(
-	onUnhandled: NonNullable<PromiseRejectionTrackerOptions['onUnhandled']>,
-) {
-	const hermes = typeof HermesInternal === 'undefined' ? null : HermesInternal;
-
-	if (hermes === null || !('enablePromiseRejectionTracker' in hermes)) return;
-
-	(hermes as HermesInternalObject).enablePromiseRejectionTracker?.({
-		allRejections: true,
-		onUnhandled,
-	});
-}
-
-// UNKNOWN: a promise can be rejected with any value.
-function logRejection(id: number, error: unknown) {
-	Logger.error(`Unhandled promise rejection ${id}:`, error);
-}
+type SentryHint = { data?: { id?: number }; mechanism?: { type?: string } };
 
 /**
- * @description Points Hermes' rejection tracker at Unbound's log, replacing the tracker set before.
- */
-export function trackRejections(): void {
-	setRejectionTracker(logRejection);
-}
-
-/**
- * Logs unhandled promise rejections. Discord hands them only to the Sentry SDK, which Unbound blocks,
- * so they would otherwise vanish.
+ * Logs the unhandled rejections Sentry's tracker reports. Sentry replaces Unbound's early tracker while
+ * Discord starts, and its reports go nowhere since Unbound blocks the Sentry SDK.
  */
 export function start() {
-	active = true;
+	// UNKNOWN: Sentry captures whatever the promise was rejected with.
+	Patcher.before(SentryCore, 'captureException', ({ args: [error, hint] }) => {
+		const { data, mechanism } = (hint ?? {}) as SentryHint;
 
-	// Sentry enables the tracker while Discord starts, and each call replaces the last, so this one
-	// waits until Discord has drawn.
-	afterFirstFrame(() => {
-		if (active) {
-			trackRejections();
-		}
+		if (mechanism?.type !== 'onunhandledrejection') return;
+
+		logRejection(data?.id, error);
 	});
 }
 
-/** Stops logging rejections. Hermes cannot remove a tracker, and Sentry's is gone, so it goes quiet. */
+/** Stops logging the rejections Sentry reports. */
 export function stop() {
-	active = false;
-	setRejectionTracker(noop);
+	Patcher.unpatchAll();
 }
 
 export default { start, stop };
