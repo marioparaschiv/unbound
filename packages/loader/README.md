@@ -565,13 +565,11 @@ adb logcat -d -b crash | go run ./tools symbolicate-android --symbols android-sy
 
 `--symbols` takes the release zip or an extracted artifact directory. The tool resolves every `libunbound*.so` frame with `llvm-symbolizer` from the Android NDK (`ANDROID_NDK_HOME`, or the newest NDK under `ANDROID_HOME`), or the one passed with `--symbolizer`, and prints each frame's functions, inlined callers and source lines under it. The ABI comes from the frame's library path or the tombstone's `ABI:` line; pass `--abi` when the backtrace names neither. A frame whose `BuildId` differs from the symbols is reported instead of resolved, since those symbols belong to another build.
 
-## Patching an IPA
+## Unbound's Info.plist changes
 
-The IPA build patches Discord before injecting the tweak: it names the app Unbound, drops the supported-device list, enables file sharing, adds the Unbound alternate icon and the `unbound://` URL scheme, and renames the React Navigation elements module. The same step runs on its own:
+cyan makes every change while it injects the tweak; the IPA is not rewritten beforehand. `-n Unbound` names the app, `-u` drops the supported-device list, `-d` enables file sharing, and the Unbound alternate icon's PNGs go in with `-f`. cyan's `-l` replaces each top-level key it merges, so the build writes a merge plist from the IPA's own `CFBundleIcons`, `CFBundleIcons~ipad` and `CFBundleURLTypes` with the `UnboundIcon` alternate icon and the `unbound://` scheme added.
 
-```bash
-go run ./tools patch-ipa --ipa Discord.ipa --output Patched.ipa
-```
+On a jailbroken device the deb's `unbound-bundle` tool makes the same changes to the installed Discord as root, and also installs the custom app icons added in Discord's app icon picker. A sideloaded app cannot gain icons after install, since iOS checks icon names against the Info.plist on disk.
 
 The alternate icon is compiled from `tools/assets/ipa-icons/AppIcon.icon`. After editing it, regenerate the bundled PNGs on macOS with Xcode installed:
 

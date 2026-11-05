@@ -226,14 +226,14 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 	if _, err := os.Stat(input); err != nil {
 		return fmt.Errorf("IPA not found: %s", input)
 	}
-	patched := filepath.Join(work, "patched.ipa")
-	if options.channel == "testflight" {
-		patched = input
-	} else {
-		if err := patchIPA(input, patched); err != nil {
-			return fmt.Errorf("patching IPA failed: %w", err)
+	var unboundArgs, unboundFiles []string
+	if options.channel != "testflight" {
+		unboundArgs, unboundFiles, err = cyanInputs(input, work)
+		if err != nil {
+			return fmt.Errorf("preparing the Unbound Info.plist failed: %w", err)
 		}
 	}
+	patched := input
 	if err := rejectInjectedIPA(patched, work, runner); err != nil {
 		return err
 	}
@@ -257,8 +257,10 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 	if options.channel == "testflight" {
 		args = append(args, "-b", "com.hammerandchisel.discord.testflight")
 	}
+	args = append(args, unboundArgs...)
 	args = append(args, "-i", patched, "-o", injectionOutput, "-f", options.deb)
 	args = append(args, extensionPaths...)
+	args = append(args, unboundFiles...)
 	if err := runner(options.root, cyan, args, os.Environ(), os.Stdout, os.Stderr); err != nil {
 		return fmt.Errorf("IPA injection failed: %w", err)
 	}
