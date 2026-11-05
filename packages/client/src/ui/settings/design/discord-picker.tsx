@@ -3,8 +3,9 @@ import noop from '@unbound-app/utils/noop';
 import { View } from 'react-native';
 
 import Empty from '~/ui/components/empty-state';
+import { format, messages } from '~/i18n/api';
 import { Discord } from '~/metro/components';
-import { messages } from '~/i18n/api';
+import { Manager } from '~/addons/manager';
 
 import { DEFAULT_THEME_ID, defaultThemeSwatch } from './default-theme';
 import { NavigationCore, type HeaderOptions } from './navigation';
@@ -100,6 +101,20 @@ function DiscordPicker({ kind }: DiscordPickerProps) {
 
 	if (!connected) {
 		return <Empty>{messages.UNBOUND_EMPTY_RESULTS}</Empty>;
+	}
+
+	// Discord's picker reads its first swatch unguarded, so with no icon packs it gets none and keeps the install menu.
+	if (!themes.length) {
+		return (
+			<View style={styles.page}>
+				<Empty>
+					{format('UNBOUND_NO_ADDONS', {
+						type: messages[Manager.for(kind).label].toLowerCase(),
+					})}
+				</Empty>
+				<PickerActions kind={kind} addon={undefined} />
+			</View>
+		);
 	}
 
 	// Called inline so its hooks run as this component's: it only resolves Discord's inner `ThemePicker`.
