@@ -1,11 +1,11 @@
 #pragma once
 
 #include <optional>
-#include <vector>
 
 namespace loader::dynamicisland {
 constexpr double kLogoHeightRatio    = 0.92;
 constexpr double kNotchCornerRatio   = 0.65;
+constexpr double kHoleLogoRatio      = 0.6;
 constexpr double kRevealSeconds      = 0.2;
 constexpr double kCreateDelaySeconds = 1.0;
 constexpr double kShowDelaySeconds   = 0.5;
@@ -23,29 +23,16 @@ struct Frame {
     double height = 0;
 };
 
-enum class Ink
-{
-    Shadow,
-    Red,
-    Cyan,
-    White,
-    Scanline,
-};
-
 enum class CutoutKind
 {
     Island,
     Notch,
+    Hole,
 };
 
 struct Cutout {
     CutoutKind kind;
     Frame      frame;
-};
-
-struct Pixel {
-    Ink   ink;
-    Frame frame;
 };
 
 struct ViewState {
@@ -75,8 +62,7 @@ enum class Lifecycle
 
 std::optional<Cutout> cutoutFromSystem(std::optional<Frame> rect);
 double                cornerRadius(const Cutout &cutout);
-Frame                 logoFrame(const Frame &cutout);
-std::vector<Pixel>    logoPixels();
+Frame                 logoFrame(const Cutout &cutout);
 
 class Presentation
 {

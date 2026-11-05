@@ -38,71 +38,38 @@ static void readsNotchesFromTheSystemCutout()
     assert(near(cornerRadius(*cutout), 32 * kNotchCornerRatio));
 }
 
+static void readsCameraHolesFromTheSystemCutout()
+{
+    const Frame                 duoClosed{399, 30, 37, 37};
+    const std::optional<Cutout> cutout = cutoutFromSystem(duoClosed);
+    assert(cutout && cutout->kind == CutoutKind::Hole && sameFrame(cutout->frame, duoClosed));
+    assert(near(cornerRadius(*cutout), 18.5));
+
+    const Frame logo = logoFrame(*cutout);
+    assert(near(logo.width, 37 * kHoleLogoRatio * kLogoAspect));
+    const double cornerX = logo.x + logo.width - duoClosed.width / 2;
+    const double cornerY = logo.y + logo.height - duoClosed.height / 2;
+    assert(std::sqrt(cornerX * cornerX + cornerY * cornerY) <= duoClosed.width / 2);
+}
+
 static void rejectsMissingCutouts()
 {
     assert(!cutoutFromSystem(Frame{0, 0, 0, 0}));
-    assert(!cutoutFromSystem(Frame{150, 14, 30, 30}));
+    assert(!cutoutFromSystem(Frame{150, 14, 0, 30}));
     assert(!cutoutFromSystem(std::nullopt));
 }
 
 static void fitsTheLogoInsideTheCutout()
 {
     const Frame island{157.333, 14, 125.333, 36.6667};
-    const Frame logo = logoFrame(island);
+    const Frame logo = logoFrame(Cutout{CutoutKind::Island, island});
     assert(near(logo.height, 36.6667 * kLogoHeightRatio));
     assert(near(logo.width / logo.height, kLogoAspect));
     assert(near(logo.x, (island.width - logo.width) / 2));
     assert(near(logo.y, (island.height - logo.height) / 2));
 
-    const Frame narrow = logoFrame(Frame{100, 14, 30, 30});
-    assert(near(narrow.width, 30) && near(narrow.width / narrow.height, kLogoAspect));
-}
-
-static void drawsTheLogoLayersInOrder()
-{
-    const std::vector<Pixel> pixels = logoPixels();
-
-    int  counts[5] = {};
-    Ink  previous  = Ink::Shadow;
-    bool ordered   = true;
-    for (const Pixel &pixel : pixels)
-    {
-        counts[static_cast<int>(pixel.ink)]++;
-        ordered  = ordered && static_cast<int>(pixel.ink) >= static_cast<int>(previous);
-        previous = pixel.ink;
-    }
-
-    assert(ordered);
-    assert(counts[static_cast<int>(Ink::White)] == 140);
-    assert(counts[static_cast<int>(Ink::Shadow)] == 140);
-    assert(counts[static_cast<int>(Ink::Red)] == 24);
-    assert(counts[static_cast<int>(Ink::Cyan)] == 24);
-
-    bool hasCornerCell = false;
-    bool hasSparkle    = false;
-    for (const Pixel &pixel : pixels)
-    {
-        if (pixel.ink != Ink::White)
-        {
-            continue;
-        }
-        hasCornerCell =
-            hasCornerCell || (near(pixel.frame.x, 39.6, 0.02) && near(pixel.frame.y, 116.15, 0.02));
-        hasSparkle = hasSparkle || sameFrame(pixel.frame, Frame{192.82, 64.84, 8.73, 8.73});
-    }
-    assert(hasCornerCell && hasSparkle);
-
-    for (const Pixel &pixel : pixels)
-    {
-        if (pixel.ink == Ink::Scanline && near(pixel.frame.x, 39.6, 0.02) &&
-            near(pixel.frame.y, 116.15, 0.02))
-        {
-            assert(near(pixel.frame.height, 1.45, 0.02));
-        }
-        assert(pixel.frame.x >= kLogoMinX - 1e-6 && pixel.frame.y >= kLogoMinY - 1e-6);
-        assert(pixel.frame.x + pixel.frame.width <= kLogoMinX + kLogoWidth + 1e-6);
-        assert(pixel.frame.y + pixel.frame.height <= kLogoMinY + kLogoHeight + 1e-6);
-    }
+    const Frame narrow = logoFrame(Cutout{CutoutKind::Island, Frame{100, 14, 20, 18}});
+    assert(near(narrow.width, 20) && near(narrow.width / narrow.height, kLogoAspect));
 }
 
 static void startsOnceOnIslandDevices()
@@ -145,9 +112,9 @@ int main()
 {
     readsIslandsFromTheSystemCutout();
     readsNotchesFromTheSystemCutout();
+    readsCameraHolesFromTheSystemCutout();
     rejectsMissingCutouts();
     fitsTheLogoInsideTheCutout();
-    drawsTheLogoLayersInOrder();
     startsOnceOnIslandDevices();
     plansShowAndHide();
     return 0;
