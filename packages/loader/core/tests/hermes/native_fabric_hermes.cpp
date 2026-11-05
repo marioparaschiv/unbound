@@ -308,7 +308,9 @@ static size_t countCalls(const RecordingAdapter &adapter, const std::string &pre
 
 static bool called(const RecordingAdapter &adapter, const std::string &call)
 {
-    return std::find(adapter.calls.begin(), adapter.calls.end(), call) != adapter.calls.end();
+    return std::any_of(adapter.calls.begin(), adapter.calls.end(), [&](const std::string &actual) {
+        return sameCall(actual, call);
+    });
 }
 
 static void evaluate(jsi::Runtime &runtime, const std::string &source, const char *name)
