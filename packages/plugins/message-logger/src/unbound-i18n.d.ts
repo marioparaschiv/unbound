@@ -77,6 +77,42 @@ declare module '@unbound-app/i18n' {
 		readonly CURRENT_VERSION: string;
 		/** (empty) */
 		readonly EMPTY_MESSAGE: string;
+		/** Persistent archive */
+		readonly PERSISTENT_ARCHIVE: string;
+		/** Save captured messages across restarts */
+		readonly PERSIST_CAPTURE: string;
+		/** Starts off. Saves only messages this client observes being edited or deleted. */
+		readonly PERSIST_CAPTURE_DETAIL: string;
+		/** Save only these channel IDs */
+		readonly CAPTURE_CHANNELS: string;
+		/** Comma or space separated. Blank allows all accessible channels; other ignore filters still apply. */
+		readonly CAPTURE_CHANNELS_DETAIL: string;
+		/** Retention days (1–30) */
+		readonly RETENTION_DAYS: string;
+		/** Maximum saved events (50–2000) */
+		readonly MAX_SAVED_EVENTS: string;
+		/** Open saved archive and search */
+		readonly VIEW_SAVED: string;
+		/** Clear saved history for this account */
+		readonly CLEAR_SAVED_ACCOUNT: string;
+		/** Permanently clear this account’s locally saved history? */
+		readonly CLEAR_ACCOUNT_CONFIRM: string;
+		/** Clear saved history for ALL accounts */
+		readonly CLEAR_ALL_SAVED: string;
+		/** Permanently clear all locally saved history on this device? */
+		readonly CLEAR_ALL_CONFIRM: string;
+		/** Local, unencrypted archive */
+		readonly ARCHIVE_PRIVACY: string;
+		/** Use only where participants permit. No uncaptured-message recovery. File names only; no attachment downloads. Device backups may contain history. Wait for Saved locally in the archive before force-closing. Age/count limits cover all accounts combined; older records expire when the app runs. */
+		readonly ARCHIVE_PRIVACY_DETAIL: string;
+		/** Restore saved deletions in their original channel */
+		readonly RESTORE_IN_CHANNEL: string;
+		/** Shows retained captured deletions as local red messages when Discord loads that part of the channel. Does not send messages or restore uncaptured content. */
+		readonly RESTORE_IN_CHANNEL_DETAIL: string;
+		/** Deleted-message color */
+		readonly DELETED_COLOR: string;
+		/** Choose the color used for captured deleted messages. Red text must be enabled. */
+		readonly DELETED_COLOR_DETAIL: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
