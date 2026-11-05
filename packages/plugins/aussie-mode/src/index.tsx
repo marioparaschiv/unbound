@@ -4,17 +4,19 @@ import { isAussieDevice } from '~/locale';
 import { startRotation } from '~/rotation';
 import { startUpsideDownText } from '~/text';
 
-let stopRotation = () => {};
+let stopRotation: () => Promise<void> = async () => {};
 
-export function start(context: PluginContext) {
+export async function start(context: PluginContext): Promise<void> {
 	if (!isAussieDevice()) return;
 
-	// Last, so a failure in the text feature never leaves the screen turned over.
 	startUpsideDownText();
-	stopRotation = startRotation(context.native, (error) => console.error('[Aussie Mode]', error));
+	stopRotation = await startRotation(context.native, (error) =>
+		console.error('[Aussie Mode]', error),
+	);
 }
 
-export function stop() {
-	stopRotation();
-	stopRotation = () => {};
+export async function stop(): Promise<void> {
+	const cleanup = stopRotation;
+	stopRotation = async () => {};
+	await cleanup();
 }
