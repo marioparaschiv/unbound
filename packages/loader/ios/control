@@ -8,5 +8,5 @@ Author: Unbound Team
 Section: Tweaks
 Depends: ellekit, uikittools
 SileoDepiction: https://builds.unbound.rip/repo/depictions/unbound.json
-Icon: https://assets.unbound.rip/logo/logo.png
+Icon: https://builds.unbound.rip/repo/icon.png
 Conflicts: app.enmity, mod.vendetta, app.pyoncord
