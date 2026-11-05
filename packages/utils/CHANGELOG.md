@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.10.0](https://github.com/marioparaschiv/unbound/compare/utils-v0.9.2...utils-v0.10.0) (2026-11-05)
+
+
+### Features
+
+* **cli:** overhaul the plugin developer experience ([#907](https://github.com/marioparaschiv/unbound/issues/907)) ([64e34e7](https://github.com/marioparaschiv/unbound/commit/64e34e7729ed1edf3677acdabbd32900a0945c9a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/types bumped to 0.12.0
+
 ## [0.9.2](https://github.com/marioparaschiv/unbound/compare/utils-v0.9.1...utils-v0.9.2) (2026-10-31)
 
 

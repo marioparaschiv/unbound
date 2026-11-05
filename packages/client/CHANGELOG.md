@@ -1,5 +1,151 @@
 # Changelog
 
+## [1.0.0](https://github.com/marioparaschiv/unbound/compare/client-v0.12.0...client-v1.0.0) (2026-11-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* **rollup-plugin-hermes:** the plugin is ESM-only, `manifestUrl` is now `registryUrl`, and the manifest helpers moved from dist/manifest.js to the `./manifest` export.
+
+### Features
+
+* **avatar-radius:** round avatars from UI-thread hooks ([4809639](https://github.com/marioparaschiv/unbound/commit/480963908b2f13cbafee1d4abce5c6618bf959fa))
+* **cli:** add ubd profile for Hermes' sampling profiler ([0c2c07e](https://github.com/marioparaschiv/unbound/commit/0c2c07eec18cd1955cf023162795c6adc2e35a82))
+* **client:** add a typed native.objc.create ([#726](https://github.com/marioparaschiv/unbound/issues/726)) ([6dca897](https://github.com/marioparaschiv/unbound/commit/6dca89729b4efc0f5022147145e5515b522c52d4))
+* **client:** add addon, updates, sync and builtins namespaces ([#727](https://github.com/marioparaschiv/unbound/issues/727)) ([edbbc37](https://github.com/marioparaschiv/unbound/commit/edbbc3791ab8e2681c44b49297b892d936d776a4))
+* **client:** add chat backgrounds that themes can recommend ([#966](https://github.com/marioparaschiv/unbound/issues/966)) ([4b72e6e](https://github.com/marioparaschiv/unbound/commit/4b72e6e9f7d29608901ec4320985685fd3cd1069))
+* **client:** add commands.register and commands.unregister ([#708](https://github.com/marioparaschiv/unbound/issues/708)) ([2ea9a39](https://github.com/marioparaschiv/unbound/commit/2ea9a390863152c23586e3838e72e63cf013a543))
+* **client:** add metro.onModuleLoad and hide internal members ([#695](https://github.com/marioparaschiv/unbound/issues/695)) ([ad49b36](https://github.com/marioparaschiv/unbound/commit/ad49b36ed1988770143efc97c2009459cab784ac))
+* **client:** add new names for fs, assets, toasts, i18n and settings ([#693](https://github.com/marioparaschiv/unbound/issues/693)) ([968a5d4](https://github.com/marioparaschiv/unbound/commit/968a5d4b7ffc26a1a0d0bde605da210b642b230c))
+* **client:** add the Bucket API to storage ([#694](https://github.com/marioparaschiv/unbound/issues/694)) ([e0be2df](https://github.com/marioparaschiv/unbound/commit/e0be2dfe91c70bd3c431316dad008d20c44f6f44))
+* **client:** add the domain-move codemod ([#690](https://github.com/marioparaschiv/unbound/issues/690)) ([95bc097](https://github.com/marioparaschiv/unbound/commit/95bc0979881b875875e0fa04ce3b688153977c58))
+* **client:** add the flux namespace ([#722](https://github.com/marioparaschiv/unbound/issues/722)) ([f0213f2](https://github.com/marioparaschiv/unbound/commit/f0213f2d78a309964be60f3101803b8a750b9f8c))
+* **client:** add the ui namespace for addon settings ([#728](https://github.com/marioparaschiv/unbound/issues/728)) ([26840c9](https://github.com/marioparaschiv/unbound/commit/26840c943c39a5412dda1a30376faf066fae0cd3))
+* **client:** evaluate plugins with a per-plugin Addon scope ([#721](https://github.com/marioparaschiv/unbound/issues/721)) ([a58fe1c](https://github.com/marioparaschiv/unbound/commit/a58fe1ce39a303ef5edec93e21175914c1a738c2))
+* **client:** expose plugin start durations ([b7e7a9a](https://github.com/marioparaschiv/unbound/commit/b7e7a9aea635e6b420fea7e709a425e1973d6ae0))
+* **client:** lazy patch targets and lazy addon lookups ([#714](https://github.com/marioparaschiv/unbound/issues/714)) ([e7c1cd9](https://github.com/marioparaschiv/unbound/commit/e7c1cd9a7c788bf1f6a3d58a63591a91df36cdf4))
+* **client:** let worklets call back into JS ([8a01f16](https://github.com/marioparaschiv/unbound/commit/8a01f1625f188431a9d88f5fbf8c5cb50762b6bd))
+* **client:** log unhandled promise rejections ([833b739](https://github.com/marioparaschiv/unbound/commit/833b739b4d58ec47c5b56ea33f5266edef35ebd3))
+* **client:** move fonts to a native font store with presets ([#969](https://github.com/marioparaschiv/unbound/issues/969)) ([40ff081](https://github.com/marioparaschiv/unbound/commit/40ff081f49917861523acf3e0a1ad0e8b6ec14f0))
+* **client:** read and write settings through the loader ([e2651a2](https://github.com/marioparaschiv/unbound/commit/e2651a29c0ac9f37459f20033d67aa184144988e))
+* **client:** read manifest platforms, add definePlatform and has ([#723](https://github.com/marioparaschiv/unbound/issues/723)) ([9c31acf](https://github.com/marioparaschiv/unbound/commit/9c31acf0591982314e8c35457b91740d45f3d67a))
+* **client:** rebuild Plugins and Design settings on Discord primitives ([#964](https://github.com/marioparaschiv/unbound/issues/964)) ([cd4349f](https://github.com/marioparaschiv/unbound/commit/cd4349fdd5b74ede4f267d7716ad16380c51fc9c))
+* **client:** redesign settings and add a shared Unbound account ([#810](https://github.com/marioparaschiv/unbound/issues/810)) ([859add1](https://github.com/marioparaschiv/unbound/commit/859add1230f6dce2ff67c2088f4590199a8ab667))
+* **client:** scope module listeners, buckets, flux and commands ([#731](https://github.com/marioparaschiv/unbound/issues/731)) ([e8e913c](https://github.com/marioparaschiv/unbound/commit/e8e913cb68d341bb0dd75614b390b35bec805555))
+* **client:** show an addon's store page from the marketplace ([#725](https://github.com/marioparaschiv/unbound/issues/725)) ([6f87e74](https://github.com/marioparaschiv/unbound/commit/6f87e74b5b712d210d9e449c8ad33dee330badeb))
+* **client:** splice hook changes in place during hot refresh ([#890](https://github.com/marioparaschiv/unbound/issues/890)) ([ab1355c](https://github.com/marioparaschiv/unbound/commit/ab1355c493239e287dcd9c2f6a6895aeae7fb39d))
+* **cli:** overhaul the plugin developer experience ([#907](https://github.com/marioparaschiv/unbound/issues/907)) ([64e34e7](https://github.com/marioparaschiv/unbound/commit/64e34e7729ed1edf3677acdabbd32900a0945c9a))
+* **cli:** show plugin start times in ubd status ([b7e7a9a](https://github.com/marioparaschiv/unbound/commit/b7e7a9aea635e6b420fea7e709a425e1973d6ae0))
+* **contracts:** add the manifest platforms field ([#691](https://github.com/marioparaschiv/unbound/issues/691)) ([edac1ed](https://github.com/marioparaschiv/unbound/commit/edac1ed2f287a26e869bf02057c2244684494aba))
+* **discord-bot:** v2 addon cards with gallery and author avatars ([#871](https://github.com/marioparaschiv/unbound/issues/871)) ([444fe85](https://github.com/marioparaschiv/unbound/commit/444fe854746bc7e5a0b654e0ad17ffaecb8f7bc5))
+* **loader:** add an in-app updater for patched Discord ([#956](https://github.com/marioparaschiv/unbound/issues/956)) ([747ef3b](https://github.com/marioparaschiv/unbound/commit/747ef3bde0f5b712e1548a4d3b4c3aad7394bcc6))
+* **loader:** keep settings native and read them on demand ([e2651a2](https://github.com/marioparaschiv/unbound/commit/e2651a29c0ac9f37459f20033d67aa184144988e))
+* **loader:** replace preload.js with the UnboundNative bridge ([#902](https://github.com/marioparaschiv/unbound/issues/902)) ([4d7a469](https://github.com/marioparaschiv/unbound/commit/4d7a469e0cad7791c731e0f2b156bde960722406))
+* **loader:** report active iOS jailbreak in diagnostics ([#905](https://github.com/marioparaschiv/unbound/issues/905)) ([b00057b](https://github.com/marioparaschiv/unbound/commit/b00057bb2208c4b5b080a9a5251bf1aed5ce81c1))
+* **loader:** ship the React DevTools backend as signed bytecode ([#919](https://github.com/marioparaschiv/unbound/issues/919)) ([d940256](https://github.com/marioparaschiv/unbound/commit/d940256443edfc12fb0fd5bb6ae0eb013f4aadcb))
+* native sponsor badges in Discord and staff badges without a sponsorship ([#909](https://github.com/marioparaschiv/unbound/issues/909)) ([3fdd04f](https://github.com/marioparaschiv/unbound/commit/3fdd04fd167760332bf5a4c605509a959b9ac6e6))
+* **native:** run plugin hooks on the UI thread ([4dde7a6](https://github.com/marioparaschiv/unbound/commit/4dde7a66bc26463ebc0e043c6c630727f3dba730))
+* **plugins:** add Aussie Mode and Aussie Speech ([00a6123](https://github.com/marioparaschiv/unbound/commit/00a61233243e389c9cc1006f847f79a4a4b2b374))
+* require a minimum loader version per bundle ([#962](https://github.com/marioparaschiv/unbound/issues/962)) ([840bcfa](https://github.com/marioparaschiv/unbound/commit/840bcfa3912c370623fad8b7e810af46e5598d8f))
+* **rollup-plugin-hermes:** move hermes tooling into the repo ([#957](https://github.com/marioparaschiv/unbound/issues/957)) ([b91ec1e](https://github.com/marioparaschiv/unbound/commit/b91ec1e283e51ddf94a5296872181856e68655b8))
+* **sdk:** type the Addon scope globals in global.d.ts ([#737](https://github.com/marioparaschiv/unbound/issues/737)) ([5fde80b](https://github.com/marioparaschiv/unbound/commit/5fde80ba20afc9a06b6a0cc2f59cf58ca14bf057))
+* type all of window.unbound and publish versioned API docs ([#784](https://github.com/marioparaschiv/unbound/issues/784)) ([3174a68](https://github.com/marioparaschiv/unbound/commit/3174a68aa9713d44631bf2527b0014a7d79f2a8c))
+
+
+### Bug Fixes
+
+* clear the lint, type and test failures on main ([#932](https://github.com/marioparaschiv/unbound/issues/932)) ([594831f](https://github.com/marioparaschiv/unbound/commit/594831f1839c6bc0278cc552d52aa368b3c5c841))
+* **client:** animate GIF sponsor badges in the directory and sheet ([#914](https://github.com/marioparaschiv/unbound/issues/914)) ([172d1de](https://github.com/marioparaschiv/unbound/commit/172d1de02fba90373324ac43ade6a3d7834ee124))
+* **client:** apply icon packs on Discord 349 ([#730](https://github.com/marioparaschiv/unbound/issues/730)) ([b4f7310](https://github.com/marioparaschiv/unbound/commit/b4f73109ad4e430402851d5a7e3be884ebdb7eaa))
+* **client:** drop the input guard underlay over a chat background ([#968](https://github.com/marioparaschiv/unbound/issues/968)) ([c1e3af5](https://github.com/marioparaschiv/unbound/commit/c1e3af5ba36dee2eaeb51c61e80c7afd7afe3c66))
+* **client:** let native calls made during a plugin's stop finish ([c461211](https://github.com/marioparaschiv/unbound/commit/c461211309bd17d6fdf706572a59ad467946ba76))
+* **client:** log promise rejections from before Discord's bundle runs ([496e33b](https://github.com/marioparaschiv/unbound/commit/496e33b8b1c6adfe8f46f617f6f05fd9c5c25577))
+* **client:** render mid-sentence page media uncropped ([#740](https://github.com/marioparaschiv/unbound/issues/740)) ([0c8f2aa](https://github.com/marioparaschiv/unbound/commit/0c8f2aad99503ef16b7132e6904fecd5dfea746b))
+* **client:** render store page media and bold on Discord 349 ([#732](https://github.com/marioparaschiv/unbound/issues/732)) ([bc19683](https://github.com/marioparaschiv/unbound/commit/bc1968388911bc769286854a12d725ce5e21f9cf))
+* **client:** show sponsor badges before Discord's own badges ([#958](https://github.com/marioparaschiv/unbound/issues/958)) ([68e2c24](https://github.com/marioparaschiv/unbound/commit/68e2c24fdb0d8dd2e02c8d3f0c913370d05a8c3e))
+* **client:** track rejections through Hermes alone, not Sentry ([b3c2979](https://github.com/marioparaschiv/unbound/commit/b3c2979bda99228eb39c483bb9e1124811bd5184))
+* **client:** trim isRenderable and the design audit from the SDK ([#867](https://github.com/marioparaschiv/unbound/issues/867)) ([e47bd64](https://github.com/marioparaschiv/unbound/commit/e47bd646d89fb4fd6461164c4a8c6c9acf8d7126))
+* **loader:** report why the smoke crash fixture could not be armed ([00a6123](https://github.com/marioparaschiv/unbound/commit/00a61233243e389c9cc1006f847f79a4a4b2b374))
+* **native:** follow Cocoa ownership in the iOS bridge and create ([#904](https://github.com/marioparaschiv/unbound/issues/904)) ([d17f03c](https://github.com/marioparaschiv/unbound/commit/d17f03c15fef7d0dfcb57ca37970e806371a35b8))
+* **plugins:** keep Reaction Avatars pills intact across restarts ([c461211](https://github.com/marioparaschiv/unbound/commit/c461211309bd17d6fdf706572a59ad467946ba76))
+
+
+### Performance Improvements
+
+* **chat-bubbles:** wake JS only for Android rows that need measuring ([8a01f16](https://github.com/marioparaschiv/unbound/commit/8a01f1625f188431a9d88f5fbf8c5cb50762b6bd))
+* **client:** add a cached byTypeName metro filter ([45ce33c](https://github.com/marioparaschiv/unbound/commit/45ce33c0a17bf1aa83955410bab0811019d0d49e))
+* **client:** create UIKit objects on the main thread ([f83f796](https://github.com/marioparaschiv/unbound/commit/f83f796ab270d59c7c3d993401e19bf389e230ec))
+* **client:** cut the bundle by 28% and move off zod ([#868](https://github.com/marioparaschiv/unbound/issues/868)) ([e662499](https://github.com/marioparaschiv/unbound/commit/e662499d9553f8025a0f72ab03710273ba0507da))
+* **client:** load modules on demand, import Discord's libraries ([#789](https://github.com/marioparaschiv/unbound/issues/789)) ([d732248](https://github.com/marioparaschiv/unbound/commit/d7322488f7019307615246b4fc29d60fa5d85330))
+* **client:** look up file-path searches and waits by path ([#806](https://github.com/marioparaschiv/unbound/issues/806)) ([8c17656](https://github.com/marioparaschiv/unbound/commit/8c17656d0990b9e88e68457458363e37dfe65c27))
+* **client:** start late plugins after Discord's first frame ([94c7428](https://github.com/marioparaschiv/unbound/commit/94c7428c663d707ab72ba54cb7dc102726484072))
+* **loader:** harden the native runtime and add cheaper native paths ([#879](https://github.com/marioparaschiv/unbound/issues/879)) ([3686732](https://github.com/marioparaschiv/unbound/commit/36867326491240cc5ab27082a795537df282de27))
+* **loader:** hash bundles and download addon files natively ([#903](https://github.com/marioparaschiv/unbound/issues/903)) ([8e9d4e6](https://github.com/marioparaschiv/unbound/commit/8e9d4e6b84564f3944b5c325cff42717829ee741))
+* **loader:** keep compiled plugin sources off the JS heap ([0c2c07e](https://github.com/marioparaschiv/unbound/commit/0c2c07eec18cd1955cf023162795c6adc2e35a82))
+* **loader:** third native round, legacy removal, three Vencord ports ([#885](https://github.com/marioparaschiv/unbound/issues/885)) ([7311206](https://github.com/marioparaschiv/unbound/commit/7311206e0f0fad007bfc086fadd1c17181679fae))
+* **plugins:** find Mention Avatars text views with one native search ([f83f796](https://github.com/marioparaschiv/unbound/commit/f83f796ab270d59c7c3d993401e19bf389e230ec))
+* **plugins:** restore Reaction Avatars layouts asynchronously ([f83f796](https://github.com/marioparaschiv/unbound/commit/f83f796ab270d59c7c3d993401e19bf389e230ec))
+* **plugins:** share one async table update across Shiki rows ([f83f796](https://github.com/marioparaschiv/unbound/commit/f83f796ab270d59c7c3d993401e19bf389e230ec))
+* **plugins:** stop Chat Bubbles from blocking UIKit on JavaScript ([f83f796](https://github.com/marioparaschiv/unbound/commit/f83f796ab270d59c7c3d993401e19bf389e230ec))
+* run Unbound before Discord's bundle and hook Metro's define ([#803](https://github.com/marioparaschiv/unbound/issues/803)) ([e84491b](https://github.com/marioparaschiv/unbound/commit/e84491bfa033dfadd42ad58310826771ac9e1959))
+* **sdk-generator:** skip type checking while bundling the SDK ([7171793](https://github.com/marioparaschiv/unbound/commit/7171793a4c6c47b26ca27e187b57aa47e38e7533))
+
+
+### Code Refactoring
+
+* **client:** add AddonKind and Manager.for ([#684](https://github.com/marioparaschiv/unbound/issues/684)) ([82c0cd6](https://github.com/marioparaschiv/unbound/commit/82c0cd6e92471066f0d3511622e6a5666c2a87f0))
+* **client:** add the Addon class and per-kind behaviour ([#705](https://github.com/marioparaschiv/unbound/issues/705)) ([3195a68](https://github.com/marioparaschiv/unbound/commit/3195a68bb18b726d8e7c6e2e1ef033d58fb387a6))
+* **client:** delete old-path stubs and ui barrels ([#719](https://github.com/marioparaschiv/unbound/issues/719)) ([ddbd151](https://github.com/marioparaschiv/unbound/commit/ddbd151def57542a55b3dd8f5b3c283206d29ea9))
+* **client:** import domains directly from ui addon folders ([#711](https://github.com/marioparaschiv/unbound/issues/711)) ([e087100](https://github.com/marioparaschiv/unbound/commit/e087100971d6f26809a2e37ac99b0fdc1eb643cc))
+* **client:** import domains directly in ui/settings ([#709](https://github.com/marioparaschiv/unbound/issues/709)) ([537002d](https://github.com/marioparaschiv/unbound/commit/537002d7304299ad0ec700b7d93e73ec16455c6d))
+* **client:** move client modules into domain folders ([#707](https://github.com/marioparaschiv/unbound/issues/707)) ([6aa56a9](https://github.com/marioparaschiv/unbound/commit/6aa56a930028d426a3d5b3e46be5a0c2a47ccff7))
+* **client:** move the promise rejection built-in into diagnostics ([e6d435d](https://github.com/marioparaschiv/unbound/commit/e6d435dade963e497728cf6e58f832cd0e65b6c5))
+* **client:** pass the built-ins to the registry from core ([#680](https://github.com/marioparaschiv/unbound/issues/680)) ([e5fc5cb](https://github.com/marioparaschiv/unbound/commit/e5fc5cb6cd592b7c63e7ea758ae9ec1881eac1e2))
+* **client:** register settings sections from each domain ([#713](https://github.com/marioparaschiv/unbound/issues/713)) ([ec7724d](https://github.com/marioparaschiv/unbound/commit/ec7724d34b4fcd0dc7bcb1738b3fa00c0390c18f))
+* **client:** remove deprecated APIs and document the SDK ([#795](https://github.com/marioparaschiv/unbound/issues/795)) ([ae90809](https://github.com/marioparaschiv/unbound/commit/ae90809cad35698c8df7e954ff283a526500fb13))
+* **client:** share the native method-to-Capability map ([#681](https://github.com/marioparaschiv/unbound/issues/681)) ([cbfa587](https://github.com/marioparaschiv/unbound/commit/cbfa5873fc4ee69f24d2719eccf672f40dd9ce13))
+* **client:** split the native runtime by concern ([#712](https://github.com/marioparaschiv/unbound/issues/712)) ([f00a8f7](https://github.com/marioparaschiv/unbound/commit/f00a8f724f37c362f2075e9398b2fc128ee41460))
+* **client:** type each patcher callback by its patch kind ([#682](https://github.com/marioparaschiv/unbound/issues/682)) ([a6e2744](https://github.com/marioparaschiv/unbound/commit/a6e2744af84e3f051731bd6f7df6d5f0b9c67e03))
+* **plugins:** migrate every plugin to the new plugin setup ([#910](https://github.com/marioparaschiv/unbound/issues/910)) ([bea93f7](https://github.com/marioparaschiv/unbound/commit/bea93f7d146092cb72ed7892c3c97174ba7af6ae))
+* rename astral back to unbound ([#751](https://github.com/marioparaschiv/unbound/issues/751)) ([05faca1](https://github.com/marioparaschiv/unbound/commit/05faca1a9fef48992fd80f981f009d02da943b40))
+
+
+### Build System
+
+* **deps:** bump @babel/plugin-syntax-jsx from 7.29.7 to 8.0.1 ([513bfab](https://github.com/marioparaschiv/unbound/commit/513bfab33593678c1cc0ea80c55658e0280e3942))
+* **deps:** bump @babel/preset-typescript from 7.29.7 to 8.0.7 ([513bfab](https://github.com/marioparaschiv/unbound/commit/513bfab33593678c1cc0ea80c55658e0280e3942))
+* **deps:** bump postgres from 3.4.9 to 4.0.0 ([513bfab](https://github.com/marioparaschiv/unbound/commit/513bfab33593678c1cc0ea80c55658e0280e3942))
+* **deps:** bump the minor-and-patch group with 5 updates ([513bfab](https://github.com/marioparaschiv/unbound/commit/513bfab33593678c1cc0ea80c55658e0280e3942))
+
+
+### Documentation
+
+* move task-specific rules from AGENTS.md into skills ([#735](https://github.com/marioparaschiv/unbound/issues/735)) ([4289367](https://github.com/marioparaschiv/unbound/commit/428936749c7334884a3c60d643f9961e56068ea6))
+
+
+### Tests
+
+* **client:** type the createStyles stub's sheet as view styles ([#965](https://github.com/marioparaschiv/unbound/issues/965)) ([176c5f7](https://github.com/marioparaschiv/unbound/commit/176c5f761dff1e464f48d6b37cd4e576c1588e02))
+* **loader:** run the smoke fault scripts against the real client ([00a6123](https://github.com/marioparaschiv/unbound/commit/00a61233243e389c9cc1006f847f79a4a4b2b374))
+
+
+### Continuous Integration
+
+* **deps:** bump gradle/actions/setup-gradle to 6.4.1 ([513bfab](https://github.com/marioparaschiv/unbound/commit/513bfab33593678c1cc0ea80c55658e0280e3942))
+* **loader:** flag main loader commits that never got a build ([00a6123](https://github.com/marioparaschiv/unbound/commit/00a61233243e389c9cc1006f847f79a4a4b2b374))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 0.13.0
+    * @unbound-app/debugger-protocol bumped to 0.10.0
+    * @unbound-app/logger bumped to 0.7.3
+    * @unbound-app/types bumped to 0.12.0
+    * @unbound-app/utils bumped to 0.10.0
+    * @unbound-app/web bumped to 0.13.0
+
 ## [0.12.0](https://github.com/marioparaschiv/unbound/compare/client-v0.11.0...client-v0.12.0) (2026-10-31)
 
 

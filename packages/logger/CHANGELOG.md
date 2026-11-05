@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.3](https://github.com/marioparaschiv/unbound/compare/logger-v0.7.2...logger-v0.7.3) (2026-11-05)
+
+
+### Performance Improvements
+
+* **client:** cut the bundle by 28% and move off zod ([#868](https://github.com/marioparaschiv/unbound/issues/868)) ([e662499](https://github.com/marioparaschiv/unbound/commit/e662499d9553f8025a0f72ab03710273ba0507da))
+
 ## [0.7.2](https://github.com/marioparaschiv/unbound/compare/logger-v0.7.1...logger-v0.7.2) (2026-10-31)
 
 
