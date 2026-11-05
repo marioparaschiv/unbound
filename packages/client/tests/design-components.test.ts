@@ -11,6 +11,10 @@ mock.module('~/metro/search', () => ({
 	findByName: () => undefined,
 	findByProps: () => undefined,
 }));
+// The fallbacks' style sheets read colour tokens, which `~/metro/common` takes off Discord's `window`.
+mock.module('~/metro/common', () => ({
+	Theme: { colors: new Proxy({}, { get: (_target, key) => String(key) }) },
+}));
 
 const components = await import('~/metro/components');
 const { auditDesignComponents } = await import('~/metro/design');

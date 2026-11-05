@@ -33,7 +33,16 @@ mock.module('react', () => React);
 mock.module('react/jsx-runtime', () => ({ jsx, jsxs: jsx, Fragment: 'Fragment' }));
 mock.module('react/jsx-dev-runtime', () => ({ jsxDEV: jsx, Fragment: 'Fragment' }));
 mock.module('react-native', () => ({ View: 'View' }));
-mock.module('~/metro/components', () => ({ Discord: named, BottomSheets: named }));
+// Style sheets call `createStyles` as they load; it hands back a hook returning the sheet as written.
+const discord = new Proxy(
+	{},
+	{
+		get: (_target, key) =>
+			key === 'createStyles' ? (sheet: Record<string, unknown>) => () => sheet : String(key),
+	},
+);
+
+mock.module('~/metro/components', () => ({ Discord: discord, BottomSheets: named }));
 mock.module('~/i18n/api', () => ({ messages: named }));
 
 const { default: InputSheet } = await import('~/ui/settings-kit/input-sheet');
