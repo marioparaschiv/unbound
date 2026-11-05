@@ -8,6 +8,8 @@ export const LOCK_DIR = '/tmp/unbound-vphone.lock';
 const POLL_MS = 5_000;
 const REPORT_EVERY_MS = 60_000;
 const BENCH_OWNER = /^unbound-bench pid=(\d+)/;
+/** An agent's claim from the ubd-vphone skill's `claim.sh`: it lapses at `until`, in epoch seconds. */
+const AGENT_CLAIM = /^agent .* until=(\d+)/;
 
 function holder(dir: string): string {
 	try {
@@ -28,19 +30,24 @@ function alive(pid: number): boolean {
 }
 
 /**
- * @description Whether a lock holder is a bench run whose process is gone, so its lock is stale. Locks other
- * agents hold are never judged stale: they are waited for.
+ * @description Whether a lock is stale: a bench run whose process is gone, or an agent claim past its expiry.
+ * Other locks are never judged stale: they are waited for.
  * @param owner The lock's owner text.
  * @param isAlive Whether a process id still runs.
+ * @param now The current time in milliseconds.
  * @returns `true` when the lock can be taken over.
  */
 export function isStaleBenchLock(
 	owner: string,
 	isAlive: (pid: number) => boolean = alive,
+	now = Date.now(),
 ): boolean {
-	const match = BENCH_OWNER.exec(owner);
+	const bench = BENCH_OWNER.exec(owner);
+	const claim = AGENT_CLAIM.exec(owner);
 
-	return Boolean(match && !isAlive(Number(match[1])));
+	return Boolean(
+		(bench && !isAlive(Number(bench[1]))) || (claim && Number(claim[1]) * 1000 < now),
+	);
 }
 
 /**

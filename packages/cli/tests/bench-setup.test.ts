@@ -220,6 +220,13 @@ describe('vphone lock', () => {
 		);
 		expect(isStaleBenchLock('lazy-core', () => false)).toBe(false);
 	});
+
+	test('takes over an agent claim only once it has expired', () => {
+		const claim = 'agent /home/dev/unbound until=1000';
+
+		expect(isStaleBenchLock(claim, () => true, 999_000)).toBe(false);
+		expect(isStaleBenchLock(claim, () => true, 1_001_000)).toBe(true);
+	});
 });
 
 describe('parseDotEnv', () => {
