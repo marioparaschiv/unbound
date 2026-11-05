@@ -1,8 +1,9 @@
-import { trackPromiseRejections } from '~/diagnostics/promise-rejections';
+import { setRejectionTracker } from '~/diagnostics/promise-rejections';
 import deferUntilReady from '~/core/loader';
 
-// First, so a rejection from here until Sentry takes the tracker over is logged too.
-trackPromiseRejections();
+// First, so rejections are logged from the start; the diagnostics built-in takes the tracker back
+// after Discord's startup replaces it.
+setRejectionTracker();
 
 deferUntilReady(() => {
 	require('./preinitialize');
