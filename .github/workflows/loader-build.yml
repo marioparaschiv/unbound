@@ -3,6 +3,7 @@ run-name: >-
     ${{
       inputs.only_app_repo == true && 'app-repo deploy' ||
       inputs.only_apt_repo == true && 'apt-repo deploy' ||
+      inputs.android_publish_only == true && format('In-app Android {0} build', inputs.android_channel) ||
       format('{0} for {1}', (inputs.release == true && 'Release' || 'Build'), (inputs.version != '' && inputs.version || inputs.ipa_url != '' && inputs.ipa_url || inputs.android_channel != '' && format('latest Android {0}', inputs.android_channel) || 'latest stable'))
     }}
 
@@ -42,6 +43,10 @@ on:
                 description: "Exact Discord Android version code for an Android channel build; leave empty for the channel's latest"
                 required: false
                 type: string
+            android_publish_only:
+                default: false
+                description: "Build only Android for android_channel (stable, beta or alpha) against that channel's released Discord and publish it as an in-app build; publishes only from main"
+                type: boolean
             authenticated_source:
                 default: false
                 description: 'Authenticate direct IPA source downloads with the dkrypt API key'
@@ -112,6 +117,9 @@ on:
             android_code:
                 default: ''
                 type: string
+            android_publish_only:
+                default: false
+                type: boolean
             authenticated_source:
                 default: false
                 type: boolean
@@ -171,7 +179,7 @@ on:
 permissions: {}
 
 concurrency:
-    group: ${{ inputs.release == true && 'loader-release' || format('build-{0}-{1}-{2}', github.workflow, github.ref, github.event_name) }}
+    group: ${{ inputs.release == true && 'loader-release' || format('build-{0}-{1}-{2}-{3}', github.workflow, github.ref, github.event_name, inputs.android_channel) }}
     cancel-in-progress: false
 
 defaults:
@@ -183,6 +191,8 @@ jobs:
         if: inputs.only_app_repo != true && inputs.only_apt_repo != true
         runs-on: ubuntu-26.04
         timeout-minutes: 50
+        permissions:
+            contents: read
         outputs:
             version: ${{ steps.resolve.outputs.version || steps.select.outputs.version }}
             release_version: ${{ steps.resolve.outputs.release_version || steps.select.outputs.release_version }}
@@ -212,12 +222,28 @@ jobs:
                   INPUT_ANDROID_TRACKER: https://tracker.vendetta.rocks/tracker
                   INPUT_ANDROID_CHANNEL: ${{ inputs.android_channel }}
                   INPUT_ANDROID_CODE: ${{ inputs.android_code }}
+                  INPUT_ANDROID_PUBLISH_ONLY: ${{ inputs.android_publish_only }}
                   DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
+                  GITHUB_TOKEN: ${{ github.token }}
               run: |
                   set -euo pipefail
+                  if [ "$INPUT_ANDROID_PUBLISH_ONLY" = true ]; then
+                    case "$INPUT_ANDROID_CHANNEL" in
+                      stable|beta|alpha) ;;
+                      *) echo "::error::An in-app Android build needs android_channel stable, beta or alpha, not '$INPUT_ANDROID_CHANNEL'"; exit 1 ;;
+                    esac
+                    if [ "$INPUT_RELEASE" = true ]; then
+                      echo "::error::An in-app Android build publishes no release; leave release off"
+                      exit 1
+                    fi
+                    # Patch the Discord the channel's latest Unbound release uses, never a newer one: new Discord versions stay the release poll's job.
+                    if [ -z "$INPUT_ANDROID_CODE" ]; then INPUT_ANDROID_CODE=$(unbound-tools released-android-code --channel "$INPUT_ANDROID_CHANNEL"); fi
+                    echo "::notice::Building the in-app Android $INPUT_ANDROID_CHANNEL build for Discord version code $INPUT_ANDROID_CODE"
+                  fi
                   if [ -n "$INPUT_ANDROID_CHANNEL" ]; then
                     case "$INPUT_ANDROID_CHANNEL" in
                       beta|alpha) ;;
+                      stable) if [ "$INPUT_ANDROID_PUBLISH_ONLY" != true ]; then echo "::error::Only in-app Android builds take the stable channel"; exit 1; fi ;;
                       *) echo "::error::Android channel builds are beta or alpha, not $INPUT_ANDROID_CHANNEL"; exit 1 ;;
                     esac
                     if [ "$INPUT_IS_TESTFLIGHT" = true ]; then
@@ -581,7 +607,7 @@ jobs:
         uses: ./.github/workflows/loader-android.yml
         with:
             ios_version: ${{ needs.resolve-source.outputs.version }}
-            release: ${{ inputs.release || false }}
+            release: ${{ inputs.release || inputs.android_publish_only || false }}
             discord_channel: ${{ inputs.android_channel || 'stable' }}
             android_code: ${{ needs.resolve-source.outputs.android_code }}
             pr_number: ${{ inputs.pr_number || '' }}
@@ -884,7 +910,7 @@ jobs:
 
     android-builds:
         name: Publish in-app Android builds
-        if: ${{ !cancelled() && inputs.release == true && inputs.release_dry_run != true && needs.android.result == 'success' && (needs.release.result == 'success' || needs['android-prerelease'].result == 'success') }}
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && inputs.release_dry_run != true && needs.android.result == 'success' && needs.android.outputs.attested == 'true' && (inputs.android_publish_only == true || (inputs.release == true && (needs.release.result == 'success' || needs['android-prerelease'].result == 'success'))) }}
         needs: [android, release, android-prerelease]
         runs-on: ubuntu-26.04
         timeout-minutes: 20
@@ -919,6 +945,7 @@ jobs:
               run: echo "The public bucket is not configured (vars S3_ENDPOINT, S3_REGION, S3_PUBLIC_BUCKET; secrets S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY), so the in-app Android builds are not published." >> "$GITHUB_STEP_SUMMARY"
 
             # Uploads each gzipped split under android/{channel}/{discord versionCode}/{commit}/, build.json last, then records the build so Discord's Updates screen can install it.
+            # Off main it only stages and checks the splits, so a branch build never reaches users.
             - name: Publish the in-app Android build
               if: ${{ vars.S3_PUBLIC_BUCKET != '' }}
               env:
@@ -934,7 +961,12 @@ jobs:
               run: |
                   set -euo pipefail
                   : "${UNBOUND_API_URL:?UNBOUND_API_URL is required to record the build}"
-                  unbound-tools publish-android-build \
+                  dry_run=()
+                  if [ "$GITHUB_REF" != refs/heads/main ]; then
+                    dry_run=(--dry-run)
+                    echo "::notice title=Not published::$GITHUB_REF is not main, so the in-app Android build is staged and checked but not published."
+                  fi
+                  unbound-tools publish-android-build "${dry_run[@]}" \
                     --apks "android-build/$PATCHED_FILENAME" \
                     --split android-build/emulator/*.apk \
                     --channel "$DISCORD_CHANNEL" \
