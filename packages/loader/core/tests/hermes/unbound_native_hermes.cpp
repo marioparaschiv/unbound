@@ -149,8 +149,9 @@ static const char *const kUnboundNativeChecks = R"JS((function () {
 	var themes = UnboundNative.getThemes();
 	check(Array.isArray(themes) && themes.length === 1, 'the valid theme arrives');
 	check(themes[0].bundle === expectedThemeBundle, 'a theme bundle arrives as its file text, got ' + JSON.stringify(themes[0].bundle));
-	UnboundNative.rescanAddons();
-	check(UnboundNative.getThemes().length === 2, 'rescanAddons lists a theme installed since launch');
+	UnboundNative.rescanThemes();
+	check(UnboundNative.getThemes().length === 2, 'rescanThemes lists a theme installed since launch');
+	check(UnboundNative.getPlugins().length === plugins.length, 'rescanThemes keeps the scanned plugins');
 	check(NativePlatform.settings.get('unbound', 'answer') === 42, 'a setting is read lazily');
 	check(NativePlatform.settings.get('名前', 'ü') === 1, 'unicode settings keys are read intact');
 	var fonts = UnboundNative.fonts.list();
@@ -272,11 +273,11 @@ int main()
             std::ofstream(destination, std::ios::binary) << url;
             return loader::DownloadResult{200, ""};
         });
-    // Installs a theme the launch scan missed, as the client does before it calls rescanAddons.
-    launchData.rescanAddons = [&addons, documents] {
+    // Installs a theme the launch scan missed, as the client does before it calls rescanThemes.
+    launchData.rescanThemes = [&addons, documents] {
         write(documents / "Themes" / "late" / "manifest.json", R"({"id":"theme.late"})");
         write(documents / "Themes" / "late" / "bundle.json", kThemeBundle);
-        addons.scan(documents.string());
+        addons.rescanThemes(documents.string());
     };
 
     auto executor = std::make_shared<QueuedExecutor>();

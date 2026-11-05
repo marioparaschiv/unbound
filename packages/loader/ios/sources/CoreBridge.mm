@@ -242,6 +242,11 @@ nlohmann::json UnboundFontCatalog()
                              [CoreBridge mainBundleBytecodeVersion]);
 }
 
++ (void)rescanThemes
+{
+    UnboundAddonState().rescanThemes(toStdString(FileSystem.documents));
+}
+
 + (NSArray *)themes
 {
     return arrayFromJSON(UnboundAddonState().themes());

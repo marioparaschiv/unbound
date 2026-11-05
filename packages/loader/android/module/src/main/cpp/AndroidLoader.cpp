@@ -524,8 +524,8 @@ loader::UnboundNativeProvider AndroidLoader::unboundNativeProvider()
         });
     // Themes.kt reads a theme's colours when the selection changes, so a rescan before then is
     // enough.
-    provider.rescanAddons = [self = shared_from_this()] {
-        self->addons_.scan(self->configuration_.documents, self->runtimeBytecodeVersion());
+    provider.rescanThemes = [self = shared_from_this()] {
+        self->addons_.rescanThemes(self->configuration_.documents);
     };
     return provider;
 }
