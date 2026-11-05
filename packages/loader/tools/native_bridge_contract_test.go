@@ -30,7 +30,7 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 	headerText := string(header)
 	sourceText := string(source)
 	typeText := string(types)
-	if !containsCode(headerText, `kNativePluginApiVersion[] = "1.0.0"`) {
+	if !containsCode(headerText, `kNativePluginApiVersion[] = "1.1.0"`) {
 		t.Fatal("native plugin API version is not v1")
 	}
 	if !containsCode(headerText, `kNativePluginAbiVersion[] = "1.0.0"`) {

@@ -25,6 +25,8 @@ struct BundleManifest {
     std::map<std::string, std::string> sha512;
     std::string                        nativeBridgeApi;
     std::string                        nativeBridgeAbi;
+    // The oldest loader that runs this bundle; empty when any loader does.
+    std::string minLoaderVersion;
 
     bool        isSignable() const;
     std::string bundleFile(uint32_t bytecodeVersion, bool developerMode) const;
@@ -51,6 +53,8 @@ BundleBaseline baselineFromManifest(const BundleManifest &manifest, const std::s
 std::optional<std::string> nativeBridgeProblem(const BundleManifest &manifest,
                                                std::string_view      loaderApi,
                                                std::string_view      loaderAbi);
+std::optional<std::string> loaderVersionProblem(const BundleManifest &manifest,
+                                                std::string_view      loaderVersion);
 std::optional<std::string> rollbackProblem(const BundleManifest                &manifest,
                                            const std::string                   &source,
                                            const std::optional<BundleBaseline> &baseline);

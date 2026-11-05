@@ -8,6 +8,8 @@
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
 #include "LoaderPreferences.h"
+#include "LoaderRequiredLoader.h"
+#include "LoaderVersion.h"
 #include "NativeBundleTransaction.h"
 #include "NativePluginVersion.h"
 
@@ -404,6 +406,15 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
                 *rollback + ".");
         throw std::runtime_error("Bundle manifest would roll back the active bundle");
     }
+
+    if (std::optional<std::string> outdated = loaderVersionProblem(*manifest, loaderVersion()))
+    {
+        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
+            "Refused the update: " + *outdated + ". Update the loader to use this bundle.");
+        recordRequiredLoader(documents_, manifest->minLoaderVersion);
+        throw std::runtime_error("Bundle needs a newer loader");
+    }
+    recordRequiredLoader(documents_, "");
 
     if (std::optional<std::string> bridge =
             nativeBridgeProblem(*manifest, kNativePluginApiVersion, kNativePluginAbiVersion))

@@ -8,6 +8,8 @@ export type UnboundLoaderInfo = {
 	origin: string;
 	version: string;
 	bytecodeVersion: number;
+	/** The loader version the newest bundle needs, set while this loader refused it as too old. */
+	requiredVersion?: string;
 };
 
 /**
