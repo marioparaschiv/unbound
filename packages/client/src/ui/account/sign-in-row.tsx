@@ -14,9 +14,9 @@ function SignInRow({ subLabel }: SignInRowProps) {
 
 	return (
 		<Discord.TableRow
-			label={messages.UNBOUND_ACCOUNT_SIGN_IN}
+			label={messages.UNBOUND_SIGN_IN}
 			subLabel={subLabel}
-			icon={<Discord.TableRowIcon source={icons.ClydeIcon} />}
+			icon={<Discord.TableRowIcon source={icons.UserIcon} />}
 			arrow
 			disabled={busy}
 			onPress={start}

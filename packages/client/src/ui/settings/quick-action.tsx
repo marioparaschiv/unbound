@@ -11,7 +11,7 @@ type QuickActionProps = {
 };
 
 /**
- * @description One tile of the Unbound page's quick actions: an icon over a label, on Discord's pressable card.
+ * @description One tile of the Unbound page's quick actions: an icon centred over its label, on Discord's pressable card.
  */
 function QuickAction({ label, icon, onPress }: QuickActionProps) {
 	const styles = useStyles();

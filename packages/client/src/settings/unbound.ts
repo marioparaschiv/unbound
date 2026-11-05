@@ -1,6 +1,7 @@
 import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
 import type { PredicateResult, Widen } from '@unbound-app/types';
 
+import { DEFAULT_BACKGROUND_OPACITY, type ChatBackgroundSource } from '~/themes/chat-background';
 import type { SettingsPayload } from '~/storage/api';
 import { getBucket, useBucket } from '~/storage/api';
 
@@ -21,6 +22,13 @@ const DEFAULTS = {
 	'toasts.blur': 0.15,
 	'toasts.duration': 5000,
 	'toasts.maxOnScreen': 3,
+	/** `theme` draws the applied theme's recommended chat background; `custom` draws `chat-background.url`. */
+	'chat-background.source': 'theme' as ChatBackgroundSource,
+	'chat-background.url': '',
+	'chat-background.blur': 0,
+	'chat-background.opacity': DEFAULT_BACKGROUND_OPACITY,
+	/** Whether Discord's fade behind the chat input shows. */
+	'chat-input.shadow': true,
 	'plugins.showLibraries': false,
 	'updater.auto': true,
 	'updater.notify': true,

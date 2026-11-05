@@ -1,12 +1,14 @@
 ---
 title: 'Backgrounds'
-description: 'Place an image behind the interface, with blur and opacity.'
+description: 'Recommend a chat background image, with blur and opacity.'
 icon: 'photo'
 ---
 
 ## Adding a background
 
-To put an image behind Discord's interface, add an optional `background` object to your theme definition. Set the image `url`, then adjust how it looks behind the UI with `blur` and `opacity`.
+To recommend an image behind the chat, add an optional `background` object to your theme definition. Set the image `url`, then adjust how it looks behind the messages with `blur` and `opacity`.
+
+The background is a recommendation. Users see it by default, and they can swap in their own image or turn it off in **Design → Chat**.
 
 ```json bundle.json
 {
@@ -22,19 +24,17 @@ To put an image behind Discord's interface, add an optional `background` object 
 ## Fields
 
 <ResponseField name='url' type='string' required>
-	The image to display behind the interface.
+	The image to display behind the chat.
 </ResponseField>
 <ResponseField name='blur' type='number'>
-	How much to blur the image. Higher values soften it so foreground text stays readable.
+	The blur radius in points, `0` when left out. Higher values soften the image so messages stay readable.
 </ResponseField>
 <ResponseField name='opacity' type='number'>
-	How visible the image is behind the UI, from `0` (hidden) to `1` (fully opaque).
+	How much of the image shows through the chat color, from `0` (hidden) to `1` (the image alone). Left out, it is `0.5`.
 </ResponseField>
 
-<Warning>
-	A background can make text harder to read. Choose semantic colors that stay readable over the image, and use `blur` and a lower `opacity` to keep the interface legible.
-</Warning>
+The chat color is your theme's `CHANNEL_BACKGROUND_DEFAULT`. While a background shows, Unbound draws it at `1 - opacity` over the image, so you don't need to make it transparent yourself.
 
-<Tip>
-	To let the image show through, make the surfaces above it semi-transparent in your [semantic colors](/docs/developer/themes/types#semantic-colors). A fully opaque `BACKGROUND_PRIMARY` hides it entirely.
-</Tip>
+<Warning>
+	A background can make text harder to read. Choose semantic colors that stay readable over the image, and use `blur` and a lower `opacity` to keep messages legible.
+</Warning>

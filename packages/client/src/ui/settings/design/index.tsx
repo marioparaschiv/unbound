@@ -11,8 +11,8 @@ import DiscordPicker from './discord-picker';
 const renderPicker = (kind: PickerKind) => <DiscordPicker kind={kind} />;
 
 /**
- * @description The Design settings page: Discord's App Theme picker for themes and icon packs, beside Fonts,
- * full-screen under its transparent header. The active picker owns the header; Fonts keeps the back
+ * @description The Design settings page: Discord's App Theme picker for themes and icon packs, beside Fonts and Chat,
+ * full-screen under its transparent header. The active picker owns the header; Fonts and Chat keep the back
  * button and title only.
  */
 function DesignPage() {
@@ -27,11 +27,12 @@ function DesignPage() {
 	);
 
 	useEffect(() => {
-		const base = (tab === 'font' ? undefined : headers[tab]) ?? headers.theme;
+		const picker = tab === 'theme' || tab === 'icon-pack' ? tab : undefined;
+		const base = (picker ? headers[picker] : undefined) ?? headers.theme;
 
 		if (!base) return;
 
-		navigation.setOptions(tab === 'font' ? { ...base, headerRight: () => null } : base);
+		navigation.setOptions(picker ? base : { ...base, headerRight: () => null });
 	}, [navigation, tab, headers]);
 
 	return (
