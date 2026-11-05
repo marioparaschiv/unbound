@@ -6,6 +6,8 @@ import { Platform } from 'react-native';
 import { create } from 'zustand';
 
 import { automaticUpdates, fetchUpdates } from '~/updates/addon-updates';
+import { checkDiscordBuilds } from '~/updates/discord-builds';
+import type { DiscordBuilds } from '~/updates/discord-builds';
 import type { PendingUpdate } from '~/updates/addon-updates';
 import { fetchLoaderUpdate } from '~/updates/loader-updates';
 import { API_URL, CLIENT_VERSION } from '~/core/constants';
@@ -19,7 +21,14 @@ const logger = createLogger('Updater');
 export type UpdatesState =
 	| { status: 'idle' }
 	| { status: 'checking' }
-	| { status: 'ready'; checkedAt: string; updates: PendingUpdate[]; loader: LoaderUpdate | null }
+	| {
+			status: 'ready';
+			checkedAt: string;
+			updates: PendingUpdate[];
+			loader: LoaderUpdate | null;
+			/** The patched Discord's installable builds; `null` where Discord cannot install them. */
+			discord: DiscordBuilds | null;
+	  }
 	| { status: 'error'; checkedAt: string; error: string };
 
 /** An update being applied, or one whose last attempt failed. Absent once it succeeds. */
@@ -63,6 +72,20 @@ export async function findLoaderUpdate(): Promise<LoaderUpdate | null> {
 	}
 }
 
+/**
+ * @description Reads the in-app installer's state and the installed channel's patched Discord builds.
+ * @returns The builds, or `null` where the installer does not apply or the check failed.
+ */
+export async function findDiscordBuilds(): Promise<DiscordBuilds | null> {
+	try {
+		return await checkDiscordBuilds(API_URL);
+	} catch (error) {
+		logger.error('Failed to list the patched Discord builds:', error);
+
+		return null;
+	}
+}
+
 const UpdatesStore = create<UpdatesStore>((set, get) => {
 	function setApplying(id: string, status: ApplyStatus | undefined) {
 		set((prev) => {
@@ -82,9 +105,10 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 				set({ state: { status: 'checking' } });
 
 				try {
-					const [updates, loader] = await Promise.all([
+					const [updates, loader, discord] = await Promise.all([
 						checkInstalled(),
 						findLoaderUpdate(),
+						findDiscordBuilds(),
 					]);
 
 					set({
@@ -93,6 +117,7 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 							checkedAt: new Date().toISOString(),
 							updates,
 							loader,
+							discord,
 						},
 					});
 				} catch (error) {
