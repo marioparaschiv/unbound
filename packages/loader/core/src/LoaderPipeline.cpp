@@ -68,11 +68,14 @@ void LoaderPipeline::prepare()
     bool hasSaved = bundle && !bundle->empty();
     // A saved bundle from the other flavour runs at the next launch anyway, so this launch waits
     // for its replacement rather than leaving the switch to a second restart.
-    bool flavourSwitch   = hasSaved && !savedFlavourIsCurrent(savedPath);
-    bool waitForDownload = !hasSaved || flavourSwitch;
+    bool flavourSwitch = hasSaved && !savedFlavourIsCurrent(savedPath);
+    // Hot reload waits for the newest bundle too: reloading once it lands would tear the runtime
+    // down while Discord's bundle is still starting its native modules.
+    bool hotReload       = settings_.getBoolean("loader.update.hmr", false);
+    bool waitForDownload = !hasSaved || flavourSwitch || hotReload;
     {
         std::lock_guard<std::mutex> lock(savedMutex_);
-        if (flavourSwitch)
+        if (hasSaved && waitForDownload)
         {
             firstDownload_.fallback = SavedBundle{std::move(*bundle), savedPath};
         }
@@ -96,7 +99,7 @@ bool LoaderPipeline::savedFlavourIsCurrent(const std::string &path) const
 }
 
 // Downloads the newest bundle for the next runtime. With no saved bundle, or with
-// `loader.update.hmr`, reloads once a new one arrives so it runs now, before Discord's bundle.
+// `loader.update.hmr`, the runtime waits for it; if that wait gives up, reloads once it arrives.
 void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bool waitForDownload,
                                         uint64_t token)
 {
