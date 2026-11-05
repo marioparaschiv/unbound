@@ -274,7 +274,6 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
 {
     self.menu         = [CoreBridge toolboxMenu:@{
         @"openAppFolder" : @YES,
-        @"unboundIcon" : @(![Utilities hasDiscordProductionEntitlements]),
     }];
     self.menuSections = self.menu[@"sections"] ?: @[];
 }
@@ -298,7 +297,6 @@ static NSString *iconForMenuItem(NSString *identifier)
             @"open-issue" : @"exclamationmark.bubble",
             @"gesture-shake" : @"iphone.gen3.radiowaves.left.and.right",
             @"gesture-three-finger" : @"hand.tap",
-            @"unbound-icon" : @"app.badge",
         };
     });
     return icons[identifier] ?: @"circle";
@@ -365,15 +363,7 @@ static NSString *iconForMenuItem(NSString *identifier)
                       action:@selector(toggleSetting:)
             forControlEvents:UIControlEventValueChanged];
 
-        if ([item[@"id"] isEqualToString:@"unbound-icon"])
-        {
-            NSString *currentIcon = [[UIApplication sharedApplication] alternateIconName];
-            toggle.on             = [currentIcon isEqualToString:@"UnboundIcon"];
-        }
-        else
-        {
-            toggle.on = [item[@"on"] boolValue];
-        }
+        toggle.on = [item[@"on"] boolValue];
 
         cell.accessoryView = toggle;
     }
@@ -623,20 +613,6 @@ static NSString *iconForMenuItem(NSString *identifier)
                 }
             }
         }
-    }
-    else if ([identifier isEqualToString:@"unbound-icon"])
-    {
-        NSString *iconName = sender.on ? @"UnboundIcon" : nil;
-
-        [[UIApplication sharedApplication] setAlternateIconName:iconName
-                                              completionHandler:^(NSError *error) {
-                                                  if (error)
-                                                  {
-                                                      dispatch_async(dispatch_get_main_queue(), ^{
-                                                          [sender setOn:!sender.on animated:YES];
-                                                      });
-                                                  }
-                                              }];
     }
 }
 

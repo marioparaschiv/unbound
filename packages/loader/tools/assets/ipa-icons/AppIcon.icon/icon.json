@@ -1,38 +1,35 @@
 {
-  "fill" : "system-dark",
-  "groups" : [
+  "fill": "system-dark",
+  "groups": [
     {
-      "layers" : [
+      "layers": [
         {
-          "blend-mode" : "normal",
-          "fill" : {
-            "automatic-gradient" : "extended-srgb:1.00000,0.21961,0.23529,1.00000"
-          },
-          "glass" : true,
-          "hidden" : false,
-          "image-name" : "simple-logo.svg",
-          "name" : "simple-logo",
-          "position" : {
-            "scale" : 0.76,
-            "translation-in-points" : [
+          "blend-mode": "normal",
+          "glass": false,
+          "hidden": false,
+          "image-name": "unbound-logo.svg",
+          "name": "unbound-logo",
+          "position": {
+            "scale": 0.62,
+            "translation-in-points": [
               0,
               0
             ]
           }
         }
       ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.6
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.6
       },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.2
+      "translucency": {
+        "enabled": true,
+        "value": 0.2
       }
     }
   ],
-  "supported-platforms" : {
-    "squares" : [
+  "supported-platforms": {
+    "squares": [
       "macOS"
     ]
   }

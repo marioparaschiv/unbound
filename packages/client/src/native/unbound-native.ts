@@ -1,5 +1,6 @@
 import type {
 	UnboundAddonBundle,
+	UnboundAppIcon,
 	UnboundLoaderInfo,
 	UnboundNativeBridge,
 	UnboundNativeFonts,
@@ -20,6 +21,14 @@ function read<T>(method: keyof UnboundNativeBridge, call: (bridge: UnboundNative
 	} catch (error) {
 		logger.error(`Failed to read UnboundNative.${method}:`, error);
 	}
+}
+
+/**
+ * @description Reads the Unbound app icons the installed app declares.
+ * @returns The icons, or none on a loader that does not provide any.
+ */
+export function getAppIcons(): UnboundAppIcon[] {
+	return read('getAppIcons', (bridge) => bridge.getAppIcons?.()) ?? [];
 }
 
 /**

@@ -378,11 +378,6 @@ static MenuSection settingsSection(const SettingsStore &settings, const MenuOpti
         {gestureToggle(settings, preferences::ToolboxGesture::Shake, "Enable Shake Motion"),
          gestureToggle(settings, preferences::ToolboxGesture::ThreeFinger,
                        "Enable Three Finger Press")}};
-    if (options.unboundIcon)
-    {
-        section.items.push_back(
-            platformItem("unbound-icon", "Use Unbound Icon", MenuItemKind::Toggle));
-    }
     return section;
 }
 
@@ -413,8 +408,7 @@ MenuOptions menuOptions(const std::string &json)
     {
         return {};
     }
-    return {menuOption(input, "openAppFolder"), menuOption(input, "copyAppFolderPath"),
-            menuOption(input, "unboundIcon")};
+    return {menuOption(input, "openAppFolder"), menuOption(input, "copyAppFolderPath")};
 }
 
 static const char *kindName(MenuItemKind kind)

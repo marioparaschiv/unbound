@@ -139,6 +139,47 @@ public:
         return [CoreBridge mainBundleBytecodeVersion];
     }
 
+    static std::string iconImageURL(NSArray<NSString *> *files)
+    {
+        NSBundle *bundle = NSBundle.mainBundle;
+        for (NSString *file in files)
+        {
+            for (NSString *suffix in @[ @"@3x.png", @"@2x.png", @".png" ])
+            {
+                NSString *path = [bundle.bundlePath
+                    stringByAppendingPathComponent:[file stringByAppendingString:suffix]];
+                if ([NSFileManager.defaultManager fileExistsAtPath:path])
+                {
+                    return toStdString([NSURL fileURLWithPath:path].absoluteString);
+                }
+            }
+        }
+        return "";
+    }
+
+    static nlohmann::json declaredUnboundIcons()
+    {
+        nlohmann::json icons = nlohmann::json::array();
+        NSDictionary  *alternate =
+            NSBundle.mainBundle.infoDictionary[@"CFBundleIcons"][@"CFBundleAlternateIcons"];
+        for (NSString *iconId in [alternate.allKeys sortedArrayUsingSelector:@selector(compare:)])
+        {
+            if (![iconId hasPrefix:@"Unbound"])
+            {
+                continue;
+            }
+            std::string image = iconImageURL(alternate[iconId][@"CFBundleIconFiles"]);
+            if (image.empty())
+            {
+                continue;
+            }
+            NSString *name = [iconId isEqualToString:@"UnboundIcon"] ? @"Unbound" : iconId;
+            icons.push_back(
+                {{"id", toStdString(iconId)}, {"name", toStdString(name)}, {"image", image}});
+        }
+        return icons;
+    }
+
     loader::UnboundNativeProvider unboundNativeProvider() override
     {
         loader::UnboundNativeProvider provider = loader::makeUnboundNativeProvider(
@@ -146,6 +187,9 @@ public:
             runtimeBytecodeVersion(), toStdString(FileSystem.documents), UnboundDownload);
         // The scan finishes before the call returns, so the client's next `getThemes` lists the
         // theme; recolouring runs on main.
+        provider.getAppIcons = [] {
+            return declaredUnboundIcons();
+        };
         provider.rescanThemes = [] {
             [CoreBridge rescanThemes];
             dispatch_async(dispatch_get_main_queue(), ^{ [Themes refreshThemes]; });

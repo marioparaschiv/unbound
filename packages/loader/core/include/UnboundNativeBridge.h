@@ -18,6 +18,9 @@ struct UnboundNativeProvider {
     std::function<nlohmann::json()> getLoader;
     std::function<nlohmann::json()> getPlugins;
     std::function<nlohmann::json()> getThemes;
+    // The Unbound app icons the installed app declares, as `{id, name, image}` objects; the
+    // platform sets it, as only it can read the app's own icon declarations. Empty when unset.
+    std::function<nlohmann::json()> getAppIcons;
     // Rereads the installed themes and reapplies the selected one; left out of the bridge when
     // empty. The platform sets it, as only it can recolour native views.
     std::function<void()> rescanThemes;
