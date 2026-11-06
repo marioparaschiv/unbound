@@ -1,10 +1,10 @@
-# Publishes every first-party plugin whose manifest version is newer than the live one, without review.
+# Publishes every first-party plugin and theme whose manifest version is newer than the live one, without review.
 #
 # Secret `UNBOUND_API_KEY`: an API key of the CI account, whose role is `ci`. To mint it, an admin sets
 # that account's role to `ci` on /admin/users; then, signed in as that account, create the key on
 # /account under API keys. The server must have FIRST_PARTY_REPOSITORY=marioparaschiv/unbound set.
 # Variable `UNBOUND_API_URL`: the backend's base URL, shared with loader-build.yml.
-name: Publish Plugins
+name: Publish Addons
 
 on:
     push:
@@ -12,6 +12,7 @@ on:
             - main
         paths:
             - packages/plugins/**
+            - packages/themes/**
     workflow_dispatch:
 
 permissions:
@@ -47,15 +48,15 @@ jobs:
               run: |
                   git config user.name 'github-actions[bot]'
                   git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            - name: Publish plugins
+            - name: Publish addons
               env:
                   UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
                   UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
                   UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}
                   GH_TOKEN: ${{ github.token }}
-              run: bun packages/plugin-scripts/src/publish-plugins.ts --remote "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+              run: bun packages/plugin-scripts/src/publish-addons.ts --remote "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
-            - name: Verify the published plugins
+            - name: Verify the published addons
               env:
                   UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
               run: |

@@ -71,7 +71,10 @@ export const GUIDE_NAV: Record<GuideTab, GuideTabNav> = {
 					'icon-packs/introduction',
 				],
 			},
-			{ label: 'Tools', slugs: ['development/cli', 'development/debugging'] },
+			{
+				label: 'Tools',
+				slugs: ['development/cli', 'development/debugging', 'development/ai-agents'],
+			},
 			{ label: 'Core Development', slugs: ['development/local-builds'] },
 			{
 				label: 'Under the Hood',

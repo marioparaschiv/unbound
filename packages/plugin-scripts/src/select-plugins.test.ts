@@ -4,7 +4,13 @@ import type { LocalPlugin, PublishedVersion } from './select-plugins';
 import { getSelected, selectPlugins } from './select-plugins';
 
 function plugin(version: string): LocalPlugin {
-	return { id: 'unbound.example', dir: 'example', version, bundle: 'example/dist/index.js' };
+	return {
+		id: 'unbound.example',
+		workspace: 'packages/plugins',
+		dir: 'example',
+		version,
+		bundle: 'example/dist/index.js',
+	};
 }
 
 function live(version: string): PublishedVersion {

@@ -16,6 +16,7 @@ import { currentEnvironment } from '~/core/environment';
 import { getLoader } from '~/native/unbound-native';
 import type { Addon } from '~/addons/addon';
 import { plugins } from '~/plugins/manager';
+import { themes } from '~/themes/manager';
 import { onChange } from '~/storage/api';
 import { show } from '~/toasts/api';
 
@@ -188,8 +189,10 @@ function runtimeBytecode(request: PluginPushRequest): string | undefined {
 }
 
 async function handlePluginPush(request: PluginPushRequest) {
+	const manager = request.kind === 'theme' ? themes : plugins;
+
 	try {
-		const result = await plugins.reload(
+		const result = await manager.reload(
 			request.addonId,
 			request.bundle,
 			request.manifest,
@@ -198,7 +201,7 @@ async function handlePluginPush(request: PluginPushRequest) {
 		);
 
 		if (result.ok) {
-			plugins.markDevelopmentCopy(request.addonId);
+			manager.markDevelopmentCopy(request.addonId);
 		}
 
 		reply(
@@ -393,13 +396,19 @@ function listenToReloads() {
 		});
 	}
 
-	plugins.on('reloaded', onReloaded);
-	plugins.on('reload-error', onReloadError);
+	const managers = [plugins, themes];
+
+	for (const manager of managers) {
+		manager.on('reloaded', onReloaded);
+		manager.on('reload-error', onReloadError);
+	}
 
 	return [
 		() => clearTimeout(reset),
-		() => void plugins.off('reloaded', onReloaded),
-		() => void plugins.off('reload-error', onReloadError),
+		...managers.flatMap((manager) => [
+			() => void manager.off('reloaded', onReloaded),
+			() => void manager.off('reload-error', onReloadError),
+		]),
 	];
 }
 

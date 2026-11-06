@@ -1,10 +1,12 @@
-/** A first-party plugin as its directory describes it. */
+/** A first-party addon, plugin or theme, as its directory describes it. */
 export type LocalPlugin = {
 	id: string;
-	/** The plugin's directory, relative to `packages/plugins`. */
+	/** The workspace holding it, relative to the repository root, such as `packages/plugins`. */
+	workspace: string;
+	/** The addon's directory, relative to its workspace. */
 	dir: string;
 	version: string;
-	/** The built bundle, relative to `packages/plugins`. */
+	/** The built bundle, relative to its workspace. */
 	bundle: string;
 	/** The built bundle's SHA-256, when it has been built. */
 	sha256?: string;

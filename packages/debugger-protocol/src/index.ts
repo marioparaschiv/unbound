@@ -37,15 +37,20 @@ export type EvalResult = {
 	  }
 );
 
+/** The addon managers a push can reload into. */
+export type PushedAddonKind = 'plugin' | 'theme';
+
 /**
- * A request to hot-reload a plugin on the device, sent controller → bridge → device. Carries the
- * freshly built bundle and manifest so the device swaps them in without a re-fetch.
+ * A request to hot-reload a plugin or theme on the device, sent controller → bridge → device. Carries
+ * the freshly built bundle and manifest so the device swaps them in without a re-fetch.
  */
 export type PluginPushRequest = {
 	type: 'plugin-push';
 	/** Correlation id echoed back on the matching {@link PluginPushResult}. */
 	id: string;
 	addonId: string;
+	/** Which manager reloads the addon; a plugin when omitted, as pushes from older CLIs are. */
+	kind?: PushedAddonKind;
 	bundle: string;
 	/** The manifest as authored; the device validates it before swapping anything in. */
 	manifest: PushedManifest;
@@ -191,6 +196,10 @@ function hasRequiredFields(frame: unknown): frame is BridgeMessage {
 				typeof frame.id === 'string' &&
 				'addonId' in frame &&
 				typeof frame.addonId === 'string' &&
+				(!('kind' in frame) ||
+					frame.kind === void 0 ||
+					frame.kind === 'plugin' ||
+					frame.kind === 'theme') &&
 				'bundle' in frame &&
 				typeof frame.bundle === 'string' &&
 				'manifest' in frame &&

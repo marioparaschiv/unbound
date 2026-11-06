@@ -1,0 +1,14 @@
+{
+	"id": "unbound.rosie-purple",
+	"name": "Rosie Purple",
+	"description": "A dark purple-grey theme with lilac text and accents.",
+	"authors": [
+		{
+			"name": "Rosie<3",
+			"id": "581573474296791211"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}
