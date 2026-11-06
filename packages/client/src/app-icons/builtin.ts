@@ -5,6 +5,7 @@ import { openCustomIconsSheet } from '~/ui/app-icons/open-custom-icons-sheet';
 import { createPatcher } from '~/patcher/create-patcher';
 import { onModuleLoaded } from '~/metro/wait';
 import { byFilePath } from '~/metro/filters';
+import { icons } from '~/assets/api';
 import { format } from '~/i18n/api';
 
 import type { DiscordAppIcon, DiscordAppIconSelection, DiscordIconRow } from './bridge-icons';
@@ -17,7 +18,6 @@ import {
 	resolveDiscordAppIconSelection,
 	toDiscordAppIcon,
 } from './bridge-icons';
-import { ADD_TILE_IMAGE } from './add-tile-image';
 import AppIconStore from './state';
 
 const APP_ICON_CONSTANTS = 'modules/app_icons/native/AppIconConstants.tsx';
@@ -53,7 +53,7 @@ function addTile(): DiscordAppIcon {
 				? 'UNBOUND_APP_ICON_ADD_HOME_SCREEN_TILE'
 				: 'UNBOUND_APP_ICON_ADD_TILE',
 		),
-		iconSource: { uri: ADD_TILE_IMAGE },
+		iconSource: icons.PlusLargeIcon,
 		isPremium: false,
 	};
 }

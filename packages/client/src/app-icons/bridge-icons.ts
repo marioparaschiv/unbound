@@ -5,7 +5,7 @@ export type DiscordAppIcon = {
 	nativeId: string;
 	replacesId?: string;
 	name: string;
-	iconSource: { uri: string };
+	iconSource?: number | { uri: string };
 	isPremium: boolean;
 };
 
