@@ -24,6 +24,8 @@ struct UnboundNativeProvider {
     std::function<void()>        rescanThemes;
     std::function<void()>        syncAppIcons;
     std::function<std::string()> buildIconIPA;
+    std::function<bool(const std::string &name, const std::string &imagePath)>
+        installHomeScreenIcon;
     // Saves `url` to `path`, relative to Unbound's folder. Runs off the JS thread; throws what
     // failed.
     std::function<void(const std::string &url, const std::string &path)> downloadFile;

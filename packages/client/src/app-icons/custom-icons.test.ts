@@ -1,13 +1,17 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 
+type HomeScreenIconCall = { name: string; imagePath: string };
+
 const files = new Map<string, string>();
 const syncs: string[] = [];
+const homeScreenIcons: HomeScreenIconCall[] = [];
 const setIcons: string[] = [];
 const discordSetIcons: string[] = [];
 let currentIcon = 'AppIcon';
 let installedIds: string[] = [];
 
 mock.module('~/native/fs', () => ({
+	documentsPath: '/documents',
 	exists: async (path: string) => files.has(path),
 	readFile: async (path: string) => files.get(path) ?? '',
 	writeFile: async (path: string, content: string) => {
@@ -28,6 +32,12 @@ mock.module('~/native/native', () => ({
 
 mock.module('~/native/unbound-native', () => ({
 	getAppIcons: () => installedIds.map((id) => ({ id, name: id, image: '' })),
+	canInstallHomeScreenIcon: () => true,
+	installHomeScreenIcon: (name: string, imagePath: string) => {
+		homeScreenIcons.push({ name, imagePath });
+
+		return true;
+	},
 	syncAppIcons: () => {
 		syncs.push('sync');
 		installedIds = installedIds.filter(
@@ -49,13 +59,14 @@ mock.module('~/metro/wrappers', () => ({
 	}),
 }));
 
-const { readCustomIcons, removeCustomIcon } = await import('./custom-icons');
+const { addHomeScreenIcon, readCustomIcons, removeCustomIcon } = await import('./custom-icons');
 
 const MANIFEST = 'Unbound/AppIcons/custom.json';
 
 afterEach(() => {
 	files.clear();
 	syncs.length = 0;
+	homeScreenIcons.length = 0;
 	setIcons.length = 0;
 	discordSetIcons.length = 0;
 	currentIcon = 'AppIcon';
@@ -112,5 +123,20 @@ describe('removeCustomIcon', () => {
 		await removeCustomIcon('UnboundCustomA');
 
 		expect(setIcons).toEqual([]);
+	});
+});
+
+describe('addHomeScreenIcon', () => {
+	test('copies the selected image into Documents for profile creation and removes the temporary copy', async () => {
+		files.set('/photos/icon.jpg', 'image-data');
+
+		expect(await addHomeScreenIcon('Jailed Cats', '/photos/icon.jpg')).toBe(true);
+		expect(homeScreenIcons).toHaveLength(1);
+		expect(homeScreenIcons[0]?.name).toBe('Jailed Cats');
+		expect(homeScreenIcons[0]?.imagePath).toMatch(
+			/^\/documents\/Unbound\/AppIcons\/UnboundHomeScreen.+\.png$/,
+		);
+		expect(files).toEqual(new Map([['/photos/icon.jpg', 'image-data']]));
+		expect(syncs).toEqual([]);
 	});
 });

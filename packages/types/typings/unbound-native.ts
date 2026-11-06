@@ -203,6 +203,7 @@ export type UnboundNativeBridge = {
 	 */
 	rescanThemes?(): void;
 	syncAppIcons?(): void;
+	installHomeScreenIcon?(name: string, imagePath: string): boolean;
 	/** The font store; missing on a loader from before it. */
 	fonts?: UnboundNativeFonts;
 	/**

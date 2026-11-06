@@ -85,6 +85,23 @@ static jsi::Function getter(jsi::Runtime &runtime, const char *name,
         });
 }
 
+static jsi::Function
+homeScreenIconFunction(jsi::Runtime                                                 &runtime,
+                       std::function<bool(const std::string &, const std::string &)> install)
+{
+    return native::makeFunction(
+        runtime, "installHomeScreenIcon", 2,
+        [install = std::move(install)](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args,
+                                       size_t count) -> jsi::Value {
+            if (count < 2 || !args[0].isString() || !args[1].isString())
+            {
+                throw jsi::JSError(rt, "installHomeScreenIcon expects a name and an image path");
+            }
+            return jsi::Value(
+                install(args[0].getString(rt).utf8(rt), args[1].getString(rt).utf8(rt)));
+        });
+}
+
 static jsi::Function actionFunction(jsi::Runtime &runtime, const char *name,
                                     std::function<void()> action)
 {
@@ -193,6 +210,12 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
     {
         bridge.setProperty(runtime, "buildIconIPA",
                            buildIconIPAFunction(runtime, std::move(provider.buildIconIPA)));
+    }
+    if (provider.installHomeScreenIcon)
+    {
+        bridge.setProperty(
+            runtime, "installHomeScreenIcon",
+            homeScreenIconFunction(runtime, std::move(provider.installHomeScreenIcon)));
     }
     if (provider.fonts)
     {

@@ -1,7 +1,7 @@
 import { createLogger } from '@unbound-app/logger';
 
-import { exists, readFile, removeFile, writeFile } from '~/native/fs';
-import { syncAppIcons } from '~/native/unbound-native';
+import { documentsPath, exists, readFile, removeFile, writeFile } from '~/native/fs';
+import { installHomeScreenIcon, syncAppIcons } from '~/native/unbound-native';
 import { findByPropsLazy } from '~/metro/wrappers';
 import { getNativeModule } from '~/native/native';
 
@@ -12,6 +12,7 @@ const Logger = createLogger('AppIcons', 'Custom');
 const DIRECTORY = 'Unbound/AppIcons';
 const MANIFEST = `${DIRECTORY}/custom.json`;
 const ID_PREFIX = 'UnboundCustom';
+const HOME_SCREEN_ID_PREFIX = 'UnboundHomeScreen';
 const MAX_SIDE = 1024;
 const INSTALL_TIMEOUT_MS = 15_000;
 const INSTALL_POLL_MS = 500;
@@ -166,6 +167,30 @@ export async function addCustomIcon(name: string, image: string): Promise<boolea
 	syncAppIcons();
 
 	return waitForIcons((ids) => ids.includes(id));
+}
+
+/**
+ * @description Copies a picked image into Unbound's AppIcons folder and has the loader offer it as a Home Screen
+ * shortcut profile. The loader reads the image before returning, so the copy is removed afterwards.
+ * @param name The shortcut's label.
+ * @param image The picked image's local path.
+ * @returns Whether the profile was prepared and opened.
+ */
+export async function addHomeScreenIcon(name: string, image: string): Promise<boolean> {
+	const file = `${DIRECTORY}/${HOME_SCREEN_ID_PREFIX}${Date.now().toString(36)}.png`;
+	const imagePath = `${documentsPath}/${file}`;
+
+	await writeFile(file, await readFile(image, 'base64', false), 'base64');
+
+	try {
+		return installHomeScreenIcon(name, imagePath);
+	} finally {
+		try {
+			await removeFile(file);
+		} catch (error) {
+			Logger.error(`Failed to remove temporary Home Screen icon ${file}:`, error);
+		}
+	}
 }
 
 /**

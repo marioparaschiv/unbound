@@ -47,6 +47,29 @@ export function syncAppIcons(): void {
 }
 
 /**
+ * @description Reports whether the loader can add a Home Screen shortcut with a custom icon, which jailed iOS uses
+ * in place of real alternate icons.
+ * @returns Whether `installHomeScreenIcon` is available.
+ */
+export function canInstallHomeScreenIcon(): boolean {
+	return typeof globalThis.UnboundNative?.installHomeScreenIcon === 'function';
+}
+
+/**
+ * @description Asks the loader to build a Home Screen shortcut profile for an image and open it for installation.
+ * @param name The shortcut's label.
+ * @param imagePath The image's absolute path inside Unbound's AppIcons folder.
+ * @returns Whether the profile was prepared and opened.
+ */
+export function installHomeScreenIcon(name: string, imagePath: string): boolean {
+	return (
+		read('installHomeScreenIcon', (bridge) =>
+			bridge.installHomeScreenIcon?.(name, imagePath),
+		) ?? false
+	);
+}
+
+/**
  * @description Reads the native loader's origin, version and the runtime's Hermes bytecode version.
  * @returns The loader info, or `undefined` when no loader installed `UnboundNative`.
  */

@@ -1,7 +1,7 @@
 import { createLogger } from '@unbound-app/logger';
 
+import { canInstallHomeScreenIcon, canSyncAppIcons } from '~/native/unbound-native';
 import { openCustomIconsSheet } from '~/ui/app-icons/open-custom-icons-sheet';
-import { canSyncAppIcons } from '~/native/unbound-native';
 import { createPatcher } from '~/patcher/create-patcher';
 import { onModuleLoaded } from '~/metro/wait';
 import { byFilePath } from '~/metro/filters';
@@ -22,6 +22,7 @@ import AppIconStore from './state';
 
 const APP_ICON_CONSTANTS = 'modules/app_icons/native/AppIconConstants.tsx';
 const APP_ICON_ROWS = 'modules/app_icons/native/AppIconRows.tsx';
+const APP_ICON_ROW = 'modules/app_icons/native/AppIconRow/AppIconRow.tsx';
 
 const ADD_TILE_ID = 'UnboundAddCustomIcon';
 const UNBOUND_ICON_ID = 'UnboundIcon';
@@ -31,6 +32,14 @@ const Logger = createLogger('AppIcons');
 
 let stopWaiting: (() => void)[] = [];
 
+function canAddCustomIcon(): boolean {
+	return canSyncAppIcons() || canInstallHomeScreenIcon();
+}
+
+function usesHomeScreenIcon(): boolean {
+	return !canSyncAppIcons() && canInstallHomeScreenIcon();
+}
+
 function discordIcons(): DiscordAppIcon[] {
 	return AppIconStore.getState().icons.map(toDiscordAppIcon);
 }
@@ -39,7 +48,11 @@ function addTile(): DiscordAppIcon {
 	return {
 		id: ADD_TILE_ID,
 		nativeId: ADD_TILE_ID,
-		name: format('UNBOUND_APP_ICON_ADD_TILE'),
+		name: format(
+			usesHomeScreenIcon()
+				? 'UNBOUND_APP_ICON_ADD_HOME_SCREEN_TILE'
+				: 'UNBOUND_APP_ICON_ADD_TILE',
+		),
 		iconSource: { uri: ADD_TILE_IMAGE },
 		isPremium: false,
 	};
@@ -74,6 +87,10 @@ function patchConstants(constants: MetroExport) {
 }
 
 type ElementProps = {
+	icon?: DiscordAppIcon;
+	trailing?: unknown;
+	accessibilityRole?: string;
+	accessibilityState?: unknown;
 	icons?: DiscordIconRow[];
 	children?: Element | Element[];
 	onSelect?: (...args: SelectArgs) => void;
@@ -107,12 +124,58 @@ function findRows(node: Element | Element[]): Element {
 	return findRows(node.props?.children);
 }
 
+function findTrailing(node: Element | Element[]): Element {
+	if (!node || typeof node !== 'object') {
+		return undefined;
+	}
+
+	if (Array.isArray(node)) {
+		for (const child of node) {
+			const found = findTrailing(child);
+
+			if (found) {
+				return found;
+			}
+		}
+
+		return undefined;
+	}
+
+	if (node.props && 'trailing' in node.props) {
+		return node;
+	}
+
+	return findTrailing(node.props?.children);
+}
+
+function patchRow(row: MetroExport) {
+	Patcher.after(row, 'default', ({ args, result }) => {
+		const props = args[0] as ElementProps | undefined;
+
+		if (props?.icon?.id !== ADD_TILE_ID) {
+			return result;
+		}
+
+		const tile = findTrailing(result as Element);
+
+		if (!tile?.props) {
+			return result;
+		}
+
+		tile.props.trailing = undefined;
+		tile.props.accessibilityRole = 'button';
+		tile.props.accessibilityState = undefined;
+
+		return result;
+	});
+}
+
 function patchRows(rows: MetroExport) {
 	Patcher.after(rows, 'default', ({ result }) => {
 		const icons = AppIconStore((state) => state.icons)
 			.map(toDiscordAppIcon)
 			.sort((a, b) => Number(b.id === UNBOUND_ICON_ID) - Number(a.id === UNBOUND_ICON_ID));
-		const leading = canSyncAppIcons() ? [addTile()] : [];
+		const leading = canAddCustomIcon() ? [addTile()] : [];
 		const list = findRows(result as Element);
 		const shown = list?.props?.icons;
 
@@ -149,11 +212,12 @@ function patchRows(rows: MetroExport) {
  * @description Adds loader-provided app icons to Discord's native app icon picker.
  */
 export function start(): void {
-	if (!AppIconStore.getState().refresh().length && !canSyncAppIcons()) return;
+	if (!AppIconStore.getState().refresh().length && !canAddCustomIcon()) return;
 
 	stopWaiting = [
 		onModuleLoaded(byFilePath(APP_ICON_CONSTANTS), patchConstants),
 		onModuleLoaded(byFilePath(APP_ICON_ROWS), patchRows),
+		onModuleLoaded(byFilePath(APP_ICON_ROW), patchRow),
 	];
 }
 

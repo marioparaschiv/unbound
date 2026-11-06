@@ -7,6 +7,7 @@
 #import "CoreBridge.h"
 #import "CoreConversions.h"
 #import "Discord.h"
+#import "HomeScreenIcon.h"
 #import "HotReload.h"
 #import "IconIPA.h"
 #include "LoaderBootstrap.h"
@@ -223,6 +224,9 @@ public:
                 notify_post("app.unbound.bundle.sync");
             };
         }
+        provider.installHomeScreenIcon = [](const std::string &name, const std::string &imagePath) {
+            return UBInstallHomeScreenIcon(toNSString(name), toNSString(imagePath)) == YES;
+        };
         provider.buildIconIPA = [] {
             NSString *documents =
                 NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)
