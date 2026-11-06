@@ -40,7 +40,7 @@ function ThemePreview({ colors }: ThemePreviewProps) {
 						<SegmentedItem
 							key={entry.value}
 							value={entry.value}
-							className='flex-1 px-2'
+							className='flex-1 justify-center px-2'
 							asChild
 						>
 							<button
