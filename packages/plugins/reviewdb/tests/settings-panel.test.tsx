@@ -59,8 +59,9 @@ describe('the sign-in rows', () => {
 
 		const view = render(<SettingsPanel />);
 
-		view.act(() => void row(view, messages.AUTHORIZE).props.onPress?.());
-		await new Promise((resolve) => setImmediate(resolve));
+		await view.act(async () => {
+			await row(view, messages.AUTHORIZE).props.onPress?.();
+		});
 
 		expect(settings.token).toBe('granted');
 		expect(toasts.shown).toMatchObject([{ content: messages.LOGIN_SUCCESS }]);
@@ -85,8 +86,9 @@ describe('the blocked users row', () => {
 
 		const view = render(<SettingsPanel />);
 
-		view.act(() => void row(view, messages.MANAGE_BLOCKED_USERS).props.onPress?.());
-		await new Promise((resolve) => setImmediate(resolve));
+		await view.act(async () => {
+			await row(view, messages.MANAGE_BLOCKED_USERS).props.onPress?.();
+		});
 
 		expect(sheets).toHaveLength(1);
 	});
