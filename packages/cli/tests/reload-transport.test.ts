@@ -10,7 +10,12 @@ import type { ReloadContext, BuiltAddon } from '../src/lib/reload-transport';
 
 import { createReloadTransport, readBuiltAddon } from '../src/lib/reload-transport';
 
-type RecordedPush = { addonId: string; bundle: string; manifest: PushedManifest };
+type RecordedPush = {
+	addonId: string;
+	kind?: string;
+	bundle: string;
+	manifest: PushedManifest;
+};
 
 const roots: string[] = [];
 
@@ -66,6 +71,7 @@ function fakeContext(client: FakeClient): ReloadContext {
 			async pushPlugin(push) {
 				client.pushes.push({
 					addonId: push.addonId,
+					kind: push.kind,
 					bundle: push.bundle,
 					manifest: push.manifest,
 				});
@@ -137,15 +143,45 @@ describe('createReloadTransport', () => {
 		expect(client.pushes).toEqual([]);
 	});
 
-	test('a theme is skipped rather than pushed down the plugin channel', async () => {
+	test('a static theme is pushed as-is, tagged for the themes manager', async () => {
 		const client: FakeClient = { isDeviceConnected: true, pushes: [], result: ok };
-		const plugin = builtPlugin();
+		const dir = mkdtempSync(join(tmpdir(), 'ubd-push-theme-'));
+		const bundle = JSON.stringify({
+			type: 'dark',
+			semantic: {},
+			raw: { BRAND_500: '#c2789b' },
+		});
+
+		roots.push(dir);
+		writeFileSync(
+			join(dir, 'manifest.json'),
+			JSON.stringify({
+				id: 'com.example.theme',
+				name: 'Theme',
+				description: 'x',
+				authors: [{ name: 'M', id: '1' }],
+				version: '1.0.0',
+				main: 'bundle.json',
+			}),
+		);
+		writeFileSync(join(dir, 'bundle.json'), bundle);
 
 		const transport = createReloadTransport(fakeContext(client));
 
-		await transport.reload({ ...plugin, kind: 'theme' });
+		await transport.reload({
+			id: 'com.example.theme',
+			kind: 'theme',
+			dir,
+			output: dir,
+			static: true,
+		});
 
-		expect(client.pushes).toEqual([]);
+		expect(client.pushes).toHaveLength(1);
+		expect(client.pushes[0]).toMatchObject({
+			addonId: 'com.example.theme',
+			kind: 'theme',
+			bundle,
+		});
 	});
 
 	test('a missing build output is reported without throwing or crashing the watcher', async () => {

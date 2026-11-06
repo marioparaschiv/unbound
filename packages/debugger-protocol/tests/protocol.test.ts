@@ -46,6 +46,20 @@ describe('plugin-push round-trip', () => {
 		expect(parseMessage(JSON.stringify({ ...message, bytecode: ['x'] }))).toBeUndefined();
 	});
 
+	test('a theme push keeps its kind, and an unknown kind is rejected', () => {
+		const message: PluginPushRequest = {
+			type: 'plugin-push',
+			id: 'push-1',
+			addonId: manifest.id,
+			kind: 'theme',
+			bundle: '{"type":"dark","semantic":{},"raw":{}}',
+			manifest,
+		};
+
+		expect(parseMessage(serializeMessage(message))).toEqual(message);
+		expect(parseMessage(JSON.stringify({ ...message, kind: 'font' }))).toBeUndefined();
+	});
+
 	test('a valid plugin-push-result survives serialize → parse intact', () => {
 		const ok: PluginPushResult = { type: 'plugin-push-result', id: 'push-1', ok: true };
 		const failed: PluginPushResult = {

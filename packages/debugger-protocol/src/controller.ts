@@ -1,6 +1,12 @@
 import type { PushedManifest } from '@unbound-app/types';
 
-import type { DeviceInfo, EvalResult, LogMessage, PluginPushResult } from './index';
+import type {
+	DeviceInfo,
+	EvalResult,
+	LogMessage,
+	PluginPushResult,
+	PushedAddonKind,
+} from './index';
 
 import {
 	DEFAULT_EVAL_TIMEOUT_MS,
@@ -28,6 +34,7 @@ type PendingPush = {
 
 type PluginPush = {
 	addonId: string;
+	kind?: PushedAddonKind;
 	bundle: string;
 	manifest: PushedManifest;
 	bytecode?: Record<string, string>;
@@ -152,7 +159,7 @@ export class ControllerClient {
 	}
 
 	/**
-	 * @description Pushes a freshly built plugin to the device via the bridge and resolves with the
+	 * @description Pushes a freshly built plugin or theme to the device via the bridge and resolves with the
 	 * device's reload outcome. Fails fast if the socket isn't open or the bridge doesn't answer in time.
 	 * @param push The addon id plus the built bundle and manifest to swap in.
 	 * @returns The device's {@link PluginPushResult}.

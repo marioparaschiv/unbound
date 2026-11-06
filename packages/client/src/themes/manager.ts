@@ -1,14 +1,17 @@
+import type { PushedManifest, Theme } from '@unbound-app/types';
 import toError from '@unbound-app/utils/to-error';
-import type { Theme } from '@unbound-app/types';
 
 import { getLoader, getThemes, rescanThemes } from '~/native/unbound-native';
 import type { AddonResolveable } from '~/addons/addon';
+import type { ReloadResult } from '~/addons/addons';
 import { parseThemeBundle } from '~/themes/bundle';
+import type { AddonFiles } from '~/addons/files';
 import { Manager } from '~/addons/manager';
 import { Addons } from '~/addons/addons';
 import ThemeStore from '~/themes/state';
 
-const DISK_EVENTS = ['installed', 'updated', 'deleted'] as const;
+// A hot reload persists the pushed theme, so it rewrites the files on disk like an update.
+const DISK_EVENTS = ['installed', 'updated', 'deleted', 'reloaded'] as const;
 
 /**
  * @description Manages user themes, layering theme-specific application on top of the base {@link Addons} manager.
@@ -180,6 +183,34 @@ export class Themes extends Addons<Theme> {
 		if (!resolved?.started || this.getAppliedId() !== resolved.id) return;
 
 		ThemeStore.getState().setApplied(resolved.id, this.stateOf(resolved).instance);
+	}
+
+	/**
+	 * @description Hot-reloads a theme from a pushed bundle, and re-applies it through {@link ThemeStore} if it is the applied one.
+	 * @param entity The theme id or entity to reload.
+	 * @param bundle The freshly pushed theme bundle.
+	 * @param manifest The pushed manifest; {@link Addons.reload} validates it.
+	 * @param bytecode Unused by themes; kept for the base signature.
+	 * @param files The extra files to write beside the bundle, by path.
+	 * @returns The reload outcome.
+	 */
+	async reload(
+		entity: AddonResolveable<Theme>,
+		bundle: string,
+		manifest: PushedManifest,
+		bytecode?: string,
+		files?: AddonFiles,
+	): Promise<ReloadResult> {
+		const result = await super.reload(entity, bundle, manifest, bytecode, files);
+		const resolved = this.resolve(manifest.id);
+
+		if (!result.ok || !resolved?.started || this.getAppliedId() !== resolved.id) {
+			return result;
+		}
+
+		ThemeStore.getState().setApplied(resolved.id, this.stateOf(resolved).instance);
+
+		return result;
 	}
 }
 

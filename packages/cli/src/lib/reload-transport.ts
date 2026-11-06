@@ -47,8 +47,8 @@ const RECONNECT_WAIT_MS = 5_000;
 /**
  * @description Builds the real hot-reload transport over the shared bridge controller. Each reload
  * reads the freshly built bundle and manifest from disk and pushes them to the device via
- * {@link ControllerClient.pushPlugin}. Theme hot reload isn't wired yet, so a theme is skipped with a
- * notice. If the device isn't connected it waits briefly for a reconnect, then warns and drops the
+ * {@link ControllerClient.pushPlugin}, tagged with its kind so a theme reloads through the themes manager.
+ * If the device isn't connected it waits briefly for a reconnect, then warns and drops the
  * reload; any disk or transport failure is reported. Nothing here throws, so the watcher keeps running.
  * @param context A bearer of the bridge client shared by every command; its client dials on first use.
  * @param reconnectWaitMs How long to wait for a dropped device to reconnect before dropping a reload.
@@ -60,16 +60,6 @@ export function createReloadTransport(
 ): ReloadTransport {
 	return {
 		async reload(addon: BuiltAddon): Promise<void> {
-			// Theme reload has no device transport yet (tracked separately); rebuilding still writes the
-			// output, so the developer just restarts to pick a theme up.
-			if (addon.kind !== 'plugin') {
-				process.stdout.write(
-					`Rebuilt ${addon.id}, but ${addon.kind} hot reload isn't available yet — restart the app to load it.\n`,
-				);
-
-				return;
-			}
-
 			const { client } = context;
 
 			// The device dials the bridge; a momentary drop (backgrounded app, slept device) shouldn't
@@ -91,7 +81,11 @@ export function createReloadTransport(
 
 				process.stdout.write(`Pushing ${addon.id}…\n`);
 
-				const result = await client.pushPlugin({ addonId: addon.id, ...built });
+				const result = await client.pushPlugin({
+					addonId: addon.id,
+					kind: addon.kind,
+					...built,
+				});
 
 				if (result.ok) {
 					process.stdout.write(`Reloaded ${addon.id}.\n`);

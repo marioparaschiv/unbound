@@ -10,17 +10,19 @@ import { NOT_CONNECTED } from '~/lib/device';
 
 const schema = Type.Object({
 	addon: defaulted(
-		Type.String({ description: 'The plugin to push, as its manifest id or directory.' }),
+		Type.String({
+			description: 'The plugin or theme to push, as its manifest id or directory.',
+		}),
 		'.',
 	),
-	build: defaulted(Type.Boolean({ description: 'Build the plugin before pushing it.' }), true),
+	build: defaulted(Type.Boolean({ description: 'Build the addon before pushing it.' }), true),
 	port: bridgePortField,
 });
 
 const pushCommand: CommandDefinition<typeof schema> = {
 	name: 'push',
 	description:
-		'Build one plugin and hot-reload it in the running client on the connected device, installing ' +
+		'Build one plugin or theme and hot-reload it in the running client on the connected device, installing ' +
 		'it when the device does not have it yet. Use this to try a change on a specific device.',
 	surfaces: { cli: 'root', mcp: true },
 	schema,
@@ -46,7 +48,11 @@ const pushCommand: CommandDefinition<typeof schema> = {
 		}
 
 		const built = readBuiltAddon(resolved.addon);
-		const result = await client.pushPlugin({ addonId: resolved.addon.id, ...built });
+		const result = await client.pushPlugin({
+			addonId: resolved.addon.id,
+			kind: resolved.addon.kind,
+			...built,
+		});
 		const compiled = Object.keys(built.bytecode ?? {});
 		const summary = compiled.length
 			? `${built.bundle.length} bytes, bytecode ${compiled.join(', ')}`
