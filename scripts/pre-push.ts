@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { PROJECTS, TSC_ARGS } from './typecheck';
+import { buildWebTypes, PROJECTS, TSC_ARGS } from './typecheck';
 
 export type Check = { label: string; cwd: string; command: string[] };
 
@@ -158,6 +158,14 @@ async function main(): Promise<void> {
 	}
 
 	console.log(`Running ${checks.length} checks for the pushed changes…`);
+
+	// Projects importing `@unbound-app/web` type-check against its built declarations, as `bun run typecheck` does.
+	if (checks.some((check) => check.command.includes('tsc')) && !(await buildWebTypes())) {
+		console.error('Push stopped: building the web types failed.');
+		process.exitCode = 1;
+
+		return;
+	}
 
 	const results = await Promise.all(checks.map(runCheck));
 

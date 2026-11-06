@@ -89,7 +89,11 @@ async function typecheck(project: string): Promise<ProjectResult> {
 	return { project, errors: code !== 0 && !errors.length ? [output.trim()] : errors };
 }
 
-async function buildWebTypes(): Promise<boolean> {
+/**
+ * @description Builds `@unbound-app/web`'s declaration files, which the projects importing it type-check against.
+ * @returns Whether the build succeeded; its output is printed when it fails.
+ */
+export async function buildWebTypes(): Promise<boolean> {
 	const types = await run(['bun', 'run', '--filter', '@unbound-app/web', 'build:types'], root);
 
 	if (types.code !== 0) {
