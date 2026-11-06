@@ -56,7 +56,7 @@ export function canInstallHomeScreenIcon(): boolean {
 }
 
 /**
- * @description Asks the loader to build a Home Screen shortcut profile for an image and open it for installation.
+ * @description Asks the loader to offer a Home Screen shortcut to Discord with an image: a profile on iOS, a pinned shortcut on Android.
  * @param name The shortcut's label.
  * @param imagePath The image's absolute path inside Unbound's AppIcons folder.
  * @returns Whether the profile was prepared and opened.

@@ -503,6 +503,23 @@ bool AndroidLoader::isServing(const std::string &url, double timeoutSeconds)
     return !clearPendingException(env) && serving == JNI_TRUE;
 }
 
+bool AndroidLoader::installHomeScreenIcon(const std::string &name, const std::string &imagePath)
+{
+    JNIEnv *env = currentEnvironment();
+    if (!env)
+    {
+        return false;
+    }
+
+    jstring  javaName      = toJavaString(env, name);
+    jstring  javaImagePath = toJavaString(env, imagePath);
+    jboolean installed     = env->CallStaticBooleanMethod(
+        callbacks_.bridgeClass, callbacks_.installHomeScreenIcon, javaName, javaImagePath);
+    env->DeleteLocalRef(javaImagePath);
+    env->DeleteLocalRef(javaName);
+    return !clearPendingException(env) && installed == JNI_TRUE;
+}
+
 std::shared_ptr<loader::HotReloadController> AndroidLoader::hotReload()
 {
     return hotReload_;
@@ -529,6 +546,10 @@ loader::UnboundNativeProvider AndroidLoader::unboundNativeProvider()
             return icons;
         };
     }
+    provider.installHomeScreenIcon = [self = shared_from_this()](const std::string &name,
+                                                                 const std::string &imagePath) {
+        return self->installHomeScreenIcon(name, imagePath);
+    };
     // Themes.kt reads a theme's colours when the selection changes, so a rescan before then is
     // enough.
     provider.rescanThemes = [self = shared_from_this()] {

@@ -350,6 +350,7 @@
 	"UNBOUND_APP_ICON_ADD": "Add an icon from Photos",
 	"UNBOUND_APP_ICON_ADD_HOME_SCREEN": "Create shortcut from Photos",
 	"UNBOUND_APP_ICON_PROFILE_REQUIRED": "Install the downloaded profile in Settings. This adds a Home Screen shortcut that opens Discord; remove it in Settings > General > VPN & Device Management.",
+	"UNBOUND_APP_ICON_SHORTCUT_REQUESTED": "Confirm the shortcut to add it to your Home Screen.",
 	"UNBOUND_APP_ICON_INSTALL_FAILED": "Couldn't prepare the Home Screen shortcut. Check that the image is available and try again.",
 	"UNBOUND_APP_ICON_NAME": "Icon name",
 	"UNBOUND_APP_ICON_NAME_EMPTY": "Give the icon a name.",

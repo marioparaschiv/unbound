@@ -171,10 +171,10 @@ export async function addCustomIcon(name: string, image: string): Promise<boolea
 
 /**
  * @description Copies a picked image into Unbound's AppIcons folder and has the loader offer it as a Home Screen
- * shortcut profile. The loader reads the image before returning, so the copy is removed afterwards.
+ * shortcut. The loader reads the image before returning, so the copy is removed afterwards.
  * @param name The shortcut's label.
  * @param image The picked image's local path.
- * @returns Whether the profile was prepared and opened.
+ * @returns Whether the loader offered the shortcut.
  */
 export async function addHomeScreenIcon(name: string, image: string): Promise<boolean> {
 	const file = `${DIRECTORY}/${HOME_SCREEN_ID_PREFIX}${Date.now().toString(36)}.png`;

@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 import {
 	addHomeScreenIcon,
 	addCustomIcon,
@@ -21,7 +23,11 @@ const MAX_NAME = 32;
 async function install(name: string, image: string) {
 	if (!canSyncAppIcons() && canInstallHomeScreenIcon()) {
 		if (await addHomeScreenIcon(name, image)) {
-			toasts.info('UNBOUND_APP_ICON_PROFILE_REQUIRED');
+			toasts.info(
+				Platform.OS === 'ios'
+					? 'UNBOUND_APP_ICON_PROFILE_REQUIRED'
+					: 'UNBOUND_APP_ICON_SHORTCUT_REQUESTED',
+			);
 		} else {
 			toasts.error(messages.UNBOUND_APP_ICON_INSTALL_FAILED);
 		}

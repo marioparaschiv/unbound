@@ -312,6 +312,9 @@ object NativeBridge {
     fun devServerHost(): String? = Platform.emulatorHostAddress()
 
     @JvmStatic
+    fun installHomeScreenIcon(name: String, imagePath: String): Boolean = HomeScreenShortcuts.pin(name, imagePath)
+
+    @JvmStatic
     fun isServing(url: String, timeoutMs: Int): Boolean = runCatching {
         val connection = URL(url).openConnection() as HttpURLConnection
         connection.requestMethod = "HEAD"
