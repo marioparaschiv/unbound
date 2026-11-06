@@ -22,7 +22,12 @@ class Unbound : XposedModule() {
     }
 
     override fun onPackageReady(param: PackageReadyParam) {
-        if (param.packageName != DISCORD_PACKAGE || !param.isFirstPackage) return
+        if (!param.isFirstPackage) return
+        if (param.packageName in LauncherIconHook.LAUNCHERS) {
+            LauncherIconHook.install(this)
+            return
+        }
+        if (param.packageName != DISCORD_PACKAGE) return
 
         runCatching { initialize(param) }
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to initialize Unbound", it) }
@@ -45,8 +50,10 @@ class Unbound : XposedModule() {
         val documents = NativeBridge.nativeDocumentsDirectory(File(appInfo.dataDir, "files").absolutePath)
         NativeBridge.documents = documents
         val bytecodeVersion = Platform.mainBundleBytecodeVersion(appInfo.sourceDir)
+        val launcherIcons = !Platform.isLSPatched(appInfo, param.classLoader)
         val platformInfo = Platform.describe(appInfo, frameworkLabel(appInfo, param.classLoader))
             .put("appIcons", AndroidAppIcons.describe(moduleInfo, appInfo))
+            .put("launcherIcons", launcherIcons)
 
         NativeBridge.nativeInitialize(
             documents,
@@ -73,6 +80,10 @@ class Unbound : XposedModule() {
             .onFailure { Logger.error(LogCategory.FONTS, "Failed to hook React Native fonts", it) }
         runCatching { Themes.install(this, param.classLoader) }
             .onFailure { Logger.error(LogCategory.THEMES, "Failed to apply the theme", it) }
+        if (launcherIcons) {
+            runCatching { LauncherIconSelection.install(this, param.classLoader) }
+                .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to hook Discord's app icon module", it) }
+        }
         runCatching { Recovery.install(this) }
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to install the Recovery Mode shortcut", it) }
         runCatching { Toolbox.install(this) }

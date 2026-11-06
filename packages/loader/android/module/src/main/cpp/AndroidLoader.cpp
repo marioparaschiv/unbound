@@ -24,6 +24,47 @@ static constexpr const char *kCallableModuleRegistrar = "RN$registerCallableModu
 static constexpr const char *kSchedulerDrainModule    = "UnboundNativeWork";
 static constexpr const char *kSchedulerDrainMethod    = "drain";
 
+static constexpr const char *kAppIconDirectory = "AppIcons";
+static constexpr const char *kCustomIconPrefix = "UnboundCustom";
+
+static std::string stringField(const nlohmann::json &entry, const char *key)
+{
+    const auto field = entry.is_object() ? entry.find(key) : entry.end();
+    return field != entry.end() && field->is_string() ? field->get<std::string>() : std::string();
+}
+
+static nlohmann::json customAppIcons(const std::string &documents)
+{
+    const std::string directory = loader::joinPath(documents, kAppIconDirectory);
+    const auto        manifest  = loader::readTextFile(loader::joinPath(directory, "custom.json"));
+    nlohmann::json    icons     = nlohmann::json::array();
+    if (!manifest)
+    {
+        return icons;
+    }
+
+    const nlohmann::json entries = loader::parseBoundedJSON(*manifest);
+    if (!entries.is_array())
+    {
+        return icons;
+    }
+
+    for (const auto &entry : entries)
+    {
+        const std::string id   = stringField(entry, "id");
+        const std::string name = stringField(entry, "name");
+        const std::string file = stringField(entry, "file");
+        const auto        path = loader::resolveInsideDirectory(directory, file);
+        if (id.rfind(kCustomIconPrefix, 0) != 0 || name.empty() || !path ||
+            !loader::fileExists(*path))
+        {
+            continue;
+        }
+        icons.push_back({{"id", id}, {"name", name}, {"image", "file://" + *path}});
+    }
+    return icons;
+}
+
 static jint milliseconds(double seconds)
 {
     return static_cast<jint>(seconds * 1000);
@@ -539,11 +580,26 @@ loader::UnboundNativeProvider AndroidLoader::unboundNativeProvider()
                                     const loader::DownloadPolicy             &policy) {
             return self->download(url, destination, headers, policy);
         });
-    const auto appIcons = configuration_.platformInfo.find("appIcons");
-    if (appIcons != configuration_.platformInfo.end() && appIcons->is_array())
+    const auto     appIcons = configuration_.platformInfo.find("appIcons");
+    nlohmann::json packaged = appIcons != configuration_.platformInfo.end() && appIcons->is_array()
+                                  ? *appIcons
+                                  : nlohmann::json::array();
+    if (configuration_.platformInfo.value("launcherIcons", false))
     {
-        provider.getAppIcons = [icons = *appIcons] {
+        provider.getAppIcons = [packaged, documents = configuration_.documents] {
+            nlohmann::json icons = packaged;
+            for (auto &icon : customAppIcons(documents))
+            {
+                icons.push_back(std::move(icon));
+            }
             return icons;
+        };
+        provider.syncAppIcons = [] {};
+    }
+    else if (!packaged.empty())
+    {
+        provider.getAppIcons = [packaged] {
+            return packaged;
         };
     }
     provider.installHomeScreenIcon = [self = shared_from_this()](const std::string &name,
