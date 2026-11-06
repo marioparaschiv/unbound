@@ -6,21 +6,21 @@ Paths are relative to `skills/ubd-vphone/`.
 
 Scripts read these from the environment, else the repo's gitignored `.env`, else the main checkout's `.env`.
 
-| Variable                                                            | Default                                   | Meaning                                                                               |
-| ------------------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------- |
-| `DEV_HOST`                                                          | the client's LAN guess                    | Address the device reaches this machine at; set it on a machine with several networks |
-| `UNBOUND_DEV_PORT` / `UNBOUND_BRIDGE_PORT` / `UNBOUND_CATALOG_PORT` | `3000` / `9090` / `3200`                  | Bundle server, debugger bridge, catalog stub                                          |
-| `UNBOUND_LOG_DIR`                                                   | `$TMPDIR` or `/tmp`                       | Server logs, `<tmux session>.log`                                                     |
-| `TAILNET_URL`                                                       | `http://<this machine's tailnet IP>:8790` | The tailnet MCP hub the vphone scripts call                                           |
-| `VPHONE_SSH` / `VPHONE_SSH_PORT`                                    | unset / SSH's own                         | Reach the device over SSH instead of the hub: a host alias or `mobile@<ip>`           |
-| `VPHONE_SUDO_PASSWORD`                                              | `alpine`                                  | The mobile user's password, for root actions over SSH                                 |
-| `DKRYPT_API_KEY`                                                    | none                                      | `fetch-ipa`; keep it out of output and commits                                        |
+| Variable                                                            | Default                                | Meaning                                                                                                               |
+| ------------------------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `DEV_HOST`                                                          | the client's LAN guess                 | Address the device reaches this machine at; set it on a machine with several networks                                 |
+| `UNBOUND_DEV_PORT` / `UNBOUND_BRIDGE_PORT` / `UNBOUND_CATALOG_PORT` | `3000` / `9090` / `3200`               | Bundle server, debugger bridge, catalog stub                                                                          |
+| `UNBOUND_LOG_DIR`                                                   | `$TMPDIR` or `/tmp`                    | Server logs, `<tmux session>.log`                                                                                     |
+| `VPHONE_SSH` / `VPHONE_SSH_PORT`                                    | unset / SSH's own                      | The device's SSH host: a host alias or `mobile@<ip>`                                                                  |
+| `TAILNET_URL`                                                       | this machine's tailnet IP, port `8790` | The maintainer's personal tailnet MCP hub; derived only where `tailnet-connector` is installed, and `VPHONE_SSH` wins |
+| `VPHONE_SUDO_PASSWORD`                                              | `alpine`                               | The mobile user's password, for root actions over SSH                                                                 |
+| `DKRYPT_API_KEY`                                                    | none                                   | `fetch-ipa`; keep it out of output and commits                                                                        |
 
 ## Over SSH
 
-Set `VPHONE_SSH` when the device has no tailnet hub. SSH must log in without a prompt (a key, `BatchMode=yes`), and the device needs `sudo`, `base64`, `ps` and `uiopen` (a rootless jailbreak's bootstrap has them). A roothide login shell, whose real root is `/rootfs`, works too. Without `plutil`, `app_info` reports no `version`.
+Set `VPHONE_SSH`: the tailnet hub is one maintainer's own setup, so SSH is how everyone else reaches the device. SSH must log in without a prompt (a key, `BatchMode=yes`), and the device needs `sudo`, `base64`, `ps` and `uiopen` (a rootless jailbreak's bootstrap has them). A roothide login shell, whose real root is `/rootfs`, works too. Without `plutil`, `app_info` reports no `version`.
 
-| Works                                                                                                                       | Needs the hub                                                                                                |
+| Works over SSH                                                                                                              | Needs the personal hub                                                                                       |
 | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `claim.sh`, `release.sh`, `relaunch`, `ready.sh`, `doctor.sh`, `crashes`, `unbound-log`, `provision` without `--ipa`, `ubd` | `vphone shot`, `ui`, `wait`, `tap`, `swipe`, `type`, `logs`, `install_ipa`, `install_tweak`, `bun run bench` |
 | `vphone shell`, `app_info`, `launch`, `terminate`, `crashes`, `pid`, `get`, `put`                                           | Screens: read state with `ubd eval` and `ubd mcp route` instead                                              |
@@ -29,6 +29,7 @@ Check: `scripts/vphone pid` prints Discord's pid or `not running`. Exit 2 names 
 
 ## Known faults
 
+- **A locked screen stalls every wait**: Unbound's debugger connects only while Discord is in front, and `launch` cannot open it over the lock screen. `relaunch` presses home and swipes up first; over SSH it cannot, so set Settings, Display & Brightness, Auto-Lock to Never.
 - **JS reload loses Unbound** on loaders without `fix/reload-keeps-unbound` (`loader-ios`): use `relaunch`.
 - **No saved bundle** (first install, or the saved one failed): Discord starts without Unbound and reloads once the download lands.
 - **A loader newer than the client** shows "Unbound failed to initialize" (`Cannot read property 'NativeModules' of undefined`): serve a client built for that loader.

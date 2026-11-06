@@ -214,8 +214,19 @@ async function explainDeath(vphone: Vphone, since: number): Promise<string> {
 	return `no crash report was written (killed by the system or a watchdog?); unbound.log for it:\n${summariseLog(window, 8)}`;
 }
 
+/**
+ * Wakes and unlocks the screen. `launch` cannot bring an app in front of the lock screen, and Unbound's debugger
+ * only dials the bridge while Discord is in front, so a locked device would wait for someone to open Discord.
+ */
+async function wake(vphone: Vphone) {
+	// Over SSH these actions fail: the device must have Auto-Lock off (setup.md).
+	await vphone.text('key', { name: 'home' }).catch(() => '');
+	await vphone.text('swipe', { x1: 215, y1: 920, x2: 215, y2: 400, ms: 300 }).catch(() => '');
+}
+
 async function launchOnce(vphone: Vphone): Promise<number | undefined> {
 	await stop(vphone);
+	await wake(vphone);
 	await retryAx(() => vphone.text('launch', { bundle_id: DISCORD }));
 
 	for (let i = 0; i < 20; i++) {

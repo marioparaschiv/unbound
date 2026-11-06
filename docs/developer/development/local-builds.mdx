@@ -52,7 +52,7 @@ The scripts in `skills/ubd-vphone/scripts/` run the test loop against a jailbrok
 		ssh -o BatchMode=yes mobile@192.168.1.30 true
 		```
 
-		Install the debug build of the loader tweak on the device too.
+		Install the debug build of the loader tweak on the device too. Then, in the device's **Settings**, open **Display & Brightness** and set **Auto-Lock** to **Never**. The debugger connects only while Discord is open, and the scripts cannot unlock the screen over SSH.
 	</Step>
 	<Step title='Point the scripts at the device'>
 		Add the device and your computer's address to `.env` at the root of the repository:
