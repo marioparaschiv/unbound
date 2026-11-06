@@ -182,6 +182,7 @@ export type UnboundNativeFonts = {
 export type UnboundAppIcon = {
 	/** The id Discord's native app icon module switches to. */
 	id: string;
+	pickerId?: string;
 	/** The name the picker shows. */
 	name: string;
 	/** A `file://` URL of the icon's image. */

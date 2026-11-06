@@ -43,7 +43,12 @@ type NativeAppIconModule = {
 	setIcon(id: string): Promise<void>;
 };
 
+type AppIconUtils = {
+	setAppIcon?(id: string): Promise<boolean>;
+};
+
 const DEFAULT_ICON_ID = 'AppIcon';
+const AppIconUtils = findByPropsLazy('setAppIcon') as AppIconUtils;
 
 function isCustomIcon(value: unknown): value is CustomAppIcon {
 	return (
@@ -119,7 +124,11 @@ async function leaveIcon(id: string) {
 	const current = await module?.getCurrentIcon();
 
 	if (current?.id === id) {
-		await module?.setIcon(DEFAULT_ICON_ID);
+		if (typeof AppIconUtils.setAppIcon === 'function') {
+			await AppIconUtils.setAppIcon(DEFAULT_ICON_ID);
+		} else {
+			await module?.setIcon(DEFAULT_ICON_ID);
+		}
 	}
 }
 

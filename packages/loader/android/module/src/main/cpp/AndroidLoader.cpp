@@ -522,6 +522,13 @@ loader::UnboundNativeProvider AndroidLoader::unboundNativeProvider()
                                     const loader::DownloadPolicy             &policy) {
             return self->download(url, destination, headers, policy);
         });
+    const auto appIcons = configuration_.platformInfo.find("appIcons");
+    if (appIcons != configuration_.platformInfo.end() && appIcons->is_array())
+    {
+        provider.getAppIcons = [icons = *appIcons] {
+            return icons;
+        };
+    }
     // Themes.kt reads a theme's colours when the selection changes, so a rescan before then is
     // enough.
     provider.rescanThemes = [self = shared_from_this()] {

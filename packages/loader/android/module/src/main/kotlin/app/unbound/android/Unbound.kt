@@ -45,13 +45,15 @@ class Unbound : XposedModule() {
         val documents = NativeBridge.nativeDocumentsDirectory(File(appInfo.dataDir, "files").absolutePath)
         NativeBridge.documents = documents
         val bytecodeVersion = Platform.mainBundleBytecodeVersion(appInfo.sourceDir)
+        val platformInfo = Platform.describe(appInfo, frameworkLabel(appInfo, param.classLoader))
+            .put("appIcons", AndroidAppIcons.describe(moduleInfo, appInfo))
 
         NativeBridge.nativeInitialize(
             documents,
             readBootstrapScripts(moduleInfo.sourceDir).toString(),
             NATIVE_LIBRARY,
             bytecodeVersion,
-            Platform.describe(appInfo, frameworkLabel(appInfo, param.classLoader)).toString(),
+            platformInfo.toString(),
         )
 
         Logger.info(LogCategory.DEFAULT, "Hermes bytecode version $bytecodeVersion, documents at $documents")

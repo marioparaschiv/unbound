@@ -452,6 +452,48 @@ jobs:
                   done
                   echo "version=$version" >> "$GITHUB_OUTPUT"
 
+            - name: Add the Unbound launcher icon
+              run: |
+                  set -euo pipefail
+                  prepared="$RUNNER_TEMP/discord-with-unbound-icon"
+                  mkdir -p "$prepared"
+                  cp discord/*.apk "$prepared/"
+                  unbound-tools android-app-icon --apk "$prepared/base.apk" --icon tools/assets/android-icons/unbound-icon.webp
+                  build_tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+                  "$build_tools/zipalign" -P 16 -f 4 "$prepared/base.apk" "$prepared/base.aligned.apk"
+                  mv "$prepared/base.aligned.apk" "$prepared/base.apk"
+                  "$build_tools/zipalign" -c -P 16 4 "$prepared/base.apk"
+
+            - name: Sign prepared Discord splits
+              run: |
+                  set -euo pipefail
+                  if [ -n "${ANDROID_SIGNING_STORE_FILE:-}" ]; then
+                      signing_store_path="$ANDROID_SIGNING_STORE_FILE"
+                      signing_store_password="$ANDROID_SIGNING_STORE_PASSWORD"
+                      signing_key_alias="$ANDROID_SIGNING_KEY_ALIAS"
+                      signing_key_password="$ANDROID_SIGNING_KEY_PASSWORD"
+                  else
+                      signing_store_path="$RUNNER_TEMP/unbound-android-pr.keystore"
+                      signing_store_password=unbound-pr
+                      signing_key_alias=unbound
+                      signing_key_password=unbound-pr
+                      keytool -genkeypair -noprompt -storetype PKCS12 -keystore "$signing_store_path" \
+                        -storepass "$signing_store_password" -keypass "$signing_key_password" -alias "$signing_key_alias" \
+                        -dname 'CN=Unbound PR' -keyalg RSA -keysize 2048 -validity 30
+                      {
+                          echo "ANDROID_SIGNING_STORE_FILE=$signing_store_path"
+                          echo "ANDROID_SIGNING_STORE_PASSWORD=$signing_store_password"
+                          echo "ANDROID_SIGNING_KEY_ALIAS=$signing_key_alias"
+                          echo "ANDROID_SIGNING_KEY_PASSWORD=$signing_key_password"
+                      } >> "$GITHUB_ENV"
+                  fi
+                  build_tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+                  for apk in "$RUNNER_TEMP/discord-with-unbound-icon"/*.apk; do
+                      "$build_tools/apksigner" sign --ks "$signing_store_path" \
+                        --ks-pass "pass:$signing_store_password" --key-pass "pass:$signing_key_password" \
+                        --ks-key-alias "$signing_key_alias" "$apk"
+                  done
+
             - name: Patch Discord
               id: patch
               run: |
@@ -461,7 +503,7 @@ jobs:
                   if [ -n "${ANDROID_SIGNING_STORE_FILE:-}" ]; then
                       signing=(-k "$ANDROID_SIGNING_STORE_FILE" "$ANDROID_SIGNING_STORE_PASSWORD" "$ANDROID_SIGNING_KEY_ALIAS" "$ANDROID_SIGNING_KEY_PASSWORD")
                   fi
-                  java -jar "$LSPATCH_JAR" discord/*.apk -m module/*.apk -l 2 -o patched -f "${signing[@]}"
+                  java -jar "$LSPATCH_JAR" "$RUNNER_TEMP/discord-with-unbound-icon"/*.apk -m module/*.apk -l 2 -o patched -f "${signing[@]}"
                   # patch-apk pins every split to one versionCode, so any build installs over any other, and re-signs in place; apksigner would duplicate LSPatch's shared origin.apk bytes.
                   signer="$RUNNER_TEMP/apk-signer.pem"
                   if [ -n "${ANDROID_SIGNING_STORE_FILE:-}" ]; then

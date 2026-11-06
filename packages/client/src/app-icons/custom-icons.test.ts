@@ -3,6 +3,7 @@ import { afterEach, describe, expect, mock, test } from 'bun:test';
 const files = new Map<string, string>();
 const syncs: string[] = [];
 const setIcons: string[] = [];
+const discordSetIcons: string[] = [];
 let currentIcon = 'AppIcon';
 let installedIds: string[] = [];
 
@@ -37,7 +38,16 @@ mock.module('~/native/unbound-native', () => ({
 	},
 }));
 
-mock.module('~/metro/wrappers', () => ({ findByPropsLazy: () => ({}) }));
+mock.module('~/metro/wrappers', () => ({
+	findByPropsLazy: () => ({
+		setAppIcon: async (id: string) => {
+			discordSetIcons.push(id);
+			currentIcon = id;
+
+			return true;
+		},
+	}),
+}));
 
 const { readCustomIcons, removeCustomIcon } = await import('./custom-icons');
 
@@ -47,6 +57,7 @@ afterEach(() => {
 	files.clear();
 	syncs.length = 0;
 	setIcons.length = 0;
+	discordSetIcons.length = 0;
 	currentIcon = 'AppIcon';
 	installedIds = [];
 });
@@ -80,14 +91,15 @@ describe('readCustomIcons', () => {
 });
 
 describe('removeCustomIcon', () => {
-	test('switches to the default icon before removing the one in use', async () => {
+	test('switches through Discord before removing the icon in use', async () => {
 		files.set(MANIFEST, JSON.stringify([{ id: 'UnboundCustomA', name: 'A', file: 'a.png' }]));
 		files.set('Unbound/AppIcons/a.png', 'image');
 		currentIcon = 'UnboundCustomA';
 		installedIds = ['UnboundCustomA'];
 
 		expect(await removeCustomIcon('UnboundCustomA')).toBe(true);
-		expect(setIcons).toEqual(['AppIcon']);
+		expect(discordSetIcons).toEqual(['AppIcon']);
+		expect(setIcons).toEqual([]);
 		expect(files.has('Unbound/AppIcons/a.png')).toBe(false);
 		expect(await readCustomIcons()).toEqual([]);
 		expect(syncs).toEqual(['sync']);
