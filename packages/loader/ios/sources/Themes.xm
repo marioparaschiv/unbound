@@ -1,5 +1,7 @@
 #import "Themes.h"
 
+#include <mach-o/dyld.h>
+#include <mach-o/getsect.h>
 #include <mach/mach_time.h>
 
 #import "AddonsCore.h"
@@ -23,6 +25,99 @@ static BOOL                                        semanticColorsSwizzled = NO;
 static BOOL                                        refreshingDiscordTheme = NO;
 static NSDictionary<NSString *, UIColor *>        *semanticColors         = nil;
 static NSDictionary<NSString *, NSString *>       *rawFallbacks           = nil;
+static NSDictionary<NSNumber *, UIColor *>        *paletteColors          = nil;
+
+static NSNumber *paletteKey(CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha)
+{
+    auto channel = [](CGFloat value) {
+        return (uint32_t) lround(fmin(fmax(value, 0.0), 1.0) * 255.0);
+    };
+    return @((channel(red) << 24) | (channel(green) << 16) | (channel(blue) << 8) | channel(alpha));
+}
+
+static NSNumber *paletteKeyForColor(UIColor *color)
+{
+    CGFloat red, green, blue, alpha;
+    return [color getRed:&red green:&green blue:&blue alpha:&alpha]
+               ? paletteKey(red, green, blue, alpha)
+               : nil;
+}
+
+static NSNumber *paletteKeyForHSB(CGFloat hue, CGFloat saturation, CGFloat brightness,
+                                  CGFloat alpha)
+{
+    // UIKit's HSB to RGB conversion, so a palette colour keys like its raw getter.
+    auto channel = [&](CGFloat offset) {
+        CGFloat k = fmod(offset + fmod(hue, 1.0) * 6.0, 6.0);
+        return brightness - brightness * saturation * fmax(0.0, fmin(fmin(k, 4.0 - k), 1.0));
+    };
+    return paletteKey(channel(5.0), channel(3.0), channel(1.0), alpha);
+}
+
+// Raw pointers keep ARC out of the original initializer's consumed receiver and retained result.
+static void *(*originalInitWithHue)(void *, SEL, CGFloat, CGFloat, CGFloat, CGFloat);
+static uintptr_t discordTextStart = 0;
+static uintptr_t discordTextEnd   = 0;
+
+// Discord's own binary calls initWithHue: only from its colour palette, so its __TEXT range tells
+// palette colours apart from ones UIKit, React Native or other libraries create.
+static void findDiscordText(void)
+{
+    for (uint32_t index = 0; index < _dyld_image_count(); index++)
+    {
+        const struct mach_header_64 *header =
+            (const struct mach_header_64 *) _dyld_get_image_header(index);
+        if (header->filetype != MH_EXECUTE)
+        {
+            continue;
+        }
+
+        unsigned long size  = 0;
+        uint8_t      *start = getsegmentdata(header, "__TEXT", &size);
+        discordTextStart    = (uintptr_t) start;
+        discordTextEnd      = (uintptr_t) start + size;
+        return;
+    }
+}
+
+// Discord's Swift chat palette builds colours from literal HSB values (the mention highlight is
+// YELLOW_300) and never calls the raw getters, so a palette colour that matches a themed raw colour
+// resolves to the theme's colour instead.
+static NS_RETURNS_RETAINED UIColor *themedInitWithHue(NS_RELEASES_ARGUMENT id self, SEL _cmd,
+                                                      CGFloat hue, CGFloat saturation,
+                                                      CGFloat brightness, CGFloat alpha)
+{
+    uintptr_t caller  = (uintptr_t) __builtin_extract_return_addr(__builtin_return_address(0));
+    BOOL      palette = caller >= discordTextStart && caller < discordTextEnd;
+
+    UIColor *themed = nil;
+    @synchronized([Themes class])
+    {
+        if (palette && paletteColors.count)
+        {
+            themed = paletteColors[paletteKeyForHSB(hue, saturation, brightness, alpha)];
+        }
+    }
+
+    if (themed)
+    {
+        return themed;
+    }
+
+    return (__bridge_transfer UIColor *) originalInitWithHue((__bridge_retained void *) self, _cmd,
+                                                             hue, saturation, brightness, alpha);
+}
+
+static void hookPaletteColors(void)
+{
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        findDiscordText();
+        MSHookMessageEx(NSClassFromString(@"UIPlaceholderColor"),
+                        @selector(initWithHue:saturation:brightness:alpha:),
+                        (IMP) themedInitWithHue, (IMP *) &originalInitWithHue);
+    });
+}
 
 static loader::ThemeSelection &themeSelection(void)
 {
@@ -54,6 +149,45 @@ static double millisecondsSince(uint64_t start)
     static dispatch_once_t           once;
     dispatch_once(&once, ^{ mach_timebase_info(&timebase); });
     return (double) (mach_absolute_time() - start) * timebase.numer / timebase.denom / 1e6;
+}
+
+// Reloads the chat and the collections inside it, such as reaction lists, which the chat's reload
+// leaves configured. Children reload before the chat that may reuse them.
+static void reloadChatViews(UIView *view, BOOL inChat)
+{
+    BOOL chat = [view isKindOfClass:NSClassFromString(@"DCDTableView")];
+
+    for (UIView *subview in view.subviews)
+    {
+        reloadChatViews(subview, inChat || chat);
+    }
+
+    if (chat)
+    {
+        [(UITableView *) view reloadData];
+    }
+    else if (inChat && [view isKindOfClass:[UICollectionView class]])
+    {
+        [(UICollectionView *) view reloadData];
+    }
+}
+
+// Chat cells keep the palette colours they were configured with, so on-screen ones are reloaded to
+// pick up the theme that replaced them.
+static void reloadVisibleChats(void)
+{
+    for (UIScene *scene in UIApplication.sharedApplication.connectedScenes)
+    {
+        if (![scene isKindOfClass:[UIWindowScene class]])
+        {
+            continue;
+        }
+
+        for (UIWindow *window in ((UIWindowScene *) scene).windows)
+        {
+            reloadChatViews(window, NO);
+        }
+    }
 }
 
 + (BOOL)isValidCustomTheme:(NSString *)manifestId
@@ -120,6 +254,8 @@ static double millisecondsSince(uint64_t start)
 
 + (void)refreshDiscordThemeOnMainThread
 {
+    reloadVisibleChats();
+
     DCDThemeModule *theme        = currentDiscordTheme;
     NSString       *discordTheme = optionalThemeId(themeSelection().discordTheme());
     if (!theme || discordTheme.length == 0)
@@ -213,11 +349,26 @@ static double millisecondsSince(uint64_t start)
 
     [Logger info:LOG_CATEGORY_THEMES format:@"Attempting swizzle raw colors..."];
 
+    hookPaletteColors();
+
+    Class                                       colorClass = NSClassFromString(@"UIColor");
+    NSMutableDictionary<NSNumber *, UIColor *> *palette    = [NSMutableDictionary dictionary];
+    NSMutableSet<NSNumber *>                   *ambiguous  = [NSMutableSet set];
+
     @try
     {
         for (NSString *raw in payload)
         {
             SEL selector = NSSelectorFromString(raw);
+
+            // Read Discord's colour before hooking; themes may name raw colours this build lacks.
+            UIColor *native = nil;
+            if ([colorClass respondsToSelector:selector])
+            {
+                UIColor *(*getColor)(id, SEL) =
+                    (UIColor * (*)(id, SEL)) [colorClass methodForSelector:selector];
+                native = getColor(colorClass, selector);
+            }
 
             __block id (*original)(Class, SEL);
             IMP     replacement = imp_implementationWithBlock(^UIColor *(id self) {
@@ -228,6 +379,22 @@ static double millisecondsSince(uint64_t start)
             MSHookMessageEx(instance, selector, replacement, (IMP *) &original);
 
             originalRawImplementations[raw] = [NSValue valueWithPointer:(void *) original];
+
+            NSNumber *key = native ? paletteKeyForColor(native) : nil;
+            if (key && palette[key] && ![palette[key] isEqual:payload[raw]])
+            {
+                [ambiguous addObject:key];
+            }
+            else if (key)
+            {
+                palette[key] = payload[raw];
+            }
+        }
+
+        [palette removeObjectsForKeys:ambiguous.allObjects];
+        @synchronized([Themes class])
+        {
+            paletteColors = [palette copy];
         }
 
         [Logger info:LOG_CATEGORY_THEMES format:@"Raw color swizzle completed."];
@@ -241,6 +408,11 @@ static double millisecondsSince(uint64_t start)
 + (void)restoreOriginalRawColors
 {
     Class instance = object_getClass(NSClassFromString(@"UIColor"));
+
+    @synchronized([Themes class])
+    {
+        paletteColors = nil;
+    }
 
     for (NSString *selectorName in originalRawImplementations)
     {
