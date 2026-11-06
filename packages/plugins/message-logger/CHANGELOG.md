@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.1.0]
+
+### Added
+
+- Optional local persistence of captured edits and deletions, with account-separated search, clearing and retention controls.
+- Restore retained deleted text when its channel history loads.
+- Choose the deleted-message highlight color.
+
+### Changed
+
+- Rename to Persistent Message Logger and credit Xias alongside the original authors.
+
+### Fixed
+
+- Preserve captured phone-initiated deletions when their server confirmation arrives; explicit Dismiss still removes them.
+
+
 ## [1.0.4] - 2026-11-05
 
 ### Changed

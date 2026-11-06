@@ -78,7 +78,9 @@ export function patchRowManager(log: MessageLog): () => void {
 			if (renderingVersion || !row || !messageId || !log.hasHistory(messageId)) return;
 
 			const deleted = log.isDeleted(messageId);
-			const color = deleted ? processColor(DELETED_TEXT_COLOR) : null;
+			const color = deleted
+				? processColor(settings.deletedColor ?? DELETED_TEXT_COLOR)
+				: null;
 			const channelId = row.message?.channelId;
 			const previousVersions = settings.inlineEdits
 				? log

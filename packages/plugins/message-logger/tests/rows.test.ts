@@ -46,6 +46,13 @@ describe('a message row', () => {
 		expect(row.textColor).toBeUndefined();
 		expect(row.ephemeralIndication).toBeUndefined();
 	});
+	test('uses the selected deleted-message color while preserving the marker and dismiss link', async () => {
+		settings.deletedColor = '#00ff00';
+		await del();
+		const row = generateRow();
+		expect(row.textColor).toBe(0xff00ff00);
+		expect(row.ephemeralIndication).toBeDefined();
+	});
 
 	test('is drawn again once, after its log changes', async () => {
 		const chat = new ChatManager();

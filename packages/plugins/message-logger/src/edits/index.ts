@@ -7,6 +7,7 @@ import { shouldIgnore } from '~/log/filters';
 import type { MessageLog } from '~/log';
 import { MessageStore } from '~/log/modules';
 import { CLEARING_FLAG } from '~/history/actions';
+import { recordEdit } from '~/archive/runtime';
 
 type UpdatedMessage = {
 	id?: string;
@@ -45,6 +46,12 @@ export function startEdits(log: MessageLog): () => void {
 		) {
 			return false;
 		}
+
+		recordEdit(
+			previous,
+			settings.logDeletedAttachments ? next : { ...next, attachments: previous.attachments },
+			next.channel_id,
+		);
 
 		if (
 			next.edited_timestamp &&

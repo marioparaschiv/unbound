@@ -13,16 +13,21 @@ import { startNonces } from '~/nonces';
 import { startEdits } from '~/edits';
 import { startRows } from '~/rows';
 import { PLUGIN_NAME } from '~/constants';
+import { startArchive, stopArchive } from '~/archive/runtime';
+import { closeSavedArchive } from '~/archive/sheet';
+import { startRestoration } from '~/restore';
 
 let log: MessageLog | undefined;
 let disposeHistory: (() => unknown) | undefined;
 let disposeRows: (() => unknown) | undefined;
+let disposeRestoration: (() => void) | undefined;
 
-export function start() {
+export async function start() {
 	if (!ensureModules(PLUGIN_NAME, { ActionSheets, ChatManager, MessageStore, RowManager })) {
 		return;
 	}
 
+	if (!(await startArchive())) return;
 	const current = createMessageLog();
 
 	log = current;
@@ -35,18 +40,23 @@ export function start() {
 		startNonces,
 	]);
 	disposeHistory = startFeatures(PLUGIN_NAME, [() => startHistory(current)]);
+	disposeRestoration = startRestoration(current);
 }
 
-export function stop() {
-	disposeHistory?.();
+export async function stop() {
+	closeSavedArchive();
+	disposeRestoration?.();
+	await disposeHistory?.();
 	// The row patches go before the purge, which makes Discord draw the rows again; the interceptors stay for it.
-	disposeRows?.();
+	await disposeRows?.();
 
 	if (log) purgeLog(log);
+	await stopArchive();
 
 	log = undefined;
 	disposeHistory = undefined;
 	disposeRows = undefined;
+	disposeRestoration = undefined;
 }
 
 export { featureSelfTest as selfTest };

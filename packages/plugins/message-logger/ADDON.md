@@ -12,3 +12,9 @@ banner: media/banner.png
 ## :gear: Settings
 
 Pick how logged messages look, what gets logged, and who to ignore. Bots are ignored by default.
+
+## :floppy-disk: Local archive
+
+Enable persistent capture to keep captured edits and deletions across restarts. Search or clear the archive in settings, choose retention from 1 to 30 days and 50 to 2,000 events, and restore retained deleted text in its channel when history loads. Change the deleted-message color in settings.
+
+Message text and attachment names stay in local files; attachment contents are not saved. Only messages captured while the plugin is running can be retained. It cannot recover messages deleted before capture. Archive writes may still be interrupted by an immediate force-close. Ignore and channel controls apply to capture and restoration.
