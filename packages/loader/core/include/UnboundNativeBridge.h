@@ -21,8 +21,9 @@ struct UnboundNativeProvider {
     std::function<nlohmann::json()> getAppIcons;
     // Rereads the installed themes and reapplies the selected one; left out of the bridge when
     // empty. The platform sets it, as only it can recolour native views.
-    std::function<void()> rescanThemes;
-    std::function<void()> syncAppIcons;
+    std::function<void()>        rescanThemes;
+    std::function<void()>        syncAppIcons;
+    std::function<std::string()> buildIconIPA;
     // Saves `url` to `path`, relative to Unbound's folder. Runs off the JS thread; throws what
     // failed.
     std::function<void(const std::string &url, const std::string &path)> downloadFile;

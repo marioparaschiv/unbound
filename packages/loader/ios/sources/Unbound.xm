@@ -8,6 +8,7 @@
 #import "CoreConversions.h"
 #import "Discord.h"
 #import "HotReload.h"
+#import "IconIPA.h"
 #include "LoaderBootstrap.h"
 #include "LoaderBrowserLogin.h"
 #include "LoaderDiagnostics.h"
@@ -222,6 +223,12 @@ public:
                 notify_post("app.unbound.bundle.sync");
             };
         }
+        provider.buildIconIPA = [] {
+            NSString *documents =
+                NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)
+                    .firstObject;
+            return toStdString(UBBuildIconIPA(documents) ?: @"");
+        };
         provider.rescanThemes = [] {
             [CoreBridge rescanThemes];
             dispatch_async(dispatch_get_main_queue(), ^{ [Themes refreshThemes]; });

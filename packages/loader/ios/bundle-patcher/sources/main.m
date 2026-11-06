@@ -1,6 +1,5 @@
-#import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
-#import <ImageIO/ImageIO.h>
+#import "../../shared/UBAppIcons.h"
 #import <objc/runtime.h>
 #import <spawn.h>
 #import <sys/stat.h>
@@ -15,21 +14,7 @@ static NSString *const kOriginalsKey    = @"UnboundOriginalValues";
 static NSString *const kAbsentKeysKey   = @"UnboundAbsentKeys";
 static NSString *const kURLScheme       = @"unbound";
 static NSString *const kURLName         = @"app.unbound.rip";
-static NSString *const kCustomPrefix    = @"UnboundCustom";
-static NSString *const kNamesKey        = @"UnboundIconNames";
-static NSString *const kCustomManifest  = @"Documents/Unbound/AppIcons/custom.json";
 
-typedef struct
-{
-    NSString *suffix;
-    size_t    pixels;
-} IconRendition;
-
-static const IconRendition kRenditions[] = {
-    {@"60x60@2x.png", 120},
-    {@"60x60@3x.png", 180},
-    {@"76x76@2x~ipad.png", 152},
-};
 
 typedef void (*EventStreamHandlerSetter)(const char *, dispatch_queue_t, void (^)(void *));
 
@@ -37,7 +22,7 @@ static NSArray<NSString *> *managedKeys(void)
 {
     return @[
         @"UISupportedDevices", @"UIFileSharingEnabled", @"UISupportsDocumentBrowser", @"CFBundleURLTypes",
-        @"CFBundleIcons", @"CFBundleIcons~ipad", kNamesKey
+        @"CFBundleIcons", @"CFBundleIcons~ipad", UBIconNamesKey
     ];
 }
 
@@ -59,42 +44,7 @@ static NSURL *proxyURL(id proxy, NSString *key)
     return [NSFileManager.defaultManager fileExistsAtPath:url.path] ? url : nil;
 }
 
-static BOOL isCustomIconId(id iconId)
-{
-    NSRegularExpression *pattern = [NSRegularExpression regularExpressionWithPattern:@"^UnboundCustom[A-Za-z0-9]{1,32}$"
-                                                                             options:0
-                                                                               error:nil];
-    return [iconId isKindOfClass:NSString.class] &&
-           [pattern numberOfMatchesInString:iconId options:0 range:NSMakeRange(0, [iconId length])] == 1;
-}
 
-static NSArray<NSDictionary *> *customIcons(NSURL *dataContainer)
-{
-    NSString *manifestPath = [dataContainer.path stringByAppendingPathComponent:kCustomManifest];
-    NSData   *data         = [NSData dataWithContentsOfFile:manifestPath];
-    NSArray  *entries      = data ? [NSJSONSerialization JSONObjectWithData:data options:0 error:nil] : nil;
-    if (![entries isKindOfClass:NSArray.class])
-    {
-        return @[];
-    }
-    NSString       *directory = manifestPath.stringByDeletingLastPathComponent;
-    NSMutableArray *icons     = [NSMutableArray array];
-    for (NSDictionary *entry in entries)
-    {
-        if (![entry isKindOfClass:NSDictionary.class] || !isCustomIconId(entry[@"id"]) ||
-            ![entry[@"name"] isKindOfClass:NSString.class] || ![entry[@"file"] isKindOfClass:NSString.class] ||
-            [entry[@"file"] containsString:@"/"])
-        {
-            continue;
-        }
-        [icons addObject:@{
-            @"id" : entry[@"id"],
-            @"name" : entry[@"name"],
-            @"image" : [directory stringByAppendingPathComponent:entry[@"file"]],
-        }];
-    }
-    return icons;
-}
 
 static NSMutableDictionary *originalInfo(NSDictionary *info)
 {
@@ -133,19 +83,6 @@ static void recordOriginals(NSMutableDictionary *patched, NSDictionary *original
     patched[kAbsentKeysKey] = absent;
 }
 
-static void addAlternateIcon(NSMutableDictionary *info, NSString *key, NSArray<NSString *> *files)
-{
-    NSString *iconId = [files.firstObject substringToIndex:[files.firstObject length] - @"60x60".length];
-    NSMutableDictionary *icons = [info[key] mutableCopy];
-    if (!icons)
-    {
-        return;
-    }
-    NSMutableDictionary *alternates = [icons[@"CFBundleAlternateIcons"] mutableCopy] ?: [NSMutableDictionary dictionary];
-    alternates[iconId]              = @{@"CFBundleIconFiles" : files};
-    icons[@"CFBundleAlternateIcons"] = alternates;
-    info[key]                        = icons;
-}
 
 static BOOL declaresURLScheme(NSArray *types)
 {
@@ -174,23 +111,7 @@ static void addURLScheme(NSMutableDictionary *info)
     info[@"CFBundleURLTypes"] = types;
 }
 
-static NSArray<NSString *> *iconFileNames(NSString *iconId, BOOL ipad)
-{
-    NSString *phone = [iconId stringByAppendingString:@"60x60"];
-    return ipad ? @[ phone, [iconId stringByAppendingString:@"76x76"] ] : @[ phone ];
-}
 
-static void addCustomIcons(NSMutableDictionary *info, NSArray<NSDictionary *> *icons)
-{
-    NSMutableDictionary *names = [NSMutableDictionary dictionary];
-    for (NSDictionary *icon in icons)
-    {
-        addAlternateIcon(info, @"CFBundleIcons", iconFileNames(icon[@"id"], NO));
-        addAlternateIcon(info, @"CFBundleIcons~ipad", iconFileNames(icon[@"id"], YES));
-        names[icon[@"id"]] = icon[@"name"];
-    }
-    info[kNamesKey] = names;
-}
 
 static NSMutableDictionary *patchedInfo(NSDictionary *original, NSArray<NSDictionary *> *icons)
 {
@@ -198,9 +119,8 @@ static NSMutableDictionary *patchedInfo(NSDictionary *original, NSArray<NSDictio
     [patched removeObjectForKey:@"UISupportedDevices"];
     patched[@"UIFileSharingEnabled"]      = @YES;
     patched[@"UISupportsDocumentBrowser"] = @YES;
-    addAlternateIcon(patched, @"CFBundleIcons", iconFileNames(kIconId, NO));
-    addAlternateIcon(patched, @"CFBundleIcons~ipad", iconFileNames(kIconId, YES));
-    addCustomIcons(patched, icons);
+    UBAddAlternateIcon(patched, kIconId);
+    UBAddCustomIcons(patched, icons);
     addURLScheme(patched);
     recordOriginals(patched, original);
     return patched;
@@ -232,117 +152,11 @@ static BOOL copyIcons(NSURL *bundle, BOOL install)
     return changed;
 }
 
-static CGImageRef squareImage(NSString *path)
-{
-    CGImageSourceRef source = CGImageSourceCreateWithURL((__bridge CFURLRef)[NSURL fileURLWithPath:path], NULL);
-    if (!source)
-    {
-        return NULL;
-    }
-    CGImageRef image = CGImageSourceCreateImageAtIndex(source, 0, NULL);
-    CFRelease(source);
-    if (!image)
-    {
-        return NULL;
-    }
-    size_t     side    = MIN(CGImageGetWidth(image), CGImageGetHeight(image));
-    CGRect     crop    = CGRectMake((CGImageGetWidth(image) - side) / 2, (CGImageGetHeight(image) - side) / 2, side, side);
-    CGImageRef cropped = CGImageCreateWithImageInRect(image, crop);
-    CGImageRelease(image);
-    return cropped;
-}
 
-static NSData *renderPNG(CGImageRef image, size_t pixels)
-{
-    CGColorSpaceRef space   = CGColorSpaceCreateDeviceRGB();
-    CGContextRef    context = CGBitmapContextCreate(NULL, pixels, pixels, 8, 0, space,
-                                                    kCGImageAlphaNoneSkipLast | kCGBitmapByteOrderDefault);
-    CGColorSpaceRelease(space);
-    if (!context)
-    {
-        return nil;
-    }
-    CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
-    CGContextDrawImage(context, CGRectMake(0, 0, pixels, pixels), image);
-    CGImageRef      scaled = CGBitmapContextCreateImage(context);
-    CGContextRelease(context);
-    NSMutableData  *data        = [NSMutableData data];
-    CGImageDestinationRef sink  = CGImageDestinationCreateWithData((__bridge CFMutableDataRef)data, CFSTR("public.png"), 1, NULL);
-    CGImageDestinationAddImage(sink, scaled, NULL);
-    BOOL written = CGImageDestinationFinalize(sink);
-    CFRelease(sink);
-    CGImageRelease(scaled);
-    return written ? data : nil;
-}
 
-static BOOL writeIfChanged(NSData *data, NSString *target)
-{
-    if (!data || [data isEqualToData:[NSData dataWithContentsOfFile:target]])
-    {
-        return NO;
-    }
-    if (![data writeToFile:target atomically:YES])
-    {
-        fprintf(stderr, "unbound-bundle: Failed to write %s\n", target.UTF8String);
-        return NO;
-    }
-    chmod(target.fileSystemRepresentation, 0644);
-    return YES;
-}
 
-static BOOL renderCustomIcon(NSURL *bundle, NSDictionary *icon)
-{
-    CGImageRef image = squareImage(icon[@"image"]);
-    if (!image)
-    {
-        fprintf(stderr, "unbound-bundle: Failed to read custom icon %s\n", [icon[@"id"] UTF8String]);
-        return NO;
-    }
-    BOOL changed = NO;
-    for (size_t index = 0; index < sizeof(kRenditions) / sizeof(kRenditions[0]); index++)
-    {
-        NSString *name = [icon[@"id"] stringByAppendingString:kRenditions[index].suffix];
-        changed = writeIfChanged(renderPNG(image, kRenditions[index].pixels),
-                                 [bundle.path stringByAppendingPathComponent:name]) || changed;
-    }
-    CGImageRelease(image);
-    return changed;
-}
 
-static BOOL syncCustomIconFiles(NSURL *bundle, NSArray<NSDictionary *> *icons)
-{
-    BOOL      changed = NO;
-    NSArray  *wanted  = [icons valueForKey:@"id"];
-    for (NSString *file in [NSFileManager.defaultManager contentsOfDirectoryAtPath:bundle.path error:nil])
-    {
-        NSString *iconId = [file componentsSeparatedByString:@"60x60"].firstObject;
-        iconId           = [iconId componentsSeparatedByString:@"76x76"].firstObject;
-        if ([file hasPrefix:kCustomPrefix] && ![wanted containsObject:iconId])
-        {
-            changed = [NSFileManager.defaultManager removeItemAtPath:[bundle.path stringByAppendingPathComponent:file]
-                                                               error:nil] || changed;
-        }
-    }
-    for (NSDictionary *icon in icons)
-    {
-        changed = renderCustomIcon(bundle, icon) || changed;
-    }
-    return changed;
-}
 
-static NSArray<NSDictionary *> *renderableIcons(NSURL *bundle, NSArray<NSDictionary *> *icons)
-{
-    NSMutableArray *rendered = [NSMutableArray array];
-    for (NSDictionary *icon in icons)
-    {
-        NSString *file = [icon[@"id"] stringByAppendingString:kRenditions[0].suffix];
-        if ([NSFileManager.defaultManager fileExistsAtPath:[bundle.path stringByAppendingPathComponent:file]])
-        {
-            [rendered addObject:icon];
-        }
-    }
-    return rendered;
-}
 
 static BOOL writeInfo(NSString *path, NSDictionary *info, struct stat owner)
 {
@@ -418,11 +232,11 @@ int main(int argc, char *argv[])
         }
 
         NSArray<NSDictionary *> *icons =
-            install ? customIcons(proxyURL(proxy, @"dataContainerURL")) : @[];
+            install ? UBCustomIcons([proxyURL(proxy, @"dataContainerURL").path stringByAppendingPathComponent:@"Documents"]) : @[];
         BOOL                 filesChanged = copyIcons(bundle, install);
-        filesChanged                      = syncCustomIconFiles(bundle, icons) || filesChanged;
+        filesChanged                      = UBSyncCustomIconFiles(bundle.path, icons) || filesChanged;
         NSMutableDictionary *original     = originalInfo(info);
-        NSDictionary        *wanted = install ? patchedInfo(original, renderableIcons(bundle, icons)) : original;
+        NSDictionary        *wanted = install ? patchedInfo(original, UBRenderableIcons(bundle.path, icons)) : original;
         BOOL                 infoChanged  = ![wanted isEqualToDictionary:info];
         if (infoChanged && !writeInfo(infoPath, wanted, owner))
         {

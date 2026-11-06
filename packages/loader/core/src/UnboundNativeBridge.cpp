@@ -142,6 +142,28 @@ downloadFunction(jsi::Runtime                                                 &r
         });
 }
 
+static jsi::Function buildIconIPAFunction(jsi::Runtime &runtime, std::function<std::string()> build)
+{
+    return native::makeFunction(
+        runtime, "buildIconIPA", 0,
+        [build = std::move(build)](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *,
+                                   size_t) -> jsi::Value {
+            auto path = std::make_shared<std::string>();
+            return native::executeBackgroundAsynchronously(
+                rt,
+                [build, path] {
+                    *path = build();
+                    if (path->empty())
+                    {
+                        throw std::runtime_error("Failed to build the icon IPA");
+                    }
+                },
+                [path](jsi::Runtime &result) {
+                    return jsi::Value(jsi::String::createFromUtf8(result, *path));
+                });
+        });
+}
+
 void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
 {
     const nlohmann::json none = nlohmann::json::array();
@@ -166,6 +188,11 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
         bridge.setProperty(
             runtime, "syncAppIcons",
             actionFunction(runtime, "syncAppIcons", std::move(provider.syncAppIcons)));
+    }
+    if (provider.buildIconIPA)
+    {
+        bridge.setProperty(runtime, "buildIconIPA",
+                           buildIconIPAFunction(runtime, std::move(provider.buildIconIPA)));
     }
     if (provider.fonts)
     {

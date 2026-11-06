@@ -51,7 +51,7 @@ LIBFFI_HEADERS := $(LIBFFI_OUTPUT)/include
 BEARSSL_FILES := $(shell find ../vendor/bearssl/src -name "*.c")
 $(foreach file,$(BEARSSL_FILES),$(eval $(file)_CFLAGS = -I$(VENDOR_DIR)/bearssl/src))
 
-$(TWEAK_NAME)_FILES = $(shell find sources -name "*.x*" -o -name "*.m*") $(wildcard ../core/src/*.cpp) $(wildcard ../core/src/ffi/*.cpp) $(wildcard ../vendor/monocypher/*.c) ../vendor/miniz/miniz_unbound.c $(BEARSSL_FILES)
+$(TWEAK_NAME)_FILES = $(shell find sources -name "*.x*" -o -name "*.m*") $(wildcard ../core/src/*.cpp) $(wildcard ../core/src/ffi/*.cpp) $(wildcard ../vendor/monocypher/*.c) ../vendor/miniz/miniz_unbound.c shared/UBAppIcons.m $(BEARSSL_FILES)
 $(TWEAK_NAME)_CFLAGS = $(COMMON_FLAGS)
 sources/CoreBridge.mm_CFLAGS = -DCOMMIT_HASH='@"$(COMMIT_HASH)"' -DCOMMIT_SHORT_HASH='@"$(COMMIT_SHORT_HASH)"' -DCOMMIT_SUBJECT='@"$(COMMIT_SUBJECT)"' -DCOMMIT_BRANCH='@"$(COMMIT_BRANCH)"' -DBUILD_TIMESTAMP='@"$(BUILD_TIMESTAMP)"'
 ../core/src/LoaderVersion.cpp_CFLAGS = -DUNBOUND_VERSION='"$(THEOS_PACKAGE_BASE_VERSION)"'
@@ -60,7 +60,8 @@ sources/CoreBridge.mm_CFLAGS = -DCOMMIT_HASH='@"$(COMMIT_HASH)"' -DCOMMIT_SHORT_
 $(TWEAK_NAME)_CCFLAGS = $(COMMON_FLAGS) -I$(LIBFFI_HEADERS) -std=c++20 -fno-cxx-modules
 # Resolve JSI/TurboModule symbols from Discord's React dylib at load time.
 $(TWEAK_NAME)_LDFLAGS = -undefined dynamic_lookup $(LIBFFI_ARCHIVE)
-$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation AuthenticationServices UniformTypeIdentifiers Security SafariServices AVFoundation CoreHaptics
+$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation AuthenticationServices UniformTypeIdentifiers Security SafariServices AVFoundation CoreHaptics CoreGraphics ImageIO
+$(TWEAK_NAME)_LIBRARIES = z
 
 BUNDLE_NAME = UnboundResources
 $(BUNDLE_NAME)_INSTALL_PATH = "/Library/Application\ Support/"
