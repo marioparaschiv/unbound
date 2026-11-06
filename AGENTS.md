@@ -20,7 +20,8 @@ Test: `turn-check` is clean and `bun run typecheck` passes.
 | Task                                                   | Skill              |
 | ------------------------------------------------------ | ------------------ |
 | Client code: components, domains, API, managers, metro | `unbound-client`   |
-| Changing Discord behaviour, finding modules, patching  | `unbound-patching` |
+| Changing Discord: metro lookups, flux, patches         | `unbound-patching` |
+| A plugin's files, lifecycle, launch cost               | `unbound-plugins`  |
 | Proving a client change on the vphone                  | `ubd-vphone`       |
 | `apps/web` pages, endpoints, auth or review publishing | `unbound-web`      |
 

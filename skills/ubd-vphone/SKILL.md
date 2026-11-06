@@ -1,6 +1,8 @@
 ---
 name: ubd-vphone
 description: Drive the vphone (an iOS VM running Discord with Unbound) and prove client changes on it. Use when proving a change on device, evaluating in Discord's runtime, pressing, typing or screenshotting on the vphone, reading its crashes or logs, installing an IPA or tweak, benchmarking startup, or when the dev server, bridge or loader misbehaves.
+metadata:
+    internal: true
 ---
 
 # ubd-vphone
@@ -37,4 +39,4 @@ Device CLI commands live in `packages/cli/src/commands/`, registered in `package
 - [device.md](device.md): device shell, files, logs, crashes, installing IPAs and tweaks.
 - [setup.md](setup.md): configuration, known faults, rebuilding the device from nothing, the marketplace catalog stub, dkrypt.
 - [bench.md](bench.md): measuring startup and memory.
-- Probing views, hooks and traces, or finding what to patch: the `unbound-patching` skill.
+- Finding what to patch and tracing it: the `hermes-internals` skill. Native views and hooks: `react-native-internals`.

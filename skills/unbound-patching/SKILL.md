@@ -1,20 +1,22 @@
 ---
 name: unbound-patching
-description: Change what Discord does or shows from an Unbound plugin or the client. Use when asked to modify, hide, add to or block Discord behaviour, find a Discord module, store or component, write a before, after, instead or React patch, read Discord's decompiled source, or inspect logs, views, hooks or traces on a device.
+description: Reaching into Discord's JS with Unbound's metro, flux and patcher, from a plugin (`@unbound-app/api`) or Unbound's client (`~/metro`, `~/patcher`). Use when code must hide, change or add to something Discord shows or does; looks up a Discord module, store or component (`metro.findByProps`, `flux.getStore`); listens to or intercepts a Flux action; or wraps a function or component render (`patcher.after`, `patcher.react`).
 ---
 
 # Patching Discord
 
-Read only the file the task needs. A modification request usually walks them in order.
+Read only the file for the task. The calls are the same in a plugin and in the client; only the imports and the cleanup differ.
 
-| Step                  | File                       | Done when                                               |
-| --------------------- | -------------------------- | ------------------------------------------------------- |
-| 1. Find what to patch | [target.md](target.md)     | A lookup resolves on device and a trace shows it runs   |
-| 2. Look the module up | [metro.md](metro.md)       | The lookup is the cheapest one that stays unique        |
-| 3. Write the patch    | [patching.md](patching.md) | The patch waits for its module and composes with others |
-| Read Discord's source | [hermes.md](hermes.md)     | You found the module that produces the behaviour        |
-| Inspect a device      | [probe.md](probe.md)       | Logs, views, hooks or traces answered the question      |
+| File                           | What it covers                                                                                                                                   | Read when                                                                               |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| [metro.md](metro.md)           | `metro.api`, `metro.common`, `metro.components`, `findByProps`, `findByFilePath`, filters, lazy stand-ins, `getModulePresence`, `onModuleLoaded` | Looking up a Discord module or component, or handling one that a Discord update removed |
+| [flux.md](flux.md)             | `flux.getStore`, `useStore`, `onAction`, `interceptAction`, `onStoreChange`                                                                      | Reading Discord state, or reacting to an action such as `MESSAGE_CREATE`                |
+| [patching.md](patching.md)     | `patcher.before`, `after`, `instead`, unpatch, `{ once: true }`, cleanup in a plugin versus the client                                           | Wrapping a Discord function                                                             |
+| [components.md](components.md) | `patcher.react.*`, `utils.react.findComponent`, class components, per-render children                                                            | Changing what a Discord screen renders                                                  |
 
-`scripts/source.sh [version]` prints the decompiled source folder for the vphone's Discord version, building it when missing.
+Scaffolding a plugin, its `start` and `stop`, launch cost and auto-disable: the `unbound-plugins` skill. Running it on a phone: `unbound-debugger`.
 
-The full guide is `docs/developer/plugins/` (https://unbound.rip/docs/developer/plugins/introduction). Prove the result on device with the `ubd-vphone` skill.
+Past the API:
+
+- A lookup returns nothing or the wrong module, no namespace names the code behind the behaviour, or a patch never fires: the `hermes-internals` skill.
+- The patch ran but the screen did not change, or the element is a native view: the `react-native-internals` skill.
