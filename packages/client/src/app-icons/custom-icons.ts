@@ -9,7 +9,6 @@ import AppIconStore from './state';
 
 const Logger = createLogger('AppIcons', 'Custom');
 
-/** Read by the native bundle patcher, which installs each entry as an alternate app icon. */
 const DIRECTORY = 'Unbound/AppIcons';
 const MANIFEST = `${DIRECTORY}/custom.json`;
 const ID_PREFIX = 'UnboundCustom';
@@ -17,7 +16,6 @@ const MAX_SIDE = 1024;
 const INSTALL_TIMEOUT_MS = 15_000;
 const INSTALL_POLL_MS = 500;
 
-/** A custom app icon the user added: its id, the name the picker shows, and its image in {@link DIRECTORY}. */
 export type CustomAppIcon = { id: string; name: string; file: string };
 
 type PickerResult = { assets?: { uri?: string }[]; errorCode?: string; errorMessage?: string };
@@ -69,8 +67,8 @@ function localPath(uri: string) {
 }
 
 /**
- * @description Reads the custom app icons the user added.
- * @returns The icons, or none when the list is missing or unreadable.
+ * @description Reads the custom app icons saved by the user.
+ * @returns Saved icons, or an empty list when the manifest is missing or invalid.
  */
 export async function readCustomIcons(): Promise<CustomAppIcon[]> {
 	if (!(await exists(MANIFEST))) {
@@ -93,9 +91,9 @@ async function writeCustomIcons(icons: CustomAppIcon[]) {
 }
 
 /**
- * @description Opens Discord's photo picker so the user picks an image for a new app icon.
- * @returns The picked image's local path, or `undefined` when the picker was cancelled.
- * @throws When the picker is unavailable or fails.
+ * @description Opens Discord's photo picker for a custom app icon.
+ * @returns The selected image's local path, or `undefined` when the picker is cancelled.
+ * @throws When Discord's photo picker is unavailable or fails.
  */
 export async function pickCustomIconImage(): Promise<string | undefined> {
 	if (typeof ImagePicker.launchImageLibraryAsync !== 'function') {
@@ -153,11 +151,10 @@ async function waitForIcons(isDone: (ids: string[]) => boolean): Promise<boolean
 }
 
 /**
- * @description Saves a picked image as a custom app icon and has the loader install it. The loader crops it to a
- * square.
- * @param name The name the picker shows.
- * @param image The picked image's local path.
- * @returns Whether the icon was installed before the timeout.
+ * @description Saves a custom app icon and asks the loader to install it.
+ * @param name The name displayed in Discord's icon picker.
+ * @param image The selected image's local path.
+ * @returns Whether the loader installed the icon before the timeout.
  */
 export async function addCustomIcon(name: string, image: string): Promise<boolean> {
 	const id = `${ID_PREFIX}${Date.now().toString(36)}`;
@@ -172,9 +169,9 @@ export async function addCustomIcon(name: string, image: string): Promise<boolea
 }
 
 /**
- * @description Deletes a custom app icon and has the loader remove it from the app.
+ * @description Deletes a custom app icon and asks the loader to remove it.
  * @param id The icon's id.
- * @returns Whether the loader removed it before the timeout.
+ * @returns Whether the loader removed the icon before the timeout.
  */
 export async function removeCustomIcon(id: string): Promise<boolean> {
 	const icons = await readCustomIcons();

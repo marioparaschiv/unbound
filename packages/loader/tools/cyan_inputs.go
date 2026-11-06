@@ -22,9 +22,6 @@ const (
 	unboundURLName       = "app.unbound.rip"
 )
 
-// cyanInputs writes what cyan needs to make Discord's IPA Unbound's into dir: a plist to merge into Info.plist and
-// the alternate icon's images. cyan replaces each top-level key it merges, so the icon and URL entries carry the
-// IPA's own values with Unbound's added.
 func cyanInputs(ipa, dir string) ([]string, []string, error) {
 	info, err := readIPAInfoPlist(ipa)
 	if err != nil {

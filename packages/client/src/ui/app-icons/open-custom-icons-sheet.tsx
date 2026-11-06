@@ -62,7 +62,7 @@ async function remove(icon: CustomAppIcon) {
 }
 
 /**
- * @description Offers adding a custom app icon from a photo, and removing each one added before, in an action sheet.
+ * @description Opens an action sheet for adding or removing custom app icons.
  */
 export async function openCustomIconsSheet(): Promise<void> {
 	const custom = await readCustomIcons();

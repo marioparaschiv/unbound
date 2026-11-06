@@ -109,7 +109,6 @@ function findRows(node: Element | Element[]): Element {
 
 function patchRows(rows: MetroExport) {
 	Patcher.after(rows, 'default', ({ result }) => {
-		// The rows component calls this on every render, so the store hook keeps a stable order.
 		const icons = AppIconStore((state) => state.icons)
 			.map(toDiscordAppIcon)
 			.sort((a, b) => Number(b.id === UNBOUND_ICON_ID) - Number(a.id === UNBOUND_ICON_ID));
@@ -147,10 +146,9 @@ function patchRows(rows: MetroExport) {
 }
 
 /**
- * @description Lists the app icons the loader provides, such as Unbound's and the user's custom ones, in Discord's own
- * app icon picker, with a tile that adds or removes custom icons where the loader can install them.
+ * @description Adds loader-provided app icons to Discord's native app icon picker.
  */
-export function start() {
+export function start(): void {
 	if (!AppIconStore.getState().refresh().length && !canSyncAppIcons()) return;
 
 	stopWaiting = [
@@ -159,8 +157,10 @@ export function start() {
 	];
 }
 
-/** Removes the loader's app icons from Discord's app icon picker. */
-export function stop() {
+/**
+ * @description Removes the loader's app icon picker patches.
+ */
+export function stop(): void {
 	for (const stop of stopWaiting) stop();
 
 	stopWaiting = [];

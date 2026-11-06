@@ -175,17 +175,10 @@ export type UnboundNativeFonts = {
 	removePreset(id: string): Promise<void>;
 };
 
-/**
- * An app icon the loader provides, as Discord's app icon picker lists it.
- * @internal
- */
 export type UnboundAppIcon = {
-	/** The id Discord's native app icon module switches to. */
 	id: string;
 	pickerId?: string;
-	/** The name the picker shows. */
 	name: string;
-	/** A `file://` URL of the icon's image. */
 	image: string;
 };
 
@@ -203,17 +196,12 @@ export type UnboundNativeBridge = {
 	 * beat building the object over JSI (0.28 vs 0.41 ms, 800 colours), and update checks hash its exact bytes.
 	 */
 	getThemes(): UnboundAddonBundle[];
-	/** The Unbound app icons the installed app declares, which Discord's app icon picker can switch to. Missing on a loader from before it. */
 	getAppIcons?(): UnboundAppIcon[];
 	/**
 	 * Rereads only the installed themes, so `getThemes` lists ones installed, updated or deleted since launch and native
 	 * views take the applied theme's new colours. Missing on a loader from before it.
 	 */
 	rescanThemes?(): void;
-	/**
-	 * Installs the custom app icons saved in `Unbound/AppIcons/custom.json` and drops removed ones; `getAppIcons` lists
-	 * them once installed. Missing where the app cannot add icons, such as a sideloaded iOS install.
-	 */
 	syncAppIcons?(): void;
 	/** The font store; missing on a loader from before it. */
 	fonts?: UnboundNativeFonts;

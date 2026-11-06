@@ -124,10 +124,11 @@ func buildAll(options buildOptions, runner commandRunner) error {
 		return err
 	}
 	if options.deb == "" {
-		options.deb, _ = firstMatch(filepath.Join(iosRoot(options.root), "packages"), ".deb")
-	}
-	if options.deb == "" {
-		return errors.New("no .deb package was produced")
+		deb, err := defaultDeb(filepath.Join(iosRoot(options.root), "packages"), options.configuration)
+		if err != nil {
+			return err
+		}
+		options.deb = deb
 	}
 	if options.output == "" {
 		name, err := packageName(options.root)
@@ -195,10 +196,11 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 		options.ipa = resolved
 	}
 	if options.deb == "" {
-		options.deb, _ = firstMatch(filepath.Join(iosRoot(options.root), "packages"), ".deb")
-	}
-	if options.deb == "" {
-		return errors.New("tweak package path is required")
+		deb, err := defaultDeb(filepath.Join(iosRoot(options.root), "packages"), options.configuration)
+		if err != nil {
+			return fmt.Errorf("tweak package path is required: %w", err)
+		}
+		options.deb = deb
 	}
 	if options.output == "" {
 		name, err := packageName(options.root)
@@ -823,6 +825,34 @@ func firstMatch(root, suffix string) (string, error) {
 		return "", errors.New("no matching file")
 	}
 	return paths[0], nil
+}
+
+func defaultDeb(root, configuration string) (string, error) {
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		return "", err
+	}
+	debug := configuration == "debug"
+	var selected string
+	var newest os.FileInfo
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() || !strings.HasSuffix(name, ".deb") || strings.Contains(name, "+debug_") != debug {
+			continue
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return "", err
+		}
+		if newest == nil || info.ModTime().After(newest.ModTime()) {
+			selected = filepath.Join(root, name)
+			newest = info
+		}
+	}
+	if selected == "" {
+		return "", fmt.Errorf("no %s tweak package found", configuration)
+	}
+	return selected, nil
 }
 
 func toolsCommand() string {

@@ -158,8 +158,6 @@ public:
         return "";
     }
 
-    // Read from disk: the jailbreak bundle patcher adds custom icons while Discord runs, after
-    // `infoDictionary` was cached.
     static NSDictionary *installedInfo()
     {
         NSString *path =

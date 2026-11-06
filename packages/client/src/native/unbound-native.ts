@@ -24,25 +24,23 @@ function read<T>(method: keyof UnboundNativeBridge, call: (bridge: UnboundNative
 }
 
 /**
- * @description Reads the Unbound app icons the installed app declares.
- * @returns The icons, or none on a loader that does not provide any.
+ * @description Reads the app icons declared by the installed loader.
+ * @returns The icons, or an empty list when the loader provides none.
  */
 export function getAppIcons(): UnboundAppIcon[] {
 	return read('getAppIcons', (bridge) => bridge.getAppIcons?.()) ?? [];
 }
 
 /**
- * @description Reports whether the loader can install custom app icons, which needs a jailbroken iOS device or a
- * rooted Android one.
- * @returns Whether `syncAppIcons` does anything.
+ * @description Reports whether the installed loader can add or remove custom app icons.
+ * @returns Whether `syncAppIcons` is available.
  */
 export function canSyncAppIcons(): boolean {
 	return typeof globalThis.UnboundNative?.syncAppIcons === 'function';
 }
 
 /**
- * @description Has the loader install the custom app icons saved in `Unbound/AppIcons/custom.json` and drop removed
- * ones. Returns before they are installed; does nothing where {@link canSyncAppIcons} is false.
+ * @description Asks the loader to install saved custom app icons and remove deleted ones.
  */
 export function syncAppIcons(): void {
 	read('syncAppIcons', (bridge) => bridge.syncAppIcons?.());
