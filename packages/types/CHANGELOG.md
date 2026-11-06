@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.13.0](https://github.com/marioparaschiv/unbound/compare/types-v0.12.0...types-v0.13.0) (2026-11-06)
+
+
+### Features
+
+* **client:** park the Icons tab and centre the empty Plugins list ([#976](https://github.com/marioparaschiv/unbound/issues/976)) ([97565f5](https://github.com/marioparaschiv/unbound/commit/97565f57c6bcd7be86e66f91e6d3601575ccabdb))
+
+
+### Performance Improvements
+
+* **loader:** reread only themes after a theme changes on disk ([#977](https://github.com/marioparaschiv/unbound/issues/977)) ([d7c5fa7](https://github.com/marioparaschiv/unbound/commit/d7c5fa708a680ea822b8a895f42c4e41e93cd39e))
+
 ## [0.12.0](https://github.com/marioparaschiv/unbound/compare/types-v0.11.0...types-v0.12.0) (2026-11-05)
 
 
