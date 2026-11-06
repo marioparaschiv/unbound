@@ -6,7 +6,7 @@ import { join } from 'node:path';
 
 import { verifyPluginSignature } from './sign-plugin';
 
-const SCRIPT = join(import.meta.dir, 'publish-plugins.ts');
+const SCRIPT = join(import.meta.dir, 'publish-addons.ts');
 const REPOSITORY = 'owner/plugins';
 
 type Published = {
@@ -155,7 +155,7 @@ function remoteTags(): string {
 }
 
 beforeAll(() => {
-	root = mkdtempSync(join(tmpdir(), 'publish-plugins-test-'));
+	root = mkdtempSync(join(tmpdir(), 'publish-addons-test-'));
 	work = join(root, 'work');
 	remote = join(root, 'remote.git');
 	mkdirSync(work);
@@ -333,4 +333,40 @@ test('signs each published bundle into its manifest when the signing key is set'
 	} finally {
 		extraEnv = {};
 	}
+});
+
+test('publishes a static theme from the themes workspace beside the plugins', async () => {
+	write('packages/themes/unbound.config.json', '{ "addons": ["*"] }\n');
+	write(
+		'packages/themes/gamma/manifest.json',
+		`${JSON.stringify({
+			id: 'unbound.gamma',
+			name: 'gamma',
+			description: 'The gamma theme.',
+			authors: [{ name: 'adrian', id: '1' }],
+			version: '1.0.0',
+			main: 'bundle.json',
+		})}\n`,
+	);
+	write('packages/themes/gamma/bundle.json', '{ "type": "dark", "semantic": {}, "raw": {} }\n');
+
+	const head = commit('feat(gamma): add the theme');
+
+	state.published = new Map([
+		['unbound.alpha', { version: '1.0.0', commitSha: null }],
+		['unbound.beta', { version: '1.1.0', commitSha: null }],
+	]);
+	state.calls = [];
+
+	const result = await run();
+	const tag = `plugin-builds/${head}`;
+	const build = state.calls[0]?.body.commitSha ?? '';
+
+	expect(result.exitCode).toBe(0);
+	expect(state.calls.map((call) => call.body)).toEqual([
+		{ repository: REPOSITORY, path: 'packages/themes/gamma', ref: tag, commitSha: build },
+	]);
+	expect(git(work, 'show', `${build}:packages/themes/gamma/CHANGELOG.md`)).toContain(
+		'- Add the theme',
+	);
 });

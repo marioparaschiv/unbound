@@ -39,7 +39,8 @@ import {
 	withSignature,
 } from './sign-plugin';
 
-const WORKSPACE_DIR = 'packages/plugins';
+/** The workspaces whose addons CI publishes: first-party plugins and themes. */
+const WORKSPACE_DIRS = ['packages/plugins', 'packages/themes'];
 const TAG_PREFIX = 'plugin-builds/';
 const FIELD = '\u001f';
 const RECORD = '\u001e';
@@ -152,12 +153,16 @@ function readOptions(): Options {
 	};
 }
 
-function builtContent(root: string, bundle: string): Pick<LocalPlugin, 'sha256' | 'bytecode'> {
-	const path = join(root, WORKSPACE_DIR, bundle);
+function builtContent(
+	root: string,
+	workspaceDir: string,
+	bundle: string,
+): Pick<LocalPlugin, 'sha256' | 'bytecode'> {
+	const path = join(root, workspaceDir, bundle);
 
 	if (!existsSync(path)) return {};
 
-	const compiled = findCompiledBundles(root, `${WORKSPACE_DIR}/${bundle}`);
+	const compiled = findCompiledBundles(root, `${workspaceDir}/${bundle}`);
 
 	return {
 		sha256: createHash('sha256').update(readFileSync(path)).digest('hex'),
@@ -168,7 +173,13 @@ function builtContent(root: string, bundle: string): Pick<LocalPlugin, 'sha256' 
 }
 
 function discoverPlugins(root: string): LocalPlugin[] {
-	const workspace = join(root, WORKSPACE_DIR);
+	return WORKSPACE_DIRS.filter((dir) => existsSync(join(root, dir, CONFIG_FILENAME))).flatMap(
+		(dir) => discoverWorkspace(root, dir),
+	);
+}
+
+function discoverWorkspace(root: string, workspaceDir: string): LocalPlugin[] {
+	const workspace = join(root, workspaceDir);
 	const config = parse(
 		workspaceConfigSchema,
 		JSON.parse(readFileSync(join(workspace, CONFIG_FILENAME), 'utf8')),
@@ -198,10 +209,11 @@ function discoverPlugins(root: string): LocalPlugin[] {
 
 		plugins.push({
 			id: addon.id,
+			workspace: workspaceDir,
 			dir,
 			version: readPluginManifest(join(workspace, dir, 'manifest.json')).version,
 			bundle: addon.bundle,
-			...builtContent(root, addon.bundle),
+			...builtContent(root, workspaceDir, addon.bundle),
 		});
 	}
 
@@ -256,7 +268,7 @@ function findChangelogBase(options: Options, decision: SelectedDecision): string
 		}
 	}
 
-	const manifest = `${WORKSPACE_DIR}/${plugin.dir}/manifest.json`;
+	const manifest = `${plugin.workspace}/${plugin.dir}/manifest.json`;
 	const needle = `"version": "${published.version}"`;
 	const candidates = git(root, ['log', '--format=%H', '-S', needle, 'HEAD', '--', manifest]);
 
@@ -266,15 +278,9 @@ function findChangelogBase(options: Options, decision: SelectedDecision): string
 		.find((sha) => tryGit(root, ['show', `${sha}:${manifest}`]).stdout.includes(needle));
 }
 
-function listCommits(root: string, dir: string, base: string | undefined): PluginCommit[] {
+function listCommits(root: string, path: string, base: string | undefined): PluginCommit[] {
 	const range = base ? `${base}..HEAD` : 'HEAD';
-	const log = git(root, [
-		'log',
-		`--format=%H${FIELD}%s${FIELD}%b${RECORD}`,
-		range,
-		'--',
-		`${WORKSPACE_DIR}/${dir}`,
-	]);
+	const log = git(root, ['log', `--format=%H${FIELD}%s${FIELD}%b${RECORD}`, range, '--', path]);
 
 	return log
 		.split(RECORD)
@@ -290,7 +296,7 @@ function listCommits(root: string, dir: string, base: string | undefined): Plugi
 function prepareRelease(options: Options, decision: SelectedDecision, date: string): PluginRelease {
 	const { root } = options;
 	const { plugin } = decision;
-	const path = `${WORKSPACE_DIR}/${plugin.dir}/CHANGELOG.md`;
+	const path = `${plugin.workspace}/${plugin.dir}/CHANGELOG.md`;
 	const existing = tryGit(root, ['show', `HEAD:${path}`]);
 	const current = existing.ok
 		? selectRelease(parseChangelog(existing.stdout), plugin.version)
@@ -305,7 +311,11 @@ function prepareRelease(options: Options, decision: SelectedDecision, date: stri
 	}
 
 	const release = createRelease({
-		commits: listCommits(root, plugin.dir, findChangelogBase(options, decision)),
+		commits: listCommits(
+			root,
+			`${plugin.workspace}/${plugin.dir}`,
+			findChangelogBase(options, decision),
+		),
 		date,
 		firstRelease: decision.reason === 'unpublished',
 	});
@@ -345,14 +355,15 @@ const GENERATED_MANIFEST_FIELDS = ['platforms', 'capabilities'] as const;
 /**
  * @description Builds the manifest to publish: the source manifest with the platforms and Capabilities `ubd build` generated into `dist/manifest.json`, which the source never holds.
  * @param root The repository root.
- * @param dir The plugin's folder.
+ * @param dir The addon's folder, relative to the root, such as `packages/plugins/moyai`.
  * @returns The manifest's JSON text.
  */
 export function publishedManifest(root: string, dir: string): string {
-	const source = JSON.parse(
-		readFileSync(join(root, WORKSPACE_DIR, dir, 'manifest.json'), 'utf8'),
-	) as Record<string, unknown>;
-	const builtPath = join(root, WORKSPACE_DIR, dir, 'dist', 'manifest.json');
+	const source = JSON.parse(readFileSync(join(root, dir, 'manifest.json'), 'utf8')) as Record<
+		string,
+		unknown
+	>;
+	const builtPath = join(root, dir, 'dist', 'manifest.json');
 
 	if (!existsSync(builtPath)) return JSON.stringify(source);
 
@@ -398,7 +409,8 @@ function collectFiles(root: string, releases: PluginRelease[], key?: KeyObject):
 	const files: BuildFile[] = [];
 
 	for (const { plugin, changelog } of releases) {
-		const bundle = `${WORKSPACE_DIR}/${plugin.bundle}`;
+		const directory = `${plugin.workspace}/${plugin.dir}`;
+		const bundle = `${plugin.workspace}/${plugin.bundle}`;
 
 		if (!existsSync(join(root, bundle))) {
 			throw new Error(
@@ -411,7 +423,7 @@ function collectFiles(root: string, releases: PluginRelease[], key?: KeyObject):
 		files.push({ path: bundle, contents });
 
 		if (key) {
-			const manifest = `${WORKSPACE_DIR}/${plugin.dir}/manifest.json`;
+			const manifest = `${directory}/manifest.json`;
 			const compiled = findCompiledBundles(root, bundle);
 			const digests = bytecodeDigests(
 				new Map([...compiled].map(([version, file]) => [version, file.contents])),
@@ -422,12 +434,12 @@ function collectFiles(root: string, releases: PluginRelease[], key?: KeyObject):
 			files.push({
 				path: manifest,
 				contents: new TextEncoder().encode(
-					withSignature(publishedManifest(root, plugin.dir), signature, digests),
+					withSignature(publishedManifest(root, directory), signature, digests),
 				),
 			});
 		}
 		files.push({
-			path: `${WORKSPACE_DIR}/${plugin.dir}/CHANGELOG.md`,
+			path: `${directory}/CHANGELOG.md`,
 			contents: new TextEncoder().encode(changelog),
 		});
 	}
@@ -525,7 +537,7 @@ async function publishPlugin(
 	const label = `${plugin.id} ${plugin.version}`;
 	const request: PublishFirstPartyRequest = {
 		repository: options.repository,
-		path: `${WORKSPACE_DIR}/${plugin.dir}`,
+		path: `${plugin.workspace}/${plugin.dir}`,
 		ref: build.tag,
 		commitSha: build.commit,
 	};

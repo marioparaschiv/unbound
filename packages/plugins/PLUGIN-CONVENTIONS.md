@@ -64,7 +64,7 @@ Do not write tests that mock Discord modules and then assert the mock was called
 
 Each plugin ships `ADDON.md`, `CHANGELOG.md` and a `version` in its manifest. `bun run plugins:validate` fails when `ADDON.md` is missing or empty, when `CHANGELOG.md` does not parse, and when the changelog has no entry for the manifest's version.
 
-- Raise `version` in `manifest.json` in the same change that alters what the plugin does, and add that version's entry to `CHANGELOG.md`. The `plugins-publish` workflow publishes every plugin whose manifest version is newer than the live one.
+- Raise `version` in `manifest.json` in the same change that alters what the plugin does, and add that version's entry to `CHANGELOG.md`. The `plugins-publish` workflow publishes every plugin and theme whose manifest version is newer than the live one.
 - A changelog entry has `Added`, `Changed`, `Fixed` and `Removed` sections. Write what a user notices. A change with no visible effect says so: "The plugin works the same as before."
 - Commit as `type(scope): subject`, with the plugin's folder name as the scope, such as `fix(moyai): play the sound once`. `feat`, `fix` and `perf` commits feed the changelog, and every other type is left out.
 - A change to `ADDON.md` alone ships as a patch release too, with the entry "The plugin works the same as before." See `character-counter`'s `CHANGELOG.md` for examples.
