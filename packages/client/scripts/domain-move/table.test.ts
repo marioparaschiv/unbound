@@ -25,6 +25,7 @@ const DOMAINS = new Set([
 	'plugins',
 	'themes',
 	'icon-packs',
+	'app-icons',
 	'fonts',
 	'marketplace',
 	'updates',
