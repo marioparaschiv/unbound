@@ -67,7 +67,7 @@ Each entry is an object with a `type` (`color` for a literal color, or `raw` to 
 	The color, or the raw key when `type` is `raw`.
 </ResponseField>
 <ResponseField name='opacity' type='number'>
-	Optional opacity from `0` to `1`, applied on top of the parsed color. It replaces any alpha already in the color string. It's ignored when `type` is `raw`.
+	Optional opacity from `0` to `1`, applied on top of the color. It replaces any alpha already in the color string or the raw color. It's ignored when a `raw` entry names a color your `raw` map doesn't define.
 </ResponseField>
 
 If an entry is missing `type` or `value`, it's skipped and the role keeps its original color.

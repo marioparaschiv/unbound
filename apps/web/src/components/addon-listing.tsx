@@ -2,6 +2,7 @@ import {
 	IconGrid,
 	IconMagnifierMinus,
 	IconPalette,
+	IconPaintbrush,
 	IconPlug,
 	IconPlus,
 	IconXmark,
@@ -97,6 +98,17 @@ function SubmitButton() {
 			<Link to={session ? '/submit' : '/login'}>
 				<IconPlus size={24} />
 				Submit
+			</Link>
+		</Button>
+	);
+}
+
+function CreateThemeButton() {
+	return (
+		<Button asChild className='flex-1 sm:flex-none'>
+			<Link to='/themes/create'>
+				<IconPaintbrush size={24} />
+				Create
 			</Link>
 		</Button>
 	);
@@ -261,6 +273,7 @@ function AddonListing({ type, search }: AddonListingProps) {
 					actions={
 						<>
 							<SortMenu value={search.sort ?? 'name'} onChange={changeSort} />
+							{type === 'theme' ? <CreateThemeButton /> : null}
 							<SubmitButton />
 						</>
 					}

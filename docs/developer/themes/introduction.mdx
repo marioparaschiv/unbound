@@ -26,6 +26,23 @@ Only one theme is applied at a time, so applying a new one replaces the last. Un
 	</Card>
 </CardGroup>
 
+## Make a theme
+
+The [theme maker](/themes/create) builds a theme from a base and three colors: background, accent and mentions. It previews them on Discord's home, server, chat, profile and settings screens, and downloads a zip with the theme's `manifest.json` and `bundle.json`. Advanced mode lets you set single parts on top, such as the chat background, links or the @mention pill.
+
+To keep editing by hand, unzip the folder into an addon workspace and edit `bundle.json`. See [Theme Colors](/docs/developer/themes/types) for what each part does.
+
+## Reload a theme while you edit
+
+Once the [debugger](/docs/developer/development/debugging) is running and your phone is connected to it, the [CLI](/docs/developer/development/cli) can reload a theme without restarting Discord. Run these from the workspace:
+
+```bash
+ubd dev
+ubd push my-theme
+```
+
+`dev` watches every addon and reloads the one you changed each time you save. `push` sends one theme once, and installs it if the device doesn't have it yet.
+
 <Note>
 	A theme can't run logic or patch components. It only restyles. For behavior, write a [plugin](/docs/developer/plugins/introduction).
 </Note>
