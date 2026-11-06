@@ -24,6 +24,7 @@ import hotRefresh from '~/hot-refresh/builtin.dev';
 import { pluginsSection } from '~/plugins/builtin';
 import { builtins } from '~/builtins/registry';
 import staffMode from '~/builtins/staff-mode';
+import appIcons from '~/app-icons/builtin';
 import nativeConsent from '~/native/builtin';
 import { Manager } from '~/addons/manager';
 import tracking from '~/builtins/tracking';
@@ -83,6 +84,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	['settings', createSettings(SECTIONS_IN_OVERVIEW_ORDER)],
 	['sponsorBadges', sponsorBadges],
 	['staffMode', staffMode],
+	['appIcons', appIcons],
 	['themes', themes],
 	['toasts', toasts],
 	['tracking', tracking],

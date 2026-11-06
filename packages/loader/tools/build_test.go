@@ -9,11 +9,52 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestBuildOptionsDoNotAllowOmittingExtensions(t *testing.T) {
 	if _, err := parseBuildOptions([]string{"--extensions", "exclude"}, false); err == nil {
 		t.Fatal("IPA builds must not allow extensions to be omitted")
+	}
+}
+
+func TestDefaultDebMatchesConfiguration(t *testing.T) {
+	packages := t.TempDir()
+	releaseOld := filepath.Join(packages, "app.unbound.ios_1.0.0_iphoneos-arm64.deb")
+	release := filepath.Join(packages, "app.unbound.ios_2.0.0_iphoneos-arm64.deb")
+	debug := filepath.Join(packages, "app.unbound.ios_2.0.0+debug_iphoneos-arm64.deb")
+	for _, path := range []string{releaseOld, release, debug} {
+		if err := os.WriteFile(path, []byte(path), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	oldTime := time.Unix(100, 0)
+	newTime := time.Unix(200, 0)
+	if err := os.Chtimes(releaseOld, oldTime, oldTime); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chtimes(release, newTime, newTime); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chtimes(debug, time.Unix(300, 0), time.Unix(300, 0)); err != nil {
+		t.Fatal(err)
+	}
+	for _, test := range []struct {
+		configuration string
+		want          string
+	}{
+		{configuration: "release", want: release},
+		{configuration: "debug", want: debug},
+	} {
+		t.Run(test.configuration, func(t *testing.T) {
+			got, err := defaultDeb(packages, test.configuration)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got != test.want {
+				t.Fatalf("defaultDeb(%q) = %q, want %q", test.configuration, got, test.want)
+			}
+		})
 	}
 }
 
@@ -32,21 +73,6 @@ func TestValidateIPAExtensionsRequiresOriginalAndBuiltExtensions(t *testing.T) {
 		!strings.Contains(err.Error(), "OpenInDiscord") ||
 		!strings.Contains(err.Error(), "Share") {
 		t.Fatalf("missing extension was not detected: %v", err)
-	}
-}
-
-func TestRejectLinkRelayAppKeepsTheJailbreakRelayOutOfIPAs(t *testing.T) {
-	clean := []string{"Payload/Discord.app/Info.plist", "Payload/Discord.app/PlugIns/Share.appex/Info.plist"}
-	if err := rejectLinkRelayApp(clean); err != nil {
-		t.Fatalf("IPA without the relay rejected: %v", err)
-	}
-	for _, entry := range []string{
-		"Payload/UnboundLink.app/Info.plist",
-		"Payload/Discord.app/UnboundLink.app/UnboundLink",
-	} {
-		if err := rejectLinkRelayApp(append(append([]string{}, clean...), entry)); err == nil {
-			t.Fatalf("relay at %s was not rejected", entry)
-		}
 	}
 }
 

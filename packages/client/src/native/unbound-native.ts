@@ -1,5 +1,6 @@
 import type {
 	UnboundAddonBundle,
+	UnboundAppIcon,
 	UnboundLoaderInfo,
 	UnboundNativeBridge,
 	UnboundNativeFonts,
@@ -20,6 +21,52 @@ function read<T>(method: keyof UnboundNativeBridge, call: (bridge: UnboundNative
 	} catch (error) {
 		logger.error(`Failed to read UnboundNative.${method}:`, error);
 	}
+}
+
+/**
+ * @description Reads the app icons declared by the installed loader.
+ * @returns The icons, or an empty list when the loader provides none.
+ */
+export function getAppIcons(): UnboundAppIcon[] {
+	return read('getAppIcons', (bridge) => bridge.getAppIcons?.()) ?? [];
+}
+
+/**
+ * @description Reports whether the installed loader can add or remove custom app icons.
+ * @returns Whether `syncAppIcons` is available.
+ */
+export function canSyncAppIcons(): boolean {
+	return typeof globalThis.UnboundNative?.syncAppIcons === 'function';
+}
+
+/**
+ * @description Asks the loader to install saved custom app icons and remove deleted ones.
+ */
+export function syncAppIcons(): void {
+	read('syncAppIcons', (bridge) => bridge.syncAppIcons?.());
+}
+
+/**
+ * @description Reports whether the loader can add a Home Screen shortcut with a custom icon, which jailed iOS uses
+ * in place of real alternate icons.
+ * @returns Whether `installHomeScreenIcon` is available.
+ */
+export function canInstallHomeScreenIcon(): boolean {
+	return typeof globalThis.UnboundNative?.installHomeScreenIcon === 'function';
+}
+
+/**
+ * @description Asks the loader to offer a Home Screen shortcut to Discord with an image: a profile on iOS, a pinned shortcut on Android.
+ * @param name The shortcut's label.
+ * @param imagePath The image's absolute path inside Unbound's AppIcons folder.
+ * @returns Whether the profile was prepared and opened.
+ */
+export function installHomeScreenIcon(name: string, imagePath: string): boolean {
+	return (
+		read('installHomeScreenIcon', (bridge) =>
+			bridge.installHomeScreenIcon?.(name, imagePath),
+		) ?? false
+	);
 }
 
 /**

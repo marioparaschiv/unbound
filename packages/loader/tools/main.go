@@ -27,8 +27,6 @@ func run(args []string) error {
 		return runFetch(args[1:])
 	case "ipa-info":
 		return runIPAInfo(args[1:])
-	case "patch-ipa":
-		return runPatchIPA(args[1:])
 	case "ipa-icons":
 		return runIPAIcons(args[1:])
 	case "discord-version":
@@ -37,6 +35,8 @@ func run(args []string) error {
 		return runDiscordAPK(args[1:])
 	case "patch-apk":
 		return runPatchAPK(args[1:])
+	case "android-app-icon":
+		return runAndroidAppIcon(args[1:])
 	case "publish-android-build":
 		return runPublishAndroidBuild(args[1:])
 	case "release-candidate":
@@ -117,7 +117,7 @@ func run(args []string) error {
 }
 
 func printUsage() {
-	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|patch-ipa|ipa-icons|discord-version|discord-apk|android-version|released-android-code|build-watch|release-candidate|generate-loader-changelog|publish-loader-releases|attest|bundle-key|smoke|smoke-regression|smoke-failure-summary|pr-comment|actions-cleanup|symbolicate-android|doctor|dev|compat-scan|compat-issue|compat-legacy-issue|compat-support-issue|format|lint>")
+	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|ipa-icons|discord-version|discord-apk|android-app-icon|android-version|released-android-code|build-watch|release-candidate|generate-loader-changelog|publish-loader-releases|attest|bundle-key|smoke|smoke-regression|smoke-failure-summary|pr-comment|actions-cleanup|symbolicate-android|doctor|dev|compat-scan|compat-issue|compat-legacy-issue|compat-support-issue|format|lint>")
 	fmt.Println("       go run ./tools build <tweak|ipa|simulator|all> [flags]")
 	fmt.Println("       go run ./tools platform <build|test> <ios|android> [flags]")
 	fmt.Println("       go run ./tools validate [--root <path>]")
@@ -125,11 +125,11 @@ func printUsage() {
 	fmt.Println("       go run ./tools packages <list|validate> [--root <path>]")
 	fmt.Println("       go run ./tools libffi-build --archive <path> --include <path>")
 	fmt.Println("       go run ./tools ipa-info --ipa <path>")
-	fmt.Println("       go run ./tools patch-ipa --ipa <path> --output <path>")
 	fmt.Println("       go run ./tools ipa-icons [--root <path>]")
 	fmt.Println("       go run ./tools discord-version --version <version> | --android-code <code>")
 	fmt.Println("       go run ./tools discord-apk --channel <stable|beta|alpha> [--code <code>] [--output-dir <dir> --split <name>...]")
 	fmt.Println("       go run ./tools patch-apk --signer <pem> <apk>...")
+	fmt.Println("       go run ./tools android-app-icon --apk <base.apk> --icon <unbound-icon.webp>")
 	fmt.Println("       go run ./tools publish-android-build --apks <path> --channel <stable|beta|alpha> --commit <sha> [--split <apk>...] [--work-dir <dir>] [--dry-run]")
 	fmt.Println("       go run ./tools release-candidate --channel <stable|testflight|android-beta|android-alpha>")
 	fmt.Println("       go run ./tools publish-loader-releases --version <semver> --ios-url <release-url> --android-url <release-url> [--changelog-file <path>]")

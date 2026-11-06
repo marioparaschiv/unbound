@@ -1,12 +1,15 @@
 #import "Unbound.h"
 
 #import <jsi/jsi.h>
+#import <notify.h>
 
 #import "AddonsCore.h"
 #import "CoreBridge.h"
 #import "CoreConversions.h"
 #import "Discord.h"
+#import "HomeScreenIcon.h"
 #import "HotReload.h"
+#import "IconIPA.h"
 #include "LoaderBootstrap.h"
 #include "LoaderBrowserLogin.h"
 #include "LoaderDiagnostics.h"
@@ -139,6 +142,72 @@ public:
         return [CoreBridge mainBundleBytecodeVersion];
     }
 
+    static std::string iconImageURL(NSArray<NSString *> *files)
+    {
+        NSBundle *bundle = NSBundle.mainBundle;
+        for (NSString *file in files)
+        {
+            for (NSString *suffix in @[ @"@3x.png", @"@2x.png", @".png" ])
+            {
+                NSString *path = [bundle.bundlePath
+                    stringByAppendingPathComponent:[file stringByAppendingString:suffix]];
+                if ([NSFileManager.defaultManager fileExistsAtPath:path])
+                {
+                    return toStdString([NSURL fileURLWithPath:path].absoluteString);
+                }
+            }
+        }
+        return "";
+    }
+
+    static NSDictionary *installedInfo()
+    {
+        NSString *path =
+            [NSBundle.mainBundle.bundlePath stringByAppendingPathComponent:@"Info.plist"];
+        return [NSDictionary dictionaryWithContentsOfFile:path]
+                   ?: NSBundle.mainBundle.infoDictionary;
+    }
+
+    static NSString *iconName(NSString *iconId, NSDictionary *names)
+    {
+        if ([iconId isEqualToString:@"UnboundIcon"])
+        {
+            return @"Unbound";
+        }
+        NSString *name = names[iconId];
+        return [name isKindOfClass:NSString.class] && name.length ? name : iconId;
+    }
+
+    static nlohmann::json declaredUnboundIcons()
+    {
+        nlohmann::json icons     = nlohmann::json::array();
+        NSDictionary  *info      = installedInfo();
+        NSDictionary  *alternate = info[@"CFBundleIcons"][@"CFBundleAlternateIcons"];
+        NSDictionary  *names     = info[@"UnboundIconNames"];
+        for (NSString *iconId in [alternate.allKeys sortedArrayUsingSelector:@selector(compare:)])
+        {
+            if (![iconId hasPrefix:@"Unbound"])
+            {
+                continue;
+            }
+            std::string image = iconImageURL(alternate[iconId][@"CFBundleIconFiles"]);
+            if (image.empty())
+            {
+                continue;
+            }
+            icons.push_back({{"id", toStdString(iconId)},
+                             {"name", toStdString(iconName(iconId, names))},
+                             {"image", image}});
+        }
+        return icons;
+    }
+
+    static BOOL canPatchBundle()
+    {
+        return
+            [NSFileManager.defaultManager fileExistsAtPath:@"/var/jb/usr/libexec/unbound-bundle"];
+    }
+
     loader::UnboundNativeProvider unboundNativeProvider() override
     {
         loader::UnboundNativeProvider provider = loader::makeUnboundNativeProvider(
@@ -146,6 +215,24 @@ public:
             runtimeBytecodeVersion(), toStdString(FileSystem.documents), UnboundDownload);
         // The scan finishes before the call returns, so the client's next `getThemes` lists the
         // theme; recolouring runs on main.
+        provider.getAppIcons = [] {
+            return declaredUnboundIcons();
+        };
+        if (canPatchBundle())
+        {
+            provider.syncAppIcons = [] {
+                notify_post("app.unbound.bundle.sync");
+            };
+        }
+        provider.installHomeScreenIcon = [](const std::string &name, const std::string &imagePath) {
+            return UBInstallHomeScreenIcon(toNSString(name), toNSString(imagePath)) == YES;
+        };
+        provider.buildIconIPA = [] {
+            NSString *documents =
+                NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)
+                    .firstObject;
+            return toStdString(UBBuildIconIPA(documents) ?: @"");
+        };
         provider.rescanThemes = [] {
             [CoreBridge rescanThemes];
             dispatch_async(dispatch_get_main_queue(), ^{ [Themes refreshThemes]; });

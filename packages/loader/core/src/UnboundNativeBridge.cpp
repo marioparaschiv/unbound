@@ -85,13 +85,31 @@ static jsi::Function getter(jsi::Runtime &runtime, const char *name,
         });
 }
 
-static jsi::Function rescanFunction(jsi::Runtime &runtime, std::function<void()> rescan)
+static jsi::Function
+homeScreenIconFunction(jsi::Runtime                                                 &runtime,
+                       std::function<bool(const std::string &, const std::string &)> install)
 {
-    return native::makeFunction(runtime, "rescanThemes", 0,
-                                [rescan = std::move(rescan)](jsi::Runtime &, const jsi::Value &,
+    return native::makeFunction(
+        runtime, "installHomeScreenIcon", 2,
+        [install = std::move(install)](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args,
+                                       size_t count) -> jsi::Value {
+            if (count < 2 || !args[0].isString() || !args[1].isString())
+            {
+                throw jsi::JSError(rt, "installHomeScreenIcon expects a name and an image path");
+            }
+            return jsi::Value(
+                install(args[0].getString(rt).utf8(rt), args[1].getString(rt).utf8(rt)));
+        });
+}
+
+static jsi::Function actionFunction(jsi::Runtime &runtime, const char *name,
+                                    std::function<void()> action)
+{
+    return native::makeFunction(runtime, name, 0,
+                                [action = std::move(action)](jsi::Runtime &, const jsi::Value &,
                                                              const jsi::Value *,
                                                              size_t) -> jsi::Value {
-                                    rescan();
+                                    action();
                                     return jsi::Value::undefined();
                                 });
 }
@@ -141,6 +159,28 @@ downloadFunction(jsi::Runtime                                                 &r
         });
 }
 
+static jsi::Function buildIconIPAFunction(jsi::Runtime &runtime, std::function<std::string()> build)
+{
+    return native::makeFunction(
+        runtime, "buildIconIPA", 0,
+        [build = std::move(build)](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *,
+                                   size_t) -> jsi::Value {
+            auto path = std::make_shared<std::string>();
+            return native::executeBackgroundAsynchronously(
+                rt,
+                [build, path] {
+                    *path = build();
+                    if (path->empty())
+                    {
+                        throw std::runtime_error("Failed to build the icon IPA");
+                    }
+                },
+                [path](jsi::Runtime &result) {
+                    return jsi::Value(jsi::String::createFromUtf8(result, *path));
+                });
+        });
+}
+
 void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
 {
     const nlohmann::json none = nlohmann::json::array();
@@ -152,10 +192,30 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
                        getter(runtime, "getPlugins", std::move(provider.getPlugins), none));
     bridge.setProperty(runtime, "getThemes",
                        getter(runtime, "getThemes", std::move(provider.getThemes), none));
+    bridge.setProperty(runtime, "getAppIcons",
+                       getter(runtime, "getAppIcons", std::move(provider.getAppIcons), none));
     if (provider.rescanThemes)
     {
-        bridge.setProperty(runtime, "rescanThemes",
-                           rescanFunction(runtime, std::move(provider.rescanThemes)));
+        bridge.setProperty(
+            runtime, "rescanThemes",
+            actionFunction(runtime, "rescanThemes", std::move(provider.rescanThemes)));
+    }
+    if (provider.syncAppIcons)
+    {
+        bridge.setProperty(
+            runtime, "syncAppIcons",
+            actionFunction(runtime, "syncAppIcons", std::move(provider.syncAppIcons)));
+    }
+    if (provider.buildIconIPA)
+    {
+        bridge.setProperty(runtime, "buildIconIPA",
+                           buildIconIPAFunction(runtime, std::move(provider.buildIconIPA)));
+    }
+    if (provider.installHomeScreenIcon)
+    {
+        bridge.setProperty(
+            runtime, "installHomeScreenIcon",
+            homeScreenIconFunction(runtime, std::move(provider.installHomeScreenIcon)));
     }
     if (provider.fonts)
     {

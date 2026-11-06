@@ -61,6 +61,7 @@ struct JavaCallbacks {
     jmethodID download                 = nullptr;
     jmethodID devServerHost            = nullptr;
     jmethodID isServing                = nullptr;
+    jmethodID installHomeScreenIcon    = nullptr;
     jmethodID availableFonts           = nullptr;
     jmethodID appFonts                 = nullptr;
     jmethodID appFontBytes             = nullptr;
@@ -133,6 +134,7 @@ private:
     nlohmann::json             fontCatalog();
     std::optional<std::string> devServerHost();
     bool                       isServing(const std::string &url, double timeoutSeconds);
+    bool installHomeScreenIcon(const std::string &name, const std::string &imagePath);
 
     LoaderConfiguration                                                            configuration_;
     JavaCallbacks                                                                  callbacks_;

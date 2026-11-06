@@ -53,6 +53,8 @@ android {
     compileSdk = 36
     ndkVersion = "27.3.13750724"
 
+    sourceSets.getByName("main").assets.srcDir(repositoryRoot.resolve("tools/assets/android-icons"))
+
     defaultConfig {
         applicationId = "app.unbound.android"
         minSdk = 28

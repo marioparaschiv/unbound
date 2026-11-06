@@ -80,5 +80,10 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_DEPENDENCIES_UNAVAILABLE: { names: string | number };
 		UNBOUND_DEPENDENCY_FAILED: { name: string | number };
 		UNBOUND_ENABLED_COUNT: { enabled: string | number };
+		UNBOUND_APP_ICON_REMOVE: { name: string | number };
+		UNBOUND_APP_ICON_INSTALLING: { name: string | number };
+		UNBOUND_APP_ICON_ADDED: { name: string | number };
+		UNBOUND_APP_ICON_REMOVED: { name: string | number };
+		UNBOUND_APP_ICON_PENDING: { name: string | number };
 	};
 }

@@ -19,7 +19,6 @@ import (
 const (
 	cyanRepository     = "https://github.com/asdfzxcvbn/pyzule-rw"
 	cyanCommit         = "740d3716dcd98c20c000f12cdb88f1f0b2a533a4"
-	linkRelayAppName   = "UnboundLink.app"
 	pillowVersion      = "11.3.0"
 	simforgeRepository = "https://github.com/EthanArbuckle/simforge"
 	simforgeCommit     = "c1de4439aa00a6057d497f6097fecda530800a29"
@@ -125,10 +124,11 @@ func buildAll(options buildOptions, runner commandRunner) error {
 		return err
 	}
 	if options.deb == "" {
-		options.deb, _ = firstMatch(filepath.Join(iosRoot(options.root), "packages"), ".deb")
-	}
-	if options.deb == "" {
-		return errors.New("no .deb package was produced")
+		deb, err := defaultDeb(filepath.Join(iosRoot(options.root), "packages"), options.configuration)
+		if err != nil {
+			return err
+		}
+		options.deb = deb
 	}
 	if options.output == "" {
 		name, err := packageName(options.root)
@@ -196,10 +196,11 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 		options.ipa = resolved
 	}
 	if options.deb == "" {
-		options.deb, _ = firstMatch(filepath.Join(iosRoot(options.root), "packages"), ".deb")
-	}
-	if options.deb == "" {
-		return errors.New("tweak package path is required")
+		deb, err := defaultDeb(filepath.Join(iosRoot(options.root), "packages"), options.configuration)
+		if err != nil {
+			return fmt.Errorf("tweak package path is required: %w", err)
+		}
+		options.deb = deb
 	}
 	if options.output == "" {
 		name, err := packageName(options.root)
@@ -227,14 +228,14 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 	if _, err := os.Stat(input); err != nil {
 		return fmt.Errorf("IPA not found: %s", input)
 	}
-	patched := filepath.Join(work, "patched.ipa")
-	if options.channel == "testflight" {
-		patched = input
-	} else {
-		if err := patchIPA(input, patched); err != nil {
-			return fmt.Errorf("patching IPA failed: %w", err)
+	var unboundArgs, unboundFiles []string
+	if options.channel != "testflight" {
+		unboundArgs, unboundFiles, err = cyanInputs(input, work)
+		if err != nil {
+			return fmt.Errorf("preparing the Unbound Info.plist failed: %w", err)
 		}
 	}
+	patched := input
 	if err := rejectInjectedIPA(patched, work, runner); err != nil {
 		return err
 	}
@@ -258,8 +259,10 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 	if options.channel == "testflight" {
 		args = append(args, "-b", "com.hammerandchisel.discord.testflight")
 	}
+	args = append(args, unboundArgs...)
 	args = append(args, "-i", patched, "-o", injectionOutput, "-f", options.deb)
 	args = append(args, extensionPaths...)
+	args = append(args, unboundFiles...)
 	if err := runner(options.root, cyan, args, os.Environ(), os.Stdout, os.Stderr); err != nil {
 		return fmt.Errorf("IPA injection failed: %w", err)
 	}
@@ -273,9 +276,6 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 		return err
 	}
 	if err := validateIPAExtensions(sourceEntries, finalEntries); err != nil {
-		return err
-	}
-	if err := rejectLinkRelayApp(finalEntries); err != nil {
 		return err
 	}
 	if err := validateIPAExtensionExecutables(options.output); err != nil {
@@ -635,17 +635,6 @@ func validateIPAExtensions(sourceEntries, finalEntries []string) error {
 	return fmt.Errorf("final IPA is missing required extensions: %s", strings.Join(missing, ", "))
 }
 
-func rejectLinkRelayApp(entries []string) error {
-	for _, entry := range entries {
-		for _, part := range strings.Split(entry, "/") {
-			if part == linkRelayAppName {
-				return fmt.Errorf("final IPA must not contain %s (Discord itself claims unbound:// in a sideloaded IPA): %s", linkRelayAppName, entry)
-			}
-		}
-	}
-	return nil
-}
-
 func validateIPAExtensionExecutables(path string) error {
 	archive, err := zip.OpenReader(path)
 	if err != nil {
@@ -836,6 +825,34 @@ func firstMatch(root, suffix string) (string, error) {
 		return "", errors.New("no matching file")
 	}
 	return paths[0], nil
+}
+
+func defaultDeb(root, configuration string) (string, error) {
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		return "", err
+	}
+	debug := configuration == "debug"
+	var selected string
+	var newest os.FileInfo
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() || !strings.HasSuffix(name, ".deb") || strings.Contains(name, "+debug_") != debug {
+			continue
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return "", err
+		}
+		if newest == nil || info.ModTime().After(newest.ModTime()) {
+			selected = filepath.Join(root, name)
+			newest = info
+		}
+	}
+	if selected == "" {
+		return "", fmt.Errorf("no %s tweak package found", configuration)
+	}
+	return selected, nil
 }
 
 func toolsCommand() string {

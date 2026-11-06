@@ -59,7 +59,6 @@ struct MenuSection {
 struct MenuOptions {
     bool openAppFolder     = false;
     bool copyAppFolderPath = false;
-    bool unboundIcon       = false;
 };
 
 struct IssueReport {

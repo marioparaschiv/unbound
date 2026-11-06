@@ -175,6 +175,13 @@ export type UnboundNativeFonts = {
 	removePreset(id: string): Promise<void>;
 };
 
+export type UnboundAppIcon = {
+	id: string;
+	pickerId?: string;
+	name: string;
+	image: string;
+};
+
 /**
  * Launch data the loader publishes as `globalThis.UnboundNative`.
  * @internal
@@ -189,11 +196,14 @@ export type UnboundNativeBridge = {
 	 * beat building the object over JSI (0.28 vs 0.41 ms, 800 colours), and update checks hash its exact bytes.
 	 */
 	getThemes(): UnboundAddonBundle[];
+	getAppIcons?(): UnboundAppIcon[];
 	/**
 	 * Rereads only the installed themes, so `getThemes` lists ones installed, updated or deleted since launch and native
 	 * views take the applied theme's new colours. Missing on a loader from before it.
 	 */
 	rescanThemes?(): void;
+	syncAppIcons?(): void;
+	installHomeScreenIcon?(name: string, imagePath: string): boolean;
 	/** The font store; missing on a loader from before it. */
 	fonts?: UnboundNativeFonts;
 	/**
