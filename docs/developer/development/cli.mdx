@@ -232,14 +232,14 @@ ubd device reset
 
 ## AI clients
 
-`ubd mcp` serves the bridge commands above, plus `install` and `device`, as tools of a stdio [MCP](https://modelcontextprotocol.io) server over one connection to the bridge, so an AI client can evaluate code, inspect views, and push plugins. `build`, `check`, `dev`, `create`, `logs`, `login`, `logout` and `publish` stay CLI only.
+`ubd mcp` serves the bridge commands above, plus `install` and `device`, as tools of a stdio [MCP](https://modelcontextprotocol.io) server over one connection to the bridge, so an AI client can evaluate code, inspect views, and push plugins. `build`, `check`, `dev`, `create`, `logs`, `login`, `logout` and `publish` stay CLI only. [AI agents](/docs/developer/development/ai-agents) covers registering it and installing Unbound's skills.
 
 Two tools are also available from the command line under `ubd mcp`: `ubd mcp route` prints the focused navigation route with its params and navigator path, and `ubd mcp open <screen>` opens an Unbound or Discord settings screen from anywhere in the app.
 
 ```json
 {
 	"mcpServers": {
-		"unbound": { "command": "bunx", "args": ["@unbound-app/cli", "mcp"] }
+		"unbound": { "command": "bunx", "args": ["--bun", "@unbound-app/cli", "mcp"] }
 	}
 }
 ```

@@ -1,0 +1,87 @@
+---
+title: 'AI Agents'
+description: 'Connect an AI coding agent to your phone with the ubd MCP server, and teach it Unbound with skills.'
+icon: 'plug'
+---
+
+An agent writes better addons when it can check its own work. Give it two things:
+
+- **The MCP server.** `ubd mcp` lets the agent run code in Discord, push a plugin, open a screen and read native views on your connected phone.
+- **Unbound's skills.** Short guides the agent loads when a task needs them: how plugins are laid out, how to find and patch Discord's code, and how to use the debugger.
+
+With both, the agent can make a change, push it to your phone, and check that it worked before telling you it's done. The skills tell it which commands to run and when, so you don't have to.
+
+## Set it up
+
+<Steps>
+	<Step title='Start the bridge and connect your phone'>
+		The MCP server talks to your phone through the debugger bridge. Start it and connect the device as described in [debugging](/docs/developer/development/debugging).
+
+		```bash
+		bunx @unbound-app/debugger
+		```
+	</Step>
+	<Step title='Register the MCP server'>
+		Add `ubd mcp` to your agent. With Claude Code or Codex, one command does it:
+
+		```bash
+		claude mcp add unbound -- bunx --bun @unbound-app/cli mcp
+		codex mcp add unbound -- bunx --bun @unbound-app/cli mcp
+		```
+
+		Other agents read a JSON config. Add this to theirs:
+
+		```json
+		{
+			"mcpServers": {
+				"unbound": { "command": "bunx", "args": ["--bun", "@unbound-app/cli", "mcp"] }
+			}
+		}
+		```
+
+		If the bridge runs on another port, add `--port <port>` after `mcp`.
+	</Step>
+	<Step title='Install the skills'>
+		The skills live in the [Unbound repository](https://github.com/marioparaschiv/unbound/tree/main/skills). The [`skills`](https://skills.sh) CLI copies them into your agent's skills folder:
+
+		```bash
+		npx skills add marioparaschiv/unbound
+		```
+
+		It asks which skills to install and for which agent. Name them to skip the questions, and add `-g` to install for every project instead of the current one:
+
+		```bash
+		npx skills add marioparaschiv/unbound --skill unbound-plugins unbound-debugger -a claude-code -g
+		npx skills add marioparaschiv/unbound --list
+		```
+
+		Run `npx skills update` later to pull newer versions.
+
+		You can also copy a skill's folder from `skills/` into your agent's skills folder yourself, such as `~/.claude/skills/` for Claude Code.
+	</Step>
+	<Step title='Check it works'>
+		Restart the agent and ask it for the status of your phone. It should call the `status` tool and name the connected device. If it says no device is connected, check that the bridge is running and that the phone shows as connected in its terminal.
+	</Step>
+</Steps>
+
+## Skills
+
+| Skill | The agent uses it to |
+| --- | --- |
+| `unbound-plugins` | Scaffold a plugin, lay out its files, write `start` and `stop`, and keep its launch cost low. |
+| `unbound-patching` | Find a Discord module, store or component, and patch a function, a render or a Flux action. |
+| `unbound-debugger` | Start the bridge, register `ubd mcp`, hot reload with `ubd dev` or `ubd push`, and check the result on the phone. |
+| `hermes-internals` | Read Discord's decompiled JavaScript when a lookup finds nothing, often after a Discord update. |
+| `react-native-internals` | Inspect native views and hook native methods when a patch ran but the screen did not change. |
+
+An agent loads a skill only when its description matches the task, so installing all five costs nothing until one is needed.
+
+## What the agent can do
+
+The MCP server exposes the commands that act on the running app: `eval`, `status`, `push`, `reload`, `install`, `device`, `open`, `route`, `modules`, `trace`, `profile`, `timing`, `views`, `inspect`, `hook` and `spans`. Each tool takes the same options as the [CLI command](/docs/developer/development/cli) of the same name.
+
+`build`, `check`, `dev`, `create`, `logs`, `i18n`, `login` and `publish` stay on the command line. The agent runs them in its terminal, as `bunx --bun @unbound-app/cli <command>`.
+
+<Note>
+	The MCP server runs with your access. Anything the agent evaluates runs inside Discord on your phone, signed in as you. Use a test account for agent work.
+</Note>
