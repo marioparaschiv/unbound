@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { BottomSheets, Discord } from '~/metro/components';
 import { format } from '~/i18n/api';
 
+import useStyles from './font-install-sheet.style';
 import useFontInstall from './use-font-install';
 
 type FontInstallSheetProps = {
@@ -16,6 +17,7 @@ type FontInstallSheetProps = {
 function FontInstallSheet({ onClose }: FontInstallSheetProps) {
 	const { ActionSheet, BottomSheetTitleHeader } = BottomSheets;
 	const install = useFontInstall(onClose);
+	const styles = useStyles();
 	const count = install.wholeFiles ? install.variants.length : install.selected.size;
 
 	return (
@@ -24,7 +26,7 @@ function FontInstallSheet({ onClose }: FontInstallSheetProps) {
 				title={format('UNBOUND_FONTS_INSTALL')}
 				subtitle={format('UNBOUND_FONTS_INSTALL_HINT')}
 			/>
-			<View style={{ gap: 16, padding: 16 }}>
+			<View style={styles.content}>
 				<Discord.TextInput
 					value={install.input}
 					placeholder='Inter'
