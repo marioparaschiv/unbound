@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.13.1](https://github.com/marioparaschiv/unbound/compare/contracts-v0.13.0...contracts-v0.13.1) (2026-11-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/types bumped to 0.13.0
+
 ## [0.13.0](https://github.com/marioparaschiv/unbound/compare/contracts-v0.12.0...contracts-v0.13.0) (2026-11-05)
 
 

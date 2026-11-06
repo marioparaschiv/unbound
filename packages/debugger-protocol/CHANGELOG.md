@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.10.1](https://github.com/marioparaschiv/unbound/compare/debugger-protocol-v0.10.0...debugger-protocol-v0.10.1) (2026-11-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/types bumped to 0.13.0
+
 ## [0.10.0](https://github.com/marioparaschiv/unbound/compare/debugger-protocol-v0.9.1...debugger-protocol-v0.10.0) (2026-11-05)
 
 

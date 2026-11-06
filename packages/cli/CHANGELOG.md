@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.0.1](https://github.com/marioparaschiv/unbound/compare/cli-v1.0.0...cli-v1.0.1) (2026-11-06)
+
+
+### Bug Fixes
+
+* **cli:** treat expired agent vphone claims as stale ([#982](https://github.com/marioparaschiv/unbound/issues/982)) ([e0ac74a](https://github.com/marioparaschiv/unbound/commit/e0ac74a0ec538e98cabc8d6de717bb93e7a30acc))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 0.13.1
+    * @unbound-app/debugger-protocol bumped to 0.10.1
+  * devDependencies
+    * @unbound-app/api bumped to 1.1.0
+    * @unbound-app/types bumped to 0.13.0
+    * @unbound-app/utils bumped to 0.10.1
+    * @unbound-app/web bumped to 0.13.1
+
 ## [1.0.0](https://github.com/marioparaschiv/unbound/compare/cli-v0.12.0...cli-v1.0.0) (2026-11-05)
 
 
