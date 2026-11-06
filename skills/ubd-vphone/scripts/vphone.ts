@@ -1,5 +1,5 @@
-// The vphone's MCP tool, called from a shell through the tailnet hub's stdio agent (`tailnet-connector agent`).
-// vphone-cli.ts is the command line over it; the other scripts import this file.
+// The vphone's MCP tool through the tailnet hub's stdio agent (`tailnet-connector agent`).
+// vphone-ssh.ts answers the same actions over SSH; session.ts picks one.
 import { createInterface } from 'node:readline';
 import { spawn } from 'node:child_process';
 import { homedir } from 'node:os';
@@ -35,8 +35,35 @@ export const DISCORD = 'com.hammerandchisel.discord';
 /** The tool answered with an error: the same call would fail the same way. */
 export class VphoneError extends Error {}
 
-/** The hub, connector or tool could not be reached. */
+/** The hub, connector, SSH or tool could not be reached. */
 export class HubError extends Error {}
+
+/** A session that runs vphone actions, through the tailnet hub or SSH. */
+export type Vphone = {
+	/** Lists the actions and their arguments. */
+	describe(): Promise<string>;
+	/** Runs one action. */
+	call(action: string, args?: ToolArgs, timeoutMs?: number): Promise<CallResult>;
+	/** Runs one action and returns its text; throws {@link VphoneError} when it reports an error. */
+	text(action: string, args?: ToolArgs, timeoutMs?: number): Promise<string>;
+	close(): void;
+};
+
+/**
+ * @description Reads a result's text, throwing when the action reported an error.
+ * @param action The action, for the error.
+ * @param result Its result.
+ * @returns The joined text parts.
+ */
+export function resultText(action: string, result: CallResult): string {
+	const text = result.content.map((part) => part.text ?? '').join('');
+
+	if (result.isError) {
+		throw new VphoneError(`vphone ${action} failed: ${text.trim()}`);
+	}
+
+	return text;
+}
 
 function readContent(part: Json): Content {
 	return {
@@ -48,7 +75,7 @@ function readContent(part: Json): Content {
 }
 
 /** One stdio MCP session with the hub agent. */
-export class Vphone {
+export class HubVphone implements Vphone {
 	private readonly child;
 	private readonly pending = new Map<number, Pending>();
 	private nextId = 1;
@@ -205,14 +232,7 @@ export class Vphone {
 	 * @returns The text the tool answered with; throws {@link VphoneError} when it reports an error.
 	 */
 	async text(action: string, args: ToolArgs = {}, timeoutMs?: number): Promise<string> {
-		const result = await this.call(action, args, timeoutMs);
-		const text = result.content.map((part) => part.text ?? '').join('');
-
-		if (result.isError) {
-			throw new VphoneError(`vphone ${action} failed: ${text.trim()}`);
-		}
-
-		return text;
+		return resultText(action, await this.call(action, args, timeoutMs));
 	}
 
 	close() {

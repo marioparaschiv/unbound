@@ -7,15 +7,15 @@ import {
 	manifest,
 	seedVersion,
 	signInWithDiscord,
-} from '../../../../apps/web/tests/helpers/index';
-import listAddonVersionsEndpoint from '../../../../apps/web/src/endpoints/list-addon-versions';
-import { createTestDatabase, dropDatabase } from '../../../../apps/web/tests/helpers/database';
-import checkUpdatesEndpoint from '../../../../apps/web/src/endpoints/check-updates';
-import getCatalogEndpoint from '../../../../apps/web/src/endpoints/get-catalog';
-import { resolveDevHost } from '../../../../packages/client/scripts/dev-host';
-import { eq } from '../../../../apps/web/node_modules/drizzle-orm/index.js';
-import { addon, addonMaintainer } from '../../../../apps/web/src/db/schema';
-import { toAddonSummary } from '../../../../apps/web/src/lib/addons';
+} from '../../../apps/web/tests/helpers/index';
+import listAddonVersionsEndpoint from '../../../apps/web/src/endpoints/list-addon-versions';
+import { createTestDatabase, dropDatabase } from '../../../apps/web/tests/helpers/database';
+import checkUpdatesEndpoint from '../../../apps/web/src/endpoints/check-updates';
+import getCatalogEndpoint from '../../../apps/web/src/endpoints/get-catalog';
+import { resolveDevHost } from '../../../packages/client/scripts/dev-host';
+import { eq } from '../../../apps/web/node_modules/drizzle-orm/index.js';
+import { addon, addonMaintainer } from '../../../apps/web/src/db/schema';
+import { toAddonSummary } from '../../../apps/web/src/lib/addons';
 
 const PORT = Number(process.env.PORT ?? 3200);
 const ORIGIN = `http://${resolveDevHost()}:${PORT}`;

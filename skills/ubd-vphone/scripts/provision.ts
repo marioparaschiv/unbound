@@ -2,8 +2,16 @@
 // Makes an installed Discord on the vphone load this machine's dev build, idempotently.
 import { join } from 'node:path';
 
-import { appPaths, DISCORD, HubError, readDeviceFile, Vphone, writeDeviceFile } from './vphone.ts';
+import {
+	appPaths,
+	DISCORD,
+	HubError,
+	readDeviceFile,
+	writeDeviceFile,
+	type Vphone,
+} from './vphone.ts';
 import { isObject, parseJson, type Json, type JsonObject } from './json.ts';
+import { connectVphone } from './session.ts';
 
 /** Printed by --help and on a bad argument. */
 const USAGE = `Makes an installed Discord on the vphone load this machine's Unbound dev build. Idempotent: it copies
@@ -74,7 +82,7 @@ async function main(): Promise<number> {
 		throw new Error('Run through scripts/provision (it loads .env)');
 	}
 
-	const vphone = new Vphone();
+	const vphone = connectVphone();
 
 	try {
 		const ipa = argValue('--ipa');

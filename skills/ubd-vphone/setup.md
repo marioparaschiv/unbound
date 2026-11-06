@@ -12,7 +12,20 @@ Scripts read these from the environment, else the repo's gitignored `.env`, else
 | `UNBOUND_DEV_PORT` / `UNBOUND_BRIDGE_PORT` / `UNBOUND_CATALOG_PORT` | `3000` / `9090` / `3200`                  | Bundle server, debugger bridge, catalog stub                                          |
 | `UNBOUND_LOG_DIR`                                                   | `$TMPDIR` or `/tmp`                       | Server logs, `<tmux session>.log`                                                     |
 | `TAILNET_URL`                                                       | `http://<this machine's tailnet IP>:8790` | The tailnet MCP hub the vphone scripts call                                           |
+| `VPHONE_SSH` / `VPHONE_SSH_PORT`                                    | unset / SSH's own                         | Reach the device over SSH instead of the hub: a host alias or `mobile@<ip>`           |
+| `VPHONE_SUDO_PASSWORD`                                              | `alpine`                                  | The mobile user's password, for root actions over SSH                                 |
 | `DKRYPT_API_KEY`                                                    | none                                      | `fetch-ipa`; keep it out of output and commits                                        |
+
+## Over SSH
+
+Set `VPHONE_SSH` when the device has no tailnet hub. SSH must log in without a prompt (a key, `BatchMode=yes`), and the device needs `sudo`, `base64`, `ps` and `uiopen` (a rootless jailbreak's bootstrap has them). A roothide login shell, whose real root is `/rootfs`, works too. Without `plutil`, `app_info` reports no `version`.
+
+| Works                                                                                                                       | Needs the hub                                                                                                |
+| --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `claim.sh`, `release.sh`, `relaunch`, `ready.sh`, `doctor.sh`, `crashes`, `unbound-log`, `provision` without `--ipa`, `ubd` | `vphone shot`, `ui`, `wait`, `tap`, `swipe`, `type`, `logs`, `install_ipa`, `install_tweak`, `bun run bench` |
+| `vphone shell`, `app_info`, `launch`, `terminate`, `crashes`, `pid`, `get`, `put`                                           | Screens: read state with `ubd eval` and `ubd mcp route` instead                                              |
+
+Check: `scripts/vphone pid` prints Discord's pid or `not running`. Exit 2 names the SSH error.
 
 ## Known faults
 

@@ -3,9 +3,10 @@
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { appPid, DISCORD, HubError, retryAx, Vphone } from './vphone.ts';
+import { appPid, DISCORD, HubError, retryAx, type Vphone } from './vphone.ts';
 import { readWindow, summariseLog } from './unbound-log.ts';
 import { listCrashes, summarise } from './crashes.ts';
+import { connectVphone } from './session.ts';
 
 /** Printed by --help and on a bad argument. */
 const USAGE = `Relaunches Discord on the vphone and waits until Unbound runs, surviving the usual failure modes: \`terminate\`
@@ -239,7 +240,7 @@ async function main(options: Options): Promise<number> {
 		return 3;
 	}
 
-	const vphone = new Vphone();
+	const vphone = connectVphone();
 
 	try {
 		for (let attempt = 1; attempt <= options.attempts; attempt++) {
