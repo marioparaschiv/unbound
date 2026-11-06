@@ -24,8 +24,10 @@ fi
 : "${UNBOUND_BRIDGE_PORT:=9090}"
 : "${UNBOUND_CATALOG_PORT:=3200}"
 : "${UNBOUND_LOG_DIR:=${TMPDIR:-/tmp}}"
-# The tailnet MCP hub the vphone scripts call; unset means a hub on this machine's tailnet address.
-[[ -n ${TAILNET_URL:-} ]] || TAILNET_URL=$(ip=$(tailscale ip -4 2>/dev/null | head -n 1) && [[ -n $ip ]] && echo "http://$ip:8790")
+# A personal tailnet MCP hub, used only where its connector is installed; everyone else sets VPHONE_SSH.
+if [[ -z ${TAILNET_URL:-} ]] && { command -v tailnet-connector >/dev/null || [[ -x $HOME/.cargo/bin/tailnet-connector ]]; }; then
+	TAILNET_URL=$(ip=$(tailscale ip -4 2>/dev/null | head -n 1) && [[ -n $ip ]] && echo "http://$ip:8790")
+fi
 # The one-driver lock every agent and `bun run bench` share: a folder whose `owner` file names the holder.
 VPHONE_LOCK=/tmp/unbound-vphone.lock
 export DEV_HOST UNBOUND_DEV_PORT UNBOUND_BRIDGE_PORT UNBOUND_CATALOG_PORT UNBOUND_LOG_DIR TAILNET_URL VPHONE_LOCK

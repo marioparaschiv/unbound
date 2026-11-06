@@ -55,7 +55,7 @@ while :; do
 	fi
 
 	if ((SECONDS - start >= timeout)); then
-		echo "FAIL not ready after ${timeout}s: $state. Screenshot the device: an 'Unbound failed to initialize' alert means the build crashed." >&2
+		echo "FAIL not ready after ${timeout}s: $state. Screenshot the device: an 'Unbound failed to initialize' alert means the build crashed; a lock screen means Discord is not in front (scripts/relaunch unlocks it)." >&2
 		exit 1
 	fi
 
