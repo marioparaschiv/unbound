@@ -1,0 +1,14 @@
+{
+	"id": "unbound.rosie-pink",
+	"name": "Rosie Pink",
+	"description": "A dusky pink-grey theme with soft pink text and accents.",
+	"authors": [
+		{
+			"name": "Rosie<3",
+			"id": "581573474296791211"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}
