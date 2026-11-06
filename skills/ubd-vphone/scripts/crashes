@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Runs crashes.ts with the .env settings (TAILNET_URL, ports) loaded.
+. "$(dirname "$0")/env.sh"
+exec bun "$here/crashes.ts" "$@"
