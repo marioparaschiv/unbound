@@ -5,13 +5,14 @@ import {
 	HubError,
 	readDeviceFile,
 	retryAx,
-	Vphone,
+	type Vphone,
 	VphoneError,
 	writeDeviceFile,
 	type ToolArgs,
 } from './vphone.ts';
 // Any vphone tool action from a shell.
 import { isObject, parseJson, type Json } from './json.ts';
+import { connectVphone } from './session.ts';
 
 /** Printed by --help and on a bad argument. */
 const USAGE = `Any vphone tool action from a shell.
@@ -162,7 +163,7 @@ async function main(argv: string[]): Promise<number> {
 		return 0;
 	}
 
-	const vphone = new Vphone();
+	const vphone = connectVphone();
 
 	try {
 		return await run(vphone, action, rest);

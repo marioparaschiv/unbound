@@ -7,7 +7,7 @@ metadata:
 
 # ubd-vphone
 
-Scripts live in `skills/ubd-vphone/scripts/`, run from any directory, and read ports, `DEV_HOST` and `TAILNET_URL` from the repo's `.env` (the main checkout's when a worktree has none). Each script's header lists its flags. A change counts as **proven** only when the device ran this checkout's build and a screenshot or eval shows the end state.
+Scripts live in `skills/ubd-vphone/scripts/`, run from any directory, and read ports, `DEV_HOST` and `TAILNET_URL` from the repo's `.env` (the main checkout's when a worktree has none). Each script's header lists its flags. They reach the device through the tailnet hub, or over SSH when `VPHONE_SSH` is set ([setup.md](setup.md#over-ssh)); over SSH, prove with eval instead of screenshots. A change counts as **proven** only when the device ran this checkout's build and a screenshot or eval shows the end state.
 
 ## The loop
 

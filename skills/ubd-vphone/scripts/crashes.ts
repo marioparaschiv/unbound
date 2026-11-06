@@ -11,7 +11,8 @@ import {
 	type JsonObject,
 } from './json.ts';
 import { readWindow, summariseLog, toIso } from './unbound-log.ts';
-import { appPaths, DISCORD, Vphone } from './vphone.ts';
+import { appPaths, DISCORD, type Vphone } from './vphone.ts';
+import { connectVphone } from './session.ts';
 
 /** Printed by --help and on a bad argument. */
 const USAGE = `Explains Discord's newest crash on the vphone, keeping only what decides the cause: a one-line verdict, the
@@ -326,7 +327,7 @@ async function main(argv: string[]) {
 		}
 	}
 
-	const vphone = new Vphone();
+	const vphone = connectVphone();
 
 	try {
 		if (path) {

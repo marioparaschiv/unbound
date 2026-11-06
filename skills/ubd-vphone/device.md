@@ -4,7 +4,7 @@
 
 ## Shell and files
 
-- `shell command=<sh>` runs in a bootstrap root; the real root is under `/rootfs`. `root=true` writes outside the user's files. `curl`, `sha256sum` and `dpkg` exist; `ps`, `pgrep`, `strings`, `zip`, `python3` and tailnet DNS do not (`vphone pid`; address machines by IP). `/etc/hosts` is read-only, and the VM clock is in another time zone.
+- `shell command=<sh>` runs in a bootstrap root; the real root is under `/rootfs`. `root=true` writes outside the user's files. `curl`, `sha256sum` and `dpkg` exist; `ps`, `pgrep`, `strings`, `zip`, `python3` and tailnet DNS do not (`vphone pid`; address machines by IP). `/etc/hosts` is read-only, and the VM clock is in another time zone. Over SSH it runs in the real root and drops a `/rootfs` prefix, so the same paths work.
 - `app_info bundle_id=<id>` gives `bundle_path`, `data_path` and `documents_path`; they change on reinstall, so never hard-code them. Unbound's files live in `<documents_path>/Unbound/`.
 - `push path=<host file> to=<device path>` and `pull path=<device path> to=<host file>` move files.
 

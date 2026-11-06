@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 // The important part of the loader's own log (unbound.log) for one Discord run.
-import { appPaths, DISCORD, processes, Vphone } from './vphone.ts';
+import { appPaths, DISCORD, processes, type Vphone } from './vphone.ts';
+import { connectVphone } from './session.ts';
 
 /** Printed by --help and on a bad argument. */
 const USAGE = `The important part of the loader's own log for one Discord run: errors and warnings, deduplicated with counts
@@ -166,7 +167,7 @@ async function main(argv: string[]) {
 		}
 	}
 
-	const vphone = new Vphone();
+	const vphone = connectVphone();
 
 	try {
 		const start = (await processes(vphone)).find(
