@@ -2,46 +2,91 @@ import { createLogger } from '@unbound-app/logger';
 
 import { getSetting, isSettingChange } from '~/settings/unbound';
 import { createPatcher } from '~/patcher/create-patcher';
-import { Guilds, Users } from '~/metro/stores';
+import { findByPropsLazy } from '~/metro/wrappers';
 import { byFluxStore } from '~/metro/filters';
 import { onModuleLoaded } from '~/metro/wait';
 import { onChange } from '~/storage/api';
 
 const Patcher = createPatcher('unbound::staff-mode');
 const Logger = createLogger('StaffMode');
+const UserConstants = findByPropsLazy('isStaffEnv', 'isStaffEnvRawData');
 
 let stopWaiting: (() => void) | null = null;
 let unsubscribe: (() => void) | null = null;
+let warnedMissingStaffHelper = false;
+let warnedMissingUpdateHandler = false;
 
 /** Makes the developer experiment store report staff status from the `staff-mode` setting. */
 export function start() {
-	// The patch lands as the store's module loads, before Flux initializes the store.
+	warnedMissingStaffHelper = false;
+	warnedMissingUpdateHandler = false;
 	stopWaiting = onModuleLoaded(byFluxStore('DeveloperExperiment'), patchStore);
 }
 
 function patchStore(Store: MetroExport) {
-	if (!Object.isExtensible(Store)) {
-		Logger.warn('DeveloperExperimentStore is frozen, so staff mode cannot be applied.');
+	if (Object.getOwnPropertyDescriptor(Store, 'isDeveloper') === undefined) {
+		const InitializeTarget = Object.getOwnPropertyDescriptor(Store, 'initialize')
+			? Store
+			: Object.getPrototypeOf(Store);
 
-		return;
+		if (!InitializeTarget || !Object.isExtensible(InitializeTarget)) {
+			Logger.warn('DeveloperExperimentStore cannot be patched before initialization.');
+		} else {
+			Patcher.instead(InitializeTarget, 'initialize', ({ original }) =>
+				withStaffMode(original),
+			);
+		}
 	}
-
-	Patcher.instead(Store, 'initialize', ({ this: self }) => {
-		self.waitFor(Users, Guilds);
-
-		Object.defineProperties(self, {
-			isDeveloper: {
-				configurable: false,
-				get: () => getSetting('staff-mode'),
-				set: () => {},
-			},
-		});
-	});
 
 	unsubscribe = onChange(
 		(payload) => isSettingChange(payload, 'staff-mode'),
-		() => Store.emitChange(),
+		() => refreshStore(Store),
 	);
+
+	if (Object.getOwnPropertyDescriptor(Store, 'isDeveloper') !== undefined) {
+		refreshStore(Store);
+	}
+}
+
+function withStaffMode<T>(operation: () => T): T {
+	const original = UserConstants.isStaffEnv;
+
+	if (typeof original !== 'function') {
+		if (!warnedMissingStaffHelper) {
+			Logger.warn('Discord staff environment helper was not found.');
+			warnedMissingStaffHelper = true;
+		}
+
+		return operation();
+	}
+
+	UserConstants.isStaffEnv = function (
+		this: MetroExport,
+		user: MetroExport,
+		environment?: string,
+	) {
+		return getSetting('staff-mode') || original.call(this, user, environment);
+	};
+
+	try {
+		return operation();
+	} finally {
+		UserConstants.isStaffEnv = original;
+	}
+}
+
+function refreshStore(Store: MetroExport) {
+	const token = Store.getDispatchToken?.() ?? Store._dispatchToken;
+	const handler = Store._dispatcher?._nodes?.get(token)?.actionHandler?.CURRENT_USER_UPDATE;
+
+	if (typeof handler === 'function') {
+		withStaffMode(() => handler({ type: 'CURRENT_USER_UPDATE' }));
+	} else if (!warnedMissingUpdateHandler) {
+		Logger.warn('DeveloperExperimentStore current-user handler was not found.');
+		warnedMissingUpdateHandler = true;
+	}
+
+	Store.emitChange();
 }
 
 /** Stops following the `staff-mode` setting and restores the developer experiment store. */
