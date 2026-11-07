@@ -42,8 +42,6 @@ export declare const Media: any;
 export declare const Portal: any;
 /** Discord's safe area components, with `SafeAreaPaddingView`; found on first access. */
 export declare const SafeArea: any;
-/** `react-native-safe-area-context`, with `useSafeAreaInsets`; found on first access. */
-export declare const SafeAreaContext: any;
 /** Discord's video player module, with `VideoComponent` and `createVideoControls`; found on first access. */
 export declare const Video: any;
 /**

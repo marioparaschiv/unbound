@@ -194,8 +194,8 @@ export declare function RadioRow({
  */
 export declare function ResetRow({ label, onReset }: ResetRowProps): React$1.ReactElement;
 /**
- * @description A card saying a change applies after Discord restarts, with a full-width button that restarts it now.
- * @returns The card.
+ * @description A settings group saying a change applies after Discord restarts, with a button that restarts it now.
+ * @returns The group.
  */
 export declare function RestartRow(): React$1.ReactElement;
 /**

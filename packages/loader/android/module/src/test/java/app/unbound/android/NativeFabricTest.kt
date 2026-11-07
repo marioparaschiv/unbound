@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -21,10 +22,32 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class NativeFabricTest {
+    private class FakeView(context: Context) : View(context) {
+        var layoutParamWrites = 0
+        var minimumWidthWrites = 0
+        var minimumHeightWrites = 0
+
+        override fun setLayoutParams(params: ViewGroup.LayoutParams?) {
+            layoutParamWrites += 1
+            super.setLayoutParams(params)
+        }
+
+        override fun setMinimumWidth(minWidth: Int) {
+            minimumWidthWrites += 1
+            super.setMinimumWidth(minWidth)
+        }
+
+        override fun setMinimumHeight(minHeight: Int) {
+            minimumHeightWrites += 1
+            super.setMinimumHeight(minHeight)
+        }
+    }
+
     private class FakeSurface(private val view: View) : NativeFabric.Surface {
         var started = false
         var stopped = false
         var props: Bundle? = null
+        var updateCalls = 0
 
         override fun view(): View = view
         override fun start() {
@@ -36,6 +59,7 @@ class NativeFabricTest {
         }
 
         override fun updateProps(props: Bundle) {
+            updateCalls += 1
             this.props = props
         }
 
@@ -52,7 +76,7 @@ class NativeFabricTest {
             props: Bundle,
         ): NativeFabric.Surface {
             created.add(moduleName to props)
-            val surface = FakeSurface(View(activity))
+            val surface = FakeSurface(FakeView(activity))
             surfaces.add(surface)
 
             return surface
@@ -170,30 +194,34 @@ class NativeFabricTest {
             fixture.getString("module"),
             fixture.getJSONObject("initialProperties").toString(),
         )
-        val mutations = fixture.getJSONArray("mutations")
-
-        for (index in 0 until mutations.length()) {
-            val mutation = mutations.getJSONObject(index)
-            if (mutation.has("properties")) {
-                NativeFabric.update(handle, mutation.getJSONObject("properties").toString())
-            }
-            if (mutation.has("size")) {
-                val size = mutation.getJSONObject("size")
-                NativeFabric.setSize(
-                    handle,
-                    size.getJSONObject("minimum").toString(),
-                    size.getJSONObject("maximum").toString(),
-                )
-            }
-            if (mutation.has("frame")) {
-                NativeFabric.setFrame(handle, mutation.getJSONObject("frame").toString())
-            }
-        }
-
         val expected = fixture.getJSONObject("expected")
+        val minimum = expected.getJSONObject("minimum")
+        val maximum = expected.getJSONObject("maximum")
+        val frame = expected.getJSONObject("frame")
+        val trackingView = host.surfaces.single().view() as FakeView
+        trackingView.layoutParamWrites = 0
+        trackingView.minimumWidthWrites = 0
+        trackingView.minimumHeightWrites = 0
+        NativeFabric.update(handle, expected.getJSONObject("properties").toString())
+        NativeFabric.setSize(handle, minimum.toString(), maximum.toString())
+        assertEquals(expected.getInt("sizeCalls"), trackingView.layoutParamWrites)
+        assertEquals(expected.getInt("sizeCalls"), trackingView.minimumWidthWrites)
+        assertEquals(expected.getInt("sizeCalls"), trackingView.minimumHeightWrites)
+        assertEquals(
+            kotlin.math.ceil(maximum.getDouble("width") * trackingView.resources.displayMetrics.density).toInt(),
+            trackingView.layoutParams.width,
+        )
+        NativeFabric.setFrame(handle, frame.toString())
+
         val view = host.surfaces.single().view()
         val density = view.resources.displayMetrics.density
         val expectedProperties = expected.getJSONObject("properties")
+        val expectedCalls = fixture.getJSONObject("expected")
+        assertEquals(expectedCalls.getInt("updateCalls"), host.surfaces.single().updateCalls)
+        assertEquals(
+            expectedCalls.getInt("sizeCalls") + expectedCalls.getInt("frameCalls"),
+            trackingView.layoutParamWrites,
+        )
         assertEquals(
             expectedProperties.getString("label"),
             host.surfaces.single().props?.getString("label"),
@@ -206,13 +234,19 @@ class NativeFabricTest {
             kotlin.math.ceil(expected.getJSONObject("minimum").getDouble("width") * density).toInt(),
             view.minimumWidth,
         )
+        assertEquals((frame.getDouble("x") * density).toFloat(), view.translationX, 0.01f)
+        assertEquals((frame.getDouble("y") * density).toFloat(), view.translationY, 0.01f)
         assertEquals(
-            kotlin.math.ceil(expected.getJSONObject("frame").getDouble("width") * density).toInt(),
+            kotlin.math.ceil(frame.getDouble("width") * density).toInt(),
             view.layoutParams.width,
         )
         assertEquals(
-            kotlin.math.ceil(expected.getJSONObject("frame").getDouble("height") * density).toInt(),
+            kotlin.math.ceil(frame.getDouble("height") * density).toInt(),
             view.layoutParams.height,
+        )
+        assertEquals(
+            expectedCalls.getInt("frameCalls"),
+            trackingView.layoutParamWrites - expectedCalls.getInt("sizeCalls"),
         )
     }
 
