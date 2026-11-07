@@ -10,13 +10,20 @@ import (
 
 func TestGenerateLoaderChangelogListsTheChangesSinceThePreviousVersion(t *testing.T) {
 	root := newLoaderRepo(t, "chore(build): add the loader", "feat(native): add Android UI handles", "fix(plugins): reject stale UI snapshots")
+	commits, err := gitOutput(root, defaultRunner, "rev-list", "--reverse", "HEAD", "--", "ios/source.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, root, "tag", "loader-v1.0.1", strings.Fields(commits)[0])
+	writeLoaderVersion(t, root, "1.1.0")
+	commitGit(t, root, "chore(loader): release 1.1.0")
 
-	changelog, err := generateLoaderChangelog(root, "1.0.3", "1.0.1")
+	changelog, err := generateLoaderChangelog(root, "1.1.0", "1.0.1")
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, expected := range []string{
-		"# Loader 1.0.3",
+		"# Loader 1.1.0",
 		"## Features",
 		"**native:** Add Android UI handles",
 		"## Fixes",
@@ -32,10 +39,12 @@ func TestGenerateLoaderChangelogListsTheChangesSinceThePreviousVersion(t *testin
 }
 
 func TestGenerateLoaderChangelogListsTheLastChangeWithoutAnOlderPreviousVersion(t *testing.T) {
-	root := newLoaderRepo(t, "feat(native): add Android UI handles", "fix(plugins): reject stale UI snapshots")
+	root := newLoaderRepo(t, "chore(build): establish baseline", "feat(native): add Android UI handles", "fix(plugins): reject stale UI snapshots")
+	writeLoaderVersion(t, root, "1.1.0")
+	commitGit(t, root, "chore(loader): release 1.1.0")
 
 	for _, previous := range []string{"", "1.0.0", "1.0.2", "not a version"} {
-		changelog, err := generateLoaderChangelog(root, "1.0.2", previous)
+		changelog, err := generateLoaderChangelog(root, "1.1.0", previous)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -48,8 +57,22 @@ func TestGenerateLoaderChangelogListsTheLastChangeWithoutAnOlderPreviousVersion(
 func TestGenerateLoaderChangelogRequiresTheCheckoutsVersion(t *testing.T) {
 	root := newLoaderRepo(t, "feat(native): add Android UI handles")
 
-	if _, err := generateLoaderChangelog(root, "1.0.2", ""); err == nil || !strings.Contains(err.Error(), "does not match the checkout's loader version 1.0.1") {
+	if _, err := generateLoaderChangelog(root, "1.0.2", ""); err == nil || !strings.Contains(err.Error(), "does not match the checkout's loader version 1.0.0") {
 		t.Fatalf("expected a loader version mismatch, got %v", err)
+	}
+}
+
+func TestGenerateLoaderChangelogUsesLegacyCommitCountForTheMigrationRelease(t *testing.T) {
+	root := newLoaderRepo(t, "chore(build): establish baseline", "feat(native): add Android UI handles", "fix(plugins): reject stale UI snapshots")
+	writeLoaderVersion(t, root, "1.1.0")
+	commitGit(t, root, "chore(loader): release 1.1.0")
+
+	changelog, err := generateLoaderChangelog(root, "1.1.0", "1.0.2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(changelog, "Reject stale UI snapshots") || strings.Contains(changelog, "Add Android UI handles") {
+		t.Fatalf("changelog did not use the legacy release boundary: %s", changelog)
 	}
 }
 

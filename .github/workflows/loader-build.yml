@@ -50,7 +50,7 @@ on:
                 type: boolean
             loader_publish_only:
                 default: false
-                description: 'Build iOS and Android against the released Discord, then publish the deb and module as loader 1.0.<loader commits> and the in-app Android stable build; publishes only from main'
+                description: 'Build iOS and Android against the released Discord, then publish the semantic loader release and the in-app Android stable build; publishes only from main'
                 type: boolean
             authenticated_source:
                 default: false
@@ -213,7 +213,6 @@ jobs:
             ipa_available: ${{ steps.source.outputs.missing != 'true' }}
             loader_version: ${{ steps.loader-version.outputs.version }}
         steps:
-            # The loader version counts the loader's commits, so it needs the full history; blobs are not needed to count.
             - name: Checkout resolver
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:

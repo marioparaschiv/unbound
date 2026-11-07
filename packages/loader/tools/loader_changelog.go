@@ -13,10 +13,10 @@ import (
 	"time"
 )
 
-// loaderChangelogLimit caps the commits one changelog lists, keeping it under the API's changelog length.
 const loaderChangelogLimit = 50
 
 var loaderConventionalCommitPattern = regexp.MustCompile("(?i)^([a-z]+)(?:\\(([^)]*)\\))?(!)?:\\s*(.+)$")
+var loaderChangelogPathspec = []string{".", ":(exclude)docs", ":(exclude)workflow-tests", ":(exclude)version.json", ":(exclude,glob)**/*.md", ":(exclude,glob)**/*.mdx"}
 
 type loaderChangelogEntry struct {
 	category string
@@ -63,8 +63,6 @@ func runGenerateLoaderChangelog(args []string) error {
 	return nil
 }
 
-// generateLoaderChangelog lists the loader commits since previous, whose patch is its loader commit count. Without a
-// usable previous version (none, 1.0.0 or not older) it lists the commit that made this version alone.
 func generateLoaderChangelog(root string, version string, previous string) (string, error) {
 	if _, err := parseSemanticVersion(version); err != nil {
 		return "", fmt.Errorf("invalid loader changelog version: %w", err)
@@ -76,23 +74,59 @@ func generateLoaderChangelog(root string, version string, previous string) (stri
 	if currentVersion != version {
 		return "", fmt.Errorf("requested loader changelog version %s does not match the checkout's loader version %s", version, currentVersion)
 	}
-	parsed, _ := parseSemanticVersion(version)
-	count, _ := strconv.Atoi(parsed.patch)
-
-	since := count - 1
-	if previousVersion, err := parseSemanticVersion(previous); err == nil {
-		if patch, _ := strconv.Atoi(previousVersion.patch); patch >= 1 && patch < count {
-			since = patch
-		}
+	previousCommit, foundPrevious, err := loaderPreviousReleaseCommit(root, previous)
+	if err != nil {
+		return "", err
 	}
-	limit := min(count-since, loaderChangelogLimit)
-	arguments := append([]string{"log", "--format=%s", "-n", strconv.Itoa(limit), "HEAD", "--"}, loaderVersionPathspec...)
+	arguments := []string{"log", "--format=%s"}
+	if foundPrevious {
+		arguments = append(arguments, "-n", strconv.Itoa(loaderChangelogLimit), previousCommit+"..HEAD")
+	} else {
+		arguments = append(arguments, "-n", "1", "HEAD")
+	}
+	arguments = append(arguments, "--")
+	arguments = append(arguments, loaderChangelogPathspec...)
 	subjects, err := gitOutput(root, defaultRunner, arguments...)
 	if err != nil {
-		return "", fmt.Errorf("read loader changes since %d: %w", since, err)
+		return "", fmt.Errorf("read loader changes since %s: %w", previous, err)
 	}
 
 	return renderLoaderChangelog(version, strings.Split(strings.TrimSpace(subjects), "\n")), nil
+}
+
+func loaderPreviousReleaseCommit(root string, previous string) (string, bool, error) {
+	if previous == "" {
+		return "", false, nil
+	}
+	tag := "loader-v" + previous
+	tags, err := gitOutput(root, defaultRunner, "tag", "--list", tag)
+	if err != nil {
+		return "", false, fmt.Errorf("find loader release tag %s: %w", tag, err)
+	}
+	if strings.TrimSpace(tags) != "" {
+		commit, err := gitOutput(root, defaultRunner, "rev-parse", "refs/tags/"+tag+"^{commit}")
+		if err != nil {
+			return "", false, fmt.Errorf("resolve loader release tag %s: %w", tag, err)
+		}
+		return strings.TrimSpace(commit), true, nil
+	}
+	version, err := parseSemanticVersion(previous)
+	if err != nil || version.major != "1" || version.minor != "0" {
+		return "", false, nil
+	}
+	legacyCount, err := strconv.Atoi(version.patch)
+	if err != nil || legacyCount < 1 {
+		return "", false, nil
+	}
+	commits, err := gitOutput(root, defaultRunner, append([]string{"rev-list", "--reverse", "HEAD", "--"}, loaderChangelogPathspec...)...)
+	if err != nil {
+		return "", false, fmt.Errorf("read loader release history: %w", err)
+	}
+	knownCommits := strings.Split(strings.TrimSpace(commits), "\n")
+	if legacyCount > len(knownCommits) {
+		return "", false, nil
+	}
+	return knownCommits[legacyCount-1], true, nil
 }
 
 func renderLoaderChangelog(version string, subjects []string) string {

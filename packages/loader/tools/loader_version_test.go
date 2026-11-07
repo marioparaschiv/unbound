@@ -7,8 +7,6 @@ import (
 	"testing"
 )
 
-// newLoaderRepo commits ios/control at 1.0.0 together with the first change, then one commit per further change,
-// interleaving a docs-only and a Markdown-only commit that the loader version must not count.
 func newLoaderRepo(t *testing.T, changes ...string) string {
 	t.Helper()
 	root := t.TempDir()
@@ -23,6 +21,7 @@ func newLoaderRepo(t *testing.T, changes ...string) string {
 		t.Fatal(err)
 	}
 	writeLoaderControl(t, controlPath, "1.0.0")
+	writeLoaderVersion(t, root, "1.0.0")
 	for index, change := range changes {
 		writeLoaderChange(t, root, change)
 		commitGit(t, root, change)
@@ -37,42 +36,41 @@ func newLoaderRepo(t *testing.T, changes ...string) string {
 	return root
 }
 
-func TestLoaderVersionCountsLoaderCommitsOnly(t *testing.T) {
+func TestLoaderVersionUsesThePackageSemanticVersion(t *testing.T) {
 	root := newLoaderRepo(t, "feat: one", "fix: two", "fix: three")
 
 	version, err := loaderVersion(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if version != "1.0.3" {
-		t.Fatalf("version = %s, want 1.0.3", version)
+	if version != "1.0.0" {
+		t.Fatalf("version = %s, want package version 1.0.0", version)
 	}
 	if again, _ := loaderVersion(root); again != version {
 		t.Fatalf("version changed between runs: %s then %s", version, again)
 	}
 }
 
-func TestLoaderVersionKeepsTheControlMajorAndMinor(t *testing.T) {
+func TestLoaderVersionReadsTheVersionManifest(t *testing.T) {
 	root := newLoaderRepo(t, "feat: one")
-	writeLoaderControl(t, filepath.Join(root, "ios", "control"), "2.3.0")
-	commitGit(t, root, "chore(release): loader 2.3")
+	writeLoaderVersion(t, root, "2.3.0")
 
 	version, err := loaderVersion(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if version != "2.3.2" {
-		t.Fatalf("version = %s, want 2.3.2", version)
+	if version != "2.3.0" {
+		t.Fatalf("version = %s, want 2.3.0", version)
 	}
 }
 
-func TestLoaderVersionRefusesAShallowCheckout(t *testing.T) {
-	source := newLoaderRepo(t, "feat: one", "fix: two")
-	clone := filepath.Join(t.TempDir(), "clone")
-	runGit(t, filepath.Dir(clone), "clone", "-q", "--depth", "1", "file://"+source, clone)
-
-	if _, err := loaderVersion(clone); err == nil || !strings.Contains(err.Error(), "shallow") {
-		t.Fatalf("expected a shallow checkout error, got %v", err)
+func TestLoaderVersionRejectsMalformedVersionFiles(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "version.json"), []byte(`{"version":"1.0"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := loaderVersion(root); err == nil || !strings.Contains(err.Error(), "semantic versioning 2.0.0") {
+		t.Fatalf("expected an invalid semantic version error, got %v", err)
 	}
 }
 
@@ -96,5 +94,12 @@ func TestStampLoaderVersionRewritesOnlyTheVersionLine(t *testing.T) {
 	}
 	if err := stampLoaderVersion(root, "1.0"); err == nil {
 		t.Fatal("stamped a version that is not semver")
+	}
+}
+
+func writeLoaderVersion(t *testing.T, root string, version string) {
+	t.Helper()
+	if err := os.WriteFile(filepath.Join(root, "version.json"), []byte("{\"version\":\""+version+"\"}\n"), 0o600); err != nil {
+		t.Fatal(err)
 	}
 }
