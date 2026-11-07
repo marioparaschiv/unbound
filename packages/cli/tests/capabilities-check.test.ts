@@ -32,6 +32,17 @@ export function paint(context: PluginContext) {
 	context.native.java.getClass('android.view.View');
 }`;
 
+const IOS_HOOK_HANDLER = `${NATIVE_IMPORT}
+export function paint(context: PluginContext) {
+	context.native.objc.hook('UIView', 'layoutIfNeeded', { after: () => undefined });
+}`;
+
+const IOS_FABRIC_BATCH_HANDLER = `${NATIVE_IMPORT}
+export function paint(context: PluginContext) {
+	const surface = context.native.fabric.mount(context.native.objc.getClass('UIView'), 'Card');
+	context.native.fabric.batchAsync([{ surface, frame: { x: 0, y: 0, width: 40, height: 20 } }]);
+}`;
+
 const PLATFORM_FILE = `import { definePlatform } from '@unbound-app/api/native';
 import { paint as ios } from './ios/paint';
 import { paint as android } from './android/paint';
@@ -119,6 +130,44 @@ export const start = definePlatform({ ios });`,
 		expect(await check(dir)).toEqual([]);
 		expect(builtManifest(dir)).toMatchObject({
 			platforms: { ios: { capabilities: ['native.objc.classes', 'native.objc.invoke'] } },
+		});
+	});
+
+	test('declares Objective-C hooks used by the iOS handler', async () => {
+		const dir = plugin({
+			'src/index.ts': `import { definePlatform } from '@unbound-app/api/native';
+import { paint as ios } from './ios/paint';
+export const start = definePlatform({ ios });`,
+			'src/ios/paint.ts': IOS_HOOK_HANDLER,
+		});
+
+		expect(await check(dir)).toEqual([]);
+		expect(builtManifest(dir)).toEqual({
+			id: 'example.paint',
+			main: 'index.js',
+			platforms: { ios: { capabilities: ['native.objc.hooks'] } },
+		});
+	});
+
+	test('declares Fabric frame batches as asynchronous native work', async () => {
+		const dir = plugin({
+			'src/index.ts': `import { definePlatform } from '@unbound-app/api/native';
+import { paint as ios } from './ios/paint';
+export const start = definePlatform({ ios });`,
+			'src/ios/paint.ts': IOS_FABRIC_BATCH_HANDLER,
+		});
+
+		expect(await check(dir)).toEqual([]);
+		expect(builtManifest(dir)).toMatchObject({
+			platforms: {
+				ios: {
+					capabilities: [
+						'native.fabric.async',
+						'native.fabric.mount',
+						'native.objc.classes',
+					],
+				},
+			},
 		});
 	});
 
