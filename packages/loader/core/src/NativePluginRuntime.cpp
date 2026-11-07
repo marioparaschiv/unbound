@@ -1049,7 +1049,14 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
             };
             if (nextFrame)
             {
-                target->runOnMainNextFrame(std::move(runOperation));
+                if (!target->runOnMainNextFrame(std::move(runOperation)))
+                {
+                    gate->expire();
+                    cancelled->store(true);
+                    rejectPending(rt, identifier, "NATIVE_FRAME_SCHEDULING_FAILED",
+                                  "Native frame work could not be scheduled");
+                    return jsi::Value::undefined();
+                }
             }
             else
             {

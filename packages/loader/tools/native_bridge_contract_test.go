@@ -424,12 +424,16 @@ func TestNativeFabricConformanceIsSharedAcrossPlatforms(t *testing.T) {
 
 	files := []string{
 		"core/include/NativePluginRuntime.h",
+		"core/include/NativeFrameWorkQueue.h",
+		"core/src/NativeFrameWorkQueue.cpp",
 		"core/src/NativeFabric.cpp",
 		"core/tests/hermes/native_fabric_hermes.cpp",
 		"ios/sources/NativePluginBridge.mm",
+		"ios/sources/NativePluginFabricAdapter.mm",
 		"ios/sources/NativePluginFrameScheduler.mm",
 		"android/module/src/main/cpp/AndroidLoader.cpp",
 		"android/module/src/main/cpp/AndroidLoader.h",
+		"android/module/src/main/cpp/NativePluginBridge.cpp",
 		"android/module/src/main/kotlin/app/unbound/android/NativeBridge.kt",
 		"android/module/src/main/kotlin/app/unbound/android/NativeFabric.kt",
 		"android/module/src/test/java/app/unbound/android/NativeFabricTest.kt",
@@ -448,8 +452,14 @@ func TestNativeFabricConformanceIsSharedAcrossPlatforms(t *testing.T) {
 	contract := source.String()
 	for _, required := range []string{
 		"runOnMainNextFrame",
+		"bool runOnMainNextFrame",
 		"Choreographer.getInstance().postFrameCallback",
 		"CADisplayLink displayLinkWithTarget",
+		"NativeFrameWorkQueue",
+		"class AndroidFabricAdapter",
+		"makeNativePluginFabricAdapter",
+		"Failed to schedule frame-batched native work.",
+		"frameQueue_.clear()",
 		"fabric.defineAsync(\"batchAsync\"",
 		"fabric.batchAsync",
 		"native.fabric.async",
@@ -458,6 +468,29 @@ func TestNativeFabricConformanceIsSharedAcrossPlatforms(t *testing.T) {
 		if !containsCode(contract, required) {
 			t.Fatalf("shared native Fabric conformance contract %q is missing", required)
 		}
+	}
+}
+
+func TestNativeFabricFrameBatchesAreAsyncAndNextFrameOnly(t *testing.T) {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("could not locate test source")
+	}
+	root := filepath.Dir(filepath.Dir(filename))
+	path := filepath.Join(root, "core", "src", "NativeFabric.cpp")
+	source, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	code := string(source)
+	if codeIndex(code, `fabric.defineAsync("batchAsync"`) == -1 {
+		t.Fatal("Fabric frame batches must be exposed through the asynchronous-only entrypoint")
+	}
+	if codeIndex(code, `fabric.define("batchAsync"`) != -1 {
+		t.Fatal("Fabric frame batches must not acquire a synchronous entrypoint")
+	}
+	if codeIndex(code, `nullptr, nullptr, true`) == -1 {
+		t.Fatal("Fabric frame batches must be scheduled for the next display frame")
 	}
 }
 

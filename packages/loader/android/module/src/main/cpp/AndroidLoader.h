@@ -17,6 +17,7 @@
 #include "LoaderPipeline.h"
 #include "LoaderSettings.h"
 #include "LoaderUpdater.h"
+#include "NativeFrameWorkQueue.h"
 #include "NativePluginRuntime.h"
 #include "NativeWorkQueue.h"
 
@@ -106,7 +107,7 @@ public:
     void runOnRuntimeCritical(std::function<void(facebook::jsi::Runtime &)> work) override;
     bool isMainThread() override;
     void runOnMain(std::function<void()> work) override;
-    void runOnMainNextFrame(std::function<void()> work) override;
+    bool runOnMainNextFrame(std::function<void()> work) override;
     void runAfter(double seconds, std::function<void()> work) override;
     void runInBackground(std::function<void()> work) override;
     std::optional<std::string>    resource(const std::string &name) override;
@@ -149,10 +150,8 @@ private:
     std::mutex                                                                     mainQueueMutex_;
     std::deque<std::function<void()>>                                              mainQueue_;
     bool                                        mainDrainScheduled_ = false;
-    std::mutex                                  frameQueueMutex_;
-    std::deque<std::function<void()>>           frameQueue_;
-    bool                                        frameDrainScheduled_ = false;
-    std::atomic<bool>                           schedulerDrainLive_  = false;
+    loader::native::NativeFrameWorkQueue        frameQueue_;
+    std::atomic<bool>                           schedulerDrainLive_ = false;
     DeadlineTimer                               timer_;
     loader::AddonState                          addons_;
     std::shared_ptr<loader::fonts::FontService> fonts_;

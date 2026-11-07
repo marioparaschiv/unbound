@@ -412,9 +412,9 @@ public:
         });
     }
 
-    void runOnMainNextFrame(std::function<void()> work) override
+    bool runOnMainNextFrame(std::function<void()> work) override
     {
-        loader::ios::scheduleNativePluginFrameWork(std::move(work));
+        return loader::ios::scheduleNativePluginFrameWork(std::move(work));
     }
 
     void runOnRuntime(std::function<void(Runtime &)> work) override

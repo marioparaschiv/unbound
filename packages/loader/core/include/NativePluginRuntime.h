@@ -24,9 +24,10 @@ public:
 
     virtual bool isMainThread()                        = 0;
     virtual void runOnMain(std::function<void()> work) = 0;
-    virtual void runOnMainNextFrame(std::function<void()> work)
+    virtual bool runOnMainNextFrame(std::function<void()> work)
     {
         runOnMain(std::move(work));
+        return true;
     }
     virtual void runOnRuntime(std::function<void(facebook::jsi::Runtime &)> work) = 0;
     virtual void runOnRuntimeCoalesced(std::string                                   key,

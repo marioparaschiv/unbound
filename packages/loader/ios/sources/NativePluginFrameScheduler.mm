@@ -1,18 +1,11 @@
 #include "NativePluginFrameScheduler.h"
 
 #import <QuartzCore/QuartzCore.h>
-#include <deque>
-#include <exception>
 #include <functional>
-#include <mutex>
-#include <string>
-#include <vector>
 
-#include "LoaderLog.h"
+#include "NativeFrameWorkQueue.h"
 
-static std::mutex                        gFrameWorkMutex;
-static std::deque<std::function<void()>> gFrameWork;
-static bool                              gFrameScheduled = false;
+static loader::native::NativeFrameWorkQueue gFrameWork;
 
 @interface IOSNativePluginFrameScheduler : NSObject
 
@@ -48,53 +41,20 @@ static bool                              gFrameScheduled = false;
 {
     [self.displayLink invalidate];
     self.displayLink = nil;
-
-    std::deque<std::function<void()>> work;
-    {
-        std::lock_guard<std::mutex> lock(gFrameWorkMutex);
-        work.swap(gFrameWork);
-        gFrameScheduled = false;
-    }
-
     @autoreleasepool
     {
-        for (auto &item : work)
-        {
-            try
-            {
-                item();
-            }
-            catch (const std::exception &error)
-            {
-                loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
-                            std::string("Frame-batched native work failed: ") + error.what());
-            }
-            catch (...)
-            {
-                loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
-                            "Frame-batched native work failed.");
-            }
-        }
+        gFrameWork.drain();
     }
 }
 
 @end
 
-void loader::ios::scheduleNativePluginFrameWork(std::function<void()> work)
+bool loader::ios::scheduleNativePluginFrameWork(std::function<void()> work)
 {
-    bool schedule = false;
-    {
-        std::lock_guard<std::mutex> lock(gFrameWorkMutex);
-        gFrameWork.push_back(std::move(work));
-        if (!gFrameScheduled)
-        {
-            gFrameScheduled = true;
-            schedule        = true;
-        }
-    }
-    if (schedule)
+    if (gFrameWork.enqueue(std::move(work)))
     {
         dispatch_async(dispatch_get_main_queue(),
                        ^{ [[IOSNativePluginFrameScheduler sharedScheduler] start]; });
     }
+    return true;
 }

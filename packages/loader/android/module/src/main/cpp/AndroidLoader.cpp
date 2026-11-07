@@ -386,36 +386,7 @@ void AndroidLoader::drainMainWork()
 
 void AndroidLoader::drainMainFrameWork()
 {
-    std::deque<std::function<void()>> work;
-    {
-        std::lock_guard<std::mutex> lock(frameQueueMutex_);
-        work.swap(frameQueue_);
-        frameDrainScheduled_ = false;
-    }
-    if (work.empty())
-    {
-        return;
-    }
-
-    const auto startedAt = std::chrono::steady_clock::now();
-    for (auto &item : work)
-    {
-        try
-        {
-            item();
-        }
-        catch (const std::exception &error)
-        {
-            loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
-                        std::string("Frame-batched native work failed: ") + error.what());
-        }
-        catch (...)
-        {
-            loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
-                        "Frame-batched native work failed.");
-        }
-    }
-    loader::native::recordMainDrain(work.size(), std::chrono::steady_clock::now() - startedAt);
+    frameQueue_.drain();
 }
 
 void AndroidLoader::runOnRuntime(std::function<void(jsi::Runtime &)> work)
@@ -498,27 +469,30 @@ void AndroidLoader::runOnMain(std::function<void()> work)
     clearPendingException(env);
 }
 
-void AndroidLoader::runOnMainNextFrame(std::function<void()> work)
+bool AndroidLoader::runOnMainNextFrame(std::function<void()> work)
 {
+    if (!frameQueue_.enqueue(std::move(work)))
     {
-        std::lock_guard<std::mutex> lock(frameQueueMutex_);
-        frameQueue_.push_back(std::move(work));
-        if (frameDrainScheduled_)
-        {
-            return;
-        }
-        frameDrainScheduled_ = true;
+        return true;
     }
 
     JNIEnv *env = currentEnvironment();
-    if (!env)
+    if (!env || !callbacks_.scheduleMainFrame)
     {
-        std::lock_guard<std::mutex> lock(frameQueueMutex_);
-        frameDrainScheduled_ = false;
-        return;
+        frameQueue_.clear();
+        loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
+                    "Failed to schedule frame-batched native work.");
+        return false;
     }
     env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.scheduleMainFrame);
-    clearPendingException(env);
+    if (clearPendingException(env))
+    {
+        frameQueue_.clear();
+        loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
+                    "Failed to schedule frame-batched native work.");
+        return false;
+    }
+    return true;
 }
 
 void AndroidLoader::runAfter(double seconds, std::function<void()> work)
