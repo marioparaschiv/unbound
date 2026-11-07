@@ -135,8 +135,11 @@ android {
         unitTests.isIncludeAndroidResources = true
         unitTests.all {
             val vectors = repositoryRoot.resolve("core/tests/vectors/crypto-cross-check.txt")
+            val nativeFabricVectors = repositoryRoot.resolve("core/tests/vectors/native-fabric-conformance.json")
             it.inputs.file(vectors)
             it.systemProperty("unbound.coreCryptoVectors", vectors.absolutePath)
+            it.inputs.file(nativeFabricVectors)
+            it.systemProperty("unbound.nativeFabricVectors", nativeFabricVectors.absolutePath)
         }
     }
 

@@ -53,6 +53,7 @@ export const NATIVE_PLUGIN_METHOD_CAPABILITIES = {
 	'fabric.updateAsync': 'native.fabric.async',
 	'fabric.setSizeAsync': 'native.fabric.async',
 	'fabric.setFrameAsync': 'native.fabric.async',
+	'fabric.batchAsync': 'native.fabric.async',
 	'fabric.measureAsync': 'native.fabric.async',
 	'fabric.unmountAsync': 'native.fabric.async',
 	'fabric.releaseIdleAsync': 'native.fabric.async',

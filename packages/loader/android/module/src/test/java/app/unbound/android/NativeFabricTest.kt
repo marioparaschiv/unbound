@@ -16,6 +16,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
@@ -159,6 +160,60 @@ class NativeFabricTest {
 
         assertEquals(64, view.layoutParams.width)
         assertEquals(0, view.layoutParams.height)
+    }
+
+    @Test
+    fun matchesTheSharedNativeFabricConformanceVector() {
+        val fixture = JSONObject(File(requireNotNull(System.getProperty("unbound.nativeFabricVectors"))).readText())
+        val handle = NativeFabric.mount(
+            "{}",
+            fixture.getString("module"),
+            fixture.getJSONObject("initialProperties").toString(),
+        )
+        val mutations = fixture.getJSONArray("mutations")
+
+        for (index in 0 until mutations.length()) {
+            val mutation = mutations.getJSONObject(index)
+            if (mutation.has("properties")) {
+                NativeFabric.update(handle, mutation.getJSONObject("properties").toString())
+            }
+            if (mutation.has("size")) {
+                val size = mutation.getJSONObject("size")
+                NativeFabric.setSize(
+                    handle,
+                    size.getJSONObject("minimum").toString(),
+                    size.getJSONObject("maximum").toString(),
+                )
+            }
+            if (mutation.has("frame")) {
+                NativeFabric.setFrame(handle, mutation.getJSONObject("frame").toString())
+            }
+        }
+
+        val expected = fixture.getJSONObject("expected")
+        val view = host.surfaces.single().view()
+        val density = view.resources.displayMetrics.density
+        val expectedProperties = expected.getJSONObject("properties")
+        assertEquals(
+            expectedProperties.getString("label"),
+            host.surfaces.single().props?.getString("label"),
+        )
+        assertEquals(
+            expectedProperties.getInt("revision"),
+            host.surfaces.single().props?.getInt("revision"),
+        )
+        assertEquals(
+            kotlin.math.ceil(expected.getJSONObject("minimum").getDouble("width") * density).toInt(),
+            view.minimumWidth,
+        )
+        assertEquals(
+            kotlin.math.ceil(expected.getJSONObject("frame").getDouble("width") * density).toInt(),
+            view.layoutParams.width,
+        )
+        assertEquals(
+            kotlin.math.ceil(expected.getJSONObject("frame").getDouble("height") * density).toInt(),
+            view.layoutParams.height,
+        )
     }
 
     @Test

@@ -217,6 +217,7 @@ const fakeBridge: LoaderBridge = {
 		setSizeAsync: () => cancellable(Promise.resolve(), 'size'),
 		setFrame: () => undefined,
 		setFrameAsync: () => cancellable(Promise.resolve(), 'frame'),
+		batchAsync: () => cancellable(Promise.resolve(), 'batch'),
 		measure: () => ({ x: 0, y: 0, width: 0, height: 0 }),
 		measureAsync: () => cancellable(new Promise(() => undefined), 'measure'),
 		unmount: (surface: NativeFabricSurface) => unmounted.push(surface),

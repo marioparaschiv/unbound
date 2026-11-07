@@ -22,8 +22,12 @@ class NativePluginExecutor
 public:
     virtual ~NativePluginExecutor() = default;
 
-    virtual bool isMainThread()                                                   = 0;
-    virtual void runOnMain(std::function<void()> work)                            = 0;
+    virtual bool isMainThread()                        = 0;
+    virtual void runOnMain(std::function<void()> work) = 0;
+    virtual void runOnMainNextFrame(std::function<void()> work)
+    {
+        runOnMain(std::move(work));
+    }
     virtual void runOnRuntime(std::function<void(facebook::jsi::Runtime &)> work) = 0;
     virtual void runOnRuntimeCoalesced(std::string                                   key,
                                        std::function<void(facebook::jsi::Runtime &)> work)
@@ -131,7 +135,8 @@ inline constexpr const char *kMainWaitsForRuntimeMessage =
 
 facebook::jsi::Value
 executeMainAsynchronously(facebook::jsi::Runtime &runtime, std::function<void()> operation,
-                          std::function<facebook::jsi::Value(facebook::jsi::Runtime &)> result);
+                          std::function<facebook::jsi::Value(facebook::jsi::Runtime &)> result,
+                          bool nextFrame = false);
 
 // Runs `operation` on its own thread, then settles the returned promise on the runtime thread with
 // `result`, or rejects it with what `operation` threw.

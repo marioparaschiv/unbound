@@ -145,6 +145,7 @@ export declare const NATIVE_PLUGIN_METHOD_CAPABILITIES: {
 	readonly 'fabric.updateAsync': 'native.fabric.async';
 	readonly 'fabric.setSizeAsync': 'native.fabric.async';
 	readonly 'fabric.setFrameAsync': 'native.fabric.async';
+	readonly 'fabric.batchAsync': 'native.fabric.async';
 	readonly 'fabric.measureAsync': 'native.fabric.async';
 	readonly 'fabric.unmountAsync': 'native.fabric.async';
 	readonly 'fabric.releaseIdleAsync': 'native.fabric.async';
@@ -3084,17 +3085,8 @@ export type FloatingActionButtonProps = Omit<
 	/** @default 16 */
 	positionRight?: number;
 };
-/** A custom font the native loader has registered, as `UnboundNative.getFonts()` returns it. */
-export type FontDescriptor = {
-	/** The font's PostScript name, else its full name, else its file name without extension; the Fonts manager keys by it. */
-	name: string;
-	/** The font's file name in Unbound's `Fonts` directory. */
-	file: string;
-	/** The absolute path to the font file on the device. */
-	path: string;
-};
-/** A font managed by the Fonts manager: currently identical to its {@link FontDescriptor}. */
-export type FontEntity = FontDescriptor;
+/** A font face managed by the Fonts manager, as `UnboundNative.fonts.list()` returns it. */
+export type FontEntity = UnboundInstalledFont;
 /**
  * Props of `FormLabel` (function). Exports: default.
  * @see design/void/Form/native/FormLabel.tsx
@@ -3906,6 +3898,15 @@ export type NativeFFITypeName =
 	| 'object'
 	| 'class'
 	| 'selector';
+export type NativeFabricBatchMutation = {
+	surface: NativeFabricSurface;
+	properties?: NativeSerializableObject;
+	frame?: NativeFabricFrame;
+	size?: {
+		minimum: NativeFabricSize;
+		maximum: NativeFabricSize;
+	};
+};
 /** Mounts registered React Native components inside existing native views. Sync methods are iOS only. */
 export type NativeFabricBridge = {
 	/** Starts a surface for a registered component inside a container view. Needs `native.fabric.mount`. */
@@ -3948,6 +3949,7 @@ export type NativeFabricBridge = {
 		surface: NativeFabricSurface,
 		frame: NativeFabricFrame,
 	): NativeCancelablePromise<void>;
+	batchAsync(mutations: NativeFabricBatchMutation[]): NativeCancelablePromise<void>;
 	/** Reads a view's frame. */
 	measure(view: NativeObjectHandle): NativeFabricFrame;
 	/** Like `measure`, on the main thread. */
@@ -6433,12 +6435,36 @@ export type ToggleIconButtonProps = {
 };
 /** `TransitionStates`: MOUNTED = 0, ENTERED = 1, YEETED = 2. */
 export type TransitionState = 'MOUNTED' | 'ENTERED' | 'YEETED';
+export type UnboundAppIcon = {
+	id: string;
+	pickerId?: string;
+	name: string;
+	image: string;
+};
 /** A {@link DiscordAsset} extended with Unbound's icon-pack overrides and the files of an asset a plugin registered. */
 export type UnboundAsset = DiscordAsset & {
 	iconPackPath?: string;
 	iconPackScale?: number;
 	/** The URI of a registered plugin asset at each scale; set while it is registered. */
 	unboundSources?: Record<number, string>;
+};
+/**
+ * One installed face in the loader's font store.
+ * @internal
+ */
+type UnboundInstalledFont = {
+	/** The store id: the face's PostScript name with only `[A-Za-z0-9._-]`. */
+	id: string;
+	family: string;
+	postScriptName: string;
+	fullName: string;
+	weight: number;
+	style: UnboundFontStyle;
+	/** The file, relative to Unbound's `Fonts` folder. */
+	file: string;
+	/** The file's absolute path; `list()` adds it. */
+	path?: string;
+	source: UnboundFontSource;
 };
 /** A value the generator could not type with confidence, so a loose prop accepts anything for it. */
 export type UncertainValue = any;

@@ -4,6 +4,7 @@ import android.graphics.fonts.SystemFonts
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.view.Choreographer
 import android.widget.Toast
 import java.io.File
 import java.net.HttpURLConnection
@@ -50,6 +51,9 @@ object NativeBridge {
 
     @JvmStatic
     external fun nativeDrainMainWork()
+
+    @JvmStatic
+    external fun nativeDrainFrameWork()
 
     @JvmStatic
     external fun nativeHermesBytecodeVersion(header: ByteArray): Int
@@ -133,6 +137,13 @@ object NativeBridge {
     @JvmStatic
     fun scheduleMainWork() {
         Handler(Looper.getMainLooper()).post { nativeDrainMainWork() }
+    }
+
+    @JvmStatic
+    fun scheduleMainFrameWork() {
+        Handler(Looper.getMainLooper()).post {
+            Choreographer.getInstance().postFrameCallback { nativeDrainFrameWork() }
+        }
     }
 
     @JvmStatic

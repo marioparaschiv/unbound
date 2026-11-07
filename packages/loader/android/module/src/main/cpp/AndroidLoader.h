@@ -25,6 +25,7 @@ struct JavaCallbacks {
     jclass    bridgeClass              = nullptr;
     jmethodID scheduleRuntime          = nullptr;
     jmethodID scheduleMain             = nullptr;
+    jmethodID scheduleMainFrame        = nullptr;
     jmethodID isMainThread             = nullptr;
     jmethodID isVerifiedBuild          = nullptr;
     jmethodID installer                = nullptr;
@@ -89,6 +90,7 @@ public:
     void onLoadJSBundle();
     void onRuntimeCreated(facebook::jsi::Runtime &runtime);
     void drainMainWork();
+    void drainMainFrameWork();
     void drainRuntimeWork(facebook::jsi::Runtime &runtime);
     bool installSchedulerDrain(facebook::jsi::Runtime &runtime);
 
@@ -104,6 +106,7 @@ public:
     void runOnRuntimeCritical(std::function<void(facebook::jsi::Runtime &)> work) override;
     bool isMainThread() override;
     void runOnMain(std::function<void()> work) override;
+    void runOnMainNextFrame(std::function<void()> work) override;
     void runAfter(double seconds, std::function<void()> work) override;
     void runInBackground(std::function<void()> work) override;
     std::optional<std::string>    resource(const std::string &name) override;
@@ -146,7 +149,10 @@ private:
     std::mutex                                                                     mainQueueMutex_;
     std::deque<std::function<void()>>                                              mainQueue_;
     bool                                        mainDrainScheduled_ = false;
-    std::atomic<bool>                           schedulerDrainLive_ = false;
+    std::mutex                                  frameQueueMutex_;
+    std::deque<std::function<void()>>           frameQueue_;
+    bool                                        frameDrainScheduled_ = false;
+    std::atomic<bool>                           schedulerDrainLive_  = false;
     DeadlineTimer                               timer_;
     loader::AddonState                          addons_;
     std::shared_ptr<loader::fonts::FontService> fonts_;

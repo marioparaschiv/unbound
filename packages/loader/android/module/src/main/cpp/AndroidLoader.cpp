@@ -384,6 +384,40 @@ void AndroidLoader::drainMainWork()
     loader::native::recordMainDrain(work.size(), std::chrono::steady_clock::now() - startedAt);
 }
 
+void AndroidLoader::drainMainFrameWork()
+{
+    std::deque<std::function<void()>> work;
+    {
+        std::lock_guard<std::mutex> lock(frameQueueMutex_);
+        work.swap(frameQueue_);
+        frameDrainScheduled_ = false;
+    }
+    if (work.empty())
+    {
+        return;
+    }
+
+    const auto startedAt = std::chrono::steady_clock::now();
+    for (auto &item : work)
+    {
+        try
+        {
+            item();
+        }
+        catch (const std::exception &error)
+        {
+            loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
+                        std::string("Frame-batched native work failed: ") + error.what());
+        }
+        catch (...)
+        {
+            loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
+                        "Frame-batched native work failed.");
+        }
+    }
+    loader::native::recordMainDrain(work.size(), std::chrono::steady_clock::now() - startedAt);
+}
+
 void AndroidLoader::runOnRuntime(std::function<void(jsi::Runtime &)> work)
 {
     enqueueRuntime(std::move(work), loader::native::NativeWorkPriority::Deferred);
@@ -461,6 +495,29 @@ void AndroidLoader::runOnMain(std::function<void()> work)
         return;
     }
     env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.scheduleMain);
+    clearPendingException(env);
+}
+
+void AndroidLoader::runOnMainNextFrame(std::function<void()> work)
+{
+    {
+        std::lock_guard<std::mutex> lock(frameQueueMutex_);
+        frameQueue_.push_back(std::move(work));
+        if (frameDrainScheduled_)
+        {
+            return;
+        }
+        frameDrainScheduled_ = true;
+    }
+
+    JNIEnv *env = currentEnvironment();
+    if (!env)
+    {
+        std::lock_guard<std::mutex> lock(frameQueueMutex_);
+        frameDrainScheduled_ = false;
+        return;
+    }
+    env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.scheduleMainFrame);
     clearPendingException(env);
 }
 
