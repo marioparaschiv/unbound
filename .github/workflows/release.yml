@@ -34,6 +34,12 @@ jobs:
               id: release
               uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7
 
+            - name: Run loader release-please
+              uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7
+              with:
+                  config-file: release-please-loader-config.json
+                  manifest-file: release-please-loader-manifest.json
+
             # release-please bumps package.json versions but only knows npm lockfiles, so the
             # workspace versions recorded in bun.lock are refreshed on the release PR branch.
             - name: Checkout code

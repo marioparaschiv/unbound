@@ -170,14 +170,14 @@ A release also publishes each split for Discord's in-app updater. `publish-andro
 go run ./tools publish-android-build --apks Unbound.apks --split emulator/config.x86_64.apk --channel stable --commit "$(git rev-parse HEAD)" --dry-run
 ```
 
-Loader changes reach every platform without a new Discord version. Every push to `main` that touches `packages/loader` runs `loader-publish.yml`, which calls `loader-build.yml` three times, one after another:
+Loader releases reach every platform without a new Discord version. A loader-specific Release Please configuration reads Conventional Commits from the last published legacy build boundary; its release PR updates `packages/loader/version.json` and creates the `loader-vX.Y.Z` release. Merging that version update triggers `loader-publish.yml`, which calls `loader-build.yml` three times, one after another:
 
 - **stable**, with `loader_publish_only`: builds the deb and the Xposed module once, against the Discord the latest iOS and Android stable releases use, and runs both smoke tests. `publish-loader-build` then uploads the deb and the module to the public bucket under `loader/{version}/` with `build.json` last, and records them at `POST /api/v1/loader/releases`, so jailbroken iOS and rooted Android users see the update. The same run publishes the in-app Android stable build.
 - **beta** and **alpha**, with `android_publish_only`: each patches the Discord that the channel's latest Unbound release uses (`released-android-code --channel <beta|alpha>`) and publishes the in-app build.
 
-Each call signs with the release key and publishes only smoke-tested builds. None creates a GitHub release or changes `Unbound.apks` or Obtainium. Off `main`, the publish steps run with `--dry-run`. A loader version already in the bucket is never overwritten.
+Each call signs with the release key and publishes only smoke-tested builds. These calls do not create Discord-version releases or change `Unbound.apks` or Obtainium. Off `main`, the publish steps run with `--dry-run`. A loader version already in the bucket is never overwritten.
 
-The loader version is `<major>.<minor>.<loader commits>`: the major and minor come from `ios/control`, and the patch is `unbound-tools loader-version`, which counts the commits up to `HEAD` that touch `packages/loader`, except `docs/`, `workflow-tests/` and Markdown. These are the paths that trigger `loader-publish.yml`, so every published change gets a higher version, and every build of one commit gets the same one. `resolve-source` computes it from the full history and every build in the run stamps it into `ios/control` (`loader-version --set`), so the deb, the module, the attestation, the release titles and the update record all carry it. The changelog of a version lists the loader commits since the newest published release.
+`packages/loader/version.json` is the loader's SemVer source of truth. Release Please applies Conventional Commit rules: `fix` increments patch, `feat` increments minor, and breaking changes increment major. The build reads that version and stamps it into `ios/control` before producing the deb, Android module, attestations and update record. Loader release changelogs use the previous `loader-vX.Y.Z` tag; the first semantic release maps the published `1.0.<commit-count>` baseline to its original source commit so only unpublished changes are included.
 
 </details>
 

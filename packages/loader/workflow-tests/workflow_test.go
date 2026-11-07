@@ -902,8 +902,8 @@ func TestParsedLoaderChangesOnMainPublishTheLoaderAndEveryChannelsInAppBuild(t *
 	if err := yaml.Unmarshal(data, &trigger); err != nil {
 		t.Fatal(err)
 	}
-	if !slices.Equal(trigger.On.Push.Branches, []string{"main"}) || !slices.Contains(trigger.On.Push.Paths, "packages/loader/**") {
-		t.Fatalf("every loader change on main must publish, push trigger is %+v", trigger.On.Push)
+	if !slices.Equal(trigger.On.Push.Branches, []string{"main"}) || !slices.Equal(trigger.On.Push.Paths, []string{"packages/loader/version.json"}) {
+		t.Fatalf("only a semantic loader version update on main must publish, push trigger is %+v", trigger.On.Push)
 	}
 	publish := loadWorkflow(t, "loader-publish.yml")
 	stable := publish.job(t, "stable")
@@ -1006,7 +1006,7 @@ func TestParsedEveryBuildCarriesTheComputedLoaderVersion(t *testing.T) {
 	resolve := build.job(t, "resolve-source")
 	checkout := resolve.stepUsing(t, "actions/checkout@")
 	if checkout.With["fetch-depth"] != "0" {
-		t.Fatal("the loader version counts commits, so resolve-source needs the full history")
+		t.Fatal("loader changelog generation needs full history and release tags")
 	}
 	if run := resolve.step(t, "Version the loader").Run; !strings.Contains(run, "version=$(unbound-tools loader-version)") || !strings.Contains(run, `unbound-tools loader-version --set "$version"`) {
 		t.Fatalf("resolve-source must compute and stamp the loader version before naming releases, runs %q", run)

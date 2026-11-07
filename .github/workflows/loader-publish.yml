@@ -1,16 +1,9 @@
 name: Loader Publish loader changes
-
-# Every loader change on main publishes the deb and the Xposed module as loader 1.0.<loader commits> and republishes each channel's patched
-# Discord, so the Updates screen offers loader fixes on every platform without a new Discord version.
 on:
     push:
         branches: [main]
         paths:
-            - 'packages/loader/**'
-            - '!packages/loader/docs/**'
-            - '!packages/loader/workflow-tests/**'
-            - '!**/*.md'
-            - '!**/*.mdx'
+            - 'packages/loader/version.json'
     workflow_dispatch:
 
 permissions: {}

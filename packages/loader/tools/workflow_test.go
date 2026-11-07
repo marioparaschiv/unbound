@@ -12,6 +12,81 @@ import (
 	"testing"
 )
 
+func TestLoaderVersionUsesReleasePleaseSemVer(t *testing.T) {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("could not locate test source")
+	}
+	root := filepath.Join(filepath.Dir(filepath.Dir(filename)), "..", "..")
+	configData, err := os.ReadFile(filepath.Join(root, "release-please-loader-config.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var config struct {
+		BootstrapSHA string `json:"bootstrap-sha"`
+		Packages     map[string]struct {
+			Component      string `json:"component"`
+			ReleaseType    string `json:"release-type"`
+			InitialVersion string `json:"initial-version"`
+			ExtraFiles     []struct {
+				Type     string `json:"type"`
+				Path     string `json:"path"`
+				JSONPath string `json:"jsonpath"`
+			} `json:"extra-files"`
+		} `json:"packages"`
+	}
+	if err := json.Unmarshal(configData, &config); err != nil {
+		t.Fatal(err)
+	}
+	loader := config.Packages["packages/loader"]
+	if config.BootstrapSHA != "d7c5fa708a680ea822b8a895f42c4e41e93cd39e" || loader.Component != "loader" || loader.ReleaseType != "simple" || loader.InitialVersion != "1.0.971" || len(loader.ExtraFiles) != 1 {
+		t.Fatalf("unexpected loader release configuration %+v", loader)
+	}
+	file := loader.ExtraFiles[0]
+	if file.Type != "json" || file.Path != "packages/loader/version.json" || file.JSONPath != "$.version" {
+		t.Fatalf("unexpected loader version updater %+v", file)
+	}
+	manifestData, err := os.ReadFile(filepath.Join(root, "release-please-loader-manifest.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest map[string]string
+	if err := json.Unmarshal(manifestData, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	contents, err := os.ReadFile(filepath.Join(root, "packages/loader/version.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var version loaderVersionManifest
+	if err := json.Unmarshal(contents, &version); err != nil {
+		t.Fatal(err)
+	}
+	if manifest["packages/loader"] != version.Version {
+		t.Fatalf("manifest version %s differs from source version %s", manifest["packages/loader"], version.Version)
+	}
+	rootConfigData, err := os.ReadFile(filepath.Join(root, "release-please-config.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var rootConfig struct {
+		Packages map[string]json.RawMessage `json:"packages"`
+	}
+	if err := json.Unmarshal(rootConfigData, &rootConfig); err != nil {
+		t.Fatal(err)
+	}
+	if _, exists := rootConfig.Packages["packages/loader"]; exists {
+		t.Fatal("loader release must not use the monorepo-wide bootstrap boundary")
+	}
+	workflow, err := os.ReadFile(filepath.Join(root, ".github", "workflows", "release.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(workflow), "config-file: release-please-loader-config.json") || !strings.Contains(string(workflow), "manifest-file: release-please-loader-manifest.json") {
+		t.Fatal("release workflow does not invoke loader-specific semantic versioning")
+	}
+}
+
 func TestBuildWorkflowInstallsAutotoolsBeforeTweakBuild(t *testing.T) {
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
@@ -404,9 +479,8 @@ func TestStableReleasePublishesLoaderUpdateRecords(t *testing.T) {
 			t.Fatalf("stable release workflow is missing loader update publishing detail %q", required)
 		}
 	}
-	// The loader version counts loader commits (unbound-tools loader-version), never anything from the Discord build.
 	if !strings.Contains(contents, "version=$(unbound-tools loader-version)") || !strings.Contains(contents, "loader_version: ${{ steps.loader-version.outputs.version }}") {
-		t.Fatal("resolve-source must compute the loader version from the loader's commits")
+		t.Fatal("resolve-source must compute the loader version from its semantic version file")
 	}
 	for _, forbidden := range []string{
 		"IOS_BUILD:",
