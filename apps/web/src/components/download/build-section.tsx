@@ -10,11 +10,11 @@ import {
 } from '~/lib/downloads/install-links';
 import type { BuildTrack, DownloadBuild } from '~/lib/downloads/builds';
 import DownloadFileRow from '~/components/download/download-file-row';
+import { staggerStyle } from '~/components/motion/reveal-style';
 import type { SourceApp } from '~/lib/downloads/install-links';
 import SourceBadge from '~/components/download/source-badge';
 import CopyField from '~/components/download/copy-field';
 import { formatDate } from '~/components/addon/format';
-import Reveal from '~/components/motion/reveal';
 
 type TrackInfo = {
 	/** Names a nightly track; a stable build sits under its platform's heading alone. */
@@ -34,8 +34,8 @@ type SourceRowProps = {
 	label?: string;
 };
 
-// Tiles that scroll into view together enter one after another, then the sources under them.
-const STAGGER_S = 0.06;
+// Stagger slots after the page's sections and the platform heading: the versions, each tile, then the sources.
+const FIRST_SLOT = 7;
 
 const TRACK_INFO: Record<BuildTrack, TrackInfo> = {
 	ios: {},
@@ -113,7 +113,7 @@ function BuildSection({ build }: BuildSectionProps) {
 
 	return (
 		<div className='flex flex-col gap-4 min-w-0'>
-			<Reveal className='flex flex-col gap-0.5'>
+			<div className='flex flex-col gap-0.5 animate-reveal' style={staggerStyle(FIRST_SLOT)}>
 				{info.title ? (
 					<h4 className='font-semibold text-foreground text-lg'>{info.title}</h4>
 				) : null}
@@ -133,17 +133,24 @@ function BuildSection({ build }: BuildSectionProps) {
 						<IconArrowUpRight size={14} aria-hidden />
 					</a>
 				</div>
-			</Reveal>
+			</div>
 			<div className='gap-3 grid sm:grid-cols-2'>
 				{build.files.map((file, index) => (
-					<Reveal key={file.kind} delay={index * STAGGER_S} className='grid'>
+					<div
+						key={file.kind}
+						className='grid animate-reveal'
+						style={staggerStyle(FIRST_SLOT + 1 + index)}
+					>
 						<DownloadFileRow file={file} />
-					</Reveal>
+					</div>
 				))}
 			</div>
-			<Reveal delay={build.files.length * STAGGER_S} className='flex flex-col gap-4'>
+			<div
+				className='flex flex-col gap-4 animate-reveal'
+				style={staggerStyle(FIRST_SLOT + 1 + build.files.length)}
+			>
 				<BuildSources build={build} />
-			</Reveal>
+			</div>
 		</div>
 	);
 }

@@ -7,7 +7,6 @@ import { staggerStyle } from '~/components/motion/reveal-style';
 import DownloadQuiz from '~/components/download/download-quiz';
 import { RELEASES_URL } from '~/lib/downloads/install-links';
 import PageHeader from '~/components/page-header';
-import Reveal from '~/components/motion/reveal';
 import { Button } from '~/components/ui/button';
 
 function DownloadPage() {
@@ -62,7 +61,7 @@ function DownloadPage() {
 
 			<DownloadChannels downloads={downloads} />
 
-			<Reveal className='text-muted-foreground text-sm text-center'>
+			<p className='text-muted-foreground text-sm text-center'>
 				Stuck? The{' '}
 				<Link
 					to='/docs/user/$'
@@ -81,7 +80,7 @@ function DownloadPage() {
 					GitHub releases page
 					<IconArrowUpRight size={12} aria-hidden />
 				</a>
-			</Reveal>
+			</p>
 		</div>
 	);
 }
