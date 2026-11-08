@@ -57,7 +57,9 @@ function watchCarousel(lookup: Lookup) {
 					key='unbound-authors'
 					authors={addon.manifest.authors}
 					nameStyle={(child as ReactElement<CaptionProps>).props.style}
-				/>
+				>
+					{child}
+				</CarouselAuthors>
 			) : (
 				child
 			),
