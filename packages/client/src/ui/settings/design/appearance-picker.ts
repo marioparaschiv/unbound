@@ -1,3 +1,4 @@
+import type { StyleProp, ViewStyle } from 'react-native';
 import type { ReactElement } from 'react';
 
 import { findByFilePathLazy, findByPropsLazy } from '~/metro/wrappers';
@@ -74,6 +75,31 @@ export const Lodash: LodashModule = findByPropsLazy('debounce', 'throttle', 'mem
 /** The picker's swatch carousel; `currentThemeIndex` is the swatch it previews. */
 export const Carousel: CarouselModule = findByFilePathLazy(
 	`${ROOT}components/SettingsAppearanceThemeCarousel.tsx`,
+);
+
+type SelectorItemProps = { themePreset: PickerTheme; isSelected: boolean };
+
+type SelectorItemModule = { default: (props: SelectorItemProps) => ReactElement };
+
+/** One swatch of the carousel: its background, as `{ item }`, inside the selection ring. */
+export const SelectorItem: SelectorItemModule = findByFilePathLazy(
+	`${ROOT}components/SettingsAppearanceThemeSelectorItem.tsx`,
+);
+
+type SwatchGradientProps = {
+	customTheme: PickerTheme;
+	mix: boolean;
+	componentStyles?: StyleProp<ViewStyle>;
+};
+
+type GradientModule = {
+	/** Draws a gradient swatch; with `mix` it blends the colours 20% towards black, or 50% towards white on light. */
+	CustomThemedGradient: (props: SwatchGradientProps) => ReactElement | null;
+};
+
+/** Discord's gradient views, among them the one a gradient swatch draws with. */
+export const Gradients: GradientModule = findByFilePathLazy(
+	'modules/client_themes/native/ThemedGradient.tsx',
 );
 
 /** One colour stop of the backdrop Discord's picker draws behind its preview. */
