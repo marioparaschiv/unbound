@@ -2,6 +2,7 @@ import { IconApple, IconMobile } from 'nucleo-micro-bold';
 
 import type { DownloadBuild, DownloadPlatform } from '~/lib/downloads/builds';
 import BuildSection from '~/components/download/build-section';
+import Reveal from '~/components/motion/reveal';
 
 type PlatformInfo = {
 	title: string;
@@ -38,7 +39,7 @@ function PlatformSection({ platform, builds }: PlatformSectionProps) {
 			aria-labelledby={`platform-${platform}`}
 			className='flex flex-col gap-6 pt-8 border-t first:border-t-0 first:pt-0'
 		>
-			<div className='flex items-center gap-4'>
+			<Reveal className='flex items-center gap-4'>
 				<span className='flex justify-center items-center bg-card shadow-surface border rounded-full size-14 text-foreground shrink-0'>
 					<info.icon size={26} aria-hidden />
 				</span>
@@ -48,7 +49,7 @@ function PlatformSection({ platform, builds }: PlatformSectionProps) {
 					</h3>
 					<p className='text-muted-foreground text-sm'>{info.detail}</p>
 				</div>
-			</div>
+			</Reveal>
 			<div className='flex flex-col gap-10'>
 				{builds.map((build) => (
 					<BuildSection key={build.track} build={build} />

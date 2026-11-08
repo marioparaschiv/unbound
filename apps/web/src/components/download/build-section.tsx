@@ -14,6 +14,7 @@ import type { SourceApp } from '~/lib/downloads/install-links';
 import SourceBadge from '~/components/download/source-badge';
 import CopyField from '~/components/download/copy-field';
 import { formatDate } from '~/components/addon/format';
+import Reveal from '~/components/motion/reveal';
 
 type TrackInfo = {
 	/** Names a nightly track; a stable build sits under its platform's heading alone. */
@@ -32,6 +33,9 @@ type SourceRowProps = {
 	url?: string;
 	label?: string;
 };
+
+// Tiles that scroll into view together enter one after another, then the sources under them.
+const STAGGER_S = 0.06;
 
 const TRACK_INFO: Record<BuildTrack, TrackInfo> = {
 	ios: {},
@@ -109,7 +113,7 @@ function BuildSection({ build }: BuildSectionProps) {
 
 	return (
 		<div className='flex flex-col gap-4 min-w-0'>
-			<div className='flex flex-col gap-0.5'>
+			<Reveal className='flex flex-col gap-0.5'>
 				{info.title ? (
 					<h4 className='font-semibold text-foreground text-lg'>{info.title}</h4>
 				) : null}
@@ -129,13 +133,17 @@ function BuildSection({ build }: BuildSectionProps) {
 						<IconArrowUpRight size={14} aria-hidden />
 					</a>
 				</div>
-			</div>
+			</Reveal>
 			<div className='gap-3 grid sm:grid-cols-2'>
-				{build.files.map((file) => (
-					<DownloadFileRow key={file.kind} file={file} />
+				{build.files.map((file, index) => (
+					<Reveal key={file.kind} delay={index * STAGGER_S} className='grid'>
+						<DownloadFileRow file={file} />
+					</Reveal>
 				))}
 			</div>
-			<BuildSources build={build} />
+			<Reveal delay={build.files.length * STAGGER_S} className='flex flex-col gap-4'>
+				<BuildSources build={build} />
+			</Reveal>
 		</div>
 	);
 }

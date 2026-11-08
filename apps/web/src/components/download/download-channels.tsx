@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { DownloadChannel, DownloadPlatform, Downloads } from '~/lib/downloads/builds';
 import PlatformSection from '~/components/download/platform-section';
 import { Segmented, SegmentedItem } from '~/components/ui/segmented';
+import { staggerStyle } from '~/components/motion/reveal-style';
 import { RELEASES_URL } from '~/lib/downloads/install-links';
 
 type DownloadChannelsProps = {
@@ -45,7 +46,10 @@ function DownloadChannels({ downloads }: DownloadChannelsProps) {
 
 	return (
 		<section aria-labelledby='downloads-heading' className='flex flex-col gap-8'>
-			<div className='flex flex-wrap justify-between items-end gap-3'>
+			<div
+				className='flex flex-wrap justify-between items-end gap-3 animate-reveal'
+				style={staggerStyle(5)}
+			>
 				<div className='flex flex-col gap-1 max-w-2xl'>
 					<h2 id='downloads-heading' className='font-semibold text-foreground text-xl'>
 						All downloads
