@@ -21,9 +21,9 @@ xml=$(adb_avd shell cat /sdcard/ubd-avd-ui.xml 2>/dev/null)
 
 if ((bounds)); then
 	# Each node with text: its label and the centre of its bounds="[x1,y1][x2,y2]".
-	grep -o 'text="[^"]\+"[^>]*bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]"' <<<"$xml" |
+	grep -oE 'text="[^"]+"[^>]*bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"' <<<"$xml" |
 		sed -E 's/text="([^"]+)".*bounds="\[([0-9]+),([0-9]+)\]\[([0-9]+),([0-9]+)\]"/\1\t\2 \3 \4 \5/' |
 		awk -F'\t' '{ split($2, b, " "); printf "%s\t%d %d\n", $1, (b[1] + b[3]) / 2, (b[2] + b[4]) / 2 }'
 else
-	grep -o 'text="[^"]\+"' <<<"$xml" | cut -d'"' -f2 | awk '!seen[$0]++'
+	grep -oE 'text="[^"]+"' <<<"$xml" | cut -d'"' -f2 | awk '!seen[$0]++'
 fi

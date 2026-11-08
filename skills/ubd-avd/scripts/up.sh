@@ -45,40 +45,33 @@ reap_if_orphaned() {
 	path=$(session_path "$1")
 	[[ -z $path ]] && return 0
 	# A removed worktree shows as "<path> (deleted)"; a trashed one follows the move into the trash.
-	[[ $path == *' (deleted)' || $path == */.local/share/Trash/* || ! -d $path ]] || return 0
+	[[ $path == *' (deleted)' || $path == */.local/share/Trash/* || $path == */.Trash/* || ! -d $path ]] || return 0
 	echo "stopping $1: its checkout ${path% (deleted)} is gone"
 	tmux kill-session -t "=$1" 2>/dev/null || true
 }
 
-# The pid of the emulator running this AVD, from its discovery file; stale files of dead emulators are removed.
+# The pid of the emulator running this AVD, from its discovery file (env.sh: emulator_ini).
 emulator_pid() {
-	local file pid
+	local file
 
-	for file in "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"/avd/running/pid_*.ini; do
-		[[ -f $file ]] && grep -qx "avd.name=$AVD_NAME" "$file" || continue
-		pid=$(basename "$file" .ini)
-		pid=${pid#pid_}
-
-		if kill -0 "$pid" 2>/dev/null; then
-			echo "$pid"
-			return
-		fi
-
-		rm -f "$file"
-	done
+	file=$(emulator_ini)
+	[[ -n $file ]] || return 0
+	file=$(basename "$file" .ini)
+	echo "${file#pid_}"
 }
 
 # Waits up to 5 s for a port to free. A port held inside a tmux session from a deleted checkout is reclaimed;
 # any other holder is named and the script stops.
 port_free() {
-	local port=$1 name=$2 variable=$3 holder pid session tries=5
+	local port=$1 name=$2 variable=$3 pid session= tries=5
 
-	while holder=$(ss -Hltnp "sport = :$port" 2>/dev/null | head -n 1) && [[ -n $holder ]] && ((tries--)); do
+	while port_busy "$port" && ((tries--)); do
 		sleep 1
 	done
 
-	[[ -z $holder ]] && return 0
-	pid=$(grep -o 'pid=[0-9]*' <<<"$holder" | head -n 1 | cut -d= -f2)
+	port_busy "$port" || return 0
+	pid=$(port_pid "$port")
+	local holder="pid ${pid:-unknown}${pid:+ ($(ps -o comm= -p "$pid" 2>/dev/null))}"
 
 	# Climb from the holder to the tmux pane that started it.
 	while [[ -n $pid && $pid != 1 ]]; do
@@ -142,7 +135,7 @@ if wanted emu; then
 
 	if [[ -n $pid ]] && restarting emu; then
 		echo "stopping $AVD_NAME (pid $pid)"
-		timeout 10 "$ADB" -s "$AVD_SERIAL" emu kill >/dev/null 2>&1 || kill "$pid"
+		with_timeout 10 "$ADB" -s "$AVD_SERIAL" emu kill >/dev/null 2>&1 || kill "$pid"
 
 		for _ in {1..30}; do
 			kill -0 "$pid" 2>/dev/null || break
@@ -156,22 +149,30 @@ if wanted emu; then
 
 	if [[ -n $pid ]]; then
 		# Any copy of emulator-access.json grants the preview's Rtc calls; the SDK default does not.
-		grep -q '^grpc.allowlist=.*/emulator-access.json$' "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/avd/running/pid_$pid.ini" ||
+		grep -q '^grpc.allowlist=.*/emulator-access.json$' "$AVD_DISCOVERY_DIR/pid_$pid.ini" ||
 			echo "WARN $AVD_NAME runs without the preview's gRPC access; the preview needs up.sh --restart=emu" >&2
 		echo "running $AVD_NAME as $AVD_SERIAL"
 	else
 		tmux kill-session -t '=avd-emu' 2>/dev/null || true
+
+		if [[ $(uname -s) == Linux && ! -w /dev/kvm ]]; then
+			echo "FAIL /dev/kvm is not writable, so the emulator would crawl or refuse to start: sudo usermod -aG kvm $USER, then log in again" >&2
+			exit 1
+		fi
+
 		port_free "$AVD_CONSOLE_PORT" emu CONSOLE
 		port_free "$AVD_GRPC_PORT" emu GRPC
 		# -no-snapshot cold boots from the disk: loading the old default_boot snapshot would roll the disk back to it,
-		# losing the Discord login and everything installed since.
-		start emu "'$EMULATOR' -avd '$AVD_NAME' -port $AVD_CONSOLE_PORT -grpc $AVD_GRPC_PORT -grpc-use-token -grpc-allowlist '$AVD_ALLOWLIST' -no-window -no-audio -no-boot-anim -gpu $AVD_GPU -no-snapshot" || true
+		# losing the Discord login and everything installed since. AVD_WINDOW=1 shows the emulator's own window.
+		window=-no-window
+		[[ ${AVD_WINDOW:-0} == 1 ]] && window=
+		start emu "'$EMULATOR' -avd '$AVD_NAME' -port $AVD_CONSOLE_PORT -grpc $AVD_GRPC_PORT -grpc-use-token -grpc-allowlist '$AVD_ALLOWLIST' $window -no-audio -no-boot-anim -gpu $AVD_GPU -no-snapshot" || true
 	fi
 
 	"$ADB" start-server >/dev/null 2>&1
 	began=$SECONDS
 
-	until [[ $(timeout 10 "$ADB" -s "$AVD_SERIAL" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r') == 1 ]]; do
+	until [[ $(with_timeout 10 "$ADB" -s "$AVD_SERIAL" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r') == 1 ]]; do
 		if [[ -z $(emulator_pid) ]] && ((SECONDS - began > 10)); then
 			echo "FAIL the emulator exited while booting; tail of $AVD_LOG_DIR/avd-emu.log:" >&2
 			tail -n 15 "$AVD_LOG_DIR/avd-emu.log" >&2 || true
@@ -189,9 +190,9 @@ if wanted emu; then
 
 	# Root adbd: Magisk's su denies the shell user after a cold boot, and ubd install, ubd device and point.sh
 	# all use a root adb shell when they get one. adbd restarts, so wait for it to come back.
-	if [[ $(timeout 10 "$ADB" -s "$AVD_SERIAL" shell id -u 2>/dev/null | tr -d '\r') != 0 ]]; then
-		timeout 20 "$ADB" -s "$AVD_SERIAL" root >/dev/null 2>&1 || true
-		timeout 30 "$ADB" -s "$AVD_SERIAL" wait-for-device || true
+	if [[ $(with_timeout 10 "$ADB" -s "$AVD_SERIAL" shell id -u 2>/dev/null | tr -d '\r') != 0 ]]; then
+		with_timeout 20 "$ADB" -s "$AVD_SERIAL" root >/dev/null 2>&1 || true
+		with_timeout 30 "$ADB" -s "$AVD_SERIAL" wait-for-device || true
 	fi
 
 	if ! root_shell id 2>/dev/null | grep -q 'uid=0'; then
@@ -249,7 +250,7 @@ if wanted preview; then
 	prepare preview "$AVD_PREVIEW_PORT" PREVIEW
 
 	# tmux sessions start with the tmux server's environment, so the settings go on the command line.
-	start preview "env ANDROID_HOME='$ANDROID_HOME' AVD_SERIAL=$AVD_SERIAL AVD_GRPC_PORT=$AVD_GRPC_PORT AVD_PREVIEW_PORT=$AVD_PREVIEW_PORT bun '$here/preview/server.ts'" || true
+	start preview "env ANDROID_HOME='$ANDROID_HOME' AVD_SERIAL=$AVD_SERIAL AVD_GRPC_PORT=$AVD_GRPC_PORT AVD_DISCOVERY_DIR='$AVD_DISCOVERY_DIR' AVD_PREVIEW_PORT=$AVD_PREVIEW_PORT bun '$here/preview/server.ts'" || true
 
 	for _ in {1..20}; do
 		curl -fs -o /dev/null "http://127.0.0.1:$AVD_PREVIEW_PORT/" && break
@@ -262,5 +263,5 @@ if wanted preview; then
 		exit 1
 	fi
 
-	echo "preview on http://127.0.0.1:$AVD_PREVIEW_PORT (preview.md shows how to open it)"
+	echo "preview on http://127.0.0.1:$AVD_PREVIEW_PORT; open it in any browser on this machine (preview.md)"
 fi

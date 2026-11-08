@@ -1,6 +1,4 @@
-// Streams the AVD to a browser: serves index.html and relays one WebSocket per tab to the emulator's gRPC.
-// The emulator encodes the screen itself (its Rtc service); this server only carries the WebRTC signalling
-// (JSEP) and the tab's mouse and key input. Video flows peer to peer from the emulator to the tab.
+// Relays WebRTC signalling and tab input between index.html and the emulator's gRPC; video flows peer to peer.
 import { readdirSync, readFileSync } from 'node:fs';
 import * as protoLoader from '@grpc/proto-loader';
 import { Type, type Static } from 'typebox';
@@ -143,10 +141,10 @@ const page = join(import.meta.dir, 'index.html');
 
 // Reads the emulator's discovery file on every connection, since a restarted emulator gets a new token.
 function connect(): Emulator | undefined {
-	const directory = join(
-		process.env.XDG_RUNTIME_DIR ?? `/run/user/${process.getuid?.()}`,
-		'avd/running',
-	);
+	// env.sh resolves the platform's folder (Linux and macOS differ) and up.sh passes it in.
+	const directory =
+		process.env.AVD_DISCOVERY_DIR ??
+		join(process.env.XDG_RUNTIME_DIR ?? `/run/user/${process.getuid?.()}`, 'avd/running');
 	let files: string[] = [];
 
 	try {

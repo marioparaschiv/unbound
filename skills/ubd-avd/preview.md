@@ -1,33 +1,37 @@
 # Live preview in a browser
 
-The emulator encodes its own screen as WebRTC (its gRPC `Rtc` service). `scripts/preview/server.ts` serves a page and relays signalling and input over one WebSocket per tab; video flows straight from the emulator to the tab.
+The emulator encodes its own screen as WebRTC, through its gRPC `Rtc` service. `scripts/preview/server.ts` serves a page and relays the signalling and the tab's input over one WebSocket per tab; the video flows straight from the emulator to the tab.
 
-1. **Start it**: `scripts/up.sh emu preview`. It installs the server's npm packages (`@grpc/grpc-js`, `@grpc/proto-loader`, `typebox`) on first run, and prints `preview on http://127.0.0.1:8560` (`AVD_PREVIEW_PORT`).
-2. **Open it in the T3 browser**: `preview_open` with `target: {kind: 'environment-port', port: 8560}`. If the first load gives `ERR_CONNECTION_REFUSED`, call `preview_navigate` with the same target once more.
-3. **Check**: the status line under the screen reads `connected`, and `preview_evaluate` of `document.getElementById('screen').videoWidth` is `1080`.
+1. **Start it**: `scripts/up.sh emu preview`. On first run it installs the server's npm packages (`@grpc/grpc-js`, `@grpc/proto-loader`, `typebox`), then prints `preview on http://127.0.0.1:8560` (`AVD_PREVIEW_PORT`).
+2. **Open it**:
+    - Any browser on the same machine: `http://127.0.0.1:8560`.
+    - In T3: `preview_open` with `target: {kind: 'environment-port', port: 8560}`. If the first load gives `ERR_CONNECTION_REFUSED`, call `preview_navigate` with the same target again.
+3. **Check**: the status line under the screen reads `connected` and the screen shows within a second.
 
-Outside T3, from a tailnet browser: `tailscale serve --bg --https=8560 http://127.0.0.1:8560`, then open the `https://<host>.ts.net:8560` URL `tailscale serve status` lists. The video then needs UDP from that browser to the VPS's tailnet address, which tailnet peers have.
+The server listens on `127.0.0.1` only. From another machine, forward the page (`ssh -L 8560:127.0.0.1:8560 <host>`, or `tailscale serve --bg --https=8560 http://127.0.0.1:8560`). The video still needs a direct UDP path from that browser to the emulator host, such as the same LAN or a tailnet.
+
+When the screen alone is enough, the emulator's own window also works: set `AVD_WINDOW=1`, then `up.sh --restart=emu`.
 
 ## Input it forwards
 
-| In the tab                   | Reaches Android as                                                                   |
-| ---------------------------- | ------------------------------------------------------------------------------------ |
-| Click, drag                  | A single-finger touch, through gRPC `streamInputEvent` mouse events                  |
-| Wheel                        | A drag of the same on-screen distance; the emulator ignores gRPC wheel events        |
-| Keys, with the video focused | gRPC key events. Only an AVD with `hw.keyboard=yes` receives them (`probe` has `no`) |
-| ◀ ● ■ buttons                | `adb shell input keyevent` BACK, HOME, APP_SWITCH, which work on any AVD             |
+| In the tab                   | Reaches Android as                                                                  |
+| ---------------------------- | ----------------------------------------------------------------------------------- |
+| Click, drag                  | A single-finger touch, sent as gRPC `streamInputEvent` mouse events                 |
+| Wheel                        | A drag of the same on-screen distance, since the emulator ignores gRPC wheel events |
+| Keys, with the video focused | gRPC key events, which only an AVD with `hw.keyboard=yes` receives                  |
+| ◀ ● ■ buttons                | `adb shell input keyevent` BACK, HOME, APP_SWITCH, which work on any AVD            |
 
-Agents prove changes with `adb` and `ubd eval` ([loop.md](loop.md)); the preview is for the human to watch, and for `preview_snapshot` when a screenshot of the live screen helps. `preview_act` `scroll` does not fire wheel events on the video; drag with `send({type: 'mouse', ...})` from `preview_evaluate` instead.
+The preview is for a human to watch; agents prove changes with `ready.sh`, `ubd eval` and `shot` ([loop.md](loop.md)). In T3, `preview_act` `scroll` does not fire wheel events on the video. Drag instead, by sending `{type: 'mouse', ...}` messages from `preview_evaluate`.
 
 ## Faults
 
-| Status line or log                                       | Cause and fix                                                                                                                                    |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `disconnected; retrying in 2 s`, WebSocket 503           | No emulator serves gRPC on `AVD_GRPC_PORT`: `up.sh emu`                                                                                          |
-| `Failed to start the WebRTC stream: 7 PERMISSION_DENIED` | The emulator booted without `-grpc-allowlist scripts/emulator-access.json`: `up.sh --restart=emu`                                                |
-| `connected` but black video                              | The screen is off, from an emulator booted outside `up.sh` (which keeps it on): `up.sh emu` again                                                |
-| `no video yet; reconnecting`, repeating                  | The emulator sends frames only on screen change, and the tab's repaint request (SurfaceFlinger `1004`) needs root: `up.sh emu` reruns `adb root` |
-| Stuck on `connecting`, or `failed`                       | ICE found no route; the browser cannot reach the VPS over UDP. Use the T3 browser or a tailnet peer                                              |
-| `/tmp/avd-preview.log`: `ANDROID_HOME is unset`          | The server was started without `up.sh`, which passes the environment into tmux                                                                   |
+| Status line or log                                       | Cause and fix                                                                                                                                           |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `disconnected; retrying in 2 s`, WebSocket 503           | No emulator serves gRPC on `AVD_GRPC_PORT`: `up.sh emu`                                                                                                 |
+| `Failed to start the WebRTC stream: 7 PERMISSION_DENIED` | The emulator booted without `-grpc-allowlist scripts/emulator-access.json`, for example from Android Studio: `up.sh --restart=emu`                      |
+| `connected` but black video                              | The screen is off, because the emulator was booted outside `up.sh` (which keeps it on): run `up.sh emu` again                                           |
+| `no video yet; reconnecting`, repeating                  | The emulator sends frames only when the screen changes, and the tab's repaint request (SurfaceFlinger `1004`) needs root: `up.sh emu` reruns `adb root` |
+| Stuck on `connecting`, or `failed`                       | ICE found no UDP route from the browser to the emulator host. Open the page on the same machine, LAN or tailnet                                         |
+| `avd-preview.log`: `ANDROID_HOME is unset`               | The server was started without `up.sh`, which passes the environment into tmux                                                                          |
 
-`index.html` is read on every page load, so page edits need only a reload; `server.ts` edits need `up.sh --restart=preview`.
+Page edits to `index.html` need only a reload, because the page is read on every load. Edits to `server.ts` need `up.sh --restart=preview`.

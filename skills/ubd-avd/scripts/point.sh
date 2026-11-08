@@ -14,7 +14,7 @@ data=/data/data/com.discord
 dir=$data/files/Unbound
 file=$dir/settings.json
 
-if ! timeout 10 "$ADB" -s "$AVD_SERIAL" get-state >/dev/null 2>&1; then
+if ! with_timeout 10 "$ADB" -s "$AVD_SERIAL" get-state >/dev/null 2>&1; then
 	echo "FAIL $AVD_SERIAL is not attached: scripts/up.sh emu" >&2
 	exit 1
 fi

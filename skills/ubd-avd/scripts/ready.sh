@@ -22,12 +22,12 @@ while (($#)); do
 	shift
 done
 
-if ! timeout 10 "$ADB" -s "$AVD_SERIAL" get-state >/dev/null 2>&1; then
+if ! with_timeout 10 "$ADB" -s "$AVD_SERIAL" get-state >/dev/null 2>&1; then
 	echo "FAIL $AVD_SERIAL is not attached: scripts/up.sh emu" >&2
 	exit 1
 fi
 
-if ! ss -Hltn "sport = :$AVD_BRIDGE_PORT" | grep -q .; then
+if ! port_busy "$AVD_BRIDGE_PORT"; then
 	echo "FAIL nothing listens on the bridge port $AVD_BRIDGE_PORT: scripts/up.sh bridge" >&2
 	exit 1
 fi
@@ -40,7 +40,7 @@ adb_avd shell wm dismiss-keyguard >/dev/null 2>&1
 ((relaunch)) && adb_avd shell am force-stop com.discord
 
 foreground() {
-	adb_avd shell dumpsys activity activities 2>/dev/null | grep -m1 topResumedActivity | grep -q 'com.discord/'
+	adb_avd shell dumpsys activity activities 2>/dev/null | grep -m1 -E 'topResumedActivity|mResumedActivity' | grep -q 'com.discord/'
 }
 
 launch() {
@@ -50,7 +50,7 @@ launch() {
 # The visible text on screen, one label per line, from the accessibility tree.
 screen_text() {
 	adb_avd shell uiautomator dump /sdcard/ubd-avd-ui.xml >/dev/null 2>&1
-	adb_avd shell cat /sdcard/ubd-avd-ui.xml 2>/dev/null | grep -o 'text="[^"]\+"' | cut -d'"' -f2 | awk '!seen[$0]++'
+	adb_avd shell cat /sdcard/ubd-avd-ui.xml 2>/dev/null | grep -oE 'text="[^"]+"' | cut -d'"' -f2 | awk '!seen[$0]++'
 }
 
 signed_out() {
