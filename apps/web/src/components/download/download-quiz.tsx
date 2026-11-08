@@ -110,66 +110,52 @@ function ResultBody({ id, children, actions }: ResultBodyProps) {
 function DownloadQuiz({ builds }: DownloadQuizProps) {
 	return (
 		<InstallQuiz>
-			<InstallResult id='ios-source' title='Add the Unbound source to your sideloading tool'>
+			<InstallResult id='ios-source' title='iOS source'>
 				<ResultBody id='ios-source'>
-					<p>
-						Open your tool with the source added, then install Unbound from it. Using
-						another tool? Add the URL by hand.
-					</p>
+					<p>Add the source, then install Unbound from it. Other tools: paste the URL.</p>
 					<Badges apps={SIDELOADERS} />
 					<CopyField label='sideloading source' value={APP_SOURCE_URL} />
 				</ResultBody>
 			</InstallResult>
 
-			<InstallResult id='ios-ipa' title='Download the app file'>
+			<InstallResult id='ios-ipa' title='iOS IPA'>
 				<ResultBody id='ios-ipa' actions={<FileButton builds={builds} kind='ipa' />}>
-					<p>Open the file in your sideloading tool and install it.</p>
+					<p>Open it in your sideloading tool.</p>
 				</ResultBody>
 			</InstallResult>
 
-			<InstallResult id='ios-no-tool' title='Get a sideloading tool first'>
+			<InstallResult id='ios-no-tool' title='Sideloading tool'>
 				<ResultBody id='ios-no-tool'>
-					<p>
-						Apple only lets you install apps from the App Store. Set up one of these,
-						then come back and tap Back.
-					</p>
+					<p>Set up one of these first, then tap Back.</p>
 					<Badges apps={SIDELOADING_TOOLS} action='Get' external />
 				</ResultBody>
 			</InstallResult>
 
-			<InstallResult id='ios-jailbroken' title='Install the jailbreak tweak'>
+			<InstallResult id='ios-jailbroken' title='iOS Deb'>
 				<ResultBody id='ios-jailbroken' actions={<FileButton builds={builds} kind='deb' />}>
-					<p>
-						Add the repo to your package manager and install Unbound, or download the
-						package below.
-					</p>
+					<p>Add the repo and install Unbound, or download the package.</p>
 					<Badges apps={PACKAGE_MANAGERS} />
 					<CopyField label='jailbreak repo' value={JAILBREAK_REPO_URL} />
 				</ResultBody>
 			</InstallResult>
 
-			<InstallResult id='android-patched' title='Install Discord with Unbound built in'>
+			<InstallResult id='android-patched' title='APK'>
 				<ResultBody
 					id='android-patched'
 					actions={<FileButton builds={builds} kind='apks' />}
 				>
-					<p>
-						Uninstall Discord first: this one is signed differently. Obtainium installs
-						Unbound and tells you when an update is out. Or install the file with a
-						split-APK installer such as SAI.
-					</p>
+					<p>Uninstall Discord first. Install with Obtainium for updates, or with SAI.</p>
 					<Badges apps={OBTAINIUM} />
 				</ResultBody>
 			</InstallResult>
 
-			<InstallResult id='android-rooted' title='Install the Xposed module'>
+			<InstallResult id='android-rooted' title='Xposed module'>
 				<ResultBody
 					id='android-rooted'
 					actions={<FileButton builds={builds} kind='xposed' />}
 				>
 					<p>
-						Install the module, enable it in Vector or LSPosed, scope it to Discord and
-						restart Discord.
+						Enable it in Vector or LSPosed, scope it to Discord, then restart Discord.
 					</p>
 				</ResultBody>
 			</InstallResult>

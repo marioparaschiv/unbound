@@ -34,12 +34,12 @@ export const INSTALL_QUESTIONS: Record<InstallQuestionId, InstallQuestion> = {
 		title: 'What are you installing on?',
 		answers: [
 			{ label: 'iPhone or iPad', icon: 'apple', next: 'jailbreak' },
-			{ label: 'Android', detail: 'Phone or tablet', icon: 'mobile', next: 'root' },
+			{ label: 'Android', icon: 'mobile', next: 'root' },
 		],
 	},
 	jailbreak: {
 		title: 'Is your device jailbroken?',
-		help: "If you're not sure, it isn't. A jailbreak is something you set up on purpose.",
+		help: "If you're not sure, it isn't.",
 		answers: [
 			{
 				label: 'No',
@@ -51,19 +51,19 @@ export const INSTALL_QUESTIONS: Record<InstallQuestionId, InstallQuestion> = {
 			{
 				label: 'Yes',
 				summary: 'Jailbroken',
-				detail: 'A rootless jailbreak, with Sileo or a similar package manager',
+				detail: 'Rootless, with Sileo or Zebra',
 				icon: 'wrench',
 				next: 'ios-jailbroken',
 			},
 		],
 	},
 	sideloader: {
-		title: 'Which app do you use to install apps from outside the App Store?',
-		help: 'This is your sideloading tool.',
+		title: 'Which sideloading tool do you use?',
+		help: 'The app you install apps with outside the App Store.',
 		answers: [
 			{
 				label: 'SideStore, Feather or AltStore',
-				detail: 'Or another tool that supports sources',
+				detail: 'Or any tool with sources',
 				icon: 'download',
 				next: 'ios-source',
 			},
@@ -77,8 +77,8 @@ export const INSTALL_QUESTIONS: Record<InstallQuestionId, InstallQuestion> = {
 		],
 	},
 	root: {
-		title: 'Is your device rooted, with Vector or LSPosed installed?',
-		help: "If you're not sure, it isn't. Pick No.",
+		title: 'Is your device rooted with Vector or LSPosed?',
+		help: "If you're not sure, it isn't.",
 		answers: [
 			{
 				label: 'No',
@@ -90,7 +90,6 @@ export const INSTALL_QUESTIONS: Record<InstallQuestionId, InstallQuestion> = {
 			{
 				label: 'Yes',
 				summary: 'Rooted',
-				detail: 'Rooted, with an Xposed framework',
 				icon: 'wrench',
 				next: 'android-rooted',
 			},
