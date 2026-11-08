@@ -166,7 +166,10 @@ if wanted emu; then
 		# losing the Discord login and everything installed since. AVD_WINDOW=1 shows the emulator's own window.
 		window=-no-window
 		[[ ${AVD_WINDOW:-0} == 1 ]] && window=
-		start emu "'$EMULATOR' -avd '$AVD_NAME' -port $AVD_CONSOLE_PORT -grpc $AVD_GRPC_PORT -grpc-use-token -grpc-allowlist '$AVD_ALLOWLIST' $window -no-audio -no-boot-anim -gpu $AVD_GPU -no-snapshot" || true
+		emulator="'$EMULATOR' -avd '$AVD_NAME' -port $AVD_CONSOLE_PORT -grpc $AVD_GRPC_PORT -grpc-use-token -grpc-allowlist '$AVD_ALLOWLIST' $window -no-audio -no-boot-anim -gpu $AVD_GPU -no-snapshot"
+		# An emulator that exits on its own boots again after 5 s, and the log keeps when and how it exited.
+		# --restart=emu and Ctrl+C end the loop by ending the tmux session.
+		start emu "while :; do echo \"== \$(date '+%F %T') starting $AVD_NAME\"; $emulator; echo \"== \$(date '+%F %T') $AVD_NAME exited with \$?\"; sleep 5; done" || true
 	fi
 
 	"$ADB" start-server >/dev/null 2>&1

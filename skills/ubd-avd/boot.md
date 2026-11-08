@@ -10,7 +10,7 @@
 
 2. Check: it prints `emulator-<port> booted` and `preview on http://127.0.0.1:8560`, and exits 0.
 
-Stop the emulator with `adb -s <serial> emu kill`. To start the emulator, `up.sh` waits for `sys.boot_completed`, switches adbd to root, and keeps the screen on and unlocked. It boots with `-no-snapshot`: loading the AVD's `default_boot` snapshot rolls the disk back to that moment and loses the Discord login.
+Stop the emulator with `up.sh --restart=emu` or `tmux kill-session -t avd-emu`. `avd-emu` boots the emulator again 5 s after it exits on its own, so `adb emu kill` alone only restarts it. Each start and exit is a `== <time>` line in `avd-emu.log`; read those first when the AVD dropped. To start the emulator, `up.sh` waits for `sys.boot_completed`, switches adbd to root, and keeps the screen on and unlocked. It boots with `-no-snapshot`: loading the AVD's `default_boot` snapshot rolls the disk back to that moment and loses the Discord login.
 
 ## What up.sh repairs on its own
 
@@ -21,6 +21,7 @@ Stop the emulator with `adb -s <serial> emu kill`. To start the emulator, `up.sh
 | A dead emulator's discovery file (`pid_*.ini`) is left behind           | Removes it and boots a fresh emulator                               |
 | An emulator is already running, for example started from Android Studio | Uses its ports and serial instead of the defaults                   |
 | The emulator exits during boot                                          | Fails at once with the tail of `avd-emu.log`                        |
+| The emulator exits after booting                                        | `avd-emu` boots it again; Discord keeps its data                    |
 | Magisk's `su` denies the shell user, as it does after a cold boot       | Runs `adb root`; scripts try a root adb shell first and `su` second |
 | The screen is off or locked                                             | `svc power stayon true`, no screen timeout, lock screen disabled    |
 | There are no `node_modules` in this checkout or in `scripts/preview`    | `bun install --frozen-lockfile`                                     |
@@ -34,6 +35,7 @@ Stop the emulator with `adb -s <serial> emu kill`. To start the emulator, `up.sh
 | `FAIL port <n> is taken by tmux session <name> (<path>)` | A live session from an existing checkout. Stop it, or set the port's `AVD_*_PORT` ([setup.md](setup.md))      |
 | `FAIL /dev/kvm is not writable`                          | Linux only: `sudo usermod -aG kvm $USER`, then log in again                                                   |
 | `FAIL ... did not finish booting in 240 s`               | Read `avd-emu.log` in `AVD_LOG_DIR`. Another emulator on the same AVD shows in `pgrep -af qemu`               |
+| `avd-emu.log`: `Cannot find AVD system path`             | The SDK lacks the AVD's system image. Set `ANDROID_HOME` to the SDK that has it ([setup.md](setup.md) step 2) |
 | `WARN ... has no root shell`                             | `adb root` failed too. Run the loader health check below; restore root as in [setup.md](setup.md) step 3      |
 
 ## Loader health check
