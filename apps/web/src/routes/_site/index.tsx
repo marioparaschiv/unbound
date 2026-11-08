@@ -151,9 +151,7 @@ function HomePage() {
 				</h2>
 				<div className='flex gap-4 mt-4 animate-reveal' style={ACTIONS_STYLE}>
 					<Button asChild variant='default' size='lg' className='min-w-40'>
-						<Link to='/docs/user/$' params={{ _splat: 'installing' }}>
-							Get Started
-						</Link>
+						<Link to='/install'>Install</Link>
 					</Button>
 					<Button asChild variant='secondary' size='lg' className='min-w-40'>
 						<Link to='/addons/plugins'>Browse Addons</Link>

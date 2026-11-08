@@ -18,6 +18,7 @@ import { Route as SiteAccountRouteImport } from './routes/_site/account'
 import { Route as SiteDashboardRouteImport } from './routes/_site/dashboard'
 import { Route as SiteDocsRouteRouteImport } from './routes/_site/docs/route'
 import { Route as SiteFaqRouteImport } from './routes/_site/faq'
+import { Route as SiteInstallRouteImport } from './routes/_site/install'
 import { Route as SiteLicenseRouteImport } from './routes/_site/license'
 import { Route as SitePluginsRouteImport } from './routes/_site/plugins'
 import { Route as SitePrivacyRouteImport } from './routes/_site/privacy'
@@ -132,6 +133,11 @@ const SiteDocsRouteRoute = SiteDocsRouteRouteImport.update({
 const SiteFaqRoute = SiteFaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => SiteRouteRoute,
+} as any)
+const SiteInstallRoute = SiteInstallRouteImport.update({
+  id: '/install',
+  path: '/install',
   getParentRoute: () => SiteRouteRoute,
 } as any)
 const SiteLicenseRoute = SiteLicenseRouteImport.update({
@@ -514,6 +520,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof SiteAccountRoute
   '/dashboard': typeof SiteDashboardRoute
   '/faq': typeof SiteFaqRoute
+  '/install': typeof SiteInstallRoute
   '/license': typeof SiteLicenseRoute
   '/plugins': typeof SitePluginsRoute
   '/privacy': typeof SitePrivacyRoute
@@ -594,6 +601,7 @@ export interface FileRoutesByTo {
   '/account': typeof SiteAccountRoute
   '/dashboard': typeof SiteDashboardRoute
   '/faq': typeof SiteFaqRoute
+  '/install': typeof SiteInstallRoute
   '/license': typeof SiteLicenseRoute
   '/plugins': typeof SitePluginsRoute
   '/privacy': typeof SitePrivacyRoute
@@ -675,6 +683,7 @@ export interface FileRoutesById {
   '/_site/account': typeof SiteAccountRoute
   '/_site/dashboard': typeof SiteDashboardRoute
   '/_site/faq': typeof SiteFaqRoute
+  '/_site/install': typeof SiteInstallRoute
   '/_site/license': typeof SiteLicenseRoute
   '/_site/plugins': typeof SitePluginsRoute
   '/_site/privacy': typeof SitePrivacyRoute
@@ -759,6 +768,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/dashboard'
     | '/faq'
+    | '/install'
     | '/license'
     | '/plugins'
     | '/privacy'
@@ -839,6 +849,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/dashboard'
     | '/faq'
+    | '/install'
     | '/license'
     | '/plugins'
     | '/privacy'
@@ -919,6 +930,7 @@ export interface FileRouteTypes {
     | '/_site/account'
     | '/_site/dashboard'
     | '/_site/faq'
+    | '/_site/install'
     | '/_site/license'
     | '/_site/plugins'
     | '/_site/privacy'
@@ -1089,6 +1101,13 @@ declare module '@tanstack/react-router' {
       path: '/faq'
       fullPath: '/faq'
       preLoaderRoute: typeof SiteFaqRouteImport
+      parentRoute: typeof SiteRouteRoute
+    }
+    '/_site/install': {
+      id: '/_site/install'
+      path: '/install'
+      fullPath: '/install'
+      preLoaderRoute: typeof SiteInstallRouteImport
       parentRoute: typeof SiteRouteRoute
     }
     '/_site/license': {
@@ -1686,6 +1705,7 @@ interface SiteRouteRouteChildren {
   SiteAccountRoute: typeof SiteAccountRoute
   SiteDashboardRoute: typeof SiteDashboardRoute
   SiteFaqRoute: typeof SiteFaqRoute
+  SiteInstallRoute: typeof SiteInstallRoute
   SiteLicenseRoute: typeof SiteLicenseRoute
   SitePluginsRoute: typeof SitePluginsRoute
   SitePrivacyRoute: typeof SitePrivacyRoute
@@ -1708,6 +1728,7 @@ const SiteRouteRouteChildren: SiteRouteRouteChildren = {
   SiteAccountRoute: SiteAccountRoute,
   SiteDashboardRoute: SiteDashboardRoute,
   SiteFaqRoute: SiteFaqRoute,
+  SiteInstallRoute: SiteInstallRoute,
   SiteLicenseRoute: SiteLicenseRoute,
   SitePluginsRoute: SitePluginsRoute,
   SitePrivacyRoute: SitePrivacyRoute,

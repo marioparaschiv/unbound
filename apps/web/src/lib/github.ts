@@ -42,6 +42,23 @@ export type RepositoryExtras = {
 	latestRelease: RepositoryRelease | null;
 };
 
+/** A file attached to a release. */
+export type GitHubReleaseAsset = {
+	name: string;
+	size: number;
+	url: string;
+};
+
+/** A published release with its files; drafts are never listed. */
+export type GitHubRelease = {
+	tag: string;
+	name: string | null;
+	prerelease: boolean;
+	publishedAt: string | null;
+	url: string;
+	assets: GitHubReleaseAsset[];
+};
+
 export type GitHubClient = ReturnType<typeof createGitHubClient>;
 
 const repositoryResponseSchema = Type.Object({
@@ -103,6 +120,24 @@ const releaseResponseSchema = Type.Object({
 	published_at: Type.Union([Type.String({ format: 'date-time' }), Type.Null()]),
 	html_url: Type.String({ format: 'url' }),
 });
+
+const releasesResponseSchema = Type.Array(
+	Type.Object({
+		tag_name: Type.String({ minLength: 1 }),
+		name: Type.Union([Type.String(), Type.Null()]),
+		draft: Type.Boolean(),
+		prerelease: Type.Boolean(),
+		published_at: Type.Union([Type.String({ format: 'date-time' }), Type.Null()]),
+		html_url: Type.String({ format: 'url' }),
+		assets: Type.Array(
+			Type.Object({
+				name: Type.String({ minLength: 1 }),
+				size: Type.Integer({ minimum: 0 }),
+				browser_download_url: Type.String({ format: 'url' }),
+			}),
+		),
+	}),
+);
 
 const userRepositoriesResponseSchema = Type.Array(
 	Type.Object({
@@ -444,6 +479,33 @@ export function createGitHubClient(env: Env, token: string | null) {
 						}
 					: null,
 			};
+		},
+
+		/**
+		 * @description Lists the newest published releases with their files, newest first.
+		 * @param repository The repository as `owner/name`.
+		 * @returns Up to 100 releases; drafts are left out.
+		 */
+		async listReleases(repository: string): Promise<GitHubRelease[]> {
+			const found = await get(
+				`/repos/${repository}/releases?per_page=100`,
+				releasesResponseSchema,
+			);
+
+			return (found ?? [])
+				.filter((release) => !release.draft)
+				.map((release) => ({
+					tag: release.tag_name,
+					name: release.name,
+					prerelease: release.prerelease,
+					publishedAt: release.published_at,
+					url: release.html_url,
+					assets: release.assets.map((asset) => ({
+						name: asset.name,
+						size: asset.size,
+						url: asset.browser_download_url,
+					})),
+				}));
 		},
 
 		/**
