@@ -1,6 +1,7 @@
 import {
 	IconBook,
 	IconBookmark,
+	IconDownload,
 	IconHouse,
 	IconMenu2,
 	IconPlug,
@@ -32,6 +33,7 @@ type NavRoute = {
 const ROUTES: NavRoute[] = [
 	{ path: '/', title: 'Home', icon: IconHouse },
 	{ path: '/addons', title: 'Addons', icon: IconPlug },
+	{ path: '/install', title: 'Install', icon: IconDownload },
 	{ path: '/team', title: 'Team', icon: IconUsers },
 	{ path: '/docs', title: 'Docs', icon: IconBook },
 	{ path: '/faq', title: 'FAQ', icon: IconBookmark },
