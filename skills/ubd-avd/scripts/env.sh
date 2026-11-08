@@ -18,13 +18,37 @@ if [[ -f $env_file ]]; then
 	done <"$env_file"
 fi
 
-# The SDK whose emulator runs the AVD: ANDROID_HOME, ANDROID_SDK_ROOT, or the usual install folders.
+# Whether an SDK holds the system image an AVD boots from (its config.ini `image.sysdir.1`). One machine can have
+# several SDKs, and an emulator from one that lacks the image fails with "Cannot find AVD system path".
+sdk_has_image() {
+	local config sysdir
+
+	for config in "$HOME"/.android/avd/${2:-*}.avd/config.ini; do
+		sysdir=$(grep -m1 '^image.sysdir.1' "$config" 2>/dev/null | cut -d= -f2- | tr -d ' ')
+		[[ -n $sysdir && -d $1/$sysdir ]] && return 0
+	done
+
+	return 1
+}
+
+# The SDK whose emulator runs the AVD: ANDROID_HOME, ANDROID_SDK_ROOT, else the usual install folder that holds the
+# AVD's system image (AVD_NAME's, or unbound_root's or unbound_root_x86's), else the first with an emulator.
 : "${ANDROID_HOME:=${ANDROID_SDK_ROOT:-}}"
 
 if [[ -z $ANDROID_HOME ]]; then
+	sdks=()
+
 	for candidate in "$HOME/Library/Android/sdk" "$HOME/Android/Sdk" "$HOME/android-sdk"; do
-		[[ -x $candidate/emulator/emulator ]] && ANDROID_HOME=$candidate && break
+		[[ -x $candidate/emulator/emulator ]] && sdks+=("$candidate")
 	done
+
+	for avd in ${AVD_NAME:-unbound_root unbound_root_x86}; do
+		for candidate in "${sdks[@]}"; do
+			sdk_has_image "$candidate" "$avd" && ANDROID_HOME=$candidate && break 2
+		done
+	done
+
+	: "${ANDROID_HOME:=${sdks[0]:-}}"
 fi
 
 if [[ -z $ANDROID_HOME || ! -x $ANDROID_HOME/emulator/emulator || ! -x $ANDROID_HOME/platform-tools/adb ]]; then
