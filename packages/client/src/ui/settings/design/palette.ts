@@ -3,6 +3,7 @@ import type { Theme as ThemeData } from '@unbound-app/types';
 import { resolveThemeColor } from '~/themes/colors';
 import { parseThemeBundle } from '~/themes/bundle';
 import type { Addon } from '~/addons/addon';
+import { Manager } from '~/addons/manager';
 
 /** The four colours a picker swatch and preview draw an addon with. */
 export type Palette = {
@@ -11,6 +12,14 @@ export type Palette = {
 	accent: string;
 	text: string;
 };
+
+// Discord's background tiers, from the server rail to the panels. A theme that paints them alike is flat; one that
+// paints them apart reads as a gradient.
+const BACKGROUND_TOKENS = [
+	'BACKGROUND_BASE_LOWEST',
+	'BACKGROUND_BASE_LOWER',
+	'BACKGROUND_BASE_LOW',
+];
 
 /** What a theme that leaves a colour unset falls back to: Discord's own colours for its base theme. */
 const FALLBACKS: Record<ThemeData['type'], Palette> = {
@@ -54,7 +63,8 @@ export function themeOf(addon: Addon): ThemeData | null {
 		return addon.instance as ThemeData;
 	}
 
-	if (addon.manifest.type !== 'theme' || !addon.bundle) return null;
+	// The theme manager owns it: a manifest's `type` is optional, so most themes leave it out.
+	if (Manager.for('theme').getEntity(addon.id) !== addon || !addon.bundle) return null;
 
 	if (!parsed.has(addon)) {
 		try {
@@ -66,6 +76,17 @@ export function themeOf(addon: Addon): ThemeData | null {
 	}
 
 	return parsed.get(addon) ?? null;
+}
+
+/**
+ * @description Reads the distinct colours a theme paints Discord's background tiers with, in tier order.
+ * @param theme The theme.
+ * @returns Its background colours; fewer than two when the theme's background is flat.
+ */
+export function backgroundsOf(theme: ThemeData): string[] {
+	const colors = BACKGROUND_TOKENS.map((name) => resolveThemeColor(theme, name)?.toLowerCase());
+
+	return [...new Set(colors.filter((color) => color !== undefined))];
 }
 
 /**
