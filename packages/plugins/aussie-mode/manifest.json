@@ -31,5 +31,12 @@
 			]
 		}
 	},
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "82c847a7d5f2d6c439179161a2c7e0b4d35cb288dbb11459a014e141de6ba3b8798778daab44b606bf457b3a886f0db8a3d506db6963d753685afd3e2e57ad42"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "HJVw7VtaTiOwF7Tf9z/o/j+8mi8TgvZLD0/9l0KTdJiHQPIpIOgYAWKUgaiXwBkcLyNALRW5b7QY8u7lkFFoDA=="
+	}
 }

@@ -18,5 +18,12 @@
 	],
 	"version": "1.0.0",
 	"icon": "EyeSlashIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "3d0fb6c900675fa4df1e1ad38203eb63be004a6f696df90055a9d143630d91d558e78d001b4d85c2e780ec0d4532cf9e1cf84d30775039fcf072c2be8d4e3c1b"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "6546J6eOcdyuyzDX7PfqCLZsiEFqngAIz+E4Dr7QtpomslGdOQ6ehAYAnJ4pEnMBeimLKSC1pZ6xIWWON34TCQ=="
+	}
 }

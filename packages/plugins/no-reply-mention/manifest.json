@@ -27,5 +27,12 @@
 	"version": "1.0.5",
 	"icon": "ic_swipe_reply_24px",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"bytecode": {
+		"98": "3f22fdc83229582bcc704dd4b9029299bb4a741eac78f5d08875367abd18a7af28b1c4bc788cc4e6a22ab7e48cb7fa10582c406ee4a41714e81de9b9ca068669"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "eUnRdXHql19LeWRldU6xtdC5r+TQEQGgZLWWre39DX04cBnvAsc3uzW+iZBrgmBP8K2stCAK/Onxa87RYTIwAQ=="
+	}
 }

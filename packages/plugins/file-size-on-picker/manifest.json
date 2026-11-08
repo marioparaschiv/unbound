@@ -16,5 +16,24 @@
 	"icon": "ImageIcon",
 	"minNativePluginApi": "1.0.0",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"platforms": {
+		"ios": {},
+		"android": {
+			"capabilities": [
+				"native.java.batch",
+				"native.java.classes",
+				"native.java.fields",
+				"native.java.invoke",
+				"native.java.invokeAsync"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "80e5e9c57aaac49055f8e1db9d7918fb7745cc9e7d9de1f032144e0c085e997c6427694b0ff27be509a8e885a6c4798a5b5afb473423f55ada3c5e4560f1d4cf"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "nfoOM3znuEebohZMXb8A6mmfvtgtrpL3aUhcFImvfUYGm+yOlGTy3Bns0+I5nxTXwpHV03xdbqIU3DuJfrEkBw=="
+	}
 }
