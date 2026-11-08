@@ -31,7 +31,7 @@
 			"typescript": "^7.0.2",
 			"possess": "^1.1.0",
 			"@types/bun": "latest",
-			"better-auth": "1.7.16"
+			"better-auth": "1.7.18"
 		},
 		"catalogs": {
 			"react": {
@@ -85,13 +85,13 @@
 		"@stylistic/eslint-plugin": "^5.10.0",
 		"@types/bun": "catalog:",
 		"dts-bundle-generator": "^9.5.1",
-		"eslint-plugin-jsdoc": "^65.4.3",
+		"eslint-plugin-jsdoc": "^65.4.4",
 		"eslint-plugin-perfectionist": "^5.13.0",
 		"eslint-plugin-unicorn": "^79.0.0",
 		"lefthook": "^2.2.2",
 		"oxfmt": "^0.76.0",
 		"oxlint": "^1.91.0",
-		"oxlint-tsgolint": "^7.0.2005",
+		"oxlint-tsgolint": "^7.0.2006",
 		"semantic-release": "^25.0.9",
 		"ts-morph": "^28.0.0",
 		"typescript": "catalog:"

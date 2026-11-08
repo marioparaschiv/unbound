@@ -30,12 +30,12 @@
 	},
 	"devDependencies": {
 		"@jridgewell/trace-mapping": "^0.3.31",
-		"@swc/core": "^1.16.21",
+		"@swc/core": "^1.16.22",
 		"@types/bun": "catalog:",
 		"@types/react": "catalog:react",
 		"react": "catalog:react",
 		"react-native": "catalog:react",
-		"react-native-gesture-handler": "^3.4.0",
+		"react-native-gesture-handler": "^3.5.0",
 		"react-native-reanimated": "^4.2.1"
 	},
 	"peerDependencies": {

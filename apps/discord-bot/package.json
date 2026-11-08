@@ -13,7 +13,7 @@
 	},
 	"dependencies": {
 		"@opentelemetry/api": "^1.10.0",
-		"@opentelemetry/exporter-logs-otlp-http": "^0.300.0",
+		"@opentelemetry/exporter-logs-otlp-http": "^0.301.0",
 		"@opentelemetry/resources": "^3.0.0",
 		"@opentelemetry/sdk-logs": "^3.0.0",
 		"@sapphire/decorators": "^6.2.0",
