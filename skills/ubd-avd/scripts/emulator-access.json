@@ -1,0 +1,12 @@
+{
+	"unprotected": [],
+	"allowlist": [
+		{
+			"iss": "android-studio",
+			"allowed": [
+				"/android.emulation.control.EmulatorController/.*",
+				"/android.emulation.control.Rtc/.*"
+			]
+		}
+	]
+}

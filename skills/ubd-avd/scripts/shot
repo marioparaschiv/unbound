@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Saves a PNG of the AVD's screen and prints the text on it, as evidence and as tap targets.
+# Usage: shot <path.png> [--bounds]
+#   --bounds  print each label with its tap point in device pixels (x y), for adb shell input tap
+set -euo pipefail
+. "$(dirname "$0")/env.sh"
+
+out=${1:-}
+[[ -n $out && $out == *.png ]] || { sed -n '3,4s/^# //p' "$0" >&2; exit 2; }
+bounds=0
+[[ ${2:-} == --bounds ]] && bounds=1
+
+mkdir -p "$(dirname "$out")"
+adb_avd shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1
+adb_avd exec-out screencap -p >"$out"
+[[ -s $out ]] || { echo "FAIL screencap wrote nothing; is $AVD_SERIAL attached? scripts/up.sh emu" >&2; exit 1; }
+echo "saved $out"
+
+adb_avd shell uiautomator dump /sdcard/ubd-avd-ui.xml >/dev/null 2>&1
+xml=$(adb_avd shell cat /sdcard/ubd-avd-ui.xml 2>/dev/null)
+
+if ((bounds)); then
+	# Each node with text: its label and the centre of its bounds="[x1,y1][x2,y2]".
+	grep -oE 'text="[^"]+"[^>]*bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"' <<<"$xml" |
+		sed -E 's/text="([^"]+)".*bounds="\[([0-9]+),([0-9]+)\]\[([0-9]+),([0-9]+)\]"/\1\t\2 \3 \4 \5/' |
+		awk -F'\t' '{ split($2, b, " "); printf "%s\t%d %d\n", $1, (b[1] + b[3]) / 2, (b[2] + b[4]) / 2 }'
+else
+	grep -oE 'text="[^"]+"' <<<"$xml" | cut -d'"' -f2 | awk '!seen[$0]++'
+fi
