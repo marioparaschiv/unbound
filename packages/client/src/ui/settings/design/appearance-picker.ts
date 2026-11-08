@@ -1,4 +1,3 @@
-import type { StyleProp, ViewStyle } from 'react-native';
 import type { ReactElement } from 'react';
 
 import { findByFilePathLazy, findByPropsLazy } from '~/metro/wrappers';
@@ -94,22 +93,6 @@ type BackdropModule = {
 
 /** Converts the picker's swatches into the backdrop behind its preview. */
 export const Backdrop: BackdropModule = findByPropsLazy('convertThemesToAnimatedThemes');
-
-type SwatchGradientProps = {
-	customTheme?: PickerTheme;
-	mix?: boolean;
-	componentStyles?: StyleProp<ViewStyle>;
-};
-
-type ThemedGradientModule = {
-	/** Draws a gradient swatch; with `mix` it blends the colours 20% towards black, or 50% towards white on light. */
-	CustomThemedGradient: (props: SwatchGradientProps) => ReactElement | null;
-};
-
-/** Discord's gradient views, among them the one a gradient swatch draws with. */
-export const ThemedGradient: ThemedGradientModule = findByFilePathLazy(
-	'modules/client_themes/native/ThemedGradient.tsx',
-);
 
 /**
  * @description Loads Discord's App Theme screen. Discord loads its modules only when the screen opens,
