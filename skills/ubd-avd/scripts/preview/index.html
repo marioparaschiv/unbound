@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>AVD preview</title>
+		<style>
+			:root {
+				color-scheme: dark;
+				font:
+					13px/1.4 system-ui,
+					sans-serif;
+			}
+			body {
+				margin: 0;
+				height: 100vh;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				background: #111;
+				color: #ccc;
+			}
+			#screen {
+				flex: 1;
+				min-height: 0;
+				max-width: 100vw;
+				aspect-ratio: var(--aspect, 9 / 20);
+				background: #000;
+				touch-action: none;
+				cursor: pointer;
+				outline: none;
+			}
+			nav {
+				display: flex;
+				gap: 6px;
+				align-items: center;
+				padding: 6px;
+			}
+			button {
+				font: inherit;
+				padding: 4px 10px;
+			}
+		</style>
+	</head>
+	<body>
+		<video id="screen" autoplay muted playsinline tabindex="0"></video>
+		<nav>
+			<button data-key="back" title="Back">◀</button>
+			<button data-key="home" title="Home">●</button>
+			<button data-key="recents" title="Recents">■</button>
+			<span id="status">connecting…</span>
+		</nav>
+		<script>
+			const video = document.getElementById('screen');
+			const status = document.getElementById('status');
+			const display = { width: 1080, height: 2400 };
+			let socket;
+			let peer;
+
+			function setStatus(text) {
+				status.textContent = text;
+			}
+
+			function send(message) {
+				if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(message));
+			}
+
+			// The emulator offers; the tab answers. Candidates flow both ways through the server.
+			async function onJsep(raw) {
+				const signal = JSON.parse(raw);
+
+				if (signal.start) {
+					peer = new RTCPeerConnection(signal.start);
+					// Audio and display arrive as separate streams; the emulator runs with -no-audio, so keep the display.
+					peer.ontrack = (event) => {
+						if (event.track.kind === 'video')
+							video.srcObject = new MediaStream([event.track]);
+					};
+					peer.onicecandidate = (event) =>
+						event.candidate &&
+						send({ type: 'jsep', message: event.candidate.toJSON() });
+					// A restarted emulator drops the peer; reconnecting asks the new one for a stream.
+					peer.onconnectionstatechange = () => {
+						setStatus(peer.connectionState);
+						if (
+							peer.connectionState === 'failed' ||
+							peer.connectionState === 'disconnected'
+						)
+							socket.close();
+
+						// The emulator sends frames only when the screen changes, so a new viewer of a still screen asks
+						// for a repaint. If none arrives anyway, a fresh connection is the last resort.
+						if (peer.connectionState === 'connected') {
+							const watched = socket;
+
+							send({ type: 'repaint' });
+
+							setTimeout(() => {
+								if (socket === watched && video.videoWidth === 0) {
+									setStatus('no video yet; reconnecting');
+									socket.close();
+								}
+							}, 8000);
+						}
+					};
+				}
+
+				if (signal.sdp) {
+					await peer.setRemoteDescription(signal);
+
+					if (signal.type === 'offer') {
+						const answer = await peer.createAnswer();
+						await peer.setLocalDescription(answer);
+						send({ type: 'jsep', message: { type: answer.type, sdp: answer.sdp } });
+					}
+				}
+
+				if (signal.candidate) await peer.addIceCandidate(signal);
+				if (signal.bye) setStatus('emulator ended the stream');
+			}
+
+			function connect() {
+				const scheme = location.protocol === 'https:' ? 'wss' : 'ws';
+				socket = new WebSocket(
+					`${scheme}://${location.host}${location.pathname.replace(/\/?$/, '/')}ws`,
+				);
+				socket.onmessage = ({ data }) => {
+					const message = JSON.parse(data);
+
+					if (message.type === 'jsep')
+						onJsep(message.message).catch((error) =>
+							setStatus(`signalling failed: ${error}`),
+						);
+					if (message.type === 'error') setStatus(message.text);
+					if (message.type === 'display') {
+						Object.assign(display, message);
+						video.style.setProperty('--aspect', `${message.width} / ${message.height}`);
+					}
+				};
+				socket.onclose = () => {
+					peer?.close();
+					video.srcObject = null;
+					setStatus('disconnected; retrying in 2 s');
+					setTimeout(connect, 2000);
+				};
+			}
+
+			function devicePoint(event) {
+				const box = video.getBoundingClientRect();
+				const x = Math.round(((event.clientX - box.left) / box.width) * display.width);
+				const y = Math.round(((event.clientY - box.top) / box.height) * display.height);
+
+				return {
+					x: Math.max(0, Math.min(display.width - 1, x)),
+					y: Math.max(0, Math.min(display.height - 1, y)),
+				};
+			}
+
+			video.addEventListener('pointerdown', (event) => {
+				video.focus();
+				video.setPointerCapture(event.pointerId);
+				send({ type: 'mouse', ...devicePoint(event), buttons: 1 });
+			});
+			video.addEventListener('pointermove', (event) => {
+				if (event.buttons & 1) send({ type: 'mouse', ...devicePoint(event), buttons: 1 });
+			});
+			video.addEventListener('pointerup', (event) =>
+				send({ type: 'mouse', ...devicePoint(event), buttons: 0 }),
+			);
+			// The emulator ignores gRPC wheel events, so a wheel burst becomes one drag, which Android scrolls by.
+			let wheel;
+
+			async function swipe({ x, y }, distance) {
+				const steps = 8;
+				const end = Math.max(0, Math.min(display.height - 1, y - distance));
+
+				for (let step = 0; step <= steps; step++) {
+					send({
+						type: 'mouse',
+						x,
+						y: Math.round(y + ((end - y) * step) / steps),
+						buttons: 1,
+					});
+					await new Promise((resolve) => setTimeout(resolve, 12));
+				}
+
+				// Holding still before the release stops Android turning the drag into a fling.
+				await new Promise((resolve) => setTimeout(resolve, 60));
+				send({ type: 'mouse', x, y: end, buttons: 0 });
+			}
+
+			video.addEventListener(
+				'wheel',
+				(event) => {
+					event.preventDefault();
+					const scale = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 40 : 1;
+					wheel ??= { point: devicePoint(event), delta: 0 };
+					wheel.delta += event.deltaY * scale * (display.height / video.clientHeight);
+					clearTimeout(wheel.timer);
+					wheel.timer = setTimeout(() => {
+						const limit = display.height / 2;
+						swipe(wheel.point, Math.max(-limit, Math.min(limit, wheel.delta)));
+						wheel = undefined;
+					}, 80);
+				},
+				{ passive: false },
+			);
+
+			for (const type of ['keydown', 'keyup']) {
+				video.addEventListener(type, (event) => {
+					if (event.metaKey || event.ctrlKey) return;
+					event.preventDefault();
+					send({ type: 'key', event: type, key: event.key });
+				});
+			}
+
+			for (const button of document.querySelectorAll('[data-key]')) {
+				button.addEventListener('click', () => {
+					send({ type: 'nav', key: button.dataset.key });
+					video.focus();
+				});
+			}
+
+			connect();
+		</script>
+	</body>
+</html>

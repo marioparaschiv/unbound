@@ -23,6 +23,7 @@ Test: `turn-check` is clean and `bun run typecheck` passes.
 | Changing Discord: metro lookups, flux, patches         | `unbound-patching` |
 | A plugin's files, lifecycle, launch cost               | `unbound-plugins`  |
 | Proving a client change on the vphone                  | `ubd-vphone`       |
+| Proving a change on the Android emulator, live preview | `ubd-avd`          |
 | `apps/web` pages, endpoints, auth or review publishing | `unbound-web`      |
 
 Name things with `GLOSSARY.md` terms. `DESIGN.md` lists the design-system primitives.
