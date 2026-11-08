@@ -16,7 +16,7 @@ function DownloadPage() {
 		<div className='flex flex-col flex-1 gap-10 page-frame'>
 			<PageHeader
 				title='Download Unbound'
-				description='Discord with Unbound built in, for iPhone, iPad and Android.'
+				description='Discord with Unbound, for iOS and Android.'
 			>
 				<Button
 					asChild
@@ -34,11 +34,10 @@ function DownloadPage() {
 			<section aria-labelledby='quiz-heading' className='flex flex-col gap-4'>
 				<div className='flex flex-col gap-1 animate-reveal' style={staggerStyle(2)}>
 					<h2 id='quiz-heading' className='font-semibold text-foreground text-xl'>
-						Find the right download
+						Find your download
 					</h2>
 					<p className='text-muted-foreground text-sm'>
-						Not sure which file you need? Answer two or three questions about your
-						device.
+						A few questions about your device.
 					</p>
 				</div>
 				<div className='animate-reveal' style={staggerStyle(3)}>
@@ -53,31 +52,29 @@ function DownloadPage() {
 				style={staggerStyle(4)}
 			>
 				<span className='bg-border h-px grow' />
-				<span className='font-medium text-muted-foreground text-sm'>
-					Know what you need? Pick a file yourself
-				</span>
+				<span className='font-medium text-muted-foreground text-sm'>Or pick a file</span>
 				<span className='bg-border h-px grow' />
 			</div>
 
 			<DownloadChannels downloads={downloads} />
 
 			<p className='text-muted-foreground text-sm text-center'>
-				Stuck? The{' '}
+				Stuck? See the{' '}
 				<Link
 					to='/docs/user/$'
 					params={{ _splat: 'installing' }}
 					className='text-link underline-offset-4 hover:underline'
 				>
 					installation guide
-				</Link>{' '}
-				walks through every step. Every build is also on the{' '}
+				</Link>
+				. All builds are on{' '}
 				<a
 					href={RELEASES_URL}
 					target='_blank'
 					rel='noopener noreferrer'
 					className='inline-flex items-center gap-0.5 text-link underline-offset-4 hover:underline'
 				>
-					GitHub releases page
+					GitHub releases
 					<IconArrowUpRight size={12} aria-hidden />
 				</a>
 			</p>

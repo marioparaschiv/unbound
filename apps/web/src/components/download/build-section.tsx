@@ -1,5 +1,3 @@
-import { IconArrowUpRight } from 'nucleo-micro-bold';
-
 import {
 	APP_SOURCE_URL,
 	JAILBREAK_REPO_URL,
@@ -8,13 +6,13 @@ import {
 	SIDELOADERS,
 	getObtainiumUrl,
 } from '~/lib/downloads/install-links';
+import { BuildMeta, ReleaseNotesLink } from '~/components/download/build-meta';
 import type { BuildTrack, DownloadBuild } from '~/lib/downloads/builds';
 import DownloadFileRow from '~/components/download/download-file-row';
 import { staggerStyle } from '~/components/motion/reveal-style';
 import type { SourceApp } from '~/lib/downloads/install-links';
 import SourceBadge from '~/components/download/source-badge';
 import CopyField from '~/components/download/copy-field';
-import { formatDate } from '~/components/addon/format';
 
 type TrackInfo = {
 	/** Names a nightly track; a stable build sits under its platform's heading alone. */
@@ -40,15 +38,9 @@ const FIRST_SLOT = 7;
 const TRACK_INFO: Record<BuildTrack, TrackInfo> = {
 	ios: {},
 	android: {},
-	'ios-testflight': {
-		title: 'Discord TestFlight',
-		detail: "Built on Discord's TestFlight beta.",
-	},
-	'android-beta': { title: 'Discord beta', detail: "Built on Discord's Google Play beta." },
-	'android-alpha': {
-		title: 'Discord alpha',
-		detail: "Built on Discord's Google Play alpha, which changes the most.",
-	},
+	'ios-testflight': { title: 'Discord TestFlight' },
+	'android-beta': { title: 'Discord beta' },
+	'android-alpha': { title: 'Discord alpha', detail: 'Changes the most.' },
 };
 
 function SourceRow({ title, apps, url, label = 'source' }: SourceRowProps) {
@@ -77,7 +69,7 @@ function BuildSources({ build }: BuildSectionProps) {
 	if (build.platform === 'android') {
 		return obtainium ? (
 			<SourceRow
-				title='Get updates automatically'
+				title='Auto-updates'
 				apps={[{ name: 'Obtainium', icon: OBTAINIUM_ICON, href: obtainium }]}
 			/>
 		) : null;
@@ -86,14 +78,14 @@ function BuildSources({ build }: BuildSectionProps) {
 	return (
 		<>
 			<SourceRow
-				title='Add the source to your sideloader'
+				title='Sideloading source'
 				apps={SIDELOADERS}
 				url={APP_SOURCE_URL}
 				label='sideloading source'
 			/>
 			{build.track === 'ios' ? (
 				<SourceRow
-					title='Add the repo to your package manager'
+					title='Jailbreak repo'
 					apps={PACKAGE_MANAGERS}
 					url={JAILBREAK_REPO_URL}
 					label='jailbreak repo'
@@ -114,25 +106,19 @@ function BuildSection({ build }: BuildSectionProps) {
 	return (
 		<div className='flex flex-col gap-4 min-w-0'>
 			<div className='flex flex-col gap-0.5 animate-reveal' style={staggerStyle(FIRST_SLOT)}>
+				{/* A stable build has no title; its platform heading shows its versions instead. */}
 				{info.title ? (
 					<h4 className='font-semibold text-foreground text-lg'>{info.title}</h4>
 				) : null}
-				{/* Same size and baseline, so the versions and the link read as one line. */}
-				<div className='flex flex-wrap justify-between items-baseline gap-x-4 gap-y-1 text-muted-foreground text-sm'>
-					<p>
-						{info.detail ? `${info.detail} ` : null}Unbound {build.version} · Discord{' '}
-						{build.discordVersion} · {formatDate(build.publishedAt)}
-					</p>
-					<a
-						href={build.releaseUrl}
-						target='_blank'
-						rel='noopener noreferrer'
-						className='inline-flex items-center gap-1 hover:text-foreground whitespace-nowrap transition-colors'
-					>
-						Release notes
-						<IconArrowUpRight size={14} aria-hidden />
-					</a>
-				</div>
+				{info.title ? (
+					<div className='flex flex-wrap justify-between items-baseline gap-x-4 gap-y-1 text-muted-foreground text-sm'>
+						<p>
+							{info.detail ? `${info.detail} ` : null}
+							<BuildMeta build={build} />
+						</p>
+						<ReleaseNotesLink build={build} />
+					</div>
+				) : null}
 			</div>
 			<div className='gap-3 grid sm:grid-cols-2'>
 				{build.files.map((file, index) => (

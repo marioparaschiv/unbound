@@ -22,26 +22,26 @@ type DownloadFileRowProps = {
 
 const KIND_INFO: Record<DownloadKind, KindInfo> = {
 	ipa: {
-		label: 'App for sideloading',
-		detail: 'Install with SideStore, Feather, AltStore or another sideloading tool',
+		label: 'iOS IPA',
+		detail: 'For SideStore, Feather, AltStore and other sideloaders',
 		extension: '.ipa',
 		icon: IconMobile,
 	},
 	deb: {
-		label: 'Jailbreak tweak',
-		detail: 'For rootless jailbreaks; install with Sileo or Zebra',
+		label: 'iOS Deb',
+		detail: 'Rootless jailbreaks, via Sileo or Zebra',
 		extension: '.deb',
 		icon: IconWrench,
 	},
 	apks: {
-		label: 'Discord with Unbound',
-		detail: 'Replaces your Discord app; install with Obtainium or SAI',
+		label: 'APK',
+		detail: 'Replaces Discord, via Obtainium or SAI',
 		extension: '.apks',
 		icon: IconBox,
 	},
 	xposed: {
 		label: 'Xposed module',
-		detail: 'Loads into your Discord on rooted devices with Vector or LSPosed',
+		detail: 'Rooted devices with Vector or LSPosed',
 		extension: '.apk',
 		icon: IconPuzzlePiece,
 	},

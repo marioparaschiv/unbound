@@ -23,14 +23,12 @@ const CHANNELS: ChannelInfo[] = [
 	{
 		value: 'stable',
 		title: 'Stable',
-		description:
-			'Built on the Discord version in the App Store and Google Play. Most people want this.',
+		description: 'Matches Discord on the App Store and Google Play. Pick this if unsure.',
 	},
 	{
 		value: 'nightly',
 		title: 'Nightly',
-		description:
-			"Fresh builds from CI on Discord's TestFlight, beta and alpha versions. Expect things to break now and then.",
+		description: "Built on Discord's TestFlight, beta and alpha. Expect breakage.",
 	},
 ];
 
@@ -88,7 +86,7 @@ function DownloadChannels({ downloads }: DownloadChannelsProps) {
 				</div>
 			) : (
 				<p className='bg-card p-5 border rounded-surface text-muted-foreground text-sm'>
-					Couldn't load the builds right now. Get them from{' '}
+					Couldn't load builds. Get them from{' '}
 					<a
 						href={RELEASES_URL}
 						target='_blank'
