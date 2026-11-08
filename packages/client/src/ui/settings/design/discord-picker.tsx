@@ -18,6 +18,7 @@ import useApplyOnSelect from './use-apply-on-select';
 import useSaveIntercept from './use-save-intercept';
 import useDiscordTheme from './use-discord-theme';
 import useStableAddons from './use-stable-addons';
+import useTrueColours from './use-true-colours';
 import useStyles from './discord-picker.style';
 import { pickerThemeOf } from './picker-theme';
 import useApplyAddon from './use-apply-addon';
@@ -63,6 +64,8 @@ function DiscordPicker({ kind }: DiscordPickerProps) {
 	);
 
 	const ids = useMemo(() => themes.map((theme) => theme.unboundAddonId), [themes]);
+	// A theme's swatch is its real background; an icon pack's is only a tint, which Discord's dimming keeps calm.
+	const undimmed = useMemo(() => (kind === 'theme' ? ids : []), [kind, ids]);
 	// The swatch last applied from this picker; one in view that differs was swiped to and not yet applied.
 	const settled = useRef(applied ?? (clearable ? DEFAULT_THEME_ID : ''));
 	const select = useCallback(
@@ -94,6 +97,7 @@ function DiscordPicker({ kind }: DiscordPickerProps) {
 		};
 	});
 	useEffect(() => () => closing.current(), []);
+	useTrueColours(undimmed);
 	useApplyOnSelect(ids, select);
 	useCarouselAuthors(addons);
 	useHideNitroBadge(ids);
