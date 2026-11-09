@@ -75,7 +75,7 @@ function isolateList(items: readonly ReactNode[], component: string): readonly R
 
 // Copies the element and its props only when one of its props changes.
 function isolateElement(element: Element, component: string): Element {
-	let props: Record<PropertyKey, unknown> | undefined;
+	let props: Element['props'];
 
 	for (const key in element.props) {
 		const value = element.props[key];

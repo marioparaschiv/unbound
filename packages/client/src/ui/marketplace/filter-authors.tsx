@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 
 import type { AuthorOption, FilterMatch, MarketplaceFilters } from '~/marketplace/filters';
-import { FILTER_MATCHES } from '~/marketplace/filters';
 import { Avatars, BottomSheets, Discord, GorhomSheet } from '~/metro/components';
 import useAuthorUsers from '~/ui/addons/use-author-users';
+import { FILTER_MATCHES } from '~/marketplace/filters';
 import { messages, format } from '~/i18n/api';
 
 import useStyles from './filter-sheet.style';

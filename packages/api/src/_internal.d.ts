@@ -693,6 +693,7 @@ export type BadgeProps = {
 		| {
 				text: string;
 		  };
+	/** The badge's colour scheme. */
 	variant?: BadgeVariant;
 	/** A leading icon component, such as `StarIcon`, drawn at `xxs`. */
 	icon?: React$1.ComponentType<DiscordIconProps>;
@@ -3084,17 +3085,8 @@ export type FloatingActionButtonProps = Omit<
 	/** @default 16 */
 	positionRight?: number;
 };
-/** A custom font the native loader has registered, as `UnboundNative.getFonts()` returns it. */
-export type FontDescriptor = {
-	/** The font's PostScript name, else its full name, else its file name without extension; the Fonts manager keys by it. */
-	name: string;
-	/** The font's file name in Unbound's `Fonts` directory. */
-	file: string;
-	/** The absolute path to the font file on the device. */
-	path: string;
-};
-/** A font managed by the Fonts manager: currently identical to its {@link FontDescriptor}. */
-export type FontEntity = FontDescriptor;
+/** A font face managed by the Fonts manager, as `UnboundNative.fonts.list()` returns it. */
+export type FontEntity = UnboundInstalledFont;
 /**
  * Props of `FormLabel` (function). Exports: default.
  * @see design/void/Form/native/FormLabel.tsx
@@ -5656,6 +5648,22 @@ export type SimpleActionSheetProps = {
 		map?: unknown;
 	};
 };
+/** The `simple-markdown` library Discord bundles, found by `parserFor`, `outputFor` and `defaultRules`. */
+export type SimpleMarkdownModule = {
+	/** CommonMark-like rules for a whole document, unlike Discord's message rules. */
+	defaultRules: MarkdownRules;
+	/** Builds a parser from a rule set, such as `defaultRules` plus your own; `TNode` names the nodes they parse. */
+	parserFor<TNode extends MarkdownNode = MarkdownNode>(
+		rules: MarkdownRules,
+	): SimpleMarkdownParser<TNode>;
+	/** Wraps a regex into a `match` that only matches inside inline content. */
+	inlineRegex(regex: RegExp): MarkdownRule['match'];
+};
+/** Parses Markdown into nodes; `inline: false` parses blocks such as headings, lists, code and tables. */
+export type SimpleMarkdownParser<TNode extends MarkdownNode = MarkdownNode> = (
+	source: string,
+	state?: MarkdownState,
+) => TNode[];
 export type SliderComponent = React$1.ComponentType<SliderProps & Record<string, unknown>>;
 /**
  * Props of `Slider` (function). Exports: Slider.
@@ -6433,12 +6441,41 @@ export type ToggleIconButtonProps = {
 };
 /** `TransitionStates`: MOUNTED = 0, ENTERED = 1, YEETED = 2. */
 export type TransitionState = 'MOUNTED' | 'ENTERED' | 'YEETED';
+/** A home screen icon the loader ships, listed in Discord's app icon picker. */
+export type UnboundAppIcon = {
+	/** The icon's native id, which the loader switches to. */
+	id: string;
+	/** The picker row it shows as, when it replaces one of Discord's own icons. */
+	pickerId?: string;
+	/** The name shown under it in the picker. */
+	name: string;
+	/** The URI of its preview image. */
+	image: string;
+};
 /** A {@link DiscordAsset} extended with Unbound's icon-pack overrides and the files of an asset a plugin registered. */
 export type UnboundAsset = DiscordAsset & {
 	iconPackPath?: string;
 	iconPackScale?: number;
 	/** The URI of a registered plugin asset at each scale; set while it is registered. */
 	unboundSources?: Record<number, string>;
+};
+/**
+ * One installed face in the loader's font store.
+ * @internal
+ */
+type UnboundInstalledFont = {
+	/** The store id: the face's PostScript name with only `[A-Za-z0-9._-]`. */
+	id: string;
+	family: string;
+	postScriptName: string;
+	fullName: string;
+	weight: number;
+	style: UnboundFontStyle;
+	/** The file, relative to Unbound's `Fonts` folder. */
+	file: string;
+	/** The file's absolute path; `list()` adds it. */
+	path?: string;
+	source: UnboundFontSource;
 };
 /** A value the generator could not type with confidence, so a loose prop accepts anything for it. */
 export type UncertainValue = any;

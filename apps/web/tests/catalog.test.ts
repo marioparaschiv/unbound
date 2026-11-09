@@ -3,12 +3,12 @@ import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
+import { addon, addonTag, tag, user } from '~/db/schema';
 import getCatalogEndpoint from '~/endpoints/get-catalog';
 import { createApiClient } from '~/api/schema-client';
 import { NotModifiedError } from '~/api/client';
 import type { Caller } from '~/lib/api/caller';
 import { serveVersion } from '~/lib/rollback';
-import { addon, addonTag, tag, user } from '~/db/schema';
 import type { Api } from '~/api';
 
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from './helpers/addons';

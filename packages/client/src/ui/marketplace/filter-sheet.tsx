@@ -10,8 +10,8 @@ import type { FilterView } from './filter-root';
 
 import FilterAuthors from './filter-authors';
 import FilterUpdated from './filter-updated';
-import FilterTags from './filter-tags';
 import FilterRoot from './filter-root';
+import FilterTags from './filter-tags';
 
 type FilterSheetProps = {
 	kind: AddonKind;

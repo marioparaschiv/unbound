@@ -175,10 +175,15 @@ export type UnboundNativeFonts = {
 	removePreset(id: string): Promise<void>;
 };
 
+/** A home screen icon the loader ships, listed in Discord's app icon picker. */
 export type UnboundAppIcon = {
+	/** The icon's native id, which the loader switches to. */
 	id: string;
+	/** The picker row it shows as, when it replaces one of Discord's own icons. */
 	pickerId?: string;
+	/** The name shown under it in the picker. */
 	name: string;
+	/** The URI of its preview image. */
 	image: string;
 };
 
