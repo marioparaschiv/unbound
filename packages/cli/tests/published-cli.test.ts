@@ -99,7 +99,46 @@ beforeAll(() => {
 
 afterAll(() => user.remove());
 
+type InstalledManifest = {
+	name: string;
+	version: string;
+	dependencies?: Record<string, string>;
+	peerDependencies?: Record<string, string>;
+};
+
+function readInstalled(dir: string): InstalledManifest {
+	return JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
+}
+
 describe('the published CLI', () => {
+	test('installs dependencies whose peers its own dependencies satisfy', () => {
+		const cli = join(user.path, 'node_modules', '@unbound-app', 'cli');
+		const { dependencies = {}, peerDependencies = {} } = readInstalled(cli);
+		const installed = new Map(
+			Object.keys(dependencies).map((name) => [
+				name,
+				readInstalled(join(cli, 'node_modules', name)),
+			]),
+		);
+		const unmet = [...installed.values()].flatMap((dependency) =>
+			Object.entries(dependency.peerDependencies ?? {})
+				.filter(([peer, range]) => {
+					const version = installed.get(peer)?.version;
+
+					return version !== void 0 && !Bun.semver.satisfies(version, range);
+				})
+				.map(([peer, range]) => `${dependency.name} wants ${peer}@${range}`),
+		);
+		// Bun 1.4.2 lets an `npm:` alias of a peer satisfy that peer, installing the wrong version.
+		const aliasedPeers = Object.entries(dependencies)
+			.filter(([, spec]) =>
+				Object.keys(peerDependencies).some((peer) => spec.startsWith(`npm:${peer}@`)),
+			)
+			.map(([name, spec]) => `${name}: ${spec}`);
+
+		expect({ unmet, aliasedPeers }).toEqual({ unmet: [], aliasedPeers: [] });
+	});
+
 	test('runs from its installed bin', async () => {
 		const { exitCode, output } = await run([ubd, '--help'], user.path);
 
