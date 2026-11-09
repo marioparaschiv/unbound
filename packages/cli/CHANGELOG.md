@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/marioparaschiv/unbound/compare/cli-v1.1.1...cli-v1.1.2) (2026-11-09)
+
+
+### Bug Fixes
+
+* **cli:** install without peer dependency warnings ([#1034](https://github.com/marioparaschiv/unbound/issues/1034)) ([d447bda](https://github.com/marioparaschiv/unbound/commit/d447bda702dee11a998ae2cabb070edbbe14a73e))
+
 ## [1.1.1](https://github.com/marioparaschiv/unbound/compare/cli-v1.1.0...cli-v1.1.1) (2026-11-09)
 
 
