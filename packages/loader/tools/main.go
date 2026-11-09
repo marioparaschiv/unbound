@@ -143,7 +143,7 @@ func printUsage() {
 	fmt.Println("       go run ./tools bundle-key verify --dir <dist> [--pr <n>] [--public-key <file>]")
 	fmt.Println("       go run ./tools smoke android --apks <dir> [--serial <serial>] [--plugins <dir>] [--client <dir>] [--artifacts <dir>] [--timeout <duration>]")
 	fmt.Println("       go run ./tools smoke ios --app <Discord.app> [--device <udid>] [--plugins <dir>] [--client <dir>] [--artifacts <dir>] [--timeout <duration>]")
-	fmt.Println("       go run ./tools smoke ios-prewarm --app <earlier Discord.app> [--timeout <duration>] [--output <file>]")
+	fmt.Println("       go run ./tools smoke ios-prewarm [--timeout <duration>] [--output <file>] <earlier Discord.app>...")
 	fmt.Println("       go run ./tools symbolicate-android --symbols <dir|zip> [--abi <abi>] [--symbolizer <path>] [--input <file>] < tombstone.txt")
 	fmt.Println("       go run ./tools compat-scan [--ipa <path>] [--apk <path>...] [--android-version <v>] [--baseline <json>] [--results <json>] [--report <md>] [--ios-sdk <path>] [--android-jar <path>]")
 	fmt.Println("       go run ./tools compat-issue --results <json> --report <md> --channel <name> [--repo <owner/name>]")

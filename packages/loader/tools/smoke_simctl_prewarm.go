@@ -18,44 +18,55 @@ import (
 // reuses the device launches this run's build in seconds. The cost is per device, not per app install.
 func runIOSPrewarm(args []string) error {
 	set := flag.NewFlagSet("smoke ios-prewarm", flag.ContinueOnError)
-	app := set.String("app", "", "an earlier simulator build's Discord.app to launch once")
 	timeout := set.Duration("timeout", 15*time.Minute, "stop waiting for Discord's runtime after this long")
 	output := set.String("output", os.Getenv("GITHUB_OUTPUT"), "file to append device=<udid> to")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
-	if *app == "" {
-		return errors.New("usage: smoke ios-prewarm --app <Discord.app> [--timeout <duration>] [--output <file>]")
+	apps := set.Args()
+	if len(apps) == 0 {
+		return errors.New("usage: smoke ios-prewarm [--timeout <duration>] [--output <file>] <earlier Discord.app>...")
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	target := &iosSmokeTarget{app: *app}
-	if err := target.prewarm(ctx, *timeout); err != nil {
-		target.cleanup()
-		return err
-	}
-	fmt.Printf("Prewarmed the iOS simulator %s.\n", target.device)
-	return appendGitHubOutput(*output, "device", target.device)
-}
-
-func (target *iosSmokeTarget) prewarm(ctx context.Context, timeout time.Duration) error {
+	target := &iosSmokeTarget{}
 	if err := target.createDevice(ctx); err != nil {
 		return err
 	}
 	if _, err := target.simctl(ctx, 10*time.Minute, "bootstatus", target.device, "-b"); err != nil {
+		target.cleanup()
 		return err
 	}
-	if _, err := target.simctl(ctx, 10*time.Minute, "install", target.device, target.app); err != nil {
+	// Some builds fail to launch on the simulator at all, so the next older one gets a turn on the same device.
+	for _, app := range apps {
+		if err := target.prewarm(ctx, app, *timeout); err != nil {
+			fmt.Printf("Failed to prewarm %s with %s: %v\n", target.device, app, err)
+			continue
+		}
+		fmt.Printf("Prewarmed the iOS simulator %s.\n", target.device)
+		return appendGitHubOutput(*output, "device", target.device)
+	}
+	target.cleanup()
+	return fmt.Errorf("none of the %d earlier builds launched on %s", len(apps), target.device)
+}
+
+func (target *iosSmokeTarget) prewarm(ctx context.Context, app string, timeout time.Duration) error {
+	if _, err := target.simctl(ctx, 10*time.Minute, "install", target.device, app); err != nil {
+		return err
+	}
+	// The smoke test needs an empty data container, so the earlier build's settings and plugins cannot leak into it.
+	uninstall := func() error {
+		_, err := target.simctl(ctx, 2*time.Minute, "uninstall", target.device, smokeIOSBundleID)
 		return err
 	}
 	logs, stopLogs, err := target.streamLogs(ctx)
 	if err != nil {
-		return err
+		return errors.Join(err, uninstall())
 	}
 	started := time.Now()
 	if _, err := target.simctl(ctx, 2*time.Minute, "launch", target.device, smokeIOSBundleID); err != nil {
 		_ = stopLogs()
-		return err
+		return errors.Join(err, uninstall())
 	}
 	created := waitForLogLine(ctx, logs, smokeRuntimeCreated, timeout)
 	_ = stopLogs()
@@ -67,9 +78,7 @@ func (target *iosSmokeTarget) prewarm(ctx context.Context, timeout time.Duration
 	if _, err := target.simctl(ctx, time.Minute, "terminate", target.device, smokeIOSBundleID); err != nil {
 		fmt.Printf("Failed to terminate Discord on %s: %v\n", target.device, err)
 	}
-	// The smoke test needs an empty data container, so the earlier build's settings and plugins cannot leak into it.
-	_, err = target.simctl(ctx, 2*time.Minute, "uninstall", target.device, smokeIOSBundleID)
-	return err
+	return uninstall()
 }
 
 // waitForLogLine reports whether a line containing want arrives on logs before the timeout.

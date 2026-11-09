@@ -565,16 +565,18 @@ jobs:
                   GH_TOKEN: ${{ github.token }}
               run: |
                   set -euo pipefail
-                  id=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=ios-simulator&per_page=50" --jq '[.artifacts[] | select(.workflow_run.head_branch == "main" and .workflow_run.head_repository_id == .workflow_run.repository_id and (.expired | not))][0].id // empty')
-                  test -n "$id"
-                  prewarm="$RUNNER_TEMP/prewarm"
-                  mkdir -p "$prewarm"
-                  gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" > "$prewarm/artifact.zip"
-                  unzip -q "$prewarm/artifact.zip" -d "$prewarm"
-                  unzip -q "$prewarm/unbound-ios-simulator.zip" -d "$prewarm/app"
-                  app=$(find "$prewarm/app" -maxdepth 2 -type d -name Discord.app -print -quit)
-                  test -n "$app"
-                  unbound-tools smoke ios-prewarm --app "$app" --timeout 10m
+                  ids=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=ios-simulator&per_page=50" --jq '[.artifacts[] | select(.workflow_run.head_branch == "main" and .workflow_run.head_repository_id == .workflow_run.repository_id and (.expired | not))][:3][].id')
+                  apps=()
+                  for id in $ids; do
+                    build="$RUNNER_TEMP/prewarm/$id"
+                    mkdir -p "$build"
+                    gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" > "$build/artifact.zip"
+                    unzip -q "$build/artifact.zip" -d "$build"
+                    unzip -q "$build/unbound-ios-simulator.zip" -d "$build/app"
+                    apps+=("$(find "$build/app" -maxdepth 2 -type d -name Discord.app -print -quit)")
+                  done
+                  test "${#apps[@]}" -gt 0
+                  unbound-tools smoke ios-prewarm --timeout 10m "${apps[@]}"
 
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
