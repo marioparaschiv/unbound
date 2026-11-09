@@ -157,14 +157,20 @@ jobs:
               run: unbound-tools loader-version --set "$LOADER_VERSION"
 
             - name: Check cache
-              run: printf 'upstream_heads=%s-%s\n' "$(git ls-remote https://github.com/theos/theos | awk 'NR == 1 { print $1 }')" "$(git ls-remote https://github.com/theos/sdks | awk 'NR == 1 { print $1 }')" >> "$GITHUB_ENV"
+              run: |
+                  {
+                    echo "theos_head=$(git ls-remote https://github.com/theos/theos HEAD | awk '{ print $1 }')"
+                    echo "sdks_head=$(git ls-remote https://github.com/theos/sdks HEAD | awk '{ print $1 }')"
+                  } >> "$GITHUB_ENV"
 
+            # An older Theos restores when upstream moves; Prepare Theos fast-forwards it in place.
             - name: Use cache
               id: cache
               uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
               with:
                   path: ${{ github.workspace }}/theos
-                  key: ${{ runner.os }}-${{ env.upstream_heads }}
+                  key: theos-${{ runner.os }}-${{ env.theos_head }}-${{ env.sdks_head }}
+                  restore-keys: theos-${{ runner.os }}-
 
             - name: Trust Homebrew tap
               run: |
@@ -182,11 +188,16 @@ jobs:
                   echo "THEOS=$THEOS" >> "$GITHUB_ENV"
                   if [ ! -d "$THEOS" ]; then
                     git clone --recursive https://github.com/theos/theos "$THEOS"
+                  elif [ "$(git -C "$THEOS" rev-parse HEAD)" != "$theos_head" ]; then
+                    git -C "$THEOS" pull --ff-only --recurse-submodules
+                    git -C "$THEOS" submodule update --init --recursive
                   fi
-                  if [ -z "$(ls "$THEOS/sdks")" ]; then
+                  if [ "$(cat "$THEOS/sdks/.revision" 2> /dev/null)" != "$sdks_head" ]; then
                     sdks="$(mktemp -d)"
                     git clone --depth 1 https://github.com/theos/sdks "$sdks"
+                    find "$THEOS/sdks" -mindepth 1 -maxdepth 1 -name '*.sdk' -exec rm -rf {} +
                     mv "$sdks"/*.sdk "$THEOS/sdks"
+                    git -C "$sdks" rev-parse HEAD > "$THEOS/sdks/.revision"
                     rm -rf "$sdks"
                   fi
 
