@@ -68,6 +68,7 @@ function patchBoundary(Boundary: MetroExport) {
 				componentStack={boundary.__unboundComponentStack}
 				clientVersion={CLIENT_VERSION}
 				platform={Platform.OS}
+				recovery={getSetting('recovery')}
 				onRetry={() => {
 					boundary.__unboundComponentStack = undefined;
 					boundary.setState({ error: null });
