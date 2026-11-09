@@ -11,7 +11,8 @@ Object.assign(globalThis, {
 	$$DEV$$: false,
 });
 
-mock.module('~/native/native', () => ({ BundleInfo: { Build: BUILD } }));
+// No `NativePlatform.files`: an older loader, so the cache stays in its Bucket.
+mock.module('~/native/native', () => ({ BundleInfo: { Build: BUILD }, NativePlatform: undefined }));
 
 // No `unbound::cache` Bucket: a fresh install, or a cache cleared by hand.
 const { data, traffic } = installSettingsBridge();
