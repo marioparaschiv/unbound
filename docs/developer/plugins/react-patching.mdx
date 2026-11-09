@@ -289,7 +289,9 @@ React compares the element's `type` between renders. A swap to the same function
 A component patch that throws can't take Discord down with it. Unbound falls back to Discord's own render instead:
 
 - If your callback throws, that render shows Discord's tree as it was before your patch ran.
-- If the tree your patch returned throws while React renders it, Discord's component renders on its own in its place. The next time the component re-renders, Unbound tries your patch again.
+- If the tree your patch returned throws while React renders it, that copy of the component shows Discord's tree from the same render until it unmounts. Discord's hooks run once, in the component's own fiber, so its state survives: a chat input keeps its text. The next copy that mounts tries your patch again.
+
+To fall back without running Discord's render twice, Unbound keeps a copy of Discord's tree from each render of a patch that has failed before. A patch that has never failed pays nothing for it. On a patch's first failure the component renders nothing for one frame, then re-renders with the copy.
 
 Nothing is shown to the user for a single crash. Unbound only logs the error, naming the component.
 

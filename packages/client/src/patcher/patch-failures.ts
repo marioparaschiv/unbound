@@ -6,6 +6,8 @@ export type PatchFailures = {
 	name: string;
 	/** Failures since the patch last rendered cleanly. */
 	count: number;
+	/** Set by the first failure: from then on each render keeps an untouched copy of Discord's tree to fall back to. */
+	unstable: boolean;
 	/** Removes the patch. */
 	unpatch: () => void;
 };
@@ -22,6 +24,7 @@ const logger = createLogger('Patcher', 'React');
  */
 export function recordFailure(failures: PatchFailures, cause: unknown): void {
 	failures.count++;
+	failures.unstable = true;
 	logger.error(`Failed to render patch on component ${failures.name}:`, cause);
 
 	if (failures.count !== FAILURE_LIMIT) return;
