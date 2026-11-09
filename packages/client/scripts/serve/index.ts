@@ -37,7 +37,7 @@ export function startServer(reloadOnRebuild: boolean = true) {
 				return handleOutcome();
 			}
 
-			return serveStatic(pathname);
+			return serveStatic(pathname, req.headers.get('If-None-Match'));
 		},
 		websocket: refresh.websocket,
 	});
