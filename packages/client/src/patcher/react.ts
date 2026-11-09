@@ -5,6 +5,7 @@ import { PatchType } from 'possess';
 
 import { recordFailure, recordSuccess, type PatchFailures } from '~/patcher/patch-failures';
 import { fallbackOf, isPatchBoundary, withPatchBoundary } from '~/patcher/patch-boundary';
+import { isolateAdded, markDiscordTree } from '~/patcher/isolate-added';
 import type { PatchBoundaryProps } from '~/patcher/patch-boundary';
 import { snapshotTree } from '~/patcher/snapshot-tree';
 import type { IsUntyped } from '~/patcher/is-untyped';
@@ -212,8 +213,9 @@ function boundaryProps(
 	return kept ? { patches, fallback: kept.fallback } : { patches };
 }
 
-// A failing patch or tree falls back to Discord's tree from the same render, so its hooks run once and keep
-// their state. Three failures in a row remove the patch.
+// An element the patch added beside Discord's renders nothing once it throws. A failing patch or tree falls back
+// to Discord's tree from the same render, so its hooks run once and keep their state. Three such failures in a row
+// remove the patch.
 function adapt(
 	type: PatchType,
 	render: Render,
@@ -234,6 +236,11 @@ function adapt(
 		let kept = inner ? fallbackOf(inner) : undefined;
 		let called: { tree: ReactNode } | undefined;
 
+		// Only an after callback gets Discord's tree as `result`; an instead callback gets it from `original()`.
+		if (type === PatchType.After) {
+			markDiscordTree(result);
+		}
+
 		if (!kept && failures.unstable && type === PatchType.After) {
 			kept = { fallback: snapshotTree(result) };
 		}
@@ -250,6 +257,7 @@ function adapt(
 						: ctx.original(next, ...ctx.args.slice(1));
 
 					called = { tree };
+					markDiscordTree(tree);
 
 					if (!kept && failures.unstable) {
 						kept = { fallback: snapshotTree(tree) };
@@ -273,7 +281,7 @@ function adapt(
 
 			// The boundary resets the count once this tree commits cleanly.
 			return withPatchBoundary(
-				value === undefined ? result : value,
+				isolateAdded(value === undefined ? result : value, name),
 				boundaryProps(inner ? [...earlier, failures] : own, kept),
 			);
 		} catch (error) {
