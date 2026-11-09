@@ -23,8 +23,11 @@ type FlashListProps<T> = {
 	ListEmptyComponent?: ReactElement;
 	ListHeaderComponent?: ReactElement;
 	ListFooterComponent?: ReactElement;
+	horizontal?: boolean;
+	showsHorizontalScrollIndicator?: boolean;
 	keyboardDismissMode?: ScrollViewProps['keyboardDismissMode'];
 	refreshControl?: ScrollViewProps['refreshControl'];
+	style?: StyleProp<ViewStyle>;
 	contentContainerStyle?: StyleProp<ViewStyle>;
 };
 
