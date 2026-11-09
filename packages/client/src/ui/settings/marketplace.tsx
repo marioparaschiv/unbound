@@ -5,10 +5,13 @@ import { Dimensions, View } from 'react-native';
 
 import { offerListedInstall } from '~/ui/marketplace/offer-listed-install';
 import MarketplaceList from '~/ui/marketplace/marketplace-list';
-import SearchContext from '~/ui/marketplace/search-context';
-import { Discord, SafeArea } from '~/metro/components';
+import BrowseContext from '~/ui/marketplace/browse-context';
+import FilterButton from '~/ui/marketplace/filter-button';
+import { DEFAULT_FILTERS } from '~/marketplace/filters';
+import FilterChips from '~/ui/marketplace/filter-chips';
 import MarketplaceStore from '~/marketplace/state';
 import { messages, format } from '~/i18n/api';
+import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
 
 import useStyles from './marketplace.style';
@@ -27,13 +30,18 @@ type MarketplacePageProps = {
 };
 
 /**
- * @description The addon marketplace: a search field over one swipeable tab per addon type, listing
- * the catalog stored on device. Opening the page refreshes the catalog in the background.
+ * @description The addon marketplace, laid out like the addon pages: a pinned search beside a Sort & Filter
+ * button, the active filters, and one swipeable tab per addon type listing the catalog stored on device.
+ * Opening the page refreshes the catalog in the background.
  */
 function MarketplacePage({ route }: MarketplacePageProps) {
 	const styles = useStyles();
 	const { kind, id, request } = route.params ?? {};
 	const [search, setSearch] = useState(id ?? '');
+	const [filters, setFilters] = useState(DEFAULT_FILTERS);
+	const [tab, setTab] = useState(kind ? ADDON_KINDS.indexOf(kind) : 0);
+	const browse = useMemo(() => ({ search, filters }), [search, filters]);
+	const active = ADDON_KINDS[tab] ?? 'plugin';
 	const catalog = MarketplaceStore((store) => store.state);
 	const lastOfferedOpen = useRef<string | undefined>(undefined);
 
@@ -55,6 +63,7 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 		items,
 		pageWidth: Dimensions.get('window').width,
 		defaultIndex: kind ? ADDON_KINDS.indexOf(kind) : 0,
+		onPageChange: setTab,
 	});
 
 	// A link opened while the page is mounted only changes its params.
@@ -82,22 +91,30 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 	}, [id, request, catalog]);
 
 	return (
-		<SafeArea.SafeAreaPaddingView bottom style={styles.fill}>
+		<View style={styles.fill}>
 			<View style={styles.header}>
-				<Discord.SearchBar
-					size='md'
-					value={search}
-					onChange={setSearch}
-					placeholder={format('UNBOUND_SEARCH', { type: messages.UNBOUND_MARKETPLACE })}
-				/>
+				<Discord.Stack direction='horizontal' spacing={8} align='center'>
+					<View style={styles.search}>
+						<Discord.SearchBar
+							size='md'
+							value={search}
+							onChange={setSearch}
+							placeholder={format('UNBOUND_SEARCH', {
+								type: messages.UNBOUND_MARKETPLACE,
+							})}
+						/>
+					</View>
+					<FilterButton kind={active} filters={filters} onChange={setFilters} />
+				</Discord.Stack>
 				<Discord.SegmentedControl state={state} />
+				<FilterChips kind={active} filters={filters} onChange={setFilters} />
 			</View>
-			<SearchContext.Provider value={search}>
+			<BrowseContext.Provider value={browse}>
 				<View style={styles.fill}>
 					<Discord.SegmentedControlPages state={state} />
 				</View>
-			</SearchContext.Provider>
-		</SafeArea.SafeAreaPaddingView>
+			</BrowseContext.Provider>
+		</View>
 	);
 }
 

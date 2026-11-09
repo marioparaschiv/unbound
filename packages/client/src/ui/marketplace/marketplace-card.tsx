@@ -4,28 +4,29 @@ import { memo, useState } from 'react';
 import { View } from 'react-native';
 
 import { getInstalledVersion, installVersion } from '~/marketplace/install';
-import AddonCardHeader from '~/ui/components/addon-card-header';
 import type { InstallStatus } from '~/marketplace/catalog';
 import { brokenDependents } from '~/addons/dependencies';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { AvailableChoice } from '~/addons/versions';
 import { installsFromManifest } from '~/addons/addons';
+import AddonAuthors from '~/ui/addons/addon-authors';
+import AddonTitle from '~/ui/components/addon-title';
+import AddonIcon from '~/ui/components/addon-icon';
 import { compareVersions } from '~/core/versions';
 import { confirmText } from '~/dialogs/feedback';
+import AddonTag from '~/ui/components/addon-tag';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
-import { Screens } from '~/core/constants';
 import { showDialog } from '~/dialogs/api';
 import { ActionSheets } from '~/metro/api';
 import { icons } from '~/assets/api';
 import { show } from '~/toasts/api';
 
-import type { StorePageParams } from './store-page';
-
 import VersionPickerSheet from './version-picker-sheet';
 import useInstallStatus from './use-install-status';
 import useStyles from './marketplace-card.style';
+import useOpenListing from './use-open-listing';
 
 type MarketplaceCardProps = {
 	addon: ListedAddon;
@@ -91,17 +92,20 @@ function confirmChoice(
 }
 
 /**
- * @description One listed addon: the same header as an installed addon's card, with an Install, Update
- * or Installed button judged against the installed copy at its top right. Holding the button offers
+ * @description One listed addon, laid out like an installed addon's card: icon, name and authors on top
+ * with an Install, Update or Installed button judged against the installed copy at its top right, the
+ * description and version below. Holding the button offers
  * the newest version or a picker of every version, except for fonts. Tapping the card opens the store page.
  */
 function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 	const styles = useStyles();
-	const navigation = Discord.useNavigation();
+	const open = useOpenListing();
 	const status = useInstallStatus(kind, addon);
 	// Holds the pressed action until it settles, so the label doesn't flip while the button spins.
 	const [pending, setPending] = useState<InstallStatus | null>(null);
 	const { manifest, version: latest, pageUrl } = addon.latestVersion;
+	const name = addon.name ?? manifest.name;
+	const description = addon.description ?? manifest.description;
 	const action = ACTIONS[pending ?? status];
 	const updatable = installsFromManifest(kind) ? kind : undefined;
 
@@ -113,12 +117,6 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 		setPending(null);
 
 		return ok;
-	}
-
-	function openPage() {
-		const params: StorePageParams = { addon, kind };
-
-		navigation.push(Screens.StorePage, params);
 	}
 
 	function fail(content: string) {
@@ -199,11 +197,13 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 			border='subtle'
 			shadow='low'
 			style={styles.card}
-			onPress={pageUrl ? openPage : void 0}
+			onPress={pageUrl ? () => open(addon, kind) : void 0}
 		>
 			<Discord.Stack direction='horizontal' spacing={12} align='flex-start'>
-				<View style={styles.body}>
-					<AddonCardHeader id={addon.id} kind={kind} manifest={manifest} />
+				<AddonIcon id={addon.id} kind={kind} />
+				<View style={styles.heading}>
+					<AddonTitle name={name} />
+					{manifest.authors.length ? <AddonAuthors authors={manifest.authors} /> : null}
 				</View>
 				<Discord.Button
 					size='sm'
@@ -214,6 +214,16 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 					onLongPress={updatable === undefined ? void 0 : () => hold(updatable)}
 				/>
 			</Discord.Stack>
+			<View style={styles.bottom}>
+				{description ? (
+					<Discord.Text variant='text-sm/normal' style={styles.description}>
+						{description}
+					</Discord.Text>
+				) : (
+					<View style={styles.spacer} />
+				)}
+				<AddonTag>{`v${latest}`}</AddonTag>
+			</View>
 		</Discord.Card>
 	);
 }

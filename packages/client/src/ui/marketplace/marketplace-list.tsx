@@ -3,10 +3,12 @@ import type { AddonKind } from '@unbound-app/types/addons';
 import { RefreshControl, ScrollView } from 'react-native';
 import Animated from 'react-native-reanimated';
 
+import { countActiveFilters, filterCatalog, pickFeatured } from '~/marketplace/filters';
 import { queryCatalog } from '~/marketplace/catalog';
 import MarketplaceStore from '~/marketplace/state';
 import Empty from '~/ui/components/empty-state';
 import { messages, format } from '~/i18n/api';
+import { SafeArea } from '~/metro/components';
 import { Manager } from '~/addons/manager';
 import { show } from '~/toasts/api';
 
@@ -14,30 +16,51 @@ import MarketplaceSkeleton from './marketplace-skeleton';
 import MarketplaceCard from './marketplace-card';
 import useStyles from './marketplace-list.style';
 import useCardMotion from './use-card-motion';
-import SearchContext from './search-context';
+import BrowseContext from './browse-context';
+import FeaturedShelf from './featured-shelf';
+import SectionTitle from './section-title';
 
 type MarketplaceListProps = {
 	kind: AddonKind;
 };
 
 /**
- * @description One marketplace tab: the stored catalog narrowed to the tab's kind and the search, as
- * cards. Pulling down refreshes the catalog; a failed refresh keeps the stored copy and says so.
+ * @description One marketplace tab: the Featured shelf, then the stored catalog narrowed to the tab's
+ * kind, the search and the filters, as cards. The shelf steps aside while anything narrows the list.
+ * Pulling down refreshes the catalog; a failed refresh keeps the stored copy and says so.
  */
 function MarketplaceList({ kind }: MarketplaceListProps) {
 	const styles = useStyles();
 	const state = MarketplaceStore((store) => store.state);
-	const search = useContext(SearchContext);
+	const { search, filters } = useContext(BrowseContext);
 	const motion = useCardMotion();
 	// Only a pull shows the spinner, so the background refresh on open doesn't shift the list.
 	const [pulling, setPulling] = useState(false);
+	// Read once per mount: the Updated window and the day's Featured picks hold still while the page is open.
+	const [now] = useState(Date.now);
 
-	const addons = useMemo(
+	const browsing = !search.trim() && countActiveFilters(filters) === 0;
+
+	const addons = useMemo(() => {
+		if (state.status !== 'ready') {
+			return [];
+		}
+
+		const found = queryCatalog(state.catalog.addons, {
+			type: kind,
+			search,
+			sort: filters.sort,
+		});
+
+		return filterCatalog(found, filters, now);
+	}, [state, kind, search, filters, now]);
+
+	const featured = useMemo(
 		() =>
-			state.status === 'ready'
-				? queryCatalog(state.catalog.addons, { type: kind, search })
+			state.status === 'ready' && browsing
+				? pickFeatured(state.catalog.addons, kind, now)
 				: [],
-		[state, kind, search],
+		[state, kind, browsing, now],
 	);
 
 	async function pull() {
@@ -56,13 +79,14 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 		}
 	}
 
-	const label = messages[Manager.for(kind).label].toLowerCase();
+	const plural = messages[Manager.for(kind).label];
+	const label = plural.toLowerCase();
 	const empty =
 		state.status === 'failed' ? (
 			<Empty image='empty_permission'>{messages.UNBOUND_MARKETPLACE_ERROR}</Empty>
 		) : state.status === 'ready' ? (
-			<Empty image={search ? 'sticker_search_empty' : 'empty_permission'}>
-				{search
+			<Empty image={browsing ? 'empty_permission' : 'sticker_search_empty'}>
+				{!browsing
 					? messages.UNBOUND_EMPTY_RESULTS
 					: format('UNBOUND_MARKETPLACE_EMPTY', { type: label })}
 			</Empty>
@@ -82,6 +106,14 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 				/>
 			}
 		>
+			{featured.length ? (
+				<>
+					<FeaturedShelf addons={featured} kind={kind} />
+					<SectionTitle>
+						{format('UNBOUND_MARKETPLACE_ALL', { type: plural })}
+					</SectionTitle>
+				</>
+			) : null}
 			{addons.length
 				? addons.map((addon) => (
 						<Animated.View key={addon.id} {...motion}>
@@ -89,6 +121,8 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 						</Animated.View>
 					))
 				: empty}
+			{/* The bottom inset pads the end of the list, so the cards scroll under the home indicator, as on the Plugins page. */}
+			<SafeArea.SafeAreaPaddingView bottom />
 		</ScrollView>
 	);
 }
