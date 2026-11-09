@@ -13,7 +13,17 @@ const { react, unpatchAll } = await import('~/patcher/api');
 const { isPatchBoundary } = await import('~/patcher/patch-boundary');
 const { withElementBoundary } = await import('~/patcher/element-boundary');
 
-type Parent = ReactElement<{ children: ReactNode[] }>;
+type ParentProps = { children: ReactNode[] };
+
+type Parent = ReactElement<ParentProps>;
+
+function asParent(node: ReactNode): Parent {
+	if (!isValidElement(node)) {
+		throw new Error('Expected an element');
+	}
+
+	return node as Parent;
+}
 
 const ElementBoundary = withElementBoundary(createElement('View'), 'probe').type;
 
@@ -80,9 +90,7 @@ describe('patcher.react isolation', () => {
 			),
 		);
 
-		const fragment = patched().props.children as unknown as ReactElement<{
-			children: ReactNode[];
-		}>;
+		const fragment = asParent(patched().props.children);
 
 		expect((fragment.props.children[1] as ReactElement).type).toBe(ElementBoundary);
 	});
@@ -102,7 +110,7 @@ describe('patcher.react isolation', () => {
 
 		react.after(List, () => replacement);
 
-		expect(patched()).toBe(replacement as unknown as Parent);
+		expect<ReactNode>(patched()).toBe(replacement);
 	});
 
 	test('an added element that throws renders nothing and keeps the patch', () => {

@@ -693,6 +693,7 @@ export type BadgeProps = {
 		| {
 				text: string;
 		  };
+	/** The badge's colour; grey when omitted. */
 	variant?: BadgeVariant;
 	/** A leading icon component, such as `StarIcon`, drawn at `xxs`. */
 	icon?: React$1.ComponentType<DiscordIconProps>;
@@ -6424,10 +6425,15 @@ export type ToggleIconButtonProps = {
 };
 /** `TransitionStates`: MOUNTED = 0, ENTERED = 1, YEETED = 2. */
 export type TransitionState = 'MOUNTED' | 'ENTERED' | 'YEETED';
+/** An app icon the loader offers, as `getAppIcons` returns it. */
 export type UnboundAppIcon = {
+	/** The icon's native id, which the loader applies. */
 	id: string;
+	/** The id of Discord's own picker entry this icon replaces, when it replaces one. */
 	pickerId?: string;
+	/** The name shown in the icon picker. */
 	name: string;
+	/** A URI of the icon's preview image. */
 	image: string;
 };
 /** A {@link DiscordAsset} extended with Unbound's icon-pack overrides and the files of an asset a plugin registered. */

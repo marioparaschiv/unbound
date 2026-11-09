@@ -434,8 +434,12 @@ func TestParsedWorkflowsSetUpGoAndBunOnlyThroughTheSharedActions(t *testing.T) {
 			t.Fatalf("setup-bun-deps input %s must default to %q, got %+v", input, value, bun.Inputs)
 		}
 	}
-	if bun.Runs.Steps[1].With["key"] != "bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}" {
-		t.Fatalf("setup-bun-deps must key its cache on bun.lock, got %+v", bun.Runs.Steps[1].With)
+	cachesBun := false
+	for _, step := range bun.Runs.Steps {
+		cachesBun = cachesBun || strings.HasPrefix(step.Uses, "actions/cache@") && step.With["key"] == "bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}"
+	}
+	if !cachesBun {
+		t.Fatalf("setup-bun-deps must key its cache on bun.lock, got %+v", bun.Runs.Steps)
 	}
 	for _, name := range []string{"plugins.yml", "plugins-publish.yml"} {
 		for _, job := range loadWorkflow(t, name).Jobs {

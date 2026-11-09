@@ -97,6 +97,7 @@ export type BadgeVariant =
 export type BadgeProps = {
 	/** A built-in label, or `{ text }` for custom text. */
 	type: 'new' | 'beta' | 'early_access' | 'free_trial' | { text: string };
+	/** The badge's colour; grey when omitted. */
 	variant?: BadgeVariant;
 	/** A leading icon component, such as `StarIcon`, drawn at `xxs`. */
 	icon?: ComponentType<DiscordIconProps>;
