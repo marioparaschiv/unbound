@@ -19,7 +19,7 @@
 		"@unbound-app/types": "workspace:*",
 		"marked": "^18.1.3",
 		"picomatch": "^4.0.7",
-		"typebox": "^1.4.4",
+		"typebox": "^1.4.5",
 		"yaml": "^2.9.1"
 	},
 	"devDependencies": {
