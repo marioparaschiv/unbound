@@ -32,7 +32,6 @@ function AddonGroup({ addons, updates, checked, listed }: AddonGroupProps) {
 			}
 			icon={<Discord.TableRowIcon source={icons.PuzzlePieceIcon} />}
 			defaultExpanded={updates.length > 0}
-			helperText={messages.UNBOUND_UPDATES_ADDONS_DESC}
 		>
 			{sorted.map((entry) => (
 				<UpdateRow

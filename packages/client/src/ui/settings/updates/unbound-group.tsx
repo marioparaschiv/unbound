@@ -9,7 +9,6 @@ import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { icons } from '~/assets/api';
 
-import CollapsibleGroup from './collapsible-group';
 import LoaderUpdateRow from './loader-update-row';
 import StatusIcon from './status-icon';
 
@@ -20,7 +19,7 @@ type UnboundGroupProps = {
 	discord: DiscordBuilds | null;
 };
 
-/** @description Unbound itself, the client and the native loader, collapsed unless a loader update is waiting. */
+/** @description Unbound itself: the client and the native loader, each its own row. */
 function UnboundGroup({ checked, loader, discord }: UnboundGroupProps) {
 	const settings = useUnboundSettings();
 	// With automatic updates off, the loader keeps the cached client until the user refetches it.
@@ -28,14 +27,7 @@ function UnboundGroup({ checked, loader, discord }: UnboundGroupProps) {
 	const installed = getLoader()?.version;
 
 	return (
-		<CollapsibleGroup
-			label={messages.UNBOUND_CLIENT}
-			subLabel={
-				loader ? format('UNBOUND_UPDATES_PENDING', { count: 1 }) : `v${CLIENT_VERSION}`
-			}
-			icon={<LogoRowIcon />}
-			defaultExpanded={loader !== null}
-		>
+		<Discord.TableRowGroup>
 			<Discord.TableRow
 				label={messages.UNBOUND_UPDATES_CLIENT}
 				subLabel={
@@ -56,7 +48,7 @@ function UnboundGroup({ checked, loader, discord }: UnboundGroupProps) {
 					trailing={checked ? <StatusIcon variant='current' /> : undefined}
 				/>
 			) : null}
-		</CollapsibleGroup>
+		</Discord.TableRowGroup>
 	);
 }
 

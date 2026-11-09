@@ -59,7 +59,7 @@ function UpdatesPage() {
 
 			{discord ? <DiscordBuildGroup discord={discord} /> : null}
 
-			<Discord.TableRowGroup>
+			<Discord.TableRowGroup helperText={messages.UNBOUND_UPDATES_ADDONS_DESC}>
 				<Discord.TableRow
 					label={messages.UNBOUND_UPDATES_SETTINGS}
 					icon={<Discord.TableRowIcon source={icons.SettingsIcon} />}
