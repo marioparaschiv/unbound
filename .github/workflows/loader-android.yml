@@ -382,7 +382,7 @@ jobs:
             - name: Download LSPatch
               run: |
                   set -euo pipefail
-                  curl --fail --location --silent --show-error --retry 5 --retry-all-errors \
+                  curl --fail --location --silent --show-error --retry 10 --retry-max-time 300 --retry-all-errors \
                     "https://github.com/JingMatrix/LSPatch/releases/download/$LSPATCH_VERSION/$LSPATCH_JAR" -o "$LSPATCH_JAR"
                   echo "$LSPATCH_SHA256  $LSPATCH_JAR" | sha256sum -c -
 

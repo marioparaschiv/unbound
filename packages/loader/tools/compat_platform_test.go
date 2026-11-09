@@ -243,7 +243,8 @@ func TestEvaluateCompatAgainstSDKs(t *testing.T) {
 		{Kind: referenceJavaClass, Name: "app.unbound.android.ActivityTracker", Component: "plugin:demo", Locations: location},
 		{Kind: referenceJavaClass, Name: "app.unbound.android.Gone", Component: "plugin:demo", Locations: location},
 		{Kind: referenceJavaMethod, Name: "currentActivity", Component: "plugin:demo", Locations: location},
-		{Kind: referenceJavaClass, Name: "android.app.ActivityThread", Component: "plugin:demo", Locations: location},
+		{Kind: referenceJavaClass, Name: "android.app.ActivityThread", Component: "loader-android", Locations: location},
+		{Kind: referenceJavaClass, Name: "android.app.ActivityGone", Component: "plugin:demo", Locations: location},
 		{Kind: referenceJavaClass, Name: "android.os.SystemProperties", Component: "loader-android", Locations: location},
 		{Kind: referenceJavaClass, Name: "org.lsposed.lspatch.loader.LSPApplication", Component: "loader-android", Locations: location},
 		{Kind: referenceJavaField, Name: "mColor", Component: "plugin:demo", Locations: location},
@@ -265,14 +266,15 @@ func TestEvaluateCompatAgainstSDKs(t *testing.T) {
 	expect("android", referenceJavaClass, "app.unbound.android.ActivityTracker", compatOK)
 	expect("android", referenceJavaClass, "app.unbound.android.Gone", compatBroken)
 	expect("android", referenceJavaMethod, "currentActivity", compatOK)
-	expect("android", referenceJavaClass, "android.app.ActivityThread", compatBroken)
+	expect("android", referenceJavaClass, "android.app.ActivityThread", compatExternal)
+	expect("android", referenceJavaClass, "android.app.ActivityGone", compatBroken)
 	expect("android", referenceJavaClass, "android.os.SystemProperties", compatExternal)
 	expect("android", referenceJavaClass, "org.lsposed.lspatch.loader.LSPApplication", compatExternal)
 	expect("android", referenceJavaField, "mColor", compatExternal)
 	expect("android", referenceJavaField, "mOuterRadii", compatExternal)
 
 	report := renderCompatReport(results)
-	if !strings.Contains(report, "Outside Discord and the SDKs (5)") {
+	if !strings.Contains(report, "Outside Discord and the SDKs (6)") {
 		t.Fatalf("environment-only classes must be listed:\n%s", report)
 	}
 }
