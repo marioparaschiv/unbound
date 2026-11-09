@@ -385,7 +385,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 	 * @param version The version whose file to install.
 	 * @returns Whether the install succeeded.
 	 */
-	async installListed(_listed: ListedAddon, version: AddonVersion): Promise<boolean> {
+	async installListed(_listed: Pick<ListedAddon, 'id'>, version: AddonVersion): Promise<boolean> {
 		return Boolean(await this.install(version.bundleUrl));
 	}
 

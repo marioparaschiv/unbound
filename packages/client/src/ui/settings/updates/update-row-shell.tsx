@@ -1,23 +1,10 @@
 import type { ReactNode } from 'react';
 
 import { Discord } from '~/metro/components';
-import { Screens } from '~/core/constants';
 
 import type { ChangelogEntry } from './changelog';
 
-import Changelog from './changelog';
-
-/**
- * @description Picks a changelog's first line of prose, dropping Markdown heading and list markers.
- * @param changelog The changelog text.
- * @returns The line, or `undefined` when the changelog is empty.
- */
-function headline(changelog: string | null): string | undefined {
-	return changelog
-		?.split('\n')
-		.map((text) => text.replace(/^\s*(?:#+|[-*+]|\d+\.)\s*/, '').trim())
-		.find(Boolean);
-}
+import { openChangelog } from './open-changelog';
 
 /** The fields an addon's and the loader's pending update share, as the row and its changelog read them. */
 export type UpdateInfo = {
@@ -56,32 +43,25 @@ function UpdateRowShell({
 	actionLarge,
 }: UpdateRowShellProps) {
 	const navigation = Discord.useNavigation();
-	const summary = headline(update.changelogs[0]?.changelog ?? update.changelog);
-	const versions = `${installed} → ${update.version}`;
+	const versions = `v${installed} → v${update.version}`;
 	const jump = note ? `${versions} · ${note}` : versions;
 
 	return (
 		<Discord.TableRow
 			label={name}
-			subLabel={summary ? `${jump}\n${summary}` : jump}
+			subLabel={jump}
 			labelLineClamp={1}
-			subLabelLineClamp={2}
+			subLabelLineClamp={1}
 			icon={<Discord.TableRowIcon source={icon} />}
 			trailing={action}
 			onPress={() =>
-				navigation.push(Screens.PanelHost, {
-					title: name,
-					render: () => (
-						<Changelog
-							name={name}
-							icon={icon}
-							installed={installed}
-							offered={update.version}
-							changelogs={update.changelogs}
-						>
-							{actionLarge}
-						</Changelog>
-					),
+				openChangelog(navigation, {
+					name,
+					icon,
+					installed,
+					offered: update.version,
+					changelogs: update.changelogs,
+					action: actionLarge,
 				})
 			}
 		/>

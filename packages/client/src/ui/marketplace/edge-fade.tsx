@@ -12,20 +12,20 @@ type EdgeFadeProps = {
 /**
  * @description A scroll shadow over one end of a horizontal scroller: the card's colour fading to clear,
  * hinting that more content hides past that edge. Lets touches through to the scroller.
+ * Renders nothing while hidden, so a row that fits draws no gradients.
  */
 function EdgeFade({ side, visible }: EdgeFadeProps) {
 	const styles = useStyles();
+
+	if (!visible) return null;
+
 	const id = `unbound-edge-fade-${side}`;
 	const color = styles.card.color;
 
 	return (
 		<View
 			pointerEvents='none'
-			style={[
-				styles.fade,
-				side === 'start' ? styles.start : styles.end,
-				visible ? null : styles.hidden,
-			]}
+			style={[styles.fade, side === 'start' ? styles.start : styles.end]}
 		>
 			<SVG.Svg width='100%' height='100%'>
 				<SVG.Defs>

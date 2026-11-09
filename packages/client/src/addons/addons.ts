@@ -336,13 +336,13 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	/**
 	 * @description Installs one version of a listed addon, newer or older than the installed one, then
 	 * holds it there or lets automatic updates move it on.
-	 * @param listed The listed addon.
+	 * @param listed The listed addon; only its id is read.
 	 * @param version The version to install.
 	 * @param hold Whether automatic updates should leave the addon on this version.
 	 * @returns Whether the addon now runs the version.
 	 */
 	async installListed(
-		listed: ListedAddon,
+		listed: Pick<ListedAddon, 'id'>,
 		version: AddonVersion,
 		hold: boolean = false,
 	): Promise<boolean> {

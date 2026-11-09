@@ -89,6 +89,8 @@ export const Forms = lazy<any>(
 			() => findByProps('FormSection', 'FormRow'),
 		) ?? {},
 );
+/** Discord's `TableRowDivider`, the hairline `TableRowGroup` draws between rows; found on first access. */
+export const TableRowDividers = findByPropsLazy('TableRowDivider');
 /** Discord's avatar module, with `Avatar` and `AvatarSizes`; found on first access. */
 export const Avatars = findByPropsLazy('AvatarSizes', 'Avatar');
 /** Discord's stacked avatar components, `AvatarPile` and `AvatarDuoPile`; found on first access. */

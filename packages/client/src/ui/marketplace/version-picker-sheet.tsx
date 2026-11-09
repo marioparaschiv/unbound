@@ -1,7 +1,4 @@
-import type { ListedAddon } from '@unbound-app/contracts/addons';
-
 import { fetchAddonVersions, toVersionChoices } from '~/addons/versions';
-import { getInstalledVersion } from '~/marketplace/install';
 import { CLIENT_VERSION, API_URL } from '~/core/constants';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { AvailableChoice } from '~/addons/versions';
@@ -16,7 +13,8 @@ const loadVersions = (id: string) => fetchAddonVersions(id, { baseUrl: API_URL }
 
 type VersionPickerSheetProps = {
 	kind: UpdatableKind;
-	addon: ListedAddon;
+	id: string;
+	name: string;
 	/** Runs with the chosen version; the sheet is already closing. */
 	onPick: (choice: AvailableChoice) => void;
 	onClose: () => void;
@@ -26,12 +24,11 @@ type VersionPickerSheetProps = {
  * @description An action sheet listing every live version of a listed addon, newest first. Pressing a
  * version this client can run, other than the installed one, closes the sheet and hands it back.
  */
-function VersionPickerSheet({ kind, addon, onPick, onClose }: VersionPickerSheetProps) {
+function VersionPickerSheet({ kind, id, name, onPick, onClose }: VersionPickerSheetProps) {
 	const { ActionSheet, ActionSheetRow, BottomSheetTitleHeader } = BottomSheets;
-	const { state, retry } = useResource(addon.id, loadVersions);
-	const { name } = addon.latestVersion.manifest;
-	const held = Manager.for(kind).getHeldVersion(addon.id);
-	const installed = getInstalledVersion(kind, addon);
+	const { state, retry } = useResource(id, loadVersions);
+	const held = Manager.for(kind).getHeldVersion(id);
+	const installed = Manager.for(kind).getEntity(id)?.version;
 
 	function pick(choice: AvailableChoice) {
 		onClose();

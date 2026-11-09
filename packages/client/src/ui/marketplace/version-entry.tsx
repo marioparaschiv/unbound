@@ -5,18 +5,23 @@ import AddonTag from '~/ui/components/addon-tag';
 import { Discord } from '~/metro/components';
 import { messages } from '~/i18n/api';
 
+import ChangelogMarkdown from './changelog-markdown';
 import ChangelogSections from './changelog-sections';
 import { formatListingDate } from './listing-date';
 import useStyles from './version-entry.style';
 
+/** One release on a timeline: an addon version, or a loader release, which has no typed `changes`. */
+export type TimelineVersion = Pick<AddonVersion, 'version' | 'changelog' | 'publishedAt'> &
+	Partial<Pick<AddonVersion, 'changes'>>;
+
 type VersionEntryProps = {
-	version: AddonVersion;
+	version: TimelineVersion;
 	latest: boolean;
 	/** Ends the timeline's rail at this entry's dot. */
 	last: boolean;
 };
 
-/** @description One version on the store page's timeline: its number, date and what changed in it. */
+/** @description One version on a changelog timeline: its number, date and what changed in it. */
 function VersionEntry({ version, latest, last }: VersionEntryProps) {
 	const styles = useStyles();
 	const { changes, changelog } = version;
@@ -44,9 +49,11 @@ function VersionEntry({ version, latest, last }: VersionEntryProps) {
 				</Discord.Text>
 				{changes?.sections.length ? (
 					<ChangelogSections changes={changes} />
+				) : changelog ? (
+					<ChangelogMarkdown text={changelog} />
 				) : (
 					<Discord.Text variant='text-sm/normal' style={styles.plain}>
-						{changelog ?? messages.UNBOUND_UPDATES_NO_CHANGELOG}
+						{messages.UNBOUND_UPDATES_NO_CHANGELOG}
 					</Discord.Text>
 				)}
 			</View>

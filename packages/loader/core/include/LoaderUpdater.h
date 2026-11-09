@@ -44,6 +44,9 @@ UpdaterSettings updaterSettings(SettingsStore &store);
 
 constexpr const char *kBundleTrustSuffix     = ".trust";
 constexpr const char *kBundleBaselineSetting = "loader.update.baseline";
+// The Updates screen's switch for automatic client updates; off keeps the cached client bundle
+// instead of checking for one. Absent means on.
+constexpr const char *kAutoClientSetting = "updater.auto.client";
 // The loader version that last checked for a bundle, so a loader update is noticed once.
 constexpr const char *kCheckedLoaderSetting = "loader.update.checkedBy";
 
@@ -54,9 +57,11 @@ public:
                   FileDownloader download, BundleTrust trust = compiledBundleTrust());
 
     std::string resolveBundlePath();
+    // `ignorePause` is for an explicit manual refetch, which checks even while client updates
+    // are paused; launch-time updates leave it false.
     std::string downloadBundle(const std::string                &preferredPath,
                                const std::optional<std::string> &updateURL,
-                               uint32_t                          bytecodeVersion);
+                               uint32_t bytecodeVersion, bool ignorePause = false);
     std::string downloadURL(const std::optional<std::string> &updateURL, uint32_t bytecodeVersion);
 
     // The DevTools backend the bundle at `bundlePath` was built with, verified against that
@@ -100,6 +105,9 @@ private:
     std::optional<std::string> verifiedRecord(const DownloadPlan &plan,
                                               const std::string  &candidatePath) const;
     std::optional<std::string> candidateProblem(const std::string &candidatePath) const;
+    std::optional<std::string> pauseProblem(const std::string                &path,
+                                            const std::optional<std::string> &updateURL,
+                                            uint32_t bytecodeVersion) const;
     void                       recordBaseline(const std::string &record);
 
     std::string     documents_;

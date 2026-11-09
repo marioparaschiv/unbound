@@ -199,7 +199,7 @@ bool refetchBundle(BundleUpdater &updater, const std::optional<std::string> &upd
     try
     {
         return fileExists(
-            updater.downloadBundle(updater.resolveBundlePath(), updateURL, bytecodeVersion));
+            updater.downloadBundle(updater.resolveBundlePath(), updateURL, bytecodeVersion, true));
     }
     catch (const std::exception &error)
     {

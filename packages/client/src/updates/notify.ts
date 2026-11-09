@@ -12,6 +12,8 @@ import { show } from '~/toasts/api';
 const logger = createLogger('Updater', 'Notify');
 
 const TOAST_ID = 'unbound-updates';
+// Its own id, so the update check's toast a moment later stacks below it instead of replacing it.
+const CLIENT_TOAST_ID = 'unbound-client-updated';
 
 async function openUpdates(handle: ToastHandle) {
 	handle.close();
@@ -41,10 +43,13 @@ function showWithView(options: UpdatesToast) {
  * @description Shows a toast for what the last check found: that the loader is too old for the newest bundle,
  * or else how many updates are waiting.
  * @param state The finished check.
- * @param announceAvailable Whether to announce waiting updates; a too-old loader is always announced, as
- * Unbound otherwise stops updating without a word.
+ * @param options Whether to announce a waiting loader and waiting addon updates. A too-old loader is always
+ * announced, as Unbound otherwise stops updating without a word.
  */
-export function notifyUpdates(state: UpdatesState, announceAvailable: boolean) {
+export function notifyUpdates(
+	state: UpdatesState,
+	{ loader, addons }: { loader: boolean; addons: boolean },
+) {
 	if (state.status !== 'ready') return;
 
 	if (state.requiredLoader) {
@@ -57,9 +62,9 @@ export function notifyUpdates(state: UpdatesState, announceAvailable: boolean) {
 		return;
 	}
 
-	const count = state.updates.length + (state.loader ? 1 : 0);
+	const count = (addons ? state.updates.length : 0) + (loader && state.loader ? 1 : 0);
 
-	if (!announceAvailable || count === 0) return;
+	if (count === 0) return;
 
 	showWithView({
 		title: format('UNBOUND_UPDATES_NOTIFY_TITLE', { count }),
@@ -67,4 +72,20 @@ export function notifyUpdates(state: UpdatesState, announceAvailable: boolean) {
 	});
 }
 
-export default { notifyUpdates };
+/**
+ * @description Shows a toast when this launch runs a newer client than the last one did.
+ * @param previous The client version that last ran; empty on the first launch, which stays quiet.
+ * @param current The client version running now.
+ */
+export function notifyClientUpdated(previous: string, current: string) {
+	if (!previous || previous === current) return;
+
+	show({
+		id: CLIENT_TOAST_ID,
+		title: messages.UNBOUND_UPDATES_CLIENT_UPDATED,
+		content: format('UNBOUND_UPDATES_CLIENT_UPDATED_DESC', { version: current }),
+		icon: 'CircleCheckIcon',
+	});
+}
+
+export default { notifyUpdates, notifyClientUpdated };
