@@ -53,7 +53,7 @@ function describePlan(install: ListedDependency[], update: ListedDependency[]): 
 /**
  * @description Before a plugin installs from the store, installs or updates the plugins it depends on,
  * each after what it needs itself, once the user agrees. Nothing installs when a dependency cannot be
- * satisfied or the user cancels.
+ * satisfied or the user cancels. Newly installed dependencies are enabled, so the plugin can use them.
  * @param manifest The manifest of the plugin version about to install.
  * @returns Whether its dependencies are in place, so the plugin itself can install.
  */
@@ -94,6 +94,8 @@ export async function installDependencies(manifest: PublishedManifest): Promise<
 		return false;
 	}
 
+	const fresh = new Set(plan.install.map((dependency) => dependency.id));
+
 	for (const dependency of plan.ordered) {
 		const entry = listed.get(dependency.id);
 		const done = entry
@@ -108,6 +110,10 @@ export async function installDependencies(manifest: PublishedManifest): Promise<
 			});
 
 			return false;
+		}
+
+		if (fresh.has(dependency.id)) {
+			await manager.enable(dependency.id);
 		}
 	}
 
