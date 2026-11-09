@@ -17,6 +17,7 @@ type actionsCache struct {
 	Key            string    `json:"key"`
 	SizeInBytes    int64     `json:"size_in_bytes"`
 	LastAccessedAt time.Time `json:"last_accessed_at"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 type actionsArtifact struct {
@@ -31,6 +32,9 @@ type actionsArtifact struct {
 }
 
 var pullRequestRef = regexp.MustCompile(`^refs/pull/(\d+)/`)
+
+// cacheVersionSuffix matches the commit and content hashes a cache key ends with, leaving the key's family.
+var cacheVersionSuffix = regexp.MustCompile(`(-[0-9a-f]{32,})+$`)
 
 func pullRequestNumber(ref string) (int, bool) {
 	match := pullRequestRef.FindStringSubmatch(ref)
@@ -50,6 +54,31 @@ func staleCaches(caches []actionsCache, openPullRequests map[int]bool, now time.
 		}
 	}
 	return stale
+}
+
+// supersededCaches finds caches a newer one of the same family and ref replaced: restore-keys pick the newest,
+// so an entry nothing restored since its replacement appeared, and idle for minIdle, is dead weight.
+func supersededCaches(caches []actionsCache, now time.Time, minIdle time.Duration) []actionsCache {
+	newest := map[string]time.Time{}
+	group := func(cache actionsCache) string {
+		return cache.Ref + "\x00" + cacheVersionSuffix.ReplaceAllString(cache.Key, "")
+	}
+	for _, cache := range caches {
+		if !cacheVersionSuffix.MatchString(cache.Key) {
+			continue
+		}
+		if created := newest[group(cache)]; cache.CreatedAt.After(created) {
+			newest[group(cache)] = cache.CreatedAt
+		}
+	}
+	var superseded []actionsCache
+	for _, cache := range caches {
+		replaced, ok := newest[group(cache)]
+		if ok && cache.CreatedAt.Before(replaced) && cache.LastAccessedAt.Before(replaced) && now.Sub(cache.LastAccessedAt) > minIdle {
+			superseded = append(superseded, cache)
+		}
+	}
+	return superseded
 }
 
 func staleArtifacts(artifacts []actionsArtifact, keptBranches map[string]bool, now time.Time, maxAge time.Duration) []actionsArtifact {
@@ -115,6 +144,7 @@ func runActionsCleanup(args []string) error {
 	repository := set.String("repo", os.Getenv("GITHUB_REPOSITORY"), "owner/name to clean up")
 	keepBranch := set.String("keep-branch", "main", "branch whose artifacts stay, since smoke comparisons read them; open pull requests' branches stay too")
 	maxIdle := set.Duration("cache-idle", 7*24*time.Hour, "delete caches unused for longer than this")
+	supersededIdle := set.Duration("superseded-idle", 24*time.Hour, "delete caches a newer one replaced once unused for longer than this")
 	maxAge := set.Duration("artifact-age", 48*time.Hour, "delete other branches' artifacts older than this")
 	maxDeletions := set.Int("max-deletions", 800, "stop after this many deletions to stay inside the API rate limit")
 	dryRun := set.Bool("dry-run", false, "print what would be deleted without deleting it")
@@ -145,10 +175,15 @@ func runActionsCleanup(args []string) error {
 	var cacheBytes, artifactBytes int64
 	cacheCount, artifactCount := 0, 0
 	budget := *maxDeletions
-	for _, cache := range staleCaches(caches, open, now, *maxIdle) {
+	deleted := map[int64]bool{}
+	for _, cache := range append(staleCaches(caches, open, now, *maxIdle), supersededCaches(caches, now, *supersededIdle)...) {
 		if budget == 0 {
 			break
 		}
+		if deleted[cache.ID] {
+			continue
+		}
+		deleted[cache.ID] = true
 		budget--
 		if !*dryRun {
 			if _, err := ghAPI(nil, "--method", "DELETE", fmt.Sprintf("repos/%s/actions/caches/%d", *repository, cache.ID)); err != nil {
