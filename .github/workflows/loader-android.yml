@@ -207,6 +207,7 @@ jobs:
               uses: ./.github/actions/setup-ccache
               with:
                   key: android-module
+                  hash-dir: 'false'
 
             - name: Install NDK and CMake
               run: |

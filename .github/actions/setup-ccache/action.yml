@@ -5,6 +5,10 @@ inputs:
     key:
         description: Names the job's cache, so jobs that build different code keep separate caches.
         required: true
+    hash-dir:
+        description: Hashes the working directory into -g builds. Turn it off where the build directory's name changes per run.
+        required: false
+        default: 'true'
 
 runs:
     using: composite
@@ -17,7 +21,8 @@ runs:
               fi
               if [ "$RUNNER_OS" = macOS ]; then
                   brew install ccache > /dev/null
-              else
+              elif ! sudo apt-get install -y -qq ccache > /dev/null; then
+                  # The image's package lists usually still resolve ccache; refreshing them costs about 10 s.
                   sudo apt-get update -qq
                   sudo apt-get install -y -qq ccache > /dev/null
               fi
@@ -37,9 +42,11 @@ runs:
                   echo "CCACHE_BASEDIR=${{ github.workspace }}"
                   echo "CCACHE_COMPRESS=true"
                   echo "CCACHE_MAXSIZE=500M"
-                  # Builds with -g hash the working directory, and AGP names its CMake directory after the PR's
-                  # arguments, so pull requests never hit main's objects without this.
-                  echo "CCACHE_NOHASHDIR=true"
+                  # Builds with -g hash the working directory. AGP names its CMake directory after the build's
+                  # arguments, so its pull requests never hit main's objects unless the directory is left out.
+                  if [ "${{ inputs.hash-dir }}" = false ]; then
+                      echo "CCACHE_NOHASHDIR=true"
+                  fi
                   echo "CMAKE_C_COMPILER_LAUNCHER=ccache"
                   echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache"
               } >> "$GITHUB_ENV"
