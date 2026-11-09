@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import type { FilterMatch, MarketplaceFilters } from '~/marketplace/filters';
 import { BottomSheets, Discord } from '~/metro/components';
-import { UPDATED_WINDOWS } from '~/marketplace/filters';
+import { FILTER_MATCHES, UPDATED_WINDOWS } from '~/marketplace/filters';
 import { messages } from '~/i18n/api';
 
 import { windowLabel } from './filter-labels';
@@ -44,6 +44,7 @@ function FilterUpdated({ filters, onChange, onBack }: FilterUpdatedProps) {
 			<View style={styles.body}>
 				<MatchControl
 					value={filters.updatedMatch}
+					matches={FILTER_MATCHES}
 					labels={labels}
 					disabled={filters.updated === null}
 					onChange={(updatedMatch: FilterMatch) => onChange({ updatedMatch })}

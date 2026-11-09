@@ -41,10 +41,12 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_VERSION_HELD_TOAST: { name: string | number; version: string | number };
 		UNBOUND_MARKETPLACE_EMPTY: { type: string | number };
 		UNBOUND_MARKETPLACE_ALL: { type: string | number };
+		UNBOUND_FILTER_ALL_OF: { value: string | number };
 		UNBOUND_FILTER_NOT: { value: string | number };
 		UNBOUND_FILTER_WITHIN_VALUE: { value: string | number };
 		UNBOUND_FILTER_OLDER_THAN: { value: string | number };
 		UNBOUND_FILTER_CHIP: { field: string | number; value: string | number };
+		UNBOUND_FILTER_LISTED: { count: number };
 		UNBOUND_FILTER_REMOVE: { name: string | number };
 		UNBOUND_LINK_INSTALL_TITLE: { name: string | number };
 		UNBOUND_LINK_UPDATE_TITLE: { name: string | number };

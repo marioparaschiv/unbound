@@ -7,6 +7,7 @@ import { changelogSchema } from './changelog';
 import { submissionSchema } from './publish';
 import { sourcePinSchema } from './source';
 import { addonIconSchema } from './icons';
+import { tagSchema } from './tags';
 
 // Lives in icons.ts so publish.ts can use it without importing this module back.
 export { addonIconSchema };
@@ -126,6 +127,8 @@ export const listedAddonSchema = Type.Object({
 	name: Type.Optional(Type.String()),
 	/** The display description: the served version's, unless staff pinned another. Optional like `name`. */
 	description: Type.Optional(Type.String()),
+	/** The addon's tags in menu order; only the catalog carries them. Optional so catalogs stored before it still parse. */
+	tags: Type.Optional(Type.Array(tagSchema)),
 	latestVersion: addonVersionSchema,
 });
 

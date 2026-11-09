@@ -28,4 +28,15 @@ export default Discord.createStyles({
 	spacer: {
 		flex: 1,
 	},
+	// With tags, the description spans the card and the footer below holds the tags and version.
+	above: {
+		flex: 0,
+		marginTop: -8,
+	},
+	footer: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 8,
+		marginTop: -4,
+	},
 });

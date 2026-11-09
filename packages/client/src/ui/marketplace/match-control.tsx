@@ -1,38 +1,44 @@
 import { Dimensions, View } from 'react-native';
 import { useEffect, useMemo } from 'react';
 
-import type { FilterMatch } from '~/marketplace/filters';
+import type { TagMatch } from '~/marketplace/filters';
 import { Discord } from '~/metro/components';
 
 import useStyles from './match-control.style';
 
-type MatchControlProps = {
-	value: FilterMatch;
-	/** The labels of `any` and `none`, such as Include and Exclude. */
-	labels: [string, string];
+type MatchControlProps<M extends TagMatch> = {
+	value: M;
+	/** The operators in segment order, such as `['any', 'none']`. */
+	matches: readonly M[];
+	/** One label per operator, such as Include and Exclude. */
+	labels: readonly string[];
 	/** Dims the control while its filter has nothing picked. */
 	disabled?: boolean;
-	onChange: (match: FilterMatch) => void;
+	onChange: (match: M) => void;
 };
 
-const MATCHES: FilterMatch[] = ['any', 'none'];
-
 /**
- * @description Discord's segmented control over a filter's two operators, keeping or dropping what it picks.
+ * @description Discord's segmented control over a filter's operators, such as keeping or dropping what it picks.
  */
-function MatchControl({ value, labels, disabled = false, onChange }: MatchControlProps) {
+function MatchControl<M extends TagMatch>({
+	value,
+	matches,
+	labels,
+	disabled = false,
+	onChange,
+}: MatchControlProps<M>) {
 	const styles = useStyles();
-	const picked = MATCHES.indexOf(value);
+	const picked = matches.indexOf(value);
 	const items = useMemo(
-		() => MATCHES.map((match, index) => ({ id: match, label: labels[index] })),
-		[labels],
+		() => matches.map((match, index) => ({ id: match, label: labels[index] })),
+		[matches, labels],
 	);
 	const state = Discord.useSegmentedControlState({
 		items,
 		pageWidth: Dimensions.get('window').width,
 		defaultIndex: picked,
 		onSetActiveIndex(index: number) {
-			const next = MATCHES[index];
+			const next = matches[index];
 
 			if (next && next !== value) {
 				onChange(next);

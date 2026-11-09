@@ -27,6 +27,7 @@ import type { ActionMeta } from '~/lib/moderation-events';
 import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import { renderAddonIcon } from '~/lib/addon-icons';
+import { readAddonTags } from '~/lib/addon-tags';
 import { LIVE_VERSIONS } from '~/lib/live-versions';
 import { likeContains } from '~/lib/like-contains';
 import type { Transaction } from '~/db/database';
@@ -407,13 +408,18 @@ export async function listListedAddons(ctx: AppContext): Promise<ListedAddon[]> 
 }
 
 /**
- * @description Snapshots every listed addon with its newest version, ordered by id. The revision is a
- * hash of the snapshot, so it changes exactly when an approval, delist or relist changes what is listed.
+ * @description Snapshots every listed addon with its newest version and tags, ordered by id. The revision
+ * is a hash of the snapshot, so it changes exactly when an approval, delist, relist or retag changes it.
  * @param ctx The application context.
  * @returns The catalog and its revision.
  */
 export async function getCatalog(ctx: AppContext): Promise<CatalogResponse> {
-	const addons = await listListedAddons(ctx);
+	const listed = await listListedAddons(ctx);
+	const tags = await readAddonTags(
+		ctx,
+		listed.map((entry) => entry.id),
+	);
+	const addons = listed.map((entry) => ({ ...entry, tags: tags.get(entry.id) ?? [] }));
 	const revision = new Bun.CryptoHasher('sha256').update(JSON.stringify(addons)).digest('hex');
 
 	return { revision, addons };

@@ -1,4 +1,4 @@
-import type { AuthorOption, MarketplaceFilters } from '~/marketplace/filters';
+import type { AuthorOption, MarketplaceFilters, TagOption } from '~/marketplace/filters';
 import type { CatalogSort } from '~/marketplace/catalog';
 import { messages, format } from '~/i18n/api';
 
@@ -31,6 +31,32 @@ export function windowLabel(days: number): string {
 			return messages.UNBOUND_FILTER_YEAR;
 		default:
 			return `${days}d`;
+	}
+}
+
+/**
+ * @description Sums up the Tags filter: the first picked label, how many more, and how they match.
+ * @param filters The page's filters.
+ * @param options The tab's tags, which label the picked ids.
+ * @returns The summary, such as "Chat +2", "all of Chat +1" or "not Chat", or `undefined` when no tag is picked.
+ */
+export function tagsSummary(filters: MarketplaceFilters, options: TagOption[]): string | undefined {
+	const [first, ...rest] = filters.tags;
+
+	if (first === undefined) {
+		return undefined;
+	}
+
+	const label = options.find((option) => option.id === first)?.label ?? first;
+	const value = rest.length ? `${label} +${rest.length}` : label;
+
+	switch (filters.tagMatch) {
+		case 'none':
+			return format('UNBOUND_FILTER_NOT', { value });
+		case 'all':
+			return rest.length ? format('UNBOUND_FILTER_ALL_OF', { value }) : value;
+		default:
+			return value;
 	}
 }
 

@@ -2,14 +2,14 @@ import type { AddonKind } from '@unbound-app/types/addons';
 import { ScrollView } from 'react-native';
 import { useMemo } from 'react';
 
-import { DEFAULT_FILTERS, listAuthors } from '~/marketplace/filters';
+import { DEFAULT_FILTERS, listAuthors, listTags } from '~/marketplace/filters';
 import type { MarketplaceFilters } from '~/marketplace/filters';
 import MarketplaceStore from '~/marketplace/state';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { icons } from '~/assets/api';
 
-import { authorsSummary, updatedSummary } from './filter-labels';
+import { authorsSummary, tagsSummary, updatedSummary } from './filter-labels';
 import useStyles from './filter-chips.style';
 
 type FilterChipsProps = {
@@ -26,7 +26,7 @@ type Chip = {
 
 /**
  * @description The active filters under the marketplace search, one pill each, such as "Authors: V +2".
- * Tapping a pill drops its filter; Clear all drops both. Renders nothing while no filter is set.
+ * Tapping a pill drops its filter; Clear all drops them all. Renders nothing while no filter is set.
  */
 function FilterChips({ kind, filters, onChange }: FilterChipsProps) {
 	const styles = useStyles();
@@ -35,10 +35,16 @@ function FilterChips({ kind, filters, onChange }: FilterChipsProps) {
 		() => (state.status === 'ready' ? listAuthors(state.catalog.addons, kind) : []),
 		[state, kind],
 	);
+	const tagOptions = useMemo(
+		() => (state.status === 'ready' ? listTags(state.catalog.addons, kind) : []),
+		[state, kind],
+	);
 
+	const tags = tagsSummary(filters, tagOptions);
 	const authors = authorsSummary(filters, options);
 	const updated = updatedSummary(filters);
 	const chips: Chip[] = [
+		...(tags ? [{ field: messages.UNBOUND_TAGS, value: tags, clear: { tags: [] } }] : []),
 		...(authors
 			? [{ field: messages.UNBOUND_AUTHORS, value: authors, clear: { authors: [] } }]
 			: []),

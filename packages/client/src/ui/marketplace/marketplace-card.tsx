@@ -27,6 +27,7 @@ import VersionPickerSheet from './version-picker-sheet';
 import useInstallStatus from './use-install-status';
 import useStyles from './marketplace-card.style';
 import useOpenListing from './use-open-listing';
+import TagRow from './tag-row';
 
 type MarketplaceCardProps = {
 	addon: ListedAddon;
@@ -94,7 +95,7 @@ function confirmChoice(
 /**
  * @description One listed addon, laid out like an installed addon's card: icon, name and authors on top
  * with an Install, Update or Installed button judged against the installed copy at its top right, the
- * description and version below. Holding the button offers
+ * description below, then the tags in a scrolling row beside the version. Holding the button offers
  * the newest version or a picker of every version, except for fonts. Tapping the card opens the store page.
  */
 function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
@@ -106,6 +107,7 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 	const { manifest, version: latest, pageUrl } = addon.latestVersion;
 	const name = addon.name ?? manifest.name;
 	const description = addon.description ?? manifest.description;
+	const tags = addon.tags ?? [];
 	const action = ACTIONS[pending ?? status];
 	const updatable = installsFromManifest(kind) ? kind : undefined;
 
@@ -214,16 +216,33 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 					onLongPress={updatable === undefined ? void 0 : () => hold(updatable)}
 				/>
 			</Discord.Stack>
-			<View style={styles.bottom}>
-				{description ? (
-					<Discord.Text variant='text-sm/normal' style={styles.description}>
-						{description}
-					</Discord.Text>
-				) : (
-					<View style={styles.spacer} />
-				)}
-				<AddonTag>{`v${latest}`}</AddonTag>
-			</View>
+			{tags.length ? (
+				<>
+					{description ? (
+						<Discord.Text
+							variant='text-sm/normal'
+							style={[styles.description, styles.above]}
+						>
+							{description}
+						</Discord.Text>
+					) : null}
+					<View style={styles.footer}>
+						<TagRow tags={tags} />
+						<AddonTag>{`v${latest}`}</AddonTag>
+					</View>
+				</>
+			) : (
+				<View style={styles.bottom}>
+					{description ? (
+						<Discord.Text variant='text-sm/normal' style={styles.description}>
+							{description}
+						</Discord.Text>
+					) : (
+						<View style={styles.spacer} />
+					)}
+					<AddonTag>{`v${latest}`}</AddonTag>
+				</View>
+			)}
 		</Discord.Card>
 	);
 }
