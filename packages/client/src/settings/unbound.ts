@@ -26,8 +26,14 @@ const DEFAULTS = {
 	'chat-background.blur': 0,
 	'chat-background.opacity': DEFAULT_BACKGROUND_OPACITY,
 	'plugins.showLibraries': false,
-	'updater.auto': true,
-	'updater.notify': true,
+	/** The loader reads it at launch; off keeps the cached bundle until the user refetches. */
+	'updater.auto.client': true,
+	'updater.auto.addons': false,
+	'updater.notify.client': true,
+	'updater.notify.loader': true,
+	'updater.notify.addons': true,
+	/** The client version that last ran, so a new one is announced once. */
+	'updater.lastClientVersion': '',
 	/** The loader reads the `loader.*` keys at launch; an empty URL means the default bundle. */
 	'loader.update.url': '',
 	'loader.update.force': false,
