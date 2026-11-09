@@ -1,5 +1,54 @@
 # Changelog
 
+## [1.1.0](https://github.com/marioparaschiv/unbound/compare/client-v1.0.0...client-v1.1.0) (2026-11-09)
+
+
+### Features
+
+* **app-icons:** custom app icons on every platform ([#987](https://github.com/marioparaschiv/unbound/issues/987)) ([9dbbcf8](https://github.com/marioparaschiv/unbound/commit/9dbbcf8bba4b7abcef6a27d99bb004d3c2a837ef))
+* **client:** filter the marketplace by tags ([#1014](https://github.com/marioparaschiv/unbound/issues/1014)) ([d822616](https://github.com/marioparaschiv/unbound/commit/d822616424f95ded34a33e4b3150f9cb38b2d648))
+* **client:** park the Icons tab and centre the empty Plugins list ([#976](https://github.com/marioparaschiv/unbound/issues/976)) ([97565f5](https://github.com/marioparaschiv/unbound/commit/97565f57c6bcd7be86e66f91e6d3601575ccabdb))
+* **client:** port the restyled crash screen from v2.5 ([#1007](https://github.com/marioparaschiv/unbound/issues/1007)) ([c6a8239](https://github.com/marioparaschiv/unbound/commit/c6a8239b5176357af200a5d819a4f419a569edee))
+* **client:** redesign the addon store page ([#1016](https://github.com/marioparaschiv/unbound/issues/1016)) ([8c72fe5](https://github.com/marioparaschiv/unbound/commit/8c72fe5114c80c1178c02bf3f81928ed70870a49))
+* **client:** redesign the marketplace with filters and a Featured shelf ([#1010](https://github.com/marioparaschiv/unbound/issues/1010)) ([394caab](https://github.com/marioparaschiv/unbound/commit/394caab113bbcc168820e7cf0826862f89aace23))
+* **client:** redesign the updater screen ([#1022](https://github.com/marioparaschiv/unbound/issues/1022)) ([f0677df](https://github.com/marioparaschiv/unbound/commit/f0677df1860f88f609d6beca7016cd9db0ae9b36))
+* **themes:** add Rosie themes, a theme maker and theme hot reload ([#985](https://github.com/marioparaschiv/unbound/issues/985)) ([0c926db](https://github.com/marioparaschiv/unbound/commit/0c926dbc03587960ac2d16f16cdd78fd07abfc5e))
+
+
+### Bug Fixes
+
+* **ci:** repair local validation failures ([#988](https://github.com/marioparaschiv/unbound/issues/988)) ([833aa4b](https://github.com/marioparaschiv/unbound/commit/833aa4b55980b791ae306679c20b2d3f1ab63ed0))
+* **client:** border every theme swatch and follow Discord's theme ([#1001](https://github.com/marioparaschiv/unbound/issues/1001)) ([c6a6b0f](https://github.com/marioparaschiv/unbound/commit/c6a6b0f57f60ac5bdfd77bc58ebd4ccc4d78b620))
+* **client:** draw theme picker swatches and backdrop in real colours ([e0bdb50](https://github.com/marioparaschiv/unbound/commit/e0bdb5028a323cb1a2de1b484664a0ca73099f97))
+* **client:** draw theme swatches from their own background colours ([#993](https://github.com/marioparaschiv/unbound/issues/993)) ([473e086](https://github.com/marioparaschiv/unbound/commit/473e0867531c7351e29dac7ca56fe89f806bdf7e))
+* **client:** enable staff experiments reliably ([#989](https://github.com/marioparaschiv/unbound/issues/989)) ([74f2295](https://github.com/marioparaschiv/unbound/commit/74f22959c9bd0896b725b62baf41277b97a223ff))
+* **client:** fall back to Discord's render when a React patch crashes ([#1008](https://github.com/marioparaschiv/unbound/issues/1008)) ([c4862e9](https://github.com/marioparaschiv/unbound/commit/c4862e90d48b98c5d0089e7a3af1817d9b3bb43f))
+* **client:** hide the chat input shadow while a chat background is drawn ([#973](https://github.com/marioparaschiv/unbound/issues/973)) ([5a5cc69](https://github.com/marioparaschiv/unbound/commit/5a5cc692fa5705ca90cf2761b7afcb03482273cd))
+* **client:** keep Discord's fibers when a patch-added element crashes ([#1011](https://github.com/marioparaschiv/unbound/issues/1011)) ([9d37735](https://github.com/marioparaschiv/unbound/commit/9d3773596d3ec6954c25833d9fad8f19b1b0b446))
+* **client:** keep Discord's own swatch in the theme picker ([#997](https://github.com/marioparaschiv/unbound/issues/997)) ([798f729](https://github.com/marioparaschiv/unbound/commit/798f72950d786c8cec05f5136f9b62fa99949ef9))
+* **client:** keep patched components' hooks in one fiber on fallback ([#1009](https://github.com/marioparaschiv/unbound/issues/1009)) ([fa9e03d](https://github.com/marioparaschiv/unbound/commit/fa9e03d16f83c35dfb629e37b83ae4953b40ebf3))
+* **client:** lay theme authors over the carousel's hidden caption ([#1002](https://github.com/marioparaschiv/unbound/issues/1002)) ([bd5b711](https://github.com/marioparaschiv/unbound/commit/bd5b711d79df8307dcb4340a60c6ab77fb97f57e))
+* **client:** sort updater imports and regenerate the SDK ([#1023](https://github.com/marioparaschiv/unbound/issues/1023)) ([a2abf3a](https://github.com/marioparaschiv/unbound/commit/a2abf3a54729e3b22f1e4632963872fe00d68057))
+* **client:** speed up the marketplace and settle its list ([#1020](https://github.com/marioparaschiv/unbound/issues/1020)) ([697d440](https://github.com/marioparaschiv/unbound/commit/697d4407c8ae7fe997cf7728037b8ba22d90ae3a))
+* **client:** tidy the updater page ([#1024](https://github.com/marioparaschiv/unbound/issues/1024)) ([f3f94f6](https://github.com/marioparaschiv/unbound/commit/f3f94f6f25ac24cdf30e4cf8a246888bdd1d58d9))
+
+
+### Performance Improvements
+
+* **loader:** reread only themes after a theme changes on disk ([#977](https://github.com/marioparaschiv/unbound/issues/977)) ([d7c5fa7](https://github.com/marioparaschiv/unbound/commit/d7c5fa708a680ea822b8a895f42c4e41e93cd39e))
+* **web:** send only the page icons an addon page uses ([#1019](https://github.com/marioparaschiv/unbound/issues/1019)) ([2eb5a49](https://github.com/marioparaschiv/unbound/commit/2eb5a49c2d6448e7fe3ec691c8e54cb80573921b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 0.14.0
+    * @unbound-app/debugger-protocol bumped to 0.11.0
+    * @unbound-app/types bumped to 0.13.0
+    * @unbound-app/utils bumped to 0.10.1
+    * @unbound-app/web bumped to 0.14.0
+
 ## [1.0.0](https://github.com/marioparaschiv/unbound/compare/client-v0.12.0...client-v1.0.0) (2026-11-05)
 
 

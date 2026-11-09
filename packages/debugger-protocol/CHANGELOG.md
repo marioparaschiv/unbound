@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.11.0](https://github.com/marioparaschiv/unbound/compare/debugger-protocol-v0.10.0...debugger-protocol-v0.11.0) (2026-11-09)
+
+
+### Features
+
+* **themes:** add Rosie themes, a theme maker and theme hot reload ([#985](https://github.com/marioparaschiv/unbound/issues/985)) ([0c926db](https://github.com/marioparaschiv/unbound/commit/0c926dbc03587960ac2d16f16cdd78fd07abfc5e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/types bumped to 0.13.0
+
 ## [0.10.0](https://github.com/marioparaschiv/unbound/compare/debugger-protocol-v0.9.1...debugger-protocol-v0.10.0) (2026-11-05)
 
 

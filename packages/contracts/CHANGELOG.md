@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.14.0](https://github.com/marioparaschiv/unbound/compare/contracts-v0.13.0...contracts-v0.14.0) (2026-11-09)
+
+
+### Features
+
+* **client:** filter the marketplace by tags ([#1014](https://github.com/marioparaschiv/unbound/issues/1014)) ([d822616](https://github.com/marioparaschiv/unbound/commit/d822616424f95ded34a33e4b3150f9cb38b2d648))
+* **client:** redesign the addon store page ([#1016](https://github.com/marioparaschiv/unbound/issues/1016)) ([8c72fe5](https://github.com/marioparaschiv/unbound/commit/8c72fe5114c80c1178c02bf3f81928ed70870a49))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/types bumped to 0.13.0
+
 ## [0.13.0](https://github.com/marioparaschiv/unbound/compare/contracts-v0.12.0...contracts-v0.13.0) (2026-11-05)
 
 

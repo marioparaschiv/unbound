@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.13.0](https://github.com/marioparaschiv/unbound/compare/types-v0.12.0...types-v0.13.0) (2026-11-09)
+
+
+### Features
+
+* **app-icons:** custom app icons on every platform ([#987](https://github.com/marioparaschiv/unbound/issues/987)) ([9dbbcf8](https://github.com/marioparaschiv/unbound/commit/9dbbcf8bba4b7abcef6a27d99bb004d3c2a837ef))
+* **client:** park the Icons tab and centre the empty Plugins list ([#976](https://github.com/marioparaschiv/unbound/issues/976)) ([97565f5](https://github.com/marioparaschiv/unbound/commit/97565f57c6bcd7be86e66f91e6d3601575ccabdb))
+* **client:** redesign the addon store page ([#1016](https://github.com/marioparaschiv/unbound/issues/1016)) ([8c72fe5](https://github.com/marioparaschiv/unbound/commit/8c72fe5114c80c1178c02bf3f81928ed70870a49))
+
+
+### Performance Improvements
+
+* **loader:** reread only themes after a theme changes on disk ([#977](https://github.com/marioparaschiv/unbound/issues/977)) ([d7c5fa7](https://github.com/marioparaschiv/unbound/commit/d7c5fa708a680ea822b8a895f42c4e41e93cd39e))
+
 ## [0.12.0](https://github.com/marioparaschiv/unbound/compare/types-v0.11.0...types-v0.12.0) (2026-11-05)
 
 

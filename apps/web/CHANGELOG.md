@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.14.0](https://github.com/marioparaschiv/unbound/compare/web-v0.13.0...web-v0.14.0) (2026-11-09)
+
+
+### Features
+
+* **client:** filter the marketplace by tags ([#1014](https://github.com/marioparaschiv/unbound/issues/1014)) ([d822616](https://github.com/marioparaschiv/unbound/commit/d822616424f95ded34a33e4b3150f9cb38b2d648))
+* **client:** redesign the addon store page ([#1016](https://github.com/marioparaschiv/unbound/issues/1016)) ([8c72fe5](https://github.com/marioparaschiv/unbound/commit/8c72fe5114c80c1178c02bf3f81928ed70870a49))
+* **themes:** add Rosie themes, a theme maker and theme hot reload ([#985](https://github.com/marioparaschiv/unbound/issues/985)) ([0c926db](https://github.com/marioparaschiv/unbound/commit/0c926dbc03587960ac2d16f16cdd78fd07abfc5e))
+* **web:** add an install page with stable and nightly builds ([#998](https://github.com/marioparaschiv/unbound/issues/998)) ([560a7ee](https://github.com/marioparaschiv/unbound/commit/560a7ee03543e365af1b725cc66c08eccfc85436))
+* **web:** stagger the install page's sections and tiles in ([#999](https://github.com/marioparaschiv/unbound/issues/999)) ([2667089](https://github.com/marioparaschiv/unbound/commit/2667089aad2c77b4db3428fa677902f40369bb0f))
+
+
+### Bug Fixes
+
+* **web:** animate install page downloads on load, not on scroll ([#1000](https://github.com/marioparaschiv/unbound/issues/1000)) ([1a3999d](https://github.com/marioparaschiv/unbound/commit/1a3999db8d8613887a69131bb6e4c39c42e310cd))
+* **web:** centre the theme maker's preview tab labels ([#986](https://github.com/marioparaschiv/unbound/issues/986)) ([37a68e4](https://github.com/marioparaschiv/unbound/commit/37a68e43a32415ca302775c0e532d09938446e9c))
+
+
+### Performance Improvements
+
+* **web:** send only the page icons an addon page uses ([#1019](https://github.com/marioparaschiv/unbound/issues/1019)) ([2eb5a49](https://github.com/marioparaschiv/unbound/commit/2eb5a49c2d6448e7fe3ec691c8e54cb80573921b))
+
+
+### Documentation
+
+* **web:** tighten install page copy ([#1003](https://github.com/marioparaschiv/unbound/issues/1003)) ([78f0797](https://github.com/marioparaschiv/unbound/commit/78f0797fa6458dde665039ea3e629f74455d7ec3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 0.14.0
+    * @unbound-app/utils bumped to 0.10.1
+
 ## [0.13.0](https://github.com/marioparaschiv/unbound/compare/web-v0.12.0...web-v0.13.0) (2026-11-05)
 
 
