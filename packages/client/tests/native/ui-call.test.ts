@@ -3,8 +3,10 @@ import { afterEach, beforeEach, describe, expect, jest, mock, spyOn, test } from
 type CallResult = { ok: true; value: number } | { ok: false; error: string };
 type Completion = (result: CallResult) => void;
 type CallClosure = { settle: Completion };
+type Scheduled = () => void;
 
 const completions: Completion[] = [];
+const scheduled: Scheduled[] = [];
 let schedulingFailure: Error | undefined;
 
 mock.module('~/metro/wrappers', () => ({
@@ -17,6 +19,7 @@ mock.module('~/metro/wrappers', () => ({
 
 			const closure: CallClosure = Reflect.get(worklet, '__closure');
 
+			scheduled.push(worklet);
 			completions.push(closure.settle);
 		},
 	}),
@@ -31,12 +34,36 @@ beforeEach(() => {
 
 afterEach(() => {
 	completions.length = 0;
+	scheduled.length = 0;
 	schedulingFailure = undefined;
 	jest.useRealTimers();
 	jest.restoreAllMocks();
-	Reflect.deleteProperty(globalThis, '_REANIMATED_VERSION_JS');
-	Reflect.deleteProperty(globalThis, '_REANIMATED_VERSION_CPP');
+
+	for (const name of [
+		'_REANIMATED_VERSION_JS',
+		'_REANIMATED_VERSION_CPP',
+		'_WORKLETS_VERSION_JS',
+		'_WORKLETS_VERSION_CPP',
+	]) {
+		Reflect.deleteProperty(globalThis, name);
+	}
 });
+
+function evalWorkletCode(worklet: Scheduled | undefined) {
+	const initData: { code: string } | undefined = worklet && Reflect.get(worklet, '__initData');
+
+	// oxlint-disable-next-line no-eval -- mirrors the UI runtime's own unpacker.
+	return (0, eval)(initData?.code ?? '') as
+		| ((this: Scheduled, value: number) => void)
+		| undefined;
+}
+
+function useReanimated4(worklets = '0.14.0-main') {
+	Reflect.set(globalThis, '_REANIMATED_VERSION_JS', '4.8.0-main');
+	Reflect.set(globalThis, '_REANIMATED_VERSION_CPP', '4.8.0-main');
+	Reflect.set(globalThis, '_WORKLETS_VERSION_JS', worklets);
+	Reflect.set(globalThis, '_WORKLETS_VERSION_CPP', worklets);
+}
 
 describe('UI calls', () => {
 	test('refuses an unrecognized worklet runtime before scheduling work', () => {
@@ -55,6 +82,52 @@ describe('UI calls', () => {
 
 		expect(() => bridge.run(() => {})).toThrow('unsupported');
 		expect(completions).toHaveLength(0);
+		dispose();
+	});
+
+	test('runs on Reanimated 4 with the react-native-worklets version it was verified on', async () => {
+		useReanimated4();
+		const { bridge, dispose } = createScopedUIBridge([], 'android');
+		const pending = bridge.call(() => 42);
+
+		completions[0]?.({ ok: true, value: 42 });
+		expect(await pending).toBe(42);
+		dispose();
+	});
+
+	test('refuses Reanimated 4 on another or a mismatched worklets runtime', () => {
+		useReanimated4('0.15.0');
+		const { bridge, dispose } = createScopedUIBridge([], 'android');
+
+		expect(() => bridge.run(() => {})).toThrow('worklets runtime version is unsupported');
+		Reflect.set(globalThis, '_WORKLETS_VERSION_JS', '0.14.0-main');
+		expect(() => bridge.run(() => {})).toThrow('native 0.15.0');
+		Reflect.deleteProperty(globalThis, '_WORKLETS_VERSION_CPP');
+		expect(() => bridge.callback(() => {})).toThrow('unsupported');
+		expect(completions).toHaveLength(0);
+		dispose();
+	});
+
+	test('guard code evaluates to a function as is, as react-native-worklets evals it', () => {
+		const { bridge, dispose } = createScopedUIBridge([], 'android');
+		const ran: number[] = [];
+
+		bridge.run((value: number) => ran.push(value), 1);
+		void bridge.call(() => 2).catch(() => undefined);
+
+		expect(scheduled).toHaveLength(2);
+
+		for (const worklet of scheduled) {
+			expect(typeof evalWorkletCode(worklet)).toBe('function');
+		}
+
+		const [guardedRun] = scheduled;
+
+		if (guardedRun) {
+			evalWorkletCode(guardedRun)?.call(guardedRun, 3);
+		}
+
+		expect(ran).toEqual([3]);
 		dispose();
 	});
 

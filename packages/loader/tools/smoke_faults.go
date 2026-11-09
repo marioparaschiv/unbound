@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -82,7 +83,10 @@ func runSmokeCrashFault(ctx context.Context, target smokeTarget, options *smokeO
 		return smokeFaultResult{Name: name, Problem: "the fixture that calls abort() while starting did not crash Discord"}
 	}
 	for launch := 1; launch <= smokeCrashRelaunches; launch++ {
-		if err := target.launch(ctx); err != nil {
+		if err := target.launch(ctx); errors.Is(err, errSmokeNotStarted) {
+			// The fixture can crash Discord before the first poll sees it: count that launch as a crash.
+			continue
+		} else if err != nil {
 			return smokeFaultResult{Name: name, Problem: "relaunch Discord: " + err.Error()}
 		}
 		if !waitForSmokeDebugger(ctx, target, options) {
