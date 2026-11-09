@@ -21,8 +21,10 @@ type FlashListProps<T> = {
 	renderItem: (info: ListItemInfo<T>) => ReactElement;
 	estimatedItemSize: number;
 	ListEmptyComponent?: ReactElement;
+	ListHeaderComponent?: ReactElement;
 	ListFooterComponent?: ReactElement;
 	keyboardDismissMode?: ScrollViewProps['keyboardDismissMode'];
+	refreshControl?: ScrollViewProps['refreshControl'];
 	contentContainerStyle?: StyleProp<ViewStyle>;
 };
 
