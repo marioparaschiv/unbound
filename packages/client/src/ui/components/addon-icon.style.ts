@@ -10,6 +10,11 @@ export default Discord.createStyles({
 		justifyContent: 'center',
 		backgroundColor: Theme.colors.BACKGROUND_SURFACE_HIGH,
 	},
+	large: {
+		width: 64,
+		height: 64,
+		borderRadius: 18,
+	},
 	// Read as a resolved string for the SVG's `color` prop.
 	glyph: {
 		color: Theme.colors.TEXT_STRONG,

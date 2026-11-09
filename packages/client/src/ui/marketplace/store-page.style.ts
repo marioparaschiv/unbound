@@ -1,9 +1,6 @@
 import { Discord } from '~/metro/components';
 
 export default Discord.createStyles({
-	fill: {
-		flex: 1,
-	},
 	scroll: {
 		paddingVertical: 16,
 	},
@@ -12,5 +9,11 @@ export default Discord.createStyles({
 	},
 	inset: {
 		paddingHorizontal: 16,
+	},
+	loading: {
+		paddingVertical: 32,
+	},
+	card: {
+		padding: 16,
 	},
 });
