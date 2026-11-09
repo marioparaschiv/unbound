@@ -1,12 +1,31 @@
 import { Discord } from '~/metro/components';
+import { Theme } from '~/metro/common';
 
+// Mirrors the installed addon card (`~/ui/addons/addon-card.style`), so both pages read alike.
 export default Discord.createStyles({
 	card: {
 		gap: 14,
 		padding: 16,
 	},
-	body: {
+	heading: {
 		flex: 1,
 		minWidth: 0,
+		gap: 2,
+	},
+	bottom: {
+		flexDirection: 'row',
+		alignItems: 'flex-end',
+		gap: 12,
+		marginTop: -8,
+	},
+	description: {
+		flex: 1,
+		minWidth: 0,
+		alignSelf: 'flex-start',
+		lineHeight: 19,
+		color: Theme.colors.TEXT_DEFAULT,
+	},
+	spacer: {
+		flex: 1,
 	},
 });
