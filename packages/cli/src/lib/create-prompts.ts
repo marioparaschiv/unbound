@@ -53,6 +53,14 @@ export async function resolveOptions(
 ): Promise<CreateOptions> {
 	intro('ubd create');
 
+	const unprompted = process.stdin.isTTY ? [] : missingFlags(input, Boolean(workspace));
+
+	// Without a terminal clack's prompts end at once as cancelled, which would exit 0 without scaffolding.
+	if (unprompted.length) {
+		cancel(`No terminal to prompt in. Pass ${unprompted.join(', ')}.`);
+		process.exit(2);
+	}
+
 	const shape = await resolveShape(input.shape, Boolean(workspace));
 	const kind = await resolveKind(input.kind);
 
@@ -88,6 +96,37 @@ export async function resolveOptions(
 		gitInit,
 		install,
 	};
+}
+
+/** The flag for each value `ubd create` prompts for, in prompt order; the optional author id has a fallback instead. */
+const PROMPTED_FLAGS = [
+	['shape', '--shape'],
+	['kind', '--kind'],
+	['name', '--name'],
+	['displayName', '--display-name'],
+	['description', '--description'],
+	['authorName', '--author-name'],
+	['id', '--id'],
+	['dir', '--dir'],
+	['gitInit', '--git-init'],
+	['install', '--install'],
+] as const;
+
+function missingFlags(input: CreateInput, hasWorkspace: boolean): string[] {
+	const repository = input.shape === 'repository';
+
+	return PROMPTED_FLAGS.filter(([key]) => {
+		if (key === 'gitInit' || key === 'install') {
+			return repository && input[key] === void 0;
+		}
+
+		// An addon added to a workspace lands in its plugins or themes folder, so it asks no directory.
+		if (key === 'dir' && !repository && hasWorkspace) {
+			return false;
+		}
+
+		return input[key] === void 0;
+	}).map(([, flag]) => flag);
 }
 
 async function resolveShape(flag: CreateInput['shape'], hasWorkspace: boolean): Promise<Shape> {

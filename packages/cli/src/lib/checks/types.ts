@@ -49,9 +49,14 @@ export const typesCheck: Check = {
 	 * @description Type-checks the addon with its `tsconfig.json` through TypeScript 7's `tsc --noEmit -p`.
 	 * Slow, so `ubd check` runs it only with `--types`.
 	 * @param context The addon to check.
-	 * @returns One diagnostic per type error; none for an addon without a tsconfig.
+	 * @returns One diagnostic per type error; none for a theme or an addon without a tsconfig.
 	 */
 	async run({ addon }) {
+		// A theme has no code; the tsconfig above it would check the workspace's plugins under its name.
+		if (addon.kind !== 'plugin') {
+			return [];
+		}
+
 		const configPath = findConfig(addon.dir);
 
 		if (!configPath) {
