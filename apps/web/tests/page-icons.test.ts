@@ -4,6 +4,8 @@ import { describe, expect, test } from 'bun:test';
 import { createElement } from 'react';
 import { join } from 'node:path';
 
+import { createPageIconRenderer } from '~/components/addon/page-icon-svg';
+import { renderPageIcons } from '~/lib/page-icon-svgs';
 import AddonMd from '~/components/addon-md';
 
 import { PAGE_PIN } from './helpers/addon-page';
@@ -13,7 +15,13 @@ const SHORTCODE = /:([a-z0-9]+(?:-[a-z0-9]+)*):/g;
 
 function render(source: string): string {
 	return renderToStaticMarkup(
-		createElement(AddonMd, { source, pin: PAGE_PIN, mediaBase: 'https://cdn.example/' }),
+		// The published page's path: the server renders the used icons, the page draws only those.
+		createElement(AddonMd, {
+			source,
+			pin: PAGE_PIN,
+			mediaBase: 'https://cdn.example/',
+			renderIcon: createPageIconRenderer(renderPageIcons(source)),
+		}),
 	);
 }
 

@@ -1,10 +1,11 @@
 import { getRouteApi, Link, notFound, useRouteContext } from '@tanstack/react-router';
 import { IconArrowLeft, IconArrowUpRight } from 'nucleo-micro-bold';
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
 
 import ListingField, { toAddonType, TYPE_LABELS } from '~/components/staff/listing-field';
+import { createPageIconRenderer } from '~/components/addon/page-icon-svg';
 import type { SettingsForm } from '~/components/staff/use-settings-form';
 import { adminAddonQuery } from '~/queries/admin-addons/admin-addons';
 import AddonIconControl from '~/components/admin/addon-icon-control';
@@ -159,6 +160,8 @@ function TypeSlot({ view, form }: ListingSlotProps) {
 function StorePage({ store }: StorePageProps) {
 	const [expanded, setExpanded] = useState(false);
 	const { source } = store;
+	const icons = source?.icons;
+	const renderIcon = useMemo(() => createPageIconRenderer(icons ?? {}), [icons]);
 
 	if (!source?.addonMd) return null;
 
@@ -170,6 +173,7 @@ function StorePage({ store }: StorePageProps) {
 					pin={source.pin}
 					mediaBase={source.mediaBase}
 					page={source.page}
+					renderIcon={renderIcon}
 				/>
 			</CardContent>
 			{expanded ? null : (

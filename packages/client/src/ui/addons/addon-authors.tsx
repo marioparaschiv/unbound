@@ -61,12 +61,14 @@ function AddonAuthors({ authors, style, nameStyle }: AddonAuthorsProps) {
 				pressed ? styles.pressed : null,
 			]}
 		>
-			<AvatarPile size={AvatarSizes.XSMALL_20} names={names} totalCount={authors.length}>
+			{/* XSMALL (24): Discord's "+N" chip only sizes its text for 16, 24, 30, 40, 48 and 64; at 20 it
+			falls back to text-md and overflows. */}
+			<AvatarPile size={AvatarSizes.XSMALL} names={names} totalCount={authors.length}>
 				{resolved.slice(0, MAX_AVATARS).map(({ author, avatar }, index) => (
 					<Avatar
 						key={`${author.id}-${index}`}
 						source={avatar}
-						size={AvatarSizes.XSMALL_20}
+						size={AvatarSizes.XSMALL}
 					/>
 				))}
 			</AvatarPile>

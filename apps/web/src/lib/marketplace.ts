@@ -16,6 +16,7 @@ import { searchAuthors, type AuthorPage } from '~/lib/authors/directory';
 import { getAddonDetails, listAddons } from '~/lib/addons';
 import { getPublishedMediaBase } from '~/lib/markdown-url';
 import { schemaValidator } from '~/lib/schema-validator';
+import { renderPageIcons } from '~/lib/page-icon-svgs';
 import { loadAuthors } from '~/lib/authors/resolve';
 import { splitList } from '~/lib/addon-filters';
 import app from '~/lib/app';
@@ -49,6 +50,8 @@ export type MarketplaceSource = {
 	page: AddonPage | null;
 	/** The directory URL ADDON.md's `media/` paths load from. */
 	mediaBase: string;
+	/** Each `:name:` icon ADDON.md uses, as `<svg>` markup by name, so the page ships only those. */
+	icons: Record<string, string>;
 	/** When the version was approved, which dates the `details` snapshot. */
 	approvedAt: string;
 };
@@ -147,6 +150,7 @@ export const fetchMarketplaceAddon = createServerFn({ method: 'GET' })
 							addonMd: details.addonMd,
 							page: details.page,
 							mediaBase: getPublishedMediaBase(latest.manifestUrl),
+							icons: renderPageIcons(details.addonMd ?? ''),
 							approvedAt: latest.publishedAt,
 						}
 					: null,
