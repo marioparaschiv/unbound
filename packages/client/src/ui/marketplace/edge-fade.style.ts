@@ -18,7 +18,4 @@ export default Discord.createStyles({
 	end: {
 		right: 0,
 	},
-	hidden: {
-		opacity: 0,
-	},
 });

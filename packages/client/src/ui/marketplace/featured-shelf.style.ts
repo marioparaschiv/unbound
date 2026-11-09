@@ -10,8 +10,11 @@ export default Discord.createStyles({
 		marginHorizontal: -16,
 	},
 	row: {
-		gap: 10,
 		paddingHorizontal: 16,
 		paddingBottom: 4,
+	},
+	// The gap between cards; a virtualised row lays its cells out itself, so `gap` does not apply.
+	after: {
+		paddingLeft: 10,
 	},
 });

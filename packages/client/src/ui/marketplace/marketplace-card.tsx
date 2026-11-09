@@ -42,7 +42,7 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 			style={styles.card}
 			onPress={pageUrl ? () => open(addon, kind) : void 0}
 		>
-			<Discord.Stack direction='horizontal' spacing={12} align='flex-start'>
+			<Discord.Stack direction='horizontal' spacing={12} align='center'>
 				<AddonIcon id={addon.id} kind={kind} />
 				<View style={styles.heading}>
 					<AddonTitle name={name} />

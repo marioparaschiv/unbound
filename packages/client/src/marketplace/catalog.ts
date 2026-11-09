@@ -127,7 +127,28 @@ export function findIconSvg(state: MarketplaceState, id: string): string | undef
 		return undefined;
 	}
 
-	return state.catalog.addons.find((addon) => addon.id === id)?.iconSvg ?? undefined;
+	return indexIcons(state.catalog).get(id);
+}
+
+// Every card's icon reads this on each store change, so one map per catalog keeps a lookup O(1).
+const iconIndexes = new WeakMap<Catalog, Map<string, string>>();
+
+function indexIcons(catalog: Catalog) {
+	let index = iconIndexes.get(catalog);
+
+	if (!index) {
+		index = new Map();
+
+		for (const addon of catalog.addons) {
+			if (addon.iconSvg) {
+				index.set(addon.id, addon.iconSvg);
+			}
+		}
+
+		iconIndexes.set(catalog, index);
+	}
+
+	return index;
 }
 
 /**
