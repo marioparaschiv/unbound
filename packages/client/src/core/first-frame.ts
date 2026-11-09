@@ -28,6 +28,10 @@ function runNextWaiting() {
 			setTimeout(runNextWaiting, 0);
 		} else {
 			phase = 'drawn';
+
+			if (import.meta.env.BENCH) {
+				globalThis.__ubdBench?.mark('afterFirstFrame:end');
+			}
 		}
 	}
 }
@@ -36,6 +40,11 @@ function flushFirstFrame() {
 	if (phase !== 'waiting') return;
 
 	phase = 'draining';
+
+	if (import.meta.env.BENCH) {
+		globalThis.__ubdBench?.mark('firstFrame');
+	}
+
 	runNextWaiting();
 }
 

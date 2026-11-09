@@ -1,6 +1,8 @@
 import '~/metro/state';
 import '~/metro/cache';
 import '~/metro';
+// Each addon manager registers itself as its module runs; `Manager.for` below needs all of them.
+import '~/addons/managers';
 
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
@@ -47,6 +49,8 @@ export type UnboundWindowObject = UnboundLifecycle & Omit<typeof api, 'default'>
 
 declare global {
 	var unbound: UnboundWindowObject | UnboundLifecycle;
+	/** The benchmark agent a bench build installs before anything else runs. */
+	var __ubdBench: { mark: (name: string) => void } | undefined;
 }
 
 const Logger = createLogger('Core');
@@ -104,6 +108,10 @@ export function initialize(): void {
 		return;
 	}
 
+	if (import.meta.env.BENCH) {
+		globalThis.__ubdBench?.mark('initialize:start');
+	}
+
 	window.unbound = { ...api, initialize, shutdown };
 	Logger.info('Initializing Unbound...');
 
@@ -115,6 +123,10 @@ export function initialize(): void {
 
 	initialized = true;
 	Logger.info('Unbound initialized');
+
+	if (import.meta.env.BENCH) {
+		globalThis.__ubdBench?.mark('initialize:end');
+	}
 }
 
 /**

@@ -6,6 +6,19 @@ import deferUntilReady from '~/core/loader';
 setRejectionTracker();
 
 deferUntilReady(() => {
+	if (import.meta.env.BENCH) {
+		globalThis.__ubdBench?.mark('ready:start');
+	}
+
 	require('./preinitialize');
+
+	if (import.meta.env.BENCH) {
+		globalThis.__ubdBench?.mark('preinitialize:end');
+	}
+
 	require('.');
+
+	if (import.meta.env.BENCH) {
+		globalThis.__ubdBench?.mark('core:end');
+	}
 });
