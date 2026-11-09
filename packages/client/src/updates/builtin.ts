@@ -1,8 +1,8 @@
 import type { SectionEntry } from '~/settings/section';
-import { notifyUpdates } from '~/updates/notify';
-import { getSetting } from '~/settings/unbound';
+import { notifyClientUpdated, notifyUpdates } from '~/updates/notify';
+import { getSetting, setSetting } from '~/settings/unbound';
 import UpdatesPage from '~/ui/settings/updates';
-import { Screens } from '~/core/constants';
+import { CLIENT_VERSION, Screens } from '~/core/constants';
 import UpdatesStore from '~/updates/state';
 
 let pending: ReturnType<typeof setTimeout> | undefined;
@@ -12,19 +12,36 @@ async function update() {
 
 	await check();
 
-	if (getSetting('updater.auto')) {
+	if (getSetting('updater.auto.addons')) {
 		await applyAll();
 	}
 
 	// After applying, so the toast counts only the updates still waiting.
-	notifyUpdates(UpdatesStore.getState().state, getSetting('updater.notify'));
+	notifyUpdates(UpdatesStore.getState().state, {
+		loader: getSetting('updater.notify.loader'),
+		addons: getSetting('updater.notify.addons'),
+	});
+}
+
+function announceClient() {
+	const previous = getSetting('updater.lastClientVersion');
+
+	if (previous === CLIENT_VERSION) return;
+
+	if (getSetting('updater.notify.client')) {
+		notifyClientUpdated(previous, CLIENT_VERSION);
+	}
+
+	setSetting('updater.lastClientVersion', CLIENT_VERSION);
 }
 
 /**
- * Checks for addon updates once after startup, applying them when `updater.auto` is on. A toast then says
- * when the loader is too old for the newest bundle, or with `updater.notify` on, what is left to update.
+ * Toasts a newly updated client, then checks for updates once after startup: applies addon updates with
+ * `updater.auto.addons` on, and toasts a too-old loader and, per `updater.notify.*`, what is left.
  */
 export function start() {
+	announceClient();
+
 	// Built-ins start before the addon managers load their entities.
 	pending = setTimeout(() => void update());
 }

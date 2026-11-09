@@ -506,13 +506,33 @@ bool isAcceptedDownloadStatus(int status)
 
 std::string BundleUpdater::downloadBundle(const std::string                &preferredPath,
                                           const std::optional<std::string> &updateURL,
-                                          uint32_t                          bytecodeVersion)
+                                          uint32_t bytecodeVersion, bool ignorePause)
 {
     log(LogLevel::Info, LOG_CATEGORY_UPDATER, "Ensuring bundle is up to date...");
 
     if (hasSuffix(preferredPath, kCandidateSuffix) && fileExists(preferredPath))
     {
         return preferredPath;
+    }
+
+    bool paused = !settings_.getBoolean(kAutoClientSetting, true);
+    if (paused && ignorePause)
+    {
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+            "Automatic client updates are off, but a manual refetch checks anyway.");
+    }
+    else if (paused)
+    {
+        std::string cachedPath = preferredPath.empty() ? resolveBundlePath() : preferredPath;
+        std::optional<std::string> problem = pauseProblem(cachedPath, updateURL, bytecodeVersion);
+        if (!problem)
+        {
+            log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+                "Automatic client updates are off; keeping the cached bundle.");
+            return cachedPath;
+        }
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+            "Automatic client updates are off, but " + *problem + "; checking for a bundle.");
     }
 
     std::string  storedEtag = settings_.getString("loader.update.etag", "");

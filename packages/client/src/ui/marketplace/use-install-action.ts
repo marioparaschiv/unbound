@@ -2,23 +2,17 @@ import type { ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonKind } from '@unbound-app/types/addons';
 import { useState } from 'react';
 
-import { getInstalledVersion, installVersion } from '~/marketplace/install';
 import type { InstallStatus } from '~/marketplace/catalog';
-import { brokenDependents } from '~/addons/dependencies';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { AvailableChoice } from '~/addons/versions';
 import { installsFromManifest } from '~/addons/addons';
-import { compareVersions } from '~/core/versions';
-import { confirmText } from '~/dialogs/feedback';
+import { installVersion } from '~/marketplace/install';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
-import { Manager } from '~/addons/manager';
-import { showDialog } from '~/dialogs/api';
-import { ActionSheets } from '~/metro/api';
 import { icons } from '~/assets/api';
 import { show } from '~/toasts/api';
 
-import VersionPickerSheet from './version-picker-sheet';
+import { confirmChoice, installChoice, openVersionPicker } from './version-choice';
 import useInstallStatus from './use-install-status';
 
 type StatusAction = {
@@ -52,43 +46,6 @@ const ACTIONS: Record<InstallStatus, StatusAction> = {
 	},
 	installed: { label: () => messages.UNBOUND_INSTALLED, variant: 'secondary' },
 };
-
-const SHEET_KEY = 'unbound-addon-versions';
-
-// Asks when the choice pauses updates, goes back a version or breaks a dependent; an upgrade to the latest just installs.
-function confirmChoice(
-	kind: UpdatableKind,
-	addon: ListedAddon,
-	choice: AvailableChoice,
-): Promise<boolean> {
-	const { name } = addon.latestVersion.manifest;
-	const { version } = choice.version;
-	const installed = getInstalledVersion(kind, addon);
-	const broken = brokenDependents(addon.id, version, Manager.for(kind).getEntities());
-	const downgrade = installed !== void 0 && compareVersions(version, installed) < 0;
-
-	if (!choice.holds && !downgrade && broken.length === 0) {
-		return Promise.resolve(true);
-	}
-
-	const lines = [
-		choice.holds ? format('UNBOUND_VERSION_CONFIRM_HOLD', { name }) : null,
-		downgrade ? format('UNBOUND_VERSION_CONFIRM_DOWNGRADE', { installed }) : null,
-		broken.length > 0
-			? format('UNBOUND_VERSION_CONFIRM_BROKEN', {
-					names: broken.map((dependent) => dependent.manifest.name).join(', '),
-				})
-			: null,
-	];
-
-	// The body joins whichever warnings apply, so it is composed here rather than one message key.
-	return confirmText(showDialog, {
-		title: format('UNBOUND_VERSION_CONFIRM_TITLE', { name, version }),
-		body: lines.filter(Boolean).join('\n\n'),
-		confirm: messages.UNBOUND_INSTALL,
-		cancel: messages.UNBOUND_CANCEL,
-	});
-}
 
 /**
  * @description Drives a listed addon's Install, Update or Installed button, judged against the installed
@@ -130,33 +87,18 @@ function useInstallAction(kind: AddonKind, addon: ListedAddon): InstallAction {
 	}
 
 	async function pick(kind: UpdatableKind, choice: AvailableChoice) {
-		if (pending || !(await confirmChoice(kind, addon, choice))) return;
+		const target = { kind, id: addon.id, name: manifest.name };
 
-		const vars = { name: manifest.name, version: choice.version.version };
-		const ok = await run(() => installVersion(kind, addon, choice.version, choice.holds));
+		if (pending || !(await confirmChoice(target, choice))) return;
 
-		if (!ok) {
-			fail(format('UNBOUND_VERSION_FAILED', vars));
-
-			return;
-		}
-
-		if (choice.holds) {
-			show({
-				title: manifest.name,
-				content: format('UNBOUND_VERSION_HELD_TOAST', vars),
-				icon: 'CircleCheckIcon',
-			});
-		}
+		await run(() => installChoice(target, choice));
 	}
 
 	function openPicker(kind: UpdatableKind) {
-		ActionSheets.openLazy(Promise.resolve({ default: VersionPickerSheet }), SHEET_KEY, {
-			kind,
-			addon,
-			onPick: (choice: AvailableChoice) => void pick(kind, choice),
-			onClose: () => ActionSheets.hideActionSheet(SHEET_KEY),
-		});
+		openVersionPicker(
+			{ kind, id: addon.id, name: manifest.name },
+			(choice) => void pick(kind, choice),
+		);
 	}
 
 	// The installed state has nothing else to offer, so a menu would only cost a tap.

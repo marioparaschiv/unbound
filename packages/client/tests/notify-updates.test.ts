@@ -23,7 +23,10 @@ mock.module('~/toasts/api', () => ({
 	},
 }));
 
-const { notifyUpdates } = await import('~/updates/notify');
+const { notifyClientUpdated, notifyUpdates } = await import('~/updates/notify');
+
+const QUIET = { loader: false, addons: false };
+const LOUD = { loader: true, addons: true };
 
 function pending(id: string): PendingUpdate {
 	return {
@@ -62,26 +65,58 @@ beforeEach(() => {
 
 describe('notifyUpdates', () => {
 	test('warns that the loader is too old even with notifications off', () => {
-		notifyUpdates(ready('2.0.0', 3), false);
+		notifyUpdates(ready('2.0.0', 3), QUIET);
 
 		expect(toasts).toHaveLength(1);
 		expect(toasts[0]?.icon).toBe('WarningIcon');
 		expect(toasts[0]?.content).toContain('2.0.0');
 	});
 
-	test('announces waiting updates only with notifications on', () => {
-		notifyUpdates(ready(null, 2), false);
+	test('announces waiting addon updates only with addon notifications on', () => {
+		notifyUpdates(ready(null, 2), { loader: true, addons: false });
 		expect(toasts).toHaveLength(0);
 
-		notifyUpdates(ready(null, 2), true);
+		notifyUpdates(ready(null, 2), { loader: false, addons: true });
 		expect(toasts).toHaveLength(1);
 		expect(toasts[0]?.icon).toBe('DownloadIcon');
 	});
 
 	test('stays quiet when nothing is waiting or the check did not finish', () => {
-		notifyUpdates(ready(null), true);
-		notifyUpdates({ status: 'checking' }, true);
+		notifyUpdates(ready(null), LOUD);
+		notifyUpdates({ status: 'checking' }, LOUD);
 
 		expect(toasts).toHaveLength(0);
+	});
+
+	test('leaves a newer loader out with loader notifications off', () => {
+		const state = {
+			...ready(null),
+			loader: {
+				platform: 'ios' as const,
+				version: '2.0.0',
+				url: 'https://example.com/loader',
+				changelog: null,
+				publishedAt: new Date().toISOString(),
+				changelogs: [],
+			},
+		};
+
+		notifyUpdates(state, { loader: false, addons: true });
+		expect(toasts).toHaveLength(0);
+
+		notifyUpdates(state, { loader: true, addons: false });
+		expect(toasts).toHaveLength(1);
+	});
+});
+
+describe('notifyClientUpdated', () => {
+	test('announces a new client version, but not the first launch or a relaunch', () => {
+		notifyClientUpdated('', '1.1.0');
+		notifyClientUpdated('1.1.0', '1.1.0');
+		expect(toasts).toHaveLength(0);
+
+		notifyClientUpdated('1.0.0', '1.1.0');
+		expect(toasts).toHaveLength(1);
+		expect(toasts[0]?.content).toContain('1.1.0');
 	});
 });
