@@ -46,9 +46,22 @@ type ReportBody = {
 	errors?: string[];
 	discord?: Record<string, number>;
 	hasGc?: boolean;
+	spans?: Span[];
+	totals?: Record<string, Total>;
 };
 
-type BenchHooks = { mark: (name: string) => void };
+/** Summed time and call count of work reported through `add`. */
+type Total = [ms: number, calls: number];
+
+/** A timed piece of work: its name, start and end epoch. */
+type Span = [name: string, start: number, end: number];
+
+type BenchHooks = {
+	mark: (name: string) => void;
+	now: () => number;
+	span: (name: string, start: number, end: number) => void;
+	add: (name: string, ms: number) => void;
+};
 
 /** One measured window: what ran, what loaded and how the JS thread stalled while it lasted. */
 type Window = {
@@ -78,6 +91,8 @@ type Global = typeof globalThis & {
 };
 
 const LAG_INTERVAL_MS = 16;
+// Shorter spans are dropped: a launch runs thousands of Discord module factories, most in microseconds.
+const SPAN_MIN_MS = 0.05;
 const STALL_MS = 50;
 
 const g = globalThis as Global;
@@ -105,6 +120,8 @@ function captureErrors() {
 	};
 }
 const loaded: [string, number][] = [];
+const spans: Span[] = [];
+const totals: Record<string, Total> = {};
 const windows: Window[] = [];
 let loadedCursor = 0;
 let windowStart = epoch0;
@@ -303,17 +320,33 @@ async function run() {
 		errors,
 		discord: discordMarks(),
 		hasGc: typeof g.gc === 'function',
+		spans,
+		totals,
 	});
 }
 
 g.__ubdBench = {
-	mark(name) {
-		marks[name] ??= epoch();
+	now: epoch,
+	add(name, ms) {
+		const total = (totals[name] ??= [0, 0]);
 
+		total[0] += ms;
+		total[1]++;
+	},
+	span(name, start, end) {
+		if (end - start >= SPAN_MIN_MS) {
+			spans.push([name, start, end]);
+		}
+	},
+	mark(name) {
+		// Closing the bundle window counts every Discord module (~2.5 ms), so the mark is taken after it, keeping that
+		// out of the startup it opens.
 		if (name === 'ready:start') {
 			captureErrors();
 			closeWindow('bundle');
 		}
+
+		marks[name] ??= epoch();
 
 		if (name === 'core:end') {
 			closeWindow('startup');

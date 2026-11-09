@@ -101,7 +101,7 @@ const cacheState = { assetsComplete: false, moduleFlags: {} };
 mock.module('~/metro/cache', () =>
 	createCacheMock({
 		state: cacheState,
-		moduleIds,
+		getModuleIds: () => moduleIds,
 		hasModuleFlag: () => false,
 		addModuleFlag: () => undefined,
 		getModuleCacheForKey: (key: string) => cachedIds[key],

@@ -1,19 +1,23 @@
-import StorePageScreen from '~/ui/marketplace/store-page';
-import MarketplacePage from '~/ui/settings/marketplace';
 import type { SectionEntry } from '~/settings/section';
 import { Screens } from '~/core/constants';
 
 export const marketplaceSection: SectionEntry = {
 	key: Screens.Marketplace,
 	titleKey: 'UNBOUND_MARKETPLACE',
-	component: MarketplacePage,
+	/**
+	 *
+	 */
+	getComponent: () => require('~/ui/settings/marketplace').default,
 	icon: 'img_collectibles_shop',
 };
 
 export const storePageSection: SectionEntry = {
 	key: Screens.StorePage,
 	titleKey: 'UNBOUND_STORE_PAGE',
-	component: StorePageScreen,
+	/**
+	 *
+	 */
+	getComponent: () => require('~/ui/marketplace/store-page').default,
 	hidden: true,
 };
 

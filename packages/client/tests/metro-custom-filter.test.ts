@@ -33,7 +33,7 @@ modules.get = (id: number) => {
 
 mock.module('~/metro/cache', () =>
 	createCacheMock({
-		moduleIds: [...modules.keys()],
+		getModuleIds: () => [...modules.keys()],
 		getModuleCacheForKey: (key: string) => cachedIds[key],
 		addCachedIDForKey(key: string, id: number) {
 			cachedIds[key] ??= [];

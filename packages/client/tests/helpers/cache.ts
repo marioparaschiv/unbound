@@ -4,7 +4,7 @@ import type { ModuleHint } from '~/metro/cache';
 export type CacheMock = {
 	ModuleFlags: { BLACKLISTED: number };
 	state: { moduleFlags: Record<number, number>; assetsComplete?: boolean };
-	moduleIds: number[];
+	getModuleIds: () => readonly number[];
 	hasModuleFlag: (id: number, flag: number) => boolean;
 	addModuleFlag: (id: number, flag: number) => void;
 	getModuleCacheForKey: (key: string) => number[] | undefined;
@@ -28,7 +28,7 @@ export function createCacheMock(overrides: Partial<CacheMock> = {}): CacheMock {
 	return {
 		ModuleFlags: { BLACKLISTED: 1 },
 		state: { moduleFlags: {} },
-		moduleIds: [],
+		getModuleIds: () => [],
 		hasModuleFlag: () => false,
 		addModuleFlag: () => undefined,
 		getModuleCacheForKey: () => undefined,

@@ -32,7 +32,7 @@ fakeMetro.define(REGISTRY, [], (_, __, ___, ____, module) => {
 });
 fakeMetro.require(REGISTRY);
 
-mock.module('~/metro/cache', () => createCacheMock({ moduleIds: [REGISTRY] }));
+mock.module('~/metro/cache', () => createCacheMock({ getModuleIds: () => [REGISTRY] }));
 mock.module('~/metro/wrappers', () => ({
 	// React Native's `resolveAssetSource`: the first transformer that returns a source wins.
 	findByPropsLazy: () => ({

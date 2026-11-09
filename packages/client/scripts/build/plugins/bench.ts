@@ -67,18 +67,28 @@ export default function bench(root: string, config: BenchConfig): Plugin {
 			handler(code, id) {
 				if (id === agent) {
 					return {
-						code: code.replaceAll(CONFIG_TOKEN, `(${JSON.stringify(config)})`),
+						// Every use, but not the `declare const` that types it.
+						code: code.replace(
+							new RegExp(`(?<!declare const )\\b${CONFIG_TOKEN}\\b`, 'g'),
+							`(${JSON.stringify(config)})`,
+						),
 						map: null,
 					};
 				}
 
 				const head = id === entry ? `import ${JSON.stringify(agent)};\n` : '';
-				// Statements before imports still run after them: this marks the body, once its imports have run.
-				const trace = config.trace
-					? `globalThis.__ubdBenchModule?.(${JSON.stringify(relative(join(root, 'src'), id))});\n`
-					: '';
 
-				return head || trace ? { code: head + trace + code, map: null } : null;
+				if (!config.trace) {
+					return head ? { code: head + code, map: null } : null;
+				}
+
+				const path = JSON.stringify(relative(join(root, 'src'), id));
+				// Statements before imports still run after them: this marks the body, once its imports have run.
+				// The closing span covers the body alone, since every import's body ran before it started.
+				const open = `globalThis.__ubdBenchModule?.(${path});\nconst __ubdBenchStart = globalThis.__ubdBench?.now();\n`;
+				const close = `\n;globalThis.__ubdBench?.span("module " + ${path}, __ubdBenchStart, globalThis.__ubdBench.now());\n`;
+
+				return { code: head + open + code + close, map: null };
 			},
 		},
 	};

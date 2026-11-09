@@ -2,12 +2,10 @@ import { createLogger } from '@unbound-app/logger';
 
 import { getSetting, useUnboundSettings } from '~/settings/unbound';
 import { createPatcher } from '~/patcher/create-patcher';
-import ToastContainer from '~/ui/toasts/toast-container';
 import type { SectionEntry } from '~/settings/section';
 import { CACHE_KEY, Screens } from '~/core/constants';
 import type { MetroFilter } from '~/metro/filters';
 import { onModuleLoaded } from '~/metro/wait';
-import ToastsPage from '~/ui/settings/toasts';
 import { show } from '~/toasts/api';
 
 import discordToastOptions, { type DiscordToastOptions } from './discord-toast-options';
@@ -42,6 +40,9 @@ function patchToastContainer() {
 				const settings = useUnboundSettings(({ key }) => key?.startsWith('toasts'));
 
 				if (settings.get('toasts.enabled')) {
+					// Required on render, so startup never evaluates the toast UI.
+					const { default: ToastContainer } = require('~/ui/toasts/toast-container');
+
 					return <ToastContainer />;
 				}
 
@@ -81,7 +82,10 @@ function patchOpen(Toasts: MetroExport) {
 export const toastsSection: SectionEntry = {
 	key: Screens.Toasts,
 	titleKey: 'UNBOUND_TOAST_SETTINGS',
-	component: ToastsPage,
+	/**
+	 *
+	 */
+	getComponent: () => require('~/ui/settings/toasts').default,
 	hidden: true,
 };
 

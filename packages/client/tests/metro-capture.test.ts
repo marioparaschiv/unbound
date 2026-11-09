@@ -55,7 +55,7 @@ metro.require(COUNTED);
 mock.module('~/metro/cache', () =>
 	createCacheMock({
 		state: { moduleFlags },
-		moduleIds: [...globalThis.modules.keys()],
+		getModuleIds: () => [...globalThis.modules.keys()],
 		hasModuleFlag: (id: number, flag: number) => Boolean(moduleFlags[id] & flag),
 		addModuleFlag(id: number, flag: number) {
 			moduleFlags[id] |= flag;

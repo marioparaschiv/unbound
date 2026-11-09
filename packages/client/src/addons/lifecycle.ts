@@ -25,18 +25,16 @@ import { reportCrash } from '~/diagnostics/crash-reports';
 import { beginNativeStop } from '~/native/plugin-context';
 import type { NativeConsents } from '~/native/consent';
 import { afterFirstFrame } from '~/core/first-frame';
+import { monotonicNow } from '~/core/monotonic-now';
 import { currentPlatform } from '~/native/platform';
 import { unpatchAllByCaller } from '~/patcher/api';
 import type { PluginScope } from '~/addons/scope';
 import { isSafeAddonMain } from '~/addons/paths';
 import { getSetting } from '~/settings/unbound';
+import { benchSpan } from '~/core/bench-span';
 import { Manager } from '~/addons/manager';
 import { Addon } from '~/addons/addon';
 import storage from '~/storage/api';
-
-function monotonicNow(): number {
-	return globalThis.performance?.now?.() ?? Date.now();
-}
 
 /**
  * @description Runtime lifecycle shared by every addon kind: load/unload, start/stop, enable/disable,
@@ -298,7 +296,9 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 			state.context = this.createContext(resolved);
 			const context = state.context;
 
-			const starting = withAddonScope(scope, () => state.instance?.start?.(context));
+			const starting = benchSpan(`addon ${resolved.id} start`, () =>
+				withAddonScope(scope, () => state.instance?.start?.(context)),
+			);
 
 			// An async start runs on in the background, so its rejection is recorded like a deferred failure.
 			if (starting && typeof starting.then === 'function') {

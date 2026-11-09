@@ -11,7 +11,7 @@ import {
 	addAssetToCache,
 	getCachedAssetModule,
 	markAssetsComplete,
-	moduleIds,
+	getModuleIds,
 	removeAssetFromCache,
 	state,
 } from '~/metro/cache';
@@ -273,6 +273,8 @@ function sweep() {
 	if (!registry) return;
 
 	swept = true;
+
+	const moduleIds = getModuleIds();
 
 	for (let i = 0, len = moduleIds.length; i < len; i++) {
 		const id = moduleIds[i];

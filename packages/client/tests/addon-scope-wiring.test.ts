@@ -54,7 +54,7 @@ mock.module('~/flux/modules', () => ({ Dispatcher: dispatcher, Flux: {}, FluxHoo
 mock.module('~/metro/cache', () =>
 	createCacheMock({
 		state: { moduleFlags: {} },
-		moduleIds: [],
+		getModuleIds: () => [],
 		hasModuleFlag: () => false,
 		addModuleFlag: () => void 0,
 		getModuleCacheForKey: () => void 0,

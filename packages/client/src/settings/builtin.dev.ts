@@ -10,7 +10,10 @@ function useDeveloperMode(): boolean {
 export const developerSection: SectionEntry = {
 	key: Screens.Developer,
 	titleKey: 'UNBOUND_DEVELOPER',
-	component: DeveloperPage,
+	/**
+	 *
+	 */
+	getComponent: () => DeveloperPage,
 	usePredicate: useDeveloperMode,
 	icon: 'WrenchIcon',
 };

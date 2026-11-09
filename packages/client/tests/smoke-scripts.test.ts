@@ -13,7 +13,7 @@ mock.module('~/flux/modules', () => ({
 }));
 mock.module('~/metro/cache', () =>
 	createCacheMock({
-		moduleIds: [],
+		getModuleIds: () => [],
 		hasModuleFlag: () => false,
 		addModuleFlag: () => void 0,
 		getModuleCacheForKey: () => void 0,

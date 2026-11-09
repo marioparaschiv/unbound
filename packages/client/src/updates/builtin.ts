@@ -2,7 +2,6 @@ import { notifyClientUpdated, notifyUpdates } from '~/updates/notify';
 import { getSetting, setSetting } from '~/settings/unbound';
 import { CLIENT_VERSION, Screens } from '~/core/constants';
 import type { SectionEntry } from '~/settings/section';
-import UpdatesPage from '~/ui/settings/updates';
 import UpdatesStore from '~/updates/state';
 
 let pending: ReturnType<typeof setTimeout> | undefined;
@@ -54,7 +53,10 @@ export function stop() {
 export const updatesSection: SectionEntry = {
 	key: Screens.Updates,
 	titleKey: 'UNBOUND_UPDATES',
-	component: UpdatesPage,
+	/**
+	 *
+	 */
+	getComponent: () => require('~/ui/settings/updates').default,
 	icon: 'DownloadIcon',
 };
 

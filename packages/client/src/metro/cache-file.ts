@@ -2,6 +2,7 @@ import type { SettingsValue } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
 
 import { NativePlatform } from '~/native/native';
+import { benchSpan } from '~/core/bench-span';
 import { getBucket } from '~/storage/api';
 
 const Logger = createLogger('Metro', 'Cache');
@@ -64,7 +65,7 @@ export function readStoredCache(fields: readonly string[]): StoredCache {
 		return readLegacy(fields);
 	}
 
-	const text = file.read(CACHE_FILE);
+	const text = benchSpan('metro cache file read', () => file.read(CACHE_FILE));
 
 	if (text === undefined) {
 		// First launch since the move: carry the Bucket over; the first save writes the file and clears it.
@@ -74,7 +75,10 @@ export function readStoredCache(fields: readonly string[]): StoredCache {
 	}
 
 	try {
-		const value: unknown = JSON.parse(text);
+		const value: unknown = benchSpan(
+			() => `metro cache parse ${Math.round(text.length / 1024)} KB`,
+			() => JSON.parse(text),
+		);
 
 		return isRecord(value) ? value : {};
 	} catch (error) {
@@ -84,27 +88,77 @@ export function readStoredCache(fields: readonly string[]): StoredCache {
 	}
 }
 
+// A detached field's own file, beside the cache's.
+const detachedFile = (field: string) => CACHE_FILE.replace(/\.json$/, `.${field}.json`);
+
 /**
- * @description Saves the metro cache: the whole of it to its file, or the changed fields to the settings Bucket.
- * @param state The whole cache.
- * @param fields The fields that changed since the last save.
+ * @description Reads one field the cache keeps in its own file, so launches that never need it skip parsing it.
+ * @param field The detached field.
+ * @returns The field's saved value, or `undefined` when nothing was saved or the file is unreadable.
  */
-export function writeStoredCache(state: Record<string, SettingsValue>, fields: Iterable<string>) {
+export function readStoredField(field: string): SettingsValue | undefined {
 	const file = cacheFile();
+	const text = file?.read(detachedFile(field));
+
+	if (!file || (text === undefined && migrating)) {
+		return readLegacy([field])[field];
+	}
+
+	if (text === undefined) return;
+
+	try {
+		return benchSpan(`metro cache parse ${field}`, () => JSON.parse(text));
+	} catch (error) {
+		Logger.error(`Failed to parse metro cache ${detachedFile(field)}:`, error);
+	}
+}
+
+function writeFile(file: CacheFile, path: string, value: SettingsValue): boolean {
+	const text = benchSpan(`metro cache stringify ${path}`, () => JSON.stringify(value));
+
+	if (benchSpan(`metro cache write ${path}`, () => file.write(path, text))) {
+		return true;
+	}
+
+	Logger.error(`Failed to write metro cache ${path}.`);
+
+	return false;
+}
+
+/**
+ * @description Saves the metro cache: to its file, each detached field to its own, or the changed fields to the
+ * settings Bucket. The cache file is rewritten only when one of its own fields changed.
+ * @param state The whole cache; a detached field is read only when it changed.
+ * @param fields The fields that changed since the last save.
+ * @param detached The fields kept in their own files.
+ */
+export function writeStoredCache(
+	state: Record<string, SettingsValue>,
+	fields: Iterable<string>,
+	detached: readonly string[] = [],
+) {
+	const file = cacheFile();
+	const changed = [...fields];
 
 	if (!file) {
 		const bucket = getBucket(LEGACY_BUCKET);
 
-		for (const field of fields) {
+		for (const field of changed) {
 			bucket.set(field, state[field]);
 		}
 
 		return;
 	}
 
-	if (!file.write(CACHE_FILE, JSON.stringify(state))) {
-		Logger.error(`Failed to write metro cache ${CACHE_FILE}.`);
+	for (const field of changed.filter((name) => detached.includes(name))) {
+		writeFile(file, detachedFile(field), state[field]);
+	}
 
+	if (changed.every((name) => detached.includes(name))) return;
+
+	const own = Object.keys(state).filter((name) => !detached.includes(name));
+
+	if (!writeFile(file, CACHE_FILE, Object.fromEntries(own.map((name) => [name, state[name]])))) {
 		return;
 	}
 

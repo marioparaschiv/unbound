@@ -34,7 +34,7 @@ mock.module('~/metro/wait', () => ({
 mock.module('~/metro/cache', () =>
 	createCacheMock({
 		state: { moduleFlags: {} },
-		moduleIds: [],
+		getModuleIds: () => [],
 		hasModuleFlag: () => false,
 		addModuleFlag: () => void 0,
 	}),
@@ -50,7 +50,7 @@ const { createSettings } = await import('~/settings/builtin');
 const { registerSection, removeSection } = await import('~/settings/api');
 
 function section(key: string, titleKey: SectionEntry['titleKey'], hidden?: boolean): SectionEntry {
-	return { key, titleKey, component: Page, icon: hidden ? undefined : 'Icon', hidden };
+	return { key, titleKey, getComponent: () => Page, icon: hidden ? undefined : 'Icon', hidden };
 }
 
 function config(): Record<string, SettingsEntry> {

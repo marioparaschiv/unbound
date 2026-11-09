@@ -18,7 +18,7 @@ for (const id of IDS) {
 mock.module('~/metro/cache', () =>
 	createCacheMock({
 		state: { moduleFlags: {} },
-		moduleIds: IDS,
+		getModuleIds: () => IDS,
 		hasModuleFlag: () => false,
 		addModuleFlag: () => void 0,
 	}),

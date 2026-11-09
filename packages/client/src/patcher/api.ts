@@ -19,6 +19,7 @@ import { patch, recordRemovals } from '~/hot-refresh/live-patch';
 import type { IsUntyped } from '~/patcher/is-untyped';
 import { createReactPatcher } from '~/patcher/react';
 import type { PatchPlace } from '~/patcher/react';
+import { benchTotal } from '~/core/bench-span';
 
 /** The arguments a patch receives for method `F`: its parameters, or its constructor's for a class. */
 type ArgsOf<F> =
@@ -138,8 +139,16 @@ function patchAt(
 ) {
 	return patchWhenLoaded(parent, options?.caller, (target) => {
 		const place = locate(target);
+		// A benchmark build sums each patch's callback time; an `instead` total includes the original it calls.
+		const callback: PatchCallback = import.meta.env.BENCH
+			? (ctx) =>
+					benchTotal(
+						`patch ${options?.caller ?? 'unbound'} ${PatchType[type]} ${String(place.method)}`,
+						() => place.callback(ctx),
+					)
+			: place.callback;
 
-		return patch(type, place.parent, place.method, place.callback, options);
+		return patch(type, place.parent, place.method, callback, options);
 	});
 }
 

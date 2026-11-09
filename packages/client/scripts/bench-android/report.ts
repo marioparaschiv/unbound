@@ -2,6 +2,7 @@ import type { AgentReport as AgentFinal } from './schema';
 import type { MemInfo } from './device';
 
 import { mannWhitney, summarize } from '../../../cli/src/bench/stats';
+import { spanSection, totalsSection } from './spans';
 
 /** One measured launch. */
 export type LaunchRecord = {
@@ -378,7 +379,7 @@ export function moduleSections(builds: BuildInfo[], valid: LaunchRecord[]): stri
 			const heaviest = [...self.entries()]
 				.map(([id, times]) => [id, summarize(times)!.median] as const)
 				.toSorted((x, y) => y[1] - x[1])
-				.slice(0, 10);
+				.slice(0, 25);
 
 			lines.push(
 				`<details><summary>${name}: ${counts.size} modules (median ${format(summarize(runs.map((r) => r.agent!.windows.find((x) => x.name === name)?.modules.length ?? 0))?.median)} per launch)</summary>`,
@@ -442,6 +443,18 @@ export function renderReport(builds: BuildInfo[], records: LaunchRecord[]): stri
 		'',
 		...metricTable(builds, valid),
 		'',
+		'## Startup spans (slowest first)',
+		'',
+		...spanSection(
+			builds.map((b) => b.name),
+			valid,
+		),
+		'## Summed totals (whole launch)',
+		'',
+		...totalsSection(
+			builds.map((b) => b.name),
+			valid,
+		),
 		'## Settings walk (medians per step)',
 		'',
 		...scenarioTable(builds, valid),

@@ -69,7 +69,7 @@ Object.assign(globalThis, {
 mock.module('~/metro/cache', () =>
 	createCacheMock({
 		state: { moduleFlags: {} },
-		moduleIds: [...modules.keys()],
+		getModuleIds: () => [...modules.keys()],
 		hasModuleFlag: () => false,
 		addModuleFlag: () => undefined,
 		getModuleCacheForKey: (key: string) => cachedIds[key],

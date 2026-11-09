@@ -1,4 +1,5 @@
 // The finders module is a leaf, so a shim imported before Discord defines its modules does not load the search.
+import { benchSpan } from '~/core/bench-span';
 import { finder } from '~/metro/finders';
 
 // Metro marks a Babel-compiled ES module with `__esModule`; a CommonJS module is its own default export.
@@ -17,7 +18,9 @@ export function createLibraryShim(props: string[]): MetroExport {
 
 	function resolve(): MetroExport {
 		// Only the library's own exports identify it; a wrapper whose default re-exports them must not match.
-		mdl ??= finder('findByProps')(...props, { interop: false, esModules: false });
+		mdl ??= benchSpan(`library ${props.join(',')}`, () =>
+			finder('findByProps')(...props, { interop: false, esModules: false }),
+		);
 
 		return mdl;
 	}

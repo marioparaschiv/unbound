@@ -23,7 +23,7 @@ import {
 	getModuleCacheForKey,
 	hasModuleFlag,
 	markKeyMissing,
-	moduleIds,
+	getModuleIds,
 	state,
 	ModuleFlags,
 } from '~/metro/cache';
@@ -37,11 +37,13 @@ import {
 } from '~/metro/filters';
 import { couldMatch, idsNear, recordMove } from '~/metro/candidates';
 import { attachRunner, type MetroFactory } from '~/metro/capture';
+import { benchModuleName } from '~/metro/bench-module-name';
 import { isInvalidExport } from '~/metro/invalid-exports';
 import { createLazyModule } from '~/metro/lazy-registry';
 import { filterPresence } from '~/metro/presence';
 import { provideFinders } from '~/metro/finders';
-import { blacklist, data } from '~/metro/state';
+import { blacklist, data, loadedIds } from '~/metro/state';
+import { benchSpan } from '~/core/bench-span';
 import { onModuleLoaded } from '~/metro/wait';
 import { CACHE_KEY } from '~/core/constants';
 
@@ -59,6 +61,8 @@ for (const id in state.moduleFlags) {
 
 // Modules that ran before this file loaded, such as React Native's InitializeCore, get the patches now.
 for (const id of attachRunner(runModule)) {
+	data.initialized.push(id);
+
 	if (!blacklist.has(id)) {
 		onModuleExports(window.modules.get(id)?.publicModule.exports, id);
 	}
@@ -69,6 +73,8 @@ for (const id of attachRunner(runModule)) {
  * hardening invalid exports and running our patches. A blacklisted module runs untouched.
  */
 function runModule(factory: MetroFactory, id: number, args: Parameters<MetroFactory>) {
+	data.initialized.push(id);
+
 	if (blacklist.has(id)) {
 		factory.apply(globalThis, args);
 
@@ -98,7 +104,16 @@ function runModule(factory: MetroFactory, id: number, args: Parameters<MetroFact
 			return { ...exps, default: exps };
 		};
 
-		factory.apply(globalThis, args);
+		if (import.meta.env.BENCH) {
+			// Discord's import tracker names the module as its factory finishes, so the span is named after it runs.
+			benchSpan(
+				() => benchModuleName(id),
+				() => factory.apply(globalThis, args),
+			);
+		} else {
+			factory.apply(globalThis, args);
+		}
+
 		onModuleExports(moduleObject.exports, id);
 	} catch {
 		addModuleFlag(id, ModuleFlags.BLACKLISTED);
@@ -204,6 +219,16 @@ export function onModuleLoad(listener: MetroModuleLoadListener): () => void {
  * @returns The first matching module, an array of matches when `all` is set, or `null`.
  */
 export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
+	if (import.meta.env.BENCH) {
+		return benchSpan(`metro find ${filter?.[CACHE_KEY] ?? 'uncached'}`, () =>
+			findModule(filter, options),
+		);
+	}
+
+	return findModule(filter, options);
+}
+
+function findModule(filter: MetroFilter, options: MetroSearchOptions) {
 	if (!filter) {
 		throw new Error('You must provide a filter to search by.');
 	}
@@ -334,7 +359,7 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 			return result.found;
 		}
 
-		scan(moduleIds, initializeModules);
+		scan(initializeModules ? getModuleIds() : loadedIds(), initializeModules);
 
 		if (initializeModules && !result.found.length) {
 			recordMissing(key, result.errored);
@@ -357,7 +382,7 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 
 		if (!found && !cached && !cacheOnly) {
 			found =
-				(useCache ? scan([...data.cache.keys()], false) : null) ?? scan(moduleIds, false);
+				(useCache ? scan([...data.cache.keys()], false) : null) ?? scan(loadedIds(), false);
 		}
 	}
 
@@ -372,7 +397,7 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 
 	if (cacheOnly) return null;
 
-	found = scanNearHints() ?? scan(moduleIds, true);
+	found = scanNearHints() ?? scan(getModuleIds(), true);
 
 	if (!found) {
 		recordMissing(key, result.errored);
