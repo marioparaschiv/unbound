@@ -33,9 +33,9 @@
 	},
 	"dependencies": {
 		"@babel/core": "^7.29.7",
-		"@babel/plugin-syntax-jsx": "^8.0.1",
+		"@babel/plugin-syntax-jsx": "^7.29.7",
 		"@babel/plugin-transform-arrow-functions": "^7.29.7",
-		"@babel/plugin-transform-block-scoping": "^8.0.10",
+		"@babel/plugin-transform-block-scoping": "^7.29.7",
 		"@babel/plugin-transform-class-properties": "^7.29.7",
 		"@babel/plugin-transform-classes": "^7.29.7",
 		"@babel/plugin-transform-nullish-coalescing-operator": "^7.29.7",
@@ -43,7 +43,7 @@
 		"@babel/plugin-transform-shorthand-properties": "^7.29.7",
 		"@babel/plugin-transform-template-literals": "^7.29.7",
 		"@babel/plugin-transform-unicode-regex": "^7.29.7",
-		"@babel/preset-typescript": "^8.0.7",
+		"@babel/preset-typescript": "^7.29.7",
 		"@clack/prompts": "^1.8.1",
 		"@modelcontextprotocol/sdk": "^1.32.2",
 		"@rollup/plugin-commonjs": "^29.0.3",
@@ -63,8 +63,7 @@
 		"rollup-plugin-swc3": "^0.12.1",
 		"sharp": "^0.35.5",
 		"thumbhash": "^0.1.1",
-		"typebox": "^1.4.4",
-		"typescript-api": "npm:typescript@5.9.3"
+		"typebox": "^1.4.4"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
@@ -76,7 +75,8 @@
 		"@unbound-app/web": "workspace:*",
 		"reanimated-worklets-plugin": "npm:react-native-reanimated@3.19.4",
 		"tsdown": "^0.23.5",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"typescript-api": "npm:typescript@5.9.3"
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"
