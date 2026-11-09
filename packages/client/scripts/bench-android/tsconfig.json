@@ -1,0 +1,14 @@
+{
+	"extends": "../../../../tsconfig.base.json",
+	"compilerOptions": {
+		"lib": ["ESNext", "DOM"],
+		"composite": false,
+		"module": "Preserve",
+		"verbatimModuleSyntax": true,
+		"types": ["bun", "@unbound-app/types"],
+		"paths": {
+			"~/*": ["../../src/*"],
+			"@i18n/*": ["../../../../i18n/*"]
+		}
+	}
+}

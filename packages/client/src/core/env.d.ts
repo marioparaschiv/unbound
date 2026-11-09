@@ -4,6 +4,8 @@ type ImportMetaEnv = {
 	readonly DEV: boolean;
 	/** Whether this is the dev bundle (or a local dev build), which carries the `*.dev.ts` developer tooling. */
 	readonly DEV_TOOLS: boolean;
+	/** Whether this is a benchmark build, which carries `scripts/bench-android`'s agent and its startup marks. */
+	readonly BENCH: boolean;
 };
 
 type ImportMeta = {

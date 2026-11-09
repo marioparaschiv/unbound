@@ -119,6 +119,10 @@ export type NativePlatformApp = {
 export type NativePlatformFiles = {
 	/** Removes a file or folder tree, by path relative to the Unbound folder; returns whether anything was removed. */
 	remove(path: string): boolean;
+	/** Reads a text file, by path relative to the Unbound folder; `undefined` when it is missing. Older loaders lack it. */
+	read?(path: string): string | undefined;
+	/** Replaces a text file atomically, by path relative to the Unbound folder; returns whether it was written. Older loaders lack it. */
+	write?(path: string, text: string): boolean;
 };
 
 /** What an addon was doing when the loader blamed it: `starting` or `running` for a crash, `frozen` for a freeze. */

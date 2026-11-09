@@ -15,6 +15,7 @@ export const PROJECTS = [
 	'apps/sdk-generator',
 	'packages/cli',
 	'packages/client',
+	'packages/client/scripts/bench-android',
 	'packages/client/scripts/build',
 	'packages/client/scripts/dev',
 	'packages/client/scripts/serve',

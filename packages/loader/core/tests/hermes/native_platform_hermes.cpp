@@ -68,6 +68,13 @@ static const char *const kBridgeChecks = R"JS((function () {
 	check(platform.files.remove('../outside') === false, 'files remove refuses to escape');
 	check(platform.files.remove('/etc') === false, 'files remove refuses absolute paths');
 	check(platform.files.remove() === false, 'files remove without a path');
+	check(platform.files.read('cache.json') === undefined, 'files read of a missing file');
+	check(platform.files.write('cache.json', '{"a":"é"}') === true, 'files write inside documents');
+	check(platform.files.read('cache.json') === '{"a":"é"}', 'files read returns what was written');
+	check(platform.files.write('../outside/escaped.json', 'x') === false, 'files write refuses to escape');
+	check(platform.files.write('/tmp/absolute.json', 'x') === false, 'files write refuses absolute paths');
+	check(platform.files.write('cache.json') === false, 'files write without text');
+	check(platform.files.read('../outside') === undefined, 'files read refuses to escape');
 
 	check(typeof platform.crashGuard.register('unbound.example', 'Example') === 'number', 'crash guard register');
 	check(typeof platform.crashGuard.begin('unbound.example', 'Example') === 'boolean', 'crash guard begin');
@@ -158,6 +165,8 @@ int main()
     require(!std::filesystem::exists(documents / "Plugins" / "doomed"),
             "the removed folder is gone");
     require(std::filesystem::exists(outside), "nothing outside the documents folder was removed");
+    require(!std::filesystem::exists(outside / "escaped.json"),
+            "nothing outside the documents folder was written");
 
     std::filesystem::remove_all(documents);
     std::filesystem::remove_all(outside);

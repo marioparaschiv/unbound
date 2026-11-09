@@ -27,9 +27,11 @@ import downlevel, {
 	lowerSourceFallback,
 } from './plugins/downlevel';
 import generateManifest, { writeManifest } from './plugins/manifest';
+import lazyModules, { lazyMode } from './plugins/lazy-modules';
 import globals, { shimmedModules } from './plugins/globals';
 import hermesVersions from './plugins/hermes-versions';
 import releaseModules from './plugins/release-modules';
+import bench, { benchConfig } from './plugins/bench';
 import staticAssets from './plugins/static-assets';
 import { bytecodeVersions } from './hermes.json';
 import { buildDevtools } from './devtools';
@@ -81,6 +83,8 @@ const RELEASE_MODULES: Record<string, string> = {
 function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 	// A local dev build hot-patches its own modules, which needs the full runtime whatever the flavour.
 	const devTools = flavour.devTools || IS_DEV_BUILD;
+	const benchmark = benchConfig();
+	const lazy = lazyMode();
 
 	return {
 		input: 'src/core/entry.ts',
@@ -98,6 +102,7 @@ function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 				$$DEV$$: JSON.stringify(IS_DEV_BUILD),
 				'import.meta.env.DEV': JSON.stringify(IS_DEV_BUILD),
 				'import.meta.env.DEV_TOOLS': JSON.stringify(devTools),
+				'import.meta.env.BENCH': JSON.stringify(Boolean(benchmark)),
 			},
 		},
 		// The store page imports the ADDON.md contract but never parses YAML; yaml declares no `sideEffects`.
@@ -127,6 +132,7 @@ function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 			// A local dev build keeps every module; the default release bundle swaps in the lean twins.
 			releaseModules(devTools ? {} : RELEASE_MODULES),
 			worklets(),
+			...(benchmark ? [bench(root, benchmark)] : []),
 			replace({
 				preventAssignment: true,
 				$$VERSION$$: GIT_REVISION,
@@ -148,6 +154,8 @@ function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 				jsc: { target: 'es2022' },
 				sourceMaps: !IS_DEV_BUILD,
 			}),
+			// Reads compiled JavaScript, so it runs after swc has stripped types and JSX.
+			...(lazy ? [lazyModules(root, lazy)] : []),
 			downlevel(root),
 			// Stripping function names saves ~15 bytes per function; release stack frames then name no function,
 			// and `symbolicate` recovers file and line from the source map.

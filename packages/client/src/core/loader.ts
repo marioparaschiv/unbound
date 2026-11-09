@@ -94,6 +94,11 @@ function onMainModuleRun(onReady: () => void | Promise<void>) {
 		for (const unpatch of unpatches.splice(0)) unpatch();
 
 		resumeDeferred();
+
+		if (import.meta.env.BENCH) {
+			globalThis.__ubdBench?.mark('ready:resumed');
+		}
+
 		watchFirstFrame();
 
 		if (initialized) {
