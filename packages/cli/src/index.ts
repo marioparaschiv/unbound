@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import { cli } from 'cleye';
 
 import { mcpCommand, mcpMenuEntry, isMcpTool, runMcpTool } from '~/commands/mcp';

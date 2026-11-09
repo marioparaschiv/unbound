@@ -24,7 +24,8 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./rollup": "./src/rollup/index.ts",
-		"./oxlint": "./src/oxlint/plugin.ts"
+		"./oxlint": "./src/oxlint/plugin.ts",
+		"./settings/schema": "./src/settings/schema.ts"
 	},
 	"scripts": {
 		"build": "tsdown",
@@ -33,13 +34,22 @@
 	"dependencies": {
 		"@babel/core": "^7.29.7",
 		"@babel/plugin-syntax-jsx": "^8.0.1",
+		"@babel/plugin-transform-arrow-functions": "^7.29.7",
 		"@babel/plugin-transform-block-scoping": "^8.0.10",
+		"@babel/plugin-transform-class-properties": "^7.29.7",
+		"@babel/plugin-transform-classes": "^7.29.7",
+		"@babel/plugin-transform-nullish-coalescing-operator": "^7.29.7",
+		"@babel/plugin-transform-optional-chaining": "^7.29.7",
+		"@babel/plugin-transform-shorthand-properties": "^7.29.7",
+		"@babel/plugin-transform-template-literals": "^7.29.7",
+		"@babel/plugin-transform-unicode-regex": "^7.29.7",
 		"@babel/preset-typescript": "^8.0.7",
 		"@clack/prompts": "^1.8.1",
 		"@modelcontextprotocol/sdk": "^1.32.2",
 		"@rollup/plugin-commonjs": "^29.0.3",
 		"@rollup/plugin-json": "^6.1.0",
 		"@rollup/plugin-node-resolve": "^16.0.3",
+		"@unbound-app/debugger": "workspace:*",
 		"@unbound-app/debugger-protocol": "workspace:*",
 		"@unbound-app/rollup-plugin-hermes": "workspace:*",
 		"better-auth": "catalog:",

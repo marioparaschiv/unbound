@@ -113,9 +113,13 @@ export const lintCheck: Check = {
 	 * @description Runs oxlint over the addon with the nearest `.oxlintrc.json`, the plugin lint
 	 * `docs/developer/addons/standards.mdx` describes.
 	 * @param context The addon to check.
-	 * @returns One diagnostic per lint finding, or a warning when oxlint is not installed.
+	 * @returns One diagnostic per lint finding, or a warning when oxlint is not installed; none for a theme.
 	 */
 	async run({ addon }) {
+		if (addon.kind !== 'plugin') {
+			return [];
+		}
+
 		const setup = findLintSetup(addon.dir);
 
 		if (!setup) {

@@ -1,6 +1,7 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 import { outro, note } from '@clack/prompts';
-import { relative } from 'node:path';
+import { join, relative } from 'node:path';
+import { existsSync } from 'node:fs';
 
 import type { CreateInput } from '~/lib/create-prompts';
 import { resolveOptions } from '~/lib/create-prompts';
@@ -72,9 +73,15 @@ function printOutro(result: ScaffoldResult): void {
 	const manifestDocs = `${DOCS_BASE_URL}/addons/manifest`;
 	const cd = relative(process.cwd(), result.dir) || '.';
 
+	const installed =
+		!existsSync(join(result.dir, 'package.json')) ||
+		existsSync(join(result.dir, 'node_modules'));
+
+	// `ubd` is only on the PATH of a global install; bunx runs the workspace's copy.
 	const steps = [
 		`cd ${cd}`,
-		'ubd dev',
+		...(installed ? [] : ['bun install']),
+		'bunx @unbound-app/cli dev',
 		`Learn the ${result.kind} API: ${kindDocs}`,
 		`Manifest reference: ${manifestDocs}`,
 	];

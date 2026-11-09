@@ -20,8 +20,6 @@ const LISTEN_TIMEOUT_MS = 15_000;
 const LISTEN_POLL_MS = 250;
 const LOOKUP_TIMEOUT_MS = 5_000;
 
-const BRIDGE_ENTRY = join(import.meta.dir, '..', '..', '..', 'debugger', 'src', 'index.ts');
-
 function isListening(port: number): Promise<boolean> {
 	return new Promise((resolve) => {
 		const socket = connect({ host: '127.0.0.1', port });
@@ -77,7 +75,9 @@ function bridgeLogPath(port: number): string {
 function startDetached(port: number): string {
 	const log = bridgeLogPath(port);
 	const output = openSync(log, 'a');
-	const child = spawn('bun', [BRIDGE_ENTRY, '--port', String(port)], {
+	// The debugger's entry is its source in the workspace and its build once published.
+	const entry = Bun.resolveSync('@unbound-app/debugger', import.meta.dir);
+	const child = spawn('bun', [entry, '--port', String(port)], {
 		detached: true,
 		stdio: ['ignore', output, output],
 	});

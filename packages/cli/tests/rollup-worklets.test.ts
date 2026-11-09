@@ -1,8 +1,10 @@
 import type { TransformPluginContext, TransformResult } from 'rollup';
 import { describe, expect, test } from 'bun:test';
+import { join } from 'node:path';
 
 import { needsWorklets } from '../src/rollup/needs-worklets';
 import { worklets } from '../src/rollup/worklets';
+import { createTempDir } from './helpers/ubd';
 
 type Transform = (
 	this: TransformPluginContext,
@@ -117,5 +119,24 @@ describe('worklets', () => {
 		expect(code).toContain('typeof first');
 		expect(code).not.toContain('this.__closure');
 		expect(code).not.toContain(': unknown');
+	});
+
+	test('compiles worklet classes from a plugin that does not install the Babel plugins they need', async () => {
+		const plugin = createTempDir();
+		const cwd = process.cwd();
+
+		process.chdir(plugin.path);
+
+		try {
+			const code = await transform(
+				'export class Counter { __workletClass = true; count = 0; increment() { return ++this.count; } }',
+				join(plugin.path, 'src', 'index.js'),
+			);
+
+			expect(code).toContain('Counter__classFactory');
+		} finally {
+			process.chdir(cwd);
+			plugin.remove();
+		}
 	});
 });

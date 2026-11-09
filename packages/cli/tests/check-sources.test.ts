@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import type { Check } from '../src/lib/check/check';
 
-import { toLintDiagnostics, type LintOutput } from '../src/lib/checks/lint';
+import { lintCheck, toLintDiagnostics, type LintOutput } from '../src/lib/checks/lint';
 import { findJsonOffset, manifestCheck } from '../src/lib/checks/manifest';
 import { textInputPropsCheck } from '../src/lib/checks/text-input-props';
 import { formatDiagnostic } from '../src/rollup/diagnostic';
@@ -102,6 +102,19 @@ describe('the types check', () => {
 			"src/index.ts:1:14  Type 'string' is not assignable to type 'number' (TS2322).",
 		]);
 	});
+
+	test('skips themes, whose nearest tsconfig belongs to the code around them', async () => {
+		const dir = createTempDir({
+			'manifest.json': JSON.stringify({ ...MANIFEST, main: 'dark.json' }),
+			'dark.json': '{}',
+			'tsconfig.json': JSON.stringify({ compilerOptions: { noEmit: true, types: [] } }),
+			'plugin.ts': "export const count: number = 'one';\n",
+		});
+
+		dirs.push(dir);
+
+		expect(await typesCheck.run(checkContext(await onlyAddon(dir), false))).toEqual([]);
+	});
 });
 
 describe('the lint check', () => {
@@ -134,6 +147,17 @@ describe('the lint check', () => {
 			'src/index.ts:3:5  Unexpected var, use let or const instead (eslint(no-var)).  Fix: Replace var with let or const.',
 			'src/other.ts  Expected === and instead saw == (eslint(eqeqeq)).',
 		]);
+	});
+
+	test('skips themes, which hold no code to lint', async () => {
+		const dir = createTempDir({
+			'manifest.json': JSON.stringify({ ...MANIFEST, main: 'dark.json' }),
+			'dark.json': '{}',
+		});
+
+		dirs.push(dir);
+
+		expect(await lintCheck.run(checkContext(await onlyAddon(dir), false))).toEqual([]);
 	});
 });
 

@@ -6,6 +6,7 @@ import {
 } from '@unbound-app/contracts/settings-schema';
 import type { SettingChoice, SettingsSchema } from '@unbound-app/types/settings';
 import { existsSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { join, sep } from 'node:path';
 import { rolldown } from 'rolldown';
 
@@ -62,7 +63,8 @@ type Labelled = {
 	of?: Labelled;
 };
 
-const BUILDERS = join(import.meta.dirname, '..', 'settings', 'schema.ts');
+// Resolved through the package's own exports: the published build bundles this file into a dist chunk, so a relative path breaks.
+const BUILDERS = fileURLToPath(import.meta.resolve('@unbound-app/cli/settings/schema'));
 
 /**
  * @description Names a plugin's settings schema file.
