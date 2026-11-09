@@ -30,12 +30,9 @@ jobs:
               run: bun run plugins:validate
             - name: Test plugins
               run: bun run plugins:test
+            # Client CI's static job lints and format-checks the whole repository, plugins included.
             - name: Build plugins
               run: bun run plugins:build
-            - name: Lint
-              run: bun run lint:js
-            - name: Check formatting
-              run: bun run fmt:js:check
             - name: Download the latest loader IPA
               id: loader-ipa
               env:

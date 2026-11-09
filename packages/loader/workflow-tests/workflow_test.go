@@ -374,8 +374,13 @@ func TestParsedSmokeTestsTimeOutQuickly(t *testing.T) {
 				continue
 			}
 			smokeJobs++
-			if job.TimeoutMinutes > 30 {
-				t.Errorf("%s %s is a smoke test and must time out within 30 minutes, has %d", name, jobName, job.TimeoutMinutes)
+			// Prewarming a simulator overlaps the build, so it may add up to 10 minutes the job spends waiting anyway.
+			limit := 30
+			if slices.ContainsFunc(job.Steps, func(step workflowStep) bool { return strings.HasPrefix(step.Name, "Prewarm the simulator") }) {
+				limit = 40
+			}
+			if job.TimeoutMinutes > limit {
+				t.Errorf("%s %s is a smoke test and must time out within %d minutes, has %d", name, jobName, limit, job.TimeoutMinutes)
 			}
 		}
 	}
@@ -422,7 +427,7 @@ func TestParsedWorkflowsSetUpGoAndBunOnlyThroughTheSharedActions(t *testing.T) {
 	installsGo, cachesGo, buildsTools := false, false, false
 	for _, step := range goTools.Runs.Steps {
 		installsGo = installsGo || (strings.HasPrefix(step.Uses, "actions/setup-go@") && step.With["go-version-file"] == "packages/loader/go.mod")
-		cachesGo = cachesGo || strings.HasPrefix(step.Uses, "actions/cache@")
+		cachesGo = cachesGo || strings.HasPrefix(step.Uses, "actions/cache/restore@")
 		buildsTools = buildsTools || strings.Contains(step.Run, "go build -o \"$RUNNER_TEMP/loader-tools/unbound-tools\" ./tools")
 	}
 	if !installsGo || !cachesGo || !buildsTools {
@@ -577,7 +582,16 @@ func TestParsedAndroidSmokeTestGatesTheAndroidBuild(t *testing.T) {
 func TestParsedIOSSmokeTestGatesTheIOSBuild(t *testing.T) {
 	ios := loadWorkflow(t, "loader-ios.yml")
 	smoke := ios.job(t, "smoke-simulator")
-	requireNeeds(t, "smoke-simulator", smoke, "build-ipa")
+	// The job starts beside build-ipa to prewarm the simulator, so it waits for the build and fails when the build fails.
+	if run := smoke.step(t, "Wait for the simulator build").Run; run != "unbound-tools wait-artifact --name ios-simulator --job build-ipa" {
+		t.Fatalf("the smoke test must wait for this run's build-ipa, got %q", run)
+	}
+	if build := ios.job(t, "build-ipa"); build.Name != "" {
+		t.Fatalf("wait-artifact finds build-ipa by its job id, so the job must keep it as its name, got %q", build.Name)
+	}
+	if smoke.step(t, "Wait for the simulator build").ContinueOnError != "" {
+		t.Fatal("a failed simulator build must fail the smoke test")
+	}
 	if smoke.If != "inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true" || smoke.ContinueOnError {
 		t.Fatalf("the iOS smoke test must run whenever the simulator is built, unless a pull request touches nothing it covers, runs if %q", smoke.If)
 	}

@@ -157,14 +157,20 @@ jobs:
               run: unbound-tools loader-version --set "$LOADER_VERSION"
 
             - name: Check cache
-              run: printf 'upstream_heads=%s-%s\n' "$(git ls-remote https://github.com/theos/theos | awk 'NR == 1 { print $1 }')" "$(git ls-remote https://github.com/theos/sdks | awk 'NR == 1 { print $1 }')" >> "$GITHUB_ENV"
+              run: |
+                  {
+                    echo "theos_head=$(git ls-remote https://github.com/theos/theos HEAD | awk '{ print $1 }')"
+                    echo "sdks_head=$(git ls-remote https://github.com/theos/sdks HEAD | awk '{ print $1 }')"
+                  } >> "$GITHUB_ENV"
 
+            # An older Theos restores when upstream moves; Prepare Theos fast-forwards it in place.
             - name: Use cache
               id: cache
               uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
               with:
                   path: ${{ github.workspace }}/theos
-                  key: ${{ runner.os }}-${{ env.upstream_heads }}
+                  key: theos-${{ runner.os }}-${{ env.theos_head }}-${{ env.sdks_head }}
+                  restore-keys: theos-${{ runner.os }}-
 
             - name: Trust Homebrew tap
               run: |
@@ -182,11 +188,16 @@ jobs:
                   echo "THEOS=$THEOS" >> "$GITHUB_ENV"
                   if [ ! -d "$THEOS" ]; then
                     git clone --recursive https://github.com/theos/theos "$THEOS"
+                  elif [ "$(git -C "$THEOS" rev-parse HEAD)" != "$theos_head" ]; then
+                    git -C "$THEOS" pull --ff-only --recurse-submodules
+                    git -C "$THEOS" submodule update --init --recursive
                   fi
-                  if [ -z "$(ls "$THEOS/sdks")" ]; then
+                  if [ "$(cat "$THEOS/sdks/.revision" 2> /dev/null)" != "$sdks_head" ]; then
                     sdks="$(mktemp -d)"
                     git clone --depth 1 https://github.com/theos/sdks "$sdks"
+                    find "$THEOS/sdks" -mindepth 1 -maxdepth 1 -name '*.sdk' -exec rm -rf {} +
                     mv "$sdks"/*.sdk "$THEOS/sdks"
+                    git -C "$sdks" rev-parse HEAD > "$THEOS/sdks/.revision"
                     rm -rf "$sdks"
                   fi
 
@@ -247,7 +258,7 @@ jobs:
                       echo '```'
                       ccache --show-stats
                       echo '```'
-                  } >> "$GITHUB_STEP_SUMMARY"
+                  } | tee -a "$GITHUB_STEP_SUMMARY"
 
             - name: Save the compiler cache
               if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
@@ -523,12 +534,14 @@ jobs:
               id: set-simulator-filename
               run: echo "filename=unbound-ios-simulator.zip" >> "$GITHUB_OUTPUT"
 
+    # Starts beside the build: a fresh simulator's first Discord launch takes 3-10 minutes, so it runs main's last
+    # simulator build once while build-ipa works, then waits for this run's build. A failed build-ipa fails this job.
     smoke-simulator:
         name: Smoke test the simulator build
         if: inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true
-        needs: [build-ipa, smoke-inputs]
+        needs: [smoke-inputs]
         runs-on: macos-26
-        timeout-minutes: 30
+        timeout-minutes: 40
         permissions:
             contents: read
             actions: read
@@ -544,6 +557,27 @@ jobs:
               with:
                   prebuilt: 'true'
 
+            # Best effort: without main's build the smoke test creates its own simulator and pays the first launch.
+            - name: Prewarm the simulator with main's build
+              id: prewarm
+              continue-on-error: true
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  set -euo pipefail
+                  ids=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=ios-simulator&per_page=50" --jq '[.artifacts[] | select(.workflow_run.head_branch == "main" and .workflow_run.head_repository_id == .workflow_run.repository_id and (.expired | not))][:3][].id')
+                  apps=()
+                  for id in $ids; do
+                    build="$RUNNER_TEMP/prewarm/$id"
+                    mkdir -p "$build"
+                    gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" > "$build/artifact.zip"
+                    unzip -q "$build/artifact.zip" -d "$build"
+                    unzip -q "$build/unbound-ios-simulator.zip" -d "$build/app"
+                    apps+=("$(find "$build/app" -maxdepth 2 -type d -name Discord.app -print -quit)")
+                  done
+                  test "${#apps[@]}" -gt 0
+                  unbound-tools smoke ios-prewarm --timeout 10m "${apps[@]}"
+
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
 
@@ -552,6 +586,11 @@ jobs:
               with:
                   name: ios smoke inputs
                   path: packages
+
+            - name: Wait for the simulator build
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: unbound-tools wait-artifact --name ios-simulator --job build-ipa
 
             - name: Download the simulator build
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
@@ -571,7 +610,8 @@ jobs:
             - name: Run the smoke test
               env:
                   APP_PATH: ${{ steps.app.outputs.path }}
-              run: unbound-tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --bundle-budget 60s --plugins-budget 60s ${{ inputs.pr_number != '' && '--quick --timeout 12m' || '--timeout 25m' }}
+                  DEVICE: ${{ steps.prewarm.outputs.device }}
+              run: unbound-tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --bundle-budget 60s --plugins-budget 60s ${{ inputs.pr_number != '' && '--quick --timeout 12m' || '--timeout 25m' }} ${DEVICE:+--device "$DEVICE"}
 
             - name: Compare startup and the console with main
               if: success() && github.event_name == 'pull_request'

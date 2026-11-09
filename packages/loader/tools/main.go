@@ -85,6 +85,8 @@ func run(args []string) error {
 		return runReleasedAndroidCode(args[1:])
 	case "actions-cleanup":
 		return runActionsCleanup(args[1:])
+	case "wait-artifact":
+		return runWaitArtifact(args[1:])
 	case "pr-comment":
 		return runPRComment(args[1:])
 	case "smoke-failure-summary":
@@ -117,7 +119,7 @@ func run(args []string) error {
 }
 
 func printUsage() {
-	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|ipa-icons|discord-version|discord-apk|android-app-icon|android-version|released-android-code|build-watch|release-candidate|generate-loader-changelog|publish-loader-releases|attest|bundle-key|smoke|smoke-regression|smoke-failure-summary|pr-comment|actions-cleanup|symbolicate-android|doctor|dev|compat-scan|compat-issue|compat-legacy-issue|compat-support-issue|format|lint>")
+	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|ipa-icons|discord-version|discord-apk|android-app-icon|android-version|released-android-code|build-watch|release-candidate|generate-loader-changelog|publish-loader-releases|attest|bundle-key|smoke|smoke-regression|smoke-failure-summary|pr-comment|actions-cleanup|wait-artifact|symbolicate-android|doctor|dev|compat-scan|compat-issue|compat-legacy-issue|compat-support-issue|format|lint>")
 	fmt.Println("       go run ./tools build <tweak|ipa|simulator|all> [flags]")
 	fmt.Println("       go run ./tools platform <build|test> <ios|android> [flags]")
 	fmt.Println("       go run ./tools validate [--root <path>]")
@@ -141,6 +143,7 @@ func printUsage() {
 	fmt.Println("       go run ./tools bundle-key verify --dir <dist> [--pr <n>] [--public-key <file>]")
 	fmt.Println("       go run ./tools smoke android --apks <dir> [--serial <serial>] [--plugins <dir>] [--client <dir>] [--artifacts <dir>] [--timeout <duration>]")
 	fmt.Println("       go run ./tools smoke ios --app <Discord.app> [--device <udid>] [--plugins <dir>] [--client <dir>] [--artifacts <dir>] [--timeout <duration>]")
+	fmt.Println("       go run ./tools smoke ios-prewarm [--timeout <duration>] [--output <file>] <earlier Discord.app>...")
 	fmt.Println("       go run ./tools symbolicate-android --symbols <dir|zip> [--abi <abi>] [--symbolizer <path>] [--input <file>] < tombstone.txt")
 	fmt.Println("       go run ./tools compat-scan [--ipa <path>] [--apk <path>...] [--android-version <v>] [--baseline <json>] [--results <json>] [--report <md>] [--ios-sdk <path>] [--android-jar <path>]")
 	fmt.Println("       go run ./tools compat-issue --results <json> --report <md> --channel <name> [--repo <owner/name>]")

@@ -539,6 +539,8 @@ go run ./tools smoke android --apks patched-discord --client ../client/dist
 go run ./tools smoke ios --app Payload/Discord.app --client ../client/dist
 ```
 
+That first-launch cost belongs to the simulator, not the app: once any Unbound build has launched on a device, a newer one installed there launches in seconds. So CI starts the iOS smoke job beside `build-ipa`, launches main's newest `ios-simulator` artifact once with `smoke ios-prewarm`, which tries older ones on the same device when a build fails to launch and prints the device UDID, then `wait-artifact --name ios-simulator --job build-ipa` waits for this run's build, failing as soon as `build-ipa` fails, and `smoke ios --device <udid>` tests it on the warm simulator.
+
 `--plugin-start-budget` fails the run when any single plugin's start, from evaluating its bundle to its `start` returning, takes longer than the given duration. Android CI uses 1s.
 
 `--apks` is a directory of patched split APKs, from which the base, the emulator's ABI split and the other config splits are installed. Without `--client` the app keeps its default bundle URL. The simulator build retargets frameworks that only declare an iPhoneOS deployment target, such as `CydiaSubstrate.framework`, to the simulator platform, since the simulator refuses to load them otherwise.
