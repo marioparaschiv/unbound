@@ -286,6 +286,10 @@ export const designSection: SectionEntry = {
 	/**
 	 *
 	 */
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
+	 */
 	getComponent: () => require('~/ui/settings/design').default,
 	icon: 'PaintPaletteIcon',
 };
@@ -296,6 +300,10 @@ export const fontGroupSection: SectionEntry = {
 	titleKey: 'UNBOUND_FONTS',
 	/**
 	 *
+	 */
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
 	 */
 	getComponent: () => require('~/ui/settings/design/font-group-page').default,
 	hidden: true,

@@ -8,6 +8,10 @@ export const assetsSection: SectionEntry = {
 	/**
 	 *
 	 */
+	/**
+	 * @description Hands Discord's navigator the page.
+	 * @returns The page.
+	 */
 	getComponent: () => AssetsPage,
 	hidden: true,
 };

@@ -38,11 +38,11 @@ import {
 import { couldMatch, idsNear, recordMove } from '~/metro/candidates';
 import { attachRunner, type MetroFactory } from '~/metro/capture';
 import { benchModuleName } from '~/metro/bench-module-name';
+import { blacklist, data, loadedIds } from '~/metro/state';
 import { isInvalidExport } from '~/metro/invalid-exports';
 import { createLazyModule } from '~/metro/lazy-registry';
 import { filterPresence } from '~/metro/presence';
 import { provideFinders } from '~/metro/finders';
-import { blacklist, data, loadedIds } from '~/metro/state';
 import { benchSpan } from '~/core/bench-span';
 import { onModuleLoaded } from '~/metro/wait';
 import { CACHE_KEY } from '~/core/constants';

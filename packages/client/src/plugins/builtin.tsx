@@ -7,6 +7,10 @@ export const pluginsSection: SectionEntry = {
 	/**
 	 *
 	 */
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
+	 */
 	getComponent: () => require('~/ui/settings/plugins').default,
 	icon: 'PuzzlePieceIcon',
 	/**

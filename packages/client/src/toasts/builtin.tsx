@@ -85,6 +85,10 @@ export const toastsSection: SectionEntry = {
 	/**
 	 *
 	 */
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
+	 */
 	getComponent: () => require('~/ui/settings/toasts').default,
 	hidden: true,
 };

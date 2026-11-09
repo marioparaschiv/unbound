@@ -56,6 +56,10 @@ export const updatesSection: SectionEntry = {
 	/**
 	 *
 	 */
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
+	 */
 	getComponent: () => require('~/ui/settings/updates').default,
 	icon: 'DownloadIcon',
 };

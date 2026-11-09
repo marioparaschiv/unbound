@@ -7,6 +7,10 @@ export const marketplaceSection: SectionEntry = {
 	/**
 	 *
 	 */
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
+	 */
 	getComponent: () => require('~/ui/settings/marketplace').default,
 	icon: 'img_collectibles_shop',
 };
@@ -16,6 +20,10 @@ export const storePageSection: SectionEntry = {
 	titleKey: 'UNBOUND_STORE_PAGE',
 	/**
 	 *
+	 */
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
 	 */
 	getComponent: () => require('~/ui/marketplace/store-page').default,
 	hidden: true,

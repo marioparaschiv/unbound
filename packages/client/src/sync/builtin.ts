@@ -63,6 +63,10 @@ export const cloudSyncSection: SectionEntry = {
 	/**
 	 *
 	 */
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
+	 */
 	getComponent: () => require('~/ui/settings/cloud-sync').default,
 	// Listed on the General page, so the overview stays short.
 	hidden: true,

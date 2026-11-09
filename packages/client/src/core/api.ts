@@ -1,9 +1,6 @@
-import lazy from '@unbound-app/utils/lazy';
-
-import type * as SettingsKit from '~/ui/settings-kit/api';
-
 export * as marketplace from '~/marketplace/api';
 export * as iconPacks from '~/icon-packs/api';
+export * as ui from '~/ui/settings-kit/api';
 export * as builtins from '~/builtins/api';
 export * as commands from '~/commands/api';
 export * as settings from '~/settings/api';
@@ -24,6 +21,3 @@ export * as sync from '~/sync/api';
 export * as fs from '~/native/fs';
 export * as metro from '~/metro';
 export * as utils from '~/utils';
-
-/** The settings kit, evaluated when first read, so startup never runs its modules. */
-export const ui: typeof SettingsKit = lazy(() => require('~/ui/settings-kit/api'));

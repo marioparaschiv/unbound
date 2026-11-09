@@ -39,6 +39,10 @@ export const generalSection: SectionEntry = {
 	/**
 	 *
 	 */
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
+	 */
 	getComponent: () => require('~/ui/settings/general').default,
 	icon: LogoIcon,
 	/**
@@ -53,6 +57,10 @@ export const panelHostSection: SectionEntry = {
 	titleKey: 'UNBOUND_CUSTOM',
 	/**
 	 *
+	 */
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
 	 */
 	getComponent: () => require('~/ui/settings/custom').default,
 	hidden: true,

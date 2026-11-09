@@ -13,6 +13,10 @@ export const developerSection: SectionEntry = {
 	/**
 	 *
 	 */
+	/**
+	 * @description Hands Discord's navigator the page.
+	 * @returns The page.
+	 */
 	getComponent: () => DeveloperPage,
 	usePredicate: useDeveloperMode,
 	icon: 'WrenchIcon',

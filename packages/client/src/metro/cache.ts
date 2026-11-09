@@ -93,6 +93,10 @@ export const state: CacheState = {
 	get assets() {
 		return loadedAssets();
 	},
+	/**
+	 * @description Replaces the asset cache, which a save then writes to its own file.
+	 * @param value The new asset cache.
+	 */
 	set assets(value) {
 		assets = value;
 	},
