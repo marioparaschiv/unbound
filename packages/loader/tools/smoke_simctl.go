@@ -322,21 +322,14 @@ func (target *iosSmokeTarget) running(ctx context.Context) bool {
 	if target.pid <= 0 {
 		return true
 	}
-	output, err := target.simctl(ctx, 30*time.Second, "spawn", target.device, "launchctl", "list")
-	if err != nil {
-		return true
-	}
-	return simulatorProcessListed(output, target.pid)
+	return hostProcessAlive(target.pid)
 }
 
-func simulatorProcessListed(listing string, pid int) bool {
-	for _, line := range strings.Split(listing, "\n") {
-		fields := strings.Fields(line)
-		if len(fields) >= 3 && fields[0] == strconv.Itoa(pid) {
-			return true
-		}
-	}
-	return false
+// hostProcessAlive checks a simulator app by its host PID. Spawning `launchctl list` in the simulator
+// every poll cost seconds of CPU each time and slowed Discord's first launch on CI by minutes.
+func hostProcessAlive(pid int) bool {
+	err := syscall.Kill(pid, 0)
+	return err == nil || errors.Is(err, syscall.EPERM)
 }
 
 func (target *iosSmokeTarget) isLoaderLine(line string) bool {

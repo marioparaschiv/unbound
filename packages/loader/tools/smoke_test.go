@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -267,13 +268,16 @@ func TestParseSimctlLaunchPID(t *testing.T) {
 	}
 }
 
-func TestSimulatorProcessListed(t *testing.T) {
-	listing := "PID\tStatus\tLabel\n4242\t0\tUIKitApplication:com.hammerandchisel.discord[1a2b][rb-legacy]\n-\t0\tcom.apple.other\n"
-	if !simulatorProcessListed(listing, 4242) {
-		t.Fatal("a listed pid is running")
+func TestHostProcessAlive(t *testing.T) {
+	if !hostProcessAlive(os.Getpid()) {
+		t.Fatal("the test's own process is running")
 	}
-	if simulatorProcessListed(listing, 4243) {
-		t.Fatal("an unlisted pid is not running")
+	exited := exec.Command("true")
+	if err := exited.Run(); err != nil {
+		t.Fatal(err)
+	}
+	if hostProcessAlive(exited.Process.Pid) {
+		t.Fatal("a reaped process is not running")
 	}
 }
 
