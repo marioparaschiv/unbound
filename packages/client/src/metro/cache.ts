@@ -1,6 +1,6 @@
+import { readStoredCache, writeStoredCache } from '~/metro/cache-file';
 import { CACHE_VERSION } from '~/core/constants';
 import { BundleInfo } from '~/native/native';
-import { getBucket } from '~/storage/api';
 
 /** Bitwise flags tracking per-module state; `BLACKLISTED` marks a module that must never be returned from a search. */
 export enum ModuleFlags {
@@ -14,8 +14,6 @@ const CurrentCacheInfo = {
 	buildNumber: BundleInfo.Build,
 	moduleCount: moduleIds.length,
 };
-
-const storage = getBucket('unbound::cache');
 
 const SAVE_DELAY_MS = 1000;
 const unsaved = new Set<keyof CacheState>();
@@ -41,14 +39,34 @@ type CacheState = {
 	hints: Record<string, ModuleHint[]>;
 };
 
+const stored = readStoredCache([
+	'info',
+	'modules',
+	'moduleFlags',
+	'assets',
+	'assetsComplete',
+	'paths',
+	'hints',
+] satisfies (keyof CacheState)[]);
+
+// Checks only the outer shape: walking every entry would cost each launch, and `isValidCache` drops a cache saved
+// under another `info`.
+function storedObject<T extends object>(field: keyof CacheState, fallback: T): T {
+	const value = stored[field];
+
+	return typeof value === 'object' && value !== null && !Array.isArray(value)
+		? (value as T)
+		: fallback;
+}
+
 export const state: CacheState = {
-	info: storage.get('info', CurrentCacheInfo),
-	modules: storage.get('modules', {}),
-	moduleFlags: storage.get('moduleFlags', {}),
-	assets: storage.get('assets', {}),
-	assetsComplete: storage.get('assetsComplete', false),
-	paths: storage.get('paths', {}),
-	hints: storage.get('hints', {}),
+	info: storedObject('info', CurrentCacheInfo),
+	modules: storedObject('modules', {}),
+	moduleFlags: storedObject('moduleFlags', {}),
+	assets: storedObject('assets', {}),
+	assetsComplete: stored.assetsComplete === true,
+	paths: storedObject('paths', {}),
+	hints: storedObject('hints', {}),
 };
 
 if (!isValidCache()) {
@@ -244,10 +262,7 @@ function save(...fields: [keyof CacheState, ...(keyof CacheState)[]]) {
 	saveTimer ??= setTimeout(() => {
 		saveTimer = undefined;
 
-		for (const field of unsaved) {
-			storage.set(field, state[field]);
-		}
-
+		writeStoredCache(state, unsaved);
 		unsaved.clear();
 	}, SAVE_DELAY_MS);
 }
