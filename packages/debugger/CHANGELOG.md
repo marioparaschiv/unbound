@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.10.2](https://github.com/marioparaschiv/unbound/compare/debugger-v0.10.1...debugger-v0.10.2) (2026-11-09)
+
+
+### Bug Fixes
+
+* **cli:** make the published CLI scaffold, build and bridge ([#1031](https://github.com/marioparaschiv/unbound/issues/1031)) ([312690e](https://github.com/marioparaschiv/unbound/commit/312690e035a0158fb45ee8914701832ffabc77fd))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger-protocol bumped to 0.11.1
+
 ## [0.10.1](https://github.com/marioparaschiv/unbound/compare/debugger-v0.10.0...debugger-v0.10.1) (2026-11-09)
 
 
