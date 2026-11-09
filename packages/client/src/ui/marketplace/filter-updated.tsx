@@ -2,8 +2,8 @@ import { View } from 'react-native';
 import { useMemo } from 'react';
 
 import type { FilterMatch, MarketplaceFilters } from '~/marketplace/filters';
-import { BottomSheets, Discord } from '~/metro/components';
 import { FILTER_MATCHES, UPDATED_WINDOWS } from '~/marketplace/filters';
+import { BottomSheets, Discord } from '~/metro/components';
 import { messages } from '~/i18n/api';
 
 import { windowLabel } from './filter-labels';

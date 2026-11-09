@@ -2,6 +2,7 @@ import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 
 import { useRef, useState } from 'react';
 
 import type { ScrollEdges, ScrollMetrics } from './scroll-edges';
+
 import { scrollEdges } from './scroll-edges';
 
 /**

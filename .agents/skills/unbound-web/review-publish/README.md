@@ -1,6 +1,6 @@
 # Verify review publishing
 
-**Promise.** The public files at `addons/{id}/{version}/` (bundle, `manifest.json`, `ADDON.md`, `page.json`, `media/`, and the extra files `assets/<sha256>.<type>` and `i18n/<code>.json`) exist only for a live `addon_version` row, the bundle's bytes match that row's `sha256`, and the other files are that row's submission's. A submission is decided at most once, and a rejected submission's bytes are never public.
+**Promise.** The public files at `addons/{id}/{version}/` (bundle, `manifest.json`, `ADDON.md`, `page.json`, `store-page.json`, `media/`, and the extra files `assets/<sha256>.<type>` and `i18n/<code>.json`) exist only for a live `addon_version` row, the bundle's bytes match that row's `sha256`, and the other files are that row's submission's. A submission is decided at most once, and a rejected submission's bytes are never public.
 
 **Harm when broken.** Users install a bundle no reviewer approved, or one whose hash disagrees with what the API reports.
 

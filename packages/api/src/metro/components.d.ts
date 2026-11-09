@@ -36,12 +36,16 @@ export declare const Discord: DesignModule;
 export declare const FlashList: any;
 /** Discord's legacy form components, such as `FormRow` and `FormSection`; `{}` on builds without them. */
 export declare const Forms: any;
+/** The `@gorhom/bottom-sheet` Discord bundles, whose `BottomSheetScrollView` scrolls inside a `scrollable` sheet; found on first access. */
+export declare const GorhomSheet: any;
 /** Discord's media viewer module, with `openMediaModal`; found on first access. */
 export declare const Media: any;
 /** Discord's portal components, `Portal` and `PortalHost`, for rendering outside the tree; found on first access. */
 export declare const Portal: any;
 /** Discord's safe area components, with `SafeAreaPaddingView`; found on first access. */
 export declare const SafeArea: any;
+/** `react-native-safe-area-context`, with `useSafeAreaInsets`; found on first access. */
+export declare const SafeAreaContext: any;
 /** Discord's video player module, with `VideoComponent` and `createVideoControls`; found on first access. */
 export declare const Video: any;
 /**

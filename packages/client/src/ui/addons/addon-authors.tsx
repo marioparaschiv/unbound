@@ -19,6 +19,9 @@ type AddonAuthorsProps = {
 
 const SHEET_KEY = 'unbound-addon-authors';
 
+// As on the website: three avatars, then the pile's "+N" chip for the rest.
+const MAX_AVATARS = 3;
+
 /**
  * @description An addon's author line: their avatars in a pile, then their manifest names. Pressing it
  * opens the profile of a sole resolved author, or a sheet listing every author.
@@ -59,7 +62,7 @@ function AddonAuthors({ authors, style, nameStyle }: AddonAuthorsProps) {
 			]}
 		>
 			<AvatarPile size={AvatarSizes.XSMALL_20} names={names} totalCount={authors.length}>
-				{resolved.map(({ author, avatar }, index) => (
+				{resolved.slice(0, MAX_AVATARS).map(({ author, avatar }, index) => (
 					<Avatar
 						key={`${author.id}-${index}`}
 						source={avatar}

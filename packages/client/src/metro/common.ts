@@ -1,4 +1,4 @@
-import type { MarkdownParserModule } from '@unbound-app/types/markdown';
+import type { MarkdownParserModule, SimpleMarkdownModule } from '@unbound-app/types/markdown';
 import type { ImageProps, ImageURISource } from 'react-native';
 
 import { findByPropsLazy } from '~/metro/wrappers';
@@ -24,6 +24,12 @@ export const MarkdownParser: MarkdownParserModule = findByPropsLazy(
 	'parse',
 	'parseToAST',
 	'reactParserFor',
+);
+/** Discord's copy of `simple-markdown`, whose block rules parse whole documents; found on first access. */
+export const SimpleMarkdown: SimpleMarkdownModule = findByPropsLazy(
+	'parserFor',
+	'outputFor',
+	'defaultRules',
 );
 /** Discord's copy of `react-native-screens`, with `FullWindowOverlay`; found on first access. */
 export const Screens = findByPropsLazy('FullWindowOverlay');
