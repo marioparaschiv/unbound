@@ -1,4 +1,5 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
+import { availableParallelism } from 'node:os';
 
 import { BUILD_CHECKS, DECLARED_CAPABILITY_CHECKS, buildWithChecks } from '~/lib/build-checks';
 import { formatReport, isOverBudget } from '~/lib/report-format';
@@ -55,42 +56,52 @@ const buildCommand: CommandDefinition<typeof schema> = {
 			return { ok: true, text: 'No addons found.' };
 		}
 
+		const { build } = resolved.config;
 		const checks = declaredCapabilities ? DECLARED_CAPABILITY_CHECKS : BUILD_CHECKS;
 		const results: BuiltAddonReport[] = [];
-		const tables: string[] = [];
-		const failed: string[] = [];
 		// The rollup preset reads it, since the build runs as the addon's own command.
 		const env: Record<string, string> = verbose ? { UNBOUND_VERBOSE: '1' } : {};
+		const queue = addons.map((addon, index) => ({ addon, index }));
 
-		for (const addon of addons) {
-			// Progress goes to stderr, so stdout holds only the reports, or the JSON under `--json`.
-			process.stderr.write(
-				addon.static ? `Checking ${addon.id} (static addon)…\n` : `Building ${addon.id}…\n`,
-			);
+		// Each build is its own process, so a few run at once; results keep the order of `addons`.
+		async function work() {
+			for (let next = queue.shift(); next; next = queue.shift()) {
+				const { addon, index } = next;
 
-			const { ok, report } = await buildWithReport(addon, (reportEnv) =>
-				buildWithChecks(addon, resolved.config.build, checks, { ...env, ...reportEnv }),
-			);
-			const passed = ok && !(strictBudget && report && isOverBudget(report));
-
-			results.push({ id: addon.id, ok: passed, report: report ?? null });
-
-			if (report) {
-				tables.push(formatReport(report, { verbose, strict: strictBudget }));
-			}
-
-			if (passed) {
-				process.stderr.write(`Built ${addon.id}.\n`);
-			} else {
-				failed.push(addon.id);
+				// Progress goes to stderr, so stdout holds only the reports, or the JSON under `--json`.
 				process.stderr.write(
-					ok
-						? `Failed to build ${addon.id}: it is over a size budget.\n`
-						: `Failed to build ${addon.id}.\n`,
+					addon.static
+						? `Checking ${addon.id} (static addon)…\n`
+						: `Building ${addon.id}…\n`,
 				);
+
+				const { ok, report } = await buildWithReport(addon, (reportEnv) =>
+					buildWithChecks(addon, build, checks, { ...env, ...reportEnv }),
+				);
+				const passed = ok && !(strictBudget && report && isOverBudget(report));
+
+				results[index] = { id: addon.id, ok: passed, report: report ?? null };
+
+				if (passed) {
+					process.stderr.write(`Built ${addon.id}.\n`);
+				} else {
+					process.stderr.write(
+						ok
+							? `Failed to build ${addon.id}: it is over a size budget.\n`
+							: `Failed to build ${addon.id}.\n`,
+					);
+				}
 			}
 		}
 
+		await Promise.all(
+			Array.from({ length: Math.min(addons.length, availableParallelism()) }, work),
+		);
+
+		const tables = results.flatMap(({ report }) =>
+			report ? [formatReport(report, { verbose, strict: strictBudget })] : [],
+		);
+		const failed = results.filter((result) => !result.ok).map((result) => result.id);
 		const data = { addons: results };
 
 		if (failed.length > 0) {
