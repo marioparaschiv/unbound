@@ -7,11 +7,11 @@ import {
 	writeFileSync,
 } from 'node:fs';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { createServer } from 'node:net';
 import { dirname, join } from 'node:path';
+import { createServer } from 'node:net';
 
-import { createTempDir, type TempDir } from './helpers/ubd';
 import { installPublished } from './helpers/published-package';
+import { createTempDir, type TempDir } from './helpers/ubd';
 
 const CLI = join(import.meta.dir, '..');
 const API = join(CLI, '..', 'api');

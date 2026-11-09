@@ -7,8 +7,8 @@ import {
 	symlinkSync,
 	writeFileSync,
 } from 'node:fs';
-import { execFileSync } from 'node:child_process';
 import { dirname, join, relative } from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 type Manifest = {
 	files?: string[];
