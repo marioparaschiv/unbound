@@ -4,6 +4,7 @@ import noop from '@unbound-app/utils/noop';
 
 import { safeRelativePath, isSafeIconPackMain } from '~/addons/paths';
 import type { Addon, AddonResolveable } from '~/addons/addon';
+import type { InstalledEntry } from '~/updates/addon-updates';
 import { getById, onAssetRegistered } from '~/assets/api';
 import { downloadFile } from '~/native/download-file';
 import { ImageSources } from '~/metro/common';
@@ -86,6 +87,14 @@ export class Icons extends Addons<Plugin> {
 	 */
 	protected isAcceptableMain(main: unknown): main is string {
 		return isSafeIconPackMain(main);
+	}
+
+	/**
+	 * @description Lists the installed packs for an update check, leaving out the built-in default pack.
+	 * @returns One entry per installed pack.
+	 */
+	listInstalled(): InstalledEntry[] {
+		return super.listInstalled().filter((entry) => entry.id !== defaultPack.manifest.id);
 	}
 
 	get applied(): IconPack {
