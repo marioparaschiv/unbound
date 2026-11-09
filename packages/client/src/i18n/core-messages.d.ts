@@ -85,5 +85,6 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_APP_ICON_ADDED: { name: string | number };
 		UNBOUND_APP_ICON_REMOVED: { name: string | number };
 		UNBOUND_APP_ICON_PENDING: { name: string | number };
+		UNBOUND_PATCH_REMOVED: { name: string | number };
 	};
 }

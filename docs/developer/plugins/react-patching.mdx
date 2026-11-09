@@ -284,6 +284,19 @@ patcher.react.after(Profile, 'UserProfile', ({ result }) => {
 
 React compares the element's `type` between renders. A swap to the same function every time keeps the row's state. The swap goes away with the patch when the plugin stops.
 
+## When a patch crashes
+
+A component patch that throws can't take Discord down with it. Unbound falls back to Discord's own render instead:
+
+- If your callback throws, that render shows Discord's tree as it was before your patch ran.
+- If the tree your patch returned throws while React renders it, Discord's component renders on its own in its place. The next time the component re-renders, Unbound tries your patch again.
+
+Nothing is shown to the user for a single crash. Unbound only logs the error, naming the component.
+
+After 3 crashes in a row, Unbound removes the patch and shows a toast saying it was turned off. A render that commits cleanly resets the count. When several patches on one component built the tree that crashed, each of them counts the crash, since Unbound can't tell which one caused it. The patch stays removed until your plugin starts again.
+
+Your patch's tree sits inside a small error boundary. Later `after` patches still get your tree as `result`, not the boundary. Text, `null` and other trees that can't throw aren't wrapped.
+
 ## Undoing a component patch
 
 Unbound removes your patches when the plugin stops, and so does the function each patch returns. You don't need to re-render anything. Mounted components re-render with Discord's original render, and function components keep their state, even when your patch called hooks.

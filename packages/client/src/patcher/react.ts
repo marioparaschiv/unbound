@@ -1,8 +1,12 @@
 import type { PatchCallback, PatchContext, PatchOptions, PatchParent } from 'possess';
 import type { JSXElementConstructor, ReactNode } from 'react';
+import noop from '@unbound-app/utils/noop';
 import { PatchType } from 'possess';
 
+import { recordFailure, recordSuccess, type PatchFailures } from '~/patcher/patch-failures';
+import { isPatchBoundary, withPatchBoundary } from '~/patcher/patch-boundary';
 import type { IsUntyped } from '~/patcher/is-untyped';
+import { LateHook } from '~/hot-refresh/hooks';
 
 /** A component `patcher.react` finds the render of by itself: a `memo`, a `forwardRef` or a class. */
 export type ReactPatchTarget = JSXElementConstructor<never> | { $$typeof: symbol };
@@ -166,12 +170,23 @@ function renderOf(component: MetroExport): Render | undefined {
 		: renderOf(component.type);
 }
 
+// A `memo` or `forwardRef` holds its name on the wrapper or on what it wraps.
+function nameOf(component: MetroExport): string {
+	const inner = component?.type ?? component?.render;
+
+	return (
+		component?.displayName ||
+		component?.name ||
+		inner?.displayName ||
+		inner?.name ||
+		String(component)
+	);
+}
+
 function requireRender(component: MetroExport, render: Render | undefined): Render {
 	if (!render) {
-		const name = component?.displayName ?? component?.name ?? String(component);
-
 		throw new TypeError(
-			`Failed to patch component ${name}: pass the object holding a function component and its key, as patcher.react.after(parent, key, callback).`,
+			`Failed to patch component ${nameOf(component)}: pass the object holding a function component and its key, as patcher.react.after(parent, key, callback).`,
 		);
 	}
 
@@ -188,23 +203,84 @@ function locateMember(parent: PatchParent, key: string): Render {
 	return requireRender(value, renderOf(value));
 }
 
-function adapt(type: PatchType, render: Render, callback: AnyReactCallback): PatchPlace {
+// A failing patch or tree falls back to Discord's render; three failures in a row remove the patch.
+function adapt(
+	type: PatchType,
+	render: Render,
+	callback: AnyReactCallback,
+	name: string,
+	unpatch: () => void,
+): PatchPlace {
+	const failures: PatchFailures = { name, count: 0, unpatch };
+	const own = [failures];
+	const none: PatchFailures[] = [];
+
 	function adapted(ctx: PatchContext) {
 		const props = render.isClass ? ctx.this?.props : ctx.args[0];
-		const value = callback({
-			props,
-			this: render.isClass ? ctx.this : undefined,
-			result: ctx.result,
-			// `ctx.original` is read at call time: the live patcher swaps it in to track hooks.
-			original: (next = props) =>
-				render.isClass ? ctx.original() : ctx.original(next, ...ctx.args.slice(1)),
-		});
+		const inner = isPatchBoundary(ctx.result) ? ctx.result.props : undefined;
+		const result = inner ? inner.children : ctx.result;
+		const earlier = inner ? inner.patches : none;
+		let called: { tree: ReactNode } | undefined;
 
-		if (type !== PatchType.Before) {
-			return value;
+		try {
+			const value = callback({
+				props,
+				this: render.isClass ? ctx.this : undefined,
+				result,
+				// `ctx.original` is read at call time: the live patcher swaps it in to track hooks.
+				original: (next = props) => {
+					const tree = render.isClass
+						? ctx.original()
+						: ctx.original(next, ...ctx.args.slice(1));
+
+					called = { tree };
+
+					return tree;
+				},
+			});
+
+			if (type === PatchType.Before) {
+				recordSuccess(failures);
+
+				return !render.isClass && value !== undefined
+					? [value, ...ctx.args.slice(1)]
+					: undefined;
+			}
+
+			if (type === PatchType.Instead && value === undefined) {
+				return undefined;
+			}
+
+			// The boundary resets the count once this tree commits cleanly.
+			return withPatchBoundary(value === undefined ? result : value, {
+				place: render,
+				self: ctx.this,
+				args: ctx.args,
+				patches: inner ? [...earlier, failures] : own,
+			});
+		} catch (error) {
+			// The live patcher catches a late hook itself and remounts the component.
+			if (error instanceof LateHook) {
+				throw error;
+			}
+
+			recordFailure(failures, error);
+
+			if (type === PatchType.Before) {
+				return undefined;
+			}
+
+			// The original runs at most once per render, so its hooks keep their order.
+			const fallback =
+				type === PatchType.After ? result : (called?.tree ?? ctx.original(...ctx.args));
+
+			return withPatchBoundary(fallback, {
+				place: render,
+				self: ctx.this,
+				args: ctx.args,
+				patches: earlier,
+			});
 		}
-
-		return !render.isClass && value !== undefined ? [value, ...ctx.args.slice(1)] : undefined;
 	}
 
 	return { parent: render.parent, method: render.method, callback: adapted };
@@ -222,25 +298,40 @@ function isComponentArgs(args: ComponentArgs | MemberArgs): args is ComponentArg
 export function createReactPatcher(patchAt: PatchAt): ReactPatcher {
 	function hook(type: PatchType) {
 		return (target: PatchParent, ...args: ComponentArgs | MemberArgs): (() => void) => {
+			// Read when a render fails, by which time `patchAt` has returned.
+			let remove = noop;
+			const unpatch = () => remove();
+
 			if (isComponentArgs(args)) {
 				const [callback, options] = args;
 
-				return patchAt(
+				remove = patchAt(
 					type,
 					target,
-					(loaded) => adapt(type, requireRender(loaded, renderOf(loaded)), callback),
+					(loaded) =>
+						adapt(
+							type,
+							requireRender(loaded, renderOf(loaded)),
+							callback,
+							nameOf(loaded),
+							unpatch,
+						),
 					options,
 				);
+
+				return remove;
 			}
 
 			const [key, callback, options] = args;
 
-			return patchAt(
+			remove = patchAt(
 				type,
 				target,
-				(loaded) => adapt(type, locateMember(loaded, key), callback),
+				(loaded) => adapt(type, locateMember(loaded, key), callback, key, unpatch),
 				options,
 			);
+
+			return remove;
 		};
 	}
 
