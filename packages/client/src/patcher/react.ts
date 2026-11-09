@@ -213,8 +213,8 @@ function boundaryProps(
 	return kept ? { patches, fallback: kept.fallback } : { patches };
 }
 
-// An added element that throws renders nothing. A failing patch falls back to Discord's tree from the same
-// render, so its hooks keep their state; three failures in a row remove the patch.
+// A thrown added element renders nothing; a failing patch falls back to Discord's tree from the same
+// render, so hooks run once. Three failures in a row remove the patch.
 function adapt(
 	type: PatchType,
 	render: Render,

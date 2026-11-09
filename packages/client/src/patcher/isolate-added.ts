@@ -75,17 +75,14 @@ function isolateList(items: readonly ReactNode[], component: string): readonly R
 
 // Copies the element and its props only when one of its props changes.
 function isolateElement(element: Element, component: string): Element {
-	let props: Record<PropertyKey, ReactNode> | undefined;
+	let props: Element['props'];
 
 	for (const key in element.props) {
 		const value = element.props[key];
 		const next = isolateSlot(value, component, []);
 
 		if (next !== value) {
-			const copy: Record<PropertyKey, ReactNode> = props ?? { ...element.props };
-
-			copy[key] = next;
-			props = copy;
+			props = { ...(props ?? element.props), [key]: next };
 		}
 	}
 

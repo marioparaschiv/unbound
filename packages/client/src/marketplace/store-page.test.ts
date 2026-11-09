@@ -1,15 +1,18 @@
 import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import { afterAll, describe, expect, test } from 'bun:test';
 
-import { fetchStorePage, findPageMedia, splitPageBody } from './store-page';
+import { fetchStorePage, findPageMedia, loadStorePage, normalizePageBody } from './store-page';
 
 let files: Record<string, string> = {};
 let status = 200;
+let requests = 0;
 
 const cdn = Bun.serve({
 	port: 0,
 	fetch(request) {
 		const body = files[new URL(request.url).pathname];
+
+		requests += 1;
 
 		if (status !== 200 || body === undefined) {
 			return new Response(null, { status: status === 200 ? 404 : status });
@@ -68,8 +71,30 @@ describe('fetchStorePage', () => {
 		expect(await fetchStorePage(PAGE_URL)).toEqual({
 			body: '## Usage\n\nOpen settings.',
 			measured: MEASURED,
+			icons: new Map(),
 			folder: FOLDER,
 		});
+	});
+
+	test('reads the whole page from store-page.json in one request', async () => {
+		const gear = '<svg viewBox="0 0 20 20"><circle r="2"/></svg>';
+
+		serve({
+			[`${FOLDER}store-page.json`]: JSON.stringify({
+				body: ':gear: Settings',
+				measured: MEASURED,
+				icons: { gear },
+			}),
+		});
+		requests = 0;
+
+		expect(await fetchStorePage(PAGE_URL)).toEqual({
+			body: ':gear: Settings',
+			measured: MEASURED,
+			icons: new Map([['gear', gear]]),
+			folder: FOLDER,
+		});
+		expect(requests).toBe(1);
 	});
 
 	test('a version without page.json has a body and no media', async () => {
@@ -78,6 +103,7 @@ describe('fetchStorePage', () => {
 		expect(await fetchStorePage(PAGE_URL)).toEqual({
 			body: 'Just text.',
 			measured: null,
+			icons: new Map(),
 			folder: FOLDER,
 		});
 	});
@@ -107,7 +133,7 @@ describe('fetchStorePage', () => {
 });
 
 describe('findPageMedia', () => {
-	const page = { body: '', measured: MEASURED, folder: FOLDER };
+	const page = { body: '', measured: MEASURED, icons: new Map<string, string>(), folder: FOLDER };
 
 	test('resolves a measured path against the version folder', () => {
 		expect(findPageMedia(page, 'media/shot.png')).toEqual({
@@ -122,32 +148,82 @@ describe('findPageMedia', () => {
 	});
 });
 
-describe('splitPageBody', () => {
-	test('lays out lines that hold only media as blocks between runs of text', () => {
+describe('loadStorePage', () => {
+	test('fetches a version once and serves later visits from memory', async () => {
+		const url = `${FOLDER}cached/ADDON.md`;
+
+		serve({ [url]: 'Cached.' });
+		requests = 0;
+
+		const [first, second] = await Promise.all([loadStorePage(url), loadStorePage(url)]);
+
+		expect(await loadStorePage(url)).toBe(first);
+		expect(second).toBe(first);
+		expect(requests).toBe(3);
+	});
+
+	test('a failed fetch is forgotten, so a retry asks the CDN again', async () => {
+		const url = `${FOLDER}retry/ADDON.md`;
+
+		serve({ [url]: 'Back.' }, 503);
+
+		const failed = await loadStorePage(url).then(
+			() => false,
+			() => true,
+		);
+
+		serve({ [url]: 'Back.' });
+
+		expect(failed).toBe(true);
+		expect((await loadStorePage(url))?.body).toBe('Back.');
+	});
+});
+
+describe('normalizePageBody', () => {
+	test('separates headings, fences and lists from the paragraph above them', () => {
 		const body = [
 			'Intro.',
-			'',
-			'![Shot](media/shot.png)',
-			'',
-			'An ![inline](media/a.png) image.',
-		].join('\n');
+			'## Usage',
+			'Open settings:',
+			'- one',
+			'- two',
+			'```',
+			'code',
+			'```',
+			'Done.',
+		];
 
-		expect(splitPageBody(body)).toEqual([
-			{ kind: 'markdown', source: 'Intro.\n' },
-			{ kind: 'media', alt: 'Shot', path: 'media/shot.png' },
-			{ kind: 'markdown', source: '\nAn ![inline](media/a.png) image.' },
-		]);
+		expect(normalizePageBody(body.join('\n'))).toBe(
+			[
+				'Intro.',
+				'',
+				'## Usage',
+				'',
+				'Open settings:',
+				'',
+				'- one',
+				'- two',
+				'',
+				'```',
+				'code',
+				'```',
+				'',
+				'Done.',
+				'',
+				'',
+			].join('\n'),
+		);
 	});
 
-	test('keeps media lines inside a code fence as text', () => {
-		const body = ['```md', '![Shot](media/shot.png)', '```'].join('\n');
+	test('keeps lines inside a code fence as written', () => {
+		const body = ['```md', '# Title', 'text', '- item', '```'].join('\n');
 
-		expect(splitPageBody(body)).toEqual([{ kind: 'markdown', source: body }]);
+		expect(normalizePageBody(body)).toBe(`${body}\n\n\n`);
 	});
 
-	test('a body without media is one run of text', () => {
-		expect(splitPageBody('## Usage\n\nOpen settings.')).toEqual([
-			{ kind: 'markdown', source: '## Usage\n\nOpen settings.' },
-		]);
+	test('leaves nested list items and their continuations alone', () => {
+		const body = ['- one', '  continued', '  - nested', '- two'].join('\n');
+
+		expect(normalizePageBody(body)).toBe(`${body}\n\n`);
 	});
 });

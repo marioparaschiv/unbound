@@ -3,6 +3,7 @@ import {
 	MEASURED_PAGE_FILENAME,
 	type AddonPage,
 } from '@unbound-app/contracts/addon-page';
+import { STORE_PAGE_FILENAME } from '@unbound-app/contracts/addon-page-text';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { formatChangelogText } from '@unbound-app/contracts/changelog';
 import type { AddonVersion } from '@unbound-app/contracts/addons';
@@ -10,6 +11,7 @@ import type { SourcePin } from '@unbound-app/contracts/source';
 
 import type { addonVersion, submissionSource } from '~/db/schema';
 import type { PageMediaFiles } from '~/lib/addon-page-source';
+import { buildStorePageFile } from '~/lib/store-page-file';
 import type { AppContext } from '~/lib/context';
 import type { Env } from '~/lib/env';
 
@@ -127,8 +129,8 @@ export async function writeArtifact(
 }
 
 /**
- * @description Writes a version's store page to its folder: ADDON.md, the measured `page.json`, and each
- * media file at the path ADDON.md writes it as, so `media/` lands under the version folder.
+ * @description Writes a version's store page to its folder: ADDON.md, the measured `page.json`, the app's
+ * one-request `store-page.json`, and each media file at the path ADDON.md writes it as.
  * @param ctx The application context.
  * @param target The addon id and version the page is published as.
  * @param page ADDON.md, the measured page and its verified media bytes.
@@ -154,6 +156,11 @@ export async function writeStorePage(
 					{ type: 'application/json' },
 				)
 			: undefined,
+		ctx.storage.public.write(
+			`${directory}/${STORE_PAGE_FILENAME}`,
+			buildStorePageFile(page.addonMd, page.measured),
+			{ type: 'application/json' },
+		),
 	]);
 }
 

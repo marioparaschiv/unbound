@@ -7,11 +7,10 @@ import {
 import { useMemo } from 'react';
 
 import AddonGallery, { type GalleryEntry } from '~/components/addon-gallery';
+import Markdown, { type MarkdownIconRenderer } from '~/components/markdown';
 import { resolvePageMedia, type PageMediaMap } from '~/lib/page-media';
-import { renderPageIcon } from '~/components/addon/page-icon';
 import type { MarkdownPin } from '~/lib/markdown-url';
 import MediaFile from '~/components/media-file';
-import Markdown from '~/components/markdown';
 
 type AddonMdProps = {
 	/** The ADDON.md text, frontmatter included. */
@@ -21,6 +20,8 @@ type AddonMdProps = {
 	mediaBase: string;
 	/** The page as `ubd build` measured it; without it there is no banner or gallery, and media show as links. */
 	page?: AddonPage | null;
+	/** Draws `:name:` shortcodes; passed in so a published page can ship only the icons it uses. */
+	renderIcon: MarkdownIconRenderer;
 };
 
 const FRONTMATTER_KEYS = new Set(Object.keys(addonPageFrontmatterSchema.properties));
@@ -63,7 +64,7 @@ function toGalleryEntry(entry: PageMedia, media: PageMediaMap): GalleryEntry | u
  * @param props The ADDON.md text, its source pin, where its media load from and its measured page.
  * @returns The rendered store page.
  */
-function AddonMd({ source, pin, mediaBase, page }: AddonMdProps) {
+function AddonMd({ source, pin, mediaBase, page, renderIcon }: AddonMdProps) {
 	const body = useMemo(() => getBody(source, page), [source, page]);
 	const media = useMemo(
 		() => (page ? resolvePageMedia(page, mediaBase) : undefined),
@@ -71,7 +72,7 @@ function AddonMd({ source, pin, mediaBase, page }: AddonMdProps) {
 	);
 
 	if (!page || !media) {
-		return <Markdown source={body} pin={pin} renderIcon={renderPageIcon} />;
+		return <Markdown source={body} pin={pin} renderIcon={renderIcon} />;
 	}
 
 	const banner = media.get(page.frontmatter.banner);
@@ -85,7 +86,7 @@ function AddonMd({ source, pin, mediaBase, page }: AddonMdProps) {
 				<MediaFile media={banner} alt='' className='w-full h-auto object-cover' />
 			) : null}
 			{gallery.length > 0 ? <AddonGallery entries={gallery} /> : null}
-			<Markdown source={body} pin={pin} media={media} renderIcon={renderPageIcon} />
+			<Markdown source={body} pin={pin} media={media} renderIcon={renderIcon} />
 		</div>
 	);
 }

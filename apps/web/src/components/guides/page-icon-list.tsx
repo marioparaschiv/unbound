@@ -1,6 +1,6 @@
 import { ADDON_PAGE_ICON_NAMES } from '@unbound-app/contracts/addon-page-icons';
 
-import { ADDON_PAGE_ICONS } from '~/components/addon/page-icons';
+import { ADDON_PAGE_ICONS } from '~/lib/page-icons';
 
 /**
  * @description Every icon an ADDON.md may name, each with the shortcode that draws it, generated from the set the store renders.

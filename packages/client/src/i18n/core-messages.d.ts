@@ -48,6 +48,8 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_FILTER_CHIP: { field: string | number; value: string | number };
 		UNBOUND_FILTER_LISTED: { count: number };
 		UNBOUND_FILTER_REMOVE: { name: string | number };
+		UNBOUND_STORE_PAGE_UPDATED: { date: string | number };
+		UNBOUND_STORE_PAGE_REQUIRES_VERSION: { version: string | number };
 		UNBOUND_LINK_INSTALL_TITLE: { name: string | number };
 		UNBOUND_LINK_UPDATE_TITLE: { name: string | number };
 		UNBOUND_LINK_BODY: { version: string | number; authors: string | number; description: string | number };

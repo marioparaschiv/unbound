@@ -1,19 +1,17 @@
-import { ActivityIndicator, ScrollView, View } from 'react-native';
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonKind } from '@unbound-app/types/addons';
+import { ScrollView, View } from 'react-native';
 import { useEffect } from 'react';
 
-import { fetchStorePage, findPageMedia } from '~/marketplace/store-page';
-import AddonCardHeader from '~/ui/components/addon-card-header';
+import { loadStorePage } from '~/marketplace/store-page';
 import { Discord, SafeArea } from '~/metro/components';
-import Empty from '~/ui/components/empty-state';
-import { messages } from '~/i18n/api';
 
+import VersionHistory from './version-history';
+import StorePageBody from './store-page-body';
+import AboutSection from './about-section';
 import useStyles from './store-page.style';
-import PageGallery from './page-gallery';
+import StoreHeader from './store-header';
 import useResource from './use-resource';
-import PageMedia from './page-media';
-import PageBody from './page-body';
 
 /** The listed addon whose latest version's page the screen shows. */
 export type StorePageParams = {
@@ -26,61 +24,33 @@ type StorePageScreenProps = {
 };
 
 /**
- * @description A listed addon's store page: the banner, the addon's header, the gallery, then the
- * ADDON.md body. A version without a page on the CDN says so; a failed fetch offers a retry.
+ * @description A listed addon's store page, laid out like the website's: the header with its install
+ * button, the ADDON.md banner, gallery and body, What's new, then About. Everything but the body comes
+ * from the listing, so it draws at once; the body is fetched once per version and session.
  */
 function StorePageScreen({ route }: StorePageScreenProps) {
 	const styles = useStyles();
 	const { addon, kind } = route.params;
 	const { manifest, pageUrl } = addon.latestVersion;
 	const navigation = Discord.useNavigation();
-	const { state, retry } = useResource(pageUrl ?? null, fetchStorePage);
+	const resource = useResource(pageUrl ?? null, loadStorePage);
 
 	useEffect(() => {
 		navigation.setOptions({ title: manifest.name });
 	}, [manifest.name]);
 
-	if (state.status === 'missing') {
-		return <Empty>{messages.UNBOUND_STORE_PAGE_MISSING}</Empty>;
-	}
-
-	if (state.status === 'loading') {
-		return <ActivityIndicator style={styles.fill} />;
-	}
-
-	if (state.status === 'failed') {
-		return (
-			<View style={styles.fill}>
-				<Empty>{messages.UNBOUND_STORE_PAGE_FAILED}</Empty>
-				<Discord.Button
-					text={messages.UNBOUND_UPDATES_RETRY}
-					variant='secondary'
-					onPress={retry}
-				/>
-			</View>
-		);
-	}
-
-	const page = state.value;
-	const frontmatter = page.measured?.frontmatter;
-	const banner = frontmatter ? findPageMedia(page, frontmatter.banner) : undefined;
-
 	return (
 		<ScrollView contentContainerStyle={styles.scroll}>
 			<SafeArea.SafeAreaPaddingView bottom style={styles.content}>
-				{banner ? (
-					<View style={styles.inset}>
-						<PageMedia media={banner} alt={manifest.name} />
-					</View>
-				) : null}
 				<View style={styles.inset}>
-					<AddonCardHeader id={addon.id} kind={kind} manifest={manifest} />
+					<StoreHeader addon={addon} kind={kind} />
 				</View>
-				{frontmatter?.media.length ? (
-					<PageGallery page={page} entries={frontmatter.media} />
-				) : null}
+				<StorePageBody resource={resource} name={manifest.name} />
 				<View style={styles.inset}>
-					<PageBody page={page} />
+					<VersionHistory addon={addon} />
+				</View>
+				<View style={styles.inset}>
+					<AboutSection addon={addon} />
 				</View>
 			</SafeArea.SafeAreaPaddingView>
 		</ScrollView>

@@ -156,7 +156,7 @@ import {
 } from 'nucleo-micro-bold';
 import type { AddonPageIconName } from '@unbound-app/contracts/addon-page-icons';
 
-import { IconEyeSlash } from '~/components/addon/icon-eye-slash';
+import { IconEyeSlash } from '~/lib/icon-eye-slash';
 
 /** The `nucleo-micro-bold` component behind each icon name an ADDON.md may use. */
 export const ADDON_PAGE_ICONS: Record<AddonPageIconName, typeof IconGear> = {

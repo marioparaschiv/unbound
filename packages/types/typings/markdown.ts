@@ -53,6 +53,24 @@ export type MarkdownReactParser = (
 	state?: MarkdownState,
 ) => ReactNode;
 
+/** Parses Markdown into nodes; `inline: false` parses blocks such as headings, lists, code and tables. */
+export type SimpleMarkdownParser<TNode extends MarkdownNode = MarkdownNode> = (
+	source: string,
+	state?: MarkdownState,
+) => TNode[];
+
+/** The `simple-markdown` library Discord bundles, found by `parserFor`, `outputFor` and `defaultRules`. */
+export type SimpleMarkdownModule = {
+	/** CommonMark-like rules for a whole document, unlike Discord's message rules. */
+	defaultRules: MarkdownRules;
+	/** Builds a parser from a rule set, such as `defaultRules` plus your own; `TNode` names the nodes they parse. */
+	parserFor<TNode extends MarkdownNode = MarkdownNode>(
+		rules: MarkdownRules,
+	): SimpleMarkdownParser<TNode>;
+	/** Wraps a regex into a `match` that only matches inside inline content. */
+	inlineRegex(regex: RegExp): MarkdownRule['match'];
+};
+
 /** Discord's Markdown module (`MarkupUtils`), found by `parse`, `parseToAST` and `reactParserFor`. */
 export type MarkdownParserModule = {
 	/** The rules Discord renders messages with. */

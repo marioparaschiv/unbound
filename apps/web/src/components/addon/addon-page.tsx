@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { createPageIconRenderer } from '~/components/addon/page-icon-svg';
 import type { MarketplaceAddonDetails } from '~/lib/marketplace';
 import VersionHistory from '~/components/addon/version-history';
 import { staggerStyle } from '~/components/motion/reveal-style';
@@ -24,6 +25,8 @@ type AddonPageProps = {
  */
 function AddonPage({ addon, banner }: AddonPageProps) {
 	const { source } = addon;
+	const icons = source?.icons;
+	const renderIcon = useMemo(() => createPageIconRenderer(icons ?? {}), [icons]);
 	const sidebar = [
 		<AuthorsCard key='authors' authors={addon.authors} />,
 		<Card key='changelog' className='gap-4'>
@@ -62,6 +65,7 @@ function AddonPage({ addon, banner }: AddonPageProps) {
 								pin={source.pin}
 								mediaBase={source.mediaBase}
 								page={source.page}
+								renderIcon={renderIcon}
 							/>
 						) : (
 							<Text variant='text-md' color='muted'>

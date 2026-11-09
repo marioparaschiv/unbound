@@ -693,7 +693,7 @@ export type BadgeProps = {
 		| {
 				text: string;
 		  };
-	/** The badge's colour; grey when omitted. */
+	/** The badge's colour scheme. */
 	variant?: BadgeVariant;
 	/** A leading icon component, such as `StarIcon`, drawn at `xxs`. */
 	icon?: React$1.ComponentType<DiscordIconProps>;
@@ -5648,6 +5648,22 @@ export type SimpleActionSheetProps = {
 		map?: unknown;
 	};
 };
+/** The `simple-markdown` library Discord bundles, found by `parserFor`, `outputFor` and `defaultRules`. */
+export type SimpleMarkdownModule = {
+	/** CommonMark-like rules for a whole document, unlike Discord's message rules. */
+	defaultRules: MarkdownRules;
+	/** Builds a parser from a rule set, such as `defaultRules` plus your own; `TNode` names the nodes they parse. */
+	parserFor<TNode extends MarkdownNode = MarkdownNode>(
+		rules: MarkdownRules,
+	): SimpleMarkdownParser<TNode>;
+	/** Wraps a regex into a `match` that only matches inside inline content. */
+	inlineRegex(regex: RegExp): MarkdownRule['match'];
+};
+/** Parses Markdown into nodes; `inline: false` parses blocks such as headings, lists, code and tables. */
+export type SimpleMarkdownParser<TNode extends MarkdownNode = MarkdownNode> = (
+	source: string,
+	state?: MarkdownState,
+) => TNode[];
 export type SliderComponent = React$1.ComponentType<SliderProps & Record<string, unknown>>;
 /**
  * Props of `Slider` (function). Exports: Slider.
@@ -6425,15 +6441,15 @@ export type ToggleIconButtonProps = {
 };
 /** `TransitionStates`: MOUNTED = 0, ENTERED = 1, YEETED = 2. */
 export type TransitionState = 'MOUNTED' | 'ENTERED' | 'YEETED';
-/** An app icon the loader offers, as `getAppIcons` returns it. */
+/** A home screen icon the loader ships, listed in Discord's app icon picker. */
 export type UnboundAppIcon = {
-	/** The icon's native id, which the loader applies. */
+	/** The icon's native id, which the loader switches to. */
 	id: string;
-	/** The id of Discord's own picker entry this icon replaces, when it replaces one. */
+	/** The picker row it shows as, when it replaces one of Discord's own icons. */
 	pickerId?: string;
-	/** The name shown in the icon picker. */
+	/** The name shown under it in the picker. */
 	name: string;
-	/** A URI of the icon's preview image. */
+	/** The URI of its preview image. */
 	image: string;
 };
 /** A {@link DiscordAsset} extended with Unbound's icon-pack overrides and the files of an asset a plugin registered. */

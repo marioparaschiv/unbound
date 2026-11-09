@@ -17,14 +17,6 @@ type ParentProps = { children: ReactNode[] };
 
 type Parent = ReactElement<ParentProps>;
 
-function asParent(node: ReactNode): Parent {
-	if (!isValidElement(node)) {
-		throw new Error('Expected an element');
-	}
-
-	return node as Parent;
-}
-
 const ElementBoundary = withElementBoundary(createElement('View'), 'probe').type;
 
 const row = createElement('Text', { key: 'row' }, 'row');
@@ -90,7 +82,12 @@ describe('patcher.react isolation', () => {
 			),
 		);
 
-		const fragment = asParent(patched().props.children);
+		// The patch replaced the children with one fragment, though `Parent` types them as an array.
+		const fragment: ReactNode = patched().props.children;
+
+		if (!isValidElement<ParentProps>(fragment)) {
+			throw new TypeError('Expected a fragment.');
+		}
 
 		expect((fragment.props.children[1] as ReactElement).type).toBe(ElementBoundary);
 	});
@@ -110,7 +107,9 @@ describe('patcher.react isolation', () => {
 
 		react.after(List, () => replacement);
 
-		expect<ReactNode>(patched()).toBe(replacement);
+		const tree: ReactNode = patched();
+
+		expect(tree).toBe(replacement);
 	});
 
 	test('an added element that throws renders nothing and keeps the patch', () => {

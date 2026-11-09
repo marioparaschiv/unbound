@@ -1,0 +1,60 @@
+import type { ListedAddon } from '@unbound-app/contracts/addons';
+import { ActivityIndicator } from 'react-native';
+import { useState } from 'react';
+
+import { fetchAddonVersions } from '~/addons/versions';
+import { Discord } from '~/metro/components';
+import { API_URL } from '~/core/constants';
+import { messages } from '~/i18n/api';
+
+import StoreSection from './store-section';
+import VersionEntry from './version-entry';
+import useResource from './use-resource';
+
+type VersionHistoryProps = {
+	addon: ListedAddon;
+};
+
+const loadVersions = (id: string) => fetchAddonVersions(id, { baseUrl: API_URL });
+
+/**
+ * @description The store page's What's new card: the listed version's changes from the catalog, then
+ * every version on a timeline once asked for, which is the only request the card makes.
+ */
+function VersionHistory({ addon }: VersionHistoryProps) {
+	const [expanded, setExpanded] = useState(false);
+	const { state, retry } = useResource(expanded ? addon.id : null, loadVersions);
+	const versions = state.status === 'ready' ? state.value : [addon.latestVersion];
+
+	return (
+		<StoreSection title={messages.UNBOUND_UPDATES_CHANGELOG}>
+			{versions.map((version, index) => (
+				<VersionEntry
+					key={version.version}
+					version={version}
+					latest={index === 0}
+					last={index === versions.length - 1}
+				/>
+			))}
+			{expanded ? null : (
+				<Discord.Button
+					size='md'
+					variant='secondary'
+					text={messages.UNBOUND_STORE_PAGE_ALL_VERSIONS}
+					onPress={() => setExpanded(true)}
+				/>
+			)}
+			{expanded && state.status === 'loading' ? <ActivityIndicator /> : null}
+			{expanded && state.status === 'failed' ? (
+				<Discord.Button
+					size='md'
+					variant='secondary'
+					text={messages.UNBOUND_VERSIONS_FAILED}
+					onPress={retry}
+				/>
+			) : null}
+		</StoreSection>
+	);
+}
+
+export default VersionHistory;

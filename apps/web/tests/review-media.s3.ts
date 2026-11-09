@@ -1,6 +1,7 @@
 import { createSubmissionResponseSchema } from '@unbound-app/contracts/publish';
 import { reviewSubmissionResponseSchema } from '@unbound-app/contracts/review';
 import type { ReviewSubmissionRequest } from '@unbound-app/contracts/review';
+import { splitFrontmatter } from '@unbound-app/contracts/addon-page-text';
 import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 import { afterAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
@@ -108,14 +109,21 @@ async function findStatus(id: string) {
 }
 
 describe('publishing the store page', () => {
-	test('approval copies ADDON.md, page.json and every media file under the version folder', async () => {
+	test('approval copies ADDON.md, page.json, store-page.json and every media file under the version folder', async () => {
 		const [author, moderator] = await Promise.all([signUp(), signUp('moderator')]);
 		const id = await submitPage(author, 'review-media.approved');
 
 		await review(moderator, id, { decision: 'approved' });
 
 		const base = 'addons/review-media.approved/1.0.0';
-		const names = ['ADDON.md', 'index.js', 'manifest.json', 'page.json', ...MEDIA];
+		const names = [
+			'ADDON.md',
+			'index.js',
+			'manifest.json',
+			'page.json',
+			'store-page.json',
+			...MEDIA,
+		];
 
 		expect(await listPublic('review-media.approved')).toEqual(
 			names.map((name) => `${base}/${name}`).toSorted(),
@@ -124,6 +132,11 @@ describe('publishing the store page', () => {
 		expect(await ctx.storage.public.file(`${base}/page.json`).json()).toEqual(
 			committedPage(64),
 		);
+		expect(await ctx.storage.public.file(`${base}/store-page.json`).json()).toEqual({
+			body: splitFrontmatter(COMMITTED_ADDON_MD).body,
+			measured: committedPage(64),
+			icons: {},
+		});
 
 		for (const path of MEDIA) {
 			expect(await ctx.storage.public.file(`${base}/${path}`).bytes()).toEqual(

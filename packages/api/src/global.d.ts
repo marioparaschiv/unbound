@@ -428,6 +428,8 @@ export type {
 	ShimmerTextSlotProps,
 	SimpleActionSheetComponent,
 	SimpleActionSheetProps,
+	SimpleMarkdownModule,
+	SimpleMarkdownParser,
 	SliderComponent,
 	SliderProps,
 	SlotProps,

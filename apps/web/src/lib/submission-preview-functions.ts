@@ -14,6 +14,7 @@ import { readAddonTags, readTags } from '~/lib/addon-tags';
 import { resolvePlatforms } from '~/lib/addon-platforms';
 import { schemaValidator } from '~/lib/schema-validator';
 import { getPinnedMediaBase } from '~/lib/markdown-url';
+import { renderPageIcons } from '~/lib/page-icon-svgs';
 import { previewSubmission } from '~/lib/submissions';
 import type { Permissions } from '~/lib/auth/access';
 import { renderAddonIcon } from '~/lib/addon-icons';
@@ -103,6 +104,7 @@ async function toPreviewPage(pending: PendingVersion): Promise<MarketplaceAddonD
 			addonMd: pending.addonMd,
 			page: pending.page,
 			mediaBase: getPinnedMediaBase(pin),
+			icons: renderPageIcons(pending.addonMd ?? ''),
 			approvedAt: at,
 		},
 		tags,

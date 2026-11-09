@@ -1,5 +1,13 @@
-import { MEASURED_PAGE_FILENAME, splitFrontmatter } from '@unbound-app/contracts/addon-page-text';
-import type { AddonPage, MeasuredMedia } from '@unbound-app/contracts/addon-page';
+import {
+	MEASURED_PAGE_FILENAME,
+	STORE_PAGE_FILENAME,
+	splitFrontmatter,
+} from '@unbound-app/contracts/addon-page-text';
+import type {
+	AddonPage,
+	MeasuredMedia,
+	PublishedStorePage,
+} from '@unbound-app/contracts/addon-page';
 
 import { readServerJson } from '~/core/server-data';
 
@@ -9,6 +17,8 @@ export type StorePage = {
 	body: string;
 	/** The measured `page.json`, or `null` when the version has none, so the page shows no media. */
 	measured: AddonPage | null;
+	/** Each `:name:` icon's SVG from the version's sprite; empty when it has none, so the icons are left out. */
+	icons: Map<string, string>;
 	/** The version folder's URL, ending in `/`, that media paths resolve against. */
 	folder: string;
 };
@@ -16,13 +26,13 @@ export type StorePage = {
 /** A measured media file and the CDN URL it loads from. */
 export type PageMediaFile = MeasuredMedia & { url: string };
 
-/** A run of the body: Markdown rendered as text, or a line that holds only an image or video. */
-export type PageBlock =
-	| { kind: 'markdown'; source: string }
-	| { kind: 'media'; alt: string; path: string };
-
-const MEDIA_LINE = /^\s*!\[([^\]\n]*)\]\(\s*([^)\s]+)\s*\)\s*$/;
 const FENCE = /^\s*(?:```|~~~)/;
+const HEADING = /^ {0,3}#{1,6}\s/;
+const LIST_ITEM = /^(?:[*+-]|\d+\.)\s/;
+const INDENTED = /^\s/;
+
+// Versions are immutable on the CDN, so a page fetched once serves every later visit this session.
+const pages = new Map<string, Promise<StorePage | null>>();
 
 async function fetchText(url: string): Promise<string | null> {
 	const response = await fetch(url);
@@ -47,13 +57,8 @@ function parseMeasured(text: string | null): AddonPage | null {
 	}
 }
 
-/**
- * @description Fetches a version's store page: ADDON.md at `pageUrl` and the measured `page.json` beside it.
- * @param pageUrl The catalog version's `pageUrl`.
- * @returns The page, or `null` when ADDON.md is not on the CDN; throws when the CDN fails.
- */
-export async function fetchStorePage(pageUrl: string): Promise<StorePage | null> {
-	const folder = pageUrl.slice(0, pageUrl.lastIndexOf('/') + 1);
+// A version published before `store-page.json` has only ADDON.md and `page.json`, and no icons.
+async function fetchLegacyStorePage(pageUrl: string, folder: string): Promise<StorePage | null> {
 	const [addonMd, measured] = await Promise.all([
 		fetchText(pageUrl),
 		fetchText(folder + MEASURED_PAGE_FILENAME).catch(() => null),
@@ -61,7 +66,57 @@ export async function fetchStorePage(pageUrl: string): Promise<StorePage | null>
 
 	if (addonMd === null) return null;
 
-	return { body: splitFrontmatter(addonMd).body, measured: parseMeasured(measured), folder };
+	return {
+		body: splitFrontmatter(addonMd).body,
+		measured: parseMeasured(measured),
+		icons: new Map(),
+		folder,
+	};
+}
+
+/**
+ * @description Fetches a version's store page in one request: the `store-page.json` beside ADDON.md, or
+ * ADDON.md and `page.json` for a version published before it.
+ * @param pageUrl The catalog version's `pageUrl`.
+ * @returns The page, or `null` when ADDON.md is not on the CDN; throws when the CDN fails.
+ */
+export async function fetchStorePage(pageUrl: string): Promise<StorePage | null> {
+	const folder = pageUrl.slice(0, pageUrl.lastIndexOf('/') + 1);
+	const text = await fetchText(folder + STORE_PAGE_FILENAME);
+
+	if (text === null) {
+		return fetchLegacyStorePage(pageUrl, folder);
+	}
+
+	// The server wrote the file from the page it validated when it published the version.
+	const file = readServerJson<PublishedStorePage>(text);
+
+	return {
+		body: file.body,
+		measured: file.measured,
+		icons: new Map(Object.entries(file.icons)),
+		folder,
+	};
+}
+
+/**
+ * @description Fetches a version's store page once per session, sharing the request between callers.
+ * @param pageUrl The catalog version's `pageUrl`.
+ * @returns The page, or `null` when ADDON.md is not on the CDN; a failure is not kept, so a retry fetches again.
+ */
+export function loadStorePage(pageUrl: string): Promise<StorePage | null> {
+	const cached = pages.get(pageUrl);
+
+	if (cached) {
+		return cached;
+	}
+
+	const request = fetchStorePage(pageUrl);
+
+	pages.set(pageUrl, request);
+	request.catch(() => pages.delete(pageUrl));
+
+	return request;
 }
 
 /**
@@ -76,47 +131,49 @@ export function findPageMedia(page: StorePage, path: string): PageMediaFile | un
 	return media ? { ...media, url: page.folder + media.path } : undefined;
 }
 
-/**
- * @description Cuts the body at each line that holds only an image or video, outside code fences, so
- * media lay out as blocks between runs of text.
- * @param body ADDON.md after its frontmatter.
- * @returns The Markdown runs and media lines in order, without blank runs.
- */
-export function splitPageBody(body: string): PageBlock[] {
-	const blocks: PageBlock[] = [];
-	let lines: string[] = [];
-	let fenced = false;
-
-	function flush() {
-		const source = lines.join('\n');
-
-		if (source.trim()) {
-			blocks.push({ kind: 'markdown', source });
-		}
-
-		lines = [];
+// A heading, a fence, or a list right under a paragraph starts a new block, as CommonMark reads it.
+function startsBlock(line: string, previous: string): boolean {
+	if (previous.trim() === '') {
+		return false;
 	}
 
-	for (const line of body.split('\n')) {
+	if (HEADING.test(line) || FENCE.test(line)) {
+		return true;
+	}
+
+	return LIST_ITEM.test(line) && !LIST_ITEM.test(previous) && !INDENTED.test(previous);
+}
+
+/**
+ * @description Puts blank lines around each heading and code fence, and before each list that follows
+ * a paragraph, since simple-markdown only ends a block at a blank line. Fenced lines stay as written.
+ * @param body ADDON.md after its frontmatter.
+ * @returns The body, ending in the blank line the block parser needs.
+ */
+export function normalizePageBody(body: string): string {
+	const lines: string[] = [];
+	let fenced = false;
+	let previous = '';
+
+	for (const line of body.replaceAll('\r\n', '\n').split('\n')) {
+		if (!fenced && startsBlock(line, previous)) {
+			lines.push('');
+		}
+
+		lines.push(line);
+
 		if (FENCE.test(line)) {
 			fenced = !fenced;
 		}
 
-		const media = fenced ? null : MEDIA_LINE.exec(line);
-
-		if (!media) {
-			lines.push(line);
-
-			continue;
+		if (!fenced && (HEADING.test(line) || FENCE.test(line))) {
+			lines.push('');
 		}
 
-		flush();
-		blocks.push({ kind: 'media', alt: media[1] ?? '', path: media[2] ?? '' });
+		previous = line;
 	}
 
-	flush();
-
-	return blocks;
+	return `${lines.join('\n')}\n\n`;
 }
 
-export default { fetchStorePage, findPageMedia, splitPageBody };
+export default { fetchStorePage, loadStorePage, findPageMedia, normalizePageBody };
