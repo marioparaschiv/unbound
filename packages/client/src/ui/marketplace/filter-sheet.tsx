@@ -3,13 +3,14 @@ import type { AddonKind } from '@unbound-app/types/addons';
 import { useMemo, useState } from 'react';
 
 import type { MarketplaceFilters } from '~/marketplace/filters';
-import { listAuthors } from '~/marketplace/filters';
+import { listAuthors, listTags } from '~/marketplace/filters';
 import { BottomSheets } from '~/metro/components';
 
 import type { FilterView } from './filter-root';
 
 import FilterAuthors from './filter-authors';
 import FilterUpdated from './filter-updated';
+import FilterTags from './filter-tags';
 import FilterRoot from './filter-root';
 
 type FilterSheetProps = {
@@ -30,6 +31,7 @@ function FilterSheet({ kind, addons, initial, onChange }: FilterSheetProps) {
 	const [filters, setFilters] = useState(initial);
 	const [view, setView] = useState<FilterView>('root');
 	const options = useMemo(() => listAuthors(addons, kind), [addons, kind]);
+	const tags = useMemo(() => listTags(addons, kind), [addons, kind]);
 
 	function change(patch: Partial<MarketplaceFilters>) {
 		const next = { ...filters, ...patch };
@@ -41,8 +43,10 @@ function FilterSheet({ kind, addons, initial, onChange }: FilterSheetProps) {
 	const back = () => setView('root');
 
 	return (
-		<ActionSheet scrollable={view === 'authors'}>
-			{view === 'authors' ? (
+		<ActionSheet scrollable={view === 'authors' || view === 'tags'}>
+			{view === 'tags' ? (
+				<FilterTags filters={filters} options={tags} onChange={change} onBack={back} />
+			) : view === 'authors' ? (
 				<FilterAuthors
 					filters={filters}
 					options={options}
@@ -55,6 +59,7 @@ function FilterSheet({ kind, addons, initial, onChange }: FilterSheetProps) {
 				<FilterRoot
 					filters={filters}
 					options={options}
+					tags={tags}
 					onChange={change}
 					onOpen={setView}
 				/>

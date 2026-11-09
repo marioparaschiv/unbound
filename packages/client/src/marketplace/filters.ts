@@ -1,14 +1,21 @@
+import type { AddonAuthor, AddonKind } from '@unbound-app/types/addons';
 import type { ListedAddon } from '@unbound-app/contracts/addons';
-import type { AddonKind } from '@unbound-app/types/addons';
+import type { Tag } from '@unbound-app/contracts/tags';
 
 import type { CatalogSort } from '~/marketplace/catalog';
 
 /** `any` keeps the addons a filter's values match; `none` keeps the rest, as the website's filters do. */
 export type FilterMatch = 'any' | 'none';
 
+/** Tags also take `all`, keeping the addons that carry every picked tag. */
+export type TagMatch = FilterMatch | 'all';
+
 /** How the marketplace page sorts and narrows a tab beyond its search. */
 export type MarketplaceFilters = {
 	sort: CatalogSort;
+	/** Ids of the tags to match; empty filters nothing. */
+	tags: string[];
+	tagMatch: TagMatch;
 	/** Discord ids of the authors to keep or drop; empty filters nothing. */
 	authors: string[];
 	authorMatch: FilterMatch;
@@ -19,16 +26,27 @@ export type MarketplaceFilters = {
 
 /** One author the filter offers, with how many addons of the tab list them. */
 export type AuthorOption = {
-	id: string;
+	id: AddonAuthor['id'];
 	name: string;
 	count: number;
 };
+
+/** One tag the filter offers, with how many addons of the tab carry it. */
+export type TagOption = Tag & { count: number };
+
+/** The operators of the Authors and Updated filters, in segment order. */
+export const FILTER_MATCHES: readonly FilterMatch[] = ['any', 'none'];
+
+/** The Tags filter's operators, in segment order, as the website offers them. */
+export const TAG_MATCHES: readonly TagMatch[] = ['any', 'all', 'none'];
 
 /** The Updated filter's windows, in days, as the website offers them. */
 export const UPDATED_WINDOWS = [7, 30, 90, 365] as const;
 
 export const DEFAULT_FILTERS: MarketplaceFilters = {
 	sort: 'name',
+	tags: [],
+	tagMatch: 'any',
 	authors: [],
 	authorMatch: 'any',
 	updated: null,
@@ -43,14 +61,32 @@ const DAY_MS = 86_400_000;
 /**
  * @description Counts the filters that narrow the list; the sort narrows nothing.
  * @param filters The page's filters.
- * @returns 0, 1 or 2.
+ * @returns 0 to 3.
  */
 export function countActiveFilters(filters: MarketplaceFilters): number {
-	return Number(filters.authors.length > 0) + Number(filters.updated !== null);
+	return (
+		Number(filters.tags.length > 0) +
+		Number(filters.authors.length > 0) +
+		Number(filters.updated !== null)
+	);
+}
+
+// `any` keeps an addon carrying one picked tag, `all` one carrying every picked tag, `none` one carrying none.
+function matchesTags(addon: ListedAddon, picked: Set<string>, match: TagMatch): boolean {
+	const carried = (addon.tags ?? []).filter((tag) => picked.has(tag.id)).length;
+
+	switch (match) {
+		case 'all':
+			return carried === picked.size;
+		case 'none':
+			return carried === 0;
+		default:
+			return carried > 0;
+	}
 }
 
 /**
- * @description Narrows listed addons by their authors and when their newest version was published.
+ * @description Narrows listed addons by their tags, their authors and when their newest version was published.
  * @param addons The addons, already searched and sorted; their order is kept.
  * @param filters The page's filters.
  * @param now The current time in milliseconds, which the Updated window counts back from.
@@ -61,11 +97,16 @@ export function filterCatalog(
 	filters: MarketplaceFilters,
 	now: number,
 ): ListedAddon[] {
+	const tags = new Set(filters.tags);
 	const authors = new Set(filters.authors);
 	const cutoff = filters.updated === null ? undefined : now - filters.updated * DAY_MS;
 
 	return addons.filter((addon) => {
 		const { manifest, publishedAt } = addon.latestVersion;
+
+		if (tags.size > 0 && !matchesTags(addon, tags, filters.tagMatch)) {
+			return false;
+		}
 
 		if (authors.size > 0) {
 			const listed = manifest.authors.some((author) => authors.has(author.id));
@@ -112,6 +153,33 @@ export function listAuthors(addons: ListedAddon[], type: AddonKind): AuthorOptio
 	return [...options.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 }
 
+/**
+ * @description Lists every tag of one kind's addons, the most used first.
+ * @param addons The catalog's addons.
+ * @param type The tab's kind.
+ * @returns One option per tag id; none when the catalog carries no tags.
+ */
+export function listTags(addons: ListedAddon[], type: AddonKind): TagOption[] {
+	const options = new Map<string, TagOption>();
+
+	for (const addon of addons) {
+		if (addon.type !== type) {
+			continue;
+		}
+
+		for (const tag of addon.tags ?? []) {
+			const option = options.get(tag.id) ?? { ...tag, count: 0 };
+
+			option.count += 1;
+			options.set(tag.id, option);
+		}
+	}
+
+	return [...options.values()].sort(
+		(a, b) => b.count - a.count || a.label.localeCompare(b.label),
+	);
+}
+
 // FNV-1a: a stable, well-spread order for one day's picks without shipping a PRNG.
 function hash(text: string): number {
 	let value = 2166136261;
@@ -153,5 +221,6 @@ export default {
 	countActiveFilters,
 	filterCatalog,
 	listAuthors,
+	listTags,
 	pickFeatured,
 };

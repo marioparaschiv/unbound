@@ -8,6 +8,7 @@ import {
 	DEFAULT_FILTERS,
 	filterCatalog,
 	listAuthors,
+	listTags,
 	pickFeatured,
 } from './filters';
 
@@ -16,6 +17,7 @@ type ListingOptions = {
 	authors?: [`${number}`, string][];
 	publishedAt?: string;
 	iconSvg?: string;
+	tags?: string[];
 };
 
 const NOW = Date.parse('2026-11-09T12:00:00.000Z');
@@ -26,12 +28,14 @@ function listing(id: string, options: ListingOptions = {}): ListedAddon {
 		authors = [['1', 'Mario']],
 		publishedAt = '2026-11-08T00:00:00.000Z',
 		iconSvg,
+		tags,
 	} = options;
 
 	return {
 		id,
 		type,
 		iconSvg,
+		tags: tags?.map((tag) => ({ id: tag, label: tag.toUpperCase(), color: '#fff' })),
 		latestVersion: {
 			version: '1.0.0',
 			manifest: {
@@ -56,16 +60,17 @@ function listing(id: string, options: ListingOptions = {}): ListedAddon {
 }
 
 const addons = [
-	listing('a.solo', { authors: [['1', 'Mario']] }),
+	listing('a.solo', { authors: [['1', 'Mario']], tags: ['chat', 'privacy'] }),
 	listing('a.pair', {
 		authors: [
 			['1', 'Mario'],
 			['2', 'Noelle'],
 		],
 		publishedAt: '2026-06-01T00:00:00.000Z',
+		tags: ['chat'],
 	}),
 	listing('a.other', { authors: [['2', 'Noelle']], publishedAt: '2025-01-01T00:00:00.000Z' }),
-	listing('a.theme', { type: 'theme', authors: [['3', 'Rosie']] }),
+	listing('a.theme', { type: 'theme', authors: [['3', 'Rosie']], tags: ['dark'] }),
 ];
 
 function ids(filters: Partial<MarketplaceFilters>): string[] {
@@ -75,6 +80,12 @@ function ids(filters: Partial<MarketplaceFilters>): string[] {
 describe('filterCatalog', () => {
 	test('keeps everything by default, in order', () => {
 		expect(ids({})).toEqual(['a.solo', 'a.pair', 'a.other', 'a.theme']);
+	});
+
+	test('keeps addons carrying any, all or none of the picked tags', () => {
+		expect(ids({ tags: ['chat', 'privacy'] })).toEqual(['a.solo', 'a.pair']);
+		expect(ids({ tags: ['chat', 'privacy'], tagMatch: 'all' })).toEqual(['a.solo']);
+		expect(ids({ tags: ['chat'], tagMatch: 'none' })).toEqual(['a.other', 'a.theme']);
 	});
 
 	test('keeps addons any picked author wrote, or drops them with none', () => {
@@ -93,9 +104,10 @@ describe('filterCatalog', () => {
 });
 
 describe('countActiveFilters', () => {
-	test('counts authors and updated, not the sort', () => {
+	test('counts tags, authors and updated, not the sort', () => {
 		expect(countActiveFilters({ ...DEFAULT_FILTERS, sort: 'updated' })).toBe(0);
 		expect(countActiveFilters({ ...DEFAULT_FILTERS, authors: ['1'], updated: 30 })).toBe(2);
+		expect(countActiveFilters({ ...DEFAULT_FILTERS, tags: ['chat'], updated: 30 })).toBe(2);
 	});
 });
 
@@ -106,6 +118,16 @@ describe('listAuthors', () => {
 			{ id: '2', name: 'Noelle', count: 2 },
 		]);
 		expect(listAuthors(addons, 'theme')).toEqual([{ id: '3', name: 'Rosie', count: 1 }]);
+	});
+});
+
+describe('listTags', () => {
+	test("counts one kind's tags, the most used first", () => {
+		expect(listTags(addons, 'plugin')).toEqual([
+			{ id: 'chat', label: 'CHAT', color: '#fff', count: 2 },
+			{ id: 'privacy', label: 'PRIVACY', color: '#fff', count: 1 },
+		]);
+		expect(listTags([listing('a.bare')], 'plugin')).toEqual([]);
 	});
 });
 

@@ -97,6 +97,8 @@ export const AvatarPiles = findByPropsLazy('AvatarPile', 'AvatarDuoPile');
 export const DefaultAvatars = findByPropsLazy('DEFAULT_AVATARS', 'DEFAULT_AVATARS_SMALL');
 /** Discord's bottom sheet components, with `ActionSheet` and `BottomSheetTitleHeader`; found on first access. */
 export const BottomSheets = findByPropsLazy('BottomSheetTitleHeader', 'ActionSheet');
+/** The `@gorhom/bottom-sheet` Discord bundles, whose `BottomSheetScrollView` scrolls inside a `scrollable` sheet; found on first access. */
+export const GorhomSheet = findByPropsLazy('BottomSheetScrollView', 'BottomSheetModal');
 
 /**
  * @description Unbound's stand-in for Discord's `SearchField`, which some builds no longer ship: Discord's

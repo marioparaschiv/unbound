@@ -8,7 +8,7 @@ import { createApiClient } from '~/api/schema-client';
 import { NotModifiedError } from '~/api/client';
 import type { Caller } from '~/lib/api/caller';
 import { serveVersion } from '~/lib/rollback';
-import { addon, user } from '~/db/schema';
+import { addon, addonTag, tag, user } from '~/db/schema';
 import type { Api } from '~/api';
 
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from './helpers/addons';
@@ -78,6 +78,34 @@ describe('GET /api/v1/catalog', () => {
 		expect(plugin?.iconSvg).toContain('currentColor');
 		expect(theme?.icon).toBeNull();
 		expect(theme?.iconSvg).toBeNull();
+	});
+
+	test("carries each addon's tags in menu order, and changes the revision on a retag", async () => {
+		const before = (await get()).headers.get('etag') ?? '';
+
+		await ctx.db.insert(tag).values([
+			{ id: 'privacy', label: 'Privacy', color: '#3ba55c', position: 1 },
+			{ id: 'chat', label: 'Chat', color: '#5865f2', position: 0 },
+		]);
+		await ctx.db.insert(addonTag).values([
+			{ addonId: 'cat.plugin', tagId: 'privacy' },
+			{ addonId: 'cat.plugin', tagId: 'chat' },
+		]);
+
+		const catalog = await client('GET /api/v1/catalog', { response: catalogResponseSchema });
+		const [plugin, theme] = catalog.addons;
+
+		expect(plugin?.tags).toEqual([
+			{ id: 'chat', label: 'Chat', color: '#5865f2' },
+			{ id: 'privacy', label: 'Privacy', color: '#3ba55c' },
+		]);
+		expect(theme?.tags).toEqual([]);
+		expect(catalog.revision).not.toBe(before.slice(1, -1));
+
+		await ctx.db.delete(addonTag);
+		await ctx.db.delete(tag);
+
+		expect((await get(before)).status).toBe(304);
 	});
 
 	test('serves the revision as a strong ETag', async () => {
