@@ -17,6 +17,9 @@ import { Manager } from '~/addons/manager';
 
 const logger = createLogger('Updater');
 
+/** How long a check stays `checking` at least, so its spinner never flips straight to the result. */
+const MIN_CHECK_MS = 500;
+
 /** The last update check. `ready` and `error` keep when it finished, for the status line. */
 export type UpdatesState =
 	| { status: 'idle' }
@@ -110,12 +113,16 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 			pending ??= (async () => {
 				set({ state: { status: 'checking' } });
 
+				const minimum = new Promise((resolve) => setTimeout(resolve, MIN_CHECK_MS));
+
 				try {
 					const [updates, loader, discord] = await Promise.all([
 						checkInstalled(),
 						findLoaderUpdate(),
 						findDiscordBuilds(),
 					]);
+
+					await minimum;
 
 					set({
 						state: {
@@ -129,6 +136,7 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 					});
 				} catch (error) {
 					logger.error('Failed to check for addon updates:', error);
+					await minimum;
 					set({
 						state: {
 							status: 'error',
