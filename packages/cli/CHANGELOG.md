@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.1.1](https://github.com/marioparaschiv/unbound/compare/cli-v1.1.0...cli-v1.1.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* **ci:** finish npm publish, skip unnamed TestFlight releases ([#1026](https://github.com/marioparaschiv/unbound/issues/1026)) ([db758dc](https://github.com/marioparaschiv/unbound/commit/db758dcbbeb3429a1bf84484fe843d62e5956087))
+* **cli:** bundle the private contracts package into the published build ([#1029](https://github.com/marioparaschiv/unbound/issues/1029)) ([0fe5b40](https://github.com/marioparaschiv/unbound/commit/0fe5b408e6ddfd1ebf2126b1c428bb51350c9cc9))
+* **client:** run UI worklets on Reanimated 4's worklets runtime ([#1028](https://github.com/marioparaschiv/unbound/issues/1028)) ([269995c](https://github.com/marioparaschiv/unbound/commit/269995c755d6b186af09fa5807cecb29b9411a4b))
+* **cli:** make the published CLI scaffold, build and bridge ([#1031](https://github.com/marioparaschiv/unbound/issues/1031)) ([312690e](https://github.com/marioparaschiv/unbound/commit/312690e035a0158fb45ee8914701832ffabc77fd))
+
+
+### Performance Improvements
+
+* **loader:** lazy settings cache, metro cache file, plugin bytecode installs ([#1032](https://github.com/marioparaschiv/unbound/issues/1032)) ([87179aa](https://github.com/marioparaschiv/unbound/commit/87179aad6016c4e019546bb9ae0ba9d19147f614))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger bumped to 0.10.2
+    * @unbound-app/debugger-protocol bumped to 0.11.1
+  * devDependencies
+    * @unbound-app/api bumped to 1.1.1
+    * @unbound-app/contracts bumped to 0.14.1
+    * @unbound-app/types bumped to 0.13.1
+    * @unbound-app/utils bumped to 0.10.2
+    * @unbound-app/web bumped to 0.14.1
+
 ## [1.1.0](https://github.com/marioparaschiv/unbound/compare/cli-v1.0.0...cli-v1.1.0) (2026-11-09)
 
 

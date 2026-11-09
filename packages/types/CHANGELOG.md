@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.1](https://github.com/marioparaschiv/unbound/compare/types-v0.13.0...types-v0.13.1) (2026-11-09)
+
+
+### Performance Improvements
+
+* **loader:** lazy settings cache, metro cache file, plugin bytecode installs ([#1032](https://github.com/marioparaschiv/unbound/issues/1032)) ([87179aa](https://github.com/marioparaschiv/unbound/commit/87179aad6016c4e019546bb9ae0ba9d19147f614))
+
 ## [0.13.0](https://github.com/marioparaschiv/unbound/compare/types-v0.12.0...types-v0.13.0) (2026-11-09)
 
 
