@@ -18,7 +18,21 @@ inputs:
 runs:
     using: composite
     steps:
+        # GitHub release downloads sometimes answer 504, so a failed install waits and tries once more.
         - name: Setup Bun
+          id: setup-bun
+          continue-on-error: true
+          uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+          with:
+              bun-version: ${{ inputs.bun-version }}
+
+        - name: Wait before retrying Setup Bun
+          if: steps.setup-bun.outcome == 'failure'
+          shell: bash
+          run: sleep 30
+
+        - name: Retry Setup Bun
+          if: steps.setup-bun.outcome == 'failure'
           uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
           with:
               bun-version: ${{ inputs.bun-version }}

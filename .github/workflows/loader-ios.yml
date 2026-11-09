@@ -172,8 +172,23 @@ jobs:
                     brew trust aws/tap
                   fi
 
+            # Replaces Randomblock1/theos-action, whose unzip of the SDK archive fails on macOS 26 with "symlink error: Permission denied".
             - name: Prepare Theos
-              uses: Randomblock1/theos-action@4e23d15886bca77b5f7c462a82567e0de33ebe0b
+              env:
+                  THEOS: ${{ github.workspace }}/theos
+              run: |
+                  set -euo pipefail
+                  brew install ldid make
+                  echo "THEOS=$THEOS" >> "$GITHUB_ENV"
+                  if [ ! -d "$THEOS" ]; then
+                    git clone --recursive https://github.com/theos/theos "$THEOS"
+                  fi
+                  if [ -z "$(ls "$THEOS/sdks")" ]; then
+                    sdks="$(mktemp -d)"
+                    git clone --depth 1 https://github.com/theos/sdks "$sdks"
+                    mv "$sdks"/*.sdk "$THEOS/sdks"
+                    rm -rf "$sdks"
+                  fi
 
             - name: Read the libffi revision
               id: libffi
@@ -224,6 +239,8 @@ jobs:
             - name: Report the compiler cache
               if: ${{ !cancelled() }}
               run: |
+                  # A failure before Setup ccache leaves nothing to report.
+                  command -v ccache > /dev/null || exit 0
                   {
                       echo "### Compiler cache"
                       echo
