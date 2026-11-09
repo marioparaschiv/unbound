@@ -36,7 +36,10 @@ runs:
                   echo "CCACHE_DIR=${{ runner.temp }}/ccache"
                   echo "CCACHE_BASEDIR=${{ github.workspace }}"
                   echo "CCACHE_COMPRESS=true"
-                  echo "CCACHE_MAXSIZE=200M"
+                  echo "CCACHE_MAXSIZE=500M"
+                  # Builds with -g hash the working directory, and AGP names its CMake directory after the PR's
+                  # arguments, so pull requests never hit main's objects without this.
+                  echo "CCACHE_NOHASHDIR=true"
                   echo "CMAKE_C_COMPILER_LAUNCHER=ccache"
                   echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache"
               } >> "$GITHUB_ENV"

@@ -648,7 +648,7 @@ func TestLoaderWorkflowsCacheTheirSlowestInputs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, required := range []string{"uses: actions/setup-go@", "name: Cache Go builds", "~/.cache/go-build", "~/go/pkg/mod", "go-version-file: packages/loader/go.mod"} {
+	for _, required := range []string{"uses: actions/setup-go@", "name: Restore Go builds", "name: Save Go builds", "~/.cache/go-build", "~/go/pkg/mod", "go-version-file: packages/loader/go.mod"} {
 		if !strings.Contains(string(setupGo), required) {
 			t.Fatalf("the shared Go setup is missing %q", required)
 		}

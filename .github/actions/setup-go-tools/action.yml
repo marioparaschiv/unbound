@@ -43,22 +43,38 @@ runs:
               cache: false
               go-version-file: packages/loader/go.mod
 
-        - name: Cache Go builds
+        # Keyed on the sources too: a key on go.sum alone hit forever and kept the first build cache it saved.
+        - name: Restore Go builds
+          id: go-cache
           if: steps.prebuilt.outputs.installed != 'true'
-          uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+          uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
           with:
               path: |
                   ~/.cache/go-build
                   ~/Library/Caches/go-build
                   ~/go/pkg/mod
-              key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/go.sum') }}
-              restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+              key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/go.sum') }}-${{ hashFiles('packages/loader/**/*.go') }}
+              restore-keys: |
+                  go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/go.sum') }}-
+                  go-${{ runner.os }}-${{ runner.arch }}-
 
         - name: Build the tools
           if: steps.prebuilt.outputs.installed != 'true'
           shell: bash
           working-directory: packages/loader
           run: go build -o "$RUNNER_TEMP/loader-tools/unbound-tools" ./tools
+
+        # Only main saves, so pull requests restore main's latest build cache instead of filling the cache store.
+        - name: Save Go builds
+          if: steps.prebuilt.outputs.installed != 'true' && steps.go-cache.outputs.cache-hit != 'true' && github.ref == 'refs/heads/main'
+          continue-on-error: true
+          uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+          with:
+              path: |
+                  ~/.cache/go-build
+                  ~/Library/Caches/go-build
+                  ~/go/pkg/mod
+              key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/go.sum') }}-${{ hashFiles('packages/loader/**/*.go') }}
 
         - name: Put the tools on PATH
           shell: bash
