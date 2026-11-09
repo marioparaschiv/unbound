@@ -110,6 +110,8 @@ jobs:
               with:
                   persist-credentials: false
                   fetch-depth: 0
+                  # The SBOM hashes the vendored submodules.
+                  submodules: recursive
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
