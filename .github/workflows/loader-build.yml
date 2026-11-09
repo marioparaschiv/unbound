@@ -445,9 +445,10 @@ jobs:
                     echo "is_testflight=$INPUT_IS_TESTFLIGHT"
                   } >> "$GITHUB_OUTPUT"
 
+            # A skipped TestFlight release has no version to name, and naming it would fail the job.
             - name: Name the releases
               id: names
-              if: inputs.release == true
+              if: inputs.release == true && !(steps.source.outputs.missing == 'true' && inputs.is_testflight == true)
               env:
                   RELEASE_VERSION: ${{ steps.resolve.outputs.release_version || steps.select.outputs.release_version }}
                   ANDROID_VERSION: ${{ steps.resolve.outputs.android_version }}
