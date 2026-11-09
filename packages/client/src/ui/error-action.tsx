@@ -1,24 +1,33 @@
-import { Pressable, Text } from 'react-native';
+import { Discord } from '~/metro/components';
+import { icons } from '~/assets/api';
 
-import styles from './error-boundary.style';
+import useStyles from './error-boundary.style';
 
 type ErrorActionProps = {
 	label: string;
-	primary?: boolean;
+	/** The asset name of the action's icon. */
+	icon: string;
 	onPress: () => void;
 };
 
-function ErrorAction({ label, primary, onPress }: ErrorActionProps) {
+/**
+ * @description One of the crash screen's secondary actions: an icon over its label on Discord's pressable card,
+ * like the Unbound page's quick actions.
+ */
+function ErrorAction({ label, icon, onPress }: ErrorActionProps) {
+	const styles = useStyles();
+
 	return (
-		<Pressable
-			accessibilityRole='button'
-			onPress={onPress}
-			style={[styles.button, primary ? styles.primaryButton : null]}
-		>
-			<Text style={[styles.buttonText, primary ? styles.primaryButtonText : null]}>
+		<Discord.Card accessibilityLabel={label} onPress={onPress} style={styles.tile}>
+			<Discord.TableRowIcon source={icons[icon]} />
+			<Discord.Text
+				variant='text-sm/semibold'
+				color='mobile-text-heading-primary'
+				lineClamp={1}
+			>
 				{label}
-			</Text>
-		</Pressable>
+			</Discord.Text>
+		</Discord.Card>
 	);
 }
 
