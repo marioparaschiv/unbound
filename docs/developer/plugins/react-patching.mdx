@@ -286,14 +286,33 @@ React compares the element's `type` between renders. A swap to the same function
 
 ## When a patch crashes
 
-A component patch that throws can't take Discord down with it. Unbound falls back to Discord's own render instead:
+A component patch that throws can't take Discord down with it. What renders depends on what threw:
 
-- If your callback throws, that render shows Discord's tree as it was before your patch ran.
-- If the tree your patch returned throws while React renders it, that copy of the component shows Discord's tree from the same render until it unmounts. Discord's hooks run once, in the component's own fiber, so its state survives: a chat input keeps its text. The next copy that mounts tries your patch again.
+| What threw | What renders | Does Discord's UI remount? | Counts toward removal? |
+| --- | --- | --- | --- |
+| An element you added next to Discord's | Nothing, in that element's place, until it unmounts | No | No, it's only logged |
+| Your callback | Discord's tree as it was before your patch ran | Yes, if your patch changed its shape | Yes |
+| Anything else in your tree | Discord's tree from the same render, until the component unmounts | Yes, below the component | Yes |
+
+The first row is the one to aim for. When it applies, a focused chat input keeps its text and the keyboard stays open.
+
+### Which elements count as added
+
+An element counts as added when none of the elements Discord rendered are inside it. Your own component placed beside Discord's children, pushed into them, or put in a Fragment with them all count.
+
+- Unbound wraps each added element in a small error boundary, keyed like the element, so its siblings keep their places.
+- A parent that reads its children's props sees the boundary, not your element.
+- An element with the same type as one of Discord's siblings stays unwrapped, because its parent may read it as one item of a list.
+- A tree with none of Discord's elements in it replaced Discord's. The other two rows apply to it.
+- An element that wraps Discord's, such as a provider around `result`, isn't isolated. If it throws, the last row applies.
+
+Unbound records Discord's elements in a `WeakSet` before your callback runs, so it never keeps a tree alive. Each render of a patched component costs about 3 µs more.
+
+### Falling back and removal
 
 To fall back without running Discord's render twice, Unbound keeps a copy of Discord's tree from each render of a patch that has failed before. A patch that has never failed pays nothing for it. On a patch's first failure the component renders nothing for one frame, then re-renders with the copy.
 
-Nothing is shown to the user for a single crash. Unbound only logs the error, naming the component.
+Nothing is shown to the user for a single crash. Unbound only logs the error, naming the component, and the element when one you added crashed.
 
 After 3 crashes in a row, Unbound removes the patch and shows a toast saying it was turned off. A render that commits cleanly resets the count. When several patches on one component built the tree that crashed, each of them counts the crash, since Unbound can't tell which one caused it. The patch stays removed until your plugin starts again.
 
