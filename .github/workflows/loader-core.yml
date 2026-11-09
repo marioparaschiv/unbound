@@ -1,10 +1,9 @@
 name: Loader Core
 
+# Fuzzing runs nightly in native-fuzz.yml; this workflow keeps the unit tests every build needs.
 on:
     workflow_call:
     workflow_dispatch:
-    schedule:
-        - cron: '29 3 * * *'
 
 concurrency:
     group: core-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
@@ -41,7 +40,7 @@ jobs:
               run: cmake --build build/core -j"$(nproc)"
 
             - name: Run core tests
-              run: ctest --test-dir build/core --output-on-failure --timeout 120 -j"$(nproc)"
+              run: ctest --test-dir build/core --output-on-failure --timeout 120 -j"$(nproc)" -E '_fuzz$'
 
             - name: Report the compiler cache
               if: ${{ !cancelled() }}
@@ -52,7 +51,7 @@ jobs:
                       echo '```'
                       ccache --show-stats
                       echo '```'
-                  } >> "$GITHUB_STEP_SUMMARY"
+                  } | tee -a "$GITHUB_STEP_SUMMARY"
 
             - name: Save the compiler cache
               if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
@@ -62,7 +61,7 @@ jobs:
                   key: ccache-${{ runner.os }}-core-tests-${{ github.sha }}
 
     native-jsi-fuzz:
-        name: Host Hermes bridge tests and fuzzing
+        name: Host Hermes bridge tests
         runs-on: ubuntu-26.04
         timeout-minutes: 40
         env:
@@ -114,7 +113,7 @@ jobs:
                       echo '```'
                       ccache --show-stats
                       echo '```'
-                  } >> "$GITHUB_STEP_SUMMARY"
+                  } | tee -a "$GITHUB_STEP_SUMMARY"
 
             - name: Save the compiler cache
               if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
@@ -134,60 +133,8 @@ jobs:
                   build/jsi-fuzz/native_runtime_hermes | tee runtime.log
                   grep -q "FFI included" runtime.log
 
-            - name: Fuzz
+            # A few hundred values replay kRegressionSources and check the generator; native-fuzz.yml fuzzes nightly.
+            - name: Replay the JSI fuzz regressions
               env:
-                  UNBOUND_FUZZ_ITERATIONS: ${{ github.event_name == 'push' && '3000' || '20000' }}
+                  UNBOUND_FUZZ_ITERATIONS: '500'
               run: build/jsi-fuzz/native_jsi_fuzz
-
-    native-bridge-fuzz:
-        name: Fuzz the native bridge
-        runs-on: ubuntu-26.04
-        timeout-minutes: 8
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-              with:
-                  persist-credentials: false
-                  fetch-depth: 1
-
-            - name: Setup ccache
-              uses: ./.github/actions/setup-ccache
-              with:
-                  key: bridge-fuzz
-
-            - name: Configure the fuzzer
-              run: cmake -S core -B build/fuzz -DUNBOUND_CORE_FUZZ=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=fuzzer-no-link,address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=fuzzer-no-link,address,undefined -fno-sanitize-recover=all"
-
-            - name: Build the fuzzer
-              run: cmake --build build/fuzz --target native_bridge_libfuzzer -j"$(nproc)"
-
-            - name: Report the compiler cache
-              if: ${{ !cancelled() }}
-              run: |
-                  {
-                      echo "### Compiler cache"
-                      echo
-                      echo '```'
-                      ccache --show-stats
-                      echo '```'
-                  } >> "$GITHUB_STEP_SUMMARY"
-
-            - name: Save the compiler cache
-              if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
-              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: ${{ runner.temp }}/ccache
-                  key: ccache-${{ runner.os }}-bridge-fuzz-${{ github.sha }}
-
-            - name: Fuzz for a minute
-              run: |
-                  mkdir -p build/fuzz/corpus
-                  build/fuzz/native_bridge_libfuzzer -max_total_time=60 -max_len=4096 -artifact_prefix=build/fuzz/ build/fuzz/corpus core/tests/fuzz/corpus
-
-            - name: Upload crashing inputs
-              if: failure()
-              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-              with:
-                  name: native bridge fuzz crashes
-                  path: packages/loader/build/fuzz/crash-*
-                  retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}

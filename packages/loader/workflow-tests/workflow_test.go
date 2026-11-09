@@ -422,7 +422,7 @@ func TestParsedWorkflowsSetUpGoAndBunOnlyThroughTheSharedActions(t *testing.T) {
 	installsGo, cachesGo, buildsTools := false, false, false
 	for _, step := range goTools.Runs.Steps {
 		installsGo = installsGo || (strings.HasPrefix(step.Uses, "actions/setup-go@") && step.With["go-version-file"] == "packages/loader/go.mod")
-		cachesGo = cachesGo || strings.HasPrefix(step.Uses, "actions/cache@")
+		cachesGo = cachesGo || strings.HasPrefix(step.Uses, "actions/cache/restore@")
 		buildsTools = buildsTools || strings.Contains(step.Run, "go build -o \"$RUNNER_TEMP/loader-tools/unbound-tools\" ./tools")
 	}
 	if !installsGo || !cachesGo || !buildsTools {
