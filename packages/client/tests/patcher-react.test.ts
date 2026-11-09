@@ -2,13 +2,22 @@ import { afterEach, describe, expect, mock, test } from 'bun:test';
 import { Component, createElement, forwardRef, memo } from 'react';
 import type { ReactNode } from 'react';
 
+import type { UnpatchedRenderProps } from '~/patcher/unpatched-render';
+
 // No React surface is mounted under bun, so the renderer finds no roots.
 mock.module('~/metro/wrappers', () => ({
 	findByPropsLazy: () => ({ getPublicInstanceFromRootTag: () => null }),
 }));
 
+const warning = mock();
+const toasts = { show: mock(), success: mock(), info: mock(), warning, error: mock() };
+
+// Every export, since bun keeps a module mock for the test files that run after this one.
+mock.module('~/toasts/api', () => ({ ...toasts, default: toasts }));
+
 const { react, unpatchAll } = await import('~/patcher/api');
 const { createPatcher } = await import('~/patcher/create-patcher');
+const { isPatchBoundary } = await import('~/patcher/patch-boundary');
 
 type Props = { name: string };
 
@@ -26,16 +35,42 @@ class Card extends Component<Props> {
 
 type TextElement = { props: { children: string } };
 
-// Reads a render result that is either a string or a `Text` element holding one.
+// Reads a render result that is either a string or a `Text` element holding one, inside any patch boundary.
 function textOf(node: ReactNode): string {
 	if (typeof node === 'string') {
 		return node;
 	}
 
+	if (isPatchBoundary(node)) {
+		return textOf(node.props.children);
+	}
+
 	return (node as TextElement).props.children;
 }
 
-afterEach(() => unpatchAll());
+// Mounts the boundary around a render result, as React would.
+function mountBoundary(node: ReactNode) {
+	if (!isPatchBoundary(node)) {
+		throw new TypeError('Expected a patch boundary.');
+	}
+
+	return new node.type(node.props);
+}
+
+// Makes the boundary around a render result catch an error, as React would.
+function failBoundary(node: ReactNode) {
+	const boundary = mountBoundary(node);
+
+	boundary.state = { ...boundary.state, failed: true };
+	boundary.componentDidCatch(new Error('render failed'));
+
+	return boundary;
+}
+
+afterEach(() => {
+	unpatchAll();
+	warning.mockClear();
+});
 
 describe('patcher.react types', () => {
 	test('types props, this and result by component', () => {
@@ -144,6 +179,145 @@ describe('patcher.react', () => {
 		unpatch();
 
 		expect(Memo.type).toBe(original);
+	});
+
+	test('wraps a patched tree in one boundary that later patches see through', () => {
+		const Memo = memo(Greeting);
+
+		react.after(Memo, ({ result }) => createElement('View', null, result));
+		react.after(Memo, ({ result }) => {
+			expect(isPatchBoundary(result)).toBe(false);
+
+			return result;
+		});
+
+		const tree = Memo.type({ name: 'a' });
+
+		expect(isPatchBoundary(tree)).toBe(true);
+		expect(isPatchBoundary(Reflect.get(tree as object, 'props').children)).toBe(false);
+	});
+
+	test('leaves text and empty trees unwrapped', () => {
+		const Memo = memo(Greeting);
+
+		react.after(Memo, () => null);
+
+		expect(Memo.type({ name: 'a' })).toBeNull();
+	});
+
+	test('a throwing patch renders the original and stays patched', () => {
+		const Memo = memo(Greeting);
+		const original = Memo.type;
+
+		react.instead(Memo, () => {
+			throw new Error('patch failed');
+		});
+
+		expect(textOf(Memo.type({ name: 'a' }))).toBe('hi a');
+		expect(Memo.type).not.toBe(original);
+		expect(warning).not.toHaveBeenCalled();
+	});
+
+	test('a patch throwing three times in a row is removed with a toast', async () => {
+		const Memo = memo(Greeting);
+		const original = Memo.type;
+
+		react.after(Memo, () => {
+			throw new Error('patch failed');
+		});
+
+		Memo.type({ name: 'a' });
+		Memo.type({ name: 'a' });
+
+		expect(Memo.type).not.toBe(original);
+
+		Memo.type({ name: 'a' });
+
+		expect(Memo.type).toBe(original);
+
+		await Bun.sleep(0);
+
+		expect(warning).toHaveBeenCalledTimes(1);
+	});
+
+	test('a clean render resets the failure count', () => {
+		const Memo = memo(Greeting);
+		const original = Memo.type;
+		let fail = true;
+
+		react.after(Memo, ({ result }) => {
+			if (fail) {
+				throw new Error('patch failed');
+			}
+
+			return createElement('View', null, result);
+		});
+
+		Memo.type({ name: 'a' });
+		Memo.type({ name: 'a' });
+		fail = false;
+		mountBoundary(Memo.type({ name: 'a' })).componentDidMount();
+		fail = true;
+		Memo.type({ name: 'a' });
+		Memo.type({ name: 'a' });
+
+		expect(Memo.type).not.toBe(original);
+	});
+
+	test('a throwing instead renders the original it already called once', () => {
+		let calls = 0;
+		const holder = {
+			Greeting: (props: Props) => {
+				calls++;
+
+				return Greeting(props);
+			},
+		};
+
+		react.instead(holder, 'Greeting', ({ original }) => {
+			original();
+
+			throw new Error('patch failed');
+		});
+
+		expect(textOf(holder.Greeting({ name: 'a' }))).toBe('hi a');
+		expect(calls).toBe(1);
+	});
+
+	test('a failing tree falls back to the unpatched render', () => {
+		const Memo = memo(Greeting);
+
+		react.after(Memo, ({ result }) => createElement('View', null, result));
+
+		const fallback = failBoundary(Memo.type({ name: 'a' })).render();
+		const { type, props } = fallback as {
+			type: (props: UnpatchedRenderProps) => ReactNode;
+			props: UnpatchedRenderProps;
+		};
+
+		expect(textOf(type(props))).toBe('hi a');
+		expect(warning).not.toHaveBeenCalled();
+	});
+
+	test('a tree failing three times removes every patch that built it', async () => {
+		const Memo = memo(Greeting);
+		const original = Memo.type;
+
+		react.after(Memo, ({ result }) => createElement('View', null, result));
+		react.after(Memo, ({ result }) => createElement('View', null, result));
+
+		failBoundary(Memo.type({ name: 'a' }));
+		failBoundary(Memo.type({ name: 'a' }));
+
+		expect(Memo.type).not.toBe(original);
+
+		failBoundary(Memo.type({ name: 'a' }));
+
+		expect(Memo.type).toBe(original);
+
+		await Bun.sleep(0);
+
+		expect(warning).toHaveBeenCalledTimes(2);
 	});
 
 	test('a scoped patcher removes its React patches with the rest', () => {
