@@ -1,0 +1,7 @@
+{
+	// The cli's declaration build. tsgo emits only files under the tsconfig's directory, and the cli
+	// inlines the types of private workspace packages, so this config sits at the repository root.
+	"extends": "./packages/cli/tsconfig.json",
+	"include": ["packages/cli/src", "packages/contracts/src", "packages/types/typings"],
+	"exclude": ["packages/cli/templates", "packages/cli/tests/fixtures"]
+}

@@ -24,6 +24,9 @@ const (
 	smokeAndroidStaging = "/data/local/tmp/unbound-smoke"
 )
 
+// errSmokeNotStarted: no Discord process showed within a minute of a launch. One that crashes between two polls also leaves none.
+var errSmokeNotStarted = errors.New("Discord did not start")
+
 var androidSplitABIs = map[string]string{
 	"config.arm64_v8a":   "arm64-v8a",
 	"config.armeabi_v7a": "armeabi-v7a",
@@ -238,7 +241,7 @@ func (target *androidSmokeTarget) attach(ctx context.Context) error {
 		}
 		time.Sleep(smokePollInterval)
 	}
-	return errors.New("Discord did not start")
+	return errSmokeNotStarted
 }
 
 func (target *androidSmokeTarget) discordPIDs(ctx context.Context) ([]string, error) {

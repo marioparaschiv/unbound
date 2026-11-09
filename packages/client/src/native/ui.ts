@@ -48,21 +48,26 @@ type ScopedUIBridge = {
 
 const Reanimated = findByPropsLazy('runOnJS', 'runOnUI');
 
-const SUPPORTED_WORKLET_VERSIONS = new Set(['3.19.4']);
+// Reanimated version -> the react-native-worklets version it must run on, or undefined when Reanimated carries its own worklets (3.x).
+const SUPPORTED_WORKLET_RUNTIMES = new Map<string, string | undefined>([
+	['3.19.4', undefined],
+	['4.8.0-main', '0.14.0-main'],
+]);
 
+// Each `code` is a parenthesized expression: react-native-worklets evals it as is, and Reanimated 3 wraps it again harmlessly.
 const GUARDED_RUN = {
 	hash: 0x75_6e_62_01,
-	code: "function unboundGuardedRun(){const{worklet}=this.__closure;try{worklet.apply(undefined,arguments);}catch(error){console.error('[Unbound] A UI worklet failed: '+String(error));}}",
+	code: "(function unboundGuardedRun(){const{worklet}=this.__closure;try{worklet.apply(undefined,arguments);}catch(error){console.error('[Unbound] A UI worklet failed: '+String(error));}})",
 };
 
 const GUARDED_CALL = {
 	hash: 0x75_6e_62_03,
-	code: 'function unboundGuardedCall(){const{worklet,runOnJS,settle}=this.__closure;let result;try{result={ok:true,value:worklet.apply(undefined,arguments)};}catch(error){result={ok:false,error:String(error)};}runOnJS(settle)(result);}',
+	code: '(function unboundGuardedCall(){const{worklet,runOnJS,settle}=this.__closure;let result;try{result={ok:true,value:worklet.apply(undefined,arguments)};}catch(error){result={ok:false,error:String(error)};}runOnJS(settle)(result);})',
 };
 
 const JS_CALLBACK = {
 	hash: 0x75_6e_62_05,
-	code: 'function unboundJSCallback(){const{runOnJS,listener}=this.__closure;runOnJS(listener).apply(undefined,arguments);}',
+	code: '(function unboundJSCallback(){const{runOnJS,listener}=this.__closure;runOnJS(listener).apply(undefined,arguments);})',
 };
 
 const PREPARED_CALL_METHODS: ReadonlySet<NativePluginMethod> = new Set([
@@ -125,10 +130,23 @@ function uiRuntime(): ResolvedUIRuntime {
 	if (
 		typeof version !== 'string' ||
 		version !== nativeVersion ||
-		!SUPPORTED_WORKLET_VERSIONS.has(version)
+		!SUPPORTED_WORKLET_RUNTIMES.has(version)
 	) {
 		throw new NativePluginUnavailableError(
 			`The UI runtime version is unsupported (JS ${String(version)}, native ${String(nativeVersion)}).`,
+		);
+	}
+
+	const workletsVersion = SUPPORTED_WORKLET_RUNTIMES.get(version);
+	const workletsJS = Reflect.get(globalThis, '_WORKLETS_VERSION_JS');
+	const workletsNative = Reflect.get(globalThis, '_WORKLETS_VERSION_CPP');
+
+	if (
+		workletsVersion !== undefined &&
+		(workletsJS !== workletsVersion || workletsNative !== workletsVersion)
+	) {
+		throw new NativePluginUnavailableError(
+			`The worklets runtime version is unsupported (Reanimated ${version}, JS ${String(workletsJS)}, native ${String(workletsNative)}).`,
 		);
 	}
 

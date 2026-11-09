@@ -74,7 +74,8 @@ jobs:
 
     publish:
         needs: release
-        if: needs.release.outputs.releases-created == 'true'
+        # A manual run retries a release whose publish failed; publish-all skips versions already on npm.
+        if: needs.release.outputs.releases-created == 'true' || github.event_name == 'workflow_dispatch'
         permissions:
             contents: read
             id-token: write

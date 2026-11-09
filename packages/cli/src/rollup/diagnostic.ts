@@ -1,4 +1,3 @@
-import type { Without } from '@unbound-app/types/utils';
 import { isAbsolute, relative, sep } from 'node:path';
 import type { PluginContext } from 'rollup';
 
@@ -134,7 +133,7 @@ export function reportDiagnostic(
 }
 
 /** A problem one of the preset's rollup plugins found; `file` may be absolute or relative to the plugin. */
-export type PluginProblem = Without<DiagnosticInit, 'check'>;
+export type PluginProblem = Omit<DiagnosticInit, 'check'>;
 
 /**
  * @description Builds a preset plugin's diagnostic under its `ubd check` id, with the file and any absolute

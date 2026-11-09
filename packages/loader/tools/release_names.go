@@ -103,7 +103,7 @@ func runReleaseNames(args []string) error {
 		fmt.Print(names.outputLines())
 		return nil
 	}
-	file, err := os.OpenFile(output, os.O_APPEND|os.O_WRONLY, 0o600)
+	file, err := os.OpenFile(output, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return fmt.Errorf("open GitHub Actions output: %w", err)
 	}

@@ -29,6 +29,13 @@ describe('worklets', () => {
 		expect(code).toContain('const{offset}=this.__closure');
 	});
 
+	test('parenthesizes worklet code, which react-native-worklets evals as is', async () => {
+		const code = await transform("export function f(a) { 'worklet'; return a + 1; }");
+
+		expect(code).toContain('code: "(function f_indexJs1(a){return a+1;})"');
+		expect(code).not.toContain('code: "function');
+	});
+
 	test('still compiles modules with a worklet directive in either quote style', async () => {
 		expect(await transform("export function f() { 'worklet'; return 1; }")).toContain(
 			'__workletHash',
