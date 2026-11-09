@@ -4,7 +4,9 @@ import noop from '@unbound-app/utils/noop';
 import { PatchType } from 'possess';
 
 import { recordFailure, recordSuccess, type PatchFailures } from '~/patcher/patch-failures';
-import { isPatchBoundary, withPatchBoundary } from '~/patcher/patch-boundary';
+import { fallbackOf, isPatchBoundary, withPatchBoundary } from '~/patcher/patch-boundary';
+import type { PatchBoundaryProps } from '~/patcher/patch-boundary';
+import { snapshotTree } from '~/patcher/snapshot-tree';
 import type { IsUntyped } from '~/patcher/is-untyped';
 import { LateHook } from '~/hot-refresh/hooks';
 
@@ -203,7 +205,15 @@ function locateMember(parent: PatchParent, key: string): Render {
 	return requireRender(value, renderOf(value));
 }
 
-// A failing patch or tree falls back to Discord's render; three failures in a row remove the patch.
+function boundaryProps(
+	patches: readonly PatchFailures[],
+	kept: { fallback: ReactNode } | undefined,
+): PatchBoundaryProps {
+	return kept ? { patches, fallback: kept.fallback } : { patches };
+}
+
+// A failing patch or tree falls back to Discord's tree from the same render, so its hooks run once and keep
+// their state. Three failures in a row remove the patch.
 function adapt(
 	type: PatchType,
 	render: Render,
@@ -211,7 +221,7 @@ function adapt(
 	name: string,
 	unpatch: () => void,
 ): PatchPlace {
-	const failures: PatchFailures = { name, count: 0, unpatch };
+	const failures: PatchFailures = { name, count: 0, unstable: false, unpatch };
 	const own = [failures];
 	const none: PatchFailures[] = [];
 
@@ -220,7 +230,13 @@ function adapt(
 		const inner = isPatchBoundary(ctx.result) ? ctx.result.props : undefined;
 		const result = inner ? inner.children : ctx.result;
 		const earlier = inner ? inner.patches : none;
+		// Only a patch that has failed pays for the copy, taken before its callback can edit the tree in place.
+		let kept = inner ? fallbackOf(inner) : undefined;
 		let called: { tree: ReactNode } | undefined;
+
+		if (!kept && failures.unstable && type === PatchType.After) {
+			kept = { fallback: snapshotTree(result) };
+		}
 
 		try {
 			const value = callback({
@@ -234,6 +250,10 @@ function adapt(
 						: ctx.original(next, ...ctx.args.slice(1));
 
 					called = { tree };
+
+					if (!kept && failures.unstable) {
+						kept = { fallback: snapshotTree(tree) };
+					}
 
 					return tree;
 				},
@@ -252,12 +272,10 @@ function adapt(
 			}
 
 			// The boundary resets the count once this tree commits cleanly.
-			return withPatchBoundary(value === undefined ? result : value, {
-				place: render,
-				self: ctx.this,
-				args: ctx.args,
-				patches: inner ? [...earlier, failures] : own,
-			});
+			return withPatchBoundary(
+				value === undefined ? result : value,
+				boundaryProps(inner ? [...earlier, failures] : own, kept),
+			);
 		} catch (error) {
 			// The live patcher catches a late hook itself and remounts the component.
 			if (error instanceof LateHook) {
@@ -271,15 +289,13 @@ function adapt(
 			}
 
 			// The original runs at most once per render, so its hooks keep their order.
-			const fallback =
-				type === PatchType.After ? result : (called?.tree ?? ctx.original(...ctx.args));
+			const fallback = kept
+				? kept.fallback
+				: type === PatchType.After
+					? result
+					: (called?.tree ?? ctx.original(...ctx.args));
 
-			return withPatchBoundary(fallback, {
-				place: render,
-				self: ctx.this,
-				args: ctx.args,
-				patches: earlier,
-			});
+			return withPatchBoundary(fallback, boundaryProps(earlier, inner && fallbackOf(inner)));
 		}
 	}
 

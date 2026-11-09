@@ -149,6 +149,18 @@ export function refresh(previous: Component, next: Component): number {
 	return count;
 }
 
+/**
+ * @description Re-renders one mounted fiber in place, keeping its state, even when its props are unchanged.
+ * @param fiber The fiber to re-render.
+ */
+export function rerenderFiber(fiber: Fiber): void {
+	const root = hostRootOf(fiber);
+
+	if (root) {
+		schedule(root, [fiber]);
+	}
+}
+
 function findRoots() {
 	const roots = new Set<FiberRoot>();
 
@@ -293,4 +305,4 @@ function schedule(root: FiberRoot, fibers: Fiber[]) {
 	}
 }
 
-export default { HOOK_FIBERS, reconcile, rerender, refresh, withAlternates };
+export default { HOOK_FIBERS, reconcile, rerender, rerenderFiber, refresh, withAlternates };

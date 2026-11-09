@@ -2,8 +2,6 @@ import { afterEach, describe, expect, mock, test } from 'bun:test';
 import { Component, createElement, forwardRef, memo } from 'react';
 import type { ReactNode } from 'react';
 
-import type { UnpatchedRenderProps } from '~/patcher/unpatched-render';
-
 // No React surface is mounted under bun, so the renderer finds no roots.
 mock.module('~/metro/wrappers', () => ({
 	findByPropsLazy: () => ({ getPublicInstanceFromRootTag: () => null }),
@@ -284,19 +282,69 @@ describe('patcher.react', () => {
 		expect(calls).toBe(1);
 	});
 
-	test('a failing tree falls back to the unpatched render', () => {
+	test('a failing tree falls back to the tree Discord rendered in the same pass', () => {
 		const Memo = memo(Greeting);
 
 		react.after(Memo, ({ result }) => createElement('View', null, result));
 
-		const fallback = failBoundary(Memo.type({ name: 'a' })).render();
-		const { type, props } = fallback as {
-			type: (props: UnpatchedRenderProps) => ReactNode;
-			props: UnpatchedRenderProps;
-		};
+		const boundary = failBoundary(Memo.type({ name: 'a' }));
 
-		expect(textOf(type(props))).toBe('hi a');
+		// No copy was kept before the first failure, so it renders nothing until the component re-renders.
+		expect(boundary.render()).toBeNull();
+
+		const next = Memo.type({ name: 'b' });
+
+		if (!isPatchBoundary(next)) {
+			throw new TypeError('Expected a patch boundary.');
+		}
+
+		Reflect.set(boundary, 'props', next.props);
+
+		expect(textOf(boundary.render())).toBe('hi b');
 		expect(warning).not.toHaveBeenCalled();
+	});
+
+	test('the fallback is a copy taken before the patch edits the tree in place', () => {
+		type Row = { props: { items: ReactNode[] } };
+		// React freezes element props in development, but not an array passed in them.
+		const List = memo(() =>
+			createElement('View', { items: [createElement('Text', null, 'a')] }),
+		);
+		let fail = true;
+
+		react.after(List, ({ result }) => {
+			if (fail) {
+				throw new Error('patch failed');
+			}
+
+			(result as Row).props.items.push(createElement('Text', null, 'edited'));
+		});
+
+		List.type();
+		fail = false;
+
+		const tree = List.type();
+
+		if (!isPatchBoundary(tree)) {
+			throw new TypeError('Expected a patch boundary.');
+		}
+
+		expect((tree.props.children as Row).props.items).toHaveLength(2);
+		expect((tree.props.fallback as Row).props.items).toHaveLength(1);
+	});
+
+	test('a stable patch keeps no copy', () => {
+		const Memo = memo(Greeting);
+
+		react.after(Memo, ({ result }) => createElement('View', null, result));
+
+		const tree = Memo.type({ name: 'a' });
+
+		if (!isPatchBoundary(tree)) {
+			throw new TypeError('Expected a patch boundary.');
+		}
+
+		expect('fallback' in tree.props).toBe(false);
 	});
 
 	test('a tree failing three times removes every patch that built it', async () => {
