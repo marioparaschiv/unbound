@@ -182,7 +182,7 @@ std::optional<FontFace> readFontFace(const std::string &data, std::string &error
     }
 
     FontFace face;
-    face.fullName       = names->full.value_or(*names->postScript);
+    face.fullName       = names->full ? *names->full : *names->postScript;
     face.postScriptName = names->postScript.value_or(withoutSpaces(face.fullName));
     face.family         = names->family.value_or(face.fullName);
 
