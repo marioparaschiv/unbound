@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.1.0](https://github.com/marioparaschiv/unbound/compare/api-v1.0.0...api-v1.1.0) (2026-11-09)
+
+
+### Features
+
+* **client:** redesign the addon store page ([#1016](https://github.com/marioparaschiv/unbound/issues/1016)) ([8c72fe5](https://github.com/marioparaschiv/unbound/commit/8c72fe5114c80c1178c02bf3f81928ed70870a49))
+
+
+### Bug Fixes
+
+* **client:** sort updater imports and regenerate the SDK ([#1023](https://github.com/marioparaschiv/unbound/issues/1023)) ([a2abf3a](https://github.com/marioparaschiv/unbound/commit/a2abf3a54729e3b22f1e4632963872fe00d68057))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 1.1.0
+    * @unbound-app/sdk-generator bumped to 0.11.1
+
 ## [1.0.0](https://github.com/marioparaschiv/unbound/compare/api-v0.12.0...api-v1.0.0) (2026-11-05)
 
 

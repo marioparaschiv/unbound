@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.1.0](https://github.com/marioparaschiv/unbound/compare/cli-v1.0.0...cli-v1.1.0) (2026-11-09)
+
+
+### Features
+
+* **themes:** add Rosie themes, a theme maker and theme hot reload ([#985](https://github.com/marioparaschiv/unbound/issues/985)) ([0c926db](https://github.com/marioparaschiv/unbound/commit/0c926dbc03587960ac2d16f16cdd78fd07abfc5e))
+
+
+### Bug Fixes
+
+* **cli:** treat expired agent vphone claims as stale ([#982](https://github.com/marioparaschiv/unbound/issues/982)) ([e0ac74a](https://github.com/marioparaschiv/unbound/commit/e0ac74a0ec538e98cabc8d6de717bb93e7a30acc))
+
+
+### Performance Improvements
+
+* **ci:** cut pull request CI wall time ([#1021](https://github.com/marioparaschiv/unbound/issues/1021)) ([0e5e0a7](https://github.com/marioparaschiv/unbound/commit/0e5e0a7ec4f6c107e78f6afca3409eca3b953be0))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 0.14.0
+    * @unbound-app/debugger-protocol bumped to 0.11.0
+  * devDependencies
+    * @unbound-app/api bumped to 1.1.0
+    * @unbound-app/types bumped to 0.13.0
+    * @unbound-app/utils bumped to 0.10.1
+    * @unbound-app/web bumped to 0.14.0
+
 ## [1.0.0](https://github.com/marioparaschiv/unbound/compare/cli-v0.12.0...cli-v1.0.0) (2026-11-05)
 
 
