@@ -30,6 +30,10 @@ function toBin(entry: string): string {
 	return toDist(entry).replace(/^\.\//, '');
 }
 
+function publishedManifest(manifest: Manifest): Manifest {
+	return resolveSpecifiers(manifest.scripts?.build ? distManifest(manifest) : manifest);
+}
+
 function distManifest(manifest: Manifest): Manifest {
 	const next: Manifest = { ...manifest };
 
@@ -150,9 +154,7 @@ function isPublished(name: string, version: string): boolean {
 	}
 }
 
-function publish() {
-	const [dir = process.cwd()] = process.argv.slice(2);
-
+function publish(dir: string) {
 	const target = resolve(ROOT, dir);
 	const path = join(target, 'package.json');
 	const original = readFileSync(path, 'utf8');
@@ -170,7 +172,7 @@ function publish() {
 		execFileSync('bun', ['run', 'build'], { cwd: target, stdio: 'inherit' });
 	}
 
-	const prepared = resolveSpecifiers(built ? distManifest(manifest) : manifest);
+	const prepared = publishedManifest(manifest);
 
 	writeFileSync(path, JSON.stringify(prepared, null, '\t') + '\n');
 
@@ -186,4 +188,13 @@ function publish() {
 	}
 }
 
-publish();
+const [dir = process.cwd(), mode] = process.argv.slice(2);
+
+// `--manifest` prints the manifest npm would get, for tests that install the package as published.
+if (mode === '--manifest') {
+	const path = join(resolve(ROOT, dir), 'package.json');
+
+	console.log(JSON.stringify(publishedManifest(readManifest(path)), null, '\t'));
+} else {
+	publish(dir);
+}

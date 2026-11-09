@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.14.1](https://github.com/marioparaschiv/unbound/compare/web-v0.14.0...web-v0.14.1) (2026-11-09)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 0.14.1
+    * @unbound-app/utils bumped to 0.10.2
+
 ## [0.14.0](https://github.com/marioparaschiv/unbound/compare/web-v0.13.0...web-v0.14.0) (2026-11-09)
 
 

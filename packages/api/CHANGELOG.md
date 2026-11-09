@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.1](https://github.com/marioparaschiv/unbound/compare/api-v1.1.0...api-v1.1.1) (2026-11-09)
+
+
+### Performance Improvements
+
+* **loader:** lazy settings cache, metro cache file, plugin bytecode installs ([#1032](https://github.com/marioparaschiv/unbound/issues/1032)) ([87179aa](https://github.com/marioparaschiv/unbound/commit/87179aad6016c4e019546bb9ae0ba9d19147f614))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 1.1.1
+    * @unbound-app/sdk-generator bumped to 0.11.2
+
 ## [1.1.0](https://github.com/marioparaschiv/unbound/compare/api-v1.0.0...api-v1.1.0) (2026-11-09)
 
 
