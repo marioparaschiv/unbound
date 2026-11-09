@@ -18,6 +18,9 @@ type AddonGroupProps = {
 /** @description The installed addons, collapsed unless an addon update is waiting. */
 function AddonGroup({ addons, updates, checked, listed }: AddonGroupProps) {
 	const count = format('UNBOUND_UPDATES_ADDONS_COUNT', { count: addons.length });
+	const isListed = (entry: InstalledEntry) => !listed || listed.has(entry.id);
+	// Stable sort keeps the name order within the listed and unlisted runs.
+	const sorted = [...addons].sort((a, b) => Number(isListed(b)) - Number(isListed(a)));
 
 	return (
 		<CollapsibleGroup
@@ -29,15 +32,14 @@ function AddonGroup({ addons, updates, checked, listed }: AddonGroupProps) {
 			}
 			icon={<Discord.TableRowIcon source={icons.PuzzlePieceIcon} />}
 			defaultExpanded={updates.length > 0}
-			helperText={messages.UNBOUND_UPDATES_ADDONS_DESC}
 		>
-			{addons.map((entry) => (
+			{sorted.map((entry) => (
 				<UpdateRow
 					key={entry.id}
 					entry={entry}
 					update={updates.find((pending) => pending.id === entry.id)}
 					checked={checked}
-					listed={!listed || listed.has(entry.id)}
+					listed={isListed(entry)}
 				/>
 			))}
 		</CollapsibleGroup>
