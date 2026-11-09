@@ -180,6 +180,12 @@ void AndroidLoader::start()
     loader::setNativePlatformProvider(provider);
     loader::createDirectories(configuration_.documents);
     settings_.load();
+    runInBackground([weak = weak_from_this()] {
+        if (auto loader = std::static_pointer_cast<AndroidLoader>(weak.lock()))
+        {
+            loader->settings_.refreshCache();
+        }
+    });
     openFonts();
 
     updater_ = std::make_unique<loader::BundleUpdater>(
@@ -239,7 +245,8 @@ std::string AndroidLoader::themeColorsJSON(const std::string &themeId)
 
 void AndroidLoader::onLoadJSBundle()
 {
-    settings_.load();
+    // start() loaded the file moments ago; a reloaded runtime still sees edits made since.
+    settings_.reload();
     pipeline_->prepare();
 }
 

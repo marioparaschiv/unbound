@@ -1,12 +1,6 @@
 #include "LoaderSettings.h"
 
-#include <chrono>
-#include <filesystem>
-#include <system_error>
-
-#include "LoaderFiles.h"
 #include "LoaderJSON.h"
-#include "LoaderLog.h"
 
 namespace loader {
 static std::vector<std::string> splitKeyPath(const std::string &key)
@@ -32,93 +26,11 @@ SettingsStore::SettingsStore(std::string path, std::chrono::milliseconds diskRec
 {
 }
 
-SettingsStore::FileStamp SettingsStore::stampOnDisk() const
-{
-    std::error_code error;
-    const auto      size = std::filesystem::file_size(path_, error);
-    if (error)
-    {
-        return {};
-    }
-    const auto modified = std::filesystem::last_write_time(path_, error);
-    if (error)
-    {
-        return {};
-    }
-    return {true, static_cast<int64_t>(modified.time_since_epoch().count()),
-            static_cast<uint64_t>(size)};
-}
-
-void SettingsStore::refreshLocked(bool beforeWrite) const
-{
-    if (dirty_)
-    {
-        return;
-    }
-    auto now = std::chrono::steady_clock::now();
-    if (!beforeWrite && now - checkedAt_ < diskRecheck_)
-    {
-        return;
-    }
-    checkedAt_              = now;
-    const FileStamp current = stampOnDisk();
-    if (current == stamp_ || !current.exists)
-    {
-        return;
-    }
-    std::optional<std::string> contents = readTextFile(path_);
-    nlohmann::json             parsed   = contents ? parseBoundedJSON(*contents) : nlohmann::json();
-    if (parsed.is_object())
-    {
-        data_ = std::move(parsed);
-    }
-    stamp_ = current;
-}
-
-void SettingsStore::load()
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    std::optional<std::string> contents = readTextFile(path_);
-    if (!contents)
-    {
-        data_ = nlohmann::json::object();
-        writeTextFileAtomically(path_, "{}");
-        return;
-    }
-
-    nlohmann::json parsed = parseBoundedJSON(*contents);
-    if (parsed.is_discarded() || !parsed.is_object())
-    {
-        log(LogLevel::Error, LOG_CATEGORY_SETTINGS,
-            "settings.json is corrupt, backing it up and resetting.");
-        backupCorruptFile();
-        data_ = nlohmann::json::object();
-        writeTextFileAtomically(path_, "{}");
-        return;
-    }
-
-    data_  = std::move(parsed);
-    stamp_ = stampOnDisk();
-    dirty_ = false;
-}
-
-bool SettingsStore::save() const
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (!writeTextFileAtomically(path_, data_.dump()))
-    {
-        return false;
-    }
-    stamp_ = stampOnDisk();
-    dirty_ = false;
-    return true;
-}
-
 nlohmann::json SettingsStore::snapshot() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
     refreshLocked();
+    parseAllLocked();
     return data_;
 }
 
@@ -126,6 +38,7 @@ std::string SettingsStore::serialize() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
     refreshLocked();
+    parseAllLocked();
     return data_.dump(2);
 }
 
@@ -138,56 +51,73 @@ bool SettingsStore::replace(const std::string &json)
     }
 
     std::lock_guard<std::mutex> lock(mutex_);
-    data_  = std::move(parsed);
+    data_ = std::move(parsed);
+    raw_.clear();
     dirty_ = true;
     return true;
 }
 
-std::optional<nlohmann::json> SettingsStore::get(const std::string &store,
-                                                 const std::string &key) const
+const nlohmann::json *SettingsStore::findLocked(const std::string &store,
+                                                const std::string &key) const
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     refreshLocked();
+    parseStoreLocked(store);
 
     auto storeEntry = data_.find(store);
     if (storeEntry == data_.end() || !storeEntry->is_object())
     {
-        return std::nullopt;
+        return nullptr;
     }
 
     const nlohmann::json *current = &*storeEntry;
     if (key.empty())
     {
-        return *current;
+        return current;
     }
 
     for (const std::string &part : splitKeyPath(key))
     {
         if (!current->is_object())
         {
-            return std::nullopt;
+            return nullptr;
         }
 
         auto next = current->find(part);
         if (next == current->end())
         {
-            return std::nullopt;
+            return nullptr;
         }
         current = &*next;
     }
 
-    if (current->is_null())
-    {
-        return std::nullopt;
-    }
+    return current->is_null() ? nullptr : current;
+}
 
-    return *current;
+std::optional<nlohmann::json> SettingsStore::get(const std::string &store,
+                                                 const std::string &key) const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    const nlohmann::json       *value = findLocked(store, key);
+    return value ? std::optional<nlohmann::json>(*value) : std::nullopt;
+}
+
+bool SettingsStore::read(const std::string &store, const std::string &key,
+                         const std::function<void(const nlohmann::json &)> &reader) const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    const nlohmann::json       *value = findLocked(store, key);
+    if (value)
+    {
+        reader(*value);
+    }
+    return value != nullptr;
 }
 
 bool SettingsStore::getBoolean(const std::string &store, const std::string &key,
                                bool fallback) const
 {
-    std::optional<nlohmann::json> value = get(store, key);
+    std::lock_guard<std::mutex> lock(mutex_);
+    const nlohmann::json       *value = findLocked(store, key);
     if (!value)
     {
         return fallback;
@@ -205,7 +135,7 @@ bool SettingsStore::getBoolean(const std::string &store, const std::string &key,
 
     if (value->is_string())
     {
-        const std::string text = value->get<std::string>();
+        const std::string &text = value->get_ref<const std::string &>();
         return text == "true" || text == "1" || text == "yes";
     }
 
@@ -215,7 +145,8 @@ bool SettingsStore::getBoolean(const std::string &store, const std::string &key,
 std::string SettingsStore::getString(const std::string &store, const std::string &key,
                                      const std::string &fallback) const
 {
-    std::optional<nlohmann::json> value = get(store, key);
+    std::lock_guard<std::mutex> lock(mutex_);
+    const nlohmann::json       *value = findLocked(store, key);
     if (!value || !value->is_string())
     {
         return fallback;
@@ -278,7 +209,10 @@ void SettingsStore::applyLocked(const nlohmann::json &changes)
         }
         if (change.contains("clear") && change["clear"].is_boolean() && change["clear"].get<bool>())
         {
-            dirty_ = data_.erase(change["store"].get<std::string>()) > 0 || dirty_;
+            const std::string &store  = change["store"].get_ref<const std::string &>();
+            bool               erased = data_.erase(store) > 0;
+            erased                    = raw_.erase(store) > 0 || erased;
+            dirty_                    = erased || dirty_;
             continue;
         }
         if (!change.contains("key") || !change["key"].is_string())
@@ -305,6 +239,7 @@ void SettingsStore::setLocked(const std::string &store, const std::string &key,
                               nlohmann::json value)
 {
     dirty_ = true;
+    parseStoreLocked(store);
 
     nlohmann::json &payload = data_[store];
     if (!payload.is_object())
@@ -329,6 +264,7 @@ void SettingsStore::setLocked(const std::string &store, const std::string &key,
 
 void SettingsStore::removeLocked(const std::string &store, const std::string &key)
 {
+    parseStoreLocked(store);
     auto payload = data_.find(store);
     if (payload == data_.end() || !payload->is_object())
     {
@@ -371,20 +307,5 @@ void SettingsStore::removeLocked(const std::string &store, const std::string &ke
 const std::string &SettingsStore::path() const
 {
     return path_;
-}
-
-void SettingsStore::backupCorruptFile() const
-{
-    auto        timestamp = std::chrono::duration_cast<std::chrono::seconds>(
-                                std::chrono::system_clock::now().time_since_epoch())
-                                .count();
-    std::string backup    = path_ + ".corrupt-" + std::to_string(timestamp);
-    if (!copyFile(path_, backup))
-    {
-        log(LogLevel::Error, LOG_CATEGORY_SETTINGS, "Failed to back up corrupt settings.json.");
-        return;
-    }
-
-    log(LogLevel::Error, LOG_CATEGORY_SETTINGS, "Backed up corrupt settings.json to " + backup);
 }
 }

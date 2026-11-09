@@ -15,6 +15,11 @@ NSString *const SettingsDidChangeNotification = @"SettingsDidChange";
 
 static std::unique_ptr<loader::SettingsStore> gStore;
 
+static void refreshSettingsCache()
+{
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{ gStore->refreshCache(); });
+}
+
 loader::SettingsStore &UnboundSettingsStore()
 {
     static dispatch_once_t onceToken;
@@ -23,6 +28,7 @@ loader::SettingsStore &UnboundSettingsStore()
             pathWithComponents:@[ FileSystem.documents, @(loader::preferences::kSettingsFile) ]];
         gStore         = std::make_unique<loader::SettingsStore>(toStdString(path));
         gStore->load();
+        refreshSettingsCache();
     });
     return *gStore;
 }
@@ -47,6 +53,7 @@ loader::SettingsStore &UnboundSettingsStore()
 + (void)loadSettings
 {
     UnboundSettingsStore().load();
+    refreshSettingsCache();
 }
 
 @end

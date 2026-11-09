@@ -67,19 +67,18 @@ object Platform {
         .put("isVirtualDevice", isEmulator())
         .put("virtualDeviceHost", emulatorHostAddress() ?: JSONObject.NULL)
 
-    fun mainBundleBytecodeVersion(apkPath: String): Int = runCatching {
-        ZipFile(apkPath).use { zip ->
-            val entry = zip.getEntry(MAIN_BUNDLE_ENTRY) ?: return 0
-            zip.getInputStream(entry).use { stream ->
-                val header = ByteArray(12)
-                var read = 0
-                while (read < header.size) {
-                    val count = stream.read(header, read, header.size - read)
-                    if (count < 0) return 0
-                    read += count
-                }
-                NativeBridge.nativeHermesBytecodeVersion(header)
+    /** Reads the Hermes bytecode version from the header of the main bundle in Discord's open APK; 0 if unreadable. */
+    fun mainBundleBytecodeVersion(zip: ZipFile): Int = runCatching {
+        val entry = zip.getEntry(MAIN_BUNDLE_ENTRY) ?: return 0
+        zip.getInputStream(entry).use { stream ->
+            val header = ByteArray(12)
+            var read = 0
+            while (read < header.size) {
+                val count = stream.read(header, read, header.size - read)
+                if (count < 0) return 0
+                read += count
             }
+            NativeBridge.nativeHermesBytecodeVersion(header)
         }
     }.getOrDefault(0)
 }

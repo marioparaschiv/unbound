@@ -19,6 +19,8 @@ class Unbound : XposedModule() {
         private const val REACT_INSTANCE = "com.facebook.react.runtime.ReactInstance"
         private const val BUNDLE_LOADER = "com.facebook.react.bridge.JSBundleLoader"
         private const val BOOTSTRAP_DIRECTORY = "assets/js/"
+        private const val STARTUP_CACHE = "code_cache/unbound-startup-cache"
+        private const val DISCORD_APK_FACTS = "discordAPK"
     }
 
     override fun onPackageReady(param: PackageReadyParam) {
@@ -33,9 +35,6 @@ class Unbound : XposedModule() {
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to initialize Unbound", it) }
     }
 
-    private fun frameworkLabel(appInfo: ApplicationInfo, classLoader: ClassLoader): String =
-        Platform.frameworkLabel(frameworkName, frameworkVersion, Platform.isLSPatched(appInfo, classLoader))
-
     private fun initialize(param: PackageReadyParam) {
         val moduleInfo = moduleApplicationInfo
         val appInfo = param.applicationInfo
@@ -49,15 +48,19 @@ class Unbound : XposedModule() {
 
         val documents = NativeBridge.nativeDocumentsDirectory(File(appInfo.dataDir, "files").absolutePath)
         NativeBridge.documents = documents
-        val bytecodeVersion = Platform.mainBundleBytecodeVersion(appInfo.sourceDir)
-        val launcherIcons = !Platform.isLSPatched(appInfo, param.classLoader)
-        val platformInfo = Platform.describe(appInfo, frameworkLabel(appInfo, param.classLoader))
-            .put("appIcons", AndroidAppIcons.describe(moduleInfo, appInfo))
+        val cache = StartupCache(File(appInfo.dataDir, STARTUP_CACHE))
+        val (bytecodeVersion, packagedIcon) = discordAPKFacts(File(appInfo.sourceDir), cache)
+        val lsPatched = Platform.isLSPatched(appInfo, param.classLoader)
+        val launcherIcons = !lsPatched
+        val platformInfo = Platform.describe(appInfo, Platform.frameworkLabel(frameworkName, frameworkVersion, lsPatched))
+        platformInfo.put("appIcons", AndroidAppIcons.describe(moduleInfo, appInfo, packagedIcon, cache))
             .put("launcherIcons", launcherIcons)
+        cache.save()
+        val bootstrapScripts = readBootstrapScripts(moduleInfo.sourceDir).toString()
 
         NativeBridge.nativeInitialize(
             documents,
-            readBootstrapScripts(moduleInfo.sourceDir).toString(),
+            bootstrapScripts,
             NATIVE_LIBRARY,
             bytecodeVersion,
             platformInfo.toString(),
@@ -206,6 +209,22 @@ class Unbound : XposedModule() {
             }.getOrNull(),
             runCatching { reactInstance.getDeclaredMethod("loadJSBundleFromFile", String::class.java, String::class.java) }.getOrNull(),
         )
+    }
+
+    /** Discord's main bundle bytecode version and whether its APK carries Unbound's icon, from one look at the APK. */
+    private fun discordAPKFacts(apk: File, cache: StartupCache): Pair<Int, Boolean> {
+        cache.get(DISCORD_APK_FACTS, apk)?.split(',')?.takeIf { it.size == 2 }?.let { (version, icon) ->
+            version.toIntOrNull()?.let { return it to (icon == "1") }
+        }
+
+        val facts = runCatching {
+            ZipFile(apk).use { zip ->
+                Platform.mainBundleBytecodeVersion(zip) to (zip.getEntry(AndroidAppIcons.MARKER) != null)
+            }
+        }.getOrDefault(0 to false)
+        // An unreadable version is not cached, so the next launch reads the APK again.
+        if (facts.first != 0) cache.put(DISCORD_APK_FACTS, apk, "${facts.first},${if (facts.second) 1 else 0}")
+        return facts
     }
 
     private fun nativeLibraryPath(moduleInfo: ApplicationInfo, appInfo: ApplicationInfo): String {
