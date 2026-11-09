@@ -127,13 +127,15 @@ type smokeResult struct {
 
 func runSmoke(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: smoke <android|ios|ios-device> [flags]")
+		return errors.New("usage: smoke <android|ios|ios-prewarm|ios-device> [flags]")
 	}
 	switch args[0] {
 	case "android":
 		return runAndroidSmoke(args[1:])
 	case "ios":
 		return runIOSSmoke(args[1:])
+	case "ios-prewarm":
+		return runIOSPrewarm(args[1:])
 	case "ios-device":
 		return runIOSDeviceSmoke(args[1:])
 	default:

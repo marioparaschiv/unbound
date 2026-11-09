@@ -534,12 +534,14 @@ jobs:
               id: set-simulator-filename
               run: echo "filename=unbound-ios-simulator.zip" >> "$GITHUB_OUTPUT"
 
+    # Starts beside the build: a fresh simulator's first Discord launch takes 3-10 minutes, so it runs main's last
+    # simulator build once while build-ipa works, then waits for this run's build. A failed build-ipa fails this job.
     smoke-simulator:
         name: Smoke test the simulator build
         if: inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true
-        needs: [build-ipa, smoke-inputs]
+        needs: [smoke-inputs]
         runs-on: macos-26
-        timeout-minutes: 30
+        timeout-minutes: 40
         permissions:
             contents: read
             actions: read
@@ -555,6 +557,25 @@ jobs:
               with:
                   prebuilt: 'true'
 
+            # Best effort: without main's build the smoke test creates its own simulator and pays the first launch.
+            - name: Prewarm the simulator with main's build
+              id: prewarm
+              continue-on-error: true
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  set -euo pipefail
+                  id=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=ios-simulator&per_page=50" --jq '[.artifacts[] | select(.workflow_run.head_branch == "main" and .workflow_run.head_repository_id == .workflow_run.repository_id and (.expired | not))][0].id // empty')
+                  test -n "$id"
+                  prewarm="$RUNNER_TEMP/prewarm"
+                  mkdir -p "$prewarm"
+                  gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" > "$prewarm/artifact.zip"
+                  unzip -q "$prewarm/artifact.zip" -d "$prewarm"
+                  unzip -q "$prewarm/unbound-ios-simulator.zip" -d "$prewarm/app"
+                  app=$(find "$prewarm/app" -maxdepth 2 -type d -name Discord.app -print -quit)
+                  test -n "$app"
+                  unbound-tools smoke ios-prewarm --app "$app" --timeout 10m
+
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
 
@@ -563,6 +584,11 @@ jobs:
               with:
                   name: ios smoke inputs
                   path: packages
+
+            - name: Wait for the simulator build
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: unbound-tools wait-artifact --name ios-simulator --job build-ipa
 
             - name: Download the simulator build
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
@@ -582,7 +608,8 @@ jobs:
             - name: Run the smoke test
               env:
                   APP_PATH: ${{ steps.app.outputs.path }}
-              run: unbound-tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --bundle-budget 60s --plugins-budget 60s ${{ inputs.pr_number != '' && '--quick --timeout 12m' || '--timeout 25m' }}
+                  DEVICE: ${{ steps.prewarm.outputs.device }}
+              run: unbound-tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --bundle-budget 60s --plugins-budget 60s ${{ inputs.pr_number != '' && '--quick --timeout 12m' || '--timeout 25m' }} ${DEVICE:+--device "$DEVICE"}
 
             - name: Compare startup and the console with main
               if: success() && github.event_name == 'pull_request'
