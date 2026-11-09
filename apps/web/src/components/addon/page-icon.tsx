@@ -1,7 +1,7 @@
 import type { AddonPageIconName } from '@unbound-app/contracts/addon-page-icons';
 import type { ReactNode } from 'react';
 
-import { ADDON_PAGE_ICONS } from '~/components/addon/page-icons';
+import { ADDON_PAGE_ICONS } from '~/lib/page-icons';
 
 function isPageIcon(name: string): name is AddonPageIconName {
 	return Object.hasOwn(ADDON_PAGE_ICONS, name);

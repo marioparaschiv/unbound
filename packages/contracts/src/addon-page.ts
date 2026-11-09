@@ -122,6 +122,16 @@ export const addonPageSchema = superRefine(
 
 export type AddonPage = StaticDecode<typeof addonPageSchema>;
 
+/** `store-page.json`: what the app's store page draws, published beside ADDON.md so it loads in one request. */
+export type PublishedStorePage = {
+	/** ADDON.md after its frontmatter. */
+	body: string;
+	/** The measured `page.json`, or `null` when the version has none. */
+	measured: AddonPage | null;
+	/** Each `:name:` icon the body uses, as a standalone `<svg>` in `currentColor`, by name. */
+	icons: Record<string, string>;
+};
+
 /** The result of reading ADDON.md: its typed frontmatter and Markdown body, or why it was refused. */
 export type ParsedAddonPage =
 	| { success: true; frontmatter: AddonPageFrontmatter; body: string }
