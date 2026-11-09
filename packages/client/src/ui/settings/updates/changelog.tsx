@@ -2,8 +2,8 @@ import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
 import type { TimelineVersion } from '~/ui/marketplace/version-entry';
-import VersionEntry from '~/ui/marketplace/version-entry';
 import StoreSection from '~/ui/marketplace/store-section';
+import VersionEntry from '~/ui/marketplace/version-entry';
 import { Discord } from '~/metro/components';
 import Page from '~/ui/components/page';
 import { messages } from '~/i18n/api';

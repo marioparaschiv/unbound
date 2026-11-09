@@ -46,6 +46,8 @@ export declare const Portal: any;
 export declare const SafeArea: any;
 /** `react-native-safe-area-context`, with `useSafeAreaInsets`; found on first access. */
 export declare const SafeAreaContext: any;
+/** Discord's `TableRowDivider`, the hairline `TableRowGroup` draws between rows; found on first access. */
+export declare const TableRowDividers: any;
 /** Discord's video player module, with `VideoComponent` and `createVideoControls`; found on first access. */
 export declare const Video: any;
 /**
