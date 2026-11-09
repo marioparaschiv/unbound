@@ -1,8 +1,11 @@
 import { listAddonFiles } from '@unbound-app/contracts/addon-files';
 import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import { getBundleName } from '@unbound-app/contracts/workspace';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { bytecodeFileName } from '~/rollup/hermes-bytecode';
 import { readBuiltAddon } from '~/lib/reload-transport';
 import type { DiscoveredAddon } from '~/lib/discovery';
 import type { CommandRunner } from '~/lib/run-command';
@@ -20,7 +23,9 @@ export type InstallOptions = {
 const SAFE_ADDON_ID = /^[\w.-]+$/;
 
 /**
- * @description Lists the built files a plugin install copies onto a device: its manifest, bundle and the extra files the manifest lists.
+ * @description Lists the built files a plugin install copies onto a device: its manifest, bundle, Hermes bytecode and the
+ * extra files the manifest lists. The manifest copied names each bytecode file's digest, which the loader checks before it
+ * runs the bytecode instead of compiling the source.
  * @param addon The built plugin.
  * @returns The plugin's id and files, or why its id cannot be used as a folder name on the device.
  */
@@ -29,14 +34,25 @@ export function readPluginPayload(addon: DiscoveredAddon): PluginPayload | { err
 		return { error: `${addon.id} is not a valid plugin id for a device folder.` };
 	}
 
-	const { manifest } = readBuiltAddon(addon);
+	const { manifest, bytecode = {} } = readBuiltAddon(addon);
+	const bundle = getBundleName(addon.static, manifest.main);
 	const names = [
-		MANIFEST_FILENAME,
-		getBundleName(addon.static, manifest.main),
+		bundle,
+		...Object.keys(bytecode).map((version) => bytecodeFileName(bundle, Number(version))),
 		...listAddonFiles(manifest).map((file) => file.path),
 	];
+	// The built manifest has no bytecode digests; the one read back adds them, so it is written out to copy instead.
+	const staged = join(mkdtempSync(join(tmpdir(), 'ubd-install-')), MANIFEST_FILENAME);
 
-	return { id: addon.id, files: names.map((name) => ({ name, path: join(addon.output, name) })) };
+	writeFileSync(staged, JSON.stringify(manifest, null, '\t'));
+
+	return {
+		id: addon.id,
+		files: [
+			{ name: MANIFEST_FILENAME, path: staged },
+			...names.map((name) => ({ name, path: join(addon.output, name) })),
+		],
+	};
 }
 
 /**

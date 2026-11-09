@@ -1,5 +1,6 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { afterEach, describe, expect, test } from 'bun:test';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -8,6 +9,7 @@ import type { PluginPayload } from '../src/lib/plugin-install';
 
 import { installOnAndroid, ANDROID_PLUGINS_DIRECTORY } from '../src/lib/android-install';
 import { parseShellResult, resolvePilot } from '../src/lib/pilot';
+import { readPluginPayload } from '../src/lib/plugin-install';
 import { installOnIOS } from '../src/lib/ios-install';
 
 type Call = { command: string; args: string[]; timeoutMs: number };
@@ -62,6 +64,42 @@ function shellOutput(exitCode: number, output: string): CommandResult {
 }
 
 function quiet() {}
+
+describe('readPluginPayload', () => {
+	test('copies the bytecode with a manifest naming its digest, so the loader runs it', () => {
+		const dir = mkdtempSync(join(tmpdir(), 'ubd-install-test-'));
+		const bytecode = Buffer.from('compiled');
+
+		roots.push(dir);
+		writeFileSync(join(dir, 'manifest.json'), '{"id":"com.example.sample","main":"index.js"}');
+		writeFileSync(join(dir, 'index.js'), '({})');
+		writeFileSync(join(dir, 'index.98.hbc'), bytecode);
+
+		const payload = readPluginPayload({
+			id: 'com.example.sample',
+			kind: 'plugin',
+			path: '',
+			bundle: 'index.js',
+			dir,
+			output: dir,
+			static: false,
+		});
+
+		if ('error' in payload) {
+			throw new Error(payload.error);
+		}
+
+		expect(payload.files.map((file) => file.name)).toEqual([
+			'manifest.json',
+			'index.js',
+			'index.98.hbc',
+		]);
+		expect(payload.files[2]?.path).toBe(join(dir, 'index.98.hbc'));
+		expect(JSON.parse(readFileSync(payload.files[0]?.path ?? '', 'utf8')).bytecode).toEqual({
+			98: createHash('sha512').update(bytecode).digest('hex'),
+		});
+	});
+});
 
 describe('installOnAndroid', () => {
 	test('stages each file, then copies them into place as root', async () => {
