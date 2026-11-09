@@ -15,7 +15,8 @@ export function getInstalledVersion(kind: AddonKind, addon: ListedAddon): string
 }
 
 /**
- * @description Installs one version of a listed addon through its manager. Plugins get their dependencies first.
+ * @description Installs one version of a listed addon through its manager, enabling it on a first install.
+ * Plugins get their dependencies first.
  * @param kind The manager the addon belongs to.
  * @param addon The listed addon.
  * @param version The version to install.
@@ -32,5 +33,17 @@ export async function installVersion(
 		return false;
 	}
 
-	return Manager.for(kind).installListed(addon, version, hold);
+	const manager = Manager.for(kind);
+	const fresh = !manager.getInstalledVersion(addon);
+
+	if (!(await manager.installListed(addon, version, hold))) {
+		return false;
+	}
+
+	// Updates keep the user's choice; only a new install turns itself on. Fonts have no on state, so they apply from Design.
+	if (fresh && 'enable' in manager) {
+		await manager.enable(addon.id);
+	}
+
+	return true;
 }
