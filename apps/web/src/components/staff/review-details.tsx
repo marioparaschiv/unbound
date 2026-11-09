@@ -11,6 +11,7 @@ import ManifestDiffTable from '~/components/review/manifest-diff-table';
 import AddonMdDiffView from '~/components/review/addon-md-diff-view';
 import type { FieldDiff, ReviewEntry } from '~/lib/review-entry';
 import ChangelogSections from '~/components/changelog-sections';
+import { renderPageIcon } from '~/components/addon/page-icon';
 import { getBundleUrl, shortSha } from '~/lib/github-urls';
 import SourcePinLink from '~/components/source-pin-link';
 import { getPinnedMediaBase } from '~/lib/markdown-url';
@@ -148,6 +149,7 @@ function buildSections(entry: ReviewEntry): Section[] {
 						pin={source}
 						mediaBase={getPinnedMediaBase(source)}
 						page={page}
+						renderIcon={renderPageIcon}
 					/>
 				</div>
 			),
@@ -164,6 +166,7 @@ function buildSections(entry: ReviewEntry): Section[] {
 						pin={source}
 						mediaBase={getPinnedMediaBase(source)}
 						page={page}
+						renderIcon={renderPageIcon}
 					/>
 				</div>
 			) : (

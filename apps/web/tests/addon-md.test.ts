@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, test } from 'bun:test';
 
 import { getPinnedMediaBase, getPublishedMediaBase } from '~/lib/markdown-url';
+import { renderPageIcon } from '~/components/addon/page-icon';
 import AddonGallery from '~/components/addon-gallery';
 import { resolvePageMedia } from '~/lib/page-media';
 import Markdown from '~/components/markdown';
@@ -16,7 +17,15 @@ const CDN = 'https://cdn.example/addons/acme.hello/1.2.0';
 const PINNED_BASE = getPinnedMediaBase(PAGE_PIN);
 
 function render(source: string, page?: AddonPage, mediaBase: string = PINNED_BASE): string {
-	return renderToStaticMarkup(createElement(AddonMd, { source, pin: PAGE_PIN, mediaBase, page }));
+	return renderToStaticMarkup(
+		createElement(AddonMd, {
+			source,
+			pin: PAGE_PIN,
+			mediaBase,
+			page,
+			renderIcon: renderPageIcon,
+		}),
+	);
 }
 
 function mediaTags(html: string): string[] {
