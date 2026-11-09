@@ -32,7 +32,7 @@
 	"devDependencies": {
 		"@types/bun": "catalog:",
 		"@types/terminal-kit": "^2.5.7",
-		"tsdown": "^0.23.5"
+		"tsdown": "^0.23.7"
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"
