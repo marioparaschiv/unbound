@@ -138,6 +138,13 @@ describe('the scaffolded plugin', () => {
 		);
 	});
 
+	test('leaves the version and description to the manifest, out of package.json', () => {
+		const packageJson = JSON.parse(readFileSync(join(addon.dir, 'package.json'), 'utf8'));
+
+		expect(packageJson).not.toHaveProperty('version');
+		expect(packageJson).not.toHaveProperty('description');
+	});
+
 	test('typechecks against the i18n, settings and image contracts', async () => {
 		const config = join(workspace.path, 'tsconfig.scaffold-check.json');
 		const plugin = relative(workspace.path, addon.dir);
