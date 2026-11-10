@@ -32,6 +32,7 @@ const COMMON_PROPS = {
 	Gestures: ['PanGestureHandler'],
 	Clipboard: ['setString', 'getString', 'setImage', 'getImage'],
 	MarkdownParser: ['parse', 'parseToAST', 'reactParserFor'],
+	SimpleMarkdown: ['parserFor', 'outputFor', 'defaultRules'],
 	Screens: ['FullWindowOverlay'],
 	SVG: ['Svg', 'Path'],
 	Commands: ['getBuiltInCommands'],

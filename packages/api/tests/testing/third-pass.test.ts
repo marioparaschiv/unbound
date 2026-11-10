@@ -36,6 +36,17 @@ describe('metro.find', () => {
 	});
 });
 
+describe('metro.common', () => {
+	test('finds SimpleMarkdown by the props the client finds it by', () => {
+		const metro = createFakeMetro();
+		const defaultRules = {};
+
+		metro.register({ parserFor: () => {}, outputFor: () => {}, defaultRules });
+
+		expect(metro.common.SimpleMarkdown.defaultRules).toBe(defaultRules);
+	});
+});
+
 describe('native overrides', () => {
 	test('merge into the fake objc bridge, so the fake members stay', () => {
 		const native = createFakeNative();
