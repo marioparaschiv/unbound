@@ -41,11 +41,12 @@ public:
     bool        getBoolean(const std::string &store, const std::string &key, bool fallback) const;
     std::string getString(const std::string &store, const std::string &key,
                           const std::string &fallback) const;
-    void        set(const std::string &store, const std::string &key, nlohmann::json value);
-    void        remove(const std::string &store, const std::string &key);
-    bool        apply(const nlohmann::json &changes);
-    bool        stage(const nlohmann::json &changes);
-    bool        flush();
+    // False when the key already held this value, so callers can skip a save.
+    bool set(const std::string &store, const std::string &key, nlohmann::json value);
+    void remove(const std::string &store, const std::string &key);
+    bool apply(const nlohmann::json &changes);
+    bool stage(const nlohmann::json &changes);
+    bool flush();
 
     const std::string &path() const;
 

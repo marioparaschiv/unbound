@@ -37,9 +37,12 @@ int main()
     assert(store.getString("unbound", "loader.update.etag", "fallback") == "fallback");
     assert(!store.get("other", "loader.enabled"));
 
-    store.set("unbound", "loader.update.etag", "\"abc\"");
-    store.set("unbound", "debugger.enabled", true);
+    assert(store.set("unbound", "loader.update.etag", "\"abc\""));
+    assert(store.set("unbound", "debugger.enabled", true));
     assert(store.save());
+    // Setting a value a key already holds reports no change, so callers skip the save.
+    assert(!store.set("unbound", "debugger.enabled", true));
+    assert(!store.set("unbound", "loader.update.url", "http://host/unbound.js"));
 
     loader::SettingsStore reloaded(path);
     reloaded.load();
