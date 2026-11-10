@@ -1,3 +1,4 @@
+// What a plugin's tests import, beside the preset in their bunfig.toml: the lifecycle, `render` and the recorders.
 export {
 	toasts,
 	dialogs,
@@ -11,32 +12,18 @@ export {
 	logs,
 	setLocale,
 	extendApi,
+	type ToastRecorder,
+	type DialogRecorder,
+	type CommandRecorder,
+	type PatchRecorder,
+	type FluxRecorder,
+	type MetroRecorder,
+	type NativeRecorder,
+	type PluginRecorder,
+	type FsRecorder,
+	type LogRecorder,
 } from './recorders';
-export { act, createTestRenderer, type TestRenderer } from './test-renderer';
 export { startPlugin, stopPlugin, pluginHolds } from './plugin-lifecycle';
 export { render, type RenderOptions, type RenderResult } from './render';
-export * from './install-addon-globals';
-export * from './fake-native-bridge';
-export * from './fake-react-native';
-export * from './listener-registry';
-export * from './recording-patcher';
-export * from './fake-components';
-export * from './memory-storage';
-export * from './fake-feedback';
-export * from './fake-settings';
-export * from './fake-locales';
-export * from './fake-plugins';
-export * from './plugin-types';
-export * from './fake-native';
-export * from './fake-timers';
-export * from './react-value';
-export * from './fake-metro';
-export * from './fake-react';
-export * from './fake-utils';
-export * from './icu-format';
-export * from './fake-java';
-export * from './fake-objc';
-export * from './icu-parse';
-export * from './test-node';
-export * from './fake-api';
-export * from './fake-fs';
+export { fakeAssetId, type StoreSeeds } from './fake-api';
+export type { PluginTypes } from './plugin-types';

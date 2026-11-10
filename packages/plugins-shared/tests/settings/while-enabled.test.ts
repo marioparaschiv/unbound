@@ -3,7 +3,7 @@ import {
 	createMemoryStorage,
 	defineSettings,
 	setting,
-} from '@unbound-app/api/testing';
+} from '@unbound-app/api/testing/fakes';
 import { expect, mock, test } from 'bun:test';
 
 const storage = createMemoryStorage('plugin');

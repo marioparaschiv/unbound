@@ -92,6 +92,7 @@ describe('buildExports', () => {
 			'./assets': './src/assets.d.ts',
 			'./global': './src/global.d.ts',
 			'./testing': './testing/index.ts',
+			'./testing/fakes': './testing/fakes.ts',
 			'./testing/icu-parse': './testing/icu-parse.ts',
 			'./testing/preset': './testing/preset.ts',
 			'./types': './src/_types.d.ts',

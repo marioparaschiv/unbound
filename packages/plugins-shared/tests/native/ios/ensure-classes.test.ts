@@ -1,5 +1,5 @@
 import type { NativeClassHandle, NativeObjCBridge } from '@unbound-app/api/native';
-import { installAddonGlobals } from '@unbound-app/api/testing';
+import { installAddonGlobals } from '@unbound-app/api/testing/fakes';
 import { describe, expect, test } from 'bun:test';
 
 import { ensureClasses } from '~/native/ios/ensure-classes';

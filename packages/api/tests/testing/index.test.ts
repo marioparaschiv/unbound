@@ -1,19 +1,15 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import type { ReactNode } from 'react';
 
-import {
-	createRecordingPatcher,
-	installAddonGlobals,
-	createMemoryStorage,
-	createListenerRegistry,
-	createFakeSettings,
-	createFakeMetro,
-	createFakeReact,
-	createFakeFlux,
-	createFakeTimers,
-	defineSettings,
-	setting,
-} from '~/testing';
+import { createFakeSettings, defineSettings, setting } from '~/testing/fake-settings';
+import { installAddonGlobals } from '~/testing/install-addon-globals';
+import { createListenerRegistry } from '~/testing/listener-registry';
+import { createRecordingPatcher } from '~/testing/recording-patcher';
+import { createMemoryStorage } from '~/testing/memory-storage';
+import { createFakeTimers } from '~/testing/fake-timers';
+import { createFakeMetro } from '~/testing/fake-metro';
+import { createFakeReact } from '~/testing/fake-react';
+import { createFakeFlux } from '~/testing/fake-api';
 
 type LabelProps = { text: string };
 

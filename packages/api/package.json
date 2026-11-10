@@ -45,6 +45,7 @@
 		"./storage": "./src/storage.d.ts",
 		"./sync": "./src/sync.d.ts",
 		"./testing": "./testing/index.ts",
+		"./testing/fakes": "./testing/fakes.ts",
 		"./testing/icu-parse": "./testing/icu-parse.ts",
 		"./testing/preset": "./testing/preset.ts",
 		"./themes": "./src/themes.d.ts",
