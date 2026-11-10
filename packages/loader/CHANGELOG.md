@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.1](https://github.com/marioparaschiv/unbound/compare/loader-v1.1.0...loader-v1.1.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* **loader:** cross-check iTunes with dkrypt in the stable poll ([#1045](https://github.com/marioparaschiv/unbound/issues/1045)) ([dc77dc9](https://github.com/marioparaschiv/unbound/commit/dc77dc9ecb9f5fcd09cd4316b4dfcb98e65f73ea))
+* **loader:** let the compat gate pass the private UIPlaceholderColor ([#1043](https://github.com/marioparaschiv/unbound/issues/1043)) ([7663da1](https://github.com/marioparaschiv/unbound/commit/7663da12f80f842517f4df8eba5df2b028fbc0cf))
+* **loader:** point release-please at the loader's version.json ([#1039](https://github.com/marioparaschiv/unbound/issues/1039)) ([e401981](https://github.com/marioparaschiv/unbound/commit/e401981b28802d446f1d43a8525e2cb7e557b1a1))
+* **loader:** stop patching the App Store Discord bundle on jailbreak ([#1047](https://github.com/marioparaschiv/unbound/issues/1047)) ([f24c091](https://github.com/marioparaschiv/unbound/commit/f24c0919c5f8950eada54df6d2814a7ddf385c09))
+
 ## [1.1.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.0.971...loader-v1.1.0) (2026-11-10)
 
 
