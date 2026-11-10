@@ -67,6 +67,13 @@ public:
     {
         reloads++;
     }
+
+    void alert(const std::string &message) override
+    {
+        alerts.push_back(message);
+    }
+
+    std::vector<std::string> alerts;
 };
 
 // Marks the running loader as having checked before, so a launch models a loader that was not just
@@ -272,6 +279,23 @@ void mapsBytecodeAndReadsSource()
     assert(!loader::LoaderPipeline::readSavedBundle(server.path("missing.bundle")));
 }
 
+void explainsWhyAFirstLaunchHasNoBundle()
+{
+    Launch offline;
+    offline.pipeline.prepare();
+    assert(offline.host->alerts.size() == 1);
+    assert(offline.host->alerts[0] ==
+           loader::bundleFailureNotice(loader::BundleUpdateFailure::Network));
+
+    Launch outdated;
+    outdated.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "next"}}, {}, "beta",
+                            "abc1234", "999.0.0");
+    outdated.pipeline.prepare();
+    assert(outdated.host->alerts.size() == 1);
+    assert(outdated.host->alerts[0] ==
+           loader::bundleFailureNotice(loader::BundleUpdateFailure::LoaderTooOld));
+}
+
 void guardsTheLaunchOncePerProcess()
 {
     Launch launch;
@@ -320,6 +344,7 @@ int main()
     runsTheNewBundleOnTheFirstLaunchAfterALoaderUpdate();
     doesNothingWhenDisabled();
     mapsBytecodeAndReadsSource();
+    explainsWhyAFirstLaunchHasNoBundle();
     guardsTheLaunchOncePerProcess();
     turnsOnRecoveryModeAfterRepeatedFailedLaunches();
     return 0;

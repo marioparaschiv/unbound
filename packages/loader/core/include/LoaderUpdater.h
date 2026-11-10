@@ -4,6 +4,7 @@
 #include <functional>
 #include <map>
 #include <optional>
+#include <stdexcept>
 #include <string>
 
 #include "LoaderBundleManifest.h"
@@ -26,6 +27,29 @@ constexpr DownloadPolicy kBundleDownloadPolicy{};
 constexpr double         kManifestFetchTimeoutSeconds = 5.0;
 
 bool isAcceptedDownloadStatus(int status);
+
+// Why a bundle update failed, so a launch without a saved bundle can say what to do about it.
+enum class BundleUpdateFailure
+{
+    Network,
+    Verification,
+    LoaderTooOld,
+    Storage,
+};
+
+class BundleUpdateError : public std::runtime_error
+{
+public:
+    BundleUpdateError(BundleUpdateFailure failure, const std::string &message)
+        : std::runtime_error(message), failure(failure)
+    {
+    }
+
+    BundleUpdateFailure failure;
+};
+
+// The alert for a launch that has no saved bundle and could not download one.
+std::string bundleFailureNotice(BundleUpdateFailure failure);
 
 using TextFetcher =
     std::function<std::optional<std::string>(const std::string &url, double timeoutSeconds)>;

@@ -141,6 +141,8 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
         }
         catch (const std::exception &error)
         {
+            const auto         *update  = dynamic_cast<const BundleUpdateError *>(&error);
+            BundleUpdateFailure failure = update ? update->failure : BundleUpdateFailure::Network;
             // Even a failed check counts, so an offline launch does not wait again next time.
             settings_.setString(kCheckedLoaderSetting, loaderVersion());
             log(hasSaved ? LogLevel::Warning : LogLevel::Error, LOG_CATEGORY_DEFAULT,
@@ -152,8 +154,7 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
             }
             if (!hasSaved && token == token_.load())
             {
-                host_->alert(
-                    "Failed to load Unbound's bundle. Please report this to the developers.");
+                host_->alert(bundleFailureNotice(failure));
             }
             return;
         }
