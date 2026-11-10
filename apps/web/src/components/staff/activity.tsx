@@ -23,7 +23,7 @@ import { staggerStyle } from '~/components/motion/reveal-style';
 import type { AdminSubmission } from '~/lib/admin-submissions';
 import type { EventTimeline } from '~/lib/moderation-events';
 import StatusPill from '~/components/dashboard/status-pill';
-import type { MarketplaceVersion } from '~/lib/marketplace';
+import type { MarketplaceVersion } from '~/lib/marketplace-page';
 import getApiErrorMessage from '~/lib/api/error-message';
 import type { AdminVersion } from '~/lib/admin-addon';
 import type { StaffNote } from '~/lib/staff-notes';

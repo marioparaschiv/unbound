@@ -11,7 +11,7 @@ import { adminAddonQuery } from '~/queries/admin-addons/admin-addons';
 import AddonIconControl from '~/components/admin/addon-icon-control';
 import useSettingsForm from '~/components/staff/use-settings-form';
 import type { ActivityFilter } from '~/components/staff/activity';
-import type { MarketplaceAddonDetails } from '~/lib/marketplace';
+import type { MarketplaceAddonDetails } from '~/lib/marketplace-page';
 import { staggerStyle } from '~/components/motion/reveal-style';
 import { TransferButton } from '~/components/staff/addon-moves';
 import { formatDate } from '~/components/admin/format-date';

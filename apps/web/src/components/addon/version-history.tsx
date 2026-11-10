@@ -3,7 +3,7 @@ import { IconCodeCommit } from 'nucleo-micro-bold';
 import { commitUrl, formatDate, shortSha } from '~/components/addon/format';
 import ChangelogSections from '~/components/changelog-sections';
 import { ExternalLink } from '~/components/addon/sidebar-card';
-import type { MarketplaceVersion } from '~/lib/marketplace';
+import type { MarketplaceVersion } from '~/lib/marketplace-page';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
 import cn from '~/lib/cn';

@@ -2,7 +2,7 @@ import { useMemo, type ReactNode } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { createPageIconRenderer } from '~/components/addon/page-icon-svg';
-import type { MarketplaceAddonDetails } from '~/lib/marketplace';
+import type { MarketplaceAddonDetails } from '~/lib/marketplace-page';
 import VersionHistory from '~/components/addon/version-history';
 import { staggerStyle } from '~/components/motion/reveal-style';
 import AddonHeader from '~/components/addon/addon-header';

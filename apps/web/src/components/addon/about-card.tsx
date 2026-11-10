@@ -2,7 +2,7 @@ import { IconExternalLink } from 'nucleo-micro-bold';
 
 import { DetailRow, ExternalLink, SidebarCard } from '~/components/addon/sidebar-card';
 import { directoryUrl, formatBytes, formatDate } from '~/components/addon/format';
-import type { MarketplaceAddonDetails } from '~/lib/marketplace';
+import type { MarketplaceAddonDetails } from '~/lib/marketplace-page';
 import { PLATFORM_LABELS } from '~/lib/addon-platforms';
 import GitHubIcon from '~/components/icons/github';
 import Text from '~/components/ui/text';
