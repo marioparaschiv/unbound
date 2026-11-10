@@ -6,6 +6,7 @@ import { discordFailure, eventNonce, type MessageGateway } from '~/lib/discord-m
 import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
 import { reviewNotice, type ReviewNoticeOutcome } from '~/db/schema';
 import { EMBED_LIMITS, quote, truncate } from '~/lib/message-text';
+import { createEventCursor } from '~/lib/event-cursor';
 import { DECISIONS } from '~/dispatchers/audit-kinds';
 import type { Database } from '~/db/database';
 
@@ -15,7 +16,6 @@ export type ReviewNoticesOptions = {
 	messages: MessageGateway;
 };
 
-const PAGE = 100;
 const SUBMISSIONS = { listing: 'Your new addon', update: 'Your update to' } as const;
 
 type Handled = { outcome: ReviewNoticeOutcome; messageId?: string };
@@ -53,22 +53,18 @@ async function record(db: Database, eventId: number, { outcome, messageId }: Han
 		.onConflictDoNothing();
 }
 
-// An empty `review_notice` means notices were never enabled here, so the newest event becomes the
-// floor and enabling DMs nobody about old decisions.
-async function recordFloor({ db, web }: DispatcherContext) {
-	const floor = await web.newestEventId();
+// The floor keeps enabling notices from DMing anybody about old decisions.
+const cursor = createEventCursor({
+	table: {
+		async last(db) {
+			const [row] = await db.select({ last: max(reviewNotice.eventId) }).from(reviewNotice);
 
-	await record(db, floor, { outcome: 'floor' });
-
-	return floor;
-}
-
-// Notices are handled one at a time in event id order, so the newest handled id is the whole cursor.
-async function cursor(stores: DispatcherContext) {
-	const [row] = await stores.db.select({ last: max(reviewNotice.eventId) }).from(reviewNotice);
-
-	return row?.last ?? (await recordFloor(stores));
-}
+			return row?.last ?? undefined;
+		},
+		floor: (db, eventId) => record(db, eventId, { outcome: 'floor' }),
+	},
+	after: (web, eventId, limit) => web.reviewNoticesAfter(eventId, limit),
+});
 
 // The nonce dedupes a quick retry; a crash between this send and its row re-sends on a later run,
 // which can DM the author twice. That is accepted.
@@ -110,16 +106,12 @@ async function deliver(
  */
 export function createReviewNoticesDispatcher(options: ReviewNoticesOptions): Dispatcher {
 	// Strictly sequential: a failed send throws and ends the run, and the next run resumes at the cursor.
-	async function notifyPending(context: DispatcherContext) {
-		for (;;) {
-			const notices = await context.web.reviewNoticesAfter(await cursor(context), PAGE);
-
-			if (!notices.length) return;
-
+	function notifyPending(context: DispatcherContext) {
+		return cursor.drain(context, async (notices) => {
 			for (const notice of notices) {
 				await record(context.db, notice.eventId, await deliver(options, notice));
 			}
-		}
+		});
 	}
 
 	return {

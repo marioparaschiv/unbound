@@ -17,6 +17,7 @@ import {
 import { deployBuild, type FirstPartyBuild } from '~/dispatchers/audit-kinds';
 import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
 import type { AuditTelemetry } from '~/lib/audit-telemetry';
+import { createEventCursor } from '~/lib/event-cursor';
 import type { Database } from '~/db/database';
 import { auditPost } from '~/db/schema';
 
@@ -32,7 +33,6 @@ export type AuditOptions = {
 
 // Posts are strictly sequential, so a post orphaned by a crash is always among the newest messages.
 const RECOVERY_WINDOW = 100;
-const PAGE = 100;
 // A batch post's footer reads `Events #first–#last`; it was last edited for its last event.
 const FOOTER_ID = /^Events? #(?:\d+–#)?(\d+) /;
 const MAX_BATCH = 20;
@@ -42,26 +42,10 @@ type Batch = {
 	events: DeployBatch;
 };
 
-// An empty `audit_post` means the log was never enabled here, so the newest event becomes the floor and
-// enabling posts no history. An empty moderation log floors at 0, which posts its first event.
-async function recordFloor({ db, web }: DispatcherContext, channelId: string) {
-	const floor = await web.newestEventId();
+async function lastPosted(db: Database) {
+	const [row] = await db.select({ last: max(auditPost.eventId) }).from(auditPost);
 
-	await db
-		.insert(auditPost)
-		.values({ eventId: floor, channelId, messageId: null })
-		.onConflictDoNothing();
-
-	return floor;
-}
-
-// Posts go out one at a time in id order and moderation event ids are commit-ordered, so every
-// event up to the newest posted one is posted: that id is the whole cursor.
-async function pendingEvents(stores: DispatcherContext, channelId: string): Promise<AuditEvent[]> {
-	const [row] = await stores.db.select({ last: max(auditPost.eventId) }).from(auditPost);
-	const last = row?.last ?? (await recordFloor(stores, channelId));
-
-	return stores.web.eventsAfter(last, PAGE);
+	return row?.last ?? undefined;
 }
 
 // Both a fresh post and an adopted one pass through here once, so each event is exported once.
@@ -209,10 +193,23 @@ function post(messages: MessageGateway, channelId: string, event: AuditEvent, em
  */
 export function createAuditDispatcher(options: AuditOptions): Dispatcher {
 	const { channelId, siteUrl, telemetry, messages } = options;
+	// The floor row has no message: the newest event when the log was first enabled, never posted.
+	const cursor = createEventCursor({
+		table: {
+			last: lastPosted,
+			async floor(db, eventId) {
+				await db
+					.insert(auditPost)
+					.values({ eventId, channelId, messageId: null })
+					.onConflictDoNothing();
+			},
+		},
+		after: (web, eventId, limit) => web.eventsAfter(eventId, limit),
+	});
 
 	// A failed send throws and ends the run, so no later event is ever posted ahead of it.
-	async function postPending(context: DispatcherContext) {
-		for (let pending = await pendingEvents(context, channelId); pending.length;) {
+	function postPending(context: DispatcherContext) {
+		return cursor.drain(context, async (pending) => {
 			const unposted = await recoverPosted(options, pending, context.db);
 
 			for (const event of unposted) {
@@ -223,11 +220,7 @@ export function createAuditDispatcher(options: AuditOptions): Dispatcher {
 
 				await markPosted(context.db, telemetry, event, channelId, messageId, embed);
 			}
-
-			if (pending.length < PAGE) return;
-
-			pending = await pendingEvents(context, channelId);
-		}
+		});
 	}
 
 	return {
