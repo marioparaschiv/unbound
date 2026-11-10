@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /** The commit the spec and COVERAGE.md line numbers describe. Move it only after re-checking every row. */
-export const SYNC_COMMIT = '00cce1a0e15643fd232b7fde07dea1f99a41ea87';
+export const SYNC_COMMIT = '7d1857c90db9d551a070036c9fe9032eebc9c85d';
 
 /** Every file the model describes. */
 export const VERIFIED_FILES = [

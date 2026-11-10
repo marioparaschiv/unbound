@@ -30,4 +30,4 @@ Rows are read by `scripts/touched.ts`; keep the `file` `function` start-end shap
 
 `reserve`, the review's commit and the ban's cancel are each one Postgres SERIALIZABLE transaction that `createDatabase` retries whole on a serialization failure or deadlock, so each is still one indivisible step.
 
-Sync commit: `00cce1a0e15643fd232b7fde07dea1f99a41ea87`. Move it forward only after you confirm, hunk by hunk, that every row above still describes the code at the new commit, and update the line numbers in the table and in the spec comments.
+Sync commit: `7d1857c90db9d551a070036c9fe9032eebc9c85d`. Move it forward only after you confirm, hunk by hunk, that every row above still describes the code at the new commit, and update the line numbers in the table and in the spec comments.
