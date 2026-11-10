@@ -164,31 +164,44 @@ export function now(strategy: SyncStrategy = MODE_STRATEGIES[getMode()]): Promis
 }
 
 /**
- * @description Starts syncing for an account that just signed in: turns syncing on, and asks how to
- * combine this device with a setup the cloud already holds before the first sync.
+ * @description Turns syncing on. A cloud setup this device has never agreed with waits for the user to
+ * choose how to combine them; otherwise it syncs right away, uploading when the cloud is empty.
  * @returns Whether the cloud could be read. Failures are recorded as `lastError`.
- * @internal
  */
-export async function connect(): Promise<boolean> {
+async function begin(): Promise<boolean> {
 	try {
 		const remote = await account.createClient()('GET /api/v1/sync', {});
+		const revision = Store.get('revision', 0);
+		// A remote revision behind ours means the document was deleted since, so nothing is agreed on.
+		const agreed = revision > 0 && remote.revision >= revision;
 
-		resetBase();
 		Store.set('enabled', true);
 		Store.set('lastError', null);
-		Store.set('pendingChoice', remote.revision > 0);
+		Store.set('pendingChoice', remote.revision > 0 && !agreed);
 
 		if (remote.revision === 0) {
-			void now('push');
+			return await now('push');
 		}
 
-		return true;
+		return agreed ? await now() : true;
 	} catch (error) {
-		logger.error('Failed to read the cloud setup after signing in:', error);
+		logger.error('Failed to read the cloud setup:', error);
 		Store.set('lastError', toError(error).message);
 
 		return false;
 	}
+}
+
+/**
+ * @description Starts syncing for an account that just signed in: forgets what was agreed before, turns
+ * syncing on, and asks how to combine this device with a setup the cloud already holds.
+ * @returns Whether the cloud could be read. Failures are recorded as `lastError`.
+ * @internal
+ */
+export function connect(): Promise<boolean> {
+	resetBase();
+
+	return begin();
 }
 
 /**
@@ -205,15 +218,21 @@ export function disconnect() {
 }
 
 /**
- * @description Turns automatic syncing on or off, syncing right away when turned on.
+ * @description Turns automatic syncing on or off. Turning it on syncs right away, or first asks how to
+ * combine this device with a cloud setup it has never synced with.
  * @param enabled Whether to sync automatically.
+ * @returns Whether turning it on could read the cloud; always true when turning it off.
  */
-export function setEnabled(enabled: boolean) {
-	Store.set('enabled', enabled);
+export function setEnabled(enabled: boolean): Promise<boolean> {
+	if (!enabled) {
+		// Turning it off also dismisses a first-sync choice; turning it on again asks again.
+		Store.set('pendingChoice', false);
+		Store.set('enabled', false);
 
-	if (isEnabled()) {
-		void now();
+		return Promise.resolve(true);
 	}
+
+	return begin();
 }
 
 /**
