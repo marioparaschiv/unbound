@@ -1,28 +1,25 @@
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import type { CommandContext, CommandDefinition } from '@unbound-app/debugger-protocol/registry';
+import type { CommandContext } from '@unbound-app/debugger-protocol/registry';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 
-import { safeParse, type TObject } from '~/lib/schema';
+import type { McpTool } from '~/registry';
+import { safeParse } from '~/lib/schema';
 
 /**
- * @description Registers registry definitions as MCP tools on the server: each definition's schema
+ * @description Registers commands as MCP tools on the server: each definition's schema
  * is the tool's input schema, and its handler output maps to a tool result — the formatted text as
  * the sole content block, `ok: false` surfacing as `isError`. The schemas are JSON Schema already, so
  * the low-level server takes them without a translation layer.
  * @param server The MCP server to register the tools on.
- * @param definitions The commands to expose.
+ * @param tools The commands to expose, under their tool names.
  * @param context The runtime the handlers evaluate against.
  */
-export function registerTools(
-	server: Server,
-	definitions: CommandDefinition<TObject>[],
-	context: CommandContext,
-): void {
-	const byName = new Map(definitions.map((definition) => [definition.name, definition]));
+export function registerTools(server: Server, tools: McpTool[], context: CommandContext): void {
+	const byName = new Map(tools.map((tool) => [tool.name, tool.definition]));
 
 	server.setRequestHandler(ListToolsRequestSchema, async () => ({
-		tools: definitions.map((definition) => ({
-			name: definition.name,
+		tools: tools.map(({ name, definition }) => ({
+			name,
 			description: definition.description,
 			inputSchema: definition.schema,
 		})),

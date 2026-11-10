@@ -26,7 +26,7 @@ const evalCommand: CommandDefinition<typeof schema> = {
 		'expression is the return value, and a returned promise is awaited for its resolved value; ' +
 		'`console.log`/`warn`/`error` are captured separately. Pass `timeout` for long-running code.',
 	summary: 'Run JavaScript on the connected device.',
-	surfaces: { cli: 'root', mcp: true },
+	mcp: true,
 	schema,
 	cli: { positionals: ['code'] },
 	handler({ code, timeout }, { client }) {

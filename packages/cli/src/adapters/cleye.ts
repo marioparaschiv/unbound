@@ -30,7 +30,8 @@ function inputValue(value: unknown): CommandInputValue {
 /**
  * @description Builds a cleye command from a registry definition: the properties named in
  * `cli.positionals` become positional parameters, every other schema property becomes a flag whose type
- * is derived from the schema field. The callback reads a stdin-fed positional when piped, validates the
+ * is derived from the schema field. The callback reads a missing required first positional from a
+ * pipe, validates the
  * assembled input through the definition's schema, runs the handler, and exits `0`/`1`/`2` on
  * success, on-device failure, and connection or usage error respectively.
  * @param definition The command to adapt.
@@ -59,22 +60,12 @@ export function toCleyeCommand(definition: CommandDefinition<TObject>): Command 
 	return command(
 		{
 			name: definition.name,
-			description: definition.description,
+			description: definition.summary,
 			parameters: positionalNames.map((name) =>
 				isArrayField(properties[name]!) ? `[${name}...]` : `[${name}]`,
 			),
 			flags,
-			// Tools under `ubd mcp` run through a second cleye instance, whose usage line would drop `mcp`.
-			help: {
-				description: firstSentence(definition.description),
-				...(definition.surfaces.cli === 'mcp'
-					? {
-							usage: ['ubd mcp', definition.name, '[flags...]']
-								.concat(positionalNames.map((name) => `[${name}]`))
-								.join(' '),
-						}
-					: {}),
-			},
+			help: { description: definition.description },
 		},
 		(parsed) => {
 			const { json, ...flagInput } = parsed.flags;
@@ -102,13 +93,14 @@ export function toCleyeCommand(definition: CommandDefinition<TObject>): Command 
 				input[name] = inputValue(Reflect.get(parsed._, name));
 			}
 
-			void run(definition, input, positionalNames[0], Boolean(json));
+			// Only a required positional reads stdin: an optional one keeps its default under a non-TTY agent shell.
+			const [first] = positionalNames;
+			const stdinField =
+				first && definition.schema.required?.includes(first) ? first : void 0;
+
+			void run(definition, input, stdinField, Boolean(json));
 		},
 	);
-}
-
-function firstSentence(description: string) {
-	return description.match(/^.*?\.(?=\s|$)/s)?.[0] ?? description;
 }
 
 async function run(

@@ -7,7 +7,7 @@ import { readCredentials } from '~/lib/credentials';
 
 /**
  * @description Builds the credentials the API is called with: the `UNBOUND_API_KEY` when set (CI),
- * otherwise the session `ubd login` stored for this API origin.
+ * otherwise the session `ubd auth login` stored for this API origin.
  * @param env The validated environment.
  * @returns The authentication headers.
  */
@@ -19,12 +19,12 @@ function getAuthHeaders(env: Env): Headers {
 	const credentials = readCredentials(getCredentialsPath(env));
 
 	if (!credentials) {
-		throw new Error('Not logged in. Run `ubd login`, or set UNBOUND_API_KEY.');
+		throw new Error('Not logged in. Run `ubd auth login`, or set UNBOUND_API_KEY.');
 	}
 
 	if (credentials.apiUrl !== env.UNBOUND_API_URL) {
 		throw new Error(
-			`Logged in to ${credentials.apiUrl}, not ${env.UNBOUND_API_URL}. Run \`ubd login\` again.`,
+			`Logged in to ${credentials.apiUrl}, not ${env.UNBOUND_API_URL}. Run \`ubd auth login\` again.`,
 		);
 	}
 

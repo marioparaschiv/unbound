@@ -1,20 +1,11 @@
-import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
+import type { CommandOutput } from '@unbound-app/debugger-protocol/registry';
 import { closeSync, openSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { connect } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { bridgePortField } from '~/lib/context';
 import { runCommand } from '~/lib/run-command';
-import { Type } from '~/lib/schema';
-
-const schema = Type.Object({
-	action: Type.Enum(['restart', 'start'], {
-		description: 'Restart the running bridge, or start one when none runs.',
-	}),
-	port: bridgePortField,
-});
 
 const LISTEN_TIMEOUT_MS = 15_000;
 const LISTEN_POLL_MS = 250;
@@ -88,46 +79,44 @@ function startDetached(port: number): string {
 	return log;
 }
 
-const bridgeCommand: CommandDefinition<typeof schema> = {
-	name: 'bridge',
-	description:
-		'Restart the debugger bridge so it runs the current code, or start one when none is listening. ' +
-		'The bridge runs detached and writes its log to the system temporary directory.',
-	surfaces: { cli: 'root', mcp: false },
-	schema,
-	cli: { positionals: ['action'] },
-	async handler({ action, port }) {
-		const running = await listenerPids(port);
+/**
+ * @description Starts the debugger bridge detached, logging to the system temporary directory. With
+ * `restart`, stops the bridge already listening first, so it runs the current code.
+ * @param port The port the bridge listens on.
+ * @param restart Whether to replace a running bridge instead of keeping it.
+ * @returns Whether a bridge listens now, and where its log is.
+ */
+export async function launchBridge(port: number, restart: boolean): Promise<CommandOutput> {
+	const running = await listenerPids(port);
 
-		if (action === 'start' && running.length) {
-			return { ok: true, text: `A bridge already listens on port ${port}.` };
+	if (!restart && running.length) {
+		return { ok: true, text: `A bridge already listens on port ${port}.` };
+	}
+
+	for (const pid of running) {
+		try {
+			process.kill(pid);
+		} catch {
+			continue;
 		}
+	}
 
-		for (const pid of running) {
-			try {
-				process.kill(pid);
-			} catch {
-				continue;
-			}
-		}
+	if (running.length && !(await waitUntil(port, false))) {
+		return { ok: false, text: `The bridge on port ${port} did not stop.` };
+	}
 
-		if (running.length && !(await waitUntil(port, false))) {
-			return { ok: false, text: `The bridge on port ${port} did not stop.` };
-		}
+	const log = startDetached(port);
 
-		const log = startDetached(port);
+	if (!(await waitUntil(port, true))) {
+		return {
+			ok: false,
+			text: `The bridge did not start listening on port ${port}; see ${log}.`,
+		};
+	}
 
-		if (!(await waitUntil(port, true))) {
-			return {
-				ok: false,
-				text: `The bridge did not start listening on port ${port}; see ${log}.`,
-			};
-		}
+	const verb = running.length ? 'Restarted' : 'Started';
 
-		const verb = running.length ? 'Restarted' : 'Started';
+	return { ok: true, text: `${verb} the bridge on port ${port}. Its log is ${log}.` };
+}
 
-		return { ok: true, text: `${verb} the bridge on port ${port}. Its log is ${log}.` };
-	},
-};
-
-export default bridgeCommand;
+export default launchBridge;

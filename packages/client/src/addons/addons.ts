@@ -534,7 +534,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	}
 
 	/**
-	 * @description Stops treating an addon as a development copy, removing the marker `ubd install` leaves, so update checks include it again.
+	 * @description Stops treating an addon as a development copy, removing the marker `ubd device install` leaves, so update checks include it again.
 	 * @param id The addon's id.
 	 */
 	clearDevelopmentCopy(id: string): void {

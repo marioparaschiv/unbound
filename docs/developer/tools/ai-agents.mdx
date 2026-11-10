@@ -56,20 +56,22 @@ Give an agent the `ubd mcp` server to run code on your phone, and Unbound's skil
 
 | Skill | Use |
 | --- | --- |
+| `unbound-cli` | Pick the right `ubd` command, and read its JSON output and exit code. |
 | `unbound-plugins` | Scaffold a plugin, lay out its files, write `start` and `stop`, keep launch cost low. |
 | `unbound-patching` | Find a module, store or component, and patch a function, render or Flux action. |
-| `unbound-debugger` | Start the bridge, register `ubd mcp`, hot reload with `ubd dev` or `ubd push`, check on the phone. |
+| `unbound-debugger` | Start the bridge, register `ubd mcp`, hot reload with `ubd dev` or `ubd debug push`, check on the phone. |
 | `hermes-internals` | Read Discord's decompiled JavaScript when a lookup finds nothing, often after an update. |
 | `react-native-internals` | Inspect native views and hook native methods when a patch ran but the screen didn't change. |
 
-An agent loads a skill only when the task matches, so installing all five costs nothing up front.
+An agent loads a skill only when the task matches, so installing all six costs nothing up front.
 
 ## Tools
 
 | Where | Commands |
 | --- | --- |
-| MCP tools | `eval`, `status`, `push`, `reload`, `install`, `device`, `open`, `route`, `modules`, `trace`, `profile`, `timing`, `views`, `inspect`, `hook`, `spans` |
-| Terminal only | `build`, `check`, `dev`, `create`, `logs`, `i18n`, `login`, `publish`, run as `bunx --bun @unbound-app/cli <command>` |
+| MCP tools | The `ubd debug` commands by name: `eval`, `status`, `push`, `reload`, `open`, `route`, `modules`, `trace`, `profile`, `timing`, `views`, `inspect`, `hook`, `spans` |
+| MCP tools | The `ubd device` commands with a prefix: `device_install`, `device_reset`, `device_save`, `device_restore`, `device_snapshots` |
+| Terminal only | The rest, such as `build`, `check`, `dev`, `i18n`, `publish` and `device logs`, run as `bunx --bun @unbound-app/cli <command>` |
 
 Each tool takes the same options as its [CLI](/docs/developer/tools/cli) command.
 

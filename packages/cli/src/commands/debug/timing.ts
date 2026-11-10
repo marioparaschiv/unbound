@@ -16,7 +16,8 @@ const timingCommand: CommandDefinition<typeof schema> = {
 		'Measure how long a zero-delay JavaScript timer and a native main-thread round trip take on the ' +
 		'connected device right now. Large numbers mean the JavaScript thread is busy, for instance with ' +
 		'plugin work during a cold start.',
-	surfaces: { cli: 'root', mcp: true },
+	summary: 'Measure JavaScript and main-thread latency.',
+	mcp: true,
 	schema,
 	handler({ rounds }, { client }) {
 		return runOnDevice(client, toDeviceCode(measureTiming, rounds));

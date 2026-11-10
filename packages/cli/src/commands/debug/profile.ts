@@ -56,7 +56,8 @@ const profileCommand: CommandDefinition<typeof schema> = {
 		"Sample the connected device's JavaScript thread with Hermes' sampling profiler for a while, " +
 		'then rank the functions and sources it spent the time in. Scroll or open the screen to measure ' +
 		'while it records. `--out` also saves the raw trace.',
-	surfaces: { cli: 'root', mcp: true },
+	summary: 'Sample the JavaScript thread and rank where time went.',
+	mcp: true,
 	schema,
 	handler(input, { client }) {
 		return runProfile(client, input);

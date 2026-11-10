@@ -60,7 +60,8 @@ const inspectCommand: CommandDefinition<typeof schema> = {
 		"`views [--class <name>] [--depth n]` dumps the current activity's view tree with class names, " +
 		'resource ids, sizes, visibility and text. `find <class>` lists the attached views of a class. ' +
 		'It reads through a running plugin that holds native access.',
-	surfaces: { cli: 'root', mcp: true },
+	summary: 'Describe a Java class, or walk or find native views.',
+	mcp: true,
 	schema,
 	cli: { positionals: ['what', 'name'] },
 	handler(input, { client }) {
@@ -69,7 +70,7 @@ const inspectCommand: CommandDefinition<typeof schema> = {
 };
 
 /**
- * @description Runs one `ubd inspect` request on the device and formats what it reports.
+ * @description Runs one `ubd debug inspect` request on the device and formats what it reports.
  * @param client The bridge controller.
  * @param input The parsed command input.
  * @returns The formatted report with the raw report as data, or why it failed.
@@ -117,11 +118,11 @@ function toRequest(
 		case 'class':
 			return name
 				? { kind: 'class', name }
-				: { error: 'Pass the class to describe: ubd inspect class <name>.' };
+				: { error: 'Pass the class to describe: ubd debug inspect class <name>.' };
 		case 'find':
 			return name
 				? { kind: 'find', className: name, maxResults: 200, maxNodes, chunk: CHUNK_SIZE }
-				: { error: 'Pass the class to look for: ubd inspect find <class>.' };
+				: { error: 'Pass the class to look for: ubd debug inspect find <class>.' };
 		case 'views':
 			return {
 				kind: 'views',

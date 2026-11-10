@@ -85,7 +85,8 @@ const logsCommand: CommandDefinition<typeof schema> = {
 		"Tail Discord's log, filtered to Unbound, the JavaScript console and crashes: on Android " +
 		'through adb logcat for com.discord, following it across restarts, or on a jailbroken iPhone ' +
 		'through its unified log. Runs until interrupted.',
-	surfaces: { cli: 'root', mcp: false },
+	summary: "Tail Discord's log, or pull the loader's log files.",
+	mcp: false,
 	schema,
 	async handler({
 		serial,

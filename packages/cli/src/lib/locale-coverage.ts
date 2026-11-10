@@ -27,7 +27,7 @@ export type LocaleCoverage = {
 	percent: number;
 	/** Keys en-US has and the file lacks. */
 	missing: string[];
-	/** Keys still holding the English stub `--fix` wrote. */
+	/** Keys still holding the English stub `ubd i18n fix` wrote. */
 	untranslated: string[];
 	/** Keys the file has and en-US does not; the build leaves them out. */
 	extra: string[];
@@ -191,7 +191,7 @@ export function measureCoverage(
 }
 
 /**
- * @description Counts what fails `ubd i18n`: ICU problems, extra keys and unreadable files, plus missing and
+ * @description Counts what fails `ubd i18n check`: ICU problems, extra keys and unreadable files, plus missing and
  * untranslated keys under `strict`.
  * @param report The coverage report.
  * @param strict Whether missing translations count too.

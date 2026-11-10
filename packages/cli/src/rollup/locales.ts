@@ -118,7 +118,7 @@ function readTranslation(
 				file: `${LOCALES_DIRECTORY}/${code}.json`,
 				path: key,
 				message: `is not in ${SOURCE_LOCALE}.json, so it is left out`,
-				fix: `add it to ${SOURCE_LOCALE}.json, or remove it (ubd i18n --prune)`,
+				fix: `add it to ${SOURCE_LOCALE}.json, or remove it (ubd i18n fix --prune)`,
 			});
 			continue;
 		}

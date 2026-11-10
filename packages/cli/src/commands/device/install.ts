@@ -41,8 +41,9 @@ const installCommand: CommandDefinition<typeof schema> = {
 	description:
 		"Build one plugin and copy it into Discord's plugin folder on a rooted Android device or " +
 		'emulator over adb, or on a jailbroken iPhone through jb-p1lot, so the next cold start loads ' +
-		'it. Pass `restart` to relaunch Discord right away. Use `push` to hot-reload instead.',
-	surfaces: { cli: 'root', mcp: true },
+		'it. Pass `restart` to relaunch Discord right away. Use `ubd debug push` to hot-reload instead.',
+	summary: 'Copy a plugin into Discord for the next cold start.',
+	mcp: true,
 	schema,
 	cli: { positionals: ['addon'] },
 	async handler({ addon: target, build, serial, ios, udid, restart }) {

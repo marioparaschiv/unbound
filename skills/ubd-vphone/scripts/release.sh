@@ -25,7 +25,7 @@ if [[ -n $served && $served != "$root" && -d $served ]]; then
 fi
 
 if [[ -n $url ]]; then
-	"$here/ubd" eval "unbound.storage.getBucket('unbound').set('loader.update.url', '$url')" >/dev/null ||
+	"$here/ubd" debug eval "unbound.storage.getBucket('unbound').set('loader.update.url', '$url')" >/dev/null ||
 		echo "WARN could not restore the loader URL to $url" >&2
 fi
 

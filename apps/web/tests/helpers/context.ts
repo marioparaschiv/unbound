@@ -184,7 +184,7 @@ export async function browserSessionHeaders(ctx: AppContext, token: string): Pro
 }
 
 /**
- * @description Runs the device authorization flow `ubd login` uses: requests a code, approves it as
+ * @description Runs the device authorization flow `ubd auth login` uses: requests a code, approves it as
  * the signed-in user and exchanges it for a session.
  * @param ctx The application context.
  * @param headers The approving user's session headers.

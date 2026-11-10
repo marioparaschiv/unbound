@@ -17,7 +17,8 @@ const spansCommand: CommandDefinition<typeof schema> = {
 		'Print the text and spans of the Android text views that contain some text, with each ' +
 		"span's class and range and the text's invisible characters escaped. Use it to see how Discord " +
 		'renders mentions, code blocks and links before a plugin rewrites them.',
-	surfaces: { cli: 'root', mcp: true },
+	summary: 'Print the spans of Android text views.',
+	mcp: true,
 	schema,
 	cli: { positionals: ['match'] },
 	handler({ match, max }, { client }) {

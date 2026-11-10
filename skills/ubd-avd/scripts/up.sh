@@ -191,7 +191,7 @@ if wanted emu; then
 		sleep 2
 	done
 
-	# Root adbd: Magisk's su denies the shell user after a cold boot, and ubd install, ubd device and point.sh
+	# Root adbd: Magisk's su denies the shell user after a cold boot, and ubd device and point.sh
 	# all use a root adb shell when they get one. adbd restarts, so wait for it to come back.
 	if [[ $(with_timeout 10 "$ADB" -s "$AVD_SERIAL" shell id -u 2>/dev/null | tr -d '\r') != 0 ]]; then
 		with_timeout 20 "$ADB" -s "$AVD_SERIAL" root >/dev/null 2>&1 || true
@@ -199,7 +199,7 @@ if wanted emu; then
 	fi
 
 	if ! root_shell id 2>/dev/null | grep -q 'uid=0'; then
-		echo "WARN $AVD_SERIAL has no root shell; ubd install and point.sh need it. boot.md: Rebuilding from nothing" >&2
+		echo "WARN $AVD_SERIAL has no root shell; ubd device install and point.sh need it. boot.md: Rebuilding from nothing" >&2
 	fi
 
 	keep_awake

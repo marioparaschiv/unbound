@@ -44,7 +44,7 @@ function keyDiagnostics(pluginRoot: string, sourceFile: LocaleFile): Diagnostic[
 				path: usage.key,
 				severity: 'error',
 				message: `${usage.site} names ${usage.key}, which ${sourceFile.file} does not have`,
-				fix: `add it: ubd i18n --add ${usage.key} "<English text>"`,
+				fix: `add it: ubd i18n add ${usage.key} "<English text>"`,
 			}),
 		);
 	}
@@ -90,7 +90,7 @@ function keylessDiagnostics(pluginRoot: string, sourceFile: LocaleFile): Diagnos
 			path: usage.key,
 			severity: 'error',
 			message: `${usage.site} names ${usage.key}, but the plugin has no ${sourceFile.file}`,
-			fix: `add ${sourceFile.file} with the key: ubd i18n --add ${usage.key} "<English text>"`,
+			fix: `add ${sourceFile.file} with the key: ubd i18n add ${usage.key} "<English text>"`,
 		}),
 	);
 }
@@ -98,7 +98,7 @@ function keylessDiagnostics(pluginRoot: string, sourceFile: LocaleFile): Diagnos
 export const i18nCheck: Check = {
 	id: 'i18n',
 	/**
-	 * @description Checks a plugin's translations as `ubd i18n --unused` does: missing translations, a plural or
+	 * @description Checks a plugin's translations as `ubd i18n unused` does: missing translations, a plural or
 	 * select without `other`, keys the source names that en-US lacks, and en-US keys nothing uses.
 	 * @param context The addon to check.
 	 * @returns The problems; without `i18n/en-US.json`, one per key the source names.
@@ -129,7 +129,7 @@ export const i18nCheck: Check = {
 						file: locale.file,
 						severity: 'warning',
 						message: `lacks ${locale.missing.length} of ${locale.total} keys (${locale.missing.join(', ')}), which show in English`,
-						fix: 'translate them; ubd i18n --fix stubs them with the English text',
+						fix: 'translate them; ubd i18n fix stubs them with the English text',
 					}),
 				);
 			}

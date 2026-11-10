@@ -33,7 +33,8 @@ const openCommand: CommandDefinition<typeof schema> = {
 	description:
 		'Open an Unbound (or Discord) settings screen on the connected device from anywhere in the ' +
 		'app, through the root navigation ref. Prints the route key it opened.',
-	surfaces: { cli: 'mcp', mcp: true },
+	summary: 'Open a settings screen on the device.',
+	mcp: true,
 	schema,
 	cli: { positionals: ['screen'] },
 	async handler({ screen, params }, { client }) {

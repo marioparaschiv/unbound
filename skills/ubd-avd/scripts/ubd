@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Runs an Unbound CLI command (eval, open, route, reload, install, logs) against the AVD's bridge and adb serial.
+# Runs an Unbound CLI command (debug eval, debug open, device install, device logs...) against the AVD's bridge and adb serial.
 set -euo pipefail
 . "$(dirname "$0")/env.sh"
 cd "$root"
-# `ubd install` and `ubd logs` call adb from PATH.
+# `ubd device` commands call adb from PATH.
 export PATH=$ANDROID_HOME/platform-tools:$PATH
 export ANDROID_SERIAL=$AVD_SERIAL
 
 # Only the bridge commands take --port; the others reject flags they do not know.
 case ${1:-} in
-bridge | dev | eval | hook | inspect | mcp | modules | open | profile | push | reload | route | spans | status | timing | trace | views)
+debug | dev | mcp)
 	exec bun packages/cli/src/index.ts "$@" --port "$AVD_BRIDGE_PORT"
 	;;
 *) exec bun packages/cli/src/index.ts "$@" ;;

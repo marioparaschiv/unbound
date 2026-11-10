@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { safeParse, Type, type StaticDecode } from './schema';
 
 const schema = Type.Object({
-	/** The origin of the Unbound web API that `ubd login` and `ubd publish` talk to. */
+	/** The origin of the Unbound web API that `ubd auth login` and `ubd publish` talk to. */
 	UNBOUND_API_URL: apiUrlSchema,
 	/** An API key for CI; when set, `ubd publish` sends it instead of the stored login. */
 	UNBOUND_API_KEY: Type.Optional(Type.String({ minLength: 1 })),
@@ -74,7 +74,7 @@ export function parseMediaLimits(source: EnvSource = process.env): MediaLimits {
 }
 
 /**
- * @description Resolves where `ubd login` stores credentials, following the XDG base directory spec.
+ * @description Resolves where `ubd auth login` stores credentials, following the XDG base directory spec.
  * @param env The validated environment.
  * @returns The absolute path of `unbound/credentials.json` in the user's config directory.
  */
