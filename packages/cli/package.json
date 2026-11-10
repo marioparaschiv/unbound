@@ -57,13 +57,13 @@
 		"magic-string": "^1.4.5",
 		"marked": "^18.1.3",
 		"picocolors": "^1.1.1",
-		"rolldown": "^1.2.16",
-		"rollup": "^4.67.5",
+		"rolldown": "^1.3.0",
+		"rollup": "^4.68.0",
 		"rollup-plugin-iife": "^0.8.0",
 		"rollup-plugin-swc3": "^0.12.1",
 		"sharp": "^0.35.5",
 		"thumbhash": "^0.1.1",
-		"typebox": "^1.4.4"
+		"typebox": "^1.4.5"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
@@ -74,7 +74,7 @@
 		"@unbound-app/utils": "workspace:*",
 		"@unbound-app/web": "workspace:*",
 		"reanimated-worklets-plugin": "npm:react-native-reanimated@3.19.4",
-		"tsdown": "^0.23.5",
+		"tsdown": "^0.23.7",
 		"typescript": "catalog:",
 		"typescript-api": "npm:typescript@5.9.3"
 	},
