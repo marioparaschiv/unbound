@@ -1,9 +1,9 @@
 import type { FluxActionOf } from '@unbound-app/api/flux';
+import { settings } from '@unbound-app/settings';
 import { flux } from '@unbound-app/api';
 
 import { resolveUser } from '~/discord';
 import { messages, uniqueUsername } from '~/messages';
-import { readSettings } from '~/modules';
 import { notifyAboutUser } from '~/notify';
 import { relationshipRemovalKind } from '~/removals';
 import { refresh, type Session } from '~/session';
@@ -34,7 +34,7 @@ export function subscribeRelationshipRemove(session: Session): () => void {
 
 		if (!id || session.manual.friends.consume(id)) return;
 
-		const kind = relationshipRemovalKind(relationship.type ?? 0, readSettings());
+		const kind = relationshipRemovalKind(relationship.type ?? 0, settings);
 
 		if (kind) void report(id, kind, session);
 	}

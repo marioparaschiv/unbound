@@ -1,6 +1,7 @@
+import { settings } from '@unbound-app/settings';
+import type { Settings } from '@unbound-app/settings';
 import { describe, expect, test } from 'bun:test';
 
-import { SETTINGS, type Settings } from '~/constants';
 import {
 	createManualRemovals,
 	findOfflineRemovals,
@@ -23,6 +24,15 @@ const previous: Snapshot = {
 	requests: ['r1', 'r2', 'r3'],
 };
 
+const ALL_ON: Settings = {
+	notices: false,
+	offlineRemovals: true,
+	friends: true,
+	friendRequestCancels: true,
+	servers: true,
+	groups: true,
+};
+
 const current: Snapshot = {
 	guilds: [{ id: 'g1', name: 'Kept' }],
 	groups: [{ id: 'c1', name: 'Kept' }],
@@ -31,7 +41,7 @@ const current: Snapshot = {
 };
 
 const context = (settings: Partial<Settings> = {}) => ({
-	settings: { ...SETTINGS, ...settings },
+	settings: { ...ALL_ON, ...settings },
 	isGuildUnavailable: (id: string): boolean | undefined => id === 'g3',
 	relationshipType: (id: string) => (id === 'r2' ? 1 : id === 'r3' ? 2 : 0),
 });
@@ -104,19 +114,19 @@ describe('guild availability', () => {
 
 describe('relationshipRemovalKind', () => {
 	test('reports friends and incoming requests', () => {
-		expect(relationshipRemovalKind(1, SETTINGS)).toBe('friend');
-		expect(relationshipRemovalKind(3, SETTINGS)).toBe('request');
+		expect(relationshipRemovalKind(1, ALL_ON)).toBe('friend');
+		expect(relationshipRemovalKind(3, ALL_ON)).toBe('request');
 	});
 
 	test('ignores blocks and outgoing requests', () => {
-		expect(relationshipRemovalKind(2, SETTINGS)).toBeUndefined();
-		expect(relationshipRemovalKind(4, SETTINGS)).toBeUndefined();
+		expect(relationshipRemovalKind(2, ALL_ON)).toBeUndefined();
+		expect(relationshipRemovalKind(4, ALL_ON)).toBeUndefined();
 	});
 
 	test('honours the friend and request settings', () => {
-		expect(relationshipRemovalKind(1, { ...SETTINGS, friends: false })).toBeUndefined();
+		expect(relationshipRemovalKind(1, { ...ALL_ON, friends: false })).toBeUndefined();
 		expect(
-			relationshipRemovalKind(3, { ...SETTINGS, friendRequestCancels: false }),
+			relationshipRemovalKind(3, { ...ALL_ON, friendRequestCancels: false }),
 		).toBeUndefined();
 	});
 });
@@ -139,5 +149,11 @@ describe('createManualRemovals', () => {
 		removals.clear();
 
 		expect(removals.consume('1')).toBe(false);
+	});
+});
+
+describe('the settings', () => {
+	test('report every removal, offline ones too, in notifications that fade, until the user changes them', () => {
+		expect({ ...settings }).toEqual(ALL_ON);
 	});
 });

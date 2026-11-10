@@ -1,6 +1,5 @@
-import { flux, metro, storage } from '@unbound-app/api';
+import { flux, metro } from '@unbound-app/api';
 
-import { SETTINGS, type SettingKey, type Settings } from '~/constants';
 import type {} from '~/types';
 
 export const UserStore = flux.getStore('User', { lazy: true });
@@ -21,19 +20,3 @@ export const GUILD_ACTIONS_FILTER = metro.filters.byProps('leaveGuild');
 export const PRIVATE_CHANNEL_ACTIONS_FILTER = metro.filters.byProps('closePrivateChannel');
 
 export const { AsyncUsers, Profiles } = metro.api;
-
-export const settings = storage.getBucket();
-
-/**
- * @description Reads every setting with its default.
- * @returns The plugin's current settings.
- */
-export function readSettings(): Settings {
-	const values = {} as Settings;
-
-	for (const key of Object.keys(SETTINGS) as SettingKey[]) {
-		values[key] = settings.get(key, SETTINGS[key]);
-	}
-
-	return values;
-}

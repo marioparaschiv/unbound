@@ -12,7 +12,6 @@ import { patchRelationshipActions } from '~/patches/relationship-actions';
 import { patchGuildActions } from '~/patches/guild-actions';
 import { patchRestRemovals } from '~/patches/rest-removals';
 import { closeSession, createSession } from '~/session';
-import SettingsPanel from '~/components/settings-panel';
 import {
 	ChannelStore,
 	GuildMemberStore,
@@ -53,5 +52,3 @@ export const { start, stop, selfTest } = runFeatures(
 	},
 	{ atomic: true },
 );
-
-export { SettingsPanel };

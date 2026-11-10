@@ -1,9 +1,9 @@
 import type { FluxActionOf } from '@unbound-app/api/flux';
+import { settings } from '@unbound-app/settings';
 import { flux } from '@unbound-app/api';
 
 import { isGuildUnavailable } from '~/discord';
 import { messages } from '~/messages';
-import { readSettings } from '~/modules';
 import { notify } from '~/notify';
 import { refresh, type Session } from '~/session';
 
@@ -23,7 +23,7 @@ export function subscribeGuildDelete(session: Session): () => void {
 
 		refresh(session, 'guilds', id);
 
-		if (known && !manual && readSettings().servers) {
+		if (known && !manual && settings.servers) {
 			notify(messages.removedFromServer(known.name), known.iconURL);
 		}
 	}
