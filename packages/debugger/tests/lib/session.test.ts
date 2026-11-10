@@ -11,7 +11,7 @@ import {
 	handleDeviceMessage,
 	resolveEvalTimeout,
 	type SocketLike,
-} from '../src/lib/session';
+} from '~/lib/session';
 
 type RecordingSocket = SocketLike & { frames: unknown[] };
 
