@@ -1,19 +1,10 @@
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { RepositoryDetails } from '@unbound-app/contracts/source';
-import { eq } from 'drizzle-orm';
 
-import {
-	addon,
-	addonMaintainer,
-	addonVersion,
-	submission,
-	submissionSource,
-	user,
-} from '~/db/schema';
-import { refreshAddonSummary, toAddonSummary } from '~/lib/addons';
+import { makeLive, markFilesPublished, promoteDeveloper } from '~/lib/publish-version';
+import { submission, submissionSource } from '~/db/schema';
 import type { SubmissionRow } from '~/lib/submissions';
 import type { AppContext } from '~/lib/context';
-import { toVersionRow } from '~/lib/review';
 
 type SubmissionInsert = typeof submission.$inferInsert;
 
@@ -136,9 +127,21 @@ export async function seedSubmission(
 	return row;
 }
 
+// Makes a seeded approved submission live as publishing does, its files already written.
+async function seedLive(ctx: AppContext, row: SubmissionRow, sha256: string): Promise<void> {
+	await ctx.db.transaction(async (tx) => {
+		await makeLive(tx, row, sha256, ctx.now());
+
+		if (row.kind === 'listing') {
+			await promoteDeveloper(tx, row.authorId);
+		}
+	});
+	await markFilesPublished(ctx.db, row);
+}
+
 /**
- * @description Stores an approved submission and its live version row, as approval would, without
- * touching object storage.
+ * @description Stores an approved update and its live version row of an addon that exists, as
+ * approval would, without touching object storage.
  * @param ctx The application context.
  * @param authorId The submitting user.
  * @param published The approved manifest.
@@ -159,21 +162,18 @@ export async function seedVersion(
 		ctx,
 		authorId,
 		published,
-		{ status: 'approved', sha256 },
+		{ kind: 'update', status: 'approved', sha256 },
 		source ?? null,
 	);
 
-	await ctx.db.transaction(async (tx) => {
-		await tx.insert(addonVersion).values(toVersionRow(row, sha256, ctx.now()));
-		await refreshAddonSummary(tx, published.id);
-	});
+	await seedLive(ctx, row, sha256);
 
 	return row;
 }
 
 /**
- * @description Stores an approved addon owned by `ownerId` with one live version, and gives the owner
- * the `developer` role first approval grants.
+ * @description Stores an approved listing: the addon owned by `ownerId` with one live version, and
+ * the `developer` role first approval grants the owner.
  * @param ctx The application context.
  * @param ownerId The owner.
  * @param published The first approved manifest.
@@ -186,15 +186,16 @@ export async function seedApprovedAddon(
 	published: PublishedManifest,
 	source?: SourceSeed,
 ): Promise<SubmissionRow> {
-	await ctx.db.insert(addon).values({
-		id: published.id,
-		createdAt: ctx.now(),
-		...toAddonSummary(published, ctx.now()),
-	});
-	await ctx.db
-		.insert(addonMaintainer)
-		.values({ addonId: published.id, userId: ownerId, role: 'owner' });
-	await ctx.db.update(user).set({ role: 'developer' }).where(eq(user.id, ownerId));
+	const sha256 = new Bun.CryptoHasher('sha256').update(published.version).digest('hex');
+	const row = await seedSubmission(
+		ctx,
+		ownerId,
+		published,
+		{ status: 'approved', sha256 },
+		source ?? null,
+	);
 
-	return seedVersion(ctx, ownerId, published, undefined, source);
+	await seedLive(ctx, row, sha256);
+
+	return row;
 }
