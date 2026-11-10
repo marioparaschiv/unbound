@@ -9,8 +9,8 @@ import {
 	signInWithDiscord,
 	addTeamMembers,
 } from '../../../../../apps/web/tests/helpers';
+import { getArtifactKeys } from '../../../../../packages/contracts/src/version-layout';
 import { addon, addonMaintainer } from '../../../../../apps/web/src/db/schema';
-import { getArtifactKeys } from '../../../../../apps/web/src/lib/artifacts';
 import { createAppContext } from '../../../../../apps/web/src/lib/context';
 import { createDatabase } from '../../../../../apps/web/src/db/database';
 import { toAddonSummary } from '../../../../../apps/web/src/lib/addons';

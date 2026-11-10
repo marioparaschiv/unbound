@@ -4,40 +4,25 @@ import type {
 	ReviewSubmissionRequest,
 	ReviewSubmissionResponse,
 } from '@unbound-app/contracts/review';
-import type { ReviewDecision, SubmissionKind } from '@unbound-app/contracts/publish';
+import type { SubmissionKind } from '@unbound-app/contracts/publish';
 import { submissionKindSchema } from '@unbound-app/contracts/publish';
-import { listAddonFiles } from '@unbound-app/contracts/addon-files';
-import { and, eq, isNotNull } from 'drizzle-orm';
+import { isNotNull } from 'drizzle-orm';
 
-import { toAddonVersion, writeArtifact, writeStorePage, type StorePage } from '~/lib/artifacts';
-import { applySubmissionMaintainers, describeMaintainerChanges } from '~/lib/maintainers';
-import { addon, addonMaintainer, addonVersion, submission, user } from '~/db/schema';
-import { LATEST_VERSION, refreshAddonSummary, toAddonSummary } from '~/lib/addons';
-import type { SourcedSubmissionRow, SubmissionRow } from '~/lib/submissions';
+import { decideSubmission, type Decision } from '~/lib/submission-decision';
+import type { SourcedSubmissionRow } from '~/lib/submissions';
 import { requireSourced, toSubmission } from '~/lib/submissions';
-import { requestProfileRefresh } from '~/lib/authors/profiles';
-import { recordReviewDecision } from '~/lib/moderation-events';
-import { readTags, replaceAddonTags } from '~/lib/addon-tags';
-import { readPageMedia } from '~/lib/addon-page-source';
+import { describeMaintainerChanges } from '~/lib/maintainers';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
-import { connectGitHubIfLinked } from '~/lib/github';
-import { readListedFiles } from '~/lib/addon-files';
+import { publish } from '~/lib/publish-version';
 import { hasPermission } from '~/lib/auth/access';
-import type { Transaction } from '~/db/database';
-import { toVersionKey } from '~/lib/version-key';
+import { toAddonVersion } from '~/lib/artifacts';
+import { LATEST_VERSION } from '~/lib/addons';
 import type { AppContext } from '~/lib/context';
+import { readTags } from '~/lib/addon-tags';
 import type { Caller } from '~/lib/api/caller';
 import { ApiError } from '~/lib/api/errors';
-
-export type AddonVersionInsert = typeof addonVersion.$inferInsert;
-
-type Decision = {
-	decision: ReviewDecision;
-	note: string | null;
-	reviewerId: string;
-	reviewedAt: Date;
-};
+import { addonVersion } from '~/db/schema';
 
 const REVIEW_PERMISSIONS: Record<SubmissionKind, Permissions> = {
 	listing: { submission: ['review'] },
@@ -48,34 +33,6 @@ function getReviewableKinds(caller: Caller): SubmissionKind[] {
 	return submissionKindSchema.enum.filter((kind) =>
 		hasPermission(caller.user.role, REVIEW_PERMISSIONS[kind]),
 	);
-}
-
-/**
- * @description Builds the live version row an approved submission publishes.
- * @param row The approved submission.
- * @param sha256 The verified SHA-256 of the published bundle.
- * @param publishedAt The approval time.
- * @returns The `addon_version` values.
- */
-export function toVersionRow(
-	row: SubmissionRow,
-	sha256: string,
-	publishedAt: Date,
-): AddonVersionInsert {
-	const min = row.manifest.unbound?.min;
-
-	return {
-		addonId: row.addonId,
-		version: row.version,
-		versionKey: toVersionKey(row.version),
-		minClientKey: min ? toVersionKey(min) : '',
-		submissionId: row.id,
-		manifest: row.manifest,
-		changelog: row.changelog,
-		bundleSize: row.bundleSize,
-		sha256,
-		publishedAt,
-	};
 }
 
 /**
@@ -181,18 +138,12 @@ export async function listReviewQueue(
 	return { submissions };
 }
 
-type ReviewTarget = {
-	row: SourcedSubmissionRow;
-	// The approval already committed and its version is live: the request only republishes the files.
-	republish: boolean;
-};
-
 async function requireReviewable(
 	ctx: AppContext,
 	caller: Caller,
 	id: string,
 	request: ReviewSubmissionRequest,
-): Promise<ReviewTarget> {
+): Promise<SourcedSubmissionRow> {
 	if (getReviewableKinds(caller).length === 0) {
 		throw new ApiError('forbidden', 'You do not have permission to review submissions.');
 	}
@@ -205,7 +156,8 @@ async function requireReviewable(
 
 	requirePermission(caller, REVIEW_PERMISSIONS[row.kind]);
 
-	const republish = await isRepublish(ctx, row, request);
+	// An approved submission may be approved again: publishing then writes the files a failed write left pending.
+	const republish = request.decision === 'approved' && row.status === 'approved';
 
 	if (row.status !== 'pending_review' && !republish) {
 		throw new ApiError('submission_not_pending', `Submission ${id} is ${row.status}.`);
@@ -220,253 +172,7 @@ async function requireReviewable(
 		throw new ApiError('self_review', `You cannot review ${row.addonId}: you maintain it.`);
 	}
 
-	return { row: requireSourced(row), republish };
-}
-
-// A repeated approval finishes a failed write only while the version is still this submission's and unpublished.
-async function isRepublish(
-	ctx: AppContext,
-	row: SubmissionRow,
-	request: ReviewSubmissionRequest,
-): Promise<boolean> {
-	if (request.decision !== 'approved' || row.status !== 'approved') {
-		return false;
-	}
-
-	const live = await ctx.db.query.addonVersion.findFirst({
-		where: { addonId: row.addonId, version: row.version },
-		columns: { submissionId: true, filesPendingSince: true },
-	});
-
-	return live?.submissionId === row.id && live.filesPendingSince !== null;
-}
-
-// b2/staging-lifecycle.json hides staged objects after 14 days, so re-read the pinned blob
-// instead of failing.
-async function refetchBundle(ctx: AppContext, row: SourcedSubmissionRow): Promise<Uint8Array> {
-	// The repository is public, so an author whose GitHub link lapsed must not block the approval.
-	const github = await connectGitHubIfLinked(ctx, row.authorId);
-
-	return github.readBlob(row.repository, row.source.bundleBlobSha);
-}
-
-async function readBundle(ctx: AppContext, row: SourcedSubmissionRow): Promise<Uint8Array> {
-	const staged = ctx.storage.staging.file(row.stagingKey);
-
-	return (await staged.exists()) ? staged.bytes() : refetchBundle(ctx, row);
-}
-
-async function readPinnedStorePage(
-	ctx: AppContext,
-	row: SourcedSubmissionRow,
-): Promise<StorePage | undefined> {
-	const { addonMd, page, commitSha, path } = row.source;
-
-	if (addonMd === null) return;
-
-	if (!page) {
-		return { addonMd, measured: null, media: new Map() };
-	}
-
-	const github = await connectGitHubIfLinked(ctx, row.authorId);
-	const tree = await github.getTree(row.repository, commitSha);
-	const location = { repository: row.repository, tree, commitSha, addonDir: path };
-
-	return { addonMd, measured: page, media: await readPageMedia(ctx.env, github, location, page) };
-}
-
-// Extra files are never staged: like media, approval re-reads them from the pinned commit's blobs.
-async function readPinnedFiles(
-	ctx: AppContext,
-	row: SourcedSubmissionRow,
-): Promise<ReadonlyMap<string, Uint8Array>> {
-	if (!listAddonFiles(row.manifest).length) {
-		return new Map();
-	}
-
-	const { commitSha, bundlePath } = row.source;
-	const github = await connectGitHubIfLinked(ctx, row.authorId);
-	const tree = await github.getTree(row.repository, commitSha);
-	const location = { repository: row.repository, tree, bundlePath, commitSha };
-
-	return readListedFiles(ctx.env, github, location, row.manifest);
-}
-
-type VerifiedArtifact = {
-	sha256: string;
-	bundle: Uint8Array;
-	page: StorePage | undefined;
-	files: ReadonlyMap<string, Uint8Array>;
-};
-
-// Reads and verifies everything an approval publishes without writing it: the files go public only
-// once `decide` has committed the approval (see publishArtifact).
-async function readArtifact(ctx: AppContext, row: SourcedSubmissionRow): Promise<VerifiedArtifact> {
-	const [bundle, page, files] = await Promise.all([
-		readBundle(ctx, row),
-		readPinnedStorePage(ctx, row),
-		readPinnedFiles(ctx, row),
-	]);
-	const sha256 = new Bun.CryptoHasher('sha256').update(bundle).digest('hex');
-
-	if (
-		bundle.byteLength > ctx.env.ADDON_MAX_BYTES ||
-		bundle.byteLength !== row.bundleSize ||
-		sha256 !== row.sha256
-	) {
-		throw new ApiError(
-			'artifact_mismatch',
-			`The bundle of ${row.id} no longer matches what was submitted.`,
-		);
-	}
-
-	return { sha256, bundle, page, files };
-}
-
-// Runs after `decide` commits, and again on a repeated approval. Writing earlier let a losing request leave files under the version's keys.
-async function publishArtifact(
-	ctx: AppContext,
-	row: SourcedSubmissionRow,
-	{ bundle, page, files }: VerifiedArtifact,
-): Promise<void> {
-	await Promise.all([
-		writeArtifact(ctx, row, bundle, { files }),
-		page ? writeStorePage(ctx, row, page) : undefined,
-	]);
-	await ctx.db
-		.update(addonVersion)
-		.set({ filesPendingSince: null })
-		.where(and(eq(addonVersion.addonId, row.addonId), eq(addonVersion.submissionId, row.id)));
-}
-
-/**
- * @description Replaces a live version in place with a rebuild of the same version, as first-party CI
- * publishes before release: the row takes the new submission, manifest and bundle digest.
- * @param tx The transaction.
- * @param row The approved submission carrying the rebuild.
- * @param sha256 The new bundle's SHA-256.
- * @param publishedAt When the rebuild went live.
- */
-export async function replaceVersion(
-	tx: Transaction,
-	row: SubmissionRow,
-	sha256: string,
-	publishedAt: Date,
-): Promise<void> {
-	const { addonId, version, ...values } = toVersionRow(row, sha256, publishedAt);
-
-	await tx
-		.update(addonVersion)
-		.set(values)
-		.where(and(eq(addonVersion.addonId, addonId), eq(addonVersion.version, version)));
-	await refreshAddonSummary(tx, addonId);
-}
-
-/**
- * @description Makes an approved submission's version live, inside the approval's transaction: a
- * listing creates the addon with the author as owner, an update moves the addon to the submitted
- * repository and refreshes its summary. The submission's chosen tags and maintainers replace the
- * addon's, when it chose any.
- * @param tx The approval's transaction.
- * @param row The approved submission.
- * @param sha256 The verified SHA-256 of the published bundle.
- * @param publishedAt The approval time.
- * @returns Resolves once the version is live.
- */
-export async function publishVersion(
-	tx: Transaction,
-	row: SubmissionRow,
-	sha256: string,
-	publishedAt: Date,
-): Promise<void> {
-	if (row.kind === 'listing') {
-		await tx.insert(addon).values({
-			id: row.addonId,
-			repository: row.repository,
-			createdAt: publishedAt,
-			...toAddonSummary(row.manifest, publishedAt),
-			icon: row.icon,
-		});
-		await tx.insert(addonMaintainer).values({
-			addonId: row.addonId,
-			userId: row.authorId,
-			role: 'owner',
-			createdAt: publishedAt,
-		});
-	}
-
-	await tx
-		.insert(addonVersion)
-		.values({ ...toVersionRow(row, sha256, publishedAt), filesPendingSince: publishedAt });
-
-	if (row.tags) {
-		await replaceAddonTags(tx, row.addonId, row.tags);
-	}
-
-	if (row.maintainers) {
-		await applySubmissionMaintainers(tx, row.addonId, row.maintainers, {
-			actorId: row.authorId,
-			at: publishedAt,
-		});
-	}
-
-	if (row.kind !== 'update') return;
-
-	await tx.update(addon).set({ repository: row.repository }).where(eq(addon.id, row.addonId));
-	await refreshAddonSummary(tx, row.addonId);
-}
-
-/**
- * Records the decision on a submission still pending review; anything else means another reviewer
- * decided first. Approval goes live in the same transaction; its files are written after this commits.
- */
-function decide(
-	ctx: AppContext,
-	row: SubmissionRow,
-	decision: Decision,
-	sha256?: string,
-): Promise<SubmissionRow> {
-	return ctx.db.transaction(async (tx) => {
-		const [updated] = await tx
-			.update(submission)
-			.set({
-				status: decision.decision,
-				reviewDecision: decision.decision,
-				reviewNote: decision.note,
-				reviewerId: decision.reviewerId,
-				reviewedAt: decision.reviewedAt,
-			})
-			.where(and(eq(submission.id, row.id), eq(submission.status, 'pending_review')))
-			.returning();
-
-		if (!updated) {
-			throw new ApiError(
-				'submission_not_pending',
-				`Submission ${row.id} was already reviewed.`,
-			);
-		}
-
-		await recordReviewDecision(tx, updated);
-
-		if (!sha256) {
-			return updated;
-		}
-
-		await publishVersion(tx, row, sha256, decision.reviewedAt);
-
-		if (row.kind === 'listing') {
-			const [author] = await tx
-				.select({ role: user.role })
-				.from(user)
-				.where(eq(user.id, row.authorId));
-
-			if (author && !hasPermission(author.role, { update: ['create'] })) {
-				await tx.update(user).set({ role: 'developer' }).where(eq(user.id, row.authorId));
-			}
-		}
-
-		return updated;
-	});
+	return requireSourced(row);
 }
 
 /**
@@ -485,21 +191,17 @@ export async function reviewSubmission(
 	id: string,
 	request: ReviewSubmissionRequest,
 ): Promise<ReviewSubmissionResponse> {
-	const { row, republish } = await requireReviewable(ctx, caller, id, request);
+	const row = await requireReviewable(ctx, caller, id, request);
 	const decision: Decision = {
 		decision: request.decision,
 		note: request.note ?? null,
 		reviewerId: caller.user.id,
 		reviewedAt: ctx.now(),
 	};
-
-	const artifact = request.decision === 'approved' ? await readArtifact(ctx, row) : undefined;
-	const reviewed = republish ? row : await decide(ctx, row, decision, artifact?.sha256);
-
-	if (artifact) {
-		await publishArtifact(ctx, row, artifact);
-		requestProfileRefresh();
-	}
+	const reviewed =
+		request.decision === 'approved'
+			? ((await publish(ctx, { mode: 'review', row, decision })).row ?? row)
+			: await ctx.db.transaction((tx) => decideSubmission(tx, row, decision));
 
 	if (request.decision !== 'changes_requested') {
 		await ctx.storage.staging.delete(row.stagingKey);
@@ -515,4 +217,4 @@ export async function reviewSubmission(
 	};
 }
 
-export default { toVersionRow, publishVersion, replaceVersion, listReviewQueue, reviewSubmission };
+export default { listReviewQueue, reviewSubmission };

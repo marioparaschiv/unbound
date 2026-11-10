@@ -1,6 +1,6 @@
 ---
 name: unbound-web
-description: Prove and verify apps/web (unbound.rip and its /api/v1 API). Use when booting it locally signed in as any role, proving a change to its pages, endpoints, submissions, review or auth, or when a change touches review publishing (review.ts, submissions.ts, staging.ts, artifacts.ts, github.ts, the addon schema) and the model check must rerun.
+description: Prove and verify apps/web (unbound.rip and its /api/v1 API). Use when booting it locally signed in as any role, proving a change to its pages, endpoints, submissions, review or auth, or when a change touches review publishing (review.ts, publish-version.ts, submissions.ts, staging.ts, artifacts.ts, github.ts, the addon schema) and the model check must rerun.
 metadata:
     internal: true
 ---

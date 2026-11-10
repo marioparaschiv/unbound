@@ -1,10 +1,10 @@
+import { getBytecodePath } from '@unbound-app/contracts/version-layout';
 import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { bytecodeFileName } from '~/rollup/hermes-bytecode';
-import { listBuiltFiles } from '~/lib/built-addon';
 import type { DiscoveredAddon } from '~/lib/discovery';
+import { listBuiltFiles } from '~/lib/built-addon';
 
 export type PluginFile = { name: string; path: string };
 
@@ -40,7 +40,7 @@ export function readPluginPayload(
 		: built.manifest;
 	const names = [
 		built.bundle,
-		...versions.map((version) => bytecodeFileName(built.bundle, Number(version))),
+		...versions.map((version) => getBytecodePath(built.bundle, version)),
 		...built.files,
 	];
 	// The built manifest has no bytecode digests, so the one naming them is written out to copy instead.

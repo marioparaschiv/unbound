@@ -93,17 +93,18 @@ const LABELS: Record<string, string> = {
 	Purge: 'purgeUserSubmissions (ban) cancels',
 	Orphan: 'sweepStaging deletes an orphaned staged object',
 	Start: 'reviewSubmission -> requireReviewable passes',
-	RetryStart: 'the approval is repeated: requireReviewable sees the live version and republishes',
-	ReadFail: 'readArtifact fails (staging, GitHub)',
-	ReadOk: 'readArtifact reads (or refetches from the pin) and re-hashes the bundle',
+	RetryStart:
+		'the approval is repeated: commitReview sees the live version pending and republishes',
+	ReadFail: 'readVerified fails (staging, GitHub)',
+	ReadOk: 'readVerified reads (or refetches from the pin) and re-hashes the bundle',
 	WriteFail: 'a public write fails after decide committed; the request errors with no cleanup',
 	ReadStaged:
-		'readArtifact reads (or refetches from the pin) and re-hashes the bundle, and reads the pinned media and extra files',
-	WriteBundle: 'publishArtifact (after decide) writes the public bundle',
-	WriteManifest: 'publishArtifact (after decide) writes the public manifest.json',
-	WritePage: 'publishArtifact (after decide) writes the public ADDON.md, page.json and media/',
-	WriteFiles: 'publishArtifact (after decide) writes the public extra files (assets/, i18n/)',
-	Decide: 'decide() transaction',
+		'readVerified reads (or refetches from the pin) and re-hashes the bundle, and reads the pinned media and extra files',
+	WriteBundle: 'writeFiles (after decide) writes the public bundle',
+	WriteManifest: 'writeFiles (after decide) writes the public manifest.json',
+	WritePage: 'writeFiles (after decide) writes the public ADDON.md, page.json and media/',
+	WriteFiles: 'writeFiles (after decide) writes the public extra files and compiled bundles',
+	Decide: 'commitReview transaction (decideSubmission, makeLive)',
 	Cleanup: 'staging.delete(row.stagingKey)',
 };
 

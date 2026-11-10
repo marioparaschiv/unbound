@@ -1,15 +1,15 @@
 import type { ControllerClient } from '@unbound-app/debugger-protocol/controller';
+import { getBytecodePath } from '@unbound-app/contracts/version-layout';
 import { listAddonFiles } from '@unbound-app/contracts/addon-files';
 import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import { getBundleName } from '@unbound-app/contracts/workspace';
 import type { PushedManifest } from '@unbound-app/types';
-import toError from '@unbound-app/utils/to-error';
 import { existsSync, readFileSync } from 'node:fs';
+import toError from '@unbound-app/utils/to-error';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 
 import { BYTECODE_DIGESTS_FILENAME, bytecodeDigestsSchema } from '~/rollup/bytecode-digests-schema';
-import { bytecodeFileName } from '~/rollup/hermes-bytecode';
 import type { DiscoveredAddon } from '~/lib/discovery';
 import { readDevManifest } from '~/lib/manifest';
 import { parseJson } from '~/lib/parse-json';
@@ -113,7 +113,7 @@ export function readBuiltAddon(addon: BuiltAddon): ReadAddon {
 	const bytecode = new Map<string, Buffer>();
 
 	for (const [version, digest] of Object.entries(listed.bytecode)) {
-		const path = join(addon.output, bytecodeFileName(listed.bundle, Number(version)));
+		const path = join(addon.output, getBytecodePath(listed.bundle, version));
 		const contents = existsSync(path) ? readFileSync(path) : void 0;
 
 		// A file rewritten since the build no longer matches its digest, so that runtime loads the source.

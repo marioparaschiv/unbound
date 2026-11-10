@@ -1,9 +1,10 @@
 import { hermescBinary, resolveHermesTargets } from '@unbound-app/rollup-plugin-hermes/manifest';
 import type { HermesTarget } from '@unbound-app/rollup-plugin-hermes/manifest';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { getBytecodePath } from '@unbound-app/contracts/version-layout';
 import { ADDON_SCOPE_GLOBALS } from '@unbound-app/types/addons';
-import { dirname, join } from 'node:path';
 import { execFile } from 'node:child_process';
+import { dirname, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { promisify } from 'node:util';
 import type { Plugin } from 'rollup';
@@ -34,16 +35,6 @@ const parameters = ADDON_SCOPE_GLOBALS.map((name) =>
  */
 export function bytecodeSource(code: string): string {
 	return `((${parameters}) => { return ${code} })`;
-}
-
-/**
- * @description Names the compiled bundle beside a source bundle, matching the loader's lookup.
- * @param fileName The source bundle's file name, such as `index.js`.
- * @param version The Hermes bytecode version.
- * @returns The bytecode file name, such as `index.98.hbc`.
- */
-export function bytecodeFileName(fileName: string, version: number): string {
-	return `${fileName.replace(/\.[^.]+$/, '')}.${version}.hbc`;
 }
 
 // UNKNOWN: execFile rejects with whatever the child process failure carries.
@@ -138,7 +129,7 @@ export function hermesBytecode({ versions, sourceName }: BytecodeOptions): Plugi
 						);
 
 						if (compiled) {
-							const fileName = bytecodeFileName(chunk.fileName, version);
+							const fileName = getBytecodePath(chunk.fileName, version);
 
 							this.emitFile({ type: 'asset', fileName, source: compiled });
 							emitted.set(
@@ -182,4 +173,4 @@ export function hermesBytecode({ versions, sourceName }: BytecodeOptions): Plugi
 	};
 }
 
-export default { bytecodeSource, bytecodeFileName, hermesBytecode };
+export default { bytecodeSource, hermesBytecode };

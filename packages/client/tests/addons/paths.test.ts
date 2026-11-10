@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
-	compiledBundlePath,
 	isSafeAddonId,
 	isSafeAddonMain,
 	isSafeIconPackMain,
@@ -43,14 +42,6 @@ describe('addon paths', () => {
 			expect(safeRelativePath(path)).toBeUndefined();
 		}
 	});
-});
-
-test('names the compiled bundle beside its source', () => {
-	expect(compiledBundlePath('dist/index.js', 98)).toBe('dist/index.98.hbc');
-	expect(compiledBundlePath('https://example.com/a.b/dist/index.js', 96)).toBe(
-		'https://example.com/a.b/dist/index.96.hbc',
-	);
-	expect(compiledBundlePath('index', 94)).toBe('index.94.hbc');
 });
 
 test('icon packs accept the built-in pack and GitHub trees but nothing that leaves the pack', () => {

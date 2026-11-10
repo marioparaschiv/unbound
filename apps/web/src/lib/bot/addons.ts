@@ -1,3 +1,4 @@
+import { getCdnUrl, getVersionDirectory } from '@unbound-app/contracts/version-layout';
 import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import type { AddonType } from '@unbound-app/contracts/addons';
 
@@ -82,9 +83,7 @@ function toPublicAddon(
 	if (!served) return;
 
 	const { repository, source } = served.submission ?? {};
-	const cdn = options.cdnUrl.endsWith('/') ? options.cdnUrl : `${options.cdnUrl}/`;
-	// The version's CDN folder, as `getVersionDirectory` names it; artifacts.ts is outside the bot's import graph.
-	const folder = new URL(`addons/${row.id}/${served.version}/`, cdn).href;
+	const folder = getCdnUrl(options.cdnUrl, `${getVersionDirectory(row.id, served.version)}/`);
 
 	return {
 		id: row.id,

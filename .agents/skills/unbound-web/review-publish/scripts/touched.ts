@@ -5,11 +5,16 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /** The commit the spec and COVERAGE.md line numbers describe. Move it only after re-checking every row. */
-export const SYNC_COMMIT = '77160c8d5ecf8894ae607b385fb6c081fa31be53';
+export const SYNC_COMMIT = '00cce1a0e15643fd232b7fde07dea1f99a41ea87';
 
 /** Every file the model describes. */
 export const VERIFIED_FILES = [
 	'apps/web/src/lib/review.ts',
+	'apps/web/src/lib/publish-version.ts',
+	'apps/web/src/lib/submission-decision.ts',
+	'apps/web/src/lib/addon-claim.ts',
+	'apps/web/src/lib/pinned-files.ts',
+	'apps/web/src/lib/addon-bytecode.ts',
 	'apps/web/src/lib/submissions.ts',
 	'apps/web/src/lib/staging.ts',
 	'apps/web/src/lib/github.ts',
@@ -19,6 +24,7 @@ export const VERIFIED_FILES = [
 	'apps/web/src/lib/addon-page-source.ts',
 	'apps/web/src/lib/addon-files.ts',
 	'packages/contracts/src/addon-files.ts',
+	'packages/contracts/src/version-layout.ts',
 ];
 
 type Row = { file: string; ranges: [number, number][]; actions: string };

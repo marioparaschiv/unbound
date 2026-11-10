@@ -5,11 +5,12 @@ import type {
 	VersionChangelog,
 } from '@unbound-app/contracts/updates';
 import { and, desc, eq, gt, inArray, isNotNull, isNull, lte, or } from 'drizzle-orm';
+import { getArtifactKeys, getCdnUrl } from '@unbound-app/contracts/version-layout';
 import { MAX_UPDATE_CHANGELOGS } from '@unbound-app/contracts/updates';
 
-import { getArtifactKeys, getCdnUrl, toVersionChangelog } from '~/lib/artifacts';
 import { addon, addonVersion, submissionSource } from '~/db/schema';
 import type { SubmissionSourceRow } from '~/lib/artifacts';
+import { toVersionChangelog } from '~/lib/artifacts';
 import { toVersionKey } from '~/lib/version-key';
 import type { AppContext } from '~/lib/context';
 
@@ -262,8 +263,8 @@ export async function findUpdates(
 		return {
 			id: row.addonId,
 			version: row.version,
-			manifestUrl: getCdnUrl(ctx.env, keys.manifest),
-			bundleUrl: getCdnUrl(ctx.env, keys.bundle),
+			manifestUrl: getCdnUrl(ctx.env.CDN_URL, keys.manifest),
+			bundleUrl: getCdnUrl(ctx.env.CDN_URL, keys.bundle),
 			sha256: row.sha256,
 			...changelogOf(row),
 			changelogs,

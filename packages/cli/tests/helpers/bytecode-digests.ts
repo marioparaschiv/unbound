@@ -1,9 +1,9 @@
+import { getBytecodePath } from '@unbound-app/contracts/version-layout';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 
 import { BYTECODE_DIGESTS_FILENAME } from '~/rollup/bytecode-digests-schema';
-import { bytecodeFileName } from '~/rollup/hermes-bytecode';
 
 const sha512 = (contents: Buffer | string) => createHash('sha512').update(contents).digest('hex');
 
@@ -21,7 +21,7 @@ export function writeBuiltBytecode(
 	const digests: Record<string, string> = {};
 
 	for (const [version, contents] of Object.entries(bytecode)) {
-		writeFileSync(join(output, bytecodeFileName(bundle, Number(version))), contents);
+		writeFileSync(join(output, getBytecodePath(bundle, version)), contents);
 		digests[version] = sha512(contents);
 	}
 

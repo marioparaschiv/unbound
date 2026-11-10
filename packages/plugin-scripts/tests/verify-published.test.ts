@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { checkRelease, compiledBundleUrl, digestOf } from '~/verify-published';
+import { checkRelease, digestOf } from '~/verify-published';
 
 const encoder = new TextEncoder();
 
@@ -40,7 +40,7 @@ describe('checkRelease', () => {
 		const fetcher = served({
 			[release.bundleUrl]: 'bundle',
 			[release.manifestUrl]: manifestWith({ 98: sha('compiled', 'sha512') }),
-			[compiledBundleUrl(release.bundleUrl, '98')]: 'compiled',
+			'https://cdn.test/sample/index.98.hbc': 'compiled',
 		});
 
 		expect(await checkRelease(release, fetcher)).toEqual([]);
@@ -53,7 +53,7 @@ describe('checkRelease', () => {
 				98: sha('compiled', 'sha512'),
 				99: sha('other', 'sha512'),
 			}),
-			[compiledBundleUrl(release.bundleUrl, '98')]: 'recompiled',
+			'https://cdn.test/sample/index.98.hbc': 'recompiled',
 		});
 		const problems = (await checkRelease(release, fetcher)).join('\n');
 
@@ -61,14 +61,6 @@ describe('checkRelease', () => {
 		expect(problems).toContain("bytecode 98 bundle's SHA-512 does not match");
 		expect(problems).toContain(
 			'bytecode 99 bundle at https://cdn.test/sample/index.99.hbc answered 404',
-		);
-	});
-});
-
-describe('compiledBundleUrl', () => {
-	test('swaps the extension for the bytecode version', () => {
-		expect(compiledBundleUrl('https://cdn.test/a/index.js', '98')).toBe(
-			'https://cdn.test/a/index.98.hbc',
 		);
 	});
 });

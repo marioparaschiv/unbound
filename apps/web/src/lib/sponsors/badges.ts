@@ -8,6 +8,7 @@ import type {
 	UploadBadgeImageResponse,
 } from '@unbound-app/contracts/sponsors';
 import { BADGE_IMAGE_MAX_BYTES, BADGE_IMAGE_MAX_LABEL } from '@unbound-app/contracts/sponsors';
+import { getCdnUrl } from '@unbound-app/contracts/version-layout';
 import { and, eq, inArray, isNull, lte, or } from 'drizzle-orm';
 import { safeParse } from '@unbound-app/contracts/schema';
 import { createLogger } from '@unbound-app/logger';
@@ -29,7 +30,6 @@ import { formatPrice } from '~/lib/sponsors/price';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { ApiError } from '~/lib/api/errors';
-import { getCdnUrl } from '~/lib/artifacts';
 import { isDiscordId } from '~/lib/discord';
 import type { Env } from '~/lib/env';
 
@@ -64,7 +64,7 @@ function parseBadges(row: ClaimRow): Badge[] | undefined {
 }
 
 function getBadgeImageUrl(env: Env, image: string): string {
-	return getCdnUrl(env, getBadgeImageKey(image));
+	return getCdnUrl(env.CDN_URL, getBadgeImageKey(image));
 }
 
 function toOwnedBadge(env: Env, badge: Badge): OwnedBadge {
