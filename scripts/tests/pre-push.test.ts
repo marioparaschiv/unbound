@@ -65,9 +65,11 @@ describe('pre-push checks', () => {
 		]);
 	});
 
-	test('type-checks the repo scripts and their lint rules', () => {
+	test('tests and type-checks the repo scripts and their lint rules', () => {
 		expect(labels(['scripts/oxlint/plugin.ts'])).toEqual([
+			'scripts tests',
 			'scripts type-check',
+			'scripts/oxlint tests',
 			'scripts/oxlint type-check',
 		]);
 	});

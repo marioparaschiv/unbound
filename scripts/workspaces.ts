@@ -209,8 +209,8 @@ export function publishOrder(): string[] {
 // Tooling outside the workspaces that still type-checks: the repo's scripts, and a client script with no
 // manifest. Their tests run nowhere before a push.
 const DIRECTORIES: Pick<Project, 'dir' | 'checks'>[] = [
-	{ dir: 'scripts', checks: { tests: 'none' } },
-	{ dir: 'scripts/oxlint', checks: { tests: 'none' } },
+	{ dir: 'scripts', checks: {} },
+	{ dir: 'scripts/oxlint', checks: {} },
 	{ dir: 'packages/client/scripts/bench-android', checks: { tests: 'none' } },
 ];
 
