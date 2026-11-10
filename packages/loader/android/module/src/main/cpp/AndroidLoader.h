@@ -87,6 +87,7 @@ public:
 
     void start();
     void onLoadJSBundle();
+    void markHealthy();
     void onRuntimeCreated(facebook::jsi::Runtime &runtime);
     void drainMainWork();
     void drainRuntimeWork(facebook::jsi::Runtime &runtime);

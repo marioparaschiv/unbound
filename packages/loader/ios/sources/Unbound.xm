@@ -121,6 +121,13 @@ public:
         dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{ (*task)(); });
     }
 
+    void runAfter(double seconds, std::function<void()> work) override
+    {
+        auto task = std::make_shared<std::function<void()>>(std::move(work));
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t) (seconds * NSEC_PER_SEC)),
+                       dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{ (*task)(); });
+    }
+
     std::optional<std::string> resource(const std::string &name) override
     {
         NSData *data = [Utilities getResource:toNSString(name) data:true ext:@"js"];
@@ -342,6 +349,17 @@ static void prepareLoading(id instance)
 
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0),
                    ^{ [CoreBridge prescanAddons]; });
+
+    // Leaving the foreground without crashing counts the launch as healthy; a suspended app's
+    // health timer would otherwise never fire before iOS ends it.
+    [[NSNotificationCenter defaultCenter]
+        addObserverForName:UIApplicationDidEnterBackgroundNotification
+                    object:nil
+                     queue:nil
+                usingBlock:^(NSNotification *) {
+                    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0),
+                                   ^{ pipeline().markHealthy(); });
+                }];
 
 #if ATTESTATION_ENABLED
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{

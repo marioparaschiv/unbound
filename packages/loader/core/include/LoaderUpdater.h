@@ -37,6 +37,7 @@ struct UpdaterSettings {
     std::function<std::string(const std::string &key, const std::string &fallback)> getString;
     std::function<bool(const std::string &key, bool fallback)>                      getBoolean;
     std::function<void(const std::string &key, const std::string &value)>           setString;
+    std::function<void(const std::string &key, bool value)>                         setBoolean;
     std::function<bool()>                                                           developerMode;
 };
 
@@ -72,6 +73,10 @@ public:
     bool markBundleAttempted(const std::string &path);
     bool acceptBundle(const std::string &path);
     void rejectBundle(const std::string &path);
+    // Puts back the bundle the last promotion replaced; false when there is none to put back.
+    bool rollBackToPrevious();
+
+    const std::string &documents() const;
 
     bool                developerMode() const;
     std::optional<bool> recordedDeveloperMode(const std::string &path) const;

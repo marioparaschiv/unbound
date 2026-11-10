@@ -96,6 +96,14 @@ static void nativeOnLoadJSBundle(JNIEnv *, jclass)
     }
 }
 
+static void nativeMarkHealthy(JNIEnv *, jclass)
+{
+    if (auto loader = currentLoader())
+    {
+        loader->markHealthy();
+    }
+}
+
 static jboolean nativeOnRuntimeCreated(JNIEnv *, jclass, jlong runtimePointer)
 {
     if (runtimePointer == 0)
@@ -536,6 +544,7 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
          "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)V",
          reinterpret_cast<void *>(nativeInitialize)},
         {"nativeOnLoadJSBundle", "()V", reinterpret_cast<void *>(nativeOnLoadJSBundle)},
+        {"nativeMarkHealthy", "()V", reinterpret_cast<void *>(nativeMarkHealthy)},
         {"nativeOnRuntimeCreated", "(J)Z", reinterpret_cast<void *>(nativeOnRuntimeCreated)},
         {"nativeDrainRuntimeWork", "(J)V", reinterpret_cast<void *>(nativeDrainRuntimeWork)},
         {"nativeInstallSchedulerDrain", "(J)Z",

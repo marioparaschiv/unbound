@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <functional>
 #include <jsi/jsi.h>
@@ -8,6 +9,7 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <thread>
 
 #include "LoaderUpdater.h"
 #include "UnboundNativeBridge.h"
@@ -19,6 +21,14 @@ public:
     virtual ~LoaderHost() = default;
 
     virtual void runInBackground(std::function<void()> work) = 0;
+    // Runs `work` off the main thread once `seconds` have passed.
+    virtual void runAfter(double seconds, std::function<void()> work)
+    {
+        runInBackground([seconds, work = std::move(work)]() {
+            std::this_thread::sleep_for(std::chrono::duration<double>(seconds));
+            work();
+        });
+    }
 
     virtual std::optional<std::string> resource(const std::string &name) = 0;
     virtual std::optional<std::string> resolveUpdateURL()                = 0;
@@ -50,6 +60,12 @@ public:
 
     bool isBundleReady() const;
 
+    // Seconds Discord must run after a launch, or after a new bundle runs, to count as healthy.
+    static constexpr double kHealthySeconds = 15.0;
+
+    // Counts Discord as healthy now: the app went to the background or is about to reload.
+    void markHealthy();
+
 private:
     struct FirstDownload {
         uint64_t                   token     = 0;
@@ -68,6 +84,8 @@ private:
     bool evaluate(facebook::jsi::Runtime &runtime, SavedBundle saved, uint64_t token);
     void injectPreBundle(facebook::jsi::Runtime &runtime, const std::string &bundlePath);
     void announceCrashDisabledAddons();
+    void guardLaunch();
+    void promotePendingBundle();
 
     std::shared_ptr<LoaderHost> host_;
     UpdaterSettings             settings_;
@@ -79,5 +97,9 @@ private:
     std::atomic_bool            evaluationFailed_{false};
     FirstDownload               firstDownload_;
     std::condition_variable     firstDownloadSettled_;
+    std::atomic_bool            launchGuarded_{false};
+    std::atomic_bool            launchHealthy_{false};
+    std::mutex                  promotionMutex_;
+    std::optional<std::string>  pendingPromotion_;
 };
 }

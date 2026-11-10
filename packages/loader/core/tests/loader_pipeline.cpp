@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "LoaderLaunchGuard.h"
 #include "LoaderLog.h"
 #include "LoaderPipeline.h"
 #include "LoaderVersion.h"
@@ -24,6 +25,13 @@ public:
     {
         work();
     }
+
+    void runAfter(double, std::function<void()> work) override
+    {
+        delayed.push_back(std::move(work));
+    }
+
+    std::vector<std::function<void()>> delayed;
 
     std::optional<std::string> resource(const std::string &) override
     {
@@ -240,6 +248,39 @@ void doesNothingWhenDisabled()
     assert(launch.host->reloads == 0);
     assert(launch.server.downloads == 0);
 }
+
+void guardsTheLaunchOncePerProcess()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    std::string marker = launch.server.path(loader::LaunchGuard::kFile);
+
+    launch.pipeline.prepare();
+    assert(loader::fileExists(marker));
+    // A reload in the same process does not count as a failed launch.
+    launch.pipeline.prepare();
+    assert(loader::readTextFile(marker) == R"({"failures":0})");
+
+    for (const std::function<void()> &work : launch.host->delayed)
+    {
+        work();
+    }
+    assert(!loader::fileExists(marker));
+}
+
+void turnsOnRecoveryModeAfterRepeatedFailedLaunches()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    assert(loader::writeTextFileAtomically(launch.server.path(loader::LaunchGuard::kFile),
+                                           R"({"failures":2})"));
+
+    launch.pipeline.prepare();
+
+    assert(launch.server.settings.getBoolean("unbound", "recovery", false));
+}
 }
 
 int main()
@@ -255,5 +296,7 @@ int main()
     logsTheRuntimeBeforeAddonsLoadForIt();
     runsTheNewBundleOnTheFirstLaunchAfterALoaderUpdate();
     doesNothingWhenDisabled();
+    guardsTheLaunchOncePerProcess();
+    turnsOnRecoveryModeAfterRepeatedFailedLaunches();
     return 0;
 }

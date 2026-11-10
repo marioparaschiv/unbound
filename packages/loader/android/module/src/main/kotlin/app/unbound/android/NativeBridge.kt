@@ -37,6 +37,10 @@ object NativeBridge {
     @JvmStatic
     external fun nativeOnLoadJSBundle()
 
+    /** Counts this launch as healthy: Discord left the foreground without crashing. */
+    @JvmStatic
+    external fun nativeMarkHealthy()
+
     external fun nativeEvictIdleSurfaces()
 
     @JvmStatic

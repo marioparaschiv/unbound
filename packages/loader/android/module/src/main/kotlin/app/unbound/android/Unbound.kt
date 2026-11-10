@@ -166,6 +166,7 @@ class Unbound : XposedModule() {
                 val activity = chain.thisObject as Activity
                 ActivityTracker.onActivityPaused(activity)
                 runCatching { Toolbox.onPaused(activity) }
+                runCatching { NativeBridge.nativeMarkHealthy() }
                 result
             }
     }

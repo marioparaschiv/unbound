@@ -243,6 +243,14 @@ std::string AndroidLoader::themeColorsJSON(const std::string &themeId)
                                 : nlohmann::json::object());
 }
 
+void AndroidLoader::markHealthy()
+{
+    if (pipeline_)
+    {
+        pipeline_->markHealthy();
+    }
+}
+
 void AndroidLoader::onLoadJSBundle()
 {
     // start() loaded the file moments ago; a reloaded runtime still sees edits made since.

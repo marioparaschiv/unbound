@@ -5,6 +5,7 @@
 #include "LoaderCrashGuard.h"
 #include "LoaderFiles.h"
 #include "LoaderJSI.h"
+#include "LoaderLaunchGuard.h"
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
 #include "LoaderVersion.h"
@@ -49,6 +50,10 @@ void LoaderPipeline::prepare()
         log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Loader is disabled. Aborting.");
         return;
     }
+
+    // A reload means the bundle that ran survived until something chose to restart it.
+    promotePendingBundle();
+    guardLaunch();
 
     host_->onAddonsPrepared();
 
@@ -302,10 +307,15 @@ bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t
         return false;
     }
 
-    if (!updater_.acceptBundle(saved.path))
+    // A candidate replaces the active bundle only once Discord has run healthily with it; if
+    // Discord dies first, its attempt marker makes the next launch discard it.
     {
-        log(LogLevel::Error, LOG_CATEGORY_DEFAULT, "Validated bundle could not be promoted.");
+        std::lock_guard<std::mutex> lock(promotionMutex_);
+        pendingPromotion_ = saved.path;
     }
+    host_->runAfter(kHealthySeconds, [this]() {
+        promotePendingBundle();
+    });
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Unbound's bundle was successfully executed.");
     if (token == token_.load())
     {
@@ -313,5 +323,55 @@ bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t
         host_->onBundleExecuted();
     }
     return true;
+}
+
+void LoaderPipeline::promotePendingBundle()
+{
+    std::optional<std::string> path;
+    {
+        std::lock_guard<std::mutex> lock(promotionMutex_);
+        path.swap(pendingPromotion_);
+    }
+    if (path && !updater_.acceptBundle(*path))
+    {
+        log(LogLevel::Error, LOG_CATEGORY_DEFAULT, "Validated bundle could not be promoted.");
+    }
+}
+
+// Once per process: counts launches that ended early and steps in after repeated ones.
+void LoaderPipeline::guardLaunch()
+{
+    if (launchGuarded_.exchange(true))
+    {
+        return;
+    }
+
+    LaunchGuard   guard(updater_.documents());
+    LaunchVerdict verdict = guard.begin();
+    if (verdict.rollBack && updater_.rollBackToPrevious())
+    {
+        log(LogLevel::Error, LOG_CATEGORY_DEFAULT, launchRollBackNotice(verdict.failures));
+        host_->alert(launchRollBackNotice(verdict.failures));
+    }
+    if (verdict.enterRecovery && settings_.setBoolean)
+    {
+        settings_.setBoolean("recovery", true);
+        log(LogLevel::Error, LOG_CATEGORY_DEFAULT, launchRecoveryNotice(verdict.failures));
+        host_->alert(launchRecoveryNotice(verdict.failures));
+    }
+    host_->runAfter(kHealthySeconds, [this]() {
+        markHealthy();
+    });
+}
+
+void LoaderPipeline::markHealthy()
+{
+    promotePendingBundle();
+    if (!launchGuarded_.load() || launchHealthy_.exchange(true))
+    {
+        return;
+    }
+    LaunchGuard(updater_.documents()).succeed();
+    log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Discord ran long enough to count as healthy.");
 }
 }

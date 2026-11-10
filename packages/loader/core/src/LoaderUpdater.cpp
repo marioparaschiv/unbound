@@ -86,8 +86,16 @@ UpdaterSettings updaterSettings(SettingsStore &store)
         return store.getBoolean("unbound", key, fallback);
     };
     settings.setString = [&store](const std::string &key, const std::string &value) {
-        store.set("unbound", key, value);
-        store.save();
+        if (store.set("unbound", key, value))
+        {
+            store.save();
+        }
+    };
+    settings.setBoolean = [&store](const std::string &key, bool value) {
+        if (store.set("unbound", key, value))
+        {
+            store.save();
+        }
     };
     settings.developerMode = [&store]() {
         return preferences::developerMode(store);
@@ -652,6 +660,17 @@ bool BundleUpdater::acceptBundle(const std::string &path)
         return false;
     }
 
+    // The replaced bundle's record goes with its backup, so a rollback restores both.
+    if (std::optional<std::string> replaced = readTextFile(targetPath + kBundleTrustSuffix);
+        replaced && hadTarget == "1")
+    {
+        writeTextFileAtomically(backupPath + kBundleTrustSuffix, *replaced);
+    }
+    else
+    {
+        removeFile(backupPath + kBundleTrustSuffix);
+    }
+
     std::optional<std::string> record = readTextFile(path + kBundleTrustSuffix);
     if (!record || !writeTextFileAtomically(targetPath + kBundleTrustSuffix, *record))
     {
@@ -689,5 +708,40 @@ void BundleUpdater::rejectBundle(const std::string &path)
     removeFile(path + ".etag");
     removeFile(path + ".attempting");
     removeFile(path + kBundleTrustSuffix);
+}
+
+bool BundleUpdater::rollBackToPrevious()
+{
+    for (const char *extension : kExtensions)
+    {
+        std::string target = bundlePath(extension);
+        std::string backup = target + ".previous";
+        if (!fileExists(target) || !fileExists(backup) || fileSize(backup) == 0)
+        {
+            continue;
+        }
+        if (!restoreNativeBundle(backup.c_str(), target.c_str()))
+        {
+            log(LogLevel::Error, LOG_CATEGORY_UPDATER,
+                "Failed to roll back to the previous bundle.");
+            return false;
+        }
+        // Keeping the ETag and baseline of the bundle that failed makes the next check answer
+        // 304 for it, so it is not downloaded again; a newer build replaces it as usual.
+        if (std::optional<std::string> record = readTextFile(backup + kBundleTrustSuffix))
+        {
+            writeTextFileAtomically(target + kBundleTrustSuffix, *record);
+        }
+        removeFile(backup);
+        removeFile(backup + kBundleTrustSuffix);
+        log(LogLevel::Warning, LOG_CATEGORY_UPDATER, "Rolled back to the previous bundle.");
+        return true;
+    }
+    return false;
+}
+
+const std::string &BundleUpdater::documents() const
+{
+    return documents_;
 }
 }
