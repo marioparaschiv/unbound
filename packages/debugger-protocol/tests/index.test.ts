@@ -214,7 +214,9 @@ describe('the DevTools contract', () => {
 
 	test('holds frames the protocol accepts unchanged', () => {
 		for (const frame of Object.values(contract.frames)) {
-			expect(parseMessage(JSON.stringify(frame))).toEqual(frame);
+			const raw = JSON.stringify(frame);
+
+			expect(JSON.stringify(parseMessage(raw))).toBe(raw);
 		}
 	});
 
