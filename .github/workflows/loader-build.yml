@@ -1115,3 +1115,71 @@ jobs:
                     --commit "$GITHUB_SHA" \
                     --changelog-file loader-build/changelog.md \
                     --api-url "$UNBOUND_API_URL"
+
+    # A sideloaded IPA carries the loader, so a loader publish rebuilds the newest stable Discord's IPA in place;
+    # app-repo sources then list it under a new version and offer the update.
+    refresh-ios-release:
+        name: Refresh the sideloaded IPA
+        if: ${{ !cancelled() && needs.loader-publish.result == 'success' && github.ref == 'refs/heads/main' && vars.S3_PUBLIC_BUCKET != '' }}
+        needs: [resolve-source, ios, loader-publish]
+        runs-on: ubuntu-26.04
+        timeout-minutes: 15
+        permissions:
+            contents: write
+        outputs:
+            refreshed: ${{ steps.upload.outputs.refreshed }}
+        steps:
+            - name: Download the IPA
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: ipa
+                  path: assets
+
+            - name: Download iOS tweak
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: rootless package
+                  path: assets
+
+            # Only an existing release is refreshed; a Discord version without one waits for its own release run.
+            - name: Replace the IPA and deb in their releases
+              id: upload
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  TAG: discord-${{ needs.resolve-source.outputs.version }}-ios
+                  IPA_FILENAME: ${{ needs.ios.outputs.ipa_filename }}
+                  DEB_FILENAME: ${{ needs.ios.outputs.deb_filename }}
+              run: |
+                  set -euo pipefail
+                  if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+                    echo "::notice title=IPA not refreshed::$TAG has no release yet, so its release run publishes the IPA."
+                    echo "refreshed=false" >> "$GITHUB_OUTPUT"
+                    exit 0
+                  fi
+                  for tag in "$TAG" loader-latest; do
+                    gh release upload "$tag" "assets/$IPA_FILENAME" "assets/$DEB_FILENAME" --repo "$GITHUB_REPOSITORY" --clobber
+                    # The app-repo deploy reads the loader version from the release's deb, so older debs go.
+                    gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' \
+                      | { grep -E '^app\.unbound\.ios_.*_iphoneos-arm64\.deb$' | grep -vxF "$DEB_FILENAME" || true; } \
+                      | while read -r stale; do gh release delete-asset "$tag" "$stale" --repo "$GITHUB_REPOSITORY" --yes; done
+                  done
+                  echo "refreshed=true" >> "$GITHUB_OUTPUT"
+
+    refresh-app-repo:
+        if: ${{ !cancelled() && needs.refresh-ios-release.outputs.refreshed == 'true' }}
+        needs: [resolve-source, refresh-ios-release]
+        permissions:
+            contents: write
+            actions: read
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+        uses: ./.github/workflows/loader-ios.yml
+        with:
+            version: ${{ needs.resolve-source.outputs.version }}
+            only_app_repo: true
+            release: false
+        secrets:
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+            GPG_KEY: ${{ secrets.GPG_KEY }}
