@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <thread>
 #include <unistd.h>
+#include <vector>
 
 #include "LoaderFiles.h"
 
@@ -54,12 +55,40 @@ static void readsWholeFiles(const std::filesystem::path &parent)
     writer.join();
 }
 
+static void writesWithoutStagingLeftovers(const std::filesystem::path &parent)
+{
+    const auto               directory = parent / "atomic";
+    const auto               target    = directory / "settings.json";
+    std::vector<std::thread> writers;
+    for (int index = 0; index < 8; index++)
+    {
+        writers.emplace_back([&, index] {
+            for (int round = 0; round < 50; round++)
+            {
+                assert(loader::writeTextFileAtomically(target.string(),
+                                                       std::string(1000 + index, 'a' + index)));
+            }
+        });
+    }
+    for (std::thread &writer : writers)
+    {
+        writer.join();
+    }
+
+    // Concurrent writers each stage their own file, so the result is one whole write.
+    std::optional<std::string> contents = loader::readTextFile(target.string());
+    assert(contents && contents->size() >= 1000 && contents->size() < 1008);
+    assert(*contents == std::string(contents->size(), contents->front()));
+    assert(loader::listDirectory(directory.string()) == std::vector<std::string>{"settings.json"});
+}
+
 int main()
 {
     const auto parent = makeTemporaryDirectory();
     const auto root   = parent / "Unbound";
 
     readsWholeFiles(parent);
+    writesWithoutStagingLeftovers(parent);
 
     touch(root / "Themes" / "a" / "manifest.json");
     touch(root / "Themes" / "a" / "nested" / "bundle.json");
