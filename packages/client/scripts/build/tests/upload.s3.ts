@@ -9,7 +9,7 @@ import {
 	parseUploadEnv,
 	uploadBuild,
 	versionPrefix,
-} from '../scripts/build/upload';
+} from '../upload';
 
 // Run through `bun scripts/test-s3.ts`, which starts MinIO and provides the S3_* variables.
 const env = parseUploadEnv({

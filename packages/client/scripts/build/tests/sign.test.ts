@@ -16,7 +16,7 @@ import {
 	pullRequestSigningContext,
 	signBundles,
 	signedMessage,
-} from './sign';
+} from '../sign';
 
 const BUILD_MANIFEST = {
 	revision: 'abc1234',
@@ -265,7 +265,7 @@ describe('bundle signature check', () => {
 	});
 
 	test('accepts the committed public key formats', () => {
-		const keys = join(import.meta.dir, '..', '..', '..', 'loader', 'core', 'keys');
+		const keys = join(import.meta.dir, '..', '..', '..', '..', 'loader', 'core', 'keys');
 
 		for (const name of ['bundle-signing.pub', 'pr-bundle-signing.pub']) {
 			const committed = readFileSync(join(keys, name), 'utf8');

@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 
-import { transformModule } from '../scripts/build/plugins/refresh';
+import { transformModule } from '../../plugins/refresh';
 
-const root = join(import.meta.dir, '..');
+const root = join(import.meta.dir, '..', '..', '..', '..');
 const id = join(root, 'src/ui/settings/example.tsx');
 
 const source = `

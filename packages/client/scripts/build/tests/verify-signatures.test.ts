@@ -4,8 +4,8 @@ import { generateKeyPairSync } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { parseVerifyArguments, verifyBuild } from './verify-signatures';
-import { MANIFEST_FILE, signBundles } from './sign';
+import { parseVerifyArguments, verifyBuild } from '../verify-signatures';
+import { MANIFEST_FILE, signBundles } from '../sign';
 
 function makeKey() {
 	const { privateKey, publicKey } = generateKeyPairSync('ed25519');

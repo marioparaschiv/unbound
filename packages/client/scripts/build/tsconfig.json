@@ -13,5 +13,5 @@
 			"@i18n/*": ["../../../../i18n/*"]
 		}
 	},
-	"exclude": ["build-output.test.ts"]
+	"exclude": ["tests/build-output.test.ts", "tests/plugins/refresh.test.ts"]
 }

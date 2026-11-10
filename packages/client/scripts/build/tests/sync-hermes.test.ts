@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { hermescCount, nextBytecodeVersions, sameVersions } from './sync-hermes';
+import { hermescCount, nextBytecodeVersions, sameVersions } from '../sync-hermes';
 
 const manifest = {
 	latest: [99, 98, 96, 94],

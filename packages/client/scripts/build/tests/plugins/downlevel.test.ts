@@ -2,9 +2,9 @@ import { describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 import vm from 'node:vm';
 
-import { GLOBAL_BANNER, lower, lowerScript } from './downlevel';
+import { GLOBAL_BANNER, lower, lowerScript } from '../../plugins/downlevel';
 
-const root = join(import.meta.dir, '..', '..', '..');
+const root = join(import.meta.dir, '..', '..', '..', '..');
 
 describe('lower', () => {
 	test('keeps swc helpers off the global object when run by indirect eval', () => {

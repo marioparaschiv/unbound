@@ -3,12 +3,13 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 import vm from 'node:vm';
 
-import * as releaseRuntime from '../../src/hot-refresh/runtime.release';
-import * as runtime from '../../src/hot-refresh/runtime';
-import downlevel from './plugins/downlevel';
-import { config, devConfig } from '.';
+import * as releaseRuntime from '~/hot-refresh/runtime.release';
+import * as runtime from '~/hot-refresh/runtime';
 
-const root = join(import.meta.dir, '..', '..');
+import downlevel from '../plugins/downlevel';
+import { config, devConfig } from '..';
+
+const root = join(import.meta.dir, '..', '..', '..');
 const [output] = [config.output].flat();
 
 function isPlugin(option: unknown): option is Plugin {

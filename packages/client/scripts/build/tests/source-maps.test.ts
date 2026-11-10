@@ -4,10 +4,10 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { lower } from '../scripts/build/plugins/downlevel';
-import { symbolicate } from '../scripts/build/symbolicate';
+import { lower } from '../plugins/downlevel';
+import { symbolicate } from '../symbolicate';
 
-const root = join(import.meta.dir, '..');
+const root = join(import.meta.dir, '..', '..', '..');
 const dist = mkdtempSync(join(tmpdir(), 'unbound-maps-'));
 
 afterAll(() => rmSync(dist, { recursive: true, force: true }));

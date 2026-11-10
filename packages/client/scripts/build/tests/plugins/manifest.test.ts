@@ -2,8 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { describeBytecodeMismatch, parseNativeBridgeVersion } from './manifest';
-import { bytecodeVersions } from '../hermes.json';
+import { describeBytecodeMismatch, parseNativeBridgeVersion } from '../../plugins/manifest';
+import { bytecodeVersions } from '../../hermes.json';
 
 describe('describeBytecodeMismatch', () => {
 	test('accepts the declared versions in any order', () => {
@@ -26,7 +26,7 @@ describe('describeBytecodeMismatch', () => {
 describe('parseNativeBridgeVersion', () => {
 	test('reads the versions the loader declares', () => {
 		const header = readFileSync(
-			resolve(__dirname, '../../../../loader/core/include/NativePluginVersion.h'),
+			resolve(__dirname, '../../../../../loader/core/include/NativePluginVersion.h'),
 			'utf8',
 		);
 

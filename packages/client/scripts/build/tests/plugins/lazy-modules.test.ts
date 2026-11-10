@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { transformSync } from '@babel/core';
 
-import { lazyImports, type LazyMode } from './lazy-modules';
+import { lazyImports, type LazyMode } from '../../plugins/lazy-modules';
 
 function lazify(code: string, mode: LazyMode = 'proxy') {
 	const targets = new Map([['./a', '/src/a.ts']]);
