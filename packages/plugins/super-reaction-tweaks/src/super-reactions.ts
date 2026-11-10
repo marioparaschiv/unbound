@@ -1,19 +1,8 @@
 import { DISCORD_PLAYING_LIMIT, NITRO_PREMIUM_TYPE } from '~/constants';
 
 /**
- * @description Reads the stored Super Reaction playing limit as a whole number Discord can enforce.
- * @param stored The stored value, which may be missing or out of range.
- * @returns A whole number from 0 to Discord's own limit; Discord's limit when the value is missing or not a number.
- */
-export function playingLimit(stored: unknown): number {
-	if (typeof stored !== 'number' || !Number.isFinite(stored)) return DISCORD_PLAYING_LIMIT;
-
-	return Math.min(DISCORD_PLAYING_LIMIT, Math.max(0, Math.round(stored)));
-}
-
-/**
  * @description Says whether a playing limit leaves Discord's own limit in charge.
- * @param limit A limit from {@link playingLimit}.
+ * @param limit The playing limit setting, from 0 to Discord's own limit.
  * @returns `true` when the plugin has nothing to cap.
  */
 export function isDiscordLimit(limit: number): boolean {
