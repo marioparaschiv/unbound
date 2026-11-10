@@ -4,7 +4,6 @@ import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import { addon, addonTag, tag, user } from '~/db/schema';
-import getCatalogEndpoint from '~/endpoints/get-catalog';
 import { createApiClient } from '~/api/schema-client';
 import { NotModifiedError } from '~/api/client';
 import type { Caller } from '~/lib/api/caller';
@@ -13,11 +12,11 @@ import type { Api } from '~/api';
 
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from './helpers/addons';
 import { createTestContext, signInWithDiscord } from './helpers/context';
-import { serveEndpoints } from './helpers/server';
+import { serveApi } from './helpers/server';
 
 const base = await createTestContext({ ADDON_LIST_PAGE_SIZE: '1' });
 const ctx = base.ctx;
-const server = serveEndpoints(ctx, { 'GET /api/v1/catalog': getCatalogEndpoint });
+const server = await serveApi(ctx);
 const client = createApiClient<Api>({ baseUrl: server.url.href });
 const url = new URL('/api/v1/catalog', server.url);
 

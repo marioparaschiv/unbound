@@ -7,7 +7,7 @@ import type { SponsorOverview } from '~/lib/sponsors/overview';
 import { getSponsorOverview } from '~/lib/sponsors/overview';
 import { readDiscordUser } from '~/lib/authors/profiles';
 import { isDiscordId } from '~/lib/discord';
-import app from '~/lib/app';
+import { getApp } from '~/lib/app';
 
 export type AccountApiKey = Pick<
 	ApiKey,
@@ -32,6 +32,7 @@ export type AccountOverview = {
  */
 export const getAccountOverview = createServerFn({ method: 'GET' }).handler(
 	async (): Promise<AccountOverview> => {
+		const app = getApp();
 		const headers = getRequestHeaders();
 		const [session, accounts, keys] = await Promise.all([
 			app.auth.api.getSession({ headers }),

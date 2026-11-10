@@ -2,12 +2,12 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { getOpenApiDocument } from '~/lib/api/openapi/served-operations';
-import app from '~/lib/app';
+import { getApp } from '~/lib/app';
 
 export const Route = createFileRoute('/api/v1/openapi.json')({
 	server: {
 		handlers: {
-			GET: async () => Response.json(await getOpenApiDocument(app.env.PUBLIC_URL)),
+			GET: async () => Response.json(await getOpenApiDocument(getApp().env.PUBLIC_URL)),
 		},
 	},
 });

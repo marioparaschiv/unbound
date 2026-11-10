@@ -6,9 +6,6 @@ import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 import { afterAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
-import createSubmissionEndpoint from '~/endpoints/create-submission';
-import reviewSubmissionEndpoint from '~/endpoints/review-submission';
-import getCatalogEndpoint from '~/endpoints/get-catalog';
 import { createApiClient } from '~/api/schema-client';
 import { submission, user } from '~/db/schema';
 import type { Role } from '~/lib/auth/access';
@@ -17,7 +14,7 @@ import type { Api } from '~/api';
 import { COMMITTED_ADDON_MD, committedPage, committedPageFiles, png } from '../helpers/addon-page';
 import { S3_TEST_ENV, createTestContext, linkGitHub, signInWithDiscord } from '../helpers/context';
 import { commitPlugin, serveGitHub } from '../helpers/github';
-import { failure, serveEndpoints } from '../helpers/server';
+import { failure, serveApi } from '../helpers/server';
 
 const REPOSITORY = 'acme/addons';
 const PREFIX = 'addons/review-media.';
@@ -37,11 +34,7 @@ const { ctx, close } = await createTestContext({
 	CDN_URL: `${S3_TEST_ENV.S3_ENDPOINT}/${S3_TEST_ENV.S3_PUBLIC_BUCKET}/`,
 });
 
-const server = serveEndpoints(ctx, {
-	'POST /api/v1/submissions': createSubmissionEndpoint,
-	'POST /api/v1/submissions/$id/review': reviewSubmissionEndpoint,
-	'GET /api/v1/catalog': getCatalogEndpoint,
-});
+const server = await serveApi(ctx);
 
 afterAll(async () => {
 	const rows = await ctx.db.select({ key: submission.stagingKey }).from(submission);

@@ -4,8 +4,6 @@ import type { Changelog } from '@unbound-app/contracts/changelog';
 import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
-import checkUpdatesEndpoint from '~/endpoints/check-updates';
-import getCatalogEndpoint from '~/endpoints/get-catalog';
 import { createApiClient } from '~/api/schema-client';
 import { getAddonDetails } from '~/lib/addons';
 import { serveVersion } from '~/lib/rollback';
@@ -19,14 +17,11 @@ import {
 } from './helpers/shipped-contracts';
 import { manifest, REPOSITORY_DETAILS, seedApprovedAddon, seedVersion } from './helpers/addons';
 import { createTestContext, signInWithDiscord } from './helpers/context';
-import { serveEndpoints } from './helpers/server';
+import { serveApi } from './helpers/server';
 
 const base = await createTestContext();
 const ctx = base.ctx;
-const server = serveEndpoints(ctx, {
-	'GET /api/v1/catalog': getCatalogEndpoint,
-	'POST /api/v1/updates': checkUpdatesEndpoint,
-});
+const server = await serveApi(ctx);
 const client = createApiClient<Api>({ baseUrl: server.url.href });
 
 const CHANGES: Changelog = {

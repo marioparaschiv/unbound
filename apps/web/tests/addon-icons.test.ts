@@ -13,25 +13,18 @@ import {
 	buildAddonIconAtlas,
 	renderAddonIcon,
 } from '~/lib/addon-icons';
-import addMaintainerEndpoint from '~/endpoints/add-maintainer';
-import setAddonIconEndpoint from '~/endpoints/set-addon-icon';
-import listAddonsEndpoint from '~/endpoints/list-addons';
 import { createApiClient } from '~/api/schema-client';
 import { user } from '~/db/schema';
 import type { Api } from '~/api';
 
 import { createTestContext, signInWithDiscord } from './helpers/context';
 import { manifest, seedApprovedAddon } from './helpers/addons';
-import { failure, serveEndpoints } from './helpers/server';
+import { failure, serveApi } from './helpers/server';
 
 const base = await createTestContext();
 const { ctx } = base;
 
-const server = serveEndpoints(ctx, {
-	'GET /api/v1/addons': listAddonsEndpoint,
-	'POST /api/v1/addons/$id/maintainers': addMaintainerEndpoint,
-	'PUT /api/v1/addons/$id/icon': setAddonIconEndpoint,
-});
+const server = await serveApi(ctx);
 
 afterAll(async () => {
 	await server.stop(true);

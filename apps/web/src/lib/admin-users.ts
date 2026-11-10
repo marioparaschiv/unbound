@@ -223,6 +223,20 @@ export async function getUserSummary(
 ): Promise<UserSummary | undefined> {
 	requirePermission(caller, { user: ['list'] });
 
+	return readUserSummary(ctx, id);
+}
+
+/**
+ * @description Reads a user's public name and avatar, with no permission check, for pickers that
+ * name users by id.
+ * @param ctx The application context.
+ * @param id The user id.
+ * @returns The user's summary, or `undefined` when no user has the id.
+ */
+export async function readUserSummary(
+	ctx: AppContext,
+	id: string,
+): Promise<UserSummary | undefined> {
 	const row = await ctx.db.query.user.findFirst({
 		where: { id },
 		columns: { id: true, name: true, image: true },
@@ -233,4 +247,10 @@ export async function getUserSummary(
 	return { id: row.id, name: row.name, image: row.image ?? null };
 }
 
-export default { queryAdminUsers, listAdminUsers, getAdminUser, getUserSummary };
+export default {
+	queryAdminUsers,
+	listAdminUsers,
+	getAdminUser,
+	getUserSummary,
+	readUserSummary,
+};

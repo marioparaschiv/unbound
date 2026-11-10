@@ -1,9 +1,7 @@
 import { loaderUpdateQuerySchema, loaderUpdateResponseSchema } from '@unbound-app/contracts/loader';
 import { Type } from '@unbound-app/contracts/schema';
-import { getIP } from 'better-auth/api';
 
 import { findLoaderUpdate } from '~/lib/loader-releases';
-import { consumeRateLimit } from '~/lib/rate-limit';
 import endpoint from '~/lib/api/endpoint';
 
 const checkLoaderUpdateEndpoint = endpoint(
@@ -12,17 +10,8 @@ const checkLoaderUpdateEndpoint = endpoint(
 		query: loaderUpdateQuerySchema,
 		response: loaderUpdateResponseSchema,
 	},
-	async ({ ctx, request, query }) => {
-		const ip = getIP(request, ctx.auth.options) ?? 'unknown';
-
-		await consumeRateLimit(ctx, {
-			key: `api:loader-updates:${ip}`,
-			windowSeconds: ctx.env.UPDATES_RATE_LIMIT_WINDOW_SECONDS,
-			max: ctx.env.UPDATES_RATE_LIMIT_MAX,
-		});
-
-		return findLoaderUpdate(ctx, query);
-	},
+	({ ctx, query }) => findLoaderUpdate(ctx, query),
+	{ rateLimit: { bucket: 'loader-updates', budget: 'UPDATES' } },
 );
 
 export default checkLoaderUpdateEndpoint;

@@ -4,7 +4,6 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
 import { getAddonDetails, queryListedAddons } from '~/lib/addons';
-import listAddonsEndpoint from '~/endpoints/list-addons';
 import { createApiClient } from '~/api/schema-client';
 import type { AppContext } from '~/lib/context';
 import { encodeCursor } from '~/lib/keyset';
@@ -13,12 +12,12 @@ import type { Api } from '~/api';
 
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from './helpers/addons';
 import { createTestContext, signInWithDiscord } from './helpers/context';
-import { failure, serveEndpoints } from './helpers/server';
 import { explain, planNodes } from './helpers/database';
+import { failure, serveApi } from './helpers/server';
 
 const base = await createTestContext({ ADDON_LIST_PAGE_SIZE: '2' });
 const ctx = base.ctx;
-const server = serveEndpoints(ctx, { 'GET /api/v1/addons': listAddonsEndpoint });
+const server = await serveApi(ctx);
 const client = createApiClient<Api>({ baseUrl: server.url.href });
 
 afterAll(async () => {

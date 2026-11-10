@@ -1,8 +1,6 @@
 import { updatesRequestSchema } from '@unbound-app/contracts/updates';
-import { describe, expect, mock, test } from 'bun:test';
-import type { AnyRoute } from '@tanstack/react-router';
 import { Type } from '@unbound-app/contracts/schema';
-import { join } from 'node:path';
+import { describe, expect, test } from 'bun:test';
 
 import {
 	buildOpenApiDocument,
@@ -18,24 +16,7 @@ import {
 import { getSchemaFields, groupOperations } from '~/lib/docs/http-reference';
 import { PUBLIC_OPERATIONS } from '~/lib/api/openapi/public-operations';
 
-// `serve` binds handlers to the process-wide app, which reads the deployment's env; no handler runs here.
-void mock.module('~/lib/app', () => ({ default: {} }));
-
-const ROUTES = join(import.meta.dir, '../../src/routes/api/v1');
-
-// The same files the server globs, loaded as bun loads them.
-async function loadApiRoutes(): Promise<Record<string, AnyRoute>> {
-	const files = [...new Bun.Glob('**/*.ts').scanSync(ROUTES)];
-	const entries = await Promise.all(
-		files.map(async (file) => {
-			const module: { Route: AnyRoute } = await import(join(ROUTES, file));
-
-			return [`routes/api/v1/${file}`, module.Route] as const;
-		}),
-	);
-
-	return Object.fromEntries(entries);
-}
+import { loadApiRoutes } from '../helpers/api-routes';
 
 const served = collectServedEndpoints(await loadApiRoutes());
 const document = buildOpenApiDocument(listPublicOperations(served), {

@@ -3,7 +3,7 @@ import type { Caller } from '@unbound-app/contracts/account';
 import { createServerFn } from '@tanstack/react-start';
 
 import { toCallerProfile } from '~/lib/api/caller';
-import app from '~/lib/app';
+import { getApp } from '~/lib/app';
 
 /** The signed-in user as pages see them: the API's caller shape. */
 export type SessionUser = Caller;
@@ -19,7 +19,7 @@ export type PageSession = {
  */
 export const getSession = createServerFn({ method: 'GET' }).handler(
 	async (): Promise<PageSession | null> => {
-		const session = await app.auth.api.getSession({ headers: getRequestHeaders() });
+		const session = await getApp().auth.api.getSession({ headers: getRequestHeaders() });
 
 		if (!session) return null;
 

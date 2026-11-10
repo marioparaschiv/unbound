@@ -8,16 +8,7 @@ import { updatesResponseSchema } from '@unbound-app/contracts/updates';
 import { afterAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
-import removeMaintainerEndpoint from '~/endpoints/remove-maintainer';
-import listMaintainersEndpoint from '~/endpoints/list-maintainers';
-import addMaintainerEndpoint from '~/endpoints/add-maintainer';
-import transferAddonEndpoint from '~/endpoints/transfer-addon';
-import checkUpdatesEndpoint from '~/endpoints/check-updates';
-import delistAddonEndpoint from '~/endpoints/delist-addon';
-import relistAddonEndpoint from '~/endpoints/relist-addon';
-import listAddonsEndpoint from '~/endpoints/list-addons';
 import { createApiClient } from '~/api/schema-client';
-import myAddonsEndpoint from '~/endpoints/my-addons';
 import type { AppContext } from '~/lib/context';
 import type { Role } from '~/lib/auth/access';
 import { user } from '~/db/schema';
@@ -25,24 +16,14 @@ import type { Api } from '~/api';
 
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from '../helpers/addons';
 import { authRequest, createTestContext, signInWithDiscord } from '../helpers/context';
-import { failure, serveEndpoints } from '../helpers/server';
+import { failure, serveApi } from '../helpers/server';
 
 const NOW = new Date('2026-10-17T12:00:00.000Z');
 
 const base = await createTestContext();
 const ctx: AppContext = { ...base.ctx, now: () => NOW };
 
-const server = serveEndpoints(ctx, {
-	'GET /api/v1/addons': listAddonsEndpoint,
-	'GET /api/v1/addons/$id/maintainers': listMaintainersEndpoint,
-	'POST /api/v1/addons/$id/maintainers': addMaintainerEndpoint,
-	'DELETE /api/v1/addons/$id/maintainers/$userId': removeMaintainerEndpoint,
-	'POST /api/v1/addons/$id/transfer': transferAddonEndpoint,
-	'POST /api/v1/addons/$id/delist': delistAddonEndpoint,
-	'POST /api/v1/addons/$id/relist': relistAddonEndpoint,
-	'GET /api/v1/me/addons': myAddonsEndpoint,
-	'POST /api/v1/updates': checkUpdatesEndpoint,
-});
+const server = await serveApi(ctx);
 
 afterAll(async () => {
 	await server.stop(true);

@@ -8,7 +8,9 @@ import {
 } from '@unbound-app/contracts/schema';
 import { isPostgresSafe } from '@unbound-app/contracts/text';
 import { createLogger } from '@unbound-app/logger';
+import { getIP } from 'better-auth/api';
 
+import { consumeBudget, type BudgetedRateLimit } from '~/lib/rate-limit';
 import { requireCaller } from '~/lib/api/caller';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
@@ -57,6 +59,11 @@ export type EndpointOptions<TResponse extends TSchema> = {
 	 * stored whole in a `json` column that no query reads into.
 	 */
 	anyJsonBody?: boolean;
+	/**
+	 * Counts each parsed request against a budget before the handler runs: per client IP on a public
+	 * endpoint, per user once a caller endpoint resolves its caller.
+	 */
+	rateLimit?: BudgetedRateLimit;
 };
 
 type Handler<TInput, TResponse extends TSchema> = (
@@ -128,7 +135,7 @@ function parseInput<T extends TSchema>(schema: T, input: unknown): StaticDecode<
  * with `internal_error`.
  * @param schemas The request body, query and response schemas.
  * @param handler The endpoint logic.
- * @param options Conditional-request support, e.g. an `etag` derived from the result.
+ * @param options Conditional-request support, body checks and a per-IP rate limit.
  * @returns The endpoint, served from a route with `serve` and called directly from tests.
  */
 export function endpoint<TBody extends TSchema, TResponse extends TSchema, TQuery extends TSchema>(
@@ -159,6 +166,14 @@ export function endpoint<TBody extends TSchema, TResponse extends TSchema, TQuer
 
 				const body = parseInput(schemas.body, rawBody);
 				const query = parseInput(schemas.query, rawQuery);
+
+				if (options.rateLimit) {
+					// Without a trustworthy client IP, requests share one bucket rather than going unlimited.
+					const ip = getIP(request, ctx.auth.options) ?? 'unknown';
+
+					await consumeBudget(ctx, options.rateLimit, ip);
+				}
+
 				const result = parse(
 					schemas.response,
 					await handler({ ctx, request, params, body, query }),
@@ -195,7 +210,7 @@ export function endpoint<TBody extends TSchema, TResponse extends TSchema, TQuer
  * API key may call. The caller resolves once the request parses, else it fails with `unauthorized`.
  * @param schemas The request body, query and response schemas.
  * @param handler The endpoint logic, given the resolved `caller`.
- * @param options Conditional-request support, e.g. an `etag` derived from the result.
+ * @param options As {@link endpoint} takes them, with `rateLimit` counted per user.
  * @returns The endpoint, served from a route with `serve` and called directly from tests.
  */
 export function callerEndpoint<
@@ -207,15 +222,21 @@ export function callerEndpoint<
 	handler: Handler<CallerEndpointInput<StaticDecode<TBody>, StaticDecode<TQuery>>, TResponse>,
 	options: EndpointOptions<TResponse> = {},
 ): Endpoint<TBody, TResponse, TQuery> {
+	const { rateLimit, ...rest } = options;
+
 	return {
 		...endpoint(
 			schemas,
-			async (input) =>
-				handler({
-					...input,
-					caller: await requireCaller(input.ctx, input.request.headers),
-				}),
-			options,
+			async (input) => {
+				const caller = await requireCaller(input.ctx, input.request.headers);
+
+				if (rateLimit) {
+					await consumeBudget(input.ctx, rateLimit, caller.user.id);
+				}
+
+				return handler({ ...input, caller });
+			},
+			rest,
 		),
 		access: 'caller',
 	};

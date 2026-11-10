@@ -12,9 +12,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 import { eq } from 'drizzle-orm';
 
-import listFirstPartyAddonsEndpoint from '~/endpoints/list-first-party-addons';
 import publishFirstPartyEndpoint from '~/endpoints/publish-first-party';
-import getCatalogEndpoint from '~/endpoints/get-catalog';
 import { createApiClient } from '~/api/schema-client';
 import { createSubmission } from '~/lib/submissions';
 import type { AppContext } from '~/lib/context';
@@ -36,7 +34,7 @@ import {
 } from './helpers/context';
 import { COMMITTED_ADDON_MD, committedPage, committedPageFiles, png } from './helpers/addon-page';
 import { manifest, seedApprovedAddon, seedSubmission } from './helpers/addons';
-import { failure, serveEndpoints } from './helpers/server';
+import { failure, serveApi } from './helpers/server';
 import { serveMemoryS3 } from './helpers/memory-s3';
 import { serveGitHub } from './helpers/github';
 
@@ -63,11 +61,7 @@ const reviewed = await createTestContext({ ...shared, S3_ENDPOINT: reviewS3.url.
 const unconfigured = await createTestContext({ GITHUB_API_URL: github.url.href });
 const ctx = trusted.ctx;
 
-const server = serveEndpoints(ctx, {
-	'POST /api/v1/first-party/publish': publishFirstPartyEndpoint,
-	'GET /api/v1/catalog': getCatalogEndpoint,
-	'GET /api/v1/first-party/addons': listFirstPartyAddonsEndpoint,
-});
+const server = await serveApi(ctx);
 const client = createApiClient<Api>({ baseUrl: server.url.href });
 
 afterAll(async () => {

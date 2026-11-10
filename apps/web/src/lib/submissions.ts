@@ -12,20 +12,20 @@ import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { MAX_SUBMISSION_TAGS } from '@unbound-app/contracts/tags';
 import { and, count, eq, gte, inArray, ne } from 'drizzle-orm';
 
-import { addonMaintainer, addonVersion, submission, submissionSource } from '~/db/schema';
 import { readSubmissionMaintainers, requireSubmissionMaintainers } from '~/lib/maintainers';
+import { addonMaintainer, addonVersion, submission, submissionSource } from '~/db/schema';
 import type { AddonSource, RepositoryListing } from '~/lib/addon-source';
 import { readAddonTags, readTags, requireTags } from '~/lib/addon-tags';
 import type { SubmissionSourceRow } from '~/lib/artifacts';
 import { appendEvent } from '~/lib/moderation-events';
 import { readAddonSource } from '~/lib/addon-source';
-import { checkClaim } from '~/lib/addon-claim';
 import { requirePermission } from '~/lib/api/caller';
 import { readReview } from '~/lib/submission-review';
 import type { Transaction } from '~/db/database';
 import { getSnowflakeDate } from '~/lib/discord';
 import { isAddonIcon } from '~/lib/addon-icons';
 import type { AppContext } from '~/lib/context';
+import { checkClaim } from '~/lib/addon-claim';
 import type { Caller } from '~/lib/api/caller';
 import { DAY_MS } from '~/lib/calendar-date';
 import { connectGitHub } from '~/lib/github';
@@ -89,19 +89,27 @@ export function getStagingKey(submissionId: string): string {
 }
 
 /**
+ * @description Says whether a submission loaded with its source was read from GitHub.
+ * @template T The loaded row, with any further relations.
+ * @param row The submission with its source.
+ * @returns Whether it is sourced; legacy uploads are not.
+ */
+export function isSourced<T extends SubmissionWithSource>(row: T): row is T & SourcedSubmissionRow {
+	return Boolean(row.repository && row.sha256 && row.source);
+}
+
+/**
  * @description Narrows a submission loaded with its source to one read from GitHub.
  * @template T The loaded row, with any further relations.
  * @param row The submission with its source.
  * @returns The row, typed as sourced.
  */
 export function requireSourced<T extends SubmissionWithSource>(row: T): T & SourcedSubmissionRow {
-	const { repository, sha256, source } = row;
-
-	if (!repository || !sha256 || !source) {
+	if (!isSourced(row)) {
 		throw new Error(`Submission ${row.id} is a legacy upload without a GitHub source.`);
 	}
 
-	return { ...row, repository, sha256, source };
+	return row;
 }
 
 /**
@@ -516,6 +524,7 @@ export default {
 	OPEN_SUBMISSION_STATUSES,
 	REPLACEABLE_SUBMISSION_STATUSES,
 	getStagingKey,
+	isSourced,
 	requireSourced,
 	toSubmission,
 	insertSubmissionSource,

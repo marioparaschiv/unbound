@@ -15,17 +15,12 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
-import getDiscordOAuthEndpoint from '~/endpoints/get-discord-oauth';
-import discordSignInEndpoint from '~/endpoints/discord-sign-in';
-import deleteSyncEndpoint from '~/endpoints/delete-sync';
 import { createApiClient } from '~/api/schema-client';
-import getSyncEndpoint from '~/endpoints/get-sync';
-import putSyncEndpoint from '~/endpoints/put-sync';
 import { account, user } from '~/db/schema';
 import type { Api } from '~/api';
 
 import { createTestContext, signInWithDiscord } from '../helpers/context';
-import { failure, serveEndpoints } from '../helpers/server';
+import { failure, serveApi } from '../helpers/server';
 
 type FakeDiscordUser = {
 	id: string;
@@ -94,13 +89,7 @@ const base = await createTestContext({
 	SYNC_SIGN_IN_RATE_LIMIT_MAX: '1000',
 });
 const ctx = base.ctx;
-const server = serveEndpoints(ctx, {
-	'GET /api/v1/auth/discord': getDiscordOAuthEndpoint,
-	'POST /api/v1/auth/discord': discordSignInEndpoint,
-	'GET /api/v1/sync': getSyncEndpoint,
-	'PUT /api/v1/sync': putSyncEndpoint,
-	'DELETE /api/v1/sync': deleteSyncEndpoint,
-});
+const server = await serveApi(ctx);
 const client = createApiClient<Api>({ baseUrl: server.url.href });
 
 afterAll(async () => {

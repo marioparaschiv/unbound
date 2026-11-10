@@ -4,7 +4,9 @@ import { startSponsorReconciler } from '~/lib/sponsors/reconcile';
 import { startProfileRefresher } from '~/lib/authors/profiles';
 import { startStagingSweeper } from '~/lib/staging';
 import { startTeamSync } from '~/lib/team/sync';
-import app from '~/lib/app';
+import { getApp } from '~/lib/app';
+
+const app = getApp();
 
 startStagingSweeper(app);
 startSponsorReconciler(app);

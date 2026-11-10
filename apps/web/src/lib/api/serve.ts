@@ -1,7 +1,7 @@
 import type { TSchema } from '@unbound-app/contracts/schema';
 
 import type { Endpoint, PathParams } from '~/lib/api/endpoint';
-import app from '~/lib/app';
+import { getApp } from '~/lib/app';
 
 export type ServerHandlerArgs = {
 	request: Request;
@@ -14,7 +14,8 @@ export type ServedEndpoint<E> = ((args: ServerHandlerArgs) => Promise<Response>)
 };
 
 /**
- * @description Binds an endpoint to the process-wide app context as a server route handler.
+ * @description Binds an endpoint to the process-wide app context, resolved per request, as a server
+ * route handler. Importing a route therefore opens nothing.
  * @param target The endpoint to serve.
  * @returns The handler to place under a method in `server.handlers`.
  */
@@ -22,7 +23,7 @@ export function serve<TBody extends TSchema, TResponse extends TSchema, TQuery e
 	target: Endpoint<TBody, TResponse, TQuery>,
 ): ServedEndpoint<Endpoint<TBody, TResponse, TQuery>> {
 	return Object.assign(
-		({ request, params }: ServerHandlerArgs) => target.handle(app, request, params),
+		({ request, params }: ServerHandlerArgs) => target.handle(getApp(), request, params),
 		{
 			endpoint: target,
 		},

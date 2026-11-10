@@ -8,13 +8,6 @@ import type { Badge } from '@unbound-app/contracts/sponsors';
 import { eq } from 'drizzle-orm';
 
 import { getBadgeImageKey, hashBadgeImage } from '~/lib/sponsors/badge-image';
-import completeBadgeUploadEndpoint from '~/endpoints/complete-badge-upload';
-import createBadgeUploadEndpoint from '~/endpoints/create-badge-upload';
-import listUserBadgesEndpoint from '~/endpoints/list-user-badges';
-import removeMyBadgesEndpoint from '~/endpoints/remove-my-badges';
-import restoreBadgeEndpoint from '~/endpoints/restore-badge';
-import setMyBadgesEndpoint from '~/endpoints/set-my-badges';
-import revokeBadgeEndpoint from '~/endpoints/revoke-badge';
 import { createApiClient } from '~/api/schema-client';
 import type { AppContext } from '~/lib/context';
 import type { Role } from '~/lib/auth/access';
@@ -27,7 +20,7 @@ import { createTestContext, linkGitHub, signInWithDiscord } from './context';
 import { seedSponsorship } from './sponsors';
 import { withMemoryPublic } from './storage';
 import { serveMemoryS3 } from './memory-s3';
-import { serveEndpoints } from './server';
+import { serveApi } from './server';
 import { encodePng } from './png';
 
 export type SponsorOptions = {
@@ -73,15 +66,7 @@ export async function createBadgeSuite(now: Date) {
 
 		return image;
 	}) as [string, string, string, string];
-	const server = serveEndpoints(ctx, {
-		'POST /api/v1/me/badges/uploads': createBadgeUploadEndpoint,
-		'POST /api/v1/me/badges/uploads/$uploadId/complete': completeBadgeUploadEndpoint,
-		'GET /api/v1/users/$id/badges': listUserBadgesEndpoint,
-		'PUT /api/v1/me/badges': setMyBadgesEndpoint,
-		'DELETE /api/v1/me/badges': removeMyBadgesEndpoint,
-		'POST /api/v1/users/$id/badge/revoke': revokeBadgeEndpoint,
-		'DELETE /api/v1/users/$id/badge/revoke': restoreBadgeEndpoint,
-	});
+	const server = await serveApi(ctx);
 	const anonymous = createApiClient<Api>({ baseUrl: server.url.href });
 	let users = 0;
 
