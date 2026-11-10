@@ -49,6 +49,7 @@ describe('evaluateForController', () => {
 				id: 'slow',
 				ok: false,
 				error: 'Evaluation timed out after 30ms.',
+				code: 'timeout',
 			},
 		]);
 	});
@@ -105,6 +106,7 @@ describe('attachDevice', () => {
 				id: 'stuck',
 				ok: false,
 				error: 'Device disconnected before the evaluation completed.',
+				code: 'device-disconnected',
 			},
 			{ type: 'eval-result', id: 'fresh', ok: true, value: '1' },
 		]);

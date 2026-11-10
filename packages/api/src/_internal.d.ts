@@ -5158,12 +5158,25 @@ export type PluginContext = {
 	dispose(): void;
 };
 /** What a plugin's self-test found: whether the plugin works on this device, and why. */
-export type PluginSelfTestResult = {
-	/** `true` when the plugin works on this device. */
-	ok: boolean;
-	/** A human-readable reason for the result. */
-	detail: string;
-};
+export type PluginSelfTestResult =
+	| {
+			/** The plugin works on this device. */
+			ok: true;
+			/** A human-readable reason for the result. */
+			detail: string;
+			/** Set when the plugin works but has nothing on screen to draw, which says where the chat is rather than that drawing is wrong. */
+			nothingDrawn?: boolean;
+			/** Set while the plugin is still drawing what is on screen, so the device matrix waits before timing or judging it. */
+			settling?: boolean;
+	  }
+	| {
+			/** The plugin does not work on this device. */
+			ok: false;
+			/** A human-readable reason for the result. */
+			detail: string;
+			/** Set when the plugin failed only because it has nothing on screen to draw. */
+			nothingDrawn?: boolean;
+	  };
 /**
  * Props of `PostponeRender` (function). Exports: PostponeRender.
  * @see design/components/Navigator/native/PostponeRender.native.tsx

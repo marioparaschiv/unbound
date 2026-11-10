@@ -25,7 +25,8 @@
 		".": "./src/index.ts",
 		"./rollup": "./src/rollup/index.ts",
 		"./oxlint": "./src/oxlint/plugin.ts",
-		"./settings/schema": "./src/settings/schema.ts"
+		"./settings/schema": "./src/settings/schema.ts",
+		"./hermes-code": "./src/lib/hermes-code.ts"
 	},
 	"scripts": {
 		"build": "tsdown",

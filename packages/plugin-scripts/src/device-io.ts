@@ -1,44 +1,30 @@
 import { copyFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { REPO_ROOT } from './paths';
-import {
-	parse,
-	safeParse,
-	Type,
-	type StaticDecode,
-	type TSchema,
-} from '@unbound-app/contracts/schema';
-
 export type ScreenshotTarget = { kind: 'android'; serial?: string } | { kind: 'ios'; udid: string };
 
 export type ScreenSize = { width: number; height: number };
 
 export type ScrollOutcome = { swipes: number; moved?: boolean };
 
-type CommandResult = { ok: boolean; stdout: string; stderr: string };
+export type CommandResult = { ok: boolean; stdout: string; stderr: string };
+
+/** Runs a host command, such as `adb` or `jb-p1lot`, against the device. */
+export type CommandRunner = (command: string[]) => Promise<CommandResult>;
+
+/** What scrolling needs: the commands it runs and the screenshots it compares. */
+export type ScrollHost = {
+	target: ScreenshotTarget;
+	run: CommandRunner;
+	screenshot(file: string): Promise<boolean>;
+};
 
 type TargetFlags = { ios?: boolean; udid?: string; serial?: string };
 
-const CLI = join(REPO_ROOT, 'packages/cli/src/index.ts');
-const EVAL_TIMEOUT_MS = 60_000;
-const RECONNECT_PATTERN = /disconnected|No device is connected/i;
-const RECONNECT_ATTEMPTS = 3;
-const RECONNECT_WAIT_MS = 5_000;
-const BRIDGE_ATTEMPTS = 40;
-const BRIDGE_WAIT_MS = 3_000;
-const BRIDGE_SETTLE_MS = 8_000;
 const SCROLL_SWIPE_MS = 120;
 const IOS_POINTS = { width: 375, height: 667 };
 
 export const SCROLL_SWIPES = 12;
-
-// `unbound eval --json` prints the eval result; only `ok`, `value` and `error` are read.
-const evalReplySchema = Type.Object({
-	ok: Type.Optional(Type.Boolean()),
-	value: Type.Optional(Type.Unknown()),
-	error: Type.Optional(Type.Unknown()),
-});
 
 export async function run(command: string[]): Promise<CommandResult> {
 	const process = Bun.spawn(command, { stdout: 'pipe', stderr: 'pipe' });
@@ -49,92 +35,6 @@ export async function run(command: string[]): Promise<CommandResult> {
 	]);
 
 	return { ok: code === 0, stdout, stderr };
-}
-
-export function isDisconnect(error: unknown): boolean {
-	return error instanceof Error && RECONNECT_PATTERN.test(error.message);
-}
-
-export async function withReconnects<T>(
-	attempt: () => Promise<T>,
-	wait = (ms: number) => Bun.sleep(ms),
-	attempts = RECONNECT_ATTEMPTS,
-): Promise<T> {
-	for (let retry = 0; ; retry++) {
-		try {
-			return await attempt();
-		} catch (error) {
-			if (retry >= attempts || !isDisconnect(error)) throw error;
-
-			console.error(`Device disconnected, retrying in ${RECONNECT_WAIT_MS / 1000}s.`);
-			await wait(RECONNECT_WAIT_MS);
-		}
-	}
-}
-
-async function evaluateOnce(port: number, code: string): Promise<string> {
-	const { stdout, stderr } = await run([
-		'bun',
-		CLI,
-		'eval',
-		'--port',
-		String(port),
-		'--timeout',
-		String(EVAL_TIMEOUT_MS),
-		'--json',
-		code,
-	]);
-	const line = stdout.trim().split('\n').at(-1) ?? '';
-	const parsed = safeParse(evalReplySchema, JSON.parse(line || '{}'));
-	const reply = parsed.success ? parsed.data : {};
-
-	if (!reply.ok || typeof reply.value !== 'string') {
-		const reason = reply.error ?? stderr.trim();
-
-		throw new Error(
-			reason
-				? `Evaluation failed: ${JSON.stringify(reason)}`
-				: 'Device disconnected without a reply.',
-		);
-	}
-
-	return reply.value;
-}
-
-export function evaluate(port: number, code: string): Promise<string> {
-	return withReconnects(() => evaluateOnce(port, code));
-}
-
-/**
- * @description Evaluates a script whose result is JSON and parses that result with a schema.
- * @template T The parsed result.
- * @param port The debugger bridge port.
- * @param code A script that returns a JSON string.
- * @param schema The shape the script's JSON must have.
- * @returns The parsed result.
- */
-export async function evaluateJson<T extends TSchema>(
-	port: number,
-	code: string,
-	schema: T,
-): Promise<StaticDecode<T>> {
-	return parse(schema, JSON.parse(await evaluate(port, code)));
-}
-
-export async function waitForBridge(port: number): Promise<void> {
-	for (let attempt = 0; attempt < BRIDGE_ATTEMPTS; attempt++) {
-		const ready = await evaluateOnce(port, "'ready'").catch(() => undefined);
-
-		if (ready === 'ready') {
-			await Bun.sleep(BRIDGE_SETTLE_MS);
-
-			return;
-		}
-
-		await Bun.sleep(BRIDGE_WAIT_MS);
-	}
-
-	throw new Error('Device disconnected: Discord did not come back after a relaunch.');
 }
 
 export function parseScreenSize(output: string): ScreenSize | undefined {
@@ -192,7 +92,10 @@ export function swipeCommands(
 	});
 }
 
-export async function screenSize(target: ScreenshotTarget): Promise<ScreenSize> {
+export async function screenSize(
+	target: ScreenshotTarget,
+	run: CommandRunner,
+): Promise<ScreenSize> {
 	if (target.kind === 'ios') return IOS_POINTS;
 
 	const serial = target.serial ? ['-s', target.serial] : [];
@@ -209,7 +112,7 @@ async function sameScreen(before: string, after: string): Promise<boolean | unde
 	return a.length === b.length && a.every((byte, index) => byte === b[index]);
 }
 
-export async function swipeAll(commands: string[][]): Promise<number> {
+export async function swipeAll(run: CommandRunner, commands: string[][]): Promise<number> {
 	let performed = 0;
 
 	for (const command of commands) {
@@ -221,21 +124,22 @@ export async function swipeAll(commands: string[][]): Promise<number> {
 
 export const NEWEST_SWIPES = 4;
 
-export async function scrollToNewest(target: ScreenshotTarget): Promise<number> {
-	const commands = swipeCommands(target, await screenSize(target), NEWEST_SWIPES * 2);
+export async function scrollToNewest({ target, run }: ScrollHost): Promise<number> {
+	const commands = swipeCommands(target, await screenSize(target, run), NEWEST_SWIPES * 2);
 
-	return swipeAll(commands.slice(NEWEST_SWIPES));
+	return swipeAll(run, commands.slice(NEWEST_SWIPES));
 }
 
-export async function scrollStress(target: ScreenshotTarget, out: string): Promise<ScrollOutcome> {
-	const commands = swipeCommands(target, await screenSize(target), SCROLL_SWIPES);
+export async function scrollStress(host: ScrollHost, out: string): Promise<ScrollOutcome> {
+	const { target, run } = host;
+	const commands = swipeCommands(target, await screenSize(target, run), SCROLL_SWIPES);
 	const half = commands.length / 2;
 	const before = join(out, 'scroll-before.png');
 	const after = join(out, 'scroll-after.png');
-	const capturedBefore = await screenshot(target, before);
-	const older = await swipeAll(commands.slice(0, half));
-	const capturedAfter = await screenshot(target, after);
-	const newer = await swipeAll(commands.slice(half));
+	const capturedBefore = await host.screenshot(before);
+	const older = await swipeAll(run, commands.slice(0, half));
+	const capturedAfter = await host.screenshot(after);
+	const newer = await swipeAll(run, commands.slice(half));
 	const same = capturedBefore && capturedAfter ? await sameScreen(before, after) : undefined;
 
 	return { swipes: older + newer, moved: same === undefined ? undefined : !same };

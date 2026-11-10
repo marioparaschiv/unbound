@@ -45,26 +45,4 @@ export function deviceSlug(device: MatrixDevice): string {
 		.replace(/^-|-$/g, '');
 }
 
-export function collectorArgs(
-	device: MatrixDevice,
-	out: string,
-	channel: string | undefined,
-	only: string | undefined,
-	leakCycles?: number,
-): string[] {
-	return [
-		'--port',
-		String(device.port),
-		'--out',
-		out,
-		'--device',
-		device.name,
-		...(device.udid ? ['--udid', device.udid] : []),
-		...(device.serial ? ['--serial', device.serial] : []),
-		...(channel ? ['--channel', channel] : []),
-		...(only ? ['--only', only] : []),
-		...(leakCycles ? ['--leak-cycles', String(leakCycles)] : []),
-	];
-}
-
-export default { collectorArgs, deviceSlug, parseMatrixConfig, readMatrixConfig };
+export default { deviceSlug, parseMatrixConfig, readMatrixConfig };

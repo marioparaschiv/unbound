@@ -1,42 +1,15 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { parse } from '@unbound-app/contracts/schema';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
-import { measuredChecksSchema, type MeasuredCheck } from './compare-device-matrix';
-import {
-	describeMemory,
-	describeSpringBoard,
-	largestGrowers,
-	type MemoryReport,
-} from './device-memory';
-import type { SelfTestResult } from './loader-self-test';
-import { describeTimings, type PhaseTimings } from './timings';
-import {
-	MATRIX_CONFIG_PATH,
-	collectorArgs,
-	deviceSlug,
-	readMatrixConfig,
-	type MatrixDevice,
-} from './matrix-config';
+import type { MeasuredCheck } from './compare-device-matrix';
+import { openDevice } from './device';
+import { describeMemory, describeSpringBoard, largestGrowers } from './device-memory';
+import { runDevice, type DeviceRun } from './device-run';
+import { describeTimings } from './timings';
+import { MATRIX_CONFIG_PATH, deviceSlug, readMatrixConfig } from './matrix-config';
 
-export type DeviceRun = {
-	device: MatrixDevice;
-	checks: MeasuredCheck[];
-	changes: string[];
-	scrollToasts?: string[];
-	emptyToasts?: string[];
-	scrollStuck?: boolean;
-	drops?: string[];
-	memory?: MemoryReport;
-	selfTest?: SelfTestResult;
-	timings?: PhaseTimings;
-	error?: string;
-};
-
-type ScrollResult = { swipes: number; moved?: boolean; toasts: string[]; emptyToasts?: string[] };
-
-const COLLECTOR = resolve(import.meta.dir, 'collect-device-matrix.ts');
+export type { DeviceRun } from './device-run';
 
 function passed(check: MeasuredCheck): boolean {
 	return check.behavior === 'pass' && check.lifecycle === 'pass';
@@ -50,25 +23,6 @@ function cell(check: MeasuredCheck | undefined): string {
 
 const LISTED_CALLS = 6;
 const PLACEMENT_LISTED = 5;
-const collectors = new Set<Bun.Subprocess>();
-
-function stopCollectorsOn(signal: NodeJS.Signals, code: number) {
-	process.once(signal, () => {
-		for (const collector of collectors) collector.kill('SIGTERM');
-
-		void Promise.all([...collectors].map((collector) => collector.exited)).finally(() =>
-			process.exit(code),
-		);
-	});
-}
-
-export function failureReason(lines: string[]): string | undefined {
-	const errors = lines.filter(
-		(line) => line.startsWith('error: ') && !line.includes('exited with code'),
-	);
-
-	return errors.at(-1)?.slice('error: '.length) ?? lines.filter(Boolean).at(-1);
-}
 
 export function listCalls(calls: string[]): string {
 	const listed = calls.slice(0, LISTED_CALLS).map((call) => `\`${call}\``);
@@ -220,32 +174,6 @@ export function renderSummary(runs: DeviceRun[]): string {
 	].join('\n');
 }
 
-function readMemory(out: string): MemoryReport | undefined {
-	const file = join(out, 'memory.json');
-
-	return existsSync(file) ? (JSON.parse(readFileSync(file, 'utf8')) as MemoryReport) : undefined;
-}
-
-function readTimings(out: string): PhaseTimings | undefined {
-	const file = join(out, 'timing.json');
-
-	return existsSync(file) ? (JSON.parse(readFileSync(file, 'utf8')) as PhaseTimings) : undefined;
-}
-
-function readSelfTest(out: string): SelfTestResult | undefined {
-	const file = join(out, 'selftest.json');
-
-	return existsSync(file)
-		? (JSON.parse(readFileSync(file, 'utf8')) as SelfTestResult)
-		: undefined;
-}
-
-function readScroll(out: string): ScrollResult | undefined {
-	const file = join(out, 'scroll.json');
-
-	return existsSync(file) ? (JSON.parse(readFileSync(file, 'utf8')) as ScrollResult) : undefined;
-}
-
 export function runFailed(run: DeviceRun): boolean {
 	return Boolean(
 		run.error ||
@@ -255,76 +183,6 @@ export function runFailed(run: DeviceRun): boolean {
 		run.emptyToasts?.length ||
 		!run.checks.every(passed),
 	);
-}
-
-function readChecks(out: string): MeasuredCheck[] {
-	const file = join(out, 'results.json');
-
-	return existsSync(file)
-		? parse(measuredChecksSchema, JSON.parse(readFileSync(file, 'utf8')))
-		: [];
-}
-
-async function collect(
-	device: MatrixDevice,
-	out: string,
-	channel: string | undefined,
-	only: string | undefined,
-	lenient = false,
-	leakCycles?: number,
-	fullLeakCheck = false,
-	clearStaged = false,
-): Promise<DeviceRun> {
-	mkdirSync(out, { recursive: true });
-	rmSync(join(out, 'scroll.json'), { force: true });
-	rmSync(join(out, 'memory.json'), { force: true });
-	rmSync(join(out, 'selftest.json'), { force: true });
-	rmSync(join(out, 'timing.json'), { force: true });
-
-	const args = [
-		...collectorArgs(device, out, channel, only, leakCycles),
-		...(lenient ? ['--lenient'] : []),
-		...(fullLeakCheck ? ['--full-leak-check'] : []),
-		...(clearStaged ? ['--clear-staged'] : []),
-	];
-	const child = Bun.spawn(['bun', COLLECTOR, ...args], {
-		stdout: 'pipe',
-		stderr: 'pipe',
-	});
-
-	collectors.add(child);
-
-	const [stderr, exit] = await Promise.all([new Response(child.stderr).text(), child.exited]);
-
-	collectors.delete(child);
-	const lines = stderr.split('\n');
-	const changes = lines
-		.filter((line) => line.startsWith('changed: '))
-		.map((line) => line.slice('changed: '.length));
-	const drops = lines
-		.filter((line) => line.startsWith('dropped: '))
-		.map((line) => line.slice('dropped: '.length));
-	const ids = new Set(only?.split(','));
-	const checks = readChecks(out).filter((check) => !only || ids.has(check.id));
-
-	const scroll = readScroll(out);
-	const toasts = {
-		drops,
-		selfTest: readSelfTest(out),
-		timings: readTimings(out),
-		memory: readMemory(out),
-		scrollToasts: scroll?.toasts,
-		emptyToasts: scroll?.emptyToasts,
-		scrollStuck: scroll?.moved === false,
-	};
-
-	if (exit !== 0) {
-		const reason = failureReason(lines) ?? `exited with ${exit}`;
-
-		return { device, checks, changes, ...toasts, error: `collector failed: ${reason}` };
-	}
-
-	return { device, checks, changes, ...toasts };
 }
 
 async function main(): Promise<void> {
@@ -349,20 +207,31 @@ async function main(): Promise<void> {
 	}
 
 	const out = resolve(values.out);
-	const channel = values.channel ?? config.channel;
+	const options = {
+		channel: values.channel ?? config.channel,
+		only: values.only?.split(','),
+		lenient: values.lenient,
+		leakCycles: Number(values['leak-cycles'] ?? 0),
+		fullLeakCheck: values['full-leak-check'],
+		clearStaged: values['clear-staged'],
+	};
+
+	mkdirSync(out, { recursive: true });
+
+	// Each device runs in this process; its report is the returned run, and run.json in its folder.
 	const runs = await Promise.all(
-		config.devices.map((device) =>
-			collect(
-				device,
-				join(out, deviceSlug(device)),
-				channel,
-				values.only,
-				values.lenient,
-				values['leak-cycles'] ? Number(values['leak-cycles']) : undefined,
-				values['full-leak-check'],
-				values['clear-staged'],
-			),
-		),
+		config.devices.map(async (matrixDevice) => {
+			const device = openDevice(matrixDevice);
+
+			try {
+				return await runDevice(device, {
+					...options,
+					out: join(out, deviceSlug(matrixDevice)),
+				});
+			} finally {
+				device.close();
+			}
+		}),
 	);
 	const summary = renderSummary(runs);
 
@@ -372,8 +241,4 @@ async function main(): Promise<void> {
 	if (runs.some(runFailed)) process.exitCode = 1;
 }
 
-if (import.meta.main) {
-	stopCollectorsOn('SIGINT', 130);
-	stopCollectorsOn('SIGTERM', 143);
-	await main();
-}
+if (import.meta.main) await main();

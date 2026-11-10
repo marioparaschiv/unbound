@@ -157,7 +157,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "1.1.1",
+      "version": "1.1.1-0536718f7f22c8bf4fa2b949e8d22ab2165c9acc25bb0a423075b70927a20aa5",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -377,7 +377,9 @@
         "@types/bun": "catalog:",
         "@types/react": "catalog:react",
         "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
         "@unbound-app/contracts": "workspace:*",
+        "@unbound-app/debugger-protocol": "workspace:*",
         "@unbound-app/types": "workspace:*",
         "react": "catalog:react",
         "react-native": "catalog:react",

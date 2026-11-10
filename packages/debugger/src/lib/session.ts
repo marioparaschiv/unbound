@@ -80,12 +80,14 @@ export function detachDevice(socket: SocketLike) {
 		id,
 		ok: false,
 		error: 'Device disconnected before the evaluation completed.',
+		code: 'device-disconnected',
 	}));
 	pendingPushes.failAll((id) => ({
 		type: 'plugin-push-result',
 		id,
 		ok: false,
 		error: 'Device disconnected before the reload completed.',
+		code: 'device-disconnected',
 	}));
 
 	broadcastDeviceStatus(false);
@@ -149,6 +151,7 @@ export function pushPluginForController(socket: SocketLike, request: PluginPushR
 			id: request.id,
 			ok: false,
 			error: 'No device is connected to the debugger.',
+			code: 'no-device',
 		});
 
 		return;
@@ -162,6 +165,7 @@ export function pushPluginForController(socket: SocketLike, request: PluginPushR
 			id: request.id,
 			ok: false,
 			error: `Plugin push timed out after ${PLUGIN_PUSH_TIMEOUT_MS}ms.`,
+			code: 'timeout',
 		}),
 		meta: socket,
 	});
@@ -194,6 +198,7 @@ function dispatch(
 			id,
 			ok: false,
 			error: 'No device is connected to the debugger.',
+			code: 'no-device',
 		});
 
 		return;
@@ -207,6 +212,7 @@ function dispatch(
 			id,
 			ok: false,
 			error: `Evaluation timed out after ${timeout}ms.`,
+			code: 'timeout',
 		}),
 		meta: origin,
 	});
