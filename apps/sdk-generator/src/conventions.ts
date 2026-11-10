@@ -20,6 +20,7 @@ export const CONVENTIONS_OUT = join(API_SRC, '_conventions');
 const COPIED: CopiedConvention[] = [
 	{ source: 'packages/contracts/src/addon-locales.ts', out: 'addon-locales.ts' },
 	{ source: 'packages/contracts/src/addon-assets.ts', out: 'addon-assets.ts' },
+	{ source: 'packages/contracts/src/icu-parse.ts', out: 'icu-parse.ts' },
 	{
 		source: 'packages/utils/src/walk-tree.ts',
 		out: 'walk-tree.ts',
@@ -73,12 +74,16 @@ function lookupProps(sourceFile: SourceFile, path: string): [string, string[]][]
 	const table: [string, string[]][] = [];
 
 	for (const statement of sourceFile.getVariableStatements()) {
-		if (!statement.isExported()) continue;
+		if (!statement.isExported()) {
+			continue;
+		}
 
 		for (const declaration of statement.getDeclarations()) {
 			const call = declaration.getInitializerIfKind(SyntaxKind.CallExpression);
 
-			if (call?.getExpression().getText() !== 'findByPropsLazy') continue;
+			if (call?.getExpression().getText() !== 'findByPropsLazy') {
+				continue;
+			}
 
 			const props = call.getArguments().map((argument) => {
 				if (!Node.isStringLiteral(argument)) {

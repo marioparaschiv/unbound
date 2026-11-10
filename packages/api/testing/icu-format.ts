@@ -4,7 +4,7 @@ import {
 	type IcuNode,
 	type IcuPluralNode,
 	type IcuSelectNode,
-} from './icu-parse';
+} from '../src/_conventions/icu-parse';
 import { SOURCE_LOCALE } from '../src/_conventions/addon-locales';
 
 /** A value `format` puts into a placeholder, as the client's `FormatVars` types it. */

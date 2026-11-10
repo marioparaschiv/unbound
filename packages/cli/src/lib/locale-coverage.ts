@@ -1,5 +1,5 @@
-import { IcuSyntaxError } from '@unbound-app/api/testing/icu-parse';
 import { isLocaleCode } from '@unbound-app/contracts/addon-locales';
+import { IcuSyntaxError } from '@unbound-app/contracts/icu-parse';
 
 import {
 	keyLine,
