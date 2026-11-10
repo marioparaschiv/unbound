@@ -3,9 +3,10 @@ import type { Navigation } from '@unbound-app/types/components';
 
 import type { DiscordBuilds } from '~/updates/discord-builds';
 import type { PendingUpdate } from '~/updates/addon-updates';
+import { readInstallKind } from '~/updates/install-kind';
 import { getLoader } from '~/native/unbound-native';
+import { loaderName } from '~/updates/loader-name';
 import { Manager } from '~/addons/manager';
-import { messages } from '~/i18n/api';
 import { icons } from '~/assets/api';
 
 import { openAddonChangelog } from './open-addon-changelog';
@@ -49,17 +50,18 @@ export function listPendingItems(
 	}
 
 	const from = getLoader()?.version ?? '?';
+	const name = loaderName(readInstallKind());
 
 	return [
 		{
 			key: 'loader',
-			name: messages.UNBOUND_UPDATES_LOADER,
+			name,
 			icon: icons.WrenchIcon,
 			from,
 			to: loader.version,
 			open: (navigation) =>
 				openChangelog(navigation, {
-					name: messages.UNBOUND_UPDATES_LOADER,
+					name,
 					icon: icons.WrenchIcon,
 					installed: from,
 					offered: loader.version,

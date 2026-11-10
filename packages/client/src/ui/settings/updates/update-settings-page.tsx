@@ -1,6 +1,8 @@
 import type { UnboundSettingKey } from '~/settings/unbound';
+import { readInstallKind } from '~/updates/install-kind';
 import { useUnboundSettings } from '~/settings/unbound';
 import LogoRowIcon from '~/ui/icons/logo-row-icon';
+import { loaderName } from '~/updates/loader-name';
 import { Discord } from '~/metro/components';
 import Page from '~/ui/components/page';
 import { messages } from '~/i18n/api';
@@ -50,7 +52,7 @@ function UpdateSettingsPage() {
 					{...toggle('updater.notify.client')}
 				/>
 				<Discord.TableSwitchRow
-					label={messages.UNBOUND_UPDATES_LOADER}
+					label={loaderName(readInstallKind())}
 					icon={<Discord.TableRowIcon source={icons.WrenchIcon} />}
 					{...toggle('updater.notify.loader')}
 				/>

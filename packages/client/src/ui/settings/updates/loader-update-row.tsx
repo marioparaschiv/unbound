@@ -1,8 +1,9 @@
 import type { LoaderUpdate } from '@unbound-app/contracts/loader';
 
 import type { DiscordBuilds } from '~/updates/discord-builds';
+import { readInstallKind } from '~/updates/install-kind';
 import { getLoader } from '~/native/unbound-native';
-import { messages } from '~/i18n/api';
+import { loaderName } from '~/updates/loader-name';
 import { icons } from '~/assets/api';
 
 import LoaderUpdateButton from './loader-update-button';
@@ -18,7 +19,7 @@ type LoaderUpdateRowProps = {
 function LoaderUpdateRow({ update, discord }: LoaderUpdateRowProps) {
 	return (
 		<UpdateRowShell
-			name={messages.UNBOUND_UPDATES_LOADER}
+			name={loaderName(readInstallKind())}
 			icon={icons.WrenchIcon}
 			installed={getLoader()?.version ?? 'unknown'}
 			update={update}

@@ -22,6 +22,15 @@ describe('loaderDownloadUrl', () => {
 		expect(loaderDownloadUrl(MODULE, 'module')).toBe(MODULE);
 	});
 
+	test('sends a CDN loader release to the newest app build', () => {
+		const cdn = 'https://cdn.unbound.rip/loader/1.1.1/app.unbound.ios_1.1.1_iphoneos-arm64.deb';
+		const latest = `${RELEASES}/loader-latest`;
+
+		expect(loaderDownloadUrl(cdn, 'ipa')).toBe(`${latest}/Unbound.ipa`);
+		expect(loaderDownloadUrl(cdn, 'apk')).toBe(`${latest}/Unbound.apks`);
+		expect(loaderDownloadUrl(cdn, 'tweak')).toBe(cdn);
+	});
+
 	test('leaves a release page or an unknown install alone', () => {
 		const page = 'https://github.com/marioparaschiv/unbound/releases/tag/discord-352.1-ios';
 

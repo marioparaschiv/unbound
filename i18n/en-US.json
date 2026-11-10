@@ -130,6 +130,7 @@
 	"UNBOUND_UPDATES_NO_CHANGELOG": "No changelog provided.",
 	"UNBOUND_UPDATES_UPDATE_TO": "Update to v{version}",
 	"UNBOUND_UPDATES_LOADER": "Loader",
+	"UNBOUND_UPDATES_LOADER_IPA": "IPA",
 	"UNBOUND_UPDATES_DOWNLOAD": "Download",
 	"UNBOUND_UPDATES_DOWNLOAD_VERSION": "Download v{version}",
 	"UNBOUND_INSTALL_FAILED": "Couldn't install {name}.",
