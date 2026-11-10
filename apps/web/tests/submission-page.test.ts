@@ -16,9 +16,10 @@ import {
 	manyMediaFiles,
 	png,
 } from './helpers/addon-page';
-import { createTestContext, linkGitHub, signInWithDiscord, snowflakeAt } from './helpers/context';
 import { commitPlugin, serveGitHub, type FixtureFiles } from './helpers/github';
+import { createTestContext, snowflakeAt } from './helpers/context';
 import { withMemoryStaging } from './helpers/storage';
+import { signUpUser } from './helpers/users';
 
 const REPOSITORY = 'acme/addons';
 const ACCOUNT_CREATED = new Date('2020-01-01T00:00:00.000Z');
@@ -49,20 +50,8 @@ afterAll(async () => {
 	await github.stop();
 });
 
-let users = 0;
-
-async function signUp(target: AppContext = ctx) {
-	users += 1;
-
-	const signedIn = await signInWithDiscord(target, {
-		id: snowflakeAt(ACCOUNT_CREATED),
-		name: `User ${users}`,
-		email: `user-${users}@example.com`,
-	});
-
-	await linkGitHub(target, signedIn.userId, 'owner');
-
-	return signedIn;
+function signUp(target: AppContext = ctx) {
+	return signUpUser(target, { github: 'owner', discordId: snowflakeAt(ACCOUNT_CREATED) });
 }
 
 function submit(headers: Headers, request: CreateSubmissionRequest, target: AppContext = ctx) {

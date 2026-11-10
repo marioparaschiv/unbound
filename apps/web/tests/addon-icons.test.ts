@@ -4,7 +4,6 @@ import {
 	maintainersResponseSchema,
 } from '@unbound-app/contracts/addons';
 import { afterAll, describe, expect, test } from 'bun:test';
-import { eq } from 'drizzle-orm';
 
 import {
 	ADDON_ICON_NAMES,
@@ -14,12 +13,12 @@ import {
 	renderAddonIcon,
 } from '~/lib/addon-icons';
 import { createApiClient } from '~/api/schema-client';
-import { user } from '~/db/schema';
 import type { Api } from '~/api';
 
-import { createTestContext, signInWithDiscord } from './helpers/context';
 import { manifest, seedApprovedAddon } from './helpers/addons';
+import { createTestContext } from './helpers/context';
 import { failure, serveApi } from './helpers/server';
+import { signUpUser } from './helpers/users';
 
 const base = await createTestContext();
 const { ctx } = base;
@@ -31,20 +30,11 @@ afterAll(async () => {
 	await base.close();
 });
 
-let users = 0;
-
 async function signUp() {
-	users += 1;
+	const created = await signUpUser(ctx, { role: 'developer' });
+	const client = createApiClient<Api>({ baseUrl: server.url.href, headers: created.headers });
 
-	const { userId, headers } = await signInWithDiscord(ctx, {
-		id: `8035111022468${String(users).padStart(4, '0')}`,
-		name: `Icon User ${users}`,
-		email: `icon-user-${users}@example.com`,
-	});
-
-	await ctx.db.update(user).set({ role: 'developer' }).where(eq(user.id, userId));
-
-	return { userId, client: createApiClient<Api>({ baseUrl: server.url.href, headers }) };
+	return { ...created, client };
 }
 
 type Member = Awaited<ReturnType<typeof signUp>>;

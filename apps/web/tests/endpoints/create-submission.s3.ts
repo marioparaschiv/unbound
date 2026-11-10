@@ -7,8 +7,9 @@ import { createApiClient } from '~/api/schema-client';
 import { submission } from '~/db/schema';
 import type { Api } from '~/api';
 
-import { S3_TEST_ENV, createTestContext, linkGitHub, signInWithDiscord } from '../helpers/context';
+import { S3_TEST_ENV, createTestContext } from '../helpers/context';
 import { commitPlugin, serveGitHub } from '../helpers/github';
+import { signUpUser } from '../helpers/users';
 import { serveApi } from '../helpers/server';
 
 const REPOSITORY = 'acme/addons';
@@ -31,18 +32,8 @@ afterAll(async () => {
 	await close();
 });
 
-let users = 0;
-
 async function signUp() {
-	users += 1;
-
-	const { userId, headers } = await signInWithDiscord(ctx, {
-		id: '80351110224678912',
-		name: `Publisher ${users}`,
-		email: `publisher-${users}@example.com`,
-	});
-
-	await linkGitHub(ctx, userId, 'owner');
+	const { headers } = await signUpUser(ctx, { github: 'owner' });
 
 	return createApiClient<Api>({ baseUrl: server.url.href, headers });
 }

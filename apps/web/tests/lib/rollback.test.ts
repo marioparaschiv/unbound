@@ -1,24 +1,24 @@
 import type { UpdatesRequest } from '@unbound-app/contracts/updates';
 import { afterAll, describe, expect, test } from 'bun:test';
-import { eq } from 'drizzle-orm';
 
 import { LATEST_VERSION, getAddonDetails, getCatalog, listAddons } from '~/lib/addons';
 import { findUpdates, newestCompatibleVersions } from '~/lib/updates';
-import type { ServeVersionResult } from '~/lib/rollback';
 import { createSubmission } from '~/lib/submissions';
-import { moderationEvent, user } from '~/db/schema';
 import { getAdminAddon } from '~/lib/admin-addon';
 import type { AppContext } from '~/lib/context';
 import { reviewSubmission } from '~/lib/review';
 import type { Caller } from '~/lib/api/caller';
+import { moderationEvent } from '~/db/schema';
 import type { Role } from '~/lib/auth/access';
 import { serveVersion } from '~/lib/rollback';
 
-import { createTestContext, linkGitHub, signInWithDiscord, snowflakeAt } from '../helpers/context';
 import { manifest, seedApprovedAddon, seedVersion } from '../helpers/addons';
 import { explain, indexCond, planNodes } from '../helpers/database';
+import { createTestContext, linkGitHub } from '../helpers/context';
 import { commitPlugin, serveGitHub } from '../helpers/github';
 import { serveMemoryS3 } from '../helpers/memory-s3';
+import { rejection } from '../helpers/server';
+import { signUpUser } from '../helpers/users';
 
 const REPOSITORY = 'acme/addons';
 
@@ -40,20 +40,8 @@ afterAll(async () => {
 	await base.close();
 });
 
-let users = 0;
-
-async function signUp(role: Role = 'user') {
-	users += 1;
-
-	const { userId } = await signInWithDiscord(ctx, {
-		id: snowflakeAt(new Date('2020-01-01T00:00:00.000Z')),
-		name: `Member ${users}`,
-		email: `rollback-${users}@example.com`,
-	});
-
-	await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
-
-	return { userId, caller: await currentCaller(userId) };
+function signUp(role: Role = 'user') {
+	return signUpUser(ctx, { role });
 }
 
 async function currentCaller(userId: string): Promise<Caller> {
@@ -107,14 +95,6 @@ async function offered(id: string, version: string, clientVersion: string = '9.0
 
 function countEvents() {
 	return ctx.db.$count(moderationEvent);
-}
-
-async function rejection(run: () => Promise<ServeVersionResult>): Promise<Error | undefined> {
-	try {
-		await run();
-	} catch (error) {
-		return error instanceof Error ? error : undefined;
-	}
 }
 
 describe('serveVersion', () => {
@@ -279,15 +259,15 @@ describe('serveVersion', () => {
 		const request = { version: '1.0.0', reason: 'Broken' };
 
 		expect(
-			await rejection(() => serveVersion(ctx, moderator.caller, 'rb.refused', request)),
+			await rejection(serveVersion(ctx, moderator.caller, 'rb.refused', request)),
 		).toMatchObject({ code: 'forbidden' });
 		expect(
-			await rejection(() =>
+			await rejection(
 				serveVersion(ctx, admin.caller, 'rb.refused', { ...request, version: '3.0.0' }),
 			),
 		).toMatchObject({ code: 'not_found' });
 		expect(
-			await rejection(() => serveVersion(ctx, admin.caller, 'rb.unknown', request)),
+			await rejection(serveVersion(ctx, admin.caller, 'rb.unknown', request)),
 		).toMatchObject({ code: 'not_found' });
 		expect(await countEvents()).toBe(events);
 		expect((await served('rb.refused')).catalog).toBe('1.2.0');

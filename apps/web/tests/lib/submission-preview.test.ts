@@ -1,38 +1,19 @@
 import { afterAll, describe, expect, test } from 'bun:test';
-import { eq } from 'drizzle-orm';
 
 import { loadSubmissionPreview } from '~/lib/submission-preview';
 import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
-import { user } from '~/db/schema';
 
-import { createTestContext, signInWithDiscord, snowflakeAt } from '../helpers/context';
 import { manifest, seedApprovedAddon, seedSubmission } from '../helpers/addons';
+import { createTestContext } from '../helpers/context';
+import { signUpUser } from '../helpers/users';
 
 const { ctx, close } = await createTestContext();
 
 afterAll(close);
 
-let users = 0;
-
 async function signUp(role: Role = 'user'): Promise<Caller> {
-	users += 1;
-
-	const { userId } = await signInWithDiscord(ctx, {
-		id: snowflakeAt(new Date('2020-01-01T00:00:00.000Z')),
-		name: `Preview ${users}`,
-		email: `preview-${users}@example.com`,
-	});
-
-	await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
-
-	const row = await ctx.db.query.user.findFirst({ where: { id: userId } });
-
-	if (!row) {
-		throw new Error(`User ${userId} was not stored.`);
-	}
-
-	return { user: row, via: 'session' };
+	return (await signUpUser(ctx, { role })).caller;
 }
 
 describe('loadSubmissionPreview', () => {

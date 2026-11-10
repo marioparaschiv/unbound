@@ -10,24 +10,15 @@ import {
 import { requireSourced } from '~/lib/submissions';
 
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from '../helpers/addons';
-import { createTestContext, signInWithDiscord, snowflakeAt } from '../helpers/context';
+import { createTestContext } from '../helpers/context';
+import { signUpUser } from '../helpers/users';
 
 const { ctx, close } = await createTestContext();
 
 afterAll(close);
 
-let users = 0;
-
 async function signUp(): Promise<string> {
-	users += 1;
-
-	const { userId } = await signInWithDiscord(ctx, {
-		id: snowflakeAt(new Date('2020-01-01T00:00:00.000Z')),
-		name: `Page ${users}`,
-		email: `page-${users}@example.com`,
-	});
-
-	return userId;
+	return (await signUpUser(ctx)).userId;
 }
 
 // What a reader sees at the top of the page: everything but the dates and pins that differ per submission.

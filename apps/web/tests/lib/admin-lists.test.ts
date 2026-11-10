@@ -22,7 +22,8 @@ import {
 	type PlanNode,
 } from '../helpers/database';
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from '../helpers/addons';
-import { authRequest, createTestContext, signInWithDiscord } from '../helpers/context';
+import { authRequest, createTestContext } from '../helpers/context';
+import { signUpUser } from '../helpers/users';
 
 type CompiledQuery = {
 	sql: string;
@@ -70,7 +71,6 @@ const ADDONS = [
 	{ id: 'walk.echo', name: 'Owl Hoot', day: 4, type: 'plugin' },
 ] as const;
 
-let signUps = 0;
 let moderator: Caller;
 let owner = '';
 let helper = '';
@@ -80,11 +80,8 @@ function onDay(day: number): AppContext {
 	return { ...ctx, now: () => new Date(day * DAY + DAY / 2) };
 }
 
-async function signUp(name: string) {
-	signUps += 1;
-
-	return signInWithDiscord(ctx, {
-		id: `8035111022470${String(signUps).padStart(4, '0')}`,
+function signUp(name: string) {
+	return signUpUser(ctx, {
 		name,
 		email: `${name.toLowerCase().replaceAll(' ', '-')}@example.com`,
 	});

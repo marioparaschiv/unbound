@@ -6,17 +6,16 @@ import {
 } from '@unbound-app/contracts/addons';
 import { updatesResponseSchema } from '@unbound-app/contracts/updates';
 import { afterAll, describe, expect, test } from 'bun:test';
-import { eq } from 'drizzle-orm';
 
 import { createApiClient } from '~/api/schema-client';
 import type { AppContext } from '~/lib/context';
 import type { Role } from '~/lib/auth/access';
-import { user } from '~/db/schema';
 import type { Api } from '~/api';
 
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from '../helpers/addons';
-import { authRequest, createTestContext, signInWithDiscord } from '../helpers/context';
+import { authRequest, createTestContext } from '../helpers/context';
 import { failure, serveApi } from '../helpers/server';
+import { signUpUser } from '../helpers/users';
 
 const NOW = new Date('2026-10-17T12:00:00.000Z');
 
@@ -30,20 +29,11 @@ afterAll(async () => {
 	await base.close();
 });
 
-let users = 0;
-
 async function signUp(role: Role = 'user') {
-	users += 1;
+	const created = await signUpUser(ctx, { role });
+	const client = createApiClient<Api>({ baseUrl: server.url.href, headers: created.headers });
 
-	const { userId, headers } = await signInWithDiscord(ctx, {
-		id: `8035111022467${String(users).padStart(4, '0')}`,
-		name: `User ${users}`,
-		email: `user-${users}@example.com`,
-	});
-
-	await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
-
-	return { userId, headers, client: createApiClient<Api>({ baseUrl: server.url.href, headers }) };
+	return { ...created, client };
 }
 
 type Member = Awaited<ReturnType<typeof signUp>>;

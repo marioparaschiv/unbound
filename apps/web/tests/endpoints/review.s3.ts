@@ -14,9 +14,10 @@ import { createApiClient } from '~/api/schema-client';
 import type { Role } from '~/lib/auth/access';
 import type { Api } from '~/api';
 
-import { S3_TEST_ENV, createTestContext, linkGitHub, signInWithDiscord } from '../helpers/context';
+import { S3_TEST_ENV, createTestContext } from '../helpers/context';
 import { commitPlugin, serveGitHub } from '../helpers/github';
 import { failure, serveApi } from '../helpers/server';
+import { signUpUser } from '../helpers/users';
 import { manifest } from '../helpers/addons';
 
 const REPOSITORY = 'acme/addons';
@@ -48,21 +49,11 @@ afterAll(async () => {
 	await close();
 });
 
-let users = 0;
-
 async function signUp(role: Role = 'user') {
-	users += 1;
+	const created = await signUpUser(ctx, { role, github: 'owner' });
+	const client = createApiClient<Api>({ baseUrl: server.url.href, headers: created.headers });
 
-	const { userId, headers } = await signInWithDiscord(ctx, {
-		id: '80351110224678912',
-		name: `Member ${users}`,
-		email: `member-${users}@example.com`,
-	});
-
-	await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
-	await linkGitHub(ctx, userId, 'owner');
-
-	return { userId, client: createApiClient<Api>({ baseUrl: server.url.href, headers }) };
+	return { ...created, client };
 }
 
 type Member = Awaited<ReturnType<typeof signUp>>;

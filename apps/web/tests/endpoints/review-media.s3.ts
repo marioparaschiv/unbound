@@ -7,14 +7,15 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
 import { createApiClient } from '~/api/schema-client';
-import { submission, user } from '~/db/schema';
 import type { Role } from '~/lib/auth/access';
+import { submission } from '~/db/schema';
 import type { Api } from '~/api';
 
 import { COMMITTED_ADDON_MD, committedPage, committedPageFiles, png } from '../helpers/addon-page';
-import { S3_TEST_ENV, createTestContext, linkGitHub, signInWithDiscord } from '../helpers/context';
+import { S3_TEST_ENV, createTestContext } from '../helpers/context';
 import { commitPlugin, serveGitHub } from '../helpers/github';
 import { failure, serveApi } from '../helpers/server';
+import { signUpUser } from '../helpers/users';
 
 const REPOSITORY = 'acme/addons';
 const PREFIX = 'addons/review-media.';
@@ -49,19 +50,8 @@ afterAll(async () => {
 	await close();
 });
 
-let users = 0;
-
 async function signUp(role: Role = 'user') {
-	users += 1;
-
-	const { userId, headers } = await signInWithDiscord(ctx, {
-		id: '80351110224678912',
-		name: `Member ${users}`,
-		email: `media-${users}@example.com`,
-	});
-
-	await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
-	await linkGitHub(ctx, userId, 'owner');
+	const { headers } = await signUpUser(ctx, { role, github: 'owner' });
 
 	return createApiClient<Api>({ baseUrl: server.url.href, headers });
 }

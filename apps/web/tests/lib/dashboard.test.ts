@@ -9,29 +9,18 @@ import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
 
 import { manifest, seedApprovedAddon, seedSubmission } from '../helpers/addons';
-import { createTestContext, signInWithDiscord } from '../helpers/context';
+import { createTestContext } from '../helpers/context';
+import { signUpUser } from '../helpers/users';
 
 const NOW = new Date('2026-10-17T12:00:00.000Z');
 
 const base = await createTestContext();
 const ctx: AppContext = { ...base.ctx, now: () => NOW };
 
-let users = 0;
-
 afterAll(() => base.close());
 
 async function signUp(role: Role = 'user'): Promise<string> {
-	users += 1;
-
-	const { userId } = await signInWithDiscord(ctx, {
-		id: `8035111022470${String(users).padStart(4, '0')}`,
-		name: `Developer ${users}`,
-		email: `dashboard-${users}@example.com`,
-	});
-
-	await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
-
-	return userId;
+	return (await signUpUser(ctx, { role })).userId;
 }
 
 async function callerOf(userId: string): Promise<Caller> {
