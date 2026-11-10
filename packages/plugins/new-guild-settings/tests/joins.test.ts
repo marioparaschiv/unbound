@@ -1,3 +1,4 @@
+import { settings } from '@unbound-app/settings';
 import { storage } from '@unbound-app/api';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
@@ -72,7 +73,7 @@ describe('joining a server', () => {
 	});
 
 	test('follows the saved settings', async () => {
-		storage.getBucket(addon.id).set('guild', false);
+		settings.guild = false;
 		await dispatch({ type: 'INVITE_ACCEPT_SUCCESS', invite: { guild: { id: '100' } } });
 
 		expect(applied[0]?.update).toMatchObject({ muted: false });
@@ -86,5 +87,15 @@ describe('a server that hides channels', () => {
 		await dispatch({ type: 'INVITE_ACCEPT_SUCCESS', invite: { guild: { id: '100' } } });
 
 		expect(toggled).toEqual(['100']);
+	});
+});
+
+describe('settings saved by 1.0.x', () => {
+	test("apply the message notification level stored as Discord's number", async () => {
+		storage.getBucket().set('messages', 1);
+		await startGuildSettings();
+		await dispatch({ type: 'INVITE_ACCEPT_SUCCESS', invite: { guild: { id: '100' } } });
+
+		expect(applied[1]?.update).toEqual({ message_notifications: 1 });
 	});
 });
