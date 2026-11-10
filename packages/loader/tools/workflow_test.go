@@ -43,7 +43,8 @@ func TestLoaderVersionUsesReleasePleaseSemVer(t *testing.T) {
 		t.Fatalf("unexpected loader release configuration %+v", loader)
 	}
 	file := loader.ExtraFiles[0]
-	if file.Type != "json" || file.Path != "packages/loader/version.json" || file.JSONPath != "$.version" {
+	// Release Please resolves extra-files paths against the package directory.
+	if file.Type != "json" || file.Path != "version.json" || file.JSONPath != "$.version" {
 		t.Fatalf("unexpected loader version updater %+v", file)
 	}
 	manifestData, err := os.ReadFile(filepath.Join(root, "release-please-loader-manifest.json"))

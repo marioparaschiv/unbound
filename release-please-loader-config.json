@@ -10,7 +10,7 @@
 			"extra-files": [
 				{
 					"type": "json",
-					"path": "packages/loader/version.json",
+					"path": "version.json",
 					"jsonpath": "$.version"
 				}
 			]
