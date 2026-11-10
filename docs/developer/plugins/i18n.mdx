@@ -1,59 +1,24 @@
 ---
 title: 'Translations'
-description: "Show your plugin's text in the language the user picked in Discord."
+description: "Show text in the user's Discord language."
 icon: 'language'
 ---
 
-Discord lets each user pick a language. Your plugin can follow that choice. You write every string once per language in a JSON file, and Unbound picks the right one each time you read it.
+Write each string once per language in `i18n/`. Unbound reads it in the user's Discord language each time you show it.
 
-## Reference
-
-The build makes `@unbound-app/i18n` from your `i18n` folder. It exports:
-
-| Export | Signature | What it is |
-| --- | --- | --- |
-| `messages` | `Messages` | Every en-US string without placeholders, read in the user's language on each access |
-| `format` | `format(key, vars?) => string` | A string with its placeholders filled. `vars` is required when the key has placeholders and rejected when it has none |
-| `useMessages` | `() => string` | Re-renders the component when the language changes, and returns the locale code. The build adds it for you |
-| `MessageKey` | `type` | The union of your en-US keys |
-| `Messages`, `FormatVars` | `type` | The en-US strings, and each key's placeholders |
-
-`@unbound-app/api` accepts these keys where it shows text: `title` and `subtitle` of a [setting](/docs/developer/plugins/settings), `description` of a [command](/docs/developer/plugins/commands), and the text of a [toast or dialog](/docs/developer/plugins/feedback). `@unbound-app/api/testing` adds `setLocale(locale)` for [tests](/docs/developer/plugins/testing#switch-the-language).
-
-## How a string is chosen
-
-Each string has a **key**, such as `GREETING_TITLE`. When your plugin reads a key, Unbound looks for it in this order, and uses the first match:
-
-<Flow>
-	<FlowStep title="The user's language" detail='de, when Discord is in German' />
-	<FlowStep title='en-US' detail='Your source of truth' />
-	<FlowStep title='The key itself' detail='GREETING_TITLE' />
-</Flow>
-
-So a missing translation never breaks your plugin. It shows English until someone translates it. That makes `en-US` the one file that must have every key.
-
-## Lay out the files
-
-Keep one JSON file per language in an `i18n` folder at the root of your plugin, beside `src`.
+## Quick Start
 
 <FileTree>
 	<File name='manifest.json' />
 	<Folder name='i18n' note='One file per language'>
-		<File name='en-US.json' note='Every key. Required, and the fallback for the rest' />
+		<File name='en-US.json' note='Every key. Required, and the fallback' />
 		<File name='de.json' note='German' />
-		<File name='fr.json' note='French' />
 	</Folder>
 	<Folder name='src'>
 		<File name='index.tsx' />
 		<File name='unbound-i18n.d.ts' note='Generated from en-US.json. Commit it' />
 	</Folder>
 </FileTree>
-
-Name each file after Discord's code for the language. Most are two letters, such as `de`, `fr` and `ja`. A few name a region: `en-US`, `en-GB`, `es-ES`, `es-419`, `pt-BR`, `sv-SE`, `zh-CN` and `zh-TW`.
-
-## Write the strings
-
-Each file maps keys to strings. Use the same keys in every file.
 
 ```json i18n/en-US.json
 {
@@ -71,13 +36,7 @@ Each file maps keys to strings. Use the same keys in every file.
 }
 ```
 
-Strings use ICU message syntax. `{name}` is a placeholder. `{count, plural, ...}` picks a form by number, and `#` prints the number. Each language writes its own plural forms.
-
-## Use them
-
-Import `messages` and `format` from `@unbound-app/i18n`. That is not a package you install: the build makes the module from your `i18n` folder, and every file that imports it gets the same one. Your strings are kept apart from Unbound's and every other plugin's, so your keys need no prefix.
-
-Read plain strings from `messages`. Use `format` for strings with placeholders, and pass the values.
+Read plain strings from `messages`. Use `format` for strings with placeholders.
 
 ```ts src/greeting/index.ts
 import { toasts } from '@unbound-app/api';
@@ -92,26 +51,56 @@ export function showGreeting(name: string) {
 }
 ```
 
-Both are typed from `en-US.json`. A key that is not there is an error. `format` knows each key's placeholders: `GREETING_BODY` needs `{ name }`, `UNREAD_COUNT` needs `{ count }` as a number, and a key with no placeholders takes no values.
+The build makes `@unbound-app/i18n` from your `i18n/` folder. Your keys are kept apart from Unbound's and other plugins', so they need no prefix.
 
-| Placeholder                      | Type             |
-| -------------------------------- | ---------------- |
-| `{name}`                         | `string \| number` |
+## Fallback Order
+
+<Flow>
+	<FlowStep title="The user's language" detail='de, when Discord is in German' />
+	<FlowStep title='en-US' detail='Your source of truth' />
+	<FlowStep title='The key itself' detail='GREETING_TITLE' />
+</Flow>
+
+A missing translation shows English, so only `en-US.json` must have every key.
+
+## File Names
+
+Name each file after Discord's language code. Most are two letters, such as `de`, `fr` and `ja`. These name a region: `en-US`, `en-GB`, `es-ES`, `es-419`, `pt-BR`, `sv-SE`, `zh-CN`, `zh-TW`.
+
+## Exports
+
+| Export | Signature | What it is |
+| --- | --- | --- |
+| `messages` | `Messages` | Every en-US string without placeholders, read in the user's language on each access |
+| `format` | `format(key, vars?) => string` | A string with placeholders filled. `vars` is required when the key has placeholders, rejected otherwise |
+| `useMessages` | `() => string` | Re-renders on a language change. Returns the locale code |
+| `MessageKey` | `type` | The union of your en-US keys |
+| `Messages`, `FormatVars` | `type` | The en-US strings, and each key's placeholders |
+
+`@unbound-app/api` takes keys for [setting](/docs/developer/plugins/settings) labels, [command](/docs/developer/plugins/commands) descriptions, and [toast and dialog](/docs/developer/plugins/feedback) text. `@unbound-app/api/testing` adds `setLocale(locale)` for [tests](/docs/developer/testing/writing-tests#switch-the-language). The SDK's [`i18n`](/docs/sdk/latest/i18n) namespace is a different API: Unbound's own strings and the `AddonLocales` type.
+
+## Placeholders
+
+Strings use ICU message syntax. `#` prints a plural's number. Each language writes its own plural forms. `format` types each key's values from en-US:
+
+| Placeholder | Type |
+| --- | --- |
+| `{name}` | `string \| number` |
 | `{count, number}`, `{count, plural, ...}` | `number` |
-| `{when, date}`, `{when, time}`   | `Date \| number` |
-| `{kind, select, a {...} b {...}}` | `'a' \| 'b'`, plus any string when there is an `other` branch |
+| `{when, date}`, `{when, time}` | `Date \| number` |
+| `{kind, select, a {...} b {...}}` | `'a' \| 'b'`, plus any string with an `other` branch |
 
 <Warning>
-	Import `@unbound-app/i18n`, never the `i18n` folder or one of its files by path. `import de from '../i18n/de.json'` would put German in your bundle, so the build stops and tells you to import from `'@unbound-app/i18n'` instead.
+	Read strings when you show them, never once at the top of a file. A string saved in a constant stays in the language active at load.
 </Warning>
 
 <Warning>
-	Read strings when you show them, not once at the top of a file. `messages` looks up the user's current language on every read. A string saved in a constant at load stays in whatever language was active then.
+	Import `@unbound-app/i18n`, never a file in `i18n/`. `import de from '../i18n/de.json'` would bundle German, so the build stops.
 </Warning>
 
-## Use them in a component
+## Components
 
-A component uses the same `messages` and `format`. It must render again when the user changes language or a translation finishes loading, and `useMessages()` does that. The build adds `useMessages()` for you to every component and hook that reads `messages` or `format`, even inside a callback such as `onPress`, or through a helper in the same file.
+The build adds `useMessages()` to every component and hook that reads `messages` or `format`, so it re-renders on a language change. That covers callbacks such as `onPress`, helpers in the same file, and `React.memo` children whose props did not change.
 
 ```tsx src/components/unread-badge.tsx
 import { Text } from 'react-native';
@@ -127,13 +116,12 @@ export function UnreadBadge({ count }: { count: number }) {
 }
 ```
 
-A component counts when it is a PascalCase function, a function passed to `memo` or `forwardRef`, or a `use*` hook, the same rules React's hooks follow. Set `UNBOUND_VERBOSE=1` to see each one the build adds it to.
+A component is a PascalCase function, a function passed to `memo` or `forwardRef`, or a `use*` hook. Set `UNBOUND_VERBOSE=1` to list each one the build changes.
 
-Call `useMessages()` yourself, once at the top, in three cases:
+Call `useMessages()` yourself when:
 
-- The component gets its strings from a helper in another file. The build only follows helpers in the same file.
-- A memoised value builds on strings. `useMessages()` returns the active locale code, so pass it as a dependency, as below.
-- You want the component to follow the language for another reason.
+- The strings come from a helper in another file.
+- A memoised value builds on strings. Pass the returned locale as a dependency.
 
 ```tsx src/components/greeting.tsx
 import { format, useMessages } from '@unbound-app/i18n';
@@ -148,11 +136,11 @@ export function Greeting({ name }: { name: string }) {
 }
 ```
 
-A `React.memo` child that shows strings gets `useMessages()` itself, so it renders again on a language change even when its props stay the same. A class component cannot use hooks: the build warns, with its file and line, when one reads `messages` or `format`.
+A class component cannot use hooks. The build warns, with file and line, when one reads `messages` or `format`.
 
-## Match Discord's own text
+## Discord's Own Text
 
-Some labels belong to Discord, such as the "Delete Message" row in a message's menu. To find that row, or to reuse its wording, read the label in the user's language from Discord's i18n module, and fall back to English when the module or the message is missing. Discord names each message by a hashed id, which you find in the decompiled bundle.
+To match a label Discord shows, such as "Delete Message", read it from Discord's i18n module by its hashed id from the decompiled bundle. Keep an English fallback.
 
 ```ts src/unsuppress/delete-label.ts
 import { metro } from '@unbound-app/api';
@@ -181,31 +169,28 @@ export function getDeleteLabel(): string {
 }
 ```
 
-Three habits keep this safe. Look the message up at the moment you need it, so a language change takes effect. Guard every step, because a Discord update can rename the id or the module. And keep the English label as a constant, so a plugin that matches the text still works when Discord's module is gone. Strings that are yours go in `i18n/`. Only text that has to equal Discord's belongs here.
+Look it up when needed, and guard every step: a Discord update can rename the id or module. Use this only for text that must equal Discord's.
 
-## What ships to the user
+## Shipping
 
-`en-US.json` goes into your bundle, so English is there from the first frame. Every other language is its own file beside the bundle, `dist/i18n/<code>.json`, listed under `locales` in `dist/manifest.json`.
+`en-US.json` is in your bundle. Each other language ships as `dist/i18n/<code>.json`, listed under `locales` in `dist/manifest.json`. Unbound downloads all of them on install or update, and loads only the active one into memory. Until it loads, your plugin shows English.
 
-Unbound downloads all of them when the user installs or updates your plugin. It reads one into memory only when your plugin first shows a string in that language, and keeps only that one beside English. When the user changes language, it drops the old one and reads the new one. Until it has loaded, your plugin shows English, and a component that uses `useMessages()` switches when it arrives.
+## Build Checks
 
-## What the build checks
+| Problem | Result |
+| --- | --- |
+| A file is not a JSON object, a value is not a string, or a string is invalid ICU | Build fails |
+| `@unbound-app/i18n` imported without `i18n/en-US.json` | Build fails |
+| A translation has a key en-US lacks | Warning, key left out |
+| A translation's placeholders differ from en-US | Warning |
 
-`ubd build` stops when a file is not a JSON object, when a value is not a string, or when a string is not valid ICU syntax. It warns when a translation has a key that `en-US.json` does not, and leaves that key out. It also warns when a translation's placeholders differ from the English ones.
+The build writes `src/unbound-i18n.d.ts` from `en-US.json`. Commit it and never edit it. `ubd dev` rewrites it within a second of saving `en-US.json`, and pushes every language file on save.
 
-It also writes `src/unbound-i18n.d.ts`, which declares the `@unbound-app/i18n` module from `en-US.json`. Your `tsconfig.json` already includes `src`, so TypeScript finds it with no setup. Commit it, so your editor and type checks work before the first build. Do not edit it. A plugin that imports `@unbound-app/i18n` without an `i18n/en-US.json` fails to build, with a message saying so.
+## Adding a Language
 
-## While you develop
+1. Copy `i18n/en-US.json` to the language's code, such as `i18n/ja.json`.
+2. Translate each string. Keep keys and placeholders unchanged.
 
-`ubd dev` watches your `i18n` folder. When you save `en-US.json`, it rewrites `src/unbound-i18n.d.ts` at once, before the rebuild, so your editor offers a new key within a second. Saving any language file also rebuilds the plugin and pushes it with its translations to the device, as any other save does.
+A partial file is fine. Missing keys fall back to en-US.
 
-## Adding a language
-
-1. Copy `i18n/en-US.json` to a file named after the language's code, such as `i18n/ja.json`.
-2. Translate each string. Keep the keys and placeholders exactly as they are.
-
-You can ship a partly translated file. Every key it leaves out falls back to `en-US`.
-
-## Check your translations
-
-`ubd i18n` reports how much of `en-US.json` each language covers, and every placeholder or ICU syntax problem. `--fix` adds missing keys, `--unused` lists keys your code never uses, and `--add` adds a key to `en-US.json`. See [the CLI reference](/docs/developer/development/cli#translations).
+`ubd i18n` reports each language's coverage and every placeholder or syntax problem. `--fix` adds missing keys, `--unused` lists unused keys, `--add` adds a key to en-US. See [CLI](/docs/developer/tools/cli#translations).

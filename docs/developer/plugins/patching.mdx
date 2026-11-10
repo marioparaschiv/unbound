@@ -1,28 +1,12 @@
 ---
 title: 'Patching Functions'
-description: "Run your own code before, after or instead of one of Discord's functions."
+description: "Run code before, after or instead of Discord's functions."
 icon: 'layers'
 ---
 
-A **patch** wraps a function that belongs to someone else. You give the patcher an object and the name of a function on it. From then on, every call to that function runs your callback too. Discord doesn't know it was patched, so your code runs wherever Discord calls it.
+Wrap one of Discord's functions so every call to it also runs your callback. Pass the object, the function's name on it, and your callback.
 
-## Reference
-
-Every function is on `patcher`, from `@unbound-app/api`. Each returns a function that removes the patch.
-
-| Function | Runs your callback | Callback gets | Callback returns |
-| --- | --- | --- | --- |
-| `patcher.before(parent, key, callback, options?)` | Before the original | `{ args, this }` | A new `args` array, or nothing |
-| `patcher.instead(parent, key, callback, options?)` | In place of the original | `{ args, original, this }` | The result |
-| `patcher.after(parent, key, callback, options?)` | After the original | `{ args, result, this }` | A new `result`, or nothing |
-| `patcher.react.before\|instead\|after(...)` | The same, for a component's render | See [Patching Components](/docs/developer/plugins/react-patching#reference) | |
-| `patcher.unpatchAll()` | | | Removes every patch your plugin made |
-
-| Option | Does |
-| --- | --- |
-| `once: true` | Removes the patch after it runs once |
-
-## A first patch
+## Quick Start
 
 ```ts src/message-log/index.ts
 import { metro, patcher } from '@unbound-app/api';
@@ -36,21 +20,25 @@ export function startMessageLog() {
 }
 ```
 
-The patcher takes the object, the function's name on it, and your callback. It swaps the function for a wrapper that runs your callback, then Discord's original.
+## Reference
 
-## The three kinds of patch
+Every function is on `patcher`, from `@unbound-app/api`. Each returns a function that removes the patch.
 
-Each kind runs at a different point of the call, and gets the parts of the call that exist at that point.
+| Function | Runs | Callback gets | Callback returns |
+| --- | --- | --- | --- |
+| `patcher.before(parent, key, callback, options?)` | Before the original | `{ args, this }` | New `args` array, or nothing |
+| `patcher.instead(parent, key, callback, options?)` | In place of the original | `{ args, original, this }` | The result |
+| `patcher.after(parent, key, callback, options?)` | After the original | `{ args, result, this }` | New `result`, or nothing |
+| `patcher.react.before\|instead\|after(...)` | The same, for a render | See [Patching Components](/docs/developer/plugins/react-patching#reference) | |
+| `patcher.unpatchAll()` | | | Removes every patch your plugin made |
 
-<Flow>
-	<FlowStep title='before' detail='args' />
-	<FlowStep title='instead' detail='args, original' />
-	<FlowStep title='after' detail='args, result' />
-</Flow>
+`this` is the object the function was called on. The only option is `once: true`, which removes the patch after one run. Full signatures: [`patcher`](/docs/sdk/latest/patcher) in the SDK reference.
+
+## Patch Kinds
 
 <Tabs>
 	<Tab title='before'>
-		Runs before the original, with its `args`. Return a new array to replace the arguments.
+		Return a new array to replace the arguments.
 
 		```ts
 		import { metro, patcher } from '@unbound-app/api';
@@ -65,7 +53,7 @@ Each kind runs at a different point of the call, and gets the parts of the call 
 		```
 	</Tab>
 	<Tab title='after'>
-		Runs after the original, with its `result`. Return a value to replace the result. This is the usual choice for changing what a component renders.
+		Return a value to replace the result. The usual choice for changing a render.
 
 		```ts
 		import { flux, patcher } from '@unbound-app/api';
@@ -78,7 +66,7 @@ Each kind runs at a different point of the call, and gets the parts of the call 
 		```
 	</Tab>
 	<Tab title='instead'>
-		Runs in place of the original. Call `original` yourself when you want Discord's behavior, or skip it to replace the function entirely.
+		Call `original` for Discord's behavior, or skip it to replace the function.
 
 		```ts
 		import { metro, patcher } from '@unbound-app/api';
@@ -95,11 +83,9 @@ Each kind runs at a different point of the call, and gets the parts of the call 
 	</Tab>
 </Tabs>
 
-Every callback also gets `this`, the object the function was called on.
+## Undoing a Patch
 
-## Undoing a patch
-
-The Addon scope removes a plugin's patches after `stop` returns, so most plugins never undo one by hand. To remove one sooner, call the function the patch returns.
+The Addon scope removes your patches after `stop` returns. To remove one sooner, call the function the patch returns.
 
 ```ts
 import { flux, patcher } from '@unbound-app/api';
@@ -114,22 +100,26 @@ const unpatch = patcher.after(UserStore, 'getCurrentUser', ({ result }) => {
 unpatch();
 ```
 
-Pass `{ once: true }` as the last argument to remove a patch after it runs once. `patcher.unpatchAll()` removes every patch your plugin made.
-
 <Warning>
-	A `stop` that makes Discord draw again, such as one that calls `emitChange`, must call `unpatch()` first. The scope removes patches only after `stop` returns, so a redraw inside `stop` still sees them. [How Plugins Run](/docs/developer/plugins/introduction#remove-your-own-patch-before-you-redraw) has the example.
+	If `stop` makes Discord redraw, such as by calling `emitChange`, call `unpatch()` first. Patches are removed only after `stop` returns. See [Unpatch Before Redrawing](/docs/developer/getting-started/lifecycle#unpatch-before-redrawing).
 </Warning>
 
-## Patching a module that hasn't loaded
+## Unloaded Modules
 
-You can patch a [lazy lookup](/docs/developer/plugins/metro#searches-are-lazy) before its module loads. The patcher waits, and applies the patch when Discord loads the module. So a patch never makes Discord load a module early.
+You can patch a [lazy lookup](/docs/developer/plugins/metro#searches-are-lazy) before its module loads. The patch applies when Discord loads it, never earlier.
 
-## Several plugins, one function
+## Shared Functions
 
-Other plugins may patch the same function. The patcher chains every patch, so each one runs. Write patches that work alongside others:
+Other plugins may patch the same function. Every patch runs, chained.
 
-- Change only what you need, and return the rest unchanged.
-- Expect `result` to already be changed by another plugin's `after` patch.
-- In an `instead` patch, call `original` unless you mean to replace Discord's behavior.
+- Change only what you need; return the rest unchanged.
+- Expect `result` already changed by another `after` patch.
+- In `instead`, call `original` unless you mean to replace Discord's behavior.
 
-Next, apply the same patcher to [Discord's components](/docs/developer/plugins/react-patching).
+## Next
+
+<CardGroup cols={1}>
+	<Card title='Patching Components' icon='atom' href='/docs/developer/plugins/react-patching'>
+		Change what Discord renders.
+	</Card>
+</CardGroup>

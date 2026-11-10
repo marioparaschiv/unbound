@@ -1,0 +1,78 @@
+---
+title: 'AI Agents'
+description: 'Connect a coding agent to your phone and teach it Unbound.'
+icon: 'plug'
+---
+
+Give an agent the `ubd mcp` server to run code on your phone, and Unbound's skills to know which commands to use. With both, it can push a change and check it before reporting done.
+
+## Setup
+
+<Steps>
+	<Step title='Start the Bridge'>
+		Start it and connect your phone, as in [Debugger](/docs/developer/tools/debugger).
+
+		```bash
+		bunx @unbound-app/debugger
+		```
+	</Step>
+	<Step title='Register the Server'>
+		For Claude Code or Codex:
+
+		```bash
+		claude mcp add unbound -- bunx --bun @unbound-app/cli mcp
+		codex mcp add unbound -- bunx --bun @unbound-app/cli mcp
+		```
+
+		Other agents read a JSON config:
+
+		```json
+		{
+			"mcpServers": {
+				"unbound": { "command": "bunx", "args": ["--bun", "@unbound-app/cli", "mcp"] }
+			}
+		}
+		```
+
+		For another bridge port, add `--port <port>` after `mcp`.
+	</Step>
+	<Step title='Install the Skills'>
+		The skills live in the [Unbound repository](https://github.com/marioparaschiv/unbound/tree/main/skills). The [`skills`](https://skills.sh) CLI installs them:
+
+		```bash
+		npx skills add marioparaschiv/unbound
+		npx skills add marioparaschiv/unbound --skill unbound-plugins unbound-debugger -a claude-code -g
+		npx skills add marioparaschiv/unbound --list
+		```
+
+		Without flags it asks which skills and which agent. `-g` installs for every project. `npx skills update` pulls newer versions. You can also copy a folder from `skills/` into your agent's skills folder, such as `~/.claude/skills/`.
+	</Step>
+	<Step title='Verify'>
+		Restart the agent and ask for your phone's status. It should call the `status` tool and name the device. If no device is connected, check that the bridge runs and shows the phone as connected.
+	</Step>
+</Steps>
+
+## Skills
+
+| Skill | Use |
+| --- | --- |
+| `unbound-plugins` | Scaffold a plugin, lay out its files, write `start` and `stop`, keep launch cost low. |
+| `unbound-patching` | Find a module, store or component, and patch a function, render or Flux action. |
+| `unbound-debugger` | Start the bridge, register `ubd mcp`, hot reload with `ubd dev` or `ubd push`, check on the phone. |
+| `hermes-internals` | Read Discord's decompiled JavaScript when a lookup finds nothing, often after an update. |
+| `react-native-internals` | Inspect native views and hook native methods when a patch ran but the screen didn't change. |
+
+An agent loads a skill only when the task matches, so installing all five costs nothing up front.
+
+## Tools
+
+| Where | Commands |
+| --- | --- |
+| MCP tools | `eval`, `status`, `push`, `reload`, `install`, `device`, `open`, `route`, `modules`, `trace`, `profile`, `timing`, `views`, `inspect`, `hook`, `spans` |
+| Terminal only | `build`, `check`, `dev`, `create`, `logs`, `i18n`, `login`, `publish`, run as `bunx --bun @unbound-app/cli <command>` |
+
+Each tool takes the same options as its [CLI](/docs/developer/tools/cli) command.
+
+<Warning>
+	The agent's code runs inside Discord on your phone, signed in as you. Use a test account.
+</Warning>

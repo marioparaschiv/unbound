@@ -1,24 +1,25 @@
 ---
 title: 'Settings Reference'
-description: 'Every key the loader reads from settings.json, with its default and effect.'
+description: 'Every key the loader reads from settings.json.'
 icon: 'sliders-3'
 ---
 
-This page lists every key the native loader reads from or writes to `settings.json`, its default when absent, and what it does. The loader keeps all of its configuration in this one file.
+Every key the loader reads or writes in `settings.json`, with its default. The loader keeps all its configuration in this file.
 
-## File location
+## File Location
 
-`settings.json` is in the `Unbound` folder inside the app's documents directory. On iOS, open it in the Files app at `On My iPhone` -> `<App Name>` -> `Unbound`, as described on the [iOS page](/docs/developer/loader/ios). On Android it is in `files/Unbound` inside Discord's data directory, as described on the [Android page](/docs/developer/loader/android).
+| Platform | Path |
+| --- | --- |
+| iOS | Files app: **On My iPhone → `<App Name>` → Unbound**. See [iOS Loader](/docs/developer/loader/ios). |
+| Android | `files/Unbound` in Discord's data directory. See [Android Loader](/docs/developer/loader/android). |
 
-If the file doesn't exist when the loader starts, the loader creates it with the contents `{}`.
+If the file is missing at startup, the loader creates it as `{}`.
 
 ## Structure
 
-The root of the file is an object of **stores**. Each store is a namespace. The loader reads from the store named `unbound`, and the applied theme's id from `applied` in the `themes` store.
+The root is an object of **stores**. The loader reads the `unbound` store, and the applied theme's id from `applied` in the `themes` store. Each addon gets its own store keyed by its id; see [storage](/docs/sdk/latest/storage).
 
-Each addon gets its own store, keyed by its id, so an addon's storage can never collide with the loader's keys. See [storage](/docs/sdk/latest/storage) for how addons use the same file.
-
-Inside a store, keys are dot-paths that map to nested objects. For example, `loader.update.url` is stored as:
+Keys are dot-paths into nested objects. `loader.update.url` is stored as:
 
 ```json settings.json
 {
@@ -33,72 +34,62 @@ Inside a store, keys are dot-paths that map to nested objects. For example, `loa
 ```
 
 <Note>
-	The native loader and Unbound's JavaScript settings share the `unbound` store. Keys the loader doesn't recognise, such as `staff-mode` or `toasts.*`, belong to the client. They are documented with the features that use them.
+	The loader shares the `unbound` store with Unbound's JavaScript. Keys it doesn't read, such as `staff-mode` or `toasts.*`, belong to the client and are documented with their features.
 </Note>
 
 ## Keys
 
-All keys below are inside the `unbound` store.
+All keys are in the `unbound` store.
 
 <ParamField path="loader.enabled" type="boolean" default="true">
-	Turns the whole loader on or off. When it is `false`, the loader logs `Loader is disabled. Aborting.` and hands the bundle load straight back to Discord. No plugins, themes, fonts, updater, or hot reload run.
-
-	This is the only key that is on by default. It is also the main way to recover a broken app. See [disabling the loader](#disabling-the-loader).
+	Turns the loader on or off. When `false`, it logs `Loader is disabled. Aborting.` and hands the bundle load back to Discord: no plugins, themes, fonts, updater or hot reload. See [Disabling the Loader](#disabling-the-loader).
 </ParamField>
 
 <ParamField path="loader.devtools" type="boolean" default="false">
-	Evaluates the bundled DevTools script in the JavaScript runtime before the main bundle. This is what lets React DevTools attach. Leave it off unless you are actively debugging.
+	Runs the bundled DevTools script before the main bundle, so React DevTools can attach.
 </ParamField>
 
 <ParamField path="loader.update" type="object">
-	Controls where the JavaScript bundle is downloaded from and when it is refetched.
+	Where the bundle downloads from and when it is refetched.
 
 	<Expandable title="properties">
 		<ParamField path="loader.update.url" type="string" default="'https://builds.unbound.rip/'">
-			The URL the bundle is downloaded from. When it is empty, the loader uses the default its build was made with, which is `https://builds.unbound.rip/` for releases. On a simulator or emulator, a dev server running on the host's port 3000 is used instead of that default.
+			The bundle source. Empty uses the build's default (`https://builds.unbound.rip/` for releases); on a simulator or emulator, a dev server on the host's port 3000 wins.
 
-			- If the value ends in `.bundle` or `.js`, it names the bundle file directly, and its folder is the source.
-			- Otherwise it is treated as the source folder.
+			- Ending in `.bundle` or `.js`: names the file; its folder is the source.
+			- Otherwise: the source folder.
 
-			The loader fetches the folder's `manifest.json` and its signature, `manifest.json.sig`, then downloads `unbound.<bytecode version>.bundle` when the manifest lists the app's Hermes bytecode version, or `unbound.js` otherwise. The download must match the SHA-512 in the signed manifest. A new bundle is saved as a candidate and only replaces the active `unbound.bundle` or `unbound.js` once it has run. See [bundle updates](/docs/developer/loader/android#bundle-updates) for every check.
-
-			This value also sets the hot reload target. The loader opens its hot reload stream to this URL's origin (scheme and host).
+			Also sets the hot reload origin (scheme and host). See [Bundle Updates](/docs/developer/loader/android#bundle-updates) for every check.
 		</ParamField>
 
 		<ParamField path="loader.update.force" type="boolean" default="false">
-			Skips ETag revalidation and redownloads the bundle on every launch. When this is off, the loader sends the stored ETag as an `If-None-Match` header and keeps the existing file if the server responds `304`.
+			Redownloads every launch instead of sending the stored ETag as `If-None-Match` and keeping the file on `304`.
 		</ParamField>
 
 		<ParamField path="loader.update.hmr" type="boolean" default="false">
-			Opens a hot reload connection to the origin of `loader.update.url`. No connection is made if that key is empty or doesn't parse into a URL with both a scheme and a host. While it is on, the loader runs the cached bundle, then reloads Discord once a newer bundle downloads.
+			Opens a hot reload connection to the origin of `loader.update.url`, and reloads Discord once a newer bundle downloads. No connection if the URL is empty or lacks a scheme and host.
 		</ParamField>
 
 		<ParamField path="loader.update.unsigned" type="boolean" default="false">
-			Skips the bundle signature check, so the loader accepts a bundle from any source. Leave it off unless you are loading your own build from a server that isn't on your local network. Bundles from `localhost`, `*.localhost`, `*.local`, `::1`, or a private IPv4 address skip the check without it.
+			Skips the bundle signature check. Only needed for your own build on a non-local server: `localhost`, `*.localhost`, `*.local`, `::1` and private IPv4 hosts skip it already.
 		</ParamField>
 
 		<ParamField path="loader.update.baseline" type="string" default="''">
-			Set by the loader. Don't edit it by hand. It records the source, channel, and build time of the active signed bundle, so the loader can refuse an update that is on another channel or was built earlier.
+			Set by the loader. Records the source, channel and build time of the active signed bundle, to refuse updates from another channel or older builds.
 		</ParamField>
 
 		<ParamField path="loader.update.etag" type="string" default="''">
-			Set by the loader. Don't edit it by hand. It stores the `etag` response header from the last successful bundle download, so the next launch can revalidate instead of redownloading. Deleting it forces one full download.
+			Set by the loader. The `etag` of the last successful download. Delete it to force one full download.
 		</ParamField>
 	</Expandable>
 </ParamField>
 
 <ParamField path="recovery" type="boolean" default="false">
-	Turns on recovery mode. When it is on:
-
-	- The loader skips applying the theme natively.
-	- The client starts addons with an empty no-op instance instead of evaluating their bundles.
-	- Addon cards still appear in the UI, but you can't interact with them.
-
-	The toolbox toggles this key and reloads the app. See [Troubleshooting](/docs/user/troubleshooting) for how to use recovery mode.
+	Recovery Mode. When on, the loader skips the native theme, and the client starts addons as empty no-ops; addon cards show but can't be used. The toolbox toggles it and reloads. See [Troubleshooting](/docs/user/troubleshooting).
 </ParamField>
 
 <ParamField path="font-states" type="object" default="{}">
-	Legacy. Older loaders mapped a font name to the font that replaced it here. The loader now keeps font overrides in `Fonts/state.json`: on its first launch it moves the overrides that name an installed font file there, and Unbound then removes this key. Overrides that named a system font are dropped.
+	Legacy font overrides. On first launch the loader moves overrides naming an installed font file into `Fonts/state.json`, drops ones naming a system font, and Unbound removes this key.
 </ParamField>
 
 <ParamField path="toolbox.shake" type="boolean" default="true">
@@ -106,48 +97,35 @@ All keys below are inside the `unbound` store.
 </ParamField>
 
 <ParamField path="toolbox.three-finger" type="boolean" default="true">
-	Opens the toolbox when you hold three fingers on the screen.
-
-	The two gesture toggles protect each other. Turning one off turns the other back on, so you can't lock yourself out of the toolbox.
+	Opens the toolbox when you hold three fingers on the screen. Turning one gesture off turns the other on, so you can't lock yourself out.
 </ParamField>
 
 <ParamField path="dev-overlay.position" type="object">
-	Set by the loader. It saves where you dragged the dev overlay button, as `x` and `y` fractions of the screen size.
+	Set by the loader. Where you dragged the dev overlay button, as `x` and `y` fractions of the screen.
 </ParamField>
 
 <Note>
-	The toolbox's **Use Unbound Icon** switch on iOS isn't stored in `settings.json`. It sets the app's alternate icon directly.
+	The iOS toolbox's **Use Unbound Icon** switch isn't stored here. It sets the app's alternate icon directly.
 </Note>
 
-## External edits apply without a restart
+## Live Edits
 
-You can edit `settings.json` from the Files app, over SSH, or with any other tool, and the new values take effect without restarting the app. The loader watches the file for changes and reloads it in place.
+Edits from the Files app, SSH or any tool apply without a restart: the loader watches and reparses the file.
 
-On each change, the loader reparses the file and posts an internal change notification that the rest of the loader listens for.
+- Keys read once at launch, such as `loader.enabled` and `loader.devtools`, still need a restart.
+- In-app writes are debounced by 300ms, so a burst of changes is one write.
 
-<Note>
-	Live reload updates the values the loader holds, but it doesn't re-run work that already happened at startup. Keys read once during launch, such as `loader.enabled` and `loader.devtools`, still need an app restart to take effect.
-</Note>
+## Corrupt Files
 
-Writes made from inside the app are debounced by 300ms before they are flushed to disk, so a burst of changes produces one write.
+If the file fails to parse, or isn't a JSON object, the loader:
 
-## Corrupt files are backed up
-
-If `settings.json` fails to parse, or parses into anything other than a JSON object, the loader doesn't crash the app. Instead it:
-
-1. Copies the file to `settings.json.corrupt-<timestamp>` in the same directory. `<timestamp>` is the Unix time in whole seconds.
+1. Copies it to `settings.json.corrupt-<timestamp>` (Unix seconds), for example `settings.json.corrupt-1753488000`.
 2. Resets `settings.json` to `{}`.
-3. Continues starting up.
+3. Keeps starting up.
 
-```
-settings.json.corrupt-1753488000
-```
+## Disabling the Loader
 
-Your old configuration is still readable in that backup. At worst, a bad hand edit costs you a restart.
-
-## Disabling the loader
-
-Set `loader.enabled` to `false` to turn Unbound off without uninstalling anything. The check runs before any plugin, theme, or bundle work, so the loader does nothing and you get a stock app.
+Set `loader.enabled` to `false` to get a stock app without uninstalling. The check runs before any plugin, theme or bundle work.
 
 ```json settings.json
 {
@@ -159,4 +137,4 @@ Set `loader.enabled` to `false` to turn Unbound off without uninstalling anythin
 }
 ```
 
-Use this when a bad bundle or addon makes the app unusable and you can't get far enough into the UI to fix it. If you only need to get addons out of the way, use `recovery` instead, which changes less.
+Use it when a bad bundle or addon blocks the UI. To only sideline addons, use `recovery` instead; it changes less.

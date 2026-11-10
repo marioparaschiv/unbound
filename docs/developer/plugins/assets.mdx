@@ -1,28 +1,12 @@
 ---
 title: 'Images'
-description: 'Ship your own images with a plugin and draw them like any Discord icon.'
+description: 'Ship images and icons with a plugin.'
 icon: 'photo'
 ---
 
-Import an image like a module. A PNG, JPEG, WebP or GIF import is the image's asset id, for `source` props. An SVG import is an icon component, for `IconComponent` and `icon` props; see [SVGs](#svgs).
+Import an image like a module. A PNG, JPEG, WebP or GIF gives an asset id for `source` props. An SVG gives an icon component.
 
-## Reference
-
-| Import or call | Gives |
-| --- | --- |
-| `import id from './star.png'`, and `.jpg`, `.jpeg`, `.webp`, `.gif` | The image's asset id, a `number`, for `source` props |
-| `import Star from './star.svg'` | An icon component, for `IconComponent` and `icon` props |
-| `assets.getIdByName(name, type?)` | The id of the asset with that name, or `undefined`. Finds your plugin's own names first, then Discord's |
-| `assets.getByName(name, type?)` | The asset record, or `undefined` |
-| `assets.getById(id)` | The asset record, or `undefined` |
-| `assets.find(filter)` | The first asset that `filter` accepts |
-| `assets.getAll()` | Every registered asset |
-| `assets.register(options)` | Registers an image you make at runtime. Returns `{ id, unregister }` |
-| `assets.onAssetRegistered(listener)` | Calls `listener(asset, id)` for each asset registered afterwards. Returns a function that removes it |
-
-The scope removes every asset your plugin registered, and every listener, when the plugin stops.
-
-## Import an image
+## Quick Start
 
 ```tsx
 import { Image } from 'react-native';
@@ -33,7 +17,7 @@ export function Rating() {
 }
 ```
 
-That's all the setup there is. `ubd build` copies the file into `dist/`, lists it in the built manifest, and Unbound registers it with Discord's asset registry when your plugin starts. The id works anywhere Discord takes an image `source`:
+`ubd build` copies the file into `dist/` and lists it in the built manifest. Unbound registers it with Discord's asset registry when your plugin starts. The id works anywhere Discord takes a `source`:
 
 ```tsx
 import { Discord } from '@unbound-app/api/metro/components';
@@ -42,21 +26,29 @@ import star from '~/images/star.png';
 <Discord.TableRow label='Favourites' icon={<Discord.TableRowIcon source={star} />} />;
 ```
 
-An image can live anywhere in your plugin. Import it with a relative path or `~/`, which points at `src/`.
+Images can live anywhere. Import with a relative path or `~/` (which points at `src/`).
 
-## Formats and sizes
+## Reference
 
-| Format | Extensions |
+| Import or call | Gives |
 | --- | --- |
-| PNG | `.png` |
-| JPEG | `.jpg`, `.jpeg` |
-| WebP | `.webp` |
-| GIF | `.gif` |
-| SVG | `.svg` |
+| `import id from './star.png'` (also `.jpg`, `.jpeg`, `.webp`, `.gif`) | The asset id, a `number` |
+| `import Star from './star.svg'` | An icon component |
+| `assets.getIdByName(name, type?)` | The id, or `undefined`. Your plugin's names first, then Discord's |
+| `assets.getByName(name, type?)` | The asset record, or `undefined` |
+| `assets.getById(id)` | The asset record, or `undefined` |
+| `assets.find(filter)` | The first asset `filter` accepts |
+| `assets.getAll()` | Every registered asset |
+| `assets.register(options)` | Registers a runtime image. Returns `{ id, unregister }` |
+| `assets.onAssetRegistered(listener)` | Calls `listener(asset, id)` for each later asset. Returns a remover |
 
-An SVG works differently; see [SVGs](#svgs). Anything else fails the build with the file's name.
+Other file types fail the build, naming the file. Full signatures: [`assets`](/docs/sdk/latest/assets) in the SDK reference.
 
-For sharp images on every screen, put the larger versions beside the file with an `@2x` or `@3x` suffix. You import only the plain name, and Unbound picks the right file for the device:
+An imported image always ships. Every asset and listener your plugin registered is removed when it stops. An unregistered id draws nothing.
+
+## Screen Densities
+
+Put larger versions beside the file with `@2x` or `@3x`. Import the plain name, and Unbound picks the right file.
 
 ```
 assets/icons/star.png      24 × 24
@@ -64,11 +56,11 @@ assets/icons/star@2x.png   48 × 48
 assets/icons/star@3x.png   72 × 72
 ```
 
-The build reads each image's width and height, so `<Image source={star} />` has its size in points without a `style`. You can ship only `@3x`; the size is still in points.
+The build reads each image's size, so `<Image source={star} />` needs no `style`. Shipping only `@3x` works.
 
 ## SVGs
 
-Importing an SVG gives you an icon component that behaves like Discord's own, such as `WrenchIcon`. Pass the component where a prop takes one, and an element where a prop takes a node:
+An SVG import is an icon component like Discord's own `WrenchIcon`. Pass the component to `IconComponent` props, and an element to `icon` props:
 
 ```tsx
 import { Discord } from '@unbound-app/api/metro/components';
@@ -79,7 +71,7 @@ import Star from '../assets/star.svg';
 <Discord.IconButton icon={<Star />} />;
 ```
 
-Unbound's own APIs take any icon: an asset id, an element or a component.
+Unbound's APIs take an asset id, an element or a component:
 
 ```tsx
 import { toasts, ui } from '@unbound-app/api';
@@ -91,25 +83,32 @@ toasts.show({ title: 'Starred', icon: Star });
 
 | Prop | Takes | The icon gets |
 | --- | --- | --- |
-| `TableRowIcon` and `ActionSheetRow.Icon` `IconComponent` | A component | `size` and `color` for the row's variant |
+| `TableRowIcon`, `ActionSheetRow.Icon` `IconComponent` | A component | `size` and `color` for the row |
 | A settings entry's `IconComponent` | A component | The same, through `TableRowIcon` |
-| `MenuItem` and `ContextMenuItem` `IconComponent` | A component | `size: 'sm'`, and `color` in a context menu |
-| `TableRow`, `ActionSheetRow`, `Button` and `IconButton` `icon` | An element | Nothing: it draws at its own size and colour |
-| `ui.Row`, `ui.SwitchRow`, `toasts.show` `icon`, a toast button's `icon` | An asset id, element or component | A component draws through `TableRowIcon`, or at `md` in a toast |
+| `MenuItem`, `ContextMenuItem` `IconComponent` | A component | `size: 'sm'`, and `color` in a context menu |
+| `TableRow`, `ActionSheetRow`, `Button`, `IconButton` `icon` | An element | Nothing. Own size and colour |
+| `ui.Row`, `ui.SwitchRow`, `toasts.show` `icon`, a toast button's `icon` | An id, element or component | `TableRowIcon`, or `md` in a toast |
 
-**Size and colour.** The component takes Discord's icon props. `size` is `'xxs'` (12), `'xs'` (16), `'sm'` (18), `'md'` (24, the default), `'lg'` (32), a number of points, or `'custom'` to size it with `style`. `width` and `height` still win when you pass them. `color` is a theme token, such as `Theme.colors.TEXT_LINK`, or a colour. Without one, the icon takes the theme's icon colour, so it matches Discord's icons in every theme.
+### Size and Colour
 
-**Tinting.** If the SVG draws in one solid colour, counting the default black fill, the build swaps that colour for `currentColor`, which `color` sets. An SVG that uses two or more colours, gradients, masks, `<style>` or `class` is left as drawn, and `color` doesn't change it. To show a one-colour SVG in its own colour, pass that colour as `color`.
+| Prop | Values |
+| --- | --- |
+| `size` | `'xxs'` (12), `'xs'` (16), `'sm'` (18), `'md'` (24, default), `'lg'` (32), a number, or `'custom'` to size with `style`. `width` and `height` win |
+| `color` | A theme token such as `Theme.colors.TEXT_LINK`, or a colour. Default: the theme's icon colour |
 
-**Cleaning.** The build drops comments, the doctype, editor metadata (`<metadata>`, `sodipodi:*`, `inkscape:*`) and the whitespace between tags. A file that isn't well-formed XML, or whose root isn't `<svg>`, fails the build with the reason.
+A one-colour SVG (default black fill included) is tinted by `color`. One with two or more colours, gradients, masks, `<style>` or `class` keeps its colours. To show a one-colour SVG in its own colour, pass that colour.
 
-**Loading.** Nothing loads when your plugin starts. `react-native-svg` and the theme are read the first time a component renders. The cleaned markup is inlined in your bundle once per file, however many times you import it. The build warns about an SVG over 32 KB: simplify it, or export it as a PNG.
+### Build Behaviour
 
-An SVG is never registered as an asset, so it has no asset id. For a `source` prop, export a PNG.
+- Strips comments, doctype, editor metadata (`<metadata>`, `sodipodi:*`, `inkscape:*`) and whitespace between tags.
+- Fails on malformed XML or a root that isn't `<svg>`.
+- Warns above 32 KB. Simplify it or export a PNG.
+- Inlines each file once, however often it is imported. Nothing loads until first render.
+- Never registers an SVG as an asset. For a `source` prop, use a PNG.
 
-## Looking images up by name
+## Lookup by Name
 
-Each image also has a name: its path without the extension or scale suffix. Under the plugin's `assets/` folder the name starts inside that folder, so `assets/icons/star.png` is `icons/star`. Anywhere else it starts at the plugin root, so `src/images/star.png` is `src/images/star`.
+An image's name is its path without extension or scale suffix. Under `assets/` it starts inside that folder: `assets/icons/star.png` is `icons/star`. Elsewhere it starts at the plugin root: `src/images/star.png` is `src/images/star`.
 
 ```ts
 import { assets } from '@unbound-app/api';
@@ -117,15 +116,15 @@ import { assets } from '@unbound-app/api';
 const star = assets.getIdByName('icons/star');
 ```
 
-Inside your plugin, `getIdByName` and `getByName` find your own names first, then Discord's. Two plugins can both have an `icons/star` without either seeing the other's.
+Two plugins can both have `icons/star` without conflict.
 
 <Note>
-	An imported image always ships. An image in `assets/` that nothing imports ships only when your code spells out its name, as in `getIdByName('icons/star')`. The build warns about every image it leaves out. A name you build at runtime, such as `` `icons/${kind}` ``, isn't spelled out, so import those images instead.
+	An image in `assets/` that nothing imports ships only when your code spells out its name, as above. The build warns about each image it leaves out. For runtime names such as `` `icons/${kind}` ``, import the images.
 </Note>
 
-## Images you make at runtime
+## Runtime Images
 
-`assets.register` registers an image your plugin creates while it runs, such as a `data:` URI or a file you wrote with `fs`. It returns the id and a function that unregisters it.
+`assets.register` registers an image made while running, such as a `data:` URI or a file written with `fs`.
 
 ```tsx
 import { assets, fs } from '@unbound-app/api';
@@ -144,14 +143,12 @@ const avatar = assets.register({
 
 | Option | What it does |
 | --- | --- |
-| `name` | The name `getIdByName` finds it by. Registering a name again reuses its id |
-| `uri` or `path` | The image at scale 1: a URI such as `data:` or `https:`, or an absolute file path |
-| `width`, `height` | Its size in points |
-| `type` | Its file type, such as `png` |
-| `scales` | The image at other densities, by scale: `{ 2: uri, 3: uri }` |
+| `name` | The lookup name. Registering a name again reuses its id |
+| `uri` or `path` | The image at scale 1: a URI (`data:`, `https:`) or an absolute path |
+| `width`, `height` | Size in points |
+| `type` | File type, such as `png` |
+| `scales` | Other densities: `{ 2: uri, 3: uri }` |
 
-Everything your plugin registers, imported images included, is unregistered when it stops. An unregistered id draws nothing.
+## While Developing
 
-## While you develop
-
-`ubd dev` rebuilds your plugin when you add, edit or replace an image, and the next push carries the new file to the device. Files are named by their content, so a replaced image never shows the old one from a cache.
+`ubd dev` rebuilds and pushes when you add, edit or replace an image. Files are named by content, so a replaced image never shows a cached copy.

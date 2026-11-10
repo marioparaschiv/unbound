@@ -1,0 +1,192 @@
+---
+title: 'Your First Plugin'
+description: 'Scaffold a plugin and run it on your phone.'
+icon: 'rocket'
+---
+
+Go from an empty folder to a plugin running on your phone. You need [Bun](https://bun.sh) on your computer and a phone with [Unbound installed](/docs/user/installing) on the same network.
+
+## Quick Start
+
+<Steps>
+	<Step title='Scaffold a workspace'>
+		`ubd` asks for anything you leave out, such as your Discord user id.
+
+		```bash
+		bunx @unbound-app/cli create --kind plugin --name hello-world --shape repository --git-init --install
+		cd hello-world
+		```
+	</Step>
+	<Step title='Start the bridge'>
+		Leave it running in its own terminal. It prints a `Devices` address, such as `192.168.1.20:9090`.
+
+		```bash
+		bunx @unbound-app/debugger
+		```
+	</Step>
+	<Step title='Connect your phone'>
+		1. In Discord, open **Unbound** settings, then **General**, and turn on **Developer Mode**.
+		2. Open **Developer** and turn on **Enable Debugger**.
+		3. Enter the `Devices` address in **Debugger Address**.
+		4. Restart Discord.
+
+		The bridge prints `Device connected`.
+	</Step>
+	<Step title='Push the plugin'>
+		`push` builds, installs and starts the plugin. It greets you with a toast.
+
+		```bash
+		bunx @unbound-app/cli push hello-world
+		```
+	</Step>
+	<Step title='Rebuild on save'>
+		`dev` rebuilds the plugin and reloads it on the phone each time you save.
+
+		```bash
+		bun run dev
+		```
+	</Step>
+</Steps>
+
+## What You Got
+
+The plugin lives in `plugins/hello-world`. [Plugin Anatomy](/docs/developer/getting-started/plugin-anatomy) explains each file.
+
+<FileTree>
+	<Folder name='hello-world'>
+		<File name='manifest.json' note='Id, name and version' />
+		<File name='ADDON.md' note='The store page' />
+		<File name='settings.ts' note='Settings; Unbound builds the panel' />
+		<Folder name='i18n'>
+			<File name='en-US.json' note='Every string the plugin shows' />
+		</Folder>
+		<Folder name='assets'>
+			<File name='icon.png' note="The toast's icon" />
+		</Folder>
+		<Folder name='media' note='Store page images' />
+		<Folder name='src'>
+			<File name='index.tsx' note='Starts each feature' />
+			<File name='unbound-i18n.d.ts' note='Generated. Commit it' />
+			<File name='unbound-settings.d.ts' note='Generated. Commit it' />
+		</Folder>
+		<File name='bunfig.toml' note='Loads the testing preset' />
+		<Folder name='tests'>
+			<File name='index.test.ts' note='Runs with bun test' />
+		</Folder>
+	</Folder>
+</FileTree>
+
+The entry exports `start`. It reads settings from `@unbound-app/settings`, which the build makes from `settings.ts`. `toasts.success` takes a message key and its placeholder values, and an imported image is its asset id.
+
+```tsx src/index.tsx
+import { settings } from '@unbound-app/settings';
+import { toasts } from '@unbound-app/api';
+
+import icon from '../assets/icon.png';
+
+/** Greets the user, unless they turned the greeting off. */
+export function start() {
+	if (!settings.greetOnStart) return;
+
+	toasts.success('GREETING_BODY', { name: addon.name }, { icon });
+}
+```
+
+`settings.ts` declares one switch. Its `title` and `subtitle` are message keys.
+
+```ts settings.ts
+import { defineSettings, setting } from '@unbound-app/settings/schema';
+
+export default defineSettings({
+	greetOnStart: setting.boolean({
+		default: true,
+		title: 'GREET_ON_START',
+		subtitle: 'GREET_ON_START_SUBTITLE',
+	}),
+});
+```
+
+The test starts the plugin and checks its toast. Run it with `bun test`.
+
+```ts tests/index.test.ts
+import { startPlugin, stopPlugin, toasts } from '@unbound-app/api/testing';
+import { settings } from '@unbound-app/settings';
+import { describe, expect, test } from 'bun:test';
+
+describe('start', () => {
+	test('greets with the plugin name', async () => {
+		await startPlugin();
+
+		expect(toasts.shown).toMatchObject([{ key: 'GREETING_BODY', title: 'Hello World is running.' }]);
+		await stopPlugin();
+	});
+
+	test('stays quiet when greetOnStart is off', async () => {
+		settings.greetOnStart = false;
+		await startPlugin();
+
+		expect(toasts.shown).toEqual([]);
+		await stopPlugin();
+	});
+});
+```
+
+The scaffold also has a `.gitignore` and an `.oxlintrc.json` with the [lint rules](/docs/developer/getting-started/project-rules#all-checks).
+
+## Change Discord
+
+Add a feature that logs every message you send, in its own folder:
+
+```ts src/message-log/index.ts
+import { metro, patcher } from '@unbound-app/api';
+
+const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+
+export function startMessageLog() {
+	patcher.before(Messages, 'sendMessage', ({ args }) => {
+		logger.log('Sending a message to channel', args[0]);
+	});
+}
+```
+
+| Call | What it does |
+| --- | --- |
+| `metro.findByProps` | Finds the module with both exports. Lazy |
+| `patcher.before` | Runs your callback before each `sendMessage`, with its arguments |
+| `logger` | A global that prefixes each line with the plugin's name |
+
+Start it from the entry:
+
+```tsx src/index.tsx
+import { settings } from '@unbound-app/settings';
+import { toasts } from '@unbound-app/api';
+
+import { startMessageLog } from '~/message-log';
+import icon from '../assets/icon.png';
+
+/** Starts the message log, and greets the user unless they turned the greeting off. */
+export function start() {
+	startMessageLog();
+
+	if (!settings.greetOnStart) return;
+
+	toasts.success('GREETING_BODY', { name: addon.name }, { icon });
+}
+```
+
+Save, then send a message on your phone. The log line appears in the bridge's terminal.
+
+<Note>
+	No `stop` is needed. The Addon scope removes the patch when the plugin turns off. See [Lifecycle](/docs/developer/getting-started/lifecycle).
+</Note>
+
+## Next
+
+<CardGroup cols={2}>
+	<Card title='Lifecycle' icon='plug' href='/docs/developer/getting-started/lifecycle'>
+		Start, stop and the Addon scope.
+	</Card>
+	<Card title='Plugin Anatomy' icon='folder-tree' href='/docs/developer/getting-started/plugin-anatomy'>
+		Every file of a real plugin.
+	</Card>
+</CardGroup>

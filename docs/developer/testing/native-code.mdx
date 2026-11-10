@@ -1,0 +1,79 @@
+---
+title: 'Testing Native Code'
+description: 'Fake the platform and native bridges in tests.'
+icon: 'mobile'
+---
+
+Fakes for a plugin that calls the native bridge, from `native` in `@unbound-app/api/testing`. Set up the preset first: see [Writing Tests](/docs/developer/testing/writing-tests).
+
+## Example
+
+Set the platform, modules and capabilities:
+
+```ts
+import { native } from '@unbound-app/api/testing';
+
+native.setPlatform('android');
+native.registerModule('NativeFileModule', { readFile: async () => '' });
+native.setCapabilities(['native.java.hooks']);
+```
+
+`startPlugin` gives `context.native.objc` on iOS, and `context.native.java` and `hooks` on Android. Register the classes your handlers reach:
+
+```ts
+import { native, startPlugin } from '@unbound-app/api/testing';
+
+native.objc.registerClass('UIView', {
+	superclass: 'NSObject',
+	methods: { 'setAlpha:': (self, alpha) => {}, 'tag': () => 7 },
+	classMethods: { sharedView: () => native.objc.create('UIView') },
+});
+await startPlugin();
+
+native.setPlatform('android');
+native.java.registerClass('android.view.View', {
+	methods: { getWidth: () => 120 },
+	fields: { mLeft: 4 },
+	staticMethods: { create: () => native.java.create('android.view.View') },
+	staticFields: { INSTANCE: native.java.create('android.view.View') },
+});
+```
+
+## Reference
+
+| Call | Does |
+| --- | --- |
+| `native.setPlatform(platform)` | Sets the platform, `'ios'` by default. `Platform.OS` follows it |
+| `native.registerModule(name, module)` | A module for `getNativeModule(name)` to return |
+| `native.setCapabilities(capabilities)` | What `native.has` reports |
+| `native.objc.registerClass(name, { superclass?, methods?, classMethods? })` | Adds a class. A method gets the object and the call's arguments; `callSuper` reaches the superclass |
+| `native.objc.create(name, ivars?)` | An object, with the instance variables `getIvar` reads |
+| `native.java.registerClass(name, options)` | Adds a class. See [Java Classes](#java-classes) |
+| `native.java.create(name, fields?)` | An object, as a `handle` value |
+| `native.calls` | Every `objc`, `java` and `hooks` call this test: `bridge`, `method`, `target` class, `name` (selector or method), `args` |
+
+### Java Classes
+
+`native.java.registerClass` options: `superclass`, `methods`, `staticMethods`, `fields`, `staticFields`, `signatures`, `fieldTypes`, `construct`.
+
+- A method gets the object and plain arguments, and returns a plain value. The bridge tags it `string`, `int`, `double`, `boolean`, `null`, `handle` or `array`.
+- `construct` runs for `java.construct`.
+- `signatures` gives each method's `{ parameters?, returnType? }`, and `fieldTypes` each field's type. `java.describe` returns them, so code that finds a member by its types works. Unset types are `java.lang.Object`.
+
+## Platform Handlers
+
+- `definePlatform` picks the current platform's handler, and throws `NativePluginUnsupportedPlatformError` when there is none.
+- It runs at import, before a test sets the platform. A function handler therefore calls the current platform's handler on each call. Any other handler is read once, when `definePlatform` runs.
+- `getNativeModule(...names)` returns the first module registered under one of the names.
+
+## Faked Members
+
+| Bridge | Faked |
+| --- | --- |
+| `objc` | `getClass`, `alloc`, `create`, `className`, `respondsTo`, `call`, `invoke`, `invokeAsync`, `callSuper`, `invokeSuper`, `batch`, `prepare`, `invokePrepared`, `getIvar`, `setIvar`, associated objects, `struct`, `hook` |
+| `java` | `getClass`, `construct`, `describe`, `className`, `respondsTo`, `invoke`, `invokeAsync`, `getField`, `setField`, `batch`, `batchAsync`, `prepare`, `invokePrepared`, associated objects, `release` |
+| `hooks` | `hook`, `remove`, return values |
+
+- A hook runs when a registered method is called, like `objc.hook`'s `before`, `replace` and `after`.
+- An unregistered class, selector, method or field throws, naming how to add it.
+- An unfaked member throws too. Supply it with `startPlugin({ native: { objc: { snapshot } } })`. Members you pass are laid over the fake: yours win, the rest stay.

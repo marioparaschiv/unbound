@@ -1,138 +1,78 @@
 ---
 title: 'Roadmap'
-description: 'What Unbound does today and what is coming next.'
+description: 'What works today and what is next.'
 icon: 'map'
 ---
 
-This page lists what you can do with Unbound today, and the work that is underway. Everything works on both iOS and Android unless a line says otherwise.
+What Unbound does today and what's underway. Everything works on iOS and Android unless noted.
 
-## Coming next
+## Coming Next
 
-Lines with a number link to the pull request or issue where you can follow the work.
+Numbers link to the pull request or issue.
 
-### For everyone
+### For Everyone
 
 | Feature | Status |
 | --- | --- |
-| An Android Manager app that installs the patched Discord or the Xposed module, then updates them and itself in the background, with no taps ([#331](https://github.com/marioparaschiv/unbound/pull/331), [#334](https://github.com/marioparaschiv/unbound/pull/334), [#339](https://github.com/marioparaschiv/unbound/pull/339), [#343](https://github.com/marioparaschiv/unbound/pull/343)) | <Icon icon='clock' color='#E6A700' label='In progress' /> In progress |
-| Full Android support, with every iOS feature on Android too | <Icon icon='clock' color='#E6A700' label='In progress' /> In progress |
-| A theme editor to build and preview your own theme inside Discord ([#340](https://github.com/marioparaschiv/unbound/pull/340)) | <Icon icon='clock' color='#E6A700' label='In progress' /> In progress |
-| Keep your settings and plugin data when you uninstall ([#51](https://github.com/marioparaschiv/unbound/issues/51)) | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
-| Adjust Discord's corner radius, spacing and other design details without a theme ([#35](https://github.com/marioparaschiv/unbound/issues/35)) | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
+| Android Manager app that installs the patched Discord or Xposed module, and updates them and itself in the background ([#331](https://github.com/marioparaschiv/unbound/pull/331), [#334](https://github.com/marioparaschiv/unbound/pull/334), [#339](https://github.com/marioparaschiv/unbound/pull/339), [#343](https://github.com/marioparaschiv/unbound/pull/343)) | <Icon icon='clock' color='#E6A700' label='In progress' /> In progress |
+| Every iOS feature on Android | <Icon icon='clock' color='#E6A700' label='In progress' /> In progress |
+| Theme editor with live preview in Discord ([#340](https://github.com/marioparaschiv/unbound/pull/340)) | <Icon icon='clock' color='#E6A700' label='In progress' /> In progress |
+| Keep settings and plugin data across uninstalls ([#51](https://github.com/marioparaschiv/unbound/issues/51)) | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
+| Adjust corner radius, spacing and other design details without a theme ([#35](https://github.com/marioparaschiv/unbound/issues/35)) | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
 | Translations | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
 
-### For developers
+### For Developers
 
 | Feature | Status |
 | --- | --- |
-| Typed native calls, such as `UIKit.UIView.animate()`, instead of passing class and method names as strings | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
-| A desktop debugger app, with a window instead of a terminal | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
-| A Metro cache viewer on the **Developer** page ([#31](https://github.com/marioparaschiv/unbound/issues/31)) | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
-| `.help` and `.clearhistory` commands in the terminal debugger | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
+| Typed native calls, such as `UIKit.UIView.animate()`, instead of string class and method names | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
+| Desktop debugger app | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
+| Metro cache viewer on the **Developer** page ([#31](https://github.com/marioparaschiv/unbound/issues/31)) | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
+| `.help` and `.clearhistory` in the terminal debugger | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
 
-## Addons
+## Available Now
 
-You get addons from the **Marketplace** in Unbound's settings. See [Finding Addons](/docs/user/marketplace) and [Managing Addons](/docs/user/managing-addons).
-
-- Browse and install plugins, themes, and icon packs from the Marketplace.
-- Read an addon's store page before you install it.
-- Install an older version of an addon. Unbound keeps it on that version and pauses its updates.
-- Install an addon from a link on the Unbound website, or from the URL of its manifest.
-- Install the libraries a plugin needs together with the plugin. Libraries stay hidden in your plugin list.
-- Turn addons on and off, change a plugin's settings, and delete addons.
-- Use official plugins from the Unbound team, such as Chat Bubbles, Avatar Radius, Message Logger, and Translate.
-
-## Updates
-
-See [Updating](/docs/user/updating).
-
-- Unbound downloads its own updates in the background and uses them from the next launch.
-- The **Updates** page checks your addons for new versions. Tap an update to read what changed, then update one addon or all of them.
-- Addon updates install each time Discord starts. Turn off **Update automatically** to install them yourself.
-- The **Updates** page also tells you when a new version of the Unbound app is out, with a link to download it.
-
-## Customization
-
-- Apply a theme. Its colors reach Discord's native screens too.
-- Replace Discord's icons with an icon pack.
-- Change Discord's fonts to fonts on your device or font files you add. See [Fonts](/docs/user/fonts).
-- Unbound shows its own toasts in place of Discord's. You choose their duration, opacity, blur, animations, and how many show at once.
-- Show the settings Discord keeps for its staff.
-- Use Unbound's slash commands, such as `/reload`, `/recovery`, and `/debug`.
-
-## Account and sync
-
-See [Account and Sync](/docs/user/sync).
-
-- Sign in to Unbound with your Discord account.
-- Sync your addons and settings across your devices. Choose two-way, download only, or upload only.
-- Choose how a new device combines with the setup already in your cloud. You can merge both, use the cloud's setup, or use the device's setup.
-- Delete your synced data from Unbound's servers.
-- Sponsor Unbound on GitHub for $5 a month to get a custom badge and a Sponsor role in the Unbound Discord server.
-
-## Recovery and reliability
-
-See [Troubleshooting](/docs/user/troubleshooting).
-
-- The **toolbox** is a recovery menu that opens even when Unbound fails to load. Shake your device or hold three fingers on the screen to open it.
-- **Recovery Mode** starts Discord with every addon off.
-- Start Recovery Mode from the shortcut menu of Discord's app icon.
-- Unbound turns off an addon that crashes Discord on two launches in a row.
-- Unbound turns off a plugin that freezes Discord twice in one session, or once for a long time.
-- When a screen fails to draw, Unbound shows a recovery screen instead of crashing.
-- **Report Bug** opens a GitHub issue with your debug info already filled in.
-- Unbound warns you when your Discord version is older than the oldest one it supports.
-
-## Privacy and security
-
-See [Privacy](/docs/user/privacy).
-
-- Unbound blocks Discord's analytics tracking.
-- Crash reports stay off until you turn them on. A report never includes your account.
-- A plugin must ask you before it can call native code directly.
-- Unbound checks the signature of each Unbound update before it runs it.
-
-## Install options
-
-See [Installing](/docs/user/installing).
-
-| How you install | Platform |
+| Area | What works |
 | --- | --- |
-| Tweak on a jailbroken device, from the apt repo | iOS |
-| Sideloaded app, from SideStore, AltStore, Feather, or the IPA file | iOS |
-| Xposed module with Vector on a rooted device | Android |
-| Pre-patched Discord, no root needed | Android |
+| [Addons](/docs/user/marketplace) | Marketplace for plugins, themes and icon packs, with store pages. Install older versions, from the website or a manifest URL. Libraries install with their plugin and stay hidden. Official plugins such as Chat Bubbles, Avatar Radius, Message Logger and Translate |
+| [Updates](/docs/user/updating) | Unbound updates in the background for the next launch. Addons update at startup, or by hand with changelogs. New app versions show on **Updates** |
+| [Customization](/docs/user/fonts) | Themes that reach native screens, icon packs, fonts, configurable toasts, Discord's staff settings, and slash commands such as `/reload`, `/recovery` and `/debug` |
+| [Account and Sync](/docs/user/sync) | Discord sign-in. Two-way, download-only or upload-only sync, with a merge choice for new devices. Delete cloud data. $5 a month sponsor badge and role |
+| [Recovery](/docs/user/troubleshooting) | Toolbox by shake or three fingers. Recovery Mode, also from the app icon shortcut. Auto-disable for plugins that crash two launches in a row or freeze. A recovery screen when a screen fails to draw. **Report Bug**. A warning when Discord is older than supported |
+| [Privacy](/docs/user/privacy) | Discord analytics blocked. Crash reports opt-in, never with your account. Plugins ask before calling native code. Unbound updates are signature-checked |
+| [iOS Extensions](/docs/user/ios-extensions) | Open Discord links from Safari, share to Discord, passkey login through Safari, Unbound app icon (sideloaded) |
+
+## Install Options
+
+See [Installation](/docs/user/installing).
+
+| Method | Platform |
+| --- | --- |
+| Jailbreak tweak from the apt repo | iOS |
+| Sideloaded app from SideStore, AltStore, Feather or the IPA | iOS |
+| Xposed module with Vector, rooted | Android |
+| Pre-patched Discord, no root | Android |
 | Automatic app updates through Obtainium | Android |
 
-Unbound also builds for Discord's test versions. That means TestFlight on iOS, and the beta and alpha channels of Google Play on Android.
+Unbound also builds on Discord's test versions: TestFlight on iOS, Google Play beta and alpha on Android.
 
-## iOS extras
+## Developer Tools
 
-See [iOS Extensions](/docs/user/ios-extensions).
-
-- Open Discord links from Safari in the Discord app.
-- Share photos, videos, and files from other apps to a Discord channel or DM.
-- Log in with a passkey through Safari in a sideloaded app.
-- Switch Discord's app icon to the Unbound logo in a sideloaded app.
-
-## For developers
-
-- The `ubd` CLI creates an addon, rebuilds and reloads it on your device while you edit, and submits it for review. See [CLI](/docs/developer/development/cli).
-- Edited components refresh in place on the device, without a restart.
-- A copy you pushed with `ubd` is tagged **Dev copy**, stays out of update checks, and reinstalls from the store in one tap.
-- The CLI also runs code, reads logs, and inspects native views on a connected device. Its MCP server lets AI clients do the same.
-- The debugger is a terminal REPL that runs JavaScript inside Discord. See [Debugging](/docs/developer/development/debugging).
-- Unbound DevTools is a desktop React DevTools app for macOS, Windows, and Linux.
-- **Developer Mode** adds a **Developer** page with the debugger, React DevTools, the Asset Browser, and a custom bundle URL.
-- The docs include guides for plugins, themes, and icon packs, and an SDK reference for each package version.
+- `ubd` [CLI](/docs/developer/tools/cli): create an addon, rebuild and reload on device while editing, submit for review.
+- Components refresh in place without a restart.
+- A `ubd` push is tagged **Dev copy**, skips update checks, and reinstalls from the store in one tap.
+- The CLI runs code, reads logs and inspects native views. Its MCP server gives AI clients the same.
+- [Debugger](/docs/developer/tools/debugger): terminal REPL inside Discord. Unbound DevTools: desktop React DevTools for macOS, Windows and Linux.
+- **Developer Mode** adds the debugger, React DevTools, the Asset Browser and a custom bundle URL.
+- Guides for plugins, themes and icon packs, plus an SDK reference per package version.
 
 ## Website
 
-- Browse plugins, themes, and icon packs, filter them by tag, author and update date, and install one on your device from its page.
-- Read an addon's store page, its versions and their changelogs.
+- Browse addons by tag, author and update date, and install to your device.
+- Store pages with versions and changelogs.
 - Sign in with Discord.
-- Open a developer's profile to see their addons and badges.
-- Design your sponsor badge and preview it as a Discord profile badge.
-- Submit an addon from a GitHub repository, preview its store page, and follow its review.
-- Track your addons and submissions on your dashboard, and add maintainers to an addon.
-- Approve a device so `ubd login` can publish for you.
+- Developer profiles with addons and badges.
+- Design and preview your sponsor badge.
+- Submit from GitHub, preview the store page and follow review.
+- Dashboard for addons and submissions, with maintainers.
+- Approve a device so `ubd login` can publish.

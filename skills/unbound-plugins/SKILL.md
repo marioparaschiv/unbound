@@ -16,4 +16,4 @@ Read only the file for the task.
 
 Finding and changing Discord's code (`metro`, `flux`, `patcher`): the `unbound-patching` skill. Running it on a phone: `unbound-debugger`.
 
-Themes and icon packs ship no code and are not covered here. The full guide is `docs/developer/plugins/` (https://unbound.rip/docs/developer/plugins/introduction).
+Themes and icon packs ship no code and are not covered here. The full guide is `docs/developer/plugins/` (https://unbound.rip/docs/developer/getting-started/lifecycle).

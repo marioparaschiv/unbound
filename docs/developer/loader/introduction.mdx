@@ -1,14 +1,14 @@
 ---
 title: 'The Loader'
-description: "The native part of Unbound that gets its JavaScript running inside Discord."
+description: "Native code that starts Unbound inside Discord."
 icon: 'microchip'
 ---
 
-The **loader** is the native part of Unbound. It's a tweak on iOS and an Xposed module on Android. Its job is to get Unbound's JavaScript bundle running inside Discord, before Discord's own. Addon developers don't need it. Read on if you work on Unbound itself, or want to know what happens at launch.
+The loader is Unbound's native part: a tweak on iOS, an Xposed module on Android. It runs Unbound's bundle before Discord's; addon developers don't need it.
 
-## What happens at launch
+## At Launch
 
-Each time Discord loads its JavaScript, the loader runs these steps first.
+Each time Discord loads its JavaScript, the loader runs first:
 
 <Flow>
 	<FlowStep title='Read settings.json' detail='Stop here if loader.enabled is false' />
@@ -17,27 +17,27 @@ Each time Discord loads its JavaScript, the loader runs these steps first.
 	<FlowStep title="Run Discord's bundle" />
 </Flow>
 
-The loader never runs plugins itself. It reads them from disk, and hands them to Unbound's JavaScript through the `UnboundNative` object, such as `UnboundNative.getPlugins()` and `UnboundNative.getThemes()`. Unbound's bundle starts and stops them.
+The loader never runs plugins. It reads them from disk and hands them to Unbound through `UnboundNative`, such as `UnboundNative.getPlugins()` and `UnboundNative.getThemes()`. Running first lets Unbound hook [Metro](/docs/developer/concepts) before Discord defines its modules.
 
-Running first is what lets Unbound hook Metro before Discord defines its modules. See [Concepts](/docs/developer/concepts).
+## Native Work
 
-## What else it does in native code
+| Job | What it does |
+| --- | --- |
+| Bundle updates | Downloads a newer bundle in the background, checks signature and hash, uses it next launch. |
+| Theme and fonts | Swaps colors and fonts below JavaScript, so native views change too. |
+| Crash guard | Turns off an addon after two launches in a row end inside it. |
+| Toolbox | The recovery menu works even when Unbound's JavaScript fails. |
 
-- **Updates the bundle.** It downloads a newer bundle in the background, checks its signature and hash, and uses it from the next launch.
-- **Applies the theme and fonts.** Colors and fonts are swapped below JavaScript, so they cover native views too.
-- **Guards against crashes.** When two launches in a row end inside the same addon, Unbound turns that addon off.
-- **Opens the toolbox.** The recovery menu works even when Unbound's JavaScript fails to load.
-
-## Where to read more
+## Next
 
 <CardGroup cols={2}>
 	<Card title='iOS Loader' icon='apple' href='/docs/developer/loader/ios'>
-		Where the iOS loader keeps Unbound's files.
+		Where files live on iOS.
 	</Card>
 	<Card title='Android Loader' icon='mobile' href='/docs/developer/loader/android'>
-		Startup, storage, bundle updates and signed plugins on Android.
+		Install, startup, updates and storage.
 	</Card>
 	<Card title='Settings Reference' icon='sliders-3' href='/docs/developer/loader/settings'>
-		Every key the loader reads from settings.json.
+		Every key in settings.json.
 	</Card>
 </CardGroup>
