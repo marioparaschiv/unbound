@@ -11,7 +11,7 @@
 namespace loader {
 static constexpr const char *kDigestCacheFile = ".verified.json";
 
-static std::optional<nlohmann::json> fileIdentity(const std::string &path)
+std::optional<nlohmann::json> fileIdentity(const std::string &path)
 {
     struct stat info{};
     if (stat(path.c_str(), &info) != 0)

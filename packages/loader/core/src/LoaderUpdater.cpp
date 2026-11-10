@@ -5,6 +5,7 @@
 #include <stdexcept>
 
 #include "LoaderBundleRecord.h"
+#include "LoaderDigestCache.h"
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
 #include "LoaderPreferences.h"
@@ -211,12 +212,6 @@ std::optional<std::string> BundleUpdater::candidateProblem(const std::string &ca
         return std::nullopt;
     }
 
-    std::optional<std::string> bundle = readTextFile(candidatePath);
-    if (!bundle)
-    {
-        return std::string("it could not be read");
-    }
-
     std::string source    = bundleRecordField(record, "source");
     std::string signature = bundleRecordField(record, "signature");
     if (kind != "manifest")
@@ -235,9 +230,24 @@ std::optional<std::string> BundleUpdater::candidateProblem(const std::string &ca
         return std::string("its stored manifest is incomplete");
     }
     auto hash = manifest->sha512.find(bundleRecordField(record, "file"));
-    if (hash == manifest->sha512.end() || hash->second != sha512Hex(*bundle))
+    if (hash == manifest->sha512.end())
     {
-        return std::string("its SHA-512 does not match its signed manifest");
+        return std::string("its signed manifest does not list it");
+    }
+    // The download hashed these exact bytes; an unchanged file skips hashing it again at launch.
+    std::optional<nlohmann::json> identity = fileIdentity(candidatePath);
+    auto                          verified = record.find("identity");
+    if (!identity || verified == record.end() || *verified != *identity)
+    {
+        std::optional<std::string> bundle = readTextFile(candidatePath);
+        if (!bundle)
+        {
+            return std::string("it could not be read");
+        }
+        if (hash->second != sha512Hex(*bundle))
+        {
+            return std::string("its SHA-512 does not match its signed manifest");
+        }
     }
     if (std::optional<std::string> rollback = rollbackProblem(*manifest, source, baseline()))
     {
@@ -480,6 +490,10 @@ std::optional<std::string> BundleUpdater::verifiedRecord(const DownloadPlan &pla
     }
     log(LogLevel::Info, LOG_CATEGORY_UPDATER,
         "Bundle signature verified: " + urlFileName(plan.url) + " matches the signed manifest.");
+    if (std::optional<nlohmann::json> identity = fileIdentity(candidatePath))
+    {
+        record["identity"] = *identity;
+    }
     record["kind"]      = "manifest";
     record["manifest"]  = plan.manifestText;
     record["signature"] = plan.manifestSignature;

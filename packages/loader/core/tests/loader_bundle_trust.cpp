@@ -1,6 +1,7 @@
 #include <cassert>
 #include <string>
 
+#include "LoaderDigestCache.h"
 #include "LoaderRequiredLoader.h"
 #include "LoaderVersion.h"
 #include "bundle_test_server.h"
@@ -30,6 +31,9 @@ static void acceptsASignedManifestAndBundle()
     assert(server.download(updater, std::nullopt));
     assert(server.lastDownload == kBase + kBundle);
     assert(trustRecord(server.candidate())["kind"] == "manifest");
+    // The record names the exact file it hashed, so launch skips hashing it again.
+    assert(trustRecord(server.candidate())["identity"] ==
+           *loader::fileIdentity(server.candidate()));
     assert(updater.resolveBundlePath() == server.candidate());
     assert(updater.markBundleAttempted(server.candidate()));
     assert(updater.acceptBundle(server.candidate()));
