@@ -1,6 +1,6 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { runOnDevice, toDeviceCode } from '~/lib/device';
+import { RECORDING_GRACE_MS, runOnDevice, toDeviceCode } from '~/lib/device';
 import { bridgePortField } from '~/lib/context';
 import { defaulted, Type } from '~/lib/schema';
 import { traceFunction } from '~/lib/probes';
@@ -22,13 +22,16 @@ const traceCommand: CommandDefinition<typeof schema> = {
 	name: 'trace',
 	description:
 		"Record calls to a JavaScript function of one of Discord's modules for a while, such as " +
-		'generateMessageRowData, summarising the arguments and result of the first calls. The device ' +
-		'evaluation times out after ten seconds, so keep the duration below that.',
+		'generateMessageRowData, summarising the arguments and result of the first calls.',
 	surfaces: { cli: 'root', mcp: true },
 	schema,
 	cli: { positionals: ['props'] },
 	handler({ props, duration, samples }, { client }) {
-		return runOnDevice(client, toDeviceCode(traceFunction, props, duration, samples));
+		return runOnDevice(
+			client,
+			toDeviceCode(traceFunction, props, duration, samples),
+			duration + RECORDING_GRACE_MS,
+		);
 	},
 };
 

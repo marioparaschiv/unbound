@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { lintCheck, toLintDiagnostics, type LintOutput } from '~/lib/checks/lint';
 import { findJsonOffset, manifestCheck } from '~/lib/checks/manifest';
 import { textInputPropsCheck } from '~/lib/checks/text-input-props';
-import { formatDiagnostic } from '~/rollup/diagnostic';
+import { formatDiagnostic } from '~/lib/check/diagnostic';
 import { typesCheck } from '~/lib/checks/types';
 import type { Check } from '~/lib/check/check';
 import { i18nCheck } from '~/lib/checks/i18n';

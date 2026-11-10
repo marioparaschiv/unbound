@@ -1,14 +1,11 @@
 import type {
 	NativeJavaHandleValue,
 	NativeJavaReference,
-	NativeJavaValue,
 	NativeObjectHandle,
-	NativePluginCapability,
 } from '@unbound-app/api/native';
-import type { UnboundGlobal } from '@unbound-app/api/global';
 
 import type { InspectReport, ViewRecord } from '~/lib/inspect-report';
-import type { PluginManager } from '~/lib/probes';
+import type { DevicePrelude } from '~/lib/device-prelude';
 
 export type InspectRequest =
 	| { kind: 'class'; name: string }
@@ -17,34 +14,24 @@ export type InspectRequest =
 
 /**
  * @description Answers one `ubd inspect` request on the device: a Java class description, the current activity's view tree, or the attached views of a class on Android, and the same through the Objective-C bridge on iOS where it allows. It borrows the native bridge of a running plugin that holds the needed capabilities, and yields to the JavaScript thread between chunks of a view walk. Runs on the device through `toDeviceCode`, so it only uses its parameters and the device's globals.
- * @param unbound Unbound's global on the device.
+ * @param device The device prelude.
  * @param request What to inspect, with the walk's limits.
  * @returns The raw report, which the CLI formats.
  */
 export async function inspectNative(
-	unbound: UnboundGlobal,
+	{ nativeBridge, javaValues }: DevicePrelude,
 	request: InspectRequest,
 ): Promise<InspectReport> {
-	const manager = Reflect.get(unbound, 'plugins') as PluginManager;
-	const holder = (platform: string, capabilities: NativePluginCapability[]) =>
-		[...manager.entities.values()].find(
-			(entity) =>
-				entity.started &&
-				entity.context?.platform === platform &&
-				capabilities.every((capability) =>
-					entity.context?.capabilities.includes(capability),
-				),
-		)?.context;
 	const yieldToJs = () => new Promise((resolve) => setTimeout(resolve, 0));
 	const snippet = (text: string | null | undefined) =>
 		text ? text.slice(0, 60).replaceAll('\n', '\\n') : null;
-	const android = holder(
+	const android = nativeBridge(
 		'android',
 		request.kind === 'class'
 			? ['native.java.classes', 'native.java.invoke']
 			: ['native.java.classes', 'native.java.fields', 'native.java.invoke'],
 	);
-	const ios = holder(
+	const ios = nativeBridge(
 		'ios',
 		request.kind === 'class'
 			? ['native.objc.classes', 'native.objc.invoke']
@@ -53,13 +40,7 @@ export async function inspectNative(
 
 	if (android) {
 		const { java } = android.native;
-		const handle = (value: NativeJavaValue): NativeJavaHandleValue | null =>
-			value.type === 'handle' ? value : null;
-		const isTrue = (value: NativeJavaValue) => 'value' in value && value.value === true;
-		const number = (value: NativeJavaValue) =>
-			'value' in value && typeof value.value === 'number' ? value.value : 0;
-		const string = (value: NativeJavaValue) => (value.type === 'string' ? value.value : '');
-		const int = (value: number): NativeJavaValue => ({ type: 'int', value });
+		const { handle, isTrue, number, string, int } = javaValues;
 
 		if (request.kind === 'class') {
 			const candidates = request.name.includes('.')

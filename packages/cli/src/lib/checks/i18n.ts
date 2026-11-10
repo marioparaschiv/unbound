@@ -2,7 +2,7 @@ import { SOURCE_LOCALE } from '@unbound-app/contracts/addon-locales';
 
 import { keyLine, readLocaleFile, type LocaleFile } from '~/lib/locale-files';
 import { measureCoverage, type IcuProblem } from '~/lib/locale-coverage';
-import { diagnostic, type Diagnostic } from '~/rollup/diagnostic';
+import { diagnostic, type Diagnostic } from '~/lib/check/diagnostic';
 import { collectPluginKeys } from '~/lib/locale-usages';
 import type { Check } from '~/lib/check/check';
 

@@ -1,9 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 
-import { diagnostic, formatDiagnostic, isDiagnostic, sortDiagnostics } from '~/rollup/diagnostic';
+import {
+	diagnostic,
+	formatDiagnostic,
+	isDiagnostic,
+	sortDiagnostics,
+} from '~/lib/check/diagnostic';
 import { formatReport, formatSummary, summarize } from '~/lib/check/report';
+import type { Diagnostic } from '~/lib/check/diagnostic';
 import type { DiscoveredAddon } from '~/lib/discovery';
-import type { Diagnostic } from '~/rollup/diagnostic';
 
 const ADDON: DiscoveredAddon = {
 	id: 'example.demo',

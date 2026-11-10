@@ -40,8 +40,8 @@ export const LOCALE_TYPINGS = 'src/unbound-i18n.d.ts';
 
 const VIRTUAL_ID = '\0unbound-locales';
 
-// The `ubd check` id these plugins report under.
-const CHECK = 'locales';
+/** The `ubd check` id these plugins report under. */
+export const CHECK = 'locales';
 
 /**
  * @description Names the en-US file whose presence turns a plugin's locale support on.
@@ -442,6 +442,7 @@ export function locales(pluginRoot: string): Plugin {
 }
 
 export default {
+	CHECK,
 	LOCALE_MODULE,
 	LOCALE_TYPINGS,
 	sourceLocalePath,

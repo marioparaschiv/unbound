@@ -9,9 +9,9 @@ import {
 } from '~/lib/check/registry';
 import { createCheckCache, type Check } from '~/lib/check/check';
 import { hasFailures, runChecks } from '~/lib/check/run';
+import { diagnostic } from '~/lib/check/diagnostic';
 import { buildChecks } from '~/lib/build-checks';
 import { discoverAddons } from '~/lib/discovery';
-import { diagnostic } from '~/rollup/diagnostic';
 
 import { createTempDir, type TempDir } from '../helpers/ubd';
 import { loadWorkspace } from '../helpers/config';

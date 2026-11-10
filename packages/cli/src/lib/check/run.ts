@@ -1,9 +1,9 @@
 import toError from '@unbound-app/utils/to-error';
 
 import type { Check, CheckCache, CheckContext } from '~/lib/check/check';
+import type { Diagnostic } from '~/lib/check/diagnostic';
+import { sortDiagnostics } from '~/lib/check/diagnostic';
 import type { DiscoveredAddon } from '~/lib/discovery';
-import type { Diagnostic } from '~/rollup/diagnostic';
-import { sortDiagnostics } from '~/rollup/diagnostic';
 
 /** Every diagnostic the checks found in one addon, sorted for printing. */
 export type AddonDiagnostics = {

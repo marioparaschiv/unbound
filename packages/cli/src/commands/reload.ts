@@ -1,8 +1,9 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import type { UnboundGlobal } from '@unbound-app/api/global';
 
 import { evaluateOnDevice, NOT_CONNECTED, toDeviceCode } from '~/lib/device';
 import { bridgePortField, waitForDevice } from '~/lib/context';
+import type { DevicePrelude } from '~/lib/device-prelude';
+import { lowerForHermes } from '~/lib/hermes-code';
 import { defaulted, Type } from '~/lib/schema';
 import { formatResult } from '~/lib/format';
 
@@ -23,7 +24,7 @@ const schema = Type.Object({
 });
 
 // Runs on the device: tags the bundle, then reloads once the eval has answered.
-function tagAndReload(unbound: UnboundGlobal, key: string, token: string): string {
+function tagAndReload({ unbound }: DevicePrelude, key: string, token: string): string {
 	Reflect.set(globalThis, key, token);
 	setTimeout(() => void unbound.native.reload(), 100);
 
@@ -31,7 +32,7 @@ function tagAndReload(unbound: UnboundGlobal, key: string, token: string): strin
 }
 
 // Runs on the device: a fresh bundle no longer carries the token.
-function bundleFreshness(_unbound: UnboundGlobal, key: string, token: string): string {
+function bundleFreshness(_device: DevicePrelude, key: string, token: string): string {
 	return Reflect.get(globalThis, key) === token ? 'stale' : 'fresh';
 }
 
@@ -63,7 +64,9 @@ const reloadCommand: CommandDefinition<typeof schema> = {
 				continue;
 			}
 
-			const probe = await client.evaluate(toDeviceCode(bundleFreshness, TOKEN_KEY, token));
+			const probe = await client.evaluate(
+				lowerForHermes(toDeviceCode(bundleFreshness, TOKEN_KEY, token)),
+			);
 
 			if (probe.ok && probe.value === 'fresh') {
 				return { ok: true, text: `Reloaded in ${Date.now() - started}ms.` };

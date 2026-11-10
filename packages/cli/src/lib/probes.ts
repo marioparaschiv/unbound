@@ -2,16 +2,10 @@ import type {
 	NativeJavaHandleValue,
 	NativeJavaValue,
 	NativeObjectHandle,
-	NativePluginCapability,
-	PluginContext,
 } from '@unbound-app/api/native';
-import type { AddonHandle, UnboundGlobal } from '@unbound-app/api/global';
 
-/** A loaded plugin as the client's manager holds it: its handle, plus the native bridge the client keeps off it. */
-type PluginEntity = AddonHandle & { context?: PluginContext };
+import type { DevicePrelude } from '~/lib/device-prelude';
 
-/** The slice of Unbound's plugin manager the device probes borrow a running plugin's native bridge from. */
-export type PluginManager = { entities: ReadonlyMap<PropertyKey, PluginEntity> };
 type ModuleRecord = {
 	isInitialized?: boolean;
 	__filePath?: string;
@@ -31,43 +25,28 @@ type Summarized =
 
 /**
  * @description Prints the native view tree: Android views from the current activity's decor view, iOS views from every visible window. Runs on the device through `toDeviceCode`, so it only uses its parameters and the device's globals, and borrows the native bridge of a running plugin that holds the needed capability.
- * @param unbound Unbound's global on the device.
+ * @param device The device prelude.
  * @param filter A class name substring; matching views and their ancestors are kept. Empty keeps every view.
  * @param maxDepth How deep to walk.
  * @param maxNodes How many views to visit at most.
  * @returns One indented line per view.
  */
 export async function viewTree(
-	unbound: UnboundGlobal,
+	{ nativeBridge, javaValues }: DevicePrelude,
 	filter: string,
 	maxDepth: number,
 	maxNodes: number,
 ): Promise<string> {
-	const manager = Reflect.get(unbound, 'plugins') as PluginManager;
-	const holder = (platform: string, capabilities: NativePluginCapability[]) =>
-		[...manager.entities.values()].find(
-			(entity) =>
-				entity.started &&
-				entity.context?.platform === platform &&
-				capabilities.every((capability) =>
-					entity.context?.capabilities.includes(capability),
-				),
-		)?.context;
-	const android = holder('android', [
+	const android = nativeBridge('android', [
 		'native.java.classes',
 		'native.java.fields',
 		'native.java.invoke',
 	]);
-	const ios = holder('ios', ['native.objc.snapshot']);
+	const ios = nativeBridge('ios', ['native.objc.snapshot']);
 
 	if (android) {
 		const { java } = android.native;
-		const handle = (value: NativeJavaValue): NativeJavaHandleValue | null =>
-			value.type === 'handle' ? value : null;
-		const isTrue = (value: NativeJavaValue) => 'value' in value && value.value === true;
-		const number = (value: NativeJavaValue) =>
-			'value' in value && typeof value.value === 'number' ? value.value : 0;
-		const string = (value: NativeJavaValue) => (value.type === 'string' ? value.value : '');
+		const { handle, isTrue, number, string, int } = javaValues;
 		const tracker = handle(
 			java.getField(java.getClass('app.unbound.android.ActivityTracker'), 'INSTANCE'),
 		);
@@ -118,9 +97,7 @@ export async function viewTree(
 			const count = number(java.invoke(view, 'getChildCount'));
 
 			for (let index = 0; index < count; index++) {
-				const child = handle(
-					java.invoke(view, 'getChildAt', [{ type: 'int', value: index }]),
-				);
+				const child = handle(java.invoke(view, 'getChildAt', [int(index)]));
 
 				if (child) {
 					walk(child, depth + 1);
@@ -231,35 +208,28 @@ export async function viewTree(
 
 /**
  * @description Prints the text and spans of Android text views whose text contains a match, the way span-based plugins see them. Runs on the device through `toDeviceCode`, so it only uses its parameters and the device's globals.
- * @param unbound Unbound's global on the device.
+ * @param device The device prelude.
  * @param match The text to look for.
  * @param maxViews How many matching text views to print.
  * @returns Each matching view's escaped text and its spans with their ranges.
  */
-export function textSpans(unbound: UnboundGlobal, match: string, maxViews: number): string {
-	const manager = Reflect.get(unbound, 'plugins') as PluginManager;
-	const context = [...manager.entities.values()].find(
-		(entity) =>
-			entity.started &&
-			entity.context?.platform === 'android' &&
-			['native.java.classes', 'native.java.fields', 'native.java.invoke'].every(
-				(capability) =>
-					entity.context?.capabilities.includes(capability as NativePluginCapability),
-			),
-	)?.context;
+export function textSpans(
+	{ nativeBridge, javaValues }: DevicePrelude,
+	match: string,
+	maxViews: number,
+): string {
+	const context = nativeBridge('android', [
+		'native.java.classes',
+		'native.java.fields',
+		'native.java.invoke',
+	]);
 
 	if (!context) {
 		return 'No running Android plugin holds native.java.fields and native.java.invoke. Spans can only be read on Android.';
 	}
 
 	const { java } = context.native;
-	const handle = (value: NativeJavaValue): NativeJavaHandleValue | null =>
-		value.type === 'handle' ? value : null;
-	const number = (value: NativeJavaValue) =>
-		'value' in value && typeof value.value === 'number' ? value.value : 0;
-	const string = (value: NativeJavaValue) => (value.type === 'string' ? value.value : '');
-	const int = (value: number): NativeJavaValue => ({ type: 'int', value });
-	const isTrue = (value: NativeJavaValue) => 'value' in value && value.value === true;
+	const { handle, isTrue, number, string, int } = javaValues;
 	const tracker = handle(
 		java.getField(java.getClass('app.unbound.android.ActivityTracker'), 'INSTANCE'),
 	);
@@ -339,12 +309,16 @@ export function textSpans(unbound: UnboundGlobal, match: string, maxViews: numbe
 
 /**
  * @description Lists Metro modules whose tracked file path or export names match a pattern, with whether they have loaded, so a plugin's lookups can be compared across platforms. Runs on the device through `toDeviceCode`, so it only uses its parameters and the device's globals.
- * @param unbound Unbound's global on the device.
+ * @param device The device prelude.
  * @param pattern A case-insensitive regular expression.
  * @param maxResults How many modules to list.
  * @returns One line per module: id, state, path and export keys.
  */
-export function searchModules(unbound: UnboundGlobal, pattern: string, maxResults: number): string {
+export function searchModules(
+	{ unbound }: DevicePrelude,
+	pattern: string,
+	maxResults: number,
+): string {
 	const expression = new RegExp(pattern, 'i');
 	const modules = Reflect.get(globalThis, 'modules') as ModuleRegistry;
 	const output: string[] = [];
@@ -386,7 +360,7 @@ export function searchModules(unbound: UnboundGlobal, pattern: string, maxResult
 
 /**
  * @description Records calls to a native method for a while: an Android Java method by class, name and parameter types, or an iOS Objective-C method by class and selector. Runs on the device through `toDeviceCode`, so it only uses its parameters and the device's globals.
- * @param unbound Unbound's global on the device.
+ * @param device The device prelude.
  * @param className The class that declares or inherits the method.
  * @param method The Java method name or Objective-C selector.
  * @param parameters The Java parameter type names; ignored on iOS.
@@ -395,23 +369,15 @@ export function searchModules(unbound: UnboundGlobal, pattern: string, maxResult
  * @returns How many calls arrived and a description of the first ones.
  */
 export async function captureNativeHook(
-	unbound: UnboundGlobal,
+	{ nativeBridge }: DevicePrelude,
 	className: string,
 	method: string,
 	parameters: string[],
 	duration: number,
 	samples: number,
 ): Promise<string> {
-	const manager = Reflect.get(unbound, 'plugins') as PluginManager;
-	const holder = (platform: string, capability: NativePluginCapability) =>
-		[...manager.entities.values()].find(
-			(entity) =>
-				entity.started &&
-				entity.context?.platform === platform &&
-				entity.context.capabilities.includes(capability),
-		)?.context;
-	const android = holder('android', 'native.java.hooks');
-	const ios = holder('ios', 'native.objc.hooks');
+	const android = nativeBridge('android', ['native.java.hooks']);
+	const ios = nativeBridge('ios', ['native.objc.hooks']);
 	const calls: string[] = [];
 	const started = Date.now();
 	let count = 0;
@@ -478,14 +444,14 @@ export async function captureNativeHook(
 
 /**
  * @description Records calls to a JavaScript function on a Metro module found by its props, such as `generateMessageRowData`, summarising the arguments and result. Runs on the device through `toDeviceCode`, so it only uses its parameters and the device's globals.
- * @param unbound Unbound's global on the device.
+ * @param device The device prelude.
  * @param props The props that identify the module; the first is the function to trace.
  * @param duration How long to record, in milliseconds.
  * @param samples How many calls to describe.
  * @returns How many calls arrived and a description of the first ones.
  */
 export async function traceFunction(
-	unbound: UnboundGlobal,
+	{ unbound }: DevicePrelude,
 	props: string[],
 	duration: number,
 	samples: number,
@@ -528,18 +494,15 @@ export async function traceFunction(
 
 /**
  * @description Measures how long a zero-delay timer and, on Android, a main-thread round trip take right now. Runs on the device through `toDeviceCode`, so it only uses its parameters and the device's globals.
- * @param unbound Unbound's global on the device.
+ * @param device The device prelude.
  * @param rounds How many samples to take.
  * @returns The timer delay and main-thread round trip of each sample, in milliseconds.
  */
-export async function measureTiming(unbound: UnboundGlobal, rounds: number): Promise<string> {
-	const manager = Reflect.get(unbound, 'plugins') as PluginManager;
-	const context = [...manager.entities.values()].find(
-		(entity) =>
-			entity.started &&
-			entity.context?.platform === 'android' &&
-			entity.context.capabilities.includes('native.java.invokeAsync'),
-	)?.context;
+export async function measureTiming(
+	{ nativeBridge }: DevicePrelude,
+	rounds: number,
+): Promise<string> {
+	const context = nativeBridge('android', ['native.java.invokeAsync']);
 	const lines: string[] = [];
 
 	for (let round = 0; round < rounds; round++) {

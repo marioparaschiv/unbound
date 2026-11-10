@@ -3,7 +3,7 @@ import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { bundleCheck, checkModuleGraph, fromRollupLog } from '~/lib/checks/bundle';
-import { formatDiagnostic } from '~/rollup/diagnostic';
+import { formatDiagnostic } from '~/lib/check/diagnostic';
 import { createCheckCache } from '~/lib/check/check';
 
 import { createTempDir, type TempDir } from '../../helpers/ubd';

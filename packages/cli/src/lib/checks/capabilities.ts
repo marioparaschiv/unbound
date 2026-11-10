@@ -8,10 +8,10 @@ import { join } from 'node:path';
 import type { PlatformCapabilities } from '~/lib/capabilities/analyze';
 import { analyzeCapabilities } from '~/lib/capabilities/analyze';
 import type { Check, CheckContext } from '~/lib/check/check';
+import type { Diagnostic } from '~/lib/check/diagnostic';
 import type { DiscoveredAddon } from '~/lib/discovery';
-import type { Diagnostic } from '~/rollup/diagnostic';
+import { diagnostic } from '~/lib/check/diagnostic';
 import { readDevManifest } from '~/lib/manifest';
-import { diagnostic } from '~/rollup/diagnostic';
 import { findFile } from '~/rollup/source-alias';
 
 type DevManifest = ReturnType<typeof readDevManifest>;

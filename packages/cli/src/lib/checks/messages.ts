@@ -2,7 +2,7 @@ import { parseSync, Visitor, type ESTree } from 'rolldown/utils';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, join, relative, sep } from 'node:path';
 
-import { diagnostic, type Diagnostic } from '~/rollup/diagnostic';
+import { diagnostic, type Diagnostic } from '~/lib/check/diagnostic';
 import { locate } from '~/lib/check/parse-cache';
 import type { Check } from '~/lib/check/check';
 

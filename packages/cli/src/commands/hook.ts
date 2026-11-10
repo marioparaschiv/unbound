@@ -1,6 +1,6 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { runOnDevice, toDeviceCode } from '~/lib/device';
+import { RECORDING_GRACE_MS, runOnDevice, toDeviceCode } from '~/lib/device';
 import { captureNativeHook } from '~/lib/probes';
 import { bridgePortField } from '~/lib/context';
 import { defaulted, Type } from '~/lib/schema';
@@ -28,9 +28,7 @@ const hookCommand: CommandDefinition<typeof schema> = {
 		'Record calls to a native method on the connected device for a while and describe the first ' +
 		'ones: an Android Java method, or an iOS Objective-C selector. Use it to learn when Discord ' +
 		'binds, lays out or redraws a view before writing a plugin hook. Pick a method of a specific ' +
-		'class: hooking one every view calls, such as UIView layoutSubviews, can crash the app. ' +
-		'The device evaluation times ' +
-		'out after ten seconds, so keep the duration below that.',
+		'class: hooking one every view calls, such as UIView layoutSubviews, can crash the app.',
 	surfaces: { cli: 'root', mcp: true },
 	schema,
 	cli: { positionals: ['className', 'method'] },
@@ -38,6 +36,7 @@ const hookCommand: CommandDefinition<typeof schema> = {
 		return runOnDevice(
 			client,
 			toDeviceCode(captureNativeHook, className, method, parameters, duration, samples),
+			duration + RECORDING_GRACE_MS,
 		);
 	},
 };

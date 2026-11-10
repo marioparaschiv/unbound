@@ -32,8 +32,9 @@ const IMAGE_FILE = /^(.+?)(?:@([23])x)?\.(png|jpe?g|webp|gif)$/i;
 const UNSUPPORTED_IMAGE = /\.(bmp|tiff?|heic|heif|avif|ico)$/i;
 const SVG_FILE = /\.svg$/i;
 const IMPORT_PREFIX = '\0unbound-asset:';
-// The `ubd check` id these plugins report under.
-const CHECK = 'assets';
+
+/** The `ubd check` id these plugins report under. */
+export const CHECK = 'assets';
 const SCALES: AssetScale[] = ['1', '2', '3'];
 
 /**
@@ -350,6 +351,7 @@ export function assets(pluginRoot: string, collector: AssetCollector): Plugin {
 }
 
 export default {
+	CHECK,
 	createAssetCollector,
 	readAssetGroup,
 	readAssetFolder,

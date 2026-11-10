@@ -1,5 +1,5 @@
 // Each function here runs on the device through `toDeviceCode`, so none may reach outside its own body.
-import type { UnboundGlobal } from '@unbound-app/api/global';
+import type { DevicePrelude } from '~/lib/device-prelude';
 
 /** Route parameters passed to a settings screen, as JSON. */
 export type ScreenParams = Record<string, string | number | boolean | null>;
@@ -14,13 +14,13 @@ export type CurrentRoute = { name: string; params: ScreenParams; path: string[] 
 
 /**
  * @description Opens a settings screen from anywhere in the app, through Discord's root navigation ref.
- * @param unbound Unbound's global on the device.
+ * @param device The device prelude.
  * @param name A route key, or a name matching one ignoring case, underscores and `UNBOUND_` (`Marketplace` → `UNBOUND_MARKETPLACE`), or the end of an Unbound one (`Sync` → `UNBOUND_CLOUD_SYNC`).
  * @param params Route parameters for the screen.
  * @returns The route key it opened. Throws, listing Unbound's screens, when nothing matches.
  * Discord's own entries name their route apart from their key (`APPEARANCE_THEME_PICKER` → `Appearance Theme Picker`), so it navigates to `screen.route`.
  */
-export function openScreen(unbound: UnboundGlobal, name: string, params: ScreenParams): string {
+export function openScreen({ unbound }: DevicePrelude, name: string, params: ScreenParams): string {
 	const { SETTING_RENDERER_CONFIG } = unbound.metro.findByProps('SETTING_RENDERER_CONFIG');
 	const { getRootNavigationRef } = unbound.metro.findByProps('getRootNavigationRef');
 
@@ -53,10 +53,10 @@ export function openScreen(unbound: UnboundGlobal, name: string, params: ScreenP
 
 /**
  * @description Reads the focused route and the stack of route names leading to it.
- * @param unbound Unbound's global on the device.
+ * @param device The device prelude.
  * @returns The route as a JSON string of {@link CurrentRoute}.
  */
-export function currentRoute(unbound: UnboundGlobal): string {
+export function currentRoute({ unbound }: DevicePrelude): string {
 	const ref = unbound.metro.findByProps('getRootNavigationRef').getRootNavigationRef();
 	const path: string[] = [];
 	let state: NavigationState | undefined = ref.getRootState();

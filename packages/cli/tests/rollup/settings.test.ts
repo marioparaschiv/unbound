@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { settingsTypings, writeSettingsTypings } from '~/rollup/settings-typings';
 import { readPluginSettings } from '~/rollup/settings-read';
-import { formatDiagnostic } from '~/rollup/diagnostic';
+import { formatDiagnostic } from '~/lib/check/diagnostic';
 
 import { buildPlugin, createPlugin, removePlugins } from '../helpers/settings-plugin';
 

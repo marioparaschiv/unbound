@@ -215,7 +215,7 @@ describe('formatFoundViews', () => {
 });
 
 function requestIn(code: string | undefined) {
-	const request = /\(unbound, (\{.*\})\)\)\)\(\);$/s.exec(code ?? '')?.[1];
+	const request = /\(unbound\), (\{.*\})\)\)\)\(\);$/s.exec(code ?? '')?.[1];
 
 	return request ? (JSON.parse(request) as Record<string, string | number>) : undefined;
 }

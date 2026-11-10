@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
+import type { Diagnostic } from '~/lib/check/diagnostic';
 import type { DiscoveredAddon } from '~/lib/discovery';
-import type { Diagnostic } from '~/rollup/diagnostic';
+import { BUILD_REPORT_ENV } from '~/rollup/build-env';
 import { discoverAddons } from '~/lib/discovery';
 import { buildAddon } from '~/lib/build-addon';
 import type { Check } from '~/lib/check/check';
-import { BUILD_REPORT_ENV } from '~/rollup/build-env';
 
 import { createTempDir, runUbd, type TempDir } from '../helpers/ubd';
 import { loadWorkspace } from '../helpers/config';

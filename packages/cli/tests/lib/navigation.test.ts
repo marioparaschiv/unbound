@@ -2,6 +2,7 @@ import type { UnboundGlobal } from '@unbound-app/api/global';
 import { describe, expect, test } from 'bun:test';
 
 import { openScreen, type ScreenParams } from '~/lib/navigation';
+import { createDevicePrelude } from '~/lib/device-prelude';
 
 type Navigated = { screen: string; params: ScreenParams };
 
@@ -31,33 +32,33 @@ function deviceWith(routes: string[], names: Record<string, string> = {}) {
 		throw new Error('The fake device has no metro.');
 	}
 
-	return { unbound: device, opened };
+	return { prelude: createDevicePrelude(device), opened };
 }
 
 describe('openScreen', () => {
 	test('opens an Unbound screen by the end of its route key', () => {
-		const { unbound, opened } = deviceWith([
+		const { prelude, opened } = deviceWith([
 			'ACCOUNT',
 			'UNBOUND_CLOUD_SYNC',
 			'UNBOUND_PLUGINS',
 		]);
 
-		expect(openScreen(unbound, 'sync', {})).toBe('UNBOUND_CLOUD_SYNC');
+		expect(openScreen(prelude, 'sync', {})).toBe('UNBOUND_CLOUD_SYNC');
 		expect(opened).toEqual([{ screen: 'UNBOUND_CLOUD_SYNC', params: {} }]);
 	});
 
 	test('prefers a whole-name match over the end of another key', () => {
-		const { unbound } = deviceWith(['UNBOUND_CLOUD_SYNC', 'UNBOUND_SYNC']);
+		const { prelude } = deviceWith(['UNBOUND_CLOUD_SYNC', 'UNBOUND_SYNC']);
 
-		expect(openScreen(unbound, 'Sync', {})).toBe('UNBOUND_SYNC');
+		expect(openScreen(prelude, 'Sync', {})).toBe('UNBOUND_SYNC');
 	});
 
 	test('navigates to the route name of a Discord screen, not its key', () => {
-		const { unbound, opened } = deviceWith(['APPEARANCE_THEME_PICKER'], {
+		const { prelude, opened } = deviceWith(['APPEARANCE_THEME_PICKER'], {
 			APPEARANCE_THEME_PICKER: 'Appearance Theme Picker',
 		});
 
-		expect(openScreen(unbound, 'APPEARANCE_THEME_PICKER', {})).toBe('APPEARANCE_THEME_PICKER');
+		expect(openScreen(prelude, 'APPEARANCE_THEME_PICKER', {})).toBe('APPEARANCE_THEME_PICKER');
 		expect(opened).toEqual([{ screen: 'Appearance Theme Picker', params: {} }]);
 	});
 });

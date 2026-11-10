@@ -7,8 +7,8 @@ import { pluginDiagnostic, reportDiagnostics, type Diagnostic } from './diagnost
 import { LOCALE_MODULE, readTable, sourceLocalePath } from './locales.ts';
 import { checkCommandText, type SourceLocale } from './command-text.ts';
 
-// The `ubd check` id this plugin reports under.
-const CHECK = 'commands';
+/** The `ubd check` id this plugin reports under. */
+export const CHECK = 'commands';
 const sourceFile = /\.(m?[jt]sx?)$/;
 
 /**
@@ -81,4 +81,4 @@ export function commandLocales(pluginRoot: string): Plugin {
 	};
 }
 
-export default { commandLocales, readSourceLocale };
+export default { CHECK, commandLocales, readSourceLocale };
