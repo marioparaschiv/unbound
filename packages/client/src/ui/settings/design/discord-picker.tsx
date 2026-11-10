@@ -12,6 +12,7 @@ import { NavigationCore, type HeaderOptions } from './navigation';
 import { ReportPicker, type PickerKind } from './picker-report';
 import useCarouselAuthors from './use-carousel-authors';
 import useHideNitroBadge from './use-hide-nitro-badge';
+import useIconPackPicker from './use-icon-pack-picker';
 import { loadThemePicker } from './appearance-picker';
 import usePreviewedAddon from './use-previewed-addon';
 import useApplyOnSelect from './use-apply-on-select';
@@ -30,7 +31,7 @@ type DiscordPickerProps = {
 
 /**
  * @description Discord's own App Theme picker, fed Unbound's themes or icon packs: its live preview and
- * carousel, saving on selection, with saving routed to the addon instead of Discord's theme, plus the
+ * carousel, an icon pack shown by its icons, saving on selection, with saving routed to the addon instead of Discord's theme, plus the
  * addon actions in its bottom corners. The header it sets goes to the page through {@link ReportPicker},
  * since Themes and Icons share one stack header.
  */
@@ -46,7 +47,7 @@ function DiscordPicker({ kind }: DiscordPickerProps) {
 	const themes = useMemo(
 		() => [
 			...(clearable ? [defaultThemeSwatch(discordTheme)] : []),
-			...addons.map((addon, index) => pickerThemeOf(addon, index)),
+			...addons.map((addon) => pickerThemeOf(addon, discordTheme)),
 		],
 		[addons, clearable, discordTheme],
 	);
@@ -64,8 +65,9 @@ function DiscordPicker({ kind }: DiscordPickerProps) {
 	);
 
 	const ids = useMemo(() => themes.map((theme) => theme.unboundAddonId), [themes]);
-	// A theme's swatch is its real background; an icon pack's is only a tint, which Discord's dimming keeps calm.
+	// A theme's swatch is its real background; an icon pack's is Discord's own, which Discord draws as it is.
 	const undimmed = useMemo(() => (kind === 'theme' ? ids : []), [kind, ids]);
+	const packs = useMemo(() => (kind === 'icon-pack' ? addons : []), [kind, addons]);
 	// The swatch last applied from this picker; one in view that differs was swiped to and not yet applied.
 	const settled = useRef(applied ?? (clearable ? DEFAULT_THEME_ID : ''));
 	const select = useCallback(
@@ -98,10 +100,11 @@ function DiscordPicker({ kind }: DiscordPickerProps) {
 	});
 	useEffect(() => () => closing.current(), []);
 	useTrueColours(undimmed);
+	useIconPackPicker(packs);
 	useApplyOnSelect(ids, select);
 	useCarouselAuthors(addons);
 	useHideNitroBadge(ids);
-	useSaveIntercept(ids);
+	useSaveIntercept();
 
 	if (!connected) {
 		return <Empty>{messages.UNBOUND_EMPTY_RESULTS}</Empty>;

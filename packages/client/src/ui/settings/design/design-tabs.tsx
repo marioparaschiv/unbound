@@ -11,14 +11,13 @@ import DeferredPage, { ActiveTab } from './deferred-page';
 import { HeaderElements } from './navigation';
 import useStyles from './design-tabs.style';
 import HeaderInset from './header-inset';
-import IconsTab from './icons-tab';
 import ChatTab from './chat-tab';
 import FontsTab from './fonts';
 
 export type DesignTab = (typeof TABS)[number]['id'];
 
 type DesignTabsProps = {
-	/** Renders the Themes page; called once, the first time it is shown. */
+	/** Renders the Themes or Icons page; called once per tab, the first time it is shown. */
 	renderPage: (kind: PickerKind) => ReactNode;
 	onTabChange?: (tab: DesignTab) => void;
 };
@@ -33,9 +32,8 @@ const TABS = [
 function renderTab(id: DesignTab, renderPage: DesignTabsProps['renderPage']) {
 	switch (id) {
 		case 'theme':
-			return renderPage(id);
 		case 'icon-pack':
-			return <IconsTab />;
+			return renderPage(id);
 		case 'font':
 			return (
 				<HeaderInset>
@@ -54,8 +52,8 @@ function renderTab(id: DesignTab, renderPage: DesignTabsProps['renderPage']) {
 /**
  * @description The Design page's frame: Discord's large segmented control over Themes, Fonts, Icons and Chat, floating
  * below a transparent header over full-screen pages, which inset past both through the header height. Each page
- * mounts the first time its tab opens. Fonts is the shared override list; Icons is a placeholder; Chat holds the chat's
- * look, such as its background.
+ * mounts the first time its tab opens. Themes and Icons are Discord's theme picker; Fonts is the shared override list;
+ * Chat holds the chat's look, such as its background.
  */
 function DesignTabs({ renderPage, onTabChange = noop }: DesignTabsProps) {
 	const styles = useStyles();
