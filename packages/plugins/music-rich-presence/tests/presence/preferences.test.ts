@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { settings } from '@unbound-app/settings';
 
-import { SETTINGS } from './defaults';
+import { SETTINGS } from '../helpers/defaults';
 import {
 	canQuery,
 	hasInvalidCustomInstance,

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { SETTINGS } from './defaults';
+import { SETTINGS } from '../../helpers/defaults';
 import {
 	apiUrl,
 	coverArtFromResponse,

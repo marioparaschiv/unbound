@@ -9,7 +9,7 @@ import {
 	shouldHide,
 } from '~/presence/activity';
 import { DISCORD_APP_ID, LASTFM_PLACEHOLDER_IMAGE_HASH } from '~/constants';
-import { SETTINGS } from './defaults';
+import { SETTINGS } from '../helpers/defaults';
 import type { Scrobbler, TrackData } from '~/types';
 
 const track: TrackData = {
