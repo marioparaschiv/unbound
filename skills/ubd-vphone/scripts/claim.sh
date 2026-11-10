@@ -69,7 +69,7 @@ echo "$owner" >"$lock/owner"
 
 if ((fresh_claim)); then
 	# Remember what to hand back. A stale claim's record is replaced, since its owner is gone.
-	url=$("$here/ubd" eval 'unbound.storage.getBucket("unbound").get("loader.update.url", "")' 2>/dev/null | tail -n 1 | tr -d '"')
+	url=$("$here/ubd" debug eval 'unbound.storage.getBucket("unbound").get("loader.update.url", "")' 2>/dev/null | tail -n 1 | tr -d '"')
 	printf 'served=%s\nurl=%s\n' "$(served_root)" "$url" >"$lock/previous"
 fi
 
@@ -85,10 +85,10 @@ rollback() {
 "$here/up.sh" $([[ $(served_root) != "$root" ]] && echo --restart=dev) || rollback
 
 want="http://$DEV_HOST:$UNBOUND_DEV_PORT/unbound.bundle"
-url=$("$here/ubd" eval 'unbound.storage.getBucket("unbound").get("loader.update.url", "")' 2>/dev/null | tail -n 1 | tr -d '"')
+url=$("$here/ubd" debug eval 'unbound.storage.getBucket("unbound").get("loader.update.url", "")' 2>/dev/null | tail -n 1 | tr -d '"')
 
 if [[ $url != "$want" ]]; then
-	"$here/ubd" eval "unbound.storage.getBucket('unbound').set('loader.update.url', '$want')" >/dev/null || rollback
+	"$here/ubd" debug eval "unbound.storage.getBucket('unbound').set('loader.update.url', '$want')" >/dev/null || rollback
 	echo "loader URL set to $want (was ${url:-unset})"
 fi
 

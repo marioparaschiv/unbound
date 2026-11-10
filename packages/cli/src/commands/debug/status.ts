@@ -140,7 +140,7 @@ export function describeDevice(device: DeviceInfo | undefined): string {
  * @description Renders the status report.
  * @param device What the device reported in its hello.
  * @param report The plugin and resource counts read from the device.
- * @returns The lines `ubd status` prints.
+ * @returns The lines `ubd debug status` prints.
  */
 function formatStatus(device: DeviceInfo | undefined, report: DeviceStatusReport): string {
 	const lines = [
@@ -233,7 +233,8 @@ const statusCommand: CommandDefinition<typeof schema> = {
 	description:
 		'Show the device attached to the debugger bridge, its Discord, loader and client versions, how ' +
 		'many plugins started, and the native hooks, surfaces and handles it holds after a garbage collection.',
-	surfaces: { cli: 'root', mcp: true },
+	summary: 'Show the connected device, its versions and native resources.',
+	mcp: true,
 	schema,
 	async handler({ watch, interval, samples }, { client }) {
 		if (watch) {

@@ -16,7 +16,7 @@ export type InspectRequest =
 	| { kind: 'find'; className: string; maxResults: number; maxNodes: number; chunk: number };
 
 /**
- * @description Answers one `ubd inspect` request on the device: a Java class description, the current activity's view tree, or the attached views of a class on Android, and the same through the Objective-C bridge on iOS where it allows. It borrows the native bridge of a running plugin that holds the needed capabilities, and yields to the JavaScript thread between chunks of a view walk. Runs on the device through `toDeviceCode`, so it only uses its parameters and the device's globals.
+ * @description Answers one `ubd debug inspect` request on the device: a Java class description, the current activity's view tree, or the attached views of a class on Android, and the same through the Objective-C bridge on iOS where it allows. It borrows the native bridge of a running plugin that holds the needed capabilities, and yields to the JavaScript thread between chunks of a view walk. Runs on the device through `toDeviceCode`, so it only uses its parameters and the device's globals.
  * @param unbound Unbound's global on the device.
  * @param request What to inspect, with the walk's limits.
  * @returns The raw report, which the CLI formats.

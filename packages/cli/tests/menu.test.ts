@@ -2,17 +2,21 @@ import { expect, test } from 'bun:test';
 
 import { renderMenu } from '../src/lib/menu';
 
-test('renderMenu lists commands with a summary first, keeping their order', () => {
-	const menu = renderMenu([
-		{ name: 'status' },
-		{ name: 'create', summary: 'Scaffold.' },
-		{ name: 'logs' },
-		{ name: 'mcp', summary: 'Serve.' },
-	]);
-	const names = menu
-		.split('\n')
-		.map((line) => /^\s+\S*?(create|mcp|status|logs)\b/.exec(line)?.[1])
-		.filter(Boolean);
+test('renderMenu lists entries under their headings, marking groups', () => {
+	const menu = renderMenu({
+		invocation: 'ubd',
+		tagline: 'the toolkit',
+		sections: [
+			{ title: 'Addons', entries: [{ name: 'create', summary: 'Scaffold.' }] },
+			{ title: 'Device', entries: [{ name: 'debug', summary: 'Drive.', group: true }] },
+		],
+		hints: ['A hint.'],
+	});
+	const lines = menu.split('\n').map((line) => line.trim());
 
-	expect(names).toEqual(['create', 'mcp', 'status', 'logs']);
+	expect(lines).toContain('ubd <command> [flags]');
+	expect(lines.indexOf('Addons')).toBeLessThan(lines.indexOf('Device'));
+	expect(lines.some((line) => /^create\s+Scaffold\.$/.test(line))).toBe(true);
+	expect(lines.some((line) => /^debug <command>\s+Drive\.$/.test(line))).toBe(true);
+	expect(lines).toContain('A hint.');
 });

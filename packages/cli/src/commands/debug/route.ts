@@ -14,7 +14,8 @@ const routeCommand: CommandDefinition<typeof schema> = {
 	description:
 		'Print the focused navigation route on the connected device: its name, its params, and the ' +
 		'navigator path leading to it.',
-	surfaces: { cli: 'mcp', mcp: true },
+	summary: 'Print the focused navigation route.',
+	mcp: true,
 	schema,
 	handler(_input, { client }) {
 		return runOnDevice(client, toDeviceCode(currentRoute));

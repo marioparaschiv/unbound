@@ -7,7 +7,7 @@ import { LOCALE_MODULE } from '~/rollup/locales';
 /** One place a plugin's source names a message key. */
 export type KeyUsage = { key: string; file: string; line: number; site: string };
 
-/** A key site whose key is computed, so `--unused` cannot tell which key it reads. */
+/** A key site whose key is computed, so `ubd i18n unused` cannot tell which key it reads. */
 export type DynamicUsage = { file: string; line: number; site: string };
 
 /** Every key a plugin's source names, and what the collector could not read. */

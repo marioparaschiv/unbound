@@ -7,7 +7,6 @@ import { migrateEntry } from '~/codemods/entry';
 import { defaulted, Type } from '~/lib/schema';
 
 const schema = Type.Object({
-	what: Type.Enum(['entry'], { description: 'What to migrate: entry.' }),
 	dir: defaulted(
 		Type.String({
 			description:
@@ -38,15 +37,15 @@ function entriesIn(dir: string): string[] {
 	});
 }
 
-const migrateCommand: CommandDefinition<typeof schema> = {
-	name: 'migrate',
+const entryCommand: CommandDefinition<typeof schema> = {
+	name: 'entry',
 	description:
-		"Rewrite source to the current addon API. `entry` turns a plugin entry's `export default { start, stop, " +
-		'getSettingsPanel }` into named exports: `export function start`, `stop` and `SettingsPanel`, keeping comments.',
-	summary: 'Migrate plugin source to the current API.',
-	surfaces: { cli: 'root', mcp: false },
+		"Turn a plugin entry's `export default { start, stop, getSettingsPanel }` into named exports: " +
+		'`export function start`, `stop` and `SettingsPanel`, keeping comments.',
+	summary: 'Turn a default-export entry into named exports.',
+	mcp: false,
 	schema,
-	cli: { positionals: ['what', 'dir'] },
+	cli: { positionals: ['dir'] },
 	async handler({ dir }) {
 		const root = resolve(dir);
 		const entries = entriesIn(root);
@@ -81,4 +80,4 @@ const migrateCommand: CommandDefinition<typeof schema> = {
 	},
 };
 
-export default migrateCommand;
+export default entryCommand;

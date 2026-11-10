@@ -9,9 +9,9 @@ const schema = Type.Object({});
 
 const logoutCommand: CommandDefinition<typeof schema> = {
 	name: 'logout',
-	description: 'Delete the credentials `ubd login` stored.',
+	description: 'Delete the credentials `ubd auth login` stored.',
 	summary: 'Delete the stored login.',
-	surfaces: { cli: 'root', mcp: false },
+	mcp: false,
 	schema,
 	async handler() {
 		try {

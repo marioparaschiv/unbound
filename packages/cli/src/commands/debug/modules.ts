@@ -19,7 +19,8 @@ const modulesCommand: CommandDefinition<typeof schema> = {
 		"Search the client's Metro modules by tracked file path or export name and list each match " +
 		'with its id, whether it has loaded yet and its exports. Run it against both platforms to see ' +
 		'why a lookup finds a module on one and not the other.',
-	surfaces: { cli: 'root', mcp: true },
+	summary: "Search Discord's Metro modules by path or export.",
+	mcp: true,
 	schema,
 	cli: { positionals: ['pattern'] },
 	handler({ pattern, max }, { client }) {

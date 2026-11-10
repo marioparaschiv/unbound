@@ -9,7 +9,7 @@ type Route = { name: string; params?: ScreenParams; state?: NavigationState };
 
 type NavigationState = { index?: number; routes: Route[] };
 
-/** What the device reports for `ubd mcp route`. */
+/** What the device reports for `ubd debug route`. */
 export type CurrentRoute = { name: string; params: ScreenParams; path: string[] };
 
 /**

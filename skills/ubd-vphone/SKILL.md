@@ -13,8 +13,8 @@ Scripts live in `skills/ubd-vphone/scripts/`, run from any directory, and read p
 
 1. **Claim.** `scripts/claim.sh` takes the shared vphone lock, serves this checkout, points the loader here and relaunches onto this build. Exit 3: another agent holds it; `claim.sh --wait`.
 2. **Load edits.** Component edits hot-patch. `curl -s localhost:$UNBOUND_DEV_PORT/__outcome` waits for the edit in flight and prints `patched: N fibers`, `reloaded`, `failed` or `unchanged` (no loader connected). `0 fibers`: open the screen that shows it. Unpatchable edits reload through the loader's `/__hot` stream, which needs `loader.update.hmr`. Edits under `scripts/**` need `scripts/up.sh --restart=dev`. Otherwise `scripts/relaunch`.
-3. **Navigate** with `scripts/ubd mcp open <Screen>` (an unknown name lists the valid ones); `ubd mcp route` gives `{name, params, path}` to assert on.
-4. **Act** with `scripts/ubd eval '<js>' [--timeout ms]` for state (`unbound` is the client global; the bridge times out at 10 s) and `scripts/vphone` for input.
+3. **Navigate** with `scripts/ubd debug open <Screen>` (an unknown name lists the valid ones); `ubd debug route` gives `{name, params, path}` to assert on.
+4. **Act** with `scripts/ubd debug eval '<js>' [--timeout ms]` for state (`unbound` is the client global; the bridge times out at 10 s) and `scripts/vphone` for input.
 5. **Evidence**: `scripts/vphone shot /tmp/<task>-evidence/01-<what>.png --wait '<text>'`, plus eval output.
 6. **Release.** `scripts/release.sh` restores the previous checkout and loader URL, relaunches, and drops the lock.
 

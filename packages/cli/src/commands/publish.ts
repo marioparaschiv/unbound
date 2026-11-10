@@ -32,9 +32,9 @@ const publishCommand: CommandDefinition<typeof schema> = {
 	name: 'publish',
 	description:
 		'Submit the committed and pushed addon for review on Unbound; its build output must be ' +
-		'committed. Authenticates with UNBOUND_API_KEY when set, otherwise with the `ubd login` session.',
-	summary: 'Build an addon and submit it for review.',
-	surfaces: { cli: 'root', mcp: false },
+		'committed. Authenticates with UNBOUND_API_KEY when set, otherwise with the `ubd auth login` session.',
+	summary: 'Submit a committed, pushed addon for review.',
+	mcp: false,
 	schema,
 	async handler({ addon: id, ref, repository }) {
 		try {

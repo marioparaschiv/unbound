@@ -68,19 +68,20 @@ With both, the agent can make a change, push it to your phone, and check that it
 
 | Skill | The agent uses it to |
 | --- | --- |
+| `unbound-cli` | Pick the right `ubd` command, and read its JSON output and exit code. |
 | `unbound-plugins` | Scaffold a plugin, lay out its files, write `start` and `stop`, and keep its launch cost low. |
 | `unbound-patching` | Find a Discord module, store or component, and patch a function, a render or a Flux action. |
-| `unbound-debugger` | Start the bridge, register `ubd mcp`, hot reload with `ubd dev` or `ubd push`, and check the result on the phone. |
+| `unbound-debugger` | Start the bridge, register `ubd mcp`, hot reload with `ubd dev` or `ubd debug push`, and check the result on the phone. |
 | `hermes-internals` | Read Discord's decompiled JavaScript when a lookup finds nothing, often after a Discord update. |
 | `react-native-internals` | Inspect native views and hook native methods when a patch ran but the screen did not change. |
 
-An agent loads a skill only when its description matches the task, so installing all five costs nothing until one is needed.
+An agent loads a skill only when its description matches the task, so installing all six costs nothing until one is needed.
 
 ## What the agent can do
 
-The MCP server exposes the commands that act on the running app: `eval`, `status`, `push`, `reload`, `install`, `device`, `open`, `route`, `modules`, `trace`, `profile`, `timing`, `views`, `inspect`, `hook` and `spans`. Each tool takes the same options as the [CLI command](/docs/developer/development/cli) of the same name.
+The MCP server exposes the commands that act on the phone. The `ubd debug` commands keep their names: `eval`, `status`, `push`, `reload`, `open`, `route`, `modules`, `trace`, `profile`, `timing`, `views`, `inspect`, `hook` and `spans`. The `ubd device` commands take a prefix: `device_install`, `device_reset`, `device_save`, `device_restore` and `device_snapshots`. Each tool takes the same options as its [CLI command](/docs/developer/development/cli).
 
-`build`, `check`, `dev`, `create`, `logs`, `i18n`, `login` and `publish` stay on the command line. The agent runs them in its terminal, as `bunx --bun @unbound-app/cli <command>`.
+The rest, such as `build`, `check`, `dev`, `i18n`, `publish` and `device logs`, stay on the command line. The agent runs them in its terminal, as `bunx --bun @unbound-app/cli <command>`.
 
 <Note>
 	The MCP server runs with your access. Anything the agent evaluates runs inside Discord on your phone, signed in as you. Use a test account for agent work.

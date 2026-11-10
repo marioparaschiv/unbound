@@ -24,7 +24,8 @@ const pushCommand: CommandDefinition<typeof schema> = {
 	description:
 		'Build one plugin or theme and hot-reload it in the running client on the connected device, installing ' +
 		'it when the device does not have it yet. Use this to try a change on a specific device.',
-	surfaces: { cli: 'root', mcp: true },
+	summary: 'Build an addon and hot-reload it on the device.',
+	mcp: true,
 	schema,
 	cli: { positionals: ['addon'] },
 	async handler({ addon: target, build }, { client }) {

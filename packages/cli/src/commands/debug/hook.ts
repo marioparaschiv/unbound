@@ -31,7 +31,8 @@ const hookCommand: CommandDefinition<typeof schema> = {
 		'class: hooking one every view calls, such as UIView layoutSubviews, can crash the app. ' +
 		'The device evaluation times ' +
 		'out after ten seconds, so keep the duration below that.',
-	surfaces: { cli: 'root', mcp: true },
+	summary: 'Record calls to a native method.',
+	mcp: true,
 	schema,
 	cli: { positionals: ['className', 'method'] },
 	handler({ className, method, parameters, duration, samples }, { client }) {

@@ -30,7 +30,8 @@ const viewsCommand: CommandDefinition<typeof schema> = {
 		"activity, iOS views from every visible window, with each view's size, visibility, text and handle. " +
 		'Use it to find where a plugin should hook or place its views. It reads views through a running ' +
 		'plugin that holds native view access.',
-	surfaces: { cli: 'root', mcp: true },
+	summary: 'Print the native view tree.',
+	mcp: true,
 	schema,
 	cli: { positionals: ['filter'] },
 	handler({ filter, depth, max }, { client }) {

@@ -40,7 +40,7 @@ export const viewsReportSchema = Type.Object({
 	truncated: Type.Boolean(),
 });
 
-/** What `inspectNative` answers with on the device, as `ubd inspect` reads it back. */
+/** What `inspectNative` answers with on the device, as `ubd debug inspect` reads it back. */
 export const inspectReportSchema = Type.Union([
 	Type.Object({ error: Type.String() }),
 	classReportSchema,

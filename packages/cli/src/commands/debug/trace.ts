@@ -24,7 +24,8 @@ const traceCommand: CommandDefinition<typeof schema> = {
 		"Record calls to a JavaScript function of one of Discord's modules for a while, such as " +
 		'generateMessageRowData, summarising the arguments and result of the first calls. The device ' +
 		'evaluation times out after ten seconds, so keep the duration below that.',
-	surfaces: { cli: 'root', mcp: true },
+	summary: "Record calls to a Discord module's function.",
+	mcp: true,
 	schema,
 	cli: { positionals: ['props'] },
 	handler({ props, duration, samples }, { client }) {

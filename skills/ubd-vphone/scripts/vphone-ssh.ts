@@ -265,7 +265,7 @@ export class SshVphone implements Vphone {
 				return this.crashes(args);
 			default:
 				return fail(
-					`${action} needs the tailnet hub's vphone tool; over SSH, check state with ubd eval`,
+					`${action} needs the tailnet hub's vphone tool; over SSH, check state with ubd debug eval`,
 				);
 		}
 	}

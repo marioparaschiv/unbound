@@ -9,4 +9,4 @@ A plugin should cost almost nothing until it is used. In priority order:
 5. **Do little per render.** A component patch runs on every render: return early when it does not apply, and select store data with `flux.useStore` plus `utils.react.useShallow`.
 6. **Change native views from a UI-thread worklet** (`context.native.ui.run`), so the change never flashes in.
 
-Measure on device: `ubd status` (start durations), `ubd profile` (JS-thread hot spots), `ubd timing` (thread latency).
+Measure on device: `ubd debug status` (start durations), `ubd debug profile` (JS-thread hot spots), `ubd debug timing` (thread latency).
