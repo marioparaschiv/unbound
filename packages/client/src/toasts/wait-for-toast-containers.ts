@@ -1,6 +1,6 @@
 import { byFilePath, type MetroFilter } from '~/metro/filters';
 import type { onModuleLoaded } from '~/metro/wait';
-import { CACHE_KEY } from '~/core/constants';
+import { CACHE_KEY } from '~/metro/cache-key';
 import type { AnyProps } from '~/metro';
 
 export type ToastContainerTarget = [AnyProps, string];

@@ -6,7 +6,7 @@ import type { MetroLazySearchOptions, MetroModuleLoadedOptions } from '~/metro/t
 import type { MetroFilter } from '~/metro/filters';
 import { blacklist, data } from '~/metro/state';
 import { benchTotal } from '~/core/bench-span';
-import { CACHE_KEY } from '~/core/constants';
+import { CACHE_KEY } from '~/metro/cache-key';
 import { finder } from '~/metro/finders';
 
 type Waiter = {

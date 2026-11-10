@@ -114,7 +114,7 @@ mock.module('~/metro/cache', () =>
 );
 
 const metro = await import('~/metro/search');
-const { CACHE_KEY } = await import('~/core/constants');
+const { CACHE_KEY } = await import('~/metro/cache-key');
 
 function initialized() {
 	return moduleIds.filter((id) => modules.get(id)?.isInitialized);

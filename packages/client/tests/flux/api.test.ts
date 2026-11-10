@@ -135,7 +135,7 @@ mock.module('~/metro/finders', () => ({
 const flux = await import('~/flux/api');
 const runtime = await import('~/flux/runtime-bridge');
 const filters = await import('~/metro/filters');
-const { CACHE_KEY } = await import('~/core/constants');
+const { CACHE_KEY } = await import('~/metro/cache-key');
 const { shallow, useShallow } = await import('~/utils/react/shallow');
 
 beforeEach(() => {

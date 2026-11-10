@@ -1,5 +1,4 @@
 import { readStoredCache, readStoredField, writeStoredCache } from '~/metro/cache-file';
-import { CACHE_VERSION } from '~/core/constants';
 import { benchSpan } from '~/core/bench-span';
 import { BundleInfo } from '~/native/native';
 
@@ -20,6 +19,9 @@ export function getModuleIds(): readonly number[] {
 
 	return moduleIds;
 }
+
+/** Version of the stored module cache's layout; a stored cache with another version is discarded. */
+export const CACHE_VERSION = 2;
 
 const CurrentCacheInfo = {
 	cacheVersion: CACHE_VERSION,

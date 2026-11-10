@@ -1,7 +1,7 @@
 import type { MetroModuleLoadedOptions, MetroModulePresence } from '~/metro/types';
 import { getModuleCacheForKey, isKeyMissing } from '~/metro/cache';
 import type { MetroFilter } from '~/metro/filters';
-import { CACHE_KEY } from '~/core/constants';
+import { CACHE_KEY } from '~/metro/cache-key';
 import { finder } from '~/metro/finders';
 
 /**

@@ -48,7 +48,7 @@ const { find } = await import('~/metro/search');
 const { data } = await import('~/metro/state');
 const { filter } = await import('~/metro/custom-filter');
 const { all, any, not, byName, byProps } = await import('~/metro/filters');
-const { CACHE_KEY } = await import('~/core/constants');
+const { CACHE_KEY } = await import('~/metro/cache-key');
 
 // The key the build injects into a predicate it can trace.
 function keyed<T extends object>(predicate: T, key: string): T {

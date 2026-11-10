@@ -44,8 +44,8 @@ import { createLazyModule } from '~/metro/lazy-registry';
 import { filterPresence } from '~/metro/presence';
 import { provideFinders } from '~/metro/finders';
 import { benchSpan } from '~/core/bench-span';
+import { CACHE_KEY } from '~/metro/cache-key';
 import { onModuleLoaded } from '~/metro/wait';
-import { CACHE_KEY } from '~/core/constants';
 
 const Logger = createLogger('Metro');
 

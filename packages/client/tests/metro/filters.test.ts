@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-const { CACHE_KEY } = await import('~/core/constants');
+const { CACHE_KEY } = await import('~/metro/cache-key');
 const { byTypeName } = await import('~/metro/filters');
 
 describe('byTypeName', () => {

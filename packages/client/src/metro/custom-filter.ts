@@ -1,7 +1,7 @@
 import type { PredicateResult } from '@unbound-app/types';
 
 import type { MetroFilter } from '~/metro/filters';
-import { CACHE_KEY } from '~/core/constants';
+import { CACHE_KEY } from '~/metro/cache-key';
 
 /** A value a filter argument may hold: its JSON is part of the filter's cache key. */
 export type FilterArgument =
