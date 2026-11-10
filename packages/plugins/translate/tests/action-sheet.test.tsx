@@ -43,6 +43,16 @@ beforeEach(async () => {
 	resetHealth();
 	hidden.length = 0;
 	metro.register(ActionSheets);
+	metro.register(
+		class RowManager {
+			generate() {}
+		},
+	);
+	metro.register(
+		class ChatManager {
+			determineChangeType() {}
+		},
+	);
 	metro.register({
 		setString: (text: string) => (clipboard.text = text),
 		getString: () => '',

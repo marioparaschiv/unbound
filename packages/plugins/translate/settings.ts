@@ -4,6 +4,11 @@ import { defineSettings, setting } from '@unbound-app/settings/schema';
 export default defineSettings({
 	sourceLanguage: setting.string({ default: 'auto', hidden: true }),
 	targetLanguage: setting.string({ default: 'en', hidden: true }),
+	display: setting.choice({
+		default: 'toast',
+		hidden: true,
+		options: { toast: 'SHOW_IN_TOAST', inline: 'SHOW_INLINE' },
+	}),
 	apiBaseUrl: setting.string({ default: 'https://translate.unbound.rip', hidden: true }),
 	accessToken: setting.string({ default: '', hidden: true }),
 	refreshToken: setting.string({ default: '', hidden: true }),

@@ -9,7 +9,7 @@ export function start() {
 }
 
 export function stop() {
-	stopTranslate();
+	return stopTranslate();
 }
 
 export { featureSelfTest as selfTest };
