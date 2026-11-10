@@ -4,9 +4,9 @@ import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { verifyPluginSignature } from './sign-plugin';
+import { verifyPluginSignature } from '~/sign-plugin';
 
-const SCRIPT = join(import.meta.dir, 'publish-addons.ts');
+const SCRIPT = join(import.meta.dir, '../src/publish-addons.ts');
 const REPOSITORY = 'owner/plugins';
 
 type Published = {

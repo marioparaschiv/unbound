@@ -1,8 +1,8 @@
 import { expect, test } from 'bun:test';
 
-import { collectorArgs, deviceSlug, parseMatrixConfig } from './matrix-config';
-import type { MeasuredCheck } from './compare-device-matrix';
-import { failureReason, listCalls, renderSummary, runFailed } from './run-device-matrix';
+import { collectorArgs, deviceSlug, parseMatrixConfig } from '~/matrix-config';
+import type { MeasuredCheck } from '~/compare-device-matrix';
+import { failureReason, listCalls, renderSummary, runFailed } from '~/run-device-matrix';
 
 const phone = { name: 'iPhone SE', port: 9090, udid: 'abc' };
 const emulator = { name: 'Android Emulator', port: 9091, serial: 'emulator-5554' };

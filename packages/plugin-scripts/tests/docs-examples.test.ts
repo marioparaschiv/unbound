@@ -9,8 +9,8 @@ import {
 	extractExamples,
 	parseErrors,
 	quoteProblem,
-} from './docs-examples';
-import { REPO_ROOT } from './paths';
+} from '~/docs-examples';
+import { REPO_ROOT } from '~/paths';
 
 const PAGE = `---
 title: 'A page'

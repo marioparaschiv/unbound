@@ -4,8 +4,8 @@ import { describe, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { pluginIcon, readPluginManifests } from './plugin-manifests';
-import { firstPartyPlugins } from './verify-published';
+import { pluginIcon, readPluginManifests } from '~/plugin-manifests';
+import { firstPartyPlugins } from '~/verify-published';
 
 const manifest: PublishedManifest = {
 	id: 'unbound.sample',

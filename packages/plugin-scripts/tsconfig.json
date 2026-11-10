@@ -10,7 +10,10 @@
 		"resolveJsonModule": true,
 		"allowImportingTsExtensions": true,
 		"types": ["bun"],
-		"noEmit": true
+		"noEmit": true,
+		"paths": {
+			"~/*": ["./src/*"]
+		}
 	},
-	"include": ["src"]
+	"include": ["src", "tests"]
 }

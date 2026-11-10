@@ -9,8 +9,8 @@ import {
 	validatePluginFolder,
 	validatePluginDocs,
 	validateTextInputProps,
-} from './validate-plugins';
-import { PLUGINS_DIR } from './paths';
+} from '~/validate-plugins';
+import { PLUGINS_DIR } from '~/paths';
 
 const validManifest = {
 	id: 'unbound.example-plugin',

@@ -10,7 +10,7 @@ import {
 	signPlugin,
 	verifyPluginSignature,
 	withSignature,
-} from './sign-plugin';
+} from '~/sign-plugin';
 
 const { privateKey, publicKey } = generateKeyPairSync('ed25519');
 const rawPublicKey = publicKey

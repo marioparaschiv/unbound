@@ -2,9 +2,9 @@ import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import * as deviceScripts from './device-scripts';
-import * as leakCheck from './leak-check';
-import * as selfTest from './loader-self-test';
+import * as deviceScripts from '~/device-scripts';
+import * as leakCheck from '~/leak-check';
+import * as selfTest from '~/loader-self-test';
 
 const modules = [
 	{ file: 'device-scripts.ts', exports: deviceScripts },
@@ -33,7 +33,7 @@ function topLevelNames(source: string): string[] {
 
 describe('device scripts', () => {
 	for (const { file, exports } of modules) {
-		const names = topLevelNames(readFileSync(join(import.meta.dir, file), 'utf8'));
+		const names = topLevelNames(readFileSync(join(import.meta.dir, '../src', file), 'utf8'));
 
 		for (const [name, value] of Object.entries(exports)) {
 			if (!name.endsWith('Script') || typeof value !== 'function') continue;

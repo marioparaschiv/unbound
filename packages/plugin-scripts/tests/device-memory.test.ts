@@ -8,7 +8,7 @@ import {
 	settledDiscordMemory,
 	parseIOSFootprint,
 	parseProcessMemory,
-} from './device-memory';
+} from '~/device-memory';
 
 test('reads Discord itself from the process list, not its extensions', () => {
 	const output = JSON.stringify({

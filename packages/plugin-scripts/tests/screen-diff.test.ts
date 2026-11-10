@@ -9,7 +9,7 @@ import {
 	differenceRatio,
 	keepGoodScreens,
 	referenceFor,
-} from './screen-diff';
+} from '~/screen-diff';
 
 describe('screen changes', () => {
 	test('reads the share ImageMagick prints', () => {

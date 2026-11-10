@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { parseDigest, sameEnvironment, type Environment } from './environment';
+import { parseDigest, sameEnvironment, type Environment } from '~/environment';
 
 const environment: Environment = {
 	loader: '1.0.0',

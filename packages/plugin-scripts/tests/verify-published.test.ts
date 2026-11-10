@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { checkRelease, compiledBundleUrl, digestOf } from './verify-published';
+import { checkRelease, compiledBundleUrl, digestOf } from '~/verify-published';
 
 const encoder = new TextEncoder();
 

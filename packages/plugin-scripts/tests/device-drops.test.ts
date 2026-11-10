@@ -7,7 +7,7 @@ import {
 	parseLatestExit,
 	relaunchCommands,
 	type CommandRunner,
-} from './device-drops';
+} from '~/device-drops';
 
 const jetsam = `{"bug_type":"298"}
 ${JSON.stringify({

@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { createTimings, describeTimings, formatDuration } from './timings';
+import { createTimings, describeTimings, formatDuration } from '~/timings';
 
 test('formats durations for the summary', () => {
 	expect(formatDuration(850)).toBe('850 ms');

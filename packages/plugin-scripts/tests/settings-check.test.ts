@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { MeasuredCheck } from './compare-device-matrix';
-import { settingsFailure, withSettings } from './settings-check';
+import type { MeasuredCheck } from '~/compare-device-matrix';
+import { settingsFailure, withSettings } from '~/settings-check';
 
 const check: MeasuredCheck = {
 	id: 'unbound.demo',

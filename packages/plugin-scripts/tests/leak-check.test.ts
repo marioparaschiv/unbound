@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { growthPerCycle, leakNote } from './leak-check';
+import { growthPerCycle, leakNote } from '~/leak-check';
 
 test('works out live heap growth per cycle', () => {
 	expect(growthPerCycle(80 * 1_048_576, 83 * 1_048_576, 5)).toBe(0.6);

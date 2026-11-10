@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { MeasuredCheck } from './compare-device-matrix';
-import { reusableLeak, reusableSettings } from './run-reuse';
+import type { MeasuredCheck } from '~/compare-device-matrix';
+import { reusableLeak, reusableSettings } from '~/run-reuse';
 
 const check = (bundleHash?: string, leakPerCycleMB?: number): MeasuredCheck => ({
 	id: 'unbound.demo',

@@ -7,7 +7,7 @@ import {
 	renderBanner,
 	withBannerFrontmatter,
 	wrapLines,
-} from './generate-plugin-banners';
+} from '~/generate-plugin-banners';
 
 const icon = Buffer.from(
 	'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',

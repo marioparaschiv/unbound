@@ -3,8 +3,8 @@ import { join } from 'node:path';
 
 import { expect, test } from 'bun:test';
 
-import { catalogPlugins, renderDeviceMatrix, validateDeviceMatrix } from './device-matrix';
-import { PLUGINS_DIR } from './paths';
+import { catalogPlugins, renderDeviceMatrix, validateDeviceMatrix } from '~/device-matrix';
+import { PLUGINS_DIR } from '~/paths';
 
 const catalog = [
 	{ id: 'unbound.alpha', name: 'Alpha' },

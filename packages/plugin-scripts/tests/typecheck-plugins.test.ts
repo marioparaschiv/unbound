@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { typeErrors } from './typecheck-plugins';
+import { typeErrors } from '~/typecheck-plugins';
 
 test('keeps only the lines tsc reports errors on', () => {
 	expect(

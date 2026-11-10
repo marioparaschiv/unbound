@@ -6,19 +6,19 @@ import {
 	parseToastLines,
 	parseSkippedHooks,
 	toastCaller,
-} from './log-parsers';
+} from '~/log-parsers';
 import {
 	cycleScript,
 	clearStagedScript,
 	fixtureScript,
 	fixturesPresentScript,
 	type CycleResult,
-} from './device-scripts';
-import { withReconnects, parseScreenSize, swipeCommands } from './device-io';
-import { checkFromCycle, applyLogPolicy } from './matrix-policy';
-import { fakeDiscord, runOnFakeDevice } from './device-fakes';
-import { parseChannel } from './collect-device-matrix';
-import { validateDeviceMatrix } from './device-matrix';
+} from '~/device-scripts';
+import { withReconnects, parseScreenSize, swipeCommands } from '~/device-io';
+import { checkFromCycle, applyLogPolicy } from '~/matrix-policy';
+import { fakeDiscord, runOnFakeDevice } from './helpers/device-fakes';
+import { parseChannel } from '~/collect-device-matrix';
+import { validateDeviceMatrix } from '~/device-matrix';
 
 const healthy: CycleResult = {
 	id: 'unbound.alpha',

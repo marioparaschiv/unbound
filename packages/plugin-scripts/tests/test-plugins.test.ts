@@ -3,7 +3,7 @@ import { expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { pluginsWithTests } from './test-plugins';
+import { pluginsWithTests } from '~/test-plugins';
 
 test('lists each plugin with a test under src/ or tests/ once', () => {
 	const dir = mkdtempSync(join(tmpdir(), 'plugins-'));
