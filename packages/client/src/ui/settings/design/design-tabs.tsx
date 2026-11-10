@@ -7,7 +7,6 @@ import { messages } from '~/i18n/api';
 
 import type { PickerKind } from './picker-report';
 
-import DeferredPage, { ActiveTab } from './deferred-page';
 import { HeaderElements } from './navigation';
 import useStyles from './design-tabs.style';
 import HeaderInset from './header-inset';
@@ -18,7 +17,7 @@ import FontsTab from './fonts';
 export type DesignTab = (typeof TABS)[number]['id'];
 
 type DesignTabsProps = {
-	/** Renders the Themes page; called once, the first time it is shown. */
+	/** Renders the Themes page; called once, when the tabs mount. */
 	renderPage: (kind: PickerKind) => ReactNode;
 	onTabChange?: (tab: DesignTab) => void;
 };
@@ -53,23 +52,22 @@ function renderTab(id: DesignTab, renderPage: DesignTabsProps['renderPage']) {
 
 /**
  * @description The Design page's frame: Discord's large segmented control over Themes, Fonts, Icons and Chat, floating
- * below a transparent header over full-screen pages, which inset past both through the header height. Each page
- * mounts the first time its tab opens. Fonts is the shared override list; Icons is a placeholder; Chat holds the chat's
- * look, such as its background.
+ * below a transparent header over full-screen pages, which inset past both through the header height. Discord keeps
+ * each page frozen until a swipe or press first reaches it, so it mounts as it slides in. Fonts is the shared override
+ * list; Icons is a placeholder; Chat holds the chat's look, such as its background.
  */
 function DesignTabs({ renderPage, onTabChange = noop }: DesignTabsProps) {
 	const styles = useStyles();
 	const headerHeight = HeaderElements.useHeaderHeight();
-	const [tab, setTab] = useState(0);
 	const [tabsHeight, setTabsHeight] = useState(0);
 	const { width } = useWindowDimensions();
 
 	const items = useMemo(
 		() =>
-			TABS.map(({ id, label }, index) => ({
+			TABS.map(({ id, label }) => ({
 				id,
 				label: label(),
-				page: <DeferredPage index={index}>{renderTab(id, renderPage)}</DeferredPage>,
+				page: renderTab(id, renderPage),
 			})),
 		[],
 	);
@@ -78,28 +76,23 @@ function DesignTabs({ renderPage, onTabChange = noop }: DesignTabsProps) {
 		items,
 		pageWidth: width,
 		defaultIndex: 0,
-		onPageChange: (index: number) => {
-			setTab(index);
-			onTabChange(TABS[index]?.id ?? 'theme');
-		},
+		onPageChange: (index: number) => onTabChange(TABS[index]?.id ?? 'theme'),
 	});
 
 	return (
-		<ActiveTab.Provider value={tab}>
-			<View style={styles.frame}>
-				<HeaderElements.HeaderHeightContext.Provider value={headerHeight + tabsHeight}>
-					<View style={StyleSheet.absoluteFill}>
-						<Discord.SegmentedControlPages state={state} />
-					</View>
-				</HeaderElements.HeaderHeightContext.Provider>
-				<View
-					onLayout={(event) => setTabsHeight(event.nativeEvent.layout.height)}
-					style={[styles.tabs, { top: headerHeight }]}
-				>
-					<Discord.SegmentedControl state={state} variant='experimental_Large' />
+		<View style={styles.frame}>
+			<HeaderElements.HeaderHeightContext.Provider value={headerHeight + tabsHeight}>
+				<View style={StyleSheet.absoluteFill}>
+					<Discord.SegmentedControlPages state={state} />
 				</View>
+			</HeaderElements.HeaderHeightContext.Provider>
+			<View
+				onLayout={(event) => setTabsHeight(event.nativeEvent.layout.height)}
+				style={[styles.tabs, { top: headerHeight }]}
+			>
+				<Discord.SegmentedControl state={state} variant='experimental_Large' />
 			</View>
-		</ActiveTab.Provider>
+		</View>
 	);
 }
 
