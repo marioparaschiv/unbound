@@ -17,6 +17,8 @@ type MatrixGlobal = typeof globalThis & {
 
 type SettingsProbeState = {
 	rendered: boolean;
+	/** Set once the screen closed and React unmounted the probe. */
+	closed: boolean;
 	error: string;
 	boundary: { _reactInternals?: ReactFiber } | null;
 };
@@ -36,7 +38,7 @@ function openSettingsScreen(id: string) {
 	if (!entity || !SettingsPanel) return 'none';
 
 	const { React } = unbound.metro.common;
-	const probe: SettingsProbeState = { rendered: false, error: '', boundary: null };
+	const probe: SettingsProbeState = { rendered: false, closed: false, error: '', boundary: null };
 	type BoundaryInstance = {
 		props: { children?: unknown };
 		state: { failed: boolean };
@@ -57,6 +59,9 @@ function openSettingsScreen(id: string) {
 		},
 		componentDidMount(this: SettingsProbeState['boundary']) {
 			probe.boundary = this;
+		},
+		componentWillUnmount() {
+			probe.closed = true;
 		},
 		render(this: BoundaryInstance) {
 			return this.state.failed ? null : this.props.children;
@@ -147,4 +152,18 @@ function closeScreen() {
 
 export function closeScreenScript(): string {
 	return deviceScript(closeScreen);
+}
+
+function readSettingsClosed() {
+	const probe = (globalThis as MatrixGlobal).__matrixSettingsProbe;
+
+	return !probe || probe.closed ? 'closed' : 'open';
+}
+
+/**
+ * @description Reads whether the settings screen the matrix opened has closed, which React reports by unmounting the probe.
+ * @returns A script whose result is `closed` or `open`.
+ */
+export function settingsClosedScript(): string {
+	return deviceScript(readSettingsClosed);
 }

@@ -334,6 +334,22 @@ export function pluginLogScript(): string {
 	]);
 }
 
+function readPluginsSettled() {
+	const settled = [...unbound.plugins.entities.values()].every(
+		(entity) => !entity.isEnabled() || entity.started || entity.failed,
+	);
+
+	return settled ? 'settled' : 'starting';
+}
+
+/**
+ * @description Reads whether every enabled plugin has started or failed, as it has once Discord finished launching.
+ * @returns A script whose result is `settled` or `starting`.
+ */
+export function pluginsSettledScript(): string {
+	return deviceScript(readPluginsSettled);
+}
+
 function stopPlugin(id: string) {
 	return Promise.resolve(unbound.plugins.stop(id)).then(() => 'stopped');
 }

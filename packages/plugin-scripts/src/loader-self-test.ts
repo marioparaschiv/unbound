@@ -134,6 +134,21 @@ export function selfTestFinishScript(): string {
 	return deviceScript(finishSelfTest);
 }
 
+function readSelfTestFired() {
+	const state = (globalThis as SelfTestGlobal).__unboundSelfTest;
+	const fired = Boolean(state?.base) && (state?.platform !== 'ios' || Boolean(state.derived));
+
+	return !state || fired ? 'fired' : 'waiting';
+}
+
+/**
+ * @description Reads whether the self-test hooks have fired, the superclass and subclass hook on iOS, without removing them.
+ * @returns A script whose result is `fired`, or `waiting`; `fired` too when the self-test never started, so the wait ends and the finish reports it.
+ */
+export function selfTestFiredScript(): string {
+	return deviceScript(readSelfTestFired);
+}
+
 /**
  * @description Runs native calls that end early through the self-test host: one cancelled straight away, one still queued when the host stops (the host is started again after), and on Android one made on a released handle to an object the test constructs itself, since releasing a shared handle would revoke it for every plugin.
  * @returns A script whose result is the JSON outcome of each case: `resolved`, `cancellation`, or `other: <message>`.

@@ -9,10 +9,10 @@ import {
 } from '~/log-parsers';
 import { cycleScript, type CycleResult } from '~/device-scripts';
 import { clearStagedScript, fixtureScript, fixturesPresentScript } from '~/fixture-scripts';
-import { withReconnects, parseScreenSize, swipeCommands } from '~/device-io';
+import { parseScreenSize, swipeCommands } from '~/device-io';
 import { checkFromCycle, applyLogPolicy } from '~/matrix-policy';
 import { fakeDiscord, runOnFakeDevice } from './helpers/device-fakes';
-import { parseChannel } from '~/collect-device-matrix';
+import { parseChannel } from '~/device-run';
 import { validateDeviceMatrix } from '~/device-matrix';
 
 const healthy: CycleResult = {
@@ -109,38 +109,6 @@ test('a failing self-test fails the behavior with its detail', () => {
 	expect(check.behavior).toBe('fail');
 	expect(check.lifecycle).toBe('pass');
 	expect(check.note).toBe('self-test failed: used 1 colors');
-});
-
-test('retries an evaluation the device dropped, then gives up', async () => {
-	let calls = 0;
-	const flaky = async () => {
-		calls++;
-		if (calls < 2)
-			throw new Error(
-				'Evaluation failed: "Device disconnected before the evaluation completed."',
-			);
-
-		return 'ok';
-	};
-
-	expect(await withReconnects(flaky, async () => undefined)).toBe('ok');
-
-	const gone = async () => {
-		throw new Error('Evaluation failed: "No device is connected to the debugger."');
-	};
-
-	await expect(withReconnects(gone, async () => undefined, 2)).rejects.toThrow('No device');
-});
-
-test('does not retry other evaluation failures', async () => {
-	let calls = 0;
-	const broken = async () => {
-		calls++;
-		throw new Error('Evaluation failed: "TypeError"');
-	};
-
-	await expect(withReconnects(broken, async () => undefined)).rejects.toThrow('TypeError');
-	expect(calls).toBe(1);
 });
 
 test('reads a fixture channel as guild and channel ids', () => {

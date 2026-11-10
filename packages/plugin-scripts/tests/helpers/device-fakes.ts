@@ -1,4 +1,9 @@
+import type { Device } from '~/device';
+
 type Received = { channel: string; message: Record<string, unknown> };
+
+/** What the fake device answers a script with: its result, or a thrown error. */
+export type FakeAnswer = string | (() => string);
 
 /**
  * @description Runs a device script against a fake `unbound` global, with timers that fire at once.
@@ -58,4 +63,38 @@ export function fakeDiscord(
 	};
 
 	return { unbound, received, transitions, sent, dispatched };
+}
+
+/**
+ * @description Builds a fake matrix device that answers each script it knows by its exact text, with host commands that fail, no screenshots and instant sleeps.
+ * @param answers The result of each script, by the script's text; an answer function may throw, as a dropped device does.
+ * @returns The device and what the run asked of it.
+ */
+export function fakeMatrixDevice(answers: Map<string, FakeAnswer>) {
+	const evaluated: string[] = [];
+	const commands: string[][] = [];
+	const device: Device = {
+		name: 'Fake Phone',
+		target: { kind: 'android', serial: 'emulator-5554' },
+		async evaluate(code) {
+			const answer = answers.get(code);
+
+			if (answer === undefined) throw new Error(`The fake device has no answer for ${code}`);
+
+			evaluated.push(code);
+
+			return typeof answer === 'function' ? answer() : answer;
+		},
+		waitForDevice: async () => true,
+		async run(command) {
+			commands.push(command);
+
+			return { ok: false, stdout: '', stderr: 'not a real device' };
+		},
+		screenshot: async () => false,
+		sleep: async () => {},
+		close: () => {},
+	};
+
+	return { device, evaluated, commands };
 }
