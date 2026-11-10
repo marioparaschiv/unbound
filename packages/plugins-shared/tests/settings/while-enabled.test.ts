@@ -22,7 +22,7 @@ const settings = createFakeSettings(
 	'plugin',
 );
 
-mock.module('@unbound-app/api/storage', () => ({ onChange: storage.onChange }));
+mock.module('@unbound-app/api/storage', () => storage);
 mock.module('@unbound-app/settings', () => ({ settings: settings.settings }));
 
 const { default: whileEnabled } = await import('~/settings/while-enabled');

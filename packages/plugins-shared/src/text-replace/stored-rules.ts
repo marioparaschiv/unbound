@@ -1,6 +1,5 @@
 import { normalizeRules, type TextReplaceRule } from '@unbound-plugins/shared/text-replace/rules';
-import type { Bucket } from '@unbound-app/api/storage';
-import { storage } from '@unbound-app/api';
+import { getBucket, type Bucket } from '@unbound-app/api/storage';
 
 /** Text Replace's manifest id, which also names the Bucket it stores its rules in. */
 export const TEXT_REPLACE_ID = 'unbound.text-replace';
@@ -30,7 +29,7 @@ export function hasRuleContent(rule: TextReplaceRule): boolean {
  */
 export function readRules(
 	kind: RuleKind,
-	store: RulesReader = storage.getBucket(TEXT_REPLACE_ID),
+	store: RulesReader = getBucket(TEXT_REPLACE_ID),
 ): TextReplaceRule[] {
 	return normalizeRules(store.get(kind, [])).filter(hasRuleContent);
 }
@@ -40,7 +39,7 @@ export function readRules(
  * @param store The store to read through; pass the `storage.useBucket` result to re-render on changes.
  * @returns The text and regex rules, without blank rules.
  */
-export function rules(store: RulesReader = storage.getBucket(TEXT_REPLACE_ID)): Ruleset {
+export function rules(store: RulesReader = getBucket(TEXT_REPLACE_ID)): Ruleset {
 	return {
 		stringRules: readRules('stringRules', store),
 		regexRules: readRules('regexRules', store),

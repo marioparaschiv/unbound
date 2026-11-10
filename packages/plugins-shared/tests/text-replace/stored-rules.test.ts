@@ -3,7 +3,7 @@ import { createMemoryStorage } from '@unbound-app/api/testing';
 
 const storage = createMemoryStorage('another-plugin');
 
-mock.module('@unbound-app/api', () => ({ storage }));
+mock.module('@unbound-app/api/storage', () => storage);
 
 const { rules } = await import('~/text-replace/stored-rules');
 
