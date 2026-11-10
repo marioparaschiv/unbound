@@ -364,6 +364,20 @@ object NativeBridge {
         }
     }
 
+    private var updateToast: Toast? = null
+
+    /** Shows "Updating Unbound…" while Discord's launch waits for Unbound's bundle to download. */
+    @JvmStatic
+    fun updateProgress(showing: Boolean) {
+        Handler(Looper.getMainLooper()).post {
+            updateToast?.cancel()
+            updateToast = null
+            if (!showing) return@post
+            val context = Platform.application() ?: return@post
+            updateToast = Toast.makeText(context, "Updating Unbound…", Toast.LENGTH_LONG).also { it.show() }
+        }
+    }
+
     @JvmStatic
     fun onBundleExecuted() {
         Logger.info(LogCategory.DEFAULT, "Bundle executed.")

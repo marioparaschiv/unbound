@@ -66,6 +66,7 @@ struct JavaCallbacks {
     jmethodID appFonts                 = nullptr;
     jmethodID appFontBytes             = nullptr;
     jmethodID alert                    = nullptr;
+    jmethodID updateProgress           = nullptr;
     jmethodID onBundleExecuted         = nullptr;
     jmethodID fontsChanged             = nullptr;
 };
@@ -115,6 +116,7 @@ public:
     void                          onAddonsPrepared() override;
     void                          onBundleExecuted() override;
     void                          alert(const std::string &message) override;
+    void                          showUpdateProgress(bool showing) override;
     void                          reload() override;
 
 private:

@@ -273,9 +273,18 @@ std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::awaitFirstDownload(ui
     {
         return std::nullopt;
     }
+    bool waiting = !firstDownload_.settled;
+    if (waiting)
+    {
+        host_->showUpdateProgress(true);
+    }
     bool settled = firstDownloadSettled_.wait_for(lock, kFirstDownloadWait, [this, token]() {
         return firstDownload_.token != token || firstDownload_.settled;
     });
+    if (waiting)
+    {
+        host_->showUpdateProgress(false);
+    }
     if (firstDownload_.token != token)
     {
         return std::nullopt;

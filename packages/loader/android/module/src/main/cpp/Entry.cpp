@@ -500,6 +500,7 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
     gCallbacks.appFontBytes =
         env->GetStaticMethodID(bridge, "appFontBytes", "(Ljava/lang/String;)[B");
     gCallbacks.alert            = env->GetStaticMethodID(bridge, "alert", "(Ljava/lang/String;)V");
+    gCallbacks.updateProgress   = env->GetStaticMethodID(bridge, "updateProgress", "(Z)V");
     gCallbacks.onBundleExecuted = env->GetStaticMethodID(bridge, "onBundleExecuted", "()V");
     gCallbacks.fontsChanged     = env->GetStaticMethodID(bridge, "fontsChanged", "()V");
 
@@ -517,8 +518,8 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
            gCallbacks.fabricSetFrame && gCallbacks.fabricMeasure && gCallbacks.fetchText &&
            gCallbacks.download && gCallbacks.devServerHost && gCallbacks.isServing &&
            gCallbacks.installHomeScreenIcon && gCallbacks.availableFonts && gCallbacks.appFonts &&
-           gCallbacks.appFontBytes && gCallbacks.alert && gCallbacks.onBundleExecuted &&
-           gCallbacks.fontsChanged;
+           gCallbacks.appFontBytes && gCallbacks.alert && gCallbacks.updateProgress &&
+           gCallbacks.onBundleExecuted && gCallbacks.fontsChanged;
 }
 
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)

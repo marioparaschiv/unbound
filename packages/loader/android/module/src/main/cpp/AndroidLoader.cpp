@@ -660,6 +660,18 @@ void AndroidLoader::reload()
     reloadApp();
 }
 
+void AndroidLoader::showUpdateProgress(bool showing)
+{
+    JNIEnv *env = currentEnvironment();
+    if (!env)
+    {
+        return;
+    }
+    env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.updateProgress,
+                              showing ? JNI_TRUE : JNI_FALSE);
+    clearPendingException(env);
+}
+
 void AndroidLoader::alert(const std::string &message)
 {
     JNIEnv *env = currentEnvironment();

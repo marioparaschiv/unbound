@@ -19,6 +19,7 @@
 #import "NativePluginBridge.h"
 #import "RCTHost.h"
 #import "SettingsCore.h"
+#import "UpdateBanner.h"
 #import "UpdaterCore.h"
 
 using unbound::ios::toNSString;
@@ -263,6 +264,18 @@ public:
     void reload() override
     {
         [Utilities reloadApp];
+    }
+
+    void showUpdateProgress(bool showing) override
+    {
+        if (showing)
+        {
+            [UpdateBanner show];
+        }
+        else
+        {
+            [UpdateBanner hide];
+        }
     }
 };
 
