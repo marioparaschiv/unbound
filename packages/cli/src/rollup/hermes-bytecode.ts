@@ -1,8 +1,8 @@
-import { fetchManifest, resolveHermesTargets } from '@unbound-app/rollup-plugin-hermes/manifest';
+import { hermescBinary, resolveHermesTargets } from '@unbound-app/rollup-plugin-hermes/manifest';
 import type { HermesTarget } from '@unbound-app/rollup-plugin-hermes/manifest';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { ADDON_SCOPE_GLOBALS } from '@unbound-app/types/addons';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { promisify } from 'node:util';
@@ -88,22 +88,6 @@ async function sha512(path: string) {
 }
 
 /**
- * @description Counts how many of hermesc's newest versions to resolve so every wanted version is among them.
- * @param latest hermesc's versions, newest first.
- * @param wanted The bytecode versions to compile for.
- * @returns The number of newest versions to resolve.
- */
-export function hermescCount(latest: number[], wanted: number[]): number {
-	const missing = wanted.filter((version) => !latest.includes(version));
-
-	if (missing.length) {
-		throw new Error(`hermesc does not publish bytecode ${missing.join(', ')}.`);
-	}
-
-	return Math.max(...wanted.map((version) => latest.indexOf(version)), 0) + 1;
-}
-
-/**
  * @description Compiles each plugin bundle to Hermes bytecode for exactly the bytecode versions the client ships.
  * Once written, it records each bundle's digest and its bytecode's in {@link BYTECODE_DIGESTS_FILENAME}, so a
  * reader takes only this build's bytecode, never a leftover from an earlier build.
@@ -120,13 +104,8 @@ export function hermesBytecode({ versions, sourceName }: BytecodeOptions): Plugi
 		async generateBundle(_outputOptions, bundle) {
 			emitted = new Map();
 
-			targets ??= (
-				await resolveHermesTargets(this, {
-					versions: hermescCount((await fetchManifest(this)).latest, versions),
-				})
-			).filter((target) => versions.includes(target.version));
+			targets ??= await resolveHermesTargets(this, { versions });
 
-			const executable = process.platform === 'win32' ? 'hermesc.exe' : 'hermesc';
 			const directory = await mkdtemp(join(tmpdir(), 'plugin-bytecode-'));
 
 			try {
@@ -148,7 +127,7 @@ export function hermesBytecode({ versions, sourceName }: BytecodeOptions): Plugi
 							continue;
 						}
 
-						const hermesc = resolve(dir, process.platform, executable);
+						const hermesc = hermescBinary(dir);
 						const output = join(directory, `${version}.hbc`);
 						const compiled = await compile(hermesc, directory, source, output).catch(
 							(error) => {
@@ -203,4 +182,4 @@ export function hermesBytecode({ versions, sourceName }: BytecodeOptions): Plugi
 	};
 }
 
-export default { bytecodeSource, bytecodeFileName, hermescCount, hermesBytecode };
+export default { bytecodeSource, bytecodeFileName, hermesBytecode };
