@@ -15,5 +15,34 @@
 	"version": "1.0.1",
 	"icon": "VideoIcon",
 	"minNativePluginApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.objc.classes",
+				"native.objc.hooks",
+				"native.objc.invoke",
+				"native.objc.invokeAsync",
+				"native.objc.snapshot"
+			]
+		},
+		"android": {
+			"capabilities": [
+				"native.java.batch",
+				"native.java.classes",
+				"native.java.construct",
+				"native.java.fields",
+				"native.java.hooks",
+				"native.java.invoke",
+				"native.java.invokeAsync"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "2d5653e0ae1f3e0d5990912231e5cabbe6d1579b82f4c3732471335d216eea34fc6e365d17e0223d39145a4439d3bb3ea095b882ddad0d5db265b706c39d9019"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "5gdwJ+2LWI26DkmzJSz2pbC17OWk1T6owHHSrN7g6VVvJNGxTdhIUaVDcgaYu2gGKFoR2L2U5EgOW5J9ajygCw=="
+	}
 }
