@@ -31,7 +31,9 @@ afterEach(() => {
 
 describe('grammar files', () => {
 	test('pin the module URL to the Shiki version the plugin depends on', () => {
-		const manifest = JSON.parse(readFileSync(join(import.meta.dir, '../package.json'), 'utf8'));
+		const manifest = JSON.parse(
+			readFileSync(join(import.meta.dir, '../../package.json'), 'utf8'),
+		);
 
 		expect(manifest.dependencies['@shikijs/langs']).toBe(SHIKI_LANGS_VERSION);
 		expect(grammarModuleUrl('cpp')).toBe(
