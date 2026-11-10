@@ -80,6 +80,7 @@ import { Route as SiteDocsSdkVersionIndexRouteImport } from './routes/_site/docs
 import { Route as SiteDocsSdkVersionSymbolRouteImport } from './routes/_site/docs/sdk/$version/$symbol'
 import { Route as ApiV1AddonsIdDelistRouteImport } from './routes/api/v1/addons/$id/delist'
 import { Route as ApiV1AddonsIdIconRouteImport } from './routes/api/v1/addons/$id/icon'
+import { Route as ApiV1AddonsIdInstallsRouteImport } from './routes/api/v1/addons/$id/installs'
 import { Route as ApiV1AddonsIdMaintainersRouteImport } from './routes/api/v1/addons/$id/maintainers'
 import { Route as ApiV1AddonsIdRelistRouteImport } from './routes/api/v1/addons/$id/relist'
 import { Route as ApiV1AddonsIdTransferRouteImport } from './routes/api/v1/addons/$id/transfer'
@@ -451,6 +452,11 @@ const ApiV1AddonsIdIconRoute = ApiV1AddonsIdIconRouteImport.update({
   path: '/$id/icon',
   getParentRoute: () => ApiV1AddonsRoute,
 } as any)
+const ApiV1AddonsIdInstallsRoute = ApiV1AddonsIdInstallsRouteImport.update({
+  id: '/$id/installs',
+  path: '/$id/installs',
+  getParentRoute: () => ApiV1AddonsRoute,
+} as any)
 const ApiV1AddonsIdMaintainersRoute =
   ApiV1AddonsIdMaintainersRouteImport.update({
     id: '/$id/maintainers',
@@ -579,6 +585,7 @@ export interface FileRoutesByFullPath {
   '/docs/sdk/$version/$symbol': typeof SiteDocsSdkVersionSymbolRoute
   '/api/v1/addons/$id/delist': typeof ApiV1AddonsIdDelistRoute
   '/api/v1/addons/$id/icon': typeof ApiV1AddonsIdIconRoute
+  '/api/v1/addons/$id/installs': typeof ApiV1AddonsIdInstallsRoute
   '/api/v1/addons/$id/maintainers': typeof ApiV1AddonsIdMaintainersRouteWithChildren
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
@@ -658,6 +665,7 @@ export interface FileRoutesByTo {
   '/docs/sdk/$version/$symbol': typeof SiteDocsSdkVersionSymbolRoute
   '/api/v1/addons/$id/delist': typeof ApiV1AddonsIdDelistRoute
   '/api/v1/addons/$id/icon': typeof ApiV1AddonsIdIconRoute
+  '/api/v1/addons/$id/installs': typeof ApiV1AddonsIdInstallsRoute
   '/api/v1/addons/$id/maintainers': typeof ApiV1AddonsIdMaintainersRouteWithChildren
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
@@ -743,6 +751,7 @@ export interface FileRoutesById {
   '/_site/docs/sdk/$version/$symbol': typeof SiteDocsSdkVersionSymbolRoute
   '/api/v1/addons/$id/delist': typeof ApiV1AddonsIdDelistRoute
   '/api/v1/addons/$id/icon': typeof ApiV1AddonsIdIconRoute
+  '/api/v1/addons/$id/installs': typeof ApiV1AddonsIdInstallsRoute
   '/api/v1/addons/$id/maintainers': typeof ApiV1AddonsIdMaintainersRouteWithChildren
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
@@ -827,6 +836,7 @@ export interface FileRouteTypes {
     | '/docs/sdk/$version/$symbol'
     | '/api/v1/addons/$id/delist'
     | '/api/v1/addons/$id/icon'
+    | '/api/v1/addons/$id/installs'
     | '/api/v1/addons/$id/maintainers'
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
@@ -906,6 +916,7 @@ export interface FileRouteTypes {
     | '/docs/sdk/$version/$symbol'
     | '/api/v1/addons/$id/delist'
     | '/api/v1/addons/$id/icon'
+    | '/api/v1/addons/$id/installs'
     | '/api/v1/addons/$id/maintainers'
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
@@ -990,6 +1001,7 @@ export interface FileRouteTypes {
     | '/_site/docs/sdk/$version/$symbol'
     | '/api/v1/addons/$id/delist'
     | '/api/v1/addons/$id/icon'
+    | '/api/v1/addons/$id/installs'
     | '/api/v1/addons/$id/maintainers'
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
@@ -1537,6 +1549,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1AddonsIdIconRouteImport
       parentRoute: typeof ApiV1AddonsRoute
     }
+    '/api/v1/addons/$id/installs': {
+      id: '/api/v1/addons/$id/installs'
+      path: '/$id/installs'
+      fullPath: '/api/v1/addons/$id/installs'
+      preLoaderRoute: typeof ApiV1AddonsIdInstallsRouteImport
+      parentRoute: typeof ApiV1AddonsRoute
+    }
     '/api/v1/addons/$id/maintainers': {
       id: '/api/v1/addons/$id/maintainers'
       path: '/$id/maintainers'
@@ -1766,6 +1785,7 @@ const ApiV1AddonsIdMaintainersRouteWithChildren =
 interface ApiV1AddonsRouteChildren {
   ApiV1AddonsIdDelistRoute: typeof ApiV1AddonsIdDelistRoute
   ApiV1AddonsIdIconRoute: typeof ApiV1AddonsIdIconRoute
+  ApiV1AddonsIdInstallsRoute: typeof ApiV1AddonsIdInstallsRoute
   ApiV1AddonsIdMaintainersRoute: typeof ApiV1AddonsIdMaintainersRouteWithChildren
   ApiV1AddonsIdRelistRoute: typeof ApiV1AddonsIdRelistRoute
   ApiV1AddonsIdTransferRoute: typeof ApiV1AddonsIdTransferRoute
@@ -1775,6 +1795,7 @@ interface ApiV1AddonsRouteChildren {
 const ApiV1AddonsRouteChildren: ApiV1AddonsRouteChildren = {
   ApiV1AddonsIdDelistRoute: ApiV1AddonsIdDelistRoute,
   ApiV1AddonsIdIconRoute: ApiV1AddonsIdIconRoute,
+  ApiV1AddonsIdInstallsRoute: ApiV1AddonsIdInstallsRoute,
   ApiV1AddonsIdMaintainersRoute: ApiV1AddonsIdMaintainersRouteWithChildren,
   ApiV1AddonsIdRelistRoute: ApiV1AddonsIdRelistRoute,
   ApiV1AddonsIdTransferRoute: ApiV1AddonsIdTransferRoute,

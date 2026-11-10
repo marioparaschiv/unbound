@@ -49,6 +49,8 @@ export type AddonDetails = {
 	name: string;
 	description: string;
 	icon: string | null;
+	/** How many times clients installed the addon from the marketplace. */
+	installs: number;
 	createdAt: string;
 	/** Newest first, withdrawn ones left out; the first is served. */
 	versions: AddonVersion[];
@@ -63,7 +65,10 @@ export type AddonDetails = {
 
 type SourcedVersionRow = AddonVersionRow & { submission: VersionSubmission | null };
 
-type ListedAddonRow = Pick<AddonRow, 'id' | 'type' | 'name' | 'description' | 'icon'> & {
+type ListedAddonRow = Pick<
+	AddonRow,
+	'id' | 'type' | 'name' | 'description' | 'icon' | 'installs'
+> & {
 	versions: SourcedVersionRow[];
 };
 
@@ -367,6 +372,7 @@ function toListedAddons(ctx: AppContext, rows: ListedAddonRow[]): ListedAddon[] 
 						description: row.description,
 						icon: row.icon,
 						iconSvg: renderAddonIcon(row.icon),
+						installs: row.installs,
 						latestVersion: toAddonVersion(ctx.env, latest, latest.submission),
 					},
 				]
@@ -409,7 +415,7 @@ export async function listListedAddons(ctx: AppContext): Promise<ListedAddon[]> 
 
 /**
  * @description Snapshots every listed addon with its newest version and tags, ordered by id. The revision
- * is a hash of the snapshot, so it changes exactly when an approval, delist, relist or retag changes it.
+ * is a hash of the snapshot, so it changes exactly when an approval, delist, relist, retag or counted install changes it.
  * @param ctx The application context.
  * @returns The catalog and its revision.
  */
@@ -423,6 +429,22 @@ export async function getCatalog(ctx: AppContext): Promise<CatalogResponse> {
 	const revision = new Bun.CryptoHasher('sha256').update(JSON.stringify(addons)).digest('hex');
 
 	return { revision, addons };
+}
+
+/**
+ * @description Counts one anonymous marketplace install of a listed addon. Nothing about the installer is stored.
+ * @param ctx The application context.
+ * @param id The addon id.
+ * @returns The addon's install count, or `undefined` when it does not exist or is delisted.
+ */
+export async function countAddonInstall(ctx: AppContext, id: string): Promise<number | undefined> {
+	const [row] = await ctx.db
+		.update(addon)
+		.set({ installs: sql`${addon.installs} + 1` })
+		.where(and(eq(addon.id, id), isNull(addon.delistedAt)))
+		.returning({ installs: addon.installs });
+
+	return row?.installs;
 }
 
 /**
@@ -458,6 +480,7 @@ export async function getAddonDetails(
 		name: row.name,
 		description: row.description,
 		icon: row.icon,
+		installs: row.installs,
 		createdAt: row.createdAt.toISOString(),
 		versions: row.versions.map((version) =>
 			toAddonVersion(ctx.env, version, version.submission),
@@ -559,6 +582,7 @@ export default {
 	listAddons,
 	listListedAddons,
 	getCatalog,
+	countAddonInstall,
 	getAddonDetails,
 	listAddonVersions,
 	listMyAddons,

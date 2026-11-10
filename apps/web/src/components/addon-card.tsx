@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '~/components/ui/card'
 import InstallAddonButton from '~/components/install-addon-button';
 import type { MarketplaceAddon } from '~/lib/marketplace-addon';
 import AuthorByline from '~/components/author-byline';
+import InstallCount from '~/components/install-count';
 import AddonIcon from '~/components/addon-icon';
 import Text from '~/components/ui/text';
 import cn from '~/lib/cn';
@@ -43,8 +44,15 @@ function AddonCard({ addon, footer, className, ...props }: AddonCardProps) {
 						<AuthorByline authors={addon.authors} prefixed={false} />
 					</Text>
 				</div>
-				<Text variant='text-xs' color='muted' className='self-start mt-1 shrink-0'>
-					v{addon.version}
+				{/* The install count sits under the version, beside the name and authors, so the card keeps its height. */}
+				<Text
+					as='div'
+					variant='text-xs'
+					color='muted'
+					className='flex flex-col items-end gap-0.5 self-start mt-1 shrink-0'
+				>
+					<span>v{addon.version}</span>
+					{addon.installs ? <InstallCount count={addon.installs} short /> : null}
 				</Text>
 			</CardHeader>
 			<CardContent className='px-(--card-pad) pt-3 pb-0'>

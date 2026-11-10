@@ -14,9 +14,14 @@ export type MarketplaceAddon = {
 	authors: ResolvedAuthor[];
 	version: string;
 	manifestUrl: string;
+	/** How many times clients installed the addon from the marketplace. */
+	installs: number;
 };
 
-export type ListedAddonFields = Pick<ListedAddon, 'id' | 'type' | 'name' | 'description' | 'icon'>;
+export type ListedAddonFields = Pick<
+	ListedAddon,
+	'id' | 'type' | 'name' | 'description' | 'icon' | 'installs'
+>;
 
 /**
  * @description Builds an addon card from a listed addon and the version it serves.
@@ -39,6 +44,7 @@ export function toMarketplaceAddon(
 		authors: resolve(latest.manifest.authors),
 		version: latest.version,
 		manifestUrl: latest.manifestUrl,
+		installs: addon.installs ?? 0,
 	};
 }
 
