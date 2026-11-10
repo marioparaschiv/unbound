@@ -9,7 +9,6 @@ import { getProvider } from '~/providers';
 import type { ProviderContext, ProviderId, TrendingData } from '~/types';
 
 const trending = new Map<ProviderId, TrendingData>();
-let removePatches = () => {};
 let lastContext: Partial<ProviderContext> = {};
 
 function contextFor(context: Partial<ProviderContext>): ProviderContext {
@@ -55,7 +54,7 @@ async function refreshTrending(): Promise<void> {
 			trendingGIFPreview: response.body?.gifs?.[0],
 		});
 	} catch (error) {
-		console.warn('[GIF Provider Switcher] Could not refresh trending categories:', error);
+		logger.warn('Could not refresh trending categories:', error);
 	}
 }
 
@@ -64,10 +63,12 @@ async function refreshTrending(): Promise<void> {
  * Patches `get` and `post` on Discord's HTTP client (`metro.common.REST`, found by `getAPIBaseURL`) and on its `HTTP` object, which the mobile GIF picker calls, and answers `/gifs/search`, `/gifs/suggest`, `/gifs/trending`, `/gifs/trending-gifs`, `/integrations/<id>/search` and `POST /gifs/select` itself, with the bodies those endpoints send.
  * Discord's GIF picker actions then dispatch `GIF_PICKER_QUERY_SUCCESS`, `GIF_PICKER_SUGGESTIONS_SUCCESS`, `GIF_PICKER_TRENDING_FETCH_SUCCESS` and `INTEGRATION_QUERY_SUCCESS` as usual.
  * With Klipy picked, every request goes to Discord unchanged.
- * When the provider changes, the cached categories are dropped and `GIF_PICKER_TRENDING_FETCH_SUCCESS` is dispatched with the new provider's; `stopRequests` does the same with Klipy's.
+ * When the provider changes, the cached categories are dropped and `GIF_PICKER_TRENDING_FETCH_SUCCESS` is dispatched with the new provider's; stopping does the same with Klipy's.
  * Reads the locale from each request, else `LocaleStore`.
+ * @returns A function that stops serving GIFs from the picked provider and asks Discord for Klipy's trending categories
+ * again. The Addon scope would remove the patches only after it runs, so it removes them first, or the refresh would be answered by the provider.
  */
-export function startRequests(): void {
+export function startRequests(): () => void {
 	const clients = REST.HTTP ? [REST, REST.HTTP] : [REST];
 	const unpatches = clients.flatMap((client) => [
 		patchMethod(client, 'get'),
@@ -78,24 +79,15 @@ export function startRequests(): void {
 		void refreshTrending();
 	});
 
-	removePatches = () => {
+	return () => {
+		const servedTrending = trending.size > 0;
+
 		stopListening();
 		for (const unpatch of unpatches) unpatch();
+		trending.clear();
+
+		if (servedTrending) void refreshTrending();
+
+		lastContext = {};
 	};
-}
-
-/**
- * @description Stops serving GIFs from the picked provider and asks Discord for Klipy's trending categories again.
- * The Addon scope would remove the patches only after this runs, so they are removed first, or the refresh would be answered by the provider.
- */
-export function stopRequests(): void {
-	const servedTrending = trending.size > 0;
-
-	removePatches();
-	removePatches = () => {};
-	trending.clear();
-
-	if (servedTrending) void refreshTrending();
-
-	lastContext = {};
 }

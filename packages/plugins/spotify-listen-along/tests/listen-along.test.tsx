@@ -1,4 +1,3 @@
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { render, startPlugin, toasts } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
@@ -74,7 +73,6 @@ describe('Listen Along button', () => {
 
 describe('self test', () => {
 	test('passes once the plugin has started', async () => {
-		resetHealth();
 		await startPlugin();
 
 		expect(selfTest()).toMatchObject({ ok: true });

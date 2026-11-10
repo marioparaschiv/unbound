@@ -68,7 +68,7 @@ export function startAndroidTagGradients(
 	context: PluginContext,
 	appearances: LabelAppearances,
 ): () => Promise<void> {
-	if (!ensureCapabilities('More User Tags: gradients', context.native, context.capabilities)) {
+	if (!ensureCapabilities(context.native, context.capabilities, 'gradients')) {
 		return async () => {};
 	}
 
@@ -80,7 +80,7 @@ export function startAndroidTagGradients(
 		: null;
 
 	if (!bind || !leftToRight) {
-		console.error('[More User Tags: gradients] Skipped, the Android tag view was not found.');
+		logger.error('Skipped gradients, the Android tag view was not found.');
 
 		return async () => {};
 	}
@@ -128,14 +128,12 @@ export function startAndroidTagGradients(
 	ui.call(installAndroidTagGradients, scope, bind, appearances.snapshot())
 		.then((installed) => {
 			if (!installed) {
-				console.error(
-					'[More User Tags: gradients] Skipped, the gradient classes were not found.',
-				);
+				logger.error('Skipped gradients, the gradient classes were not found.');
 			}
 		})
 		.catch((error: unknown) => {
 			if (!isCancellation(error)) {
-				console.error('[More User Tags: gradients] Failed to install the hook:', error);
+				logger.error('Failed to install the gradient hook:', error);
 			}
 		});
 
@@ -164,7 +162,7 @@ export function startAndroidTagGradients(
 		}
 	}
 
-	scheduleStartupScans('More User Tags', scanVisible);
+	scheduleStartupScans(scanVisible);
 
 	return async () => {
 		stopped = true;

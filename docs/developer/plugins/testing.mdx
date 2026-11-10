@@ -118,7 +118,7 @@ await startPlugin({ capabilities: ['native.ffi.call'], native: { apiVersion: '2.
 
 ## Test the self-test
 
-A plugin can export `selfTest`, which the device matrix calls after a restart to learn whether the plugin works. A plugin whose features all skipped, because Discord renamed a module, still passes `start`, so the self-test is what fails it. First-party plugins count their applied features with `recordApplied` and export `featureSelfTest` from `@unbound-plugins/shared`, as [Anatomy of a Plugin](/docs/developer/plugins/anatomy#the-entry) shows. The same idea needs no helper:
+A plugin can export `selfTest`, which the device matrix calls after a restart to learn whether the plugin works. A plugin whose features all skipped, because Discord renamed a module, still passes `start`, so the self-test is what fails it. First-party plugins export the `selfTest` that `runFeatures` from `@unbound-plugins/shared` builds, as [Anatomy of a Plugin](/docs/developer/plugins/anatomy#the-entry) shows. The same idea needs no helper:
 
 ```tsx src/index.tsx
 import { flux, patcher } from '@unbound-app/api';
@@ -151,7 +151,7 @@ test('reports that a feature applied', async () => {
 });
 ```
 
-State kept in a module, such as `applied`, survives from one test to the next. Reset it in `beforeEach`. The shared helper does this with `resetHealth()` from `@unbound-plugins/shared/lifecycle/health`.
+State kept in a module, such as `applied`, survives from one test to the next. Reset it in `beforeEach`. `runFeatures` resets its own state on each `start`.
 
 ## Check what the plugin did
 

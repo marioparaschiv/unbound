@@ -21,7 +21,7 @@ type UpdatedMessage = {
  * @description Records each edit's previous text, and keeps attachments an edit removed so they show as deleted.
  * @param log The message log.
  * Reads the previous version from `MessageStore`. The Addon scope removes the interceptor on `MESSAGE_UPDATE` when the plugin stops.
- * @returns A function with nothing to undo, for `applyFeatures`.
+ * @returns A function with nothing to undo; the Addon scope removes what it added.
  */
 export function startEdits(log: MessageLog): () => void {
 	flux.interceptAction('MESSAGE_UPDATE', (action) => {

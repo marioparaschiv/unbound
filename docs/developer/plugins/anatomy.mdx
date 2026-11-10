@@ -130,29 +130,23 @@ See [Testing](/docs/developer/plugins/testing) for what the preset serves.
 `src/index.tsx` starts the plugin's features and holds no logic of its own. A plugin with several features calls each feature's start function here.
 
 ```tsx src/index.tsx quoted
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
 import { startCounter } from '~/counter';
 
-export function start() {
-	startCounter();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures([startCounter]);
 ```
 
 There is no `stop`. The patch that `startCounter` makes goes through the plugin's own `patcher`, so the Addon scope removes it after the plugin stops, and nothing else needs undoing. Add a `stop` only for what the scope cannot see, as [How Plugins Run](/docs/developer/plugins/introduction#what-stop-still-has-to-undo) lists.
 
-`selfTest` is the optional fourth lifecycle export. The device matrix calls it after a restart, and it returns `{ ok, detail }`. A plugin whose `start` skipped every feature, because a module was not found, still passes `start`. The self-test is what fails it. `featureSelfTest` reports `ok` once at least one feature has called `recordApplied`, and says why when a feature recorded a skip or a failure. Both come from `@unbound-plugins/shared`.
+`selfTest` is the optional fourth lifecycle export. The device matrix calls it after a restart, and it returns `{ ok, detail }`. A plugin whose `start` skipped every feature, because a module was not found, still passes `start`. The self-test is what fails it. `runFeatures` from `@unbound-plugins/shared/lifecycle/features` builds all three exports: `selfTest` reports `ok` while the started features run, and says why when one failed, skipped or still waits for a module Discord has not loaded.
 
-A plugin with more than one feature starts them with `startFeatures` or `applyFeatures`, which are also in `@unbound-plugins/shared/lifecycle`:
+`runFeatures` takes functions that each start one feature and may return a cleanup, or a function of the start context that returns them. `stop` runs every cleanup in reverse. Logs go through the Addon scope's `logger`, so they carry the plugin's name.
 
-| Helper | When a feature throws | Use it when |
+| Option | When a feature throws | Use it when |
 | --- | --- | --- |
-| `startFeatures(name, features)` | Logs it and records a failure. The other features still start | The features are independent, which is the usual case |
-| `applyFeatures(name, features)` | Removes the features already applied, then rethrows | The features need each other, so half of them is worse than none |
-
-Each takes functions that start one feature and may return a cleanup. Both return one function that runs every cleanup in reverse. Return it from `stop`.
+| none | Logs it and records a failure. The other features still start | The features are independent, which is the usual case |
+| `atomic: true` | Removes the features already started and records a failure | The features need each other, so half of them is worse than none |
 
 ## A feature folder
 
@@ -163,7 +157,6 @@ A [feature](/docs/developer/addons/standards#the-layout) is one thing the plugin
 The feature's `index.tsx` makes its patch. The JSDoc names what it patches and what it reads, so the next developer can find the Discord code it depends on.
 
 ```tsx src/counter/index.tsx quoted
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { cloneElement, isValidElement, type ReactNode } from 'react';
 import { patcher } from '@unbound-app/api';
@@ -179,7 +172,7 @@ type ContainerProps = { channel?: { id?: string }; channelId?: string };
  * Nitro tier from `UserStore`. The Addon scope removes the patch when the plugin stops.
  */
 export function startCounter(): void {
-	if (!ensureModules('Character Counter', { ChatInputs, FloatingChatInputContainer })) return;
+	if (!ensureModules({ ChatInputs, FloatingChatInputContainer })) return;
 
 	patcher.react.after(FloatingChatInputContainer, 'default', ({ props, result }) => {
 		const container: ContainerProps = props;
@@ -197,16 +190,13 @@ export function startCounter(): void {
 			</>,
 		);
 	});
-
-	recordApplied(1);
 }
 ```
 
 Three habits of this file recur in every plugin:
 
-- `ensureModules` checks that the modules the feature needs exist, and logs one line and returns `false` when one does not. The feature then does nothing, and the rest of the plugin keeps working. `ensureModules` never loads a lazy handle.
+- `ensureModules` checks that the modules the feature needs exist, and logs one line, fails the self-test and returns `false` when one does not. The feature then does nothing, and the rest of the plugin keeps working. `ensureModules` never loads a lazy handle; until Discord loads one, the self-test reports it as waiting.
 - `patcher.react.after` takes the module and the key `'default'`, not the component itself. Reading the component would load the module at start. With the key, the patch waits for the module.
-- `recordApplied(1)` tells the self-test that this feature applied.
 
 The patch adds a child and leaves Discord's tree otherwise as it was. Other plugins can patch the same component, so it never replaces `children`.
 

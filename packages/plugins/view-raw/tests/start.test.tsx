@@ -1,5 +1,4 @@
 import { flux, metro, render, startPlugin } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { Pressable, Text, View } from 'react-native';
 import type { ReactNode } from 'react';
@@ -68,7 +67,6 @@ async function renderedLabels(): Promise<unknown[]> {
 }
 
 beforeEach(() => {
-	resetHealth();
 	opened.length = 0;
 	metro.register(ActionSheets);
 	metro.register({ setString: () => undefined, getString: () => '', setImage: () => undefined });

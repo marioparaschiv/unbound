@@ -1,6 +1,6 @@
 import { patcher } from '@unbound-app/api';
 
-import { CHANGE_TYPE_NONE, CHANGE_TYPE_UPDATE, PLUGIN_NAME } from '~/constants';
+import { CHANGE_TYPE_NONE, CHANGE_TYPE_UPDATE } from '~/constants';
 import { ChatManager } from '~/rows/modules';
 import type { MessageLog } from '~/log';
 
@@ -16,7 +16,7 @@ type ChangeInput = {
  */
 export function patchChatManager(log: MessageLog): () => void {
 	if (typeof ChatManager.prototype?.determineChangeType !== 'function') {
-		console.error(`[${PLUGIN_NAME}] Skipped, ChatManager.determineChangeType not found.`);
+		logger.error(`Skipped, ChatManager.determineChangeType not found.`);
 
 		return () => {};
 	}

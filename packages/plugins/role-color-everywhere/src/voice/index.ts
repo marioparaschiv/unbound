@@ -9,7 +9,6 @@ import { Text } from 'react-native';
 import { GuildMemberStore, VoiceUserNameItem } from '~/voice/modules';
 import { paintRoleText } from '~/shared/role-text';
 import type { Member, Rendered } from '~/types';
-import { PLUGIN_NAME } from '~/constants';
 
 type VoiceUserNameItemProps = {
 	guildId?: string;
@@ -52,7 +51,7 @@ function patchVoiceUserNameItem(): () => void {
  * @returns The function that ends the feature.
  */
 export function startVoice(): () => void {
-	if (!ensureModules(`${PLUGIN_NAME}: voice users`, { GuildMemberStore })) return () => {};
+	if (!ensureModules({ GuildMemberStore }, 'voice users')) return () => {};
 
 	return whileEnabled(settings, 'voiceUsers', true, patchVoiceUserNameItem);
 }

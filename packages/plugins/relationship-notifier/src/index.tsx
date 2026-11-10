@@ -1,5 +1,4 @@
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
 import { subscribeRelationshipRemove } from '~/events/relationship-remove';
@@ -14,7 +13,6 @@ import { patchGuildActions } from '~/patches/guild-actions';
 import { patchRestRemovals } from '~/patches/rest-removals';
 import { closeSession, createSession } from '~/session';
 import SettingsPanel from '~/components/settings-panel';
-import { PLUGIN_NAME } from '~/constants';
 import {
 	ChannelStore,
 	GuildMemberStore,
@@ -23,45 +21,37 @@ import {
 	UserStore,
 } from '~/modules';
 
-let dispose: () => Promise<void> | undefined = () => undefined;
+export const { start, stop, selfTest } = runFeatures(
+	() => {
+		if (
+			!ensureModules({
+				UserStore,
+				GuildStore,
+				GuildMemberStore,
+				ChannelStore,
+				RelationshipStore,
+			})
+		) {
+			return;
+		}
 
-export function start() {
-	if (
-		!ensureModules(PLUGIN_NAME, {
-			UserStore,
-			GuildStore,
-			GuildMemberStore,
-			ChannelStore,
-			RelationshipStore,
-		})
-	) {
-		return;
-	}
+		const session = createSession();
 
-	const session = createSession();
+		return [
+			() => () => closeSession(session),
+			() => patchRelationshipActions(session),
+			() => patchGuildActions(session),
+			() => patchPrivateChannelActions(session),
+			() => patchRestRemovals(session),
+			() => subscribeSnapshotChanges(session),
+			() => subscribeGuildDelete(session),
+			() => subscribeChannelDelete(session),
+			() => subscribeRelationshipRemove(session),
+			() => subscribeConnectionOpen(session),
+			() => scheduleStartCheck(session),
+		];
+	},
+	{ atomic: true },
+);
 
-	dispose = applyFeatures(PLUGIN_NAME, [
-		() => () => closeSession(session),
-		() => patchRelationshipActions(session),
-		() => patchGuildActions(session),
-		() => patchPrivateChannelActions(session),
-		() => patchRestRemovals(session),
-		() => subscribeSnapshotChanges(session),
-		() => subscribeGuildDelete(session),
-		() => subscribeChannelDelete(session),
-		() => subscribeRelationshipRemove(session),
-		() => subscribeConnectionOpen(session),
-		() => scheduleStartCheck(session),
-	]);
-}
-
-export function stop() {
-	const pending = dispose();
-
-	dispose = () => undefined;
-
-	return pending;
-}
-
-export const selfTest = featureSelfTest;
 export { SettingsPanel };

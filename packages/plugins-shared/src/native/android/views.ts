@@ -126,19 +126,15 @@ export async function findViewsOfClass(
 
 /**
  * @description Scans the views on screen after each startup delay, logging a scan that fails.
- * @param label The plugin's name for the log.
  * @param scan Finds and handles the views on screen.
  * @returns The timers, to clear when the plugin stops.
  */
-export function scheduleStartupScans(
-	label: string,
-	scan: () => Promise<void>,
-): ReturnType<typeof setTimeout>[] {
+export function scheduleStartupScans(scan: () => Promise<void>): ReturnType<typeof setTimeout>[] {
 	return STARTUP_SCAN_DELAYS.map((delay) =>
 		setTimeout(() => {
 			scan().catch((error) => {
 				if (!isCancellation(error)) {
-					console.error(`[${label}] Failed to scan the views on screen:`, error);
+					logger.error('Failed to scan the views on screen:', error);
 				}
 			});
 		}, delay),

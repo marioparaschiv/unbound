@@ -10,7 +10,7 @@ import { InvitePermissions } from '~/invites/modules';
  * `showInvitesPaused` is off. The Addon scope removes the patch when the plugin stops.
  */
 export function startInvitePermissions(): void {
-	if (!ensureModules('Show Hidden Things: paused invites', { InvitePermissions })) return;
+	if (!ensureModules({ InvitePermissions }, 'paused invites')) return;
 
 	patcher.after(InvitePermissions, 'useInvitesDisabledPermission', ({ result }) =>
 		settings.showInvitesPaused ? true : result,

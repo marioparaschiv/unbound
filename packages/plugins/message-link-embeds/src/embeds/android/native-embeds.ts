@@ -302,10 +302,7 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		setTimeout(() => {
 			render(messageView, messageId).catch((error) => {
 				if (!isCancellation(error)) {
-					console.error(
-						'[Message Link Embeds] Failed to embed a linked message on Android:',
-						error,
-					);
+					logger.error('Failed to embed a linked message on Android:', error);
 				}
 			});
 		}, 0);
@@ -356,7 +353,7 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		}
 	}
 
-	scheduleStartupScans('Message Link Embeds', scanVisible);
+	scheduleStartupScans(scanVisible);
 
 	return {
 		drawn: () => embeds.size,

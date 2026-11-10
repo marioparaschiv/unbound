@@ -1,8 +1,7 @@
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
+import type { Feature } from '@unbound-plugins/shared/lifecycle/features';
 import { metro } from '@unbound-app/api';
 
-import { PLUGIN_NAME } from '~/constants';
 import { patchThreadChannel } from '~/typing-indicator/thread-channel';
 import { patchTextChannel } from '~/typing-indicator/text-channel';
 
@@ -14,8 +13,8 @@ import { patchTextChannel } from '~/typing-indicator/text-channel';
  * The Addon scope removes both patches when the plugin stops, and the rows draw without the indicator again.
  * A patch that throws on an unexpected component is logged and recorded, and the other still applies.
  */
-export function startTypingIndicators(): () => Promise<void> {
-	if (!ensureModules(PLUGIN_NAME, { Theme: metro.common.Theme })) return async () => {};
+export function typingIndicatorFeatures(): Feature[] | undefined {
+	if (!ensureModules({ Theme: metro.common.Theme })) return;
 
-	return startFeatures(PLUGIN_NAME, [patchTextChannel, patchThreadChannel]);
+	return [patchTextChannel, patchThreadChannel];
 }

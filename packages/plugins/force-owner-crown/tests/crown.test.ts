@@ -1,5 +1,4 @@
 import { assets } from '@unbound-app/api';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { flux, metro, native, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
@@ -14,7 +13,6 @@ function row(message: Record<string, unknown>) {
 }
 
 beforeEach(() => {
-	resetHealth();
 	Object.assign(assets, {
 		getById: () => ({
 			httpServerLocation: '/assets/images/native/icons',

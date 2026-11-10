@@ -1,9 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
 import { startForumDefaults } from '~/forum-defaults';
 
-export function start() {
-	startForumDefaults();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures([startForumDefaults]);

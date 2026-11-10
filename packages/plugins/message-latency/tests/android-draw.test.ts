@@ -1,6 +1,5 @@
 import { flux, metro, native, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import type { NativeJavaValue } from '@unbound-app/api/native';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 const MESSAGE_VIEW = 'com.discord.chat.presentation.message.MessageView';
@@ -171,7 +170,6 @@ function seedDiscord() {
 }
 
 beforeEach(() => {
-	resetHealth();
 	shown.id = SENT;
 });
 

@@ -7,7 +7,7 @@ import { loadBundledGrammar, type RegistrationSource } from '~/codeblocks/gramma
 import { bundledThemes } from '~/codeblocks/bundled';
 import { highlightCodeToTokens, shouldUseHighlightJs } from '~/codeblocks/highlight-js';
 import { isLightTheme, loadThemeDefinition, themeUrl } from '~/codeblocks/themes';
-import { Limits, Palette, PLUGIN_NAME } from '~/constants';
+import { Limits, Palette } from '~/constants';
 import { expandTabs, type CodeBlock } from '~/codeblocks/fences';
 import { sharedTokenStore, type TokenStore } from '~/codeblocks/token-store';
 
@@ -98,10 +98,7 @@ export function createHighlighter(
 		})
 			.then((highlighter) => (loaded = highlighter))
 			.catch((error) => {
-				console.error(
-					`[${PLUGIN_NAME}] Failed to initialize the Shiki highlighter:`,
-					error,
-				);
+				logger.error(`Failed to initialize the Shiki highlighter:`, error);
 				core = null;
 
 				return null;

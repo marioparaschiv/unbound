@@ -1,3 +1,4 @@
+import { skipFeature } from '@unbound-plugins/shared/lifecycle/features';
 import type { NativePluginBridge } from '@unbound-app/api/native';
 
 import type { Embeds, Renderers } from '~/embeds/modules';
@@ -14,7 +15,7 @@ export function startEmbeds(native: NativePluginBridge, renderers: Renderers): E
 	const android = createNativeEmbeds(native, renderers) ?? createAndroidEmbeds(native, renderers);
 
 	if (!android) {
-		console.error('[Message Link Embeds] Skipped, the embed surface did not register.');
+		skipFeature('the embed surface did not register');
 
 		return;
 	}

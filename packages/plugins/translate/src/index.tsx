@@ -1,15 +1,7 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startTranslate, stopTranslate } from '~/translate';
+import { startTranslate } from '~/translate';
 
 export { SettingsPanel } from '~/settings';
 
-export function start() {
-	startTranslate();
-}
-
-export function stop() {
-	stopTranslate();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures([startTranslate]);

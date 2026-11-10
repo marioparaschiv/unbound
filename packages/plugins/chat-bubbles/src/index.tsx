@@ -1,14 +1,8 @@
-import type { PluginContext } from '@unbound-app/api/native';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { bubblesSelfTest, startBubbles, stopBubbles } from '~/bubbles';
+import { bubblesSelfTest, startBubbles } from '~/bubbles';
 import SettingsPanel from '~/settings';
 
-export function start(context: PluginContext) {
-	startBubbles(context);
-}
+export const { start, stop, selfTest } = runFeatures([startBubbles], { selfTest: bubblesSelfTest });
 
-export function stop() {
-	return stopBubbles();
-}
-
-export { bubblesSelfTest as selfTest, SettingsPanel };
+export { SettingsPanel };

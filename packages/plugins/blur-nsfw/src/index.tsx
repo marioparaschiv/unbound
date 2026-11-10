@@ -1,13 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startBlurNsfw, stopBlurNsfw } from '~/blur-nsfw';
+import { startBlurNsfw } from '~/blur-nsfw';
 
-export function start() {
-	startBlurNsfw();
-}
-
-export function stop() {
-	stopBlurNsfw();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures([startBlurNsfw]);

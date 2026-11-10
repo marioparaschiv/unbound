@@ -6,8 +6,7 @@ import {
 	startPlugin,
 	stopPlugin,
 } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
-import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
 
 import { selfTest } from '~/index';
 
@@ -35,9 +34,6 @@ function seedDiscord() {
 	metro.register({ TooltipArrowDirections: {}, TooltipArrowPositions: {} });
 	metro.register({ generateMessageRowData: () => ({ message: {} }) });
 }
-
-beforeEach(resetHealth);
-
 describe('the latency indicator on iOS', () => {
 	test('hooks the message cells and measures rows while running', async () => {
 		registerIosClasses();

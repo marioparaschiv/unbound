@@ -1,4 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import type { PluginContext } from '@unbound-app/api/native';
 
 import { createController } from '~/picture-in-picture/session/controller';
@@ -8,14 +7,13 @@ import { patchOverlayHeader } from '~/picture-in-picture/button';
 import { createWindow } from '~/picture-in-picture/platform';
 import { START_TIMEOUT_MS } from '~/constants';
 
-let dispose: (() => void) | undefined;
-
 /**
  * @description Adds a picture in picture button to the media viewer's header, and opens the playing video in the system's picture in picture window.
  * Patches the render of `MediaModalOverlayHeader` and reads `MediaViewerOverlayButton`. The Addon scope removes the patch when the plugin stops.
  * @param context The plugin's native context, which the platform window opens its views with.
+ * @returns A function that closes the picture in picture window and ends the session, which the Addon scope cannot see.
  */
-export function startPictureInPicture(context: PluginContext): void {
+export function startPictureInPicture(context: PluginContext): () => void {
 	const sessions = createSessionStore<string>();
 	const window = createWindow(context, { onEnded: () => sessions.end() });
 	const controller = createController(sessions, window, {
@@ -23,19 +21,10 @@ export function startPictureInPicture(context: PluginContext): void {
 		giveUpAfterMs: START_TIMEOUT_MS,
 	});
 
-	dispose = () => {
+	patchOverlayHeader(sessions, controller);
+
+	return () => {
 		controller.dispose();
 		sessions.end();
 	};
-
-	patchOverlayHeader(sessions, controller);
-	recordApplied(1);
-}
-
-/**
- * @description Closes the picture in picture window and ends the session, which the Addon scope cannot see.
- */
-export function stopPictureInPicture(): void {
-	dispose?.();
-	dispose = undefined;
 }

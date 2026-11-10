@@ -1,4 +1,3 @@
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { flux, metro, native, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
@@ -302,10 +301,6 @@ describe('voice users', () => {
 });
 
 describe('self test', () => {
-	beforeEach(() => {
-		resetHealth();
-	});
-
 	test('reports ok once the native painters find their Discord classes', async () => {
 		native.objc.registerClass('DCDMessageTableViewCell');
 		native.objc.registerClass('DCDChatInputComponentView');
@@ -321,7 +316,7 @@ describe('self test', () => {
 
 		expect(ok).toBe(false);
 		expect(detail).toBe(
-			'skipped: Role Color Everywhere: chat mentions: native classes not found: DCDMessageTableViewCell; Role Color Everywhere: composer mentions: native classes not found: DCDChatInputComponentView',
+			'skipped: chat mentions: native classes not found: DCDMessageTableViewCell; composer mentions: native classes not found: DCDChatInputComponentView',
 		);
 	});
 

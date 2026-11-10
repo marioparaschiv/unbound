@@ -42,7 +42,7 @@ export function createPlayer(manager: SoundManager, msPerDurationUnit: number) {
 		try {
 			manager.release?.(Sound.id);
 		} catch (error) {
-			console.error('[Moyai] Failed to release the sound:', error);
+			logger.error('Failed to release the sound:', error);
 		}
 	}
 
@@ -62,7 +62,7 @@ export function createPlayer(manager: SoundManager, msPerDurationUnit: number) {
 				}
 
 				if (error) {
-					console.error('[Moyai] Failed to prepare the sound:', error);
+					logger.error('Failed to prepare the sound:', error);
 
 					return;
 				}
@@ -72,7 +72,7 @@ export function createPlayer(manager: SoundManager, msPerDurationUnit: number) {
 			});
 		} catch (error) {
 			preparing = false;
-			console.error('[Moyai] Failed to prepare the sound:', error);
+			logger.error('Failed to prepare the sound:', error);
 		}
 	}
 
@@ -98,7 +98,7 @@ export function createPlayer(manager: SoundManager, msPerDurationUnit: number) {
 		} catch (error) {
 			if (current === sequence) playing = false;
 
-			console.error('[Moyai] Failed to play the sound:', error);
+			logger.error('Failed to play the sound:', error);
 
 			return;
 		}

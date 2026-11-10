@@ -16,7 +16,7 @@ import {
 	textEngine,
 } from '@unbound-plugins/shared/native/ios/text-attachments';
 
-import { CARD_SETTINGS, Limits, PLUGIN_NAME } from '~/constants';
+import { CARD_SETTINGS, Limits } from '~/constants';
 import {
 	locateCodeBlocks,
 	parseFencedCodeBlocks,
@@ -296,7 +296,7 @@ function labelLanguages(session: Session): void {
 		})
 		.catch((error) => {
 			if (!isCancellation(error)) {
-				console.error(`[${PLUGIN_NAME}] Failed to load the language catalog:`, error);
+				logger.error(`Failed to load the language catalog:`, error);
 			}
 		});
 }

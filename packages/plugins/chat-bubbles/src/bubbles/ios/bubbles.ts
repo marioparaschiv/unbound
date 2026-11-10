@@ -13,7 +13,7 @@ import { readNativeMessageInfo } from '@unbound-plugins/shared/native/ios/messag
 
 import { messageLayout, type SnapshotNode } from '~/bubbles/message-layout';
 import { drawBubble, forgetBubbles, installBubbleGuards } from '~/bubbles/ios/ui-bubbles';
-import { BubbleLayout, CARD_INSET, IOSClass, PLUGIN_NAME } from '~/constants';
+import { BubbleLayout, CARD_INSET, IOSClass } from '~/constants';
 import { bubbleFrame, bubbleProblem, cardFrame, frameDrift } from '~/bubbles/geometry';
 import { currentAppearance } from '~/bubbles/theme';
 import { messageOwnership } from '~/bubbles/author';
@@ -314,7 +314,7 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 				pending.delete(key);
 				await place(key, queued).catch((error) => {
 					if (!isCancellation(error)) {
-						console.error(`[${PLUGIN_NAME}] Failed to place a bubble:`, error);
+						logger.error(`Failed to place a bubble:`, error);
 					}
 				});
 			}

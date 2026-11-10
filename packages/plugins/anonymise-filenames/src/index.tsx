@@ -1,15 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startAnonymise } from '~/anonymise';
+import { anonymiseFeatures } from '~/anonymise';
 
-let stopAnonymise = async () => {};
-
-export function start() {
-	stopAnonymise = startAnonymise();
-}
-
-export function stop() {
-	return stopAnonymise();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures(anonymiseFeatures);

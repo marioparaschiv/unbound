@@ -1,5 +1,3 @@
-export const PLUGIN_NAME = 'Chat Bubbles';
-
 export const BubbleStyle = {
 	radius: 10,
 	horizontalPadding: 8,

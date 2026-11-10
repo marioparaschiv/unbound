@@ -14,7 +14,6 @@ import {
 } from '~/chat/android/ui-chat-input';
 import { currentGuildId, guildAliases } from '~/chat/composer-aliases';
 import { GuildMemberStore, SelectedChannelStore } from '~/chat/modules';
-import { PLUGIN_NAME } from '~/constants';
 
 const REFRESH_DELAY_MS = 250;
 
@@ -64,13 +63,11 @@ export function colorAndroidChatInputMentions({ ui }: Native): () => Promise<voi
 	ui.call(installAndroidComposerHooks, scope, composerMentions())
 		.then((installed) => {
 			if (!installed) {
-				console.error(
-					`[${PLUGIN_NAME}: composer mentions] Skipped, the mention span was not found.`,
-				);
+				logger.error('Skipped composer mentions, the mention span was not found.');
 			}
 		})
 		.catch((error) => {
-			console.error(`[${PLUGIN_NAME}: composer mentions] Failed to hook the input:`, error);
+			logger.error('Failed to hook the composer input:', error);
 		});
 	SelectedChannelStore.addChangeListener(scheduleRefresh);
 	GuildMemberStore.addChangeListener(scheduleRefresh);

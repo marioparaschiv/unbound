@@ -1,11 +1,9 @@
 import { flux, metro, startPlugin } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
 
 beforeEach(() => {
-	resetHealth();
 	flux.seed({ PendingReply: { getPendingReply: () => undefined } });
 });
 

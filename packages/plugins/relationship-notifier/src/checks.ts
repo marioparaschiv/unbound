@@ -70,7 +70,7 @@ async function check(session: Session): Promise<void> {
 export function syncAndRunChecks(session: Session): Promise<void> {
 	session.checking ??= check(session)
 		.catch((error: unknown) => {
-			console.error('[Relationship Notifier] The offline check failed:', error);
+			logger.error('The offline check failed:', error);
 		})
 		.finally(() => {
 			session.checking = undefined;

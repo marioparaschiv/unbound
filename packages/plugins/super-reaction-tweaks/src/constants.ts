@@ -1,5 +1,3 @@
-export const PLUGIN_NAME = 'Super Reaction Tweaks';
-
 export const BURST_REACTION_TOGGLE_PATH = 'modules/reactions/native/BurstReactionToggle.tsx';
 
 export const DISCORD_PLAYING_LIMIT = 5;

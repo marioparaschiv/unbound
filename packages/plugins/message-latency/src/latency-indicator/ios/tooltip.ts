@@ -45,7 +45,7 @@ export function createTooltips(
 	objc: NativeObjCBridge,
 	fabric: NativeFabricBridge,
 ): TooltipController | null {
-	if (!ensureModules('Message Latency: tooltip', { Tooltips })) return null;
+	if (!ensureModules({ Tooltips }, 'tooltip')) return null;
 
 	const tasks = new Set<Promise<void>>();
 	let shown: Shown | null = null;

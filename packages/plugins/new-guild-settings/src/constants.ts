@@ -1,7 +1,3 @@
-export const PLUGIN_NAME = 'New Guild Settings';
-
-export const PLUGIN_ID = 'unbound.new-guild-settings';
-
 export const MessageNotifications = {
 	All: 0,
 	Mentions: 1,

@@ -19,12 +19,7 @@ export function createIndicators(
 	const { objc, fabric, ui } = context.native;
 
 	if (
-		!ensureClasses('Message Latency', objc, [
-			'DCDMessageTableViewCell',
-			'NSLayoutConstraint',
-			'UIColor',
-			'UIFont',
-		])
+		!ensureClasses(objc, ['DCDMessageTableViewCell', 'NSLayoutConstraint', 'UIColor', 'UIFont'])
 	) {
 		return null;
 	}

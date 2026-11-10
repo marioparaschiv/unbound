@@ -2,7 +2,7 @@ import { safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke'
 import type { NativeHandle, NativeObjCBridge } from '@unbound-app/api/native';
 
 import { asHandle } from '~/picture-in-picture/ios/player-layer';
-import { IOS_WATCH_MS, PLUGIN_NAME } from '~/constants';
+import { IOS_WATCH_MS } from '~/constants';
 
 const KVO_SUBCLASS_PREFIX = 'NSKVONotifying_';
 const APPLICATION_ACTIVE = 0;
@@ -74,7 +74,7 @@ function hookAfter(
 
 		return () => token.remove();
 	} catch (error) {
-		console.error(`[${PLUGIN_NAME}] Could not watch ${selector} on the video player:`, error);
+		logger.error(`Could not watch ${selector} on the video player:`, error);
 
 		return () => {};
 	}

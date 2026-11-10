@@ -1,4 +1,4 @@
-import { recordApplied, recordSkip } from '@unbound-plugins/shared/lifecycle/health';
+import { skipFeature } from '@unbound-plugins/shared/lifecycle/features';
 import { settings } from '@unbound-app/settings';
 import type { MetroFunction } from '@unbound-app/api/metro';
 import { metro, patcher } from '@unbound-app/api';
@@ -12,7 +12,6 @@ import {
 } from '~/blur-nsfw/blur';
 import { byRowManager, ChannelStore } from '~/blur-nsfw/modules';
 import { isNsfwChannel } from '~/blur-nsfw/nsfw';
-import { PLUGIN_NAME } from '~/constants';
 
 function enabledParts(): BlurParts {
 	return { attachments: settings.attachments, embeds: settings.embeds };
@@ -33,10 +32,7 @@ export function patchRowManager(
 ): void {
 	metro.onModuleLoaded(byRowManager, (RowManager: MetroFunction) => {
 		if (typeof RowManager.prototype?.generate !== 'function') {
-			const reason = 'RowManager has no generate method';
-
-			console.error(`[${PLUGIN_NAME}] Skipped, ${reason}.`);
-			recordSkip(reason);
+			skipFeature('RowManager has no generate method');
 
 			return;
 		}
@@ -50,6 +46,5 @@ export function patchRowManager(
 				blurrer.apply(row, parts, blurs && isNsfwRow(input as RowInput | undefined, row));
 			}),
 		);
-		recordApplied(1);
 	});
 }

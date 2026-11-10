@@ -370,7 +370,7 @@ export function createAndroidRenderer(
 		for (const view of await findViewsOfClass(java, decor, TEXT_VIEW)) schedule(view);
 	}
 
-	scheduleStartupScans('Mention Avatars', scanVisible);
+	scheduleStartupScans(scanVisible);
 
 	return {
 		retryWaiting,

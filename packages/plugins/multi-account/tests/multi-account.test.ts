@@ -1,13 +1,9 @@
 import { flux as fakeFlux, startPlugin, stopPlugin } from '@unbound-app/api/testing';
-import { beforeEach, expect, test } from 'bun:test';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
+import { expect, test } from 'bun:test';
 import { flux } from '@unbound-app/api';
 
 import { MultiAccountStore } from '~/multi-account/modules';
 import { selfTest } from '~/index';
-
-beforeEach(resetHealth);
-
 function seedStore() {
 	fakeFlux.seed({ MultiAccount: { getCanUseMultiAccountMobile: () => false } });
 

@@ -1,4 +1,4 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
+import type { Feature } from '@unbound-plugins/shared/lifecycle/features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
 import { MessageActions, PendingReplyStore, ReplyActions } from '~/gif-paste/modules';
@@ -10,14 +10,12 @@ import { createKeptReplies } from '~/gif-paste/kept-replies';
  * @description Pastes GIF picker selections into the composer instead of sending them.
  * Patches `sendMessage` on `MessageActions` and `deletePendingReply` on `ReplyActions`, and reads
  * `PendingReplyStore` and `ChatInputRegistry`. The Addon scope removes both patches when the plugin stops.
+ * @returns One feature per patch, or nothing when a module is missing.
  */
-export function startGifPaste(): void {
-	if (!ensureModules('GIF Paste', { MessageActions, ReplyActions, PendingReplyStore })) return;
+export function gifPasteFeatures(): Feature[] | undefined {
+	if (!ensureModules({ MessageActions, ReplyActions, PendingReplyStore })) return;
 
 	const keptReplies = createKeptReplies();
 
-	patchReplyActions(keptReplies);
-	patchMessageActions(keptReplies);
-
-	recordApplied(2);
+	return [() => patchReplyActions(keptReplies), () => patchMessageActions(keptReplies)];
 }

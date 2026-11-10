@@ -63,7 +63,7 @@ type Metrics = {
  * @returns The tooltip controller, or `null` when Discord's tooltip component is missing.
  */
 export function createAndroidTooltips({ java, hooks, fabric }: Native): AndroidTooltips | null {
-	if (!ensureModules('Message Latency: tooltip', { Tooltips })) return null;
+	if (!ensureModules({ Tooltips }, 'tooltip')) return null;
 
 	const tasks = new Set<Promise<void>>();
 	let shown: Shown | null = null;

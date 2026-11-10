@@ -1,5 +1,4 @@
 import { flux, metro, render, startPlugin } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { createElement } from 'react';
 import { View } from 'react-native';
@@ -35,7 +34,6 @@ async function renderDots(Dot: typeof AnimatedEllipsisDot) {
 }
 
 beforeEach(() => {
-	resetHealth();
 	flux.seed({ Typing: { emitChange: () => undefined } });
 });
 

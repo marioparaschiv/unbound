@@ -51,7 +51,7 @@ export async function fetchReactors(context: ReactionContext): Promise<Reactor[]
 				if (users.size >= Avatar.limit) break;
 			}
 		} catch (error) {
-			console.error('[Reaction Avatars] Failed to fetch reactors:', error);
+			logger.error('Failed to fetch reactors:', error);
 		}
 	}
 

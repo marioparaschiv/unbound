@@ -237,10 +237,7 @@ export function createAndroidIndicators(
 			setTimeout(() => {
 				place(indicator).catch((error) => {
 					if (!isCancellation(error)) {
-						console.error(
-							'[Message Latency] Failed to place an Android indicator:',
-							error,
-						);
+						logger.error('Failed to place an Android indicator:', error);
 					}
 				});
 			}, delay);
@@ -343,7 +340,7 @@ export function createAndroidIndicators(
 			)
 			.catch((error) => {
 				if (!isCancellation(error)) {
-					console.error('[Message Latency] Failed to draw an Android indicator:', error);
+					logger.error('Failed to draw an Android indicator:', error);
 				}
 			})
 			.finally(() => {
@@ -404,7 +401,7 @@ export function createAndroidIndicators(
 		}
 	}
 
-	scheduleStartupScans('Message Latency', scanVisible);
+	scheduleStartupScans(scanVisible);
 
 	return {
 		async dispose() {

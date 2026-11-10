@@ -48,7 +48,7 @@ import {
 import { registerCodeCardSurface, type CardContent } from '~/codeblocks/components/code-card';
 import { channelBlocks } from '~/codeblocks/android/channel-blocks';
 import { storage } from '@unbound-app/api';
-import { CARD_SETTINGS, Limits, PLUGIN_NAME } from '~/constants';
+import { CARD_SETTINGS, Limits } from '~/constants';
 import { createFlatRecovery } from '~/codeblocks/flat-recovery';
 import { onAppForeground } from '~/codeblocks/foreground';
 import { createHighlighter } from '~/codeblocks/highlighter';
@@ -347,7 +347,7 @@ export function createNativeCards(native: Native) {
 
 			render(textView).catch((error) => {
 				if (!isCancellation(error)) {
-					console.error(`[${PLUGIN_NAME}] Failed to draw an Android code card:`, error);
+					logger.error(`Failed to draw an Android code card:`, error);
 				}
 			});
 		}, 0);
@@ -364,7 +364,7 @@ export function createNativeCards(native: Native) {
 
 		define(rendered, layout).catch((error) => {
 			if (!isCancellation(error)) {
-				console.error(`[${PLUGIN_NAME}] Failed to repaint an Android code card:`, error);
+				logger.error(`Failed to repaint an Android code card:`, error);
 			}
 		});
 	}, onAppForeground);
@@ -402,10 +402,7 @@ export function createNativeCards(native: Native) {
 			if (resized) {
 				resize(resized).catch((error) => {
 					if (!isCancellation(error)) {
-						console.error(
-							`[${PLUGIN_NAME}] Failed to resize an Android code card:`,
-							error,
-						);
+						logger.error(`Failed to resize an Android code card:`, error);
 					}
 				});
 			}
@@ -418,10 +415,7 @@ export function createNativeCards(native: Native) {
 			for (const [rendered, layout] of layouts) {
 				define(rendered, layout).catch((error) => {
 					if (!isCancellation(error)) {
-						console.error(
-							`[${PLUGIN_NAME}] Failed to repaint an Android code card:`,
-							error,
-						);
+						logger.error(`Failed to repaint an Android code card:`, error);
 					}
 				});
 			}
@@ -438,7 +432,7 @@ export function createNativeCards(native: Native) {
 		}
 	}
 
-	const scans = scheduleStartupScans('Shiki Codeblocks', scanVisible);
+	const scans = scheduleStartupScans(scanVisible);
 
 	return {
 		progress: () => ({

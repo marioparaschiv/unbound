@@ -1,5 +1,5 @@
 import { messageTextViewClass } from '@unbound-plugins/shared/native/ios/text-attachments';
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { skipFeature, startTogether } from '@unbound-plugins/shared/lifecycle/features';
 import { installReuseCleanup } from '@unbound-plugins/shared/native/ios/ui-reuse-cleanup';
 import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
 import type { NativePluginBridge } from '@unbound-app/api/native';
@@ -19,19 +19,14 @@ import { EMBED_HOST_TAG } from '~/constants';
 export function startEmbeds(native: NativePluginBridge, renderers: Renderers): Embeds | undefined {
 	const { objc, fabric, ui } = native;
 
-	if (
-		!ensureClasses('Message Link Embeds', objc, [
-			'DCDMessageTableViewCell',
-			messageTextViewClass(objc),
-		])
-	) {
+	if (!ensureClasses(objc, ['DCDMessageTableViewCell', messageTextViewClass(objc)])) {
 		return;
 	}
 
 	const embeds = createSession(objc, fabric, renderers);
 
 	if (!embeds) {
-		console.error('[Message Link Embeds] Skipped, the embed surface did not register.');
+		skipFeature('the embed surface did not register');
 
 		return;
 	}
@@ -40,7 +35,7 @@ export function startEmbeds(native: NativePluginBridge, renderers: Renderers): E
 
 	return {
 		drawn: embeds.drawn,
-		dispose: applyFeatures('Message Link Embeds', [
+		dispose: startTogether([
 			() => embeds.dispose,
 			() => subscribeMessageStore(session),
 			() => hookMessageCells(session),

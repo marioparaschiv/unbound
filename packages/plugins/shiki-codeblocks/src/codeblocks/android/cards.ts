@@ -51,7 +51,7 @@ import {
 import { registerCodeCardSurface, type CardContent } from '~/codeblocks/components/code-card';
 import { channelBlocks } from '~/codeblocks/android/channel-blocks';
 import { storage } from '@unbound-app/api';
-import { CARD_SETTINGS, Limits, PLUGIN_NAME } from '~/constants';
+import { CARD_SETTINGS, Limits } from '~/constants';
 import { createHighlighter } from '~/codeblocks/highlighter';
 import { readPreferences } from '~/codeblocks/preferences';
 import type { CodeBlock } from '~/codeblocks/fences';
@@ -265,10 +265,7 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 				for (const card of entry.cards) {
 					place(entry, card).catch((error) => {
 						if (!isCancellation(error)) {
-							console.error(
-								`[${PLUGIN_NAME}] Failed to place an Android code card:`,
-								error,
-							);
+							logger.error(`Failed to place an Android code card:`, error);
 						}
 					});
 				}
@@ -448,10 +445,7 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 				.then(() => render(textView))
 				.catch((error) => {
 					if (!isCancellation(error)) {
-						console.error(
-							`[${PLUGIN_NAME}] Failed to draw an Android code card:`,
-							error,
-						);
+						logger.error(`Failed to draw an Android code card:`, error);
 					}
 				})
 				.finally(() => {
@@ -497,10 +491,7 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 			for (const entry of views.values()) {
 				repaint(entry).catch((error) => {
 					if (!isCancellation(error)) {
-						console.error(
-							`[${PLUGIN_NAME}] Failed to repaint an Android code card:`,
-							error,
-						);
+						logger.error(`Failed to repaint an Android code card:`, error);
 					}
 				});
 			}
@@ -517,7 +508,7 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 		}
 	}
 
-	const scans = scheduleStartupScans('Shiki Codeblocks', scanVisible);
+	const scans = scheduleStartupScans(scanVisible);
 
 	return {
 		progress: () => ({

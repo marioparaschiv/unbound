@@ -1,14 +1,8 @@
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { flux, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
-
-// Health is module state that earlier tests in this process left behind.
-beforeEach(() => {
-	resetHealth();
-});
 
 type Author = { id: string; username: string; bot?: boolean };
 type Row = { message: { timestamp: string; timestampAccessibilityLabel: string } };

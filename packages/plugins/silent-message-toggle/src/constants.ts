@@ -1,5 +1,3 @@
-export const PLUGIN_NAME = 'Silent Message Toggle';
-
 export const SUPPRESS_NOTIFICATIONS = 1 << 12;
 
 export const Button = {

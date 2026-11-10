@@ -1,13 +1,7 @@
-import { selfTestYoutubeEmbeds, startYoutubeEmbeds } from '~/youtube-embeds';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-let stopEmbeds = async () => {};
+import { selfTestYoutubeEmbeds, youtubeEmbedFeatures } from '~/youtube-embeds';
 
-export function start() {
-	stopEmbeds = startYoutubeEmbeds();
-}
-
-export function stop() {
-	return stopEmbeds();
-}
-
-export { selfTestYoutubeEmbeds as selfTest };
+export const { start, stop, selfTest } = runFeatures(youtubeEmbedFeatures, {
+	selfTest: selfTestYoutubeEmbeds,
+});

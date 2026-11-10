@@ -1,5 +1,3 @@
-export const PLUGIN_NAME = 'Relationship Notifier';
-
 export const SETTINGS = {
 	notices: false,
 	offlineRemovals: true,

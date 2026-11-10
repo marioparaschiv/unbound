@@ -1,11 +1,10 @@
 import { storage, ui } from '@unbound-app/api';
 
 import { DISCORD_PLAYING_LIMIT, SETTINGS } from '~/constants';
-import { SETTINGS_BUCKET } from '~/modules';
 import { playingLimit } from '~/settings';
 
 function SettingsPanel() {
-	const store = storage.useBucket(SETTINGS_BUCKET);
+	const store = storage.useBucket(addon.id);
 
 	return (
 		<ui.Page>

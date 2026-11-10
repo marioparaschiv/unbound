@@ -31,11 +31,14 @@ type Row = {
  */
 export function startTimeoutIcons(): void {
 	if (
-		!ensureModules('Show Hidden Things: timeout icons', {
-			MessageRowData,
-			GuildMemberStore,
-			ChannelStore,
-		})
+		!ensureModules(
+			{
+				MessageRowData,
+				GuildMemberStore,
+				ChannelStore,
+			},
+			'timeout icons',
+		)
 	) {
 		return;
 	}

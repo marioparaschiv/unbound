@@ -1,4 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { assets, patcher } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
@@ -38,7 +37,7 @@ function getCrownSource(): string | number | undefined {
  * `GuildStore` and the crown's URI from the asset URI module. The Addon scope removes the patch when the plugin stops.
  */
 export function startCrown(): void {
-	if (!ensureModules('Force Owner Crown', { MessageRowData, GuildStore })) return;
+	if (!ensureModules({ MessageRowData, GuildStore })) return;
 
 	// Resolved on the first owner row rather than at start, since the asset may register later.
 	let source: string | number | undefined;
@@ -61,6 +60,4 @@ export function startCrown(): void {
 			alt: messages.SERVER_OWNER,
 		};
 	});
-
-	recordApplied(1);
 }

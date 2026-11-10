@@ -404,7 +404,7 @@ export function createAndroidReactions({ java, hooks, fabric, ui }: Native, surf
 			)
 			.catch((error) => {
 				if (!isCancellation(error)) {
-					console.error('[Reaction Avatars] Failed to draw Android reactors:', error);
+					logger.error('Failed to draw Android reactors:', error);
 				}
 			})
 			.finally(() => {
@@ -487,7 +487,7 @@ export function createAndroidReactions({ java, hooks, fabric, ui }: Native, surf
 		}
 	}
 
-	scheduleStartupScans('Reaction Avatars', scanVisible);
+	scheduleStartupScans(scanVisible);
 
 	return {
 		async dispose() {

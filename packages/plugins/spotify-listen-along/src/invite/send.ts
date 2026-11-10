@@ -9,7 +9,7 @@ import {
 	SpotifyStore,
 } from '~/invite/modules';
 import type { SpotifyActivity } from '~/types';
-import { ACTIVITY_ACTION_LISTEN, DRAFT_TYPE_CHANNEL_MESSAGE, PLUGIN_NAME } from '~/constants';
+import { ACTIVITY_ACTION_LISTEN, DRAFT_TYPE_CHANNEL_MESSAGE } from '~/constants';
 
 /**
  * @description Reads your current Spotify activity when it can be listened along to.
@@ -29,7 +29,7 @@ export function sendListenAlongInvite() {
 	const channelId = SelectedChannelStore.getChannelId?.();
 
 	if (!activity || !channelId) {
-		toasts.show({ title: PLUGIN_NAME, content: messages.PLAY_SOMETHING });
+		toasts.show({ title: addon.name, content: messages.PLAY_SOMETHING });
 
 		return;
 	}

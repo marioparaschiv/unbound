@@ -1,25 +1,23 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import { whenAllLoaded } from '@unbound-plugins/shared/metro/when-loaded';
+import { skipFeature } from '@unbound-plugins/shared/lifecycle/features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { patcher } from '@unbound-app/api';
 
 import { ChatClassFilters, ChatManager, ChatUpdatesQueue, RowManager } from '~/blocked/modules';
 import { chat, refreshChat } from '~/blocked/chat';
 
-let showBlocked = () => {};
-
 /**
  * @description Hides the rows that stand in for blocked messages, and refreshes the open chat so it applies at once.
  * Patches `ChatManager` (`setup`, `createRow`), `RowManager` (`generate`) and `ChatUpdatesQueue` (`add`) once all three classes have loaded.
- * The Addon scope removes the patches, but not the hidden rows, so `stopBlocked` stops hiding and refreshes the chat.
+ * The Addon scope removes the patches, but not the hidden rows.
+ * @returns A function that shows blocked messages in the open chat again.
  */
-export function startBlocked(): void {
-	if (!ensureModules('No Blocked Messages', { ChatManager, RowManager, ChatUpdatesQueue }))
-		return;
+export function startBlocked(): (() => void) | undefined {
+	if (!ensureModules({ ChatManager, RowManager, ChatUpdatesQueue })) return;
 
 	// Once every class has loaded, the reads through the lazy handles load nothing.
 	// The chat manager patch refreshes the open chat, so the managers it reads are captured first.
-	showBlocked = whenAllLoaded(ChatClassFilters, () => {
+	return whenAllLoaded(ChatClassFilters, () => {
 		patchRowManager();
 		patchChatUpdatesQueue();
 
@@ -27,17 +25,9 @@ export function startBlocked(): void {
 	});
 }
 
-/**
- * @description Shows blocked messages in the open chat again.
- */
-export function stopBlocked(): void {
-	showBlocked();
-	showBlocked = () => {};
-}
-
 function patchRowManager() {
 	if (typeof RowManager.prototype?.generate !== 'function') {
-		console.error('[No Blocked Messages] Skipped, RowManager.generate not found.');
+		skipFeature('RowManager.generate not found');
 
 		return;
 	}
@@ -45,13 +35,11 @@ function patchRowManager() {
 	patcher.before(RowManager.prototype, 'generate', ({ this: self }) => {
 		chat.rowManager = self;
 	});
-
-	recordApplied(1);
 }
 
 function patchChatUpdatesQueue() {
 	if (typeof ChatUpdatesQueue.prototype?.add !== 'function') {
-		console.error('[No Blocked Messages] Skipped, ChatUpdatesQueue.add not found.');
+		skipFeature('ChatUpdatesQueue.add not found');
 
 		return;
 	}
@@ -59,15 +47,13 @@ function patchChatUpdatesQueue() {
 	patcher.before(ChatUpdatesQueue.prototype, 'add', ({ this: self }) => {
 		chat.updatesQueue = self;
 	});
-
-	recordApplied(1);
 }
 
 function patchChatManager() {
 	const { prototype } = ChatManager;
 
 	if (typeof prototype?.setup !== 'function' || typeof prototype.createRow !== 'function') {
-		console.error('[No Blocked Messages] Skipped, ChatManager.createRow not found.');
+		skipFeature('ChatManager.createRow not found');
 
 		return;
 	}
@@ -85,7 +71,6 @@ function patchChatManager() {
 	});
 
 	refreshChat();
-	recordApplied(1);
 
 	return () => {
 		unpatchCreateRow();

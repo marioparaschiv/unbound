@@ -1,5 +1,5 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import type { Feature, SelfTestResult } from '@unbound-plugins/shared/lifecycle/features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
 
@@ -7,51 +7,49 @@ import { MessageStore, SelectedChannelStore } from '~/codeblocks/modules';
 import { createHighlighter } from '~/codeblocks/highlighter';
 import { readPreferences } from '~/codeblocks/preferences';
 import { startCards } from '~/codeblocks/platform';
-import { PLUGIN_NAME } from '~/constants';
 import type { Cards } from '~/types';
 
-let dispose: () => Promise<void> | undefined = () => undefined;
 let cards: Cards | undefined;
 
 /**
  * @description Draws syntax-highlighted code cards in place of code blocks in messages, natively on iOS and Android.
  * Reads `MessageStore` and `SelectedChannelStore`, and hooks Discord's native message cells and text views through
- * the platform handler. The native hooks are outside the Addon scope, so `stopCodeblocks` removes them.
+ * the platform handler. The native hooks are outside the Addon scope, so `stop` removes them.
  * @param context The plugin context, whose native bridge and granted capabilities the cards need.
+ * @returns The features, which start together; `undefined` when the plugin skipped starting.
  */
-export function startCodeblocks(context: PluginContext): void {
+export function startCodeblocks(context: PluginContext): Feature[] | undefined {
 	if (
-		!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities) ||
-		!ensureModules(PLUGIN_NAME, { MessageStore, SelectedChannelStore })
+		!ensureCapabilities(context.native, context.capabilities) ||
+		!ensureModules({ MessageStore, SelectedChannelStore })
 	) {
 		return;
 	}
 
-	cards = startCards(context.native);
+	const started = startCards(context.native);
 
-	if (cards) {
-		dispose = applyFeatures(PLUGIN_NAME, [cards.feature]);
-	}
-}
+	if (!started) return;
 
-/**
- * @description Removes the native hooks and views the cards added.
- * @returns A promise while a removal is still finishing.
- */
-export function stopCodeblocks(): Promise<void> | undefined {
-	const finished = dispose();
+	return [
+		() => {
+			cards = started;
 
-	dispose = () => undefined;
-	cards = undefined;
-
-	return finished;
+			return () => {
+				cards = undefined;
+			};
+		},
+		started.feature,
+	];
 }
 
 /**
  * @description Checks that sample code highlights in more than one color and that the cards on screen sit on their own messages.
+ * @param features The features' own result, which a failure keeps.
  * @returns The self test result for the device matrix.
  */
-export async function codeblocksSelfTest() {
+export async function codeblocksSelfTest(features: SelfTestResult): Promise<SelfTestResult> {
+	if (!features.ok) return features;
+
 	const { theme, hljs } = readPreferences();
 	const tokens = await createHighlighter()
 		.tokenize({ code: 'const answer: number = 42;', language: 'typescript' }, theme, hljs)

@@ -1,10 +1,5 @@
 import { metro, startPlugin } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
-import { beforeEach, describe, expect, test } from 'bun:test';
-
-beforeEach(() => {
-	resetHealth();
-});
+import { describe, expect, test } from 'bun:test';
 
 async function selfTest() {
 	const plugin = await import('~/index');

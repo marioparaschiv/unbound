@@ -2,7 +2,6 @@ import { format, messages } from '@unbound-app/i18n';
 import { toasts } from '@unbound-app/api';
 
 import { actionLabel, applyAction, type EmbedAction } from '~/unsuppress/embeds';
-import { PLUGIN_NAME } from '~/constants';
 import { REST } from '~/unsuppress/modules';
 
 // UNKNOWN: Discord's REST client rejects with an untyped error.
@@ -35,7 +34,7 @@ export async function changeEmbeds(
 		});
 	} catch (error) {
 		toasts.show({
-			title: PLUGIN_NAME,
+			title: addon.name,
 			content: format('CHANGE_FAILED', {
 				action: actionLabel(action),
 				reason: errorText(error),

@@ -1,17 +1,10 @@
-import type { PluginContext } from '@unbound-app/api/native';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { codeblocksSelfTest, startCodeblocks, stopCodeblocks } from '~/codeblocks';
+import { codeblocksSelfTest, startCodeblocks } from '~/codeblocks';
 
-export function start(context: PluginContext) {
-	startCodeblocks(context);
-}
-
-export function stop() {
-	return stopCodeblocks();
-}
-
-export function selfTest() {
-	return codeblocksSelfTest();
-}
+export const { start, stop, selfTest } = runFeatures(startCodeblocks, {
+	atomic: true,
+	selfTest: codeblocksSelfTest,
+});
 
 export { SettingsPanel } from '~/settings';

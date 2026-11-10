@@ -15,7 +15,6 @@ import { canAttachIn } from '~/uploads/permissions';
 import { pickAttachments } from '~/uploads/picker';
 import { addAttachments } from '~/uploads';
 import type { EditableMessage } from '~/types';
-import { PLUGIN_NAME } from '~/constants';
 
 type SheetProps = {
 	message?: EditableMessage;
@@ -29,7 +28,7 @@ async function chooseAndAdd(message: EditableMessage): Promise<void> {
 		await addAttachments(message.channel_id, message.id, items);
 	} catch (error) {
 		toasts.show({
-			title: PLUGIN_NAME,
+			title: addon.name,
 			content: error instanceof Error ? error.message : messages.PICKER_FAILED,
 		});
 	}
@@ -63,7 +62,7 @@ function rowsFor(message: EditableMessage, hide: () => void): SheetRowSpec[] {
  * @returns A function that removes the row and ignores sheets still loading.
  */
 export function startSheet(): () => void {
-	if (!ensureModules(`${PLUGIN_NAME}: sheet`, { ActionSheets, CloudUploader, REST })) {
+	if (!ensureModules({ ActionSheets, CloudUploader, REST }, 'sheet')) {
 		return () => undefined;
 	}
 

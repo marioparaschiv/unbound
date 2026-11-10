@@ -1,5 +1,4 @@
 import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { Pressable, View } from 'react-native';
 
@@ -40,7 +39,6 @@ const PATHS = {
 async function start() {
 	const fakes = createFakes();
 
-	resetHealth();
 	({ drafts, stickerSends } = fakes);
 	flux.seed({
 		Draft: { getDraft: (channelId: string) => drafts.get(channelId) ?? '' },
