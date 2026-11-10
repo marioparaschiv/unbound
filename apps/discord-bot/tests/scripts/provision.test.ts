@@ -14,8 +14,8 @@ import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 import postgres from 'postgres';
 
+import { MIGRATIONS_FOLDER, migrateDatabase } from '~/db/migrate';
 import { createDatabase, type Database } from '~/db/database';
-import { migrateDatabase } from '~/db/migrate';
 
 import { TEST_GRACE_DAYS, waitFor } from '../helpers/database';
 
@@ -27,14 +27,13 @@ const SUPERUSER_URL = process.env.POSTGRES_SUPERUSER_URL;
 const SCRIPT = join(import.meta.dirname, '..', '..', 'scripts', 'provision.sql');
 // A busy shared cluster can hold a CREATE or DROP DATABASE for seconds.
 const DATABASE_DDL_TIMEOUT_MS = 30_000;
-const MIGRATIONS = join(import.meta.dirname, '..', '..', 'drizzle');
 const FUNCTION_DECLARATION = /CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+bot\.(\w+)\s*\(/gi;
 
 // Every function the bot's migrations create, read from their SQL, so a new hook needs no edit here.
 function declaredFunctions(): string[] {
-	const sql = readdirSync(MIGRATIONS, { withFileTypes: true })
+	const sql = readdirSync(MIGRATIONS_FOLDER, { withFileTypes: true })
 		.filter((entry) => entry.isDirectory())
-		.map((entry) => readFileSync(join(MIGRATIONS, entry.name, 'migration.sql'), 'utf8'))
+		.map((entry) => readFileSync(join(MIGRATIONS_FOLDER, entry.name, 'migration.sql'), 'utf8'))
 		.join('\n');
 
 	return [
