@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Jelző",
+	"LATENCY_THRESHOLD": "Késleltetési küszöb",
+	"LATENCY_THRESHOLD_SUBTITLE": "Jelző megjelenítése, ha egy üzenet elküldése legalább ennyi ideig tart.",
+	"SHOW_MILLISECONDS": "Ezredmásodpercek megjelenítése",
+	"SHOW_MILLISECONDS_SUBTITLE": "Ezredmásodperces pontosság a jelzőben.",
+	"IGNORE_MY_MESSAGES": "Saját üzeneteim figyelmen kívül hagyása",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Csak mások üzeneteinek megjelölése.",
+	"DETECT_LEGACY_ANDROID": "Régi androidos kliensek észlelése",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Jelölés a régebbi androidos Discord-kliensek ismert időbélyeg-eltolódásánál.",
+	"DURATION_DAYS": "{count, plural, one {# nap} other {# nap}}",
+	"DURATION_HOURS": "{count, plural, one {# óra} other {# óra}}",
+	"DURATION_MINUTES": "{count, plural, one {# perc} other {# perc}}",
+	"DURATION_SECONDS": "{count, plural, one {# másodperc} other {# másodperc}}",
+	"DURATION_MILLISECONDS": "{count, plural, one {# ezredmásodperc} other {# ezredmásodperc}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} és {later}",
+	"TOOLTIP_DELAYED": "Ez az üzenet {duration} késéssel lett elküldve.",
+	"TOOLTIP_CLOCK_AHEAD": "A felhasználó órája ennyivel siet: {duration}.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "A felhasználó valószínűleg régi androidos Discord-klienst használ",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} A felhasználó valószínűleg régi androidos Discord-klienst használ.",
+	"OLD_ANDROID_CLIENT": "Régi androidos Discord-kliens"
+}

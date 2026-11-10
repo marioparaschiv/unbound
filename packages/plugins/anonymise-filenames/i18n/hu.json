@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Anonimizálás alapértelmezetten",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Az egyes fájloknál az előnézeti lapon továbbra is átállítható",
+	"METHOD": "Módszer",
+	"METHOD_RANDOM": "Véletlenszerű karakterek",
+	"METHOD_CONSISTENT": "Állandó",
+	"METHOD_TIMESTAMP": "Időbélyeg",
+	"LENGTH": "Hossz",
+	"FILE_NAME": "Fájlnév",
+	"FILE_NAME_PLACEHOLDER": "kép",
+	"FILE_NAME_SUBTITLE": "Minden fájl ezzel a névvel és a saját kiterjesztésével töltődik fel.",
+	"ANONYMISE_FILE_NAME": "Fájlnév anonimizálása",
+	"USING_ANONYMOUS_NAME": "Névtelen fájlnév használatban",
+	"USING_ORIGINAL_NAME": "Eredeti fájlnév használatban",
+	"USE_ORIGINAL_FILE_NAME": "Eredeti fájlnév használata"
+}

@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "ไม่สามารถเปิด{image, select, avatar {อวาตาร์} banner {แบนเนอร์} serverAvatar {อวาตาร์เซิร์ฟเวอร์} serverIcon {ไอคอนเซิร์ฟเวอร์} serverBanner {แบนเนอร์เซิร์ฟเวอร์} other {ไอคอนกลุ่มข้อความส่วนตัว}}ได้",
+	"VIEW_AVATAR": "ดูอวาตาร์",
+	"VIEW_BANNER": "ดูแบนเนอร์",
+	"VIEW_GROUP_ICON": "ดูไอคอนกลุ่มข้อความส่วนตัว",
+	"VIEW_ICONS": "ดูไอคอน",
+	"VIEW_SERVER_AVATAR": "ดูอวาตาร์เซิร์ฟเวอร์",
+	"VIEW_SERVER_BANNER": "ดูแบนเนอร์เซิร์ฟเวอร์",
+	"VIEW_SERVER_ICON": "ดูไอคอนเซิร์ฟเวอร์"
+}

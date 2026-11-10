@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Alustailmaisimet",
+	"SHOW_INDICATORS": "Näytä ilmaisimet",
+	"MEMBER_LIST": "Jäsenluettelo",
+	"MEMBER_LIST_SUBTITLE": "Nimien perässä jäsenluettelossa ja muissa käyttäjäluetteloissa",
+	"PROFILES": "Profiilit",
+	"PROFILES_SUBTITLE": "Nimen ja merkkien alla profiileissa",
+	"MESSAGES": "Viestit",
+	"MESSAGES_SUBTITLE": "Viestien aikaleiman perässä",
+	"STATUS": "Tila",
+	"COLOR_MOBILE_INDICATOR": "Väritä mobiili-ilmaisin",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "Näytä puhelimen muotoinen tilakuvake myös poissa- tai varattu-tilassa oleville mobiilikäyttäjille",
+	"PLATFORM_DESKTOP": "Tietokone",
+	"PLATFORM_MOBILE": "Mobiili",
+	"PLATFORM_WEB": "Verkko",
+	"PLATFORM_EMBEDDED": "Upotettu (konsoli tai peli)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "Paikalla: {platforms}"
+}

@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "預設版面配置",
+	"LAYOUT_LIST": "清單",
+	"LAYOUT_LIST_SUBTITLE": "以清單顯示貼文",
+	"LAYOUT_GALLERY": "圖庫",
+	"LAYOUT_GALLERY_SUBTITLE": "以卡片網格顯示貼文",
+	"DEFAULT_SORT_ORDER": "預設排序方式",
+	"SORT_RECENTLY_ACTIVE": "最近活躍",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "最新訊息的貼文優先",
+	"SORT_DATE_POSTED": "發文日期",
+	"SORT_DATE_POSTED_SUBTITLE": "最新的貼文優先"
+}

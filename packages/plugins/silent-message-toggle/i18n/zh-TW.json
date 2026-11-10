@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "自動停用",
+	"AUTO_DISABLE_SUBTITLE": "傳送一則靜音訊息後自動關閉開關",
+	"DISABLE_SILENT_MESSAGE": "停用靜音訊息",
+	"ENABLE_SILENT_MESSAGE": "啟用靜音訊息",
+	"PERSIST_STATE": "保留狀態",
+	"PERSIST_STATE_SUBTITLE": "開啟其他頻道時保持開關開啟",
+	"SILENT_MESSAGE_TOGGLE": "靜音訊息開關",
+	"TOGGLE": "切換",
+	"TOGGLED_OFF": "你在這裡傳送的訊息會再次通知其他人。",
+	"TOGGLED_ON": "你在這裡傳送的訊息不會發出通知。"
+}

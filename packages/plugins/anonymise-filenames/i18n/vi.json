@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Ẩn danh theo mặc định",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Vẫn có thể bật/tắt cho từng tệp trong bảng xem trước của tệp đó",
+	"METHOD": "Phương thức",
+	"METHOD_RANDOM": "Ký tự ngẫu nhiên",
+	"METHOD_CONSISTENT": "Cố định",
+	"METHOD_TIMESTAMP": "Dấu thời gian",
+	"LENGTH": "Độ dài",
+	"FILE_NAME": "Tên tệp",
+	"FILE_NAME_PLACEHOLDER": "image",
+	"FILE_NAME_SUBTITLE": "Mọi tệp đều được tải lên với tên này và đuôi tệp riêng của nó.",
+	"ANONYMISE_FILE_NAME": "Ẩn danh tên tệp",
+	"USING_ANONYMOUS_NAME": "Đang dùng tên tệp ẩn danh",
+	"USING_ORIGINAL_NAME": "Đang dùng tên tệp gốc",
+	"USE_ORIGINAL_FILE_NAME": "Dùng tên tệp gốc"
+}

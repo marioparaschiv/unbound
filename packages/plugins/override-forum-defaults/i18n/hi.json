@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "डिफ़ॉल्ट लेआउट",
+	"LAYOUT_LIST": "लिस्ट",
+	"LAYOUT_LIST_SUBTITLE": "पोस्ट एक लिस्ट में",
+	"LAYOUT_GALLERY": "गैलरी",
+	"LAYOUT_GALLERY_SUBTITLE": "पोस्ट कार्ड की ग्रिड में",
+	"DEFAULT_SORT_ORDER": "डिफ़ॉल्ट क्रम",
+	"SORT_RECENTLY_ACTIVE": "हाल ही में एक्टिव",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "सबसे नए मैसेज वाली पोस्ट पहले",
+	"SORT_DATE_POSTED": "पोस्ट करने की तारीख",
+	"SORT_DATE_POSTED_SUBTITLE": "सबसे नई पोस्ट पहले"
+}

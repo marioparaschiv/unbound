@@ -1,0 +1,5 @@
+{
+	"MESSAGE_PREVIEW": "Viestin esikatselu",
+	"PREVIEW_FAILED": "Esikatselu epäonnistui: {reason}",
+	"PREVIEW_MESSAGE": "Esikatsele viestiä"
+}

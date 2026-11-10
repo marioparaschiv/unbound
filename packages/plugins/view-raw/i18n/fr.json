@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Fermer",
+	"CONTENT_COPIED": "Contenu brut copié dans le presse-papiers.",
+	"COPY_CONTENT": "Copier le contenu",
+	"COPY_DATA": "Copier les données",
+	"DATA_COPIED": "Données ({type}) copiées dans le presse-papiers.",
+	"MESSAGE_CONTENT": "Contenu du message",
+	"MESSAGE_DATA": "Données du message",
+	"RAW_TITLE": "Données brutes : {type}",
+	"TYPE_CHANNEL": "Salon",
+	"TYPE_GUILD": "Serveur",
+	"TYPE_MESSAGE": "Message",
+	"TYPE_PROFILE": "Profil",
+	"TYPE_USER": "Utilisateur",
+	"VIEW_RAW": "Voir les données brutes"
+}

@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "代名詞",
+	"FORMAT_LOWERCASE": "小文字",
+	"FORMAT_CAPITALIZED": "先頭を大文字",
+	"SOURCE": "取得元",
+	"SOURCE_PRONOUNDB": "PronounDBを優先",
+	"SOURCE_PRONOUNDB_SUBTITLE": "なければDiscordプロフィールの代名詞を使用",
+	"SOURCE_DISCORD": "Discordを優先",
+	"SOURCE_DISCORD_SUBTITLE": "なければPronounDBを使用",
+	"SHOW_FOR_YOURSELF": "自分にも表示",
+	"PRONOUN_ANY": "どの代名詞でも可",
+	"PRONOUN_ASK": "代名詞は聞いてください",
+	"PRONOUN_AVOID": "代名詞を使わず名前で呼んでください",
+	"PRONOUN_HE": "He/Him",
+	"PRONOUN_IT": "It/Its",
+	"PRONOUN_OTHER": "その他の代名詞",
+	"PRONOUN_SHE": "She/Her",
+	"PRONOUN_THEY": "They/Them",
+	"PRONOUN_UNSPECIFIED": "代名詞が指定されていません。"
+}

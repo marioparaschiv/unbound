@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "平台指示器",
+	"SHOW_INDICATORS": "顯示指示器",
+	"MEMBER_LIST": "成員清單",
+	"MEMBER_LIST_SUBTITLE": "顯示在成員清單和其他使用者清單中的名稱後方",
+	"PROFILES": "個人資料",
+	"PROFILES_SUBTITLE": "顯示在個人資料的名稱和徽章下方",
+	"MESSAGES": "訊息",
+	"MESSAGES_SUBTITLE": "顯示在訊息的時間戳記後方",
+	"STATUS": "狀態",
+	"COLOR_MOBILE_INDICATOR": "彩色行動裝置指示器",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "閒置或請勿打擾的行動裝置使用者也顯示手機狀態圖示",
+	"PLATFORM_DESKTOP": "桌面",
+	"PLATFORM_MOBILE": "行動裝置",
+	"PLATFORM_WEB": "網頁",
+	"PLATFORM_EMBEDDED": "嵌入式（主機或遊戲）",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "在 {platforms} 上線"
+}

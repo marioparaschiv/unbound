@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Plattformanzeigen",
+	"SHOW_INDICATORS": "Anzeigen einblenden",
+	"MEMBER_LIST": "Mitgliederliste",
+	"MEMBER_LIST_SUBTITLE": "Hinter Namen in der Mitgliederliste und anderen Nutzerlisten",
+	"PROFILES": "Profile",
+	"PROFILES_SUBTITLE": "Unter dem Namen und den Abzeichen in Profilen",
+	"MESSAGES": "Nachrichten",
+	"MESSAGES_SUBTITLE": "Hinter dem Zeitstempel von Nachrichten",
+	"STATUS": "Status",
+	"COLOR_MOBILE_INDICATOR": "Mobil-Anzeige einfärben",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "Zeigt die Handy-Statusform auch für mobile Nutzer, die abwesend oder beschäftigt sind",
+	"PLATFORM_DESKTOP": "Desktop",
+	"PLATFORM_MOBILE": "Mobil",
+	"PLATFORM_WEB": "Web",
+	"PLATFORM_EMBEDDED": "Eingebettet (Konsole oder Spiel)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "Online auf {platforms}"
+}

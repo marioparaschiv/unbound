@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Platformjelzők",
+	"SHOW_INDICATORS": "Jelzők megjelenítése",
+	"MEMBER_LIST": "Taglista",
+	"MEMBER_LIST_SUBTITLE": "A nevek után a taglistában és más felhasználólistákban",
+	"PROFILES": "Profilok",
+	"PROFILES_SUBTITLE": "A név és a jelvények alatt a profilokon",
+	"MESSAGES": "Üzenetek",
+	"MESSAGES_SUBTITLE": "Az időbélyeg után az üzeneteken",
+	"STATUS": "Állapot",
+	"COLOR_MOBILE_INDICATOR": "Színes mobiljelző",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "A telefon alakú állapotjelző a tétlen vagy elfoglalt mobilos felhasználóknál is",
+	"PLATFORM_DESKTOP": "Asztali",
+	"PLATFORM_MOBILE": "Mobil",
+	"PLATFORM_WEB": "Web",
+	"PLATFORM_EMBEDDED": "Beágyazott (konzol vagy játék)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "Online itt: {platforms}"
+}

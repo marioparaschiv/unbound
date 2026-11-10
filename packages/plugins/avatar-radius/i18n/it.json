@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Avatar",
+	"CORNER_RADIUS": "Raggio degli angoli",
+	"CORNER_RADIUS_SUBTITLE": "Da 0 (quadrato) a 64. Un raggio oltre la metà della dimensione dell’avatar lo mantiene circolare."
+}

@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "禁言剩餘 {remaining}",
+	"TIMEOUT_EXPIRES_IN": "禁言將於 {remaining}後結束"
+}

@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "플랫폼 표시기",
+	"SHOW_INDICATORS": "표시기 표시 위치",
+	"MEMBER_LIST": "멤버 목록",
+	"MEMBER_LIST_SUBTITLE": "멤버 목록 및 기타 사용자 목록의 이름 뒤",
+	"PROFILES": "프로필",
+	"PROFILES_SUBTITLE": "프로필의 이름과 배지 아래",
+	"MESSAGES": "메시지",
+	"MESSAGES_SUBTITLE": "메시지의 타임스탬프 뒤",
+	"STATUS": "상태",
+	"COLOR_MOBILE_INDICATOR": "모바일 표시기 색상",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "자리 비움이나 방해 금지 상태인 모바일 사용자에게도 휴대폰 모양 상태를 표시해요",
+	"PLATFORM_DESKTOP": "데스크톱",
+	"PLATFORM_MOBILE": "모바일",
+	"PLATFORM_WEB": "웹",
+	"PLATFORM_EMBEDDED": "임베디드 (콘솔 또는 게임)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "{platforms}에서 온라인"
+}

@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Індикатори платформи",
+	"SHOW_INDICATORS": "Показувати індикатори",
+	"MEMBER_LIST": "Список учасників",
+	"MEMBER_LIST_SUBTITLE": "Після імен у списку учасників та інших списках користувачів",
+	"PROFILES": "Профілі",
+	"PROFILES_SUBTITLE": "Під іменем і значками в профілях",
+	"MESSAGES": "Повідомлення",
+	"MESSAGES_SUBTITLE": "Після позначки часу в повідомленнях",
+	"STATUS": "Статус",
+	"COLOR_MOBILE_INDICATOR": "Кольоровий мобільний індикатор",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "Показувати статус у формі телефона також для мобільних користувачів, які неактивні чи зайняті",
+	"PLATFORM_DESKTOP": "Комп’ютер",
+	"PLATFORM_MOBILE": "Мобільний",
+	"PLATFORM_WEB": "Веб",
+	"PLATFORM_EMBEDDED": "Вбудований (консоль або гра)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "У мережі: {platforms}"
+}

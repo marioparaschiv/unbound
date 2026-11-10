@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Uždaryti",
+	"CONTENT_COPIED": "Neapdorotas turinys nukopijuotas į iškarpinę.",
+	"COPY_CONTENT": "Kopijuoti turinį",
+	"COPY_DATA": "Kopijuoti duomenis",
+	"DATA_COPIED": "Duomenys ({type}) nukopijuoti į iškarpinę.",
+	"MESSAGE_CONTENT": "Žinutės turinys",
+	"MESSAGE_DATA": "Žinutės duomenys",
+	"RAW_TITLE": "Neapdoroti duomenys: {type}",
+	"TYPE_CHANNEL": "Kanalas",
+	"TYPE_GUILD": "Serveris",
+	"TYPE_MESSAGE": "Žinutė",
+	"TYPE_PROFILE": "Profilis",
+	"TYPE_USER": "Naudotojas",
+	"VIEW_RAW": "Peržiūrėti neapdorotą"
+}

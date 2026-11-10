@@ -1,0 +1,7 @@
+{
+	"SHOW_INVITES_PAUSED": "顯示已暫停的邀請",
+	"SHOW_INVITES_PAUSED_SUBTITLE": "向所有人顯示伺服器設定中的「暫停邀請」選項",
+	"SHOW_TIMEOUTS": "顯示禁言圖示",
+	"SHOW_TIMEOUTS_SUBTITLE": "在聊天中顯示成員的禁言圖示",
+	"VISIBILITY": "可見度"
+}

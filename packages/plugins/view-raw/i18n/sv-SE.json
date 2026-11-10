@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Stäng",
+	"CONTENT_COPIED": "Råinnehållet kopierades till urklipp.",
+	"COPY_CONTENT": "Kopiera innehåll",
+	"COPY_DATA": "Kopiera data",
+	"DATA_COPIED": "Data för {type} kopierades till urklipp.",
+	"MESSAGE_CONTENT": "Meddelandeinnehåll",
+	"MESSAGE_DATA": "Meddelandedata",
+	"RAW_TITLE": "Rådata för {type}",
+	"TYPE_CHANNEL": "Kanal",
+	"TYPE_GUILD": "Server",
+	"TYPE_MESSAGE": "Meddelande",
+	"TYPE_PROFILE": "Profil",
+	"TYPE_USER": "Användare",
+	"VIEW_RAW": "Visa rådata"
+}

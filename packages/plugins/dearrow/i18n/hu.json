@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Csere",
+	"REPLACE_ALL": "Címek és bélyegképek",
+	"REPLACE_TITLES": "Címek",
+	"REPLACE_THUMBNAILS": "Bélyegképek",
+	"DEARROW_BY_DEFAULT": "DeArrow alapértelmezetten",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Címek és bélyegképek cseréje kérdés nélkül",
+	"SHOW_TOGGLE": "Kapcsoló megjelenítése",
+	"SHOW_TOGGLE_SUBTITLE": "A beágyazás oda-vissza váltása az üzenetmenüből",
+	"SHOW_ORIGINAL_EMBED": "Eredeti beágyazás megjelenítése",
+	"DEARROW_EMBED": "Beágyazás DeArrow-val"
+}

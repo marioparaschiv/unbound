@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Местоимения",
+	"FORMAT_LOWERCASE": "Малки букви",
+	"FORMAT_CAPITALIZED": "С главна буква",
+	"SOURCE": "Източник",
+	"SOURCE_PRONOUNDB": "Предпочитай PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "При липса използвай местоименията от профила в Discord",
+	"SOURCE_DISCORD": "Предпочитай Discord",
+	"SOURCE_DISCORD_SUBTITLE": "При липса използвай PronounDB",
+	"SHOW_FOR_YOURSELF": "Показвай и за себе си",
+	"PRONOUN_ANY": "Всякакви местоимения",
+	"PRONOUN_ASK": "Попитай ме за местоименията ми",
+	"PRONOUN_AVOID": "Без местоимения, използвай името ми",
+	"PRONOUN_HE": "Той/него",
+	"PRONOUN_IT": "То/него",
+	"PRONOUN_OTHER": "Други местоимения",
+	"PRONOUN_SHE": "Тя/нея",
+	"PRONOUN_THEY": "Те/тях",
+	"PRONOUN_UNSPECIFIED": "Няма посочени местоимения."
+}

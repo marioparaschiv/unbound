@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "偏好設定",
+	"DISPLAY_MODE": "顯示模式",
+	"MODE_NICK_USER": "顯示名稱在前，使用者名稱在後",
+	"MODE_NICK_USER_SUBTITLE": "顯示名稱 (@使用者名稱)",
+	"MODE_USER_NICK": "使用者名稱在前，顯示名稱在後",
+	"MODE_USER_NICK_SUBTITLE": "@使用者名稱 (顯示名稱)",
+	"MODE_USER": "僅使用者名稱",
+	"MODE_USER_SUBTITLE": "@使用者名稱",
+	"FRIEND_NICKNAMES": "顯示好友暱稱",
+	"FRIEND_NICKNAMES_SUBTITLE": "在適用的地方優先顯示好友暱稱",
+	"DISPLAY_NAMES": "使用全域名稱",
+	"DISPLAY_NAMES_SUBTITLE": "顯示帳號的全域名稱，而非使用者名稱",
+	"IN_REPLIES": "套用至回覆",
+	"IN_REPLIES_SUBTITLE": "同時套用至回覆預覽"
+}

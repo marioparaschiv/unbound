@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "Szolgáltató",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "GIF-keresés a Tenoron",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "GIF-keresés a Giphyn",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "A Discord saját GIF-keresője",
+	"PROVIDER_BUTTON_LABEL": "GIF-szolgáltató: {provider}. Váltás erre: {next}"
+}

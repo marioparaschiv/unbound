@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "吹き出しの色",
+	"BUBBLE_COLOR_FALLBACK": "テーマに合わせます(ダークテーマでは黒、ライトテーマでは白)",
+	"COLORS": "色",
+	"CORNER_RADIUS": "角の丸み",
+	"HORIZONTAL_PADDING": "左右の余白",
+	"LAYOUT": "レイアウト",
+	"LAYOUT_CARD": "全幅カード",
+	"LAYOUT_CARD_SUBTITLE": "Rosiecordのように、名前やリアクションを含むメッセージ全体の背後に1枚のカードを表示します",
+	"LAYOUT_FIT": "メッセージに合わせる",
+	"LAYOUT_FIT_SUBTITLE": "各吹き出しがメッセージのテキストとメディアだけを囲みます",
+	"OPACITY": "不透明度",
+	"OWN_COLOR": "自分のメッセージ",
+	"OWN_COLOR_FALLBACK": "吹き出しの色と同じ",
+	"SHAPE": "形",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "上下の余白"
+}

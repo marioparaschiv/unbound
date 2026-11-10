@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "代名詞",
+	"FORMAT_LOWERCASE": "小寫",
+	"FORMAT_CAPITALIZED": "首字母大寫",
+	"SOURCE": "來源",
+	"SOURCE_PRONOUNDB": "優先使用 PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "無資料時改用 Discord 個人資料中的代名詞",
+	"SOURCE_DISCORD": "優先使用 Discord",
+	"SOURCE_DISCORD_SUBTITLE": "無資料時改用 PronounDB",
+	"SHOW_FOR_YOURSELF": "也為自己顯示",
+	"PRONOUN_ANY": "任何代名詞",
+	"PRONOUN_ASK": "請詢問我的代名詞",
+	"PRONOUN_AVOID": "不使用代名詞，請稱呼我的名字",
+	"PRONOUN_HE": "He/Him",
+	"PRONOUN_IT": "It/Its",
+	"PRONOUN_OTHER": "其他代名詞",
+	"PRONOUN_SHE": "She/Her",
+	"PRONOUN_THEY": "They/Them",
+	"PRONOUN_UNSPECIFIED": "未指定代名詞。"
+}

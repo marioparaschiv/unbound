@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "Nhà cung cấp",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "Tìm GIF trên Tenor",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "Tìm GIF trên Giphy",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "Tìm kiếm GIF riêng của Discord",
+	"PROVIDER_BUTTON_LABEL": "Nhà cung cấp GIF: {provider}. Chuyển sang {next}"
+}

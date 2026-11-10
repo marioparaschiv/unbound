@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Индикатори за платформа",
+	"SHOW_INDICATORS": "Показвай индикатори",
+	"MEMBER_LIST": "Списък с членове",
+	"MEMBER_LIST_SUBTITLE": "След имената в списъка с членове и в други списъци с потребители",
+	"PROFILES": "Профили",
+	"PROFILES_SUBTITLE": "Под името и значките в профилите",
+	"MESSAGES": "Съобщения",
+	"MESSAGES_SUBTITLE": "След часа на съобщенията",
+	"STATUS": "Статус",
+	"COLOR_MOBILE_INDICATOR": "Цветен мобилен индикатор",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "Показвай формата на телефон в статуса и за мобилни потребители, които са неактивни или заети",
+	"PLATFORM_DESKTOP": "Компютър",
+	"PLATFORM_MOBILE": "Мобилно устройство",
+	"PLATFORM_WEB": "Уеб",
+	"PLATFORM_EMBEDDED": "Вградено (конзола или игра)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "Онлайн от {platforms}"
+}

@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Bezárás",
+	"CONTENT_COPIED": "Nyers tartalom a vágólapra másolva.",
+	"COPY_CONTENT": "Tartalom másolása",
+	"COPY_DATA": "Adatok másolása",
+	"DATA_COPIED": "{type}-adatok a vágólapra másolva.",
+	"MESSAGE_CONTENT": "Üzenet tartalma",
+	"MESSAGE_DATA": "Üzenet adatai",
+	"RAW_TITLE": "Nyers {type}-adatok",
+	"TYPE_CHANNEL": "Csatorna",
+	"TYPE_GUILD": "Szerver",
+	"TYPE_MESSAGE": "Üzenet",
+	"TYPE_PROFILE": "Profil",
+	"TYPE_USER": "Felhasználó",
+	"VIEW_RAW": "Nyers adatok megtekintése"
+}

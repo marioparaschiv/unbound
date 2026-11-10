@@ -1,0 +1,6 @@
+{
+	"SUPPRESS_EMBEDS": "Ascunde încorporările",
+	"UNSUPPRESS_EMBEDS": "Afișează încorporările",
+	"CHANGE_FAILED": "{action} a eșuat: {reason}",
+	"CHANGE_REFUSED": "Discord a refuzat modificarea."
+}

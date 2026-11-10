@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "Utseende",
+	"COLOR_THRESHOLDS": "Färggränser",
+	"COLOR_THRESHOLDS_SUBTITLE": "Varna när meddelandet närmar sig Discords teckengräns.",
+	"COUNTER_LABEL": "{length} av {limit} tecken"
+}

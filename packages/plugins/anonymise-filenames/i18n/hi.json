@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "डिफ़ॉल्ट रूप से गुमनाम करें",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "हर फ़ाइल को उसकी प्रीव्यू शीट से अब भी बदला जा सकता है",
+	"METHOD": "तरीका",
+	"METHOD_RANDOM": "रैंडम अक्षर",
+	"METHOD_CONSISTENT": "एक जैसा",
+	"METHOD_TIMESTAMP": "टाइमस्टैम्प",
+	"LENGTH": "लंबाई",
+	"FILE_NAME": "फ़ाइल का नाम",
+	"FILE_NAME_PLACEHOLDER": "image",
+	"FILE_NAME_SUBTITLE": "हर फ़ाइल इसी नाम और अपने एक्सटेंशन के साथ अपलोड होती है।",
+	"ANONYMISE_FILE_NAME": "फ़ाइल का नाम गुमनाम करें",
+	"USING_ANONYMOUS_NAME": "गुमनाम फ़ाइल नाम इस्तेमाल हो रहा है",
+	"USING_ORIGINAL_NAME": "मूल फ़ाइल नाम इस्तेमाल हो रहा है",
+	"USE_ORIGINAL_FILE_NAME": "मूल फ़ाइल नाम इस्तेमाल करें"
+}

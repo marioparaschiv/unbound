@@ -55,6 +55,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 			directory: 'Unbound/Fonts',
 			bucket: 'fonts',
 			label: 'UNBOUND_FONTS',
+			noun: 'UNBOUND_FONTS_NOUN',
 			icon: 'LettersIcon',
 		});
 

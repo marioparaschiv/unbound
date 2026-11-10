@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "添付ファイルを追加",
+	"UPLOADING": "アップロード中です。しばらくかかる場合があります…",
+	"ATTACHMENTS_ADDED": "{count, plural, other {添付ファイルを追加しました!}}",
+	"UPLOAD_FAILED": "添付ファイルのアップロードに失敗しました。",
+	"NOT_ADDED": "添付ファイルを追加できませんでした。",
+	"PICKER_UNAVAILABLE": "このDiscordのビルドではメディアピッカーを利用できません。",
+	"PICKER_FAILED": "メディアピッカーでエラーが発生しました。",
+	"LIMIT_REACHED": "このメッセージにはこれ以上ファイルを添付できません。",
+	"LIMIT_REMAINING": "このメッセージに追加できる添付ファイルは、あと{count, plural, other {#個}}までです。"
+}

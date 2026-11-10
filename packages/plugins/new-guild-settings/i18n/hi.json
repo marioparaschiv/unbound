@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "जब आप किसी सर्वर से जुड़ें",
+	"MUTE_SERVER": "सर्वर म्यूट करें",
+	"MUTE_SERVER_SUBTITLE": "नए सर्वर अपने-आप म्यूट करें",
+	"SUPPRESS_EVERYONE": "@everyone और @here म्यूट करें",
+	"SUPPRESS_EVERYONE_SUBTITLE": "नए सर्वर में @everyone और @here को इग्नोर करें",
+	"SUPPRESS_ROLES": "सभी रोल @मेंशन म्यूट करें",
+	"SUPPRESS_ROLES_SUBTITLE": "नए सर्वर में रोल मेंशन इग्नोर करें",
+	"SUPPRESS_HIGHLIGHTS": "हाइलाइट म्यूट करें",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "नए सर्वर में हाइलाइट नोटिफ़िकेशन बंद करें",
+	"MUTE_EVENTS": "नए इवेंट म्यूट करें",
+	"MUTE_EVENTS_SUBTITLE": "शेड्यूल किए गए इवेंट के नोटिफ़िकेशन म्यूट करें",
+	"SHOW_ALL_CHANNELS": "सभी चैनल दिखाएँ",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "जिन सर्वर में चैनल चुनने की सुविधा है, उनमें हर चैनल दिखाएँ",
+	"SERVER_NOTIFICATION_SETTINGS": "सर्वर नोटिफ़िकेशन सेटिंग्स",
+	"NOTIFY_ALL": "सभी मैसेज",
+	"NOTIFY_MENTIONS": "सिर्फ़ @मेंशन",
+	"NOTIFY_NOTHING": "कुछ नहीं",
+	"NOTIFY_DEFAULT": "सर्वर डिफ़ॉल्ट",
+	"APPLY_NEW_GUILD_SETTINGS": "नए सर्वर की सेटिंग्स लागू करें",
+	"APPLIED_TO_GUILD": "{name} पर लागू किया गया।",
+	"APPLIED_TO_THIS_SERVER": "इस सर्वर पर लागू किया गया।"
+}

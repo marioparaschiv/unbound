@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Kanavan kirjoitusilmaisimet",
+	"INCLUDE_CURRENT_CHANNEL": "Sisällytä nykyinen kanava",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Näytä kirjoitustoiminta valitulla kanavalla.",
+	"INCLUDE_MUTED_CHANNELS": "Sisällytä mykistetyt kanavat",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Näytä kirjoitustoiminta mykistetyillä kanavilla.",
+	"INCLUDE_IGNORED_USERS": "Sisällytä ohitetut käyttäjät",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Näytä ohitettujen käyttäjien kirjoitustoiminta.",
+	"INCLUDE_BLOCKED_USERS": "Sisällytä estetyt käyttäjät",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Näytä estettyjen käyttäjien kirjoitustoiminta.",
+	"APPEARANCE": "Ulkoasu",
+	"APPEARANCE_BOTH": "Profiilikuvat ja animoidut pisteet",
+	"APPEARANCE_DOTS": "Animoidut pisteet",
+	"APPEARANCE_AVATARS": "Profiilikuvat",
+	"TYPING_ONE": "{a} kirjoittaa...",
+	"TYPING_TWO": "{a} ja {b} kirjoittavat...",
+	"TYPING_THREE": "{a}, {b} ja {c} kirjoittavat...",
+	"TYPING_SEVERAL": "Useat ihmiset kirjoittavat...",
+	"SOMEONE": "Joku"
+}

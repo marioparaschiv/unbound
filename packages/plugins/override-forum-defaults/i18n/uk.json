@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Стандартний макет",
+	"LAYOUT_LIST": "Список",
+	"LAYOUT_LIST_SUBTITLE": "Дописи списком",
+	"LAYOUT_GALLERY": "Галерея",
+	"LAYOUT_GALLERY_SUBTITLE": "Дописи сіткою карток",
+	"DEFAULT_SORT_ORDER": "Стандартне сортування",
+	"SORT_RECENTLY_ACTIVE": "Нещодавно активні",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Спершу дописи з найновішими повідомленнями",
+	"SORT_DATE_POSTED": "Дата публікації",
+	"SORT_DATE_POSTED_SUBTITLE": "Спершу найновіші дописи"
+}

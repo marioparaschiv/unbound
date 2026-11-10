@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Înlocuiește",
+	"REPLACE_ALL": "Titluri și miniaturi",
+	"REPLACE_TITLES": "Titluri",
+	"REPLACE_THUMBNAILS": "Miniaturi",
+	"DEARROW_BY_DEFAULT": "DeArrow implicit",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Înlocuiește titlurile și miniaturile fără să întrebe",
+	"SHOW_TOGGLE": "Afișează comutatorul",
+	"SHOW_TOGGLE_SUBTITLE": "Comută o încorporare înainte și înapoi din meniul mesajului",
+	"SHOW_ORIGINAL_EMBED": "Afișează încorporarea originală",
+	"DEARROW_EMBED": "Aplică DeArrow încorporării"
+}

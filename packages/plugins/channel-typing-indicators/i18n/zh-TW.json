@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "頻道輸入指示器",
+	"INCLUDE_CURRENT_CHANNEL": "包含目前頻道",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "顯示所選頻道中的輸入動態。",
+	"INCLUDE_MUTED_CHANNELS": "包含已靜音的頻道",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "顯示已靜音頻道中的輸入動態。",
+	"INCLUDE_IGNORED_USERS": "包含已忽略的使用者",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "顯示已忽略使用者的輸入動態。",
+	"INCLUDE_BLOCKED_USERS": "包含已封鎖的使用者",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "顯示已封鎖使用者的輸入動態。",
+	"APPEARANCE": "外觀",
+	"APPEARANCE_BOTH": "頭像和動態圓點",
+	"APPEARANCE_DOTS": "動態圓點",
+	"APPEARANCE_AVATARS": "頭像",
+	"TYPING_ONE": "{a} 正在輸入…",
+	"TYPING_TWO": "{a} 和 {b} 正在輸入…",
+	"TYPING_THREE": "{a}、{b} 和 {c} 正在輸入…",
+	"TYPING_SEVERAL": "有好幾個人正在輸入…",
+	"SOMEONE": "某人"
+}

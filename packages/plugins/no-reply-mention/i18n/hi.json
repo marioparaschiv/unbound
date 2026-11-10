@@ -1,0 +1,18 @@
+{
+	"ADD_USER_ID": "यूज़र ID जोड़ें",
+	"ADD_USER_ID_SUBTITLE": "अपवाद चालू होने पर जवाब इन यूज़र को मेंशन कर सकते हैं",
+	"CANCEL": "रद्द करें",
+	"DELETE": "हटाएँ",
+	"EDIT": "एडिट करें",
+	"EDIT_USER_ID": "यूज़र ID एडिट करें",
+	"EXCEPTIONS": "अपवाद",
+	"INVALID_USER_ID": "अंकों वाली Discord यूज़र ID डालें।",
+	"NO_USERS": "अभी तक कोई यूज़र नहीं जोड़ा गया।",
+	"ONLY_PING_LISTED": "सिर्फ़ लिस्ट के यूज़र को पिंग करें",
+	"ONLY_PING_LISTED_OFF": "डिफ़ॉल्ट रूप से जवाब किसी को मेंशन नहीं करते",
+	"ONLY_PING_LISTED_ON": "जवाब सिर्फ़ ऊपर लिस्ट किए गए यूज़र को मेंशन करते हैं",
+	"PLUGIN_NAME": "जवाब में मेंशन नहीं",
+	"SAVE": "सेव करें",
+	"TAP_TO_EDIT": "एडिट करने के लिए टैप करें",
+	"USER_ID_PLACEHOLDER": "Discord यूज़र ID"
+}

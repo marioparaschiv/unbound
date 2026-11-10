@@ -1,0 +1,18 @@
+{
+	"ADD_USER_ID": "Dodaj ID użytkownika",
+	"ADD_USER_ID_SUBTITLE": "Gdy wyjątek jest włączony, odpowiedzi mogą oznaczać tych użytkowników",
+	"CANCEL": "Anuluj",
+	"DELETE": "Usuń",
+	"EDIT": "Edytuj",
+	"EDIT_USER_ID": "Edytuj ID użytkownika",
+	"EXCEPTIONS": "Wyjątki",
+	"INVALID_USER_ID": "Wpisz liczbowe ID użytkownika Discorda.",
+	"NO_USERS": "Nie dodano jeszcze żadnych użytkowników.",
+	"ONLY_PING_LISTED": "Oznaczaj tylko użytkowników z listy",
+	"ONLY_PING_LISTED_OFF": "Domyślnie odpowiedzi nikogo nie oznaczają",
+	"ONLY_PING_LISTED_ON": "Odpowiedzi oznaczają tylko użytkowników z powyższej listy",
+	"PLUGIN_NAME": "Odpowiedzi bez wzmianki",
+	"SAVE": "Zapisz",
+	"TAP_TO_EDIT": "Dotknij, aby edytować",
+	"USER_ID_PLACEHOLDER": "ID użytkownika Discorda"
+}

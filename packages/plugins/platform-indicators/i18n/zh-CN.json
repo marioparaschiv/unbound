@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "平台指示器",
+	"SHOW_INDICATORS": "显示指示器",
+	"MEMBER_LIST": "成员列表",
+	"MEMBER_LIST_SUBTITLE": "显示在成员列表和其他用户列表中的名称之后",
+	"PROFILES": "个人资料",
+	"PROFILES_SUBTITLE": "显示在个人资料中的名称和徽章下方",
+	"MESSAGES": "消息",
+	"MESSAGES_SUBTITLE": "显示在消息的时间戳之后",
+	"STATUS": "状态",
+	"COLOR_MOBILE_INDICATOR": "彩色移动端指示器",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "对处于闲置或请勿打扰状态的移动端用户也显示手机状态图标",
+	"PLATFORM_DESKTOP": "桌面端",
+	"PLATFORM_MOBILE": "移动端",
+	"PLATFORM_WEB": "网页端",
+	"PLATFORM_EMBEDDED": "嵌入式（主机或游戏）",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "在{platforms}上在线"
+}

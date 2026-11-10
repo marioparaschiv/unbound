@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Automaticky vypnout",
+	"AUTO_DISABLE_SUBTITLE": "Po odeslání jedné tiché zprávy se přepínač znovu vypne",
+	"DISABLE_SILENT_MESSAGE": "Vypnout tichou zprávu",
+	"ENABLE_SILENT_MESSAGE": "Zapnout tichou zprávu",
+	"PERSIST_STATE": "Pamatovat stav",
+	"PERSIST_STATE_SUBTITLE": "Přepínač zůstane zapnutý i po otevření jiného kanálu",
+	"SILENT_MESSAGE_TOGGLE": "Přepínač tichých zpráv",
+	"TOGGLE": "Přepínač",
+	"TOGGLED_OFF": "Tvé zprávy tady zase lidi upozorňují.",
+	"TOGGLED_ON": "Tvé zprávy tady se odesílají bez upozornění."
+}

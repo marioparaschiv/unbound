@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "자동으로 끄기",
+	"AUTO_DISABLE_SUBTITLE": "무음 메시지를 하나 보내면 토글을 다시 꺼요",
+	"DISABLE_SILENT_MESSAGE": "무음 메시지 끄기",
+	"ENABLE_SILENT_MESSAGE": "무음 메시지 켜기",
+	"PERSIST_STATE": "상태 유지",
+	"PERSIST_STATE_SUBTITLE": "다른 채널을 열어도 토글을 켜 둔 상태로 유지해요",
+	"SILENT_MESSAGE_TOGGLE": "무음 메시지 토글",
+	"TOGGLE": "토글",
+	"TOGGLED_OFF": "이제 여기서 보내는 메시지가 다시 상대방에게 알림을 보내요.",
+	"TOGGLED_ON": "이제 여기서 보내는 메시지는 알림 없이 전송돼요."
+}

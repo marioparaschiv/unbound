@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Adaugă atașamente",
+	"UPLOADING": "Se încarcă, poate dura ceva timp...",
+	"ATTACHMENTS_ADDED": "{count, plural, one {Atașamentul a fost adăugat!} few {Atașamentele au fost adăugate!} other {Atașamentele au fost adăugate!}}",
+	"UPLOAD_FAILED": "Un atașament nu a putut fi încărcat.",
+	"NOT_ADDED": "Atașamentele nu au putut fi adăugate.",
+	"PICKER_UNAVAILABLE": "Selectorul media nu este disponibil în această versiune de Discord.",
+	"PICKER_FAILED": "Selectorul media a eșuat.",
+	"LIMIT_REACHED": "Nu mai poți adăuga atașamente la acest mesaj.",
+	"LIMIT_REMAINING": "Mai poți adăuga doar {count, plural, one {# atașament} few {# atașamente} other {# de atașamente}} la acest mesaj."
+}

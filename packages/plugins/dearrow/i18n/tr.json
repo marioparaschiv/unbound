@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Değiştir",
+	"REPLACE_ALL": "Başlıklar ve Küçük Resimler",
+	"REPLACE_TITLES": "Başlıklar",
+	"REPLACE_THUMBNAILS": "Küçük Resimler",
+	"DEARROW_BY_DEFAULT": "Varsayılan Olarak DeArrow Uygula",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Başlıkları ve küçük resimleri sormadan değiştir",
+	"SHOW_TOGGLE": "Geçiş Düğmesini Göster",
+	"SHOW_TOGGLE_SUBTITLE": "Bir yerleştirmeyi mesaj menüsünden ileri geri değiştir",
+	"SHOW_ORIGINAL_EMBED": "Orijinal Yerleştirmeyi Göster",
+	"DEARROW_EMBED": "Yerleştirmeye DeArrow Uygula"
+}

@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Colorer les mentions",
+	"COLOR_MENTIONS_SUBTITLE": "Afficher les couleurs de rôle du membre mentionné dans la discussion et la zone de saisie",
+	"COLOR_MESSAGE_CONTENT": "Colorer le contenu des messages",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Teinter le texte du message avec la couleur de rôle de son auteur",
+	"MESSAGE_COLOR_INTENSITY": "Intensité de la couleur des messages",
+	"TYPING_NAMES": "Noms en train d’écrire",
+	"TYPING_NAMES_SUBTITLE": "Colorer les noms dans l’indicateur de saisie du salon",
+	"MEMBER_LIST_ROLE_HEADERS": "En-têtes de rôle de la liste des membres",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "Colorer les titres des sections de rôle dans la liste des membres",
+	"REACTION_USERS": "Auteurs des réactions",
+	"REACTION_USERS_SUBTITLE": "Colorer les noms dans la liste détaillée des réactions",
+	"POLL_VOTERS": "Votants des sondages",
+	"POLL_VOTERS_SUBTITLE": "Colorer les noms dans le détail des résultats des sondages",
+	"VOICE_USERS": "Utilisateurs en vocal",
+	"VOICE_USERS_SUBTITLE": "Colorer les noms des membres dans les listes des salons vocaux"
+}

@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Boblefarve",
+	"BUBBLE_COLOR_FALLBACK": "Følger temaet: sort på mørke temaer, hvid på det lyse tema",
+	"COLORS": "Farver",
+	"CORNER_RADIUS": "Hjørneradius",
+	"HORIZONTAL_PADDING": "Vandret afstand",
+	"LAYOUT": "Layout",
+	"LAYOUT_CARD": "Kort i fuld bredde",
+	"LAYOUT_CARD_SUBTITLE": "Ét kort bag hver hele besked, inklusive navn og reaktioner, ligesom Rosiecord",
+	"LAYOUT_FIT": "Tilpas til besked",
+	"LAYOUT_FIT_SUBTITLE": "Hver boble omslutter kun beskedens tekst og medier",
+	"OPACITY": "Opacitet",
+	"OWN_COLOR": "Dine beskeder",
+	"OWN_COLOR_FALLBACK": "Samme som boblefarven",
+	"SHAPE": "Form",
+	"UNIT_PERCENT": " %",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Lodret afstand"
+}

@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Aggiungi allegati",
+	"UPLOADING": "Caricamento in corso, potrebbe volerci un po’...",
+	"ATTACHMENTS_ADDED": "{count, plural, one {Allegato aggiunto!} many {Allegati aggiunti!} other {Allegati aggiunti!}}",
+	"UPLOAD_FAILED": "Il caricamento di un allegato non è riuscito.",
+	"NOT_ADDED": "Impossibile aggiungere gli allegati.",
+	"PICKER_UNAVAILABLE": "Il selettore di contenuti multimediali non è disponibile in questa build di Discord.",
+	"PICKER_FAILED": "Il selettore di contenuti multimediali non ha funzionato.",
+	"LIMIT_REACHED": "Non puoi aggiungere altri allegati a questo messaggio.",
+	"LIMIT_REMAINING": "Puoi aggiungere solo {count, plural, one {# altro allegato} many {# di altri allegati} other {altri # allegati}} a questo messaggio."
+}

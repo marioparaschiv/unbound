@@ -1,0 +1,12 @@
+{
+	"REPLACE": "替换",
+	"REPLACE_ALL": "标题和缩略图",
+	"REPLACE_TITLES": "标题",
+	"REPLACE_THUMBNAILS": "缩略图",
+	"DEARROW_BY_DEFAULT": "默认启用 DeArrow",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "无需询问，直接替换标题和缩略图",
+	"SHOW_TOGGLE": "显示切换选项",
+	"SHOW_TOGGLE_SUBTITLE": "通过消息菜单来回切换嵌入内容",
+	"SHOW_ORIGINAL_EMBED": "显示原始嵌入内容",
+	"DEARROW_EMBED": "使用 DeArrow 处理嵌入内容"
+}

@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Lägg till bilagor",
+	"UPLOADING": "Laddar upp, det kan ta en stund …",
+	"ATTACHMENTS_ADDED": "{count, plural, one {Bilagan har lagts till!} other {Bilagorna har lagts till!}}",
+	"UPLOAD_FAILED": "En bilaga kunde inte laddas upp.",
+	"NOT_ADDED": "Bilagorna kunde inte läggas till.",
+	"PICKER_UNAVAILABLE": "Medieväljaren är inte tillgänglig i den här Discord-versionen.",
+	"PICKER_FAILED": "Medieväljaren misslyckades.",
+	"LIMIT_REACHED": "Du kan inte lägga till fler bilagor i det här meddelandet.",
+	"LIMIT_REMAINING": "Du kan bara lägga till {count, plural, one {# bilaga till} other {# bilagor till}} i det här meddelandet."
+}

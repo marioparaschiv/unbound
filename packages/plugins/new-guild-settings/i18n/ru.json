@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "При вступлении на сервер",
+	"MUTE_SERVER": "Заглушить сервер",
+	"MUTE_SERVER_SUBTITLE": "Автоматически заглушать новые серверы",
+	"SUPPRESS_EVERYONE": "Отключить @everyone и @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Игнорировать @everyone и @here на новых серверах",
+	"SUPPRESS_ROLES": "Отключить все @упоминания ролей",
+	"SUPPRESS_ROLES_SUBTITLE": "Игнорировать упоминания ролей на новых серверах",
+	"SUPPRESS_HIGHLIGHTS": "Отключить подборки",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Выключить уведомления о подборках на новых серверах",
+	"MUTE_EVENTS": "Заглушить новые события",
+	"MUTE_EVENTS_SUBTITLE": "Заглушить уведомления о запланированных событиях",
+	"SHOW_ALL_CHANNELS": "Показывать все каналы",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Показывать все каналы на серверах, где можно выбирать каналы",
+	"SERVER_NOTIFICATION_SETTINGS": "Настройки уведомлений сервера",
+	"NOTIFY_ALL": "Все сообщения",
+	"NOTIFY_MENTIONS": "Только @упоминания",
+	"NOTIFY_NOTHING": "Ничего",
+	"NOTIFY_DEFAULT": "По умолчанию для сервера",
+	"APPLY_NEW_GUILD_SETTINGS": "Применить настройки для новых серверов",
+	"APPLIED_TO_GUILD": "Применено к серверу {name}.",
+	"APPLIED_TO_THIS_SERVER": "Применено к этому серверу."
+}

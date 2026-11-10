@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "加入服务器时",
+	"MUTE_SERVER": "静音服务器",
+	"MUTE_SERVER_SUBTITLE": "自动静音新加入的服务器",
+	"SUPPRESS_EVERYONE": "屏蔽 @everyone 和 @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "在新服务器中忽略 @everyone 和 @here",
+	"SUPPRESS_ROLES": "屏蔽所有身份组 @提及",
+	"SUPPRESS_ROLES_SUBTITLE": "在新服务器中忽略身份组提及",
+	"SUPPRESS_HIGHLIGHTS": "屏蔽精彩内容",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "在新服务器中关闭精彩内容通知",
+	"MUTE_EVENTS": "静音新活动",
+	"MUTE_EVENTS_SUBTITLE": "静音已安排活动的通知",
+	"SHOW_ALL_CHANNELS": "显示所有频道",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "在允许您选择频道的服务器中显示所有频道",
+	"SERVER_NOTIFICATION_SETTINGS": "服务器通知设置",
+	"NOTIFY_ALL": "所有消息",
+	"NOTIFY_MENTIONS": "仅 @提及",
+	"NOTIFY_NOTHING": "无",
+	"NOTIFY_DEFAULT": "服务器默认",
+	"APPLY_NEW_GUILD_SETTINGS": "应用新服务器设置",
+	"APPLIED_TO_GUILD": "已应用到 {name}。",
+	"APPLIED_TO_THIS_SERVER": "已应用到此服务器。"
+}

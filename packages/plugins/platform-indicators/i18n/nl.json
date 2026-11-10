@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Platformindicatoren",
+	"SHOW_INDICATORS": "Indicatoren tonen",
+	"MEMBER_LIST": "Ledenlijst",
+	"MEMBER_LIST_SUBTITLE": "Na namen in de ledenlijst en andere gebruikerslijsten",
+	"PROFILES": "Profielen",
+	"PROFILES_SUBTITLE": "Onder de naam en badges op profielen",
+	"MESSAGES": "Berichten",
+	"MESSAGES_SUBTITLE": "Na de tijdstempel bij berichten",
+	"STATUS": "Status",
+	"COLOR_MOBILE_INDICATOR": "Mobiele indicator kleuren",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "Toon de telefoonvorm ook voor mobiele gebruikers die inactief zijn of niet storen hebben ingesteld",
+	"PLATFORM_DESKTOP": "Desktop",
+	"PLATFORM_MOBILE": "Mobiel",
+	"PLATFORM_WEB": "Web",
+	"PLATFORM_EMBEDDED": "Ingebouwd (console of game)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "Online op {platforms}"
+}

@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "Impossible d’ouvrir {image, select, avatar {l’avatar} banner {la bannière} serverAvatar {l’avatar de serveur} serverIcon {l’icône du serveur} serverBanner {la bannière du serveur} other {l’icône du MP de groupe}}.",
+	"VIEW_AVATAR": "Voir l’avatar",
+	"VIEW_BANNER": "Voir la bannière",
+	"VIEW_GROUP_ICON": "Voir l’icône du MP de groupe",
+	"VIEW_ICONS": "Voir les icônes",
+	"VIEW_SERVER_AVATAR": "Voir l’avatar de serveur",
+	"VIEW_SERVER_BANNER": "Voir la bannière du serveur",
+	"VIEW_SERVER_ICON": "Voir l’icône du serveur"
+}

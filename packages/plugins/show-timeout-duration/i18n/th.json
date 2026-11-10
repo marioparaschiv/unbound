@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "เหลือเวลาระงับชั่วคราวอีก {remaining}",
+	"TIMEOUT_EXPIRES_IN": "การระงับชั่วคราวจะสิ้นสุดใน {remaining}"
+}

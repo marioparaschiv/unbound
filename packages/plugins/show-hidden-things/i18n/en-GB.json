@@ -1,0 +1,7 @@
+{
+	"SHOW_INVITES_PAUSED": "Show Paused Invites",
+	"SHOW_INVITES_PAUSED_SUBTITLE": "Show the Pause Invites setting in Server Settings to everyone",
+	"SHOW_TIMEOUTS": "Show Timeout Icons",
+	"SHOW_TIMEOUTS_SUBTITLE": "Show member timeout icons in chat",
+	"VISIBILITY": "Visibility"
+}

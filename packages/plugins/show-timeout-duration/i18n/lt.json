@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "Liko laikino apribojimo: {remaining}",
+	"TIMEOUT_EXPIRES_IN": "Laikinas apribojimas baigsis po {remaining}"
+}

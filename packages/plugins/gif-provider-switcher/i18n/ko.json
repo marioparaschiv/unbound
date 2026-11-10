@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "제공업체",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "Tenor에서 GIF 검색",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "Giphy에서 GIF 검색",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "Discord 자체 GIF 검색",
+	"PROVIDER_BUTTON_LABEL": "GIF 제공업체: {provider}. {next}(으)로 전환"
+}

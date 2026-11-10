@@ -1,0 +1,7 @@
+{
+	"SHOW_INVITES_PAUSED": "招待の一時停止を表示",
+	"SHOW_INVITES_PAUSED_SUBTITLE": "サーバー設定の「招待を一時停止」の設定を全員に表示します",
+	"SHOW_TIMEOUTS": "タイムアウトアイコンを表示",
+	"SHOW_TIMEOUTS_SUBTITLE": "チャットでメンバーのタイムアウトアイコンを表示します",
+	"VISIBILITY": "表示"
+}

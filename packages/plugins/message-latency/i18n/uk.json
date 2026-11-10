@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Індикатор",
+	"LATENCY_THRESHOLD": "Поріг затримки",
+	"LATENCY_THRESHOLD_SUBTITLE": "Показувати індикатор, коли надсилання повідомлення триває щонайменше стільки.",
+	"SHOW_MILLISECONDS": "Показувати мілісекунди",
+	"SHOW_MILLISECONDS_SUBTITLE": "Показувати в індикаторі точність до мілісекунд.",
+	"IGNORE_MY_MESSAGES": "Ігнорувати мої повідомлення",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Позначати лише повідомлення інших людей.",
+	"DETECT_LEGACY_ANDROID": "Виявляти старі клієнти Android",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Показувати позначку для відомого зсуву часу в старіших клієнтах Discord для Android.",
+	"DURATION_DAYS": "{count, plural, one {# день} few {# дні} many {# днів} other {# дня}}",
+	"DURATION_HOURS": "{count, plural, one {# година} few {# години} many {# годин} other {# години}}",
+	"DURATION_MINUTES": "{count, plural, one {# хвилина} few {# хвилини} many {# хвилин} other {# хвилини}}",
+	"DURATION_SECONDS": "{count, plural, one {# секунда} few {# секунди} many {# секунд} other {# секунди}}",
+	"DURATION_MILLISECONDS": "{count, plural, one {# мілісекунда} few {# мілісекунди} many {# мілісекунд} other {# мілісекунди}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} і {later}",
+	"TOOLTIP_DELAYED": "Це повідомлення надіслано із затримкою: {duration}.",
+	"TOOLTIP_CLOCK_AHEAD": "Годинник цього користувача поспішає на {duration}.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "Імовірно, користувач має старий клієнт Discord для Android",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} Імовірно, користувач має старий клієнт Discord для Android.",
+	"OLD_ANDROID_CLIENT": "Старий клієнт Discord для Android"
+}

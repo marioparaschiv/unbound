@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "Beállítások",
+	"DISPLAY_MODE": "Megjelenítési mód",
+	"MODE_NICK_USER": "Megjelenített név, majd felhasználónév",
+	"MODE_NICK_USER_SUBTITLE": "Megjelenített név (@felhasználónév)",
+	"MODE_USER_NICK": "Felhasználónév, majd megjelenített név",
+	"MODE_USER_NICK_SUBTITLE": "@felhasználónév (Megjelenített név)",
+	"MODE_USER": "Csak felhasználónév",
+	"MODE_USER_SUBTITLE": "@felhasználónév",
+	"FRIEND_NICKNAMES": "Barátok beceneveinek megjelenítése",
+	"FRIEND_NICKNAMES_SUBTITLE": "A barát beceneve előnyben, ahol alkalmazható",
+	"DISPLAY_NAMES": "Globális nevek használata",
+	"DISPLAY_NAMES_SUBTITLE": "A fiók globális nevének megjelenítése a felhasználónév helyett",
+	"IN_REPLIES": "Alkalmazás a válaszokra",
+	"IN_REPLIES_SUBTITLE": "A válaszok előnézetére is vonatkozik"
+}

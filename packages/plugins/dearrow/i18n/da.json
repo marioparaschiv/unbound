@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Erstat",
+	"REPLACE_ALL": "Titler og miniaturer",
+	"REPLACE_TITLES": "Titler",
+	"REPLACE_THUMBNAILS": "Miniaturer",
+	"DEARROW_BY_DEFAULT": "Brug DeArrow som standard",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Erstat titler og miniaturer uden at spørge",
+	"SHOW_TOGGLE": "Vis skifteknap",
+	"SHOW_TOGGLE_SUBTITLE": "Skift en indlejring frem og tilbage fra beskedmenuen",
+	"SHOW_ORIGINAL_EMBED": "Vis oprindelig indlejring",
+	"DEARROW_EMBED": "Brug DeArrow på indlejring"
+}

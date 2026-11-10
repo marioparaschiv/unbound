@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "彩色提及",
+	"COLOR_MENTIONS_SUBTITLE": "在聊天和输入框中显示被提及成员的身份组颜色",
+	"COLOR_MESSAGE_CONTENT": "彩色消息内容",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "用作者的身份组颜色为消息文字着色",
+	"MESSAGE_COLOR_INTENSITY": "消息颜色强度",
+	"TYPING_NAMES": "输入中的名称",
+	"TYPING_NAMES_SUBTITLE": "为频道输入提示中的名称着色",
+	"MEMBER_LIST_ROLE_HEADERS": "成员列表身份组标题",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "为成员列表中的身份组分区标题着色",
+	"REACTION_USERS": "反应用户",
+	"REACTION_USERS_SUBTITLE": "为反应详情列表中的名称着色",
+	"POLL_VOTERS": "投票者",
+	"POLL_VOTERS_SUBTITLE": "为投票结果详情中的名称着色",
+	"VOICE_USERS": "语音用户",
+	"VOICE_USERS_SUBTITLE": "为语音用户列表中的成员名称着色"
+}

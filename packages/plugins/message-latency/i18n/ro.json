@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Indicator",
+	"LATENCY_THRESHOLD": "Prag de latență",
+	"LATENCY_THRESHOLD_SUBTITLE": "Afișează un indicator când trimiterea unui mesaj durează cel puțin atât.",
+	"SHOW_MILLISECONDS": "Afișează milisecundele",
+	"SHOW_MILLISECONDS_SUBTITLE": "Include precizie la milisecundă în indicator.",
+	"IGNORE_MY_MESSAGES": "Ignoră mesajele mele",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Marchează doar mesajele trimise de alte persoane.",
+	"DETECT_LEGACY_ANDROID": "Detectează clienții Android vechi",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Afișează un marcaj pentru decalajul cunoscut al marcajului temporal în clienții Discord Android mai vechi.",
+	"DURATION_DAYS": "{count, plural, one {# zi} few {# zile} other {# de zile}}",
+	"DURATION_HOURS": "{count, plural, one {# oră} few {# ore} other {# de ore}}",
+	"DURATION_MINUTES": "{count, plural, one {# minut} few {# minute} other {# de minute}}",
+	"DURATION_SECONDS": "{count, plural, one {# secundă} few {# secunde} other {# de secunde}}",
+	"DURATION_MILLISECONDS": "{count, plural, one {# milisecundă} few {# milisecunde} other {# de milisecunde}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} și {later}",
+	"TOOLTIP_DELAYED": "Acest mesaj a fost trimis cu o întârziere de {duration}.",
+	"TOOLTIP_CLOCK_AHEAD": "Ceasul acestui utilizator este înainte cu {duration}.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "Utilizatorul pare să folosească un client Discord Android vechi",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} Utilizatorul pare să folosească un client Discord Android vechi.",
+	"OLD_ANDROID_CLIENT": "Client Discord Android vechi"
+}

@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Ek Ekle",
+	"UPLOADING": "Yükleniyor, bu biraz zaman alabilir...",
+	"ATTACHMENTS_ADDED": "{count, plural, one {Ek başarıyla eklendi!} other {Ekler başarıyla eklendi!}}",
+	"UPLOAD_FAILED": "Bir ek yüklenemedi.",
+	"NOT_ADDED": "Ekler eklenemedi.",
+	"PICKER_UNAVAILABLE": "Medya seçici bu Discord derlemesinde kullanılamıyor.",
+	"PICKER_FAILED": "Medya seçici başarısız oldu.",
+	"LIMIT_REACHED": "Bu mesaja daha fazla ek ekleyemezsin.",
+	"LIMIT_REMAINING": "Bu mesaja yalnızca {count, plural, one {# ek daha} other {# ek daha}} ekleyebilirsin."
+}

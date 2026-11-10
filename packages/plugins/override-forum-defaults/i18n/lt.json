@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Numatytasis išdėstymas",
+	"LAYOUT_LIST": "Sąrašas",
+	"LAYOUT_LIST_SUBTITLE": "Įrašai sąraše",
+	"LAYOUT_GALLERY": "Galerija",
+	"LAYOUT_GALLERY_SUBTITLE": "Įrašai kortelių tinklelyje",
+	"DEFAULT_SORT_ORDER": "Numatytoji rikiavimo tvarka",
+	"SORT_RECENTLY_ACTIVE": "Neseniai aktyvūs",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Pirmiausia įrašai su naujausiomis žinutėmis",
+	"SORT_DATE_POSTED": "Paskelbimo data",
+	"SORT_DATE_POSTED_SUBTITLE": "Pirmiausia naujausi įrašai"
+}

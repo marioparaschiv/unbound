@@ -1,0 +1,16 @@
+{
+	"CLOSE": "ปิด",
+	"CONTENT_COPIED": "คัดลอกเนื้อหาดิบไปยังคลิปบอร์ดแล้ว",
+	"COPY_CONTENT": "คัดลอกเนื้อหา",
+	"COPY_DATA": "คัดลอกข้อมูล",
+	"DATA_COPIED": "คัดลอกข้อมูล{type}ไปยังคลิปบอร์ดแล้ว",
+	"MESSAGE_CONTENT": "เนื้อหาข้อความ",
+	"MESSAGE_DATA": "ข้อมูลข้อความ",
+	"RAW_TITLE": "ข้อมูลดิบของ{type}",
+	"TYPE_CHANNEL": "ช่อง",
+	"TYPE_GUILD": "เซิร์ฟเวอร์",
+	"TYPE_MESSAGE": "ข้อความ",
+	"TYPE_PROFILE": "โปรไฟล์",
+	"TYPE_USER": "ผู้ใช้",
+	"VIEW_RAW": "ดูข้อมูลดิบ"
+}

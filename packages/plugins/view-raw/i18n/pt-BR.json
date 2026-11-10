@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Fechar",
+	"CONTENT_COPIED": "Conteúdo bruto copiado para a área de transferência.",
+	"COPY_CONTENT": "Copiar conteúdo",
+	"COPY_DATA": "Copiar dados",
+	"DATA_COPIED": "Dados de {type} copiados para a área de transferência.",
+	"MESSAGE_CONTENT": "Conteúdo da mensagem",
+	"MESSAGE_DATA": "Dados da mensagem",
+	"RAW_TITLE": "Dados brutos de {type}",
+	"TYPE_CHANNEL": "Canal",
+	"TYPE_GUILD": "Servidor",
+	"TYPE_MESSAGE": "Mensagem",
+	"TYPE_PROFILE": "Perfil",
+	"TYPE_USER": "Usuário",
+	"VIEW_RAW": "Ver dados brutos"
+}

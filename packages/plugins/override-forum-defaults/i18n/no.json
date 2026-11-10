@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Standardoppsett",
+	"LAYOUT_LIST": "Liste",
+	"LAYOUT_LIST_SUBTITLE": "Innlegg i en liste",
+	"LAYOUT_GALLERY": "Galleri",
+	"LAYOUT_GALLERY_SUBTITLE": "Innlegg i et rutenett av kort",
+	"DEFAULT_SORT_ORDER": "Standard sorteringsrekkefølge",
+	"SORT_RECENTLY_ACTIVE": "Nylig aktive",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Innlegg med de nyeste meldingene først",
+	"SORT_DATE_POSTED": "Publiseringsdato",
+	"SORT_DATE_POSTED_SUBTITLE": "De nyeste innleggene først"
+}

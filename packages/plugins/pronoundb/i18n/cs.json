@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Zájmena",
+	"FORMAT_LOWERCASE": "Malými písmeny",
+	"FORMAT_CAPITALIZED": "S velkým počátečním písmenem",
+	"SOURCE": "Zdroj",
+	"SOURCE_PRONOUNDB": "Upřednostnit PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "Jinak použít zájmena z profilu na Discordu",
+	"SOURCE_DISCORD": "Upřednostnit Discord",
+	"SOURCE_DISCORD_SUBTITLE": "Jinak použít PronounDB",
+	"SHOW_FOR_YOURSELF": "Zobrazit i u sebe",
+	"PRONOUN_ANY": "Jakákoli zájmena",
+	"PRONOUN_ASK": "Zeptej se mě na zájmena",
+	"PRONOUN_AVOID": "Bez zájmen, použij moje jméno",
+	"PRONOUN_HE": "On/jeho",
+	"PRONOUN_IT": "Ono/jeho",
+	"PRONOUN_OTHER": "Jiná zájmena",
+	"PRONOUN_SHE": "Ona/její",
+	"PRONOUN_THEY": "Oni/jejich",
+	"PRONOUN_UNSPECIFIED": "Zájmena nejsou uvedena."
+}

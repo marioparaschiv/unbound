@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "इंडिकेटर",
+	"LATENCY_THRESHOLD": "लेटेंसी सीमा",
+	"LATENCY_THRESHOLD_SUBTITLE": "जब किसी मैसेज को भेजने में कम से कम इतना समय लगे, तो इंडिकेटर दिखाएँ।",
+	"SHOW_MILLISECONDS": "मिलीसेकंड दिखाएँ",
+	"SHOW_MILLISECONDS_SUBTITLE": "इंडिकेटर में मिलीसेकंड तक की सटीकता शामिल करें।",
+	"IGNORE_MY_MESSAGES": "मेरे मैसेज इग्नोर करें",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "सिर्फ़ दूसरे लोगों के भेजे मैसेज पर निशान लगाएँ।",
+	"DETECT_LEGACY_ANDROID": "पुराने Android क्लाइंट पहचानें",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "पुराने Discord Android क्लाइंट में टाइमस्टैम्प के ज्ञात अंतर के लिए एक मार्कर दिखाएँ।",
+	"DURATION_DAYS": "{count, plural, one {# दिन} other {# दिन}}",
+	"DURATION_HOURS": "{count, plural, one {# घंटा} other {# घंटे}}",
+	"DURATION_MINUTES": "{count, plural, one {# मिनट} other {# मिनट}}",
+	"DURATION_SECONDS": "{count, plural, one {# सेकंड} other {# सेकंड}}",
+	"DURATION_MILLISECONDS": "{count, plural, one {# मिलीसेकंड} other {# मिलीसेकंड}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} और {later}",
+	"TOOLTIP_DELAYED": "यह मैसेज {duration} की देरी से भेजा गया।",
+	"TOOLTIP_CLOCK_AHEAD": "इस यूज़र की घड़ी {duration} आगे है।",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "शायद यह यूज़र पुराने Discord Android क्लाइंट पर है",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} शायद यह यूज़र पुराने Discord Android क्लाइंट पर है।",
+	"OLD_ANDROID_CLIENT": "पुराना Discord Android क्लाइंट"
+}

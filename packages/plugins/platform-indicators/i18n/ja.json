@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "プラットフォームインジケーター",
+	"SHOW_INDICATORS": "インジケーターを表示",
+	"MEMBER_LIST": "メンバーリスト",
+	"MEMBER_LIST_SUBTITLE": "メンバーリストや他のユーザー一覧で名前の後ろに表示",
+	"PROFILES": "プロフィール",
+	"PROFILES_SUBTITLE": "プロフィールの名前とバッジの下に表示",
+	"MESSAGES": "メッセージ",
+	"MESSAGES_SUBTITLE": "メッセージのタイムスタンプの後ろに表示",
+	"STATUS": "ステータス",
+	"COLOR_MOBILE_INDICATOR": "モバイルインジケーターに色を付ける",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "退席中や取り込み中のモバイルユーザーにもスマホ型のステータスを表示します",
+	"PLATFORM_DESKTOP": "デスクトップ",
+	"PLATFORM_MOBILE": "モバイル",
+	"PLATFORM_WEB": "ウェブ",
+	"PLATFORM_EMBEDDED": "組み込み(ゲーム機やゲーム内)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "{platforms}でオンライン"
+}

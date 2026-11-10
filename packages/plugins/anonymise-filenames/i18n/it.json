@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Anonimizza per impostazione predefinita",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Puoi comunque cambiarlo per ogni file dalla sua schermata di anteprima",
+	"METHOD": "Metodo",
+	"METHOD_RANDOM": "Caratteri casuali",
+	"METHOD_CONSISTENT": "Fisso",
+	"METHOD_TIMESTAMP": "Data e ora",
+	"LENGTH": "Lunghezza",
+	"FILE_NAME": "Nome del file",
+	"FILE_NAME_PLACEHOLDER": "immagine",
+	"FILE_NAME_SUBTITLE": "Ogni file viene caricato con questo nome e la propria estensione.",
+	"ANONYMISE_FILE_NAME": "Anonimizza il nome del file",
+	"USING_ANONYMOUS_NAME": "Viene usato un nome del file anonimo",
+	"USING_ORIGINAL_NAME": "Viene usato il nome del file originale",
+	"USE_ORIGINAL_FILE_NAME": "Usa il nome del file originale"
+}

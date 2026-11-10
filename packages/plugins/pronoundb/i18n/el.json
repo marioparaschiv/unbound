@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Αντωνυμίες",
+	"FORMAT_LOWERCASE": "Πεζά",
+	"FORMAT_CAPITALIZED": "Με κεφαλαίο αρχικό",
+	"SOURCE": "Πηγή",
+	"SOURCE_PRONOUNDB": "Προτίμηση PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "Εναλλακτικά, οι αντωνυμίες του προφίλ Discord",
+	"SOURCE_DISCORD": "Προτίμηση Discord",
+	"SOURCE_DISCORD_SUBTITLE": "Εναλλακτικά, το PronounDB",
+	"SHOW_FOR_YOURSELF": "Εμφάνιση και για εσένα",
+	"PRONOUN_ANY": "Οποιεσδήποτε αντωνυμίες",
+	"PRONOUN_ASK": "Ρώτα με για τις αντωνυμίες μου",
+	"PRONOUN_AVOID": "Χωρίς αντωνυμίες, χρησιμοποίησε το όνομά μου",
+	"PRONOUN_HE": "He/Him",
+	"PRONOUN_IT": "It/Its",
+	"PRONOUN_OTHER": "Άλλες αντωνυμίες",
+	"PRONOUN_SHE": "She/Her",
+	"PRONOUN_THEY": "They/Them",
+	"PRONOUN_UNSPECIFIED": "Δεν έχουν οριστεί αντωνυμίες."
+}

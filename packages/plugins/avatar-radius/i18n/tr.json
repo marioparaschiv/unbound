@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Avatarlar",
+	"CORNER_RADIUS": "Köşe yarıçapı",
+	"CORNER_RADIUS_SUBTITLE": "Kare için 0’dan 64’e kadar. Avatar boyutunun yarısını aşan bir yarıçap onu daire olarak tutar."
+}

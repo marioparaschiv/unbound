@@ -1,0 +1,6 @@
+{
+	"SUPPRESS_EMBEDS": "임베드 숨기기",
+	"UNSUPPRESS_EMBEDS": "임베드 다시 표시",
+	"CHANGE_FAILED": "{action} 실패: {reason}",
+	"CHANGE_REFUSED": "Discord가 변경을 거부했어요."
+}

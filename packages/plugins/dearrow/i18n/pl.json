@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Zastępuj",
+	"REPLACE_ALL": "Tytuły i miniatury",
+	"REPLACE_TITLES": "Tytuły",
+	"REPLACE_THUMBNAILS": "Miniatury",
+	"DEARROW_BY_DEFAULT": "Domyślnie używaj DeArrow",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Zastępuj tytuły i miniatury bez pytania",
+	"SHOW_TOGGLE": "Pokaż przełącznik",
+	"SHOW_TOGGLE_SUBTITLE": "Przełączaj osadzenie w menu wiadomości",
+	"SHOW_ORIGINAL_EMBED": "Pokaż oryginalne osadzenie",
+	"DEARROW_EMBED": "Użyj DeArrow w osadzeniu"
+}

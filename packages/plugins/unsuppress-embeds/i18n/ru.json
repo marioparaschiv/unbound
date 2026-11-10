@@ -1,0 +1,6 @@
+{
+	"SUPPRESS_EMBEDS": "Скрыть встраивания",
+	"UNSUPPRESS_EMBEDS": "Показать встраивания",
+	"CHANGE_FAILED": "{action}: ошибка — {reason}",
+	"CHANGE_REFUSED": "Discord отклонил изменение."
+}

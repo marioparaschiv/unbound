@@ -1,0 +1,6 @@
+{
+	"SUPPRESS_EMBEDS": "Insluitingen onderdrukken",
+	"UNSUPPRESS_EMBEDS": "Insluitingen weer tonen",
+	"CHANGE_FAILED": "{action} mislukt: {reason}",
+	"CHANGE_REFUSED": "Discord heeft de wijziging geweigerd."
+}

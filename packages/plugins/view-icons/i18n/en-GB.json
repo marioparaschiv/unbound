@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "Unable to open {image, select, avatar {avatar} banner {banner} serverAvatar {server avatar} serverIcon {server icon} serverBanner {server banner} other {group DM icon}}.",
+	"VIEW_AVATAR": "View Avatar",
+	"VIEW_BANNER": "View Banner",
+	"VIEW_GROUP_ICON": "View Group DM Icon",
+	"VIEW_ICONS": "View Icons",
+	"VIEW_SERVER_AVATAR": "View Server Avatar",
+	"VIEW_SERVER_BANNER": "View Server Banner",
+	"VIEW_SERVER_ICON": "View Server Icon"
+}

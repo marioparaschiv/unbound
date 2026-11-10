@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Domyślny układ",
+	"LAYOUT_LIST": "Lista",
+	"LAYOUT_LIST_SUBTITLE": "Posty w formie listy",
+	"LAYOUT_GALLERY": "Galeria",
+	"LAYOUT_GALLERY_SUBTITLE": "Posty w siatce kart",
+	"DEFAULT_SORT_ORDER": "Domyślna kolejność sortowania",
+	"SORT_RECENTLY_ACTIVE": "Ostatnio aktywne",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Najpierw posty z najnowszymi wiadomościami",
+	"SORT_DATE_POSTED": "Data publikacji",
+	"SORT_DATE_POSTED_SUBTITLE": "Najpierw najnowsze posty"
+}

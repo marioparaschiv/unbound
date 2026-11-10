@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "मेंशन में रंग",
+	"COLOR_MENTIONS_SUBTITLE": "चैट और कंपोज़र में मेंशन किए गए मेंबर के रोल के रंग दिखाएँ",
+	"COLOR_MESSAGE_CONTENT": "मैसेज टेक्स्ट में रंग",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "मैसेज के टेक्स्ट को लेखक के रोल के रंग से रंगें",
+	"MESSAGE_COLOR_INTENSITY": "मैसेज के रंग की तीव्रता",
+	"TYPING_NAMES": "टाइप करने वालों के नाम",
+	"TYPING_NAMES_SUBTITLE": "चैनल टाइपिंग इंडिकेटर में नाम रंगें",
+	"MEMBER_LIST_ROLE_HEADERS": "मेंबर लिस्ट के रोल हेडर",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "मेंबर लिस्ट में रोल सेक्शन के टाइटल रंगें",
+	"REACTION_USERS": "रिएक्शन देने वाले यूज़र",
+	"REACTION_USERS_SUBTITLE": "रिएक्शन की जानकारी वाली लिस्ट में नाम रंगें",
+	"POLL_VOTERS": "पोल में वोट करने वाले",
+	"POLL_VOTERS_SUBTITLE": "पोल नतीजों की जानकारी में नाम रंगें",
+	"VOICE_USERS": "वॉइस यूज़र",
+	"VOICE_USERS_SUBTITLE": "वॉइस यूज़र लिस्ट में मेंबर के नाम रंगें"
+}

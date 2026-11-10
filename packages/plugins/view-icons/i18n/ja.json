@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "{image, select, avatar {アバター} banner {バナー} serverAvatar {サーバーアバター} serverIcon {サーバーアイコン} serverBanner {サーバーバナー} other {グループDMのアイコン}}を開けませんでした。",
+	"VIEW_AVATAR": "アバターを表示",
+	"VIEW_BANNER": "バナーを表示",
+	"VIEW_GROUP_ICON": "グループDMのアイコンを表示",
+	"VIEW_ICONS": "アイコンを表示",
+	"VIEW_SERVER_AVATAR": "サーバーアバターを表示",
+	"VIEW_SERVER_BANNER": "サーバーバナーを表示",
+	"VIEW_SERVER_ICON": "サーバーアイコンを表示"
+}

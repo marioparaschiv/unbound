@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Avatares",
+	"CORNER_RADIUS": "Radio de las esquinas",
+	"CORNER_RADIUS_SUBTITLE": "De 0 (cuadrado) a 64. Un radio mayor que la mitad del tamaño del avatar lo mantiene circular."
+}

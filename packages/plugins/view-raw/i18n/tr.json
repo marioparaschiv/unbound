@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Kapat",
+	"CONTENT_COPIED": "Ham içerik panoya kopyalandı.",
+	"COPY_CONTENT": "İçeriği kopyala",
+	"COPY_DATA": "Veriyi kopyala",
+	"DATA_COPIED": "{type} verisi panoya kopyalandı.",
+	"MESSAGE_CONTENT": "Mesaj İçeriği",
+	"MESSAGE_DATA": "Mesaj Verisi",
+	"RAW_TITLE": "Ham {type} Verisi",
+	"TYPE_CHANNEL": "Kanal",
+	"TYPE_GUILD": "Sunucu",
+	"TYPE_MESSAGE": "Mesaj",
+	"TYPE_PROFILE": "Profil",
+	"TYPE_USER": "Kullanıcı",
+	"VIEW_RAW": "Ham Veriyi Görüntüle"
+}

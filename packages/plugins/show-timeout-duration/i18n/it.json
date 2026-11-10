@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "Timeout: {remaining} rimanenti",
+	"TIMEOUT_EXPIRES_IN": "Il timeout scade tra {remaining}"
+}

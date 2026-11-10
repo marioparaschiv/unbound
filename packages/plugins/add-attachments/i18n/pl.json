@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Dodaj załączniki",
+	"UPLOADING": "Przesyłanie, to może chwilę potrwać...",
+	"ATTACHMENTS_ADDED": "{count, plural, one {Dodano załącznik!} few {Dodano załączniki!} many {Dodano załączniki!} other {Dodano załączniki!}}",
+	"UPLOAD_FAILED": "Nie udało się przesłać załącznika.",
+	"NOT_ADDED": "Nie udało się dodać załączników.",
+	"PICKER_UNAVAILABLE": "Wybór multimediów jest niedostępny w tej wersji Discorda.",
+	"PICKER_FAILED": "Wybór multimediów nie powiódł się.",
+	"LIMIT_REACHED": "Nie możesz dodać więcej załączników do tej wiadomości.",
+	"LIMIT_REMAINING": "Do tej wiadomości możesz dodać jeszcze tylko {count, plural, one {# załącznik} few {# załączniki} many {# załączników} other {# załącznika}}."
+}

@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "ตัวบ่งชี้",
+	"LATENCY_THRESHOLD": "เกณฑ์ความหน่วง",
+	"LATENCY_THRESHOLD_SUBTITLE": "แสดงตัวบ่งชี้เมื่อข้อความใช้เวลาส่งอย่างน้อยเท่านี้",
+	"SHOW_MILLISECONDS": "แสดงมิลลิวินาที",
+	"SHOW_MILLISECONDS_SUBTITLE": "แสดงความละเอียดระดับมิลลิวินาทีในตัวบ่งชี้",
+	"IGNORE_MY_MESSAGES": "ไม่สนใจข้อความของฉัน",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "ทำเครื่องหมายเฉพาะข้อความที่คนอื่นส่ง",
+	"DETECT_LEGACY_ANDROID": "ตรวจจับไคลเอนต์ Android รุ่นเก่า",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "แสดงเครื่องหมายสำหรับเวลาที่คลาดเคลื่อนซึ่งทราบกันดีในไคลเอนต์ Discord Android รุ่นเก่า",
+	"DURATION_DAYS": "{count, plural, other {# วัน}}",
+	"DURATION_HOURS": "{count, plural, other {# ชั่วโมง}}",
+	"DURATION_MINUTES": "{count, plural, other {# นาที}}",
+	"DURATION_SECONDS": "{count, plural, other {# วินาที}}",
+	"DURATION_MILLISECONDS": "{count, plural, other {# มิลลิวินาที}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} และ {later}",
+	"TOOLTIP_DELAYED": "ข้อความนี้ถูกส่งล่าช้า {duration}",
+	"TOOLTIP_CLOCK_AHEAD": "นาฬิกาของผู้ใช้นี้เร็วกว่า {duration}",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "ผู้ใช้น่าจะใช้ไคลเอนต์ Discord Android รุ่นเก่า",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} ผู้ใช้น่าจะใช้ไคลเอนต์ Discord Android รุ่นเก่า",
+	"OLD_ANDROID_CLIENT": "ไคลเอนต์ Discord Android รุ่นเก่า"
+}

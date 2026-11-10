@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Zamirler",
+	"FORMAT_LOWERCASE": "Küçük harf",
+	"FORMAT_CAPITALIZED": "Baş harfi büyük",
+	"SOURCE": "Kaynak",
+	"SOURCE_PRONOUNDB": "PronounDB’yi Tercih Et",
+	"SOURCE_PRONOUNDB_SUBTITLE": "Yoksa Discord profilindeki zamirleri kullan",
+	"SOURCE_DISCORD": "Discord’u Tercih Et",
+	"SOURCE_DISCORD_SUBTITLE": "Yoksa PronounDB’yi kullan",
+	"SHOW_FOR_YOURSELF": "Kendin İçin Göster",
+	"PRONOUN_ANY": "Herhangi bir zamir",
+	"PRONOUN_ASK": "Zamirlerimi bana sor",
+	"PRONOUN_AVOID": "Zamir kullanma, adımı kullan",
+	"PRONOUN_HE": "He/Him",
+	"PRONOUN_IT": "It/Its",
+	"PRONOUN_OTHER": "Diğer zamirler",
+	"PRONOUN_SHE": "She/Her",
+	"PRONOUN_THEY": "They/Them",
+	"PRONOUN_UNSPECIFIED": "Belirtilmiş zamir yok."
+}

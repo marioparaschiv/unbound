@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "外観",
+	"COLOR_THRESHOLDS": "色が変わるしきい値",
+	"COLOR_THRESHOLDS_SUBTITLE": "メッセージがDiscordの文字数制限に近づくと警告します。",
+	"COUNTER_LABEL": "{length} / {limit}文字"
+}

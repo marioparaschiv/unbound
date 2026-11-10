@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "气泡颜色",
+	"BUBBLE_COLOR_FALLBACK": "跟随主题：深色主题下为黑色，浅色主题下为白色",
+	"COLORS": "颜色",
+	"CORNER_RADIUS": "圆角半径",
+	"HORIZONTAL_PADDING": "水平内边距",
+	"LAYOUT": "布局",
+	"LAYOUT_CARD": "全宽卡片",
+	"LAYOUT_CARD_SUBTITLE": "每条完整消息（包括名称和反应）背后都有一张卡片，类似 Rosiecord",
+	"LAYOUT_FIT": "贴合消息",
+	"LAYOUT_FIT_SUBTITLE": "每个气泡仅包裹其消息的文字和媒体",
+	"OPACITY": "不透明度",
+	"OWN_COLOR": "您的消息",
+	"OWN_COLOR_FALLBACK": "与气泡颜色相同",
+	"SHAPE": "形状",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "垂直内边距"
+}

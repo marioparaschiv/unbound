@@ -1,0 +1,6 @@
+{
+	"SUPPRESS_EMBEDS": "Ukryj osadzenia",
+	"UNSUPPRESS_EMBEDS": "Przywróć osadzenia",
+	"CHANGE_FAILED": "Nie udało się: {action} ({reason})",
+	"CHANGE_REFUSED": "Discord odrzucił zmianę."
+}

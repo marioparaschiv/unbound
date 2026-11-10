@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "Nepavyko atidaryti {image, select, avatar {avataro} banner {reklamjuostės} serverAvatar {serverio avataro} serverIcon {serverio piktogramos} serverBanner {serverio reklamjuostės} other {grupinės tiesioginės žinutės piktogramos}}.",
+	"VIEW_AVATAR": "Peržiūrėti avatarą",
+	"VIEW_BANNER": "Peržiūrėti reklamjuostę",
+	"VIEW_GROUP_ICON": "Peržiūrėti grupės piktogramą",
+	"VIEW_ICONS": "Peržiūrėti piktogramas",
+	"VIEW_SERVER_AVATAR": "Peržiūrėti serverio avatarą",
+	"VIEW_SERVER_BANNER": "Peržiūrėti serverio reklamjuostę",
+	"VIEW_SERVER_ICON": "Peržiūrėti serverio piktogramą"
+}

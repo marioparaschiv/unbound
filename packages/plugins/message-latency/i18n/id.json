@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Indikator",
+	"LATENCY_THRESHOLD": "Ambang batas latensi",
+	"LATENCY_THRESHOLD_SUBTITLE": "Tampilkan indikator saat pengiriman pesan memakan waktu setidaknya selama ini.",
+	"SHOW_MILLISECONDS": "Tampilkan milidetik",
+	"SHOW_MILLISECONDS_SUBTITLE": "Sertakan presisi milidetik pada indikator.",
+	"IGNORE_MY_MESSAGES": "Abaikan pesanku",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Hanya tandai pesan yang dikirim oleh orang lain.",
+	"DETECT_LEGACY_ANDROID": "Deteksi klien Android lama",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Tampilkan penanda untuk selisih stempel waktu yang diketahui pada klien Discord Android versi lama.",
+	"DURATION_DAYS": "{count, plural, other {# hari}}",
+	"DURATION_HOURS": "{count, plural, other {# jam}}",
+	"DURATION_MINUTES": "{count, plural, other {# menit}}",
+	"DURATION_SECONDS": "{count, plural, other {# detik}}",
+	"DURATION_MILLISECONDS": "{count, plural, other {# milidetik}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} dan {later}",
+	"TOOLTIP_DELAYED": "Pesan ini dikirim dengan penundaan {duration}.",
+	"TOOLTIP_CLOCK_AHEAD": "Jam pengguna ini {duration} lebih cepat.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "Pengguna diduga menggunakan klien Discord Android versi lama",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} Pengguna diduga menggunakan klien Discord Android versi lama.",
+	"OLD_ANDROID_CLIENT": "Klien Discord Android lama"
+}

@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Erwähnungen einfärben",
+	"COLOR_MENTIONS_SUBTITLE": "Zeigt die Rollenfarben des erwähnten Mitglieds im Chat und im Eingabefeld",
+	"COLOR_MESSAGE_CONTENT": "Nachrichteninhalt einfärben",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Tönt den Nachrichtentext in der Rollenfarbe des Autors",
+	"MESSAGE_COLOR_INTENSITY": "Farbintensität der Nachricht",
+	"TYPING_NAMES": "Namen in der Tippanzeige",
+	"TYPING_NAMES_SUBTITLE": "Färbt Namen in der Tippanzeige des Kanals ein",
+	"MEMBER_LIST_ROLE_HEADERS": "Rollenüberschriften in der Mitgliederliste",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "Färbt die Titel der Rollenabschnitte in der Mitgliederliste ein",
+	"REACTION_USERS": "Nutzer bei Reaktionen",
+	"REACTION_USERS_SUBTITLE": "Färbt Namen in der Detailliste der Reaktionen ein",
+	"POLL_VOTERS": "Umfrageteilnehmer",
+	"POLL_VOTERS_SUBTITLE": "Färbt Namen in den Details der Umfrageergebnisse ein",
+	"VOICE_USERS": "Nutzer im Sprachkanal",
+	"VOICE_USERS_SUBTITLE": "Färbt die Namen von Mitgliedern in Sprachnutzerlisten ein"
+}

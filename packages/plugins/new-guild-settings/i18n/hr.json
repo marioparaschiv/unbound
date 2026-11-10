@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "Kad se pridružiš serveru",
+	"MUTE_SERVER": "Utišaj server",
+	"MUTE_SERVER_SUBTITLE": "Automatski utišaj nove servere",
+	"SUPPRESS_EVERYONE": "Potisni @everyone i @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Zanemari @everyone i @here na novim serverima",
+	"SUPPRESS_ROLES": "Potisni sva @spominjanja uloga",
+	"SUPPRESS_ROLES_SUBTITLE": "Zanemari spominjanja uloga na novim serverima",
+	"SUPPRESS_HIGHLIGHTS": "Potisni istaknuto",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Isključi obavijesti o istaknutom na novim serverima",
+	"MUTE_EVENTS": "Utišaj nove događaje",
+	"MUTE_EVENTS_SUBTITLE": "Utišaj obavijesti o zakazanim događajima",
+	"SHOW_ALL_CHANNELS": "Prikaži sve kanale",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Prikaži sve kanale na serverima koji ti dopuštaju odabir kanala",
+	"SERVER_NOTIFICATION_SETTINGS": "Postavke obavijesti servera",
+	"NOTIFY_ALL": "Sve poruke",
+	"NOTIFY_MENTIONS": "Samo @spominjanja",
+	"NOTIFY_NOTHING": "Ništa",
+	"NOTIFY_DEFAULT": "Zadano za server",
+	"APPLY_NEW_GUILD_SETTINGS": "Primijeni postavke za nove servere",
+	"APPLIED_TO_GUILD": "Primijenjeno na {name}.",
+	"APPLIED_TO_THIS_SERVER": "Primijenjeno na ovaj server."
+}

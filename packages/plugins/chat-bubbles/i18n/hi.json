@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "बबल का रंग",
+	"BUBBLE_COLOR_FALLBACK": "थीम के अनुसार: डार्क थीम पर काला, लाइट थीम पर सफ़ेद",
+	"COLORS": "रंग",
+	"CORNER_RADIUS": "कोने की गोलाई",
+	"HORIZONTAL_PADDING": "क्षैतिज पैडिंग",
+	"LAYOUT": "लेआउट",
+	"LAYOUT_CARD": "पूरी चौड़ाई वाले कार्ड",
+	"LAYOUT_CARD_SUBTITLE": "हर पूरे मैसेज के पीछे एक कार्ड, नाम और रिएक्शन समेत, Rosiecord की तरह",
+	"LAYOUT_FIT": "मैसेज के हिसाब से",
+	"LAYOUT_FIT_SUBTITLE": "हर बबल सिर्फ़ अपने मैसेज के टेक्स्ट और मीडिया को घेरता है",
+	"OPACITY": "अपारदर्शिता",
+	"OWN_COLOR": "आपके मैसेज",
+	"OWN_COLOR_FALLBACK": "बबल के रंग जैसा",
+	"SHAPE": "आकार",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "ऊर्ध्वाधर पैडिंग"
+}

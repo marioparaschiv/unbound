@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Indicateurs de saisie dans les salons",
+	"INCLUDE_CURRENT_CHANNEL": "Inclure le salon actuel",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Afficher l’activité de saisie dans le salon sélectionné.",
+	"INCLUDE_MUTED_CHANNELS": "Inclure les salons en sourdine",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Afficher l’activité de saisie dans les salons en sourdine.",
+	"INCLUDE_IGNORED_USERS": "Inclure les utilisateurs ignorés",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Afficher l’activité de saisie des utilisateurs ignorés.",
+	"INCLUDE_BLOCKED_USERS": "Inclure les utilisateurs bloqués",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Afficher l’activité de saisie des utilisateurs bloqués.",
+	"APPEARANCE": "Apparence",
+	"APPEARANCE_BOTH": "Avatars et points animés",
+	"APPEARANCE_DOTS": "Points animés",
+	"APPEARANCE_AVATARS": "Avatars",
+	"TYPING_ONE": "{a} est en train d’écrire…",
+	"TYPING_TWO": "{a} et {b} sont en train d’écrire…",
+	"TYPING_THREE": "{a}, {b} et {c} sont en train d’écrire…",
+	"TYPING_SEVERAL": "Plusieurs personnes sont en train d’écrire…",
+	"SOMEONE": "Quelqu’un"
+}

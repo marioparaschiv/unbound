@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Zamknij",
+	"CONTENT_COPIED": "Skopiowano surową treść do schowka.",
+	"COPY_CONTENT": "Kopiuj treść",
+	"COPY_DATA": "Kopiuj dane",
+	"DATA_COPIED": "Skopiowano dane ({type}) do schowka.",
+	"MESSAGE_CONTENT": "Treść wiadomości",
+	"MESSAGE_DATA": "Dane wiadomości",
+	"RAW_TITLE": "Surowe dane: {type}",
+	"TYPE_CHANNEL": "Kanał",
+	"TYPE_GUILD": "Serwer",
+	"TYPE_MESSAGE": "Wiadomość",
+	"TYPE_PROFILE": "Profil",
+	"TYPE_USER": "Użytkownik",
+	"VIEW_RAW": "Wyświetl surowe dane"
+}

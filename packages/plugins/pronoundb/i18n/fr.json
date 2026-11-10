@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Pronoms",
+	"FORMAT_LOWERCASE": "Minuscules",
+	"FORMAT_CAPITALIZED": "Majuscule initiale",
+	"SOURCE": "Source",
+	"SOURCE_PRONOUNDB": "Préférer PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "Utiliser les pronoms du profil Discord en secours",
+	"SOURCE_DISCORD": "Préférer Discord",
+	"SOURCE_DISCORD_SUBTITLE": "Utiliser PronounDB en secours",
+	"SHOW_FOR_YOURSELF": "Afficher pour vous-même",
+	"PRONOUN_ANY": "N’importe quels pronoms",
+	"PRONOUN_ASK": "Demandez-moi mes pronoms",
+	"PRONOUN_AVOID": "Pas de pronoms, utilisez mon nom",
+	"PRONOUN_HE": "Il/Lui",
+	"PRONOUN_IT": "It/Its",
+	"PRONOUN_OTHER": "Autres pronoms",
+	"PRONOUN_SHE": "Elle",
+	"PRONOUN_THEY": "Iel",
+	"PRONOUN_UNSPECIFIED": "Aucun pronom indiqué."
+}

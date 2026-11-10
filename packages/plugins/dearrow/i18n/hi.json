@@ -1,0 +1,12 @@
+{
+	"REPLACE": "बदलें",
+	"REPLACE_ALL": "टाइटल और थंबनेल",
+	"REPLACE_TITLES": "टाइटल",
+	"REPLACE_THUMBNAILS": "थंबनेल",
+	"DEARROW_BY_DEFAULT": "डिफ़ॉल्ट रूप से DeArrow करें",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "बिना पूछे टाइटल और थंबनेल बदलें",
+	"SHOW_TOGGLE": "टॉगल दिखाएँ",
+	"SHOW_TOGGLE_SUBTITLE": "मैसेज मेन्यू से एम्बेड को बदलें और वापस करें",
+	"SHOW_ORIGINAL_EMBED": "मूल एम्बेड दिखाएँ",
+	"DEARROW_EMBED": "एम्बेड को DeArrow करें"
+}

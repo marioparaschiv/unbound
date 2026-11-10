@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "Al unirte a un servidor",
+	"MUTE_SERVER": "Silenciar servidor",
+	"MUTE_SERVER_SUBTITLE": "Silencia automáticamente los servidores nuevos",
+	"SUPPRESS_EVERYONE": "Suprimir @everyone y @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Ignora @everyone y @here en los servidores nuevos",
+	"SUPPRESS_ROLES": "Suprimir todas las @menciones de roles",
+	"SUPPRESS_ROLES_SUBTITLE": "Ignora las menciones de roles en los servidores nuevos",
+	"SUPPRESS_HIGHLIGHTS": "Suprimir destacados",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Desactiva las notificaciones de destacados en los servidores nuevos",
+	"MUTE_EVENTS": "Silenciar eventos nuevos",
+	"MUTE_EVENTS_SUBTITLE": "Silencia las notificaciones de eventos programados",
+	"SHOW_ALL_CHANNELS": "Mostrar todos los canales",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Muestra todos los canales en los servidores que te permiten elegir canales",
+	"SERVER_NOTIFICATION_SETTINGS": "Ajustes de notificaciones del servidor",
+	"NOTIFY_ALL": "Todos los mensajes",
+	"NOTIFY_MENTIONS": "Solo @menciones",
+	"NOTIFY_NOTHING": "Nada",
+	"NOTIFY_DEFAULT": "Predeterminado del servidor",
+	"APPLY_NEW_GUILD_SETTINGS": "Aplicar ajustes de servidor nuevo",
+	"APPLIED_TO_GUILD": "Se ha aplicado a {name}.",
+	"APPLIED_TO_THIS_SERVER": "Se ha aplicado a este servidor."
+}

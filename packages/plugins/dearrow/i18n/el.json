@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Αντικατάσταση",
+	"REPLACE_ALL": "Τίτλοι και μικρογραφίες",
+	"REPLACE_TITLES": "Τίτλοι",
+	"REPLACE_THUMBNAILS": "Μικρογραφίες",
+	"DEARROW_BY_DEFAULT": "DeArrow από προεπιλογή",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Αντικατάσταση τίτλων και μικρογραφιών χωρίς ερώτηση",
+	"SHOW_TOGGLE": "Εμφάνιση διακόπτη",
+	"SHOW_TOGGLE_SUBTITLE": "Εναλλαγή μιας ενσωμάτωσης μπρος-πίσω από το μενού μηνύματος",
+	"SHOW_ORIGINAL_EMBED": "Εμφάνιση αρχικής ενσωμάτωσης",
+	"DEARROW_EMBED": "Ενσωμάτωση με DeArrow"
+}

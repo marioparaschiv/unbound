@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Цвет пузыря",
+	"BUBBLE_COLOR_FALLBACK": "Зависит от темы: чёрный в тёмных темах, белый в светлой",
+	"COLORS": "Цвета",
+	"CORNER_RADIUS": "Радиус скругления",
+	"HORIZONTAL_PADDING": "Отступ по горизонтали",
+	"LAYOUT": "Макет",
+	"LAYOUT_CARD": "Карточки во всю ширину",
+	"LAYOUT_CARD_SUBTITLE": "Одна карточка под всем сообщением, включая имя и реакции, как в Rosiecord",
+	"LAYOUT_FIT": "По размеру сообщения",
+	"LAYOUT_FIT_SUBTITLE": "Каждый пузырь охватывает только текст и медиа своего сообщения",
+	"OPACITY": "Непрозрачность",
+	"OWN_COLOR": "Ваши сообщения",
+	"OWN_COLOR_FALLBACK": "Как цвет пузыря",
+	"SHAPE": "Форма",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Отступ по вертикали"
+}

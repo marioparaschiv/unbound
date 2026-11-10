@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Pronomen",
+	"FORMAT_LOWERCASE": "Kleinbuchstaben",
+	"FORMAT_CAPITALIZED": "Großgeschrieben",
+	"SOURCE": "Quelle",
+	"SOURCE_PRONOUNDB": "PronounDB bevorzugen",
+	"SOURCE_PRONOUNDB_SUBTITLE": "Ersatzweise Pronomen aus dem Discord-Profil verwenden",
+	"SOURCE_DISCORD": "Discord bevorzugen",
+	"SOURCE_DISCORD_SUBTITLE": "Ersatzweise PronounDB verwenden",
+	"SHOW_FOR_YOURSELF": "Für dich selbst anzeigen",
+	"PRONOUN_ANY": "Beliebige Pronomen",
+	"PRONOUN_ASK": "Frag mich nach meinen Pronomen",
+	"PRONOUN_AVOID": "Keine Pronomen, nutze meinen Namen",
+	"PRONOUN_HE": "Er/Ihm",
+	"PRONOUN_IT": "Es/Ihm",
+	"PRONOUN_OTHER": "Andere Pronomen",
+	"PRONOUN_SHE": "Sie/Ihr",
+	"PRONOUN_THEY": "They/Them",
+	"PRONOUN_UNSPECIFIED": "Keine Pronomen angegeben."
+}

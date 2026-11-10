@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Nahrazovat",
+	"REPLACE_ALL": "Názvy a miniatury",
+	"REPLACE_TITLES": "Názvy",
+	"REPLACE_THUMBNAILS": "Miniatury",
+	"DEARROW_BY_DEFAULT": "DeArrow ve výchozím stavu",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Nahrazovat názvy a miniatury bez ptaní",
+	"SHOW_TOGGLE": "Zobrazit přepínač",
+	"SHOW_TOGGLE_SUBTITLE": "Přepínej náhled tam a zpět z nabídky zprávy",
+	"SHOW_ORIGINAL_EMBED": "Zobrazit původní náhled",
+	"DEARROW_EMBED": "Použít DeArrow na náhled"
+}

@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Anonimizează implicit",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Fiecare fișier poate fi comutat în continuare din fereastra lui de previzualizare",
+	"METHOD": "Metodă",
+	"METHOD_RANDOM": "Caractere aleatorii",
+	"METHOD_CONSISTENT": "Consecvent",
+	"METHOD_TIMESTAMP": "Marcaj temporal",
+	"LENGTH": "Lungime",
+	"FILE_NAME": "Numele fișierului",
+	"FILE_NAME_PLACEHOLDER": "imagine",
+	"FILE_NAME_SUBTITLE": "Fiecare fișier este încărcat cu acest nume și cu propria extensie.",
+	"ANONYMISE_FILE_NAME": "Anonimizează numele fișierului",
+	"USING_ANONYMOUS_NAME": "Se folosește un nume de fișier anonim",
+	"USING_ORIGINAL_NAME": "Se folosește numele original al fișierului",
+	"USE_ORIGINAL_FILE_NAME": "Folosește numele original al fișierului"
+}

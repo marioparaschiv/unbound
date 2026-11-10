@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Indicateurs de plateforme",
+	"SHOW_INDICATORS": "Afficher les indicateurs",
+	"MEMBER_LIST": "Liste des membres",
+	"MEMBER_LIST_SUBTITLE": "Après les noms dans la liste des membres et les autres listes d’utilisateurs",
+	"PROFILES": "Profils",
+	"PROFILES_SUBTITLE": "Sous le nom et les badges des profils",
+	"MESSAGES": "Messages",
+	"MESSAGES_SUBTITLE": "Après l’horodatage des messages",
+	"STATUS": "Statut",
+	"COLOR_MOBILE_INDICATOR": "Colorer l’indicateur mobile",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "Afficher aussi la forme de téléphone pour les utilisateurs mobiles inactifs ou occupés",
+	"PLATFORM_DESKTOP": "Ordinateur",
+	"PLATFORM_MOBILE": "Mobile",
+	"PLATFORM_WEB": "Web",
+	"PLATFORM_EMBEDDED": "Intégré (console ou jeu)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "En ligne sur {platforms}"
+}

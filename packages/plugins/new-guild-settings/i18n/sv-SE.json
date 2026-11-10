@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "När du går med i en server",
+	"MUTE_SERVER": "Tysta server",
+	"MUTE_SERVER_SUBTITLE": "Tysta nya servrar automatiskt",
+	"SUPPRESS_EVERYONE": "Undertryck @everyone och @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Ignorera @everyone och @here i nya servrar",
+	"SUPPRESS_ROLES": "Undertryck alla @omnämnanden av roller",
+	"SUPPRESS_ROLES_SUBTITLE": "Ignorera rollomnämnanden i nya servrar",
+	"SUPPRESS_HIGHLIGHTS": "Undertryck höjdpunkter",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Stäng av aviseringar om höjdpunkter i nya servrar",
+	"MUTE_EVENTS": "Tysta nya evenemang",
+	"MUTE_EVENTS_SUBTITLE": "Tysta aviseringar om schemalagda evenemang",
+	"SHOW_ALL_CHANNELS": "Visa alla kanaler",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Visa alla kanaler i servrar där du kan välja kanaler",
+	"SERVER_NOTIFICATION_SETTINGS": "Aviseringsinställningar för server",
+	"NOTIFY_ALL": "Alla meddelanden",
+	"NOTIFY_MENTIONS": "Endast @omnämnanden",
+	"NOTIFY_NOTHING": "Ingenting",
+	"NOTIFY_DEFAULT": "Serverns standard",
+	"APPLY_NEW_GUILD_SETTINGS": "Tillämpa inställningar för nya servrar",
+	"APPLIED_TO_GUILD": "Tillämpat på {name}.",
+	"APPLIED_TO_THIS_SERVER": "Tillämpat på den här servern."
+}

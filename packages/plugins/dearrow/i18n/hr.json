@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Zamijeni",
+	"REPLACE_ALL": "Naslovi i sličice",
+	"REPLACE_TITLES": "Naslovi",
+	"REPLACE_THUMBNAILS": "Sličice",
+	"DEARROW_BY_DEFAULT": "Zadano koristi DeArrow",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Zamijeni naslove i sličice bez pitanja",
+	"SHOW_TOGGLE": "Prikaži prekidač",
+	"SHOW_TOGGLE_SUBTITLE": "Prebacuj ugrađeni sadržaj naprijed-natrag iz izbornika poruke",
+	"SHOW_ORIGINAL_EMBED": "Prikaži izvorni ugrađeni sadržaj",
+	"DEARROW_EMBED": "Primijeni DeArrow"
+}

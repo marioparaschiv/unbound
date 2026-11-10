@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "Zbývající časový limit: {remaining}",
+	"TIMEOUT_EXPIRES_IN": "Časový limit vyprší za {remaining}"
+}

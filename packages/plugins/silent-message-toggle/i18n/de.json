@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Automatisch deaktivieren",
+	"AUTO_DISABLE_SUBTITLE": "Schaltet den Schalter nach dem Senden einer stummen Nachricht wieder aus",
+	"DISABLE_SILENT_MESSAGE": "Stumme Nachricht deaktivieren",
+	"ENABLE_SILENT_MESSAGE": "Stumme Nachricht aktivieren",
+	"PERSIST_STATE": "Zustand beibehalten",
+	"PERSIST_STATE_SUBTITLE": "Lässt den Schalter an, wenn du einen anderen Kanal öffnest",
+	"SILENT_MESSAGE_TOGGLE": "Schalter für stumme Nachrichten",
+	"TOGGLE": "Umschalten",
+	"TOGGLED_OFF": "Deine Nachrichten hier benachrichtigen wieder andere.",
+	"TOGGLED_ON": "Deine Nachrichten hier werden ohne Benachrichtigungen gesendet."
+}

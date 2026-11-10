@@ -74,6 +74,7 @@ export class Icons extends Addons<Plugin> {
 			directory: 'Unbound/Icons',
 			bucket: 'icons',
 			label: 'UNBOUND_ICONS',
+			noun: 'UNBOUND_ICONS_NOUN',
 			icon: 'ImageIcon',
 		});
 

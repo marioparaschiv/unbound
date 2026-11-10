@@ -1,0 +1,7 @@
+{
+	"SHOW_INVITES_PAUSED": "초대 일시 중지 표시",
+	"SHOW_INVITES_PAUSED_SUBTITLE": "서버 설정의 ‘초대 일시 중지’ 설정을 모두에게 표시해요",
+	"SHOW_TIMEOUTS": "타임아웃 아이콘 표시",
+	"SHOW_TIMEOUTS_SUBTITLE": "채팅에 멤버 타임아웃 아이콘을 표시해요",
+	"VISIBILITY": "표시 여부"
+}

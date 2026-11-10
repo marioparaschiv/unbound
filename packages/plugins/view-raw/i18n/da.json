@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Luk",
+	"CONTENT_COPIED": "Råt indhold kopieret til udklipsholderen.",
+	"COPY_CONTENT": "Kopiér indhold",
+	"COPY_DATA": "Kopiér data",
+	"DATA_COPIED": "Data for {type} kopieret til udklipsholderen.",
+	"MESSAGE_CONTENT": "Beskedindhold",
+	"MESSAGE_DATA": "Beskeddata",
+	"RAW_TITLE": "Rå data for {type}",
+	"TYPE_CHANNEL": "Kanal",
+	"TYPE_GUILD": "Server",
+	"TYPE_MESSAGE": "Besked",
+	"TYPE_PROFILE": "Profil",
+	"TYPE_USER": "Bruger",
+	"VIEW_RAW": "Se rådata"
+}

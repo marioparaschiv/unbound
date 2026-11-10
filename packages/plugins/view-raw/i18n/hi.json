@@ -1,0 +1,16 @@
+{
+	"CLOSE": "बंद करें",
+	"CONTENT_COPIED": "रॉ कंटेंट क्लिपबोर्ड पर कॉपी हो गया।",
+	"COPY_CONTENT": "कंटेंट कॉपी करें",
+	"COPY_DATA": "डेटा कॉपी करें",
+	"DATA_COPIED": "{type} डेटा क्लिपबोर्ड पर कॉपी हो गया।",
+	"MESSAGE_CONTENT": "मैसेज कंटेंट",
+	"MESSAGE_DATA": "मैसेज डेटा",
+	"RAW_TITLE": "रॉ {type} डेटा",
+	"TYPE_CHANNEL": "चैनल",
+	"TYPE_GUILD": "सर्वर",
+	"TYPE_MESSAGE": "मैसेज",
+	"TYPE_PROFILE": "प्रोफ़ाइल",
+	"TYPE_USER": "यूज़र",
+	"VIEW_RAW": "रॉ देखें"
+}

@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "プロバイダー",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "TenorでGIFを検索",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "GiphyでGIFを検索",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "Discord標準のGIF検索",
+	"PROVIDER_BUTTON_LABEL": "GIFプロバイダー: {provider}。{next}に切り替え"
+}

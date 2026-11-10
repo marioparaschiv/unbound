@@ -1,0 +1,18 @@
+{
+	"ADD_USER_ID": "사용자 ID 추가",
+	"ADD_USER_ID_SUBTITLE": "예외를 켜면 답장에서 이 사용자들을 멘션할 수 있어요",
+	"CANCEL": "취소",
+	"DELETE": "삭제",
+	"EDIT": "수정",
+	"EDIT_USER_ID": "사용자 ID 수정",
+	"EXCEPTIONS": "예외",
+	"INVALID_USER_ID": "숫자로 된 Discord 사용자 ID를 입력하세요.",
+	"NO_USERS": "아직 추가한 사용자가 없어요.",
+	"ONLY_PING_LISTED": "목록의 사용자만 멘션",
+	"ONLY_PING_LISTED_OFF": "기본적으로 답장에서 아무도 멘션하지 않아요",
+	"ONLY_PING_LISTED_ON": "답장에서 위 목록의 사용자만 멘션해요",
+	"PLUGIN_NAME": "No Reply Mention",
+	"SAVE": "저장",
+	"TAP_TO_EDIT": "탭하여 수정",
+	"USER_ID_PLACEHOLDER": "Discord 사용자 ID"
+}

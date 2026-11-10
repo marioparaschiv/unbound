@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Indicator",
+	"LATENCY_THRESHOLD": "Latency threshold",
+	"LATENCY_THRESHOLD_SUBTITLE": "Show an indicator when a message takes at least this long to send.",
+	"SHOW_MILLISECONDS": "Show milliseconds",
+	"SHOW_MILLISECONDS_SUBTITLE": "Include millisecond precision in the indicator.",
+	"IGNORE_MY_MESSAGES": "Ignore my messages",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Only mark messages sent by other people.",
+	"DETECT_LEGACY_ANDROID": "Detect legacy Android clients",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Show a marker for the known timestamp offset in older Discord Android clients.",
+	"DURATION_DAYS": "{count, plural, one {# day} other {# days}}",
+	"DURATION_HOURS": "{count, plural, one {# hour} other {# hours}}",
+	"DURATION_MINUTES": "{count, plural, one {# minute} other {# minutes}}",
+	"DURATION_SECONDS": "{count, plural, one {# second} other {# seconds}}",
+	"DURATION_MILLISECONDS": "{count, plural, one {# millisecond} other {# milliseconds}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} and {later}",
+	"TOOLTIP_DELAYED": "This message was sent with a delay of {duration}.",
+	"TOOLTIP_CLOCK_AHEAD": "This user's clock is {duration} ahead.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "User is suspected to be on an old Discord Android client",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} User is suspected to be on an old Discord Android client.",
+	"OLD_ANDROID_CLIENT": "Old Discord Android client"
+}

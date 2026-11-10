@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Анонимизировать по умолчанию",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Для каждого файла это можно переключить в окне предпросмотра",
+	"METHOD": "Способ",
+	"METHOD_RANDOM": "Случайные символы",
+	"METHOD_CONSISTENT": "Постоянное имя",
+	"METHOD_TIMESTAMP": "Метка времени",
+	"LENGTH": "Длина",
+	"FILE_NAME": "Имя файла",
+	"FILE_NAME_PLACEHOLDER": "image",
+	"FILE_NAME_SUBTITLE": "Каждый файл загружается с этим именем и своим расширением.",
+	"ANONYMISE_FILE_NAME": "Анонимизировать имя файла",
+	"USING_ANONYMOUS_NAME": "Используется анонимное имя файла",
+	"USING_ORIGINAL_NAME": "Используется исходное имя файла",
+	"USE_ORIGINAL_FILE_NAME": "Использовать исходное имя файла"
+}

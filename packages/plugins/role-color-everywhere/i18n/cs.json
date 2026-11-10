@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Barevné zmínky",
+	"COLOR_MENTIONS_SUBTITLE": "Zobrazí barvy rolí zmíněného člena v chatu i v poli pro psaní zprávy",
+	"COLOR_MESSAGE_CONTENT": "Barevný obsah zpráv",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Obarví text zprávy barvou role autora",
+	"MESSAGE_COLOR_INTENSITY": "Intenzita barvy zpráv",
+	"TYPING_NAMES": "Jména u psaní",
+	"TYPING_NAMES_SUBTITLE": "Obarví jména v indikátoru psaní v kanálu",
+	"MEMBER_LIST_ROLE_HEADERS": "Nadpisy rolí v seznamu členů",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "Obarví nadpisy sekcí rolí v seznamu členů",
+	"REACTION_USERS": "Uživatelé u reakcí",
+	"REACTION_USERS_SUBTITLE": "Obarví jména v podrobnostech reakcí",
+	"POLL_VOTERS": "Hlasující v anketách",
+	"POLL_VOTERS_SUBTITLE": "Obarví jména v podrobnostech výsledků ankety",
+	"VOICE_USERS": "Uživatelé v hlasových kanálech",
+	"VOICE_USERS_SUBTITLE": "Obarví jména členů v seznamech uživatelů v hlasových kanálech"
+}

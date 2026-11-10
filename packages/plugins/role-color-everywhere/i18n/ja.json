@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "メンションに色を付ける",
+	"COLOR_MENTIONS_SUBTITLE": "チャットや入力欄で、メンションされたメンバーのロールの色を表示します",
+	"COLOR_MESSAGE_CONTENT": "メッセージ本文に色を付ける",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "メッセージのテキストを送信者のロールの色で染めます",
+	"MESSAGE_COLOR_INTENSITY": "メッセージの色の濃さ",
+	"TYPING_NAMES": "入力中の名前",
+	"TYPING_NAMES_SUBTITLE": "チャンネルの入力中インジケーターの名前に色を付けます",
+	"MEMBER_LIST_ROLE_HEADERS": "メンバーリストのロール見出し",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "メンバーリストのロールごとの見出しに色を付けます",
+	"REACTION_USERS": "リアクションしたユーザー",
+	"REACTION_USERS_SUBTITLE": "リアクションの詳細リストの名前に色を付けます",
+	"POLL_VOTERS": "投票者",
+	"POLL_VOTERS_SUBTITLE": "投票結果の詳細の名前に色を付けます",
+	"VOICE_USERS": "ボイスのユーザー",
+	"VOICE_USERS_SUBTITLE": "ボイスのユーザーリストでメンバーの名前に色を付けます"
+}

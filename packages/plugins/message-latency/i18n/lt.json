@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Indikatorius",
+	"LATENCY_THRESHOLD": "Vėlavimo riba",
+	"LATENCY_THRESHOLD_SUBTITLE": "Rodyti indikatorių, kai žinutės siuntimas užtrunka bent tiek laiko.",
+	"SHOW_MILLISECONDS": "Rodyti milisekundes",
+	"SHOW_MILLISECONDS_SUBTITLE": "Indikatoriuje rodyti milisekundžių tikslumu.",
+	"IGNORE_MY_MESSAGES": "Ignoruoti mano žinutes",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Žymėti tik kitų žmonių išsiųstas žinutes.",
+	"DETECT_LEGACY_ANDROID": "Aptikti senus Android klientus",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Rodyti žymą dėl žinomo laiko žymos poslinkio senesniuose Discord Android klientuose.",
+	"DURATION_DAYS": "{count, plural, one {# diena} few {# dienos} many {# dienos} other {# dienų}}",
+	"DURATION_HOURS": "{count, plural, one {# valanda} few {# valandos} many {# valandos} other {# valandų}}",
+	"DURATION_MINUTES": "{count, plural, one {# minutė} few {# minutės} many {# minutės} other {# minučių}}",
+	"DURATION_SECONDS": "{count, plural, one {# sekundė} few {# sekundės} many {# sekundės} other {# sekundžių}}",
+	"DURATION_MILLISECONDS": "{count, plural, one {# milisekundė} few {# milisekundės} many {# milisekundės} other {# milisekundžių}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} ir {later}",
+	"TOOLTIP_DELAYED": "Ši žinutė išsiųsta pavėlavus: {duration}.",
+	"TOOLTIP_CLOCK_AHEAD": "Šio naudotojo laikrodis skuba {duration}.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "Įtariama, kad naudotojas naudoja seną Discord Android klientą",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} Įtariama, kad naudotojas naudoja seną Discord Android klientą.",
+	"OLD_ANDROID_CLIENT": "Senas Discord Android klientas"
+}

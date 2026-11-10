@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "Preostalo vremensko ograničenje: {remaining}",
+	"TIMEOUT_EXPIRES_IN": "Vremensko ograničenje istječe za {remaining}"
+}

@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Oboji spominjanja",
+	"COLOR_MENTIONS_SUBTITLE": "Prikaži boje uloga spomenutog člana u chatu i polju za pisanje",
+	"COLOR_MESSAGE_CONTENT": "Oboji sadržaj poruke",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Oboji tekst poruke bojom uloge autora",
+	"MESSAGE_COLOR_INTENSITY": "Intenzitet boje poruke",
+	"TYPING_NAMES": "Imena pri tipkanju",
+	"TYPING_NAMES_SUBTITLE": "Oboji imena u indikatoru tipkanja u kanalu",
+	"MEMBER_LIST_ROLE_HEADERS": "Zaglavlja uloga na popisu članova",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "Oboji naslove odjeljaka uloga na popisu članova",
+	"REACTION_USERS": "Korisnici reakcija",
+	"REACTION_USERS_SUBTITLE": "Oboji imena na popisu detalja reakcija",
+	"POLL_VOTERS": "Glasači u anketama",
+	"POLL_VOTERS_SUBTITLE": "Oboji imena u detaljima rezultata ankete",
+	"VOICE_USERS": "Korisnici u glasovnim kanalima",
+	"VOICE_USERS_SUBTITLE": "Oboji imena članova na popisima korisnika u glasovnim kanalima"
+}

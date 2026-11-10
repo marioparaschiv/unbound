@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Remplacer",
+	"REPLACE_ALL": "Titres et miniatures",
+	"REPLACE_TITLES": "Titres",
+	"REPLACE_THUMBNAILS": "Miniatures",
+	"DEARROW_BY_DEFAULT": "DeArrow par défaut",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Remplacer les titres et miniatures sans demander",
+	"SHOW_TOGGLE": "Afficher le bouton",
+	"SHOW_TOGGLE_SUBTITLE": "Basculer une intégration entre les deux versions depuis le menu du message",
+	"SHOW_ORIGINAL_EMBED": "Afficher l’intégration d’origine",
+	"DEARROW_EMBED": "Appliquer DeArrow à l’intégration"
+}

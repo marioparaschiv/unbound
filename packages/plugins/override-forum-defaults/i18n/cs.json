@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Výchozí rozložení",
+	"LAYOUT_LIST": "Seznam",
+	"LAYOUT_LIST_SUBTITLE": "Příspěvky v seznamu",
+	"LAYOUT_GALLERY": "Galerie",
+	"LAYOUT_GALLERY_SUBTITLE": "Příspěvky v mřížce karet",
+	"DEFAULT_SORT_ORDER": "Výchozí řazení",
+	"SORT_RECENTLY_ACTIVE": "Nedávno aktivní",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Nejdřív příspěvky s nejnovějšími zprávami",
+	"SORT_DATE_POSTED": "Datum zveřejnění",
+	"SORT_DATE_POSTED_SUBTITLE": "Nejdřív nejnovější příspěvky"
+}

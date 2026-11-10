@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Tilføj vedhæftede filer",
+	"UPLOADING": "Uploader, det kan tage et stykke tid …",
+	"ATTACHMENTS_ADDED": "{count, plural, one {Den vedhæftede fil blev tilføjet!} other {De vedhæftede filer blev tilføjet!}}",
+	"UPLOAD_FAILED": "En vedhæftet fil kunne ikke uploades.",
+	"NOT_ADDED": "De vedhæftede filer kunne ikke tilføjes.",
+	"PICKER_UNAVAILABLE": "Medievælgeren er ikke tilgængelig i dette Discord-build.",
+	"PICKER_FAILED": "Medievælgeren mislykkedes.",
+	"LIMIT_REACHED": "Du kan ikke tilføje flere vedhæftede filer til denne besked.",
+	"LIMIT_REMAINING": "Du kan kun tilføje {count, plural, one {# vedhæftet fil mere} other {# vedhæftede filer mere}} til denne besked."
+}

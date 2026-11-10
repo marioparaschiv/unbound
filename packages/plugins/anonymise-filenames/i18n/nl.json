@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Standaard anonimiseren",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Je kunt dit per bestand nog wijzigen in het voorbeeldvenster",
+	"METHOD": "Methode",
+	"METHOD_RANDOM": "Willekeurige tekens",
+	"METHOD_CONSISTENT": "Consistent",
+	"METHOD_TIMESTAMP": "Tijdstempel",
+	"LENGTH": "Lengte",
+	"FILE_NAME": "Bestandsnaam",
+	"FILE_NAME_PLACEHOLDER": "afbeelding",
+	"FILE_NAME_SUBTITLE": "Elk bestand wordt geüpload met deze naam en zijn eigen extensie.",
+	"ANONYMISE_FILE_NAME": "Bestandsnaam anonimiseren",
+	"USING_ANONYMOUS_NAME": "Anonieme bestandsnaam wordt gebruikt",
+	"USING_ORIGINAL_NAME": "Oorspronkelijke bestandsnaam wordt gebruikt",
+	"USE_ORIGINAL_FILE_NAME": "Oorspronkelijke bestandsnaam gebruiken"
+}

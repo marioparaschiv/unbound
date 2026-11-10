@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Standardmäßig anonymisieren",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Jede Datei kann weiterhin in ihrer Vorschau umgeschaltet werden",
+	"METHOD": "Methode",
+	"METHOD_RANDOM": "Zufällige Zeichen",
+	"METHOD_CONSISTENT": "Gleichbleibend",
+	"METHOD_TIMESTAMP": "Zeitstempel",
+	"LENGTH": "Länge",
+	"FILE_NAME": "Dateiname",
+	"FILE_NAME_PLACEHOLDER": "bild",
+	"FILE_NAME_SUBTITLE": "Jede Datei wird mit diesem Namen und ihrer eigenen Endung hochgeladen.",
+	"ANONYMISE_FILE_NAME": "Dateinamen anonymisieren",
+	"USING_ANONYMOUS_NAME": "Anonymer Dateiname wird verwendet",
+	"USING_ORIGINAL_NAME": "Originaler Dateiname wird verwendet",
+	"USE_ORIGINAL_FILE_NAME": "Originalen Dateinamen verwenden"
+}

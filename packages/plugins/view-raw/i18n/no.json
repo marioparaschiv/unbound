@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Lukk",
+	"CONTENT_COPIED": "Rått innhold kopiert til utklippstavlen.",
+	"COPY_CONTENT": "Kopier innhold",
+	"COPY_DATA": "Kopier data",
+	"DATA_COPIED": "{type}-data kopiert til utklippstavlen.",
+	"MESSAGE_CONTENT": "Meldingsinnhold",
+	"MESSAGE_DATA": "Meldingsdata",
+	"RAW_TITLE": "Rådata: {type}",
+	"TYPE_CHANNEL": "Kanal",
+	"TYPE_GUILD": "Server",
+	"TYPE_MESSAGE": "Melding",
+	"TYPE_PROFILE": "Profil",
+	"TYPE_USER": "Bruker",
+	"VIEW_RAW": "Vis rådata"
+}
