@@ -620,9 +620,9 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
         {
             return "";
         }
-        return issueURL(crashReport(issueReport(provider ? *provider : NativePlatformProvider{},
-                                                context.platform, argument),
-                                    *summary, previousLaunchLogTail(kCrashReportLogLines)));
+        return crashReportURL(issueReport(provider ? *provider : NativePlatformProvider{},
+                                          context.platform, argument),
+                              *summary, previousLaunchLogTail(kCrashReportLogLines));
     }
     if (action == "menu")
     {

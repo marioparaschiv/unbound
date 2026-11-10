@@ -38,4 +38,33 @@ toolbox::IssueReport crashReport(const toolbox::IssueReport &environment,
     }
     return report;
 }
+
+static toolbox::IssueReport withoutEntitlements(const toolbox::IssueReport &environment)
+{
+    toolbox::IssueReport report = environment;
+    std::erase_if(report.attachments, [](const auto &attachment) {
+        return attachment.first == "Entitlements";
+    });
+    return report;
+}
+
+static void dropOldestLine(std::string &log)
+{
+    size_t newline = log.find('\n');
+    log.erase(0, newline == std::string::npos ? log.size() : newline + 1);
+}
+
+std::string crashReportURL(const toolbox::IssueReport &environment, const std::string &summary,
+                           const std::string &logTail)
+{
+    const toolbox::IssueReport base = withoutEntitlements(environment);
+    std::string                log  = logTail;
+    std::string                url  = toolbox::issueURL(crashReport(base, summary, log));
+    while (url.size() > kCrashReportURLLength && !log.empty())
+    {
+        dropOldestLine(log);
+        url = toolbox::issueURL(crashReport(base, summary, log));
+    }
+    return url;
+}
 }
