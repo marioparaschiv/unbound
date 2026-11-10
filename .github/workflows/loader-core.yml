@@ -42,23 +42,11 @@ jobs:
             - name: Run core tests
               run: ctest --test-dir build/core --output-on-failure --timeout 120 -j"$(nproc)" -E '_fuzz$'
 
-            - name: Report the compiler cache
+            - name: Save ccache
               if: ${{ !cancelled() }}
-              run: |
-                  {
-                      echo "### Compiler cache"
-                      echo
-                      echo '```'
-                      ccache --show-stats
-                      echo '```'
-                  } | tee -a "$GITHUB_STEP_SUMMARY"
-
-            - name: Save the compiler cache
-              if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
-              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              uses: ./.github/actions/save-ccache
               with:
-                  path: ${{ runner.temp }}/ccache
-                  key: ccache-${{ runner.os }}-core-tests-${{ github.sha }}
+                  key: core-tests
 
     native-jsi-fuzz:
         name: Host Hermes bridge tests
@@ -104,23 +92,11 @@ jobs:
             - name: Build the Hermes tests and fuzzer
               run: cmake --build build/jsi-fuzz --target native_platform_hermes native_runtime_hermes unbound_native_hermes native_define_stage_hermes native_fabric_hermes native_handle_leases_hermes native_struct_layouts_hermes native_jsi_fuzz -j"$(nproc)"
 
-            - name: Report the compiler cache
+            - name: Save ccache
               if: ${{ !cancelled() }}
-              run: |
-                  {
-                      echo "### Compiler cache"
-                      echo
-                      echo '```'
-                      ccache --show-stats
-                      echo '```'
-                  } | tee -a "$GITHUB_STEP_SUMMARY"
-
-            - name: Save the compiler cache
-              if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
-              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              uses: ./.github/actions/save-ccache
               with:
-                  path: ${{ runner.temp }}/ccache
-                  key: ccache-${{ runner.os }}-hermes-bridge-${{ github.sha }}
+                  key: hermes-bridge
 
             - name: Test the native bridge on Hermes
               run: |
