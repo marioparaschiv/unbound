@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { asId, sheetTarget } from '~/viewer/action-sheets/targets';
+import { sheetTarget } from '~/viewer/action-sheets/targets';
 
 describe('sheetTarget', () => {
 	test('a profile opened from a server targets that member', () => {
@@ -50,13 +50,5 @@ describe('sheetTarget', () => {
 		expect(sheetTarget('ThreadLongPressActionSheet', { channelId: 'c' })).toBeUndefined();
 		expect(sheetTarget('VoiceChannelActionSheet', { channelId: 'c' })).toBeUndefined();
 		expect(sheetTarget('ChannelActionSheetFooter', { channelId: 'c' })).toBeUndefined();
-	});
-});
-
-describe('asId', () => {
-	test('accepts only non-empty strings', () => {
-		expect(asId('1')).toBe('1');
-		expect(asId('')).toBeUndefined();
-		expect(asId(1)).toBeUndefined();
 	});
 });

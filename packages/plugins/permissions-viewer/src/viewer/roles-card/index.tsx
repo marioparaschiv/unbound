@@ -1,8 +1,8 @@
+import { asId } from '@unbound-plugins/shared/values/as-id';
 import { settings } from '@unbound-app/settings';
 import { patcher } from '@unbound-app/api';
 
 import RolesCardButton from '~/viewer/roles-card/components/roles-card-button';
-import { asId } from '~/viewer/action-sheets/targets';
 import { RolesCard } from '~/viewer/modules';
 
 type RolesCardProps = {

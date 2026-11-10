@@ -1,12 +1,9 @@
+import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
 import { flux } from '@unbound-app/api';
 
 import type { VisibleCellScanner } from '~/avatars/ios/visible-cells';
 import type { Renderer } from '~/avatars/ios/renderer';
 import { SelectedChannelStore } from '~/avatars/modules';
-
-function selectedChannelId(): string | undefined {
-	return SelectedChannelStore.getChannelId() ?? SelectedChannelStore.getLastSelectedChannelId();
-}
 
 /**
  * @description Renders the cells on screen now, then starts over in each newly selected channel: restores the old cells and scans the new ones.

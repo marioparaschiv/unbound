@@ -19,7 +19,9 @@ import {
 import { MessageStore, type Renderers } from '~/embeds/modules';
 import { buildEmbeddedContent } from '~/embeds/embedded-content';
 import { createLinkedMessages } from '~/embeds/linked-messages';
-import { currentChannelId, linkedChannelName } from '~/embeds/channels';
+import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
+
+import { linkedChannelName } from '~/embeds/channels';
 import { Surface } from '~/constants';
 
 const INSERTION = '\n\ufffc';
@@ -74,7 +76,7 @@ export function createAndroidEmbeds(native: Native, renderers: Renderers) {
 		prefix: 'message-link-android',
 		async slots(text) {
 			const messageId = await text.messageId();
-			const channelId = currentChannelId();
+			const channelId = selectedChannelId();
 			const source =
 				channelId && messageId ? MessageStore.getMessage(channelId, messageId) : undefined;
 			const [target] = source ? linkedTargets(source) : [];

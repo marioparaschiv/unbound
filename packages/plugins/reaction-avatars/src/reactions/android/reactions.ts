@@ -34,7 +34,7 @@ import {
 import { reactionContext, type Reaction, type ReactionContext } from '~/reactions/reaction-context';
 import { Avatar, REACTION_ACTIONS } from '~/constants';
 import { ChannelStore, MessageStore } from '~/reactions/modules';
-import { selectedChannelId } from '~/reactions/selected-channel';
+import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
 import type { ReactionChange } from '~/types';
 import { surfaceStates } from '~/reactions/surface-states';
 import ReactionUserCache from '~/reactions/reactor-cache';

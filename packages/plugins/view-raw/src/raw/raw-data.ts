@@ -1,19 +1,12 @@
+import { isRecord } from '@unbound-plugins/shared/values/is-record';
+
 export type RawValue = string | number | boolean | null | undefined | RawValue[] | RawObject;
 export type RawObject = { [key: string]: RawValue };
-
-/**
- * @description Checks whether a value from Discord is a plain record whose data can be shown.
- * @param value A sheet prop or a nested field.
- * @returns `true` for any non-null object that is not an array.
- */
-export function isRawObject(value: unknown): value is RawObject {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
 
 function sortValue(value: RawValue): RawValue {
 	if (Array.isArray(value)) return value.map(sortValue);
 
-	return isRawObject(value) ? sortKeys(value) : value;
+	return isRecord<RawObject>(value) ? sortKeys(value) : value;
 }
 
 /**
@@ -37,7 +30,7 @@ export function cleanMessage(message: RawObject): RawObject {
 	const clone: RawObject = JSON.parse(JSON.stringify(message));
 	const { author, attachments } = clone;
 
-	if (isRawObject(author)) {
+	if (isRecord<RawObject>(author)) {
 		for (const field of ['email', 'phone', 'mfaEnabled', 'personalConnectionId']) {
 			delete author[field];
 		}
@@ -49,11 +42,11 @@ export function cleanMessage(message: RawObject): RawObject {
 
 	if (Array.isArray(attachments)) {
 		for (const attachment of attachments) {
-			if (isRawObject(attachment)) delete attachment.deleted;
+			if (isRecord<RawObject>(attachment)) delete attachment.deleted;
 		}
 	}
 
 	return sortKeys(clone);
 }
 
-export default { isRawObject, sortKeys, cleanMessage };
+export default { sortKeys, cleanMessage };

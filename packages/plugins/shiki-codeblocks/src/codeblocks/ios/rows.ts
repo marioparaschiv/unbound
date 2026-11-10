@@ -3,14 +3,16 @@ import { shouldCorrectRow } from '~/codeblocks/layout';
 import { Limits } from '~/constants';
 
 import type { Session, Surface } from '~/codeblocks/ios/session';
-import { detachSurface, isMounted, isOnScreen, visibleChannelId } from '~/codeblocks/ios/session';
+import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
+
+import { detachSurface, isMounted, isOnScreen } from '~/codeblocks/ios/session';
 import { measureRow, tableForCell } from '~/codeblocks/ios/cells';
 
 const ROW_RETRY_MS = 80;
 const SCROLL_RETRY_MS = 150;
 
 function isCurrent(session: Session, surface: Surface): boolean {
-	return isMounted(session, surface) && visibleChannelId() === surface.channelId;
+	return isMounted(session, surface) && selectedChannelId() === surface.channelId;
 }
 
 const pendingTables = new WeakMap<Session, Map<string, NativeObjectHandle>>();
