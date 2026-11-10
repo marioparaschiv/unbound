@@ -2,9 +2,10 @@ import { afterEach, describe, expect, test } from 'bun:test';
 
 import type { DiscoveredAddon } from '~/lib/discovery';
 import type { Diagnostic } from '~/rollup/diagnostic';
-import { buildWithChecks } from '~/lib/build-checks';
 import { discoverAddons } from '~/lib/discovery';
+import { buildAddon } from '~/lib/build-addon';
 import type { Check } from '~/lib/check/check';
+import { BUILD_REPORT_ENV } from '~/rollup/build-env';
 
 import { createTempDir, runUbd, type TempDir } from '../helpers/ubd';
 import { loadWorkspace } from '../helpers/config';
@@ -60,7 +61,15 @@ function reporting(issues: Diagnostic[], seen: string[] = []): Check {
 	};
 }
 
-describe('buildWithChecks', () => {
+async function buildWithChecks(
+	addon: DiscoveredAddon,
+	command: string,
+	checks: readonly Check[],
+): Promise<boolean> {
+	return (await buildAddon(addon, { command, checks })).ok;
+}
+
+describe('buildAddon', () => {
 	test('an error from a check fails the build', async () => {
 		const addon = await findAddon(workspace('true'), 'com.example.built');
 		const check = reporting([issue('error', 'broken layout')]);
@@ -119,6 +128,15 @@ describe('buildWithChecks', () => {
 
 		expect(await buildWithChecks(addon, 'true', checks)).toBe(true);
 		expect(seen).toEqual(['first', 'second', 'third']);
+	});
+
+	test('asks the preset for a report only when told to', async () => {
+		const addon = await findAddon(workspace('true'), 'com.example.built');
+		const build = (command: string, report: boolean) =>
+			buildAddon(addon, { command, checks: [], report });
+
+		expect((await build(`test -z "$${BUILD_REPORT_ENV}"`, false)).ok).toBe(true);
+		expect((await build(`test -n "$${BUILD_REPORT_ENV}"`, true)).ok).toBe(true);
 	});
 });
 

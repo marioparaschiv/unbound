@@ -9,28 +9,18 @@ import type {
 } from './index';
 
 import {
-	DEFAULT_EVAL_TIMEOUT_MS,
-	MAX_EVAL_TIMEOUT_MS,
+	BRIDGE_REPLY_GRACE_MS,
+	PLUGIN_PUSH_TIMEOUT_MS,
+	resolveEvalTimeout,
 	serializeMessage,
 	parseMessage,
 } from './index';
+import { PendingRequests } from './pending-requests';
 
 /**
  * The controller half of the bridge: dials the `?mcp` endpoint and settles id-correlated evals
  * against the results the bridge routes back. Reconnects so it outlives bridge restarts.
  */
-
-type PendingEval = {
-	resolve: (result: EvalResult) => void;
-	timer: ReturnType<typeof setTimeout>;
-	/** Console output seen between this eval's dispatch and its result, so side effects surface too. */
-	logs: LogMessage[];
-};
-
-type PendingPush = {
-	resolve: (result: PluginPushResult) => void;
-	timer: ReturnType<typeof setTimeout>;
-};
 
 type PluginPush = {
 	addonId: string;
@@ -41,16 +31,14 @@ type PluginPush = {
 	files?: Record<string, string>;
 };
 
-const EVAL_RESULT_GRACE_MS = 5_000;
-const PLUGIN_PUSH_TIMEOUT_MS = 75_000;
-
 /** How long to wait between reconnection attempts when the bridge is unreachable. */
 const RECONNECT_DELAY_MS = 1_000;
 
 export class ControllerClient {
 	private ws: WebSocket | null = null;
-	private readonly pending = new Map<string, PendingEval>();
-	private readonly pendingPushes = new Map<string, PendingPush>();
+	/** Each pending eval keeps the console output seen since its dispatch, so side effects surface too. */
+	private readonly pending = new PendingRequests<EvalResult, LogMessage[]>();
+	private readonly pendingPushes = new PendingRequests<PluginPushResult>();
 	private deviceConnected = false;
 	private deviceInfo: DeviceInfo | undefined;
 	private closed = false;
@@ -76,29 +64,18 @@ export class ControllerClient {
 		this.closed = true;
 		this.ws?.close();
 
-		for (const [id, entry] of this.pending) {
-			clearTimeout(entry.timer);
-			entry.resolve({
-				type: 'eval-result',
-				id,
-				ok: false,
-				error: 'Debugger client shut down.',
-				logs: entry.logs,
-			});
-		}
-
-		for (const [id, entry] of this.pendingPushes) {
-			clearTimeout(entry.timer);
-			entry.resolve({
-				type: 'plugin-push-result',
-				id,
-				ok: false,
-				error: 'Debugger client shut down.',
-			});
-		}
-
-		this.pending.clear();
-		this.pendingPushes.clear();
+		this.pending.failAll((id) => ({
+			type: 'eval-result',
+			id,
+			ok: false,
+			error: 'Debugger client shut down.',
+		}));
+		this.pendingPushes.failAll((id) => ({
+			type: 'plugin-push-result',
+			id,
+			ok: false,
+			error: 'Debugger client shut down.',
+		}));
 	}
 
 	/** @description Whether a device is currently connected to the bridge. */
@@ -134,20 +111,19 @@ export class ControllerClient {
 			}
 
 			const logs: LogMessage[] = [];
-			const limit = Math.min(timeout ?? DEFAULT_EVAL_TIMEOUT_MS, MAX_EVAL_TIMEOUT_MS);
+			const limit = resolveEvalTimeout(timeout);
 
-			const timer = setTimeout(() => {
-				this.pending.delete(id);
-				resolve({
+			this.pending.add(id, {
+				settle: (result) => resolve({ ...result, logs }),
+				timeoutMs: limit + BRIDGE_REPLY_GRACE_MS,
+				onTimeout: () => ({
 					type: 'eval-result',
 					id,
 					ok: false,
 					error: `Evaluation timed out after ${limit}ms.`,
-					logs,
-				});
-			}, limit + EVAL_RESULT_GRACE_MS);
-
-			this.pending.set(id, { resolve, timer, logs });
+				}),
+				meta: logs,
+			});
 			this.ws.send(
 				serializeMessage(
 					timeout === void 0
@@ -179,17 +155,17 @@ export class ControllerClient {
 				return;
 			}
 
-			const timer = setTimeout(() => {
-				this.pendingPushes.delete(id);
-				resolve({
+			this.pendingPushes.add(id, {
+				settle: resolve,
+				timeoutMs: PLUGIN_PUSH_TIMEOUT_MS + BRIDGE_REPLY_GRACE_MS,
+				onTimeout: () => ({
 					type: 'plugin-push-result',
 					id,
 					ok: false,
 					error: `Plugin push timed out after ${PLUGIN_PUSH_TIMEOUT_MS}ms.`,
-				});
-			}, PLUGIN_PUSH_TIMEOUT_MS);
-
-			this.pendingPushes.set(id, { resolve, timer });
+				}),
+				meta: void 0,
+			});
 			this.ws.send(serializeMessage({ type: 'plugin-push', id, ...push }));
 		});
 	}
@@ -209,33 +185,20 @@ export class ControllerClient {
 		if (message.type === 'log') {
 			// Device logs carry no eval id, so each goes to every in-flight eval. Exact for the MCP's
 			// one-at-a-time use; concurrent evals get a superset.
-			for (const entry of this.pending.values()) entry.logs.push(message);
+			for (const logs of this.pending.metas()) logs.push(message);
 
 			return;
 		}
 
 		if (message.type === 'eval-result') {
-			const entry = this.pending.get(message.id);
-
-			if (!entry) return;
-
-			clearTimeout(entry.timer);
-			this.pending.delete(message.id);
-			// Return the captured side-effect logs alongside the value.
-			entry.resolve({ ...message, logs: entry.logs });
+			this.pending.resolve(message.id, message);
 
 			return;
 		}
 
 		if (message.type !== 'plugin-push-result') return;
 
-		const entry = this.pendingPushes.get(message.id);
-
-		if (!entry) return;
-
-		clearTimeout(entry.timer);
-		this.pendingPushes.delete(message.id);
-		entry.resolve(message);
+		this.pendingPushes.resolve(message.id, message);
 	}
 
 	private onClose() {

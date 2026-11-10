@@ -2,9 +2,8 @@ import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry'
 
 import { bridgePortField, waitForDevice } from '~/lib/context';
 import { resolveAddonTarget } from '~/lib/addon-target';
-import { readBuiltAddon } from '~/lib/reload-transport';
+import { pushBuiltAddon } from '~/lib/built-addon';
 import { staleBuildReason } from '~/lib/stale-build';
-import { HOT_BUILD_ENV } from '~/lib/build-addon';
 import { defaulted, Type } from '~/lib/schema';
 import { NOT_CONNECTED } from '~/lib/device';
 
@@ -29,7 +28,7 @@ const pushCommand: CommandDefinition<typeof schema> = {
 	cli: { positionals: ['addon'] },
 	async handler({ addon: target, build }, { client }) {
 		const startedAt = Date.now();
-		const resolved = await resolveAddonTarget(target, build, void 0, HOT_BUILD_ENV);
+		const resolved = await resolveAddonTarget(target, { build, hot: true });
 
 		if ('error' in resolved) {
 			return { ok: false, text: resolved.error };
@@ -47,20 +46,11 @@ const pushCommand: CommandDefinition<typeof schema> = {
 			return NOT_CONNECTED;
 		}
 
-		const built = readBuiltAddon(resolved.addon);
-		const result = await client.pushPlugin({
-			addonId: resolved.addon.id,
-			kind: resolved.addon.kind,
-			...built,
-		});
-		const compiled = Object.keys(built.bytecode ?? {});
-		const summary = compiled.length
-			? `${built.bundle.length} bytes, bytecode ${compiled.join(', ')}`
-			: `${built.bundle.length} bytes`;
+		const pushed = await pushBuiltAddon(client, resolved.addon);
 
-		return result.ok
-			? { ok: true, text: `Pushed ${resolved.addon.id} (${summary}).` }
-			: { ok: false, text: `Pushing ${resolved.addon.id} failed: ${result.error}` };
+		return pushed.ok
+			? { ok: true, text: `Pushed ${resolved.addon.id} (${pushed.summary}).` }
+			: { ok: false, text: `Pushing ${resolved.addon.id} failed: ${pushed.error}` };
 	},
 };
 

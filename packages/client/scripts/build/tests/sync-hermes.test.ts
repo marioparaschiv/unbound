@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { hermescCount, nextBytecodeVersions, sameVersions } from '../sync-hermes';
+import { nextBytecodeVersions, sameVersions } from '../sync-hermes';
 
 const manifest = {
 	latest: [99, 98, 96, 94],
@@ -27,13 +27,6 @@ describe('sync-hermes', () => {
 
 	test('starts from the newest published version when none ships yet', () => {
 		expect(nextBytecodeVersions(manifest, [])).toEqual([99]);
-	});
-
-	test('resolves enough of the newest hermesc versions to cover every shipped one', () => {
-		expect(hermescCount([99, 98, 96, 94], [98])).toBe(2);
-		expect(hermescCount([98, 96, 94], [98])).toBe(1);
-		expect(hermescCount([99, 98, 96, 94], [98, 94])).toBe(4);
-		expect(() => hermescCount([99, 98], [97])).toThrow('hermesc does not publish bytecode 97.');
 	});
 
 	test('compares versions in order', () => {

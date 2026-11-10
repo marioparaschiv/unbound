@@ -13,6 +13,9 @@ import {
 	symbolicatePulledLogs,
 } from '~/lib/log-pull';
 import type { CommandResult, CommandRunner } from '~/lib/run-command';
+import type { AndroidTarget, IOSTarget } from '~/lib/device-target';
+import { openAndroidTarget } from '~/lib/android-target';
+import { openIOSTarget } from '~/lib/ios-target';
 
 type Call = { command: string; args: string[] };
 
@@ -53,6 +56,26 @@ function shellOutput(exitCode: number, output: string): CommandResult {
 	return { ok: true, stdout: JSON.stringify({ exitCode, output }) };
 }
 
+async function androidTarget(run: CommandRunner, serial?: string): Promise<AndroidTarget> {
+	const target = await openAndroidTarget({ serial, run });
+
+	if ('error' in target) {
+		throw new Error(target.error);
+	}
+
+	return target;
+}
+
+async function iosTarget(run: CommandRunner): Promise<IOSTarget> {
+	const target = await openIOSTarget({ udid: 'device', pilot: 'jb-p1lot', run });
+
+	if ('error' in target) {
+		throw new Error(target.error);
+	}
+
+	return target;
+}
+
 describe('pullAndroidLogs', () => {
 	test('stages the logs as root, pulls them and cleans up', async () => {
 		const out = outputFolder();
@@ -70,12 +93,14 @@ describe('pullAndroidLogs', () => {
 			return void 0;
 		});
 
-		const result = await pullAndroidLogs({ out, serial: 'emulator-5554', run: runner.run });
+		const result = await pullAndroidLogs(await androidTarget(runner.run, 'emulator-5554'), {
+			out,
+		});
 
 		expect(result.ok).toBe(true);
 		expect(result.text).toContain('unbound.log');
 		expect(readFileSync(join(out, 'unbound.log'), 'utf8')).toBe('line\n');
-		expect(runner.calls[1]?.args).toEqual([
+		expect(runner.calls[2]?.args).toEqual([
 			'-s',
 			'emulator-5554',
 			'shell',
@@ -93,7 +118,9 @@ describe('pullAndroidLogs', () => {
 			return { ok: true, stdout: 'UBD_ERROR=Discord has no Unbound log files yet.\n' };
 		});
 
-		const result = await pullAndroidLogs({ out: outputFolder(), run: runner.run });
+		const result = await pullAndroidLogs(await androidTarget(runner.run), {
+			out: outputFolder(),
+		});
 
 		expect(result).toEqual({ ok: false, text: 'Discord has no Unbound log files yet.' });
 		expect(runner.calls.some((call) => call.args.includes('pull'))).toBe(false);
@@ -122,12 +149,7 @@ describe('pullIOSLogs', () => {
 			return void 0;
 		});
 
-		const result = await pullIOSLogs({
-			out,
-			udid: 'device',
-			pilot: 'jb-p1lot',
-			run: runner.run,
-		});
+		const result = await pullIOSLogs(await iosTarget(runner.run), { out });
 
 		expect(result.ok).toBe(true);
 		expect(result.text).toContain('unbound.1.log, unbound.log');
@@ -147,12 +169,7 @@ describe('pullIOSLogs', () => {
 			shellOutput(1, 'UBD_ERROR=Discord has no Unbound log files yet.\n'),
 		);
 
-		const result = await pullIOSLogs({
-			out: outputFolder(),
-			udid: 'device',
-			pilot: 'jb-p1lot',
-			run: runner.run,
-		});
+		const result = await pullIOSLogs(await iosTarget(runner.run), { out: outputFolder() });
 
 		expect(result).toEqual({ ok: false, text: 'Discord has no Unbound log files yet.' });
 	});

@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { rollup } from 'rollup';
 
 import type { BuildReport } from '~/rollup/build-report-schema';
-import { BUILD_REPORT_ENV } from '~/rollup/build-report';
+import { BUILD_REPORT_ENV } from '~/rollup/build-env';
 import { unbound } from '~/rollup/preset';
 
 const EN_US = { TITLE: 'Starred users', BODY: 'Hello, {name}!' };

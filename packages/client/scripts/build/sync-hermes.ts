@@ -40,24 +40,6 @@ export function nextBytecodeVersions(manifest: HermesManifest, current: number[]
 }
 
 /**
- * @description Counts how many of the hermesc manifest's newest versions a build must resolve so it
- * includes every version it ships, for builds that select hermesc by count.
- * @param latest The hermesc manifest's versions, newest first.
- * @param wanted The bytecode versions the build ships.
- * @returns The count to resolve.
- */
-export function hermescCount(latest: number[], wanted: number[]): number {
-	const positions = wanted.map((version) => latest.indexOf(version));
-	const missing = wanted.filter((_, index) => (positions[index] ?? -1) < 0);
-
-	if (missing.length) {
-		throw new Error(`hermesc does not publish bytecode ${missing.join(', ')}.`);
-	}
-
-	return Math.max(...positions, 0) + 1;
-}
-
-/**
  * @description Reports whether two version lists name the same versions in the same order.
  * @param left One list.
  * @param right The other.

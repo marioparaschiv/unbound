@@ -175,17 +175,30 @@ describe('resolveHermesTargets', () => {
 		expect(targets.every((target) => target.dir)).toBe(true);
 	});
 
-	test('holds only the requested number of versions', async () => {
+	test('holds exactly the requested versions, newest first', async () => {
 		const targets = await resolveHermesTargets(
 			ctx,
-			{ cacheDir, versions: 1 },
+			{ cacheDir, versions: [94, 98] },
 			{
 				fetch: registryFetch(REGISTRY),
 				download: async (_npmVersion, root) => installBinary(root),
 			},
 		);
 
-		expect(targets.map((target) => target.version)).toEqual([98]);
+		expect(targets.map((target) => target.version)).toEqual([98, 94]);
+	});
+
+	test('fails on a requested version hermesc does not publish', async () => {
+		const resolved = resolveHermesTargets(
+			ctx,
+			{ cacheDir, versions: [98, 97] },
+			{
+				fetch: registryFetch(REGISTRY),
+				download: async (_npmVersion, root) => installBinary(root),
+			},
+		);
+
+		await expect(resolved).rejects.toThrow('hermesc does not publish bytecode 97.');
 	});
 
 	test('skips the download when the binary is already cached', async () => {
@@ -214,7 +227,7 @@ describe('resolveHermesTargets', () => {
 	test('reports a failed download as a target without a directory', async () => {
 		const targets = await resolveHermesTargets(
 			ctx,
-			{ cacheDir, versions: 1 },
+			{ cacheDir, versions: [98] },
 			{
 				fetch: registryFetch(REGISTRY),
 				download: async () => Promise.reject(new Error('E404')),

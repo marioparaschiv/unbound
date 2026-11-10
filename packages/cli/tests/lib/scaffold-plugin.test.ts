@@ -12,9 +12,9 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { dirname, join, relative } from 'node:path';
 
 import type { DiscoveredAddon } from '~/lib/discovery';
-import { BUILD_CHECKS } from '~/lib/build-checks';
+import { runBuildCommand } from '~/lib/build-addon';
+import { buildChecks } from '~/lib/build-checks';
 import { discoverAddons } from '~/lib/discovery';
-import { buildAddon } from '~/lib/build-addon';
 import { scaffold } from '~/lib/create';
 
 import { createTempDir, type TempDir } from '../helpers/ubd';
@@ -170,9 +170,9 @@ describe('the scaffolded plugin', () => {
 				readFileSync(join(addon.dir, path), 'utf8'),
 			);
 
-			expect(await buildAddon(addon, 'bun run build')).toBe(true);
+			expect(await runBuildCommand(addon, 'bun run build')).toBe(true);
 
-			for (const check of BUILD_CHECKS) {
+			for (const check of buildChecks()) {
 				expect({ check: check.id, found: await check.run(checkContext(addon)) }).toEqual({
 					check: check.id,
 					found: [],

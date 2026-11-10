@@ -24,7 +24,12 @@ export type HermesTarget = { version: number; dir: string | null };
 /** The slice of a rollup or rolldown plugin context the manifest reports through. */
 export type ManifestContext = { warn(message: string): void; error(message: string): never };
 
-export type ManifestOptions = { registryUrl?: string; cacheDir?: string; versions?: number };
+export type ManifestOptions = {
+	registryUrl?: string;
+	cacheDir?: string;
+	/** The exact bytecode versions to hold; the newest few the manifest publishes when omitted. */
+	versions?: number[];
+};
 
 export type ManifestDeps = {
 	fetch?: typeof fetch;
@@ -303,9 +308,10 @@ async function downloadVersion(npmVersion: string, root: string): Promise<void> 
 }
 
 /**
- * @description Downloads the newest hermesc versions into the cache, once each, and returns where each one lives.
+ * @description Downloads the requested hermesc versions, or the newest few, into the cache, once each, and returns where each one lives.
+ * Reports an error through `ctx` when a requested version is not published.
  * @param ctx The plugin context that reports warnings and errors.
- * @param options How many of the newest bytecode versions to hold, the registry URL and the cache directory.
+ * @param options The bytecode versions to hold, the registry URL and the cache directory.
  * @param deps Replacements for `fetch` and the download, for tests.
  * @returns One target per held bytecode version, newest first.
  */
@@ -317,9 +323,19 @@ export async function resolveHermesTargets(
 	const download = deps.download ?? downloadVersion;
 	const cacheDir = options.cacheDir ?? defaultCacheDir();
 	const manifest = await fetchManifest(ctx, options, deps);
+	const wanted = options.versions;
+	const missing = wanted?.filter((version) => !manifest.latest.includes(version)) ?? [];
+
+	if (missing.length) {
+		ctx.error(`hermesc does not publish bytecode ${missing.join(', ')}.`);
+	}
+
+	const held = wanted
+		? manifest.latest.filter((version) => wanted.includes(version))
+		: manifest.latest.slice(0, DEFAULT_HELD_VERSIONS);
 	const targets: HermesTarget[] = [];
 
-	for (const version of manifest.latest.slice(0, options.versions ?? DEFAULT_HELD_VERSIONS)) {
+	for (const version of held) {
 		const entry = manifest.versions[String(version)];
 
 		if (!entry) {

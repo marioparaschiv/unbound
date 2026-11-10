@@ -16,6 +16,7 @@ import {
 import { followLoaderLogFile, readLoaderLogHistory } from '~/lib/loader-log-file';
 import { createFrameRewriter, listBundles } from '~/lib/log-symbolicator';
 import { parseArchiveEvent, tailAndroid } from '~/lib/log-tail';
+import { openAndroidTarget } from '~/lib/android-target';
 import type { LogEvent } from '~/lib/log-lines';
 
 const NOW = new Date(2026, 9, 26, 22, 30, 0).getTime();
@@ -365,11 +366,15 @@ describe('tailAndroid', () => {
 		chmodSync(adb, 0o755);
 
 		const events: LogEvent[] = [];
-		const result = await tailAndroid({
-			serial: 'emulator-5554',
+		const target = await openAndroidTarget({ serial: 'emulator-5554', adb });
+
+		if ('error' in target) {
+			throw new Error(target.error);
+		}
+
+		const result = await tailAndroid(target, {
 			since: '5m',
 			follow: false,
-			adb,
 			emit: (event) => events.push(event),
 		});
 

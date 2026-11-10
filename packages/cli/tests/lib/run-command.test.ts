@@ -5,7 +5,7 @@ import { join } from 'node:path';
 
 import { formatDuration, runCommand } from '~/lib/run-command';
 import type { DiscoveredAddon } from '~/lib/discovery';
-import { buildAddon } from '~/lib/build-addon';
+import { runBuildCommand } from '~/lib/build-addon';
 
 function isAlive(pid: number): boolean {
 	try {
@@ -113,7 +113,7 @@ describe('runCommand', () => {
 	});
 });
 
-describe('buildAddon', () => {
+describe('runBuildCommand', () => {
 	test('kills every process of a build that times out', async () => {
 		const directory = mkdtempSync(join(tmpdir(), 'ubd-build-addon-'));
 		const pidFile = join(directory, 'grandchild.pid');
@@ -128,7 +128,7 @@ describe('buildAddon', () => {
 		};
 
 		try {
-			const building = buildAddon(addon, grandchildScript(pidFile), {}, 1_000);
+			const building = runBuildCommand(addon, grandchildScript(pidFile), {}, 1_000);
 			const grandchild = await waitForPid(pidFile);
 
 			expect(isAlive(grandchild)).toBe(true);

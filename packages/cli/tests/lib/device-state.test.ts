@@ -14,6 +14,7 @@ import {
 	saveScript,
 	snapshotDirectory,
 } from '~/lib/device-state';
+import { openDeviceTarget } from '~/lib/device-target';
 import type { CommandRunner } from '~/lib/run-command';
 
 const target = {
@@ -78,23 +79,19 @@ describe('device state commands', () => {
 				stdout: 'UBD_RESULT=/data/data/com.discord/files/Unbound.reset-1\n',
 			};
 		};
-		const result = await resetDevice({ serial: 'emulator-5554', run });
+		const target = await openDeviceTarget({ serial: 'emulator-5554', run });
+
+		if ('error' in target) {
+			throw new Error(target.error);
+		}
+
+		const result = await resetDevice(target);
 
 		expect(result).toEqual({
 			ok: true,
 			text: "Moved Unbound's folder to /data/data/com.discord/files/Unbound.reset-1. Launch Discord to load it.",
 		});
 		expect(calls.at(-1)?.slice(0, 4)).toEqual(['adb', '-s', 'emulator-5554', 'shell']);
-	});
-
-	test('reset refuses an Android serial together with an iPhone', async () => {
-		const result = await resetDevice({
-			serial: 'x',
-			ios: true,
-			run: async () => ({ ok: true, stdout: '' }),
-		});
-
-		expect(result.ok).toBe(false);
 	});
 
 	test('lists saved snapshots per device', () => {
@@ -125,19 +122,19 @@ describe('transfers in parts', () => {
 		};
 
 		try {
-			const result = await pullInParts(
-				'/tmp/a',
-				local,
-				async (_direction, source, destination) => {
+			const result = await pullInParts('/tmp/a', local, {
+				async pull(source, destination) {
 					writeFileSync(destination, parts[source] ?? '');
 
 					return { ok: true, stdout: '' };
 				},
-				async (script) => ({
-					ok: true,
-					value: script.startsWith('rm') ? 'removed' : '/tmp/a.part-ab /tmp/a.part-aa',
-				}),
-			);
+				async shell(script) {
+					return {
+						ok: true,
+						output: `UBD_RESULT=${script.startsWith('rm') ? 'removed' : '/tmp/a.part-ab /tmp/a.part-aa'}`,
+					};
+				},
+			});
 
 			expect(result.ok).toBe(true);
 			expect(readFileSync(local, 'utf8')).toBe('first-second');
@@ -155,20 +152,18 @@ describe('transfers in parts', () => {
 		writeFileSync(local, Buffer.alloc(5 * 1024 * 1024, 1));
 
 		try {
-			const result = await pushInParts(
-				local,
-				'/var/tmp/a.tar.gz',
-				async (_direction, _source, destination) => {
+			const result = await pushInParts(local, '/var/tmp/a.tar.gz', {
+				async push(_source, destination) {
 					sent.push(destination);
 
 					return { ok: true, stdout: '' };
 				},
-				async (script) => {
+				async shell(script) {
 					joinScript = script;
 
-					return { ok: true, value: '/var/tmp/a.tar.gz' };
+					return { ok: true, output: 'UBD_RESULT=/var/tmp/a.tar.gz' };
 				},
-			);
+			});
 
 			expect(result.ok).toBe(true);
 			expect(sent.length).toBeGreaterThan(1);

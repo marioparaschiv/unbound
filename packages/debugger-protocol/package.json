@@ -20,6 +20,7 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./controller": "./src/controller.ts",
+		"./pending-requests": "./src/pending-requests.ts",
 		"./registry": "./src/registry.ts"
 	},
 	"scripts": {

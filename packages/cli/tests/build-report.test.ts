@@ -10,7 +10,7 @@ import { formatReport, formatSummary } from '~/lib/report-format';
 import { buildReportSchema } from '~/rollup/build-report-schema';
 import type { BuildReport } from '~/rollup/build-report-schema';
 import type { ReloadTransport } from '~/lib/reload-transport';
-import { BUILD_REPORT_ENV } from '~/rollup/build-report';
+import { BUILD_REPORT_ENV } from '~/rollup/build-env';
 import { parseByteSize } from '~/rollup/byte-size';
 import { DevServer } from '~/lib/dev-server';
 import { safeParse } from '~/lib/schema';
@@ -190,28 +190,36 @@ describe('ubd build', () => {
 	}, 60_000);
 });
 
+async function devBuiltLine(report: boolean) {
+	const transport: ReloadTransport = { reload: async () => {} };
+	const server = new DevServer(loadWorkspace(workspace.path), transport, report);
+	const written: string[] = [];
+	const write = process.stdout.write.bind(process.stdout);
+
+	process.stdout.write = (text: string | Uint8Array) => written.push(String(text)) > 0;
+
+	try {
+		await server.start();
+	} finally {
+		server.stop();
+		process.stdout.write = write;
+	}
+
+	return written.find((text) => text.startsWith('Built'));
+}
+
 describe('ubd dev', () => {
-	test('prints a one-line summary per rebuild', async () => {
-		const transport: ReloadTransport = { reload: async () => {} };
-		const server = new DevServer(loadWorkspace(workspace.path), transport);
-		const written: string[] = [];
-		const write = process.stdout.write.bind(process.stdout);
-
-		process.stdout.write = (text: string | Uint8Array) => written.push(String(text)) > 0;
-
-		try {
-			await server.start();
-		} finally {
-			server.stop();
-			process.stdout.write = write;
-		}
-
-		const built = written.find((text) => text.startsWith('Built'));
+	test('prints a one-line summary per rebuild with --report', async () => {
+		const built = await devBuiltLine(true);
 
 		expect(built).toMatch(
 			new RegExp(
 				`^Built ${FIXTURE_ID}: [\\d.]+ KB · 1 uncached filter · over bundle budget · bundles tinycolor2\\n$`,
 			),
 		);
+	}, 60_000);
+
+	test('skips the report without --report', async () => {
+		expect(await devBuiltLine(false)).toBe(`Built ${FIXTURE_ID}.\n`);
 	}, 60_000);
 });

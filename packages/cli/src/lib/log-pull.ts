@@ -3,106 +3,62 @@ import type { CommandOutput } from '@unbound-app/debugger-protocol/registry';
 import { join, resolve } from 'node:path';
 
 import {
-	ERROR_MARKER,
-	IOS_TIMEOUTS,
-	pickDevice,
-	pilotShell,
-	readMarker,
-	resolvePilot,
-} from '~/lib/pilot';
-import {
 	ANDROID_FILES_DIRECTORY,
+	ANDROID_STAGING_DIRECTORY,
 	DISCORD_BUNDLE_ID,
 	IOS_CONTAINERS_DIRECTORY,
+	IOS_STAGING_DIRECTORY,
 } from '~/lib/device-paths';
-import type { CommandResult, CommandRunner } from '~/lib/run-command';
-import { ANDROID_TIMEOUTS } from '~/lib/android-install';
-import { runCommand } from '~/lib/run-command';
+import type { AndroidTarget, IOSTarget } from '~/lib/device-target';
+import { ERROR_MARKER, readMarker } from '~/lib/pilot';
 
 export const ANDROID_LOGS_DIRECTORY = `${ANDROID_FILES_DIRECTORY}/Unbound/Logs`;
 
-const ANDROID_STAGING_DIRECTORY = '/data/local/tmp/ubd-logs';
-const IOS_STAGING_DIRECTORY = '/var/tmp/ubd-logs';
+const ANDROID_LOGS_STAGING = `${ANDROID_STAGING_DIRECTORY}/ubd-logs`;
+const IOS_LOGS_STAGING = `${IOS_STAGING_DIRECTORY}/ubd-logs`;
 const FILE_MARKER = 'UBD_LOG_FILE=';
 
-export type LogPullOptions = {
-	out: string;
-	run?: CommandRunner;
-};
-
-export type AndroidLogPullOptions = LogPullOptions & { serial?: string };
-
-export type IOSLogPullOptions = LogPullOptions & { udid?: string; pilot?: string };
+export type LogPullOptions = { out: string };
 
 /**
  * @description Copies Unbound's on-device log files off a rooted Android device: they are staged as
- * root in `/data/local/tmp`, since Discord's data is private, pulled with adb, then removed.
- * @param options Where to write the files, the device serial and the command runner.
+ * root where adb can read them, since Discord's data is private, pulled with adb, then removed.
+ * @param target The device.
+ * @param options Where to write the files.
  * @returns Which files landed where, or the step that failed.
  */
-export async function pullAndroidLogs(options: AndroidLogPullOptions): Promise<CommandOutput> {
-	const { serial, run = runCommand } = options;
-
-	function adb(args: string[], timeoutMs: number): Promise<CommandResult> {
-		return run('adb', [...(serial ? ['-s', serial] : []), ...args], timeoutMs);
-	}
-
-	const identity = await adb(['shell', 'id -u'], ANDROID_TIMEOUTS.state);
-
-	if (!identity.ok) {
-		return { ok: false, text: `No Android device is ready over adb. ${identity.error}` };
-	}
-
-	const script = androidStageScript();
-	const staged = await adb(
-		['shell', identity.stdout.trim() === '0' ? script : `su -c '${script}'`],
-		ANDROID_TIMEOUTS.shell,
-	);
-	const missing = staged.ok ? readMarker(staged.stdout, ERROR_MARKER) : void 0;
+export async function pullAndroidLogs(
+	target: AndroidTarget,
+	options: LogPullOptions,
+): Promise<CommandOutput> {
+	const staged = await target.shell(androidStageScript());
+	const missing = staged.ok ? readMarker(staged.output, ERROR_MARKER) : void 0;
 
 	if (!staged.ok || missing) {
-		return {
-			ok: false,
-			text:
-				missing ??
-				`${staged.ok ? '' : staged.error} Root is needed to read Discord's data.`,
-		};
+		return { ok: false, text: missing ?? (staged.ok ? '' : staged.error) };
 	}
 
 	const directory = prepareOutput(options.out);
-	const pulled = await adb(
-		['pull', `${ANDROID_STAGING_DIRECTORY}/.`, directory],
-		ANDROID_TIMEOUTS.push,
-	);
+	const pulled = await target.pull(`${ANDROID_LOGS_STAGING}/.`, directory);
 
-	await adb(['shell', `rm -rf ${ANDROID_STAGING_DIRECTORY}`], ANDROID_TIMEOUTS.shell);
+	await target.shell(`rm -rf ${ANDROID_LOGS_STAGING}`);
 
 	return pulled.ok ? describePulled(directory) : { ok: false, text: pulled.error };
 }
 
 /**
  * @description Copies Unbound's on-device log files off a jailbroken iPhone through `jb-p1lot`: they
- * are staged in `/var/tmp` from whichever data container belongs to Discord, transferred one file at
- * a time, since each stays under the transfer limit, then removed.
- * @param options Where to write the files, the device UDID and the runner and binary to use.
+ * are staged from whichever data container belongs to Discord, transferred one file at a time, since
+ * each stays under the transfer limit, then removed.
+ * @param target The device.
+ * @param options Where to write the files.
  * @returns Which files landed where, or the step that failed.
  */
-export async function pullIOSLogs(options: IOSLogPullOptions): Promise<CommandOutput> {
-	const { run = runCommand, pilot = resolvePilot() } = options;
-
-	function pilotCommand(args: string[], timeoutMs: number): Promise<CommandResult> {
-		return run(pilot, args, timeoutMs);
-	}
-
-	const picked = options.udid ?? (await pickDevice(pilotCommand));
-
-	if (typeof picked !== 'string') {
-		return { ok: false, text: picked.error };
-	}
-
-	const device = picked;
-	const target = { udid: device, pilot, run };
-	const staged = await pilotShell(target, iosStageScript());
+export async function pullIOSLogs(
+	target: IOSTarget,
+	options: LogPullOptions,
+): Promise<CommandOutput> {
+	const staged = await target.shell(iosStageScript());
 	const output = staged.ok ? staged.output : staged.error;
 	const files = listMarked(output, FILE_MARKER);
 
@@ -111,34 +67,21 @@ export async function pullIOSLogs(options: IOSLogPullOptions): Promise<CommandOu
 			ok: false,
 			text:
 				readMarker(output, ERROR_MARKER) ??
-				`Staging the logs on ${device} failed: ${output.trim()}`,
+				`Staging the logs on ${target.id} failed: ${output.trim()}`,
 		};
 	}
 
 	const directory = prepareOutput(options.out);
 
 	for (const file of files) {
-		const transferred = await pilotCommand(
-			[
-				'file_transfer',
-				'--device',
-				device,
-				'--direction',
-				'device_to_host',
-				'--source',
-				`${IOS_STAGING_DIRECTORY}/${file}`,
-				'--destination',
-				join(directory, file),
-			],
-			IOS_TIMEOUTS.transfer,
-		);
+		const transferred = await target.pull(`${IOS_LOGS_STAGING}/${file}`, join(directory, file));
 
 		if (!transferred.ok) {
 			return { ok: false, text: transferred.error };
 		}
 	}
 
-	await pilotShell(target, `rm -rf ${IOS_STAGING_DIRECTORY}`);
+	await target.shell(`rm -rf ${IOS_LOGS_STAGING}`);
 
 	return describePulled(directory);
 }
@@ -150,15 +93,15 @@ export async function pullIOSLogs(options: IOSLogPullOptions): Promise<CommandOu
 export function androidStageScript(): string {
 	return [
 		`if [ ! -d ${ANDROID_LOGS_DIRECTORY} ]; then echo "${ERROR_MARKER}Discord has no Unbound log files yet. Launch Discord with this loader once, then retry."; exit 0; fi`,
-		`rm -rf ${ANDROID_STAGING_DIRECTORY}`,
-		`cp -r ${ANDROID_LOGS_DIRECTORY} ${ANDROID_STAGING_DIRECTORY}`,
-		`chmod 755 ${ANDROID_STAGING_DIRECTORY}`,
-		`chmod 644 ${ANDROID_STAGING_DIRECTORY}/*`,
+		`rm -rf ${ANDROID_LOGS_STAGING}`,
+		`cp -r ${ANDROID_LOGS_DIRECTORY} ${ANDROID_LOGS_STAGING}`,
+		`chmod 755 ${ANDROID_LOGS_STAGING}`,
+		`chmod 644 ${ANDROID_LOGS_STAGING}/*`,
 	].join(' && ');
 }
 
 /**
- * @description Builds the iOS script that finds Discord's log folder and stages its files in `/var/tmp`.
+ * @description Builds the iOS script that finds Discord's log folder and stages its files where jb-p1lot can read them.
  * @returns The shell script, which prints each staged file's name or why it failed.
  */
 export function iosStageScript(): string {
@@ -168,8 +111,8 @@ export function iosStageScript(): string {
 		`if [ -d "\${plist%/*}/Documents/Unbound/Logs" ]; then root="\${plist%/*}/Documents/Unbound/Logs"; break; fi`,
 		'done',
 		`if [ -z "$root" ]; then echo '${ERROR_MARKER}Discord has no Unbound log files yet. Launch Discord with this loader once, then retry.'; exit 1; fi`,
-		`rm -rf ${IOS_STAGING_DIRECTORY} && mkdir -p ${IOS_STAGING_DIRECTORY} && cp "$root"/*.log ${IOS_STAGING_DIRECTORY}/ && chmod 644 ${IOS_STAGING_DIRECTORY}/*`,
-		`for file in ${IOS_STAGING_DIRECTORY}/*.log; do echo "${FILE_MARKER}\${file##*/}"; done`,
+		`rm -rf ${IOS_LOGS_STAGING} && mkdir -p ${IOS_LOGS_STAGING} && cp "$root"/*.log ${IOS_LOGS_STAGING}/ && chmod 644 ${IOS_LOGS_STAGING}/*`,
+		`for file in ${IOS_LOGS_STAGING}/*.log; do echo "${FILE_MARKER}\${file##*/}"; done`,
 	].join('\n');
 }
 

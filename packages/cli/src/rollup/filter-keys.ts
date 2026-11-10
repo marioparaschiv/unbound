@@ -14,6 +14,7 @@ import { canonicalize, describeCanonical, renderCanonical } from './filter-canon
 import { analyzeScopes, isFunction, walk } from './filter-scope.ts';
 import { hashFunction, resolveExpression } from './filter-hash.ts';
 import { reportProblem } from './diagnostic.ts';
+import { readBuildEnv } from './build-env.ts';
 import { reportLine } from './report-line.ts';
 
 const API = '@unbound-app/api';
@@ -69,7 +70,7 @@ export function filterKeys(pluginRoot: string): Plugin {
 			const locate = moduleLocator(program, chunk);
 			const context: HashContext = { scopes, memo: new Map(), stack: [] };
 			const output = new MagicString(code);
-			const verbose = process.env.UNBOUND_VERBOSE === '1';
+			const { verbose } = readBuildEnv();
 			let edited = false;
 
 			for (const site of sites) {

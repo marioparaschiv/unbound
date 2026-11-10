@@ -4,7 +4,7 @@ import type { UnboundGlobal } from '@unbound-app/api/global';
 
 import { evaluateOnDevice, NOT_CONNECTED, toDeviceCode } from '~/lib/device';
 import { defaulted, Type, type StaticDecode } from '~/lib/schema';
-import { logToStderr } from '~/lib/plugin-install';
+import { logToStderr } from '~/lib/stderr';
 import type { DeviceClient } from '~/lib/device';
 import { bridgePortField } from '~/lib/context';
 import { parseJson } from '~/lib/parse-json';

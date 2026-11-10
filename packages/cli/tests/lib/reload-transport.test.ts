@@ -1,13 +1,13 @@
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, utimesSync } from 'node:fs';
 import type { PluginPushResult } from '@unbound-app/debugger-protocol';
 import { describe, expect, test, afterEach, spyOn } from 'bun:test';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import type { PushedManifest } from '@unbound-app/types';
-import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createReloadTransport, readBuiltAddon } from '~/lib/reload-transport';
-import type { ReloadContext, BuiltAddon } from '~/lib/reload-transport';
+import { createReloadTransport, type ReloadContext } from '~/lib/reload-transport';
+
+import { builtPlugin as makeBuiltPlugin, writeBuiltManifest } from '../helpers/built-plugin';
 
 type RecordedPush = {
 	addonId: string;
@@ -22,38 +22,7 @@ afterEach(() => {
 	for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-function builtPlugin(): BuiltAddon {
-	const dir = mkdtempSync(join(tmpdir(), 'ubd-push-'));
-
-	roots.push(dir);
-
-	const output = join(dir, 'dist');
-
-	mkdirSync(output, { recursive: true });
-
-	writeFileSync(
-		join(dir, 'manifest.json'),
-		JSON.stringify({
-			id: 'com.example.sample',
-			name: 'Sample',
-			description: 'x',
-			authors: [{ name: 'M', id: '1' }],
-			version: '1.0.0',
-			main: 'index.tsx',
-		}),
-	);
-
-	writeFileSync(join(output, 'index.js'), 'module.exports = {};');
-
-	return { id: 'com.example.sample', kind: 'plugin', dir, output, static: false };
-}
-
-function writeBuiltManifest(plugin: BuiltAddon, extra: Record<string, string[]>) {
-	writeFileSync(
-		join(plugin.output, 'manifest.json'),
-		JSON.stringify({ id: 'com.example.sample', main: 'index.js', ...extra }),
-	);
-}
+const builtPlugin = () => makeBuiltPlugin(roots);
 
 type FakeClient = {
 	isDeviceConnected: boolean;
@@ -189,7 +158,7 @@ describe('createReloadTransport', () => {
 
 		const transport = createReloadTransport(fakeContext(client));
 
-		// Point at an output directory that holds no built bundle; readBuiltAddon throws ENOENT, which
+		// Point at an output directory that holds no built bundle; reading it fails, which
 		// the transport must catch.
 		await transport.reload({ ...plugin, output: join(plugin.dir, 'missing') });
 
@@ -243,103 +212,5 @@ describe('createReloadTransport', () => {
 
 		expect(client.pushes).toEqual([]);
 		expect(errors).toContain(`Invalid ${join(plugin.dir, 'manifest.json')}`);
-	});
-});
-
-describe('readBuiltAddon', () => {
-	test('reads the manifest the build wrote into the output', () => {
-		const plugin = builtPlugin();
-
-		writeBuiltManifest(plugin, { capabilities: ['native.objc.invoke'] });
-
-		expect(readBuiltAddon(plugin).manifest).toMatchObject({
-			id: 'com.example.sample',
-			main: 'index.js',
-			capabilities: ['native.objc.invoke'],
-		});
-	});
-
-	test('sends each image the built manifest lists, base64-encoded, by path', () => {
-		const plugin = builtPlugin();
-		const image = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
-		const digest = createHash('sha256').update(image).digest('hex');
-
-		mkdirSync(join(plugin.output, 'assets'));
-		writeFileSync(join(plugin.output, 'assets', `${digest}.png`), image);
-		writeFileSync(
-			join(plugin.output, 'manifest.json'),
-			JSON.stringify({
-				id: 'com.example.sample',
-				main: 'index.js',
-				assets: { star: { type: 'png', width: 4, height: 4, scales: { 1: digest } } },
-			}),
-		);
-
-		expect(readBuiltAddon(plugin).files).toEqual({
-			[`assets/${digest}.png`]: image.toString('base64'),
-		});
-	});
-
-	test('falls back to the source manifest when the build wrote none', () => {
-		const plugin = builtPlugin();
-		const { manifest, bundle } = readBuiltAddon(plugin);
-
-		expect(manifest).toMatchObject({ id: 'com.example.sample', main: 'index.tsx' });
-		expect(bundle).toBe('module.exports = {};');
-	});
-
-	test('names the built manifest when it is invalid', () => {
-		const plugin = builtPlugin();
-
-		writeFileSync(join(plugin.output, 'manifest.json'), JSON.stringify({ id: 'x' }));
-
-		expect(() => readBuiltAddon(plugin)).toThrow(
-			`Invalid ${join(plugin.output, 'manifest.json')}`,
-		);
-	});
-
-	test('reads a dev manifest the publish rules would refuse, keeping every field', () => {
-		const plugin = builtPlugin();
-		const manifest = {
-			id: 'com.example.sample',
-			main: 'index.tsx',
-			version: '1.0',
-			authors: [{ name: 'Mario', id: 'mario' }],
-		};
-
-		writeFileSync(join(plugin.dir, 'manifest.json'), JSON.stringify(manifest));
-
-		expect(readBuiltAddon(plugin).manifest).toMatchObject(manifest);
-	});
-
-	test('sends the bytecode built with the bundle and lists its digests in the manifest', () => {
-		const plugin = builtPlugin();
-		const compiled = Buffer.from([0xc6, 0x1f, 0xbc, 0x03, 0x01]);
-		const bytecode = join(plugin.output, 'index.98.hbc');
-		const bundle = join(plugin.output, 'index.js');
-
-		writeFileSync(bytecode, compiled);
-		utimesSync(bytecode, new Date(1_000_000), new Date(1_000_000));
-		utimesSync(bundle, new Date(1_000_500), new Date(1_000_500));
-
-		const built = readBuiltAddon(plugin);
-
-		expect(built.bytecode).toEqual({ '98': compiled.toString('base64') });
-		expect(built.manifest.bytecode).toEqual({
-			'98': createHash('sha512').update(compiled).digest('hex'),
-		});
-	});
-
-	test('leaves out bytecode from an earlier build', () => {
-		const plugin = builtPlugin();
-		const stale = join(plugin.output, 'index.98.hbc');
-
-		writeFileSync(stale, 'old');
-		utimesSync(stale, new Date(0), new Date(0));
-
-		const built = readBuiltAddon(plugin);
-
-		expect(built.bytecode).toBeUndefined();
-		expect(built.manifest.bytecode).toBeUndefined();
 	});
 });

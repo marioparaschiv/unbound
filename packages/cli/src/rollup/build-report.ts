@@ -21,14 +21,11 @@ export type BudgetOptions = Partial<Record<BudgetName, ByteSize>>;
 export type BuildReportOptions = {
 	pluginRoot: string;
 	budget?: BudgetOptions;
-	/** Where to write the report as JSON; `ubd` sets it through {@link BUILD_REPORT_ENV}. Nothing is written without it. */
+	/** Where to write the report as JSON; `ubd` sets it through `BUILD_REPORT_ENV` in `build-env.ts`. Nothing is written without it. */
 	reportFile?: string;
 };
 
 type Budgets = Record<BudgetName, number>;
-
-/** The variable through which `ubd build` and `ubd dev` tell the preset where to write the report. */
-export const BUILD_REPORT_ENV = 'UNBOUND_BUILD_REPORT';
 
 export const DEFAULT_BUDGET = { bundle: '50kb', assets: '500kb' } satisfies Required<BudgetOptions>;
 
@@ -289,4 +286,4 @@ export function buildReport({ pluginRoot, budget = {}, reportFile }: BuildReport
 	};
 }
 
-export default { BUILD_REPORT_ENV, DEFAULT_BUDGET, packageOf, createReport, buildReport };
+export default { DEFAULT_BUDGET, packageOf, createReport, buildReport };

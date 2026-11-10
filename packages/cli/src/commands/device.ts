@@ -1,6 +1,7 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
 import { listSnapshots, resetDevice, restoreSnapshot, saveSnapshot } from '~/lib/device-state';
+import { openDeviceTarget } from '~/lib/device-target';
 import { defaulted, Type } from '~/lib/schema';
 
 const schema = Type.Object({
@@ -38,16 +39,24 @@ const deviceCommand: CommandDefinition<typeof schema> = {
 	surfaces: { cli: 'root', mcp: true },
 	schema,
 	cli: { positionals: ['action', 'name'] },
-	async handler({ action, name, ...options }) {
+	async handler({ action, name, serial, ios, udid, restart }) {
+		if (action === 'list') {
+			return listSnapshots();
+		}
+
+		const target = await openDeviceTarget({ serial, ios, udid });
+
+		if ('error' in target) {
+			return { ok: false, text: target.error };
+		}
+
 		switch (action) {
 			case 'reset':
-				return resetDevice(options);
+				return resetDevice(target, { restart });
 			case 'save':
-				return saveSnapshot(name, options);
+				return saveSnapshot(name, target);
 			case 'restore':
-				return restoreSnapshot(name, options);
-			case 'list':
-				return listSnapshots();
+				return restoreSnapshot(name, target, { restart });
 		}
 	},
 };
