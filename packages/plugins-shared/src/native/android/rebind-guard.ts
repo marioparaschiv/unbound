@@ -18,20 +18,24 @@ export type RebindGuard = {
 	messageView: string;
 	bindName: string;
 	bindParameters: string[];
-	messageIdGetter: string;
+	/** The row's field holding the id of the message it shows, which the bind sets. */
+	idField: string;
+	/** The key a `java.util.List` of the views drawn on the row is kept under. */
 	hosts: NativeJavaAssociationKey;
+	/** The key the id of the message those views were drawn for is kept under. */
 	drawnFor: NativeJavaAssociationKey;
+	/** Names the plugin in a log line. */
+	label: string;
 };
 
 type BindEvent = {
 	self?: NativeJavaValue;
-	args?: NativeJavaValue[];
 };
 
 /**
- * @description Hides a row's reactor avatars from a hook that runs on the UI thread right after Discord binds the row to a different message, so the old message's reactors never show on the new one; new avatars are drawn for the new message.
+ * @description Hides the views a plugin drew on a message row from a hook that runs on the UI thread right after Discord binds the row to a different message, so the old message's drawing never shows on the new one.
  * @param scope The plugin's UI scope.
- * @param guard The message view class, its bind method and the getter of the bound message's id, and the keys the avatar hosts and their message are kept under.
+ * @param guard The message view class, its bind method and id field, the keys the drawn views and their message are kept under, and the plugin's name.
  */
 export function installRebindGuard(scope: NativeUIScope, guard: RebindGuard) {
 	'worklet';
@@ -57,10 +61,7 @@ export function installRebindGuard(scope: NativeUIScope, guard: RebindGuard) {
 					return;
 				}
 
-				const message = event.args ? javaReference(event.args[0]) : null;
-				const shown = message
-					? javaText(java.invoke(message, guard.messageIdGetter, []))
-					: undefined;
+				const shown = javaText(java.getField(row, guard.idField));
 				const drawnFor = javaText(java.getAssociatedObject(row, guard.drawnFor));
 
 				if (shown && shown === drawnFor) {
@@ -77,7 +78,9 @@ export function installRebindGuard(scope: NativeUIScope, guard: RebindGuard) {
 					}
 				}
 			} catch (error) {
-				console.error(`[Reaction Avatars] ${String(error)}`);
+				console.error(
+					`[${guard.label}] Failed to hide a rebound row's views: ${String(error)}`,
+				);
 			}
 		},
 	);

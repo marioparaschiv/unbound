@@ -3,6 +3,7 @@ import {
 	javaNumber,
 	javaReference,
 	javaString,
+	javaText,
 } from '@unbound-plugins/shared/native/android/java-values';
 import type {
 	NativeJavaBridge,
@@ -12,10 +13,12 @@ import type {
 import { shapeField, shapeMethod } from '@unbound-plugins/shared/native/android/discord-shapes';
 
 export const MESSAGE_VIEW = 'com.discord.chat.presentation.message.MessageView';
+export const MESSAGE_CONTENT_VIEW = 'com.discord.chat.presentation.message.view.MessageContentView';
 export const DRAWEE_TEXT_VIEW = 'com.facebook.drawee.span.SimpleDraweeSpanTextView';
 export const DRAWEE_TEXT_SETTER = 'setDraweeSpanStringBuilder';
 
 const DISCORD_PACKAGE = 'com.discord';
+const MAX_ROW_DEPTH = 16;
 
 const viewIds = new Map<string, number>();
 
@@ -64,6 +67,42 @@ export function messageIdField(java: NativeJavaBridge): string {
 	}
 
 	return field.name;
+}
+
+/**
+ * @description Reads the id of the message a `MessageView` shows, from the field Discord's bind sets.
+ * @param java The Java bridge.
+ * @param row The `MessageView`.
+ * @returns The message id, or `undefined` when the row shows none or this build has no single such field.
+ */
+export function messageIdOf(java: NativeJavaBridge, row: NativeJavaReference): string | undefined {
+	try {
+		return javaText(java.getField(row, messageIdField(java)));
+	} catch {
+		// A build without the field, or a row released mid-read, shows no message we can name.
+		return undefined;
+	}
+}
+
+/**
+ * @description Reads the id of the message whose `MessageView` holds a view, such as its content text.
+ * @param java The Java bridge.
+ * @param view A view inside a message row.
+ * @returns The message id, or `undefined` when the view is in no message row.
+ */
+export async function messageIdAbove(
+	java: NativeJavaBridge,
+	view: NativeJavaReference,
+): Promise<string | undefined> {
+	const [row] = await java.findViews(view, MESSAGE_VIEW, {
+		direction: 'ancestors',
+		maxDepth: MAX_ROW_DEPTH,
+		maxResults: 1,
+		stopAtMatch: true,
+	});
+	const found = javaReference(row);
+
+	return found ? messageIdOf(java, found) : undefined;
 }
 
 /**
