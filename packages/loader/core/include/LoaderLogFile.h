@@ -19,6 +19,7 @@ constexpr const char *kLogFileName        = "unbound.log";
 constexpr std::size_t kLogFileMaximumSize = 1024 * 1024;
 constexpr std::size_t kLogFilesKept       = 3;
 constexpr std::size_t kLogLinesBuffered   = 512;
+constexpr std::size_t kPreviousTailBytes  = 16 * 1024;
 
 class RotatingLogFile
 {
@@ -45,6 +46,8 @@ private:
 std::string logFileLine(LogLevel level, const std::string &category, const std::string &message,
                         long long epochMilliseconds);
 std::string logFileDirectory(const std::string &documents);
+// The last `lines` lines the previous launch wrote, read when this launch opened the log.
+std::string previousLaunchLogTail(std::size_t lines);
 void        openLogFile(const std::string &documents);
 void        appendLogFile(LogLevel level, const std::string &category, const std::string &message);
 void        installConsoleCapture(facebook::jsi::Runtime &runtime);

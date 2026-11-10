@@ -685,6 +685,19 @@ void AndroidLoader::alert(const std::string &message)
     env->DeleteLocalRef(text);
 }
 
+void AndroidLoader::crashAlert(const std::string &message)
+{
+    JNIEnv *env = currentEnvironment();
+    if (!env)
+    {
+        return;
+    }
+    jstring text = toJavaString(env, message);
+    env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.crashAlert, text);
+    clearPendingException(env);
+    env->DeleteLocalRef(text);
+}
+
 std::optional<std::string> AndroidLoader::fetchText(const std::string &url, double timeoutSeconds)
 {
     JNIEnv *env = currentEnvironment();

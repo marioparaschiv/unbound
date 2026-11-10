@@ -368,6 +368,11 @@ object NativeBridge {
         }
     }
 
+    @JvmStatic
+    fun crashAlert(message: String) {
+        StartupAlert.reportCrash(message)
+    }
+
     private var updateToast: Toast? = null
 
     /** Shows "Updating Unbound…" while Discord's launch waits for Unbound's bundle to download. */

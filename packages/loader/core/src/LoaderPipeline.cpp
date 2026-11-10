@@ -4,6 +4,7 @@
 #include "HermesSampling.h"
 #include "LoaderBootstrap.h"
 #include "LoaderCrashGuard.h"
+#include "LoaderCrashReport.h"
 #include "LoaderFiles.h"
 #include "LoaderJSI.h"
 #include "LoaderLaunchGuard.h"
@@ -206,7 +207,8 @@ void LoaderPipeline::announceCrashDisabledAddons()
 
     for (const CrashedAddon &addon : takeUnannouncedCrashDisabledAddons(provider->documents))
     {
-        host_->alert(crashDisabledNotice(addon));
+        recordCrashSummary(crashDisabledNotice(addon));
+        host_->crashAlert(crashDisabledNotice(addon));
     }
 }
 
@@ -394,13 +396,15 @@ void LoaderPipeline::guardLaunch()
     if (verdict.rollBack && updater_.rollBackToPrevious())
     {
         log(LogLevel::Error, LOG_CATEGORY_DEFAULT, launchRollBackNotice(verdict.failures));
-        host_->alert(launchRollBackNotice(verdict.failures));
+        recordCrashSummary(launchRollBackNotice(verdict.failures));
+        host_->crashAlert(launchRollBackNotice(verdict.failures));
     }
     if (verdict.enterRecovery && settings_.setBoolean)
     {
         settings_.setBoolean("recovery", true);
         log(LogLevel::Error, LOG_CATEGORY_DEFAULT, launchRecoveryNotice(verdict.failures));
-        host_->alert(launchRecoveryNotice(verdict.failures));
+        recordCrashSummary(launchRecoveryNotice(verdict.failures));
+        host_->crashAlert(launchRecoveryNotice(verdict.failures));
     }
     host_->runAfter(kHealthySeconds, [this]() {
         markHealthy();

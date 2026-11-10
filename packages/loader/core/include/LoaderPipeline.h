@@ -39,6 +39,11 @@ public:
     virtual void onAddonsPrepared() {}
     virtual void onBundleExecuted() {}
     virtual void alert(const std::string &message) {}
+    // An alert about a crash the loader recovered from, offering to open a prefilled report.
+    virtual void crashAlert(const std::string &message)
+    {
+        alert(message);
+    }
     // Shown while Discord's launch waits for Unbound's bundle to download.
     virtual void showUpdateProgress(bool showing) {}
     virtual void reload() {}

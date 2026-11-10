@@ -15,6 +15,7 @@
 #import "LoaderJSI.h"
 #import "LoaderPipeline.h"
 #import "LoaderShared.h"
+#include "LoaderToolbox.h"
 #import "NativePlatform.h"
 #import "NativePluginBridge.h"
 #import "RCTHost.h"
@@ -259,6 +260,39 @@ public:
     {
         NSString *text = toNSString(message);
         dispatch_async(dispatch_get_main_queue(), ^{ [Utilities alert:text]; });
+    }
+
+    void crashAlert(const std::string &message) override
+    {
+        NSString *text = toNSString(message);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *appVersion =
+                [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+            NSString *buildNumber =
+                [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
+            NSString *discordVersion = toNSString(loader::toolbox::discordVersionLabel(
+                appVersion ? std::optional<std::string>(toStdString(appVersion)) : std::nullopt,
+                toStdString(buildNumber)));
+
+            UIAlertAction *report = [UIAlertAction
+                actionWithTitle:@"Report"
+                          style:UIAlertActionStyleDefault
+                        handler:^(UIAlertAction *action) {
+                            NSString *link = [CoreBridge toolbox:@"crash-report-url"
+                                                        argument:discordVersion];
+                            NSURL    *url  = link.length ? [NSURL URLWithString:link] : nil;
+                            if (url)
+                            {
+                                [[UIApplication sharedApplication] openURL:url
+                                                                   options:@{}
+                                                         completionHandler:nil];
+                            }
+                        }];
+            UIAlertAction *okay   = [UIAlertAction actionWithTitle:@"Okay"
+                                                             style:UIAlertActionStyleCancel
+                                                           handler:nil];
+            [Utilities alert:text title:@"Unbound" buttons:@[ okay, report ]];
+        });
     }
 
     void reload() override
