@@ -1,9 +1,8 @@
 import { Node, SyntaxKind } from 'ts-morph';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 
+import { ADDONS_TYPINGS } from './config';
 import { parseSource } from './project';
-import { ROOT } from './paths';
 
 type ScopeGlobal = {
 	sdkType: string;
@@ -12,8 +11,6 @@ type ScopeGlobal = {
 	/** Whether `global.d.ts` declares the global; lib declares the timers and `@unbound-app/types` declares `React`. */
 	declare: boolean;
 };
-
-const ADDONS_TYPINGS = join(ROOT, 'packages', 'types', 'typings', 'addons.ts');
 
 /**
  * Each Addon scope global (ADR-0002) in SDK terms. The client types its globals as client namespaces,

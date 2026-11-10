@@ -23,7 +23,7 @@ import { createLogger } from '@unbound-app/logger';
 import { dirname, join } from 'node:path';
 
 import { mergeDocsManifest } from './docs-manifest';
-import { API_SRC, ROOT } from './paths';
+import { API_SRC, ROOT } from './config';
 
 const logger = createLogger('SDK', 'Docs');
 
