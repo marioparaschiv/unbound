@@ -36,6 +36,7 @@ Name things with `GLOSSARY.md` terms. `DESIGN.md` lists the design-system primit
 - `~/` across directories, `./` for siblings.
 - Import `@unbound-app/utils` per file: `@unbound-app/utils/noop`.
 - `import type` for type-only imports.
+- Tests live in the package's `tests/`, mirroring its source folders: `src/a/b.ts` -> `tests/a/b.test.ts`; support files in `tests/helpers/` and `tests/fixtures/`.
 - Developer-only client code lives in `*.dev.ts(x)`, reached only behind `import.meta.env.DEV_TOOLS`; it ships in the dev bundle alone, and a build test fails if one leaks.
 
 ## Functions
