@@ -5,9 +5,6 @@ import { Screens, CLIENT_NAME, CLIENT_VERSION } from '~/core/constants';
 import { createPatcher } from '~/patcher/create-patcher';
 import type { SectionEntry } from '~/settings/section';
 import type { BuiltIn } from '~/builtins/registry';
-import LogoRowIcon from '~/ui/icons/logo-row-icon';
-import PanelHostScreen from '~/ui/settings/custom';
-import GeneralPage from '~/ui/settings/general';
 import { onModuleLoaded } from '~/metro/wait';
 import { Discord } from '~/metro/components';
 import SettingsStore from '~/settings/state';
@@ -29,11 +26,25 @@ type SettingsSection = {
 
 type EntryMap = Record<string, SettingsEntry>;
 
+// Required on render, so startup never evaluates the logo or the Discord colour tokens its style reads.
+function LogoIcon() {
+	const { default: LogoRowIcon } = require('~/ui/icons/logo-row-icon');
+
+	return <LogoRowIcon />;
+}
+
 export const generalSection: SectionEntry = {
 	key: Screens.General,
 	titleKey: 'UNBOUND_CLIENT',
-	component: GeneralPage,
-	icon: LogoRowIcon,
+	/**
+	 *
+	 */
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
+	 */
+	getComponent: () => require('~/ui/settings/general').default,
+	icon: LogoIcon,
 	/**
 	 * @description Shows the client version.
 	 * @returns The overview row's trailing version.
@@ -44,7 +55,14 @@ export const generalSection: SectionEntry = {
 export const panelHostSection: SectionEntry = {
 	key: Screens.PanelHost,
 	titleKey: 'UNBOUND_CUSTOM',
-	component: PanelHostScreen,
+	/**
+	 *
+	 */
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
+	 */
+	getComponent: () => require('~/ui/settings/custom').default,
 	hidden: true,
 };
 
@@ -56,7 +74,7 @@ export const panelHostSection: SectionEntry = {
 function route({
 	key,
 	titleKey,
-	component,
+	getComponent,
 	usePredicate,
 	useTrailing,
 	icon,
@@ -75,7 +93,7 @@ function route({
 			typeof icon === 'string'
 				? () => <Discord.TableRowIcon source={getIdByName(icon)} />
 				: icon,
-		screen: { route: key, getComponent: () => component },
+		screen: { route: key, getComponent },
 	};
 }
 

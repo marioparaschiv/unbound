@@ -5,6 +5,7 @@ import { addCachedIDForKey, getModuleCacheForKey, isKeyMissing } from '~/metro/c
 import type { MetroLazySearchOptions, MetroModuleLoadedOptions } from '~/metro/types';
 import type { MetroFilter } from '~/metro/filters';
 import { blacklist, data } from '~/metro/state';
+import { benchTotal } from '~/core/bench-span';
 import { CACHE_KEY } from '~/core/constants';
 import { finder } from '~/metro/finders';
 
@@ -24,7 +25,11 @@ const waitingById = new Map<number, Set<Waiter>>();
 const waitingByPath = new Map<string, Set<Waiter>>();
 const waitingForAny = new Set<Waiter>();
 
-data.listeners.add(onModuleInitialized);
+data.listeners.add(
+	import.meta.env.BENCH
+		? (exports, id) => benchTotal('metro waiters', () => onModuleInitialized(exports, id))
+		: onModuleInitialized,
+);
 
 /**
  * @description Calls `onLoad` with the module matching `filter` once it initializes, without ever initializing it.
@@ -159,7 +164,8 @@ function onModuleInitialized(exports: MetroExport, id: number) {
 		settle(waiter, exports, id);
 	}
 
-	const path = window.modules.get(id)?.__filePath;
+	// Runs for every module Discord loads, so the path is read only while a path wait is pending.
+	const path = waitingByPath.size ? window.modules.get(id)?.__filePath : void 0;
 
 	if (path !== void 0) {
 		for (const waiter of waitingByPath.get(path) ?? []) {

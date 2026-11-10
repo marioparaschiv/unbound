@@ -6,8 +6,6 @@ import useReducedMotion from '~/ui/hooks/use-reduced-motion';
 
 /** Long enough to follow the rows opening, short enough to stay out of the way. */
 const DURATION_MS = 260;
-/** A strong ease-out: the rows move at once and settle softly. */
-const EASING = Easing.bezier(0.23, 1, 0.32, 1);
 
 /**
  * @description Animates a collapsible group on the UI thread: its body's height between 0 and the rows'
@@ -24,7 +22,9 @@ function useCollapseMotion(expanded: boolean) {
 	useEffect(() => {
 		progress.value = withTiming(expanded ? 1 : 0, {
 			duration: reduced ? 0 : DURATION_MS,
-			easing: EASING,
+			// A strong ease-out: the rows move at once and settle softly. Built per move, not at import: touching `Easing`
+			// loads Reanimated, which startup should not wait on.
+			easing: Easing.bezier(0.23, 1, 0.32, 1),
 		});
 	}, [expanded, reduced]);
 

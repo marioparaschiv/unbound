@@ -2,12 +2,13 @@
 // and which client and Discord modules each part of the app loads. See README.md.
 import { cpSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { basename, join } from 'node:path';
 import { parseArgs } from 'node:util';
-import { join } from 'node:path';
 
 import { createDevice, sha256, type MemInfo } from './device';
 import { renderReport, type LaunchRecord } from './report';
 import { startServer, type AgentReport } from './server';
+import { exportLaunch } from './otel';
 
 const ROOT = join(import.meta.dir, '..', '..');
 const SHIPPED = ['manifest.json', 'unbound.98.bundle', 'unbound.js'];
@@ -27,6 +28,10 @@ const { values } = parseArgs({
 		out: { type: 'string' },
 		'report-only': { type: 'string' },
 		'skip-build': { type: 'boolean', default: false },
+		otel: {
+			type: 'string',
+			default: process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:4318',
+		},
 	},
 });
 
@@ -195,6 +200,12 @@ async function main() {
 
 	const builds: Build[] = [];
 
+	if (values.otel !== 'off') {
+		print(
+			`tracing each launch to ${values.otel} as service unbound-client-bench, bench.run=${basename(out)}`,
+		);
+	}
+
 	for (const variant of variants) {
 		builds.push(await build(variant, out, port));
 	}
@@ -343,6 +354,11 @@ async function main() {
 					const record = await measure(b, index++);
 
 					records.push(record);
+
+					if (values.otel !== 'off') {
+						await exportLaunch(values.otel, record, basename(out));
+					}
+
 					writeFileSync(
 						join(out, 'runs', `${record.index}-${b.name}.json`),
 						JSON.stringify(record),
@@ -365,3 +381,5 @@ async function main() {
 }
 
 await main();
+// The report server's sockets and pending adb timers would otherwise keep Bun alive after the report.
+process.exit(0);

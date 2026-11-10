@@ -26,6 +26,7 @@ import hotRefresh from '~/hot-refresh/builtin.dev';
 import { pluginsSection } from '~/plugins/builtin';
 import { builtins } from '~/builtins/registry';
 import staffMode from '~/builtins/staff-mode';
+import { benchSpan } from '~/core/bench-span';
 import nativeConsent from '~/native/builtin';
 import { Manager } from '~/addons/manager';
 import appIcons from '~/app-icons/builtin';
@@ -50,7 +51,14 @@ export type UnboundWindowObject = UnboundLifecycle & Omit<typeof api, 'default'>
 declare global {
 	var unbound: UnboundWindowObject | UnboundLifecycle;
 	/** The benchmark agent a bench build installs before anything else runs. */
-	var __ubdBench: { mark: (name: string) => void } | undefined;
+	var __ubdBench:
+		| {
+				mark: (name: string) => void;
+				now: () => number;
+				span: (name: string, start: number, end: number) => void;
+				add: (name: string, ms: number) => void;
+		  }
+		| undefined;
 }
 
 const Logger = createLogger('Core');
@@ -118,7 +126,7 @@ export function initialize(): void {
 	builtins.initialize(BUILT_INS);
 
 	for (const kind of ADDON_KINDS) {
-		Manager.for(kind).initialize();
+		benchSpan(`manager ${kind}`, () => Manager.for(kind).initialize());
 	}
 
 	initialized = true;

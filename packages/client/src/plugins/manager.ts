@@ -15,6 +15,7 @@ import { createAddonScope } from '~/addons/scope';
 import { setOwnerCheck } from '~/commands/owners';
 import type { AddonFiles } from '~/addons/files';
 import { registry } from '~/commands/registry';
+import { benchSpan } from '~/core/bench-span';
 import { Manager } from '~/addons/manager';
 import fs from '~/native/fs';
 
@@ -75,7 +76,7 @@ export class Plugins extends Addons<Plugin> {
 		setFreezeListener((freeze) => this.handleFreeze(freeze));
 		setOwnerCheck((owner) => Boolean(this.getEntity(owner)));
 
-		for (const entry of getPlugins()) {
+		for (const entry of benchSpan('native getPlugins', getPlugins)) {
 			const { manifest } = entry;
 			const bundle = 'bundle' in entry ? entry.bundle : '';
 
@@ -169,14 +170,16 @@ export class Plugins extends Addons<Plugin> {
 		const iife = this.factoryFor(bundle, id);
 		const globals = ADDON_SCOPE_GLOBALS.map((name) => scope.globals[name]);
 
-		return withRefreshScope(id, () => {
-			const payload = iife(...globals);
-			const instance = typeof payload === 'function' ? payload() : payload;
+		return benchSpan(`addon ${id} eval`, () =>
+			withRefreshScope(id, () => {
+				const payload = iife(...globals);
+				const instance = typeof payload === 'function' ? payload() : payload;
 
-			// Running the module here registers its components under this plugin's refresh scope. Each start
-			// evaluates the IIFE afresh, so `__load` runs the module once per start.
-			return readPluginEntry(id, isLazyPlugin(instance) ? instance.__load() : instance);
-		});
+				// Running the module here registers its components under this plugin's refresh scope. Each start
+				// evaluates the IIFE afresh, so `__load` runs the module once per start.
+				return readPluginEntry(id, isLazyPlugin(instance) ? instance.__load() : instance);
+			}),
+		);
 	}
 
 	private factoryFor(bundle: string, id: string): PluginFactory {

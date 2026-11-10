@@ -229,11 +229,29 @@ export function createLocales(fallback: LocaleStrings, source?: LocaleSource): A
 }
 
 /**
- * @description Loads the fallback and active locales, then subscribes to Discord locale changes. Fire-and-forget; never blocks startup. Twin of {@link destroy}.
- * @returns A promise that resolves once the initial locales have been ensured and the subscription is wired.
+ * @description Loads the locales once Discord's localisation module loads, so startup never initializes it early. Twin of {@link destroy}.
  * @internal
  */
-export async function init(): Promise<void> {
+export function init() {
+	let active = true;
+
+	subscriptions.push(
+		onModuleLoaded(byProps('getLanguages', 'getSystemLocale', 'intl'), () => {
+			// This runs inside the module's factory, before its importer has it, so load after the factory returns.
+			queueMicrotask(() => {
+				if (active) {
+					void load();
+				}
+			});
+		}),
+		() => {
+			active = false;
+		},
+	);
+}
+
+// Loads the fallback and active locales, then subscribes to Discord locale changes.
+async function load() {
 	const locale = Discord.intl?.currentLocale ?? Discord.getSystemLocale?.() ?? null;
 	const initialLocale = locale ?? 'en-US';
 

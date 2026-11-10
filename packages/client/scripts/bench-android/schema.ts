@@ -30,6 +30,10 @@ export const agentReportSchema = Type.Object({
 	errors: Type.Optional(Type.Array(Type.String())),
 	discord: Type.Optional(Type.Record(Type.String(), Type.Number())),
 	hasGc: Type.Optional(Type.Boolean()),
+	/** Each timed piece of work as `[name, start epoch, end epoch]`: client module bodies, Discord module factories, metro finds, `benchSpan`s. */
+	spans: Type.Optional(Type.Array(Type.Tuple([Type.String(), Type.Number(), Type.Number()]))),
+	/** Summed `[ms, calls]` of frequent work, such as testing each initialized module against waiting filters. */
+	totals: Type.Optional(Type.Record(Type.String(), Type.Tuple([Type.Number(), Type.Number()]))),
 });
 
 /** One agent report. */

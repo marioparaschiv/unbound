@@ -1,5 +1,6 @@
 import { byFilePath, type MetroFilter } from '~/metro/filters';
 import type { onModuleLoaded } from '~/metro/wait';
+import { CACHE_KEY } from '~/core/constants';
 import type { AnyProps } from '~/metro';
 
 export type ToastContainerTarget = [AnyProps, string];
@@ -33,6 +34,8 @@ const byUnknownContainer: MetroFilter = (record) =>
 	record.publicModule?.exports?.ToastContainer !== void 0;
 
 byUnknownContainer.isRaw = true;
+// Keyed, so a build that has such a container finds it from the cache on later launches.
+byUnknownContainer[CACHE_KEY] = 'unbound::toastContainer';
 
 /**
  * @description Calls `onTarget` with each Discord component that mounts the toast list as Discord loads it. iOS

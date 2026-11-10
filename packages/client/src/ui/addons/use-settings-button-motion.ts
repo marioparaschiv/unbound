@@ -19,9 +19,6 @@ const TUCKED_OFFSET = 40;
 const EMERGE_AT = 0.3;
 /** A full slide in or out; a reversal mid-move takes only the share of it left to travel. */
 const SLIDE_MS = 280;
-/** Decelerates into its slot so it lands without overshoot; the exit accelerates back under. */
-const ENTER_EASING = Easing.out(Easing.cubic);
-const EXIT_EASING = Easing.in(Easing.cubic);
 /** Reduced motion's plain cross-fade. */
 const FADE_MS = 150;
 
@@ -56,7 +53,9 @@ function useSettingsButtonMotion(visible: boolean) {
 				? { duration: FADE_MS }
 				: {
 						duration: Math.round(SLIDE_MS * remaining),
-						easing: visible ? ENTER_EASING : EXIT_EASING,
+						// Decelerates into its slot so it lands without overshoot; the exit accelerates back under. Built per move, not
+						// at import: touching `Easing` loads Reanimated, which startup should not wait on.
+						easing: visible ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
 					},
 			(finished) => {
 				if (finished && target === 0) {

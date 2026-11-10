@@ -3,7 +3,7 @@ import { parseUnboundLink } from '@unbound-app/contracts/links';
 import type { AddonKind } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
-import ShareDestinationSheet, { type ShareDestination } from '~/ui/share/share-destination-sheet';
+import type { ShareDestination } from '~/ui/share/share-destination-sheet';
 import { findByPropsLazy, findStoreLazy } from '~/metro/wrappers';
 import { getInstalledVersion } from '~/marketplace/install';
 import { navigationReady } from '~/core/navigation-ready';
@@ -231,6 +231,9 @@ async function receiveShare(files: SharedFile[]) {
 
 			return;
 		}
+
+		// Required on use, so startup never evaluates the UI.
+		const { default: ShareDestinationSheet } = require('~/ui/share/share-destination-sheet');
 
 		ActionSheets.openLazy(Promise.resolve({ default: ShareDestinationSheet }), SHEET_KEY, {
 			destinations: choices,

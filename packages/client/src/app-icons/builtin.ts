@@ -1,7 +1,7 @@
 import { createLogger } from '@unbound-app/logger';
 
 import { canInstallHomeScreenIcon, canSyncAppIcons } from '~/native/unbound-native';
-import { openCustomIconsSheet } from '~/ui/app-icons/open-custom-icons-sheet';
+import type * as CustomIconsSheet from '~/ui/app-icons/open-custom-icons-sheet';
 import { createPatcher } from '~/patcher/create-patcher';
 import { onModuleLoaded } from '~/metro/wait';
 import { byFilePath } from '~/metro/filters';
@@ -194,6 +194,11 @@ function patchRows(rows: MetroExport) {
 			const selection = args[0];
 
 			if (isAddTile(selection)) {
+				// Required on use, so startup never evaluates the UI.
+				const {
+					openCustomIconsSheet,
+				}: typeof CustomIconsSheet = require('~/ui/app-icons/open-custom-icons-sheet');
+
 				openCustomIconsSheet().catch((error) =>
 					Logger.error('Failed to open the custom app icon sheet:', error),
 				);

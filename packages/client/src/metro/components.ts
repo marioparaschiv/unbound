@@ -4,14 +4,13 @@ import firstOf from '@unbound-app/utils/first-of';
 import lazy from '@unbound-app/utils/lazy';
 import { createElement } from 'react';
 
-import { Discord, isRenderable, registerDesignFallback } from '~/metro/design';
+import {
+	Discord,
+	isRenderable,
+	registerDesignFallback,
+	registerLazyDesignFallback,
+} from '~/metro/design';
 import type { HelpMessageProps } from '~/metro/fallbacks/help-message';
-import FallbackHeading from '~/metro/fallbacks/fallback-heading';
-import FallbackSwitch from '~/metro/fallbacks/fallback-switch';
-import FallbackBadge from '~/metro/fallbacks/fallback-badge';
-import FallbackStack from '~/metro/fallbacks/fallback-stack';
-import FallbackCard from '~/metro/fallbacks/fallback-card';
-import FallbackText from '~/metro/fallbacks/fallback-text';
 import { findByName, findByProps } from '~/metro/search';
 import { findByPropsLazy } from '~/metro/wrappers';
 
@@ -77,7 +76,7 @@ export function Switch(props: SwitchProps) {
 				return isRenderable(found) ? found : undefined;
 			},
 			() => Discord.FormSwitch,
-		) ?? FallbackSwitch);
+		) ?? require('~/metro/fallbacks/fallback-switch').default);
 
 	return createElement(component, props);
 }
@@ -124,9 +123,13 @@ function FallbackSearchBar(props: SearchBarProps) {
 
 registerDesignFallback('SearchField', FallbackSearchField);
 registerDesignFallback('SearchBar', FallbackSearchBar);
-registerDesignFallback('Badge', FallbackBadge);
-registerDesignFallback('Text', FallbackText);
-registerDesignFallback('Heading', FallbackHeading);
-registerDesignFallback('FormSwitch', FallbackSwitch);
-registerDesignFallback('Stack', FallbackStack);
-registerDesignFallback('Card', FallbackCard);
+// Required on first use, so startup never evaluates the fallbacks or the Discord tokens their styles read.
+registerLazyDesignFallback('Badge', () => require('~/metro/fallbacks/fallback-badge').default);
+registerLazyDesignFallback('Text', () => require('~/metro/fallbacks/fallback-text').default);
+registerLazyDesignFallback('Heading', () => require('~/metro/fallbacks/fallback-heading').default);
+registerLazyDesignFallback(
+	'FormSwitch',
+	() => require('~/metro/fallbacks/fallback-switch').default,
+);
+registerLazyDesignFallback('Stack', () => require('~/metro/fallbacks/fallback-stack').default);
+registerLazyDesignFallback('Card', () => require('~/metro/fallbacks/fallback-card').default);

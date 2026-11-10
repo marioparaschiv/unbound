@@ -5,7 +5,14 @@ import { Screens } from '~/core/constants';
 export const assetsSection: SectionEntry = {
 	key: Screens.Assets,
 	titleKey: 'UNBOUND_ASSET_BROWSER',
-	component: AssetsPage,
+	/**
+	 *
+	 */
+	/**
+	 * @description Hands Discord's navigator the page.
+	 * @returns The page.
+	 */
+	getComponent: () => AssetsPage,
 	hidden: true,
 };
 

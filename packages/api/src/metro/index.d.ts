@@ -184,6 +184,7 @@ export declare const data: {
 	filePaths: Map<string, number>;
 	origToString: any;
 	listeners: Set<MetroModuleLoadListener>;
+	initialized: number[];
 };
 /**
  * @description Runs several filters in a single registry pass, returning one result per item.

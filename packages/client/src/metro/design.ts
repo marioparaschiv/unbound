@@ -11,7 +11,8 @@ import type { ComponentType, ElementType } from 'react';
 import { findByPropsLazy } from '~/metro/wrappers';
 
 const designModule: DesignModule = findByPropsLazy('createStyles', 'dismissAlerts', 'ContextMenu');
-const designFallbacks = new Map<DesignComponentName, ComponentType<never>>();
+// Loaders, so a fallback's file runs only when a build lacks the component it stands in for.
+const designFallbacks = new Map<DesignComponentName, () => ComponentType<never>>();
 
 /**
  * @description Tells whether a value can be rendered as a React element type: a function or class
@@ -48,7 +49,20 @@ export function registerDesignFallback<K extends DesignComponentName>(
 	name: K,
 	component: DesignModule[K],
 ): void {
-	designFallbacks.set(name, component as ComponentType<never>);
+	designFallbacks.set(name, () => component as ComponentType<never>);
+}
+
+/**
+ * @description Registers a fallback as {@link registerDesignFallback} does, loading it only when first needed.
+ * @param name The design component to stand in for.
+ * @param load Returns the fallback.
+ * @internal
+ */
+export function registerLazyDesignFallback(
+	name: DesignComponentName,
+	load: () => ComponentType<never>,
+): void {
+	designFallbacks.set(name, load);
 }
 
 // Style files call `createStyles` when imported, so the design module is read on the first render instead.
@@ -77,7 +91,7 @@ export const Discord: DesignModule = new Proxy(designTarget, {
 		const value = readDesignModule(key);
 
 		if (isDesignComponent(key) && !isRenderable(value)) {
-			return designFallbacks.get(key) ?? value;
+			return designFallbacks.get(key)?.() ?? value;
 		}
 
 		return value;

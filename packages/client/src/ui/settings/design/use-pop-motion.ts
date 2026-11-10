@@ -13,14 +13,16 @@ import { useEffect, useState } from 'react';
 import { nextPresence, settlePresence, type Presence } from '~/ui/addons/settings-button-presence';
 import useReducedMotion from '~/ui/hooks/use-reduced-motion';
 
+type Bezier = readonly [x1: number, y1: number, x2: number, y2: number];
+
 /** A full scale in or out; a reversal takes only the share left. */
 const POP_MS = 220;
 /**
  * Expo-out as a curve: fast then settling. `Easing.exp` itself reaches half size in the first frame and then
  * crawls, which reads as two separate entries.
  */
-const ENTER_EASING = Easing.bezier(0.16, 1, 0.3, 1);
-const EXIT_EASING = Easing.bezier(0.7, 0, 0.84, 0);
+const ENTER_BEZIER: Bezier = [0.16, 1, 0.3, 1];
+const EXIT_BEZIER: Bezier = [0.7, 0, 0.84, 0];
 /** The share of the move over which it fades in, so it never shows as a hard-edged speck. */
 const FADE_SHARE = 0.5;
 /** How long a freshly mounted button waits before popping in. */
@@ -57,7 +59,8 @@ function usePopMotion(visible: boolean) {
 				? { duration: FADE_MS }
 				: {
 						duration: Math.round(POP_MS * remaining),
-						easing: visible ? ENTER_EASING : EXIT_EASING,
+						// Built per move, not at import: touching `Easing` loads Reanimated, which startup should not wait on.
+						easing: Easing.bezier(...(visible ? ENTER_BEZIER : EXIT_BEZIER)),
 					},
 			(finished) => {
 				if (finished && target === 0) {

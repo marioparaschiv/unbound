@@ -1,8 +1,7 @@
-const mdls = [...globalThis.modules.values()];
-
 let reactNative, react;
 
-for (const m of mdls) {
+// React and React Native are among Metro's first modules, so walking the Map and stopping at them beats copying it.
+for (const m of globalThis.modules.values()) {
 	const exports = m?.publicModule?.exports;
 
 	if (!exports) {

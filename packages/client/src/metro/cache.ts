@@ -1,5 +1,6 @@
-import { readStoredCache, writeStoredCache } from '~/metro/cache-file';
+import { readStoredCache, readStoredField, writeStoredCache } from '~/metro/cache-file';
 import { CACHE_VERSION } from '~/core/constants';
+import { benchSpan } from '~/core/bench-span';
 import { BundleInfo } from '~/native/native';
 
 /** Bitwise flags tracking per-module state; `BLACKLISTED` marks a module that must never be returned from a search. */
@@ -7,12 +8,23 @@ export enum ModuleFlags {
 	BLACKLISTED = 1 << 0,
 }
 
-export const moduleIds = [...window.modules.keys()];
+// Copying Discord's ~20,000 module ids costs milliseconds, and a warm cache never needs a full scan.
+let moduleIds: readonly number[] | undefined;
+
+/**
+ * @description Lists every Metro module id, copied on the first full scan that needs them.
+ * @returns The module ids, in definition order.
+ */
+export function getModuleIds(): readonly number[] {
+	moduleIds ??= benchSpan('metro module ids', () => [...window.modules.keys()]);
+
+	return moduleIds;
+}
 
 const CurrentCacheInfo = {
 	cacheVersion: CACHE_VERSION,
 	buildNumber: BundleInfo.Build,
-	moduleCount: moduleIds.length,
+	moduleCount: window.modules.size,
 };
 
 const SAVE_DELAY_MS = 1000;
@@ -39,11 +51,13 @@ type CacheState = {
 	hints: Record<string, ModuleHint[]>;
 };
 
+// Fields in their own file, parsed on first use: `assets` is most of the cache and most launches never read it.
+const DETACHED: (keyof CacheState)[] = ['assets'];
+
 const stored = readStoredCache([
 	'info',
 	'modules',
 	'moduleFlags',
-	'assets',
 	'assetsComplete',
 	'paths',
 	'hints',
@@ -51,19 +65,41 @@ const stored = readStoredCache([
 
 // Checks only the outer shape: walking every entry would cost each launch, and `isValidCache` drops a cache saved
 // under another `info`.
-function storedObject<T extends object>(field: keyof CacheState, fallback: T): T {
-	const value = stored[field];
-
+// UNKNOWN: a saved field is whatever JSON the file held.
+function asObject<T extends object>(value: unknown, fallback: T): T {
 	return typeof value === 'object' && value !== null && !Array.isArray(value)
 		? (value as T)
 		: fallback;
+}
+
+function storedObject<T extends object>(field: keyof CacheState, fallback: T): T {
+	return asObject(stored[field], fallback);
+}
+
+// A cache saved before `assets` had its own file still carries them; the first save moves them out.
+let assets: CacheState['assets'] | undefined =
+	stored.assets === undefined ? undefined : storedObject('assets', {});
+
+function loadedAssets(): CacheState['assets'] {
+	assets ??= asObject(readStoredField('assets'), {});
+
+	return assets;
 }
 
 export const state: CacheState = {
 	info: storedObject('info', CurrentCacheInfo),
 	modules: storedObject('modules', {}),
 	moduleFlags: storedObject('moduleFlags', {}),
-	assets: storedObject('assets', {}),
+	get assets() {
+		return loadedAssets();
+	},
+	/**
+	 * @description Replaces the asset cache, which a save then writes to its own file.
+	 * @param value The new asset cache.
+	 */
+	set assets(value) {
+		assets = value;
+	},
 	assetsComplete: stored.assetsComplete === true,
 	paths: storedObject('paths', {}),
 	hints: storedObject('hints', {}),
@@ -71,6 +107,8 @@ export const state: CacheState = {
 
 if (!isValidCache()) {
 	invalidateCache();
+} else if (stored.assets !== undefined) {
+	save('assets');
 }
 
 /**
@@ -134,6 +172,11 @@ export function getCachedAssetModule(key: string): number | undefined {
  * @returns `true` if that module was already cached for the asset, otherwise `undefined`.
  */
 export function addAssetToCache(key: string, moduleId: number) {
+	// A complete cache already names this build's asset modules, so a registration need not load it to compare.
+	if (state.assetsComplete && !assets) {
+		return true;
+	}
+
 	if (state.assets[key] === moduleId) {
 		return true;
 	}
@@ -207,11 +250,14 @@ export function isKeyMissing(key: string | undefined) {
 }
 
 /**
- * @description Sets a {@link ModuleFlags} bit on a module and persists.
+ * @description Sets a {@link ModuleFlags} bit on a module, persisting it if it was not already set.
  * @param id The id of the module to flag.
  * @param flag The flag bit to set.
  */
 export function addModuleFlag(id: number, flag: ModuleFlags) {
+	// Discord flags the same modules every launch; saving only a change keeps launches from rewriting the cache.
+	if (hasModuleFlag(id, flag)) return;
+
 	state.moduleFlags[id] |= flag;
 	save('moduleFlags');
 }
@@ -235,7 +281,7 @@ function isValidCache() {
 		return false;
 	}
 
-	if (moduleIds.length !== state.info.moduleCount) {
+	if (window.modules.size !== state.info.moduleCount) {
 		return false;
 	}
 
@@ -262,7 +308,7 @@ function save(...fields: [keyof CacheState, ...(keyof CacheState)[]]) {
 	saveTimer ??= setTimeout(() => {
 		saveTimer = undefined;
 
-		writeStoredCache(state, unsaved);
+		writeStoredCache(state, unsaved, DETACHED);
 		unsaved.clear();
 	}, SAVE_DELAY_MS);
 }

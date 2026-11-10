@@ -4,7 +4,6 @@ import { Platform } from 'react-native';
 import { getSetting, setSetting } from '~/settings/unbound';
 import { createPatcher } from '~/patcher/create-patcher';
 import { CLIENT_VERSION } from '~/core/constants';
-import ErrorFallback from '~/ui/error-boundary';
 import { onModuleLoaded } from '~/metro/wait';
 import { byName } from '~/metro/filters';
 import { reload } from '~/native/native';
@@ -61,6 +60,9 @@ function patchBoundary(Boundary: MetroExport) {
 		if (!error) {
 			return result;
 		}
+
+		// Required on use, so startup never evaluates the UI.
+		const { default: ErrorFallback } = require('~/ui/error-boundary');
 
 		return (
 			<ErrorFallback

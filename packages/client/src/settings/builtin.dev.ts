@@ -10,7 +10,14 @@ function useDeveloperMode(): boolean {
 export const developerSection: SectionEntry = {
 	key: Screens.Developer,
 	titleKey: 'UNBOUND_DEVELOPER',
-	component: DeveloperPage,
+	/**
+	 *
+	 */
+	/**
+	 * @description Hands Discord's navigator the page.
+	 * @returns The page.
+	 */
+	getComponent: () => DeveloperPage,
 	usePredicate: useDeveloperMode,
 	icon: 'WrenchIcon',
 };

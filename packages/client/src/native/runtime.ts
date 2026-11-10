@@ -119,10 +119,24 @@ export type DCDBundleManagerType = {
  * @returns The first matching native module.
  */
 export function getNativeModule<T>(...names: string[]): T {
-	return [
-		...names.map((n) => NativeModules[n]),
-		...names.map((n) => TurboModuleRegistry.get?.(n)),
-	].find((x) => x) as T;
+	// Each lookup is a native call, and a missing name costs the most, so stop at the first hit.
+	for (const name of names) {
+		const found = NativeModules[name];
+
+		if (found) {
+			return found;
+		}
+	}
+
+	for (const name of names) {
+		const found = TurboModuleRegistry.get?.(name);
+
+		if (found) {
+			return found as T;
+		}
+	}
+
+	return undefined as T;
 }
 
 /**

@@ -5,14 +5,11 @@ import { byFilePath, byFluxStore, byProps } from '~/metro/filters';
 import { clearGuardUnderlay } from '~/themes/clear-guard-underlay';
 import { resolveChatBackground } from '~/themes/chat-background';
 import { resolveThemeColor, withOpacity } from '~/themes/colors';
-import FontGroupPage from '~/ui/settings/design/font-group-page';
 import { clearDMGreeting } from '~/themes/clear-dm-greeting';
 import { createPatcher } from '~/patcher/create-patcher';
 import type { SectionEntry } from '~/settings/section';
-import ChatBackdrop from '~/ui/themes/chat-backdrop';
 import { getSetting } from '~/settings/unbound';
 import { onModuleLoaded } from '~/metro/wait';
-import DesignPage from '~/ui/settings/design';
 import { Screens } from '~/core/constants';
 import { findStore } from '~/metro/search';
 import { onChange } from '~/storage/api';
@@ -104,7 +101,12 @@ function syncBackground() {
 
 // The chat view draws the image under its messages; the chat colour above it turns translucent to show it.
 function drawChatBackground(mdl: ChatViewModule) {
-	Patcher.after(mdl.default, 'type', ({ result }) => <ChatBackdrop>{result}</ChatBackdrop>);
+	Patcher.after(mdl.default, 'type', ({ result }) => {
+		// Required on render, so startup never evaluates the backdrop's UI.
+		const { default: ChatBackdrop } = require('~/ui/themes/chat-backdrop');
+
+		return <ChatBackdrop>{result}</ChatBackdrop>;
+	});
 }
 
 // The fade would darken a chat background, so it hides while one is drawn. The original always renders, so its hooks
@@ -281,7 +283,14 @@ export function stop() {
 export const designSection: SectionEntry = {
 	key: Screens.Design,
 	titleKey: 'UNBOUND_DESIGN',
-	component: DesignPage,
+	/**
+	 *
+	 */
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
+	 */
+	getComponent: () => require('~/ui/settings/design').default,
 	icon: 'PaintPaletteIcon',
 };
 
@@ -289,7 +298,14 @@ export const designSection: SectionEntry = {
 export const fontGroupSection: SectionEntry = {
 	key: Screens.FontGroup,
 	titleKey: 'UNBOUND_FONTS',
-	component: FontGroupPage,
+	/**
+	 *
+	 */
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
+	 */
+	getComponent: () => require('~/ui/settings/design/font-group-page').default,
 	hidden: true,
 };
 

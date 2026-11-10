@@ -1,5 +1,7 @@
 import { createLogger } from '@unbound-app/logger';
 
+import { benchSpan } from '~/core/bench-span';
+
 const Logger = createLogger('BuiltIns');
 
 /** A built-in feature exposing optional `start`/`stop` lifecycle hooks. */
@@ -29,18 +31,27 @@ class BuiltInsManager {
 	 * @param builtin The built-in to start.
 	 */
 	register(name: string, builtin: BuiltIn) {
+		if (this.start(name, builtin)) {
+			Logger.info(`Started built-in: ${name}`);
+		}
+	}
+
+	private start(name: string, builtin: BuiltIn) {
 		if (this.active.has(name)) {
 			Logger.warn(`Built-in ${name} already registered`);
 
-			return;
+			return false;
 		}
 
 		try {
-			builtin.start?.();
+			benchSpan(`built-in ${name}`, () => builtin.start?.());
 			this.active.set(name, builtin);
-			Logger.info(`Started built-in: ${name}`);
+
+			return true;
 		} catch (error) {
 			Logger.error(`Failed to start built-in ${name}:`, error);
+
+			return false;
 		}
 	}
 
@@ -74,14 +85,20 @@ class BuiltInsManager {
 			return;
 		}
 
+		const started: string[] = [];
+
 		for (const [name, builtin] of entries) {
 			if (typeof builtin.shouldStart === 'function' && !builtin.shouldStart()) {
 				continue;
 			}
 
-			this.register(name, builtin);
+			if (this.start(name, builtin)) {
+				started.push(name);
+			}
 		}
 
+		// One line, not one per built-in: each console call crosses to native, which startup pays for.
+		Logger.info(`Started built-ins: ${started.join(', ')}`);
 		this.initialized = true;
 	}
 
@@ -92,15 +109,18 @@ class BuiltInsManager {
 	shutdown() {
 		if (!this.initialized) return;
 
+		const stopped: string[] = [];
+
 		for (const [name, builtin] of [...this.active.entries()].reverse()) {
 			try {
 				builtin.stop?.();
-				Logger.info(`Stopped built-in: ${name}`);
+				stopped.push(name);
 			} catch (error) {
 				Logger.error(`Failed to stop built-in ${name}:`, error);
 			}
 		}
 
+		Logger.info(`Stopped built-ins: ${stopped.join(', ')}`);
 		this.active.clear();
 		this.initialized = false;
 	}

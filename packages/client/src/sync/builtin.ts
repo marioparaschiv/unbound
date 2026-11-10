@@ -4,7 +4,6 @@ import debounce from '@unbound-app/utils/debounce';
 import { connect, disconnect, getMode, isApplying, isEnabled, now } from '~/sync/api';
 import { off as offAccount, on as onAccount } from '~/account/api';
 import type { SectionEntry } from '~/settings/section';
-import CloudSyncPage from '~/ui/settings/cloud-sync';
 import { Screens } from '~/core/constants';
 import { onChange } from '~/storage/api';
 
@@ -61,7 +60,14 @@ export function stop() {
 export const cloudSyncSection: SectionEntry = {
 	key: Screens.Sync,
 	titleKey: 'UNBOUND_CLOUD_SYNC',
-	component: CloudSyncPage,
+	/**
+	 *
+	 */
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
+	 */
+	getComponent: () => require('~/ui/settings/cloud-sync').default,
 	// Listed on the General page, so the overview stays short.
 	hidden: true,
 };

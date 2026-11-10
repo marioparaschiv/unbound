@@ -1,18 +1,28 @@
 import type { SectionEntry } from '~/settings/section';
-import AddonCount from '~/ui/settings/addon-count';
-import PluginsPage from '~/ui/settings/plugins';
 import { Screens } from '~/core/constants';
 
 export const pluginsSection: SectionEntry = {
 	key: Screens.Plugins,
 	titleKey: 'UNBOUND_PLUGINS',
-	component: PluginsPage,
+	/**
+	 *
+	 */
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
+	 */
+	getComponent: () => require('~/ui/settings/plugins').default,
 	icon: 'PuzzlePieceIcon',
 	/**
 	 * @description Shows how many plugins are enabled.
 	 * @returns The overview row's trailing count.
 	 */
-	useTrailing: () => <AddonCount kind='plugin' />,
+	useTrailing: () => {
+		// Required on render, so startup never evaluates the UI.
+		const { default: AddonCount } = require('~/ui/settings/addon-count');
+
+		return <AddonCount kind='plugin' />;
+	},
 };
 
 export default { pluginsSection };

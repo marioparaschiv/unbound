@@ -42,6 +42,6 @@
 		"typescript": "catalog:"
 	},
 	"unbound": {
-		"minLoaderVersion": "1.0.0"
+		"minLoaderVersion": "1.1.0"
 	}
 }
