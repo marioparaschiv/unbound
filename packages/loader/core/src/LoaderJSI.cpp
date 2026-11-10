@@ -43,6 +43,9 @@ std::shared_ptr<MappedFileBuffer> MappedFileBuffer::map(const std::string &path)
     {
         return nullptr;
     }
+    // The loader maps the bundle as Discord's runtime starts, well before Hermes runs it: start
+    // reading it in now so those reads overlap Discord's own startup instead of stalling Hermes.
+    madvise(data, size, MADV_WILLNEED);
     return std::shared_ptr<MappedFileBuffer>(new MappedFileBuffer(data, size));
 }
 
