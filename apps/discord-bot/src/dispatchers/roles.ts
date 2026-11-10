@@ -302,8 +302,8 @@ export function createRolesDispatcher(options: RolesOptions): Dispatcher {
 		} catch (error) {
 			const failure = discordFailure(error);
 
-			// 10007 Unknown Member: the account exists but is not in the guild.
-			if (failure === 'gone') {
+			// The account exists but is not in the guild; any other missing resource is an error.
+			if (failure === 'unknown-member') {
 				logger.debug(
 					`Discord user ${claim.discordId} is not in the guild; retrying on the next reconcile.`,
 				);

@@ -8,11 +8,18 @@ import type {
 import { DiscordAPIError, RESTJSONErrorCodes, Routes } from 'discord.js';
 import { randomBytes } from 'node:crypto';
 
-// `gone`: the message, member or channel no longer exists. `forbidden`: the bot lacks a permission.
-// `undeliverable`: the user blocks the bot, shares no server with it, or no longer exists.
-// `rejected`: Discord refused the body and would refuse it again.
 /** How a Discord request failed, as far as a caller can act on it. */
-export type DiscordFailure = 'gone' | 'undeliverable' | 'rejected' | 'forbidden';
+export type DiscordFailure =
+	// The message, channel, guild or other resource no longer exists.
+	| 'gone'
+	// The user exists but is not in the guild.
+	| 'unknown-member'
+	// The user blocks the bot, shares no server with it, or no longer exists.
+	| 'undeliverable'
+	// Discord refused the body and would refuse it again.
+	| 'rejected'
+	// The bot lacks a permission.
+	| 'forbidden';
 
 export type OutgoingMessage = {
 	body: RESTPostAPIChannelMessageJSONBody;
@@ -76,6 +83,10 @@ export function discordFailure(
 
 	if (UNDELIVERABLE.has(error.code)) {
 		return 'undeliverable';
+	}
+
+	if (error.code === RESTJSONErrorCodes.UnknownMember) {
+		return 'unknown-member';
 	}
 
 	return BY_STATUS[error.status];

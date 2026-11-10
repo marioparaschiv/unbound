@@ -317,6 +317,17 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		expect(logged(error)).toBe('');
 	});
 
+	test('a member fetch answered with another 404 (10004 Unknown Guild) is logged as a failure', async () => {
+		seed({});
+		const discord = fakeDiscord({ members: {}, guildGone: true });
+		const roles = dispatcher(discord);
+
+		await roles.reconcile(context());
+
+		expect(logged(error)).toContain('Failed to grant roles to Discord user 1');
+		expect(discord.added).toEqual([]);
+	});
+
 	test('does not re-add a role the bot granted after a moderator removed it', async () => {
 		seed({});
 		const discord = fakeDiscord({ members: { '1': [] } });

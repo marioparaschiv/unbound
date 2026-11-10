@@ -10,7 +10,10 @@ function apiError(code: number, status: number) {
 describe('discordFailure', () => {
 	test('names each failure a caller acts on', () => {
 		expect(discordFailure(apiError(RESTJSONErrorCodes.UnknownMessage, 404))).toBe('gone');
-		expect(discordFailure(apiError(RESTJSONErrorCodes.UnknownMember, 404))).toBe('gone');
+		expect(discordFailure(apiError(RESTJSONErrorCodes.UnknownGuild, 404))).toBe('gone');
+		expect(discordFailure(apiError(RESTJSONErrorCodes.UnknownMember, 404))).toBe(
+			'unknown-member',
+		);
 		expect(discordFailure(apiError(RESTJSONErrorCodes.UnknownUser, 404))).toBe('undeliverable');
 		expect(discordFailure(apiError(RESTJSONErrorCodes.CannotSendMessagesToThisUser, 403))).toBe(
 			'undeliverable',

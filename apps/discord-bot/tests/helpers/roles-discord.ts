@@ -8,6 +8,8 @@ export type FakeDiscordOptions = {
 	members: Record<string, string[]>;
 	/** Discord ids of deleted accounts, answered with 10013 Unknown User. */
 	deleted?: string[];
+	/** Answers every member fetch with 10004 Unknown Guild, as after the bot is removed. */
+	guildGone?: boolean;
 	guildRoles?: RolesRole[];
 	/** Role ids moved above the bot's highest role. */
 	aboveBot?: string[];
@@ -62,6 +64,7 @@ export function fakeDiscord(options: FakeDiscordOptions): FakeDiscord {
 		manageRoles = true,
 		failAdd = [],
 		deleted = [],
+		guildGone = false,
 	} = options;
 	const members = new Map(
 		Object.entries(options.members).map(([id, roles]) => [id, new Set(roles)]),
@@ -117,6 +120,15 @@ export function fakeDiscord(options: FakeDiscordOptions): FakeDiscord {
 				fetched.push(user);
 
 				const held = members.get(user);
+
+				if (guildGone) {
+					throw discordError(
+						RESTJSONErrorCodes.UnknownGuild,
+						'Unknown Guild',
+						'GET',
+						`/guilds/${guildId}/members/${user}`,
+					);
+				}
 
 				if (deleted.includes(user)) {
 					throw discordError(
