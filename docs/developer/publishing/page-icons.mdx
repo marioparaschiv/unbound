@@ -1,10 +1,10 @@
 ---
 title: 'Page Icons'
-description: 'Put Nucleo Micro Bold icons in your ADDON.md with a :name: shortcode.'
+description: 'Icons in ADDON.md with :name: shortcodes.'
 icon: 'shapes'
 ---
 
-Your [store page](/docs/developer/addons/store-page) can show icons from the [Nucleo Micro Bold](https://nucleoapp.com/) set, the same set the rest of the site uses. Write the icon's name between two colons, and the store draws the icon in its place, at text size and in the brand colour.
+Write an icon name between colons in your [store page](/docs/developer/publishing/store-page), and the store draws a [Nucleo Micro Bold](https://nucleoapp.com/) icon at text size in the brand colour.
 
 ```md ADDON.md
 ## :sparkle: What it does
@@ -15,19 +15,17 @@ Your [store page](/docs/developer/addons/store-page) can show icons from the [Nu
 ## :gear: Settings
 ```
 
-## How shortcodes render
+## Rules
 
-- A shortcode works in headings, paragraphs, and list items.
-- Inside `code` spans and fenced code blocks, a shortcode stays text.
-- A name that is not in the list below stays text, colons included. Check the spelling against the list.
-- Put the icon at the start of a heading or list item. An icon in the middle of a sentence is harder to read.
+- Works in headings, paragraphs and list items.
+- Stays text inside `code` spans and fenced code blocks.
+- An unknown name stays text, colons included.
+- Put the icon at the start of a heading or list item.
 
 <Note>
-	The website draws page icons. The Unbound app shows the shortcode as text for now.
+	Only the website draws page icons. The Unbound app shows the shortcode as text for now.
 </Note>
 
-## Every icon
-
-The list comes from the set the store renders, so every name here works.
+## Every Icon
 
 <PageIconList />

@@ -1,109 +1,108 @@
 ---
-title: 'Native UI Thread'
-description: 'Change native views from worklets on the UI thread, in the same frame as Discord, so nothing flashes or pops in.'
+title: 'UI Thread'
+description: 'Change native views from worklets without flicker.'
 icon: 'bolt'
 ---
 
-Most plugins never need this page. It's for plugins that change Discord's **native** views, such as rounding avatars or recoloring message bubbles, and see a flicker when they do it from JavaScript.
+Change Discord's native views in the same frame Discord draws them, using worklets. Only for native view changes, such as rounding avatars, that flicker when done from JavaScript.
 
-## Reference
+## Why It Flickers
 
-A plugin reaches the UI thread through `context.native.ui`, from the argument of `start`.
+A hook registered from JavaScript runs after the native call returned, a frame or more late. The user sees Discord's view first, then yours. A hook installed from a worklet runs inline on the main thread, inside Reanimated's UI runtime, in the same layout pass.
 
-| Call | Returns | Does |
-| --- | --- | --- |
-| `ui.createScope()` | `NativeUIScope` | Opens a scope for the UI runtime, with every synchronous native method your Capabilities allow: `objc` on iOS, `java` and `hooks` on Android. Methods that wait, such as `invokeAsync`, `batch`, `snapshot` and `findViews`, are left out, because a worklet must never wait on the thread it runs on. Pass the scope to a worklet as an argument |
-| `ui.run(worklet, ...args)` | `void` | Queues the worklet on the UI thread. Use it to install hooks, push new data and restore views |
-| `ui.call(worklet, ...args)` | `Promise` | Runs the worklet and resolves with what it returns, which must be serializable. Use it for self-tests and counts |
-
-A worklet is a function whose body starts with `'worklet'`. Its arguments must be serializable, or a scope. Unbound disposes every scope when the plugin stops, which removes the hooks installed through it.
-
-## Why changes from JavaScript flicker
-
-Native views are created, laid out and drawn on the main thread. Your plugin's JavaScript runs on a separate thread. A hook registered from JavaScript hears about a native call only after it has returned, so your change lands a frame or more later. The user sees Discord's view first, then yours: a circle that turns into a rounded square, or a reused row that briefly shows the previous message.
-
-<Flow caption='A change made from JavaScript'>
+<Flow caption='From JavaScript'>
 	<FlowStep title='Discord lays out the view' />
 	<FlowStep title='The frame is drawn' detail="Discord's version" />
 	<FlowStep title='Your hook runs' detail='On the JavaScript thread' added />
 	<FlowStep title='Next frame' detail='Your version' />
 </Flow>
 
-**Worklets** fix this. A worklet is a small function that runs on the main thread, inside Reanimated's UI runtime. A hook installed from a worklet runs inline, during Discord's own call. Your change is part of the same layout pass, and is drawn in the same frame.
-
-<Flow caption='The same change made from a worklet'>
+<Flow caption='From a worklet'>
 	<FlowStep title='Discord lays out the view' />
 	<FlowStep title='Your hook runs' detail='Inline, on the main thread' added />
 	<FlowStep title='The frame is drawn' detail='Your version' />
 </Flow>
 
-<Note>
-	Use worklets only for changes that must be in place before the frame is drawn. Keep everything else on the JavaScript thread: Flux stores, settings, network requests, React patches, and anything heavy.
-</Note>
+## Quick Start
 
-## Writing a worklet
+<Steps>
+	<Step title='Write the worklet'>
+		A worklet's body starts with `'worklet'`. `ubd build` compiles every worklet, including imported ones. Every function it calls must be a worklet too.
 
-A worklet is a function whose body starts with `'worklet'`. `ubd build` compiles every worklet, including those in files you import. Any function a worklet calls must be a worklet too.
+		```ts src/avatars/ui-avatars.ts
+		import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
 
-```ts src/avatars/ui-avatars.ts
-import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
+		function round(objc: NativeObjCBridge, avatar: NativeObjectHandle, radius: number) {
+			'worklet';
+			// `invoke` returns a plain value, a handle or nothing. `layer` is a handle.
+			const layer = objc.invoke(avatar, 'layer', []) as NativeObjectHandle | undefined;
 
-function round(objc: NativeObjCBridge, avatar: NativeObjectHandle, radius: number) {
-	'worklet';
-	// `invoke` returns a plain value, a handle or nothing. `layer` is a handle.
-	const layer = objc.invoke(avatar, 'layer', []) as NativeObjectHandle | undefined;
+			if (layer) objc.invoke(layer, 'setCornerRadius:', [radius]);
+		}
 
-	if (layer) objc.invoke(layer, 'setCornerRadius:', [radius]);
-}
+		export function installAvatarHooks(scope: NativeUIScope, radius: number) {
+			'worklet';
+			const { objc } = scope;
 
-export function installAvatarHooks(scope: NativeUIScope, radius: number) {
-	'worklet';
-	const { objc } = scope;
+			if (!objc) return;
 
-	if (!objc) return;
+			objc.hook('DCDAvatarView', 'layoutSubviews', {
+				after: ({ self }) => {
+					try {
+						round(objc, self, radius);
+					} catch (error) {
+						console.error(`[Avatar Radius] ${String(error)}`);
+					}
+				},
+			});
+		}
+		```
+	</Step>
+	<Step title='Run it from start'>
+		`context` is the argument of `start`.
 
-	objc.hook('DCDAvatarView', 'layoutSubviews', {
-		after: ({ self }) => {
-			try {
-				round(objc, self, radius);
-			} catch (error) {
-				console.error(`[Avatar Radius] ${String(error)}`);
-			}
-		},
-	});
-}
-```
+		```ts src/avatars/index.ts
+		import type { PluginContext } from '@unbound-app/api/native';
 
-A worklet runs in its own JavaScript runtime. It can't see your plugin's variables, stores or settings. Values reach it as arguments. Constants and other worklets it uses are copied in when it's built, so a variable that changes later is never seen.
+		import { installAvatarHooks } from '~/avatars/ui-avatars';
 
-## Running worklets
+		export function startAvatars(context: PluginContext, radius: number) {
+			const { ui } = context.native;
+			const scope = ui.createScope();
 
-`context.native.ui` runs worklets. The plugin gets `context` as the argument of `start`.
+			ui.run(installAvatarHooks, scope, radius);
+		}
+		```
+	</Step>
+</Steps>
 
-```ts src/avatars/index.ts
-import type { PluginContext } from '@unbound-app/api/native';
+A worklet runs in its own runtime and can't see your plugin's variables, stores or settings. Values arrive as arguments. Constants and worklets it uses are copied in at build time, so later changes are never seen.
 
-import { installAvatarHooks } from '~/avatars/ui-avatars';
+## Reference
 
-export function startAvatars(context: PluginContext, radius: number) {
-	const { ui } = context.native;
-	const scope = ui.createScope();
+| Call on `context.native.ui` | Returns | Does |
+| --- | --- | --- |
+| `createScope()` | `NativeUIScope` | Opens a scope with every synchronous native method your Capabilities allow: `objc` on iOS, `java` and `hooks` on Android. Pass it to a worklet as an argument |
+| `run(worklet, ...args)` | `void` | Queues the worklet. Use it to install hooks, push data and restore views |
+| `call(worklet, ...args)` | `Promise` | Runs the worklet and resolves with its serializable result. Use it for self-tests and counts |
 
-	ui.run(installAvatarHooks, scope, radius);
-}
-```
+- Arguments must be serializable, or a scope.
+- Scopes leave out waiting methods (`invokeAsync`, `batch`, `snapshot`, `findViews`); a worklet must never wait on its own thread.
+- Unbound disposes every scope when the plugin stops, removing its hooks.
+- Every worklet runs behind a guard that logs errors instead of crashing. Hook callbacks still need their own `try`/`catch`.
 
-Unbound runs every worklet behind a guard, so an error it throws is logged instead of crashing Discord. Hook callbacks still need their own `try`/`catch`, as in the example above.
+Full signatures: [`native`](/docs/sdk/latest/native) in the SDK reference.
 
-## Hooks on each platform
+## Platform Hooks
 
-On iOS, `before`, `after` and `replace` callbacks of hooks installed through a scope run inline on the main thread. A `replace` callback that measures a view, such as `sizeThatFits:`, answers without waiting on the JavaScript thread.
+| Platform | Behavior |
+| --- | --- |
+| iOS | `before`, `after` and `replace` callbacks run inline on the main thread. A `replace` on a measuring method such as `sizeThatFits:` answers without waiting on JavaScript |
+| Android | A `hooks.hook` listener runs inline when the method runs on the main thread. `{ notify: 'after' }` fires after the original, so a bind hook sees the row already bound to its new message |
 
-On Android, a listener passed to `hooks.hook` through a scope runs inline when the hooked method runs on the main thread. Pass `{ notify: 'after' }` to hear about the call after the original method ran. A hook on a row's bind method then sees the row already bound to its new message.
+## Data in the UI Runtime
 
-## Keeping data in the UI runtime
-
-Data your hooks need, such as a server's role colors, comes from the JavaScript thread. Compute it there, and push a plain snapshot into the UI runtime with `ui.run`. Worklets keep it on `globalThis` in the UI runtime, under a key unique to your plugin.
+Compute data such as role colors on the JavaScript thread, then push a plain snapshot with `ui.run`. Store it on `globalThis` under a key unique to your plugin.
 
 ```ts src/avatars/radius.ts
 const RADIUS_KEY = '__avatarRadius';
@@ -114,22 +113,30 @@ export function setAvatarRadius(radius: number) {
 }
 ```
 
-- **Push only when the data changes.** Pushing on every render keeps the JavaScript thread busy while the user scrolls. Compare with the last push, and debounce bursts.
-- **Cache what the slow path measures.** Store the result per message in the UI runtime, such as a bubble's frame. The next layout of that message can draw it at once.
-- **Clean up on reuse in the same pass.** Remove your own views in `prepareForReuse` on iOS, or in an after-bind hook on Android. Tag those views so the hook finds them without searching.
+- **Push only on change.** Compare with the last push and debounce bursts. Pushing every render keeps JavaScript busy while scrolling.
+- **Cache slow measurements** per message, such as a bubble's frame, so the next layout draws at once.
+- **Clean up on reuse in the same pass:** `prepareForReuse` on iOS, an after-bind hook on Android. Tag your views so the hook finds them without searching.
 
-## What stays on the JavaScript thread
+## Cost
 
-Every native call from a worklet costs about 15 to 35 µs on iOS, and 30 to 50 µs on Android. A hook that runs while the user scrolls can afford a handful of calls, not a walk over hundreds of views. Keep these on the JavaScript thread:
+Each native call from a worklet costs about 15 to 35 µs on iOS and 30 to 50 µs on Android. A scroll-time hook affords a handful of calls. Keep these on the JavaScript thread:
 
-- View-tree snapshots, searches, and anything that measures many views.
-- Mounting React surfaces with `fabric`, which renders on the JavaScript thread anyway.
-- Flux stores, settings and network requests.
+- View-tree snapshots, searches, and measuring many views.
+- Mounting React surfaces with `fabric`.
+- Flux stores, settings, network requests and React patches.
 
-## Worklet rules
+## Rules
 
 - Start every worklet, and every function it calls, with `'worklet'`.
-- Wrap hook callbacks in `try`/`catch`. On Android, an error thrown inside a native callback is fatal, and the guard can't catch it.
-- Look up Objective-C handles and Java references inside the worklet, instead of passing ones from the JavaScript thread. Android association keys can be passed as arguments.
+- Wrap hook callbacks in `try`/`catch`. On Android, an error inside a native callback is fatal and the guard can't catch it.
+- Look up Objective-C handles and Java references inside the worklet. Android association keys can be passed as arguments.
 - Check a Java boolean with `javaFlag`. A boxed `{ type: 'boolean', value: false }` is truthy.
-- Don't declare Capabilities for worklets. `ubd build` finds their native calls like any other.
+- Don't declare Capabilities for worklets. `ubd build` finds their native calls.
+
+## Next
+
+<CardGroup cols={1}>
+	<Card title='Testing Native Code' icon='mobile' href='/docs/developer/testing/native-code'>
+		Test native calls and worklets.
+	</Card>
+</CardGroup>

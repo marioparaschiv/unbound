@@ -1,27 +1,14 @@
 ---
 title: 'Testing Native Code'
-description: 'Fake the platform, the native modules and the Objective-C and Java bridges in a plugin test.'
+description: 'Fake the platform and native bridges in tests.'
 icon: 'mobile'
 ---
 
-A plugin that calls the native bridge tests it with the fakes of `native` from `@unbound-app/api/testing`. Read [Testing](/docs/developer/plugins/testing) first for the preset and `startPlugin`.
+Fakes for a plugin that calls the native bridge, from `native` in `@unbound-app/api/testing`. Set up the preset first: see [Writing Tests](/docs/developer/testing/writing-tests).
 
-## Reference
+## Example
 
-| Call | Does |
-| --- | --- |
-| `native.setPlatform(platform)` | Sets the host platform, `'ios'` until set. `Platform.OS` from `react-native` follows it |
-| `native.registerModule(name, module)` | Gives `getNativeModule(name)` a module to return |
-| `native.setCapabilities(capabilities)` | Sets what `native.has` reports |
-| `native.objc.registerClass(name, { superclass?, methods?, classMethods? })` | Adds a class. A method takes the object and the call's arguments; `callSuper` reaches the superclass's |
-| `native.objc.create(name, ivars?)` | Makes an object, with the instance variables `getIvar` reads |
-| `native.java.registerClass(name, { superclass?, methods?, staticMethods?, fields?, staticFields?, signatures?, fieldTypes?, construct? })` | Adds a class. A method takes the object and the call's plain arguments, and returns a plain value, which the bridge tags as `string`, `int`, `double`, `boolean`, `null`, `handle` or `array`. `construct` runs for `java.construct`. `signatures` gives each method's `{ parameters?, returnType? }` and `fieldTypes` each field's type, by name; `java.describe` returns them in the bridge's shape, so code that finds a member by its types runs. A type left out is `java.lang.Object` |
-| `native.java.create(name, fields?)` | Makes an object, as a `handle` value |
-| `native.calls` | Every `objc`, `java` and `hooks` call the plugin made this test: its `bridge`, `method`, `target` class, `name` (selector or method) and `args` |
-
-## The platform and its modules
-
-`native` follows the platform a test sets. It is iOS until `native.setPlatform` says otherwise, and `Platform.OS` from `react-native` follows it too.
+Set the platform, modules and capabilities:
 
 ```ts
 import { native } from '@unbound-app/api/testing';
@@ -31,9 +18,7 @@ native.registerModule('NativeFileModule', { readFile: async () => '' });
 native.setCapabilities(['native.java.hooks']);
 ```
 
-`definePlatform` picks the handler for that platform, and throws `NativePluginUnsupportedPlatformError` when there is none. A plugin calls it as it imports its `platform.ts`, before any test sets the platform, so a function handler comes back as a function that calls the current platform's handler each time it runs. Any other handler is read when `definePlatform` runs. `getNativeModule(...names)` returns the first module registered under one of the names. `native.has` reports the capabilities set.
-
-`startPlugin` gives `context.native.objc` on iOS, and `context.native.java` and `hooks` on Android. Fill them with the classes your handlers reach:
+`startPlugin` gives `context.native.objc` on iOS, and `context.native.java` and `hooks` on Android. Register the classes your handlers reach:
 
 ```ts
 import { native, startPlugin } from '@unbound-app/api/testing';
@@ -54,4 +39,41 @@ native.java.registerClass('android.view.View', {
 });
 ```
 
-`objc` fakes `getClass`, `alloc`, `create`, `className`, `respondsTo`, `call`, `invoke`, `invokeAsync`, `callSuper`, `invokeSuper`, `batch`, `prepare`, `invokePrepared`, `getIvar`, `setIvar`, the associated objects, `struct` and `hook`. `java` fakes `getClass`, `construct`, `describe`, `className`, `respondsTo`, `invoke`, `invokeAsync`, `getField`, `setField`, `batch`, `batchAsync`, `prepare`, `invokePrepared`, the associated objects and `release`, and `hooks` fakes `hook`, `remove` and the return values. A hook runs when a registered method is called, as `objc.hook`'s `before`, `replace` and `after` do. A class, selector, method or field a test did not register throws, naming how to add it. A member the kit does not fake throws too; give your own with `startPlugin({ native: { objc: { snapshot } } })`. Members you pass for `objc`, `java` or `hooks` are laid over the fake: yours win, and the fake's others stay.
+## Reference
+
+| Call | Does |
+| --- | --- |
+| `native.setPlatform(platform)` | Sets the platform, `'ios'` by default. `Platform.OS` follows it |
+| `native.registerModule(name, module)` | A module for `getNativeModule(name)` to return |
+| `native.setCapabilities(capabilities)` | What `native.has` reports |
+| `native.objc.registerClass(name, { superclass?, methods?, classMethods? })` | Adds a class. A method gets the object and the call's arguments; `callSuper` reaches the superclass |
+| `native.objc.create(name, ivars?)` | An object, with the instance variables `getIvar` reads |
+| `native.java.registerClass(name, options)` | Adds a class. See [Java Classes](#java-classes) |
+| `native.java.create(name, fields?)` | An object, as a `handle` value |
+| `native.calls` | Every `objc`, `java` and `hooks` call this test: `bridge`, `method`, `target` class, `name` (selector or method), `args` |
+
+### Java Classes
+
+`native.java.registerClass` options: `superclass`, `methods`, `staticMethods`, `fields`, `staticFields`, `signatures`, `fieldTypes`, `construct`.
+
+- A method gets the object and plain arguments, and returns a plain value. The bridge tags it `string`, `int`, `double`, `boolean`, `null`, `handle` or `array`.
+- `construct` runs for `java.construct`.
+- `signatures` gives each method's `{ parameters?, returnType? }`, and `fieldTypes` each field's type. `java.describe` returns them, so code that finds a member by its types works. Unset types are `java.lang.Object`.
+
+## Platform Handlers
+
+- `definePlatform` picks the current platform's handler, and throws `NativePluginUnsupportedPlatformError` when there is none.
+- It runs at import, before a test sets the platform. A function handler therefore calls the current platform's handler on each call. Any other handler is read once, when `definePlatform` runs.
+- `getNativeModule(...names)` returns the first module registered under one of the names.
+
+## Faked Members
+
+| Bridge | Faked |
+| --- | --- |
+| `objc` | `getClass`, `alloc`, `create`, `className`, `respondsTo`, `call`, `invoke`, `invokeAsync`, `callSuper`, `invokeSuper`, `batch`, `prepare`, `invokePrepared`, `getIvar`, `setIvar`, associated objects, `struct`, `hook` |
+| `java` | `getClass`, `construct`, `describe`, `className`, `respondsTo`, `invoke`, `invokeAsync`, `getField`, `setField`, `batch`, `batchAsync`, `prepare`, `invokePrepared`, associated objects, `release` |
+| `hooks` | `hook`, `remove`, return values |
+
+- A hook runs when a registered method is called, like `objc.hook`'s `before`, `replace` and `after`.
+- An unregistered class, selector, method or field throws, naming how to add it.
+- An unfaked member throws too. Supply it with `startPlugin({ native: { objc: { snapshot } } })`. Members you pass are laid over the fake: yours win, the rest stay.

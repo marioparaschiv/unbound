@@ -25,4 +25,4 @@ Builds every addon once into its `dist/` directory.
 
 - Plugins: https://docs.unbound.rip/plugins/introduction
 - Themes: https://docs.unbound.rip/themes/introduction
-- Manifest reference: https://docs.unbound.rip/addons/manifest
+- Manifest reference: https://unbound.rip/docs/developer/publishing/manifest

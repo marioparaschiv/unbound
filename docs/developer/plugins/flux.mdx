@@ -1,40 +1,41 @@
 ---
 title: 'Flux Stores'
-description: "Read Discord's state, and run code when something happens."
+description: "Read Discord's state and react to actions."
 icon: 'signal'
 ---
 
-A plugin has two ways into Discord's state. It reads a **Flux store** to get what Discord knows right now, and it listens for a **Flux action** to run code when something happens.
+Read a Flux store for Discord's current state. Listen for a Flux action to run code when something happens.
+
+## Quick Start
+
+```ts src/channel-log/index.ts
+import { flux } from '@unbound-app/api';
+
+export function startChannelLog() {
+	flux.onAction('CHANNEL_SELECT', ({ channelId }) => {
+		logger.log('Channel selected:', channelId);
+	});
+}
+```
 
 ## Reference
 
-Every function is on `flux`, from `@unbound-app/api`.
+Every function is on `flux`, from `@unbound-app/api`. The scope removes every listener and interceptor when the plugin stops.
 
 | Function | Does |
 | --- | --- |
-| `flux.getStore(name, options?)` | Returns the typed store named `name`, such as `'User'` for `UserStore`. Lazy by default. `options`: `lazy`, and `short: false` to match the full name |
-| `flux.useStore(stores, selector, options?)` | In a component, returns `selector(stores)`. Re-renders only when the result changes. `options`: `deps`, `isEqual` |
-| `flux.onAction(type, listener)` | Calls `listener` with each action of `type`, after Discord's stores handle it. Returns a function that removes it |
-| `flux.interceptAction(type, interceptor)` | Calls `interceptor` before Discord handles each action of `type`. It may change the action, or return `true` to drop it. Returns a function that removes it |
-| `flux.onStoreChange(store, listener)` | Calls `listener` after each change to `store`. Returns a function that removes it |
-| `flux.dispatch(action)` | Sends an action through Discord's dispatcher. Resolves once the stores handled it |
+| `flux.getStore(name, options?)` | Returns the typed store, such as `'User'` for `UserStore`. Lazy by default. Options: `lazy`, and `short: false` to match the full name |
+| `flux.useStore(stores, selector, options?)` | In a component, returns `selector(stores)`. Re-renders only when it changes. Options: `deps`, `isEqual` |
+| `flux.onAction(type, listener)` | Calls `listener` with each action of `type`, after stores handle it. Returns a remover |
+| `flux.interceptAction(type, interceptor)` | Calls `interceptor` before Discord handles the action. It may change it, or return `true` to drop it. Returns a remover |
+| `flux.onStoreChange(store, listener)` | Calls `listener` after each change to `store`. Returns a remover |
+| `flux.dispatch(action)` | Sends an action through Discord's dispatcher. Resolves once stores handled it |
 
-The typed stores are `User`, `Guild`, `GuildMember`, `Channel`, `SelectedChannel`, `Typing`, `Relationship`, `UserProfile` and `GuildSettings`. Any other name returns a base store with `getName`, `addChangeListener`, `removeChangeListener` and `emitChange`. The scope removes every listener and interceptor when the plugin stops.
+Typed stores: `User`, `Guild`, `GuildMember`, `Channel`, `SelectedChannel`, `Typing`, `Relationship`, `UserProfile`, `GuildSettings`. Any other name returns a base store with `getName`, `addChangeListener`, `removeChangeListener` and `emitChange`.
 
-## How Flux works
+## Reading a Store
 
-When something happens, such as a message arriving or the user switching channel, Discord **dispatches an action**. **Stores** listen for actions and update the state they hold.
-
-<Flow>
-	<FlowStep title='Something happens' detail='A message arrives' />
-	<FlowStep title='Action' detail='MESSAGE_CREATE' />
-	<FlowStep title='Stores update' detail='MessageStore' />
-	<FlowStep title='Screens re-render' />
-</Flow>
-
-## Reading a store
-
-A store is a single object with getters for its state. `flux.getStore` is lazy, so you can declare the store at the top of a file. It is also typed. Prefer it to `metro.stores`, which holds the same stores without their types. See [Pick the lookup that costs least](/docs/developer/plugins/metro#pick-the-lookup-that-costs-least).
+`flux.getStore` is lazy and typed, so declare it at the top of a file. Prefer it to `metro.stores`, which has no types.
 
 ```ts
 import { flux } from '@unbound-app/api';
@@ -46,7 +47,9 @@ export function currentUsername() {
 }
 ```
 
-In a component, read the store with `flux.useStore` instead. Pass the store and a selector. The selector gets the store, and the component re-renders only when the value it returns changes.
+## In a Component
+
+Use `flux.useStore` with the store and a selector. The component re-renders only when the selector's result changes.
 
 ```tsx
 import { Discord } from '@unbound-app/api/metro/components';
@@ -61,7 +64,7 @@ function Username() {
 }
 ```
 
-To read several stores, pass them as an array. The selector gets the same array. If the selector uses a prop, pass it in `deps`, so the value is read again when it changes.
+For several stores, pass an array; the selector gets the same array. Put props the selector uses in `deps`.
 
 ```ts
 import { flux } from '@unbound-app/api';
@@ -79,7 +82,7 @@ export function useChannelLabel(channelId: string) {
 }
 ```
 
-A selector that returns a new object or array re-renders the component on every store change, because the new value is never `===` the old one. Wrap it in `utils.react.useShallow`. The component then re-renders only when a top-level field changes.
+A selector returning a new object or array re-renders on every change. Wrap it in `utils.react.useShallow` to compare top-level fields.
 
 ```ts
 import { flux, utils } from '@unbound-app/api';
@@ -97,33 +100,26 @@ export function useIdentity() {
 }
 ```
 
-For any other comparison, pass `isEqual`. It gets the old and new values, and returns `true` to skip the re-render. `utils.react.shallow` is the comparison `useShallow` uses. See [flux](/docs/sdk/latest/flux) in the SDK reference.
+For another comparison, pass `isEqual(old, new)`, returning `true` to skip the re-render. `utils.react.shallow` is the one `useShallow` uses. See [flux](/docs/sdk/latest/flux) in the SDK reference.
 
-## Listening for an action
-
-Pass the action's type and a callback. The callback gets the action's payload each time Discord dispatches it.
-
-```ts src/channel-log/index.ts
-import { flux } from '@unbound-app/api';
-
-export function startChannelLog() {
-	flux.onAction('CHANNEL_SELECT', ({ channelId }) => {
-		logger.log('Channel selected:', channelId);
-	});
-}
-```
-
-Unbound removes the listener when your plugin stops. To remove it sooner, call the function `onAction` returns.
-
-## Common actions
-
-Discord dispatches hundreds of action types. These are the ones you'll use most:
+## Common Actions
 
 | Action | Dispatched when |
 | --- | --- |
 | `MESSAGE_CREATE`, `MESSAGE_UPDATE`, `MESSAGE_DELETE` | A message is sent, edited or deleted |
 | `CHANNEL_SELECT`, `GUILD_SELECT` | The user switches channel or server |
 | `TYPING_START`, `TYPING_STOP` | Someone starts or stops typing |
-| `CONNECTION_OPEN` | The client connects and the stores fill. Use it for setup that needs live state |
+| `CONNECTION_OPEN` | The client connects and stores fill. Use it for setup needing live state |
 
-All of these except `GUILD_SELECT` have typed payloads. To type another action, see [Typing your own stores and actions](/docs/sdk/latest/flux).
+All but `GUILD_SELECT` have typed payloads. To type others, see [flux](/docs/sdk/latest/flux) in the SDK reference.
+
+## Next
+
+<CardGroup cols={2}>
+	<Card title='Finding Modules' icon='magnifier' href='/docs/developer/plugins/metro'>
+		Look up stores and modules.
+	</Card>
+	<Card title='Patching Components' icon='atom' href='/docs/developer/plugins/react-patching'>
+		Change what Discord renders.
+	</Card>
+</CardGroup>

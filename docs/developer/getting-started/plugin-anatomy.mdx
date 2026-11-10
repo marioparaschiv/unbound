@@ -1,59 +1,57 @@
 ---
-title: 'Anatomy of a Plugin'
-description: 'Every file and folder of a plugin, shown in the real code of Character Counter, and why each one is there.'
+title: 'Plugin Anatomy'
+description: 'Every file of a plugin, in a real example.'
 icon: 'folder-tree'
 ---
 
-This page walks through `packages/plugins/character-counter`, the reference plugin. Character Counter shows `120/2000` above the composer while you type, and it uses every part of the plugin setup once: a feature folder, settings, translations, tests and a store page. Every code block marked with its path is copied from that plugin, and a test fails when a copy drifts from the file.
+Every file of `packages/plugins/character-counter`, the reference plugin. It shows `120/2000` above the composer while you type. Code blocks marked with a path are copied from it, and a test fails when a copy drifts.
 
-Read [How Plugins Run](/docs/developer/plugins/introduction) first for the lifecycle. The [Project Layout](/docs/developer/addons/standards) page lists the rules that this layout follows and the checks behind them.
-
-## The whole plugin
+## Files
 
 <FileTree>
 	<Folder name='character-counter'>
-		<File name='manifest.json' note='Who the plugin is: its id, name, authors and version' />
-		<File name='package.json' note='Dependencies and the build and test scripts' />
-		<File name='rollup.config.mjs' note='One line that hands the build to ubd' />
-		<File name='tsconfig.json' note='Maps ~/ to src/ and loads the API types' />
-		<File name='bunfig.toml' note='Loads the testing preset for bun test' />
-		<File name='settings.ts' note='The settings, from which the build draws the settings panel' />
+		<File name='manifest.json' note='Id, name, authors, version' />
+		<File name='package.json' note='Dependencies and scripts' />
+		<File name='rollup.config.mjs' note='Hands the build to ubd' />
+		<File name='tsconfig.json' note='Maps ~/ to src/, loads API types' />
+		<File name='bunfig.toml' note='Loads the testing preset' />
+		<File name='settings.ts' note='Settings; the build draws the panel' />
 		<Folder name='i18n'>
-			<File name='en-US.json' note='Every string the plugin shows. Required, and the fallback for other languages' />
+			<File name='en-US.json' note='Every string. Required; the fallback language' />
 		</Folder>
 		<Folder name='src'>
-			<File name='index.tsx' note='The entry: starts each feature and nothing else' />
-			<File name='constants.ts' note='Constants that more than one file reads' />
-			<File name='unbound-settings.d.ts' note='Generated from settings.ts. Commit it' />
-			<File name='unbound-i18n.d.ts' note='Generated from en-US.json. Commit it' />
-			<Folder name='counter' note='The one feature of this plugin'>
+			<File name='index.tsx' note='The entry: starts each feature' />
+			<File name='constants.ts' note='Constants shared across files' />
+			<File name='unbound-settings.d.ts' note='Generated. Commit it' />
+			<File name='unbound-i18n.d.ts' note='Generated. Commit it' />
+			<Folder name='counter' note='The one feature'>
 				<File name='index.tsx' note='Starts the feature: the patch' />
-				<File name='modules.ts' note='Every lookup of a Discord module and store' />
-				<File name='limit.ts' note='Pure logic: the limit and the tone' />
+				<File name='modules.ts' note='Every module and store lookup' />
+				<File name='limit.ts' note='Pure logic: limit and tone' />
 				<File name='colors.ts' note='Pure logic: theme colors' />
-				<File name='use-draft-length.ts' note='A hook that reads the draft' />
+				<File name='use-draft-length.ts' note='Hook that reads the draft' />
 				<Folder name='components'>
-					<File name='character-counter.tsx' note='The pill that is drawn' />
+					<File name='character-counter.tsx' note='The pill' />
 				</Folder>
 			</Folder>
 		</Folder>
 		<Folder name='tests'>
-			<File name='limit.test.ts' note='Pure logic, tested directly' />
-			<File name='colors.test.ts' note='Pure logic, tested directly' />
+			<File name='limit.test.ts' note='Pure logic' />
+			<File name='colors.test.ts' note='Pure logic' />
 			<File name='character-counter.test.tsx' note='The started plugin, rendered' />
 		</Folder>
 		<File name='ADDON.md' note='The store page' />
-		<File name='CHANGELOG.md' note='What changed in each version' />
+		<File name='CHANGELOG.md' note='Changes per version' />
 	</Folder>
 </FileTree>
 
-A plugin that ships images adds `assets/`, and a store page with a banner adds `media/`. Both are covered below. `dist/` and `node_modules/` are build output and installs, and Git ignores them.
+A plugin with images adds `assets/`; a store page with a banner adds `media/`. Git ignores `dist/` and `node_modules/`. [Project Rules](/docs/developer/getting-started/project-rules) lists the layout rules.
 
-## The files at the root
+## Root Files
 
 ### manifest.json
 
-The [manifest](/docs/developer/addons/manifest) is the source of truth for the plugin's identity. `main` names the entry file inside `src/`, and `icon` names one of Discord's own icons.
+`main` names the entry inside `src/`. `icon` names one of Discord's icons. See [The Manifest](/docs/developer/publishing/manifest).
 
 ```json manifest.json quoted
 {
@@ -80,11 +78,11 @@ The [manifest](/docs/developer/addons/manifest) is the source of truth for the p
 }
 ```
 
-The manifest has no `platforms` or Capabilities. `ubd build` finds them by reading the native calls the plugin can reach, and it fails the build when you write them by hand.
+Never write `platforms` or Capabilities. `ubd build` derives them and fails if you add them by hand.
 
-### rollup.config.mjs and package.json
+### Build Config
 
-The build is one call. `unbound` reads the manifest, bundles `src/`, generates the settings and i18n modules, and runs the build checks.
+`unbound` reads the manifest, bundles `src/`, generates the settings and i18n modules, and runs the build checks.
 
 ```js rollup.config.mjs quoted
 import { unbound } from '@unbound-app/cli/rollup';
@@ -92,28 +90,11 @@ import { unbound } from '@unbound-app/cli/rollup';
 export default unbound(import.meta.url);
 ```
 
-`package.json` sets `"type": "module"` and two scripts, `build` and `test`. Its `devDependencies` carry the types: `@unbound-app/api` for the API, `@types/react` and `react-native` for the components, and `@unbound-app/cli` for the build. Its `dependencies` hold `@unbound-plugins/shared`, the helpers first-party plugins share. A third-party plugin has no such dependency and writes those few helpers itself.
-
-### tsconfig.json
-
-```json tsconfig.json quoted
-{
-	"extends": "../tsconfig.json",
-	"compilerOptions": {
-		"types": ["bun", "@unbound-app/api/global"],
-		"paths": {
-			"~/*": ["./src/*"]
-		}
-	},
-	"include": ["src", "tests", "settings.ts"]
-}
-```
-
-`@unbound-app/api/global` declares the globals of the [Addon scope](/docs/developer/plugins/introduction#the-addon-scope), such as `logger` and `addon`. The `~/*` path is why every import across folders reads `~/counter/limit` and not `../../limit`. The build resolves the same alias.
-
-### bunfig.toml
-
-One line turns on the testing preset, which stands in for Unbound, Discord and the build while `bun test` runs.
+| File | Holds |
+| --- | --- |
+| `package.json` | `"type": "module"`, `build` and `test` scripts. `devDependencies`: `@unbound-app/api`, `@types/react`, `react-native`, `@unbound-app/cli`. First-party plugins also depend on `@unbound-plugins/shared`; third-party plugins write those helpers themselves |
+| `tsconfig.json` | `types: ["bun", "@unbound-app/api/global"]` for the scope globals such as `logger` and `addon`. Maps `~/*` to `./src/*`, which the build also resolves. Extends the workspace `../tsconfig.json` and includes `src`, `tests` and `settings.ts` |
+| `bunfig.toml` | Preloads the testing preset, which stands in for Unbound, Discord and the build. See [Writing Tests](/docs/developer/testing/writing-tests) |
 
 ```toml bunfig.toml quoted
 [test]
@@ -121,11 +102,9 @@ One line turns on the testing preset, which stands in for Unbound, Discord and t
 preload = ["@unbound-app/api/testing/preset"]
 ```
 
-See [Testing](/docs/developer/plugins/testing) for what the preset serves.
+## The Entry
 
-## The entry
-
-`src/index.tsx` starts the plugin's features and holds no logic of its own. A plugin with several features calls each feature's start function here.
+`src/index.tsx` starts features and holds no logic.
 
 ```tsx src/index.tsx quoted
 import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
@@ -139,26 +118,26 @@ export function start() {
 export { featureSelfTest as selfTest };
 ```
 
-There is no `stop`. The patch that `startCounter` makes goes through the plugin's own `patcher`, so the Addon scope removes it after the plugin stops, and nothing else needs undoing. Add a `stop` only for what the scope cannot see, as [How Plugins Run](/docs/developer/plugins/introduction#what-stop-still-has-to-undo) lists.
+No `stop`: the Addon scope removes the patch. See [Lifecycle](/docs/developer/getting-started/lifecycle#what-stop-must-undo) for what still needs one.
 
-`selfTest` is the optional fourth lifecycle export. The device matrix calls it after a restart, and it returns `{ ok, detail }`. A plugin whose `start` skipped every feature, because a module was not found, still passes `start`. The self-test is what fails it. `featureSelfTest` reports `ok` once at least one feature has called `recordApplied`, and says why when a feature recorded a skip or a failure. Both come from `@unbound-plugins/shared`.
+`selfTest` runs after a restart in the device matrix and returns `{ ok, detail }`. A plugin whose features all skipped still passes `start`; the self-test fails it. `featureSelfTest` reports `ok` once a feature called `recordApplied`, and says why when one skipped or failed.
 
-A plugin with more than one feature starts them with `startFeatures` or `applyFeatures`, which are also in `@unbound-plugins/shared/lifecycle`:
+Several features start through helpers in `@unbound-plugins/shared/lifecycle`:
 
-| Helper | When a feature throws | Use it when |
+| Helper | When a feature throws | Use when |
 | --- | --- | --- |
-| `startFeatures(name, features)` | Logs it and records a failure. The other features still start | The features are independent, which is the usual case |
-| `applyFeatures(name, features)` | Removes the features already applied, then rethrows | The features need each other, so half of them is worse than none |
+| `startFeatures(name, features)` | Logs and records a failure. Others still start | Features are independent (usual) |
+| `applyFeatures(name, features)` | Removes features already applied, then rethrows | Features need each other |
 
-Each takes functions that start one feature and may return a cleanup. Both return one function that runs every cleanup in reverse. Return it from `stop`.
+Each takes start functions that may return a cleanup. Both return one function that runs every cleanup in reverse. Return it from `stop`.
 
-## A feature folder
+## A Feature
 
-A [feature](/docs/developer/addons/standards#the-layout) is one thing the plugin does. It lives in its own folder under `src/`, and it starts itself, so the entry never needs to know how. Character Counter has one, `src/counter/`.
+Each feature lives in its own folder under `src/` and starts itself. Character Counter has one, `src/counter/`.
 
-### index.tsx: start the feature
+### index.tsx
 
-The feature's `index.tsx` makes its patch. The JSDoc names what it patches and what it reads, so the next developer can find the Discord code it depends on.
+Makes the patch. The JSDoc names what it patches and reads.
 
 ```tsx src/counter/index.tsx quoted
 import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
@@ -200,17 +179,16 @@ export function startCounter(): void {
 }
 ```
 
-Three habits of this file recur in every plugin:
+| Habit | Why |
+| --- | --- |
+| `ensureModules` | Logs one line and returns `false` if a module is missing, so only this feature skips. Never loads a lazy handle |
+| Patch `'default'` on the module | Reading the component itself would load the module at start |
+| `recordApplied(1)` | Tells the self-test this feature applied |
+| Add a child, keep `children` | Other plugins may patch the same component |
 
-- `ensureModules` checks that the modules the feature needs exist, and logs one line and returns `false` when one does not. The feature then does nothing, and the rest of the plugin keeps working. `ensureModules` never loads a lazy handle.
-- `patcher.react.after` takes the module and the key `'default'`, not the component itself. Reading the component would load the module at start. With the key, the patch waits for the module.
-- `recordApplied(1)` tells the self-test that this feature applied.
+### modules.ts
 
-The patch adds a child and leaves Discord's tree otherwise as it was. Other plugins can patch the same component, so it never replaces `children`.
-
-### modules.ts: every lookup in one place
-
-Every handle to something outside the plugin goes in the feature's `modules.ts`. When Discord renames a module, the fix is one line in one file.
+Every handle to something outside the plugin. When Discord renames a module, the fix is one line here.
 
 ```ts src/counter/modules.ts quoted
 import { flux, metro } from '@unbound-app/api';
@@ -225,11 +203,11 @@ export const ChannelStore = flux.getStore('Channel');
 export const UserStore = flux.getStore('User');
 ```
 
-All of these lookups are lazy. Each one returns a stand-in at once and searches the first time something reads from it, so the top level of this file costs nothing at launch. `flux.getStore` is typed, so `UserStore.getCurrentUser()` has a type. A lookup that Unbound already did needs no search of its own: prefer `metro.api`, `metro.common` and `metro.stores` where they hold what you need, as [Finding Modules](/docs/developer/plugins/metro#modules-unbound-already-found) lists. `components/character-counter.tsx` reads `metro.common.Theme` for that reason.
+All lazy, so this file costs nothing at launch. `flux.getStore` is typed. Prefer `metro.api`, `metro.common` and `metro.stores` when they hold what you need; the component reads `metro.common.Theme`. See [Finding Modules](/docs/developer/plugins/metro#modules-unbound-already-found).
 
-### limit.ts: logic with no Discord in it
+### limit.ts
 
-Logic that decides something goes in a plain file with no API imports. It is the part of the plugin that tests reach most easily.
+Decision logic goes in plain files with no API imports, so tests reach it directly. `colors.ts` does the same for theme colors.
 
 ```ts src/counter/limit.ts quoted
 import type { FluxUser } from '@unbound-app/api/flux';
@@ -265,11 +243,9 @@ export function counterTone(length: number, limit: number, colorEffects: boolean
 }
 ```
 
-`colors.ts` holds the same kind of logic for theme colors, and `use-draft-length.ts` is the hook that reads the draft.
+### components
 
-### components: what is drawn
-
-The pill is a React component in `components/`. It reads three things: the draft through `useDraftLength`, the Nitro tier through `flux.useStore`, and the user's setting through `useSetting`.
+The pill reads the draft, the Nitro tier and the user's setting:
 
 ```tsx src/counter/components/character-counter.tsx excerpt
 	const length = useDraftLength(channelId);
@@ -277,18 +253,9 @@ The pill is a React component in `components/`. It reads three things: the draft
 	const colorEffects = useSetting('colorEffects');
 ```
 
-The accessibility label is the plugin's one translated string that has a placeholder:
+`format('COUNTER_LABEL', { length, limit })` gives its accessibility label. The build redraws it when the language changes.
 
-```tsx src/counter/components/character-counter.tsx excerpt
-				<Text
-					accessibilityLabel={format('COUNTER_LABEL', { length, limit })}
-```
-
-The build adds the hook that redraws the component when the user changes language, so `format` needs nothing else.
-
-### constants.ts
-
-A constant that more than one file reads goes in `src/constants.ts`. A value one file uses stays in that file.
+A constant read by more than one file goes in `src/constants.ts`. A value one file uses stays there. Character Counter's colors try Discord's theme tokens in order, then a fixed fallback:
 
 ```ts src/constants.ts quoted
 // Each tone tries Discord's theme tokens in order, then a fixed color when the theme has none.
@@ -305,7 +272,7 @@ export const COUNTER_HEIGHT = 20;
 
 ## Settings
 
-`settings.ts` sits beside `src/`, not in it. The build reads it, and it never ships in the bundle. One setting here becomes a switch in the settings panel, with no panel code.
+`settings.ts` sits beside `src/` and never ships in the bundle. This one setting becomes a switch with no panel code.
 
 ```ts settings.ts quoted
 import { defineSettings, setting } from '@unbound-app/settings/schema';
@@ -322,11 +289,11 @@ export default defineSettings(
 );
 ```
 
-`title` and `subtitle` are keys of `i18n/en-US.json`, not text. The build writes `src/unbound-settings.d.ts` from this file, which is why `useSetting('colorEffects')` above returns a `boolean`. See [Settings and Storage](/docs/developer/plugins/settings) for the builders.
+`title` and `subtitle` are message keys. The generated `src/unbound-settings.d.ts` is why `useSetting('colorEffects')` returns a `boolean`. See [Settings and Storage](/docs/developer/plugins/settings).
 
 ## Translations
 
-`i18n/en-US.json` holds every string the plugin shows. Other languages are more files beside it, and each may leave keys out.
+`i18n/en-US.json` holds every string. Other languages sit beside it and may leave keys out.
 
 ```json i18n/en-US.json quoted
 {
@@ -337,42 +304,16 @@ export default defineSettings(
 }
 ```
 
-The build writes `src/unbound-i18n.d.ts` from it, so a key that is not here is a type error in `format`, in a setting's `title` and in every toast. Commit both generated files, so your editor knows the keys before the first build. See [Translations](/docs/developer/plugins/i18n).
+The generated `src/unbound-i18n.d.ts` makes a missing key a type error in `format`, setting titles and toasts. Commit both generated files so your editor knows the keys before the first build. See [Translations](/docs/developer/plugins/i18n).
 
 ## Tests
 
-The tests sit in `tests/`, named after what they cover. Two kinds appear here.
+Tests sit in `tests/`, named after what they cover.
 
-Logic with no Discord in it is tested directly. This needs the preset only for the `~/` alias.
-
-```ts tests/limit.test.ts quoted
-import { describe, expect, test } from 'bun:test';
-
-import { characterLimit, counterTone } from '~/counter/limit';
-
-describe('characterLimit', () => {
-	test('uses Discord message limits for standard and Nitro accounts', () => {
-		expect(characterLimit({ premiumType: 0 })).toBe(2000);
-		expect(characterLimit(undefined)).toBe(2000);
-		expect(characterLimit({ premiumType: 2 })).toBe(4000);
-	});
-});
-
-describe('counterTone', () => {
-	test('moves through warning colors as the limit approaches', () => {
-		expect(counterTone(999, 2000, true)).toBe('muted');
-		expect(counterTone(1000, 2000, true)).toBe('yellow');
-		expect(counterTone(1500, 2000, true)).toBe('orange');
-		expect(counterTone(1800, 2000, true)).toBe('red');
-	});
-
-	test('stays on the primary color when warnings are off', () => {
-		expect(counterTone(1950, 2000, false)).toBe('primary');
-	});
-});
-```
-
-The started plugin is tested through the preset. `character-counter.test.tsx` registers the Discord modules the plugin looks up, calls `startPlugin()`, renders the patched container, and reads the pill. It checks what a user sees: the text, the limit with Nitro, and the color at 90%.
+| Kind | How |
+| --- | --- |
+| Pure logic (`limit.test.ts`, `colors.test.ts`) | Import and call it. The preset is needed only for `~/` |
+| Started plugin (`character-counter.test.tsx`) | Register the modules it looks up in `beforeEach`, call `startPlugin()`, render the patched container, read the pill |
 
 ```tsx tests/character-counter.test.tsx excerpt
 	test('shows the length over the limit while a message is written', () => {
@@ -385,15 +326,15 @@ The started plugin is tested through the preset. `character-counter.test.tsx` re
 	});
 ```
 
-The preset forgets every registered module before each test, so the file registers them again in `beforeEach`. [Testing](/docs/developer/plugins/testing) covers the preset and the fakes.
+The preset forgets registered modules before each test. See [Writing Tests](/docs/developer/testing/writing-tests).
 
 ## Images
 
-A plugin that ships images keeps them in an `assets/` folder beside `src/`. Importing one gives its asset id, and the build copies the file into `dist/`. Character Counter has none, because it draws only text. See [Images](/docs/developer/plugins/assets).
+Images go in `assets/` beside `src/`. Importing one gives its asset id, and the build copies it into `dist/`. See [Images](/docs/developer/plugins/assets).
 
-## The store page
+## Store Page
 
-`ADDON.md` is what the store shows for the plugin. It has no title, because the store takes the title and summary from the manifest.
+`ADDON.md` has no title; the store takes the title and summary from the manifest.
 
 ```md ADDON.md quoted
 ---
@@ -412,23 +353,23 @@ banner: media/banner.png
 - :color-palette: **Color thresholds** turns the counter yellow at 50% of the limit, orange at 75% and red at 90%. Off, it stays in Discord's brand color. On by default.
 ```
 
-The frontmatter names the banner, `media/banner.png`, and can add a gallery. All of it lives in a `media/` folder beside `ADDON.md`. A page with no frontmatter builds with a warning, and the store shows no banner. First-party banners come from `bun run plugins:banners`, which draws one from the manifest's name, description and icon and leaves a hand-made banner alone. [Store Page](/docs/developer/addons/store-page) lists the rules for the banner, the gallery and the `:name:` icons.
+- The frontmatter names the banner and an optional gallery, both in `media/`.
+- No frontmatter builds with a warning, and the store shows no banner.
+- `bun run plugins:banners` draws first-party banners from the manifest and leaves hand-made ones alone.
+- `CHANGELOG.md` lists changes newest first. Its version matches `manifest.json`.
 
-`CHANGELOG.md` lists what changed in each version, newest first, and the version in it matches `manifest.json`.
+See [Store Page](/docs/developer/publishing/store-page).
 
-## Where to go next
+## Next
 
 <CardGroup cols={2}>
 	<Card title='Finding Modules' icon='magnifier' href='/docs/developer/plugins/metro'>
-		Write the lookups that `modules.ts` holds.
+		Write the lookups in `modules.ts`.
 	</Card>
-	<Card title='Patching Functions' icon='layers' href='/docs/developer/plugins/patching'>
-		Change what Discord's functions do, as `startCounter` does.
+	<Card title='Patching Components' icon='layers' href='/docs/developer/plugins/react-patching'>
+		Change what Discord draws.
 	</Card>
-	<Card title='Settings and Storage' icon='toggle' href='/docs/developer/plugins/settings'>
-		Declare settings and get a panel.
-	</Card>
-	<Card title='Testing' icon='circle-check' href='/docs/developer/plugins/testing'>
-		Test the plugin without a phone.
+	<Card title='Writing Tests' icon='circle-check' href='/docs/developer/testing/writing-tests'>
+		Test without a phone.
 	</Card>
 </CardGroup>

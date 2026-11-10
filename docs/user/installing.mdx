@@ -1,126 +1,123 @@
 ---
-title: 'Installing Unbound'
-description: 'Answer a few questions about your device, and get the steps for it.'
+title: 'Installation'
+description: 'Get the install steps for your device.'
 icon: 'download'
 ---
 
-Unbound runs inside the Discord app, so you install a version of Discord with Unbound built in.
+Unbound comes built into a copy of Discord. Answer a few questions to get the steps for your device.
 
 <InstallQuiz>
 	<InstallResult id='ios-source' title='Install from your sideloading tool'>
 		<Steps>
-			<Step title='Open your sideloading tool'>
-				Open SideStore, Feather, AltStore, or the tool you use.
-			</Step>
 			<Step title='Add the Unbound source'>
-				Add this source URL:
+				In SideStore, Feather, AltStore or your own tool, add:
 
 				```text
 				https://repo.unbound.rip/app-repo.json
 				```
 			</Step>
 			<Step title='Install Unbound'>
-				Find **Unbound** in the source and install it. The source also lists **Unbound (TestFlight)**, built on Discord's TestFlight beta. Pick plain **Unbound** unless you want the beta.
+				Pick **Unbound**. **Unbound (TestFlight)** is built on Discord's TestFlight beta.
 			</Step>
 			<Step title='Open the app'>
-				Open the new app and log in to Discord.
+				Log in to Discord.
 			</Step>
 		</Steps>
 
 		<Note>
-			If your tool offers to remove app extensions, keep them. Without them, Discord links from Safari don't open in the app, and sharing to Discord stops working. See [iOS Extensions](/docs/user/ios-extensions).
+			Keep the app extensions if your tool offers to remove them. See [iOS Extensions](/docs/user/ios-extensions).
 		</Note>
 	</InstallResult>
 
 	<InstallResult id='ios-ipa' title='Install the app file'>
 		<Steps>
 			<Step title='Download the app file'>
-				Download [Unbound.ipa](https://github.com/marioparaschiv/unbound/releases/download/loader-latest/Unbound.ipa) from Unbound's GitHub releases.
+				Get [Unbound.ipa](https://github.com/marioparaschiv/unbound/releases/download/loader-latest/Unbound.ipa) from GitHub.
 			</Step>
-			<Step title='Install it with your sideloading tool'>
-				Open the file in your sideloading tool and install it.
+			<Step title='Install it'>
+				Open the file in your sideloading tool.
 			</Step>
 			<Step title='Open the app'>
-				Open the new app and log in to Discord.
+				Log in to Discord.
 			</Step>
 		</Steps>
 
 		<Note>
-			If your tool offers to remove app extensions, keep them. Without them, Discord links from Safari don't open in the app, and sharing to Discord stops working. See [iOS Extensions](/docs/user/ios-extensions).
+			Keep the app extensions if your tool offers to remove them. See [iOS Extensions](/docs/user/ios-extensions).
 		</Note>
 
 		<Warning>
-			Install the ready-made **Unbound.ipa**. Don't inject Unbound into a Discord app yourself. Unbound is built for the ElleKit tweak runtime, and other runtimes are likely to break features. Without ElleKit, the app shows a **Runtime Detection** alert.
+			Don't inject Unbound into Discord yourself. It needs the ElleKit runtime, and without it the app shows a **Runtime Detection** alert.
 		</Warning>
 	</InstallResult>
 
 	<InstallResult id='ios-no-tool' title='Get a sideloading tool first'>
-		Apple only lets you install apps from the App Store. A sideloading tool installs apps from other places, such as Unbound. Set up one of these by following its own guide:
+		iOS needs a sideloading tool to install apps from outside the App Store. Set one up with its own guide:
 
 		- [SideStore](https://sidestore.io)
 		- [Feather](https://github.com/khcrysalis/Feather)
 		- [AltStore](https://altstore.io)
 
-		Then come back, tap **Back**, and pick the tool you installed.
+		Then tap **Back** and pick the tool you installed.
 	</InstallResult>
 
 	<InstallResult id='ios-jailbroken' title='Install from the Unbound repo'>
 		<Steps>
-			<Step title='Remove other Discord mods'>
-				Unbound can't be installed alongside Enmity, Vendetta or Pyoncord. Remove them first if you have them.
+			<Step title='Remove other mods'>
+				Unbound can't run alongside Enmity, Vendetta or Pyoncord.
 			</Step>
-			<Step title='Add the Unbound repo'>
-				Open your package manager, such as Sileo, and add this repo:
+			<Step title='Add the repo'>
+				In Sileo or your package manager, add:
 
 				```text
 				https://repo.unbound.rip
 				```
 			</Step>
 			<Step title='Install Unbound'>
-				Search for **Unbound** and install it. Your package manager also installs ElleKit if you don't have it yet.
+				ElleKit installs with it if you don't have it.
 			</Step>
 			<Step title='Restart Discord'>
-				Close Discord if it was running, then open it again.
+				Close Discord, then open it again.
 			</Step>
 		</Steps>
 
-		To install without the repo, download the package from the [latest loader release](https://github.com/marioparaschiv/unbound/releases/tag/loader-latest), named like `app.unbound.ios_<version>_iphoneos-arm64.deb`, and open it in your package manager.
+		Without the repo, open `app.unbound.ios_<version>_iphoneos-arm64.deb` from the [latest loader release](https://github.com/marioparaschiv/unbound/releases/tag/loader-latest) in your package manager.
 
-		If Discord shows **This version of Discord is incompatible with this version of Unbound.**, your Discord app is too old or too new for this Unbound version, and Unbound won't load.
+		**This version of Discord is incompatible with this version of Unbound.** means your Discord is too old or too new, and Unbound won't load.
 	</InstallResult>
 
 	<InstallResult id='android-patched' title='Install Discord with Unbound built in'>
-		You need Android 9 or newer. [Obtainium](https://obtainium.imranr.dev) installs Unbound and tells you when an update is out.
+		Needs Android 9 or newer. [Obtainium](https://obtainium.imranr.dev) installs Unbound and tells you about updates.
 
 		<Steps>
 			<Step title='Install Obtainium'>
-				Install [Obtainium](https://obtainium.imranr.dev) on your device.
+				Get it from [obtainium.imranr.dev](https://obtainium.imranr.dev).
 			</Step>
 			<Step title='Uninstall Discord'>
-				This Discord is signed differently from the Play Store one, so Android won't install it over the top. You'll log in again afterwards.
+				Unbound's Discord is signed differently, so it can't install over the Play Store one. You'll log in again.
 			</Step>
-			<Step title='Add Unbound to Obtainium'>
-				On your device, tap [Add Unbound to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EUnbound%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5EUnbound%20.%2B%20for%20Discord%20%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B%2C%20Android%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%7D%22%7D). Obtainium opens with the source filled in. Tap **Add**.
+			<Step title='Add Unbound'>
+				On your device, tap [Add Unbound to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EUnbound%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5EUnbound%20.%2B%20for%20Discord%20%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B%2C%20Android%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%7D%22%7D), then **Add**.
 			</Step>
 			<Step title='Install Unbound'>
-				Tap **Install** in Obtainium. It downloads every part of the app and installs it.
+				Tap **Install** in Obtainium.
 			</Step>
 			<Step title='Open the app'>
-				Open Discord and log in.
+				Log in to Discord.
 			</Step>
 		</Steps>
 
 		<AccordionGroup>
-			<Accordion title="Use Discord's beta or alpha instead" icon='code-branch'>
-				Unbound is also built on Discord's Google Play beta and alpha, a few hours after Discord releases them. Alpha builds change the most, and parts of Unbound may break on them before a fix lands. In step 3, tap the link for your channel instead:
+			<Accordion title='Beta or Alpha' icon='code-branch'>
+				Unbound is also built on Discord's Google Play beta and alpha, a few hours after each release. Alpha breaks most often. In step 3, tap your channel's link instead:
 
 				- [Add Unbound (Discord beta) to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20%28Discord%20beta%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EUnbound-beta%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5EUnbound%20.%2B%20for%20Discord%20%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B%2C%20Android%20beta%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22includePrereleases%5C%22%3Atrue%7D%22%7D)
 				- [Add Unbound (Discord alpha) to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20%28Discord%20alpha%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EUnbound-alpha%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5EUnbound%20.%2B%20for%20Discord%20%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B%2C%20Android%20alpha%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22includePrereleases%5C%22%3Atrue%7D%22%7D)
 
-				To switch channels later, remove Unbound from Obtainium without uninstalling it, then add the new channel's source. Moving to a newer channel, such as stable to beta, updates in place. Moving back can fail because the installed Discord is newer, so uninstall Discord first.
+				To switch channels, remove Unbound from Obtainium without uninstalling it, then add the new source. Stable to beta updates in place. Going back fails because the installed Discord is newer, so uninstall Discord first.
 			</Accordion>
-			<Accordion title="The links don't open Obtainium" icon='link-slash'>
-				Add the source by hand. In Obtainium, tap **Add App**, enter `https://github.com/marioparaschiv/unbound` as the source URL, and set these options:
+			<Accordion title='Links Not Opening' icon='link-slash'>
+				In Obtainium, tap **Add App**, enter `https://github.com/marioparaschiv/unbound`, and set:
 
 				| Option | Stable | Beta | Alpha |
 				| --- | --- | --- | --- |
@@ -130,52 +127,55 @@ Unbound runs inside the Discord app, so you install a version of Discord with Un
 				| Filter APKs by regular expression | `^Unbound\.apks$` | `^Unbound-beta\.apks$` | `^Unbound-alpha\.apks$` |
 				| Sort method | Release date | Release date | Release date |
 			</Accordion>
-			<Accordion title='Install without Obtainium' icon='download'>
-				Download `Unbound.apks` for your channel from the [GitHub releases](https://github.com/marioparaschiv/unbound/releases), and install it with a split-APK installer such as SAI. You'll need to check for updates yourself.
+			<Accordion title='Without Obtainium' icon='download'>
+				Install your channel's `Unbound.apks` from [GitHub releases](https://github.com/marioparaschiv/unbound/releases) with a split-APK installer such as SAI. You check for updates yourself.
 			</Accordion>
 		</AccordionGroup>
 	</InstallResult>
 
 	<InstallResult id='android-rooted' title='Install the Xposed module'>
-		On a rooted device, Unbound is an Xposed module that loads into the Discord you already have. You need:
+		On a rooted device, Unbound loads into the Discord you have. You need:
 
 		- Android 9 or newer.
 		- An Xposed framework with libxposed API 101 or newer, such as Vector or LSPosed.
-		- Discord (`com.discord`) from Google Play. Any channel works.
+		- Discord (`com.discord`) from Google Play, any channel.
 
 		<Steps>
 			<Step title='Install the module'>
-				[Add the Unbound module to Obtainium](obtainium://app/%7B%22id%22%3A%22app.unbound.android%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20Loader%20%28Xposed%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5Eapp%5C%5C%5C%5C.unbound%5C%5C%5C%5C.android%5C%5C%5C%5C.xposed%5C%5C%5C%5C.apk%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5EUnbound%20.%2B%20for%20Discord%20.%2B%2C%20Android%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%7D%22%7D) and install it. Or download `app.unbound.android.xposed.apk` from the [latest release](https://github.com/marioparaschiv/unbound/releases/tag/loader-latest) and install it like any other app.
+				[Add the Unbound module to Obtainium](obtainium://app/%7B%22id%22%3A%22app.unbound.android%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20Loader%20%28Xposed%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5Eapp%5C%5C%5C%5C.unbound%5C%5C%5C%5C.android%5C%5C%5C%5C.xposed%5C%5C%5C%5C.apk%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5EUnbound%20.%2B%20for%20Discord%20.%2B%2C%20Android%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%7D%22%7D) and install it. Or install `app.unbound.android.xposed.apk` from the [latest release](https://github.com/marioparaschiv/unbound/releases/tag/loader-latest).
 			</Step>
-			<Step title='Turn the module on'>
-				Open your Xposed manager and enable the **Unbound** module.
+			<Step title='Enable it'>
+				Turn on **Unbound** in your Xposed manager.
 			</Step>
-			<Step title='Scope it to Discord'>
-				Make sure **Discord** (`com.discord`) is selected in the module's scope.
+			<Step title='Scope it'>
+				Select **Discord** (`com.discord`) in the module's scope.
 			</Step>
 			<Step title='Restart Discord'>
-				Force stop Discord from Android's app settings, then open it again.
+				Force stop Discord in Android's app settings, then open it.
 			</Step>
 		</Steps>
 	</InstallResult>
 </InstallQuiz>
 
-## After installing
+## First Launch
 
-Be online the first time you open Discord with Unbound. That's when it downloads Unbound's latest version. On later launches it checks for a newer version, and downloads it only when there is one.
+Be online the first time you open Discord. Unbound downloads its latest version then, and on later launches only when a newer one is out.
 
-### Check that Unbound is working
+Open Discord's settings. An **Unbound** section at the top means it worked.
 
-Open Discord's settings. A new **Unbound** section appears at the top of the list, with **General**, **Plugins**, **Design**, **Marketplace** and **Updates**. If it's missing, Unbound didn't load.
-
-If the download fails and no earlier copy is saved on your device, Discord shows an alert and opens without Unbound. On iOS the alert reads **Failed to load Unbound's bundle. Please report this to the developers.**
-
-### If you see a security warning
+If the first download fails, Discord opens without Unbound and shows an alert. On iOS it reads **Failed to load Unbound's bundle. Please report this to the developers.**
 
 <Warning>
-	Only install Unbound from the sources on this page. On iOS, if the app shows a **SECURITY WARNING** alert saying the injected tweak failed Unbound's integrity verification, you can't be sure your copy is free of malware. Uninstall it, and reinstall from one of the sources above.
+	Only install from the sources above. On iOS, a **SECURITY WARNING** alert about failed integrity verification means your copy may contain malware. Uninstall it and reinstall.
 </Warning>
 
-### Open the recovery menu
+## Next
 
-Shake your device for half a second to two seconds, or hold three fingers on the screen for half a second. This menu, the toolbox, works even when the rest of Unbound fails to load. See [Troubleshooting](/docs/user/troubleshooting) for what it can do.
+<CardGroup cols={2}>
+	<Card title='Finding Addons' icon='shop' href='/docs/user/marketplace'>
+		Install your first addon.
+	</Card>
+	<Card title='Troubleshooting' icon='life-ring' href='/docs/user/troubleshooting'>
+		Open the toolbox and fix a crash.
+	</Card>
+</CardGroup>

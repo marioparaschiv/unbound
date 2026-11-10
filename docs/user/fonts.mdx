@@ -1,54 +1,36 @@
 ---
 title: 'Fonts'
-description: 'Change the fonts Discord uses, with fonts from your device or your own font files.'
+description: 'Use device fonts or your own font files.'
 icon: 'text-a'
 ---
 
-Discord sorts its text into a few kinds, such as normal text and headings. In the **Fonts** tab, each kind has its own row, with the font it uses below it. That font says **Default** until you pick another.
+The **Fonts** tab has a row per kind of text, such as normal text and headings. Each row shows its font, or **Default**.
 
-You can pick a font that's already on your device, or a font file you've added yourself. Your own files are listed first.
-
-## Change a font
+## Changing a Font
 
 <Steps>
 	<Step title='Open Design, then Fonts'>
-		It's in the **Unbound** section of Discord's settings.
+		In the **Unbound** section of Discord's settings.
 	</Step>
 	<Step title='Tap a row, then a font'>
-		Type in the search field to narrow the list.
+		Your own files list first. Search to narrow the list.
 	</Step>
 	<Step title='Relaunch Discord'>
-		Close Discord from the app switcher, then open it again.
+		Close it from the app switcher, then open it.
 	</Step>
 </Steps>
 
 <Warning>
-	Fonts only change when Discord starts from scratch. The **Restart** button on the **Unbound** page doesn't apply them, so close the app fully.
+	Fonts apply only on a cold start. The **Restart** button on the **Unbound** page doesn't apply them.
 </Warning>
 
-To go back to Discord's font, tap the row, then **Reset** at the top of the list, and relaunch. If Discord can't find a font you picked, that row keeps Discord's font.
+To undo, tap the row, then **Reset**, and relaunch. A font Discord can't find falls back to Discord's.
 
-## Add your own font files
+## Adding Font Files
 
-You add font files by copying them into Unbound's **Fonts** folder.
+Copy the file straight into Unbound's **Fonts** folder, not a subfolder, then relaunch Discord. Every row then lists it. To remove one, delete it and relaunch.
 
-<Tabs>
-	<Tab title='iOS'>
-		<Steps>
-			<Step title='Open the Unbound folder'>
-				Open the [toolbox](/docs/user/troubleshooting#open-the-toolbox) and tap **Open App Folder** in **Utilities**.
-			</Step>
-			<Step title='Copy the file into Fonts'>
-				Put the file straight into **Fonts**, not in a folder of its own.
-			</Step>
-			<Step title='Relaunch Discord'>
-				The font now shows up in every row's list.
-			</Step>
-		</Steps>
-	</Tab>
-	<Tab title='Android'>
-		Unbound's folder is inside Discord's private data, so adding files needs root. Open the [toolbox](/docs/user/troubleshooting#open-the-toolbox) and tap **Copy App Folder Path** to get its location, copy the file into its **Fonts** folder with a root file manager, then relaunch Discord.
-	</Tab>
-</Tabs>
-
-To remove a font file, delete it from **Fonts** and relaunch Discord.
+| Platform | Reach the folder |
+| --- | --- |
+| iOS | [Toolbox](/docs/user/troubleshooting#toolbox), then **Open App Folder** in **Utilities** |
+| Android | Needs root. Toolbox, then **Copy App Folder Path**, then a root file manager |

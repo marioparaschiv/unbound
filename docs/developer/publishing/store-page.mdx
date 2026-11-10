@@ -1,12 +1,10 @@
 ---
 title: 'Store Page'
-description: 'ADDON.md: the page your addon shows in the store, with its banner and gallery.'
+description: 'ADDON.md: banner, gallery and description.'
 icon: 'shop'
 ---
 
-`ADDON.md` is your addon's **store page**. It sits next to `manifest.json` in the addon's directory, and the store shows it as the addon's page: a banner, a gallery of images and videos, and a Markdown body.
-
-The page is display only. The [manifest](/docs/developer/addons/manifest) stays the source of truth for everything Unbound reads: the name, the description, the authors, and the version. The store takes the page title and summary from the manifest, so `ADDON.md` never repeats them.
+`ADDON.md`, beside `manifest.json`, is your addon's store page: a banner, a gallery and a Markdown body. The store takes the title and summary from the [manifest](/docs/developer/publishing/manifest), so never repeat them here.
 
 <FileTree>
 	<Folder name='my-plugin'>
@@ -23,9 +21,7 @@ The page is display only. The [manifest](/docs/developer/addons/manifest) stays 
 	</Folder>
 </FileTree>
 
-## A complete page
-
-YAML frontmatter at the top names the banner and the gallery. Markdown below it is the page's body.
+## Example
 
 ```md ADDON.md
 ---
@@ -48,24 +44,22 @@ Hello World logs a greeting every time you send a message.
 ![Where the greeting shows up in the debug log](media/log.png)
 ```
 
-The sections below define each part.
-
 ## Frontmatter
 
-The page starts with YAML frontmatter between two `---` lines. Unbound parses it with the [`yaml`](https://eemeli.org/yaml/) package. A key that appears twice, or a key not listed below, fails the build. `title` and `description` also fail the build, because those come from the manifest.
+YAML between two `---` lines, parsed with [`yaml`](https://eemeli.org/yaml/). A duplicate key, an unknown key, `title` or `description` fails the build.
 
 <ParamField path='banner' type='string' required>
-	The image across the top of the page. It must be exactly **3:1** and at least **1200x400** pixels.
+	Image across the top. Exactly **3:1**, at least **1200x400**.
 </ParamField>
 <ParamField path='media' type='PageMedia[]' default='[]'>
-	The gallery, shown in the order you list it. Up to 20 entries. Each entry is an image or a video, and must be between **9:16** (portrait) and **21:9** (ultrawide).
+	The gallery, in order. Up to 20 entries, each between **9:16** and **21:9**. An entry has `image` or `video`, never both.
 
 	<Expandable title='Image entry'>
 		<ParamField path='image' type='string' required>
 			The image file.
 		</ParamField>
 		<ParamField path='alt' type='string' required>
-			A description of the image for screen readers, 1 to 300 characters.
+			Screen reader text, 1 to 300 characters.
 		</ParamField>
 	</Expandable>
 	<Expandable title='Video entry'>
@@ -73,72 +67,64 @@ The page starts with YAML frontmatter between two `---` lines. Unbound parses it
 			The video file.
 		</ParamField>
 		<ParamField path='poster' type='string'>
-			An image shown before the video plays.
+			Image shown before playback. Videos only.
 		</ParamField>
 		<ParamField path='alt' type='string' required>
-			A description of the video for screen readers, 1 to 300 characters.
+			Screen reader text, 1 to 300 characters.
 		</ParamField>
 	</Expandable>
 </ParamField>
 
-An entry has either `image` or `video`, never both. Only a video entry takes a `poster`.
-
 ## Body
 
-After the frontmatter, write standard Markdown. Do not start with a `#` heading: the manifest's name is already the page title. Start with `##` or with a paragraph.
+Standard Markdown after the frontmatter. Never start with a `#` heading, since the manifest name is the title. Tables fail the build; use a list.
 
-To show an image or a video in the body, use image syntax with a path under `media/`. The extension decides whether the file renders as an image or a video.
+Embed media with image syntax. The extension decides image or video:
 
 ```md
 ![The settings page](media/settings.png)
 ![A short demo](media/demo.mp4)
 ```
 
-To put an icon before a heading or a list item, write its name between colons, such as `:gear:`. [Page Icons](/docs/developer/addons/page-icons) lists every name.
+Add icons with `:name:` shortcodes such as `:gear:`. See [Page Icons](/docs/developer/publishing/page-icons).
+
+<Note>
+	Tables on pages published before this rule still show. New builds reject them.
+</Note>
 
 ## Media
 
-Every banner, gallery entry, poster, and body image is a file in your repository, inside the addon's `media/` folder. Links to images on other sites fail the build.
+Every file lives in the addon's `media/` folder. Links to other sites fail the build.
 
-| Kind  | Extensions                           |
-| ----- | ------------------------------------ |
+| Kind | Extensions |
+| --- | --- |
 | Image | `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif` |
-| Video | `.mp4`, `.webm`                      |
+| Video | `.mp4` (H.264, HEVC, AV1), `.webm` (VP8, VP9, AV1) |
 
-- A path is relative to the addon's directory and starts with `media/`. Subfolders are allowed: `media/screens/settings.png`.
-- A file or folder name uses letters, digits, `_`, `-`, and `.`, and does not start with a `.`. A path has at most 200 characters.
-- Extensions are case-insensitive. `media/SHOT.PNG` is an image.
-- A single file can be at most **10 MB**. All media in one addon together can be at most **50 MB**.
+| Where | Aspect ratio | Minimum size |
+| --- | --- | --- |
+| `banner` | Exactly 3:1 | 1200x400 |
+| `media` | 9:16 to 21:9 | None |
 
-| Where       | Aspect ratio             | Minimum size |
-| ----------- | ------------------------ | ------------ |
-| `banner`    | Exactly 3:1              | 1200x400     |
-| `media`     | From 9:16 to 21:9        | None         |
+- Paths are relative to the addon and start with `media/`. Subfolders work: `media/screens/settings.png`.
+- Names use letters, digits, `_`, `-` and `.`, and never start with `.`. Paths are at most 200 characters.
+- Extensions are case-insensitive.
+- One file: at most **10 MB**. All media: at most **50 MB**.
+- A file's contents must match its extension.
 
-## What `ubd build` does with the page
+## Building
 
-`ubd build` reads `ADDON.md`, opens every media file it references, and measures each one: its width, its height, its size in bytes, the length of a video, and a small placeholder the store shows while the file loads. It writes the result to `page.json` in the build output, next to the bundle and the built `manifest.json`. Commit `page.json` with the bundle. When you publish, the server checks the sizes and formats again against the files in your repository.
+`ubd build` measures every referenced file (size, bytes, video length, a loading placeholder) and writes `page.json` beside the bundle and built `manifest.json`. Commit `page.json` with the bundle. The server checks the files again on publish.
 
-Measuring a video needs [FFmpeg](https://ffmpeg.org/download.html): `ffmpeg` and `ffprobe` must be on your `PATH`. Images need nothing extra. To change the size limits for a build, set `ADDON_MEDIA_MAX_BYTES` (one file) or `ADDON_MEDIA_TOTAL_MAX_BYTES` (all media) in bytes.
+| Need | Detail |
+| --- | --- |
+| Videos | [FFmpeg](https://ffmpeg.org/download.html): `ffmpeg` and `ffprobe` on your `PATH` |
+| Per-file limit | `ADDON_MEDIA_MAX_BYTES`, in bytes |
+| Total limit | `ADDON_MEDIA_TOTAL_MAX_BYTES`, in bytes |
 
-The build fails when the page has any of these problems:
+The build fails on any rule broken in [Frontmatter](#frontmatter), [Body](#body) or [Media](#media), or a missing file.
 
-- The frontmatter is not valid YAML, has a key twice, or has a key not listed under [Frontmatter](#frontmatter).
-- The `banner` is missing, is not 3:1, or is smaller than 1200x400.
-- A gallery entry is outside 9:16 to 21:9, or has no `alt`.
-- A media path is outside `media/`, points at another site, or has an extension not listed under [Media](#media).
-- A referenced media file does not exist, or is larger than the size limits.
-- A media file's contents do not match its extension, or a video uses a codec other than H.264, HEVC, or AV1 (`.mp4`) or VP8, VP9, or AV1 (`.webm`).
-- The body starts with a `#` heading.
-- The body contains a table. Use a list instead.
-
-<Note>
-	The store still shows tables on pages published before this rule. New builds reject them.
-</Note>
-
-For the page in [A complete page](#a-complete-page), `ubd build` writes this `page.json`. Your numbers depend on your files.
-
-<Accordion title='The page.json for this example' icon='file-content'>
+<Accordion title='page.json for the example' icon='file-content'>
 
 ```json page.json
 {
@@ -203,3 +189,11 @@ For the page in [A complete page](#a-complete-page), `ubd build` writes this `pa
 ```
 
 </Accordion>
+
+## Next
+
+<CardGroup cols={2}>
+	<Card title='Page Icons' icon='shapes' href='/docs/developer/publishing/page-icons'>
+		Every icon shortcode.
+	</Card>
+</CardGroup>

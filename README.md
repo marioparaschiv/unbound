@@ -72,7 +72,7 @@ For problems after installation, see [Troubleshooting](https://unbound.rip/docs/
     bunx @unbound-app/cli create
     ```
 
-2. Set the add-on `type` in its [manifest](https://unbound.rip/docs/developer/addons/manifest):
+2. Set the add-on `type` in its [manifest](https://unbound.rip/docs/developer/publishing/manifest):
 
     | Type      | Purpose                                                                                                |
     | --------- | ------------------------------------------------------------------------------------------------------ |
@@ -103,7 +103,7 @@ Requirements: [Bun](https://bun.sh) and a device or emulator with Unbound instal
     bun run --filter @unbound-app/client dev
     ```
 
-3. Set your Unbound installation's bundle URL to the printed LAN address, then restart Discord. See [Building Unbound](https://unbound.rip/docs/developer/development/local-builds) for the exact steps.
+3. Set your Unbound installation's bundle URL to the printed LAN address, then restart Discord. See [Building Unbound](https://unbound.rip/docs/developer/core/building) for the exact steps.
 
 To build once without watching for changes, run `build`, then `serve`:
 
@@ -112,7 +112,7 @@ bun run --filter @unbound-app/client build
 bun run --filter @unbound-app/client serve
 ```
 
-The [debugger](https://unbound.rip/docs/developer/development/debugging) (`bunx @unbound-app/debugger`) evaluates code and streams logs from the device.
+The [debugger](https://unbound.rip/docs/developer/tools/debugger) (`bunx @unbound-app/debugger`) evaluates code and streams logs from the device.
 
 ### Architecture
 

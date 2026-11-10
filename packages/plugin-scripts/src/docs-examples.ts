@@ -278,7 +278,7 @@ export async function checkPage(source: string, page: string): Promise<PageRepor
 export function examplePages(): string[] {
 	const pages = ['docs/developer/concepts.mdx'];
 
-	for (const folder of ['addons', 'plugins']) {
+	for (const folder of ['getting-started', 'plugins', 'testing', 'publishing']) {
 		pages.push(...new Bun.Glob(`docs/developer/${folder}/*.mdx`).scanSync({ cwd: REPO_ROOT }));
 	}
 

@@ -1,47 +1,48 @@
 ---
 title: 'Account and Sync'
-description: 'Sign in with Discord to keep your addons and settings the same on every device.'
+description: 'Sign in to sync addons and settings.'
 icon: 'cloud'
 ---
 
-Signing in to Unbound with your Discord account turns on **Sync** and unlocks [sponsor perks](#sponsor-perks). Sync keeps your addons and settings the same on every device you sign in on. It stores only install links and settings, never addon files.
+Sign in with Discord to turn on Sync and get [sponsor perks](#sponsor-perks). Sync stores install links and settings, never addon files.
 
-## Turn on Sync
+## Turning On Sync
 
 <Steps>
 	<Step title='Sign in'>
-		On the **Unbound** page, tap **Sign in with Discord**, and approve the request on Discord's authorize screen.
+		On the **Unbound** page, tap **Sign in with Discord** and approve.
 	</Step>
 	<Step title='Open Sync'>
-		It's under **Preferences** on the same page.
+		Under **Preferences**.
 	</Step>
 	<Step title='Choose how to combine'>
-		If another device already synced, Sync asks how to combine its setup with this device. Nothing syncs until you pick.
+		Asked only if another device synced already. Nothing syncs until you pick.
 	</Step>
 </Steps>
 
-| Choice | What happens |
+| Choice | Result |
 | --- | --- |
-| **Merge both** | Keeps addons from both. The cloud's settings win where they differ |
+| **Merge both** | Addons from both. The cloud's settings win conflicts |
 | **Use the cloud's setup** | Replaces this device's addons and settings |
-| **Use this device's setup** | Replaces what's stored in the cloud |
+| **Use this device's setup** | Replaces the cloud's |
 
-After that, **Sync automatically** is on, and changes sync on their own. Tap **Sync now** to sync right away. The line under these rows shows when the last sync ran, or why it failed.
+**Sync automatically** is then on. **Sync now** syncs right away. The line below shows the last sync, or why it failed.
 
-## Sync direction
+## Direction
 
-| Direction | What it does |
+| Direction | Result |
 | --- | --- |
-| **Two-way** | Changes on any device reach every other one |
-| **Download only** | This device mirrors the cloud. Changes made here are replaced |
-| **Upload only** | The cloud mirrors this device. Changes from other devices are replaced |
+| **Two-way** | Changes on any device reach all |
+| **Download only** | This device mirrors the cloud |
+| **Upload only** | The cloud mirrors this device |
 
-## Sign out or delete your data
+## Leaving
 
-**Sign out** stops syncing on this device. Your addons and settings stay as they are.
+| Action | Result |
+| --- | --- |
+| **Sign out** | Stops syncing here. Nothing changes locally |
+| **Delete cloud data** | Deletes your synced data from Unbound's servers and turns Sync off here. Nothing installed is removed |
 
-**Delete cloud data** deletes your synced addons and settings from Unbound's servers, and turns Sync off on this device. Nothing installed on your devices is removed.
+## Sponsor Perks
 
-## Sponsor perks
-
-Sponsoring Unbound on GitHub for $5 a month gets you your own badge on your Discord profile, which everyone using Unbound can see, and a Sponsor role in Unbound's Discord server. Tap **See Perks** on the **Unbound** page for details.
+Sponsor Unbound on GitHub for $5 a month to get a custom Discord profile badge, seen by everyone on Unbound, and a Sponsor role in Unbound's server. Tap **See Perks** on the **Unbound** page for details.

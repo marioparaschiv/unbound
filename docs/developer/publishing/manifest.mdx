@@ -1,10 +1,10 @@
 ---
 title: 'The Manifest'
-description: 'The shared metadata every addon ships, and how Unbound validates it.'
+description: 'The metadata every addon ships.'
 icon: 'file-content'
 ---
 
-`manifest.json` tells Unbound who an addon is: its id, name, authors and version. Every [plugin](/docs/developer/plugins/introduction), [theme](/docs/developer/themes/introduction) and [icon pack](/docs/developer/icon-packs/introduction) ships one, in the same shape.
+`manifest.json` holds an addon's id, name, authors and version. Plugins, [themes](/docs/developer/themes/introduction) and [icon packs](/docs/developer/icon-packs/introduction) all use the same shape.
 
 ```json manifest.json
 {
@@ -17,91 +17,95 @@ icon: 'file-content'
 }
 ```
 
-## Required fields
+## Required Fields
 
-Unbound rejects an addon that leaves any of these out, or has an empty `authors`.
+Unbound rejects an addon missing any of these, or with an empty `authors`.
 
 <ParamField path='id' type='string' required>
-	A unique identifier for the addon. It names your [settings](/docs/developer/plugins/settings) Bucket and identifies the addon to Unbound, so choose it once and never change it.
+	Unique id. It names your [settings](/docs/developer/plugins/settings) bucket, so never change it.
 </ParamField>
 <ParamField path='name' type='string' required>
-	The human-readable name shown in settings.
+	Display name shown in settings.
 </ParamField>
 <ParamField path='description' type='string' required>
-	A short summary of what the addon does.
+	Short summary.
 </ParamField>
 <ParamField path='authors' type='AddonAuthor[]' required>
-	A non-empty array of authors. An empty array fails validation, the same as a missing field.
+	Non-empty array of authors.
 
 	<Expandable title='AddonAuthor'>
 		<ParamField path='name' type='string' required>
-			The author's display name.
+			Display name.
 		</ParamField>
 		<ParamField path='id' type='string' required>
-			The author's Discord user id.
+			Discord user id.
 		</ParamField>
 	</Expandable>
 </ParamField>
 <ParamField path='version' type='string' required>
-	The addon's version. Increase it on every release so clients can detect updates.
+	Increase it on every release so clients detect the update.
 </ParamField>
 <ParamField path='main' type='string' required>
-	The entry file the bundle is built from, relative to `src/`, such as `index.tsx`. The build writes the bundle's name, `index.js`, into the manifest it ships. Themes ignore this field. See [Themes](#themes) below.
+	Entry file relative to `src/`, such as `index.tsx`. The build writes `index.js` into the shipped manifest. Themes ignore it.
 </ParamField>
 
-## Optional fields
-
-Used for display and updates. You can leave them out.
+## Optional Fields
 
 <ParamField path='icon' type='string | { uri: string }'>
-	The addon's icon: an [asset](/docs/sdk/latest/assets) name, or an object with a `uri` for a remote image.
+	An [asset](/docs/sdk/latest/assets) name, or `{ uri }` for a remote image.
 </ParamField>
 <ParamField path='updates' type='string'>
-	A URL Unbound checks to discover newer versions.
+	URL Unbound checks for newer versions.
 </ParamField>
 <ParamField path='url' type='string'>
-	Where the addon's bundle is hosted.
+	Where the bundle is hosted.
 </ParamField>
 
-## What each kind adds
-
-Every kind uses the same manifest. A few kinds need an extra file or field.
+## Per Addon Kind
 
 <AccordionGroup>
 	<Accordion title='Plugins' icon='plug'>
-		Nothing extra. `main` names your entry file in `src/`, and `ubd build` turns it into the bundle. See [Your First Plugin](/docs/developer/addons/creating).
+		`ubd build` turns `main` into the bundle. See [Your First Plugin](/docs/developer/getting-started/first-plugin).
 
-		When your plugin ships [images](/docs/developer/plugins/assets), `ubd build` adds an `assets` field to the built manifest in `dist/`. Don't write it yourself.
+		When the plugin ships [images](/docs/developer/plugins/assets), `ubd build` adds `assets` to the built manifest in `dist/`. Never write it yourself.
 
 		<ParamField path='assets' type='Record<string, { type, width, height, scales }>'>
-			Each image by name: its type (`png`, `jpg`, `webp` or `gif`), its size in points, and the SHA-256 of its file at each scale (`1`, `2`, `3`). Each file sits beside the bundle at `assets/<sha256>.<type>`.
+			Each image by name: type (`png`, `jpg`, `webp` or `gif`), size in points, and the SHA-256 of its file at each scale (`1`, `2`, `3`). Files sit beside the bundle at `assets/<sha256>.<type>`.
 		</ParamField>
 	</Accordion>
 	<Accordion title='Themes' icon='paintbrush'>
-		A theme ships a **`bundle.json`** next to its manifest, holding the palette and background. See [Theme Colors](/docs/developer/themes/types).
+		A theme ships `bundle.json` beside its manifest, with the palette and background. See [Theme Colors](/docs/developer/themes/types).
 
 		<Warning>
-			Themes ignore `main`. The field is still required, but Unbound always reads `bundle.json`. If your colors don't apply, check the file's name.
+			Themes ignore `main`, but it is still required. Unbound always reads `bundle.json`. If colors don't apply, check that file's name.
 		</Warning>
 	</Accordion>
 	<Accordion title='Icon Packs' icon='shapes'>
-		An icon pack is a **folder of image files** laid out like Discord's assets. Its manifest adds two fields:
+		An icon pack is a folder of images laid out like Discord's assets. It adds two fields:
 
 		<ParamField path='type' type="'icon-pack'">
-			Marks the manifest as an icon pack. If the field is present at install time, it must be `'icon-pack'`, or the install is rejected.
+			If present at install, it must be `'icon-pack'` or the install is rejected.
 		</ParamField>
 		<ParamField path='source' type="'github' | 'other'">
-			How the pack's files are fetched. If omitted, it is inferred from `main`: a `github.com` URL means `github`, and anything else means `other`.
+			How files are fetched. Default: `github` when `main` is a `github.com` URL, else `other`.
 		</ParamField>
 
-		How `main` is used depends on `source`:
-
-		- `github`: `main` is the repo URL, optionally with a `/tree/<branch>/<path>` suffix. Unbound downloads the images in that tree into the pack folder.
-		- `other`: the pack installs from `main` like any other addon.
+		| `source` | `main` |
+		| --- | --- |
+		| `github` | Repo URL, optionally with `/tree/<branch>/<path>`. Unbound downloads the images in that tree |
+		| `other` | Installed like any other addon |
 
 		See [Icon Packs](/docs/developer/icon-packs/introduction).
 	</Accordion>
 	<Accordion title='Fonts' icon='text-a'>
-		A font has no manifest. It's a single font file, and Unbound names it after the full name stored inside the file. See [Fonts](/docs/user/fonts) for how users apply one.
+		No manifest. A font is one file, named after the full name stored inside it. See [Fonts](/docs/user/fonts).
 	</Accordion>
 </AccordionGroup>
+
+## Next
+
+<CardGroup cols={2}>
+	<Card title='Store Page' icon='shop' href='/docs/developer/publishing/store-page'>
+		Add a banner, gallery and description.
+	</Card>
+</CardGroup>

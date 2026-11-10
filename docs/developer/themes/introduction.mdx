@@ -1,48 +1,53 @@
 ---
-title: 'How Themes Work'
-description: "Recolor Discord's interface with a theme."
+title: 'Themes'
+description: "Recolor Discord's interface."
 icon: 'paintbrush'
 ---
 
-A theme changes how Discord looks. It is **data**: a JSON definition of colors (and an optional background) that Unbound applies to Discord's interface. A [plugin](/docs/developer/plugins/introduction), by contrast, is code that runs.
+A theme is a JSON palette, plus an optional background, that recolors Discord. It runs no code: for behavior, write a [plugin](/docs/developer/getting-started/lifecycle).
 
-## How themes work
+## How It Works
 
-Discord styles its UI from a palette of named colors. A theme overrides that palette: you set values for the color names you want to change, and everything else keeps Discord's color.
+- A theme overrides Discord's named colors. Colors you leave out keep Discord's value.
+- One theme applies at a time. Applying another replaces it.
+- Colors apply when Discord starts, so a change shows after a restart.
 
-Only one theme is applied at a time, so applying a new one replaces the last. Unbound applies the colors when Discord starts, so a change shows after a restart.
+## Make a Theme
 
-## What a theme defines
+The [theme maker](/themes/create) builds a theme from a base and three colors: background, accent and mentions.
 
-<CardGroup cols={2}>
-	<Card title='Manifest' icon='circle-info' href='/docs/developer/addons/manifest'>
-		Metadata that identifies your theme: name, authors, version.
-	</Card>
-	<Card title='Theme Colors' icon='palette' href='/docs/developer/themes/types'>
-		The semantic and raw colors that make up the palette, and the base type they extend.
-	</Card>
-	<Card title='Backgrounds' icon='photo' href='/docs/developer/themes/backgrounds'>
-		An optional image behind the interface, with blur and opacity.
-	</Card>
-</CardGroup>
+- It previews the home, server, chat, profile and settings screens.
+- **Advanced mode** sets single parts on top, such as the chat background, links or the @mention pill.
+- It downloads a zip with `manifest.json` and `bundle.json`.
 
-## Make a theme
+To edit by hand, unzip the folder into your workspace and edit `bundle.json`.
 
-The [theme maker](/themes/create) builds a theme from a base and three colors: background, accent and mentions. It previews them on Discord's home, server, chat, profile and settings screens, and downloads a zip with the theme's `manifest.json` and `bundle.json`. Advanced mode lets you set single parts on top, such as the chat background, links or the @mention pill.
+## Reload While Editing
 
-To keep editing by hand, unzip the folder into an addon workspace and edit `bundle.json`. See [Theme Colors](/docs/developer/themes/types) for what each part does.
-
-## Reload a theme while you edit
-
-Once the [debugger](/docs/developer/development/debugging) is running and your phone is connected to it, the [CLI](/docs/developer/development/cli) can reload a theme without restarting Discord. Run these from the workspace:
+With the [debugger](/docs/developer/tools/debugger) running and your phone connected, run from the workspace:
 
 ```bash
 ubd dev
 ubd push my-theme
 ```
 
-`dev` watches every addon and reloads the one you changed each time you save. `push` sends one theme once, and installs it if the device doesn't have it yet.
+| Command | Effect |
+| --- | --- |
+| `ubd dev` | Watches every addon and reloads the one you saved. |
+| `ubd push <id>` | Sends one theme once, installing it if the device lacks it. |
 
-<Note>
-	A theme can't run logic or patch components. It only restyles. For behavior, write a [plugin](/docs/developer/plugins/introduction).
-</Note>
+To install, enable or list themes from code, see [`themes`](/docs/sdk/latest/themes) in the SDK reference.
+
+## Next
+
+<CardGroup cols={2}>
+	<Card title='Theme Colors' icon='palette' href='/docs/developer/themes/types'>
+		The base type, semantic and raw colors.
+	</Card>
+	<Card title='Backgrounds' icon='photo' href='/docs/developer/themes/backgrounds'>
+		An image behind the chat.
+	</Card>
+	<Card title='The Manifest' icon='circle-info' href='/docs/developer/publishing/manifest'>
+		Name, authors and version.
+	</Card>
+</CardGroup>

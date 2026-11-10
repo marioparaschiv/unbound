@@ -1,35 +1,23 @@
 ---
 title: 'Icon Packs'
-description: "Replace Discord's icons with your own set."
+description: "Replace Discord's icons with your own."
 icon: 'shapes'
 ---
 
-An icon pack replaces Discord's built-in icons with your own. Like a [theme](/docs/developer/themes/introduction), it's a restyling addon. A theme recolors the interface, and an icon pack replaces the *images* Discord renders for its icons.
+An icon pack is a folder of images that replace Discord's icons by name. It ships no code.
 
-## How icon packs work
+## How It Works
 
-Discord refers to each icon by name, such as `ic_message_delete`. For each name your pack has an image for, Unbound shows your image instead of Discord's. Names you leave out keep Discord's icon, so a pack can replace a few icons or all of them.
+- Discord requests each icon by name, such as `ic_message_delete`.
+- If your pack has an image with that name, Unbound shows it instead.
+- Names you leave out keep Discord's icon.
+- One pack applies at a time. Enabling another replaces it; disabling restores Discord's icons.
 
-<Note>
-	An icon pack overrides icons *by name*. The asset names that the [assets](/docs/sdk/latest/assets) module discovers are the same names a pack targets.
-</Note>
+The names a pack targets are the ones the [assets](/docs/sdk/latest/assets) module discovers.
 
-## What an icon pack ships
+## File Layout
 
-Unlike a [plugin](/docs/developer/plugins/introduction), a pack ships no code. It's a folder of image files laid out like Discord's own assets.
-
-<CardGroup cols={2}>
-	<Card title='Manifest' icon='circle-info' href='/docs/developer/addons/manifest'>
-		Metadata identifying the pack: name, authors, version, plus `type` and `source`.
-	</Card>
-	<Card title='Assets' icon='face-smile' href='/docs/sdk/latest/assets'>
-		How Discord's icons are named and discovered. These are the names a pack overrides.
-	</Card>
-</CardGroup>
-
-## File layout
-
-Each image sits at the same path as the Discord asset it replaces, without the leading `assets/`, and is named after the asset.
+Each image sits at the path of the Discord asset it replaces, without the leading `assets/`.
 
 <FileTree>
 	<Folder name='my-pack'>
@@ -41,25 +29,36 @@ Each image sits at the same path as the Discord asset it replaces, without the l
 	</Folder>
 </FileTree>
 
-Scale variants use the `@2x` and `@3x` suffixes. A file with no suffix is scale `1`. Unbound picks the **highest** scale present for each asset, so shipping only an `@3x` file is fine. An asset with no matching file in the pack keeps Discord's original.
+| Suffix | Scale |
+| --- | --- |
+| none | `1` |
+| `@2x` | `2` |
+| `@3x` | `3` |
 
-## How installation resolves files
-
-Unbound installs a pack from its manifest URL. The manifest's `source` field sets how the files are downloaded. For the in-app install steps, see [Managing Addons](/docs/user/managing-addons).
-
-<AccordionGroup>
-	<Accordion title='GitHub' icon='code-branch'>
-		`main` is the repo URL. You can narrow it to a branch and folder with `/tree/<branch>/<subpath>`. Unbound reads the repo's file tree and downloads every file under that path into the pack folder. If `source` is omitted and `main` is a `github.com` URL, this method is used.
-	</Accordion>
-	<Accordion title='Other' icon='link'>
-		The pack installs through the same bundle download path as other addons.
-	</Accordion>
-</AccordionGroup>
-
-<Note>
-	Only one pack applies at a time, like a [theme](/docs/developer/themes/introduction). Enabling a pack replaces the applied one. Disabling it brings back Discord's own icons.
-</Note>
+Unbound uses the highest scale present, so shipping only `@3x` works.
 
 <Tip>
-	Match Discord's icon names exactly. An override applies only when its name matches the asset Discord requests. A mismatched name does nothing.
+	Names must match Discord's exactly. A mismatched name does nothing.
 </Tip>
+
+## Install Sources
+
+Unbound installs a pack from its manifest URL. The manifest's `source` sets how files download. For in-app steps, see [Managing Addons](/docs/user/managing-addons).
+
+| `source` | Behavior |
+| --- | --- |
+| GitHub | `main` is the repo URL, optionally narrowed with `/tree/<branch>/<subpath>`. Unbound downloads every file under that path. Used by default when `source` is omitted and `main` is a `github.com` URL. |
+| Other | Downloads like any other addon bundle. |
+
+To install, enable or list packs from code, see [`iconPacks`](/docs/sdk/latest/iconPacks) in the SDK reference.
+
+## Next
+
+<CardGroup cols={2}>
+	<Card title='The Manifest' icon='circle-info' href='/docs/developer/publishing/manifest'>
+		Name, authors, version, `type` and `source`.
+	</Card>
+	<Card title='Assets' icon='face-smile' href='/docs/sdk/latest/assets'>
+		How Discord's icon names are discovered.
+	</Card>
+</CardGroup>

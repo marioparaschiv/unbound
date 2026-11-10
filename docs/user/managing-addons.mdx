@@ -1,78 +1,62 @@
 ---
 title: 'Managing Addons'
-description: 'Turn plugins on, apply themes and icon packs, update addons, and remove them.'
+description: 'Turn on, update and remove addons.'
 icon: 'puzzle-piece'
 ---
 
-Your installed addons live in the **Unbound** section of Discord's settings. Plugins are on the **Plugins** page. Themes and icon packs are on the **Design** page, under the **Themes** and **Icons** tabs. To install one, see [Finding Addons](/docs/user/marketplace).
+Plugins live on the **Plugins** page. Themes and icon packs live on **Design**, under **Themes** and **Icons**. To get more, see [Finding Addons](/docs/user/marketplace).
 
-## An addon's card
+## Card Controls
 
-Each addon is a card with its name, authors, description and version. The controls sit in its top right corner:
-
-| Control | What it does |
+| Control | Does |
 | --- | --- |
-| Gear | Opens the plugin's settings. Grayed out when the plugin has none, or is turned off |
-| **⋯** | Opens a menu with **Delete** |
+| Gear | Opens a plugin's settings. Grayed out when it has none or is off |
+| **⋯** | Menu with **Delete** |
 | Switch | Turns a plugin on or off |
 | Check mark | Applies a theme or icon pack |
 
-## Plugins
+## Applying
 
-Tap a plugin's switch to turn it on or off. It takes effect right away, with no restart. You can run as many plugins as you like.
+| Kind | How | Takes effect |
+| --- | --- | --- |
+| Plugin | Tap its switch. Run as many as you like | Right away |
+| Theme | Tap it, then **Restart**. One at a time | After restart |
+| Icon pack | Tap it. One at a time | Right away |
 
-## Themes
-
-Only one theme is applied at a time.
-
-<Steps>
-	<Step title='Open Design, then Themes'>
-		Each theme is a card.
-	</Step>
-	<Step title='Tap the theme you want'>
-		A check mark appears on it, and the theme you had before is unselected.
-	</Step>
-	<Step title='Tap Restart'>
-		Unbound asks to restart, so the theme applies everywhere.
-	</Step>
-</Steps>
-
-To go back to Discord's own colors, tap the applied theme again to unselect it, then restart.
-
-## Icon packs
-
-Open **Design**, then **Icons**, and tap the pack you want. It applies right away. Any icon the pack doesn't include keeps Discord's look. To go back to Discord's icons, tap the applied pack again to unselect it.
+Tap an applied theme or icon pack again to go back to Discord's look. A theme needs a restart for that too. Icons a pack lacks keep Discord's look.
 
 ## Updates
 
-Unbound checks your addons for updates and installs them when Discord starts. To see what's new first, or to update by hand:
+Addons update when Discord starts. To review first or update by hand:
 
 <Steps>
 	<Step title='Open Updates'>
-		On the **Unbound** page, tap **Updates** at the top.
+		At the top of the **Unbound** page.
 	</Step>
-	<Step title='Read what changed'>
-		Each available update is listed. Tap one to read its changelog.
+	<Step title='Read the changelog'>
+		Tap an update.
 	</Step>
 	<Step title='Update'>
 		Tap **Update** on one, or **Update all**.
 	</Step>
 </Steps>
 
-Turn off **Update automatically** on that page to only update by hand. An addon you held at an older version with **Choose version** sits out automatic updates. See [Install an older version](/docs/user/marketplace#install-an-older-version).
+Turn off **Update automatically** there to only update by hand. An addon pinned with [Choose version](/docs/user/marketplace#older-versions) skips automatic updates.
 
-## Removing an addon
+## Removing
 
-Tap **⋯** on its card, then **Delete**, and confirm. Its files are removed from your device.
+Tap **⋯**, then **Delete**, and confirm. Its files leave your device.
 
-- A removed plugin stops right away.
-- A removed icon pack brings back Discord's icons.
-- A removed theme's colors stay until you restart.
+| Kind | After delete |
+| --- | --- |
+| Plugin | Stops right away |
+| Icon pack | Discord's icons return |
+| Theme | Colors stay until restart |
 
-If you delete a library that other plugins need, Unbound names them. You can delete just the library, or the library and the plugins that need it.
+Deleting a library that other plugins need lists them. Delete the library alone, or with those plugins.
 
-## When an addon breaks
+## Broken Addons
 
-An addon that fails to start is dimmed, with its error in red under it. You can still delete it from **⋯**.
+An addon that fails to start is dimmed, with its error in red. You can still delete it.
 
-Unbound also turns a plugin off on its own when it crashes Discord on two launches in a row, or freezes it for too long. If a plugin keeps Discord from opening at all, see [Troubleshooting](/docs/user/troubleshooting#an-addon-breaks-discord).
+Unbound turns a plugin off when it crashes Discord on two launches in a row, or freezes it too long. If Discord won't open, see [Troubleshooting](/docs/user/troubleshooting#broken-addons).

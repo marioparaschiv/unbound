@@ -1,27 +1,28 @@
 ---
 title: 'CLI'
-description: 'Scaffold, build, hot reload and publish addons, and inspect Discord on a connected device, with ubd.'
+description: 'Scaffold, build, check and publish addons with ubd.'
 icon: 'terminal'
 ---
 
-`ubd` is Unbound's command line tool, published on npm as [`@unbound-app/cli`](https://www.npmjs.com/package/@unbound-app/cli). It needs [Bun](https://bun.sh).
+`ubd` is Unbound's command line tool, published as [`@unbound-app/cli`](https://www.npmjs.com/package/@unbound-app/cli). It needs [Bun](https://bun.sh).
 
 ```bash
 bunx @unbound-app/cli --help
 ```
 
-Every command takes `--help` for its flags and `--json` to print the raw result instead of the formatted transcript.
+Every command takes `--help` for its flags and `--json` to print the raw result.
 
-## Commands that talk to the device
+## Device Access
 
-Commands that act on the running client, such as `eval`, `push`, `reload` and `dev`, go through the debugger bridge. Start it first with `bunx @unbound-app/debugger` and connect the device to it, as described in [debugging](/docs/developer/development/debugging). They use port `9090` unless you pass `--port`.
+| Commands | Reach Discord through |
+| --- | --- |
+| `eval`, `push`, `reload`, `dev` and the inspect commands | The [bridge](/docs/developer/tools/debugger). Start it with `bunx @unbound-app/debugger` first. Port `9090` unless you pass `--port`. |
+| `install`, `device`, `logs` | `adb` on a rooted Android device or emulator, or jb-p1lot on a jailbroken iPhone with `--ios` or `--udid`. `--serial` picks one of several Android devices. |
 
-`install`, `device` and `logs` don't need the bridge. They reach Discord directly: over `adb` on a rooted Android device or emulator, or through jb-p1lot on a jailbroken iPhone when you pass `--ios` or `--udid`. Use `--serial` to pick one of several Android devices.
-
-## Make an addon
+## Make an Addon
 
 <Steps>
-	<Step title='Scaffold it'>
+	<Step title='Scaffold'>
 		`ubd create` asks for anything you don't pass as a flag.
 
 		```bash
@@ -31,7 +32,7 @@ Commands that act on the running client, such as `eval`, `push`, `reload` and `d
 		| Flag | Meaning |
 		| --- | --- |
 		| `--kind` | `plugin` or `theme`. |
-		| `--shape` | `repository` for a workspace that can hold several addons, or `addon` for a single one. |
+		| `--shape` | `repository` for a workspace of several addons, or `addon` for one. |
 		| `--name` | The addon name, in kebab-case. |
 		| `--id` | The manifest id. Defaults to `<author name>.<name>`. |
 		| `--display-name`, `--description` | The name and one-line description shown in Unbound. |
@@ -39,7 +40,7 @@ Commands that act on the running client, such as `eval`, `push`, `reload` and `d
 		| `--dir` | Where to create it. Defaults to `./<name>`. |
 		| `--git-init`, `--install` | Initialize git and install dependencies. Repository shape only. |
 	</Step>
-	<Step title='Build and hot reload it'>
+	<Step title='Build and Hot Reload'>
 		Run these from the workspace.
 
 		```bash
@@ -47,17 +48,13 @@ Commands that act on the running client, such as `eval`, `push`, `reload` and `d
 		ubd dev
 		```
 
-		`build` builds every addon once and reports which succeeded. `dev` watches every addon, rebuilds only the one whose files changed, and reloads it in the running client after each successful build.
-
-		`ubd build --verbose` also logs each [metro filter](/docs/developer/plugins/metro#custom-filters) the build rewrote into a built-in filter, with its file and line.
-
-		To send one plugin to the device without watching, use `push`. It builds the plugin, installs it if the device doesn't have it yet, and hot reloads it. Pass `--build=false` to push the existing build.
-
-		```bash
-		ubd push hello-world
-		```
+		| Command | What it does |
+		| --- | --- |
+		| `ubd build` | Builds every addon once and reports which succeeded. `--verbose` also logs each [custom filter](/docs/developer/plugins/metro#custom-filters) rewritten into a built-in one, with file and line. |
+		| `ubd dev` | Watches every addon, rebuilds the one that changed, and reloads it on the device. |
+		| `ubd push <name>` | Builds one plugin, installs it if missing, and hot reloads it. `--build=false` pushes the existing build. |
 	</Step>
-	<Step title='Install it for cold starts'>
+	<Step title='Install for Cold Starts'>
 		`install` copies a built plugin into Discord's plugin folder, so it loads on the next cold start. `--restart` restarts Discord right away.
 
 		```bash
@@ -65,7 +62,7 @@ Commands that act on the running client, such as `eval`, `push`, `reload` and `d
 		ubd install hello-world --ios --restart
 		```
 	</Step>
-	<Step title='Publish it'>
+	<Step title='Publish'>
 		Log in once by approving a code on the website, then submit the addon for review. Its build output must be committed and pushed.
 
 		```bash
@@ -73,52 +70,19 @@ Commands that act on the running client, such as `eval`, `push`, `reload` and `d
 		ubd publish
 		```
 
-		`publish` takes `--addon` (required when the workspace has several addons), `--ref` (defaults to the tag on `HEAD`, otherwise its commit), and `--repository` (defaults to the `origin` remote). `ubd logout` deletes the stored credentials.
+		| Flag | Default |
+		| --- | --- |
+		| `--addon` | Required when the workspace has several addons. |
+		| `--ref` | The tag on `HEAD`, otherwise its commit. |
+		| `--repository` | The `origin` remote. |
+
+		`ubd logout` deletes the stored credentials.
 	</Step>
 </Steps>
 
-## Translations
+## Check an Addon
 
-`ubd i18n` checks a plugin's `i18n/` folder against `i18n/en-US.json`. Run it in the plugin, or pass `--plugin <dir>`. For each language it prints how many keys are translated, which are missing, which keys `en-US.json` does not have, and every ICU problem: placeholders that differ from English, a `plural` or `select` without an `other` branch, and a syntax error with its file, line and position.
-
-```bash
-ubd i18n
-ubd i18n --fix
-ubd i18n --unused
-ubd i18n --add GREETING "Hello, {name}!"
-ubd i18n --json
-```
-
-| Flag | Meaning |
-| --- | --- |
-| `--fix` | Adds every missing key to each translation, with its English text, in `en-US.json`'s key order. The file keeps its indentation and trailing newline. Running it twice changes nothing. |
-| `--prune` | Also removes keys that `en-US.json` does not have. Implies `--fix`. |
-| `--unused` | Lists `en-US.json` keys that no file in `src/` or `settings.ts` uses, and keys used there that `en-US.json` lacks. |
-| `--add <key> <text>` | Adds a key to `en-US.json`, in sorted place when the file is sorted and last otherwise, then rewrites `src/unbound-i18n.d.ts` the way `ubd dev` does. |
-| `--strict` | Fails on missing translations too. |
-| `--json` | Prints the report as JSON, for CI. |
-
-The command exits `1` on an ICU problem, a key `en-US.json` does not have, a file it cannot read, or, with `--unused`, a used key `en-US.json` lacks. Missing translations only fail with `--strict`.
-
-`--fix` lists each key it added in `i18n/untranslated.jsonc`, with the English text it wrote. The report counts such a key as missing until its text changes, so commit that file. The build never reads it, and a stub shows the English text the user would see anyway. The next `--fix` drops keys that have been translated, and updates stubs whose English changed.
-
-`--unused` finds keys where the source passes a string literal:
-
-| Call | Keys read |
-| --- | --- |
-| `messages.KEY`, `messages['KEY']` | The property, when `messages` comes from `@unbound-app/i18n` |
-| `format('KEY', …)` | The first argument, when `format` comes from `@unbound-app/i18n` |
-| `defineSettings(...)` | `title`, `subtitle`, `label`, `options` and `confirm` values |
-| `commands.register(...)` | `description` and `label` values |
-| `option.choice({ value: 'KEY' })` | Each label key in the choice map |
-| `toasts.success('KEY', vars)`, and `error`, `info`, `warning` | The first argument |
-| `dialogs.confirm('KEY', …)`, `dialogs.alert('KEY', …)` | The first argument, and the `body`, `confirm` and `cancel` options |
-
-A key built at run time, such as `messages[name]`, cannot be found this way. The report counts these reads, so you can check that the keys it lists as unused are really unused.
-
-## Check an addon
-
-`ubd check` runs every check `ubd build` runs, without producing a bundle. It also validates the manifest against the publish rules, runs the plugin lint with the nearest `.oxlintrc.json`, and runs the build's rollup plugins over the module graph, so a broken import or a problem a plugin reports shows up too. Nothing in the output folder changes.
+`ubd check` runs every check `ubd build` runs, without writing a bundle. It also validates the manifest against the publish rules, runs the plugin lint with the nearest `.oxlintrc.json`, and runs the build's rollup plugins over the module graph.
 
 ```bash
 ubd check                       # the addon holding the current directory
@@ -127,20 +91,22 @@ ubd check --all                 # every addon in the workspace
 ubd check --only lint,manifest  # just these checks
 ```
 
-It prints each problem as `file:line:column  <path>  <problem>.  Fix: <fix>.`, grouped by file with errors first, then a summary such as `3 errors, 1 warning in 2 files`. `ubd build` prints its checks the same way.
+Each problem prints as `file:line:column  <path>  <problem>.  Fix: <fix>.`, grouped by file, errors first. A summary such as `3 errors, 1 warning in 2 files` follows. `ubd build` prints the same way.
 
 | Flag | Meaning |
 | --- | --- |
-| `--watch` | Re-check an addon each time you save a file in it, and print only the problems that appeared or were fixed. |
-| `--json` | Print the diagnostics as JSON. With `--watch`, print one JSON line per run. |
+| `--watch` | Re-check on each save and print only problems that appeared or were fixed. |
+| `--json` | Print diagnostics as JSON. With `--watch`, one JSON line per run. |
 | `--only` | Run only the named checks, comma-separated. `ubd check --help` lists them. |
-| `--strict` | Fail on warnings too. Without it, only an error exits non-zero. |
-| `--types` | Also type-check the addon with its `tsconfig.json`, as `tsc --noEmit` does. It is slow, so it is off by default. |
+| `--strict` | Fail on warnings too. Otherwise only an error exits non-zero. |
+| `--types` | Also type-check with the addon's `tsconfig.json`, like `tsc --noEmit`. Slow, so off by default. |
 | `--declared-capabilities` | Check capabilities as `ubd build --declared-capabilities` does. |
 
-While you edit, keep `ubd check --watch` running in a terminal beside the editor. In CI, run `ubd check --all --json` and read the exit code: `1` means at least one error.
+<Tip>
+	Keep `ubd check --watch` running beside your editor. In CI, run `ubd check --all --json`; exit code `1` means at least one error.
+</Tip>
 
-## Build report
+## Build Report
 
 After each plugin builds, `ubd build` prints what it ships and warns when a size passes its budget:
 
@@ -158,11 +124,11 @@ starred-users 1.2.0
 | Line | Measures |
 | --- | --- |
 | `bundle` | The written `index.js`, its gzip size, and the largest Hermes bytecode file. |
-| `inlined` | What the build inlined into the bundle, such as en-US strings and SVG icons, as the plugins that inline them count it. |
-| `shipped` | The files the manifest lists beside the bundle (translations and images), as publish and install read them. |
-| `metro` | The Metro filters that got a cache key, and where each one that searches uncached is. |
+| `inlined` | What plugins inlined into the bundle, such as en-US strings and SVG icons. |
+| `shipped` | Files the manifest lists beside the bundle (translations and images). |
+| `metro` | Metro filters that got a cache key, and where each uncached one is. |
 
-`--verbose` also lists the five largest source modules. `--json` prints the same data for CI. `ubd dev` prints one line per rebuild instead, such as `Built my-plugin: 18.4 KB · 1 uncached filter`.
+`--verbose` also lists the five largest source modules. `--json` prints the same data. `ubd dev` prints one line per rebuild, such as `Built my-plugin: 18.4 KB · 1 uncached filter`.
 
 ### Budgets
 
@@ -174,11 +140,12 @@ import { unbound } from '@unbound-app/cli/rollup';
 export default unbound(import.meta.url, { budget: { bundle: '80kb', assets: '1mb' } });
 ```
 
-A size over its budget is a warning. Pass `--strict-budget` to fail the build instead. The report also warns when the bundle contains a library from `node_modules` that the client already provides, such as a file of `lodash` imported by path. Import the library by its name so the plugin uses the client's copy.
+- A size over budget is a warning. `--strict-budget` fails the build instead.
+- The report warns when the bundle contains a `node_modules` library the client already provides, such as a `lodash` file imported by path. Import it by name to use the client's copy.
 
-### Add a line from a rollup plugin
+### Custom Report Lines
 
-A rollup plugin adds a line by emitting `reportLine(entry)` with `this.emitFile`, from any hook up to `generateBundle`. Entries with the same `section` and `label` merge: their `bytes` add up, `unit` shows how many merged, `tally` counts them by kind, `location` lists where each came from, and `issue` names them in the `ubd dev` line. The entries never reach `dist`.
+A rollup plugin adds a line by emitting `reportLine(entry)` with `this.emitFile`, from any hook up to `generateBundle`. The entries never reach `dist`.
 
 ```js
 import { reportLine } from '@unbound-app/cli/rollup';
@@ -186,42 +153,106 @@ import { reportLine } from '@unbound-app/cli/rollup';
 this.emitFile(reportLine({ section: 'inlined', label: 'svg', unit: '', bytes: xml.length }));
 ```
 
-## Run code and reload
+Entries with the same `section` and `label` merge:
 
-| Command | What it does |
+| Field | When merged |
 | --- | --- |
-| `ubd eval <code>` | Evaluates JavaScript in the running client and prints the result and any console output. `--timeout` sets how long to wait, in milliseconds. |
-| `ubd reload` | Reloads the bundle and waits until the fresh bundle reconnects to the bridge. `--timeout` defaults to `60000`. |
-| `ubd modules [pattern]` | Searches Discord's Metro modules by file path or export name, and lists each match's id, whether it has loaded, and its exports. `--max` defaults to `40`. |
-| `ubd trace <props...>` | Records calls to a function of one of Discord's modules, such as `generateMessageRowData`, and summarises the first calls' arguments and results. |
-| `ubd timing` | Measures a zero-delay JavaScript timer and a native main-thread round trip. `--rounds` defaults to `3`. |
-| `ubd profile` | Samples the JavaScript thread with Hermes' sampling profiler for `--duration` milliseconds (default `5000`) and ranks the functions and sources it ran, by their own time and their time on the stack. `--top` defaults to `20`. `--out` also saves the Chrome trace, which opens in Perfetto. |
+| `bytes` | Adds up. |
+| `unit` | Shows how many merged. |
+| `tally` | Counts them by kind. |
+| `location` | Lists where each came from. |
+| `issue` | Names them in the `ubd dev` line. |
 
-`trace` and `hook` record for `--duration` milliseconds (default `3000`) and describe the first `--samples` calls (default `10`).
+## Translations
 
-## Inspect native code
+`ubd i18n` checks a plugin's `i18n/` folder against `i18n/en-US.json`. Run it in the plugin, or pass `--plugin <dir>`. Per language it prints translated and missing keys, keys `en-US.json` lacks, and every ICU problem with file, line and position.
 
-| Command | What it does |
-| --- | --- |
-| `ubd views [filter]` | Prints the native view tree: Android views of the current activity, or iOS views of every visible window, with each view's size, visibility, text and handle. |
-| `ubd inspect <class\|views\|find> [name]` | Inspects native code. `class` lists a class's constructors, methods and fields (`--filter` narrows them), and `views` dumps view subtrees (`--class` keeps only one view class). |
-| `ubd hook <className> [method]` | Records calls to an Android Java method or an iOS Objective-C selector. On Android, `--parameters` gives the Java parameter types, such as `android.view.MotionEvent`. |
-| `ubd spans [match]` | Prints the text and spans of Android text views that contain some text, with each span's class and range, and invisible characters escaped. |
-
-## Logs and device state
-
-`ubd logs` tails Discord's log, filtered to Unbound, the JavaScript console and crashes. On Android it follows `adb logcat` for `com.discord` across restarts. On an iPhone it reads the unified log.
+```bash
+ubd i18n
+ubd i18n --fix
+ubd i18n --unused
+ubd i18n --add GREETING "Hello, {name}!"
+ubd i18n --json
+```
 
 | Flag | Meaning |
 | --- | --- |
-| `--level` | The lowest level to print: `verbose`, `debug`, `info`, `warn`, `error` or `fatal`. Defaults to `verbose`. |
-| `--grep` | Print only lines matching a regular expression. |
-| `--since` | Start from history: a duration such as `5m`, a time such as `14:30`, or a date. On iOS, history only holds notices, errors and faults. |
-| `--follow=false` | Print the history and exit. |
-| `--symbolicate` | Rewrite Hermes frames of the client bundle to source positions, using the source maps in `packages/client/dist`. `--bundle` picks the bundle. |
-| `--pull` | Copy the loader's own log files off the device instead of tailing. They survive restarts and include the JavaScript console. `--out` sets the folder. |
+| `--fix` | Adds each missing key to every translation with its English text, in `en-US.json`'s order. Keeps indentation and trailing newline. Idempotent. |
+| `--prune` | Also removes keys `en-US.json` lacks. Implies `--fix`. |
+| `--unused` | Lists `en-US.json` keys unused in `src/` or `settings.ts`, and used keys `en-US.json` lacks. |
+| `--add <key> <text>` | Adds a key to `en-US.json` (sorted place if sorted, else last), then rewrites `src/unbound-i18n.d.ts` like `ubd dev`. |
+| `--strict` | Fails on missing translations too. |
+| `--json` | Prints the report as JSON. |
 
-`ubd device` saves and restores Discord's Unbound state, which is useful for testing from a known starting point:
+ICU problems are placeholders that differ from English, a `plural` or `select` without an `other` branch, and syntax errors.
+
+### Exit Codes
+
+It exits `1` on any of these:
+
+- An ICU problem.
+- A key `en-US.json` does not have.
+- A file it cannot read.
+- With `--unused`, a used key `en-US.json` lacks.
+
+Missing translations fail only with `--strict`.
+
+### Untranslated Stubs
+
+`--fix` records each key it added in `i18n/untranslated.jsonc`, with the English text it wrote. Commit that file: the report counts those keys as missing until their text changes. The build never reads it. The next `--fix` drops translated keys and updates stubs whose English changed.
+
+### Unused Key Detection
+
+`--unused` finds keys passed as string literals:
+
+| Call | Keys read |
+| --- | --- |
+| `messages.KEY`, `messages['KEY']` | The property, when `messages` comes from `@unbound-app/i18n` |
+| `format('KEY', …)` | The first argument, when `format` comes from `@unbound-app/i18n` |
+| `defineSettings(...)` | `title`, `subtitle`, `label`, `options` and `confirm` values |
+| `commands.register(...)` | `description` and `label` values |
+| `option.choice({ value: 'KEY' })` | Each label key in the choice map |
+| `toasts.success('KEY', vars)`, and `error`, `info`, `warning` | The first argument |
+| `dialogs.confirm('KEY', …)`, `dialogs.alert('KEY', …)` | The first argument, and the `body`, `confirm` and `cancel` options |
+
+Keys built at run time, such as `messages[name]`, are not found. The report counts these reads so you can verify its unused list.
+
+## Run and Reload
+
+| Command | What it does |
+| --- | --- |
+| `ubd eval <code>` | Evaluates JavaScript in the client and prints the result and console output. `--timeout` in milliseconds. |
+| `ubd reload` | Reloads the bundle and waits for it to reconnect to the bridge. `--timeout` defaults to `60000`. |
+| `ubd modules [pattern]` | Searches Metro modules by file path or export name: id, loaded state, exports. `--max` defaults to `40`. |
+| `ubd trace <props...>` | Records calls to a Discord module function, such as `generateMessageRowData`, and summarises arguments and results. |
+| `ubd timing` | Measures a zero-delay JavaScript timer and a native main-thread round trip. `--rounds` defaults to `3`. |
+| `ubd profile` | Samples the JavaScript thread with Hermes' profiler for `--duration` ms (default `5000`) and ranks functions by self and stack time. `--top` defaults to `20`. `--out` saves a Chrome trace for Perfetto. |
+
+`trace` and `hook` record for `--duration` ms (default `3000`) and describe the first `--samples` calls (default `10`).
+
+## Inspect Native Code
+
+| Command | What it does |
+| --- | --- |
+| `ubd views [filter]` | Prints the native view tree: Android views of the current activity, or iOS views of every visible window, with size, visibility, text and handle. |
+| `ubd inspect <class\|views\|find> [name]` | `class` lists constructors, methods and fields (`--filter` narrows). `views` dumps view subtrees (`--class` keeps one view class). |
+| `ubd hook <className> [method]` | Records calls to an Android Java method or iOS Objective-C selector. On Android, `--parameters` gives Java parameter types, such as `android.view.MotionEvent`. |
+| `ubd spans [match]` | Prints the text and spans of matching Android text views, with each span's class and range and invisible characters escaped. |
+
+## Logs and Device State
+
+`ubd logs` tails Discord's log, filtered to Unbound, the JavaScript console and crashes. On Android it follows `adb logcat` for `com.discord` across restarts. On iOS it reads the unified log.
+
+| Flag | Meaning |
+| --- | --- |
+| `--level` | Lowest level: `verbose`, `debug`, `info`, `warn`, `error` or `fatal`. Defaults to `verbose`. |
+| `--grep` | Only lines matching a regular expression. |
+| `--since` | Start from history: a duration (`5m`), a time (`14:30`) or a date. iOS history holds only notices, errors and faults. |
+| `--follow=false` | Print history and exit. |
+| `--symbolicate` | Map Hermes frames of the client bundle to source with the maps in `packages/client/dist`. `--bundle` picks the bundle. |
+| `--pull` | Copy the loader's own log files off the device instead. They survive restarts and include the console. `--out` sets the folder. |
+
+`ubd device` saves and restores Discord's Unbound state, to test from a known start:
 
 ```bash
 ubd device save clean
@@ -230,11 +261,9 @@ ubd device restore clean --restart
 ubd device reset
 ```
 
-## AI clients
+## MCP Server
 
-`ubd mcp` serves the bridge commands above, plus `install` and `device`, as tools of a stdio [MCP](https://modelcontextprotocol.io) server over one connection to the bridge, so an AI client can evaluate code, inspect views, and push plugins. `build`, `check`, `dev`, `create`, `logs`, `login`, `logout` and `publish` stay CLI only. [AI agents](/docs/developer/development/ai-agents) covers registering it and installing Unbound's skills.
-
-Two tools are also available from the command line under `ubd mcp`: `ubd mcp route` prints the focused navigation route with its params and navigator path, and `ubd mcp open <screen>` opens an Unbound or Discord settings screen from anywhere in the app.
+`ubd mcp` serves the bridge commands, plus `install` and `device`, as tools of a stdio [MCP](https://modelcontextprotocol.io) server. `build`, `check`, `dev`, `create`, `logs`, `login`, `logout` and `publish` stay CLI only. See [AI Agents](/docs/developer/tools/ai-agents).
 
 ```json
 {
@@ -243,3 +272,10 @@ Two tools are also available from the command line under `ubd mcp`: `ubd mcp rou
 	}
 }
 ```
+
+Two tools also run from the command line:
+
+| Command | What it does |
+| --- | --- |
+| `ubd mcp route` | Prints the focused navigation route, its params and navigator path. |
+| `ubd mcp open <screen>` | Opens an Unbound or Discord settings screen from anywhere. |

@@ -302,7 +302,7 @@ function ThemeMaker() {
 							. With the{' '}
 							<Link
 								to='/docs/developer/$'
-								params={{ _splat: 'development/debugging' }}
+								params={{ _splat: 'tools/debugger' }}
 								className={LINK}
 							>
 								debugger
@@ -310,7 +310,7 @@ function ThemeMaker() {
 							connected,{' '}
 							<Link
 								to='/docs/developer/$'
-								params={{ _splat: 'development/cli' }}
+								params={{ _splat: 'tools/cli' }}
 								className={cn(LINK, 'font-mono')}
 							>
 								ubd dev

@@ -1,84 +1,82 @@
 ---
 title: 'Building Unbound'
-description: "Build Unbound's own bundle from source, and load it on your phone."
+description: "Build Unbound's own bundle and load it on your phone."
 icon: 'hammer'
 ---
 
-This page is for working on Unbound itself. To build an addon, see [Your First Plugin](/docs/developer/addons/creating) instead.
+Build Unbound itself from source and point the loader at your build instead of `https://builds.unbound.rip/`. To build an addon, see [Your First Plugin](/docs/developer/getting-started/first-plugin).
 
-The loader normally downloads Unbound's bundle from `https://builds.unbound.rip/`. To test your changes, build the bundle yourself, serve it on your network, and point the loader at it.
+## Quick Start
 
 <Steps>
-	<Step title='Install dependencies'>
-		From the root of the Unbound repository:
+	<Step title='Install Dependencies'>
+		From the repository root:
 
 		```bash
 		bun install
 		```
 	</Step>
-	<Step title='Start the dev server'>
-		It rebuilds the bundle whenever the source changes, and serves it over HTTP.
+	<Step title='Start the Dev Server'>
+		It rebuilds on every change and serves the bundle over HTTP.
 
 		```bash
 		bun run --filter @unbound-app/client dev
 		```
 
-		On startup it prints the address your phone should use: `Devices on the LAN should connect to: ...`.
+		It prints the address for your phone: `Devices on the LAN should connect to: ...`.
 	</Step>
-	<Step title='Point the loader at your bundle'>
-		Set `loader.update.url` in the phone's `settings.json` to that address. See the [settings reference](/docs/developer/loader/settings#keys) for where the file is and how keys nest.
-
-		Bundles from your local network skip the signature check, so no other key is needed.
+	<Step title='Point the Loader'>
+		Set `loader.update.url` in the phone's `settings.json` to that address. See [Settings Reference](/docs/developer/loader/settings#keys). Bundles from your local network skip the signature check.
 	</Step>
 </Steps>
 
-To build once without watching, build and then serve the result:
+To build once without watching:
 
 ```bash
 bun run --filter @unbound-app/client build
 bun run --filter @unbound-app/client serve
 ```
 
-## Test on a jailbroken iPhone over SSH
+## Jailbroken iPhone over SSH
 
-The scripts in `skills/ubd-vphone/scripts/` run the test loop against a jailbroken iPhone or iOS virtual machine. They serve your build, point the loader at it, relaunch Discord until Unbound answers, and explain a crash when Discord dies. With `VPHONE_SSH` set, they reach the device over SSH.
+The scripts in `skills/ubd-vphone/scripts/` run the test loop on a jailbroken iPhone or iOS VM. With `VPHONE_SSH` set, they reach it over SSH.
 
 <Steps>
-	<Step title='Set up SSH'>
-		The device needs an SSH server and, from a rootless jailbreak's bootstrap, `sudo`, `base64`, `ps` and `uiopen`. Log in with a key, since the scripts never answer a password prompt:
+	<Step title='Set Up SSH'>
+		The device needs an SSH server plus `sudo`, `base64`, `ps` and `uiopen` from a rootless jailbreak's bootstrap. Use key login; the scripts never answer a password prompt.
 
 		```bash
 		ssh-copy-id mobile@192.168.1.30
 		ssh -o BatchMode=yes mobile@192.168.1.30 true
 		```
 
-		Install the debug build of the loader tweak on the device too. Then, in the device's **Settings**, open **Display & Brightness** and set **Auto-Lock** to **Never**. The debugger connects only while Discord is open, and the scripts cannot unlock the screen over SSH.
+		Install the loader tweak's debug build. In **Settings**, **Display & Brightness**, set **Auto-Lock** to **Never**: the debugger connects only while Discord is open, and SSH cannot unlock the screen.
 	</Step>
-	<Step title='Point the scripts at the device'>
-		Add the device and your computer's address to `.env` at the root of the repository:
+	<Step title='Configure .env'>
+		At the repository root:
 
 		```bash .env
 		VPHONE_SSH=mobile@192.168.1.30
 		DEV_HOST=192.168.1.20
 		```
 
-		Check it: `skills/ubd-vphone/scripts/vphone pid` prints Discord's process id, or `not running`.
+		Check: `skills/ubd-vphone/scripts/vphone pid` prints Discord's process id, or `not running`.
 	</Step>
-	<Step title='Start the servers'>
-		`up.sh` starts the dev server and the [debugger](/docs/developer/development/debugging) bridge in tmux sessions.
+	<Step title='Start the Servers'>
+		`up.sh` starts the dev server and the [debugger](/docs/developer/tools/debugger) bridge in tmux sessions.
 
 		```bash
 		skills/ubd-vphone/scripts/up.sh
 		```
 	</Step>
 	<Step title='Provision Discord'>
-		`provision` copies the loader's resources into Discord, points the loader and the debugger at your computer, and relaunches Discord. Run it again after every reinstall of Discord.
+		Copies the loader's resources into Discord, points the loader and debugger at your computer, and relaunches. Rerun after every Discord reinstall.
 
 		```bash
 		skills/ubd-vphone/scripts/provision
 		```
 	</Step>
-	<Step title='Run your build'>
+	<Step title='Run Your Build'>
 		`claim.sh` serves the current checkout and relaunches Discord until it runs that build. `release.sh` hands the device back.
 
 		```bash
@@ -87,20 +85,24 @@ The scripts in `skills/ubd-vphone/scripts/` run the test loop against a jailbrok
 	</Step>
 </Steps>
 
+### Variables
+
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `VPHONE_SSH` | Unset | The device's SSH host: an alias from `~/.ssh/config`, or `user@address` |
-| `VPHONE_SSH_PORT` | SSH's own | The SSH port, when it is not in `~/.ssh/config` |
-| `VPHONE_SUDO_PASSWORD` | `alpine` | The password `sudo` asks for. The scripts need root to read Discord's containers and crash reports |
+| `VPHONE_SSH` | Unset | SSH host: a `~/.ssh/config` alias, or `user@address` |
+| `VPHONE_SSH_PORT` | SSH's own | SSH port, when not in `~/.ssh/config` |
+| `VPHONE_SUDO_PASSWORD` | `alpine` | The `sudo` password. Root reads Discord's containers and crash reports |
 | `DEV_HOST` | Your LAN address | The address the device reaches your computer at |
 
-Four more scripts cover the rest of the loop:
+### Scripts
 
 | Script | What it does |
 | --- | --- |
-| `relaunch` | Restarts Discord and waits until Unbound runs. When Discord dies while starting, it prints the crash and tries again |
-| `crashes` | Explains Discord's newest crash report: what killed it, the libraries to suspect, and Unbound's log for that run |
-| `unbound-log` | Prints the errors and warnings from Unbound's log for the current run |
-| `doctor.sh --fix` | Checks the servers, the bridge and the loader's bundle address, and repairs what fails |
+| `relaunch` | Restarts Discord and waits for Unbound. If Discord dies on start, prints the crash and retries |
+| `crashes` | Explains the newest crash: what killed it, suspect libraries, and Unbound's log for that run |
+| `unbound-log` | Prints errors and warnings from Unbound's log for the current run |
+| `doctor.sh --fix` | Checks the servers, bridge and loader bundle address, and repairs failures |
 
-SSH cannot see or touch the screen, so screenshots, taps and typing are not available. Check what the app shows with `ubd eval` and `ubd mcp route` instead, as [Debugging](/docs/developer/development/debugging) describes.
+<Note>
+	SSH cannot see or touch the screen: no screenshots, taps or typing. Check the app with `ubd eval` and `ubd mcp route` instead; see [CLI](/docs/developer/tools/cli).
+</Note>
