@@ -2,10 +2,12 @@ import { afterEach, describe, expect, mock, test } from 'bun:test';
 import { Component, createElement, forwardRef, memo } from 'react';
 import type { ReactNode } from 'react';
 
+import { mockLookups } from '../helpers/lookups';
+
 // No React surface is mounted under bun, so the renderer finds no roots.
-mock.module('~/metro/wrappers', () => ({
-	findByPropsLazy: () => ({ getPublicInstanceFromRootTag: () => null }),
-}));
+mockLookups({
+	findByProps: () => ({ getPublicInstanceFromRootTag: () => null }),
+});
 
 const warning = mock();
 const toasts = { show: mock(), success: mock(), info: mock(), warning, error: mock() };

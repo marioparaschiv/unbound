@@ -5,10 +5,13 @@ import type { PendingUpdate } from '~/updates/addon-updates';
 import type { UpdatesState } from '~/updates/state';
 
 import { coreI18nMock } from '../helpers/core-i18n';
+import { mockLookups } from '../helpers/lookups';
 
 const toasts: ToastOptions[] = [];
 
 mock.module('~/i18n/api', coreI18nMock);
+// Navigation readiness finds Discord's navigation module, which these tests never reach.
+mockLookups({});
 
 const actualToasts = await import('~/toasts/api');
 

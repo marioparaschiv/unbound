@@ -3,11 +3,15 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 import vm from 'node:vm';
 
-import * as releaseRuntime from '~/hot-refresh/runtime.release';
-import * as runtime from '~/hot-refresh/runtime';
-
+import { mockLookups } from '../../../tests/helpers/lookups';
 import downlevel from '../plugins/downlevel';
 import { config, devConfig } from '..';
+
+// The hot runtime finds Discord's renderer, which this test never reaches.
+mockLookups({});
+
+const releaseRuntime = await import('~/hot-refresh/runtime.release');
+const runtime = await import('~/hot-refresh/runtime');
 
 const root = join(import.meta.dir, '..', '..', '..');
 const [output] = [config.output].flat();

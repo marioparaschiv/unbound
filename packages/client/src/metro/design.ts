@@ -8,9 +8,10 @@ import type {
 import { DESIGN_COMPONENTS } from '@unbound-app/types/components';
 import type { ComponentType, ElementType } from 'react';
 
-import { findByPropsLazy } from '~/metro/wrappers';
+import { byProps } from '~/metro/filters';
+import { find } from '~/metro/lookups';
 
-const designModule: DesignModule = findByPropsLazy('createStyles', 'dismissAlerts', 'ContextMenu');
+const designModule: DesignModule = find(byProps('createStyles', 'dismissAlerts', 'ContextMenu'));
 // Loaders, so a fallback's file runs only when a build lacks the component it stands in for.
 const designFallbacks = new Map<DesignComponentName, () => ComponentType<never>>();
 

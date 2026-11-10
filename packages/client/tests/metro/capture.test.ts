@@ -68,6 +68,7 @@ mock.module('~/metro/cache', () =>
 );
 
 const search = await import('~/metro/search');
+const lookups = await import('~/metro/lookups');
 const { blacklist } = await import('~/metro/state');
 const { onModuleLoaded } = await import('~/metro/wait');
 const { byProps } = await import('~/metro/filters');
@@ -91,7 +92,9 @@ describe('the define stage', () => {
 		metro.require(DISCORD);
 
 		expect(globalThis.modules.get(DISCORD)?.__filePath).toBe('modules/debug/Logger.tsx');
-		expect(search.findByFilePath('modules/debug/Logger.tsx')).toEqual({ discord: true });
+		expect(lookups.findByFilePath('modules/debug/Logger.tsx', { lazy: false })).toEqual({
+			discord: true,
+		});
 	});
 
 	test('notifies module listeners when a module loads', () => {

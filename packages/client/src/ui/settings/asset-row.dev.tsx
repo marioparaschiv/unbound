@@ -3,7 +3,7 @@ import { memo, useRef } from 'react';
 import { Image } from 'react-native';
 
 import { Discord, Media } from '~/metro/components';
-import { findByProps } from '~/metro/search';
+import { findByProps } from '~/metro/lookups';
 
 import useStyles from './asset-row.style';
 

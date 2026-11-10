@@ -1,6 +1,6 @@
 import type { FunctionComponent } from 'react';
 
-import { findByPropsLazy } from '~/metro/wrappers';
+import { findByProps } from '~/metro/lookups';
 
 /** Any function component; `never` props accept every component's props. */
 export type Component = FunctionComponent<never>;
@@ -52,7 +52,7 @@ type FiberRoot = {
 	pendingLanes: number;
 };
 
-const Renderer = findByPropsLazy('getPublicInstanceFromRootTag');
+const Renderer = findByProps('getPublicInstanceFromRootTag');
 
 const HOST_ROOT = 3;
 const MEMO = 14;

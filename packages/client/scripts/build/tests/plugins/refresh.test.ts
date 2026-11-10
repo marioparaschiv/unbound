@@ -1,7 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 
+import { mockLookups } from '../../../../tests/helpers/lookups';
 import { transformModule } from '../../plugins/refresh';
+
+// The hot runtime finds Discord's renderer, which this test never reaches.
+mockLookups({});
 
 const root = join(import.meta.dir, '..', '..', '..', '..');
 const id = join(root, 'src/ui/settings/example.tsx');

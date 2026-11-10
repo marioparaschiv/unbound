@@ -3,7 +3,7 @@ import { View } from 'react-native';
 
 import { parseTypedColor, typedColorState } from '~/ui/settings-kit/typed-color';
 import { Discord } from '~/metro/components';
-import { findByName } from '~/metro/search';
+import { findByName } from '~/metro/lookups';
 import { ActionSheets } from '~/metro/api';
 import { messages } from '~/i18n/api';
 
@@ -34,7 +34,7 @@ function toHex(color: number): string {
 }
 
 function openPicker(color: string, onSelect: (color: string) => void): boolean {
-	const picker = findByName('CustomColorPickerActionSheet');
+	const picker = findByName('CustomColorPickerActionSheet', { lazy: false });
 
 	if (!picker || !ActionSheets?.openLazy) {
 		return false;

@@ -5,12 +5,11 @@ import { forwardRef, memo } from 'react';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { mockLookups } from '../helpers/lookups';
+
 await import('../helpers/addons');
 
-mock.module('~/metro/search', () => ({
-	findByName: () => undefined,
-	findByProps: () => undefined,
-}));
+mockLookups({});
 // The fallbacks' style sheets read colour tokens, which `~/metro/common` takes off Discord's `window`.
 mock.module('~/metro/common', () => ({
 	Theme: { colors: new Proxy({}, { get: (_target, key) => String(key) }) },

@@ -123,10 +123,6 @@ mock.module('~/metro/cache', () =>
 	}),
 );
 
-mock.module('~/metro/wrappers', () => ({
-	findByPropsLazy: () => ({ getPublicInstanceFromRootTag: () => null }),
-}));
-
 const loadedBeforeImport = initialized();
 const assets = await import('~/assets/api');
 

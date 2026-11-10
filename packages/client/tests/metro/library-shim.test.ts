@@ -22,11 +22,14 @@ function matches(exports: MetroExport, props: string[]) {
 	return props.every((prop) => exports?.[prop] !== void 0);
 }
 
+let lookupsLoaded = false;
+
 // Mirrors `findByProps`: a module also matches through its default export unless `esModules` is off.
-mock.module('~/metro/finders', () => ({
-	finder:
-		() =>
-		(...args: [...string[], SearchOptions]) => {
+mock.module('~/metro/lookups', () => {
+	lookupsLoaded = true;
+
+	return {
+		findByProps: (...args: [...string[], SearchOptions]) => {
 			const props = args.slice(0, -1) as string[];
 			const { esModules = true } = args.at(-1) as SearchOptions;
 
@@ -36,7 +39,8 @@ mock.module('~/metro/finders', () => ({
 				(mdl) => matches(mdl, props) || (esModules && matches(mdl.default, props)),
 			);
 		},
-}));
+	};
+});
 
 const { createLibraryShim } = await import('~/metro/library-shim');
 
@@ -61,9 +65,11 @@ beforeEach(() => {
 });
 
 describe('a library shim', () => {
-	test('finds nothing when created or imported', () => {
+	// Shims load while the metro cache is loading, before the search that reads it can.
+	test('loads no metro lookup and finds nothing when created or imported', () => {
 		toESM(createLibraryShim(['Svg', 'Path']));
 
+		expect(lookupsLoaded).toBe(false);
 		expect(searches).toEqual([]);
 	});
 

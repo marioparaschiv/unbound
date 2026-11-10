@@ -1,13 +1,15 @@
 import { cloneElement, createElement, Fragment, isValidElement, memo } from 'react';
-import { afterEach, describe, expect, mock, test } from 'bun:test';
+import { afterEach, describe, expect, test } from 'bun:test';
 import type { ReactElement, ReactNode } from 'react';
 
 import type { ElementBoundaryProps } from '~/patcher/element-boundary';
 
+import { mockLookups } from '../helpers/lookups';
+
 // No React surface is mounted under bun, so the renderer finds no roots.
-mock.module('~/metro/wrappers', () => ({
-	findByPropsLazy: () => ({ getPublicInstanceFromRootTag: () => null }),
-}));
+mockLookups({
+	findByProps: () => ({ getPublicInstanceFromRootTag: () => null }),
+});
 
 const { react, unpatchAll } = await import('~/patcher/api');
 const { isPatchBoundary } = await import('~/patcher/patch-boundary');

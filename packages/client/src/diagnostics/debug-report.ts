@@ -1,7 +1,7 @@
 import { BundleInfo, getRuntimeProperties } from '~/native/native';
-import { findByPropsLazy, findStoreLazy } from '~/metro/wrappers';
 import { CLIENT_VERSION, VERSION } from '~/core/constants';
 import { Messages as MessageActions } from '~/metro/api';
+import { findByProps, findStore } from '~/metro/lookups';
 import { discordChannel } from '~/core/discord-support';
 import type { BundleInfoType } from '~/native/native';
 import { React, ReactNative } from '~/metro/common';
@@ -27,8 +27,8 @@ const ENTITLEMENTS_PATH = 'Unbound/cache/debug/Entitlements.xml';
 const UPLOAD_ORIGIN_FILE = 1;
 const UPLOAD_PLATFORM_REACT_NATIVE = 0;
 
-const CloudUploader = findByPropsLazy('CloudUpload');
-const SelectedChannelStore = findStoreLazy('SelectedChannel');
+const CloudUploader = findByProps('CloudUpload');
+const SelectedChannelStore = findStore('SelectedChannel');
 
 // A TurboModule serves its constants through getConstants() instead of as properties.
 function readBundleInfo(): Partial<BundleInfoType> {

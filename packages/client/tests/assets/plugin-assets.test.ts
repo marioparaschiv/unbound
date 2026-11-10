@@ -3,6 +3,7 @@ import { describe, expect, mock, test } from 'bun:test';
 
 import { startFakeMetro } from '../helpers/fake-metro';
 import { createCacheMock } from '../helpers/cache';
+import { mockLookups } from '../helpers/lookups';
 
 type Asset = { name: string; type: string; width: number; height: number; scales: number[] };
 type Resolver = { asset?: Asset };
@@ -32,15 +33,18 @@ fakeMetro.define(REGISTRY, [], (_, __, ___, ____, module) => {
 fakeMetro.require(REGISTRY);
 
 mock.module('~/metro/cache', () => createCacheMock({ getModuleIds: () => [REGISTRY] }));
-mock.module('~/metro/wrappers', () => ({
-	// React Native's `resolveAssetSource`: the first transformer that returns a source wins.
-	findByPropsLazy: () => ({
-		addCustomSourceTransformer: (transform: Transform) => transforms.push(transform),
-		pickScale: (scales: number[], scale: number) =>
-			scales.toSorted((a, b) => a - b).find((candidate) => candidate >= scale) ??
-			Math.max(...scales),
-	}),
-}));
+mockLookups(
+	{
+		// React Native's `resolveAssetSource`: the first transformer that returns a source wins.
+		findByProps: () => ({
+			addCustomSourceTransformer: (transform: Transform) => transforms.push(transform),
+			pickScale: (scales: number[], scale: number) =>
+				scales.toSorted((a, b) => a - b).find((candidate) => candidate >= scale) ??
+				Math.max(...scales),
+		}),
+	},
+	await import('~/metro/lookups'),
+);
 
 // The scope reads locale files through the native file manager, which this test never reaches.
 mock.module('~/native/fs', () => ({

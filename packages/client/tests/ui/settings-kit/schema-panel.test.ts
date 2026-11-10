@@ -6,6 +6,8 @@ import type { ReactElement } from 'react';
 import type { SettingsValues } from '~/storage/define';
 import type { AlertDialogProps } from '~/dialogs/api';
 
+import { mockLookups } from '../../helpers/lookups';
+
 // The rows read Discord's components and Unbound's strings only when they render, which these tests never do.
 const named = new Proxy({}, { get: (_target, key) => String(key) });
 
@@ -27,11 +29,7 @@ mock.module('~/metro/components', () => ({
 	HelpMessage: named,
 	HelpMessageTypes: named,
 }));
-mock.module('~/metro/search', () => ({
-	findByName: () => undefined,
-	findByProps: () => undefined,
-}));
-mock.module('~/metro/wrappers', () => ({ findStoreLazy: () => undefined }));
+mockLookups({});
 mock.module('~/metro/api', () => ({ ActionSheets: undefined }));
 mock.module('~/assets/api', () => ({ icons: named }));
 mock.module('~/i18n/api', () => ({ messages: named, format: (key: string) => key }));

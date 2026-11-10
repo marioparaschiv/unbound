@@ -7,7 +7,7 @@ import type { MetroFilter } from '~/metro/filters';
 import { blacklist, data } from '~/metro/state';
 import { benchTotal } from '~/core/bench-span';
 import { CACHE_KEY } from '~/metro/cache-key';
-import { finder } from '~/metro/finders';
+import { find } from '~/metro/search';
 
 type Waiter = {
 	filter: MetroFilter;
@@ -50,7 +50,7 @@ export function onModuleLoaded(
 		return noop;
 	}
 
-	const loaded = finder('find')(filter, { ...options, initialize: false });
+	const loaded = find(filter, { ...options, initialize: false });
 
 	if (loaded !== null && loaded !== void 0) {
 		onLoad(loaded);
@@ -90,7 +90,7 @@ export function onModuleLoaded(
  */
 export function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = {}) {
 	const { signal, ...rest } = options;
-	const existing = finder('find')(filter, { ...rest, initialize: false });
+	const existing = find(filter, { ...rest, initialize: false });
 
 	// `find` reports a miss as `null`.
 	if (existing !== null && existing !== void 0) {

@@ -2,14 +2,14 @@ import { createLogger } from '@unbound-app/logger';
 
 import { getSetting, isSettingChange } from '~/settings/unbound';
 import { createPatcher } from '~/patcher/create-patcher';
-import { findByPropsLazy } from '~/metro/wrappers';
 import { byFluxStore } from '~/metro/filters';
+import { findByProps } from '~/metro/lookups';
 import { onModuleLoaded } from '~/metro/wait';
 import { onChange } from '~/storage/api';
 
 const Patcher = createPatcher('unbound::staff-mode');
 const Logger = createLogger('StaffMode');
-const UserConstants = findByPropsLazy('isStaffEnv', 'isStaffEnvRawData');
+const UserConstants = findByProps('isStaffEnv', 'isStaffEnvRawData');
 
 let stopWaiting: (() => void) | null = null;
 let unsubscribe: (() => void) | null = null;

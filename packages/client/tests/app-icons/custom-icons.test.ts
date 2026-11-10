@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 
+import { mockLookups } from '../helpers/lookups';
+
 type HomeScreenIconCall = { name: string; imagePath: string };
 
 const files = new Map<string, string>();
@@ -48,8 +50,8 @@ mock.module('~/native/unbound-native', () => ({
 	},
 }));
 
-mock.module('~/metro/wrappers', () => ({
-	findByPropsLazy: () => ({
+mockLookups({
+	findByProps: () => ({
 		setAppIcon: async (id: string) => {
 			discordSetIcons.push(id);
 			currentIcon = id;
@@ -57,7 +59,7 @@ mock.module('~/metro/wrappers', () => ({
 			return true;
 		},
 	}),
-}));
+});
 
 const { addHomeScreenIcon, readCustomIcons, removeCustomIcon } =
 	await import('~/app-icons/custom-icons');

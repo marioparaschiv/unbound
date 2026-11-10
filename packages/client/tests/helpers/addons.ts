@@ -11,6 +11,7 @@ import { mock } from 'bun:test';
 import type { Addon, AddonState } from '~/addons/addon';
 
 import { coreI18nMock } from './core-i18n';
+import { mockLookups } from './lookups';
 
 // The base Addons manager reaches native FS and storage through these modules, which pull in
 // react-native. Stub both so the pure lifecycle logic loads under bun with no device harness.
@@ -122,6 +123,9 @@ mock.module('react-native', () => ({
 
 // The toasts API formats its error title with core i18n, whose real module reads Discord's globals on import.
 mock.module('~/i18n/api', coreI18nMock);
+
+// The metro search reads Discord's bundle info on import; these tests find no Discord module.
+mockLookups({});
 
 // Loaded dynamically after the mocks above: static imports hoist above `mock.module`, which would let
 // the real react-native-backed fs/storage load before the stubs are registered.

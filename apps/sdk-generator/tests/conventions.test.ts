@@ -29,12 +29,12 @@ describe('buildMetroConventions', () => {
 		'lazy-registry.ts': "const LAZY_MARKER = '__LAZY__';",
 		'common.ts': [
 			'export const React = window.React;',
-			"export const Theme = findByPropsLazy('colors', 'internal');",
-			"const Hidden = findByPropsLazy('private');",
+			"export const Theme = find(byProps('colors', 'internal'));",
+			"const Hidden = find(byProps('private'));",
 		].join('\n'),
 		'api.ts': [
 			'export const Linking = ReactNative.Linking;',
-			"export const Messages = findByPropsLazy('sendMessage', 'receiveMessage');",
+			"export const Messages = find(byProps('sendMessage', 'receiveMessage'));",
 		].join('\n'),
 	};
 	const read = (path: string) => sources[path.split('/').at(-1) ?? ''] ?? '';
@@ -51,7 +51,7 @@ describe('buildMetroConventions', () => {
 	});
 
 	test('rejects a lookup whose props are not string literals', () => {
-		const dynamic = { ...sources, 'api.ts': 'export const Messages = findByPropsLazy(name);' };
+		const dynamic = { ...sources, 'api.ts': 'export const Messages = find(byProps(name));' };
 
 		expect(() =>
 			buildMetroConventions((path) => dynamic[path.split('/').at(-1) ?? ''] ?? ''),
