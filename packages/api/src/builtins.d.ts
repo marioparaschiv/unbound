@@ -4,10 +4,12 @@
 export declare const register: (name: string, builtin: BuiltIn) => void;
 /** Stops the built-in feature registered under a name. */
 export declare const unregister: (name: string) => void;
-/** A built-in feature exposing optional `start`/`stop` lifecycle hooks. */
+/** A built-in feature exposing optional `start`/`afterAddons`/`stop` lifecycle hooks. */
 export type BuiltIn = {
-	/** Runs when the built-in is registered; if it throws, the built-in is logged and left inactive. */
+	/** Runs when the built-in is registered, before the addon managers load; if it throws, the built-in is logged and left inactive. */
 	start?: () => void;
+	/** Runs once the addon managers have loaded their addons, for work that reads them. */
+	afterAddons?: () => void;
 	/** Runs when the built-in is unregistered or the built-ins shut down, in reverse start order. */
 	stop?: () => void;
 	/** Checked once at initialisation; returning `false` skips registering the built-in. */
