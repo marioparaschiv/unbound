@@ -1,8 +1,9 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { IconTextAlignLeft } from 'nucleo-micro-bold';
 
 import type { GuideHeading } from '~/lib/guides/guide-meta';
 import useActiveHeading from '~/hooks/use-active-heading';
+import smoothScrollTo from '~/lib/smooth-scroll';
 import cn from '~/lib/cn';
 
 type GuideTocProps = {
@@ -13,6 +14,27 @@ type MarkerBox = {
 	top: number;
 	height: number;
 };
+
+// A plain click glides to the heading; a modified one (new tab, new window) keeps the browser's default.
+function scrollToHeading(event: MouseEvent<HTMLAnchorElement>, slug: string) {
+	const heading = document.getElementById(slug);
+
+	if (
+		!heading ||
+		event.button !== 0 ||
+		event.metaKey ||
+		event.ctrlKey ||
+		event.shiftKey ||
+		event.altKey
+	) {
+		return;
+	}
+
+	event.preventDefault();
+	// Keeps the router's entry state, so the hash updates without a navigation or an instant jump.
+	history.replaceState(history.state, '', `#${slug}`);
+	smoothScrollTo(heading);
+}
 
 /**
  * @description The "On this page" rail of a guide's h2s and h3s, in a sticky column from `xl` up. A marker
@@ -68,6 +90,7 @@ function GuideToc({ toc }: GuideTocProps) {
 								}
 							}}
 							href={`#${heading.slug}`}
+							onClick={(event) => scrollToHeading(event, heading.slug)}
 							aria-current={heading.slug === active ? 'location' : undefined}
 							className={cn(
 								'block py-1 pr-1 pl-3.5 rounded-sm outline-none focus-visible:ring-[3px] focus-visible:ring-halo transition-colors',
