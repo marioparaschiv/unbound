@@ -50,7 +50,7 @@ FilesPublic(v) ==
 
 LiveEventuallyPublic == \A v \in Versions : (versionRow[v] # None) ~> FilesPublic(v)
 
-\* findUpdates and the listings offer a version (live-versions.ts LIVE_VERSIONS): a live row whose files
+\* findUpdates and the listings offer a version (addon-visibility.ts LIVE_VERSIONS): a live row whose files
 \* are written, or any live row when ServeOnlyPublished is FALSE.
 Served(v) == versionRow[v] # None /\ ~(ServeOnlyPublished /\ pending[v])
 

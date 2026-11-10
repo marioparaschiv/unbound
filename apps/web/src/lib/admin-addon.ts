@@ -23,6 +23,7 @@ import { isAddonIcon, renderAddonIcon } from '~/lib/addon-icons';
 import { listSubmissionHistory } from '~/lib/admin-submissions';
 import type { AdminSubmission } from '~/lib/admin-submissions';
 import { addon, addonMaintainer, user } from '~/db/schema';
+import { isLive, requireAddon } from '~/lib/addon-visibility';
 import type { AdminAddon } from '~/lib/admin-addons';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
@@ -220,6 +221,7 @@ function queryAddon(ctx: AppContext, id: string) {
 					manifest: true,
 					bundleSize: true,
 					sha256: true,
+					withdrawnBy: true,
 					filesPendingSince: true,
 				},
 				with: {
@@ -264,9 +266,7 @@ export async function getAdminAddon(
 
 	const { maintainers: members, versions, ...rest } = row;
 	const maintainers = toMaintainers(members);
-	const served = versions.find(
-		(version) => !version.withdrawal && version.filesPendingSince === null,
-	);
+	const served = versions.find(isLive);
 	const state = toEditableState(
 		rest,
 		members.map((member) => ({ userId: member.userId, role: member.role })),
@@ -294,7 +294,7 @@ export async function getAdminAddon(
 		},
 		maintainers,
 		versions: versions.map(
-			({ manifest, submission, withdrawal, filesPendingSince, ...version }) => ({
+			({ manifest, submission, withdrawal, withdrawnBy, filesPendingSince, ...version }) => ({
 				...version,
 				repository: submission?.repository ?? null,
 				minClient: manifest.unbound?.min ?? null,
@@ -342,12 +342,8 @@ export async function editAddon(
 	requirePermission(caller, { addon: ['delist'] });
 
 	await ctx.db.transaction(async (tx) => {
-		const [row] = await tx.select().from(addon).where(eq(addon.id, id));
-
-		if (!row) {
-			throw new ApiError('not_found', `Addon ${id} does not exist.`);
-		}
-
+		const [found] = await tx.select().from(addon).where(eq(addon.id, id));
+		const row = requireAddon(found, id);
 		const current = toEditableState(row, await selectMembers(tx, id));
 
 		if (revisionOf(current) !== edit.revision) {

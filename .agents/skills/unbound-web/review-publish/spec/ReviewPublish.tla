@@ -17,7 +17,7 @@ CONSTANTS
     Recovery,              \* repeating an approved request republishes a live version's files (publish-version.ts hasPendingFiles)
     MaxWriteFailures,      \* public writes that fail after decide() commits, over a whole run
     AllowTamper,           \* Tamper may fire; FALSE only in the liveness config (see Fairness)
-    ServeOnlyPublished,    \* TRUE = current code: updates and listings skip a version whose files are pending (live-versions.ts LIVE_VERSIONS)
+    ServeOnlyPublished,    \* TRUE = current code: updates and listings skip a version whose files are pending (addon-visibility.ts LIVE_VERSIONS)
     None                   \* model value: no row, no object
 
 Subs     == SubsV1 \cup SubsV2

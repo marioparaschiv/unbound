@@ -10,7 +10,7 @@ import { afterKey, cursorTime, decodeCursor, scanOrder, toKeysetPage } from '~/l
 import { addonMaintainer, addonSearchText, submission } from '~/db/schema';
 import { requirePermission } from '~/lib/api/caller';
 import { renderAddonIcon } from '~/lib/addon-icons';
-import { LIVE_VERSIONS } from '~/lib/live-versions';
+import { SERVED_VERSION } from '~/lib/addon-visibility';
 import { matchesSearch } from '~/lib/admin-search';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
@@ -123,12 +123,7 @@ export function queryAdminAddons(ctx: AppContext, search: AdminAddonsSearch = {}
 				) ?? sql`true`,
 		},
 		with: {
-			versions: {
-				columns: { version: true },
-				where: LIVE_VERSIONS,
-				orderBy: { versionKey: 'desc' },
-				limit: 1,
-			},
+			versions: { ...SERVED_VERSION, columns: { version: true } },
 			maintainers: {
 				where: { role: 'owner' },
 				with: { user: { columns: { id: true, name: true, image: true } } },

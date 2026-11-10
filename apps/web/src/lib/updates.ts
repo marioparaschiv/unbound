@@ -4,14 +4,14 @@ import type {
 	UpdatesResponse,
 	VersionChangelog,
 } from '@unbound-app/contracts/updates';
-import { and, desc, eq, gt, inArray, isNotNull, isNull, lte, or } from 'drizzle-orm';
+import { and, desc, eq, gt, inArray, isNotNull, lte, or } from 'drizzle-orm';
 import { getArtifactKeys, getCdnUrl } from '@unbound-app/contracts/version-layout';
 import { MAX_UPDATE_CHANGELOGS } from '@unbound-app/contracts/updates';
 
 import { addon, addonVersion, submissionSource } from '~/db/schema';
 import type { SubmissionSourceRow } from '~/lib/artifacts';
 import { toVersionChangelog } from '~/lib/artifacts';
-import { isLiveVersion } from '~/lib/live-versions';
+import { isListedAddon, isLiveVersion } from '~/lib/addon-visibility';
 import { toVersionKey } from '~/lib/version-key';
 import type { AppContext } from '~/lib/context';
 
@@ -43,7 +43,7 @@ export function newestCompatibleVersions(ctx: AppContext, request: UpdatesReques
 				),
 				lte(addonVersion.minClientKey, toVersionKey(request.clientVersion)),
 				isLiveVersion(),
-				isNull(addon.delistedAt),
+				isListedAddon(),
 			),
 		)
 		.orderBy(addonVersion.addonId, desc(addonVersion.versionKey));

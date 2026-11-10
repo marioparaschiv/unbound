@@ -1,8 +1,8 @@
-import { and, asc, eq, exists, inArray, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import type { AddonType } from '@unbound-app/contracts/addons';
 
-import { addon, addonTag, addonVersion, tag } from '~/db/schema';
-import { isLiveVersion } from '~/lib/live-versions';
+import { addon, addonTag, tag } from '~/db/schema';
+import { isListedAddon } from '~/lib/addon-visibility';
 import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';
@@ -35,13 +35,7 @@ export async function listTags(ctx: AppContext, type?: AddonType): Promise<TagOp
 			addon,
 			and(
 				eq(addon.id, addonTag.addonId),
-				isNull(addon.delistedAt),
-				exists(
-					ctx.db
-						.select({ one: sql`1` })
-						.from(addonVersion)
-						.where(and(eq(addonVersion.addonId, addon.id), isLiveVersion())),
-				),
+				isListedAddon(),
 				type ? eq(addon.type, type) : undefined,
 			),
 		)

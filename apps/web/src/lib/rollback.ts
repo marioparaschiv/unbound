@@ -8,6 +8,7 @@ import { addon, addonVersion } from '~/db/schema';
 import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
+import { requireAddon } from '~/lib/addon-visibility';
 import { planServe } from '~/lib/serve-plan';
 import { ApiError } from '~/lib/api/errors';
 
@@ -68,11 +69,11 @@ export async function serveVersion(
 				.from(addon)
 				.where(eq(addon.id, addonId));
 
+			requireAddon(exists, addonId);
+
 			throw new ApiError(
 				'not_found',
-				exists
-					? `${addonId} has no approved version ${request.version}.`
-					: `Addon ${addonId} does not exist.`,
+				`${addonId} has no approved version ${request.version}.`,
 			);
 		}
 

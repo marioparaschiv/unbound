@@ -11,6 +11,7 @@ import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import type { ActionMeta } from '~/lib/moderation-events';
 import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
+import { requireAddon } from '~/lib/addon-visibility';
 import { addonMaintainer, user } from '~/db/schema';
 import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
@@ -136,12 +137,8 @@ export async function replaceMaintainers(
 	});
 }
 
-async function requireAddon(ctx: AppContext, id: string) {
-	const row = await ctx.db.query.addon.findFirst({ where: { id }, columns: { id: true } });
-
-	if (!row) {
-		throw new ApiError('not_found', `Addon ${id} does not exist.`);
-	}
+async function requireExistingAddon(ctx: AppContext, id: string) {
+	requireAddon(await ctx.db.query.addon.findFirst({ where: { id }, columns: { id: true } }), id);
 }
 
 function toSummary({ id, name, image }: UserSummary): UserSummary {
@@ -178,7 +175,7 @@ async function requireOwner(ctx: AppContext, caller: Caller, addonId: string) {
 	});
 
 	if (!membership) {
-		await requireAddon(ctx, addonId);
+		await requireExistingAddon(ctx, addonId);
 
 		throw new ApiError('not_maintainer', `You are not a maintainer of ${addonId}.`);
 	}
@@ -288,7 +285,7 @@ export async function transferAddon(
 ): Promise<MaintainersResponse> {
 	requirePermission(caller, { addon: ['transfer'] });
 
-	await requireAddon(ctx, addonId);
+	await requireExistingAddon(ctx, addonId);
 	await requireUsers(ctx, [request.userId]);
 
 	await ctx.db.transaction(async (tx) => {

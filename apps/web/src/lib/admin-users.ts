@@ -13,7 +13,7 @@ import type { AdminSubmission } from '~/lib/admin-submissions';
 import type { EventTimeline } from '~/lib/moderation-events';
 import { getEventTimeline } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
-import { LIVE_VERSIONS } from '~/lib/live-versions';
+import { SERVED_VERSION } from '~/lib/addon-visibility';
 import { matchesSearch } from '~/lib/admin-search';
 import type { StaffNote } from '~/lib/staff-notes';
 import { listStaffNotes } from '~/lib/staff-notes';
@@ -149,12 +149,7 @@ function queryMaintainedAddons(ctx: AppContext, userId: string) {
 			addon: {
 				columns: { id: true, name: true, type: true, delistedAt: true },
 				with: {
-					versions: {
-						columns: { version: true },
-						where: LIVE_VERSIONS,
-						orderBy: { versionKey: 'desc' },
-						limit: 1,
-					},
+					versions: { ...SERVED_VERSION, columns: { version: true } },
 				},
 			},
 		},
