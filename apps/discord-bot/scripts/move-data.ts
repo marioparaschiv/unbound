@@ -8,7 +8,7 @@ import postgres from 'postgres';
 import { ADDON_CHANNELS, desiredChannel, type AddonChannels } from '~/dispatchers/addons';
 import { CDN_URL, SITE_URL } from '~/lib/constants';
 import { contentHash } from '~/lib/content-hash';
-import { parseDatabaseEnv } from '~/lib/env';
+import { loadConfig } from '~/lib/config';
 
 type Row = Record<string, string | null>;
 
@@ -294,7 +294,14 @@ export async function moveData(
 const moveEnvSchema = Type.Object({ SOURCE_DATABASE_URL: Type.String({ minLength: 1 }) });
 
 if (import.meta.main) {
-	const { DATABASE_DIRECT_URL } = parseDatabaseEnv();
+	const loaded = loadConfig(process.env);
+
+	if (!loaded.ok) {
+		throw new Error(loaded.message);
+	}
+
+	const { DATABASE_DIRECT_URL } = loaded.config.env;
+	// Only this one-off move needs the old database, so it is not part of the bot's configuration.
 	const { SOURCE_DATABASE_URL } = parse(moveEnvSchema, process.env);
 	const source = postgres(SOURCE_DATABASE_URL, { max: 1, onnotice: () => void 0 });
 	const target = postgres(DATABASE_DIRECT_URL, { max: 1, onnotice: () => void 0 });

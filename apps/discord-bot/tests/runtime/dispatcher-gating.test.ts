@@ -10,10 +10,10 @@ import {
 } from 'bun:test';
 import { Client } from 'discord.js';
 
-import { DISCORD_IDS, GUILD_ID, type DiscordIds, type IdConstantName } from '~/lib/constants';
 import type { Dispatcher, DispatcherContext, NotifyChannel } from '~/dispatchers/types';
+import { DISCORD_IDS, type DiscordIds, type IdConstantName } from '~/lib/constants';
 import { startDispatchers } from '~/runtime/start';
-import { checkConfig } from '~/lib/config';
+import { loadConfig } from '~/lib/config';
 
 import {
 	createBotTestDatabase,
@@ -128,7 +128,7 @@ describe.skipIf(!DATABASE_URL)('dispatcher gating', () => {
 	});
 
 	test('boots with only role sync enabled under the real constants', async () => {
-		expect(checkConfig(ENV, GUILD_ID).ok).toBe(true);
+		expect(loadConfig(ENV).ok).toBe(true);
 
 		const roles = fakeDispatcher('roles', 'member_changed', [
 			'CONTRIBUTOR_ROLE_ID',

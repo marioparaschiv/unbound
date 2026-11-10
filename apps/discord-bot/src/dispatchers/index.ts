@@ -6,29 +6,27 @@ import { createRolesDispatcher } from '~/dispatchers/roles';
 import type { AuditTelemetry } from '~/lib/audit-telemetry';
 import { addonsDispatcher } from '~/dispatchers/addons';
 import type { Dispatcher } from '~/dispatchers/types';
-import type { Env } from '~/lib/env';
+import type { BotConfig } from '~/lib/config';
 
 export type DispatcherConfig = {
-	env: Env;
-	/** The validated `GUILD_ID`. */
-	guildId: string;
+	config: BotConfig;
 	telemetry: AuditTelemetry;
 };
 
 /**
  * @description Builds every dispatcher from the validated configuration; each track adds one entry here.
- * @param config The validated environment, guild id and the audit telemetry.
+ * @param options The bot's configuration and the audit telemetry.
  * @returns The dispatchers the runtime starts.
  */
-export function createDispatchers({ env, guildId, telemetry }: DispatcherConfig): Dispatcher[] {
+export function createDispatchers({ config, telemetry }: DispatcherConfig): Dispatcher[] {
 	return [
 		addonsDispatcher,
 		releasesDispatcher,
 		createAuditDispatcher(telemetry),
 		reviewNoticesDispatcher,
 		createRolesDispatcher({
-			guildId,
-			contributors: createContributorCache({ token: env.GITHUB_TOKEN }),
+			guildId: config.guildId,
+			contributors: createContributorCache({ token: config.env.GITHUB_TOKEN }),
 		}),
 	];
 }

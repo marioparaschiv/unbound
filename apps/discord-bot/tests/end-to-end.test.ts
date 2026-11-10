@@ -19,7 +19,6 @@ import { createAuditDispatcher } from '~/dispatchers/audit';
 import { createRolesDispatcher } from '~/dispatchers/roles';
 import { messageLinks } from '~/dispatchers/addon-card';
 import { startDispatchers } from '~/runtime/start';
-import { parseOtelEnv } from '~/lib/env';
 
 import {
 	createFakeDiscord as createFakeChannels,
@@ -33,6 +32,7 @@ import {
 } from './helpers/database';
 import { createFakeClient, createFakeDiscord, type FakeDiscord } from './helpers/fake-discord';
 import { FAKE_GUILD_ID, fakeDiscord as fakeGuild } from './helpers/roles-discord';
+import { testConfig } from './helpers/config';
 import { signUp } from './helpers/web';
 
 const CHANNELS: AddonChannels = { plugin: '11', theme: '12', 'icon-pack': '13' };
@@ -92,7 +92,7 @@ describe.skipIf(!DATABASE_URL)('the runtime against the web database and a fake 
 				handle: (payload, context) => announceRelease(context, rest, payload, RELEASES),
 			},
 			createAuditDispatcher(
-				createAuditTelemetry({ env: parseOtelEnv({}) }),
+				createAuditTelemetry({ env: testConfig().env }),
 				auditLog.channelId,
 			),
 			{

@@ -7,18 +7,18 @@ import type { Client } from 'discord.js';
 import type { DispatcherContext } from '~/dispatchers/types';
 import { createAuditTelemetry } from '~/lib/audit-telemetry';
 import { createAuditDispatcher } from '~/dispatchers/audit';
-import { parseOtelEnv } from '~/lib/env';
 import { auditPost } from '~/db/schema';
 
 import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from '../helpers/database';
 import { createFakeClient, createFakeDiscord, type FakeDiscord } from '../helpers/fake-discord';
 import { createFakeReads, EVENT, type FakeReads } from '../helpers/fake-reads';
 import RecordingExporter from '../helpers/recording-exporter';
+import { testConfig } from '../helpers/config';
 import { signUp } from '../helpers/web';
 
 type EventColumns = Partial<AuditEvent>;
 
-const OTEL_OFF = parseOtelEnv({});
+const OTEL_OFF = testConfig().env;
 const NO_TELEMETRY = createAuditTelemetry({ env: OTEL_OFF });
 
 function deployOf(commitSha: string): EventColumns {

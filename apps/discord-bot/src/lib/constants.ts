@@ -1,4 +1,4 @@
-export const GUILD_ID: string | undefined = '950850315601711176';
+export const GUILD_ID = '950850315601711176';
 export const SITE_URL = 'https://unbound.rip';
 export const CDN_URL = 'https://cdn.unbound.rip';
 

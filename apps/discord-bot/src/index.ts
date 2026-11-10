@@ -1,38 +1,47 @@
 import './lib/setup';
 
+import { container, LogLevel, SapphireClient } from '@sapphire/framework';
 import { Events, GatewayIntentBits, type Client } from 'discord.js';
-import { LogLevel, SapphireClient } from '@sapphire/framework';
 import { createBotReads } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
 
 import { createDatabase, POOLED_OPTIONS } from '~/db/database';
-import { CDN_URL, GUILD_ID, SITE_URL } from '~/lib/constants';
 import { createAuditTelemetry } from '~/lib/audit-telemetry';
+import { loadConfig, type BotConfig } from '~/lib/config';
 import { startDispatchers } from '~/runtime/start';
 import { createDispatchers } from '~/dispatchers';
 import { checkTriggers } from '~/db/triggers';
 import { setDatabase } from '~/db/instance';
-import { checkConfig } from '~/lib/config';
+
+declare module '@sapphire/pieces' {
+	// oxlint-disable-next-line typescript/consistent-type-definitions -- declaration merging needs an interface
+	interface Container {
+		/** The configuration `src/index.ts` loaded, for the Sapphire pieces, which Sapphire constructs itself. */
+		config: BotConfig;
+	}
+}
 
 const logger = createLogger('Bot');
-const config = checkConfig(process.env, GUILD_ID);
+const loaded = loadConfig(process.env);
 
-if (!config.ok) {
-	logger.error(config.message);
+if (!loaded.ok) {
+	logger.error(loaded.message);
 	process.exit(1);
 }
 
-const { env, guildId } = config;
+const { config } = loaded;
+const { env } = config;
 const auditTelemetry = createAuditTelemetry({ env });
-const dispatchers = createDispatchers({ env, guildId, telemetry: auditTelemetry });
+const dispatchers = createDispatchers({ config, telemetry: auditTelemetry });
 const db = createDatabase(env.DATABASE_URL, POOLED_OPTIONS);
 // One pool for both: the bot's schema through `db`, the web's tables, read only, through `web`.
 const web = createBotReads(db.$client, {
-	siteUrl: SITE_URL,
-	cdnUrl: CDN_URL,
+	siteUrl: config.siteUrl,
+	cdnUrl: config.cdnUrl,
 	sponsorGraceDays: env.SPONSOR_PERK_GRACE_DAYS,
 });
 
+container.config = config;
 setDatabase(db);
 
 try {
