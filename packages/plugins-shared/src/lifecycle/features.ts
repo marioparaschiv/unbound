@@ -1,14 +1,8 @@
+import type { PluginSelfTestResult } from '@unbound-app/api/global';
 import type { PluginContext } from '@unbound-app/api/native';
 
-export type SelfTestResult =
-	| {
-			ok: true;
-			detail: string;
-			/** Set when the plugin works but has nothing on screen to draw, which says where the chat is rather than that drawing is wrong. */
-			nothingDrawn?: boolean;
-			settling?: boolean;
-	  }
-	| { ok: false; detail: string; nothingDrawn?: boolean };
+/** The self-test report a plugin returns, the one shape the device matrix reads through `plugins.selfTest(id)`. */
+export type SelfTestResult = PluginSelfTestResult;
 
 /** Ends one feature; a promise for native work that must finish before the plugin's native scope closes. */
 export type Cleanup = () => void | Promise<void>;

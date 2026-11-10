@@ -22,26 +22,30 @@ import {
 	cycleResultSchema,
 	cycleScript,
 	developerModeScript,
-	clearStagedScript,
 	redrawTimesScript,
 	redrawTimesSchema,
-	fixtureScript,
-	fixturesPresentScript,
 	logLinesSchema,
 	pluginLogScript,
 	restoreScript,
-	scrollFillerScript,
 	toastDurationScript,
 	toastLogScript,
 	MATRIX_TOAST_MS,
-	settingsScreenScript,
 	selfTestsScript,
 	selfTestReportsSchema,
+} from './device-scripts';
+import {
+	clearStagedScript,
+	fixtureScript,
+	fixturesPresentScript,
+	scrollFillerScript,
+} from './fixture-scripts';
+import {
+	closeScreenScript,
 	settingsProbeScript,
 	settingsProbeSchema,
+	settingsScreenScript,
 	type SettingsProbe,
-	closeScreenScript,
-} from './device-scripts';
+} from './settings-scripts';
 import { withSettings } from './settings-check';
 import { reusableLeak, reusableSettings } from './run-reuse';
 import {

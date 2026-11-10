@@ -7,13 +7,8 @@ import {
 	parseSkippedHooks,
 	toastCaller,
 } from '~/log-parsers';
-import {
-	cycleScript,
-	clearStagedScript,
-	fixtureScript,
-	fixturesPresentScript,
-	type CycleResult,
-} from '~/device-scripts';
+import { cycleScript, type CycleResult } from '~/device-scripts';
+import { clearStagedScript, fixtureScript, fixturesPresentScript } from '~/fixture-scripts';
 import { withReconnects, parseScreenSize, swipeCommands } from '~/device-io';
 import { checkFromCycle, applyLogPolicy } from '~/matrix-policy';
 import { fakeDiscord, runOnFakeDevice } from './helpers/device-fakes';

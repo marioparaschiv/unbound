@@ -1,5 +1,5 @@
 import type { MeasuredCheck } from './compare-device-matrix';
-import type { SettingsProbe } from './device-scripts';
+import type { SettingsProbe } from './settings-scripts';
 
 /**
  * @description Says what is wrong with a plugin's settings screen from what the matrix's probe recorded.

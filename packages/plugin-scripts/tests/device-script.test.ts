@@ -3,11 +3,15 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import * as deviceScripts from '~/device-scripts';
+import * as fixtureScripts from '~/fixture-scripts';
 import * as leakCheck from '~/leak-check';
 import * as selfTest from '~/loader-self-test';
+import * as settingsScripts from '~/settings-scripts';
 
 const modules = [
 	{ file: 'device-scripts.ts', exports: deviceScripts },
+	{ file: 'fixture-scripts.ts', exports: fixtureScripts },
+	{ file: 'settings-scripts.ts', exports: settingsScripts },
 	{ file: 'leak-check.ts', exports: leakCheck },
 	{ file: 'loader-self-test.ts', exports: selfTest },
 ];
@@ -43,10 +47,15 @@ describe('device scripts', () => {
 					...(SAMPLE_ARGUMENTS[name] ?? []),
 				);
 				const called = /^\((\w+|async function \w+|function \w+)/.exec(script);
-				const own = /^\((?:async )?function (\w+)/.exec(script)?.[1];
+				// The script's own function and any it is passed as an argument, such as the drawn predicate.
+				const own = new Set(
+					[...script.matchAll(/(?:^\(|, )(?:async )?function (\w+)/g)].map(
+						(match) => match[1],
+					),
+				);
 				const leaked = names.filter(
 					(candidate) =>
-						candidate !== own &&
+						!own.has(candidate) &&
 						candidate !== name &&
 						new RegExp(`\\b${candidate}\\b`).test(script),
 				);

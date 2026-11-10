@@ -8,13 +8,16 @@ const BYTES_PER_MB = 1_048_576;
  * @description Collects garbage and reads Hermes' live heap, so the reading reflects what is retained rather than what is uncollected.
  * @returns A script whose result is the live heap in bytes, or `-1` when Hermes exposes no statistics.
  */
+type HermesGlobal = {
+	HermesInternal?: { getInstrumentedStats?: () => { js_allocatedBytes: number } } | null;
+};
+
 function liveHeap() {
 	if (typeof gc === 'function') gc();
 
-	const stats =
-		typeof HermesInternal !== 'undefined'
-			? HermesInternal?.getInstrumentedStats?.()
-			: undefined;
+	// React Native types `HermesInternal` as an empty object, so read the stats Hermes adds through a typed view.
+	const hermes = (globalThis as HermesGlobal).HermesInternal;
+	const stats = hermes?.getInstrumentedStats?.();
 
 	return String(stats ? stats.js_allocatedBytes : -1);
 }

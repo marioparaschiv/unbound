@@ -562,13 +562,13 @@ export type AddonScope = {
 /** The lifecycle entry points, all the global `unbound` object keeps after {@link shutdown}. */
 export interface UnboundLifecycle {
 	/**
-	 * @description Brings up the client, initialising the built-ins, plugins, and themes managers in turn. Twin of
-	 * {@link shutdown}.
+	 * @description Brings up the client: registers the addon managers, starts the built-ins, loads each kind's addons,
+	 * then runs the built-ins' `afterAddons` hooks. Twin of {@link shutdown}.
 	 */
 	initialize(): void;
 	/**
-	 * @description Tears the client back down, shutting down the built-ins, plugins, and themes managers and persisting
-	 * settings before clearing the global down to the lifecycle entry points. Twin of {@link initialize}.
+	 * @description Tears the client back down: stops the built-ins, shuts down each kind's manager, persists settings,
+	 * unregisters the managers and clears the global down to the lifecycle entry points. Twin of {@link initialize}.
 	 * @returns A promise that resolves once settings have been persisted and shutdown is complete.
 	 */
 	shutdown(): Promise<void>;
