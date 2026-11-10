@@ -47,6 +47,7 @@
 		"prepare": "lefthook install --reset-hooks-path",
 		"generate-sdk": "bun apps/sdk-generator/src/index.ts",
 		"generate-discord-types": "bun apps/discord-typegen/src/index.ts",
+		"generate-native-capabilities": "bun scripts/generate-native-capabilities.ts",
 		"test:s3": "bun scripts/test-s3.ts",
 		"bench": "bun packages/cli/src/bench/main.ts",
 		"lint": "bun run lint:js && bun run loader:lint",

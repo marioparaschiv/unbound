@@ -1,4 +1,4 @@
-import { validateAddonCapabilities } from '@unbound-app/contracts/addon-conventions';
+import { validateAddonCapabilities } from '@unbound-app/contracts/manifest';
 import { afterEach, describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -191,7 +191,7 @@ export const start = definePlatform({ android });`,
 		expect(await check(valid, declaredCapabilitiesCheck)).toEqual([]);
 		expect(existsSync(join(valid.path, 'dist', 'manifest.json'))).toBe(false);
 		expect(await check(invalid, declaredCapabilitiesCheck)).toEqual([
-			'manifest.json  capabilities contains an unsupported value: native.objc.unknown.',
+			'manifest.json  /capabilities/0  Must be a Capability, not native.objc.unknown.',
 		]);
 	});
 

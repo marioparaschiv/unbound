@@ -103,7 +103,10 @@ export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
 	'native.debug.evaluations',
 	'native.debug.environment',
 ];
-/** The Capability each native bridge method needs. */
+/**
+ * The Capability each native bridge method needs; the source of every Capability name. Edit it, then run
+ * `bun run generate-native-capabilities` to regenerate the client's and the loader's Capability lists.
+ */
 export declare const NATIVE_PLUGIN_METHOD_CAPABILITIES: {
 	readonly 'objc.getClass': 'native.objc.classes';
 	readonly 'objc.alloc': 'native.objc.classes';
@@ -181,38 +184,38 @@ export declare const NATIVE_PLUGIN_METHOD_CAPABILITIES: {
 export declare const NATIVE_PLUGIN_PLATFORMS: readonly ['ios', 'android'];
 /** The capabilities each platform's loader offers; Objective-C ones are iOS only and Java ones Android only. */
 export declare const NATIVE_PLUGIN_PLATFORM_CAPABILITIES: {
+	readonly ios: readonly [
+		'native.objc.classes',
+		'native.objc.invoke',
+		'native.objc.invokeAsync',
+		'native.objc.batch',
+		'native.objc.snapshot',
+		'native.objc.ivars',
+		'native.objc.associations',
+		'native.objc.hooks',
+		'native.ffi.symbols',
+		'native.ffi.call',
+		'native.fabric.mount',
+		'native.fabric.async',
+		'native.runtime.events',
+		'native.debug.evaluations',
+		'native.debug.environment',
+	];
 	readonly android: readonly [
+		'native.ffi.symbols',
+		'native.ffi.call',
+		'native.fabric.async',
+		'native.runtime.events',
 		'native.java.classes',
 		'native.java.construct',
 		'native.java.fields',
 		'native.java.invoke',
-		'native.fabric.async',
-		'native.ffi.call',
-		'native.ffi.symbols',
-		'native.java.associations',
-		'native.java.batch',
-		'native.java.hooks',
 		'native.java.invokeAsync',
-		'native.runtime.events',
-		'native.debug.environment',
+		'native.java.hooks',
+		'native.java.batch',
+		'native.java.associations',
 		'native.debug.evaluations',
-	];
-	readonly ios: readonly [
-		'native.fabric.async',
-		'native.fabric.mount',
-		'native.ffi.call',
-		'native.ffi.symbols',
-		'native.objc.associations',
-		'native.objc.batch',
-		'native.objc.classes',
-		'native.objc.hooks',
-		'native.objc.invoke',
-		'native.objc.invokeAsync',
-		'native.objc.ivars',
-		'native.objc.snapshot',
 		'native.debug.environment',
-		'native.debug.evaluations',
-		'native.runtime.events',
 	];
 };
 /** The design components Discord added after the build the generated types describe; see {@link NewerDesignComponents}. */
@@ -470,8 +473,12 @@ export type AddonLogger = Record<
 	'log' | 'info' | 'success' | 'warn' | 'error' | 'debug',
 	(...args: unknown[]) => void
 >;
-/** A loaded addon's manifest: the {@link AuthoredAddonManifest} plus what the loader and installer record. */
+/** A loaded addon's manifest: the {@link AuthoredAddonManifest} plus what `ubd build`, the loader and installer record. */
 export type AddonManifest = AuthoredAddonManifest & {
+	/** Written by `ubd build` from the native calls in the code: the platforms the addon runs on, each with the capabilities it needs there; absent means every platform. */
+	platforms?: AddonPlatforms;
+	/** Legacy: capabilities needed on every platform, from a manifest that declares them by hand; `ubd build` writes `platforms` instead. */
+	capabilities?: NativePluginCapability[];
 	/** Set by the loader for an addon it read from disk: the addon's folder name. */
 	folder?: string;
 	/** Set by the loader for an addon it read from disk: the addon's absolute directory. */
@@ -564,10 +571,6 @@ export type AuthoredAddonManifest = {
 	main: string;
 	/** The addon's version, in strict SemVer 2.0.0 with no `v` prefix. */
 	version: string;
-	/** The platforms the addon runs on, each with the capabilities it needs there; absent means every platform. */
-	platforms?: AddonPlatforms;
-	/** Capabilities the addon needs on every platform it runs on. */
-	capabilities?: NativePluginCapability[];
 	/** The lowest native plugin API version the addon supports; an older native bridge fails its start. */
 	minNativePluginApi?: string;
 	/** The Ed25519 signature the Unbound team's publish pipeline puts on first-party plugins. */
@@ -4618,7 +4621,7 @@ export type NativePluginBridge = {
 	readonly ui: NativeUIBridge;
 };
 /** A named permission to use one part of the native bridge, declared in an addon's manifest. */
-export type NativePluginCapability = (typeof NATIVE_PLUGIN_CAPABILITIES)[number];
+export type NativePluginCapability = (typeof NATIVE_PLUGIN_METHOD_CAPABILITIES)[NativePluginMethod];
 /** The shape of an error the native bridge or its plugin scope throws. */
 export type NativePluginError = {
 	/** Which failure it is; native failures without their own code use `NATIVE_BRIDGE_ERROR`. */
