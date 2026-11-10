@@ -6,6 +6,10 @@ import { shouldIgnore } from '~/log/filters';
 import type { MessageLog } from '~/log';
 import { MessageStore } from '~/log/modules';
 import { redrawMessage } from '~/rows/redraw';
+import { recordDeletion } from '~/archive/runtime';
+import { forgetSaved } from '~/archive/runtime';
+import { LOCAL_CLEANUP_FLAG } from '~/restore/local-cleanup';
+import { trackLocalDeletes } from './local-delete';
 
 type DeleteAction = {
 	id?: string;
@@ -26,6 +30,7 @@ function keepDeleted(log: MessageLog, channelId: string, messageId: string): boo
 		return false;
 	}
 
+	recordDeletion(message, channelId);
 	log.markDeleted(channelId, messageId);
 	redrawMessage(log, channelId, messageId);
 
@@ -39,8 +44,22 @@ function keepDeleted(log: MessageLog, channelId: string, messageId: string): boo
  * @returns A function with nothing to undo, for `applyFeatures`.
  */
 export function startDeletions(log: MessageLog): () => void {
+	const localDeletes = trackLocalDeletes();
 	flux.interceptAction('MESSAGE_DELETE', (action) => {
 		const { id, channelId } = action as DeleteAction;
+		if ((action as Record<string, unknown>)[LOCAL_CLEANUP_FLAG]) {
+			if (id) log.forget(id);
+			return false;
+		}
+		if (id && channelId && log.isDeleted(id)) {
+			const explicitLocalDismiss =
+				(action as any).onlyLocal === true || (action as any).localOnly === true;
+			if (explicitLocalDismiss) localDeletes.dismiss(channelId, id);
+			else if (localDeletes.isConfirmation(channelId, id)) return true;
+			log.forget(id);
+			void forgetSaved(channelId, id);
+			return false;
+		}
 
 		return !!id && !!channelId && keepDeleted(log, channelId, id);
 	});
@@ -51,7 +70,13 @@ export function startDeletions(log: MessageLog): () => void {
 
 		if (!channelId || !Array.isArray(bulk.ids)) return false;
 
-		const passing = bulk.ids.filter((id) => !keepDeleted(log, channelId, id));
+		const passing = bulk.ids.filter((id) => {
+			const previouslyDeleted = log.isDeleted(id);
+			if (previouslyDeleted && localDeletes.isConfirmation(channelId, id)) return false;
+			const kept = keepDeleted(log, channelId, id);
+			if (previouslyDeleted) void forgetSaved(channelId, id);
+			return !kept;
+		});
 
 		if (!passing.length) return true;
 
@@ -60,5 +85,5 @@ export function startDeletions(log: MessageLog): () => void {
 		return false;
 	});
 
-	return () => {};
+	return localDeletes.stop;
 }

@@ -1,4 +1,4 @@
-export const PLUGIN_NAME = 'Message Logger';
+export const PLUGIN_NAME = 'Persistent Message Logger';
 
 export const EPHEMERAL_FLAG = 64;
 

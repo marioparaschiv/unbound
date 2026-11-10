@@ -141,6 +141,12 @@ declare module '@unbound-app/settings' {
 		 */
 		redText: boolean;
 		/**
+		 * Deleted-message color
+		 *
+		 * Choose the color used for captured deleted messages. Red text must be enabled.
+		 */
+		deletedColor: import('@unbound-app/settings').HexColor;
+		/**
 		 * Deleted marker
 		 *
 		 * Show “This message was deleted” under deleted messages, with a Dismiss link.
@@ -200,6 +206,37 @@ declare module '@unbound-app/settings' {
 		 * Server IDs that are not logged. Separate IDs with commas or spaces.
 		 */
 		ignoreGuilds: string;
+		/**
+		 * Persistent archive
+		 */
+		readonly archive: {
+			/**
+			 * Save captured messages across restarts
+			 *
+			 * Starts off. Saves only messages this client observes being edited or deleted.
+			 */
+			persistCapture: boolean;
+			/**
+			 * Restore saved deletions in their original channel
+			 *
+			 * Shows retained captured deletions as local red messages when Discord loads that part of the channel. Does not send messages or restore uncaptured content.
+			 */
+			restoreInChannel: boolean;
+			/**
+			 * Save only these channel IDs
+			 *
+			 * Comma or space separated. Blank allows all accessible channels; other ignore filters still apply.
+			 */
+			captureChannels: string;
+			/**
+			 * Retention days (1–30)
+			 */
+			retentionDays: number;
+			/**
+			 * Maximum saved events (50–2000)
+			 */
+			maxSavedEvents: number;
+		};
 	};
 
 	/** Each setting and section by its dot-separated key. */
@@ -210,6 +247,12 @@ declare module '@unbound-app/settings' {
 		 * Show the text of deleted messages in red.
 		 */
 		"redText": boolean;
+		/**
+		 * Deleted-message color
+		 *
+		 * Choose the color used for captured deleted messages. Red text must be enabled.
+		 */
+		"deletedColor": import('@unbound-app/settings').HexColor;
 		/**
 		 * Deleted marker
 		 *
@@ -270,6 +313,36 @@ declare module '@unbound-app/settings' {
 		 * Server IDs that are not logged. Separate IDs with commas or spaces.
 		 */
 		"ignoreGuilds": string;
+		/**
+		 * Persistent archive
+		 */
+		"archive": Settings["archive"];
+		/**
+		 * Save captured messages across restarts
+		 *
+		 * Starts off. Saves only messages this client observes being edited or deleted.
+		 */
+		"archive.persistCapture": boolean;
+		/**
+		 * Restore saved deletions in their original channel
+		 *
+		 * Shows retained captured deletions as local red messages when Discord loads that part of the channel. Does not send messages or restore uncaptured content.
+		 */
+		"archive.restoreInChannel": boolean;
+		/**
+		 * Save only these channel IDs
+		 *
+		 * Comma or space separated. Blank allows all accessible channels; other ignore filters still apply.
+		 */
+		"archive.captureChannels": string;
+		/**
+		 * Retention days (1–30)
+		 */
+		"archive.retentionDays": number;
+		/**
+		 * Maximum saved events (50–2000)
+		 */
+		"archive.maxSavedEvents": number;
 	};
 
 	/** Every setting and section by its dot-separated key; buttons and notices are not settings. */
@@ -278,10 +351,11 @@ declare module '@unbound-app/settings' {
 	export type SettingsEntry<K extends SettingKey> = SettingValues[K];
 
 	/** The functions src/actions.ts exports, which a `setting.button` can run. */
-	export type ActionName = never;
+	type Actions = typeof import('./actions');
+	export type ActionName = Extract<{ [K in keyof Actions]: Actions[K] extends () => void | Promise<void> ? K : never }[keyof Actions], string>;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "redText" | "deletedMarker" | "inlineEdits" | "logDeletes" | "logEdits" | "logDeletedAttachments" | "ignoreBots" | "ignoreSelf";
+	export type BooleanSettingKey = "redText" | "deletedMarker" | "inlineEdits" | "logDeletes" | "logEdits" | "logDeletedAttachments" | "ignoreBots" | "ignoreSelf" | "archive.persistCapture" | "archive.restoreInChannel";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

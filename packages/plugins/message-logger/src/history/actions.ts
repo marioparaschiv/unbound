@@ -4,6 +4,8 @@ import type { AttachmentLike } from '~/edits/attachments';
 import type { MessageLog } from '~/log';
 import { MessageStore } from '~/log/modules';
 import { redrawMessage } from '~/rows/redraw';
+import { forgetSaved } from '~/archive/runtime';
+import { LOCAL_CLEANUP_FLAG } from '~/restore/local-cleanup';
 
 export const CLEARING_FLAG = 'messageLoggerClearing';
 
@@ -40,8 +42,15 @@ function stripDeletedAttachments(
  * @param messageId The message.
  */
 export function clearMessageHistory(log: MessageLog, channelId: string, messageId: string): void {
-	if (log.isDeleted(messageId)) {
-		void flux.dispatch({ type: 'MESSAGE_DELETE', id: messageId, channelId });
+	const wasDeleted = log.isDeleted(messageId);
+	void forgetSaved(channelId, messageId);
+	if (wasDeleted) {
+		void flux.dispatch({
+			type: 'MESSAGE_DELETE',
+			id: messageId,
+			channelId,
+			[LOCAL_CLEANUP_FLAG]: true,
+		});
 
 		return;
 	}
@@ -58,6 +67,7 @@ export function clearMessageHistory(log: MessageLog, channelId: string, messageI
  * @returns How many messages had a log.
  */
 export function clearChannelLog(log: MessageLog, channelId: string): number {
+	void forgetSaved(channelId);
 	const messages = MessageStore.getMessages(channelId)?.toArray() ?? [];
 	const logged = messages.filter((message) => log.hasHistory(message.id));
 
@@ -91,7 +101,12 @@ export function purgeLog(log: MessageLog): void {
 	}));
 
 	for (const { channelId, messageId } of log.deletedMessages()) {
-		void flux.dispatch({ type: 'MESSAGE_DELETE', id: messageId, channelId });
+		void flux.dispatch({
+			type: 'MESSAGE_DELETE',
+			id: messageId,
+			channelId,
+			[LOCAL_CLEANUP_FLAG]: true,
+		});
 	}
 
 	log.clear();
