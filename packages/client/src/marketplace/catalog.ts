@@ -7,8 +7,11 @@ import { compareVersions } from '~/core/versions';
 /** The marketplace snapshot kept on device: every listed addon and the revision it was served at. */
 export type Catalog = CatalogResponse;
 
-/** `name` sorts alphabetically, `updated` puts the most recently published versions first. */
-export type CatalogSort = 'name' | 'updated';
+/**
+ * `name` sorts alphabetically, `popular` puts the most installed addons first, `updated` the most
+ * recently published versions.
+ */
+export type CatalogSort = 'name' | 'popular' | 'updated';
 
 /** What `marketplace.search` filters the catalog by. */
 export type CatalogQuery = {
@@ -53,6 +56,8 @@ export type MarketplaceListing = {
 	version: string;
 	/** When the newest version was published, as an ISO 8601 date-time. */
 	publishedAt: string;
+	/** How many times the addon was installed from the marketplace; 0 when the catalog predates counts. */
+	installs: number;
 };
 
 /** What a marketplace card offers for an addon, judged against the installed copy. */
@@ -62,6 +67,7 @@ const SORTERS: Record<CatalogSort, (a: ListedAddon, b: ListedAddon) => number> =
 	name: (a, b) =>
 		a.latestVersion.manifest.name.localeCompare(b.latestVersion.manifest.name) ||
 		a.id.localeCompare(b.id),
+	popular: (a, b) => (b.installs ?? 0) - (a.installs ?? 0) || SORTERS.name(a, b),
 	updated: (a, b) =>
 		b.latestVersion.publishedAt.localeCompare(a.latestVersion.publishedAt) ||
 		a.id.localeCompare(b.id),
