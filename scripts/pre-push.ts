@@ -10,7 +10,8 @@ const ALL_PLUGINS: Check[] = [
 	{ label: 'plugin tests', cwd: '.', command: ['bun', 'run', 'plugins:test'] },
 	{ label: 'plugin type-check', cwd: '.', command: ['bun', 'run', 'plugins:typecheck'] },
 ];
-const UNTESTED = new Set(['apps/web', 'apps/discord-bot']);
+// Its tests need Postgres; the bot's skip their database suites without one.
+const UNTESTED = new Set(['apps/web']);
 // Their tests replace modules with `mock.module`, which leaks across files in one process.
 const ISOLATED = new Set(['packages/client']);
 const SKIPPED = ['packages/loader/', 'docs/', '.github/'];

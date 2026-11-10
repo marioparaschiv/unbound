@@ -8,6 +8,7 @@ const present = new Set([
 	'packages/plugin-scripts/package.json',
 	'packages/client/package.json',
 	'apps/web/package.json',
+	'apps/discord-bot/package.json',
 ]);
 const exists = (path: string) => present.has(path);
 const labels = (files: string[]) => checksFor(files, exists).map((check) => check.label);
@@ -51,6 +52,14 @@ describe('pre-push checks', () => {
 		expect(labels(['apps/web/app/root.tsx', 'packages/loader/core/src/a.cpp'])).toEqual([
 			'apps/web type-check',
 			'loader lint',
+		]);
+	});
+
+	// Its Postgres suites skip without a database, as they do outside CI.
+	test('tests and type-checks the Discord bot', () => {
+		expect(labels(['apps/discord-bot/src/index.ts'])).toEqual([
+			'apps/discord-bot tests',
+			'apps/discord-bot type-check',
 		]);
 	});
 

@@ -1,5 +1,5 @@
+import { dirname, join, resolve } from 'node:path';
 import { describe, expect, test } from 'bun:test';
-import { join, resolve } from 'node:path';
 import { existsSync } from 'node:fs';
 
 import { PROJECTS, summarize, typeErrors } from '~/typecheck';
@@ -40,5 +40,18 @@ describe('typecheck', () => {
 	test('covers every project with a tsconfig', () => {
 		for (const project of PROJECTS)
 			expect(existsSync(join(root, project, 'tsconfig.json'))).toBe(true);
+	});
+
+	// Plugins are type-checked by `plugins:typecheck`; fixtures and templates are inputs, not projects.
+	test('type-checks every tsconfig in the repository', () => {
+		const unchecked = [...new Bun.Glob('**/tsconfig.json').scanSync({ cwd: root })]
+			.map((path) => dirname(path))
+			.filter(
+				(dir) => !/(^|\/)(node_modules|fixtures|templates|docs-fixture)(\/|$)/.test(dir),
+			)
+			.filter((dir) => !dir.startsWith('packages/plugins/') && dir !== 'packages/plugins')
+			.filter((dir) => !PROJECTS.includes(dir));
+
+		expect(unchecked).toEqual([]);
 	});
 });
