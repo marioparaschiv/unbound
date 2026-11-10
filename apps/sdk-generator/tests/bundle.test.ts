@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { resolveLibraryTypes } from '../src/bundle';
+import { resolveLibraryTypes } from '~/bundle';
 
 // Manifests are read from disk, so the expected typings path comes from the package, not the resolver.
 const REPO = join(import.meta.dirname, '..', '..', '..');

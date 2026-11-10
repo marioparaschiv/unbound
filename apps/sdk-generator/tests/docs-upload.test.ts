@@ -8,7 +8,7 @@ import {
 	MUTABLE_CACHE_CONTROL,
 	uploadDocs,
 	type DocsBucket,
-} from '../src/docs-upload';
+} from '~/docs-upload';
 
 type StoredObject = {
 	body: string;
