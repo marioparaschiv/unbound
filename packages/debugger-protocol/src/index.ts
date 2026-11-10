@@ -123,18 +123,29 @@ export const DEFAULT_EVAL_TIMEOUT_MS = 10_000;
 
 export const MAX_EVAL_TIMEOUT_MS = 86_400_000;
 
+/** How long the bridge waits for the device to reload a pushed addon. */
+export const PLUGIN_PUSH_TIMEOUT_MS = 60_000;
+
+/**
+ * How much longer a controller waits than the bridge, so the bridge's own timeout reply always
+ * arrives before the controller gives up on its own.
+ */
+export const BRIDGE_REPLY_GRACE_MS = 5_000;
+
+/**
+ * @description Picks how long an eval may run: the requested timeout when it is a positive number of
+ * milliseconds, capped at {@link MAX_EVAL_TIMEOUT_MS}, otherwise {@link DEFAULT_EVAL_TIMEOUT_MS}.
+ * @param requested The timeout the controller asked for, if any.
+ * @returns The timeout to apply, in milliseconds.
+ */
+export function resolveEvalTimeout(requested: number | undefined): number {
+	return typeof requested === 'number' && requested > 0
+		? Math.min(requested, MAX_EVAL_TIMEOUT_MS)
+		: DEFAULT_EVAL_TIMEOUT_MS;
+}
+
 /** The query marker a controller appends to its URL so the bridge routes it as a controller, not a device. */
 export const CONTROLLER_ENDPOINT_MARKER = 'mcp';
-
-const MESSAGE_TYPES: ReadonlySet<string> = new Set<BridgeMessage['type']>([
-	'eval',
-	'eval-result',
-	'plugin-push',
-	'plugin-push-result',
-	'log',
-	'hello',
-	'device-status',
-]);
 
 /**
  * @description Safely parses a raw wire frame into a {@link BridgeMessage}, guarding against invalid
@@ -151,7 +162,7 @@ export function parseMessage(raw: string): BridgeMessage | undefined {
 		return void 0;
 	}
 
-	return isBridgeMessage(value) ? value : void 0;
+	return hasRequiredFields(value) ? value : void 0;
 }
 
 function hasRequiredFields(frame: unknown): frame is BridgeMessage {
@@ -261,17 +272,6 @@ function isStringRecord(value: unknown): value is Record<string, string> {
 	);
 }
 
-function isBridgeMessage(value: unknown): value is BridgeMessage {
-	return (
-		typeof value === 'object' &&
-		value !== null &&
-		'type' in value &&
-		typeof value.type === 'string' &&
-		MESSAGE_TYPES.has(value.type) &&
-		hasRequiredFields(value)
-	);
-}
-
 /**
  * @description Serialises a {@link BridgeMessage} into its wire form. Inverse of {@link parseMessage}.
  * @param message The message to frame.
@@ -284,7 +284,10 @@ export default {
 	DEFAULT_BRIDGE_PORT,
 	DEFAULT_EVAL_TIMEOUT_MS,
 	MAX_EVAL_TIMEOUT_MS,
+	PLUGIN_PUSH_TIMEOUT_MS,
+	BRIDGE_REPLY_GRACE_MS,
 	CONTROLLER_ENDPOINT_MARKER,
+	resolveEvalTimeout,
 	parseMessage,
 	serializeMessage,
 };

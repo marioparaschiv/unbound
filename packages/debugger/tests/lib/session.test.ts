@@ -1,4 +1,3 @@
-import { DEFAULT_EVAL_TIMEOUT_MS, MAX_EVAL_TIMEOUT_MS } from '@unbound-app/debugger-protocol';
 import type { EvalResult } from '@unbound-app/debugger-protocol';
 import { afterEach, describe, expect, test } from 'bun:test';
 
@@ -9,7 +8,6 @@ import {
 	detachDevice,
 	evaluateForController,
 	handleDeviceMessage,
-	resolveEvalTimeout,
 	type SocketLike,
 } from '~/lib/session';
 
@@ -35,17 +33,6 @@ afterEach(() => {
 	detachDevice(device);
 	device.frames.length = 0;
 	controller.frames.length = 0;
-});
-
-describe('resolveEvalTimeout', () => {
-	test('honours a positive timeout and falls back to the default otherwise', () => {
-		expect(resolveEvalTimeout(30_000)).toBe(30_000);
-		expect(resolveEvalTimeout(undefined)).toBe(DEFAULT_EVAL_TIMEOUT_MS);
-		expect(resolveEvalTimeout(0)).toBe(DEFAULT_EVAL_TIMEOUT_MS);
-		expect(resolveEvalTimeout(-5)).toBe(DEFAULT_EVAL_TIMEOUT_MS);
-		expect(resolveEvalTimeout(Number.NaN)).toBe(DEFAULT_EVAL_TIMEOUT_MS);
-		expect(resolveEvalTimeout(Number.POSITIVE_INFINITY)).toBe(MAX_EVAL_TIMEOUT_MS);
-	});
 });
 
 describe('evaluateForController', () => {
@@ -79,6 +66,20 @@ describe('evaluateForController', () => {
 		expect(evalResults(controller)).toEqual([
 			{ type: 'eval-result', id: 'fast', ok: true, value: '42' },
 		]);
+	});
+});
+
+describe('detachController', () => {
+	test('drops its in-flight eval so a late result goes nowhere', () => {
+		attachDevice(device);
+		attachController(controller);
+		evaluateForController(controller, { type: 'eval', id: 'gone', code: 'x', timeout: 1_000 });
+		detachController(controller);
+		controller.frames.length = 0;
+
+		handleDeviceMessage({ type: 'eval-result', id: 'gone', ok: true, value: '1' });
+
+		expect(controller.frames).toEqual([]);
 	});
 });
 

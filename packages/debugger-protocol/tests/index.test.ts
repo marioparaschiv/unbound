@@ -2,6 +2,9 @@ import type { AuthoredAddonManifest } from '@unbound-app/types';
 import { describe, expect, test } from 'bun:test';
 
 import {
+	DEFAULT_EVAL_TIMEOUT_MS,
+	MAX_EVAL_TIMEOUT_MS,
+	resolveEvalTimeout,
 	serializeMessage,
 	parseMessage,
 	type EvalRequest,
@@ -182,5 +185,16 @@ describe('hello', () => {
 				JSON.stringify({ type: 'device-status', connected: true, device: partial }),
 			),
 		).toBeUndefined();
+	});
+});
+
+describe('resolveEvalTimeout', () => {
+	test('honours a positive timeout and falls back to the default otherwise', () => {
+		expect(resolveEvalTimeout(30_000)).toBe(30_000);
+		expect(resolveEvalTimeout(undefined)).toBe(DEFAULT_EVAL_TIMEOUT_MS);
+		expect(resolveEvalTimeout(0)).toBe(DEFAULT_EVAL_TIMEOUT_MS);
+		expect(resolveEvalTimeout(-5)).toBe(DEFAULT_EVAL_TIMEOUT_MS);
+		expect(resolveEvalTimeout(Number.NaN)).toBe(DEFAULT_EVAL_TIMEOUT_MS);
+		expect(resolveEvalTimeout(Number.POSITIVE_INFINITY)).toBe(MAX_EVAL_TIMEOUT_MS);
 	});
 });
