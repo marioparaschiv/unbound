@@ -5,15 +5,15 @@ import { watch, type FSWatcher } from 'node:fs';
 import { resolve, join, sep } from 'node:path';
 
 import type { ReloadTransport, BuiltAddon } from '~/lib/reload-transport';
-import { DEV_BUILD_CHECKS, runBuildChecks } from '~/lib/build-checks';
 import { LOCALE_TYPINGS, writeLocaleTypings } from '~/rollup/locales';
-import { buildAddon, HOT_BUILD_ENV } from '~/lib/build-addon';
 import { SETTINGS_TYPINGS } from '~/rollup/settings-typings';
 import type { DiscoveredAddon } from '~/lib/discovery';
-import { buildWithReport } from '~/lib/build-report';
+import { DEV_BUILD_CHECKS } from '~/lib/build-checks';
+import { createCheckCache } from '~/lib/check/check';
 import { formatSummary } from '~/lib/report-format';
 import type { ResolvedConfig } from '~/lib/config';
 import { discoverAddons } from '~/lib/discovery';
+import { buildAddon } from '~/lib/build-addon';
 
 const GENERATED_TYPINGS = [SETTINGS_TYPINGS, LOCALE_TYPINGS];
 
@@ -28,6 +28,8 @@ export class DevServer {
 	private watcher: FSWatcher | null = null;
 	private addons = new Map<string, DiscoveredAddon>();
 	private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
+	// Unchanged files stay parsed between rebuilds.
+	private readonly checkCache = createCheckCache();
 
 	constructor(
 		private readonly resolved: ResolvedConfig,
@@ -115,14 +117,12 @@ export class DevServer {
 			process.stdout.write(`Building ${addon.id}…\n`);
 		}
 
-		const { ok, report } = await buildWithReport(
-			addon,
-			async (env) =>
-				(await buildAddon(addon, this.resolved.config.build, {
-					...HOT_BUILD_ENV,
-					...env,
-				})) && (await runBuildChecks(addon, DEV_BUILD_CHECKS)),
-		);
+		const { ok, report } = await buildAddon(addon, {
+			command: this.resolved.config.build,
+			hot: true,
+			checks: DEV_BUILD_CHECKS,
+			cache: this.checkCache,
+		});
 
 		if (!ok) {
 			process.stderr.write(`Failed to build ${addon.id}.\n`);

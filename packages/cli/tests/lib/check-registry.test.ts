@@ -7,9 +7,9 @@ import {
 	listCheckIds,
 	selectChecks,
 } from '~/lib/check/registry';
-import { BUILD_CHECKS, DECLARED_CAPABILITY_CHECKS } from '~/lib/build-checks';
 import { createCheckCache, type Check } from '~/lib/check/check';
 import { hasFailures, runChecks } from '~/lib/check/run';
+import { buildChecks } from '~/lib/build-checks';
 import { discoverAddons } from '~/lib/discovery';
 import { diagnostic } from '~/rollup/diagnostic';
 
@@ -61,8 +61,8 @@ describe('the check registry', () => {
 			throw new Error('Unexpected unknown ids.');
 		}
 
-		expect(selection.checks).toEqual([...CHECKS, ...BUILD_CHECKS]);
-		expect(typed.checks).toEqual([...CHECKS, ...BUILD_CHECKS, ...OPT_IN_CHECKS]);
+		expect(selection.checks).toEqual([...CHECKS, ...buildChecks()]);
+		expect(typed.checks).toEqual([...CHECKS, ...buildChecks(), ...OPT_IN_CHECKS]);
 	});
 
 	test('runs the declared capabilities check when asked to', () => {
@@ -72,7 +72,7 @@ describe('the check registry', () => {
 			throw new Error('Unexpected unknown ids.');
 		}
 
-		expect(selection.checks).toEqual([...CHECKS, ...DECLARED_CAPABILITY_CHECKS]);
+		expect(selection.checks).toEqual([...CHECKS, ...buildChecks(true)]);
 	});
 
 	test('--only narrows to the named checks and rejects unknown ones', () => {

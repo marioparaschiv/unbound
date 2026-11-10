@@ -53,7 +53,10 @@ const installCommand: CommandDefinition<typeof schema> = {
 			return { ok: false, text: platform.error };
 		}
 
-		const resolved = await resolveAddonTarget(addonTarget, build, BUILD_TIMEOUT_MS);
+		const resolved = await resolveAddonTarget(addonTarget, {
+			build,
+			timeoutMs: BUILD_TIMEOUT_MS,
+		});
 
 		if ('error' in resolved) {
 			return { ok: false, text: resolved.error };

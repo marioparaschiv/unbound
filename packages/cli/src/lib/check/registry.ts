@@ -1,14 +1,14 @@
-import { BUILD_CHECKS, DECLARED_CAPABILITY_CHECKS } from '~/lib/build-checks';
 import { textInputPropsCheck } from '~/lib/checks/text-input-props';
 import { manifestCheck } from '~/lib/checks/manifest';
 import type { Diagnostic } from '~/rollup/diagnostic';
 import { bundleCheck } from '~/lib/checks/bundle';
+import { buildChecks } from '~/lib/build-checks';
 import { typesCheck } from '~/lib/checks/types';
 import type { Check } from '~/lib/check/check';
 import { lintCheck } from '~/lib/checks/lint';
 
 /**
- * The checks `ubd check` runs beside `BUILD_CHECKS`; register a feature's check with one line here.
+ * The checks `ubd check` runs beside `buildChecks()`; register a feature's check with one line here.
  * A rollup plugin's check runs through the bundle check; add its id to `BUNDLE_REPORTED_CHECKS`.
  */
 // Checks start in this order and the synchronous ones block: oxlint and rollup go first, so they run
@@ -50,7 +50,7 @@ export type SelectOptions = {
  * @returns The ids, in run order.
  */
 export function listCheckIds(): string[] {
-	const all = [...BUILD_CHECKS, ...CHECKS, ...OPT_IN_CHECKS].map((check) => check.id);
+	const all = [...buildChecks(), ...CHECKS, ...OPT_IN_CHECKS].map((check) => check.id);
 
 	return [...new Set([...all, ...BUNDLE_REPORTED_CHECKS])];
 }
@@ -66,7 +66,7 @@ export function selectChecks({
 	types = false,
 	only = [],
 }: SelectOptions): CheckSelection | { unknown: string[] } {
-	const build = declaredCapabilities ? DECLARED_CAPABILITY_CHECKS : BUILD_CHECKS;
+	const build = buildChecks(declaredCapabilities);
 	const optIn = types || only.includes('types') ? OPT_IN_CHECKS : [];
 	const all = [...CHECKS, ...build, ...optIn];
 

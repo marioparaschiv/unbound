@@ -10,7 +10,7 @@ import { formatReport, formatSummary } from '~/lib/report-format';
 import { buildReportSchema } from '~/rollup/build-report-schema';
 import type { BuildReport } from '~/rollup/build-report-schema';
 import type { ReloadTransport } from '~/lib/reload-transport';
-import { BUILD_REPORT_ENV } from '~/rollup/build-report';
+import { BUILD_REPORT_ENV } from '~/rollup/build-env';
 import { parseByteSize } from '~/rollup/byte-size';
 import { DevServer } from '~/lib/dev-server';
 import { safeParse } from '~/lib/schema';

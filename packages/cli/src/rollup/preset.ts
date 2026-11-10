@@ -14,7 +14,6 @@ import type { Globals } from './globals.ts';
 
 import { settingsModule, settingsPanel, type SettingsState } from './settings.ts';
 import { assetImports, assets, createAssetCollector } from './assets.ts';
-import { BUILD_REPORT_ENV, buildReport } from './build-report.ts';
 import { hermesExpressionEntrypoint } from './entrypoint.ts';
 import { externalFor, unboundGlobals } from './globals.ts';
 import { findFile, sourceAlias } from './source-alias.ts';
@@ -22,8 +21,10 @@ import { commandLocales } from './command-locales.ts';
 import { hermesBytecode } from './hermes-bytecode.ts';
 import { localeModule, locales } from './locales.ts';
 import { entryExports } from './entry-exports.ts';
+import { buildReport } from './build-report.ts';
 import { lazyModules } from './lazy-modules.ts';
 import { localeHooks } from './locale-hooks.ts';
+import { readBuildEnv } from './build-env.ts';
 import { filterKeys } from './filter-keys.ts';
 import { outputOnly } from './output-only.ts';
 import { svgImports } from './svg-assets.ts';
@@ -36,8 +37,7 @@ export type PluginConfigOptions = {
 	budget?: BudgetOptions;
 };
 
-// `ubd dev` and `ubd push` set UNBOUND_HOT: components register for hot refresh and keep their hooks' state on push.
-const hot = process.env.UNBOUND_HOT === '1';
+const { hot } = readBuildEnv();
 
 const minifyOptions = {
 	compress: { keep_classnames: true, keep_fnames: true },
@@ -133,7 +133,7 @@ export function pluginConfig(
 			manifestToDist(pluginRoot),
 			locales(pluginRoot),
 			assets(pluginRoot, images),
-			buildReport({ pluginRoot, budget, reportFile: process.env[BUILD_REPORT_ENV] }),
+			buildReport({ pluginRoot, budget, reportFile: readBuildEnv().reportFile }),
 		],
 		output: {
 			dir: resolve(pluginRoot, 'dist'),

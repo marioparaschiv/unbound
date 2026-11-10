@@ -4,6 +4,7 @@ import MagicString from 'magic-string';
 import type { Plugin } from 'rollup';
 
 import { collectNames, isFunction, walkScopes, type Reference } from './estree-scope.ts';
+import { readBuildEnv } from './build-env.ts';
 import { LOCALE_MODULE } from './locales.ts';
 
 type AnyFunction = ESTree.Function | ESTree.ArrowFunctionExpression;
@@ -402,7 +403,7 @@ function lineOf(code: string, offset: number): number {
  * @returns The rollup plugin.
  */
 export function localeHooks(pluginRoot: string): Plugin {
-	const verbose = process.env.UNBOUND_VERBOSE === '1';
+	const { verbose } = readBuildEnv();
 
 	return {
 		name: 'unbound-locale-hooks',

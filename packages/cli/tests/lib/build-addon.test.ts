@@ -2,8 +2,8 @@ import { afterEach, describe, expect, test } from 'bun:test';
 
 import type { DiscoveredAddon } from '~/lib/discovery';
 import type { Diagnostic } from '~/rollup/diagnostic';
-import { buildWithChecks } from '~/lib/build-checks';
 import { discoverAddons } from '~/lib/discovery';
+import { buildAddon } from '~/lib/build-addon';
 import type { Check } from '~/lib/check/check';
 
 import { createTempDir, runUbd, type TempDir } from '../helpers/ubd';
@@ -60,7 +60,15 @@ function reporting(issues: Diagnostic[], seen: string[] = []): Check {
 	};
 }
 
-describe('buildWithChecks', () => {
+async function buildWithChecks(
+	addon: DiscoveredAddon,
+	command: string,
+	checks: readonly Check[],
+): Promise<boolean> {
+	return (await buildAddon(addon, { command, checks })).ok;
+}
+
+describe('buildAddon', () => {
 	test('an error from a check fails the build', async () => {
 		const addon = await findAddon(workspace('true'), 'com.example.built');
 		const check = reporting([issue('error', 'broken layout')]);
