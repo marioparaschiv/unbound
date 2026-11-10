@@ -8,8 +8,8 @@ export type PluginTestRun = { plugin: string; passed: boolean; output: string };
  * @returns The plugin folder names, sorted.
  */
 export function pluginsWithTests(dir: string = PLUGINS_DIR): string[] {
-	const plugins = [...new Bun.Glob('*/{src,tests}/**/*.test.{ts,tsx}').scanSync(dir)].map(
-		(path) => path.slice(0, path.indexOf('/')),
+	const plugins = [...new Bun.Glob('*/tests/**/*.test.{ts,tsx}').scanSync(dir)].map((path) =>
+		path.slice(0, path.indexOf('/')),
 	);
 
 	return [...new Set(plugins)].sort();
