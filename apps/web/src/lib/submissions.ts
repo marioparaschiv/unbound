@@ -12,13 +12,14 @@ import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { MAX_SUBMISSION_TAGS } from '@unbound-app/contracts/tags';
 import { and, count, eq, gte, inArray, ne } from 'drizzle-orm';
 
-import { addon, addonMaintainer, addonVersion, submission, submissionSource } from '~/db/schema';
+import { addonMaintainer, addonVersion, submission, submissionSource } from '~/db/schema';
 import { readSubmissionMaintainers, requireSubmissionMaintainers } from '~/lib/maintainers';
 import type { AddonSource, RepositoryListing } from '~/lib/addon-source';
 import { readAddonTags, readTags, requireTags } from '~/lib/addon-tags';
 import type { SubmissionSourceRow } from '~/lib/artifacts';
 import { appendEvent } from '~/lib/moderation-events';
 import { readAddonSource } from '~/lib/addon-source';
+import { checkClaim } from '~/lib/addon-claim';
 import { requirePermission } from '~/lib/api/caller';
 import { readReview } from '~/lib/submission-review';
 import type { Transaction } from '~/db/database';
@@ -77,6 +78,15 @@ export const OPEN_SUBMISSION_STATUSES = openSubmissionStatusSchema.enum;
 export const REPLACEABLE_SUBMISSION_STATUSES = [
 	'changes_requested',
 ] as const satisfies OpenSubmissionStatus[];
+
+/**
+ * @description Builds the staging bucket key a submission's bundle waits at until it is decided.
+ * @param submissionId The submission's id.
+ * @returns The key.
+ */
+export function getStagingKey(submissionId: string): string {
+	return `submissions/${submissionId}/bundle`;
+}
 
 /**
  * @description Narrows a submission loaded with its source to one read from GitHub.
@@ -146,17 +156,22 @@ async function checkAccountAge(ctx: AppContext, userId: string, now: Date) {
 	}
 }
 
-async function checkClaim(
+function isReplaceable(row: SubmissionRow, userId: string): boolean {
+	return (
+		row.authorId === userId &&
+		REPLACEABLE_SUBMISSION_STATUSES.some((status) => status === row.status)
+	);
+}
+
+async function claimSubmission(
 	ctx: AppContext,
 	tx: ClaimReader,
 	caller: Caller,
 	manifest: PublishedManifest,
 ): Promise<Claim> {
 	const { user } = caller;
-	const [approved] = await tx
-		.select({ id: addon.id })
-		.from(addon)
-		.where(eq(addon.id, manifest.id));
+	const claim = await checkClaim(tx, manifest, (row) => isReplaceable(row, user.id));
+	const approved = claim.addon !== undefined;
 
 	if (approved) {
 		const [maintainer] = await tx
@@ -172,17 +187,7 @@ async function checkClaim(
 
 		requirePermission(caller, { update: ['create'] });
 
-		const [existing] = await tx
-			.select({ version: addonVersion.version })
-			.from(addonVersion)
-			.where(
-				and(
-					eq(addonVersion.addonId, manifest.id),
-					eq(addonVersion.version, manifest.version),
-				),
-			);
-
-		if (existing) {
+		if (claim.live) {
 			throw new ApiError(
 				'version_exists',
 				`${manifest.id} already has a version ${manifest.version}.`,
@@ -192,35 +197,13 @@ async function checkClaim(
 		requirePermission(caller, { submission: ['create'] });
 	}
 
-	const open = await tx
-		.select()
-		.from(submission)
-		.where(
-			and(
-				eq(submission.addonId, manifest.id),
-				inArray(submission.status, OPEN_SUBMISSION_STATUSES),
-			),
-		);
-
-	const replaced = open.find(
-		(row) =>
-			row.authorId === user.id &&
-			REPLACEABLE_SUBMISSION_STATUSES.some((status) => status === row.status),
-	);
-
-	const others = open.filter((row) => row !== replaced);
+	const replaced = claim.open.find((row) => isReplaceable(row, user.id));
+	const others = claim.open.filter((row) => row !== replaced);
 
 	if (approved && others.length >= ctx.env.SUBMISSION_MAX_PENDING_UPDATES) {
 		throw new ApiError(
 			'pending_update_exists',
 			`${manifest.id} already has an update waiting for review.`,
-		);
-	}
-
-	if (!approved && others.length > 0) {
-		throw new ApiError(
-			'addon_id_taken',
-			`The addon id ${manifest.id} is claimed by another submission.`,
 		);
 	}
 
@@ -292,7 +275,7 @@ function reserve(
 	const { manifest, pin } = source;
 
 	return ctx.db.transaction(async (tx) => {
-		const { kind, replaced } = await checkClaim(ctx, tx, caller, manifest);
+		const { kind, replaced } = await claimSubmission(ctx, tx, caller, manifest);
 
 		if (icon && kind === 'update') {
 			throw new ApiError(
@@ -366,7 +349,7 @@ async function stageAndReserve(
 	now: Date,
 ): Promise<Reservation> {
 	const id = Bun.randomUUIDv7();
-	const staged = { id, stagingKey: `submissions/${id}/bundle` };
+	const staged = { id, stagingKey: getStagingKey(id) };
 
 	// Until the row exists, only STAGING_ORPHAN_GRACE_SECONDS keeps the sweeper off this object.
 	await ctx.storage.staging.write(staged.stagingKey, submitted.source.bundle);
@@ -471,7 +454,9 @@ export async function previewSubmission(
 
 	const github = await connectGitHub(ctx, caller.user.id);
 	const source = await readAddonSource(ctx, github, request);
-	const { kind } = await ctx.db.transaction((tx) => checkClaim(ctx, tx, caller, source.manifest));
+	const { kind } = await ctx.db.transaction((tx) =>
+		claimSubmission(ctx, tx, caller, source.manifest),
+	);
 	const { id } = source.manifest;
 	const access = await readSubmissionMaintainers(ctx, caller, id);
 
@@ -530,6 +515,7 @@ export async function markUpToDate(
 export default {
 	OPEN_SUBMISSION_STATUSES,
 	REPLACEABLE_SUBMISSION_STATUSES,
+	getStagingKey,
 	requireSourced,
 	toSubmission,
 	insertSubmissionSource,
