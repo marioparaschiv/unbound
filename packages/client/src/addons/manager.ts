@@ -71,7 +71,7 @@ export abstract class Manager<
 	}
 
 	/**
-	 * @description Resolves the manager singleton of an addon kind. Twin of {@link register}.
+	 * @description Resolves the manager singleton of an addon kind, once core has registered it.
 	 * @template K The addon kind.
 	 * @param kind The addon kind.
 	 * @returns The kind's manager.
@@ -87,13 +87,20 @@ export abstract class Manager<
 	}
 
 	/**
-	 * @description Makes a manager the singleton {@link Manager.for} resolves for its kind. Twin of {@link for}.
-	 * @template K The addon kind.
-	 * @param kind The addon kind.
-	 * @param manager The kind's manager.
+	 * @description Makes each kind's manager the singleton {@link Manager.for} resolves. Twin of {@link unregister}.
+	 * @param managers Every kind's manager.
 	 */
-	protected static register<K extends AddonKind>(kind: K, manager: ManagerOf[K]) {
-		registry[kind] = manager;
+	static register(managers: ManagerOf) {
+		Object.assign(registry, managers);
+	}
+
+	/**
+	 * @description Forgets every registered manager, so {@link Manager.for} throws again. Twin of {@link register}.
+	 */
+	static unregister() {
+		for (const kind of Object.keys(registry) as AddonKind[]) {
+			delete registry[kind];
+		}
 	}
 
 	/**

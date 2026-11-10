@@ -8,7 +8,6 @@ import type { InstalledEntry } from '~/updates/addon-updates';
 import { getById, onAssetRegistered } from '~/assets/api';
 import { downloadFile } from '~/native/download-file';
 import { ImageSources } from '~/metro/common';
-import { Manager } from '~/addons/manager';
 import { Addons } from '~/addons/addons';
 import fs from '~/native/fs';
 
@@ -89,8 +88,6 @@ export class Icons extends Addons<Plugin> {
 			label: 'UNBOUND_ICONS',
 			icon: 'ImageIcon',
 		});
-
-		Manager.register('icon-pack', this);
 	}
 
 	/**

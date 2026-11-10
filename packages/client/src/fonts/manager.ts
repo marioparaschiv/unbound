@@ -57,8 +57,6 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 			label: 'UNBOUND_FONTS',
 			icon: 'LettersIcon',
 		});
-
-		Manager.register('font', this);
 	}
 
 	initialize() {

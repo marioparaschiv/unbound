@@ -1,8 +1,6 @@
 import '~/metro/state';
 import '~/metro/cache';
 import '~/metro';
-// Each addon manager registers itself as its module runs; `Manager.for` below needs all of them.
-import '~/addons/managers';
 
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
@@ -13,6 +11,7 @@ import themes, { designSection, fontGroupSection } from '~/themes/builtin';
 import cloudSync, { cloudSyncSection } from '~/sync/builtin';
 import updater, { updatesSection } from '~/updates/builtin';
 import { developerSection } from '~/settings/builtin.dev';
+import { themes as themeManager } from '~/themes/manager';
 import toasts, { toastsSection } from '~/toasts/builtin';
 import discordSupport from '~/builtins/discord-support';
 import type { BuiltInEntry } from '~/builtins/registry';
@@ -27,13 +26,16 @@ import { pluginsSection } from '~/plugins/builtin';
 import { builtins } from '~/builtins/registry';
 import staffMode from '~/builtins/staff-mode';
 import { benchSpan } from '~/core/bench-span';
+import { icons } from '~/icon-packs/manager';
 import nativeConsent from '~/native/builtin';
+import { plugins } from '~/plugins/manager';
 import { Manager } from '~/addons/manager';
 import appIcons from '~/app-icons/builtin';
 import tracking from '~/builtins/tracking';
 import debug from '~/debugger/builtin.dev';
 import commands from '~/commands/builtin';
 import account from '~/account/builtin';
+import { fonts } from '~/fonts/manager';
 import links from '~/links/builtin';
 import storage from '~/storage/api';
 import * as api from '~/core/api';
@@ -78,7 +80,7 @@ const SECTIONS_IN_OVERVIEW_ORDER: SectionEntry[] = [
 	fontGroupSection,
 ];
 
-// The account starts first: it takes over Sync's session before Sync reads it.
+// The account starts first, so its session refresh is already in flight when other built-ins reach unbound.rip.
 const BUILT_INS: BuiltInEntry[] = [
 	['account', account],
 	['cloudSync', cloudSync],
@@ -106,8 +108,8 @@ const BUILT_INS: BuiltInEntry[] = [
 let initialized = false;
 
 /**
- * @description Brings up the client, initialising the built-ins, plugins, and themes managers in turn. Twin of
- * {@link shutdown}.
+ * @description Brings up the client: registers the addon managers, starts the built-ins, loads each kind's addons,
+ * then runs the built-ins' `afterAddons` hooks. Twin of {@link shutdown}.
  */
 export function initialize(): void {
 	if (initialized) {
@@ -123,11 +125,14 @@ export function initialize(): void {
 	window.unbound = { ...api, initialize, shutdown };
 	Logger.info('Initializing Unbound...');
 
+	Manager.register({ plugin: plugins, theme: themeManager, 'icon-pack': icons, font: fonts });
 	builtins.initialize(BUILT_INS);
 
 	for (const kind of ADDON_KINDS) {
 		benchSpan(`manager ${kind}`, () => Manager.for(kind).initialize());
 	}
+
+	builtins.afterAddons();
 
 	initialized = true;
 	Logger.info('Unbound initialized');
@@ -138,8 +143,8 @@ export function initialize(): void {
 }
 
 /**
- * @description Tears the client back down, shutting down the built-ins, plugins, and themes managers and persisting
- * settings before clearing the global down to the lifecycle entry points. Twin of {@link initialize}.
+ * @description Tears the client back down: stops the built-ins, shuts down each kind's manager, persists settings,
+ * unregisters the managers and clears the global down to the lifecycle entry points. Twin of {@link initialize}.
  * @returns A promise that resolves once settings have been persisted and shutdown is complete.
  */
 export async function shutdown(): Promise<void> {
@@ -158,6 +163,7 @@ export async function shutdown(): Promise<void> {
 	}
 
 	await storage.persist();
+	Manager.unregister();
 
 	initialized = false;
 

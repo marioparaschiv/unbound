@@ -1,12 +1,14 @@
-// The plugins manager installs the check on initialize; until then every owner counts as known.
-let check: (owner: string) => boolean = () => true;
+const knowsEveryOwner = () => true;
+
+// The plugins manager installs the check on initialize and removes it on shutdown; without it every owner counts as known.
+let check: (owner: string) => boolean = knowsEveryOwner;
 
 /**
  * @description Sets how commands tell a plugin id from a mistyped owner, so the plugins manager supplies it without the commands API importing it.
- * @param ownerCheck Returns whether a plugin with that id is loaded.
+ * @param ownerCheck Returns whether a plugin with that id is loaded, or `undefined` to count every owner as known again.
  */
-export function setOwnerCheck(ownerCheck: (owner: string) => boolean): void {
-	check = ownerCheck;
+export function setOwnerCheck(ownerCheck: ((owner: string) => boolean) | undefined): void {
+	check = ownerCheck ?? knowsEveryOwner;
 }
 
 /**

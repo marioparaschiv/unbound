@@ -3,7 +3,6 @@ import type { Theme } from '@unbound-app/types';
 import { getLoader, getThemes, rescanThemes } from '~/native/unbound-native';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { parseThemeBundle } from '~/themes/bundle';
-import { Manager } from '~/addons/manager';
 import { Addons } from '~/addons/addons';
 import ThemeStore from '~/themes/state';
 
@@ -26,8 +25,6 @@ export class Themes extends Addons<Theme> {
 			label: 'UNBOUND_THEMES',
 			icon: 'PaintPaletteIcon',
 		});
-
-		Manager.register('theme', this);
 
 		// The loader recolours native views from the theme files it scanned, so each change on disk rescans them.
 		for (const event of DISK_EVENTS) {

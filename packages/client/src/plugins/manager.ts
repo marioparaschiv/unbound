@@ -18,7 +18,6 @@ import { setOwnerCheck } from '~/commands/owners';
 import type { AddonFiles } from '~/addons/files';
 import { registry } from '~/commands/registry';
 import { benchSpan } from '~/core/bench-span';
-import { Manager } from '~/addons/manager';
 import { Addons } from '~/addons/addons';
 import fs from '~/native/fs';
 
@@ -68,8 +67,6 @@ export class Plugins extends Addons<Plugin> {
 			label: 'UNBOUND_PLUGINS',
 			icon: 'PuzzlePieceIcon',
 		});
-
-		Manager.register('plugin', this);
 	}
 
 	/**
@@ -93,6 +90,17 @@ export class Plugins extends Addons<Plugin> {
 
 			this.load(bundle, manifest);
 		}
+	}
+
+	/**
+	 * @description Stops listening for freezes and restores the default command owner check, then shuts the plugins down.
+	 * @returns A promise that resolves once every plugin has stopped.
+	 */
+	shutdown(): Promise<void> {
+		setFreezeListener(undefined);
+		setOwnerCheck(undefined);
+
+		return super.shutdown();
 	}
 
 	/**

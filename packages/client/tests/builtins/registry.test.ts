@@ -30,3 +30,27 @@ test('starts the given built-ins in order, skips declined ones and stops them in
 	expect(calls).toEqual(['start b', 'start a', 'start c', 'stop c', 'stop a', 'stop b']);
 	expect(builtins.isInitialized()).toBe(false);
 });
+
+test('runs afterAddons on started built-ins in start order, past one that throws', () => {
+	const calls: string[] = [];
+
+	builtins.initialize([
+		['first', { afterAddons: () => calls.push('first') }],
+		['skipped', { shouldStart: () => false, afterAddons: () => calls.push('skipped') }],
+		[
+			'throws',
+			{
+				afterAddons: () => {
+					throw new Error('boom');
+				},
+			},
+		],
+		['plain', {}],
+		['last', { afterAddons: () => calls.push('last') }],
+	]);
+
+	builtins.afterAddons();
+	builtins.shutdown();
+
+	expect(calls).toEqual(['first', 'last']);
+});
