@@ -69,12 +69,14 @@ export class ControllerClient {
 			id,
 			ok: false,
 			error: 'Debugger client shut down.',
+			code: 'shut-down',
 		}));
 		this.pendingPushes.failAll((id) => ({
 			type: 'plugin-push-result',
 			id,
 			ok: false,
 			error: 'Debugger client shut down.',
+			code: 'shut-down',
 		}));
 	}
 
@@ -105,6 +107,7 @@ export class ControllerClient {
 					id,
 					ok: false,
 					error: 'Not connected to the debugger bridge.',
+					code: 'bridge-unreachable',
 				});
 
 				return;
@@ -121,6 +124,7 @@ export class ControllerClient {
 					id,
 					ok: false,
 					error: `Evaluation timed out after ${limit}ms.`,
+					code: 'timeout',
 				}),
 				meta: logs,
 			});
@@ -150,6 +154,7 @@ export class ControllerClient {
 					id,
 					ok: false,
 					error: 'Not connected to the debugger bridge.',
+					code: 'bridge-unreachable',
 				});
 
 				return;
@@ -163,6 +168,7 @@ export class ControllerClient {
 					id,
 					ok: false,
 					error: `Plugin push timed out after ${PLUGIN_PUSH_TIMEOUT_MS}ms.`,
+					code: 'timeout',
 				}),
 				meta: void 0,
 			});

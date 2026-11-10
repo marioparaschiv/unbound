@@ -72,4 +72,24 @@ describe('ControllerClient.evaluate', () => {
 
 		expect(bridge.requests[0]).not.toHaveProperty('timeout');
 	});
+
+	test('fails with a code when it has no bridge, and when it shuts down mid-eval', async () => {
+		const unconnected = new ControllerClient('ws://127.0.0.1:9');
+
+		expect(await unconnected.evaluate('1')).toMatchObject({
+			ok: false,
+			code: 'bridge-unreachable',
+		});
+
+		const bridge = fakeBridge();
+		const client = await connectedClient(bridge);
+
+		bridge.server.stop(true);
+
+		const pending = client.evaluate('never()');
+
+		client.close();
+
+		expect(await pending).toMatchObject({ ok: false, code: expect.any(String) });
+	});
 });

@@ -14,6 +14,18 @@ export type EvalRequest = {
 	timeout?: number;
 };
 
+/**
+ * Why a request failed before the device answered it, so callers branch on a code instead of the error text:
+ * `no-device` (the bridge has no device), `device-disconnected` (it dropped mid-request), `timeout`,
+ * `bridge-unreachable` (the controller has no socket to the bridge) and `shut-down` (the controller closed).
+ */
+export type RequestFailureCode =
+	| 'no-device'
+	| 'device-disconnected'
+	| 'timeout'
+	| 'bridge-unreachable'
+	| 'shut-down';
+
 /** The outcome of an {@link EvalRequest}, sent device → bridge → the one waiting controller. */
 export type EvalResult = {
 	type: 'eval-result';
@@ -34,6 +46,8 @@ export type EvalResult = {
 			ok: false;
 			/** The inspected error. */
 			error: string;
+			/** Set when the bridge or controller failed the eval; absent when the code itself threw on the device. */
+			code?: RequestFailureCode;
 	  }
 );
 
@@ -71,6 +85,8 @@ export type PluginPushResult = {
 			ok: false;
 			/** The reload failure, inspected. */
 			error: string;
+			/** Set when the bridge or controller failed the push; absent when the device's reload failed. */
+			code?: RequestFailureCode;
 	  }
 );
 
