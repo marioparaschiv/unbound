@@ -1,4 +1,7 @@
+import { settings } from '@unbound-app/settings';
 import { flux, patcher } from '@unbound-app/api';
+
+import { languageFlag } from '~/translate/flags';
 
 import { ChatManager, MessageStore, RowManager } from '~/translate/modules';
 import type { TranslationResult } from '~/translate/translate';
@@ -115,28 +118,38 @@ export function isShownInline(messageId: string): boolean {
 	return translations.has(messageId);
 }
 
+export type LanguageCodeStyle = {
+	/** Whether the translation ends with its languages, such as `(en -> de)`. */
+	showLanguages: boolean;
+	/** Whether the languages show as flag emojis where a language has one, such as `(🇬🇧 -> 🇩🇪)`. */
+	flags: boolean;
+};
+
 /**
- * @description Builds the markdown a translated message shows: its original text, an empty line, then the translation as italic subtext ending with its language codes.
+ * @description Builds the markdown a translated message shows: its original text, then the translation as italic subtext, ending with its languages unless they are hidden.
  * @param original The message text.
  * @param translation The translation and its language codes.
- * @returns The text to draw, such as `Hello` + `\n\n-# *Hallo* (en -> de)`.
+ * @param style How the languages show.
+ * @returns The text to draw, such as `Hello` + `\n-# *Hallo* (en -> de)`.
  */
 export function withTranslation(
 	original: string,
 	{ text, source, target }: TranslationResult,
+	style: LanguageCodeStyle = { showLanguages: true, flags: false },
 ): string {
 	const lines = text
 		.split('\n')
 		.map((line) => line.trim())
 		.filter(Boolean)
 		.map((line) => `-# *${line}*`);
-	const codes = `(${source} -> ${target})`;
+	const label = style.flags ? languageFlag : (code: string) => code;
+	const codes = style.showLanguages ? `(${label(source)} -> ${label(target)})` : '';
 
-	if (!lines.length) return `${original}\n\n-# ${codes}`;
+	if (!lines.length) return codes ? `${original}\n-# ${codes}` : original;
 
-	lines[lines.length - 1] += ` ${codes}`;
+	if (codes) lines[lines.length - 1] += ` ${codes}`;
 
-	return `${original}\n\n${lines.join('\n')}`;
+	return `${original}\n${lines.join('\n')}`;
 }
 
 /**
@@ -155,7 +168,10 @@ export function showInline(
 	translations.set(messageId, {
 		channelId,
 		original,
-		shown: withTranslation(original, translation),
+		shown: withTranslation(original, translation, {
+			showLanguages: settings.showLanguages,
+			flags: settings.languageFlags,
+		}),
 	});
 	void redraw(channelId, messageId);
 }
@@ -174,7 +190,7 @@ export function hideInline(messageId: string): void {
 }
 
 /**
- * @description Draws translations in the chat: each translated message's row shows its original text, an empty line, then the translation as italic subtext with its language codes.
+ * @description Draws translations in the chat: each translated message's row shows its original text, then the translation as italic subtext, ending with its languages unless they are hidden.
  * Patches `generate` on Discord's `RowManager` and `determineChangeType` on its `ChatManager`, so a translation redraws its row.
  * @returns A function that draws every translated message's original text again, then removes both patches once Discord handled the redraws.
  */

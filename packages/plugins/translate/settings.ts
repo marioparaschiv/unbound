@@ -9,6 +9,8 @@ export default defineSettings({
 		hidden: true,
 		options: { toast: 'SHOW_IN_TOAST', inline: 'SHOW_INLINE' },
 	}),
+	showLanguages: setting.boolean({ default: true, hidden: true }),
+	languageFlags: setting.boolean({ default: false, hidden: true }),
 	apiBaseUrl: setting.string({ default: 'https://translate.unbound.rip', hidden: true }),
 	accessToken: setting.string({ default: '', hidden: true }),
 	refreshToken: setting.string({ default: '', hidden: true }),

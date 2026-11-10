@@ -25,6 +25,14 @@ declare module '@unbound-app/i18n' {
 		readonly SHOW_INLINE: string;
 		/** Adds the translation below the message text until you pick Show Original */
 		readonly SHOW_INLINE_SUBTITLE: string;
+		/** Show languages */
+		readonly SHOW_LANGUAGES: string;
+		/** End a translation in the message with its languages, such as (en -> de) */
+		readonly SHOW_LANGUAGES_SUBTITLE: string;
+		/** Show languages as flags */
+		readonly LANGUAGE_FLAGS: string;
+		/** Use flag emojis instead of language codes where a language has one */
+		readonly LANGUAGE_FLAGS_SUBTITLE: string;
 		/** Connect Discord account */
 		readonly CONNECT_ACCOUNT: string;
 		/** Reconnect Discord account */

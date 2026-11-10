@@ -107,7 +107,7 @@ describe('translating in the message', () => {
 	test('shows the translation under the text, without a toast, and redraws the row', async () => {
 		expect(await pressTranslate()).toBe('Translate');
 
-		expect(drawn()).toEqual([{ type: 'text', content: 'Hello\n\n-# *Hallo* (en -> de)' }]);
+		expect(drawn()).toEqual([{ type: 'text', content: 'Hello\n-# *Hallo* (en -> de)' }]);
 		expect(toasts.shown).toEqual([]);
 		expect(flux.dispatched).toMatchObject([
 			{ type: 'MESSAGE_UPDATE', message: { id: '1', channel_id: '2', content: 'Hello' } },
@@ -159,6 +159,33 @@ describe('the translated message text', () => {
 	test('puts each line of a multi-line translation in italic subtext and the codes on the last', () => {
 		expect(
 			withTranslation('Hi\nthere', { text: 'Hallo\n\nda ', source: 'en', target: 'de' }),
-		).toBe('Hi\nthere\n\n-# *Hallo*\n-# *da* (en -> de)');
+		).toBe('Hi\nthere\n-# *Hallo*\n-# *da* (en -> de)');
+	});
+
+	test('leaves out the languages when they are hidden', () => {
+		expect(
+			withTranslation(
+				'Hi',
+				{ text: 'Hallo', source: 'en', target: 'de' },
+				{ showLanguages: false, flags: true },
+			),
+		).toBe('Hi\n-# *Hallo*');
+	});
+
+	test('shows the languages as flags where they have one', () => {
+		expect(
+			withTranslation(
+				'Hi',
+				{ text: 'Saluton', source: 'pt-BR', target: 'eo' },
+				{ showLanguages: true, flags: true },
+			),
+		).toBe('Hi\n-# *Saluton* (🇧🇷 -> eo)');
+		expect(
+			withTranslation(
+				'Hi',
+				{ text: 'Hallo', source: 'en', target: 'de' },
+				{ showLanguages: true, flags: true },
+			),
+		).toBe('Hi\n-# *Hallo* (🇬🇧 -> 🇩🇪)');
 	});
 });

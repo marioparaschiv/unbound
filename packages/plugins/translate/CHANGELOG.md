@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.0] - 2026-11-10
+
+### Added
+
+- A **Show languages** setting for translations in the message. Turn it off to leave out the languages, such as `(en -> de)`.
+- A **Show languages as flags** setting, which shows the languages as flag emojis where a language has one, such as `(🇬🇧 -> 🇩🇪)`.
+
+### Changed
+
+- A translation in the message now follows the original text directly, without an empty line between them.
+
 ## [1.1.0] - 2026-11-10
 
 ### Added
