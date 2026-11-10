@@ -705,8 +705,10 @@ jobs:
                     if [[ "$train" != *.* ]]; then train="${train}.0"; fi
                     platform=ios
                     if [ -n "$build" ]; then platform=ios-testflight; fi
-                    gh release download "discord-${train}${build}-${platform}" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber
+                    LATEST_TAG="discord-${train}${build}-${platform}"
+                    gh release download "$LATEST_TAG" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber
                   fi
+                  echo "IPA_RELEASE_TAG=$LATEST_TAG" >> "$GITHUB_ENV"
 
             - name: Restore live site state
               run: |
@@ -771,20 +773,27 @@ jobs:
                   fi
 
                   NAME=$(grep '^Name:' ios/control | cut -d ' ' -f 2)
+                  # Feather offers an update only when the version string changes, so it names the loader the IPA carries.
+                  LOADER_VERSION=""
+                  if gh release download "$IPA_RELEASE_TAG" --repo "${{ github.repository }}" --pattern '*arm64.deb' --dir ipa-deb --clobber; then
+                    LOADER_VERSION=$(for deb in ipa-deb/*.deb; do dpkg-deb -f "$deb" Version; done | sort -V | tail -n 1)
+                  fi
+                  rm -rf ipa-deb
+                  DISCORD_VERSION="$VERSION"
+                  if [ -n "$LOADER_VERSION" ]; then VERSION="$DISCORD_VERSION ($LOADER_VERSION)"; fi
+
                   # A full timestamp, so sources show when the build landed instead of midnight UTC.
                   DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
                   IPA_SIZE=$(stat -c%s "$APP_FILE")
-                  RELEASE_TAG="discord-$VERSION-ios"
-                  if [[ "$IS_TESTFLIGHT" == true ]]; then RELEASE_TAG="discord-$VERSION-ios-testflight"; fi
+                  RELEASE_TAG="discord-$DISCORD_VERSION-ios"
+                  if [[ "$IS_TESTFLIGHT" == true ]]; then RELEASE_TAG="discord-$DISCORD_VERSION-ios-testflight"; fi
                   DOWNLOAD_URL=https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/$NAME.ipa
                   NEW_ENTRY=$(jq -n --arg version "$VERSION" --arg date "$DATE" --arg size "$IPA_SIZE" --arg downloadURL "$DOWNLOAD_URL" '{version: $version, date: $date, size: ($size | tonumber), downloadURL: $downloadURL, localizedDescription: "Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience."}')
 
-                  VERSION_EXISTS=$(jq --arg version "$VERSION" --argjson index "$APP_INDEX" '.apps[$index].versions | map(select(.version == $version)) | length' apt-repo/repo/app-repo.json)
-                  if [ "$VERSION_EXISTS" -gt 0 ]; then
-                    jq --argjson newEntry "$NEW_ENTRY" --argjson index "$APP_INDEX" --arg version "$VERSION" '.apps[$index].versions |= map(if .version == $version then $newEntry else . end)' apt-repo/repo/app-repo.json > temp.json
-                  else
-                    jq --argjson newEntry "$NEW_ENTRY" --argjson index "$APP_INDEX" '.apps[$index].versions |= [$newEntry] + .' apt-repo/repo/app-repo.json > temp.json
-                  fi
+                  # The release's IPA is replaced in place, so older entries for this Discord version would download the new one anyway.
+                  jq --argjson newEntry "$NEW_ENTRY" --argjson index "$APP_INDEX" --arg discord "$DISCORD_VERSION" \
+                    '.apps[$index].versions |= [$newEntry] + map(select(.version != $discord and (.version | startswith($discord + " (") | not)))' \
+                    apt-repo/repo/app-repo.json > temp.json
                   mv temp.json apt-repo/repo/app-repo.json
 
             - name: Update depiction version
