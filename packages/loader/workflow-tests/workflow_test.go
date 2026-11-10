@@ -556,8 +556,8 @@ func TestParsedAndroidSmokeTestGatesTheAndroidBuild(t *testing.T) {
 	smoke := android.job(t, "smoke")
 	requireNeeds(t, "smoke", smoke, "patch-discord")
 	requireNeeds(t, "smoke", smoke, "build-module")
-	// Disabled for runner time; restoring the condition without `false && ` turns it back on.
-	if smoke.If != "false && needs.build-module.outputs.attested == 'true'" || smoke.ContinueOnError {
+	// Off unless the repository variable SMOKE_TESTS is true, to save runner time.
+	if smoke.If != "vars.SMOKE_TESTS == 'true' && needs.build-module.outputs.attested == 'true'" || smoke.ContinueOnError {
 		t.Fatalf("the Android smoke test must stay disabled until it is turned back on, runs if %q", smoke.If)
 	}
 	runner := smoke.stepUsing(t, "reactivecircus/android-emulator-runner@")
@@ -593,8 +593,8 @@ func TestParsedIOSSmokeTestGatesTheIOSBuild(t *testing.T) {
 	if smoke.step(t, "Wait for the simulator build").ContinueOnError != "" {
 		t.Fatal("a failed simulator build must fail the smoke test")
 	}
-	// Disabled for runner time; restoring the condition without `false && ` turns it back on.
-	if smoke.If != "false && inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true" || smoke.ContinueOnError {
+	// Off unless the repository variable SMOKE_TESTS is true, to save runner time.
+	if smoke.If != "vars.SMOKE_TESTS == 'true' && inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true" || smoke.ContinueOnError {
 		t.Fatalf("the iOS smoke test must stay disabled until it is turned back on, runs if %q", smoke.If)
 	}
 	if smoke.step(t, "Download the simulator build").With["name"] != "ios-simulator" {
