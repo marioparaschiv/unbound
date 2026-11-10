@@ -3,9 +3,8 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { HermesContext } from '../src/index';
-
-import hermes from '../src/index';
+import type { HermesContext } from '~/index';
+import hermes from '~/index';
 
 const FAKE_HERMESC = `#!/bin/sh
 echo "$@" > "$(dirname "$0")/args"
