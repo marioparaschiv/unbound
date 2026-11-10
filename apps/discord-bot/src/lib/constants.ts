@@ -5,7 +5,6 @@ export const CDN_URL = 'https://cdn.unbound.rip';
 export const COLOURS = {
 	positive: 0x00_ff_00,
 	danger: 0xff_00_00,
-	neutral: 0xf1_f1_f1,
 	brand: 0xc8_41_51,
 	warning: 0xf0_b2_32,
 	info: 0x58_65_f2,

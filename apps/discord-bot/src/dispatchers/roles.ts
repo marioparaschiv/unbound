@@ -5,7 +5,6 @@ import { inArray } from 'drizzle-orm';
 
 import { DISCORD_IDS, type IdConstantName } from '~/lib/constants';
 import type { ContributorCache } from '~/lib/github-contributors';
-import createSerialQueue from '~/runtime/serial-queue';
 import type { Stores } from '~/dispatchers/types';
 import type { Database } from '~/db/database';
 import { roleGrant } from '~/db/schema';
@@ -31,10 +30,8 @@ export type RolesGuild = {
 	roles: { cache: { get: (roleId: string) => RolesRole | undefined } };
 	members: { me: BotMember | null; fetch: (options: FetchMember) => Promise<RolesMember> };
 };
-export type JoinedMember = { id: string; guild: { id: string } };
 export type RolesClient = {
 	guilds: { fetch: (guildId: string) => Promise<RolesGuild> };
-	on: (event: 'guildMemberAdd', listener: (member: JoinedMember) => void) => void;
 };
 export type RolesContext = Stores & { client: RolesClient };
 
@@ -85,13 +82,11 @@ export type RolesDispatcher = {
 	requires: readonly IdConstantName[];
 	reconcile: (context: RolesContext) => Promise<void>;
 	handle: (payload: string, context: RolesContext) => Promise<void>;
-	/** Resolves once every queued sync, including joins, has settled. */
-	drain: () => Promise<void>;
 };
 
 const DELETED_RETRY_MS = 60 * 60 * 1000;
 const ALL_MEMBERS: MemberQuery = { by: 'all' };
-// The subjects the bot's triggers write into `member_changed` payloads; `discord` is for joins only.
+// The subjects the bot's triggers write into `member_changed` payloads.
 const PAYLOAD_SUBJECTS: ReadonlySet<string> = new Set<MemberSubject>(['user', 'github', 'addon']);
 
 function isPayloadSubject(value: string): value is MemberSubject {
@@ -165,7 +160,7 @@ function isMissingPermissions(error: unknown): error is DiscordAPIError {
 /**
  * @description Creates the grant-only role-sync dispatcher.
  * @param options Guild and contributor cache; role ids and clock default to the constants and `Date.now`.
- * @returns A dispatcher assignable to `Dispatcher`, plus `drain()`.
+ * @returns A dispatcher assignable to `Dispatcher`.
  */
 export function createRolesDispatcher(options: RolesOptions): RolesDispatcher {
 	const { guildId, contributors, roleIds, now = Date.now } = options;
@@ -176,13 +171,11 @@ export function createRolesDispatcher(options: RolesOptions): RolesDispatcher {
 			return roleId === undefined ? [] : [[key, roleId]];
 		}),
 	);
-	const queue = createSerialQueue();
 	// `discordId:roleId` pairs seen held by hand; per process, so a restart checks them once more.
 	const held = new Set<string>();
 	// Discord id -> epoch ms before which a deleted account is not fetched again; one not in the guild is retried every run.
 	const deleted = new Map<string, number>();
 	let reported = new Set<string>();
-	let attached = false;
 
 	async function loadClaims({ db, web }: Stores, query: MemberQuery): Promise<Claim[]> {
 		const ids = await contributors.get();
@@ -400,34 +393,12 @@ export function createRolesDispatcher(options: RolesOptions): RolesDispatcher {
 		}
 	}
 
-	// The bot runs without the privileged GuildMembers intent, so this never fires today and the timed reconcile grants joins; it costs nothing if the intent is approved.
-	function attach(context: RolesContext) {
-		if (attached) return;
-
-		attached = true;
-		context.client.on('guildMemberAdd', (joined) => {
-			if (joined.guild.id !== guildId) return;
-
-			queue
-				.enqueue(() => sync(context, { by: 'discord', ids: [joined.id] }))
-				.catch((error) => {
-					logger.error(
-						`Failed to sync roles for joined Discord user ${joined.id}:`,
-						error,
-					);
-				});
-		});
-	}
-
+	// The bot runs without the privileged GuildMembers intent, so the timed reconcile grants joins.
 	return {
 		name: 'roles',
 		channel: 'member_changed',
 		requires: ROLES.map((role) => role.constant),
-		reconcile(current) {
-			attach(current);
-
-			return queue.enqueue(() => sync(current, ALL_MEMBERS));
-		},
+		reconcile: (current) => sync(current, ALL_MEMBERS),
 		handle(payload, current) {
 			const query = parseMemberPayload(payload);
 
@@ -435,9 +406,8 @@ export function createRolesDispatcher(options: RolesOptions): RolesDispatcher {
 				return Promise.resolve();
 			}
 
-			return queue.enqueue(() => sync(current, query));
+			return sync(current, query);
 		},
-		drain: () => queue.drain(),
 	};
 }
 

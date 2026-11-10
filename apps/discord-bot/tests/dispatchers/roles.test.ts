@@ -334,7 +334,7 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		expect(discord.held('1')).toEqual(new Set(['r-s']));
 	});
 
-	test('skips an absent member and writes nothing, then grants on join', async () => {
+	test('skips an absent member and writes nothing', async () => {
 		seed({});
 		const discord = fakeDiscord({ members: {} });
 		const roles = dispatcher();
@@ -344,29 +344,6 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		expect(discord.fetched).toEqual(['1']);
 		expect(await grants()).toEqual([]);
 		expect(logged(error)).toBe('');
-
-		discord.join('1', 'another-guild');
-		discord.join('1');
-		await roles.drain();
-
-		expect(discord.added).toEqual([{ discordId: '1', roleId: 'r-c' }]);
-		expect(discord.fetched).toEqual(['1', '1']);
-	});
-
-	test('join grants the union of the rows sharing a discord id', async () => {
-		seed(
-			{ userId: 'a', githubId: '7', isSponsor: true },
-			{ userId: 'b', githubId: '8', isAddonDeveloper: true },
-		);
-		const discord = fakeDiscord({ members: {} });
-		const roles = dispatcher();
-
-		await roles.reconcile(context(discord.client));
-		discord.join('1');
-		await roles.drain();
-
-		expect(discord.fetched).toEqual(['1', '1']);
-		expect(discord.added.map((grant) => grant.roleId).toSorted()).toEqual(['r-a', 'r-s']);
 	});
 
 	test("logs which role to move when the bot's highest role is at or below a target, still grants the others", async () => {
@@ -444,31 +421,6 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		expect(roleIdsFor('1')).toEqual(['r-s']);
 		expect(roleIdsFor('2')).toEqual(['r-s']);
 		expect(count(error, 'Missing Permissions (50013)')).toBe(1);
-	});
-
-	test('concurrent reconcile, handle and join add each role once', async () => {
-		seed({ isSponsor: true });
-		const discord = fakeDiscord({ members: { '1': [] } });
-		const roles = dispatcher();
-		const current = context(discord.client);
-		const reconciled = roles.reconcile(current);
-
-		discord.join('1');
-		await Promise.all([reconciled, roles.handle(USER_PAYLOAD, current), roles.drain()]);
-
-		expect(discord.added.map((grant) => grant.roleId).toSorted()).toEqual(['r-c', 'r-s']);
-		expect(discord.fetched).toEqual(['1']);
-	});
-
-	test('two reconciles attach one guildMemberAdd listener', async () => {
-		const discord = fakeDiscord({ members: {} });
-		const roles = dispatcher();
-		const current = context(discord.client);
-
-		await roles.reconcile(current);
-		await roles.reconcile(current);
-
-		expect(discord.listeners).toBe(1);
 	});
 
 	test("a reconcile after the cache's refresh interval picks up a new contributor", async () => {
