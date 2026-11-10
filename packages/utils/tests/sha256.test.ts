@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 
-import sha256 from './sha256';
+import sha256 from '~/sha256';
 
 function reference(input: string): string {
 	return createHash('sha256').update(new TextEncoder().encode(input)).digest('hex');

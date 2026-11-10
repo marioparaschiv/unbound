@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import lazy from './lazy';
+import lazy from '~/lazy';
 
 describe('lazy', () => {
 	test('defers the initializer until first access', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import firstOf from './first-of';
+import firstOf from '~/first-of';
 
 describe('firstOf', () => {
 	test('returns the first lookup that produces a value', () => {
