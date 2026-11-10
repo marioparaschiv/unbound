@@ -13,5 +13,7 @@
 			"@i18n/*": ["../../../../i18n/*"]
 		}
 	},
+	// These tests import `~/hot-refresh/runtime`, which pulls client sources that fail this config's
+	// stricter `noImplicitAny` and `noUncheckedIndexedAccess`; `packages/client` typechecks them instead.
 	"exclude": ["tests/build-output.test.ts", "tests/plugins/refresh.test.ts"]
 }
