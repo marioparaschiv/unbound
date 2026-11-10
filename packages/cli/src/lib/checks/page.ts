@@ -18,9 +18,9 @@ import type { Token, Tokens } from 'marked';
 import { Lexer, walkTokens } from 'marked';
 import { dirname, join } from 'node:path';
 
-import type { Diagnostic } from '~/rollup/diagnostic';
+import type { Diagnostic } from '~/lib/check/diagnostic';
+import { diagnostic } from '~/lib/check/diagnostic';
 import { measureMedia } from '~/lib/media-probe';
-import { diagnostic } from '~/rollup/diagnostic';
 import type { Check } from '~/lib/check/check';
 import type { MediaLimits } from '~/lib/env';
 import { parseMediaLimits } from '~/lib/env';

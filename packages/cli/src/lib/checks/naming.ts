@@ -2,8 +2,8 @@ import { validateAddonNaming } from '@unbound-app/contracts/addon-conventions';
 import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import { basename } from 'node:path';
 
+import { diagnostic } from '~/lib/check/diagnostic';
 import { readDevManifest } from '~/lib/manifest';
-import { diagnostic } from '~/rollup/diagnostic';
 import type { Check } from '~/lib/check/check';
 
 export const namingCheck: Check = {

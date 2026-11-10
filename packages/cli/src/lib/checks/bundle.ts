@@ -4,8 +4,8 @@ import { existsSync, statSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { rollup } from 'rollup';
 
-import type { Diagnostic, Severity } from '~/rollup/diagnostic';
-import { diagnostic, isDiagnostic } from '~/rollup/diagnostic';
+import type { Diagnostic, Severity } from '~/lib/check/diagnostic';
+import { diagnostic, isDiagnostic } from '~/lib/check/diagnostic';
 import type { Check, CheckCache } from '~/lib/check/check';
 import { OUTPUT_ONLY } from '~/rollup/output-only';
 

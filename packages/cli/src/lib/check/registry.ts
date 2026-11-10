@@ -1,6 +1,13 @@
+import { CHECK as COMMAND_LOCALES_CHECK } from '~/rollup/command-locales';
+import { CHECK as ENTRY_EXPORTS_CHECK } from '~/rollup/entry-exports';
 import { textInputPropsCheck } from '~/lib/checks/text-input-props';
+import { CHECK as FILTER_KEYS_CHECK } from '~/rollup/filter-keys';
+import { CHECK as SVG_ASSETS_CHECK } from '~/rollup/svg-assets';
+import { CHECK as SETTINGS_CHECK } from '~/rollup/settings';
+import { CHECK as LOCALES_CHECK } from '~/rollup/locales';
+import type { Diagnostic } from '~/lib/check/diagnostic';
+import { CHECK as ASSETS_CHECK } from '~/rollup/assets';
 import { manifestCheck } from '~/lib/checks/manifest';
-import type { Diagnostic } from '~/rollup/diagnostic';
 import { bundleCheck } from '~/lib/checks/bundle';
 import { buildChecks } from '~/lib/build-checks';
 import { typesCheck } from '~/lib/checks/types';
@@ -9,7 +16,7 @@ import { lintCheck } from '~/lib/checks/lint';
 
 /**
  * The checks `ubd check` runs beside `buildChecks()`; register a feature's check with one line here.
- * A rollup plugin's check runs through the bundle check; add its id to `BUNDLE_REPORTED_CHECKS`.
+ * A rollup plugin's check runs through the bundle check; add its exported `CHECK` to `BUNDLE_REPORTED_CHECKS`.
  */
 // Checks start in this order and the synchronous ones block: oxlint and rollup go first, so they run
 // while the TypeScript checks hold the thread.
@@ -22,12 +29,15 @@ export const CHECKS: readonly Check[] = [
 
 /** Ids rollup plugins report under with `reportDiagnostic`, which `--only` accepts. */
 export const BUNDLE_REPORTED_CHECKS: readonly string[] = [
-	'locales',
-	'filters',
-	'assets',
-	'commands',
-	'entry',
-	'settings',
+	...new Set([
+		LOCALES_CHECK,
+		FILTER_KEYS_CHECK,
+		ASSETS_CHECK,
+		SVG_ASSETS_CHECK,
+		COMMAND_LOCALES_CHECK,
+		ENTRY_EXPORTS_CHECK,
+		SETTINGS_CHECK,
+	]),
 ];
 
 /** The opt-in checks, too slow to run by default. */

@@ -18,8 +18,9 @@ import { readBuildEnv } from './build-env.ts';
 import { reportLine } from './report-line.ts';
 
 const API = '@unbound-app/api';
-// The `ubd check` id this plugin reports under.
-const CHECK = 'filters';
+
+/** The `ubd check` id this plugin reports under. */
+export const CHECK = 'filters';
 
 type Position = 'first' | 'factory' | 'every' | 'items';
 

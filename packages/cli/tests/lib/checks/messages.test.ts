@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import { findKeyOnlyErrorToasts, messagesCheck } from '~/lib/checks/messages';
-import { formatDiagnostic } from '~/rollup/diagnostic';
+import { formatDiagnostic } from '~/lib/check/diagnostic';
 import { i18nCheck } from '~/lib/checks/i18n';
 
 import { createTempDir, type TempDir } from '../../helpers/ubd';

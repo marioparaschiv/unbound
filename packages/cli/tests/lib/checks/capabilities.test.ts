@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { capabilitiesCheck, declaredCapabilitiesCheck } from '~/lib/checks/capabilities';
-import { formatDiagnostic } from '~/rollup/diagnostic';
+import { formatDiagnostic } from '~/lib/check/diagnostic';
 import { discoverAddons } from '~/lib/discovery';
 import type { Check } from '~/lib/check/check';
 

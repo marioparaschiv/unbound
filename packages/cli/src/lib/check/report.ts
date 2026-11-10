@@ -1,10 +1,10 @@
 import { join, relative } from 'node:path';
 import pc from 'picocolors';
 
-import type { Diagnostic, Severity } from '~/rollup/diagnostic';
+import type { Diagnostic, Severity } from '~/lib/check/diagnostic';
+import { formatDiagnostic } from '~/lib/check/diagnostic';
 import type { AddonDiagnostics } from '~/lib/check/run';
 import type { DiscoveredAddon } from '~/lib/discovery';
-import { formatDiagnostic } from '~/rollup/diagnostic';
 
 export type Summary = {
 	errors: number;

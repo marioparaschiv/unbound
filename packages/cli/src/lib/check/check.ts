@@ -1,8 +1,8 @@
 import { createTypeScriptCache } from '~/lib/check/typescript-cache';
 import type { TypeScriptCache } from '~/lib/check/typescript-cache';
 import type { ParseCache } from '~/lib/check/parse-cache';
+import type { Diagnostic } from '~/lib/check/diagnostic';
 import type { DiscoveredAddon } from '~/lib/discovery';
-import type { Diagnostic } from '~/rollup/diagnostic';
 
 /** What a check runs against, and the caches a re-run shares with the run before it. */
 export type CheckContext = {

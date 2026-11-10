@@ -1,8 +1,8 @@
 import { dirname, join } from 'node:path';
 import { existsSync } from 'node:fs';
 
-import { diagnostic, withoutFullStop } from '~/rollup/diagnostic';
-import type { Diagnostic } from '~/rollup/diagnostic';
+import { diagnostic, withoutFullStop } from '~/lib/check/diagnostic';
+import type { Diagnostic } from '~/lib/check/diagnostic';
 import type { TscDiagnostic } from '~/lib/check/tsc';
 import type { Check } from '~/lib/check/check';
 import { runTsc } from '~/lib/check/tsc';

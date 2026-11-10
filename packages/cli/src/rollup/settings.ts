@@ -28,8 +28,8 @@ const VIRTUAL_ID = '\0unbound-settings';
 const FIX = `read settings from '${SETTINGS_MODULE}'`;
 const PANEL_EXPORT = 'SettingsPanel';
 const REGISTER_ACTIONS = '__registerActions';
-// The `ubd check` id these plugins report under.
-const CHECK = 'settings';
+/** The `ubd check` id these plugins report under. */
+export const CHECK = 'settings';
 
 function isTypeBox(source: string): boolean {
 	return source === 'typebox' || source.startsWith('typebox/');
@@ -273,4 +273,4 @@ export function settingsPanel(entry: string, state: SettingsState): Plugin {
 	};
 }
 
-export default { hasCustomPanel, settingsModule, settingsModuleSource, settingsPanel };
+export default { CHECK, hasCustomPanel, settingsModule, settingsModuleSource, settingsPanel };

@@ -4,8 +4,8 @@ import toError from '@unbound-app/utils/to-error';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { diagnostic } from '~/lib/check/diagnostic';
 import { locate } from '~/lib/check/parse-cache';
-import { diagnostic } from '~/rollup/diagnostic';
 import type { Check } from '~/lib/check/check';
 import { safeParse } from '~/lib/schema';
 
