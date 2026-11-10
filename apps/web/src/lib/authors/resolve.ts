@@ -2,12 +2,7 @@ import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { PublicBadge } from '@unbound-app/contracts/sponsors';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 
-import {
-	isStale,
-	readProfiles,
-	requestProfileRefresh,
-	type CachedProfile,
-} from '~/lib/authors/profiles';
+import { isStale, readProfiles, type CachedProfile } from '~/lib/authors/profiles';
 import { getAvatarUrl, getDefaultAvatarUrl, isDiscordId } from '~/lib/discord';
 import { getPublicSponsors } from '~/lib/sponsors/sponsorships';
 import { getVisibleBadges } from '~/lib/sponsors/badges';
@@ -167,7 +162,7 @@ export async function loadAuthors(
 	const [linked, cached] = await Promise.all([readLinkedUsers(ctx, ids), readProfiles(ctx, ids)]);
 
 	if (ids.some((id) => isStale(ctx, cached.get(id)))) {
-		requestProfileRefresh();
+		ctx.jobs.kick('profiles');
 	}
 
 	return (authors) => {
