@@ -4,7 +4,9 @@ import { toasts, ui } from '@unbound-app/api';
 import { useState } from 'react';
 
 import { readClipboard, shareRuleset } from '~/replace/transfer';
-import { parseRuleset, type Ruleset } from '~/replace/ruleset';
+import type { Ruleset } from '@unbound-plugins/shared/text-replace/stored-rules';
+
+import { parseRuleset } from '~/replace/ruleset';
 import { saveRuleset } from '~/replace/stored-rules';
 
 type RulesetTransferProps = {

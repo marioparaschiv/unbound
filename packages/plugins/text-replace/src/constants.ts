@@ -2,5 +2,3 @@
 export const RULES_CHANNEL_ID = '1102784112584040479';
 
 export const RULESET_VERSION = 1;
-
-export type RuleKind = 'stringRules' | 'regexRules';

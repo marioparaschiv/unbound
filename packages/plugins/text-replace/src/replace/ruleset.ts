@@ -1,13 +1,9 @@
+import { hasRuleContent, type Ruleset } from '@unbound-plugins/shared/text-replace/stored-rules';
 import { normalizeRules, type TextReplaceRule } from '@unbound-plugins/shared/text-replace/rules';
 
 import { messages } from '@unbound-app/i18n';
 
 import { RULESET_VERSION } from '~/constants';
-
-export type Ruleset = {
-	stringRules: TextReplaceRule[];
-	regexRules: TextReplaceRule[];
-};
 
 type ExportedRule = Pick<TextReplaceRule, 'find' | 'replace' | 'onlyIfIncludes'>;
 
@@ -16,15 +12,6 @@ type ParsedRuleset = {
 	stringRules?: ExportedRule[];
 	regexRules?: ExportedRule[];
 };
-
-/**
- * @description Checks whether a rule has any field filled in.
- * @param rule The rule to check.
- * @returns `false` for a rule left completely blank.
- */
-export function hasRuleContent(rule: TextReplaceRule): boolean {
-	return Boolean(rule.find || rule.replace || rule.onlyIfIncludes);
-}
 
 function exportRules(rules: TextReplaceRule[]): ExportedRule[] {
 	return rules
@@ -79,4 +66,4 @@ export function parseRuleset(value: string): Ruleset {
 	};
 }
 
-export default { hasRuleContent, serializeRuleset, parseRuleset };
+export default { serializeRuleset, parseRuleset };

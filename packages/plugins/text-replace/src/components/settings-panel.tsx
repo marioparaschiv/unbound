@@ -1,3 +1,4 @@
+import { rules, type RuleKind } from '@unbound-plugins/shared/text-replace/stored-rules';
 import { createRule, type TextReplaceRule } from '@unbound-plugins/shared/text-replace/rules';
 import { Discord } from '@unbound-app/api/metro/components';
 import { messages } from '@unbound-app/i18n';
@@ -5,10 +6,8 @@ import { storage, ui } from '@unbound-app/api';
 import { useState } from 'react';
 
 import RulesetTransfer from '~/components/ruleset-transfer';
-import type { RuleKind } from '~/constants';
 import RuleEditor from '~/components/rule-editor';
 import RuleTester from '~/components/rule-tester';
-import { readRuleset } from '~/replace/stored-rules';
 import RuleList from '~/components/rule-list';
 
 type Editing = {
@@ -21,7 +20,7 @@ function SettingsPanel() {
 	const store = storage.useBucket(addon.id);
 	const [kind, setKind] = useState<RuleKind>('stringRules');
 	const [editing, setEditing] = useState<Editing | null>(null);
-	const ruleset = readRuleset(store);
+	const ruleset = rules(store);
 
 	if (editing) {
 		return <RuleEditor {...editing} onClose={() => setEditing(null)} />;
