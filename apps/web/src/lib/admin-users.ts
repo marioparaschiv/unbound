@@ -4,7 +4,7 @@ import type { UserSummary } from '@unbound-app/contracts/account';
 import { Type } from '@unbound-app/contracts/schema';
 import { and, sql } from 'drizzle-orm';
 
-import { afterKey, cursorTime, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
+import { cursorTime, keysetList } from '~/lib/keyset';
 import { userNameSearchText, userSearchText } from '~/db/schema';
 import { listSubmissionHistory } from '~/lib/admin-submissions';
 import { DEFAULT_ROLE, hasPermission } from '~/lib/auth/access';
@@ -82,37 +82,39 @@ function toAdminUser(row: UserRow, showEmail: boolean): AdminUser {
 }
 
 /**
- * @description Builds the one statement behind {@link listAdminUsers}: one page plus a lookahead row,
- * newest first by `(created_at, id)`.
+ * @description Builds one page of {@link listAdminUsers}, newest first by `(created_at, id)`.
  * @param ctx The application context.
  * @param search The search text and the cursor to page from.
  * @param byEmail Whether the search text may match an email, for the development team only.
- * @returns The unexecuted relational query.
+ * @returns The page's statement and its reader.
  */
 export function queryAdminUsers(
 	ctx: AppContext,
 	search: AdminUsersSearch = {},
 	byEmail: boolean = false,
 ) {
-	const { q, cursor, dir } = search;
-	const after = cursor ? decodeCursor(cursor, USER_CURSOR) : undefined;
-	const order = scanOrder('desc', dir);
+	const { q } = search;
 
-	return ctx.db.query.user.findMany({
-		where: {
-			RAW: (table) =>
-				and(
-					q ? matchesSearch(userSearchText(table), q) : undefined,
-					// The indexed text includes the email; matching the id and name alone keeps it from being probed.
-					q && !byEmail ? matchesSearch(userNameSearchText(table), q) : undefined,
-					after ? afterKey([table.createdAt, table.id], after, 'desc', dir) : undefined,
-				) ?? sql`true`,
-		},
-		orderBy: (table, operators) => [
-			operators[order](table.createdAt),
-			operators[order](table.id),
-		],
-		limit: ctx.env.USER_LIST_PAGE_SIZE + 1,
+	return keysetList({
+		key: ['createdAt', 'id'],
+		schema: USER_CURSOR,
+		request: search,
+		order: 'desc',
+		size: ctx.env.USER_LIST_PAGE_SIZE,
+		query: (page) =>
+			ctx.db.query.user.findMany({
+				where: {
+					RAW: (table) =>
+						and(
+							q ? matchesSearch(userSearchText(table), q) : undefined,
+							// The indexed text includes the email; matching the id and name alone keeps it from being probed.
+							q && !byEmail ? matchesSearch(userNameSearchText(table), q) : undefined,
+							page.where(table),
+						) ?? sql`true`,
+				},
+				orderBy: (table) => page.orderBy(table),
+				limit: page.limit,
+			}),
 	});
 }
 
@@ -132,11 +134,7 @@ export async function listAdminUsers(
 	requirePermission(caller, { user: ['list'] });
 
 	const showEmail = await isDevelopmentTeam(ctx.db, caller.user.id);
-	const rows = await queryAdminUsers(ctx, search, showEmail);
-	const page = toKeysetPage(rows, ctx.env.USER_LIST_PAGE_SIZE, search, (row) => [
-		row.createdAt.getTime(),
-		row.id,
-	]);
+	const page = await queryAdminUsers(ctx, search, showEmail).page();
 
 	return { ...page, items: page.items.map((row) => toAdminUser(row, showEmail)) };
 }

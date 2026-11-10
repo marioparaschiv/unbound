@@ -13,7 +13,7 @@ import { authRequest, createTestContext, signInWithDiscord } from '../helpers/co
 import { manifest, seedApprovedAddon, seedSubmission } from '../helpers/addons';
 
 const { ctx, close } = await createTestContext({
-	ADDON_LIST_PAGE_SIZE: '2',
+	ADMIN_ADDON_LIST_PAGE_SIZE: '2',
 	USER_LIST_PAGE_SIZE: '2',
 });
 
