@@ -3,7 +3,7 @@ import { beforeEach, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
 
-import { dispatch, generateRow, startLogger } from './discord';
+import { dispatch, generateRow, startLogger } from './helpers/discord';
 
 beforeEach(resetHealth);
 
