@@ -10,6 +10,7 @@ import navigationReady from '~/core/navigation-ready';
 import type { UpdatesState } from '~/updates/state';
 import { messages, format } from '~/i18n/api';
 import { Screens } from '~/core/constants';
+import { reload } from '~/native/runtime';
 import { show } from '~/toasts/api';
 
 const logger = createLogger('Updater', 'Notify');
@@ -17,6 +18,7 @@ const logger = createLogger('Updater', 'Notify');
 const TOAST_ID = 'unbound-updates';
 // Its own id, so the update check's toast a moment later stacks below it instead of replacing it.
 const CLIENT_TOAST_ID = 'unbound-client-updated';
+const STAGED_TOAST_ID = 'unbound-client-staged';
 
 async function openUpdates(handle: ToastHandle) {
 	handle.close();
@@ -93,4 +95,27 @@ export function notifyClientUpdated(previous: string, current: string) {
 	});
 }
 
-export default { notifyUpdates, notifyClientUpdated };
+/**
+ * @description Offers a restart when a newer client bundle downloaded during this launch.
+ */
+export function notifyStagedBundle() {
+	const handle: ToastHandle = show({
+		id: STAGED_TOAST_ID,
+		title: messages.UNBOUND_UPDATES_STAGED,
+		content: messages.UNBOUND_UPDATES_STAGED_DESC,
+		icon: 'DownloadIcon',
+		buttons: [
+			{
+				content: messages.UNBOUND_RESTART,
+				onPress: () => {
+					handle.close();
+					reload().catch((error) =>
+						logger.error('Failed to restart for the staged bundle:', error),
+					);
+				},
+			},
+		],
+	});
+}
+
+export default { notifyUpdates, notifyClientUpdated, notifyStagedBundle };

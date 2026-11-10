@@ -1,10 +1,26 @@
-import { notifyClientUpdated, notifyUpdates } from '~/updates/notify';
+import { AppState } from 'react-native';
+
+import { notifyClientUpdated, notifyStagedBundle, notifyUpdates } from '~/updates/notify';
 import { getSetting, setSetting } from '~/settings/unbound';
 import { CLIENT_VERSION, Screens } from '~/core/constants';
+import { hasStagedBundle } from '~/native/unbound-native';
 import type { SectionEntry } from '~/settings/section';
 import UpdatesStore from '~/updates/state';
 
+// The loader downloads the next bundle in the background, usually within seconds of launch.
+const STAGED_CHECK_DELAY = 20_000;
+
 let pending: ReturnType<typeof setTimeout> | undefined;
+let stagedCheck: ReturnType<typeof setTimeout> | undefined;
+let appState: ReturnType<typeof AppState.addEventListener> | undefined;
+let stagedAnnounced = false;
+
+function announceStagedBundle() {
+	if (stagedAnnounced || !getSetting('updater.notify.client') || !hasStagedBundle()) return;
+
+	stagedAnnounced = true;
+	notifyStagedBundle();
+}
 
 async function update() {
 	const { check, applyAll } = UpdatesStore.getState();
@@ -35,19 +51,27 @@ function announceClient() {
 }
 
 /**
- * Toasts a newly updated client, then checks for updates once after startup: applies addon updates with
- * `updater.auto.addons` on, and toasts a too-old loader and, per `updater.notify.*`, what is left.
+ * Toasts a newly updated client, checks for updates once after startup, and offers a restart for a staged bundle.
  */
 export function start() {
 	announceClient();
 
 	// Built-ins start before the addon managers load their entities.
 	pending = setTimeout(() => void update());
+	stagedCheck = setTimeout(announceStagedBundle, STAGED_CHECK_DELAY);
+	appState = AppState.addEventListener('change', (state) => {
+		if (state === 'active') {
+			announceStagedBundle();
+		}
+	});
 }
 
 /** Cancels an update check that has not started yet. */
 export function stop() {
 	clearTimeout(pending);
+	clearTimeout(stagedCheck);
+	appState?.remove();
+	appState = undefined;
 }
 
 export const updatesSection: SectionEntry = {

@@ -32,6 +32,11 @@ bool LoaderPipeline::isBundleReady() const
     return bundleReady_.load();
 }
 
+bool LoaderPipeline::hasStagedBundle() const
+{
+    return bundleStaged_.load();
+}
+
 void LoaderPipeline::prepare()
 {
     // Hosts call this once Discord's runtime exists, before addons load for it; smoke timing starts
@@ -39,6 +44,7 @@ void LoaderPipeline::prepare()
     log(LogLevel::Info, LOG_CATEGORY_RUNTIME, "Discord's runtime was created.");
     native::noteRuntimeCreated();
     bundleReady_.store(false);
+    bundleStaged_.store(false);
     uint64_t token = token_.fetch_add(1) + 1;
     {
         std::lock_guard<std::mutex> lock(savedMutex_);
@@ -166,6 +172,11 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
         {
             return;
         }
+        if (updated && !reloadOnUpdate && token == token_.load())
+        {
+            // The client offers a restart; otherwise it runs at the next launch.
+            bundleStaged_.store(true);
+        }
         if (!updated || !reloadOnUpdate || token != token_.load())
         {
             return;
@@ -219,7 +230,11 @@ void LoaderPipeline::injectPreBundle(jsi::Runtime &runtime, const std::string &b
 
     try
     {
-        installUnboundNative(runtime, host_->unboundNativeProvider());
+        UnboundNativeProvider provider = host_->unboundNativeProvider();
+        provider.hasStagedBundle       = [this]() {
+            return nlohmann::json(hasStagedBundle());
+        };
+        installUnboundNative(runtime, std::move(provider));
     }
     catch (const std::exception &error)
     {

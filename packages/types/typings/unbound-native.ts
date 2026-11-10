@@ -203,6 +203,11 @@ export type UnboundNativeBridge = {
 	getThemes(): UnboundAddonBundle[];
 	getAppIcons?(): UnboundAppIcon[];
 	/**
+	 * Whether a newer client bundle downloaded during this launch and runs after the next restart. Missing on a loader
+	 * from before it.
+	 */
+	hasStagedBundle?(): boolean;
+	/**
 	 * Rereads only the installed themes, so `getThemes` lists ones installed, updated or deleted since launch and native
 	 * views take the applied theme's new colours. Missing on a loader from before it.
 	 */

@@ -102,6 +102,8 @@ void leavesAFirstDownloadForTheRuntime()
     assert(launch.host->addonPreparations == 1);
     assert(launch.host->reloads == 0);
     assert(loader::readTextFile(launch.server.candidate()) == "first");
+    // The runtime waits for it, so it runs this launch and is not staged.
+    assert(!launch.pipeline.hasStagedBundle());
 }
 
 void keepsTheSavedBundleUntilTheNextLaunch()
@@ -115,6 +117,7 @@ void keepsTheSavedBundleUntilTheNextLaunch()
 
     assert(launch.host->reloads == 0);
     assert(loader::readTextFile(launch.server.candidate()) == "next");
+    assert(launch.pipeline.hasStagedBundle());
 }
 
 void runsAHotReloadUpdateWithoutReloading()

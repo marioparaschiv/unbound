@@ -19,6 +19,8 @@ struct UnboundNativeProvider {
     std::function<nlohmann::json()> getPlugins;
     std::function<nlohmann::json()> getThemes;
     std::function<nlohmann::json()> getAppIcons;
+    // Whether a newer bundle downloaded this launch and runs at the next restart.
+    std::function<nlohmann::json()> hasStagedBundle;
     // Rereads the installed themes and reapplies the selected one; left out of the bridge when
     // empty. The platform sets it, as only it can recolour native views.
     std::function<void()>        rescanThemes;

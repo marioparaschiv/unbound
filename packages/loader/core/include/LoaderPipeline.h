@@ -71,6 +71,8 @@ public:
     std::optional<SavedBundle> takeSavedBundle();
 
     bool isBundleReady() const;
+    // Whether a newer bundle downloaded this launch and runs at the next restart.
+    bool hasStagedBundle() const;
 
     // Seconds Discord must run after a launch, or after a new bundle runs, to count as healthy.
     static constexpr double kHealthySeconds = 15.0;
@@ -106,6 +108,7 @@ private:
     std::mutex                  savedMutex_;
     std::atomic_uint64_t        token_{0};
     std::atomic_bool            bundleReady_{false};
+    std::atomic_bool            bundleStaged_{false};
     std::atomic_bool            evaluationFailed_{false};
     FirstDownload               firstDownload_;
     std::condition_variable     firstDownloadSettled_;
