@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
 
-import { ActivityButtons, registerDiscord, synced } from './fake-discord';
+import { ActivityButtons, registerDiscord, synced } from './helpers/fake-discord';
 
 import type { StoreSeeds } from '@unbound-app/api/testing';
 
