@@ -1,7 +1,7 @@
 import type { DocsVersion } from '@unbound-app/contracts/docs';
 import { describe, expect, test } from 'bun:test';
 
-import { compareDocsVersions, mergeDocsManifest } from '../src/docs-manifest';
+import { compareDocsVersions, mergeDocsManifest } from '~/docs-manifest';
 
 describe('compareDocsVersions', () => {
 	test('puts main first, then release tags newest first by semver', () => {

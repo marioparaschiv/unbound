@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 
-import { addonScopeGlobals, readScopeGlobalNames } from '../src/addon-scope';
+import { addonScopeGlobals, readScopeGlobalNames } from '~/addon-scope';
 
 describe('addonScopeGlobals', () => {
 	test('types every global the client evaluates a plugin with, in parameter order', () => {

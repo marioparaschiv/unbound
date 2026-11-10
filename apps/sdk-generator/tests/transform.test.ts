@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 
-import type { ModuleEntry } from '../src/paths';
-
 import {
 	collapseNamespaces,
 	collectReferencedNames,
@@ -12,9 +10,10 @@ import {
 	hoistLibraries,
 	stripInternal,
 	strip,
-} from '../src/transform';
-import { parseSource } from '../src/project';
-import { bundle } from '../src/bundle';
+} from '~/transform';
+import type { ModuleEntry } from '~/paths';
+import { parseSource } from '~/project';
+import { bundle } from '~/bundle';
 
 const FIXTURES = join(import.meta.dirname, 'fixtures');
 
