@@ -1,4 +1,14 @@
 /**
+ * @description In a benchmark build, tells the agent that startup reached a named point.
+ * @param name The mark's name.
+ */
+export function benchMark(name: string): void {
+	if (import.meta.env.BENCH) {
+		globalThis.__ubdBench?.mark(name);
+	}
+}
+
+/**
  * @description Runs `work`, and in a benchmark build reports how long it took to the agent as a span.
  * @template T What `work` returns.
  * @param name The span's name, or a function that names it once `work` has run.

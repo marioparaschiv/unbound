@@ -1,4 +1,5 @@
 import { setRejectionTracker } from '~/diagnostics/promise-rejections';
+import { benchMark } from '~/core/bench-span';
 import deferUntilReady from '~/core/loader';
 
 // First, so rejections are logged from the start; the diagnostics built-in takes the tracker back
@@ -6,19 +7,13 @@ import deferUntilReady from '~/core/loader';
 setRejectionTracker();
 
 deferUntilReady(() => {
-	if (import.meta.env.BENCH) {
-		globalThis.__ubdBench?.mark('ready:start');
-	}
+	benchMark('ready:start');
 
 	require('./preinitialize');
 
-	if (import.meta.env.BENCH) {
-		globalThis.__ubdBench?.mark('preinitialize:end');
-	}
+	benchMark('preinitialize:end');
 
 	require('.');
 
-	if (import.meta.env.BENCH) {
-		globalThis.__ubdBench?.mark('core:end');
-	}
+	benchMark('core:end');
 });

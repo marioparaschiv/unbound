@@ -12,6 +12,7 @@ import cloudSync, { cloudSyncSection } from '~/sync/builtin';
 import updater, { updatesSection } from '~/updates/builtin';
 import { developerSection } from '~/settings/builtin.dev';
 import { themes as themeManager } from '~/themes/manager';
+import { benchMark, benchSpan } from '~/core/bench-span';
 import toasts, { toastsSection } from '~/toasts/builtin';
 import discordSupport from '~/builtins/discord-support';
 import type { BuiltInEntry } from '~/builtins/registry';
@@ -25,7 +26,6 @@ import hotRefresh from '~/hot-refresh/builtin.dev';
 import { pluginsSection } from '~/plugins/builtin';
 import { builtins } from '~/builtins/registry';
 import staffMode from '~/builtins/staff-mode';
-import { benchSpan } from '~/core/bench-span';
 import { icons } from '~/icon-packs/manager';
 import nativeConsent from '~/native/builtin';
 import { plugins } from '~/plugins/manager';
@@ -118,9 +118,7 @@ export function initialize(): void {
 		return;
 	}
 
-	if (import.meta.env.BENCH) {
-		globalThis.__ubdBench?.mark('initialize:start');
-	}
+	benchMark('initialize:start');
 
 	window.unbound = { ...api, initialize, shutdown };
 	Logger.info('Initializing Unbound...');
@@ -137,9 +135,7 @@ export function initialize(): void {
 	initialized = true;
 	Logger.info('Unbound initialized');
 
-	if (import.meta.env.BENCH) {
-		globalThis.__ubdBench?.mark('initialize:end');
-	}
+	benchMark('initialize:end');
 }
 
 /**

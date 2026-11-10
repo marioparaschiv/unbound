@@ -2,6 +2,7 @@ import { createLogger } from '@unbound-app/logger';
 
 import { watchFirstFrame } from '~/core/first-frame';
 import { captureMetro } from '~/metro/capture';
+import { benchMark } from '~/core/bench-span';
 
 // `window` is referenced throughout the client but the host only defines it later in its own
 // bundle, so alias it to the global object up front.
@@ -95,9 +96,7 @@ function onMainModuleRun(onReady: () => void | Promise<void>) {
 
 		resumeDeferred();
 
-		if (import.meta.env.BENCH) {
-			globalThis.__ubdBench?.mark('ready:resumed');
-		}
+		benchMark('ready:resumed');
 
 		watchFirstFrame();
 
