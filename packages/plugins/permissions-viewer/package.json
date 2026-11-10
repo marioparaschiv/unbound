@@ -1,8 +1,6 @@
 {
 	"name": "permissions-viewer",
-	"version": "1.0.0",
 	"private": true,
-	"description": "View the permissions a member or channel has, and the roles of a server.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

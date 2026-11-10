@@ -1,8 +1,6 @@
 {
 	"name": "reaction-avatars",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Shows the people behind each message reaction.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

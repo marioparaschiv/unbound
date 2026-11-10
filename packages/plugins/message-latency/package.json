@@ -1,8 +1,6 @@
 {
 	"name": "message-latency",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Marks messages that took at least the selected threshold to send.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

@@ -1,8 +1,6 @@
 {
 	"name": "one-ping-per-dm",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Plays the in-app message sound only for the first unread message in a DM, until you read it.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

@@ -1,8 +1,6 @@
 {
 	"name": "override-forum-defaults",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Sets your own default layout and sort order for forum channels. You can still change them per channel.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

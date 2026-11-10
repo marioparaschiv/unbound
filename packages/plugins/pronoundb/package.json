@@ -1,8 +1,6 @@
 {
 	"name": "pronoundb",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Adds pronouns to user messages using PronounDB.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

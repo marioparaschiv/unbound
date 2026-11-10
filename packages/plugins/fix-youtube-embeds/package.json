@@ -1,8 +1,6 @@
 {
 	"name": "fix-youtube-embeds",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Plays YouTube videos that are blocked from playing in Discord, such as music videos from UMG, instead of showing an error.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

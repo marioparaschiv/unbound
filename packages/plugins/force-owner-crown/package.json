@@ -1,8 +1,6 @@
 {
 	"name": "force-owner-crown",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Force the owner crown next to usernames even in large servers.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

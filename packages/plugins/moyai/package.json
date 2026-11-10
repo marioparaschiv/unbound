@@ -1,8 +1,6 @@
 {
 	"name": "moyai",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Plays a thud for Moyai messages and reactions.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

@@ -1,8 +1,6 @@
 {
 	"name": "anonymise-filenames",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Replaces the names of files you upload with random characters, a fixed name or a timestamp, keeping the extension.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

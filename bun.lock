@@ -416,7 +416,6 @@
     },
     "packages/plugins/add-attachments": {
       "name": "add-attachments",
-      "version": "1.0.1",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -430,7 +429,6 @@
     },
     "packages/plugins/always-animate": {
       "name": "always-animate",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -445,7 +443,6 @@
     },
     "packages/plugins/anonymise-filenames": {
       "name": "anonymise-filenames",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -460,7 +457,6 @@
     },
     "packages/plugins/aussie-mode": {
       "name": "aussie-mode",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -475,7 +471,6 @@
     },
     "packages/plugins/aussie-speech": {
       "name": "aussie-speech",
-      "version": "1.0.1",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -490,7 +485,6 @@
     },
     "packages/plugins/avatar-radius": {
       "name": "avatar-radius",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -504,7 +498,6 @@
     },
     "packages/plugins/blur-nsfw": {
       "name": "blur-nsfw",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -519,7 +512,6 @@
     },
     "packages/plugins/channel-typing-indicators": {
       "name": "channel-typing-indicators",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -534,7 +526,6 @@
     },
     "packages/plugins/character-counter": {
       "name": "character-counter",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -549,7 +540,6 @@
     },
     "packages/plugins/chat-bubbles": {
       "name": "chat-bubbles",
-      "version": "1.4.5",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -563,7 +553,6 @@
     },
     "packages/plugins/clear-urls": {
       "name": "clear-urls",
-      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -578,7 +567,6 @@
     },
     "packages/plugins/custom-commands": {
       "name": "custom-commands",
-      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -593,7 +581,6 @@
     },
     "packages/plugins/dearrow": {
       "name": "dearrow",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -607,7 +594,6 @@
     },
     "packages/plugins/expression-tools": {
       "name": "expression-tools",
-      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -622,7 +608,6 @@
     },
     "packages/plugins/file-size-on-picker": {
       "name": "file-size-on-picker",
-      "version": "1.0.4",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -637,7 +622,6 @@
     },
     "packages/plugins/fix-gif-download": {
       "name": "fix-gif-download",
-      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -651,7 +635,6 @@
     },
     "packages/plugins/fix-youtube-embeds": {
       "name": "fix-youtube-embeds",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -666,7 +649,6 @@
     },
     "packages/plugins/force-owner-crown": {
       "name": "force-owner-crown",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -681,7 +663,6 @@
     },
     "packages/plugins/gif-paste": {
       "name": "gif-paste",
-      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -695,7 +676,6 @@
     },
     "packages/plugins/gif-provider-switcher": {
       "name": "gif-provider-switcher",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -710,7 +690,6 @@
     },
     "packages/plugins/hide-gift-button": {
       "name": "hide-gift-button",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -725,7 +704,6 @@
     },
     "packages/plugins/mention-avatars": {
       "name": "mention-avatars",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -739,7 +717,6 @@
     },
     "packages/plugins/message-latency": {
       "name": "message-latency",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -754,7 +731,6 @@
     },
     "packages/plugins/message-link-embeds": {
       "name": "message-link-embeds",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -769,7 +745,6 @@
     },
     "packages/plugins/message-logger": {
       "name": "message-logger",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -784,7 +759,6 @@
     },
     "packages/plugins/more-user-tags": {
       "name": "more-user-tags",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -799,7 +773,6 @@
     },
     "packages/plugins/moyai": {
       "name": "moyai",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -814,7 +787,6 @@
     },
     "packages/plugins/multi-account": {
       "name": "multi-account",
-      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -829,7 +801,6 @@
     },
     "packages/plugins/music-rich-presence": {
       "name": "music-rich-presence",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -844,7 +815,6 @@
     },
     "packages/plugins/new-guild-settings": {
       "name": "new-guild-settings",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -859,7 +829,6 @@
     },
     "packages/plugins/no-blocked-messages": {
       "name": "no-blocked-messages",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -874,7 +843,6 @@
     },
     "packages/plugins/no-reply-mention": {
       "name": "no-reply-mention",
-      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -889,7 +857,6 @@
     },
     "packages/plugins/no-typing-animation": {
       "name": "no-typing-animation",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -904,7 +871,6 @@
     },
     "packages/plugins/one-ping-per-dm": {
       "name": "one-ping-per-dm",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -919,7 +885,6 @@
     },
     "packages/plugins/override-forum-defaults": {
       "name": "override-forum-defaults",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -934,7 +899,6 @@
     },
     "packages/plugins/permissions-viewer": {
       "name": "permissions-viewer",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -949,7 +913,6 @@
     },
     "packages/plugins/picture-in-picture": {
       "name": "picture-in-picture",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -964,7 +927,6 @@
     },
     "packages/plugins/platform-indicators": {
       "name": "platform-indicators",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -979,7 +941,6 @@
     },
     "packages/plugins/preview-message": {
       "name": "preview-message",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -994,7 +955,6 @@
     },
     "packages/plugins/pronoundb": {
       "name": "pronoundb",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1008,7 +968,6 @@
     },
     "packages/plugins/reaction-avatars": {
       "name": "reaction-avatars",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1023,7 +982,6 @@
     },
     "packages/plugins/relationship-notifier": {
       "name": "relationship-notifier",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1038,7 +996,6 @@
     },
     "packages/plugins/reviewdb": {
       "name": "reviewdb",
-      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1053,7 +1010,6 @@
     },
     "packages/plugins/role-color-everywhere": {
       "name": "role-color-everywhere",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1068,7 +1024,6 @@
     },
     "packages/plugins/settings-demo": {
       "name": "settings-demo",
-      "version": "1.0.0",
       "devDependencies": {
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
@@ -1078,7 +1033,6 @@
     },
     "packages/plugins/shiki-codeblocks": {
       "name": "shiki-codeblocks",
-      "version": "1.0.0",
       "dependencies": {
         "@shikijs/langs": "4.6.0",
         "@shikijs/themes": "4.6.0",
@@ -1098,7 +1052,6 @@
     },
     "packages/plugins/show-hidden-things": {
       "name": "show-hidden-things",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1113,7 +1066,6 @@
     },
     "packages/plugins/show-me-your-name": {
       "name": "show-me-your-name",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1128,7 +1080,6 @@
     },
     "packages/plugins/show-timeout-duration": {
       "name": "show-timeout-duration",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1142,7 +1093,6 @@
     },
     "packages/plugins/silent-message-toggle": {
       "name": "silent-message-toggle",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1157,7 +1107,6 @@
     },
     "packages/plugins/spotify-listen-along": {
       "name": "spotify-listen-along",
-      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1172,7 +1121,6 @@
     },
     "packages/plugins/sticker-preview": {
       "name": "sticker-preview",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1187,7 +1135,6 @@
     },
     "packages/plugins/super-reaction-tweaks": {
       "name": "super-reaction-tweaks",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1202,7 +1149,6 @@
     },
     "packages/plugins/text-replace": {
       "name": "text-replace",
-      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1217,7 +1163,6 @@
     },
     "packages/plugins/translate": {
       "name": "translate",
-      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1232,7 +1177,6 @@
     },
     "packages/plugins/typing-avatars": {
       "name": "typing-avatars",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1247,7 +1191,6 @@
     },
     "packages/plugins/unsuppress-embeds": {
       "name": "unsuppress-embeds",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1262,7 +1205,6 @@
     },
     "packages/plugins/view-icons": {
       "name": "view-icons",
-      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1277,7 +1219,6 @@
     },
     "packages/plugins/view-raw": {
       "name": "view-raw",
-      "version": "1.0.3",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1292,7 +1233,6 @@
     },
     "packages/plugins/youtube-adblock": {
       "name": "youtube-adblock",
-      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },

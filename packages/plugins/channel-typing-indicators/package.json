@@ -1,8 +1,6 @@
 {
 	"name": "channel-typing-indicators",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Shows typing users in the channel list.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",
