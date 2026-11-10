@@ -4,6 +4,7 @@ import type { NativeSerializableObject } from '@unbound-app/types';
 import type { DependencyList } from 'react';
 
 import { createHookRenderer } from '../helpers/render-hook';
+import { mockLookups } from '../helpers/lookups';
 
 type Listener = (action: FluxAction) => void;
 type Interceptor = (action: FluxAction) => boolean;
@@ -123,14 +124,13 @@ mock.module('~/flux/modules', () => ({
 
 let storeLoaded = true;
 
-mock.module('~/metro/finders', () => ({
-	finder: () =>
-		function findStore(name: string, options: StoreSearch['options']) {
-			searches.push({ name, options });
+mockLookups({
+	findStore(name: string, options: StoreSearch['options']) {
+		searches.push({ name, options });
 
-			return storeLoaded || options.lazy ? userStore : null;
-		},
-}));
+		return storeLoaded || options.lazy ? userStore : null;
+	},
+});
 
 const flux = await import('~/flux/api');
 const runtime = await import('~/flux/runtime-bridge');

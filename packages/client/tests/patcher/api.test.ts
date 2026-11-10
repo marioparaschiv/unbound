@@ -1,9 +1,11 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test';
+import { afterEach, describe, expect, test } from 'bun:test';
+
+import { mockLookups } from '../helpers/lookups';
 
 // No React surface is mounted under bun, so the renderer finds no roots.
-mock.module('~/metro/wrappers', () => ({
-	findByPropsLazy: () => ({ getPublicInstanceFromRootTag: () => null }),
-}));
+mockLookups({
+	findByProps: () => ({ getPublicInstanceFromRootTag: () => null }),
+});
 
 const { after, before, instead, patches, unpatchAll } = await import('~/patcher/api');
 const { createPatcher } = await import('~/patcher/create-patcher');

@@ -2,8 +2,8 @@ import { createLogger } from '@unbound-app/logger';
 
 import { documentsPath, exists, readFile, removeFile, writeFile } from '~/native/fs';
 import { installHomeScreenIcon, syncAppIcons } from '~/native/unbound-native';
-import { findByPropsLazy } from '~/metro/wrappers';
 import { getNativeModule } from '~/native/native';
+import { findByProps } from '~/metro/lookups';
 
 import AppIconStore from './state';
 
@@ -33,7 +33,7 @@ type ImagePickerModule = {
 	launchImageLibraryAsync?: (options: PickerOptions) => Promise<PickerResult>;
 };
 
-const ImagePicker: ImagePickerModule = findByPropsLazy('launchImageLibraryAsync');
+const ImagePicker: ImagePickerModule = findByProps('launchImageLibraryAsync');
 
 type CurrentAppIcon = { id?: string };
 
@@ -47,7 +47,7 @@ type AppIconUtils = {
 };
 
 const DEFAULT_ICON_ID = 'AppIcon';
-const AppIconUtils = findByPropsLazy('setAppIcon') as AppIconUtils;
+const AppIconUtils = findByProps('setAppIcon') as AppIconUtils;
 
 function isCustomIcon(value: unknown): value is CustomAppIcon {
 	return (

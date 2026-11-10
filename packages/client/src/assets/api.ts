@@ -21,9 +21,10 @@ import {
 	type AssetRegistration,
 	type RegisteredAsset,
 } from '~/assets/plugin-assets';
-import { find as findModule, initializeModule } from '~/metro/search';
 import { recordedAssets } from '~/assets/registered';
+import { find as findModule } from '~/metro/lookups';
 import { isAssetModule } from '~/metro/candidates';
+import { initializeModule } from '~/metro/search';
 import { onModuleLoaded } from '~/metro/wait';
 import { byProps } from '~/metro/filters';
 import { data } from '~/metro/state';

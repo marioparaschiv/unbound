@@ -2,7 +2,7 @@ import type { MetroModuleLoadedOptions, MetroModulePresence } from '~/metro/type
 import { getModuleCacheForKey, isKeyMissing } from '~/metro/cache';
 import type { MetroFilter } from '~/metro/filters';
 import { CACHE_KEY } from '~/metro/cache-key';
-import { finder } from '~/metro/finders';
+import { find } from '~/metro/search';
 
 /**
  * @description Reports what is known of the module matching `filter`, without loading any module.
@@ -22,7 +22,7 @@ export function filterPresence(
 	}
 
 	// Cached ids name the module, so only they need testing for whether it has loaded.
-	const loaded = finder('find')(filter, {
+	const loaded = find(filter, {
 		...options,
 		initialize: false,
 		cacheOnly: Boolean(cached),

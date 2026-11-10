@@ -1,4 +1,6 @@
-import { expect, mock, test } from 'bun:test';
+import { expect, test } from 'bun:test';
+
+import { mockLookups } from '../helpers/lookups';
 
 // Discord's gesture handler, which no longer exports `createNativeWrapper`.
 const gestureHandler = {
@@ -13,7 +15,7 @@ function findGestureHandler(...properties: string[]) {
 	return properties.includes('GestureDetector') ? gestureHandler : null;
 }
 
-mock.module('~/metro/finders', () => ({ finder: () => findGestureHandler }));
+mockLookups({ findByProps: findGestureHandler });
 
 const { default: shims } = await import('~/core/shims');
 

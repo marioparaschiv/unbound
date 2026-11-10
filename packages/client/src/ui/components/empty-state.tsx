@@ -3,7 +3,7 @@ import type { ComponentType } from 'react';
 import { createElement } from 'react';
 
 import { isRenderable } from '~/metro/components';
-import { findByName } from '~/metro/search';
+import { findByName } from '~/metro/lookups';
 import { icons } from '~/assets/api';
 
 import FallbackEmptyState from './fallback-empty-state';
@@ -29,7 +29,9 @@ let discordEmptyState: ComponentType<DiscordEmptyStateProps> | null | undefined;
 
 function readDiscordEmptyState() {
 	if (discordEmptyState === undefined) {
-		const found: ComponentType<DiscordEmptyStateProps> | undefined = findByName('EmptyState');
+		const found: ComponentType<DiscordEmptyStateProps> | undefined = findByName('EmptyState', {
+			lazy: false,
+		});
 
 		discordEmptyState = isRenderable(found) ? found : null;
 	}

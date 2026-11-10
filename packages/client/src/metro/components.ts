@@ -11,8 +11,8 @@ import {
 	registerLazyDesignFallback,
 } from '~/metro/design';
 import type { HelpMessageProps } from '~/metro/fallbacks/help-message';
-import { findByName, findByProps } from '~/metro/search';
-import { findByPropsLazy } from '~/metro/wrappers';
+import { find, findByName, findByProps } from '~/metro/lookups';
+import { byProps } from '~/metro/filters';
 
 /** The props of Discord's `FormSwitch`, which the switch fallback accepts. */
 type SwitchProps = ComponentProps<DesignModule['FormSwitch']>;
@@ -23,19 +23,19 @@ export type { DesignComponentName, DesignModule } from '@unbound-app/types/compo
 export { Discord, isRenderable, registerDesignFallback } from '~/metro/design';
 export { DESIGN_COMPONENTS } from '@unbound-app/types/components';
 /** Discord's blur backdrop components, with `BackgroundBlurFill`; found on first access. */
-export const BackdropFilters = findByPropsLazy('BackgroundBlurFill');
+export const BackdropFilters = find(byProps('BackgroundBlurFill'));
 /** Discord's safe area components, with `SafeAreaPaddingView`; found on first access. */
-export const SafeArea = findByPropsLazy('SafeAreaPaddingView');
+export const SafeArea = find(byProps('SafeAreaPaddingView'));
 /** `react-native-safe-area-context`, with `useSafeAreaInsets`; found on first access. */
-export const SafeAreaContext = findByPropsLazy('useSafeAreaInsets');
+export const SafeAreaContext = find(byProps('useSafeAreaInsets'));
 /** Discord's portal components, `Portal` and `PortalHost`, for rendering outside the tree; found on first access. */
-export const Portal = findByPropsLazy('PortalHost', 'Portal');
+export const Portal = find(byProps('PortalHost', 'Portal'));
 /** Discord's media viewer module, with `openMediaModal`; found on first access. */
-export const Media = findByPropsLazy('openMediaModal');
+export const Media = find(byProps('openMediaModal'));
 /** Discord's video player module, with `VideoComponent` and `createVideoControls`; found on first access. */
-export const Video = findByPropsLazy('VideoComponent', 'createVideoControls');
+export const Video = find(byProps('VideoComponent', 'createVideoControls'));
 /** Discord's copy of Shopify's `FlashList` module; found on first access. */
-export const FlashList = findByPropsLazy('FlashList');
+export const FlashList = find(byProps('FlashList'));
 let helpMessage: ComponentType<HelpMessageProps> | undefined;
 
 /**
@@ -45,7 +45,7 @@ let helpMessage: ComponentType<HelpMessageProps> | undefined;
  */
 export function HelpMessage(props: HelpMessageProps) {
 	const component: ComponentType<HelpMessageProps> = (helpMessage ??= firstOf(
-		() => findByName('HelpMessage'),
+		() => findByName('HelpMessage', { lazy: false }),
 		() => require('~/metro/fallbacks/help-message').default,
 	)!);
 
@@ -56,7 +56,7 @@ export function HelpMessage(props: HelpMessageProps) {
 export const HelpMessageTypes = lazy(
 	() =>
 		firstOf(
-			() => findByProps('HelpMessageTypes')?.HelpMessageTypes,
+			() => findByProps('HelpMessageTypes', { lazy: false })?.HelpMessageTypes,
 			() => require('~/metro/fallbacks/help-message').HelpMessageTypes,
 		) ?? {},
 );
@@ -71,7 +71,9 @@ export function Switch(props: SwitchProps) {
 	const component: ComponentType<SwitchProps> = (switchComponent ??=
 		firstOf(
 			() => {
-				const found: ComponentType<SwitchProps> | undefined = findByName('Switch');
+				const found: ComponentType<SwitchProps> | undefined = findByName('Switch', {
+					lazy: false,
+				});
 
 				return isRenderable(found) ? found : undefined;
 			},
@@ -84,22 +86,22 @@ export function Switch(props: SwitchProps) {
 export const Forms = lazy<any>(
 	() =>
 		firstOf(
-			() => findByProps('FormSliderRow'),
-			() => findByProps('FormSection', 'FormRow'),
+			() => findByProps('FormSliderRow', { lazy: false }),
+			() => findByProps('FormSection', 'FormRow', { lazy: false }),
 		) ?? {},
 );
 /** Discord's `TableRowDivider`, the hairline `TableRowGroup` draws between rows; found on first access. */
-export const TableRowDividers = findByPropsLazy('TableRowDivider');
+export const TableRowDividers = find(byProps('TableRowDivider'));
 /** Discord's avatar module, with `Avatar` and `AvatarSizes`; found on first access. */
-export const Avatars = findByPropsLazy('AvatarSizes', 'Avatar');
+export const Avatars = find(byProps('AvatarSizes', 'Avatar'));
 /** Discord's stacked avatar components, `AvatarPile` and `AvatarDuoPile`; found on first access. */
-export const AvatarPiles = findByPropsLazy('AvatarPile', 'AvatarDuoPile');
+export const AvatarPiles = find(byProps('AvatarPile', 'AvatarDuoPile'));
 /** Discord's default avatar images, `DEFAULT_AVATARS` and `DEFAULT_AVATARS_SMALL`; found on first access. */
-export const DefaultAvatars = findByPropsLazy('DEFAULT_AVATARS', 'DEFAULT_AVATARS_SMALL');
+export const DefaultAvatars = find(byProps('DEFAULT_AVATARS', 'DEFAULT_AVATARS_SMALL'));
 /** Discord's bottom sheet components, with `ActionSheet` and `BottomSheetTitleHeader`; found on first access. */
-export const BottomSheets = findByPropsLazy('BottomSheetTitleHeader', 'ActionSheet');
+export const BottomSheets = find(byProps('BottomSheetTitleHeader', 'ActionSheet'));
 /** The `@gorhom/bottom-sheet` Discord bundles, whose `BottomSheetScrollView` scrolls inside a `scrollable` sheet; found on first access. */
-export const GorhomSheet = findByPropsLazy('BottomSheetScrollView', 'BottomSheetModal');
+export const GorhomSheet = find(byProps('BottomSheetScrollView', 'BottomSheetModal'));
 
 /**
  * @description Unbound's stand-in for Discord's `SearchField`, which some builds no longer ship: Discord's

@@ -1,4 +1,6 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
+
+import { mockLookups } from '../helpers/lookups';
 
 type Listener = (...values: number[]) => void;
 
@@ -7,12 +9,12 @@ type CallbackClosure = {
 	listener: Listener;
 };
 
-mock.module('~/metro/wrappers', () => ({
-	findByPropsLazy: () => ({
+mockLookups({
+	findByProps: () => ({
 		runOnJS: (listener: Listener) => listener,
 		runOnUI: () => () => undefined,
 	}),
-}));
+});
 
 const { createScopedUIBridge } = await import('~/native/ui');
 

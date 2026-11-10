@@ -1,5 +1,5 @@
 import { documentsPath, readFile, removeFile, writeFile } from '~/native/fs';
-import { findByPropsLazy } from '~/metro/wrappers';
+import { findByProps } from '~/metro/lookups';
 
 type PickerAsset = { uri?: string; fileName?: string };
 
@@ -22,7 +22,7 @@ type ImagePickerModule = {
 };
 
 /** Discord's photo library picker, the one its attachment button opens. */
-const ImagePicker: ImagePickerModule = findByPropsLazy('launchImageLibraryAsync');
+const ImagePicker: ImagePickerModule = findByProps('launchImageLibraryAsync');
 
 /** Picked photos are copied here, inside the Unbound folder, so they outlive the picker's temporary copy. */
 const SAVED_PREFIX = 'Unbound/chat-background-';

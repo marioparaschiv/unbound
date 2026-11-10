@@ -11,7 +11,7 @@ import { NATIVE_PLUGIN_METHOD_CAPABILITIES } from '@unbound-app/types/native';
 
 import { NativePluginDisposedError, NativePluginUnavailableError } from '~/native/errors';
 import { getNativePlugin } from '~/native/plugin-bridge';
-import { findByPropsLazy } from '~/metro/wrappers';
+import { findByProps } from '~/metro/lookups';
 
 type UIWorklet<A extends NativeUIArgument[], R> = (...args: A) => R;
 
@@ -46,7 +46,7 @@ type ScopedUIBridge = {
 	dispose: () => void;
 };
 
-const Reanimated = findByPropsLazy('runOnJS', 'runOnUI');
+const Reanimated = findByProps('runOnJS', 'runOnUI');
 
 // Reanimated version -> the react-native-worklets version it must run on, or undefined when Reanimated carries its own worklets (3.x).
 const SUPPORTED_WORKLET_RUNTIMES = new Map<string, string | undefined>([

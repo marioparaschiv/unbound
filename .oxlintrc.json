@@ -220,7 +220,7 @@
 	"overrides": [
 		{
 			"files": [
-				"packages/client/src/metro/{api.ts,common.ts,components.ts,design.ts,fallbacks/**,filters.ts,finders.ts,index.ts,invalid-exports.ts,lazy-registry.ts,registry.ts,search.ts,state.ts,stores.ts,types.ts,wrappers.ts}",
+				"packages/client/src/metro/{api.ts,common.ts,components.ts,design.ts,fallbacks/**,filters.ts,index.ts,invalid-exports.ts,lazy-registry.ts,registry.ts,search.ts,state.ts,stores.ts,types.ts}",
 				"packages/types/typings/components.ts"
 			],
 			"rules": {

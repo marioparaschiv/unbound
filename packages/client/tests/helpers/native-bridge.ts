@@ -22,6 +22,8 @@ import type {
 } from '@unbound-app/types';
 import { mock } from 'bun:test';
 
+import { mockLookups } from './lookups';
+
 // Importing the native API captures and deletes `globalThis.NativePlugin`, so each file using these
 // fixtures needs its own module registry: run them with `bun test --isolate`.
 type NativePluginGlobal = typeof globalThis & {
@@ -69,9 +71,10 @@ const fluxDispatcher = {
 	},
 };
 
-mock.module('~/metro/wrappers', () => ({
-	findByPropsLazy: () => fluxDispatcher,
-}));
+mockLookups({
+	find: () => fluxDispatcher,
+	findByProps: () => fluxDispatcher,
+});
 
 export const removed: string[] = [];
 export const cleared: unknown[] = [];

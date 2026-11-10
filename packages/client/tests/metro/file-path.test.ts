@@ -61,6 +61,7 @@ mock.module('~/metro/cache', () =>
 );
 
 const metro = await import('~/metro/search');
+const lookups = await import('~/metro/lookups');
 const { findLazy, onModuleLoaded } = await import('~/metro/wait');
 const { byFilePath } = await import('~/metro/filters');
 
@@ -136,7 +137,9 @@ describe('a file path search', () => {
 		metroRequire(60);
 		recordsRead.clear();
 
-		expect(metro.findByFilePath('modules/m60.tsx', { interop: false })).toEqual({ id: 60 });
+		expect(lookups.findByFilePath('modules/m60.tsx', { lazy: false, interop: false })).toEqual({
+			id: 60,
+		});
 		expect([...recordsRead]).toEqual([60]);
 	});
 
@@ -149,7 +152,9 @@ describe('a file path search', () => {
 	});
 
 	test('still loads the module from that file when the search may load', () => {
-		expect(metro.findByFilePath('modules/m80.tsx', { interop: false })).toEqual({ id: 80 });
+		expect(lookups.findByFilePath('modules/m80.tsx', { lazy: false, interop: false })).toEqual({
+			id: 80,
+		});
 		expect(isLoaded(80)).toBe(true);
 	});
 });

@@ -114,6 +114,7 @@ mock.module('~/metro/cache', () =>
 );
 
 const metro = await import('~/metro/search');
+const lookups = await import('~/metro/lookups');
 const { CACHE_KEY } = await import('~/metro/cache-key');
 
 function initialized() {
@@ -136,16 +137,18 @@ describe('a forcing search', () => {
 	test('reaches a module by path without loading asset or third-party modules before it', () => {
 		let found: MetroExport;
 
-		expect(loadedBy(() => (found = metro.findByFilePath('modules/wanted.tsx')))).toEqual([
-			13, 15,
-		]);
+		expect(
+			loadedBy(() => (found = lookups.findByFilePath('modules/wanted.tsx', { lazy: false }))),
+		).toEqual([13, 15]);
 		expect(found?.wanted).toBe(true);
 	});
 
 	test('reaches a module by props without loading asset modules before it', () => {
 		let found: MetroExport;
 
-		expect(loadedBy(() => (found = metro.findByProps('after')))).toEqual([12, 16]);
+		expect(loadedBy(() => (found = lookups.findByProps('after', { lazy: false })))).toEqual([
+			12, 16,
+		]);
 		expect(found?.after).toBe(true);
 	});
 });
@@ -154,26 +157,28 @@ describe('a forcing search with a hint from an earlier build', () => {
 	test('loads only the modules around the old id until it matches', () => {
 		hints['byProps::module25'] = [{ id: 23, path: 'modules/m25.tsx' }];
 
-		expect(loadedBy(() => metro.findByProps('module25'))).toEqual([22, 23, 24, 25]);
+		expect(loadedBy(() => lookups.findByProps('module25', { lazy: false }))).toEqual([
+			22, 23, 24, 25,
+		]);
 		expect(cachedIds['byProps::module25']).toEqual([25]);
 	});
 
 	test("tries a nearby module's move first", () => {
 		hints['byProps::module30'] = [{ id: 28, path: 'modules/m30.tsx' }];
 
-		expect(loadedBy(() => metro.findByProps('module30'))).toEqual([30]);
+		expect(loadedBy(() => lookups.findByProps('module30', { lazy: false }))).toEqual([30]);
 	});
 
 	test('falls back to the whole registry when nothing near the old id matches', () => {
 		hints['byProps::module39'] = [{ id: 3, path: 'modules/m39.tsx' }];
 
-		expect(metro.findByProps('module39')?.module39).toBe(true);
+		expect(lookups.findByProps('module39', { lazy: false })?.module39).toBe(true);
 	});
 
 	test('returns the module from the same file, not another the filter matches', () => {
 		hints['byProps::twin'] = [{ id: 39, path: 'modules/twin-b.tsx' }];
 
-		expect(metro.findByProps('twin')?.twin).toBe('b');
+		expect(lookups.findByProps('twin', { lazy: false })?.twin).toBe('b');
 	});
 
 	test('tries a module without a file path at its old id alone', () => {
@@ -181,7 +186,9 @@ describe('a forcing search with a hint from an earlier build', () => {
 
 		let found: MetroExport;
 
-		expect(loadedBy(() => (found = metro.findByProps('pathless')))).toEqual([45]);
+		expect(loadedBy(() => (found = lookups.findByProps('pathless', { lazy: false })))).toEqual([
+			45,
+		]);
 		expect(found?.pathless).toBe('kept');
 	});
 });

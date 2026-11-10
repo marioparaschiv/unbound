@@ -2,9 +2,8 @@ import type { AssetsModule, UnboundAsset } from '@unbound-app/types/assets';
 import { getAssetPath } from '@unbound-app/contracts/addon-assets';
 import type { AddonAsset } from '@unbound-app/types/addons';
 
+import { find as findModule, findByProps } from '~/metro/lookups';
 import { recordedAssets as assets } from '~/assets/registered';
-import { find as findModule } from '~/metro/search';
-import { findByPropsLazy } from '~/metro/wrappers';
 import { byProps } from '~/metro/filters';
 
 /** An image to register with Discord's asset registry, so `<Image source={id}>` and Discord's icon props draw it. */
@@ -58,7 +57,7 @@ type Registration = {
 };
 
 // React Native's `resolveAssetSource`, whose transformers run before it builds a path inside the app bundle.
-const SourceResolver: SourceResolver = findByPropsLazy('addCustomSourceTransformer', 'pickScale');
+const SourceResolver: SourceResolver = findByProps('addCustomSourceTransformer', 'pickScale');
 
 // Every registration by `<qualified name>.<type>`; an unregistered one keeps its id for the next registration.
 const registrations = new Map<string, Registration>();
@@ -122,7 +121,9 @@ function transform(resolver: Resolver): ResolvedSource | null {
 }
 
 function registry(): AssetsModule {
-	const found: AssetsModule | undefined = findModule(byProps('registerAsset', 'getAssetByID'));
+	const found: AssetsModule | undefined = findModule(byProps('registerAsset', 'getAssetByID'), {
+		lazy: false,
+	});
 
 	if (!found) {
 		throw new Error("Discord's asset registry has not loaded.");

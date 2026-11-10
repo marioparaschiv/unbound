@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 
+import { mockLookups } from '../helpers/lookups';
+
 type User = { isStaff: boolean };
 type Filter = (payload: MetroExport) => boolean;
 
@@ -25,10 +27,10 @@ mock.module('~/settings/unbound', () => ({
 }));
 
 mock.module('~/metro/filters', () => ({ byFluxStore: () => () => true }));
-mock.module('~/metro/wrappers', () => ({
-	findByPropsLazy: (...props: string[]) =>
+mockLookups({
+	findByProps: (...props: string[]) =>
 		props.includes('isStaffEnv') ? UserConstants : { getPublicInstanceFromRootTag: () => null },
-}));
+});
 mock.module('~/metro/wait', () => ({
 	onModuleLoaded: (_filter: Filter, callback: (store: MetroExport) => void) => {
 		loaded = callback;

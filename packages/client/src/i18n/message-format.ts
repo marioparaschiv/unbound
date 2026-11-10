@@ -1,5 +1,5 @@
 import type { FormatVars, LocaleStrings } from '~/i18n/locale-strings';
-import { findByName } from '~/metro/search';
+import { findByName } from '~/metro/lookups';
 
 type MessageFormatInstance = {
 	format: (vars?: FormatVars) => string;
@@ -15,7 +15,7 @@ let MessageFormat: MessageFormatConstructor | undefined;
  * @returns The `MessageFormat` constructor.
  */
 function getMessageFormat() {
-	MessageFormat ??= findByName('MessageFormat');
+	MessageFormat ??= findByName('MessageFormat', { lazy: false });
 
 	return MessageFormat;
 }

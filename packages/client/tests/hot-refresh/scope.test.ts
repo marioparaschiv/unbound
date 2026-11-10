@@ -1,7 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
-import { stableType, withRefreshScope } from '~/hot-refresh/runtime';
-import { performReactRefresh } from '~/hot-refresh/families';
+import { mockLookups } from '../helpers/lookups';
+
+// The refresh runtime finds Discord's renderer, which these tests never reach.
+mockLookups({});
+
+const { stableType, withRefreshScope } = await import('~/hot-refresh/runtime');
+const { performReactRefresh } = await import('~/hot-refresh/families');
 
 function register(type: () => string, name: string) {
 	globalThis.$RefreshReg$?.(type, name);

@@ -1,4 +1,4 @@
-import { Node, SyntaxKind, type SourceFile } from 'ts-morph';
+import { Node, SyntaxKind, type CallExpression, type SourceFile } from 'ts-morph';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -28,7 +28,7 @@ const COPIED: CopiedConvention[] = [
 	},
 ];
 
-// The client modules whose `findByPropsLazy` lookups name the props each `metro.<namespace>` member is found by.
+// The client modules whose `find(byProps(...))` lookups name the props each `metro.<namespace>` member is found by.
 const METRO_TABLES = [
 	{
 		name: 'COMMON_PROPS',
@@ -79,9 +79,9 @@ function lookupProps(sourceFile: SourceFile, path: string): [string, string[]][]
 		}
 
 		for (const declaration of statement.getDeclarations()) {
-			const call = declaration.getInitializerIfKind(SyntaxKind.CallExpression);
+			const call = byPropsLookup(declaration.getInitializerIfKind(SyntaxKind.CallExpression));
 
-			if (call?.getExpression().getText() !== 'findByPropsLazy') {
+			if (!call) {
 				continue;
 			}
 
@@ -100,6 +100,21 @@ function lookupProps(sourceFile: SourceFile, path: string): [string, string[]][]
 	}
 
 	return table;
+}
+
+// The `byProps(...)` call of a `find(byProps(...))` lookup.
+function byPropsLookup(call: CallExpression | undefined) {
+	if (call?.getExpression().getText() !== 'find') {
+		return;
+	}
+
+	const [filter] = call.getArguments();
+
+	if (!Node.isCallExpression(filter) || filter.getExpression().getText() !== 'byProps') {
+		return;
+	}
+
+	return filter;
 }
 
 /**

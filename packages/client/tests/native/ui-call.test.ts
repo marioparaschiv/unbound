@@ -1,4 +1,6 @@
-import { afterEach, beforeEach, describe, expect, jest, mock, spyOn, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, jest, spyOn, test } from 'bun:test';
+
+import { mockLookups } from '../helpers/lookups';
 
 type CallResult = { ok: true; value: number } | { ok: false; error: string };
 type Completion = (result: CallResult) => void;
@@ -9,8 +11,8 @@ const completions: Completion[] = [];
 const scheduled: Scheduled[] = [];
 let schedulingFailure: Error | undefined;
 
-mock.module('~/metro/wrappers', () => ({
-	findByPropsLazy: () => ({
+mockLookups({
+	findByProps: () => ({
 		runOnJS: (callback: Completion) => callback,
 		runOnUI: (worklet: () => void) => () => {
 			if (schedulingFailure) {
@@ -23,7 +25,7 @@ mock.module('~/metro/wrappers', () => ({
 			completions.push(closure.settle);
 		},
 	}),
-}));
+});
 
 const { createScopedUIBridge } = await import('~/native/ui');
 
