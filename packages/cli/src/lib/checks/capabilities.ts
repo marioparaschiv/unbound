@@ -1,7 +1,6 @@
+import { MANIFEST_FILENAME, validateAddonCapabilities } from '@unbound-app/contracts/manifest';
 import type { NativePluginCapability, NativePluginPlatform } from '@unbound-app/types/native';
-import { validateAddonCapabilities } from '@unbound-app/contracts/addon-conventions';
 import { existsSync, mkdirSync, renameSync, writeFileSync } from 'node:fs';
-import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import { NATIVE_PLUGIN_PLATFORMS } from '@unbound-app/types/native';
 import { getBundleName } from '@unbound-app/contracts/workspace';
 import { join } from 'node:path';
@@ -104,7 +103,9 @@ function checkCapabilities(
 	const declared = GENERATED_FIELDS.filter((field) => manifest[field] !== void 0);
 
 	if (addon.static || addon.kind !== 'plugin' || (acceptDeclared && declared.length)) {
-		return validateAddonCapabilities(manifest).map((message) => manifestError(message));
+		return validateAddonCapabilities(manifest).map(({ path, message }) =>
+			manifestError(message, path || void 0),
+		);
 	}
 
 	const issues = declared.map((field) =>

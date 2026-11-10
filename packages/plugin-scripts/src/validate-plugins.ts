@@ -1,9 +1,9 @@
 import {
-	validateAddonCapabilities,
 	validateAddonFolder,
 	validateAddonNaming,
 	type ConventionManifest,
 } from '@unbound-app/contracts/addon-conventions';
+import { validateAddonCapabilities } from '@unbound-app/contracts/manifest';
 import { formatChangelogIssues, parseChangelog } from '@unbound-app/contracts/changelog';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -40,7 +40,12 @@ export function validatePluginFolder(folder: string, manifest: unknown): string[
 	if (typeof manifest.main !== 'string' || !manifest.main.trim())
 		errors.push('main must be a non-empty string');
 
-	return [...errors, ...validateAddonCapabilities(manifest)];
+	return [
+		...errors,
+		...validateAddonCapabilities(manifest).map(({ path, message }) =>
+			path ? `${message} (at ${path})` : message,
+		),
+	];
 }
 
 /**

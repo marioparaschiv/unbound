@@ -107,7 +107,7 @@ test('reports naming, required field and capability problems for a plugin folder
 		'folder must use lowercase kebab-case',
 		'id must end with .Example_Plugin',
 		'authors must be a non-empty array',
-		'capabilities contains an unsupported value: native.objc.unknown',
+		'Must be a Capability, not native.objc.unknown. (at /capabilities/0)',
 	]);
 });
 
