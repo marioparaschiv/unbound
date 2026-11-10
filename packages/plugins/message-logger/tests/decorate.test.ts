@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { decorateRow, type ChatRow, type RowDecoration } from '~/rows/decorate';
+import { asEditedSubtext, decorateRow, type ChatRow, type RowDecoration } from '~/rows/decorate';
 
 const none: RowDecoration = {
 	deleted: false,
@@ -25,6 +25,20 @@ function row(): ChatRow {
 		},
 	};
 }
+
+describe('asEditedSubtext', () => {
+	test('shows an earlier version as subtext ending with the edited suffix', () => {
+		expect(asEditedSubtext('before')).toBe('-# before (edited)');
+	});
+
+	test('puts each line in subtext without blank lines or indents', () => {
+		expect(asEditedSubtext('  one\n\n  two  \n')).toBe('-# one\n-# two (edited)');
+	});
+
+	test('shows only the suffix for a version without text', () => {
+		expect(asEditedSubtext('')).toBe('-# (edited)');
+	});
+});
 
 describe('decorateRow', () => {
 	test('shows a deleted message in red with a deleted marker and dismiss link', () => {
@@ -59,7 +73,6 @@ describe('decorateRow', () => {
 
 		expect(target.message?.content).toEqual([
 			{ type: 'text', content: 'before' },
-			{ type: 'text', content: ' (edited)\n' },
 			{ type: 'text', content: 'now' },
 		]);
 	});

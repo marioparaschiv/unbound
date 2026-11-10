@@ -27,6 +27,11 @@ export default defineSettings(
 			title: 'LOG_EDITS',
 			subtitle: 'LOG_EDITS_SUBTITLE',
 		}),
+		persistLog: setting.boolean({
+			default: true,
+			title: 'PERSIST_LOG',
+			subtitle: 'PERSIST_LOG_SUBTITLE',
+		}),
 		logDeletedAttachments: setting.boolean({
 			default: true,
 			title: 'LOG_DELETED_ATTACHMENTS',

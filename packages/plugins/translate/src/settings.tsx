@@ -14,6 +14,8 @@ export function SettingsPanel() {
 	const sourceLanguage = useSetting('sourceLanguage');
 	const targetLanguage = useSetting('targetLanguage');
 	const display = useSetting('display');
+	const showLanguages = useSetting('showLanguages');
+	const languageFlags = useSetting('languageFlags');
 
 	function connect() {
 		setConnecting(true);
@@ -88,6 +90,23 @@ export function SettingsPanel() {
 				]}
 				onChange={(value) => (settings.display = value as typeof display)}
 			/>
+			{display === 'inline' ? (
+				<ui.Section>
+					<ui.SwitchRow
+						label={messages.SHOW_LANGUAGES}
+						subLabel={messages.SHOW_LANGUAGES_SUBTITLE}
+						value={showLanguages}
+						onValueChange={(value) => (settings.showLanguages = value)}
+					/>
+					<ui.SwitchRow
+						label={messages.LANGUAGE_FLAGS}
+						subLabel={messages.LANGUAGE_FLAGS_SUBTITLE}
+						value={languageFlags}
+						disabled={!showLanguages}
+						onValueChange={(value) => (settings.languageFlags = value)}
+					/>
+				</ui.Section>
+			) : null}
 		</ui.Page>
 	);
 }

@@ -9,3 +9,8 @@ export const CHANGE_TYPE_UPDATE = 2;
 export const DELETED_TEXT_COLOR = '#f23f42';
 
 export const HELP_ARTICLE_URL = 'https://vencord.dev/plugins/MessageLogger';
+
+export const LOG_FILE = 'Unbound/Data/message-logger/log.json';
+
+/** How many deleted messages, edited messages and messages with deleted attachments the saved log keeps each, newest first. */
+export const SAVED_MESSAGE_LIMIT = 1000;

@@ -54,17 +54,30 @@ function deletedIndication(dismissTarget: object | null) {
 	};
 }
 
+/**
+ * @description Builds the markdown an earlier version of a message shows: each line of its text as small subtext, the last one ending with the edited suffix, with no blank lines.
+ * @param content The earlier version's text.
+ * @returns The text to draw, such as `-# Hello (edited)`.
+ */
+export function asEditedSubtext(content: string): string {
+	const lines = content
+		.split('\n')
+		.map((line) => line.trim())
+		.filter(Boolean)
+		.map((line) => `-# ${line}`);
+
+	if (!lines.length) return `-#${messages.EDITED_SUFFIX}`;
+
+	lines[lines.length - 1] += messages.EDITED_SUFFIX;
+
+	return lines.join('\n');
+}
+
 function withPreviousVersions(
 	content: readonly ContentNode[],
 	versions: readonly ContentNode[][],
 ): ContentNode[] {
-	return [
-		...versions.flatMap((version) => [
-			...version,
-			{ type: 'text', content: `${messages.EDITED_SUFFIX}\n` },
-		]),
-		...content,
-	];
+	return [...versions.flat(), ...content];
 }
 
 function markAttachment(attachment: RowAttachment, deletedIds: ReadonlySet<string>, all: boolean) {

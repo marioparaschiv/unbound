@@ -3,7 +3,7 @@ import { patcher } from '@unbound-app/api';
 import { processColor } from 'react-native';
 
 import { DELETED_TEXT_COLOR, EPHEMERAL_FLAG, PLUGIN_NAME } from '~/constants';
-import { decorateRow, type ChatRow, type ContentNode } from '~/rows/decorate';
+import { asEditedSubtext, decorateRow, type ChatRow, type ContentNode } from '~/rows/decorate';
 import { RowManager } from '~/rows/modules';
 import { MessageStore } from '~/log/modules';
 import type { MessageLog } from '~/log';
@@ -84,7 +84,11 @@ export function patchRowManager(log: MessageLog): () => void {
 				? log
 						.editsOf(messageId)
 						.map((edit) =>
-							versionContent(self as RowGenerator, input as RowInput, edit.content),
+							versionContent(
+								self as RowGenerator,
+								input as RowInput,
+								asEditedSubtext(edit.content),
+							),
 						)
 						.filter((content): content is ContentNode[] => content !== null)
 				: [];
