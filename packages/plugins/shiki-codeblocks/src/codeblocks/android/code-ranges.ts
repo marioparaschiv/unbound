@@ -63,42 +63,6 @@ export function placeholderTexts(original: string, slots: SpanRange[]): string[]
 }
 
 /**
- * @description Replaces each slot of a message text with its placeholder.
- * @param original The message text.
- * @param slots The slots, in text order.
- * @returns The text Discord shows once the cards take the slots' place.
- */
-export function renderedText(original: string, slots: SpanRange[]): string {
-	const texts = placeholderTexts(original, slots);
-	let text = original;
-
-	for (let index = slots.length - 1; index >= 0; index--) {
-		const slot = slots[index]!;
-
-		text = text.slice(0, slot.start) + texts[index] + text.slice(slot.end);
-	}
-
-	return text;
-}
-
-/**
- * @description Finds where each placeholder lands once every slot is replaced by one character.
- * @param slots The slots, in text order.
- * @returns The placeholder index of each slot.
- */
-export function placeholderOffsets(slots: SpanRange[]): number[] {
-	let removed = 0;
-
-	return slots.map(({ start, end }) => {
-		const offset = start - removed;
-
-		removed += end - start - 1;
-
-		return offset;
-	});
-}
-
-/**
  * @description Finds the fenced block a rendered code block came from, to learn its language.
  * @param code The rendered code.
  * @param blocks The fenced blocks of the messages that may contain it.
@@ -112,4 +76,4 @@ export function sourceBlock(code: string, blocks: CodeBlock[]): CodeBlock | unde
 	);
 }
 
-export default { codeSlots, placeholderOffsets, sourceBlock };
+export default { codeSlots, placeholderTexts, sourceBlock };

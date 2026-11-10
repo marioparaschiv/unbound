@@ -1,45 +1,13 @@
 import { createSurfaceListeners } from '@unbound-plugins/shared/native/surface-listeners';
-import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeFabricBridge,
-	NativeFabricSurface,
 	NativeJavaBridge,
-	NativeJavaHandle,
 	NativeJavaHooksBridge,
-	NativeJavaReference,
-	NativeJavaValue,
 } from '@unbound-app/api/native';
 import {
-	MESSAGE_VIEW,
-	messageBindMethod,
-	messageIdField,
-} from '@unbound-plugins/shared/native/android/discord-views';
-import {
-	createHost,
-	hostContainer,
-	layoutHostingList,
-	hostHasContent,
-	placeHost,
-	removeHost,
-	reservedPosition,
-	spacerSpan,
-} from '@unbound-plugins/shared/native/android/inline-hosts';
-import {
-	javaFlag,
-	javaInt,
-	javaNumber,
-	javaReference,
-	javaString,
-	javaText,
-	javaViewKey,
-} from '@unbound-plugins/shared/native/android/java-values';
-import { readViewText } from '@unbound-plugins/shared/native/android/spans';
-import {
-	currentDecorView,
-	findViewsOfClass,
-	resourceDensity,
-	scheduleStartupScans,
-} from '@unbound-plugins/shared/native/android/views';
+	createMessageTextSurfaces,
+	type TextSurfaceSlot,
+} from '@unbound-plugins/shared/native/android/message-text-surfaces';
 
 import { registerMessageSurface, type SurfaceContent } from '~/embeds/components/message-surface';
 import {
@@ -48,21 +16,13 @@ import {
 	targetKey,
 	type LinkTarget,
 } from '~/embeds/link-targets';
-import { MessageStore, type Message, type Renderers } from '~/embeds/modules';
+import { MessageStore, type Renderers } from '~/embeds/modules';
 import { buildEmbeddedContent } from '~/embeds/embedded-content';
 import { createLinkedMessages } from '~/embeds/linked-messages';
 import { currentChannelId, linkedChannelName } from '~/embeds/channels';
 import { Surface } from '~/constants';
-import {
-	FIRST_ARGUMENT_AFTER_CALL,
-	RECEIVER_ONLY_AFTER_CALL,
-} from '@unbound-plugins/shared/native/android/hook-options';
 
-const MESSAGE_CONTENT_VIEW = 'com.discord.chat.presentation.message.view.MessageContentView';
-const SPAN_EXCLUSIVE_EXCLUSIVE = 33;
-const PLACEHOLDER = '￼';
-const SETTLE_DELAYS = [0, 120, 600];
-const SIZE_PARAMETERS = ['int', 'int', 'int', 'int'];
+const INSERTION = '\n\ufffc';
 
 type Native = {
 	java: NativeJavaBridge;
@@ -70,443 +30,133 @@ type Native = {
 	fabric: NativeFabricBridge;
 };
 
-type WaitingView = {
-	messageView: NativeJavaReference;
-	messageId: string;
+type Embed = SurfaceContent & {
+	target: LinkTarget;
+	revision: number;
 };
 
-type Embed = SurfaceContent & {
-	id: string;
-	messageView: NativeJavaReference;
-	textView: NativeJavaReference;
-	host: NativeJavaHandle;
-	mounting: Promise<NativeFabricSurface> | null;
-	messageId: string;
+type EmbedSlot = TextSurfaceSlot & {
 	target: LinkTarget;
-	channelName: string;
-	density: number;
-	height: number;
-	placeholder: number;
-	renderedText: string | null;
-	original: NativeJavaReference | null;
-	revision: number;
-	disposed: boolean;
+	content: Omit<SurfaceContent, 'width'>;
 };
 
 /**
- * @description Embeds the message each Android message links to as a real chat row, the way the iOS client shows it.
+ * @description Embeds the message each Android message links to as a real chat row through the loader's native text rewrites, so embeds stay in place while the chat scrolls.
  * @param native The plugin's Java, hook and Fabric bridges.
  * @param renderers Discord's message renderers, shared with the iOS embeds.
- * @returns `dispose`, which removes the hook and every embed and resolves once the views are restored, or `undefined` when the surface did not register.
+ * @returns `drawn` and `dispose`, which removes every embed and restores the text, or `undefined` when the surface or the native rewrites are unavailable.
  */
-export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: Renderers) {
-	const embeds = new Map<string, Embed>();
-	const byId = new Map<string, Embed>();
-	const waiting = new Map<string, Map<string, WaitingView>>();
-	const awaitingSize = new Map<string, WaitingView>();
+export function createAndroidEmbeds(native: Native, renderers: Renderers) {
+	const bySurface = new Map<string, Embed>();
+	const heights = new Map<string, number>();
+	const listeners = createSurfaceListeners();
+	const waiting = new Map<string, Set<() => void>>();
 	const controller = new AbortController();
-	let nextId = 0;
 
 	const linked = createLinkedMessages(controller.signal, (key) => {
-		for (const { messageView, messageId } of waiting.get(key)?.values() ?? []) {
-			render(messageView, messageId).catch((error) => {
-				if (!isCancellation(error)) {
-					logger.error('Failed to embed a linked message on Android:', error);
-				}
-			});
-		}
+		for (const retry of waiting.get(key) ?? []) retry();
 
 		waiting.delete(key);
 	});
 
-	const listeners = createSurfaceListeners();
 	const surfaceModule = registerMessageSurface({
 		renderers,
-		surface: (surfaceId) => byId.get(surfaceId),
+		surface: (surfaceId) => bySurface.get(surfaceId),
 		reportLayout: (surfaceId, height) => reportLayout(surfaceId, height),
-		revision: (surfaceId) => byId.get(surfaceId)?.revision ?? -1,
+		revision: (surfaceId) => bySurface.get(surfaceId)?.revision ?? -1,
 		subscribe: listeners.subscribe,
 	});
 
-	function publish(embed: Embed) {
-		embed.revision++;
-		listeners.notify(embed.id);
-	}
-
 	if (!surfaceModule) return undefined;
 
-	function contentTextView(
-		messageView: NativeJavaReference,
-		channelName: string,
-	): NativeJavaReference | null {
-		const stack: NativeJavaReference[] = [messageView];
-		const contentClass = java.getClass(MESSAGE_CONTENT_VIEW);
-		const groupClass = java.getClass('android.view.ViewGroup');
+	const surfaces = createMessageTextSurfaces<EmbedSlot>(native, {
+		surfaceModule,
+		prefix: 'message-link-android',
+		async slots(text) {
+			const messageId = await text.messageId();
+			const channelId = currentChannelId();
+			const source =
+				channelId && messageId ? MessageStore.getMessage(channelId, messageId) : undefined;
+			const [target] = source ? linkedTargets(source) : [];
 
-		while (stack.length) {
-			const view = stack.pop()!;
+			if (!target) return;
 
-			if (javaFlag(java.invoke(contentClass, 'isInstance', [view]))) {
-				const text = readViewText(java, view)?.string ?? '';
+			const linkedMessage = linked.get(target);
 
-				if (findRenderedLinkRange(text, channelName)) return view;
+			if (!linkedMessage) {
+				const retries = waiting.get(targetKey(target)) ?? new Set();
 
-				continue;
+				retries.add(text.retry);
+				waiting.set(targetKey(target), retries);
+				linked.fetch(target);
+
+				return;
 			}
 
-			if (!javaFlag(java.invoke(groupClass, 'isInstance', [view]))) continue;
+			const channelName = linkedChannelName(target, linkedMessage);
+			const range = channelName ? findRenderedLinkRange(text.string, channelName) : undefined;
+			const content = buildEmbeddedContent(renderers, linkedMessage, target.channelId);
 
-			const count = javaNumber(java.invoke(view, 'getChildCount', [])) ?? 0;
+			if (!range || !content) return;
 
-			for (let index = count - 1; index >= 0; index--) {
-				const child = javaReference(java.invoke(view, 'getChildAt', [javaInt(index)]));
+			const insertAt = range.location + range.length;
 
-				if (child) stack.push(child);
-			}
-		}
+			return [
+				{
+					start: insertAt,
+					end: insertAt,
+					text: INSERTION,
+					placeholder: 1,
+					gap: Surface.topGap,
+					target,
+					content,
+				},
+			];
+		},
+		async layout(surfaceId, slot, width) {
+			const previous = bySurface.get(surfaceId);
 
-		return null;
-	}
-
-	async function teardown(embed: Embed) {
-		embed.disposed = true;
-		embeds.delete(javaViewKey(embed.messageView as NativeJavaValue) ?? '');
-		byId.delete(embed.id);
-
-		const mounted = await embed.mounting?.catch(() => null);
-
-		if (mounted) await fabric.unmountAsync(mounted).catch(() => undefined);
-
-		await removeHost(java, embed.host).catch(() => undefined);
-	}
-
-	async function restore(embed: Embed) {
-		const current = readViewText(java, embed.textView);
-
-		if (embed.original && current?.string === embed.renderedText) {
-			await java.invokeAsync(embed.textView, 'setText', [embed.original]);
-			await relayout(embed);
-		}
-	}
-
-	async function relayout(embed: Embed) {
-		await java.invokeAsync(embed.textView, 'requestLayout', []);
-		await layoutHostingList(java, embed.messageView);
-	}
-
-	async function reserve(embed: Embed): Promise<boolean> {
-		const content = readViewText(java, embed.textView);
-
-		if (!content) return false;
-
-		const range = findRenderedLinkRange(content.string, embed.channelName);
-
-		if (!range) return false;
-
-		if (content.string !== embed.renderedText) embed.original = content.text;
-
-		const insertAt = range.location + range.length;
-		const builder = java.construct('android.text.SpannableStringBuilder', [content.text]);
-		const width = embed.width * embed.density;
-
-		const reserved = content.string.slice(insertAt, insertAt + 2) === `\n${PLACEHOLDER}`;
-
-		java.invoke(builder, 'replace', [
-			javaInt(insertAt),
-			javaInt(reserved ? insertAt + 2 : insertAt),
-			javaString(`\n${PLACEHOLDER}`),
-		]);
-		java.invoke(builder, 'setSpan', [
-			spacerSpan(java, width, (embed.height + Surface.topGap) * embed.density),
-			javaInt(insertAt + 1),
-			javaInt(insertAt + 2),
-			javaInt(SPAN_EXCLUSIVE_EXCLUSIVE),
-		]);
-		embed.placeholder = insertAt + 1;
-		embed.renderedText = javaText(java.invoke(builder, 'toString', [])) ?? null;
-		await java.invokeAsync(embed.textView, 'setText', [builder]);
-		await relayout(embed);
-
-		return true;
-	}
-
-	function isCurrent(embed: Embed): boolean {
-		return (
-			!embed.disposed &&
-			embeds.get(javaViewKey(embed.messageView as NativeJavaValue) ?? '') === embed &&
-			readViewText(java, embed.textView)?.string === embed.renderedText
-		);
-	}
-
-	async function place(embed: Embed) {
-		if (!isCurrent(embed)) return;
-
-		const container = await hostContainer(java, embed.textView);
-		const position = await reservedPosition(
-			java,
-			embed.textView,
-			embed.placeholder,
-			embed.height * embed.density,
-		);
-
-		if (!container || !position) return;
-
-		await placeHost(
-			java,
-			embed.host,
-			container.container,
-			{ x: container.offset.x + position.x, y: container.offset.y + position.y },
-			{ width: embed.width * embed.density, height: embed.height * embed.density },
-		);
-
-		if (!isCurrent(embed)) {
-			if (
-				embed.disposed ||
-				embeds.get(javaViewKey(embed.messageView as NativeJavaValue) ?? '') !== embed
-			) {
-				await removeHost(java, embed.host).catch(() => undefined);
-			}
-
-			return;
-		}
-
-		if (embed.mounting && !embed.disposed) {
-			const mounted = await embed.mounting.catch(() => null);
-
-			if (!(await hostHasContent(java, embed.host))) {
-				embed.mounting = null;
-
-				if (mounted) await fabric.unmountAsync(mounted).catch(() => undefined);
-			}
-		}
-
-		if (!embed.mounting && !embed.disposed) {
-			embed.mounting = fabric.mountAsync(embed.host, surfaceModule!, {
-				renderRevision: embed.revision,
-				surfaceId: embed.id,
+			bySurface.set(surfaceId, {
+				...slot.content,
+				width,
+				target: slot.target,
+				revision: (previous?.revision ?? 0) + 1,
 			});
-			await embed.mounting.catch((error: unknown) => {
-				embed.mounting = null;
-				throw error;
-			});
-		}
-	}
+			listeners.notify(surfaceId);
 
-	function settle(embed: Embed) {
-		for (const delay of SETTLE_DELAYS) {
-			setTimeout(() => {
-				place(embed).catch((error) => {
-					if (!isCancellation(error)) {
-						logger.error('Failed to place an Android embed:', error);
-					}
-				});
-			}, delay);
-		}
-	}
+			return heights.get(targetKey(slot.target)) ?? Surface.minHeight;
+		},
+	});
+
+	if (!surfaces) return undefined;
+
+	const drawing = surfaces;
 
 	function reportLayout(surfaceId: string, height: number) {
-		const embed = byId.get(surfaceId);
+		const embed = bySurface.get(surfaceId);
 
-		if (
-			!embed ||
-			embed.disposed ||
-			!Number.isFinite(height) ||
-			height <= 0 ||
-			height > Surface.maxHeight
-		)
+		if (!embed || !Number.isFinite(height) || height <= 0 || height > Surface.maxHeight) {
 			return;
+		}
 
 		const fitted = Math.max(Surface.minHeight, height - Surface.bottomTrim);
+		const key = targetKey(embed.target);
 
-		if (Math.abs(fitted - embed.height) < 2) return;
+		if (Math.abs(fitted - (heights.get(key) ?? Surface.minHeight)) < 2) return;
 
-		embed.height = fitted;
-		void reserve(embed)
-			.then((reserved) => reserved && settle(embed))
-			.catch(() => undefined);
+		heights.set(key, fitted);
+		drawing.redraw(surfaceId);
 	}
-
-	async function render(messageView: NativeJavaReference, messageId: string) {
-		const key = javaViewKey(messageView as NativeJavaValue);
-
-		if (!key) return;
-
-		const channelId = currentChannelId();
-		const source: Message | undefined = channelId
-			? MessageStore.getMessage(channelId, messageId)
-			: undefined;
-		const [target] = source ? linkedTargets(source) : [];
-		const existing = embeds.get(key);
-
-		if (
-			existing &&
-			(!target ||
-				existing.messageId !== messageId ||
-				targetKey(existing.target) !== targetKey(target))
-		) {
-			await teardown(existing);
-		}
-
-		if (!target) {
-			awaitingSize.delete(key);
-
-			return;
-		}
-
-		const linkedMessage = linked.get(target);
-
-		if (!linkedMessage) {
-			const views = waiting.get(targetKey(target)) ?? new Map<string, WaitingView>();
-
-			views.set(key, { messageView, messageId });
-			waiting.set(targetKey(target), views);
-			linked.fetch(target);
-
-			return;
-		}
-
-		const channelName = linkedChannelName(target, linkedMessage);
-		const textView = channelName ? contentTextView(messageView, channelName) : null;
-		const built = buildEmbeddedContent(renderers, linkedMessage, target.channelId);
-
-		if (!channelName || !textView || !built) {
-			if (channelName && built) awaitingSize.set(key, { messageView, messageId });
-
-			return;
-		}
-
-		awaitingSize.delete(key);
-
-		const density = resourceDensity(
-			java,
-			javaReference(java.invoke(textView, 'getResources', [])),
-		);
-		const textWidth =
-			(javaNumber(java.invoke(textView, 'getWidth', [])) ?? 0) -
-			(javaNumber(java.invoke(textView, 'getTotalPaddingLeft', [])) ?? 0) -
-			(javaNumber(java.invoke(textView, 'getTotalPaddingRight', [])) ?? 0);
-		const width = textWidth / density;
-
-		if (width < Surface.minWidth) {
-			awaitingSize.set(key, { messageView, messageId });
-
-			return;
-		}
-
-		const embed: Embed =
-			existing && !existing.disposed
-				? Object.assign(existing, {
-						textView,
-						record: built.record,
-						generator: built.generator,
-						width,
-					})
-				: {
-						id: `message-link-android-${nextId++}`,
-						messageView,
-						textView,
-						host: await createHost(java, textView),
-						mounting: null,
-						messageId,
-						target,
-						channelName,
-						density,
-						height: Surface.minHeight,
-						placeholder: 0,
-						renderedText: null,
-						original: null,
-						revision: 0,
-						disposed: false,
-						...built,
-						width,
-					};
-
-		embeds.set(key, embed);
-		byId.set(embed.id, embed);
-
-		if (embed === existing) publish(embed);
-
-		if (await reserve(embed)) settle(embed);
-	}
-
-	const bindMessage = messageBindMethod(java);
-	const token = hooks.hook(
-		MESSAGE_VIEW,
-		bindMessage.name,
-		bindMessage.parameters,
-		FIRST_ARGUMENT_AFTER_CALL,
-		({ self, args }) => {
-			const messageView = javaReference(self);
-			const message = javaReference(args[0]);
-			const messageId = message
-				? javaText(java.invoke(message, 'getId-3Eiw7ao', []))
-				: undefined;
-
-			if (!messageView || !messageId) return;
-
-			setTimeout(() => {
-				render(messageView, messageId).catch((error) => {
-					if (!isCancellation(error)) {
-						logger.error('Failed to embed a linked message on Android:', error);
-					}
-				});
-			}, 0);
-		},
-	);
-
-	const sizeToken = hooks.hook(
-		MESSAGE_VIEW,
-		'onSizeChanged',
-		SIZE_PARAMETERS,
-		RECEIVER_ONLY_AFTER_CALL,
-		({ self }) => {
-			const key = javaViewKey(self);
-			const pending = key ? awaitingSize.get(key) : undefined;
-
-			if (!key || !pending) return;
-
-			awaitingSize.delete(key);
-			render(pending.messageView, pending.messageId).catch((error) => {
-				if (!isCancellation(error)) {
-					logger.error('Failed to embed a linked message on Android:', error);
-				}
-			});
-		},
-	);
-
-	async function scanVisible() {
-		const decor = currentDecorView(java);
-
-		if (!decor || controller.signal.aborted) return;
-
-		for (const messageView of await findViewsOfClass(java, decor, MESSAGE_VIEW)) {
-			const messageId = javaText(java.getField(messageView, messageIdField(java)));
-
-			if (messageId) {
-				render(messageView, messageId).catch((error) => {
-					if (!isCancellation(error)) {
-						logger.error('Failed to embed a linked message on Android:', error);
-					}
-				});
-			}
-		}
-	}
-
-	scheduleStartupScans(scanVisible);
 
 	return {
-		drawn: () => embeds.size,
+		drawn: drawing.drawn,
 		dispose() {
 			controller.abort();
-			hooks.remove(token);
-			hooks.remove(sizeToken);
-			awaitingSize.clear();
-			linked.clear();
+			waiting.clear();
+			bySurface.clear();
 			listeners.clear();
 
-			return Promise.all(
-				[...embeds.values()].flatMap((embed) => [teardown(embed), restore(embed)]),
-			).then(() => undefined);
+			return drawing.dispose();
 		},
 	};
 }

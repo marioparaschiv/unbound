@@ -1,12 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import {
-	codeSlots,
-	placeholderOffsets,
-	placeholderTexts,
-	renderedText,
-	sourceBlock,
-} from '~/codeblocks/android/code-ranges';
+import { codeSlots, placeholderTexts, sourceBlock } from '~/codeblocks/android/code-ranges';
 
 describe('android code blocks', () => {
 	const text = 'fresh shiki fixture\nconst answer = 42;\nconsole.log(answer); \n​';
@@ -48,40 +42,26 @@ describe('android code blocks', () => {
 		).toEqual(['first', 'second']);
 	});
 
-	test('places each placeholder after the replacements before it', () => {
-		expect(
-			placeholderOffsets([
-				{ start: 2, end: 8 },
-				{ start: 11, end: 19 },
-			]),
-		).toEqual([2, 6]);
-	});
-
-	test('renders messages that differ only in their code to different text', () => {
+	test('tags messages that differ only in their code differently', () => {
 		const slots = [
 			{ start: 0, end: 5 },
 			{ start: 6, end: 11 },
 		];
-		const html = renderedText('aaaaa\nbbbbb', slots);
-		const zig = renderedText('ccccc\nddddd', slots);
+		const html = placeholderTexts('aaaaa\nbbbbb', slots);
+		const zig = placeholderTexts('ccccc\nddddd', slots);
 
-		expect(html).not.toBe(zig);
-		expect(html.startsWith('\ufffc\n\ufffc')).toBe(true);
-		expect(html.slice(3)).toMatch(/^(?:\u200b|\u200c|\u200d|\u2060)+$/);
-		expect(renderedText('aaaaa\nbbbbb', slots)).toBe(html);
+		expect(html).not.toEqual(zig);
+		expect(html[1]!.slice(1)).toMatch(/^(?:\u200b|\u200c|\u200d|\u2060)+$/);
+		expect(placeholderTexts('aaaaa\nbbbbb', slots)).toEqual(html);
 	});
 
-	test('tags only the last placeholder, so earlier offsets stay put', () => {
+	test('tags only the last placeholder, so earlier ones stay one character', () => {
 		const slots = [
 			{ start: 2, end: 8 },
 			{ start: 11, end: 19 },
 		];
-		const original = 'a\n123456\nb\n12345678';
-		const rendered = renderedText(original, slots);
-		const offsets = placeholderOffsets(slots);
 
-		expect(placeholderTexts(original, slots)[0]).toBe('\ufffc');
-		expect(offsets.map((offset) => rendered[offset])).toEqual(['\ufffc', '\ufffc']);
+		expect(placeholderTexts('a\n123456\nb\n12345678', slots)[0]).toBe('\ufffc');
 	});
 
 	test('matches a rendered block to its fence', () => {
