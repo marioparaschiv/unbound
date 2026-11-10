@@ -396,6 +396,14 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
         return plan;
     }
 
+    // The active bundle came from this exact manifest: nothing changed, so the signature and
+    // the bundle request can both be skipped.
+    if (manifestText && isActiveManifest(plan.url, *manifestText))
+    {
+        plan.unchanged = true;
+        return plan;
+    }
+
     std::optional<std::string> signature =
         manifest ? fetch(manifestURL + kBundleSignatureSuffix) : std::nullopt;
     TrustedSigner signer =
@@ -459,6 +467,24 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
     plan.manifestSignature = *signature;
     plan.expectedSha512    = hash->second;
     return plan;
+}
+
+bool BundleUpdater::isActiveManifest(const std::string &url, const std::string &manifestText) const
+{
+    std::string extension = urlPathExtension(url);
+    if (!isSupportedExtension(extension) || settings_.getBoolean("loader.update.force", false))
+    {
+        return false;
+    }
+    std::string target = bundlePath(extension);
+    if (!fileExists(target) || fileExists(target + kCandidateSuffix))
+    {
+        return false;
+    }
+    nlohmann::json record = parseBundleRecord(readTextFile(target + kBundleTrustSuffix));
+    return bundleRecordField(record, "kind") == "manifest" &&
+           bundleRecordField(record, "file") == urlFileName(url) &&
+           bundleRecordField(record, "manifest") == manifestText;
 }
 
 std::optional<std::string> BundleUpdater::verifiedRecord(const DownloadPlan &plan,
@@ -560,6 +586,11 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
     std::string  storedEtag = settings_.getString("loader.update.etag", "");
     DownloadPlan plan       = planDownload(updateURL, bytecodeVersion);
     std::string  url        = plan.url;
+    if (plan.unchanged)
+    {
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER, "No update found; the manifest is unchanged.");
+        return bundlePath(urlPathExtension(url));
+    }
 
     std::string urlExtension     = urlPathExtension(url);
     std::string currentPath      = preferredPath.empty() ? resolveBundlePath() : preferredPath;

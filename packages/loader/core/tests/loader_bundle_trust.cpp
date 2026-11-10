@@ -44,7 +44,15 @@ static void acceptsASignedManifestAndBundle()
     assert(baseline && baseline->source == kBase && baseline->channel == "beta");
     assert(baseline->buildTime == kCurrent && baseline->revision == "abc1234");
 
+    // An unchanged manifest skips the signature and the bundle request.
+    int downloads = server.downloads;
     assert(!server.download(updater, std::nullopt));
+    assert(server.downloads == downloads);
+
+    // A new manifest for the same bytes asks for the bundle conditionally.
+    server.publish(kBase, "2026-10-03T00:00:00.000Z", {{kBundle, "current"}, {"unbound.js", "js"}});
+    assert(!server.download(updater, std::nullopt));
+    assert(server.downloads == downloads + 1);
     assert(server.lastHeaders.count("If-None-Match") == 1);
 }
 
@@ -273,14 +281,11 @@ static void replacesAPreSigningActiveBundle()
     assert(server.activeContents() == "verified");
     assert(loader::fileExists(server.active() + loader::kBundleTrustSuffix));
 
-    try
-    {
-        updater.downloadBundle(updater.resolveBundlePath(), std::nullopt, 98);
-    }
-    catch (const std::runtime_error &)
-    {
-    }
-    assert(server.lastHeaders.count("If-None-Match") == 1);
+    // The verified active bundle came from this manifest, so nothing is requested.
+    int downloads = server.downloads;
+    assert(updater.downloadBundle(updater.resolveBundlePath(), std::nullopt, 98) ==
+           server.active());
+    assert(server.downloads == downloads);
 
     server.files.clear();
     assert(!server.download(updater, std::nullopt));

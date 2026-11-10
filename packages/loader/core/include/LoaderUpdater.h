@@ -96,6 +96,7 @@ private:
         std::string manifestText;
         std::string manifestSignature;
         std::string expectedSha512;
+        bool        unchanged = false;
     };
 
     std::string                bundlePath(const std::string &extension) const;
@@ -110,6 +111,7 @@ private:
     std::optional<std::string> verifiedRecord(const DownloadPlan &plan,
                                               const std::string  &candidatePath) const;
     std::optional<std::string> candidateProblem(const std::string &candidatePath) const;
+    bool isActiveManifest(const std::string &url, const std::string &manifestText) const;
     std::optional<std::string> pauseProblem(const std::string                &path,
                                             const std::optional<std::string> &updateURL,
                                             uint32_t bytecodeVersion) const;
