@@ -7,7 +7,7 @@ import {
 	ADDON_NAME_MAX_LENGTH,
 	validateAddonCapabilities,
 	validateAddonNaming,
-} from '../src/addon-conventions';
+} from '~/addon-conventions';
 
 const manifest = {
 	id: 'unbound.example-plugin',

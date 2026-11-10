@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { Type, parse, safeParse } from '../src/schema';
+import { Type, parse, safeParse } from '~/schema';
 
 describe('parse', () => {
 	test('drops undeclared keys at every depth and leaves the input untouched', () => {

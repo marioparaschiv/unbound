@@ -6,8 +6,8 @@ import {
 	formatChangelogText,
 	parseChangelog,
 	selectRelease,
-} from '../src/changelog';
-import { parse, safeParse } from '../src/schema';
+} from '~/changelog';
+import { parse, safeParse } from '~/schema';
 
 const VALID = `# Changelog
 

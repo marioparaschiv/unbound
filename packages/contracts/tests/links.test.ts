@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createUnboundLink, parseUnboundLink } from '../src/links';
+import { createUnboundLink, parseUnboundLink } from '~/links';
 
 describe('createUnboundLink', () => {
 	test('builds an install link the parser reads back', () => {

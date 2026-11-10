@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { listAddonFiles } from '../src/addon-files';
+import { listAddonFiles } from '~/addon-files';
 
 const SHA = (digit: string) => digit.repeat(64);
 
