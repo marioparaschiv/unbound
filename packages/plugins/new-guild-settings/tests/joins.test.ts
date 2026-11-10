@@ -3,7 +3,14 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 
 import { PLUGIN_ID } from '~/constants';
 
-import { ME, applied, dispatch, guildActions, startGuildSettings, toggled } from './discord';
+import {
+	ME,
+	applied,
+	dispatch,
+	guildActions,
+	startGuildSettings,
+	toggled,
+} from './helpers/discord';
 
 describe('joining a server', () => {
 	beforeEach(() => startGuildSettings());

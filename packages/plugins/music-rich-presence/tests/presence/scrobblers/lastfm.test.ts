@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import { LASTFM_API_KEY } from '~/constants';
-import { SETTINGS } from './defaults';
+import { SETTINGS } from '../../helpers/defaults';
 import { LastFmScrobbler, parseRecentTracks, recentTracksUrl } from '~/presence/scrobblers/lastfm';
 import type { Fetcher } from '~/types';
 
