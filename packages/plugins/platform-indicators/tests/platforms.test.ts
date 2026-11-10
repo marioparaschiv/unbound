@@ -116,7 +116,7 @@ describe('describePlatforms', () => {
 					{ platform: 'desktop', status: 'online' },
 					{ platform: 'mobile', status: 'idle' },
 				],
-				'de',
+				'ar',
 			),
 		).toBe('Online on Desktop and Mobile');
 	});
