@@ -1,48 +1,50 @@
 ---
 title: 'Privacy'
-description: 'What Unbound stops Discord from sending, and what Unbound itself sends and to whom.'
+description: 'What Unbound blocks and what it sends.'
 icon: 'shield'
 ---
 
-Unbound blocks part of Discord's tracking. It doesn't hide you from Discord: Discord still needs your account, your messages and your connection to work, and it still sees all of that.
+Unbound blocks part of Discord's tracking. Discord still sees your account, messages and connection.
 
-## What Unbound blocks
+## What Unbound Blocks
 
-On both platforms, Unbound stops Discord's app from sending:
+| Tracking | Blocked on |
+| --- | --- |
+| Usage analytics: screens you open, buttons you tap | iOS and Android |
+| Connection analytics: app connects and disconnects | iOS and Android |
+| Discord's analytics fingerprint for your device | iOS and Android |
+| **Sentry** crash and error reports | iOS and Android |
+| **Firebase Installations** per-install id | iOS |
+| **AppsFlyer** install attribution | Android |
 
-- **Usage analytics**, the reports about what you do in the app, such as the screens you open and the buttons you tap.
-- **Connection analytics**, the reports sent when the app connects to or disconnects from Discord.
-- **Its analytics fingerprint**, an id Discord's app records for your device.
+Blocking is always on, Recovery Mode included, with no setting. If a Discord update moves one of these, it goes unblocked and Unbound only logs it.
 
-It also blocks third-party services built into Discord's app:
+## What Discord Sees
 
-| Service | What it does | Blocked on |
-| --- | --- | --- |
-| **Sentry** | Sends crash and error reports | iOS and Android |
-| **Firebase Installations** | Registers an id for each install | iOS |
-| **AppsFlyer** | Tracks where installs come from | Android |
+Your account, messages, the servers and channels you open, your IP address, and the device and app details sent with normal requests.
 
-There's no setting for this. It's always on, in Recovery Mode too. If a Discord update moves one of these, Unbound can't find it and that part isn't blocked. Unbound only notes this in its logs.
+## What Unbound Sends
 
-## What Discord still sees
-
-Everything it needs to run the app: your account, your messages, the servers and channels you open, your IP address, and the device and app details Discord's app sends with its normal requests.
-
-## What Unbound itself sends
-
-Unbound has no analytics of its own. Downloads never carry your Discord account.
+Unbound has no analytics. Downloads never carry your Discord account. Every server sees your IP address.
 
 | When | Where | What |
 | --- | --- | --- |
-| Every launch | `builds.unbound.rip` | A check for a newer version of Unbound |
-| Every launch | GitHub | Unbound's translations, for English and your Discord language, such as `de` |
-| When you open the Marketplace or update addons | `unbound.rip` and `cdn.unbound.rip` | The list of published addons, then the addons you install |
-| When you install from a link | The link's address | The addon's files, from wherever its author hosts them |
-| Only if you sign in | `unbound.rip` | Your sign-in, then your synced install links and settings. See [Account and Sync](/docs/user/sync) |
-| Only if you turn on **Send Crash Reports** | `unbound.rip` | See below |
+| Every launch | `builds.unbound.rip` | Update check |
+| Every launch | GitHub | Translations for English and your Discord language, such as `de` |
+| Marketplace or addon updates | `unbound.rip`, `cdn.unbound.rip` | Addon list, then addons you install |
+| Install from a link | The link's host | The addon's files |
+| Signed in | `unbound.rip` | Sign-in, synced install links and settings. See [Account and Sync](/docs/user/sync) |
+| **Send Crash Reports** on | `unbound.rip` | See [Crash Reports](#crash-reports) |
+| **Switch Bundle Version** (iOS) | GitHub | Build list |
+| **Load Custom Bundle** (iOS) | The address you enter | The bundle |
 
-Like any download, each server can see your IP address.
+## Crash Reports
 
-**Send Crash Reports** is off until you turn it on. When a plugin then crashes, freezes or fails to start, Unbound sends the plugin's id and version, whether it's signed, how long a freeze lasted, the error for a failed start, the Unbound, loader and Discord versions, and your platform, OS version and device model. It never sends your Discord account, messages or plugin settings.
+Off until you turn them on. When a plugin crashes, freezes or fails to start, a report holds:
 
-On iOS, **Switch Bundle Version** also contacts GitHub to list the builds, and **Load Custom Bundle** downloads from the address you enter.
+- The plugin's id, version and whether it's signed.
+- The freeze length, or the error for a failed start.
+- Unbound, loader and Discord versions.
+- Your platform, OS version and device model.
+
+It never holds your Discord account, messages or plugin settings.

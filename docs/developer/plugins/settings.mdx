@@ -1,44 +1,12 @@
 ---
 title: 'Settings and Storage'
-description: 'Declare typed settings once, and get a localised settings panel for free.'
+description: 'Typed settings and a generated settings panel.'
 icon: 'toggle'
 ---
 
-Declare your plugin's settings once, in `settings.ts` beside `src/`. The build reads that file, types your settings, and draws a settings panel from it. TypeBox, the schema library under the builders, runs only while you build. It never ships in your plugin.
+Declare your settings once in `settings.ts`, beside `src/`. The build types them and draws the settings panel for you.
 
-## Reference
-
-Three modules hold the settings API. Only `settings.ts` may import the first, and plugin code reads the second.
-
-| Export of `@unbound-app/settings/schema` | Declares |
-| --- | --- |
-| `defineSettings(properties, options?)` | The plugin's settings. The default export of `settings.ts`. `options.title` names the section that holds the top-level settings |
-| `setting.boolean(options)` | A `boolean`: a switch or a checkbox |
-| `setting.number(options)`, `setting.integer(options)` | A number: an input, a slider, a stepper or a duration in milliseconds |
-| `setting.string(options)` | A string: an input, a multiline input, a secret, a URL, a color, an image, a font, an emoji or a Discord entity. `setting.string()` with no options is an item of an array |
-| `setting.choice({ options, default, ... })` | One of the keys of `options`. `setting.choice({ options })` with no `default` is an item of an array |
-| `setting.array({ of, default?, ... })` | A list of `of`: strings as an editable list or an entity picker, choices as checkboxes |
-| `setting.section(options, properties)` | A titled group of settings, one level deep |
-| `setting.button({ action, ... })` | A row that runs a function of `src/actions.ts`. It stores nothing |
-| `setting.notice({ title, subtitle?, tone?, visibleWhen? })` | A message row. It stores nothing |
-
-| Export of `@unbound-app/settings` | What it is |
-| --- | --- |
-| `settings` | Every setting, typed. Reads apply defaults. Assign a property, a section's too, to save it |
-| `useSetting(key)` | Reads a setting or a section by its dot-separated key, and re-renders when it changes |
-| `resetSettings()` | Puts every setting back to its default |
-| `SettingsPanel` | The generated panel, for a custom panel to render |
-| `Settings`, `SettingKey`, `SettingsEntry<K>`, `ActionName` | The types of your settings. See [Types](#types) |
-
-| Export of `storage` | What it does |
-| --- | --- |
-| `storage.getBucket(name?)` | Returns a [Bucket](#buckets): your plugin's, or the one called `name` |
-| `storage.onChange(predicate, callback)` | Calls `callback` for each change that `predicate` accepts. Returns a function that removes it |
-| `storage.snapshot(options?)` | Reads every Bucket, with `secret` settings masked unless `includeSecrets` is set |
-
-## A first settings file
-
-Declare the settings once. Each `title` and `subtitle` is a key of `i18n/en-US.json`.
+## Quick Start
 
 ```ts settings.ts
 import { defineSettings, setting } from '@unbound-app/settings/schema';
@@ -62,11 +30,7 @@ export default defineSettings({
 });
 ```
 
-`ubd create` writes this file, with one example setting, and the `i18n/en-US.json` it needs.
-
-## Labels are message keys
-
-Every `title`, `subtitle`, `placeholder`, `confirm` and option label is a key of your plugin's `i18n/en-US.json`, not text. The panel shows each one in the user's language, and falls back to en-US. A plugin with a `settings.ts` must have an `i18n/en-US.json`.
+Every `title`, `subtitle`, `placeholder`, `confirm` and option label is a [message key](/docs/developer/plugins/i18n), not text. A plugin with a `settings.ts` must have an `i18n/en-US.json`. A key missing from en-US is a type error.
 
 ```json i18n/en-US.json
 {
@@ -81,11 +45,7 @@ Every `title`, `subtitle`, `placeholder`, `confirm` and option label is a key of
 }
 ```
 
-The labels are typed: your editor completes the keys, and a key that is not in en-US is a type error. Translations in other languages can leave keys out.
-
-## Reading and writing
-
-Plugin code reads settings from `@unbound-app/settings`. Defaults apply on read, and a write is checked against the schema and saved to your plugin's Bucket at once.
+Read and write settings from `@unbound-app/settings`. Reads apply defaults. A write is checked against the schema and saved at once.
 
 ```ts src/greeting/index.ts
 import { settings, useSetting } from '@unbound-app/settings';
@@ -99,53 +59,68 @@ function Badge() {
 }
 ```
 
-A stored value the schema rejects, such as one an older version saved, is logged once and reset to its default.
+`ubd create` writes both files with one example setting. A stored value the schema rejects, such as one an older version saved, is logged once and reset to its default.
+
+## Exports
+
+Only `settings.ts` may import `@unbound-app/settings/schema`. Plugin code reads `@unbound-app/settings`. Full signatures: [`settings`](/docs/sdk/latest/settings) in the SDK reference.
+
+| `@unbound-app/settings/schema` | Declares |
+| --- | --- |
+| `defineSettings(properties, options?)` | The default export of `settings.ts`. `options.title` names the top-level section |
+| `setting.boolean`, `number`, `integer`, `string`, `choice`, `array` | A stored setting. See [Builders](#builders) |
+| `setting.section(options, properties)` | A titled group, one level deep |
+| `setting.button({ action, ... })` | A row that runs an action. Stores nothing |
+| `setting.notice({ title, subtitle?, tone?, visibleWhen? })` | A message row. Stores nothing |
+
+`setting.string()` and `setting.choice({ options })` with no `default` are array items.
+
+| `@unbound-app/settings` | What it is |
+| --- | --- |
+| `settings` | Every setting, typed. Assign a property, or a section's, to save it |
+| `useSetting(key)` | Reads a setting or section by dot-separated key. Re-renders when it changes |
+| `resetSettings()` | Resets every setting to its default |
+| `SettingsPanel` | The generated panel |
+| `Settings`, `SettingKey`, `SettingsEntry<K>`, `ActionName` | Types. See [Types](#types) |
 
 ## Builders
 
-Each builder is a primitive: what is stored. `displayAs` picks how it is drawn, and its first value is the default. Options marked for a display are accepted only with that display.
+`displayAs` picks how a setting is drawn. Its first listed value is the default. Display options are accepted only with that display.
 
-| Builder | Stored | `displayAs` | Display options |
+| Builder | Stored | `displayAs` | Options |
 | --- | --- | --- | --- |
 | `boolean` | `boolean` | `switch`, `checkbox` | |
-| `number`, `integer` | `number` | `input`, `slider` (the default with `min` and `max`), `stepper`, `duration` (milliseconds) | `min`, `max`; `slider`/`stepper`: `step` (a `number` stepper needs it); `duration`: `units` |
+| `number`, `integer` | `number` | `input`, `slider` (default with `min` and `max`), `stepper`, `duration` (ms) | `min`, `max`; `slider`/`stepper`: `step` (required for a `number` stepper); `duration`: `units` |
 | `string` | `string` | `input`, `multiline`, `secret`, `url`, `color`, `user`, `channel`, `guild`, `role`, `emoji`, `image`, `font` | `input`/`multiline`: `minLength`, `maxLength`, `placeholder`; `color`: `alpha`, `presets`, `palette` |
-| `choice` | one of `options`' keys | `radio` (the default up to 5 options), `picker` (the default above 5), `segmented` (up to 4) | `options`: a key, or `{ title, subtitle }`; only a radio group shows subtitles |
-| `array` | a list of `of` | `of: setting.string()`: `list`, or `user`/`channel`/`guild`/`role`; `of: setting.choice({ options })`: `checkboxes` (Discord's checkbox group, the default) | `minItems`, `maxItems` |
-| `section` | an object of settings | `group`, `collapsible` | |
-| `button` | nothing | `button`, `danger` | `action`: the name of a function `src/actions.ts` exports; `confirm`: a question to ask first |
-| `notice` | nothing | `notice` | `tone`: `info` (the default), `warning` or `danger`. Takes only `title`, `subtitle`, `tone` and `visibleWhen` |
+| `choice` | a key of `options` | `radio` (default up to 5), `picker` (default above 5), `segmented` (up to 4) | `options`: a key, or `{ title, subtitle }`. Only `radio` shows subtitles |
+| `array` | a list of `of` | `of: setting.string()`: `list`, `user`, `channel`, `guild`, `role`; `of: setting.choice({ options })`: `checkboxes` | `minItems`, `maxItems` |
+| `section` | an object | `group`, `collapsible` | |
+| `button` | nothing | `button`, `danger` | `action`, `confirm` |
+| `notice` | nothing | `notice` | `tone`: `info` (default), `warning`, `danger` |
 
-Each display is drawn with Discord's own components, as its settings screens draw them:
+The stored type follows the display:
 
-| Display | Row |
+| Display | Stored as |
 | --- | --- |
-| `input`, `multiline`, `secret`, `url`, number `input` | A row with the value trailing (a secret masked). Pressing it opens Discord's titled action sheet with the input, its description and any error; Save writes it. `multiline` uses Discord's `TextArea`, which counts up to `maxLength` |
-| `slider` | Discord's form slider under the label, with its value label and a mark at the default. The section's reset row restores it |
-| `segmented` | Discord's `SegmentedControl`. A `duration`'s unit picker is one too |
-| `picker` | A row with the picked option trailing, opening Discord's titled action sheet |
-| `color` | A swatch row opening Discord's own colour picker sheet |
-| `checkboxes` | Discord's checkbox group, with each option's subtitle |
-| `button`, `danger` | Discord's full-width Row Button; `danger` leads with a red trash icon |
-| `notice` | Discord's message box, in the style of its `tone`, with the title and subtitle as its text |
-| `stepper` | Unbound's own stepper, since Discord has none |
+| `color` | `` `#${string}` `` |
+| `url` | An http or https URL, or empty |
+| `user`, `channel`, `guild`, `role` | A Discord id, or empty |
+| `emoji` | Its `name`, or `name:id` for a custom emoji |
 
-The stored type follows the display: a `color` is a `` `#${string}` ``, a `url` is an http or https URL (or empty), an entity display holds a Discord id (or empty), and an `emoji` holds its `name`, or `name:id` for a custom emoji. Sections nest one level deep.
+Each display uses Discord's own components. `stepper` is Unbound's own, since Discord has none.
 
-## Common options
-
-Every builder takes these.
+## Common Options
 
 | Option | What it does |
 | --- | --- |
-| `title` | The row's label. Required, unless `hidden` |
+| `title` | The row's label. Required unless `hidden` |
 | `subtitle` | The row's sub-label |
-| `hidden: true` | Stored and typed, but not drawn |
+| `hidden: true` | Stored and typed, not drawn |
 | `visibleWhen` | Draws the row only while it holds |
 | `disabledWhen` | Draws the row disabled while it holds |
 | `requiresRestart: true` | Changing it shows a "Restart Discord to apply" row with a restart button |
 
-`visibleWhen` and `disabledWhen` take a boolean setting's key, or a predicate of every setting:
+`visibleWhen` and `disabledWhen` take a boolean setting's key, or a predicate:
 
 ```ts settings.ts
 import { defineSettings, setting } from '@unbound-app/settings/schema';
@@ -169,11 +144,11 @@ export default defineSettings({
 });
 ```
 
-The build lifts each predicate out of `settings.ts` into your plugin, so it must be pure: it reads only its parameter, its own variables and built-ins such as `Math` and `Number`, and it assigns, constructs and imports nothing. The panel runs it again on every settings change. A predicate that throws is logged once, and its row stays shown and enabled.
+The build copies each predicate into your plugin, so it must be pure. It reads only its parameter, its own variables and built-ins such as `Math`. It assigns, constructs and imports nothing. The panel reruns it on every settings change. A predicate that throws is logged once, and its row stays shown and enabled.
 
 ## Buttons
 
-A `setting.button` runs a function from `src/actions.ts`. Export each action by name, as a function or a const arrow, taking nothing and returning `void` or a promise. `action` is typed from those exports, so a typo is a type error, and the build checks it too.
+A `setting.button` runs a function exported by name from `src/actions.ts`, as a function or a const arrow. Each action takes nothing and returns `void` or a promise. `action` is typed from those exports, and the build checks it too. The action runs in your plugin, with its own `unbound`.
 
 ```ts src/actions.ts
 import { settings } from '@unbound-app/settings';
@@ -196,11 +171,11 @@ export default defineSettings({
 });
 ```
 
-The action runs in your plugin, with its own `unbound`. One that throws is logged as `Failed to run settings action <name> for <plugin id>:` and shown in a toast.
+`confirm` asks a question first. An action that throws is logged as `Failed to run settings action <name> for <plugin id>:` and shown in a toast.
 
 ## Notices
 
-A `setting.notice` shows a message in the panel and stores nothing, so it is not in `settings`. Use it to warn about a setting, and show it only while the warning applies:
+A `setting.notice` shows a message and stores nothing, so it is not in `settings`.
 
 ```ts settings.ts
 import { defineSettings, setting } from '@unbound-app/settings/schema';
@@ -216,17 +191,15 @@ export default defineSettings({
 });
 ```
 
-`tone` is `info`, `warning` or `danger`, and picks the icon and colours of Discord's message box. A notice has no `hidden`, `disabledWhen` or `requiresRestart`. A notice stands alone in its section, not inside a shared group of rows.
+A notice takes no `hidden`, `disabledWhen` or `requiresRestart`. It stands alone in its section.
 
 ## Types
 
-`@unbound-app/settings` also exports the types of your settings, for your own code.
-
 | Type | What it is |
 | --- | --- |
-| `Settings` | The whole settings object, what `settings` is |
-| `SettingKey` | Every setting's and section's dot-separated key, hidden ones included; buttons and notices are not settings |
-| `SettingsEntry<K>` | The value at `K`, such as a `` `#${string}` `` for a color or the union of a choice's keys |
+| `Settings` | The type of `settings` |
+| `SettingKey` | Every setting's and section's dot-separated key, hidden ones included. Buttons and notices have none |
+| `SettingsEntry<K>` | The value at `K`, such as the union of a choice's keys |
 | `ActionName` | The functions `src/actions.ts` exports |
 
 ```ts
@@ -235,11 +208,11 @@ import type { SettingsEntry } from '@unbound-app/settings';
 function paint(color: SettingsEntry<'appearance.accent'>) {}
 ```
 
-## The generated panel
+## Custom Panel
 
-A plugin with a `settings.ts` gets a settings panel with no code: a row per setting, a section per `setting.section`, and a "Reset all to defaults" row. Every row is public in `ui` (`SwitchRow`, `CheckboxRow`, `SliderRow`, `StepperRow`, `NumberRow`, `DurationRow`, `InputRow`, `MultilineRow`, `SecretRow`, `UrlRow`, `ColorRow`, `PaletteRow`, `EntityRow`, `RadioRow`, `PickerRow`, `SegmentedRow`, `ListRow`, `ChecklistRow`, `ButtonRow`), so a custom panel can use them too.
+The generated panel has a row per setting, a section per `setting.section`, and a "Reset all to defaults" row. Its rows are public in `ui`: `SwitchRow`, `CheckboxRow`, `SliderRow`, `StepperRow`, `NumberRow`, `DurationRow`, `InputRow`, `MultilineRow`, `SecretRow`, `UrlRow`, `ColorRow`, `PaletteRow`, `EntityRow`, `RadioRow`, `PickerRow`, `SegmentedRow`, `ListRow`, `ChecklistRow`, `ButtonRow`.
 
-Write a custom panel when the generated one can't say it, such as a live preview. Export a `SettingsPanel` component from your entry, and it replaces the generated one. It can still read `settings` and `useSetting`, and render the generated panel inside it.
+Export a `SettingsPanel` from your entry to replace it, such as for a live preview. It can still render the generated panel:
 
 ```tsx src/index.tsx
 import { SettingsPanel as GeneratedPanel } from '@unbound-app/settings';
@@ -249,9 +222,29 @@ export function SettingsPanel() {
 }
 ```
 
-## Build errors
+## Buckets
 
-The build checks `settings.ts` and reports every problem in one run, with where it is and how to fix it. `ubd build` fails, and `ubd dev` keeps running your last good build.
+Your plugin's settings live in its bucket, named after its manifest `id`. Store other data there too.
+
+| `storage` | What it does |
+| --- | --- |
+| `getBucket(name?)` | Your plugin's bucket, or the one called `name` |
+| `onChange(predicate, callback)` | Calls `callback` for each change `predicate` accepts. Returns a remover. Removed when your plugin stops |
+| `snapshot(options?)` | Reads every bucket. `secret` settings are masked unless `includeSecrets` is set |
+
+Full signatures: [`storage`](/docs/sdk/latest/storage) in the SDK reference.
+
+| Bucket method | What it does |
+| --- | --- |
+| `get(key, default)` | Reads a value, or the default when unset |
+| `set(key, value)` | Saves a value |
+| `toggle(key, default)` | Flips a boolean. An unset key starts from the default |
+| `remove(key)` | Deletes a value |
+| `clear()` | Deletes every value |
+
+## Build Errors
+
+The build reports every problem in `settings.ts` in one run. `ubd build` fails. `ubd dev` keeps your last good build.
 
 ```text
 settings.ts:2:33  a  title "Greet" is not a key of i18n/en-US.json.  Fix: add "Greet" (or "A") to i18n/en-US.json.
@@ -259,22 +252,8 @@ settings.ts:5:91  b.visibleWhen  reads outer variable "limit".  Fix: read only t
 settings.ts:8:2  layout  shows 5 options as segmented, which fits at most 4.  Fix: use displayAs: 'radio' or 'picker'.
 ```
 
-Only `settings.ts` may import `@unbound-app/settings/schema` or `typebox`. A value import of either, or of `settings.ts` itself, from `src/` fails the build with `Fix: read settings from '@unbound-app/settings'`. `import type` is allowed.
+A value import of `@unbound-app/settings/schema`, `typebox` or `settings.ts` from `src/` fails with `Fix: read settings from '@unbound-app/settings'`. `import type` is allowed. TypeBox runs only at build time and never ships.
 
 ## Typings
 
-`ubd build` and `ubd dev` write `src/unbound-settings.d.ts` (the builders and your settings) and `src/unbound-i18n.d.ts` (your message keys). `ubd dev` rewrites them when `settings.ts` or `i18n/en-US.json` changes. Commit both, so your editor knows your settings before the first build. Hovering a setting shows its en-US title and subtitle.
-
-## Buckets
-
-Settings live in **Buckets**. A Bucket is a named group of keys and values, saved under its own name, and your plugin's is named after its manifest `id`. For data that isn't a setting, `storage.getBucket()` returns your Bucket.
-
-| Method | What it does |
-| --- | --- |
-| `get(key, default)` | Reads a value, or the default when the key is unset |
-| `set(key, value)` | Saves a value |
-| `toggle(key, default)` | Flips a boolean. An unset key starts from the default |
-| `remove(key)` | Deletes a value |
-| `clear()` | Deletes every value in the Bucket |
-
-A feature that isn't a component can listen for changes with `storage.onChange`. Unbound removes the listener when your plugin stops. `storage.snapshot()` reads every Bucket, with `secret` settings masked.
+`ubd build` and `ubd dev` write `src/unbound-settings.d.ts` (the builders and your settings) and `src/unbound-i18n.d.ts` (your message keys). Hovering a setting shows its en-US title and subtitle. `ubd dev` rewrites them when `settings.ts` or `i18n/en-US.json` changes. Commit both, so your editor knows your settings before the first build.

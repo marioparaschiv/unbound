@@ -1,14 +1,12 @@
 ---
 title: 'Backgrounds'
-description: 'Recommend a chat background image, with blur and opacity.'
+description: 'A chat background image with blur and opacity.'
 icon: 'photo'
 ---
 
-## Adding a background
+Add an optional `background` to `bundle.json` to recommend an image behind the chat. Users see it by default and can replace or turn it off in **Design → Chat**.
 
-To recommend an image behind the chat, add an optional `background` object to your theme definition. Set the image `url`, then adjust how it looks behind the messages with `blur` and `opacity`.
-
-The background is a recommendation. Users see it by default, and they can swap in their own image or turn it off in **Design → Chat**.
+## Example
 
 ```json bundle.json
 {
@@ -24,17 +22,17 @@ The background is a recommendation. Users see it by default, and they can swap i
 ## Fields
 
 <ResponseField name='url' type='string' required>
-	The image to display behind the chat.
+	The image shown behind the chat.
 </ResponseField>
 <ResponseField name='blur' type='number'>
-	The blur radius in points, `0` when left out. Higher values soften the image so messages stay readable.
+	Blur radius in points. Default `0`.
 </ResponseField>
 <ResponseField name='opacity' type='number'>
-	How much of the image shows through the chat color, from `0` (hidden) to `1` (the image alone). Left out, it is `0.5`.
+	How much image shows through the chat color, from `0` (hidden) to `1` (image only). Default `0.5`.
 </ResponseField>
 
-The chat color is your theme's `CHANNEL_BACKGROUND_DEFAULT`. While a background shows, Unbound draws it at `1 - opacity` over the image, so you don't need to make it transparent yourself.
+The chat color is your theme's `CHANNEL_BACKGROUND_DEFAULT`. Unbound draws it at `1 - opacity` over the image, so you don't make it transparent yourself.
 
 <Warning>
-	A background can make text harder to read. Choose semantic colors that stay readable over the image, and use `blur` and a lower `opacity` to keep messages legible.
+	Keep text readable: pick semantic colors that contrast with the image, and raise `blur` or lower `opacity`.
 </Warning>

@@ -1,66 +1,53 @@
 ---
 title: 'Updating Unbound'
-description: 'What updates on its own, how to update the app, and how to go back to an older version.'
+description: 'Update the app, or go back a version.'
 icon: 'arrow-rotate-clockwise'
 ---
 
-Unbound has two parts, and they update differently.
+Unbound updates itself. The app you installed, you update by hand.
 
-| Part | What it is | How it updates |
-| --- | --- | --- |
-| **Unbound** | The features you see in Discord's settings | On its own, every time you open Discord |
-| **The app** | The Discord app or tweak you installed | By you, the same way you installed it |
+| Part | Updates |
+| --- | --- |
+| **Unbound** | On its own, each time Discord starts |
+| **The app** | By you, the way you installed it |
+| **Addons** | On its own. See [Managing Addons](/docs/user/managing-addons#updates) |
 
-Your addons update on their own too. See [Updates](/docs/user/managing-addons#updates).
+## Unbound
 
-## Unbound updates itself
+Each launch, Unbound downloads a newer version if there is one. If the check fails, it keeps the version it has. On Android a dialog may say so; tap **Okay**.
 
-Each time Discord starts, Unbound checks for a newer version and downloads it only if there is one. You don't need to do anything. If the check fails, for example without internet, Unbound keeps the version it already has. On Android, a dialog may say so. Tap **Okay**.
+To update now, open the [toolbox](/docs/user/troubleshooting#toolbox) and tap **Refetch Bundle**. Discord restarts on the newest version.
 
-To check right away, open the [toolbox](/docs/user/troubleshooting#open-the-toolbox) and tap **Refetch Bundle**. Discord restarts on the newest version.
+## The App
 
-## Update the app
+When a new app version is out, **Updates** on the **Unbound** page lists **Unbound loader** with a **Download** button.
 
-When a new version of the app is out, the **Updates** page on the **Unbound** page lists **Unbound loader** with a **Download** button. Update it the same way you installed it:
+| Installed with | Update by |
+| --- | --- |
+| iOS sideloading source | Refresh the source in your tool, then install the update |
+| iOS app file | Install the latest [Unbound.ipa](https://github.com/marioparaschiv/unbound/releases/download/loader-latest/Unbound.ipa) with your tool |
+| iOS jailbreak | Refresh sources, update the **Unbound** package, then reopen Discord |
+| Android, Obtainium | Tap **Update**. For the Xposed module, then force stop and reopen Discord |
+| Android, by hand | Install the newer file from [GitHub releases](https://github.com/marioparaschiv/unbound/releases) over the old one. Use your split-APK installer for the patched Discord |
 
-<AccordionGroup>
-	<Accordion title='iOS, from a sideloading source' icon='apple'>
-		Refresh Unbound's source in SideStore, Feather, AltStore or your other tool, and install the update from there.
-	</Accordion>
-	<Accordion title='iOS, from the app file' icon='apple'>
-		Download the latest [unbound.ipa](https://github.com/marioparaschiv/unbound/releases/download/loader-latest/unbound.ipa) and install it with your sideloading tool, as you did the first time.
-	</Accordion>
-	<Accordion title='iOS, jailbroken' icon='apple'>
-		Refresh your package manager's sources, install the update to the **Unbound** package, then close and reopen Discord.
+On a jailbreak, **This version of Discord is incompatible with this version of Unbound.** means Discord is too old or too new. Update Discord from the App Store.
 
-		If Discord shows **This version of Discord is incompatible with this version of the Tweak.**, your Discord app is too old for the tweak. Update Discord from the App Store.
-	</Accordion>
-	<Accordion title='Android, with Obtainium' icon='mobile'>
-		Obtainium shows an update when a new build for your Discord channel is out. Tap **Update**.
+## Older Versions
 
-		This works the same for the patched Discord and for the Xposed module. After updating the module, force stop Discord and open it again.
-	</Accordion>
-	<Accordion title='Android, without Obtainium' icon='mobile'>
-		Download the newer file from the [GitHub releases](https://github.com/marioparaschiv/unbound/releases), and install it over the old one. Use your split-APK installer for the patched Discord.
-	</Accordion>
-</AccordionGroup>
-
-## Go back to an older version of Unbound
-
-This is only on iOS. Use it when a new version breaks something you rely on.
+iOS only.
 
 <Steps>
 	<Step title='Open the toolbox'>
 		Shake your device for half a second to two seconds, or hold three fingers on the screen.
 	</Step>
 	<Step title='Tap Switch Bundle Version'>
-		It's in the **Bundle** section, and needs internet.
+		In **Bundle**. Needs internet.
 	</Step>
 	<Step title='Pick a version'>
-		Pick a branch if it asks, then one of its last 10 builds, such as `a1b2c3d (Mar 4, 2026)`. Discord restarts on that build.
+		Pick a branch if asked, then one of its last 10 builds, such as `a1b2c3d (Mar 4, 2026)`. Discord restarts on it.
 	</Step>
 </Steps>
 
 <Warning>
-	The version you pick stays pinned, and Unbound stops updating itself. To go back to the latest version, open the toolbox, tap **Delete Bundle**, and confirm. Your addons and settings stay.
+	The picked version stays pinned, and Unbound stops updating itself. To unpin, tap **Delete Bundle** in the toolbox and confirm. Addons and settings stay.
 </Warning>
