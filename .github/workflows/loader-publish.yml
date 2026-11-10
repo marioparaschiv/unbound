@@ -1,14 +1,35 @@
 name: Loader Publish loader changes
+# release.yml calls this only when a merged loader release PR creates its release; a manual run retries a failed publish.
 on:
-    push:
-        branches: [main]
-        paths:
-            - 'packages/loader/version.json'
+    workflow_call:
+        secrets:
+            ANDROID_SIGNING_KEYSTORE_BASE64:
+                required: false
+            ANDROID_SIGNING_KEY_ALIAS:
+                required: false
+            ANDROID_SIGNING_KEY_PASSWORD:
+                required: false
+            ANDROID_SIGNING_STORE_PASSWORD:
+                required: false
+            UNBOUND_API_KEY:
+                required: false
+            S3_ACCESS_KEY_ID:
+                required: false
+            S3_SECRET_ACCESS_KEY:
+                required: false
+            ATTESTATION_PK:
+                required: false
+            DKRYPT_API_KEY:
+                required: false
+            GPG_KEY:
+                required: false
+            GRADLE_ENCRYPTION_KEY:
+                required: false
     workflow_dispatch:
 
 permissions: {}
 
-# A newer push replaces a queued run, so only the latest loader is published; a running publish always finishes.
+# A newer release replaces a queued run, so only the latest loader is published; a running publish always finishes.
 concurrency:
     group: loader-publish-${{ github.ref }}
     cancel-in-progress: false

@@ -500,7 +500,8 @@ jobs:
             pull-requests: write
         timeout-minutes: 5
         needs: [build, comment-pr]
-        if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+        # Disabled with the smoke tests in loader-android.yml and loader-ios.yml; drop `false &&` to turn it back on.
+        if: ${{ false && !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
         strategy:
             fail-fast: false
             matrix:

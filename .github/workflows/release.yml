@@ -29,12 +29,14 @@ jobs:
             client-version: ${{ steps.release.outputs['packages/client--version'] }}
             devtools-released: ${{ steps.release.outputs['apps/devtools--release_created'] }}
             devtools-version: ${{ steps.release.outputs['apps/devtools--version'] }}
+            loader-released: ${{ steps.loader-release.outputs['packages/loader--release_created'] }}
         steps:
             - name: Run release-please
               id: release
               uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7
 
             - name: Run loader release-please
+              id: loader-release
               uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7
               with:
                   config-file: release-please-loader-config.json
@@ -157,6 +159,30 @@ jobs:
                   S3_PUBLIC_BUCKET: ${{ vars.DOCS_S3_BUCKET }}
                   S3_ACCESS_KEY_ID: ${{ secrets.DOCS_S3_ACCESS_KEY_ID }}
                   S3_SECRET_ACCESS_KEY: ${{ secrets.DOCS_S3_SECRET_ACCESS_KEY }}
+
+    # Only a merged loader release PR publishes the loader and the in-app Android builds, so users get one update per release.
+    loader:
+        needs: release
+        if: needs.release.outputs.loader-released == 'true'
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+            actions: read
+        uses: ./.github/workflows/loader-publish.yml
+        secrets:
+            ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+            ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+            ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+            ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+            UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
+            S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+            S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+            GPG_KEY: ${{ secrets.GPG_KEY }}
+            GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
     devtools:
         needs: release

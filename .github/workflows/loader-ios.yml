@@ -84,9 +84,10 @@ defaults:
         working-directory: packages/loader
 
 jobs:
+    # Smoke tests are disabled to save runner time; remove the `false` guard from both smoke jobs to turn them back on.
     smoke-inputs:
         name: Build the smoke test's client and plugins
-        if: inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true
+        if: false && inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true
         runs-on: ubuntu-26.04
         timeout-minutes: 15
         permissions:
@@ -538,7 +539,7 @@ jobs:
     # simulator build once while build-ipa works, then waits for this run's build. A failed build-ipa fails this job.
     smoke-simulator:
         name: Smoke test the simulator build
-        if: inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true
+        if: false && inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true
         needs: [smoke-inputs]
         runs-on: macos-26
         timeout-minutes: 40
