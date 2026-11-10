@@ -8,7 +8,6 @@ import { cloneElement } from 'react';
 import { ChannelStore, GuildMemberStore, MessageReactionsContent } from '~/reactions/modules';
 import RoleColoredRender from '~/components/role-colored-render';
 import { guildIdOf } from '~/shared/channel-guild';
-import { PLUGIN_NAME } from '~/constants';
 import { presentNames } from '~/shared/names';
 import type { Rendered } from '~/types';
 
@@ -79,7 +78,7 @@ function patchMessageReactionsContent(): () => void {
  * @returns The function that ends the feature.
  */
 export function startReactions(): () => void {
-	if (!ensureModules(`${PLUGIN_NAME}: reactions`, { GuildMemberStore, ChannelStore })) {
+	if (!ensureModules({ GuildMemberStore, ChannelStore }, 'reactions')) {
 		return () => {};
 	}
 

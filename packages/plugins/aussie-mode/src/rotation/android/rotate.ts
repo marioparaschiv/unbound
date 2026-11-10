@@ -90,7 +90,7 @@ function applyTranslation(session: RotationSession, offsetY: number): Promise<un
 }
 
 function reportKeyboardFailure(operation: string, error: unknown): void {
-	console.error(`[Aussie Mode] Failed to ${operation}:`, error);
+	logger.error(`Failed to ${operation}:`, error);
 }
 
 function stopKeyboardTracking(session: RotationSession): void {

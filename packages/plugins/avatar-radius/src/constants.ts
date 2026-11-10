@@ -1,5 +1,3 @@
-export const PLUGIN_NAME = 'Avatar Radius';
-
 export const AvatarClass = {
 	ios: 'DCDAvatarView',
 	iosImage: 'DCDFastImageComponentViewCore',

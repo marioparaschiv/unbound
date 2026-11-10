@@ -7,7 +7,6 @@ import { cloneElement } from 'react';
 import { ChannelStore, GuildMemberStore, PollVotesActionSheet } from '~/polls/modules';
 import RoleColoredVotersList from '~/polls/voters-list';
 import { guildIdOf } from '~/shared/channel-guild';
-import { PLUGIN_NAME } from '~/constants';
 import type { Rendered } from '~/types';
 
 function patchPollVotesActionSheet(): () => void {
@@ -62,7 +61,7 @@ function patchPollVotesActionSheet(): () => void {
  * @returns The function that ends the feature.
  */
 export function startPolls(): () => void {
-	if (!ensureModules(`${PLUGIN_NAME}: poll results`, { GuildMemberStore, ChannelStore })) {
+	if (!ensureModules({ GuildMemberStore, ChannelStore }, 'poll results')) {
 		return () => {};
 	}
 

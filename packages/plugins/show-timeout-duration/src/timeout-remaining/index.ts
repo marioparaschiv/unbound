@@ -1,5 +1,4 @@
 import getTimeoutDeadline from '@unbound-plugins/shared/members/timeout-deadline';
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { FluxGuildMember, FluxMessage } from '@unbound-app/api/flux';
 import { format } from '@unbound-app/i18n';
@@ -33,9 +32,7 @@ function getDeadline({ channel_id, author }: FluxMessage): number | null {
  * and `ChannelStore`. The Addon scope removes the patch and the refresh timer when the plugin stops.
  */
 export function startTimeoutRemaining(): void {
-	if (
-		!ensureModules('Show Timeout Duration', { MessageRowData, GuildMemberStore, ChannelStore })
-	) {
+	if (!ensureModules({ MessageRowData, GuildMemberStore, ChannelStore })) {
 		return;
 	}
 
@@ -82,6 +79,4 @@ export function startTimeoutRemaining(): void {
 			});
 		}
 	}, 30_000);
-
-	recordApplied(1);
 }

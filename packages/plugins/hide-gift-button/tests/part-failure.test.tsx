@@ -1,5 +1,4 @@
 import { metro, render, startPlugin } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { expect, test } from 'bun:test';
 import { memo } from 'react';
 import { Text } from 'react-native';
@@ -13,7 +12,6 @@ const GiftOrThreadButton = memo(({ hideGiftButton }: { hideGiftButton?: boolean 
 ));
 
 test('a part that cannot be patched leaves the other hiding the gift and fails the self test', async () => {
-	resetHealth();
 	metro.register(
 		{ default: GiftOrThreadButton },
 		`${folder}ChatInputActionButtonGiftOrThread.tsx`,

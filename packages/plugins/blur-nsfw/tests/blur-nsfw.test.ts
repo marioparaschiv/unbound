@@ -1,6 +1,5 @@
 import { flux, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
@@ -36,7 +35,6 @@ function generate(channelId: string) {
 }
 
 beforeEach(() => {
-	resetHealth();
 	flux.seed({ Channel: { getChannel: (id: string) => channels[id] } });
 });
 

@@ -1,28 +1,15 @@
-import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
 import { NotificationSettings, UserGuildSettingsStore } from '~/apply/modules';
 import { startGuildContextMenus, startGuildSheets } from '~/menu';
-import { PLUGIN_NAME } from '~/constants';
 import { startJoins } from '~/joins';
 import SettingsPanel from '~/settings';
 
-let stopFeatures: (() => Promise<void>) | undefined;
+export const { start, stop, selfTest } = runFeatures(() => {
+	if (!ensureModules({ NotificationSettings, UserGuildSettingsStore })) return;
 
-export function start() {
-	if (!ensureModules(PLUGIN_NAME, { NotificationSettings, UserGuildSettingsStore })) return;
+	return [startJoins, startGuildSheets, startGuildContextMenus];
+});
 
-	stopFeatures = startFeatures(PLUGIN_NAME, [
-		startJoins,
-		startGuildSheets,
-		startGuildContextMenus,
-	]);
-}
-
-export async function stop() {
-	await stopFeatures?.();
-	stopFeatures = undefined;
-}
-
-export { featureSelfTest as selfTest, SettingsPanel };
+export { SettingsPanel };

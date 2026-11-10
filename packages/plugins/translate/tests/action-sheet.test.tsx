@@ -1,5 +1,4 @@
 import { metro, render, startPlugin, toasts } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
 import { settings } from '@unbound-app/settings';
@@ -40,7 +39,6 @@ const labels = (sheet: Awaited<ReturnType<typeof openSheet>>) =>
 
 beforeEach(async () => {
 	clipboard.text = '';
-	resetHealth();
 	hidden.length = 0;
 	metro.register(ActionSheets);
 	metro.register({

@@ -2,7 +2,7 @@ import { settings } from '@unbound-app/settings';
 import { patcher } from '@unbound-app/api';
 import { processColor } from 'react-native';
 
-import { DELETED_TEXT_COLOR, EPHEMERAL_FLAG, PLUGIN_NAME } from '~/constants';
+import { DELETED_TEXT_COLOR, EPHEMERAL_FLAG } from '~/constants';
 import { decorateRow, type ChatRow, type ContentNode } from '~/rows/decorate';
 import { RowManager } from '~/rows/modules';
 import { MessageStore } from '~/log/modules';
@@ -40,7 +40,7 @@ function dismissTarget(value: unknown): object | null {
  */
 export function patchRowManager(log: MessageLog): () => void {
 	if (typeof RowManager.prototype?.generate !== 'function') {
-		console.error(`[${PLUGIN_NAME}] Skipped, RowManager.generate not found.`);
+		logger.error(`Skipped, RowManager.generate not found.`);
 
 		return () => {};
 	}

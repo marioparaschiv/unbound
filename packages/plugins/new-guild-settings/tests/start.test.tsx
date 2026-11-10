@@ -1,15 +1,11 @@
-import { render } from '@unbound-app/api/testing';
-import { beforeEach, expect, spyOn, test } from 'bun:test';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
+import { logs, render } from '@unbound-app/api/testing';
+import { expect, test } from 'bun:test';
 import { View } from 'react-native';
 import { createElement } from 'react';
 
 import { selfTest } from '~/index';
 
 import { sheets, startGuildSettings } from './helpers/discord';
-
-beforeEach(resetHealth);
-
 function ActionSheetRow(_props: { label: string; onPress: () => void }) {
 	return <View />;
 }
@@ -35,8 +31,6 @@ test('reports healthy once every feature has started', async () => {
 });
 
 test('keeps the action sheet row when the context menu cannot be patched', async () => {
-	const error = spyOn(console, 'error').mockImplementation(() => {});
-
 	await startGuildSettings(false, true);
 
 	const module = { default: GuildSheet };
@@ -51,7 +45,5 @@ test('keeps the action sheet row when the context menu cannot be patched', async
 		'Apply New Guild Settings',
 	);
 	expect((await selfTest()).ok).toBe(false);
-	expect(error).toHaveBeenCalled();
-
-	error.mockRestore();
+	expect(logs.entries.some(({ level }) => level === 'error')).toBe(true);
 });

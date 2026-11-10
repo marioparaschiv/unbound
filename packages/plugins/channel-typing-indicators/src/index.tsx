@@ -1,17 +1,7 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startTypingIndicators } from '~/typing-indicator';
+import { typingIndicatorFeatures } from '~/typing-indicator';
 
 export { SettingsPanel } from '~/settings';
 
-let stopIndicators = async () => {};
-
-export function start() {
-	stopIndicators = startTypingIndicators();
-}
-
-export function stop() {
-	return stopIndicators();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures(typingIndicatorFeatures);

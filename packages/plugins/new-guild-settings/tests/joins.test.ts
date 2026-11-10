@@ -1,8 +1,6 @@
 import { storage } from '@unbound-app/api';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import { PLUGIN_ID } from '~/constants';
-
 import {
 	ME,
 	applied,
@@ -74,7 +72,7 @@ describe('joining a server', () => {
 	});
 
 	test('follows the saved settings', async () => {
-		storage.getBucket(PLUGIN_ID).set('guild', false);
+		storage.getBucket(addon.id).set('guild', false);
 		await dispatch({ type: 'INVITE_ACCEPT_SUCCESS', invite: { guild: { id: '100' } } });
 
 		expect(applied[0]?.update).toMatchObject({ muted: false });

@@ -10,7 +10,6 @@ import { cloneElement } from 'react';
 import { Text } from 'react-native';
 
 import { GuildMemberStore, GuildRoleStore, UsersFastList } from '~/member-list/modules';
-import { PLUGIN_NAME } from '~/constants';
 import { paintRoleText } from '~/shared/role-text';
 import type { Rendered } from '~/types';
 
@@ -92,7 +91,7 @@ function patchUsersFastList(): () => void {
  * @returns The function that ends the feature.
  */
 export function startMemberList(): () => void {
-	if (!ensureModules(`${PLUGIN_NAME}: member list`, { GuildMemberStore, GuildRoleStore })) {
+	if (!ensureModules({ GuildMemberStore, GuildRoleStore }, 'member list')) {
 		return () => {};
 	}
 

@@ -111,10 +111,7 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 		for (const { messageView, messageId } of waiting.get(key)?.values() ?? []) {
 			render(messageView, messageId).catch((error) => {
 				if (!isCancellation(error)) {
-					console.error(
-						'[Message Link Embeds] Failed to embed a linked message on Android:',
-						error,
-					);
+					logger.error('Failed to embed a linked message on Android:', error);
 				}
 			});
 		}
@@ -300,10 +297,7 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 			setTimeout(() => {
 				place(embed).catch((error) => {
 					if (!isCancellation(error)) {
-						console.error(
-							'[Message Link Embeds] Failed to place an Android embed:',
-							error,
-						);
+						logger.error('Failed to place an Android embed:', error);
 					}
 				});
 			}, delay);
@@ -453,10 +447,7 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 			setTimeout(() => {
 				render(messageView, messageId).catch((error) => {
 					if (!isCancellation(error)) {
-						console.error(
-							'[Message Link Embeds] Failed to embed a linked message on Android:',
-							error,
-						);
+						logger.error('Failed to embed a linked message on Android:', error);
 					}
 				});
 			}, 0);
@@ -477,10 +468,7 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 			awaitingSize.delete(key);
 			render(pending.messageView, pending.messageId).catch((error) => {
 				if (!isCancellation(error)) {
-					console.error(
-						'[Message Link Embeds] Failed to embed a linked message on Android:',
-						error,
-					);
+					logger.error('Failed to embed a linked message on Android:', error);
 				}
 			});
 		},
@@ -497,17 +485,14 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 			if (messageId) {
 				render(messageView, messageId).catch((error) => {
 					if (!isCancellation(error)) {
-						console.error(
-							'[Message Link Embeds] Failed to embed a linked message on Android:',
-							error,
-						);
+						logger.error('Failed to embed a linked message on Android:', error);
 					}
 				});
 			}
 		}
 	}
 
-	scheduleStartupScans('Message Link Embeds', scanVisible);
+	scheduleStartupScans(scanVisible);
 
 	return {
 		drawn: () => embeds.size,

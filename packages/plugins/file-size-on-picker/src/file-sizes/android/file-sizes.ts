@@ -9,7 +9,6 @@ import { currentActivity } from '@unbound-plugins/shared/native/android/views';
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 
 import type { FileSizes } from '~/types';
-import { PLUGIN_NAME } from '~/constants';
 
 /**
  * @description Reads media file sizes from Android's content resolver, which Discord's picker leaves out, and remembers each answer.
@@ -17,7 +16,7 @@ import { PLUGIN_NAME } from '~/constants';
  * @returns A lookup for content URIs, with no lookup when the loader lacks a capability it needs, and a function that releases the resolver.
  */
 export function createFileSizes(context: PluginContext): FileSizes {
-	if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) {
+	if (!ensureCapabilities(context.native, context.capabilities)) {
 		return { release: () => {} };
 	}
 
@@ -78,10 +77,7 @@ export function createFileSizes(context: PluginContext): FileSizes {
 			} catch (error) {
 				sizes.set(uri, undefined);
 				if (!isCancellation(error)) {
-					console.error(
-						`[File Size On Picker] Could not read the size of ${uri}:`,
-						error,
-					);
+					logger.error(`Could not read the size of ${uri}:`, error);
 				}
 			}
 		}

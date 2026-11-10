@@ -1,9 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
 import { startImages } from '~/images';
 
-export function start() {
-	startImages();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures(startImages);

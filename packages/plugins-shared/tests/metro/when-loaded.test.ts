@@ -1,3 +1,4 @@
+import { createFakeNative, installAddonGlobals } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
 type Module = { name: string };
@@ -40,6 +41,11 @@ void mock.module('@unbound-app/api', () => ({
 }));
 
 const { whenAllLoaded, whenLoaded } = await import('~/metro/when-loaded');
+const { runFeatures } = await import('~/lifecycle/features');
+
+installAddonGlobals();
+
+const context = createFakeNative().context(addon.manifest);
 
 function filter(): Filter {
 	return () => false;
@@ -98,6 +104,20 @@ describe('whenLoaded', () => {
 
 		expect(waits[0].stopped).toBe(true);
 		expect(applied).toBe(false);
+	});
+
+	test('fails the self test until the module loads, unless optional', () => {
+		const path = 'modules/chat/native/TypingIndicator.tsx';
+		const plugin = runFeatures([
+			() => whenLoaded<Module>(path, () => undefined),
+			() => whenLoaded<Module>(filter(), () => undefined, { optional: true }),
+		]);
+
+		plugin.start(context);
+		expect(plugin.selfTest()).toEqual({ ok: false, detail: `waiting for ${path}` });
+
+		load(waits[0], { name: 'late' });
+		expect(plugin.selfTest()).toEqual({ ok: true, detail: '2 features applied' });
 	});
 
 	test('prefers the first loaded source, otherwise the first source to load', () => {

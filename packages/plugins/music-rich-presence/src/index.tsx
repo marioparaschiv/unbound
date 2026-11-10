@@ -1,14 +1,6 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startPresence, stopPresence } from '~/presence';
+import { startPresence } from '~/presence';
 
-export function start() {
-	startPresence();
-}
-
-/** Clears the activity the plugin sent, which the Addon scope cannot see. */
-export function stop() {
-	stopPresence();
-}
-
-export { featureSelfTest as selfTest };
+// Stopping clears the activity the plugin sent, which the Addon scope cannot see.
+export const { start, stop, selfTest } = runFeatures([startPresence]);

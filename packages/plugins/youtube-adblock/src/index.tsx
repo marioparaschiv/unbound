@@ -1,9 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
 import { startWebViewAdblock } from '~/webview';
 
-export function start() {
-	startWebViewAdblock();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures([startWebViewAdblock]);

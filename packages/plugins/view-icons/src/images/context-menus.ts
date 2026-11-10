@@ -70,7 +70,7 @@ function resolveTargets(menu: ContextMenu, opened: OpenedSheet | null): ImageTar
  * @param opened The last opened profile or guild sheet, for menus opened from inside it.
  */
 export function patchContextMenus(opened: SheetRef): void {
-	if (!ensureModules('View Icons: context menus', { Theme })) return;
+	if (!ensureModules({ Theme }, 'context menus')) return;
 
 	patcher.before(
 		ContextMenus,

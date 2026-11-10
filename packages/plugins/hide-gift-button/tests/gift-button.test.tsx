@@ -1,6 +1,5 @@
 import { metro, render, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { memo, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
@@ -31,8 +30,6 @@ const ChatInputRightActions = memo(({ shouldShowGiftButton }: ActionsProps) => (
 const folder = 'modules/chat_input/native/action_buttons/';
 
 beforeEach(async () => {
-	resetHealth();
-
 	metro.register(
 		{ default: GiftOrThreadButton },
 		`${folder}ChatInputActionButtonGiftOrThread.tsx`,

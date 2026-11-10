@@ -36,7 +36,7 @@ export function isTranslating(): boolean {
  * The Addon scope removes the patches when the plugin stops.
  */
 export function startTranslation(): void {
-	if (!ensureModules('Aussie Speech', { Messages })) return;
+	if (!ensureModules({ Messages })) return;
 
 	for (const method of ['sendMessage', 'editMessage'] as const) {
 		if (typeof Messages[method] !== 'function') continue;

@@ -1,16 +1,10 @@
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
-import { metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { logs, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { View } from 'react-native';
 
 import { selfTest } from '~/index';
 import { UPLOAD_PREVIEW_SHEET } from '~/constants';
-
-// Health is module state that earlier tests in this process left behind.
-beforeEach(() => {
-	resetHealth();
-});
 
 type Upload = { id: string; filename: string };
 
@@ -157,6 +151,13 @@ describe('the plugin as a whole', () => {
 
 		expect(new CloudUpload('1', 'passport scan.png').upload()).not.toBe('passport scan.png');
 		expect((await selfTest()).detail).toContain('start failed');
+	});
+
+	test("logs a failed patch through the plugin's logger", async () => {
+		registerModules({ default: 'not a component' });
+		await startPlugin();
+
+		expect(logs.entries.map(({ args }) => args[0])).toContain('Failed to start a feature:');
 	});
 
 	test('sends files under their original names again once the plugin stops', async () => {

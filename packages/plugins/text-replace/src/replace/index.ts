@@ -1,4 +1,4 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
+import type { SelfTestResult } from '@unbound-plugins/shared/lifecycle/features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { applyRules } from '@unbound-plugins/shared/text-replace/rules';
 import { patcher } from '@unbound-app/api';
@@ -14,8 +14,6 @@ function isMessage(argument: MessageArgument): argument is Message {
 	return typeof argument === 'object' && typeof argument?.content === 'string';
 }
 
-let patched = false;
-
 /**
  * @description Rewrites each outgoing message with the stored rules before Discord sends it.
  * Patches `sendMessage` of Discord's message actions (`metro.api.Messages`). The Addon scope removes the patch when the plugin stops.
@@ -23,7 +21,7 @@ let patched = false;
 export function startReplace(): void {
 	normalizeStoredRules();
 
-	if (!ensureModules('Text Replace', { Messages })) return;
+	if (!ensureModules({ Messages })) return;
 
 	patcher.before(Messages, 'sendMessage', ({ args }) => {
 		if (args[0] === RULES_CHANNEL_ID) return;
@@ -38,23 +36,20 @@ export function startReplace(): void {
 			readRules('regexRules'),
 		);
 	});
-
-	patched = true;
-	recordApplied(1);
 }
 
 const SAMPLE_RULE = { id: 'self-test', find: 'teh', replace: 'the', onlyIfIncludes: '' };
 
 /**
  * @description Checks that outgoing messages are being rewritten, with a sample rule.
+ * @param features The features' own result, which says whether the patch is installed.
  * @returns Whether the patch is installed and the sample rule gave the expected text, with a detail line.
  */
-export function replaceSelfTest() {
+export function replaceSelfTest(features: SelfTestResult): SelfTestResult {
 	const replaced = applyRules('teh cat', [SAMPLE_RULE], []);
-	const ok = patched && replaced === 'the cat';
 
 	return {
-		ok,
-		detail: `${patched ? 'patched' : 'not patched'} sendMessage, sample rule gave "${replaced}"`,
+		ok: features.ok && replaced === 'the cat',
+		detail: `${features.ok ? 'patched sendMessage' : features.detail}, sample rule gave "${replaced}"`,
 	};
 }

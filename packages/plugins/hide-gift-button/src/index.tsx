@@ -1,15 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startGift } from '~/gift';
+import { giftFeatures } from '~/gift';
 
-let stopGift = async () => {};
-
-export function start() {
-	stopGift = startGift();
-}
-
-export function stop() {
-	return stopGift();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures(giftFeatures);

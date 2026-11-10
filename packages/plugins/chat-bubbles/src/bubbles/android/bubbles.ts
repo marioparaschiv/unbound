@@ -42,7 +42,7 @@ import {
 	type Box,
 	type Edges,
 } from '~/bubbles/geometry';
-import { AndroidClass, BubbleLayout, CARD_INSET, PLUGIN_NAME } from '~/constants';
+import { AndroidClass, BubbleLayout, CARD_INSET } from '~/constants';
 import { forgetBubbles, installBindGuard, rememberBubble } from '~/bubbles/android/ui-bubbles';
 import { currentAppearance } from '~/bubbles/theme';
 import { argb } from '~/bubbles/style';
@@ -634,7 +634,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 			for (let row = queue.shift(); row && !disposed; row = queue.shift()) {
 				await place(row).catch((error) => {
 					if (!isCancellation(error)) {
-						console.error(`[${PLUGIN_NAME}] Failed to place a bubble:`, error);
+						logger.error(`Failed to place a bubble:`, error);
 					}
 				});
 			}
@@ -689,7 +689,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 
 			void scheduleRow(accessories).catch((error) => {
 				if (!isCancellation(error)) {
-					console.error(`[${PLUGIN_NAME}] Failed to find a bubble's row:`, error);
+					logger.error(`Failed to find a bubble's row:`, error);
 				}
 			});
 		},
@@ -741,7 +741,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 
 	refreshVisible().catch((error) => {
 		if (!isCancellation(error)) {
-			console.error(`[${PLUGIN_NAME}] Failed to scan the views on screen:`, error);
+			logger.error(`Failed to scan the views on screen:`, error);
 		}
 	});
 
@@ -759,10 +759,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 			if (currentAppearance().layout === BubbleLayout.card && shiftedIcons.length) {
 				runOnMain(java, shiftedIcons.splice(0).map(unshiftOperation)).catch((error) => {
 					if (!isCancellation(error)) {
-						console.error(
-							`[${PLUGIN_NAME}] Failed to put the footer icons back:`,
-							error,
-						);
+						logger.error(`Failed to put the footer icons back:`, error);
 					}
 				});
 			}
@@ -771,7 +768,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 
 			refreshVisible().catch((error) => {
 				if (!isCancellation(error)) {
-					console.error(`[${PLUGIN_NAME}] Failed to scan the views on screen:`, error);
+					logger.error(`Failed to scan the views on screen:`, error);
 				}
 			});
 		},
@@ -789,7 +786,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 				]);
 			} catch (error) {
 				if (!isCancellation(error)) {
-					console.error(`[${PLUGIN_NAME}] Failed to restore the rows:`, error);
+					logger.error(`Failed to restore the rows:`, error);
 				}
 			}
 		},

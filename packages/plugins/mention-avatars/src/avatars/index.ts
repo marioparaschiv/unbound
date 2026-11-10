@@ -1,4 +1,4 @@
-import { drawnSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { drawnSelfTest, type SelfTestResult } from '@unbound-plugins/shared/lifecycle/features';
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
@@ -24,44 +24,38 @@ let renderer: ReturnType<typeof startRenderer> | undefined;
  * when it loads, roles from `UserStore`, `MessageStore`, `SelectedChannelStore` and `RoleStore`. The native renderer
  * (`ios/`, `android/`) rewrites the message text views.
  * @param context The plugin's start context, with its native bridge and Capabilities.
+ * @returns A function that restores every rewritten text view and removes the native hooks, which the Addon scope can't see.
  */
-export function startAvatars(context: PluginContext): void {
+export function startAvatars(context: PluginContext): (() => void) | undefined {
 	const modules = { MessageStore, SelectedChannelStore, UserStore, RowGenerator };
 
-	if (
-		!ensureCapabilities('Mention Avatars', context.native, context.capabilities) ||
-		!ensureModules('Mention Avatars', modules)
-	) {
+	if (!ensureCapabilities(context.native, context.capabilities) || !ensureModules(modules)) {
 		return;
 	}
 
-	const index = createMentionIndex(
-		ensureModules('Mention Avatars: role mentions', { RoleStore }),
-	);
+	const index = createMentionIndex(ensureModules({ RoleStore }, 'role mentions'));
 
 	patchRowGenerator(index);
 	renderer = startRenderer(context.native, index, () => settings.get('showAtSymbol', true));
 	subscribeMentionSources(renderer.retryWaiting);
+
+	return () => {
+		void renderer?.dispose();
+		renderer = undefined;
+	};
 }
 
 /**
  * @description Reports whether the mentions on screen drew their images.
+ * @param features The features' own self-test result.
  * @returns The self-test result for the plugin's `selfTest` export.
  */
-export function avatarsSelfTest() {
+export function avatarsSelfTest(features: SelfTestResult): SelfTestResult {
 	const missing = renderer?.failed() ?? [];
 
 	if (missing.length) {
 		return { ok: false, detail: `${missing.length} mention avatars failed to load` };
 	}
 
-	return drawnSelfTest(renderer?.rendered, 'mention avatars', renderer?.settling);
-}
-
-/**
- * @description Restores every rewritten text view and removes the native hooks, which the Addon scope can't see.
- */
-export function stopAvatars(): void {
-	void renderer?.dispose();
-	renderer = undefined;
+	return drawnSelfTest(features, renderer?.rendered, 'mention avatars', renderer?.settling);
 }

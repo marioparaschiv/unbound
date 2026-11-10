@@ -1,24 +1,21 @@
-import { recordSkip } from '@unbound-plugins/shared/lifecycle/health';
+import { ensurePresent } from '@unbound-plugins/shared/lifecycle/features';
 import type { NativeObjCBridge } from '@unbound-app/api/native';
 
 /**
  * @description Checks that every Objective-C class a plugin hooks or allocates exists, so `start` can bail out before applying a partial feature.
- * @param plugin The plugin's display name, used in the log line.
  * @param objc The Objective-C bridge from `context.native`.
  * @param classes The class names to check.
+ * @param feature The feature that needs them, when not the whole plugin, named in the log line.
  * @returns `true` when every class exists, otherwise `false` after logging the missing names.
  */
-export function ensureClasses(plugin: string, objc: NativeObjCBridge, classes: string[]): boolean {
+export function ensureClasses(
+	objc: NativeObjCBridge,
+	classes: string[],
+	feature?: string,
+): boolean {
 	const missing = classes.filter((name) => !objc.getClass(name));
 
-	if (!missing.length) {
-		return true;
-	}
-
-	recordSkip(`${plugin}: native classes not found: ${missing.join(', ')}`);
-	console.error(`[${plugin}] Not starting, native classes not found: ${missing.join(', ')}.`);
-
-	return false;
+	return ensurePresent(missing, 'native classes not found', feature);
 }
 
 export default ensureClasses;

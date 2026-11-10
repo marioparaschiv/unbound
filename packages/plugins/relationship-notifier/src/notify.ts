@@ -1,7 +1,7 @@
 import type { ToastHandle, ToastOptions } from '@unbound-app/api/toasts';
 import { toasts } from '@unbound-app/api';
 
-import { FALLBACK_ICON, PLUGIN_NAME } from '~/constants';
+import { FALLBACK_ICON } from '~/constants';
 import { avatarURL, openProfile, type DiscordUser } from '~/discord';
 import { readSettings } from '~/modules';
 
@@ -40,7 +40,7 @@ export function notify(text: string, iconURL?: string, userId?: string): void {
 	const actions = buttons(() => handle, persistent, userId);
 	const handle = toasts.show({
 		id: `relationship-notifier-${nextId++}`,
-		title: PLUGIN_NAME,
+		title: addon.name,
 		content: text,
 		icon: iconURL ? { uri: iconURL } : FALLBACK_ICON,
 		tintedIcon: !iconURL,

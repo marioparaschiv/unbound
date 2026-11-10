@@ -1,10 +1,9 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { settings } from '@unbound-app/settings';
 import { flux, storage } from '@unbound-app/api';
 
 import { resolveActivity } from '~/presence/activity';
-import { DISCORD_APP_ID, PLUGIN_NAME, POLL_INTERVAL_MS, SOCKET_ID } from '~/constants';
+import { DISCORD_APP_ID, POLL_INTERVAL_MS, SOCKET_ID } from '~/constants';
 import { AssetManager, PresenceStore, SelfPresenceStore, UserStore } from '~/presence/modules';
 import { canQuery, readPreferences } from '~/presence/preferences';
 import { LastFmScrobbler } from '~/presence/scrobblers/lastfm';
@@ -18,7 +17,7 @@ async function resolveAsset(key: string): Promise<string | undefined> {
 	try {
 		return (await AssetManager.fetchAssetIds(DISCORD_APP_ID, [key]))[0] ?? undefined;
 	} catch (error) {
-		console.error(`[${PLUGIN_NAME}] Failed to resolve the ${key} asset:`, error);
+		logger.error(`Failed to resolve the ${key} asset:`, error);
 		return undefined;
 	}
 }
@@ -37,7 +36,7 @@ function loadLocalActivityStore() {
 		if (flux.getStore('LocalActivity', { lazy: false })) return;
 	} catch {}
 
-	console.warn(`[${PLUGIN_NAME}] LocalActivityStore was not found; sending the activity anyway.`);
+	logger.warn('LocalActivityStore was not found; sending the activity anyway.');
 }
 
 function dispatchActivity(activity: Activity | null) {
@@ -50,15 +49,14 @@ const scheduleTimeout: Schedule = (callback, delay) => {
 	return () => clearTimeout(timer);
 };
 
-let sync: ReturnType<typeof createPresenceSync> | undefined;
-
 /**
  * @description Polls the chosen scrobbler and keeps the Rich Presence activity in sync with what is playing.
  * Reads the user and presence stores and Discord's asset manager, and sends activities as `LOCAL_ACTIVITY_UPDATE`
- * actions. The Addon scope clears the poll timer and the settings listener; `stopPresence` clears the activity.
+ * actions. The Addon scope clears the poll timer and the settings listener.
+ * @returns A function that stops the poll for good and clears the activity the plugin sent, which the Addon scope cannot see.
  */
-export function startPresence(): void {
-	if (!ensureModules(PLUGIN_NAME, { UserStore })) return;
+export function startPresence(): (() => void) | undefined {
+	if (!ensureModules({ UserStore })) return;
 
 	const listenBrainz = createListenBrainz();
 	const fetcher = fetch as unknown as Fetcher;
@@ -78,7 +76,7 @@ export function startPresence(): void {
 			fetcher,
 			resolveAsset,
 		).catch((error: unknown) => {
-			console.error(`[${PLUGIN_NAME}] Failed to query ${scrobbler.name}:`, error);
+			logger.error(`Failed to query ${scrobbler.name}:`, error);
 			return null;
 		});
 	}
@@ -92,8 +90,6 @@ export function startPresence(): void {
 		refreshDelay: SETTINGS_REFRESH_MS,
 	});
 
-	sync = current;
-
 	setInterval(() => void current.poll(), POLL_INTERVAL_MS);
 	storage.onChange(
 		(payload) => payload.store === addon.id,
@@ -105,13 +101,6 @@ export function startPresence(): void {
 	);
 
 	void current.poll();
-	recordApplied(1);
-}
 
-/**
- * @description Stops the poll for good and clears the activity the plugin sent, which the Addon scope cannot see.
- */
-export function stopPresence(): void {
-	sync?.stop();
-	sync = undefined;
+	return () => current.stop();
 }

@@ -1,5 +1,3 @@
-export const PLUGIN_NAME = 'No Typing Animation';
-
 export const ELLIPSIS_PATH = 'design/void/Ellipsis/native/Ellipsis.tsx';
 
 export const ANIMATED_DOT_NAME = 'AnimatedEllipsisDot';

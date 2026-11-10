@@ -5,7 +5,6 @@ import type { ReactElement } from 'react';
 import { ActivityButtons, SpotifyActions, SpotifyComponents } from '~/listen/modules';
 import { ListenAlongRow } from '~/listen/components/listen-along-row';
 import type { SpotifyActivity } from '~/types';
-import { PLUGIN_NAME } from '~/constants';
 
 type ButtonProps = { activity?: SpotifyActivity };
 
@@ -21,7 +20,7 @@ function withListenAlong(props: ButtonProps | undefined, result: ReactElement | 
  * Depends on Discord's Spotify actions (`play`, `sync`) and `SpotifyStore`, `SpotifyProtocolStore` and `UserStore`.
  */
 export function startListenAlong(): void {
-	if (!ensureModules(`${PLUGIN_NAME}: listen along`, { ActivityButtons, SpotifyActions })) {
+	if (!ensureModules({ ActivityButtons, SpotifyActions }, 'listen along')) {
 		return;
 	}
 

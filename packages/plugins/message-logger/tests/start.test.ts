@@ -1,18 +1,14 @@
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
-import { beforeEach, expect, test } from 'bun:test';
+import { expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
 
 import { dispatch, generateRow, startLogger } from './helpers/discord';
-
-beforeEach(resetHealth);
-
 const isMarkedDeleted = () => generateRow().ephemeralIndication !== undefined;
 
 test('reports healthy once every feature has started', async () => {
 	await startLogger();
 
-	expect(await selfTest()).toEqual({ ok: true, detail: '5 features applied' });
+	expect(selfTest()).toEqual({ ok: true, detail: '6 features applied' });
 });
 
 test('leaves the other features running when one fails to start', async () => {

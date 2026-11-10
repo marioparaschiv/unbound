@@ -1,13 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startUnsuppress, stopUnsuppress } from '~/unsuppress';
+import { startUnsuppress } from '~/unsuppress';
 
-export function start() {
-	startUnsuppress();
-}
-
-export function stop() {
-	stopUnsuppress();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures([startUnsuppress]);

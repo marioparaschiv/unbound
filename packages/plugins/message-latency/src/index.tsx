@@ -1,14 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
-import type { PluginContext } from '@unbound-app/api/native';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startLatencyIndicator, stopLatencyIndicator } from '~/latency-indicator';
+import { latencyFeatures } from '~/latency-indicator';
 
-export function start(context: PluginContext) {
-	startLatencyIndicator(context);
-}
-
-export function stop() {
-	return stopLatencyIndicator();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures(latencyFeatures, { atomic: true });

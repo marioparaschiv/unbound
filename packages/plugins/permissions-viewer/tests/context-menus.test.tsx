@@ -1,7 +1,6 @@
-import { flux, metro, pluginHolds, render, startPlugin } from '@unbound-app/api/testing';
+import { logs, flux, metro, pluginHolds, render, startPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
-import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { View } from 'react-native';
 
 import { selfTest } from '~/index';
@@ -61,7 +60,6 @@ function registerDiscord({ brokenContextMenus = false } = {}) {
 }
 
 async function launch() {
-	resetHealth();
 	registerDiscord();
 	await startPlugin();
 }
@@ -151,16 +149,11 @@ describe('the plugin on start', () => {
 	});
 
 	test('keeps the other patches when one cannot be applied', async () => {
-		const error = spyOn(console, 'error').mockImplementation(() => {});
-
-		resetHealth();
 		registerDiscord({ brokenContextMenus: true });
 		await startPlugin();
 
 		expect(pluginHolds().join()).toContain('openLazy');
 		expect(selfTest()).toMatchObject({ ok: false });
-		expect(error).toHaveBeenCalled();
-
-		error.mockRestore();
+		expect(logs.entries.some(({ level }) => level === 'error')).toBe(true);
 	});
 });

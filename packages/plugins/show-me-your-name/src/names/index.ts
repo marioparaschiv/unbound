@@ -1,4 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { settings } from '@unbound-app/settings';
 import { patcher } from '@unbound-app/api';
@@ -70,7 +69,7 @@ function relabel(row: Row | undefined, messageAuthor: Author | undefined) {
  * friend nicknames from `RelationshipStore`. The Addon scope removes the patch when the plugin stops.
  */
 export function startNames(): void {
-	if (!ensureModules('Show Me Your Name', { MessageRowData, UserStore })) return;
+	if (!ensureModules({ MessageRowData, UserStore })) return;
 
 	patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
 		const message: Message | undefined = args[0]?.message;
@@ -85,6 +84,4 @@ export function startNames(): void {
 
 		relabel(result?.message?.referencedMessage?.message, reply?.author);
 	});
-
-	recordApplied(1);
 }

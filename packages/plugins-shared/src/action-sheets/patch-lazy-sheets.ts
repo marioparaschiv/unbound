@@ -59,19 +59,24 @@ export function patchLazySheets<P>(
 
 	for (const [path, key] of DIRECT_SHEETS) {
 		unpatches.push(
-			whenLoaded<AnyProps>(path, (module) => {
-				const target = findRenderTarget(module);
+			whenLoaded<AnyProps>(
+				path,
+				(module) => {
+					const target = findRenderTarget(module);
 
-				if (disposed || !target || patchedModules.has(module)) return;
+					if (disposed || !target || patchedModules.has(module)) return;
 
-				patchedModules.add(module);
+					patchedModules.add(module);
 
-				return Patcher.after(target.holder, target.key, ({ args: [props], result }) => {
-					const render = props ? onOpen(key, props as P) : undefined;
+					return Patcher.after(target.holder, target.key, ({ args: [props], result }) => {
+						const render = props ? onOpen(key, props as P) : undefined;
 
-					return render ? render(result) : result;
-				});
-			}),
+						return render ? render(result) : result;
+					});
+					// Each loads only when a user long-presses its target, so waiting would fail every self test until then.
+				},
+				{ optional: true },
+			),
 		);
 	}
 

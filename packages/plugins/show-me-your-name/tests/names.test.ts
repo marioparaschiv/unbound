@@ -1,7 +1,6 @@
 import { flux, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 
 import { selfTest } from '~/index';
 
@@ -29,7 +28,6 @@ function rowFor(message: Message) {
 }
 
 beforeEach(async () => {
-	resetHealth();
 	flux.seed({
 		Relationship: { getNickname: (id: string) => (id === '1' ? 'Ally' : null) },
 		User: { getUser: (id: string) => [alice, bob].find((user) => user.id === id) },

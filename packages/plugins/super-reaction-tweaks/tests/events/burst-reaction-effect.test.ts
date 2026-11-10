@@ -29,11 +29,10 @@ const scope = installAddonGlobals({
 
 mock.module('@unbound-app/api', () => scope.unbound);
 
-const { SETTINGS_BUCKET } = await import('~/modules');
 const { CLEAR_ACTION, PLAY_ACTION, limitPlayingEffects } =
 	await import('~/events/burst-reaction-effect');
 
-const bucket = scope.storage.getBucket(SETTINGS_BUCKET);
+const bucket = scope.storage.getBucket(scope.addon.manifest.id);
 
 const effect = (key: string, messageId = 'm1') => ({
 	channelId: 'c1',

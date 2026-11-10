@@ -1,5 +1,3 @@
-export const PLUGIN_NAME = 'Picture In Picture';
-
 export const OVERLAY_HEADER_PATH =
 	'modules/media_viewer/native/components/overlay/MediaModalOverlayHeader.tsx';
 export const OVERLAY_BUTTON_PATH =

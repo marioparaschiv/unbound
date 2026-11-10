@@ -28,7 +28,7 @@ function loopInEmbeds(label: string, source: string) {
 	return whenLoaded<AnyProps>(
 		source,
 		(module) => {
-			if (!ensureModules(label, { component: module.default })) return;
+			if (!ensureModules({ component: module.default }, label)) return;
 
 			return embedComponent(module, 'default', animatedLottieProps);
 		},
@@ -44,7 +44,7 @@ function loopInEmbeds(label: string, source: string) {
 export function startMediaPatches(): () => void {
 	const unpatches: Array<() => void> = [];
 
-	if (ensureModules('Message Link Embeds: animated images', { FastImage })) {
+	if (ensureModules({ FastImage }, 'animated images')) {
 		unpatches.push(playImageInEmbeds(FastImage, animatedImageProps));
 	}
 

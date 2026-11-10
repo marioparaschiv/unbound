@@ -1,5 +1,3 @@
-export const PLUGIN_NAME = 'Blur NSFW';
-
 export const SPOILER_LABEL = 'SPOILER';
 
 export const EMBED_MEDIA_FIELDS = ['image', 'images', 'thumbnail', 'video'] as const;

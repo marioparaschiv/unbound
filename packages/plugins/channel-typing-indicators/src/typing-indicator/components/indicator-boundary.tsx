@@ -12,7 +12,7 @@ class IndicatorBoundary extends Component<IndicatorBoundaryProps, IndicatorBound
 	}
 
 	componentDidCatch(error: Error): void {
-		console.error('Channel typing indicator failed:', error);
+		logger.error('Failed to render a channel typing indicator:', error);
 	}
 
 	render(): ReactNode {

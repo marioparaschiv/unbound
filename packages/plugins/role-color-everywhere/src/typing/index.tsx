@@ -20,7 +20,6 @@ import {
 import RoleColoredRender from '~/components/role-colored-render';
 import { presentNames, uniqueNames, type NameOwner } from '~/shared/names';
 import { guildIdOf } from '~/shared/channel-guild';
-import { PLUGIN_NAME } from '~/constants';
 import type { Rendered } from '~/types';
 
 function typingAppearances(): Map<string, RoleColorAppearance> {
@@ -96,7 +95,6 @@ function patchTypingIndicator(): () => void {
  * @returns The function that ends the feature.
  */
 export function startTyping(): () => void {
-	const feature = `${PLUGIN_NAME}: typing`;
 	const modules = {
 		GuildMemberStore,
 		TypingStore,
@@ -105,7 +103,7 @@ export function startTyping(): () => void {
 		SelectedChannelStore,
 	};
 
-	if (!ensureModules(feature, modules)) return () => {};
+	if (!ensureModules(modules, 'typing')) return () => {};
 
 	return whileEnabled(settings, 'typingUsers', true, patchTypingIndicator);
 }

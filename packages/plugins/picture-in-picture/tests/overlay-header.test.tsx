@@ -1,6 +1,5 @@
 import { metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, test } from 'bun:test';
 import type { ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -37,12 +36,12 @@ async function start(rows: ReactNode) {
 
 	metro.register(buttonModule, OVERLAY_BUTTON_PATH);
 	metro.register(header, OVERLAY_HEADER_PATH);
+	// The web players wait for `react-native-webview`, and the self test with them.
+	metro.register({ WebView: () => null });
 	await startPlugin();
 
 	return header;
 }
-
-beforeEach(resetHealth);
 afterEach(stopPlugin);
 
 describe('the media viewer header', () => {
@@ -95,6 +94,6 @@ describe('the media viewer header', () => {
 	test('reports the header patch as applied', async () => {
 		await start(rows);
 
-		expect((await selfTest()).ok).toBe(true);
+		expect(selfTest()).toMatchObject({ ok: true });
 	});
 });

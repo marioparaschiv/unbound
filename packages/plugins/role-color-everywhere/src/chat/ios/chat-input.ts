@@ -13,7 +13,6 @@ import {
 } from '~/chat/ios/ui-chat-input';
 import { ChannelStore, GuildMemberStore, SelectedChannelStore, UserStore } from '~/chat/modules';
 import { currentGuildId, guildAliases } from '~/chat/composer-aliases';
-import { PLUGIN_NAME } from '~/constants';
 
 const REFRESH_DELAY_MS = 250;
 
@@ -50,11 +49,11 @@ function composerMentions(): ComposerMentions {
  */
 export function colorChatInputMentions(native: NativePluginBridge): () => Promise<void> {
 	const { objc, ui } = native;
-	const feature = `${PLUGIN_NAME}: composer mentions`;
+	const feature = 'composer mentions';
 
 	if (
-		!ensureModules(feature, { UserStore, ChannelStore, SelectedChannelStore }) ||
-		!ensureClasses(feature, objc, ['DCDChatInputComponentView'])
+		!ensureModules({ UserStore, ChannelStore, SelectedChannelStore }, feature) ||
+		!ensureClasses(objc, ['DCDChatInputComponentView'], feature)
 	) {
 		return async () => {};
 	}
@@ -81,7 +80,7 @@ export function colorChatInputMentions(native: NativePluginBridge): () => Promis
 		)
 		.catch((error) => {
 			if (!isCancellation(error)) {
-				console.error(`[${PLUGIN_NAME}] Failed to scan the composer:`, error);
+				logger.error(`Failed to scan the composer:`, error);
 			}
 		});
 

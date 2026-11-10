@@ -8,7 +8,6 @@ import { format, messages } from '@unbound-app/i18n';
 import { patcher, toasts } from '@unbound-app/api';
 
 import { channelHasLog, clearChannelLog, clearMessageHistory } from '~/history/actions';
-import { PLUGIN_NAME } from '~/constants';
 import type { MessageLog } from '~/log';
 import { ActionSheets } from '~/history/modules';
 import { closeHistorySheet, openHistorySheet } from '~/history/sheet';
@@ -73,7 +72,7 @@ function channelRows(log: MessageLog, hide: () => void, channelId: string): Shee
 				const cleared = clearChannelLog(log, channelId);
 
 				toasts.show({
-					title: PLUGIN_NAME,
+					title: addon.name,
 					content: format('LOG_CLEARED', { count: cleared }),
 				});
 			},

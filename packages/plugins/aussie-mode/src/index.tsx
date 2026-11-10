@@ -1,22 +1,19 @@
-import type { PluginContext } from '@unbound-app/api/native';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
 import { isAussieDevice } from '~/locale';
 import { startRotation } from '~/rotation';
 import { startUpsideDownText } from '~/text';
 
-let stopRotation: () => Promise<void> = async () => {};
-
-export async function start(context: PluginContext): Promise<void> {
+// Off an Australian device the plugin starts nothing, and it has no self test the device matrix would fail.
+export const { start, stop } = runFeatures(() => {
 	if (!isAussieDevice()) return;
 
-	startUpsideDownText();
-	stopRotation = await startRotation(context.native, (error) =>
-		console.error('[Aussie Mode]', error),
-	);
-}
-
-export async function stop(): Promise<void> {
-	const cleanup = stopRotation;
-	stopRotation = async () => {};
-	await cleanup();
-}
+	return [
+		startUpsideDownText,
+		// `start` waits for the first rotation.
+		(context) =>
+			startRotation(context.native, (error) =>
+				logger.error('Failed to rotate the screen:', error),
+			),
+	];
+});

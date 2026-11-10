@@ -4,20 +4,19 @@ import { settings } from '@unbound-app/settings';
 import { storage } from '@unbound-app/api';
 
 import { roundAvatars } from '~/avatars/platform';
-import { PLUGIN_NAME } from '~/constants';
 
-let dispose: () => void | Promise<void> = () => {};
 let rounded: (() => number | Promise<number>) | null = null;
 let unrounded: (() => Promise<number>) | null = null;
 
 /**
  * @description Rounds every avatar to the chosen corner radius, and rounds them again when the radius changes.
  * Hooks Discord's native avatar views through the platform's native bridge (`DCDAvatarView` on iOS, `SimpleDraweeView` on Android).
- * The Addon scope removes the radius listener, but the native hooks need `stopAvatars`.
+ * The Addon scope removes the radius listener, but the native hooks need the returned function.
  * @param context The plugin's native bridge and capabilities.
+ * @returns A function that brings the circles back on every avatar the plugin rounded, settling once the native hooks are removed.
  */
-export function startAvatars(context: PluginContext): void {
-	if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) return;
+export function startAvatars(context: PluginContext): (() => void | Promise<void>) | undefined {
+	if (!ensureCapabilities(context.native, context.capabilities)) return;
 
 	const avatars = roundAvatars(context.native, () => settings.radius);
 
@@ -28,24 +27,13 @@ export function startAvatars(context: PluginContext): void {
 
 	rounded = avatars.rounded;
 	unrounded = avatars.unrounded;
-	dispose = () => {
+
+	return () => {
 		rounded = null;
 		unrounded = null;
 
 		return avatars.dispose();
 	};
-}
-
-/**
- * @description Brings the circles back on every avatar the plugin rounded.
- * @returns A promise that settles once the native hooks are removed.
- */
-export function stopAvatars(): void | Promise<void> {
-	const stopping = dispose();
-
-	dispose = () => {};
-
-	return stopping;
 }
 
 /**

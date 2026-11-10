@@ -1,5 +1,5 @@
 import { getElementName } from '@unbound-plugins/shared/react/find-element';
-import { recordSkip } from '@unbound-plugins/shared/lifecycle/health';
+import { skipFeature } from '@unbound-plugins/shared/lifecycle/features';
 import { patcher } from '@unbound-app/api';
 import { cloneElement, type ComponentType, type ReactElement, type ReactNode } from 'react';
 
@@ -16,7 +16,7 @@ import {
 import PipButton from '~/picture-in-picture/button/components/pip-button';
 import type { Controller } from '~/picture-in-picture/session/controller';
 import type { SessionStore } from '~/picture-in-picture/session/store';
-import { OVERLAY_BUTTON_NAMES, OVERLAY_HEADER_EXPORT, PLUGIN_NAME } from '~/constants';
+import { OVERLAY_BUTTON_NAMES, OVERLAY_HEADER_EXPORT } from '~/constants';
 import type { MediaSource } from '~/types';
 
 type HeaderProps = { source?: MediaSource };
@@ -32,11 +32,6 @@ function isOverlayButton(Button: ComponentType<OverlayButtonProps>) {
 			element.type === Button || (name !== undefined && OVERLAY_BUTTON_NAMES.includes(name))
 		);
 	};
-}
-
-function skip(reason: string) {
-	console.error(`[${PLUGIN_NAME}] Skipped, ${reason}.`);
-	recordSkip(reason);
 }
 
 /**
@@ -68,7 +63,7 @@ export function patchOverlayHeader(
 
 		if (next === undefined && !reportedMissingRow) {
 			reportedMissingRow = true;
-			skip(`${OVERLAY_HEADER_EXPORT} renders no row of buttons`);
+			skipFeature(`${OVERLAY_HEADER_EXPORT} renders no row of buttons`);
 		}
 
 		return (next ?? result) as ReactNode;

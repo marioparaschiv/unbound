@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
-import { metro, native, patches, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { logs, metro, native, patches, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import type { NativeObjectHandle } from '@unbound-app/api/native';
 import { AppState, NativeModules } from 'react-native';
 
@@ -149,8 +149,6 @@ describe('on an Australian device', () => {
 	});
 
 	test('reports a rotation that fails instead of throwing', async () => {
-		const error = spyOn(console, 'error').mockImplementation(() => {});
-
 		// A device whose key window cannot be found.
 		native.objc.registerClass('UIApplication', {
 			classMethods: {
@@ -162,8 +160,7 @@ describe('on an Australian device', () => {
 		await startAussie();
 		await stopPlugin();
 
-		expect(error).toHaveBeenCalled();
-		error.mockRestore();
+		expect(logs.entries.some(({ level }) => level === 'error')).toBe(true);
 	});
 });
 

@@ -1,5 +1,5 @@
 import { findRenderTarget } from '@unbound-plugins/shared/react/render-target';
-import { recordSkip } from '@unbound-plugins/shared/lifecycle/health';
+import { skipFeature } from '@unbound-plugins/shared/lifecycle/features';
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import type { AnyProps } from '@unbound-app/api/metro';
 import { metro, patcher } from '@unbound-app/api';
@@ -7,7 +7,7 @@ import { useRef, useSyncExternalStore, type ComponentType, type ReactNode } from
 import { StyleSheet, View } from 'react-native';
 
 import type { PipClip, PipClipStore } from '~/picture-in-picture/android/pip-clip';
-import { OVERLAY_PATH, PLUGIN_NAME, VIDEO_PROTOTYPE } from '~/constants';
+import { OVERLAY_PATH, VIDEO_PROTOTYPE } from '~/constants';
 
 const EXTERNAL_PIP_VIEW_PATH = 'modules/external_pip/ExternalPipView.android.tsx';
 
@@ -88,11 +88,6 @@ function PipSurface({ store, fallback }: { store: PipClipStore; fallback: ReactN
 	return clip.kind === 'video' ? <ClipPlayer key={clip.uri} clip={clip} store={store} /> : null;
 }
 
-function skip(reason: string) {
-	console.error(`[${PLUGIN_NAME}] Skipped, ${reason}.`);
-	recordSkip(reason);
-}
-
 function patchRender(
 	path: string,
 	name: string,
@@ -101,7 +96,7 @@ function patchRender(
 	return whenLoaded<AnyProps>(path, (module) => {
 		const target = findRenderTarget(module);
 
-		if (!target) return skip(`${name} has no render function`);
+		if (!target) return skipFeature(`${name} has no render function`);
 
 		return patcher.after(target.holder, target.key, ({ result }) =>
 			render(result as ReactNode),

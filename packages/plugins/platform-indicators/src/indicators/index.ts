@@ -1,12 +1,10 @@
-import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
-import { recordSkip } from '@unbound-plugins/shared/lifecycle/health';
+import { skipFeature, type Feature } from '@unbound-plugins/shared/lifecycle/features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
 import { patchUserProfilePrimaryInfo } from '~/indicators/profile';
 import { patchMobileStatus } from '~/indicators/mobile-status';
 import { patchMessageRow } from '~/indicators/message-row';
 import { patchUserRow } from '~/indicators/member-list';
-import { PLUGIN_NAME } from '~/constants';
 import {
 	MessageRowData,
 	PresenceStore,
@@ -23,29 +21,30 @@ import {
  * `PresenceStore`. Reads `SessionsStore` and `UserStore` for the signed-in user, and `Theme` and `ThemeStore` for
  * the icon colors. Each patch reads its setting when it runs, so a switch applies at once. A feature that throws on start
  * is logged and recorded, and the others still start. The Addon scope removes the patches.
+ * @returns The features whose modules were found, or nothing when a module every feature needs is missing.
  */
-export function startIndicators(): void {
-	if (!ensureModules(PLUGIN_NAME, { PresenceStore, SessionsStore, UserStore })) return;
+export function indicatorFeatures(): Feature[] | undefined {
+	if (!ensureModules({ PresenceStore, SessionsStore, UserStore })) return;
 
-	const features: (() => void)[] = [];
+	const features: Feature[] = [];
 
-	if (ensureModules(`${PLUGIN_NAME}: member list`, { Theme, ThemeStore })) {
+	if (ensureModules({ Theme, ThemeStore }, 'member list')) {
 		features.push(patchUserRow);
 	}
 
-	if (ensureModules(`${PLUGIN_NAME}: profiles`, { Theme, ThemeStore })) {
+	if (ensureModules({ Theme, ThemeStore }, 'profiles')) {
 		features.push(patchUserProfilePrimaryInfo);
 	}
 
-	if (ensureModules(`${PLUGIN_NAME}: messages`, { MessageRowData })) {
+	if (ensureModules({ MessageRowData }, 'messages')) {
 		features.push(patchMessageRow);
 	}
 
 	if (typeof PresenceStore.isMobileOnline === 'function') {
 		features.push(patchMobileStatus);
 	} else {
-		recordSkip(`${PLUGIN_NAME}: mobile status needs PresenceStore.isMobileOnline`);
+		skipFeature('mobile status needs PresenceStore.isMobileOnline');
 	}
 
-	startFeatures(PLUGIN_NAME, features);
+	return features;
 }

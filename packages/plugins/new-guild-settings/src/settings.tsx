@@ -2,7 +2,7 @@ import { messages } from '@unbound-app/i18n';
 import { Discord } from '@unbound-app/api/metro/components';
 import { storage, ui } from '@unbound-app/api';
 
-import { DEFAULTS, MessageNotifications, PLUGIN_ID, type SettingKey } from '~/constants';
+import { DEFAULTS, MessageNotifications, type SettingKey } from '~/constants';
 
 type Toggle = {
 	key: Exclude<SettingKey, 'messages'>;
@@ -11,7 +11,7 @@ type Toggle = {
 };
 
 function SettingsPanel() {
-	const settings = storage.useBucket(PLUGIN_ID);
+	const settings = storage.useBucket(addon.id);
 
 	const toggles: Toggle[] = [
 		{ key: 'guild', label: messages.MUTE_SERVER, subLabel: messages.MUTE_SERVER_SUBTITLE },

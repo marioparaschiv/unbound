@@ -1,5 +1,3 @@
-export const PLUGIN_NAME = 'One Ping Per DM';
-
 export const PLAY_IN_APP_MESSAGE_SOUND_PATH =
 	'modules/notifications/native/playInAppMessageSound.tsx';
 
