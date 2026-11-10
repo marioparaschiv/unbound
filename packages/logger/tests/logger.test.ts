@@ -1,6 +1,6 @@
 import { afterEach, expect, spyOn, test } from 'bun:test';
 
-import Logger from './logger';
+import Logger from '~/logger';
 
 afterEach(() => {
 	Logger.setInspector(null);
