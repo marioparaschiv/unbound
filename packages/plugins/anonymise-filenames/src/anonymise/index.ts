@@ -5,7 +5,6 @@ import { patchUploadPreviewSheet } from '~/anonymise/preview-sheet';
 import { patchCloudUpload } from '~/anonymise/cloud-upload';
 import { createUploadChoices } from '~/anonymise/uploads';
 import { patchSend } from '~/anonymise/send';
-import { PLUGIN_NAME } from '~/constants';
 
 /**
  * @description Sends uploaded files under an anonymous name, and adds a per-file switch to the upload preview sheet.
@@ -17,7 +16,7 @@ import { PLUGIN_NAME } from '~/constants';
 export function startAnonymise(): () => Promise<void> {
 	const choices = createUploadChoices(() => settings);
 
-	return startFeatures(PLUGIN_NAME, [
+	return startFeatures(addon.name, [
 		() => patchCloudUpload(choices),
 		() => patchSend(choices),
 		() => patchUploadPreviewSheet(choices),

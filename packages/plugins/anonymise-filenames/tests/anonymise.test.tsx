@@ -1,7 +1,7 @@
 import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
-import { beforeEach, describe, expect, test } from 'bun:test';
+import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { View } from 'react-native';
 
 import { selfTest } from '~/index';
@@ -157,6 +157,16 @@ describe('the plugin as a whole', () => {
 
 		expect(new CloudUpload('1', 'passport scan.png').upload()).not.toBe('passport scan.png');
 		expect((await selfTest()).detail).toContain('start failed');
+	});
+
+	test("logs a failed patch under the manifest's name", async () => {
+		const error = spyOn(console, 'error').mockImplementation(() => {});
+
+		registerModules({ default: 'not a component' });
+		await startPlugin();
+
+		expect(String(error.mock.calls[0]?.[0])).toStartWith('[Anonymise File Names]');
+		error.mockRestore();
 	});
 
 	test('sends files under their original names again once the plugin stops', async () => {

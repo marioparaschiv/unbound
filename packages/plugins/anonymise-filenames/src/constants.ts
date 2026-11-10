@@ -1,5 +1,3 @@
-export const PLUGIN_NAME = 'Anonymise Filenames';
-
 export const RANDOM_CHARACTERS = '0123456789bdfhjkmnpqrstvwxz';
 
 export const DEFAULT_FILE_NAME = 'image';
