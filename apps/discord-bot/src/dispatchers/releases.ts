@@ -5,9 +5,14 @@ import { ButtonStyle, ComponentType } from 'discord.js';
 import { createLogger } from '@unbound-app/logger';
 import { and, eq } from 'drizzle-orm';
 
+import {
+	createPostLedger,
+	type AppendOnlyRows,
+	type DesiredPost,
+	type LedgerRow,
+} from '~/lib/post-ledger';
 import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
 import type { MessageGateway } from '~/lib/discord-messages';
-import type { Database } from '~/db/database';
 import { releasePost } from '~/db/schema';
 import { COLOURS } from '~/lib/constants';
 
@@ -87,52 +92,45 @@ export function renderRelease(release: Release, roleId: string): RESTPostAPIChan
 	};
 }
 
-async function recordPost(db: Database, release: ReleaseKey, channelId: string, messageId: string) {
-	await db
-		.insert(releasePost)
-		.values({ platform: release.platform, version: release.version, channelId, messageId })
-		.onConflictDoNothing();
+function ledgerRow(row: typeof releasePost.$inferSelect): LedgerRow {
+	return { channelId: row.channelId, messageId: row.messageId, hash: '' };
 }
 
-// Our listed announcement whose title names an unannounced release lost its row write, so it is
-// adopted. Nothing here is ever deleted: its ping already happened.
-async function adoptOrphans(
-	db: Database,
-	messages: MessageGateway,
-	target: ReleaseTarget,
-	unannounced: Release[],
-): Promise<Release[]> {
-	const byTitle = new Map(unannounced.map((release) => [releaseTitle(release), release]));
+// The release_post table as an append-only ledger, keyed by `platform:version`.
+const RELEASE_ROWS: AppendOnlyRows = {
+	async list(db) {
+		const rows = await db.select().from(releasePost);
 
-	for (const message of await messages.listOwn(target.channelId)) {
-		const title = message.embeds[0]?.title;
-		const release = title ? byTitle.get(title) : undefined;
+		return new Map(rows.map((row) => [keyOf(row), ledgerRow(row)]));
+	},
+	async get(db, key) {
+		const release = parseKey(key);
 
-		if (!title || !release) {
-			continue;
-		}
+		if (!release) return;
 
-		byTitle.delete(title);
-		await recordPost(db, release, target.channelId, message.id);
-	}
+		const [row] = await db
+			.select()
+			.from(releasePost)
+			.where(
+				and(
+					eq(releasePost.platform, release.platform),
+					eq(releasePost.version, release.version),
+				),
+			);
 
-	return [...byTitle.values()];
-}
+		return row && ledgerRow(row);
+	},
+	async insert(db, key, { channelId, messageId }) {
+		const release = parseKey(key);
 
-// Once posted, a release is never edited or reposted, even if its message was deleted by hand:
-// a repost would ping the role a second time.
-async function announce(
-	db: Database,
-	messages: MessageGateway,
-	release: Release,
-	target: ReleaseTarget,
-) {
-	const messageId = await messages.post(target.channelId, {
-		body: renderRelease(release, target.roleId),
-	});
+		if (!release) return;
 
-	await recordPost(db, release, target.channelId, messageId);
-}
+		await db
+			.insert(releasePost)
+			.values({ ...release, channelId, messageId })
+			.onConflictDoNothing();
+	},
+};
 
 /**
  * @description Creates the dispatcher that announces each fresh loader release once, pinging the releases role.
@@ -140,7 +138,19 @@ async function announce(
  * @returns The `loader_release` dispatcher.
  */
 export function createReleasesDispatcher(options: ReleasesOptions): Dispatcher {
-	const { messages, now, ...target } = options;
+	const { messages, now, channelId, roleId } = options;
+	// Once posted, a release is never edited or reposted, even if its message was deleted by hand:
+	// a repost would ping the role a second time.
+	const ledger = createPostLedger({
+		messages,
+		label: 'release',
+		policy: 'append-only',
+		rows: RELEASE_ROWS,
+	});
+
+	function desiredPost(release: Release): DesiredPost {
+		return { channelId, render: async () => ({ body: renderRelease(release, roleId) }) };
+	}
 
 	// Announces the release a `platform:version` payload names unless it was announced already.
 	async function announceRelease({ db, web }: DispatcherContext, payload: string) {
@@ -148,44 +158,30 @@ export function createReleasesDispatcher(options: ReleasesOptions): Dispatcher {
 
 		if (!key) return;
 
-		const [release, [posted]] = await Promise.all([
-			web.release(key),
-			db
-				.select({ messageId: releasePost.messageId })
-				.from(releasePost)
-				.where(
-					and(
-						eq(releasePost.platform, key.platform),
-						eq(releasePost.version, key.version),
-					),
-				),
-		]);
+		const release = await web.release(key);
 
-		if (!release || posted || release.publishedAt < freshSince(now())) return;
+		if (!release || release.publishedAt < freshSince(now())) return;
 
-		await announce(db, messages, release, target);
+		await ledger.sync(db, keyOf(key), desiredPost(release));
 	}
 
 	// Adopts announcements a crash left unrecorded, then announces every unannounced fresh release in
 	// publish order; one release's failure is logged and left to the next run.
 	async function reconcileReleases({ db, web }: DispatcherContext) {
-		const [fresh, posts] = await Promise.all([
-			web.releasesSince(freshSince(now())),
-			db
-				.select({ platform: releasePost.platform, version: releasePost.version })
-				.from(releasePost),
-		]);
-		const posted = new Set(posts.map(keyOf));
-		const unannounced = await adoptOrphans(
-			db,
-			messages,
-			target,
-			fresh.filter((release) => !posted.has(keyOf(release))),
-		);
+		const fresh = await web.releasesSince(freshSince(now()));
+		const byTitle = new Map(fresh.map((release) => [releaseTitle(release), release]));
 
-		for (const release of unannounced) {
+		// Our announcement whose title names a fresh release is that release's post.
+		await ledger.adopt(db, [channelId], (message) => {
+			const title = message.embeds[0]?.title;
+			const release = title ? byTitle.get(title) : undefined;
+
+			return release && { key: keyOf(release), channelId };
+		});
+
+		for (const release of fresh) {
 			try {
-				await announce(db, messages, release, target);
+				await ledger.sync(db, keyOf(release), desiredPost(release));
 			} catch (error) {
 				logger.error(`Failed to announce ${release.platform} ${release.version}:`, error);
 			}
