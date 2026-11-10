@@ -2,18 +2,18 @@ import type { ReviewNotice } from '@unbound-app/web/bot';
 import type { APIEmbed } from 'discord.js';
 import { max } from 'drizzle-orm';
 
-import {
-	createMessageGateway,
-	discordFailure,
-	eventNonce,
-	type MessageGateway,
-} from '~/lib/discord-messages';
-import type { Dispatcher, DispatcherContext, Stores } from '~/dispatchers/types';
+import { discordFailure, eventNonce, type MessageGateway } from '~/lib/discord-messages';
+import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
 import { reviewNotice, type ReviewNoticeOutcome } from '~/db/schema';
 import { EMBED_LIMITS, quote, truncate } from '~/lib/message-text';
 import { DECISIONS } from '~/dispatchers/audit-kinds';
 import type { Database } from '~/db/database';
-import { SITE_URL } from '~/lib/constants';
+
+export type ReviewNoticesOptions = {
+	/** The site origin each notice links to. */
+	siteUrl: string;
+	messages: MessageGateway;
+};
 
 const PAGE = 100;
 const SUBMISSIONS = { listing: 'Your new addon', update: 'Your update to' } as const;
@@ -26,7 +26,7 @@ type Handled = { outcome: ReviewNoticeOutcome; messageId?: string };
  * @param siteUrl The site origin links point at.
  * @returns The embed, within Discord's limits.
  */
-export function renderReviewNotice(notice: ReviewNotice, siteUrl: string = SITE_URL): APIEmbed {
+export function renderReviewNotice(notice: ReviewNotice, siteUrl: string): APIEmbed {
 	const decision = DECISIONS[notice.decision];
 	const approved = notice.decision === 'approved';
 	const url = approved
@@ -55,7 +55,7 @@ async function record(db: Database, eventId: number, { outcome, messageId }: Han
 
 // An empty `review_notice` means notices were never enabled here, so the newest event becomes the
 // floor and enabling DMs nobody about old decisions.
-async function recordFloor({ db, web }: Stores) {
+async function recordFloor({ db, web }: DispatcherContext) {
 	const floor = await web.newestEventId();
 
 	await record(db, floor, { outcome: 'floor' });
@@ -64,7 +64,7 @@ async function recordFloor({ db, web }: Stores) {
 }
 
 // Notices are handled one at a time in event id order, so the newest handled id is the whole cursor.
-async function cursor(stores: Stores) {
+async function cursor(stores: DispatcherContext) {
 	const [row] = await stores.db.select({ last: max(reviewNotice.eventId) }).from(reviewNotice);
 
 	return row?.last ?? (await recordFloor(stores));
@@ -72,7 +72,10 @@ async function cursor(stores: Stores) {
 
 // The nonce dedupes a quick retry; a crash between this send and its row re-sends on a later run,
 // which can DM the author twice. That is accepted.
-async function deliver(messages: MessageGateway, notice: ReviewNotice): Promise<Handled> {
+async function deliver(
+	{ messages, siteUrl }: ReviewNoticesOptions,
+	notice: ReviewNotice,
+): Promise<Handled> {
 	if (!notice.discordId) {
 		return { outcome: 'unlinked' };
 	}
@@ -80,7 +83,12 @@ async function deliver(messages: MessageGateway, notice: ReviewNotice): Promise<
 	try {
 		const messageId = await messages.dm(
 			notice.discordId,
-			{ body: { embeds: [renderReviewNotice(notice)], allowed_mentions: { parse: [] } } },
+			{
+				body: {
+					embeds: [renderReviewNotice(notice, siteUrl)],
+					allowed_mentions: { parse: [] },
+				},
+			},
 			{ nonce: eventNonce('r', notice.eventId, notice.createdAt) },
 		);
 
@@ -95,39 +103,32 @@ async function deliver(messages: MessageGateway, notice: ReviewNotice): Promise<
 	}
 }
 
-// Strictly sequential: a failed send throws and ends the run, and the next run resumes at the cursor.
-async function notifyPending(context: DispatcherContext) {
-	const messages = createMessageGateway(context.client.rest, context.client.user.id);
+/**
+ * @description Creates the dispatcher that DMs each human review decision to the submission's author once, in event order.
+ * @param options The site origin and the bot's Discord messages.
+ * @returns The `audit_event` dispatcher.
+ */
+export function createReviewNoticesDispatcher(options: ReviewNoticesOptions): Dispatcher {
+	// Strictly sequential: a failed send throws and ends the run, and the next run resumes at the cursor.
+	async function notifyPending(context: DispatcherContext) {
+		for (;;) {
+			const notices = await context.web.reviewNoticesAfter(await cursor(context), PAGE);
 
-	for (;;) {
-		const notices = await context.web.reviewNoticesAfter(await cursor(context), PAGE);
+			if (!notices.length) return;
 
-		if (!notices.length) return;
-
-		for (const notice of notices) {
-			await record(context.db, notice.eventId, await deliver(messages, notice));
+			for (const notice of notices) {
+				await record(context.db, notice.eventId, await deliver(options, notice));
+			}
 		}
 	}
+
+	return {
+		name: 'review-notices',
+		channel: 'audit_event',
+		reconcile: notifyPending,
+		// The payload's event id adds nothing: every decision after the cursor is handled.
+		handle: (_payload, context) => notifyPending(context),
+	};
 }
 
-/** DMs each human review decision to the submission's author once, in event order. */
-export const reviewNoticesDispatcher: Dispatcher = {
-	name: 'review-notices',
-	channel: 'audit_event',
-	requires: [],
-	/**
-	 * @description DMs every review decision after the cursor.
-	 * @param context The dispatcher's stores and Discord client.
-	 * @returns Resolves once every pending decision is handled.
-	 */
-	reconcile: (context) => notifyPending(context),
-	/**
-	 * @description DMs every review decision after the cursor; the payload's event id adds nothing.
-	 * @param _payload The `audit_event` payload.
-	 * @param context The dispatcher's stores and Discord client.
-	 * @returns Resolves once every pending decision is handled.
-	 */
-	handle: (_payload, context) => notifyPending(context),
-};
-
-export default { renderReviewNotice, reviewNoticesDispatcher };
+export default { renderReviewNotice, createReviewNoticesDispatcher };

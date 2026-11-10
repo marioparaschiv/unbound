@@ -7,13 +7,11 @@ import {
 	seedSponsorship,
 } from '@unbound-app/web/testing';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import type { Client } from 'discord.js';
 import { eq } from 'drizzle-orm';
 
-import { announceRelease, reconcileReleases, type ReleaseTarget } from '~/dispatchers/releases';
-import { reconcileAddons, syncAddon, type AddonChannels } from '~/dispatchers/addons';
+import { createReleasesDispatcher, type ReleaseTarget } from '~/dispatchers/releases';
+import { createAddonsDispatcher, type AddonChannels } from '~/dispatchers/addons';
 import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
-import { DISCORD_IDS, type DiscordIds } from '~/lib/constants';
 import { createAuditTelemetry } from '~/lib/audit-telemetry';
 import { createAuditDispatcher } from '~/dispatchers/audit';
 import { createRolesDispatcher } from '~/dispatchers/roles';
@@ -30,25 +28,28 @@ import {
 	waitFor,
 	type BotTestDatabase,
 } from './helpers/database';
-import { createFakeClient, createFakeDiscord, type FakeDiscord } from './helpers/fake-discord';
+import { createFakeDiscord, createFakeGateway, type FakeDiscord } from './helpers/fake-discord';
 import { FAKE_GUILD_ID, fakeDiscord as fakeGuild } from './helpers/roles-discord';
 import { testConfig } from './helpers/config';
 import { signUp } from './helpers/web';
 
 const CHANNELS: AddonChannels = { plugin: '11', theme: '12', 'icon-pack': '13' };
 const RELEASES: ReleaseTarget = { channelId: '21', roleId: '31' };
-const ROLE_IDS = { contributor: 'r-c', addonDeveloper: 'r-a', sponsor: 'r-s' };
+const ROLE_IDS = {
+	CONTRIBUTOR_ROLE_ID: 'r-c',
+	ADDON_DEVELOPER_ROLE_ID: 'r-a',
+	SPONSOR_ROLE_ID: 'r-s',
+};
 const LINKED_DISCORD_ID = '555';
 // What a notification may take to reach Discord through LISTEN, the serial queue and the fake.
 const NOTIFY_WITHIN_MS = 1000;
-// Every id set, so the runtime starts every dispatcher.
-const IDS = Object.fromEntries(Object.keys(DISCORD_IDS).map((name) => [name, '1'])) as DiscordIds;
+// No author has an avatar emoji, so each card hashes its listing alone.
+const NO_AVATARS = { resolve: async () => new Map(), prune: async () => {} };
 
 describe.skipIf(!DATABASE_URL)('the runtime against the web database and a fake Discord', () => {
 	let database: BotTestDatabase;
 	let channels: FakeChannels;
 	let auditLog: FakeDiscord;
-	let client: Client<true>;
 	let stop: () => Promise<void>;
 	const guild = fakeGuild({ members: { [LINKED_DISCORD_ID]: [] }, guildId: FAKE_GUILD_ID });
 	const started = new Set<string>();
@@ -68,50 +69,35 @@ describe.skipIf(!DATABASE_URL)('the runtime against the web database and a fake 
 		database = await createBotTestDatabase();
 		channels = createFakeChannels();
 		auditLog = createFakeDiscord();
-		client = createFakeClient(auditLog);
 
 		const { gateway } = channels;
-		const roles = createRolesDispatcher({
-			guildId: FAKE_GUILD_ID,
-			roleIds: ROLE_IDS,
-			contributors: { get: async () => new Set<string>() },
-		});
+		const config = testConfig();
 		const registered: Dispatcher[] = [
-			{
-				name: 'addons',
-				channel: 'addon_changed',
-				requires: [],
-				reconcile: (context) => reconcileAddons(context, gateway, CHANNELS),
-				handle: (id, context) => syncAddon(context, gateway, id, CHANNELS),
-			},
-			{
-				name: 'releases',
-				channel: 'loader_release',
-				requires: [],
-				reconcile: (context) => reconcileReleases(context, gateway, RELEASES),
-				handle: (payload, context) => announceRelease(context, gateway, payload, RELEASES),
-			},
-			createAuditDispatcher(
-				createAuditTelemetry({ env: testConfig().env }),
-				auditLog.channelId,
-			),
-			{
-				...roles,
-				reconcile: (context) => roles.reconcile({ ...context, client: guild.client }),
-				handle: (payload, context) =>
-					roles.handle(payload, { ...context, client: guild.client }),
-			},
+			createAddonsDispatcher({ channels: CHANNELS, messages: gateway, emojis: NO_AVATARS }),
+			createReleasesDispatcher({ ...RELEASES, messages: gateway, now: Date.now }),
+			createAuditDispatcher({
+				channelId: auditLog.channelId,
+				siteUrl: config.siteUrl,
+				telemetry: createAuditTelemetry({ env: config.env }),
+				messages: createFakeGateway(auditLog),
+			}),
+			createRolesDispatcher({
+				guildId: FAKE_GUILD_ID,
+				guilds: guild.guilds,
+				ids: ROLE_IDS,
+				contributors: { get: async () => new Set<string>() },
+				now: Date.now,
+			}),
 		];
 		const dispatchers = registered.map(observed);
-		const context: DispatcherContext = { db: database.db, web: database.reads, client };
+		const context: DispatcherContext = { db: database.db, web: database.reads };
 
-		({ stop } = startDispatchers(dispatchers, context, database.url, 60_000, IDS));
+		({ stop } = startDispatchers(dispatchers, context, database.url, 60_000));
 		await waitFor(() => started.size === dispatchers.length);
 	});
 
 	afterAll(async () => {
 		await stop();
-		await client.destroy();
 		auditLog.stop();
 		await channels.stop();
 		await database.drop();

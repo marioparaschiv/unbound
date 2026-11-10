@@ -1,6 +1,6 @@
 import { DiscordAPIError, RESTJSONErrorCodes } from 'discord.js';
 
-import type { RolesClient, RolesGuild, RolesMember, RolesRole } from '~/dispatchers/roles';
+import type { RolesGuild, RolesGuilds, RolesMember, RolesRole } from '~/dispatchers/roles';
 
 export type FakeDiscordOptions = {
 	guildId?: string;
@@ -19,7 +19,7 @@ export type FakeDiscordOptions = {
 export type Added = { discordId: string; roleId: string };
 
 export type FakeDiscord = {
-	client: RolesClient;
+	guilds: RolesGuilds;
 	added: Added[];
 	fetched: string[];
 	/** Adds the member to the guild, as a bot without the GuildMembers intent sees it: no event fires. */
@@ -52,7 +52,7 @@ function discordError(code: RESTJSONErrorCodes, message: string, method: string,
 /**
  * @description A guild with one bot member, recording every fetch and role add.
  * @param options Members, guild roles, hierarchy and permission.
- * @returns The client, the recorded calls and `enter()`.
+ * @returns The guilds, the recorded calls and `enter()`.
  */
 export function fakeDiscord(options: FakeDiscordOptions): FakeDiscord {
 	const {
@@ -142,15 +142,13 @@ export function fakeDiscord(options: FakeDiscordOptions): FakeDiscord {
 	};
 
 	return {
-		client: {
-			guilds: {
-				async fetch(id) {
-					if (id !== guildId) {
-						throw new Error(`Unknown guild ${id}`);
-					}
+		guilds: {
+			async fetch(id) {
+				if (id !== guildId) {
+					throw new Error(`Unknown guild ${id}`);
+				}
 
-					return guild;
-				},
+				return guild;
 			},
 		},
 		added,

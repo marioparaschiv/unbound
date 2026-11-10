@@ -1,7 +1,28 @@
 import { type StaticDecode, type TSchema, safeParse, Type } from '@unbound-app/contracts/schema';
 import { DEFAULT_PERK_GRACE_DAYS } from '@unbound-app/web/bot';
 
-import { CDN_URL, DISCORD_IDS, GUILD_ID, SITE_URL, type DiscordIds } from '~/lib/constants';
+const SITE_URL = 'https://unbound.rip';
+const CDN_URL = 'https://cdn.unbound.rip';
+const GUILD_ID = '950850315601711176';
+
+// `undefined` marks an id the operator has not supplied yet; a dispatcher that requires it is not started.
+const DISCORD_IDS = {
+	PLUGINS_CHANNEL_ID: '1564067818415333407',
+	THEMES_CHANNEL_ID: '1564067819958571110',
+	ICON_PACKS_CHANNEL_ID: '1564067821443616768',
+	AUDIT_LOG_CHANNEL_ID: '1564277749403746314',
+	RELEASES_CHANNEL_ID: '1564277813849100378',
+	RELEASES_ROLE_ID: undefined,
+	CONTRIBUTOR_ROLE_ID: '967799585844113418',
+	ADDON_DEVELOPER_ROLE_ID: '952688684107456612',
+	SPONSOR_ROLE_ID: '997233808522874910',
+} as const;
+
+/** Where the operator sets the guild and the id constants, for messages that ask them to. */
+export const IDS_SOURCE = 'src/lib/config.ts';
+
+export type IdConstantName = keyof typeof DISCORD_IDS;
+export type DiscordIds = Readonly<Record<IdConstantName, string | undefined>>;
 
 // The process environment holds only strings, so each number is a string check plus a decode to a number.
 const integerAtLeast = (minimum: number, message: string) =>

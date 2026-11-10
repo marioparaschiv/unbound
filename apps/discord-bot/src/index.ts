@@ -32,7 +32,6 @@ if (!loaded.ok) {
 const { config } = loaded;
 const { env } = config;
 const auditTelemetry = createAuditTelemetry({ env });
-const dispatchers = createDispatchers({ config, telemetry: auditTelemetry });
 const db = createDatabase(env.DATABASE_URL, POOLED_OPTIONS);
 // One pool for both: the bot's schema through `db`, the web's tables, read only, through `web`.
 const web = createBotReads(db.$client, {
@@ -74,9 +73,20 @@ async function exit(code: number): Promise<never> {
 }
 
 function startRuntime(ready: Client<true>) {
-	const { started, stop: stopDispatchers } = startDispatchers(
+	const dispatchers = createDispatchers({
+		config,
+		discord: {
+			rest: ready.rest,
+			selfId: ready.user.id,
+			applicationId: ready.application.id,
+			guilds: ready.guilds,
+		},
+		telemetry: auditTelemetry,
+		now: Date.now,
+	});
+	const { stop: stopDispatchers } = startDispatchers(
 		dispatchers,
-		{ db, web, client: ready },
+		{ db, web },
 		// LISTEN holds a session, which pgbouncer's transaction mode cannot give it.
 		env.DATABASE_DIRECT_URL,
 		env.RECONCILE_INTERVAL_SECONDS * 1000,
@@ -90,7 +100,7 @@ function startRuntime(ready: Client<true>) {
 	process.once('SIGINT', () => void shutdown());
 	process.once('SIGTERM', () => void shutdown());
 
-	logger.success(`Runtime started with ${started.length} dispatcher(s).`);
+	logger.success(`Runtime started with ${dispatchers.length} dispatcher(s).`);
 }
 
 client.once(Events.ClientReady, (ready) => {

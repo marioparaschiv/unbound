@@ -1,7 +1,6 @@
 import { DEFAULT_PERK_GRACE_DAYS } from '@unbound-app/web/bot';
 import { describe, expect, test } from 'bun:test';
 
-import { CDN_URL, DISCORD_IDS, GUILD_ID, SITE_URL } from '~/lib/constants';
 import { loadConfig, loadDatabaseConfig } from '~/lib/config';
 
 import { REQUIRED_ENV as ENV } from '../helpers/config';
@@ -44,10 +43,13 @@ describe('loadConfig', () => {
 		expect(result).toEqual({
 			ok: true,
 			config: {
-				guildId: GUILD_ID,
-				ids: DISCORD_IDS,
-				siteUrl: SITE_URL,
-				cdnUrl: CDN_URL,
+				guildId: '950850315601711176',
+				ids: expect.objectContaining({
+					PLUGINS_CHANNEL_ID: '1564067818415333407',
+					RELEASES_ROLE_ID: undefined,
+				}),
+				siteUrl: 'https://unbound.rip',
+				cdnUrl: 'https://cdn.unbound.rip',
 				env: {
 					...ENV,
 					RECONCILE_INTERVAL_SECONDS: 300,

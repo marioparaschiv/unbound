@@ -20,14 +20,23 @@ import {
 import { createContributorCache } from '~/lib/github-contributors';
 import { roleGrant } from '~/db/schema';
 
+import {
+	FAKE_GUILD_ID,
+	GUILD_ROLES,
+	fakeDiscord,
+	type FakeDiscord,
+} from '../helpers/roles-discord';
 import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from '../helpers/database';
-import { FAKE_GUILD_ID, GUILD_ROLES, fakeDiscord } from '../helpers/roles-discord';
 import { createFakeReads, MEMBER, type FakeReads } from '../helpers/fake-reads';
 import { fakeGitHub } from '../helpers/github-fetch';
 import { signUp } from '../helpers/web';
 
 const HOUR = 60 * 60 * 1000;
-const ROLE_IDS = { contributor: 'r-c', addonDeveloper: 'r-a', sponsor: 'r-s' };
+const ROLE_IDS = {
+	CONTRIBUTOR_ROLE_ID: 'r-c',
+	ADDON_DEVELOPER_ROLE_ID: 'r-a',
+	SPONSOR_ROLE_ID: 'r-s',
+};
 const CONTRIBUTORS = new Set(['42']);
 
 const ROW: Member = {
@@ -43,11 +52,13 @@ function logged(spy: ReturnType<typeof spyOn>) {
 	return spy.mock.calls.flat().map(String).join('\n');
 }
 
-function dispatcher(overrides: Partial<RolesOptions> = {}) {
+function dispatcher(discord: Pick<FakeDiscord, 'guilds'>, overrides: Partial<RolesOptions> = {}) {
 	return createRolesDispatcher({
 		guildId: FAKE_GUILD_ID,
-		roleIds: ROLE_IDS,
+		guilds: discord.guilds,
+		ids: ROLE_IDS,
 		contributors: { get: async () => CONTRIBUTORS },
+		now: Date.now,
 		...overrides,
 	});
 }
@@ -129,8 +140,8 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		}
 	}
 
-	function context(client: ReturnType<typeof fakeDiscord>['client']) {
-		return { db: database.db, web: fake.reads, client };
+	function context() {
+		return { db: database.db, web: fake.reads };
 	}
 
 	function grants() {
@@ -146,7 +157,7 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		);
 		const discord = fakeDiscord({ members: { '1': [], '2': [] } });
 
-		await dispatcher().reconcile(context(discord.client));
+		await dispatcher(discord).reconcile(context());
 
 		expect(discord.added).toEqual([{ discordId: '1', roleId: 'r-c' }]);
 	});
@@ -155,7 +166,7 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		seed({ githubId: '7', isAddonDeveloper: true, isSponsor: true });
 		const discord = fakeDiscord({ members: { '1': [] } });
 
-		await dispatcher().reconcile(context(discord.client));
+		await dispatcher(discord).reconcile(context());
 
 		expect(discord.added).toHaveLength(2);
 		expect(discord.added).toEqual(
@@ -169,9 +180,9 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 	test('with no contributor list, grants Addon Developer and Sponsor but not Contributor', async () => {
 		seed({ isAddonDeveloper: true, isSponsor: true });
 		const discord = fakeDiscord({ members: { '1': [] } });
-		const roles = dispatcher({ contributors: { get: async () => undefined } });
+		const roles = dispatcher(discord, { contributors: { get: async () => undefined } });
 
-		await roles.reconcile(context(discord.client));
+		await roles.reconcile(context());
 
 		expect(discord.added.map((grant) => grant.roleId).toSorted()).toEqual(['r-a', 'r-s']);
 	});
@@ -180,7 +191,7 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		seed({ githubId: null, isAddonDeveloper: true, isSponsor: true });
 		const discord = fakeDiscord({ members: { '1': [] } });
 
-		await dispatcher().reconcile(context(discord.client));
+		await dispatcher(discord).reconcile(context());
 
 		expect(discord.added).toEqual([]);
 		expect(discord.fetched).toEqual([]);
@@ -189,8 +200,8 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 	test('a member who unlinks Discord is granted nothing more and keeps earlier grants', async () => {
 		seed({ isSponsor: true });
 		const discord = fakeDiscord({ members: { '1': [] } });
-		const roles = dispatcher();
-		const current = context(discord.client);
+		const roles = dispatcher(discord);
+		const current = context();
 
 		await roles.reconcile(current);
 		fake.members.length = 0;
@@ -212,7 +223,7 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		seed({});
 		const discord = fakeDiscord({ members: { '1': [] } });
 
-		await dispatcher().reconcile(context(discord.client));
+		await dispatcher(discord).reconcile(context());
 
 		expect(discord.held('1')).toEqual(new Set(['r-c']));
 		expect(await grants()).toEqual([{ discordId: '1', role: 'r-c' }]);
@@ -222,7 +233,7 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		seed({ isSponsor: true });
 		const discord = fakeDiscord({ members: { '1': ['r-c'] } });
 
-		await dispatcher().reconcile(context(discord.client));
+		await dispatcher(discord).reconcile(context());
 
 		expect(discord.added).toEqual([{ discordId: '1', roleId: 'r-s' }]);
 		expect(await grants()).toEqual([{ discordId: '1', role: 'r-s' }]);
@@ -231,8 +242,8 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 	test('a second reconcile makes no Discord calls', async () => {
 		seed({ isAddonDeveloper: true, isSponsor: true });
 		const discord = fakeDiscord({ members: { '1': [] } });
-		const roles = dispatcher();
-		const current = context(discord.client);
+		const roles = dispatcher(discord);
+		const current = context();
 
 		await roles.reconcile(current);
 		const fetched = discord.fetched.length;
@@ -246,8 +257,8 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 	test('a role held by hand costs no Discord call on the next reconcile', async () => {
 		seed({});
 		const discord = fakeDiscord({ members: { '1': ['r-c'] } });
-		const roles = dispatcher();
-		const current = context(discord.client);
+		const roles = dispatcher(discord);
+		const current = context();
 
 		await roles.reconcile(current);
 		await roles.reconcile(current);
@@ -261,8 +272,8 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 	test('an absent member who later enters the guild is granted on the next reconcile, with no guildMemberAdd', async () => {
 		seed({});
 		const discord = fakeDiscord({ members: {} });
-		const roles = dispatcher();
-		const current = context(discord.client);
+		const roles = dispatcher(discord);
+		const current = context();
 
 		await roles.reconcile(current);
 		expect(discord.added).toEqual([]);
@@ -279,8 +290,8 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		seed({});
 		const discord = fakeDiscord({ members: {}, deleted: ['1'] });
 		let clock = 0;
-		const roles = dispatcher({ now: () => clock });
-		const current = context(discord.client);
+		const roles = dispatcher(discord, { now: () => clock });
+		const current = context();
 
 		await roles.reconcile(current);
 		clock = HOUR - 1;
@@ -296,8 +307,8 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 	test('a deleted account (10013 Unknown User) is skipped quietly like an absent member', async () => {
 		seed({});
 		const discord = fakeDiscord({ members: {}, deleted: ['1'] });
-		const roles = dispatcher();
-		const current = context(discord.client);
+		const roles = dispatcher(discord);
+		const current = context();
 
 		await roles.reconcile(current);
 		await roles.reconcile(current);
@@ -309,8 +320,8 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 	test('does not re-add a role the bot granted after a moderator removed it', async () => {
 		seed({});
 		const discord = fakeDiscord({ members: { '1': [] } });
-		const roles = dispatcher();
-		const current = context(discord.client);
+		const roles = dispatcher(discord);
+		const current = context();
 
 		await roles.reconcile(current);
 		discord.held('1')?.delete('r-c');
@@ -324,8 +335,8 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 	test('a member who stops qualifying keeps their roles', async () => {
 		seed({ isSponsor: true });
 		const discord = fakeDiscord({ members: { '1': [] } });
-		const roles = dispatcher({ contributors: { get: async () => new Set<string>() } });
-		const current = context(discord.client);
+		const roles = dispatcher(discord, { contributors: { get: async () => new Set<string>() } });
+		const current = context();
 
 		await roles.reconcile(current);
 		seed({ isSponsor: false });
@@ -337,9 +348,9 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 	test('skips an absent member and writes nothing', async () => {
 		seed({});
 		const discord = fakeDiscord({ members: {} });
-		const roles = dispatcher();
+		const roles = dispatcher(discord);
 
-		await roles.reconcile(context(discord.client));
+		await roles.reconcile(context());
 
 		expect(discord.fetched).toEqual(['1']);
 		expect(await grants()).toEqual([]);
@@ -350,7 +361,7 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		seed({ isSponsor: true });
 		const discord = fakeDiscord({ members: { '1': [] }, aboveBot: ['r-s'] });
 
-		await dispatcher().reconcile(context(discord.client));
+		await dispatcher(discord).reconcile(context());
 
 		expect(discord.added).toEqual([{ discordId: '1', roleId: 'r-c' }]);
 		expect(logged(error)).toContain('Cannot grant "Sponsor"');
@@ -363,18 +374,21 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		const sponsorAbove = fakeDiscord({ members, aboveBot: ['r-s'] });
 		const bothAbove = fakeDiscord({ members, aboveBot: ['r-s', 'r-a'] });
 		const fixed = fakeDiscord({ members });
-		const roles = dispatcher();
+		let guild = sponsorAbove;
+		const roles = dispatcher({ guilds: { fetch: (id) => guild.guilds.fetch(id) } });
 
-		await roles.reconcile(context(sponsorAbove.client));
-		await roles.reconcile(context(sponsorAbove.client));
+		await roles.reconcile(context());
+		await roles.reconcile(context());
 		expect(count(error, 'Cannot grant "Sponsor"')).toBe(1);
 
-		await roles.reconcile(context(bothAbove.client));
+		guild = bothAbove;
+		await roles.reconcile(context());
 		expect(count(error, 'Cannot grant "Sponsor"')).toBe(2);
 		expect(count(error, 'Cannot grant "Addon Developer"')).toBe(1);
 
-		await roles.reconcile(context(fixed.client));
-		await roles.reconcile(context(fixed.client));
+		guild = fixed;
+		await roles.reconcile(context());
+		await roles.reconcile(context());
 		expect(fixed.added).toEqual([{ discordId: '1', roleId: 'r-s' }]);
 		expect(count(info, 'Role grants are unblocked')).toBe(1);
 	});
@@ -384,7 +398,7 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		const guildRoles = GUILD_ROLES.filter((role) => role.id !== 'r-c');
 		const discord = fakeDiscord({ members: { '1': [] }, guildRoles });
 
-		await dispatcher().reconcile(context(discord.client));
+		await dispatcher(discord).reconcile(context());
 
 		expect(discord.added).toEqual([{ discordId: '1', roleId: 'r-s' }]);
 		expect(logged(error)).toContain(
@@ -396,7 +410,7 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		seed({ isSponsor: true });
 		const discord = fakeDiscord({ members: { '1': [] }, manageRoles: false });
 
-		await dispatcher().reconcile(context(discord.client));
+		await dispatcher(discord).reconcile(context());
 
 		expect(discord.added).toEqual([]);
 		expect(discord.fetched).toEqual([]);
@@ -410,7 +424,7 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		);
 		const discord = fakeDiscord({ members: { '1': [], '2': [] }, failAdd: ['r-c'] });
 
-		await dispatcher().reconcile(context(discord.client));
+		await dispatcher(discord).reconcile(context());
 
 		function roleIdsFor(discordId: string) {
 			return discord.added
@@ -437,8 +451,8 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 			now: () => clock,
 		});
 		const discord = fakeDiscord({ members: { '1': [] } });
-		const roles = dispatcher({ contributors });
-		const current = context(discord.client);
+		const roles = dispatcher(discord, { contributors });
+		const current = context();
 
 		await roles.reconcile(current);
 		client.push([{ id: 5 }]);
@@ -457,13 +471,13 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		);
 		fake.maintainers.set('acme.plugin', ['b']);
 		const discord = fakeDiscord({ members: { '1': [], '2': [] } });
-		const roles = dispatcher();
+		const roles = dispatcher(discord);
 
-		await roles.handle('github:7', context(discord.client));
+		await roles.handle('github:7', context());
 		expect(discord.added).toEqual([{ discordId: '1', roleId: 'r-s' }]);
 
-		await roles.handle('addon:acme.plugin', context(discord.client));
-		await roles.handle('discord:2', context(discord.client));
+		await roles.handle('addon:acme.plugin', context());
+		await roles.handle('discord:2', context());
 		expect(discord.added).toEqual([
 			{ discordId: '1', roleId: 'r-s' },
 			{ discordId: '2', roleId: 'r-a' },
@@ -473,8 +487,8 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 	test('linking GitHub on the web, as a sponsoring addon developer, grants both roles', async () => {
 		const member = await signUp(database.web);
 		const discord = fakeDiscord({ members: { [member.discordId]: [] } });
-		const roles = dispatcher({ contributors: { get: async () => new Set<string>() } });
-		const real = { db: database.db, web: database.reads, client: discord.client };
+		const roles = dispatcher(discord, { contributors: { get: async () => new Set<string>() } });
+		const real = { db: database.db, web: database.reads };
 
 		await seedApprovedAddon(database.web, member.userId, manifest('roles.addon'));
 		await seedSponsorship(database.web, { githubId: member.userId });

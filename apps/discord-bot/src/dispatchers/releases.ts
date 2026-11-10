@@ -5,15 +5,21 @@ import { ButtonStyle, ComponentType } from 'discord.js';
 import { createLogger } from '@unbound-app/logger';
 import { and, eq } from 'drizzle-orm';
 
-import { createMessageGateway, type MessageGateway } from '~/lib/discord-messages';
-import type { Dispatcher, Stores } from '~/dispatchers/types';
-import { COLOURS, requireId } from '~/lib/constants';
+import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
+import type { MessageGateway } from '~/lib/discord-messages';
 import type { Database } from '~/db/database';
 import { releasePost } from '~/db/schema';
+import { COLOURS } from '~/lib/constants';
 
 export type ReleaseTarget = {
 	channelId: string;
 	roleId: string;
+};
+
+export type ReleasesOptions = ReleaseTarget & {
+	messages: MessageGateway;
+	/** The clock, in epoch milliseconds; a release older than a week is never announced. */
+	now: () => number;
 };
 
 const logger = createLogger('Bot', 'Releases');
@@ -21,11 +27,6 @@ const logger = createLogger('Bot', 'Releases');
 const PLATFORM_NAMES: Record<LoaderPlatform, string> = { ios: 'iOS', android: 'Android' };
 // An older release is never announced, or a first deploy would ping the role once per historic release.
 const RELEASE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-
-// Read per call: the role id may still be unset, and the runtime then never starts this dispatcher.
-function releaseTarget(): ReleaseTarget {
-	return { channelId: requireId('RELEASES_CHANNEL_ID'), roleId: requireId('RELEASES_ROLE_ID') };
-}
 
 function isPlatform(value: string): value is LoaderPlatform {
 	return Object.hasOwn(PLATFORM_NAMES, value);
@@ -134,108 +135,69 @@ async function announce(
 }
 
 /**
- * @description Announces the release named by a `platform:version` payload unless it was announced already.
- * @param stores The bot database and the web's reads.
- * @param messages The bot's Discord messages.
- * @param payload The `loader_release` notification payload.
- * @param target The channel to post in and the role to ping.
- * @param now The current time in milliseconds; a release older than a week is skipped.
- * @returns Resolves once the release is announced, found already announced, or skipped.
+ * @description Creates the dispatcher that announces each fresh loader release once, pinging the releases role.
+ * @param options The channel and role, the bot's Discord messages and the clock.
+ * @returns The `loader_release` dispatcher.
  */
-export async function announceRelease(
-	{ db, web }: Stores,
-	messages: MessageGateway,
-	payload: string,
-	target: ReleaseTarget = releaseTarget(),
-	now: number = Date.now(),
-): Promise<void> {
-	const key = parseKey(payload);
+export function createReleasesDispatcher(options: ReleasesOptions): Dispatcher {
+	const { messages, now, ...target } = options;
 
-	if (!key) return;
+	// Announces the release a `platform:version` payload names unless it was announced already.
+	async function announceRelease({ db, web }: DispatcherContext, payload: string) {
+		const key = parseKey(payload);
 
-	const [release, [posted]] = await Promise.all([
-		web.release(key),
-		db
-			.select({ messageId: releasePost.messageId })
-			.from(releasePost)
-			.where(
-				and(eq(releasePost.platform, key.platform), eq(releasePost.version, key.version)),
-			),
-	]);
+		if (!key) return;
 
-	if (!release || posted || release.publishedAt < freshSince(now)) return;
+		const [release, [posted]] = await Promise.all([
+			web.release(key),
+			db
+				.select({ messageId: releasePost.messageId })
+				.from(releasePost)
+				.where(
+					and(
+						eq(releasePost.platform, key.platform),
+						eq(releasePost.version, key.version),
+					),
+				),
+		]);
 
-	await announce(db, messages, release, target);
-}
+		if (!release || posted || release.publishedAt < freshSince(now())) return;
 
-/**
- * @description Adopts announcements a crash left unrecorded, then announces every unannounced fresh release in publish order.
- * @param stores The bot database and the web's reads.
- * @param messages The bot's Discord messages.
- * @param target The channel to post in and the role to ping.
- * @param now The current time in milliseconds; releases older than a week are skipped.
- * @returns Resolves once every release was tried; one release's failure is logged and left to the next run.
- */
-export async function reconcileReleases(
-	{ db, web }: Stores,
-	messages: MessageGateway,
-	target: ReleaseTarget = releaseTarget(),
-	now: number = Date.now(),
-): Promise<void> {
-	const [fresh, posts] = await Promise.all([
-		web.releasesSince(freshSince(now)),
-		db
-			.select({ platform: releasePost.platform, version: releasePost.version })
-			.from(releasePost),
-	]);
-	const posted = new Set(posts.map(keyOf));
-	const unannounced = await adoptOrphans(
-		db,
-		messages,
-		target,
-		fresh.filter((release) => !posted.has(keyOf(release))),
-	);
+		await announce(db, messages, release, target);
+	}
 
-	for (const release of unannounced) {
-		try {
-			await announce(db, messages, release, target);
-		} catch (error) {
-			logger.error(`Failed to announce ${release.platform} ${release.version}:`, error);
+	// Adopts announcements a crash left unrecorded, then announces every unannounced fresh release in
+	// publish order; one release's failure is logged and left to the next run.
+	async function reconcileReleases({ db, web }: DispatcherContext) {
+		const [fresh, posts] = await Promise.all([
+			web.releasesSince(freshSince(now())),
+			db
+				.select({ platform: releasePost.platform, version: releasePost.version })
+				.from(releasePost),
+		]);
+		const posted = new Set(posts.map(keyOf));
+		const unannounced = await adoptOrphans(
+			db,
+			messages,
+			target,
+			fresh.filter((release) => !posted.has(keyOf(release))),
+		);
+
+		for (const release of unannounced) {
+			try {
+				await announce(db, messages, release, target);
+			} catch (error) {
+				logger.error(`Failed to announce ${release.platform} ${release.version}:`, error);
+			}
 		}
 	}
+
+	return {
+		name: 'releases',
+		channel: 'loader_release',
+		reconcile: reconcileReleases,
+		handle: (payload, context) => announceRelease(context, payload),
+	};
 }
 
-export const releasesDispatcher: Dispatcher = {
-	name: 'releases',
-	channel: 'loader_release',
-	requires: ['RELEASES_CHANNEL_ID', 'RELEASES_ROLE_ID'],
-	/**
-	 * @description Announces every loader release that has no message yet.
-	 * @param context The dispatcher's stores and Discord client.
-	 * @returns Resolves once every release was announced.
-	 */
-	reconcile: (context) =>
-		reconcileReleases(
-			context,
-			createMessageGateway(context.client.rest, context.client.user.id),
-		),
-	/**
-	 * @description Announces the loader release a NOTIFY payload names.
-	 * @param payload The release payload from the notification.
-	 * @param context The dispatcher's stores and Discord client.
-	 * @returns Resolves once the release was announced.
-	 */
-	handle: (payload, context) =>
-		announceRelease(
-			context,
-			createMessageGateway(context.client.rest, context.client.user.id),
-			payload,
-		),
-};
-
-export default {
-	renderRelease,
-	announceRelease,
-	reconcileReleases,
-	releasesDispatcher,
-};
+export default { renderRelease, createReleasesDispatcher };

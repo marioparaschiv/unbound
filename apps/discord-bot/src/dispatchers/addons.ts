@@ -1,33 +1,44 @@
 import type { AddonType } from '@unbound-app/contracts/addons';
 import type { PublicAddon } from '@unbound-app/web/bot';
-import type { APIMessage, Client } from 'discord.js';
 import { createLogger } from '@unbound-app/logger';
+import type { APIMessage } from 'discord.js';
 import { eq } from 'drizzle-orm';
 
-import {
-	createMessageGateway,
-	discordFailure,
-	type MessageGateway,
-	type OutgoingMessage,
-} from '~/lib/discord-messages';
+import { discordFailure, type MessageGateway, type OutgoingMessage } from '~/lib/discord-messages';
 import { messageLinks, renderAddon, renderCardImages } from '~/dispatchers/addon-card';
-import { createAuthorEmojis, type AuthorEmojis } from '~/lib/author-emojis';
-import type { Dispatcher, Stores } from '~/dispatchers/types';
+import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
+import type { AuthorEmojis } from '~/lib/author-emojis';
 import { contentHash } from '~/lib/content-hash';
+import type { DiscordIds } from '~/lib/config';
 import type { Database } from '~/db/database';
-import { DISCORD_IDS } from '~/lib/constants';
 import { addonMessage } from '~/db/schema';
 
 export type AddonChannels = { [K in AddonType]?: string };
 
+export type AddonsOptions = {
+	/** The channel each addon type posts to. */
+	channels: AddonChannels;
+	messages: MessageGateway;
+	/** The author avatar emoji sync, one per process so its lookups outlive a single run. */
+	emojis: AuthorEmojis;
+};
+
 const logger = createLogger('Bot', 'Addons');
 
-// Fonts have no channel, so they are never posted.
-export const ADDON_CHANNELS: AddonChannels = {
-	plugin: DISCORD_IDS.PLUGINS_CHANNEL_ID,
-	theme: DISCORD_IDS.THEMES_CHANNEL_ID,
-	'icon-pack': DISCORD_IDS.ICON_PACKS_CHANNEL_ID,
-};
+/**
+ * @description Names the channel each addon type posts to; fonts have none, so they are never posted.
+ * @param ids The id constants.
+ * @returns The channels, an unset id leaving its type out.
+ */
+export function addonChannels(
+	ids: Pick<DiscordIds, 'PLUGINS_CHANNEL_ID' | 'THEMES_CHANNEL_ID' | 'ICON_PACKS_CHANNEL_ID'>,
+): AddonChannels {
+	return {
+		plugin: ids.PLUGINS_CHANNEL_ID,
+		theme: ids.THEMES_CHANNEL_ID,
+		'icon-pack': ids.ICON_PACKS_CHANNEL_ID,
+	};
+}
 
 /**
  * @description Names the channel an addon's message belongs in.
@@ -140,178 +151,120 @@ async function editOrReplace(
 }
 
 /**
- * @description Brings one addon's Discord message in line with its listing: posted, edited, moved or removed.
- * @param stores The bot database and the web's reads.
- * @param messages The bot's Discord messages.
- * @param id The addon id.
- * @param channels The channel each addon type posts to.
- * @param present Ids of our messages that exist, from a listing; without it the message is fetched.
- * @param emojis The author avatar emoji sync; without it a card shows no avatars.
- * @returns Resolves once the message and its row match the addon.
+ * @description Creates the dispatcher that keeps one card per listed addon in its type's channel.
+ * @param options The channels, the bot's Discord messages and the author avatar emoji sync.
+ * @returns The `addon_changed` dispatcher.
  */
-export async function syncAddon(
-	{ db, web }: Stores,
-	messages: MessageGateway,
-	id: string,
-	channels: AddonChannels = ADDON_CHANNELS,
-	present?: ReadonlySet<string>,
-	emojis?: AuthorEmojis,
-): Promise<void> {
-	const [current, [posted]] = await Promise.all([
-		web.addon(id),
-		db.select().from(addonMessage).where(eq(addonMessage.addonId, id)),
-	]);
-	const channelId = current ? desiredChannel(current, channels) : undefined;
+export function createAddonsDispatcher({ channels, messages, emojis }: AddonsOptions): Dispatcher {
+	// Brings one addon's message in line with its listing: posted, edited, moved or removed. `present`
+	// holds our message ids from a listing; without it the message is fetched.
+	async function sync({ db, web }: DispatcherContext, id: string, present?: ReadonlySet<string>) {
+		const [current, [posted]] = await Promise.all([
+			web.addon(id),
+			db.select().from(addonMessage).where(eq(addonMessage.addonId, id)),
+		]);
+		const channelId = current ? desiredChannel(current, channels) : undefined;
 
-	// A delisted addon loses its message, and relisting announces it afresh. Discord goes first, so
-	// a crash in between leaves a row whose message is already gone, which the next sync clears.
-	if (!current || !channelId) {
+		// A delisted addon loses its message, and relisting announces it afresh. Discord goes first, so
+		// a crash in between leaves a row whose message is already gone, which the next sync clears.
+		if (!current || !channelId) {
+			if (posted) {
+				await messages.delete(posted.channelId, posted.messageId);
+				await db.delete(addonMessage).where(eq(addonMessage.addonId, id));
+			}
+
+			return;
+		}
+
+		const avatars = await emojis.resolve(authorIds(current));
+		const hash = contentHash(
+			current,
+			Object.fromEntries([...avatars].map(([discordId, emoji]) => [discordId, emoji.name])),
+		);
+		const kept =
+			posted?.channelId === channelId &&
+			(present?.has(posted.messageId) ??
+				(await messages.exists(posted.channelId, posted.messageId)));
+
+		if (posted && kept && posted.postedHash === hash) return;
+
+		// Images are rendered only once the card is known to change; they need downloads.
+		const card = renderAddon(current, await renderCardImages(current), avatars);
+
+		if (posted && kept) {
+			const messageId = await editOrReplace(messages, channelId, posted.messageId, card);
+
+			await db
+				.update(addonMessage)
+				.set({ messageId, postedHash: hash, editedAt: new Date() })
+				.where(eq(addonMessage.addonId, id));
+
+			return;
+		}
+
 		if (posted) {
 			await messages.delete(posted.channelId, posted.messageId);
-			await db.delete(addonMessage).where(eq(addonMessage.addonId, id));
 		}
 
-		return;
-	}
+		const messageId = await messages.post(channelId, card);
 
-	const avatars = emojis ? await emojis.resolve(authorIds(current)) : new Map();
-	const hash = contentHash(
-		current,
-		Object.fromEntries([...avatars].map(([discordId, emoji]) => [discordId, emoji.name])),
-	);
-	const kept =
-		posted?.channelId === channelId &&
-		(present?.has(posted.messageId) ??
-			(await messages.exists(posted.channelId, posted.messageId)));
-
-	if (posted && kept && posted.postedHash === hash) return;
-
-	// Images are rendered only once the card is known to change; they need downloads.
-	const card = renderAddon(current, await renderCardImages(current), avatars);
-
-	if (posted && kept) {
-		const messageId = await editOrReplace(messages, channelId, posted.messageId, card);
-
-		await db
-			.update(addonMessage)
-			.set({ messageId, postedHash: hash, editedAt: new Date() })
-			.where(eq(addonMessage.addonId, id));
-
-		return;
-	}
-
-	if (posted) {
-		await messages.delete(posted.channelId, posted.messageId);
-	}
-
-	const messageId = await messages.post(channelId, card);
-
-	try {
-		await storeMessage(db, id, channelId, messageId, hash);
-	} catch (error) {
-		// A post without its row would be duplicated by the next sync; reconcile adopts it if this fails.
-		await messages.delete(channelId, messageId).catch((cleanup) => {
-			logger.warn(
-				`Failed to remove unrecorded message ${messageId} of addon ${id}:`,
-				cleanup,
-			);
-		});
-
-		throw error;
-	}
-}
-
-/**
- * @description Adopts messages a crash left without a row, then syncs every addon that has or had a message.
- * @param stores The bot database and the web's reads.
- * @param messages The bot's Discord messages.
- * @param channels The channel each addon type posts to.
- * @param emojis The author avatar emoji sync; its emojis of authors no posted addon names are deleted.
- * @returns Resolves once every addon was synced; one addon's failure is logged and left to the next run.
- */
-export async function reconcileAddons(
-	stores: Stores,
-	messages: MessageGateway,
-	channels: AddonChannels = ADDON_CHANNELS,
-	emojis?: AuthorEmojis,
-): Promise<void> {
-	// One listing per channel replaces a fetch per message on every periodic run.
-	const listings = new Map<string, APIMessage[]>();
-
-	for (const channelId of new Set(Object.values(channels))) {
-		if (channelId) {
-			listings.set(channelId, await messages.listOwn(channelId));
-		}
-	}
-
-	const present = new Set([...listings.values()].flat().map((message) => message.id));
-
-	const addons = await stores.web.addons();
-
-	await adoptOrphans(stores.db, messages, channels, listings, addons);
-
-	const posted = await stores.db.select({ id: addonMessage.addonId }).from(addonMessage);
-	const ids = new Set([...addons.map((item) => item.id), ...posted.map((row) => row.id)]);
-
-	for (const id of ids) {
 		try {
-			await syncAddon(stores, messages, id, channels, present, emojis);
+			await storeMessage(db, id, channelId, messageId, hash);
 		} catch (error) {
-			logger.error(`Failed to sync addon ${id}:`, error);
+			// A post without its row would be duplicated by the next sync; reconcile adopts it if this fails.
+			await messages.delete(channelId, messageId).catch((cleanup) => {
+				logger.warn(
+					`Failed to remove unrecorded message ${messageId} of addon ${id}:`,
+					cleanup,
+				);
+			});
+
+			throw error;
 		}
 	}
 
-	const shown = addons.filter((item) => desiredChannel(item, channels));
+	// Adopts messages a crash left without a row, then syncs every addon that has or had a message;
+	// one addon's failure is logged and left to the next run.
+	async function reconcile(context: DispatcherContext) {
+		// One listing per channel replaces a fetch per message on every periodic run.
+		const listings = new Map<string, APIMessage[]>();
 
-	await emojis?.prune(new Set(shown.flatMap(authorIds)));
+		for (const channelId of new Set(Object.values(channels))) {
+			if (channelId) {
+				listings.set(channelId, await messages.listOwn(channelId));
+			}
+		}
+
+		const present = new Set([...listings.values()].flat().map((message) => message.id));
+
+		const addons = await context.web.addons();
+
+		await adoptOrphans(context.db, messages, channels, listings, addons);
+
+		const posted = await context.db.select({ id: addonMessage.addonId }).from(addonMessage);
+		const ids = new Set([...addons.map((item) => item.id), ...posted.map((row) => row.id)]);
+
+		for (const id of ids) {
+			try {
+				await sync(context, id, present);
+			} catch (error) {
+				logger.error(`Failed to sync addon ${id}:`, error);
+			}
+		}
+
+		const shown = addons.filter((item) => desiredChannel(item, channels));
+
+		// Its emojis of authors no posted addon names are deleted.
+		await emojis.prune(new Set(shown.flatMap(authorIds)));
+	}
+
+	return {
+		name: 'addons',
+		channel: 'addon_changed',
+		reconcile,
+		// The payload is the addon id.
+		handle: (id, context) => sync(context, id),
+	};
 }
 
-// One sync per process, so its avatar lookups and emoji listing outlive a single run.
-let authorEmojis: AuthorEmojis | undefined;
-
-function authorEmojisOf(client: Client<true>): AuthorEmojis {
-	authorEmojis ??= createAuthorEmojis(client.rest, client.application.id);
-
-	return authorEmojis;
-}
-
-export const addonsDispatcher: Dispatcher = {
-	name: 'addons',
-	channel: 'addon_changed',
-	requires: ['PLUGINS_CHANNEL_ID', 'THEMES_CHANNEL_ID', 'ICON_PACKS_CHANNEL_ID'],
-	/**
-	 * @description Syncs every addon message with the web's listings.
-	 * @param context The dispatcher's stores and Discord client.
-	 * @returns Resolves once every addon was synced.
-	 */
-	reconcile: (context) =>
-		reconcileAddons(
-			context,
-			createMessageGateway(context.client.rest, context.client.user.id),
-			ADDON_CHANNELS,
-			authorEmojisOf(context.client),
-		),
-	/**
-	 * @description Syncs the message of the addon a NOTIFY payload names.
-	 * @param id The addon id from the payload.
-	 * @param context The dispatcher's stores and Discord client.
-	 * @returns Resolves once the addon's message matches its listing.
-	 */
-	handle: (id, context) =>
-		syncAddon(
-			context,
-			createMessageGateway(context.client.rest, context.client.user.id),
-			id,
-			ADDON_CHANNELS,
-			undefined,
-			authorEmojisOf(context.client),
-		),
-};
-
-export default {
-	ADDON_CHANNELS,
-	desiredChannel,
-	syncAddon,
-	reconcileAddons,
-	addonsDispatcher,
-};
+export default { addonChannels, desiredChannel, createAddonsDispatcher };

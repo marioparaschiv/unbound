@@ -12,6 +12,7 @@ import { contentHash } from '~/lib/content-hash';
 
 import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from '../helpers/database';
 import { moveData, type MoveOptions, type MoveReport } from '../../scripts/move-data';
+import { testConfig } from '../helpers/config';
 import { signUp } from '../helpers/web';
 
 // The old bot database's tables the move reads, as its last migrations left them.
@@ -47,7 +48,8 @@ function refusal(move: Promise<MoveReport>): Promise<string> {
 		(error: Error) => error.message,
 	);
 }
-const OPTIONS: MoveOptions = { channels: CHANNELS };
+const { siteUrl, cdnUrl } = testConfig();
+const OPTIONS: MoveOptions = { channels: CHANNELS, siteUrl, cdnUrl };
 
 describe.skipIf(!DATABASE_URL)('move-data', () => {
 	let database: BotTestDatabase;

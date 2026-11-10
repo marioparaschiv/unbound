@@ -3,24 +3,32 @@ import type { APIEmbed, APIMessage } from 'discord.js';
 import { asc, desc, eq, max } from 'drizzle-orm';
 
 import {
-	createMessageGateway,
-	discordFailure,
-	eventNonce,
-	type MessageGateway,
-	type OutgoingMessage,
-} from '~/lib/discord-messages';
-import {
 	buildAuditEmbed,
 	buildDeployEmbed,
 	buildFallbackEmbed,
 	type DeployBatch,
 } from '~/dispatchers/audit-embed';
-import type { Dispatcher, DispatcherContext, Stores } from '~/dispatchers/types';
+import {
+	discordFailure,
+	eventNonce,
+	type MessageGateway,
+	type OutgoingMessage,
+} from '~/lib/discord-messages';
 import { deployBuild, type FirstPartyBuild } from '~/dispatchers/audit-kinds';
+import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
 import type { AuditTelemetry } from '~/lib/audit-telemetry';
 import type { Database } from '~/db/database';
-import { requireId } from '~/lib/constants';
 import { auditPost } from '~/db/schema';
+
+export type AuditOptions = {
+	/** The audit log channel. */
+	channelId: string;
+	/** The site origin each embed's subject link points at. */
+	siteUrl: string;
+	/** Where each posted event is also exported, as an OpenTelemetry log. */
+	telemetry: AuditTelemetry;
+	messages: MessageGateway;
+};
 
 // Posts are strictly sequential, so a post orphaned by a crash is always among the newest messages.
 const RECOVERY_WINDOW = 100;
@@ -36,7 +44,7 @@ type Batch = {
 
 // An empty `audit_post` means the log was never enabled here, so the newest event becomes the floor and
 // enabling posts no history. An empty moderation log floors at 0, which posts its first event.
-async function recordFloor({ db, web }: Stores, channelId: string) {
+async function recordFloor({ db, web }: DispatcherContext, channelId: string) {
 	const floor = await web.newestEventId();
 
 	await db
@@ -49,7 +57,7 @@ async function recordFloor({ db, web }: Stores, channelId: string) {
 
 // Posts go out one at a time in id order and moderation event ids are commit-ordered, so every
 // event up to the newest posted one is posted: that id is the whole cursor.
-async function pendingEvents(stores: Stores, channelId: string): Promise<AuditEvent[]> {
+async function pendingEvents(stores: DispatcherContext, channelId: string): Promise<AuditEvent[]> {
 	const [row] = await stores.db.select({ last: max(auditPost.eventId) }).from(auditPost);
 	const last = row?.last ?? (await recordFloor(stores, channelId));
 
@@ -84,13 +92,8 @@ function isPostOf(message: APIMessage, event: AuditEvent) {
 }
 
 // Adopts messages that reached Discord before a failure kept their ids from being stored.
-async function recoverPosted(
-	messages: MessageGateway,
-	channelId: string,
-	pending: AuditEvent[],
-	db: Database,
-	telemetry: AuditTelemetry,
-) {
+async function recoverPosted(options: AuditOptions, pending: AuditEvent[], db: Database) {
+	const { messages, channelId, siteUrl, telemetry } = options;
 	const recent = await messages.recentOwn(channelId, RECOVERY_WINDOW);
 	const unposted: AuditEvent[] = [];
 
@@ -103,7 +106,14 @@ async function recoverPosted(
 			continue;
 		}
 
-		await markPosted(db, telemetry, event, channelId, message.id, buildAuditEmbed(event));
+		await markPosted(
+			db,
+			telemetry,
+			event,
+			channelId,
+			message.id,
+			buildAuditEmbed(event, siteUrl),
+		);
 	}
 
 	return unposted;
@@ -118,7 +128,7 @@ function isDeployOf(event: AuditEvent, build: FirstPartyBuild) {
 // CI publishes a build's addons one request at a time, so a deploy joins the newest post while
 // that post lists only deploys of the same build.
 async function openBatch(
-	{ db, web }: Stores,
+	{ db, web }: DispatcherContext,
 	channelId: string,
 	event: AuditEvent,
 ): Promise<Batch | undefined> {
@@ -161,8 +171,7 @@ function messageOf(embed: APIEmbed): OutgoingMessage {
 
 // A batch post that is gone, or whose edit Discord rejects, leaves the event a post of its own.
 async function extend(
-	messages: MessageGateway,
-	channelId: string,
+	{ messages, channelId, siteUrl }: AuditOptions,
 	batch: Batch,
 	event: AuditEvent,
 ): Promise<string | undefined> {
@@ -170,7 +179,7 @@ async function extend(
 		await messages.edit(
 			channelId,
 			batch.messageId,
-			messageOf(buildDeployEmbed([...batch.events, event])),
+			messageOf(buildDeployEmbed([...batch.events, event], siteUrl)),
 		);
 
 		return batch.messageId;
@@ -195,31 +204,21 @@ function post(messages: MessageGateway, channelId: string, event: AuditEvent, em
 
 /**
  * @description Creates the dispatcher that posts each moderation event once, in id order, to the audit log channel.
- * @param telemetry Where each posted event is also exported, as an OpenTelemetry log.
- * @param configured The audit log channel's id; `AUDIT_LOG_CHANNEL_ID` by default.
+ * @param options The channel, the site origin, the telemetry and the bot's Discord messages.
  * @returns The `audit_event` dispatcher.
  */
-export function createAuditDispatcher(telemetry: AuditTelemetry, configured?: string): Dispatcher {
+export function createAuditDispatcher(options: AuditOptions): Dispatcher {
+	const { channelId, siteUrl, telemetry, messages } = options;
+
 	// A failed send throws and ends the run, so no later event is ever posted ahead of it.
 	async function postPending(context: DispatcherContext) {
-		const channelId = configured ?? requireId('AUDIT_LOG_CHANNEL_ID');
-		const messages = createMessageGateway(context.client.rest, context.client.user.id);
-
 		for (let pending = await pendingEvents(context, channelId); pending.length;) {
-			const unposted = await recoverPosted(
-				messages,
-				channelId,
-				pending,
-				context.db,
-				telemetry,
-			);
+			const unposted = await recoverPosted(options, pending, context.db);
 
 			for (const event of unposted) {
 				const batch = await openBatch(context, channelId, event);
-				const extended = batch
-					? await extend(messages, channelId, batch, event)
-					: undefined;
-				const embed = buildAuditEmbed(event);
+				const extended = batch ? await extend(options, batch, event) : undefined;
+				const embed = buildAuditEmbed(event, siteUrl);
 				const messageId = extended ?? (await post(messages, channelId, event, embed));
 
 				await markPosted(context.db, telemetry, event, channelId, messageId, embed);
@@ -234,7 +233,6 @@ export function createAuditDispatcher(telemetry: AuditTelemetry, configured?: st
 	return {
 		name: 'audit',
 		channel: 'audit_event',
-		requires: ['AUDIT_LOG_CHANNEL_ID'],
 		reconcile: postPending,
 		handle: (_payload, context) => postPending(context),
 	};
