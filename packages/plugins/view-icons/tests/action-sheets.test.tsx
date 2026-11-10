@@ -5,7 +5,7 @@ import { View } from 'react-native';
 
 import type { ReactNode } from 'react';
 
-import { ActionSheets, hidden, registerDiscord } from './discord';
+import { ActionSheets, hidden, registerDiscord } from './helpers/discord';
 
 function ActionSheetRowGroup({ children }: { children?: ReactNode }) {
 	return <View>{children}</View>;

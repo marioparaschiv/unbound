@@ -2,7 +2,7 @@ import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { pluginHolds, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
 
-import { registerDiscord } from './discord';
+import { registerDiscord } from './helpers/discord';
 import { selfTest } from '~/index';
 
 beforeEach(() => resetHealth());

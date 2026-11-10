@@ -1,7 +1,7 @@
 import { metro, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import { ActionSheets, ContextMenus, hidden, opened, registerDiscord } from './discord';
+import { ActionSheets, ContextMenus, hidden, opened, registerDiscord } from './helpers/discord';
 
 type MenuItem = { label?: string; action?: () => void };
 type Menu = { items: MenuItem[]; user?: { id: string }; guild?: { id: string; icon?: string } };
