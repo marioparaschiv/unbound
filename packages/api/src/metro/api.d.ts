@@ -6,8 +6,8 @@ export declare const ActionSheets: any;
 export declare const AsyncUsers: any;
 /** Discord's invite actions module, with `acceptInviteAndTransitionToInviteChannel`; found on first access. */
 export declare const Invites: any;
-/** Discord's link opener module, with `openURL` and `openSettings`; found on first access. */
-export declare const Linking: any;
+/** React Native's `Linking`, with `openURL` and `openSettings`; read directly, as a search on a cold metro cache costs ~15 ms. */
+export declare const Linking: import('react-native').LinkingImpl;
 /** Discord's message actions module, with `sendMessage` and `receiveMessage`; found on first access. */
 export declare const Messages: any;
 /** Discord's module with `openOAuth2Modal`, which opens the app authorize screen; found on first access. */
