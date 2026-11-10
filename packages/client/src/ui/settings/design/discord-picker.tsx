@@ -113,7 +113,7 @@ function DiscordPicker({ kind }: DiscordPickerProps) {
 			<View style={styles.page}>
 				<Empty>
 					{format('UNBOUND_NO_ADDONS', {
-						type: messages[Manager.for(kind).label].toLowerCase(),
+						type: messages[Manager.for(kind).noun],
 					})}
 				</Empty>
 				<PickerActions kind={kind} addon={undefined} />
