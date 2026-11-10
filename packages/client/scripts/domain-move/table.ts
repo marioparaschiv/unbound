@@ -165,7 +165,6 @@ export const kept: string[] = [
 	'builtins/api.ts',
 	'builtins/discord-support.ts',
 	'builtins/error-boundary.tsx',
-	'builtins/sponsor-badge-shapes.test.ts',
 	'builtins/sponsor-badge-shapes.ts',
 	'builtins/sponsor-badges.ts',
 	'builtins/staff-mode.ts',
