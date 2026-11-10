@@ -162,7 +162,7 @@ starred-users 1.2.0
 | `shipped` | The files the manifest lists beside the bundle (translations and images), as publish and install read them. |
 | `metro` | The Metro filters that got a cache key, and where each one that searches uncached is. |
 
-`--verbose` also lists the five largest source modules. `--json` prints the same data for CI. `ubd dev` prints one line per rebuild instead, such as `Built my-plugin: 18.4 KB · 1 uncached filter`.
+`--verbose` also lists the five largest source modules. `--json` prints the same data for CI. `ubd dev --report` prints one line per rebuild instead, such as `Built my-plugin: 18.4 KB · 1 uncached filter`; without `--report`, `ubd dev` skips the report so each hot rebuild stays fast.
 
 ### Budgets
 
@@ -178,7 +178,7 @@ A size over its budget is a warning. Pass `--strict-budget` to fail the build in
 
 ### Add a line from a rollup plugin
 
-A rollup plugin adds a line by emitting `reportLine(entry)` with `this.emitFile`, from any hook up to `generateBundle`. Entries with the same `section` and `label` merge: their `bytes` add up, `unit` shows how many merged, `tally` counts them by kind, `location` lists where each came from, and `issue` names them in the `ubd dev` line. The entries never reach `dist`.
+A rollup plugin adds a line by emitting `reportLine(entry)` with `this.emitFile`, from any hook up to `generateBundle`. Entries with the same `section` and `label` merge: their `bytes` add up, `unit` shows how many merged, `tally` counts them by kind, `location` lists where each came from, and `issue` names them in the `ubd dev --report` line. The entries never reach `dist`.
 
 ```js
 import { reportLine } from '@unbound-app/cli/rollup';

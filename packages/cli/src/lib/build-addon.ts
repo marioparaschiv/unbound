@@ -18,16 +18,18 @@ export type AddonBuildOptions = {
 	cache?: CheckCache;
 	/** How long the bundle step may run before it fails; unbounded when omitted. */
 	timeoutMs?: number;
+	/** Have the preset write the build report and read it back; off by default, which keeps hot builds fast. */
+	report?: boolean;
 };
 
 /**
- * @description Builds an addon, then runs the post-build checks and reads the build report. A static
- * addon has no bundle step but still runs the checks; a failed bundle skips them.
+ * @description Builds an addon, then runs the post-build checks and, when asked, reads the build report.
+ * A static addon has no bundle step but still runs the checks; a failed bundle skips them.
  * @param addon The addon to build.
- * @param options The build command, how to build, and the checks to run after it.
+ * @param options The build command, how to build, the checks to run after it, and whether to report.
  * @returns Whether the bundle step succeeded and no check reported an error, and the build's report.
  */
-export function buildAddon(
+export async function buildAddon(
 	addon: DiscoveredAddon,
 	options: AddonBuildOptions,
 ): Promise<ReportedBuild> {
@@ -38,18 +40,17 @@ export function buildAddon(
 		checks = buildChecks(),
 		cache,
 		timeoutMs,
+		report = false,
 	} = options;
+	const build = async (reportFile?: string) =>
+		(await runBuildCommand(
+			addon,
+			command,
+			buildEnv({ hot, verbose, reportFile }),
+			timeoutMs,
+		)) && (await runBuildChecks(addon, checks, cache));
 
-	return buildWithReport(
-		addon,
-		async (reportFile) =>
-			(await runBuildCommand(
-				addon,
-				command,
-				buildEnv({ hot, verbose, reportFile }),
-				timeoutMs,
-			)) && (await runBuildChecks(addon, checks, cache)),
-	);
+	return report ? buildWithReport(addon, build) : { ok: await build(), report: void 0 };
 }
 
 /**

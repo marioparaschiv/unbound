@@ -4,9 +4,16 @@ import { createReloadTransport } from '~/lib/reload-transport';
 import { bridgePortField } from '~/lib/context';
 import { DevServer } from '~/lib/dev-server';
 import { loadConfig } from '~/lib/config';
-import { Type } from '~/lib/schema';
+import { defaulted, Type } from '~/lib/schema';
 
 const schema = Type.Object({
+	report: defaulted(
+		Type.Boolean({
+			description:
+				'After each rebuild, print its bundle size and the issues its build report counts. Slows each rebuild a little.',
+		}),
+		false,
+	),
 	port: bridgePortField,
 });
 
@@ -18,14 +25,14 @@ const devCommand: CommandDefinition<typeof schema> = {
 	summary: 'Watch addons and rebuild on change.',
 	surfaces: { cli: 'root', mcp: false },
 	schema,
-	async handler(_input, context) {
+	async handler({ report }, context) {
 		const resolved = loadConfig();
 
 		if ('error' in resolved) {
 			return { ok: false, text: resolved.error };
 		}
 
-		const server = new DevServer(resolved, createReloadTransport(context));
+		const server = new DevServer(resolved, createReloadTransport(context), report);
 
 		process.on('SIGINT', () => {
 			server.stop();

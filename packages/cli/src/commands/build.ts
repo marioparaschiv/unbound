@@ -72,6 +72,7 @@ const buildCommand: CommandDefinition<typeof schema> = {
 				verbose,
 				checks,
 				cache,
+				report: true,
 			});
 			const passed = ok && !(strictBudget && report && isOverBudget(report));
 

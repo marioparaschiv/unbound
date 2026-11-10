@@ -5,6 +5,7 @@ import type { Diagnostic } from '~/rollup/diagnostic';
 import { discoverAddons } from '~/lib/discovery';
 import { buildAddon } from '~/lib/build-addon';
 import type { Check } from '~/lib/check/check';
+import { BUILD_REPORT_ENV } from '~/rollup/build-env';
 
 import { createTempDir, runUbd, type TempDir } from '../helpers/ubd';
 import { loadWorkspace } from '../helpers/config';
@@ -127,6 +128,15 @@ describe('buildAddon', () => {
 
 		expect(await buildWithChecks(addon, 'true', checks)).toBe(true);
 		expect(seen).toEqual(['first', 'second', 'third']);
+	});
+
+	test('asks the preset for a report only when told to', async () => {
+		const addon = await findAddon(workspace('true'), 'com.example.built');
+		const build = (command: string, report: boolean) =>
+			buildAddon(addon, { command, checks: [], report });
+
+		expect((await build(`test -z "$${BUILD_REPORT_ENV}"`, false)).ok).toBe(true);
+		expect((await build(`test -n "$${BUILD_REPORT_ENV}"`, true)).ok).toBe(true);
 	});
 });
 

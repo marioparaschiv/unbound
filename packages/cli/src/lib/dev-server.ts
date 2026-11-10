@@ -34,6 +34,8 @@ export class DevServer {
 	constructor(
 		private readonly resolved: ResolvedConfig,
 		private readonly transport: ReloadTransport,
+		// Each rebuild reads its build report for the summary line only when asked; it slows every hot build.
+		private readonly report = false,
 	) {}
 
 	/** @description Runs initial discovery, builds every addon once, then watches until {@link stop}ped. */
@@ -122,6 +124,7 @@ export class DevServer {
 			hot: true,
 			checks: DEV_BUILD_CHECKS,
 			cache: this.checkCache,
+			report: this.report,
 		});
 
 		if (!ok) {
