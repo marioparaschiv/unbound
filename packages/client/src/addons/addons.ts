@@ -12,12 +12,14 @@ import {
 	verifySignature,
 } from '~/addons/download';
 import { downloadAddonFiles, writeAddonFiles, type AddonFiles } from '~/addons/files';
-import { getLoader, getSha256 } from '~/native/unbound-native';
 import type { Addon, AddonResolveable } from '~/addons/addon';
+import { assertTextDigest, digestOf } from '~/addons/digests';
 import type { InstalledEntry } from '~/updates/addon-updates';
 import type { UpdatableKind } from '~/addons/manager-of';
 import { AddonLifecycle } from '~/addons/lifecycle';
 import { compiledBundlePath } from '~/addons/paths';
+import { getLoader } from '~/native/unbound-native';
+import { createRecord } from '~/addons/records';
 import { toRelease } from '~/addons/versions';
 import { Manager } from '~/addons/manager';
 import fs from '~/native/fs';
@@ -33,45 +35,6 @@ export type InstallListedOptions = {
 
 const INSTALL_EVENTS = ['loaded', 'unloaded', 'installed', 'updated', 'deleted'] as const;
 
-type BundleDigest = {
-	bundle: string;
-	digest: string;
-};
-
-const bundleDigests = new Map<string, BundleDigest>();
-const sourceDigests = new Map<string, string>();
-
-/**
- * @description Records the SHA-256 the loader took of a plugin source it kept back, for update checks.
- * @param id The plugin's id.
- * @param digest The source's SHA-256, in hex.
- */
-export function rememberSourceDigest(id: string, digest: string): void {
-	sourceDigests.set(id, digest);
-}
-
-function cachedDigest(id: string, bundle: string): string {
-	const cached = bundleDigests.get(id);
-
-	if (cached?.bundle === bundle) {
-		return cached.digest;
-	}
-
-	const digest = getSha256(bundle);
-
-	bundleDigests.set(id, { bundle, digest });
-
-	return digest;
-}
-
-function assertTextDigest(bundle: string, expected: string): void {
-	const digest = getSha256(bundle);
-
-	if (digest !== expected) {
-		throw new Error(`Bundle SHA-256 ${digest} does not match ${expected}.`);
-	}
-}
-
 /**
  * @description Addon distribution on top of {@link AddonLifecycle}: install, update, hot reload and
  * delete, the on-disk layout, development copies and version holds.
@@ -79,6 +42,18 @@ function assertTextDigest(bundle: string, expected: string): void {
  */
 export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	declare readonly kind: UpdatableKind;
+	/** The version each addon is held at. */
+	protected readonly held = createRecord<string>(this.settings, 'held', (change) =>
+		this.emit('record-changed', change),
+	);
+	/** The addons pushed from a dev machine, which update checks leave alone. */
+	protected readonly development = createRecord<boolean>(this.settings, 'development', (change) =>
+		this.emit('record-changed', change),
+	);
+	/** The URL each addon was installed from; addons loaded from disk or pushed over the debugger have none. */
+	protected readonly sources = createRecord<string>(this.settings, 'sources', (change) =>
+		this.emit('record-changed', change),
+	);
 
 	protected registered(id: string): void {
 		void this.adoptDevelopmentMarker(id);
@@ -413,10 +388,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 		return this.getEntities()
 			.filter((entity) => !this.isDevelopmentCopy(entity.id))
 			.map((entity) => {
-				const { bundle } = this.stateOf(entity);
-				const sha256 = bundle
-					? cachedDigest(entity.id, bundle)
-					: sourceDigests.get(entity.id);
+				const sha256 = digestOf(entity.id, this.stateOf(entity).bundle);
 
 				return {
 					kind: this.kind,
@@ -526,7 +498,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	 * @param id The addon's id.
 	 */
 	markDevelopmentCopy(id: string): void {
-		this.settings.set('development', { ...this.getDevelopmentCopies(), [id]: true });
+		this.development.set(id, true);
 	}
 
 	/**
@@ -535,11 +507,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	 * @returns `true` until the addon is installed from the store or deleted.
 	 */
 	isDevelopmentCopy(id: string): boolean {
-		return this.getDevelopmentCopies()[id] === true;
-	}
-
-	private getDevelopmentCopies(): Record<string, boolean> {
-		return this.settings.get('development', {});
+		return this.development.get(id) === true;
 	}
 
 	/**
@@ -548,13 +516,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	 */
 	clearDevelopmentCopy(id: string): void {
 		void fs.removeFile(this.developmentMarkerOf(id)).catch(() => undefined);
-
-		const copies = this.getDevelopmentCopies();
-
-		if (!(id in copies)) return;
-
-		delete copies[id];
-		this.settings.set('development', copies);
+		this.development.delete(id);
 	}
 
 	/**
@@ -563,7 +525,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	 * @param version The version to hold it at.
 	 */
 	holdVersion(id: string, version: string): void {
-		this.settings.set('held', { ...this.getHolds(), [id]: version });
+		this.held.set(id, version);
 	}
 
 	/**
@@ -572,13 +534,9 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	 * @returns The held version, or `undefined` when it is not held or runs another version.
 	 */
 	getHeldVersion(id: string): string | undefined {
-		const held = this.getHolds()[id];
+		const held = this.held.get(id);
 
 		return held !== void 0 && held === this.getEntity(id)?.version ? held : void 0;
-	}
-
-	private getHolds(): Record<string, string> {
-		return this.settings.get('held', {});
 	}
 
 	/**
@@ -586,12 +544,32 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	 * @param id The addon's id.
 	 */
 	releaseHold(id: string): void {
-		const holds = this.getHolds();
+		this.held.delete(id);
+	}
 
-		if (!(id in holds)) return;
+	/**
+	 * @description Reads the URL each addon was installed from.
+	 * @returns A record of addon id to install URL.
+	 */
+	getSources(): Record<string, string> {
+		return this.sources.all();
+	}
 
-		delete holds[id];
-		this.settings.set('held', holds);
+	/**
+	 * @description Records the URL an addon was installed from. Twin of {@link forgetSource}.
+	 * @param id The addon's id.
+	 * @param url The install URL.
+	 */
+	recordSource(id: string, url: string): void {
+		this.sources.set(id, url);
+	}
+
+	/**
+	 * @description Forgets the URL an addon was installed from. Twin of {@link recordSource}.
+	 * @param id The addon's id.
+	 */
+	forgetSource(id: string): void {
+		this.sources.delete(id);
 	}
 
 	// A hold left on a version the addon moved off would otherwise come back if it returns there.

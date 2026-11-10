@@ -109,7 +109,6 @@ export class Themes extends Addons<Theme> {
 
 		try {
 			const prev = this.getAppliedId();
-			const states = this.getStates();
 
 			if (prev && prev !== resolved.id) {
 				const prevEntity = this.getEntity(prev);
@@ -119,13 +118,12 @@ export class Themes extends Addons<Theme> {
 				}
 
 				// Only one theme applies, so the one it replaces reads as disabled.
-				states[prev] = false;
+				this.states.set(prev, false);
 			}
 
 			this.settings.set('applied', resolved.id);
-
-			states[resolved.id] = true;
-			this.settings.set('states', states);
+			this.emit('record-changed', { key: 'applied', id: resolved.id });
+			this.states.set(resolved.id, true);
 
 			if (!resolved.started) {
 				this.start(resolved);
@@ -151,11 +149,8 @@ export class Themes extends Addons<Theme> {
 
 		try {
 			this.settings.set('applied', null);
-
-			const states = this.getStates();
-
-			states[resolved.id] = false;
-			this.settings.set('states', states);
+			this.emit('record-changed', { key: 'applied', id: resolved.id });
+			this.states.set(resolved.id, false);
 
 			if (resolved.started) {
 				this.stop(resolved);

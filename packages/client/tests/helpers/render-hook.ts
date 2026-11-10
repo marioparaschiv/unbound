@@ -95,6 +95,13 @@ export function createHookRenderer() {
 		return [state.value, setState] as const;
 	}
 
+	// Enough of React's for the dispatch-only reducers the hooks under test use, such as a forced re-render.
+	function useReducer<S>(reducer: (current: S) => S, initial: S) {
+		const [state, setState] = useState(initial);
+
+		return [state, () => setState((current) => reducer(current))] as const;
+	}
+
 	function useCallback<T>(callback: T, deps: DependencyList) {
 		const [memo] = slot(() => ({ callback, deps }));
 
@@ -203,7 +210,7 @@ export function createHookRenderer() {
 		};
 	}
 
-	const React = { useRef, useState, useCallback, useEffect, useSyncExternalStore };
+	const React = { useRef, useState, useReducer, useCallback, useEffect, useSyncExternalStore };
 
 	return { React: { ...React, default: React }, renderHook };
 }

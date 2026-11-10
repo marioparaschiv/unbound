@@ -1,30 +1,16 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import type { AddonManifest } from '@unbound-app/types';
 
-import type { Addon } from '~/addons/addon';
-
 const { FakeAddons, makeManifest } = await import('../helpers/addons');
 const { setConsentPrompt, NativeConsentRequiredError } = await import('~/native/consent');
 
 class ConsentAddons extends FakeAddons {
-	consents: Record<string, string> = {};
-
 	protected validateManifest(manifest: AddonManifest) {
 		return manifest;
 	}
 
-	protected getConsents() {
-		return this.consents;
-	}
-
-	protected async requestConsent(entity: Addon) {
-		const granted = await super.requestConsent(entity);
-
-		if (granted) {
-			this.consents[entity.id] = (entity.manifest.capabilities ?? []).join(',');
-		}
-
-		return granted;
+	consentFor(id: string) {
+		return this.consents.get(id);
 	}
 }
 
@@ -76,7 +62,7 @@ describe('native consent', () => {
 		await addons.enable('ffi.allowed');
 
 		expect(addons.getEntity('ffi.allowed')?.started).toBe(true);
-		expect(addons.consents['ffi.allowed']).toBe('native.ffi.call');
+		expect(addons.consentFor('ffi.allowed')).toBe('native.ffi.call');
 
 		addons.disable('ffi.allowed');
 		await addons.enable('ffi.allowed');

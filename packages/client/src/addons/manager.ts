@@ -119,36 +119,6 @@ export abstract class Manager<
 	}
 
 	/**
-	 * @description Reads the URL each entity was installed from. Entities loaded from disk or pushed
-	 * over the debugger have none.
-	 * @returns A record of entity id to install URL.
-	 */
-	getSources(): Record<string, string> {
-		return this.settings.get('sources', {});
-	}
-
-	/**
-	 * @description Records the URL an entity was installed from. Twin of {@link forgetSource}.
-	 * @param id The entity id.
-	 * @param url The install URL.
-	 */
-	recordSource(id: string, url: string) {
-		this.settings.set('sources', { ...this.getSources(), [id]: url });
-	}
-
-	/**
-	 * @description Forgets the URL an entity was installed from. Twin of {@link recordSource}.
-	 * @param id The entity id.
-	 */
-	forgetSource(id: string) {
-		const { [id]: removed, ...sources } = this.getSources();
-
-		if (removed === undefined) return;
-
-		this.settings.set('sources', sources);
-	}
-
-	/**
 	 * @description Tears the manager down, reverting all patches and clearing its entities and errors.
 	 */
 	shutdown(): void | Promise<void> {

@@ -134,6 +134,7 @@ export class Icons extends Addons<Plugin> {
 			const pack = packs.find((p) => p.manifest.id === resolved.id) ?? defaultPack;
 
 			this.settings.set('applied', pack);
+			this.emit('record-changed', { key: 'applied', id: resolved.id });
 
 			this.removePack();
 			await this.applyPack(resolved.id);
@@ -151,6 +152,7 @@ export class Icons extends Addons<Plugin> {
 
 		try {
 			this.settings.set('applied', defaultPack);
+			this.emit('record-changed', { key: 'applied', id: resolved.id });
 			this.removePack();
 
 			this.emit('disabled', resolved);

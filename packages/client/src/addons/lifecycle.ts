@@ -30,6 +30,7 @@ import { currentPlatform } from '~/native/platform';
 import { unpatchAllByCaller } from '~/patcher/api';
 import type { PluginScope } from '~/addons/scope';
 import { isSafeAddonMain } from '~/addons/paths';
+import { createRecord } from '~/addons/records';
 import { getSetting } from '~/settings/unbound';
 import { benchSpan } from '~/core/bench-span';
 import { Manager } from '~/addons/manager';
@@ -51,6 +52,14 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	protected pendingStarts = new Set<string>();
 	protected stopTimeoutMs = 5000;
 	private readonly records = new WeakMap<Addon<I>, AddonState<I>>();
+	/** Whether the user has each addon enabled. */
+	protected readonly states = createRecord<boolean>(this.settings, 'states', (change) =>
+		this.emit('record-changed', change),
+	);
+	/** The consent-gated capabilities the user allowed each addon, as {@link consentKey} names them. */
+	protected readonly consents = createRecord<string>(this.settings, 'consents', (change) =>
+		this.emit('record-changed', change),
+	);
 
 	async shutdown(): Promise<void> {
 		this.pendingStarts.clear();
@@ -170,9 +179,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 			this.entities.set(manifest.id, entity);
 			this.registered(manifest.id);
 
-			const states = this.getStates();
-
-			if (states[manifest.id] && !this.disableAfterCrash(entity)) {
+			if (this.states.get(manifest.id) && !this.disableAfterCrash(entity)) {
 				this.startWhenDue(entity);
 			}
 
@@ -190,7 +197,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		}
 
 		afterFirstFrame(() => {
-			if (this.entities.get(entity.id) === entity && this.getStates()[entity.id]) {
+			if (this.entities.get(entity.id) === entity && this.states.get(entity.id)) {
 				this.start(entity);
 			}
 		});
@@ -399,10 +406,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	 */
 	private disableAfterCrash(entity: Addon<I>): boolean {
 		return disableIfCrashed(entity, this.bucket, this.logger, () => {
-			const states = this.getStates();
-
-			states[entity.id] = false;
-			this.settings.set('states', states);
+			this.states.set(entity.id, false);
 			void storage.persist();
 		});
 	}
@@ -467,7 +471,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 						const shouldRestart = this.pendingStarts.delete(resolved.id);
 
-						if (stopped && shouldRestart && this.getStates()[resolved.id]) {
+						if (stopped && shouldRestart && this.states.get(resolved.id)) {
 							this.start(resolved);
 						}
 					});
@@ -567,10 +571,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 	private enableNow(resolved: Addon<I>, consented: boolean): void {
 		try {
-			const states = this.getStates();
-
-			states[resolved.id] = true;
-			this.settings.set('states', states);
+			this.states.set(resolved.id, true);
 
 			if (!resolved.started) {
 				this.start(resolved, consented);
@@ -593,10 +594,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 		try {
 			this.pendingStarts.delete(resolved.id);
-			const states = this.getStates();
-
-			states[resolved.id] = false;
-			this.settings.set('states', states);
+			this.states.set(resolved.id, false);
 
 			if (resolved.started) {
 				this.stop(resolved);
@@ -613,7 +611,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	 * @returns The consents keyed by addon id.
 	 */
 	protected getConsents(): NativeConsents {
-		return this.settings.get<NativeConsents>('consents', {});
+		return this.consents.all();
 	}
 
 	/**
@@ -634,10 +632,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 			return false;
 		}
 
-		this.settings.set('consents', {
-			...this.getConsents(),
-			[entity.id]: consentKey(entity.manifest),
-		});
+		this.consents.set(entity.id, consentKey(entity.manifest));
 		this.errors.delete(entity.id);
 
 		return true;
@@ -690,15 +685,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	 * @returns Its persisted enabled state.
 	 */
 	isEnabled(id: string): boolean {
-		return Boolean(this.getStates()[id]);
-	}
-
-	/**
-	 * @description Reads the persisted enabled/disabled state map for this manager's addons.
-	 * @returns A record of addon id to its enabled state.
-	 */
-	protected getStates(): Record<string, boolean> {
-		return this.settings.get('states', {});
+		return Boolean(this.states.get(id));
 	}
 
 	/**

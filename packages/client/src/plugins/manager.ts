@@ -7,11 +7,11 @@ import { performRefresh, withRefreshScope } from '~/hot-refresh/runtime';
 import { installDependencies } from '~/marketplace/install-dependencies';
 import type { AddonGlobals, PluginScope } from '~/addons/scope';
 import { getLoader, getPlugins } from '~/native/unbound-native';
-import { Addons, rememberSourceDigest } from '~/addons/addons';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { createPluginContext } from '~/native/plugin-context';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { readPluginEntry } from '~/plugins/legacy-entry';
+import { rememberSourceDigest } from '~/addons/digests';
 import type { ReloadResult } from '~/addons/addons';
 import { createAddonScope } from '~/addons/scope';
 import { setOwnerCheck } from '~/commands/owners';
@@ -19,6 +19,7 @@ import type { AddonFiles } from '~/addons/files';
 import { registry } from '~/commands/registry';
 import { benchSpan } from '~/core/bench-span';
 import { Manager } from '~/addons/manager';
+import { Addons } from '~/addons/addons';
 import fs from '~/native/fs';
 
 /**

@@ -65,7 +65,16 @@ mock.module('~/storage/api', () => {
 		set: <T>(key: string, value: T) => {
 			if (key !== 'states') {
 				storedSettings.set(key, value);
+
+				return;
 			}
+
+			// Tests read `states` by reference, so a write replaces its contents.
+			for (const id of Object.keys(states)) {
+				delete states[id];
+			}
+
+			Object.assign(states, value);
 		},
 	};
 

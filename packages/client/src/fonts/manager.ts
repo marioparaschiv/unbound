@@ -354,12 +354,6 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 		return sources;
 	}
 
-	/** The loader records each face's source itself. */
-	recordSource() {}
-
-	/** The loader forgets a face's source when it removes the face. */
-	forgetSource() {}
-
 	/**
 	 * @description Reads whether a listed font is installed: a face installed from its file.
 	 * @param listed The listed font.
