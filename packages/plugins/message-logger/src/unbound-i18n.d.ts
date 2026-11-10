@@ -25,6 +25,10 @@ declare module '@unbound-app/i18n' {
 		readonly LOG_EDITS: string;
 		/** Keep the earlier versions of edited messages. */
 		readonly LOG_EDITS_SUBTITLE: string;
+		/** Keep the log after restarts */
+		readonly PERSIST_LOG: string;
+		/** Save deleted and edited messages, so they still show after Discord restarts. */
+		readonly PERSIST_LOG_SUBTITLE: string;
 		/** Log deleted attachments */
 		readonly LOG_DELETED_ATTACHMENTS: string;
 		/** Keep attachments removed by an edit, marked as deleted. */

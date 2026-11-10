@@ -10,6 +10,8 @@
 	"LOG_DELETES_SUBTITLE": "Keep deleted messages in the chat.",
 	"LOG_EDITS": "Log edited messages",
 	"LOG_EDITS_SUBTITLE": "Keep the earlier versions of edited messages.",
+	"PERSIST_LOG": "Keep the log after restarts",
+	"PERSIST_LOG_SUBTITLE": "Save deleted and edited messages, so they still show after Discord restarts.",
 	"LOG_DELETED_ATTACHMENTS": "Log deleted attachments",
 	"LOG_DELETED_ATTACHMENTS_SUBTITLE": "Keep attachments removed by an edit, marked as deleted.",
 	"IGNORE_BOTS": "Ignore bots",

@@ -165,6 +165,12 @@ declare module '@unbound-app/settings' {
 		 */
 		logEdits: boolean;
 		/**
+		 * Keep the log after restarts
+		 *
+		 * Save deleted and edited messages, so they still show after Discord restarts.
+		 */
+		persistLog: boolean;
+		/**
 		 * Log deleted attachments
 		 *
 		 * Keep attachments removed by an edit, marked as deleted.
@@ -235,6 +241,12 @@ declare module '@unbound-app/settings' {
 		 */
 		"logEdits": boolean;
 		/**
+		 * Keep the log after restarts
+		 *
+		 * Save deleted and edited messages, so they still show after Discord restarts.
+		 */
+		"persistLog": boolean;
+		/**
 		 * Log deleted attachments
 		 *
 		 * Keep attachments removed by an edit, marked as deleted.
@@ -281,7 +293,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "redText" | "deletedMarker" | "inlineEdits" | "logDeletes" | "logEdits" | "logDeletedAttachments" | "ignoreBots" | "ignoreSelf";
+	export type BooleanSettingKey = "redText" | "deletedMarker" | "inlineEdits" | "logDeletes" | "logEdits" | "persistLog" | "logDeletedAttachments" | "ignoreBots" | "ignoreSelf";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

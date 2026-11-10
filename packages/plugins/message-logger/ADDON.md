@@ -6,6 +6,7 @@ banner: media/banner.png
 
 - :trash: Deleted messages stay where they were, in red, marked **This message was deleted**.
 - :pen: Edited messages show their earlier versions above the current text, as small subtext.
+- :floppy-disk: Deleted and edited messages stay logged after Discord restarts, unless **Keep the log after restarts** is turned off.
 - :clock-rotate-clockwise: **View Edit History** in the long-press menu lists every version and when it changed.
 - :broom: **Clear Message History** and **Clear Message Log** tidy up one message or a whole channel.
 
