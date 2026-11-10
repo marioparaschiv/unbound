@@ -3,7 +3,7 @@ import { messages, format } from '~/i18n/api';
 import { Moment } from '~/metro/common';
 
 /** How the status card colours its badge. */
-export type HeroTone = 'positive' | 'brand' | 'critical' | 'neutral';
+export type HeroTone = 'positive' | 'warning' | 'brand' | 'critical' | 'neutral';
 
 export type Hero = {
 	tone: HeroTone;
@@ -17,9 +17,10 @@ export type Hero = {
  * @description Words the last update check for the status card at the top of the page.
  * @param state The last check.
  * @param pending How many updates are waiting, counting the loader only while its updates run.
+ * @param blocked Whether client updates run but the newest client needs a newer loader.
  * @returns The card's tone, icon, title and subtitle.
  */
-export function describeHero(state: UpdatesState, pending: number): Hero {
+export function describeHero(state: UpdatesState, pending: number, blocked: boolean): Hero {
 	switch (state.status) {
 		case 'idle':
 			return {
@@ -50,19 +51,21 @@ export function describeHero(state: UpdatesState, pending: number): Hero {
 		date: Moment.utc(state.checkedAt).fromNow(),
 	});
 
-	return pending > 0
-		? {
-				tone: 'brand',
-				icon: 'DownloadIcon',
-				title: format('UNBOUND_UPDATES_NOTIFY_TITLE', { count: pending }),
-				subtitle,
-			}
-		: {
-				tone: 'positive',
-				icon: 'CircleCheckIcon',
-				title: messages.UNBOUND_UPDATES_STATUS_UP_TO_DATE,
-				subtitle,
-			};
+	if (pending > 0) {
+		return {
+			tone: 'brand',
+			icon: 'DownloadIcon',
+			title: format('UNBOUND_UPDATES_NOTIFY_TITLE', { count: pending }),
+			subtitle,
+		};
+	}
+
+	return {
+		tone: blocked ? 'warning' : 'positive',
+		icon: blocked ? 'WarningIcon' : 'CircleCheckIcon',
+		title: messages.UNBOUND_UPDATES_STATUS_UP_TO_DATE,
+		subtitle,
+	};
 }
 
 export default { describeHero };

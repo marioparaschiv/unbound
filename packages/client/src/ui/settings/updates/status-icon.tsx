@@ -3,20 +3,28 @@ import { icons } from '~/assets/api';
 
 import useStyles from './status-icon.style';
 
+/** `current` is a green check, `paused` an amber pause, `blocked` an amber warning, `update` a brand download. */
+type StatusVariant = 'current' | 'paused' | 'blocked' | 'update';
+
 type StatusIconProps = {
-	/** `current` is a green check; `paused` an amber pause. */
-	variant: 'current' | 'paused';
+	variant: StatusVariant;
 };
 
-/** @description A row's trailing mark for a part that is up to date or whose updates are paused. */
+const ICONS = {
+	current: 'CircleCheckIcon',
+	paused: 'PauseIcon',
+	blocked: 'WarningIcon',
+	update: 'DownloadIcon',
+} as const satisfies Record<StatusVariant, string>;
+
+/**
+ * @description A row's trailing mark for a part that is up to date, paused, blocked on a loader update, or
+ * has one waiting.
+ */
 function StatusIcon({ variant }: StatusIconProps) {
 	const styles = useStyles();
 
-	return variant === 'current' ? (
-		<TintedIcon source={icons.CircleCheckIcon ?? 0} size={20} style={styles.current} />
-	) : (
-		<TintedIcon source={icons.PauseIcon ?? 0} size={20} style={styles.paused} />
-	);
+	return <TintedIcon source={icons[ICONS[variant]] ?? 0} size={20} style={styles[variant]} />;
 }
 
 export default StatusIcon;

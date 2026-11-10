@@ -16,15 +16,25 @@ type UnboundGroupProps = {
 	/** Whether the last check finished, so a loader without an update is known to be current. */
 	checked: boolean;
 	loader: LoaderUpdate | null;
+	/** The loader version the newest client needs while the installed loader is older. */
+	requiredLoader: string | null;
 	discord: DiscordBuilds | null;
 };
 
 /** @description Unbound itself: the client and the native loader, each its own row. */
-function UnboundGroup({ checked, loader, discord }: UnboundGroupProps) {
+function UnboundGroup({ checked, loader, requiredLoader, discord }: UnboundGroupProps) {
 	const settings = useUnboundSettings();
 	// With automatic updates off, the loader keeps the cached client until the user refetches it.
 	const clientManual = !settings.get('updater.auto.client');
 	const installed = getLoader()?.version;
+
+	function clientStatus() {
+		if (clientManual) {
+			return 'paused';
+		}
+
+		return requiredLoader ? 'blocked' : 'current';
+	}
 
 	return (
 		<Discord.TableRowGroup>
@@ -36,7 +46,7 @@ function UnboundGroup({ checked, loader, discord }: UnboundGroupProps) {
 						: `v${CLIENT_VERSION}`
 				}
 				icon={<LogoRowIcon />}
-				trailing={<StatusIcon variant={clientManual ? 'paused' : 'current'} />}
+				trailing={<StatusIcon variant={clientStatus()} />}
 			/>
 			{loader ? (
 				<LoaderUpdateRow update={loader} discord={discord} />
@@ -45,7 +55,11 @@ function UnboundGroup({ checked, loader, discord }: UnboundGroupProps) {
 					label={messages.UNBOUND_UPDATES_LOADER}
 					subLabel={`v${installed}`}
 					icon={<Discord.TableRowIcon source={icons.WrenchIcon} />}
-					trailing={checked ? <StatusIcon variant='current' /> : undefined}
+					trailing={
+						checked ? (
+							<StatusIcon variant={requiredLoader ? 'update' : 'current'} />
+						) : undefined
+					}
 				/>
 			) : null}
 		</Discord.TableRowGroup>

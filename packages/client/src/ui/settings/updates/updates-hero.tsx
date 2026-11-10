@@ -18,16 +18,18 @@ type UpdatesHeroProps = {
 	pending: PendingItem[];
 	/** How many updates Update all applies; the button hides at 0. */
 	automatic: number;
+	/** Whether client updates run but the newest client needs a newer loader. */
+	blocked: boolean;
 };
 
 /**
  * @description The status header at the top of the updates page: a coloured badge for where things stand,
  * when it was checked, what is waiting, and the actions that check again and update everything.
  */
-function UpdatesHero({ state, pending, automatic }: UpdatesHeroProps) {
+function UpdatesHero({ state, pending, automatic, blocked }: UpdatesHeroProps) {
 	const styles = useStyles();
 	const { check, applyAll } = UpdatesStore.getState();
-	const hero = describeHero(state, pending.length);
+	const hero = describeHero(state, pending.length, blocked);
 	const checking = state.status === 'checking';
 
 	return (
