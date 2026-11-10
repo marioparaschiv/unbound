@@ -1,9 +1,10 @@
 import { findByPropsLazy } from '~/metro/wrappers';
+import { ReactNative } from '~/metro/common';
 
 /** Discord's message actions module, with `sendMessage` and `receiveMessage`; found on first access. */
 export const Messages = findByPropsLazy('sendMessage', 'receiveMessage');
-/** Discord's link opener module, with `openURL` and `openSettings`; found on first access. */
-export const Linking = findByPropsLazy('openURL', 'openSettings');
+/** React Native's `Linking`, with `openURL` and `openSettings`; read directly, as a search on a cold metro cache costs ~15 ms. */
+export const Linking = ReactNative.Linking;
 /** Discord's module with `showUserProfile`, which opens a user's profile; found on first access. */
 export const Profiles = findByPropsLazy('showUserProfile');
 /** Discord's module with `fetchProfile`, which loads a user's profile from the API; found on first access. */
