@@ -2,7 +2,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import type { EnvSource } from '../../src/lib/env';
+import type { EnvSource } from '~/lib/env';
 
 export type UbdResult = {
 	exitCode: number;

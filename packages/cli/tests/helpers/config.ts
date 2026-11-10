@@ -1,4 +1,4 @@
-import { loadConfig, type ResolvedConfig } from '../../src/lib/config';
+import { loadConfig, type ResolvedConfig } from '~/lib/config';
 
 /**
  * @description Loads a test workspace's config, failing the test when it is invalid.

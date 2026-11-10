@@ -6,8 +6,8 @@ import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import { rollup } from 'rollup';
 
-import { walk } from '../../src/rollup/filter-scope';
-import { unbound } from '../../src/rollup/preset';
+import { walk } from '~/rollup/filter-scope';
+import { unbound } from '~/rollup/preset';
 
 export type PluginBuild = { code: string; warnings: string[]; infos: string[] };
 

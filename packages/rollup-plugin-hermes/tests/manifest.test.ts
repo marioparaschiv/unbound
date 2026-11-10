@@ -3,15 +3,14 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { ManifestContext } from '../src/manifest';
-
 import {
 	buildManifest,
 	fetchManifest,
 	hermescBinary,
 	parseRegistryVersions,
 	resolveHermesTargets,
-} from '../src/manifest';
+} from '~/manifest';
+import type { ManifestContext } from '~/manifest';
 
 type RegistryVersion = { version: string };
 

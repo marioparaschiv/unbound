@@ -1,17 +1,11 @@
 import type { EvalResult } from '@unbound-app/debugger-protocol';
 import { describe, expect, test } from 'bun:test';
 
-import type {
-	ClassReport,
-	InspectReport,
-	ViewRecord,
-	ViewsReport,
-} from '../src/lib/inspect-report';
-import type { DeviceClient } from '../src/lib/device';
-
-import { formatClassReport, formatFoundViews, formatViewTree } from '../src/lib/inspect-format';
-import inspectCommand, { runInspect } from '../src/commands/inspect';
-import { parse, type StaticDecode } from '../src/lib/schema';
+import type { ClassReport, InspectReport, ViewRecord, ViewsReport } from '~/lib/inspect-report';
+import { formatClassReport, formatFoundViews, formatViewTree } from '~/lib/inspect-format';
+import inspectCommand, { runInspect } from '~/commands/inspect';
+import { parse, type StaticDecode } from '~/lib/schema';
+import type { DeviceClient } from '~/lib/device';
 
 const textView: ClassReport = {
 	platform: 'android',
