@@ -6,7 +6,7 @@ import { createDevicePrelude } from '~/lib/device-prelude';
 type FakePlugin = {
 	id: string;
 	started: boolean;
-	context?: { platform: string; capabilities: string[] };
+	context?: { id: string; platform: string; capabilities: string[] };
 };
 
 type FakeUnbound = { plugins?: { entities: Map<string, FakePlugin> } };
@@ -29,24 +29,35 @@ function unboundWith(plugins: FakePlugin[] | undefined) {
 
 describe('createDevicePrelude', () => {
 	test('borrows the native bridge of a started plugin holding every capability', () => {
-		const bridge = {
-			platform: 'android',
-			capabilities: ['native.java.invoke', 'native.java.fields'],
-		};
+		const capabilities = ['native.java.invoke', 'native.java.fields'];
 		const { nativeBridge } = createDevicePrelude(
 			unboundWith([
-				{ id: 'stopped', started: false, context: { ...bridge } },
+				{
+					id: 'stopped',
+					started: false,
+					context: { id: 'stopped', platform: 'android', capabilities },
+				},
 				{
 					id: 'partial',
 					started: true,
-					context: { platform: 'android', capabilities: ['native.java.invoke'] },
+					context: {
+						id: 'partial',
+						platform: 'android',
+						capabilities: ['native.java.invoke'],
+					},
 				},
-				{ id: 'ios', started: true, context: { ...bridge, platform: 'ios' } },
-				{ id: 'holder', started: true, context: bridge },
+				{ id: 'ios', started: true, context: { id: 'ios', platform: 'ios', capabilities } },
+				{
+					id: 'holder',
+					started: true,
+					context: { id: 'holder', platform: 'android', capabilities },
+				},
 			]),
 		);
 
-		expect(nativeBridge('android', ['native.java.invoke', 'native.java.fields'])).toBe(bridge);
+		expect(nativeBridge('android', ['native.java.invoke', 'native.java.fields'])?.id).toBe(
+			'holder',
+		);
 		expect(nativeBridge('android', ['native.java.hooks'])).toBeUndefined();
 	});
 
