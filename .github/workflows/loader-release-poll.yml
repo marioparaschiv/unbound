@@ -19,7 +19,7 @@ defaults:
 jobs:
     stable-candidate:
         runs-on: ubuntu-26.04
-        timeout-minutes: 10
+        timeout-minutes: 20
         outputs:
             version: ${{ steps.candidate.outputs.version }}
             android_code: ${{ steps.candidate.outputs.android_code }}
@@ -31,12 +31,26 @@ jobs:
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
 
+            # iTunes Lookup can serve the previous version for hours after a release; dkrypt reads the App Store directly.
+            # A dkrypt outage leaves the iTunes version alone in charge.
+            - name: Resolve the latest App Store build
+              id: appstore
+              continue-on-error: true
+              uses: castdrian/dkrypt@90e77358afff7fc913376dd732d30b222f922e0d
+              with:
+                  api-url: ${{ vars.DKRYPT_BASE_URL || 'https://ipa.dylib.dev' }}
+                  api-key: ${{ secrets.DKRYPT_API_KEY }}
+                  bundle-id: com.hammerandchisel.discord
+                  channel: appstore
+                  resolve-only: true
+
             - name: Resolve stable candidate
               id: candidate
               env:
                   GITHUB_REPOSITORY: ${{ github.repository }}
                   GITHUB_TOKEN: ${{ github.token }}
-              run: unbound-tools release-candidate --channel stable
+                  APPSTORE_VERSION: ${{ steps.appstore.outputs.version }}
+              run: unbound-tools release-candidate --channel stable --version "$APPSTORE_VERSION"
 
     testflight-candidate:
         runs-on: ubuntu-26.04

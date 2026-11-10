@@ -112,8 +112,43 @@ func TestDiscoverStableCandidateSkipsUnavailableAndroidVersion(t *testing.T) {
 	}
 }
 
+func TestDiscoverStableCandidatePrefersANewerDkryptVersionOverAStaleItunesLookup(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		switch request.URL.Path {
+		case "/lookup":
+			fmt.Fprint(writer, `{"resultCount":1,"results":[{"bundleId":"com.hammerandchisel.discord","trackId":985746746,"version":"352.1"}]}`)
+		case "/tracker/index":
+			fmt.Fprint(writer, `{"latest":{"stable":352017}}`)
+		case "/tracker/download/352017/base":
+			writer.WriteHeader(http.StatusPartialContent)
+			fmt.Fprint(writer, "x")
+		default:
+			t.Fatalf("unexpected request path %q", request.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	for resolved, want := range map[string]string{"353.0": "353.0", "352.0": "352.1", "": "352.1", "latest": "352.1"} {
+		config := releasePollConfig{
+			channel:           "stable",
+			bundleID:          defaultBundleID,
+			itunesLookupURL:   server.URL + "/lookup",
+			androidTrackerURL: server.URL + "/tracker",
+			resolvedVersion:   resolved,
+			httpClient:        server.Client(),
+		}
+		candidate, err := discoverReleaseCandidate(context.Background(), config)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if candidate.Version != want {
+			t.Fatalf("dkrypt %q: selected %q, want %q", resolved, candidate.Version, want)
+		}
+	}
+}
+
 func TestTestflightCandidateUsesTheVersionTheActionResolved(t *testing.T) {
-	config := releasePollConfig{channel: "testflight", testflightVersion: "352.0_118977"}
+	config := releasePollConfig{channel: "testflight", resolvedVersion: "352.0_118977"}
 	candidate, err := discoverReleaseCandidate(context.Background(), config)
 	if err != nil {
 		t.Fatal(err)
@@ -125,7 +160,7 @@ func TestTestflightCandidateUsesTheVersionTheActionResolved(t *testing.T) {
 
 func TestTestflightCandidateRejectsAVersionWithoutABuild(t *testing.T) {
 	for _, version := range []string{"", "352.0", "352_118977", "latest", "352.0_"} {
-		config := releasePollConfig{channel: "testflight", testflightVersion: version}
+		config := releasePollConfig{channel: "testflight", resolvedVersion: version}
 		if _, err := discoverReleaseCandidate(context.Background(), config); err == nil || !strings.Contains(err.Error(), "--version <version>_<build>") {
 			t.Fatalf("version %q: expected a version_build error, got %v", version, err)
 		}

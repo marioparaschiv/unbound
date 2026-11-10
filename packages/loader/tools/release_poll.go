@@ -32,7 +32,7 @@ type releasePollConfig struct {
 	sniffURL          string
 	githubAPIURL      string
 	githubRepository  string
-	testflightVersion string
+	resolvedVersion   string
 	githubToken       string
 	httpClient        *http.Client
 	now               func() time.Time
@@ -78,7 +78,7 @@ func runReleaseCandidate(args []string) error {
 	itunesURL := set.String("itunes-url", defaultItunesLookupURL, "iTunes Lookup endpoint")
 	androidTrackerURL := set.String("android-tracker", defaultAndroidTracker, "Android package tracker base URL")
 	sniffURL := set.String("sniff-url", envOr("DISCORD_SNIFF_URL", defaultSniffURL), "sniff service base URL")
-	testflightVersion := set.String("version", "", "TestFlight version_build the dkrypt action resolved")
+	resolvedVersion := set.String("version", "", "version the dkrypt action resolved: TestFlight version_build, or the App Store version")
 	githubAPIURL := set.String("github-api-url", defaultGithubAPI, "GitHub API base URL")
 	githubRepository := set.String("github-repository", os.Getenv("GITHUB_REPOSITORY"), "GitHub owner/repository")
 	if err := set.Parse(args); err != nil {
@@ -99,7 +99,7 @@ func runReleaseCandidate(args []string) error {
 		sniffURL:          strings.TrimRight(*sniffURL, "/"),
 		githubAPIURL:      strings.TrimRight(*githubAPIURL, "/"),
 		githubRepository:  *githubRepository,
-		testflightVersion: strings.TrimSpace(*testflightVersion),
+		resolvedVersion:   strings.TrimSpace(*resolvedVersion),
 		githubToken:       os.Getenv("GITHUB_TOKEN"),
 		httpClient:        lookupClient(releasePollRequestLimit),
 		now:               time.Now,
@@ -131,13 +131,26 @@ func discoverReleaseCandidate(ctx context.Context, config releasePollConfig) (re
 		return discoverAndroidChannelCandidate(ctx, config, channel)
 	}
 	if config.channel == "testflight" {
-		return testflightCandidate(config.testflightVersion)
+		return testflightCandidate(config.resolvedVersion)
 	}
 	lookup, err := lookupItunesApp(ctx, config.httpClient, config.itunesLookupURL, config.bundleID)
 	if err != nil {
 		return releaseCandidate{}, err
 	}
-	return discoverStableCandidate(ctx, config, lookup.Version)
+	return discoverStableCandidate(ctx, config, newestAppStoreVersion(lookup.Version, config.resolvedVersion))
+}
+
+// iTunes Lookup's edge caches can serve the previous version for hours after a release, so dkrypt's App Store version wins when it is newer.
+func newestAppStoreVersion(itunesVersion, resolvedVersion string) string {
+	if resolvedVersion == "" {
+		return itunesVersion
+	}
+	order, err := compareDiscordVersions(resolvedVersion, itunesVersion)
+	if err != nil || order <= 0 {
+		return itunesVersion
+	}
+	fmt.Printf("::notice title=release poll::iTunes Lookup still serves %s; dkrypt resolved App Store %s\n", itunesVersion, resolvedVersion)
+	return resolvedVersion
 }
 
 func loaderReleaseTags(channel string, candidate releaseCandidate) ([]string, error) {
