@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Vervangen",
+	"REPLACE_ALL": "Titels en miniaturen",
+	"REPLACE_TITLES": "Titels",
+	"REPLACE_THUMBNAILS": "Miniaturen",
+	"DEARROW_BY_DEFAULT": "Standaard DeArrow gebruiken",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Titels en miniaturen vervangen zonder te vragen",
+	"SHOW_TOGGLE": "Schakelaar tonen",
+	"SHOW_TOGGLE_SUBTITLE": "Wissel een insluiting heen en weer via het berichtmenu",
+	"SHOW_ORIGINAL_EMBED": "Oorspronkelijke insluiting tonen",
+	"DEARROW_EMBED": "DeArrow toepassen op insluiting"
+}

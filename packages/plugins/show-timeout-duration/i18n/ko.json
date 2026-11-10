@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "타임아웃 {remaining} 남음",
+	"TIMEOUT_EXPIRES_IN": "{remaining} 후 타임아웃 종료"
+}

@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Erstatt",
+	"REPLACE_ALL": "Titler og miniatyrbilder",
+	"REPLACE_TITLES": "Titler",
+	"REPLACE_THUMBNAILS": "Miniatyrbilder",
+	"DEARROW_BY_DEFAULT": "DeArrow som standard",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Erstatt titler og miniatyrbilder uten å spørre",
+	"SHOW_TOGGLE": "Vis bryter",
+	"SHOW_TOGGLE_SUBTITLE": "Bytt en innbygging frem og tilbake fra meldingsmenyen",
+	"SHOW_ORIGINAL_EMBED": "Vis opprinnelig innbygging",
+	"DEARROW_EMBED": "Bruk DeArrow på innbygging"
+}

@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Poista automaattisesti käytöstä",
+	"AUTO_DISABLE_SUBTITLE": "Kytke valitsin pois päältä yhden hiljaisen viestin lähettämisen jälkeen",
+	"DISABLE_SILENT_MESSAGE": "Poista hiljainen viesti käytöstä",
+	"ENABLE_SILENT_MESSAGE": "Ota hiljainen viesti käyttöön",
+	"PERSIST_STATE": "Säilytä tila",
+	"PERSIST_STATE_SUBTITLE": "Pidä valitsin päällä, kun avaat toisen kanavan",
+	"SILENT_MESSAGE_TOGGLE": "Hiljaisen viestin valitsin",
+	"TOGGLE": "Vaihda",
+	"TOGGLED_OFF": "Viestisi täällä lähettävät taas ilmoituksia.",
+	"TOGGLED_ON": "Viestisi täällä lähetetään ilman ilmoituksia."
+}

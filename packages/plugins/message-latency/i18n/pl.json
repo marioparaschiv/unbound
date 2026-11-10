@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Wskaźnik",
+	"LATENCY_THRESHOLD": "Próg opóźnienia",
+	"LATENCY_THRESHOLD_SUBTITLE": "Pokazuj wskaźnik, gdy wysłanie wiadomości trwa co najmniej tyle.",
+	"SHOW_MILLISECONDS": "Pokazuj milisekundy",
+	"SHOW_MILLISECONDS_SUBTITLE": "Pokazuj we wskaźniku czas z dokładnością do milisekund.",
+	"IGNORE_MY_MESSAGES": "Ignoruj moje wiadomości",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Oznaczaj tylko wiadomości wysłane przez inne osoby.",
+	"DETECT_LEGACY_ANDROID": "Wykrywaj starsze klienty na Androida",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Pokazuj znacznik przy znanym przesunięciu znacznika czasu w starszych klientach Discorda na Androida.",
+	"DURATION_DAYS": "{count, plural, one {# dzień} few {# dni} many {# dni} other {# dnia}}",
+	"DURATION_HOURS": "{count, plural, one {# godzina} few {# godziny} many {# godzin} other {# godziny}}",
+	"DURATION_MINUTES": "{count, plural, one {# minuta} few {# minuty} many {# minut} other {# minuty}}",
+	"DURATION_SECONDS": "{count, plural, one {# sekunda} few {# sekundy} many {# sekund} other {# sekundy}}",
+	"DURATION_MILLISECONDS": "{count, plural, one {# milisekunda} few {# milisekundy} many {# milisekund} other {# milisekundy}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} i {later}",
+	"TOOLTIP_DELAYED": "Ta wiadomość została wysłana z opóźnieniem: {duration}.",
+	"TOOLTIP_CLOCK_AHEAD": "Zegar tego użytkownika spieszy się o {duration}.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "Użytkownik prawdopodobnie korzysta ze starego klienta Discorda na Androida",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} Użytkownik prawdopodobnie korzysta ze starego klienta Discorda na Androida.",
+	"OLD_ANDROID_CLIENT": "Stary klient Discorda na Androida"
+}

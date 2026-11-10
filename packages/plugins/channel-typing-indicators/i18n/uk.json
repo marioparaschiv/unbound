@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Індикатори набору тексту в каналах",
+	"INCLUDE_CURRENT_CHANNEL": "Включати поточний канал",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Показувати набір тексту у вибраному каналі.",
+	"INCLUDE_MUTED_CHANNELS": "Включати канали без сповіщень",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Показувати набір тексту в каналах зі вимкненими сповіщеннями.",
+	"INCLUDE_IGNORED_USERS": "Включати ігнорованих користувачів",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Показувати набір тексту від ігнорованих користувачів.",
+	"INCLUDE_BLOCKED_USERS": "Включати заблокованих користувачів",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Показувати набір тексту від заблокованих користувачів.",
+	"APPEARANCE": "Вигляд",
+	"APPEARANCE_BOTH": "Аватари й анімовані крапки",
+	"APPEARANCE_DOTS": "Анімовані крапки",
+	"APPEARANCE_AVATARS": "Аватари",
+	"TYPING_ONE": "{a} друкує...",
+	"TYPING_TWO": "{a} і {b} друкують...",
+	"TYPING_THREE": "{a}, {b} і {c} друкують...",
+	"TYPING_SEVERAL": "Кілька людей друкують...",
+	"SOMEONE": "Хтось"
+}

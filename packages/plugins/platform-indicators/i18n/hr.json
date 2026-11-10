@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Indikatori platforme",
+	"SHOW_INDICATORS": "Prikaži indikatore",
+	"MEMBER_LIST": "Popis članova",
+	"MEMBER_LIST_SUBTITLE": "Iza imena na popisu članova i drugim popisima korisnika",
+	"PROFILES": "Profili",
+	"PROFILES_SUBTITLE": "Ispod imena i znački na profilima",
+	"MESSAGES": "Poruke",
+	"MESSAGES_SUBTITLE": "Iza vremenske oznake na porukama",
+	"STATUS": "Status",
+	"COLOR_MOBILE_INDICATOR": "Oboji mobilni indikator",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "Prikaži oblik statusa telefona i za mobilne korisnike koji su neaktivni ili zauzeti",
+	"PLATFORM_DESKTOP": "Računalo",
+	"PLATFORM_MOBILE": "Mobitel",
+	"PLATFORM_WEB": "Web",
+	"PLATFORM_EMBEDDED": "Ugrađeno (konzola ili igra)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "Na mreži na: {platforms}"
+}

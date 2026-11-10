@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Цветные упоминания",
+	"COLOR_MENTIONS_SUBTITLE": "Показывать цвета ролей упомянутого участника в чате и поле ввода",
+	"COLOR_MESSAGE_CONTENT": "Цветной текст сообщений",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Подкрашивать текст сообщения цветом роли автора",
+	"MESSAGE_COLOR_INTENSITY": "Интенсивность цвета сообщений",
+	"TYPING_NAMES": "Имена в наборе текста",
+	"TYPING_NAMES_SUBTITLE": "Окрашивать имена в индикаторе набора текста в канале",
+	"MEMBER_LIST_ROLE_HEADERS": "Заголовки ролей в списке участников",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "Окрашивать заголовки разделов ролей в списке участников",
+	"REACTION_USERS": "Авторы реакций",
+	"REACTION_USERS_SUBTITLE": "Окрашивать имена в списке реакций",
+	"POLL_VOTERS": "Участники опросов",
+	"POLL_VOTERS_SUBTITLE": "Окрашивать имена в результатах опроса",
+	"VOICE_USERS": "Участники голосовых каналов",
+	"VOICE_USERS_SUBTITLE": "Окрашивать имена участников в списках голосовых каналов"
+}

@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Dodaj privitke",
+	"UPLOADING": "Prijenos u tijeku, ovo može potrajati...",
+	"ATTACHMENTS_ADDED": "{count, plural, one {Privitak je uspješno dodan!} few {Privitci su uspješno dodani!} other {Privitci su uspješno dodani!}}",
+	"UPLOAD_FAILED": "Prijenos jednog privitka nije uspio.",
+	"NOT_ADDED": "Privitke nije bilo moguće dodati.",
+	"PICKER_UNAVAILABLE": "Odabir medija nije dostupan u ovom buildu Discorda.",
+	"PICKER_FAILED": "Odabir medija nije uspio.",
+	"LIMIT_REACHED": "Ovoj poruci ne možeš dodati više privitaka.",
+	"LIMIT_REMAINING": "Ovoj poruci možeš dodati još samo {count, plural, one {# privitak} few {# privitka} other {# privitaka}}."
+}

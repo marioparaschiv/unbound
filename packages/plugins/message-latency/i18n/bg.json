@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Индикатор",
+	"LATENCY_THRESHOLD": "Праг на забавяне",
+	"LATENCY_THRESHOLD_SUBTITLE": "Показвай индикатор, когато изпращането на съобщение отнеме поне толкова време.",
+	"SHOW_MILLISECONDS": "Показвай милисекунди",
+	"SHOW_MILLISECONDS_SUBTITLE": "Показвай индикатора с точност до милисекунда.",
+	"IGNORE_MY_MESSAGES": "Игнорирай моите съобщения",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Маркирай само съобщения, изпратени от други хора.",
+	"DETECT_LEGACY_ANDROID": "Разпознавай стари Android клиенти",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Показвай маркер за известното отместване на времето в по-старите Android клиенти на Discord.",
+	"DURATION_DAYS": "{count, plural, one {# ден} other {# дни}}",
+	"DURATION_HOURS": "{count, plural, one {# час} other {# часа}}",
+	"DURATION_MINUTES": "{count, plural, one {# минута} other {# минути}}",
+	"DURATION_SECONDS": "{count, plural, one {# секунда} other {# секунди}}",
+	"DURATION_MILLISECONDS": "{count, plural, one {# милисекунда} other {# милисекунди}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} и {later}",
+	"TOOLTIP_DELAYED": "Това съобщение е изпратено със закъснение от {duration}.",
+	"TOOLTIP_CLOCK_AHEAD": "Часовникът на този потребител избързва с {duration}.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "Потребителят вероятно използва стар Android клиент на Discord",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} Потребителят вероятно използва стар Android клиент на Discord.",
+	"OLD_ANDROID_CLIENT": "Стар Android клиент на Discord"
+}

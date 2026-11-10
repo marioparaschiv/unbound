@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "환경설정",
+	"DISPLAY_MODE": "표시 방식",
+	"MODE_NICK_USER": "표시 이름 다음에 사용자명",
+	"MODE_NICK_USER_SUBTITLE": "표시 이름 (@사용자명)",
+	"MODE_USER_NICK": "사용자명 다음에 표시 이름",
+	"MODE_USER_NICK_SUBTITLE": "@사용자명 (표시 이름)",
+	"MODE_USER": "사용자명만",
+	"MODE_USER_SUBTITLE": "@사용자명",
+	"FRIEND_NICKNAMES": "친구 별명 표시",
+	"FRIEND_NICKNAMES_SUBTITLE": "친구 별명이 있으면 어디서든 우선 사용해요",
+	"DISPLAY_NAMES": "전역 표시 이름 사용",
+	"DISPLAY_NAMES_SUBTITLE": "사용자명 대신 계정의 전역 표시 이름을 보여 줘요",
+	"IN_REPLIES": "답장에도 적용",
+	"IN_REPLIES_SUBTITLE": "답장 미리 보기에도 적용해요"
+}

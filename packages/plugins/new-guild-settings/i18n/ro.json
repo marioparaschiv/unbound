@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "Când intri pe un server",
+	"MUTE_SERVER": "Amuțește serverul",
+	"MUTE_SERVER_SUBTITLE": "Amuțește automat serverele noi",
+	"SUPPRESS_EVERYONE": "Suprimă @everyone și @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Ignoră @everyone și @here pe serverele noi",
+	"SUPPRESS_ROLES": "Suprimă toate @mențiunile de rol",
+	"SUPPRESS_ROLES_SUBTITLE": "Ignoră mențiunile de rol pe serverele noi",
+	"SUPPRESS_HIGHLIGHTS": "Suprimă evidențierile",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Dezactivează notificările pentru evidențieri pe serverele noi",
+	"MUTE_EVENTS": "Amuțește evenimentele noi",
+	"MUTE_EVENTS_SUBTITLE": "Amuțește notificările pentru evenimentele programate",
+	"SHOW_ALL_CHANNELS": "Afișează toate canalele",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Afișează toate canalele pe serverele care te lasă să alegi canalele",
+	"SERVER_NOTIFICATION_SETTINGS": "Setări de notificare ale serverului",
+	"NOTIFY_ALL": "Toate mesajele",
+	"NOTIFY_MENTIONS": "Doar @mențiuni",
+	"NOTIFY_NOTHING": "Nimic",
+	"NOTIFY_DEFAULT": "Implicit pentru server",
+	"APPLY_NEW_GUILD_SETTINGS": "Aplică setările pentru servere noi",
+	"APPLIED_TO_GUILD": "Aplicat pe {name}.",
+	"APPLIED_TO_THIS_SERVER": "Aplicat pe acest server."
+}

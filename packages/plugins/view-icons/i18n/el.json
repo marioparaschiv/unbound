@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "Δεν ήταν δυνατό το άνοιγμα {image, select, avatar {του άβαταρ} banner {του banner} serverAvatar {του άβαταρ διακομιστή} serverIcon {του εικονιδίου διακομιστή} serverBanner {του banner διακομιστή} other {του εικονιδίου ομαδικού ΑΜ}}.",
+	"VIEW_AVATAR": "Προβολή άβαταρ",
+	"VIEW_BANNER": "Προβολή banner",
+	"VIEW_GROUP_ICON": "Προβολή εικονιδίου ομαδικού ΑΜ",
+	"VIEW_ICONS": "Προβολή εικονιδίων",
+	"VIEW_SERVER_AVATAR": "Προβολή άβαταρ διακομιστή",
+	"VIEW_SERVER_BANNER": "Προβολή banner διακομιστή",
+	"VIEW_SERVER_ICON": "Προβολή εικονιδίου διακομιστή"
+}

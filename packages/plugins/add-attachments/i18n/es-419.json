@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Añadir archivos adjuntos",
+	"UPLOADING": "Subiendo, esto puede tardar un poco...",
+	"ATTACHMENTS_ADDED": "{count, plural, one {¡Archivo adjunto añadido!} many {¡Archivos adjuntos añadidos!} other {¡Archivos adjuntos añadidos!}}",
+	"UPLOAD_FAILED": "No se pudo subir un archivo adjunto.",
+	"NOT_ADDED": "No se pudieron añadir los archivos adjuntos.",
+	"PICKER_UNAVAILABLE": "El selector de multimedia no está disponible en esta versión de Discord.",
+	"PICKER_FAILED": "Error en el selector de multimedia.",
+	"LIMIT_REACHED": "No puedes añadir más archivos adjuntos a este mensaje.",
+	"LIMIT_REMAINING": "Solo puedes añadir {count, plural, one {# archivo adjunto más} many {# archivos adjuntos más} other {# archivos adjuntos más}} a este mensaje."
+}

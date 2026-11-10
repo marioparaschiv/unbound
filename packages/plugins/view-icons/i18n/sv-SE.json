@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "Det gick inte att öppna {image, select, avatar {avataren} banner {banderollen} serverAvatar {serveravataren} serverIcon {serverikonen} serverBanner {serverbanderollen} other {ikonen för grupp-DM:et}}.",
+	"VIEW_AVATAR": "Visa avatar",
+	"VIEW_BANNER": "Visa banderoll",
+	"VIEW_GROUP_ICON": "Visa ikon för grupp-DM",
+	"VIEW_ICONS": "Visa ikoner",
+	"VIEW_SERVER_AVATAR": "Visa serveravatar",
+	"VIEW_SERVER_BANNER": "Visa serverbanderoll",
+	"VIEW_SERVER_ICON": "Visa serverikon"
+}

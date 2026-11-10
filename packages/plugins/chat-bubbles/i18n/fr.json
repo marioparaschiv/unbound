@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Couleur des bulles",
+	"BUBBLE_COLOR_FALLBACK": "Suit le thème : noir sur les thèmes sombres, blanc sur le thème clair",
+	"COLORS": "Couleurs",
+	"CORNER_RADIUS": "Arrondi des coins",
+	"HORIZONTAL_PADDING": "Marge horizontale",
+	"LAYOUT": "Disposition",
+	"LAYOUT_CARD": "Cartes pleine largeur",
+	"LAYOUT_CARD_SUBTITLE": "Une carte derrière chaque message entier, nom et réactions compris, comme Rosiecord",
+	"LAYOUT_FIT": "Ajustée au message",
+	"LAYOUT_FIT_SUBTITLE": "Chaque bulle entoure uniquement le texte et les médias de son message",
+	"OPACITY": "Opacité",
+	"OWN_COLOR": "Vos messages",
+	"OWN_COLOR_FALLBACK": "Identique à la couleur des bulles",
+	"SHAPE": "Forme",
+	"UNIT_PERCENT": " %",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Marge verticale"
+}

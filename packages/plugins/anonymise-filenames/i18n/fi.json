@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Anonymisoi oletuksena",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Jokaisen tiedoston voi silti vaihtaa sen esikatselunäkymästä",
+	"METHOD": "Menetelmä",
+	"METHOD_RANDOM": "Satunnaiset merkit",
+	"METHOD_CONSISTENT": "Yhtenäinen",
+	"METHOD_TIMESTAMP": "Aikaleima",
+	"LENGTH": "Pituus",
+	"FILE_NAME": "Tiedostonimi",
+	"FILE_NAME_PLACEHOLDER": "kuva",
+	"FILE_NAME_SUBTITLE": "Jokainen tiedosto lähetetään tällä nimellä ja omalla tiedostopäätteellään.",
+	"ANONYMISE_FILE_NAME": "Anonymisoi tiedostonimi",
+	"USING_ANONYMOUS_NAME": "Käytetään anonyymiä tiedostonimeä",
+	"USING_ORIGINAL_NAME": "Käytetään alkuperäistä tiedostonimeä",
+	"USE_ORIGINAL_FILE_NAME": "Käytä alkuperäistä tiedostonimeä"
+}

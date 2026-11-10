@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Colora le menzioni",
+	"COLOR_MENTIONS_SUBTITLE": "Mostra i colori del ruolo del membro menzionato nella chat e nella casella di scrittura",
+	"COLOR_MESSAGE_CONTENT": "Colora il contenuto dei messaggi",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Tingi il testo dei messaggi con il colore del ruolo dell’autore",
+	"MESSAGE_COLOR_INTENSITY": "Intensità del colore dei messaggi",
+	"TYPING_NAMES": "Nomi di chi scrive",
+	"TYPING_NAMES_SUBTITLE": "Colora i nomi nell’indicatore di digitazione del canale",
+	"MEMBER_LIST_ROLE_HEADERS": "Intestazioni dei ruoli nell’elenco membri",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "Colora i titoli delle sezioni dei ruoli nell’elenco membri",
+	"REACTION_USERS": "Utenti delle reazioni",
+	"REACTION_USERS_SUBTITLE": "Colora i nomi nell’elenco dei dettagli delle reazioni",
+	"POLL_VOTERS": "Votanti dei sondaggi",
+	"POLL_VOTERS_SUBTITLE": "Colora i nomi nei dettagli dei risultati dei sondaggi",
+	"VOICE_USERS": "Utenti in vocale",
+	"VOICE_USERS_SUBTITLE": "Colora i nomi dei membri negli elenchi degli utenti in vocale"
+}

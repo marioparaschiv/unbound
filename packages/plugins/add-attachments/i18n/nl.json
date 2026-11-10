@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Bijlagen toevoegen",
+	"UPLOADING": "Uploaden, dit kan even duren...",
+	"ATTACHMENTS_ADDED": "{count, plural, one {Bijlage toegevoegd!} other {Bijlagen toegevoegd!}}",
+	"UPLOAD_FAILED": "Een bijlage kon niet worden geüpload.",
+	"NOT_ADDED": "De bijlagen konden niet worden toegevoegd.",
+	"PICKER_UNAVAILABLE": "De mediakiezer is niet beschikbaar in deze Discord-build.",
+	"PICKER_FAILED": "De mediakiezer is mislukt.",
+	"LIMIT_REACHED": "Je kunt geen bijlagen meer aan dit bericht toevoegen.",
+	"LIMIT_REMAINING": "Je kunt nog maar {count, plural, one {# bijlage} other {# bijlagen}} aan dit bericht toevoegen."
+}

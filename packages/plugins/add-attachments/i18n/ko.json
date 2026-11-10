@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "첨부 파일 추가",
+	"UPLOADING": "업로드 중이에요. 시간이 좀 걸릴 수 있어요...",
+	"ATTACHMENTS_ADDED": "{count, plural, other {첨부 파일을 추가했어요!}}",
+	"UPLOAD_FAILED": "첨부 파일 하나를 업로드하지 못했어요.",
+	"NOT_ADDED": "첨부 파일을 추가하지 못했어요.",
+	"PICKER_UNAVAILABLE": "이 Discord 빌드에서는 미디어 선택기를 사용할 수 없어요.",
+	"PICKER_FAILED": "미디어 선택기에 문제가 발생했어요.",
+	"LIMIT_REACHED": "이 메시지에는 첨부 파일을 더 추가할 수 없어요.",
+	"LIMIT_REMAINING": "이 메시지에는 첨부 파일을 {count, plural, other {#개}}만 더 추가할 수 있어요."
+}

@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "Wanneer je lid wordt van een server",
+	"MUTE_SERVER": "Server dempen",
+	"MUTE_SERVER_SUBTITLE": "Nieuwe servers automatisch dempen",
+	"SUPPRESS_EVERYONE": "@everyone en @here onderdrukken",
+	"SUPPRESS_EVERYONE_SUBTITLE": "@everyone en @here negeren in nieuwe servers",
+	"SUPPRESS_ROLES": "Alle @vermeldingen van rollen onderdrukken",
+	"SUPPRESS_ROLES_SUBTITLE": "Rolvermeldingen negeren in nieuwe servers",
+	"SUPPRESS_HIGHLIGHTS": "Hoogtepunten onderdrukken",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Meldingen voor hoogtepunten uitschakelen in nieuwe servers",
+	"MUTE_EVENTS": "Nieuwe evenementen dempen",
+	"MUTE_EVENTS_SUBTITLE": "Meldingen van geplande evenementen dempen",
+	"SHOW_ALL_CHANNELS": "Alle kanalen tonen",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Toon elk kanaal in servers waar je zelf kanalen kunt kiezen",
+	"SERVER_NOTIFICATION_SETTINGS": "Meldingsinstellingen van server",
+	"NOTIFY_ALL": "Alle berichten",
+	"NOTIFY_MENTIONS": "Alleen @vermeldingen",
+	"NOTIFY_NOTHING": "Niets",
+	"NOTIFY_DEFAULT": "Serverstandaard",
+	"APPLY_NEW_GUILD_SETTINGS": "Instellingen voor nieuwe servers toepassen",
+	"APPLIED_TO_GUILD": "Toegepast op {name}.",
+	"APPLIED_TO_THIS_SERVER": "Toegepast op deze server."
+}

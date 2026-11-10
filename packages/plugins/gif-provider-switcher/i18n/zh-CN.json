@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "提供方",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "在 Tenor 上搜索 GIF",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "在 Giphy 上搜索 GIF",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "Discord 自带的 GIF 搜索",
+	"PROVIDER_BUTTON_LABEL": "GIF 提供方：{provider}。切换到 {next}"
+}

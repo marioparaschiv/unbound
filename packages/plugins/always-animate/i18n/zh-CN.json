@@ -1,0 +1,18 @@
+{
+	"AVATARS": "头像",
+	"AVATARS_SUBTITLE": "动态头像和个人资料横幅",
+	"DECORATIONS": "头像装饰",
+	"DECORATIONS_SUBTITLE": "头像周围的装饰",
+	"NAMEPLATES": "名牌",
+	"NAMEPLATES_SUBTITLE": "名称背后的名牌，循环播放",
+	"PROFILE_EFFECTS": "个人资料特效",
+	"PROFILE_EFFECTS_SUBTITLE": "覆盖在个人资料上的特效",
+	"SERVER_ICONS": "服务器图标",
+	"SERVER_ICONS_SUBTITLE": "动态服务器图标和横幅",
+	"EMOJIS": "表情符号",
+	"EMOJIS_SUBTITLE": "消息、反应和自定义状态中的表情符号",
+	"STICKERS": "贴纸",
+	"STICKERS_SUBTITLE": "动态贴纸，循环播放",
+	"GIFS": "GIF",
+	"GIFS_SUBTITLE": "无需点按即可播放 GIF"
+}

@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "無法開啟{image, select, avatar {頭像} banner {橫幅} serverAvatar {伺服器頭像} serverIcon {伺服器圖示} serverBanner {伺服器橫幅} other {群組私人訊息圖示}}。",
+	"VIEW_AVATAR": "檢視頭像",
+	"VIEW_BANNER": "檢視橫幅",
+	"VIEW_GROUP_ICON": "檢視群組私人訊息圖示",
+	"VIEW_ICONS": "檢視圖示",
+	"VIEW_SERVER_AVATAR": "檢視伺服器頭像",
+	"VIEW_SERVER_BANNER": "檢視伺服器橫幅",
+	"VIEW_SERVER_ICON": "檢視伺服器圖示"
+}

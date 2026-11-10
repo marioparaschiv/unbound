@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Замінювати",
+	"REPLACE_ALL": "Назви й мініатюри",
+	"REPLACE_TITLES": "Назви",
+	"REPLACE_THUMBNAILS": "Мініатюри",
+	"DEARROW_BY_DEFAULT": "DeArrow за замовчуванням",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Замінювати назви й мініатюри без запиту",
+	"SHOW_TOGGLE": "Показувати перемикач",
+	"SHOW_TOGGLE_SUBTITLE": "Перемикати вбудовування туди й назад через меню повідомлення",
+	"SHOW_ORIGINAL_EMBED": "Показати оригінальне вбудовування",
+	"DEARROW_EMBED": "Застосувати DeArrow"
+}

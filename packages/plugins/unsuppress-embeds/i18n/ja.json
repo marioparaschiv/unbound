@@ -1,0 +1,6 @@
+{
+	"SUPPRESS_EMBEDS": "埋め込みを非表示",
+	"UNSUPPRESS_EMBEDS": "埋め込みを再表示",
+	"CHANGE_FAILED": "{action}に失敗しました: {reason}",
+	"CHANGE_REFUSED": "Discordが変更を拒否しました。"
+}

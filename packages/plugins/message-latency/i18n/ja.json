@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "インジケーター",
+	"LATENCY_THRESHOLD": "遅延のしきい値",
+	"LATENCY_THRESHOLD_SUBTITLE": "メッセージの送信にこの時間以上かかった場合にインジケーターを表示します。",
+	"SHOW_MILLISECONDS": "ミリ秒を表示",
+	"SHOW_MILLISECONDS_SUBTITLE": "インジケーターにミリ秒単位の精度を含めます。",
+	"IGNORE_MY_MESSAGES": "自分のメッセージを無視",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "他の人が送信したメッセージにのみマークを付けます。",
+	"DETECT_LEGACY_ANDROID": "旧Androidクライアントを検出",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "古いDiscord Androidクライアントで知られているタイムスタンプのずれに対してマーカーを表示します。",
+	"DURATION_DAYS": "{count, plural, other {#日}}",
+	"DURATION_HOURS": "{count, plural, other {#時間}}",
+	"DURATION_MINUTES": "{count, plural, other {#分}}",
+	"DURATION_SECONDS": "{count, plural, other {#秒}}",
+	"DURATION_MILLISECONDS": "{count, plural, other {#ミリ秒}}",
+	"DURATION_JOIN": "{earlier}{later}",
+	"DURATION_JOIN_LAST": "{earlier}{later}",
+	"TOOLTIP_DELAYED": "このメッセージは{duration}遅れて送信されました。",
+	"TOOLTIP_CLOCK_AHEAD": "このユーザーの時計は{duration}進んでいます。",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "このユーザーは古いDiscord Androidクライアントを使用している可能性があります",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} このユーザーは古いDiscord Androidクライアントを使用している可能性があります。",
+	"OLD_ANDROID_CLIENT": "古いDiscord Androidクライアント"
+}

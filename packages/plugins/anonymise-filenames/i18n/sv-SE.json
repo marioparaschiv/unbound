@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Anonymisera som standard",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Varje fil kan fortfarande ändras från sitt förhandsgranskningsblad",
+	"METHOD": "Metod",
+	"METHOD_RANDOM": "Slumpmässiga tecken",
+	"METHOD_CONSISTENT": "Konsekvent",
+	"METHOD_TIMESTAMP": "Tidsstämpel",
+	"LENGTH": "Längd",
+	"FILE_NAME": "Filnamn",
+	"FILE_NAME_PLACEHOLDER": "bild",
+	"FILE_NAME_SUBTITLE": "Alla filer laddas upp med det här namnet och sitt eget filtillägg.",
+	"ANONYMISE_FILE_NAME": "Anonymisera filnamn",
+	"USING_ANONYMOUS_NAME": "Använder ett anonymt filnamn",
+	"USING_ORIGINAL_NAME": "Använder det ursprungliga filnamnet",
+	"USE_ORIGINAL_FILE_NAME": "Använd ursprungligt filnamn"
+}

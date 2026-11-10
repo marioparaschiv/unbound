@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "Не удалось открыть {image, select, avatar {аватар} banner {баннер} serverAvatar {аватар на сервере} serverIcon {значок сервера} serverBanner {баннер сервера} other {значок группы}}.",
+	"VIEW_AVATAR": "Посмотреть аватар",
+	"VIEW_BANNER": "Посмотреть баннер",
+	"VIEW_GROUP_ICON": "Посмотреть значок группы",
+	"VIEW_ICONS": "Просмотр значков",
+	"VIEW_SERVER_AVATAR": "Посмотреть аватар на сервере",
+	"VIEW_SERVER_BANNER": "Посмотреть баннер сервера",
+	"VIEW_SERVER_ICON": "Посмотреть значок сервера"
+}

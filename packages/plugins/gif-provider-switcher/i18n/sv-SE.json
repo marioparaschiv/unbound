@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "Leverantör",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "Sök GIF:ar på Tenor",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "Sök GIF:ar på Giphy",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "Discords egen GIF-sökning",
+	"PROVIDER_BUTTON_LABEL": "GIF-leverantör: {provider}. Byt till {next}"
+}

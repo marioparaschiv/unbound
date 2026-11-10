@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "Weergave",
+	"COLOR_THRESHOLDS": "Kleurdrempels",
+	"COLOR_THRESHOLDS_SUBTITLE": "Waarschuw wanneer het bericht de tekenlimiet van Discord nadert.",
+	"COUNTER_LABEL": "{length} van {limit} tekens"
+}

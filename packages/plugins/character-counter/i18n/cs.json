@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "Vzhled",
+	"COLOR_THRESHOLDS": "Barevné prahy",
+	"COLOR_THRESHOLDS_SUBTITLE": "Upozorní, když se zpráva blíží limitu znaků Discordu.",
+	"COUNTER_LABEL": "{length} z {limit} znaků"
+}

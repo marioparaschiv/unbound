@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Baloncuk rengi",
+	"BUBBLE_COLOR_FALLBACK": "Temaya uyar: koyu temalarda siyah, açık temada beyaz",
+	"COLORS": "Renkler",
+	"CORNER_RADIUS": "Köşe yarıçapı",
+	"HORIZONTAL_PADDING": "Yatay dolgu",
+	"LAYOUT": "Düzen",
+	"LAYOUT_CARD": "Tam genişlikte kartlar",
+	"LAYOUT_CARD_SUBTITLE": "Rosiecord’daki gibi, ad ve tepkiler dahil her mesajın tamamının arkasında bir kart",
+	"LAYOUT_FIT": "Mesaja sığdır",
+	"LAYOUT_FIT_SUBTITLE": "Her baloncuk yalnızca mesajının metnini ve medyasını sarar",
+	"OPACITY": "Opaklık",
+	"OWN_COLOR": "Senin mesajların",
+	"OWN_COLOR_FALLBACK": "Baloncuk rengiyle aynı",
+	"SHAPE": "Şekil",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Dikey dolgu"
+}

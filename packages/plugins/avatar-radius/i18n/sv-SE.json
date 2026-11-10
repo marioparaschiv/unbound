@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Avatarer",
+	"CORNER_RADIUS": "Hörnradie",
+	"CORNER_RADIUS_SUBTITLE": "Från 0 för fyrkantig upp till 64. En radie större än halva avatarens storlek gör den rund."
+}

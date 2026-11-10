@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Ανωνυμοποίηση από προεπιλογή",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Κάθε αρχείο μπορεί να αλλάξει ξεχωριστά από το φύλλο προεπισκόπησής του",
+	"METHOD": "Μέθοδος",
+	"METHOD_RANDOM": "Τυχαίοι χαρακτήρες",
+	"METHOD_CONSISTENT": "Σταθερό",
+	"METHOD_TIMESTAMP": "Χρονοσήμανση",
+	"LENGTH": "Μήκος",
+	"FILE_NAME": "Όνομα αρχείου",
+	"FILE_NAME_PLACEHOLDER": "image",
+	"FILE_NAME_SUBTITLE": "Κάθε αρχείο μεταφορτώνεται με αυτό το όνομα και τη δική του επέκταση.",
+	"ANONYMISE_FILE_NAME": "Ανωνυμοποίηση ονόματος αρχείου",
+	"USING_ANONYMOUS_NAME": "Χρήση ανώνυμου ονόματος αρχείου",
+	"USING_ORIGINAL_NAME": "Χρήση του αρχικού ονόματος αρχείου",
+	"USE_ORIGINAL_FILE_NAME": "Χρήση αρχικού ονόματος αρχείου"
+}

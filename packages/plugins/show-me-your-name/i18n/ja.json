@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "環境設定",
+	"DISPLAY_MODE": "表示モード",
+	"MODE_NICK_USER": "表示名、ユーザー名の順",
+	"MODE_NICK_USER_SUBTITLE": "表示名 (@ユーザー名)",
+	"MODE_USER_NICK": "ユーザー名、表示名の順",
+	"MODE_USER_NICK_SUBTITLE": "@ユーザー名 (表示名)",
+	"MODE_USER": "ユーザー名のみ",
+	"MODE_USER_SUBTITLE": "@ユーザー名",
+	"FRIEND_NICKNAMES": "フレンドのニックネームを表示",
+	"FRIEND_NICKNAMES_SUBTITLE": "適用できる場所ではフレンドのニックネームを優先します",
+	"DISPLAY_NAMES": "グローバル名を使用",
+	"DISPLAY_NAMES_SUBTITLE": "ユーザー名の代わりにアカウントのグローバル名を表示します",
+	"IN_REPLIES": "返信にも適用",
+	"IN_REPLIES_SUBTITLE": "返信のプレビューにも適用します"
+}

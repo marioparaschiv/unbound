@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Desactivar automáticamente",
+	"AUTO_DISABLE_SUBTITLE": "Vuelve a desactivar el interruptor después de enviar un mensaje silencioso",
+	"DISABLE_SILENT_MESSAGE": "Desactivar mensaje silencioso",
+	"ENABLE_SILENT_MESSAGE": "Activar mensaje silencioso",
+	"PERSIST_STATE": "Mantener el estado",
+	"PERSIST_STATE_SUBTITLE": "Mantiene el interruptor activado cuando abres otro canal",
+	"SILENT_MESSAGE_TOGGLE": "Interruptor de mensaje silencioso",
+	"TOGGLE": "Alternar",
+	"TOGGLED_OFF": "Tus mensajes aquí vuelven a notificar a las personas.",
+	"TOGGLED_ON": "Tus mensajes aquí se envían sin notificaciones."
+}

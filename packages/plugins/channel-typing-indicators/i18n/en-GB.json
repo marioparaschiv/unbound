@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Channel typing indicators",
+	"INCLUDE_CURRENT_CHANNEL": "Include current channel",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Show typing activity in the selected channel.",
+	"INCLUDE_MUTED_CHANNELS": "Include muted channels",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Show typing activity in muted channels.",
+	"INCLUDE_IGNORED_USERS": "Include ignored users",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Show typing activity from ignored users.",
+	"INCLUDE_BLOCKED_USERS": "Include blocked users",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Show typing activity from blocked users.",
+	"APPEARANCE": "Appearance",
+	"APPEARANCE_BOTH": "Avatars and animated dots",
+	"APPEARANCE_DOTS": "Animated dots",
+	"APPEARANCE_AVATARS": "Avatars",
+	"TYPING_ONE": "{a} is typing...",
+	"TYPING_TWO": "{a} and {b} are typing...",
+	"TYPING_THREE": "{a}, {b}, and {c} are typing...",
+	"TYPING_SEVERAL": "Several people are typing...",
+	"SOMEONE": "Someone"
+}

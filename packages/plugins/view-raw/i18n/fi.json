@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Sulje",
+	"CONTENT_COPIED": "Raakasisältö kopioitu leikepöydälle.",
+	"COPY_CONTENT": "Kopioi sisältö",
+	"COPY_DATA": "Kopioi tiedot",
+	"DATA_COPIED": "Tiedot ({type}) kopioitu leikepöydälle.",
+	"MESSAGE_CONTENT": "Viestin sisältö",
+	"MESSAGE_DATA": "Viestin tiedot",
+	"RAW_TITLE": "Raakatiedot: {type}",
+	"TYPE_CHANNEL": "Kanava",
+	"TYPE_GUILD": "Palvelin",
+	"TYPE_MESSAGE": "Viesti",
+	"TYPE_PROFILE": "Profiili",
+	"TYPE_USER": "Käyttäjä",
+	"VIEW_RAW": "Näytä raakadata"
+}

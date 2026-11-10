@@ -1,0 +1,18 @@
+{
+	"AVATARS": "Profilképek",
+	"AVATARS_SUBTITLE": "Animált profilképek és profilbannerek",
+	"DECORATIONS": "Profilkép-dekorációk",
+	"DECORATIONS_SUBTITLE": "Dekorációk a profilképek körül",
+	"NAMEPLATES": "Névtáblák",
+	"NAMEPLATES_SUBTITLE": "Névtáblák a nevek mögött, ismétlődve",
+	"PROFILE_EFFECTS": "Profileffektusok",
+	"PROFILE_EFFECTS_SUBTITLE": "Effektusok a profilok felett",
+	"SERVER_ICONS": "Szerverikonok",
+	"SERVER_ICONS_SUBTITLE": "Animált szerverikonok és -bannerek",
+	"EMOJIS": "Emojik",
+	"EMOJIS_SUBTITLE": "Emojik üzenetekben, reakciókban és egyéni állapotokban",
+	"STICKERS": "Matricák",
+	"STICKERS_SUBTITLE": "Animált matricák, ismétlődve",
+	"GIFS": "GIF-ek",
+	"GIFS_SUBTITLE": "A GIF-ek koppintás nélkül is lejátszódnak"
+}

@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "Preferințe",
+	"DISPLAY_MODE": "Mod de afișare",
+	"MODE_NICK_USER": "Numele afișat, apoi numele de utilizator",
+	"MODE_NICK_USER_SUBTITLE": "Nume afișat (@nume_utilizator)",
+	"MODE_USER_NICK": "Numele de utilizator, apoi numele afișat",
+	"MODE_USER_NICK_SUBTITLE": "@nume_utilizator (Nume afișat)",
+	"MODE_USER": "Doar numele de utilizator",
+	"MODE_USER_SUBTITLE": "@nume_utilizator",
+	"FRIEND_NICKNAMES": "Afișează pseudonimele prietenilor",
+	"FRIEND_NICKNAMES_SUBTITLE": "Preferă pseudonimul unui prieten oriunde se aplică",
+	"DISPLAY_NAMES": "Folosește numele globale",
+	"DISPLAY_NAMES_SUBTITLE": "Afișează numele global al contului în locul numelui de utilizator",
+	"IN_REPLIES": "Aplică la răspunsuri",
+	"IN_REPLIES_SUBTITLE": "Aplică și la previzualizările răspunsurilor"
+}

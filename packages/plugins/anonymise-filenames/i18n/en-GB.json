@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Anonymise by Default",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Each file can still be switched from its preview sheet",
+	"METHOD": "Method",
+	"METHOD_RANDOM": "Random Characters",
+	"METHOD_CONSISTENT": "Consistent",
+	"METHOD_TIMESTAMP": "Timestamp",
+	"LENGTH": "Length",
+	"FILE_NAME": "File Name",
+	"FILE_NAME_PLACEHOLDER": "image",
+	"FILE_NAME_SUBTITLE": "Every file is uploaded with this name and its own extension.",
+	"ANONYMISE_FILE_NAME": "Anonymise File Name",
+	"USING_ANONYMOUS_NAME": "Using an anonymous file name",
+	"USING_ORIGINAL_NAME": "Using the original file name",
+	"USE_ORIGINAL_FILE_NAME": "Use Original File Name"
+}

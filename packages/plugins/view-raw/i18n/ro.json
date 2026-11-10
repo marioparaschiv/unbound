@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Închide",
+	"CONTENT_COPIED": "Conținutul brut a fost copiat în clipboard.",
+	"COPY_CONTENT": "Copiază conținutul",
+	"COPY_DATA": "Copiază datele",
+	"DATA_COPIED": "Datele ({type}) au fost copiate în clipboard.",
+	"MESSAGE_CONTENT": "Conținutul mesajului",
+	"MESSAGE_DATA": "Datele mesajului",
+	"RAW_TITLE": "Date brute: {type}",
+	"TYPE_CHANNEL": "Canal",
+	"TYPE_GUILD": "Server",
+	"TYPE_MESSAGE": "Mesaj",
+	"TYPE_PROFILE": "Profil",
+	"TYPE_USER": "Utilizator",
+	"VIEW_RAW": "Vezi datele brute"
+}

@@ -1,0 +1,16 @@
+{
+	"CLOSE": "닫기",
+	"CONTENT_COPIED": "원본 내용을 클립보드에 복사했어요.",
+	"COPY_CONTENT": "내용 복사",
+	"COPY_DATA": "데이터 복사",
+	"DATA_COPIED": "{type} 데이터를 클립보드에 복사했어요.",
+	"MESSAGE_CONTENT": "메시지 내용",
+	"MESSAGE_DATA": "메시지 데이터",
+	"RAW_TITLE": "{type} 원본 데이터",
+	"TYPE_CHANNEL": "채널",
+	"TYPE_GUILD": "서버",
+	"TYPE_MESSAGE": "메시지",
+	"TYPE_PROFILE": "프로필",
+	"TYPE_USER": "사용자",
+	"VIEW_RAW": "원본 보기"
+}

@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "Poskytovatel",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "Hledat GIFy na Tenoru",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "Hledat GIFy na Giphy",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "Vlastní vyhledávání GIFů od Discordu",
+	"PROVIDER_BUTTON_LABEL": "Poskytovatel GIFů: {provider}. Přepnout na {next}"
+}

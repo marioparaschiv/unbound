@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Barva bubliny",
+	"BUBBLE_COLOR_FALLBACK": "Podle motivu: černá v tmavých motivech, bílá ve světlém motivu",
+	"COLORS": "Barvy",
+	"CORNER_RADIUS": "Zaoblení rohů",
+	"HORIZONTAL_PADDING": "Vodorovné odsazení",
+	"LAYOUT": "Rozložení",
+	"LAYOUT_CARD": "Karty přes celou šířku",
+	"LAYOUT_CARD_SUBTITLE": "Jedna karta za celou zprávou včetně jména a reakcí, jako v Rosiecordu",
+	"LAYOUT_FIT": "Přizpůsobit zprávě",
+	"LAYOUT_FIT_SUBTITLE": "Každá bublina obepíná jen text a média své zprávy",
+	"OPACITY": "Neprůhlednost",
+	"OWN_COLOR": "Tvoje zprávy",
+	"OWN_COLOR_FALLBACK": "Stejná jako barva bubliny",
+	"SHAPE": "Tvar",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Svislé odsazení"
+}

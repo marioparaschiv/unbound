@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Thêm tệp đính kèm",
+	"UPLOADING": "Đang tải lên, việc này có thể mất một lúc...",
+	"ATTACHMENTS_ADDED": "{count, plural, other {Đã thêm tệp đính kèm thành công!}}",
+	"UPLOAD_FAILED": "Một tệp đính kèm tải lên không thành công.",
+	"NOT_ADDED": "Không thể thêm các tệp đính kèm.",
+	"PICKER_UNAVAILABLE": "Trình chọn phương tiện không khả dụng trên bản dựng Discord này.",
+	"PICKER_FAILED": "Trình chọn phương tiện gặp lỗi.",
+	"LIMIT_REACHED": "Bạn không thể thêm tệp đính kèm vào tin nhắn này nữa.",
+	"LIMIT_REMAINING": "Bạn chỉ có thể thêm {count, plural, other {# tệp đính kèm nữa}} vào tin nhắn này."
+}

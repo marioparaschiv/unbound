@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Farg omtaler",
+	"COLOR_MENTIONS_SUBTITLE": "Vis rollefargene til det omtalte medlemmet i chatten og i skrivefeltet",
+	"COLOR_MESSAGE_CONTENT": "Farg meldingsinnhold",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Fargelegg meldingsteksten med forfatterens rollefarge",
+	"MESSAGE_COLOR_INTENSITY": "Fargestyrke for meldinger",
+	"TYPING_NAMES": "Navn som skriver",
+	"TYPING_NAMES_SUBTITLE": "Farg navn i skriveindikatoren for kanalen",
+	"MEMBER_LIST_ROLE_HEADERS": "Rolleoverskrifter i medlemslisten",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "Farg rolleseksjonstitler i medlemslisten",
+	"REACTION_USERS": "Brukere som reagerte",
+	"REACTION_USERS_SUBTITLE": "Farg navn i listen over reaksjonsdetaljer",
+	"POLL_VOTERS": "Avstemningsdeltakere",
+	"POLL_VOTERS_SUBTITLE": "Farg navn i detaljene for avstemningsresultater",
+	"VOICE_USERS": "Brukere i talekanaler",
+	"VOICE_USERS_SUBTITLE": "Farg medlemsnavn i lister over brukere i talekanaler"
+}

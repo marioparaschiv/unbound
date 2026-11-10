@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "До конца тайм-аута: {remaining}",
+	"TIMEOUT_EXPIRES_IN": "Тайм-аут закончится через {remaining}"
+}

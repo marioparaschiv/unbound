@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Pronouns",
+	"FORMAT_LOWERCASE": "Lowercase",
+	"FORMAT_CAPITALIZED": "Capitalised",
+	"SOURCE": "Source",
+	"SOURCE_PRONOUNDB": "Prefer PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "Fall back to Discord profile pronouns",
+	"SOURCE_DISCORD": "Prefer Discord",
+	"SOURCE_DISCORD_SUBTITLE": "Fall back to PronounDB",
+	"SHOW_FOR_YOURSELF": "Show for Yourself",
+	"PRONOUN_ANY": "Any pronouns",
+	"PRONOUN_ASK": "Ask me my pronouns",
+	"PRONOUN_AVOID": "Avoid pronouns, use my name",
+	"PRONOUN_HE": "He/Him",
+	"PRONOUN_IT": "It/Its",
+	"PRONOUN_OTHER": "Other pronouns",
+	"PRONOUN_SHE": "She/Her",
+	"PRONOUN_THEY": "They/Them",
+	"PRONOUN_UNSPECIFIED": "No pronouns specified."
+}

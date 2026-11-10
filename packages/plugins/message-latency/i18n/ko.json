@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "표시기",
+	"LATENCY_THRESHOLD": "지연 기준값",
+	"LATENCY_THRESHOLD_SUBTITLE": "메시지 전송에 이 시간 이상 걸리면 표시기를 보여 줘요.",
+	"SHOW_MILLISECONDS": "밀리초 표시",
+	"SHOW_MILLISECONDS_SUBTITLE": "표시기에 밀리초 단위까지 표시해요.",
+	"IGNORE_MY_MESSAGES": "내 메시지 무시",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "다른 사람이 보낸 메시지만 표시해요.",
+	"DETECT_LEGACY_ANDROID": "구버전 Android 클라이언트 감지",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "구버전 Discord Android 클라이언트에서 알려진 타임스탬프 오차가 있으면 표시해요.",
+	"DURATION_DAYS": "{count, plural, other {#일}}",
+	"DURATION_HOURS": "{count, plural, other {#시간}}",
+	"DURATION_MINUTES": "{count, plural, other {#분}}",
+	"DURATION_SECONDS": "{count, plural, other {#초}}",
+	"DURATION_MILLISECONDS": "{count, plural, other {#밀리초}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} {later}",
+	"TOOLTIP_DELAYED": "이 메시지는 {duration} 늦게 전송됐어요.",
+	"TOOLTIP_CLOCK_AHEAD": "이 사용자의 시계가 {duration} 빨라요.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "구버전 Discord Android 클라이언트를 사용하는 것으로 보여요",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} 구버전 Discord Android 클라이언트를 사용하는 것으로 보여요.",
+	"OLD_ANDROID_CLIENT": "구버전 Discord Android 클라이언트"
+}

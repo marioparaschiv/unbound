@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Thay thế",
+	"REPLACE_ALL": "Tiêu đề và hình thu nhỏ",
+	"REPLACE_TITLES": "Tiêu đề",
+	"REPLACE_THUMBNAILS": "Hình thu nhỏ",
+	"DEARROW_BY_DEFAULT": "Dùng DeArrow theo mặc định",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Thay tiêu đề và hình thu nhỏ mà không cần hỏi",
+	"SHOW_TOGGLE": "Hiện nút chuyển",
+	"SHOW_TOGGLE_SUBTITLE": "Chuyển qua lại nội dung nhúng từ menu tin nhắn",
+	"SHOW_ORIGINAL_EMBED": "Hiện nội dung nhúng gốc",
+	"DEARROW_EMBED": "Áp dụng DeArrow cho nội dung nhúng"
+}

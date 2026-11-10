@@ -1,0 +1,7 @@
+{
+	"SHOW_INVITES_PAUSED": "Mostrar convites pausados",
+	"SHOW_INVITES_PAUSED_SUBTITLE": "Mostra a opção Pausar convites nas configurações do servidor para todos",
+	"SHOW_TIMEOUTS": "Mostrar ícones de castigo",
+	"SHOW_TIMEOUTS_SUBTITLE": "Mostra os ícones de castigo dos membros no chat",
+	"VISIBILITY": "Visibilidade"
+}

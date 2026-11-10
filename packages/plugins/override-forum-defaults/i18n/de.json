@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Standardlayout",
+	"LAYOUT_LIST": "Liste",
+	"LAYOUT_LIST_SUBTITLE": "Beiträge in einer Liste",
+	"LAYOUT_GALLERY": "Galerie",
+	"LAYOUT_GALLERY_SUBTITLE": "Beiträge in einem Kartenraster",
+	"DEFAULT_SORT_ORDER": "Standard-Sortierung",
+	"SORT_RECENTLY_ACTIVE": "Kürzlich aktiv",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Beiträge mit den neuesten Nachrichten zuerst",
+	"SORT_DATE_POSTED": "Veröffentlichungsdatum",
+	"SORT_DATE_POSTED_SUBTITLE": "Die neuesten Beiträge zuerst"
+}

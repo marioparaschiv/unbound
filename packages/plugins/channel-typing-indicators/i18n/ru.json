@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Индикаторы набора текста в каналах",
+	"INCLUDE_CURRENT_CHANNEL": "Учитывать текущий канал",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Показывать набор текста в выбранном канале.",
+	"INCLUDE_MUTED_CHANNELS": "Учитывать заглушённые каналы",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Показывать набор текста в заглушённых каналах.",
+	"INCLUDE_IGNORED_USERS": "Учитывать игнорируемых пользователей",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Показывать набор текста игнорируемыми пользователями.",
+	"INCLUDE_BLOCKED_USERS": "Учитывать заблокированных пользователей",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Показывать набор текста заблокированными пользователями.",
+	"APPEARANCE": "Внешний вид",
+	"APPEARANCE_BOTH": "Аватары и анимированные точки",
+	"APPEARANCE_DOTS": "Анимированные точки",
+	"APPEARANCE_AVATARS": "Аватары",
+	"TYPING_ONE": "{a} печатает...",
+	"TYPING_TWO": "{a} и {b} печатают...",
+	"TYPING_THREE": "{a}, {b} и {c} печатают...",
+	"TYPING_SEVERAL": "Несколько человек печатают...",
+	"SOMEONE": "Кто-то"
+}

@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Vermeldingen kleuren",
+	"COLOR_MENTIONS_SUBTITLE": "Toon de rolkleuren van het vermelde lid in de chat en het invoerveld",
+	"COLOR_MESSAGE_CONTENT": "Berichtinhoud kleuren",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Kleur berichttekst met de rolkleur van de auteur",
+	"MESSAGE_COLOR_INTENSITY": "Kleurintensiteit van berichten",
+	"TYPING_NAMES": "Namen bij typen",
+	"TYPING_NAMES_SUBTITLE": "Kleur namen in de typindicator van het kanaal",
+	"MEMBER_LIST_ROLE_HEADERS": "Roltitels in ledenlijst",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "Kleur de titels van rolsecties in de ledenlijst",
+	"REACTION_USERS": "Gebruikers bij reacties",
+	"REACTION_USERS_SUBTITLE": "Kleur namen in de lijst met reactiedetails",
+	"POLL_VOTERS": "Stemmers in peilingen",
+	"POLL_VOTERS_SUBTITLE": "Kleur namen in de details van peilingresultaten",
+	"VOICE_USERS": "Gebruikers in spraakkanalen",
+	"VOICE_USERS_SUBTITLE": "Kleur de namen van leden in lijsten van spraakgebruikers"
+}

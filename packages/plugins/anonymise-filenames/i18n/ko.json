@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "기본으로 익명화",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "파일마다 미리 보기 시트에서 따로 바꿀 수 있어요",
+	"METHOD": "방식",
+	"METHOD_RANDOM": "무작위 문자",
+	"METHOD_CONSISTENT": "고정 이름",
+	"METHOD_TIMESTAMP": "타임스탬프",
+	"LENGTH": "길이",
+	"FILE_NAME": "파일 이름",
+	"FILE_NAME_PLACEHOLDER": "image",
+	"FILE_NAME_SUBTITLE": "모든 파일이 원래 확장자를 유지한 채 이 이름으로 업로드돼요.",
+	"ANONYMISE_FILE_NAME": "파일 이름 익명화",
+	"USING_ANONYMOUS_NAME": "익명 파일 이름 사용 중",
+	"USING_ORIGINAL_NAME": "원래 파일 이름 사용 중",
+	"USE_ORIGINAL_FILE_NAME": "원래 파일 이름 사용"
+}

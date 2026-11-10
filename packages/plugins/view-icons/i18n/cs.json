@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "Nelze otevřít {image, select, avatar {avatar} banner {banner} serverAvatar {serverový avatar} serverIcon {ikonu serveru} serverBanner {banner serveru} other {ikonu skupinové konverzace}}.",
+	"VIEW_AVATAR": "Zobrazit avatar",
+	"VIEW_BANNER": "Zobrazit banner",
+	"VIEW_GROUP_ICON": "Zobrazit ikonu skupinové konverzace",
+	"VIEW_ICONS": "Zobrazit ikony",
+	"VIEW_SERVER_AVATAR": "Zobrazit serverový avatar",
+	"VIEW_SERVER_BANNER": "Zobrazit banner serveru",
+	"VIEW_SERVER_ICON": "Zobrazit ikonu serveru"
+}

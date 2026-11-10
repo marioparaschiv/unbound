@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "偏好设置",
+	"DISPLAY_MODE": "显示方式",
+	"MODE_NICK_USER": "显示名称在前，用户名在后",
+	"MODE_NICK_USER_SUBTITLE": "显示名称 (@用户名)",
+	"MODE_USER_NICK": "用户名在前，显示名称在后",
+	"MODE_USER_NICK_SUBTITLE": "@用户名 (显示名称)",
+	"MODE_USER": "仅用户名",
+	"MODE_USER_SUBTITLE": "@用户名",
+	"FRIEND_NICKNAMES": "显示好友昵称",
+	"FRIEND_NICKNAMES_SUBTITLE": "在适用的地方优先显示好友昵称",
+	"DISPLAY_NAMES": "使用全局名称",
+	"DISPLAY_NAMES_SUBTITLE": "显示帐号的全局名称，而不是用户名",
+	"IN_REPLIES": "应用于回复",
+	"IN_REPLIES_SUBTITLE": "同时应用于回复预览"
+}

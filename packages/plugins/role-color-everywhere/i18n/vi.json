@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Tô màu lượt nhắc đến",
+	"COLOR_MENTIONS_SUBTITLE": "Hiện màu vai trò của thành viên được nhắc đến trong cuộc trò chuyện và khung soạn tin",
+	"COLOR_MESSAGE_CONTENT": "Tô màu nội dung tin nhắn",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Nhuộm văn bản tin nhắn theo màu vai trò của người gửi",
+	"MESSAGE_COLOR_INTENSITY": "Cường độ màu tin nhắn",
+	"TYPING_NAMES": "Tên đang nhập",
+	"TYPING_NAMES_SUBTITLE": "Tô màu tên trong chỉ báo đang nhập của kênh",
+	"MEMBER_LIST_ROLE_HEADERS": "Tiêu đề vai trò trong danh sách thành viên",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "Tô màu tiêu đề nhóm vai trò trong danh sách thành viên",
+	"REACTION_USERS": "Người thả biểu cảm",
+	"REACTION_USERS_SUBTITLE": "Tô màu tên trong danh sách chi tiết biểu cảm",
+	"POLL_VOTERS": "Người bình chọn khảo sát",
+	"POLL_VOTERS_SUBTITLE": "Tô màu tên trong chi tiết kết quả khảo sát",
+	"VOICE_USERS": "Người dùng kênh thoại",
+	"VOICE_USERS_SUBTITLE": "Tô màu tên thành viên trong danh sách người dùng kênh thoại"
+}

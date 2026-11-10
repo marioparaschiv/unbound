@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Buborék színe",
+	"BUBBLE_COLOR_FALLBACK": "A témát követi: sötét témáknál fekete, világos témánál fehér",
+	"COLORS": "Színek",
+	"CORNER_RADIUS": "Sarokkerekítés",
+	"HORIZONTAL_PADDING": "Vízszintes belső margó",
+	"LAYOUT": "Elrendezés",
+	"LAYOUT_CARD": "Teljes szélességű kártyák",
+	"LAYOUT_CARD_SUBTITLE": "Minden teljes üzenet mögött egy kártya, a névvel és a reakciókkal együtt, mint a Rosiecordban",
+	"LAYOUT_FIT": "Üzenethez igazítva",
+	"LAYOUT_FIT_SUBTITLE": "Minden buborék csak az üzenet szövegét és médiáját öleli körül",
+	"OPACITY": "Átlátszatlanság",
+	"OWN_COLOR": "Saját üzeneteid",
+	"OWN_COLOR_FALLBACK": "Ugyanaz, mint a buborék színe",
+	"SHAPE": "Forma",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Függőleges belső margó"
+}

@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Mellékletek hozzáadása",
+	"UPLOADING": "Feltöltés, ez eltarthat egy ideig...",
+	"ATTACHMENTS_ADDED": "{count, plural, one {Melléklet sikeresen hozzáadva!} other {Mellékletek sikeresen hozzáadva!}}",
+	"UPLOAD_FAILED": "Egy mellékletet nem sikerült feltölteni.",
+	"NOT_ADDED": "Nem sikerült hozzáadni a mellékleteket.",
+	"PICKER_UNAVAILABLE": "A médiaválasztó nem érhető el ebben a Discord-buildben.",
+	"PICKER_FAILED": "A médiaválasztó hibába ütközött.",
+	"LIMIT_REACHED": "Ehhez az üzenethez nem adhatsz hozzá több mellékletet.",
+	"LIMIT_REMAINING": "Ehhez az üzenethez már csak {count, plural, one {# mellékletet} other {# mellékletet}} adhatsz hozzá."
+}

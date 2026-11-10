@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Kolor dymka",
+	"BUBBLE_COLOR_FALLBACK": "Zgodny z motywem: czarny w ciemnych motywach, biały w jasnym",
+	"COLORS": "Kolory",
+	"CORNER_RADIUS": "Promień narożników",
+	"HORIZONTAL_PADDING": "Odstęp poziomy",
+	"LAYOUT": "Układ",
+	"LAYOUT_CARD": "Karty na pełną szerokość",
+	"LAYOUT_CARD_SUBTITLE": "Jedna karta pod całą wiadomością, razem z nazwą i reakcjami, jak w Rosiecord",
+	"LAYOUT_FIT": "Dopasuj do wiadomości",
+	"LAYOUT_FIT_SUBTITLE": "Każdy dymek obejmuje tylko tekst i multimedia swojej wiadomości",
+	"OPACITY": "Nieprzezroczystość",
+	"OWN_COLOR": "Twoje wiadomości",
+	"OWN_COLOR_FALLBACK": "Taki sam jak kolor dymka",
+	"SHAPE": "Kształt",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Odstęp pionowy"
+}

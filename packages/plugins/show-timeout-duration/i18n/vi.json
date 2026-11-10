@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "Thời gian hạn chế còn lại: {remaining}",
+	"TIMEOUT_EXPIRES_IN": "Hạn chế hết hạn sau {remaining}"
+}

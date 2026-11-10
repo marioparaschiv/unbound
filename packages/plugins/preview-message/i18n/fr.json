@@ -1,0 +1,5 @@
+{
+	"MESSAGE_PREVIEW": "Aperçu du message",
+	"PREVIEW_FAILED": "Échec de l’aperçu : {reason}",
+	"PREVIEW_MESSAGE": "Prévisualiser le message"
+}

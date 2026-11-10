@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Анонимизиране по подразбиране",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Всеки файл все още може да бъде превключен от прозореца за преглед",
+	"METHOD": "Метод",
+	"METHOD_RANDOM": "Случайни символи",
+	"METHOD_CONSISTENT": "Постоянно",
+	"METHOD_TIMESTAMP": "Времеви печат",
+	"LENGTH": "Дължина",
+	"FILE_NAME": "Име на файла",
+	"FILE_NAME_PLACEHOLDER": "изображение",
+	"FILE_NAME_SUBTITLE": "Всеки файл се качва с това име и собственото си разширение.",
+	"ANONYMISE_FILE_NAME": "Анонимизирай името на файла",
+	"USING_ANONYMOUS_NAME": "Използва се анонимно име на файла",
+	"USING_ORIGINAL_NAME": "Използва се оригиналното име на файла",
+	"USE_ORIGINAL_FILE_NAME": "Използвай оригиналното име на файла"
+}

@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "Không thể mở {image, select, avatar {ảnh đại diện} banner {biểu ngữ} serverAvatar {ảnh đại diện máy chủ} serverIcon {biểu tượng máy chủ} serverBanner {biểu ngữ máy chủ} other {biểu tượng nhóm tin nhắn trực tiếp}}.",
+	"VIEW_AVATAR": "Xem ảnh đại diện",
+	"VIEW_BANNER": "Xem biểu ngữ",
+	"VIEW_GROUP_ICON": "Xem biểu tượng nhóm tin nhắn trực tiếp",
+	"VIEW_ICONS": "Xem biểu tượng",
+	"VIEW_SERVER_AVATAR": "Xem ảnh đại diện máy chủ",
+	"VIEW_SERVER_BANNER": "Xem biểu ngữ máy chủ",
+	"VIEW_SERVER_ICON": "Xem biểu tượng máy chủ"
+}

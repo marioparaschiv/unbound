@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "Time-out: nog {remaining}",
+	"TIMEOUT_EXPIRES_IN": "Time-out verloopt over {remaining}"
+}

@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "Источник",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "Искать GIF в Tenor",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "Искать GIF в Giphy",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "Собственный поиск GIF от Discord",
+	"PROVIDER_BUTTON_LABEL": "Источник GIF: {provider}. Переключить на {next}"
+}

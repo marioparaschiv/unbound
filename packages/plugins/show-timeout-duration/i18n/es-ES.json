@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "Quedan {remaining} de aislamiento",
+	"TIMEOUT_EXPIRES_IN": "El aislamiento termina en {remaining}"
+}

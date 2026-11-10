@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "Nu s-a putut deschide {image, select, avatar {avatarul} banner {bannerul} serverAvatar {avatarul de server} serverIcon {pictograma serverului} serverBanner {bannerul serverului} other {pictograma grupului de mesaje directe}}.",
+	"VIEW_AVATAR": "Vezi avatarul",
+	"VIEW_BANNER": "Vezi bannerul",
+	"VIEW_GROUP_ICON": "Vezi pictograma grupului",
+	"VIEW_ICONS": "Vezi pictogramele",
+	"VIEW_SERVER_AVATAR": "Vezi avatarul de server",
+	"VIEW_SERVER_BANNER": "Vezi bannerul serverului",
+	"VIEW_SERVER_ICON": "Vezi pictograma serverului"
+}

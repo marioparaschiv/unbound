@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Pronomen",
+	"FORMAT_LOWERCASE": "Gemener",
+	"FORMAT_CAPITALIZED": "Stor begynnelsebokstav",
+	"SOURCE": "Källa",
+	"SOURCE_PRONOUNDB": "Föredra PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "Använd pronomen från Discord-profilen som reserv",
+	"SOURCE_DISCORD": "Föredra Discord",
+	"SOURCE_DISCORD_SUBTITLE": "Använd PronounDB som reserv",
+	"SHOW_FOR_YOURSELF": "Visa för dig själv",
+	"PRONOUN_ANY": "Valfria pronomen",
+	"PRONOUN_ASK": "Fråga mig om mina pronomen",
+	"PRONOUN_AVOID": "Undvik pronomen, använd mitt namn",
+	"PRONOUN_HE": "Han/honom",
+	"PRONOUN_IT": "Den/det",
+	"PRONOUN_OTHER": "Andra pronomen",
+	"PRONOUN_SHE": "Hon/henne",
+	"PRONOUN_THEY": "Hen/hen",
+	"PRONOUN_UNSPECIFIED": "Inga pronomen angivna."
+}

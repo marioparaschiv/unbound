@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Анонімізувати за замовчуванням",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Для кожного файлу це можна змінити в його вікні попереднього перегляду",
+	"METHOD": "Спосіб",
+	"METHOD_RANDOM": "Випадкові символи",
+	"METHOD_CONSISTENT": "Постійна назва",
+	"METHOD_TIMESTAMP": "Позначка часу",
+	"LENGTH": "Довжина",
+	"FILE_NAME": "Назва файлу",
+	"FILE_NAME_PLACEHOLDER": "image",
+	"FILE_NAME_SUBTITLE": "Кожен файл вивантажується з цією назвою та власним розширенням.",
+	"ANONYMISE_FILE_NAME": "Анонімізувати назву файлу",
+	"USING_ANONYMOUS_NAME": "Використовується анонімна назва файлу",
+	"USING_ORIGINAL_NAME": "Використовується оригінальна назва файлу",
+	"USE_ORIGINAL_FILE_NAME": "Використати оригінальну назву"
+}

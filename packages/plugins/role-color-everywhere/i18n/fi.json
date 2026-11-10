@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Väritä maininnat",
+	"COLOR_MENTIONS_SUBTITLE": "Näytä mainitun jäsenen roolivärit keskustelussa ja viestikentässä",
+	"COLOR_MESSAGE_CONTENT": "Väritä viestin sisältö",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Sävytä viestin teksti kirjoittajan roolivärillä",
+	"MESSAGE_COLOR_INTENSITY": "Viestin värin voimakkuus",
+	"TYPING_NAMES": "Kirjoittajien nimet",
+	"TYPING_NAMES_SUBTITLE": "Väritä nimet kanavan kirjoitusilmaisimessa",
+	"MEMBER_LIST_ROLE_HEADERS": "Jäsenluettelon roolien otsikot",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "Väritä roolien osioiden otsikot jäsenluettelossa",
+	"REACTION_USERS": "Reagoijat",
+	"REACTION_USERS_SUBTITLE": "Väritä nimet reaktioiden tietoluettelossa",
+	"POLL_VOTERS": "Kyselyyn vastanneet",
+	"POLL_VOTERS_SUBTITLE": "Väritä nimet kyselyn tulosten tiedoissa",
+	"VOICE_USERS": "Puhekanavan käyttäjät",
+	"VOICE_USERS_SUBTITLE": "Väritä jäsenten nimet puhekanavien käyttäjäluetteloissa"
+}

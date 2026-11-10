@@ -1,0 +1,5 @@
+{
+	"AVATARS": "頭像",
+	"CORNER_RADIUS": "圓角半徑",
+	"CORNER_RADIUS_SUBTITLE": "從 0（方形）到 64。半徑超過頭像尺寸一半時，頭像會維持圓形。"
+}

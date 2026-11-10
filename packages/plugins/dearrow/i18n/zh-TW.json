@@ -1,0 +1,12 @@
+{
+	"REPLACE": "取代",
+	"REPLACE_ALL": "標題和縮圖",
+	"REPLACE_TITLES": "標題",
+	"REPLACE_THUMBNAILS": "縮圖",
+	"DEARROW_BY_DEFAULT": "預設套用 DeArrow",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "不經詢問直接取代標題和縮圖",
+	"SHOW_TOGGLE": "顯示切換選項",
+	"SHOW_TOGGLE_SUBTITLE": "從訊息選單來回切換嵌入內容",
+	"SHOW_ORIGINAL_EMBED": "顯示原始嵌入內容",
+	"DEARROW_EMBED": "以 DeArrow 處理嵌入內容"
+}

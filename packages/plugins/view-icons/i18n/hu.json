@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "Nem sikerült megnyitni: {image, select, avatar {profilkép} banner {banner} serverAvatar {szerverprofilkép} serverIcon {szerverikon} serverBanner {szerverbanner} other {csoportos DM ikonja}}.",
+	"VIEW_AVATAR": "Profilkép megtekintése",
+	"VIEW_BANNER": "Banner megtekintése",
+	"VIEW_GROUP_ICON": "Csoportos DM ikonjának megtekintése",
+	"VIEW_ICONS": "Ikonok megtekintése",
+	"VIEW_SERVER_AVATAR": "Szerverprofilkép megtekintése",
+	"VIEW_SERVER_BANNER": "Szerverbanner megtekintése",
+	"VIEW_SERVER_ICON": "Szerverikon megtekintése"
+}

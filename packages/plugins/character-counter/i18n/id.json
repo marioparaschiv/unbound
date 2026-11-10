@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "Tampilan",
+	"COLOR_THRESHOLDS": "Ambang batas warna",
+	"COLOR_THRESHOLDS_SUBTITLE": "Beri peringatan saat pesan mendekati batas karakter Discord.",
+	"COUNTER_LABEL": "{length} dari {limit} karakter"
+}

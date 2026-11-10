@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "Preferensi",
+	"DISPLAY_MODE": "Mode Tampilan",
+	"MODE_NICK_USER": "Nama tampilan lalu nama pengguna",
+	"MODE_NICK_USER_SUBTITLE": "Nama Tampilan (@namapengguna)",
+	"MODE_USER_NICK": "Nama pengguna lalu nama tampilan",
+	"MODE_USER_NICK_SUBTITLE": "@namapengguna (Nama Tampilan)",
+	"MODE_USER": "Hanya nama pengguna",
+	"MODE_USER_SUBTITLE": "@namapengguna",
+	"FRIEND_NICKNAMES": "Tampilkan Nama Panggilan Teman",
+	"FRIEND_NICKNAMES_SUBTITLE": "Utamakan nama panggilan teman di mana pun berlaku",
+	"DISPLAY_NAMES": "Gunakan Nama Global",
+	"DISPLAY_NAMES_SUBTITLE": "Tampilkan nama global akun alih-alih nama penggunanya",
+	"IN_REPLIES": "Terapkan ke Balasan",
+	"IN_REPLIES_SUBTITLE": "Terapkan juga ke pratinjau balasan"
+}

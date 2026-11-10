@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Màu bong bóng",
+	"BUBBLE_COLOR_FALLBACK": "Theo chủ đề: đen với chủ đề tối, trắng với chủ đề sáng",
+	"COLORS": "Màu sắc",
+	"CORNER_RADIUS": "Bán kính bo góc",
+	"HORIZONTAL_PADDING": "Khoảng đệm ngang",
+	"LAYOUT": "Bố cục",
+	"LAYOUT_CARD": "Thẻ toàn chiều rộng",
+	"LAYOUT_CARD_SUBTITLE": "Mỗi tin nhắn nằm trọn trên một thẻ, gồm cả tên và biểu cảm, giống Rosiecord",
+	"LAYOUT_FIT": "Vừa với tin nhắn",
+	"LAYOUT_FIT_SUBTITLE": "Mỗi bong bóng chỉ bao quanh văn bản và phương tiện của tin nhắn",
+	"OPACITY": "Độ mờ đục",
+	"OWN_COLOR": "Tin nhắn của bạn",
+	"OWN_COLOR_FALLBACK": "Giống màu bong bóng",
+	"SHAPE": "Hình dạng",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Khoảng đệm dọc"
+}

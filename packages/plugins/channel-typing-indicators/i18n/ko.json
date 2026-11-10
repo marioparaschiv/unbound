@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "채널 입력 중 표시",
+	"INCLUDE_CURRENT_CHANNEL": "현재 채널 포함",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "선택한 채널의 입력 중 상태를 표시해요.",
+	"INCLUDE_MUTED_CHANNELS": "알림 끈 채널 포함",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "알림을 끈 채널의 입력 중 상태를 표시해요.",
+	"INCLUDE_IGNORED_USERS": "무시한 사용자 포함",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "무시한 사용자의 입력 중 상태를 표시해요.",
+	"INCLUDE_BLOCKED_USERS": "차단한 사용자 포함",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "차단한 사용자의 입력 중 상태를 표시해요.",
+	"APPEARANCE": "모양",
+	"APPEARANCE_BOTH": "아바타와 움직이는 점",
+	"APPEARANCE_DOTS": "움직이는 점",
+	"APPEARANCE_AVATARS": "아바타",
+	"TYPING_ONE": "{a} 님이 입력하고 있어요...",
+	"TYPING_TWO": "{a} 님과 {b} 님이 입력하고 있어요...",
+	"TYPING_THREE": "{a} 님, {b} 님, {c} 님이 입력하고 있어요...",
+	"TYPING_SEVERAL": "여러 명이 입력하고 있어요...",
+	"SOMEONE": "누군가"
+}

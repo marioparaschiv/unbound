@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "Preferenze",
+	"DISPLAY_MODE": "Modalità di visualizzazione",
+	"MODE_NICK_USER": "Nome visualizzato, poi nome utente",
+	"MODE_NICK_USER_SUBTITLE": "Nome visualizzato (@nomeutente)",
+	"MODE_USER_NICK": "Nome utente, poi nome visualizzato",
+	"MODE_USER_NICK_SUBTITLE": "@nomeutente (Nome visualizzato)",
+	"MODE_USER": "Solo nome utente",
+	"MODE_USER_SUBTITLE": "@nomeutente",
+	"FRIEND_NICKNAMES": "Mostra i nickname degli amici",
+	"FRIEND_NICKNAMES_SUBTITLE": "Preferisci il nickname di un amico ovunque sia applicabile",
+	"DISPLAY_NAMES": "Usa i nomi globali",
+	"DISPLAY_NAMES_SUBTITLE": "Mostra il nome globale dell’account invece del nome utente",
+	"IN_REPLIES": "Applica alle risposte",
+	"IN_REPLIES_SUBTITLE": "Applica anche alle anteprime delle risposte"
+}

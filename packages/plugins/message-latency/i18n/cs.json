@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Indikátor",
+	"LATENCY_THRESHOLD": "Práh zpoždění",
+	"LATENCY_THRESHOLD_SUBTITLE": "Zobrazí indikátor, když odeslání zprávy trvá alespoň takto dlouho.",
+	"SHOW_MILLISECONDS": "Zobrazit milisekundy",
+	"SHOW_MILLISECONDS_SUBTITLE": "Zobrazí v indikátoru čas s přesností na milisekundy.",
+	"IGNORE_MY_MESSAGES": "Ignorovat moje zprávy",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Označovat jen zprávy od ostatních.",
+	"DETECT_LEGACY_ANDROID": "Rozpoznat starší klienty pro Android",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Zobrazí značku u známého posunu časového razítka ve starších klientech Discordu pro Android.",
+	"DURATION_DAYS": "{count, plural, one {# den} few {# dny} many {# dne} other {# dní}}",
+	"DURATION_HOURS": "{count, plural, one {# hodina} few {# hodiny} many {# hodiny} other {# hodin}}",
+	"DURATION_MINUTES": "{count, plural, one {# minuta} few {# minuty} many {# minuty} other {# minut}}",
+	"DURATION_SECONDS": "{count, plural, one {# sekunda} few {# sekundy} many {# sekundy} other {# sekund}}",
+	"DURATION_MILLISECONDS": "{count, plural, one {# milisekunda} few {# milisekundy} many {# milisekundy} other {# milisekund}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} a {later}",
+	"TOOLTIP_DELAYED": "Tato zpráva byla odeslána se zpožděním {duration}.",
+	"TOOLTIP_CLOCK_AHEAD": "Hodiny tohoto uživatele jdou napřed o {duration}.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "Uživatel nejspíš používá starý klient Discordu pro Android",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} Uživatel nejspíš používá starý klient Discordu pro Android.",
+	"OLD_ANDROID_CLIENT": "Starý klient Discordu pro Android"
+}

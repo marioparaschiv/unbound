@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Inaktivera automatiskt",
+	"AUTO_DISABLE_SUBTITLE": "Stäng av reglaget igen efter att ett tyst meddelande har skickats",
+	"DISABLE_SILENT_MESSAGE": "Inaktivera tyst meddelande",
+	"ENABLE_SILENT_MESSAGE": "Aktivera tyst meddelande",
+	"PERSIST_STATE": "Behåll läget",
+	"PERSIST_STATE_SUBTITLE": "Låt reglaget vara på när du öppnar en annan kanal",
+	"SILENT_MESSAGE_TOGGLE": "Reglage för tysta meddelanden",
+	"TOGGLE": "Växla",
+	"TOGGLED_OFF": "Dina meddelanden här aviserar folk igen.",
+	"TOGGLED_ON": "Dina meddelanden här skickas utan aviseringar."
+}

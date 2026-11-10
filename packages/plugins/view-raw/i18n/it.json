@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Chiudi",
+	"CONTENT_COPIED": "Contenuto grezzo copiato negli appunti.",
+	"COPY_CONTENT": "Copia contenuto",
+	"COPY_DATA": "Copia dati",
+	"DATA_COPIED": "Dati ({type}) copiati negli appunti.",
+	"MESSAGE_CONTENT": "Contenuto del messaggio",
+	"MESSAGE_DATA": "Dati del messaggio",
+	"RAW_TITLE": "Dati grezzi ({type})",
+	"TYPE_CHANNEL": "Canale",
+	"TYPE_GUILD": "Server",
+	"TYPE_MESSAGE": "Messaggio",
+	"TYPE_PROFILE": "Profilo",
+	"TYPE_USER": "Utente",
+	"VIEW_RAW": "Visualizza dati grezzi"
+}

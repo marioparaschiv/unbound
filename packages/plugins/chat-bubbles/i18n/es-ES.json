@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Color de la burbuja",
+	"BUBBLE_COLOR_FALLBACK": "Sigue el tema: negro en los temas oscuros y blanco en el tema claro",
+	"COLORS": "Colores",
+	"CORNER_RADIUS": "Radio de las esquinas",
+	"HORIZONTAL_PADDING": "Margen horizontal",
+	"LAYOUT": "Diseño",
+	"LAYOUT_CARD": "Tarjetas a ancho completo",
+	"LAYOUT_CARD_SUBTITLE": "Una tarjeta detrás de cada mensaje completo, con el nombre y las reacciones incluidos, como en Rosiecord",
+	"LAYOUT_FIT": "Ajustar al mensaje",
+	"LAYOUT_FIT_SUBTITLE": "Cada burbuja envuelve solo el texto y el contenido multimedia de su mensaje",
+	"OPACITY": "Opacidad",
+	"OWN_COLOR": "Tus mensajes",
+	"OWN_COLOR_FALLBACK": "Igual que el color de la burbuja",
+	"SHAPE": "Forma",
+	"UNIT_PERCENT": " %",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Margen vertical"
+}

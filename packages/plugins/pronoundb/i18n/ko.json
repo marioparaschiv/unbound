@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "대명사",
+	"FORMAT_LOWERCASE": "소문자",
+	"FORMAT_CAPITALIZED": "첫 글자 대문자",
+	"SOURCE": "출처",
+	"SOURCE_PRONOUNDB": "PronounDB 우선",
+	"SOURCE_PRONOUNDB_SUBTITLE": "없으면 Discord 프로필의 대명사 사용",
+	"SOURCE_DISCORD": "Discord 우선",
+	"SOURCE_DISCORD_SUBTITLE": "없으면 PronounDB 사용",
+	"SHOW_FOR_YOURSELF": "내 대명사도 표시",
+	"PRONOUN_ANY": "아무 대명사나",
+	"PRONOUN_ASK": "제 대명사를 물어봐 주세요",
+	"PRONOUN_AVOID": "대명사 대신 이름으로 불러 주세요",
+	"PRONOUN_HE": "He/Him",
+	"PRONOUN_IT": "It/Its",
+	"PRONOUN_OTHER": "기타 대명사",
+	"PRONOUN_SHE": "She/Her",
+	"PRONOUN_THEY": "They/Them",
+	"PRONOUN_UNSPECIFIED": "지정된 대명사가 없어요."
+}

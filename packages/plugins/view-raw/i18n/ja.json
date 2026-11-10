@@ -1,0 +1,16 @@
+{
+	"CLOSE": "閉じる",
+	"CONTENT_COPIED": "生の内容をクリップボードにコピーしました。",
+	"COPY_CONTENT": "内容をコピー",
+	"COPY_DATA": "データをコピー",
+	"DATA_COPIED": "{type}のデータをクリップボードにコピーしました。",
+	"MESSAGE_CONTENT": "メッセージの内容",
+	"MESSAGE_DATA": "メッセージのデータ",
+	"RAW_TITLE": "{type}の生データ",
+	"TYPE_CHANNEL": "チャンネル",
+	"TYPE_GUILD": "サーバー",
+	"TYPE_MESSAGE": "メッセージ",
+	"TYPE_PROFILE": "プロフィール",
+	"TYPE_USER": "ユーザー",
+	"VIEW_RAW": "生データを表示"
+}

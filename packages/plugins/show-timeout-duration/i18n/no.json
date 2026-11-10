@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "{remaining} igjen av tidsavbruddet",
+	"TIMEOUT_EXPIRES_IN": "Tidsavbruddet utløper om {remaining}"
+}

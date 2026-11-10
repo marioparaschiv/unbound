@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "Furnizor",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "Caută GIF-uri pe Tenor",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "Caută GIF-uri pe Giphy",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "Căutarea de GIF-uri proprie a Discord",
+	"PROVIDER_BUTTON_LABEL": "Furnizor de GIF-uri: {provider}. Comută la {next}"
+}

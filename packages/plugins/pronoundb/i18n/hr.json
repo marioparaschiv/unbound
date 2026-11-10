@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Zamjenice",
+	"FORMAT_LOWERCASE": "Mala slova",
+	"FORMAT_CAPITALIZED": "Veliko početno slovo",
+	"SOURCE": "Izvor",
+	"SOURCE_PRONOUNDB": "Prednost PronounDB-u",
+	"SOURCE_PRONOUNDB_SUBTITLE": "Inače koristi zamjenice s Discord profila",
+	"SOURCE_DISCORD": "Prednost Discordu",
+	"SOURCE_DISCORD_SUBTITLE": "Inače koristi PronounDB",
+	"SHOW_FOR_YOURSELF": "Prikaži i za sebe",
+	"PRONOUN_ANY": "Bilo koje zamjenice",
+	"PRONOUN_ASK": "Pitaj me za zamjenice",
+	"PRONOUN_AVOID": "Izbjegavaj zamjenice, koristi moje ime",
+	"PRONOUN_HE": "On/njega",
+	"PRONOUN_IT": "Ono/njega",
+	"PRONOUN_OTHER": "Druge zamjenice",
+	"PRONOUN_SHE": "Ona/nju",
+	"PRONOUN_THEY": "Oni/njih",
+	"PRONOUN_UNSPECIFIED": "Zamjenice nisu navedene."
+}

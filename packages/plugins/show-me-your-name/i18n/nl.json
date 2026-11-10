@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "Voorkeuren",
+	"DISPLAY_MODE": "Weergavemodus",
+	"MODE_NICK_USER": "Weergavenaam, dan gebruikersnaam",
+	"MODE_NICK_USER_SUBTITLE": "Weergavenaam (@gebruikersnaam)",
+	"MODE_USER_NICK": "Gebruikersnaam, dan weergavenaam",
+	"MODE_USER_NICK_SUBTITLE": "@gebruikersnaam (Weergavenaam)",
+	"MODE_USER": "Alleen gebruikersnaam",
+	"MODE_USER_SUBTITLE": "@gebruikersnaam",
+	"FRIEND_NICKNAMES": "Bijnamen van vrienden tonen",
+	"FRIEND_NICKNAMES_SUBTITLE": "Gebruik waar mogelijk de bijnaam van een vriend",
+	"DISPLAY_NAMES": "Globale namen gebruiken",
+	"DISPLAY_NAMES_SUBTITLE": "Toon de globale naam van het account in plaats van de gebruikersnaam",
+	"IN_REPLIES": "Toepassen op antwoorden",
+	"IN_REPLIES_SUBTITLE": "Ook toepassen op voorbeelden van antwoorden"
+}

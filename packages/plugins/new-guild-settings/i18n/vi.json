@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "Khi bạn tham gia máy chủ",
+	"MUTE_SERVER": "Tắt tiếng máy chủ",
+	"MUTE_SERVER_SUBTITLE": "Tự động tắt tiếng máy chủ mới",
+	"SUPPRESS_EVERYONE": "Chặn @everyone và @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Bỏ qua @everyone và @here trong máy chủ mới",
+	"SUPPRESS_ROLES": "Chặn mọi lượt @nhắc đến vai trò",
+	"SUPPRESS_ROLES_SUBTITLE": "Bỏ qua lượt nhắc đến vai trò trong máy chủ mới",
+	"SUPPRESS_HIGHLIGHTS": "Chặn tin nổi bật",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Tắt thông báo tin nổi bật trong máy chủ mới",
+	"MUTE_EVENTS": "Tắt tiếng sự kiện mới",
+	"MUTE_EVENTS_SUBTITLE": "Tắt thông báo sự kiện đã lên lịch",
+	"SHOW_ALL_CHANNELS": "Hiện tất cả kênh",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Hiện mọi kênh trong các máy chủ cho phép bạn chọn kênh",
+	"SERVER_NOTIFICATION_SETTINGS": "Cài đặt thông báo máy chủ",
+	"NOTIFY_ALL": "Tất cả tin nhắn",
+	"NOTIFY_MENTIONS": "Chỉ @nhắc đến",
+	"NOTIFY_NOTHING": "Không có gì",
+	"NOTIFY_DEFAULT": "Mặc định của máy chủ",
+	"APPLY_NEW_GUILD_SETTINGS": "Áp dụng cài đặt máy chủ mới",
+	"APPLIED_TO_GUILD": "Đã áp dụng cho {name}.",
+	"APPLIED_TO_THIS_SERVER": "Đã áp dụng cho máy chủ này."
+}

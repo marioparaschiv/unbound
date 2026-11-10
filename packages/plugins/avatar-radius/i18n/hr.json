@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Avatari",
+	"CORNER_RADIUS": "Zaobljenost kutova",
+	"CORNER_RADIUS_SUBTITLE": "Od 0 za kvadrat do 64. Polumjer veći od pola veličine avatara zadržava ga kao krug."
+}

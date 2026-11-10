@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Blasenfarbe",
+	"BUBBLE_COLOR_FALLBACK": "Folgt dem Theme: Schwarz bei dunklen Themes, Weiß beim hellen Theme",
+	"COLORS": "Farben",
+	"CORNER_RADIUS": "Eckenradius",
+	"HORIZONTAL_PADDING": "Horizontaler Innenabstand",
+	"LAYOUT": "Layout",
+	"LAYOUT_CARD": "Karten in voller Breite",
+	"LAYOUT_CARD_SUBTITLE": "Eine Karte hinter jeder ganzen Nachricht, inklusive Name und Reaktionen, wie bei Rosiecord",
+	"LAYOUT_FIT": "An Nachricht anpassen",
+	"LAYOUT_FIT_SUBTITLE": "Jede Blase umschließt nur den Text und die Medien ihrer Nachricht",
+	"OPACITY": "Deckkraft",
+	"OWN_COLOR": "Deine Nachrichten",
+	"OWN_COLOR_FALLBACK": "Wie die Blasenfarbe",
+	"SHAPE": "Form",
+	"UNIT_PERCENT": " %",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Vertikaler Innenabstand"
+}

@@ -1,0 +1,6 @@
+{
+	"SUPPRESS_EMBEDS": "Приховати вбудовування",
+	"UNSUPPRESS_EMBEDS": "Показати вбудовування",
+	"CHANGE_FAILED": "Помилка дії «{action}»: {reason}",
+	"CHANGE_REFUSED": "Discord відхилив зміну."
+}

@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "Kai prisijungiate prie serverio",
+	"MUTE_SERVER": "Nutildyti serverį",
+	"MUTE_SERVER_SUBTITLE": "Automatiškai nutildyti naujus serverius",
+	"SUPPRESS_EVERYONE": "Slopinti @everyone ir @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Ignoruoti @everyone ir @here naujuose serveriuose",
+	"SUPPRESS_ROLES": "Slopinti visus rolių @paminėjimus",
+	"SUPPRESS_ROLES_SUBTITLE": "Ignoruoti rolių paminėjimus naujuose serveriuose",
+	"SUPPRESS_HIGHLIGHTS": "Slopinti paryškinimus",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Išjungti paryškinimų pranešimus naujuose serveriuose",
+	"MUTE_EVENTS": "Nutildyti naujus renginius",
+	"MUTE_EVENTS_SUBTITLE": "Nutildyti suplanuotų renginių pranešimus",
+	"SHOW_ALL_CHANNELS": "Rodyti visus kanalus",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Rodyti visus kanalus serveriuose, kuriuose galima rinktis kanalus",
+	"SERVER_NOTIFICATION_SETTINGS": "Serverio pranešimų nustatymai",
+	"NOTIFY_ALL": "Visos žinutės",
+	"NOTIFY_MENTIONS": "Tik @paminėjimai",
+	"NOTIFY_NOTHING": "Nieko",
+	"NOTIFY_DEFAULT": "Serverio numatytasis",
+	"APPLY_NEW_GUILD_SETTINGS": "Taikyti naujo serverio nustatymus",
+	"APPLIED_TO_GUILD": "Pritaikyta serveriui {name}.",
+	"APPLIED_TO_THIS_SERVER": "Pritaikyta šiam serveriui."
+}

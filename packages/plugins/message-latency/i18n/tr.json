@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Gösterge",
+	"LATENCY_THRESHOLD": "Gecikme eşiği",
+	"LATENCY_THRESHOLD_SUBTITLE": "Bir mesajın gönderilmesi en az bu kadar sürdüğünde bir gösterge göster.",
+	"SHOW_MILLISECONDS": "Milisaniyeleri göster",
+	"SHOW_MILLISECONDS_SUBTITLE": "Göstergede milisaniye hassasiyeti kullan.",
+	"IGNORE_MY_MESSAGES": "Mesajlarımı yok say",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Yalnızca başkalarının gönderdiği mesajları işaretle.",
+	"DETECT_LEGACY_ANDROID": "Eski Android istemcilerini algıla",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Eski Discord Android istemcilerindeki bilinen zaman damgası kayması için bir işaret göster.",
+	"DURATION_DAYS": "{count, plural, one {# gün} other {# gün}}",
+	"DURATION_HOURS": "{count, plural, one {# saat} other {# saat}}",
+	"DURATION_MINUTES": "{count, plural, one {# dakika} other {# dakika}}",
+	"DURATION_SECONDS": "{count, plural, one {# saniye} other {# saniye}}",
+	"DURATION_MILLISECONDS": "{count, plural, one {# milisaniye} other {# milisaniye}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} ve {later}",
+	"TOOLTIP_DELAYED": "Bu mesaj {duration} gecikmeyle gönderildi.",
+	"TOOLTIP_CLOCK_AHEAD": "Bu kullanıcının saati {duration} ileride.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "Kullanıcının eski bir Discord Android istemcisi kullandığından şüpheleniliyor",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} Kullanıcının eski bir Discord Android istemcisi kullandığından şüpheleniliyor.",
+	"OLD_ANDROID_CLIENT": "Eski Discord Android istemcisi"
+}

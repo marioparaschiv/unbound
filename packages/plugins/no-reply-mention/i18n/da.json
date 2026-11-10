@@ -1,0 +1,18 @@
+{
+	"ADD_USER_ID": "Tilføj bruger-id",
+	"ADD_USER_ID_SUBTITLE": "Svar kan omtale disse brugere, når undtagelsen er slået til",
+	"CANCEL": "Annuller",
+	"DELETE": "Slet",
+	"EDIT": "Rediger",
+	"EDIT_USER_ID": "Rediger bruger-id",
+	"EXCEPTIONS": "Undtagelser",
+	"INVALID_USER_ID": "Indtast et numerisk Discord-bruger-id.",
+	"NO_USERS": "Ingen brugere tilføjet endnu.",
+	"ONLY_PING_LISTED": "Ping kun brugere på listen",
+	"ONLY_PING_LISTED_OFF": "Svar omtaler som standard ingen",
+	"ONLY_PING_LISTED_ON": "Svar omtaler kun brugerne på listen ovenfor",
+	"PLUGIN_NAME": "No Reply Mention",
+	"SAVE": "Gem",
+	"TAP_TO_EDIT": "Tryk for at redigere",
+	"USER_ID_PLACEHOLDER": "Discord-bruger-id"
+}

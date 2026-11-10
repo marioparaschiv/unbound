@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "प्लैटफ़ॉर्म इंडिकेटर",
+	"SHOW_INDICATORS": "इंडिकेटर दिखाएँ",
+	"MEMBER_LIST": "मेंबर लिस्ट",
+	"MEMBER_LIST_SUBTITLE": "मेंबर लिस्ट और दूसरी यूज़र लिस्ट में नाम के बाद",
+	"PROFILES": "प्रोफ़ाइल",
+	"PROFILES_SUBTITLE": "प्रोफ़ाइल पर नाम और बैज के नीचे",
+	"MESSAGES": "मैसेज",
+	"MESSAGES_SUBTITLE": "मैसेज पर टाइमस्टैम्प के बाद",
+	"STATUS": "स्टेटस",
+	"COLOR_MOBILE_INDICATOR": "मोबाइल इंडिकेटर में रंग",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "निष्क्रिय या व्यस्त मोबाइल यूज़र के लिए भी फ़ोन वाला स्टेटस आकार दिखाएँ",
+	"PLATFORM_DESKTOP": "डेस्कटॉप",
+	"PLATFORM_MOBILE": "मोबाइल",
+	"PLATFORM_WEB": "वेब",
+	"PLATFORM_EMBEDDED": "एम्बेडेड (कंसोल या गेम)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "{platforms} पर ऑनलाइन"
+}

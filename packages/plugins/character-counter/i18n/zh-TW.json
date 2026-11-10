@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "外觀",
+	"COLOR_THRESHOLDS": "顏色門檻",
+	"COLOR_THRESHOLDS_SUBTITLE": "當訊息接近 Discord 的字數上限時發出警告。",
+	"COUNTER_LABEL": "{length}/{limit} 個字元"
+}

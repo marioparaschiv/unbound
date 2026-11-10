@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Ενδείξεις πλατφόρμας",
+	"SHOW_INDICATORS": "Εμφάνιση ενδείξεων",
+	"MEMBER_LIST": "Λίστα μελών",
+	"MEMBER_LIST_SUBTITLE": "Μετά τα ονόματα στη λίστα μελών και σε άλλες λίστες χρηστών",
+	"PROFILES": "Προφίλ",
+	"PROFILES_SUBTITLE": "Κάτω από το όνομα και τα σήματα στα προφίλ",
+	"MESSAGES": "Μηνύματα",
+	"MESSAGES_SUBTITLE": "Μετά τη χρονοσήμανση στα μηνύματα",
+	"STATUS": "Κατάσταση",
+	"COLOR_MOBILE_INDICATOR": "Χρωματιστή ένδειξη κινητού",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "Εμφάνιση του σχήματος τηλεφώνου και για χρήστες κινητού που είναι αδρανείς ή απασχολημένοι",
+	"PLATFORM_DESKTOP": "Υπολογιστής",
+	"PLATFORM_MOBILE": "Κινητό",
+	"PLATFORM_WEB": "Web",
+	"PLATFORM_EMBEDDED": "Ενσωματωμένο (κονσόλα ή παιχνίδι)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "Σε σύνδεση σε: {platforms}"
+}

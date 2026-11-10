@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "Når du tilmelder dig en server",
+	"MUTE_SERVER": "Gør server lydløs",
+	"MUTE_SERVER_SUBTITLE": "Gør nye servere lydløse automatisk",
+	"SUPPRESS_EVERYONE": "Undertryk @everyone og @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Ignorer @everyone og @here på nye servere",
+	"SUPPRESS_ROLES": "Undertryk alle @omtaler af roller",
+	"SUPPRESS_ROLES_SUBTITLE": "Ignorer omtaler af roller på nye servere",
+	"SUPPRESS_HIGHLIGHTS": "Undertryk højdepunkter",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Slå notifikationer om højdepunkter fra på nye servere",
+	"MUTE_EVENTS": "Gør nye begivenheder lydløse",
+	"MUTE_EVENTS_SUBTITLE": "Gør notifikationer om planlagte begivenheder lydløse",
+	"SHOW_ALL_CHANNELS": "Vis alle kanaler",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Vis alle kanaler på servere, hvor du selv kan vælge kanaler",
+	"SERVER_NOTIFICATION_SETTINGS": "Indstillinger for servernotifikationer",
+	"NOTIFY_ALL": "Alle beskeder",
+	"NOTIFY_MENTIONS": "Kun @omtaler",
+	"NOTIFY_NOTHING": "Intet",
+	"NOTIFY_DEFAULT": "Serverstandard",
+	"APPLY_NEW_GUILD_SETTINGS": "Anvend indstillinger for nye servere",
+	"APPLIED_TO_GUILD": "Anvendt på {name}.",
+	"APPLIED_TO_THIS_SERVER": "Anvendt på denne server."
+}
