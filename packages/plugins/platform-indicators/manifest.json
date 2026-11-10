@@ -26,5 +26,12 @@
 	],
 	"version": "1.0.1",
 	"icon": "LaptopPhoneIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "4bdb59e723671c3c9116cecfee480937ff0c89335c94a0ab489dc361463f1c53005aa444e45bf39aa85fdd32659e1a93d2a0efce2726e46489344854ed6d1a94"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "T8SIddg+HnuPIEieTUAIEmf9i2EB8RIS/gU5iyWIR8E+4lZ7nuRMnjO/nnkFfz8VmLM5mEUvRK8YTi5DMp1qAw=="
+	}
 }
