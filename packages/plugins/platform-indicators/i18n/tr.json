@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Platform Göstergeleri",
+	"SHOW_INDICATORS": "Göstergeleri Göster",
+	"MEMBER_LIST": "Üye Listesi",
+	"MEMBER_LIST_SUBTITLE": "Üye listesinde ve diğer kullanıcı listelerinde isimlerin yanında",
+	"PROFILES": "Profiller",
+	"PROFILES_SUBTITLE": "Profillerde ismin ve rozetlerin altında",
+	"MESSAGES": "Mesajlar",
+	"MESSAGES_SUBTITLE": "Mesajlarda zaman damgasından sonra",
+	"STATUS": "Durum",
+	"COLOR_MOBILE_INDICATOR": "Mobil Göstergeyi Renklendir",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "Boşta veya rahatsız etmeyin durumundaki mobil kullanıcılar için de telefon şeklindeki durum simgesini göster",
+	"PLATFORM_DESKTOP": "Masaüstü",
+	"PLATFORM_MOBILE": "Mobil",
+	"PLATFORM_WEB": "Web",
+	"PLATFORM_EMBEDDED": "Gömülü (Konsol veya Oyun)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "Çevrimiçi: {platforms}"
+}

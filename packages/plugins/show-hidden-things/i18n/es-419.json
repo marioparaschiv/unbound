@@ -1,0 +1,7 @@
+{
+	"SHOW_INVITES_PAUSED": "Mostrar invitaciones pausadas",
+	"SHOW_INVITES_PAUSED_SUBTITLE": "Muestra a todos el ajuste Pausar invitaciones en los Ajustes del servidor",
+	"SHOW_TIMEOUTS": "Mostrar íconos de aislamiento",
+	"SHOW_TIMEOUTS_SUBTITLE": "Muestra en el chat los íconos de miembros aislados temporalmente",
+	"VISIBILITY": "Visibilidad"
+}

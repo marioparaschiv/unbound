@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Ganti",
+	"REPLACE_ALL": "Judul dan Thumbnail",
+	"REPLACE_TITLES": "Judul",
+	"REPLACE_THUMBNAILS": "Thumbnail",
+	"DEARROW_BY_DEFAULT": "Dearrow secara Bawaan",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Ganti judul dan thumbnail tanpa bertanya",
+	"SHOW_TOGGLE": "Tampilkan Tombol",
+	"SHOW_TOGGLE_SUBTITLE": "Beralih antara embed asli dan Dearrow dari menu pesan",
+	"SHOW_ORIGINAL_EMBED": "Tampilkan Embed Asli",
+	"DEARROW_EMBED": "Dearrow Embed"
+}

@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Заменять",
+	"REPLACE_ALL": "Заголовки и превью",
+	"REPLACE_TITLES": "Заголовки",
+	"REPLACE_THUMBNAILS": "Превью",
+	"DEARROW_BY_DEFAULT": "DeArrow по умолчанию",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Заменять заголовки и превью без вопросов",
+	"SHOW_TOGGLE": "Показывать переключатель",
+	"SHOW_TOGGLE_SUBTITLE": "Переключать встраивание туда и обратно из меню сообщения",
+	"SHOW_ORIGINAL_EMBED": "Показать исходное встраивание",
+	"DEARROW_EMBED": "Применить DeArrow"
+}

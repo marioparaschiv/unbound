@@ -1,0 +1,111 @@
+---
+title: 'The Manifest'
+description: 'The metadata every addon ships.'
+icon: 'file-content'
+---
+
+`manifest.json` holds an addon's id, name, authors and version. Plugins, [themes](/docs/developer/themes/introduction) and [icon packs](/docs/developer/icon-packs/introduction) all use the same shape.
+
+```json manifest.json
+{
+	"id": "my-plugin",
+	"name": "My Plugin",
+	"description": "Adds something useful to Discord.",
+	"authors": [{ "name": "you", "id": "1234567890" }],
+	"version": "1.0.0",
+	"main": "index.tsx"
+}
+```
+
+## Required Fields
+
+Unbound rejects an addon missing any of these, or with an empty `authors`.
+
+<ParamField path='id' type='string' required>
+	Unique id. It names your [settings](/docs/developer/plugins/settings) bucket, so never change it.
+</ParamField>
+<ParamField path='name' type='string' required>
+	Display name shown in settings.
+</ParamField>
+<ParamField path='description' type='string' required>
+	Short summary.
+</ParamField>
+<ParamField path='authors' type='AddonAuthor[]' required>
+	Non-empty array of authors.
+
+	<Expandable title='AddonAuthor'>
+		<ParamField path='name' type='string' required>
+			Display name.
+		</ParamField>
+		<ParamField path='id' type='string' required>
+			Discord user id.
+		</ParamField>
+	</Expandable>
+</ParamField>
+<ParamField path='version' type='string' required>
+	Increase it on every release so clients detect the update.
+</ParamField>
+<ParamField path='main' type='string' required>
+	Entry file relative to `src/`, such as `index.tsx`. The build writes `index.js` into the shipped manifest. Themes ignore it.
+</ParamField>
+
+## Optional Fields
+
+<ParamField path='icon' type='string | { uri: string }'>
+	An [asset](/docs/sdk/latest/assets) name, or `{ uri }` for a remote image.
+</ParamField>
+<ParamField path='updates' type='string'>
+	URL Unbound checks for newer versions.
+</ParamField>
+<ParamField path='url' type='string'>
+	Where the bundle is hosted.
+</ParamField>
+
+## Per Addon Kind
+
+<AccordionGroup>
+	<Accordion title='Plugins' icon='plug'>
+		`ubd build` turns `main` into the bundle. See [Your First Plugin](/docs/developer/getting-started/first-plugin).
+
+		When the plugin ships [images](/docs/developer/plugins/assets), `ubd build` adds `assets` to the built manifest in `dist/`. Never write it yourself.
+
+		<ParamField path='assets' type='Record<string, { type, width, height, scales }>'>
+			Each image by name: type (`png`, `jpg`, `webp` or `gif`), size in points, and the SHA-256 of its file at each scale (`1`, `2`, `3`). Files sit beside the bundle at `assets/<sha256>.<type>`.
+		</ParamField>
+	</Accordion>
+	<Accordion title='Themes' icon='paintbrush'>
+		A theme ships `bundle.json` beside its manifest, with the palette and background. See [Theme Colors](/docs/developer/themes/types).
+
+		<Warning>
+			Themes ignore `main`, but it is still required. Unbound always reads `bundle.json`. If colors don't apply, check that file's name.
+		</Warning>
+	</Accordion>
+	<Accordion title='Icon Packs' icon='shapes'>
+		An icon pack is a folder of images laid out like Discord's assets. It adds two fields:
+
+		<ParamField path='type' type="'icon-pack'">
+			If present at install, it must be `'icon-pack'` or the install is rejected.
+		</ParamField>
+		<ParamField path='source' type="'github' | 'other'">
+			How files are fetched. Default: `github` when `main` is a `github.com` URL, else `other`.
+		</ParamField>
+
+		| `source` | `main` |
+		| --- | --- |
+		| `github` | Repo URL, optionally with `/tree/<branch>/<path>`. Unbound downloads the images in that tree |
+		| `other` | Installed like any other addon |
+
+		See [Icon Packs](/docs/developer/icon-packs/introduction).
+	</Accordion>
+	<Accordion title='Fonts' icon='text-a'>
+		No manifest. A font is one file, named after the full name stored inside it. See [Fonts](/docs/user/fonts).
+	</Accordion>
+</AccordionGroup>
+
+## Next
+
+<CardGroup cols={2}>
+	<Card title='Store Page' icon='shop' href='/docs/developer/publishing/store-page'>
+		Add a banner, gallery and description.
+	</Card>
+</CardGroup>

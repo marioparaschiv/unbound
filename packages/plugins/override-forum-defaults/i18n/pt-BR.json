@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Layout padrão",
+	"LAYOUT_LIST": "Lista",
+	"LAYOUT_LIST_SUBTITLE": "Publicações em lista",
+	"LAYOUT_GALLERY": "Galeria",
+	"LAYOUT_GALLERY_SUBTITLE": "Publicações em uma grade de cartões",
+	"DEFAULT_SORT_ORDER": "Ordem de classificação padrão",
+	"SORT_RECENTLY_ACTIVE": "Atividade recente",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Publicações com as mensagens mais recentes primeiro",
+	"SORT_DATE_POSTED": "Data de publicação",
+	"SORT_DATE_POSTED_SUBTITLE": "As publicações mais recentes primeiro"
+}

@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "自动关闭",
+	"AUTO_DISABLE_SUBTITLE": "发送一条静默消息后自动关闭此开关",
+	"DISABLE_SILENT_MESSAGE": "关闭静默消息",
+	"ENABLE_SILENT_MESSAGE": "开启静默消息",
+	"PERSIST_STATE": "保持状态",
+	"PERSIST_STATE_SUBTITLE": "打开其他频道时保持开关为开启状态",
+	"SILENT_MESSAGE_TOGGLE": "静默消息开关",
+	"TOGGLE": "开关",
+	"TOGGLED_OFF": "您在此处发送的消息将重新通知他人。",
+	"TOGGLED_ON": "您在此处发送的消息将不会发出通知。"
+}

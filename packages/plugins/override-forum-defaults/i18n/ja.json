@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "デフォルトのレイアウト",
+	"LAYOUT_LIST": "リスト",
+	"LAYOUT_LIST_SUBTITLE": "投稿をリストで表示",
+	"LAYOUT_GALLERY": "ギャラリー",
+	"LAYOUT_GALLERY_SUBTITLE": "投稿をカードのグリッドで表示",
+	"DEFAULT_SORT_ORDER": "デフォルトの並び順",
+	"SORT_RECENTLY_ACTIVE": "最近のアクティブ順",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "最新のメッセージがある投稿から表示",
+	"SORT_DATE_POSTED": "投稿日順",
+	"SORT_DATE_POSTED_SUBTITLE": "新しい投稿から表示"
+}

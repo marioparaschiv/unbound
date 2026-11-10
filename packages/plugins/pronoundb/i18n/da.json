@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Pronominer",
+	"FORMAT_LOWERCASE": "Små bogstaver",
+	"FORMAT_CAPITALIZED": "Stort begyndelsesbogstav",
+	"SOURCE": "Kilde",
+	"SOURCE_PRONOUNDB": "Foretræk PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "Brug pronominer fra Discord-profilen som reserve",
+	"SOURCE_DISCORD": "Foretræk Discord",
+	"SOURCE_DISCORD_SUBTITLE": "Brug PronounDB som reserve",
+	"SHOW_FOR_YOURSELF": "Vis for dig selv",
+	"PRONOUN_ANY": "Alle pronominer",
+	"PRONOUN_ASK": "Spørg mig om mine pronominer",
+	"PRONOUN_AVOID": "Undgå pronominer, brug mit navn",
+	"PRONOUN_HE": "Han/ham",
+	"PRONOUN_IT": "Den/det",
+	"PRONOUN_OTHER": "Andre pronominer",
+	"PRONOUN_SHE": "Hun/hende",
+	"PRONOUN_THEY": "De/dem",
+	"PRONOUN_UNSPECIFIED": "Ingen pronominer angivet."
+}

@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "Preferencias",
+	"DISPLAY_MODE": "Modo de visualización",
+	"MODE_NICK_USER": "Nombre para mostrar y luego nombre de usuario",
+	"MODE_NICK_USER_SUBTITLE": "Nombre para mostrar (@usuario)",
+	"MODE_USER_NICK": "Nombre de usuario y luego nombre para mostrar",
+	"MODE_USER_NICK_SUBTITLE": "@usuario (Nombre para mostrar)",
+	"MODE_USER": "Solo nombre de usuario",
+	"MODE_USER_SUBTITLE": "@usuario",
+	"FRIEND_NICKNAMES": "Mostrar apodos de amigos",
+	"FRIEND_NICKNAMES_SUBTITLE": "Prefiere el apodo de un amigo dondequiera que se aplique",
+	"DISPLAY_NAMES": "Usar nombres globales",
+	"DISPLAY_NAMES_SUBTITLE": "Muestra el nombre global de la cuenta en lugar de su nombre de usuario",
+	"IN_REPLIES": "Aplicar a las respuestas",
+	"IN_REPLIES_SUBTITLE": "Se aplica también a las vistas previas de respuestas"
+}

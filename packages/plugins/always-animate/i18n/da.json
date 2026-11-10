@@ -1,0 +1,18 @@
+{
+	"AVATARS": "Avatarer",
+	"AVATARS_SUBTITLE": "Animerede avatarer og profilbannere",
+	"DECORATIONS": "Avatardekorationer",
+	"DECORATIONS_SUBTITLE": "Dekorationer omkring avatarer",
+	"NAMEPLATES": "Navneskilte",
+	"NAMEPLATES_SUBTITLE": "Navneskilte bag navne, i loop",
+	"PROFILE_EFFECTS": "Profileffekter",
+	"PROFILE_EFFECTS_SUBTITLE": "Effekter oven på profiler",
+	"SERVER_ICONS": "Serverikoner",
+	"SERVER_ICONS_SUBTITLE": "Animerede serverikoner og -bannere",
+	"EMOJIS": "Emojis",
+	"EMOJIS_SUBTITLE": "Emojis i beskeder, reaktioner og brugerdefinerede statusser",
+	"STICKERS": "Klistermærker",
+	"STICKERS_SUBTITLE": "Animerede klistermærker, i loop",
+	"GIFS": "GIF’er",
+	"GIFS_SUBTITLE": "GIF’er afspilles, uden at du skal trykke på dem"
+}

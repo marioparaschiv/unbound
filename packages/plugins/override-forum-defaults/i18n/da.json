@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Standardlayout",
+	"LAYOUT_LIST": "Liste",
+	"LAYOUT_LIST_SUBTITLE": "Opslag i en liste",
+	"LAYOUT_GALLERY": "Galleri",
+	"LAYOUT_GALLERY_SUBTITLE": "Opslag i et gitter af kort",
+	"DEFAULT_SORT_ORDER": "Standardsortering",
+	"SORT_RECENTLY_ACTIVE": "Senest aktive",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Opslag med de nyeste beskeder først",
+	"SORT_DATE_POSTED": "Dato for opslag",
+	"SORT_DATE_POSTED_SUBTITLE": "De nyeste opslag først"
+}

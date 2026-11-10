@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Plattformindikatorer",
+	"SHOW_INDICATORS": "Vis indikatorer",
+	"MEMBER_LIST": "Medlemsliste",
+	"MEMBER_LIST_SUBTITLE": "Etter navn i medlemslisten og andre brukerlister",
+	"PROFILES": "Profiler",
+	"PROFILES_SUBTITLE": "Under navnet og merkene på profiler",
+	"MESSAGES": "Meldinger",
+	"MESSAGES_SUBTITLE": "Etter tidsstempelet på meldinger",
+	"STATUS": "Status",
+	"COLOR_MOBILE_INDICATOR": "Farg mobilindikatoren",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "Vis telefonformen på statusen også for mobilbrukere som er inaktive eller opptatt",
+	"PLATFORM_DESKTOP": "Datamaskin",
+	"PLATFORM_MOBILE": "Mobil",
+	"PLATFORM_WEB": "Nett",
+	"PLATFORM_EMBEDDED": "Innebygd (konsoll eller spill)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "Pålogget på {platforms}"
+}

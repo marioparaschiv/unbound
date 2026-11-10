@@ -64,5 +64,5 @@ serving=$(served_root)
 echo "unbound-dev is up, serving $serving"
 
 if [[ -n $previous && $previous != "$serving" ]]; then
-	echo "It served $previous before. The device still runs that build: relaunch, or ubd reload, then ready.sh --fresh."
+	echo "It served $previous before. The device still runs that build: relaunch, or ubd debug reload, then ready.sh --fresh."
 fi

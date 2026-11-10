@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "Zaman aşımının bitmesine {remaining} kaldı",
+	"TIMEOUT_EXPIRES_IN": "Zaman aşımı {remaining} içinde sona erecek"
+}

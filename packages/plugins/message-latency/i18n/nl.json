@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Indicator",
+	"LATENCY_THRESHOLD": "Vertragingsdrempel",
+	"LATENCY_THRESHOLD_SUBTITLE": "Toon een indicator wanneer het versturen van een bericht minstens zo lang duurt.",
+	"SHOW_MILLISECONDS": "Milliseconden tonen",
+	"SHOW_MILLISECONDS_SUBTITLE": "Toon de indicator tot op de milliseconde nauwkeurig.",
+	"IGNORE_MY_MESSAGES": "Mijn berichten negeren",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Markeer alleen berichten die door anderen zijn verstuurd.",
+	"DETECT_LEGACY_ANDROID": "Oude Android-clients detecteren",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Toon een markering voor de bekende tijdstempelafwijking in oudere Android-clients van Discord.",
+	"DURATION_DAYS": "{count, plural, one {# dag} other {# dagen}}",
+	"DURATION_HOURS": "{count, plural, one {# uur} other {# uur}}",
+	"DURATION_MINUTES": "{count, plural, one {# minuut} other {# minuten}}",
+	"DURATION_SECONDS": "{count, plural, one {# seconde} other {# seconden}}",
+	"DURATION_MILLISECONDS": "{count, plural, one {# milliseconde} other {# milliseconden}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} en {later}",
+	"TOOLTIP_DELAYED": "Dit bericht is verstuurd met een vertraging van {duration}.",
+	"TOOLTIP_CLOCK_AHEAD": "De klok van deze gebruiker loopt {duration} voor.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "Deze gebruiker gebruikt vermoedelijk een oude Android-client van Discord",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} Deze gebruiker gebruikt vermoedelijk een oude Android-client van Discord.",
+	"OLD_ANDROID_CLIENT": "Oude Android-client van Discord"
+}

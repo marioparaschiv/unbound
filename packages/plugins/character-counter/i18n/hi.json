@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "रूप-रंग",
+	"COLOR_THRESHOLDS": "रंग की सीमाएँ",
+	"COLOR_THRESHOLDS_SUBTITLE": "जैसे-जैसे मैसेज Discord की अक्षर सीमा के करीब पहुँचे, चेतावनी दें।",
+	"COUNTER_LABEL": "{limit} में से {length} अक्षर"
+}

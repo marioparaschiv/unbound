@@ -1,0 +1,6 @@
+{
+	"SUPPRESS_EMBEDS": "隐藏嵌入内容",
+	"UNSUPPRESS_EMBEDS": "恢复嵌入内容",
+	"CHANGE_FAILED": "{action}失败：{reason}",
+	"CHANGE_REFUSED": "Discord 拒绝了此更改。"
+}

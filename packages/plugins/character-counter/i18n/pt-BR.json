@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "Aparência",
+	"COLOR_THRESHOLDS": "Limites de cor",
+	"COLOR_THRESHOLDS_SUBTITLE": "Avisa quando a mensagem se aproxima do limite de caracteres do Discord.",
+	"COUNTER_LABEL": "{length} de {limit} caracteres"
+}

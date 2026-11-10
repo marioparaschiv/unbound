@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Tutup",
+	"CONTENT_COPIED": "Konten mentah disalin ke papan klip.",
+	"COPY_CONTENT": "Salin konten",
+	"COPY_DATA": "Salin data",
+	"DATA_COPIED": "Data {type} disalin ke papan klip.",
+	"MESSAGE_CONTENT": "Konten Pesan",
+	"MESSAGE_DATA": "Data Pesan",
+	"RAW_TITLE": "Data Mentah {type}",
+	"TYPE_CHANNEL": "Saluran",
+	"TYPE_GUILD": "Server",
+	"TYPE_MESSAGE": "Pesan",
+	"TYPE_PROFILE": "Profil",
+	"TYPE_USER": "Pengguna",
+	"VIEW_RAW": "Lihat Mentah"
+}

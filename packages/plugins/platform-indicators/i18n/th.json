@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "ตัวบ่งชี้แพลตฟอร์ม",
+	"SHOW_INDICATORS": "แสดงตัวบ่งชี้",
+	"MEMBER_LIST": "รายชื่อสมาชิก",
+	"MEMBER_LIST_SUBTITLE": "ต่อท้ายชื่อในรายชื่อสมาชิกและรายชื่อผู้ใช้อื่นๆ",
+	"PROFILES": "โปรไฟล์",
+	"PROFILES_SUBTITLE": "ใต้ชื่อและตราสัญลักษณ์บนโปรไฟล์",
+	"MESSAGES": "ข้อความ",
+	"MESSAGES_SUBTITLE": "ต่อท้ายเวลาประทับของข้อความ",
+	"STATUS": "สถานะ",
+	"COLOR_MOBILE_INDICATOR": "ใส่สีตัวบ่งชี้มือถือ",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "แสดงรูปโทรศัพท์ตามสถานะสำหรับผู้ใช้มือถือที่ไม่อยู่หรือห้ามรบกวนด้วย",
+	"PLATFORM_DESKTOP": "เดสก์ท็อป",
+	"PLATFORM_MOBILE": "มือถือ",
+	"PLATFORM_WEB": "เว็บ",
+	"PLATFORM_EMBEDDED": "แบบฝัง (คอนโซลหรือเกม)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "ออนไลน์บน {platforms}"
+}

@@ -10,7 +10,7 @@ const schema = Type.Object({
 	token: Type.String({ minLength: 1 }),
 });
 
-/** The session `ubd login` stores. */
+/** The session `ubd auth login` stores. */
 export type Credentials = StaticDecode<typeof schema>;
 
 /**

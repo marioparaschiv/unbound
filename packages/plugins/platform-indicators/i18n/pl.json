@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Wskaźniki platformy",
+	"SHOW_INDICATORS": "Pokazuj wskaźniki",
+	"MEMBER_LIST": "Lista członków",
+	"MEMBER_LIST_SUBTITLE": "Za nazwami na liście członków i innych listach użytkowników",
+	"PROFILES": "Profile",
+	"PROFILES_SUBTITLE": "Pod nazwą i odznakami w profilach",
+	"MESSAGES": "Wiadomości",
+	"MESSAGES_SUBTITLE": "Za znacznikiem czasu w wiadomościach",
+	"STATUS": "Status",
+	"COLOR_MOBILE_INDICATOR": "Kolorowy wskaźnik mobilny",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "Pokazuj status w kształcie telefonu także u użytkowników mobilnych ze statusem „Zaraz wracam” lub „Nie przeszkadzać”",
+	"PLATFORM_DESKTOP": "Komputer",
+	"PLATFORM_MOBILE": "Telefon",
+	"PLATFORM_WEB": "Przeglądarka",
+	"PLATFORM_EMBEDDED": "Wbudowane (konsola lub gra)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "Dostępny na: {platforms}"
+}

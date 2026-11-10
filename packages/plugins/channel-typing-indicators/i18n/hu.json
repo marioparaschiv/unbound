@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Gépelésjelzők a csatornákon",
+	"INCLUDE_CURRENT_CHANNEL": "Jelenlegi csatornában is",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Gépelés megjelenítése a kiválasztott csatornában.",
+	"INCLUDE_MUTED_CHANNELS": "Némított csatornákban is",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Gépelés megjelenítése a némított csatornákban.",
+	"INCLUDE_IGNORED_USERS": "Figyelmen kívül hagyott felhasználóknál is",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Figyelmen kívül hagyott felhasználók gépelésének megjelenítése.",
+	"INCLUDE_BLOCKED_USERS": "Letiltott felhasználóknál is",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Letiltott felhasználók gépelésének megjelenítése.",
+	"APPEARANCE": "Megjelenés",
+	"APPEARANCE_BOTH": "Profilképek és animált pöttyök",
+	"APPEARANCE_DOTS": "Animált pöttyök",
+	"APPEARANCE_AVATARS": "Profilképek",
+	"TYPING_ONE": "{a} éppen gépel...",
+	"TYPING_TWO": "{a} és {b} éppen gépel...",
+	"TYPING_THREE": "{a}, {b} és {c} éppen gépel...",
+	"TYPING_SEVERAL": "Többen is gépelnek...",
+	"SOMEONE": "Valaki"
+}

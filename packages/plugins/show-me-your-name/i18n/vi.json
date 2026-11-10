@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "Tùy chọn",
+	"DISPLAY_MODE": "Chế độ hiển thị",
+	"MODE_NICK_USER": "Tên hiển thị rồi tên người dùng",
+	"MODE_NICK_USER_SUBTITLE": "Tên hiển thị (@tên_người_dùng)",
+	"MODE_USER_NICK": "Tên người dùng rồi tên hiển thị",
+	"MODE_USER_NICK_SUBTITLE": "@tên_người_dùng (Tên hiển thị)",
+	"MODE_USER": "Chỉ tên người dùng",
+	"MODE_USER_SUBTITLE": "@tên_người_dùng",
+	"FRIEND_NICKNAMES": "Hiện biệt danh bạn bè",
+	"FRIEND_NICKNAMES_SUBTITLE": "Ưu tiên biệt danh của bạn bè ở bất cứ nơi nào áp dụng",
+	"DISPLAY_NAMES": "Dùng tên toàn cục",
+	"DISPLAY_NAMES_SUBTITLE": "Hiện tên toàn cục của tài khoản thay vì tên người dùng",
+	"IN_REPLIES": "Áp dụng cho phản hồi",
+	"IN_REPLIES_SUBTITLE": "Áp dụng cả cho bản xem trước phản hồi"
+}

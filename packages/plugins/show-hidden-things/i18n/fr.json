@@ -1,0 +1,7 @@
+{
+	"SHOW_INVITES_PAUSED": "Afficher les invitations suspendues",
+	"SHOW_INVITES_PAUSED_SUBTITLE": "Afficher à tout le monde l’option Suspendre les invitations dans les paramètres du serveur",
+	"SHOW_TIMEOUTS": "Afficher les icônes d’exclusion",
+	"SHOW_TIMEOUTS_SUBTITLE": "Afficher dans la discussion les icônes d’exclusion temporaire des membres",
+	"VISIBILITY": "Visibilité"
+}

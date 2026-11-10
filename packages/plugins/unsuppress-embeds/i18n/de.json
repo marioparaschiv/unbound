@@ -1,0 +1,6 @@
+{
+	"SUPPRESS_EMBEDS": "Einbettungen unterdrücken",
+	"UNSUPPRESS_EMBEDS": "Einbettungen wiederherstellen",
+	"CHANGE_FAILED": "{action} fehlgeschlagen: {reason}",
+	"CHANGE_REFUSED": "Discord hat die Änderung abgelehnt."
+}

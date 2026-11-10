@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "ผู้ให้บริการ",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "ค้นหา GIF บน Tenor",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "ค้นหา GIF บน Giphy",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "ระบบค้นหา GIF ของ Discord เอง",
+	"PROVIDER_BUTTON_LABEL": "ผู้ให้บริการ GIF: {provider} สลับไปใช้ {next}"
+}

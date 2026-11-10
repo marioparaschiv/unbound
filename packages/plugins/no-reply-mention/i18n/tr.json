@@ -1,0 +1,18 @@
+{
+	"ADD_USER_ID": "Kullanıcı kimliği ekle",
+	"ADD_USER_ID_SUBTITLE": "İstisna etkinken yanıtlar bu kullanıcılardan bahsedebilir",
+	"CANCEL": "İptal",
+	"DELETE": "Sil",
+	"EDIT": "Düzenle",
+	"EDIT_USER_ID": "Kullanıcı kimliğini düzenle",
+	"EXCEPTIONS": "İstisnalar",
+	"INVALID_USER_ID": "Sayısal bir Discord kullanıcı kimliği gir.",
+	"NO_USERS": "Henüz kullanıcı eklenmedi.",
+	"ONLY_PING_LISTED": "Yalnızca Listedekileri Etiketle",
+	"ONLY_PING_LISTED_OFF": "Yanıtlar varsayılan olarak kimseden bahsetmez",
+	"ONLY_PING_LISTED_ON": "Yanıtlar yalnızca yukarıda listelenen kullanıcılardan bahseder",
+	"PLUGIN_NAME": "Yanıtta Bahsetme Yok",
+	"SAVE": "Kaydet",
+	"TAP_TO_EDIT": "Düzenlemek için dokun",
+	"USER_ID_PLACEHOLDER": "Discord kullanıcı kimliği"
+}

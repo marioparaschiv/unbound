@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Zadani raspored",
+	"LAYOUT_LIST": "Popis",
+	"LAYOUT_LIST_SUBTITLE": "Objave na popisu",
+	"LAYOUT_GALLERY": "Galerija",
+	"LAYOUT_GALLERY_SUBTITLE": "Objave u mreži kartica",
+	"DEFAULT_SORT_ORDER": "Zadani redoslijed",
+	"SORT_RECENTLY_ACTIVE": "Nedavno aktivno",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Prvo objave s najnovijim porukama",
+	"SORT_DATE_POSTED": "Datum objave",
+	"SORT_DATE_POSTED_SUBTITLE": "Prvo najnovije objave"
+}

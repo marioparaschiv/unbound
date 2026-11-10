@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Slå av automatisk",
+	"AUTO_DISABLE_SUBTITLE": "Slå av bryteren igjen etter at én stille melding er sendt",
+	"DISABLE_SILENT_MESSAGE": "Slå av stille melding",
+	"ENABLE_SILENT_MESSAGE": "Slå på stille melding",
+	"PERSIST_STATE": "Husk tilstand",
+	"PERSIST_STATE_SUBTITLE": "La bryteren være på når du åpner en annen kanal",
+	"SILENT_MESSAGE_TOGGLE": "Bryter for stille meldinger",
+	"TOGGLE": "Bryter",
+	"TOGGLED_OFF": "Meldingene dine her varsler folk igjen.",
+	"TOGGLED_ON": "Meldingene dine her sendes uten varsler."
+}

@@ -1,0 +1,18 @@
+{
+	"AVATARS": "アバター",
+	"AVATARS_SUBTITLE": "アニメーションアバターとプロフィールバナー",
+	"DECORATIONS": "アバターデコレーション",
+	"DECORATIONS_SUBTITLE": "アバターの周りのデコレーション",
+	"NAMEPLATES": "ネームプレート",
+	"NAMEPLATES_SUBTITLE": "名前の背景のネームプレートをループ再生",
+	"PROFILE_EFFECTS": "プロフィールエフェクト",
+	"PROFILE_EFFECTS_SUBTITLE": "プロフィールに重なるエフェクト",
+	"SERVER_ICONS": "サーバーアイコン",
+	"SERVER_ICONS_SUBTITLE": "アニメーションするサーバーアイコンとバナー",
+	"EMOJIS": "絵文字",
+	"EMOJIS_SUBTITLE": "メッセージ、リアクション、カスタムステータスの絵文字",
+	"STICKERS": "スタンプ",
+	"STICKERS_SUBTITLE": "アニメーションスタンプをループ再生",
+	"GIFS": "GIF",
+	"GIFS_SUBTITLE": "タップしなくてもGIFを再生"
+}

@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "Когато се присъединиш към сървър",
+	"MUTE_SERVER": "Заглуши сървъра",
+	"MUTE_SERVER_SUBTITLE": "Заглушавай новите сървъри автоматично",
+	"SUPPRESS_EVERYONE": "Потисни @everyone и @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Игнорирай @everyone и @here в новите сървъри",
+	"SUPPRESS_ROLES": "Потисни всички @споменавания на роли",
+	"SUPPRESS_ROLES_SUBTITLE": "Игнорирай споменаванията на роли в новите сървъри",
+	"SUPPRESS_HIGHLIGHTS": "Потисни акцентите",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Изключи известията за акценти в новите сървъри",
+	"MUTE_EVENTS": "Заглуши новите събития",
+	"MUTE_EVENTS_SUBTITLE": "Заглушавай известията за насрочени събития",
+	"SHOW_ALL_CHANNELS": "Покажи всички канали",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Показвай всеки канал в сървърите, които ти позволяват да избираш канали",
+	"SERVER_NOTIFICATION_SETTINGS": "Настройки за известия на сървъра",
+	"NOTIFY_ALL": "Всички съобщения",
+	"NOTIFY_MENTIONS": "Само @споменавания",
+	"NOTIFY_NOTHING": "Нищо",
+	"NOTIFY_DEFAULT": "По подразбиране за сървъра",
+	"APPLY_NEW_GUILD_SETTINGS": "Приложи настройките за нови сървъри",
+	"APPLIED_TO_GUILD": "Приложено към {name}.",
+	"APPLIED_TO_THIS_SERVER": "Приложено към този сървър."
+}

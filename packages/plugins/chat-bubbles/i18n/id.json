@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Warna gelembung",
+	"BUBBLE_COLOR_FALLBACK": "Mengikuti tema: hitam pada tema gelap, putih pada tema terang",
+	"COLORS": "Warna",
+	"CORNER_RADIUS": "Radius sudut",
+	"HORIZONTAL_PADDING": "Padding horizontal",
+	"LAYOUT": "Tata letak",
+	"LAYOUT_CARD": "Kartu selebar layar",
+	"LAYOUT_CARD_SUBTITLE": "Satu kartu di belakang setiap pesan utuh, termasuk nama dan reaksi, seperti Rosiecord",
+	"LAYOUT_FIT": "Sesuaikan dengan pesan",
+	"LAYOUT_FIT_SUBTITLE": "Setiap gelembung hanya membungkus teks dan media pesannya",
+	"OPACITY": "Opasitas",
+	"OWN_COLOR": "Pesanmu",
+	"OWN_COLOR_FALLBACK": "Sama dengan warna gelembung",
+	"SHAPE": "Bentuk",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Padding vertikal"
+}

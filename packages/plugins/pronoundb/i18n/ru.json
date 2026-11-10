@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Местоимения",
+	"FORMAT_LOWERCASE": "Строчными",
+	"FORMAT_CAPITALIZED": "С заглавной",
+	"SOURCE": "Источник",
+	"SOURCE_PRONOUNDB": "Сначала PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "Иначе местоимения из профиля Discord",
+	"SOURCE_DISCORD": "Сначала Discord",
+	"SOURCE_DISCORD_SUBTITLE": "Иначе PronounDB",
+	"SHOW_FOR_YOURSELF": "Показывать для себя",
+	"PRONOUN_ANY": "Любые местоимения",
+	"PRONOUN_ASK": "Спросите мои местоимения",
+	"PRONOUN_AVOID": "Без местоимений, называйте по имени",
+	"PRONOUN_HE": "Он/его",
+	"PRONOUN_IT": "Оно/его",
+	"PRONOUN_OTHER": "Другие местоимения",
+	"PRONOUN_SHE": "Она/её",
+	"PRONOUN_THEY": "Они/их",
+	"PRONOUN_UNSPECIFIED": "Местоимения не указаны."
+}

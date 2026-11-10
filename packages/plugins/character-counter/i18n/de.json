@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "Darstellung",
+	"COLOR_THRESHOLDS": "Farbschwellen",
+	"COLOR_THRESHOLDS_SUBTITLE": "Warnt, wenn sich die Nachricht dem Zeichenlimit von Discord nähert.",
+	"COUNTER_LABEL": "{length} von {limit} Zeichen"
+}

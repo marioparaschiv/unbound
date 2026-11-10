@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "{remaining} timeout återstår",
+	"TIMEOUT_EXPIRES_IN": "Timeouten upphör om {remaining}"
+}

@@ -2,6 +2,21 @@ import type { SourcePin } from '@unbound-app/contracts/source';
 
 const DATE_FORMAT = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 const BYTES_FORMAT = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 });
+const COUNT_FORMAT = new Intl.NumberFormat('en-US');
+const COMPACT_FORMAT = new Intl.NumberFormat('en-US', {
+	notation: 'compact',
+	maximumFractionDigits: 1,
+});
+
+/**
+ * @description Formats an install count, in full or abbreviated for a card.
+ * @param count The install count.
+ * @param short Whether to abbreviate thousands and millions.
+ * @returns The count, such as `1,234` or `1.2K`.
+ */
+export function formatInstalls(count: number, short: boolean = false): string {
+	return (short ? COMPACT_FORMAT : COUNT_FORMAT).format(count);
+}
 
 /**
  * @description Formats an ISO timestamp as a UTC calendar date.
@@ -54,4 +69,4 @@ export function directoryUrl(pin: SourcePin): string {
 	return `https://github.com/${pin.repository}/tree/${pin.commitSha}${path}`;
 }
 
-export default { formatDate, formatBytes, shortSha, commitUrl, directoryUrl };
+export default { formatInstalls, formatDate, formatBytes, shortSha, commitUrl, directoryUrl };

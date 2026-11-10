@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "加入伺服器時",
+	"MUTE_SERVER": "將伺服器靜音",
+	"MUTE_SERVER_SUBTITLE": "自動將新伺服器靜音",
+	"SUPPRESS_EVERYONE": "隱藏 @everyone 和 @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "在新伺服器中忽略 @everyone 和 @here",
+	"SUPPRESS_ROLES": "隱藏所有身分組 @提及",
+	"SUPPRESS_ROLES_SUBTITLE": "在新伺服器中忽略身分組提及",
+	"SUPPRESS_HIGHLIGHTS": "隱藏精選重點",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "在新伺服器中關閉精選重點通知",
+	"MUTE_EVENTS": "將新活動靜音",
+	"MUTE_EVENTS_SUBTITLE": "將已排定活動的通知靜音",
+	"SHOW_ALL_CHANNELS": "顯示所有頻道",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "在可讓你挑選頻道的伺服器中顯示所有頻道",
+	"SERVER_NOTIFICATION_SETTINGS": "伺服器通知設定",
+	"NOTIFY_ALL": "所有訊息",
+	"NOTIFY_MENTIONS": "僅限 @提及",
+	"NOTIFY_NOTHING": "無",
+	"NOTIFY_DEFAULT": "伺服器預設",
+	"APPLY_NEW_GUILD_SETTINGS": "套用新伺服器設定",
+	"APPLIED_TO_GUILD": "已套用至 {name}。",
+	"APPLIED_TO_THIS_SERVER": "已套用至此伺服器。"
+}

@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "サーバーに参加したとき",
+	"MUTE_SERVER": "サーバーをミュート",
+	"MUTE_SERVER_SUBTITLE": "新しいサーバーを自動でミュートします",
+	"SUPPRESS_EVERYONE": "@everyoneと@hereを無効化",
+	"SUPPRESS_EVERYONE_SUBTITLE": "新しいサーバーで@everyoneと@hereを無視します",
+	"SUPPRESS_ROLES": "すべてのロール@mentionsを無効化",
+	"SUPPRESS_ROLES_SUBTITLE": "新しいサーバーでロールへのメンションを無視します",
+	"SUPPRESS_HIGHLIGHTS": "ハイライトを無効化",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "新しいサーバーでハイライト通知をオフにします",
+	"MUTE_EVENTS": "新しいイベントをミュート",
+	"MUTE_EVENTS_SUBTITLE": "予定されたイベントの通知をミュートします",
+	"SHOW_ALL_CHANNELS": "すべてのチャンネルを表示",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "チャンネルを選べるサーバーで、すべてのチャンネルを表示します",
+	"SERVER_NOTIFICATION_SETTINGS": "サーバー通知設定",
+	"NOTIFY_ALL": "すべてのメッセージ",
+	"NOTIFY_MENTIONS": "@mentionsのみ",
+	"NOTIFY_NOTHING": "通知しない",
+	"NOTIFY_DEFAULT": "サーバーのデフォルト",
+	"APPLY_NEW_GUILD_SETTINGS": "新規サーバー設定を適用",
+	"APPLIED_TO_GUILD": "{name}に適用しました。",
+	"APPLIED_TO_THIS_SERVER": "このサーバーに適用しました。"
+}

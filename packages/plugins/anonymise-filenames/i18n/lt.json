@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Anonimizuoti pagal numatytuosius",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Kiekvieno failo nustatymą vis tiek galima pakeisti jo peržiūros lape",
+	"METHOD": "Būdas",
+	"METHOD_RANDOM": "Atsitiktiniai simboliai",
+	"METHOD_CONSISTENT": "Pastovus",
+	"METHOD_TIMESTAMP": "Laiko žyma",
+	"LENGTH": "Ilgis",
+	"FILE_NAME": "Failo pavadinimas",
+	"FILE_NAME_PLACEHOLDER": "image",
+	"FILE_NAME_SUBTITLE": "Kiekvienas failas įkeliamas su šiuo pavadinimu ir savo plėtiniu.",
+	"ANONYMISE_FILE_NAME": "Anonimizuoti failo pavadinimą",
+	"USING_ANONYMOUS_NAME": "Naudojamas anoniminis failo pavadinimas",
+	"USING_ORIGINAL_NAME": "Naudojamas originalus failo pavadinimas",
+	"USE_ORIGINAL_FILE_NAME": "Naudoti originalų failo pavadinimą"
+}

@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Ajouter des pièces jointes",
+	"UPLOADING": "Envoi en cours, cela peut prendre un moment…",
+	"ATTACHMENTS_ADDED": "{count, plural, one {Pièce jointe ajoutée !} many {Pièces jointes ajoutées !} other {Pièces jointes ajoutées !}}",
+	"UPLOAD_FAILED": "Échec de l’envoi d’une pièce jointe.",
+	"NOT_ADDED": "Impossible d’ajouter les pièces jointes.",
+	"PICKER_UNAVAILABLE": "Le sélecteur de médias n’est pas disponible sur cette build de Discord.",
+	"PICKER_FAILED": "Le sélecteur de médias a rencontré une erreur.",
+	"LIMIT_REACHED": "Vous ne pouvez plus ajouter de pièces jointes à ce message.",
+	"LIMIT_REMAINING": "Vous ne pouvez ajouter que {count, plural, one {# pièce jointe supplémentaire} many {# de pièces jointes supplémentaires} other {# pièces jointes supplémentaires}} à ce message."
+}

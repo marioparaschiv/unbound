@@ -9,6 +9,7 @@ import AddonIcon from '~/ui/components/addon-icon';
 import AddonTag from '~/ui/components/addon-tag';
 import { Discord } from '~/metro/components';
 
+import InstallCountLabel from './install-count-label';
 import useInstallAction from './use-install-action';
 import useStyles from './marketplace-card.style';
 import useOpenListing from './use-open-listing';
@@ -22,7 +23,7 @@ type MarketplaceCardProps = {
 /**
  * @description One listed addon, laid out like an installed addon's card: icon, name and authors on top
  * with an Install, Update or Installed button judged against the installed copy at its top right, the
- * description below, then the tags in a scrolling row beside the version. Holding the button offers
+ * description below, then the tags in a scrolling row beside the install count and version. Holding the button offers
  * the newest version or a picker of every version, except for fonts. Tapping the card opens the store page.
  */
 function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
@@ -33,6 +34,13 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 	const name = addon.name ?? manifest.name;
 	const description = addon.description ?? manifest.description;
 	const tags = addon.tags ?? [];
+	const installs = addon.installs ?? 0;
+	const meta = (
+		<View style={styles.meta}>
+			{installs ? <InstallCountLabel count={installs} /> : null}
+			<AddonTag>{`v${latest}`}</AddonTag>
+		</View>
+	);
 
 	return (
 		<Discord.Card
@@ -69,7 +77,7 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 					) : null}
 					<View style={styles.footer}>
 						<TagRow tags={tags} />
-						<AddonTag>{`v${latest}`}</AddonTag>
+						{meta}
 					</View>
 				</>
 			) : (
@@ -81,7 +89,7 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 					) : (
 						<View style={styles.spacer} />
 					)}
-					<AddonTag>{`v${latest}`}</AddonTag>
+					{meta}
 				</View>
 			)}
 		</Discord.Card>

@@ -157,7 +157,7 @@ const checkCommand: CommandDefinition<typeof schema> = {
 	description:
 		'Run every check `ubd build` runs, plus the manifest, the plugin lint and the build’s rollup plugins, without producing a bundle. Exits non-zero on any error.',
 	summary: 'Check addons without building them.',
-	surfaces: { cli: 'root', mcp: false },
+	mcp: false,
 	schema,
 	async handler({ plugin, all, watch, only, strict, types, declaredCapabilities, json }) {
 		const ids = only

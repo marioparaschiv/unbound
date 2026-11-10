@@ -129,6 +129,8 @@ export const listedAddonSchema = Type.Object({
 	description: Type.Optional(Type.String()),
 	/** The addon's tags in menu order; only the catalog carries them. Optional so catalogs stored before it still parse. */
 	tags: Type.Optional(Type.Array(tagSchema)),
+	/** How many times clients installed the addon from the marketplace. Optional so catalogs stored before it still parse. */
+	installs: Type.Optional(Type.Integer({ minimum: 0 })),
 	latestVersion: addonVersionSchema,
 });
 
@@ -145,6 +147,11 @@ export const listAddonsResponseSchema = Type.Object({
 export const catalogResponseSchema = Type.Object({
 	revision: Type.String({ minLength: 1 }),
 	addons: Type.Array(listedAddonSchema),
+});
+
+/** The addon's install count after an anonymous marketplace install was counted. */
+export const addonInstallResponseSchema = Type.Object({
+	installs: Type.Integer({ minimum: 0 }),
 });
 
 /** Every live version of one listed addon, newest first. */
@@ -210,6 +217,7 @@ export type SetAddonIconRequest = StaticDecode<typeof setAddonIconRequestSchema>
 export type AddonIconResponse = StaticDecode<typeof addonIconResponseSchema>;
 export type ListAddonsResponse = StaticDecode<typeof listAddonsResponseSchema>;
 export type CatalogResponse = StaticDecode<typeof catalogResponseSchema>;
+export type AddonInstallResponse = StaticDecode<typeof addonInstallResponseSchema>;
 export type AddonVersionsResponse = StaticDecode<typeof addonVersionsResponseSchema>;
 export type Maintainer = StaticDecode<typeof maintainerSchema>;
 export type AddMaintainerRequest = StaticDecode<typeof addMaintainerRequestSchema>;
@@ -234,6 +242,7 @@ export default {
 	listedAddonSchema,
 	listAddonsResponseSchema,
 	catalogResponseSchema,
+	addonInstallResponseSchema,
 	addonVersionsResponseSchema,
 	setAddonIconRequestSchema,
 	addonIconResponseSchema,

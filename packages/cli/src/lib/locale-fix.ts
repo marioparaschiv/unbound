@@ -162,7 +162,7 @@ export function addSourceKey(
 	}
 
 	if (!key || !text) {
-		return { error: 'Pass a key and its English text: ubd i18n --add KEY "English text".' };
+		return { error: 'Pass a key and its English text: ubd i18n add KEY "English text".' };
 	}
 
 	if (table[key] !== undefined) {

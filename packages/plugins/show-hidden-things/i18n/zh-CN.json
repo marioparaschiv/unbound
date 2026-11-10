@@ -1,0 +1,7 @@
+{
+	"SHOW_INVITES_PAUSED": "显示暂停邀请",
+	"SHOW_INVITES_PAUSED_SUBTITLE": "向所有人显示服务器设置中的“暂停邀请”选项",
+	"SHOW_TIMEOUTS": "显示禁言图标",
+	"SHOW_TIMEOUTS_SUBTITLE": "在聊天中显示成员的禁言图标",
+	"VISIBILITY": "可见性"
+}

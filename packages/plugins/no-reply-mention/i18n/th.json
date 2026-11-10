@@ -1,0 +1,18 @@
+{
+	"ADD_USER_ID": "เพิ่ม ID ผู้ใช้",
+	"ADD_USER_ID_SUBTITLE": "การตอบกลับสามารถกล่าวถึงผู้ใช้เหล่านี้ได้เมื่อเปิดใช้ข้อยกเว้น",
+	"CANCEL": "ยกเลิก",
+	"DELETE": "ลบ",
+	"EDIT": "แก้ไข",
+	"EDIT_USER_ID": "แก้ไข ID ผู้ใช้",
+	"EXCEPTIONS": "ข้อยกเว้น",
+	"INVALID_USER_ID": "ใส่ ID ผู้ใช้ Discord ที่เป็นตัวเลข",
+	"NO_USERS": "ยังไม่ได้เพิ่มผู้ใช้",
+	"ONLY_PING_LISTED": "ปิงเฉพาะผู้ใช้ในรายการ",
+	"ONLY_PING_LISTED_OFF": "โดยค่าเริ่มต้น การตอบกลับจะไม่กล่าวถึงใคร",
+	"ONLY_PING_LISTED_ON": "การตอบกลับจะกล่าวถึงเฉพาะผู้ใช้ในรายการด้านบน",
+	"PLUGIN_NAME": "No Reply Mention",
+	"SAVE": "บันทึก",
+	"TAP_TO_EDIT": "แตะเพื่อแก้ไข",
+	"USER_ID_PLACEHOLDER": "ID ผู้ใช้ Discord"
+}

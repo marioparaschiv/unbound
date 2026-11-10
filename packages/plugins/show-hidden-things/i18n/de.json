@@ -1,0 +1,7 @@
+{
+	"SHOW_INVITES_PAUSED": "Pausierte Einladungen anzeigen",
+	"SHOW_INVITES_PAUSED_SUBTITLE": "Zeigt allen die Einstellung „Einladungen pausieren“ in den Servereinstellungen",
+	"SHOW_TIMEOUTS": "Time-out-Symbole anzeigen",
+	"SHOW_TIMEOUTS_SUBTITLE": "Zeigt Time-out-Symbole von Mitgliedern im Chat",
+	"VISIBILITY": "Sichtbarkeit"
+}

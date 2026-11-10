@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Layout predefinito",
+	"LAYOUT_LIST": "Elenco",
+	"LAYOUT_LIST_SUBTITLE": "Post in un elenco",
+	"LAYOUT_GALLERY": "Galleria",
+	"LAYOUT_GALLERY_SUBTITLE": "Post in una griglia di schede",
+	"DEFAULT_SORT_ORDER": "Ordinamento predefinito",
+	"SORT_RECENTLY_ACTIVE": "Attivi di recente",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Prima i post con i messaggi più recenti",
+	"SORT_DATE_POSTED": "Data di pubblicazione",
+	"SORT_DATE_POSTED_SUBTITLE": "Prima i post più recenti"
+}

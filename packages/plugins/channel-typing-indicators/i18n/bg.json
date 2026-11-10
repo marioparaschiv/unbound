@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Индикатори за писане в каналите",
+	"INCLUDE_CURRENT_CHANNEL": "Включи текущия канал",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Показвай кой пише в избрания канал.",
+	"INCLUDE_MUTED_CHANNELS": "Включи заглушените канали",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Показвай кой пише в заглушените канали.",
+	"INCLUDE_IGNORED_USERS": "Включи игнорираните потребители",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Показвай, когато пишат игнорирани потребители.",
+	"INCLUDE_BLOCKED_USERS": "Включи блокираните потребители",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Показвай, когато пишат блокирани потребители.",
+	"APPEARANCE": "Облик",
+	"APPEARANCE_BOTH": "Аватари и анимирани точки",
+	"APPEARANCE_DOTS": "Анимирани точки",
+	"APPEARANCE_AVATARS": "Аватари",
+	"TYPING_ONE": "{a} пише...",
+	"TYPING_TWO": "{a} и {b} пишат...",
+	"TYPING_THREE": "{a}, {b} и {c} пишат...",
+	"TYPING_SEVERAL": "Няколко души пишат...",
+	"SOMEONE": "Някой"
+}

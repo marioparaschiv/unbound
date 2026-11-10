@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "泡泡顏色",
+	"BUBBLE_COLOR_FALLBACK": "跟隨主題：深色主題為黑色，淺色主題為白色",
+	"COLORS": "顏色",
+	"CORNER_RADIUS": "圓角半徑",
+	"HORIZONTAL_PADDING": "水平間距",
+	"LAYOUT": "版面配置",
+	"LAYOUT_CARD": "全寬卡片",
+	"LAYOUT_CARD_SUBTITLE": "每則完整訊息（包含名稱和反應）後方都有一張卡片，類似 Rosiecord",
+	"LAYOUT_FIT": "貼合訊息",
+	"LAYOUT_FIT_SUBTITLE": "每個泡泡只包住其訊息的文字和媒體",
+	"OPACITY": "不透明度",
+	"OWN_COLOR": "你的訊息",
+	"OWN_COLOR_FALLBACK": "與泡泡顏色相同",
+	"SHAPE": "形狀",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "垂直間距"
+}

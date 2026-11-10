@@ -13,19 +13,15 @@ export type CommandContext = { client: ControllerClient };
 /** What a command handler returns: a success flag, human-readable text, and optional structured data. */
 export type CommandOutput = { ok: boolean; text: string; data?: unknown };
 
-/**
- * Every command is on the CLI: at the root (`ubd eval`), or under `ubd mcp` (`ubd mcp open`) for
- * agent-facing tools, which must then be MCP tools too.
- */
-export type CommandSurfaces = { cli: 'root'; mcp: boolean } | { cli: 'mcp'; mcp: true };
-
 /** A command usable from both the CLI and (when opted in) the MCP server. */
 export type CommandDefinition<S extends TObject = TObject> = {
+	/** The word that runs it, under its group when it has one: `eval` in `ubd debug eval`. */
 	name: string;
 	description: string;
-	/** A one-line summary for the CLI's menu, where the description is too long. */
-	summary?: string;
-	surfaces: CommandSurfaces;
+	/** The one line the CLI's menus show for it. */
+	summary: string;
+	/** Whether `ubd mcp` serves it as a tool. */
+	mcp: boolean;
 	/** Used directly as the MCP tool's input schema; the CLI adapter derives flags from its properties. */
 	schema: S;
 	/** Which schema properties the CLI presents as positionals; the rest become flags. */

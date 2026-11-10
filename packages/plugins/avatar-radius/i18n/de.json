@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Avatare",
+	"CORNER_RADIUS": "Eckenradius",
+	"CORNER_RADIUS_SUBTITLE": "Von 0 für quadratisch bis 64. Ein Radius über der halben Avatargröße lässt ihn kreisrund."
+}

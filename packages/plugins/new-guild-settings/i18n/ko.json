@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "서버에 참가할 때",
+	"MUTE_SERVER": "서버 알림 끄기",
+	"MUTE_SERVER_SUBTITLE": "새 서버의 알림을 자동으로 꺼요",
+	"SUPPRESS_EVERYONE": "@everyone 및 @here 알림 끄기",
+	"SUPPRESS_EVERYONE_SUBTITLE": "새 서버에서 @everyone과 @here를 무시해요",
+	"SUPPRESS_ROLES": "모든 역할 @멘션 알림 끄기",
+	"SUPPRESS_ROLES_SUBTITLE": "새 서버에서 역할 멘션을 무시해요",
+	"SUPPRESS_HIGHLIGHTS": "하이라이트 알림 끄기",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "새 서버에서 하이라이트 알림을 꺼요",
+	"MUTE_EVENTS": "새 이벤트 알림 끄기",
+	"MUTE_EVENTS_SUBTITLE": "예정된 이벤트 알림을 꺼요",
+	"SHOW_ALL_CHANNELS": "모든 채널 표시",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "채널을 직접 고를 수 있는 서버에서 모든 채널을 표시해요",
+	"SERVER_NOTIFICATION_SETTINGS": "서버 알림 설정",
+	"NOTIFY_ALL": "모든 메시지",
+	"NOTIFY_MENTIONS": "@멘션만",
+	"NOTIFY_NOTHING": "알림 없음",
+	"NOTIFY_DEFAULT": "서버 기본값",
+	"APPLY_NEW_GUILD_SETTINGS": "새 서버 설정 적용",
+	"APPLIED_TO_GUILD": "{name}에 적용했어요.",
+	"APPLIED_TO_THIS_SERVER": "이 서버에 적용했어요."
+}

@@ -1,0 +1,18 @@
+{
+	"AVATARS": "Profiilikuvat",
+	"AVATARS_SUBTITLE": "Animoidut profiilikuvat ja profiilibannerit",
+	"DECORATIONS": "Profiilikuvan koristeet",
+	"DECORATIONS_SUBTITLE": "Koristeet profiilikuvien ympärillä",
+	"NAMEPLATES": "Nimikyltit",
+	"NAMEPLATES_SUBTITLE": "Nimikyltit nimien takana, toistuvasti",
+	"PROFILE_EFFECTS": "Profiiliefektit",
+	"PROFILE_EFFECTS_SUBTITLE": "Efektit profiilien päällä",
+	"SERVER_ICONS": "Palvelinkuvakkeet",
+	"SERVER_ICONS_SUBTITLE": "Animoidut palvelinkuvakkeet ja -bannerit",
+	"EMOJIS": "Emojit",
+	"EMOJIS_SUBTITLE": "Emojit viesteissä, reaktioissa ja mukautetuissa tiloissa",
+	"STICKERS": "Tarrat",
+	"STICKERS_SUBTITLE": "Animoidut tarrat, toistuvasti",
+	"GIFS": "GIFit",
+	"GIFS_SUBTITLE": "GIFit toistuvat ilman napautusta"
+}

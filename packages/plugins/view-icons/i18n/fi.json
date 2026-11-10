@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "{image, select, avatar {Profiilikuvaa} banner {Banneria} serverAvatar {Palvelinprofiilikuvaa} serverIcon {Palvelimen kuvaketta} serverBanner {Palvelimen banneria} other {Ryhmäyksityisviestin kuvaketta}} ei voitu avata.",
+	"VIEW_AVATAR": "Näytä profiilikuva",
+	"VIEW_BANNER": "Näytä banneri",
+	"VIEW_GROUP_ICON": "Näytä ryhmäyksityisviestin kuvake",
+	"VIEW_ICONS": "Näytä kuvakkeet",
+	"VIEW_SERVER_AVATAR": "Näytä palvelinprofiilikuva",
+	"VIEW_SERVER_BANNER": "Näytä palvelimen banneri",
+	"VIEW_SERVER_ICON": "Näytä palvelimen kuvake"
+}

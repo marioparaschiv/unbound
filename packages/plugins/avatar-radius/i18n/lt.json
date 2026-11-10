@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Avatarai",
+	"CORNER_RADIUS": "Kampų spindulys",
+	"CORNER_RADIUS_SUBTITLE": "Nuo 0 (kvadratas) iki 64. Spindulys, didesnis nei pusė avataro dydžio, palieka jį apskritimu."
+}

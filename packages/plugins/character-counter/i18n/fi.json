@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "Ulkoasu",
+	"COLOR_THRESHOLDS": "Värirajat",
+	"COLOR_THRESHOLDS_SUBTITLE": "Varoita, kun viesti lähestyy Discordin merkkirajaa.",
+	"COUNTER_LABEL": "{length}/{limit} merkkiä"
+}

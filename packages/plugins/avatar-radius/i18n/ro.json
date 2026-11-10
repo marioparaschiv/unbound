@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Avatare",
+	"CORNER_RADIUS": "Rotunjirea colțurilor",
+	"CORNER_RADIUS_SUBTITLE": "De la 0 pentru pătrat până la 64. O rază mai mare de jumătate din dimensiunea avatarului îl păstrează cerc."
+}

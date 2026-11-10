@@ -1,42 +1,33 @@
 ---
 title: 'iOS Loader'
-description: 'Where the iOS loader keeps Unbound files.'
+description: 'Where the iOS loader keeps files.'
 icon: 'apple'
 ---
 
-The iOS loader keeps all of Unbound's files in a single `Unbound` folder in the app's Documents directory.
+The iOS loader keeps every Unbound file in one `Unbound` folder in the app's Documents directory. In the Files app, open **On My iPhone → `<App Name>` → Unbound**.
 
 ## Storage
 
-To browse the folder in the Files app, open `On My iPhone` -> `<App Name>` -> `Unbound`.
+| Path | Contents |
+| --- | --- |
+| `Plugins/<id>` | A [plugin](/docs/developer/getting-started/lifecycle): `manifest.json` and its bundle. |
+| `Themes/<id>` | A [theme](/docs/developer/themes/introduction): `manifest.json` and its bundle. |
+| `Fonts` | Font files, directly in the folder. |
+| `Icons/<id>` | An [icon pack](/docs/developer/icon-packs/introduction), laid out like Discord's asset tree. |
+| `settings.json` | Every Unbound setting. See [Settings Reference](/docs/developer/loader/settings). |
+| `unbound.bundle` or `unbound.js` | The injected bundle, depending on the source. Manage it from the toolbox. |
 
-<AccordionGroup>
-	<Accordion title='Addons' icon='puzzle-piece'>
-		Each addon type has its own directory:
+- To remove an addon, delete its folder.
+- The loader rescans on each bundle load, so changes apply after a restart or reload.
+- If `settings.json` is unreadable or invalid JSON, the loader copies it to `settings.json.corrupt-<timestamp>` and starts fresh. Look there if settings vanish.
 
-		| Directory | Contents |
-		| --- | --- |
-		| `Plugins/<id>` | An installed [plugin](/docs/developer/plugins/introduction): its `manifest.json` and bundle, in a folder named after the plugin's id. |
-		| `Themes/<id>` | An installed [theme](/docs/developer/themes/introduction): its `manifest.json` and bundle, in a folder named after the theme's id. |
-		| `Fonts` | Installed font files, stored directly in this folder with no subfolders. |
-		| `Icons/<id>` | An installed icon pack, in a folder named after the pack's id. Its images follow the same layout as Discord's asset tree. |
+## Toolbox Actions
 
-		To remove an addon, delete its folder. The loader scans these directories each time the app loads its bundle, so changes take effect after the app restarts or reloads.
+| Action | Deletes |
+| --- | --- |
+| **Wipe Plugins**, **Wipe Themes**, **Wipe Fonts** | The matching folder. |
+| **Wipe Icon Packs** | The `Icons` folder. |
+| **Delete Bundle** | The bundle, and clears `loader.update.url` and `loader.update.force`. |
+| **Factory Reset** | The whole `Unbound` folder, including `settings.json` and the bundle. |
 
-		The toolbox's **Wipe Plugins**, **Wipe Themes**, **Wipe Fonts**, and **Wipe Icon Packs** actions each permanently delete the matching directory. **Factory Reset** deletes the entire `Unbound` folder, including `settings.json` and the bundle.
-	</Accordion>
-	<Accordion title='Settings' icon='gear'>
-		`settings.json` holds every Unbound setting, including every key in the [settings reference](/docs/developer/loader/settings).
-
-		If this file can't be read or isn't valid JSON, the loader copies it to `settings.json.corrupt-<timestamp>` and starts with a fresh file instead of refusing to boot. If your settings disappear unexpectedly, look for that backup.
-	</Accordion>
-	<Accordion title='Bundle' icon='box'>
-		`unbound.bundle` (or `unbound.js`, depending on the source you point at) is the JavaScript bundle the loader injects. Don't manage it by hand. Use the toolbox's bundle actions instead. **Delete Bundle** deletes this file and also clears `loader.update.url` and `loader.update.force`.
-	</Accordion>
-</AccordionGroup>
-
-<Note>
-	Icon packs are stored in `Icons`, even though the toolbox's wipe action is labelled "Wipe Icon Packs".
-</Note>
-
-For the toolbox, recovery mode, and bug reports, see [Troubleshooting](/docs/user/troubleshooting).
+For the toolbox, Recovery Mode and bug reports, see [Troubleshooting](/docs/user/troubleshooting).

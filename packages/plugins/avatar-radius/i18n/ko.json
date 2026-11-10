@@ -1,0 +1,5 @@
+{
+	"AVATARS": "아바타",
+	"CORNER_RADIUS": "모서리 둥글기",
+	"CORNER_RADIUS_SUBTITLE": "0(정사각형)부터 64까지. 아바타 크기의 절반을 넘으면 원 모양이 유지돼요."
+}

@@ -63,6 +63,7 @@ export class Plugins extends Addons<Plugin> {
 			directory: 'Unbound/Plugins',
 			bucket: 'plugins',
 			label: 'UNBOUND_PLUGINS',
+			noun: 'UNBOUND_PLUGINS_NOUN',
 			icon: 'PuzzlePieceIcon',
 		});
 

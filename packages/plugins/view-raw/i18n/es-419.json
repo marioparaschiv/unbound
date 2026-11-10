@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Cerrar",
+	"CONTENT_COPIED": "Contenido sin formato copiado al portapapeles.",
+	"COPY_CONTENT": "Copiar contenido",
+	"COPY_DATA": "Copiar datos",
+	"DATA_COPIED": "Datos ({type}) copiados al portapapeles.",
+	"MESSAGE_CONTENT": "Contenido del mensaje",
+	"MESSAGE_DATA": "Datos del mensaje",
+	"RAW_TITLE": "Datos sin procesar: {type}",
+	"TYPE_CHANNEL": "Canal",
+	"TYPE_GUILD": "Servidor",
+	"TYPE_MESSAGE": "Mensaje",
+	"TYPE_PROFILE": "Perfil",
+	"TYPE_USER": "Usuario",
+	"VIEW_RAW": "Ver sin formato"
+}

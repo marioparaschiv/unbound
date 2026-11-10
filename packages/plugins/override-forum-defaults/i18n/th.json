@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "เลย์เอาต์เริ่มต้น",
+	"LAYOUT_LIST": "รายการ",
+	"LAYOUT_LIST_SUBTITLE": "แสดงโพสต์เป็นรายการ",
+	"LAYOUT_GALLERY": "แกลเลอรี",
+	"LAYOUT_GALLERY_SUBTITLE": "แสดงโพสต์เป็นตารางการ์ด",
+	"DEFAULT_SORT_ORDER": "ลำดับการเรียงเริ่มต้น",
+	"SORT_RECENTLY_ACTIVE": "มีความเคลื่อนไหวล่าสุด",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "โพสต์ที่มีข้อความใหม่ล่าสุดอยู่ก่อน",
+	"SORT_DATE_POSTED": "วันที่โพสต์",
+	"SORT_DATE_POSTED_SUBTITLE": "โพสต์ใหม่ล่าสุดอยู่ก่อน"
+}

@@ -45,6 +45,7 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_VERSION_FAILED: { name: string | number; version: string | number };
 		UNBOUND_VERSION_HELD_TOAST: { name: string | number; version: string | number };
 		UNBOUND_MARKETPLACE_EMPTY: { type: string | number };
+		UNBOUND_MARKETPLACE_INSTALLS: { value: string | number; count: number };
 		UNBOUND_MARKETPLACE_ALL: { type: string | number };
 		UNBOUND_FILTER_ALL_OF: { value: string | number };
 		UNBOUND_FILTER_NOT: { value: string | number };

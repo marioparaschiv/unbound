@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Займенники",
+	"FORMAT_LOWERCASE": "Малими літерами",
+	"FORMAT_CAPITALIZED": "З великої літери",
+	"SOURCE": "Джерело",
+	"SOURCE_PRONOUNDB": "Спершу PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "Інакше займенники з профілю Discord",
+	"SOURCE_DISCORD": "Спершу Discord",
+	"SOURCE_DISCORD_SUBTITLE": "Інакше PronounDB",
+	"SHOW_FOR_YOURSELF": "Показувати для себе",
+	"PRONOUN_ANY": "Будь-які займенники",
+	"PRONOUN_ASK": "Запитайте про мої займенники",
+	"PRONOUN_AVOID": "Без займенників, називайте на ім’я",
+	"PRONOUN_HE": "Він/його",
+	"PRONOUN_IT": "Воно/його",
+	"PRONOUN_OTHER": "Інші займенники",
+	"PRONOUN_SHE": "Вона/її",
+	"PRONOUN_THEY": "Вони/їх",
+	"PRONOUN_UNSPECIFIED": "Займенники не вказано."
+}

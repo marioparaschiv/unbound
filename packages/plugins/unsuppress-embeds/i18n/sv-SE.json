@@ -1,0 +1,6 @@
+{
+	"SUPPRESS_EMBEDS": "Dölj inbäddningar",
+	"UNSUPPRESS_EMBEDS": "Visa inbäddningar",
+	"CHANGE_FAILED": "{action} misslyckades: {reason}",
+	"CHANGE_REFUSED": "Discord avvisade ändringen."
+}

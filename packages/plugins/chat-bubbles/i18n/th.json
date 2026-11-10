@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "สีบับเบิล",
+	"BUBBLE_COLOR_FALLBACK": "ตามธีม: สีดำในธีมมืด สีขาวในธีมสว่าง",
+	"COLORS": "สี",
+	"CORNER_RADIUS": "รัศมีมุม",
+	"HORIZONTAL_PADDING": "ระยะขอบแนวนอน",
+	"LAYOUT": "เลย์เอาต์",
+	"LAYOUT_CARD": "การ์ดเต็มความกว้าง",
+	"LAYOUT_CARD_SUBTITLE": "การ์ดหนึ่งใบอยู่ด้านหลังข้อความทั้งข้อความ รวมทั้งชื่อและรีแอคชัน เหมือน Rosiecord",
+	"LAYOUT_FIT": "พอดีกับข้อความ",
+	"LAYOUT_FIT_SUBTITLE": "บับเบิลแต่ละอันจะครอบเฉพาะข้อความและสื่อของข้อความนั้น",
+	"OPACITY": "ความทึบ",
+	"OWN_COLOR": "ข้อความของคุณ",
+	"OWN_COLOR_FALLBACK": "เหมือนกับสีบับเบิล",
+	"SHAPE": "รูปทรง",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "ระยะขอบแนวตั้ง"
+}

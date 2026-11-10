@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Koloruj wzmianki",
+	"COLOR_MENTIONS_SUBTITLE": "Pokazuj kolory ról wspomnianego członka na czacie i w polu wiadomości",
+	"COLOR_MESSAGE_CONTENT": "Koloruj treść wiadomości",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Zabarwiaj tekst wiadomości kolorem roli autora",
+	"MESSAGE_COLOR_INTENSITY": "Intensywność koloru wiadomości",
+	"TYPING_NAMES": "Nazwy piszących",
+	"TYPING_NAMES_SUBTITLE": "Koloruj nazwy we wskaźniku pisania na kanale",
+	"MEMBER_LIST_ROLE_HEADERS": "Nagłówki ról na liście członków",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "Koloruj tytuły sekcji ról na liście członków",
+	"REACTION_USERS": "Użytkownicy reakcji",
+	"REACTION_USERS_SUBTITLE": "Koloruj nazwy na liście szczegółów reakcji",
+	"POLL_VOTERS": "Głosujący w ankietach",
+	"POLL_VOTERS_SUBTITLE": "Koloruj nazwy w szczegółach wyników ankiety",
+	"VOICE_USERS": "Użytkownicy na kanałach głosowych",
+	"VOICE_USERS_SUBTITLE": "Koloruj nazwy członków na listach użytkowników kanałów głosowych"
+}

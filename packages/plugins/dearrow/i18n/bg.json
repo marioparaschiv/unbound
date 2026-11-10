@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Замяна",
+	"REPLACE_ALL": "Заглавия и миниатюри",
+	"REPLACE_TITLES": "Заглавия",
+	"REPLACE_THUMBNAILS": "Миниатюри",
+	"DEARROW_BY_DEFAULT": "DeArrow по подразбиране",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Заменяй заглавията и миниатюрите, без да питаш",
+	"SHOW_TOGGLE": "Покажи превключвател",
+	"SHOW_TOGGLE_SUBTITLE": "Превключвай вграждането напред-назад от менюто на съобщението",
+	"SHOW_ORIGINAL_EMBED": "Покажи оригиналното вграждане",
+	"DEARROW_EMBED": "Приложи DeArrow към вграждането"
+}

@@ -1,0 +1,5 @@
+{
+	"MESSAGE_PREVIEW": "Náhled zprávy",
+	"PREVIEW_FAILED": "Náhled se nezdařil: {reason}",
+	"PREVIEW_MESSAGE": "Zobrazit náhled zprávy"
+}

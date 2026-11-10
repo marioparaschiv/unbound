@@ -144,7 +144,7 @@ describe('locale build', () => {
 		expect(fallbacks).toEqual([enUS]);
 	});
 
-	test('ships nothing of the `ubd i18n --fix` sidecar and does not warn about it', async () => {
+	test('ships nothing of the `ubd i18n fix` sidecar and does not warn about it', async () => {
 		const root = await plugin({ 'en-US': enUS, de: { TITLE: 'Willkommen zurück' } });
 
 		await writeFile(
@@ -200,7 +200,7 @@ describe('locale build', () => {
 		expect(JSON.parse(assets.get('i18n/de.json') ?? '{}')).toEqual({ BODY: 'Hallo, {nom}!' });
 		expect(warnings).toEqual([
 			'[plugin unbound-locales] i18n/de.json  BODY  has placeholders {nom}, but en-US.json has {name}.  Fix: use the placeholders en-US.json uses.',
-			'[plugin unbound-locales] i18n/de.json  EXTRA  is not in en-US.json, so it is left out.  Fix: add it to en-US.json, or remove it (ubd i18n --prune).',
+			'[plugin unbound-locales] i18n/de.json  EXTRA  is not in en-US.json, so it is left out.  Fix: add it to en-US.json, or remove it (ubd i18n fix --prune).',
 		]);
 	});
 

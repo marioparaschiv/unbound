@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "Inställningar",
+	"DISPLAY_MODE": "Visningsläge",
+	"MODE_NICK_USER": "Visningsnamn, sedan användarnamn",
+	"MODE_NICK_USER_SUBTITLE": "Visningsnamn (@användarnamn)",
+	"MODE_USER_NICK": "Användarnamn, sedan visningsnamn",
+	"MODE_USER_NICK_SUBTITLE": "@användarnamn (Visningsnamn)",
+	"MODE_USER": "Endast användarnamn",
+	"MODE_USER_SUBTITLE": "@användarnamn",
+	"FRIEND_NICKNAMES": "Visa vänners smeknamn",
+	"FRIEND_NICKNAMES_SUBTITLE": "Föredra en väns smeknamn överallt där det gäller",
+	"DISPLAY_NAMES": "Använd globala namn",
+	"DISPLAY_NAMES_SUBTITLE": "Visa kontots globala namn i stället för användarnamnet",
+	"IN_REPLIES": "Tillämpa på svar",
+	"IN_REPLIES_SUBTITLE": "Tillämpa även på förhandsvisningar av svar"
+}

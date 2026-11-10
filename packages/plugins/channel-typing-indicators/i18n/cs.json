@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Indikátory psaní v kanálech",
+	"INCLUDE_CURRENT_CHANNEL": "Včetně aktuálního kanálu",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Zobrazí psaní ve vybraném kanálu.",
+	"INCLUDE_MUTED_CHANNELS": "Včetně ztlumených kanálů",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Zobrazí psaní ve ztlumených kanálech.",
+	"INCLUDE_IGNORED_USERS": "Včetně ignorovaných uživatelů",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Zobrazí psaní ignorovaných uživatelů.",
+	"INCLUDE_BLOCKED_USERS": "Včetně zablokovaných uživatelů",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Zobrazí psaní zablokovaných uživatelů.",
+	"APPEARANCE": "Vzhled",
+	"APPEARANCE_BOTH": "Avatary a animované tečky",
+	"APPEARANCE_DOTS": "Animované tečky",
+	"APPEARANCE_AVATARS": "Avatary",
+	"TYPING_ONE": "{a} píše...",
+	"TYPING_TWO": "{a} a {b} píšou...",
+	"TYPING_THREE": "{a}, {b} a {c} píšou...",
+	"TYPING_SEVERAL": "Píše několik lidí...",
+	"SOMEONE": "Někdo"
+}

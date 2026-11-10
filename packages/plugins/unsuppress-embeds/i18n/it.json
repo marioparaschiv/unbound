@@ -1,0 +1,6 @@
+{
+	"SUPPRESS_EMBEDS": "Nascondi contenuti incorporati",
+	"UNSUPPRESS_EMBEDS": "Mostra contenuti incorporati",
+	"CHANGE_FAILED": "{action} non riuscito: {reason}",
+	"CHANGE_REFUSED": "Discord ha rifiutato la modifica."
+}

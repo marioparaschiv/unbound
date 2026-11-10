@@ -1,0 +1,122 @@
+import type { CommandOutput } from '@unbound-app/debugger-protocol/registry';
+import { closeSync, openSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { connect } from 'node:net';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+import { runCommand } from '~/lib/run-command';
+
+const LISTEN_TIMEOUT_MS = 15_000;
+const LISTEN_POLL_MS = 250;
+const LOOKUP_TIMEOUT_MS = 5_000;
+
+function isListening(port: number): Promise<boolean> {
+	return new Promise((resolve) => {
+		const socket = connect({ host: '127.0.0.1', port });
+
+		socket.once('connect', () => {
+			socket.destroy();
+			resolve(true);
+		});
+		socket.once('error', () => resolve(false));
+	});
+}
+
+async function waitUntil(port: number, listening: boolean): Promise<boolean> {
+	const deadline = Date.now() + LISTEN_TIMEOUT_MS;
+
+	while (Date.now() < deadline) {
+		if ((await isListening(port)) === listening) {
+			return true;
+		}
+
+		await Bun.sleep(LISTEN_POLL_MS);
+	}
+
+	return false;
+}
+
+async function listenerPids(port: number): Promise<number[]> {
+	const result = await runCommand(
+		'lsof',
+		['-nP', `-iTCP:${port}`, '-sTCP:LISTEN', '-t'],
+		LOOKUP_TIMEOUT_MS,
+	);
+
+	if (!result.ok) {
+		return [];
+	}
+
+	return result.stdout
+		.split('\n')
+		.map((line) => Number(line.trim()))
+		.filter((pid) => Number.isInteger(pid) && pid > 0);
+}
+
+/**
+ * @description Names the log file a detached bridge writes to.
+ * @param port The bridge's port.
+ * @returns The path in the system temporary directory.
+ */
+function bridgeLogPath(port: number): string {
+	return join(tmpdir(), `unbound-bridge-${port}.log`);
+}
+
+function startDetached(port: number): string {
+	const log = bridgeLogPath(port);
+	const output = openSync(log, 'a');
+	// The debugger's entry is its source in the workspace and its build once published.
+	const entry = Bun.resolveSync('@unbound-app/debugger', import.meta.dir);
+	const child = spawn('bun', [entry, '--port', String(port)], {
+		detached: true,
+		stdio: ['ignore', output, output],
+	});
+
+	child.unref();
+	closeSync(output);
+
+	return log;
+}
+
+/**
+ * @description Starts the debugger bridge detached, logging to the system temporary directory. With
+ * `restart`, stops the bridge already listening first, so it runs the current code.
+ * @param port The port the bridge listens on.
+ * @param restart Whether to replace a running bridge instead of keeping it.
+ * @returns Whether a bridge listens now, and where its log is.
+ */
+export async function launchBridge(port: number, restart: boolean): Promise<CommandOutput> {
+	const running = await listenerPids(port);
+
+	if (!restart && running.length) {
+		return { ok: true, text: `A bridge already listens on port ${port}.` };
+	}
+
+	for (const pid of running) {
+		try {
+			process.kill(pid);
+		} catch {
+			continue;
+		}
+	}
+
+	if (running.length && !(await waitUntil(port, false))) {
+		return { ok: false, text: `The bridge on port ${port} did not stop.` };
+	}
+
+	const log = startDetached(port);
+
+	if (!(await waitUntil(port, true))) {
+		return {
+			ok: false,
+			text: `The bridge did not start listening on port ${port}; see ${log}.`,
+		};
+	}
+
+	const verb = running.length ? 'Restarted' : 'Started';
+
+	return { ok: true, text: `${verb} the bridge on port ${port}. Its log is ${log}.` };
+}
+
+export default launchBridge;

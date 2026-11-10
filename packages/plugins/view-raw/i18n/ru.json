@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Закрыть",
+	"CONTENT_COPIED": "Исходный текст скопирован в буфер обмена.",
+	"COPY_CONTENT": "Копировать текст",
+	"COPY_DATA": "Копировать данные",
+	"DATA_COPIED": "Данные ({type}) скопированы в буфер обмена.",
+	"MESSAGE_CONTENT": "Текст сообщения",
+	"MESSAGE_DATA": "Данные сообщения",
+	"RAW_TITLE": "Исходные данные: {type}",
+	"TYPE_CHANNEL": "Канал",
+	"TYPE_GUILD": "Сервер",
+	"TYPE_MESSAGE": "Сообщение",
+	"TYPE_PROFILE": "Профиль",
+	"TYPE_USER": "Пользователь",
+	"VIEW_RAW": "Исходные данные"
+}

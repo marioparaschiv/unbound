@@ -1,0 +1,18 @@
+{
+	"ADD_USER_ID": "ユーザーIDを追加",
+	"ADD_USER_ID_SUBTITLE": "例外が有効なとき、返信でこれらのユーザーにメンションできます",
+	"CANCEL": "キャンセル",
+	"DELETE": "削除",
+	"EDIT": "編集",
+	"EDIT_USER_ID": "ユーザーIDを編集",
+	"EXCEPTIONS": "例外",
+	"INVALID_USER_ID": "数字のDiscordユーザーIDを入力してください。",
+	"NO_USERS": "まだユーザーが追加されていません。",
+	"ONLY_PING_LISTED": "リストのユーザーにのみメンション",
+	"ONLY_PING_LISTED_OFF": "返信はデフォルトで誰にもメンションしません",
+	"ONLY_PING_LISTED_ON": "返信は上記のユーザーにのみメンションします",
+	"PLUGIN_NAME": "No Reply Mention",
+	"SAVE": "保存",
+	"TAP_TO_EDIT": "タップして編集",
+	"USER_ID_PLACEHOLDER": "DiscordユーザーID"
+}

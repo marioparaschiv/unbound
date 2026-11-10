@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Bahsetmeleri Renklendir",
+	"COLOR_MENTIONS_SUBTITLE": "Bahsedilen üyenin rol renklerini sohbette ve mesaj kutusunda göster",
+	"COLOR_MESSAGE_CONTENT": "Mesaj İçeriğini Renklendir",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Mesaj metnini yazarın rol rengiyle renklendir",
+	"MESSAGE_COLOR_INTENSITY": "Mesaj rengi yoğunluğu",
+	"TYPING_NAMES": "Yazan Kişilerin İsimleri",
+	"TYPING_NAMES_SUBTITLE": "Kanal yazma göstergesindeki isimleri renklendir",
+	"MEMBER_LIST_ROLE_HEADERS": "Üye Listesi Rol Başlıkları",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "Üye listesindeki rol bölümü başlıklarını renklendir",
+	"REACTION_USERS": "Tepki Verenler",
+	"REACTION_USERS_SUBTITLE": "Tepki ayrıntıları listesindeki isimleri renklendir",
+	"POLL_VOTERS": "Anket Katılımcıları",
+	"POLL_VOTERS_SUBTITLE": "Anket sonucu ayrıntılarındaki isimleri renklendir",
+	"VOICE_USERS": "Sesli Kanaldaki Kullanıcılar",
+	"VOICE_USERS_SUBTITLE": "Sesli kanal kullanıcı listelerindeki üye isimlerini renklendir"
+}

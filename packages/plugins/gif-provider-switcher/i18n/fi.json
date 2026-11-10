@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "Palveluntarjoaja",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "Hae GIFejä Tenorista",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "Hae GIFejä Giphystä",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "Discordin oma GIF-haku",
+	"PROVIDER_BUTTON_LABEL": "GIF-palvelu: {provider}. Vaihda palveluun {next}"
+}

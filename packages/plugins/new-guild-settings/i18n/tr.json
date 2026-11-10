@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "Bir sunucuya katıldığında",
+	"MUTE_SERVER": "Sunucuyu Sessize Al",
+	"MUTE_SERVER_SUBTITLE": "Yeni sunucuları otomatik olarak sessize al",
+	"SUPPRESS_EVERYONE": "@everyone ve @here Bahsetmelerini Engelle",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Yeni sunucularda @everyone ve @here bahsetmelerini yok say",
+	"SUPPRESS_ROLES": "Tüm Rol @bahsetmelerini Engelle",
+	"SUPPRESS_ROLES_SUBTITLE": "Yeni sunucularda rol bahsetmelerini yok say",
+	"SUPPRESS_HIGHLIGHTS": "Öne Çıkanları Engelle",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Yeni sunucularda öne çıkan bildirimlerini kapat",
+	"MUTE_EVENTS": "Yeni Etkinlikleri Sessize Al",
+	"MUTE_EVENTS_SUBTITLE": "Planlanmış etkinlik bildirimlerini sessize al",
+	"SHOW_ALL_CHANNELS": "Tüm Kanalları Göster",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Kanal seçmene izin veren sunucularda tüm kanalları göster",
+	"SERVER_NOTIFICATION_SETTINGS": "Sunucu Bildirim Ayarları",
+	"NOTIFY_ALL": "Tüm Mesajlar",
+	"NOTIFY_MENTIONS": "Sadece @bahsetmeler",
+	"NOTIFY_NOTHING": "Hiçbir Şey",
+	"NOTIFY_DEFAULT": "Sunucu Varsayılanı",
+	"APPLY_NEW_GUILD_SETTINGS": "Yeni Sunucu Ayarlarını Uygula",
+	"APPLIED_TO_GUILD": "{name} sunucusuna uygulandı.",
+	"APPLIED_TO_THIS_SERVER": "Bu sunucuya uygulandı."
+}

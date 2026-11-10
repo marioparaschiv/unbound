@@ -1,0 +1,18 @@
+{
+	"ADD_USER_ID": "Lägg till användar-ID",
+	"ADD_USER_ID_SUBTITLE": "Svar kan nämna dessa användare när undantaget är aktiverat",
+	"CANCEL": "Avbryt",
+	"DELETE": "Radera",
+	"EDIT": "Redigera",
+	"EDIT_USER_ID": "Redigera användar-ID",
+	"EXCEPTIONS": "Undantag",
+	"INVALID_USER_ID": "Ange ett numeriskt Discord-användar-ID.",
+	"NO_USERS": "Inga användare har lagts till än.",
+	"ONLY_PING_LISTED": "Pinga bara listade användare",
+	"ONLY_PING_LISTED_OFF": "Svar nämner ingen som standard",
+	"ONLY_PING_LISTED_ON": "Svar nämner bara användarna som listas ovan",
+	"PLUGIN_NAME": "No Reply Mention",
+	"SAVE": "Spara",
+	"TAP_TO_EDIT": "Tryck för att redigera",
+	"USER_ID_PLACEHOLDER": "Discord-användar-ID"
+}

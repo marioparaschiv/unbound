@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Färga omnämnanden",
+	"COLOR_MENTIONS_SUBTITLE": "Visa den nämnda medlemmens rollfärger i chatten och i skrivfältet",
+	"COLOR_MESSAGE_CONTENT": "Färga meddelandeinnehåll",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Tona meddelandetexten med avsändarens rollfärg",
+	"MESSAGE_COLOR_INTENSITY": "Färgintensitet för meddelanden",
+	"TYPING_NAMES": "Namn som skriver",
+	"TYPING_NAMES_SUBTITLE": "Färga namn i kanalens skrivindikator",
+	"MEMBER_LIST_ROLE_HEADERS": "Rollrubriker i medlemslistan",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "Färga rollernas avsnittsrubriker i medlemslistan",
+	"REACTION_USERS": "Användare som reagerat",
+	"REACTION_USERS_SUBTITLE": "Färga namn i listan med reaktionsdetaljer",
+	"POLL_VOTERS": "Röstande i omröstningar",
+	"POLL_VOTERS_SUBTITLE": "Färga namn i detaljerna för omröstningsresultat",
+	"VOICE_USERS": "Röstanvändare",
+	"VOICE_USERS_SUBTITLE": "Färga medlemmarnas namn i listor över användare i röstkanaler"
+}

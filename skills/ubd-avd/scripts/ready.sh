@@ -70,7 +70,7 @@ served_etag() {
 }
 
 device_etag() {
-	"$here/ubd" eval 'unbound.storage.getBucket("unbound").get("loader.update.etag")' 2>&1 | grep -o '[0-9a-f]\{8,\}' | tail -n 1
+	"$here/ubd" debug eval 'unbound.storage.getBucket("unbound").get("loader.update.etag")' 2>&1 | grep -o '[0-9a-f]\{8,\}' | tail -n 1
 }
 
 start=$SECONDS
@@ -78,7 +78,7 @@ state='Discord has not started'
 
 while :; do
 	foreground || launch
-	result=$("$here/ubd" eval 'typeof unbound' 2>&1)
+	result=$("$here/ubd" debug eval 'typeof unbound' 2>&1)
 
 	if grep -q '^object' <<<"$result"; then
 		if ((!fresh)); then
@@ -98,7 +98,7 @@ while :; do
 		screen_text | head -n 15 | sed 's/^/  /' >&2
 		echo "Discord's last crash (empty if none):" >&2
 		adb_avd logcat -b crash -d -t 30 2>/dev/null | grep -A8 'com.discord' | head -n 20 | sed 's/^/  /' >&2
-		echo "Logs: scripts/ubd logs --since 2m; /tmp/avd-dev.log for build errors" >&2
+		echo "Logs: scripts/ubd device logs --since 2m; /tmp/avd-dev.log for build errors" >&2
 		exit 1
 	fi
 
@@ -111,7 +111,7 @@ if signed_out; then
 fi
 
 echo "ready in $((SECONDS - start))s"
-echo "route: $("$here/ubd" route 2>&1 | tail -n 1)"
+echo "route: $("$here/ubd" debug route 2>&1 | tail -n 1)"
 served=$(tmux display -p -t '=avd-dev:' '#{pane_current_path}' 2>/dev/null)
 
 if [[ -n $served && $served != "$root" ]]; then

@@ -1,0 +1,18 @@
+{
+	"ADD_USER_ID": "添加用户 ID",
+	"ADD_USER_ID_SUBTITLE": "启用例外后，回复可以提及这些用户",
+	"CANCEL": "取消",
+	"DELETE": "删除",
+	"EDIT": "编辑",
+	"EDIT_USER_ID": "编辑用户 ID",
+	"EXCEPTIONS": "例外",
+	"INVALID_USER_ID": "请输入纯数字的 Discord 用户 ID。",
+	"NO_USERS": "尚未添加任何用户。",
+	"ONLY_PING_LISTED": "仅提及列表中的用户",
+	"ONLY_PING_LISTED_OFF": "回复默认不提及任何人",
+	"ONLY_PING_LISTED_ON": "回复仅提及上方列出的用户",
+	"PLUGIN_NAME": "回复不提及",
+	"SAVE": "保存",
+	"TAP_TO_EDIT": "点按以编辑",
+	"USER_ID_PLACEHOLDER": "Discord 用户 ID"
+}

@@ -1,0 +1,6 @@
+{
+	"SUPPRESS_EMBEDS": "隱藏嵌入內容",
+	"UNSUPPRESS_EMBEDS": "取消隱藏嵌入內容",
+	"CHANGE_FAILED": "{action}失敗：{reason}",
+	"CHANGE_REFUSED": "Discord 拒絕了此變更。"
+}

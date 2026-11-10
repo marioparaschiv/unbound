@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs an Unbound CLI device command (eval, open, route, reload) against this machine's bridge.
+# Runs an Unbound CLI bridge command (debug eval, debug open, debug route, debug reload) against this machine's bridge.
 set -euo pipefail
 . "$(dirname "$0")/env.sh"
 cd "$root"

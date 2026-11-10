@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Indikátory platformy",
+	"SHOW_INDICATORS": "Zobrazit indikátory",
+	"MEMBER_LIST": "Seznam členů",
+	"MEMBER_LIST_SUBTITLE": "Za jmény v seznamu členů a dalších seznamech uživatelů",
+	"PROFILES": "Profily",
+	"PROFILES_SUBTITLE": "Pod jménem a odznaky v profilech",
+	"MESSAGES": "Zprávy",
+	"MESSAGES_SUBTITLE": "Za časovým údajem u zpráv",
+	"STATUS": "Status",
+	"COLOR_MOBILE_INDICATOR": "Barevný indikátor mobilu",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "Zobrazí tvar telefonu i u mobilních uživatelů, kteří jsou nečinní nebo nerušit",
+	"PLATFORM_DESKTOP": "Počítač",
+	"PLATFORM_MOBILE": "Mobil",
+	"PLATFORM_WEB": "Web",
+	"PLATFORM_EMBEDDED": "Vestavěné (konzole nebo hra)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "Online na: {platforms}"
+}

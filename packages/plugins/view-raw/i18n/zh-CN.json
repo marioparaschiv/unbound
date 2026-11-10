@@ -1,0 +1,16 @@
+{
+	"CLOSE": "关闭",
+	"CONTENT_COPIED": "原始内容已复制到剪贴板。",
+	"COPY_CONTENT": "复制内容",
+	"COPY_DATA": "复制数据",
+	"DATA_COPIED": "{type}数据已复制到剪贴板。",
+	"MESSAGE_CONTENT": "消息内容",
+	"MESSAGE_DATA": "消息数据",
+	"RAW_TITLE": "{type}原始数据",
+	"TYPE_CHANNEL": "频道",
+	"TYPE_GUILD": "服务器",
+	"TYPE_MESSAGE": "消息",
+	"TYPE_PROFILE": "个人资料",
+	"TYPE_USER": "用户",
+	"VIEW_RAW": "查看原始数据"
+}

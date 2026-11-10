@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Domyślnie anonimizuj",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Każdy plik nadal można przełączyć w jego podglądzie",
+	"METHOD": "Metoda",
+	"METHOD_RANDOM": "Losowe znaki",
+	"METHOD_CONSISTENT": "Stała nazwa",
+	"METHOD_TIMESTAMP": "Znacznik czasu",
+	"LENGTH": "Długość",
+	"FILE_NAME": "Nazwa pliku",
+	"FILE_NAME_PLACEHOLDER": "obraz",
+	"FILE_NAME_SUBTITLE": "Każdy plik jest przesyłany pod tą nazwą z własnym rozszerzeniem.",
+	"ANONYMISE_FILE_NAME": "Anonimizuj nazwę pliku",
+	"USING_ANONYMOUS_NAME": "Używana jest anonimowa nazwa pliku",
+	"USING_ORIGINAL_NAME": "Używana jest oryginalna nazwa pliku",
+	"USE_ORIGINAL_FILE_NAME": "Użyj oryginalnej nazwy pliku"
+}

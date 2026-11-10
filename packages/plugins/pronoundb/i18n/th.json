@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "คำสรรพนาม",
+	"FORMAT_LOWERCASE": "ตัวพิมพ์เล็ก",
+	"FORMAT_CAPITALIZED": "ขึ้นต้นด้วยตัวพิมพ์ใหญ่",
+	"SOURCE": "แหล่งที่มา",
+	"SOURCE_PRONOUNDB": "ใช้ PronounDB ก่อน",
+	"SOURCE_PRONOUNDB_SUBTITLE": "หากไม่มี ใช้คำสรรพนามจากโปรไฟล์ Discord แทน",
+	"SOURCE_DISCORD": "ใช้ Discord ก่อน",
+	"SOURCE_DISCORD_SUBTITLE": "หากไม่มี ใช้ PronounDB แทน",
+	"SHOW_FOR_YOURSELF": "แสดงสำหรับตัวคุณเอง",
+	"PRONOUN_ANY": "คำสรรพนามใดก็ได้",
+	"PRONOUN_ASK": "ถามคำสรรพนามของฉัน",
+	"PRONOUN_AVOID": "ไม่ใช้คำสรรพนาม ใช้ชื่อของฉัน",
+	"PRONOUN_HE": "He/Him",
+	"PRONOUN_IT": "It/Its",
+	"PRONOUN_OTHER": "คำสรรพนามอื่น",
+	"PRONOUN_SHE": "She/Her",
+	"PRONOUN_THEY": "They/Them",
+	"PRONOUN_UNSPECIFIED": "ไม่ได้ระบุคำสรรพนาม"
+}

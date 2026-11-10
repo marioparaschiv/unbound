@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "การกำหนดค่า",
+	"DISPLAY_MODE": "โหมดการแสดงผล",
+	"MODE_NICK_USER": "ชื่อที่แสดง ตามด้วยชื่อผู้ใช้",
+	"MODE_NICK_USER_SUBTITLE": "ชื่อที่แสดง (@ชื่อผู้ใช้)",
+	"MODE_USER_NICK": "ชื่อผู้ใช้ ตามด้วยชื่อที่แสดง",
+	"MODE_USER_NICK_SUBTITLE": "@ชื่อผู้ใช้ (ชื่อที่แสดง)",
+	"MODE_USER": "ชื่อผู้ใช้เท่านั้น",
+	"MODE_USER_SUBTITLE": "@ชื่อผู้ใช้",
+	"FRIEND_NICKNAMES": "แสดงชื่อเล่นของเพื่อน",
+	"FRIEND_NICKNAMES_SUBTITLE": "ใช้ชื่อเล่นของเพื่อนก่อนในทุกที่ที่ใช้ได้",
+	"DISPLAY_NAMES": "ใช้ชื่อสากล",
+	"DISPLAY_NAMES_SUBTITLE": "แสดงชื่อสากลของบัญชีแทนชื่อผู้ใช้",
+	"IN_REPLIES": "ใช้กับการตอบกลับ",
+	"IN_REPLIES_SUBTITLE": "ใช้กับตัวอย่างการตอบกลับด้วย"
+}

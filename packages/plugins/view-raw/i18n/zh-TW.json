@@ -1,0 +1,16 @@
+{
+	"CLOSE": "關閉",
+	"CONTENT_COPIED": "已將原始內容複製到剪貼簿。",
+	"COPY_CONTENT": "複製內容",
+	"COPY_DATA": "複製資料",
+	"DATA_COPIED": "已將{type}資料複製到剪貼簿。",
+	"MESSAGE_CONTENT": "訊息內容",
+	"MESSAGE_DATA": "訊息資料",
+	"RAW_TITLE": "{type}原始資料",
+	"TYPE_CHANNEL": "頻道",
+	"TYPE_GUILD": "伺服器",
+	"TYPE_MESSAGE": "訊息",
+	"TYPE_PROFILE": "個人資料",
+	"TYPE_USER": "使用者",
+	"VIEW_RAW": "檢視原始資料"
+}

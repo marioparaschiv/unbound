@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "Πάροχος",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "Αναζήτηση GIF στο Tenor",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "Αναζήτηση GIF στο Giphy",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "Η αναζήτηση GIF του ίδιου του Discord",
+	"PROVIDER_BUTTON_LABEL": "Πάροχος GIF: {provider}. Αλλαγή σε {next}"
+}

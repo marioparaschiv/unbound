@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Platformų indikatoriai",
+	"SHOW_INDICATORS": "Rodyti indikatorius",
+	"MEMBER_LIST": "Narių sąrašas",
+	"MEMBER_LIST_SUBTITLE": "Po vardų narių sąraše ir kituose naudotojų sąrašuose",
+	"PROFILES": "Profiliai",
+	"PROFILES_SUBTITLE": "Po vardu ir ženkleliais profiliuose",
+	"MESSAGES": "Žinutės",
+	"MESSAGES_SUBTITLE": "Po žinučių laiko žymos",
+	"STATUS": "Būsena",
+	"COLOR_MOBILE_INDICATOR": "Spalvinti mobiliojo indikatorių",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "Rodyti telefono būsenos formą ir neaktyviems arba užimtiems mobiliųjų naudotojams",
+	"PLATFORM_DESKTOP": "Kompiuteris",
+	"PLATFORM_MOBILE": "Mobilusis",
+	"PLATFORM_WEB": "Žiniatinklis",
+	"PLATFORM_EMBEDDED": "Įterptinė (konsolė ar žaidimas)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "Prisijungta per: {platforms}"
+}

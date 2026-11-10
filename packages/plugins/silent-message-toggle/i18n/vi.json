@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Tự động tắt",
+	"AUTO_DISABLE_SUBTITLE": "Tắt lại công tắc sau khi gửi một tin nhắn im lặng",
+	"DISABLE_SILENT_MESSAGE": "Tắt tin nhắn im lặng",
+	"ENABLE_SILENT_MESSAGE": "Bật tin nhắn im lặng",
+	"PERSIST_STATE": "Giữ trạng thái",
+	"PERSIST_STATE_SUBTITLE": "Giữ công tắc bật khi bạn mở kênh khác",
+	"SILENT_MESSAGE_TOGGLE": "Công tắc tin nhắn im lặng",
+	"TOGGLE": "Bật/tắt",
+	"TOGGLED_OFF": "Tin nhắn của bạn ở đây sẽ lại thông báo cho mọi người.",
+	"TOGGLED_ON": "Tin nhắn của bạn ở đây được gửi mà không kèm thông báo."
+}

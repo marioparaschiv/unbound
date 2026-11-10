@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Automatiškai išjungti",
+	"AUTO_DISABLE_SUBTITLE": "Išsiuntus vieną tylią žinutę, jungiklį vėl išjungti",
+	"DISABLE_SILENT_MESSAGE": "Išjungti tylią žinutę",
+	"ENABLE_SILENT_MESSAGE": "Įjungti tylią žinutę",
+	"PERSIST_STATE": "Išlaikyti būseną",
+	"PERSIST_STATE_SUBTITLE": "Palikti jungiklį įjungtą atidarius kitą kanalą",
+	"SILENT_MESSAGE_TOGGLE": "Tylių žinučių jungiklis",
+	"TOGGLE": "Perjungti",
+	"TOGGLED_OFF": "Jūsų žinutės čia vėl siunčia pranešimus.",
+	"TOGGLED_ON": "Jūsų žinutės čia siunčiamos be pranešimų."
+}

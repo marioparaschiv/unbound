@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "Görünüm",
+	"COLOR_THRESHOLDS": "Renk eşikleri",
+	"COLOR_THRESHOLDS_SUBTITLE": "Mesaj, Discord’un karakter sınırına yaklaştıkça uyar.",
+	"COUNTER_LABEL": "{length}/{limit} karakter"
+}

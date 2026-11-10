@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Indikator",
+	"LATENCY_THRESHOLD": "Prag kašnjenja",
+	"LATENCY_THRESHOLD_SUBTITLE": "Prikaži indikator kad slanje poruke traje barem ovoliko.",
+	"SHOW_MILLISECONDS": "Prikaži milisekunde",
+	"SHOW_MILLISECONDS_SUBTITLE": "Prikaži preciznost u milisekundama u indikatoru.",
+	"IGNORE_MY_MESSAGES": "Zanemari moje poruke",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Označi samo poruke koje šalju drugi.",
+	"DETECT_LEGACY_ANDROID": "Prepoznaj stare Android klijente",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Prikaži oznaku za poznati pomak vremenske oznake u starijim Discord Android klijentima.",
+	"DURATION_DAYS": "{count, plural, one {# dan} few {# dana} other {# dana}}",
+	"DURATION_HOURS": "{count, plural, one {# sat} few {# sata} other {# sati}}",
+	"DURATION_MINUTES": "{count, plural, one {# minuta} few {# minute} other {# minuta}}",
+	"DURATION_SECONDS": "{count, plural, one {# sekunda} few {# sekunde} other {# sekundi}}",
+	"DURATION_MILLISECONDS": "{count, plural, one {# milisekunda} few {# milisekunde} other {# milisekundi}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} i {later}",
+	"TOOLTIP_DELAYED": "Ova je poruka poslana sa zakašnjenjem: {duration}.",
+	"TOOLTIP_CLOCK_AHEAD": "Sat ovog korisnika žuri: {duration}.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "Sumnja se da korisnik koristi stari Discord Android klijent",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} Sumnja se da korisnik koristi stari Discord Android klijent.",
+	"OLD_ANDROID_CLIENT": "Stari Discord Android klijent"
+}

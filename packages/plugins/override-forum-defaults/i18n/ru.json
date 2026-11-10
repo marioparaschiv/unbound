@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Макет по умолчанию",
+	"LAYOUT_LIST": "Список",
+	"LAYOUT_LIST_SUBTITLE": "Публикации списком",
+	"LAYOUT_GALLERY": "Галерея",
+	"LAYOUT_GALLERY_SUBTITLE": "Публикации сеткой карточек",
+	"DEFAULT_SORT_ORDER": "Сортировка по умолчанию",
+	"SORT_RECENTLY_ACTIVE": "Недавняя активность",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Сначала публикации с самыми новыми сообщениями",
+	"SORT_DATE_POSTED": "Дата публикации",
+	"SORT_DATE_POSTED_SUBTITLE": "Сначала самые новые публикации"
+}

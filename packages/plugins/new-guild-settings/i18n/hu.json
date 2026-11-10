@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "Amikor csatlakozol egy szerverhez",
+	"MUTE_SERVER": "Szerver némítása",
+	"MUTE_SERVER_SUBTITLE": "Új szerverek automatikus némítása",
+	"SUPPRESS_EVERYONE": "@everyone és @here elnémítása",
+	"SUPPRESS_EVERYONE_SUBTITLE": "@everyone és @here figyelmen kívül hagyása új szervereken",
+	"SUPPRESS_ROLES": "Minden @rangemlítés elnémítása",
+	"SUPPRESS_ROLES_SUBTITLE": "Rangemlítések figyelmen kívül hagyása új szervereken",
+	"SUPPRESS_HIGHLIGHTS": "Kiemelések elnémítása",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Kiemelési értesítések kikapcsolása új szervereken",
+	"MUTE_EVENTS": "Új események némítása",
+	"MUTE_EVENTS_SUBTITLE": "Ütemezett események értesítéseinek némítása",
+	"SHOW_ALL_CHANNELS": "Összes csatorna megjelenítése",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Minden csatorna megjelenítése azokon a szervereken, ahol választhatsz csatornákat",
+	"SERVER_NOTIFICATION_SETTINGS": "Szerver értesítési beállításai",
+	"NOTIFY_ALL": "Minden üzenet",
+	"NOTIFY_MENTIONS": "Csak @említések",
+	"NOTIFY_NOTHING": "Semmi",
+	"NOTIFY_DEFAULT": "Szerver alapértelmezése",
+	"APPLY_NEW_GUILD_SETTINGS": "Új szerverbeállítások alkalmazása",
+	"APPLIED_TO_GUILD": "Alkalmazva itt: {name}.",
+	"APPLIED_TO_THIS_SERVER": "Alkalmazva ezen a szerveren."
+}

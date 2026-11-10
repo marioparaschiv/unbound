@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Tippanzeigen in Kanälen",
+	"INCLUDE_CURRENT_CHANNEL": "Aktuellen Kanal einbeziehen",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Zeigt Tippaktivität im ausgewählten Kanal.",
+	"INCLUDE_MUTED_CHANNELS": "Stummgeschaltete Kanäle einbeziehen",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Zeigt Tippaktivität in stummgeschalteten Kanälen.",
+	"INCLUDE_IGNORED_USERS": "Ignorierte Nutzer einbeziehen",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Zeigt Tippaktivität von ignorierten Nutzern.",
+	"INCLUDE_BLOCKED_USERS": "Blockierte Nutzer einbeziehen",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Zeigt Tippaktivität von blockierten Nutzern.",
+	"APPEARANCE": "Darstellung",
+	"APPEARANCE_BOTH": "Avatare und animierte Punkte",
+	"APPEARANCE_DOTS": "Animierte Punkte",
+	"APPEARANCE_AVATARS": "Avatare",
+	"TYPING_ONE": "{a} schreibt …",
+	"TYPING_TWO": "{a} und {b} schreiben …",
+	"TYPING_THREE": "{a}, {b} und {c} schreiben …",
+	"TYPING_SEVERAL": "Mehrere Personen schreiben …",
+	"SOMEONE": "Jemand"
+}

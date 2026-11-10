@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "チャンネルの入力中インジケーター",
+	"INCLUDE_CURRENT_CHANNEL": "現在のチャンネルを含める",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "選択中のチャンネルでの入力中の状態を表示します。",
+	"INCLUDE_MUTED_CHANNELS": "ミュート中のチャンネルを含める",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "ミュート中のチャンネルでの入力中の状態を表示します。",
+	"INCLUDE_IGNORED_USERS": "無視中のユーザーを含める",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "無視中のユーザーの入力中の状態を表示します。",
+	"INCLUDE_BLOCKED_USERS": "ブロック中のユーザーを含める",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "ブロック中のユーザーの入力中の状態を表示します。",
+	"APPEARANCE": "外観",
+	"APPEARANCE_BOTH": "アバターとアニメーションのドット",
+	"APPEARANCE_DOTS": "アニメーションのドット",
+	"APPEARANCE_AVATARS": "アバター",
+	"TYPING_ONE": "{a}が入力中…",
+	"TYPING_TWO": "{a}と{b}が入力中…",
+	"TYPING_THREE": "{a}、{b}、{c}が入力中…",
+	"TYPING_SEVERAL": "複数人が入力中…",
+	"SOMEONE": "誰か"
+}

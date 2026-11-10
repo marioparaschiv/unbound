@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "Fournisseur",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "Rechercher des GIF sur Tenor",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "Rechercher des GIF sur Giphy",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "La recherche de GIF intégrée à Discord",
+	"PROVIDER_BUTTON_LABEL": "Fournisseur de GIF : {provider}. Passer à {next}"
+}

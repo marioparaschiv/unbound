@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "Облик",
+	"COLOR_THRESHOLDS": "Цветови прагове",
+	"COLOR_THRESHOLDS_SUBTITLE": "Предупреждавай, когато съобщението наближи лимита на Discord за символи.",
+	"COUNTER_LABEL": "{length} от {limit} символа"
+}

@@ -36,7 +36,7 @@ export type PluginConfigOptions = {
 	budget?: BudgetOptions;
 };
 
-// `ubd dev` and `ubd push` set UNBOUND_HOT: components register for hot refresh and keep their hooks' state on push.
+// `ubd dev` and `ubd debug push` set UNBOUND_HOT: components register for hot refresh and keep their hooks' state on push.
 const hot = process.env.UNBOUND_HOT === '1';
 
 const minifyOptions = {

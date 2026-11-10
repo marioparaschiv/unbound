@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "Nije moguće otvoriti {image, select, avatar {avatar} banner {banner} serverAvatar {avatar servera} serverIcon {ikonu servera} serverBanner {banner servera} other {ikonu grupnog razgovora}}.",
+	"VIEW_AVATAR": "Prikaži avatar",
+	"VIEW_BANNER": "Prikaži banner",
+	"VIEW_GROUP_ICON": "Prikaži ikonu grupnog razgovora",
+	"VIEW_ICONS": "Prikaži ikone",
+	"VIEW_SERVER_AVATAR": "Prikaži avatar servera",
+	"VIEW_SERVER_BANNER": "Prikaži banner servera",
+	"VIEW_SERVER_ICON": "Prikaži ikonu servera"
+}

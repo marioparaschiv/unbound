@@ -47,7 +47,7 @@ async function decide(
 	});
 }
 
-describe('ubd login and logout', () => {
+describe('ubd auth login and logout', () => {
 	test('login polls until approved, stores a working session readable only by the user, and logout deletes it', async () => {
 		const { userId, headers } = await signInWithDiscord(ctx, {
 			id: '80351110224678912',
@@ -86,7 +86,9 @@ describe('ubd login and logout', () => {
 
 		expect(me.user.id).toBe(userId);
 
-		const logout = await runUbd(['logout'], config.path, { XDG_CONFIG_HOME: config.path });
+		const logout = await runUbd(['auth', 'logout'], config.path, {
+			XDG_CONFIG_HOME: config.path,
+		});
 
 		expect(logout).toMatchObject({ exitCode: 0, stdout: `Logged out. Deleted ${path}.\n` });
 		expect(existsSync(path)).toBe(false);

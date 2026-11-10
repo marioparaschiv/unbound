@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Indikator",
+	"LATENCY_THRESHOLD": "Latensgräns",
+	"LATENCY_THRESHOLD_SUBTITLE": "Visa en indikator när ett meddelande tar minst så här lång tid att skicka.",
+	"SHOW_MILLISECONDS": "Visa millisekunder",
+	"SHOW_MILLISECONDS_SUBTITLE": "Visa tiden i indikatorn med millisekundprecision.",
+	"IGNORE_MY_MESSAGES": "Ignorera mina meddelanden",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Markera bara meddelanden som skickats av andra.",
+	"DETECT_LEGACY_ANDROID": "Upptäck äldre Android-klienter",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Visa en markering för den kända tidsstämpelförskjutningen i äldre Discord-klienter för Android.",
+	"DURATION_DAYS": "{count, plural, one {# dag} other {# dagar}}",
+	"DURATION_HOURS": "{count, plural, one {# timme} other {# timmar}}",
+	"DURATION_MINUTES": "{count, plural, one {# minut} other {# minuter}}",
+	"DURATION_SECONDS": "{count, plural, one {# sekund} other {# sekunder}}",
+	"DURATION_MILLISECONDS": "{count, plural, one {# millisekund} other {# millisekunder}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} och {later}",
+	"TOOLTIP_DELAYED": "Det här meddelandet skickades med en fördröjning på {duration}.",
+	"TOOLTIP_CLOCK_AHEAD": "Den här användarens klocka går {duration} före.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "Användaren misstänks använda en gammal Discord-klient för Android",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} Användaren misstänks använda en gammal Discord-klient för Android.",
+	"OLD_ANDROID_CLIENT": "Gammal Discord-klient för Android"
+}

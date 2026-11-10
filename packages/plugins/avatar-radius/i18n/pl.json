@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Awatary",
+	"CORNER_RADIUS": "Promień narożników",
+	"CORNER_RADIUS_SUBTITLE": "Od 0 (kwadrat) do 64. Promień większy niż połowa rozmiaru awatara zachowuje kształt koła."
+}

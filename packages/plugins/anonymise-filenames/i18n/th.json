@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "ซ่อนชื่อไฟล์เป็นค่าเริ่มต้น",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "ยังสลับได้ทีละไฟล์จากหน้าตัวอย่างของไฟล์นั้น",
+	"METHOD": "วิธีการ",
+	"METHOD_RANDOM": "ตัวอักษรสุ่ม",
+	"METHOD_CONSISTENT": "ชื่อเดียวกันทุกครั้ง",
+	"METHOD_TIMESTAMP": "เวลาประทับ",
+	"LENGTH": "ความยาว",
+	"FILE_NAME": "ชื่อไฟล์",
+	"FILE_NAME_PLACEHOLDER": "image",
+	"FILE_NAME_SUBTITLE": "ทุกไฟล์จะถูกอัปโหลดด้วยชื่อนี้และนามสกุลไฟล์เดิมของตัวเอง",
+	"ANONYMISE_FILE_NAME": "ซ่อนชื่อไฟล์",
+	"USING_ANONYMOUS_NAME": "ใช้ชื่อไฟล์แบบไม่ระบุตัวตน",
+	"USING_ORIGINAL_NAME": "ใช้ชื่อไฟล์เดิม",
+	"USE_ORIGINAL_FILE_NAME": "ใช้ชื่อไฟล์เดิม"
+}

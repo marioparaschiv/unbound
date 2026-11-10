@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "Kun liityt palvelimelle",
+	"MUTE_SERVER": "Mykistä palvelin",
+	"MUTE_SERVER_SUBTITLE": "Mykistä uudet palvelimet automaattisesti",
+	"SUPPRESS_EVERYONE": "Vaimenna @everyone ja @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Ohita @everyone ja @here uusilla palvelimilla",
+	"SUPPRESS_ROLES": "Vaimenna kaikki roolien @maininnat",
+	"SUPPRESS_ROLES_SUBTITLE": "Ohita roolimaininnat uusilla palvelimilla",
+	"SUPPRESS_HIGHLIGHTS": "Vaimenna kohokohdat",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Poista kohokohtailmoitukset käytöstä uusilla palvelimilla",
+	"MUTE_EVENTS": "Mykistä uudet tapahtumat",
+	"MUTE_EVENTS_SUBTITLE": "Mykistä ajoitettujen tapahtumien ilmoitukset",
+	"SHOW_ALL_CHANNELS": "Näytä kaikki kanavat",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Näytä jokainen kanava palvelimilla, joilla voit valita kanavat",
+	"SERVER_NOTIFICATION_SETTINGS": "Palvelimen ilmoitusasetukset",
+	"NOTIFY_ALL": "Kaikki viestit",
+	"NOTIFY_MENTIONS": "Vain @maininnat",
+	"NOTIFY_NOTHING": "Ei mitään",
+	"NOTIFY_DEFAULT": "Palvelimen oletus",
+	"APPLY_NEW_GUILD_SETTINGS": "Käytä uuden palvelimen asetuksia",
+	"APPLIED_TO_GUILD": "Otettu käyttöön palvelimella {name}.",
+	"APPLIED_TO_THIS_SERVER": "Otettu käyttöön tällä palvelimella."
+}

@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Anonimizar de forma predeterminada",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Puedes cambiar cada archivo desde su hoja de vista previa",
+	"METHOD": "Método",
+	"METHOD_RANDOM": "Caracteres aleatorios",
+	"METHOD_CONSISTENT": "Fijo",
+	"METHOD_TIMESTAMP": "Marca de tiempo",
+	"LENGTH": "Longitud",
+	"FILE_NAME": "Nombre de archivo",
+	"FILE_NAME_PLACEHOLDER": "imagen",
+	"FILE_NAME_SUBTITLE": "Todos los archivos se suben con este nombre y su propia extensión.",
+	"ANONYMISE_FILE_NAME": "Anonimizar nombre de archivo",
+	"USING_ANONYMOUS_NAME": "Se usa un nombre de archivo anónimo",
+	"USING_ORIGINAL_NAME": "Se usa el nombre de archivo original",
+	"USE_ORIGINAL_FILE_NAME": "Usar nombre de archivo original"
+}

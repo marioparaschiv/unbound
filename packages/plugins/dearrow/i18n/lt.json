@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Pakeisti",
+	"REPLACE_ALL": "Pavadinimai ir miniatiūros",
+	"REPLACE_TITLES": "Pavadinimai",
+	"REPLACE_THUMBNAILS": "Miniatiūros",
+	"DEARROW_BY_DEFAULT": "DeArrow pagal numatytuosius",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Keisti pavadinimus ir miniatiūras neklausiant",
+	"SHOW_TOGGLE": "Rodyti jungiklį",
+	"SHOW_TOGGLE_SUBTITLE": "Perjungti įterpinį pirmyn ir atgal iš žinutės meniu",
+	"SHOW_ORIGINAL_EMBED": "Rodyti originalų įterpinį",
+	"DEARROW_EMBED": "Taikyti DeArrow įterpiniui"
+}

@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Voornaamwoorden",
+	"FORMAT_LOWERCASE": "Kleine letters",
+	"FORMAT_CAPITALIZED": "Met hoofdletter",
+	"SOURCE": "Bron",
+	"SOURCE_PRONOUNDB": "Voorkeur voor PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "Anders de voornaamwoorden van het Discord-profiel gebruiken",
+	"SOURCE_DISCORD": "Voorkeur voor Discord",
+	"SOURCE_DISCORD_SUBTITLE": "Anders PronounDB gebruiken",
+	"SHOW_FOR_YOURSELF": "Voor jezelf tonen",
+	"PRONOUN_ANY": "Alle voornaamwoorden",
+	"PRONOUN_ASK": "Vraag me naar mijn voornaamwoorden",
+	"PRONOUN_AVOID": "Geen voornaamwoorden, gebruik mijn naam",
+	"PRONOUN_HE": "Hij/hem",
+	"PRONOUN_IT": "Het/zijn",
+	"PRONOUN_OTHER": "Andere voornaamwoorden",
+	"PRONOUN_SHE": "Zij/haar",
+	"PRONOUN_THEY": "Die/hen",
+	"PRONOUN_UNSPECIFIED": "Geen voornaamwoorden opgegeven."
+}

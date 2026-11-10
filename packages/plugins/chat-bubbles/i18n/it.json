@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Colore dei fumetti",
+	"BUBBLE_COLOR_FALLBACK": "Segue il tema: nero con i temi scuri, bianco con il tema chiaro",
+	"COLORS": "Colori",
+	"CORNER_RADIUS": "Raggio degli angoli",
+	"HORIZONTAL_PADDING": "Spaziatura orizzontale",
+	"LAYOUT": "Layout",
+	"LAYOUT_CARD": "Schede a larghezza piena",
+	"LAYOUT_CARD_SUBTITLE": "Una scheda dietro l’intero messaggio, nome e reazioni inclusi, come in Rosiecord",
+	"LAYOUT_FIT": "Adatta al messaggio",
+	"LAYOUT_FIT_SUBTITLE": "Ogni fumetto racchiude solo il testo e i contenuti multimediali del proprio messaggio",
+	"OPACITY": "Opacità",
+	"OWN_COLOR": "I tuoi messaggi",
+	"OWN_COLOR_FALLBACK": "Uguale al colore dei fumetti",
+	"SHAPE": "Forma",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Spaziatura verticale"
+}

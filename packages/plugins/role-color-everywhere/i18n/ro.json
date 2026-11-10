@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Colorează mențiunile",
+	"COLOR_MENTIONS_SUBTITLE": "Afișează culorile rolului membrului menționat în chat și în caseta de scriere",
+	"COLOR_MESSAGE_CONTENT": "Colorează conținutul mesajelor",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Nuanțează textul mesajului cu culoarea rolului autorului",
+	"MESSAGE_COLOR_INTENSITY": "Intensitatea culorii mesajelor",
+	"TYPING_NAMES": "Nume la tastare",
+	"TYPING_NAMES_SUBTITLE": "Colorează numele din indicatorul de tastare al canalului",
+	"MEMBER_LIST_ROLE_HEADERS": "Titlurile rolurilor din lista de membri",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "Colorează titlurile secțiunilor de rol din lista de membri",
+	"REACTION_USERS": "Utilizatorii reacțiilor",
+	"REACTION_USERS_SUBTITLE": "Colorează numele din lista de detalii a reacțiilor",
+	"POLL_VOTERS": "Votanții sondajelor",
+	"POLL_VOTERS_SUBTITLE": "Colorează numele din detaliile rezultatelor sondajelor",
+	"VOICE_USERS": "Utilizatori pe voce",
+	"VOICE_USERS_SUBTITLE": "Colorează numele membrilor din listele de utilizatori pe voce"
+}

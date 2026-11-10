@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Automatisch uitschakelen",
+	"AUTO_DISABLE_SUBTITLE": "Zet de schakelaar weer uit na het versturen van één stil bericht",
+	"DISABLE_SILENT_MESSAGE": "Stil bericht uitschakelen",
+	"ENABLE_SILENT_MESSAGE": "Stil bericht inschakelen",
+	"PERSIST_STATE": "Status onthouden",
+	"PERSIST_STATE_SUBTITLE": "Laat de schakelaar aan staan wanneer je een ander kanaal opent",
+	"SILENT_MESSAGE_TOGGLE": "Schakelaar voor stille berichten",
+	"TOGGLE": "Schakelaar",
+	"TOGGLED_OFF": "Je berichten hier sturen weer meldingen.",
+	"TOGGLED_ON": "Je berichten hier worden zonder meldingen verstuurd."
+}

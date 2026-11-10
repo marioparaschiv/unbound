@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "ใส่สีการกล่าวถึง",
+	"COLOR_MENTIONS_SUBTITLE": "แสดงสีบทบาทของสมาชิกที่ถูกกล่าวถึงในแชทและช่องพิมพ์ข้อความ",
+	"COLOR_MESSAGE_CONTENT": "ใส่สีเนื้อหาข้อความ",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "แต้มสีข้อความด้วยสีบทบาทของผู้เขียน",
+	"MESSAGE_COLOR_INTENSITY": "ความเข้มของสีข้อความ",
+	"TYPING_NAMES": "ชื่อผู้ที่กำลังพิมพ์",
+	"TYPING_NAMES_SUBTITLE": "ใส่สีชื่อในตัวบ่งชี้การพิมพ์ของช่อง",
+	"MEMBER_LIST_ROLE_HEADERS": "หัวข้อบทบาทในรายชื่อสมาชิก",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "ใส่สีหัวข้อส่วนบทบาทในรายชื่อสมาชิก",
+	"REACTION_USERS": "ผู้ใช้ที่รีแอคชัน",
+	"REACTION_USERS_SUBTITLE": "ใส่สีชื่อในรายการรายละเอียดรีแอคชัน",
+	"POLL_VOTERS": "ผู้โหวตโพล",
+	"POLL_VOTERS_SUBTITLE": "ใส่สีชื่อในรายละเอียดผลโพล",
+	"VOICE_USERS": "ผู้ใช้ในช่องเสียง",
+	"VOICE_USERS_SUBTITLE": "ใส่สีชื่อสมาชิกในรายชื่อผู้ใช้ช่องเสียง"
+}

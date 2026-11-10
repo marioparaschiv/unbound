@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "Nuostatos",
+	"DISPLAY_MODE": "Rodymo režimas",
+	"MODE_NICK_USER": "Rodomas vardas, tada naudotojo vardas",
+	"MODE_NICK_USER_SUBTITLE": "Rodomas vardas (@naudotojovardas)",
+	"MODE_USER_NICK": "Naudotojo vardas, tada rodomas vardas",
+	"MODE_USER_NICK_SUBTITLE": "@naudotojovardas (Rodomas vardas)",
+	"MODE_USER": "Tik naudotojo vardas",
+	"MODE_USER_SUBTITLE": "@naudotojovardas",
+	"FRIEND_NICKNAMES": "Rodyti draugų slapyvardžius",
+	"FRIEND_NICKNAMES_SUBTITLE": "Visur, kur įmanoma, pirmenybę teikti draugo slapyvardžiui",
+	"DISPLAY_NAMES": "Naudoti bendruosius vardus",
+	"DISPLAY_NAMES_SUBTITLE": "Rodyti paskyros bendrąjį vardą vietoj naudotojo vardo",
+	"IN_REPLIES": "Taikyti atsakymams",
+	"IN_REPLIES_SUBTITLE": "Taip pat taikyti atsakymų peržiūroms"
+}

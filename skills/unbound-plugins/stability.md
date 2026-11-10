@@ -9,4 +9,4 @@ Discord changes between builds and other plugins patch the same code. In priorit
 5. **Never block the JS thread.** Unbound disables a plugin after its second freeze in a session, or one freeze of 20 s or more.
 6. **Never crash Discord.** The loader disables a plugin that crashes Discord while starting or running it on consecutive launches, and tells the user.
 
-Prove it: turn the plugin off and on again on device and check that nothing it added remains; then cold start with `ubd install <id> --restart`.
+Prove it: turn the plugin off and on again on device and check that nothing it added remains; then cold start with `ubd device install <id> --restart`.

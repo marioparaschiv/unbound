@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Default Layout",
+	"LAYOUT_LIST": "List",
+	"LAYOUT_LIST_SUBTITLE": "Posts in a list",
+	"LAYOUT_GALLERY": "Gallery",
+	"LAYOUT_GALLERY_SUBTITLE": "Posts in a grid of cards",
+	"DEFAULT_SORT_ORDER": "Default Sort Order",
+	"SORT_RECENTLY_ACTIVE": "Recently Active",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Posts with the newest messages first",
+	"SORT_DATE_POSTED": "Date Posted",
+	"SORT_DATE_POSTED_SUBTITLE": "The newest posts first"
+}

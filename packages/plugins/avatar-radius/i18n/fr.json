@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Avatars",
+	"CORNER_RADIUS": "Arrondi des coins",
+	"CORNER_RADIUS_SUBTITLE": "De 0 pour un carré jusqu’à 64. Un rayon supérieur à la moitié de la taille d’un avatar le garde rond."
+}

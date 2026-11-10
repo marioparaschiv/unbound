@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Ersätt",
+	"REPLACE_ALL": "Titlar och miniatyrbilder",
+	"REPLACE_TITLES": "Titlar",
+	"REPLACE_THUMBNAILS": "Miniatyrbilder",
+	"DEARROW_BY_DEFAULT": "DeArrow som standard",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Ersätt titlar och miniatyrbilder utan att fråga",
+	"SHOW_TOGGLE": "Visa reglage",
+	"SHOW_TOGGLE_SUBTITLE": "Växla en inbäddning fram och tillbaka från meddelandemenyn",
+	"SHOW_ORIGINAL_EMBED": "Visa ursprunglig inbäddning",
+	"DEARROW_EMBED": "Använd DeArrow på inbäddning"
+}

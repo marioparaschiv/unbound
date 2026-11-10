@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Indicadores de escritura en canales",
+	"INCLUDE_CURRENT_CHANNEL": "Incluir el canal actual",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Muestra quién está escribiendo en el canal seleccionado.",
+	"INCLUDE_MUTED_CHANNELS": "Incluir canales silenciados",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Muestra quién está escribiendo en los canales silenciados.",
+	"INCLUDE_IGNORED_USERS": "Incluir usuarios ignorados",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Muestra cuándo escriben los usuarios ignorados.",
+	"INCLUDE_BLOCKED_USERS": "Incluir usuarios bloqueados",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Muestra cuándo escriben los usuarios bloqueados.",
+	"APPEARANCE": "Apariencia",
+	"APPEARANCE_BOTH": "Avatares y puntos animados",
+	"APPEARANCE_DOTS": "Puntos animados",
+	"APPEARANCE_AVATARS": "Avatares",
+	"TYPING_ONE": "{a} está escribiendo...",
+	"TYPING_TWO": "{a} y {b} están escribiendo...",
+	"TYPING_THREE": "{a}, {b} y {c} están escribiendo...",
+	"TYPING_SEVERAL": "Varias personas están escribiendo...",
+	"SOMEONE": "Alguien"
+}

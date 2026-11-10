@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Skrivindikatorer i kanaler",
+	"INCLUDE_CURRENT_CHANNEL": "Inkludera aktuell kanal",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Visa skrivaktivitet i den valda kanalen.",
+	"INCLUDE_MUTED_CHANNELS": "Inkludera tystade kanaler",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Visa skrivaktivitet i tystade kanaler.",
+	"INCLUDE_IGNORED_USERS": "Inkludera ignorerade användare",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Visa skrivaktivitet från ignorerade användare.",
+	"INCLUDE_BLOCKED_USERS": "Inkludera blockerade användare",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Visa skrivaktivitet från blockerade användare.",
+	"APPEARANCE": "Utseende",
+	"APPEARANCE_BOTH": "Avatarer och animerade prickar",
+	"APPEARANCE_DOTS": "Animerade prickar",
+	"APPEARANCE_AVATARS": "Avatarer",
+	"TYPING_ONE": "{a} skriver …",
+	"TYPING_TWO": "{a} och {b} skriver …",
+	"TYPING_THREE": "{a}, {b} och {c} skriver …",
+	"TYPING_SEVERAL": "Flera personer skriver …",
+	"SOMEONE": "Någon"
+}

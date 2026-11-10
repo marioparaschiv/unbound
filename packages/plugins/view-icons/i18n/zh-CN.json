@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "无法打开{image, select, avatar {头像} banner {横幅} serverAvatar {服务器头像} serverIcon {服务器图标} serverBanner {服务器横幅} other {群组私信图标}}。",
+	"VIEW_AVATAR": "查看头像",
+	"VIEW_BANNER": "查看横幅",
+	"VIEW_GROUP_ICON": "查看群组私信图标",
+	"VIEW_ICONS": "查看图标",
+	"VIEW_SERVER_AVATAR": "查看服务器头像",
+	"VIEW_SERVER_BANNER": "查看服务器横幅",
+	"VIEW_SERVER_ICON": "查看服务器图标"
+}

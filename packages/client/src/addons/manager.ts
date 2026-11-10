@@ -23,6 +23,8 @@ export type ManagerInfo = {
 	bucket: string;
 	/** The message key of the tab and section label. */
 	label: string;
+	/** The message key of the kind's plural as a sentence reads it, cased per locale. */
+	noun: string;
 	/** The asset name that stands in for an addon's own icon. */
 	icon: string;
 };
@@ -51,6 +53,7 @@ export abstract class Manager<T, EventMap extends DefaultEventMap = {}> extends 
 	readonly directory: string;
 	readonly bucket: string;
 	readonly label: string;
+	readonly noun: string;
 	readonly icon: string;
 
 	protected logger: ReturnType<typeof createLogger>;
@@ -59,7 +62,7 @@ export abstract class Manager<T, EventMap extends DefaultEventMap = {}> extends 
 
 	/**
 	 * @description Constructs the manager, creating its logger and patcher from its name and its settings from its bucket.
-	 * @param info The manager's kind, name, directory, bucket, label and icon.
+	 * @param info The manager's kind, name, directory, bucket, label, noun and icon.
 	 */
 	constructor(info: ManagerInfo) {
 		super();
@@ -69,6 +72,7 @@ export abstract class Manager<T, EventMap extends DefaultEventMap = {}> extends 
 		this.directory = info.directory;
 		this.bucket = info.bucket;
 		this.label = info.label;
+		this.noun = info.noun;
 		this.icon = info.icon;
 
 		this.logger = createLogger(info.name);

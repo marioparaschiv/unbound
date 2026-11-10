@@ -18,6 +18,7 @@ function toListing(listed: ListedAddon): MarketplaceListing {
 		authors: manifest.authors,
 		version,
 		publishedAt,
+		installs: listed.installs ?? 0,
 	};
 }
 

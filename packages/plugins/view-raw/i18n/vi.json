@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Đóng",
+	"CONTENT_COPIED": "Đã sao chép nội dung thô vào bảng nhớ tạm.",
+	"COPY_CONTENT": "Sao chép nội dung",
+	"COPY_DATA": "Sao chép dữ liệu",
+	"DATA_COPIED": "Đã sao chép dữ liệu {type} vào bảng nhớ tạm.",
+	"MESSAGE_CONTENT": "Nội dung tin nhắn",
+	"MESSAGE_DATA": "Dữ liệu tin nhắn",
+	"RAW_TITLE": "Dữ liệu {type} thô",
+	"TYPE_CHANNEL": "Kênh",
+	"TYPE_GUILD": "Máy chủ",
+	"TYPE_MESSAGE": "Tin nhắn",
+	"TYPE_PROFILE": "Hồ sơ",
+	"TYPE_USER": "Người dùng",
+	"VIEW_RAW": "Xem dữ liệu thô"
+}

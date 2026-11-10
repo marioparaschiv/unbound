@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "Encore {remaining} d’exclusion temporaire",
+	"TIMEOUT_EXPIRES_IN": "L’exclusion temporaire expire dans {remaining}"
+}

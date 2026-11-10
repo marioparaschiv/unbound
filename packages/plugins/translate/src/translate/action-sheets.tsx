@@ -5,19 +5,18 @@ import { findElement } from '@unbound-plugins/shared/react/find-element';
 import { assets, patcher } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
 
-import { copyTranslation } from '~/translate/translate';
+import { showTranslation, type TranslatableMessage } from '~/translate/translate';
+import { hideInline, isShownInline } from '~/translate/inline';
 import { ActionSheets } from '~/translate/modules';
 
-type Message = {
-	content: string;
-};
+type Message = TranslatableMessage;
 
 type SheetProps = {
 	message?: Message;
 };
 
 /**
- * @description Adds a Translate row to the message long-press action sheet, patching each sheet module as Discord lazy-loads it.
+ * @description Adds a Translate row to the message long-press action sheet, or Show Original on a message translated in the chat, patching each sheet module as Discord lazy-loads it.
  * @returns A function that removes the row and ignores sheets still loading.
  */
 export function patchActionSheets(): () => void {
@@ -33,13 +32,15 @@ export function patchActionSheets(): () => void {
 		if (rows.some((row) => row?.key === 'unbound-translate')) return result;
 
 		const ActionSheetRow = getActionSheetRow();
-		const { content } = message;
+		const target = message;
+		const translated = Boolean(target.id && isShownInline(target.id));
 		const icon = assets.getIdByName('LanguageIcon');
 
 		function onPress() {
 			if (sheetKey) ActionSheets.hideActionSheet(sheetKey);
 
-			void copyTranslation(content);
+			if (translated && target.id) hideInline(target.id);
+			else void showTranslation(target);
 		}
 
 		rows.splice(
@@ -47,7 +48,7 @@ export function patchActionSheets(): () => void {
 			0,
 			<ActionSheetRow
 				key='unbound-translate'
-				label={messages.TRANSLATE}
+				label={translated ? messages.SHOW_ORIGINAL : messages.TRANSLATE}
 				icon={icon ? <ActionSheetRow.Icon source={icon} /> : undefined}
 				onPress={onPress}
 			/>,

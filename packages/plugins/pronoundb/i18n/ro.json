@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Pronume",
+	"FORMAT_LOWERCASE": "Litere mici",
+	"FORMAT_CAPITALIZED": "Cu majusculă",
+	"SOURCE": "Sursă",
+	"SOURCE_PRONOUNDB": "Preferă PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "Revine la pronumele din profilul Discord",
+	"SOURCE_DISCORD": "Preferă Discord",
+	"SOURCE_DISCORD_SUBTITLE": "Revine la PronounDB",
+	"SHOW_FOR_YOURSELF": "Afișează și pentru tine",
+	"PRONOUN_ANY": "Orice pronume",
+	"PRONOUN_ASK": "Întreabă-mă ce pronume folosesc",
+	"PRONOUN_AVOID": "Evită pronumele, folosește-mi numele",
+	"PRONOUN_HE": "El/Lui",
+	"PRONOUN_IT": "It/Its",
+	"PRONOUN_OTHER": "Alte pronume",
+	"PRONOUN_SHE": "Ea/Ei",
+	"PRONOUN_THEY": "Ei/Lor",
+	"PRONOUN_UNSPECIFIED": "Niciun pronume specificat."
+}

@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "人称代词",
+	"FORMAT_LOWERCASE": "小写",
+	"FORMAT_CAPITALIZED": "首字母大写",
+	"SOURCE": "来源",
+	"SOURCE_PRONOUNDB": "优先使用 PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "无数据时使用 Discord 个人资料中的人称代词",
+	"SOURCE_DISCORD": "优先使用 Discord",
+	"SOURCE_DISCORD_SUBTITLE": "无数据时使用 PronounDB",
+	"SHOW_FOR_YOURSELF": "为自己显示",
+	"PRONOUN_ANY": "任意人称代词",
+	"PRONOUN_ASK": "请询问我的人称代词",
+	"PRONOUN_AVOID": "不使用代词，请称呼我的名字",
+	"PRONOUN_HE": "他",
+	"PRONOUN_IT": "它",
+	"PRONOUN_OTHER": "其他人称代词",
+	"PRONOUN_SHE": "她",
+	"PRONOUN_THEY": "Ta（他们）",
+	"PRONOUN_UNSPECIFIED": "未指定人称代词。"
+}

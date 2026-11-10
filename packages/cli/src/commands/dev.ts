@@ -16,7 +16,7 @@ const devCommand: CommandDefinition<typeof schema> = {
 		'Watch every addon in the workspace and rebuild only the addon whose files change, reloading ' +
 		'it in the running client after each successful build. Runs until interrupted.',
 	summary: 'Watch addons and rebuild on change.',
-	surfaces: { cli: 'root', mcp: false },
+	mcp: false,
 	schema,
 	async handler(_input, context) {
 		const resolved = loadConfig();

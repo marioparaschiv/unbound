@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Boja oblačića",
+	"BUBBLE_COLOR_FALLBACK": "Prati temu: crna na tamnim temama, bijela na svijetloj temi",
+	"COLORS": "Boje",
+	"CORNER_RADIUS": "Zaobljenost kutova",
+	"HORIZONTAL_PADDING": "Vodoravna ispuna",
+	"LAYOUT": "Raspored",
+	"LAYOUT_CARD": "Kartice pune širine",
+	"LAYOUT_CARD_SUBTITLE": "Jedna kartica iza cijele poruke, uključujući ime i reakcije, kao u Rosiecordu",
+	"LAYOUT_FIT": "Prilagodi poruci",
+	"LAYOUT_FIT_SUBTITLE": "Svaki oblačić obuhvaća samo tekst i medije svoje poruke",
+	"OPACITY": "Neprozirnost",
+	"OWN_COLOR": "Tvoje poruke",
+	"OWN_COLOR_FALLBACK": "Ista kao boja oblačića",
+	"SHAPE": "Oblik",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Okomita ispuna"
+}

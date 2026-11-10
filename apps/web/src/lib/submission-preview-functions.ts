@@ -91,6 +91,7 @@ async function toPreviewPage(pending: PendingVersion): Promise<MarketplaceAddonD
 		authors: resolve(manifest.authors),
 		version: manifest.version,
 		manifestUrl: version.manifestUrl,
+		installs: published?.installs ?? 0,
 		createdAt: published?.createdAt ?? at,
 		platforms: resolvePlatforms(manifest),
 		minClientVersion: manifest.unbound?.min ?? null,

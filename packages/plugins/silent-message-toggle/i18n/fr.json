@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Désactivation automatique",
+	"AUTO_DISABLE_SUBTITLE": "Désactiver à nouveau l’option après l’envoi d’un message silencieux",
+	"DISABLE_SILENT_MESSAGE": "Désactiver le message silencieux",
+	"ENABLE_SILENT_MESSAGE": "Activer le message silencieux",
+	"PERSIST_STATE": "Conserver l’état",
+	"PERSIST_STATE_SUBTITLE": "Garder l’option activée quand vous ouvrez un autre salon",
+	"SILENT_MESSAGE_TOGGLE": "Bouton de message silencieux",
+	"TOGGLE": "Bouton",
+	"TOGGLED_OFF": "Vos messages ici notifient de nouveau les autres.",
+	"TOGGLED_ON": "Vos messages ici sont envoyés sans notification."
+}

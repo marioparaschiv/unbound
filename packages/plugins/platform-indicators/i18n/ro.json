@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Indicatori de platformă",
+	"SHOW_INDICATORS": "Afișează indicatorii",
+	"MEMBER_LIST": "Lista de membri",
+	"MEMBER_LIST_SUBTITLE": "După nume în lista de membri și în alte liste de utilizatori",
+	"PROFILES": "Profiluri",
+	"PROFILES_SUBTITLE": "Sub nume și insigne, pe profiluri",
+	"MESSAGES": "Mesaje",
+	"MESSAGES_SUBTITLE": "Imediat după ora mesajului",
+	"STATUS": "Status",
+	"COLOR_MOBILE_INDICATOR": "Colorează indicatorul mobil",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "Afișează forma de telefon a statusului și pentru utilizatorii de pe mobil care sunt inactivi sau ocupați",
+	"PLATFORM_DESKTOP": "Desktop",
+	"PLATFORM_MOBILE": "Mobil",
+	"PLATFORM_WEB": "Web",
+	"PLATFORM_EMBEDDED": "Încorporat (consolă sau joc)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "Online pe {platforms}"
+}

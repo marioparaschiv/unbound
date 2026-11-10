@@ -1,0 +1,5 @@
+{
+	"MESSAGE_PREVIEW": "Nachrichtenvorschau",
+	"PREVIEW_FAILED": "Vorschau fehlgeschlagen: {reason}",
+	"PREVIEW_MESSAGE": "Nachricht in der Vorschau ansehen"
+}

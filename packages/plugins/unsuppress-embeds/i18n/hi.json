@@ -1,0 +1,6 @@
+{
+	"SUPPRESS_EMBEDS": "एम्बेड छिपाएँ",
+	"UNSUPPRESS_EMBEDS": "एम्बेड फिर से दिखाएँ",
+	"CHANGE_FAILED": "{action} विफल रहा: {reason}",
+	"CHANGE_REFUSED": "Discord ने बदलाव अस्वीकार कर दिया।"
+}

@@ -10,7 +10,7 @@ import type {
 import type { DeviceClient } from '../src/lib/device';
 
 import { formatClassReport, formatFoundViews, formatViewTree } from '../src/lib/inspect-format';
-import inspectCommand, { runInspect } from '../src/commands/inspect';
+import inspectCommand, { runInspect } from '../src/commands/debug/inspect';
 import { parse, type StaticDecode } from '../src/lib/schema';
 
 const textView: ClassReport = {
@@ -279,7 +279,7 @@ describe('inspect command', () => {
 		});
 		expect(await run({ what: 'find' }, clientAnswering(textView))).toEqual({
 			ok: false,
-			text: 'Pass the class to look for: ubd inspect find <class>.',
+			text: 'Pass the class to look for: ubd debug inspect find <class>.',
 		});
 	});
 });

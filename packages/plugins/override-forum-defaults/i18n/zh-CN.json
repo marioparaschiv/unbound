@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "默认布局",
+	"LAYOUT_LIST": "列表",
+	"LAYOUT_LIST_SUBTITLE": "以列表形式显示帖子",
+	"LAYOUT_GALLERY": "画廊",
+	"LAYOUT_GALLERY_SUBTITLE": "以卡片网格形式显示帖子",
+	"DEFAULT_SORT_ORDER": "默认排序方式",
+	"SORT_RECENTLY_ACTIVE": "最近活跃",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "有最新消息的帖子排在前面",
+	"SORT_DATE_POSTED": "发布日期",
+	"SORT_DATE_POSTED_SUBTITLE": "最新发布的帖子排在前面"
+}

@@ -21,7 +21,7 @@ type NoAddonsProps = {
 function NoAddons({ kind }: NoAddonsProps) {
 	const styles = useStyles();
 	const navigation = Discord.useNavigation();
-	const type = messages[Manager.for(kind).label].toLowerCase();
+	const type = messages[Manager.for(kind).noun];
 
 	return (
 		<View style={styles.container}>

@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "Tercihler",
+	"DISPLAY_MODE": "Gösterim Modu",
+	"MODE_NICK_USER": "Önce görünen ad, sonra kullanıcı adı",
+	"MODE_NICK_USER_SUBTITLE": "Görünen Ad (@kullanıcıadı)",
+	"MODE_USER_NICK": "Önce kullanıcı adı, sonra görünen ad",
+	"MODE_USER_NICK_SUBTITLE": "@kullanıcıadı (Görünen Ad)",
+	"MODE_USER": "Yalnızca kullanıcı adı",
+	"MODE_USER_SUBTITLE": "@kullanıcıadı",
+	"FRIEND_NICKNAMES": "Arkadaş Takma Adlarını Göster",
+	"FRIEND_NICKNAMES_SUBTITLE": "Geçerli olduğu her yerde arkadaşının takma adını tercih et",
+	"DISPLAY_NAMES": "Genel Adları Kullan",
+	"DISPLAY_NAMES_SUBTITLE": "Kullanıcı adı yerine hesabın genel adını göster",
+	"IN_REPLIES": "Yanıtlara Uygula",
+	"IN_REPLIES_SUBTITLE": "Yanıt önizlemelerine de uygula"
+}

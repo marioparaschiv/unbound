@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Anhänge hinzufügen",
+	"UPLOADING": "Wird hochgeladen, das kann eine Weile dauern …",
+	"ATTACHMENTS_ADDED": "{count, plural, one {Anhang erfolgreich hinzugefügt!} other {Anhänge erfolgreich hinzugefügt!}}",
+	"UPLOAD_FAILED": "Ein Anhang konnte nicht hochgeladen werden.",
+	"NOT_ADDED": "Die Anhänge konnten nicht hinzugefügt werden.",
+	"PICKER_UNAVAILABLE": "Die Medienauswahl ist in diesem Discord-Build nicht verfügbar.",
+	"PICKER_FAILED": "Die Medienauswahl ist fehlgeschlagen.",
+	"LIMIT_REACHED": "Du kannst dieser Nachricht keine weiteren Anhänge hinzufügen.",
+	"LIMIT_REMAINING": "Du kannst dieser Nachricht nur noch {count, plural, one {# Anhang} other {# Anhänge}} hinzufügen."
+}

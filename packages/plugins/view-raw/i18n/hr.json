@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Zatvori",
+	"CONTENT_COPIED": "Neobrađeni sadržaj kopiran je u međuspremnik.",
+	"COPY_CONTENT": "Kopiraj sadržaj",
+	"COPY_DATA": "Kopiraj podatke",
+	"DATA_COPIED": "Podaci ({type}) kopirani su u međuspremnik.",
+	"MESSAGE_CONTENT": "Sadržaj poruke",
+	"MESSAGE_DATA": "Podaci poruke",
+	"RAW_TITLE": "Neobrađeni podaci: {type}",
+	"TYPE_CHANNEL": "Kanal",
+	"TYPE_GUILD": "Server",
+	"TYPE_MESSAGE": "Poruka",
+	"TYPE_PROFILE": "Profil",
+	"TYPE_USER": "Korisnik",
+	"VIEW_RAW": "Prikaži neobrađeno"
+}

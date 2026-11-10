@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "提及上色",
+	"COLOR_MENTIONS_SUBTITLE": "在聊天和輸入框中顯示被提及成員的身分組顏色",
+	"COLOR_MESSAGE_CONTENT": "訊息內容上色",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "以作者的身分組顏色為訊息文字著色",
+	"MESSAGE_COLOR_INTENSITY": "訊息顏色強度",
+	"TYPING_NAMES": "輸入中的名稱",
+	"TYPING_NAMES_SUBTITLE": "為頻道輸入指示器中的名稱上色",
+	"MEMBER_LIST_ROLE_HEADERS": "成員清單身分組標題",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "為成員清單中的身分組區段標題上色",
+	"REACTION_USERS": "反應使用者",
+	"REACTION_USERS_SUBTITLE": "為反應詳細資料清單中的名稱上色",
+	"POLL_VOTERS": "投票者",
+	"POLL_VOTERS_SUBTITLE": "為投票結果詳細資料中的名稱上色",
+	"VOICE_USERS": "語音使用者",
+	"VOICE_USERS_SUBTITLE": "為語音使用者清單中的成員名稱上色"
+}

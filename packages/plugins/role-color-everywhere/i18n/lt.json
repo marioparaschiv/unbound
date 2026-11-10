@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Spalvinti paminėjimus",
+	"COLOR_MENTIONS_SUBTITLE": "Rodyti paminėto nario rolių spalvas pokalbyje ir rašymo laukelyje",
+	"COLOR_MESSAGE_CONTENT": "Spalvinti žinučių turinį",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Atspalvinti žinutės tekstą autoriaus rolės spalva",
+	"MESSAGE_COLOR_INTENSITY": "Žinučių spalvos intensyvumas",
+	"TYPING_NAMES": "Rašančiųjų vardai",
+	"TYPING_NAMES_SUBTITLE": "Spalvinti vardus kanalo rašymo indikatoriuje",
+	"MEMBER_LIST_ROLE_HEADERS": "Narių sąrašo rolių antraštės",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "Spalvinti rolių skilčių pavadinimus narių sąraše",
+	"REACTION_USERS": "Sureagavę naudotojai",
+	"REACTION_USERS_SUBTITLE": "Spalvinti vardus reakcijų informacijos sąraše",
+	"POLL_VOTERS": "Apklausos dalyviai",
+	"POLL_VOTERS_SUBTITLE": "Spalvinti vardus apklausos rezultatų informacijoje",
+	"VOICE_USERS": "Balso naudotojai",
+	"VOICE_USERS_SUBTITLE": "Spalvinti narių vardus balso naudotojų sąrašuose"
+}

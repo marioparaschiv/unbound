@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Profilképek",
+	"CORNER_RADIUS": "Sarokkerekítés",
+	"CORNER_RADIUS_SUBTITLE": "0-tól (négyzet) 64-ig. A profilkép méretének felénél nagyobb sugár mellett kör marad."
+}

@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Standardlayout",
+	"LAYOUT_LIST": "Lista",
+	"LAYOUT_LIST_SUBTITLE": "Inlägg i en lista",
+	"LAYOUT_GALLERY": "Galleri",
+	"LAYOUT_GALLERY_SUBTITLE": "Inlägg i ett rutnät av kort",
+	"DEFAULT_SORT_ORDER": "Standardsortering",
+	"SORT_RECENTLY_ACTIVE": "Nyligen aktiva",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Inlägg med de senaste meddelandena först",
+	"SORT_DATE_POSTED": "Publiceringsdatum",
+	"SORT_DATE_POSTED_SUBTITLE": "De nyaste inläggen först"
+}

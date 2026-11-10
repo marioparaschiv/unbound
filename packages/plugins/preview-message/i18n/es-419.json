@@ -1,0 +1,5 @@
+{
+	"MESSAGE_PREVIEW": "Vista previa del mensaje",
+	"PREVIEW_FAILED": "Error en la vista previa: {reason}",
+	"PREVIEW_MESSAGE": "Vista previa del mensaje"
+}

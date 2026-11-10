@@ -1,0 +1,18 @@
+{
+	"ADD_USER_ID": "Přidat ID uživatele",
+	"ADD_USER_ID_SUBTITLE": "Když je výjimka zapnutá, odpovědi mohou tyto uživatele zmínit",
+	"CANCEL": "Zrušit",
+	"DELETE": "Smazat",
+	"EDIT": "Upravit",
+	"EDIT_USER_ID": "Upravit ID uživatele",
+	"EXCEPTIONS": "Výjimky",
+	"INVALID_USER_ID": "Zadej číselné ID uživatele Discordu.",
+	"NO_USERS": "Zatím nejsou přidaní žádní uživatelé.",
+	"ONLY_PING_LISTED": "Pingovat jen uvedené uživatele",
+	"ONLY_PING_LISTED_OFF": "Odpovědi ve výchozím stavu nikoho nezmíní",
+	"ONLY_PING_LISTED_ON": "Odpovědi zmíní jen uživatele uvedené výše",
+	"PLUGIN_NAME": "No Reply Mention",
+	"SAVE": "Uložit",
+	"TAP_TO_EDIT": "Klepnutím upravíš",
+	"USER_ID_PLACEHOLDER": "ID uživatele Discordu"
+}

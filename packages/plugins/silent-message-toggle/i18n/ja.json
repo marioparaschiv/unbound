@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "自動でオフ",
+	"AUTO_DISABLE_SUBTITLE": "サイレントメッセージを1件送信したら、トグルを再びオフにします",
+	"DISABLE_SILENT_MESSAGE": "サイレントメッセージを無効化",
+	"ENABLE_SILENT_MESSAGE": "サイレントメッセージを有効化",
+	"PERSIST_STATE": "状態を維持",
+	"PERSIST_STATE_SUBTITLE": "別のチャンネルを開いてもトグルをオンのままにします",
+	"SILENT_MESSAGE_TOGGLE": "サイレントメッセージ切り替え",
+	"TOGGLE": "切り替え",
+	"TOGGLED_OFF": "ここでのメッセージは再び通知されるようになりました。",
+	"TOGGLED_ON": "ここでのメッセージは通知なしで送信されます。"
+}

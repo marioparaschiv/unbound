@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "सर्वनाम",
+	"FORMAT_LOWERCASE": "छोटे अक्षर",
+	"FORMAT_CAPITALIZED": "पहला अक्षर बड़ा",
+	"SOURCE": "स्रोत",
+	"SOURCE_PRONOUNDB": "PronounDB को प्राथमिकता दें",
+	"SOURCE_PRONOUNDB_SUBTITLE": "न मिलने पर Discord प्रोफ़ाइल के सर्वनाम इस्तेमाल करें",
+	"SOURCE_DISCORD": "Discord को प्राथमिकता दें",
+	"SOURCE_DISCORD_SUBTITLE": "न मिलने पर PronounDB इस्तेमाल करें",
+	"SHOW_FOR_YOURSELF": "अपने लिए भी दिखाएँ",
+	"PRONOUN_ANY": "कोई भी सर्वनाम",
+	"PRONOUN_ASK": "मेरे सर्वनाम मुझसे पूछें",
+	"PRONOUN_AVOID": "सर्वनाम नहीं, मेरा नाम इस्तेमाल करें",
+	"PRONOUN_HE": "He/Him (पुल्लिंग)",
+	"PRONOUN_IT": "It/Its",
+	"PRONOUN_OTHER": "दूसरे सर्वनाम",
+	"PRONOUN_SHE": "She/Her (स्त्रीलिंग)",
+	"PRONOUN_THEY": "They/Them",
+	"PRONOUN_UNSPECIFIED": "कोई सर्वनाम नहीं बताया गया।"
+}

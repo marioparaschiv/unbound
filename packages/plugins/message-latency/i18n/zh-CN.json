@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "指示器",
+	"LATENCY_THRESHOLD": "延迟阈值",
+	"LATENCY_THRESHOLD_SUBTITLE": "消息发送耗时达到此时长时显示指示器。",
+	"SHOW_MILLISECONDS": "显示毫秒",
+	"SHOW_MILLISECONDS_SUBTITLE": "在指示器中显示精确到毫秒的时间。",
+	"IGNORE_MY_MESSAGES": "忽略我的消息",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "仅标记其他人发送的消息。",
+	"DETECT_LEGACY_ANDROID": "检测旧版 Android 客户端",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "为旧版 Discord Android 客户端已知的时间戳偏差显示标记。",
+	"DURATION_DAYS": "{count, plural, other {# 天}}",
+	"DURATION_HOURS": "{count, plural, other {# 小时}}",
+	"DURATION_MINUTES": "{count, plural, other {# 分钟}}",
+	"DURATION_SECONDS": "{count, plural, other {# 秒}}",
+	"DURATION_MILLISECONDS": "{count, plural, other {# 毫秒}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} {later}",
+	"TOOLTIP_DELAYED": "此消息延迟了 {duration} 才发送。",
+	"TOOLTIP_CLOCK_AHEAD": "此用户的时钟快了 {duration}。",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "该用户疑似在使用旧版 Discord Android 客户端",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message}该用户疑似在使用旧版 Discord Android 客户端。",
+	"OLD_ANDROID_CLIENT": "旧版 Discord Android 客户端"
+}

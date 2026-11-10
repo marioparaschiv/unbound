@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Chỉ báo nền tảng",
+	"SHOW_INDICATORS": "Hiện chỉ báo",
+	"MEMBER_LIST": "Danh sách thành viên",
+	"MEMBER_LIST_SUBTITLE": "Sau tên trong danh sách thành viên và các danh sách người dùng khác",
+	"PROFILES": "Hồ sơ",
+	"PROFILES_SUBTITLE": "Dưới tên và huy hiệu trên hồ sơ",
+	"MESSAGES": "Tin nhắn",
+	"MESSAGES_SUBTITLE": "Sau dấu thời gian của tin nhắn",
+	"STATUS": "Trạng thái",
+	"COLOR_MOBILE_INDICATOR": "Tô màu chỉ báo di động",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "Hiện cả hình điện thoại cho người dùng di động đang treo máy hoặc bận",
+	"PLATFORM_DESKTOP": "Máy tính",
+	"PLATFORM_MOBILE": "Di động",
+	"PLATFORM_WEB": "Web",
+	"PLATFORM_EMBEDDED": "Nhúng (máy chơi game hoặc trò chơi)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "Trực tuyến trên {platforms}"
+}

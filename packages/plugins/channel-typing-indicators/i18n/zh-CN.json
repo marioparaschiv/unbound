@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "频道输入提示",
+	"INCLUDE_CURRENT_CHANNEL": "包括当前频道",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "在当前选中的频道中显示输入状态。",
+	"INCLUDE_MUTED_CHANNELS": "包括已静音的频道",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "在已静音的频道中显示输入状态。",
+	"INCLUDE_IGNORED_USERS": "包括已忽略的用户",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "显示已忽略用户的输入状态。",
+	"INCLUDE_BLOCKED_USERS": "包括已屏蔽的用户",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "显示已屏蔽用户的输入状态。",
+	"APPEARANCE": "外观",
+	"APPEARANCE_BOTH": "头像和动画圆点",
+	"APPEARANCE_DOTS": "动画圆点",
+	"APPEARANCE_AVATARS": "头像",
+	"TYPING_ONE": "{a} 正在输入…",
+	"TYPING_TWO": "{a} 和 {b} 正在输入…",
+	"TYPING_THREE": "{a}、{b} 和 {c} 正在输入…",
+	"TYPING_SEVERAL": "多人正在输入…",
+	"SOMEONE": "某人"
+}

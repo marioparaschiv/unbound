@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "外观",
+	"COLOR_THRESHOLDS": "颜色阈值",
+	"COLOR_THRESHOLDS_SUBTITLE": "消息接近 Discord 字数上限时发出警示。",
+	"COUNTER_LABEL": "{length}/{limit} 个字符"
+}

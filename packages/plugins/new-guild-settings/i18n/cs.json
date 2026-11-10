@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "Když se připojíš na server",
+	"MUTE_SERVER": "Ztlumit server",
+	"MUTE_SERVER_SUBTITLE": "Automaticky ztlumí nové servery",
+	"SUPPRESS_EVERYONE": "Potlačit @everyone a @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Ignoruje @everyone a @here na nových serverech",
+	"SUPPRESS_ROLES": "Potlačit všechny @zmínky rolí",
+	"SUPPRESS_ROLES_SUBTITLE": "Ignoruje zmínky rolí na nových serverech",
+	"SUPPRESS_HIGHLIGHTS": "Potlačit zvýraznění",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Vypne oznámení o zvýrazněních na nových serverech",
+	"MUTE_EVENTS": "Ztlumit nové události",
+	"MUTE_EVENTS_SUBTITLE": "Ztlumí oznámení o naplánovaných událostech",
+	"SHOW_ALL_CHANNELS": "Zobrazit všechny kanály",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Zobrazí všechny kanály na serverech, kde si můžeš kanály vybrat",
+	"SERVER_NOTIFICATION_SETTINGS": "Nastavení oznámení serveru",
+	"NOTIFY_ALL": "Všechny zprávy",
+	"NOTIFY_MENTIONS": "Jen @zmínky",
+	"NOTIFY_NOTHING": "Nic",
+	"NOTIFY_DEFAULT": "Výchozí nastavení serveru",
+	"APPLY_NEW_GUILD_SETTINGS": "Použít nastavení pro nové servery",
+	"APPLIED_TO_GUILD": "Použito na server {name}.",
+	"APPLIED_TO_THIS_SERVER": "Použito na tento server."
+}

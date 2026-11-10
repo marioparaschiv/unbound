@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Zavřít",
+	"CONTENT_COPIED": "Nezpracovaný obsah zkopírován do schránky.",
+	"COPY_CONTENT": "Kopírovat obsah",
+	"COPY_DATA": "Kopírovat data",
+	"DATA_COPIED": "Data ({type}) zkopírována do schránky.",
+	"MESSAGE_CONTENT": "Obsah zprávy",
+	"MESSAGE_DATA": "Data zprávy",
+	"RAW_TITLE": "Nezpracovaná data: {type}",
+	"TYPE_CHANNEL": "Kanál",
+	"TYPE_GUILD": "Server",
+	"TYPE_MESSAGE": "Zpráva",
+	"TYPE_PROFILE": "Profil",
+	"TYPE_USER": "Uživatel",
+	"VIEW_RAW": "Zobrazit nezpracovaná data"
+}

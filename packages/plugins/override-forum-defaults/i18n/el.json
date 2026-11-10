@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Προεπιλεγμένη διάταξη",
+	"LAYOUT_LIST": "Λίστα",
+	"LAYOUT_LIST_SUBTITLE": "Δημοσιεύσεις σε λίστα",
+	"LAYOUT_GALLERY": "Συλλογή",
+	"LAYOUT_GALLERY_SUBTITLE": "Δημοσιεύσεις σε πλέγμα καρτών",
+	"DEFAULT_SORT_ORDER": "Προεπιλεγμένη σειρά ταξινόμησης",
+	"SORT_RECENTLY_ACTIVE": "Πρόσφατη δραστηριότητα",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Πρώτα οι δημοσιεύσεις με τα πιο πρόσφατα μηνύματα",
+	"SORT_DATE_POSTED": "Ημερομηνία δημοσίευσης",
+	"SORT_DATE_POSTED_SUBTITLE": "Πρώτα οι πιο πρόσφατες δημοσιεύσεις"
+}

@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "Χρονικός αποκλεισμός: απομένουν {remaining}",
+	"TIMEOUT_EXPIRES_IN": "Ο χρονικός αποκλεισμός λήγει σε {remaining}"
+}

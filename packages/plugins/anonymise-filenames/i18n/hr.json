@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Zadano anonimiziraj",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Svaka se datoteka i dalje može prebaciti u njezinom pregledu",
+	"METHOD": "Metoda",
+	"METHOD_RANDOM": "Nasumični znakovi",
+	"METHOD_CONSISTENT": "Dosljedno",
+	"METHOD_TIMESTAMP": "Vremenska oznaka",
+	"LENGTH": "Duljina",
+	"FILE_NAME": "Naziv datoteke",
+	"FILE_NAME_PLACEHOLDER": "slika",
+	"FILE_NAME_SUBTITLE": "Svaka se datoteka prenosi s ovim nazivom i vlastitim nastavkom.",
+	"ANONYMISE_FILE_NAME": "Anonimiziraj naziv datoteke",
+	"USING_ANONYMOUS_NAME": "Koristi se anonimni naziv datoteke",
+	"USING_ORIGINAL_NAME": "Koristi se izvorni naziv datoteke",
+	"USE_ORIGINAL_FILE_NAME": "Koristi izvorni naziv datoteke"
+}

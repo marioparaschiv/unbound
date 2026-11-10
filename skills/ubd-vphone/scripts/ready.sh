@@ -37,12 +37,12 @@ served_etag() {
 runs_served_build() {
 	local device
 
-	device=$("$here/ubd" eval 'unbound.storage.getBucket("unbound").get("loader.update.etag")' 2>&1 | grep -o '[0-9a-f]\{8,\}' | tail -n 1)
+	device=$("$here/ubd" debug eval 'unbound.storage.getBucket("unbound").get("loader.update.etag")' 2>&1 | grep -o '[0-9a-f]\{8,\}' | tail -n 1)
 	[[ -n $device && $device == "$(served_etag)" ]]
 }
 
 while :; do
-	result=$("$here/ubd" eval 'typeof unbound' 2>&1)
+	result=$("$here/ubd" debug eval 'typeof unbound' 2>&1)
 
 	if grep -q '^object' <<<"$result"; then
 		if ((!fresh)) || runs_served_build; then
@@ -63,7 +63,7 @@ while :; do
 done
 
 echo "ready in $((SECONDS - start))s"
-echo "route: $("$here/ubd" mcp route 2>&1 | tail -n 1)"
+echo "route: $("$here/ubd" debug route 2>&1 | tail -n 1)"
 echo "last device bundle fetch: $(last_fetch)"
 
 if [[ -n $serving && $serving != "$root" ]]; then

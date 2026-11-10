@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "Hátralévő felfüggesztés: {remaining}",
+	"TIMEOUT_EXPIRES_IN": "A felfüggesztés {remaining} múlva lejár"
+}
