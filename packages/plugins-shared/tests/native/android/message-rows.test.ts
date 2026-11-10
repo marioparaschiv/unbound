@@ -52,11 +52,12 @@ function fakeAndroid() {
 		},
 	});
 	fake.registerClass(MESSAGE);
+	// MessageView as Discord 353.1 ships it: its widest bind `f` first stores the message id in `x`, its only `String` field.
 	fake.registerClass(MESSAGE_VIEW, {
 		methods: {
-			// Discord's bind keeps the shown message's id in the row's only `String` field.
-			setMessage: (self, message) => {
-				java.setField(self, 'messageId', {
+			b: () => null,
+			f: (self, message) => {
+				java.setField(self, 'x', {
 					type: 'string',
 					value: String(Reflect.get(message as object, 'fields').get('id')),
 				});
@@ -65,10 +66,21 @@ function fakeAndroid() {
 			},
 			onSizeChanged: () => null,
 		},
-		fields: { messageId: null },
-		fieldTypes: { messageId: 'java.lang.String' },
+		fields: { E: false, H: false, K: null, x: null },
+		fieldTypes: { E: 'boolean', H: 'boolean', K: 'java.util.ArrayList', x: 'java.lang.String' },
 		signatures: {
-			setMessage: { parameters: [MESSAGE, 'MessageContext', 'ChatEventHandler'] },
+			b: { parameters: [MESSAGE, 'd9.b', 'k9.v', 'ga.c'] },
+			f: {
+				parameters: [
+					MESSAGE,
+					'ga.c',
+					'd9.b',
+					'r9.c',
+					'kotlin.jvm.functions.Function0',
+					'boolean',
+					'boolean',
+				],
+			},
 			onSizeChanged: { parameters: ['int', 'int', 'int', 'int'] },
 		},
 	});
@@ -90,7 +102,7 @@ function fakeAndroid() {
 		row: () => fake.create(MESSAGE_VIEW) as NativeJavaReference,
 		host: () => fake.create('android.widget.FrameLayout') as NativeJavaReference,
 		bind(row: NativeJavaReference, id: string) {
-			java.invoke(row, 'setMessage', [fake.create(MESSAGE, { id })]);
+			java.invoke(row, 'f', [fake.create(MESSAGE, { id })]);
 		},
 		resize(row: NativeJavaReference) {
 			java.invoke(
