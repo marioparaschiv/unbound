@@ -1,22 +1,24 @@
 import type { PushedManifest, Plugin, PluginContext } from '@unbound-app/types';
+import type { AddonVersion } from '@unbound-app/contracts/addons';
 import { ADDON_SCOPE_GLOBALS } from '@unbound-app/types/addons';
 
 import { attributeAddon, crashGuardKey, setFreezeListener } from '~/addons/crash-guard';
 import { performRefresh, withRefreshScope } from '~/hot-refresh/runtime';
+import { installDependencies } from '~/marketplace/install-dependencies';
 import type { AddonGlobals, PluginScope } from '~/addons/scope';
 import { getLoader, getPlugins } from '~/native/unbound-native';
-import { Addons, rememberSourceDigest } from '~/addons/addons';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { createPluginContext } from '~/native/plugin-context';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { readPluginEntry } from '~/plugins/legacy-entry';
+import { rememberSourceDigest } from '~/addons/digests';
 import type { ReloadResult } from '~/addons/addons';
 import { createAddonScope } from '~/addons/scope';
 import { setOwnerCheck } from '~/commands/owners';
 import type { AddonFiles } from '~/addons/files';
 import { registry } from '~/commands/registry';
 import { benchSpan } from '~/core/bench-span';
-import { Manager } from '~/addons/manager';
+import { Addons } from '~/addons/addons';
 import fs from '~/native/fs';
 
 /**
@@ -65,12 +67,10 @@ export class Plugins extends Addons<Plugin> {
 			label: 'UNBOUND_PLUGINS',
 			icon: 'PuzzlePieceIcon',
 		});
-
-		Manager.register('plugin', this);
 	}
 
 	/**
-	 * @description Loads every plugin the loader scanned (`UnboundNative.getPlugins()`), then marks the manager initialised.
+	 * @description Loads every plugin the loader scanned (`UnboundNative.getPlugins()`).
 	 */
 	initialize() {
 		setFreezeListener((freeze) => this.handleFreeze(freeze));
@@ -90,8 +90,17 @@ export class Plugins extends Addons<Plugin> {
 
 			this.load(bundle, manifest);
 		}
+	}
 
-		this.initialized = true;
+	/**
+	 * @description Stops listening for freezes and restores the default command owner check, then shuts the plugins down.
+	 * @returns A promise that resolves once every plugin has stopped.
+	 */
+	shutdown(): Promise<void> {
+		setFreezeListener(undefined);
+		setOwnerCheck(undefined);
+
+		return super.shutdown();
 	}
 
 	/**
@@ -149,6 +158,15 @@ export class Plugins extends Addons<Plugin> {
 		}
 
 		return result;
+	}
+
+	/**
+	 * @description Installs or updates the plugins a listed version depends on, once the user agrees.
+	 * @param version The version about to install.
+	 * @returns Whether its dependencies are in place.
+	 */
+	protected installRequirements(version: AddonVersion): Promise<boolean> {
+		return installDependencies(version.manifest);
 	}
 
 	protected createScope(entity: Addon<Plugin>): PluginScope {

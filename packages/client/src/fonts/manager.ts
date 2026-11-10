@@ -57,39 +57,30 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 			label: 'UNBOUND_FONTS',
 			icon: 'LettersIcon',
 		});
-
-		Manager.register('font', this);
 	}
 
 	initialize() {
 		const bridge = getNativeFonts();
 
-		if (bridge) {
-			const constants: Record<string, string> = {};
+		if (!bridge) return;
 
-			for (const [key, value] of Object.entries<unknown>(Constants.Fonts ?? {})) {
-				if (typeof value === 'string') {
-					constants[key] = value;
-				}
+		const constants: Record<string, string> = {};
+
+		for (const [key, value] of Object.entries<unknown>(Constants.Fonts ?? {})) {
+			if (typeof value === 'string') {
+				constants[key] = value;
 			}
-
-			bridge.setTargets(constants, { api: API_URL });
-			getBucket(CORE_SETTINGS_STORE).remove(LEGACY_OVERRIDES);
-			this.refresh();
-			this.launched = this.overrides;
 		}
 
-		this.initialized = true;
+		bridge.setTargets(constants, { api: API_URL });
+		getBucket(CORE_SETTINGS_STORE).remove(LEGACY_OVERRIDES);
+		this.refresh();
+		this.launched = this.overrides;
 	}
 
 	/** @returns Whether the loader has the font store; an older one needs an update first. */
 	isSupported(): boolean {
 		return Boolean(getNativeFonts());
-	}
-
-	/** @returns The installed faces. */
-	getFonts(): FontEntity[] {
-		return this.getEntities();
 	}
 
 	/** @returns The installed faces grouped by family, families in name order. */
@@ -361,12 +352,6 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 		return sources;
 	}
 
-	/** The loader records each face's source itself. */
-	recordSource() {}
-
-	/** The loader forgets a face's source when it removes the face. */
-	forgetSource() {}
-
 	/**
 	 * @description Reads whether a listed font is installed: a face installed from its file.
 	 * @param listed The listed font.
@@ -380,7 +365,8 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 	}
 
 	/**
-	 * @description Installs a listed font from its file; fonts carry no manifest, and no version to hold.
+	 * @description Installs a listed font from its file; fonts carry no manifest, no version to hold and
+	 * no on state, so they apply from Design.
 	 * @param _listed The listed font.
 	 * @param version The version whose file to install.
 	 * @returns Whether the install succeeded.

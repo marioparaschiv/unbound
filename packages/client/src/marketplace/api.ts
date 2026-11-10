@@ -1,9 +1,9 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 
 import type { CatalogQuery, MarketplaceListing } from '~/marketplace/catalog';
-import { installVersion } from '~/marketplace/install';
 import { queryCatalog } from '~/marketplace/catalog';
 import MarketplaceStore from '~/marketplace/state';
+import { Manager } from '~/addons/manager';
 
 export type { CatalogQuery, CatalogSort, MarketplaceListing } from '~/marketplace/catalog';
 
@@ -66,5 +66,5 @@ export async function install(id: string): Promise<boolean> {
 		return false;
 	}
 
-	return installVersion(listed.type, listed, listed.latestVersion);
+	return Manager.for(listed.type).installListed(listed, listed.latestVersion);
 }

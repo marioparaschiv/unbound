@@ -11,7 +11,7 @@ import { checkDiscordBuilds } from '~/updates/discord-builds';
 import type { DiscordBuilds } from '~/updates/discord-builds';
 import type { PendingUpdate } from '~/updates/addon-updates';
 import type { LoaderCheck } from '~/updates/loader-updates';
-import { installsFromManifest } from '~/addons/addons';
+import { installsFromManifest } from '~/addons/installs-from-manifest';
 import { getLoader } from '~/native/unbound-native';
 import { Manager } from '~/addons/manager';
 

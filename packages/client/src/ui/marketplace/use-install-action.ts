@@ -5,10 +5,10 @@ import { useState } from 'react';
 import type { InstallStatus } from '~/marketplace/catalog';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { AvailableChoice } from '~/addons/versions';
-import { installsFromManifest } from '~/addons/addons';
-import { installVersion } from '~/marketplace/install';
+import { installsFromManifest } from '~/addons/installs-from-manifest';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
+import { Manager } from '~/addons/manager';
 import { icons } from '~/assets/api';
 import { show } from '~/toasts/api';
 
@@ -79,7 +79,7 @@ function useInstallAction(kind: AddonKind, addon: ListedAddon): InstallAction {
 	async function press() {
 		if (!action.offer || pending) return;
 
-		const ok = await run(() => installVersion(kind, addon, addon.latestVersion));
+		const ok = await run(() => Manager.for(kind).installListed(addon, addon.latestVersion));
 
 		if (!ok) {
 			fail(format('UNBOUND_INSTALL_FAILED', { name: manifest.name }));

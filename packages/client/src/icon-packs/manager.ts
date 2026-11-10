@@ -8,7 +8,6 @@ import type { InstalledEntry } from '~/updates/addon-updates';
 import { getById, onAssetRegistered } from '~/assets/api';
 import { downloadFile } from '~/native/download-file';
 import { ImageSources } from '~/metro/common';
-import { Manager } from '~/addons/manager';
 import { Addons } from '~/addons/addons';
 import fs from '~/native/fs';
 
@@ -59,11 +58,24 @@ const defaultPack: IconPack = {
 	} satisfies IconPackManifest,
 };
 
+// UNKNOWN: packs applied by older clients stored the whole pack under `applied`, where the id is kept now.
+function legacyAppliedId(stored: unknown): string | undefined {
+	if (typeof stored !== 'object' || stored === null || !('manifest' in stored)) return;
+
+	const { manifest } = stored;
+
+	if (typeof manifest !== 'object' || manifest === null || !('id' in manifest)) return;
+
+	return typeof manifest.id === 'string' ? manifest.id : undefined;
+}
+
 /**
  * @description Manages icon packs. A pack is a folder of image files mirroring Discord's asset tree;
  * the applied pack rewrites `Image` sources to the on-disk files. Single-select, like themes.
  */
 export class Icons extends Addons<Plugin> {
+	protected readonly selection = 'one';
+	protected readonly fallback = defaultPack.manifest.id;
 	// Stops stamping assets that register after the applied pack.
 	private stopStamping = noop;
 
@@ -76,8 +88,6 @@ export class Icons extends Addons<Plugin> {
 			label: 'UNBOUND_ICONS',
 			icon: 'ImageIcon',
 		});
-
-		Manager.register('icon-pack', this);
 	}
 
 	/**
@@ -97,111 +107,57 @@ export class Icons extends Addons<Plugin> {
 		return super.listInstalled().filter((entry) => entry.id !== defaultPack.manifest.id);
 	}
 
-	get applied(): IconPack {
-		return this.settings.get('applied', defaultPack);
-	}
-
 	initialize() {
+		const legacy = legacyAppliedId(this.settings.get<unknown>('applied', null));
+
+		if (legacy !== undefined) {
+			this.settings.set('applied', legacy);
+		}
+
 		for (const pack of this.settings.get<IconPack[]>('packs', [defaultPack])) {
 			this.load(pack.bundle, pack.manifest);
 		}
-
-		this.applyPack(this.applied.manifest.id).catch((error) => {
-			this.logger.error('Failed to apply icon pack on init:', error);
-		});
-		this.initialized = true;
 	}
 
 	protected handleBundle(): null {
 		return null;
 	}
 
-	isEnabled(id: string): boolean {
-		return this.applied.manifest.id === id;
+	/**
+	 * @description Shows the applied pack's icons, replacing the pack before. The built-in pack has no
+	 * files, so applying it shows Discord's own icons. Twin of {@link unapply}.
+	 * @param pack The applied pack.
+	 * @returns Settles once every registered asset is stamped and images read from the pack.
+	 */
+	protected apply(pack: Addon): Promise<void> | void {
+		this.removePack();
+
+		if (pack.id === this.fallback) return;
+
+		return this.applyPack(pack.id);
 	}
 
 	/**
-	 * @description Applies a pack, replacing the one applied before, and emits `enabled`. Icons are
-	 * single-select: the applied pack lives in `applied`, not the base `states` map.
-	 * @param entity The pack to enable, as its id or the entity itself.
+	 * @description Shows Discord's own icons again. Twin of {@link apply}.
 	 */
-	async enable(entity: AddonResolveable) {
-		const resolved = this.resolve(entity);
-
-		if (!resolved) return;
-
-		try {
-			const packs = this.settings.get<IconPack[]>('packs', [defaultPack]);
-			const pack = packs.find((p) => p.manifest.id === resolved.id) ?? defaultPack;
-
-			this.settings.set('applied', pack);
-
-			this.removePack();
-			await this.applyPack(resolved.id);
-
-			this.emit('enabled', resolved);
-		} catch (error) {
-			this.fail('enable', resolved.id, error, 'icon pack');
-		}
-	}
-
-	disable(entity: AddonResolveable) {
-		const resolved = this.resolve(entity);
-
-		if (!resolved) return;
-
-		try {
-			this.settings.set('applied', defaultPack);
-			this.removePack();
-
-			this.emit('disabled', resolved);
-		} catch (error) {
-			this.fail('disable', resolved.id, error, 'icon pack');
-		}
+	protected unapply(): void {
+		this.removePack();
 	}
 
 	/**
-	 * @description Re-applies the pack if it is the applied one, re-reading its files from disk.
-	 * @param entity The pack to restart, as its id or the entity itself.
+	 * @description Deletes a pack, forgetting it from the packs loaded at launch.
+	 * @param entity The pack to delete, as its id or the entity itself.
 	 */
-	async restart(entity: AddonResolveable): Promise<void> {
-		const resolved = this.resolve(entity);
-
-		if (!resolved || !this.isEnabled(resolved.id)) return;
-
-		try {
-			this.removePack();
-			await this.applyPack(resolved.id);
-		} catch (error) {
-			this.fail('restart', resolved.id, error, 'icon pack');
-		}
-	}
-
 	async delete(entity: AddonResolveable): Promise<void> {
-		const resolved = this.resolve(entity);
+		const id = typeof entity === 'string' ? entity : entity.id;
+		const packs = this.settings.get<IconPack[]>('packs', [defaultPack]);
 
-		if (!resolved) return;
+		this.settings.set(
+			'packs',
+			packs.filter((p) => p.manifest.id !== id),
+		);
 
-		try {
-			if (this.applied.manifest.id === resolved.id) {
-				this.disable(resolved);
-			}
-
-			const packs = this.settings.get<IconPack[]>('packs', [defaultPack]);
-
-			this.settings.set(
-				'packs',
-				packs.filter((p) => p.manifest.id !== resolved.id),
-			);
-
-			this.unload(resolved);
-			await fs.removeFile(this.directoryOf(resolved.id));
-			this.forgetSource(resolved.id);
-
-			this.emit('deleted', resolved);
-		} catch (error) {
-			this.fail('delete', resolved.id, error, 'icon pack');
-		}
+		await super.delete(entity);
 	}
 
 	/**
@@ -209,11 +165,9 @@ export class Icons extends Addons<Plugin> {
 	 * patches the source resolution of every `Image` render to swap numeric sources for the pack's files.
 	 * Stamps are awaited before the patch installs, so no image renders against an un-stamped asset.
 	 * Assets that register later are stamped as they register.
-	 * @param id The pack id to apply. The `default` pack is a no-op.
+	 * @param id The pack id to apply.
 	 */
 	async applyPack(id: string) {
-		if (id === 'default') return;
-
 		const stamps: Array<Promise<void>> = [];
 
 		this.stopStamping();
@@ -336,14 +290,8 @@ export class Icons extends Addons<Plugin> {
 			]);
 
 			this.load(manifest.name, manifest);
-			const entity = this.getEntity(manifest.id);
 
-			if (entity) {
-				this.recordSource(entity.id, url);
-				this.emit('installed', entity);
-			}
-
-			return entity;
+			return this.installed(manifest.id, url);
 		} catch (error) {
 			this.logger.error('Failed to install icon pack:', error);
 			this.emit('install-error', toError(error));

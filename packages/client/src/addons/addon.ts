@@ -8,6 +8,7 @@ import type {
 import type { ComponentType } from 'react';
 
 import type { AddonLifecycle } from '~/addons/lifecycle';
+import type { RecordChange } from '~/addons/records';
 import type { PluginScope } from '~/addons/scope';
 
 /** What a manager keeps for one addon it governs. The manager is its only writer. */
@@ -51,6 +52,8 @@ export type AddonEvents<T> = {
 	'consent-required': (entity: T) => void;
 	/** Any change to {@link Addon.phase} or its settings panel: a start, an async settle, a stop or a failure. */
 	changed: (entity: T) => void;
+	/** A per-addon record the manager keeps in its Bucket changed, such as its enabled state or hold. */
+	'record-changed': (change: RecordChange) => void;
 };
 
 /** The manager calls an {@link Addon} forwards to. */

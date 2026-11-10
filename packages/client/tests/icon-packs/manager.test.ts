@@ -69,7 +69,7 @@ function settle() {
 	return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
-const { existingFiles, makeManifest } = await import('../helpers/addons');
+const { existingFiles, makeManifest, storedSettings } = await import('../helpers/addons');
 const { icons } = await import('~/icon-packs/manager');
 
 existingFiles.add(packFile('ic_star'));
@@ -121,5 +121,32 @@ describe('an enabled icon pack', () => {
 
 		expect(late.iconPackPath).toBe(`/docs/${packFile('late')}`);
 		expect(removed.iconPackPath).toBeUndefined();
+	});
+});
+
+describe('the applied icon pack', () => {
+	test('reads a pack an older client applied, which it stored whole', () => {
+		storedSettings.set('applied', { bundle: PACK, manifest: makeManifest(PACK) });
+
+		icons.initialize();
+
+		expect(icons.getAppliedId()).toBe(PACK);
+		expect(storedSettings.get('applied')).toBe(PACK);
+	});
+
+	test('deleting the applied pack shows Discord icons again and forgets its hold', async () => {
+		const DELETED = 'acme.deleted';
+
+		icons.load(DELETED, { ...makeManifest(DELETED), main: '', type: 'icon-pack' });
+		existingFiles.add(`Unbound/Icons/${DELETED}/images/native/icons/ic_star@2x.png`);
+		await icons.enable(DELETED);
+		icons.holdVersion(DELETED, '1.0.0');
+
+		await icons.delete(DELETED);
+
+		expect(icons.getEntity(DELETED)).toBeUndefined();
+		expect(icons.getAppliedId()).toBe('default');
+		expect(storedSettings.get('held')).not.toHaveProperty(DELETED);
+		expect(ImageSources.getImageSourcesFromImageProps({ source: 1 })).toBe(1);
 	});
 });

@@ -4,8 +4,6 @@ import { CLIENT_VERSION, Screens } from '~/core/constants';
 import type { SectionEntry } from '~/settings/section';
 import UpdatesStore from '~/updates/state';
 
-let pending: ReturnType<typeof setTimeout> | undefined;
-
 async function update() {
 	const { check, applyAll } = UpdatesStore.getState();
 
@@ -34,20 +32,17 @@ function announceClient() {
 	setSetting('updater.lastClientVersion', CLIENT_VERSION);
 }
 
-/**
- * Toasts a newly updated client, then checks for updates once after startup: applies addon updates with
- * `updater.auto.addons` on, and toasts a too-old loader and, per `updater.notify.*`, what is left.
- */
+/** Toasts a newly updated client. */
 export function start() {
 	announceClient();
-
-	// Built-ins start before the addon managers load their entities.
-	pending = setTimeout(() => void update());
 }
 
-/** Cancels an update check that has not started yet. */
-export function stop() {
-	clearTimeout(pending);
+/**
+ * Checks for updates once the addons have loaded: applies addon updates with `updater.auto.addons` on, and toasts
+ * a too-old loader and, per `updater.notify.*`, what is left.
+ */
+export function afterAddons() {
+	void update();
 }
 
 export const updatesSection: SectionEntry = {
@@ -64,4 +59,4 @@ export const updatesSection: SectionEntry = {
 	icon: 'DownloadIcon',
 };
 
-export default { start, stop, updatesSection };
+export default { start, afterAddons, updatesSection };

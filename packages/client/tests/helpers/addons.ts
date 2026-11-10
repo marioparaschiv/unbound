@@ -65,7 +65,16 @@ mock.module('~/storage/api', () => {
 		set: <T>(key: string, value: T) => {
 			if (key !== 'states') {
 				storedSettings.set(key, value);
+
+				return;
 			}
+
+			// Tests read `states` by reference, so a write replaces its contents.
+			for (const id of Object.keys(states)) {
+				delete states[id];
+			}
+
+			Object.assign(states, value);
 		},
 	};
 
@@ -125,7 +134,8 @@ export const { createPluginContext } =
 	require('~/native/plugin-context') as typeof import('~/native/plugin-context');
 
 /**
- * @description Loads the four addon managers, which read Discord's modules off `window` while they load.
+ * @description Loads the four addon managers, which read Discord's modules off `window` while they load, and
+ * registers them as core does.
  * @returns The base class, with every kind's manager registered.
  */
 export async function loadManagers() {
@@ -139,10 +149,12 @@ export async function loadManagers() {
 
 	const { Manager } = await import('~/addons/manager');
 
-	await import('~/plugins/manager');
-	await import('~/themes/manager');
-	await import('~/icon-packs/manager');
-	await import('~/fonts/manager');
+	const { plugins } = await import('~/plugins/manager');
+	const { themes } = await import('~/themes/manager');
+	const { icons } = await import('~/icon-packs/manager');
+	const { fonts } = await import('~/fonts/manager');
+
+	Manager.register({ plugin: plugins, theme: themes, 'icon-pack': icons, font: fonts });
 
 	return Manager;
 }

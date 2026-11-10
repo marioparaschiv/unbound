@@ -1,5 +1,6 @@
+import useRecordChanges from '~/ui/hooks/use-record-changes';
+import type { UpdatableKind } from '~/addons/manager-of';
 import { Manager } from '~/addons/manager';
-import { useBucket } from '~/storage/api';
 
 /**
  * @description Reads whether an addon is a development copy, re-rendering when its manager's development markers change.
@@ -7,12 +8,10 @@ import { useBucket } from '~/storage/api';
  * @param id The addon id.
  * @returns Whether the addon is a development copy.
  */
-function useDevelopmentCopy(kind: 'plugin' | 'theme' | 'icon-pack', id: string): boolean {
-	const manager = Manager.for(kind);
+function useDevelopmentCopy(kind: UpdatableKind, id: string): boolean {
+	useRecordChanges(kind, ['development']);
 
-	useBucket(manager.bucket, ({ key }) => key === 'development');
-
-	return manager.isDevelopmentCopy(id);
+	return Manager.for(kind).isDevelopmentCopy(id);
 }
 
 export default useDevelopmentCopy;

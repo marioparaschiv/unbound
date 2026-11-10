@@ -1,8 +1,8 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonKind } from '@unbound-app/types/addons';
 
-import { getInstalledVersion, installVersion } from '~/marketplace/install';
 import { getInstallStatus } from '~/marketplace/catalog';
+import { Manager } from '~/addons/manager';
 import { confirm } from '~/dialogs/api';
 import { format } from '~/i18n/api';
 import { show } from '~/toasts/api';
@@ -15,7 +15,8 @@ import { show } from '~/toasts/api';
  */
 export async function offerListedInstall(kind: AddonKind, addon: ListedAddon): Promise<boolean> {
 	const { name, description, version, authors } = addon.latestVersion.manifest;
-	const status = getInstallStatus(version, getInstalledVersion(kind, addon));
+	const manager = Manager.for(kind);
+	const status = getInstallStatus(version, manager.getInstalledVersion(addon));
 
 	if (status === 'installed') {
 		return false;
@@ -40,7 +41,7 @@ export async function offerListedInstall(kind: AddonKind, addon: ListedAddon): P
 		return false;
 	}
 
-	const ok = await installVersion(kind, addon, addon.latestVersion);
+	const ok = await manager.installListed(addon, addon.latestVersion);
 
 	if (!ok) {
 		show({

@@ -5,13 +5,13 @@ import { createLogger } from '@unbound-app/logger';
 
 import type { ShareDestination } from '~/ui/share/share-destination-sheet';
 import { findByPropsLazy, findStoreLazy } from '~/metro/wrappers';
-import { getInstalledVersion } from '~/marketplace/install';
 import { navigationReady } from '~/core/navigation-ready';
 import { createPatcher } from '~/patcher/create-patcher';
 import { ActionSheets, Linking } from '~/metro/api';
 import MarketplaceStore from '~/marketplace/state';
 import { getNativeModule } from '~/native/runtime';
 import { messages, format } from '~/i18n/api';
+import { Manager } from '~/addons/manager';
 import { Screens } from '~/core/constants';
 import { show } from '~/toasts/api';
 import fs from '~/native/fs';
@@ -267,7 +267,7 @@ const targets: LinkTargets = {
 	load: () => MarketplaceStore.getState().load(),
 	refresh: () => MarketplaceStore.getState().refresh(),
 	state: () => MarketplaceStore.getState().state,
-	installedVersion: getInstalledVersion,
+	installedVersion: (kind, listed) => Manager.for(kind).getInstalledVersion(listed),
 	open,
 };
 

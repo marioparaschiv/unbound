@@ -1,11 +1,11 @@
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { useEffect } from 'react';
 
+import { onRecordChange } from '~/ui/hooks/use-record-changes';
 import type { InstalledEntry } from '~/updates/addon-updates';
 import useForceUpdate from '~/ui/hooks/use-force-update';
-import { installsFromManifest } from '~/addons/addons';
+import { installsFromManifest } from '~/addons/installs-from-manifest';
 import { Manager } from '~/addons/manager';
-import { onChange } from '~/storage/api';
 
 const KINDS = ADDON_KINDS.filter(installsFromManifest);
 
@@ -18,11 +18,10 @@ function useInstalledAddons(): InstalledEntry[] {
 	const forceUpdate = useForceUpdate();
 
 	useEffect(() => {
-		const buckets = new Set(KINDS.map((kind) => Manager.for(kind).bucket));
-		const offs = [
-			...KINDS.map((kind) => Manager.for(kind).onInstalledChange(forceUpdate)),
-			onChange(({ store, key }) => buckets.has(store) && key === 'held', forceUpdate),
-		];
+		const offs = KINDS.flatMap((kind) => [
+			Manager.for(kind).onInstalledChange(forceUpdate),
+			onRecordChange(kind, ['held'], forceUpdate),
+		]);
 
 		return () => {
 			for (const off of offs) off();
