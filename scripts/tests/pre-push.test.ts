@@ -1,17 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 
+import { loadProjects } from '~/workspaces';
 import { checksFor } from '~/pre-push';
 
-const present = new Set([
-	'packages/plugins/chat-bubbles/package.json',
-	'packages/plugins/chat-bubbles/tsconfig.json',
-	'packages/plugin-scripts/package.json',
-	'packages/client/package.json',
-	'apps/web/package.json',
-	'apps/discord-bot/package.json',
-]);
-const exists = (path: string) => present.has(path);
-const labels = (files: string[]) => checksFor(files, exists).map((check) => check.label);
+const projects = loadProjects();
+const labels = (files: string[]) => checksFor(files, projects).map((check) => check.label);
 
 describe('pre-push checks', () => {
 	test('tests and type-checks a changed plugin', () => {
@@ -25,6 +18,7 @@ describe('pre-push checks', () => {
 		expect(labels(['packages/plugins-shared/src/native/app-surface.ts'])).toEqual([
 			'plugin tests',
 			'plugin type-check',
+			'packages/plugins-shared tests',
 			'packages/plugins-shared type-check',
 		]);
 	});
@@ -43,9 +37,17 @@ describe('pre-push checks', () => {
 	});
 
 	test('runs the client tests in isolation', () => {
-		const [check] = checksFor(['packages/client/src/core/index.ts'], exists);
+		const [check] = checksFor(['packages/client/src/core/index.ts'], projects);
 
 		expect(check?.command).toEqual(['bun', 'test', '--parallel']);
+	});
+
+	test('checks a client script with the client and its own config', () => {
+		expect(labels(['packages/client/scripts/build/index.ts'])).toEqual([
+			'packages/client tests',
+			'packages/client type-check',
+			'packages/client/scripts/build type-check',
+		]);
 	});
 
 	test('only type-checks apps and lints the loader', () => {
@@ -61,6 +63,17 @@ describe('pre-push checks', () => {
 			'apps/discord-bot tests',
 			'apps/discord-bot type-check',
 		]);
+	});
+
+	test('type-checks the repo scripts and their lint rules', () => {
+		expect(labels(['scripts/oxlint/plugin.ts'])).toEqual([
+			'scripts type-check',
+			'scripts/oxlint type-check',
+		]);
+	});
+
+	test('checks nothing for files outside every project', () => {
+		expect(labels(['README.md', 'packages/missing/src/a.ts'])).toEqual([]);
 	});
 
 	test('lints the loader for workflow changes but not for its docs', () => {

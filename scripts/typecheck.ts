@@ -1,39 +1,23 @@
 import { parseArgs } from 'node:util';
 import { resolve } from 'node:path';
 
+import { loadProjects, ROOT } from './workspaces';
+import { runCommand } from './run-command';
+
 export type ProjectResult = { project: string; errors: string[] };
 
 export type TypecheckSummary = { lines: string[]; ok: boolean };
 
-type CommandResult = { code: number; output: string };
-
-const root = resolve(import.meta.dir, '..');
-
-export const PROJECTS = [
-	'apps/web',
-	'apps/discord-bot',
-	'apps/discord-typegen',
-	'apps/sdk-generator',
-	'packages/cli',
-	'packages/client',
-	'packages/client/scripts/bench-android',
-	'packages/client/scripts/build',
-	'packages/client/scripts/dev',
-	'packages/client/scripts/serve',
-	'packages/plugin-scripts',
-	'packages/api',
-	'packages/contracts',
-	'packages/debugger',
-	'packages/debugger-protocol',
-	'packages/logger',
-	'packages/plugin-test',
-	'packages/plugins-shared',
-	'packages/rollup-plugin-hermes',
-	'packages/types',
-	'packages/utils',
-	'scripts',
-	'scripts/oxlint',
-];
+/**
+ * @description Lists the projects `bun run typecheck` checks: every typed one but the plugins, which
+ * `plugins:typecheck` covers.
+ * @returns Their directories, relative to the repository root.
+ */
+export function typecheckProjects(): string[] {
+	return loadProjects()
+		.filter((project) => project.typed && !project.plugin)
+		.map((project) => project.dir);
+}
 
 export const TSC_ARGS = [
 	'tsc',
@@ -74,19 +58,8 @@ export function summarize(results: ProjectResult[]): TypecheckSummary {
 	return { lines, ok: failing.length === 0 };
 }
 
-async function run(command: string[], cwd: string): Promise<CommandResult> {
-	const child = Bun.spawn(command, { cwd, stdout: 'pipe', stderr: 'pipe' });
-	const [stdout, stderr, code] = await Promise.all([
-		new Response(child.stdout).text(),
-		new Response(child.stderr).text(),
-		child.exited,
-	]);
-
-	return { code, output: stdout + stderr };
-}
-
 async function typecheck(project: string): Promise<ProjectResult> {
-	const { code, output } = await run(['bunx', ...TSC_ARGS], resolve(root, project));
+	const { code, output } = await runCommand(['bunx', ...TSC_ARGS], resolve(ROOT, project));
 	const errors = typeErrors(output);
 
 	return { project, errors: code !== 0 && !errors.length ? [output.trim()] : errors };
@@ -97,7 +70,10 @@ async function typecheck(project: string): Promise<ProjectResult> {
  * @returns Whether the build succeeded; its output is printed when it fails.
  */
 export async function buildWebTypes(): Promise<boolean> {
-	const types = await run(['bun', 'run', '--filter', '@unbound-app/web', 'build:types'], root);
+	const types = await runCommand(
+		['bun', 'run', '--filter', '@unbound-app/web', 'build:types'],
+		ROOT,
+	);
 
 	if (types.code !== 0) {
 		console.error(types.output);
@@ -115,7 +91,7 @@ async function main(): Promise<void> {
 		return;
 	}
 
-	const queue = [...PROJECTS];
+	const queue = typecheckProjects();
 	const results: ProjectResult[] = [];
 	const workers = Array.from({ length: Math.max(1, navigator.hardwareConcurrency) }, async () => {
 		for (let project = queue.shift(); project; project = queue.shift()) {

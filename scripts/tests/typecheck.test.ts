@@ -2,9 +2,18 @@ import { dirname, join, resolve } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 import { existsSync } from 'node:fs';
 
-import { PROJECTS, summarize, typeErrors } from '~/typecheck';
+import { summarize, typecheckProjects, typeErrors } from '~/typecheck';
+import { loadProjects } from '~/workspaces';
 
 const root = resolve(import.meta.dir, '../..');
+
+function trackedTsconfigDirs(): string[] {
+	const listed = Bun.spawnSync(['git', 'ls-files', '--', 'tsconfig.json', '**/tsconfig.json'], {
+		cwd: root,
+	});
+
+	return listed.stdout.toString().split('\n').filter(Boolean).map(dirname);
+}
 
 describe('typecheck', () => {
 	test('picks only error lines out of tsc output', () => {
@@ -38,20 +47,28 @@ describe('typecheck', () => {
 	});
 
 	test('covers every project with a tsconfig', () => {
-		for (const project of PROJECTS)
+		for (const project of typecheckProjects())
 			expect(existsSync(join(root, project, 'tsconfig.json'))).toBe(true);
 	});
 
 	// Plugins are type-checked by `plugins:typecheck`; fixtures and templates are inputs, not projects.
 	test('type-checks every tsconfig in the repository', () => {
-		const unchecked = [...new Bun.Glob('**/tsconfig.json').scanSync({ cwd: root })]
-			.map((path) => dirname(path))
-			.filter(
-				(dir) => !/(^|\/)(node_modules|fixtures|templates|docs-fixture)(\/|$)/.test(dir),
-			)
-			.filter((dir) => !dir.startsWith('packages/plugins/') && dir !== 'packages/plugins')
-			.filter((dir) => !PROJECTS.includes(dir));
+		const checked = new Set(typecheckProjects());
+		const skipped = new Set(
+			loadProjects()
+				.filter((project) => project.plugin || project.checks.typecheck === false)
+				.map((project) => project.dir),
+		);
+		const unchecked = trackedTsconfigDirs()
+			.filter((dir) => !/(^|\/)(fixtures|templates|docs-fixture)(\/|$)/.test(dir))
+			.filter((dir) => dir !== '.' && !checked.has(dir) && !skipped.has(dir));
 
 		expect(unchecked).toEqual([]);
+		expect(checked).toContain('apps/discord-typegen');
+	});
+
+	test('leaves the plugins to plugins:typecheck', () => {
+		expect(typecheckProjects()).not.toContain('packages/plugins/chat-bubbles');
+		expect(typecheckProjects()).not.toContain('packages/plugins');
 	});
 });

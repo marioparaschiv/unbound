@@ -102,5 +102,8 @@
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"
+	},
+	"checks": {
+		"tests": "none"
 	}
 }

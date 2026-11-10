@@ -13,5 +13,8 @@
 	"devDependencies": {
 		"@types/bun": "catalog:",
 		"typescript": "catalog:"
+	},
+	"checks": {
+		"tests": "none"
 	}
 }
