@@ -2,19 +2,20 @@ import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { listAddonFiles } from '@unbound-app/contracts/addon-files';
 import { and, eq } from 'drizzle-orm';
 
-import { getStagingKey, insertSubmissionSource, requireSourced } from '~/lib/submissions';
-import type { SourcedSubmissionRow, SubmissionRow } from '~/lib/submissions';
-import { writeArtifact, writeStorePage, type StorePage } from '~/lib/artifacts';
 import { addon, addonMaintainer, addonVersion, submission, user } from '~/db/schema';
-import { refreshAddonSummary, toAddonSummary } from '~/lib/addons';
-import { decideSubmission, type Decision } from '~/lib/submission-decision';
-import { applySubmissionMaintainers } from '~/lib/maintainers';
+import { checkClaim, type Claim, type ClaimedVersion } from '~/lib/addon-claim';
 import { readPageMedia, type PageMediaFiles } from '~/lib/addon-page-source';
-import type { Database, Transaction } from '~/db/database';
-import { requestProfileRefresh } from '~/lib/authors/profiles';
-import { recordReviewDecision } from '~/lib/moderation-events';
-import { checkClaim, type ClaimedVersion } from '~/lib/addon-claim';
+import type { SourcedSubmissionRow, SubmissionRow } from '~/lib/submissions';
+import { decideSubmission, type Decision } from '~/lib/submission-decision';
+import { getStagingKey, insertSubmissionSource } from '~/lib/submissions';
 import { readPinnedFiles, type PinnedFiles } from '~/lib/pinned-files';
+import { refreshAddonSummary, toAddonSummary } from '~/lib/addons';
+import type { ArtifactVersion, StorePage } from '~/lib/artifacts';
+import { writeArtifact, writeStorePage } from '~/lib/artifacts';
+import { requestProfileRefresh } from '~/lib/authors/profiles';
+import { applySubmissionMaintainers } from '~/lib/maintainers';
+import { recordReviewDecision } from '~/lib/moderation-events';
+import type { Database, Transaction } from '~/db/database';
 import type { AddonSource } from '~/lib/addon-source';
 import { connectGitHubIfLinked } from '~/lib/github';
 import { replaceAddonTags } from '~/lib/addon-tags';
@@ -51,11 +52,9 @@ export type Published = {
 type Artifact = PinnedFiles & { media: PageMediaFiles };
 
 type Commit = {
-	status: PublishStatus;
-	sha256: string;
-	row: SourcedSubmissionRow | undefined;
-	/** The files to write after the commit; `undefined` when they are already public. */
-	artifact: Artifact | undefined;
+	row: SourcedSubmissionRow;
+	/** The files to write after the commit. */
+	artifact: Artifact;
 };
 
 type FirstPartyPin = Extract<PublishPin, { mode: 'first-party' }>;
@@ -268,22 +267,30 @@ async function readVerified(ctx: AppContext, row: SourcedSubmissionRow): Promise
 	return artifact;
 }
 
-function toStorePage(row: SourcedSubmissionRow, media: PageMediaFiles): StorePage | undefined {
-	const { addonMd, page } = row.source;
-
+function toStorePage(
+	{ addonMd, page }: Pick<AddonSource, 'addonMd' | 'page'>,
+	media: PageMediaFiles,
+): StorePage | undefined {
 	if (addonMd === null) return;
 
 	return { addonMd, measured: page, media };
 }
 
+async function writePublicFiles(
+	ctx: AppContext,
+	target: ArtifactVersion,
+	artifact: Artifact,
+	page: StorePage | undefined,
+) {
+	await Promise.all([
+		writeArtifact(ctx, target, artifact.bundle, artifact),
+		page ? writeStorePage(ctx, target, page) : undefined,
+	]);
+}
+
 // Runs only after the version's row commits: writing earlier let a losing request leave files under its keys.
 async function writeFiles(ctx: AppContext, row: SourcedSubmissionRow, artifact: Artifact) {
-	const page = toStorePage(row, artifact.media);
-
-	await Promise.all([
-		writeArtifact(ctx, row, artifact.bundle, artifact),
-		page ? writeStorePage(ctx, row, page) : undefined,
-	]);
+	await writePublicFiles(ctx, row, artifact, toStorePage(row.source, artifact.media));
 	await markFilesPublished(ctx.db, row);
 }
 
@@ -303,9 +310,7 @@ async function commitReview(ctx: AppContext, { row, decision }: ReviewPin): Prom
 			throw new ApiError('submission_not_pending', `Submission ${row.id} is ${row.status}.`);
 		}
 
-		const artifact = await readVerified(ctx, row);
-
-		return { status: 'published', sha256: row.sha256, row, artifact };
+		return { row, artifact: await readVerified(ctx, row) };
 	}
 
 	const artifact = await readVerified(ctx, row);
@@ -322,55 +327,61 @@ async function commitReview(ctx: AppContext, { row, decision }: ReviewPin): Prom
 	});
 
 	return {
-		status: 'published',
-		sha256: row.sha256,
 		row: { ...decided, repository: row.repository, sha256: row.sha256, source: row.source },
 		artifact,
 	};
 }
 
-// The version CI publishes is already live from an earlier build, whose files may still be pending.
-async function commitUnchanged(ctx: AppContext, live: ClaimedVersion): Promise<Commit> {
-	if (live.filesPendingSince === null) {
-		return { status: 'unchanged', sha256: live.sha256, row: undefined, artifact: undefined };
+async function claimFirstParty(
+	tx: Pick<Transaction, 'select'>,
+	{ source, caller, repository }: FirstPartyPin,
+): Promise<Claim> {
+	const { manifest } = source;
+	const claim = await checkClaim(tx, manifest, (row) => row.authorId === caller.user.id);
+
+	if (claim.addon && !isSameRepository(claim.addon.repository, repository)) {
+		throw new ApiError(
+			'forbidden',
+			`${manifest.id} is not published from ${repository}, so it is not first-party.`,
+		);
 	}
 
-	const loaded = await ctx.db.query.submission.findFirst({
-		where: { id: live.submissionId },
-		with: { source: true },
-	});
-
-	if (!loaded) {
-		throw new Error(`Submission ${live.submissionId} of a live version does not exist.`);
-	}
-
-	const row = requireSourced(loaded);
-
-	return {
-		status: 'unchanged',
-		sha256: live.sha256,
-		row,
-		artifact: await readVerified(ctx, row),
-	};
+	return claim;
 }
 
-async function commitFirstParty(ctx: AppContext, pin: FirstPartyPin): Promise<Commit> {
-	const { source, caller, repository } = pin;
+// The live version when this build already is it, so nothing needs publishing.
+function findUnchanged({ live }: Claim, source: AddonSource): ClaimedVersion | undefined {
+	return live && !isRebuild(live, source) ? live : undefined;
+}
+
+// Files land before the row commits, so a failed write never makes an unwritten version the served one.
+// A rebuild overwrites the live version's files in place.
+async function publishFirstParty(ctx: AppContext, pin: FirstPartyPin): Promise<Published> {
+	const { source, caller } = pin;
 	const { manifest, pin: sourcePin } = source;
+	const unchanged = (live: ClaimedVersion): Published => ({
+		status: 'unchanged',
+		sha256: live.sha256,
+		row: undefined,
+	});
+
+	const live = findUnchanged(await claimFirstParty(ctx.db, pin), source);
+
+	if (live) {
+		return unchanged(live);
+	}
+
+	const target = { addonId: manifest.id, version: manifest.version, manifest };
+
+	await writePublicFiles(ctx, target, source, toStorePage(source, source.media));
+
 	const now = ctx.now();
-
 	const committed = await ctx.db.transaction(async (tx) => {
-		const claim = await checkClaim(tx, manifest, (row) => row.authorId === caller.user.id);
+		const claim = await claimFirstParty(tx, pin);
+		const raced = findUnchanged(claim, source);
 
-		if (claim.addon && !isSameRepository(claim.addon.repository, repository)) {
-			throw new ApiError(
-				'forbidden',
-				`${manifest.id} is not published from ${repository}, so it is not first-party.`,
-			);
-		}
-
-		if (claim.live && !isRebuild(claim.live, source)) {
-			return claim.live;
+		if (raced) {
+			return raced;
 		}
 
 		const id = Bun.randomUUIDv7();
@@ -399,7 +410,8 @@ async function commitFirstParty(ctx: AppContext, pin: FirstPartyPin): Promise<Co
 				})
 				.returning(),
 		);
-		const sourceRow = await insertSubmissionSource(tx, id, source);
+
+		await insertSubmissionSource(tx, id, source);
 
 		await recordReviewDecision(tx, row, {
 			repository: sourcePin.repository,
@@ -413,41 +425,43 @@ async function commitFirstParty(ctx: AppContext, pin: FirstPartyPin): Promise<Co
 			await makeLive(tx, row, source.sha256, now);
 		}
 
-		return { replace, row: requireSourced({ ...row, source: sourceRow }) };
+		await markFilesPublished(tx, row);
+
+		return { replace, row };
 	});
 
 	if (!('row' in committed)) {
-		return commitUnchanged(ctx, committed);
+		return unchanged(committed);
 	}
 
-	const { bundle, bytecode, files, media } = source;
+	requestProfileRefresh();
 
 	return {
 		status: committed.replace ? 'replaced' : 'published',
 		sha256: source.sha256,
 		row: committed.row,
-		artifact: { bundle, bytecode, files, media },
 	};
 }
 
 /**
- * @description Makes pinned source the live version. Both modes read the files at the pinned commit,
- * commit the version with its files pending, then write the files and mark them published; repeating a
- * publish whose write failed writes them again.
+ * @description Makes pinned source the live version, read and checked at its pinned commit. A review
+ * commits the approval with the files pending, then writes them; first-party writes them, then commits.
+ * Repeating a publish whose write failed writes them again.
  * @param ctx The application context.
  * @param pin The approved submission, or the first-party build and the CI caller publishing it.
  * @returns What publishing did, the live bundle's SHA-256 and the approved submission.
  */
 export async function publish(ctx: AppContext, pin: PublishPin): Promise<Published> {
-	const { status, sha256, row, artifact } =
-		pin.mode === 'review' ? await commitReview(ctx, pin) : await commitFirstParty(ctx, pin);
-
-	if (row && artifact) {
-		await writeFiles(ctx, row, artifact);
-		requestProfileRefresh();
+	if (pin.mode === 'first-party') {
+		return publishFirstParty(ctx, pin);
 	}
 
-	return { status, sha256, row };
+	const { row, artifact } = await commitReview(ctx, pin);
+
+	await writeFiles(ctx, row, artifact);
+	requestProfileRefresh();
+
+	return { status: 'published', sha256: row.sha256, row };
 }
 
 export default { isSameRepository, makeLive, promoteDeveloper, markFilesPublished, publish };

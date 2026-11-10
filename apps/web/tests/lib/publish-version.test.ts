@@ -1,10 +1,11 @@
 import { afterAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
-import { readAddonSource } from '~/lib/addon-source';
 import { publish, type PublishPin } from '~/lib/publish-version';
-import type { Caller } from '~/lib/api/caller';
+import { readAddonSource } from '~/lib/addon-source';
 import { connectGitHubIfLinked } from '~/lib/github';
+import type { Caller } from '~/lib/api/caller';
+import { findUpdates } from '~/lib/updates';
 import { user } from '~/db/schema';
 
 import { createTestContext, signInWithDiscord, snowflakeAt } from '../helpers/context';
@@ -60,11 +61,11 @@ async function signUpCi(): Promise<Caller> {
 	return { user: row, via: 'api-key' };
 }
 
-async function readBuild(caller: Caller, id: string) {
+async function readBuild(caller: Caller, id: string, version: string = '1.0.0') {
 	const compiled = new TextEncoder().encode(`${id} bytecode 98`);
-	const { request } = commitPlugin(github.repository(REPOSITORY), REPOSITORY, id, '1.0.0', {
+	const { request } = commitPlugin(github.repository(REPOSITORY), REPOSITORY, id, version, {
 		'manifest.json': JSON.stringify({
-			...manifest(id),
+			...manifest(id, version),
 			main: 'src/index.ts',
 			bytecode: { '98': new Bun.CryptoHasher('sha512').update(compiled).digest('hex') },
 		}),
@@ -75,38 +76,55 @@ async function readBuild(caller: Caller, id: string) {
 	return readAddonSource(ctx, client, request, false);
 }
 
-function pendingSince(addonId: string) {
-	return ctx.db.query.addonVersion
-		.findFirst({ where: { addonId, version: '1.0.0' } })
-		.then((row) => row?.filesPendingSince);
+function servedVersion(id: string) {
+	return findUpdates(ctx, { clientVersion: '999.0.0', addons: [{ id, version: '0.0.1' }] }).then(
+		({ updates }) => updates.find((update) => update.id === id)?.version,
+	);
+}
+
+async function publishFailing(pin: PublishPin) {
+	failing = true;
+
+	try {
+		return await rejection(publish(ctx, pin));
+	} finally {
+		failing = false;
+	}
 }
 
 describe('first-party publishing', () => {
-	test('commits the version before its files, and a repeated publish writes what a failed write left', async () => {
+	test('keeps the served version served when a newer build fails to write, and a repeat publishes it', async () => {
 		const caller = await signUpCi();
-		const source = await readBuild(caller, 'publish.recover');
-		const pin: PublishPin = { mode: 'first-party', source, caller, repository: REPOSITORY };
+		const first = await readBuild(caller, 'publish.recover');
 
-		failing = true;
-
-		try {
-			expect(await rejection(publish(ctx, pin))).toBeInstanceOf(Error);
-		} finally {
-			failing = false;
-		}
-
-		expect(await pendingSince('publish.recover')).toBeInstanceOf(Date);
-
-		expect(await publish(ctx, pin)).toMatchObject({
-			status: 'unchanged',
-			sha256: source.sha256,
-		});
-		expect(await pendingSince('publish.recover')).toBeNull();
 		expect(
-			await ctx.storage.public.file('addons/publish.recover/1.0.0/index.98.hbc').exists(),
+			await publish(ctx, {
+				mode: 'first-party',
+				source: first,
+				caller,
+				repository: REPOSITORY,
+			}),
+		).toMatchObject({ status: 'published' });
+		expect(await servedVersion('publish.recover')).toBe('1.0.0');
+
+		const next = await readBuild(caller, 'publish.recover', '1.1.0');
+		const pin: PublishPin = {
+			mode: 'first-party',
+			source: next,
+			caller,
+			repository: REPOSITORY,
+		};
+
+		expect(await publishFailing(pin)).toBeInstanceOf(Error);
+		expect(await servedVersion('publish.recover')).toBe('1.0.0');
+
+		expect(await publish(ctx, pin)).toMatchObject({ status: 'published', sha256: next.sha256 });
+		expect(await servedVersion('publish.recover')).toBe('1.1.0');
+		expect(
+			await ctx.storage.public.file('addons/publish.recover/1.1.0/index.98.hbc').exists(),
 		).toBe(true);
-		expect(await ctx.storage.public.file('addons/publish.recover/1.0.0/index.js').text()).toBe(
-			new TextDecoder().decode(source.bundle),
+		expect(await ctx.storage.public.file('addons/publish.recover/1.1.0/index.js').text()).toBe(
+			new TextDecoder().decode(next.bundle),
 		);
 	});
 });

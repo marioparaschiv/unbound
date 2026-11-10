@@ -11,10 +11,7 @@ type ClaimReader = Pick<Transaction, 'select'>;
 type SubmissionRow = typeof submission.$inferSelect;
 
 /** The version already published under the claimed id and version, as a claim compares against it. */
-export type ClaimedVersion = Pick<
-	typeof addonVersion.$inferSelect,
-	'sha256' | 'manifest' | 'submissionId' | 'filesPendingSince'
->;
+export type ClaimedVersion = Pick<typeof addonVersion.$inferSelect, 'sha256' | 'manifest'>;
 
 /** Who already holds a manifest's addon id and version. */
 export type Claim = {
@@ -68,8 +65,6 @@ export async function checkClaim(
 		.select({
 			sha256: addonVersion.sha256,
 			manifest: addonVersion.manifest,
-			submissionId: addonVersion.submissionId,
-			filesPendingSince: addonVersion.filesPendingSince,
 		})
 		.from(addonVersion)
 		.where(
