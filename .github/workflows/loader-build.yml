@@ -1128,6 +1128,10 @@ jobs:
             contents: write
         outputs:
             refreshed: ${{ steps.upload.outputs.refreshed }}
+        # No checkout, so packages/loader does not exist; the assets download into the workspace root.
+        defaults:
+            run:
+                working-directory: .
         steps:
             - name: Download the IPA
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
