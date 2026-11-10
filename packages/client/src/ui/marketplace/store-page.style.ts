@@ -1,6 +1,9 @@
 import { Discord } from '~/metro/components';
 
 export default Discord.createStyles({
+	screen: {
+		flex: 1,
+	},
 	scroll: {
 		paddingVertical: 16,
 	},

@@ -1,9 +1,11 @@
-import type { StyleProp, ViewStyle } from 'react-native';
-import { Image, Pressable } from 'react-native';
+import { Image, Pressable, type StyleProp, type View, type ViewStyle } from 'react-native';
+import { useContext, useRef } from 'react';
 
 import type { PageMediaFile } from '~/marketplace/store-page';
-import { Media, Video } from '~/metro/components';
+import { Video } from '~/metro/components';
 
+import ScreenRectContext from './screen-rect-context';
+import { openPageMedia } from './open-page-media';
 import useStyles from './page-media.style';
 
 type PageMediaProps = {
@@ -15,19 +17,14 @@ type PageMediaProps = {
 	style?: StyleProp<ViewStyle>;
 };
 
-function openImage({ url, width, height }: PageMediaFile) {
-	Media.openMediaModal({
-		initialIndex: 0,
-		initialSources: [{ uri: url, sourceURI: url, width, height }],
-	});
-}
-
 /**
  * @description One image or video of a store page at its measured aspect ratio. Tapping an image opens
- * Discord's media viewer; a video plays in place with the player's own controls.
+ * Discord's media viewer out of it; a video plays in place with the player's own controls.
  */
 function PageMedia({ media, alt, poster, style }: PageMediaProps) {
 	const styles = useStyles();
+	const ref = useRef<View>(null);
+	const measureOnScreen = useContext(ScreenRectContext);
 	const frame = [styles.frame, { aspectRatio: media.width / media.height }, style];
 
 	if (media.kind === 'video') {
@@ -50,7 +47,10 @@ function PageMedia({ media, alt, poster, style }: PageMediaProps) {
 			style={frame}
 			accessibilityRole='imagebutton'
 			accessibilityLabel={alt}
-			onPress={() => openImage(media)}
+			ref={ref}
+			onPress={() =>
+				measureOnScreen(ref.current, (origin) => openPageMedia([{ media }], 0, origin))
+			}
 		>
 			<Image source={{ uri: media.url }} style={styles.fill} resizeMode='cover' />
 		</Pressable>
