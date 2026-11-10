@@ -24,12 +24,19 @@ const NO_PATH_GROUP = 'node-modules';
 const NAMED_PATHS: ReadonlyMap<string, string> = new Map([
 	['design/native.tsx', 'DesignBarrelComponents'],
 ]);
-const NAMED_SHARD = 'barrels.gen.d.ts';
+
+/** The self-contained shard holding the named paths' aliases and every type they reach. */
+export const BARREL_FILE = 'barrels.gen.d.ts';
 
 // Declaration files, so consumers' `skipLibCheck` skips the multi-megabyte output instead of checking it.
 export const EXTENSION = '.gen.d.ts';
 
-function specifier(file: string): string {
+/**
+ * @description Turns a generated file name into the relative specifier a sibling imports it by.
+ * @param file The file name, such as `barrels.gen.d.ts`.
+ * @returns The specifier, such as `./barrels.gen`.
+ */
+export function specifier(file: string): string {
 	return `./${file.replace(/\.d\.ts$/, '')}`;
 }
 
@@ -41,6 +48,14 @@ export type EmitInput = {
 	inference: Inference;
 	resolve: Resolver;
 	exports: ExportEntry[];
+};
+
+/** The generated files, and the component types the barrel shard declares. */
+export type EmitOutput = {
+	/** File name (relative to the output directory) to file text. */
+	files: Map<string, string>;
+	/** The `<Name>Component` aliases {@link BARREL_FILE} declares. */
+	barrelComponents: Set<string>;
 };
 
 type Shard = { file: string; components: ComponentRecord[]; aliases: StatementStructures[] };
@@ -311,7 +326,7 @@ function planShards(input: EmitInput, project: Project): Shard[] {
 
 	if (closure.size > 0) {
 		shards.push({
-			file: NAMED_SHARD,
+			file: BARREL_FILE,
 			components: input.components.filter((component) => closure.has(component)),
 			aliases: namedAliases(input),
 		});
@@ -349,9 +364,9 @@ function planShards(input: EmitInput, project: Project): Shard[] {
  * @description Prints the generated type files: a self-contained shard for the named paths, one shard per
  * source-path root (split when over ~1 MB) and an index with the lookup maps.
  * @param input The build, its components, their names and inferred types.
- * @returns File name (relative to the output directory) to file text.
+ * @returns The generated files and the barrel shard's component types.
  */
-export function emit(input: EmitInput): Map<string, string> {
+export function emit(input: EmitInput): EmitOutput {
 	const project = createPrinter();
 	const shards = planShards(input, project);
 	const shardOf = new Map<ComponentRecord, string>();
@@ -391,7 +406,12 @@ export function emit(input: EmitInput): Map<string, string> {
 
 	files.set(`index${EXTENSION}`, printIndex(input, project, shards, shardOf));
 
-	return files;
+	const barrel = shards.find((shard) => shard.file === BARREL_FILE);
+	const barrelComponents = new Set(
+		barrel?.components.map((component) => `${input.names.get(component)}Component`),
+	);
+
+	return { files, barrelComponents };
 }
 
 function printIndex(
@@ -418,7 +438,7 @@ function printIndex(
 		const alias = NAMED_PATHS.get(path);
 
 		if (alias) {
-			imports.set(NAMED_SHARD, (imports.get(NAMED_SHARD) ?? new Set()).add(alias));
+			imports.set(BARREL_FILE, (imports.get(BARREL_FILE) ?? new Set()).add(alias));
 
 			return `\t${literalType(path)}: ${alias};`;
 		}
@@ -463,4 +483,4 @@ function printIndex(
 	]);
 }
 
-export default { BANNER, EXTENSION, isRequired, emit };
+export default { BANNER, BARREL_FILE, EXTENSION, isRequired, specifier, emit };

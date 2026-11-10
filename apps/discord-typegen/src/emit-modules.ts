@@ -3,9 +3,9 @@ import { createHash } from 'node:crypto';
 import type { ComponentRecord, ExportEntry } from './types';
 import type { ModuleShape } from './module-shapes';
 
+import { BANNER, BARREL_FILE, specifier } from './emit';
 import { literalType, propertyKey } from './rules';
 import { compare } from './naming';
-import { BANNER } from './emit';
 
 /** The file the module index is written to, published as `@unbound-app/discord-types/metro`. */
 export const MODULE_INDEX_FILE = 'metro.gen.d.ts';
@@ -19,28 +19,16 @@ export const MAX_TARGETS = 3;
 /** How many distinctive names a target needs to be indexed. */
 export const MIN_DISTINCTIVE = 2;
 
-/**
- * The self-contained shard `emit` writes for the design barrel. The index types only the components it declares:
- * consumers load it already, and naming any other component would pull every shard into their compile.
- */
-export const BARREL_FILE = 'barrels.gen.d.ts';
-
-/**
- * @description Lists the component types a generated shard declares.
- * @param text The shard's text.
- * @returns The `<Name>Component` aliases it exports.
- */
-export function declaredComponents(text: string): Set<string> {
-	return new Set([...text.matchAll(/^export type (\w+Component) =/gm)].map((match) => match[1]!));
-}
-
 /** Everything the module index needs about the build. */
 export type ModuleIndexInput = {
 	build: string;
 	shapes: ModuleShape[];
 	exports: ExportEntry[];
 	names: Map<ComponentRecord, string>;
-	/** The component types the index may name, all declared in {@link BARREL_FILE}. */
+	/**
+	 * The component types the index may name, all declared in {@link BARREL_FILE}: consumers load it already, and
+	 * naming any other component would pull every shard into their compile.
+	 */
 	typed: ReadonlySet<string>;
 };
 
@@ -261,7 +249,9 @@ export function emitModuleIndex(input: ModuleIndexInput): string {
 
 	const imports =
 		used.size > 0
-			? [`import type { ${[...used].sort(compare).join(', ')} } from './barrels.gen';`]
+			? [
+					`import type { ${[...used].sort(compare).join(', ')} } from '${specifier(BARREL_FILE)}';`,
+				]
 			: [];
 
 	return [
