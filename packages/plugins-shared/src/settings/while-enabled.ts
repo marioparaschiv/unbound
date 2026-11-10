@@ -1,19 +1,10 @@
-import type { Bucket, SettingsValues } from '@unbound-app/api/storage';
+import { settings, type BooleanSettingKey } from '@unbound-app/settings';
 import { onChange } from '@unbound-app/api/storage';
 
-type Store = Bucket;
 type Cleanup = () => void;
 
-function isBucket(source: Store | SettingsValues): source is Store {
-	return (
-		typeof source.get === 'function' &&
-		typeof source.toggle === 'function' &&
-		typeof source.remove === 'function'
-	);
-}
-
-// Reads a dot-separated key through the sections of a settings object, falling back to `def` when it is not a boolean.
-function readSetting(settings: SettingsValues, key: string, def: boolean): boolean {
+// Reads a dot-separated key through the sections of the plugin's settings; the schema already applied the default.
+function isOn(key: string): boolean {
 	const value = key
 		.split('.')
 		.reduce<unknown>(
@@ -22,27 +13,20 @@ function readSetting(settings: SettingsValues, key: string, def: boolean): boole
 			settings,
 		);
 
-	return typeof value === 'boolean' ? value : def;
+	return value === true;
 }
 
 /**
- * @description Runs `enable` while a boolean setting is on and its cleanup while it is off, so a feature's patches exist only when the user wants them.
- * @param store The plugin's settings Bucket from `storage.getBucket`, or its `settings` from `@unbound-app/settings`.
+ * @description Runs `enable` while a boolean setting of the plugin's settings.ts is on and its cleanup while it is off, so a feature's patches exist only when the user wants them.
  * @param key The boolean setting that gates the feature, dot-separated inside a section.
- * @param def The setting's default value.
  * @param enable Applies the feature and returns the function that removes it.
  * @returns A function that removes the feature and stops listening; call it in `stop`.
  */
-export function whileEnabled(
-	store: Store | SettingsValues,
-	key: string,
-	def: boolean,
-	enable: () => Cleanup,
-): Cleanup {
+export function whileEnabled(key: BooleanSettingKey, enable: () => Cleanup): Cleanup {
 	let disable: Cleanup | null = null;
 
 	function sync() {
-		const enabled = isBucket(store) ? store.get(key, def) : readSetting(store, key, def);
+		const enabled = isOn(key);
 
 		if (enabled && !disable) {
 			disable = enable();

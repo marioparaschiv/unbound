@@ -8,10 +8,6 @@ import { expect, mock, test } from 'bun:test';
 
 const storage = createMemoryStorage('plugin');
 
-mock.module('@unbound-app/api/storage', () => ({ onChange: storage.onChange }));
-
-const { default: whileEnabled } = await import('~/settings/while-enabled');
-
 const settings = createFakeSettings(
 	defineSettings({
 		feature: setting.boolean({ default: true, title: 'FEATURE' }),
@@ -26,39 +22,38 @@ const settings = createFakeSettings(
 	'plugin',
 );
 
-test('runs enable while a Bucket key is on, and cleanup when it turns off', () => {
-	const bucket = storage.getBucket();
+mock.module('@unbound-app/api/storage', () => ({ onChange: storage.onChange }));
+mock.module('@unbound-app/settings', () => ({ settings: settings.settings }));
+
+const { default: whileEnabled } = await import('~/settings/while-enabled');
+
+test('runs enable while a setting is on, from its default, and cleanup when it turns off', () => {
 	const calls: string[] = [];
-	const stop = whileEnabled(bucket, 'flag', false, () => {
+	const stop = whileEnabled('feature', () => {
 		calls.push('on');
 
 		return () => void calls.push('off');
 	});
 
-	bucket.set('flag', true);
-	bucket.set('flag', false);
+	settings.set('feature', false);
+	settings.set('feature', true);
 	stop();
 
-	expect(calls).toEqual(['on', 'off']);
+	expect(calls).toEqual(['on', 'off', 'on', 'off']);
 });
 
-test('takes the settings object of @unbound-app/settings, keys inside sections too', () => {
+test('reads keys inside sections', () => {
 	const calls: string[] = [];
-	const stopFeature = whileEnabled(settings.settings, 'feature', true, () => {
-		calls.push('feature on');
-
-		return () => void calls.push('feature off');
-	});
-	const stopDeep = whileEnabled(settings.settings, 'advanced.deep', false, () => {
+	const stop = whileEnabled('advanced.deep', () => {
 		calls.push('deep on');
 
 		return () => void calls.push('deep off');
 	});
 
-	settings.set('feature', false);
 	settings.set('advanced.deep', true);
-	stopFeature();
-	stopDeep();
+	settings.set('advanced.deep', false);
+	settings.set('advanced.deep', true);
+	stop();
 
-	expect(calls).toEqual(['feature on', 'feature off', 'deep on', 'deep off']);
+	expect(calls).toEqual(['deep on', 'deep off', 'deep on', 'deep off']);
 });

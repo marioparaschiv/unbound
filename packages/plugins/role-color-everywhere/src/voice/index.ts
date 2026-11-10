@@ -1,7 +1,6 @@
 import { getRoleColorAppearance } from '@unbound-plugins/shared/colors/role-colors';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { settings } from '@unbound-app/settings';
 import { patcher } from '@unbound-app/api';
 import { cloneElement } from 'react';
 import { Text } from 'react-native';
@@ -53,5 +52,5 @@ function patchVoiceUserNameItem(): () => void {
 export function startVoice(): () => void {
 	if (!ensureModules({ GuildMemberStore }, 'voice users')) return () => {};
 
-	return whileEnabled(settings, 'voiceUsers', true, patchVoiceUserNameItem);
+	return whileEnabled('voiceUsers', patchVoiceUserNameItem);
 }

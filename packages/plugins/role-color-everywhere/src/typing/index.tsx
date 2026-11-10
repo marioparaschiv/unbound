@@ -4,7 +4,6 @@ import {
 } from '@unbound-plugins/shared/colors/role-colors';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { settings } from '@unbound-app/settings';
 import { patcher } from '@unbound-app/api';
 import { cloneElement } from 'react';
 
@@ -105,5 +104,5 @@ export function startTyping(): () => void {
 
 	if (!ensureModules(modules, 'typing')) return () => {};
 
-	return whileEnabled(settings, 'typingUsers', true, patchTypingIndicator);
+	return whileEnabled('typingUsers', patchTypingIndicator);
 }
