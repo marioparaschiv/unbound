@@ -2,8 +2,8 @@ import type { ImageSourcePropType, ImageStyle, StyleProp } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
 import { View } from 'react-native';
 
-import BlurCopy from './blur-copy';
 import useStyles from './blurred-icon.style';
+import BlurCopy from './blur-copy';
 
 type BlurredIconProps = {
 	source: ImageSourcePropType;
