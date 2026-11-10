@@ -15,7 +15,7 @@ import {
 	committedPageFiles,
 } from '../../../../../apps/web/tests/helpers/addon-page.ts';
 import { listReviewQueue, reviewSubmission } from '../../../../../apps/web/src/lib/review.ts';
-import { schema, serveGitHub } from '../../../../../apps/web/tests/helpers/index.ts';
+import { schema, serveGitHub } from '../../../../../apps/web/testing/index.ts';
 
 /**
  * @description Replays a public write failing after `decide`: the review queue still lists the approval after a reload, and any reviewer's repeat republishes the files.

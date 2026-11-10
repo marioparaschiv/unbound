@@ -3,10 +3,10 @@
 import type { DiscordId } from '../../../../../apps/web/src/lib/authors/discord-users';
 
 import { addon, addonMaintainer, addonTag, tag } from '../../../../../apps/web/src/db/schema';
-import { manifest, seedVersion } from '../../../../../apps/web/tests/helpers';
 import { createAppContext } from '../../../../../apps/web/src/lib/context';
 import { createDatabase } from '../../../../../apps/web/src/db/database';
 import { toAddonSummary } from '../../../../../apps/web/src/lib/addons';
+import { manifest, seedVersion } from '../../../../../apps/web/testing';
 import { parseEnv } from '../../../../../apps/web/src/lib/env';
 
 type Seed = [id: string, name: string, tags: string[], authors: number[], daysAgo: number];

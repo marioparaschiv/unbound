@@ -12,6 +12,6 @@
 		"src/api/index.ts",
 		"src/api/client.ts",
 		"src/lib/bot/index.ts",
-		"tests/helpers/index.ts"
+		"testing/index.ts"
 	]
 }
