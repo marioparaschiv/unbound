@@ -1,7 +1,10 @@
+import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
 import type { AuthoredAddonManifest } from '@unbound-app/types';
 import { describe, expect, test } from 'bun:test';
 
 import {
+	CONTROLLER_ENDPOINT_MARKER,
+	DEFAULT_BRIDGE_PORT,
 	DEFAULT_EVAL_TIMEOUT_MS,
 	MAX_EVAL_TIMEOUT_MS,
 	resolveEvalTimeout,
@@ -11,6 +14,8 @@ import {
 	type PluginPushRequest,
 	type PluginPushResult,
 } from '~/index';
+
+import contract from './fixtures/devtools-contract.json';
 
 const manifest: AuthoredAddonManifest = {
 	id: 'com.example.plugin',
@@ -196,5 +201,24 @@ describe('resolveEvalTimeout', () => {
 		expect(resolveEvalTimeout(-5)).toBe(DEFAULT_EVAL_TIMEOUT_MS);
 		expect(resolveEvalTimeout(Number.NaN)).toBe(DEFAULT_EVAL_TIMEOUT_MS);
 		expect(resolveEvalTimeout(Number.POSITIVE_INFINITY)).toBe(MAX_EVAL_TIMEOUT_MS);
+	});
+});
+
+// The DevTools app (`apps/devtools/crates/core/src/bridge.rs`) reads the same fixture, so a change on
+// either side of the wire fails one of the two suites.
+describe('the DevTools contract', () => {
+	test('names the default port and the controller marker', () => {
+		expect(contract.defaultBridgePort).toBe(DEFAULT_BRIDGE_PORT);
+		expect(contract.controllerEndpointMarker).toBe(CONTROLLER_ENDPOINT_MARKER);
+	});
+
+	test('holds frames the protocol accepts unchanged', () => {
+		for (const frame of Object.values(contract.frames)) {
+			expect(parseMessage(JSON.stringify(frame))).toEqual(frame);
+		}
+	});
+
+	test('reads the bridge address from the core settings store', () => {
+		expect(contract.addressSetting.store).toBe(CORE_SETTINGS_STORE);
 	});
 });

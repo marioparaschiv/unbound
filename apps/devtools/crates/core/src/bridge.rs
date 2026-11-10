@@ -50,6 +50,8 @@ enum BridgeFrame {
 	Other,
 }
 
+/// The query marker that makes the bridge route this socket as a controller (`CONTROLLER_ENDPOINT_MARKER`).
+const CONTROLLER_ENDPOINT_MARKER: &str = "mcp";
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
 /// The bridge sends `device-status` right after a controller attaches.
 const STATUS_WAIT: Duration = Duration::from_millis(1500);
@@ -62,7 +64,7 @@ pub async fn eval(bridge: SocketAddr, code: &str, timeout_ms: u64) -> anyhow::Re
 	};
 	let (mut socket, _) = time::timeout(
 		CONNECT_TIMEOUT,
-		connect_async(format!("ws://{bridge}/?mcp")),
+		connect_async(format!("ws://{bridge}/?{CONTROLLER_ENDPOINT_MARKER}")),
 	)
 	.await
 	.map_err(|_| unreachable("timed out".to_owned()))?
@@ -84,7 +86,7 @@ pub async fn eval(bridge: SocketAddr, code: &str, timeout_ms: u64) -> anyhow::Re
 	}
 
 	let id = uuid::Uuid::new_v4().to_string();
-	let request = json!({ "type": "eval", "id": id, "code": code, "timeout": timeout_ms });
+	let request = eval_request(&id, code, timeout_ms);
 	socket.send(Message::text(request.to_string())).await?;
 
 	let reply = async {
@@ -113,6 +115,10 @@ pub async fn eval(bridge: SocketAddr, code: &str, timeout_ms: u64) -> anyhow::Re
 	let _ = socket.close(None).await;
 
 	Ok(outcome)
+}
+
+fn eval_request(id: &str, code: &str, timeout_ms: u64) -> serde_json::Value {
+	json!({ "type": "eval", "id": id, "code": code, "timeout": timeout_ms })
 }
 
 async fn next_frame<S>(socket: &mut S) -> Option<BridgeFrame>
@@ -175,3 +181,96 @@ const CONNECT_SCRIPT: &str = r#"(() => {
 	}
 	return url;
 })()"#;
+
+/// Checks this client against `@unbound-app/debugger-protocol`'s DevTools contract fixture, which
+/// the protocol's own tests check against its TypeScript side.
+#[cfg(test)]
+mod contract {
+	use super::*;
+	use serde_json::Value;
+
+	fn fixture() -> Value {
+		let path = concat!(
+			env!("CARGO_MANIFEST_DIR"),
+			"/../../../../packages/debugger-protocol/tests/fixtures/devtools-contract.json"
+		);
+		let text =
+			std::fs::read_to_string(path).expect("the DevTools contract fixture is readable");
+
+		serde_json::from_str(&text).expect("the DevTools contract fixture is JSON")
+	}
+
+	fn frame(contract: &Value, name: &str) -> BridgeFrame {
+		serde_json::from_value(contract["frames"][name].clone()).expect("the frame deserializes")
+	}
+
+	#[test]
+	fn names_the_protocol_constants() {
+		let contract = fixture();
+
+		assert_eq!(
+			contract["defaultBridgePort"],
+			u64::from(crate::DEFAULT_BRIDGE_PORT)
+		);
+		assert_eq!(
+			contract["controllerEndpointMarker"],
+			CONTROLLER_ENDPOINT_MARKER
+		);
+	}
+
+	#[test]
+	fn sends_the_protocols_eval_request() {
+		let contract = fixture();
+		let expected = &contract["frames"]["evalRequest"];
+		let request = eval_request(
+			expected["id"].as_str().unwrap(),
+			expected["code"].as_str().unwrap(),
+			expected["timeout"].as_u64().unwrap(),
+		);
+
+		assert_eq!(&request, expected);
+	}
+
+	#[test]
+	fn reads_the_protocols_reply_frames() {
+		let contract = fixture();
+
+		assert!(matches!(
+			frame(&contract, "evalOk"),
+			BridgeFrame::EvalResult {
+				ok: true,
+				value: Some(_),
+				..
+			}
+		));
+		assert!(matches!(
+			frame(&contract, "evalError"),
+			BridgeFrame::EvalResult {
+				ok: false,
+				error: Some(_),
+				..
+			}
+		));
+		assert!(matches!(
+			frame(&contract, "deviceConnected"),
+			BridgeFrame::DeviceStatus { connected: true }
+		));
+		assert!(matches!(
+			frame(&contract, "deviceDisconnected"),
+			BridgeFrame::DeviceStatus { connected: false }
+		));
+	}
+
+	#[test]
+	fn reads_the_address_from_the_clients_setting() {
+		let contract = fixture();
+		let setting = &contract["addressSetting"];
+		let lookup = format!(
+			"getBucket('{}').get('{}', '')",
+			setting["store"].as_str().unwrap(),
+			setting["key"].as_str().unwrap()
+		);
+
+		assert!(CONNECT_SCRIPT.contains(&lookup));
+	}
+}
