@@ -1,6 +1,7 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
 import { defaulted, Type } from '~/lib/schema';
+
 import { pluginField, runI18n } from './run';
 
 const schema = Type.Object({

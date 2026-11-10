@@ -1,8 +1,9 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { deviceTargetFields } from './target-fields';
 import { resetDevice } from '~/lib/device-state';
 import { Type } from '~/lib/schema';
+
+import { deviceTargetFields } from './target-fields';
 
 const schema = Type.Object(deviceTargetFields);
 

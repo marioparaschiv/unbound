@@ -1,7 +1,8 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { pluginField, runI18n } from './run';
 import { Type } from '~/lib/schema';
+
+import { pluginField, runI18n } from './run';
 
 const schema = Type.Object({
 	key: Type.String({ minLength: 1, description: 'The key to add, such as GREETING.' }),

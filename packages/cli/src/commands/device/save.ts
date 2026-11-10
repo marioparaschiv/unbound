@@ -1,8 +1,9 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { deviceTargetFields } from './target-fields';
 import { saveSnapshot } from '~/lib/device-state';
 import { Type } from '~/lib/schema';
+
+import { deviceTargetFields } from './target-fields';
 
 const schema = Type.Object({
 	name: Type.String({ description: 'The snapshot to save.' }),
