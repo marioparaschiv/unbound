@@ -2,6 +2,8 @@
 
 @import 'tw-animate-css';
 
+@import './styles/gallery.css';
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
