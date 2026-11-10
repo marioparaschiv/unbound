@@ -1,5 +1,6 @@
 #include "LoaderPipeline.h"
 
+#include "HermesBytecodeHeader.h"
 #include "HermesSampling.h"
 #include "LoaderBootstrap.h"
 #include "LoaderCrashGuard.h"
@@ -69,8 +70,8 @@ void LoaderPipeline::prepare()
     }
 
     // A local read, so the bundle can run before Discord's without waiting on the network.
-    std::optional<std::string> bundle =
-        !savedPath.empty() && fileExists(savedPath) ? readTextFile(savedPath) : std::nullopt;
+    std::optional<SavedBundle> bundle =
+        !savedPath.empty() && fileExists(savedPath) ? readSavedBundle(savedPath) : std::nullopt;
     bool hasSaved = bundle && !bundle->empty();
     // A saved bundle from the other flavour runs at the next launch anyway, so this launch waits
     // for its replacement rather than leaving the switch to a second restart.
@@ -87,11 +88,11 @@ void LoaderPipeline::prepare()
         std::lock_guard<std::mutex> lock(savedMutex_);
         if (hasSaved && waitForDownload)
         {
-            firstDownload_.fallback = SavedBundle{std::move(*bundle), savedPath};
+            firstDownload_.fallback = std::move(*bundle);
         }
         else if (hasSaved)
         {
-            saved_ = SavedBundle{std::move(*bundle), savedPath};
+            saved_ = std::move(*bundle);
         }
         if (waitForDownload)
         {
@@ -100,6 +101,21 @@ void LoaderPipeline::prepare()
     }
 
     updateInBackground(savedPath, hasSaved, waitForDownload, token);
+}
+
+std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::readSavedBundle(const std::string &path)
+{
+    std::shared_ptr<MappedFileBuffer> mapped = MappedFileBuffer::map(path);
+    if (mapped && isHermesBytecode(mapped->data(), mapped->size()))
+    {
+        return SavedBundle{"", path, std::move(mapped)};
+    }
+    std::optional<std::string> source = readTextFile(path);
+    if (!source)
+    {
+        return std::nullopt;
+    }
+    return SavedBundle{std::move(*source), path, nullptr};
 }
 
 bool LoaderPipeline::savedFlavourIsCurrent(const std::string &path) const
@@ -274,7 +290,7 @@ std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::awaitFirstDownload(ui
         return fallback;
     }
 
-    std::optional<std::string> bundle = readTextFile(*firstDownload_.path);
+    std::optional<SavedBundle> bundle = readSavedBundle(*firstDownload_.path);
     if (!bundle || bundle->empty())
     {
         firstDownload_.abandoned = true;
@@ -282,7 +298,7 @@ std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::awaitFirstDownload(ui
     }
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
         "Downloaded Unbound's first bundle in time to run it before Discord's.");
-    return SavedBundle{std::move(*bundle), *firstDownload_.path};
+    return bundle;
 }
 
 bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t token)
@@ -299,7 +315,9 @@ bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t
     injectPreBundle(runtime, saved.path);
 
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Evaluating Unbound's bundle before Discord's...");
-    if (!evaluateScript(runtime, std::move(saved.bundle), "unbound"))
+    bool evaluated = saved.bytecode ? evaluateBytecodeBuffer(runtime, saved.bytecode, "unbound")
+                                    : evaluateScript(runtime, std::move(saved.bundle), "unbound");
+    if (!evaluated)
     {
         global.setProperty(runtime, "__loaderBundleInstalled", jsi::Value(false));
         evaluationFailed_.store(true);

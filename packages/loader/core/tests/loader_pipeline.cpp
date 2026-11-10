@@ -1,8 +1,10 @@
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <string>
 #include <vector>
 
+#include "HermesBytecodeHeader.h"
 #include "LoaderLaunchGuard.h"
 #include "LoaderLog.h"
 #include "LoaderPipeline.h"
@@ -249,6 +251,27 @@ void doesNothingWhenDisabled()
     assert(launch.server.downloads == 0);
 }
 
+void mapsBytecodeAndReadsSource()
+{
+    bundle_test::Server server;
+    std::string         bytecode(64, '\0');
+    uint64_t            magic = loader::kHermesMagic;
+    std::memcpy(bytecode.data(), &magic, sizeof(magic));
+    bytecode[8] = 98;
+    assert(loader::writeTextFileAtomically(server.path("unbound.bundle"), bytecode));
+    assert(loader::writeTextFileAtomically(server.path("unbound.js"), "source"));
+
+    auto mapped = loader::LoaderPipeline::readSavedBundle(server.path("unbound.bundle"));
+    assert(mapped && mapped->bundle.empty() && mapped->bytecode && !mapped->empty());
+    assert(std::string(reinterpret_cast<const char *>(mapped->bytecode->data()),
+                       mapped->bytecode->size()) == bytecode);
+
+    auto source = loader::LoaderPipeline::readSavedBundle(server.path("unbound.js"));
+    assert(source && source->bundle == "source" && !source->bytecode);
+
+    assert(!loader::LoaderPipeline::readSavedBundle(server.path("missing.bundle")));
+}
+
 void guardsTheLaunchOncePerProcess()
 {
     Launch launch;
@@ -296,6 +319,7 @@ int main()
     logsTheRuntimeBeforeAddonsLoadForIt();
     runsTheNewBundleOnTheFirstLaunchAfterALoaderUpdate();
     doesNothingWhenDisabled();
+    mapsBytecodeAndReadsSource();
     guardsTheLaunchOncePerProcess();
     turnsOnRecoveryModeAfterRepeatedFailedLaunches();
     return 0;

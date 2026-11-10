@@ -52,9 +52,19 @@ public:
     void onRuntimeCreated(facebook::jsi::Runtime &runtime);
 
     struct SavedBundle {
-        std::string bundle;
-        std::string path;
+        // Source text; empty when `bytecode` maps the file instead.
+        std::string                                  bundle;
+        std::string                                  path;
+        std::shared_ptr<const facebook::jsi::Buffer> bytecode;
+
+        bool empty() const
+        {
+            return bundle.empty() && (!bytecode || bytecode->size() == 0);
+        }
     };
+
+    // Maps Hermes bytecode instead of copying it to the heap; reads source text whole.
+    static std::optional<SavedBundle> readSavedBundle(const std::string &path);
 
     std::optional<SavedBundle> takeSavedBundle();
 
