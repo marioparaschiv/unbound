@@ -7,7 +7,7 @@ import {
 	type EvalRequest,
 	type PluginPushRequest,
 	type PluginPushResult,
-} from '../src/index';
+} from '~/index';
 
 const manifest: AuthoredAddonManifest = {
 	id: 'com.example.plugin',

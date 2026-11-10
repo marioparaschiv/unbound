@@ -1,9 +1,8 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import type { Server } from 'bun';
 
-import type { EvalRequest } from '../src/index';
-
-import { ControllerClient } from '../src/controller';
+import { ControllerClient } from '~/controller';
+import type { EvalRequest } from '~/index';
 
 type FakeBridge = { server: Server<undefined>; requests: EvalRequest[] };
 
