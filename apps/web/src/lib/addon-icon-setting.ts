@@ -1,6 +1,7 @@
 import type { AddonIconResponse } from '@unbound-app/contracts/addons';
 import { eq } from 'drizzle-orm';
 
+import { requireAddon } from '~/lib/addon-visibility';
 import { isAddonIcon } from '~/lib/addon-icons';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
@@ -32,14 +33,10 @@ export async function setAddonIcon(
 	});
 
 	if (!membership) {
-		const row = await ctx.db.query.addon.findFirst({
-			where: { id: addonId },
-			columns: { id: true },
-		});
-
-		if (!row) {
-			throw new ApiError('not_found', `Addon ${addonId} does not exist.`);
-		}
+		requireAddon(
+			await ctx.db.query.addon.findFirst({ where: { id: addonId }, columns: { id: true } }),
+			addonId,
+		);
 
 		throw new ApiError('not_maintainer', `You are not a maintainer of ${addonId}.`);
 	}

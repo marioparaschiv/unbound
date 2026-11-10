@@ -4,8 +4,8 @@ import type { AddonType } from '@unbound-app/contracts/addons';
 
 import type { ReadDatabase, ResolvedReadOptions } from '~/lib/bot/reads';
 import type { PublicAddon, PublicGalleryImage } from '~/lib/bot/types';
+import { SERVED_VERSION } from '~/lib/addon-visibility';
 import { renderAddonIcon } from '~/lib/addon-icons';
-import { LIVE_VERSIONS } from '~/lib/live-versions';
 import { getTreeUrl } from '~/lib/github-urls';
 
 type AddonWithServed = Awaited<ReturnType<typeof queryAddons>>[number];
@@ -15,9 +15,7 @@ const LISTING = {
 	columns: { id: true, type: true, name: true, description: true, icon: true, delistedAt: true },
 	with: {
 		versions: {
-			where: LIVE_VERSIONS,
-			orderBy: { versionKey: 'desc' },
-			limit: 1,
+			...SERVED_VERSION,
 			columns: { version: true, manifest: true },
 			// Only the columns provision.sql grants the bot: never the bundle, ADDON.md or review details.
 			with: {

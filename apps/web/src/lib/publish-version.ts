@@ -15,11 +15,11 @@ import { writeArtifact, writeStorePage } from '~/lib/artifacts';
 import { requestProfileRefresh } from '~/lib/authors/profiles';
 import { applySubmissionMaintainers } from '~/lib/maintainers';
 import { recordReviewDecision } from '~/lib/moderation-events';
-import type { Database, Transaction } from '~/db/database';
 import type { AddonSource } from '~/lib/addon-source';
 import { connectGitHubIfLinked } from '~/lib/github';
 import { replaceAddonTags } from '~/lib/addon-tags';
 import { hasPermission } from '~/lib/auth/access';
+import type { Transaction } from '~/db/database';
 import { toVersionKey } from '~/lib/version-key';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
@@ -115,10 +115,10 @@ function toVersionRow(row: SubmissionRow, sha256: string, publishedAt: Date) {
 }
 
 /**
- * @description Makes an approved submission's version live inside the transaction that approves it, its
+ * @description Records an approved submission's version inside the transaction that approves it, its
  * files still pending: a listing creates the addon with the author as owner, an update moves the addon
- * to the submitted repository and refreshes its summary. The submission's chosen tags and maintainers
- * replace the addon's, when it chose any.
+ * to the submitted repository. The submission's chosen tags and maintainers replace the addon's, when
+ * it chose any. {@link markFilesPublished} makes it served.
  * @param tx The approval's transaction.
  * @param row The approved submission.
  * @param sha256 The verified SHA-256 of the published bundle.
@@ -162,7 +162,6 @@ export async function makeLive(
 	if (row.kind !== 'update') return;
 
 	await tx.update(addon).set({ repository: row.repository }).where(eq(addon.id, row.addonId));
-	await refreshAddonSummary(tx, row.addonId);
 }
 
 // A rebuild of a live version takes over its row in place: the new submission, manifest and digest.
@@ -173,7 +172,6 @@ async function replaceLive(tx: Transaction, row: SubmissionRow, sha256: string, 
 		.update(addonVersion)
 		.set(values)
 		.where(and(eq(addonVersion.addonId, addonId), eq(addonVersion.version, version)));
-	await refreshAddonSummary(tx, addonId);
 }
 
 /**
@@ -191,18 +189,20 @@ export async function promoteDeveloper(tx: Transaction, userId: string): Promise
 }
 
 /**
- * @description Marks a live version's public files as written, which ends its recovery.
- * @param db The database.
+ * @description Marks a version's public files as written, which ends its recovery and lets it be served,
+ * then copies the served version's summary onto the addon.
+ * @param tx The transaction.
  * @param row The submission the version was approved from.
  */
 export async function markFilesPublished(
-	db: Pick<Database, 'update'>,
+	tx: Transaction,
 	row: Pick<SubmissionRow, 'id' | 'addonId'>,
 ): Promise<void> {
-	await db
+	await tx
 		.update(addonVersion)
 		.set({ filesPendingSince: null })
 		.where(and(eq(addonVersion.addonId, row.addonId), eq(addonVersion.submissionId, row.id)));
+	await refreshAddonSummary(tx, row.addonId);
 }
 
 // Extra files, compiled bundles and media are never staged: they are re-read from the pinned commit's
@@ -291,7 +291,7 @@ async function writePublicFiles(
 // Runs only after the version's row commits: writing earlier let a losing request leave files under its keys.
 async function writeFiles(ctx: AppContext, row: SourcedSubmissionRow, artifact: Artifact) {
 	await writePublicFiles(ctx, row, artifact, toStorePage(row.source, artifact.media));
-	await markFilesPublished(ctx.db, row);
+	await ctx.db.transaction((tx) => markFilesPublished(tx, row));
 }
 
 async function hasPendingFiles(ctx: AppContext, row: SubmissionRow): Promise<boolean> {

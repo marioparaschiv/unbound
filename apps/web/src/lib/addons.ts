@@ -10,13 +10,20 @@ import type {
 	Maintainer,
 	MyAddonsResponse,
 } from '@unbound-app/contracts/addons';
-import { and, desc, EmptyFilter, eq, gte, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import { addonIdSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
+import { and, EmptyFilter, eq, gte, inArray, lt, or, sql } from 'drizzle-orm';
 import type { RepositoryDetails } from '@unbound-app/contracts/source';
 import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import { Type, type TSchema } from '@unbound-app/contracts/schema';
 import type { PinnableField } from '@unbound-app/contracts/admin';
 
+import {
+	LISTED_ADDONS,
+	LIVE_VERSIONS,
+	SERVED_VERSION,
+	requireAddon,
+	servedVersionValue,
+} from '~/lib/addon-visibility';
 import { OPEN_SUBMISSION_STATUSES, requireSourced, toSubmission } from '~/lib/submissions';
 import { afterKey, cursorTime, decodeCursor, toKeysetPage } from '~/lib/keyset';
 import type { AddonVersionRow, VersionSubmission } from '~/lib/artifacts';
@@ -27,7 +34,6 @@ import type { ActionMeta } from '~/lib/moderation-events';
 import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import { renderAddonIcon } from '~/lib/addon-icons';
-import { LIVE_VERSIONS } from '~/lib/live-versions';
 import { likeContains } from '~/lib/like-contains';
 import type { Transaction } from '~/db/database';
 import { readAddonTags } from '~/lib/addon-tags';
@@ -36,7 +42,6 @@ import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { CursorKey } from '~/lib/keyset';
 import { DAY_MS } from '~/lib/calendar-date';
-import { ApiError } from '~/lib/api/errors';
 import one from '~/db/one';
 
 export type AddonRow = typeof addon.$inferSelect;
@@ -96,12 +101,7 @@ export const PINNED_FIELDS = {
 
 /** The relational `with` that loads the version an addon serves: its newest live version. */
 export const LATEST_VERSION = {
-	versions: {
-		where: LIVE_VERSIONS,
-		orderBy: { versionKey: 'desc' },
-		limit: 1,
-		with: VERSION_SOURCE,
-	},
+	versions: { ...SERVED_VERSION, with: VERSION_SOURCE },
 } as const;
 
 /**
@@ -153,12 +153,12 @@ function unlessPinned(field: PinnableField, column: PinnableColumn, value: strin
  * @returns Resolves once the summary is copied.
  */
 export async function refreshAddonSummary(tx: Transaction, addonId: string): Promise<void> {
-	const [latest] = await tx
-		.select({ manifest: addonVersion.manifest, publishedAt: addonVersion.publishedAt })
-		.from(addonVersion)
-		.where(and(eq(addonVersion.addonId, addonId), isNull(addonVersion.withdrawnBy)))
-		.orderBy(desc(addonVersion.versionKey))
-		.limit(1);
+	const row = await tx.query.addon.findFirst({
+		where: { id: addonId },
+		columns: { id: true },
+		with: { versions: { ...SERVED_VERSION, columns: { manifest: true, publishedAt: true } } },
+	});
+	const latest = row?.versions[0];
 
 	if (!latest) {
 		throw new Error(`Addon ${addonId} has no live version to summarize.`);
@@ -224,11 +224,10 @@ async function setDelisted(
 	const row = await ctx.db.transaction(async (tx) => {
 		const [current] = await tx.select().from(addon).where(eq(addon.id, addonId));
 
-		if (!current) {
-			throw new ApiError('not_found', `Addon ${addonId} does not exist.`);
-		}
-
-		return writeDelisted(tx, current, delisted, { actorId: caller.user.id, at });
+		return writeDelisted(tx, requireAddon(current, addonId), delisted, {
+			actorId: caller.user.id,
+			at,
+		});
 	});
 
 	return { addon: toAddon(row) };
@@ -299,8 +298,8 @@ function authorFilter(table: ListingTable, query: ListingFilters) {
 
 	if (ids.length === 0) return;
 
-	const served = sql`select ${addonVersion.manifest} -> 'authors' from ${addonVersion} where ${addonVersion.addonId} = ${table.id} and ${addonVersion.withdrawnBy} is null order by ${addonVersion.versionKey} desc limit 1`;
-	const credited = sql`exists (select 1 from json_array_elements((${served})) as author where author ->> 'id' in (${sql.join(
+	const served = servedVersionValue(table, sql`${addonVersion.manifest} -> 'authors'`);
+	const credited = sql`exists (select 1 from json_array_elements(${served}) as author where author ->> 'id' in (${sql.join(
 		ids.map((id) => sql`${id}`),
 		sql`, `,
 	)}))`;
@@ -330,7 +329,7 @@ export function queryListedAddons(ctx: AppContext, query: ListAddonsQuery = {}) 
 
 	return ctx.db.query.addon.findMany({
 		where: {
-			delistedAt: { isNull: true },
+			...LISTED_ADDONS,
 			type: type ?? EmptyFilter,
 			RAW: (table) =>
 				and(
@@ -399,7 +398,7 @@ export async function listAddons(
  */
 export async function listListedAddons(ctx: AppContext): Promise<ListedAddon[]> {
 	const rows = await ctx.db.query.addon.findMany({
-		where: { delistedAt: { isNull: true } },
+		where: LISTED_ADDONS,
 		with: LATEST_VERSION,
 		orderBy: { id: 'asc' },
 	});
@@ -437,7 +436,7 @@ export async function getAddonDetails(
 	id: string,
 ): Promise<AddonDetails | undefined> {
 	const row = await ctx.db.query.addon.findFirst({
-		where: { id, delistedAt: { isNull: true } },
+		where: { ...LISTED_ADDONS, id },
 		with: {
 			versions: {
 				where: LIVE_VERSIONS,
@@ -480,7 +479,7 @@ export async function listAddonVersions(
 	id: string,
 ): Promise<AddonVersion[] | undefined> {
 	const row = await ctx.db.query.addon.findFirst({
-		where: { id, delistedAt: { isNull: true } },
+		where: { ...LISTED_ADDONS, id },
 		with: {
 			versions: {
 				where: LIVE_VERSIONS,

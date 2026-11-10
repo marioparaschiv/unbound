@@ -1,6 +1,7 @@
 import type { ServeVersionRequest } from '@unbound-app/contracts/admin';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 
+import { requireAddon } from '~/lib/addon-visibility';
 import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import { refreshAddonSummary } from '~/lib/addons';
@@ -68,11 +69,11 @@ export async function serveVersion(
 				.from(addon)
 				.where(eq(addon.id, addonId));
 
+			requireAddon(exists, addonId);
+
 			throw new ApiError(
 				'not_found',
-				exists
-					? `${addonId} has no approved version ${request.version}.`
-					: `Addon ${addonId} does not exist.`,
+				`${addonId} has no approved version ${request.version}.`,
 			);
 		}
 

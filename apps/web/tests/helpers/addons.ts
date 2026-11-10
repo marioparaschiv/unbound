@@ -135,8 +135,9 @@ async function seedLive(ctx: AppContext, row: SubmissionRow, sha256: string): Pr
 		if (row.kind === 'listing') {
 			await promoteDeveloper(tx, row.authorId);
 		}
+
+		await markFilesPublished(tx, row);
 	});
-	await markFilesPublished(ctx.db, row);
 }
 
 /**

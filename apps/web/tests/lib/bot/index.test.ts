@@ -10,7 +10,10 @@ const ALLOWED = [
 	/^~\/db\//,
 	/^~\/lib\/bot\//,
 	/^~\/lib\/sponsors\/standing$/,
-	/^~\/lib\/live-versions$/,
+	// Which addons and versions are live, listed and served, the rules the site reads by.
+	/^~\/lib\/addon-visibility$/,
+	// A leaf error class `requireAddon` throws.
+	/^~\/lib\/api\/errors$/,
 	/^~\/lib\/calendar-date$/,
 	/^~\/lib\/github-urls$/,
 	// The website icon's markup, rendered as the site renders it.

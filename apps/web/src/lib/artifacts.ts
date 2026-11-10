@@ -182,6 +182,40 @@ export function toSourcePin(submission: VersionSubmission | null): SourcePin | n
 	return pinSource(repository, source);
 }
 
+/** What renders a version for the API, whether approved or still pending review. */
+export type VersionParts = Pick<AddonVersionRow, 'addonId' | 'version' | 'manifest'> &
+	Pick<AddonVersion, 'source' | 'bundleSize' | 'sha256' | 'publishedAt'> &
+	ChangelogFields & {
+		/** Its ADDON.md, or `null` when it has none. */
+		addonMd: string | null;
+	};
+
+/**
+ * @description Renders a version as the wire contract, with the CDN URLs its files live, or will live, at.
+ * @param env The validated environment.
+ * @param parts The version, approved or still pending.
+ * @returns The version as API responses carry it.
+ */
+export function renderAddonVersion(env: Env, parts: VersionParts): AddonVersion {
+	const { addonId, version, manifest, addonMd } = parts;
+	const keys = getArtifactKeys(addonId, version, manifest.main);
+	const pageKey = `${getVersionDirectory(addonId, version)}/${ADDON_PAGE_FILENAME}`;
+
+	return {
+		version,
+		manifest,
+		changelog: parts.changelog,
+		changes: parts.changes,
+		source: parts.source,
+		bundleSize: parts.bundleSize,
+		sha256: parts.sha256,
+		publishedAt: parts.publishedAt,
+		manifestUrl: getCdnUrl(env.CDN_URL, keys.manifest),
+		bundleUrl: getCdnUrl(env.CDN_URL, keys.bundle),
+		pageUrl: addonMd === null ? null : getCdnUrl(env.CDN_URL, pageKey),
+	};
+}
+
 /**
  * @description Renders an approved version row as the wire contract, with its CDN URLs.
  * @param env The validated environment.
@@ -194,22 +228,19 @@ export function toAddonVersion(
 	row: AddonVersionRow,
 	submission: VersionSubmission | null,
 ): AddonVersion {
-	const keys = getArtifactKeys(row.addonId, row.version, row.manifest.main);
-	const pageKey = `${getVersionDirectory(row.addonId, row.version)}/${ADDON_PAGE_FILENAME}`;
-	const addonMd = submission?.source?.addonMd ?? null;
+	const source = submission?.source ?? null;
 
-	return {
+	return renderAddonVersion(env, {
+		addonId: row.addonId,
 		version: row.version,
 		manifest: row.manifest,
-		...toVersionChangelog(row.changelog, submission?.source ?? null),
+		...toVersionChangelog(row.changelog, source),
 		source: toSourcePin(submission),
+		addonMd: source?.addonMd ?? null,
 		bundleSize: row.bundleSize,
 		sha256: row.sha256,
 		publishedAt: row.publishedAt.toISOString(),
-		manifestUrl: getCdnUrl(env.CDN_URL, keys.manifest),
-		bundleUrl: getCdnUrl(env.CDN_URL, keys.bundle),
-		pageUrl: addonMd === null ? null : getCdnUrl(env.CDN_URL, pageKey),
-	};
+	});
 }
 
 export default {
@@ -219,5 +250,6 @@ export default {
 	toVersionChangelog,
 	pinSource,
 	toSourcePin,
+	renderAddonVersion,
 	toAddonVersion,
 };
