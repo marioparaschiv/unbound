@@ -143,7 +143,7 @@ describe('the published CLI', () => {
 		const { exitCode, output } = await run([ubd, '--help'], user.path);
 
 		expect({ exitCode, output }).toMatchObject({ exitCode: 0 });
-		expect(output).toContain('Scaffold a new Unbound addon');
+		expect(output).toContain('Scaffold a new addon or workspace.');
 	});
 
 	test(
@@ -210,7 +210,7 @@ describe('the published CLI', () => {
 			const port = await freePort();
 
 			try {
-				const started = await run([ubd, 'bridge', 'start', `--port=${port}`], user.path);
+				const started = await run([ubd, 'debug', 'start', `--port=${port}`], user.path);
 
 				expect(started).toMatchObject({ exitCode: 0 });
 			} finally {
