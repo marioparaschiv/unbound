@@ -1,7 +1,14 @@
 {
 	"$schema": "../../node_modules/oxlint/configuration_schema.json",
+	"jsPlugins": [
+		{
+			"name": "unbound",
+			"specifier": "../../scripts/oxlint/plugin.ts"
+		}
+	],
 	"ignorePatterns": ["**/dist/**", "**/node_modules/**"],
 	"rules": {
+		"unbound/test-file-location": "error",
 		"eslint/no-control-regex": "off",
 		"unicorn/no-useless-spread": "off",
 		"eslint/no-unused-vars": [
