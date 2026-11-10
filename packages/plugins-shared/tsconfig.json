@@ -1,7 +1,10 @@
 {
 	"extends": "../plugins/tsconfig.json",
 	"compilerOptions": {
-		"types": ["bun"]
+		"types": ["bun"],
+		"paths": {
+			"~/*": ["./src/*"]
+		}
 	},
-	"include": ["src/**/*"]
+	"include": ["src/**/*", "tests/**/*"]
 }
