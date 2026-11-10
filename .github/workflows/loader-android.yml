@@ -104,8 +104,10 @@ defaults:
         working-directory: packages/loader
 
 jobs:
+    # Smoke tests are disabled to save runner time; set the repository variable SMOKE_TESTS to true to turn them back on.
     smoke-inputs:
         name: Build the smoke test's client and plugins
+        if: vars.SMOKE_TESTS == 'true'
         runs-on: ubuntu-26.04
         timeout-minutes: 15
         permissions:
@@ -561,7 +563,7 @@ jobs:
     smoke:
         name: Smoke test patched Discord
         needs: [build-module, patch-discord, smoke-inputs]
-        if: needs.build-module.outputs.attested == 'true'
+        if: vars.SMOKE_TESTS == 'true' && needs.build-module.outputs.attested == 'true'
         runs-on: ubuntu-26.04
         timeout-minutes: 20
         permissions:

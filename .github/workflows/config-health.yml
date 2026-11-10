@@ -61,4 +61,5 @@ jobs:
                   CONFIG_PRESENT_DOCS_S3_SECRET_ACCESS_KEY: ${{ secrets.DOCS_S3_SECRET_ACCESS_KEY != '' }}
                   CONFIG_PRESENT_CDN_URL: ${{ vars.CDN_URL != '' }}
                   CONFIG_PRESENT_DKRYPT_BASE_URL: ${{ vars.DKRYPT_BASE_URL != '' }}
+                  CONFIG_PRESENT_SMOKE_TESTS: ${{ vars.SMOKE_TESTS != '' }}
               run: bun scripts/config-health.ts

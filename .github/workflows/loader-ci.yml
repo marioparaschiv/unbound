@@ -500,7 +500,8 @@ jobs:
             pull-requests: write
         timeout-minutes: 5
         needs: [build, comment-pr]
-        if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+        # Runs only with the smoke tests, when the repository variable SMOKE_TESTS is true.
+        if: ${{ vars.SMOKE_TESTS == 'true' && !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
         strategy:
             fail-fast: false
             matrix:

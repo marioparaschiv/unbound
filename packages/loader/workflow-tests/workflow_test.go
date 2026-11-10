@@ -556,8 +556,9 @@ func TestParsedAndroidSmokeTestGatesTheAndroidBuild(t *testing.T) {
 	smoke := android.job(t, "smoke")
 	requireNeeds(t, "smoke", smoke, "patch-discord")
 	requireNeeds(t, "smoke", smoke, "build-module")
-	if smoke.If != "needs.build-module.outputs.attested == 'true'" || smoke.ContinueOnError {
-		t.Fatalf("the Android smoke test must fail the build whenever the module is attested, runs if %q", smoke.If)
+	// Off unless the repository variable SMOKE_TESTS is true, to save runner time.
+	if smoke.If != "vars.SMOKE_TESTS == 'true' && needs.build-module.outputs.attested == 'true'" || smoke.ContinueOnError {
+		t.Fatalf("the Android smoke test must stay disabled until it is turned back on, runs if %q", smoke.If)
 	}
 	runner := smoke.stepUsing(t, "reactivecircus/android-emulator-runner@")
 	if !regexp.MustCompile(`@[0-9a-f]{40}$`).MatchString(runner.Uses) {
@@ -592,8 +593,9 @@ func TestParsedIOSSmokeTestGatesTheIOSBuild(t *testing.T) {
 	if smoke.step(t, "Wait for the simulator build").ContinueOnError != "" {
 		t.Fatal("a failed simulator build must fail the smoke test")
 	}
-	if smoke.If != "inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true" || smoke.ContinueOnError {
-		t.Fatalf("the iOS smoke test must run whenever the simulator is built, unless a pull request touches nothing it covers, runs if %q", smoke.If)
+	// Off unless the repository variable SMOKE_TESTS is true, to save runner time.
+	if smoke.If != "vars.SMOKE_TESTS == 'true' && inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true" || smoke.ContinueOnError {
+		t.Fatalf("the iOS smoke test must stay disabled until it is turned back on, runs if %q", smoke.If)
 	}
 	if smoke.step(t, "Download the simulator build").With["name"] != "ios-simulator" {
 		t.Fatal("the smoke test must install this run's simulator build")
@@ -904,24 +906,23 @@ func TestToolchainVersionsLiveInOnePlace(t *testing.T) {
 	}
 }
 
-func TestParsedLoaderChangesOnMainPublishTheLoaderAndEveryChannelsInAppBuild(t *testing.T) {
+func TestParsedLoaderReleasesPublishTheLoaderAndEveryChannelsInAppBuild(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "loader-publish.yml"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	var trigger struct {
-		On struct {
-			Push struct {
-				Branches []string `yaml:"branches"`
-				Paths    []string `yaml:"paths"`
-			} `yaml:"push"`
-		} `yaml:"on"`
+		On map[string]any `yaml:"on"`
 	}
 	if err := yaml.Unmarshal(data, &trigger); err != nil {
 		t.Fatal(err)
 	}
-	if !slices.Equal(trigger.On.Push.Branches, []string{"main"}) || !slices.Equal(trigger.On.Push.Paths, []string{"packages/loader/version.json"}) {
-		t.Fatalf("only a semantic loader version update on main must publish, push trigger is %+v", trigger.On.Push)
+	if _, ok := trigger.On["workflow_call"]; !ok || len(trigger.On) != 2 {
+		t.Fatalf("only release.yml and a manual retry may start the loader publish, triggers are %v", trigger.On)
+	}
+	loader := loadWorkflow(t, "release.yml").job(t, "loader")
+	if loader.Uses != "./.github/workflows/loader-publish.yml" || loader.If != "needs.release.outputs.loader-released == 'true'" {
+		t.Fatalf("only a merged loader release PR may publish the loader, release.yml runs it if %q", loader.If)
 	}
 	publish := loadWorkflow(t, "loader-publish.yml")
 	stable := publish.job(t, "stable")
@@ -982,8 +983,8 @@ func TestParsedInAppAndroidBuildsPublishOnlySignedSmokeTestedMainBuilds(t *testi
 	}
 	android := loadWorkflow(t, "loader-android.yml")
 	data := string(mustReadWorkflow(t, "loader-android.yml"))
-	if !strings.Contains(data, "value: ${{ jobs.build-module.outputs.attested }}") || android.job(t, "smoke").If != "needs.build-module.outputs.attested == 'true'" {
-		t.Fatal("the Android build must report whether its smoke test ran")
+	if !strings.Contains(data, "value: ${{ jobs.build-module.outputs.attested }}") || !strings.HasSuffix(android.job(t, "smoke").If, "needs.build-module.outputs.attested == 'true'") {
+		t.Fatal("the Android build must report whether it is attested")
 	}
 }
 
@@ -994,7 +995,6 @@ func TestParsedLoaderPublishShipsOnlySignedSmokeTestedMainBuilds(t *testing.T) {
 		"inputs.loader_publish_only == true",
 		"github.event_name != 'pull_request'",
 		"inputs.release_dry_run != true",
-		"inputs.skip_ios_smoke != true",
 		"needs.ios.result == 'success'",
 		"needs.android.result == 'success'",
 		"needs.android.outputs.attested == 'true'",

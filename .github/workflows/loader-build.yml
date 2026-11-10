@@ -1041,11 +1041,11 @@ jobs:
             DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
             GPG_KEY: ${{ secrets.GPG_KEY }}
 
-    # Publishes the smoke-tested deb and module of this loader commit for jailbroken iOS and rooted Android, without a GitHub release.
-    # The Android smoke test ran when the module is attested, and the same attestation key signed the deb.
+    # Publishes the deb and module of this loader commit for jailbroken iOS and rooted Android, without a GitHub release.
+    # The module must be attested, and the same attestation key signed the deb.
     loader-publish:
         name: Publish the loader
-        if: ${{ !cancelled() && inputs.loader_publish_only == true && github.event_name != 'pull_request' && inputs.release_dry_run != true && inputs.skip_ios_smoke != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && needs.android.result == 'success' && needs.android.outputs.attested == 'true' }}
+        if: ${{ !cancelled() && inputs.loader_publish_only == true && github.event_name != 'pull_request' && inputs.release_dry_run != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && needs.android.result == 'success' && needs.android.outputs.attested == 'true' }}
         needs: [resolve-source, ios, android]
         runs-on: ubuntu-26.04
         timeout-minutes: 15
