@@ -1,14 +1,17 @@
 package app.unbound.android
 
 import android.app.Activity
+import android.app.Application
 import android.content.pm.ApplicationInfo
 import android.content.res.AssetManager
 import android.os.Build
+import android.os.Process
 import io.github.libxposed.api.XposedInterface.ExceptionMode
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface.PackageReadyParam
 import org.json.JSONObject
 import java.io.File
+import java.io.FileOutputStream
 import java.lang.reflect.Method
 import java.util.zip.ZipFile
 
@@ -21,6 +24,7 @@ class Unbound : XposedModule() {
         private const val BOOTSTRAP_DIRECTORY = "assets/js/"
         private const val STARTUP_CACHE = "code_cache/unbound-startup-cache"
         private const val DISCORD_APK_FACTS = "discordAPK"
+        private const val BOOTSTRAP_SCRIPTS = "bootstrapScripts"
     }
 
     override fun onPackageReady(param: PackageReadyParam) {
@@ -30,6 +34,13 @@ class Unbound : XposedModule() {
             return
         }
         if (param.packageName != DISCORD_PACKAGE) return
+        // Discord's helper processes have no React runtime; loading there only costs memory and
+        // races the main process over Unbound's files.
+        val process = Application.getProcessName()
+        if (process != DISCORD_PACKAGE) {
+            Logger.info(LogCategory.DEFAULT, "Skipping Discord's $process process.")
+            return
+        }
 
         runCatching { initialize(param) }
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to initialize Unbound", it) }
@@ -55,8 +66,10 @@ class Unbound : XposedModule() {
         val platformInfo = Platform.describe(appInfo, Platform.frameworkLabel(frameworkName, frameworkVersion, lsPatched))
         platformInfo.put("appIcons", AndroidAppIcons.describe(moduleInfo, appInfo, packagedIcon, cache))
             .put("launcherIcons", launcherIcons)
+        val bootstrapScripts = cache.value(BOOTSTRAP_SCRIPTS, File(moduleInfo.sourceDir)) {
+            readBootstrapScripts(moduleInfo.sourceDir)?.toString()
+        } ?: "{}"
         cache.save()
-        val bootstrapScripts = readBootstrapScripts(moduleInfo.sourceDir).toString()
 
         NativeBridge.nativeInitialize(
             documents,
@@ -233,21 +246,35 @@ class Unbound : XposedModule() {
         if (installed?.isFile == true) return installed.absolutePath
 
         val apk = File(moduleInfo.sourceDir)
-        val abi = Build.SUPPORTED_ABIS.first()
         val target = File(appInfo.dataDir, "code_cache/unbound/${apk.lastModified()}-${apk.length()}/$NATIVE_LIBRARY")
         if (target.isFile) return target.absolutePath
 
         target.parentFile?.parentFile?.deleteRecursively()
         target.parentFile?.mkdirs()
         ZipFile(apk).use { zip ->
-            val entry = zip.getEntry("lib/$abi/$NATIVE_LIBRARY")
-                ?: error("Module APK has no $NATIVE_LIBRARY for $abi")
-            zip.getInputStream(entry).use { input -> target.outputStream().use { input.copyTo(it) } }
+            val entry = processAbis().firstNotNullOfOrNull { abi -> zip.getEntry("lib/$abi/$NATIVE_LIBRARY") }
+                ?: error("Module APK has no $NATIVE_LIBRARY for ${processAbis().joinToString()}")
+            // Copied beside the target and renamed into place, so an interrupted copy never leaves a
+            // partial library that every later launch would try to load.
+            val staging = File(target.parentFile, "$NATIVE_LIBRARY.partial")
+            zip.getInputStream(entry).use { input ->
+                FileOutputStream(staging).use { output ->
+                    input.copyTo(output)
+                    output.fd.sync()
+                }
+            }
+            check(entry.size < 0 || staging.length() == entry.size) { "Extracted $NATIVE_LIBRARY is ${staging.length()} bytes, expected ${entry.size}" }
+            check(staging.renameTo(target)) { "Failed to move the extracted $NATIVE_LIBRARY into place" }
         }
         return target.absolutePath
     }
 
-    private fun readBootstrapScripts(apkPath: String): JSONObject = runCatching {
+    /** The ABIs Discord's process runs, best first: a 32-bit Discord on a 64-bit phone needs its 32-bit library. */
+    private fun processAbis(): List<String> =
+        (if (Process.is64Bit()) Build.SUPPORTED_64_BIT_ABIS else Build.SUPPORTED_32_BIT_ABIS).toList()
+
+    /** The module's bootstrap scripts by name, or null when the APK cannot be read, so a failed read is not cached. */
+    private fun readBootstrapScripts(apkPath: String): JSONObject? = runCatching {
         ZipFile(apkPath).use { zip ->
             val scripts = JSONObject()
             zip.entries().asSequence()
@@ -258,5 +285,6 @@ class Unbound : XposedModule() {
                 }
             scripts
         }
-    }.getOrDefault(JSONObject())
+    }.onFailure { Logger.error(LogCategory.DEFAULT, "Failed to read the bootstrap scripts from $apkPath", it) }
+        .getOrNull()
 }
