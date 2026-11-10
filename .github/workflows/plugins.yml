@@ -62,7 +62,7 @@ jobs:
             - name: Sync plugin icons from the loader IPA
               if: steps.loader-ipa.outputs.available == 'true'
               run: bun packages/plugin-scripts/src/sync-plugin-icons.ts "$RUNNER_TEMP/Unbound.ipa"
-            - name: Generate the plugin catalog
-              run: bun run plugins:catalog
+            - name: Generate the plugins README
+              run: bun run plugins:readme
             - name: Check generated plugin files are up to date
-              run: git diff --exit-code -- packages/plugins/README.md packages/plugins/catalog.svg assets/plugins/icons
+              run: git diff --exit-code -- packages/plugins/README.md assets/plugins/icons assets/plugins/readme-icons

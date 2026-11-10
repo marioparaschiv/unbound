@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+<filter id="grey"><feColorMatrix values="0 0 0 0 0.55 0 0 0 0 0.55 0 0 0 0 0.58 0 0 0 1 0"/></filter>
+<image width="24" height="24" filter="url(#grey)" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAAAJ1BMVEVMaXHv7/Hs7PHv7/Hv7/Hv7/Hv7/Dv7/Hw8PHv7/Hw8PDv7/Hv7/HexvBVAAAADHRSTlMA9RI+KpXggHelU8CT4N6BAAAACXBIWXMAAAsTAAALEwEAmpwYAAABC0lEQVRYw+2YzQ6EIAyELVAWpe//vHvY7A9SFcokq4lz9PA5SOlYpunWteU5kjSLInsVE7J0KwfFDolBVJkKJo4IrT1lMSqvFiZmlYtjO4gLULSDYgEiO4gK0PdxcnVpuLT3Ih2U9KJP3SCng9z/QLClwT62QTfoBCBi7/ZDwnmmY1AMLYET4mFBhrbo+unxOohbQ5APQL45TftOf1i2luoOQLX/eWMPe0Av+3EZBr27kGqqB/T4FNcCAmmmjKDalBVUmbKDZEaB6HSg+VwfG7X9oIIcPSKwQwtrIyONDdZqYc0fFkewgIRF9uhPBGyEgA01sDELNvjBRtFiP4eGY9i4jrtAwF1p3LqOno45bbqqlcIVAAAAAElFTkSuQmCC"/>
+</svg>
