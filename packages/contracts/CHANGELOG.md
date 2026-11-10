@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.0.0](https://github.com/marioparaschiv/unbound/compare/contracts-v0.14.1...contracts-v1.0.0) (2026-11-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* **cli:** root commands such as `ubd eval`, `ubd push`, `ubd install` and `ubd login` now live under groups (`ubd debug eval`, `ubd device install`, `ubd auth login`); `i18n` flags became subcommands; MCP tools `install` and `device` became `device_install`, `device_reset`, `device_save`, `device_restore` and `device_snapshots`.
+
+### Features
+
+* count anonymous addon installs, sort by popularity ([#1066](https://github.com/marioparaschiv/unbound/issues/1066)) ([9a9f188](https://github.com/marioparaschiv/unbound/commit/9a9f1887a7979f6a6275c678dd677c0a04f7daf5))
+
+
+### Code Refactoring
+
+* **cli:** group commands under debug, device, i18n and auth ([#1065](https://github.com/marioparaschiv/unbound/issues/1065)) ([122791d](https://github.com/marioparaschiv/unbound/commit/122791ddec70095a679380c5a48dfe6419dba939))
+
 ## [0.14.1](https://github.com/marioparaschiv/unbound/compare/contracts-v0.14.0...contracts-v0.14.1) (2026-11-09)
 
 

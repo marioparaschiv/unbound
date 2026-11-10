@@ -1,5 +1,44 @@
 # Changelog
 
+## [1.0.0](https://github.com/marioparaschiv/unbound/compare/web-v0.14.1...web-v1.0.0) (2026-11-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* **cli:** root commands such as `ubd eval`, `ubd push`, `ubd install` and `ubd login` now live under groups (`ubd debug eval`, `ubd device install`, `ubd auth login`); `i18n` flags became subcommands; MCP tools `install` and `device` became `device_install`, `device_reset`, `device_save`, `device_restore` and `device_snapshots`.
+
+### Features
+
+* **client:** show icon packs in Discord's theme picker ([#1071](https://github.com/marioparaschiv/unbound/issues/1071)) ([d47801f](https://github.com/marioparaschiv/unbound/commit/d47801f328968076b465016e35ab90cbf805f1cf))
+* count anonymous addon installs, sort by popularity ([#1066](https://github.com/marioparaschiv/unbound/issues/1066)) ([9a9f188](https://github.com/marioparaschiv/unbound/commit/9a9f1887a7979f6a6275c678dd677c0a04f7daf5))
+* **web:** add addon gallery lightbox with drag panning ([#1069](https://github.com/marioparaschiv/unbound/issues/1069)) ([1fd08d5](https://github.com/marioparaschiv/unbound/commit/1fd08d57bbe6737efca3f878e4a1c5fae413bd83))
+* **web:** draw guide flows as a numbered rail in a recessed well ([#1067](https://github.com/marioparaschiv/unbound/issues/1067)) ([a9468b0](https://github.com/marioparaschiv/unbound/commit/a9468b0700b34f3f655261d8e0fbea2be11e8ef6))
+* **web:** glide to a section from the guide's page outline ([#1068](https://github.com/marioparaschiv/unbound/issues/1068)) ([1bde501](https://github.com/marioparaschiv/unbound/commit/1bde5013425aa54458f3744e206aa71a19a8c886))
+* **web:** turn FAQ rows into hover cards with expo motion ([#1055](https://github.com/marioparaschiv/unbound/issues/1055)) ([f1ce3a8](https://github.com/marioparaschiv/unbound/commit/f1ce3a8d7e44c9097782421199943afc63dbe88f))
+
+
+### Bug Fixes
+
+* **web:** nest the API search rows concentrically in its dialog ([#1057](https://github.com/marioparaschiv/unbound/issues/1057)) ([36a1d58](https://github.com/marioparaschiv/unbound/commit/36a1d58fd944c8869d0805b6e1a8251d2b942893))
+
+
+### Code Refactoring
+
+* **cli:** group commands under debug, device, i18n and auth ([#1065](https://github.com/marioparaschiv/unbound/issues/1065)) ([122791d](https://github.com/marioparaschiv/unbound/commit/122791ddec70095a679380c5a48dfe6419dba939))
+* **web:** share one search dialog across the docs tabs ([#1059](https://github.com/marioparaschiv/unbound/issues/1059)) ([88a0d0a](https://github.com/marioparaschiv/unbound/commit/88a0d0a2427a468b0782341041b6ae0bcf9bf0c9))
+
+
+### Documentation
+
+* rewrite the guides around up-front concepts ([#1064](https://github.com/marioparaschiv/unbound/issues/1064)) ([35a35a6](https://github.com/marioparaschiv/unbound/commit/35a35a6068221e40cb4ae4ea47263ce612ab8453))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 1.0.0
+
 ## [0.14.1](https://github.com/marioparaschiv/unbound/compare/web-v0.14.0...web-v0.14.1) (2026-11-09)
 
 

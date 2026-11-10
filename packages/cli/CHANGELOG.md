@@ -1,5 +1,33 @@
 # Changelog
 
+## [2.0.0](https://github.com/marioparaschiv/unbound/compare/cli-v1.1.2...cli-v2.0.0) (2026-11-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* **cli:** root commands such as `ubd eval`, `ubd push`, `ubd install` and `ubd login` now live under groups (`ubd debug eval`, `ubd device install`, `ubd auth login`); `i18n` flags became subcommands; MCP tools `install` and `device` became `device_install`, `device_reset`, `device_save`, `device_restore` and `device_snapshots`.
+
+### Code Refactoring
+
+* **cli:** group commands under debug, device, i18n and auth ([#1065](https://github.com/marioparaschiv/unbound/issues/1065)) ([122791d](https://github.com/marioparaschiv/unbound/commit/122791ddec70095a679380c5a48dfe6419dba939))
+
+
+### Documentation
+
+* rewrite the guides around up-front concepts ([#1064](https://github.com/marioparaschiv/unbound/issues/1064)) ([35a35a6](https://github.com/marioparaschiv/unbound/commit/35a35a6068221e40cb4ae4ea47263ce612ab8453))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger bumped to 0.10.3
+    * @unbound-app/debugger-protocol bumped to 1.0.0
+  * devDependencies
+    * @unbound-app/api bumped to 2.0.0
+    * @unbound-app/contracts bumped to 1.0.0
+    * @unbound-app/web bumped to 1.0.0
+
 ## [1.1.2](https://github.com/marioparaschiv/unbound/compare/cli-v1.1.1...cli-v1.1.2) (2026-11-09)
 
 
