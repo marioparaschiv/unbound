@@ -16,6 +16,7 @@ import {
 } from './paths';
 import { buildRoot, buildGlobal, writeManifest, normalizeForHash } from './emit';
 import { importGeneratedModules } from './generated-modules';
+import { buildConventions } from './conventions';
 import { bundleInWorkers } from './bundle-pool';
 import { buildOwnership } from './ownership';
 import { buildHoistFiles } from './bundle';
@@ -134,6 +135,8 @@ async function generate() {
 		join(API_SRC, 'global.d.ts'),
 		buildGlobal(entries, internal.exportedNames, ownerByName, aliases),
 	);
+
+	for (const [path, text] of buildConventions()) outputs.set(path, text);
 
 	for (const [path, text] of outputs) {
 		mkdirSync(dirname(path), { recursive: true });

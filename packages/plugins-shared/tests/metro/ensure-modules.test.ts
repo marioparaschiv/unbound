@@ -1,4 +1,4 @@
-import { createFakeNative, installAddonGlobals } from '@unbound-app/api/testing';
+import { createFakeNative, installAddonGlobals } from '@unbound-app/api/testing/fakes';
 import { describe, expect, mock, test } from 'bun:test';
 
 installAddonGlobals();

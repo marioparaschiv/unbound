@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createFakeMetro, createFakeNative } from '~/testing';
+import { createFakeNative } from '~/testing/fake-native';
+import { createFakeMetro } from '~/testing/fake-metro';
 
 const manifest: never = Object.assign({ id: 'third-pass' }) as never;
 
@@ -33,6 +34,17 @@ describe('metro.find', () => {
 		expect(metro.find(metro.filters.byProps('tag'), { lazy: false })).toBe(module);
 		expect(metro.find(metro.filters.byProps('none'), { lazy: false })).toBeUndefined();
 		expect(metro.find(metro.filters.byProps('tag'), { all: true })).toEqual([module]);
+	});
+});
+
+describe('metro.common', () => {
+	test('finds SimpleMarkdown by the props the client finds it by', () => {
+		const metro = createFakeMetro();
+		const defaultRules = {};
+
+		metro.register({ parserFor: () => {}, outputFor: () => {}, defaultRules });
+
+		expect(metro.common.SimpleMarkdown.defaultRules).toBe(defaultRules);
 	});
 });
 

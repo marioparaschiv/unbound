@@ -1,4 +1,4 @@
-import { installAddonGlobals } from '@unbound-app/api/testing';
+import { installAddonGlobals } from '@unbound-app/api/testing/fakes';
 import { expect, test } from 'bun:test';
 
 import { ensureCapabilities } from '~/native/ensure-capabilities';

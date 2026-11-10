@@ -4,7 +4,8 @@ import {
 	type IcuNode,
 	type IcuPluralNode,
 	type IcuSelectNode,
-} from './icu-parse';
+} from '../src/_conventions/icu-parse';
+import { SOURCE_LOCALE } from '../src/_conventions/addon-locales';
 
 /** A value `format` puts into a placeholder, as the client's `FormatVars` types it. */
 export type IcuValue = string | number | boolean | Date;
@@ -127,6 +128,10 @@ function formatNodes(nodes: IcuNode[], vars: IcuVars, locale: string, pound?: nu
  * @param locale The locale plural rules, numbers and dates follow, such as `de`.
  * @returns The formatted message.
  */
-export function formatIcu(message: string, vars: IcuVars = {}, locale: string = 'en-US'): string {
+export function formatIcu(
+	message: string,
+	vars: IcuVars = {},
+	locale: string = SOURCE_LOCALE,
+): string {
 	return formatNodes(parseIcu(message), vars, locale);
 }

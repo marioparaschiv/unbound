@@ -1,4 +1,4 @@
-import { parseIcu, type IcuArgumentNode, type IcuNode } from '@unbound-app/api/testing/icu-parse';
+import { parseIcu, type IcuArgumentNode, type IcuNode } from '@unbound-app/contracts/icu-parse';
 
 /** What one ICU argument accepts, as `format`'s typings spell it. */
 export type IcuArgument =

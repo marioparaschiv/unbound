@@ -8,6 +8,7 @@ import type { FakePlugins } from './fake-plugins';
 import type { FakeNative } from './fake-native';
 import type { FakeFs } from './fake-fs';
 
+import { SOURCE_LOCALE } from '../src/_conventions/addon-locales';
 import { unmountAll } from './test-renderer';
 
 /** The plugin under test and every fake the preset installed for it. */
@@ -73,5 +74,5 @@ export function resetSession(): void {
 	session.flux.reset();
 	session.toasts.shown.length = 0;
 	session.dialogs.opened.length = 0;
-	session.locales?.setLocale('en-US');
+	session.locales?.setLocale(SOURCE_LOCALE);
 }

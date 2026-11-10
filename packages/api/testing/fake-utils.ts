@@ -3,7 +3,9 @@ import { useRef } from 'react';
 import type { TreeNode, TreePredicate, TreeSearchOptions } from '../src/utils/index';
 import type { PredicateResult } from '../src/_types';
 
-// These mirror the client's `utils` line for line: the testing kit ships without the client's private packages.
+import walkTree from '../src/_conventions/walk-tree';
+
+// The tree walk is the client's own; the React finders below mirror the client's `utils/react`.
 
 /** What `findComponent` and `filterComponents` match by: a component name, or a predicate on each element. */
 type ComponentMatch = string | ((element: TreeNode) => PredicateResult);
@@ -27,64 +29,6 @@ const REACT_KEYS = [
 ];
 // Elements nest through their props, so only `props` and `children` lead to more elements.
 const ELEMENT_OPTIONS: TreeSearchOptions = { walkable: ['props', 'children'] };
-
-function walkTree(
-	root: TreeNode,
-	predicate: TreePredicate,
-	options: TreeSearchOptions,
-	all: boolean,
-): TreeNode[] {
-	const { walkable, ignore = [], maxDepth = 100 } = options;
-	const seen = new WeakSet<object>();
-	const found: TreeNode[] = [];
-
-	// Returns `true` once the search should stop.
-	function visit(node: TreeNode, depth: number): boolean {
-		if (node === null || node === undefined) {
-			return false;
-		}
-
-		const isObject = typeof node === 'object';
-
-		if (isObject) {
-			if (seen.has(node)) {
-				return false;
-			}
-
-			seen.add(node);
-		}
-
-		if (predicate(node)) {
-			found.push(node);
-
-			if (!all) {
-				return true;
-			}
-		}
-
-		if (!isObject || depth >= maxDepth) {
-			return false;
-		}
-
-		const keys = Array.isArray(node) ? node.keys() : (walkable ?? Object.keys(node));
-
-		for (const key of keys) {
-			if (typeof key === 'string' && ignore.includes(key)) {
-				continue;
-			}
-
-			if (visit(node[key], depth + 1)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	visit(root, 0);
-
-	return found;
-}
 
 function reactOptions({ walkable = [], ...rest }: TreeSearchOptions): TreeSearchOptions {
 	return { ...rest, walkable: [...REACT_KEYS, ...walkable] };

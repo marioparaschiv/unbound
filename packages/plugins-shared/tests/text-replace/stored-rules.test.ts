@@ -1,5 +1,5 @@
+import { createMemoryStorage } from '@unbound-app/api/testing/fakes';
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
-import { createMemoryStorage } from '@unbound-app/api/testing';
 
 const storage = createMemoryStorage('another-plugin');
 
