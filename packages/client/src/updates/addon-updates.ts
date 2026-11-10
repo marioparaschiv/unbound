@@ -4,7 +4,6 @@ import type { Plugin } from '@unbound-app/types';
 
 import type { UpdatableKind } from '~/addons/manager-of';
 import { createUnboundClient } from '~/account/client';
-import type { ApiRequest } from '~/account/client';
 import { CLIENT_VERSION } from '~/core/constants';
 import type { Addons } from '~/addons/addons';
 
@@ -14,9 +13,20 @@ export type UpdatableManager = Pick<
 	'listInstalled' | 'update' | 'getHeldVersion' | 'clearDevelopmentCopy'
 >;
 
+/**
+ * The one route of the Unbound API client the updater asks. Narrower than `ApiRequest`, so the addon
+ * types the SDK bundles from this module never pull in the web routes.
+ */
+export type UpdatesClient = (
+	route: 'POST /api/v1/updates',
+	init: UpdatesClientInit,
+) => Promise<UpdatesResponse>;
+
+type UpdatesClientInit = { body: UpdatesRequest };
+
 export type UpdateCheckOptions = {
 	/** The Unbound API client to ask. */
-	request?: ApiRequest;
+	request?: UpdatesClient;
 	/** The client version the server checks each update's minimum against. */
 	clientVersion?: string;
 };
