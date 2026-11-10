@@ -7,6 +7,7 @@ import {
 	fetchLoaderUpdate,
 	resolveRequiredLoader,
 } from '~/updates/loader-updates';
+import { createUnboundClient } from '~/account/client';
 
 const UPDATE: LoaderUpdateResponse = {
 	update: {
@@ -85,17 +86,17 @@ describe('buildLoaderUpdateQuery', () => {
 });
 
 describe('fetchLoaderUpdate', () => {
-	const baseUrl = server.url.origin;
+	const request = createUnboundClient({ baseUrl: server.url.origin });
 
 	test('sends no request when the loader cannot be checked', async () => {
 		requested.length = 0;
 
-		expect(await fetchLoaderUpdate({ baseUrl, platform: 'ios', loader: undefined })).toEqual({
+		expect(await fetchLoaderUpdate({ request, platform: 'ios', loader: undefined })).toEqual({
 			update: null,
 			requiredVersion: null,
 		});
 		expect(
-			await fetchLoaderUpdate({ baseUrl, platform: 'ios', loader: loader('dev', '3.2.0') }),
+			await fetchLoaderUpdate({ request, platform: 'ios', loader: loader('dev', '3.2.0') }),
 		).toEqual({ update: null, requiredVersion: '3.2.0' });
 		expect(requested).toEqual([]);
 	});
@@ -105,7 +106,7 @@ describe('fetchLoaderUpdate', () => {
 
 		expect(
 			await fetchLoaderUpdate({
-				baseUrl,
+				request,
 				platform: 'ios',
 				loader: loader('3.0.0'),
 				channel: 'stable',

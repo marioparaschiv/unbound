@@ -8,6 +8,7 @@ import {
 	findInstalledBuild,
 	isOlderDiscord,
 } from '~/updates/discord-builds';
+import { createUnboundClient } from '~/account/client';
 
 function build(
 	discordVersion: string,
@@ -86,7 +87,9 @@ describe('fetchDiscordBuilds', () => {
 	afterAll(() => server.stop(true));
 
 	test("asks for the channel's builds", async () => {
-		expect(await fetchDiscordBuilds(server.url.origin, 'beta')).toEqual([NEWEST, OLDER]);
+		expect(
+			await fetchDiscordBuilds('beta', createUnboundClient({ baseUrl: server.url.origin })),
+		).toEqual([NEWEST, OLDER]);
 		expect(requested.at(-1)?.searchParams.get('channel')).toBe('beta');
 	});
 });

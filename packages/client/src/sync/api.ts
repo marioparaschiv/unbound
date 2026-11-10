@@ -6,8 +6,8 @@ import toError from '@unbound-app/utils/to-error';
 
 import { applyActions, collectLocalDocument } from '~/sync/device';
 import { isJsonEqual, plan, reconcileBase } from '~/sync/merge';
+import type { ApiRequest } from '~/account/client';
 import type { SyncStrategy } from '~/sync/merge';
-import type { ApiRequest } from '~/account/api';
 import { getBucket } from '~/storage/api';
 import * as account from '~/account/api';
 

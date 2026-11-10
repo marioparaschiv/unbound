@@ -1,10 +1,11 @@
 import type { AddonUpdate, UpdatesRequest, UpdatesResponse } from '@unbound-app/contracts/updates';
 import { isAddonId, isSemver } from '@unbound-app/contracts/manifest-patterns';
-import { createApiClient } from '@unbound-app/web/client';
 import type { Plugin } from '@unbound-app/types';
-import type { Api } from '@unbound-app/web/api';
 
 import type { UpdatableKind } from '~/addons/manager-of';
+import { createUnboundClient } from '~/account/client';
+import type { ApiRequest } from '~/account/client';
+import { CLIENT_VERSION } from '~/core/constants';
 import type { Addons } from '~/addons/addons';
 
 /** The part of an addon manager the updater drives. */
@@ -14,9 +15,10 @@ export type UpdatableManager = Pick<
 >;
 
 export type UpdateCheckOptions = {
-	/** Origin of the Unbound web API. */
-	baseUrl: string;
-	clientVersion: string;
+	/** The Unbound API client to ask. */
+	request?: ApiRequest;
+	/** The client version the server checks each update's minimum against. */
+	clientVersion?: string;
 };
 
 /** An installed addon as its manager reports it, before its id and version are validated. */
@@ -119,20 +121,19 @@ export function toPendingUpdates(
  * @description Asks `POST /api/v1/updates` which installed addons have updates, in one request.
  * Addons the server doesn't know are never listed back.
  * @param entries The installed addons across the updatable managers.
- * @param options The API origin and this client's version.
+ * @param options The API client and this client's version, both defaulting to this client's.
  * @returns The pending updates; rejects when the server can't be reached or answers with an error.
  */
 export async function fetchUpdates(
 	entries: InstalledEntry[],
-	options: UpdateCheckOptions,
+	{ request = createUnboundClient(), clientVersion = CLIENT_VERSION }: UpdateCheckOptions = {},
 ): Promise<PendingUpdate[]> {
-	const body = buildUpdatesRequest(entries, options.clientVersion);
+	const body = buildUpdatesRequest(entries, clientVersion);
 
 	if (!body) {
 		return [];
 	}
 
-	const request = createApiClient<Api>({ baseUrl: options.baseUrl });
 	const response = await request('POST /api/v1/updates', {
 		body,
 	});
@@ -170,13 +171,13 @@ export function automaticUpdates(
  * @description Replaces a development copy with the store's published build: clears its development mark, then checks just that addon and applies the update the store returns.
  * @param manager The manager the addon belongs to.
  * @param id The addon's id.
- * @param options The API origin and this client's version.
+ * @param options The API client and this client's version, both defaulting to this client's.
  * @returns Whether the store's build was applied; `false` when the installed bundle already matches the store or the store does not publish it.
  */
 export async function reinstallFromStore(
 	manager: UpdatableManager,
 	id: string,
-	options: UpdateCheckOptions,
+	options: UpdateCheckOptions = {},
 ): Promise<boolean> {
 	manager.clearDevelopmentCopy(id);
 

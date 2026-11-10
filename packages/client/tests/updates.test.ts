@@ -15,6 +15,7 @@ import { parse } from '@unbound-app/contracts/schema';
 
 import type { InstalledEntry, PendingUpdate } from '~/updates/addon-updates';
 import { fetchUpdates, reinstallFromStore } from '~/updates/addon-updates';
+import { createUnboundClient } from '~/account/client';
 import type { Addon } from '~/addons/addon';
 
 import {
@@ -121,7 +122,10 @@ async function check(
 	}
 
 	try {
-		const pending = await fetchUpdates(entries, { baseUrl, clientVersion: CLIENT_VERSION });
+		const pending = await fetchUpdates(entries, {
+			request: createUnboundClient({ baseUrl }),
+			clientVersion: CLIENT_VERSION,
+		});
 		const applied = await Promise.all(
 			pending.map(async (update) => {
 				const owner = owners.get(update.id);
@@ -339,7 +343,7 @@ describe('reinstallFromStore', () => {
 		manager.markDevelopmentCopy('up.pushed');
 
 		const applied = await reinstallFromStore(manager, 'up.pushed', {
-			baseUrl: 'http://127.0.0.1:9',
+			request: createUnboundClient({ baseUrl: 'http://127.0.0.1:9' }),
 			clientVersion: CLIENT_VERSION,
 		}).catch(() => false);
 
