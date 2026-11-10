@@ -68,6 +68,8 @@ $(BUNDLE_NAME)_INSTALL_PATH = "/Library/Application\ Support/"
 $(BUNDLE_NAME)_RESOURCE_DIRS = "$(RESOURCES_DIR)"
 
 SUBPROJECTS += bundle-patcher
+SUBPROJECTS += link-helper
+SUBPROJECTS += springboard
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 include $(THEOS_MAKE_PATH)/bundle.mk

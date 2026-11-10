@@ -1,6 +1,6 @@
 #!/bin/sh
-uicache -u /var/jb/Applications/UnboundLink.app 2>/dev/null || true
-/var/jb/usr/libexec/unbound-bundle || true
 launchctl unload /var/jb/Library/LaunchDaemons/app.unbound.bundle.plist 2>/dev/null || true
-launchctl load /var/jb/Library/LaunchDaemons/app.unbound.bundle.plist || true
+rm -f /var/jb/Library/LaunchDaemons/app.unbound.bundle.plist
+/var/jb/usr/libexec/unbound-bundle || true
+uicache -p /var/jb/Applications/UnboundLink.app || true
 exit 0
