@@ -53,6 +53,7 @@
 		"unbound/no-pass-through-wrapper": "error",
 		"unbound/no-env-mutation": "error",
 		"unbound/prefer-discriminated-union": "error",
+		"unbound/test-file-location": "error",
 		"unbound/no-upward-imports": [
 			"error",
 			{

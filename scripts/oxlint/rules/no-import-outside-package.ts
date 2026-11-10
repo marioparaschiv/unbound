@@ -1,28 +1,10 @@
 import { dirname, resolve, sep } from 'node:path';
-import { existsSync } from 'node:fs';
 
 import type { NodeOf, Rule } from '../rule';
 
+import packageRootOf from '../package-root-of.ts';
+
 type SourceNode = NodeOf<'Literal'>;
-
-const packageRoots = new Map<string, string | undefined>();
-
-function packageRootOf(directory: string): string | undefined {
-	if (packageRoots.has(directory)) {
-		return packageRoots.get(directory);
-	}
-
-	const parent = dirname(directory);
-	const root = existsSync(resolve(directory, 'package.json'))
-		? directory
-		: parent === directory
-			? undefined
-			: packageRootOf(parent);
-
-	packageRoots.set(directory, root);
-
-	return root;
-}
 
 const noImportOutsidePackage: Rule = {
 	meta: {
