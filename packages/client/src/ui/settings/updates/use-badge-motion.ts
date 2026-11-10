@@ -2,8 +2,8 @@ import {
 	Easing,
 	cancelAnimation,
 	interpolate,
-	useAnimatedProps,
 	useAnimatedStyle,
+	useDerivedValue,
 	useSharedValue,
 	withRepeat,
 	withSpring,
@@ -19,8 +19,6 @@ const EXIT_MS = 240;
 const SPIN_MS = 900;
 /** Underdamped, so the new badge overshoots and settles: the pop. */
 const POP_SPRING = { damping: 11, stiffness: 260, mass: 0.7 };
-/** The blur a badge enters from and leaves to, in points. */
-const BLUR = 8;
 
 type BadgeMotionOptions = {
 	entering: boolean;
@@ -32,7 +30,7 @@ type BadgeMotionOptions = {
  * @description Animates one hero badge layer: it springs in from small and blurred, pops out by growing,
  * blurring and fading, and spins while checking. Reduced motion swaps and holds still.
  * @param options Whether the layer is arriving, leaving or spinning.
- * @returns The layer's and icon's animated styles, and the icon's animated blur.
+ * @returns The layer's and icon's animated styles, and how blurred the icon is, from 0 to 1.
  */
 function useBadgeMotion({ entering, leaving, spinning }: BadgeMotionOptions) {
 	const reduced = useReducedMotion();
@@ -79,9 +77,8 @@ function useBadgeMotion({ entering, leaving, spinning }: BadgeMotionOptions) {
 	const icon = useAnimatedStyle(() => ({
 		transform: [{ rotate: `${turn.value}deg` }],
 	}));
-	const blur = useAnimatedProps(() => ({
-		blurRadius: Math.round(Math.max(1 - Math.min(enter.value, 1), exit.value) * BLUR),
-	}));
+	// 0 sharp to 1 fully blurred; the spring's overshoot past 1 stays sharp.
+	const blur = useDerivedValue(() => Math.max(1 - Math.min(enter.value, 1), exit.value));
 
 	return { layer, icon, blur };
 }

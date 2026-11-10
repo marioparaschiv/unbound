@@ -31,6 +31,7 @@ function UpdatesPage() {
 	const addons = useInstalledAddons();
 	const listed = useListedIds();
 	const ready = state.status === 'ready';
+	const checking = state.status === 'checking';
 	const updates = ready ? state.updates : [];
 	const loader = ready ? state.loader : null;
 	const discord = ready ? state.discord : null;
@@ -58,13 +59,20 @@ function UpdatesPage() {
 
 			<UnboundGroup
 				checked={ready}
+				checking={checking}
 				loader={loader}
 				requiredLoader={requiredLoader}
 				discord={discord}
 			/>
 
 			{addons.length ? (
-				<AddonGroup addons={addons} updates={updates} checked={ready} listed={listed} />
+				<AddonGroup
+					addons={addons}
+					updates={updates}
+					checked={ready}
+					checking={checking}
+					listed={listed}
+				/>
 			) : null}
 
 			{discord ? <DiscordBuildGroup discord={discord} /> : null}

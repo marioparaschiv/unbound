@@ -10,91 +10,42 @@ import {
 	setMode,
 	now,
 } from '~/sync/api';
-import type { SyncStrategy } from '~/sync/merge';
-import SignInRow from '~/ui/account/sign-in-row';
-import { messages, format } from '~/i18n/api';
+import { FIRST_SYNC_CHOICES, SYNC_MODES } from '~/ui/settings/sync/sync-options';
+import type { SyncStatus } from '~/ui/settings/sync/describe-sync';
+import type { SyncHeroAction } from '~/ui/settings/sync/sync-hero';
+import SyncFocusPage from '~/ui/settings/sync/sync-focus-page';
+import SyncHero from '~/ui/settings/sync/sync-hero';
+import useSignIn from '~/ui/account/use-sign-in';
 import { Discord } from '~/metro/components';
 import { useAccount } from '~/account/api';
 import type { SyncMode } from '~/sync/api';
 import { useBucket } from '~/storage/api';
 import Page from '~/ui/components/page';
+import { messages } from '~/i18n/api';
 import { icons } from '~/assets/api';
 
 import useStyles from './cloud-sync.style';
 
-type SyncSettings = ReturnType<typeof useBucket>;
-
-/** A choice row; `label` and `description` are message keys, resolved at render for the current locale. */
-type Option<T> = {
-	value: T;
-	label: string;
-	description: string;
-	icon: string;
-};
-
-const MODES: Option<SyncMode>[] = [
-	{
-		value: 'two-way',
-		label: 'UNBOUND_CLOUD_SYNC_MODE_TWO_WAY',
-		icon: 'ArrowsUpDownIcon',
-		description: 'UNBOUND_CLOUD_SYNC_MODE_TWO_WAY_DESC',
-	},
-	{
-		value: 'download',
-		label: 'UNBOUND_CLOUD_SYNC_MODE_DOWNLOAD',
-		icon: 'DownloadIcon',
-		description: 'UNBOUND_CLOUD_SYNC_MODE_DOWNLOAD_DESC',
-	},
-	{
-		value: 'upload',
-		label: 'UNBOUND_CLOUD_SYNC_MODE_UPLOAD',
-		icon: 'UploadIcon',
-		description: 'UNBOUND_CLOUD_SYNC_MODE_UPLOAD_DESC',
-	},
-];
-
-const FIRST_SYNC_CHOICES: Option<SyncStrategy>[] = [
-	{
-		value: 'merge',
-		label: 'UNBOUND_CLOUD_SYNC_CHOICE_MERGE',
-		icon: 'ArrowsUpDownIcon',
-		description: 'UNBOUND_CLOUD_SYNC_CHOICE_MERGE_DESC',
-	},
-	{
-		value: 'pull',
-		label: 'UNBOUND_CLOUD_SYNC_CHOICE_PULL',
-		icon: 'DownloadIcon',
-		description: 'UNBOUND_CLOUD_SYNC_CHOICE_PULL_DESC',
-	},
-	{
-		value: 'push',
-		label: 'UNBOUND_CLOUD_SYNC_CHOICE_PUSH',
-		icon: 'UploadIcon',
-		description: 'UNBOUND_CLOUD_SYNC_CHOICE_PUSH_DESC',
-	},
-];
-
-function describeStatus(settings: SyncSettings): string {
-	const error = settings.get<string | null>('lastError', null);
-	const syncedAt = settings.get<string | null>('lastSyncedAt', null);
-
-	if (error) {
-		return format('UNBOUND_CLOUD_SYNC_FAILED', { error });
-	}
-
-	if (!syncedAt) {
-		return messages.UNBOUND_CLOUD_SYNC_NEVER_SYNCED;
-	}
-
-	return format('UNBOUND_CLOUD_SYNC_LAST_SYNCED', { date: new Date(syncedAt).toLocaleString() });
-}
-
-/** @description Cloud Sync settings, laid out like Discord's own settings pages. */
+/**
+ * @description Sync, laid out like the updates page: a status hero with the next step, then how this device
+ * combines with the cloud, which way it syncs, and deleting the cloud's copy.
+ */
 function CloudSyncPage() {
 	const styles = useStyles();
 	const settings = useBucket(SYNC_STORE);
 	const [busy, setBusy] = useState(false);
 	const account = useAccount();
+	const signIn = useSignIn();
+	const enabled = settings.get('enabled', false);
+
+	const status: SyncStatus = {
+		signedIn: Boolean(account),
+		enabled,
+		choosing: Boolean(account) && settings.get('pendingChoice', false),
+		syncing: busy,
+		lastError: settings.get<string | null>('lastError', null),
+		lastSyncedAt: settings.get<string | null>('lastSyncedAt', null),
+	};
 
 	function track(task: Promise<boolean>) {
 		setBusy(true);
@@ -111,55 +62,94 @@ function CloudSyncPage() {
 		});
 	}
 
-	if (!account) {
-		return (
-			<Page>
-				<Discord.TableRowGroup helperText={messages.UNBOUND_CLOUD_SYNC_SIGN_IN_DESC}>
-					<SignInRow />
-				</Discord.TableRowGroup>
-			</Page>
-		);
+	function heroActions(): SyncHeroAction[] {
+		if (!status.signedIn) {
+			return [
+				{
+					text: messages.UNBOUND_SIGN_IN,
+					variant: 'primary',
+					loading: signIn.busy,
+					onPress: () => signIn.start(),
+				},
+			];
+		}
+
+		// The choices themselves are the next step, listed under the hero.
+		if (status.choosing) {
+			return [];
+		}
+
+		return enabled
+			? [
+					{
+						text: messages.UNBOUND_CLOUD_SYNC_NOW,
+						variant: 'secondary',
+						loading: busy,
+						onPress: () => track(now()),
+					},
+				]
+			: [
+					{
+						text: messages.UNBOUND_CLOUD_SYNC_TURN_ON,
+						variant: 'primary',
+						loading: busy,
+						onPress: () => track(setEnabled(true)),
+					},
+				];
 	}
 
-	if (settings.get('pendingChoice', false)) {
+	const hero = <SyncHero status={status} actions={heroActions()} />;
+
+	if (!status.signedIn) {
+		return <SyncFocusPage hero={hero} />;
+	}
+
+	if (status.choosing) {
 		return (
-			<Page>
-				<Discord.TableRowGroup
-					title={messages.UNBOUND_CLOUD_SYNC_CHOICE}
-					helperText={messages.UNBOUND_CLOUD_SYNC_CHOICE_DESC}
-				>
-					{FIRST_SYNC_CHOICES.map((choice) => (
-						<Discord.TableRow
-							key={choice.value}
-							label={messages[choice.label]}
-							subLabel={messages[choice.description]}
-							icon={<Discord.TableRowIcon source={icons[choice.icon]} />}
-							arrow
+			<SyncFocusPage
+				hero={hero}
+				footer={
+					<>
+						<Discord.TableRowGroup>
+							{FIRST_SYNC_CHOICES.map((choice) => (
+								<Discord.TableRow
+									key={choice.value}
+									label={messages[choice.label]}
+									subLabel={messages[choice.description]}
+									icon={<Discord.TableRowIcon source={icons[choice.icon]} />}
+									arrow
+									disabled={busy}
+									onPress={() => track(resolveFirstSync(choice.value))}
+								/>
+							))}
+						</Discord.TableRowGroup>
+						<Discord.Button
+							text={messages.UNBOUND_CLOUD_SYNC_NOT_NOW}
+							variant='tertiary'
+							size='md'
 							disabled={busy}
-							onPress={() => track(resolveFirstSync(choice.value))}
+							onPress={() => void setEnabled(false)}
 						/>
-					))}
-				</Discord.TableRowGroup>
-			</Page>
+					</>
+				}
+			/>
 		);
 	}
 
 	return (
 		<Page>
-			<Discord.TableRowGroup helperText={describeStatus(settings)}>
-				<Discord.TableSwitchRow
-					label={messages.UNBOUND_CLOUD_SYNC_ENABLED}
-					icon={<Discord.TableRowIcon source={icons.CloudIcon} />}
-					value={settings.get('enabled', false)}
-					onValueChange={setEnabled}
-				/>
-				<Discord.TableRow
-					label={messages.UNBOUND_CLOUD_SYNC_NOW}
-					icon={<Discord.TableRowIcon source={icons.RetryIcon} />}
-					disabled={busy}
-					onPress={() => track(now())}
-				/>
-			</Discord.TableRowGroup>
+			{hero}
+
+			{enabled ? (
+				<Discord.TableRowGroup>
+					<Discord.TableSwitchRow
+						label={messages.UNBOUND_CLOUD_SYNC_ENABLED}
+						icon={<Discord.TableRowIcon source={icons.CloudIcon} />}
+						value={enabled}
+						onValueChange={(value: boolean) => track(setEnabled(value))}
+					/>
+				</Discord.TableRowGroup>
+			) : null}
 
 			<Discord.TableRadioGroup
 				title={messages.UNBOUND_CLOUD_SYNC_MODE}
@@ -167,7 +157,7 @@ function CloudSyncPage() {
 				value={getMode()}
 				onChange={(mode: SyncMode) => setMode(mode)}
 			>
-				{MODES.map((mode) => (
+				{SYNC_MODES.map((mode) => (
 					<Discord.TableRadioRow
 						key={mode.value}
 						value={mode.value}

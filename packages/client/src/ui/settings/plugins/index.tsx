@@ -8,6 +8,7 @@ import Empty from '~/ui/components/empty-state';
 import AddonCard from '~/ui/addons/addon-card';
 import { messages, format } from '~/i18n/api';
 import useAddons from '~/ui/hooks/use-addons';
+import NoAddons from '~/ui/addons/no-addons';
 import type { Addon } from '~/addons/addon';
 
 import type { Filter } from './filter-menu';
@@ -103,7 +104,13 @@ function PluginsPage() {
 				// Fills the space under the controls without scrolling, so the empty state sits in its centre.
 				<SafeArea.SafeAreaPaddingView bottom style={styles.empty}>
 					<View style={styles.center}>
-						<Empty image='sticker_search_empty'>{messages.UNBOUND_EMPTY_RESULTS}</Empty>
+						{listed.length ? (
+							<Empty image='sticker_search_empty'>
+								{messages.UNBOUND_EMPTY_RESULTS}
+							</Empty>
+						) : (
+							<NoAddons kind='plugin' />
+						)}
 					</View>
 					<LibrariesToggle count={libraries.size} shown={shown} onToggle={toggle} />
 				</SafeArea.SafeAreaPaddingView>

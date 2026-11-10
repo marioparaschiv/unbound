@@ -10,9 +10,9 @@ declare module '@unbound-app/i18n' {
 	export type FormatVars = {
 		UNBOUND_ACCOUNT_SIGN_OUT_CONFIRM: { name: string | number };
 		UNBOUND_CLOUD_SYNC_LAST_SYNCED: { date: string | number };
-		UNBOUND_CLOUD_SYNC_FAILED: { error: string | number };
 		UNBOUND_SEARCH: { type: string | number };
 		UNBOUND_NO_ADDONS: { type: string | number };
+		UNBOUND_NO_ADDONS_BODY: { type: string | number };
 		UNBOUND_UPDATES_CHECKED: { date: string | number };
 		UNBOUND_UPDATES_CHECK_FAILED: { error: string | number };
 		UNBOUND_UPDATES_ALL: { count: string | number };

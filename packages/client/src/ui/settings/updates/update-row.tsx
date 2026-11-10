@@ -6,6 +6,7 @@ import { icons } from '~/assets/api';
 
 import { openAddonChangelog } from './open-addon-changelog';
 import { openAddonActions } from './addon-actions';
+import CheckingIcon from './checking-icon';
 import UpdateButton from './update-button';
 import StatusIcon from './status-icon';
 
@@ -15,6 +16,8 @@ type UpdateRowProps = {
 	update: PendingUpdate | undefined;
 	/** Whether the last check finished, so an addon without an update is known to be current. */
 	checked: boolean;
+	/** Whether a check is running, which covers every listed addon. */
+	checking: boolean;
 	/** Whether the Marketplace lists it; an unlisted addon never updates. */
 	listed: boolean;
 };
@@ -44,7 +47,7 @@ function describe(
  * @description One installed addon: its version and whether it is current, paused, unlisted or has an
  * update. Pressing a listed one opens its update, version and pause actions.
  */
-function UpdateRow({ entry, update, checked, listed }: UpdateRowProps) {
+function UpdateRow({ entry, update, checked, checking, listed }: UpdateRowProps) {
 	const navigation = Discord.useNavigation();
 	const manager = Manager.for(entry.kind);
 	const held = manager.getHeldVersion(entry.id) !== void 0;
@@ -57,6 +60,10 @@ function UpdateRow({ entry, update, checked, listed }: UpdateRowProps) {
 
 		if (!listed) {
 			return undefined;
+		}
+
+		if (checking) {
+			return <CheckingIcon />;
 		}
 
 		if (held) {

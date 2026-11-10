@@ -31,10 +31,12 @@ export declare function now(strategy?: SyncStrategy): Promise<boolean>;
  */
 export declare function resolveFirstSync(strategy: SyncStrategy): Promise<boolean>;
 /**
- * @description Turns automatic syncing on or off, syncing right away when turned on.
+ * @description Turns automatic syncing on or off. Turning it on syncs right away, or first asks how to
+ * combine this device with a cloud setup it has never synced with.
  * @param enabled Whether to sync automatically.
+ * @returns Whether turning it on could read the cloud; always true when turning it off.
  */
-export declare function setEnabled(enabled: boolean): void;
+export declare function setEnabled(enabled: boolean): Promise<boolean>;
 /**
  * @description Sets which way automatic syncs move changes, syncing right away when sync is on.
  * @param mode The new mode.
