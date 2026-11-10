@@ -1,9 +1,11 @@
 import type { LoaderUpdate } from '@unbound-app/contracts/loader';
 
 import type { DiscordBuilds } from '~/updates/discord-builds';
+import { readInstallKind } from '~/updates/install-kind';
 import { useUnboundSettings } from '~/settings/unbound';
 import { getLoader } from '~/native/unbound-native';
 import LogoRowIcon from '~/ui/icons/logo-row-icon';
+import { loaderName } from '~/updates/loader-name';
 import { CLIENT_VERSION } from '~/core/constants';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
@@ -61,7 +63,7 @@ function UnboundGroup({ checked, checking, loader, requiredLoader, discord }: Un
 				<LoaderUpdateRow update={loader} discord={discord} />
 			) : installed ? (
 				<Discord.TableRow
-					label={messages.UNBOUND_UPDATES_LOADER}
+					label={loaderName(readInstallKind())}
 					subLabel={`v${installed}`}
 					icon={<Discord.TableRowIcon source={icons.WrenchIcon} />}
 					trailing={

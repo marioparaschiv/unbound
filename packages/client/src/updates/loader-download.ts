@@ -1,10 +1,11 @@
 import type { InstallKind } from '~/updates/install-kind';
+import { REPOSITORY } from '~/core/repository';
 
 /**
- * The release asset each install updates from, beside the one a loader release links: iOS releases link the
- * tweak's `.deb`, Android ones the Xposed module. Names match `toDownloads` in `apps/web`.
+ * The prebuilt app each sideloaded install updates from. Loader releases ship only the `.deb` and the Xposed
+ * module, so these come from the rolling `loader-latest` release, which CI refreshes with every app build.
  */
-const SIBLINGS: Record<InstallKind, string | undefined> = {
+const APPS: Record<InstallKind, string | undefined> = {
 	tweak: undefined,
 	module: undefined,
 	ipa: 'Unbound.ipa',
@@ -12,21 +13,20 @@ const SIBLINGS: Record<InstallKind, string | undefined> = {
 };
 
 /**
- * @description Points a loader release's download at the file this install updates from: the IPA for a
- * sideloaded app, the `.deb` for the tweak, the patched APKs or the Xposed module on Android.
- * @param url The release's download, a GitHub release asset or page.
+ * @description Points a loader release's download at the file this install updates from: the newest IPA for a
+ * sideloaded app, the patched APKs on Android, else the release's own `.deb` or Xposed module.
+ * @param url The release's download, the `.deb` on iOS and the Xposed module on Android.
  * @param kind How the loader was installed, if known.
- * @returns The asset to download, or `url` when it is already right or has no sibling assets.
+ * @returns The file to download.
  */
 export function loaderDownloadUrl(url: string, kind: InstallKind | undefined): string {
-	const sibling = kind ? SIBLINGS[kind] : undefined;
+	const app = kind ? APPS[kind] : undefined;
 
-	// Only a direct asset has siblings to swap to; a release page already lists every file.
-	if (!sibling || !url.includes('/releases/download/')) {
+	if (!app) {
 		return url;
 	}
 
-	return `${url.slice(0, url.lastIndexOf('/') + 1)}${sibling}`;
+	return `https://github.com/${REPOSITORY}/releases/download/loader-latest/${app}`;
 }
 
 export default loaderDownloadUrl;
