@@ -6,10 +6,13 @@ import { join } from 'node:path';
 
 import { installOnAndroid, ANDROID_PLUGINS_DIRECTORY } from '~/lib/android-install';
 import type { CommandResult, CommandRunner } from '~/lib/run-command';
+import type { AndroidTarget, IOSTarget } from '~/lib/device-target';
 import { parseShellResult, resolvePilot } from '~/lib/pilot';
 import type { PluginPayload } from '~/lib/plugin-install';
+import { openAndroidTarget } from '~/lib/android-target';
 import { readPluginPayload } from '~/lib/plugin-install';
 import { installOnIOS } from '~/lib/ios-install';
+import { openIOSTarget } from '~/lib/ios-target';
 
 type Call = { command: string; args: string[]; timeoutMs: number };
 
@@ -64,6 +67,32 @@ function shellOutput(exitCode: number, output: string): CommandResult {
 
 function quiet() {}
 
+async function androidTarget(run: CommandRunner, serial?: string): Promise<AndroidTarget> {
+	const target = await openAndroidTarget({ serial, run });
+
+	if ('error' in target) {
+		throw new Error(target.error);
+	}
+
+	return target;
+}
+
+async function iosTarget(run: CommandRunner, udid?: string): Promise<IOSTarget> {
+	const target = await openIOSTarget({ udid, run, pilot: 'jb-p1lot' });
+
+	if ('error' in target) {
+		throw new Error(target.error);
+	}
+
+	return target;
+}
+
+function scriptOf(call: Call | undefined): string {
+	const args = call?.args ?? [];
+
+	return args[args.indexOf('--command') + 1] ?? '';
+}
+
 describe('readPluginPayload', () => {
 	test('copies the bytecode with a manifest naming its digest, so the loader runs it', () => {
 		const dir = mkdtempSync(join(tmpdir(), 'ubd-install-test-'));
@@ -105,12 +134,11 @@ describe('installOnAndroid', () => {
 		const { run, calls } = recordingRunner(({ args }) =>
 			args.includes('id -u') ? ok('0\n') : void 0,
 		);
-		const result = await installOnAndroid(builtPlugin(), {
-			serial: 'emulator-5554',
-			restart: false,
-			run,
-			log: quiet,
-		});
+		const result = await installOnAndroid(
+			builtPlugin(),
+			await androidTarget(run, 'emulator-5554'),
+			{ restart: false, log: quiet },
+		);
 
 		expect(result).toEqual({
 			ok: true,
@@ -139,24 +167,13 @@ describe('installOnAndroid', () => {
 			args.includes('id -u') ? ok('2000\n') : void 0,
 		);
 
-		await installOnAndroid(builtPlugin(), { restart: false, run, log: quiet });
+		await installOnAndroid(builtPlugin(), await androidTarget(run), {
+			restart: false,
+			log: quiet,
+		});
 
 		expect(calls[0]?.args).toEqual(['get-state']);
 		expect(calls.at(-1)?.args[1]).toStartWith("su -c 'mkdir -p ");
-	});
-
-	test('fails clearly when no device is ready', async () => {
-		const { run, calls } = recordingRunner(() => ({
-			ok: false,
-			error: 'adb get-state timed out after 15s.',
-		}));
-		const result = await installOnAndroid(builtPlugin(), { restart: false, run, log: quiet });
-
-		expect(result).toEqual({
-			ok: false,
-			text: 'No Android device is ready over adb. adb get-state timed out after 15s.',
-		});
-		expect(calls).toHaveLength(1);
 	});
 
 	test('explains an unanswered root prompt', async () => {
@@ -169,7 +186,10 @@ describe('installOnAndroid', () => {
 				return { ok: false, error: 'adb shell timed out after 60s.' };
 			}
 		});
-		const result = await installOnAndroid(builtPlugin(), { restart: false, run, log: quiet });
+		const result = await installOnAndroid(builtPlugin(), await androidTarget(run), {
+			restart: false,
+			log: quiet,
+		});
 
 		expect(result.ok).toBe(false);
 		expect(result.text).toStartWith('adb shell timed out after 60s. Root is needed');
@@ -179,7 +199,10 @@ describe('installOnAndroid', () => {
 		const { run, calls } = recordingRunner(({ args }) =>
 			args.includes('id -u') ? ok('0\n') : void 0,
 		);
-		const result = await installOnAndroid(builtPlugin(), { restart: true, run, log: quiet });
+		const result = await installOnAndroid(builtPlugin(), await androidTarget(run), {
+			restart: true,
+			log: quiet,
+		});
 
 		expect(result.text).toEndWith('and restarted Discord.');
 		expect(calls.at(-1)?.args[1]).toStartWith(
@@ -200,18 +223,18 @@ describe('installOnIOS', () => {
 			}
 
 			if (args[0] === 'shell_exec') {
-				return args.at(-1)?.includes('killall') ? shellOutput(0, '') : unpack;
+				return scriptOf({ command: '', args, timeoutMs: 0 }).includes('killall')
+					? shellOutput(0, '')
+					: unpack;
 			}
 		});
 	}
 
 	test('picks the only device, transfers one archive and unpacks it into the Unbound folder', async () => {
 		const { run, calls } = iosRunner();
-		const result = await installOnIOS(builtPlugin(), {
+		const result = await installOnIOS(builtPlugin(), await iosTarget(run), {
 			restart: false,
-			run,
 			log: quiet,
-			pilot: 'jb-p1lot',
 		});
 
 		expect(result).toEqual({
@@ -230,7 +253,7 @@ describe('installOnIOS', () => {
 		expect(staged).toMatch(/^\/var\/tmp\/ubd-com\.example\.sample-.+\.tar\.gz$/);
 		expect(transfer[transfer.indexOf('--direction') + 1]).toBe('host_to_device');
 
-		const script = calls[2]?.args.at(-1) ?? '';
+		const script = scriptOf(calls[2]);
 
 		expect(script).toContain(`archive='${staged}'`);
 		expect(script).toContain('com.hammerandchisel.discord');
@@ -252,7 +275,10 @@ describe('installOnIOS', () => {
 				return shellOutput(0, `UBD_INSTALLED=${destination}`);
 			}
 		});
-		const result = await installOnIOS(builtPlugin(), { udid, restart: false, run, log: quiet });
+		const result = await installOnIOS(builtPlugin(), await iosTarget(run, udid), {
+			restart: false,
+			log: quiet,
+		});
 
 		expect(result.ok).toBe(true);
 		expect(transfers).toBe(2);
@@ -260,7 +286,10 @@ describe('installOnIOS', () => {
 
 	test('reports the reason the device script gave', async () => {
 		const { run } = iosRunner(shellOutput(1, 'UBD_ERROR=No Discord data container\n'));
-		const result = await installOnIOS(builtPlugin(), { udid, restart: false, run, log: quiet });
+		const result = await installOnIOS(builtPlugin(), await iosTarget(run, udid), {
+			restart: false,
+			log: quiet,
+		});
 
 		expect(result).toEqual({
 			ok: false,
@@ -268,28 +297,12 @@ describe('installOnIOS', () => {
 		});
 	});
 
-	test('asks for a UDID when several devices are connected', async () => {
-		const { run } = recordingRunner(() =>
-			ok(
-				JSON.stringify({
-					devices: [
-						{ id: 'one', bridge: true },
-						{ id: 'two', bridge: true },
-					],
-				}),
-			),
-		);
-		const result = await installOnIOS(builtPlugin(), { restart: false, run, log: quiet });
-
-		expect(result).toEqual({
-			ok: false,
-			text: 'Several iOS devices are connected (one, two); pass --udid to pick one.',
-		});
-	});
-
 	test('wakes SpringBoard without lifting the blackout and relaunches Discord', async () => {
 		const { run, calls } = iosRunner();
-		const result = await installOnIOS(builtPlugin(), { udid, restart: true, run, log: quiet });
+		const result = await installOnIOS(builtPlugin(), await iosTarget(run, udid), {
+			restart: true,
+			log: quiet,
+		});
 
 		expect(result.text).toEndWith('and restarted Discord.');
 		expect(calls.map((call) => call.args[0])).toEqual([
@@ -300,9 +313,7 @@ describe('installOnIOS', () => {
 		]);
 		expect(calls[2]?.args).toContain('unlock');
 		expect(calls[2]?.args).not.toContain('screen_on');
-		expect(calls.at(-1)?.args.at(-1)).toContain(
-			'uiopen --bundleid com.hammerandchisel.discord',
-		);
+		expect(scriptOf(calls.at(-1))).toContain('uiopen --bundleid com.hammerandchisel.discord');
 	});
 });
 

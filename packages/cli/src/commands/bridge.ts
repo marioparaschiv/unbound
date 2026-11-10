@@ -46,7 +46,11 @@ async function waitUntil(port: number, listening: boolean): Promise<boolean> {
 	return false;
 }
 
-async function listenerPids(port: number): Promise<number[]> {
+async function listenerPids(port: number): Promise<number[] | { error: string }> {
+	if (!(await isListening(port))) {
+		return [];
+	}
+
 	const result = await runCommand(
 		'lsof',
 		['-nP', `-iTCP:${port}`, '-sTCP:LISTEN', '-t'],
@@ -54,7 +58,9 @@ async function listenerPids(port: number): Promise<number[]> {
 	);
 
 	if (!result.ok) {
-		return [];
+		return {
+			error: `Something listens on port ${port}, but finding its process failed: ${result.error}`,
+		};
 	}
 
 	return result.stdout
@@ -98,6 +104,10 @@ const bridgeCommand: CommandDefinition<typeof schema> = {
 	cli: { positionals: ['action'] },
 	async handler({ action, port }) {
 		const running = await listenerPids(port);
+
+		if ('error' in running) {
+			return { ok: false, text: running.error };
+		}
 
 		if (action === 'start' && running.length) {
 			return { ok: true, text: `A bridge already listens on port ${port}.` };

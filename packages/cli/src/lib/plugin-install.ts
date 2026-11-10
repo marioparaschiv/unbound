@@ -8,7 +8,6 @@ import { join } from 'node:path';
 import { bytecodeFileName } from '~/rollup/hermes-bytecode';
 import { readBuiltAddon } from '~/lib/reload-transport';
 import type { DiscoveredAddon } from '~/lib/discovery';
-import type { CommandRunner } from '~/lib/run-command';
 
 export type PluginFile = { name: string; path: string };
 
@@ -16,7 +15,6 @@ export type PluginPayload = { id: string; files: PluginFile[] };
 
 export type InstallOptions = {
 	restart: boolean;
-	run?: CommandRunner;
 	log?: (message: string) => void;
 };
 

@@ -4,93 +4,53 @@ import { DEVELOPMENT_MARKER } from '@unbound-app/contracts/manifest';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import {
-	ERROR_MARKER,
-	IOS_TIMEOUTS,
-	pickDevice,
-	pilotShell,
-	readMarker,
-	resolvePilot,
-} from '~/lib/pilot';
-import {
-	DISCORD_BUNDLE_ID,
-	IOS_CONTAINERS_DIRECTORY,
-	IOS_TAR,
-	IOS_UIOPEN,
-} from '~/lib/device-paths';
+import { DISCORD_BUNDLE_ID, IOS_CONTAINERS_DIRECTORY, IOS_TAR } from '~/lib/device-paths';
 import type { InstallOptions, PluginPayload } from '~/lib/plugin-install';
+import { ERROR_MARKER, readMarker } from '~/lib/pilot';
 import type { CommandResult } from '~/lib/run-command';
+import type { IOSTarget } from '~/lib/device-target';
 import { logToStderr } from '~/lib/plugin-install';
-import { runCommand } from '~/lib/run-command';
 import { createTarGz } from '~/lib/tar';
 
-const STAGING_DIRECTORY = '/var/tmp';
 const INSTALLED_MARKER = 'UBD_INSTALLED=';
-
-export type IOSInstallOptions = InstallOptions & { udid?: string; pilot?: string };
 
 /**
  * @description Copies a built plugin into Discord's plugin folder on a jailbroken iPhone through
- * `jb-p1lot`. The files travel as one archive staged in `/var/tmp`, since writes straight into an app
+ * `jb-p1lot`. The files travel as one archive staged on the device, since writes straight into an app
  * container fail, and are unpacked as root into the Unbound folder of whichever data container
  * belongs to Discord, so a reinstall that moves the container is followed.
  * @param plugin The plugin's id and built files.
- * @param options The device UDID, whether to restart Discord, and the runner and binary to use.
+ * @param target The device.
+ * @param options Whether to restart Discord, and where progress goes.
  * @returns What was installed where, or the step that failed.
  */
 export async function installOnIOS(
 	plugin: PluginPayload,
-	options: IOSInstallOptions,
+	target: IOSTarget,
+	options: InstallOptions,
 ): Promise<CommandOutput> {
-	const { restart, run = runCommand, log = logToStderr, pilot = resolvePilot() } = options;
-
-	function pilotCommand(args: string[], timeoutMs: number): Promise<CommandResult> {
-		return run(pilot, args, timeoutMs);
-	}
-
-	const picked = options.udid ?? (await pickDevice(pilotCommand));
-
-	if (typeof picked !== 'string') {
-		return { ok: false, text: picked.error };
-	}
-
-	const device = picked;
-	const target = { udid: device, pilot, run };
-
+	const { restart, log = logToStderr } = options;
 	const archiveName = `ubd-${plugin.id}-${crypto.randomUUID()}.tar.gz`;
-	const staged = `${STAGING_DIRECTORY}/${archiveName}`;
+	const staged = `${target.staging}/${archiveName}`;
 
-	log(`Copying ${plugin.id} to ${device}…`);
+	log(`Copying ${plugin.id} to ${target.id}…`);
 
 	const transferred = await transferArchive(plugin, archiveName, (source) =>
-		pilotCommand(
-			[
-				'file_transfer',
-				'--device',
-				device,
-				'--direction',
-				'host_to_device',
-				'--source',
-				source,
-				'--destination',
-				staged,
-			],
-			IOS_TIMEOUTS.transfer,
-		),
+		target.push(source, staged),
 	);
 
 	if (!transferred.ok) {
 		return { ok: false, text: transferred.error };
 	}
 
-	const unpacked = await pilotShell(target, unpackScript(plugin.id, staged));
+	const unpacked = await target.shell(unpackScript(plugin.id, staged));
 	const output = unpacked.ok ? unpacked.output : unpacked.error;
 	const destination = unpacked.ok ? readMarker(output, INSTALLED_MARKER) : void 0;
 
 	if (!destination) {
 		const reason = readMarker(output, ERROR_MARKER) ?? output.trim();
 
-		return { ok: false, text: `Installing ${plugin.id} on ${device} failed: ${reason}` };
+		return { ok: false, text: `Installing ${plugin.id} on ${target.id} failed: ${reason}` };
 	}
 
 	if (!restart) {
@@ -102,16 +62,7 @@ export async function installOnIOS(
 
 	log('Restarting Discord…');
 
-	await pilotCommand(
-		['ui_action', '--device', device, '--action', 'button', '--button', 'unlock'],
-		IOS_TIMEOUTS.restart,
-	);
-
-	const restarted = await pilotShell(
-		target,
-		`killall -9 Discord; sleep 1; ${IOS_UIOPEN} --bundleid ${DISCORD_BUNDLE_ID}`,
-		{ timeoutMs: IOS_TIMEOUTS.restart },
-	);
+	const restarted = await target.restartDiscord();
 
 	return restarted.ok
 		? { ok: true, text: `Installed ${plugin.id} into ${destination} and restarted Discord.` }

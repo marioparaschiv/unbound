@@ -9,6 +9,7 @@ import {
 } from '~/lib/log-pull';
 import { createLogPrinter, LOG_LEVELS, parseLogLevel, type LogEvent } from '~/lib/log-lines';
 import { loadFrameRewriter } from '~/lib/log-symbolicator';
+import { openDeviceTarget } from '~/lib/device-target';
 import { tailAndroid, tailIOS } from '~/lib/log-tail';
 import { defaulted, Type } from '~/lib/schema';
 
@@ -100,20 +101,18 @@ const logsCommand: CommandDefinition<typeof schema> = {
 		pull,
 		out,
 	}) {
-		const onIOS = ios || udid !== void 0;
+		const target = await openDeviceTarget({ serial, ios, udid });
 
-		if (onIOS && serial !== void 0) {
-			return {
-				ok: false,
-				text: 'Pass either --serial for an Android device or --ios/--udid for an iPhone, not both.',
-			};
+		if ('error' in target) {
+			return { ok: false, text: target.error };
 		}
 
 		if (pull) {
 			const folder = out ?? defaultLogFolder();
-			const pulled = onIOS
-				? await pullIOSLogs({ udid, out: folder })
-				: await pullAndroidLogs({ serial, out: folder });
+			const pulled =
+				target.platform === 'ios'
+					? await pullIOSLogs(target, { out: folder })
+					: await pullAndroidLogs(target, { out: folder });
 
 			if (!pulled.ok || !symbolicate) {
 				return pulled;
@@ -166,9 +165,9 @@ const logsCommand: CommandDefinition<typeof schema> = {
 			}
 		}
 
-		return onIOS
-			? tailIOS({ udid, since, follow, emit })
-			: tailAndroid({ serial, since, follow, emit });
+		return target.platform === 'ios'
+			? tailIOS(target, { since, follow, emit })
+			: tailAndroid(target, { since, follow, emit });
 	},
 };
 
