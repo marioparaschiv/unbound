@@ -92,7 +92,7 @@ class Unbound : XposedModule() {
             return
         }
         Analytics.block(this, param.classLoader)
-        runCatching { Telemetry.install(this, param.classLoader) }
+        runCatching { Telemetry.install(this, param.classLoader, cache, File(appInfo.sourceDir)) }
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to block Discord's analytics requests", it) }
         runCatching { Fonts.install(this, param.classLoader) }
             .onFailure { Logger.error(LogCategory.FONTS, "Failed to hook React Native fonts", it) }
