@@ -1,12 +1,10 @@
 import { useSyncExternalStore } from 'react';
 
+import { SOURCE_LOCALE } from '../src/_conventions/addon-locales';
 import { formatIcu, type IcuVars } from './icu-format';
 
 /** One locale's messages, keyed by message key, as a plugin's `i18n/<code>.json` holds them. */
 export type LocaleTable = Record<string, string>;
-
-/** The locale every plugin ships, and the one its messages fall back to. */
-export const SOURCE_LOCALE = 'en-US';
 
 /** The fake `@unbound-app/i18n`, over a plugin's real tables, and the locale a test switches with `setLocale`. */
 export type FakeLocales = {

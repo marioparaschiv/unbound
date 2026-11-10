@@ -5,7 +5,13 @@ import type { AddonAuthor, AddonManifest } from '../src/global';
 import type { LocaleTable } from './fake-locales';
 import type { AnyObject } from '../src/patcher';
 
+import { ASSETS_DIRECTORY, ASSET_SCALES } from '../src/_conventions/addon-assets';
+import { LOCALES_DIRECTORY } from '../src/_conventions/addon-locales';
+
 const ENTRY_EXTENSIONS = ['.tsx', '.ts', '.jsx', '.js'];
+
+// The `@2x` and `@3x` an image's file name ends in at each scale above 1.
+const SCALE_SUFFIXES = ASSET_SCALES.filter((scale) => scale !== '1').map((scale) => `@${scale}x`);
 
 function isRecord(value: unknown): value is AnyObject {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -97,7 +103,7 @@ export function readManifest(root: string): Partial<AddonManifest> {
  * @returns Each table by locale code; empty when the plugin has no `i18n/`. Throws naming an invalid file.
  */
 export function readLocaleTables(root: string): Map<string, LocaleTable> {
-	const directory = join(root, 'i18n');
+	const directory = join(root, LOCALES_DIRECTORY);
 	const tables = new Map<string, LocaleTable>();
 
 	if (!existsSync(directory)) {
@@ -147,9 +153,11 @@ export function findEntry(root: string): string | undefined {
  * @returns The asset name, such as `icons/star`.
  */
 export function assetNameOf(root: string, path: string): string {
-	const assets = join(root, 'assets');
+	const assets = join(root, ASSETS_DIRECTORY);
 	const base = path.startsWith(assets + sep) ? assets : root;
 	const name = relative(base, path).slice(0, -extname(path).length).split(sep).join('/');
 
-	return name.endsWith('@2x') || name.endsWith('@3x') ? name.slice(0, -'@2x'.length) : name;
+	const suffix = SCALE_SUFFIXES.find((each) => name.endsWith(each));
+
+	return suffix ? name.slice(0, -suffix.length) : name;
 }

@@ -18,10 +18,12 @@ import { createFakeSettings, defineSettings, setting, type SettingsSchema } from
 import { createListenerRegistry, type ListenerRegistry } from './listener-registry';
 import { createFakeReactNative, type HostPropsByName } from './fake-react-native';
 import { installAddonGlobals, type FakeUnbound } from './install-addon-globals';
-import { createFakeLocales, SOURCE_LOCALE } from './fake-locales';
+import { SOURCE_LOCALE } from '../src/_conventions/addon-locales';
+import { ASSET_TYPES } from '../src/_conventions/addon-assets';
 import { createFakeAssets, createFakeFlux } from './fake-api';
 import { createJsxRuntimes } from './unfrozen-elements';
 import { resetSession, startSession } from './session';
+import { createFakeLocales } from './fake-locales';
 import { createFakePlugins } from './fake-plugins';
 import { forgetPlugin } from './plugin-lifecycle';
 import { createFakeUi } from './fake-components';
@@ -38,7 +40,8 @@ const NESTED = new Map([
 	['utils', ['react']],
 ]);
 
-const IMAGE = /\.(png|jpe?g|webp|gif)$/i;
+// The build also takes `.jpeg` as a jpg.
+const IMAGE = new RegExp(`\\.(${[...ASSET_TYPES, 'jpeg'].join('|')})$`, 'i');
 const SVG = /\.svg$/i;
 const SVG_ASSET = /\.svg\?asset$/i;
 const SVG_ASSET_NAMESPACE = 'unbound-svg-asset';
