@@ -1,9 +1,8 @@
+import { settings } from '@unbound-app/settings';
 import { describe, expect, test } from 'bun:test';
 
-import { SETTINGS } from '~/constants';
 import {
 	mayPlaySound,
-	readPingSettings,
 	shouldPing,
 	type PingContext,
 	type PingLookups,
@@ -16,6 +15,12 @@ const DM = 1;
 const GROUP_DM = 3;
 const GUILD_TEXT = 0;
 
+const DEFAULTS: PingSettings = {
+	channelToAffect: 'both_dms',
+	allowMentions: false,
+	allowEveryone: false,
+};
+
 type ContextOverrides = Partial<Omit<PingContext, 'settings'>> & {
 	settings?: Partial<PingSettings>;
 };
@@ -26,7 +31,7 @@ function context({ settings, ...overrides }: ContextOverrides = {}): PingContext
 		currentUserId: ME,
 		oldestUnreadMessageId: '100',
 		...overrides,
-		settings: { ...SETTINGS, ...settings },
+		settings: { ...DEFAULTS, ...settings },
 	};
 }
 
@@ -110,36 +115,6 @@ describe('shouldPing', () => {
 	});
 });
 
-describe('readPingSettings', () => {
-	test('uses the defaults when nothing is stored', () => {
-		expect(readPingSettings((_key, fallback) => fallback)).toEqual(SETTINGS);
-	});
-
-	test('reads stored values', () => {
-		const stored: Record<string, unknown> = {
-			channelToAffect: 'group_dm',
-			allowMentions: true,
-			allowEveryone: true,
-		};
-
-		expect(readPingSettings((key) => stored[key] as never)).toEqual({
-			channelToAffect: 'group_dm',
-			allowMentions: true,
-			allowEveryone: true,
-		});
-	});
-
-	test('falls back for invalid values', () => {
-		const stored: Record<string, unknown> = {
-			channelToAffect: 'servers',
-			allowMentions: 'yes',
-			allowEveryone: 1,
-		};
-
-		expect(readPingSettings((key) => stored[key] as never)).toEqual(SETTINGS);
-	});
-});
-
 function lookups(overrides: Partial<PingLookups> = {}): PingLookups {
 	const channelTypes: Record<string, number> = { '1': DM, '2': GROUP_DM, '9': GUILD_TEXT };
 	const oldestUnread: Record<string, string> = { '1': '100', '2': '200', '9': '900' };
@@ -148,7 +123,7 @@ function lookups(overrides: Partial<PingLookups> = {}): PingLookups {
 		channelType: (channelId) => channelTypes[channelId],
 		currentUserId: () => ME,
 		oldestUnreadMessageId: (channelId) => oldestUnread[channelId],
-		settings: () => SETTINGS,
+		settings: () => DEFAULTS,
 		...overrides,
 	};
 }
@@ -188,7 +163,7 @@ describe('mayPlaySound', () => {
 		expect(
 			mayPlaySound(
 				mention,
-				lookups({ settings: () => ({ ...SETTINGS, allowMentions: true }) }),
+				lookups({ settings: () => ({ ...DEFAULTS, allowMentions: true }) }),
 			),
 		).toBe(true);
 		expect(
@@ -196,7 +171,7 @@ describe('mayPlaySound', () => {
 				mention,
 				lookups({
 					currentUserId: () => undefined,
-					settings: () => ({ ...SETTINGS, allowMentions: true }),
+					settings: () => ({ ...DEFAULTS, allowMentions: true }),
 				}),
 			),
 		).toBe(false);
@@ -241,5 +216,19 @@ describe('mayPlaySound', () => {
 		recent.record({ id: '101', channel_id: '1' }, 0);
 
 		expect(mayPlaySound(recent.resolve(findSoundTarget([]), 60_000), lookups())).toBe(true);
+	});
+});
+
+describe('the settings', () => {
+	test('affect both kinds of DM and allow no mentions until the user changes them', () => {
+		expect({ ...settings }).toEqual(DEFAULTS);
+	});
+
+	test('hold the sound back for a later DM message from the stored settings', () => {
+		expect(mayPlaySound(second, lookups({ settings: () => settings }))).toBe(false);
+
+		settings.channelToAffect = 'group_dm';
+
+		expect(mayPlaySound(second, lookups({ settings: () => settings }))).toBe(true);
 	});
 });
