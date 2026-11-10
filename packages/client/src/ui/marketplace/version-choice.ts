@@ -1,4 +1,5 @@
 import { installDependencies } from '~/marketplace/install-dependencies';
+import { countInstall } from '~/marketplace/count-install';
 import { brokenDependents } from '~/addons/dependencies';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { AvailableChoice } from '~/addons/versions';
@@ -84,6 +85,7 @@ export async function installChoice(
 	}
 
 	if (fresh) {
+		countInstall(id);
 		await manager.enable(id);
 	}
 

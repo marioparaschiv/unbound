@@ -2,6 +2,7 @@ import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 
 import { dependentsOf, planDependencies, type ListedDependency } from '~/addons/dependencies';
+import { countInstall } from '~/marketplace/count-install';
 import MarketplaceStore from '~/marketplace/state';
 import { alert, showDialog } from '~/dialogs/api';
 import { confirmText } from '~/dialogs/feedback';
@@ -113,6 +114,7 @@ export async function installDependencies(manifest: PublishedManifest): Promise<
 		}
 
 		if (fresh.has(dependency.id)) {
+			countInstall(dependency.id);
 			await manager.enable(dependency.id);
 		}
 	}

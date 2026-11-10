@@ -18,6 +18,13 @@ export default Discord.createStyles({
 	name: {
 		color: Theme.colors.TEXT_STRONG,
 	},
+	// The install count wraps under the version and date when the line runs out of room.
+	metaRow: {
+		flexDirection: 'row',
+		flexWrap: 'wrap',
+		alignItems: 'center',
+		columnGap: 8,
+	},
 	meta: {
 		color: Theme.colors.TEXT_MUTED,
 	},

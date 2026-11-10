@@ -25,6 +25,12 @@ export default Discord.createStyles({
 		lineHeight: 19,
 		color: Theme.colors.TEXT_DEFAULT,
 	},
+	// The install count sits left of the version tag, both centred on one line.
+	meta: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 8,
+	},
 	spacer: {
 		flex: 1,
 	},

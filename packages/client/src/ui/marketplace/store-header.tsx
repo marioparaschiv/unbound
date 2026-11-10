@@ -7,6 +7,7 @@ import AddonIcon from '~/ui/components/addon-icon';
 import { Discord } from '~/metro/components';
 import { format } from '~/i18n/api';
 
+import InstallCountLabel from './install-count-label';
 import useInstallAction from './use-install-action';
 import { formatListingDate } from './listing-date';
 import useStyles from './store-header.style';
@@ -17,8 +18,8 @@ type StoreHeaderProps = {
 };
 
 /**
- * @description The top of a store page, as the website's addon header: the icon, name, version and
- * update date, the authors and description, and a full-width Install, Update or Installed button.
+ * @description The top of a store page, as the website's addon header: the icon, name, version,
+ * update date and install count, the authors and description, and a full-width Install, Update or Installed button.
  * It reads only the listing, so it draws before the page's ADDON.md arrives.
  */
 function StoreHeader({ addon, kind }: StoreHeaderProps) {
@@ -36,9 +37,14 @@ function StoreHeader({ addon, kind }: StoreHeaderProps) {
 					<Discord.Text variant='heading-xl/bold' style={styles.name} numberOfLines={2}>
 						{addon.name ?? manifest.name}
 					</Discord.Text>
-					<Discord.Text variant='text-sm/medium' style={styles.meta}>
-						{`v${version} · ${updated}`}
-					</Discord.Text>
+					<View style={styles.metaRow}>
+						<Discord.Text variant='text-sm/medium' style={styles.meta}>
+							{`v${version} · ${updated}`}
+						</Discord.Text>
+						{addon.installs ? (
+							<InstallCountLabel count={addon.installs} variant='page' />
+						) : null}
+					</View>
 				</View>
 			</View>
 			{manifest.authors.length ? <AddonAuthors authors={manifest.authors} /> : null}

@@ -49,6 +49,8 @@ export const addon = pgTable(
 		repository: text('repository'),
 		/** The website icon a maintainer picked, a Nucleo Micro Bold export name; `null` for the type's default. */
 		icon: text('icon'),
+		/** Fresh installs clients reported from the marketplace, anonymously; the store's popularity sort. */
+		installs: integer('installs').default(0).notNull(),
 	},
 	(table) => [
 		...LISTING_SORTS.flatMap((key) => [

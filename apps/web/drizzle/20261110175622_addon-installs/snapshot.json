@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "6921402e-89f2-4b59-8406-453bc1349bbd",
+  "prevIds": [
+    "fdf53ece-e5bc-4939-b1ce-37e6abd069cc"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "addon",
+        "installs"
+      ],
+      "writes": [
+        "s|col|public.addon.installs",
+        "n|col|public.addon.installs",
+        "e|col|public.addon.installs"
+      ],
+      "reads": [
+        "n|tbl|public.addon",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "addon",
+        "name": "installs",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}
