@@ -1,6 +1,8 @@
 import type { APIEmbed, APIMessage, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
 import { REST } from 'discord.js';
 
+import { createMessageGateway, type MessageGateway } from '~/lib/discord-messages';
+
 export type FakeMessage = Pick<
 	APIMessage,
 	'id' | 'channel_id' | 'author' | 'content' | 'embeds' | 'components' | 'flags'
@@ -30,6 +32,8 @@ export type FakeDiscordOptions = {
 
 export type FakeDiscord = {
 	rest: REST;
+	/** The bot's message gateway over `rest`. */
+	gateway: MessageGateway;
 	/** The bot's own user id; messages posted through `rest` carry it as author. */
 	selfId: string;
 	/** Every request `rest` made, in order. */
@@ -300,6 +304,7 @@ export function createFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord
 	}).setToken('fake');
 	const fake: FakeDiscord = {
 		rest,
+		gateway: createMessageGateway(rest, selfId),
 		selfId,
 		requests,
 		beforePostResponse: undefined,

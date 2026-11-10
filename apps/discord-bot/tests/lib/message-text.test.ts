@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import { renderAddon } from '~/dispatchers/addon-card';
-import { truncate } from '~/lib/discord-messages';
+import { truncate } from '~/lib/message-text';
 
 import { ADDON } from '../helpers/fake-reads';
 

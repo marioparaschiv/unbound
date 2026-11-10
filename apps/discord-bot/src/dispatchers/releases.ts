@@ -1,11 +1,11 @@
-import type { REST, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
 import type { LoaderPlatform } from '@unbound-app/contracts/loader';
+import type { RESTPostAPIChannelMessageJSONBody } from 'discord.js';
 import type { Release, ReleaseKey } from '@unbound-app/web/bot';
 import { ButtonStyle, ComponentType } from 'discord.js';
 import { createLogger } from '@unbound-app/logger';
 import { and, eq } from 'drizzle-orm';
 
-import { listOwnMessages, postMessage } from '~/lib/discord-messages';
+import { createMessageGateway, type MessageGateway } from '~/lib/discord-messages';
 import type { Dispatcher, Stores } from '~/dispatchers/types';
 import { COLOURS, requireId } from '~/lib/constants';
 import type { Database } from '~/db/database';
@@ -97,14 +97,13 @@ async function recordPost(db: Database, release: ReleaseKey, channelId: string, 
 // adopted. Nothing here is ever deleted: its ping already happened.
 async function adoptOrphans(
 	db: Database,
-	rest: REST,
-	selfId: string,
+	messages: MessageGateway,
 	target: ReleaseTarget,
 	unannounced: Release[],
 ): Promise<Release[]> {
 	const byTitle = new Map(unannounced.map((release) => [releaseTitle(release), release]));
 
-	for (const message of await listOwnMessages(rest, target.channelId, selfId)) {
+	for (const message of await messages.listOwn(target.channelId)) {
 		const title = message.embeds[0]?.title;
 		const release = title ? byTitle.get(title) : undefined;
 
@@ -121,12 +120,15 @@ async function adoptOrphans(
 
 // Once posted, a release is never edited or reposted, even if its message was deleted by hand:
 // a repost would ping the role a second time.
-async function announce(db: Database, rest: REST, release: Release, target: ReleaseTarget) {
-	const messageId = await postMessage(
-		rest,
-		target.channelId,
-		renderRelease(release, target.roleId),
-	);
+async function announce(
+	db: Database,
+	messages: MessageGateway,
+	release: Release,
+	target: ReleaseTarget,
+) {
+	const messageId = await messages.post(target.channelId, {
+		body: renderRelease(release, target.roleId),
+	});
 
 	await recordPost(db, release, target.channelId, messageId);
 }
@@ -134,7 +136,7 @@ async function announce(db: Database, rest: REST, release: Release, target: Rele
 /**
  * @description Announces the release named by a `platform:version` payload unless it was announced already.
  * @param stores The bot database and the web's reads.
- * @param rest The Discord REST client.
+ * @param messages The bot's Discord messages.
  * @param payload The `loader_release` notification payload.
  * @param target The channel to post in and the role to ping.
  * @param now The current time in milliseconds; a release older than a week is skipped.
@@ -142,7 +144,7 @@ async function announce(db: Database, rest: REST, release: Release, target: Rele
  */
 export async function announceRelease(
 	{ db, web }: Stores,
-	rest: REST,
+	messages: MessageGateway,
 	payload: string,
 	target: ReleaseTarget = releaseTarget(),
 	now: number = Date.now(),
@@ -163,22 +165,20 @@ export async function announceRelease(
 
 	if (!release || posted || release.publishedAt < freshSince(now)) return;
 
-	await announce(db, rest, release, target);
+	await announce(db, messages, release, target);
 }
 
 /**
  * @description Adopts announcements a crash left unrecorded, then announces every unannounced fresh release in publish order.
  * @param stores The bot database and the web's reads.
- * @param rest The Discord REST client.
- * @param selfId The bot's own user id.
+ * @param messages The bot's Discord messages.
  * @param target The channel to post in and the role to ping.
  * @param now The current time in milliseconds; releases older than a week are skipped.
  * @returns Resolves once every release was tried; one release's failure is logged and left to the next run.
  */
 export async function reconcileReleases(
 	{ db, web }: Stores,
-	rest: REST,
-	selfId: string,
+	messages: MessageGateway,
 	target: ReleaseTarget = releaseTarget(),
 	now: number = Date.now(),
 ): Promise<void> {
@@ -191,15 +191,14 @@ export async function reconcileReleases(
 	const posted = new Set(posts.map(keyOf));
 	const unannounced = await adoptOrphans(
 		db,
-		rest,
-		selfId,
+		messages,
 		target,
 		fresh.filter((release) => !posted.has(keyOf(release))),
 	);
 
 	for (const release of unannounced) {
 		try {
-			await announce(db, rest, release, target);
+			await announce(db, messages, release, target);
 		} catch (error) {
 			logger.error(`Failed to announce ${release.platform} ${release.version}:`, error);
 		}
@@ -215,14 +214,23 @@ export const releasesDispatcher: Dispatcher = {
 	 * @param context The dispatcher's stores and Discord client.
 	 * @returns Resolves once every release was announced.
 	 */
-	reconcile: (context) => reconcileReleases(context, context.client.rest, context.client.user.id),
+	reconcile: (context) =>
+		reconcileReleases(
+			context,
+			createMessageGateway(context.client.rest, context.client.user.id),
+		),
 	/**
 	 * @description Announces the loader release a NOTIFY payload names.
 	 * @param payload The release payload from the notification.
 	 * @param context The dispatcher's stores and Discord client.
 	 * @returns Resolves once the release was announced.
 	 */
-	handle: (payload, context) => announceRelease(context, context.client.rest, payload),
+	handle: (payload, context) =>
+		announceRelease(
+			context,
+			createMessageGateway(context.client.rest, context.client.user.id),
+			payload,
+		),
 };
 
 export default {

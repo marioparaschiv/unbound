@@ -1,8 +1,8 @@
 import type { APIApplicationEmoji, APIUser, REST } from 'discord.js';
 import { createLogger } from '@unbound-app/logger';
 
+import { discordFailure } from '~/lib/discord-messages';
 import { renderRoundAvatar } from '~/lib/card-images';
-import { isNotFound } from '~/lib/discord-messages';
 import type { AppEmoji } from '~/lib/constants';
 
 /** Keeps one round avatar emoji per addon author on the bot application, following avatar changes. */
@@ -118,7 +118,9 @@ export function createAuthorEmojis(rest: REST, applicationId: string): AuthorEmo
 		try {
 			user = (await rest.get(`/users/${discordId}`)) as APIUser;
 		} catch (error) {
-			if (!isNotFound(error)) {
+			const failure = discordFailure(error);
+
+			if (failure !== 'gone' && failure !== 'undeliverable') {
 				throw error;
 			}
 

@@ -1,10 +1,11 @@
-import { DiscordAPIError, PermissionFlagsBits, RESTJSONErrorCodes } from 'discord.js';
 import type { Member, MemberQuery, MemberSubject } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
+import { PermissionFlagsBits } from 'discord.js';
 import { inArray } from 'drizzle-orm';
 
 import { DISCORD_IDS, type IdConstantName } from '~/lib/constants';
 import type { ContributorCache } from '~/lib/github-contributors';
+import { discordFailure } from '~/lib/discord-messages';
 import type { Stores } from '~/dispatchers/types';
 import type { Database } from '~/db/database';
 import { roleGrant } from '~/db/schema';
@@ -143,18 +144,6 @@ function pendingRoles(claim: Claim, roles: Grantable, held: ReadonlySet<string>)
 	}
 
 	return pending;
-}
-
-function isNotInGuild(error: unknown): error is DiscordAPIError {
-	return error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMember;
-}
-
-function isDeletedUser(error: unknown): error is DiscordAPIError {
-	return error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownUser;
-}
-
-function isMissingPermissions(error: unknown): error is DiscordAPIError {
-	return error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingPermissions;
 }
 
 /**
@@ -324,7 +313,10 @@ export function createRolesDispatcher(options: RolesOptions): RolesDispatcher {
 			target = await guild.members.fetch({ user: claim.discordId, force: true });
 			deleted.delete(claim.discordId);
 		} catch (error) {
-			if (isNotInGuild(error)) {
+			const failure = discordFailure(error);
+
+			// 10007 Unknown Member: the account exists but is not in the guild.
+			if (failure === 'gone') {
 				logger.debug(
 					`Discord user ${claim.discordId} is not in the guild; retrying on the next reconcile.`,
 				);
@@ -332,7 +324,8 @@ export function createRolesDispatcher(options: RolesOptions): RolesDispatcher {
 				return;
 			}
 
-			if (isDeletedUser(error)) {
+			// 10013 Unknown User: the account was deleted.
+			if (failure === 'undeliverable') {
 				deleted.set(claim.discordId, now() + DELETED_RETRY_MS);
 				logger.debug(
 					`Discord user ${claim.discordId} is a deleted account; retrying in an hour.`,
@@ -357,7 +350,7 @@ export function createRolesDispatcher(options: RolesOptions): RolesDispatcher {
 			try {
 				await grantRole(db, target, claim.discordId, role);
 			} catch (error) {
-				if (!isMissingPermissions(error)) {
+				if (discordFailure(error) !== 'forbidden') {
 					logger.error(
 						`Failed to grant ${key} to Discord user ${claim.discordId}:`,
 						error,

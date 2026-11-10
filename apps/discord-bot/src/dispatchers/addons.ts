@@ -1,11 +1,15 @@
 import type { AddonType } from '@unbound-app/contracts/addons';
-import type { APIMessage, Client, REST } from 'discord.js';
 import type { PublicAddon } from '@unbound-app/web/bot';
-import { DiscordAPIError, Routes } from 'discord.js';
+import type { APIMessage, Client } from 'discord.js';
 import { createLogger } from '@unbound-app/logger';
 import { eq } from 'drizzle-orm';
 
-import { deleteMessage, listOwnMessages, messageExists, postMessage } from '~/lib/discord-messages';
+import {
+	createMessageGateway,
+	discordFailure,
+	type MessageGateway,
+	type OutgoingMessage,
+} from '~/lib/discord-messages';
 import { messageLinks, renderAddon, renderCardImages } from '~/dispatchers/addon-card';
 import { createAuthorEmojis, type AuthorEmojis } from '~/lib/author-emojis';
 import type { Dispatcher, Stores } from '~/dispatchers/types';
@@ -24,8 +28,6 @@ export const ADDON_CHANNELS: AddonChannels = {
 	theme: DISCORD_IDS.THEMES_CHANNEL_ID,
 	'icon-pack': DISCORD_IDS.ICON_PACKS_CHANNEL_ID,
 };
-
-const BAD_REQUEST = 400;
 
 /**
  * @description Names the channel an addon's message belongs in.
@@ -58,15 +60,15 @@ async function storeMessage(
 // belongs in that channel and has no message there yet, else it is a duplicate or stale and goes.
 async function adoptOrphans(
 	db: Database,
-	rest: REST,
+	messages: MessageGateway,
 	channels: AddonChannels,
 	listings: Map<string, APIMessage[]>,
 	addons: PublicAddon[],
 ) {
-	const messages = await db.select().from(addonMessage);
+	const posted = await db.select().from(addonMessage);
 	const byUrl = new Map(addons.map((item) => [item.pageUrl, item]));
-	const rows = new Map(messages.map((row) => [row.addonId, row]));
-	const referenced = new Set(messages.map((row) => row.messageId));
+	const rows = new Map(posted.map((row) => [row.addonId, row]));
+	const referenced = new Set(posted.map((row) => row.messageId));
 
 	for (const [channelId, listing] of listings) {
 		const listed = new Set(listing.map((message) => message.id));
@@ -87,13 +89,13 @@ async function adoptOrphans(
 
 				// A row whose message is gone takes this post over instead of deleting it and posting anew.
 				if (desiredChannel(owner, channels) !== channelId || kept) {
-					await deleteMessage(rest, channelId, message.id);
+					await messages.delete(channelId, message.id);
 
 					continue;
 				}
 
 				if (row) {
-					await deleteMessage(rest, row.channelId, row.messageId);
+					await messages.delete(row.channelId, row.messageId);
 				}
 
 				// An empty hash makes the following sync patch the message to the current content.
@@ -113,37 +115,34 @@ function authorIds(item: PublicAddon): string[] {
 	return item.authors.flatMap((author) => (author.discordId ? [author.discordId] : []));
 }
 
-// Clearing the embed and content lets an old embed post become a components v2 card in place; an
-// edit Discord still refuses is answered by replacing the message.
+// The edit clears the embed and content, so an old embed post becomes a components v2 card in place;
+// an edit Discord still rejects is answered by replacing the message.
 async function editOrReplace(
-	rest: REST,
+	messages: MessageGateway,
 	channelId: string,
 	messageId: string,
-	card: ReturnType<typeof renderAddon>,
+	card: OutgoingMessage,
 ): Promise<string> {
 	try {
-		await rest.patch(Routes.channelMessage(channelId, messageId), {
-			body: { ...card.body, embeds: [], content: '' },
-			files: card.files,
-		});
+		await messages.edit(channelId, messageId, card);
 
 		return messageId;
 	} catch (error) {
-		if (!(error instanceof DiscordAPIError) || error.status !== BAD_REQUEST) {
+		if (discordFailure(error) !== 'rejected') {
 			throw error;
 		}
 
 		logger.warn(`Failed to edit message ${messageId}, replacing it:`, error);
-		await deleteMessage(rest, channelId, messageId);
+		await messages.delete(channelId, messageId);
 
-		return postMessage(rest, channelId, card.body, card.files);
+		return messages.post(channelId, card);
 	}
 }
 
 /**
  * @description Brings one addon's Discord message in line with its listing: posted, edited, moved or removed.
  * @param stores The bot database and the web's reads.
- * @param rest The Discord REST client.
+ * @param messages The bot's Discord messages.
  * @param id The addon id.
  * @param channels The channel each addon type posts to.
  * @param present Ids of our messages that exist, from a listing; without it the message is fetched.
@@ -152,7 +151,7 @@ async function editOrReplace(
  */
 export async function syncAddon(
 	{ db, web }: Stores,
-	rest: REST,
+	messages: MessageGateway,
 	id: string,
 	channels: AddonChannels = ADDON_CHANNELS,
 	present?: ReadonlySet<string>,
@@ -168,7 +167,7 @@ export async function syncAddon(
 	// a crash in between leaves a row whose message is already gone, which the next sync clears.
 	if (!current || !channelId) {
 		if (posted) {
-			await deleteMessage(rest, posted.channelId, posted.messageId);
+			await messages.delete(posted.channelId, posted.messageId);
 			await db.delete(addonMessage).where(eq(addonMessage.addonId, id));
 		}
 
@@ -183,7 +182,7 @@ export async function syncAddon(
 	const kept =
 		posted?.channelId === channelId &&
 		(present?.has(posted.messageId) ??
-			(await messageExists(rest, posted.channelId, posted.messageId)));
+			(await messages.exists(posted.channelId, posted.messageId)));
 
 	if (posted && kept && posted.postedHash === hash) return;
 
@@ -191,7 +190,7 @@ export async function syncAddon(
 	const card = renderAddon(current, await renderCardImages(current), avatars);
 
 	if (posted && kept) {
-		const messageId = await editOrReplace(rest, channelId, posted.messageId, card);
+		const messageId = await editOrReplace(messages, channelId, posted.messageId, card);
 
 		await db
 			.update(addonMessage)
@@ -202,16 +201,16 @@ export async function syncAddon(
 	}
 
 	if (posted) {
-		await deleteMessage(rest, posted.channelId, posted.messageId);
+		await messages.delete(posted.channelId, posted.messageId);
 	}
 
-	const messageId = await postMessage(rest, channelId, card.body, card.files);
+	const messageId = await messages.post(channelId, card);
 
 	try {
 		await storeMessage(db, id, channelId, messageId, hash);
 	} catch (error) {
 		// A post without its row would be duplicated by the next sync; reconcile adopts it if this fails.
-		await deleteMessage(rest, channelId, messageId).catch((cleanup) => {
+		await messages.delete(channelId, messageId).catch((cleanup) => {
 			logger.warn(
 				`Failed to remove unrecorded message ${messageId} of addon ${id}:`,
 				cleanup,
@@ -225,16 +224,14 @@ export async function syncAddon(
 /**
  * @description Adopts messages a crash left without a row, then syncs every addon that has or had a message.
  * @param stores The bot database and the web's reads.
- * @param rest The Discord REST client.
- * @param selfId The bot's own user id.
+ * @param messages The bot's Discord messages.
  * @param channels The channel each addon type posts to.
  * @param emojis The author avatar emoji sync; its emojis of authors no posted addon names are deleted.
  * @returns Resolves once every addon was synced; one addon's failure is logged and left to the next run.
  */
 export async function reconcileAddons(
 	stores: Stores,
-	rest: REST,
-	selfId: string,
+	messages: MessageGateway,
 	channels: AddonChannels = ADDON_CHANNELS,
 	emojis?: AuthorEmojis,
 ): Promise<void> {
@@ -243,7 +240,7 @@ export async function reconcileAddons(
 
 	for (const channelId of new Set(Object.values(channels))) {
 		if (channelId) {
-			listings.set(channelId, await listOwnMessages(rest, channelId, selfId));
+			listings.set(channelId, await messages.listOwn(channelId));
 		}
 	}
 
@@ -251,14 +248,14 @@ export async function reconcileAddons(
 
 	const addons = await stores.web.addons();
 
-	await adoptOrphans(stores.db, rest, channels, listings, addons);
+	await adoptOrphans(stores.db, messages, channels, listings, addons);
 
 	const posted = await stores.db.select({ id: addonMessage.addonId }).from(addonMessage);
 	const ids = new Set([...addons.map((item) => item.id), ...posted.map((row) => row.id)]);
 
 	for (const id of ids) {
 		try {
-			await syncAddon(stores, rest, id, channels, present, emojis);
+			await syncAddon(stores, messages, id, channels, present, emojis);
 		} catch (error) {
 			logger.error(`Failed to sync addon ${id}:`, error);
 		}
@@ -290,8 +287,7 @@ export const addonsDispatcher: Dispatcher = {
 	reconcile: (context) =>
 		reconcileAddons(
 			context,
-			context.client.rest,
-			context.client.user.id,
+			createMessageGateway(context.client.rest, context.client.user.id),
 			ADDON_CHANNELS,
 			authorEmojisOf(context.client),
 		),
@@ -304,7 +300,7 @@ export const addonsDispatcher: Dispatcher = {
 	handle: (id, context) =>
 		syncAddon(
 			context,
-			context.client.rest,
+			createMessageGateway(context.client.rest, context.client.user.id),
 			id,
 			ADDON_CHANNELS,
 			undefined,

@@ -61,7 +61,7 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 	function handle(item: Release) {
 		return announceRelease(
 			stores(),
-			discord.rest,
+			discord.gateway,
 			`${item.platform}:${item.version}`,
 			TARGET,
 			NOW,
@@ -69,7 +69,7 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 	}
 
 	function reconcile() {
-		return reconcileReleases(stores(), discord.rest, discord.selfId, TARGET, NOW);
+		return reconcileReleases(stores(), discord.gateway, TARGET, NOW);
 	}
 
 	async function rowOf(item: Release) {
@@ -231,7 +231,7 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 
 		const outcome = await announceRelease(
 			stores(crashing),
-			discord.rest,
+			discord.gateway,
 			`${item.platform}:${item.version}`,
 			TARGET,
 			NOW,
@@ -295,9 +295,9 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 		await database.web.db
 			.delete(schema.loaderRelease)
 			.where(eq(schema.loaderRelease.platform, 'android'));
-		await announceRelease(real, discord.rest, 'ios:1.2.3', TARGET, NOW);
-		await announceRelease(real, discord.rest, 'android:1.2.4', TARGET, NOW);
-		await reconcileReleases(real, discord.rest, discord.selfId, TARGET, NOW);
+		await announceRelease(real, discord.gateway, 'ios:1.2.3', TARGET, NOW);
+		await announceRelease(real, discord.gateway, 'android:1.2.4', TARGET, NOW);
+		await reconcileReleases(real, discord.gateway, TARGET, NOW);
 
 		expect(discord.messages('21').map((message) => message.embeds[0]?.title)).toEqual([
 			'Unbound for iOS 1.2.3',

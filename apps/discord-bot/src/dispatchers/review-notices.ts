@@ -1,23 +1,22 @@
-import { DiscordAPIError, RESTJSONErrorCodes } from 'discord.js';
 import type { ReviewNotice } from '@unbound-app/web/bot';
-import type { APIEmbed, Client } from 'discord.js';
+import type { APIEmbed } from 'discord.js';
 import { max } from 'drizzle-orm';
 
+import {
+	createMessageGateway,
+	discordFailure,
+	eventNonce,
+	type MessageGateway,
+} from '~/lib/discord-messages';
 import type { Dispatcher, DispatcherContext, Stores } from '~/dispatchers/types';
 import { reviewNotice, type ReviewNoticeOutcome } from '~/db/schema';
-import { EMBED_LIMITS, quote } from '~/dispatchers/audit-embed';
+import { EMBED_LIMITS, quote, truncate } from '~/lib/message-text';
 import { DECISIONS } from '~/dispatchers/audit-kinds';
-import { truncate } from '~/lib/discord-messages';
 import type { Database } from '~/db/database';
 import { SITE_URL } from '~/lib/constants';
 
 const PAGE = 100;
 const SUBMISSIONS = { listing: 'Your new addon', update: 'Your update to' } as const;
-// The author blocks DMs from the bot, shares no server with it, or no longer exists: no retry helps.
-const UNDELIVERABLE = new Set<DiscordAPIError['code']>([
-	RESTJSONErrorCodes.CannotSendMessagesToThisUser,
-	RESTJSONErrorCodes.UnknownUser,
-]);
 
 type Handled = { outcome: ReviewNoticeOutcome; messageId?: string };
 
@@ -73,23 +72,22 @@ async function cursor(stores: Stores) {
 
 // The nonce dedupes a quick retry; a crash between this send and its row re-sends on a later run,
 // which can DM the author twice. That is accepted.
-async function deliver(client: Client<true>, notice: ReviewNotice): Promise<Handled> {
+async function deliver(messages: MessageGateway, notice: ReviewNotice): Promise<Handled> {
 	if (!notice.discordId) {
 		return { outcome: 'unlinked' };
 	}
 
 	try {
-		const channel = await client.users.createDM(notice.discordId);
-		const message = await channel.send({
-			embeds: [renderReviewNotice(notice)],
-			allowedMentions: { parse: [] },
-			nonce: `r${notice.eventId}.${notice.createdAt.getTime().toString(36)}`,
-			enforceNonce: true,
-		});
+		const messageId = await messages.dm(
+			notice.discordId,
+			{ body: { embeds: [renderReviewNotice(notice)], allowed_mentions: { parse: [] } } },
+			{ nonce: eventNonce('r', notice.eventId, notice.createdAt) },
+		);
 
-		return { outcome: 'sent', messageId: message.id };
+		return { outcome: 'sent', messageId };
 	} catch (error) {
-		if (!(error instanceof DiscordAPIError) || !UNDELIVERABLE.has(error.code)) {
+		// No retry helps an author who blocks the bot, shares no server with it, or no longer exists.
+		if (discordFailure(error) !== 'undeliverable') {
 			throw error;
 		}
 
@@ -99,13 +97,15 @@ async function deliver(client: Client<true>, notice: ReviewNotice): Promise<Hand
 
 // Strictly sequential: a failed send throws and ends the run, and the next run resumes at the cursor.
 async function notifyPending(context: DispatcherContext) {
+	const messages = createMessageGateway(context.client.rest, context.client.user.id);
+
 	for (;;) {
 		const notices = await context.web.reviewNoticesAfter(await cursor(context), PAGE);
 
 		if (!notices.length) return;
 
 		for (const notice of notices) {
-			await record(context.db, notice.eventId, await deliver(context.client, notice));
+			await record(context.db, notice.eventId, await deliver(messages, notice));
 		}
 	}
 }

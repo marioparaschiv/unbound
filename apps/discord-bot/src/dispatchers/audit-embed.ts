@@ -2,19 +2,11 @@ import type { AuditEvent } from '@unbound-app/web/bot';
 import type { APIEmbed } from 'discord.js';
 
 import { buildLink, deployBuild, renderKind, type KindEmbed } from '~/dispatchers/audit-kinds';
+import { EMBED_LIMITS, quote, truncate } from '~/lib/message-text';
 import { COLOURS, SITE_URL } from '~/lib/constants';
-import { truncate } from '~/lib/discord-messages';
 
 /** The deploys one post lists, oldest first; never empty. */
 export type DeployBatch = [AuditEvent, ...AuditEvent[]];
-
-export const EMBED_LIMITS = {
-	title: 256,
-	description: 4096,
-	footer: 2048,
-	authorName: 256,
-	total: 6000,
-} as const;
 
 const SUBJECT_PATHS: Record<string, string> = { addon: 'admin/addons', user: 'admin/users' };
 const CODE_FENCE = { open: '```json\n', close: '\n```' } as const;
@@ -37,19 +29,6 @@ function avatarOf(event: AuditEvent) {
 	const image = event.actor?.image;
 
 	return image && /^https?:\/\//.test(image) ? image : undefined;
-}
-
-/**
- * @description Quotes text as a Discord block quote, line by line.
- * @param text The text; surrounding blank space is dropped.
- * @returns The quoted text.
- */
-export function quote(text: string): string {
-	return text
-		.trim()
-		.split('\n')
-		.map((line) => `> ${line}`)
-		.join('\n');
 }
 
 // The note quotes come first, then the facts as subtext lines.
@@ -166,4 +145,4 @@ export function buildFallbackEmbed(event: AuditEvent): APIEmbed {
 	};
 }
 
-export default { EMBED_LIMITS, quote, buildAuditEmbed, buildDeployEmbed, buildFallbackEmbed };
+export default { buildAuditEmbed, buildDeployEmbed, buildFallbackEmbed };

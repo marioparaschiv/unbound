@@ -70,7 +70,7 @@ describe.skipIf(!DATABASE_URL)('the runtime against the web database and a fake 
 		auditLog = createFakeDiscord();
 		client = createFakeClient(auditLog);
 
-		const { rest, selfId } = channels;
+		const { gateway } = channels;
 		const roles = createRolesDispatcher({
 			guildId: FAKE_GUILD_ID,
 			roleIds: ROLE_IDS,
@@ -81,15 +81,15 @@ describe.skipIf(!DATABASE_URL)('the runtime against the web database and a fake 
 				name: 'addons',
 				channel: 'addon_changed',
 				requires: [],
-				reconcile: (context) => reconcileAddons(context, rest, selfId, CHANNELS),
-				handle: (id, context) => syncAddon(context, rest, id, CHANNELS),
+				reconcile: (context) => reconcileAddons(context, gateway, CHANNELS),
+				handle: (id, context) => syncAddon(context, gateway, id, CHANNELS),
 			},
 			{
 				name: 'releases',
 				channel: 'loader_release',
 				requires: [],
-				reconcile: (context) => reconcileReleases(context, rest, selfId, RELEASES),
-				handle: (payload, context) => announceRelease(context, rest, payload, RELEASES),
+				reconcile: (context) => reconcileReleases(context, gateway, RELEASES),
+				handle: (payload, context) => announceRelease(context, gateway, payload, RELEASES),
 			},
 			createAuditDispatcher(
 				createAuditTelemetry({ env: testConfig().env }),

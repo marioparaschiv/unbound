@@ -2,7 +2,7 @@ import type { ReviewNotice } from '@unbound-app/web/bot';
 import { describe, expect, test } from 'bun:test';
 
 import { renderReviewNotice } from '~/dispatchers/review-notices';
-import { EMBED_LIMITS } from '~/dispatchers/audit-embed';
+import { EMBED_LIMITS } from '~/lib/message-text';
 import { COLOURS } from '~/lib/constants';
 
 const SITE = 'https://unbound.rip';

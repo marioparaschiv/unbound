@@ -124,11 +124,11 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 	}
 
 	function sync(id: string) {
-		return syncAddon(stores(), discord.rest, id, CHANNELS);
+		return syncAddon(stores(), discord.gateway, id, CHANNELS);
 	}
 
 	function reconcile() {
-		return reconcileAddons(stores(), discord.rest, discord.selfId, CHANNELS);
+		return reconcileAddons(stores(), discord.gateway, CHANNELS);
 	}
 
 	async function rowOf(id: string) {
@@ -433,7 +433,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 
 		discord.beforePostResponse = () => crashing.$client.end();
 
-		const outcome = await syncAddon(stores(crashing), discord.rest, id, CHANNELS).then(
+		const outcome = await syncAddon(stores(crashing), discord.gateway, id, CHANNELS).then(
 			() => 'synced',
 			() => 'failed',
 		);
@@ -530,7 +530,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		const real = { db: database.db, web: reads };
 
 		await seedApprovedAddon(web, owner.userId, manifest('web.listed', '2.0.0'));
-		await syncAddon(real, discord.rest, 'web.listed', CHANNELS);
+		await syncAddon(real, discord.gateway, 'web.listed', CHANNELS);
 
 		const [message, ...extra] = discord.messages('11');
 
@@ -550,7 +550,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 			.update(schema.addon)
 			.set({ delistedAt: new Date() })
 			.where(eq(schema.addon.id, 'web.listed'));
-		await reconcileAddons(real, discord.rest, discord.selfId, CHANNELS);
+		await reconcileAddons(real, discord.gateway, CHANNELS);
 
 		expect(discord.messages('11')).toHaveLength(0);
 		expect(await rowOf('web.listed')).toBeUndefined();
@@ -600,13 +600,13 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		};
 
 		ingest(PLUGIN);
-		await syncAddon(stores(), discord.rest, PLUGIN.id, CHANNELS, undefined, emojis);
-		await syncAddon(stores(), discord.rest, PLUGIN.id, CHANNELS, undefined, emojis);
+		await syncAddon(stores(), discord.gateway, PLUGIN.id, CHANNELS, undefined, emojis);
+		await syncAddon(stores(), discord.gateway, PLUGIN.id, CHANNELS, undefined, emojis);
 
 		expect(cardText(messagesOf(PLUGIN)[0])).toContain('<:av_1_aaaa:501> Mario');
 
 		avatar = { name: 'av_1_bbbb', id: '502' };
-		await syncAddon(stores(), discord.rest, PLUGIN.id, CHANNELS, undefined, emojis);
+		await syncAddon(stores(), discord.gateway, PLUGIN.id, CHANNELS, undefined, emojis);
 
 		expect(writes().map((request) => request.method)).toEqual(['POST', 'PATCH']);
 		expect(cardText(messagesOf(PLUGIN)[0])).toContain('<:av_1_bbbb:502> Mario');
