@@ -20,7 +20,7 @@ function entry(id: string, name: string, description: string): PluginManifestEnt
 }
 
 const icon =
-	'<img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" alt="">';
+	'<img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt="">';
 
 describe('renderReadme', () => {
 	test('links each plugin to its store page with its icon, sorted by name', () => {

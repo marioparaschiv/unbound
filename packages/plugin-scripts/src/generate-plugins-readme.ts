@@ -51,7 +51,8 @@ export function readmeIconSvg(pngBase64: string): string {
 
 /**
  * @description Renders the plugins README: one list item per plugin, with its icon, linked to its published store page.
- * A list rather than a table, so the formatter leaves the output as written.
+ * A list rather than a table, so the formatter leaves the output as written. GitHub strips `style`,
+ * so `align="absmiddle"` centres each icon on the text.
  * @param plugins Each plugin's folder and manifest.
  * @returns The README markdown.
  */
@@ -61,7 +62,7 @@ export function renderReadme(plugins: PluginManifestEntry[]): string {
 		.toSorted((first, second) => first.name.localeCompare(second.name))
 		.map(
 			(manifest) =>
-				`- <img src="${ICONS_PATH}/${readmeIconFile(pluginIcon(manifest))}" width="${ICON_SIZE}" height="${ICON_SIZE}" alt=""> [${oneLine(manifest.name)}](${SITE_URL}/addons/${manifest.id}): ${oneLine(manifest.description)}`,
+				`- <img src="${ICONS_PATH}/${readmeIconFile(pluginIcon(manifest))}" width="${ICON_SIZE}" height="${ICON_SIZE}" align="absmiddle" alt=""> [${oneLine(manifest.name)}](${SITE_URL}/addons/${manifest.id}): ${oneLine(manifest.description)}`,
 		);
 
 	return [
