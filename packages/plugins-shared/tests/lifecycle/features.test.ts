@@ -224,12 +224,15 @@ describe('runFeatures', () => {
 		});
 	});
 
-	test('fails the self test while a feature waits for a module', () => {
+	test('names the modules a feature still waits for in the self test', () => {
 		let loaded = false;
 		const plugin = runFeatures([() => awaitModule('MessageStore', () => loaded)]);
 
 		plugin.start(context);
-		expect(plugin.selfTest()).toEqual({ ok: false, detail: 'waiting for MessageStore' });
+		expect(plugin.selfTest()).toEqual({
+			ok: true,
+			detail: '1 feature applied, waiting for MessageStore',
+		});
 
 		loaded = true;
 		expect(plugin.selfTest()).toEqual({ ok: true, detail: '1 feature applied' });

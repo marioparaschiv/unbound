@@ -61,14 +61,17 @@ describe('ensureModules', () => {
 		expect(Object.values(handles).flatMap(({ reads }) => reads)).toEqual([]);
 	});
 
-	test('fails the self test until a lazy handle loads its module', () => {
+	test('names a lazy handle in the self test until it loads its module', () => {
 		const { handle } = lazy('present');
 		const plugin = runFeatures([
 			() => void ensureModules({ MessageStore: handle, Theme: lazy('loaded').handle }),
 		]);
 
 		plugin.start(context);
-		expect(plugin.selfTest()).toEqual({ ok: false, detail: 'waiting for MessageStore' });
+		expect(plugin.selfTest()).toEqual({
+			ok: true,
+			detail: '1 feature applied, waiting for MessageStore',
+		});
 
 		presences.set(handle, 'loaded');
 		expect(plugin.selfTest()).toEqual({ ok: true, detail: '1 feature applied' });

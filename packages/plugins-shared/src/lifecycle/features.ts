@@ -161,26 +161,23 @@ function healthOf(run: Run | undefined): SelfTestResult {
 		return { ok: false, detail: `skipped: ${[...run.skips].join('; ')}` };
 	}
 
-	const waiting = new Set(run?.waits.filter((wait) => !wait.loaded()).map((wait) => wait.module));
-
-	if (waiting.size) {
-		return { ok: false, detail: `waiting for ${[...waiting].join(', ')}` };
-	}
-
 	if (!run?.running) {
 		return { ok: false, detail: 'no features are applied' };
 	}
 
+	const applied = `${run.running} feature${run.running === 1 ? '' : 's'} applied`;
+	const waiting = new Set(run.waits.filter((wait) => !wait.loaded()).map((wait) => wait.module));
+
 	return {
 		ok: true,
-		detail: `${run.running} feature${run.running === 1 ? '' : 's'} applied`,
+		detail: waiting.size ? `${applied}, waiting for ${[...waiting].join(', ')}` : applied,
 	};
 }
 
 /**
  * @description Runs a plugin's features as its `start`, `stop` and `selfTest`, named and logged through the Addon scope.
  * Each feature starts on its own unless `atomic`; `stop` ends them in reverse, and the self test counts what is running
- * and fails while a feature waits for a module Discord has not loaded.
+ * and names the modules features still wait for, since Discord loads some only on interaction.
  * @template R The self test's result.
  * @param features The features, or a function returning them once what they share is checked and built.
  * @param options `atomic` to start all or none, and `selfTest` to build on the features' result.
@@ -264,7 +261,7 @@ export function skipFeature(reason: string): void {
 }
 
 /**
- * @description Fails the running plugin's self test with `waiting for <module>` until `loaded` reports the module a deferred patch needs as loaded.
+ * @description Names `module` in the running plugin's self test detail until `loaded` reports the module a deferred patch needs as loaded.
  * @param module The module's name or source path.
  * @param loaded Reads whether the module has loaded, so the deferred patch applied.
  */

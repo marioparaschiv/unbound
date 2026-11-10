@@ -8,7 +8,7 @@ type Cleanup = () => void;
 export type ModuleSource = MetroFilter | string;
 
 export type WhenLoadedOptions = MetroModuleLoadedOptions & {
-	/** Leaves the plugin's self test alone while waiting, for a module Discord loads only on some interaction the feature also covers otherwise. */
+	/** Leaves the module out of the self test detail, for a module Discord loads only on some interaction the feature also covers otherwise. */
 	optional?: boolean;
 };
 
@@ -32,7 +32,7 @@ function nameOf(source: ModuleSource): string {
 /**
  * @description Applies a feature to a module once it loads, without loading it, so `stop` can cancel the wait or remove the feature.
  * A loaded module gets the feature at once; otherwise it is applied while the module initializes, before Discord reads it.
- * Until then the plugin's self test reports `waiting for <module>`, unless `optional`.
+ * Until then the plugin's self test detail names the module, unless `optional`.
  * @template T The module's type.
  * @param source The module's filter or file path, or several in order of preference: the first loaded wins, else the first to load.
  * @param apply Applies the feature and returns the function that removes it, or nothing when it did not apply.

@@ -106,7 +106,7 @@ describe('whenLoaded', () => {
 		expect(applied).toBe(false);
 	});
 
-	test('fails the self test until the module loads, unless optional', () => {
+	test('names the module in the self test until it loads, unless optional', () => {
 		const path = 'modules/chat/native/TypingIndicator.tsx';
 		const plugin = runFeatures([
 			() => whenLoaded<Module>(path, () => undefined),
@@ -114,7 +114,10 @@ describe('whenLoaded', () => {
 		]);
 
 		plugin.start(context);
-		expect(plugin.selfTest()).toEqual({ ok: false, detail: `waiting for ${path}` });
+		expect(plugin.selfTest()).toEqual({
+			ok: true,
+			detail: `2 features applied, waiting for ${path}`,
+		});
 
 		load(waits[0], { name: 'late' });
 		expect(plugin.selfTest()).toEqual({ ok: true, detail: '2 features applied' });
