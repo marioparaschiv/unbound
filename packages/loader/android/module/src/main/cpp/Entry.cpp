@@ -17,6 +17,7 @@
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
 #include "LoaderPreferences.h"
+#include "LoaderTelemetry.h"
 #include "LoaderThreadWarnings.h"
 #include "LoaderToolboxGestures.h"
 #include "NativeFabric.h"
@@ -238,6 +239,15 @@ static jstring nativePreference(JNIEnv *env, jclass, jstring action, jstring arg
     return toJavaString(
         env, loader::preferences::perform(loader->settings(), toStdString(env, action),
                                           argument ? toStdString(env, argument) : std::string()));
+}
+
+static jboolean nativeIsBlockedTelemetry(JNIEnv *env, jclass, jstring url)
+{
+    auto loader = currentLoader();
+    return loader && url && loader::isTelemetryURL(toStdString(env, url)) &&
+                   loader->settings().getBoolean("unbound", loader::kBlockTelemetrySetting, true)
+               ? JNI_TRUE
+               : JNI_FALSE;
 }
 
 struct ToolboxGestures {
@@ -546,6 +556,8 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
          reinterpret_cast<void *>(nativeInitialize)},
         {"nativeOnLoadJSBundle", "()V", reinterpret_cast<void *>(nativeOnLoadJSBundle)},
         {"nativeMarkHealthy", "()V", reinterpret_cast<void *>(nativeMarkHealthy)},
+        {"nativeIsBlockedTelemetry", "(Ljava/lang/String;)Z",
+         reinterpret_cast<void *>(nativeIsBlockedTelemetry)},
         {"nativeOnRuntimeCreated", "(J)Z", reinterpret_cast<void *>(nativeOnRuntimeCreated)},
         {"nativeDrainRuntimeWork", "(J)V", reinterpret_cast<void *>(nativeDrainRuntimeWork)},
         {"nativeInstallSchedulerDrain", "(J)Z",

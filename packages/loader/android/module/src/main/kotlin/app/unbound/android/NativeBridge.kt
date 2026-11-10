@@ -37,6 +37,10 @@ object NativeBridge {
     @JvmStatic
     external fun nativeOnLoadJSBundle()
 
+    /** Whether [url] is one of Discord's analytics endpoints and the loader is set to block them. */
+    @JvmStatic
+    external fun nativeIsBlockedTelemetry(url: String): Boolean
+
     /** Counts this launch as healthy: Discord left the foreground without crashing. */
     @JvmStatic
     external fun nativeMarkHealthy()
