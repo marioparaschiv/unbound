@@ -2,9 +2,9 @@ import { describe, expect, test } from 'bun:test';
 import { join, resolve } from 'node:path';
 import { existsSync } from 'node:fs';
 
-import { PROJECTS, summarize, typeErrors } from './typecheck';
+import { PROJECTS, summarize, typeErrors } from '~/typecheck';
 
-const root = resolve(import.meta.dir, '..');
+const root = resolve(import.meta.dir, '../..');
 
 describe('typecheck', () => {
 	test('picks only error lines out of tsc output', () => {

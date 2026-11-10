@@ -1,12 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { ForkRun, PullRequestSummary } from './pr-builds-fork';
-
 import {
 	forkManifestProblem,
 	parseEventPullRequests,
 	resolveForkPullRequest,
-} from './pr-builds-fork';
+} from '~/pr-builds-fork';
+import type { ForkRun, PullRequestSummary } from '~/pr-builds-fork';
 
 const run: ForkRun = {
 	repository: 'marioparaschiv/unbound',

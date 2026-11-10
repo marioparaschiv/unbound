@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { checksFor } from './pre-push';
+import { checksFor } from '~/pre-push';
 
 const present = new Set([
 	'packages/plugins/chat-bubbles/package.json',

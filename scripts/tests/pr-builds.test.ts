@@ -3,16 +3,17 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { PublicBucket } from '../packages/client/scripts/build/upload';
-
 import {
 	clientPrefix,
 	deletePullRequestBuilds,
 	loaderPrefix,
 	parsePullRequest,
 	uploadLoaderBuilds,
-} from './pr-builds';
-import { listKeys, uploadBuild } from '../packages/client/scripts/build/upload';
+} from '~/pr-builds';
+
+import type { PublicBucket } from '../../packages/client/scripts/build/upload';
+
+import { listKeys, uploadBuild } from '../../packages/client/scripts/build/upload';
 
 function createMemoryBucket(initial: Record<string, string> = {}, pageSize = 2) {
 	const objects = new Map(Object.entries(initial));

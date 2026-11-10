@@ -8,11 +8,11 @@ import {
 	presenceVariable,
 	referencedConfig,
 	renderConfigSummary,
-} from './config-health';
+} from '~/config-health';
 
 const requirements = loadRequirements();
 const healthWorkflow = readFileSync(
-	join(import.meta.dir, '../.github/workflows/config-health.yml'),
+	join(import.meta.dir, '../../.github/workflows/config-health.yml'),
 	'utf8',
 );
 

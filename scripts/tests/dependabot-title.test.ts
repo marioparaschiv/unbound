@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { shortenDependabotTitle } from './dependabot-title';
+import { shortenDependabotTitle } from '~/dependabot-title';
 
 describe('Dependabot titles', () => {
 	test('keeps a title that already fits', () => {

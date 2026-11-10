@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { parseFormAnswers, triageIssue } from './issue-triage';
+import { parseFormAnswers, triageIssue } from '~/issue-triage';
 
 const bugReport = [
 	'### Platform',

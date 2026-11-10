@@ -10,7 +10,10 @@
 		"resolveJsonModule": true,
 		"allowImportingTsExtensions": true,
 		"types": ["bun"],
-		"noEmit": true
+		"noEmit": true,
+		"paths": {
+			"~/*": ["./*"]
+		}
 	},
-	"include": ["*.ts", "oxlint/**/*.ts"]
+	"include": ["*.ts", "tests/**/*.ts", "oxlint/**/*.ts"]
 }

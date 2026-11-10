@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { decideHermescRelease, parsePublishedVersions } from './hermesc-version';
+import { decideHermescRelease, parsePublishedVersions } from '~/hermesc-version';
 
 describe('hermesc release decision', () => {
 	test('builds <bytecode>.0.0 when nothing is published', () => {

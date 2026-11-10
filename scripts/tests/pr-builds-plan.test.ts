@@ -8,7 +8,7 @@ import {
 	planPullRequestBuilds,
 	renderCommentSection,
 	writeOutputs,
-} from './pr-builds-plan';
+} from '~/pr-builds-plan';
 
 const configured = {
 	PR_NUMBER: '42',

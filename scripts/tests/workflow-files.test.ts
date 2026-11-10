@@ -3,9 +3,9 @@ import { describe, expect, test } from 'bun:test';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import { workflowFileProblems } from './workflow-files';
+import { workflowFileProblems } from '~/workflow-files';
 
-const root = resolve(import.meta.dir, '..');
+const root = resolve(import.meta.dir, '../..');
 
 function copyOfRepository(): string {
 	const copy = mkdtempSync(join(tmpdir(), 'workflow-files-'));
