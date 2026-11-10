@@ -8,4 +8,10 @@ export default Discord.createStyles({
 	paused: {
 		tintColor: Theme.colors.ICON_FEEDBACK_WARNING,
 	},
+	blocked: {
+		tintColor: Theme.colors.ICON_FEEDBACK_WARNING,
+	},
+	update: {
+		tintColor: Theme.colors.TEXT_BRAND,
+	},
 });

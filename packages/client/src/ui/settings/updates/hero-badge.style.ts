@@ -27,6 +27,12 @@ export default Discord.createStyles({
 	positiveIcon: {
 		tintColor: Theme.colors.ICON_FEEDBACK_POSITIVE,
 	},
+	warningBadge: {
+		backgroundColor: Theme.colors.BACKGROUND_FEEDBACK_WARNING,
+	},
+	warningIcon: {
+		tintColor: Theme.colors.ICON_FEEDBACK_WARNING,
+	},
 	brandBadge: {
 		backgroundColor: Theme.colors.BACKGROUND_BRAND,
 	},

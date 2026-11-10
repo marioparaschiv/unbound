@@ -1,7 +1,10 @@
 import type { ToastHandle, ToastOptions } from '@unbound-app/types/toasts';
 import { createLogger } from '@unbound-app/logger';
 
-import { describeRequiredLoader } from '~/updates/describe-required-loader';
+import {
+	describeRequiredLoader,
+	describeRequiredLoaderTitle,
+} from '~/updates/describe-required-loader';
 import { readInstallKind } from '~/updates/install-kind';
 import navigationReady from '~/core/navigation-ready';
 import type { UpdatesState } from '~/updates/state';
@@ -53,9 +56,11 @@ export function notifyUpdates(
 	if (state.status !== 'ready') return;
 
 	if (state.requiredLoader) {
+		const kind = readInstallKind();
+
 		showWithView({
-			title: messages.UNBOUND_UPDATES_LOADER_REQUIRED,
-			content: describeRequiredLoader(state.requiredLoader, readInstallKind()),
+			title: describeRequiredLoaderTitle(kind),
+			content: describeRequiredLoader(state.requiredLoader, kind),
 			icon: 'WarningIcon',
 		});
 

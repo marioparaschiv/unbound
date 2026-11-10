@@ -1,6 +1,7 @@
 import { describeRequiredLoader } from '~/updates/describe-required-loader';
 import { automaticUpdates } from '~/updates/addon-updates';
 import { readInstallKind } from '~/updates/install-kind';
+import { useUnboundSettings } from '~/settings/unbound';
 import NoticeRow from '~/ui/settings-kit/notice-row';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
@@ -26,6 +27,7 @@ import AddonGroup from './addon-group';
 function UpdatesPage() {
 	const navigation = Discord.useNavigation();
 	const state = UpdatesStore((store) => store.state);
+	const settings = useUnboundSettings();
 	const addons = useInstalledAddons();
 	const listed = useListedIds();
 	const ready = state.status === 'ready';
@@ -33,6 +35,8 @@ function UpdatesPage() {
 	const loader = ready ? state.loader : null;
 	const discord = ready ? state.discord : null;
 	const requiredLoader = ready ? state.requiredLoader : null;
+	// Paused client updates keep the cached client, so the newer one's loader requirement doesn't block it.
+	const blocked = Boolean(requiredLoader) && settings.get('updater.auto.client');
 	// Held addons keep their own Update button but sit out Update all.
 	const automatic = automaticUpdates(updates, (kind) => Manager.for(kind));
 
@@ -49,9 +53,15 @@ function UpdatesPage() {
 				state={state}
 				pending={listPendingItems(updates, loader, discord)}
 				automatic={automatic.length}
+				blocked={blocked}
 			/>
 
-			<UnboundGroup checked={ready} loader={loader} discord={discord} />
+			<UnboundGroup
+				checked={ready}
+				loader={loader}
+				requiredLoader={requiredLoader}
+				discord={discord}
+			/>
 
 			{addons.length ? (
 				<AddonGroup addons={addons} updates={updates} checked={ready} listed={listed} />
