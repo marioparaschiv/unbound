@@ -37,7 +37,7 @@ export class Themes extends Addons<Theme> {
 	}
 
 	/**
-	 * @description Loads every theme the loader scanned (`UnboundNative.getThemes()`), then marks the manager initialised.
+	 * @description Loads every theme the loader scanned (`UnboundNative.getThemes()`), then applies the selected one.
 	 */
 	initialize() {
 		for (const { bundle, manifest } of getThemes()) {
@@ -50,8 +50,6 @@ export class Themes extends Addons<Theme> {
 		if (applied?.started) {
 			ThemeStore.getState().setApplied(applied.id, this.stateOf(applied).instance);
 		}
-
-		this.initialized = true;
 	}
 
 	/**

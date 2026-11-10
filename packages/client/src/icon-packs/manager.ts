@@ -109,7 +109,6 @@ export class Icons extends Addons<Plugin> {
 		this.applyPack(this.applied.manifest.id).catch((error) => {
 			this.logger.error('Failed to apply icon pack on init:', error);
 		});
-		this.initialized = true;
 	}
 
 	protected handleBundle(): null {

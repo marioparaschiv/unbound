@@ -70,7 +70,7 @@ export class Plugins extends Addons<Plugin> {
 	}
 
 	/**
-	 * @description Loads every plugin the loader scanned (`UnboundNative.getPlugins()`), then marks the manager initialised.
+	 * @description Loads every plugin the loader scanned (`UnboundNative.getPlugins()`).
 	 */
 	initialize() {
 		setFreezeListener((freeze) => this.handleFreeze(freeze));
@@ -90,8 +90,6 @@ export class Plugins extends Addons<Plugin> {
 
 			this.load(bundle, manifest);
 		}
-
-		this.initialized = true;
 	}
 
 	/**

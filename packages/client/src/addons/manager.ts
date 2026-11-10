@@ -7,11 +7,6 @@ import type { ManagerOf } from '~/addons/manager-of';
 import { EventEmitter } from '~/core/event-emitter';
 import storage from '~/storage/api';
 
-type BaseManagerEvents<T> = {
-	load: (entity: T) => void;
-	unload: (entity: T) => void;
-};
-
 /** What a manager is called, where it keeps its addons, and how the UI shows its kind. */
 export type ManagerInfo = {
 	kind: AddonKind;
@@ -30,21 +25,20 @@ export type ManagerInfo = {
 const registry: Partial<ManagerOf> = {};
 
 /**
- * @description Base contract every addon-style manager subclasses. Extends tseep's `EventEmitter`,
- * intersecting `BaseManagerEvents<T>` (the `load`/`unload` pair) onto the subclass event map, and
- * holds an `entities` map of governed addons alongside an `errors` map recording per-entity failures.
+ * @description Base contract every addon-style manager subclasses. Extends tseep's `EventEmitter` with the
+ * subclass event map, and holds an `entities` map of governed addons alongside an `errors` map recording
+ * per-entity failures.
  * @template T The entity type the manager governs.
- * @template EventMap The subclass-specific event map, merged with `BaseManagerEvents<T>`.
+ * @template EventMap The subclass-specific event map.
  */
-export abstract class Manager<T, EventMap extends DefaultEventMap = {}> extends EventEmitter<
-	EventMap & BaseManagerEvents<T>
-> {
+export abstract class Manager<
+	T,
+	EventMap extends DefaultEventMap = {},
+> extends EventEmitter<EventMap> {
 	/** The entities currently governed by this manager, keyed by id. */
 	entities = new Map<PropertyKey, T>();
 	/** Errors recorded per entity id when an operation fails. */
 	errors = new Map<PropertyKey, Error>();
-	/** Whether {@link initialize} has completed for this manager. */
-	initialized = false;
 
 	readonly kind: AddonKind;
 	readonly name: string;
@@ -161,6 +155,5 @@ export abstract class Manager<T, EventMap extends DefaultEventMap = {}> extends 
 		this.patcher.unpatchAll();
 		this.entities.clear();
 		this.errors.clear();
-		this.initialized = false;
 	}
 }
