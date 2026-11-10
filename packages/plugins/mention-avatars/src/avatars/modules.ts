@@ -16,6 +16,5 @@ export const MessageStore = flux.getStore('Message') as MessageStoreType;
 export const GuildMemberStore = flux.getStore('GuildMember');
 export const SelectedChannelStore = flux.getStore('SelectedChannel');
 export const RoleStore = metro.findByProps('getRole', 'getSortedRoles');
-export const RowGenerator = metro.findByProps('generateMessageRowData');
 
 export const settings = storage.getBucket();

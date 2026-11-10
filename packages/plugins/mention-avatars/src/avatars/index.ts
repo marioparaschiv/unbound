@@ -1,12 +1,12 @@
 import { drawnSelfTest, type SelfTestResult } from '@unbound-plugins/shared/lifecycle/features';
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
+import { MessageRowData } from '@unbound-plugins/shared/metro/message-rows';
 import type { PluginContext } from '@unbound-app/api/native';
 
 import {
 	MessageStore,
 	RoleStore,
-	RowGenerator,
 	SelectedChannelStore,
 	settings,
 	UserStore,
@@ -20,14 +20,14 @@ let renderer: ReturnType<typeof startRenderer> | undefined;
 
 /**
  * @description Draws avatars and role icons inside mentions, from the mentions each chat row carries.
- * Patches `generateMessageRowData` on Discord's row generator module and reads users, messages, the selected channel and,
+ * Patches `generateMessageRowData` on Discord's message row module and reads users, messages, the selected channel and,
  * when it loads, roles from `UserStore`, `MessageStore`, `SelectedChannelStore` and `RoleStore`. The native renderer
  * (`ios/`, `android/`) rewrites the message text views.
  * @param context The plugin's start context, with its native bridge and Capabilities.
  * @returns A function that restores every rewritten text view and removes the native hooks, which the Addon scope can't see.
  */
 export function startAvatars(context: PluginContext): (() => void) | undefined {
-	const modules = { MessageStore, SelectedChannelStore, UserStore, RowGenerator };
+	const modules = { MessageStore, SelectedChannelStore, UserStore, MessageRowData };
 
 	if (!ensureCapabilities(context.native, context.capabilities) || !ensureModules(modules)) {
 		return;

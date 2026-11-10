@@ -1,10 +1,9 @@
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
+import { onMessageRow, type RowOptions } from '@unbound-plugins/shared/metro/message-rows';
 import type { AnyProps } from '@unbound-app/api/metro';
 import { metro, patcher } from '@unbound-app/api';
 
 import { forceAnimateArgument, type AnimateArgument } from '~/force/arguments';
-import { rowMessageId, withRowFields } from '~/force/row-fields';
-import { MessageRowData } from '~/force/modules';
 import { USER_SETTINGS_PATH } from '~/constants';
 
 type Cleanup = () => void;
@@ -109,14 +108,13 @@ export function forceUserSetting(name: string, value: unknown): Cleanup {
 }
 
 /**
- * @description Sets row options of every chat message row Discord generates.
+ * @description Sets row options of every chat message row Discord generates; a row built without options is left alone.
  * @param fieldsFor Returns the options to set for a row, from the id of the row's message.
  * @returns A function that removes the patch.
  */
-export function forceRowFields(
-	fieldsFor: (messageId: string | undefined) => Record<string, unknown>,
-): Cleanup {
-	return patcher.before(MessageRowData, 'generateMessageRowData', ({ args }) =>
-		withRowFields(args, fieldsFor(rowMessageId(args[0]))),
-	);
+export function forceRowFields(fieldsFor: (messageId: string | undefined) => RowOptions): Cleanup {
+	return onMessageRow({
+		before: ({ message, options }) =>
+			options && { options: { ...options, ...fieldsFor(message?.id) } },
+	});
 }

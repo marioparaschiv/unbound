@@ -1,8 +1,8 @@
+import { MessageRowData, onMessageRow } from '@unbound-plugins/shared/metro/message-rows';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { settings } from '@unbound-app/settings';
-import { patcher } from '@unbound-app/api';
 
-import { MessageRowData, RelationshipStore, UserStore } from '~/names/modules';
+import { RelationshipStore, UserStore } from '~/names/modules';
 import { AUTOMOD_MESSAGE_TYPE } from '~/constants';
 import { formatName } from '~/names/format-name';
 
@@ -71,17 +71,17 @@ function relabel(row: Row | undefined, messageAuthor: Author | undefined) {
 export function startNames(): void {
 	if (!ensureModules({ MessageRowData, UserStore })) return;
 
-	patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
-		const message: Message | undefined = args[0]?.message;
+	onMessageRow<Message, Row>({
+		after({ message, row }) {
+			if (!isAutomod(message)) relabel(row, message?.author);
 
-		if (!isAutomod(message)) relabel(result?.message, message?.author);
+			if (!settings.inReplies) return;
 
-		if (!settings.inReplies) return;
+			const reply = message?.referencedMessage?.message ?? message?.referenced_message;
 
-		const reply = message?.referencedMessage?.message ?? message?.referenced_message;
+			if (isAutomod(message) || isAutomod(reply)) return;
 
-		if (isAutomod(message) || isAutomod(reply)) return;
-
-		relabel(result?.message?.referencedMessage?.message, reply?.author);
+			relabel(row?.referencedMessage?.message, reply?.author);
+		},
 	});
 }

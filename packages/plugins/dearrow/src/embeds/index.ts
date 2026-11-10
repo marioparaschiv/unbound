@@ -1,10 +1,11 @@
 import type { Feature } from '@unbound-plugins/shared/lifecycle/features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
+import { MessageRowData } from '@unbound-plugins/shared/metro/message-rows';
 import { settings } from '@unbound-app/settings';
 
 import { createPendingRows, subscribeSettings } from '~/embeds/redraw';
 import { createLookup, requestBranding } from '~/embeds/lookup';
-import { MessageRowData, MessageStore } from '~/embeds/modules';
+import { MessageStore } from '~/embeds/modules';
 import { patchMessageRowData } from '~/embeds/row-data';
 import { patchToggleRow } from '~/embeds/toggle-row';
 import { patchRowRebind } from '~/embeds/row-rebind';

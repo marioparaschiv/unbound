@@ -1,17 +1,20 @@
 import getTimeoutDeadline from '@unbound-plugins/shared/members/timeout-deadline';
+import {
+	MessageRowData,
+	onMessageRow,
+	type MessageRow,
+	type RowMessage,
+} from '@unbound-plugins/shared/metro/message-rows';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { FluxGuildMember } from '@unbound-app/api/flux';
 import { settings } from '@unbound-app/settings';
-import { patcher } from '@unbound-app/api';
 
-import { ChannelStore, GuildMemberStore, MessageRowData } from '~/timeouts/modules';
+import { ChannelStore, GuildMemberStore } from '~/timeouts/modules';
 
-type Message = {
+type Message = RowMessage & {
 	guild_id?: string;
 	guildId?: string;
-	channel_id?: string;
 	channelId?: string;
-	author?: { id?: string };
 	authorId?: string;
 };
 
@@ -19,8 +22,7 @@ type Member = FluxGuildMember & {
 	communicationDisabledUntil?: string | null;
 };
 
-type Row = {
-	authorId?: string;
+type Row = MessageRow & {
 	communicationDisabled?: boolean;
 };
 
@@ -43,24 +45,23 @@ export function startTimeoutIcons(): void {
 		return;
 	}
 
-	patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
-		const row: Row | undefined = result?.message;
-		const message: Message | undefined = args[0]?.message;
+	onMessageRow<Message, Row>({
+		after({ message, row }) {
+			if (!settings.showTimeouts || !row || !message) return;
 
-		if (!settings.showTimeouts || !row || !message) return;
+			const channelId = message.channel_id ?? message.channelId;
+			const guildId =
+				message.guild_id ??
+				message.guildId ??
+				(channelId ? ChannelStore.getChannel(channelId)?.guild_id : undefined);
+			const userId = message.author?.id ?? message.authorId ?? row.authorId;
 
-		const channelId = message.channel_id ?? message.channelId;
-		const guildId =
-			message.guild_id ??
-			message.guildId ??
-			(channelId ? ChannelStore.getChannel(channelId)?.guild_id : undefined);
-		const userId = message.author?.id ?? message.authorId ?? row.authorId;
+			if (!guildId || !userId) return;
 
-		if (!guildId || !userId) return;
+			const member: Member | null = GuildMemberStore.getMember(guildId, userId);
 
-		const member: Member | null = GuildMemberStore.getMember(guildId, userId);
-
-		if (getTimeoutDeadline(member?.communicationDisabledUntil))
-			row.communicationDisabled = true;
+			if (getTimeoutDeadline(member?.communicationDisabledUntil))
+				row.communicationDisabled = true;
+		},
 	});
 }

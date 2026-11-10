@@ -1,9 +1,15 @@
+import {
+	MessageRowData,
+	onMessageRow,
+	type MessageRow,
+	type RowMessage,
+} from '@unbound-plugins/shared/metro/message-rows';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { assets, patcher } from '@unbound-app/api';
+import { assets } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
 import { Image } from 'react-native';
 
-import { AssetUris, GuildStore, MessageRowData } from '~/crown/modules';
+import { AssetUris, GuildStore } from '~/crown/modules';
 import { platformCrownSource } from '~/crown/platform';
 
 type RoleIcon = {
@@ -13,9 +19,7 @@ type RoleIcon = {
 	alt: string;
 };
 
-type Row = {
-	guildId?: string;
-	authorId?: string;
+type Row = MessageRow & {
 	roleIcon?: RoleIcon;
 };
 
@@ -42,22 +46,22 @@ export function startCrown(): void {
 	// Resolved on the first owner row rather than at start, since the asset may register later.
 	let source: string | number | undefined;
 
-	patcher.after(MessageRowData, 'generateMessageRowData', ({ result }) => {
-		const row: Row | undefined = result?.message;
+	onMessageRow<RowMessage, Row>({
+		after({ row }) {
+			if (!row?.guildId || !row.authorId || row.roleIcon) return;
 
-		if (!row?.guildId || !row.authorId || row.roleIcon) return;
+			if (GuildStore.getGuild(row.guildId)?.ownerId !== row.authorId) return;
 
-		if (GuildStore.getGuild(row.guildId)?.ownerId !== row.authorId) return;
+			source ??= getCrownSource();
 
-		source ??= getCrownSource();
+			if (source === undefined) return;
 
-		if (source === undefined) return;
-
-		row.roleIcon = {
-			source,
-			name: messages.SERVER_OWNER,
-			size: 18,
-			alt: messages.SERVER_OWNER,
-		};
+			row.roleIcon = {
+				source,
+				name: messages.SERVER_OWNER,
+				size: 18,
+				alt: messages.SERVER_OWNER,
+			};
+		},
 	});
 }

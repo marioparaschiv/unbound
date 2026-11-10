@@ -1,19 +1,20 @@
 import getTimeoutDeadline from '@unbound-plugins/shared/members/timeout-deadline';
+import {
+	MessageRowData,
+	onMessageRow,
+	type MessageRow,
+	type RowMessage,
+} from '@unbound-plugins/shared/metro/message-rows';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { FluxGuildMember, FluxMessage } from '@unbound-app/api/flux';
 import { format } from '@unbound-app/i18n';
-import { flux, patcher } from '@unbound-app/api';
+import { flux } from '@unbound-app/api';
 
-import { ChannelStore, GuildMemberStore, MessageRowData } from '~/timeout-remaining/modules';
+import { ChannelStore, GuildMemberStore } from '~/timeout-remaining/modules';
 import { formatRemaining } from '~/timeout-remaining/format-remaining';
 
 type Member = FluxGuildMember & {
 	communicationDisabledUntil?: string | null;
-};
-
-type Row = {
-	timestamp?: string;
-	timestampAccessibilityLabel?: string;
 };
 
 function getDeadline({ channel_id, author }: FluxMessage): number | null {
@@ -37,36 +38,34 @@ export function startTimeoutRemaining(): void {
 	}
 
 	const timedOut = new Map<string, FluxMessage>();
-	const stamped = new WeakSet<Row>();
+	const stamped = new WeakSet<MessageRow>();
 
-	patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
-		const message: FluxMessage | undefined = args[0]?.message;
+	onMessageRow<RowMessage & FluxMessage>({
+		after({ message, row }) {
+			if (!message?.id) return;
 
-		if (!message?.id) return;
+			const deadline = getDeadline(message);
 
-		const deadline = getDeadline(message);
+			if (!deadline) {
+				timedOut.delete(message.id);
 
-		if (!deadline) {
-			timedOut.delete(message.id);
+				return;
+			}
 
-			return;
-		}
+			timedOut.set(message.id, message);
 
-		timedOut.set(message.id, message);
+			if (typeof row?.timestamp !== 'string' || stamped.has(row)) return;
 
-		const row: Row | undefined = result?.message;
+			stamped.add(row);
 
-		if (typeof row?.timestamp !== 'string' || stamped.has(row)) return;
+			const remaining = formatRemaining(deadline);
 
-		stamped.add(row);
+			row.timestamp = `${row.timestamp} • ${format('TIMEOUT_REMAINING', { remaining })}`;
 
-		const remaining = formatRemaining(deadline);
-
-		row.timestamp = `${row.timestamp} • ${format('TIMEOUT_REMAINING', { remaining })}`;
-
-		if (typeof row.timestampAccessibilityLabel === 'string') {
-			row.timestampAccessibilityLabel = `${row.timestampAccessibilityLabel} • ${format('TIMEOUT_EXPIRES_IN', { remaining })}`;
-		}
+			if (typeof row.timestampAccessibilityLabel === 'string') {
+				row.timestampAccessibilityLabel = `${row.timestampAccessibilityLabel} • ${format('TIMEOUT_EXPIRES_IN', { remaining })}`;
+			}
+		},
 	});
 
 	// Rows are only regenerated on an update, so re-dispatch each timed-out message to tick its countdown.

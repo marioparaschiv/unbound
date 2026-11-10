@@ -9,5 +9,3 @@ export const UserStore = flux.getStore('User');
 export const ThemeStore: ThemeFluxStore = flux.getStore('Theme');
 export const Theme = metro.common.Theme;
 export const Tooltips = metro.findByProps('TooltipArrowDirections', 'TooltipArrowPositions');
-
-export const MessageRowData = metro.findByProps('generateMessageRowData');
