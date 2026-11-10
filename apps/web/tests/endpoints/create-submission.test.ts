@@ -195,7 +195,7 @@ describe('new listings', () => {
 			'dist/manifest.json': JSON.stringify({
 				...manifest('listing.built'),
 				main: 'index.js',
-				capabilities: ['native.objc.invoke'],
+				capabilities: ['native.ffi.call'],
 			}),
 		});
 		const source = commitAddon('listing.source');
@@ -209,7 +209,7 @@ describe('new listings', () => {
 
 		expect(await storedManifest(built.request)).toMatchObject({
 			id: 'listing.built',
-			capabilities: ['native.objc.invoke'],
+			capabilities: ['native.ffi.call'],
 		});
 		expect(await storedManifest(source.request)).not.toHaveProperty('capabilities');
 	});

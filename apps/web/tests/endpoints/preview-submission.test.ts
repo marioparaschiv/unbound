@@ -54,7 +54,7 @@ function builtManifestJson(id: string) {
 		...JSON.parse(manifestJson(id)),
 		main: 'index.js',
 		description: 'Built.',
-		capabilities: ['native.objc.invoke'],
+		capabilities: ['native.ffi.call'],
 	});
 }
 
@@ -203,7 +203,7 @@ describe('POST /api/v1/submissions/preview', () => {
 			id: 'acme.built',
 			main: 'index.js',
 			description: 'Built.',
-			capabilities: ['native.objc.invoke'],
+			capabilities: ['native.ffi.call'],
 		});
 	});
 
