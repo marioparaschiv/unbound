@@ -4,6 +4,7 @@ import { readdirSync } from 'node:fs';
 import { Glob } from 'bun';
 
 import { flaggedFiles, lintFixture } from '~/lint-fixture';
+
 import config from '../../../.oxlintrc.json';
 
 const CLIENT = 'packages/client/src';
