@@ -4,7 +4,7 @@ This file holds the rules that apply to first-party plugins only. Everything a p
 
 - [Anatomy of a Plugin](../../docs/developer/plugins/anatomy.mdx) shows every file of a plugin in the code of `character-counter`, the reference plugin. Copy its layout.
 - [Project Layout](../../docs/developer/addons/standards.mdx) lists the layout rules and the lint rule or build check behind each one.
-- [How Plugins Run](../../docs/developer/plugins/introduction.mdx) covers the lifecycle and the Addon scope, and the guide's other pages cover each API. Its code blocks are typechecked by `bun test packages/plugin-scripts/src/docs-examples.test.ts`.
+- [How Plugins Run](../../docs/developer/plugins/introduction.mdx) covers the lifecycle and the Addon scope, and the guide's other pages cover each API. Its code blocks are typechecked by `bun test packages/plugin-scripts/tests/docs-examples.test.ts`.
 - The repository [code style](../../AGENTS.md) applies to plugin code too.
 
 ## Naming

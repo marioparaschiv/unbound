@@ -38,8 +38,10 @@ Read [How Plugins Run](/docs/developer/plugins/introduction) first for the lifec
 			</Folder>
 		</Folder>
 		<Folder name='tests'>
-			<File name='limit.test.ts' note='Pure logic, tested directly' />
-			<File name='colors.test.ts' note='Pure logic, tested directly' />
+			<Folder name='counter'>
+				<File name='limit.test.ts' note='Pure logic, tested directly' />
+				<File name='colors.test.ts' note='Pure logic, tested directly' />
+			</Folder>
 			<File name='character-counter.test.tsx' note='The started plugin, rendered' />
 		</Folder>
 		<File name='ADDON.md' note='The store page' />
@@ -345,7 +347,7 @@ The tests sit in `tests/`, named after what they cover. Two kinds appear here.
 
 Logic with no Discord in it is tested directly. This needs the preset only for the `~/` alias.
 
-```ts tests/limit.test.ts quoted
+```ts tests/counter/limit.test.ts quoted
 import { describe, expect, test } from 'bun:test';
 
 import { characterLimit, counterTone } from '~/counter/limit';
