@@ -265,7 +265,9 @@ class Unbound : XposedModule() {
                     output.fd.sync()
                 }
             }
-            check(entry.size < 0 || staging.length() == entry.size) { "Extracted $NATIVE_LIBRARY is ${staging.length()} bytes, expected ${entry.size}" }
+            check(entry.size < 0 || staging.length() == entry.size) {
+                "Extracted $NATIVE_LIBRARY is ${staging.length()} bytes, expected ${entry.size}"
+            }
             check(staging.renameTo(target)) { "Failed to move the extracted $NATIVE_LIBRARY into place" }
         }
         return target.absolutePath

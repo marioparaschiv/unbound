@@ -33,9 +33,13 @@ object Telemetry {
                 } catch (error: InvocationTargetException) {
                     throw error.targetException
                 }
+
                 "equals" -> proxy === args?.getOrNull(0)
+
                 "hashCode" -> System.identityHashCode(proxy)
+
                 "toString" -> "UnboundTelemetryInterceptor"
+
                 else -> null
             }
         }
