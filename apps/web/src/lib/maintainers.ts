@@ -9,9 +9,9 @@ import type { UserSummary } from '@unbound-app/contracts/account';
 import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 
 import type { ActionMeta } from '~/lib/moderation-events';
+import { requireAddon } from '~/lib/addon-visibility';
 import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
-import { requireAddon } from '~/lib/addon-visibility';
 import { addonMaintainer, user } from '~/db/schema';
 import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';

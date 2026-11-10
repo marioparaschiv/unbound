@@ -4,13 +4,13 @@ import { createServerFn } from '@tanstack/react-start';
 import { Type } from '@unbound-app/contracts/schema';
 
 import { listTags, readAddonTags, type AddonTag, type TagOption } from '~/lib/addon-tags';
-import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
 import { loadAddonPage, type MarketplaceAddonDetails } from '~/lib/marketplace-page';
+import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
 import { searchAuthors, type AuthorPage } from '~/lib/authors/directory';
 import { schemaValidator } from '~/lib/schema-validator';
-import { listAddons } from '~/lib/addons';
 import { loadAuthors } from '~/lib/authors/resolve';
 import { splitList } from '~/lib/addon-filters';
+import { listAddons } from '~/lib/addons';
 import app from '~/lib/app';
 
 const listingQuery = listAddonsQuerySchema.properties;

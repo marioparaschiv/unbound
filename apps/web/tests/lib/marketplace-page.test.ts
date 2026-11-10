@@ -1,9 +1,12 @@
-import { afterAll, describe, expect, test } from 'bun:test';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { SubmissionKind } from '@unbound-app/contracts/publish';
+import { afterAll, describe, expect, test } from 'bun:test';
 
-import type { MarketplaceAddonDetails } from '~/lib/marketplace-page';
-import { loadAddonPage, toPendingVersion } from '~/lib/marketplace-page';
+import {
+	loadAddonPage,
+	toPendingVersion,
+	type MarketplaceAddonDetails,
+} from '~/lib/marketplace-page';
 import { requireSourced } from '~/lib/submissions';
 
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from '../helpers/addons';

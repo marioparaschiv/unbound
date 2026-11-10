@@ -4,8 +4,8 @@ import type { AddonType } from '@unbound-app/contracts/addons';
 
 import type { ReadDatabase, ResolvedReadOptions } from '~/lib/bot/reads';
 import type { PublicAddon, PublicGalleryImage } from '~/lib/bot/types';
-import { renderAddonIcon } from '~/lib/addon-icons';
 import { SERVED_VERSION } from '~/lib/addon-visibility';
+import { renderAddonIcon } from '~/lib/addon-icons';
 import { getTreeUrl } from '~/lib/github-urls';
 
 type AddonWithServed = Awaited<ReturnType<typeof queryAddons>>[number];

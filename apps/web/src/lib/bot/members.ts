@@ -1,8 +1,8 @@
 import { and, eq, exists, inArray, sql, type SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 
-import { addon, addonMaintainer, account, sponsorship } from '~/db/schema';
 import { isSponsoring, perkGraceMs, standingOf } from '~/lib/sponsors/standing';
+import { addon, addonMaintainer, account, sponsorship } from '~/db/schema';
 import type { ReadDatabase, ResolvedReadOptions } from '~/lib/bot/reads';
 import type { Member, MemberQuery } from '~/lib/bot/types';
 import { isListedAddon } from '~/lib/addon-visibility';

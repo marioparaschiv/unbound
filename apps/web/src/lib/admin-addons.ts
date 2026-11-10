@@ -8,9 +8,9 @@ import type { SQL } from 'drizzle-orm';
 
 import { afterKey, cursorTime, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
 import { addonMaintainer, addonSearchText, submission } from '~/db/schema';
+import { SERVED_VERSION } from '~/lib/addon-visibility';
 import { requirePermission } from '~/lib/api/caller';
 import { renderAddonIcon } from '~/lib/addon-icons';
-import { SERVED_VERSION } from '~/lib/addon-visibility';
 import { matchesSearch } from '~/lib/admin-search';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';

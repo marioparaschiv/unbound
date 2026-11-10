@@ -1,14 +1,14 @@
 import type { RepositoryDetails, SourcePin } from '@unbound-app/contracts/source';
-import type { AddonVersion } from '@unbound-app/contracts/addons';
 import type { AddonPage } from '@unbound-app/contracts/addon-page';
+import type { AddonVersion } from '@unbound-app/contracts/addons';
 import type { Changelog } from '@unbound-app/contracts/changelog';
 
-import { getPinnedMediaBase, getPublishedMediaBase } from '~/lib/markdown-url';
-import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
-import { readAddonTags, readTags, type AddonTag } from '~/lib/addon-tags';
-import { resolvePlatforms, type PlatformSupport } from '~/lib/addon-platforms';
-import { getAddonDetails, getManifestType, type AddonDetails } from '~/lib/addons';
 import { pinSource, renderAddonVersion, toVersionChangelog } from '~/lib/artifacts';
+import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
+import { getAddonDetails, getManifestType, type AddonDetails } from '~/lib/addons';
+import { resolvePlatforms, type PlatformSupport } from '~/lib/addon-platforms';
+import { getPinnedMediaBase, getPublishedMediaBase } from '~/lib/markdown-url';
+import { readAddonTags, readTags, type AddonTag } from '~/lib/addon-tags';
 import type { SourcedSubmissionRow } from '~/lib/submissions';
 import { renderPageIcons } from '~/lib/page-icon-svgs';
 import { loadAuthors } from '~/lib/authors/resolve';

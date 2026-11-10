@@ -1,8 +1,8 @@
-import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import type { AddonType } from '@unbound-app/contracts/addons';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 
-import { addon, addonTag, tag } from '~/db/schema';
 import { isListedAddon } from '~/lib/addon-visibility';
+import { addon, addonTag, tag } from '~/db/schema';
 import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';

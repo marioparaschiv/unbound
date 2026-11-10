@@ -1,6 +1,7 @@
 import type { ServeVersionRequest } from '@unbound-app/contracts/admin';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 
+import { requireAddon } from '~/lib/addon-visibility';
 import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import { refreshAddonSummary } from '~/lib/addons';
@@ -8,7 +9,6 @@ import { addon, addonVersion } from '~/db/schema';
 import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
-import { requireAddon } from '~/lib/addon-visibility';
 import { planServe } from '~/lib/serve-plan';
 import { ApiError } from '~/lib/api/errors';
 

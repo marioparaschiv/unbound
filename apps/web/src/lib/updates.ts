@@ -4,14 +4,14 @@ import type {
 	UpdatesResponse,
 	VersionChangelog,
 } from '@unbound-app/contracts/updates';
-import { and, desc, eq, gt, inArray, isNotNull, lte, or } from 'drizzle-orm';
 import { getArtifactKeys, getCdnUrl } from '@unbound-app/contracts/version-layout';
+import { and, desc, eq, gt, inArray, isNotNull, lte, or } from 'drizzle-orm';
 import { MAX_UPDATE_CHANGELOGS } from '@unbound-app/contracts/updates';
 
+import { isListedAddon, isLiveVersion } from '~/lib/addon-visibility';
 import { addon, addonVersion, submissionSource } from '~/db/schema';
 import type { SubmissionSourceRow } from '~/lib/artifacts';
 import { toVersionChangelog } from '~/lib/artifacts';
-import { isListedAddon, isLiveVersion } from '~/lib/addon-visibility';
 import { toVersionKey } from '~/lib/version-key';
 import type { AppContext } from '~/lib/context';
 

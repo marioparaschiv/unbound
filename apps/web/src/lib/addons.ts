@@ -11,15 +11,12 @@ import type {
 	MyAddonsResponse,
 } from '@unbound-app/contracts/addons';
 import { addonIdSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
-import { and, desc, EmptyFilter, eq, gte, inArray, lt, or, sql } from 'drizzle-orm';
+import { and, EmptyFilter, eq, gte, inArray, lt, or, sql } from 'drizzle-orm';
 import type { RepositoryDetails } from '@unbound-app/contracts/source';
 import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import { Type, type TSchema } from '@unbound-app/contracts/schema';
 import type { PinnableField } from '@unbound-app/contracts/admin';
 
-import { OPEN_SUBMISSION_STATUSES, requireSourced, toSubmission } from '~/lib/submissions';
-import { afterKey, cursorTime, decodeCursor, toKeysetPage } from '~/lib/keyset';
-import type { AddonVersionRow, VersionSubmission } from '~/lib/artifacts';
 import {
 	LISTED_ADDONS,
 	LIVE_VERSIONS,
@@ -27,6 +24,9 @@ import {
 	requireAddon,
 	servedVersionValue,
 } from '~/lib/addon-visibility';
+import { OPEN_SUBMISSION_STATUSES, requireSourced, toSubmission } from '~/lib/submissions';
+import { afterKey, cursorTime, decodeCursor, toKeysetPage } from '~/lib/keyset';
+import type { AddonVersionRow, VersionSubmission } from '~/lib/artifacts';
 import { VERSION_SOURCE, toAddonVersion } from '~/lib/artifacts';
 import { MAINTAINERS, toMaintainers } from '~/lib/maintainers';
 import { addon, addonTag, addonVersion } from '~/db/schema';
@@ -42,7 +42,6 @@ import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { CursorKey } from '~/lib/keyset';
 import { DAY_MS } from '~/lib/calendar-date';
-import { ApiError } from '~/lib/api/errors';
 import one from '~/db/one';
 
 export type AddonRow = typeof addon.$inferSelect;
