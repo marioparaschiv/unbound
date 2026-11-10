@@ -11,6 +11,7 @@ import (
 )
 
 func TestPlatformAndroidBuildUsesGradleTargetForConfiguration(t *testing.T) {
+	t.Setenv("ANDROID_HOME", t.TempDir())
 	var gotRoot string
 	var gotName string
 	var gotArgs []string

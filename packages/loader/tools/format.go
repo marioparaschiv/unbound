@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"go/build"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -447,9 +448,9 @@ func (selection fileSelection) withExtensions(extensions ...string) []string {
 }
 
 func runKotlinFormatter(root string, check bool, files []string) error {
-	task := ":module:ktlintFormat"
+	task := ":ktlintFormat"
 	if check {
-		task = ":module:ktlintCheck"
+		task = ":ktlintCheck"
 	}
 	if len(files) == 0 {
 		return runGradle(root, task)
@@ -458,9 +459,9 @@ func runKotlinFormatter(root string, check bool, files []string) error {
 }
 
 func runGradle(root, task string, arguments ...string) error {
-	command := exec.Command("./gradlew", append([]string{"--quiet", task}, arguments...)...)
+	// Configuring on demand leaves :module, and so the Android SDK, out of the root project's ktlint tasks.
+	command := exec.Command("./gradlew", append([]string{"--quiet", "--configure-on-demand", task}, arguments...)...)
 	command.Dir = filepath.Join(root, "android")
-	command.Env = androidEnvironment()
 	var output bytes.Buffer
 	command.Stdout = &output
 	command.Stderr = &output
@@ -470,22 +471,12 @@ func runGradle(root, task string, arguments ...string) error {
 	return nil
 }
 
-func androidEnvironment() []string {
-	environment := os.Environ()
-	if os.Getenv("ANDROID_HOME") != "" {
-		return environment
-	}
-	if home, err := os.UserHomeDir(); err == nil {
-		sdk := filepath.Join(home, "Library", "Android", "sdk")
-		if _, err := os.Stat(sdk); err == nil {
-			environment = append(environment, "ANDROID_HOME="+sdk)
-		}
-	}
-	return environment
-}
-
 func lintWorkflows(root string) error {
 	binary, err := exec.LookPath("actionlint")
+	if err != nil {
+		// `go install` puts it in GOPATH/bin, which is often not on PATH.
+		binary, err = exec.LookPath(filepath.Join(build.Default.GOPATH, "bin", "actionlint"))
+	}
 	if err != nil {
 		return errors.New("actionlint is required to lint the GitHub workflows")
 	}

@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -35,16 +34,7 @@ func newJavaFrameworkIndex() *javaFrameworkIndex {
 }
 
 func discoverAndroidJar() string {
-	var homes []string
-	for _, variable := range []string{"ANDROID_HOME", "ANDROID_SDK_ROOT"} {
-		if value := os.Getenv(variable); value != "" {
-			homes = append(homes, value)
-		}
-	}
-	if home, err := os.UserHomeDir(); err == nil {
-		homes = append(homes, filepath.Join(home, "Library", "Android", "sdk"), filepath.Join(home, "Android", "Sdk"))
-	}
-	for _, home := range homes {
+	for _, home := range androidSDKSearchPath() {
 		matches, _ := filepath.Glob(filepath.Join(home, "platforms", "android-*", "android.jar"))
 		best, bestLevel := "", -1
 		for _, match := range matches {
