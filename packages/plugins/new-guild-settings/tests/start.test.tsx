@@ -6,7 +6,7 @@ import { createElement } from 'react';
 
 import { selfTest } from '~/index';
 
-import { sheets, startGuildSettings } from './discord';
+import { sheets, startGuildSettings } from './helpers/discord';
 
 beforeEach(resetHealth);
 
