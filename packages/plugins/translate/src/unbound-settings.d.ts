@@ -136,6 +136,7 @@ declare module '@unbound-app/settings' {
 	export type Settings = {
 		sourceLanguage: string;
 		targetLanguage: string;
+		display: "toast" | "inline";
 		apiBaseUrl: string;
 		accessToken: string;
 		refreshToken: string;
@@ -146,6 +147,7 @@ declare module '@unbound-app/settings' {
 	type SettingValues = {
 		"sourceLanguage": string;
 		"targetLanguage": string;
+		"display": "toast" | "inline";
 		"apiBaseUrl": string;
 		"accessToken": string;
 		"refreshToken": string;

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0] - 2026-11-10
+
+### Added
+
+- A **Show Translations** setting. Pick **In the message** to show the translation under the message's text, as small italic text ending with the language codes, such as `(en -> de)`, instead of copying it and showing a toast.
+- On a message translated in the chat, the long-press menu offers **Show Original**, which removes the translation. Editing the message also removes it.
+
 ## [1.0.4] - 2026-11-05
 
 ### Changed

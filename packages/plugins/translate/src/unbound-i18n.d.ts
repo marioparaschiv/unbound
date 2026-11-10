@@ -9,10 +9,22 @@ declare module '@unbound-app/i18n' {
 		readonly TRANSLATED: string;
 		/** Translate Error */
 		readonly TRANSLATE_ERROR: string;
+		/** Show Original */
+		readonly SHOW_ORIGINAL: string;
 		/** Translate API */
 		readonly TRANSLATE_API: string;
 		/** Languages */
 		readonly LANGUAGES: string;
+		/** Show Translations */
+		readonly DISPLAY: string;
+		/** Copy and show in a toast */
+		readonly SHOW_IN_TOAST: string;
+		/** Copies the translation and shows it in a notification */
+		readonly SHOW_IN_TOAST_SUBTITLE: string;
+		/** In the message */
+		readonly SHOW_INLINE: string;
+		/** Adds the translation below the message text until you pick Show Original */
+		readonly SHOW_INLINE_SUBTITLE: string;
 		/** Connect Discord account */
 		readonly CONNECT_ACCOUNT: string;
 		/** Reconnect Discord account */
