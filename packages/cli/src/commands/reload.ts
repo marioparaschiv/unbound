@@ -1,7 +1,9 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
+
 import { evaluateOnDevice, NOT_CONNECTED, toDeviceCode } from '~/lib/device';
-import type { DevicePrelude } from '~/lib/device-prelude';
 import { bridgePortField, waitForDevice } from '~/lib/context';
+import type { DevicePrelude } from '~/lib/device-prelude';
+import { lowerForHermes } from '~/lib/hermes-code';
 import { defaulted, Type } from '~/lib/schema';
 import { formatResult } from '~/lib/format';
 
@@ -62,7 +64,9 @@ const reloadCommand: CommandDefinition<typeof schema> = {
 				continue;
 			}
 
-			const probe = await client.evaluate(toDeviceCode(bundleFreshness, TOKEN_KEY, token));
+			const probe = await client.evaluate(
+				lowerForHermes(toDeviceCode(bundleFreshness, TOKEN_KEY, token)),
+			);
 
 			if (probe.ok && probe.value === 'fresh') {
 				return { ok: true, text: `Reloaded in ${Date.now() - started}ms.` };
