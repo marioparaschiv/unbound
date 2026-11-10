@@ -1,5 +1,5 @@
-import { spawnSync } from 'node:child_process';
 import { describe, expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 
 import { groupCommands, groups, mcpTools, rootCommands } from '../src/registry';

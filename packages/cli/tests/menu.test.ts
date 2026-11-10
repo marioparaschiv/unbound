@@ -12,7 +12,10 @@ test('renderMenu lists entries under their headings, marking groups', () => {
 		],
 		hints: ['A hint.'],
 	});
-	const lines = menu.split('\n').map((line) => line.trim());
+	// CI forces color on, so compare the text without its escape codes.
+	const lines = Bun.stripANSI(menu)
+		.split('\n')
+		.map((line) => line.trim());
 
 	expect(lines).toContain('ubd <command> [flags]');
 	expect(lines.indexOf('Addons')).toBeLessThan(lines.indexOf('Device'));
