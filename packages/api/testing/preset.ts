@@ -31,14 +31,12 @@ import { createFakeNative } from './fake-native';
 import { createFakeUtils } from './fake-utils';
 import { unmountAll } from './test-renderer';
 import { createFakeFs } from './fake-fs';
+import sdk from '../package.json';
 
 type SvgProps = Omit<HostPropsByName['SvgXml'], 'xml' | 'asset'>;
 
-// The namespaces that serve nested modules, as `unbound.metro.components` is `@unbound-app/api/metro/components`.
-const NESTED = new Map([
-	['metro', ['api', 'common', 'components', 'filters', 'stores']],
-	['utils', ['react']],
-]);
+// The nested modules the SDK publishes, such as `metro/components` for `unbound.metro.components`.
+const NESTED = new Set(Object.keys(sdk.exports).map((subpath) => subpath.slice(2)));
 
 // The build also takes `.jpeg` as a jpg.
 const IMAGE = new RegExp(`\\.(${[...ASSET_TYPES, 'jpeg'].join('|')})$`, 'i');
@@ -178,7 +176,7 @@ for (const [name, namespace] of Object.entries(scope.unbound)) {
 
 	// A namespace that nests others serves each one at its own path, such as `@unbound-app/api/metro/components`.
 	for (const [nested, members] of Object.entries(namespace)) {
-		if (NESTED.get(name)?.includes(nested)) {
+		if (NESTED.has(`${name}/${nested}`)) {
 			mock.module(`@unbound-app/api/${name}/${nested}`, () => members);
 		}
 	}

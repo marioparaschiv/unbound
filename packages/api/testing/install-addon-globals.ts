@@ -12,7 +12,7 @@ import type {
 	OptionValue,
 	Reply,
 } from '../src/commands';
-import type { AddonHandle, AddonLogger, AddonManifest } from '../src/global';
+import type { AddonHandle, AddonLogger, AddonManifest, AddonScope } from '../src/global';
 
 import { createRecordingPatcher, type RecordingPatcher } from './recording-patcher';
 import { createFakeMetro, type FakeMetro, type FakeModule } from './fake-metro';
@@ -238,7 +238,8 @@ export function installAddonGlobals(options: InstallOptions = {}): InstalledAddo
 		setInterval: timers.setInterval,
 		clearTimeout: timers.clearTimeout,
 		clearInterval: timers.clearInterval,
-	};
+		// UNKNOWN: only the names are checked; each fake has its own shape.
+	} satisfies { [Name in keyof AddonScope]: unknown };
 	const previous = new Map<string, PropertyDescriptor | undefined>();
 
 	for (const [name, value] of Object.entries(globals)) {
