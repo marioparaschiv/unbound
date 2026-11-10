@@ -2,13 +2,13 @@ import { drawnSelfTest, type SelfTestResult } from '@unbound-plugins/shared/life
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
+import { settings } from '@unbound-app/settings';
 
 import {
 	MessageStore,
 	RoleStore,
 	RowGenerator,
 	SelectedChannelStore,
-	settings,
 	UserStore,
 } from '~/avatars/modules';
 import { subscribeMentionSources } from '~/avatars/events/mention-sources';
@@ -36,7 +36,7 @@ export function startAvatars(context: PluginContext): (() => void) | undefined {
 	const index = createMentionIndex(ensureModules({ RoleStore }, 'role mentions'));
 
 	patchRowGenerator(index);
-	renderer = startRenderer(context.native, index, () => settings.get('showAtSymbol', true));
+	renderer = startRenderer(context.native, index, () => settings.showAtSymbol);
 	subscribeMentionSources(renderer.retryWaiting);
 
 	return () => {
