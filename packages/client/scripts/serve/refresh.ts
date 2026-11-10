@@ -1,6 +1,7 @@
 import type { Server, ServerWebSocket, WebSocketHandler } from 'bun';
 import Logger from '@unbound-app/logger';
 
+import type { DeviceMessage } from '../../src/hot-refresh/messages';
 import type { HotUpdate } from '../build';
 
 import * as outcome from './outcome';
@@ -14,14 +15,9 @@ export type ClientTracker = {
 
 type SocketData = { clientId: string };
 
-type ClientMessage =
-	| { type: 'applied'; filename: string }
-	| { type: 'refreshed'; fibers: number; remounted: number; ms: number }
-	| { type: 'rejected'; reason?: string };
-
 const logger = Logger.create('Serve', 'Refresh');
 
-function isClientMessage(value: unknown): value is ClientMessage {
+function isDeviceMessage(value: unknown): value is DeviceMessage {
 	if (typeof value !== 'object' || value === null || !('type' in value)) {
 		return false;
 	}
@@ -49,11 +45,11 @@ function isClientMessage(value: unknown): value is ClientMessage {
  * @param raw The message as received off the socket.
  * @returns The message, or `undefined` when it is not valid JSON or not a known message.
  */
-function parseClientMessage(raw: string | Buffer): ClientMessage | undefined {
+function parseDeviceMessage(raw: string | Buffer): DeviceMessage | undefined {
 	try {
 		const value: unknown = JSON.parse(String(raw));
 
-		return isClientMessage(value) ? value : undefined;
+		return isDeviceMessage(value) ? value : undefined;
 	} catch {
 		return undefined;
 	}
@@ -140,7 +136,7 @@ export const websocket: WebSocketHandler<SocketData> = {
 	 * @param raw The device's message.
 	 */
 	async message(_socket, raw) {
-		const message = parseClientMessage(raw);
+		const message = parseDeviceMessage(raw);
 
 		if (!message) {
 			logger.warn('Ignored a malformed message from a device.');

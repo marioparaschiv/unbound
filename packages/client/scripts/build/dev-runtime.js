@@ -1,3 +1,4 @@
+// Implements `DevRuntime` from `src/hot-refresh/messages.ts`: `applyPatch` returns a `PatchOutcome`.
 globalThis.__rolldown_runtime__ = (() => {
 	const modules = new Map();
 	const factories = new Map();

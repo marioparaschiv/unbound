@@ -7,6 +7,8 @@ import { join, relative } from 'node:path';
 import Logger from '@unbound-app/logger';
 import { swc } from 'rollup-plugin-swc3';
 
+import type { PatchMessage } from '../../src/hot-refresh/messages';
+
 import {
 	API_URL,
 	IS_DEV_BUILD,
@@ -43,7 +45,7 @@ import signBundles from './sign';
 /** What the dev engine reports after a source change. */
 export type HotUpdate =
 	| { type: 'change'; file: string }
-	| { type: 'patch'; clientId: string; code: string; filename: string; changedIds: string[] }
+	| (PatchMessage & { clientId: string })
 	| { type: 'reload'; reason: string }
 	| { type: 'failed'; error: string }
 	| { type: 'built' };
