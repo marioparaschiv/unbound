@@ -33,8 +33,7 @@ import type {
 } from '~/lib/github';
 import { readAddonPage, type PageMediaFiles } from '~/lib/addon-page-source';
 import { readChangelog } from '~/lib/addon-changelog';
-import { readBytecode } from '~/lib/addon-bytecode';
-import { readListedFiles } from '~/lib/addon-files';
+import { readPinnedFiles } from '~/lib/pinned-files';
 import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';
 import type { Env } from '~/lib/env';
@@ -649,15 +648,15 @@ export async function readAddonSource(
 
 	const changelogPath = childPath(path, CHANGELOG_MD);
 	const addonMdPath = childPath(path, ADDON_MD);
-	const [bundle, bytecode, files, extraTexts] = await Promise.all([
-		github.readBlob(repository, bundleEntry.sha),
-		readBytecode(ctx.env, github, repository, tree, addon.bundle, manifest, commitSha),
-		readListedFiles(
-			ctx.env,
-			github,
-			{ repository, tree, bundlePath: addon.bundle, commitSha },
-			manifest,
-		),
+	const location = {
+		repository,
+		tree,
+		commitSha,
+		bundlePath: addon.bundle,
+		bundleBlobSha: bundleEntry.sha,
+	};
+	const [{ bundle, bytecode, files }, extraTexts] = await Promise.all([
+		readPinnedFiles(ctx.env, github, location, manifest),
 		readTexts(github, repository, tree, [addonMdPath, changelogPath]),
 	]);
 	const addonMd = extraTexts.get(addonMdPath) ?? null;
