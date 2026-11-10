@@ -13,7 +13,7 @@ import type { PublicAddon } from '@unbound-app/web/bot';
 
 import { renderGallery, renderIconTile } from '~/lib/card-images';
 import { COLOURS, EMOJIS, type AppEmoji } from '~/lib/constants';
-import { truncate } from '~/lib/discord-messages';
+import { truncate } from '~/lib/message-text';
 
 /** A rendered addon card: the message body and the files its `attachments` name. */
 export type AddonCard = {

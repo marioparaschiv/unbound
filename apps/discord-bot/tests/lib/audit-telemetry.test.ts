@@ -2,9 +2,9 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import type { AuditEvent } from '@unbound-app/web/bot';
 
 import { createAuditTelemetry } from '~/lib/audit-telemetry';
-import { parseOtelEnv } from '~/lib/env';
 
 import RecordingExporter from '../helpers/recording-exporter';
+import { testConfig } from '../helpers/config';
 
 const EVENT: AuditEvent = {
 	id: 33,
@@ -18,7 +18,7 @@ const EVENT: AuditEvent = {
 	createdAt: new Date('2026-10-26T00:16:49.591Z'),
 };
 
-const PRODUCTION = parseOtelEnv({ NODE_ENV: 'production' });
+const PRODUCTION = testConfig({ NODE_ENV: 'production' }).env;
 
 describe('createAuditTelemetry', () => {
 	let collector: ReturnType<typeof Bun.serve> | undefined;
@@ -77,7 +77,7 @@ describe('createAuditTelemetry', () => {
 
 	test('a dev bot files under its own -dev service, as telecord does', async () => {
 		const exporter = new RecordingExporter();
-		const env = parseOtelEnv({ NODE_ENV: 'development', OTEL_SERVICE_NAME: 'bot' });
+		const { env } = testConfig({ NODE_ENV: 'development', OTEL_SERVICE_NAME: 'bot' });
 		const telemetry = createAuditTelemetry({ env, exporter });
 
 		telemetry.emit(EVENT, 'x');
@@ -99,7 +99,7 @@ describe('createAuditTelemetry', () => {
 			await import('~/lib/setup');
 			expect(process.env.NODE_ENV).toBeUndefined();
 
-			const env = parseOtelEnv({ ...process.env });
+			const { env } = testConfig({ ...process.env });
 			const telemetry = createAuditTelemetry({ env, exporter });
 
 			telemetry.emit(EVENT, 'x');
@@ -132,7 +132,7 @@ describe('createAuditTelemetry', () => {
 		const { url, paths } = collect();
 
 		async function send(source: Record<string, string>) {
-			const telemetry = createAuditTelemetry({ env: parseOtelEnv(source) });
+			const telemetry = createAuditTelemetry({ env: testConfig(source).env });
 
 			telemetry.emit(EVENT, 'x');
 			await telemetry.shutdown();

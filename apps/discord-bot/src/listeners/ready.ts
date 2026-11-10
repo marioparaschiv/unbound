@@ -2,8 +2,6 @@ import { Events, Listener, type StoreRegistryValue } from '@sapphire/framework';
 import { ApplyOptions } from '@sapphire/decorators';
 import { blue, gray, yellow } from 'colorette';
 
-const dev = process.env.NODE_ENV === 'development';
-
 const BANNER = String.raw`
 
                 @@@@@@@@@
@@ -24,7 +22,7 @@ const BANNER = String.raw`
 
 @ApplyOptions<Listener.Options>({ event: Events.ClientReady, once: true })
 export class ReadyListener extends Listener<typeof Events.ClientReady> {
-	private readonly style = dev ? yellow : blue;
+	private readonly style = this.container.config.env.NODE_ENV === 'development' ? yellow : blue;
 
 	public override run() {
 		console.log(BANNER);

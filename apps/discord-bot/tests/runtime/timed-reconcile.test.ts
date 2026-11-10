@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { Client } from 'discord.js';
 
 import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
 import { startDispatchers } from '~/runtime/start';
@@ -38,16 +37,10 @@ describe.skipIf(!DATABASE_URL)('timed reconcile', () => {
 		await database.db.$client`
 			CREATE TABLE timed_post (id text PRIMARY KEY, posted boolean NOT NULL DEFAULT false)
 		`;
-		// The fake dispatchers never touch Discord, so an unready client is enough.
-		context = {
-			db: database.db,
-			web: database.reads,
-			client: new Client({ intents: [] }) as Client<true>,
-		};
+		context = { db: database.db, web: database.reads };
 	});
 
 	afterAll(async () => {
-		await context.client.destroy();
 		await database.drop();
 	});
 
@@ -75,7 +68,6 @@ describe.skipIf(!DATABASE_URL)('timed reconcile', () => {
 			dispatcher: {
 				name: 'fake',
 				channel: 'addon_changed',
-				requires: [],
 				reconcile: () =>
 					tracked(async () => {
 						calls.reconciles++;

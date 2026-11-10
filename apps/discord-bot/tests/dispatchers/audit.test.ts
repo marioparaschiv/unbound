@@ -2,23 +2,23 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } fr
 import { createStaffNote } from '@unbound-app/web/testing';
 import { asc, eq, isNotNull, isNull } from 'drizzle-orm';
 import type { AuditEvent } from '@unbound-app/web/bot';
-import type { Client } from 'discord.js';
 
+import { createAuditTelemetry, type AuditTelemetry } from '~/lib/audit-telemetry';
 import type { DispatcherContext } from '~/dispatchers/types';
-import { createAuditTelemetry } from '~/lib/audit-telemetry';
 import { createAuditDispatcher } from '~/dispatchers/audit';
-import { parseOtelEnv } from '~/lib/env';
 import { auditPost } from '~/db/schema';
 
+import { createFakeDiscord, createFakeGateway, type FakeDiscord } from '../helpers/fake-discord';
 import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from '../helpers/database';
-import { createFakeClient, createFakeDiscord, type FakeDiscord } from '../helpers/fake-discord';
 import { createFakeReads, EVENT, type FakeReads } from '../helpers/fake-reads';
 import RecordingExporter from '../helpers/recording-exporter';
+import { testConfig } from '../helpers/config';
 import { signUp } from '../helpers/web';
 
 type EventColumns = Partial<AuditEvent>;
 
-const OTEL_OFF = parseOtelEnv({});
+const CONFIG = testConfig();
+const OTEL_OFF = CONFIG.env;
 const NO_TELEMETRY = createAuditTelemetry({ env: OTEL_OFF });
 
 function deployOf(commitSha: string): EventColumns {
@@ -43,7 +43,6 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	let database: BotTestDatabase;
 	let fake: FakeDiscord;
 	let reads: FakeReads;
-	let clients: Client<true>[];
 
 	beforeAll(async () => {
 		database = await createBotTestDatabase();
@@ -57,21 +56,24 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 		await database.db.delete(auditPost);
 		fake = createFakeDiscord();
 		reads = createFakeReads();
-		clients = [];
 	});
 
-	afterEach(async () => {
-		await Promise.all(clients.map((client) => client.destroy()));
+	afterEach(() => {
 		fake.stop();
 	});
 
-	// A fresh client per call stands in for a restarted bot process.
 	function context(): DispatcherContext {
-		const client = createFakeClient(fake);
+		return { db: database.db, web: reads.reads };
+	}
 
-		clients.push(client);
-
-		return { db: database.db, web: reads.reads, client };
+	// The dispatcher keeps no state between calls, so one call after another stands in for a restart too.
+	function createAudit(telemetry: AuditTelemetry = NO_TELEMETRY, channelId = fake.channelId) {
+		return createAuditDispatcher({
+			channelId,
+			siteUrl: CONFIG.siteUrl,
+			telemetry,
+			messages: createFakeGateway(fake),
+		});
 	}
 
 	function seed(id: number, columns: EventColumns = {}) {
@@ -88,7 +90,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 
 	// The first run on an empty moderation log floors it at 0, so every event seeded after it posts.
 	async function enabled(channelId: string = fake.channelId) {
-		const audit = createAuditDispatcher(NO_TELEMETRY, channelId);
+		const audit = createAudit(NO_TELEMETRY, channelId);
 
 		await audit.reconcile(context());
 
@@ -117,7 +119,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	}
 
 	test('the first run posts no history and floors the log at its newest event', async () => {
-		const audit = createAuditDispatcher(NO_TELEMETRY, fake.channelId);
+		const audit = createAudit();
 
 		for (const id of [1, 2, 3]) {
 			seed(id);
@@ -139,7 +141,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('an empty log floors at 0 and posts its first event', async () => {
-		const audit = createAuditDispatcher(NO_TELEMETRY, fake.channelId);
+		const audit = createAudit();
 
 		await audit.reconcile(context());
 		seed(1);
@@ -152,7 +154,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	test('each posted event is exported to telemetry once, after its post', async () => {
 		const exporter = new RecordingExporter();
 		const telemetry = createAuditTelemetry({ env: OTEL_OFF, exporter });
-		const audit = createAuditDispatcher(telemetry, fake.channelId);
+		const audit = createAudit(telemetry);
 
 		await audit.reconcile(context());
 		seed(1);
@@ -170,7 +172,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('posts moved from the old database win over a floor', async () => {
-		const audit = createAuditDispatcher(NO_TELEMETRY, fake.channelId);
+		const audit = createAudit();
 
 		await database.db
 			.insert(auditPost)

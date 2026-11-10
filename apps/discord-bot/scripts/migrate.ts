@@ -1,14 +1,21 @@
 import { createLogger } from '@unbound-app/logger';
 
+import { loadDatabaseConfig } from '~/lib/config';
 import { createDatabase } from '~/db/database';
 import { migrateDatabase } from '~/db/migrate';
-import { parseDatabaseEnv } from '~/lib/env';
 
 const logger = createLogger('Bot', 'Migrate');
-const env = parseDatabaseEnv();
-const db = createDatabase(env.DATABASE_DIRECT_URL);
+const loaded = loadDatabaseConfig(process.env);
+
+if (!loaded.ok) {
+	logger.error(loaded.message);
+	process.exit(1);
+}
+
+const url = loaded.config.DATABASE_DIRECT_URL;
+const db = createDatabase(url);
 
 await migrateDatabase(db);
 await db.$client.end();
 
-logger.success(`Migrated ${new URL(env.DATABASE_DIRECT_URL).pathname.slice(1)}.`);
+logger.success(`Migrated ${new URL(url).pathname.slice(1)}.`);

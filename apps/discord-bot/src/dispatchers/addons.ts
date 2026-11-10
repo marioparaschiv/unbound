@@ -1,31 +1,48 @@
 import type { AddonType } from '@unbound-app/contracts/addons';
-import type { APIMessage, Client, REST } from 'discord.js';
 import type { PublicAddon } from '@unbound-app/web/bot';
-import { DiscordAPIError, Routes } from 'discord.js';
 import { createLogger } from '@unbound-app/logger';
 import { eq } from 'drizzle-orm';
 
-import { deleteMessage, listOwnMessages, messageExists, postMessage } from '~/lib/discord-messages';
+import {
+	createPostLedger,
+	type DesiredPost,
+	type LedgerRow,
+	type MutableRows,
+} from '~/lib/post-ledger';
 import { messageLinks, renderAddon, renderCardImages } from '~/dispatchers/addon-card';
-import { createAuthorEmojis, type AuthorEmojis } from '~/lib/author-emojis';
-import type { Dispatcher, Stores } from '~/dispatchers/types';
+import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
+import type { MessageGateway } from '~/lib/discord-messages';
+import type { AuthorEmojis } from '~/lib/author-emojis';
 import { contentHash } from '~/lib/content-hash';
-import type { Database } from '~/db/database';
-import { DISCORD_IDS } from '~/lib/constants';
+import type { DiscordIds } from '~/lib/config';
 import { addonMessage } from '~/db/schema';
 
 export type AddonChannels = { [K in AddonType]?: string };
 
-const logger = createLogger('Bot', 'Addons');
-
-// Fonts have no channel, so they are never posted.
-export const ADDON_CHANNELS: AddonChannels = {
-	plugin: DISCORD_IDS.PLUGINS_CHANNEL_ID,
-	theme: DISCORD_IDS.THEMES_CHANNEL_ID,
-	'icon-pack': DISCORD_IDS.ICON_PACKS_CHANNEL_ID,
+export type AddonsOptions = {
+	/** The channel each addon type posts to. */
+	channels: AddonChannels;
+	messages: MessageGateway;
+	/** The author avatar emoji sync, one per process so its lookups outlive a single run. */
+	emojis: AuthorEmojis;
 };
 
-const BAD_REQUEST = 400;
+const logger = createLogger('Bot', 'Addons');
+
+/**
+ * @description Names the channel each addon type posts to; fonts have none, so they are never posted.
+ * @param ids The id constants.
+ * @returns The channels, an unset id leaving its type out.
+ */
+export function addonChannels(
+	ids: Pick<DiscordIds, 'PLUGINS_CHANNEL_ID' | 'THEMES_CHANNEL_ID' | 'ICON_PACKS_CHANNEL_ID'>,
+): AddonChannels {
+	return {
+		plugin: ids.PLUGINS_CHANNEL_ID,
+		theme: ids.THEMES_CHANNEL_ID,
+		'icon-pack': ids.ICON_PACKS_CHANNEL_ID,
+	};
+}
 
 /**
  * @description Names the channel an addon's message belongs in.
@@ -37,285 +54,129 @@ export function desiredChannel(addon: PublicAddon, channels: AddonChannels): str
 	return addon.listed ? channels[addon.type] : undefined;
 }
 
-async function storeMessage(
-	db: Database,
-	addonId: string,
-	channelId: string,
-	messageId: string,
-	postedHash: string,
-) {
-	const values = { channelId, messageId, postedHash, postedAt: new Date(), editedAt: null };
-	const [row] = await db
-		.insert(addonMessage)
-		.values({ addonId, ...values })
-		.onConflictDoUpdate({ target: addonMessage.addonId, set: values })
-		.returning();
+// The addon_message table as a mutable ledger, keyed by addon id.
+const ADDON_ROWS: MutableRows = {
+	async list(db) {
+		const rows = await db.select().from(addonMessage);
 
-	return row;
-}
+		return new Map(rows.map((row) => [row.addonId, ledgerRow(row)]));
+	},
+	async get(db, addonId) {
+		const [row] = await db.select().from(addonMessage).where(eq(addonMessage.addonId, addonId));
 
-// A listed post of an addon that no row points at lost its row write. It is adopted when its addon
-// belongs in that channel and has no message there yet, else it is a duplicate or stale and goes.
-async function adoptOrphans(
-	db: Database,
-	rest: REST,
-	channels: AddonChannels,
-	listings: Map<string, APIMessage[]>,
-	addons: PublicAddon[],
-) {
-	const messages = await db.select().from(addonMessage);
-	const byUrl = new Map(addons.map((item) => [item.pageUrl, item]));
-	const rows = new Map(messages.map((row) => [row.addonId, row]));
-	const referenced = new Set(messages.map((row) => row.messageId));
+		return row && ledgerRow(row);
+	},
+	async insert(db, addonId, { channelId, messageId, hash }) {
+		const values = {
+			channelId,
+			messageId,
+			postedHash: hash,
+			postedAt: new Date(),
+			editedAt: null,
+		};
 
-	for (const [channelId, listing] of listings) {
-		const listed = new Set(listing.map((message) => message.id));
+		await db
+			.insert(addonMessage)
+			.values({ addonId, ...values })
+			.onConflictDoUpdate({ target: addonMessage.addonId, set: values });
+	},
+	async update(db, addonId, { channelId, messageId, hash }) {
+		await db
+			.update(addonMessage)
+			.set({ channelId, messageId, postedHash: hash, editedAt: new Date() })
+			.where(eq(addonMessage.addonId, addonId));
+	},
+	async remove(db, addonId) {
+		await db.delete(addonMessage).where(eq(addonMessage.addonId, addonId));
+	},
+};
 
-		for (const message of listing) {
-			const url = messageLinks(message).find((candidate) => byUrl.has(candidate));
-			const owner = url ? byUrl.get(url) : undefined;
-
-			// A url that names no addon is not an addon post (a tag reply, an old bot's post), so it stays.
-			if (!owner || referenced.has(message.id)) {
-				continue;
-			}
-
-			const row = rows.get(owner.id);
-
-			try {
-				const kept = row?.channelId === channelId && listed.has(row.messageId);
-
-				// A row whose message is gone takes this post over instead of deleting it and posting anew.
-				if (desiredChannel(owner, channels) !== channelId || kept) {
-					await deleteMessage(rest, channelId, message.id);
-
-					continue;
-				}
-
-				if (row) {
-					await deleteMessage(rest, row.channelId, row.messageId);
-				}
-
-				// An empty hash makes the following sync patch the message to the current content.
-				const adopted = await storeMessage(db, owner.id, channelId, message.id, '');
-
-				if (adopted) {
-					rows.set(owner.id, adopted);
-				}
-			} catch (error) {
-				logger.error(`Failed to adopt message ${message.id} of addon ${owner.id}:`, error);
-			}
-		}
-	}
+function ledgerRow(row: typeof addonMessage.$inferSelect): LedgerRow {
+	return { channelId: row.channelId, messageId: row.messageId, hash: row.postedHash };
 }
 
 function authorIds(item: PublicAddon): string[] {
 	return item.authors.flatMap((author) => (author.discordId ? [author.discordId] : []));
 }
 
-// Clearing the embed and content lets an old embed post become a components v2 card in place; an
-// edit Discord still refuses is answered by replacing the message.
-async function editOrReplace(
-	rest: REST,
-	channelId: string,
-	messageId: string,
-	card: ReturnType<typeof renderAddon>,
-): Promise<string> {
-	try {
-		await rest.patch(Routes.channelMessage(channelId, messageId), {
-			body: { ...card.body, embeds: [], content: '' },
-			files: card.files,
-		});
-
-		return messageId;
-	} catch (error) {
-		if (!(error instanceof DiscordAPIError) || error.status !== BAD_REQUEST) {
-			throw error;
-		}
-
-		logger.warn(`Failed to edit message ${messageId}, replacing it:`, error);
-		await deleteMessage(rest, channelId, messageId);
-
-		return postMessage(rest, channelId, card.body, card.files);
-	}
-}
-
 /**
- * @description Brings one addon's Discord message in line with its listing: posted, edited, moved or removed.
- * @param stores The bot database and the web's reads.
- * @param rest The Discord REST client.
- * @param id The addon id.
- * @param channels The channel each addon type posts to.
- * @param present Ids of our messages that exist, from a listing; without it the message is fetched.
- * @param emojis The author avatar emoji sync; without it a card shows no avatars.
- * @returns Resolves once the message and its row match the addon.
+ * @description Creates the dispatcher that keeps one card per listed addon in its type's channel.
+ * @param options The channels, the bot's Discord messages and the author avatar emoji sync.
+ * @returns The `addon_changed` dispatcher.
  */
-export async function syncAddon(
-	{ db, web }: Stores,
-	rest: REST,
-	id: string,
-	channels: AddonChannels = ADDON_CHANNELS,
-	present?: ReadonlySet<string>,
-	emojis?: AuthorEmojis,
-): Promise<void> {
-	const [current, [posted]] = await Promise.all([
-		web.addon(id),
-		db.select().from(addonMessage).where(eq(addonMessage.addonId, id)),
-	]);
-	const channelId = current ? desiredChannel(current, channels) : undefined;
+export function createAddonsDispatcher({ channels, messages, emojis }: AddonsOptions): Dispatcher {
+	const ledger = createPostLedger({
+		messages,
+		label: 'addon',
+		policy: 'mutable',
+		rows: ADDON_ROWS,
+	});
 
-	// A delisted addon loses its message, and relisting announces it afresh. Discord goes first, so
-	// a crash in between leaves a row whose message is already gone, which the next sync clears.
-	if (!current || !channelId) {
-		if (posted) {
-			await deleteMessage(rest, posted.channelId, posted.messageId);
-			await db.delete(addonMessage).where(eq(addonMessage.addonId, id));
+	// The post an addon should have: none while it is unknown or delisted, else its card.
+	async function desiredPost(addon: PublicAddon | undefined): Promise<DesiredPost | undefined> {
+		const channelId = addon ? desiredChannel(addon, channels) : undefined;
+
+		if (!addon || !channelId) return;
+
+		const avatars = await emojis.resolve(authorIds(addon));
+
+		return {
+			channelId,
+			hash: contentHash(
+				addon,
+				Object.fromEntries(
+					[...avatars].map(([discordId, emoji]) => [discordId, emoji.name]),
+				),
+			),
+			// Images are rendered only once the card is known to change; they need downloads.
+			render: async () => renderAddon(addon, await renderCardImages(addon), avatars),
+		};
+	}
+
+	// Brings one addon's message in line with its listing. `present` holds our message ids from a
+	// listing; without it the message is fetched.
+	async function sync({ db, web }: DispatcherContext, id: string, present?: ReadonlySet<string>) {
+		await ledger.sync(db, id, await desiredPost(await web.addon(id)), present);
+	}
+
+	// Adopts messages a crash left without a row, then syncs every addon that has or had a message;
+	// one addon's failure is logged and left to the next run.
+	async function reconcile(context: DispatcherContext) {
+		const addons = await context.web.addons();
+		const byUrl = new Map(addons.map((item) => [item.pageUrl, item]));
+		const { present, recorded } = await ledger.adopt(
+			context.db,
+			Object.values(channels).filter((channelId) => channelId !== undefined),
+			(message) => {
+				const url = messageLinks(message).find((candidate) => byUrl.has(candidate));
+				const owner = url ? byUrl.get(url) : undefined;
+
+				return owner && { key: owner.id, channelId: desiredChannel(owner, channels) };
+			},
+		);
+		const ids = new Set([...addons.map((item) => item.id), ...recorded]);
+
+		for (const id of ids) {
+			try {
+				await sync(context, id, present);
+			} catch (error) {
+				logger.error(`Failed to sync addon ${id}:`, error);
+			}
 		}
 
-		return;
+		const shown = addons.filter((item) => desiredChannel(item, channels));
+
+		// Its emojis of authors no posted addon names are deleted.
+		await emojis.prune(new Set(shown.flatMap(authorIds)));
 	}
 
-	const avatars = emojis ? await emojis.resolve(authorIds(current)) : new Map();
-	const hash = contentHash(
-		current,
-		Object.fromEntries([...avatars].map(([discordId, emoji]) => [discordId, emoji.name])),
-	);
-	const kept =
-		posted?.channelId === channelId &&
-		(present?.has(posted.messageId) ??
-			(await messageExists(rest, posted.channelId, posted.messageId)));
-
-	if (posted && kept && posted.postedHash === hash) return;
-
-	// Images are rendered only once the card is known to change; they need downloads.
-	const card = renderAddon(current, await renderCardImages(current), avatars);
-
-	if (posted && kept) {
-		const messageId = await editOrReplace(rest, channelId, posted.messageId, card);
-
-		await db
-			.update(addonMessage)
-			.set({ messageId, postedHash: hash, editedAt: new Date() })
-			.where(eq(addonMessage.addonId, id));
-
-		return;
-	}
-
-	if (posted) {
-		await deleteMessage(rest, posted.channelId, posted.messageId);
-	}
-
-	const messageId = await postMessage(rest, channelId, card.body, card.files);
-
-	try {
-		await storeMessage(db, id, channelId, messageId, hash);
-	} catch (error) {
-		// A post without its row would be duplicated by the next sync; reconcile adopts it if this fails.
-		await deleteMessage(rest, channelId, messageId).catch((cleanup) => {
-			logger.warn(
-				`Failed to remove unrecorded message ${messageId} of addon ${id}:`,
-				cleanup,
-			);
-		});
-
-		throw error;
-	}
+	return {
+		name: 'addons',
+		channel: 'addon_changed',
+		reconcile,
+		// The payload is the addon id.
+		handle: (id, context) => sync(context, id),
+	};
 }
 
-/**
- * @description Adopts messages a crash left without a row, then syncs every addon that has or had a message.
- * @param stores The bot database and the web's reads.
- * @param rest The Discord REST client.
- * @param selfId The bot's own user id.
- * @param channels The channel each addon type posts to.
- * @param emojis The author avatar emoji sync; its emojis of authors no posted addon names are deleted.
- * @returns Resolves once every addon was synced; one addon's failure is logged and left to the next run.
- */
-export async function reconcileAddons(
-	stores: Stores,
-	rest: REST,
-	selfId: string,
-	channels: AddonChannels = ADDON_CHANNELS,
-	emojis?: AuthorEmojis,
-): Promise<void> {
-	// One listing per channel replaces a fetch per message on every periodic run.
-	const listings = new Map<string, APIMessage[]>();
-
-	for (const channelId of new Set(Object.values(channels))) {
-		if (channelId) {
-			listings.set(channelId, await listOwnMessages(rest, channelId, selfId));
-		}
-	}
-
-	const present = new Set([...listings.values()].flat().map((message) => message.id));
-
-	const addons = await stores.web.addons();
-
-	await adoptOrphans(stores.db, rest, channels, listings, addons);
-
-	const posted = await stores.db.select({ id: addonMessage.addonId }).from(addonMessage);
-	const ids = new Set([...addons.map((item) => item.id), ...posted.map((row) => row.id)]);
-
-	for (const id of ids) {
-		try {
-			await syncAddon(stores, rest, id, channels, present, emojis);
-		} catch (error) {
-			logger.error(`Failed to sync addon ${id}:`, error);
-		}
-	}
-
-	const shown = addons.filter((item) => desiredChannel(item, channels));
-
-	await emojis?.prune(new Set(shown.flatMap(authorIds)));
-}
-
-// One sync per process, so its avatar lookups and emoji listing outlive a single run.
-let authorEmojis: AuthorEmojis | undefined;
-
-function authorEmojisOf(client: Client<true>): AuthorEmojis {
-	authorEmojis ??= createAuthorEmojis(client.rest, client.application.id);
-
-	return authorEmojis;
-}
-
-export const addonsDispatcher: Dispatcher = {
-	name: 'addons',
-	channel: 'addon_changed',
-	requires: ['PLUGINS_CHANNEL_ID', 'THEMES_CHANNEL_ID', 'ICON_PACKS_CHANNEL_ID'],
-	/**
-	 * @description Syncs every addon message with the web's listings.
-	 * @param context The dispatcher's stores and Discord client.
-	 * @returns Resolves once every addon was synced.
-	 */
-	reconcile: (context) =>
-		reconcileAddons(
-			context,
-			context.client.rest,
-			context.client.user.id,
-			ADDON_CHANNELS,
-			authorEmojisOf(context.client),
-		),
-	/**
-	 * @description Syncs the message of the addon a NOTIFY payload names.
-	 * @param id The addon id from the payload.
-	 * @param context The dispatcher's stores and Discord client.
-	 * @returns Resolves once the addon's message matches its listing.
-	 */
-	handle: (id, context) =>
-		syncAddon(
-			context,
-			context.client.rest,
-			id,
-			ADDON_CHANNELS,
-			undefined,
-			authorEmojisOf(context.client),
-		),
-};
-
-export default {
-	ADDON_CHANNELS,
-	desiredChannel,
-	syncAddon,
-	reconcileAddons,
-	addonsDispatcher,
-};
+export default { addonChannels, desiredChannel, createAddonsDispatcher };

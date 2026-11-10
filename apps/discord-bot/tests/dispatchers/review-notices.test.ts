@@ -2,15 +2,15 @@ import { manifest, recordReviewDecision, schema, seedSubmission } from '@unbound
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
 import type { ReviewDecision, SubmissionKind } from '@unbound-app/contracts/publish';
 import { and, asc, eq } from 'drizzle-orm';
-import type { Client } from 'discord.js';
 
-import { reviewNoticesDispatcher } from '~/dispatchers/review-notices';
+import { createReviewNoticesDispatcher } from '~/dispatchers/review-notices';
 import type { DispatcherContext } from '~/dispatchers/types';
 import { reviewNotice } from '~/db/schema';
 
+import { createFakeDiscord, createFakeGateway, type FakeDiscord } from '../helpers/fake-discord';
 import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from '../helpers/database';
-import { createFakeClient, createFakeDiscord, type FakeDiscord } from '../helpers/fake-discord';
 import { signUp, type WebUser } from '../helpers/web';
+import { testConfig } from '../helpers/config';
 
 type Decision = {
 	decision: ReviewDecision;
@@ -25,7 +25,6 @@ let addons = 0;
 describe.skipIf(!DATABASE_URL)('review notices dispatcher', () => {
 	let database: BotTestDatabase;
 	let fake: FakeDiscord;
-	let clients: Client<true>[];
 
 	beforeAll(async () => {
 		database = await createBotTestDatabase();
@@ -38,21 +37,22 @@ describe.skipIf(!DATABASE_URL)('review notices dispatcher', () => {
 	beforeEach(async () => {
 		await database.db.delete(reviewNotice);
 		fake = createFakeDiscord();
-		clients = [];
 	});
 
-	afterEach(async () => {
-		await Promise.all(clients.map((client) => client.destroy()));
+	afterEach(() => {
 		fake.stop();
 	});
 
-	// A fresh client per call stands in for a restarted bot process.
 	function context(): DispatcherContext {
-		const client = createFakeClient(fake);
+		return { db: database.db, web: database.reads };
+	}
 
-		clients.push(client);
-
-		return { db: database.db, web: database.reads, client };
+	// A fresh dispatcher per call stands in for a restarted bot process.
+	function notices() {
+		return createReviewNoticesDispatcher({
+			siteUrl: testConfig().siteUrl,
+			messages: createFakeGateway(fake),
+		});
 	}
 
 	// Each decision is on its own addon, named after its version so titles tell them apart.
@@ -79,7 +79,7 @@ describe.skipIf(!DATABASE_URL)('review notices dispatcher', () => {
 	}
 
 	async function enabled() {
-		await reviewNoticesDispatcher.reconcile(context());
+		await notices().reconcile(context());
 	}
 
 	function titles(userId: string) {
@@ -99,14 +99,14 @@ describe.skipIf(!DATABASE_URL)('review notices dispatcher', () => {
 		const author = await signUp(database.web);
 
 		await decide(author, { decision: 'approved' });
-		await reviewNoticesDispatcher.reconcile(context());
+		await notices().reconcile(context());
 
 		expect(fake.requests).toEqual([]);
 		expect(await outcomes()).toEqual(['floor']);
 
 		const name = await decide(author, { decision: 'rejected', version: '2.0.0' });
 
-		await reviewNoticesDispatcher.handle('', context());
+		await notices().handle('', context());
 
 		expect(titles(author.discordId)).toEqual([`Your update to ${name} 2.0.0 was rejected`]);
 	});
@@ -120,9 +120,9 @@ describe.skipIf(!DATABASE_URL)('review notices dispatcher', () => {
 		const rejected = await decide(author, { decision: 'rejected', kind: 'listing' });
 		const changes = await decide(author, { decision: 'changes_requested' });
 
-		await reviewNoticesDispatcher.handle('', context());
-		await reviewNoticesDispatcher.reconcile(context());
-		await reviewNoticesDispatcher.handle('', context());
+		await notices().handle('', context());
+		await notices().reconcile(context());
+		await notices().handle('', context());
 
 		expect(titles(author.discordId)).toEqual([
 			`Your update to ${approved} 1.0.0 was approved`,
@@ -160,13 +160,13 @@ describe.skipIf(!DATABASE_URL)('review notices dispatcher', () => {
 			data: {},
 			createdAt: new Date(),
 		});
-		await reviewNoticesDispatcher.handle('', context());
+		await notices().handle('', context());
 
 		expect(fake.requests).toEqual([]);
 
 		const name = await decide(author, { decision: 'approved' });
 
-		await reviewNoticesDispatcher.handle('', context());
+		await notices().handle('', context());
 
 		expect(titles(author.discordId)).toEqual([`Your update to ${name} 1.0.0 was approved`]);
 	});
@@ -184,7 +184,7 @@ describe.skipIf(!DATABASE_URL)('review notices dispatcher', () => {
 				),
 			);
 		await decide(author, { decision: 'rejected' });
-		await reviewNoticesDispatcher.handle('', context());
+		await notices().handle('', context());
 
 		expect(fake.requests).toEqual([]);
 		expect(await outcomes()).toEqual(['floor', 'unlinked']);
@@ -200,7 +200,7 @@ describe.skipIf(!DATABASE_URL)('review notices dispatcher', () => {
 
 		const name = await decide(open, { decision: 'approved' });
 
-		await reviewNoticesDispatcher.handle('', context());
+		await notices().handle('', context());
 
 		expect(fake.dms(closed.discordId)).toEqual([]);
 		expect(titles(open.discordId)).toEqual([`Your update to ${name} 1.0.0 was approved`]);
@@ -217,13 +217,13 @@ describe.skipIf(!DATABASE_URL)('review notices dispatcher', () => {
 
 		fake.outage = true;
 
-		const [run] = await Promise.allSettled([reviewNoticesDispatcher.handle('', context())]);
+		const [run] = await Promise.allSettled([notices().handle('', context())]);
 
 		expect(run?.status).toBe('rejected');
 		expect(await outcomes()).toEqual(['floor']);
 
 		fake.outage = false;
-		await reviewNoticesDispatcher.reconcile(context());
+		await notices().reconcile(context());
 
 		expect(titles(author.discordId)).toEqual([
 			`Your update to ${first} 1.0.0 was approved`,

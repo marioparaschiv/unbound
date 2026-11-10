@@ -2,8 +2,17 @@ import type { AuditEvent } from '@unbound-app/web/bot';
 import { describe, expect, test } from 'bun:test';
 import type { APIEmbed } from 'discord.js';
 
-import { buildAuditEmbed, buildDeployEmbed } from '~/dispatchers/audit-embed';
+import {
+	buildAuditEmbed as renderAudit,
+	buildDeployEmbed as renderDeploy,
+	type DeployBatch,
+} from '~/dispatchers/audit-embed';
 import { COLOURS } from '~/lib/constants';
+
+const SITE = 'https://unbound.rip';
+
+const buildAuditEmbed = (item: AuditEvent) => renderAudit(item, SITE);
+const buildDeployEmbed = (items: DeployBatch) => renderDeploy(items, SITE);
 
 type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 type EventData = Record<string, Json>;

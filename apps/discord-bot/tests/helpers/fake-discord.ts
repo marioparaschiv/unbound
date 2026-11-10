@@ -1,5 +1,7 @@
 import type { APIEmbed, APIMessage, APIUser } from 'discord.js';
-import { Client, ClientUser } from 'discord.js';
+import { REST } from 'discord.js';
+
+import { createMessageGateway, type MessageGateway } from '~/lib/discord-messages';
 
 export type PostedBody = {
 	content?: string;
@@ -43,13 +45,6 @@ export type FakeDiscord = {
 const API_VERSION_PREFIX = /^\/v\d+/;
 const MESSAGES_ROUTE = /^\/channels\/(\d+)\/messages(?:\/(\d+))?$/;
 const RETRY_AFTER_SECONDS = 0.05;
-
-// Lets a test hold a ClientUser without a gateway READY; discord.js keeps the constructor protected.
-class FakeClientUser extends ClientUser {
-	constructor(client: Client<true>, data: APIUser) {
-		super(client, data);
-	}
-}
 
 function user(id: string, username: string, bot: boolean): APIUser {
 	return { id, username, discriminator: '0', global_name: null, avatar: null, bot };
@@ -270,15 +265,10 @@ export function createFakeDiscord(): FakeDiscord {
 }
 
 /**
- * @description Builds a real discord.js client whose REST calls go to the fake, logged in as its bot user.
+ * @description Builds the bot's message gateway over a real discord.js REST client whose calls go to the fake, as its bot user.
  * @param fake The fake Discord to talk to.
- * @returns A client usable as a dispatcher's `client`; call `destroy()` when done.
+ * @returns A gateway to hand a dispatcher as its `messages`.
  */
-export function createFakeClient(fake: FakeDiscord): Client<true> {
-	const client = new Client<true>({ intents: [], rest: { api: fake.url } });
-
-	client.rest.setToken('fake');
-	client.user = new FakeClientUser(client, fake.botUser);
-
-	return client;
+export function createFakeGateway(fake: FakeDiscord): MessageGateway {
+	return createMessageGateway(new REST({ api: fake.url }).setToken('fake'), fake.botUser.id);
 }

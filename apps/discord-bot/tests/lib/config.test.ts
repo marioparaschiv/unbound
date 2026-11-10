@@ -1,31 +1,25 @@
 import { DEFAULT_PERK_GRACE_DAYS } from '@unbound-app/web/bot';
 import { describe, expect, test } from 'bun:test';
 
-import { parseDatabaseEnv } from '~/lib/env';
-import { checkConfig } from '~/lib/config';
-import { GUILD_ID } from '~/lib/constants';
+import { loadConfig, loadDatabaseConfig } from '~/lib/config';
 
-const ENV = {
-	DISCORD_TOKEN: 'token',
-	DATABASE_URL: 'postgres://bot@localhost:6432/bot',
-	DATABASE_DIRECT_URL: 'postgres://bot@localhost:5432/bot',
-};
+import { REQUIRED_ENV as ENV } from '../helpers/config';
 
 describe('SPONSOR_PERK_GRACE_DAYS', () => {
 	test("defaults to the web's grace period and takes an override", () => {
-		const unset = checkConfig(ENV, GUILD_ID);
-		const set = checkConfig({ ...ENV, SPONSOR_PERK_GRACE_DAYS: '3' }, GUILD_ID);
+		const unset = loadConfig(ENV);
+		const set = loadConfig({ ...ENV, SPONSOR_PERK_GRACE_DAYS: '3' });
 
-		expect(unset.ok ? unset.env.SPONSOR_PERK_GRACE_DAYS : 'failed').toBe(
+		expect(unset.ok ? unset.config.env.SPONSOR_PERK_GRACE_DAYS : 'failed').toBe(
 			DEFAULT_PERK_GRACE_DAYS,
 		);
-		expect(set.ok ? set.env.SPONSOR_PERK_GRACE_DAYS : 'failed').toBe(3);
+		expect(set.ok ? set.config.env.SPONSOR_PERK_GRACE_DAYS : 'failed').toBe(3);
 	});
 });
 
-describe('checkConfig', () => {
-	test('names every unset env var and an unset GUILD_ID, in one message', () => {
-		const result = checkConfig({}, undefined);
+describe('loadConfig', () => {
+	test('names every unset env var in one message', () => {
+		const result = loadConfig({});
 
 		expect(result.ok).toBe(false);
 
@@ -34,63 +28,76 @@ describe('checkConfig', () => {
 		for (const name of Object.keys(ENV)) {
 			expect(result.message).toContain(`env ${name} is not set`);
 		}
-
-		expect(result.message).toContain('constant GUILD_ID in src/lib/constants.ts is not set');
-	});
-
-	test('fails on an unset GUILD_ID alone', () => {
-		const result = checkConfig(ENV, undefined);
-
-		expect(result.ok ? '' : result.message).toContain('constant GUILD_ID');
 	});
 
 	test('names an invalid value', () => {
-		const result = checkConfig({ ...ENV, RECONCILE_INTERVAL_SECONDS: '-1' }, GUILD_ID);
+		const result = loadConfig({ ...ENV, RECONCILE_INTERVAL_SECONDS: '-1' });
 
 		expect(result.ok).toBe(false);
 		expect(result.ok ? '' : result.message).toContain('env RECONCILE_INTERVAL_SECONDS');
 	});
 
 	test('passes a complete env with the real constants, though some ids are still unset', () => {
-		const result = checkConfig(ENV, GUILD_ID);
+		const result = loadConfig(ENV);
 
 		expect(result).toEqual({
 			ok: true,
-			guildId: String(GUILD_ID),
-			env: {
-				...ENV,
-				RECONCILE_INTERVAL_SECONDS: 300,
-				SPONSOR_PERK_GRACE_DAYS: 7,
-				GITHUB_TOKEN: undefined,
-				OTEL_ENABLED: false,
-				OTEL_ENDPOINT: undefined,
-				OTEL_SERVICE_NAME: 'unbound-discord-bot',
-				NODE_ENV: 'production',
+			config: {
+				guildId: '950850315601711176',
+				ids: expect.objectContaining({
+					PLUGINS_CHANNEL_ID: '1564067818415333407',
+					RELEASES_ROLE_ID: undefined,
+				}),
+				siteUrl: 'https://unbound.rip',
+				cdnUrl: 'https://cdn.unbound.rip',
+				env: {
+					...ENV,
+					RECONCILE_INTERVAL_SECONDS: 300,
+					SPONSOR_PERK_GRACE_DAYS: 7,
+					GITHUB_TOKEN: undefined,
+					OTEL_ENABLED: false,
+					OTEL_ENDPOINT: undefined,
+					OTEL_SERVICE_NAME: 'unbound-discord-bot',
+					NODE_ENV: 'production',
+					npm_package_version: 'unknown',
+				},
 			},
 		});
 	});
 
 	test('names DATABASE_DIRECT_URL alone when only the pooled url is set', () => {
 		const { DATABASE_DIRECT_URL: _, ...pooledOnly } = ENV;
-		const result = checkConfig(pooledOnly, GUILD_ID);
+		const result = loadConfig(pooledOnly);
 		const problems = result.ok ? '' : result.message;
 
 		expect(problems).toContain('env DATABASE_DIRECT_URL is not set');
 		expect(problems.match(/^\s+- /gm)).toHaveLength(1);
 	});
 
-	test('migrations read the direct url and refuse the pooled one alone', () => {
-		expect(parseDatabaseEnv(ENV)).toEqual({ DATABASE_DIRECT_URL: ENV.DATABASE_DIRECT_URL });
-		expect(() => parseDatabaseEnv({ DATABASE_URL: ENV.DATABASE_URL })).toThrow(
-			'DATABASE_DIRECT_URL',
-		);
+	test('treats an empty GITHUB_TOKEN as unset and keeps a set one', () => {
+		const empty = loadConfig({ ...ENV, GITHUB_TOKEN: '' });
+		const set = loadConfig({ ...ENV, GITHUB_TOKEN: 'token' });
+
+		expect(empty.ok ? empty.config.env.GITHUB_TOKEN : 'failed').toBeUndefined();
+		expect(set.ok ? set.config.env.GITHUB_TOKEN : 'failed').toBe('token');
 	});
 
-	test('treats an empty GITHUB_TOKEN as unset and keeps a set one', () => {
-		const empty = checkConfig({ ...ENV, GITHUB_TOKEN: '' }, GUILD_ID);
-		const set = checkConfig({ ...ENV, GITHUB_TOKEN: 'token' }, GUILD_ID);
+	test('reads the database slice without the Discord secrets, as migrations run', () => {
+		const url = ENV.DATABASE_DIRECT_URL;
 
-		expect(empty.ok ? empty.env.GITHUB_TOKEN : 'failed').toBeUndefined();
-		expect(set.ok ? set.env.GITHUB_TOKEN : 'failed').toBe('token');
+		expect(loadDatabaseConfig({ DATABASE_DIRECT_URL: url })).toEqual({
+			ok: true,
+			config: { DATABASE_DIRECT_URL: url },
+		});
+		expect(loadDatabaseConfig({ DISCORD_TOKEN: 'token' })).toEqual({
+			ok: false,
+			message: expect.stringContaining('env DATABASE_DIRECT_URL is not set'),
+		});
+	});
+
+	test('reads the service version bun run sets', () => {
+		const result = loadConfig({ ...ENV, npm_package_version: '1.2.3' });
+
+		expect(result.ok ? result.config.env.npm_package_version : 'failed').toBe('1.2.3');
 	});
 });

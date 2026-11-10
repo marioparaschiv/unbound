@@ -5,7 +5,7 @@ import type { APIMessage } from 'discord.js';
 import { eq, sql } from 'drizzle-orm';
 import sharp from 'sharp';
 
-import { reconcileAddons, syncAddon, type AddonChannels } from '~/dispatchers/addons';
+import { createAddonsDispatcher, type AddonChannels } from '~/dispatchers/addons';
 import { createDatabase, type Database } from '~/db/database';
 import { messageLinks } from '~/dispatchers/addon-card';
 import type { AuthorEmojis } from '~/lib/author-emojis';
@@ -23,6 +23,8 @@ import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from '../he
 import { ADDON, createFakeReads, type FakeReads } from '../helpers/fake-reads';
 
 const CHANNELS: AddonChannels = { plugin: '11', theme: '12', 'icon-pack': '13' };
+// No author has an avatar emoji, so each card hashes its listing alone.
+const NO_AVATARS: AuthorEmojis = { resolve: async () => new Map(), prune: async () => {} };
 
 const PLUGIN: PublicAddon = {
 	...ADDON,
@@ -123,12 +125,16 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		}
 	}
 
+	function addons(emojis: AuthorEmojis = NO_AVATARS) {
+		return createAddonsDispatcher({ channels: CHANNELS, messages: discord.gateway, emojis });
+	}
+
 	function sync(id: string) {
-		return syncAddon(stores(), discord.rest, id, CHANNELS);
+		return addons().handle(id, stores());
 	}
 
 	function reconcile() {
-		return reconcileAddons(stores(), discord.rest, discord.selfId, CHANNELS);
+		return addons().reconcile(stores());
 	}
 
 	async function rowOf(id: string) {
@@ -433,10 +439,12 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 
 		discord.beforePostResponse = () => crashing.$client.end();
 
-		const outcome = await syncAddon(stores(crashing), discord.rest, id, CHANNELS).then(
-			() => 'synced',
-			() => 'failed',
-		);
+		const outcome = await addons()
+			.handle(id, stores(crashing))
+			.then(
+				() => 'synced',
+				() => 'failed',
+			);
 
 		discord.beforePostResponse = undefined;
 
@@ -530,7 +538,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		const real = { db: database.db, web: reads };
 
 		await seedApprovedAddon(web, owner.userId, manifest('web.listed', '2.0.0'));
-		await syncAddon(real, discord.rest, 'web.listed', CHANNELS);
+		await addons().handle('web.listed', real);
 
 		const [message, ...extra] = discord.messages('11');
 
@@ -550,7 +558,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 			.update(schema.addon)
 			.set({ delistedAt: new Date() })
 			.where(eq(schema.addon.id, 'web.listed'));
-		await reconcileAddons(real, discord.rest, discord.selfId, CHANNELS);
+		await addons().reconcile(real);
 
 		expect(discord.messages('11')).toHaveLength(0);
 		expect(await rowOf('web.listed')).toBeUndefined();
@@ -600,13 +608,13 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		};
 
 		ingest(PLUGIN);
-		await syncAddon(stores(), discord.rest, PLUGIN.id, CHANNELS, undefined, emojis);
-		await syncAddon(stores(), discord.rest, PLUGIN.id, CHANNELS, undefined, emojis);
+		await addons(emojis).handle(PLUGIN.id, stores());
+		await addons(emojis).handle(PLUGIN.id, stores());
 
 		expect(cardText(messagesOf(PLUGIN)[0])).toContain('<:av_1_aaaa:501> Mario');
 
 		avatar = { name: 'av_1_bbbb', id: '502' };
-		await syncAddon(stores(), discord.rest, PLUGIN.id, CHANNELS, undefined, emojis);
+		await addons(emojis).handle(PLUGIN.id, stores());
 
 		expect(writes().map((request) => request.method)).toEqual(['POST', 'PATCH']);
 		expect(cardText(messagesOf(PLUGIN)[0])).toContain('<:av_1_bbbb:502> Mario');

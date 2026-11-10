@@ -4,8 +4,7 @@ import { schema } from '@unbound-app/web/testing';
 import { and, eq, sql } from 'drizzle-orm';
 
 import {
-	announceRelease,
-	reconcileReleases,
+	createReleasesDispatcher,
 	renderRelease,
 	type ReleaseTarget,
 } from '~/dispatchers/releases';
@@ -58,18 +57,16 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 		fake.releases.push(...items);
 	}
 
+	function releases() {
+		return createReleasesDispatcher({ ...TARGET, messages: discord.gateway, now: () => NOW });
+	}
+
 	function handle(item: Release) {
-		return announceRelease(
-			stores(),
-			discord.rest,
-			`${item.platform}:${item.version}`,
-			TARGET,
-			NOW,
-		);
+		return releases().handle(`${item.platform}:${item.version}`, stores());
 	}
 
 	function reconcile() {
-		return reconcileReleases(stores(), discord.rest, discord.selfId, TARGET, NOW);
+		return releases().reconcile(stores());
 	}
 
 	async function rowOf(item: Release) {
@@ -229,16 +226,12 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 
 		discord.beforePostResponse = () => crashing.$client.end();
 
-		const outcome = await announceRelease(
-			stores(crashing),
-			discord.rest,
-			`${item.platform}:${item.version}`,
-			TARGET,
-			NOW,
-		).then(
-			() => 'announced',
-			() => 'failed',
-		);
+		const outcome = await releases()
+			.handle(`${item.platform}:${item.version}`, stores(crashing))
+			.then(
+				() => 'announced',
+				() => 'failed',
+			);
 
 		discord.beforePostResponse = undefined;
 
@@ -295,9 +288,9 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 		await database.web.db
 			.delete(schema.loaderRelease)
 			.where(eq(schema.loaderRelease.platform, 'android'));
-		await announceRelease(real, discord.rest, 'ios:1.2.3', TARGET, NOW);
-		await announceRelease(real, discord.rest, 'android:1.2.4', TARGET, NOW);
-		await reconcileReleases(real, discord.rest, discord.selfId, TARGET, NOW);
+		await releases().handle('ios:1.2.3', real);
+		await releases().handle('android:1.2.4', real);
+		await releases().reconcile(real);
 
 		expect(discord.messages('21').map((message) => message.embeds[0]?.title)).toEqual([
 			'Unbound for iOS 1.2.3',

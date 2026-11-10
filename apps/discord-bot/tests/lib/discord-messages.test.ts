@@ -1,34 +1,44 @@
+import { DiscordAPIError, RESTJSONErrorCodes } from 'discord.js';
 import { describe, expect, test } from 'bun:test';
 
-import { renderAddon } from '~/dispatchers/addon-card';
-import { truncate } from '~/lib/discord-messages';
+import { discordFailure, eventNonce } from '~/lib/discord-messages';
 
-import { ADDON } from '../helpers/fake-reads';
-
-function isWellFormed(text: string) {
-	return !/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/.test(text);
+function apiError(code: number, status: number) {
+	return new DiscordAPIError({ code, message: 'x' }, code, status, 'GET', '/x', {});
 }
 
-describe('truncate', () => {
-	test('keeps text that fits and cuts longer text to the limit, ending in an ellipsis', () => {
-		expect(truncate('abc', 3)).toBe('abc');
-		expect(truncate('abcdef', 4)).toBe('abc…');
-		expect(truncate('abc', 0)).toBe('');
+describe('discordFailure', () => {
+	test('names each failure a caller acts on', () => {
+		expect(discordFailure(apiError(RESTJSONErrorCodes.UnknownMessage, 404))).toBe('gone');
+		expect(discordFailure(apiError(RESTJSONErrorCodes.UnknownGuild, 404))).toBe('gone');
+		expect(discordFailure(apiError(RESTJSONErrorCodes.UnknownMember, 404))).toBe(
+			'unknown-member',
+		);
+		expect(discordFailure(apiError(RESTJSONErrorCodes.UnknownUser, 404))).toBe('undeliverable');
+		expect(discordFailure(apiError(RESTJSONErrorCodes.CannotSendMessagesToThisUser, 403))).toBe(
+			'undeliverable',
+		);
+		expect(discordFailure(apiError(RESTJSONErrorCodes.MissingPermissions, 403))).toBe(
+			'forbidden',
+		);
+		expect(discordFailure(apiError(RESTJSONErrorCodes.InvalidFormBodyOrContentType, 400))).toBe(
+			'rejected',
+		);
 	});
 
-	test('drops an emoji the cut would split instead of leaving half of it', () => {
-		const cut = truncate('ab😀cdef', 4);
-
-		expect(cut).toBe('ab…');
-		expect(isWellFormed(cut)).toBe(true);
+	test('leaves a failure a retry may fix, and any other error, unnamed', () => {
+		expect(discordFailure(apiError(0, 500))).toBeUndefined();
+		expect(discordFailure(new Error('socket hang up'))).toBeUndefined();
 	});
+});
 
-	test('an addon name cut inside an emoji renders a heading Discord accepts', () => {
-		const name = `${'a'.repeat(254)}😀 tail`;
-		const { body } = renderAddon({ ...ADDON, name }, { icon: Buffer.alloc(0) });
-		const text = JSON.stringify(body.components);
+describe('eventNonce', () => {
+	test("ties a post to its event and the event's creation time, within Discord's 25 characters", () => {
+		const createdAt = new Date('2026-10-26T00:16:49.591Z');
+		const nonce = eventNonce('a', 2_147_483_647, createdAt);
 
-		expect(text).toContain(`## ${'a'.repeat(254)}…\\n`);
-		expect(isWellFormed(text)).toBe(true);
+		expect(nonce).toBe(`a2147483647.${createdAt.getTime().toString(36)}`);
+		expect(nonce.length).toBeLessThanOrEqual(25);
+		expect(eventNonce('a', 1, createdAt)).not.toBe(eventNonce('r', 1, createdAt));
 	});
 });

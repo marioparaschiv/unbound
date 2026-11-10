@@ -1,38 +1,46 @@
 import './lib/setup';
 
+import { container, LogLevel, SapphireClient } from '@sapphire/framework';
 import { Events, GatewayIntentBits, type Client } from 'discord.js';
-import { LogLevel, SapphireClient } from '@sapphire/framework';
 import { createBotReads } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
 
 import { createDatabase, POOLED_OPTIONS } from '~/db/database';
-import { CDN_URL, GUILD_ID, SITE_URL } from '~/lib/constants';
 import { createAuditTelemetry } from '~/lib/audit-telemetry';
+import { loadConfig, type BotConfig } from '~/lib/config';
 import { startDispatchers } from '~/runtime/start';
 import { createDispatchers } from '~/dispatchers';
 import { checkTriggers } from '~/db/triggers';
 import { setDatabase } from '~/db/instance';
-import { checkConfig } from '~/lib/config';
+
+declare module '@sapphire/pieces' {
+	// oxlint-disable-next-line typescript/consistent-type-definitions -- declaration merging needs an interface
+	interface Container {
+		/** The configuration `src/index.ts` loaded, for the Sapphire pieces, which Sapphire constructs itself. */
+		config: BotConfig;
+	}
+}
 
 const logger = createLogger('Bot');
-const config = checkConfig(process.env, GUILD_ID);
+const loaded = loadConfig(process.env);
 
-if (!config.ok) {
-	logger.error(config.message);
+if (!loaded.ok) {
+	logger.error(loaded.message);
 	process.exit(1);
 }
 
-const { env, guildId } = config;
+const { config } = loaded;
+const { env } = config;
 const auditTelemetry = createAuditTelemetry({ env });
-const dispatchers = createDispatchers({ env, guildId, telemetry: auditTelemetry });
 const db = createDatabase(env.DATABASE_URL, POOLED_OPTIONS);
 // One pool for both: the bot's schema through `db`, the web's tables, read only, through `web`.
 const web = createBotReads(db.$client, {
-	siteUrl: SITE_URL,
-	cdnUrl: CDN_URL,
+	siteUrl: config.siteUrl,
+	cdnUrl: config.cdnUrl,
 	sponsorGraceDays: env.SPONSOR_PERK_GRACE_DAYS,
 });
 
+container.config = config;
 setDatabase(db);
 
 try {
@@ -65,9 +73,20 @@ async function exit(code: number): Promise<never> {
 }
 
 function startRuntime(ready: Client<true>) {
-	const { started, stop: stopDispatchers } = startDispatchers(
+	const dispatchers = createDispatchers({
+		config,
+		discord: {
+			rest: ready.rest,
+			selfId: ready.user.id,
+			applicationId: ready.application.id,
+			guilds: ready.guilds,
+		},
+		telemetry: auditTelemetry,
+		now: Date.now,
+	});
+	const { stop: stopDispatchers } = startDispatchers(
 		dispatchers,
-		{ db, web, client: ready },
+		{ db, web },
 		// LISTEN holds a session, which pgbouncer's transaction mode cannot give it.
 		env.DATABASE_DIRECT_URL,
 		env.RECONCILE_INTERVAL_SECONDS * 1000,
@@ -81,7 +100,7 @@ function startRuntime(ready: Client<true>) {
 	process.once('SIGINT', () => void shutdown());
 	process.once('SIGTERM', () => void shutdown());
 
-	logger.success(`Runtime started with ${started.length} dispatcher(s).`);
+	logger.success(`Runtime started with ${dispatchers.length} dispatcher(s).`);
 }
 
 client.once(Events.ClientReady, (ready) => {
