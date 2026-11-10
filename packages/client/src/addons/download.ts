@@ -1,6 +1,6 @@
+import { getBytecodePath } from '@unbound-app/contracts/version-layout';
 import type { AddonManifest, AddonTrust } from '@unbound-app/types';
 
-import { compiledBundlePath } from '~/addons/paths';
 import { getLoader } from '~/native/unbound-native';
 
 /** Turns the JSON a manifest URL served into a manifest, throwing when it is malformed. */
@@ -52,7 +52,7 @@ export async function downloadBytecode(
 
 	if (!bytecodeVersion || !manifest.bytecode?.[String(bytecodeVersion)]) return;
 
-	const res = await fetch(compiledBundlePath(bundleUrl, bytecodeVersion), { cache: 'no-cache' });
+	const res = await fetch(getBytecodePath(bundleUrl, bytecodeVersion), { cache: 'no-cache' });
 
 	if (!res.ok) {
 		throw new Error(`status ${res.status}`);

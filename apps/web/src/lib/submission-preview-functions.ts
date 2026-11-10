@@ -1,3 +1,4 @@
+import { getArtifactKeys, getCdnUrl } from '@unbound-app/contracts/version-layout';
 import type { RepositoryDetails, SourcePin } from '@unbound-app/contracts/source';
 import { createSubmissionRequestSchema } from '@unbound-app/contracts/publish';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
@@ -8,8 +9,8 @@ import { getRequestHeaders } from '@tanstack/react-start/server';
 import { createServerFn } from '@tanstack/react-start';
 import { Type } from '@unbound-app/contracts/schema';
 
-import { getArtifactKeys, getCdnUrl, pinSource, toVersionChangelog } from '~/lib/artifacts';
 import type { MarketplaceAddonDetails } from '~/lib/marketplace';
+import { pinSource, toVersionChangelog } from '~/lib/artifacts';
 import { readAddonTags, readTags } from '~/lib/addon-tags';
 import { resolvePlatforms } from '~/lib/addon-platforms';
 import { schemaValidator } from '~/lib/schema-validator';
@@ -78,8 +79,8 @@ async function toPreviewPage(pending: PendingVersion): Promise<MarketplaceAddonD
 		bundleSize: pending.bundleSize,
 		sha256: pending.sha256,
 		publishedAt: at,
-		manifestUrl: getCdnUrl(app.env, keys.manifest),
-		bundleUrl: getCdnUrl(app.env, keys.bundle),
+		manifestUrl: getCdnUrl(app.env.CDN_URL, keys.manifest),
+		bundleUrl: getCdnUrl(app.env.CDN_URL, keys.bundle),
 	};
 
 	return {

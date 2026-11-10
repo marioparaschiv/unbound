@@ -20,13 +20,8 @@ export {
 	readAssetFolder,
 	readAssetGroup,
 } from './assets.ts';
-export {
-	bytecodeFileName,
-	bytecodeSource,
-	hermesBytecode,
-	hermescCount,
-} from './hermes-bytecode.ts';
 export { buildReport, DEFAULT_BUDGET, type BudgetOptions } from './build-report.ts';
+export { bytecodeSource, hermesBytecode, hermescCount } from './hermes-bytecode.ts';
 export { reportLine, type ReportEntry, type ReportSection } from './report-line.ts';
 export { pluginConfig, unbound, type PluginConfigOptions } from './preset.ts';
 export { externalFor, unboundGlobals, type Globals } from './globals.ts';

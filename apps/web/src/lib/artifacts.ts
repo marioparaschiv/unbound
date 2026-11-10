@@ -1,4 +1,10 @@
 import {
+	getArtifactKeys,
+	getBytecodePath,
+	getCdnUrl,
+	getVersionDirectory,
+} from '@unbound-app/contracts/version-layout';
+import {
 	ADDON_PAGE_FILENAME,
 	MEASURED_PAGE_FILENAME,
 	type AddonPage,
@@ -32,21 +38,6 @@ export const VERSION_SOURCE = {
 
 type ChangelogFields = Pick<AddonVersion, 'changelog' | 'changes'>;
 
-export type ArtifactKeys = {
-	manifest: string;
-	bundle: string;
-};
-
-/**
- * @description Builds the public bucket key of a version's bundle compiled for one bytecode version, beside the bundle.
- * @param bundleKey The bundle's key.
- * @param bytecodeVersion The Hermes bytecode version.
- * @returns The compiled bundle's key.
- */
-export function getBytecodeKey(bundleKey: string, bytecodeVersion: string): string {
-	return `${bundleKey.replace(/\.[^./]+$/, '')}.${bytecodeVersion}.hbc`;
-}
-
 /** A version's store page as approval publishes it. */
 export type StorePage = {
 	addonMd: string;
@@ -61,30 +52,6 @@ export type ArtifactVersion = {
 	version: string;
 	manifest: PublishedManifest;
 };
-
-/**
- * @description Builds the public bucket folder an approved version's files sit in.
- * @param addonId The addon id.
- * @param version The approved version.
- * @returns The folder, without a trailing slash.
- */
-export function getVersionDirectory(addonId: string, version: string): string {
-	return `addons/${addonId}/${version}`;
-}
-
-/**
- * @description Builds the public bucket keys an approved version is published under. The bundle sits
- * at `main` relative to the manifest, which is how the client resolves it.
- * @param addonId The addon id.
- * @param version The approved version.
- * @param main The manifest's `main`.
- * @returns The manifest and bundle keys.
- */
-export function getArtifactKeys(addonId: string, version: string, main: string): ArtifactKeys {
-	const directory = getVersionDirectory(addonId, version);
-
-	return { manifest: `${directory}/manifest.json`, bundle: `${directory}/${main}` };
-}
 
 /** The verified files a version ships beside its bundle. */
 export type ArtifactExtras = {
@@ -119,7 +86,7 @@ export async function writeArtifact(
 			),
 		),
 		...[...bytecode].map(([bytecodeVersion, bytes]) =>
-			ctx.storage.public.write(getBytecodeKey(keys.bundle, bytecodeVersion), bytes),
+			ctx.storage.public.write(getBytecodePath(keys.bundle, bytecodeVersion), bytes),
 		),
 		ctx.storage.public.write(keys.bundle, bundle),
 		ctx.storage.public.write(keys.manifest, JSON.stringify(target.manifest), {
@@ -162,16 +129,6 @@ export async function writeStorePage(
 			{ type: 'application/json' },
 		),
 	]);
-}
-
-/**
- * @description Builds the CDN URL of a public bucket key.
- * @param env The validated environment.
- * @param key The public bucket key.
- * @returns The URL below `CDN_URL`.
- */
-export function getCdnUrl(env: Env, key: string): string {
-	return new URL(key, env.CDN_URL.endsWith('/') ? env.CDN_URL : `${env.CDN_URL}/`).href;
 }
 
 /**
@@ -249,19 +206,16 @@ export function toAddonVersion(
 		bundleSize: row.bundleSize,
 		sha256: row.sha256,
 		publishedAt: row.publishedAt.toISOString(),
-		manifestUrl: getCdnUrl(env, keys.manifest),
-		bundleUrl: getCdnUrl(env, keys.bundle),
-		pageUrl: addonMd === null ? null : getCdnUrl(env, pageKey),
+		manifestUrl: getCdnUrl(env.CDN_URL, keys.manifest),
+		bundleUrl: getCdnUrl(env.CDN_URL, keys.bundle),
+		pageUrl: addonMd === null ? null : getCdnUrl(env.CDN_URL, pageKey),
 	};
 }
 
 export default {
 	VERSION_SOURCE,
-	getVersionDirectory,
-	getArtifactKeys,
 	writeArtifact,
 	writeStorePage,
-	getCdnUrl,
 	toVersionChangelog,
 	pinSource,
 	toSourcePin,

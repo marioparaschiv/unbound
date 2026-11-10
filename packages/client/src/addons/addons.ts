@@ -1,5 +1,6 @@
 import type { AddonVersion, ListedAddon } from '@unbound-app/contracts/addons';
 import { DEVELOPMENT_MARKER } from '@unbound-app/contracts/manifest-files';
+import { getBytecodePath } from '@unbound-app/contracts/version-layout';
 import type { AddonManifest, PushedManifest } from '@unbound-app/types';
 import type { AddonRelease } from '@unbound-app/contracts/updates';
 import type { AddonKind } from '@unbound-app/types/addons';
@@ -17,7 +18,6 @@ import type { Addon, AddonResolveable } from '~/addons/addon';
 import type { InstalledEntry } from '~/updates/addon-updates';
 import type { UpdatableKind } from '~/addons/manager-of';
 import { AddonLifecycle } from '~/addons/lifecycle';
-import { compiledBundlePath } from '~/addons/paths';
 import { toRelease } from '~/addons/versions';
 import { Manager } from '~/addons/manager';
 import fs from '~/native/fs';
@@ -496,7 +496,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 
 		if (!bytecode || !bytecodeVersion) return;
 
-		const path = `${this.directoryOf(manifest.id)}/${compiledBundlePath(manifest.main, bytecodeVersion)}`;
+		const path = `${this.directoryOf(manifest.id)}/${getBytecodePath(manifest.main, bytecodeVersion)}`;
 
 		await fs.writeFile(path, bytecode, 'base64');
 	}

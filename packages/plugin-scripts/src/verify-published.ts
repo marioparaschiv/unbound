@@ -1,5 +1,6 @@
 import { addonManifestSchema } from '@unbound-app/contracts/manifest';
 import { updatesResponseSchema } from '@unbound-app/contracts/updates';
+import { getBytecodePath } from '@unbound-app/contracts/version-layout';
 import { appendFileSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
@@ -21,16 +22,6 @@ type PublishedRelease = {
 };
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>;
-
-/**
- * @description Names the compiled bundle the client fetches for a Hermes bytecode version, beside the source bundle.
- * @param bundleUrl The source bundle's URL.
- * @param bytecodeVersion The Hermes bytecode version.
- * @returns The compiled bundle's URL.
- */
-export function compiledBundleUrl(bundleUrl: string, bytecodeVersion: string): string {
-	return `${bundleUrl.replace(/\.[^./]+$/, '')}.${bytecodeVersion}.hbc`;
-}
 
 /**
  * @description Hashes downloaded bytes the way the client verifies them.
@@ -113,7 +104,7 @@ export async function checkRelease(release: PublishedRelease, fetcher: Fetcher):
 	const manifest = parse(addonManifestSchema, await manifestResponse.json());
 
 	for (const [version, expected] of Object.entries(manifest.bytecode ?? {})) {
-		const url = compiledBundleUrl(release.bundleUrl, version);
+		const url = getBytecodePath(release.bundleUrl, version);
 		const compiled = await fetcher(url, { cache: 'no-store' });
 
 		if (!compiled.ok) {

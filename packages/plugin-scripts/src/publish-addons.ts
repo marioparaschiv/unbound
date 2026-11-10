@@ -25,6 +25,7 @@ import {
 	publishFirstPartyResponseSchema,
 } from '@unbound-app/contracts/publish';
 import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
+import { readBytecodeVersion } from '@unbound-app/contracts/version-layout';
 
 import type { LocalPlugin, PluginDecision, PublishedVersions } from './select-plugins';
 import type { PluginCommit } from './plugin-changelog';
@@ -384,17 +385,13 @@ export function publishedManifest(root: string, dir: string): string {
  */
 export function findCompiledBundles(root: string, bundle: string): Map<number, BuildFile> {
 	const directory = dirname(bundle);
-	const stem = basename(bundle).replace(/\.[^.]+$/, '');
-	const prefix = `${stem}.`;
+	const bundleName = basename(bundle);
 	const compiled = new Map<number, BuildFile>();
 
 	for (const name of readdirSync(join(root, directory)).sort()) {
-		const version =
-			name.startsWith(prefix) && name.endsWith('.hbc')
-				? name.slice(prefix.length, -'.hbc'.length)
-				: '';
+		const version = readBytecodeVersion(name, bundleName);
 
-		if (/^\d{1,10}$/.test(version)) {
+		if (version) {
 			compiled.set(Number(version), {
 				path: `${directory}/${name}`,
 				contents: readFileSync(join(root, directory, name)),

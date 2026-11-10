@@ -1,3 +1,4 @@
+import { getBytecodePath } from '@unbound-app/contracts/version-layout';
 import { listAddonFiles } from '@unbound-app/contracts/addon-files';
 import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import { getBundleName } from '@unbound-app/contracts/workspace';
@@ -5,7 +6,6 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { bytecodeFileName } from '~/rollup/hermes-bytecode';
 import { readBuiltAddon } from '~/lib/reload-transport';
 import type { DiscoveredAddon } from '~/lib/discovery';
 import type { CommandRunner } from '~/lib/run-command';
@@ -38,7 +38,7 @@ export function readPluginPayload(addon: DiscoveredAddon): PluginPayload | { err
 	const bundle = getBundleName(addon.static, manifest.main);
 	const names = [
 		bundle,
-		...Object.keys(bytecode).map((version) => bytecodeFileName(bundle, Number(version))),
+		...Object.keys(bytecode).map((version) => getBytecodePath(bundle, version)),
 		...listAddonFiles(manifest).map((file) => file.path),
 	];
 	// The built manifest has no bytecode digests; the one read back adds them, so it is written out to copy instead.

@@ -1,4 +1,5 @@
 import type { ControllerClient } from '@unbound-app/debugger-protocol/controller';
+import { readBytecodeVersion } from '@unbound-app/contracts/version-layout';
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { listAddonFiles } from '@unbound-app/contracts/addon-files';
 import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
@@ -159,21 +160,15 @@ const SAME_BUILD_WINDOW_MS = 10_000;
 
 function readFreshBytecode(bundlePath: string): Map<string, Buffer> {
 	const directory = dirname(bundlePath);
-	const prefix = `${basename(bundlePath).replace(/\.[^.]+$/, '')}.`;
+	const bundleName = basename(bundlePath);
 	const builtAt = statSync(bundlePath).mtimeMs;
 	const compiled = new Map<string, Buffer>();
 
 	for (const name of readdirSync(directory).sort()) {
-		const version =
-			name.startsWith(prefix) && name.endsWith('.hbc')
-				? name.slice(prefix.length, -'.hbc'.length)
-				: '';
+		const version = readBytecodeVersion(name, bundleName);
 		const path = join(directory, name);
 
-		if (
-			/^\d{1,10}$/.test(version) &&
-			Math.abs(statSync(path).mtimeMs - builtAt) <= SAME_BUILD_WINDOW_MS
-		) {
+		if (version && Math.abs(statSync(path).mtimeMs - builtAt) <= SAME_BUILD_WINDOW_MS) {
 			compiled.set(version, readFileSync(path));
 		}
 	}

@@ -2,12 +2,16 @@ import {
 	listFirstPartyAddonsResponseSchema,
 	publishFirstPartyResponseSchema,
 } from '@unbound-app/contracts/publish';
+import {
+	getArtifactKeys,
+	getCdnUrl,
+	getVersionDirectory,
+} from '@unbound-app/contracts/version-layout';
 import type { PublishFirstPartyRequest } from '@unbound-app/contracts/publish';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 import { eq } from 'drizzle-orm';
 
-import { getArtifactKeys, getCdnUrl, getVersionDirectory } from '~/lib/artifacts';
 import listFirstPartyAddonsEndpoint from '~/endpoints/list-first-party-addons';
 import publishFirstPartyEndpoint from '~/endpoints/publish-first-party';
 import getCatalogEndpoint from '~/endpoints/get-catalog';
@@ -297,7 +301,7 @@ describe('POST /api/v1/first-party/publish', () => {
 		const directory = getVersionDirectory('fp.page', '1.0.0');
 		const pageUrl = addons.find((entry) => entry.id === 'fp.page')?.latestVersion.pageUrl;
 
-		expect(pageUrl).toBe(getCdnUrl(ctx.env, `${directory}/ADDON.md`));
+		expect(pageUrl).toBe(getCdnUrl(ctx.env.CDN_URL, `${directory}/ADDON.md`));
 
 		const addonMd = await ctx.storage.public.file(`${directory}/ADDON.md`).text();
 
