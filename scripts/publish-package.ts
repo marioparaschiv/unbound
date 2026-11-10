@@ -2,17 +2,16 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join, resolve } from 'node:path';
 
-import type { DependencyField, Manifest } from './workspaces';
+import type { Manifest, Workspaces } from './workspaces';
 
-import { loadWorkspaces, parseManifest, readManifest } from './workspaces';
-
-const ROOT = join(import.meta.dir, '..');
-
-const DEPENDENCY_FIELDS: DependencyField[] = [
-	'dependencies',
-	'peerDependencies',
-	'optionalDependencies',
-];
+import {
+	DEPENDENCY_FIELDS,
+	loadWorkspaces,
+	parseManifest,
+	readManifest,
+	resolveWorkspace,
+	ROOT,
+} from './workspaces';
 
 // npm ignores `publishConfig` entry-point overrides, so src exports are swapped to dist for the
 // publish and restored after, keeping the committed manifest usable without a build.
@@ -67,7 +66,7 @@ function distManifest(manifest: Manifest): Manifest {
 // cannot read bun's workspace/catalog specifiers, so they are resolved to concrete versions here.
 function resolveSpecifiers(manifest: Manifest): Manifest {
 	const root = readManifest(join(ROOT, 'package.json'));
-	const workspace = workspaceManifests();
+	const workspaces = loadWorkspaces();
 	const next: Manifest = { ...manifest };
 
 	// Workspace-only references for release triggering; they must not reach npm metadata.
@@ -83,7 +82,7 @@ function resolveSpecifiers(manifest: Manifest): Manifest {
 		next[field] = Object.fromEntries(
 			Object.entries(dependencies).map(([name, specifier]) => [
 				name,
-				resolveSpecifier(root, workspace, name, specifier),
+				resolveSpecifier(root, workspaces, name, specifier),
 			]),
 		);
 	}
@@ -91,24 +90,9 @@ function resolveSpecifiers(manifest: Manifest): Manifest {
 	return next;
 }
 
-function workspaceManifests(): Map<string, Manifest> {
-	const { manifests } = loadWorkspaces();
-
-	return new Map([...manifests.values()].map((manifest) => [manifest.name, manifest]));
-}
-
-function resolveSpecifier(
-	root: Manifest,
-	workspace: Map<string, Manifest>,
-	name: string,
-	specifier: string,
-) {
+function resolveSpecifier(root: Manifest, workspaces: Workspaces, name: string, specifier: string) {
 	if (specifier.startsWith('workspace:')) {
-		const manifest = workspace.get(name);
-
-		if (!manifest) {
-			throw new Error(`No workspace package resolves ${name}@${specifier}.`);
-		}
+		const { manifest } = resolveWorkspace(name, specifier, workspaces);
 
 		// Private packages never reach npm, so a runtime pin on one makes the package uninstallable;
 		// they belong in devDependencies so the bundler inlines them.

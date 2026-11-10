@@ -4,7 +4,8 @@ import { loadProjects, loadWorkspaces, publishOrder, workspaceDependencies } fro
 
 describe('workspaces', () => {
 	test('publishes every public workspace after its workspace dependencies', () => {
-		const { manifests, dirs } = loadWorkspaces();
+		const workspaces = loadWorkspaces();
+		const { manifests } = workspaces;
 		const order = publishOrder();
 
 		expect(order.length).toBeGreaterThan(0);
@@ -18,7 +19,7 @@ describe('workspaces', () => {
 
 			expect(manifest.private).toBeFalsy();
 
-			for (const dependency of workspaceDependencies(manifest, dirs)) {
+			for (const dependency of workspaceDependencies(manifest, workspaces)) {
 				if (!manifests.get(dependency)?.private) {
 					expect(order.indexOf(dependency)).toBeLessThan(index);
 				}
@@ -33,9 +34,9 @@ describe('workspaces', () => {
 			dependencies: { missing: 'workspace:*' },
 		};
 
-		expect(() => workspaceDependencies(manifest, new Map())).toThrow(
-			'No workspace package resolves missing@workspace:*.',
-		);
+		expect(() =>
+			workspaceDependencies(manifest, { manifests: new Map(), dirs: new Map() }),
+		).toThrow('No workspace package resolves missing@workspace:*.');
 	});
 
 	test('marks the workspaces inside the plugins root as plugins', () => {

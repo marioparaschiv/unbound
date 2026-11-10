@@ -61,6 +61,8 @@ export type Manifest = Partial<Record<DependencyField, DependencyMap>> & {
 	workspaces?: WorkspaceConfig;
 };
 
+export type Workspace = { dir: string; manifest: Manifest };
+
 export type Workspaces = {
 	manifests: Map<string, Manifest>;
 	dirs: Map<string, string>;
@@ -135,39 +137,40 @@ export function loadWorkspaces(): Workspaces {
 }
 
 /**
- * @description Finds the workspace directory a `workspace:` specifier points at.
+ * @description Finds the workspace a `workspace:` specifier points at.
  * @param name The dependency's package name.
  * @param specifier Its `workspace:` specifier, named in the error.
- * @param dirs The workspace directories keyed by package name.
- * @returns The workspace's directory.
+ * @param workspaces The loaded workspaces.
+ * @returns The workspace's directory and manifest.
  */
 export function resolveWorkspace(
 	name: string,
 	specifier: string,
-	dirs: Map<string, string>,
-): string {
+	{ manifests, dirs }: Workspaces,
+): Workspace {
 	const dir = dirs.get(name);
+	const manifest = dir === undefined ? undefined : manifests.get(dir);
 
-	if (!dir) {
+	if (dir === undefined || !manifest) {
 		throw new Error(`No workspace package resolves ${name}@${specifier}.`);
 	}
 
-	return dir;
+	return { dir, manifest };
 }
 
 /**
  * @description Lists the workspace directories a manifest depends on through `workspace:` specifiers.
  * @param manifest The dependent package's manifest.
- * @param dirs The workspace directories keyed by package name.
+ * @param workspaces The loaded workspaces.
  * @returns The directories of the workspace dependencies.
  */
-export function workspaceDependencies(manifest: Manifest, dirs: Map<string, string>): string[] {
+export function workspaceDependencies(manifest: Manifest, workspaces: Workspaces): string[] {
 	const dependencies: string[] = [];
 
 	for (const field of DEPENDENCY_FIELDS) {
 		for (const [name, specifier] of Object.entries(manifest[field] ?? {})) {
 			if (specifier.startsWith('workspace:')) {
-				dependencies.push(resolveWorkspace(name, specifier, dirs));
+				dependencies.push(resolveWorkspace(name, specifier, workspaces).dir);
 			}
 		}
 	}
@@ -181,8 +184,8 @@ export function workspaceDependencies(manifest: Manifest, dirs: Map<string, stri
  * @returns The public workspace directories, dependencies first.
  */
 export function publishOrder(): string[] {
-	const { manifests, dirs } = loadWorkspaces();
-	const publics = new Map([...manifests].filter(([, manifest]) => !manifest.private));
+	const workspaces = loadWorkspaces();
+	const publics = new Map([...workspaces.manifests].filter(([, manifest]) => !manifest.private));
 	const sorted: string[] = [];
 	const visited = new Set<string>();
 
@@ -193,7 +196,7 @@ export function publishOrder(): string[] {
 
 		visited.add(dir);
 
-		for (const dependency of workspaceDependencies(manifest, dirs)) visit(dependency);
+		for (const dependency of workspaceDependencies(manifest, workspaces)) visit(dependency);
 
 		sorted.push(dir);
 	}
