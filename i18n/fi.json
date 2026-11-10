@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "teemat",
 	"UNBOUND_ICONS": "Kuvakkeet",
 	"UNBOUND_ICONS_NOUN": "kuvakkeet",
-	"UNBOUND_ICONS_PLACEHOLDER": "Kuvakepaketit ovat tulossa pian.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Kohteita ({type}) ei ole vielä listattu.",
 	"UNBOUND_MARKETPLACE_ERROR": "Kauppapaikkaan ei saatu yhteyttä. Yritä uudelleen vetämällä alas.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Päivitys epäonnistui. Näytetään viimeksi tallennettu kopio.",

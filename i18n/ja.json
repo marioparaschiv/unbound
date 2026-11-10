@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "テーマ",
 	"UNBOUND_ICONS": "アイコン",
 	"UNBOUND_ICONS_NOUN": "アイコン",
-	"UNBOUND_ICONS_PLACEHOLDER": "アイコンパックは近日公開予定です。",
 	"UNBOUND_MARKETPLACE_EMPTY": "掲載されている{type}はまだありません。",
 	"UNBOUND_MARKETPLACE_ERROR": "マーケットプレイスに接続できませんでした。下に引いて再試行してください。",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "更新できませんでした。最後に保存されたデータを表示しています。",

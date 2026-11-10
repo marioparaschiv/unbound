@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "temas",
 	"UNBOUND_ICONS": "Ícones",
 	"UNBOUND_ICONS_NOUN": "ícones",
-	"UNBOUND_ICONS_PLACEHOLDER": "Pacotes de ícones chegam em breve.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Nenhum item em {type} ainda.",
 	"UNBOUND_MARKETPLACE_ERROR": "Não foi possível conectar à Loja. Puxe para baixo para tentar novamente.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Não foi possível atualizar. Mostrando a última cópia salva.",

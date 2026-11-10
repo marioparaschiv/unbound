@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "thema's",
 	"UNBOUND_ICONS": "Pictogrammen",
 	"UNBOUND_ICONS_NOUN": "pictogrammen",
-	"UNBOUND_ICONS_PLACEHOLDER": "Pictogrampakketten komen binnenkort.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Er zijn nog geen {type} beschikbaar.",
 	"UNBOUND_MARKETPLACE_ERROR": "Kan de Marketplace niet bereiken. Trek omlaag om het opnieuw te proberen.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Vernieuwen mislukt. De laatst opgeslagen versie wordt getoond.",

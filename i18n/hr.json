@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "teme",
 	"UNBOUND_ICONS": "Ikone",
 	"UNBOUND_ICONS_NOUN": "ikone",
-	"UNBOUND_ICONS_PLACEHOLDER": "Paketi ikona stižu uskoro.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Još ništa nije na popisu ({type}).",
 	"UNBOUND_MARKETPLACE_ERROR": "Nije moguće povezati se s Trgovinom. Povuci prema dolje za ponovni pokušaj.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Osvježavanje nije uspjelo. Prikazuje se zadnja spremljena kopija.",

@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "motivy",
 	"UNBOUND_ICONS": "Ikony",
 	"UNBOUND_ICONS_NOUN": "ikony",
-	"UNBOUND_ICONS_PLACEHOLDER": "Balíčky ikon už brzy.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Zatím tu nejsou žádné {type}.",
 	"UNBOUND_MARKETPLACE_ERROR": "Nepodařilo se spojit s Obchodem. Stáhni dolů a zkus to znovu.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Obnovení se nezdařilo. Zobrazuje se poslední uložená kopie.",

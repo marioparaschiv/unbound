@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "temaer",
 	"UNBOUND_ICONS": "Ikoner",
 	"UNBOUND_ICONS_NOUN": "ikoner",
-	"UNBOUND_ICONS_PLACEHOLDER": "Ikonpakker kommer snart.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Der er endnu ingen {type} på listen.",
 	"UNBOUND_MARKETPLACE_ERROR": "Kunne ikke få forbindelse til markedspladsen. Træk ned for at prøve igen.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Kunne ikke opdatere. Viser den senest gemte kopi.",

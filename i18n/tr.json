@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "temalar",
 	"UNBOUND_ICONS": "Simgeler",
 	"UNBOUND_ICONS_NOUN": "simgeler",
-	"UNBOUND_ICONS_PLACEHOLDER": "Simge paketleri yakında geliyor.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Henüz listelenmiş {type} yok.",
 	"UNBOUND_MARKETPLACE_ERROR": "Mağazaya ulaşılamadı. Tekrar denemek için aşağı çek.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Yenilenemedi. Son kaydedilen kopya gösteriliyor.",

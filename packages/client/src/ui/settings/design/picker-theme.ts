@@ -48,20 +48,27 @@ export function plainSwatch(
 
 /**
  * @description Describes an addon as a swatch for Discord's theme picker: a theme as a gradient across its
- * background tiers, or plain like Discord's own when they match, and an icon pack as its tint into its base.
+ * background tiers, or plain like Discord's own when they match, and an icon pack as Discord's own swatch for its theme,
+ * so its preview keeps Discord's colours.
  * @param addon The theme or icon pack.
- * @param index Its position in the carousel, so neighbouring icon packs get different tints.
+ * @param discordTheme Discord's own theme, which an icon pack's swatch stands on.
  * @returns The picker swatch, tagged with the addon's id.
  */
-export function pickerThemeOf(addon: Addon, index: number): PickerTheme {
-	const { base, accent } = paletteOf(addon, index);
+export function pickerThemeOf(addon: Addon, discordTheme: BaseTheme): PickerTheme {
 	const theme = themeOf(addon);
 
 	const name = () => addon.name;
 
 	if (!theme) {
-		return gradientSwatch('darker', name, addon.id, [accent, base]);
+		return {
+			type: 'standardBackgroundTheme',
+			theme: discordTheme,
+			getName: name,
+			unboundAddonId: addon.id,
+		};
 	}
+
+	const { base } = paletteOf(addon);
 
 	const backgrounds = backgroundsOf(theme);
 

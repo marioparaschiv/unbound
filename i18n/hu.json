@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "témák",
 	"UNBOUND_ICONS": "Ikonok",
 	"UNBOUND_ICONS_NOUN": "ikonok",
-	"UNBOUND_ICONS_PLACEHOLDER": "Az ikoncsomagok hamarosan érkeznek.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Még nincsenek listázott {type}.",
 	"UNBOUND_MARKETPLACE_ERROR": "A Piactér nem érhető el. Húzd lefelé az újrapróbáláshoz.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Nem sikerült frissíteni. A legutóbb mentett változat látható.",

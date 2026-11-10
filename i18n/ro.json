@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "teme",
 	"UNBOUND_ICONS": "Pictograme",
 	"UNBOUND_ICONS_NOUN": "pictograme",
-	"UNBOUND_ICONS_PLACEHOLDER": "Pachetele de pictograme vin în curând.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Încă nu sunt listate {type}.",
 	"UNBOUND_MARKETPLACE_ERROR": "Nu am putut contacta Marketplace. Trage în jos pentru a reîncerca.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Nu s-a putut reîmprospăta. Se afișează ultima copie salvată.",

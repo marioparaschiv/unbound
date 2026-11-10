@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "主题",
 	"UNBOUND_ICONS": "图标",
 	"UNBOUND_ICONS_NOUN": "图标",
-	"UNBOUND_ICONS_PLACEHOLDER": "图标包即将推出。",
 	"UNBOUND_MARKETPLACE_EMPTY": "暂无上架的{type}。",
 	"UNBOUND_MARKETPLACE_ERROR": "无法连接到市场。下拉以重试。",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "无法刷新。正在显示上次保存的内容。",

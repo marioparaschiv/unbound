@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "ธีม",
 	"UNBOUND_ICONS": "ไอคอน",
 	"UNBOUND_ICONS_NOUN": "ไอคอน",
-	"UNBOUND_ICONS_PLACEHOLDER": "แพ็กไอคอนจะมาเร็วๆ นี้",
 	"UNBOUND_MARKETPLACE_EMPTY": "ยังไม่มี{type}ในรายการ",
 	"UNBOUND_MARKETPLACE_ERROR": "ไม่สามารถเชื่อมต่อกับมาร์เก็ตเพลสได้ ดึงลงเพื่อลองใหม่",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "รีเฟรชไม่สำเร็จ กำลังแสดงข้อมูลที่บันทึกไว้ล่าสุด",

@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "thèmes",
 	"UNBOUND_ICONS": "Icônes",
 	"UNBOUND_ICONS_NOUN": "icônes",
-	"UNBOUND_ICONS_PLACEHOLDER": "Les packs d’icônes arrivent bientôt.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Pas encore de {type} disponibles.",
 	"UNBOUND_MARKETPLACE_ERROR": "Impossible d’accéder au catalogue. Tirez vers le bas pour réessayer.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Impossible d’actualiser. Affichage de la dernière copie enregistrée.",

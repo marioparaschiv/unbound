@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "테마",
 	"UNBOUND_ICONS": "아이콘",
 	"UNBOUND_ICONS_NOUN": "아이콘",
-	"UNBOUND_ICONS_PLACEHOLDER": "아이콘 팩이 곧 나와요.",
 	"UNBOUND_MARKETPLACE_EMPTY": "아직 등록된 {type}이(가) 없어요.",
 	"UNBOUND_MARKETPLACE_ERROR": "마켓플레이스에 연결하지 못했어요. 아래로 당겨 다시 시도하세요.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "새로 고치지 못했어요. 마지막으로 저장된 내용을 표시하고 있어요.",

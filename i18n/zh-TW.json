@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "主題",
 	"UNBOUND_ICONS": "圖示",
 	"UNBOUND_ICONS_NOUN": "圖示",
-	"UNBOUND_ICONS_PLACEHOLDER": "圖示包即將推出。",
 	"UNBOUND_MARKETPLACE_EMPTY": "目前尚無上架的{type}。",
 	"UNBOUND_MARKETPLACE_ERROR": "無法連線至市集。請下拉以重試。",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "無法重新整理。正在顯示上次儲存的內容。",

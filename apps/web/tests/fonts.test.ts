@@ -143,6 +143,30 @@ describe('resolveFont', () => {
 		expect(font).toMatchObject({ id: 'Noto Sans JP', family: 'Noto Sans JP' });
 	});
 
+	test('finds a family typed in the wrong case through its Fontsource spelling', async () => {
+		const fetch = recorded({
+			[GOOGLE_URL('jetbrains+mono')]: () => new Response('', { status: 400 }),
+			'https://api.fontsource.org/v1/fonts/jetbrains-mono': () =>
+				Response.json({ ...FONTSOURCE_INTER, family: 'JetBrains Mono' }),
+			[GOOGLE_URL('JetBrains+Mono')]: () =>
+				new Response(GOOGLE_LOBSTER.replace('Lobster', 'JetBrains Mono')),
+		});
+
+		expect(await resolveFont('jetbrains mono', fetch)).toMatchObject({
+			provider: 'google',
+			id: 'JetBrains Mono',
+			family: 'JetBrains Mono',
+		});
+	});
+
+	test('asks Fontsource nothing when Google knows the name as typed', async () => {
+		const fetch = recorded({ [GOOGLE_URL('Lobster')]: () => new Response(GOOGLE_LOBSTER) });
+
+		await resolveFont('Lobster', fetch);
+
+		expect(fetch.requests).toEqual([GOOGLE_URL('Lobster')]);
+	});
+
 	test('reports a family Google does not have as not_found', async () => {
 		const fetch = recorded({ [GOOGLE_URL('Nope')]: () => new Response('', { status: 400 }) });
 

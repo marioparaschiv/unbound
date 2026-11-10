@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "teman",
 	"UNBOUND_ICONS": "Ikoner",
 	"UNBOUND_ICONS_NOUN": "ikoner",
-	"UNBOUND_ICONS_PLACEHOLDER": "Ikonpaket kommer snart.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Inga {type} finns listade än.",
 	"UNBOUND_MARKETPLACE_ERROR": "Det gick inte att nå marknadsplatsen. Dra nedåt för att försöka igen.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Det gick inte att uppdatera. Visar den senast sparade kopian.",

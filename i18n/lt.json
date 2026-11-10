@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "temos",
 	"UNBOUND_ICONS": "Piktogramos",
 	"UNBOUND_ICONS_NOUN": "piktogramos",
-	"UNBOUND_ICONS_PLACEHOLDER": "Piktogramų rinkiniai netrukus.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Kol kas nėra jokių elementų ({type}).",
 	"UNBOUND_MARKETPLACE_ERROR": "Nepavyko pasiekti parduotuvės. Patraukite žemyn, kad bandytumėte dar kartą.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Nepavyko atnaujinti. Rodoma paskutinė išsaugota kopija.",

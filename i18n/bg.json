@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "теми",
 	"UNBOUND_ICONS": "Икони",
 	"UNBOUND_ICONS_NOUN": "икони",
-	"UNBOUND_ICONS_PLACEHOLDER": "Пакетите с икони идват скоро.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Все още няма публикувани {type}.",
 	"UNBOUND_MARKETPLACE_ERROR": "Не може да се осъществи връзка с Магазина. Плъзни надолу, за да опиташ отново.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Неуспешно опресняване. Показва се последното запазено копие.",

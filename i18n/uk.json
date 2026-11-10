@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "теми",
 	"UNBOUND_ICONS": "Іконки",
 	"UNBOUND_ICONS_NOUN": "іконки",
-	"UNBOUND_ICONS_PLACEHOLDER": "Набори іконок з’являться незабаром.",
 	"UNBOUND_MARKETPLACE_EMPTY": "{type} тут поки не опубліковано.",
 	"UNBOUND_MARKETPLACE_ERROR": "Не вдалося з’єднатися з Маркетплейсом. Потягни вниз, щоб спробувати знову.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Не вдалося оновити. Показано останню збережену копію.",

@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "themes",
 	"UNBOUND_ICONS": "Icons",
 	"UNBOUND_ICONS_NOUN": "icons",
-	"UNBOUND_ICONS_PLACEHOLDER": "Icon packs are coming soon.",
 	"UNBOUND_MARKETPLACE_EMPTY": "No {type} are listed yet.",
 	"UNBOUND_MARKETPLACE_ERROR": "Couldn't reach the marketplace. Pull down to try again.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Couldn't refresh. Showing the last saved copy.",

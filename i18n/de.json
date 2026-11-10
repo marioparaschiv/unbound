@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "Themes",
 	"UNBOUND_ICONS": "Icons",
 	"UNBOUND_ICONS_NOUN": "Icons",
-	"UNBOUND_ICONS_PLACEHOLDER": "Icon-Pakete kommen bald.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Noch keine {type} gelistet.",
 	"UNBOUND_MARKETPLACE_ERROR": "Der Marktplatz ist nicht erreichbar. Zum erneuten Versuchen nach unten ziehen.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Aktualisierung fehlgeschlagen. Die zuletzt gespeicherte Kopie wird angezeigt.",

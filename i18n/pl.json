@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "motywy",
 	"UNBOUND_ICONS": "Ikony",
 	"UNBOUND_ICONS_NOUN": "ikony",
-	"UNBOUND_ICONS_PLACEHOLDER": "Pakiety ikon już wkrótce.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Na liście nie ma jeszcze nic: {type}.",
 	"UNBOUND_MARKETPLACE_ERROR": "Nie udało się połączyć ze Sklepem. Przeciągnij w dół, aby spróbować ponownie.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Nie udało się odświeżyć. Wyświetlana jest ostatnio zapisana kopia.",

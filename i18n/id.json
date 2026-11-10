@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "tema",
 	"UNBOUND_ICONS": "Ikon",
 	"UNBOUND_ICONS_NOUN": "ikon",
-	"UNBOUND_ICONS_PLACEHOLDER": "Paket ikon segera hadir.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Belum ada {type} yang terdaftar.",
 	"UNBOUND_MARKETPLACE_ERROR": "Tidak dapat terhubung ke marketplace. Tarik ke bawah untuk mencoba lagi.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Tidak dapat memuat ulang. Menampilkan salinan terakhir yang tersimpan.",

@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "chủ đề",
 	"UNBOUND_ICONS": "Biểu tượng",
 	"UNBOUND_ICONS_NOUN": "biểu tượng",
-	"UNBOUND_ICONS_PLACEHOLDER": "Gói biểu tượng sắp ra mắt.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Chưa có {type} nào được đăng.",
 	"UNBOUND_MARKETPLACE_ERROR": "Không thể kết nối tới cửa hàng. Kéo xuống để thử lại.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Không thể làm mới. Đang hiển thị bản đã lưu gần nhất.",

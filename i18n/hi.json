@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "थीम",
 	"UNBOUND_ICONS": "आइकन",
 	"UNBOUND_ICONS_NOUN": "आइकन",
-	"UNBOUND_ICONS_PLACEHOLDER": "आइकन पैक जल्द आ रहे हैं।",
 	"UNBOUND_MARKETPLACE_EMPTY": "अभी तक कोई {type} लिस्ट नहीं है।",
 	"UNBOUND_MARKETPLACE_ERROR": "मार्केटप्लेस से कनेक्ट नहीं हो सका। फिर से कोशिश करने के लिए नीचे खींचें।",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "रिफ़्रेश नहीं हो सका। आख़िरी सेव की गई कॉपी दिखाई जा रही है।",

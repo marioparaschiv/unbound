@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "temi",
 	"UNBOUND_ICONS": "Icone",
 	"UNBOUND_ICONS_NOUN": "icone",
-	"UNBOUND_ICONS_PLACEHOLDER": "I pacchetti di icone arriveranno presto.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Non ci sono ancora {type} nell’elenco.",
 	"UNBOUND_MARKETPLACE_ERROR": "Impossibile raggiungere il Marketplace. Trascina verso il basso per riprovare.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Impossibile aggiornare. Viene mostrata l’ultima copia salvata.",

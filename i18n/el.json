@@ -187,7 +187,6 @@
 	"UNBOUND_THEMES_NOUN": "θέματα",
 	"UNBOUND_ICONS": "Εικονίδια",
 	"UNBOUND_ICONS_NOUN": "εικονίδια",
-	"UNBOUND_ICONS_PLACEHOLDER": "Τα πακέτα εικονιδίων έρχονται σύντομα.",
 	"UNBOUND_MARKETPLACE_EMPTY": "Δεν υπάρχουν ακόμα καταχωρισμένα {type}.",
 	"UNBOUND_MARKETPLACE_ERROR": "Δεν ήταν δυνατή η σύνδεση με το Marketplace. Σύρε προς τα κάτω για να δοκιμάσεις ξανά.",
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Δεν ήταν δυνατή η ανανέωση. Εμφανίζεται το τελευταίο αποθηκευμένο αντίγραφο.",

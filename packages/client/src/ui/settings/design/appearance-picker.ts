@@ -86,6 +86,15 @@ export const SelectorItem: SelectorItemModule = findByFilePathLazy(
 	`${ROOT}components/SettingsAppearanceThemeSelectorItem.tsx`,
 );
 
+type ChannelListPreviewProps = { themes: PickerTheme[]; themeIndex: number };
+
+type ChannelListPreviewModule = { default: (props: ChannelListPreviewProps) => ReactElement };
+
+/** The picker's preview: a backdrop view holding its gradient, the mock "Messages" list and the Nitro upsell. */
+export const ChannelListPreview: ChannelListPreviewModule = findByFilePathLazy(
+	`${ROOT}components/SettingsAppearanceChannelList.tsx`,
+);
+
 type SwatchGradientProps = {
 	customTheme: PickerTheme;
 	mix: boolean;
