@@ -99,7 +99,6 @@ function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 		// bundle and DCE prunes the branch and the `*.dev.ts` modules only it imports.
 		transform: {
 			define: {
-				$$DEV$$: JSON.stringify(IS_DEV_BUILD),
 				'import.meta.env.DEV': JSON.stringify(IS_DEV_BUILD),
 				'import.meta.env.DEV_TOOLS': JSON.stringify(devTools),
 				'import.meta.env.BENCH': JSON.stringify(Boolean(benchmark)),

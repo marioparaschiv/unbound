@@ -37,7 +37,6 @@ let searchLoads = 0;
 
 Object.assign(globalThis, {
 	React: { createElement: () => null },
-	$$DEV$$: false,
 	ErrorUtils: { getGlobalHandler: () => void 0, setGlobalHandler: () => void 0 },
 	__r: (id: number) => {
 		searchLoads++;

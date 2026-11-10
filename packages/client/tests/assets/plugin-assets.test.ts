@@ -13,7 +13,6 @@ const transforms: Transform[] = [];
 let deviceScale = 3;
 
 Object.assign(globalThis, {
-	$$DEV$$: false,
 	window: globalThis,
 	ReactNative: { PixelRatio: { get: () => deviceScale } },
 	React: { createElement: () => null },

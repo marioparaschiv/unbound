@@ -132,8 +132,6 @@ mock.module('~/metro/finders', () => ({
 		},
 }));
 
-Reflect.set(globalThis, '$$DEV$$', false);
-
 const flux = await import('~/flux/api');
 const runtime = await import('~/flux/runtime-bridge');
 const filters = await import('~/metro/filters');

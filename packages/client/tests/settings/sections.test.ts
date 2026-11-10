@@ -8,7 +8,7 @@ import { createCacheMock } from '../helpers/cache';
 
 await import('../helpers/addons');
 
-Object.assign(globalThis, { window: globalThis, modules: new Map(), $$DEV$$: false });
+Object.assign(globalThis, { window: globalThis, modules: new Map() });
 
 type RendererConfig = { SETTING_RENDERER_CONFIG: Record<string, Pick<SettingsEntry, 'key'>> };
 

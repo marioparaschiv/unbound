@@ -2,9 +2,6 @@ import { expect, test } from 'bun:test';
 
 import type { MetroFilter } from '~/metro/filters';
 
-// The build defines `$$DEV$$`, which the filters read through `~/lib/constants`.
-Object.assign(globalThis, { $$DEV$$: false });
-
 const { default: waitForSettingsOverview } = await import('~/settings/wait-for-overview');
 
 type Waiter = {

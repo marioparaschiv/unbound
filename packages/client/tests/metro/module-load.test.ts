@@ -5,7 +5,7 @@ import { createCacheMock } from '../helpers/cache';
 
 const IDS = [7, 8];
 
-Object.assign(globalThis, { window: globalThis, $$DEV$$: false });
+Object.assign(globalThis, { window: globalThis });
 
 const fakeMetro = startFakeMetro();
 

@@ -26,7 +26,6 @@ const cachedIds: Record<string, number[]> = {};
 const cachedAssets: Record<string, number> = {};
 
 Object.assign(globalThis, {
-	$$DEV$$: false,
 	window: globalThis,
 	ErrorUtils: { getGlobalHandler: () => undefined, setGlobalHandler: () => undefined },
 });

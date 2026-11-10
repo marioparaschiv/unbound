@@ -8,7 +8,6 @@ const ids = [1, 2, 3];
 Object.assign(globalThis, {
 	window: globalThis,
 	modules: new Map(ids.map((id) => [id, {}])),
-	$$DEV$$: false,
 });
 
 // No `NativePlatform.files`: an older loader, so the cache stays in its Bucket.

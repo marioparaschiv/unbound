@@ -18,7 +18,6 @@ const cachedIds: Record<string, number[]> = {};
 const hints: Record<string, ModuleHint[]> = {};
 
 Object.assign(globalThis, {
-	$$DEV$$: false,
 	window: globalThis,
 	ErrorUtils: { getGlobalHandler: () => undefined, setGlobalHandler: () => undefined },
 });

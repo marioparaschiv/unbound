@@ -6,8 +6,6 @@ import type { UpdatesState } from '~/updates/state';
 
 import { coreI18nMock } from '../helpers/core-i18n';
 
-Reflect.set(globalThis, '$$DEV$$', false);
-
 const toasts: ToastOptions[] = [];
 
 mock.module('~/i18n/api', coreI18nMock);

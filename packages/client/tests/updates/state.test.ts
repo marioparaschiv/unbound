@@ -3,8 +3,6 @@ import { afterAll, beforeEach, expect, test } from 'bun:test';
 
 import { FakeAddons, loadManagers, makeManifest, resetDevice, writes } from '../helpers/addons';
 
-Reflect.set(globalThis, '$$DEV$$', false);
-
 const Manager = await loadManagers();
 const { default: UpdatesStore } = await import('~/updates/state');
 

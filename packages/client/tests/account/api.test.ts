@@ -42,8 +42,6 @@ const server = Bun.serve({
 	},
 });
 
-Object.assign(globalThis, { $$DEV$$: false });
-
 const constants = await import('~/core/constants');
 
 mock.module('~/core/constants', () => ({ ...constants, API_URL: server.url.origin }));

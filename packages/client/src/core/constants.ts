@@ -1,14 +1,8 @@
 import { REPOSITORY } from '~/core/repository';
 
-/** Build-time token replaced with a boolean literal by the `replace` plugin. */
-declare const $$DEV$$: boolean;
-
 /** The symbol a metro filter stores its cache key under, so repeated lookups hit the module cache. */
 export const CACHE_KEY = Symbol.for('metro.cache');
 export const CACHE_VERSION = 2;
-
-/** Whether this is a development build. Replaced at build time by the build's `transform.define`. */
-export const DEV: boolean = $$DEV$$;
 
 /**
  * Base URL the i18n locale tables are fetched from. Replaced at build time: the GitHub raw URL in

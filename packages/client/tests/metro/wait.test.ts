@@ -9,7 +9,7 @@ type Exports = Record<string, (...args: number[]) => number | null>;
 
 const cachedIds: Record<string, number[]> = {};
 
-Object.assign(globalThis, { $$DEV$$: false, window: globalThis });
+Object.assign(globalThis, { window: globalThis });
 
 // A fake Metro registry: modules 0 and 1 are loaded before Unbound, the rest load on demand.
 const fakeMetro = startFakeMetro();

@@ -1,7 +1,7 @@
 import { createLogger } from '@unbound-app/logger';
 
-import { DEV, DEV_SERVER_URL } from '~/core/constants';
 import { performRefresh } from '~/hot-refresh/runtime';
+import { DEV_SERVER_URL } from '~/core/constants';
 
 type DevRuntime = {
 	applyPatch(code: string, changedIds: string[]): 'applied' | 'needs-reload';
@@ -46,7 +46,7 @@ export function stop() {
  * @returns `true` in dev builds made by the dev engine.
  */
 export function shouldStart() {
-	return DEV && Boolean(globalThis.__rolldown_runtime__);
+	return import.meta.env.DEV && Boolean(globalThis.__rolldown_runtime__);
 }
 
 function connect() {

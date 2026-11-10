@@ -5,7 +5,7 @@ import type { SettingsButtonState } from '~/ui/addons/settings-button-state';
 
 import { makeManifest, resetDevice, states } from '../helpers/addons';
 
-Object.assign(globalThis, { window: globalThis, modules: new Map(), $$DEV$$: false });
+Object.assign(globalThis, { window: globalThis, modules: new Map() });
 
 const { Plugins } = await import('~/plugins/manager');
 const { settingsButtonState } = await import('~/ui/addons/settings-button-state');

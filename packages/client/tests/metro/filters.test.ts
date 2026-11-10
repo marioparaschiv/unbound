@@ -1,7 +1,5 @@
 import { describe, expect, test } from 'bun:test';
 
-Object.assign(globalThis, { $$DEV$$: false });
-
 const { CACHE_KEY } = await import('~/core/constants');
 const { byTypeName } = await import('~/metro/filters');
 

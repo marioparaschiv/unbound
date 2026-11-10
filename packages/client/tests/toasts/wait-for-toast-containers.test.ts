@@ -3,9 +3,6 @@ import { expect, test } from 'bun:test';
 import type { ToastContainerTarget } from '~/toasts/wait-for-toast-containers';
 import type { MetroFilter } from '~/metro/filters';
 
-// The build defines `$$DEV$$`, which the filters read through `~/lib/constants`.
-Object.assign(globalThis, { $$DEV$$: false });
-
 const { default: waitForToastContainers } = await import('~/toasts/wait-for-toast-containers');
 
 type Waiter = {

@@ -7,7 +7,6 @@ const SETTINGS = 30;
 const cachedIds: Record<string, number[]> = {};
 
 Object.assign(globalThis, {
-	$$DEV$$: false,
 	window: globalThis,
 	ErrorUtils: { getGlobalHandler: () => undefined, setGlobalHandler: () => undefined },
 });

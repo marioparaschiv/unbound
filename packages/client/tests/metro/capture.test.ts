@@ -12,7 +12,6 @@ const FLAGGED = 7;
 const LISTENED = 8;
 
 Object.assign(globalThis, {
-	$$DEV$$: false,
 	window: globalThis,
 	ErrorUtils: { getGlobalHandler: () => undefined, setGlobalHandler: () => undefined },
 });
