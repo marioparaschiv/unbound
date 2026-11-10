@@ -11,12 +11,14 @@ type AddonGroupProps = {
 	updates: PendingUpdate[];
 	/** Whether the last check finished, so an addon without an update is known to be current. */
 	checked: boolean;
+	/** Whether a check is running. */
+	checking: boolean;
 	/** The ids the Marketplace lists; `undefined` until a catalog is available. */
 	listed: Set<string> | undefined;
 };
 
 /** @description The installed addons, collapsed unless an addon update is waiting. */
-function AddonGroup({ addons, updates, checked, listed }: AddonGroupProps) {
+function AddonGroup({ addons, updates, checked, checking, listed }: AddonGroupProps) {
 	const count = format('UNBOUND_UPDATES_ADDONS_COUNT', { count: addons.length });
 	const isListed = (entry: InstalledEntry) => !listed || listed.has(entry.id);
 	// Stable sort keeps the name order within the listed and unlisted runs.
@@ -39,6 +41,7 @@ function AddonGroup({ addons, updates, checked, listed }: AddonGroupProps) {
 					entry={entry}
 					update={updates.find((pending) => pending.id === entry.id)}
 					checked={checked}
+					checking={checking}
 					listed={isListed(entry)}
 				/>
 			))}
