@@ -397,7 +397,9 @@ jobs:
 
             - name: Skip the TestFlight release without a source IPA
               if: steps.source.outputs.missing == 'true' && inputs.is_testflight == true
-              run: echo "::notice title=No TestFlight build::dkrypt could not provide the TestFlight IPA, so this TestFlight release is skipped. The next poll tries again."
+              run: |
+                  echo "::error title=TestFlight IPA unavailable::dkrypt could not provide the requested IPA. The TestFlight release was not published."
+                  exit 1
 
             - name: Require the iOS source for a release
               if: steps.source.outputs.missing == 'true' && (inputs.release == true || inputs.release == 'true') && inputs.is_testflight != true
