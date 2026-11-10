@@ -1,6 +1,8 @@
-type BundleReply = { id: number; text?: string; error?: string };
+/** What `bundle-worker.ts` answers: the bundle text, or why it failed. */
+export type BundleReply = { id: number; text?: string; error?: string };
 
-type BundleRequest = { id: number; source: string };
+/** What `bundle-worker.ts` is asked: the entry source to bundle. */
+export type BundleRequest = { id: number; source: string };
 
 const MAX_WORKERS = 4;
 

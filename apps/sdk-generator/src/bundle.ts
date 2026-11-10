@@ -4,28 +4,25 @@ import { existsSync, realpathSync } from 'node:fs';
 import { Node } from 'ts-morph';
 
 import {
+	config,
 	SDK_TSCONFIG,
-	INLINED_LIBRARIES,
 	TYPES_INDEX,
 	UTILS_INDEX,
 	UTILS_OUT,
 	INTERNAL_OUT,
 	API_SRC,
-	isJsonObject,
-	readJson,
 	CLIENT,
-	logger,
-} from './paths';
+} from './config';
 import {
-	stripInternal,
 	declaredNames,
 	declaresValue,
 	exportedNames,
 	collectReferencedNames,
-	groupByOwner,
-	typeOnlyStatements,
-} from './transform';
+} from './declarations';
+import { stripInternal, groupByOwner, typeOnlyStatements } from './transform';
+import { isJsonObject, readJson } from './json';
 import { parseSource } from './project';
+import { logger } from './logger';
 
 export type HoistFile = {
 	/** The absolute output path of the generated hoist file. */
@@ -68,7 +65,7 @@ export type HoistFiles = {
 export function bundle(source: string, inlineDeclareGlobals: boolean = false): string {
 	const entry: EntryPointConfig = {
 		filePath: source,
-		libraries: { inlinedLibraries: INLINED_LIBRARIES },
+		libraries: { inlinedLibraries: config.inlinedLibraries },
 		output: { noBanner: true, inlineDeclareGlobals, sortNodes: true },
 	};
 
@@ -305,15 +302,15 @@ export function buildHoistFiles(): HoistFiles {
 	const sources: { library: string; out: string }[] = [
 		{ library: UTILS_INDEX, out: UTILS_OUT },
 		{ library: TYPES_INDEX, out: INTERNAL_OUT },
-		...INLINED_LIBRARIES.filter((library) => library !== '@unbound-app/types').map(
-			(library) => {
+		...config.inlinedLibraries
+			.filter((library) => library !== '@unbound-app/types')
+			.map((library) => {
 				const out = outFor(library);
 
 				assigned.add(out);
 
 				return { library, out };
-			},
-		),
+			}),
 	];
 
 	for (const { library, out } of sources) {

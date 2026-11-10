@@ -3,8 +3,8 @@ import { join } from 'node:path';
 
 import { buildExports, buildGlobal, buildRoot, normalizeForHash } from '~/emit';
 import { readNamespaceAliases } from '~/entries';
-import type { ModuleEntry } from '~/paths';
-import { API_SRC } from '~/paths';
+import type { ModuleEntry } from '~/entry-types';
+import { API_SRC } from '~/config';
 
 describe('normalizeForHash', () => {
 	test('preserves string-literal types containing //', () => {

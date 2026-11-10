@@ -2,7 +2,7 @@ import { Node, SyntaxKind, type SourceFile } from 'ts-morph';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { API_SRC, CLIENT, ROOT } from './paths';
+import { API_SRC, CLIENT, ROOT } from './config';
 import { parseSource } from './project';
 
 /** A pure source file the SDK ships a copy of, and how its imports are rewritten to resolve inside `packages/api/src`. */

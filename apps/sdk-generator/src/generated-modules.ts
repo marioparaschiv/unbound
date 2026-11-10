@@ -1,6 +1,6 @@
-import { collectReferencedNames, declaredNames } from './transform';
-import { GENERATED_MODULES } from './paths';
+import { collectReferencedNames, declaredNames } from './declarations';
 import { parseSource } from './project';
+import { config } from './config';
 
 /**
  * @description Adds a type import of each module a plugin's build generates, for the names a bundled module
@@ -12,7 +12,7 @@ import { parseSource } from './project';
  */
 export function importGeneratedModules(
 	text: string,
-	modules: Record<string, Record<string, string>> = GENERATED_MODULES,
+	modules: Record<string, Record<string, string>> = config.generatedModules,
 ): string {
 	const sourceFile = parseSource('generated-modules.d.ts', text);
 	const statements = sourceFile.getStatements();

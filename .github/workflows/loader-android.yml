@@ -252,23 +252,11 @@ jobs:
               working-directory: packages/loader/android
               run: ./gradlew :module:assembleRelease --build-cache --quiet --console=plain -PunboundBuildNumber="${GITHUB_RUN_NUMBER}"
 
-            - name: Report the compiler cache
+            - name: Save ccache
               if: ${{ !cancelled() }}
-              run: |
-                  {
-                      echo "### Compiler cache"
-                      echo
-                      echo '```'
-                      ccache --show-stats
-                      echo '```'
-                  } | tee -a "$GITHUB_STEP_SUMMARY"
-
-            - name: Save the compiler cache
-              if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
-              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              uses: ./.github/actions/save-ccache
               with:
-                  path: ${{ runner.temp }}/ccache
-                  key: ccache-${{ runner.os }}-android-module-${{ github.sha }}
+                  key: android-module
 
             - name: Test module
               working-directory: packages/loader/android

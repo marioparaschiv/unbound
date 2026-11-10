@@ -4,7 +4,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 
 import { generateDocs, listDocsEntryPoints } from '~/docs';
-import { API_SRC } from '~/paths';
+import { API_SRC } from '~/config';
 
 type Reflection = {
 	id: number;

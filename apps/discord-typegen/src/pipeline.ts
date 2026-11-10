@@ -4,15 +4,10 @@ import type { AssetRecord } from './assets';
 import type { HostProps } from './hosts';
 import type { Report } from './report';
 
-import {
-	BARREL_FILE,
-	declaredComponents,
-	emitModuleIndex,
-	MODULE_INDEX_FILE,
-} from './emit-modules';
 import { ASSETS_FILE, collectAssets, emitAssets, namesByType } from './assets';
 import { createResolver, findReactNative, listExports } from './resolve';
 import { createConstantLookup, resolveConstantRefs } from './constants';
+import { emitModuleIndex, MODULE_INDEX_FILE } from './emit-modules';
 import { isComponentCandidate, summarize } from './split';
 import { createParser, extractModule } from './extract';
 import { assignNames, sortComponents } from './naming';
@@ -97,9 +92,15 @@ export async function runPipeline(
 	const inference = infer(components, resolve, hosts, names);
 	const paths = new Map(summaries.map((summary) => [summary.id, summary.path]));
 	const exports = listExports(facts, resolve, new Set(components), paths);
-	const files = emit({ build, components, names, inference, resolve, exports });
+	const { files, barrelComponents: typed } = emit({
+		build,
+		components,
+		names,
+		inference,
+		resolve,
+		exports,
+	});
 	const assetNames = namesByType(assets);
-	const typed = declaredComponents(files.get(BARREL_FILE) ?? '');
 
 	files.set(ASSETS_FILE, emitAssets(build, assetNames));
 	files.set(MODULE_INDEX_FILE, emitModuleIndex({ build, shapes, exports, names, typed }));

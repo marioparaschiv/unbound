@@ -1,21 +1,41 @@
-import { Node, SyntaxKind, type Statement } from 'ts-morph';
+import { Node, type Statement } from 'ts-morph';
+import { dirname, relative } from 'node:path';
 
-import { relativeSpecifier, type ModuleEntry } from './paths';
+import type { ModuleEntry } from './entry-types';
+
+import { collectReferencedNames, declaredNames, declaresValue, isInternal } from './declarations';
 import { parseSource } from './project';
 
-/**
- * @description Tests whether a JSDocable node carries an `@internal` tag in its leading documentation.
- * @param node The node to inspect.
- * @returns `true` when the node is tagged `@internal`.
- */
-export function isInternal(node: Node): boolean {
-	if (!Node.isJSDocable(node)) {
-		return false;
-	}
+/** What `strip` needs to know about one module beyond its bundle text. */
+export type StripContext = {
+	/** The module's absolute output path, used to resolve relative specifiers. */
+	out: string;
+	/** The nested subpath entries whose parent is this module, keyed by namespace name. */
+	children: Map<string, ModuleEntry>;
+	/** The map attributing each hoisted declaration name to its owning hoist file. */
+	ownerByName: Map<string, string>;
+	/** Collects the hoist-file paths actually imported from, so orphan files aren't emitted. */
+	usedOwners: Set<string>;
+	/** The names this module owns and re-exports from their hoist file. */
+	owned: Set<string>;
+	/** The hoisted names their owner declares as values. */
+	hoistedValues: Set<string>;
+};
 
-	return node
-		.getJsDocs()
-		.some((doc) => doc.getTags().some((tag) => tag.getTagName() === 'internal'));
+/**
+ * @description Computes the relative module specifier from a file at `fromOut` to a hoist file at
+ * `toOut`, so nested modules (`metro/index.d.ts`) reach up to a top-level hoist file.
+ * @param fromOut The absolute output path of the importing file.
+ * @param toOut The absolute output path of the hoist file being imported.
+ * @returns The POSIX-style relative module specifier, without extension.
+ */
+export function relativeSpecifier(fromOut: string, toOut: string): string {
+	const rel = relative(dirname(fromOut), toOut)
+		.replace(/\.d\.ts$/, '')
+		.split('\\')
+		.join('/');
+
+	return rel.startsWith('.') ? rel : `./${rel}`;
 }
 
 /**
@@ -108,160 +128,12 @@ function dropInternalExportSpecifiers(statements: Statement[], internal: Set<str
 }
 
 /**
- * @description Collects every top-level declaration name that the given statements reference. Uses
- * the same reference classification as the root tree-shaker: aliased/import specifier names and a
- * declaration's own name node don't count, but a computed `[X]` property name is a real reference.
- * @param statements The surviving statements to scan for references.
- * @returns The set of referenced identifier texts.
- */
-export function collectReferencedNames(statements: Node[]): Set<string> {
-	const referenced = new Set<string>();
-
-	for (const statement of statements) {
-		for (const reference of statement.getDescendantsOfKind(SyntaxKind.Identifier)) {
-			if (!isReference(reference)) {
-				continue;
-			}
-
-			referenced.add(reference.getText());
-		}
-	}
-
-	return referenced;
-}
-
-/**
- * @description Reports whether an identifier is the declared name of its parent (a parameter,
- * a property/method signature, a property/variable name, ...) rather than a reference to a
- * declaration. ts-morph exposes the declared name via `getNameNode`, so an identifier that is
- * exactly its parent's name node is a declaration name. A computed `[X]` property name is a real
- * reference to `X`, so it is excluded.
- * @param reference The identifier to classify.
- * @returns `true` when the identifier is its parent's declared name.
- */
-export function isDeclarationName(reference: Node): boolean {
-	const parent = reference.getParent() as { getNameNode?: () => Node | undefined };
-
-	if (typeof parent.getNameNode !== 'function') {
-		return false;
-	}
-
-	if (parent.getNameNode() !== reference) {
-		return false;
-	}
-
-	return !Node.isComputedPropertyName(reference.getParent());
-}
-
-/**
- * @description Reports whether an identifier is a genuine reference to a declaration rather than a
- * binding or specifier name. An aliased export specifier (`X as Y`) references only `X`; an import
- * specifier's names are re-bindings, not references; a declaration's own name node is not a
- * reference. A computed `[X]` property name stays a reference (handled by `isDeclarationName`).
- * @param reference The identifier to classify.
- * @returns `true` when the identifier references a declaration.
- */
-export function isReference(reference: Node): boolean {
-	const parent = reference.getParent();
-
-	if (Node.isExportSpecifier(parent)) {
-		if (parent.getAliasNode() === reference) {
-			return false;
-		}
-	} else if (Node.isImportSpecifier(parent)) {
-		return false;
-	} else if (isDeclarationName(reference)) {
-		return false;
-	}
-
-	return true;
-}
-
-/**
- * @description Lists the binding names a top-level declaration introduces.
- * @param statement The declaration to inspect.
- * @returns The declared identifier names (empty for anonymous statements).
- */
-export function declaredNames(statement: Node): string[] {
-	if (Node.isVariableStatement(statement)) {
-		return statement.getDeclarations().map((declaration) => declaration.getName());
-	}
-
-	if (
-		Node.isFunctionDeclaration(statement) ||
-		Node.isClassDeclaration(statement) ||
-		Node.isInterfaceDeclaration(statement) ||
-		Node.isTypeAliasDeclaration(statement) ||
-		Node.isEnumDeclaration(statement)
-	) {
-		const name = statement.getName();
-
-		return name ? [name] : [];
-	}
-
-	return [];
-}
-
-/**
- * @description Tests whether a declaration introduces a runtime value (a `const`, function, class or enum)
- * rather than only a type.
- * @param statement The declaration to inspect.
- * @returns `true` when the statement declares a value.
- */
-export function declaresValue(statement: Node): boolean {
-	return (
-		Node.isVariableStatement(statement) ||
-		Node.isFunctionDeclaration(statement) ||
-		Node.isClassDeclaration(statement) ||
-		Node.isEnumDeclaration(statement)
-	);
-}
-
-/**
- * @description Lists the names a statement container exports from its own statements: declarations
- * wearing an `export` modifier plus `export { A as B }` specifiers, under their exported alias.
- * Re-exports from other modules count (they are part of the surface); `export *` cannot be
- * enumerated statically and is ignored.
- * @param container A source file or module body exposing `getStatements`.
- * @returns The set of exported names.
- */
-export function exportedNames(container: Node): Set<string> {
-	const names = new Set<string>();
-
-	if (!Node.isStatemented(container)) {
-		return names;
-	}
-
-	for (const statement of container.getStatements()) {
-		if (Node.isExportDeclaration(statement)) {
-			for (const specifier of statement.getNamedExports()) {
-				names.add(specifier.getAliasNode()?.getText() ?? specifier.getName());
-			}
-
-			const namespaceExport = statement.getNamespaceExport();
-
-			if (namespaceExport) {
-				names.add(namespaceExport.getName());
-			}
-
-			continue;
-		}
-
-		if (Node.isExportable(statement) && statement.hasExportKeyword()) {
-			for (const name of declaredNames(statement)) names.add(name);
-		}
-	}
-
-	return names;
-}
-
-/**
  * @description Removes a module's `default` export so each public name is declared once, as its named
  * export. Drops the `default` binding and the unexported declaration behind it once nothing references it.
  * @param sourceFile The parsed module bundle to rewrite. Handles `export { X as default }`,
  * `export default X;` and `export default function`/`class` declarations.
  */
-export function dropDefaultExport(sourceFile: Node) {
+function dropDefaultExport(sourceFile: Node) {
 	if (!Node.isStatemented(sourceFile)) return;
 
 	const locals = new Set<string>();
@@ -340,11 +212,7 @@ export function dropDefaultExport(sourceFile: Node) {
  * @param outPath The module's absolute output path (a folder module's `index.d.ts`).
  * @param children The nested subpath entries whose parent is this module, keyed for namespace lookup.
  */
-export function collapseNamespaces(
-	sourceFile: Node,
-	outPath: string,
-	children: Map<string, ModuleEntry>,
-) {
+function collapseNamespaces(sourceFile: Node, outPath: string, children: Map<string, ModuleEntry>) {
 	if (!Node.isStatemented(sourceFile)) return;
 
 	const collapsed = new Set<string>();
@@ -447,13 +315,13 @@ export function collapseNamespaces(
  * is hoisted only when its owner's is a value too (a `const Theme` is not the type `Theme`), and an
  * owned value is re-exported as a value so it stays on the module's namespace object.
  */
-export function hoistLibraries(
+function hoistLibraries(
 	sourceFile: Node,
 	outPath: string,
 	ownerByName: Map<string, string>,
 	usedOwners: Set<string>,
 	owned: Set<string>,
-	hoistedValues: Set<string> = new Set<string>(),
+	hoistedValues: Set<string>,
 ) {
 	if (!Node.isStatemented(sourceFile)) return;
 
@@ -576,29 +444,17 @@ export function typeOnlyStatements(
  * declarations, collapses nested namespace re-exports into imports of their child files, hoists
  * inlined library declarations into per-library imports, and returns the cleaned text.
  * @param text The raw bundle text.
- * @param outPath The module's absolute output path, used to resolve relative specifiers.
- * @param children The nested subpath entries whose parent is this module.
- * @param ownerByName The map attributing each hoisted declaration name to its owning hoist file.
- * @param usedOwners Collects the hoist-file paths actually imported from, so orphan files aren't emitted.
- * @param owned The names this module owns and re-exports from their hoist file.
- * @param hoistedValues The hoisted names their owner declares as values.
+ * @param context The module's output path, children and hoist ownership.
  * @returns The stripped, collapsed, hoisted module text.
  */
-export function strip(
-	text: string,
-	outPath: string,
-	children: Map<string, ModuleEntry>,
-	ownerByName: Map<string, string>,
-	usedOwners: Set<string>,
-	owned: Set<string>,
-	hoistedValues: Set<string> = new Set<string>(),
-): string {
+export function strip(text: string, context: StripContext): string {
+	const { out, children, ownerByName, usedOwners, owned, hoistedValues } = context;
 	const sourceFile = parseSource('bundle.d.ts', text);
 
 	dropDefaultExport(sourceFile);
 	stripInternal(sourceFile, new Set<string>(), new Set<string>());
-	collapseNamespaces(sourceFile, outPath, children);
-	hoistLibraries(sourceFile, outPath, ownerByName, usedOwners, owned, hoistedValues);
+	collapseNamespaces(sourceFile, out, children);
+	hoistLibraries(sourceFile, out, ownerByName, usedOwners, owned, hoistedValues);
 
 	return sourceFile.getFullText();
 }
