@@ -1,5 +1,7 @@
 #import "Unbound.h"
 
+#import <Network/Network.h>
+#include <atomic>
 #import <jsi/jsi.h>
 
 #import "AddonsCore.h"
@@ -112,6 +114,24 @@ void CompleteBrowserLogin(NSString *token)
     {
         applyPendingBrowserLogin();
     }
+}
+
+// Whether the current network path is expensive (cellular, a hotspot) or constrained (Low Data
+// Mode), kept current by a path monitor so the loader can ask from any thread without waiting.
+static std::atomic_bool meteredNetwork{false};
+
+static void watchNetworkCost()
+{
+    static nw_path_monitor_t monitor = nullptr;
+    static dispatch_once_t   onceToken;
+    dispatch_once(&onceToken, ^{
+        monitor = nw_path_monitor_create();
+        nw_path_monitor_set_queue(monitor, dispatch_get_global_queue(QOS_CLASS_UTILITY, 0));
+        nw_path_monitor_set_update_handler(monitor, ^(nw_path_t path) {
+            meteredNetwork.store(nw_path_is_expensive(path) || nw_path_is_constrained(path));
+        });
+        nw_path_monitor_start(monitor);
+    });
 }
 
 class IOSLoaderHost final : public loader::LoaderHost
@@ -300,6 +320,11 @@ public:
         [Utilities reloadApp];
     }
 
+    bool onMeteredNetwork() override
+    {
+        return meteredNetwork.load();
+    }
+
     void showUpdateProgress(bool showing) override
     {
         if (showing)
@@ -396,6 +421,25 @@ static void prepareLoading(id instance)
 
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0),
                    ^{ [CoreBridge prescanAddons]; });
+
+    watchNetworkCost();
+
+    // Returning after a while checks for a newer bundle; long sessions otherwise never see one.
+    [[NSNotificationCenter defaultCenter]
+        addObserverForName:UIApplicationWillEnterForegroundNotification
+                    object:nil
+                     queue:nil
+                usingBlock:^(NSNotification *) {
+                    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0),
+                                   ^{ pipeline().onForeground(); });
+                }];
+
+    // iOS ending Discord without a crash (rather than suspending it) is not a failed launch.
+    [[NSNotificationCenter defaultCenter]
+        addObserverForName:UIApplicationWillTerminateNotification
+                    object:nil
+                     queue:nil
+                usingBlock:^(NSNotification *) { pipeline().markHealthy(); }];
 
     // Leaving the foreground without crashing counts the launch as healthy; a suspended app's
     // health timer would otherwise never fire before iOS ends it.

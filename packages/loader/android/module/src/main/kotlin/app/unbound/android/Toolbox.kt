@@ -218,6 +218,7 @@ object Toolbox {
         when (item.optString("id")) {
             "copy-app-folder-path" -> copyFolderPath(activity)
             "open-issue" -> openIssue(activity, item)
+            "launch-timings" -> showLaunchTimings(activity, item)
         }
     }
 
@@ -262,6 +263,14 @@ object Toolbox {
         activity.getSystemService(ClipboardManager::class.java)
             ?.setPrimaryClip(ClipData.newPlainText("Unbound folder", path))
         Toast.makeText(activity, path, Toast.LENGTH_LONG).show()
+    }
+
+    private fun showLaunchTimings(activity: Activity, item: JSONObject) {
+        AlertDialog.Builder(activity, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle(item.optString("title"))
+            .setMessage(NativeBridge.nativeLaunchTimings())
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     private fun openIssue(activity: Activity, item: JSONObject) {

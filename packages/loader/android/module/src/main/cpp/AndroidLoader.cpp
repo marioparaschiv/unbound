@@ -251,6 +251,49 @@ void AndroidLoader::markHealthy()
     }
 }
 
+void AndroidLoader::onForeground()
+{
+    if (pipeline_)
+    {
+        pipeline_->onForeground();
+    }
+}
+
+loader::PreviousExit AndroidLoader::previousExit()
+{
+    JNIEnv *env = currentEnvironment();
+    if (!env)
+    {
+        return loader::PreviousExit::Unknown;
+    }
+    jint exit = env->CallStaticIntMethod(callbacks_.bridgeClass, callbacks_.previousExit);
+    if (clearPendingException(env))
+    {
+        return loader::PreviousExit::Unknown;
+    }
+    switch (exit)
+    {
+        case 1:
+            return loader::PreviousExit::Crashed;
+        case 2:
+            return loader::PreviousExit::Ended;
+        default:
+            return loader::PreviousExit::Unknown;
+    }
+}
+
+bool AndroidLoader::onMeteredNetwork()
+{
+    JNIEnv *env = currentEnvironment();
+    if (!env)
+    {
+        return false;
+    }
+    jboolean metered =
+        env->CallStaticBooleanMethod(callbacks_.bridgeClass, callbacks_.isMeteredNetwork);
+    return !clearPendingException(env) && metered == JNI_TRUE;
+}
+
 void AndroidLoader::onLoadJSBundle()
 {
     // start() loaded the file moments ago; a reloaded runtime still sees edits made since.
@@ -765,6 +808,12 @@ AndroidLoader::download(const std::string &url, const std::string &destination,
     loader::DownloadResult result;
     result.status = std::stoi(toStdString(env, status));
     result.etag   = toStdString(env, etag);
+    if (env->GetArrayLength(response) >= 3)
+    {
+        auto retryAfter   = static_cast<jstring>(env->GetObjectArrayElement(response, 2));
+        result.retryAfter = retryAfter ? toStdString(env, retryAfter) : "";
+        env->DeleteLocalRef(retryAfter);
+    }
 
     env->DeleteLocalRef(status);
     env->DeleteLocalRef(etag);
