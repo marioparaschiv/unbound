@@ -10,9 +10,9 @@ import postgres from 'postgres';
 import type { AddonChannels } from '~/dispatchers/addons';
 import { contentHash } from '~/lib/content-hash';
 
-import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
-import { moveData, type MoveOptions, type MoveReport } from '../scripts/move-data';
-import { signUp } from './helpers/web';
+import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from '../helpers/database';
+import { moveData, type MoveOptions, type MoveReport } from '../../scripts/move-data';
+import { signUp } from '../helpers/web';
 
 // The old bot database's tables the move reads, as its last migrations left them.
 const OLD_SCHEMA = `

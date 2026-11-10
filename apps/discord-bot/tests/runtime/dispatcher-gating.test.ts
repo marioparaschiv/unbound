@@ -20,7 +20,7 @@ import {
 	DATABASE_URL,
 	waitFor,
 	type BotTestDatabase,
-} from './helpers/database';
+} from '../helpers/database';
 
 type FakeDispatcher = {
 	dispatcher: Dispatcher;

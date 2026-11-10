@@ -12,9 +12,9 @@ import {
 import { createDatabase, type Database } from '~/db/database';
 import { releasePost } from '~/db/schema';
 
-import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
-import { createFakeDiscord, type FakeDiscord } from './helpers/fake-discord-rest';
-import { createFakeReads, RELEASE, type FakeReads } from './helpers/fake-reads';
+import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from '../helpers/database';
+import { createFakeDiscord, type FakeDiscord } from '../helpers/fake-discord-rest';
+import { createFakeReads, RELEASE, type FakeReads } from '../helpers/fake-reads';
 
 const TARGET: ReleaseTarget = { channelId: '21', roleId: '31' };
 const NOW = Date.parse('2026-10-02T00:00:00.000Z');

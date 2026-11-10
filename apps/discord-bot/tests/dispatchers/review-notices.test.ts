@@ -8,9 +8,9 @@ import { reviewNoticesDispatcher } from '~/dispatchers/review-notices';
 import type { DispatcherContext } from '~/dispatchers/types';
 import { reviewNotice } from '~/db/schema';
 
-import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
-import { createFakeClient, createFakeDiscord, type FakeDiscord } from './helpers/fake-discord';
-import { signUp, type WebUser } from './helpers/web';
+import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from '../helpers/database';
+import { createFakeClient, createFakeDiscord, type FakeDiscord } from '../helpers/fake-discord';
+import { signUp, type WebUser } from '../helpers/web';
 
 type Decision = {
 	decision: ReviewDecision;

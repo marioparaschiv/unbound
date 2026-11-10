@@ -20,11 +20,11 @@ import {
 import { createContributorCache } from '~/lib/github-contributors';
 import { roleGrant } from '~/db/schema';
 
-import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
-import { FAKE_GUILD_ID, GUILD_ROLES, fakeDiscord } from './helpers/roles-discord';
-import { createFakeReads, MEMBER, type FakeReads } from './helpers/fake-reads';
-import { fakeGitHub } from './helpers/github-fetch';
-import { signUp } from './helpers/web';
+import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from '../helpers/database';
+import { FAKE_GUILD_ID, GUILD_ROLES, fakeDiscord } from '../helpers/roles-discord';
+import { createFakeReads, MEMBER, type FakeReads } from '../helpers/fake-reads';
+import { fakeGitHub } from '../helpers/github-fetch';
+import { signUp } from '../helpers/web';
 
 const HOUR = 60 * 60 * 1000;
 const ROLE_IDS = { contributor: 'r-c', addonDeveloper: 'r-a', sponsor: 'r-s' };

@@ -10,11 +10,11 @@ import { createAuditDispatcher } from '~/dispatchers/audit';
 import { parseOtelEnv } from '~/lib/env';
 import { auditPost } from '~/db/schema';
 
-import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
-import { createFakeClient, createFakeDiscord, type FakeDiscord } from './helpers/fake-discord';
-import { createFakeReads, EVENT, type FakeReads } from './helpers/fake-reads';
-import RecordingExporter from './helpers/recording-exporter';
-import { signUp } from './helpers/web';
+import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from '../helpers/database';
+import { createFakeClient, createFakeDiscord, type FakeDiscord } from '../helpers/fake-discord';
+import { createFakeReads, EVENT, type FakeReads } from '../helpers/fake-reads';
+import RecordingExporter from '../helpers/recording-exporter';
+import { signUp } from '../helpers/web';
 
 type EventColumns = Partial<AuditEvent>;
 

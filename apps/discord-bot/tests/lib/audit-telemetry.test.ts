@@ -4,7 +4,7 @@ import type { AuditEvent } from '@unbound-app/web/bot';
 import { createAuditTelemetry } from '~/lib/audit-telemetry';
 import { parseOtelEnv } from '~/lib/env';
 
-import RecordingExporter from './helpers/recording-exporter';
+import RecordingExporter from '../helpers/recording-exporter';
 
 const EVENT: AuditEvent = {
 	id: 33,

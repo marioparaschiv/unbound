@@ -18,9 +18,9 @@ import {
 	createFakeDiscord,
 	type FakeDiscord,
 	type FakeMessage,
-} from './helpers/fake-discord-rest';
-import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
-import { ADDON, createFakeReads, type FakeReads } from './helpers/fake-reads';
+} from '../helpers/fake-discord-rest';
+import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from '../helpers/database';
+import { ADDON, createFakeReads, type FakeReads } from '../helpers/fake-reads';
 
 const CHANNELS: AddonChannels = { plugin: '11', theme: '12', 'icon-pack': '13' };
 

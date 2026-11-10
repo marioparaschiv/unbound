@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 
 import { contentHash } from '~/lib/content-hash';
 
-import { ADDON } from './helpers/fake-reads';
+import { ADDON } from '../helpers/fake-reads';
 
 test('key order does not change the hash; any visible field does', () => {
 	const { gallery, iconSvg, installUrl, sourceUrl, listed, pageUrl, authors, ...rest } = ADDON;

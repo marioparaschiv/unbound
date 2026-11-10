@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { renderAddon } from '~/dispatchers/addon-card';
 import { truncate } from '~/lib/discord-messages';
 
-import { ADDON } from './helpers/fake-reads';
+import { ADDON } from '../helpers/fake-reads';
 
 function isWellFormed(text: string) {
 	return !/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/.test(text);

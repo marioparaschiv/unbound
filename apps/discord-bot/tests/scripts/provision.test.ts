@@ -17,17 +17,17 @@ import postgres from 'postgres';
 import { createDatabase, type Database } from '~/db/database';
 import { migrateDatabase } from '~/db/migrate';
 
-import { TEST_GRACE_DAYS, waitFor } from './helpers/database';
+import { TEST_GRACE_DAYS, waitFor } from '../helpers/database';
 
 type Grant = { table_name: string; privilege_type: string };
 type Owner = { proname: string; owner: string };
 type Phase = 'grant' | 'lock';
 
 const SUPERUSER_URL = process.env.POSTGRES_SUPERUSER_URL;
-const SCRIPT = join(import.meta.dirname, '..', 'scripts', 'provision.sql');
+const SCRIPT = join(import.meta.dirname, '..', '..', 'scripts', 'provision.sql');
 // A busy shared cluster can hold a CREATE or DROP DATABASE for seconds.
 const DATABASE_DDL_TIMEOUT_MS = 30_000;
-const MIGRATIONS = join(import.meta.dirname, '..', 'drizzle');
+const MIGRATIONS = join(import.meta.dirname, '..', '..', 'drizzle');
 const FUNCTION_DECLARATION = /CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+bot\.(\w+)\s*\(/gi;
 
 // Every function the bot's migrations create, read from their SQL, so a new hook needs no edit here.

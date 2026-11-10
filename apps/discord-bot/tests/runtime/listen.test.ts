@@ -8,8 +8,8 @@ import {
 	DATABASE_URL,
 	waitFor,
 	type BotTestDatabase,
-} from './helpers/database';
-import { createTcpProxy } from './helpers/proxy';
+} from '../helpers/database';
+import { createTcpProxy } from '../helpers/proxy';
 
 const FAST_BACKOFF: Backoff = { initialMs: 50, maxMs: 1000 };
 const OUTAGE_MS = 6500;

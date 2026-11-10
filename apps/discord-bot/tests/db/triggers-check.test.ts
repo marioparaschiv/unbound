@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 
 import { checkTriggers } from '~/db/triggers';
 
-import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
+import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from '../helpers/database';
 
 describe.skipIf(!DATABASE_URL)('startup trigger check', () => {
 	let database: BotTestDatabase;

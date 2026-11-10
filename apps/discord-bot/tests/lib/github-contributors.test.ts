@@ -6,7 +6,7 @@ import {
 	fetchContributorIds,
 } from '~/lib/github-contributors';
 
-import { fakeGitHub, type FakeGitHubOptions } from './helpers/github-fetch';
+import { fakeGitHub, type FakeGitHubOptions } from '../helpers/github-fetch';
 
 const HOUR = 60 * 60 * 1000;
 

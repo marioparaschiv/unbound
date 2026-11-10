@@ -21,7 +21,7 @@ import {
 	type BotTestDatabase,
 	type Notification,
 	type NotificationLog,
-} from './helpers/database';
+} from '../helpers/database';
 
 const {
 	account,
