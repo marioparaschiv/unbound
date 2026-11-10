@@ -13,7 +13,7 @@ import {
 	createFakeTimers,
 	defineSettings,
 	setting,
-} from '../testing';
+} from '~/testing';
 
 type LabelProps = { text: string };
 

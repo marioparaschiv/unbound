@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { CommandMessageKey, CommandTree, OptionBuilders } from '../src/commands';
+import type { CommandMessageKey, CommandTree, OptionBuilders } from '~/commands';
 
 // The plugin's keys come from `fixtures/unbound-i18n.d.ts`, which mirrors the typings `ubd build` generates.
 const keys: CommandMessageKey[] = ['COIN_FLIP', 'COIN_SIDE', 'COIN_HEADS', 'COIN_TAILS'];

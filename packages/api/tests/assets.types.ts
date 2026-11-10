@@ -1,5 +1,5 @@
 // Type-level tests, checked by `bun run typecheck` and never run: asset lookups suggest Discord's names and accept any.
-import type * as Assets from '../src/assets';
+import type * as Assets from '~/assets';
 
 type Expect<T extends true> = T;
 type Equal<A, B> =

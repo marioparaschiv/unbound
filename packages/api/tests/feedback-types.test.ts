@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import type * as dialogs from '../src/dialogs';
-import type * as toasts from '../src/toasts';
+import type * as dialogs from '~/dialogs';
+import type * as toasts from '~/toasts';
 
 // Never called: `bun run typecheck` checks these against the fixture's generated `@unbound-app/i18n`.
 function plugin(toast: typeof toasts, dialog: typeof dialogs, cause: unknown, name: string) {

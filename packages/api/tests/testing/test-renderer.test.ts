@@ -12,7 +12,7 @@ import {
 } from 'react';
 import { describe, expect, test } from 'bun:test';
 
-import { act, createTestRenderer, formatIcu, queriesOf } from '../testing';
+import { act, createTestRenderer, formatIcu, queriesOf } from '~/testing';
 
 function render(element: ReactNode) {
 	const renderer = createTestRenderer(element);

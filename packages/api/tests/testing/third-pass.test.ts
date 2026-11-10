@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createFakeMetro, createFakeNative } from '../testing';
+import { createFakeMetro, createFakeNative } from '~/testing';
 
 const manifest: never = Object.assign({ id: 'third-pass' }) as never;
 
