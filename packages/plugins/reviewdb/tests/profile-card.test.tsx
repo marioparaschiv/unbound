@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
 
-import { type CardProps, startReviewdb } from './start-reviewdb';
+import { type CardProps, startReviewdb } from './helpers/start-reviewdb';
 
 function UserInfo(_: { userId: string }) {
 	return null;
