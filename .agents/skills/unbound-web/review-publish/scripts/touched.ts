@@ -23,6 +23,7 @@ export const VERIFIED_FILES = [
 	'apps/web/src/lib/artifacts.ts',
 	'apps/web/src/lib/addon-page-source.ts',
 	'apps/web/src/lib/addon-files.ts',
+	'apps/web/src/lib/live-versions.ts',
 	'packages/contracts/src/addon-files.ts',
 	'packages/contracts/src/version-layout.ts',
 ];

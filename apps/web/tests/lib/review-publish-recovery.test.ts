@@ -1,10 +1,12 @@
 import { afterAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
+import { getAddonDetails, getCatalog, listAddons } from '~/lib/addons';
 import { listReviewQueue, reviewSubmission } from '~/lib/review';
 import { createSubmission } from '~/lib/submissions';
 import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
+import { findUpdates } from '~/lib/updates';
 import { user } from '~/db/schema';
 
 import { createTestContext, linkGitHub, signInWithDiscord, snowflakeAt } from '../helpers/context';
@@ -66,18 +68,23 @@ async function signUp(role: Role = 'user'): Promise<Caller> {
 	return { user: row, via: 'session' };
 }
 
-async function submit(author: Caller, id: string) {
-	const { request } = commitPlugin(github.repository(REPOSITORY), REPOSITORY, id, '1.0.0');
+async function submit(author: Caller, id: string, version = '1.0.0') {
+	const { request } = commitPlugin(github.repository(REPOSITORY), REPOSITORY, id, version);
 	const { submission } = await createSubmission(ctx, author, request);
 
 	return submission.id;
 }
 
-function versionOf(addonId: string) {
-	return ctx.db.query.addonVersion.findFirst({ where: { addonId, version: '1.0.0' } });
+function versionOf(addonId: string, version = '1.0.0') {
+	return ctx.db.query.addonVersion.findFirst({ where: { addonId, version } });
 }
 
-async function approveWithFailingWrite(id: string, reviewer: Caller, addonId: string) {
+async function approveWithFailingWrite(
+	id: string,
+	reviewer: Caller,
+	addonId: string,
+	version = '1.0.0',
+) {
 	failing = true;
 
 	try {
@@ -88,7 +95,7 @@ async function approveWithFailingWrite(id: string, reviewer: Caller, addonId: st
 		failing = false;
 	}
 
-	expect((await versionOf(addonId))?.filesPendingSince).toBeInstanceOf(Date);
+	expect((await versionOf(addonId, version))?.filesPendingSince).toBeInstanceOf(Date);
 }
 
 describe('publish recovery through the queue', () => {
@@ -137,5 +144,61 @@ describe('publish recovery through the queue', () => {
 		expect(submissions.find((entry) => entry.submission.id === id)?.submission.status).toBe(
 			'pending_review',
 		);
+	});
+});
+
+describe('a version whose files are pending', () => {
+	function updatesFrom(addonId: string, version: string) {
+		return findUpdates(ctx, { clientVersion: '9.0.0', addons: [{ id: addonId, version }] });
+	}
+
+	async function listedVersion(addonId: string) {
+		const { addons } = await getCatalog(ctx);
+
+		return addons.find((entry) => entry.id === addonId)?.latestVersion.version;
+	}
+
+	test('is not served or listed until its files are written', async () => {
+		const author = await signUp('developer');
+		const reviewer = await signUp('moderator');
+		const addonId = 'recover.served';
+
+		await reviewSubmission(ctx, reviewer, await submit(author, addonId), {
+			decision: 'approved',
+		});
+
+		const update = await submit(author, addonId, '1.1.0');
+
+		await approveWithFailingWrite(update, reviewer, addonId, '1.1.0');
+
+		expect((await updatesFrom(addonId, '1.0.0')).updates).toEqual([]);
+		expect(await listedVersion(addonId)).toBe('1.0.0');
+		expect(
+			(await getAddonDetails(ctx, addonId))?.versions.map((entry) => entry.version),
+		).toEqual(['1.0.0']);
+
+		await reviewSubmission(ctx, reviewer, update, { decision: 'approved' });
+
+		expect((await updatesFrom(addonId, '1.0.0')).updates.map((entry) => entry.version)).toEqual(
+			['1.1.0'],
+		);
+		expect(await listedVersion(addonId)).toBe('1.1.0');
+	});
+
+	test('keeps a new listing off the marketplace until its files are written', async () => {
+		const author = await signUp();
+		const reviewer = await signUp('moderator');
+		const addonId = 'recover.listing';
+		const id = await submit(author, addonId);
+
+		await approveWithFailingWrite(id, reviewer, addonId);
+
+		expect(await listedVersion(addonId)).toBeUndefined();
+		expect(await getAddonDetails(ctx, addonId)).toBeUndefined();
+		expect((await listAddons(ctx)).addons.some((entry) => entry.id === addonId)).toBe(false);
+
+		await reviewSubmission(ctx, reviewer, id, { decision: 'approved' });
+
+		expect(await listedVersion(addonId)).toBe('1.0.0');
 	});
 });

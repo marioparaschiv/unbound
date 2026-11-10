@@ -12,8 +12,8 @@ import {
 	signInWithDiscord,
 } from '../../../../../apps/web/tests/helpers/index.ts';
 
-// Replays the TLC counterexamples against the real reviewSubmission, real Postgres and an in-memory
-// object store whose public writes can be held open. Invariant names match spec/ReviewPublish.tla.
+// Replays TLC counterexamples on the real reviewSubmission, real Postgres and an in-memory object
+// store that can hold public writes open. Invariant names match spec/ReviewPublishProperties.tla.
 export type Checks = Record<string, boolean>;
 
 export type Replay = {

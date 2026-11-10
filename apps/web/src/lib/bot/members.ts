@@ -5,6 +5,7 @@ import { addon, addonMaintainer, addonVersion, account, sponsorship } from '~/db
 import { isSponsoring, perkGraceMs, standingOf } from '~/lib/sponsors/standing';
 import type { ReadDatabase, ResolvedReadOptions } from '~/lib/bot/reads';
 import type { Member, MemberQuery } from '~/lib/bot/types';
+import { isLiveVersion } from '~/lib/live-versions';
 
 // Only `user_id`, `provider_id` and `account_id` of `account` are granted to the bot, never tokens.
 const discord = alias(account, 'discord');
@@ -14,7 +15,7 @@ function maintainsListedAddon(db: ReadDatabase) {
 	const live = db
 		.select({ one: sql`1` })
 		.from(addonVersion)
-		.where(and(eq(addonVersion.addonId, addon.id), isNull(addonVersion.withdrawnBy)));
+		.where(and(eq(addonVersion.addonId, addon.id), isLiveVersion()));
 
 	return exists(
 		db

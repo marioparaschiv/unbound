@@ -220,6 +220,7 @@ function queryAddon(ctx: AppContext, id: string) {
 					manifest: true,
 					bundleSize: true,
 					sha256: true,
+					filesPendingSince: true,
 				},
 				with: {
 					submission: { columns: { repository: true } },
@@ -263,7 +264,9 @@ export async function getAdminAddon(
 
 	const { maintainers: members, versions, ...rest } = row;
 	const maintainers = toMaintainers(members);
-	const served = versions.find((version) => !version.withdrawal);
+	const served = versions.find(
+		(version) => !version.withdrawal && version.filesPendingSince === null,
+	);
 	const state = toEditableState(
 		rest,
 		members.map((member) => ({ userId: member.userId, role: member.role })),
@@ -290,21 +293,23 @@ export async function getAdminAddon(
 				.map(({ id: userId, name, image }) => ({ id: userId, name, image })),
 		},
 		maintainers,
-		versions: versions.map(({ manifest, submission, withdrawal, ...version }) => ({
-			...version,
-			repository: submission?.repository ?? null,
-			minClient: manifest.unbound?.min ?? null,
-			withdrawal: withdrawal
-				? {
-						eventId: withdrawal.id,
-						at: withdrawal.createdAt,
-						by: withdrawal.actor
-							? { ...withdrawal.actor, image: withdrawal.actor.image ?? null }
-							: null,
-						reason: withdrawal.reason,
-					}
-				: null,
-		})),
+		versions: versions.map(
+			({ manifest, submission, withdrawal, filesPendingSince, ...version }) => ({
+				...version,
+				repository: submission?.repository ?? null,
+				minClient: manifest.unbound?.min ?? null,
+				withdrawal: withdrawal
+					? {
+							eventId: withdrawal.id,
+							at: withdrawal.createdAt,
+							by: withdrawal.actor
+								? { ...withdrawal.actor, image: withdrawal.actor.image ?? null }
+								: null,
+							reason: withdrawal.reason,
+						}
+					: null,
+			}),
+		),
 		submissions,
 		events,
 		manifest: served

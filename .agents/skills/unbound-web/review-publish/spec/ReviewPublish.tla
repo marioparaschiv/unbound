@@ -17,6 +17,7 @@ CONSTANTS
     Recovery,              \* repeating an approved request republishes a live version's files (publish-version.ts hasPendingFiles)
     MaxWriteFailures,      \* public writes that fail after decide() commits, over a whole run
     AllowTamper,           \* Tamper may fire; FALSE only in the liveness config (see Fairness)
+    ServeOnlyPublished,    \* TRUE = current code: updates and listings skip a version whose files are pending (live-versions.ts LIVE_VERSIONS)
     None                   \* model value: no row, no object
 
 Subs     == SubsV1 \cup SubsV2
@@ -39,11 +40,12 @@ VARIABLES
     publicFiles,    \* public bucket addons/{id}/{version}/assets/*, i18n/*: submission whose manifest listed them
     decisions,      \* committed decide() transactions per submission
     fails,          \* public write failures so far
+    pending,        \* addon_version.files_pending_since is set, per version
     pc, target, dec, rowSha, bytes, wroteB, wroteM, wroteP, wroteF \* per review request
 
 vars == <<status, kind, staged, recordedSha, addonExists, versionRow, publicBundle,
-          publicManifest, publicPage, publicFiles, decisions, fails, pc, target, dec, rowSha, bytes,
-          wroteB, wroteM, wroteP, wroteF>>
+          publicManifest, publicPage, publicFiles, decisions, fails, pending, pc, target, dec, rowSha,
+          bytes, wroteB, wroteM, wroteP, wroteF>>
 
 Init ==
     /\ status = [s \in Subs |-> None]
@@ -58,6 +60,7 @@ Init ==
     /\ publicFiles = [v \in Versions |-> None]
     /\ decisions = [s \in Subs |-> 0]
     /\ fails = 0
+    /\ pending = [v \in Versions |-> FALSE]
     /\ pc = [r \in Reviewers |-> "idle"]
     /\ target = [r \in Reviewers |-> None]
     /\ dec = [r \in Reviewers |-> None]
@@ -72,7 +75,7 @@ OpenSubs == {o \in Subs : status[o] \in Open}
 
 ReviewerVars == <<pc, target, dec, rowSha, bytes, wroteB, wroteM, wroteP, wroteF>>
 StoreVars    == <<addonExists, versionRow, publicBundle, publicManifest, publicPage, publicFiles,
-                 decisions, fails>>
+                 decisions, fails, pending>>
 
 (* ---------------- Authors and background jobs ---------------- *)
 
@@ -143,14 +146,14 @@ Start(r, s, d) ==
     /\ UNCHANGED <<status, kind, staged, recordedSha, StoreVars>>
 
 \* reviewSubmission repeated for an approved submission (publish-version.ts commitReview 306-313, hasPendingFiles 297-304): the
-\* row is approved and its addon_version row still names this submission. The code also needs the row's
-\* files_pending_since set (not modelled; it only narrows the retry) and allows any reviewer. Skips
-\* decide() and goes to the reads.
+\* row is approved, its addon_version row still names this submission and its files are pending. Any
+\* reviewer may repeat it. Skips decide() and goes to the reads.
 RetryStart(r, s) ==
     /\ Recovery /\ PublishAfterCommit
     /\ pc[r] = "idle"
     /\ status[s] = "approved"
     /\ versionRow[VersionOf(s)] # None /\ versionRow[VersionOf(s)].sub = s
+    /\ pending[VersionOf(s)]
     /\ pc' = [pc EXCEPT ![r] = "read"]
     /\ target' = [target EXCEPT ![r] = s]
     /\ dec' = [dec EXCEPT ![r] = "republish"]
@@ -197,7 +200,7 @@ ReadOk(r) ==
 
 ReadStaged(r) == ReadFail(r) \/ ReadOk(r)
 
-AfterWrite == IF PublishAfterCommit THEN "cleanup" ELSE "decide"
+AfterWrite == IF PublishAfterCommit THEN "mark" ELSE "decide"
 
 \* writeFiles writes after decide commits (publish-version.ts 292-295): writeArtifact (artifacts.ts 71-96) PUTs the bundle, the
 \* manifest, each compiled bundle and each extra file at addons/{id}/{version}/<path>. writeStorePage (artifacts.ts 105-132) PUTs ADDON.md, page.json and each media file. All run
@@ -210,8 +213,8 @@ WriteBundle(r) ==
     /\ wroteB' = [wroteB EXCEPT ![r] = TRUE]
     /\ pc' = [pc EXCEPT ![r] = IF wroteM[r] /\ wroteP[r] /\ wroteF[r] THEN AfterWrite ELSE "write"]
     /\ UNCHANGED <<status, kind, staged, recordedSha, addonExists, versionRow, publicManifest,
-                   publicPage, publicFiles, decisions, fails, target, dec, rowSha, bytes, wroteM, wroteP,
-                   wroteF>>
+                   publicPage, publicFiles, decisions, fails, pending, target, dec, rowSha, bytes, wroteM,
+                   wroteP, wroteF>>
 
 WriteManifest(r) ==
     LET s == target[r] IN
@@ -220,8 +223,8 @@ WriteManifest(r) ==
     /\ wroteM' = [wroteM EXCEPT ![r] = TRUE]
     /\ pc' = [pc EXCEPT ![r] = IF wroteB[r] /\ wroteP[r] /\ wroteF[r] THEN AfterWrite ELSE "write"]
     /\ UNCHANGED <<status, kind, staged, recordedSha, addonExists, versionRow, publicBundle,
-                   publicPage, publicFiles, decisions, fails, target, dec, rowSha, bytes, wroteB, wroteP,
-                   wroteF>>
+                   publicPage, publicFiles, decisions, fails, pending, target, dec, rowSha, bytes, wroteB,
+                   wroteP, wroteF>>
 
 WritePage(r) ==
     LET s == target[r] IN
@@ -230,8 +233,8 @@ WritePage(r) ==
     /\ wroteP' = [wroteP EXCEPT ![r] = TRUE]
     /\ pc' = [pc EXCEPT ![r] = IF wroteB[r] /\ wroteM[r] /\ wroteF[r] THEN AfterWrite ELSE "write"]
     /\ UNCHANGED <<status, kind, staged, recordedSha, addonExists, versionRow, publicBundle,
-                   publicManifest, publicFiles, decisions, fails, target, dec, rowSha, bytes, wroteB, wroteM,
-                   wroteF>>
+                   publicManifest, publicFiles, decisions, fails, pending, target, dec, rowSha, bytes, wroteB,
+                   wroteM, wroteF>>
 
 \* writeArtifact's PUTs of the extra files and compiled bundles (artifacts.ts 81-90): the bytes readPinnedFiles read and
 \* checked, so they are always the files s's manifest lists.
@@ -242,20 +245,35 @@ WriteFiles(r) ==
     /\ wroteF' = [wroteF EXCEPT ![r] = TRUE]
     /\ pc' = [pc EXCEPT ![r] = IF wroteB[r] /\ wroteM[r] /\ wroteP[r] THEN AfterWrite ELSE "write"]
     /\ UNCHANGED <<status, kind, staged, recordedSha, addonExists, versionRow, publicBundle,
-                   publicManifest, publicPage, decisions, fails, target, dec, rowSha, bytes, wroteB, wroteM,
-                   wroteP>>
+                   publicManifest, publicPage, decisions, fails, pending, target, dec, rowSha, bytes, wroteB,
+                   wroteM, wroteP>>
 
-\* A public PUT fails after decide() committed (or during a republish): the request errors out of
-\* writeFiles before markFilesPublished, so no cleanup runs, the version stays live and whichever writes landed stay public.
-\* At most MaxWriteFailures over a run.
+\* markFilesPublished (publish-version.ts 197-207), one transaction after every write landed: clears
+\* files_pending_since on the row that still names this submission, so the version starts being served.
+MarkPublished(r) ==
+    LET s == target[r]
+        v == VersionOf(s)
+    IN
+    /\ pc[r] = "mark"
+    /\ pending' = IF versionRow[v] # None /\ versionRow[v].sub = s
+                     THEN [pending EXCEPT ![v] = FALSE]
+                     ELSE pending
+    /\ pc' = [pc EXCEPT ![r] = "cleanup"]
+    /\ UNCHANGED <<status, kind, staged, recordedSha, addonExists, versionRow, publicBundle,
+                   publicManifest, publicPage, publicFiles, decisions, fails, target, dec, rowSha, bytes,
+                   wroteB, wroteM, wroteP, wroteF>>
+
+\* A public PUT fails after decide() committed (or during a republish), or markFilesPublished's transaction
+\* fails: the request errors out of writeFiles with the files still pending, so no cleanup runs, the
+\* version stays live and whichever writes landed stay public. At most MaxWriteFailures over a run.
 WriteFail(r) ==
-    /\ pc[r] = "write"
+    /\ pc[r] \in {"write", "mark"}
     /\ PublishAfterCommit
     /\ fails < MaxWriteFailures
     /\ fails' = fails + 1
     /\ Done(r)
     /\ UNCHANGED <<status, kind, staged, recordedSha, addonExists, versionRow, publicBundle,
-                   publicManifest, publicPage, publicFiles, decisions>>
+                   publicManifest, publicPage, publicFiles, decisions, pending>>
 
 \* decide (publish-version.ts commitReview 317-328): one serializable transaction, retried whole on a
 \* serialization failure. CAS at submission-decision.ts 40, throw at 44-46. Approval runs makeLive (320),
@@ -276,7 +294,9 @@ Decide(r) ==
                /\ IF d = "approved"
                      THEN /\ versionRow' = [versionRow EXCEPT ![v] = [sub |-> s, sha |-> bytes[r]]]
                           /\ addonExists' = TRUE
-                     ELSE UNCHANGED <<versionRow, addonExists>>
+                          \* toVersionRow sets files_pending_since; before the fix the files were already written.
+                          /\ pending' = [pending EXCEPT ![v] = PublishAfterCommit]
+                     ELSE UNCHANGED <<versionRow, addonExists, pending>>
                /\ pc' = [pc EXCEPT ![r] =
                         IF d = "approved" /\ PublishAfterCommit THEN "write" ELSE "cleanup"]
                /\ UNCHANGED <<publicBundle, publicManifest, publicPage, publicFiles, fails, target, dec,
@@ -296,7 +316,8 @@ Next ==
     \/ \E r \in Reviewers, s \in Subs, d \in Decisions : Start(r, s, d)
     \/ \E r \in Reviewers, s \in Subs : RetryStart(r, s)
     \/ \E r \in Reviewers : ReadStaged(r) \/ WriteBundle(r) \/ WriteManifest(r) \/ WritePage(r)
-                          \/ WriteFiles(r) \/ WriteFail(r) \/ Decide(r) \/ Cleanup(r)
+                          \/ WriteFiles(r) \/ MarkPublished(r) \/ WriteFail(r) \/ Decide(r)
+                          \/ Cleanup(r)
 
 \* Fairness for the liveness check: a request in flight keeps moving (weak), and someone repeats the
 \* approval whenever it can be (strong: a failed read or write returns the request to idle, so the
@@ -307,7 +328,7 @@ Fairness ==
           /\ SF_vars(ReadOk(r))
           /\ WF_vars(WriteBundle(r)) /\ WF_vars(WriteManifest(r))
           /\ WF_vars(WritePage(r)) /\ WF_vars(WriteFiles(r))
-          /\ WF_vars(Decide(r)) /\ WF_vars(Cleanup(r))
+          /\ WF_vars(MarkPublished(r)) /\ WF_vars(Decide(r)) /\ WF_vars(Cleanup(r))
 
 Spec == Init /\ [][Next]_vars
 
@@ -315,52 +336,5 @@ LiveSpec == Spec /\ Fairness
 
 \* Reviewers are interchangeable requests; TLC explores one ordering of their names.
 ReviewerSymmetry == Permutations(Reviewers)
-
-(* ---------------- Properties ---------------- *)
-
-NoStrayFiles ==
-    \A v \in Versions :
-        (publicBundle[v] # None \/ publicManifest[v] # None \/ publicPage[v] # None
-            \/ publicFiles[v] # None) =>
-            versionRow[v] # None
-
-\* Public files for a version exist only once that version is live (an addon_version row).
-PublicOnlyIfLive == NoStrayFiles
-
-\* The same, checked only when no review request is in flight: files that stay public for good.
-PublicOnlyIfLiveAtRest == (\A r \in Reviewers : pc[r] = "idle") => NoStrayFiles
-
-\* Public bytes are the bytes whose sha256 the live row records; the manifest, store page and extra files
-\* are that row's.
-PublicMatchesLive ==
-    \A v \in Versions : versionRow[v] # None =>
-        /\ publicBundle[v] # None => publicBundle[v].bytes = versionRow[v].sha
-        /\ publicManifest[v] # None => publicManifest[v] = versionRow[v].sub
-        /\ publicPage[v] # None => publicPage[v] = versionRow[v].sub
-        /\ publicFiles[v] # None => publicFiles[v] = versionRow[v].sub
-
-\* A live version's sha256 is the one create recorded from the pin, i.e. the bytes reviewers were shown.
-LiveIsReviewed ==
-    \A v \in Versions : versionRow[v] # None =>
-        versionRow[v].sha = recordedSha[versionRow[v].sub]
-
-\* decide() commits at most one decision per submission.
-DecidedOnce == \A s \in Subs : decisions[s] <= 1
-
-\* What the public bucket serves never comes from a rejected submission.
-RejectedNeverPublic ==
-    \A v \in Versions :
-        /\ publicBundle[v] # None => status[publicBundle[v].from] # "rejected"
-        /\ publicManifest[v] # None => status[publicManifest[v]] # "rejected"
-        /\ publicPage[v] # None => status[publicPage[v]] # "rejected"
-        /\ publicFiles[v] # None => status[publicFiles[v]] # "rejected"
-
-\* Every live version eventually has all its public files. Checked with LiveSpec (fair retries, at most
-\* MaxWriteFailures failed writes, no Tamper); fails when Recovery is FALSE.
-FilesPublic(v) ==
-    /\ publicBundle[v] # None /\ publicManifest[v] # None
-    /\ publicPage[v] # None /\ publicFiles[v] # None
-
-LiveEventuallyPublic == \A v \in Versions : (versionRow[v] # None) ~> FilesPublic(v)
 
 =============================================================================

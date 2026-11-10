@@ -10,8 +10,8 @@ import type {
 	Maintainer,
 	MyAddonsResponse,
 } from '@unbound-app/contracts/addons';
-import { and, desc, EmptyFilter, eq, gte, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import { addonIdSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
+import { and, desc, EmptyFilter, eq, gte, inArray, lt, or, sql } from 'drizzle-orm';
 import type { RepositoryDetails } from '@unbound-app/contracts/source';
 import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import { Type, type TSchema } from '@unbound-app/contracts/schema';
@@ -20,6 +20,7 @@ import type { PinnableField } from '@unbound-app/contracts/admin';
 import { OPEN_SUBMISSION_STATUSES, requireSourced, toSubmission } from '~/lib/submissions';
 import { afterKey, cursorTime, decodeCursor, toKeysetPage } from '~/lib/keyset';
 import type { AddonVersionRow, VersionSubmission } from '~/lib/artifacts';
+import { LIVE_VERSIONS, isLiveVersion } from '~/lib/live-versions';
 import { VERSION_SOURCE, toAddonVersion } from '~/lib/artifacts';
 import { MAINTAINERS, toMaintainers } from '~/lib/maintainers';
 import { addon, addonTag, addonVersion } from '~/db/schema';
@@ -27,7 +28,6 @@ import type { ActionMeta } from '~/lib/moderation-events';
 import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import { renderAddonIcon } from '~/lib/addon-icons';
-import { LIVE_VERSIONS } from '~/lib/live-versions';
 import { likeContains } from '~/lib/like-contains';
 import type { Transaction } from '~/db/database';
 import { readAddonTags } from '~/lib/addon-tags';
@@ -156,7 +156,7 @@ export async function refreshAddonSummary(tx: Transaction, addonId: string): Pro
 	const [latest] = await tx
 		.select({ manifest: addonVersion.manifest, publishedAt: addonVersion.publishedAt })
 		.from(addonVersion)
-		.where(and(eq(addonVersion.addonId, addonId), isNull(addonVersion.withdrawnBy)))
+		.where(and(eq(addonVersion.addonId, addonId), isLiveVersion()))
 		.orderBy(desc(addonVersion.versionKey))
 		.limit(1);
 
@@ -299,7 +299,7 @@ function authorFilter(table: ListingTable, query: ListingFilters) {
 
 	if (ids.length === 0) return;
 
-	const served = sql`select ${addonVersion.manifest} -> 'authors' from ${addonVersion} where ${addonVersion.addonId} = ${table.id} and ${addonVersion.withdrawnBy} is null order by ${addonVersion.versionKey} desc limit 1`;
+	const served = sql`select ${addonVersion.manifest} -> 'authors' from ${addonVersion} where ${addonVersion.addonId} = ${table.id} and ${isLiveVersion()} order by ${addonVersion.versionKey} desc limit 1`;
 	const credited = sql`exists (select 1 from json_array_elements((${served})) as author where author ->> 'id' in (${sql.join(
 		ids.map((id) => sql`${id}`),
 		sql`, `,
@@ -331,6 +331,7 @@ export function queryListedAddons(ctx: AppContext, query: ListAddonsQuery = {}) 
 	return ctx.db.query.addon.findMany({
 		where: {
 			delistedAt: { isNull: true },
+			versions: LIVE_VERSIONS,
 			type: type ?? EmptyFilter,
 			RAW: (table) =>
 				and(
@@ -399,7 +400,7 @@ export async function listAddons(
  */
 export async function listListedAddons(ctx: AppContext): Promise<ListedAddon[]> {
 	const rows = await ctx.db.query.addon.findMany({
-		where: { delistedAt: { isNull: true } },
+		where: { delistedAt: { isNull: true }, versions: LIVE_VERSIONS },
 		with: LATEST_VERSION,
 		orderBy: { id: 'asc' },
 	});
@@ -437,7 +438,7 @@ export async function getAddonDetails(
 	id: string,
 ): Promise<AddonDetails | undefined> {
 	const row = await ctx.db.query.addon.findFirst({
-		where: { id, delistedAt: { isNull: true } },
+		where: { id, delistedAt: { isNull: true }, versions: LIVE_VERSIONS },
 		with: {
 			versions: {
 				where: LIVE_VERSIONS,
@@ -480,7 +481,7 @@ export async function listAddonVersions(
 	id: string,
 ): Promise<AddonVersion[] | undefined> {
 	const row = await ctx.db.query.addon.findFirst({
-		where: { id, delistedAt: { isNull: true } },
+		where: { id, delistedAt: { isNull: true }, versions: LIVE_VERSIONS },
 		with: {
 			versions: {
 				where: LIVE_VERSIONS,

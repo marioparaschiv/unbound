@@ -11,6 +11,7 @@ import { MAX_UPDATE_CHANGELOGS } from '@unbound-app/contracts/updates';
 import { addon, addonVersion, submissionSource } from '~/db/schema';
 import type { SubmissionSourceRow } from '~/lib/artifacts';
 import { toVersionChangelog } from '~/lib/artifacts';
+import { isLiveVersion } from '~/lib/live-versions';
 import { toVersionKey } from '~/lib/version-key';
 import type { AppContext } from '~/lib/context';
 
@@ -41,7 +42,7 @@ export function newestCompatibleVersions(ctx: AppContext, request: UpdatesReques
 					request.addons.map((installed) => installed.id),
 				),
 				lte(addonVersion.minClientKey, toVersionKey(request.clientVersion)),
-				isNull(addonVersion.withdrawnBy),
+				isLiveVersion(),
 				isNull(addon.delistedAt),
 			),
 		)
@@ -90,7 +91,7 @@ async function skippedVersions(
 		.from(addonVersion)
 		.where(
 			and(
-				isNull(addonVersion.withdrawnBy),
+				isLiveVersion(),
 				or(
 					...ranges.map((range) =>
 						and(
