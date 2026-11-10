@@ -8,11 +8,17 @@ const { React, renderHook } = createHookRenderer();
 
 mock.module('react', () => React);
 
+// Applying an icon pack patches how images resolve their source.
+mock.module('~/metro/common', () => ({
+	Constants: {},
+	ImageSources: { getImageSourcesFromImageProps: () => undefined },
+}));
+
 const Manager = await loadManagers();
 
 const { default: useDevelopmentCopy } = await import('~/ui/hooks/use-development-copy');
 const { default: useAddonState } = await import('~/ui/hooks/use-addon-state');
-const { installsFromManifest } = await import('~/addons/addons');
+const { installsFromManifest } = await import('~/addons/installs-from-manifest');
 
 const LISTED_KINDS = ['plugin', 'theme', 'icon-pack'] as const;
 const mounted: { unmount: () => void }[] = [];
@@ -53,20 +59,26 @@ test('keeps each manager on the bucket name it has always persisted to', () => {
 
 describe('addon hooks', () => {
 	for (const kind of LISTED_KINDS) {
-		test(`re-render ${kind} addons when their enabled state changes, and not on other records`, () => {
+		test(`re-render ${kind} addons when their enabled state changes, and not on other records`, async () => {
 			const manager = Manager.for(kind);
 			const id = `${kind}.state`;
 
-			manager.load('({})', makeManifest(id));
+			manager.load('{}', makeManifest(id));
 
 			const state = render(() => useAddonState(kind, id));
 
 			manager.markDevelopmentCopy(id);
 			expect(state.renders).toBe(1);
 
-			manager.disable(id);
+			// Plugins turn on one by one, so turning one off writes its state; themes and icon packs change by applying.
+			if (kind === 'plugin') {
+				manager.disable(id);
+			} else {
+				await manager.enable(id);
+			}
+
 			expect(state.renders).toBeGreaterThan(1);
-			expect(state.current.enabled).toBe(false);
+			expect(state.current.enabled).toBe(kind !== 'plugin');
 		});
 
 		test(`re-render ${kind} addons when their development markers change, and not on holds`, () => {

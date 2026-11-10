@@ -2,7 +2,6 @@ import type { AddonVersion, ListedAddon } from '@unbound-app/contracts/addons';
 import { DEVELOPMENT_MARKER } from '@unbound-app/contracts/manifest-files';
 import type { AddonManifest, PushedManifest } from '@unbound-app/types';
 import type { AddonRelease } from '@unbound-app/contracts/updates';
-import type { AddonKind } from '@unbound-app/types/addons';
 import toError from '@unbound-app/utils/to-error';
 
 import {
@@ -16,12 +15,11 @@ import type { Addon, AddonResolveable } from '~/addons/addon';
 import { assertTextDigest, digestOf } from '~/addons/digests';
 import type { InstalledEntry } from '~/updates/addon-updates';
 import type { UpdatableKind } from '~/addons/manager-of';
-import { AddonLifecycle } from '~/addons/lifecycle';
+import { AddonSelection } from '~/addons/selection';
 import { compiledBundlePath } from '~/addons/paths';
 import { getLoader } from '~/native/unbound-native';
 import { createRecord } from '~/addons/records';
 import { toRelease } from '~/addons/versions';
-import { Manager } from '~/addons/manager';
 import fs from '~/native/fs';
 
 /** The outcome of an addon reload: success, or failure carrying the recorded error. */
@@ -36,11 +34,11 @@ export type InstallListedOptions = {
 const INSTALL_EVENTS = ['loaded', 'unloaded', 'installed', 'updated', 'deleted'] as const;
 
 /**
- * @description Addon distribution on top of {@link AddonLifecycle}: install, update, hot reload and
+ * @description Addon distribution on top of {@link AddonSelection}: install, update, hot reload and
  * delete, the on-disk layout, development copies and version holds.
  * @template I What the bundles of the addons this manager governs evaluate to.
  */
-export abstract class Addons<I extends object> extends AddonLifecycle<I> {
+export abstract class Addons<I extends object> extends AddonSelection<I> {
 	declare readonly kind: UpdatableKind;
 	/** The version each addon is held at. */
 	protected readonly held = createRecord<string>(this.settings, 'held', (change) =>
@@ -159,7 +157,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			this.clearFailure(resolved);
 
 			if (wasStarted) {
-				this.start(resolved);
+				await this.activate(resolved);
 			}
 
 			const startError = this.errors.get(resolved.id);
@@ -220,22 +218,34 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			await this.persist(bundle, trusted, bytecode, files);
 
 			this.register(bundle, trusted);
-			const entity = this.getEntity(manifest.id);
 
-			if (entity) {
-				this.clearDevelopmentCopy(entity.id);
-				this.recordSource(entity.id, url);
-				this.releaseStaleHold(entity.id);
-				this.emit('installed', entity);
-			}
-
-			return entity;
+			return this.installed(manifest.id, url);
 		} catch (error) {
 			this.logger.error('Failed to install addon:', error);
 			this.emit('install-error', toError(error));
 
 			return undefined;
 		}
+	}
+
+	/**
+	 * @description Finishes an install once the addon is registered: it is no longer a development copy,
+	 * remembers its URL, drops a hold on a version it moved off, and emits `installed`.
+	 * @param id The addon's id.
+	 * @param url The manifest URL it was installed from.
+	 * @returns The installed addon, or `undefined` when it failed to load.
+	 */
+	protected installed(id: string, url: string): Addon<I> | undefined {
+		const entity = this.getEntity(id);
+
+		if (!entity) return;
+
+		this.clearDevelopmentCopy(entity.id);
+		this.recordSource(entity.id, url);
+		this.releaseStaleHold(entity.id);
+		this.emit('installed', entity);
+
+		return entity;
 	}
 
 	/**
@@ -410,6 +420,11 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 		if (!resolved) return;
 
 		try {
+			// A deleted addon cannot stay the applied one.
+			if (this.selection === 'one' && this.isEnabled(resolved.id)) {
+				this.disable(resolved);
+			}
+
 			await this.unload(resolved);
 			await fs.removeFile(this.directoryOf(resolved.id));
 			this.forgetSource(resolved.id);
@@ -592,13 +607,4 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			return;
 		}
 	}
-}
-
-/**
- * @description Whether an addon kind installs from a manifest URL, which also makes it updatable and holdable.
- * @param kind The addon kind.
- * @returns Whether the kind's manager is an {@link Addons} manager.
- */
-export function installsFromManifest(kind: AddonKind): kind is UpdatableKind {
-	return Manager.for(kind) instanceof Addons;
 }

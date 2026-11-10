@@ -12,7 +12,7 @@
 
 ## Hierarchy
 
-`Manager` (`addons/manager.ts`, an `EventEmitter`) → `AddonLifecycle` (`addons/lifecycle.ts`: load, start, stop, unload) → `Addons` (`addons/addons.ts`: install, enable, …) → `Plugins`, `Themes`, `Icons`. `Fonts` extends `Manager`. Get one with `Manager.for('plugins')`.
+`Manager` (`addons/manager.ts`, an `EventEmitter`) → `AddonLifecycle` (`addons/lifecycle.ts`: load, start, stop, unload) → `AddonSelection` (`addons/selection.ts`: enable, disable, consent, single-select `applied`) → `Addons` (`addons/addons.ts`: install, update, delete, …) → `Plugins`, `Themes`, `Icons`. `Fonts` extends `Manager`. Get one with `Manager.for('plugins')`.
 
 ## Operations
 

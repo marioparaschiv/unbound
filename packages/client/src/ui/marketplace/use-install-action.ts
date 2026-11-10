@@ -5,7 +5,7 @@ import { useState } from 'react';
 import type { InstallStatus } from '~/marketplace/catalog';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { AvailableChoice } from '~/addons/versions';
-import { installsFromManifest } from '~/addons/addons';
+import { installsFromManifest } from '~/addons/installs-from-manifest';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';

@@ -102,7 +102,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 		forgetSource: (id) => themes.forgetSource(id),
 	},
 	icons: {
-		getApplied: () => icons.applied.manifest.id,
+		getApplied: () => icons.getAppliedId(),
 		isEnabled: (id) => icons.isEnabled(id),
 		isInstalled: (id) => Boolean(icons.getEntity(id)),
 		install: (url) => icons.install(url),

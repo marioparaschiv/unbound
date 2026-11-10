@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { onRecordChange } from '~/ui/hooks/use-record-changes';
 import type { InstalledEntry } from '~/updates/addon-updates';
 import useForceUpdate from '~/ui/hooks/use-force-update';
-import { installsFromManifest } from '~/addons/addons';
+import { installsFromManifest } from '~/addons/installs-from-manifest';
 import { Manager } from '~/addons/manager';
 
 const KINDS = ADDON_KINDS.filter(installsFromManifest);

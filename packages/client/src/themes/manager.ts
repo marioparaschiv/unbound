@@ -1,11 +1,8 @@
-import type { PushedManifest, Theme } from '@unbound-app/types';
-import toError from '@unbound-app/utils/to-error';
+import type { Theme } from '@unbound-app/types';
 
 import { getLoader, getThemes, rescanThemes } from '~/native/unbound-native';
-import type { AddonResolveable } from '~/addons/addon';
-import type { ReloadResult } from '~/addons/addons';
+import type { Addon, AddonResolveable } from '~/addons/addon';
 import { parseThemeBundle } from '~/themes/bundle';
-import type { AddonFiles } from '~/addons/files';
 import { Manager } from '~/addons/manager';
 import { Addons } from '~/addons/addons';
 import ThemeStore from '~/themes/state';
@@ -15,9 +12,11 @@ const DISK_EVENTS = ['installed', 'updated', 'deleted', 'reloaded'] as const;
 
 /**
  * @description Manages user themes, layering theme-specific application on top of the base {@link Addons} manager.
- * Loads bundled themes at startup and applies the selected one through {@link ThemeStore} and the `applied` setting.
+ * One theme applies at a time; the applied one is shown through {@link ThemeStore}.
  */
 export class Themes extends Addons<Theme> {
+	protected readonly selection = 'one';
+
 	constructor() {
 		super({
 			kind: 'theme',
@@ -37,18 +36,11 @@ export class Themes extends Addons<Theme> {
 	}
 
 	/**
-	 * @description Loads every theme the loader scanned (`UnboundNative.getThemes()`), then applies the selected one.
+	 * @description Loads every theme the loader scanned (`UnboundNative.getThemes()`); the applied one starts and shows as it loads.
 	 */
 	initialize() {
 		for (const { bundle, manifest } of getThemes()) {
 			this.load(bundle, manifest);
-		}
-
-		const appliedId = this.getAppliedId();
-		const applied = appliedId ? this.getEntity(appliedId) : undefined;
-
-		if (applied?.started) {
-			ThemeStore.getState().setApplied(applied.id, this.stateOf(applied).instance);
 		}
 	}
 
@@ -62,21 +54,18 @@ export class Themes extends Addons<Theme> {
 	}
 
 	/**
-	 * @description Reads which theme is applied.
-	 * @returns The applied theme's id, or `null` when Discord's own theme is in use.
+	 * @description Shows the applied theme, replacing the one before. Twin of {@link unapply}.
+	 * @param theme The applied theme.
 	 */
-	getAppliedId(): string | null {
-		return this.settings.get<string | null>('applied', null);
+	protected apply(theme: Addon<Theme>): void {
+		ThemeStore.getState().setApplied(theme.id, this.stateOf(theme).instance);
 	}
 
 	/**
-	 * @description Reports whether a theme is the applied one, overriding the base implementation: only one theme applies,
-	 * so the `applied` setting decides, not a `states` map that can hold more than one.
-	 * @param id The theme's id.
-	 * @returns Whether it is applied.
+	 * @description Brings back Discord's own theme. Twin of {@link apply}.
 	 */
-	isEnabled(id: string): boolean {
-		return this.getAppliedId() === id;
+	protected unapply(): void {
+		ThemeStore.getState().setApplied(null, null);
 	}
 
 	/**
@@ -95,115 +84,6 @@ export class Themes extends Addons<Theme> {
 		return !getThemes().some(
 			({ bundle, manifest }) => manifest.id === resolved.id && bundle === resolved.bundle,
 		);
-	}
-
-	/**
-	 * @description Enables a theme, overriding the base implementation: stops any previously applied theme, records
-	 * this one as `applied`, starts it if needed, and pushes it onto {@link ThemeStore}. Twin of {@link disable}.
-	 * @param entity The theme id or entity to enable.
-	 */
-	enable(entity: AddonResolveable<Theme>) {
-		const resolved = this.resolve(entity);
-
-		if (!resolved) return;
-
-		try {
-			const prev = this.getAppliedId();
-
-			if (prev && prev !== resolved.id) {
-				const prevEntity = this.getEntity(prev);
-
-				if (prevEntity && prevEntity.started) {
-					this.stop(prevEntity);
-				}
-
-				// Only one theme applies, so the one it replaces reads as disabled.
-				this.states.set(prev, false);
-			}
-
-			this.settings.set('applied', resolved.id);
-			this.emit('record-changed', { key: 'applied', id: resolved.id });
-			this.states.set(resolved.id, true);
-
-			if (!resolved.started) {
-				this.start(resolved);
-			}
-
-			ThemeStore.getState().setApplied(resolved.id, this.stateOf(resolved).instance);
-			this.emit('enabled', resolved);
-		} catch (error) {
-			this.logger.error(`Failed to enable theme ${resolved.id}:`, error);
-			this.errors.set(resolved.id, toError(error));
-		}
-	}
-
-	/**
-	 * @description Disables a theme, overriding the base implementation: clears the `applied` setting, stops the
-	 * theme if running, and clears it from {@link ThemeStore}. Twin of {@link enable}.
-	 * @param entity The theme id or entity to disable.
-	 */
-	disable(entity: AddonResolveable<Theme>) {
-		const resolved = this.resolve(entity);
-
-		if (!resolved) return;
-
-		try {
-			this.settings.set('applied', null);
-			this.emit('record-changed', { key: 'applied', id: resolved.id });
-			this.states.set(resolved.id, false);
-
-			if (resolved.started) {
-				this.stop(resolved);
-			}
-
-			ThemeStore.getState().setApplied(null, null);
-			this.emit('disabled', resolved);
-		} catch (error) {
-			this.logger.error(`Failed to disable theme ${resolved.id}:`, error);
-			this.errors.set(resolved.id, toError(error));
-		}
-	}
-
-	/**
-	 * @description Restarts a running theme, re-parsing its bundle, and re-applies it through {@link ThemeStore} if it is the applied one.
-	 * @param entity The theme id or entity to restart.
-	 */
-	async restart(entity: AddonResolveable<Theme>): Promise<void> {
-		await super.restart(entity);
-
-		const resolved = this.resolve(entity);
-
-		if (!resolved?.started || this.getAppliedId() !== resolved.id) return;
-
-		ThemeStore.getState().setApplied(resolved.id, this.stateOf(resolved).instance);
-	}
-
-	/**
-	 * @description Hot-reloads a theme from a pushed bundle, and re-applies it through {@link ThemeStore} if it is the applied one.
-	 * @param entity The theme id or entity to reload.
-	 * @param bundle The freshly pushed theme bundle.
-	 * @param manifest The pushed manifest; {@link Addons.reload} validates it.
-	 * @param bytecode Unused by themes; kept for the base signature.
-	 * @param files The extra files to write beside the bundle, by path.
-	 * @returns The reload outcome.
-	 */
-	async reload(
-		entity: AddonResolveable<Theme>,
-		bundle: string,
-		manifest: PushedManifest,
-		bytecode?: string,
-		files?: AddonFiles,
-	): Promise<ReloadResult> {
-		const result = await super.reload(entity, bundle, manifest, bytecode, files);
-		const resolved = this.resolve(manifest.id);
-
-		if (!result.ok || !resolved?.started || this.getAppliedId() !== resolved.id) {
-			return result;
-		}
-
-		ThemeStore.getState().setApplied(resolved.id, this.stateOf(resolved).instance);
-
-		return result;
 	}
 }
 
