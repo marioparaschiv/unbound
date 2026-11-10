@@ -81,7 +81,7 @@ function HttpSearch({ operations, open, onOpenChange }: HttpSearchProps) {
 		<Dialog open={open} onOpenChange={(next) => (next ? onOpenChange(true) : close())}>
 			<DialogContent
 				showCloseButton={false}
-				className='top-[18%] translate-y-0 gap-0 p-0 overflow-hidden sm:max-w-xl'
+				className='top-[18%] translate-y-0 gap-0 p-0 overflow-hidden rounded-menu corner-continuous sm:max-w-xl'
 			>
 				<DialogTitle className='sr-only'>Search the HTTP reference</DialogTitle>
 				<DialogDescription className='sr-only'>
