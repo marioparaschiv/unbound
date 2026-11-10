@@ -6,20 +6,22 @@ import (
 	"testing"
 )
 
-func TestUnboundURLSchemeMatchesTheBundlePatcherAndTheClient(t *testing.T) {
-	patcher, err := os.ReadFile("../ios/bundle-patcher/sources/main.m")
+func TestUnboundURLSchemeMatchesTheRelayAppAndTheClient(t *testing.T) {
+	data, err := os.ReadFile("../ios/link-helper/Resources/Info.plist")
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, check := range []struct{ pattern, want string }{
-		{`kURLScheme\s*=\s*@"([^"]*)"`, unboundURLScheme},
-		{`kURLName\s*=\s*@"([^"]*)"`, unboundURLName},
-		{`kIconId\s*=\s*@"([^"]*)"`, unboundAlternateIcon},
-	} {
-		match := regexp.MustCompile(check.pattern).FindSubmatch(patcher)
-		if match == nil || string(match[1]) != check.want {
-			t.Fatalf("the jailbreak bundle patcher must use %q (pattern %s)", check.want, check.pattern)
-		}
+	info, err := readPlist(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	urlTypes := info.get("CFBundleURLTypes")
+	if urlTypes == nil || len(urlTypes.values) != 1 {
+		t.Fatal("the relay app must declare exactly one URL type")
+	}
+	schemes := urlTypes.values[0].get("CFBundleURLSchemes")
+	if schemes == nil || len(schemes.values) != 1 || schemes.values[0].text != unboundURLScheme {
+		t.Fatalf("the relay app must claim only %q", unboundURLScheme)
 	}
 
 	source, err := os.ReadFile("../../contracts/src/links.ts")

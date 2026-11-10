@@ -571,7 +571,7 @@ adb logcat -d -b crash | go run ./tools symbolicate-android --symbols android-sy
 
 cyan makes every change while it injects the tweak; the IPA is not rewritten beforehand. `-n Unbound` names the app, `-u` drops the supported-device list, `-d` enables file sharing, and the Unbound alternate icon's PNGs go in with `-f`. cyan's `-l` replaces each top-level key it merges, so the build writes a merge plist from the IPA's own `CFBundleIcons`, `CFBundleIcons~ipad` and `CFBundleURLTypes` with the `UnboundIcon` alternate icon and the `unbound://` scheme added.
 
-On a jailbroken device the deb's `unbound-bundle` tool makes the same changes to the installed Discord as root, and also installs the custom app icons added in Discord's app icon picker. A sideloaded app cannot gain icons after install, since iOS checks icon names against the Info.plist on disk.
+On a jailbroken device Discord keeps its App Store signature, so the deb never edits Discord.app; editing it makes iOS refuse the launch. The hidden `UnboundLink.app` claims `unbound://`, and `UnboundSpringBoard.dylib` hands those opens straight to Discord as `com.hammerandchisel.discord://unbound/…` in one app switch. If that hook stops matching, `UnboundLink.app` relays the link itself. The deb's `unbound-bundle` tool only restores Discord.app on installs that an older deb patched. A sideloaded app cannot gain icons after install, since iOS checks icon names against the Info.plist on disk.
 
 The alternate icon is compiled from `tools/assets/ipa-icons/AppIcon.icon`. After editing it, regenerate the bundled PNGs on macOS with Xcode installed:
 

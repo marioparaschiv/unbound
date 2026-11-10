@@ -1,6 +1,7 @@
 #!/bin/sh
 launchctl unload /var/jb/Library/LaunchDaemons/app.unbound.bundle.plist 2>/dev/null || true
 if [ "$1" = "remove" ] || [ "$1" = "purge" ]; then
-	/var/jb/usr/libexec/unbound-bundle remove || true
+	/var/jb/usr/libexec/unbound-bundle || true
 fi
+uicache -u /var/jb/Applications/UnboundLink.app || true
 exit 0

@@ -1,7 +1,6 @@
 #import "Unbound.h"
 
 #import <jsi/jsi.h>
-#import <notify.h>
 
 #import "AddonsCore.h"
 #import "CoreBridge.h"
@@ -202,12 +201,6 @@ public:
         return icons;
     }
 
-    static BOOL canPatchBundle()
-    {
-        return
-            [NSFileManager.defaultManager fileExistsAtPath:@"/var/jb/usr/libexec/unbound-bundle"];
-    }
-
     loader::UnboundNativeProvider unboundNativeProvider() override
     {
         loader::UnboundNativeProvider provider = loader::makeUnboundNativeProvider(
@@ -218,12 +211,6 @@ public:
         provider.getAppIcons = [] {
             return declaredUnboundIcons();
         };
-        if (canPatchBundle())
-        {
-            provider.syncAppIcons = [] {
-                notify_post("app.unbound.bundle.sync");
-            };
-        }
         provider.installHomeScreenIcon = [](const std::string &name, const std::string &imagePath) {
             return UBInstallHomeScreenIcon(toNSString(name), toNSString(imagePath)) == YES;
         };
