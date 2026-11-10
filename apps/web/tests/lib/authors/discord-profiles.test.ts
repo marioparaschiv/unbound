@@ -4,7 +4,6 @@ import { eq } from 'drizzle-orm';
 import {
 	readProfiles,
 	refreshDiscordProfiles,
-	requestProfileRefresh,
 	startProfileRefresher,
 } from '~/lib/authors/profiles';
 import { fetchDiscordUser } from '~/lib/authors/discord-users';
@@ -301,7 +300,7 @@ describe('startProfileRefresher', () => {
 
 		try {
 			await waitFor(() => discord.requests.length === 1);
-			requestProfileRefresh();
+			ctx.jobs.kick('profiles');
 			await Bun.sleep(50);
 
 			// A retry_after under a second is held to one, so this pause is still running.
@@ -317,7 +316,7 @@ describe('startProfileRefresher', () => {
 
 	test('does nothing on request when no refresher was started', async () => {
 		await credit('901');
-		requestProfileRefresh();
+		ctx.jobs.kick('profiles');
 		await Bun.sleep(20);
 
 		expect(discord.requests.map((request) => request.path)).not.toContain('/api/v10/users/901');

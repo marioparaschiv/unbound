@@ -1,5 +1,4 @@
 import { afterAll, describe, expect, test } from 'bun:test';
-import { eq } from 'drizzle-orm';
 
 import { getAddonDetails, getCatalog, listAddons } from '~/lib/addons';
 import { listReviewQueue, reviewSubmission } from '~/lib/review';
@@ -7,12 +6,12 @@ import { createSubmission } from '~/lib/submissions';
 import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
 import { findUpdates } from '~/lib/updates';
-import { user } from '~/db/schema';
 
-import { createTestContext, linkGitHub, signInWithDiscord, snowflakeAt } from '../helpers/context';
 import { commitPlugin, serveGitHub } from '../helpers/github';
+import { createTestContext } from '../helpers/context';
 import { serveMemoryS3 } from '../helpers/memory-s3';
 import { rejection } from '../helpers/server';
+import { signUpUser } from '../helpers/users';
 
 const REPOSITORY = 'acme/addons';
 
@@ -45,27 +44,8 @@ afterAll(async () => {
 	await close();
 });
 
-let users = 0;
-
 async function signUp(role: Role = 'user'): Promise<Caller> {
-	users += 1;
-
-	const { userId } = await signInWithDiscord(ctx, {
-		id: snowflakeAt(new Date('2020-01-01T00:00:00.000Z')),
-		name: `Recoverer ${users}`,
-		email: `recoverer-${users}@example.com`,
-	});
-
-	await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
-	await linkGitHub(ctx, userId, 'owner');
-
-	const row = await ctx.db.query.user.findFirst({ where: { id: userId } });
-
-	if (!row) {
-		throw new Error(`User ${userId} was not stored.`);
-	}
-
-	return { user: row, via: 'session' };
+	return (await signUpUser(ctx, { role, github: 'owner' })).caller;
 }
 
 async function submit(author: Caller, id: string, version = '1.0.0') {

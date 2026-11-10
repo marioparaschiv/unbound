@@ -3,7 +3,6 @@ import type { CreateSubmissionRequest } from '@unbound-app/contracts/publish';
 import { afterAll, describe, expect, test } from 'bun:test';
 import { count } from 'drizzle-orm';
 
-import previewSubmissionEndpoint from '~/endpoints/preview-submission';
 import { createApiClient } from '~/api/schema-client';
 import { ApiRequestError } from '~/api/client';
 import type { EnvSource } from '~/lib/env';
@@ -12,7 +11,7 @@ import type { Api } from '~/api';
 
 import { createTestContext, linkGitHub, signInWithDiscord, snowflakeAt } from '../helpers/context';
 import { manifest, seedApprovedAddon } from '../helpers/addons';
-import { failure, serveEndpoints } from '../helpers/server';
+import { failure, serveApi } from '../helpers/server';
 import { serveGitHub } from '../helpers/github';
 
 const REPOSITORY = 'acme/addons';
@@ -87,9 +86,7 @@ async function setup(overrides: EnvSource = {}) {
 		GITHUB_RATE_LIMIT_MAX: '1000',
 		...overrides,
 	});
-	const server = serveEndpoints(test.ctx, {
-		'POST /api/v1/submissions/preview': previewSubmissionEndpoint,
-	});
+	const server = await serveApi(test.ctx);
 
 	return {
 		ctx: test.ctx,

@@ -1,22 +1,12 @@
 import { crashReportResponseSchema, crashReportSchema } from '@unbound-app/contracts/crash-reports';
 import { Type } from '@unbound-app/contracts/schema';
-import { getIP } from 'better-auth/api';
 
-import { consumeRateLimit } from '~/lib/rate-limit';
 import { crashReport } from '~/db/schema';
 import endpoint from '~/lib/api/endpoint';
 
 const reportCrashEndpoint = endpoint(
 	{ body: crashReportSchema, query: Type.Undefined(), response: crashReportResponseSchema },
-	async ({ ctx, request, body }) => {
-		const ip = getIP(request, ctx.auth.options) ?? 'unknown';
-
-		await consumeRateLimit(ctx, {
-			key: `api:crash-reports:${ip}`,
-			windowSeconds: ctx.env.CRASH_REPORTS_RATE_LIMIT_WINDOW_SECONDS,
-			max: ctx.env.CRASH_REPORTS_RATE_LIMIT_MAX,
-		});
-
+	async ({ ctx, body }) => {
 		const id = Bun.randomUUIDv7();
 
 		await ctx.db.insert(crashReport).values({
@@ -42,6 +32,7 @@ const reportCrashEndpoint = endpoint(
 
 		return { id };
 	},
+	{ rateLimit: { bucket: 'crash-reports', budget: 'CRASH_REPORTS' } },
 );
 
 export default reportCrashEndpoint;

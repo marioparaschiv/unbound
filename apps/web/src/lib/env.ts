@@ -113,6 +113,7 @@ export const envSchema = Type.Object({
 	CRASH_REPORTS_RATE_LIMIT_WINDOW_SECONDS: positiveInt(3600),
 	CRASH_REPORTS_RATE_LIMIT_MAX: positiveInt(20),
 	ADDON_LIST_PAGE_SIZE: positiveInt(50),
+	ADMIN_ADDON_LIST_PAGE_SIZE: positiveInt(50),
 	DEVELOPER_LIST_PAGE_SIZE: positiveInt(24),
 	USER_LIST_PAGE_SIZE: positiveInt(25),
 	EVENT_PAGE_SIZE: positiveInt(100),

@@ -3,15 +3,16 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
 import { createSubmission, previewSubmission } from '~/lib/submissions';
-import { addon, submission, user } from '~/db/schema';
+import { addon, submission } from '~/db/schema';
 import { reviewSubmission } from '~/lib/review';
 import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
 
-import { createTestContext, linkGitHub, signInWithDiscord, snowflakeAt } from '../helpers/context';
 import { commitPlugin, serveGitHub } from '../helpers/github';
+import { createTestContext } from '../helpers/context';
 import { serveMemoryS3 } from '../helpers/memory-s3';
 import { rejection } from '../helpers/server';
+import { signUpUser } from '../helpers/users';
 
 const REPOSITORY = 'acme/addons';
 
@@ -31,21 +32,8 @@ afterAll(async () => {
 	await close();
 });
 
-let users = 0;
-
 async function signUp(role: Role = 'user'): Promise<Caller> {
-	users += 1;
-
-	const { userId } = await signInWithDiscord(ctx, {
-		id: snowflakeAt(new Date('2020-01-01T00:00:00.000Z')),
-		name: `Iconer ${users}`,
-		email: `iconer-${users}@example.com`,
-	});
-
-	await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
-	await linkGitHub(ctx, userId, 'owner');
-
-	return load(userId);
+	return (await signUpUser(ctx, { role, github: 'owner' })).caller;
 }
 
 async function load(userId: string): Promise<Caller> {

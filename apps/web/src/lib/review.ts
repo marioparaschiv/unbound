@@ -4,23 +4,23 @@ import type {
 	ReviewSubmissionRequest,
 	ReviewSubmissionResponse,
 } from '@unbound-app/contracts/review';
-import type { SubmissionKind } from '@unbound-app/contracts/publish';
 import { submissionKindSchema } from '@unbound-app/contracts/publish';
+import type { SubmissionKind } from '@unbound-app/contracts/publish';
 import { isNotNull } from 'drizzle-orm';
 
 import { decideSubmission, type Decision } from '~/lib/submission-decision';
-import type { SourcedSubmissionRow } from '~/lib/submissions';
 import { requireSourced, toSubmission } from '~/lib/submissions';
 import { describeMaintainerChanges } from '~/lib/maintainers';
+import type { SourcedSubmissionRow } from '~/lib/submissions';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
-import { publish } from '~/lib/publish-version';
 import { hasPermission } from '~/lib/auth/access';
 import { toAddonVersion } from '~/lib/artifacts';
-import { LATEST_VERSION } from '~/lib/addons';
 import type { AppContext } from '~/lib/context';
-import { readTags } from '~/lib/addon-tags';
+import { publish } from '~/lib/publish-version';
 import type { Caller } from '~/lib/api/caller';
+import { LATEST_VERSION } from '~/lib/addons';
+import { readTags } from '~/lib/addon-tags';
 import { ApiError } from '~/lib/api/errors';
 import { addonVersion } from '~/db/schema';
 
@@ -29,10 +29,18 @@ const REVIEW_PERMISSIONS: Record<SubmissionKind, Permissions> = {
 	update: { update: ['review'] },
 };
 
+/**
+ * @description Says whether the caller's role may review submissions of a kind.
+ * @param caller The would-be reviewer.
+ * @param kind The submission kind.
+ * @returns Whether they may review it.
+ */
+export function canReview(caller: Caller, kind: SubmissionKind): boolean {
+	return hasPermission(caller.user.role, REVIEW_PERMISSIONS[kind]);
+}
+
 function getReviewableKinds(caller: Caller): SubmissionKind[] {
-	return submissionKindSchema.enum.filter((kind) =>
-		hasPermission(caller.user.role, REVIEW_PERMISSIONS[kind]),
-	);
+	return submissionKindSchema.enum.filter((kind) => canReview(caller, kind));
 }
 
 /**
@@ -217,4 +225,4 @@ export async function reviewSubmission(
 	};
 }
 
-export default { listReviewQueue, reviewSubmission };
+export default { canReview, listReviewQueue, reviewSubmission };

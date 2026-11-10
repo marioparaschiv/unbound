@@ -2,48 +2,27 @@ import { editAddonRequestSchema } from '@unbound-app/contracts/admin';
 import type { EditAddonRequest } from '@unbound-app/contracts/admin';
 import { afterAll, describe, expect, test } from 'bun:test';
 import { safeParse } from '@unbound-app/contracts/schema';
-import { eq } from 'drizzle-orm';
 
 import { getAddonDetails, getCatalog, listAddons } from '~/lib/addons';
 import { editAddon, getAdminAddon } from '~/lib/admin-addon';
-import { moderationEvent, user } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
+import { moderationEvent } from '~/db/schema';
 import type { Role } from '~/lib/auth/access';
 import { serveVersion } from '~/lib/rollback';
 
-import { createTestContext, signInWithDiscord, snowflakeAt } from '../helpers/context';
 import { manifest, seedApprovedAddon, seedVersion } from '../helpers/addons';
+import { createTestContext } from '../helpers/context';
+import { rejection } from '../helpers/server';
+import { signUpUser } from '../helpers/users';
 
 const base = await createTestContext({ ADDON_LIST_PAGE_SIZE: '100' });
 const ctx: AppContext = base.ctx;
 
 afterAll(base.close);
 
-let users = 0;
-
-async function callerOf(userId: string): Promise<Caller> {
-	const row = await ctx.db.query.user.findFirst({ where: { id: userId } });
-
-	if (!row) {
-		throw new Error(`User ${userId} was not stored.`);
-	}
-
-	return { user: row, via: 'session' };
-}
-
-async function signUp(role: Role = 'user') {
-	users += 1;
-
-	const { userId } = await signInWithDiscord(ctx, {
-		id: snowflakeAt(new Date('2020-01-01T00:00:00.000Z')),
-		name: `Member ${users}`,
-		email: `edit-${users}@example.com`,
-	});
-
-	await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
-
-	return { userId, caller: await callerOf(userId) };
+function signUp(role: Role = 'user') {
+	return signUpUser(ctx, { role });
 }
 
 const owner = await signUp();
@@ -90,13 +69,6 @@ function eventsOf(id: string) {
 		where: { subjectType: 'addon', subjectId: id },
 		orderBy: { id: 'asc' },
 	});
-}
-
-function rejection(request: Promise<unknown>): Promise<Error | undefined> {
-	return request.then(
-		() => undefined,
-		(error: Error) => error,
-	);
 }
 
 describe('editAddon', () => {

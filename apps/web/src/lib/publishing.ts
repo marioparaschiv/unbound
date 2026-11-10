@@ -7,7 +7,8 @@ import { loadDashboard, loadSubmitTarget } from '~/lib/dashboard';
 import type { Dashboard, SubmitTarget } from '~/lib/dashboard';
 import { schemaValidator } from '~/lib/schema-validator';
 import requestCaller from '~/lib/api/request-caller';
-import app from '~/lib/app';
+import { readUserSummary } from '~/lib/admin-users';
+import { getApp } from '~/lib/app';
 
 export type SubmitOverview = {
 	githubLinked: boolean;
@@ -24,7 +25,7 @@ const findUserRequestSchema = Type.Object({
 });
 
 async function isGitHubLinked(headers: Headers): Promise<boolean> {
-	const accounts = await app.auth.api.listUserAccounts({ headers });
+	const accounts = await getApp().auth.api.listUserAccounts({ headers });
 
 	return accounts.some((account) => account.providerId === 'github');
 }
@@ -40,7 +41,7 @@ export const getSubmitOverview = createServerFn({ method: 'GET' })
 		const [githubLinked, target] = await Promise.all([
 			isGitHubLinked(getRequestHeaders()),
 			addonId
-				? requestCaller().then((caller) => loadSubmitTarget(app, caller, addonId))
+				? requestCaller().then((caller) => loadSubmitTarget(getApp(), caller, addonId))
 				: null,
 		]);
 
@@ -58,7 +59,7 @@ export const getDashboard = createServerFn({ method: 'GET' }).handler(
 			isGitHubLinked(getRequestHeaders()),
 		]);
 
-		return loadDashboard(app, caller, githubLinked);
+		return loadDashboard(getApp(), caller, githubLinked);
 	},
 );
 
@@ -71,12 +72,7 @@ export const findUser = createServerFn({ method: 'GET' })
 	.handler(async ({ data }): Promise<UserSummary | null> => {
 		await requestCaller();
 
-		const row = await app.db.query.user.findFirst({
-			where: { id: data.id },
-			columns: { id: true, name: true, image: true },
-		});
-
-		return row ? { ...row, image: row.image ?? null } : null;
+		return (await readUserSummary(getApp(), data.id)) ?? null;
 	});
 
 export default { getSubmitOverview, getDashboard, findUser };

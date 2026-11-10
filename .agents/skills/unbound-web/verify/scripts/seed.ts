@@ -1,16 +1,16 @@
 // Usage: bun seed.ts <sessions.json>, run by launch.sh from apps/web with the instance env loaded.
 // Seeds a user per role (session, linked GitHub), an approved addon and a pending submission.
 import {
-	browserSessionHeaders,
 	linkGitHub,
 	manifest,
 	seedSubmission,
 	seedVersion,
 	signInWithDiscord,
-	addTeamMembers,
-} from '../../../../../apps/web/tests/helpers';
+} from '../../../../../apps/web/testing';
 import { getArtifactKeys } from '../../../../../packages/contracts/src/version-layout';
+import { browserSessionHeaders } from '../../../../../apps/web/tests/helpers/context';
 import { addon, addonMaintainer } from '../../../../../apps/web/src/db/schema';
+import { addTeamMembers } from '../../../../../apps/web/tests/helpers/team';
 import { createAppContext } from '../../../../../apps/web/src/lib/context';
 import { createDatabase } from '../../../../../apps/web/src/db/database';
 import { toAddonSummary } from '../../../../../apps/web/src/lib/addons';

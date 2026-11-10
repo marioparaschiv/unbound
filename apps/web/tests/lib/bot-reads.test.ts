@@ -2,24 +2,18 @@ import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { afterAll, describe, expect, test } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 
-import { account, addon, addonMaintainer, addonVersion, moderationEvent, user } from '~/db/schema';
+import { account, addon, addonMaintainer, addonVersion, moderationEvent } from '~/db/schema';
 import { publishLoaderRelease, withdrawLoaderRelease } from '~/lib/loader-releases';
 import { renderAddonIcon } from '~/lib/addon-icons';
 import { createStaffNote } from '~/lib/staff-notes';
-import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
 import { delistAddon } from '~/lib/addons';
 import { createBotReads } from '~/lib/bot';
 
-import {
-	authRequest,
-	createTestContext,
-	linkGitHub,
-	signInWithDiscord,
-	snowflakeAt,
-} from '../helpers/context';
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from '../helpers/addons';
+import { authRequest, createTestContext, linkGitHub } from '../helpers/context';
 import { seedSponsorship } from '../helpers/sponsors';
+import { signUpUser } from '../helpers/users';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const NOW = new Date('2026-10-20T00:00:00.000Z');
@@ -34,29 +28,8 @@ const reads = createBotReads(ctx.db.$client, {
 
 afterAll(close);
 
-let users = 0;
-
-async function signUp(role: Role = 'user') {
-	users += 1;
-
-	const discordId = snowflakeAt(new Date(Date.UTC(2020, 0, users)));
-	const { userId, headers } = await signInWithDiscord(ctx, {
-		id: discordId,
-		name: `Member ${users}`,
-		email: `bot-reads-${users}@example.com`,
-	});
-
-	await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
-
-	const row = await ctx.db.query.user.findFirst({ where: { id: userId } });
-
-	if (!row) {
-		throw new Error(`User ${userId} was not stored.`);
-	}
-
-	const caller: Caller = { user: row, via: 'session' };
-
-	return { userId, discordId, headers, caller };
+function signUp(role: Role = 'user') {
+	return signUpUser(ctx, { role });
 }
 
 function seedAddon(ownerId: string, id: string, overrides: Partial<PublishedManifest> = {}) {

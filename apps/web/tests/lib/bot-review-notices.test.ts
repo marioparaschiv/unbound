@@ -6,8 +6,9 @@ import { recordReviewDecision, type FirstPartyBuild } from '~/lib/moderation-eve
 import { account, moderationEvent } from '~/db/schema';
 import { createBotReads } from '~/lib/bot';
 
-import { createTestContext, signInWithDiscord, snowflakeAt } from '../helpers/context';
 import { manifest, seedApprovedAddon, seedSubmission } from '../helpers/addons';
+import { createTestContext } from '../helpers/context';
+import { signUpUser } from '../helpers/users';
 
 const BUILD: FirstPartyBuild = { repository: 'owner/repo', commitSha: 'abc', ref: 'builds/abc' };
 
@@ -19,19 +20,8 @@ const reads = createBotReads(ctx.db.$client, {
 
 afterAll(close);
 
-let users = 0;
-
-async function signUp() {
-	users += 1;
-
-	const discordId = snowflakeAt(new Date(Date.UTC(2021, 0, users)));
-	const { userId } = await signInWithDiscord(ctx, {
-		id: discordId,
-		name: `Author ${users}`,
-		email: `review-notices-${users}@example.com`,
-	});
-
-	return { userId, discordId };
+function signUp() {
+	return signUpUser(ctx);
 }
 
 type Decided = {

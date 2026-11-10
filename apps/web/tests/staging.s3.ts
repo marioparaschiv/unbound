@@ -8,15 +8,10 @@ import { addonVersion, submission, user } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
 import { sweepStaging } from '~/lib/staging';
 
-import {
-	S3_TEST_ENV,
-	authRequest,
-	createTestContext,
-	linkGitHub,
-	signInWithDiscord,
-} from './helpers/context';
+import { S3_TEST_ENV, authRequest, createTestContext, linkGitHub } from './helpers/context';
 import { manifest, seedApprovedAddon, seedSubmission } from './helpers/addons';
 import { commitPlugin, serveGitHub } from './helpers/github';
+import { signUpUser } from './helpers/users';
 
 const MINUTE_MS = 60_000;
 const REPOSITORY = 'acme/addons';
@@ -49,16 +44,8 @@ function sweepAfter(ms: number) {
 	});
 }
 
-let users = 0;
-
-async function signUp() {
-	users += 1;
-
-	return signInWithDiscord(ctx, {
-		id: '80351110224678912',
-		name: `Author ${users}`,
-		email: `author-${users}@example.com`,
-	});
+function signUp() {
+	return signUpUser(ctx);
 }
 
 function staged(key: string) {

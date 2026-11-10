@@ -1,29 +1,23 @@
 import type { ModerationEvent, Subject } from '@unbound-app/contracts/admin';
 import { afterAll, describe, expect, test } from 'bun:test';
-import { eq } from 'drizzle-orm';
 
 import { createStaffNote, deleteStaffNote, editStaffNote } from '~/lib/staff-notes';
 import { addMaintainer, removeMaintainer, transferAddon } from '~/lib/maintainers';
 import { listEvents, queryEvents } from '~/lib/moderation-events';
 import { delistAddon, relistAddon } from '~/lib/addons';
 import { createSubmission } from '~/lib/submissions';
-import { moderationEvent, user } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
 import { reviewSubmission } from '~/lib/review';
-import type { Caller } from '~/lib/api/caller';
+import { moderationEvent } from '~/db/schema';
 import type { Role } from '~/lib/auth/access';
 
-import {
-	authRequest,
-	createTestContext,
-	linkGitHub,
-	signInWithDiscord,
-	snowflakeAt,
-} from '../helpers/context';
+import { authRequest, createTestContext, linkGitHub } from '../helpers/context';
 import { explain, planNodes, planPath } from '../helpers/database';
 import { manifest, seedApprovedAddon } from '../helpers/addons';
 import { commitPlugin, serveGitHub } from '../helpers/github';
 import { serveMemoryS3 } from '../helpers/memory-s3';
+import { rejection } from '../helpers/server';
+import { signUpUser } from '../helpers/users';
 
 const REPOSITORY = 'acme/addons';
 
@@ -48,28 +42,8 @@ afterAll(async () => {
 	await base.close();
 });
 
-let users = 0;
-
-async function signUp(role: Role = 'user') {
-	users += 1;
-
-	const { userId, headers } = await signInWithDiscord(ctx, {
-		id: snowflakeAt(new Date('2020-01-01T00:00:00.000Z')),
-		name: `Member ${users}`,
-		email: `events-${users}@example.com`,
-	});
-
-	await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
-
-	const row = await ctx.db.query.user.findFirst({ where: { id: userId } });
-
-	if (!row) {
-		throw new Error(`User ${userId} was not stored.`);
-	}
-
-	const caller: Caller = { user: row, via: 'session' };
-
-	return { userId, headers, caller };
+function signUp(role: Role = 'user') {
+	return signUpUser(ctx, { role });
 }
 
 type Member = Awaited<ReturnType<typeof signUp>>;
@@ -104,13 +78,6 @@ async function timeline(viewer: Member, subject: Subject): Promise<ModerationEve
 	return items;
 }
 
-function rejection(request: Promise<object | void>): Promise<Error | undefined> {
-	return request.then(
-		() => undefined,
-		(error: Error) => error,
-	);
-}
-
 function addonSubject(id: string): Subject {
 	return { type: 'addon', id };
 }
@@ -135,8 +102,8 @@ describe('review decisions', () => {
 			note: 'Thanks.',
 		});
 
-		const actor = { id: moderator.userId, name: 'Member 2', image: null };
-		const submitter = { id: author.userId, name: 'Member 1', image: null };
+		const actor = { id: moderator.userId, name: moderator.name, image: null };
+		const submitter = { id: author.userId, name: author.name, image: null };
 
 		expect(await timeline(moderator, addonSubject('events.cycle'))).toMatchObject([
 			{

@@ -17,11 +17,9 @@ import { AUTH_ERROR_PATH } from '~/lib/auth/auth-errors';
 import { DISCORD_SCOPES } from '~/lib/discord-sign-in';
 import { grantTeamRole } from '~/lib/team/site-roles';
 import type { FileRoutesByTo } from '~/routeTree.gen';
+import type { AuthHookContext } from '~/lib/context';
 import { purgeUserSubmissions } from '~/lib/staging';
-import type { Database } from '~/db/database';
-import type { Storage } from '~/lib/storage';
 import * as schema from '~/db/schema';
-import type { Env } from '~/lib/env';
 
 const logger = createLogger('Web', 'Auth');
 
@@ -55,12 +53,11 @@ export type Session = Auth['$Infer']['Session'];
  * Banning a user cancels their open submissions and deletes their staged files, and bans, unbans and
  * role changes are recorded as moderation events. Linking Discord grants the staff role the team
  * snapshot names. Only the admin plugin endpoints the site uses are open, and no one sets their own role.
- * @param db The database the auth tables live in.
- * @param env The validated environment.
- * @param storage The object storage, for purging a banned user's staged files.
+ * @param ctx The context its hooks run with; they read its clock when they run.
  * @returns The configured Better Auth instance.
  */
-export function createAuth(db: Database, env: Env, storage: Storage): Auth {
+export function createAuth(ctx: AuthHookContext): Auth {
+	const { db, env, now } = ctx;
 	const options: AuthOptions = {
 		appName: 'Unbound',
 		baseURL: env.PUBLIC_URL,
@@ -122,7 +119,7 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 						if (created.providerId !== 'discord') return;
 
 						try {
-							await grantTeamRole(db, created.userId, new Date());
+							await grantTeamRole(db, created.userId, now());
 						} catch (error) {
 							// The sign-in already committed; the next team sync grants the role.
 							logger.error(
@@ -141,7 +138,7 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 						if (updated.banned !== true) return;
 
 						try {
-							await purgeUserSubmissions({ db, storage }, updated.id);
+							await purgeUserSubmissions(ctx, updated.id);
 						} catch (error) {
 							// The submissions are cancelled first, so the staging sweeper reaps what is left.
 							logger.error(
@@ -157,7 +154,7 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 					before: async (deleted, context) => {
 						await deleteUserWithRecord(db, deleted.id, {
 							actorId: context?.context.session?.user.id ?? null,
-							at: new Date(),
+							at: now(),
 						});
 
 						return false;
@@ -189,7 +186,7 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 					await recordAuthAdminAction(db, {
 						path: ctx.path,
 						actorId: ctx.context.session?.user.id ?? null,
-						at: new Date(),
+						at: now(),
 						body: ctx.body,
 						returned: ctx.context.returned,
 					});

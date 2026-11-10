@@ -8,20 +8,15 @@ import { addMaintainer } from '~/lib/maintainers';
 import { getAdminUser } from '~/lib/admin-users';
 import type { AppContext } from '~/lib/context';
 import { reviewSubmission } from '~/lib/review';
-import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
-import { addon, user } from '~/db/schema';
+import { addon } from '~/db/schema';
 
-import {
-	authRequest,
-	createTestContext,
-	linkGitHub,
-	signInWithDiscord,
-	snowflakeAt,
-} from '../helpers/context';
+import { authRequest, createTestContext, linkGitHub } from '../helpers/context';
 import { manifest, seedApprovedAddon, seedVersion } from '../helpers/addons';
 import { commitPlugin, serveGitHub } from '../helpers/github';
 import { serveMemoryS3 } from '../helpers/memory-s3';
+import { rejection } from '../helpers/server';
+import { signUpUser } from '../helpers/users';
 
 const REPOSITORY = 'acme/addons';
 const MOVED_REPOSITORY = 'acme/moved';
@@ -42,29 +37,8 @@ afterAll(async () => {
 	await base.close();
 });
 
-let users = 0;
-
-async function signUp(role: Role = 'user') {
-	users += 1;
-
-	const name = `Member ${users}`;
-	const { userId, headers } = await signInWithDiscord(ctx, {
-		id: snowflakeAt(new Date('2020-01-01T00:00:00.000Z')),
-		name,
-		email: `views-${users}@example.com`,
-	});
-
-	await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
-
-	const row = await ctx.db.query.user.findFirst({ where: { id: userId } });
-
-	if (!row) {
-		throw new Error(`User ${userId} was not stored.`);
-	}
-
-	const caller: Caller = { user: row, via: 'session' };
-
-	return { userId, name, headers, caller };
+function signUp(role: Role = 'user') {
+	return signUpUser(ctx, { role });
 }
 
 type Member = Awaited<ReturnType<typeof signUp>>;
@@ -96,13 +70,6 @@ function adminAction(moderator: Member, path: string, body: Record<string, strin
 		headers: moderator.headers,
 		body: JSON.stringify(body),
 	});
-}
-
-function rejection(request: Promise<object | undefined>): Promise<Error | undefined> {
-	return request.then(
-		() => undefined,
-		(error: Error) => error,
-	);
 }
 
 describe('the admin addon view', () => {

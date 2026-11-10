@@ -1,5 +1,5 @@
-import { authRequest, createSubmissionEndpoint, serveEndpoints } from '@unbound-app/web/testing';
 import type { AppContext, GitFixture } from '@unbound-app/web/testing';
+import { authRequest, serveApi } from '@unbound-app/web/testing';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
@@ -40,12 +40,12 @@ function git(dir: string, args: string[]): string {
 }
 
 /**
- * @description Serves the submission endpoint `ubd publish` calls, plus Better Auth.
+ * @description Serves the web API `ubd publish` calls, plus Better Auth.
  * @param ctx The application context.
  * @returns The running server.
  */
 export function servePublishApi(ctx: AppContext) {
-	return serveEndpoints(ctx, { 'POST /api/v1/submissions': createSubmissionEndpoint });
+	return serveApi(ctx);
 }
 
 /**

@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';
 import { rateLimit } from '~/db/schema';
+import type { Env } from '~/lib/env';
 import one from '~/db/one';
 
 export type RateLimitOptions = {
@@ -10,6 +11,18 @@ export type RateLimitOptions = {
 	key: string;
 	windowSeconds: number;
 	max: number;
+};
+
+/** The `P` of an env pair `P_RATE_LIMIT_WINDOW_SECONDS` and `P_RATE_LIMIT_MAX`. */
+export type RateLimitBudget = {
+	[K in keyof Env]: K extends `${infer P}_RATE_LIMIT_MAX` ? P : never;
+}[keyof Env];
+
+/** A named bucket counted against an env-configured budget. */
+export type BudgetedRateLimit = {
+	/** The key's middle part: `api:<bucket>:<subject>`. */
+	bucket: string;
+	budget: RateLimitBudget;
 };
 
 /**
@@ -44,4 +57,24 @@ export async function consumeRateLimit(ctx: AppContext, options: RateLimitOption
 	}
 }
 
-export default { consumeRateLimit };
+/**
+ * @description Counts a request by one subject against a bucket's env-configured budget, as
+ * {@link consumeRateLimit} does.
+ * @param ctx The application context.
+ * @param limit The bucket and the env pair that sizes it.
+ * @param subject Who is counted: a client IP or a user id.
+ * @returns Resolves when the request is within budget.
+ */
+export function consumeBudget(
+	ctx: AppContext,
+	limit: BudgetedRateLimit,
+	subject: string,
+): Promise<void> {
+	return consumeRateLimit(ctx, {
+		key: `api:${limit.bucket}:${subject}`,
+		windowSeconds: ctx.env[`${limit.budget}_RATE_LIMIT_WINDOW_SECONDS`],
+		max: ctx.env[`${limit.budget}_RATE_LIMIT_MAX`],
+	});
+}
+
+export default { consumeRateLimit, consumeBudget };

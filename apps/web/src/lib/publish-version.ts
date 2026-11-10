@@ -12,7 +12,6 @@ import { readPinnedFiles, type PinnedFiles } from '~/lib/pinned-files';
 import { refreshAddonSummary, toAddonSummary } from '~/lib/addons';
 import type { ArtifactVersion, StorePage } from '~/lib/artifacts';
 import { writeArtifact, writeStorePage } from '~/lib/artifacts';
-import { requestProfileRefresh } from '~/lib/authors/profiles';
 import { applySubmissionMaintainers } from '~/lib/maintainers';
 import { recordReviewDecision } from '~/lib/moderation-events';
 import type { AddonSource } from '~/lib/addon-source';
@@ -434,7 +433,7 @@ async function publishFirstParty(ctx: AppContext, pin: FirstPartyPin): Promise<P
 		return unchanged(committed);
 	}
 
-	requestProfileRefresh();
+	ctx.jobs.kick('profiles');
 
 	return {
 		status: committed.replace ? 'replaced' : 'published',
@@ -459,7 +458,7 @@ export async function publish(ctx: AppContext, pin: PublishPin): Promise<Publish
 	const { row, artifact } = await commitReview(ctx, pin);
 
 	await writeFiles(ctx, row, artifact);
-	requestProfileRefresh();
+	ctx.jobs.kick('profiles');
 
 	return { status: 'published', sha256: row.sha256, row };
 }

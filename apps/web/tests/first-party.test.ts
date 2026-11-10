@@ -12,9 +12,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 import { eq } from 'drizzle-orm';
 
-import listFirstPartyAddonsEndpoint from '~/endpoints/list-first-party-addons';
 import publishFirstPartyEndpoint from '~/endpoints/publish-first-party';
-import getCatalogEndpoint from '~/endpoints/get-catalog';
 import { createApiClient } from '~/api/schema-client';
 import { createSubmission } from '~/lib/submissions';
 import type { AppContext } from '~/lib/context';
@@ -22,21 +20,16 @@ import { reviewSubmission } from '~/lib/review';
 import type { Caller } from '~/lib/api/caller';
 import { API_KEY_HEADER } from '~/api/client';
 import { delistAddon } from '~/lib/addons';
-import { addon, user } from '~/db/schema';
+import { addon } from '~/db/schema';
 import type { Api } from '~/api';
 
 import type { FixtureFiles, GitFixture } from './helpers/github';
 
-import {
-	authRequest,
-	createTestContext,
-	linkGitHub,
-	signInWithDiscord,
-	snowflakeAt,
-} from './helpers/context';
 import { COMMITTED_ADDON_MD, committedPage, committedPageFiles, png } from './helpers/addon-page';
 import { manifest, seedApprovedAddon, seedSubmission } from './helpers/addons';
-import { failure, serveEndpoints } from './helpers/server';
+import { authRequest, createTestContext, linkGitHub } from './helpers/context';
+import { signUpUser, type SignUpOptions } from './helpers/users';
+import { failure, serveApi } from './helpers/server';
 import { serveMemoryS3 } from './helpers/memory-s3';
 import { serveGitHub } from './helpers/github';
 
@@ -63,11 +56,7 @@ const reviewed = await createTestContext({ ...shared, S3_ENDPOINT: reviewS3.url.
 const unconfigured = await createTestContext({ GITHUB_API_URL: github.url.href });
 const ctx = trusted.ctx;
 
-const server = serveEndpoints(ctx, {
-	'POST /api/v1/first-party/publish': publishFirstPartyEndpoint,
-	'GET /api/v1/catalog': getCatalogEndpoint,
-	'GET /api/v1/first-party/addons': listFirstPartyAddonsEndpoint,
-});
+const server = await serveApi(ctx);
 const client = createApiClient<Api>({ baseUrl: server.url.href });
 
 afterAll(async () => {
@@ -78,26 +67,10 @@ afterAll(async () => {
 	}
 });
 
-let users = 0;
+async function signUp(target: AppContext, role?: SignUpOptions['role']): Promise<Member> {
+	const { userId, headers, caller } = await signUpUser(target, { role });
 
-async function signUp(target: AppContext, role: string = 'user'): Promise<Member> {
-	users += 1;
-
-	const { userId, headers } = await signInWithDiscord(target, {
-		id: snowflakeAt(new Date('2020-01-01T00:00:00.000Z')),
-		name: `Member ${users}`,
-		email: `first-party-${users}@example.com`,
-	});
-
-	await target.db.update(user).set({ role }).where(eq(user.id, userId));
-
-	const row = await target.db.query.user.findFirst({ where: { id: userId } });
-
-	if (!row) {
-		throw new Error(`User ${userId} was not stored.`);
-	}
-
-	return { userId, session: headers, caller: { user: row, via: 'session' } };
+	return { userId, session: headers, caller };
 }
 
 async function apiKey(target: AppContext, member: Member): Promise<Headers> {

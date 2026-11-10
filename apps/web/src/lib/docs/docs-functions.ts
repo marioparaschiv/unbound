@@ -13,9 +13,9 @@ import { getDocsNav, getDocsPage, type DocsNav, type DocsPageData } from '~/lib/
 import { createDocsSource } from '~/lib/docs/docs-source';
 import { schemaValidator } from '~/lib/schema-validator';
 import type { DocsIndex } from '~/lib/docs/docs-index';
-import app from '~/lib/app';
+import { getApp } from '~/lib/app';
 
-const docs = createDocsSource({ cdnUrl: (key) => getCdnUrl(app.env.CDN_URL, key) });
+const docs = createDocsSource({ cdnUrl: (key) => getCdnUrl(getApp().env.CDN_URL, key) });
 
 const versionParamsSchema = Type.Object({ package: docsPackageSchema, version: docsVersionSchema });
 

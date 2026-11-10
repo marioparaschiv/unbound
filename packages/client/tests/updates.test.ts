@@ -1,11 +1,10 @@
 import {
-	checkUpdatesEndpoint,
 	MAINTENANCE_URL,
 	createTestContext,
 	manifest,
 	seedApprovedAddon,
 	seedVersion,
-	serveEndpoints,
+	serveApi,
 	signInWithDiscord,
 } from '@unbound-app/web/testing';
 import { afterAll, beforeAll, beforeEach, describe, expect, spyOn, test } from 'bun:test';
@@ -41,7 +40,7 @@ const cdn = Bun.serve({
 });
 
 let web: TestContext;
-let api: ReturnType<typeof serveEndpoints>;
+let api: Awaited<ReturnType<typeof serveApi>>;
 
 // Bound and stopped up front, so nothing is listening on its port.
 const closed = Bun.serve({ port: 0, fetch: () => new Response() });
@@ -159,7 +158,7 @@ describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and update', () => {
 
 	beforeAll(async () => {
 		web = await createTestContext({ CDN_URL: cdn.url.origin });
-		api = serveEndpoints(web.ctx, { 'POST /api/v1/updates': checkUpdatesEndpoint });
+		api = await serveApi(web.ctx);
 
 		const { userId } = await signInWithDiscord(web.ctx, {
 			id: '80351110224678920',

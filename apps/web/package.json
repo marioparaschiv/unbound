@@ -21,8 +21,8 @@
 			"default": "./src/lib/bot/index.ts"
 		},
 		"./testing": {
-			"types": "./dist/types/tests/helpers/index.d.ts",
-			"default": "./tests/helpers/index.ts"
+			"types": "./dist/types/testing/index.d.ts",
+			"default": "./testing/index.ts"
 		}
 	},
 	"scripts": {

@@ -1,9 +1,8 @@
 import { createStaffNoteRequestSchema } from '@unbound-app/contracts/admin';
-import { dirname, join, relative, resolve } from 'node:path';
 import { afterAll, describe, expect, test } from 'bun:test';
 import { safeParse } from '@unbound-app/contracts/schema';
-import { existsSync, readdirSync } from 'node:fs';
 import { eq } from 'drizzle-orm';
+import { join } from 'node:path';
 
 import {
 	createStaffNote,
@@ -16,12 +15,14 @@ import { addon, staffNote, user } from '~/db/schema';
 import { getAdminAddon } from '~/lib/admin-addon';
 import { getAdminUser } from '~/lib/admin-users';
 import type { AppContext } from '~/lib/context';
-import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
 
-import { createTestContext, signInWithDiscord, snowflakeAt } from '../helpers/context';
 import { explain, indexCond, planPath } from '../helpers/database';
+import { SRC, sourceFiles, walkImports } from '../helpers/imports';
 import { manifest, seedApprovedAddon } from '../helpers/addons';
+import { createTestContext } from '../helpers/context';
+import { rejection } from '../helpers/server';
+import { signUpUser } from '../helpers/users';
 
 const base = await createTestContext();
 
@@ -31,42 +32,14 @@ const ctx: AppContext = { ...base.ctx, now: () => clock };
 
 afterAll(base.close);
 
-let users = 0;
-
-async function signUp(role: Role = 'user') {
-	users += 1;
-
-	const name = `Staff ${users}`;
-	const { userId } = await signInWithDiscord(ctx, {
-		id: snowflakeAt(new Date('2020-01-01T00:00:00.000Z')),
-		name,
-		email: `notes-${users}@example.com`,
-	});
-
-	await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
-
-	const row = await ctx.db.query.user.findFirst({ where: { id: userId } });
-
-	if (!row) {
-		throw new Error(`User ${userId} was not stored.`);
-	}
-
-	const caller: Caller = { user: row, via: 'session' };
-
-	return { userId, name, caller };
+function signUp(role: Role = 'user') {
+	return signUpUser(ctx, { role });
 }
 
 function tick() {
 	clock = new Date(clock.getTime() + 60_000);
 
 	return clock;
-}
-
-function rejection(request: Promise<object | void>): Promise<Error | undefined> {
-	return request.then(
-		() => undefined,
-		(error: Error) => error,
-	);
 }
 
 async function seedAddon(id: string) {
@@ -330,64 +303,11 @@ describe('staff notes', () => {
 	});
 });
 
-const SRC = resolve(import.meta.dir, '../../src');
-const EXTENSIONS = ['.ts', '.tsx', '/index.ts', '/index.tsx'];
-const transpiler = new Bun.Transpiler({ loader: 'tsx' });
-
-function sourceFiles(directory: string): string[] {
-	return readdirSync(directory, { recursive: true, encoding: 'utf8' })
-		.filter((name) => /\.tsx?$/.test(name))
-		.map((name) => join(directory, name));
-}
-
-function resolveImport(from: string, specifier: string): string | undefined {
-	let target: string | undefined;
-
-	if (specifier.startsWith('~/')) {
-		target = join(SRC, specifier.slice(2));
-	} else if (specifier.startsWith('.')) {
-		target = resolve(dirname(from), specifier);
-	}
-
-	if (!target) return;
-
-	if (/\.tsx?$/.test(target) && existsSync(target)) {
-		return target;
-	}
-
-	return EXTENSIONS.map((extension) => target + extension).find((path) => existsSync(path));
-}
-
-async function reachable(entries: string[]): Promise<Set<string>> {
-	const seen = new Set<string>();
-	const queue = [...entries];
-
-	for (let file = queue.pop(); file; file = queue.pop()) {
-		if (seen.has(file)) {
-			continue;
-		}
-
-		seen.add(file);
-
-		const imports = transpiler.scanImports(await Bun.file(file).text());
-
-		for (const { path } of imports) {
-			const target = resolveImport(file, path);
-
-			if (target) {
-				queue.push(target);
-			}
-		}
-	}
-
-	return new Set([...seen].map((path) => relative(SRC, path)));
-}
-
 const STAFF_ONLY = ['lib/staff-notes.ts', 'lib/admin-functions.ts'];
 
 describe('the public API surface', () => {
 	test('no /api route or endpoint reaches the staff notes or admin server functions', async () => {
-		const files = await reachable([
+		const files = await walkImports([
 			...sourceFiles(join(SRC, 'routes/api')),
 			...sourceFiles(join(SRC, 'endpoints')),
 		]);
@@ -397,7 +317,7 @@ describe('the public API surface', () => {
 	});
 
 	test('the admin pages do reach them, so the walk follows imports', async () => {
-		const files = await reachable([join(SRC, 'routes/_site/_staff/admin/users/$id.tsx')]);
+		const files = await walkImports([join(SRC, 'routes/_site/_staff/admin/users/$id.tsx')]);
 
 		expect(STAFF_ONLY.filter((path) => files.has(path))).toEqual(STAFF_ONLY);
 	});

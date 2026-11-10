@@ -9,18 +9,15 @@ import { addonResponseSchema } from '@unbound-app/contracts/addons';
 import { afterAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
-import createSubmissionEndpoint from '~/endpoints/create-submission';
-import reviewSubmissionEndpoint from '~/endpoints/review-submission';
 import { addonMaintainer, submission, user } from '~/db/schema';
-import delistAddonEndpoint from '~/endpoints/delist-addon';
-import reviewQueueEndpoint from '~/endpoints/review-queue';
 import { createApiClient } from '~/api/schema-client';
 import type { Role } from '~/lib/auth/access';
 import type { Api } from '~/api';
 
-import { S3_TEST_ENV, createTestContext, linkGitHub, signInWithDiscord } from '../helpers/context';
+import { S3_TEST_ENV, createTestContext } from '../helpers/context';
 import { commitPlugin, serveGitHub } from '../helpers/github';
-import { failure, serveEndpoints } from '../helpers/server';
+import { failure, serveApi } from '../helpers/server';
+import { signUpUser } from '../helpers/users';
 import { manifest } from '../helpers/addons';
 
 const REPOSITORY = 'acme/addons';
@@ -37,12 +34,7 @@ const fixture = github.repository(REPOSITORY);
 // The real clock: MinIO checks presigned URLs against it.
 const { ctx, close } = await createTestContext({ ...S3_TEST_ENV, GITHUB_API_URL: github.url.href });
 
-const server = serveEndpoints(ctx, {
-	'POST /api/v1/submissions': createSubmissionEndpoint,
-	'POST /api/v1/submissions/$id/review': reviewSubmissionEndpoint,
-	'GET /api/v1/review/queue': reviewQueueEndpoint,
-	'POST /api/v1/addons/$id/delist': delistAddonEndpoint,
-});
+const server = await serveApi(ctx);
 
 afterAll(async () => {
 	const rows = await ctx.db.select({ key: submission.stagingKey }).from(submission);
@@ -57,21 +49,11 @@ afterAll(async () => {
 	await close();
 });
 
-let users = 0;
-
 async function signUp(role: Role = 'user') {
-	users += 1;
+	const created = await signUpUser(ctx, { role, github: 'owner' });
+	const client = createApiClient<Api>({ baseUrl: server.url.href, headers: created.headers });
 
-	const { userId, headers } = await signInWithDiscord(ctx, {
-		id: '80351110224678912',
-		name: `Member ${users}`,
-		email: `member-${users}@example.com`,
-	});
-
-	await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
-	await linkGitHub(ctx, userId, 'owner');
-
-	return { userId, client: createApiClient<Api>({ baseUrl: server.url.href, headers }) };
+	return { ...created, client };
 }
 
 type Member = Awaited<ReturnType<typeof signUp>>;

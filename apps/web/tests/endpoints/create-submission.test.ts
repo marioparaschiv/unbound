@@ -16,13 +16,12 @@ import {
 	authorizeDevice,
 	browserSessionHeaders,
 	createTestContext,
-	linkGitHub,
-	signInWithDiscord,
 	snowflakeAt,
 } from '../helpers/context';
 import { manifest, seedApprovedAddon } from '../helpers/addons';
 import { commitPlugin, serveGitHub } from '../helpers/github';
 import { withMemoryStaging } from '../helpers/storage';
+import { signUpUser } from '../helpers/users';
 
 const NOW = new Date('2026-10-17T12:00:00.000Z');
 const DAY_MS = 86_400_000;
@@ -66,26 +65,15 @@ function commitAddon(id: string, version?: string) {
 	return commitPlugin(fixture, REPOSITORY, id, version);
 }
 
-let users = 0;
-
-async function signUp(
+function signUp(
 	target: AppContext = ctx,
 	token: string | null = 'owner',
 	accountAgeDays: number = 365,
 ) {
-	users += 1;
-
-	const signedIn = await signInWithDiscord(target, {
-		id: snowflakeAt(new Date(target.now().getTime() - accountAgeDays * DAY_MS)),
-		name: `User ${users}`,
-		email: `user-${users}@example.com`,
+	return signUpUser(target, {
+		github: token ?? undefined,
+		discordId: snowflakeAt(new Date(target.now().getTime() - accountAgeDays * DAY_MS)),
 	});
-
-	if (token) {
-		await linkGitHub(target, signedIn.userId, token);
-	}
-
-	return signedIn;
 }
 
 function submit(headers: Headers, request: CreateSubmissionRequest, target: AppContext = ctx) {

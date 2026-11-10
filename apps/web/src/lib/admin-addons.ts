@@ -6,7 +6,7 @@ import type { UserSummary } from '@unbound-app/contracts/account';
 import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import type { SQL } from 'drizzle-orm';
 
-import { afterKey, cursorTime, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
+import { cursorTime, keysetList } from '~/lib/keyset';
 import { addonMaintainer, addonSearchText, submission } from '~/db/schema';
 import { SERVED_VERSION } from '~/lib/addon-visibility';
 import { requirePermission } from '~/lib/api/caller';
@@ -102,39 +102,40 @@ function filters(db: Database, table: typeof addon, search: AdminAddonsSearch) {
 }
 
 /**
- * @description Builds the one statement behind {@link listAdminAddons}: one page plus a lookahead row
- * by `(created_at, id)`, each with its newest version and owners.
+ * @description Builds one page of {@link listAdminAddons} by `(created_at, id)`, each with its newest
+ * version and owners.
  * @param ctx The application context.
  * @param search The filters, order and the cursor to page from.
- * @returns The unexecuted relational query.
+ * @returns The page's statement and its reader.
  */
 export function queryAdminAddons(ctx: AppContext, search: AdminAddonsSearch = {}) {
-	const { order = 'desc', cursor, dir } = search;
-	const after = cursor ? decodeCursor(cursor, ADDON_CURSOR) : undefined;
-	const read = scanOrder(order, dir);
-
-	return ctx.db.query.addon.findMany({
-		where: {
-			RAW: (table) =>
-				and(
-					...filters(ctx.db, table, search),
-					...publishedRange(table, search, read, after),
-					after ? afterKey([table.createdAt, table.id], after, order, dir) : undefined,
-				) ?? sql`true`,
-		},
-		with: {
-			versions: { ...SERVED_VERSION, columns: { version: true } },
-			maintainers: {
-				where: { role: 'owner' },
-				with: { user: { columns: { id: true, name: true, image: true } } },
-				orderBy: { createdAt: 'asc', userId: 'asc' },
-			},
-		},
-		orderBy: (table, operators) => [
-			operators[read](table.createdAt),
-			operators[read](table.id),
-		],
-		limit: ctx.env.ADDON_LIST_PAGE_SIZE + 1,
+	return keysetList({
+		key: ['createdAt', 'id'],
+		schema: ADDON_CURSOR,
+		request: search,
+		order: search.order ?? 'desc',
+		size: ctx.env.ADMIN_ADDON_LIST_PAGE_SIZE,
+		query: (page) =>
+			ctx.db.query.addon.findMany({
+				where: {
+					RAW: (table) =>
+						and(
+							...filters(ctx.db, table, search),
+							...publishedRange(table, search, page.read, page.after),
+							page.where(table),
+						) ?? sql`true`,
+				},
+				with: {
+					versions: { ...SERVED_VERSION, columns: { version: true } },
+					maintainers: {
+						where: { role: 'owner' },
+						with: { user: { columns: { id: true, name: true, image: true } } },
+						orderBy: { createdAt: 'asc', userId: 'asc' },
+					},
+				},
+				orderBy: (table) => page.orderBy(table),
+				limit: page.limit,
+			}),
 	});
 }
 
@@ -154,11 +155,7 @@ export async function listAdminAddons(
 ): Promise<AdminAddonsPage> {
 	requirePermission(caller, { addon: ['delist'] });
 
-	const rows = await queryAdminAddons(ctx, search);
-	const page = toKeysetPage(rows, ctx.env.ADDON_LIST_PAGE_SIZE, search, (row) => [
-		row.createdAt.getTime(),
-		row.id,
-	]);
+	const page = await queryAdminAddons(ctx, search).page();
 
 	const items = page.items.map((row) => ({
 		...toAddon(row),

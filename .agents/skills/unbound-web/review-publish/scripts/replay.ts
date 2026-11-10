@@ -21,7 +21,7 @@ import {
 	seedApprovedAddon,
 	seedSubmission,
 	serveGitHub,
-} from '../../../../../apps/web/tests/helpers/index.ts';
+} from '../../../../../apps/web/testing/index.ts';
 import {
 	COMMITTED_ADDON_MD,
 	committedPage,

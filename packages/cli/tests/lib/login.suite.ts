@@ -1,8 +1,7 @@
 import {
 	authRequest,
 	createTestContext,
-	meEndpoint,
-	serveEndpoints,
+	serveApi,
 	signInWithDiscord,
 } from '@unbound-app/web/testing';
 import { afterAll, afterEach, describe, expect, setSystemTime, test } from 'bun:test';
@@ -17,7 +16,7 @@ import { login } from '~/lib/login';
 import { createTempDir, runUbd } from '../helpers/ubd';
 
 const { ctx, close } = await createTestContext();
-const server = serveEndpoints(ctx, { 'GET /api/v1/me': meEndpoint });
+const server = await serveApi(ctx);
 const config = createTempDir();
 const env = parseEnv({ UNBOUND_API_URL: server.url.href, XDG_CONFIG_HOME: config.path });
 

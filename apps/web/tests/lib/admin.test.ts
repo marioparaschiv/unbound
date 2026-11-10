@@ -5,42 +5,22 @@ import { addon, addonMaintainer, user } from '~/db/schema';
 import { listAdminAddons } from '~/lib/admin-addons';
 import { listAdminUsers } from '~/lib/admin-users';
 import { toReviewEntry } from '~/lib/review-entry';
-import type { Caller } from '~/lib/api/caller';
 import { listReviewQueue } from '~/lib/review';
 import type { Role } from '~/lib/auth/access';
 
-import { authRequest, createTestContext, signInWithDiscord } from '../helpers/context';
 import { manifest, seedApprovedAddon, seedSubmission } from '../helpers/addons';
+import { authRequest, createTestContext } from '../helpers/context';
+import { signUpUser } from '../helpers/users';
 
 const { ctx, close } = await createTestContext({
-	ADDON_LIST_PAGE_SIZE: '2',
+	ADMIN_ADDON_LIST_PAGE_SIZE: '2',
 	USER_LIST_PAGE_SIZE: '2',
 });
 
 afterAll(close);
 
-let users = 0;
-
-async function signUp(role: Role = 'user', name: string = `Member ${users + 1}`) {
-	users += 1;
-
-	const { userId, headers } = await signInWithDiscord(ctx, {
-		id: `8035111022460${String(users).padStart(4, '0')}`,
-		name,
-		email: `admin-${users}@example.com`,
-	});
-
-	await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
-
-	const row = await ctx.db.query.user.findFirst({ where: { id: userId } });
-
-	if (!row) {
-		throw new Error(`User ${userId} was not stored.`);
-	}
-
-	const caller: Caller = { user: row, via: 'session' };
-
-	return { userId, headers, caller };
+function signUp(role: Role = 'user', name?: string) {
+	return signUpUser(ctx, { role, name });
 }
 
 describe('the review queue', () => {

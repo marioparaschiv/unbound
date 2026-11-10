@@ -1,13 +1,12 @@
 import { afterAll, describe, expect, test } from 'bun:test';
-import { eq } from 'drizzle-orm';
 
 import { getAdminUser, listAdminUsers } from '~/lib/admin-users';
-import { teamMember, user } from '~/db/schema';
-import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
 import type { DiscordId } from '~/db/schema';
+import { teamMember } from '~/db/schema';
 
-import { authRequest, createTestContext, signInWithDiscord } from '../helpers/context';
+import { authRequest, createTestContext } from '../helpers/context';
+import { signUpUser } from '../helpers/users';
 
 const { ctx, close } = await createTestContext();
 
@@ -19,24 +18,10 @@ async function signUp(role: Role = 'user') {
 	users += 1;
 
 	const discordId: DiscordId = `${8_035_111_022_480_000 + users}`;
-	const email = `privacy-${users}@example.com`;
-	const { userId, headers } = await signInWithDiscord(ctx, {
-		id: discordId,
-		name: `Privacy Member ${users}`,
-		email,
-	});
 
-	await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
+	const member = await signUpUser(ctx, { role, discordId, name: `Privacy Member ${users}` });
 
-	const row = await ctx.db.query.user.findFirst({ where: { id: userId } });
-
-	if (!row) {
-		throw new Error(`User ${userId} was not stored.`);
-	}
-
-	const caller: Caller = { user: row, via: 'session' };
-
-	return { userId, discordId, email, headers, caller };
+	return { ...member, discordId };
 }
 
 type Member = Awaited<ReturnType<typeof signUp>>;

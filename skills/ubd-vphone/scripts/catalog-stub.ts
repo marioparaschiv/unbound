@@ -4,12 +4,13 @@ import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 
 import {
 	createTestContext,
+	createTestDatabase,
+	dropDatabase,
 	manifest,
 	seedVersion,
 	signInWithDiscord,
-} from '../../../apps/web/tests/helpers/index';
+} from '../../../apps/web/testing/index';
 import listAddonVersionsEndpoint from '../../../apps/web/src/endpoints/list-addon-versions';
-import { createTestDatabase, dropDatabase } from '../../../apps/web/tests/helpers/database';
 import checkUpdatesEndpoint from '../../../apps/web/src/endpoints/check-updates';
 import getCatalogEndpoint from '../../../apps/web/src/endpoints/get-catalog';
 import { resolveDevHost } from '../../../packages/client/scripts/dev-host';

@@ -25,7 +25,7 @@ import {
 	servedVersionValue,
 } from '~/lib/addon-visibility';
 import { OPEN_SUBMISSION_STATUSES, requireSourced, toSubmission } from '~/lib/submissions';
-import { afterKey, cursorTime, decodeCursor, toKeysetPage } from '~/lib/keyset';
+import { cursorTime, keysetList } from '~/lib/keyset';
 import type { AddonVersionRow, VersionSubmission } from '~/lib/artifacts';
 import { VERSION_SOURCE, toAddonVersion } from '~/lib/artifacts';
 import { MAINTAINERS, toMaintainers } from '~/lib/maintainers';
@@ -40,7 +40,6 @@ import { readAddonTags } from '~/lib/addon-tags';
 import { splitList } from '~/lib/addon-filters';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
-import type { CursorKey } from '~/lib/keyset';
 import { DAY_MS } from '~/lib/calendar-date';
 import one from '~/db/one';
 
@@ -266,12 +265,6 @@ export function relistAddon(
 	return setDelisted(ctx, caller, addonId, false);
 }
 
-function listingKey(row: AddonRow, sort: AddonSort): CursorKey {
-	const value = row[SORT_COLUMNS[sort]];
-
-	return [value instanceof Date ? value.getTime() : value, row.id];
-}
-
 function tagFilter(table: ListingTable, query: ListingFilters) {
 	const tags = splitList(query.tags);
 
@@ -316,39 +309,44 @@ function updatedFilter(ctx: AppContext, table: ListingTable, query: ListingFilte
 }
 
 /**
- * @description Builds the one statement behind {@link listAddons}: one page plus a lookahead row,
- * keyset-paginated over the sort column and id so every filter and sort reads one index.
+ * @description Builds one page of {@link listAddons}, keyset-paginated over the sort column and id so
+ * every filter and sort reads one index.
  * @param ctx The application context.
  * @param query The type, tag, author and update filters, search text, sort and the previous page's cursor.
- * @returns The unexecuted relational query.
+ * @returns The page's statement and its reader.
  */
 export function queryListedAddons(ctx: AppContext, query: ListAddonsQuery = {}) {
-	const { type, q, sort = 'name', order = 'asc', cursor } = query;
-	const column = SORT_COLUMNS[sort];
-	const after = cursor ? decodeCursor(cursor, CURSOR_SCHEMAS[sort]) : undefined;
+	const { type, q, sort = 'name', order = 'asc' } = query;
 
-	return ctx.db.query.addon.findMany({
-		where: {
-			...LISTED_ADDONS,
-			type: type ?? EmptyFilter,
-			RAW: (table) =>
-				and(
-					q
-						? or(likeContains(table.name, q), likeContains(table.description, q))
-						: undefined,
-					tagFilter(table, query),
-					authorFilter(table, query),
-					updatedFilter(ctx, table, query),
-					after ? afterKey([table[column], table.id], after, order) : undefined,
-				) ?? sql`true`,
-		},
-		with: LATEST_VERSION,
-		orderBy: (table, operators) => {
-			const direction = operators[order];
-
-			return [direction(table[column]), direction(table.id)];
-		},
-		limit: ctx.env.ADDON_LIST_PAGE_SIZE + 1,
+	return keysetList({
+		key: [SORT_COLUMNS[sort], 'id'],
+		schema: CURSOR_SCHEMAS[sort],
+		request: query,
+		order,
+		size: ctx.env.ADDON_LIST_PAGE_SIZE,
+		query: (page) =>
+			ctx.db.query.addon.findMany({
+				where: {
+					...LISTED_ADDONS,
+					type: type ?? EmptyFilter,
+					RAW: (table) =>
+						and(
+							q
+								? or(
+										likeContains(table.name, q),
+										likeContains(table.description, q),
+									)
+								: undefined,
+							tagFilter(table, query),
+							authorFilter(table, query),
+							updatedFilter(ctx, table, query),
+							page.where(table),
+						) ?? sql`true`,
+				},
+				with: LATEST_VERSION,
+				orderBy: (table) => page.orderBy(table),
+				limit: page.limit,
+			}),
 	});
 }
 
@@ -383,10 +381,7 @@ export async function listAddons(
 	ctx: AppContext,
 	query: ListAddonsQuery = {},
 ): Promise<ListAddonsResponse> {
-	const rows = await queryListedAddons(ctx, query);
-	const page = toKeysetPage(rows, ctx.env.ADDON_LIST_PAGE_SIZE, query, (row) =>
-		listingKey(row, query.sort ?? 'name'),
-	);
+	const page = await queryListedAddons(ctx, query).page();
 
 	return { addons: toListedAddons(ctx, page.items), nextCursor: page.next };
 }
