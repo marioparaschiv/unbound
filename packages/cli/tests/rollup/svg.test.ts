@@ -8,9 +8,9 @@ import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import { rollup } from 'rollup';
 
-import { SVG_WARN_BYTES } from '../src/rollup/svg-assets';
-import { cleanSvg } from '../src/rollup/svg-clean';
-import { unbound } from '../src/rollup/preset';
+import { SVG_WARN_BYTES } from '~/rollup/svg-assets';
+import { cleanSvg } from '~/rollup/svg-clean';
+import { unbound } from '~/rollup/preset';
 
 type Built = {
 	code: string;

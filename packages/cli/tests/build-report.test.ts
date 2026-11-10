@@ -6,18 +6,18 @@ import { gzipSync } from 'node:zlib';
 import { join } from 'node:path';
 import { rollup } from 'rollup';
 
-import type { BuildReport } from '../src/rollup/build-report-schema';
-import type { ReloadTransport } from '../src/lib/reload-transport';
+import { formatReport, formatSummary } from '~/lib/report-format';
+import { buildReportSchema } from '~/rollup/build-report-schema';
+import type { BuildReport } from '~/rollup/build-report-schema';
+import type { ReloadTransport } from '~/lib/reload-transport';
+import { BUILD_REPORT_ENV } from '~/rollup/build-report';
+import { parseByteSize } from '~/rollup/byte-size';
+import { DevServer } from '~/lib/dev-server';
+import { safeParse } from '~/lib/schema';
 
 import { createReportWorkspace, FIXTURE_ID } from './helpers/report-plugin';
-import { formatReport, formatSummary } from '../src/lib/report-format';
-import { buildReportSchema } from '../src/rollup/build-report-schema';
-import { BUILD_REPORT_ENV } from '../src/rollup/build-report';
-import { parseByteSize } from '../src/rollup/byte-size';
 import { runUbd, type TempDir } from './helpers/ubd';
-import { DevServer } from '../src/lib/dev-server';
 import { loadWorkspace } from './helpers/config';
-import { safeParse } from '../src/lib/schema';
 
 let workspace: TempDir;
 let pluginDir = '';

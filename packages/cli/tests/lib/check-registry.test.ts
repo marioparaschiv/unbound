@@ -6,14 +6,15 @@ import {
 	keepSelected,
 	listCheckIds,
 	selectChecks,
-} from '../src/lib/check/registry';
-import { BUILD_CHECKS, DECLARED_CAPABILITY_CHECKS } from '../src/lib/build-checks';
-import { createCheckCache, type Check } from '../src/lib/check/check';
-import { hasFailures, runChecks } from '../src/lib/check/run';
-import { createTempDir, type TempDir } from './helpers/ubd';
-import { discoverAddons } from '../src/lib/discovery';
-import { diagnostic } from '../src/rollup/diagnostic';
-import { loadWorkspace } from './helpers/config';
+} from '~/lib/check/registry';
+import { BUILD_CHECKS, DECLARED_CAPABILITY_CHECKS } from '~/lib/build-checks';
+import { createCheckCache, type Check } from '~/lib/check/check';
+import { hasFailures, runChecks } from '~/lib/check/run';
+import { discoverAddons } from '~/lib/discovery';
+import { diagnostic } from '~/rollup/diagnostic';
+
+import { createTempDir, type TempDir } from '../helpers/ubd';
+import { loadWorkspace } from '../helpers/config';
 
 const dirs: TempDir[] = [];
 

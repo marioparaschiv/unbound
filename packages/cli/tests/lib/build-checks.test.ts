@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
-import type { DiscoveredAddon } from '../src/lib/discovery';
-import type { Diagnostic } from '../src/rollup/diagnostic';
-import type { Check } from '../src/lib/check/check';
+import type { DiscoveredAddon } from '~/lib/discovery';
+import type { Diagnostic } from '~/rollup/diagnostic';
+import { buildWithChecks } from '~/lib/build-checks';
+import { discoverAddons } from '~/lib/discovery';
+import type { Check } from '~/lib/check/check';
 
-import { createTempDir, runUbd, type TempDir } from './helpers/ubd';
-import { buildWithChecks } from '../src/lib/build-checks';
-import { discoverAddons } from '../src/lib/discovery';
-import { loadWorkspace } from './helpers/config';
+import { createTempDir, runUbd, type TempDir } from '../helpers/ubd';
+import { loadWorkspace } from '../helpers/config';
 
 const dirs: TempDir[] = [];
 

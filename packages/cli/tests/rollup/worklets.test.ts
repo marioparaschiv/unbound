@@ -2,9 +2,10 @@ import type { TransformPluginContext, TransformResult } from 'rollup';
 import { describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 
-import { needsWorklets } from '../src/rollup/needs-worklets';
-import { worklets } from '../src/rollup/worklets';
-import { createTempDir } from './helpers/ubd';
+import { needsWorklets } from '~/rollup/needs-worklets';
+import { worklets } from '~/rollup/worklets';
+
+import { createTempDir } from '../helpers/ubd';
 
 type Transform = (
 	this: TransformPluginContext,

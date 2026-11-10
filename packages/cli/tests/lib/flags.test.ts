@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { fieldToFlag, isArrayField, negatedFlags } from '../src/lib/flags';
-import { defaulted, Type } from '../src/lib/schema';
+import { fieldToFlag, isArrayField, negatedFlags } from '~/lib/flags';
+import { defaulted, Type } from '~/lib/schema';
 
 test('maps array fields to repeatable string flags', () => {
 	const field = defaulted(Type.Array(Type.String()), []);

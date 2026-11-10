@@ -3,14 +3,14 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { Check } from '../src/lib/check/check';
+import { capabilitiesCheck, declaredCapabilitiesCheck } from '~/lib/checks/capabilities';
+import { formatDiagnostic } from '~/rollup/diagnostic';
+import { discoverAddons } from '~/lib/discovery';
+import type { Check } from '~/lib/check/check';
 
-import { capabilitiesCheck, declaredCapabilitiesCheck } from '../src/lib/checks/capabilities';
-import { formatDiagnostic } from '../src/rollup/diagnostic';
-import { createTempDir, type TempDir } from './helpers/ubd';
-import { discoverAddons } from '../src/lib/discovery';
-import { loadWorkspace } from './helpers/config';
-import { checkContext } from './helpers/check';
+import { createTempDir, type TempDir } from '../../helpers/ubd';
+import { loadWorkspace } from '../../helpers/config';
+import { checkContext } from '../../helpers/check';
 
 const dirs: TempDir[] = [];
 
@@ -18,7 +18,7 @@ afterEach(() => {
 	for (const dir of dirs.splice(0)) dir.remove();
 });
 
-const API_TYPES = join(import.meta.dir, '..', '..', 'api', 'src');
+const API_TYPES = join(import.meta.dir, '..', '..', '..', '..', 'api', 'src');
 
 const NATIVE_IMPORT = "import type { PluginContext } from '@unbound-app/api/native';";
 

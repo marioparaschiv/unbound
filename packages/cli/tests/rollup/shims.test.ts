@@ -7,8 +7,9 @@ import type { Plugin } from 'rollup';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { shimGlobal, shimImports } from '../src/rollup/shims';
-import { buildBundle } from './helpers/rollup';
+import { shimGlobal, shimImports } from '~/rollup/shims';
+
+import { buildBundle } from '../helpers/rollup';
 
 type TransformContext = { parse: typeof parseAst };
 

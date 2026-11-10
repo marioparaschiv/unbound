@@ -5,7 +5,7 @@ import type {
 	ClientFilters,
 	FixtureModule,
 	FixtureValue,
-} from './helpers/filter-plugin';
+} from '../helpers/filter-plugin';
 
 import {
 	buildPlugin,
@@ -13,7 +13,7 @@ import {
 	compilePredicate,
 	customKeys,
 	runFilters,
-} from './helpers/filter-plugin';
+} from '../helpers/filter-plugin';
 
 const CACHE_KEY = Symbol.for('metro.cache');
 

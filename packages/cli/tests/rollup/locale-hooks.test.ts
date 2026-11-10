@@ -8,9 +8,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { rollup } from 'rollup';
 
-import { injectLocaleHooks, localeHooks } from '../src/rollup/locale-hooks';
-import { unboundGlobals } from '../src/rollup/globals';
-import { pluginConfig } from '../src/rollup/preset';
+import { injectLocaleHooks, localeHooks } from '~/rollup/locale-hooks';
+import { unboundGlobals } from '~/rollup/globals';
+import { pluginConfig } from '~/rollup/preset';
 
 const IMPORT = "import { format, messages } from '@unbound-app/i18n';\n";
 

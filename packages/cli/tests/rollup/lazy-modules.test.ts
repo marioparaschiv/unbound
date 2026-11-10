@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { buildBundle } from './helpers/rollup';
+import { buildBundle } from '../helpers/rollup';
 
 type LazyEntry = { use: () => (string | number)[] };
 

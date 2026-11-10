@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createTarGz } from '../src/lib/tar';
+import { createTarGz } from '~/lib/tar';
 
 const roots: string[] = [];
 

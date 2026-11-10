@@ -1,10 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { VariantBuild } from '../src/bench/build';
-import type { RunRecord } from '../src/bench/record';
-
-import { renderReport, runsCsv, summaryRows } from '../src/bench/report';
-import { planFromRefs } from '../src/bench/plan';
+import { renderReport, runsCsv, summaryRows } from '~/bench/report';
+import type { VariantBuild } from '~/bench/build';
+import type { RunRecord } from '~/bench/record';
+import { planFromRefs } from '~/bench/plan';
 
 const BUNDLE = { A: 'a'.repeat(64), B: 'b'.repeat(64) };
 

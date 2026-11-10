@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import { runInNewContext } from 'node:vm';
 
-import { gcProbe, hermesSampleSchema } from '../src/bench/probe';
-import { parse } from '../src/lib/schema';
+import { gcProbe, hermesSampleSchema } from '~/bench/probe';
+import { parse } from '~/lib/schema';
 
 const MB = 1024 * 1024;
 

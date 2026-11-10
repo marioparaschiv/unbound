@@ -1,8 +1,9 @@
 import { afterEach, expect, test } from 'bun:test';
 
-import { createTempDir, type TempDir } from './helpers/ubd';
-import { discoverAddons } from '../src/lib/discovery';
-import { loadWorkspace } from './helpers/config';
+import { discoverAddons } from '~/lib/discovery';
+
+import { createTempDir, type TempDir } from '../helpers/ubd';
+import { loadWorkspace } from '../helpers/config';
 
 const dirs: TempDir[] = [];
 

@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 
-import { createTempDir, runUbd, withoutProgress, type TempDir } from './helpers/ubd';
-import { checkContext, reportLines } from './helpers/check';
-import { namingCheck } from '../src/lib/checks/naming';
-import { discoverAddons } from '../src/lib/discovery';
-import { loadWorkspace } from './helpers/config';
+import { namingCheck } from '~/lib/checks/naming';
+import { discoverAddons } from '~/lib/discovery';
+
+import { createTempDir, runUbd, withoutProgress, type TempDir } from '../../helpers/ubd';
+import { checkContext, reportLines } from '../../helpers/check';
+import { loadWorkspace } from '../../helpers/config';
 
 const dirs: TempDir[] = [];
 
@@ -13,7 +14,7 @@ afterEach(() => {
 	for (const dir of dirs.splice(0)) dir.remove();
 });
 
-const PLUGINS_DIR = join(import.meta.dir, '..', '..', 'plugins');
+const PLUGINS_DIR = join(import.meta.dir, '..', '..', '..', '..', 'plugins');
 
 type Manifest = Record<string, string | string[] | Record<string, string>[]>;
 

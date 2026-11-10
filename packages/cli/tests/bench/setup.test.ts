@@ -3,13 +3,12 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { VariantBuild } from '../src/bench/build';
-
-import { benchSettings, installScript, withoutModuleCache } from '../src/bench/device';
-import { planFromFile, planFromRefs, schedule } from '../src/bench/plan';
-import { acquireLock, isStaleBenchLock } from '../src/bench/lock';
-import { parseDotEnv } from '../src/bench/environment';
-import { addonCheck } from '../src/bench/launch';
+import { benchSettings, installScript, withoutModuleCache } from '~/bench/device';
+import { planFromFile, planFromRefs, schedule } from '~/bench/plan';
+import { acquireLock, isStaleBenchLock } from '~/bench/lock';
+import type { VariantBuild } from '~/bench/build';
+import { parseDotEnv } from '~/bench/environment';
+import { addonCheck } from '~/bench/launch';
 
 const roots: string[] = [];
 

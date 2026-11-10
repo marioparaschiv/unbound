@@ -3,8 +3,8 @@ import { afterEach, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { readManifest } from '../src/lib/manifest';
-import { loadConfig } from '../src/lib/config';
+import { readManifest } from '~/lib/manifest';
+import { loadConfig } from '~/lib/config';
 
 const roots: string[] = [];
 

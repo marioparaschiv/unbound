@@ -2,10 +2,10 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 
-import { readEntryExports } from '../src/rollup/entry-exports';
-import { migrateEntry } from '../src/codemods/entry';
+import { readEntryExports } from '~/rollup/entry-exports';
+import { migrateEntry } from '~/codemods/entry';
 
-const FIXTURES = join(import.meta.dir, 'fixtures', 'migrate-entry');
+const FIXTURES = join(import.meta.dir, '..', 'fixtures', 'migrate-entry');
 
 function fixture(name: string) {
 	const files = readdirSync(join(FIXTURES, name));

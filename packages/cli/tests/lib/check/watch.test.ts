@@ -2,12 +2,13 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { watchChecks, type CheckWatcher, type WatchUpdate } from '../src/lib/check/watch';
-import { checkAddons } from '../src/lib/check/check-addons';
-import { createTempDir, type TempDir } from './helpers/ubd';
-import { createCheckCache } from '../src/lib/check/check';
-import { selectChecks } from '../src/lib/check/registry';
-import { onlyAddon } from './helpers/check';
+import { watchChecks, type CheckWatcher, type WatchUpdate } from '~/lib/check/watch';
+import { checkAddons } from '~/lib/check/check-addons';
+import { createCheckCache } from '~/lib/check/check';
+import { selectChecks } from '~/lib/check/registry';
+
+import { createTempDir, type TempDir } from '../../helpers/ubd';
+import { onlyAddon } from '../../helpers/check';
 
 const dirs: TempDir[] = [];
 const watchers: CheckWatcher[] = [];

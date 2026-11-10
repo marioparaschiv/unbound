@@ -2,16 +2,16 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { Check } from '../src/lib/check/check';
+import { lintCheck, toLintDiagnostics, type LintOutput } from '~/lib/checks/lint';
+import { findJsonOffset, manifestCheck } from '~/lib/checks/manifest';
+import { textInputPropsCheck } from '~/lib/checks/text-input-props';
+import { formatDiagnostic } from '~/rollup/diagnostic';
+import { typesCheck } from '~/lib/checks/types';
+import type { Check } from '~/lib/check/check';
+import { i18nCheck } from '~/lib/checks/i18n';
 
-import { lintCheck, toLintDiagnostics, type LintOutput } from '../src/lib/checks/lint';
-import { findJsonOffset, manifestCheck } from '../src/lib/checks/manifest';
-import { textInputPropsCheck } from '../src/lib/checks/text-input-props';
-import { formatDiagnostic } from '../src/rollup/diagnostic';
-import { createTempDir, type TempDir } from './helpers/ubd';
-import { checkContext, onlyAddon } from './helpers/check';
-import { typesCheck } from '../src/lib/checks/types';
-import { i18nCheck } from '../src/lib/checks/i18n';
+import { createTempDir, type TempDir } from '../../helpers/ubd';
+import { checkContext, onlyAddon } from '../../helpers/check';
 
 const dirs: TempDir[] = [];
 

@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { readLocaleFile } from '../../src/lib/locale-files';
+import { readLocaleFile } from '~/lib/locale-files';
+
 import { createTempDir, type TempDir } from './ubd';
 
 /** A plugin's locale files by code, and its other files by path. */

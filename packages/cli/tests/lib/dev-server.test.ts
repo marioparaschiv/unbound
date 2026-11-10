@@ -3,10 +3,10 @@ import { describe, expect, test, afterEach } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { ReloadTransport, BuiltAddon } from '../src/lib/reload-transport';
+import type { ReloadTransport, BuiltAddon } from '~/lib/reload-transport';
+import { DevServer } from '~/lib/dev-server';
 
-import { DevServer } from '../src/lib/dev-server';
-import { loadWorkspace } from './helpers/config';
+import { loadWorkspace } from '../helpers/config';
 
 const roots: string[] = [];
 
@@ -87,7 +87,7 @@ describe('DevServer capabilities', () => {
 	test('the manifest it reloads carries the generated platforms and Capabilities', async () => {
 		const root = workspace('true');
 		const pluginDir = join(root, 'plugins', 'sample');
-		const apiTypes = join(import.meta.dir, '..', '..', 'api', 'src');
+		const apiTypes = join(import.meta.dir, '..', '..', '..', 'api', 'src');
 
 		writeFileSync(
 			join(pluginDir, 'tsconfig.json'),

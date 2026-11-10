@@ -3,8 +3,6 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { LogEvent } from '../src/lib/log-lines';
-
 import {
 	createAndroidLogSource,
 	createIOSLogSource,
@@ -14,10 +12,11 @@ import {
 	parseSince,
 	parseSyslogLine,
 	unquoteConsoleArguments,
-} from '../src/lib/log-lines';
-import { followLoaderLogFile, readLoaderLogHistory } from '../src/lib/loader-log-file';
-import { createFrameRewriter, listBundles } from '../src/lib/log-symbolicator';
-import { parseArchiveEvent, tailAndroid } from '../src/lib/log-tail';
+} from '~/lib/log-lines';
+import { followLoaderLogFile, readLoaderLogHistory } from '~/lib/loader-log-file';
+import { createFrameRewriter, listBundles } from '~/lib/log-symbolicator';
+import { parseArchiveEvent, tailAndroid } from '~/lib/log-tail';
+import type { LogEvent } from '~/lib/log-lines';
 
 const NOW = new Date(2026, 9, 26, 22, 30, 0).getTime();
 const roots: string[] = [];

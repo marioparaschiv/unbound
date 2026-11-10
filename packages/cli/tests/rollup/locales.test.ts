@@ -8,9 +8,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { rollup } from 'rollup';
 
-import { readIcuArguments } from '../src/rollup/icu-arguments';
-import { unbound } from '../src/rollup/preset';
-import { runTsc } from '../src/lib/check/tsc';
+import { readIcuArguments } from '~/rollup/icu-arguments';
+import { unbound } from '~/rollup/preset';
+import { runTsc } from '~/lib/check/tsc';
 
 type Built = { code: string; assets: Map<string, string>; warnings: string[] };
 

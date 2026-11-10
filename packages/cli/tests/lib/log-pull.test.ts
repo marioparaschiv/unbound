@@ -3,8 +3,6 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { CommandResult, CommandRunner } from '../src/lib/run-command';
-
 import {
 	ANDROID_LOGS_DIRECTORY,
 	androidStageScript,
@@ -13,7 +11,8 @@ import {
 	pullAndroidLogs,
 	pullIOSLogs,
 	symbolicatePulledLogs,
-} from '../src/lib/log-pull';
+} from '~/lib/log-pull';
+import type { CommandResult, CommandRunner } from '~/lib/run-command';
 
 type Call = { command: string; args: string[] };
 

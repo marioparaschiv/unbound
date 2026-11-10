@@ -3,7 +3,7 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { staleBuildReason } from '../src/lib/stale-build';
+import { staleBuildReason } from '~/lib/stale-build';
 
 const directories: string[] = [];
 

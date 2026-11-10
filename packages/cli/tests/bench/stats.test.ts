@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { mannWhitney, summarize } from '../src/bench/stats';
-import { smallestP } from '../src/bench/report';
+import { mannWhitney, summarize } from '~/bench/stats';
+import { smallestP } from '~/bench/report';
 
 describe('summarize', () => {
 	test('gives the median, range and interpolated quartiles', () => {

@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { renderMenu } from '../src/lib/menu';
+import { renderMenu } from '~/lib/menu';
 
 test('renderMenu lists commands with a summary first, keeping their order', () => {
 	const menu = renderMenu([

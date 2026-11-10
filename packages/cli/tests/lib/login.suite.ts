@@ -9,12 +9,12 @@ import { afterAll, afterEach, describe, expect, setSystemTime, test } from 'bun:
 import { meResponseSchema } from '@unbound-app/contracts/account';
 import { existsSync, statSync } from 'node:fs';
 
-import type { DeviceCode } from '../src/lib/login';
+import { getCredentialsPath, parseEnv } from '~/lib/env';
+import { createClient } from '~/lib/api-client';
+import type { DeviceCode } from '~/lib/login';
+import { login } from '~/lib/login';
 
-import { getCredentialsPath, parseEnv } from '../src/lib/env';
-import { createTempDir, runUbd } from './helpers/ubd';
-import { createClient } from '../src/lib/api-client';
-import { login } from '../src/lib/login';
+import { createTempDir, runUbd } from '../helpers/ubd';
 
 const { ctx, close } = await createTestContext();
 const server = serveEndpoints(ctx, { 'GET /api/v1/me': meEndpoint });

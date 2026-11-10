@@ -1,15 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { DiscoveredAddon } from '../src/lib/discovery';
-import type { Diagnostic } from '../src/rollup/diagnostic';
-
-import {
-	diagnostic,
-	formatDiagnostic,
-	isDiagnostic,
-	sortDiagnostics,
-} from '../src/rollup/diagnostic';
-import { formatReport, formatSummary, summarize } from '../src/lib/check/report';
+import { diagnostic, formatDiagnostic, isDiagnostic, sortDiagnostics } from '~/rollup/diagnostic';
+import { formatReport, formatSummary, summarize } from '~/lib/check/report';
+import type { DiscoveredAddon } from '~/lib/discovery';
+import type { Diagnostic } from '~/rollup/diagnostic';
 
 const ADDON: DiscoveredAddon = {
 	id: 'example.demo',

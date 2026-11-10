@@ -11,19 +11,19 @@ import {
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { dirname, join, relative } from 'node:path';
 
-import type { DiscoveredAddon } from '../src/lib/discovery';
+import type { DiscoveredAddon } from '~/lib/discovery';
+import { BUILD_CHECKS } from '~/lib/build-checks';
+import { discoverAddons } from '~/lib/discovery';
+import { buildAddon } from '~/lib/build-addon';
+import { scaffold } from '~/lib/create';
 
-import { createTempDir, type TempDir } from './helpers/ubd';
-import { BUILD_CHECKS } from '../src/lib/build-checks';
-import { discoverAddons } from '../src/lib/discovery';
-import { buildAddon } from '../src/lib/build-addon';
-import { loadWorkspace } from './helpers/config';
-import { checkContext } from './helpers/check';
-import { scaffold } from '../src/lib/create';
+import { createTempDir, type TempDir } from '../helpers/ubd';
+import { loadWorkspace } from '../helpers/config';
+import { checkContext } from '../helpers/check';
 
 type Diagnostic = { code: string; filename: string };
 
-const CLI = join(import.meta.dir, '..');
+const CLI = join(import.meta.dir, '..', '..');
 const REPO = join(CLI, '..', '..');
 const API = join(REPO, 'packages', 'api');
 const ROLLUP = realpathSync(join(CLI, 'node_modules', 'rollup'));

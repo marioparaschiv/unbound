@@ -5,10 +5,9 @@ import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import { rollup } from 'rollup';
 
-import type { BuildReport } from '../src/rollup/build-report-schema';
-
-import { BUILD_REPORT_ENV } from '../src/rollup/build-report';
-import { unbound } from '../src/rollup/preset';
+import type { BuildReport } from '~/rollup/build-report-schema';
+import { BUILD_REPORT_ENV } from '~/rollup/build-report';
+import { unbound } from '~/rollup/preset';
 
 const EN_US = { TITLE: 'Starred users', BODY: 'Hello, {name}!' };
 

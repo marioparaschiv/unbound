@@ -2,10 +2,11 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { PARTIAL, createPlugin, readSource, readText } from './helpers/i18n-plugin';
-import { addSourceKey, fixTranslations } from '../src/lib/locale-fix';
-import { measureCoverage } from '../src/lib/locale-coverage';
-import { runUbd, type TempDir } from './helpers/ubd';
+import { addSourceKey, fixTranslations } from '~/lib/locale-fix';
+import { measureCoverage } from '~/lib/locale-coverage';
+
+import { PARTIAL, createPlugin, readSource, readText } from '../helpers/i18n-plugin';
+import { runUbd, type TempDir } from '../helpers/ubd';
 
 const plugins: TempDir[] = [];
 

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { ranStaleBundle } from '../src/bench/runner';
+import { ranStaleBundle } from '~/bench/runner';
 
 const OWN = 'b0eb14f48a819033210c562896e6954a0fb7cd41d401feb0b769513f198fd394';
 const STALE = '4ec8aaf162d465959ebc677322cbfb52690eb277226d074b9b1a48117a89c18b';

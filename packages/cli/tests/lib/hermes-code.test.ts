@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { lowerForHermes } from '../src/lib/hermes-code';
+import { lowerForHermes } from '~/lib/hermes-code';
 
 describe('lowerForHermes', () => {
 	test('gives each loop iteration its own binding', () => {

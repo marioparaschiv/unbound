@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
-import { countCoverageErrors, measureCoverage } from '../src/lib/locale-coverage';
-import { BROKEN, PARTIAL, createPlugin, readSource } from './helpers/i18n-plugin';
-import { runUbd, type TempDir } from './helpers/ubd';
+import { countCoverageErrors, measureCoverage } from '~/lib/locale-coverage';
+
+import { BROKEN, PARTIAL, createPlugin, readSource } from '../helpers/i18n-plugin';
+import { runUbd, type TempDir } from '../helpers/ubd';
 
 const plugins: TempDir[] = [];
 

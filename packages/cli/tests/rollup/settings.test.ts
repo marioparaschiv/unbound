@@ -2,12 +2,13 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { settingsTypings, writeSettingsTypings } from '../src/rollup/settings-typings';
-import { buildPlugin, createPlugin, removePlugins } from './helpers/settings-plugin';
-import { readPluginSettings } from '../src/rollup/settings-read';
-import { formatDiagnostic } from '../src/rollup/diagnostic';
+import { settingsTypings, writeSettingsTypings } from '~/rollup/settings-typings';
+import { readPluginSettings } from '~/rollup/settings-read';
+import { formatDiagnostic } from '~/rollup/diagnostic';
 
-const FIXTURE = join(import.meta.dir, 'fixtures', 'settings-plugin');
+import { buildPlugin, createPlugin, removePlugins } from '../helpers/settings-plugin';
+
+const FIXTURE = join(import.meta.dir, '..', 'fixtures', 'settings-plugin');
 const IMPORT = "import { defineSettings, setting } from '@unbound-app/settings/schema';\n";
 const MESSAGES = { A: 'A', B: 'B', C: 'C', D: 'D', E: 'E', F: 'F', G: 'G' };
 

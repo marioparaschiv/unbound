@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { rollup } from 'rollup';
 import sharp from 'sharp';
 
-import { unbound } from '../src/rollup/preset';
+import { unbound } from '~/rollup/preset';
 
 type Built = {
 	code: string;

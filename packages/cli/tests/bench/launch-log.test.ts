@@ -2,11 +2,11 @@ import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { parseLaunchLog } from '../src/bench/launch-log';
+import { parseLaunchLog } from '~/bench/launch-log';
 
 // Loader logs recorded on the vphone by the earlier hand-run benches (unbound-lazy-eval, unbound-startup-bench).
 function fixture(name: string): string {
-	return readFileSync(join(import.meta.dir, 'fixtures/bench', name), 'utf8');
+	return readFileSync(join(import.meta.dir, '..', 'fixtures/bench', name), 'utf8');
 }
 
 // Milliseconds after `RCTHost didInitializeRuntime reached.` at 03:43:57.021, read off the fixture's timestamps.

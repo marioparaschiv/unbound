@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from 'bun:test';
 import { runInThisContext } from 'node:vm';
 
-import { hermesExpressionEntrypoint } from '../src/rollup/entrypoint';
+import { hermesExpressionEntrypoint } from '~/rollup/entrypoint';
 
 type Chunk = { code: string; type: 'chunk' };
 

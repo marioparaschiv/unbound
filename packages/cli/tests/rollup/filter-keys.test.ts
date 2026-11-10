@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { buildPlugin, clientFilters, customKeys, runFilters } from './helpers/filter-plugin';
+import { buildPlugin, clientFilters, customKeys, runFilters } from '../helpers/filter-plugin';
 
 const api = "import { metro } from '@unbound-app/api';\n";
 

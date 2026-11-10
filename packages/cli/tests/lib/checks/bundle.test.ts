@@ -2,11 +2,12 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { bundleCheck, checkModuleGraph, fromRollupLog } from '../src/lib/checks/bundle';
-import { formatDiagnostic } from '../src/rollup/diagnostic';
-import { createTempDir, type TempDir } from './helpers/ubd';
-import { createCheckCache } from '../src/lib/check/check';
-import { checkContext, onlyAddon } from './helpers/check';
+import { bundleCheck, checkModuleGraph, fromRollupLog } from '~/lib/checks/bundle';
+import { formatDiagnostic } from '~/rollup/diagnostic';
+import { createCheckCache } from '~/lib/check/check';
+
+import { createTempDir, type TempDir } from '../../helpers/ubd';
+import { checkContext, onlyAddon } from '../../helpers/check';
 
 const dirs: TempDir[] = [];
 
@@ -14,7 +15,7 @@ afterEach(() => {
 	for (const dir of dirs.splice(0)) dir.remove();
 });
 
-const DIAGNOSTIC_MODULE = join(import.meta.dir, '..', 'src', 'rollup', 'diagnostic.ts');
+const DIAGNOSTIC_MODULE = join(import.meta.dir, '..', '..', '..', 'src', 'rollup', 'diagnostic.ts');
 
 // A rollup plugin that reports each TODO through `reportDiagnostic`, the way the build's plugins do.
 const CONFIG = `import { reportDiagnostic } from ${JSON.stringify(DIAGNOSTIC_MODULE)};

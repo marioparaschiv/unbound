@@ -2,7 +2,7 @@ import { ADDON_SCOPE_GLOBALS } from '@unbound-app/types/addons';
 import { runInThisContext } from 'node:vm';
 import { expect, test } from 'bun:test';
 
-import { bytecodeSource } from '../src/rollup/hermes-bytecode';
+import { bytecodeSource } from '~/rollup/hermes-bytecode';
 
 type Factory = (...globals: string[]) => string[];
 

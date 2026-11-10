@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
-import { collectModuleKeys, collectPluginKeys } from '../src/lib/locale-usages';
-import { createPlugin } from './helpers/i18n-plugin';
-import { runUbd, type TempDir } from './helpers/ubd';
+import { collectModuleKeys, collectPluginKeys } from '~/lib/locale-usages';
+
+import { createPlugin } from '../helpers/i18n-plugin';
+import { runUbd, type TempDir } from '../helpers/ubd';
 
 const ENTRY = `import { format, messages as strings } from '@unbound-app/i18n';
 import * as i18n from '@unbound-app/i18n';

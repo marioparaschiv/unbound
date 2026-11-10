@@ -4,9 +4,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { rollup } from 'rollup';
 
-import { commandLocales } from '../src/rollup/command-locales';
-import { checkCommandText } from '../src/rollup/command-text';
-import { formatDiagnostic } from '../src/rollup/diagnostic';
+import { commandLocales } from '~/rollup/command-locales';
+import { checkCommandText } from '~/rollup/command-text';
+import { formatDiagnostic } from '~/rollup/diagnostic';
 
 const source = {
 	COIN_FLIP: 'Flip a coin',

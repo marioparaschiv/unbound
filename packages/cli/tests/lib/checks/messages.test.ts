@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
-import { findKeyOnlyErrorToasts, messagesCheck } from '../src/lib/checks/messages';
-import { formatDiagnostic } from '../src/rollup/diagnostic';
-import { createTempDir, type TempDir } from './helpers/ubd';
-import { checkContext, onlyAddon } from './helpers/check';
-import { i18nCheck } from '../src/lib/checks/i18n';
+import { findKeyOnlyErrorToasts, messagesCheck } from '~/lib/checks/messages';
+import { formatDiagnostic } from '~/rollup/diagnostic';
+import { i18nCheck } from '~/lib/checks/i18n';
+
+import { createTempDir, type TempDir } from '../../helpers/ubd';
+import { checkContext, onlyAddon } from '../../helpers/check';
 
 const dirs: TempDir[] = [];
 

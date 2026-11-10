@@ -3,10 +3,9 @@ import { describe, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { DiscoveredAddon } from '../src/lib/discovery';
-
-import { formatDuration, runCommand } from '../src/lib/run-command';
-import { buildAddon } from '../src/lib/build-addon';
+import { formatDuration, runCommand } from '~/lib/run-command';
+import type { DiscoveredAddon } from '~/lib/discovery';
+import { buildAddon } from '~/lib/build-addon';
 
 function isAlive(pid: number): boolean {
 	try {

@@ -4,8 +4,9 @@ import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { lifecycleTypo, readEntryExports } from '../src/rollup/entry-exports';
-import { buildBundle } from './helpers/rollup';
+import { lifecycleTypo, readEntryExports } from '~/rollup/entry-exports';
+
+import { buildBundle } from '../helpers/rollup';
 
 let root = '';
 

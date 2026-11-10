@@ -1,7 +1,7 @@
 import type { UnboundGlobal } from '@unbound-app/api/global';
 import { describe, expect, test } from 'bun:test';
 
-import { openScreen, type ScreenParams } from '../src/lib/navigation';
+import { openScreen, type ScreenParams } from '~/lib/navigation';
 
 type Navigated = { screen: string; params: ScreenParams };
 

@@ -6,9 +6,8 @@ import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { ReloadContext, BuiltAddon } from '../src/lib/reload-transport';
-
-import { createReloadTransport, readBuiltAddon } from '../src/lib/reload-transport';
+import { createReloadTransport, readBuiltAddon } from '~/lib/reload-transport';
+import type { ReloadContext, BuiltAddon } from '~/lib/reload-transport';
 
 type RecordedPush = {
 	addonId: string;

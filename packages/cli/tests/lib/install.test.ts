@@ -4,13 +4,12 @@ import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { CommandResult, CommandRunner } from '../src/lib/run-command';
-import type { PluginPayload } from '../src/lib/plugin-install';
-
-import { installOnAndroid, ANDROID_PLUGINS_DIRECTORY } from '../src/lib/android-install';
-import { parseShellResult, resolvePilot } from '../src/lib/pilot';
-import { readPluginPayload } from '../src/lib/plugin-install';
-import { installOnIOS } from '../src/lib/ios-install';
+import { installOnAndroid, ANDROID_PLUGINS_DIRECTORY } from '~/lib/android-install';
+import type { CommandResult, CommandRunner } from '~/lib/run-command';
+import { parseShellResult, resolvePilot } from '~/lib/pilot';
+import type { PluginPayload } from '~/lib/plugin-install';
+import { readPluginPayload } from '~/lib/plugin-install';
+import { installOnIOS } from '~/lib/ios-install';
 
 type Call = { command: string; args: string[]; timeoutMs: number };
 

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-import { CORE_TYPINGS, coreMessageTypings, readCoreSource } from '../src/rollup/core-messages';
+import { CORE_TYPINGS, coreMessageTypings, readCoreSource } from '~/rollup/core-messages';
 
 describe('core message typings', () => {
 	test('match i18n/en-US.json; run `bun packages/cli/src/rollup/core-messages.ts` after editing it', () => {
