@@ -11,6 +11,13 @@ pre-commit:
             stage_fixed: true
         plugins:
             run: bun run plugins:validate
+        plugins-readme:
+            # Includes deletions, so removing a plugin also drops it and its icon from the README.
+            files: git diff --cached --name-only --diff-filter=ACDMR -- 'packages/plugins/*/manifest.json' 'assets/plugins/icons/*.png'
+            glob:
+                - 'packages/plugins/*/manifest.json'
+                - 'assets/plugins/icons/*.png'
+            run: bun run plugins:readme && git add packages/plugins/README.md assets/plugins/readme-icons
 
 pre-push:
     commands:
