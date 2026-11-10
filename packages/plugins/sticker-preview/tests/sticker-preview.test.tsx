@@ -5,7 +5,7 @@ import { Pressable, View } from 'react-native';
 
 import { selfTest } from '~/index';
 
-import { createFakes } from './fakes';
+import { createFakes } from './helpers/fakes';
 import type { Sticker } from '@unbound-plugins/shared/stickers/staged-stickers';
 
 type PickerRowProps = { onPressSticker: (sticker: Sticker) => void };

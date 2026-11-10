@@ -1,7 +1,7 @@
 import { flux, metro } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import { createFakes, fakeInput } from './fakes';
+import { createFakes, fakeInput } from '../helpers/fakes';
 import { createStaging } from '~/sticker-staging/staging';
 
 let { behaviour, drafts, sent, stickerSends } = createFakes();
