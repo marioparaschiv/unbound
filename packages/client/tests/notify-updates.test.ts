@@ -11,6 +11,7 @@ Reflect.set(globalThis, '$$DEV$$', false);
 const toasts: ToastOptions[] = [];
 
 mock.module('~/i18n/api', coreI18nMock);
+mock.module('~/native/runtime', () => ({ reload: async () => {} }));
 
 const actualToasts = await import('~/toasts/api');
 
