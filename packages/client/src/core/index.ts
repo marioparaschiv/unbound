@@ -52,15 +52,6 @@ export type UnboundWindowObject = UnboundLifecycle & Omit<typeof api, 'default'>
 
 declare global {
 	var unbound: UnboundWindowObject | UnboundLifecycle;
-	/** The benchmark agent a bench build installs before anything else runs. */
-	var __ubdBench:
-		| {
-				mark: (name: string) => void;
-				now: () => number;
-				span: (name: string, start: number, end: number) => void;
-				add: (name: string, ms: number) => void;
-		  }
-		| undefined;
 }
 
 const Logger = createLogger('Core');

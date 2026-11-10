@@ -1,8 +1,10 @@
+import type { BenchMark } from '~/core/bench-hooks';
+
 /**
  * @description In a benchmark build, tells the agent that startup reached a named point.
  * @param name The mark's name.
  */
-export function benchMark(name: string): void {
+export function benchMark(name: BenchMark): void {
 	if (import.meta.env.BENCH) {
 		globalThis.__ubdBench?.mark(name);
 	}
