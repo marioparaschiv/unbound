@@ -1,4 +1,7 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import { devicePlatform, openDeviceTarget } from '~/lib/device-target';
 import { installOnAndroid } from '~/lib/android-install';
@@ -62,21 +65,27 @@ const installCommand: CommandDefinition<typeof schema> = {
 			return { ok: false, text: resolved.error };
 		}
 
-		const plugin = readPluginPayload(resolved.addon);
+		const staging = mkdtempSync(join(tmpdir(), 'ubd-install-'));
 
-		if ('error' in plugin) {
-			return { ok: false, text: plugin.error };
+		try {
+			const plugin = readPluginPayload(resolved.addon, staging);
+
+			if ('error' in plugin) {
+				return { ok: false, text: plugin.error };
+			}
+
+			const target = await openDeviceTarget({ serial, ios, udid });
+
+			if ('error' in target) {
+				return { ok: false, text: target.error };
+			}
+
+			return await (target.platform === 'ios'
+				? installOnIOS(plugin, target, { restart })
+				: installOnAndroid(plugin, target, { restart }));
+		} finally {
+			rmSync(staging, { recursive: true, force: true });
 		}
-
-		const target = await openDeviceTarget({ serial, ios, udid });
-
-		if ('error' in target) {
-			return { ok: false, text: target.error };
-		}
-
-		return target.platform === 'ios'
-			? installOnIOS(plugin, target, { restart })
-			: installOnAndroid(plugin, target, { restart });
 	},
 };
 

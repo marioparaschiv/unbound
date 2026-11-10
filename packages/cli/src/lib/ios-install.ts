@@ -9,7 +9,7 @@ import type { InstallOptions, PluginPayload } from '~/lib/plugin-install';
 import { ERROR_MARKER, readMarker } from '~/lib/pilot';
 import type { CommandResult } from '~/lib/run-command';
 import type { IOSTarget } from '~/lib/device-target';
-import { logToStderr } from '~/lib/plugin-install';
+import { logToStderr } from '~/lib/stderr';
 import { createTarGz } from '~/lib/tar';
 
 const INSTALLED_MARKER = 'UBD_INSTALLED=';

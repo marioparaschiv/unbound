@@ -14,6 +14,8 @@ import { readPluginPayload } from '~/lib/plugin-install';
 import { installOnIOS } from '~/lib/ios-install';
 import { openIOSTarget } from '~/lib/ios-target';
 
+import { writeBuiltBytecode } from '../helpers/bytecode-digests';
+
 type Call = { command: string; args: string[]; timeoutMs: number };
 
 type Responder = (call: Call) => CommandResult | undefined;
@@ -101,17 +103,24 @@ describe('readPluginPayload', () => {
 		roots.push(dir);
 		writeFileSync(join(dir, 'manifest.json'), '{"id":"com.example.sample","main":"index.js"}');
 		writeFileSync(join(dir, 'index.js'), '({})');
-		writeFileSync(join(dir, 'index.98.hbc'), bytecode);
+		writeBuiltBytecode(dir, 'index.js', { 98: bytecode });
 
-		const payload = readPluginPayload({
-			id: 'com.example.sample',
-			kind: 'plugin',
-			path: '',
-			bundle: 'index.js',
-			dir,
-			output: dir,
-			static: false,
-		});
+		const staging = mkdtempSync(join(tmpdir(), 'ubd-install-staging-'));
+
+		roots.push(staging);
+
+		const payload = readPluginPayload(
+			{
+				id: 'com.example.sample',
+				kind: 'plugin',
+				path: '',
+				bundle: 'index.js',
+				dir,
+				output: dir,
+				static: false,
+			},
+			staging,
+		);
 
 		if ('error' in payload) {
 			throw new Error(payload.error);
@@ -122,6 +131,7 @@ describe('readPluginPayload', () => {
 			'index.js',
 			'index.98.hbc',
 		]);
+		expect(payload.files[0]?.path).toBe(join(staging, 'manifest.json'));
 		expect(payload.files[2]?.path).toBe(join(dir, 'index.98.hbc'));
 		expect(JSON.parse(readFileSync(payload.files[0]?.path ?? '', 'utf8')).bytecode).toEqual({
 			98: createHash('sha512').update(bytecode).digest('hex'),

@@ -4,7 +4,7 @@ import toError from '@unbound-app/utils/to-error';
 import { watch, type FSWatcher } from 'node:fs';
 import { resolve, join, sep } from 'node:path';
 
-import type { ReloadTransport, BuiltAddon } from '~/lib/reload-transport';
+import type { ReloadTransport } from '~/lib/reload-transport';
 import { LOCALE_TYPINGS, writeLocaleTypings } from '~/rollup/locales';
 import { SETTINGS_TYPINGS } from '~/rollup/settings-typings';
 import type { DiscoveredAddon } from '~/lib/discovery';
@@ -136,7 +136,7 @@ export class DevServer {
 			);
 		}
 
-		await this.transport.reload(toBuiltAddon(addon));
+		await this.transport.reload(addon);
 	}
 
 	private async rediscover() {
@@ -186,16 +186,6 @@ function isLocalePath(changedPath: string, dir: string): boolean {
 
 function isManifestPath(changedPath: string): boolean {
 	return changedPath.endsWith(join(sep, MANIFEST_FILENAME));
-}
-
-function toBuiltAddon(addon: DiscoveredAddon): BuiltAddon {
-	return {
-		id: addon.id,
-		kind: addon.kind,
-		dir: addon.dir,
-		output: addon.output,
-		static: addon.static,
-	};
 }
 
 export default DevServer;

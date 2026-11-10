@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from 'n
 import { getBundleName } from '@unbound-app/contracts/workspace';
 import { join, relative, resolve } from 'node:path';
 
-import type { BuiltAddon } from '~/lib/reload-transport';
+import type { BuiltAddon } from '~/lib/built-addon';
 import { readDevManifest } from '~/lib/manifest';
 
 import { safeParse, Type, type StaticDecode } from './schema';

@@ -1,12 +1,9 @@
-import { listAddonFiles } from '@unbound-app/contracts/addon-files';
 import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
-import { getBundleName } from '@unbound-app/contracts/workspace';
-import { mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { bytecodeFileName } from '~/rollup/hermes-bytecode';
-import { readBuiltAddon } from '~/lib/reload-transport';
+import { listBuiltFiles } from '~/lib/built-addon';
 import type { DiscoveredAddon } from '~/lib/discovery';
 
 export type PluginFile = { name: string; path: string };
@@ -21,26 +18,33 @@ export type InstallOptions = {
 const SAFE_ADDON_ID = /^[\w.-]+$/;
 
 /**
- * @description Lists the built files a plugin install copies onto a device: its manifest, bundle, Hermes bytecode and the
- * extra files the manifest lists. The manifest copied names each bytecode file's digest, which the loader checks before it
- * runs the bytecode instead of compiling the source.
+ * @description Lists the built files a plugin install copies onto a device: its manifest, bundle, this build's Hermes
+ * bytecode and the extra files the manifest lists. The manifest copied names each bytecode file's digest, which the
+ * loader checks before it runs the bytecode instead of compiling the source; it is written into `staging`.
  * @param addon The built plugin.
+ * @param staging A directory the caller owns and removes once the install is done.
  * @returns The plugin's id and files, or why its id cannot be used as a folder name on the device.
  */
-export function readPluginPayload(addon: DiscoveredAddon): PluginPayload | { error: string } {
+export function readPluginPayload(
+	addon: DiscoveredAddon,
+	staging: string,
+): PluginPayload | { error: string } {
 	if (!SAFE_ADDON_ID.test(addon.id)) {
 		return { error: `${addon.id} is not a valid plugin id for a device folder.` };
 	}
 
-	const { manifest, bytecode = {} } = readBuiltAddon(addon);
-	const bundle = getBundleName(addon.static, manifest.main);
+	const built = listBuiltFiles(addon);
+	const versions = Object.keys(built.bytecode);
+	const manifest = versions.length
+		? { ...built.manifest, bytecode: built.bytecode }
+		: built.manifest;
 	const names = [
-		bundle,
-		...Object.keys(bytecode).map((version) => bytecodeFileName(bundle, Number(version))),
-		...listAddonFiles(manifest).map((file) => file.path),
+		built.bundle,
+		...versions.map((version) => bytecodeFileName(built.bundle, Number(version))),
+		...built.files,
 	];
-	// The built manifest has no bytecode digests; the one read back adds them, so it is written out to copy instead.
-	const staged = join(mkdtempSync(join(tmpdir(), 'ubd-install-')), MANIFEST_FILENAME);
+	// The built manifest has no bytecode digests, so the one naming them is written out to copy instead.
+	const staged = join(staging, MANIFEST_FILENAME);
 
 	writeFileSync(staged, JSON.stringify(manifest, null, '\t'));
 
@@ -51,14 +55,6 @@ export function readPluginPayload(addon: DiscoveredAddon): PluginPayload | { err
 			...names.map((name) => ({ name, path: join(addon.output, name) })),
 		],
 	};
-}
-
-/**
- * @description Writes an install step's progress to stderr, which stays clear of the MCP's stdout.
- * @param message The line to write.
- */
-export function logToStderr(message: string) {
-	process.stderr.write(`${message}\n`);
 }
 
 export default readPluginPayload;

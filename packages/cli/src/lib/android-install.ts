@@ -4,7 +4,7 @@ import { DEVELOPMENT_MARKER } from '@unbound-app/contracts/manifest';
 import type { InstallOptions, PluginPayload } from '~/lib/plugin-install';
 import { ANDROID_FILES_DIRECTORY } from '~/lib/device-paths';
 import type { AndroidTarget } from '~/lib/device-target';
-import { logToStderr } from '~/lib/plugin-install';
+import { logToStderr } from '~/lib/stderr';
 
 export const ANDROID_PLUGINS_DIRECTORY = `${ANDROID_FILES_DIRECTORY}/Unbound/Plugins`;
 

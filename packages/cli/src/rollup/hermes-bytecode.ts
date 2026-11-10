@@ -2,11 +2,14 @@ import { fetchManifest, resolveHermesTargets } from '@unbound-app/rollup-plugin-
 import type { HermesTarget } from '@unbound-app/rollup-plugin-hermes/manifest';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { ADDON_SCOPE_GLOBALS } from '@unbound-app/types/addons';
+import { dirname, join, resolve } from 'node:path';
 import { execFile } from 'node:child_process';
-import { join, resolve } from 'node:path';
+import { createHash } from 'node:crypto';
 import { promisify } from 'node:util';
 import type { Plugin } from 'rollup';
 import { tmpdir } from 'node:os';
+
+import { BYTECODE_DIGESTS_FILENAME, type BytecodeDigests } from './bytecode-digests-schema.ts';
 
 type BytecodeOptions = { versions: number[]; sourceName: string };
 
@@ -78,6 +81,12 @@ async function compile(hermesc: string, directory: string, source: string, outpu
 	return readFile(output);
 }
 
+async function sha512(path: string) {
+	return createHash('sha512')
+		.update(await readFile(path))
+		.digest('hex');
+}
+
 /**
  * @description Counts how many of hermesc's newest versions to resolve so every wanted version is among them.
  * @param latest hermesc's versions, newest first.
@@ -96,15 +105,21 @@ export function hermescCount(latest: number[], wanted: number[]): number {
 
 /**
  * @description Compiles each plugin bundle to Hermes bytecode for exactly the bytecode versions the client ships.
+ * Once written, it records each bundle's digest and its bytecode's in {@link BYTECODE_DIGESTS_FILENAME}, so a
+ * reader takes only this build's bytecode, never a leftover from an earlier build.
  * @param options The bytecode versions to compile for, and the name the bytecode's source locations use.
  * @returns The rollup plugin.
  */
 export function hermesBytecode({ versions, sourceName }: BytecodeOptions): Plugin {
 	let targets: HermesTarget[] | undefined;
+	// Each bundle's bytecode file names, by version, from the last generateBundle.
+	let emitted = new Map<string, Map<number, string>>();
 
 	return {
 		name: 'hermes-bytecode',
 		async generateBundle(_outputOptions, bundle) {
+			emitted = new Map();
+
 			targets ??= (
 				await resolveHermesTargets(this, {
 					versions: hermescCount((await fetchManifest(this)).latest, versions),
@@ -144,17 +159,46 @@ export function hermesBytecode({ versions, sourceName }: BytecodeOptions): Plugi
 						);
 
 						if (compiled) {
-							this.emitFile({
-								type: 'asset',
-								fileName: bytecodeFileName(chunk.fileName, version),
-								source: compiled,
-							});
+							const fileName = bytecodeFileName(chunk.fileName, version);
+
+							this.emitFile({ type: 'asset', fileName, source: compiled });
+							emitted.set(
+								chunk.fileName,
+								(emitted.get(chunk.fileName) ?? new Map()).set(version, fileName),
+							);
 						}
 					}
 				}
 			} finally {
 				await rm(directory, { recursive: true, force: true });
 			}
+		},
+		// Hashes the files as written, so the digests hold whatever later plugins did to the chunks.
+		async writeBundle(outputOptions, bundle) {
+			const directory = outputOptions.dir ?? dirname(outputOptions.file ?? '');
+			const digests: BytecodeDigests = {};
+
+			for (const chunk of Object.values(bundle)) {
+				if (chunk.type !== 'chunk') {
+					continue;
+				}
+
+				const bytecode: Record<string, string> = {};
+
+				for (const [version, fileName] of emitted.get(chunk.fileName) ?? []) {
+					bytecode[version] = await sha512(join(directory, fileName));
+				}
+
+				digests[chunk.fileName] = {
+					sha512: await sha512(join(directory, chunk.fileName)),
+					bytecode,
+				};
+			}
+
+			await writeFile(
+				join(directory, BYTECODE_DIGESTS_FILENAME),
+				`${JSON.stringify(digests, null, '\t')}\n`,
+			);
 		},
 	};
 }

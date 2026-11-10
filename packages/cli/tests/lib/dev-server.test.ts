@@ -3,7 +3,8 @@ import { describe, expect, test, afterEach } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { ReloadTransport, BuiltAddon } from '~/lib/reload-transport';
+import type { ReloadTransport } from '~/lib/reload-transport';
+import type { BuiltAddon } from '~/lib/built-addon';
 import { DevServer } from '~/lib/dev-server';
 
 import { loadWorkspace } from '../helpers/config';
