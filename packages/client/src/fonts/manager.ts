@@ -373,7 +373,8 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 	}
 
 	/**
-	 * @description Installs a listed font from its file; fonts carry no manifest, and no version to hold.
+	 * @description Installs a listed font from its file; fonts carry no manifest, no version to hold and
+	 * no on state, so they apply from Design.
 	 * @param _listed The listed font.
 	 * @param version The version whose file to install.
 	 * @returns Whether the install succeeded.

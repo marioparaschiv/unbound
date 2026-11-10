@@ -1,4 +1,3 @@
-import { installDependencies } from '~/marketplace/install-dependencies';
 import { brokenDependents } from '~/addons/dependencies';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { AvailableChoice } from '~/addons/versions';
@@ -59,8 +58,7 @@ export function confirmChoice(target: VersionTarget, choice: AvailableChoice): P
 }
 
 /**
- * @description Installs a picked version, plugins' dependencies first and enabling a first install, then
- * toasts a failure or the hold it leaves.
+ * @description Installs a picked version through its manager, then toasts a failure or the hold it leaves.
  * @param target The addon the version is for.
  * @param choice The picked version.
  * @returns Whether the addon now runs the version.
@@ -71,20 +69,14 @@ export async function installChoice(
 ): Promise<boolean> {
 	const { kind, id, name } = target;
 	const vars = { name, version: choice.version.version };
-	const manager = Manager.for(kind);
-	const fresh = !manager.getEntity(id);
-	const ok =
-		(kind !== 'plugin' || (await installDependencies(choice.version.manifest))) &&
-		(await manager.installListed({ id }, choice.version, choice.holds));
+	const ok = await Manager.for(kind).installListed({ id }, choice.version, {
+		hold: choice.holds,
+	});
 
 	if (!ok) {
 		show({ title: name, content: format('UNBOUND_VERSION_FAILED', vars), icon: 'CircleXIcon' });
 
 		return false;
-	}
-
-	if (fresh) {
-		await manager.enable(id);
 	}
 
 	if (choice.holds) {

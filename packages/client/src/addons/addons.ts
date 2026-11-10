@@ -25,6 +25,12 @@ import fs from '~/native/fs';
 /** The outcome of an addon reload: success, or failure carrying the recorded error. */
 export type ReloadResult = { ok: true } | { ok: false; error: Error };
 
+/** How {@link Addons.installListed} leaves a listed version once installed. */
+export type InstallListedOptions = {
+	/** Whether automatic updates should leave the addon on this version. */
+	hold?: boolean;
+};
+
 const INSTALL_EVENTS = ['loaded', 'unloaded', 'installed', 'updated', 'deleted'] as const;
 
 type BundleDigest = {
@@ -128,9 +134,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 		// consults the persisted state and starts it only if enabled.
 		if (!resolved) {
 			try {
-				await this.persist(bundle, manifest);
-				await this.persistBytecode(manifest, bytecode);
-				await this.persistFiles(manifest, files);
+				await this.persist(bundle, manifest, bytecode, files);
 				this.register(bundle, manifest);
 
 				const loaded = this.getEntity(manifest.id);
@@ -159,9 +163,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			// user has explicitly disabled.
 			const wasStarted = resolved.started || this.pendingStarts.has(resolved.id);
 
-			await this.persist(bundle, manifest);
-			await this.persistBytecode(manifest, bytecode);
-			await this.persistFiles(manifest, files);
+			await this.persist(bundle, manifest, bytecode, files);
 
 			this.pendingStarts.delete(resolved.id);
 
@@ -240,9 +242,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			const installedTrust = this.getEntity(manifest.id)?.manifest.trust;
 			const trusted = verifySignature(manifest, bundle, installedTrust);
 
-			await this.persist(bundle, trusted);
-			await this.persistBytecode(trusted, bytecode);
-			await this.persistFiles(trusted, files);
+			await this.persist(bundle, trusted, bytecode, files);
 
 			this.register(bundle, trusted);
 			const entity = this.getEntity(manifest.id);
@@ -334,18 +334,25 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	}
 
 	/**
-	 * @description Installs one version of a listed addon, newer or older than the installed one, then
-	 * holds it there or lets automatic updates move it on.
+	 * @description Installs one version of a listed addon, newer or older than the installed one, once
+	 * its requirements are in place, then holds it there or lets automatic updates move it on. A first
+	 * install turns itself on; an update keeps the user's choice.
 	 * @param listed The listed addon; only its id is read.
 	 * @param version The version to install.
-	 * @param hold Whether automatic updates should leave the addon on this version.
+	 * @param options `hold`: whether automatic updates should leave the addon on this version.
 	 * @returns Whether the addon now runs the version.
 	 */
 	async installListed(
 		listed: Pick<ListedAddon, 'id'>,
 		version: AddonVersion,
-		hold: boolean = false,
+		{ hold = false }: InstallListedOptions = {},
 	): Promise<boolean> {
+		if (!(await this.installRequirements(version))) {
+			return false;
+		}
+
+		const fresh = !this.getEntity(listed.id);
+
 		if (!(await this.applyRelease(listed.id, toRelease(listed.id, version)))) {
 			return false;
 		}
@@ -356,6 +363,19 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			this.releaseHold(listed.id);
 		}
 
+		if (fresh) {
+			await this.enable(listed.id);
+		}
+
+		return true;
+	}
+
+	/**
+	 * @description Puts in place what a listed version needs before it installs. Plugins install their dependencies here.
+	 * @param _version The version about to install.
+	 * @returns Whether the version can install.
+	 */
+	protected async installRequirements(_version: AddonVersion): Promise<boolean> {
 		return true;
 	}
 
@@ -471,45 +491,34 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	}
 
 	/**
-	 * @description Writes an addon's manifest and bundle to its on-disk folder, the same layout the
-	 * loader reads at startup, so a fresh install or hot reload survives the next app launch.
+	 * @description Writes an addon to its on-disk folder, the same layout the loader reads at startup, so a
+	 * fresh install or hot reload survives the next app launch.
 	 * @param bundle The addon's bundle source.
 	 * @param manifest The addon's validated manifest.
+	 * @param bytecode The bundle compiled for this runtime, base64-encoded, written beside the source.
+	 * @param files The extra files beside the bundle, such as images, by path; the ones on disk stay when omitted.
 	 */
-	protected async persist(bundle: string, manifest: AddonManifest): Promise<void> {
+	protected async persist(
+		bundle: string,
+		manifest: AddonManifest,
+		bytecode?: string,
+		files?: AddonFiles,
+	): Promise<void> {
 		const dir = this.directoryOf(manifest.id);
+		const bytecodeVersion = getLoader()?.bytecodeVersion;
 
 		await fs.writeFile(`${dir}/manifest.json`, JSON.stringify(manifest));
 		await fs.writeFile(`${dir}/${manifest.main}`, bundle);
-	}
 
-	/**
-	 * @description Writes the bundle compiled for this runtime beside the source, where the loader looks for it on the next launch.
-	 * @param manifest The addon's validated manifest.
-	 * @param bytecode The compiled bundle, base64-encoded.
-	 */
-	protected async persistBytecode(
-		manifest: AddonManifest,
-		bytecode: string | undefined,
-	): Promise<void> {
-		const bytecodeVersion = getLoader()?.bytecodeVersion;
+		if (bytecode && bytecodeVersion) {
+			const path = `${dir}/${compiledBundlePath(manifest.main, bytecodeVersion)}`;
 
-		if (!bytecode || !bytecodeVersion) return;
+			await fs.writeFile(path, bytecode, 'base64');
+		}
 
-		const path = `${this.directoryOf(manifest.id)}/${compiledBundlePath(manifest.main, bytecodeVersion)}`;
-
-		await fs.writeFile(path, bytecode, 'base64');
-	}
-
-	/**
-	 * @description Replaces the extra files beside the bundle, such as the images a plugin registers when it starts.
-	 * @param manifest The addon's validated manifest.
-	 * @param files The files, base64-encoded, by path; the ones on disk stay when omitted.
-	 */
-	protected async persistFiles(manifest: AddonManifest, files?: AddonFiles): Promise<void> {
-		if (!files) return;
-
-		await writeAddonFiles(this.directoryOf(manifest.id), manifest, files);
+		if (files) {
+			await writeAddonFiles(dir, manifest, files);
+		}
 	}
 
 	/**

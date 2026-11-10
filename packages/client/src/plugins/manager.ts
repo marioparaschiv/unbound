@@ -1,8 +1,10 @@
 import type { PushedManifest, Plugin, PluginContext } from '@unbound-app/types';
+import type { AddonVersion } from '@unbound-app/contracts/addons';
 import { ADDON_SCOPE_GLOBALS } from '@unbound-app/types/addons';
 
 import { attributeAddon, crashGuardKey, setFreezeListener } from '~/addons/crash-guard';
 import { performRefresh, withRefreshScope } from '~/hot-refresh/runtime';
+import { installDependencies } from '~/marketplace/install-dependencies';
 import type { AddonGlobals, PluginScope } from '~/addons/scope';
 import { getLoader, getPlugins } from '~/native/unbound-native';
 import { Addons, rememberSourceDigest } from '~/addons/addons';
@@ -147,6 +149,15 @@ export class Plugins extends Addons<Plugin> {
 		}
 
 		return result;
+	}
+
+	/**
+	 * @description Installs or updates the plugins a listed version depends on, once the user agrees.
+	 * @param version The version about to install.
+	 * @returns Whether its dependencies are in place.
+	 */
+	protected installRequirements(version: AddonVersion): Promise<boolean> {
+		return installDependencies(version.manifest);
 	}
 
 	protected createScope(entity: Addon<Plugin>): PluginScope {
