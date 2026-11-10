@@ -136,7 +136,7 @@ describe('listLocale', () => {
 	});
 
 	test('names every locale in the i18n folder', () => {
-		const files = readdirSync(`${import.meta.dir}/../i18n`).map((name) =>
+		const files = readdirSync(`${import.meta.dir}/../../i18n`).map((name) =>
 			name.replace('.json', ''),
 		);
 
