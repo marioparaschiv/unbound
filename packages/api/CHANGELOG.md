@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.0.0](https://github.com/marioparaschiv/unbound/compare/api-v1.1.1...api-v2.0.0) (2026-11-10)
+
+
+### Features
+
+* **client:** polish the Plugins, Sync and Updates pages ([#1046](https://github.com/marioparaschiv/unbound/issues/1046)) ([aba402c](https://github.com/marioparaschiv/unbound/commit/aba402c2d905abd6819ab67630f3a5e11d79203f))
+* count anonymous addon installs, sort by popularity ([#1066](https://github.com/marioparaschiv/unbound/issues/1066)) ([9a9f188](https://github.com/marioparaschiv/unbound/commit/9a9f1887a7979f6a6275c678dd677c0a04f7daf5))
+
+
+### Performance Improvements
+
+* **client:** cut Android startup hold from 46 ms to 8 ms ([#1037](https://github.com/marioparaschiv/unbound/issues/1037)) ([88738f1](https://github.com/marioparaschiv/unbound/commit/88738f14ddff40314c76d8da114add2d24569c54))
+* **client:** read React Native's Linking instead of a metro search ([#1053](https://github.com/marioparaschiv/unbound/issues/1053)) ([bc826c5](https://github.com/marioparaschiv/unbound/commit/bc826c5f0d37250b12c6679abbc3b7225095275e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 2.0.0
+    * @unbound-app/sdk-generator bumped to 0.11.3
+
 ## [1.1.1](https://github.com/marioparaschiv/unbound/compare/api-v1.1.0...api-v1.1.1) (2026-11-09)
 
 

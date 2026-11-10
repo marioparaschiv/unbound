@@ -1,5 +1,48 @@
 # Changelog
 
+## [2.0.0](https://github.com/marioparaschiv/unbound/compare/client-v1.1.1...client-v2.0.0) (2026-11-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* **cli:** root commands such as `ubd eval`, `ubd push`, `ubd install` and `ubd login` now live under groups (`ubd debug eval`, `ubd device install`, `ubd auth login`); `i18n` flags became subcommands; MCP tools `install` and `device` became `device_install`, `device_reset`, `device_save`, `device_restore` and `device_snapshots`.
+
+### Features
+
+* **client:** name the install kind in loader update warnings ([#1042](https://github.com/marioparaschiv/unbound/issues/1042)) ([472e3ec](https://github.com/marioparaschiv/unbound/commit/472e3ec1c784ff4a1979f025ee2501b44c010ecb))
+* **client:** polish the Plugins, Sync and Updates pages ([#1046](https://github.com/marioparaschiv/unbound/issues/1046)) ([aba402c](https://github.com/marioparaschiv/unbound/commit/aba402c2d905abd6819ab67630f3a5e11d79203f))
+* **client:** show icon packs in Discord's theme picker ([#1071](https://github.com/marioparaschiv/unbound/issues/1071)) ([d47801f](https://github.com/marioparaschiv/unbound/commit/d47801f328968076b465016e35ab90cbf805f1cf))
+* count anonymous addon installs, sort by popularity ([#1066](https://github.com/marioparaschiv/unbound/issues/1066)) ([9a9f188](https://github.com/marioparaschiv/unbound/commit/9a9f1887a7979f6a6275c678dd677c0a04f7daf5))
+* **i18n:** translate Unbound into every Discord locale ([#1070](https://github.com/marioparaschiv/unbound/issues/1070)) ([7ded2cb](https://github.com/marioparaschiv/unbound/commit/7ded2cb0a8b2ebc0a2d9a115029252d7ad70862e))
+* **web:** add addon gallery lightbox with drag panning ([#1069](https://github.com/marioparaschiv/unbound/issues/1069)) ([1fd08d5](https://github.com/marioparaschiv/unbound/commit/1fd08d57bbe6737efca3f878e4a1c5fae413bd83))
+
+
+### Bug Fixes
+
+* **client:** download the IPA for sideloaded loader updates ([#1048](https://github.com/marioparaschiv/unbound/issues/1048)) ([880fa81](https://github.com/marioparaschiv/unbound/commit/880fa812b96d85b4ec6f1f436b6d47e0ccb5f552))
+* **client:** mount Design pages as they slide in ([#1061](https://github.com/marioparaschiv/unbound/issues/1061)) ([1830d80](https://github.com/marioparaschiv/unbound/commit/1830d80869e740badb3663bf7514f24e0008e876))
+* **loader:** republish the sideloaded IPA on loader updates ([#1050](https://github.com/marioparaschiv/unbound/issues/1050)) ([5664844](https://github.com/marioparaschiv/unbound/commit/5664844740e43449ce55dc1caa4dc05e2bec9d2f))
+
+
+### Performance Improvements
+
+* **client:** cut Android startup hold from 46 ms to 8 ms ([#1037](https://github.com/marioparaschiv/unbound/issues/1037)) ([88738f1](https://github.com/marioparaschiv/unbound/commit/88738f14ddff40314c76d8da114add2d24569c54))
+* **client:** read React Native's Linking instead of a metro search ([#1053](https://github.com/marioparaschiv/unbound/issues/1053)) ([bc826c5](https://github.com/marioparaschiv/unbound/commit/bc826c5f0d37250b12c6679abbc3b7225095275e))
+
+
+### Code Refactoring
+
+* **cli:** group commands under debug, device, i18n and auth ([#1065](https://github.com/marioparaschiv/unbound/issues/1065)) ([122791d](https://github.com/marioparaschiv/unbound/commit/122791ddec70095a679380c5a48dfe6419dba939))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 1.0.0
+    * @unbound-app/debugger-protocol bumped to 1.0.0
+    * @unbound-app/web bumped to 1.0.0
+
 ## [1.1.1](https://github.com/marioparaschiv/unbound/compare/client-v1.1.0...client-v1.1.1) (2026-11-09)
 
 

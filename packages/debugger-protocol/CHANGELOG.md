@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/marioparaschiv/unbound/compare/debugger-protocol-v0.11.1...debugger-protocol-v1.0.0) (2026-11-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* **cli:** root commands such as `ubd eval`, `ubd push`, `ubd install` and `ubd login` now live under groups (`ubd debug eval`, `ubd device install`, `ubd auth login`); `i18n` flags became subcommands; MCP tools `install` and `device` became `device_install`, `device_reset`, `device_save`, `device_restore` and `device_snapshots`.
+
+### Code Refactoring
+
+* **cli:** group commands under debug, device, i18n and auth ([#1065](https://github.com/marioparaschiv/unbound/issues/1065)) ([122791d](https://github.com/marioparaschiv/unbound/commit/122791ddec70095a679380c5a48dfe6419dba939))
+
 ## [0.11.1](https://github.com/marioparaschiv/unbound/compare/debugger-protocol-v0.11.0...debugger-protocol-v0.11.1) (2026-11-09)
 
 
