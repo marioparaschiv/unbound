@@ -133,13 +133,12 @@ describe('an edited message', () => {
 	const texts = (content: { content?: unknown }[] | undefined) =>
 		content?.map((node) => node.content);
 
-	test('keeps its earlier text above the new text', async () => {
+	test('keeps its earlier text above the new text as subtext', async () => {
 		await edit({ content: 'hello world' });
 
 		expect(reached).toHaveLength(1);
 		expect(texts(generateRow({ content: 'hello world' }).content)).toEqual([
-			'hello',
-			' (edited)\n',
+			'-# hello (edited)',
 			'hello world',
 		]);
 	});

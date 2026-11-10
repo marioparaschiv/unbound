@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-10
+
+### Changed
+
+- Earlier versions of an edited message now show above its current text as small subtext, each ending with `(edited)`, without blank lines or indents.
+
 ## [1.0.4] - 2026-11-05
 
 ### Changed
