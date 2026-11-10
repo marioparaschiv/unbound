@@ -15,6 +15,8 @@ Every key the loader reads or writes in `settings.json`, with its default. The l
 
 If the file is missing at startup, the loader creates it as `{}`.
 
+Each time `settings.json` loads cleanly, the loader keeps a copy as `settings.json.good`. If the file is ever corrupt, the loader saves it as `settings.json.corrupt-<timestamp>`, keeping the newest three, and restores `settings.json.good`. It resets to `{}` only when there is no good copy.
+
 ## Structure
 
 The root is an object of **stores**. The loader reads the `unbound` store, and the applied theme's id from `applied` in the `themes` store. Each addon gets its own store keyed by its id; see [storage](/docs/sdk/latest/storage).
@@ -49,6 +51,10 @@ All keys are in the `unbound` store.
 	Runs the bundled DevTools script before the main bundle, so React DevTools can attach.
 </ParamField>
 
+<ParamField path="loader.telemetry.block" type="boolean" default="true">
+	Answers Discord's own analytics requests (`/api/v*/science` and `/api/v*/metrics` on `discord.com`) locally with `204 No Content`, so they never leave the device. This backs up the client's tracking builtin for requests that run before it or around it.
+</ParamField>
+
 <ParamField path="loader.update" type="object">
 	Where the bundle downloads from and when it is refetched.
 
@@ -58,6 +64,8 @@ All keys are in the `unbound` store.
 
 			- Ending in `.bundle` or `.js`: names the file; its folder is the source.
 			- Otherwise: the source folder.
+
+			Fetches `manifest.json` and `manifest.json.sig`, then `unbound.<bytecode version>.bundle` if the manifest lists the app's Hermes bytecode version, or `unbound.js` otherwise; the download must match the signed SHA-512. A new bundle stays a candidate until Discord has run with it for 15 seconds, gone to the background, or reloaded. A manifest byte-for-byte equal to the active bundle's skips the signature and bundle requests.
 
 			Also sets the hot reload origin (scheme and host). See [Bundle Updates](/docs/developer/loader/android#bundle-updates) for every check.
 		</ParamField>
@@ -86,6 +94,8 @@ All keys are in the `unbound` store.
 
 <ParamField path="recovery" type="boolean" default="false">
 	Recovery Mode. When on, the loader skips the native theme, and the client starts addons as empty no-ops; addon cards show but can't be used. The toolbox toggles it and reloads. See [Troubleshooting](/docs/user/troubleshooting).
+
+	The loader turns it on by itself after Discord closes during startup three launches in a row; a launch counts once Discord has run for 15 seconds or gone to the background. After two such launches, it first goes back to the bundle its last update replaced.
 </ParamField>
 
 <ParamField path="font-states" type="object" default="{}">

@@ -4,6 +4,7 @@
 #include <functional>
 #include <map>
 #include <optional>
+#include <stdexcept>
 #include <string>
 
 #include "LoaderBundleManifest.h"
@@ -27,6 +28,29 @@ constexpr double         kManifestFetchTimeoutSeconds = 5.0;
 
 bool isAcceptedDownloadStatus(int status);
 
+// Why a bundle update failed, so a launch without a saved bundle can say what to do about it.
+enum class BundleUpdateFailure
+{
+    Network,
+    Verification,
+    LoaderTooOld,
+    Storage,
+};
+
+class BundleUpdateError : public std::runtime_error
+{
+public:
+    BundleUpdateError(BundleUpdateFailure failure, const std::string &message)
+        : std::runtime_error(message), failure(failure)
+    {
+    }
+
+    BundleUpdateFailure failure;
+};
+
+// The alert for a launch that has no saved bundle and could not download one.
+std::string bundleFailureNotice(BundleUpdateFailure failure);
+
 using TextFetcher =
     std::function<std::optional<std::string>(const std::string &url, double timeoutSeconds)>;
 using FileDownloader = std::function<std::optional<DownloadResult>(
@@ -37,6 +61,7 @@ struct UpdaterSettings {
     std::function<std::string(const std::string &key, const std::string &fallback)> getString;
     std::function<bool(const std::string &key, bool fallback)>                      getBoolean;
     std::function<void(const std::string &key, const std::string &value)>           setString;
+    std::function<void(const std::string &key, bool value)>                         setBoolean;
     std::function<bool()>                                                           developerMode;
 };
 
@@ -72,6 +97,10 @@ public:
     bool markBundleAttempted(const std::string &path);
     bool acceptBundle(const std::string &path);
     void rejectBundle(const std::string &path);
+    // Puts back the bundle the last promotion replaced; false when there is none to put back.
+    bool rollBackToPrevious();
+
+    const std::string &documents() const;
 
     bool                developerMode() const;
     std::optional<bool> recordedDeveloperMode(const std::string &path) const;
@@ -91,6 +120,7 @@ private:
         std::string manifestText;
         std::string manifestSignature;
         std::string expectedSha512;
+        bool        unchanged = false;
     };
 
     std::string                bundlePath(const std::string &extension) const;
@@ -105,6 +135,7 @@ private:
     std::optional<std::string> verifiedRecord(const DownloadPlan &plan,
                                               const std::string  &candidatePath) const;
     std::optional<std::string> candidateProblem(const std::string &candidatePath) const;
+    bool isActiveManifest(const std::string &url, const std::string &manifestText) const;
     std::optional<std::string> pauseProblem(const std::string                &path,
                                             const std::optional<std::string> &updateURL,
                                             uint32_t bytecodeVersion) const;

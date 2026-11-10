@@ -70,6 +70,14 @@ export function installHomeScreenIcon(name: string, imagePath: string): boolean 
 }
 
 /**
+ * @description Reports whether a newer client bundle downloaded during this launch and runs after a restart.
+ * @returns Whether a staged bundle waits, `false` on a loader from before it.
+ */
+export function hasStagedBundle(): boolean {
+	return read('hasStagedBundle', (bridge) => bridge.hasStagedBundle?.()) ?? false;
+}
+
+/**
  * @description Reads the native loader's origin, version and the runtime's Hermes bytecode version.
  * @returns The loader info, or `undefined` when no loader installed `UnboundNative`.
  */

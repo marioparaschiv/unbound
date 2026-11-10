@@ -114,6 +114,8 @@
 	"UNBOUND_UPDATES_NOTIFY_DESC": "Show a toast when an update is out, or when the client has updated.",
 	"UNBOUND_UPDATES_CLIENT_UPDATED": "Unbound Updated",
 	"UNBOUND_UPDATES_CLIENT_UPDATED_DESC": "Now on v{version}.",
+	"UNBOUND_UPDATES_STAGED": "Unbound Update Ready",
+	"UNBOUND_UPDATES_STAGED_DESC": "Restart to use it now, or it applies the next time Discord opens.",
 	"UNBOUND_UPDATES_NOTIFY_TITLE": "{count, plural, one {# Update Available} other {# Updates Available}}",
 	"UNBOUND_UPDATES_VIEW": "View",
 	"UNBOUND_UPDATES_LOADER_REQUIRED": "Loader Update Required",

@@ -1,10 +1,13 @@
 #include "LoaderPipeline.h"
 
+#include "HermesBytecodeHeader.h"
 #include "HermesSampling.h"
 #include "LoaderBootstrap.h"
 #include "LoaderCrashGuard.h"
+#include "LoaderCrashReport.h"
 #include "LoaderFiles.h"
 #include "LoaderJSI.h"
+#include "LoaderLaunchGuard.h"
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
 #include "LoaderVersion.h"
@@ -30,6 +33,11 @@ bool LoaderPipeline::isBundleReady() const
     return bundleReady_.load();
 }
 
+bool LoaderPipeline::hasStagedBundle() const
+{
+    return bundleStaged_.load();
+}
+
 void LoaderPipeline::prepare()
 {
     // Hosts call this once Discord's runtime exists, before addons load for it; smoke timing starts
@@ -37,6 +45,7 @@ void LoaderPipeline::prepare()
     log(LogLevel::Info, LOG_CATEGORY_RUNTIME, "Discord's runtime was created.");
     native::noteRuntimeCreated();
     bundleReady_.store(false);
+    bundleStaged_.store(false);
     uint64_t token = token_.fetch_add(1) + 1;
     {
         std::lock_guard<std::mutex> lock(savedMutex_);
@@ -49,6 +58,10 @@ void LoaderPipeline::prepare()
         log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Loader is disabled. Aborting.");
         return;
     }
+
+    // A reload means the bundle that ran survived until something chose to restart it.
+    promotePendingBundle();
+    guardLaunch();
 
     host_->onAddonsPrepared();
 
@@ -64,8 +77,8 @@ void LoaderPipeline::prepare()
     }
 
     // A local read, so the bundle can run before Discord's without waiting on the network.
-    std::optional<std::string> bundle =
-        !savedPath.empty() && fileExists(savedPath) ? readTextFile(savedPath) : std::nullopt;
+    std::optional<SavedBundle> bundle =
+        !savedPath.empty() && fileExists(savedPath) ? readSavedBundle(savedPath) : std::nullopt;
     bool hasSaved = bundle && !bundle->empty();
     // A saved bundle from the other flavour runs at the next launch anyway, so this launch waits
     // for its replacement rather than leaving the switch to a second restart.
@@ -82,11 +95,11 @@ void LoaderPipeline::prepare()
         std::lock_guard<std::mutex> lock(savedMutex_);
         if (hasSaved && waitForDownload)
         {
-            firstDownload_.fallback = SavedBundle{std::move(*bundle), savedPath};
+            firstDownload_.fallback = std::move(*bundle);
         }
         else if (hasSaved)
         {
-            saved_ = SavedBundle{std::move(*bundle), savedPath};
+            saved_ = std::move(*bundle);
         }
         if (waitForDownload)
         {
@@ -95,6 +108,21 @@ void LoaderPipeline::prepare()
     }
 
     updateInBackground(savedPath, hasSaved, waitForDownload, token);
+}
+
+std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::readSavedBundle(const std::string &path)
+{
+    std::shared_ptr<MappedFileBuffer> mapped = MappedFileBuffer::map(path);
+    if (mapped && isHermesBytecode(mapped->data(), mapped->size()))
+    {
+        return SavedBundle{"", path, std::move(mapped)};
+    }
+    std::optional<std::string> source = readTextFile(path);
+    if (!source)
+    {
+        return std::nullopt;
+    }
+    return SavedBundle{std::move(*source), path, nullptr};
 }
 
 bool LoaderPipeline::savedFlavourIsCurrent(const std::string &path) const
@@ -120,6 +148,8 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
         }
         catch (const std::exception &error)
         {
+            const auto         *update  = dynamic_cast<const BundleUpdateError *>(&error);
+            BundleUpdateFailure failure = update ? update->failure : BundleUpdateFailure::Network;
             // Even a failed check counts, so an offline launch does not wait again next time.
             settings_.setString(kCheckedLoaderSetting, loaderVersion());
             log(hasSaved ? LogLevel::Warning : LogLevel::Error, LOG_CATEGORY_DEFAULT,
@@ -131,8 +161,7 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
             }
             if (!hasSaved && token == token_.load())
             {
-                host_->alert(
-                    "Failed to load Unbound's bundle. Please report this to the developers.");
+                host_->alert(bundleFailureNotice(failure));
             }
             return;
         }
@@ -143,6 +172,11 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
                                 updated ? std::optional<std::string>(downloaded) : std::nullopt))
         {
             return;
+        }
+        if (updated && !reloadOnUpdate && token == token_.load())
+        {
+            // The client offers a restart; otherwise it runs at the next launch.
+            bundleStaged_.store(true);
         }
         if (!updated || !reloadOnUpdate || token != token_.load())
         {
@@ -173,7 +207,8 @@ void LoaderPipeline::announceCrashDisabledAddons()
 
     for (const CrashedAddon &addon : takeUnannouncedCrashDisabledAddons(provider->documents))
     {
-        host_->alert(crashDisabledNotice(addon));
+        recordCrashSummary(crashDisabledNotice(addon));
+        host_->crashAlert(crashDisabledNotice(addon));
     }
 }
 
@@ -197,7 +232,11 @@ void LoaderPipeline::injectPreBundle(jsi::Runtime &runtime, const std::string &b
 
     try
     {
-        installUnboundNative(runtime, host_->unboundNativeProvider());
+        UnboundNativeProvider provider = host_->unboundNativeProvider();
+        provider.hasStagedBundle       = [this]() {
+            return nlohmann::json(hasStagedBundle());
+        };
+        installUnboundNative(runtime, std::move(provider));
     }
     catch (const std::exception &error)
     {
@@ -251,9 +290,18 @@ std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::awaitFirstDownload(ui
     {
         return std::nullopt;
     }
+    bool waiting = !firstDownload_.settled;
+    if (waiting)
+    {
+        host_->showUpdateProgress(true);
+    }
     bool settled = firstDownloadSettled_.wait_for(lock, kFirstDownloadWait, [this, token]() {
         return firstDownload_.token != token || firstDownload_.settled;
     });
+    if (waiting)
+    {
+        host_->showUpdateProgress(false);
+    }
     if (firstDownload_.token != token)
     {
         return std::nullopt;
@@ -269,7 +317,7 @@ std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::awaitFirstDownload(ui
         return fallback;
     }
 
-    std::optional<std::string> bundle = readTextFile(*firstDownload_.path);
+    std::optional<SavedBundle> bundle = readSavedBundle(*firstDownload_.path);
     if (!bundle || bundle->empty())
     {
         firstDownload_.abandoned = true;
@@ -277,7 +325,7 @@ std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::awaitFirstDownload(ui
     }
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
         "Downloaded Unbound's first bundle in time to run it before Discord's.");
-    return SavedBundle{std::move(*bundle), *firstDownload_.path};
+    return bundle;
 }
 
 bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t token)
@@ -294,7 +342,9 @@ bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t
     injectPreBundle(runtime, saved.path);
 
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Evaluating Unbound's bundle before Discord's...");
-    if (!evaluateScript(runtime, std::move(saved.bundle), "unbound"))
+    bool evaluated = saved.bytecode ? evaluateBytecodeBuffer(runtime, saved.bytecode, "unbound")
+                                    : evaluateScript(runtime, std::move(saved.bundle), "unbound");
+    if (!evaluated)
     {
         global.setProperty(runtime, "__loaderBundleInstalled", jsi::Value(false));
         evaluationFailed_.store(true);
@@ -302,10 +352,15 @@ bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t
         return false;
     }
 
-    if (!updater_.acceptBundle(saved.path))
+    // A candidate replaces the active bundle only once Discord has run healthily with it; if
+    // Discord dies first, its attempt marker makes the next launch discard it.
     {
-        log(LogLevel::Error, LOG_CATEGORY_DEFAULT, "Validated bundle could not be promoted.");
+        std::lock_guard<std::mutex> lock(promotionMutex_);
+        pendingPromotion_ = saved.path;
     }
+    host_->runAfter(kHealthySeconds, [this]() {
+        promotePendingBundle();
+    });
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Unbound's bundle was successfully executed.");
     if (token == token_.load())
     {
@@ -313,5 +368,57 @@ bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t
         host_->onBundleExecuted();
     }
     return true;
+}
+
+void LoaderPipeline::promotePendingBundle()
+{
+    std::optional<std::string> path;
+    {
+        std::lock_guard<std::mutex> lock(promotionMutex_);
+        path.swap(pendingPromotion_);
+    }
+    if (path && !updater_.acceptBundle(*path))
+    {
+        log(LogLevel::Error, LOG_CATEGORY_DEFAULT, "Validated bundle could not be promoted.");
+    }
+}
+
+// Once per process: counts launches that ended early and steps in after repeated ones.
+void LoaderPipeline::guardLaunch()
+{
+    if (launchGuarded_.exchange(true))
+    {
+        return;
+    }
+
+    LaunchGuard   guard(updater_.documents());
+    LaunchVerdict verdict = guard.begin();
+    if (verdict.rollBack && updater_.rollBackToPrevious())
+    {
+        log(LogLevel::Error, LOG_CATEGORY_DEFAULT, launchRollBackNotice(verdict.failures));
+        recordCrashSummary(launchRollBackNotice(verdict.failures));
+        host_->crashAlert(launchRollBackNotice(verdict.failures));
+    }
+    if (verdict.enterRecovery && settings_.setBoolean)
+    {
+        settings_.setBoolean("recovery", true);
+        log(LogLevel::Error, LOG_CATEGORY_DEFAULT, launchRecoveryNotice(verdict.failures));
+        recordCrashSummary(launchRecoveryNotice(verdict.failures));
+        host_->crashAlert(launchRecoveryNotice(verdict.failures));
+    }
+    host_->runAfter(kHealthySeconds, [this]() {
+        markHealthy();
+    });
+}
+
+void LoaderPipeline::markHealthy()
+{
+    promotePendingBundle();
+    if (!launchGuarded_.load() || launchHealthy_.exchange(true))
+    {
+        return;
+    }
+    LaunchGuard(updater_.documents()).succeed();
+    log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Discord ran long enough to count as healthy.");
 }
 }

@@ -37,6 +37,14 @@ object NativeBridge {
     @JvmStatic
     external fun nativeOnLoadJSBundle()
 
+    /** Whether [url] is one of Discord's analytics endpoints and the loader is set to block them. */
+    @JvmStatic
+    external fun nativeIsBlockedTelemetry(url: String): Boolean
+
+    /** Counts this launch as healthy: Discord left the foreground without crashing. */
+    @JvmStatic
+    external fun nativeMarkHealthy()
+
     external fun nativeEvictIdleSurfaces()
 
     @JvmStatic
@@ -357,6 +365,25 @@ object NativeBridge {
         Handler(Looper.getMainLooper()).post {
             val context = Platform.application() ?: return@post
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    @JvmStatic
+    fun crashAlert(message: String) {
+        StartupAlert.reportCrash(message)
+    }
+
+    private var updateToast: Toast? = null
+
+    /** Shows "Updating Unbound…" while Discord's launch waits for Unbound's bundle to download. */
+    @JvmStatic
+    fun updateProgress(showing: Boolean) {
+        Handler(Looper.getMainLooper()).post {
+            updateToast?.cancel()
+            updateToast = null
+            if (!showing) return@post
+            val context = Platform.application() ?: return@post
+            updateToast = Toast.makeText(context, "Updating Unbound…", Toast.LENGTH_LONG).also { it.show() }
         }
     }
 

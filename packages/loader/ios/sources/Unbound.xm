@@ -15,10 +15,12 @@
 #import "LoaderJSI.h"
 #import "LoaderPipeline.h"
 #import "LoaderShared.h"
+#include "LoaderToolbox.h"
 #import "NativePlatform.h"
 #import "NativePluginBridge.h"
 #import "RCTHost.h"
 #import "SettingsCore.h"
+#import "UpdateBanner.h"
 #import "UpdaterCore.h"
 
 using unbound::ios::toNSString;
@@ -119,6 +121,13 @@ public:
     {
         auto task = std::make_shared<std::function<void()>>(std::move(work));
         dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{ (*task)(); });
+    }
+
+    void runAfter(double seconds, std::function<void()> work) override
+    {
+        auto task = std::make_shared<std::function<void()>>(std::move(work));
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t) (seconds * NSEC_PER_SEC)),
+                       dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{ (*task)(); });
     }
 
     std::optional<std::string> resource(const std::string &name) override
@@ -253,9 +262,54 @@ public:
         dispatch_async(dispatch_get_main_queue(), ^{ [Utilities alert:text]; });
     }
 
+    void crashAlert(const std::string &message) override
+    {
+        NSString *text = toNSString(message);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *appVersion =
+                [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+            NSString *buildNumber =
+                [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
+            NSString *discordVersion = toNSString(loader::toolbox::discordVersionLabel(
+                appVersion ? std::optional<std::string>(toStdString(appVersion)) : std::nullopt,
+                toStdString(buildNumber)));
+
+            UIAlertAction *report = [UIAlertAction
+                actionWithTitle:@"Report"
+                          style:UIAlertActionStyleDefault
+                        handler:^(UIAlertAction *action) {
+                            NSString *link = [CoreBridge toolbox:@"crash-report-url"
+                                                        argument:discordVersion];
+                            NSURL    *url  = link.length ? [NSURL URLWithString:link] : nil;
+                            if (url)
+                            {
+                                [[UIApplication sharedApplication] openURL:url
+                                                                   options:@{}
+                                                         completionHandler:nil];
+                            }
+                        }];
+            UIAlertAction *okay   = [UIAlertAction actionWithTitle:@"Okay"
+                                                             style:UIAlertActionStyleCancel
+                                                           handler:nil];
+            [Utilities alert:text title:@"Unbound" buttons:@[ okay, report ]];
+        });
+    }
+
     void reload() override
     {
         [Utilities reloadApp];
+    }
+
+    void showUpdateProgress(bool showing) override
+    {
+        if (showing)
+        {
+            [UpdateBanner show];
+        }
+        else
+        {
+            [UpdateBanner hide];
+        }
     }
 };
 
@@ -342,6 +396,17 @@ static void prepareLoading(id instance)
 
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0),
                    ^{ [CoreBridge prescanAddons]; });
+
+    // Leaving the foreground without crashing counts the launch as healthy; a suspended app's
+    // health timer would otherwise never fire before iOS ends it.
+    [[NSNotificationCenter defaultCenter]
+        addObserverForName:UIApplicationDidEnterBackgroundNotification
+                    object:nil
+                     queue:nil
+                usingBlock:^(NSNotification *) {
+                    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0),
+                                   ^{ pipeline().markHealthy(); });
+                }];
 
 #if ATTESTATION_ENABLED
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{

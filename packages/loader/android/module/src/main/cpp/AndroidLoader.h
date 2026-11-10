@@ -66,6 +66,8 @@ struct JavaCallbacks {
     jmethodID appFonts                 = nullptr;
     jmethodID appFontBytes             = nullptr;
     jmethodID alert                    = nullptr;
+    jmethodID crashAlert               = nullptr;
+    jmethodID updateProgress           = nullptr;
     jmethodID onBundleExecuted         = nullptr;
     jmethodID fontsChanged             = nullptr;
 };
@@ -87,6 +89,7 @@ public:
 
     void start();
     void onLoadJSBundle();
+    void markHealthy();
     void onRuntimeCreated(facebook::jsi::Runtime &runtime);
     void drainMainWork();
     void drainRuntimeWork(facebook::jsi::Runtime &runtime);
@@ -114,6 +117,8 @@ public:
     void                          onAddonsPrepared() override;
     void                          onBundleExecuted() override;
     void                          alert(const std::string &message) override;
+    void                          crashAlert(const std::string &message) override;
+    void                          showUpdateProgress(bool showing) override;
     void                          reload() override;
 
 private:
