@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { flaggedFiles, lintFixture } from '../lint-fixture';
+import { flaggedFiles, lintFixture } from '~/lint-fixture';
 
 test('flags relative imports that leave the nearest package', async () => {
 	const findings = await lintFixture('no-import-outside-package', {

@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { flaggedFiles, lintFixture } from '../lint-fixture';
+import { flaggedFiles, lintFixture } from '~/lint-fixture';
 
 test('flags writes to process.env outside tests', async () => {
 	const findings = await lintFixture('no-env-mutation', {

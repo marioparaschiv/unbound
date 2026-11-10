@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { flaggedFiles, lintFixture } from '../lint-fixture';
+import { flaggedFiles, lintFixture } from '~/lint-fixture';
 
 const files = {
 	'lazy.ts': "export const Store = flux.getStore('User', { lazy: true });",

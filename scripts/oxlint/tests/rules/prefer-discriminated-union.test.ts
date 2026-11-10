@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { flaggedFiles, lintFixture } from '../lint-fixture';
+import { flaggedFiles, lintFixture } from '~/lint-fixture';
 
 test('flags a boolean discriminant beside optional payload fields', async () => {
 	const findings = await lintFixture('prefer-discriminated-union', {

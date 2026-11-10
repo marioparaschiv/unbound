@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { flaggedFiles, lintFixture } from '../lint-fixture';
+import { flaggedFiles, lintFixture } from '~/lint-fixture';
 
 test('flags inline styles and theme tokens outside style files', async () => {
 	const findings = await lintFixture('no-inline-styles', {

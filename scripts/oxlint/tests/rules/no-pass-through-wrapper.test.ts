@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { flaggedFiles, lintFixture } from '../lint-fixture';
+import { flaggedFiles, lintFixture } from '~/lint-fixture';
 
 const IMPORT = "import { get } from './store';\n";
 

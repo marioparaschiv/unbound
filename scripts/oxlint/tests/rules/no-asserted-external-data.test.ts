@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { flaggedFiles, lintFixture } from '../lint-fixture';
+import { flaggedFiles, lintFixture } from '~/lint-fixture';
 
 test('flags a type asserted onto JSON.parse or response.json output', async () => {
 	const findings = await lintFixture('no-asserted-external-data', {

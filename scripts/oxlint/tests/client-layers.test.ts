@@ -3,11 +3,11 @@ import { expect, test } from 'bun:test';
 import { readdirSync } from 'node:fs';
 import { Glob } from 'bun';
 
-import { flaggedFiles, lintFixture } from './lint-fixture';
-import config from '../../.oxlintrc.json';
+import { flaggedFiles, lintFixture } from '~/lint-fixture';
+import config from '../../../.oxlintrc.json';
 
 const CLIENT = 'packages/client/src';
-const source = resolve(import.meta.dir, '../..', CLIENT);
+const source = resolve(import.meta.dir, '../../..', CLIENT);
 // A domain's `builtin.dev.ts(x)` is its dev-bundle twin, wired in at startup the same way.
 const builtins = [...new Glob('*/builtin{,.dev}.{ts,tsx}').scanSync({ cwd: source })].sort();
 

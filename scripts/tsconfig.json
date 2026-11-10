@@ -15,5 +15,5 @@
 			"~/*": ["./*"]
 		}
 	},
-	"include": ["*.ts", "tests/**/*.ts", "oxlint/**/*.ts"]
+	"include": ["*.ts", "tests/**/*.ts"]
 }

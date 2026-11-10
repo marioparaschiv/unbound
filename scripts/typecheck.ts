@@ -31,6 +31,7 @@ export const PROJECTS = [
 	'packages/types',
 	'packages/utils',
 	'scripts',
+	'scripts/oxlint',
 ];
 
 export const TSC_ARGS = [

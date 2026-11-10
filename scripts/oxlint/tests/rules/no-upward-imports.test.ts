@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { flaggedFiles, lintFixture, type JsonObject } from '../lint-fixture';
+import { flaggedFiles, lintFixture, type JsonObject } from '~/lint-fixture';
 
 const layers: JsonObject[] = [
 	{

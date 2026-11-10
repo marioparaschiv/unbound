@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { flaggedFiles, lintFixture } from '../lint-fixture';
+import { flaggedFiles, lintFixture } from '~/lint-fixture';
 
 test('flags platform checks outside platform.ts', async () => {
 	const findings = await lintFixture('platform-check-only-in-platform-file', {
