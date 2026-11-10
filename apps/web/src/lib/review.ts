@@ -22,6 +22,7 @@ import { readPageMedia } from '~/lib/addon-page-source';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
 import { connectGitHubIfLinked } from '~/lib/github';
+import { readBytecode } from '~/lib/addon-bytecode';
 import { readListedFiles } from '~/lib/addon-files';
 import { hasPermission } from '~/lib/auth/access';
 import type { Transaction } from '~/db/database';
@@ -292,19 +293,37 @@ async function readPinnedFiles(
 	return readListedFiles(ctx.env, github, location, row.manifest);
 }
 
+// Compiled bundles are never staged either: approval re-reads them from the pinned commit's blobs.
+async function readPinnedBytecode(
+	ctx: AppContext,
+	row: SourcedSubmissionRow,
+): Promise<ReadonlyMap<string, Uint8Array>> {
+	if (!Object.keys(row.manifest.bytecode ?? {}).length) {
+		return new Map();
+	}
+
+	const { commitSha, bundlePath } = row.source;
+	const github = await connectGitHubIfLinked(ctx, row.authorId);
+	const tree = await github.getTree(row.repository, commitSha);
+
+	return readBytecode(ctx.env, github, row.repository, tree, bundlePath, row.manifest, commitSha);
+}
+
 type VerifiedArtifact = {
 	sha256: string;
 	bundle: Uint8Array;
 	page: StorePage | undefined;
+	bytecode: ReadonlyMap<string, Uint8Array>;
 	files: ReadonlyMap<string, Uint8Array>;
 };
 
 // Reads and verifies everything an approval publishes without writing it: the files go public only
 // once `decide` has committed the approval (see publishArtifact).
 async function readArtifact(ctx: AppContext, row: SourcedSubmissionRow): Promise<VerifiedArtifact> {
-	const [bundle, page, files] = await Promise.all([
+	const [bundle, page, bytecode, files] = await Promise.all([
 		readBundle(ctx, row),
 		readPinnedStorePage(ctx, row),
+		readPinnedBytecode(ctx, row),
 		readPinnedFiles(ctx, row),
 	]);
 	const sha256 = new Bun.CryptoHasher('sha256').update(bundle).digest('hex');
@@ -320,17 +339,17 @@ async function readArtifact(ctx: AppContext, row: SourcedSubmissionRow): Promise
 		);
 	}
 
-	return { sha256, bundle, page, files };
+	return { sha256, bundle, page, bytecode, files };
 }
 
 // Runs after `decide` commits, and again on a repeated approval. Writing earlier let a losing request leave files under the version's keys.
 async function publishArtifact(
 	ctx: AppContext,
 	row: SourcedSubmissionRow,
-	{ bundle, page, files }: VerifiedArtifact,
+	{ bundle, page, bytecode, files }: VerifiedArtifact,
 ): Promise<void> {
 	await Promise.all([
-		writeArtifact(ctx, row, bundle, { files }),
+		writeArtifact(ctx, row, bundle, { bytecode, files }),
 		page ? writeStorePage(ctx, row, page) : undefined,
 	]);
 	await ctx.db
