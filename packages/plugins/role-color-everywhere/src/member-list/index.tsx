@@ -4,7 +4,6 @@ import {
 } from '@unbound-plugins/shared/colors/role-colors';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { settings } from '@unbound-app/settings';
 import { patcher } from '@unbound-app/api';
 import { cloneElement } from 'react';
 import { Text } from 'react-native';
@@ -95,5 +94,5 @@ export function startMemberList(): () => void {
 		return () => {};
 	}
 
-	return whileEnabled(settings, 'memberList', true, patchUsersFastList);
+	return whileEnabled('memberList', patchUsersFastList);
 }

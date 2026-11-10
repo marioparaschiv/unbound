@@ -1,16 +1,3 @@
-export const SETTINGS = {
-	notices: false,
-	offlineRemovals: true,
-	friends: true,
-	friendRequestCancels: true,
-	servers: true,
-	groups: true,
-} as const;
-
-export type SettingKey = keyof typeof SETTINGS;
-
-export type Settings = Record<SettingKey, boolean>;
-
 export const RelationshipType = {
 	FRIEND: 1,
 	BLOCKED: 2,

@@ -3,7 +3,9 @@ import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { applyRules } from '@unbound-plugins/shared/text-replace/rules';
 import { patcher } from '@unbound-app/api';
 
-import { normalizeStoredRules, readRules } from '~/replace/stored-rules';
+import { readRules } from '@unbound-plugins/shared/text-replace/stored-rules';
+
+import { normalizeStoredRules } from '~/replace/stored-rules';
 import { RULES_CHANNEL_ID } from '~/constants';
 import { Messages } from '~/replace/modules';
 

@@ -1,7 +1,6 @@
 import { getRoleColorAppearance } from '@unbound-plugins/shared/colors/role-colors';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { settings } from '@unbound-app/settings';
 import { patcher } from '@unbound-app/api';
 import { cloneElement } from 'react';
 
@@ -82,5 +81,5 @@ export function startReactions(): () => void {
 		return () => {};
 	}
 
-	return whileEnabled(settings, 'reactorsList', true, patchMessageReactionsContent);
+	return whileEnabled('reactorsList', patchMessageReactionsContent);
 }

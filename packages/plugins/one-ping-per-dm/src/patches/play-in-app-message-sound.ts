@@ -1,10 +1,11 @@
 import { skipFeature } from '@unbound-plugins/shared/lifecycle/features';
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
+import { settings } from '@unbound-app/settings';
 import { patcher } from '@unbound-app/api';
 
 import { PLAY_IN_APP_MESSAGE_SOUND_PATH } from '~/constants';
-import { ChannelStore, UserStore, settings } from '~/modules';
-import { mayPlaySound, readPingSettings, type PingLookups } from '~/ping-rules';
+import { mayPlaySound, type PingLookups } from '~/ping-rules';
+import { ChannelStore, UserStore } from '~/modules';
 import { oldestUnreadMessageId, verifyReadState } from '~/read-state';
 import { findSoundTarget, type RecentMessages } from '~/sound-target';
 
@@ -23,8 +24,7 @@ const lookups: PingLookups = {
 	channelType: (channelId) => ChannelStore.getChannel(channelId)?.type,
 	currentUserId: () => UserStore.getCurrentUser()?.id,
 	oldestUnreadMessageId,
-	settings: () =>
-		readPingSettings((key, fallback) => settings.get(key, fallback) as typeof fallback),
+	settings: () => settings,
 };
 
 /**

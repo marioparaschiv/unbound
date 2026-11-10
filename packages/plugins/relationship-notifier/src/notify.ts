@@ -1,9 +1,9 @@
 import type { ToastHandle, ToastOptions } from '@unbound-app/api/toasts';
+import { settings } from '@unbound-app/settings';
 import { toasts } from '@unbound-app/api';
 
 import { FALLBACK_ICON } from '~/constants';
 import { avatarURL, openProfile, type DiscordUser } from '~/discord';
-import { readSettings } from '~/modules';
 
 type ToastButton = NonNullable<ToastOptions['buttons']>[number];
 
@@ -36,7 +36,7 @@ function buttons(handle: () => ToastHandle, persistent: boolean, userId?: string
  * @param userId The user whose profile a button opens.
  */
 export function notify(text: string, iconURL?: string, userId?: string): void {
-	const persistent = readSettings().notices;
+	const persistent = settings.notices;
 	const actions = buttons(() => handle, persistent, userId);
 	const handle = toasts.show({
 		id: `relationship-notifier-${nextId++}`,

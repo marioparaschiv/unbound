@@ -7,7 +7,6 @@ import { RECENT_MESSAGE_LIMIT, RECENT_MESSAGE_MAX_AGE } from '~/constants';
 import { ChannelStore, ReadStateStore, UserStore } from '~/modules';
 import { recordMessageCreate } from '~/events/message-create';
 import { createRecentMessages } from '~/sound-target';
-import SettingsPanel from '~/components/settings-panel';
 
 export const { start, stop, selfTest } = runFeatures(
 	() => {
@@ -21,5 +20,3 @@ export const { start, stop, selfTest } = runFeatures(
 	},
 	{ atomic: true, selfTest: readStateSelfTest },
 );
-
-export { SettingsPanel };

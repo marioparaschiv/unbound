@@ -1,0 +1,15 @@
+{
+	"NOTIFY_WHEN": "Notify When",
+	"FRIENDS": "Friends",
+	"FRIENDS_SUBTITLE": "A friend removes you",
+	"FRIEND_REQUESTS": "Friend Requests",
+	"FRIEND_REQUESTS_SUBTITLE": "A friend request to you is cancelled",
+	"SERVERS": "Servers",
+	"SERVERS_SUBTITLE": "You are removed from a server",
+	"GROUPS": "Group Chats",
+	"GROUPS_SUBTITLE": "You are removed from a group chat",
+	"OFFLINE_REMOVALS": "Offline Removals",
+	"OFFLINE_REMOVALS_SUBTITLE": "When Discord opens, report removals that happened while it was closed",
+	"NOTICES": "Persistent Notices",
+	"NOTICES_SUBTITLE": "Keep each notification on screen until you dismiss it"
+}

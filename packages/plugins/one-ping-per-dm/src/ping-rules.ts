@@ -1,4 +1,6 @@
-import { CHANNEL_SCOPES, ChannelType, SETTINGS, type ChannelScope } from '~/constants';
+import type { Settings, SettingsEntry } from '@unbound-app/settings';
+
+import { ChannelType } from '~/constants';
 
 type Mention = string | { id?: unknown } | null | undefined;
 
@@ -11,11 +13,7 @@ export type PingMessage = {
 	mentionEveryone?: boolean;
 };
 
-export type PingSettings = {
-	channelToAffect: ChannelScope;
-	allowMentions: boolean;
-	allowEveryone: boolean;
-};
+export type PingSettings = Pick<Settings, 'channelToAffect' | 'allowMentions' | 'allowEveryone'>;
 
 export type PingContext = {
 	channelType: number | undefined;
@@ -23,23 +21,6 @@ export type PingContext = {
 	oldestUnreadMessageId: string | null | undefined;
 	settings: PingSettings;
 };
-
-/**
- * @description Reads the plugin's settings, falling back to the defaults for missing or invalid values.
- * @param read Reads one stored value, with its default.
- * @returns The settings the ping rules use.
- */
-export function readPingSettings(read: <T>(key: string, fallback: T) => T): PingSettings {
-	const scope = read<unknown>('channelToAffect', SETTINGS.channelToAffect);
-
-	return {
-		channelToAffect: CHANNEL_SCOPES.includes(scope as ChannelScope)
-			? (scope as ChannelScope)
-			: SETTINGS.channelToAffect,
-		allowMentions: read('allowMentions', SETTINGS.allowMentions) === true,
-		allowEveryone: read('allowEveryone', SETTINGS.allowEveryone) === true,
-	};
-}
 
 /**
  * @description Reads the channel a message was sent in.
@@ -64,7 +45,10 @@ function mentionsEveryone(message: PingMessage): boolean {
 	return message.mention_everyone === true || message.mentionEveryone === true;
 }
 
-function isAffectedChannel(channelType: number | undefined, scope: ChannelScope): boolean {
+function isAffectedChannel(
+	channelType: number | undefined,
+	scope: SettingsEntry<'channelToAffect'>,
+): boolean {
 	if (channelType === ChannelType.DM) return scope !== 'group_dm';
 	if (channelType === ChannelType.GROUP_DM) return scope !== 'user_dm';
 

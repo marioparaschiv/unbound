@@ -1,6 +1,5 @@
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { settings } from '@unbound-app/settings';
 import { patcher } from '@unbound-app/api';
 import { cloneElement } from 'react';
 
@@ -65,5 +64,5 @@ export function startPolls(): () => void {
 		return () => {};
 	}
 
-	return whileEnabled(settings, 'pollResults', true, patchPollVotesActionSheet);
+	return whileEnabled('pollResults', patchPollVotesActionSheet);
 }

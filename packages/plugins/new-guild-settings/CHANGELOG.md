@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2] - 2026-11-10
+
+### Changed
+
+- The settings are drawn by Unbound's settings panel, with every setting under one heading. Your saved notification level carries over, and the plugin works the same as before.
+
 ## [1.0.1] - 2026-11-05
 
 ### Changed

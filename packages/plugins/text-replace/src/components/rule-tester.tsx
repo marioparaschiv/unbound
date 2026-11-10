@@ -4,7 +4,7 @@ import { messages } from '@unbound-app/i18n';
 import { ui } from '@unbound-app/api';
 import { useState } from 'react';
 
-import type { Ruleset } from '~/replace/ruleset';
+import type { Ruleset } from '@unbound-plugins/shared/text-replace/stored-rules';
 
 type RuleTesterProps = {
 	ruleset: Ruleset;

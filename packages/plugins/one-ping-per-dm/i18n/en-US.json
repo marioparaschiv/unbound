@@ -1,0 +1,11 @@
+{
+	"ONE_PING_PER_DM": "One Ping Per DM",
+	"DMS_TO_AFFECT": "DMs to affect",
+	"BOTH_DMS": "Both",
+	"USER_DMS": "User DMs",
+	"GROUP_DMS": "Group DMs",
+	"ALLOW_MENTIONS": "Allow Mentions",
+	"ALLOW_MENTIONS_SUBTITLE": "Play the sound for every message that mentions you",
+	"ALLOW_EVERYONE": "Allow @everyone",
+	"ALLOW_EVERYONE_SUBTITLE": "Play the sound for every @everyone and @here in group DMs"
+}

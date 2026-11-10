@@ -1,8 +1,6 @@
 {
 	"name": "show-me-your-name",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Display usernames next to nicks, or no nicks at all.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

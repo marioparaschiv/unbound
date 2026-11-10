@@ -1,4 +1,4 @@
-import { metro, storage, flux } from '@unbound-app/api';
+import { metro, flux } from '@unbound-app/api';
 
 export const DraftStore = flux.getStore('Draft');
 export const SelectedChannelStore = flux.getStore('SelectedChannel');
@@ -17,5 +17,3 @@ export const ChatInputSendButton = metro.findByFilePath(
 export const ChatItem = metro.findByFilePath('components_native/chat/ChatItem.tsx');
 export const MessageRecord = metro.findByName('MessageRecord', { interop: false });
 export const RowManager = metro.findByName('RowManager', { interop: false });
-
-export const textReplaceSettings = storage.getBucket('unbound.text-replace');

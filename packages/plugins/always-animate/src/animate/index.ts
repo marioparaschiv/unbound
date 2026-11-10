@@ -1,6 +1,6 @@
 import type { Feature } from '@unbound-plugins/shared/lifecycle/features';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
-import { settings, type SettingKey } from '@unbound-app/settings';
+import type { SettingKey } from '@unbound-app/settings';
 
 import { animateDecorations } from '~/decorations';
 import { animateNameplates } from '~/nameplates';
@@ -29,6 +29,6 @@ const FEATURES: Record<SettingKey, () => () => void> = {
  */
 export function animateFeatures(): Feature[] {
 	return (Object.keys(FEATURES) as SettingKey[]).map(
-		(key) => () => whileEnabled(settings, key, true, FEATURES[key]),
+		(key) => () => whileEnabled(key, FEATURES[key]),
 	);
 }

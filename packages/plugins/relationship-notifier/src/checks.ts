@@ -1,3 +1,5 @@
+import { settings } from '@unbound-app/settings';
+
 import {
 	currentUserId,
 	isGuildUnavailable,
@@ -11,7 +13,6 @@ import { findOfflineRemovals, keepUnconfirmedGuilds, type OfflineRemovals } from
 import { messages, uniqueUsername } from '~/messages';
 import { loadSnapshot } from '~/snapshot-file';
 import { flushSave, scheduleSave, type Session } from '~/session';
-import { readSettings } from '~/modules';
 
 async function notifyUsers(ids: string[], text: (name: string) => string): Promise<void> {
 	for (const id of ids) {
@@ -55,7 +56,7 @@ async function check(session: Session): Promise<void> {
 
 	await report(
 		findOfflineRemovals(previous, current, {
-			settings: readSettings(),
+			settings,
 			isGuildUnavailable,
 			relationshipType,
 		}),

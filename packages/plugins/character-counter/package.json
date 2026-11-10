@@ -1,8 +1,6 @@
 {
 	"name": "character-counter",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Shows the current message length and Discord's character limit in the composer.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

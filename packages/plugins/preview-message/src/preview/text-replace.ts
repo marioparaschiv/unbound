@@ -1,8 +1,7 @@
-import { applyRules, normalizeRules } from '@unbound-plugins/shared/text-replace/rules';
+import { rules, TEXT_REPLACE_ID } from '@unbound-plugins/shared/text-replace/stored-rules';
+import { applyRules } from '@unbound-plugins/shared/text-replace/rules';
 
 import { plugins } from '@unbound-app/api';
-
-import { textReplaceSettings } from '~/preview/modules';
 
 /**
  * @description Rewrites a draft the way Text Replace will rewrite it on send.
@@ -10,13 +9,11 @@ import { textReplaceSettings } from '~/preview/modules';
  * @returns The draft with the user's Text Replace rules applied, or unchanged when that plugin is not running.
  */
 export function applyTextReplace(content: string): string {
-	if (!plugins.get('unbound.text-replace')?.started) return content;
+	if (!plugins.get(TEXT_REPLACE_ID)?.started) return content;
 
-	return applyRules(
-		content,
-		normalizeRules(textReplaceSettings.get('stringRules', [])),
-		normalizeRules(textReplaceSettings.get('regexRules', [])),
-	);
+	const { stringRules, regexRules } = rules();
+
+	return applyRules(content, stringRules, regexRules);
 }
 
 export default applyTextReplace;

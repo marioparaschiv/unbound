@@ -1,8 +1,6 @@
 {
 	"name": "new-guild-settings",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Mutes new servers and applies your notification and channel defaults as soon as you join them.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

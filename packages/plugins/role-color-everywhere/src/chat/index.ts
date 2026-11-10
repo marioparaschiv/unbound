@@ -1,7 +1,6 @@
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
-import { settings } from '@unbound-app/settings';
 
 import { createNativeMentions } from '~/chat/native-mentions';
 import { patchRowManager } from '~/chat/row-manager';
@@ -21,7 +20,7 @@ export function startChat(context: PluginContext): () => Promise<void> {
 	const nativeMentions = createNativeMentions(context);
 
 	patchRowManager();
-	const stopNativeMentions = whileEnabled(settings, 'chatMentions', true, nativeMentions.enable);
+	const stopNativeMentions = whileEnabled('chatMentions', nativeMentions.enable);
 
 	return () => {
 		stopNativeMentions();

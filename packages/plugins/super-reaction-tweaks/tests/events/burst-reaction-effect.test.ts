@@ -1,38 +1,9 @@
-import { installAddonGlobals } from '@unbound-app/api/testing';
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { flux as fakeFlux, logs } from '@unbound-app/api/testing';
+import { settings } from '@unbound-app/settings';
+import { flux } from '@unbound-app/api';
+import { describe, expect, test } from 'bun:test';
 
-type Interceptor = (action: object) => boolean | void;
-
-const interceptors = new Map<string, Set<Interceptor>>();
-
-function interceptAction(type: string, interceptor: Interceptor) {
-	const set = interceptors.get(type) ?? new Set();
-
-	set.add(interceptor);
-	interceptors.set(type, set);
-
-	return () => void set.delete(interceptor);
-}
-
-function dispatch(type: string, action: object): 'dropped' | 'passed' {
-	for (const interceptor of interceptors.get(type) ?? []) {
-		if (interceptor({ type, ...action }) === true) return 'dropped';
-	}
-
-	return 'passed';
-}
-
-const scope = installAddonGlobals({
-	manifest: { id: 'unbound.super-reaction-tweaks' },
-	unbound: { flux: { getStore: () => ({}), interceptAction } },
-});
-
-mock.module('@unbound-app/api', () => scope.unbound);
-
-const { CLEAR_ACTION, PLAY_ACTION, limitPlayingEffects } =
-	await import('~/events/burst-reaction-effect');
-
-const bucket = scope.storage.getBucket(scope.addon.manifest.id);
+import { CLEAR_ACTION, PLAY_ACTION, limitPlayingEffects } from '~/events/burst-reaction-effect';
 
 const effect = (key: string, messageId = 'm1') => ({
 	channelId: 'c1',
@@ -41,82 +12,83 @@ const effect = (key: string, messageId = 'm1') => ({
 	key,
 });
 
-function setLimit(limit: number) {
-	bucket.set('superReactionPlayingLimit', limit);
+// An action reaches Discord's listeners only when no interceptor dropped it.
+async function dispatch(type: string, action: object): Promise<'dropped' | 'passed'> {
+	let passed = false;
+	const remove = flux.onAction(type, () => void (passed = true));
+
+	await fakeFlux.dispatch({ type, ...action });
+	remove();
+
+	return passed ? 'passed' : 'dropped';
 }
 
-beforeEach(() => {
-	interceptors.clear();
-	scope.logs.length = 0;
-	setLimit(5);
-});
-
 describe('limitPlayingEffects', () => {
-	test("passes every animation at Discord's own limit", () => {
+	test("passes every animation at Discord's own limit", async () => {
 		limitPlayingEffects();
 
-		const results = ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map((key) =>
-			dispatch(PLAY_ACTION, effect(key)),
-		);
+		const results = [];
+
+		for (const key of ['a', 'b', 'c', 'd', 'e', 'f', 'g']) {
+			results.push(await dispatch(PLAY_ACTION, effect(key)));
+		}
 
 		expect(results.every((result) => result === 'passed')).toBe(true);
 	});
 
-	test('drops every animation at a limit of 0', () => {
-		setLimit(0);
+	test('drops every animation at a limit of 0', async () => {
+		settings.superReactionPlayingLimit = 0;
 		limitPlayingEffects();
 
-		expect(dispatch(PLAY_ACTION, effect('a'))).toBe('dropped');
+		expect(await dispatch(PLAY_ACTION, effect('a'))).toBe('dropped');
 	});
 
-	test('drops animations past the limit on one message only', () => {
-		setLimit(1);
+	test('drops animations past the limit on one message only', async () => {
+		settings.superReactionPlayingLimit = 1;
 		limitPlayingEffects();
 
-		expect(dispatch(PLAY_ACTION, effect('a'))).toBe('passed');
-		expect(dispatch(PLAY_ACTION, effect('b'))).toBe('dropped');
-		expect(dispatch(PLAY_ACTION, effect('c', 'm2'))).toBe('passed');
+		expect(await dispatch(PLAY_ACTION, effect('a'))).toBe('passed');
+		expect(await dispatch(PLAY_ACTION, effect('b'))).toBe('dropped');
+		expect(await dispatch(PLAY_ACTION, effect('c', 'm2'))).toBe('passed');
 	});
 
-	test('frees a slot when the clear action arrives, and never drops clears', () => {
-		setLimit(1);
+	test('frees a slot when the clear action arrives, and never drops clears', async () => {
+		settings.superReactionPlayingLimit = 1;
 		limitPlayingEffects();
 
-		dispatch(PLAY_ACTION, effect('a'));
+		await dispatch(PLAY_ACTION, effect('a'));
 
-		expect(dispatch(CLEAR_ACTION, effect('a'))).toBe('passed');
-		expect(dispatch(PLAY_ACTION, effect('b'))).toBe('passed');
+		expect(await dispatch(CLEAR_ACTION, effect('a'))).toBe('passed');
+		expect(await dispatch(PLAY_ACTION, effect('b'))).toBe('passed');
 	});
 
-	test('counts animations it let through at the top limit once the limit is lowered', () => {
+	test('counts animations it let through at the top limit once the limit is lowered', async () => {
 		limitPlayingEffects();
-		dispatch(PLAY_ACTION, effect('a'));
-		setLimit(1);
+		await dispatch(PLAY_ACTION, effect('a'));
+		settings.superReactionPlayingLimit = 1;
 
-		expect(dispatch(PLAY_ACTION, effect('b'))).toBe('dropped');
+		expect(await dispatch(PLAY_ACTION, effect('b'))).toBe('dropped');
 	});
 
-	test('passes everything again after stopping', () => {
-		setLimit(0);
+	test('passes everything again after stopping', async () => {
+		settings.superReactionPlayingLimit = 0;
 		limitPlayingEffects()();
 
-		expect(dispatch(PLAY_ACTION, effect('a'))).toBe('passed');
-		expect(interceptors.get(PLAY_ACTION)?.size).toBe(0);
-		expect(interceptors.get(CLEAR_ACTION)?.size).toBe(0);
+		expect(await dispatch(PLAY_ACTION, effect('a'))).toBe('passed');
 	});
 
-	test('warns once when a play action lacks the ids it counts by', () => {
+	test('warns once when a play action lacks the ids it counts by', async () => {
 		limitPlayingEffects();
-		dispatch(PLAY_ACTION, { emoji: { name: '🔥' } });
-		dispatch(PLAY_ACTION, { emoji: { name: '🔥' } });
+		await dispatch(PLAY_ACTION, { emoji: { name: '🔥' } });
+		await dispatch(PLAY_ACTION, { emoji: { name: '🔥' } });
 
-		expect(scope.logs.filter((entry) => entry.level === 'warn')).toHaveLength(1);
+		expect(logs.entries.filter((entry) => entry.level === 'warn')).toHaveLength(1);
 	});
 
-	test('stays quiet for the expected shape', () => {
+	test('stays quiet for the expected shape', async () => {
 		limitPlayingEffects();
-		dispatch(PLAY_ACTION, effect('a'));
+		await dispatch(PLAY_ACTION, effect('a'));
 
-		expect(scope.logs).toHaveLength(0);
+		expect(logs.entries).toHaveLength(0);
 	});
 });

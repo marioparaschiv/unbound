@@ -1,6 +1,6 @@
 import { messages } from '@unbound-app/i18n';
 
-import type { RuleKind } from '~/constants';
+import type { RuleKind } from '@unbound-plugins/shared/text-replace/stored-rules';
 
 /**
  * @description Reads the texts a kind of rule is shown with, in the user's language.

@@ -1,8 +1,6 @@
 {
 	"name": "message-logger",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Keeps deleted and edited messages in the chat.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",
