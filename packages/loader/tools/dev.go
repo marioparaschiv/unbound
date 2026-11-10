@@ -509,10 +509,8 @@ func avdConfigPath(name string) (string, error) {
 }
 
 func androidSDKRoot() (string, error) {
-	for _, key := range []string{"ANDROID_HOME", "ANDROID_SDK_ROOT"} {
-		if value := os.Getenv(key); value != "" {
-			return value, nil
-		}
+	if sdk, _ := localAndroidSDK(); sdk != "" {
+		return sdk, nil
 	}
 	emulator, err := exec.LookPath("emulator")
 	if err != nil {

@@ -467,16 +467,7 @@ func androidNDKCandidates() []string {
 			candidates = append(candidates, value)
 		}
 	}
-	var sdks []string
-	for _, variable := range []string{"ANDROID_HOME", "ANDROID_SDK_ROOT"} {
-		if value := os.Getenv(variable); value != "" {
-			sdks = append(sdks, value)
-		}
-	}
-	if home, err := os.UserHomeDir(); err == nil {
-		sdks = append(sdks, filepath.Join(home, "Library", "Android", "sdk"), filepath.Join(home, "Android", "Sdk"))
-	}
-	for _, sdk := range sdks {
+	for _, sdk := range androidSDKSearchPath() {
 		versions, _ := filepath.Glob(filepath.Join(sdk, "ndk", "*"))
 		sort.Sort(sort.Reverse(sort.StringSlice(versions)))
 		candidates = append(candidates, versions...)

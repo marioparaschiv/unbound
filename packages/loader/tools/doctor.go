@@ -64,19 +64,8 @@ func pinnedNDKVersion(buildFile string) string {
 }
 
 func (environment doctorEnvironment) androidSDK() string {
-	for _, key := range []string{"ANDROID_HOME", "ANDROID_SDK_ROOT"} {
-		if value := environment.getenv(key); value != "" {
-			return value
-		}
-	}
-	if environment.home == "" {
-		return ""
-	}
-	sdk := filepath.Join(environment.home, "Library", "Android", "sdk")
-	if environment.exists(sdk) {
-		return sdk
-	}
-	return ""
+	sdk, _ := findAndroidSDK(environment.getenv, environment.home, environment.exists)
+	return sdk
 }
 
 func commandCheck(name string, required bool, hint string) doctorCheck {

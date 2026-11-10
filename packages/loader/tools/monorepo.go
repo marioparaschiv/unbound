@@ -70,12 +70,20 @@ func runPlatformWithRunner(action, platform, root, configuration string, runner 
 		if configuration == "debug" {
 			target = ":module:assembleDebug"
 		}
-		return runner(filepath.Join(root, "android"), gradleCommand(), []string{target, "--no-daemon", "--quiet", "--console=plain"}, os.Environ(), os.Stdout, os.Stderr)
+		return runModuleGradle(root, target, runner)
 	}
 	if err := runCoreTests(root, runner); err != nil {
 		return err
 	}
-	return runner(filepath.Join(root, "android"), gradleCommand(), []string{":module:testDebugUnitTest", "--no-daemon", "--quiet", "--console=plain"}, os.Environ(), os.Stdout, os.Stderr)
+	return runModuleGradle(root, ":module:testDebugUnitTest", runner)
+}
+
+func runModuleGradle(root, task string, runner commandRunner) error {
+	environment, err := androidGradleEnvironment()
+	if err != nil {
+		return err
+	}
+	return runner(filepath.Join(root, "android"), gradleCommand(), []string{task, "--no-daemon", "--quiet", "--console=plain"}, environment, os.Stdout, os.Stderr)
 }
 
 func runValidate(args []string) error {
@@ -94,10 +102,10 @@ func runValidate(args []string) error {
 	if err := runGoAndCoreTests(rootPath, defaultRunner); err != nil {
 		return err
 	}
-	if err := defaultRunner(filepath.Join(rootPath, "android"), gradleCommand(), []string{":module:testDebugUnitTest", "--no-daemon", "--quiet", "--console=plain"}, os.Environ(), os.Stdout, os.Stderr); err != nil {
+	if err := runModuleGradle(rootPath, ":module:testDebugUnitTest", defaultRunner); err != nil {
 		return err
 	}
-	if err := defaultRunner(filepath.Join(rootPath, "android"), gradleCommand(), []string{":module:assembleRelease", "--no-daemon", "--quiet", "--console=plain"}, os.Environ(), os.Stdout, os.Stderr); err != nil {
+	if err := runModuleGradle(rootPath, ":module:assembleRelease", defaultRunner); err != nil {
 		return err
 	}
 	if runtime.GOOS == "darwin" {
