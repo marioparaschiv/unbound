@@ -48,7 +48,6 @@ const envSource = Type.Object({
 	...databaseSource.properties,
 	/** The same database through pgbouncer in transaction mode, for queries, e.g. `postgres://unbound_bot:<password>@127.0.0.1:6432/unbound`. */
 	DATABASE_URL: Type.String({ minLength: 1 }),
-	/** The Discord bot token. */
 	DISCORD_TOKEN: Type.String({ minLength: 1 }),
 	/** Seconds between the timed reconciles of every dispatcher. */
 	RECONCILE_INTERVAL_SECONDS: Type.Optional(positiveInt),

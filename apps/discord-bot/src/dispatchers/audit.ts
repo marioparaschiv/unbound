@@ -22,7 +22,6 @@ import type { Database } from '~/db/database';
 import { auditPost } from '~/db/schema';
 
 export type AuditOptions = {
-	/** The audit log channel. */
 	channelId: string;
 	/** The site origin each embed's subject link points at. */
 	siteUrl: string;

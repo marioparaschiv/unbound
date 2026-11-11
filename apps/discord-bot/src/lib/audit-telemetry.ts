@@ -19,7 +19,6 @@ export type AuditTelemetry = {
 };
 
 export type AuditTelemetryOptions = {
-	/** The telemetry variables, from the validated environment. */
 	env: OtelEnv;
 	/** Replaces the OTLP exporter, for tests; it exports even with `OTEL_ENABLED` off. */
 	exporter?: LogRecordExporter;
