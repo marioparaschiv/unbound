@@ -10,6 +10,7 @@
 #import "SettingsCore.h"
 
 @interface HotReload ()
++ (instancetype)shared;
 - (void)openRequest:(const loader::HotReloadRequest &)request;
 - (void)cancelTask;
 @end
