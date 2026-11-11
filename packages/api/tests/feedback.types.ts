@@ -1,9 +1,8 @@
-import { describe, expect, test } from 'bun:test';
-
+// Type-level tests, checked by `bun run typecheck` and never run: toasts and dialogs take the plugin's message keys.
 import type * as dialogs from '~/dialogs';
 import type * as toasts from '~/toasts';
 
-// Never called: `bun run typecheck` checks these against the fixture's generated `@unbound-app/i18n`.
+// Checked against the fixture's generated `@unbound-app/i18n`.
 function plugin(toast: typeof toasts, dialog: typeof dialogs, cause: unknown, name: string) {
 	toast.success('SAVED');
 	toast.success('STARRED', { name });
@@ -60,8 +59,4 @@ function plugin(toast: typeof toasts, dialog: typeof dialogs, cause: unknown, na
 	void dialog.alert('SAVED', { body: 'NOPE' });
 }
 
-describe('feedback shorthand types', () => {
-	test('are checked by the typecheck, not at runtime', () => {
-		expect(typeof plugin).toBe('function');
-	});
-});
+export type Checked = typeof plugin;

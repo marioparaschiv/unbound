@@ -209,12 +209,10 @@ export type SourcePin = StaticDecode<typeof sourcePinSchema>;
 export type RepositoryContributor = StaticDecode<typeof repositoryContributorSchema>;
 export type RepositoryRelease = StaticDecode<typeof repositoryReleaseSchema>;
 export type RepositoryDetails = StaticDecode<typeof repositoryDetailsSchema>;
-export type RepositoryAddonIssue = StaticDecode<typeof repositoryAddonIssueSchema>;
 export type RepositoryAddon = StaticDecode<typeof repositoryAddonSchema>;
 export type ListRepositoryAddonsQuery = StaticDecode<typeof listRepositoryAddonsQuerySchema>;
 export type ListRepositoryAddonsResponse = StaticDecode<typeof listRepositoryAddonsResponseSchema>;
 export type PushableRepository = StaticDecode<typeof pushableRepositorySchema>;
-export type PushableRepositoriesResponse = StaticDecode<typeof pushableRepositoriesResponseSchema>;
 
 export default {
 	repositorySchema,

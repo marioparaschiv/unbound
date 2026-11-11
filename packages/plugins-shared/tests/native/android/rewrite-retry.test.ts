@@ -21,16 +21,32 @@ describe('rewrite retry', () => {
 		}
 	});
 
-	test('starts over once a rewrite succeeds, and clear cancels pending retries', () => {
+	test('starts over once a rewrite succeeds', () => {
 		jest.useFakeTimers();
 
 		try {
 			const retry = createRewriteRetry();
 			let runs = 0;
 
-			for (let attempt = 0; attempt < 5; attempt++) retry.retry('view', () => runs++);
+			for (let attempt = 0; attempt < 5; attempt++) retry.retry('view', () => {});
 
 			retry.succeeded('view');
+			retry.retry('view', () => runs++);
+			jest.advanceTimersByTime(60);
+
+			expect(runs).toBe(1);
+		} finally {
+			jest.useRealTimers();
+		}
+	});
+
+	test('clear cancels pending retries', () => {
+		jest.useFakeTimers();
+
+		try {
+			const retry = createRewriteRetry();
+			let runs = 0;
+
 			retry.retry('view', () => runs++);
 			retry.clear();
 			jest.advanceTimersByTime(60);

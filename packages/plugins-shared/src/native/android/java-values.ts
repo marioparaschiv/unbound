@@ -39,7 +39,6 @@ export function javaString(value: string): NativeJavaValue {
 
 /**
  * @description Tags a boolean as a Java `boolean`.
- * @param value The boolean.
  * @returns The tagged value.
  */
 export function javaBoolean(value: boolean): NativeJavaValue {
@@ -76,7 +75,6 @@ export function javaReference(
 
 /**
  * @description Keys a Java view by its handle, for maps of per-view state.
- * @param view The view.
  * @returns The handle's id, or `undefined` when the value is not a handle.
  */
 export function javaViewKey(view: NativeJavaValue): string | undefined {

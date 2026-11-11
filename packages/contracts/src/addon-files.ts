@@ -34,7 +34,6 @@ export const ADDON_FILE_DIRECTORIES = [ASSETS_DIRECTORY, LOCALES_DIRECTORY] as c
 
 /**
  * @description Lists every extra file a manifest names beside its bundle, once per path; publishing copies them and installing downloads them.
- * @param manifest The manifest.
  * @returns The files, each with its SHA-256: the images, then the locales.
  */
 export function listAddonFiles(manifest: AddonFileListing): AddonFile[] {

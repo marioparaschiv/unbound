@@ -1,7 +1,6 @@
 /**
- * @description Checks if an object is empty.
- * @param object The object to check.
- * @returns A boolean indicating whether the object is empty or not.
+ * @description Checks for enumerable keys, inherited ones included, stopping at the first without building a key array.
+ * @returns Whether no key was found.
  */
 function isEmpty<T>(object: Record<PropertyKey, T>) {
 	for (const _ in object) {

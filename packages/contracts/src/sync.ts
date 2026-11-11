@@ -117,8 +117,6 @@ export type SyncSettingsStore = StaticDecode<typeof syncSettingsStoreSchema>;
 export type SyncDocument = StaticDecode<typeof syncDocumentSchema>;
 export type SyncState = StaticDecode<typeof syncStateSchema>;
 export type SyncDocumentInput = StaticDecode<typeof syncDocumentInputSchema>;
-export type SyncPutRequest = StaticDecode<typeof syncPutRequestSchema>;
-export type SyncDeleteResponse = StaticDecode<typeof syncDeleteResponseSchema>;
 
 export default {
 	SYNC_KINDS,

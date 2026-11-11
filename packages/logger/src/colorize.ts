@@ -13,8 +13,6 @@ export type Color = keyof typeof Colors;
 
 /**
  * @description Wraps a string in the ANSI escape codes for the given color, resetting afterwards.
- * @param string The string to colorize.
- * @param color The color to apply, defaulting to `reset`.
  * @returns The ANSI-wrapped string.
  */
 function colorize(string: string, color: Color = 'reset') {

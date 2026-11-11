@@ -13,10 +13,6 @@ const supportsColor =
 	process.env?.NO_COLOR === undefined &&
 	process.env?.TERM !== 'dumb';
 
-/**
- * @description A scoped console logger that prefixes every line with its caller chain, tinting
- * output per log level when the environment supports ANSI colors.
- */
 function describeError(error: Error): string {
 	const code = 'code' in error && typeof error.code === 'string' ? ` [${error.code}]` : '';
 	const heading = `${error.name}${code}: ${error.message}`;
@@ -54,6 +50,10 @@ function revealErrors(_key: string, value: LoggedValue) {
 	return value instanceof Error ? describeError(value) : value;
 }
 
+/**
+ * @description A scoped console logger that prefixes every line with its caller chain, tinting
+ * output per log level when the environment supports ANSI colors.
+ */
 class Logger {
 	private static inspector: InspectorFn | null = null;
 
@@ -87,7 +87,7 @@ class Logger {
 	}
 
 	/**
-	 * @description Initialises the value inspector once, using Node's `util.inspect` when running under Node.
+	 * @description Sets how non-string values render. Under Node every new logger resets it to `util.inspect`.
 	 */
 	static setInspector(inspector: InspectorFn | null) {
 		Logger.inspector = inspector;
@@ -121,50 +121,26 @@ class Logger {
 		console.log('');
 	}
 
-	/**
-	 * @description Logs args at the `log` level. Twin of the other level methods.
-	 * @param args The values to log.
-	 */
 	log(...args: unknown[]) {
 		this._write('log', args);
 	}
 
-	/**
-	 * @description Logs args at the `error` level. Twin of the other level methods.
-	 * @param args The values to log.
-	 */
 	error(...args: unknown[]) {
 		this._write('error', args);
 	}
 
-	/**
-	 * @description Logs args at the `success` level. Twin of the other level methods.
-	 * @param args The values to log.
-	 */
 	success(...args: unknown[]) {
 		this._write('success', args);
 	}
 
-	/**
-	 * @description Logs args at the `warn` level. Twin of the other level methods.
-	 * @param args The values to log.
-	 */
 	warn(...args: unknown[]) {
 		this._write('warn', args);
 	}
 
-	/**
-	 * @description Logs args at the `debug` level. Twin of the other level methods.
-	 * @param args The values to log.
-	 */
 	debug(...args: unknown[]) {
 		this._write('debug', args);
 	}
 
-	/**
-	 * @description Logs args at the `info` level. Twin of the other level methods.
-	 * @param args The values to log.
-	 */
 	info(...args: unknown[]) {
 		this._write('info', args);
 	}

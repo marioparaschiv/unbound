@@ -1,5 +1,4 @@
-import { describe, expect, test } from 'bun:test';
-
+// Type-level tests, checked by `bun run typecheck` and never run: command descriptions and labels take the plugin's message keys.
 import type { CommandMessageKey, CommandTree, OptionBuilders } from '~/commands';
 
 // The plugin's keys come from `fixtures/unbound-i18n.d.ts`, which mirrors the typings `ubd build` generates.
@@ -55,9 +54,4 @@ function typeOnly() {
 	option.string({ description: 'UNBOUND_COMMAND_RELOAD_DESC' });
 }
 
-describe('plugin command types', () => {
-	test("take the plugin's message keys", () => {
-		expect(typeof typeOnly).toBe('function');
-		expect(keys).toHaveLength(4);
-	});
-});
+export type Checked = [typeof keys, typeof typeOnly];

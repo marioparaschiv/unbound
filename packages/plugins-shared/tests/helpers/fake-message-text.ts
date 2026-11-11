@@ -176,7 +176,6 @@ export function fakeMessageText({ rewrites = true } = {}) {
 
 /**
  * @description Reads the handle id of a fake view, as the surfaces key it.
- * @param view The view.
  * @returns The id.
  */
 export function viewKey(view: NativeJavaReference): string {
