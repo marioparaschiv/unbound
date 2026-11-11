@@ -35,5 +35,3 @@ export async function readSelfTest(
 
 	return toReport(await instance.selfTest());
 }
-
-export default { readSelfTest };

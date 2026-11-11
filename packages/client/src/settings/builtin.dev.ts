@@ -11,9 +11,6 @@ export const developerSection: SectionEntry = {
 	key: Screens.Developer,
 	titleKey: 'UNBOUND_DEVELOPER',
 	/**
-	 *
-	 */
-	/**
 	 * @description Hands Discord's navigator the page.
 	 * @returns The page.
 	 */

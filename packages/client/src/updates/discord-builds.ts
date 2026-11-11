@@ -124,13 +124,3 @@ export async function checkDiscordBuilds(
 
 	return { status, builds, installed: findInstalledBuild(builds, hashes) };
 }
-
-export default {
-	discordChannel,
-	compareDiscordVersions,
-	findInstalledBuild,
-	isOlderDiscord,
-	discordInstaller,
-	fetchDiscordBuilds,
-	checkDiscordBuilds,
-};

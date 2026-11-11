@@ -77,8 +77,8 @@ describe('installing a plugin with images', () => {
 		);
 		expect(writes).toEqual(
 			expect.arrayContaining([
-				`${Reflect.get(manager, 'directoryOf').call(manager, ID)}/assets/${sha(STAR)}.png`,
-				`${Reflect.get(manager, 'directoryOf').call(manager, ID)}/assets/${sha(STAR_2X)}.png`,
+				`Unbound/Plugins/${ID}/assets/${sha(STAR)}.png`,
+				`Unbound/Plugins/${ID}/assets/${sha(STAR_2X)}.png`,
 			]),
 		);
 		expect(

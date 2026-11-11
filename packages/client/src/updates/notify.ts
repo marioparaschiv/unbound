@@ -117,5 +117,3 @@ export function notifyStagedBundle() {
 		],
 	});
 }
-
-export default { notifyUpdates, notifyClientUpdated, notifyStagedBundle };

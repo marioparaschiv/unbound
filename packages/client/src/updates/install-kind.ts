@@ -63,5 +63,3 @@ export function readInstallKind(): InstallKind | undefined {
 			attempt(() => discordInstaller()?.status().availability, 'unpatched') !== 'unpatched',
 	});
 }
-
-export default { classifyInstall, readInstallKind };

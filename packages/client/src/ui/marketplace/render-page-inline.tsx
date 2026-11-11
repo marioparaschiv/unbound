@@ -108,5 +108,3 @@ function renderNode(node: PageNode, ctx: PageRenderContext, key: number): ReactN
 export function renderPageInline(nodes: PageNode[], ctx: PageRenderContext): ReactNode[] {
 	return nodes.map((node, index) => renderNode(node, ctx, index));
 }
-
-export default { renderPageInline };

@@ -185,15 +185,3 @@ export async function handleOutcome(): Promise<Response> {
 		status: last.result === 'failed' ? 500 : 200,
 	});
 }
-
-export default {
-	changed,
-	sent,
-	needsReload,
-	reloadPending,
-	reconnected,
-	patched,
-	failed,
-	built,
-	handleOutcome,
-};

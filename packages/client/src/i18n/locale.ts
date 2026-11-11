@@ -42,5 +42,3 @@ export function onLocaleChange(listener: LocaleListener): () => void {
 export function countLocaleListeners(): number {
 	return listeners.size;
 }
-
-export default { getLocale, setLocale, onLocaleChange, countLocaleListeners };

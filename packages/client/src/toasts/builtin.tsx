@@ -84,9 +84,6 @@ export const toastsSection: SectionEntry = {
 	key: Screens.Toasts,
 	titleKey: 'UNBOUND_TOAST_SETTINGS',
 	/**
-	 *
-	 */
-	/**
 	 * @description Loads the page when it first opens.
 	 * @returns The page.
 	 */

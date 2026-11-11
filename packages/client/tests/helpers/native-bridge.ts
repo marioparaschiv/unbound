@@ -84,13 +84,15 @@ export const cancelled: string[] = [];
 export const javaInvokeArguments: (NativeJavaArgument[] | undefined)[] = [];
 export const javaReleased: NativeJavaHandle[] = [];
 export const javaHandle: NativeJavaHandle = Object.create(null);
-export const javaCallPlan: NativeJavaCallPlan = Object.create(null);
-export const objcCallPlan: NativeObjCCallPlan = Object.create(null);
+const javaCallPlan: NativeJavaCallPlan = Object.create(null);
+const objcCallPlan: NativeObjCCallPlan = Object.create(null);
+
 export const javaHookToken: NativeJavaHookToken = { id: 'hook-1' };
 export const hooksRemoved: NativeJavaHookToken[] = [];
 export const javaPlansDisposed: NativeJavaCallPlan[] = [];
 export const objcPlansDisposed: NativeObjCCallPlan[] = [];
-export const javaInvokeResult: NativeJavaValue = { type: 'string', value: 'invoked' };
+const javaInvokeResult: NativeJavaValue = { type: 'string', value: 'invoked' };
+
 /** Set `fails` to make the Java bridge's `invoke` throw {@link javaInvokeFailure}. */
 export const javaInvoke = { fails: false };
 export const javaInvokeFailure = Object.assign(new Error('No method noSuchMethod'), {

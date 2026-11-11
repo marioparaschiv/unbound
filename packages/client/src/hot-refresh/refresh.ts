@@ -321,5 +321,3 @@ function schedule(root: FiberRoot, fibers: Fiber[]) {
 		mark(targets, lane);
 	}
 }
-
-export default { HOOK_FIBERS, reconcile, rerender, rerenderFiber, refresh, withAlternates };

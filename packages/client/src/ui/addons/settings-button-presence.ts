@@ -24,5 +24,3 @@ export function nextPresence(presence: Presence, visible: boolean): Presence {
 export function settlePresence(presence: Presence): Presence {
 	return presence.shown || !presence.mounted ? presence : { mounted: false, shown: false };
 }
-
-export default { nextPresence, settlePresence };

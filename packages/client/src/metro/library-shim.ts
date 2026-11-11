@@ -49,5 +49,3 @@ export function createLibraryShim(props: string[]): MetroExport {
 		},
 	);
 }
-
-export default { createLibraryShim };

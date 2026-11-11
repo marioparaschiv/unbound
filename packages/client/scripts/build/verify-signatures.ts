@@ -7,7 +7,7 @@ import { findUnsignedBundles, parsePullRequest } from './sign';
 const logger = Logger.create('Build', 'Verify');
 const root = join(import.meta.dir, '..', '..');
 
-export const KEYS_DIR = join(root, '..', 'loader', 'core', 'keys');
+const KEYS_DIR = join(root, '..', 'loader', 'core', 'keys');
 
 export type VerifyArguments = {
 	dir: string;

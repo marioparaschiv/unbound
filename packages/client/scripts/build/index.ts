@@ -66,8 +66,8 @@ export type Flavour = {
 };
 
 /** The bundle every loader downloads, and the larger one Developer mode loads instead. */
-export const DEFAULT_FLAVOUR: Flavour = { name: 'unbound', devTools: false };
-export const DEV_FLAVOUR: Flavour = { name: 'unbound-dev', devTools: true };
+const DEFAULT_FLAVOUR: Flavour = { name: 'unbound', devTools: false };
+const DEV_FLAVOUR: Flavour = { name: 'unbound-dev', devTools: true };
 
 /** The modules the default bundle swaps for the release twin that drops the developer tooling. */
 const RELEASE_MODULES: Record<string, string> = {
@@ -414,7 +414,7 @@ async function hotBuild(onUpdate: (update: HotUpdate) => void) {
 	return engine;
 }
 
-export { build, watchBuild, hotBuild };
+export { build, hotBuild };
 
 if (import.meta.main) {
 	if (process.argv.includes('--watch')) {

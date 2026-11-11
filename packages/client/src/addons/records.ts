@@ -13,9 +13,7 @@ export type RecordChange = {
 
 /** One per-addon map a manager keeps, keyed by addon id. */
 export type AddonRecord<V extends SettingsValue> = {
-	/** Reads the whole map. */
 	all: () => Record<string, V>;
-	/** Reads one addon's value. */
 	get: (id: string) => V | undefined;
 	/** Writes one addon's value. Twin of `delete`. */
 	set: (id: string, value: V) => void;

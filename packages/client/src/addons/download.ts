@@ -97,5 +97,3 @@ export function verifySignature(
 
 	return { ...rest, trust: result.status };
 }
-
-export default { downloadManifest, downloadBundle, downloadBytecode, verifySignature };

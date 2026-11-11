@@ -34,28 +34,6 @@ export const storedSettings = new Map<string, unknown>();
 /** The bucket names managers opened their settings with, in construction order. */
 export const openedBuckets: string[] = [];
 
-/** A settings change a component re-renders on: one key written to one bucket. */
-export type SettingsChange = { store: string; key: string };
-
-type Subscription = {
-	store: string;
-	predicate?: (change: SettingsChange) => boolean;
-};
-
-/** What each `useBucket` call subscribed to, in call order. */
-export const subscriptions: Subscription[] = [];
-
-/**
- * @description Whether any recorded `useBucket` subscription re-renders on a change.
- * @param change The bucket and key written.
- * @returns Whether a subscriber would re-render.
- */
-export function rerendersOn(change: SettingsChange): boolean {
-	return subscriptions.some(
-		({ store, predicate }) => store === change.store && (!predicate || predicate(change)),
-	);
-}
-
 mock.module('~/storage/api', () => {
 	const store = {
 		get: <T>(key: string, fallback: T) =>
@@ -82,9 +60,7 @@ mock.module('~/storage/api', () => {
 		return store;
 	}
 
-	function useBucket(bucket: string, predicate?: Subscription['predicate']) {
-		subscriptions.push({ store: bucket, predicate });
-
+	function useBucket() {
 		return store;
 	}
 

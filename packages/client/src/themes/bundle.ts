@@ -88,5 +88,3 @@ export function parseThemeBundle(bundle: string): Theme {
 		...(background ? { background } : {}),
 	};
 }
-
-export default { parseThemeBundle };

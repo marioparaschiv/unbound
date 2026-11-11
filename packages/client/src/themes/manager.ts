@@ -42,11 +42,6 @@ export class Themes extends Addons<Theme> {
 		}
 	}
 
-	/**
-	 * @description Parses a theme bundle into its {@link Theme} definition.
-	 * @param bundle The raw theme bundle to parse.
-	 * @returns The parsed theme.
-	 */
 	protected handleBundle(bundle: string): Theme {
 		return parseThemeBundle(bundle);
 	}

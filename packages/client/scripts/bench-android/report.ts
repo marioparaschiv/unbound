@@ -336,7 +336,7 @@ function scenarioTable(builds: BuildInfo[], valid: LaunchRecord[]): string[] {
  * @param valid The valid launches.
  * @returns Markdown lines.
  */
-export function moduleSections(builds: BuildInfo[], valid: LaunchRecord[]): string[] {
+function moduleSections(builds: BuildInfo[], valid: LaunchRecord[]): string[] {
 	const lines: string[] = [];
 
 	for (const b of builds) {

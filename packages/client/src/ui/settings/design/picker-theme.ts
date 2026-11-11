@@ -37,7 +37,7 @@ function gradientSwatch(
  * @param base The swatch's colour; defaults to Discord's background for the base theme.
  * @returns The picker swatch.
  */
-export function plainSwatch(
+function plainSwatch(
 	theme: BaseTheme,
 	name: () => string,
 	id: string,

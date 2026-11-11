@@ -30,7 +30,7 @@ const compatPolicySchema = Type.Object({
 	}),
 });
 
-export const COMPAT_POLICY_PATH = join(__dirname, '..', '..', '..', 'loader', 'compat-policy.json');
+const COMPAT_POLICY_PATH = join(__dirname, '..', '..', '..', 'loader', 'compat-policy.json');
 
 export const MINIMUM_DISCORD_VERSIONS = parse(
 	compatPolicySchema,
@@ -39,8 +39,7 @@ export const MINIMUM_DISCORD_VERSIONS = parse(
 
 export const IGNORED_WARNINGS = ['PLUGIN_TIMINGS', 'EVAL', 'MISSING_NAME_OPTION_FOR_IIFE_EXPORT'];
 
-export const PROD_I18N_BASE_URL =
-	'https://raw.githubusercontent.com/marioparaschiv/unbound/main/i18n';
+const PROD_I18N_BASE_URL = 'https://raw.githubusercontent.com/marioparaschiv/unbound/main/i18n';
 
 export const IS_DEV_BUILD = process.env.UNBOUND_DEV === '1' || process.argv.includes('--dev');
 

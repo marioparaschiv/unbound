@@ -107,5 +107,3 @@ export function splitLeadingIcon(nodes: PageNode[]): LeadingIcon {
 
 	return { icon: first.name, rest };
 }
-
-export default { groupRuns, splitLeadingIcon };

@@ -112,19 +112,10 @@ export abstract class Manager<
 	 */
 	abstract initialize(): void;
 
-	/**
-	 * @description Lists every entity currently governed by this manager.
-	 * @returns An array of all governed entities.
-	 */
 	getEntities(): T[] {
 		return [...this.entities.values()];
 	}
 
-	/**
-	 * @description Looks up a single governed entity by its id.
-	 * @param id The id of the entity to retrieve.
-	 * @returns The matching entity, or `undefined` if none is governed under that id.
-	 */
 	getEntity(id: PropertyKey): T | undefined {
 		return this.entities.get(id);
 	}

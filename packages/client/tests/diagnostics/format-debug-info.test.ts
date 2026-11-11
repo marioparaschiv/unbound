@@ -43,8 +43,8 @@ describe('formatDebugInfo', () => {
 	});
 
 	test('leaves out the framework when nothing injected the loader', () => {
-		expect(formatDebugInfo({ ...info, framework: '' })).toContain(
-			'loader 1.0.0 (`Unbound.dylib`)',
+		expect(formatDebugInfo({ ...info, framework: '' }).split('\n')).toContain(
+			'- **Unbound:** v0.11.0 (`402cbbf6`), loader 1.0.0 (`Unbound.dylib`)',
 		);
 	});
 });

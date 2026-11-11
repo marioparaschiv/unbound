@@ -28,5 +28,3 @@ export function parseLocaleStrings(text: string): LocaleStrings {
 
 	return table;
 }
-
-export default { parseLocaleStrings };

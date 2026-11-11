@@ -306,5 +306,3 @@ export function settingElement({
 		}
 	}
 }
-
-export default { settingElement };

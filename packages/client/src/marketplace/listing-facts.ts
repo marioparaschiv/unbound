@@ -26,5 +26,3 @@ export function sourceUrl(pin: SourcePin): string {
 
 	return `https://github.com/${pin.repository}/tree/${pin.commitSha}${path}`;
 }
-
-export default { formatBytes, sourceUrl };

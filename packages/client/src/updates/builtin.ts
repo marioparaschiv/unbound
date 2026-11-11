@@ -88,9 +88,6 @@ export const updatesSection: SectionEntry = {
 	key: Screens.Updates,
 	titleKey: 'UNBOUND_UPDATES',
 	/**
-	 *
-	 */
-	/**
 	 * @description Loads the page when it first opens.
 	 * @returns The page.
 	 */

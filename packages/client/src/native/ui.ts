@@ -314,5 +314,3 @@ export function createScopedUIBridge(
 		},
 	};
 }
-
-export default { createScopedUIBridge, uiScopePaths };

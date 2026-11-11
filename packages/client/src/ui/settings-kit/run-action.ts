@@ -40,5 +40,3 @@ export async function runSettingsAction(
 		});
 	}
 }
-
-export default { runSettingsAction };

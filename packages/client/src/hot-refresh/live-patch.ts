@@ -661,5 +661,3 @@ function renderOf(type: FiberType): Render | null {
 function isForwardRef(type: FiberType): type is ForwardRef {
 	return typeof type === 'object' && type.$$typeof === FORWARD_REF;
 }
-
-export default { patch, recordRemovals, flush };

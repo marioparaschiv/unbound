@@ -101,12 +101,10 @@ export class Addon<I extends object = object> implements AddonHandle {
 		return this.#state.manifest;
 	}
 
-	/** Whether the addon is running. */
 	get started(): boolean {
 		return this.#state.started;
 	}
 
-	/** Whether the addon failed to start. */
 	get failed(): boolean {
 		return this.#state.failed;
 	}
@@ -145,38 +143,22 @@ export class Addon<I extends object = object> implements AddonHandle {
 		return this.#state.instance;
 	}
 
-	/** The bundle source. */
 	get bundle(): string {
 		return this.#state.bundle;
 	}
 
-	/**
-	 * @description Whether the user has the addon enabled.
-	 * @returns Its manager's answer.
-	 */
 	isEnabled(): boolean {
 		return this.#manager.isEnabled(this.id);
 	}
 
-	/**
-	 * @description Whether the addon is a plugin.
-	 * @returns `true` when the plugin manager governs it.
-	 */
 	isPlugin(): this is Addon<Plugin> {
 		return this.#manager.kind === 'plugin';
 	}
 
-	/**
-	 * @description Enables the addon through its manager.
-	 * @returns What the manager's `enable` returns.
-	 */
 	enable(): void | Promise<void> {
 		return this.#manager.enable(this);
 	}
 
-	/**
-	 * @description Disables the addon through its manager.
-	 */
 	disable(): void {
 		this.#manager.disable(this);
 	}

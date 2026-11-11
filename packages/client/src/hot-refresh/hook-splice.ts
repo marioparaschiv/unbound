@@ -57,5 +57,3 @@ export function splicePlanned(fiber: Fiber, render: Component, plan: HookPlan): 
 export function unplanned(type: FiberType): FiberType {
 	return (typeof type === 'function' && originals.get(type)) || type;
 }
-
-export default { splicePlanned, unplanned };

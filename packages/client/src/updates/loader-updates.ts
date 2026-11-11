@@ -97,5 +97,3 @@ export async function fetchLoaderUpdate(options: LoaderUpdateCheckOptions): Prom
 
 	return { update, requiredVersion: resolveRequiredLoader(options.loader, requiredVersion) };
 }
-
-export default { buildLoaderUpdateQuery, resolveRequiredLoader, fetchLoaderUpdate };

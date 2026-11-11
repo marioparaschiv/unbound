@@ -110,12 +110,3 @@ export function useUnboundSettings(predicate?: (payload: SettingsPayload) => Pre
 
 	return { get: getSetting, set: setSetting, toggle: toggleSetting };
 }
-
-export default {
-	getSetting,
-	getDefault,
-	setSetting,
-	toggleSetting,
-	isSettingChange,
-	useUnboundSettings,
-};
