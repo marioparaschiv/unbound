@@ -44,7 +44,7 @@ export type FeedbackToastsOptions = {
 };
 
 /** The icon each variant draws, matching Discord's help message tones. */
-export const VARIANT_ICONS: Record<ToastVariant, string> = {
+const VARIANT_ICONS: Record<ToastVariant, string> = {
 	success: 'CircleCheckIcon',
 	info: 'CircleInformationIcon',
 	warning: 'WarningIcon',

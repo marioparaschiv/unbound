@@ -84,7 +84,7 @@ export async function findLoaderUpdate(): Promise<LoaderCheck> {
  * @description Reads the in-app installer's state and the installed channel's patched Discord builds.
  * @returns The builds, or `null` where the installer does not apply or the check failed.
  */
-export async function findDiscordBuilds(): Promise<DiscordBuilds | null> {
+async function findDiscordBuilds(): Promise<DiscordBuilds | null> {
 	try {
 		return await checkDiscordBuilds();
 	} catch (error) {

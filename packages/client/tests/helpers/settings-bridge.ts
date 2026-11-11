@@ -23,7 +23,7 @@ function isObject(value: SettingsValue | undefined): value is SettingsObject {
  * @param data The settings file the loader holds.
  * @returns The bridge and the traffic it saw.
  */
-export function createSettingsBridge(data: Record<string, SettingsObject> = {}) {
+function createSettingsBridge(data: Record<string, SettingsObject> = {}) {
 	const traffic: SettingsTraffic = { fullReads: 0, reads: [], staged: [], stagedBytes: 0 };
 
 	function apply(change: NativeSettingsChange) {

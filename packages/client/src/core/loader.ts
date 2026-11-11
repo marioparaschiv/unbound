@@ -28,7 +28,7 @@ const readyState = (runtimeGlobal.__unboundReady ??= {
 });
 
 /** Marks Unbound as ready and runs every callback waiting on it. */
-export function markReady(): void {
+function markReady(): void {
 	if (readyState.ready) return;
 
 	readyState.ready = true;

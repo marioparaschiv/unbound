@@ -61,7 +61,7 @@ export function lanCandidates(): Candidate[] {
  * when the guess is wrong. Falls back to `localhost` when no external interface is found.
  * @returns The best-guess LAN address, or `localhost`.
  */
-export function detectLanIp(): string {
+function detectLanIp(): string {
 	return lanCandidates()[0]?.address ?? 'localhost';
 }
 

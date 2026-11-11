@@ -12,7 +12,7 @@ export type PatchFailures = {
 };
 
 /** How many failures in a row remove a patch. */
-export const FAILURE_LIMIT = 3;
+const FAILURE_LIMIT = 3;
 
 const logger = createLogger('Patcher', 'React');
 
