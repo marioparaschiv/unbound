@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { formatRemaining } from '~/timeout-remaining/format-remaining';
+import { formatRemaining } from '~/lib/format-remaining';
 
 const minute = 60_000;
 

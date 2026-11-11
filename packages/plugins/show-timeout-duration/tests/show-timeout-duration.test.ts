@@ -1,9 +1,7 @@
-import { flux, metro, startPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
 import type { StoreSeeds } from '@unbound-app/api/testing';
-
-import { selfTest } from '~/index';
 
 const HOUR = 3_600_000;
 
@@ -51,9 +49,11 @@ describe('the message timestamp', () => {
 		expect(row.message.timestamp).toBe('12:00');
 	});
 
-	test('is reported as applied to the self test', async () => {
+	test('starts without a warning', async () => {
 		await rowFor(null);
 
-		expect(selfTest()).toMatchObject({ ok: true });
+		expect(logs.entries.filter(({ level }) => level === 'warn' || level === 'error')).toEqual(
+			[],
+		);
 	});
 });

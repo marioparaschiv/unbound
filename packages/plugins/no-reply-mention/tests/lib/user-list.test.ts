@@ -7,7 +7,7 @@ import {
 	parseUserList,
 	removeUserId,
 	shouldMention,
-} from '~/reply-mention/user-list';
+} from '~/lib/user-list';
 
 const first = '100000000000000001';
 const second = '100000000000000002';

@@ -5,17 +5,18 @@ import {
 	type MessageRow,
 	type RowMessage,
 } from '@unbound-plugins/shared/metro/message-rows';
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { FluxGuildMember, FluxMessage } from '@unbound-app/api/flux';
 import { format } from '@unbound-app/i18n';
 import { flux } from '@unbound-app/api';
 
-import { ChannelStore, GuildMemberStore } from '~/timeout-remaining/modules';
-import { formatRemaining } from '~/timeout-remaining/format-remaining';
+import { formatRemaining } from '~/lib/format-remaining';
 
 type Member = FluxGuildMember & {
 	communicationDisabledUntil?: string | null;
 };
+
+const ChannelStore = flux.getStore('Channel');
+const GuildMemberStore = flux.getStore('GuildMember');
 
 function getDeadline({ channel_id, author }: FluxMessage): number | null {
 	const guildId = channel_id ? ChannelStore.getChannel(channel_id)?.guild_id : undefined;
@@ -28,12 +29,13 @@ function getDeadline({ channel_id, author }: FluxMessage): number | null {
 }
 
 /**
- * @description Appends the time left on the author's timeout to the timestamp of their messages.
- * Patches `generateMessageRowData` on Discord's message row module, and reads `GuildMemberStore`
- * and `ChannelStore`. The Addon scope removes the patch and the refresh timer when the plugin stops.
+ * @description Appends the time left on the author's timeout to the timestamp of their messages, by patching
+ * `generateMessageRowData` on Discord's message row module. A scoped timer ticks the countdown.
  */
-export function startTimeoutRemaining(): void {
-	if (!ensureModules({ MessageRowData, GuildMemberStore, ChannelStore })) {
+export function patchMessageRows(): void {
+	if (!MessageRowData) {
+		logger.warn('Timeout duration skipped: Discord moved MessageRowData.');
+
 		return;
 	}
 
