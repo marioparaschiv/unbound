@@ -35,7 +35,7 @@ export declare const ADDON_SCOPE_GLOBALS: readonly [
 	'clearInterval',
 	'commands',
 ];
-/** The core settings store; each addon's settings store is named after the addon id. */
+/** The core Bucket; each addon's Bucket is named after the addon id. */
 export declare const CORE_SETTINGS_STORE = 'unbound';
 /** The components of Discord's design module, each of which Unbound can stand in for when Discord drops it. */
 export declare const DESIGN_COMPONENTS: readonly [
@@ -5561,7 +5561,7 @@ export type SettingsGroupSchema = SettingCommon & {
 	displayAs: 'group' | 'collapsible';
 	properties: Record<string, SettingSchema | StorelessSchema>;
 };
-/** A settings store, or a nested group of settings within one. */
+/** A Bucket, or a nested group of settings within one. */
 export type SettingsObject = {
 	[key: string]: SettingsValue;
 };
@@ -5581,7 +5581,7 @@ export type SettingsScreen = {
 	/** Discord's navigator renders the screen with its own route props, so any component fits. */
 	getComponent: () => React$1.ComponentType<never>;
 };
-/** A JSON value held in a settings store. */
+/** A JSON value held in a Bucket. */
 export type SettingsValue = string | number | boolean | null | SettingsValue[] | SettingsObject;
 export type SheetBottomSheetComponent = React$1.ComponentType<
 	SheetBottomSheetProps & Record<string, unknown>
