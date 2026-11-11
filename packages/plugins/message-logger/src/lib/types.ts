@@ -1,6 +1,6 @@
 import type { FluxChannel, FluxStore, FluxUser } from '@unbound-app/api/flux';
 
-import type { AttachmentLike } from '~/edits/attachments';
+import type { AttachmentLike } from '~/lib/attachments';
 
 export type StoredMessage = {
 	id: string;

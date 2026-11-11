@@ -1,5 +1,5 @@
-import type { FilterContext } from '~/log/filters';
-import { ChannelStore, UserStore } from '~/log/modules';
+import type { FilterContext } from '~/lib/filters';
+import { ChannelStore, UserStore } from '~/lib/modules';
 
 /**
  * @description Looks up the current user and a channel for the ignore rules.

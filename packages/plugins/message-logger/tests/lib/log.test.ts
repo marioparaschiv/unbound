@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createMessageLog } from '~/log';
+import { createMessageLog } from '~/lib/log';
 
 describe('createMessageLog', () => {
 	test('records deletions and asks for one redraw', () => {

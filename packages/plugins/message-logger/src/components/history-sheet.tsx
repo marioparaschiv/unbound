@@ -2,7 +2,7 @@ import { format, messages } from '@unbound-app/i18n';
 import { Discord } from '@unbound-app/api/metro/components';
 import { ScrollView, View } from 'react-native';
 
-import type { EditEntry } from '~/log';
+import type { EditEntry } from '~/lib/log';
 
 type HistorySheetProps = {
 	current: string;

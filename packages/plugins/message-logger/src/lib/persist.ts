@@ -1,9 +1,15 @@
 import { settings } from '@unbound-app/settings';
 import { flux, fs } from '@unbound-app/api';
 
-import { LOG_FILE, SAVED_MESSAGE_LIMIT } from '~/constants';
-import type { EditEntry, LogEntries, MessageLog } from '~/log';
-import { MessageStore } from '~/log/modules';
+import { LOG_FILE, SAVED_MESSAGE_LIMIT } from '~/lib/constants';
+import {
+	messageLog,
+	onMessageLogChange,
+	type EditEntry,
+	type LogEntries,
+	type MessageLog,
+} from '~/lib/log';
+import { MessageStore, findChatModules } from '~/lib/modules';
 
 const SAVE_DELAY_MS = 1000;
 
@@ -192,13 +198,7 @@ function structuredCopy<T>(value: T): T {
 	return JSON.parse(JSON.stringify(value)) as T;
 }
 
-/**
- * @description Saves the log to a file while **Keep the log after restarts** is on, and loads it when the plugin starts: edits show again when their messages are drawn, and deleted messages and attachments go back into the chat when Discord loads their channel.
- * Intercepts `LOAD_MESSAGES_SUCCESS`; the Addon scope removes the interceptor when the plugin stops.
- * @param log The message log, whose `onChange` should call the returned `save`.
- * @returns `save`, which schedules a write, and `stop`, which writes any pending change and stops saving, so purging the log on stop leaves the file alone.
- */
-export function startPersistence(log: MessageLog): { save: () => void; stop: () => void } {
+function createSaver(log: MessageLog): { save: () => void; stop: () => void } {
 	const deletedMessages = new Map<string, RawMessage>();
 	const savedAttachments = new Map<string, RawAttachment[]>();
 	let timer: ReturnType<typeof setTimeout> | undefined;
@@ -360,4 +360,29 @@ export function startPersistence(log: MessageLog): { save: () => void; stop: () 
 			stopped = true;
 		},
 	};
+}
+
+let stopSaver: (() => void) | undefined;
+
+/**
+ * @description Saves the log to a file while **Keep the log after restarts** is on, and loads it when the plugin starts: edits show again when their messages are drawn, and deleted messages and attachments go back into the chat when Discord loads their channel.
+ * Intercepts `LOAD_MESSAGES_SUCCESS`; the Addon scope removes the interceptor when the plugin stops.
+ */
+export function startSaving(): void {
+	// `patchMessageRows` warns: the logger runs only with the rows.
+	if (!findChatModules()) return;
+
+	const saver = createSaver(messageLog);
+
+	stopSaver = saver.stop;
+	onMessageLogChange(saver.save);
+}
+
+/**
+ * @description Writes any pending change and stops saving, so clearing the log on stop leaves the file alone.
+ */
+export function stopSaving(): void {
+	stopSaver?.();
+	stopSaver = undefined;
+	onMessageLogChange(() => {});
 }

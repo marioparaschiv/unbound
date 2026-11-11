@@ -118,4 +118,17 @@ export function createMessageLog(onChange: () => void = () => {}) {
 	};
 }
 
+let onLogChange = () => {};
+
+/** The plugin's message log, which every feature reads and records into; `startSaving` saves each change. */
+export const messageLog = createMessageLog(() => onLogChange());
+
+/**
+ * @description Sets what runs after each change to the message log, such as scheduling a save.
+ * @param listener Called after each change.
+ */
+export function onMessageLogChange(listener: () => void): void {
+	onLogChange = listener;
+}
+
 export default createMessageLog;

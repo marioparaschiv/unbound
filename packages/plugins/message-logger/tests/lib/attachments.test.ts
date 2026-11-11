@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { keepRemovedAttachments } from '~/edits/attachments';
+import { keepRemovedAttachments } from '~/lib/attachments';
 
 const a = { id: 'a' };
 const b = { id: 'b' };

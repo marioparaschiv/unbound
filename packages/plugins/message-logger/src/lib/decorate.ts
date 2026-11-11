@@ -1,6 +1,6 @@
 import { messages } from '@unbound-app/i18n';
 
-import { HELP_ARTICLE_URL } from '~/constants';
+import { HELP_ARTICLE_URL } from '~/lib/constants';
 
 export type ContentNode = {
 	type: string;

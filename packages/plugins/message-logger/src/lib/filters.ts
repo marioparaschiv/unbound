@@ -1,4 +1,4 @@
-import { EPHEMERAL_FLAG } from '~/constants';
+import { EPHEMERAL_FLAG } from '~/lib/constants';
 
 export type FilterSettings = {
 	logDeletes: boolean;

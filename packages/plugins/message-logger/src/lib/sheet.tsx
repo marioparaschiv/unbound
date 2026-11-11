@@ -1,6 +1,6 @@
-import { ActionSheets } from '~/history/modules';
-import HistorySheet from '~/history/components/history-sheet';
-import type { EditEntry } from '~/log';
+import { ActionSheets } from '~/lib/modules';
+import HistorySheet from '~/components/history-sheet';
+import type { EditEntry } from '~/lib/log';
 
 let openKey: string | null = null;
 
@@ -8,7 +8,7 @@ let openKey: string | null = null;
  * @description Closes the history sheet if one is open.
  */
 export function closeHistorySheet(): void {
-	if (openKey) ActionSheets.hideActionSheet(openKey);
+	if (openKey) ActionSheets?.hideActionSheet(openKey);
 
 	openKey = null;
 }
@@ -22,7 +22,7 @@ export function openHistorySheet(current: string, edits: readonly EditEntry[]): 
 	const key = `unbound-message-logger-${Date.now()}`;
 
 	function close() {
-		ActionSheets.hideActionSheet(key);
+		ActionSheets?.hideActionSheet(key);
 
 		if (openKey === key) openKey = null;
 	}
@@ -30,7 +30,7 @@ export function openHistorySheet(current: string, edits: readonly EditEntry[]): 
 	closeHistorySheet();
 	openKey = key;
 
-	ActionSheets.openLazy(
+	ActionSheets?.openLazy(
 		Promise.resolve({ default: () => <HistorySheet current={current} edits={edits} /> }),
 		key,
 		{ onClose: close },

@@ -1,9 +1,9 @@
 import { flux } from '@unbound-app/api';
 
-import type { AttachmentLike } from '~/edits/attachments';
-import type { MessageLog } from '~/log';
-import { MessageStore } from '~/log/modules';
-import { redrawMessage } from '~/rows/redraw';
+import type { AttachmentLike } from '~/lib/attachments';
+import { messageLog, type MessageLog } from '~/lib/log';
+import { MessageStore } from '~/lib/modules';
+import { redrawMessage } from '~/lib/redraw';
 
 export const CLEARING_FLAG = 'messageLoggerClearing';
 
@@ -82,19 +82,18 @@ export function channelHasLog(log: MessageLog, channelId: string): boolean {
  * @description Removes the deleted messages and attachments the log kept, for `stop`, so none of them is left looking like a live message.
  * Runs while the deletion interceptor is still on, which lets a second deletion of a logged message through and forgets it.
  * The row patches must already be removed, so the chat draws the rows without the log.
- * @param log The message log.
  */
-export function purgeLog(log: MessageLog): void {
-	const attachments = log.messagesWithDeletedAttachments().map((target) => ({
+export function clearLog(): void {
+	const attachments = messageLog.messagesWithDeletedAttachments().map((target) => ({
 		...target,
-		deletedIds: new Set(log.deletedAttachmentIds(target.messageId)),
+		deletedIds: new Set(messageLog.deletedAttachmentIds(target.messageId)),
 	}));
 
-	for (const { channelId, messageId } of log.deletedMessages()) {
+	for (const { channelId, messageId } of messageLog.deletedMessages()) {
 		void flux.dispatch({ type: 'MESSAGE_DELETE', id: messageId, channelId });
 	}
 
-	log.clear();
+	messageLog.clear();
 
 	for (const { channelId, messageId, deletedIds } of attachments) {
 		stripDeletedAttachments(channelId, messageId, deletedIds);

@@ -2,10 +2,10 @@ import { fs, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { describe, expect, test } from 'bun:test';
 
-import { restoreIntoPage, toRawMessage, type RawMessage } from '~/persist';
-import { LOG_FILE } from '~/constants';
+import { restoreIntoPage, toRawMessage, type RawMessage } from '~/lib/persist';
+import { LOG_FILE } from '~/lib/constants';
 
-import { dispatch, generateRow, startLogger } from './helpers/discord';
+import { dispatch, generateRow, startLogger } from '../helpers/discord';
 
 const SAVED_PATH = `/documents/${LOG_FILE}`;
 

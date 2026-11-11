@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { idList, isEphemeral, shouldIgnore, type FilterSettings } from '~/log/filters';
+import { idList, isEphemeral, shouldIgnore, type FilterSettings } from '~/lib/filters';
 
 const settings: FilterSettings = {
 	logDeletes: true,

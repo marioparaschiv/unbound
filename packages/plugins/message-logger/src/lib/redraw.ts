@@ -1,7 +1,7 @@
 import { flux } from '@unbound-app/api';
 
-import type { MessageLog } from '~/log';
-import { MessageStore } from '~/log/modules';
+import type { MessageLog } from '~/lib/log';
+import { MessageStore } from '~/lib/modules';
 
 /**
  * @description Has the chat draw a message's row again, so a change to its log shows without reopening the channel.

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { asEditedSubtext, decorateRow, type ChatRow, type RowDecoration } from '~/rows/decorate';
+import { asEditedSubtext, decorateRow, type ChatRow, type RowDecoration } from '~/lib/decorate';
 
 const none: RowDecoration = {
 	deleted: false,

@@ -1,17 +1,15 @@
+import { logs } from '@unbound-app/api/testing';
 import { expect, test } from 'bun:test';
 
-import { selfTest } from '~/index';
+import { startLogger } from './helpers/discord';
 
-import { dispatch, generateRow, startLogger } from './helpers/discord';
-const isMarkedDeleted = () => generateRow().ephemeralIndication !== undefined;
-
-test('reports healthy once every feature has started', async () => {
+test('starts every feature without a warning, so the self test passes', async () => {
 	await startLogger();
 
-	expect(selfTest()).toEqual({ ok: true, detail: '7 features applied' });
+	expect(logs.entries.filter((entry) => entry.level === 'warn')).toEqual([]);
 });
 
-test('leaves the other features running when one fails to start', async () => {
+test('fails to start when a feature throws', async () => {
 	// Discord's action sheets module, whose `openLazy` fails once the plugin reads it.
 	const sheets = { hideActionSheet: () => {} };
 	let started = false;
@@ -24,10 +22,6 @@ test('leaves the other features running when one fails to start', async () => {
 		},
 	});
 	started = true;
-	await startLogger(sheets);
 
-	await dispatch({ type: 'MESSAGE_DELETE', id: 'm1', channelId: 'c1' });
-
-	expect(isMarkedDeleted()).toBe(true);
-	expect((await selfTest()).ok).toBe(false);
+	await expect(startLogger(sheets)).rejects.toThrow('openLazy is gone');
 });

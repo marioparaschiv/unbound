@@ -7,10 +7,10 @@ import {
 import { format, messages } from '@unbound-app/i18n';
 import { patcher, toasts } from '@unbound-app/api';
 
-import { channelHasLog, clearChannelLog, clearMessageHistory } from '~/history/actions';
-import type { MessageLog } from '~/log';
-import { ActionSheets } from '~/history/modules';
-import { closeHistorySheet, openHistorySheet } from '~/history/sheet';
+import { channelHasLog, clearChannelLog, clearMessageHistory } from '~/lib/clear';
+import { messageLog, type MessageLog } from '~/lib/log';
+import { ActionSheets, findChatModules } from '~/lib/modules';
+import { openHistorySheet } from '~/lib/sheet';
 
 type SheetMessage = {
 	id?: string;
@@ -80,23 +80,26 @@ function channelRows(log: MessageLog, hide: () => void, channelId: string): Shee
 	];
 }
 
-let stopSheets: (() => void) | undefined;
-let renderer: ReturnType<typeof createSheetRenderer> | undefined;
-
 /**
  * @description Adds View Edit History and Clear Message History to a logged message's long-press sheet, and Clear Message Log to a channel's sheet.
  * Patches `openLazy` on Discord's action sheets (`metro.api.ActionSheets`) and the render of each message and channel sheet.
- * @param log The message log.
- * @returns A function that ignores sheets that are still loading, unwraps the rendered rows and closes the history sheet, which the Addon scope can't see.
  */
-export function startHistory(log: MessageLog): () => void {
+export function patchMessageActions(): void {
+	// `patchMessageRows` warns: the logger runs only with the rows.
+	if (!findChatModules()) return;
+
+	if (!ActionSheets) {
+		logger.warn('Message history rows skipped: Discord moved ActionSheets.');
+
+		return;
+	}
+
+	const log = messageLog;
 	let specs: readonly SheetRowSpec[] = [];
 
-	renderer = createSheetRenderer(patcher, (result) => insertSheetRows(result, specs));
+	const { render } = createSheetRenderer(patcher, (result) => insertSheetRows(result, specs));
 
-	const { render } = renderer;
-
-	stopSheets = patchLazySheets<SheetProps>(patcher, ActionSheets, (key, props) => {
+	patchLazySheets<SheetProps>(patcher, ActionSheets, (key, props) => {
 		const channelId = props.channel?.id ?? props.channelId;
 		const hide = () => {
 			props.onClose?.();
@@ -116,12 +119,4 @@ export function startHistory(log: MessageLog): () => void {
 
 		return specs.length ? render : undefined;
 	});
-
-	return () => {
-		stopSheets?.();
-		stopSheets = undefined;
-		renderer?.dispose();
-		renderer = undefined;
-		closeHistorySheet();
-	};
 }
