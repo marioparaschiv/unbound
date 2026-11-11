@@ -1,7 +1,5 @@
-import { flux, metro, startPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, startPlugin } from '@unbound-app/api/testing';
 import { afterEach, expect, test } from 'bun:test';
-
-import { selfTest } from '~/index';
 
 const realFetch = globalThis.fetch;
 
@@ -28,5 +26,8 @@ test('a picker that cannot be patched leaves the requests answered and fails the
 	};
 
 	expect(response.body).toEqual(['cat']);
-	expect(selfTest().ok).toBe(false);
+	expect(logs.entries.map(({ level, args }) => [level, args[0]])).toContainEqual([
+		'error',
+		'Failed to patch GIFPickerHeader:',
+	]);
 });

@@ -1,8 +1,17 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { replaceSelfTest, startReplace } from '~/replace';
+import { normalizeStoredRules } from '~/lib/stored-rules';
 import SettingsPanel from '~/components/settings-panel';
+import { selfTest } from '~/lib/self-test';
+import { patchMessages } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startReplace], { selfTest: replaceSelfTest });
+export function start() {
+	normalizeStoredRules();
+	patchMessages();
+}
 
-export { SettingsPanel };
+export function stop() {
+	patcher.unpatchAll();
+}
+
+export { selfTest, SettingsPanel };

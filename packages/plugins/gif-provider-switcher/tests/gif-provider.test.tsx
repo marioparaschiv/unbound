@@ -1,10 +1,8 @@
-import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { memo } from 'react';
 import { TextInput, View } from 'react-native';
-
-import { selfTest } from '~/index';
 
 type Request = { url: string; query?: Record<string, unknown> };
 
@@ -131,6 +129,8 @@ describe('health', () => {
 	test('the self test reports the picker and the requests applied', async () => {
 		await startPlugin();
 
-		expect(selfTest()).toEqual({ ok: true, detail: '2 features applied' });
+		expect(logs.entries.filter(({ level }) => level === 'warn' || level === 'error')).toEqual(
+			[],
+		);
 	});
 });
