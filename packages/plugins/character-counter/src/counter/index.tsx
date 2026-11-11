@@ -1,4 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { cloneElement, isValidElement, type ReactNode } from 'react';
 import { patcher } from '@unbound-app/api';
@@ -14,7 +13,7 @@ type ContainerProps = { channel?: { id?: string }; channelId?: string };
  * Nitro tier from `UserStore`. The Addon scope removes the patch when the plugin stops.
  */
 export function startCounter(): void {
-	if (!ensureModules('Character Counter', { ChatInputs, FloatingChatInputContainer })) return;
+	if (!ensureModules({ ChatInputs, FloatingChatInputContainer })) return;
 
 	patcher.react.after(FloatingChatInputContainer, 'default', ({ props, result }) => {
 		const container: ContainerProps = props;
@@ -32,6 +31,4 @@ export function startCounter(): void {
 			</>,
 		);
 	});
-
-	recordApplied(1);
 }

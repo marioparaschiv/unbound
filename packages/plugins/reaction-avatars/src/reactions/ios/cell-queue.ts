@@ -2,7 +2,7 @@ import { readNativeMessageInfo } from '@unbound-plugins/shared/native/ios/messag
 import type { NativeObjectHandle } from '@unbound-app/api/native';
 
 import { readReactionCellViews } from '~/reactions/ios/cell-views';
-import { selectedChannelId } from '~/reactions/selected-channel';
+import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
 import type { Session } from '~/reactions/ios/session';
 import { key } from '~/reactions/ios/views';
 import { MessageStore } from '~/reactions/modules';

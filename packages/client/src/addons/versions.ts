@@ -1,8 +1,8 @@
 import type { AddonRelease } from '@unbound-app/contracts/updates';
 import type { AddonVersion } from '@unbound-app/contracts/addons';
-import { createApiClient } from '@unbound-app/web/client';
-import type { Api } from '@unbound-app/web/api';
 
+import { createUnboundClient } from '~/account/client';
+import type { ApiRequest } from '~/account/client';
 import { compareVersions } from '~/core/versions';
 
 /** A version that can be installed. `holds`: installing it pauses automatic updates for the addon. */
@@ -20,23 +20,17 @@ export type VersionChoice =
 	| { type: 'installed'; version: AddonVersion; latest: boolean }
 	| { type: 'incompatible'; version: AddonVersion; requires: string };
 
-export type AddonVersionsOptions = {
-	/** Origin of the Unbound web API. */
-	baseUrl: string;
-};
-
 /**
  * @description Asks `GET /api/v1/addons/$id/versions` for every live version of a listed addon.
  * @param id The addon's id.
- * @param options The API origin.
+ * @param request The Unbound API client to ask.
  * @returns The versions, newest first; rejects when the server can't be reached, answers with an
  * error, or no longer lists the addon.
  */
 export async function fetchAddonVersions(
 	id: string,
-	options: AddonVersionsOptions,
+	request: ApiRequest = createUnboundClient(),
 ): Promise<AddonVersion[]> {
-	const request = createApiClient<Api>({ baseUrl: options.baseUrl });
 	const { versions } = await request('GET /api/v1/addons/$id/versions', {
 		params: { id },
 	});
@@ -92,5 +86,3 @@ export function toRelease(id: string, version: AddonVersion): AddonRelease {
 
 	return { id, version: version.version, manifestUrl, bundleUrl, sha256, changelog, changes };
 }
-
-export default { fetchAddonVersions, toVersionChoices, toRelease };

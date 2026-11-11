@@ -4,16 +4,15 @@ import { glob } from 'node:fs/promises';
 import { join, posix } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import type { WorkspaceConfig, WorkspaceFiles } from '../src/workspace';
-
 import {
 	findWorkspaceRoot,
 	getBundleName,
 	matchAddonDirs,
 	readAddon,
 	workspaceConfigSchema,
-} from '../src/workspace';
-import { parse } from '../src/schema';
+} from '~/workspace';
+import type { WorkspaceConfig, WorkspaceFiles } from '~/workspace';
+import { parse } from '~/schema';
 
 type Tree = Record<string, string>;
 

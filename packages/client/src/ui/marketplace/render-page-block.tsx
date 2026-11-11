@@ -201,5 +201,3 @@ export function renderPageBlock(node: PageNode, ctx: PageRenderContext, key: num
 		}
 	}
 }
-
-export default { renderPageBlock };

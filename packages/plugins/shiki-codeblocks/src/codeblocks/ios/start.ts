@@ -4,7 +4,6 @@ import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
 import type { NativePluginBridge } from '@unbound-app/api/native';
 
 import { cardProgress, misplacedCards, startRenderer } from '~/codeblocks/ios/renderer';
-import { PLUGIN_NAME } from '~/constants';
 import { CARD_TAG } from '~/codeblocks/ios/code-host';
 import type { Cards } from '~/types';
 
@@ -14,9 +13,7 @@ import type { Cards } from '~/types';
  * @returns The cards, or `undefined` when Discord's message classes are missing.
  */
 export function startCards({ objc, ui }: NativePluginBridge): Cards | undefined {
-	if (
-		!ensureClasses(PLUGIN_NAME, objc, [messageTextViewClass(objc), 'DCDMessageTableViewCell'])
-	) {
+	if (!ensureClasses(objc, [messageTextViewClass(objc), 'DCDMessageTableViewCell'])) {
 		return;
 	}
 
@@ -27,7 +24,7 @@ export function startCards({ objc, ui }: NativePluginBridge): Cards | undefined 
 			ui.run(installReuseCleanup, scope, {
 				cellClass: 'DCDMessageTableViewCell',
 				tag: CARD_TAG,
-				label: PLUGIN_NAME,
+				label: addon.name,
 			});
 
 			const stop = startRenderer(objc);

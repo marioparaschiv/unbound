@@ -62,5 +62,3 @@ export const createSignatureFunctionForTransform: Runtime['createSignatureFuncti
 	() =>
 	<T>(type: T) =>
 		type;
-
-export default { canonical, withRefreshScope, createScopedReact, stableType, performRefresh };

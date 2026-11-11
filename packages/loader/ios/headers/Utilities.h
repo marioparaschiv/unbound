@@ -40,58 +40,8 @@ int csops(pid_t pid, unsigned int ops, void *useraddr, size_t usersize);
 
 + (void)alert:(NSString *)message
         title:(NSString *)title
-      buttons:(NSArray<UIAlertAction *> *)buttons
-      timeout:(NSInteger)timeout;
-
-+ (void)alert:(NSString *)message title:(NSString *)title timeout:(NSInteger)timeout;
-
-+ (void)alert:(NSString *)message
-        title:(NSString *)title
-      buttons:(NSArray<UIAlertAction *> *)buttons
-      warning:(BOOL)warning;
-
-+ (void)alert:(NSString *)message title:(NSString *)title warning:(BOOL)warning;
-
-+ (void)alert:(NSString *)message
-        title:(NSString *)title
-      buttons:(NSArray<UIAlertAction *> *)buttons
-          tts:(BOOL)tts;
-
-+ (void)alert:(NSString *)message title:(NSString *)title tts:(BOOL)tts;
-
-+ (void)alert:(NSString *)message
-        title:(NSString *)title
-      buttons:(NSArray<UIAlertAction *> *)buttons
-      warning:(BOOL)warning
-          tts:(BOOL)tts;
-
-+ (void)alert:(NSString *)message title:(NSString *)title warning:(BOOL)warning tts:(BOOL)tts;
-
-+ (void)alert:(NSString *)message
-        title:(NSString *)title
-      buttons:(NSArray<UIAlertAction *> *)buttons
       timeout:(NSInteger)timeout
       warning:(BOOL)warning;
-
-+ (void)alert:(NSString *)message
-        title:(NSString *)title
-      timeout:(NSInteger)timeout
-      warning:(BOOL)warning;
-
-+ (void)alert:(NSString *)message
-        title:(NSString *)title
-      buttons:(NSArray<UIAlertAction *> *)buttons
-      timeout:(NSInteger)timeout
-      warning:(BOOL)warning
-          tts:(BOOL)tts;
-
-+ (void)alert:(NSString *)message
-        title:(NSString *)title
-      timeout:(NSInteger)timeout
-      warning:(BOOL)warning
-          tts:(BOOL)tts;
-
-+ (void)speakAlertContent:(NSString *)title message:(NSString *)message;
 
 + (UIAlertAction *)createDiscordInviteButton;
 
@@ -99,8 +49,7 @@ int csops(pid_t pid, unsigned int ops, void *useraddr, size_t usersize);
                title:(NSString *)title
              buttons:(NSArray<UIAlertAction *> *)buttons
              timeout:(NSInteger)timeout
-             warning:(BOOL)warning
-                 tts:(BOOL)tts;
+             warning:(BOOL)warning;
 
 + (NSData *)fetchDataWithTimeout:(NSURL *)url timeout:(NSTimeInterval)timeout;
 

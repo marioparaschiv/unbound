@@ -5,10 +5,9 @@ import { createBotReads } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
 import postgres from 'postgres';
 
-import { ADDON_CHANNELS, desiredChannel, type AddonChannels } from '~/dispatchers/addons';
-import { CDN_URL, SITE_URL } from '~/lib/constants';
+import { addonChannels, desiredChannel, type AddonChannels } from '~/dispatchers/addons';
 import { contentHash } from '~/lib/content-hash';
-import { parseDatabaseEnv } from '~/lib/env';
+import { loadConfig } from '~/lib/config';
 
 type Row = Record<string, string | null>;
 
@@ -60,7 +59,10 @@ export type MoveReport = {
 
 export type MoveOptions = {
 	/** The channel each addon type posts to, for the drift report. */
-	channels?: AddonChannels;
+	channels: AddonChannels;
+	/** The site and CDN origins the listings the drift report hashes are read with. */
+	siteUrl: string;
+	cdnUrl: string;
 };
 
 const logger = createLogger('Bot', 'Move');
@@ -210,8 +212,8 @@ async function preflight(source: postgres.Sql, target: postgres.Sql) {
 }
 
 async function hashDrift(target: postgres.Sql, options: MoveOptions): Promise<HashDrift> {
-	const { channels = ADDON_CHANNELS } = options;
-	const reads = createBotReads(target, { siteUrl: SITE_URL, cdnUrl: CDN_URL });
+	const { channels, siteUrl, cdnUrl } = options;
+	const reads = createBotReads(target, { siteUrl, cdnUrl });
 	const posts = await target<{ addonId: string; channelId: string; postedHash: string }[]>`
 		select addon_id as "addonId", channel_id as "channelId", posted_hash as "postedHash" from bot.addon_message`;
 	const drift: HashDrift = { equal: 0, wouldEdit: 0, wouldMove: 0, wouldDelete: 0 };
@@ -245,7 +247,7 @@ async function hashDrift(target: postgres.Sql, options: MoveOptions): Promise<Ha
 export async function moveData(
 	source: postgres.Sql,
 	target: postgres.Sql,
-	options: MoveOptions = {},
+	options: MoveOptions,
 ): Promise<MoveReport> {
 	await preflight(source, target);
 
@@ -294,13 +296,25 @@ export async function moveData(
 const moveEnvSchema = Type.Object({ SOURCE_DATABASE_URL: Type.String({ minLength: 1 }) });
 
 if (import.meta.main) {
-	const { DATABASE_DIRECT_URL } = parseDatabaseEnv();
+	const loaded = loadConfig(process.env);
+
+	if (!loaded.ok) {
+		throw new Error(loaded.message);
+	}
+
+	const { config } = loaded;
+	const { DATABASE_DIRECT_URL } = config.env;
+	// Only this one-off move needs the old database, so it is not part of the bot's configuration.
 	const { SOURCE_DATABASE_URL } = parse(moveEnvSchema, process.env);
 	const source = postgres(SOURCE_DATABASE_URL, { max: 1, onnotice: () => void 0 });
 	const target = postgres(DATABASE_DIRECT_URL, { max: 1, onnotice: () => void 0 });
 
 	try {
-		const report = await moveData(source, target);
+		const report = await moveData(source, target, {
+			channels: addonChannels(config.ids),
+			siteUrl: config.siteUrl,
+			cdnUrl: config.cdnUrl,
+		});
 
 		for (const table of report.tables) {
 			logger.success(`moved ${table.name}: ${table.rows} rows, sha256 ${table.checksum}`);

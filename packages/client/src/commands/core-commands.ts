@@ -1,8 +1,8 @@
 import { sendDebugReport } from '~/diagnostics/debug-report';
 import { getSetting, setSetting } from '~/settings/unbound';
 import { createCommands, option } from '~/commands/api';
+import { findByProps } from '~/metro/lookups';
 import { Discord } from '~/metro/components';
-import { findByProps } from '~/metro/search';
 import { Screens } from '~/core/constants';
 import debug from '~/debugger/builtin.dev';
 import { getBucket } from '~/storage/api';

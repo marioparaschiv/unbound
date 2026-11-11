@@ -71,7 +71,6 @@ export const loaderUpdateResponseSchema = Type.Object({
 export type LoaderPlatform = StaticDecode<typeof loaderPlatformSchema>;
 export type LoaderRelease = StaticDecode<typeof loaderReleaseSchema>;
 export type PublishLoaderReleaseRequest = StaticDecode<typeof publishLoaderReleaseRequestSchema>;
-export type LoaderChangelog = StaticDecode<typeof loaderChangelogSchema>;
 export type LoaderUpdateQuery = StaticDecode<typeof loaderUpdateQuerySchema>;
 export type LoaderUpdate = StaticDecode<typeof loaderUpdateSchema>;
 export type LoaderUpdateResponse = StaticDecode<typeof loaderUpdateResponseSchema>;

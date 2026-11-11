@@ -1,5 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
-
 import { notifyNewReviews } from '~/reviews/new-reviews';
 import { patchUserProfileCard } from '~/reviews/profile-card';
 
@@ -12,5 +10,4 @@ export function startReviews(): void {
 	void notifyNewReviews();
 
 	patchUserProfileCard();
-	recordApplied(1);
 }

@@ -1,12 +1,11 @@
-import { createApiClient, NotModifiedError } from '@unbound-app/web/client';
+import { NotModifiedError } from '@unbound-app/web/client';
 import { createLogger } from '@unbound-app/logger';
 import toError from '@unbound-app/utils/to-error';
-import type { Api } from '@unbound-app/web/api';
 import { create } from 'zustand';
 
 import type { Catalog, MarketplaceEvent, MarketplaceState } from '~/marketplace/catalog';
 import { parseCatalog, reduceMarketplace } from '~/marketplace/catalog';
-import { API_URL } from '~/core/constants';
+import { createUnboundClient } from '~/account/client';
 import fs from '~/native/fs';
 
 const logger = createLogger('Marketplace');
@@ -59,7 +58,7 @@ async function store(catalog: Catalog) {
 }
 
 async function fetchCatalog(current: Catalog | undefined): Promise<MarketplaceEvent> {
-	const request = createApiClient<Api>({ baseUrl: API_URL });
+	const request = createUnboundClient();
 
 	try {
 		const catalog = await request('GET /api/v1/catalog', {

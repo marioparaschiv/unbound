@@ -1,11 +1,12 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-import type { DiscoveredAddon } from '../../src/lib/discovery';
+import { createCheckCache, type CheckContext } from '~/lib/check/check';
+import type { DiscoveredAddon } from '~/lib/discovery';
+import { discoverAddons } from '~/lib/discovery';
+
 import type { TempDir } from './ubd';
 
-import { createCheckCache, type CheckContext } from '../../src/lib/check/check';
-import { discoverAddons } from '../../src/lib/discovery';
 import { loadWorkspace } from './config';
 
 /**

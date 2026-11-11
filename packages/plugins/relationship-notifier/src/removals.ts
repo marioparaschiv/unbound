@@ -1,4 +1,6 @@
-import { RelationshipType, type Settings } from '~/constants';
+import type { Settings } from '@unbound-app/settings';
+
+import { RelationshipType } from '~/constants';
 import type { SimpleEntry, Snapshot } from '~/snapshot';
 
 export type OfflineRemovals = {

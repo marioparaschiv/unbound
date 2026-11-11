@@ -86,10 +86,6 @@ export type AuthoredAddonManifest = {
 	main: string;
 	/** The addon's version, in strict SemVer 2.0.0 with no `v` prefix. */
 	version: string;
-	/** The platforms the addon runs on, each with the capabilities it needs there; absent means every platform. */
-	platforms?: AddonPlatforms;
-	/** Capabilities the addon needs on every platform it runs on. */
-	capabilities?: NativePluginCapability[];
 	/** The lowest native plugin API version the addon supports; an older native bridge fails its start. */
 	minNativePluginApi?: string;
 	/** The Ed25519 signature the Unbound team's publish pipeline puts on first-party plugins. */
@@ -116,8 +112,12 @@ export type AuthoredAddonManifest = {
 	};
 };
 
-/** A loaded addon's manifest: the {@link AuthoredAddonManifest} plus what the loader and installer record. */
+/** A loaded addon's manifest: the {@link AuthoredAddonManifest} plus what `ubd build`, the loader and installer record. */
 export type AddonManifest = AuthoredAddonManifest & {
+	/** Written by `ubd build` from the native calls in the code: the platforms the addon runs on, each with the capabilities it needs there; absent means every platform. */
+	platforms?: AddonPlatforms;
+	/** Legacy: capabilities needed on every platform, from a manifest that declares them by hand; `ubd build` writes `platforms` instead. */
+	capabilities?: NativePluginCapability[];
 	/** Set by the loader for an addon it read from disk: the addon's folder name. */
 	folder?: string;
 	/** Set by the loader for an addon it read from disk: the addon's absolute directory. */
@@ -178,12 +178,25 @@ export type AddonHandle = {
 };
 
 /** What a plugin's self-test found: whether the plugin works on this device, and why. */
-export type PluginSelfTestResult = {
-	/** `true` when the plugin works on this device. */
-	ok: boolean;
-	/** A human-readable reason for the result. */
-	detail: string;
-};
+export type PluginSelfTestResult =
+	| {
+			/** The plugin works on this device. */
+			ok: true;
+			/** A human-readable reason for the result. */
+			detail: string;
+			/** Set when the plugin works but has nothing on screen to draw, which says where the chat is rather than that drawing is wrong. */
+			nothingDrawn?: boolean;
+			/** Set while the plugin is still drawing what is on screen, so the device matrix waits before timing or judging it. */
+			settling?: boolean;
+	  }
+	| {
+			/** The plugin does not work on this device. */
+			ok: false;
+			/** A human-readable reason for the result. */
+			detail: string;
+			/** Set when the plugin failed only because it has nothing on screen to draw. */
+			nothingDrawn?: boolean;
+	  };
 
 /** The named exports of a plugin's entry module the client reads: its lifecycle and its settings panel. */
 export type Plugin = {

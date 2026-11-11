@@ -15,7 +15,7 @@ import {
 	committedPageFiles,
 } from '../../../../../apps/web/tests/helpers/addon-page.ts';
 import { listReviewQueue, reviewSubmission } from '../../../../../apps/web/src/lib/review.ts';
-import { schema, serveGitHub } from '../../../../../apps/web/tests/helpers/index.ts';
+import { schema, serveGitHub } from '../../../../../apps/web/testing/index.ts';
 
 /**
  * @description Replays a public write failing after `decide`: the review queue still lists the approval after a reload, and any reviewer's repeat republishes the files.
@@ -58,11 +58,14 @@ export async function failedPublishRecovers(): Promise<Checks> {
 		];
 		const complete = () => expected.every((key) => seeded.public.objects.has(key));
 
-		seeded.public.failWrites = 1;
+		// An outage outlasting `writeArtifact`'s retries; one failed write alone is retried away.
+		seeded.public.failWrites = Number.POSITIVE_INFINITY;
 
 		const failed = await settle(
 			reviewSubmission(seeded.ctx, a, row.id, { decision: 'approved' }),
 		);
+
+		seeded.public.failWrites = 0;
 		const afterFailure = await seeded.ctx.db.query.addonVersion.findFirst({
 			where: { addonId: ADDON, version: '1.0.0' },
 		});

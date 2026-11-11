@@ -1,6 +1,5 @@
 import type { SessionStore } from '~/picture-in-picture/session/store';
 import { windowAspect } from '~/picture-in-picture/aspect';
-import { PLUGIN_NAME } from '~/constants';
 import type { MediaSource, PipWindow } from '~/types';
 
 export type Controller<Target> = {
@@ -87,7 +86,7 @@ export function createController<Target>(
 
 			if (change === 'started') {
 				start(target, source).catch((error: unknown) => {
-					console.error(`[${PLUGIN_NAME}] Failed to start:`, error);
+					logger.error(`Failed to start:`, error);
 					fail(target);
 				});
 			}

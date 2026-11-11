@@ -1,8 +1,6 @@
 {
 	"name": "hide-gift-button",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Hides the gift button from the chat composer.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

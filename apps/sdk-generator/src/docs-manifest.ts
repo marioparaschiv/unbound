@@ -7,8 +7,6 @@ import {
 
 /**
  * @description Orders docs versions the way the version select lists them: `main` first, then release tags newest first.
- * @param a One version.
- * @param b The other version.
  * @returns A negative number when `a` comes first.
  */
 export function compareDocsVersions(a: DocsVersion, b: DocsVersion): number {

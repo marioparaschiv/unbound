@@ -1,6 +1,7 @@
 import { listAddonFiles, type AddonFileKind } from '@unbound-app/contracts/addon-files';
 import { ASSETS_DIRECTORY, ASSET_TYPES } from '@unbound-app/contracts/addon-assets';
 import type { OutputAsset, OutputBundle, OutputChunk, Plugin } from 'rollup';
+import { readBytecodeVersion } from '@unbound-app/contracts/version-layout';
 import { LOCALES_DIRECTORY } from '@unbound-app/contracts/addon-locales';
 import libraries from '@unbound-app/client-build/shim-libraries.ts';
 import { basename, isAbsolute, relative } from 'node:path';
@@ -21,14 +22,11 @@ export type BudgetOptions = Partial<Record<BudgetName, ByteSize>>;
 export type BuildReportOptions = {
 	pluginRoot: string;
 	budget?: BudgetOptions;
-	/** Where to write the report as JSON; `ubd` sets it through {@link BUILD_REPORT_ENV}. Nothing is written without it. */
+	/** Where to write the report as JSON; `ubd` sets it through `BUILD_REPORT_ENV` in `build-env.ts`. Nothing is written without it. */
 	reportFile?: string;
 };
 
 type Budgets = Record<BudgetName, number>;
-
-/** The variable through which `ubd build` and `ubd dev` tell the preset where to write the report. */
-export const BUILD_REPORT_ENV = 'UNBOUND_BUILD_REPORT';
 
 export const DEFAULT_BUDGET = { bundle: '50kb', assets: '500kb' } satisfies Required<BudgetOptions>;
 
@@ -61,8 +59,6 @@ const SHIPPED_LABELS: Record<AddonFileKind, string> = {
 	locale: LOCALES_DIRECTORY,
 };
 
-const BYTECODE_FILE = /^(.+)\.(\d+)\.hbc$/;
-
 function sizeOf(file: OutputAsset | OutputChunk): number {
 	if (file.type === 'chunk') {
 		return Buffer.byteLength(file.code);
@@ -71,10 +67,6 @@ function sizeOf(file: OutputAsset | OutputChunk): number {
 	return typeof file.source === 'string'
 		? Buffer.byteLength(file.source)
 		: file.source.byteLength;
-}
-
-function stem(fileName: string): string {
-	return fileName.replace(/\.[^.]+$/, '');
 }
 
 function cleanId(id: string): string {
@@ -152,13 +144,11 @@ function shippedEntries(
 	}
 
 	for (const file of Object.values(bundle)) {
-		const bytecode = BYTECODE_FILE.exec(file.fileName);
-
 		if (
 			file === entry ||
 			listed.has(file.fileName) ||
 			file.fileName === 'manifest.json' ||
-			bytecode?.[1] === stem(entry.fileName)
+			readBytecodeVersion(file.fileName, entry.fileName)
 		) {
 			continue;
 		}
@@ -171,9 +161,11 @@ function shippedEntries(
 
 function bytecodeSizes(bundle: OutputBundle, entry: OutputChunk) {
 	return Object.values(bundle)
-		.map((file) => ({ match: BYTECODE_FILE.exec(file.fileName), bytes: sizeOf(file) }))
-		.filter(({ match }) => match?.[1] === stem(entry.fileName))
-		.map(({ match, bytes }) => ({ version: Number(match?.[2]), bytes }))
+		.flatMap((file) => {
+			const version = readBytecodeVersion(file.fileName, entry.fileName);
+
+			return version ? [{ version: Number(version), bytes: sizeOf(file) }] : [];
+		})
 		.toSorted((a, b) => a.version - b.version);
 }
 
@@ -289,4 +281,4 @@ export function buildReport({ pluginRoot, budget = {}, reportFile }: BuildReport
 	};
 }
 
-export default { BUILD_REPORT_ENV, DEFAULT_BUDGET, packageOf, createReport, buildReport };
+export default { DEFAULT_BUDGET, packageOf, createReport, buildReport };

@@ -3,7 +3,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { buildReportSchema, type BuildReport } from '~/rollup/build-report-schema';
-import { BUILD_REPORT_ENV } from '~/rollup/build-report';
 import type { DiscoveredAddon } from '~/lib/discovery';
 import { parseJson } from '~/lib/parse-json';
 
@@ -34,21 +33,21 @@ function readReport(path: string, addon: DiscoveredAddon): BuildReport | undefin
 }
 
 /**
- * @description Runs a build with {@link BUILD_REPORT_ENV} set, then reads the report the preset wrote.
+ * @description Runs a build that writes its report to a temporary file, then reads the report the preset wrote.
  * @param addon The addon being built.
- * @param build Runs the build with the given variables added to its environment.
+ * @param build Runs the build, telling the preset to write its report to the given file.
  * @returns Whether the build succeeded, and its report.
  */
 export async function buildWithReport(
 	addon: DiscoveredAddon,
-	build: (env: Record<string, string>) => Promise<boolean>,
+	build: (reportFile: string) => Promise<boolean>,
 ): Promise<ReportedBuild> {
 	const path = reportPath(addon);
 
 	rmSync(path, { force: true });
 
 	try {
-		const ok = await build({ [BUILD_REPORT_ENV]: path });
+		const ok = await build(path);
 
 		return { ok, report: ok ? readReport(path, addon) : void 0 };
 	} finally {

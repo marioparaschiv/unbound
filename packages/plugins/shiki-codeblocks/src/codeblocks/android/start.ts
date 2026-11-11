@@ -1,16 +1,15 @@
 import type { NativePluginBridge } from '@unbound-app/api/native';
 
-import { createNativeCards } from '~/codeblocks/android/native-cards';
 import { createAndroidCards } from '~/codeblocks/android/cards';
 import type { Cards } from '~/types';
 
 /**
- * @description Draws code cards in Discord's native Android message text, or over it when the text cannot be rewritten.
+ * @description Draws code cards in Discord's native Android message text.
  * @param native The plugin's native bridge.
- * @returns The cards, or `undefined` when neither way is available.
+ * @returns The cards, or `undefined` when the card surface or the loader's text rewrites are unavailable.
  */
 export function startCards(native: NativePluginBridge): Cards | undefined {
-	const cards = createNativeCards(native) ?? createAndroidCards(native);
+	const cards = createAndroidCards(native);
 
 	if (!cards) return;
 

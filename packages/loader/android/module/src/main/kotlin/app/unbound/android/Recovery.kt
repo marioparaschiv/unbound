@@ -94,7 +94,7 @@ object Recovery {
 
     private fun publishShortcut(activity: Activity) {
         val manager = activity.getSystemService(ShortcutManager::class.java) ?: return
-        val label = NativeBridge.nativePreference("recovery-label", null).orEmpty()
+        val label = NativeBridge.nativeRecoveryActionLabel().orEmpty()
         val intent = Intent(actionToggle).setClassName(activity.packageName, activity.javaClass.name)
         val builder = ShortcutInfo.Builder(activity, SHORTCUT_ID)
             .setShortLabel(label)

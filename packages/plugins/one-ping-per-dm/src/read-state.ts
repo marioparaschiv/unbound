@@ -1,6 +1,5 @@
-import { recordSkip } from '@unbound-plugins/shared/lifecycle/health';
+import { skipFeature, type SelfTestResult } from '@unbound-plugins/shared/lifecycle/features';
 
-import { PLUGIN_NAME } from '~/constants';
 import { ReadStateStore } from '~/modules';
 
 const MISSING_READ_STATE = 'ReadStateStore.getOldestUnreadMessageId is not a function';
@@ -24,8 +23,7 @@ export function verifyReadState(): boolean {
 
 	if (!reported) {
 		reported = true;
-		console.error(`[${PLUGIN_NAME}] Skipped, ${MISSING_READ_STATE}.`);
-		recordSkip(MISSING_READ_STATE);
+		skipFeature(MISSING_READ_STATE);
 	}
 
 	return false;
@@ -45,4 +43,15 @@ export function oldestUnreadMessageId(channelId: string): string | null | undefi
  */
 export function resetReadStateReport(): void {
 	reported = false;
+}
+
+/**
+ * @description Fails the self test when Discord's read state cannot name a channel's oldest unread message.
+ * @param features The features' own self-test result.
+ * @returns `features`, or the skip when the read state cannot be used.
+ */
+export function readStateSelfTest(features: SelfTestResult): SelfTestResult {
+	return verifyReadState() || !features.ok
+		? features
+		: { ok: false, detail: `skipped: ${MISSING_READ_STATE}` };
 }

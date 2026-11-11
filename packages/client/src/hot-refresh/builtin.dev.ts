@@ -1,14 +1,8 @@
 import { createLogger } from '@unbound-app/logger';
 
-import { DEV, DEV_SERVER_URL } from '~/core/constants';
+import type { DeviceMessage, DevRuntime, PatchMessage } from '~/hot-refresh/messages';
 import { performRefresh } from '~/hot-refresh/runtime';
-
-type DevRuntime = {
-	applyPatch(code: string, changedIds: string[]): 'applied' | 'needs-reload';
-};
-
-// Patches only: a change no patch covers is reloaded by the loader's `/__hot` stream, which outlives a JS reload.
-type ServerMessage = { type: 'patch'; code: string; filename: string; changedIds: string[] };
+import { DEV_SERVER_URL } from '~/core/constants';
 
 declare global {
 	var __rolldown_runtime__: DevRuntime | undefined;
@@ -46,7 +40,7 @@ export function stop() {
  * @returns `true` in dev builds made by the dev engine.
  */
 export function shouldStart() {
-	return DEV && Boolean(globalThis.__rolldown_runtime__);
+	return import.meta.env.DEV && Boolean(globalThis.__rolldown_runtime__);
 }
 
 function connect() {
@@ -56,7 +50,7 @@ function connect() {
 
 	socket.addEventListener('open', () => Logger.success('Connected'));
 	socket.addEventListener('message', ({ data }) => {
-		const message = parseServerMessage(data);
+		const message = parsePatchMessage(data);
 
 		if (message) {
 			handle(socket, message);
@@ -92,7 +86,8 @@ function isStringArray(value: unknown): value is string[] {
 	return Array.isArray(value) && value.every((item) => typeof item === 'string');
 }
 
-function isServerMessage(value: unknown): value is ServerMessage {
+// Patches only: a change no patch covers is reloaded by the loader's `/__hot` stream, which outlives a JS reload.
+function isPatchMessage(value: unknown): value is PatchMessage {
 	if (typeof value !== 'object' || value === null || !('type' in value)) {
 		return false;
 	}
@@ -109,13 +104,13 @@ function isServerMessage(value: unknown): value is ServerMessage {
 }
 
 // UNKNOWN: a WebSocket frame's data is whatever the dev server sent.
-function parseServerMessage(data: unknown): ServerMessage | undefined {
+function parsePatchMessage(data: unknown): PatchMessage | undefined {
 	if (typeof data !== 'string') return;
 
 	try {
 		const value: unknown = JSON.parse(data);
 
-		return isServerMessage(value) ? value : undefined;
+		return isPatchMessage(value) ? value : undefined;
 	} catch {
 		Logger.warn('Ignored a malformed message from the dev server.');
 
@@ -123,7 +118,7 @@ function parseServerMessage(data: unknown): ServerMessage | undefined {
 	}
 }
 
-function handle(socket: WebSocket, message: ServerMessage) {
+function handle(socket: WebSocket, message: PatchMessage) {
 	const started = Date.now();
 
 	try {
@@ -145,19 +140,23 @@ function handle(socket: WebSocket, message: ServerMessage) {
 		return;
 	}
 
-	socket.send(JSON.stringify({ type: 'applied', filename: message.filename }));
+	send(socket, { type: 'applied', filename: message.filename });
 
 	const { count, remounted } = performRefresh();
 	const ms = Date.now() - started;
 
-	socket.send(JSON.stringify({ type: 'refreshed', fibers: count, remounted, ms }));
+	send(socket, { type: 'refreshed', fibers: count, remounted, ms });
 	Logger.success(
 		`Patched ${message.changedIds.join(', ')}: ${count} fibers (${remounted} remounted) in ${ms}ms`,
 	);
 }
 
 function rejectPatch(socket: WebSocket, reason: string) {
-	socket.send(JSON.stringify({ type: 'rejected', reason }));
+	send(socket, { type: 'rejected', reason });
+}
+
+function send(socket: WebSocket, message: DeviceMessage) {
+	socket.send(JSON.stringify(message));
 }
 
 export default { start, stop, shouldStart };

@@ -1,13 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startPronouns, stopPronouns } from '~/pronouns';
+import { startPronouns } from '~/pronouns';
 
-export function start() {
-	startPronouns();
-}
-
-export function stop() {
-	stopPronouns();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures([startPronouns]);

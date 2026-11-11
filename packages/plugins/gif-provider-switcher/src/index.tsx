@@ -1,29 +1,7 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
-import startFeatures from '@unbound-plugins/shared/lifecycle/start-features';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startRequests, stopRequests } from '~/requests';
-import { startPicker, stopPicker } from '~/picker';
+import { startRequests } from '~/requests';
+import { startPicker } from '~/picker';
 
-let stopFeatures = async () => {};
-
-export function start() {
-	// One feature throwing must not cost the other.
-	stopFeatures = startFeatures('GIF Provider Switcher', [
-		() => {
-			startPicker();
-
-			return stopPicker;
-		},
-		() => {
-			startRequests();
-
-			return stopRequests;
-		},
-	]);
-}
-
-export function stop() {
-	return stopFeatures();
-}
-
-export { featureSelfTest as selfTest };
+// One feature throwing must not cost the other.
+export const { start, stop, selfTest } = runFeatures([startPicker, startRequests]);

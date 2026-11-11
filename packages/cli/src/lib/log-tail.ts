@@ -12,8 +12,8 @@ import {
 	type SyslogRecord,
 } from '~/lib/log-lines';
 import { followLoaderLogFile, readLoaderLogHistory } from '~/lib/loader-log-file';
+import type { AdbCommand, AndroidTarget, IOSTarget } from '~/lib/device-target';
 import { runCommand, spawnGroup, type CommandRunner } from '~/lib/run-command';
-import { pickDevice, resolvePilot } from '~/lib/pilot';
 import { DISCORD_PACKAGE } from '~/lib/device-paths';
 import { safeParse, Type } from '~/lib/schema';
 
@@ -21,15 +21,12 @@ export type TailOptions = {
 	since?: string;
 	follow: boolean;
 	emit: (event: LogEvent) => void;
-	run?: CommandRunner;
 };
 
-export type AndroidTailOptions = TailOptions & { serial?: string; adb?: string };
-
 export type IOSTailOptions = TailOptions & {
-	udid?: string;
+	/** Runs the host's log tools, for reading the log archive. */
+	run?: CommandRunner;
 	syslog?: string;
-	pilot?: string;
 	logTool?: string;
 };
 
@@ -69,21 +66,19 @@ const IOS_HISTORY_LEVELS: Record<string, LogLevel> = {
 
 /**
  * @description Tails Discord's log on an Android device over `adb logcat`, keeping Unbound's and React Native's tags and Discord's crashes. Discord is followed across restarts, and logcat is reattached when it drops, such as when the emulator restarts.
- * @param options The device serial, where the history starts, whether to keep following, and where each kept event goes.
+ * @param target The device.
+ * @param options Where the history starts, whether to keep following, and where each kept event goes.
  * @returns Once the history is printed when not following; otherwise only on failure.
  */
-export async function tailAndroid(options: AndroidTailOptions): Promise<CommandOutput> {
-	const { serial, since, follow, emit, run = runCommand, adb: program = 'adb' } = options;
-	const prefix = serial ? ['-s', serial] : [];
+export async function tailAndroid(
+	target: AndroidTarget,
+	options: TailOptions,
+): Promise<CommandOutput> {
+	const { since, follow, emit } = options;
+	const { program, argv } = target.adb;
 
 	function adb(args: string[], timeoutMs = ADB_TIMEOUT_MS) {
-		return run(program, [...prefix, ...args], timeoutMs);
-	}
-
-	const state = await adb(['get-state']);
-
-	if (!state.ok) {
-		return { ok: false, text: `No Android device is ready over adb. ${state.error}` };
+		return target.adb.run(args, timeoutMs);
 	}
 
 	const clock = await adb(['shell', 'date +%s']);
@@ -94,7 +89,7 @@ export async function tailAndroid(options: AndroidTailOptions): Promise<CommandO
 		return { ok: false, text: start.error };
 	}
 
-	const pid = await discordPid(adb);
+	const pid = await discordPid(target.adb);
 	const source = createAndroidLogSource(pid);
 	let resumeAt = start ?? 0;
 	let seenAtResume = new Set<string>();
@@ -107,7 +102,7 @@ export async function tailAndroid(options: AndroidTailOptions): Promise<CommandO
 
 	const poller = follow
 		? setInterval(() => {
-				void discordPid(adb).then((next) => emitAll(source.attach(next), emit));
+				void discordPid(target.adb).then((next) => emitAll(source.attach(next), emit));
 			}, PID_POLL_MS)
 		: void 0;
 
@@ -132,16 +127,7 @@ export async function tailAndroid(options: AndroidTailOptions): Promise<CommandO
 
 	try {
 		for (;;) {
-			const args = [
-				...prefix,
-				'logcat',
-				'-v',
-				'threadtime',
-				'-v',
-				'epoch',
-				'-b',
-				LOGCAT_BUFFERS,
-			];
+			const args = argv(['logcat', '-v', 'threadtime', '-v', 'epoch', '-b', LOGCAT_BUFFERS]);
 			const ended = await streamLines(
 				program,
 				[
@@ -179,18 +165,13 @@ export async function tailAndroid(options: AndroidTailOptions): Promise<CommandO
 
 /**
  * @description Tails Discord's log on a jailbroken iPhone: the unified log streams over USB through `idevicesyslog`, keeping what Discord's binary and the Unbound tweak log, the JavaScript console included, and crash reports about Discord. History before now comes from a log archive read with macOS's `log` tool, which holds only what iOS persists: notices, errors and faults.
- * @param options The device UDID, where the history starts, whether to keep following, and where each kept event goes.
+ * @param target The device.
+ * @param options Where the history starts, whether to keep following, and where each kept event goes.
  * @returns Once the history is printed when not following; otherwise only on failure.
  */
-export async function tailIOS(options: IOSTailOptions): Promise<CommandOutput> {
+export async function tailIOS(target: IOSTarget, options: IOSTailOptions): Promise<CommandOutput> {
 	const { since, follow, emit, run = runCommand, syslog = IDEVICESYSLOG } = options;
-	const pilot = options.pilot ?? resolvePilot();
-	const udid =
-		options.udid ?? (await pickDevice((args, timeoutMs) => run(pilot, args, timeoutMs)));
-
-	if (typeof udid !== 'string') {
-		return { ok: false, text: udid.error };
-	}
+	const { udid } = target;
 
 	const start = since === void 0 ? void 0 : parseSince(since, Date.now());
 
@@ -229,7 +210,7 @@ export async function tailIOS(options: IOSTailOptions): Promise<CommandOutput> {
 				message: `${'error' in history ? `The log archive could not be read (${history.error})` : 'The log archive held nothing'}; reading Unbound's log files instead.`,
 			});
 
-			const entries = await readLoaderLogHistory({ udid, pilot, run }, start);
+			const entries = await readLoaderLogHistory(target.pilot, start);
 
 			if ('error' in entries) {
 				return {
@@ -245,7 +226,7 @@ export async function tailIOS(options: IOSTailOptions): Promise<CommandOutput> {
 
 	if (!live) {
 		if (start === void 0) {
-			const entries = await readLoaderLogHistory({ udid, pilot, run });
+			const entries = await readLoaderLogHistory(target.pilot);
 
 			if ('error' in entries) {
 				return {
@@ -296,7 +277,7 @@ export async function tailIOS(options: IOSTailOptions): Promise<CommandOutput> {
 			message:
 				"The iPhone's unified log is not streaming; following Unbound's log file instead.",
 		});
-		void followLoaderLogFile({ udid, pilot, run, emit, since: historyEnd });
+		void followLoaderLogFile({ ...target.pilot, emit, since: historyEnd });
 	});
 
 	for (;;) {
@@ -428,10 +409,8 @@ async function readIOSHistory(
 	}
 }
 
-async function discordPid(
-	adb: (args: string[]) => ReturnType<CommandRunner>,
-): Promise<number | undefined> {
-	const result = await adb(['shell', `pidof ${DISCORD_PACKAGE}`]);
+async function discordPid(adb: AdbCommand): Promise<number | undefined> {
+	const result = await adb.run(['shell', `pidof ${DISCORD_PACKAGE}`], ADB_TIMEOUT_MS);
 	const pid = result.ok
 		? Number.parseInt(result.stdout.trim().split(/\s+/)[0] ?? '', 10)
 		: Number.NaN;

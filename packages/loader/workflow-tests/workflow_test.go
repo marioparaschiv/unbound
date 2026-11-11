@@ -147,9 +147,9 @@ func TestParsedIOSBuildReusesTheResolvedIPA(t *testing.T) {
 	if require.If != "steps.source.outputs.missing == 'true' && (inputs.release == true || inputs.release == 'true') && inputs.is_testflight != true" || !strings.Contains(require.Run, "exit 1") {
 		t.Fatalf("a stable release must fail without the iOS source, got %+v", require)
 	}
-	skip := build.job(t, "resolve-source").step(t, "Skip the TestFlight release without a source IPA")
-	if skip.If != "steps.source.outputs.missing == 'true' && inputs.is_testflight == true" || strings.Contains(skip.Run, "exit 1") {
-		t.Fatalf("a TestFlight release without its IPA must be skipped, not failed, got %+v", skip)
+	testflight := build.job(t, "resolve-source").step(t, "Fail the TestFlight release without a source IPA")
+	if testflight.If != "steps.source.outputs.missing == 'true' && inputs.is_testflight == true" || !strings.Contains(testflight.Run, "exit 1") {
+		t.Fatalf("a TestFlight release must fail without its IPA, got %+v", testflight)
 	}
 	ios := build.job(t, "ios")
 	if !strings.Contains(ios.If, "needs.resolve-source.outputs.ipa_available != 'false'") {

@@ -23,7 +23,7 @@ import { createLogger } from '@unbound-app/logger';
 import { dirname, join } from 'node:path';
 
 import { mergeDocsManifest } from './docs-manifest';
-import { API_SRC, ROOT } from './paths';
+import { API_SRC, ROOT } from './config';
 
 const logger = createLogger('SDK', 'Docs');
 
@@ -107,7 +107,6 @@ export function createDocsOptions(apiSrc: string): Partial<TypeDocOptions> {
 /**
  * @description Gives the modules in {@link MODULE_RENAMES} their documented name and summary. Links follow
  * reflection ids, so every reference to them still resolves.
- * @param project The converted project.
  */
 export function renameDocsModules(project: ProjectReflection): void {
 	for (const module of project.children ?? []) {

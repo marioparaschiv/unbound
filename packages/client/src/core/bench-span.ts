@@ -1,3 +1,15 @@
+import type { BenchMark } from '~/core/bench-hooks';
+
+/**
+ * @description In a benchmark build, tells the agent that startup reached a named point.
+ * @param name The mark's name.
+ */
+export function benchMark(name: BenchMark): void {
+	if (import.meta.env.BENCH) {
+		globalThis.__ubdBench?.mark(name);
+	}
+}
+
 /**
  * @description Runs `work`, and in a benchmark build reports how long it took to the agent as a span.
  * @template T What `work` returns.

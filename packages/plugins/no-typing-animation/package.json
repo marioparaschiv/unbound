@@ -1,8 +1,6 @@
 {
 	"name": "no-typing-animation",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Stops the typing dots from animating, so they sit still wherever someone is typing.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

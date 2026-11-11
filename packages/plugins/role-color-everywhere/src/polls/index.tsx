@@ -1,13 +1,11 @@
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { settings } from '@unbound-app/settings';
 import { patcher } from '@unbound-app/api';
 import { cloneElement } from 'react';
 
 import { ChannelStore, GuildMemberStore, PollVotesActionSheet } from '~/polls/modules';
 import RoleColoredVotersList from '~/polls/voters-list';
 import { guildIdOf } from '~/shared/channel-guild';
-import { PLUGIN_NAME } from '~/constants';
 import type { Rendered } from '~/types';
 
 function patchPollVotesActionSheet(): () => void {
@@ -62,9 +60,9 @@ function patchPollVotesActionSheet(): () => void {
  * @returns The function that ends the feature.
  */
 export function startPolls(): () => void {
-	if (!ensureModules(`${PLUGIN_NAME}: poll results`, { GuildMemberStore, ChannelStore })) {
+	if (!ensureModules({ GuildMemberStore, ChannelStore }, 'poll results')) {
 		return () => {};
 	}
 
-	return whileEnabled(settings, 'pollResults', true, patchPollVotesActionSheet);
+	return whileEnabled('pollResults', patchPollVotesActionSheet);
 }

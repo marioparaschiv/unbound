@@ -115,6 +115,7 @@ export const envSchema = Type.Object({
 	ADDON_INSTALLS_RATE_LIMIT_WINDOW_SECONDS: positiveInt(86400),
 	ADDON_INSTALLS_RATE_LIMIT_MAX: positiveInt(3),
 	ADDON_LIST_PAGE_SIZE: positiveInt(50),
+	ADMIN_ADDON_LIST_PAGE_SIZE: positiveInt(50),
 	DEVELOPER_LIST_PAGE_SIZE: positiveInt(24),
 	USER_LIST_PAGE_SIZE: positiveInt(25),
 	EVENT_PAGE_SIZE: positiveInt(100),

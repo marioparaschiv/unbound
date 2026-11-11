@@ -5,7 +5,7 @@ import type { SyncDocument } from './sync';
 /** The addon managers whose installs sync, named after their settings buckets. */
 export const SYNC_KINDS = ['plugins', 'themes', 'icons', 'fonts'] as const;
 
-/** The core settings store; addon settings stores are named after the addon id. */
+/** The core Bucket; addon Buckets are named after the addon id. */
 export const SYNC_CORE_STORE = CORE_SETTINGS_STORE;
 
 /** Stores under this prefix hold caches and session state, and never sync. */

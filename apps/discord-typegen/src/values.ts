@@ -116,8 +116,6 @@ const WRAPPERS = new Set(['memo', 'forwardRef']);
 
 /**
  * @description Reads a named member off a value, mapping module members to imports and imports to dotted paths.
- * @param base The value read from.
- * @param name The member name.
  * @returns The member's value.
  */
 export function member(base: Value, name: string): Value {

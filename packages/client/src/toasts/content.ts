@@ -43,5 +43,3 @@ export function hasVisibleContent(options: ToastOptions): boolean {
 		hasButtons(options)
 	);
 }
-
-export default { visibleText, hasVisibleContent };

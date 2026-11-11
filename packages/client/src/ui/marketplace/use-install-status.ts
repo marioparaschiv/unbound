@@ -2,7 +2,6 @@ import type { ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonKind } from '@unbound-app/types/addons';
 import { useEffect } from 'react';
 
-import { getInstalledVersion } from '~/marketplace/install';
 import type { InstallStatus } from '~/marketplace/catalog';
 import { getInstallStatus } from '~/marketplace/catalog';
 import useForceUpdate from '~/ui/hooks/use-force-update';
@@ -19,7 +18,10 @@ function useInstallStatus(kind: AddonKind, addon: ListedAddon): InstallStatus {
 
 	useEffect(() => Manager.for(kind).onInstalledChange(forceUpdate), [kind]);
 
-	return getInstallStatus(addon.latestVersion.version, getInstalledVersion(kind, addon));
+	return getInstallStatus(
+		addon.latestVersion.version,
+		Manager.for(kind).getInstalledVersion(addon),
+	);
 }
 
 export default useInstallStatus;

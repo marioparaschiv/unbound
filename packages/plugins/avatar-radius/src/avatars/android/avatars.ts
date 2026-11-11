@@ -28,7 +28,7 @@ import {
 	restoreOutlines,
 	setOutlineRadius,
 } from '~/avatars/android/ui-avatars';
-import { AvatarClass, PLUGIN_NAME } from '~/constants';
+import { AvatarClass } from '~/constants';
 import { mayBeAvatar } from '~/avatars/image-sources';
 import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
 
@@ -354,7 +354,7 @@ export function roundAndroidAvatars({ java, hooks, ui }: AndroidNative, radius: 
 
 	function report(error: unknown) {
 		if (!isCancellation(error)) {
-			console.error(`[${PLUGIN_NAME}] Failed to round an avatar:`, error);
+			logger.error(`Failed to round an avatar:`, error);
 		}
 	}
 

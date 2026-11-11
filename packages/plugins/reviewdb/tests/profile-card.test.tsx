@@ -1,10 +1,9 @@
 import { render, stopPlugin } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
 
-import { type CardProps, startReviewdb } from './start-reviewdb';
+import { type CardProps, startReviewdb } from './helpers/start-reviewdb';
 
 function UserInfo(_: { userId: string }) {
 	return null;
@@ -17,7 +16,6 @@ function renderCard(props: CardProps) {
 }
 
 beforeEach(async () => {
-	resetHealth();
 	card = await startReviewdb();
 });
 afterEach(stopPlugin);

@@ -1,8 +1,6 @@
 {
 	"name": "show-timeout-duration",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Shows how much longer a user's timeout will last.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

@@ -4,7 +4,6 @@
 
 namespace loader {
 bool installAddonCrashHandler(const std::string &markerPath);
-bool addonCrashHandlerInstalled();
 
 // The file the crash handler writes the crashing thread's stack to, beside `markerPath`.
 constexpr const char *kNativeCrashFile = "native-crash.txt";

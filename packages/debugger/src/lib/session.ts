@@ -8,7 +8,13 @@ import type {
 	PluginPushResult,
 	PluginPushRequest,
 } from '@unbound-app/debugger-protocol';
-import { DEFAULT_EVAL_TIMEOUT_MS, MAX_EVAL_TIMEOUT_MS } from '@unbound-app/debugger-protocol';
+import {
+	DEFAULT_EVAL_TIMEOUT_MS,
+	PLUGIN_PUSH_TIMEOUT_MS,
+	resolveEvalTimeout,
+	serializeMessage,
+} from '@unbound-app/debugger-protocol';
+import { PendingRequests } from '@unbound-app/debugger-protocol/pending-requests';
 
 /**
  * The bridge's transport-agnostic routing core: routes each eval result back to the controller that
@@ -21,20 +27,6 @@ export type SocketLike = {
 	close(): void;
 };
 
-type PendingEval = {
-	/** Delivers the device's answer back to whoever issued this eval (a socket, or the REPL). */
-	deliver: (result: EvalResult) => void;
-	timer: ReturnType<typeof setTimeout>;
-};
-
-type PendingPush = {
-	/** Delivers the device's reload outcome back to the controller that issued the push. */
-	deliver: (result: PluginPushResult) => void;
-	timer: ReturnType<typeof setTimeout>;
-	/** The controller that issued this push, so a controller detach can fail its in-flight pushes. */
-	origin: SocketLike;
-};
-
 export const state: {
 	device: SocketLike | null;
 	deviceInfo: DeviceInfo | null;
@@ -45,15 +37,15 @@ export const state: {
 	controllers: new Set(),
 };
 
-const pending = new Map<string, PendingEval>();
-const pendingPushes = new Map<string, PendingPush>();
+// Each pending request keeps the controller that issued it (none for the REPL), so a controller
+// detach can drop its in-flight requests.
+const pending = new PendingRequests<EvalResult, SocketLike | undefined>();
+const pendingPushes = new PendingRequests<PluginPushResult, SocketLike>();
 const logListeners = new Set<(log: LogMessage) => void>();
 const deviceListeners = new Set<(connected: boolean, device: DeviceInfo | null) => void>();
 const evalListeners = new Set<(code: string) => void>();
 const resultListeners = new Set<(result: EvalResult) => void>();
 const controllerListeners = new Set<(connected: boolean, count: number) => void>();
-
-const PLUGIN_PUSH_TIMEOUT_MS = 60_000;
 
 /**
  * @description Registers the connected device, replacing any earlier one so a relaunched or
@@ -83,27 +75,20 @@ export function detachDevice(socket: SocketLike) {
 	state.device = null;
 	state.deviceInfo = null;
 
-	for (const [id, entry] of pending) {
-		clearTimeout(entry.timer);
-		entry.deliver({
-			type: 'eval-result',
-			id,
-			ok: false,
-			error: 'Device disconnected before the evaluation completed.',
-		});
-		pending.delete(id);
-	}
-
-	for (const [id, entry] of pendingPushes) {
-		clearTimeout(entry.timer);
-		entry.deliver({
-			type: 'plugin-push-result',
-			id,
-			ok: false,
-			error: 'Device disconnected before the reload completed.',
-		});
-		pendingPushes.delete(id);
-	}
+	pending.failAll((id) => ({
+		type: 'eval-result',
+		id,
+		ok: false,
+		error: 'Device disconnected before the evaluation completed.',
+		code: 'device-disconnected',
+	}));
+	pendingPushes.failAll((id) => ({
+		type: 'plugin-push-result',
+		id,
+		ok: false,
+		error: 'Device disconnected before the reload completed.',
+		code: 'device-disconnected',
+	}));
 
 	broadcastDeviceStatus(false);
 }
@@ -124,25 +109,8 @@ export function attachController(socket: SocketLike) {
 export function detachController(socket: SocketLike) {
 	state.controllers.delete(socket);
 
-	for (const [id, entry] of pending) {
-		if (entry.deliver !== controllerDelivery.get(socket)) {
-			continue;
-		}
-
-		clearTimeout(entry.timer);
-		pending.delete(id);
-	}
-
-	for (const [id, entry] of pendingPushes) {
-		if (entry.origin !== socket) {
-			continue;
-		}
-
-		clearTimeout(entry.timer);
-		pendingPushes.delete(id);
-	}
-
-	controllerDelivery.delete(socket);
+	pending.discard((origin) => origin === socket);
+	pendingPushes.discard((origin) => origin === socket);
 
 	for (const listener of controllerListeners) listener(false, state.controllers.size);
 }
@@ -155,29 +123,16 @@ export function detachController(socket: SocketLike) {
  */
 export function evaluateForController(socket: SocketLike, request: EvalRequest) {
 	const { id, code } = request;
-	const deliver = getControllerDelivery(socket);
 
 	// Surface controller (MCP) activity so an observer like the terminal can show a full transcript,
 	// not just the device's own console output.
 	for (const listener of evalListeners) listener(code);
 
-	dispatch(id, code, resolveEvalTimeout(request.timeout), (result) => {
+	dispatch(id, code, resolveEvalTimeout(request.timeout), socket, (result) => {
 		for (const listener of resultListeners) listener(result);
 
-		deliver(result);
+		socket.send(serializeMessage(result));
 	});
-}
-
-/**
- * @description Picks how long an eval may run: the requested timeout when it is a positive number of
- * milliseconds, capped at {@link MAX_EVAL_TIMEOUT_MS}, otherwise {@link DEFAULT_EVAL_TIMEOUT_MS}.
- * @param requested The timeout the controller asked for, if any.
- * @returns The timeout to apply, in milliseconds.
- */
-export function resolveEvalTimeout(requested: number | undefined): number {
-	return typeof requested === 'number' && requested > 0
-		? Math.min(requested, MAX_EVAL_TIMEOUT_MS)
-		: DEFAULT_EVAL_TIMEOUT_MS;
 }
 
 /**
@@ -188,7 +143,7 @@ export function resolveEvalTimeout(requested: number | undefined): number {
  * @param request The push to forward verbatim; its `id` correlates the result.
  */
 export function pushPluginForController(socket: SocketLike, request: PluginPushRequest) {
-	const deliver = (result: PluginPushResult) => socket.send(JSON.stringify(result));
+	const deliver = (result: PluginPushResult) => socket.send(serializeMessage(result));
 
 	if (!state.device) {
 		deliver({
@@ -196,23 +151,25 @@ export function pushPluginForController(socket: SocketLike, request: PluginPushR
 			id: request.id,
 			ok: false,
 			error: 'No device is connected to the debugger.',
+			code: 'no-device',
 		});
 
 		return;
 	}
 
-	const timer = setTimeout(() => {
-		pendingPushes.delete(request.id);
-		deliver({
+	pendingPushes.add(request.id, {
+		settle: deliver,
+		timeoutMs: PLUGIN_PUSH_TIMEOUT_MS,
+		onTimeout: () => ({
 			type: 'plugin-push-result',
 			id: request.id,
 			ok: false,
 			error: `Plugin push timed out after ${PLUGIN_PUSH_TIMEOUT_MS}ms.`,
-		});
-	}, PLUGIN_PUSH_TIMEOUT_MS);
-
-	pendingPushes.set(request.id, { deliver, timer, origin: socket });
-	state.device.send(JSON.stringify(request));
+			code: 'timeout',
+		}),
+		meta: socket,
+	});
+	state.device.send(serializeMessage(request));
 }
 
 /**
@@ -224,7 +181,7 @@ export function pushPluginForController(socket: SocketLike, request: PluginPushR
  */
 export function evaluate(code: string): Promise<EvalResult> {
 	return new Promise<EvalResult>((resolve) => {
-		dispatch(crypto.randomUUID(), code, DEFAULT_EVAL_TIMEOUT_MS, resolve);
+		dispatch(crypto.randomUUID(), code, DEFAULT_EVAL_TIMEOUT_MS, void 0, resolve);
 	});
 }
 
@@ -232,6 +189,7 @@ function dispatch(
 	id: string,
 	code: string,
 	timeout: number,
+	origin: SocketLike | undefined,
 	deliver: (result: EvalResult) => void,
 ) {
 	if (!state.device) {
@@ -240,23 +198,25 @@ function dispatch(
 			id,
 			ok: false,
 			error: 'No device is connected to the debugger.',
+			code: 'no-device',
 		});
 
 		return;
 	}
 
-	const timer = setTimeout(() => {
-		pending.delete(id);
-		deliver({
+	pending.add(id, {
+		settle: deliver,
+		timeoutMs: timeout,
+		onTimeout: () => ({
 			type: 'eval-result',
 			id,
 			ok: false,
 			error: `Evaluation timed out after ${timeout}ms.`,
-		});
-	}, timeout);
-
-	pending.set(id, { deliver, timer });
-	state.device.send(JSON.stringify({ type: 'eval', id, code }));
+			code: 'timeout',
+		}),
+		meta: origin,
+	});
+	state.device.send(serializeMessage({ type: 'eval', id, code }));
 }
 
 /**
@@ -266,25 +226,13 @@ function dispatch(
  */
 export function handleDeviceMessage(message: BridgeMessage) {
 	if (message.type === 'eval-result') {
-		const entry = pending.get(message.id);
-
-		if (!entry) return;
-
-		clearTimeout(entry.timer);
-		pending.delete(message.id);
-		entry.deliver(message);
+		pending.resolve(message.id, message);
 
 		return;
 	}
 
 	if (message.type === 'plugin-push-result') {
-		const entry = pendingPushes.get(message.id);
-
-		if (!entry) return;
-
-		clearTimeout(entry.timer);
-		pendingPushes.delete(message.id);
-		entry.deliver(message);
+		pendingPushes.resolve(message.id, message);
 
 		return;
 	}
@@ -298,7 +246,7 @@ export function handleDeviceMessage(message: BridgeMessage) {
 
 	if (message.type !== 'log') return;
 
-	for (const socket of state.controllers) socket.send(JSON.stringify(message));
+	for (const socket of state.controllers) socket.send(serializeMessage(message));
 
 	for (const listener of logListeners) listener(message);
 }
@@ -360,28 +308,12 @@ export function onController(listener: (connected: boolean, count: number) => vo
 	return () => void controllerListeners.delete(listener);
 }
 
-// One stable delivery closure per controller so pending evals can be matched back to it on detach.
-const controllerDelivery = new Map<SocketLike, (result: EvalResult) => void>();
-
-function getControllerDelivery(socket: SocketLike): (result: EvalResult) => void {
-	let deliver = controllerDelivery.get(socket);
-
-	if (deliver) {
-		return deliver;
-	}
-
-	deliver = (result) => socket.send(JSON.stringify(result));
-	controllerDelivery.set(socket, deliver);
-
-	return deliver;
-}
-
 function sendDeviceStatus(socket: SocketLike, connected: boolean) {
 	const status: DeviceStatus = connected
 		? { type: 'device-status', connected, device: state.deviceInfo ?? void 0 }
 		: { type: 'device-status', connected };
 
-	socket.send(JSON.stringify(status));
+	socket.send(serializeMessage(status));
 }
 
 function broadcastDeviceStatus(connected: boolean) {

@@ -1,5 +1,7 @@
+import { isRecord } from '@unbound-plugins/shared/values/is-record';
+
 import { ChannelStore, UserProfileStore, UserStore } from '~/raw/modules';
-import { cleanMessage, isRawObject, sortKeys, type RawObject } from '~/raw/raw-data';
+import { cleanMessage, sortKeys, type RawObject } from '~/raw/raw-data';
 
 export type RawItem = {
 	type: 'Message' | 'Profile' | 'Channel' | 'Guild' | 'User';
@@ -43,7 +45,7 @@ export function getRawItem(key: string, props: SheetProps): RawItem | null {
 
 	const { message, profile, channel, guild } = props;
 
-	if (isRawObject(message)) {
+	if (isRecord<RawObject>(message)) {
 		return {
 			type: 'Message',
 			data: cleanMessage(message),
@@ -51,11 +53,11 @@ export function getRawItem(key: string, props: SheetProps): RawItem | null {
 		};
 	}
 
-	if (isRawObject(profile)) return { type: 'Profile', data: sortKeys(profile) };
+	if (isRecord<RawObject>(profile)) return { type: 'Profile', data: sortKeys(profile) };
 
-	if (isRawObject(channel)) return { type: 'Channel', data: sortKeys(channel) };
+	if (isRecord<RawObject>(channel)) return { type: 'Channel', data: sortKeys(channel) };
 
-	if (isRawObject(guild)) return { type: 'Guild', data: sortKeys(guild) };
+	if (isRecord<RawObject>(guild)) return { type: 'Guild', data: sortKeys(guild) };
 
 	const channelId = asString(props.channelId);
 	// Optional: without the channel or profile store, the item falls back to what the props carry.
@@ -63,7 +65,7 @@ export function getRawItem(key: string, props: SheetProps): RawItem | null {
 
 	if (storedChannel) return { type: 'Channel', data: sortKeys(storedChannel) };
 
-	const propUser = isRawObject(props.user) ? props.user : undefined;
+	const propUser = isRecord<RawObject>(props.user) ? props.user : undefined;
 	const userId = asString(props.userId) ?? asString(propUser?.id);
 	const user = propUser ?? (userId ? UserStore.getUser(userId) : undefined);
 

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 import { AUTH_REDIRECT_URI } from '~/constants';
 
-import { startReviewdb } from './start-reviewdb';
+import { startReviewdb } from './helpers/start-reviewdb';
 
 const realFetch = globalThis.fetch;
 const sheets: { key: string; load: Promise<{ default: unknown }> }[] = [];

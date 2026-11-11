@@ -28,7 +28,7 @@ int main()
     settings.load();
 
     loader::BundleUpdater updater(
-        documents, loader::updaterSettings(settings),
+        documents, settings,
         [&](const std::string &url, double) -> std::optional<std::string> {
             if (url.find("manifest.json") == std::string::npos || manifest.empty())
             {

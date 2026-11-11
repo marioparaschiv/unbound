@@ -1,7 +1,6 @@
 import { getRoleColorAppearance } from '@unbound-plugins/shared/colors/role-colors';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { settings } from '@unbound-app/settings';
 import { patcher } from '@unbound-app/api';
 import { cloneElement } from 'react';
 import { Text } from 'react-native';
@@ -9,7 +8,6 @@ import { Text } from 'react-native';
 import { GuildMemberStore, VoiceUserNameItem } from '~/voice/modules';
 import { paintRoleText } from '~/shared/role-text';
 import type { Member, Rendered } from '~/types';
-import { PLUGIN_NAME } from '~/constants';
 
 type VoiceUserNameItemProps = {
 	guildId?: string;
@@ -52,7 +50,7 @@ function patchVoiceUserNameItem(): () => void {
  * @returns The function that ends the feature.
  */
 export function startVoice(): () => void {
-	if (!ensureModules(`${PLUGIN_NAME}: voice users`, { GuildMemberStore })) return () => {};
+	if (!ensureModules({ GuildMemberStore }, 'voice users')) return () => {};
 
-	return whileEnabled(settings, 'voiceUsers', true, patchVoiceUserNameItem);
+	return whileEnabled('voiceUsers', patchVoiceUserNameItem);
 }

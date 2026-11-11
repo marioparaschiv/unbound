@@ -1,13 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startStickerStaging, stopStickerStaging } from '~/sticker-staging';
+import { startStickerStaging } from '~/sticker-staging';
 
-export function start() {
-	startStickerStaging();
-}
-
-export function stop() {
-	stopStickerStaging();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures(startStickerStaging, { atomic: true });

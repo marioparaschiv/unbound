@@ -17,5 +17,10 @@
 		"@unbound-app/contracts": "workspace:*",
 		"@unbound-app/types": "workspace:*",
 		"react": "catalog:react"
+	},
+	"checks": {
+		"tests": "none",
+		"typecheck": false,
+		"plugins": true
 	}
 }

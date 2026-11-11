@@ -1,8 +1,6 @@
 {
 	"name": "show-hidden-things",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Displays hidden and moderator-only features regardless of permissions.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

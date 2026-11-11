@@ -1,7 +1,3 @@
-import {
-	NATIVE_PLUGIN_CAPABILITIES,
-	NATIVE_PLUGIN_PLATFORM_CAPABILITIES,
-} from '@unbound-app/types/native';
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 
 import {
@@ -10,10 +6,15 @@ import {
 	ADDON_MAIN_PATTERN,
 	SEMVER_PATTERN,
 } from './manifest-patterns';
+import {
+	addonCapabilitiesSchema,
+	addonPlatformsSchema,
+	capabilityIssues,
+} from './manifest-capabilities';
 import { ASSET_NAME_PATTERN, ASSET_SCALES, ASSET_TYPES } from './addon-assets';
 import { DEVELOPMENT_MARKER, MANIFEST_FILENAME } from './manifest-files';
+import { superRefine, Type, type StaticDecode } from './schema';
 import { LOCALE_CODE_PATTERN } from './addon-locales';
-import { Type, type StaticDecode } from './schema';
 
 export {
 	ADDON_ID_MAX_LENGTH,
@@ -24,6 +25,11 @@ export {
 	isSemver,
 	SEMVER_PATTERN,
 } from './manifest-patterns';
+export {
+	addonCapabilitiesSchema,
+	addonPlatformsSchema,
+	validateAddonCapabilities,
+} from './manifest-capabilities';
 export { DEVELOPMENT_MARKER, MANIFEST_FILENAME } from './manifest-files';
 
 export const semverSchema = Type.String({
@@ -101,36 +107,6 @@ export const addonAssetsSchema = Type.Record(
 	{ additionalProperties: false },
 );
 
-export const addonPlatformsSchema = Type.Refine(
-	Type.Object(
-		{
-			ios: Type.Optional(
-				Type.Object(
-					{
-						capabilities: Type.Optional(
-							Type.Array(Type.Enum(NATIVE_PLUGIN_PLATFORM_CAPABILITIES.ios)),
-						),
-					},
-					{ additionalProperties: false },
-				),
-			),
-			android: Type.Optional(
-				Type.Object(
-					{
-						capabilities: Type.Optional(
-							Type.Array(Type.Enum(NATIVE_PLUGIN_PLATFORM_CAPABILITIES.android)),
-						),
-					},
-					{ additionalProperties: false },
-				),
-			),
-		},
-		{ additionalProperties: false },
-	),
-	(platforms) => Object.keys(platforms).length > 0,
-	() => 'Must list a platform.',
-);
-
 export const addonAuthorSchema = Type.Object({
 	name: Type.String({ minLength: 1 }),
 	// A string of digits, typed as the template literal Discord user ids use.
@@ -141,36 +117,40 @@ export const addonAuthorSchema = Type.Object({
  * The manifest an author publishes. Unknown keys pass through untouched, so the stored manifest is
  * what the author shipped; only the fields the platform relies on are validated.
  */
-export const addonManifestSchema = Type.Object(
-	{
-		id: addonIdSchema,
-		type: Type.Optional(Type.Enum(ADDON_KINDS)),
-		name: Type.String({ minLength: 1 }),
-		description: Type.String(),
-		authors: Type.Array(addonAuthorSchema, { minItems: 1 }),
-		icon: Type.Optional(Type.Union([Type.String(), Type.Object({ uri: Type.String() })])),
-		main: addonMainSchema,
-		version: semverSchema,
-		/** The platforms the addon runs on, each with its capabilities; absent means every platform. */
-		platforms: Type.Optional(addonPlatformsSchema),
-		capabilities: Type.Optional(Type.Array(Type.Enum(NATIVE_PLUGIN_CAPABILITIES))),
-		minNativePluginApi: Type.Optional(Type.String()),
-		unbound: Type.Optional(Type.Object({ min: Type.Optional(semverSchema) })),
-		bytecode: Type.Optional(bytecodeDigestsSchema),
-		/** The locale files `ubd build` emits beside the bundle, by code; en-US is in the bundle. */
-		locales: Type.Optional(localeDigestsSchema),
-		/** The images `ubd build` emits beside the bundle, by asset name. */
-		assets: Type.Optional(addonAssetsSchema),
-		/** Marks a plugin other plugins build on, which the plugin list hides by default. */
-		library: Type.Optional(Type.Boolean()),
-		/** The addons this one needs, by id, each with the semver range it accepts. */
-		dependencies: Type.Optional(
-			Type.Record(addonIdSchema, Type.String({ minLength: 1 }), {
-				additionalProperties: false,
-			}),
-		),
-	},
-	{ additionalProperties: true },
+export const addonManifestSchema = superRefine(
+	Type.Object(
+		{
+			id: addonIdSchema,
+			type: Type.Optional(Type.Enum(ADDON_KINDS)),
+			name: Type.String({ minLength: 1 }),
+			description: Type.String(),
+			authors: Type.Array(addonAuthorSchema, { minItems: 1 }),
+			icon: Type.Optional(Type.Union([Type.String(), Type.Object({ uri: Type.String() })])),
+			main: addonMainSchema,
+			version: semverSchema,
+			/** The platforms the addon runs on, each with its capabilities; absent means every platform. */
+			platforms: Type.Optional(addonPlatformsSchema),
+			/** Legacy: Capabilities needed on every platform; `ubd build` writes `platforms` instead. */
+			capabilities: Type.Optional(addonCapabilitiesSchema),
+			minNativePluginApi: Type.Optional(Type.String()),
+			unbound: Type.Optional(Type.Object({ min: Type.Optional(semverSchema) })),
+			bytecode: Type.Optional(bytecodeDigestsSchema),
+			/** The locale files `ubd build` emits beside the bundle, by code; en-US is in the bundle. */
+			locales: Type.Optional(localeDigestsSchema),
+			/** The images `ubd build` emits beside the bundle, by asset name. */
+			assets: Type.Optional(addonAssetsSchema),
+			/** Marks a plugin other plugins build on, which the plugin list hides by default. */
+			library: Type.Optional(Type.Boolean()),
+			/** The addons this one needs, by id, each with the semver range it accepts. */
+			dependencies: Type.Optional(
+				Type.Record(addonIdSchema, Type.String({ minLength: 1 }), {
+					additionalProperties: false,
+				}),
+			),
+		},
+		{ additionalProperties: true },
+	),
+	capabilityIssues,
 );
 
 export type PublishedManifest = StaticDecode<typeof addonManifestSchema>;

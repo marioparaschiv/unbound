@@ -109,5 +109,3 @@ export async function writeAddonFiles(
 
 	await Promise.all(paths.filter((path) => !leading.has(path)).map(write));
 }
-
-export default { downloadAddonFiles, writeAddonFiles };

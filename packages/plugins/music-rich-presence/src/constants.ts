@@ -1,7 +1,5 @@
 import type { Settings } from '@unbound-app/settings';
 
-export const PLUGIN_NAME = 'Music Rich Presence';
-
 export const DISCORD_APP_ID = '1108588077900898414';
 
 export const LASTFM_API_KEY = '790c37d90400163a5a5fe00d6ca32ef0';

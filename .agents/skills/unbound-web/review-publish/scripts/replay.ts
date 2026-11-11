@@ -21,7 +21,7 @@ import {
 	seedApprovedAddon,
 	seedSubmission,
 	serveGitHub,
-} from '../../../../../apps/web/tests/helpers/index.ts';
+} from '../../../../../apps/web/testing/index.ts';
 import {
 	COMMITTED_ADDON_MD,
 	committedPage,
@@ -290,7 +290,7 @@ async function checkExtraFiles(): Promise<Checks> {
 }
 
 // `violated` is what the code at the sync commit does; change it only with ../SKILL.md's findings.
-// Every replay failed on the code before publishArtifact moved after decide (SKILL.md, Findings).
+// Every replay failed on the code before the public writes moved after decide (FINDINGS.md).
 const REPLAYS: Replay[] = [
 	{
 		name: 'approve races reject',

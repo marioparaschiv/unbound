@@ -101,14 +101,14 @@ export function createRows(java: NativeJavaBridge) {
 }
 `,
 		"packages/client/src/api/metro/wrappers.ts": `
-export function findByPropsLazy(...args: TermOrOptions[]) {
+export function findByPropsLater(...args: TermOrOptions[]) {
 	return lazy(() => require('~/api/metro').findByProps(...args));
 }
 `,
 		"packages/client/src/api/stores.ts": `
-import { findByPropsLazy } from '~/api/metro/wrappers';
+import { findByPropsLater } from '~/api/metro/wrappers';
 
-export const Actions = findByPropsLazy('transitionToGuild', 'selectChannel', { lazy: true });
+export const Actions = findByPropsLater('transitionToGuild', 'selectChannel', { lazy: true });
 `,
 	})
 	expectNoDynamic(t, set)

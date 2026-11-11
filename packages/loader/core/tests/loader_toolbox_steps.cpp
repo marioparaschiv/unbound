@@ -82,7 +82,7 @@ int main()
     assert(loader::toolbox::menuStep(nlohmann::json{{"prompt", "text"}}, false) == MenuStep::Run);
 
     loader::BundleUpdater updater(
-        root.string(), loader::updaterSettings(settings),
+        root.string(), settings,
         [](const std::string &, double) -> std::optional<std::string> {
             return std::nullopt;
         },

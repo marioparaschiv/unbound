@@ -8,7 +8,7 @@ import { commitShaSchema } from '@unbound-app/contracts/source';
 import { APIError } from 'better-auth/api';
 
 import { rankAddonRepositories } from '~/lib/addon-repository-rank';
-import { consumeRateLimit } from '~/lib/rate-limit';
+import { consumeBudget } from '~/lib/rate-limit';
 import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';
 import type { Env } from '~/lib/env';
@@ -565,11 +565,7 @@ async function getGitHubToken(ctx: AppContext, userId: string): Promise<string |
  * @returns A client for that token; `github_not_linked` when none is linked.
  */
 export async function connectGitHub(ctx: AppContext, userId: string): Promise<GitHubClient> {
-	await consumeRateLimit(ctx, {
-		key: `api:github:${userId}`,
-		windowSeconds: ctx.env.GITHUB_RATE_LIMIT_WINDOW_SECONDS,
-		max: ctx.env.GITHUB_RATE_LIMIT_MAX,
-	});
+	await consumeBudget(ctx, { bucket: 'github', budget: 'GITHUB' }, userId);
 
 	const token = await getGitHubToken(ctx, userId);
 

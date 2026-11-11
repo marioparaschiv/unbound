@@ -1,5 +1,3 @@
-export const PLUGIN_NAME = 'Spotify Listen Along';
-
 export const LOADING_MS = 5_000;
 
 export const DRAFT_TYPE_CHANNEL_MESSAGE = 0;

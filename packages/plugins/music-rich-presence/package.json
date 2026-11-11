@@ -1,8 +1,6 @@
 {
 	"name": "music-rich-presence",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Shows what you are scrobbling on Last.fm or ListenBrainz as your Discord activity.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

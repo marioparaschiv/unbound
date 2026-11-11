@@ -1,8 +1,6 @@
 {
 	"name": "settings-demo",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Shows every generated settings row.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

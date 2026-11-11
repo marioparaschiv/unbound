@@ -11,9 +11,7 @@ import { mock } from 'bun:test';
 import type { Addon, AddonState } from '~/addons/addon';
 
 import { coreI18nMock } from './core-i18n';
-
-// The Fonts manager reads the API origin from core/constants, which the build defines `$$DEV$$` for.
-Reflect.set(globalThis, '$$DEV$$', false);
+import { mockLookups } from './lookups';
 
 // The base Addons manager reaches native FS and storage through these modules, which pull in
 // react-native. Stub both so the pure lifecycle logic loads under bun with no device harness.
@@ -36,28 +34,6 @@ export const storedSettings = new Map<string, unknown>();
 /** The bucket names managers opened their settings with, in construction order. */
 export const openedBuckets: string[] = [];
 
-/** A settings change a component re-renders on: one key written to one bucket. */
-export type SettingsChange = { store: string; key: string };
-
-type Subscription = {
-	store: string;
-	predicate?: (change: SettingsChange) => boolean;
-};
-
-/** What each `useBucket` call subscribed to, in call order. */
-export const subscriptions: Subscription[] = [];
-
-/**
- * @description Whether any recorded `useBucket` subscription re-renders on a change.
- * @param change The bucket and key written.
- * @returns Whether a subscriber would re-render.
- */
-export function rerendersOn(change: SettingsChange): boolean {
-	return subscriptions.some(
-		({ store, predicate }) => store === change.store && (!predicate || predicate(change)),
-	);
-}
-
 mock.module('~/storage/api', () => {
 	const store = {
 		get: <T>(key: string, fallback: T) =>
@@ -65,7 +41,16 @@ mock.module('~/storage/api', () => {
 		set: <T>(key: string, value: T) => {
 			if (key !== 'states') {
 				storedSettings.set(key, value);
+
+				return;
 			}
+
+			// Tests read `states` by reference, so a write replaces its contents.
+			for (const id of Object.keys(states)) {
+				delete states[id];
+			}
+
+			Object.assign(states, value);
 		},
 	};
 
@@ -75,9 +60,7 @@ mock.module('~/storage/api', () => {
 		return store;
 	}
 
-	function useBucket(bucket: string, predicate?: Subscription['predicate']) {
-		subscriptions.push({ store: bucket, predicate });
-
+	function useBucket() {
 		return store;
 	}
 
@@ -117,6 +100,9 @@ mock.module('react-native', () => ({
 // The toasts API formats its error title with core i18n, whose real module reads Discord's globals on import.
 mock.module('~/i18n/api', coreI18nMock);
 
+// The metro search reads Discord's bundle info on import; these tests find no Discord module.
+mockLookups({});
+
 // Loaded dynamically after the mocks above: static imports hoist above `mock.module`, which would let
 // the real react-native-backed fs/storage load before the stubs are registered.
 export const { Addons } = require('~/addons/addons') as typeof import('~/addons/addons');
@@ -125,7 +111,8 @@ export const { createPluginContext } =
 	require('~/native/plugin-context') as typeof import('~/native/plugin-context');
 
 /**
- * @description Loads the four addon managers, which read Discord's modules off `window` while they load.
+ * @description Loads the four addon managers, which read Discord's modules off `window` while they load, and
+ * registers them as core does.
  * @returns The base class, with every kind's manager registered.
  */
 export async function loadManagers() {
@@ -139,10 +126,12 @@ export async function loadManagers() {
 
 	const { Manager } = await import('~/addons/manager');
 
-	await import('~/plugins/manager');
-	await import('~/themes/manager');
-	await import('~/icon-packs/manager');
-	await import('~/fonts/manager');
+	const { plugins } = await import('~/plugins/manager');
+	const { themes } = await import('~/themes/manager');
+	const { icons } = await import('~/icon-packs/manager');
+	const { fonts } = await import('~/fonts/manager');
+
+	Manager.register({ plugin: plugins, theme: themes, 'icon-pack': icons, font: fonts });
 
 	return Manager;
 }

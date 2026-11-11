@@ -50,19 +50,6 @@ export function hasSpan(java: SpanBridge, text: NativeJavaReference, className: 
 }
 
 /**
- * @description Reads a text view's text and its plain string.
- * @param java The plugin's Java bridge.
- * @param view The `TextView`.
- * @returns The `CharSequence` and its string, or `null` when the view has no text.
- */
-export function readViewText(java: SpanBridge, view: NativeJavaReference): ViewText | null {
-	const text = javaReference(java.invoke(view, 'getText', []));
-	const string = text ? javaText(java.invoke(text, 'toString', [])) : undefined;
-
-	return text && string !== undefined ? { text, string } : null;
-}
-
-/**
  * @description Reads a text view's text on the main thread.
  * @param java The plugin's Java bridge.
  * @param view The text view.
@@ -117,4 +104,4 @@ export function spansOf(
 	return hits;
 }
 
-export default { readViewText, spansOf };
+export default { hasSpan, readViewTextAsync, spansOf };

@@ -40,7 +40,11 @@ async function waitUntil(port: number, listening: boolean): Promise<boolean> {
 	return false;
 }
 
-async function listenerPids(port: number): Promise<number[]> {
+async function listenerPids(port: number): Promise<number[] | { error: string }> {
+	if (!(await isListening(port))) {
+		return [];
+	}
+
 	const result = await runCommand(
 		'lsof',
 		['-nP', `-iTCP:${port}`, '-sTCP:LISTEN', '-t'],
@@ -48,7 +52,9 @@ async function listenerPids(port: number): Promise<number[]> {
 	);
 
 	if (!result.ok) {
-		return [];
+		return {
+			error: `Something listens on port ${port}, but finding its process failed: ${result.error}`,
+		};
 	}
 
 	return result.stdout
@@ -57,11 +63,6 @@ async function listenerPids(port: number): Promise<number[]> {
 		.filter((pid) => Number.isInteger(pid) && pid > 0);
 }
 
-/**
- * @description Names the log file a detached bridge writes to.
- * @param port The bridge's port.
- * @returns The path in the system temporary directory.
- */
 function bridgeLogPath(port: number): string {
 	return join(tmpdir(), `unbound-bridge-${port}.log`);
 }
@@ -94,6 +95,10 @@ function startDetached(port: number): string {
  */
 export async function launchBridge(port: number, restart: boolean): Promise<CommandOutput> {
 	const running = await listenerPids(port);
+
+	if ('error' in running) {
+		return { ok: false, text: running.error };
+	}
 
 	if (!restart && running.length) {
 		return { ok: true, text: `A bridge already listens on port ${port}.` };

@@ -3,8 +3,9 @@ import type {
 	NativePlatformAndroidInstaller,
 } from '@unbound-app/types/native-platform';
 import type { AndroidBuild, AndroidChannel } from '@unbound-app/contracts/android-builds';
-import { createApiClient } from '@unbound-app/web/client';
-import type { Api } from '@unbound-app/web/api';
+
+import { createUnboundClient } from '~/account/client';
+import type { ApiRequest } from '~/account/client';
 
 /** The patched Discord this client runs in and the builds it can move to. */
 export type DiscordBuilds = {
@@ -84,15 +85,14 @@ export function discordInstaller(): NativePlatformAndroidInstaller | undefined {
 
 /**
  * @description Lists a channel's patched Discord builds from `GET /api/v1/loader/android-builds`.
- * @param baseUrl The API origin.
  * @param channel The Google Play channel.
+ * @param request The Unbound API client to ask.
  * @returns The builds, newest Discord first; rejects when the server can't be reached or answers with an error.
  */
 export async function fetchDiscordBuilds(
-	baseUrl: string,
 	channel: AndroidChannel,
+	request: ApiRequest = createUnboundClient(),
 ): Promise<AndroidBuild[]> {
-	const request = createApiClient<Api>({ baseUrl });
 	const { builds } = await request('GET /api/v1/loader/android-builds', { query: { channel } });
 
 	return builds;
@@ -100,10 +100,12 @@ export async function fetchDiscordBuilds(
 
 /**
  * @description Reads what the in-app installer can do and, when it can install, the builds of the installed channel.
- * @param baseUrl The API origin.
+ * @param request The Unbound API client to ask.
  * @returns The installed Discord and its builds, or `null` where the installer does not apply: iOS, or Discord not patched with LSPatch.
  */
-export async function checkDiscordBuilds(baseUrl: string): Promise<DiscordBuilds | null> {
+export async function checkDiscordBuilds(
+	request: ApiRequest = createUnboundClient(),
+): Promise<DiscordBuilds | null> {
 	const installer = discordInstaller();
 	const status = installer?.status();
 
@@ -116,19 +118,9 @@ export async function checkDiscordBuilds(baseUrl: string): Promise<DiscordBuilds
 	}
 
 	const [builds, hashes] = await Promise.all([
-		fetchDiscordBuilds(baseUrl, channel),
+		fetchDiscordBuilds(channel, request),
 		installer.installedSplits(),
 	]);
 
 	return { status, builds, installed: findInstalledBuild(builds, hashes) };
 }
-
-export default {
-	discordChannel,
-	compareDiscordVersions,
-	findInstalledBuild,
-	isOlderDiscord,
-	discordInstaller,
-	fetchDiscordBuilds,
-	checkDiscordBuilds,
-};

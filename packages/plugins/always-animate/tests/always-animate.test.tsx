@@ -1,7 +1,6 @@
-import { metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
+import { logs, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
-import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
 import { memo, type ReactNode } from 'react';
@@ -41,8 +40,6 @@ function createComponent() {
 }
 
 beforeEach(() => {
-	resetHealth();
-
 	for (const name of Object.keys(PATHS) as (keyof typeof PATHS)[]) {
 		components[name] = createComponent();
 		modules[name] = { default: components[name] };
@@ -50,6 +47,7 @@ beforeEach(() => {
 	}
 
 	metro.register(avatarUtils, 'utils/AvatarUtils.tsx');
+	metro.register({}, 'records/GuildRecord.tsx');
 });
 
 const rowData = { generateMessageRowData: (_data: object, options: object) => options };
@@ -177,8 +175,6 @@ describe('health', () => {
 	});
 
 	test('a part that cannot start leaves the others animating', async () => {
-		const error = spyOn(console, 'error').mockImplementation(() => {});
-
 		modules.nameplate.default = 'not a component';
 
 		await startPlugin();
@@ -186,7 +182,6 @@ describe('health', () => {
 		expect(rendered(components.decoration)).toBe('animate:true loop:false');
 		expect(avatarUtils.getGuildIconURL({ canAnimate: false })).toBe('icon.gif');
 		expect(selfTest()).toMatchObject({ ok: false });
-		expect(error).toHaveBeenCalled();
-		error.mockRestore();
+		expect(logs.entries.some(({ level }) => level === 'error')).toBe(true);
 	});
 });

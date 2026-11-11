@@ -1,9 +1,6 @@
 /**
- * @description Throttles a function by the provided milliseconds.
- * @template A The function's argument types. Used to provide autocomplete for function arguments.
- * @param func The function to debounce.
- * @param ms The milliseconds to debounce the function by.
- * @return An instance of the function wrapped in a debounce timer.
+ * @description Delays `func` until `ms` have passed since the last call, then runs it once with that call's arguments.
+ * @returns The debounced function.
  */
 function debounce<A extends unknown[]>(
 	func: (...args: A) => void,

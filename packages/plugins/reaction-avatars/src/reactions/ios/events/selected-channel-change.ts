@@ -1,7 +1,7 @@
 import { scanVisibleCells } from '~/reactions/ios/visible-cells';
 import { cancelLayoutRefreshes } from '~/reactions/ios/collections';
 import { clearRenderedCells } from '~/reactions/ios/renderer';
-import { selectedChannelId } from '~/reactions/selected-channel';
+import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
 import type { Session } from '~/reactions/ios/session';
 import { SelectedChannelStore } from '~/reactions/modules';
 import { flux } from '@unbound-app/api';

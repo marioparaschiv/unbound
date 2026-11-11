@@ -17,7 +17,7 @@ function toState(row: SyncRow): SyncState {
 }
 
 /**
- * @description Reads a user's Cloud Sync document.
+ * @description Reads a user's Sync document.
  * @param ctx The application context.
  * @param userId The owner.
  * @returns The stored state, or revision `0` with an empty document when nothing is stored.
@@ -33,7 +33,7 @@ export async function getSyncState(ctx: AppContext, userId: string): Promise<Syn
 }
 
 /**
- * @description Saves a user's Cloud Sync document if it was merged against the stored revision.
+ * @description Saves a user's Sync document if it was merged against the stored revision.
  * @param ctx The application context.
  * @param userId The owner.
  * @param revision The revision the document was merged against; `0` when nothing was stored.
@@ -73,7 +73,7 @@ export async function saveSyncDocument(
 }
 
 /**
- * @description Deletes a user's Cloud Sync document.
+ * @description Deletes a user's Sync document.
  * @param ctx The application context.
  * @param userId The owner.
  * @returns Whether there was a document to delete.

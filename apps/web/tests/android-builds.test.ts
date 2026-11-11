@@ -6,6 +6,7 @@ import {
 import type { PublishAndroidBuildRequest } from '@unbound-app/contracts/android-builds';
 import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { getCdnUrl } from '@unbound-app/contracts/version-layout';
 import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
@@ -14,7 +15,6 @@ import listAndroidBuildsEndpoint from '~/endpoints/list-android-builds';
 import type { AppContext } from '~/lib/context';
 import { API_KEY_HEADER } from '~/api/client';
 import type { Role } from '~/lib/auth/access';
-import { getCdnUrl } from '~/lib/artifacts';
 import { user } from '~/db/schema';
 
 import { authRequest, createTestContext, signInWithDiscord } from './helpers/context';
@@ -153,7 +153,7 @@ describe('POST /api/v1/loader/android-builds', () => {
 		const created = parse(androidBuildSchema, await (await publish(admin, request)).json());
 
 		expect(created.splits.map((split) => split.url)).toEqual(
-			request.splits.map((split) => getCdnUrl(ctx.env, split.key)),
+			request.splits.map((split) => getCdnUrl(ctx.env.CDN_URL, split.key)),
 		);
 		expect(created.publishedAt).toBe(NOW.toISOString());
 

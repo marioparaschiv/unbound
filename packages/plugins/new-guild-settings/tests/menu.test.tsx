@@ -3,7 +3,14 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import { View } from 'react-native';
 import { createElement } from 'react';
 
-import { applied, contextMenus, hidden, hiddenMenus, sheets, startGuildSettings } from './discord';
+import {
+	applied,
+	contextMenus,
+	hidden,
+	hiddenMenus,
+	sheets,
+	startGuildSettings,
+} from './helpers/discord';
 
 function ActionSheetRow(_props: { label: string; onPress: () => void }) {
 	return <View />;

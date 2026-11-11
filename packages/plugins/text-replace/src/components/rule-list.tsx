@@ -5,7 +5,7 @@ import { ui } from '@unbound-app/api';
 import { View } from 'react-native';
 
 import { ruleKindMessages } from '~/components/rule-kind-messages';
-import type { RuleKind } from '~/constants';
+import type { RuleKind } from '@unbound-plugins/shared/text-replace/stored-rules';
 
 type RuleListProps = {
 	kind: RuleKind;

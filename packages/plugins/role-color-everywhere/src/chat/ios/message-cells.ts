@@ -25,7 +25,7 @@ import {
 	setMessageMentions,
 	type ChannelMentions,
 } from '~/chat/ios/ui-message-cells';
-import { CELL_SCAN_DELAYS, PLUGIN_NAME } from '~/constants';
+import { CELL_SCAN_DELAYS } from '~/constants';
 import type { Message, NativeValue } from '~/types';
 import { presentNames } from '~/shared/names';
 
@@ -110,12 +110,12 @@ function channelMentions(channelId: string | undefined): ChannelMentions {
  */
 export function colorMessageMentions(native: NativePluginBridge): () => Promise<void> {
 	const { objc, ui } = native;
-	const feature = `${PLUGIN_NAME}: chat mentions`;
+	const feature = 'chat mentions';
 	const modules = { MessageStore, ChannelStore, UserStore, SelectedChannelStore };
 
 	if (
-		!ensureModules(feature, modules) ||
-		!ensureClasses(feature, objc, ['DCDMessageTableViewCell'])
+		!ensureModules(modules, feature) ||
+		!ensureClasses(objc, ['DCDMessageTableViewCell'], feature)
 	) {
 		return async () => {};
 	}
@@ -315,7 +315,7 @@ export function colorMessageMentions(native: NativePluginBridge): () => Promise<
 					if (stopped) return;
 
 					if (!isCancellation(error)) {
-						console.error(`[${PLUGIN_NAME}] Failed to paint native mentions:`, error);
+						logger.error(`Failed to paint native mentions:`, error);
 					}
 				})
 				.finally(() => {
@@ -355,10 +355,7 @@ export function colorMessageMentions(native: NativePluginBridge): () => Promise<
 
 				void scanVisibleCells().catch((error) => {
 					if (!isCancellation(error)) {
-						console.error(
-							`[${PLUGIN_NAME}] Failed to scan visible message cells:`,
-							error,
-						);
+						logger.error(`Failed to scan visible message cells:`, error);
 					}
 				});
 			}, delay);

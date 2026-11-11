@@ -1,7 +1,8 @@
 import { appendFileSync, readdirSync, readFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 
 import { workflowFileProblems } from './workflow-files';
+import { ROOT } from './workspaces';
 
 export type ConfigKind = 'secret' | 'var';
 
@@ -20,7 +21,6 @@ export type ConfigReference = {
 
 export type ConfigStatus = ConfigReference & ConfigRequirement & { present: boolean };
 
-const root = resolve(import.meta.dir, '..');
 const IGNORED = new Set(['GITHUB_TOKEN']);
 const REFERENCE = /\b(secrets|vars)\.([A-Z][A-Z0-9_]*)\b/g;
 
@@ -53,7 +53,7 @@ export function referencedConfig(
 	}
 
 	for (const directory of directories) {
-		scan(join(root, directory));
+		scan(join(ROOT, directory));
 	}
 
 	return [...found]
@@ -66,7 +66,7 @@ export function referencedConfig(
  * @returns The requirements keyed by name.
  */
 export function loadRequirements(): ConfigRequirements {
-	const path = join(root, '.github/config-requirements.json');
+	const path = join(ROOT, '.github/config-requirements.json');
 	const value: unknown = JSON.parse(readFileSync(path, 'utf8'));
 
 	if (!isRequirements(value)) {
@@ -145,7 +145,6 @@ export function renderConfigSummary(statuses: ConfigStatus[]): string {
 
 /**
  * @description Names the environment variable the health workflow sets to whether a name is configured.
- * @param name The secret or variable name.
  * @returns The environment variable name.
  */
 export function presenceVariable(name: string): string {
@@ -165,7 +164,7 @@ if (import.meta.main) {
 		appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
 	}
 
-	const problems = workflowFileProblems(root);
+	const problems = workflowFileProblems(ROOT);
 
 	for (const problem of problems) {
 		console.error(problem);

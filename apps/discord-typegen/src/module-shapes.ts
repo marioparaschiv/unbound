@@ -22,7 +22,6 @@ export type ModuleShape = {
 
 /**
  * @description Reads the top-level keys of an object literal as hermes-dec prints it: `{'a': null, 'b': {'c': 1}}`.
- * @param literal The literal's text.
  * @returns The keys at depth one, in source order.
  */
 export function objectKeys(literal: string): string[] {
@@ -58,7 +57,6 @@ export function objectKeys(literal: string): string[] {
  * object stops counting.
  * The default export's keys are read only from an object literal the factory builds at its top level, the shape
  * Discord's action-creator modules use: `r2 = {'sendMessage': null, ...}; r3['default'] = r2;`.
- * @param module The module.
  * @returns The module's shape.
  */
 export function shapeOf(module: ModuleRecord): ModuleShape {

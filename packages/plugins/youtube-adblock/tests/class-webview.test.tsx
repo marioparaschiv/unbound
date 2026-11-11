@@ -1,5 +1,4 @@
 import { metro, pluginHolds, render, startPlugin } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { describe, expect, test } from 'bun:test';
 import { Component } from 'react';
 import { View, type ViewProps } from 'react-native';
@@ -16,7 +15,6 @@ class ClassWebView extends Component<WebViewProps> {
 
 describe('a WebView that is a class component', () => {
 	test('is skipped and reported, and renders unchanged', async () => {
-		resetHealth();
 		metro.register({ WebView: ClassWebView });
 		await startPlugin();
 

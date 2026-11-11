@@ -2,13 +2,12 @@ import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { ModuleRecord } from '../src/types';
-
-import { isEnumLike, passedType } from '../src/rules';
-import { runPipeline } from '../src/pipeline';
-import { loadHostProps } from '../src/hosts';
-import { splitModules } from '../src/split';
-import { TYPES_DIR } from '../src/paths';
+import { isEnumLike, passedType } from '~/rules';
+import type { ModuleRecord } from '~/types';
+import { runPipeline } from '~/pipeline';
+import { loadHostProps } from '~/hosts';
+import { splitModules } from '~/split';
+import { TYPES_DIR } from '~/paths';
 
 // Verbatim module slices of discord-350's main.js; each fixture names its source path.
 const FIXTURE_IDS = [

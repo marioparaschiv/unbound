@@ -46,5 +46,3 @@ export function createPluginContext(
 		dispose: scoped.dispose,
 	};
 }
-
-export default { beginNativeStop, createPluginContext };

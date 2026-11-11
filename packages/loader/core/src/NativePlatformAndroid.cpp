@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 
+#include "LoaderJSIJSON.h"
 #include "NativePluginRuntime.h"
 
 namespace loader {

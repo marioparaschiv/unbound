@@ -1,13 +1,9 @@
 import type { ApiErrorCode } from '@unbound-app/contracts/errors';
 
-import type { PathParams } from '~/lib/api/endpoint';
 import type { AppContext } from '~/lib/context';
 import { ApiRequestError } from '~/api/client';
 
-/** A served endpoint, whatever schemas it validates its request and response against. */
-export type AnyEndpoint = {
-	handle(ctx: AppContext, request: Request, params?: PathParams): Promise<Response>;
-};
+import { loadServedEndpoints } from './api-routes';
 
 type MethodHandlers = Record<string, (request: Bun.BunRequest) => Promise<Response>>;
 
@@ -17,16 +13,16 @@ export type ApiFailure = {
 };
 
 /**
- * @description Serves endpoints over HTTP on a random port, with Better Auth mounted at `/api/auth`,
- * so tests can call them through the typed API client and the auth client exactly as the routes would.
+ * @description Serves every endpoint the `/api/v1` route files serve over HTTP on a random port, with
+ * Better Auth mounted at `/api/auth`, so tests call them through the typed API client and the auth
+ * client exactly as the routes would.
  * @param ctx The application context the endpoints run with.
- * @param endpoints The endpoints by `"METHOD /api/v1/path/$param"`, as in the API map.
  * @returns The running server.
  */
-export function serveEndpoints(ctx: AppContext, endpoints: Record<string, AnyEndpoint>) {
+export async function serveApi(ctx: AppContext): Promise<Bun.Server<undefined>> {
 	const routes: Record<string, MethodHandlers> = {};
 
-	for (const [route, target] of Object.entries(endpoints)) {
+	for (const [route, target] of await loadServedEndpoints()) {
 		const [method = '', path = ''] = route.split(' ');
 		const handlers = (routes[path.replaceAll('$', ':')] ??= {});
 

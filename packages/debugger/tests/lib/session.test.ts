@@ -1,0 +1,136 @@
+import type { EvalResult } from '@unbound-app/debugger-protocol';
+import { afterEach, describe, expect, test } from 'bun:test';
+
+import {
+	attachController,
+	attachDevice,
+	detachController,
+	detachDevice,
+	evaluateForController,
+	handleDeviceMessage,
+	type SocketLike,
+} from '~/lib/session';
+
+type RecordingSocket = SocketLike & { frames: unknown[] };
+
+function recordingSocket(): RecordingSocket {
+	const frames: unknown[] = [];
+
+	return { frames, send: (data) => void frames.push(JSON.parse(data)), close: () => {} };
+}
+
+function evalResults(socket: RecordingSocket): EvalResult[] {
+	return socket.frames.filter(
+		(frame): frame is EvalResult => (frame as EvalResult).type === 'eval-result',
+	);
+}
+
+const device = recordingSocket();
+const controller = recordingSocket();
+
+afterEach(() => {
+	detachController(controller);
+	detachDevice(device);
+	device.frames.length = 0;
+	controller.frames.length = 0;
+});
+
+describe('evaluateForController', () => {
+	test('fails the eval once the requested timeout elapses', async () => {
+		attachDevice(device);
+		attachController(controller);
+
+		evaluateForController(controller, { type: 'eval', id: 'slow', code: 'x', timeout: 30 });
+		await Bun.sleep(80);
+
+		expect(evalResults(controller)).toEqual([
+			{
+				type: 'eval-result',
+				id: 'slow',
+				ok: false,
+				error: 'Evaluation timed out after 30ms.',
+				code: 'timeout',
+			},
+		]);
+	});
+
+	test('delivers a result that arrives within the requested timeout', async () => {
+		attachDevice(device);
+		attachController(controller);
+
+		evaluateForController(controller, { type: 'eval', id: 'fast', code: 'x', timeout: 200 });
+		await Bun.sleep(20);
+		handleDeviceMessage({ type: 'eval-result', id: 'fast', ok: true, value: '42' });
+		await Bun.sleep(220);
+
+		expect(device.frames).toEqual([{ type: 'eval', id: 'fast', code: 'x' }]);
+		expect(evalResults(controller)).toEqual([
+			{ type: 'eval-result', id: 'fast', ok: true, value: '42' },
+		]);
+	});
+});
+
+describe('detachController', () => {
+	test('drops its in-flight eval so a late result goes nowhere', () => {
+		attachDevice(device);
+		attachController(controller);
+		evaluateForController(controller, { type: 'eval', id: 'gone', code: 'x', timeout: 1_000 });
+		detachController(controller);
+		controller.frames.length = 0;
+
+		handleDeviceMessage({ type: 'eval-result', id: 'gone', ok: true, value: '1' });
+
+		expect(controller.frames).toEqual([]);
+	});
+});
+
+describe('attachDevice', () => {
+	test('lets a reconnecting device replace one that never closed', async () => {
+		let closed = false;
+		const stale = { ...recordingSocket(), close: () => void (closed = true) };
+
+		attachDevice(stale);
+		attachController(controller);
+		evaluateForController(controller, { type: 'eval', id: 'stuck', code: 'x', timeout: 1_000 });
+
+		attachDevice(device);
+		evaluateForController(controller, { type: 'eval', id: 'fresh', code: 'y', timeout: 200 });
+		handleDeviceMessage({ type: 'eval-result', id: 'fresh', ok: true, value: '1' });
+		await Bun.sleep(10);
+
+		expect(closed).toBe(true);
+		expect(device.frames).toEqual([{ type: 'eval', id: 'fresh', code: 'y' }]);
+		expect(evalResults(controller)).toEqual([
+			{
+				type: 'eval-result',
+				id: 'stuck',
+				ok: false,
+				error: 'Device disconnected before the evaluation completed.',
+				code: 'device-disconnected',
+			},
+			{ type: 'eval-result', id: 'fresh', ok: true, value: '1' },
+		]);
+	});
+});
+
+describe('device hello', () => {
+	test('reports the device to controllers until it disconnects', () => {
+		const info = {
+			platform: 'android',
+			discordVersion: '352.10',
+			loaderVersion: '1.0.0',
+			clientVersion: '0.9.0',
+		};
+
+		attachDevice(device);
+		attachController(controller);
+		handleDeviceMessage({ type: 'hello', device: info });
+		detachDevice(device);
+
+		expect(controller.frames).toEqual([
+			{ type: 'device-status', connected: true },
+			{ type: 'device-status', connected: true, device: info },
+			{ type: 'device-status', connected: false },
+		]);
+	});
+});

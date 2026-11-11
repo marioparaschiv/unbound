@@ -7,12 +7,8 @@ This documents the Discord design-system primitives Unbound composes for its UI.
 Discord ships its entire mobile design system as **one metro module**, keyed by `createStyles`, `dismissAlerts`, and `ContextMenu`. Unbound resolves it once and re-exports it as `Discord`:
 
 ```ts
-// ~/metro/components.ts
-export const Discord: DesignModule = findByPropsLazy(
-	'createStyles',
-	'dismissAlerts',
-	'ContextMenu',
-);
+// ~/metro/design.ts
+const designModule: DesignModule = find(byProps('createStyles', 'dismissAlerts', 'ContextMenu'));
 ```
 
 The export is typed as `DesignModule` (`packages/types/typings/components.ts`): the generated components plus the hand-typed helpers. Every component the barrel exports (`Text`, `TableRow`, `Menu`, `BottomSheet`, `Modal`, ...) is typed only by the generator, as `DesignBarrelComponents` in `packages/discord-types/src/barrels.gen.d.ts` (published as `@unbound-app/discord-types/design`). Regenerate it with `bun run generate-discord-types` after a Discord update, and fix a wrong component type in the generator, never by hand. Take a component's props with `ComponentProps<DesignModule['Text']>`. The barrel's non-component exports (`createStyles`, `useToken`, `openAlert`, `useNavigation`, the colour helpers, runtime enums, ...) are not generated; they are hand-typed in `DesignHelpers`, whose keys never overlap a generated component.

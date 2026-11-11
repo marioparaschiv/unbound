@@ -18,5 +18,8 @@
 		"@unbound-app/api": "workspace:*",
 		"react": "catalog:react",
 		"react-native": "^0.86.0"
+	},
+	"checks": {
+		"plugins": true
 	}
 }

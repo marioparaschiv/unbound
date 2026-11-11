@@ -1,4 +1,3 @@
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { metro, plugins, render, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, jest, test } from 'bun:test';
 import { storage } from '@unbound-app/api';
@@ -31,7 +30,6 @@ function renderActions(draft: string) {
 }
 
 beforeEach(async () => {
-	resetHealth();
 	metro.register(
 		ChatInputRightActions,
 		'modules/chat_input/native/action_buttons/ChatInputRightActions.tsx',

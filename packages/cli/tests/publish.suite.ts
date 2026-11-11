@@ -26,7 +26,7 @@ const { ctx, close } = await createTestContext({
 	ADDON_MAX_BYTES: String(ADDON_MAX_BYTES),
 	GITHUB_API_URL: github.url.href,
 });
-const server = servePublishApi(ctx);
+const server = await servePublishApi(ctx);
 const config = createTempDir();
 
 afterAll(async () => {

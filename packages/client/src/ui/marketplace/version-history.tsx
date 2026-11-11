@@ -4,7 +4,6 @@ import { useState } from 'react';
 
 import { fetchAddonVersions } from '~/addons/versions';
 import { Discord } from '~/metro/components';
-import { API_URL } from '~/core/constants';
 import { messages } from '~/i18n/api';
 
 import StoreSection from './store-section';
@@ -15,15 +14,13 @@ type VersionHistoryProps = {
 	addon: ListedAddon;
 };
 
-const loadVersions = (id: string) => fetchAddonVersions(id, { baseUrl: API_URL });
-
 /**
  * @description The store page's What's new card: the listed version's changes from the catalog, then
  * every version on a timeline once asked for, which is the only request the card makes.
  */
 function VersionHistory({ addon }: VersionHistoryProps) {
 	const [expanded, setExpanded] = useState(false);
-	const { state, retry } = useResource(expanded ? addon.id : null, loadVersions);
+	const { state, retry } = useResource(expanded ? addon.id : null, fetchAddonVersions);
 	const versions = state.status === 'ready' ? state.value : [addon.latestVersion];
 
 	return (

@@ -33,5 +33,3 @@ export function issueURL(info: DebugInfo, entitlements = ''): string {
 
 	return `https://github.com/${REPOSITORY}/issues/new?${query.toString()}`;
 }
-
-export default { issueEnvironment, issueURL };

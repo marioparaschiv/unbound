@@ -1,11 +1,10 @@
-import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
+import type { Feature } from '@unbound-plugins/shared/lifecycle/features';
 import { settings } from '@unbound-app/settings';
 
 import { patchUploadPreviewSheet } from '~/anonymise/preview-sheet';
 import { patchCloudUpload } from '~/anonymise/cloud-upload';
 import { createUploadChoices } from '~/anonymise/uploads';
 import { patchSend } from '~/anonymise/send';
-import { PLUGIN_NAME } from '~/constants';
 
 /**
  * @description Sends uploaded files under an anonymous name, and adds a per-file switch to the upload preview sheet.
@@ -14,12 +13,12 @@ import { PLUGIN_NAME } from '~/constants';
  * The Addon scope removes the patches and module waits when the plugin stops.
  * A patch that throws, such as on an unexpected sheet shape, is logged and recorded, and the others still apply.
  */
-export function startAnonymise(): () => Promise<void> {
+export function anonymiseFeatures(): Feature[] {
 	const choices = createUploadChoices(() => settings);
 
-	return startFeatures(PLUGIN_NAME, [
+	return [
 		() => patchCloudUpload(choices),
 		() => patchSend(choices),
 		() => patchUploadPreviewSheet(choices),
-	]);
+	];
 }

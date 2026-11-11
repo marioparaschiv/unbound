@@ -13,8 +13,8 @@
 #include "LoaderLaunchGuard.h"
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
+#include "LoaderPreferences.h"
 #include "LoaderVersion.h"
-#include "NativePlatformBridge.h"
 
 namespace loader {
 namespace jsi = facebook::jsi;
@@ -36,14 +36,15 @@ static double randomUnit()
     return std::uniform_real_distribution<double>(0.0, 1.0)(generator);
 }
 
-LoaderPipeline::LoaderPipeline(std::shared_ptr<LoaderHost> host, UpdaterSettings settings,
+LoaderPipeline::LoaderPipeline(std::shared_ptr<PipelineHost> host, SettingsStore &settings,
                                BundleUpdater &updater)
-    : host_(std::move(host)), settings_(std::move(settings)), updater_(updater)
+    : host_(std::move(host)), settings_(settings), updater_(updater)
 {
-    bootstrap::setScriptSource([weak = std::weak_ptr<LoaderHost>(host_)](const std::string &name) {
-        auto host = weak.lock();
-        return host ? host->resource(name) : std::nullopt;
-    });
+    bootstrap::setScriptSource(
+        [weak = std::weak_ptr<PipelineHost>(host_)](const std::string &name) {
+            auto host = weak.lock();
+            return host ? host->resource(name) : std::nullopt;
+        });
     currentPipeline.store(this);
 }
 
@@ -88,7 +89,7 @@ void LoaderPipeline::prepare()
         firstDownload_ = FirstDownload{token};
     }
 
-    if (!settings_.getBoolean("loader.enabled", true))
+    if (!preferences::loaderEnabled(settings_))
     {
         log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Loader is disabled. Aborting.");
         return;
@@ -120,11 +121,10 @@ void LoaderPipeline::prepare()
     bool flavourSwitch = hasSaved && !savedFlavourIsCurrent(savedPath);
     // The first launch after a loader update waits too, as the bundle this loader can now run would
     // otherwise need a second restart.
-    bool loaderChanged =
-        hasSaved && settings_.getString(kCheckedLoaderSetting, "") != loaderVersion();
+    bool loaderChanged = hasSaved && preferences::checkedByLoader(settings_) != loaderVersion();
     // Hot reload waits for the newest bundle too: reloading once it lands would tear the runtime
     // down while Discord's bundle is still starting its native modules.
-    bool hotReload       = settings_.getBoolean("loader.update.hmr", false);
+    bool hotReload       = preferences::hotReloadEnabled(settings_);
     bool waitForDownload = !hasSaved || flavourSwitch || loaderChanged || hotReload;
     {
         std::lock_guard<std::mutex> lock(savedMutex_);
@@ -171,7 +171,7 @@ bool LoaderPipeline::savedFlavourIsCurrent(const std::string &path) const
 void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bool waitForDownload,
                                         uint64_t token, size_t attempt)
 {
-    bool reloadOnUpdate = !hasSaved || settings_.getBoolean("loader.update.hmr", false);
+    bool reloadOnUpdate = !hasSaved || preferences::hotReloadEnabled(settings_);
 
     if (waitsForWifi(hasSaved, waitForDownload))
     {
@@ -199,14 +199,14 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
         {
             downloaded = updater_.downloadBundle(savedPath, host_->resolveUpdateURL(),
                                                  host_->runtimeBytecodeVersion());
-            settings_.setString(kCheckedLoaderSetting, loaderVersion());
+            preferences::setCheckedByLoader(settings_, loaderVersion());
         }
         catch (const std::exception &error)
         {
             const auto         *update  = dynamic_cast<const BundleUpdateError *>(&error);
             BundleUpdateFailure failure = update ? update->failure : BundleUpdateFailure::Network;
             // Even a failed check counts, so an offline launch does not wait again next time.
-            settings_.setString(kCheckedLoaderSetting, loaderVersion());
+            preferences::setCheckedByLoader(settings_, loaderVersion());
             log(hasSaved ? LogLevel::Warning : LogLevel::Error, LOG_CATEGORY_DEFAULT,
                 std::string("Bundle download failed. (") + error.what() + ")" +
                     (hasSaved ? "; using the cached bundle" : ""));
@@ -266,13 +266,12 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
 
 void LoaderPipeline::announceCrashDisabledAddons()
 {
-    std::shared_ptr<NativePlatformProvider> provider = currentNativePlatformProvider();
-    if (!provider || provider->documents.empty())
+    if (updater_.documents().empty())
     {
         return;
     }
 
-    for (const CrashedAddon &addon : takeUnannouncedCrashDisabledAddons(provider->documents))
+    for (const CrashedAddon &addon : takeUnannouncedCrashDisabledAddons(updater_.documents()))
     {
         recordCrashSummary(crashDisabledNotice(addon));
         host_->crashAlert(crashDisabledNotice(addon));
@@ -287,7 +286,7 @@ void LoaderPipeline::injectPreBundle(jsi::Runtime &runtime, const std::string &b
 
     // Before the bundle and Discord's, so the backend installs React's DevTools hook before React
     // loads.
-    if (settings_.getBoolean("loader.devtools", false))
+    if (preferences::devtoolsEnabled(settings_))
     {
         if (std::optional<std::string> devtools =
                 updater_.devtoolsScript(bundlePath, host_->runtimeBytecodeVersion()))
@@ -470,9 +469,9 @@ void LoaderPipeline::guardLaunch()
         recordCrashSummary(launchRollBackNotice(verdict.failures));
         host_->crashAlert(launchRollBackNotice(verdict.failures));
     }
-    if (verdict.enterRecovery && settings_.setBoolean)
+    if (verdict.enterRecovery)
     {
-        settings_.setBoolean("recovery", true);
+        preferences::setRecoveryEnabled(settings_, true);
         log(LogLevel::Error, LOG_CATEGORY_DEFAULT, launchRecoveryNotice(verdict.failures));
         recordCrashSummary(launchRecoveryNotice(verdict.failures));
         host_->crashAlert(launchRecoveryNotice(verdict.failures));
@@ -534,7 +533,7 @@ double LoaderPipeline::retryDelay(size_t attempt, std::optional<double> retryAft
 bool LoaderPipeline::waitsForWifi(bool hasSaved, bool waitForDownload)
 {
     // Only a launch that already has a bundle to run can put its update off.
-    return hasSaved && !waitForDownload && settings_.getBoolean(kWaitForWifiSetting, true) &&
+    return hasSaved && !waitForDownload && preferences::updatesWaitForWifi(settings_) &&
            host_->onMeteredNetwork();
 }
 
@@ -561,7 +560,7 @@ void LoaderPipeline::checkForUpdate(uint64_t token, size_t attempt)
 
 void LoaderPipeline::onForeground()
 {
-    if (!settings_.getBoolean("loader.enabled", true) || checking_.load())
+    if (!preferences::loaderEnabled(settings_) || checking_.load())
     {
         return;
     }

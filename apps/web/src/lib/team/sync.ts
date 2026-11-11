@@ -5,6 +5,7 @@ import { reconcileSiteRoles, type RoleChange } from '~/lib/team/site-roles';
 import { writeTeamSnapshot, type TeamEntry } from '~/lib/team/snapshot';
 import { fetchGuildMembers } from '~/lib/team/guild-members';
 import { readCandidateIds } from '~/lib/team/candidates';
+import { startPeriodicJob, type Job } from '~/lib/jobs';
 import type { AppContext } from '~/lib/context';
 
 const logger = createLogger('Web', 'Team');
@@ -42,12 +43,12 @@ export async function syncTeam(
 }
 
 /**
- * @description Runs {@link syncTeam} at boot and every `TEAM_SYNC_INTERVAL_SECONDS` when every team
- * role id is set. A failed run is logged and retried on the next tick; a slow run is never overlapped.
+ * @description Runs {@link syncTeam} at boot and every `TEAM_SYNC_INTERVAL_SECONDS` as a periodic
+ * job when every team role id is set.
  * @param ctx The application context.
- * @returns The interval timer, or `undefined` when a team role id is unset.
+ * @returns The started job, or `undefined` when a team role id is unset.
  */
-export function startTeamSync(ctx: AppContext): Timer | undefined {
+export function startTeamSync(ctx: AppContext): Job | undefined {
 	const config = readTeamSyncConfig(ctx.env);
 
 	if (config.kind === 'off') {
@@ -56,33 +57,15 @@ export function startTeamSync(ctx: AppContext): Timer | undefined {
 		return;
 	}
 
-	let running = false;
+	return startPeriodicJob(ctx.jobs, 'team', ctx.env.TEAM_SYNC_INTERVAL_SECONDS, async () => {
+		const { team, changes } = await syncTeam(ctx, config.ids);
 
-	async function sync(roleIds: TeamRoleIds) {
-		if (running) return;
-
-		running = true;
-
-		try {
-			const { team, changes } = await syncTeam(ctx, roleIds);
-
-			for (const change of changes) {
-				logger.info(
-					`Set the role of user ${change.userId}: ${change.from} → ${change.to}.`,
-				);
-			}
-
-			logger.debug(`Synced ${team} team members.`);
-		} catch (error) {
-			logger.error('Failed to sync the team:', error);
-		} finally {
-			running = false;
+		for (const change of changes) {
+			logger.info(`Set the role of user ${change.userId}: ${change.from} → ${change.to}.`);
 		}
-	}
 
-	void sync(config.ids);
-
-	return setInterval(() => void sync(config.ids), ctx.env.TEAM_SYNC_INTERVAL_SECONDS * 1000);
+		logger.debug(`Synced ${team} team members.`);
+	});
 }
 
 export default { syncTeam, startTeamSync };

@@ -3,8 +3,8 @@ import { basename, join } from 'node:path';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 
-import { generateDocs, listDocsEntryPoints } from '../src/docs';
-import { API_SRC } from '../src/paths';
+import { generateDocs, listDocsEntryPoints } from '~/docs';
+import { API_SRC } from '~/config';
 
 type Reflection = {
 	id: number;

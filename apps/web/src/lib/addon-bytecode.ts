@@ -1,18 +1,9 @@
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
+import { getBytecodePath } from '@unbound-app/contracts/version-layout';
 
 import type { GitHubClient, GitTree } from '~/lib/github';
 import { ApiError } from '~/lib/api/errors';
 import type { Env } from '~/lib/env';
-
-/**
- * @description Names the compiled bundle beside a bundle, as the loader and client look it up.
- * @param bundlePath The bundle's path, such as `dist/index.js`.
- * @param bytecodeVersion The Hermes bytecode version.
- * @returns The compiled bundle's path, such as `dist/index.98.hbc`.
- */
-export function compiledBundlePath(bundlePath: string, bytecodeVersion: string): string {
-	return `${bundlePath.replace(/\.[^./]+$/, '')}.${bytecodeVersion}.hbc`;
-}
 
 /**
  * @description Reads the compiled bundles `manifest.bytecode` lists, each checked against its SHA-512.
@@ -37,7 +28,7 @@ export async function readBytecode(
 	const compiled = new Map<string, Uint8Array>();
 
 	for (const [bytecodeVersion, digest] of Object.entries(manifest.bytecode ?? {})) {
-		const path = compiledBundlePath(bundlePath, bytecodeVersion);
+		const path = getBytecodePath(bundlePath, bytecodeVersion);
 		const entry = tree.get(path);
 
 		if (!entry || entry.size === 0) {
@@ -69,4 +60,4 @@ export async function readBytecode(
 	return compiled;
 }
 
-export default { compiledBundlePath, readBytecode };
+export default { readBytecode };

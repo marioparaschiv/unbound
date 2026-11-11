@@ -1,0 +1,183 @@
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import type { Plugin } from '@unbound-app/types';
+
+import { installUnboundNative, makeManifest, resetDevice, states, writes } from '../helpers/addons';
+
+const { Plugins } = await import('~/plugins/manager');
+
+type Evaluation = [folder: string, bytecodeVersion: number];
+
+let evaluations: Evaluation[];
+
+let compiled: (() => Plugin) | undefined;
+
+function compiledPlugin(marker: string): Plugin {
+	return { start: () => void evaluations.push([marker, 0]), stop: () => {} };
+}
+
+function scanCompiled(sha256: string) {
+	const manifest = { ...makeManifest('bytecode.example'), folder: 'bytecode.example' };
+
+	installUnboundNative([{ manifest, sha256 }]);
+}
+
+function scan(bundle: string) {
+	const manifest = { ...makeManifest('bytecode.example'), folder: 'bytecode.example' };
+
+	installUnboundNative([{ manifest, bundle }]);
+}
+
+beforeEach(() => {
+	resetDevice();
+	Reflect.set(globalThis, 'window', globalThis);
+	Reflect.set(globalThis, 'React', { createElement: () => null });
+	states['bytecode.example'] = true;
+	evaluations = [];
+	compiled = () => compiledPlugin('bytecode');
+	installUnboundNative([]);
+	Object.defineProperty(globalThis, 'NativePlatform', {
+		configurable: true,
+		writable: true,
+		value: {
+			addons: {
+				verify: () => ({ status: 'unsigned' }),
+				evaluateBytecode: (folder: string, bytecodeVersion: number) => {
+					evaluations.push([folder, bytecodeVersion]);
+
+					return compiled;
+				},
+			},
+		},
+	});
+});
+
+afterEach(() => {
+	globalThis.NativePlatform = undefined;
+	globalThis.UnboundNative = undefined;
+	Reflect.deleteProperty(globalThis, 'React');
+	Reflect.deleteProperty(globalThis, 'window');
+});
+
+describe('plugin bytecode', () => {
+	test('starts a scanned plugin from the bytecode compiled for this runtime', () => {
+		scan('({ start() {}, stop() {} })');
+		new Plugins().initialize();
+
+		expect(evaluations).toEqual([
+			['bytecode.example', 98],
+			['bytecode', 0],
+		]);
+	});
+
+	test('falls back to the source when there is no matching bytecode', () => {
+		compiled = undefined;
+		scan('({ start() { globalThis.__bytecodeTestSource = true; }, stop() {} })');
+		new Plugins().initialize();
+
+		expect(evaluations).toEqual([['bytecode.example', 98]]);
+		expect(Reflect.get(globalThis, '__bytecodeTestSource')).toBe(true);
+		Reflect.deleteProperty(globalThis, '__bytecodeTestSource');
+	});
+
+	test('runs a bundle that differs from the scanned one from source', () => {
+		scan('({ start() {}, stop() {} })');
+		const plugins = new Plugins();
+
+		plugins.initialize();
+
+		evaluations = [];
+
+		plugins.load(
+			'({ start() { globalThis.__bytecodeTestReloaded = true; }, stop() {} })',
+			makeManifest('bytecode.example'),
+		);
+
+		expect(evaluations).toEqual([]);
+		expect(Reflect.get(globalThis, '__bytecodeTestReloaded')).toBe(true);
+		Reflect.deleteProperty(globalThis, '__bytecodeTestReloaded');
+	});
+
+	test('restarts a plugin without loading its bytecode again', async () => {
+		scan('({ start() {}, stop() {} })');
+		const plugins = new Plugins();
+
+		plugins.initialize();
+		await plugins.stop('bytecode.example');
+		plugins.start('bytecode.example');
+
+		expect(evaluations).toEqual([
+			['bytecode.example', 98],
+			['bytecode', 0],
+			['bytecode', 0],
+		]);
+	});
+
+	test('evaluates a new bundle even after the old one was cached', () => {
+		scan('({ start() {}, stop() {} })');
+		const plugins = new Plugins();
+
+		plugins.initialize();
+		plugins.load(
+			'({ start() { globalThis.__bytecodeTestFresh = true; }, stop() {} })',
+			makeManifest('bytecode.example'),
+		);
+
+		expect(Reflect.get(globalThis, '__bytecodeTestFresh')).toBe(true);
+		Reflect.deleteProperty(globalThis, '__bytecodeTestFresh');
+	});
+
+	test('runs a pushed bundle from the bytecode pushed with it', async () => {
+		scan('({ start() {}, stop() {} })');
+		const plugins = new Plugins();
+
+		plugins.initialize();
+		evaluations = [];
+		writes.length = 0;
+
+		const pushed = { ...makeManifest('bytecode.example'), bytecode: { '98': 'digest' } };
+		const result = await plugins.reload(
+			'bytecode.example',
+			'({ start() { globalThis.__bytecodeTestPushedSource = true; }, stop() {} })',
+			pushed,
+			'xh+8Aw==',
+		);
+
+		expect(result).toEqual({ ok: true });
+		expect(writes).toContain('Unbound/Plugins/bytecode.example/index.98.hbc');
+		expect(evaluations).toEqual([
+			['bytecode.example', 98],
+			['bytecode', 0],
+		]);
+		expect(Reflect.get(globalThis, '__bytecodeTestPushedSource')).toBeUndefined();
+	});
+
+	test('starts a plugin the loader kept the source of from its bytecode', () => {
+		scanCompiled('abc');
+		const plugins = new Plugins();
+
+		plugins.initialize();
+
+		expect(evaluations).toEqual([
+			['bytecode.example', 98],
+			['bytecode', 0],
+		]);
+		expect(plugins.listInstalled()).toEqual([
+			expect.objectContaining({ id: 'bytecode.example', sha256: 'abc' }),
+		]);
+	});
+
+	test('reads a kept source from the loader when its bytecode fails', () => {
+		compiled = undefined;
+		Reflect.set(
+			globalThis.NativePlatform!.addons,
+			'readSource',
+			(folder: string) =>
+				`({ start() { globalThis.__bytecodeTestKept = '${folder}'; }, stop() {} })`,
+		);
+		scanCompiled('abc');
+		new Plugins().initialize();
+
+		expect(Reflect.get(globalThis, '__bytecodeTestKept')).toBe('bytecode.example');
+		Reflect.deleteProperty(globalThis, '__bytecodeTestKept');
+	});
+});

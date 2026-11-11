@@ -4,7 +4,6 @@ import type { NativePluginBridge } from '@unbound-app/api/native';
 import type { Enqueue } from '~/chat/native-mentions';
 import { colorMessageMentions } from '~/chat/ios/message-cells';
 import { colorChatInputMentions } from '~/chat/ios/chat-input';
-import { PLUGIN_NAME } from '~/constants';
 
 /**
  * @description Colors mentions in native message cells and the chat input on iOS.
@@ -24,7 +23,7 @@ export function enableMentions(native: NativePluginBridge, enqueue: Enqueue): ()
 				removers.push(apply());
 			} catch (error) {
 				if (!isCancellation(error)) {
-					console.error(`[${PLUGIN_NAME}] Failed to color native mentions:`, error);
+					logger.error(`Failed to color native mentions:`, error);
 				}
 			}
 		}
@@ -34,10 +33,7 @@ export function enableMentions(native: NativePluginBridge, enqueue: Enqueue): ()
 		enqueue(async () => {
 			for (const result of await Promise.allSettled(removers.map((remove) => remove()))) {
 				if (result.status === 'rejected') {
-					console.error(
-						`[${PLUGIN_NAME}] Failed to restore native mentions:`,
-						result.reason,
-					);
+					logger.error(`Failed to restore native mentions:`, result.reason);
 				}
 			}
 		});

@@ -1,4 +1,5 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
+import { skipFeature } from '@unbound-plugins/shared/lifecycle/features';
 import type { PluginContext } from '@unbound-app/api/native';
 
 import { createAndroidIndicators } from '~/latency-indicator/android/indicators';
@@ -15,7 +16,7 @@ export function createIndicators(
 	context: PluginContext,
 	records: LatencyRecords,
 ): (() => () => Promise<void>) | null {
-	if (!ensureCapabilities('Message Latency', context.native, context.capabilities)) return null;
+	if (!ensureCapabilities(context.native, context.capabilities)) return null;
 
 	const indicators = createAndroidIndicators(
 		context.native,
@@ -24,7 +25,7 @@ export function createIndicators(
 	);
 
 	if (!indicators) {
-		console.error('[Message Latency] Skipped, the indicator surface did not register.');
+		skipFeature('the indicator surface did not register');
 
 		return null;
 	}

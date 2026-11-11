@@ -13,6 +13,7 @@
 
 #include "LoaderAddonActivity.h"
 #include "LoaderBootstrap.h"
+#include "LoaderJSIJSON.h"
 #include "LoaderLog.h"
 #include "LoaderThreadWarnings.h"
 #include "NativeCallActivity.h"
@@ -966,7 +967,8 @@ bool runningAsynchronousMainOperation()
 }
 
 jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()> operation,
-                                     std::function<jsi::Value(jsi::Runtime &)> result)
+                                     std::function<jsi::Value(jsi::Runtime &)> result,
+                                     bool                                      nextFrame)
 {
     auto target = executor();
     if (!target)
@@ -991,7 +993,7 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
     jsi::Function executorFunction = makeFunction(
         runtime, "nativeMainExecutor", 2,
         [target, operation = std::move(operation), result = std::move(result), identifier,
-         cancelled, gate, generation, addon,
+         cancelled, gate, generation, addon, nextFrame,
          waits](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *callbacks,
                 size_t count) -> jsi::Value {
             if (count < 2 || !callbacks[0].isObject() || !callbacks[1].isObject())
@@ -1009,8 +1011,8 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
                 .setProperty(rt, identifier.c_str(), pair);
 
             MainWaitTiming timing(*waits);
-            target->runOnMain([operation, result, identifier, cancelled, gate, generation, addon,
-                               timing]() {
+            auto runOperation = [operation, result, identifier, cancelled, gate, generation, addon,
+                                 timing]() {
                 if (cancelled->load() || !gate->start() || generation != gGenerations.generation())
                 {
                     return;
@@ -1045,7 +1047,22 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
                         }
                         settlePending(completion, *pair, failure, result);
                     });
-            });
+            };
+            if (nextFrame)
+            {
+                if (!target->runOnMainNextFrame(std::move(runOperation)))
+                {
+                    gate->expire();
+                    cancelled->store(true);
+                    rejectPending(rt, identifier, "NATIVE_FRAME_SCHEDULING_FAILED",
+                                  "Native frame work could not be scheduled");
+                    return jsi::Value::undefined();
+                }
+            }
+            else
+            {
+                target->runOnMain(std::move(runOperation));
+            }
 
             target->runAfter(1.0, [identifier, cancelled, gate, generation, timing]() {
                 if (!gate->expire())

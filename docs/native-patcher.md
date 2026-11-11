@@ -1,6 +1,6 @@
-# Native plugin ABI
+# Native bridge ABI
 
-The native plugin system lets trusted JavaScript plugins run approved Objective-C runtime operations without shipping a plugin dylib. The loader contains the signed runtime primitives. The plugin supplies policy, state, rendering decisions, and lifecycle code.
+The native bridge lets trusted JavaScript plugins run approved Objective-C runtime operations without shipping a plugin dylib. The loader contains the signed runtime primitives. The plugin supplies policy, state, rendering decisions, and lifecycle code.
 
 The native layer is an ABI. Plugins use it through the versioned JavaScript API exposed as `context.native`.
 
@@ -17,7 +17,7 @@ Platform-wide helpers, such as device information and notifications, live under 
 
 The loader surface does not include feature-specific native classes, caches, network clients, renderers, or hooks. A plugin owns that behavior and uses the generic bridge to reach the app's existing Objective-C objects.
 
-## Plugin scope
+## Plugin context
 
 The addon manager validates the manifest before starting a plugin, then creates a scoped context:
 
@@ -108,7 +108,7 @@ The `fabric` namespace lets a plugin register a React Native component and mount
 
 All UIKit work is marshalled to the main thread, and surface handles are scoped to the plugin.
 
-The `native.fabric.mount` capability gates the synchronous operations and is only offered on iOS. The `native.fabric.async` capability gates `mountAsync`, `updateAsync`, `setSizeAsync`, `setFrameAsync`, `measureAsync`, and `unmountAsync` on both platforms. These return cancellable promises; queued main-thread work is skipped if the plugin stops or the runtime is replaced. A plugin should mount into the host view that owns the message layout, not create a window-level overlay.
+The `native.fabric.mount` capability gates the synchronous operations and is only offered on iOS. The `native.fabric.async` capability gates `mountAsync`, `updateAsync`, `setSizeAsync`, `setFrameAsync`, `batchAsync`, `measureAsync`, and `unmountAsync` on both platforms. These return cancellable promises; `batchAsync` applies several surfaces' properties, sizes and frames together on the next display frame; queued main-thread work is skipped if the plugin stops or the runtime is replaced. A plugin should mount into the host view that owns the message layout, not create a window-level overlay.
 
 ## Mention avatars migration
 

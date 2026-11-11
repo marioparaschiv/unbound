@@ -111,7 +111,7 @@ await startPlugin({ capabilities: ['native.ffi.call'], native: { apiVersion: '2.
 
 ## Self-Test
 
-The device matrix calls an exported `selfTest` after a restart. It catches a plugin whose features all skipped but whose `start` passed. First-party plugins use `featureSelfTest` from `@unbound-plugins/shared` (see [Plugin Anatomy](/docs/developer/getting-started/plugin-anatomy)). Without the helper:
+The device matrix calls an exported `selfTest` after a restart. It catches a plugin whose features all skipped but whose `start` passed. First-party plugins export the `selfTest` that `runFeatures` from `@unbound-plugins/shared` builds (see [Plugin Anatomy](/docs/developer/getting-started/plugin-anatomy)). Without the helper:
 
 ```tsx src/index.tsx
 import { flux, patcher } from '@unbound-app/api';
@@ -142,7 +142,7 @@ test('reports that a feature applied', async () => {
 });
 ```
 
-Module state such as `applied` survives between tests. Reset it in `beforeEach`, or with `resetHealth()` from `@unbound-plugins/shared/lifecycle/health`.
+Module state such as `applied` survives between tests. Reset it in `beforeEach`. `runFeatures` resets its own state on each `start`.
 
 ## Checking Results
 

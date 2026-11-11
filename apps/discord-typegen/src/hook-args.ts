@@ -9,7 +9,6 @@ export type HookReads = (component: ComponentRecord) => Map<string, PropEvidence
 /**
  * @description Builds the lookup of the props a component's hooks read, following hooks that hand their argument
  * on to further hooks. A key the passed object sets over the props is not read from them.
- * @param resolve The cross-module resolver.
  * @returns The lookup; results for hooks are memoised.
  */
 export function createHookReads(resolve: Resolver): HookReads {

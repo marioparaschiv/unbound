@@ -9,7 +9,7 @@ import type { AuditEvent } from '@unbound-app/web/bot';
 import { SeverityNumber } from '@opentelemetry/api';
 import { createLogger } from '@unbound-app/logger';
 
-import type { OtelEnv } from '~/lib/env';
+import type { OtelEnv } from '~/lib/config';
 
 export type AuditTelemetry = {
 	/** Records one moderation event as an OpenTelemetry log; a no-op without an exporter. */
@@ -19,7 +19,6 @@ export type AuditTelemetry = {
 };
 
 export type AuditTelemetryOptions = {
-	/** The telemetry variables, from the validated environment. */
 	env: OtelEnv;
 	/** Replaces the OTLP exporter, for tests; it exports even with `OTEL_ENABLED` off. */
 	exporter?: LogRecordExporter;
@@ -68,7 +67,7 @@ export function createAuditTelemetry(options: AuditTelemetryOptions): AuditTelem
 		resource: resourceFromAttributes({
 			'service.name': serviceName(env),
 			'service.namespace': 'unbound',
-			'service.version': process.env.npm_package_version ?? 'unknown',
+			'service.version': env.npm_package_version,
 			'deployment.environment.name': env.NODE_ENV,
 		}),
 		processors: [new BatchLogRecordProcessor({ exporter })],

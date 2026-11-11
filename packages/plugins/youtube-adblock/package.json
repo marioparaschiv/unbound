@@ -1,8 +1,6 @@
 {
 	"name": "youtube-adblock",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Blocks ads in YouTube videos played inside Discord and in the Watch Together activity, using AdGuard's YouTube ad blocker.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

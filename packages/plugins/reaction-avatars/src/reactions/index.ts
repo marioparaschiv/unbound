@@ -1,6 +1,6 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import registerAppSurface from '@unbound-plugins/shared/native/app-surface';
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { skipFeature } from '@unbound-plugins/shared/lifecycle/features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
 
@@ -13,6 +13,7 @@ import {
 } from '~/reactions/modules';
 import ReactionAvatarSurface from '~/reactions/components/reaction-avatar-surface';
 import { reactionFeatures } from '~/reactions/platform';
+import type { Feature } from '~/types';
 
 /**
  * @description Draws the first reactors' avatars beside each message reaction.
@@ -20,11 +21,9 @@ import { reactionFeatures } from '~/reactions/platform';
  * the faces. Reads `ChannelStore`, `MessageStore`, `SelectedChannelStore` and `UserStore`. iOS hooks Discord's native message cells
  * and Android hooks its reaction views, so each platform's hooks are native and need `stop` to remove them.
  * @param context The plugin's context, whose native bridge hooks the message views.
- * @returns A function that removes the native hooks, which resolves once the views are restored; `undefined` when the plugin skipped starting.
+ * @returns The platform's features, which start together; `undefined` when the plugin skipped starting.
  */
-export function startReactions(
-	context: PluginContext,
-): (() => Promise<void> | undefined) | undefined {
+export function startReactions(context: PluginContext): Feature[] | undefined {
 	// `UserSummaryItem` is found when a reaction first renders, and the surface renders nothing without it.
 	const modules = {
 		ReactionActions,
@@ -34,20 +33,17 @@ export function startReactions(
 		UserStore,
 	};
 
-	if (
-		!ensureCapabilities('Reaction Avatars', context.native, context.capabilities) ||
-		!ensureModules('Reaction Avatars', modules)
-	) {
+	if (!ensureCapabilities(context.native, context.capabilities) || !ensureModules(modules)) {
 		return;
 	}
 
 	const surfaceName = registerAppSurface('ReactionAvatarSurface', ReactionAvatarSurface);
 
 	if (!surfaceName) {
-		console.error('[Reaction Avatars] Skipped, the avatar surface did not register.');
+		skipFeature('the avatar surface did not register');
 
 		return;
 	}
 
-	return applyFeatures('Reaction Avatars', reactionFeatures(context.native, surfaceName));
+	return reactionFeatures(context.native, surfaceName);
 }

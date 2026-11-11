@@ -1,9 +1,9 @@
 import { watch, type FSWatcher } from 'node:fs';
 import { resolve, sep } from 'node:path';
 
+import type { Diagnostic } from '~/lib/check/diagnostic';
 import type { AddonDiagnostics } from '~/lib/check/run';
 import type { DiscoveredAddon } from '~/lib/discovery';
-import type { Diagnostic } from '~/rollup/diagnostic';
 
 /** How long the saves inside one addon settle before its checks re-run. */
 const DEBOUNCE_MS = 100;

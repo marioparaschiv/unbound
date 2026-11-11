@@ -4,7 +4,6 @@ import type { UserSummary } from '@unbound-app/contracts/account';
 import { Type } from '@unbound-app/contracts/schema';
 import { and, sql } from 'drizzle-orm';
 
-import { afterKey, cursorTime, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
 import { userNameSearchText, userSearchText } from '~/db/schema';
 import { listSubmissionHistory } from '~/lib/admin-submissions';
 import { DEFAULT_ROLE, hasPermission } from '~/lib/auth/access';
@@ -12,8 +11,9 @@ import { isDevelopmentTeam } from '~/lib/team/development-team';
 import type { AdminSubmission } from '~/lib/admin-submissions';
 import type { EventTimeline } from '~/lib/moderation-events';
 import { getEventTimeline } from '~/lib/moderation-events';
+import { SERVED_VERSION } from '~/lib/addon-visibility';
+import { cursorTime, keysetList } from '~/lib/keyset';
 import { requirePermission } from '~/lib/api/caller';
-import { LIVE_VERSIONS } from '~/lib/live-versions';
 import { matchesSearch } from '~/lib/admin-search';
 import type { StaffNote } from '~/lib/staff-notes';
 import { listStaffNotes } from '~/lib/staff-notes';
@@ -82,37 +82,39 @@ function toAdminUser(row: UserRow, showEmail: boolean): AdminUser {
 }
 
 /**
- * @description Builds the one statement behind {@link listAdminUsers}: one page plus a lookahead row,
- * newest first by `(created_at, id)`.
+ * @description Builds one page of {@link listAdminUsers}, newest first by `(created_at, id)`.
  * @param ctx The application context.
  * @param search The search text and the cursor to page from.
  * @param byEmail Whether the search text may match an email, for the development team only.
- * @returns The unexecuted relational query.
+ * @returns The page's statement and its reader.
  */
 export function queryAdminUsers(
 	ctx: AppContext,
 	search: AdminUsersSearch = {},
 	byEmail: boolean = false,
 ) {
-	const { q, cursor, dir } = search;
-	const after = cursor ? decodeCursor(cursor, USER_CURSOR) : undefined;
-	const order = scanOrder('desc', dir);
+	const { q } = search;
 
-	return ctx.db.query.user.findMany({
-		where: {
-			RAW: (table) =>
-				and(
-					q ? matchesSearch(userSearchText(table), q) : undefined,
-					// The indexed text includes the email; matching the id and name alone keeps it from being probed.
-					q && !byEmail ? matchesSearch(userNameSearchText(table), q) : undefined,
-					after ? afterKey([table.createdAt, table.id], after, 'desc', dir) : undefined,
-				) ?? sql`true`,
-		},
-		orderBy: (table, operators) => [
-			operators[order](table.createdAt),
-			operators[order](table.id),
-		],
-		limit: ctx.env.USER_LIST_PAGE_SIZE + 1,
+	return keysetList({
+		key: ['createdAt', 'id'],
+		schema: USER_CURSOR,
+		request: search,
+		order: 'desc',
+		size: ctx.env.USER_LIST_PAGE_SIZE,
+		query: (page) =>
+			ctx.db.query.user.findMany({
+				where: {
+					RAW: (table) =>
+						and(
+							q ? matchesSearch(userSearchText(table), q) : undefined,
+							// The indexed text includes the email; matching the id and name alone keeps it from being probed.
+							q && !byEmail ? matchesSearch(userNameSearchText(table), q) : undefined,
+							page.where(table),
+						) ?? sql`true`,
+				},
+				orderBy: (table) => page.orderBy(table),
+				limit: page.limit,
+			}),
 	});
 }
 
@@ -132,11 +134,7 @@ export async function listAdminUsers(
 	requirePermission(caller, { user: ['list'] });
 
 	const showEmail = await isDevelopmentTeam(ctx.db, caller.user.id);
-	const rows = await queryAdminUsers(ctx, search, showEmail);
-	const page = toKeysetPage(rows, ctx.env.USER_LIST_PAGE_SIZE, search, (row) => [
-		row.createdAt.getTime(),
-		row.id,
-	]);
+	const page = await queryAdminUsers(ctx, search, showEmail).page();
 
 	return { ...page, items: page.items.map((row) => toAdminUser(row, showEmail)) };
 }
@@ -149,12 +147,7 @@ function queryMaintainedAddons(ctx: AppContext, userId: string) {
 			addon: {
 				columns: { id: true, name: true, type: true, delistedAt: true },
 				with: {
-					versions: {
-						columns: { version: true },
-						where: LIVE_VERSIONS,
-						orderBy: { versionKey: 'desc' },
-						limit: 1,
-					},
+					versions: { ...SERVED_VERSION, columns: { version: true } },
 				},
 			},
 		},
@@ -228,6 +221,20 @@ export async function getUserSummary(
 ): Promise<UserSummary | undefined> {
 	requirePermission(caller, { user: ['list'] });
 
+	return readUserSummary(ctx, id);
+}
+
+/**
+ * @description Reads a user's public name and avatar, with no permission check, for pickers that
+ * name users by id.
+ * @param ctx The application context.
+ * @param id The user id.
+ * @returns The user's summary, or `undefined` when no user has the id.
+ */
+export async function readUserSummary(
+	ctx: AppContext,
+	id: string,
+): Promise<UserSummary | undefined> {
 	const row = await ctx.db.query.user.findFirst({
 		where: { id },
 		columns: { id: true, name: true, image: true },
@@ -238,4 +245,10 @@ export async function getUserSummary(
 	return { id: row.id, name: row.name, image: row.image ?? null };
 }
 
-export default { queryAdminUsers, listAdminUsers, getAdminUser, getUserSummary };
+export default {
+	queryAdminUsers,
+	listAdminUsers,
+	getAdminUser,
+	getUserSummary,
+	readUserSummary,
+};

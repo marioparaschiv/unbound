@@ -1,8 +1,6 @@
 {
 	"name": "mention-avatars",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Shows avatars and role icons inside mentions.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

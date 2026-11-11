@@ -14,5 +14,8 @@
 		"@types/bun": "catalog:",
 		"date-fns": "^4.4.0",
 		"typescript": "catalog:"
+	},
+	"checks": {
+		"tests": "none"
 	}
 }

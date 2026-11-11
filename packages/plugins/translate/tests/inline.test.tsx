@@ -1,5 +1,4 @@
 import { flux, metro, render, startPlugin, stopPlugin, toasts } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
 import { settings } from '@unbound-app/settings';
@@ -76,7 +75,6 @@ async function pressTranslate() {
 const drawn = () => new RowManager().generate({ message: stored.get('1')! }).message.content;
 
 beforeEach(async () => {
-	resetHealth();
 	stored.set('1', record('Hello'));
 	metro.register(ActionSheets);
 	metro.register(RowManager);

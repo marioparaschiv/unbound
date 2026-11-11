@@ -1,5 +1,3 @@
-export const PLUGIN_NAME = 'Chat Bubbles';
-
 export const BubbleStyle = {
 	radius: 10,
 	horizontalPadding: 8,
@@ -42,9 +40,7 @@ export const MEDIA_VIEW_CLASSES = [
 ];
 
 export const AndroidClass = {
-	messageView: 'com.discord.chat.presentation.message.MessageView',
 	accessories: 'com.discord.chat.presentation.message.MessageAccessoriesView',
-	content: 'com.discord.chat.presentation.message.view.MessageContentView',
 };
 
 export const CONTENT_COLUMN_SEARCH_DEPTH = 6;

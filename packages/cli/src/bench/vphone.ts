@@ -2,8 +2,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 
 import { parse, Type, type StaticDecode } from '~/lib/schema';
-
-export const DISCORD_BUNDLE_ID = 'com.hammerandchisel.discord';
+import { DISCORD_BUNDLE_ID } from '~/lib/device-paths';
 
 const TOOL_SUFFIX = '__vphone__vphone';
 
@@ -181,7 +180,6 @@ export class Vphone {
 		}
 	}
 
-	/** @description Launches Discord. */
 	async launchDiscord(): Promise<void> {
 		await this.call('launch', { bundle_id: DISCORD_BUNDLE_ID });
 	}
@@ -220,4 +218,4 @@ export class Vphone {
 /** The vphone answered, but with an error: retrying the same call would fail the same way. */
 export class VphoneError extends Error {}
 
-export default { DISCORD_BUNDLE_ID, Vphone, VphoneError };
+export default { Vphone, VphoneError };

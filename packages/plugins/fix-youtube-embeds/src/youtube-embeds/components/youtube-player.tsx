@@ -26,9 +26,7 @@ const ALL_ORIGINS = ['*'];
 function routeNavigation({ url, isTopFrame }: WebViewNavigation): boolean {
 	if (staysInPlayer(url, isTopFrame)) return true;
 
-	Linking.openURL(url).catch((error: unknown) =>
-		console.error('[Fix Youtube Embeds] Could not open link:', error),
-	);
+	Linking.openURL(url).catch((error: unknown) => logger.error('Could not open link:', error));
 
 	return false;
 }

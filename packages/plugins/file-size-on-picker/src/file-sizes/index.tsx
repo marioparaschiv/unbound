@@ -1,7 +1,6 @@
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
 import type { PluginContext } from '@unbound-app/api/native';
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import { patcher } from '@unbound-app/api';
 
 import type { MediaItemElement } from '~/types';
@@ -9,7 +8,6 @@ import { sizeBadgesForRow } from '~/file-sizes/badges';
 import { MediaKeyboardItem } from '~/file-sizes/modules';
 import SizeBadge from '~/file-sizes/components/size-badge';
 import { createFileSizes } from '~/file-sizes/platform';
-import { PLUGIN_NAME } from '~/constants';
 
 type MediaRow = ReactElement<{
 	children?: (MediaItemElement | null)[];
@@ -27,8 +25,8 @@ function isMediaRow(node: ReactNode): node is MediaRow {
  * @param context The plugin's context, whose Java bridge Android reads the sizes Discord leaves out with.
  * @returns A function that releases the native handles the size lookup holds, which the scope cannot see.
  */
-export function startFileSizes(context: PluginContext): () => void {
-	if (!ensureModules(PLUGIN_NAME, { MediaKeyboardItem })) return () => {};
+export function startFileSizes(context: PluginContext): (() => void) | undefined {
+	if (!ensureModules({ MediaKeyboardItem })) return;
 
 	const sizes = createFileSizes(context);
 
@@ -55,8 +53,6 @@ export function startFileSizes(context: PluginContext): () => void {
 			)),
 		]);
 	});
-
-	recordApplied(1);
 
 	return sizes.release;
 }

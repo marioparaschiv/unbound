@@ -5,8 +5,9 @@ import postgres from 'postgres';
 
 import { createDatabase, type Database } from '~/db/database';
 import { NOTIFY_CHANNELS } from '~/dispatchers/types';
-import { CDN_URL, SITE_URL } from '~/lib/constants';
 import { migrateDatabase } from '~/db/migrate';
+
+import { testConfig } from './config';
 
 export type BotTestDatabase = {
 	/** The web's context over the same database, for seeding web rows through the web's own helpers. */
@@ -37,6 +38,8 @@ export const TEST_GRACE_DAYS = 7;
 /** A direct url on the test cluster, from the web's helper; unset skips the database suites. */
 export const DATABASE_URL = MAINTENANCE_URL;
 
+const { siteUrl, cdnUrl } = testConfig();
+
 /**
  * @description Creates a throwaway database with the web's migrations, then the bot's: schema `bot`
  * and the triggers on the web's tables.
@@ -60,8 +63,8 @@ export async function createBotTestDatabase(): Promise<BotTestDatabase> {
 		web,
 		db,
 		reads: createBotReads(db.$client, {
-			siteUrl: SITE_URL,
-			cdnUrl: CDN_URL,
+			siteUrl,
+			cdnUrl,
 			sponsorGraceDays: TEST_GRACE_DAYS,
 		}),
 		url,

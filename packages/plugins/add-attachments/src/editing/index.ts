@@ -6,15 +6,14 @@ import { CloudUploader, REST } from '~/uploads/modules';
 import { canAddAttachments } from '~/uploads/eligibility';
 import { canAttachIn } from '~/uploads/permissions';
 import { addAttachments } from '~/uploads';
-import { PLUGIN_NAME } from '~/constants';
 
 /**
  * @description While you edit a message, files you pick, take or paste in the chat input are added to that message instead of waiting for the next one.
- * Intercepts `UPLOAD_ATTACHMENT_ADD_FILES` and reads the edited message from `EditMessageStore`. Uploads with `CloudUploader` and sends the edit through `REST`. `stop` calls the returned function, which keeps the health count in step with what is applied.
+ * Intercepts `UPLOAD_ATTACHMENT_ADD_FILES` and reads the edited message from `EditMessageStore`. Uploads with `CloudUploader` and sends the edit through `REST`.
  * @returns A function that removes the interceptor.
  */
 export function startEditUploads(): () => void {
-	if (!ensureModules(`${PLUGIN_NAME}: editing`, { CloudUploader, EditMessageStore, REST })) {
+	if (!ensureModules({ CloudUploader, EditMessageStore, REST }, 'editing')) {
 		return () => undefined;
 	}
 

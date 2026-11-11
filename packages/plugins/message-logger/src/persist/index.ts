@@ -1,7 +1,7 @@
 import { settings } from '@unbound-app/settings';
 import { flux, fs } from '@unbound-app/api';
 
-import { LOG_FILE, PLUGIN_NAME, SAVED_MESSAGE_LIMIT } from '~/constants';
+import { LOG_FILE, SAVED_MESSAGE_LIMIT } from '~/constants';
 import type { EditEntry, LogEntries, MessageLog } from '~/log';
 import { MessageStore } from '~/log/modules';
 
@@ -270,7 +270,7 @@ export function startPersistence(log: MessageLog): { save: () => void; stop: () 
 
 			await fs.writeFile(LOG_FILE, JSON.stringify(snapshot(log.entries())));
 		} catch (error) {
-			console.error(`[${PLUGIN_NAME}] Failed to save the message log:`, error);
+			logger.error(`Failed to save the message log:`, error);
 		}
 	}
 
@@ -322,7 +322,7 @@ export function startPersistence(log: MessageLog): { save: () => void; stop: () 
 				),
 			});
 		} catch (error) {
-			console.error(`[${PLUGIN_NAME}] Failed to load the saved message log:`, error);
+			logger.error(`Failed to load the saved message log:`, error);
 		} finally {
 			loaded = true;
 

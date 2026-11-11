@@ -13,7 +13,6 @@ export const bridgePortField = defaulted(
 /** How long a one-shot command waits for the bridge to report a device before giving up. */
 const DEVICE_WAIT_TIMEOUT_MS = 2_000;
 
-/** How often the device-wait polls the controller's connection state. */
 const DEVICE_WAIT_POLL_MS = 50;
 
 /**

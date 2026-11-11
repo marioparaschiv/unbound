@@ -329,7 +329,7 @@ static void reloadVisibleChats(void)
 
 + (void)applySelectedTheme
 {
-    NSString *applied = [CoreBridge preference:@"active-theme" argument:@""];
+    NSString *applied = [CoreBridge activeThemeId];
     if (!themeSelection().needsSelection(toStdString(applied)))
     {
         return;

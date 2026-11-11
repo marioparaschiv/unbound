@@ -2,20 +2,10 @@ import { Node, type JSDocableNode } from 'ts-morph';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 
-import {
-	ADDITIONAL_SUBPATHS,
-	EXCLUDE_SUBPATHS,
-	ALIAS_ROOT,
-	BARREL,
-	API_SRC,
-	ENTRY,
-	logger,
-	type Lifecycle,
-	type NamespaceAlias,
-	type ModuleEntry,
-	type SdkEntries,
-} from './paths';
-import { isInternal } from './transform';
+import type { Lifecycle, NamespaceAlias, ModuleEntry, SdkEntries } from './entry-types';
+
+import { ALIAS_ROOT, BARREL, API_SRC, ENTRY, ROOT_OUT } from './config';
+import { isInternal } from './declarations';
 import { parseSource } from './project';
 
 function docText(node: JSDocableNode): string {
@@ -102,14 +92,11 @@ export function readNamespaceExports(barrel: string): { name: string; source: st
  * @description Builds the ordered entry list by parsing the api barrel and recursing into folder
  * modules for their nested `export * as` sub-namespaces (e.g. `metro/filters`). A module is a folder
  * when its source resolves to an `index.ts`; each nested namespace becomes a `<parent>/<child>`
- * subpath entry. Auto-derived subpaths in `EXCLUDE_SUBPATHS` are skipped; `ADDITIONAL_SUBPATHS`
- * are appended. Stale excludeSubpaths entries are reported; an unresolvable additional subpath fails
- * generation.
+ * subpath entry.
  * @returns The root barrel and the module entries, sorted so the output is deterministic across runs.
  */
 export function buildEntries(): SdkEntries {
 	const entries: ModuleEntry[] = [];
-	const unusedExcludes = new Set(EXCLUDE_SUBPATHS);
 
 	const outFor = (name: string) => join(API_SRC, ...name.split('/')) + '.d.ts';
 
@@ -126,46 +113,16 @@ export function buildEntries(): SdkEntries {
 
 	function walk(barrel: string, prefix: string, topLevel: boolean) {
 		for (const { name, source } of readNamespaceExports(barrel)) {
-			const subpath = prefix ? `${prefix}/${name}` : name;
-
-			if (EXCLUDE_SUBPATHS.includes(subpath)) {
-				unusedExcludes.delete(subpath);
-				continue;
-			}
-
-			push(subpath, source, topLevel);
+			push(prefix ? `${prefix}/${name}` : name, source, topLevel);
 		}
 	}
 
 	walk(BARREL, '', true);
 
-	for (const extra of ADDITIONAL_SUBPATHS) {
-		if (EXCLUDE_SUBPATHS.includes(extra.name)) {
-			unusedExcludes.delete(extra.name);
-			continue;
-		}
-
-		const source = resolveSource(extra.source, dirname(BARREL));
-
-		if (!source) {
-			throw new Error(
-				`additionalSubpaths entry '${extra.name}' does not resolve: '${extra.source}'.`,
-			);
-		}
-
-		push(extra.name, source, false);
-	}
-
-	if (unusedExcludes.size > 0) {
-		logger.warn(
-			`excludeSubpaths entries matched no subpath: ${[...unusedExcludes].sort().join(', ')}.`,
-		);
-	}
-
 	entries.sort((a, b) => a.name.localeCompare(b.name));
 
 	return {
-		root: { source: BARREL, out: join(API_SRC, 'index.d.ts') },
+		root: { source: BARREL, out: ROOT_OUT },
 		modules: entries,
 		aliases: readNamespaceAliases(BARREL),
 	};

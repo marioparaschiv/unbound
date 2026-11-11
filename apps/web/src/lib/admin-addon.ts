@@ -22,6 +22,7 @@ import { appendEvent, getEventTimeline } from '~/lib/moderation-events';
 import { isAddonIcon, renderAddonIcon } from '~/lib/addon-icons';
 import { listSubmissionHistory } from '~/lib/admin-submissions';
 import type { AdminSubmission } from '~/lib/admin-submissions';
+import { isLive, requireAddon } from '~/lib/addon-visibility';
 import { addon, addonMaintainer, user } from '~/db/schema';
 import type { AdminAddon } from '~/lib/admin-addons';
 import { requirePermission } from '~/lib/api/caller';
@@ -220,6 +221,8 @@ function queryAddon(ctx: AppContext, id: string) {
 					manifest: true,
 					bundleSize: true,
 					sha256: true,
+					withdrawnBy: true,
+					filesPendingSince: true,
 				},
 				with: {
 					submission: { columns: { repository: true } },
@@ -263,7 +266,7 @@ export async function getAdminAddon(
 
 	const { maintainers: members, versions, ...rest } = row;
 	const maintainers = toMaintainers(members);
-	const served = versions.find((version) => !version.withdrawal);
+	const served = versions.find(isLive);
 	const state = toEditableState(
 		rest,
 		members.map((member) => ({ userId: member.userId, role: member.role })),
@@ -290,21 +293,23 @@ export async function getAdminAddon(
 				.map(({ id: userId, name, image }) => ({ id: userId, name, image })),
 		},
 		maintainers,
-		versions: versions.map(({ manifest, submission, withdrawal, ...version }) => ({
-			...version,
-			repository: submission?.repository ?? null,
-			minClient: manifest.unbound?.min ?? null,
-			withdrawal: withdrawal
-				? {
-						eventId: withdrawal.id,
-						at: withdrawal.createdAt,
-						by: withdrawal.actor
-							? { ...withdrawal.actor, image: withdrawal.actor.image ?? null }
-							: null,
-						reason: withdrawal.reason,
-					}
-				: null,
-		})),
+		versions: versions.map(
+			({ manifest, submission, withdrawal, withdrawnBy, filesPendingSince, ...version }) => ({
+				...version,
+				repository: submission?.repository ?? null,
+				minClient: manifest.unbound?.min ?? null,
+				withdrawal: withdrawal
+					? {
+							eventId: withdrawal.id,
+							at: withdrawal.createdAt,
+							by: withdrawal.actor
+								? { ...withdrawal.actor, image: withdrawal.actor.image ?? null }
+								: null,
+							reason: withdrawal.reason,
+						}
+					: null,
+			}),
+		),
 		submissions,
 		events,
 		manifest: served
@@ -337,12 +342,8 @@ export async function editAddon(
 	requirePermission(caller, { addon: ['delist'] });
 
 	await ctx.db.transaction(async (tx) => {
-		const [row] = await tx.select().from(addon).where(eq(addon.id, id));
-
-		if (!row) {
-			throw new ApiError('not_found', `Addon ${id} does not exist.`);
-		}
-
+		const [found] = await tx.select().from(addon).where(eq(addon.id, id));
+		const row = requireAddon(found, id);
 		const current = toEditableState(row, await selectMembers(tx, id));
 
 		if (revisionOf(current) !== edit.revision) {

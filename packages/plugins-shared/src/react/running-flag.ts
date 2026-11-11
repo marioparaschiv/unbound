@@ -6,7 +6,7 @@ type FlagState = {
 };
 
 export type RunningFlag = {
-	/** Marks the plugin running and returns the function that marks it stopped; pass it to `applyFeatures`. */
+	/** Marks the plugin running and returns the function that marks it stopped; return it from a feature. */
 	markRunning: () => () => void;
 	/** Reads whether the plugin is running, re-rendering when it starts or stops. */
 	useRunning: () => boolean;

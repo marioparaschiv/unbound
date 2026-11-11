@@ -35,7 +35,7 @@ export declare const ADDON_SCOPE_GLOBALS: readonly [
 	'clearInterval',
 	'commands',
 ];
-/** The core settings store; each addon's settings store is named after the addon id. */
+/** The core Bucket; each addon's Bucket is named after the addon id. */
 export declare const CORE_SETTINGS_STORE = 'unbound';
 /** The components of Discord's design module, each of which Unbound can stand in for when Discord drops it. */
 export declare const DESIGN_COMPONENTS: readonly [
@@ -103,7 +103,10 @@ export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
 	'native.debug.evaluations',
 	'native.debug.environment',
 ];
-/** The Capability each native bridge method needs. */
+/**
+ * The Capability each native bridge method needs; the source of every Capability name. Edit it, then run
+ * `bun run generate-native-capabilities` to regenerate the client's and the loader's Capability lists.
+ */
 export declare const NATIVE_PLUGIN_METHOD_CAPABILITIES: {
 	readonly 'objc.getClass': 'native.objc.classes';
 	readonly 'objc.alloc': 'native.objc.classes';
@@ -145,6 +148,7 @@ export declare const NATIVE_PLUGIN_METHOD_CAPABILITIES: {
 	readonly 'fabric.updateAsync': 'native.fabric.async';
 	readonly 'fabric.setSizeAsync': 'native.fabric.async';
 	readonly 'fabric.setFrameAsync': 'native.fabric.async';
+	readonly 'fabric.batchAsync': 'native.fabric.async';
 	readonly 'fabric.measureAsync': 'native.fabric.async';
 	readonly 'fabric.unmountAsync': 'native.fabric.async';
 	readonly 'fabric.releaseIdleAsync': 'native.fabric.async';
@@ -181,38 +185,38 @@ export declare const NATIVE_PLUGIN_METHOD_CAPABILITIES: {
 export declare const NATIVE_PLUGIN_PLATFORMS: readonly ['ios', 'android'];
 /** The capabilities each platform's loader offers; Objective-C ones are iOS only and Java ones Android only. */
 export declare const NATIVE_PLUGIN_PLATFORM_CAPABILITIES: {
+	readonly ios: readonly [
+		'native.objc.classes',
+		'native.objc.invoke',
+		'native.objc.invokeAsync',
+		'native.objc.batch',
+		'native.objc.snapshot',
+		'native.objc.ivars',
+		'native.objc.associations',
+		'native.objc.hooks',
+		'native.ffi.symbols',
+		'native.ffi.call',
+		'native.fabric.mount',
+		'native.fabric.async',
+		'native.runtime.events',
+		'native.debug.evaluations',
+		'native.debug.environment',
+	];
 	readonly android: readonly [
+		'native.ffi.symbols',
+		'native.ffi.call',
+		'native.fabric.async',
+		'native.runtime.events',
 		'native.java.classes',
 		'native.java.construct',
 		'native.java.fields',
 		'native.java.invoke',
-		'native.fabric.async',
-		'native.ffi.call',
-		'native.ffi.symbols',
-		'native.java.associations',
-		'native.java.batch',
-		'native.java.hooks',
 		'native.java.invokeAsync',
-		'native.runtime.events',
-		'native.debug.environment',
+		'native.java.hooks',
+		'native.java.batch',
+		'native.java.associations',
 		'native.debug.evaluations',
-	];
-	readonly ios: readonly [
-		'native.fabric.async',
-		'native.fabric.mount',
-		'native.ffi.call',
-		'native.ffi.symbols',
-		'native.objc.associations',
-		'native.objc.batch',
-		'native.objc.classes',
-		'native.objc.hooks',
-		'native.objc.invoke',
-		'native.objc.invokeAsync',
-		'native.objc.ivars',
-		'native.objc.snapshot',
 		'native.debug.environment',
-		'native.debug.evaluations',
-		'native.runtime.events',
 	];
 };
 /** The design components Discord added after the build the generated types describe; see {@link NewerDesignComponents}. */
@@ -470,8 +474,12 @@ export type AddonLogger = Record<
 	'log' | 'info' | 'success' | 'warn' | 'error' | 'debug',
 	(...args: unknown[]) => void
 >;
-/** A loaded addon's manifest: the {@link AuthoredAddonManifest} plus what the loader and installer record. */
+/** A loaded addon's manifest: the {@link AuthoredAddonManifest} plus what `ubd build`, the loader and installer record. */
 export type AddonManifest = AuthoredAddonManifest & {
+	/** Written by `ubd build` from the native calls in the code: the platforms the addon runs on, each with the capabilities it needs there; absent means every platform. */
+	platforms?: AddonPlatforms;
+	/** Legacy: capabilities needed on every platform, from a manifest that declares them by hand; `ubd build` writes `platforms` instead. */
+	capabilities?: NativePluginCapability[];
 	/** Set by the loader for an addon it read from disk: the addon's folder name. */
 	folder?: string;
 	/** Set by the loader for an addon it read from disk: the addon's absolute directory. */
@@ -564,10 +572,6 @@ export type AuthoredAddonManifest = {
 	main: string;
 	/** The addon's version, in strict SemVer 2.0.0 with no `v` prefix. */
 	version: string;
-	/** The platforms the addon runs on, each with the capabilities it needs there; absent means every platform. */
-	platforms?: AddonPlatforms;
-	/** Capabilities the addon needs on every platform it runs on. */
-	capabilities?: NativePluginCapability[];
 	/** The lowest native plugin API version the addon supports; an older native bridge fails its start. */
 	minNativePluginApi?: string;
 	/** The Ed25519 signature the Unbound team's publish pipeline puts on first-party plugins. */
@@ -3898,6 +3902,20 @@ export type NativeFFITypeName =
 	| 'object'
 	| 'class'
 	| 'selector';
+/** One surface's changes in a `batchAsync` call, applied as properties, then size, then frame. */
+export type NativeFabricBatchMutation = {
+	/** The surface these changes apply to. */
+	surface: NativeFabricSurface;
+	/** New properties, as `update` sends them. */
+	properties?: NativeSerializableObject;
+	/** The view's frame, as `setFrame` sets it. */
+	frame?: NativeFabricFrame;
+	/** The layout bounds, as `setSize` sets them. */
+	size?: {
+		minimum: NativeFabricSize;
+		maximum: NativeFabricSize;
+	};
+};
 /** Mounts registered React Native components inside existing native views. Sync methods are iOS only. */
 export type NativeFabricBridge = {
 	/** Starts a surface for a registered component inside a container view. Needs `native.fabric.mount`. */
@@ -3940,6 +3958,8 @@ export type NativeFabricBridge = {
 		surface: NativeFabricSurface,
 		frame: NativeFabricFrame,
 	): NativeCancelablePromise<void>;
+	/** Applies every mutation in order on the main thread's next display frame, skipping stopped surfaces. Needs `native.fabric.async`. */
+	batchAsync(mutations: NativeFabricBatchMutation[]): NativeCancelablePromise<void>;
 	/** Reads a view's frame. */
 	measure(view: NativeObjectHandle): NativeFabricFrame;
 	/** Like `measure`, on the main thread. */
@@ -4618,7 +4638,7 @@ export type NativePluginBridge = {
 	readonly ui: NativeUIBridge;
 };
 /** A named permission to use one part of the native bridge, declared in an addon's manifest. */
-export type NativePluginCapability = (typeof NATIVE_PLUGIN_CAPABILITIES)[number];
+export type NativePluginCapability = (typeof NATIVE_PLUGIN_METHOD_CAPABILITIES)[NativePluginMethod];
 /** The shape of an error the native bridge or its plugin scope throws. */
 export type NativePluginError = {
 	/** Which failure it is; native failures without their own code use `NATIVE_BRIDGE_ERROR`. */
@@ -5157,12 +5177,25 @@ export type PluginContext = {
 	dispose(): void;
 };
 /** What a plugin's self-test found: whether the plugin works on this device, and why. */
-export type PluginSelfTestResult = {
-	/** `true` when the plugin works on this device. */
-	ok: boolean;
-	/** A human-readable reason for the result. */
-	detail: string;
-};
+export type PluginSelfTestResult =
+	| {
+			/** The plugin works on this device. */
+			ok: true;
+			/** A human-readable reason for the result. */
+			detail: string;
+			/** Set when the plugin works but has nothing on screen to draw, which says where the chat is rather than that drawing is wrong. */
+			nothingDrawn?: boolean;
+			/** Set while the plugin is still drawing what is on screen, so the device matrix waits before timing or judging it. */
+			settling?: boolean;
+	  }
+	| {
+			/** The plugin does not work on this device. */
+			ok: false;
+			/** A human-readable reason for the result. */
+			detail: string;
+			/** Set when the plugin failed only because it has nothing on screen to draw. */
+			nothingDrawn?: boolean;
+	  };
 /**
  * Props of `PostponeRender` (function). Exports: PostponeRender.
  * @see design/components/Navigator/native/PostponeRender.native.tsx
@@ -5531,7 +5564,7 @@ export type SettingsGroupSchema = SettingCommon & {
 	displayAs: 'group' | 'collapsible';
 	properties: Record<string, SettingSchema | StorelessSchema>;
 };
-/** A settings store, or a nested group of settings within one. */
+/** A Bucket, or a nested group of settings within one. */
 export type SettingsObject = {
 	[key: string]: SettingsValue;
 };
@@ -5551,7 +5584,7 @@ export type SettingsScreen = {
 	/** Discord's navigator renders the screen with its own route props, so any component fits. */
 	getComponent: () => React$1.ComponentType<never>;
 };
-/** A JSON value held in a settings store. */
+/** A JSON value held in a Bucket. */
 export type SettingsValue = string | number | boolean | null | SettingsValue[] | SettingsObject;
 export type SheetBottomSheetComponent = React$1.ComponentType<
 	SheetBottomSheetProps & Record<string, unknown>

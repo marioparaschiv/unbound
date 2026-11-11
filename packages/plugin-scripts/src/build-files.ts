@@ -2,6 +2,8 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import type { KeyObject } from 'node:crypto';
 import { basename, dirname, join } from 'node:path';
 
+import { readBytecodeVersion } from '@unbound-app/contracts/version-layout';
+
 import type { LocalPlugin } from './select-plugins';
 import { buildIconPack, type IconPackBuild } from './icon-pack-build';
 import { isSubmodule, vendorWorkspace } from './vendor-workspace';
@@ -53,17 +55,13 @@ export function publishedManifest(root: string, dir: string): string {
  */
 export function findCompiledBundles(root: string, bundle: string): Map<number, BuildFile> {
 	const directory = dirname(bundle);
-	const stem = basename(bundle).replace(/\.[^.]+$/, '');
-	const prefix = `${stem}.`;
+	const bundleName = basename(bundle);
 	const compiled = new Map<number, BuildFile>();
 
 	for (const name of readdirSync(join(root, directory)).sort()) {
-		const version =
-			name.startsWith(prefix) && name.endsWith('.hbc')
-				? name.slice(prefix.length, -'.hbc'.length)
-				: '';
+		const version = readBytecodeVersion(name, bundleName);
 
-		if (/^\d{1,10}$/.test(version)) {
+		if (version) {
 			compiled.set(Number(version), {
 				path: `${directory}/${name}`,
 				contents: readFileSync(join(root, directory, name)),

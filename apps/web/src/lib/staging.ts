@@ -1,23 +1,22 @@
 import { and, eq, inArray, isNotNull, or } from 'drizzle-orm';
 import { createLogger } from '@unbound-app/logger';
 
+import type { AppContext, AuthHookContext } from '~/lib/context';
 import { OPEN_SUBMISSION_STATUSES } from '~/lib/submissions';
+import { startPeriodicJob, type Job } from '~/lib/jobs';
 import { addonVersion, submission } from '~/db/schema';
 import { appendEvent } from '~/lib/moderation-events';
-import type { AppContext } from '~/lib/context';
 
 const logger = createLogger('Web', 'Staging');
 
 const LIST_PAGE_SIZE = 1000;
-
-export type StagingContext = Pick<AppContext, 'db' | 'storage'>;
 
 export type SweepResult = {
 	/** Staged objects deleted because no open submission owns them. */
 	orphans: number;
 };
 
-async function deleteStaged(ctx: StagingContext, keys: string[]) {
+async function deleteStaged(ctx: AuthHookContext, keys: string[]) {
 	await Promise.all(keys.map((key) => ctx.storage.staging.delete(key)));
 }
 
@@ -85,36 +84,35 @@ export async function sweepStaging(ctx: AppContext): Promise<SweepResult> {
 }
 
 /**
- * @description Runs {@link sweepStaging} every `STAGING_SWEEP_INTERVAL_SECONDS` for the life of the
- * process. A failed sweep is logged and retried on the next tick.
+ * @description Runs {@link sweepStaging} at boot and every `STAGING_SWEEP_INTERVAL_SECONDS` as a
+ * periodic job.
  * @param ctx The application context.
- * @returns The interval timer, for `clearInterval`.
+ * @returns The started job.
  */
-export function startStagingSweeper(ctx: AppContext): Timer {
-	async function sweep() {
-		try {
+export function startStagingSweeper(ctx: AppContext): Job {
+	return startPeriodicJob(
+		ctx.jobs,
+		'staging',
+		ctx.env.STAGING_SWEEP_INTERVAL_SECONDS,
+		async () => {
 			const { orphans } = await sweepStaging(ctx);
 
 			if (orphans === 0) return;
 
 			logger.info(`Deleted ${orphans} orphaned objects.`);
-		} catch (error) {
-			logger.error('Failed to sweep the staging bucket:', error);
-		}
-	}
-
-	return setInterval(() => void sweep(), ctx.env.STAGING_SWEEP_INTERVAL_SECONDS * 1000);
+		},
+	);
 }
 
 /**
  * @description Cancels every open submission of a banned user, which releases the addon ids their
  * listings claimed, records a `submission.cancelled` event for each, and deletes their staged objects.
- * @param ctx The database and storage.
+ * @param ctx The application context, as auth hooks get it.
  * @param userId The banned user.
  * @returns How many submissions were cancelled.
  */
-export async function purgeUserSubmissions(ctx: StagingContext, userId: string): Promise<number> {
-	const at = new Date();
+export async function purgeUserSubmissions(ctx: AuthHookContext, userId: string): Promise<number> {
+	const at = ctx.now();
 	const cancelled = await ctx.db.transaction(async (tx) => {
 		const rows = await tx
 			.update(submission)

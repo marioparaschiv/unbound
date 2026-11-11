@@ -36,7 +36,7 @@ function attributes(values: Attributes) {
  * @param run The benchmark run's id, shared by its launches.
  * @returns The OTLP/JSON `ExportTraceServiceRequest`, or `undefined` when the launch has no agent report.
  */
-export function launchTrace(record: LaunchRecord, run: string) {
+function launchTrace(record: LaunchRecord, run: string) {
 	const { agent, processStart } = record;
 
 	if (!agent || processStart === null) return;

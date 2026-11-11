@@ -22,13 +22,12 @@ int main()
     settings.load();
     assert(loaderEnabled(settings));
     assert(recoveryEnabled(settings));
-    assert(perform(settings, "recovery-label", "") == "Disable Recovery Mode");
-    assert(perform(settings, "recovery-status", "") == "Recovery Mode enabled");
+    assert(recoveryActionLabel(recoveryEnabled(settings)) == "Disable Recovery Mode");
+    assert(recoveryStatusText(recoveryEnabled(settings)) == "Recovery Mode enabled");
     assert(!developerMode(settings));
     assert(!devOverlayVisible(settings, false, false));
-    assert(perform(settings, "dev-overlay", "virtual-device") == "true");
-    assert(perform(settings, "dev-overlay", "debug-build") == "true");
-    assert(perform(settings, "dev-overlay", "") == "false");
+    assert(devOverlayVisible(settings, true, false));
+    assert(devOverlayVisible(settings, false, true));
     assert(!hotReloadEnabled(settings));
     assert(appliedThemeId(settings) == std::optional<std::string>("adrian.theme"));
     assert(!activeThemeId(settings));
@@ -40,11 +39,9 @@ int main()
     setGestureEnabled(settings, ToolboxGesture::ThreeFinger, false);
     assert(!gestureEnabled(settings, ToolboxGesture::ThreeFinger));
     assert(gestureEnabled(settings, ToolboxGesture::Shake));
-    assert(perform(settings, "set-gesture", "three-finger=true") == "true");
-    assert(perform(settings, "gesture", "nope").empty());
-
-    assert(perform(settings, "message-bubbles", "").empty());
-    assert(perform(settings, "avatar-radius", "").empty());
+    assert(setGestureEnabled(settings, ToolboxGesture::ThreeFinger, true));
+    assert(gestureNamed("three-finger") == ToolboxGesture::ThreeFinger);
+    assert(!gestureNamed("nope"));
 
     loader::SettingsStore reread(path);
     reread.load();

@@ -1,7 +1,6 @@
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
-import { flux, metro, native, render, startPlugin, toasts } from '@unbound-app/api/testing';
+import { logs, flux, metro, native, render, startPlugin, toasts } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
-import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { View } from 'react-native';
 
 import type { ReactNode } from 'react';
@@ -60,7 +59,6 @@ function send(text: string, channel = 'a') {
 }
 
 beforeEach(() => {
-	resetHealth();
 	channelId = 'a';
 	sent.length = 0;
 });
@@ -144,8 +142,6 @@ describe('the plugin on start', () => {
 	});
 
 	test('keeps the other features when one cannot start', async () => {
-		const error = spyOn(console, 'error').mockImplementation(() => {});
-
 		register({ brokenMessages: true });
 		await startPlugin();
 
@@ -153,8 +149,6 @@ describe('the plugin on start', () => {
 			render(<rightActions.default channel={{ id: 'a' }} />).find('Pressable'),
 		).toBeDefined();
 		expect(selfTest()).toMatchObject({ ok: false });
-		expect(error).toHaveBeenCalled();
-
-		error.mockRestore();
+		expect(logs.entries.some(({ level }) => level === 'error')).toBe(true);
 	});
 });

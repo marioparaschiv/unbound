@@ -1,5 +1,4 @@
 import { flux, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { settings } from '@unbound-app/settings';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
@@ -28,7 +27,6 @@ async function flush() {
 }
 
 beforeEach(() => {
-	resetHealth();
 	globalThis.fetch = (async () => ({
 		ok: true,
 		status: 200,

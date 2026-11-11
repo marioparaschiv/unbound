@@ -1,5 +1,3 @@
-export const PLUGIN_NAME = 'Shiki Codeblocks';
-
 /** Settings that change how mounted cards look, so the renderer repaints or rebuilds them. */
 export const CARD_SETTINGS = [
 	'theme',

@@ -1,6 +1,6 @@
 import { rollup } from 'rollup';
 
-import { unbound, type PluginConfigOptions } from '../../src/rollup/preset';
+import { unbound, type PluginConfigOptions } from '~/rollup/preset';
 
 /**
  * @description Builds a plugin with the `unbound` preset, without Hermes bytecode, and returns its bundle.

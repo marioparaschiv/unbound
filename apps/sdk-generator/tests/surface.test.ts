@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 
-import { checkSurface, readRuntimeSurfaces } from '../src/surface';
+import { checkSurface, readRuntimeSurfaces } from '~/surface';
 
 const FIXTURE = join(import.meta.dirname, 'fixtures', 'surface');
 const CLIENT = join(FIXTURE, 'client');

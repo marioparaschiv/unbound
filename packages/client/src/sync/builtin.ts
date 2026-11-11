@@ -11,7 +11,6 @@ import { onChange } from '~/storage/api';
 const SYNC_DELAY_MS = 5000;
 
 let unsubscribe: (() => void) | null = null;
-let pending: ReturnType<typeof setTimeout> | undefined;
 let stopped = false;
 
 // A download-only device takes the cloud's setup at launch and on demand; syncing after a local
@@ -26,16 +25,9 @@ function onSignedIn() {
 	void connect();
 }
 
-/** Syncs once addons have loaded, then after local changes settle, and follows the account signing in and out. */
+/** Syncs after local changes settle, and follows the account signing in and out. */
 export function start() {
 	stopped = false;
-
-	// Built-ins start before the addon managers load their entities.
-	pending = setTimeout(() => {
-		if (isEnabled()) {
-			void now();
-		}
-	});
 
 	onAccount('signedIn', onSignedIn);
 	onAccount('signedOut', disconnect);
@@ -47,10 +39,16 @@ export function start() {
 	);
 }
 
+/** Syncs once the addons have loaded, so the sync sees what is installed. */
+export function afterAddons() {
+	if (isEnabled()) {
+		void now();
+	}
+}
+
 /** Stops syncing on local changes and cancels a pending sync. */
 export function stop() {
 	stopped = true;
-	clearTimeout(pending);
 	offAccount('signedIn', onSignedIn);
 	offAccount('signedOut', disconnect);
 	unsubscribe?.();
@@ -61,9 +59,6 @@ export const cloudSyncSection: SectionEntry = {
 	key: Screens.Sync,
 	titleKey: 'UNBOUND_CLOUD_SYNC',
 	/**
-	 *
-	 */
-	/**
 	 * @description Loads the page when it first opens.
 	 * @returns The page.
 	 */
@@ -72,4 +67,4 @@ export const cloudSyncSection: SectionEntry = {
 	hidden: true,
 };
 
-export default { start, stop, cloudSyncSection };
+export default { start, afterAddons, stop, cloudSyncSection };

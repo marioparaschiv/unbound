@@ -8,5 +8,3 @@ import { Moment } from '~/metro/common';
 export function formatListingDate(date: string): string {
 	return Moment.utc(date).local().format('ll');
 }
-
-export default { formatListingDate };

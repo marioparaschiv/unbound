@@ -10,8 +10,8 @@ import {
 } from '~/commands/discord';
 import type { CommandEnums, DiscordCommand, IndexSection, IndexState } from '~/commands/discord';
 import type { CommandRecord, Section } from '~/commands/normalize';
+import { findByProps, findStore } from '~/metro/lookups';
 import { createPatcher } from '~/patcher/create-patcher';
-import { findByProps, findStore } from '~/metro/search';
 import { UNBOUND_ICON } from '~/commands/unbound-icon';
 import type { CommandEffects } from '~/commands/run';
 import { commandId } from '~/commands/normalize';
@@ -84,7 +84,7 @@ export function stop() {
 
 // Discord builds its picker from the index store, so a store it has not loaded has nothing to refresh.
 function emitIndexChange() {
-	findStore('ApplicationCommandIndex', { initialize: false })?.emitChange?.();
+	findStore('ApplicationCommandIndex', { lazy: false, initialize: false })?.emitChange?.();
 }
 
 // Discord can build the picker before it loads its command enums, so the defaults stand in until both have loaded.
@@ -94,9 +94,11 @@ function getEnums(): CommandEnums {
 
 function readEnums(): CommandEnums {
 	const Types = findByProps('ApplicationCommandOptionType', 'ApplicationCommandType', {
+		lazy: false,
 		initialize: false,
 	});
 	const Inputs = findByProps('ApplicationCommandInputType', 'ApplicationCommandSectionType', {
+		lazy: false,
 		initialize: false,
 	});
 	const read: CommandEnums = {
@@ -153,7 +155,7 @@ function showEphemeral(channelId: string, reply: EphemeralReply, section: Sectio
 
 // Discord draws a bot author's avatar from BOT_AVATARS[author.avatar]: an asset id or an image uri string.
 function registerAvatar(section: Section): string | undefined {
-	const Avatars = findByProps('BOT_AVATARS', 'ensureAvatarSource');
+	const Avatars = findByProps('BOT_AVATARS', 'ensureAvatarSource', { lazy: false });
 
 	if (!Avatars?.BOT_AVATARS) return;
 
@@ -168,7 +170,7 @@ function registerAvatar(section: Section): string | undefined {
 function removeAvatars() {
 	if (!avatars.size) return;
 
-	const Avatars = findByProps('BOT_AVATARS', 'ensureAvatarSource');
+	const Avatars = findByProps('BOT_AVATARS', 'ensureAvatarSource', { lazy: false });
 
 	for (const key of avatars) {
 		delete Avatars?.BOT_AVATARS?.[key];

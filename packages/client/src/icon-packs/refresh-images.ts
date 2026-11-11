@@ -20,5 +20,3 @@ function drawsAsset(fiber: Fiber): boolean {
 export function refreshImages(): number {
 	return reconcile((fiber) => (drawsAsset(fiber) ? 'render' : null));
 }
-
-export default { refreshImages };

@@ -1,0 +1,27 @@
+{
+	"defaultBridgePort": 9090,
+	"controllerEndpointMarker": "mcp",
+	"addressSetting": { "store": "unbound", "key": "debugger.address" },
+	"frames": {
+		"evalRequest": { "type": "eval", "id": "eval-1", "code": "1 + 1", "timeout": 5000 },
+		"evalOk": { "type": "eval-result", "id": "eval-1", "ok": true, "value": "2" },
+		"evalError": {
+			"type": "eval-result",
+			"id": "eval-1",
+			"ok": false,
+			"error": "Timed out",
+			"code": "timeout"
+		},
+		"deviceConnected": {
+			"type": "device-status",
+			"connected": true,
+			"device": {
+				"platform": "ios",
+				"discordVersion": "300.0",
+				"loaderVersion": "1.0.0",
+				"clientVersion": "1.0.0"
+			}
+		},
+		"deviceDisconnected": { "type": "device-status", "connected": false }
+	}
+}

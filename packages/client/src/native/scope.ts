@@ -420,6 +420,12 @@ export function createScopedNativePlugin(
 			'fabric.setFrameAsync',
 			'Async Fabric frame updates are unavailable.',
 		),
+		batchAsync: scopeBridgeAsyncMethod(
+			fabricSource,
+			'batchAsync',
+			'fabric.batchAsync',
+			'Frame-batched Fabric updates are unavailable.',
+		),
 		measure: scopeBridgeMethod(fabricSource, 'measure', 'fabric.measure'),
 		measureAsync: scopeBridgeAsyncMethod(
 			fabricSource,
@@ -620,5 +626,3 @@ export function createScopedNativePlugin(
 		},
 	};
 }
-
-export default { createScopedNativePlugin };

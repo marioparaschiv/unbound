@@ -1,25 +1,15 @@
-import {
-	addonTypeSchema,
-	listAddonsQuerySchema,
-	type AddonVersion,
-} from '@unbound-app/contracts/addons';
-import type { RepositoryDetails, SourcePin } from '@unbound-app/contracts/source';
-import type { AddonPage } from '@unbound-app/contracts/addon-page';
+import { addonTypeSchema, listAddonsQuerySchema } from '@unbound-app/contracts/addons';
 import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import { createServerFn } from '@tanstack/react-start';
 import { Type } from '@unbound-app/contracts/schema';
 
-import { listTags, readAddonTags, type AddonTag, type TagOption } from '~/lib/addon-tags';
-import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
-import { resolvePlatforms, type PlatformSupport } from '~/lib/addon-platforms';
+import { loadMarketplacePage, type MarketplacePage } from '~/lib/marketplace-listing';
+import { loadAddonPage, type MarketplaceAddonDetails } from '~/lib/marketplace-page';
 import { searchAuthors, type AuthorPage } from '~/lib/authors/directory';
-import { getAddonDetails, listAddons } from '~/lib/addons';
-import { getPublishedMediaBase } from '~/lib/markdown-url';
+import { listTags, type TagOption } from '~/lib/addon-tags';
 import { schemaValidator } from '~/lib/schema-validator';
-import { renderPageIcons } from '~/lib/page-icon-svgs';
-import { loadAuthors } from '~/lib/authors/resolve';
 import { splitList } from '~/lib/addon-filters';
-import app from '~/lib/app';
+import { getApp } from '~/lib/app';
 
 const listingQuery = listAddonsQuerySchema.properties;
 
@@ -31,72 +21,13 @@ const authorSearchSchema = Type.Object({
 	cursor: listingQuery.cursor,
 });
 
-/** An addon card on the `/addons` tabs, with the tags it shows. */
-export type ListingAddon = MarketplaceAddon & { tags: AddonTag[] };
-
-export type MarketplacePage = {
-	addons: ListingAddon[];
-	nextCursor: string | null;
-};
-
-export type MarketplaceVersion = Omit<AddonVersion, 'manifest'>;
-
-/** Where the newest version was read from, and what it and GitHub said about it at submission. */
-export type MarketplaceSource = {
-	pin: SourcePin;
-	details: RepositoryDetails;
-	addonMd: string | null;
-	/** The measured store page, or `null` when the version has none. */
-	page: AddonPage | null;
-	/** The directory URL ADDON.md's `media/` paths load from. */
-	mediaBase: string;
-	/** Each `:name:` icon ADDON.md uses, as `<svg>` markup by name, so the page ships only those. */
-	icons: Record<string, string>;
-	/** When the version was approved, which dates the `details` snapshot. */
-	approvedAt: string;
-};
-
-export type MarketplaceAddonDetails = MarketplaceAddon & {
-	createdAt: string;
-	/** The platforms the newest version runs on, each with the Capabilities it needs there. */
-	platforms: PlatformSupport[];
-	/** The oldest Unbound version the newest version runs on. */
-	minClientVersion: string | null;
-	/** Newest first; the first is the one installs get. */
-	versions: MarketplaceVersion[];
-	/** `null` when the newest version predates GitHub sources. */
-	source: MarketplaceSource | null;
-	/** The site's tags it is filed under, in menu order. */
-	tags: AddonTag[];
-};
-
 /**
  * @description Loads one page of the public addon listing for the `/addons` tabs.
  * @returns The page's addon cards and the cursor of the next page.
  */
 export const fetchMarketplacePage = createServerFn({ method: 'GET' })
 	.validator(schemaValidator(listAddonsQuerySchema))
-	.handler(async ({ data }): Promise<MarketplacePage> => {
-		const page = await listAddons(app, data);
-		const [resolve, tags] = await Promise.all([
-			loadAuthors(
-				app,
-				page.addons.map((entry) => entry.latestVersion.manifest.authors),
-			),
-			readAddonTags(
-				app,
-				page.addons.map((entry) => entry.id),
-			),
-		]);
-
-		return {
-			addons: page.addons.map((entry) => ({
-				...toMarketplaceAddon(entry, entry.latestVersion, resolve),
-				tags: tags.get(entry.id) ?? [],
-			})),
-			nextCursor: page.nextCursor,
-		};
-	});
+	.handler(({ data }): Promise<MarketplacePage> => loadMarketplacePage(getApp(), data));
 
 /**
  * @description Lists every tag with how many listed addons of the type carry it, for the Tags filter.
@@ -104,7 +35,7 @@ export const fetchMarketplacePage = createServerFn({ method: 'GET' })
  */
 export const fetchMarketplaceTags = createServerFn({ method: 'GET' })
 	.validator(schemaValidator(addonTypeSchema))
-	.handler(({ data }): Promise<TagOption[]> => listTags(app, data));
+	.handler(({ data }): Promise<TagOption[]> => listTags(getApp(), data));
 
 /**
  * @description Searches the authors of listed addons for the Author filter, one page at a time.
@@ -113,7 +44,7 @@ export const fetchMarketplaceTags = createServerFn({ method: 'GET' })
 export const fetchMarketplaceAuthors = createServerFn({ method: 'GET' })
 	.validator(schemaValidator(authorSearchSchema))
 	.handler(({ data }): Promise<AuthorPage> =>
-		searchAuthors(app, {
+		searchAuthors(getApp(), {
 			...data,
 			ids: data.ids ? splitList(data.ids) : undefined,
 		}),
@@ -125,38 +56,10 @@ export const fetchMarketplaceAuthors = createServerFn({ method: 'GET' })
  */
 export const fetchMarketplaceAddon = createServerFn({ method: 'GET' })
 	.validator(schemaValidator(addonIdSchema))
-	.handler(async ({ data }): Promise<MarketplaceAddonDetails | null> => {
-		const details = await getAddonDetails(app, data);
-		const [latest] = details?.versions ?? [];
-
-		if (!details || !latest) return null;
-
-		const [resolve, tags] = await Promise.all([
-			loadAuthors(app, [latest.manifest.authors]),
-			readAddonTags(app, [data]),
-		]);
-
-		return {
-			...toMarketplaceAddon(details, latest, resolve),
-			createdAt: details.createdAt,
-			platforms: resolvePlatforms(latest.manifest),
-			minClientVersion: latest.manifest.unbound?.min ?? null,
-			versions: details.versions.map(({ manifest: _manifest, ...version }) => version),
-			source:
-				latest.source && details.details
-					? {
-							pin: latest.source,
-							details: details.details,
-							addonMd: details.addonMd,
-							page: details.page,
-							mediaBase: getPublishedMediaBase(latest.manifestUrl),
-							icons: renderPageIcons(details.addonMd ?? ''),
-							approvedAt: latest.publishedAt,
-						}
-					: null,
-			tags: tags.get(data) ?? [],
-		};
-	});
+	.handler(
+		async ({ data }): Promise<MarketplaceAddonDetails | null> =>
+			(await loadAddonPage(getApp(), data)) ?? null,
+	);
 
 export default {
 	fetchMarketplacePage,

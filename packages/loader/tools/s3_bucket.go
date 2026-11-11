@@ -45,7 +45,6 @@ func s3BucketFromEnv() (bucket s3Bucket, ok bool, err error) {
 	return bucket, true, nil
 }
 
-// exists reports whether key is in the bucket.
 func (bucket s3Bucket) exists(ctx context.Context, key string) (bool, error) {
 	response, err := bucket.do(ctx, http.MethodHead, key, nil, 0, emptyPayloadSHA256, "")
 	if err != nil {
@@ -61,7 +60,6 @@ func (bucket s3Bucket) exists(ctx context.Context, key string) (bool, error) {
 	return false, fmt.Errorf("HEAD %s returned HTTP %d", key, response.StatusCode)
 }
 
-// putFile uploads the file at path to key.
 func (bucket s3Bucket) putFile(ctx context.Context, key, path, contentType string) error {
 	file, err := os.Open(path)
 	if err != nil {

@@ -230,5 +230,3 @@ export function createFluxRuntimeBridge(): NativeRuntimeBridge {
 		},
 	};
 }
-
-export default { createFluxRuntimeBridge };

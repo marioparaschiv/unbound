@@ -1,6 +1,5 @@
-// The finders module is a leaf, so a shim imported before Discord defines its modules does not load the search.
+import type * as Lookups from '~/metro/lookups';
 import { benchSpan } from '~/core/bench-span';
-import { finder } from '~/metro/finders';
 
 // Metro marks a Babel-compiled ES module with `__esModule`; a CommonJS module is its own default export.
 function defaultOf(mdl: MetroExport): MetroExport {
@@ -17,10 +16,14 @@ export function createLibraryShim(props: string[]): MetroExport {
 	let mdl: MetroExport;
 
 	function resolve(): MetroExport {
-		// Only the library's own exports identify it; a wrapper whose default re-exports them must not match.
-		mdl ??= benchSpan(`library ${props.join(',')}`, () =>
-			finder('findByProps')(...props, { interop: false, esModules: false }),
-		);
+		mdl ??= benchSpan(`library ${props.join(',')}`, () => {
+			// Shims load inside `~/metro/cache`'s import of React Native, and the search reads that cache as it
+			// loads, so the lookups are required on first use.
+			const { findByProps } = require('~/metro/lookups') as typeof Lookups;
+
+			// Only the library's own exports identify it; a wrapper whose default re-exports them must not match.
+			return findByProps(...props, { lazy: false, interop: false, esModules: false });
+		});
 
 		return mdl;
 	}
@@ -46,5 +49,3 @@ export function createLibraryShim(props: string[]): MetroExport {
 		},
 	);
 }
-
-export default { createLibraryShim };

@@ -1,8 +1,6 @@
 {
 	"name": "relationship-notifier",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Notifies you when a friend, group chat, or server removes you.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

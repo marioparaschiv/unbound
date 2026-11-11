@@ -176,7 +176,6 @@ function firstForwarded(
 
 /**
  * @description Renders a literal as TypeScript type text.
- * @param value The literal.
  * @returns The literal type.
  */
 export function literalType(value: LiteralValue): string {
@@ -306,7 +305,6 @@ export const RULES: readonly Rule[] = [
 
 /**
  * @description Renders a property name, quoting it when it is not an identifier.
- * @param name The property name.
  * @returns The key as it appears in a type literal.
  */
 export function propertyKey(name: string): string {

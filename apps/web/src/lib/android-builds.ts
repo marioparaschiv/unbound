@@ -5,12 +5,12 @@ import {
 	type AndroidBuildsResponse,
 	type PublishAndroidBuildRequest,
 } from '@unbound-app/contracts/android-builds';
+import { getCdnUrl } from '@unbound-app/contracts/version-layout';
 import { desc, eq } from 'drizzle-orm';
 
 import { requirePermission } from '~/lib/api/caller';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
-import { getCdnUrl } from '~/lib/artifacts';
 import { androidBuild } from '~/db/schema';
 import type { Env } from '~/lib/env';
 
@@ -28,7 +28,10 @@ export function toAndroidBuild(env: Env, row: AndroidBuildRow): AndroidBuild {
 		discordVersion: row.discordVersion,
 		discordVersionCode: row.discordVersionCode,
 		commit: row.commit,
-		splits: row.splits.map(({ key, ...split }) => ({ ...split, url: getCdnUrl(env, key) })),
+		splits: row.splits.map(({ key, ...split }) => ({
+			...split,
+			url: getCdnUrl(env.CDN_URL, key),
+		})),
 		publishedAt: row.publishedAt.toISOString(),
 	};
 }

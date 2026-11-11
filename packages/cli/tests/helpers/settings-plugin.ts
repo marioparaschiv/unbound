@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { rollup } from 'rollup';
 
-import { unbound } from '../../src/rollup/preset';
+import { unbound } from '~/rollup/preset';
 
 /** The files of a throwaway plugin: its settings.ts, its en-US messages (`null` for no i18n folder) and its entry. */
 export type PluginFiles = {

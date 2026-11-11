@@ -1,8 +1,6 @@
 import { metro, render, startPlugin } from '@unbound-app/api/testing';
-import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
 import { Text } from 'react-native';
-
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 
 import { EMBED_ERROR_PATH, YOUTUBE_PATH } from '~/constants';
 import { selfTest } from '~/index';
@@ -12,8 +10,6 @@ const embedError = {
 };
 
 describe('starting the plugin', () => {
-	beforeEach(resetHealth);
-
 	test('reports both patches as applied', async () => {
 		metro.register({ WebView: () => null });
 		metro.register(embedError, EMBED_ERROR_PATH);

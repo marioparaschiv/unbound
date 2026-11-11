@@ -3,9 +3,10 @@ import { createLogger } from '@unbound-app/logger';
 import { getSetting, useUnboundSettings } from '~/settings/unbound';
 import { createPatcher } from '~/patcher/create-patcher';
 import type { SectionEntry } from '~/settings/section';
-import { CACHE_KEY, Screens } from '~/core/constants';
 import type { MetroFilter } from '~/metro/filters';
+import { CACHE_KEY } from '~/metro/cache-key';
 import { onModuleLoaded } from '~/metro/wait';
+import { Screens } from '~/core/constants';
 import { show } from '~/toasts/api';
 
 import discordToastOptions, { type DiscordToastOptions } from './discord-toast-options';
@@ -82,9 +83,6 @@ function patchOpen(Toasts: MetroExport) {
 export const toastsSection: SectionEntry = {
 	key: Screens.Toasts,
 	titleKey: 'UNBOUND_TOAST_SETTINGS',
-	/**
-	 *
-	 */
 	/**
 	 * @description Loads the page when it first opens.
 	 * @returns The page.

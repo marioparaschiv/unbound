@@ -172,5 +172,3 @@ function sum(layout: Layout) {
 
 	return total;
 }
-
-export default { ORIGINAL, fits, resolve, commit, offsetOf, cut };

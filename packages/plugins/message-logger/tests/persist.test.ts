@@ -5,7 +5,7 @@ import { describe, expect, test } from 'bun:test';
 import { restoreIntoPage, toRawMessage, type RawMessage } from '~/persist';
 import { LOG_FILE } from '~/constants';
 
-import { dispatch, generateRow, startLogger } from './discord';
+import { dispatch, generateRow, startLogger } from './helpers/discord';
 
 const SAVED_PATH = `/documents/${LOG_FILE}`;
 

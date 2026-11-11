@@ -1,5 +1,9 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
+import { devicePlatform, openDeviceTarget } from '~/lib/device-target';
 import { installOnAndroid } from '~/lib/android-install';
 import { readPluginPayload } from '~/lib/plugin-install';
 import { resolveAddonTarget } from '~/lib/addon-target';
@@ -46,31 +50,43 @@ const installCommand: CommandDefinition<typeof schema> = {
 	mcp: true,
 	schema,
 	cli: { positionals: ['addon'] },
-	async handler({ addon: target, build, serial, ios, udid, restart }) {
-		const onIOS = ios || udid !== void 0;
+	async handler({ addon: addonTarget, build, serial, ios, udid, restart }) {
+		const platform = devicePlatform({ serial, ios, udid });
 
-		if (onIOS && serial !== void 0) {
-			return {
-				ok: false,
-				text: 'Pass either --serial for an Android device or --ios/--udid for an iPhone, not both.',
-			};
+		if (typeof platform !== 'string') {
+			return { ok: false, text: platform.error };
 		}
 
-		const resolved = await resolveAddonTarget(target, build, BUILD_TIMEOUT_MS);
+		const resolved = await resolveAddonTarget(addonTarget, {
+			build,
+			timeoutMs: BUILD_TIMEOUT_MS,
+		});
 
 		if ('error' in resolved) {
 			return { ok: false, text: resolved.error };
 		}
 
-		const plugin = readPluginPayload(resolved.addon);
+		const staging = mkdtempSync(join(tmpdir(), 'ubd-install-'));
 
-		if ('error' in plugin) {
-			return { ok: false, text: plugin.error };
+		try {
+			const plugin = readPluginPayload(resolved.addon, staging);
+
+			if ('error' in plugin) {
+				return { ok: false, text: plugin.error };
+			}
+
+			const target = await openDeviceTarget({ serial, ios, udid });
+
+			if ('error' in target) {
+				return { ok: false, text: target.error };
+			}
+
+			return await (target.platform === 'ios'
+				? installOnIOS(plugin, target, { restart })
+				: installOnAndroid(plugin, target, { restart }));
+		} finally {
+			rmSync(staging, { recursive: true, force: true });
 		}
-
-		return onIOS
-			? installOnIOS(plugin, { udid, restart })
-			: installOnAndroid(plugin, { serial, restart });
 	},
 };
 

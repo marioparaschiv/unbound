@@ -37,7 +37,7 @@ Exit 0 means every outcome matches the `EXPECTED` and `EXPECTED_LIVENESS` tables
 ## 4. Update the verification for an intended change
 
 1. Change the action that models the changed code, keeping one action per indivisible step in the code (one `await`, one transaction, one S3 call).
-2. If the change matches a flag (`PublishAfterCommit`, `CasOnStatus`, `HashCheck`), flip it in `spec/current.cfg` and `spec/current-pending-updates.cfg` instead; `before-fix*` keep `PublishAfterCommit = FALSE`.
+2. If the change matches a flag (`PublishAfterCommit`, `CasOnStatus`, `HashCheck`, `ServeOnlyPublished`), flip it in `spec/current.cfg` and `spec/current-pending-updates.cfg` instead; `before-fix*` keep `PublishAfterCommit = FALSE`.
 3. Rerun. Update `EXPECTED` and `replay.ts` only for outcomes the code now really has, and update **Findings**.
 4. Move the sync commit forward.
 

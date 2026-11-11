@@ -1,9 +1,11 @@
 #pragma once
 
 #import <Foundation/Foundation.h>
-#import <jsi/jsi.h>
+#include <memory>
+
+#include "NativePlatformBridge.h"
 
 namespace loader {
-void registerNativePlatformProvider(void);
-void registerNativePlatform(facebook::jsi::Runtime &runtime);
+// iOS's device facts; the loader fills in its documents, settings and fonts.
+std::shared_ptr<NativePlatformProvider> makeNativePlatformProvider(void);
 }

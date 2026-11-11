@@ -3,10 +3,8 @@ import {
 	accountSignInResponseSchema,
 } from '@unbound-app/contracts/account';
 import { Type } from '@unbound-app/contracts/schema';
-import { getIP } from 'better-auth/api';
 
 import { signInWithDiscordCode } from '~/lib/discord-sign-in';
-import { consumeRateLimit } from '~/lib/rate-limit';
 import endpoint from '~/lib/api/endpoint';
 
 const discordSignInEndpoint = endpoint(
@@ -15,18 +13,8 @@ const discordSignInEndpoint = endpoint(
 		query: Type.Undefined(),
 		response: accountSignInResponseSchema,
 	},
-	async ({ ctx, request, body }) => {
-		// Without a trustworthy client IP, requests share one bucket rather than going unlimited.
-		const ip = getIP(request, ctx.auth.options) ?? 'unknown';
-
-		await consumeRateLimit(ctx, {
-			key: `api:discord-sign-in:${ip}`,
-			windowSeconds: ctx.env.SYNC_SIGN_IN_RATE_LIMIT_WINDOW_SECONDS,
-			max: ctx.env.SYNC_SIGN_IN_RATE_LIMIT_MAX,
-		});
-
-		return signInWithDiscordCode(ctx, body.code);
-	},
+	({ ctx, body }) => signInWithDiscordCode(ctx, body.code),
+	{ rateLimit: { bucket: 'discord-sign-in', budget: 'SYNC_SIGN_IN' } },
 );
 
 export default discordSignInEndpoint;

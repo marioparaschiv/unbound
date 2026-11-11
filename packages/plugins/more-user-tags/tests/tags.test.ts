@@ -1,5 +1,4 @@
 import { flux, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { storage } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
 import { afterEach, beforeEach, describe, expect, jest, test } from 'bun:test';
@@ -33,7 +32,6 @@ function memberMessage(id: string) {
 }
 
 beforeEach(async () => {
-	resetHealth();
 	permissionsOf.value = 0n;
 	metro.register({ Permissions: PERMISSIONS, ThemeTypes: {} });
 	metro.register({ computePermissions: () => permissionsOf.value, canEveryoneRole: () => false });

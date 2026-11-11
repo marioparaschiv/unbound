@@ -1,7 +1,7 @@
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import { ChatManager, dispatch, generateRow, startLogger } from './discord';
+import { ChatManager, dispatch, generateRow, startLogger } from './helpers/discord';
 
 const RED = 0xfff23f42;
 

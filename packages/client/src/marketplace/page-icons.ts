@@ -13,5 +13,3 @@ const NAMES = new Set<string>(ADDON_PAGE_ICON_NAMES);
 export function isPageIcon(name: string): name is AddonPageIconName {
 	return NAMES.has(name);
 }
-
-export default { isPageIcon };

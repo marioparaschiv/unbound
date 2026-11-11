@@ -8,6 +8,7 @@ import type { AppContext } from '~/lib/context';
 import type { DiscordId } from '~/db/schema';
 import { discordProfile } from '~/db/schema';
 import { isDiscordId } from '~/lib/discord';
+import type { Job } from '~/lib/jobs';
 
 const logger = createLogger('Web', 'Authors');
 
@@ -18,11 +19,6 @@ export type CachedProfile =
 export type SweepResult = {
 	refreshed: number;
 	retryAfterMs: number | null;
-};
-
-export type ProfileRefresher = {
-	kick(): void;
-	stop(): void;
 };
 
 type StoredKind = { kind: 'found' | 'missing' };
@@ -38,8 +34,6 @@ type RefresherState =
 const MAX_CONSECUTIVE_FAILURES = 3;
 
 const FAILURE_BACKOFF_MS = 5 * 60_000;
-
-let active: ProfileRefresher | undefined;
 
 /**
  * @description Reads cached Discord profiles, fresh or stale.
@@ -222,7 +216,7 @@ export async function refreshDiscordProfiles(
 	return { refreshed, retryAfterMs: failed ? FAILURE_BACKOFF_MS : null };
 }
 
-function createProfileRefresher(ctx: AppContext): ProfileRefresher {
+function createProfileRefresher(ctx: AppContext): Job {
 	let state: RefresherState = { kind: 'idle' };
 	let resumeTimer: Timer | undefined;
 	const stopped = new AbortController();
@@ -291,45 +285,18 @@ function createProfileRefresher(ctx: AppContext): ProfileRefresher {
 }
 
 /**
- * @description Starts the process's Discord profile refresher: sweeps now, every
- * `DISCORD_PROFILE_SWEEP_INTERVAL_SECONDS`, and whenever {@link requestProfileRefresh} asks.
+ * @description Starts the context's Discord profile refresher as the `profiles` job: sweeps now, every
+ * `DISCORD_PROFILE_SWEEP_INTERVAL_SECONDS`, and on each `ctx.jobs.kick('profiles')`. A kick during a
+ * sweep runs one more; a rate limit or failures pause it.
  * @param ctx The application context.
- * @returns The running refresher.
+ * @returns The started job.
  */
-export function startProfileRefresher(ctx: AppContext): ProfileRefresher {
-	active?.stop();
-
-	const refresher = createProfileRefresher(ctx);
-	const interval = setInterval(
-		() => refresher.kick(),
-		ctx.env.DISCORD_PROFILE_SWEEP_INTERVAL_SECONDS * 1000,
+export function startProfileRefresher(ctx: AppContext): Job {
+	return ctx.jobs.start(
+		'profiles',
+		ctx.env.DISCORD_PROFILE_SWEEP_INTERVAL_SECONDS,
+		createProfileRefresher(ctx),
 	);
-
-	const handle: ProfileRefresher = {
-		kick() {
-			refresher.kick();
-		},
-		stop() {
-			clearInterval(interval);
-			refresher.stop();
-
-			if (active === handle) {
-				active = undefined;
-			}
-		},
-	};
-
-	active = handle;
-	handle.kick();
-
-	return handle;
-}
-
-/**
- * @description Asks the running refresher, if any, for a sweep without waiting for it.
- */
-export function requestProfileRefresh() {
-	active?.kick();
 }
 
 export default {
@@ -338,5 +305,4 @@ export default {
 	isStale,
 	refreshDiscordProfiles,
 	startProfileRefresher,
-	requestProfileRefresh,
 };

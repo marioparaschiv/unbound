@@ -258,8 +258,6 @@ const docs = Type.Module({
 	}),
 });
 
-export const docsTypeSchema = Type.Unsafe<DocsType>(docs.DocsType);
-export const docsReflectionSchema = Type.Unsafe<DocsReflection>(docs.DocsReflection);
 export const docsProjectSchema = Type.Unsafe<DocsProject>(docs.DocsProject);
 
-export default { docsTypeSchema, docsReflectionSchema, docsProjectSchema };
+export default { docsProjectSchema };

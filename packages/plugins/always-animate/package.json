@@ -1,8 +1,6 @@
 {
 	"name": "always-animate",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Animates anything that can be animated: avatars, decorations, nameplates, profile effects, server icons, emojis, stickers and GIFs.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

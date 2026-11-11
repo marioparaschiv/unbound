@@ -1,7 +1,7 @@
 import { toasts } from '@unbound-app/api';
 import { format, messages } from '@unbound-app/i18n';
 
-import { COMPLETED_UPLOAD, PLUGIN_NAME } from '~/constants';
+import { COMPLETED_UPLOAD } from '~/constants';
 import { CloudUploader, MessageStore, REST } from '~/uploads/modules';
 import { attachmentLimitProblem } from '~/uploads/eligibility';
 import type { UploadItem } from '~/types';
@@ -14,7 +14,7 @@ type CloudUpload = {
 };
 
 function notify(content: string): void {
-	toasts.show({ title: PLUGIN_NAME, content });
+	toasts.show({ title: addon.name, content });
 }
 
 async function uploadFiles(

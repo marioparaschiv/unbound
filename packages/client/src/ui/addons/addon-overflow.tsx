@@ -1,7 +1,6 @@
 import { useMemo, memo } from 'react';
 
 import { reinstallFromStore } from '~/updates/addon-updates';
-import { API_URL, CLIENT_VERSION } from '~/core/constants';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import type { Addon } from '~/addons/addon';
@@ -73,10 +72,7 @@ async function reinstall(kind: AddonOverflowProps['kind'], addon: Addon) {
 	let applied = false;
 
 	try {
-		applied = await reinstallFromStore(Manager.for(kind), addon.id, {
-			baseUrl: API_URL,
-			clientVersion: CLIENT_VERSION,
-		});
+		applied = await reinstallFromStore(Manager.for(kind), addon.id);
 	} catch {
 		applied = false;
 	}

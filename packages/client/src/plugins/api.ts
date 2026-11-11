@@ -1,6 +1,7 @@
-import type { AddonHandle, PushedManifest } from '@unbound-app/types';
+import type { AddonHandle, PluginSelfTestResult, PushedManifest } from '@unbound-app/types';
 
 import type { ReloadResult } from '~/addons/addons';
+import { readSelfTest } from '~/plugins/self-test';
 import { apply, check } from '~/updates/api';
 import { plugins } from '~/plugins/manager';
 
@@ -38,6 +39,15 @@ export async function update(id: string): Promise<boolean> {
 	await check();
 
 	return apply(id);
+}
+
+/**
+ * @description Runs a running plugin's self-test, as the device matrix does after restarting it.
+ * @param id The plugin's id.
+ * @returns Its report, or `undefined` when it is not running or has no self-test; rejects with what the self-test threw.
+ */
+export function selfTest(id: string): Promise<PluginSelfTestResult | undefined> {
+	return readSelfTest(plugins.getEntity(id));
 }
 
 /** Every installed plugin, keyed by id. */

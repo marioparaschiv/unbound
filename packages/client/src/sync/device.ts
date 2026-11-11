@@ -102,7 +102,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 		forgetSource: (id) => themes.forgetSource(id),
 	},
 	icons: {
-		getApplied: () => icons.applied.manifest.id,
+		getApplied: () => icons.getAppliedId(),
 		isEnabled: (id) => icons.isEnabled(id),
 		isInstalled: (id) => Boolean(icons.getEntity(id)),
 		install: (url) => icons.install(url),
@@ -142,7 +142,7 @@ function collectKind(kind: SyncKind): SyncKindDocument {
 }
 
 /**
- * @description Copies a settings store, so the synced document cannot write through to the live settings.
+ * @description Copies a Bucket, so the synced document cannot write through to the live settings.
  * @param store The store as `snapshot` reports it.
  * @returns A shallow copy of it.
  */

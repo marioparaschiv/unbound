@@ -1,4 +1,5 @@
 import type { NativeHookToken, NativeObjectHandle } from '@unbound-app/api/native';
+import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
 import {
 	removeAttachedViews,
 	type TextAttachmentBridge,
@@ -9,7 +10,6 @@ import type { FlatRecovery } from '~/codeblocks/flat-recovery';
 import type { Highlighter } from '~/codeblocks/highlighter';
 import type { CodeBlockPlacement } from '~/codeblocks/fences';
 import type { Preferences } from '~/codeblocks/preferences';
-import { SelectedChannelStore } from '~/codeblocks/modules';
 
 import type { CodeHost } from '~/codeblocks/ios/code-host';
 import type { NativeUI } from '~/codeblocks/ios/ui';
@@ -65,14 +65,6 @@ export type Session = {
 type SurfaceIdentity = Pick<Surface, 'cellKey' | 'channelId' | 'messageId'>;
 
 /**
- * @description Reads the channel the user is looking at.
- * @returns The selected channel ID, falling back to the last selected one.
- */
-export function visibleChannelId(): string | undefined {
-	return SelectedChannelStore.getChannelId() ?? SelectedChannelStore.getLastSelectedChannelId();
-}
-
-/**
  * @description Tells whether a surface still belongs to a message cell, which UIKit recycles between messages.
  * @param surface The surface's channel, message and cell.
  * @param channelId The cell's channel.
@@ -111,7 +103,7 @@ export function isMounted(session: Session, surface: Surface): boolean {
  */
 export function isOnScreen({ ui }: Session, surface: Surface): boolean {
 	return Boolean(
-		visibleChannelId() === surface.channelId &&
+		selectedChannelId() === surface.channelId &&
 		messageIdentity(ui, surface.cell)?.messageId === surface.messageId &&
 		ui.key(surface.cell) === surface.cellKey &&
 		ui.call(surface.label, 'isDescendantOfView:', surface.cell),
@@ -148,4 +140,4 @@ export function detachSurface(session: Session, surface: Surface): void {
 	if (isMounted(session, surface)) session.surfaces.delete(surface.labelKey);
 }
 
-export default { visibleChannelId, surfaceMatchesCell, isMounted, isOnScreen, detachSurface };
+export default { surfaceMatchesCell, isMounted, isOnScreen, detachSurface };

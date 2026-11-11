@@ -34,6 +34,6 @@ export async function loadSnapshot(userId: string): Promise<Snapshot | undefined
  */
 export async function saveSnapshot(userId: string, snapshot: Snapshot): Promise<void> {
 	await fs.writeFile(snapshotPath(userId), JSON.stringify(snapshot)).catch((error: unknown) => {
-		console.error('[Relationship Notifier] Failed to save the snapshot:', error);
+		logger.error('Failed to save the snapshot:', error);
 	});
 }

@@ -40,12 +40,11 @@ export type FeedbackToastsOptions = {
 	core: MessageLookup;
 	/** Receives the error each `error` toast reports. */
 	logger: Pick<AddonLogger, 'error'>;
-	/** Shows the built toast. */
 	show: (options: ToastOptions) => ToastHandle;
 };
 
 /** The icon each variant draws, matching Discord's help message tones. */
-export const VARIANT_ICONS: Record<ToastVariant, string> = {
+const VARIANT_ICONS: Record<ToastVariant, string> = {
 	success: 'CircleCheckIcon',
 	info: 'CircleInformationIcon',
 	warning: 'WarningIcon',
@@ -141,5 +140,3 @@ export function createFeedbackToasts({
 		error,
 	};
 }
-
-export default { VARIANT_ICONS, errorText, createFeedbackToasts };

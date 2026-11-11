@@ -1,6 +1,7 @@
-import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { AddonType } from '@unbound-app/contracts/addons';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 
+import { isListedAddon } from '~/lib/addon-visibility';
 import { addon, addonTag, tag } from '~/db/schema';
 import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
@@ -34,7 +35,7 @@ export async function listTags(ctx: AppContext, type?: AddonType): Promise<TagOp
 			addon,
 			and(
 				eq(addon.id, addonTag.addonId),
-				isNull(addon.delistedAt),
+				isListedAddon(),
 				type ? eq(addon.type, type) : undefined,
 			),
 		)

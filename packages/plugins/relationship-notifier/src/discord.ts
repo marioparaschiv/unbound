@@ -111,8 +111,8 @@ function warnAvailabilityUnknown(): void {
 	if (warnedAvailabilityUnknown) return;
 
 	warnedAvailabilityUnknown = true;
-	console.warn(
-		'[Relationship Notifier] GuildAvailabilityStore.isUnavailable was not found, so servers missing while offline are not reported.',
+	logger.warn(
+		'GuildAvailabilityStore.isUnavailable was not found, so servers missing while offline are not reported.',
 	);
 }
 

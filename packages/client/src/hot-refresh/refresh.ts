@@ -1,6 +1,7 @@
 import type { FunctionComponent } from 'react';
 
-import { findByPropsLazy } from '~/metro/wrappers';
+import { whenModuleLoads } from '~/metro/lazy-registry';
+import type * as Lookups from '~/metro/lookups';
 
 /** Any function component; `never` props accept every component's props. */
 export type Component = FunctionComponent<never>;
@@ -52,7 +53,23 @@ type FiberRoot = {
 	pendingLanes: number;
 };
 
-const Renderer = findByPropsLazy('getPublicInstanceFromRootTag');
+let renderer: MetroExport;
+let waiting = false;
+
+function getRenderer(): MetroExport {
+	if (!waiting) {
+		waiting = true;
+
+		// A hot build loads this runtime inside `~/metro/cache`'s imports, and the search reads that cache as it
+		// loads, so the lookups are required on first use.
+		const { findByProps } = require('~/metro/lookups') as typeof Lookups;
+
+		// Waiting never loads a module, and a renderer that has not loaded yet is set once it does, not searched again.
+		whenModuleLoads(findByProps('getPublicInstanceFromRootTag'), (mdl) => (renderer = mdl));
+	}
+
+	return renderer;
+}
 
 const HOST_ROOT = 3;
 const MEMO = 14;
@@ -177,7 +194,7 @@ function findRoots() {
 
 function rootFiber(tag: number): Fiber | undefined {
 	try {
-		return Renderer.getPublicInstanceFromRootTag(tag)?._documentElement?.firstElementChild
+		return getRenderer()?.getPublicInstanceFromRootTag(tag)?._documentElement?.firstElementChild
 			?.__internalInstanceHandle;
 	} catch {
 		// Tags that never mounted a surface throw on some renderer versions.
@@ -304,5 +321,3 @@ function schedule(root: FiberRoot, fibers: Fiber[]) {
 		mark(targets, lane);
 	}
 }
-
-export default { HOOK_FIBERS, reconcile, rerender, rerenderFiber, refresh, withAlternates };

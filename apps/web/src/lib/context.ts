@@ -1,3 +1,4 @@
+import { createJobs, type Jobs } from '~/lib/jobs';
 import type { Database } from '~/db/database';
 import { createStorage } from '~/lib/storage';
 import { createAuth } from '~/lib/auth/auth';
@@ -12,24 +13,30 @@ export type AppContext = {
 	auth: Auth;
 	storage: Storage;
 	now: () => Date;
+	/** The process's background jobs, which code that changes their input may kick. */
+	jobs: Jobs;
 };
 
+/** The context Better Auth's hooks run with: everything but the auth instance they belong to. */
+export type AuthHookContext = Omit<AppContext, 'auth'>;
+
 /**
- * @description Wires the auth instance and storage clients around a database and environment.
+ * @description Wires the auth instance, storage clients, clock and job registry around a database and
+ * environment.
  * @param env The validated environment.
  * @param db The open, migrated database.
  * @returns The application context.
  */
 export function createAppContext(env: Env, db: Database): AppContext {
-	const storage = createStorage(env);
-
-	return {
+	const base: AuthHookContext = {
 		env,
 		db,
-		auth: createAuth(db, env, storage),
-		storage,
+		storage: createStorage(env),
 		now: () => new Date(),
+		jobs: createJobs(),
 	};
+
+	return { ...base, auth: createAuth(base) };
 }
 
 export default { createAppContext };

@@ -3,7 +3,6 @@ import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabiliti
 import type { PluginContext } from '@unbound-app/api/native';
 
 import { enableNativeMentions } from '~/chat/platform';
-import { PLUGIN_NAME } from '~/constants';
 
 export type Enqueue = (step: () => void | Promise<void>) => void;
 
@@ -23,13 +22,13 @@ export function createNativeMentions(context: PluginContext): NativeMentions {
 	function enqueue(step: Parameters<Enqueue>[0]) {
 		queue = queue.then(step).catch((error) => {
 			if (!isCancellation(error)) {
-				console.error(`[${PLUGIN_NAME}] Failed to update native mentions:`, error);
+				logger.error(`Failed to update native mentions:`, error);
 			}
 		});
 	}
 
 	function enable(): () => void {
-		if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) {
+		if (!ensureCapabilities(context.native, context.capabilities)) {
 			return () => {};
 		}
 

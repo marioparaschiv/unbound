@@ -1,5 +1,4 @@
 import { metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
@@ -48,7 +47,6 @@ function openChat() {
 }
 
 beforeEach(() => {
-	resetHealth();
 	shown.length = 0;
 	metro.register(ChatManager);
 	metro.register(RowManager);

@@ -1,6 +1,6 @@
 import { stopPlugin, toasts } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
-import { startReviewdb } from './start-reviewdb';
+import { startReviewdb } from './helpers/start-reviewdb';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 // ReviewDB's server is outside Unbound and Discord, so its response is the one thing faked.

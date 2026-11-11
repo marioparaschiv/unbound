@@ -1,10 +1,7 @@
-import { buildNotificationUpdates, isApplicableGuildId, readSettings } from '~/apply/payloads';
-import {
-	NotificationSettings,
-	OptInChannels,
-	UserGuildSettingsStore,
-	settings,
-} from '~/apply/modules';
+import { settings } from '@unbound-app/settings';
+
+import { NotificationSettings, OptInChannels, UserGuildSettingsStore } from '~/apply/modules';
+import { buildNotificationUpdates, isApplicableGuildId } from '~/apply/payloads';
 
 function showAllChannels(guildId: string): void {
 	const toggle = OptInChannels.toggleShowAllChannels;
@@ -39,13 +36,11 @@ export function applyNewGuildSettings(guildId: unknown): boolean {
 		return false;
 	}
 
-	const current = readSettings(settings);
-
-	for (const payload of buildNotificationUpdates(current)) {
+	for (const payload of buildNotificationUpdates(settings)) {
 		update.call(NotificationSettings, guildId, payload);
 	}
 
-	if (current.showAllChannels) showAllChannels(guildId);
+	if (settings.showAllChannels) showAllChannels(guildId);
 
 	return true;
 }

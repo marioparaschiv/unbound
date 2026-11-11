@@ -7,7 +7,7 @@ import {
 	registerDiscord,
 	sent,
 	type OverflowButtons,
-} from './fake-discord';
+} from './helpers/fake-discord';
 
 import type { StoreSeeds } from '@unbound-app/api/testing';
 

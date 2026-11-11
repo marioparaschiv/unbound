@@ -1,4 +1,4 @@
-import type applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import type { Feature } from '@unbound-plugins/shared/lifecycle/features';
 import type { FluxStore } from '@unbound-app/api/flux';
 
 export type CardProgress = {
@@ -7,7 +7,7 @@ export type CardProgress = {
 };
 
 export type Cards = {
-	feature: Parameters<typeof applyFeatures>[1][number];
+	feature: Feature;
 	progress: () => CardProgress;
 	misplaced: () => Promise<string[]>;
 };

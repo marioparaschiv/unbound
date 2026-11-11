@@ -14,7 +14,7 @@ import type { PendingRows } from '~/embeds/redraw';
 import type { BrandingLookup } from '~/embeds/lookup';
 import type { Toggles } from '~/embeds/toggles';
 import { ActionSheets } from '~/embeds/modules';
-import { PLUGIN_NAME, SHEET_ROW_KEY } from '~/constants';
+import { SHEET_ROW_KEY } from '~/constants';
 
 type SheetProps = {
 	message?: Message;
@@ -33,7 +33,7 @@ export function patchToggleRow(
 	toggles: Toggles,
 	pending: PendingRows,
 ): () => void {
-	if (!ensureModules(PLUGIN_NAME, { ActionSheets })) return () => {};
+	if (!ensureModules({ ActionSheets })) return () => {};
 
 	let message: Message | undefined;
 	let sheetKey: string | undefined;

@@ -18,5 +18,3 @@ export function countInstall(id: string): void {
 		logger.warn(`Failed to count install of ${id}:`, error);
 	});
 }
-
-export default { countInstall };

@@ -1,41 +1,15 @@
 import type { ControllerClient } from '@unbound-app/debugger-protocol/controller';
-import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
-import { listAddonFiles } from '@unbound-app/contracts/addon-files';
-import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
-import { getBundleName } from '@unbound-app/contracts/workspace';
-import type { PushedManifest } from '@unbound-app/types';
-import { basename, dirname, join } from 'node:path';
-import toError from '@unbound-app/utils/to-error';
-import { createHash } from 'node:crypto';
 
-import { readDevManifest } from '~/lib/manifest';
+import { pushBuiltAddon, type BuiltAddon } from '~/lib/built-addon';
 import { waitForDevice } from '~/lib/context';
 
 export type ReloadClient = Pick<ControllerClient, 'isDeviceConnected' | 'pushPlugin'>;
 
 export type ReloadContext = { client: ReloadClient };
 
-export type BuiltAddon = {
-	id: string;
-	kind: 'plugin' | 'theme';
-	dir: string;
-	/** The resolved output path; the addon directory itself for static addons. */
-	output: string;
-	/** A static addon ships its files as-is; its bundle is read straight from `output`. */
-	static: boolean;
-};
-
 /** How `ubd dev` pushes a freshly built addon to the running client. */
 export type ReloadTransport = {
 	reload(addon: BuiltAddon): Promise<void>;
-};
-
-export type ReadAddon = {
-	manifest: PushedManifest;
-	bundle: string;
-	bytecode?: Record<string, string>;
-	/** Each extra file the manifest lists beside the bundle, such as an image, base64-encoded, by path. */
-	files?: Record<string, string>;
 };
 
 /**
@@ -46,10 +20,9 @@ const RECONNECT_WAIT_MS = 5_000;
 
 /**
  * @description Builds the real hot-reload transport over the shared bridge controller. Each reload
- * reads the freshly built bundle and manifest from disk and pushes them to the device via
- * {@link ControllerClient.pushPlugin}, tagged with its kind so a theme reloads through the themes manager.
- * If the device isn't connected it waits briefly for a reconnect, then warns and drops the
- * reload; any disk or transport failure is reported. Nothing here throws, so the watcher keeps running.
+ * pushes the freshly built addon with {@link pushBuiltAddon}. If the device isn't connected it waits
+ * briefly for a reconnect, then warns and drops the reload; any disk or transport failure is reported.
+ * Nothing here throws, so the watcher keeps running.
  * @param context A bearer of the bridge client shared by every command; its client dials on first use.
  * @param reconnectWaitMs How long to wait for a dropped device to reconnect before dropping a reload.
  * @returns A {@link ReloadTransport} bound to that context.
@@ -76,118 +49,18 @@ export function createReloadTransport(
 				return;
 			}
 
-			try {
-				const built = readBuiltAddon(addon);
+			process.stdout.write(`Pushing ${addon.id}…\n`);
 
-				process.stdout.write(`Pushing ${addon.id}…\n`);
+			// A missing build output or unreadable manifest comes back as an error, so the watcher keeps running.
+			const pushed = await pushBuiltAddon(client, addon);
 
-				const result = await client.pushPlugin({
-					addonId: addon.id,
-					kind: addon.kind,
-					...built,
-				});
-
-				if (result.ok) {
-					process.stdout.write(`Reloaded ${addon.id}.\n`);
-				} else {
-					process.stderr.write(`Failed to reload ${addon.id}: ${result.error}\n`);
-				}
-			} catch (error) {
-				// A missing build output or unreadable manifest must not kill the watcher — report and drop.
-				process.stderr.write(`Failed to reload ${addon.id}: ${toError(error).message}\n`);
+			if (pushed.ok) {
+				process.stdout.write(`Reloaded ${addon.id}.\n`);
+			} else {
+				process.stderr.write(`Failed to reload ${addon.id}: ${pushed.error}\n`);
 			}
 		},
 	};
-}
-
-/**
- * @description Reads a built addon's manifest and bundle off disk. The manifest is the build's
- * `{output}/manifest.json`, or the source manifest when the build wrote none. A static addon's bundle
- * is the file named by `main` in its directory; a built addon's is the JavaScript the build emitted
- * into the output directory, named after `main` with a `.js` extension.
- * @param addon The freshly built addon.
- * @returns The validated manifest and the bundle source; throws naming the manifest when it is invalid.
- */
-export function readBuiltAddon(addon: BuiltAddon): ReadAddon {
-	const hasBuiltManifest = existsSync(join(addon.output, MANIFEST_FILENAME));
-	const manifest = readDevManifest(hasBuiltManifest ? addon.output : addon.dir);
-
-	const bundleName = getBundleName(addon.static, manifest.main);
-	const bundlePath = join(addon.output, bundleName);
-
-	// Hot reload assumes the build emits `<main-basename>.js` into `output`; a differently-named
-	// entry would otherwise surface as a bare ENOENT.
-	if (!existsSync(bundlePath)) {
-		throw new Error(
-			`Built bundle not found at ${bundlePath}. Hot reload expects the build to emit ${bundleName} into ${addon.output}.`,
-		);
-	}
-
-	const bundle = readFileSync(bundlePath, 'utf8');
-	const bytecode = addon.static ? new Map<string, Buffer>() : readFreshBytecode(bundlePath);
-	const files = readExtraFiles(addon.output, manifest);
-
-	if (!bytecode.size) {
-		return { manifest, bundle, ...files };
-	}
-
-	return {
-		manifest: { ...manifest, bytecode: sha512Digests(bytecode) },
-		bundle,
-		...files,
-		bytecode: Object.fromEntries(
-			[...bytecode].map(([version, contents]) => [version, contents.toString('base64')]),
-		),
-	};
-}
-
-function readExtraFiles(output: string, manifest: PushedManifest): Pick<ReadAddon, 'files'> {
-	const listed = listAddonFiles(manifest);
-
-	if (!listed.length) {
-		return {};
-	}
-
-	return {
-		files: Object.fromEntries(
-			listed.map(({ path }) => [path, readFileSync(join(output, path)).toString('base64')]),
-		),
-	};
-}
-
-const SAME_BUILD_WINDOW_MS = 10_000;
-
-function readFreshBytecode(bundlePath: string): Map<string, Buffer> {
-	const directory = dirname(bundlePath);
-	const prefix = `${basename(bundlePath).replace(/\.[^.]+$/, '')}.`;
-	const builtAt = statSync(bundlePath).mtimeMs;
-	const compiled = new Map<string, Buffer>();
-
-	for (const name of readdirSync(directory).sort()) {
-		const version =
-			name.startsWith(prefix) && name.endsWith('.hbc')
-				? name.slice(prefix.length, -'.hbc'.length)
-				: '';
-		const path = join(directory, name);
-
-		if (
-			/^\d{1,10}$/.test(version) &&
-			Math.abs(statSync(path).mtimeMs - builtAt) <= SAME_BUILD_WINDOW_MS
-		) {
-			compiled.set(version, readFileSync(path));
-		}
-	}
-
-	return compiled;
-}
-
-function sha512Digests(compiled: Map<string, Buffer>): Record<string, string> {
-	return Object.fromEntries(
-		[...compiled].map(([version, contents]) => [
-			version,
-			createHash('sha512').update(contents).digest('hex'),
-		]),
-	);
 }
 
 export default createReloadTransport;

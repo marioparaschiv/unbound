@@ -62,7 +62,6 @@ export const updatesResponseSchema = Type.Object({
 	updates: Type.Array(addonUpdateSchema),
 });
 
-export type InstalledAddon = StaticDecode<typeof installedAddonSchema>;
 export type UpdatesRequest = StaticDecode<typeof updatesRequestSchema>;
 export type AddonRelease = StaticDecode<typeof addonReleaseSchema>;
 export type VersionChangelog = StaticDecode<typeof versionChangelogSchema>;

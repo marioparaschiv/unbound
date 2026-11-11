@@ -1,3 +1,5 @@
+import { asId } from '@unbound-plugins/shared/values/as-id';
+
 export type GuildSheetProps = {
 	guild?: { id?: unknown } | null;
 	guildId?: unknown;
@@ -8,10 +10,6 @@ export type MenuItem = {
 	IconComponent?: unknown;
 	action?: () => void;
 };
-
-function asId(value: unknown): string | undefined {
-	return typeof value === 'string' && value ? value : undefined;
-}
 
 /**
  * @description Recognizes a server's action sheet from the arguments Discord opened it with.

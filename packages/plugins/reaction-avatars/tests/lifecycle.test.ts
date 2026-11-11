@@ -1,4 +1,3 @@
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import {
 	flux,
 	metro,
@@ -25,7 +24,6 @@ const ui = {
 const overrides = { native: { ui } as unknown as NativePluginBridge };
 
 beforeEach(() => {
-	resetHealth();
 	native.objc.registerClass('DCDMessageTableViewCell', {
 		methods: {
 			didMoveToWindow: () => null,

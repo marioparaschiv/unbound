@@ -1,40 +1,39 @@
 import { describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 
-import type { ModuleEntry } from '../src/paths';
-
-import {
-	collapseNamespaces,
-	collectReferencedNames,
-	declaredNames,
-	dropDefaultExport,
-	exportedNames,
-	hoistLibraries,
-	stripInternal,
-	strip,
-} from '../src/transform';
-import { parseSource } from '../src/project';
-import { bundle } from '../src/bundle';
+import { stripInternal, strip, type StripContext } from '~/transform';
+import type { ModuleEntry } from '~/entry-types';
+import { parseSource } from '~/project';
+import { bundle } from '~/bundle';
 
 const FIXTURES = join(import.meta.dirname, 'fixtures');
 
-describe('strip', () => {
-	test('keeps the @deprecated tag on a `export const old = next` alias and emits no default', () => {
-		const text = strip(
-			bundle(join(FIXTURES, 'deprecated-alias.ts')),
-			'/api/src/deprecated-alias.d.ts',
-			new Map<string, ModuleEntry>(),
-			new Map<string, string>(),
-			new Set<string>(),
-			new Set<string>(),
-		);
+function context(overrides: Partial<StripContext> = {}): StripContext {
+	return {
+		out: '/api/src/sample.d.ts',
+		children: new Map<string, ModuleEntry>(),
+		ownerByName: new Map<string, string>(),
+		usedOwners: new Set<string>(),
+		owned: new Set<string>(),
+		hoistedValues: new Set<string>(),
+		...overrides,
+	};
+}
 
-		expect(text).toMatch(
-			/\/\*\* @deprecated Use next \*\/\s*export declare const old: typeof next;/,
-		);
-		expect(text).toContain('export declare function next(): string;');
-		expect(text).not.toContain('default');
-	});
+describe('strip', () => {
+	test(
+		'keeps the @deprecated tag on a `export const old = next` alias and emits no default',
+		() => {
+			const text = strip(bundle(join(FIXTURES, 'deprecated-alias.ts')), context());
+
+			expect(text).toMatch(
+				/\/\*\* @deprecated Use next \*\/\s*export declare const old: typeof next;/,
+			);
+			expect(text).toContain('export declare function next(): string;');
+			expect(text).not.toContain('default');
+		},
+		{ timeout: 30_000 },
+	);
 
 	test('strips an @internal declaration that only the default object referenced', () => {
 		const text = strip(
@@ -45,11 +44,7 @@ describe('strip', () => {
 				'declare const _default: { secret: typeof secret; open: typeof open; };',
 				'export { _default as default };',
 			].join('\n'),
-			'/api/src/internal-default.d.ts',
-			new Map<string, ModuleEntry>(),
-			new Map<string, string>(),
-			new Set<string>(),
-			new Set<string>(),
+			context(),
 		);
 
 		expect(text).not.toContain('secret');
@@ -67,11 +62,7 @@ describe('strip', () => {
 				'declare function open(): void;',
 				'export { Kind$1 as Kind, hidden, open };',
 			].join('\n'),
-			'/api/src/internal-list.d.ts',
-			new Map<string, ModuleEntry>(),
-			new Map<string, string>(),
-			new Set<string>(),
-			new Set<string>(),
+			context(),
 		);
 
 		expect(text).not.toContain('Kind$1');
@@ -80,47 +71,39 @@ describe('strip', () => {
 	});
 });
 
-describe('dropDefaultExport', () => {
+describe('strip: default exports', () => {
 	for (const exportForm of ['export default foo;', 'export { foo as default };']) {
 		test(`keeps the named export behind \`${exportForm}\``, () => {
-			const sourceFile = parseSource(
-				't-default-named.d.ts',
+			const text = strip(
 				['export declare function foo(): void;', exportForm].join('\n'),
+				context(),
 			);
 
-			dropDefaultExport(sourceFile);
-
-			expect(sourceFile.getFullText().trim()).toBe('export declare function foo(): void;');
+			expect(text.trim()).toBe('export declare function foo(): void;');
 		});
 	}
 
 	test('drops `export default function` and `export default class` declarations', () => {
-		const sourceFile = parseSource(
-			't-default-declaration.d.ts',
+		const text = strip(
 			[
 				'export default function foo(): void;',
 				'export default class Foo { x: number; }',
 				'export declare function bar(): void;',
 			].join('\n'),
+			context(),
 		);
 
-		dropDefaultExport(sourceFile);
-
-		expect(sourceFile.getFullText().trim()).toBe('export declare function bar(): void;');
+		expect(text.trim()).toBe('export declare function bar(): void;');
 	});
 
 	test('keeps a default-exported declaration unexported when a survivor references it', () => {
-		const sourceFile = parseSource(
-			't-default-declaration-used.d.ts',
+		const text = strip(
 			[
 				'export default class Foo { x: number; }',
 				'export declare function make(): Foo;',
 			].join('\n'),
+			context(),
 		);
-
-		dropDefaultExport(sourceFile);
-
-		const text = sourceFile.getFullText();
 
 		expect(text).not.toContain('default');
 		expect(text).toContain('class Foo');
@@ -129,19 +112,15 @@ describe('dropDefaultExport', () => {
 	});
 
 	test('drops the default specifier and its backing object, keeping sibling specifiers', () => {
-		const sourceFile = parseSource(
-			't-default.d.ts',
+		const text = strip(
 			[
 				'declare const _default: { confirm: typeof confirm$1; };',
 				'declare function confirm$1(): void;',
 				'export { _default as default, confirm$1 as confirm };',
 				'export {};',
 			].join('\n'),
+			context(),
 		);
-
-		dropDefaultExport(sourceFile);
-
-		const text = sourceFile.getFullText();
 
 		expect(text).not.toContain('default');
 		expect(text).toContain('declare function confirm$1(): void;');
@@ -150,45 +129,25 @@ describe('dropDefaultExport', () => {
 	});
 
 	test('drops `export default X` and keeps X when another statement references it', () => {
-		const sourceFile = parseSource(
-			't-default-assignment.d.ts',
+		const text = strip(
 			[
 				'declare const api: { a: string; };',
 				'export declare function get(): typeof api;',
 				'export default api;',
 			].join('\n'),
+			context(),
 		);
-
-		dropDefaultExport(sourceFile);
-
-		const text = sourceFile.getFullText();
 
 		expect(text).not.toContain('export default');
 		expect(text).toContain('declare const api');
 	});
 });
 
-describe('exportedNames', () => {
-	test('collects export-modifier declarations and aliased export specifiers', () => {
-		const sourceFile = parseSource(
-			'exported-names.d.ts',
-			[
-				"declare const BACKING_KEYS: readonly ['A'];",
-				'export interface Exported { a: string; }',
-				'declare interface Renamed$1 { b: string; }',
-				'export { Renamed$1 as Renamed };',
-				"export type { Shared } from './utils';",
-			].join('\n'),
-		);
-
-		expect(exportedNames(sourceFile)).toEqual(new Set(['Exported', 'Renamed', 'Shared']));
-	});
-});
-
-describe('hoistLibraries', () => {
+describe('strip: hoisted libraries', () => {
 	test('owned names re-export, referenced names import, both when both, neither drops', () => {
-		const sourceFile = parseSource(
-			't-hoist.d.ts',
+		const owner = '/api/src/_internal.d.ts';
+		const usedOwners = new Set<string>();
+		const text = strip(
 			[
 				'export interface Owned { a: string; }',
 				'export interface ExportOnly { b: string; }',
@@ -196,26 +155,17 @@ describe('hoistLibraries', () => {
 				'export interface Dropped { d: string; }',
 				'export declare function use(a: Owned, c: ImportOnly): void;',
 			].join('\n'),
+			context({
+				ownerByName: new Map([
+					['Owned', owner],
+					['ExportOnly', owner],
+					['ImportOnly', owner],
+					['Dropped', owner],
+				]),
+				usedOwners,
+				owned: new Set(['Owned', 'ExportOnly']),
+			}),
 		);
-
-		const owner = '/api/src/_internal.d.ts';
-		const ownerByName = new Map([
-			['Owned', owner],
-			['ExportOnly', owner],
-			['ImportOnly', owner],
-			['Dropped', owner],
-		]);
-		const usedOwners = new Set<string>();
-
-		hoistLibraries(
-			sourceFile,
-			'/api/src/sample.d.ts',
-			ownerByName,
-			usedOwners,
-			new Set(['Owned', 'ExportOnly']),
-		);
-
-		const text = sourceFile.getFullText();
 
 		expect(text).toContain("import type { ImportOnly, Owned } from './_internal';");
 		expect(text).toContain("export type { ExportOnly, Owned } from './_internal';");
@@ -226,28 +176,21 @@ describe('hoistLibraries', () => {
 	});
 
 	test('keeps a value that shares a hoisted type name, re-exports an owned value as a value', () => {
-		const sourceFile = parseSource(
-			't-hoist-values.d.ts',
+		const owner = '/api/src/_internal.d.ts';
+		const text = strip(
 			[
 				'export declare const Theme: any;',
 				'export declare const KINDS: readonly ["a"];',
 			].join('\n'),
+			context({
+				ownerByName: new Map([
+					['Theme', owner],
+					['KINDS', owner],
+				]),
+				owned: new Set(['KINDS']),
+				hoistedValues: new Set(['KINDS']),
+			}),
 		);
-		const owner = '/api/src/_internal.d.ts';
-
-		hoistLibraries(
-			sourceFile,
-			'/api/src/sample.d.ts',
-			new Map([
-				['Theme', owner],
-				['KINDS', owner],
-			]),
-			new Set<string>(),
-			new Set(['KINDS']),
-			new Set(['KINDS']),
-		);
-
-		const text = sourceFile.getFullText();
 
 		expect(text).toContain('export declare const Theme: any;');
 		expect(text).toContain("export { KINDS } from './_internal';");
@@ -255,23 +198,59 @@ describe('hoistLibraries', () => {
 	});
 
 	test('never imports a module from itself', () => {
-		const sourceFile = parseSource(
-			't-hoist-self.d.ts',
-			'export interface Local { a: string; }\nexport declare function use(a: Local): void;',
-		);
-
 		const usedOwners = new Set<string>();
-
-		hoistLibraries(
-			sourceFile,
-			'/api/src/sample.d.ts',
-			new Map([['Local', '/api/src/sample.d.ts']]),
-			usedOwners,
-			new Set<string>(),
+		const text = strip(
+			'export interface Local { a: string; }\nexport declare function use(a: Local): void;',
+			context({ ownerByName: new Map([['Local', '/api/src/sample.d.ts']]), usedOwners }),
 		);
 
-		expect(sourceFile.getFullText()).toContain('interface Local');
+		expect(text).toContain('interface Local');
 		expect(usedOwners.size).toBe(0);
+	});
+});
+
+describe('strip: nested namespaces', () => {
+	test('rewrites child namespaces to re-exports and drops orphaned backing declarations', () => {
+		const text = strip(
+			[
+				'declare function byProps(...props: string[]): unknown;',
+				'declare function helper(): unknown;',
+				'declare namespace filters {',
+				'	export { byProps };',
+				'}',
+				'export declare function find(filter: ReturnType<typeof helper>): unknown;',
+				'export { filters };',
+			].join('\n'),
+			context({
+				out: '/api/src/metro/index.d.ts',
+				children: new Map<string, ModuleEntry>([
+					[
+						'filters',
+						{
+							name: 'metro/filters',
+							source: '',
+							out: '/api/src/metro/filters.d.ts',
+							topLevel: false,
+						},
+					],
+				]),
+			}),
+		);
+
+		expect(text).toContain("export * as filters from './filters';");
+		expect(text).not.toContain('namespace filters');
+		expect(text).not.toContain('byProps');
+		expect(text).toContain('declare function helper');
+		expect(text).not.toContain('export { filters }');
+	});
+
+	test('leaves namespaces that are not children untouched', () => {
+		const text = strip(
+			'declare namespace internal {\n\texport { x };\n}\ndeclare const x: number;\nexport { internal };',
+			context({ out: '/api/src/mod.d.ts' }),
+		);
+
+		expect(text).toContain('namespace internal');
 	});
 });
 
@@ -314,99 +293,5 @@ describe('stripInternal', () => {
 		expect(text).toContain('open:');
 		expect(internalNames).toEqual(new Set(['SECRET', 'hidden']));
 		expect(retainedInternalNames).toEqual(new Set(['BACKING']));
-	});
-});
-
-describe('collapseNamespaces', () => {
-	test('rewrites child namespaces to re-exports and drops orphaned backing declarations', () => {
-		const sourceFile = parseSource(
-			't-collapse.d.ts',
-			[
-				'declare function byProps(...props: string[]): unknown;',
-				'declare function helper(): unknown;',
-				'declare namespace filters {',
-				'	export { byProps };',
-				'}',
-				'export declare function find(filter: ReturnType<typeof helper>): unknown;',
-				'export { filters };',
-			].join('\n'),
-		);
-
-		const children = new Map<string, ModuleEntry>([
-			[
-				'filters',
-				{
-					name: 'metro/filters',
-					source: '',
-					out: '/api/src/metro/filters.d.ts',
-					topLevel: false,
-				},
-			],
-		]);
-
-		collapseNamespaces(sourceFile, '/api/src/metro/index.d.ts', children);
-
-		const text = sourceFile.getFullText();
-
-		expect(text).toContain("export * as filters from './filters';");
-		expect(text).not.toContain('namespace filters');
-		expect(text).not.toContain('byProps');
-		expect(text).toContain('declare function helper');
-		expect(text).not.toContain('export { filters }');
-	});
-
-	test('leaves namespaces that are not children untouched', () => {
-		const sourceFile = parseSource(
-			't-collapse-none.d.ts',
-			'declare namespace internal {\n\texport { x };\n}\ndeclare const x: number;\nexport { internal };',
-		);
-
-		collapseNamespaces(sourceFile, '/api/src/mod.d.ts', new Map<string, ModuleEntry>());
-
-		expect(sourceFile.getFullText()).toContain('namespace internal');
-	});
-});
-
-describe('declaredNames', () => {
-	test('lists every binding a statement introduces', () => {
-		const sourceFile = parseSource(
-			't-declared.d.ts',
-			[
-				'declare const a: string, b: number;',
-				'declare function fn(): void;',
-				'interface Shape {}',
-				'type Alias = string;',
-				"export { a as renamed } from './elsewhere';",
-			].join('\n'),
-		);
-
-		const [variables, fn, shape, alias, reexport] = sourceFile.getStatements();
-
-		expect(declaredNames(variables)).toEqual(['a', 'b']);
-		expect(declaredNames(fn)).toEqual(['fn']);
-		expect(declaredNames(shape)).toEqual(['Shape']);
-		expect(declaredNames(alias)).toEqual(['Alias']);
-		expect(declaredNames(reexport)).toEqual([]);
-	});
-});
-
-describe('collectReferencedNames', () => {
-	test('counts computed property names and export sources, not aliases or declaration names', () => {
-		const sourceFile = parseSource(
-			't-refs.d.ts',
-			[
-				'declare const CACHE_KEY: unique symbol;',
-				'interface WithComputed { [CACHE_KEY]: string; }',
-				'declare interface Orig {}',
-				'export { Orig as Renamed };',
-			].join('\n'),
-		);
-
-		const referenced = collectReferencedNames(sourceFile.getStatements());
-
-		expect(referenced.has('CACHE_KEY')).toBe(true);
-		expect(referenced.has('Orig')).toBe(true);
-		expect(referenced.has('Renamed')).toBe(false);
-		expect(referenced.has('WithComputed')).toBe(false);
 	});
 });

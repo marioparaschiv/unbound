@@ -8,7 +8,6 @@ import {
 	toasts,
 } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { View } from 'react-native';
 import { createElement } from 'react';
 
@@ -116,7 +115,6 @@ function registerDiscord() {
 }
 
 beforeEach(() => {
-	resetHealth();
 	deleteLabel = 'Eliminar mensaje';
 	localised = true;
 	requests = [];

@@ -3,7 +3,7 @@ import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { flux } from '@unbound-app/api';
 
-import { ME, dispatch, generateRow, message, startLogger, type Action } from './discord';
+import { ME, dispatch, generateRow, message, startLogger, type Action } from './helpers/discord';
 
 let reached: Action[];
 

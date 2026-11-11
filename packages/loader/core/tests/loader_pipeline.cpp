@@ -16,7 +16,7 @@ const std::string kBase   = "https://builds.unbound.rip/";
 const std::string kBundle = "unbound.98.bundle";
 const std::string kDev    = "unbound-dev.98.bundle";
 
-class CountingHost : public loader::LoaderHost
+class CountingHost : public loader::PipelineHost
 {
 public:
     int                      addonPreparations = 0;
@@ -95,7 +95,7 @@ public:
 // updated.
 bool checkedBy(bundle_test::Server &server, const std::string &version)
 {
-    server.settings.set("unbound", loader::kCheckedLoaderSetting, version);
+    server.settings.set("unbound", "loader.update.checkedBy", version);
     return true;
 }
 
@@ -104,7 +104,7 @@ struct Launch {
     bool                          checked = checkedBy(server, loader::loaderVersion());
     loader::BundleUpdater         updater = server.updater(bundle_test::productionTrust());
     std::shared_ptr<CountingHost> host    = std::make_shared<CountingHost>();
-    loader::LoaderPipeline        pipeline{host, loader::updaterSettings(server.settings), updater};
+    loader::LoaderPipeline        pipeline{host, server.settings, updater};
 };
 
 void leavesAFirstDownloadForTheRuntime()
@@ -258,7 +258,7 @@ void runsTheNewBundleOnTheFirstLaunchAfterALoaderUpdate()
 
     std::optional<loader::LoaderPipeline::SavedBundle> bundle = launch.pipeline.takeSavedBundle();
     assert(bundle && bundle->bundle == "next");
-    assert(launch.server.settings.getString("unbound", loader::kCheckedLoaderSetting, "") ==
+    assert(launch.server.settings.getString("unbound", "loader.update.checkedBy", "") ==
            loader::loaderVersion());
     assert(launch.host->reloads == 0);
 }

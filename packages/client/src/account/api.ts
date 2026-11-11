@@ -1,12 +1,13 @@
 import type { AccountSignInResponse, Caller } from '@unbound-app/contracts/account';
-import { ApiRequestError, createApiClient } from '@unbound-app/web/client';
+import { ApiRequestError } from '@unbound-app/web/client';
 import { createLogger } from '@unbound-app/logger';
 import toError from '@unbound-app/utils/to-error';
-import type { Api } from '@unbound-app/web/api';
 
 import { authorizeWithDiscord } from '~/account/discord-oauth';
+import { createUnboundClient } from '~/account/client';
 import { getBucket, useBucket } from '~/storage/api';
 import { EventEmitter } from '~/core/event-emitter';
+import type { ApiRequest } from '~/account/client';
 import type { Account } from '~/account/account';
 import { API_URL } from '~/core/constants';
 
@@ -20,9 +21,6 @@ export type SignInResult =
 	| { status: 'signed-in'; account: Account }
 	| { status: 'cancelled' }
 	| { status: 'failed'; error: Error };
-
-/** A typed request function for the Unbound web API, from `createApiClient`. */
-export type ApiRequest = ReturnType<typeof createApiClient<Api>>;
 
 type Session = AccountSignInResponse;
 
@@ -93,8 +91,7 @@ export function useAccount(): Account | undefined {
  */
 export function createClient(): ApiRequest {
 	const session = readSession();
-	const headers = session ? { authorization: `Bearer ${session.token}` } : undefined;
-	const request = createApiClient<Api>({ baseUrl: API_URL, headers });
+	const request = createUnboundClient({ token: session?.token });
 
 	if (!session) {
 		return request;
@@ -118,7 +115,7 @@ export function createClient(): ApiRequest {
  */
 export async function signIn(): Promise<SignInResult> {
 	try {
-		const request = createApiClient<Api>({ baseUrl: API_URL });
+		const request = createUnboundClient();
 		const config = await request('GET /api/v1/auth/discord', {});
 		const code = await authorizeWithDiscord(config);
 

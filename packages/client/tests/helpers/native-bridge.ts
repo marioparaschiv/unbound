@@ -22,6 +22,8 @@ import type {
 } from '@unbound-app/types';
 import { mock } from 'bun:test';
 
+import { mockLookups } from './lookups';
+
 // Importing the native API captures and deletes `globalThis.NativePlugin`, so each file using these
 // fixtures needs its own module registry: run them with `bun test --isolate`.
 type NativePluginGlobal = typeof globalThis & {
@@ -69,9 +71,10 @@ const fluxDispatcher = {
 	},
 };
 
-mock.module('~/metro/wrappers', () => ({
-	findByPropsLazy: () => fluxDispatcher,
-}));
+mockLookups({
+	find: () => fluxDispatcher,
+	findByProps: () => fluxDispatcher,
+});
 
 export const removed: string[] = [];
 export const cleared: unknown[] = [];
@@ -81,13 +84,15 @@ export const cancelled: string[] = [];
 export const javaInvokeArguments: (NativeJavaArgument[] | undefined)[] = [];
 export const javaReleased: NativeJavaHandle[] = [];
 export const javaHandle: NativeJavaHandle = Object.create(null);
-export const javaCallPlan: NativeJavaCallPlan = Object.create(null);
-export const objcCallPlan: NativeObjCCallPlan = Object.create(null);
+const javaCallPlan: NativeJavaCallPlan = Object.create(null);
+const objcCallPlan: NativeObjCCallPlan = Object.create(null);
+
 export const javaHookToken: NativeJavaHookToken = { id: 'hook-1' };
 export const hooksRemoved: NativeJavaHookToken[] = [];
 export const javaPlansDisposed: NativeJavaCallPlan[] = [];
 export const objcPlansDisposed: NativeObjCCallPlan[] = [];
-export const javaInvokeResult: NativeJavaValue = { type: 'string', value: 'invoked' };
+const javaInvokeResult: NativeJavaValue = { type: 'string', value: 'invoked' };
+
 /** Set `fails` to make the Java bridge's `invoke` throw {@link javaInvokeFailure}. */
 export const javaInvoke = { fails: false };
 export const javaInvokeFailure = Object.assign(new Error('No method noSuchMethod'), {
@@ -217,6 +222,7 @@ const fakeBridge: LoaderBridge = {
 		setSizeAsync: () => cancellable(Promise.resolve(), 'size'),
 		setFrame: () => undefined,
 		setFrameAsync: () => cancellable(Promise.resolve(), 'frame'),
+		batchAsync: () => cancellable(Promise.resolve(), 'batch'),
 		measure: () => ({ x: 0, y: 0, width: 0, height: 0 }),
 		measureAsync: () => cancellable(new Promise(() => undefined), 'measure'),
 		unmount: (surface: NativeFabricSurface) => unmounted.push(surface),

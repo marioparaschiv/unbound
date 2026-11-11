@@ -1,5 +1,3 @@
-export const PLUGIN_NAME = 'Fix Youtube Embeds';
-
 export const PLAYER_ORIGIN = 'https://www.youtube-nocookie.com';
 export const PLAYER_BASE_URL = `${PLAYER_ORIGIN}/`;
 

@@ -1,13 +1,5 @@
-import type { PluginContext } from '@unbound-app/api/native';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startTags, stopTags, tagsSelfTest } from '~/tags';
+import { startTags, tagsSelfTest } from '~/tags';
 
-export function start(context: PluginContext) {
-	startTags(context);
-}
-
-export function stop() {
-	return stopTags();
-}
-
-export { tagsSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures([startTags], { selfTest: tagsSelfTest });

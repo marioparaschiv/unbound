@@ -1,18 +1,18 @@
-import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { buildWebTypes, PROJECTS, TSC_ARGS } from './typecheck';
+import type { Project } from './workspaces';
+
+import { buildWebTypes, TSC_ARGS } from './typecheck';
+import { loadProjects, ROOT } from './workspaces';
+import { runCommand } from './run-command';
 
 export type Check = { label: string; cwd: string; command: string[] };
 
-const root = resolve(import.meta.dir, '..');
+// A bare `bun test` in the plugins root runs every plugin's tests in one process, where mocks leak.
 const ALL_PLUGINS: Check[] = [
 	{ label: 'plugin tests', cwd: '.', command: ['bun', 'run', 'plugins:test'] },
 	{ label: 'plugin type-check', cwd: '.', command: ['bun', 'run', 'plugins:typecheck'] },
 ];
-const UNTESTED = new Set(['apps/web', 'apps/discord-bot']);
-// Their tests replace modules with `mock.module`, which leaks across files in one process.
-const ISOLATED = new Set(['packages/client']);
 const SKIPPED = ['packages/loader/', 'docs/', '.github/'];
 const LOADER_LINTED = ['packages/loader/', '.github/'];
 const LOADER_LINT: Check = {
@@ -21,29 +21,31 @@ const LOADER_LINT: Check = {
 	command: ['go', 'run', './tools', 'lint'],
 };
 
-function projectOf(file: string): string | undefined {
-	const plugin = /^packages\/plugins\/([^/]+)\//.exec(file);
+function projectChecks({ dir, checks, typed }: Project): Check[] {
+	const found: Check[] = [];
 
-	if (plugin) {
-		return `packages/plugins/${plugin[1]}`;
+	if (checks.tests !== 'none') {
+		const command =
+			checks.tests === 'parallel' ? ['bun', 'test', '--parallel'] : ['bun', 'test'];
+
+		found.push({ label: `${dir} tests`, cwd: dir, command });
 	}
 
-	const workspace = /^(packages|apps)\/([^/]+)\//.exec(file);
-
-	if (workspace) {
-		return `${workspace[1]}/${workspace[2]}`;
+	if (typed) {
+		found.push({ label: `${dir} type-check`, cwd: dir, command: ['bunx', ...TSC_ARGS] });
 	}
 
-	return file.startsWith('scripts/') ? 'scripts' : undefined;
+	return found;
 }
 
 /**
- * @description Works out which tests and type-checks a set of changed files needs.
+ * @description Works out which tests and type-checks a set of changed files needs: those of every
+ * project containing a file, and every plugin's when the innermost one is a `plugins` workspace.
  * @param files Changed file paths, relative to the repository root.
- * @param exists Whether a path relative to the root exists.
+ * @param projects The projects, parents before the projects inside them, as `loadProjects` returns.
  * @returns The checks to run, without duplicates.
  */
-export function checksFor(files: string[], exists: (path: string) => boolean): Check[] {
+export function checksFor(files: string[], projects: Project[]): Check[] {
 	const checks = new Map<string, Check>();
 	const add = (check: Check) => checks.set(`${check.cwd} ${check.command.join(' ')}`, check);
 
@@ -56,50 +58,13 @@ export function checksFor(files: string[], exists: (path: string) => boolean): C
 			continue;
 		}
 
-		const project = projectOf(file);
+		const containing = projects.filter((project) => file.startsWith(`${project.dir}/`));
 
-		if (!project) {
-			continue;
-		}
-
-		if (project === 'packages/plugins-shared') {
+		if (containing.at(-1)?.checks.plugins) {
 			for (const check of ALL_PLUGINS) add(check);
 		}
 
-		// A bare `bun test` in the plugins root runs every plugin's tests in one process, where mocks leak.
-		if (project === 'packages/plugins') {
-			for (const check of ALL_PLUGINS) add(check);
-
-			continue;
-		}
-
-		if (project.startsWith('packages/plugins/')) {
-			if (!exists(`${project}/package.json`)) {
-				continue;
-			}
-
-			add({ label: `${project} tests`, cwd: project, command: ['bun', 'test'] });
-
-			if (exists(`${project}/tsconfig.json`)) {
-				add({
-					label: `${project} type-check`,
-					cwd: project,
-					command: ['bunx', ...TSC_ARGS],
-				});
-			}
-
-			continue;
-		}
-
-		if (!UNTESTED.has(project) && exists(`${project}/package.json`)) {
-			const command = ISOLATED.has(project) ? ['bun', 'test', '--parallel'] : ['bun', 'test'];
-
-			add({ label: `${project} tests`, cwd: project, command });
-		}
-
-		if (PROJECTS.includes(project)) {
-			add({ label: `${project} type-check`, cwd: project, command: ['bunx', ...TSC_ARGS] });
-		}
+		for (const check of containing.flatMap(projectChecks)) add(check);
 	}
 
 	return [...checks.values()];
@@ -107,7 +72,7 @@ export function checksFor(files: string[], exists: (path: string) => boolean): C
 
 async function changedFiles(): Promise<string[]> {
 	const diff = Bun.spawn(['git', 'diff', '--name-only', 'origin/main...HEAD'], {
-		cwd: root,
+		cwd: ROOT,
 		stdout: 'pipe',
 	});
 	const output = await new Response(diff.stdout).text();
@@ -127,31 +92,18 @@ function checkEnv(): Record<string, string | undefined> {
 const NO_TESTS = /No tests found|\b0 test files matching/;
 
 async function runCheck(check: Check): Promise<boolean> {
-	const child = Bun.spawn(check.command, {
-		cwd: resolve(root, check.cwd),
-		env: checkEnv(),
-		stdin: 'ignore',
-		stdout: 'pipe',
-		stderr: 'pipe',
-	});
-	const [stdout, stderr, code] = await Promise.all([
-		new Response(child.stdout).text(),
-		new Response(child.stderr).text(),
-		child.exited,
-	]);
-	const passed = code === 0 || NO_TESTS.test(stdout + stderr);
+	const { code, output } = await runCommand(check.command, resolve(ROOT, check.cwd), checkEnv());
+	const passed = code === 0 || NO_TESTS.test(output);
 
 	if (!passed) {
-		console.error(
-			`✗ ${check.label}\n${(stdout + stderr).trim().split('\n').slice(-30).join('\n')}`,
-		);
+		console.error(`✗ ${check.label}\n${output.trim().split('\n').slice(-30).join('\n')}`);
 	}
 
 	return passed;
 }
 
 async function main(): Promise<void> {
-	const checks = checksFor(await changedFiles(), (path) => existsSync(resolve(root, path)));
+	const checks = checksFor(await changedFiles(), loadProjects());
 
 	if (!checks.length) {
 		return;

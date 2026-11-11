@@ -47,5 +47,3 @@ export function openPageMedia(
 		originViewOrOriginLayout: origin ? { ...origin, resizeMode: 'cover' } : undefined,
 	});
 }
-
-export default { openPageMedia };

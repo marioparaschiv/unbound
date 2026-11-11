@@ -1,8 +1,6 @@
 {
 	"name": "blur-nsfw",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Blurs attachments and embedded media in age-restricted channels until you tap them.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

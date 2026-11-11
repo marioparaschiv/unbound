@@ -1,5 +1,5 @@
 import hookMessageCells from '@unbound-plugins/shared/native/ios/message-cell-hooks';
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { startTogether } from '@unbound-plugins/shared/lifecycle/features';
 import type { NativePluginBridge } from '@unbound-app/api/native';
 
 import { subscribeSelectedChannel } from '~/avatars/events/selected-channel';
@@ -27,7 +27,7 @@ export function startMentions(
 		failed: renderer.failed,
 		settling: renderer.settling,
 		retryWaiting: renderer.retryWaiting,
-		dispose: applyFeatures('Mention Avatars', [
+		dispose: startTogether([
 			() => renderer.dispose,
 			() =>
 				hookMessageCells(objc, {

@@ -1,8 +1,8 @@
+import { skipFeature } from '@unbound-plugins/shared/lifecycle/features';
 import { patcher } from '@unbound-app/api';
 
 import type { Upload, UploadChoices } from '~/anonymise/uploads';
 import { Messages } from '~/anonymise/modules';
-import { skip } from '~/anonymise/skip';
 
 type SendOptions = {
 	attachmentsToUpload?: unknown;
@@ -14,7 +14,7 @@ type SendOptions = {
  */
 export function patchSend(choices: UploadChoices): void {
 	if (typeof Messages?._sendMessage !== 'function') {
-		skip('renaming at send, Messages has no _sendMessage method');
+		skipFeature('renaming at send: Messages has no _sendMessage method');
 
 		return;
 	}

@@ -17,7 +17,6 @@ export type ListenOptions = {
 	/** The connection string; each attempt opens its own single-connection client. */
 	url: string;
 	channel: NotifyChannel;
-	/** Receives each notification's payload. */
 	handler: (payload: string) => Promise<void>;
 	/** Converges every row; runs after each (re)subscribe and is retried until it succeeds. */
 	reconcile: () => Promise<void>;

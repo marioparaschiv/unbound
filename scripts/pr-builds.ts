@@ -29,7 +29,6 @@ export function parsePullRequest(value: string | undefined): string {
 
 /**
  * @description The bucket prefix a pull request's latest loader builds live under.
- * @param pullRequest The pull request number.
  * @returns `loader/pr/{number}/`.
  */
 export function loaderPrefix(pullRequest: string): string {
@@ -38,7 +37,6 @@ export function loaderPrefix(pullRequest: string): string {
 
 /**
  * @description The bucket prefix a pull request's latest client build lives under.
- * @param pullRequest The pull request number.
  * @returns `unbound/pr/{number}/`.
  */
 export function clientPrefix(pullRequest: string): string {
@@ -47,9 +45,6 @@ export function clientPrefix(pullRequest: string): string {
 
 /**
  * @description Replaces a pull request's loader builds with the given files, keyed by file name.
- * @param bucket The public bucket.
- * @param pullRequest The pull request number.
- * @param files The loader artifacts to upload.
  * @returns The uploaded object keys.
  */
 export async function uploadLoaderBuilds(
@@ -82,8 +77,6 @@ export async function uploadLoaderBuilds(
 
 /**
  * @description Deletes a pull request's client and loader builds.
- * @param bucket The public bucket.
- * @param pullRequest The pull request number.
  * @returns The deleted object keys.
  */
 export async function deletePullRequestBuilds(

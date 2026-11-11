@@ -44,7 +44,7 @@ export const bucketEnvSchema = Type.Object({
 	S3_PUBLIC_BUCKET: Type.String({ minLength: 1 }),
 });
 
-export const uploadEnvSchema = Type.Intersect([bucketEnvSchema, releaseSchema]);
+const uploadEnvSchema = Type.Intersect([bucketEnvSchema, releaseSchema]);
 
 export type BucketEnv = StaticDecode<typeof bucketEnvSchema>;
 

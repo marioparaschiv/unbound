@@ -1,111 +1,37 @@
-type DeviceHandle = { readonly __deviceHandle?: never };
+// Device scripts read the generated SDK's `unbound` global, which `@unbound-app/api/global` declares.
+import type { AddonHandle, PluginContext } from '@unbound-app/api/global';
+import type { ComponentType } from 'react';
 
-type DeviceCancellable<T> = Promise<T> & { cancel(): void };
-
-type DeviceHookToken = { remove(): void };
-
-type DeviceObjC = {
-	getClass(name: string): DeviceHandle;
-	call(target: DeviceHandle, selector: string, ...args: unknown[]): DeviceHandle;
-	invokeAsync(
-		target: DeviceHandle,
-		selector: string,
-		args: unknown[],
-	): DeviceCancellable<unknown>;
-	hook(className: string, selector: string, handlers: { after?: () => void }): DeviceHookToken;
-};
-
-type DeviceJava = {
-	getClass(name: string): DeviceHandle;
-	getField(target: DeviceHandle, name: string): DeviceHandle;
-	construct(name: string, args: unknown[]): DeviceHandle;
-	release(handle: DeviceHandle): void;
-	invokeAsync(target: DeviceHandle, name: string, args: unknown[]): DeviceCancellable<unknown>;
-};
-
-type DeviceJavaHooks = {
-	hook(
-		className: string,
-		methodName: string,
-		parameterTypes: string[],
-		options: { notify: boolean },
-		listener: () => void,
-	): unknown;
-	remove(token: unknown): void;
-};
-
-type DevicePluginContext = {
-	platform: string;
-	capabilities?: string[];
-	native?: { objc: DeviceObjC; java: DeviceJava; hooks: DeviceJavaHooks };
-};
-
-type DevicePluginInstance = {
-	selfTest?(): unknown;
-	// UNKNOWN: a component, which may be a memo or forwardRef object; React.createElement takes it as is.
-	SettingsPanel?: unknown;
-};
-
-type DeviceEntity = {
-	id: string;
-	started: boolean;
-	bundle?: unknown;
-	manifest: { name: string };
-	instance?: DevicePluginInstance | null;
-	context?: DevicePluginContext;
-};
-
-type DeviceStore = {
-	get(key: string, fallback: unknown): unknown;
-	set(key: string, value: unknown): void;
-	remove(key: string): void;
-};
-
-type DeviceMessage = {
-	id: string;
-	content?: string;
-	author?: { bot?: boolean };
-};
-
-type DeviceUnbound = {
-	plugins: {
-		entities: ReadonlyMap<string, DeviceEntity>;
-		errors: ReadonlyMap<string, Error>;
-		get(id: string): DeviceEntity | undefined;
-		start(id: string): void | Promise<void>;
-		stop(id: string): void | Promise<void>;
-		reload(
-			id: string,
-			bundle: unknown,
-			data: unknown,
-		): Promise<{ ok: boolean; error?: unknown }>;
+declare global {
+	/**
+	 * What the client's `Addon` gives first-party device tooling beyond {@link AddonHandle}
+	 * (`packages/client/src/addons/addon.ts`): the SDK leaves these out so plugins never read them.
+	 */
+	type DeviceAddon = AddonHandle & {
+		/** The bundle source, hashed to tell whether a plugin changed since the last run. */
+		readonly bundle: string;
+		/** The running plugin's native bridge, which the loader self-test hooks through. */
+		readonly context: PluginContext | undefined;
+		/** The settings panel the plugin exports, only while it is running. */
+		readonly SettingsPanel: ComponentType | undefined;
 	};
-	native?: {
-		getNativeResources?: () => { hooks: number } | null;
-		BundleInfo?: { Version?: string; Build?: string };
+
+	type DeviceMessage = {
+		id: string;
+		content?: string;
+		author?: { bot?: boolean };
 	};
-	storage: { getBucket(name: string): DeviceStore };
-	fs: { readFile(path: string, encoding?: string): unknown };
-	flux: { getStore<T>(name: string): T };
-	metro: {
-		common: {
-			React: {
-				Component: { prototype: object; call(self: unknown, props: object): void };
-				createElement(
-					type: unknown,
-					props?: object | null,
-					...children: unknown[]
-				): unknown;
-			};
-		};
-		findByProps<T>(...names: string[]): T;
-	};
+
+	function gc(): void;
+}
+
+/** The message list the fixture scripts read, which the SDK leaves for plugins to declare. */
+type MessageStore = {
+	getMessages(channel: string): { toArray?: () => DeviceMessage[] } | undefined;
 };
 
-declare const unbound: DeviceUnbound;
-
-declare const HermesInternal:
-	| { getInstrumentedStats?: () => { js_allocatedBytes: number } }
-	| undefined;
-
-declare function gc(): void;
+declare module '@unbound-app/api/flux' {
+	interface FluxStores {
+		Message: MessageStore;
+	}
+}

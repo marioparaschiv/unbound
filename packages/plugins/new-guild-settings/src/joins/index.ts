@@ -18,7 +18,7 @@ import { REPEAT_WINDOW_MS } from '~/constants';
  * and patches `joinGuild` on Discord's guild actions module (`joinGuild`, `waitForGuild`) to apply after a non-lurking join resolves.
  * A server reported by more than one path within ten seconds is changed once.
  * The Addon scope removes the listeners and the patch when the plugin stops.
- * @returns A function with nothing to undo, for `applyFeatures`.
+ * @returns A function with nothing to undo; the Addon scope removes what it added.
  */
 export function startJoins(): () => void {
 	const isFirst = createRepeatGuard(REPEAT_WINDOW_MS);

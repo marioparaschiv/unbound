@@ -1,4 +1,4 @@
-import { recordSkip } from '@unbound-plugins/shared/lifecycle/health';
+import { awaitModule, ensurePresent } from '@unbound-plugins/shared/lifecycle/features';
 import { metro } from '@unbound-app/api';
 
 // Metro results, lazy proxies and native modules are all untyped `find` results; only their presence matters.
@@ -44,22 +44,30 @@ function isPresent(handle: ModuleHandle): boolean {
 
 /**
  * @description Checks that every module a plugin or feature needs exists, so it can bail out instead of applying partially.
- * A lazy handle is never loaded; one not known either way counts as present, since a patch on it waits for its module.
- * @param plugin The plugin's display name, or `Plugin: feature` for a single feature, used in the log line.
+ * A lazy handle is never loaded; one not known either way counts as present, since a patch on it waits for its module,
+ * and the plugin's self test reports `waiting for <name>` until that module loads.
  * @param modules The handles to check, keyed by the name to report when one is missing.
+ * @param feature The feature that needs them, when not the whole plugin, named in the log line.
  * @returns `true` unless a handle is nullish or a search of this build found nothing for it, otherwise `false` after logging the missing names.
  */
-export function ensureModules(plugin: string, modules: ModuleHandles): boolean {
-	const missing = Object.keys(modules).filter((name) => !isPresent(modules[name]));
+export function ensureModules(modules: ModuleHandles, feature?: string): boolean {
+	const names = Object.keys(modules);
+	const missing = names.filter((name) => !isPresent(modules[name]));
 
-	if (!missing.length) {
-		return true;
+	if (!ensurePresent(missing, 'modules not found', feature)) {
+		return false;
 	}
 
-	recordSkip(`${plugin}: modules not found: ${missing.join(', ')}`);
-	console.error(`[${plugin}] Skipped, modules not found: ${missing.join(', ')}.`);
+	for (const name of names) {
+		const handle = modules[name];
+		const loaded = () => metro.getModulePresence(handle) === 'loaded';
 
-	return false;
+		if (metro.getModulePresence(handle) && !loaded()) {
+			awaitModule(name, loaded);
+		}
+	}
+
+	return true;
 }
 
 export default ensureModules;

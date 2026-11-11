@@ -4,7 +4,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { createLogger } from '@unbound-app/logger';
 
-import { API_SRC, CLIENT, ROOT } from './paths';
+import { API_SRC, CLIENT, ROOT, TYPES_TYPINGS } from './config';
 import { createDocsOptions } from './docs';
 
 const logger = createLogger('SDK', 'DocCoverage');
@@ -110,10 +110,7 @@ export async function findUndocumented(
 		DECLARED_NAME,
 	);
 	const owned = declaredNames(
-		[
-			...sourceFiles(join(ROOT, 'packages', 'types', 'typings')),
-			...sourceFiles(join(CLIENT, 'src')),
-		],
+		[...sourceFiles(TYPES_TYPINGS), ...sourceFiles(join(CLIENT, 'src'))],
 		EXPORTED_NAME,
 	);
 	const app = await Application.bootstrap({ ...createDocsOptions(apiSrc), validation: false });

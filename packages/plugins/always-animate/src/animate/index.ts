@@ -1,6 +1,6 @@
-import startFeatures from '@unbound-plugins/shared/lifecycle/start-features';
+import type { Feature } from '@unbound-plugins/shared/lifecycle/features';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
-import { settings, type SettingKey } from '@unbound-app/settings';
+import type { SettingKey } from '@unbound-app/settings';
 
 import { animateDecorations } from '~/decorations';
 import { animateNameplates } from '~/nameplates';
@@ -25,13 +25,10 @@ const FEATURES: Record<SettingKey, () => () => void> = {
 /**
  * @description Turns each part on while its setting is on, and off again when the user switches it off.
  * Each part patches what its own folder names, and one that throws only costs that part.
- * @returns A function that removes every part and stops listening; call it in `stop` so the self test counts them out.
+ * @returns One feature per part, each removing it and its listener when it ends.
  */
-export function startAnimate(): () => Promise<void> {
-	return startFeatures(
-		'Always Animate',
-		(Object.keys(FEATURES) as SettingKey[]).map(
-			(key) => () => whileEnabled(settings, key, true, FEATURES[key]),
-		),
+export function animateFeatures(): Feature[] {
+	return (Object.keys(FEATURES) as SettingKey[]).map(
+		(key) => () => whileEnabled(key, FEATURES[key]),
 	);
 }

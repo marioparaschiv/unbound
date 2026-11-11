@@ -1,4 +1,3 @@
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
@@ -6,11 +5,6 @@ import { createElement, type ReactNode } from 'react';
 
 import { selfTest } from '~/index';
 import type { StoreSeeds } from '@unbound-app/api/testing';
-
-// Health is module state that earlier tests in this process left behind.
-beforeEach(() => {
-	resetHealth();
-});
 
 const VIDEO = 'dQw4w9WgXcQ';
 const BRANDING = {
@@ -49,6 +43,13 @@ const MessageRowData = {
 	},
 };
 
+// The native chat list's row builder, which the plugin waits for to rebind rows.
+class RowManager {
+	generate(row: unknown) {
+		return row;
+	}
+}
+
 const realFetch = globalThis.fetch;
 
 function respondWith(body: unknown) {
@@ -62,6 +63,7 @@ beforeEach(() => {
 	hidden.length = 0;
 	metro.register(MessageRowData);
 	metro.register(ActionSheets);
+	metro.register(RowManager);
 	flux.seed(stores);
 	respondWith(BRANDING);
 });

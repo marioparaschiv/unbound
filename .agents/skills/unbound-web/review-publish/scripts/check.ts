@@ -38,6 +38,8 @@ const TLA_SHA256 = '936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e05
 const TLA_URL = `https://github.com/tlaplus/tlaplus/releases/download/v${TLA_VERSION}/tla2tools.jar`;
 const JAR = join(homedir(), '.cache', 'tlaplus', TLA_VERSION, 'tla2tools.jar');
 const SPEC_DIR = join(import.meta.dir, '..', 'spec');
+// The properties module extends ReviewPublish.tla, so TLC runs it and loads both.
+const SPEC_MODULE = 'ReviewPublishProperties.tla';
 
 // The host shares memory with other services: one TLC at a time, a capped heap, two workers.
 const JAVA_FLAGS = ['-Xmx3g', '-XX:+UseParallelGC'];
@@ -52,6 +54,7 @@ const INVARIANTS = [
 	'LiveIsReviewed',
 	'DecidedOnce',
 	'RejectedNeverPublic',
+	'ServedHasFiles',
 ];
 
 // Invariants each config is expected to violate; every other one must hold. `current*` describe the
@@ -76,6 +79,8 @@ const EXPECTED: Record<string, string[]> = {
 	'broken-no-cas': ['DecidedOnce', 'RejectedNeverPublic'],
 	// A repeated approval also publishes whatever the staged object holds, so a tampered one goes public.
 	'broken-no-hash-check': ['LiveIsReviewed', 'PublicMatchesLive'],
+	// Serving a live row before markFilesPublished offers a bundle URL with nothing behind it.
+	'broken-serves-pending': ['ServedHasFiles'],
 };
 
 // Liveness jobs: configs run under fairness, each checking LiveEventuallyPublic.
@@ -93,17 +98,19 @@ const LABELS: Record<string, string> = {
 	Purge: 'purgeUserSubmissions (ban) cancels',
 	Orphan: 'sweepStaging deletes an orphaned staged object',
 	Start: 'reviewSubmission -> requireReviewable passes',
-	RetryStart: 'the approval is repeated: requireReviewable sees the live version and republishes',
-	ReadFail: 'readArtifact fails (staging, GitHub)',
-	ReadOk: 'readArtifact reads (or refetches from the pin) and re-hashes the bundle',
+	RetryStart:
+		'the approval is repeated: commitReview sees the live version pending and republishes',
+	ReadFail: 'readVerified fails (staging, GitHub)',
+	ReadOk: 'readVerified reads (or refetches from the pin) and re-hashes the bundle',
 	WriteFail: 'a public write fails after decide committed; the request errors with no cleanup',
 	ReadStaged:
-		'readArtifact reads (or refetches from the pin) and re-hashes the bundle, and reads the pinned media and extra files',
-	WriteBundle: 'publishArtifact (after decide) writes the public bundle',
-	WriteManifest: 'publishArtifact (after decide) writes the public manifest.json',
-	WritePage: 'publishArtifact (after decide) writes the public ADDON.md, page.json and media/',
-	WriteFiles: 'publishArtifact (after decide) writes the public extra files (assets/, i18n/)',
-	Decide: 'decide() transaction',
+		'readVerified reads (or refetches from the pin) and re-hashes the bundle, and reads the pinned media and extra files',
+	WriteBundle: 'writeFiles (after decide) writes the public bundle',
+	WriteManifest: 'writeFiles (after decide) writes the public manifest.json',
+	WritePage: 'writeFiles (after decide) writes the public ADDON.md, page.json and media/',
+	WriteFiles: 'writeFiles (after decide) writes the public extra files and compiled bundles',
+	MarkPublished: 'markFilesPublished clears files_pending_since, so the version is served',
+	Decide: 'commitReview transaction (decideSubmission, makeLive)',
 	Cleanup: 'staging.delete(row.stagingKey)',
 };
 
@@ -157,7 +164,10 @@ async function run(job: Job, scratch: string): Promise<Result> {
 		join(dir, 'model.cfg'),
 		`${base}${job.property ? 'PROPERTY' : 'INVARIANT'} ${checked(job).join(' ')}\n`,
 	);
-	copyFileSync(join(SPEC_DIR, 'ReviewPublish.tla'), join(dir, 'ReviewPublish.tla'));
+
+	for (const module of [SPEC_MODULE, 'ReviewPublish.tla']) {
+		copyFileSync(join(SPEC_DIR, module), join(dir, module));
+	}
 
 	const started = performance.now();
 	const child = Bun.spawn(
@@ -173,7 +183,7 @@ async function run(job: Job, scratch: string): Promise<Result> {
 			'states',
 			'-config',
 			'model.cfg',
-			'ReviewPublish.tla',
+			SPEC_MODULE,
 		],
 		{ stdout: 'pipe', stderr: 'pipe', cwd: dir, timeout: JOB_TIMEOUT_MS },
 	);
@@ -332,7 +342,7 @@ async function main() {
 		});
 
 		unexpected += replay.exitCode === 0 ? 0 : 1;
-		console.log('Model checking spec/ReviewPublish.tla with TLC:');
+		console.log(`Model checking spec/${SPEC_MODULE} with TLC:`);
 	}
 
 	for (const job of jobs) {

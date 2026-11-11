@@ -43,10 +43,6 @@ function isDiscordIconRow(value: unknown): value is DiscordIconRow {
 	);
 }
 
-function isDiscordAppIconSelection(value: unknown): value is DiscordAppIconSelection {
-	return typeof value === 'string' || isDiscordIconRow(value);
-}
-
 function mergeDiscordAppIcons(
 	existing: DiscordIconRow[],
 	provided: DiscordAppIcon[],
@@ -111,7 +107,6 @@ function resolveDiscordAppIconSelection(
 
 export {
 	findDiscordAppIcon,
-	isDiscordAppIconSelection,
 	isDiscordIconRow,
 	mergeDiscordAppIconRows,
 	mergeDiscordAppIcons,

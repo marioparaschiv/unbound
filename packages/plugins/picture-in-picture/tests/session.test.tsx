@@ -1,5 +1,4 @@
 import { metro, native, render, startPlugin, stopPlugin, toasts } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { beforeEach, expect, test } from 'bun:test';
 import { Pressable, View } from 'react-native';
 
@@ -23,7 +22,6 @@ const header = {
 };
 
 beforeEach(() => {
-	resetHealth();
 	metro.register({ default: OverlayButton }, OVERLAY_BUTTON_PATH);
 	metro.register(header, OVERLAY_HEADER_PATH);
 });

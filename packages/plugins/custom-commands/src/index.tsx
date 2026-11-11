@@ -1,10 +1,8 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
 import { startCommands } from '~/commands';
 import SettingsPanel from '~/settings';
 
-export function start() {
-	startCommands();
-}
+export const { start, stop, selfTest } = runFeatures([startCommands]);
 
-export { featureSelfTest as selfTest, SettingsPanel };
+export { SettingsPanel };

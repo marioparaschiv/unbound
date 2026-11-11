@@ -1,7 +1,9 @@
 import { metro, toasts } from '@unbound-app/api';
 import { Share } from 'react-native';
 
-import { serializeRuleset, type Ruleset } from '~/replace/ruleset';
+import type { Ruleset } from '@unbound-plugins/shared/text-replace/stored-rules';
+
+import { serializeRuleset } from '~/replace/ruleset';
 
 async function copy(value: string): Promise<boolean> {
 	try {

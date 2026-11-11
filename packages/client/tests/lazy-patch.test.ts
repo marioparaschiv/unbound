@@ -8,6 +8,7 @@ import type { Addon } from '~/addons/addon';
 
 import { startFakeMetro } from './helpers/fake-metro';
 import { createCacheMock } from './helpers/cache';
+import { mockLookups } from './helpers/lookups';
 
 const LOADED_ID = 1;
 const loadedExports = { loaded: (value: number) => value };
@@ -37,7 +38,6 @@ let searchLoads = 0;
 
 Object.assign(globalThis, {
 	React: { createElement: () => null },
-	$$DEV$$: false,
 	ErrorUtils: { getGlobalHandler: () => void 0, setGlobalHandler: () => void 0 },
 	__r: (id: number) => {
 		searchLoads++;
@@ -60,20 +60,21 @@ mock.module('~/metro/cache', () =>
 	}),
 );
 
-mock.module('~/metro/wrappers', () => ({
-	findByPropsLazy: () => ({ getPublicInstanceFromRootTag: () => null }),
-}));
-
 const crashes: CrashEvent[] = [];
 
 mock.module('~/diagnostics/crash-reports', () => ({
 	reportCrash: async (event: CrashEvent) => void crashes.push(event),
 }));
 
+// Copied before the addon helpers replace the lookups, which this test exercises over the fake Metro.
+const lookups = { ...(await import('~/metro/lookups')) };
 const { FakeAddons, makeManifest, resetDevice, states } = await import('./helpers/addons');
+
+mockLookups({}, lookups);
+
 const { after, instead, unpatchAll, unpatchAllByCaller } = await import('~/patcher/api');
 const { createPatcher } = await import('~/patcher/create-patcher');
-const { findByProps } = await import('~/metro/lookups');
+const { findByProps } = lookups;
 const { createAddonScope } = await import('~/addons/scope');
 
 function idOf(method: string) {

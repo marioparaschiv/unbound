@@ -5,8 +5,6 @@ import {
 import { afterAll, describe, expect, spyOn, test } from 'bun:test';
 import { APIError } from 'better-auth/api';
 
-import listGitHubRepositoriesEndpoint from '~/endpoints/list-github-repositories';
-import listRepositoryAddonsEndpoint from '~/endpoints/list-repository-addons';
 import { createApiClient } from '~/api/schema-client';
 import { connectGitHubIfLinked } from '~/lib/github';
 import type { AppContext } from '~/lib/context';
@@ -14,7 +12,7 @@ import type { Api } from '~/api';
 
 import { createTestContext, linkGitHub, signInWithDiscord } from './helpers/context';
 import { manifest, seedApprovedAddon } from './helpers/addons';
-import { failure, serveEndpoints } from './helpers/server';
+import { failure, serveApi } from './helpers/server';
 import { serveGitHub } from './helpers/github';
 
 const MONOREPO = 'acme/addons';
@@ -89,10 +87,7 @@ const base = await createTestContext({
 	GITHUB_RATE_LIMIT_MAX: '1000',
 });
 const ctx = base.ctx;
-const server = serveEndpoints(ctx, {
-	'GET /api/v1/github/repositories': listGitHubRepositoriesEndpoint,
-	'GET /api/v1/github/addons': listRepositoryAddonsEndpoint,
-});
+const server = await serveApi(ctx);
 const client = createApiClient<Api>({ baseUrl: server.url.href });
 
 // Better Auth's GitHub provider hard-codes this endpoint, so the refresh is answered at fetch.
@@ -475,9 +470,7 @@ describe('GET /api/v1/github/addons', () => {
 			GITHUB_API_URL: github.url.href,
 			GITHUB_RATE_LIMIT_MAX: '2',
 		});
-		const limitedServer = serveEndpoints(limited.ctx, {
-			'GET /api/v1/github/addons': listRepositoryAddonsEndpoint,
-		});
+		const limitedServer = await serveApi(limited.ctx);
 		const limitedClient = createApiClient<Api>({ baseUrl: limitedServer.url.href });
 
 		try {

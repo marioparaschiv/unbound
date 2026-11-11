@@ -18,10 +18,12 @@ import { createFakeSettings, defineSettings, setting, type SettingsSchema } from
 import { createListenerRegistry, type ListenerRegistry } from './listener-registry';
 import { createFakeReactNative, type HostPropsByName } from './fake-react-native';
 import { installAddonGlobals, type FakeUnbound } from './install-addon-globals';
-import { createFakeLocales, SOURCE_LOCALE } from './fake-locales';
+import { SOURCE_LOCALE } from '../src/_conventions/addon-locales';
+import { ASSET_TYPES } from '../src/_conventions/addon-assets';
 import { createFakeAssets, createFakeFlux } from './fake-api';
 import { createJsxRuntimes } from './unfrozen-elements';
 import { resetSession, startSession } from './session';
+import { createFakeLocales } from './fake-locales';
 import { createFakePlugins } from './fake-plugins';
 import { forgetPlugin } from './plugin-lifecycle';
 import { createFakeUi } from './fake-components';
@@ -29,16 +31,15 @@ import { createFakeNative } from './fake-native';
 import { createFakeUtils } from './fake-utils';
 import { unmountAll } from './test-renderer';
 import { createFakeFs } from './fake-fs';
+import sdk from '../package.json';
 
 type SvgProps = Omit<HostPropsByName['SvgXml'], 'xml' | 'asset'>;
 
-// The namespaces that serve nested modules, as `unbound.metro.components` is `@unbound-app/api/metro/components`.
-const NESTED = new Map([
-	['metro', ['api', 'common', 'components', 'filters', 'stores']],
-	['utils', ['react']],
-]);
+// The nested modules the SDK publishes, such as `metro/components` for `unbound.metro.components`.
+const NESTED = new Set(Object.keys(sdk.exports).map((subpath) => subpath.slice(2)));
 
-const IMAGE = /\.(png|jpe?g|webp|gif)$/i;
+// The build also takes `.jpeg` as a jpg.
+const IMAGE = new RegExp(`\\.(${[...ASSET_TYPES, 'jpeg'].join('|')})$`, 'i');
 const SVG = /\.svg$/i;
 const SVG_ASSET = /\.svg\?asset$/i;
 const SVG_ASSET_NAMESPACE = 'unbound-svg-asset';
@@ -175,7 +176,7 @@ for (const [name, namespace] of Object.entries(scope.unbound)) {
 
 	// A namespace that nests others serves each one at its own path, such as `@unbound-app/api/metro/components`.
 	for (const [nested, members] of Object.entries(namespace)) {
-		if (NESTED.get(name)?.includes(nested)) {
+		if (NESTED.has(`${name}/${nested}`)) {
 			mock.module(`@unbound-app/api/${name}/${nested}`, () => members);
 		}
 	}

@@ -28,7 +28,7 @@ import { listAdminAddons } from '~/lib/admin-addons';
 import requestCaller from '~/lib/api/request-caller';
 import type { StaffNote } from '~/lib/staff-notes';
 import { serveVersion } from '~/lib/rollback';
-import app from '~/lib/app';
+import { getApp } from '~/lib/app';
 
 export type AdminAddonsView = AdminAddonsPage & {
 	/** The user the `maintainer` filter names, for the filter bar; `null` without one or for an unknown id. */
@@ -44,7 +44,7 @@ export const fetchAdminUsers = createServerFn({ method: 'GET' })
 	.handler(async ({ data }): Promise<AdminUsersPage> => {
 		const caller = await requestCaller();
 
-		return listAdminUsers(app, caller, data);
+		return listAdminUsers(getApp(), caller, data);
 	});
 
 /**
@@ -57,8 +57,8 @@ export const fetchAdminAddons = createServerFn({ method: 'GET' })
 	.handler(async ({ data }): Promise<AdminAddonsView> => {
 		const caller = await requestCaller();
 		const [page, maintainer] = await Promise.all([
-			listAdminAddons(app, caller, data),
-			data.maintainer ? getUserSummary(app, caller, data.maintainer) : undefined,
+			listAdminAddons(getApp(), caller, data),
+			data.maintainer ? getUserSummary(getApp(), caller, data.maintainer) : undefined,
 		]);
 
 		return { ...page, maintainer: maintainer ?? null };
@@ -73,7 +73,7 @@ export const fetchAdminAddon = createServerFn({ method: 'GET' })
 	.handler(async ({ data }): Promise<AdminAddonView | null> => {
 		const caller = await requestCaller();
 
-		return (await getAdminAddon(app, caller, data)) ?? null;
+		return (await getAdminAddon(getApp(), caller, data)) ?? null;
 	});
 
 /**
@@ -85,7 +85,7 @@ export const fetchAdminUser = createServerFn({ method: 'GET' })
 	.handler(async ({ data }): Promise<AdminUserView | null> => {
 		const caller = await requestCaller();
 
-		return (await getAdminUser(app, caller, data)) ?? null;
+		return (await getAdminUser(getApp(), caller, data)) ?? null;
 	});
 
 /**
@@ -97,7 +97,7 @@ export const fetchEvents = createServerFn({ method: 'GET' })
 	.handler(async ({ data }): Promise<EventTimeline> => {
 		const caller = await requestCaller();
 
-		return getEventTimeline(app, caller, data.subject, data.before);
+		return getEventTimeline(getApp(), caller, data.subject, data.before);
 	});
 
 /**
@@ -111,7 +111,7 @@ export const submitServeVersion = createServerFn({ method: 'POST' })
 	.handler(async ({ data }): Promise<ServeVersionResult> => {
 		const caller = await requestCaller();
 
-		return serveVersion(app, caller, data.id, data.request);
+		return serveVersion(getApp(), caller, data.id, data.request);
 	});
 
 /**
@@ -123,7 +123,7 @@ export const submitAddonEdit = createServerFn({ method: 'POST' })
 	.handler(async ({ data }): Promise<AdminAddonView> => {
 		const caller = await requestCaller();
 
-		return editAddon(app, caller, data.id, data.edit);
+		return editAddon(getApp(), caller, data.id, data.edit);
 	});
 
 /**
@@ -135,7 +135,7 @@ export const createStaffNoteFn = createServerFn({ method: 'POST' })
 	.handler(async ({ data }): Promise<StaffNote> => {
 		const caller = await requestCaller();
 
-		return createStaffNote(app, caller, data);
+		return createStaffNote(getApp(), caller, data);
 	});
 
 /**
@@ -147,7 +147,7 @@ export const editStaffNoteFn = createServerFn({ method: 'POST' })
 	.handler(async ({ data }): Promise<StaffNote> => {
 		const caller = await requestCaller();
 
-		return editStaffNote(app, caller, data);
+		return editStaffNote(getApp(), caller, data);
 	});
 
 /**
@@ -158,7 +158,7 @@ export const deleteStaffNoteFn = createServerFn({ method: 'POST' })
 	.handler(async ({ data }) => {
 		const caller = await requestCaller();
 
-		await deleteStaffNote(app, caller, data);
+		await deleteStaffNote(getApp(), caller, data);
 	});
 
 export default {

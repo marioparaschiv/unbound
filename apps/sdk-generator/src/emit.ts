@@ -1,29 +1,17 @@
 import { Node, ModuleDeclarationKind, VariableDeclarationKind, ts } from 'ts-morph';
-import { join, relative } from 'node:path';
 import { writeFileSync } from 'node:fs';
+import { relative } from 'node:path';
 
-import {
-	API_MANIFEST,
-	API_SRC,
-	INTERNAL_OUT,
-	TYPES_INDEX,
-	readJson,
-	relativeSpecifier,
-	type Lifecycle,
-	type NamespaceAlias,
-	type ModuleEntry,
-} from './paths';
-import {
-	stripInternal,
-	declaredNames,
-	collectReferencedNames,
-	groupByOwner,
-	typeOnlyStatements,
-} from './transform';
+import type { Lifecycle, NamespaceAlias, ModuleEntry } from './entry-types';
+
+import { API_MANIFEST, API_SRC, GLOBAL_OUT, INTERNAL_OUT, ROOT_OUT, TYPES_INDEX } from './config';
+import { relativeSpecifier, stripInternal, groupByOwner, typeOnlyStatements } from './transform';
+import { declaredNames, collectReferencedNames } from './declarations';
 import { addonScopeGlobals } from './addon-scope';
 import { readLifecycle } from './entries';
 import { parseSource } from './project';
 import { bundle } from './bundle';
+import { readJson } from './json';
 
 /**
  * @description Normalises a `.d.ts` file down to its structural surface for hashing: the text is
@@ -54,7 +42,7 @@ export function normalizeForHash(text: string): string {
  * @returns The root `index.d.ts` text (unformatted, no banner).
  */
 export function buildRoot(entries: ModuleEntry[], aliases: NamespaceAlias[] = []): string {
-	const out = join(API_SRC, 'index.d.ts');
+	const out = ROOT_OUT;
 	const specifierOf = new Map(
 		entries
 			.filter((entry) => entry.topLevel)
@@ -99,7 +87,7 @@ export function buildGlobal(
 	aliases: NamespaceAlias[] = [],
 	lifecycle: Lifecycle = readLifecycle(),
 ): string {
-	const outPath = join(API_SRC, 'global.d.ts');
+	const outPath = GLOBAL_OUT;
 	const sourceFile = parseSource('global.d.ts', bundle(TYPES_INDEX, true));
 
 	stripInternal(sourceFile, new Set<string>(), new Set<string>());
@@ -276,8 +264,7 @@ export function buildGlobal(
 
 /**
  * @description Builds the `@unbound-app/api` `exports` map: the root, the globals, each module, and the
- * shared types, and the hand-written testing kit in `packages/api/testing` (its preset and the ICU parser the CLI shares).
- * @param entries The emitted module entries.
+ * shared types, and the hand-written testing kit in `packages/api/testing` (its preset and the fakes it is built from).
  * @returns The map, sorted by subpath.
  */
 export function buildExports(entries: ModuleEntry[]): Record<string, string> {
@@ -285,7 +272,7 @@ export function buildExports(entries: ModuleEntry[]): Record<string, string> {
 		'.': './src/index.d.ts',
 		'./global': './src/global.d.ts',
 		'./testing': './testing/index.ts',
-		'./testing/icu-parse': './testing/icu-parse.ts',
+		'./testing/fakes': './testing/fakes.ts',
 		'./testing/preset': './testing/preset.ts',
 		'./types': './src/_types.d.ts',
 	};

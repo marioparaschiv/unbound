@@ -5,6 +5,9 @@
 		"verbatimModuleSyntax": true,
 		"noUncheckedIndexedAccess": true,
 		"noImplicitOverride": true,
-		"types": ["bun"]
+		"types": ["bun"],
+		"paths": {
+			"~/*": ["./src/*"]
+		}
 	}
 }

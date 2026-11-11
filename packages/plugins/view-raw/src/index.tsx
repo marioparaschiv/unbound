@@ -1,15 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
 import { startViewRaw } from '~/raw';
 
-let stopViewRaw = async () => {};
-
-export function start() {
-	stopViewRaw = startViewRaw();
-}
-
-export function stop() {
-	return stopViewRaw();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures(startViewRaw);
