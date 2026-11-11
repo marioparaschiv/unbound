@@ -1,13 +1,13 @@
 import type { SettingsEntry } from '@unbound-app/types';
 import { create } from 'zustand';
 
-type SettingsStore = {
+type SectionStore = {
 	sections: Record<string, SettingsEntry>;
 	registerSection: (entry: SettingsEntry) => void;
 	removeSection: (key: string) => void;
 };
 
-const SettingsStore = create<SettingsStore>((set) => ({
+const SectionStore = create<SectionStore>((set) => ({
 	sections: {},
 	registerSection: (entry) =>
 		set((prev) => ({ sections: { ...prev.sections, [entry.key]: entry } })),
@@ -21,4 +21,4 @@ const SettingsStore = create<SettingsStore>((set) => ({
 		}),
 }));
 
-export default SettingsStore;
+export default SectionStore;

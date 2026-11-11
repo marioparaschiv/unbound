@@ -72,8 +72,6 @@ mock.module('~/storage/api', () => {
 		},
 		getBucket,
 		useBucket,
-		getStore: getBucket,
-		useSettingsStore: useBucket,
 	};
 });
 
