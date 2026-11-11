@@ -8,11 +8,16 @@ export default Discord.createStyles({
 	icon: {
 		width: ROW_ICON_SIZE,
 		height: ROW_ICON_SIZE,
-		alignItems: 'center',
-		justifyContent: 'center',
 	},
-	// Read as a resolved string for the logo SVG's `color` prop.
-	logo: {
-		color: Theme.colors.TABLEROW_ICON_COLOR_DEFAULT,
+	layer: {
+		position: 'absolute',
+		width: ROW_ICON_SIZE,
+		height: ROW_ICON_SIZE,
+	},
+	body: {
+		position: 'absolute',
+		width: ROW_ICON_SIZE,
+		height: ROW_ICON_SIZE,
+		tintColor: Theme.colors.TABLEROW_ICON_COLOR_DEFAULT,
 	},
 });
