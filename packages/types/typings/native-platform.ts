@@ -107,6 +107,7 @@ export type NativePlatformAndroidBridge = {
 export type NativePlatformApp = {
 	/** Where Discord was installed from, such as `App Store` or `Google Play`. */
 	getAppSource(): string;
+	getInstallDetails?(): string;
 	/** The framework that injected the loader, such as Vector or LSPosed on Android and ElleKit on iOS, or an empty string. */
 	getFramework(): string;
 	/** Whether the loader's embedded attestation verified against Unbound's pinned key. False for development builds. */

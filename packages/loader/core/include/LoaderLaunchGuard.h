@@ -38,6 +38,7 @@ public:
     LaunchVerdict begin(PreviousExit previous = PreviousExit::Unknown) const;
     // Disarms the marker once this launch has run long enough to count as healthy.
     bool succeed() const;
+    bool markFrozen() const;
 
 private:
     std::string path() const;

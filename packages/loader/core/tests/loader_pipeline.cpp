@@ -135,6 +135,29 @@ void keepsTheSavedBundleUntilTheNextLaunch()
     assert(launch.pipeline.hasStagedBundle());
 }
 
+std::string hermesBundle(uint32_t version, const std::string &body)
+{
+    std::string bytes(12, '\0');
+    std::memcpy(bytes.data(), &loader::kHermesMagic, sizeof(loader::kHermesMagic));
+    std::memcpy(bytes.data() + 8, &version, sizeof(version));
+    return bytes + body;
+}
+
+void waitsForAMatchingBundleWhenDiscordsBytecodeChanges()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, hermesBundle(97, "old")}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    launch.server.publish(kBase, "2026-10-03T00:00:00.000Z", {{kBundle, hermesBundle(98, "new")}});
+
+    launch.pipeline.prepare();
+
+    assert(!launch.pipeline.hasStagedBundle());
+    std::optional<loader::LoaderPipeline::SavedBundle> bundle = launch.pipeline.takeSavedBundle();
+    assert(bundle && bundle->bytecode);
+    assert(loader::hermesBytecodeVersion(bundle->bytecode->data(), bundle->bytecode->size()) == 98);
+}
+
 void runsAHotReloadUpdateWithoutReloading()
 {
     Launch launch;
@@ -406,6 +429,31 @@ void waitsForWifiBeforeABackgroundUpdate()
     assert(launch.pipeline.hasStagedBundle());
 }
 
+void checksWhenGoingToTheBackgroundOnlyWhenDue()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    launch.server.publish(kBase, "2026-10-03T00:00:00.000Z", {{kBundle, "next"}});
+    launch.host->metered = true;
+    launch.pipeline.prepare();
+    int downloads = launch.server.downloads;
+
+    launch.host->metered = false;
+    Launch fresh;
+    fresh.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(fresh.server.install(fresh.updater, std::nullopt));
+    fresh.pipeline.prepare();
+    int freshDownloads = fresh.server.downloads;
+    assert(!fresh.pipeline.onBackground());
+    assert(fresh.server.downloads == freshDownloads);
+
+    launch.pipeline.onBackground();
+    assert(launch.server.downloads > downloads);
+    assert(loader::readTextFile(launch.server.candidate()) == "next");
+    assert(!launch.pipeline.isCheckingForUpdate());
+}
+
 void checksInTheForegroundOnlyOnceTheLastCheckIsOld()
 {
     Launch launch;
@@ -454,6 +502,7 @@ int main()
 {
     leavesAFirstDownloadForTheRuntime();
     keepsTheSavedBundleUntilTheNextLaunch();
+    waitsForAMatchingBundleWhenDiscordsBytecodeChanges();
     runsAHotReloadUpdateWithoutReloading();
     runsTheSavedBundleWithHotReloadOnAndNoUpdate();
     runsTheSavedBundleWhenItsFlavourMatches();
@@ -470,6 +519,7 @@ int main()
     ignoresAnEarlyExitThatWasNotACrash();
     countsTheLaunchHealthyShortlyAfterTheFirstRender();
     waitsForWifiBeforeABackgroundUpdate();
+    checksWhenGoingToTheBackgroundOnlyWhenDue();
     checksInTheForegroundOnlyOnceTheLastCheckIsOld();
     retriesAFailedCheckWhenTheServerSaysWhen();
     spacesRetriesWithJitter();

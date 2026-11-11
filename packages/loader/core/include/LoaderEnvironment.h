@@ -22,6 +22,18 @@ struct InstallFacts {
     bool                  trollStoreLite = false;
     bool                  liveContainer  = false;
     std::function<bool()> jitAvailable;
+    std::optional<bool>   discordSigned;
+};
+
+struct SigningFacts {
+    std::optional<std::string> teamIdentifier;
+    bool                       getTaskAllow         = false;
+    bool                       hasProfile           = false;
+    bool                       provisionsAllDevices = false;
+    bool                       listsDevices         = false;
+    std::optional<std::string> profileExpiry;
+    bool                       altStore = false;
+    std::string                entitlementSource;
 };
 
 constexpr const char *kSandboxReceiptName    = "sandboxReceipt";
@@ -34,6 +46,8 @@ Receipt     receiptKind(const std::optional<std::string> &receiptName, bool rece
 bool        isTrollStoreInstall(Receipt receipt, bool trollStore, bool trollStoreLite);
 std::string trollStoreVariant(bool trollStore, bool trollStoreLite);
 std::string appSource(const InstallFacts &facts);
+std::string signingDetails(const SigningFacts &facts);
+std::optional<std::string> provisioningProfilePlist(const std::string &profile);
 bool        isDiscordProductionTeam(const std::optional<std::string> &teamIdentifier);
 bool        isVirtualDeviceMachine(const std::string &machine);
 std::string osVersionLabel(const std::string &version, const std::optional<std::string> &build);

@@ -1,0 +1,16 @@
+name: Install apt packages
+description: Installs Ubuntu packages, surviving a runner that cannot reach one of Ubuntu's mirrors.
+
+inputs:
+    packages:
+        description: The packages to install, separated by spaces.
+        required: true
+
+runs:
+    using: composite
+    steps:
+        - name: Install ${{ inputs.packages }}
+          shell: bash
+          env:
+              PACKAGES: ${{ inputs.packages }}
+          run: bash "${{ github.action_path }}/install.sh"

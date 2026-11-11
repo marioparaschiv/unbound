@@ -13,25 +13,38 @@ std::string LaunchGuard::path() const
     return joinPath(directory_, kFile);
 }
 
-static int recordedFailures(const std::optional<std::string> &contents)
+struct Marker {
+    int  failures = -1;
+    bool frozen   = false;
+};
+
+static Marker readMarker(const std::optional<std::string> &contents)
 {
     if (!contents)
     {
-        return -1;
+        return {};
     }
     nlohmann::json parsed   = nlohmann::json::parse(*contents, nullptr, false);
     auto           failures = parsed.is_object() ? parsed.find("failures") : parsed.end();
-    return failures != parsed.end() && failures->is_number_integer() && *failures >= 0
-               ? failures->get<int>()
-               : 0;
+    auto           frozen   = parsed.is_object() ? parsed.find("frozen") : parsed.end();
+    return {failures != parsed.end() && failures->is_number_integer() && *failures >= 0
+                ? failures->get<int>()
+                : 0,
+            frozen != parsed.end() && frozen->is_boolean() && frozen->get<bool>()};
 }
 
 LaunchVerdict LaunchGuard::begin(PreviousExit previous) const
 {
     // A marker left behind means the previous launch never reached succeed().
     LaunchVerdict verdict;
-    int           recorded = recordedFailures(readTextFile(path()));
-    if (recorded >= 0 && previous == PreviousExit::Ended)
+    Marker        marker   = readMarker(readTextFile(path()));
+    int           recorded = marker.failures;
+    if (recorded >= 0 && marker.frozen)
+    {
+        log(LogLevel::Warning, LOG_CATEGORY_DEFAULT,
+            "Discord's previous launch never rendered its first screen.");
+    }
+    else if (recorded >= 0 && previous == PreviousExit::Ended)
     {
         // Swiping Discord away during startup is not a crash, and it ends the streak.
         log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
@@ -60,6 +73,17 @@ LaunchVerdict LaunchGuard::begin(PreviousExit previous) const
 bool LaunchGuard::succeed() const
 {
     return removeFile(path());
+}
+
+bool LaunchGuard::markFrozen() const
+{
+    Marker marker = readMarker(readTextFile(path()));
+    if (marker.failures < 0)
+    {
+        return false;
+    }
+    return writeTextFileAtomically(
+        path(), nlohmann::json{{"failures", marker.failures}, {"frozen", true}}.dump());
 }
 
 std::string launchRollBackNotice(int failures)

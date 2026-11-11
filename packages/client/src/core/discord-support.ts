@@ -19,7 +19,7 @@ export function discordChannel(version: string, appSource = ''): ChannelVersion 
 		return { channel: 'Alpha', version: plain };
 	}
 
-	if (suffix === 'beta' || appSource === 'TestFlight') {
+	if (suffix === 'beta' || appSource.includes('TestFlight')) {
 		return { channel: 'Beta', version: plain };
 	}
 

@@ -61,5 +61,6 @@ describe('discordChannel', () => {
 			channel: 'Beta',
 			version: '352.0',
 		});
+		expect(discordChannel('352.0', 'Sideloaded (TestFlight build)').channel).toBe('Beta');
 	});
 });

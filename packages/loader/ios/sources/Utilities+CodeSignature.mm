@@ -110,6 +110,59 @@ static NSDictionary *kernelEntitlements()
     return @{};
 }
 
++ (NSString *)getInstallDetails
+{
+    NSDictionary *signature    = [self getApplicationSignatureInfo];
+    NSDictionary *entitlements = signature[@"entitlements"];
+    NSString     *source       = signature[@"source"];
+
+    loader::environment::SigningFacts facts;
+    id                                team = entitlements[@"com.apple.developer.team-identifier"];
+    if ([team isKindOfClass:[NSString class]])
+    {
+        facts.teamIdentifier = toStdString((NSString *) team);
+    }
+    facts.getTaskAllow = [entitlements[@"get-task-allow"] isKindOfClass:[NSNumber class]] &&
+                         [entitlements[@"get-task-allow"] boolValue];
+    if (source.length > 0)
+    {
+        facts.entitlementSource = [source isEqualToString:@"kernel"] ? "kernel" : "executable";
+    }
+
+    NSBundle *bundle      = NSBundle.mainBundle;
+    NSString *profilePath = [bundle pathForResource:@"embedded" ofType:@"mobileprovision"];
+    NSData   *profileData = profilePath ? [NSData dataWithContentsOfFile:profilePath] : nil;
+    if (profileData)
+    {
+        std::string raw(static_cast<const char *>(profileData.bytes), profileData.length);
+        if (auto plist = loader::environment::provisioningProfilePlist(raw))
+        {
+            NSData       *xml     = [NSData dataWithBytes:plist->data() length:plist->size()];
+            NSDictionary *profile = [NSPropertyListSerialization propertyListWithData:xml
+                                                                              options:0
+                                                                               format:nil
+                                                                                error:nil];
+            if ([profile isKindOfClass:[NSDictionary class]])
+            {
+                facts.hasProfile           = true;
+                facts.provisionsAllDevices = [profile[@"ProvisionsAllDevices"] boolValue];
+                id devices                 = profile[@"ProvisionedDevices"];
+                facts.listsDevices = [devices isKindOfClass:[NSArray class]] && [devices count] > 0;
+                if ([profile[@"ExpirationDate"] isKindOfClass:[NSDate class]])
+                {
+                    NSISO8601DateFormatter *formatter = [NSISO8601DateFormatter new];
+                    formatter.formatOptions           = NSISO8601DateFormatWithFullDate;
+                    facts.profileExpiry =
+                        toStdString([formatter stringFromDate:profile[@"ExpirationDate"]]);
+                }
+            }
+        }
+    }
+    facts.altStore = [bundle objectForInfoDictionaryKey:@"ALTDeviceID"] != nil;
+
+    return [NSString stringWithUTF8String:loader::environment::signingDetails(facts).c_str()];
+}
+
 + (NSString *)formatEntitlementsAsPlist:(NSDictionary *)entitlements
 {
     if (!entitlements || entitlements.count == 0)

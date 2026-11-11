@@ -21,10 +21,8 @@ runs:
               fi
               if [ "$RUNNER_OS" = macOS ]; then
                   brew install ccache > /dev/null
-              elif ! sudo apt-get install -y -qq ccache > /dev/null; then
-                  # The image's package lists usually still resolve ccache; refreshing them costs about 10 s.
-                  sudo apt-get update -qq
-                  sudo apt-get install -y -qq ccache > /dev/null
+              else
+                  PACKAGES=ccache bash "${{ github.action_path }}/../apt-install/install.sh"
               fi
 
         - name: Restore the compiler cache

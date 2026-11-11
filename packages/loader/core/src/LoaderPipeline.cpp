@@ -115,6 +115,20 @@ void LoaderPipeline::prepare()
     // A local read, so the bundle can run before Discord's without waiting on the network.
     std::optional<SavedBundle> bundle =
         !savedPath.empty() && fileExists(savedPath) ? readSavedBundle(savedPath) : std::nullopt;
+    if (bundle && bundle->bytecode)
+    {
+        uint32_t savedVersion =
+            hermesBytecodeVersion(bundle->bytecode->data(), bundle->bytecode->size());
+        uint32_t runtimeVersion = host_->runtimeBytecodeVersion();
+        if (savedVersion != 0 && runtimeVersion != 0 && savedVersion != runtimeVersion)
+        {
+            log(LogLevel::Warning, LOG_CATEGORY_DEFAULT,
+                "Discord now runs Hermes bytecode " + std::to_string(runtimeVersion) +
+                    ", but the saved bundle was built for " + std::to_string(savedVersion) +
+                    "; waiting for a matching bundle.");
+            bundle.reset();
+        }
+    }
     bool hasSaved = bundle && !bundle->empty();
     // A saved bundle from the other flavour runs at the next launch anyway, so this launch waits
     // for its replacement rather than leaving the switch to a second restart.
@@ -483,6 +497,20 @@ void LoaderPipeline::guardLaunch()
 
 void LoaderPipeline::markHealthy()
 {
+    int64_t created = runtimeCreatedMs_.load();
+    if (bundleExecutedMs_.load() != 0 && !rendered_.load() && created != 0 &&
+        nowMs() - created >= static_cast<int64_t>((kHealthySeconds - 1) * 1000))
+    {
+        if (!launchHealthy_.load() && !frozen_.exchange(true))
+        {
+            log(LogLevel::Warning, LOG_CATEGORY_DEFAULT,
+                "Discord has not rendered its first screen after " +
+                    std::to_string(static_cast<int>(kHealthySeconds)) +
+                    " seconds; this launch counts as frozen until it does.");
+            LaunchGuard(updater_.documents()).markFrozen();
+        }
+        return;
+    }
     promotePendingBundle();
     if (!launchGuarded_.load() || launchHealthy_.exchange(true))
     {
@@ -558,20 +586,36 @@ void LoaderPipeline::checkForUpdate(uint64_t token, size_t attempt)
                        attempt);
 }
 
-void LoaderPipeline::onForeground()
+bool LoaderPipeline::checkIfDue(const char *reason)
 {
     if (!preferences::loaderEnabled(settings_) || checking_.load())
     {
-        return;
+        return false;
     }
     int64_t last = lastCheckMs_.load();
     bool due = last != 0 && nowMs() - last >= static_cast<int64_t>(kForegroundCheckSeconds * 1000);
     if (!due && !waitingForWifi_.load())
     {
-        return;
+        return false;
     }
-    log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
-        "Back in the foreground; checking for a newer bundle.");
+    log(LogLevel::Info, LOG_CATEGORY_DEFAULT, reason);
     checkForUpdate(token_.load(), 0);
+    return true;
+}
+
+void LoaderPipeline::onForeground()
+{
+    checkIfDue("Back in the foreground; checking for a newer bundle.");
+}
+
+bool LoaderPipeline::onBackground()
+{
+    checkIfDue("Going to the background; checking for a newer bundle while there is time.");
+    return checking_.load();
+}
+
+bool LoaderPipeline::isCheckingForUpdate() const
+{
+    return checking_.load();
 }
 }

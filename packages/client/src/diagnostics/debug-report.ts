@@ -91,6 +91,7 @@ export function readDebugInfo(): DebugInfo {
 		...channelOf(String(bundle.Version ?? 'unknown'), appSource),
 		discordBuild: String(bundle.Build ?? 'unknown'),
 		appSource,
+		installDetails: android ? '' : attempt(() => platform?.app.getInstallDetails?.(), ''),
 		framework: attempt(() => platform?.app.getFramework(), ''),
 		jailbreak: android ? '' : attempt(() => platform?.device.getJailbreak?.(), ''),
 		react: React.version,

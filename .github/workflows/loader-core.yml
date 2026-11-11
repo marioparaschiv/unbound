@@ -77,9 +77,9 @@ jobs:
                   key: jsi-fuzz-ninja-${{ runner.os }}-${{ env.HERMES_TAG }}-${{ hashFiles('packages/loader/vendor/**') }}
 
             - name: Install libffi, Ninja and lld
-              run: |
-                  sudo apt-get update -qq
-                  sudo apt-get install -y -qq libffi-dev ninja-build lld
+              uses: ./.github/actions/apt-install
+              with:
+                  packages: libffi-dev ninja-build lld
 
             - name: Setup ccache
               uses: ./.github/actions/setup-ccache
