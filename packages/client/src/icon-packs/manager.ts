@@ -10,6 +10,7 @@ import toError from '@unbound-app/utils/to-error';
 import noop from '@unbound-app/utils/noop';
 
 import { safeRelativePath, isSafeIconPackMain } from '~/addons/paths';
+import { indexedIcons, listedIcons } from '~/icon-packs/pack-icons';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import type { InstalledEntry } from '~/updates/addon-updates';
 import { refreshImages } from '~/icon-packs/refresh-images';
@@ -304,6 +305,25 @@ export class Icons extends Addons<Plugin> {
 		if (id === defaultPack.manifest.id) return;
 
 		return this.lookupFile(id, asset, await this.readIndex(id));
+	}
+
+	/**
+	 * @description Lists every icon a pack draws, one file per icon at its highest scale, so a picker can show them all.
+	 * @param id The pack id; the built-in `default` pack has none.
+	 * @returns The files, or none for a GitHub pack installed before indexes.
+	 */
+	async listIconFiles(id: string): Promise<IconFile[]> {
+		if (id === defaultPack.manifest.id) {
+			return [];
+		}
+
+		const manifest = this.findPack(id)?.manifest;
+		const icons = manifest?.assets
+			? listedIcons(manifest)
+			: indexedIcons((await this.readIndex(id)) ?? []);
+		const directory = `${fs.documentsPath}/${this.directoryOf(id)}`;
+
+		return icons.map(({ path, scale }) => ({ path: `${directory}/${path}`, scale }));
 	}
 
 	// A store pack lists its images in its manifest; a GitHub pack with an index is checked in memory,

@@ -9,17 +9,21 @@ import { loadSamples } from './icon-pack-samples';
 type Loaded = { pack: Addon; samples: ImageURISource[] };
 
 /**
- * @description Reads the sample icons an icon pack draws, for its swatch and preview.
+ * @description Reads the sample icons an icon pack draws, for its swatch, or another set of them, such as all of them.
  * @param pack The icon pack.
- * @returns Its samples, or an empty list until they are read.
+ * @param load Reads the icons; a stable function, the samples by default.
+ * @returns Its icons, or an empty list until they are read.
  */
-function usePackSamples(pack: Addon): ImageURISource[] {
+function usePackSamples(
+	pack: Addon,
+	load: (pack: Addon) => Promise<ImageURISource[]> = loadSamples,
+): ImageURISource[] {
 	const [loaded, setLoaded] = useState<Loaded>();
 
 	useEffect(() => {
 		let current = true;
 
-		void loadSamples(pack).then((samples) => {
+		void load(pack).then((samples) => {
 			if (current) {
 				setLoaded({ pack, samples });
 			}
@@ -28,7 +32,7 @@ function usePackSamples(pack: Addon): ImageURISource[] {
 		return () => {
 			current = false;
 		};
-	}, [pack]);
+	}, [pack, load]);
 
 	// A carousel scrolled onto another pack shows nothing rather than the last pack's icons.
 	return loaded?.pack === pack ? loaded.samples : [];
