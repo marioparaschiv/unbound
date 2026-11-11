@@ -1,10 +1,11 @@
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { cloneElement, createElement, isValidElement, type ReactNode } from 'react';
-import { patcher } from '@unbound-app/api';
+import { flux, metro, patcher } from '@unbound-app/api';
 
-import { Ellipsis, TypingStore } from '~/still-dots/modules';
-import { stillDots, type DotElement } from '~/still-dots/dots';
-import StillDot from '~/still-dots/components/still-dot';
+import { stillDots, type DotElement } from '~/lib/dots';
+import { ELLIPSIS_PATH } from '~/lib/constants';
+import StillDot from '~/components/still-dot';
+
+const TypingStore = flux.getStore('Typing');
 
 function renderStillDot({ key, props }: DotElement) {
 	return createElement(StillDot, { ...props, key });
@@ -13,10 +14,15 @@ function renderStillDot({ key, props }: DotElement) {
 /**
  * @description Renders Discord's typing dots as still dots. The dots show in the chat's typing indicator, the channel list, forum posts and the typing status on avatars.
  * Patches the render of the `Ellipsis` component (`design/void/Ellipsis`) and asks `TypingStore` to emit so mounted dots redraw.
- * The Addon scope removes the patch when the plugin stops, and mounted dots re-render as Discord's.
  */
-export function startStillDots(): void {
-	if (!ensureModules({ Ellipsis })) return;
+export function patchEllipsis(): void {
+	const Ellipsis = metro.findByFilePath(ELLIPSIS_PATH);
+
+	if (!Ellipsis) {
+		logger.warn('Still dots skipped: Discord moved Ellipsis.');
+
+		return;
+	}
 
 	patcher.react.after(Ellipsis, 'default', ({ result }) => {
 		if (!isValidElement<{ children?: ReactNode }>(result)) return;

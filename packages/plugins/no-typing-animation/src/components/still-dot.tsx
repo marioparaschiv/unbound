@@ -1,6 +1,6 @@
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 
-import useStyles from '~/still-dots/components/still-dot.style';
+import useStyles from '~/components/still-dot.style';
 
 type StillDotProps = {
 	dotStyle?: StyleProp<ViewStyle>;

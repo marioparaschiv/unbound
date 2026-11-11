@@ -1,4 +1,4 @@
-import { shortenPronouns } from '~/pronouns/format';
+import { shortenPronouns } from '~/lib/format';
 
 export type MessageRow = {
 	timestamp: string;

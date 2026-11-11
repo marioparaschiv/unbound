@@ -1,7 +1,7 @@
 import { settings } from '@unbound-app/settings';
 
-import { formatPronouns } from '~/pronouns/format';
-import { Lookup } from '~/constants';
+import { formatPronouns } from '~/lib/format';
+import { Lookup } from '~/lib/constants';
 
 type LookupResponse = Record<string, { sets?: Record<string, string[]> }>;
 

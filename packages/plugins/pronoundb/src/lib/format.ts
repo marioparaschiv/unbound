@@ -1,4 +1,4 @@
-import { PRONOUN_LABELS, SENTENCE_CODES } from '~/constants';
+import { PRONOUN_LABELS, SENTENCE_CODES } from '~/lib/constants';
 
 /**
  * @description Turns PronounDB's pronoun codes into the label shown next to a message.

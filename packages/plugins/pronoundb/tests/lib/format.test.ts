@@ -1,11 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import {
-	cleanProfilePronouns,
-	formatPronouns,
-	pickPronouns,
-	shortenPronouns,
-} from '~/pronouns/format';
+import { cleanProfilePronouns, formatPronouns, pickPronouns, shortenPronouns } from '~/lib/format';
 
 describe('formatPronouns', () => {
 	test('labels a single pronoun set in the chosen case', () => {

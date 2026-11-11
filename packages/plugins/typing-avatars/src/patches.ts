@@ -1,10 +1,8 @@
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { cloneElement, isValidElement, type ReactNode } from 'react';
 import type { ViewStyle } from 'react-native';
-import { patcher } from '@unbound-app/api';
+import { metro, patcher } from '@unbound-app/api';
 
-import { withTypingAvatars } from '~/typing-avatars/components/typing-avatars';
-import { Avatars, TypingIndicator, UserStore } from '~/typing-avatars/modules';
+import { withTypingAvatars, type AvatarsModule } from '~/components/typing-avatars';
 
 type TypingItem = {
 	channel?: { guild_id?: string };
@@ -26,7 +24,7 @@ function collapseGutter(item: TypingItem) {
 	);
 }
 
-function addAvatars(result: ReactNode) {
+function addAvatars(result: ReactNode, avatars: AvatarsModule) {
 	if (!isValidElement<TypingIndicatorProps>(result)) return result;
 
 	const { props } = result;
@@ -43,17 +41,23 @@ function addAvatars(result: ReactNode) {
 
 	return cloneElement(result, {
 		renderItem: (...args: unknown[]) =>
-			withTypingAvatars(renderItem(...args), userIds, item.channel?.guild_id),
+			withTypingAvatars(avatars, renderItem(...args), userIds, item.channel?.guild_id),
 	});
 }
 
 /**
  * @description Shows the typing users' avatars in the chat's typing indicator.
  * Patches the render of `TypingIndicator`, and reads avatars from `Avatars` and users from `UserStore`.
- * The Addon scope removes the patch when the plugin stops.
  */
-export function startTypingAvatars(): void {
-	if (!ensureModules({ Avatars, TypingIndicator, UserStore })) return;
+export function patchTypingIndicator(): void {
+	const Avatars = metro.findByProps('SummarizedIconRow', 'Avatar', 'AvatarSizes');
+	const TypingIndicator = metro.findByFilePath('modules/chat/native/TypingIndicator.tsx');
 
-	patcher.react.after(TypingIndicator, 'default', ({ result }) => addAvatars(result));
+	if (!Avatars || !TypingIndicator) {
+		logger.warn('Typing avatars skipped: Discord moved Avatars or TypingIndicator.');
+
+		return;
+	}
+
+	patcher.react.after(TypingIndicator, 'default', ({ result }) => addAvatars(result, Avatars));
 }

@@ -1,5 +1,12 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startPronouns } from '~/pronouns';
+import { patchMessageRows, stopLookup } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startPronouns]);
+export function start() {
+	patchMessageRows();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+	stopLookup();
+}

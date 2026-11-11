@@ -1,7 +1,6 @@
 import { settings } from '@unbound-app/settings';
-import { metro } from '@unbound-app/api';
+import { flux, metro } from '@unbound-app/api';
 
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import {
 	MessageRowData,
 	onMessageRow,
@@ -10,10 +9,16 @@ import {
 	type RowMessage,
 } from '@unbound-plugins/shared/metro/message-rows';
 
-import { ChannelStore, MessageStore, UserProfileStore, UserStore } from '~/pronouns/modules';
-import { cleanProfilePronouns, pickPronouns } from '~/pronouns/format';
-import { createLookup } from '~/pronouns/lookup';
-import { addPronouns, type MessageRow as HeaderRow } from '~/pronouns/header';
+import { cleanProfilePronouns, pickPronouns } from '~/lib/format';
+import { createLookup, type PronounLookup } from '~/lib/lookup';
+import { addPronouns, type MessageRow as HeaderRow } from '~/lib/header';
+
+const UserProfileStore = flux.getStore('UserProfile');
+const ChannelStore = flux.getStore('Channel');
+const MessageStore = flux.getStore('Message');
+const UserStore = flux.getStore('User');
+
+let pronounLookup: PronounLookup | undefined;
 
 // Default (0) and reply (19) messages; other types, such as poll results, have no author header.
 function isChatMessage(message: RowMessage) {
@@ -46,14 +51,18 @@ function isShownFor(author: RowAuthor | undefined): author is RowAuthor & { id: 
  * @description Shows each message author's pronouns after the message timestamp, from PronounDB and the author's Discord profile.
  * Patches `generateMessageRowData` on the message row data module, and reads `UserProfileStore`, `ChannelStore` and `UserStore`.
  * `MessageStore.emitChange` redraws rows once a batch of PronounDB lookups lands.
- * The Addon scope removes the patch and timers when the plugin stops.
- * @returns A function that drops the PronounDB lookup, so a request still in flight changes nothing once it returns.
  */
-export function startPronouns(): (() => void) | undefined {
-	if (!ensureModules({ MessageRowData, UserProfileStore, UserStore })) return;
+export function patchMessageRows(): void {
+	if (!MessageRowData) {
+		logger.warn('Pronouns skipped: Discord moved MessageRowData.');
+
+		return;
+	}
 
 	// Without the message store, fetched pronouns show on the next re-render instead of at once.
-	const pronounLookup = createLookup(() => MessageStore.emitChange?.());
+	const lookup = createLookup(() => MessageStore.emitChange?.());
+
+	pronounLookup = lookup;
 
 	onMessageRow({
 		after({ message, row }) {
@@ -62,7 +71,7 @@ export function startPronouns(): (() => void) | undefined {
 			const { id, username } = message.author;
 			const pronouns = pickPronouns(
 				discordPronouns(id, message.channel_id),
-				pronounLookup.get(id),
+				lookup.get(id),
 				settings.priority === 'discord',
 			);
 
@@ -76,6 +85,12 @@ export function startPronouns(): (() => void) | undefined {
 			);
 		},
 	});
+}
 
-	return () => pronounLookup.dispose();
+/**
+ * @description Drops the PronounDB lookup, so a request still in flight changes nothing once it returns.
+ */
+export function stopLookup(): void {
+	pronounLookup?.dispose();
+	pronounLookup = undefined;
 }

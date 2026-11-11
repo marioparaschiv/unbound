@@ -1,7 +1,7 @@
 import { Discord } from '@unbound-app/api/metro/components';
 import { metro } from '@unbound-app/api';
 
-import { STILL_DOT_OPACITY } from '~/constants';
+import { STILL_DOT_OPACITY } from '~/lib/constants';
 
 export default Discord.createStyles(() => ({
 	dot: {

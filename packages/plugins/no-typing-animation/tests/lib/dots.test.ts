@@ -1,7 +1,7 @@
 import { createElement, isValidElement } from 'react';
 import { expect, test } from 'bun:test';
 
-import { isAnimatedDot, stillDots, type DotElement } from '~/still-dots/dots';
+import { isAnimatedDot, stillDots, type DotElement } from '~/lib/dots';
 
 function AnimatedEllipsisDot() {
 	return null;

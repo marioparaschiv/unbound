@@ -1,5 +1,11 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startStillDots } from '~/still-dots';
+import { patchEllipsis } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startStillDots]);
+export function start() {
+	patchEllipsis();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}

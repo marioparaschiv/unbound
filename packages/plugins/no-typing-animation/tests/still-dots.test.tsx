@@ -1,9 +1,7 @@
-import { flux, metro, render, startPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, render, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { createElement } from 'react';
 import { View } from 'react-native';
-
-import { selfTest } from '~/index';
 
 function AnimatedEllipsisDot(_props: { delay: number }) {
 	return <View />;
@@ -55,9 +53,19 @@ describe('the typing dots', () => {
 		expect(view.findAll('EllipsisDot').length).toBe(3);
 	});
 
-	test('are reported as applied to the self test', async () => {
+	test('start without a warning, so the self test passes', async () => {
 		await renderDots(AnimatedEllipsisDot);
 
-		expect(selfTest()).toMatchObject({ ok: true });
+		expect(logs.entries.filter((entry) => entry.level === 'warn')).toEqual([]);
+	});
+
+	test('are skipped with one warning when Discord moved Ellipsis', async () => {
+		metro.markMissing('design/void/Ellipsis/native/Ellipsis.tsx');
+		await startPlugin();
+
+		expect(logs.entries).toContainEqual({
+			level: 'warn',
+			args: ['Still dots skipped: Discord moved Ellipsis.'],
+		});
 	});
 });

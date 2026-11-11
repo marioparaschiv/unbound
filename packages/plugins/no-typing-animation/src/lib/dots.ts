@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 
-import { ANIMATED_DOT_NAME } from '~/constants';
+import { ANIMATED_DOT_NAME } from '~/lib/constants';
 
 export type DotElement = {
 	type: ComponentType<Record<string, unknown>>;
