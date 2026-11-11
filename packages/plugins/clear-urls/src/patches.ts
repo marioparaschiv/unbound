@@ -1,7 +1,7 @@
 import { metro, patcher } from '@unbound-app/api';
 
 import { cleanUrls, compileRules } from '~/lib/rules';
-import { DEFAULT_RULES } from '~/constants';
+import { DEFAULT_RULES } from '~/lib/constants';
 
 type Draft = {
 	content: string;

@@ -1,6 +1,6 @@
 import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
 
-import { ICON_TAG } from '~/constants';
+import { ICON_TAG } from '~/lib/constants';
 
 const CELL_CLASS = 'DCDMessageTableViewCell';
 

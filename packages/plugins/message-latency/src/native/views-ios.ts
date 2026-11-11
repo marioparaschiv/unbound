@@ -16,7 +16,7 @@ import { installLayout, restoreLayout, type Layout } from '~/native/layout-ios';
 import type { TooltipController } from '~/native/tooltip-ios';
 import type { LatencyRecord, LatencyRecords } from '~/lib/records';
 import { findUsernameHeader } from '~/lib/username-header';
-import { CELL_SNAPSHOT } from '~/constants';
+import { CELL_SNAPSHOT } from '~/lib/constants';
 import { subscribeTheme } from '~/lib/theme';
 
 type LatencyView = {

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import { settings } from '@unbound-app/settings';
 
 import { createLatencyRecords } from '~/lib/records';
-import { DISCORD_EPOCH } from '~/constants';
+import { DISCORD_EPOCH } from '~/lib/constants';
 
 function snowflake(timestamp: number): string {
 	return (BigInt(timestamp - DISCORD_EPOCH) << 22n).toString();

@@ -1,4 +1,4 @@
-import { BubbleLayout, BubbleLimits, BubbleStyle, type BubbleLayoutName } from '~/constants';
+import { BubbleLayout, BubbleLimits, BubbleStyle, type BubbleLayoutName } from '~/lib/constants';
 
 export type BubbleColor = {
 	red: number;

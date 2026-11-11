@@ -2,7 +2,7 @@ import {
 	ApplicationCommandInputType,
 	ApplicationCommandOptionType,
 	ApplicationCommandType,
-} from '~/constants';
+} from '~/lib/constants';
 import { messages } from '@unbound-app/i18n';
 
 import type { CommandOption, Tag } from '~/lib/tags';

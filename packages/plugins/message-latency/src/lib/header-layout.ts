@@ -1,6 +1,6 @@
 import type { NativeFabricFrame as Frame } from '@unbound-app/api/native';
 
-import { Icon } from '~/constants';
+import { Icon } from '~/lib/constants';
 
 export type Placed<T> = {
 	view: T;

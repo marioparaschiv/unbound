@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import { anonymiseFilename, fileExtension, toConsistentName } from '~/lib/filenames';
-import { RANDOM_CHARACTERS } from '~/constants';
+import { RANDOM_CHARACTERS } from '~/lib/constants';
 
 const SETTINGS = {
 	anonymiseByDefault: true,

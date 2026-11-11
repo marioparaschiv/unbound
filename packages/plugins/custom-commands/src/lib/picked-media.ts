@@ -1,6 +1,6 @@
 import { messages } from '@unbound-app/i18n';
 
-import { MIME_TYPES } from '~/constants';
+import { MIME_TYPES } from '~/lib/constants';
 
 export type PickedMedia = {
 	duration?: number;

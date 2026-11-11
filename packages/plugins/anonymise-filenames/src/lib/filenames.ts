@@ -1,6 +1,6 @@
 import type { Settings } from '@unbound-app/settings';
 
-import { DEFAULT_FILE_NAME, RANDOM_CHARACTERS, TAR_EXTENSION } from '~/constants';
+import { DEFAULT_FILE_NAME, RANDOM_CHARACTERS, TAR_EXTENSION } from '~/lib/constants';
 
 export type NameSources = {
 	random: () => number;

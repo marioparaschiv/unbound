@@ -32,7 +32,7 @@ import { registerLatencyIconSurface } from '~/components/latency-icon';
 import type { LatencyRecord, LatencyRecords } from '~/lib/records';
 import type { AndroidTooltips } from '~/native/tooltip-android';
 import { subscribeTheme } from '~/lib/theme';
-import { Icon } from '~/constants';
+import { Icon } from '~/lib/constants';
 
 const DRAWABLE = 'android.graphics.drawable.Drawable';
 const NO_DRAWABLE = { type: 'null', class: DRAWABLE } as const;

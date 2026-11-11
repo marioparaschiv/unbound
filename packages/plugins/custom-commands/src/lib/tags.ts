@@ -1,6 +1,6 @@
 import { format, messages } from '@unbound-app/i18n';
 
-import { ARGUMENT_PATTERN, MAX_ATTACHMENTS, MAX_DESCRIPTION_LENGTH } from '~/constants';
+import { ARGUMENT_PATTERN, MAX_ATTACHMENTS, MAX_DESCRIPTION_LENGTH } from '~/lib/constants';
 
 export type TagMedia = {
 	fileName: string;

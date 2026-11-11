@@ -18,7 +18,7 @@ import {
 	type Message,
 } from '~/lib/message-embeds';
 import { activeSession, pendingRows } from '~/lib/session';
-import { SHEET_ROW_KEY } from '~/constants';
+import { SHEET_ROW_KEY } from '~/lib/constants';
 
 const CHANGE_TYPE_UPDATE = 1;
 

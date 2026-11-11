@@ -7,7 +7,7 @@ import {
 	type LatencyMessage,
 } from '~/lib/latency';
 import { UserStore } from '~/lib/modules';
-import { MAX_LATENCY_RECORDS } from '~/constants';
+import { MAX_LATENCY_RECORDS } from '~/lib/constants';
 
 export type LatencyRecord = {
 	details: LatencyDetails;

@@ -1,5 +1,5 @@
 import { embedVideoId, type Branding } from '~/lib/branding';
-import type { ReplaceMode } from '~/types';
+import type { ReplaceMode } from '~/lib/types';
 
 type Media = {
 	url?: unknown;

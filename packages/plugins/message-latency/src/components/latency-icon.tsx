@@ -4,7 +4,7 @@ import { messages } from '@unbound-app/i18n';
 import { useSyncExternalStore } from 'react';
 
 import type { LatencyRecord } from '~/lib/records';
-import { FILL_TOKENS, Icon } from '~/constants';
+import { FILL_TOKENS, Icon } from '~/lib/constants';
 import { resolveColor } from '~/lib/theme';
 
 export type IconSource = {

@@ -1,4 +1,4 @@
-import { Sound } from '~/constants';
+import { Sound } from '~/lib/constants';
 
 type SoundMetadata = { duration?: number };
 type PrepareCallback = (error: unknown, metadata?: SoundMetadata) => void;

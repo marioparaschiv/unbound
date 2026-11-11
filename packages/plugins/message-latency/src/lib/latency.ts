@@ -5,7 +5,7 @@ import {
 	ANDROID_OFFSET_TOLERANCE,
 	DISCORD_EPOCH,
 	SNOWFLAKE_SHIFT,
-} from '~/constants';
+} from '~/lib/constants';
 
 export type LatencyColor = 'danger' | 'muted' | 'positive' | 'warning';
 export type LatencyFill = [LatencyColor, LatencyColor, LatencyColor];

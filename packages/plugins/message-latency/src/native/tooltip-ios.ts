@@ -12,7 +12,7 @@ import { setFrame } from '~/native/frames-ios';
 import { layoutTooltipSurface } from '~/native/tooltip-surface-ios';
 import LatencyTooltip from '~/components/latency-tooltip';
 import { placeTooltip, tooltipTextWidth } from '~/lib/tooltip-layout';
-import { Icon, Tooltip } from '~/constants';
+import { Icon, Tooltip } from '~/lib/constants';
 import { Tooltips } from '~/lib/modules';
 
 export type TooltipAnchor = {

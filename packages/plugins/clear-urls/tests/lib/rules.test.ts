@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { DEFAULT_RULES } from '~/constants';
+import { DEFAULT_RULES } from '~/lib/constants';
 import { cleanUrls, compileRules } from '~/lib/rules';
 
 const rules = compileRules(DEFAULT_RULES);

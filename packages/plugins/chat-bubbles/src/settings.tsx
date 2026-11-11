@@ -3,7 +3,7 @@ import { Discord } from '@unbound-app/api/metro/components';
 import { messages } from '@unbound-app/i18n';
 import { ui } from '@unbound-app/api';
 
-import { BubbleLayout, BubbleLimits, BubbleStyle } from '~/constants';
+import { BubbleLayout, BubbleLimits, BubbleStyle } from '~/lib/constants';
 import { bubbleLayout, parseHexColor } from '~/lib/style';
 import { ThemeStore } from '~/lib/modules';
 

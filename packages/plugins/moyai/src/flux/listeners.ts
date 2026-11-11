@@ -2,7 +2,7 @@ import type { FluxAction } from '@unbound-app/api/flux';
 import { settings } from '@unbound-app/settings';
 import { flux } from '@unbound-app/api';
 
-import { MESSAGE_PLAY_INTERVAL, REACTION_DEDUPE_WINDOW } from '~/constants';
+import { MESSAGE_PLAY_INTERVAL, REACTION_DEDUPE_WINDOW } from '~/lib/constants';
 import { countMoyai, isMoyaiReaction } from '~/lib/matchers';
 import { playMoyai } from '~/lib/player';
 

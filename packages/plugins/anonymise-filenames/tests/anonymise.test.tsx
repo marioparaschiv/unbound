@@ -3,7 +3,7 @@ import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { View } from 'react-native';
 
-import { UPLOAD_PREVIEW_SHEET } from '~/constants';
+import { UPLOAD_PREVIEW_SHEET } from '~/lib/constants';
 
 type Upload = { id: string; filename: string };
 

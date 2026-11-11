@@ -2,7 +2,7 @@ import { patcher } from '@unbound-app/api';
 
 import { patchedMethods, patchMessageActions } from '~/patches';
 import { cleanUrls, compileRules } from '~/lib/rules';
-import { DEFAULT_RULES } from '~/constants';
+import { DEFAULT_RULES } from '~/lib/constants';
 
 const SAMPLE = 'https://example.com/a?utm_source=x&id=7&fbclid=y';
 const CLEANED = 'https://example.com/a?id=7';

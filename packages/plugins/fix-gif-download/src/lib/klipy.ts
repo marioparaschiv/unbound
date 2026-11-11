@@ -1,4 +1,4 @@
-import { KLIPY_API_KEY, NESTED_KEYS, SOURCE_KEYS } from '~/constants';
+import { KLIPY_API_KEY, NESTED_KEYS, SOURCE_KEYS } from '~/lib/constants';
 import { getDiscordProxyTarget } from '~/lib/discord-proxy';
 import { findDeep, isRecord } from '~/lib/media-record';
 

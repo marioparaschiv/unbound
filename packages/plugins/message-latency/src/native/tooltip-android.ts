@@ -24,7 +24,7 @@ import registerAppSurface from '@unbound-plugins/shared/native/app-surface';
 
 import { placeTooltip, tooltipTextWidth } from '~/lib/tooltip-layout';
 import LatencyTooltip from '~/components/latency-tooltip';
-import { Icon, Tooltip } from '~/constants';
+import { Icon, Tooltip } from '~/lib/constants';
 import { Tooltips } from '~/lib/modules';
 
 type Native = {

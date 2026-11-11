@@ -7,7 +7,7 @@ import {
 	CONTENT_COLUMN_WIDTH_RATIO,
 	IOSClass,
 	MEDIA_VIEW_CLASSES,
-} from '~/constants';
+} from '~/lib/constants';
 import type { Box } from '~/lib/geometry';
 
 export type SnapshotNode = Pick<

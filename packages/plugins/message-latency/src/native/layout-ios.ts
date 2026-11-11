@@ -7,7 +7,7 @@ import { safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke'
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
 
 import { headerLayout, type Placed, type Placement } from '~/lib/header-layout';
-import { LAYOUT_RELATION_EQUAL, LayoutAttribute } from '~/constants';
+import { LAYOUT_RELATION_EQUAL, LayoutAttribute } from '~/lib/constants';
 import { getFrame, getSubviews, setFrame } from '~/native/frames-ios';
 
 type SavedView = {

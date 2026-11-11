@@ -2,7 +2,7 @@ import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/nati
 import { safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke';
 
 import { currentTheme, resolveColor } from '~/lib/theme';
-import { FILL_TOKENS, ICON_TAG, Icon } from '~/constants';
+import { FILL_TOKENS, ICON_TAG, Icon } from '~/lib/constants';
 import type { LatencyRecord } from '~/lib/records';
 import type { LatencyFill } from '~/lib/latency';
 import { getSubviews, setFrame } from '~/native/frames-ios';

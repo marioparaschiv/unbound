@@ -1,5 +1,5 @@
 import { getDiscordProxyTarget, isDiscordExternalProxy } from '~/lib/discord-proxy';
-import { NESTED_KEYS, SOURCE_KEYS } from '~/constants';
+import { NESTED_KEYS, SOURCE_KEYS } from '~/lib/constants';
 import { isRecord } from '~/lib/media-record';
 
 function isGifProvider(value: string): boolean {

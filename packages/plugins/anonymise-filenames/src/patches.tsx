@@ -6,7 +6,7 @@ import { holdsRows, insertRowOnce } from '~/lib/sheet-rows';
 import AnonymiseRow from '~/components/anonymise-row';
 import type { Upload } from '~/lib/uploads';
 import { uploadChoices } from '~/lib/choices';
-import { SHEET_ROW_KEY, UPLOAD_PREVIEW_SHEET } from '~/constants';
+import { SHEET_ROW_KEY, UPLOAD_PREVIEW_SHEET } from '~/lib/constants';
 
 type SheetProps = {
 	upload?: Upload;

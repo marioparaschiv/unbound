@@ -1,4 +1,4 @@
-import { BRANDING_URL, THUMBNAIL_URL } from '~/constants';
+import { BRANDING_URL, THUMBNAIL_URL } from '~/lib/constants';
 
 export type Branding = {
 	title?: string;

@@ -9,7 +9,7 @@ import { readNativeMessageInfo } from '@unbound-plugins/shared/native/ios/messag
 
 import { messageLayout, type SnapshotNode } from '~/lib/message-layout';
 import { drawBubble, forgetBubbles, installBubbleGuards } from '~/native/worklets-ios';
-import { BubbleLayout, CARD_INSET, IOSClass } from '~/constants';
+import { BubbleLayout, CARD_INSET, IOSClass } from '~/lib/constants';
 import { bubbleFrame, bubbleProblem, cardFrame, frameDrift } from '~/lib/geometry';
 import { currentAppearance } from '~/lib/theme';
 import { messageOwnership } from '~/lib/author';

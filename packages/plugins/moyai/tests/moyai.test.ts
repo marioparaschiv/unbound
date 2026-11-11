@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, jest, test } from 'bun:test';
 import { flux, logs, native, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 
-import { Sound } from '~/constants';
+import { Sound } from '~/lib/constants';
 
 const played: number[] = [];
 const released: number[] = [];

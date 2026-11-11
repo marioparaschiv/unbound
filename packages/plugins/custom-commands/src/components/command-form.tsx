@@ -2,7 +2,7 @@ import { Discord } from '@unbound-app/api/metro/components';
 import { format, messages } from '@unbound-app/i18n';
 import { useState } from 'react';
 
-import { MAX_ATTACHMENTS, MAX_DESCRIPTION_LENGTH } from '~/constants';
+import { MAX_ATTACHMENTS, MAX_DESCRIPTION_LENGTH } from '~/lib/constants';
 import { parseTagArguments, validateTag } from '~/lib/tags';
 import { saveTag } from '~/lib/saved-commands';
 import MediaRow from '~/components/media-row';

@@ -4,7 +4,7 @@ import {
 	HIDDEN_SELECTORS,
 	SKIP_BUTTONS,
 	YOUTUBE_DOMAINS,
-} from '~/constants';
+} from '~/lib/constants';
 
 export const INJECTED_FLAG = '__unboundYoutubeAdblock';
 

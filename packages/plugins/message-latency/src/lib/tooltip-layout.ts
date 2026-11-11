@@ -1,6 +1,6 @@
 import type { NativeFabricFrame as Frame, NativeFabricSize as Size } from '@unbound-app/api/native';
 
-import { Tooltip } from '~/constants';
+import { Tooltip } from '~/lib/constants';
 
 export type TooltipPlacement = {
 	frame: Frame;

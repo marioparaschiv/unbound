@@ -1,4 +1,4 @@
-import { ACTIVITY_DOMAIN, YOUTUBE_DOMAINS } from '~/constants';
+import { ACTIVITY_DOMAIN, YOUTUBE_DOMAINS } from '~/lib/constants';
 
 export type WebViewProps = Record<string, unknown> & {
 	source?: unknown;

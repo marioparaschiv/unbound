@@ -3,7 +3,7 @@ import { fs } from '@unbound-app/api';
 
 import { fileExtension, localPath, resolvePickedMedia } from '~/lib/picked-media';
 import type { PickedMedia, PickerAsset } from '~/lib/picked-media';
-import { MAX_ATTACHMENTS } from '~/constants';
+import { MAX_ATTACHMENTS } from '~/lib/constants';
 import type { TagMedia } from '~/lib/tags';
 import { ImagePicker } from '~/lib/modules';
 
