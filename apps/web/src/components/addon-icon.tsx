@@ -1,12 +1,9 @@
-import type { AddonType } from '@unbound-app/contracts/addons';
-import type { ComponentType } from 'react';
 import { IconColorPalette, IconGrid, IconPlug } from 'nucleo-micro-bold';
+import type { AddonType } from '@unbound-app/contracts/addons';
 
 import cn from '~/lib/cn';
 
-type FallbackIcon = ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
-
-const FALLBACKS: Record<AddonType, FallbackIcon> = {
+const FALLBACKS: Record<AddonType, typeof IconPlug> = {
 	plugin: IconPlug,
 	theme: IconColorPalette,
 	'icon-pack': IconGrid,
