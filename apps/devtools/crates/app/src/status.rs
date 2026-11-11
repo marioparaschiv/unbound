@@ -1,8 +1,7 @@
 use gpui::{Context, div, prelude::*, px};
-use unbound_devtools_core::BridgeState;
 
 use crate::app::Workspace;
-use crate::widgets::{ghost_button, tooltip};
+use crate::widgets::{footer_bar, ghost_button, tooltip};
 use crate::{assets, theme};
 
 pub fn thousands(n: usize) -> String {
@@ -25,11 +24,6 @@ impl Workspace {
 	pub fn render_status(&self, cx: &mut Context<Self>) -> impl IntoElement {
 		let status = &self.status;
 		let connection = self.connection();
-		let bridge = match status.bridge {
-			BridgeState::Unreachable => Some("Bridge unreachable"),
-			BridgeState::NoDevice => Some("Bridge has no device"),
-			BridgeState::Unknown | BridgeState::DeviceConnected => None,
-		};
 		let counts = (status.elements > 0).then(|| {
 			[
 				plural(status.elements, "component", "components"),
@@ -42,24 +36,15 @@ impl Workspace {
 			} else {
 				format!("MCP  {}", url.trim_start_matches("http://"))
 			};
-			ghost_button("mcp-url", assets::COPY, label)
-				.h(px(22.))
+			ghost_button("mcp-url", assets::COPY, label, true)
+				.h(px(28.))
 				.tooltip(tooltip("Copy the MCP endpoint for an agent"))
 				.on_click(cx.listener(|this, _, _, cx| this.copy_mcp_url(cx)))
 		});
-		div()
-			.flex_none()
-			.h(theme::STATUS_HEIGHT)
-			.flex()
-			.items_center()
-			.gap(px(12.))
-			.pl(px(theme::INSET + 4.))
-			.pr(px(theme::INSET - 4.))
-			.bg(theme::color(theme::PANEL))
-			.border_t_1()
-			.border_color(theme::color(theme::BORDER))
-			.text_size(theme::TEXT_SMALL)
-			.text_color(theme::color(theme::TEXT_MUTED))
+		// The ghost button pads its label by 8px, so the bar pads 8px less to end on the gutter.
+		footer_bar()
+			.pl(px(theme::GUTTER))
+			.pr(px(theme::GUTTER - 8.))
 			.child(
 				div()
 					.min_w_0()
@@ -69,7 +54,6 @@ impl Workspace {
 					})
 					.child(connection.label),
 			)
-			.children(bridge.map(|bridge| div().flex_none().child(bridge)))
 			.child(div().flex_1())
 			.children(
 				counts

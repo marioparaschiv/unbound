@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.1.0](https://github.com/marioparaschiv/unbound/compare/web-v1.0.0...web-v1.1.0) (2026-11-11)
+
+
+### Features
+
+* **icon-packs:** publish first-party icon packs ([#1077](https://github.com/marioparaschiv/unbound/issues/1077)) ([16593ff](https://github.com/marioparaschiv/unbound/commit/16593ff7c42a7f76c47647b10c0df6e4e953a670))
+
+
+### Bug Fixes
+
+* **web:** retry a failed write of a version's extra file ([#1080](https://github.com/marioparaschiv/unbound/issues/1080)) ([c1c87b9](https://github.com/marioparaschiv/unbound/commit/c1c87b9be157601bbbd1fe8e583d6b622a100175))
+* **web:** write a version's extra files 16 at a time ([#1078](https://github.com/marioparaschiv/unbound/issues/1078)) ([b37ac8d](https://github.com/marioparaschiv/unbound/commit/b37ac8daa336f8bd2d52e3ef18674cb283d4c865))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 1.1.0
+    * @unbound-app/utils bumped to 0.10.3
+
 ## [1.0.0](https://github.com/marioparaschiv/unbound/compare/web-v0.14.1...web-v1.0.0) (2026-11-10)
 
 

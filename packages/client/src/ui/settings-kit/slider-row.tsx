@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactElement } from 'react';
 import { View } from 'react-native';
 
-import { Discord } from '~/metro/components';
+import { Discord, isRenderable } from '~/metro/components';
 
 /** Props for `SliderRow`. */
 export type SliderRowProps = {
@@ -28,9 +28,9 @@ export type SliderRowProps = {
 };
 
 /**
- * @description A settings row with Discord's form slider, as its own settings draw one: the label, then the slider
- * with its value label and default mark. The value updates while dragging and is saved when the drag ends; Android's
- * slider and iOS's take differently named props, so it passes both.
+ * @description Discord's `TableSliderRow`, as its own settings draw one: the label and live value over the slider
+ * with its default mark. A sub-label, which that row cannot show, moves it to a `TableRow` holding the same slider.
+ * The value is saved when the drag ends; Android's slider and iOS's take differently named props, so it passes both.
  * @param props The row's label, value, default, range and change handler.
  * @returns The row, or `null` when Discord's slider is unavailable.
  */
@@ -59,10 +59,30 @@ function SliderRow({
 			minimum,
 			Math.min(maximum, Number((Math.round(raw / step) * step).toFixed(decimals))),
 		);
+	const formatValue = (raw: number) => (format ? format(snap(raw)) : `${snap(raw)}${unit}`);
+
+	if (!subLabel && isRenderable(Discord.TableSliderRow)) {
+		return (
+			<Discord.TableSliderRow
+				label={label}
+				value={value}
+				defaultValue={defaultValue}
+				minValue={minimum}
+				maxValue={maximum}
+				minimumValue={minimum}
+				maximumValue={maximum}
+				step={step}
+				formatValue={formatValue}
+				onChangeEnd={(next: number) => onChange(snap(next))}
+				onSlidingComplete={(next: number) => onChange(snap(next))}
+			/>
+		);
+	}
 
 	return (
 		<Discord.TableRow
 			label={label}
+			trailing={<Discord.TableRowTrailingText text={formatValue(dragged)} />}
 			subLabel={
 				<View>
 					{subLabel ? (
@@ -77,7 +97,6 @@ function SliderRow({
 						minimumValue={minimum}
 						maximumValue={maximum}
 						step={step}
-						valueLabel={format ? format(dragged) : `${dragged}${unit}`}
 						defaultValue={defaultValue}
 						accessibilityLabel={label}
 						onChange={(next: number) => setDragged(snap(next))}

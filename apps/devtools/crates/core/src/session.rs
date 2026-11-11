@@ -15,6 +15,7 @@ use serde_json::Value as Json;
 use tokio::sync::{mpsc, oneshot, watch};
 
 use crate::inspect::{InspectedElement, Section};
+use crate::link::{Link, LinkStatus};
 use crate::protocol::{
 	ComponentFilter, InspectedElementPayload, InspectedKind, Outbound, OverrideTarget,
 };
@@ -77,7 +78,10 @@ pub enum BridgeState {
 #[derive(Clone, Debug, Serialize)]
 pub struct Status {
 	pub connection: ConnectionState,
+	/// The last one-off bridge eval's view of the bridge (`eval`, `connect_device`).
 	pub bridge: BridgeState,
+	/// The debugger connection, when one is on.
+	pub link: Option<LinkStatus>,
 	pub elements: usize,
 	pub roots: usize,
 	pub selected: Option<ElementId>,
@@ -121,6 +125,7 @@ pub(crate) struct State {
 	pub(crate) mcp_url: Option<String>,
 	pub(crate) backend: Option<Backend>,
 	pub(crate) globals: u32,
+	pub(crate) link: Option<Link>,
 }
 
 pub(crate) struct Inner {
@@ -228,6 +233,7 @@ impl Devtools {
 				mcp_url: None,
 				backend: None,
 				globals: 0,
+				link: None,
 			}),
 			changes: watch::channel(0).0,
 			pending: Mutex::new(HashMap::new()),
@@ -263,6 +269,7 @@ impl Devtools {
 		Status {
 			connection: state.connection.clone(),
 			bridge: state.bridge.clone(),
+			link: state.link.as_ref().map(|link| link.status.clone()),
 			elements: store.len(),
 			roots: store.roots().len(),
 			selected: state.selected,

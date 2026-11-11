@@ -65,7 +65,9 @@ All keys are in the `unbound` bucket.
 			- Ending in `.bundle` or `.js`: names the file; its folder is the source.
 			- Otherwise: the source folder.
 
-			Fetches `manifest.json` and `manifest.json.sig`, then `unbound.<bytecode version>.bundle` if the manifest lists the app's Hermes bytecode version, or `unbound.js` otherwise; the download must match the signed SHA-512. A new bundle stays a candidate until Discord has run with it for 15 seconds, gone to the background, or reloaded. A manifest byte-for-byte equal to the active bundle's skips the signature and bundle requests.
+			Fetches `manifest.json` and `manifest.json.sig`, then `unbound.<bytecode version>.bundle` if the manifest lists the app's Hermes bytecode version, or `unbound.js` otherwise; the download must match the signed SHA-512. A new bundle stays a candidate until Discord's first screen has been up for 3 seconds, Discord has run with it for 15 seconds, gone to the background, or reloaded. A manifest byte-for-byte equal to the active bundle's skips the signature and bundle requests.
+
+			The loader checks at launch, and again when Discord returns to the foreground at least 4 hours after the last check. A check that fails on the network retries after about 30 seconds, 2 minutes and 10 minutes, or when the server's `Retry-After` says.
 
 			Also sets the hot reload origin (scheme and host). See [Bundle Updates](/docs/developer/loader/android#bundle-updates) for every check.
 		</ParamField>
@@ -76,6 +78,10 @@ All keys are in the `unbound` bucket.
 
 		<ParamField path="loader.update.hmr" type="boolean" default="false">
 			Opens a hot reload connection to the origin of `loader.update.url`, and reloads Discord once a newer bundle downloads. No connection if the URL is empty or lacks a scheme and host.
+		</ParamField>
+
+		<ParamField path="loader.update.waitForWifi" type="boolean" default="true">
+			On a metered network (mobile data, a hotspot, Low Data Mode or Data Saver), puts off a background update until Discord returns to the foreground on Wi-Fi. A launch with no saved bundle, or one that needs a new bundle to start, still downloads.
 		</ParamField>
 
 		<ParamField path="loader.update.unsigned" type="boolean" default="false">
@@ -95,7 +101,7 @@ All keys are in the `unbound` bucket.
 <ParamField path="recovery" type="boolean" default="false">
 	Recovery Mode. When on, the loader skips the native theme, and the client starts addons as empty no-ops; addon cards show but can't be used. The toolbox toggles it and reloads. See [Troubleshooting](/docs/user/troubleshooting).
 
-	The loader turns it on by itself after Discord closes during startup three launches in a row; a launch counts once Discord has run for 15 seconds or gone to the background. After two such launches, it first goes back to the bundle its last update replaced.
+	The loader turns it on by itself after Discord closes during startup three launches in a row; a launch counts once Discord's first screen has been up for 3 seconds, Discord has run for 15 seconds, or gone to the background. On Android 11 and later, a launch that ended without a crash (swiped away, force-stopped or closed by the system) does not count and ends the streak. After two such launches, it first goes back to the bundle its last update replaced.
 </ParamField>
 
 <ParamField path="font-states" type="object" default="{}">

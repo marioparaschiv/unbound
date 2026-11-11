@@ -73,11 +73,11 @@ function GuideSidebar({ tab, slug }: GuideSidebarProps) {
 	const [openFolders, setOpenFolders] = useState<string[]>(() =>
 		activeFolder ? [activeFolder] : [],
 	);
-	const [shownFolder, setShownFolder] = useState(activeFolder);
+	const [shownSlug, setShownSlug] = useState(slug);
 
-	// Navigating into a closed folder opens it; folders the reader opened stay open.
-	if (activeFolder !== shownFolder) {
-		setShownFolder(activeFolder);
+	// Every navigation reopens the open page's folder, even one the reader collapsed; other folders keep their state.
+	if (slug !== shownSlug) {
+		setShownSlug(slug);
 
 		if (activeFolder && !openFolders.includes(activeFolder)) {
 			setOpenFolders([...openFolders, activeFolder]);

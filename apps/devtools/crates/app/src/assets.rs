@@ -1,10 +1,12 @@
 //! Images, icons and fonts compiled into the binary, so it runs from any directory. The icons are
 //! Lucide (ISC, `assets/icons/LICENSE`) with the stroke raised to 2.25 so they stay crisp at 10 to
-//! 14 px. The fonts are Inter and JetBrains Mono (SIL OFL 1.1, `assets/fonts/*-OFL.txt`).
+//! 14 px; any other `icons/<name>.svg` comes from gpui-kit-assets' full Lucide set. The fonts are
+//! Geist, the website's font, and JetBrains Mono (SIL OFL 1.1, `assets/fonts/*-OFL.txt`).
 
 use std::borrow::Cow;
 
 use gpui::{App, AssetSource, SharedString};
+use gpui_kit_assets::AllAssets;
 
 pub const LOGO: &str = "logo.png";
 pub const CHEVRON_RIGHT: &str = "icons/chevron-right.svg";
@@ -39,16 +41,16 @@ const FILES: &[(&str, &[u8])] = &[
 	(PLUG, include_bytes!("../assets/icons/plug.svg")),
 	(LAYERS, include_bytes!("../assets/icons/layers.svg")),
 	(
-		"fonts/Inter-Regular.ttf",
-		include_bytes!("../assets/fonts/Inter-Regular.ttf"),
+		"fonts/Geist-Regular.ttf",
+		include_bytes!("../assets/fonts/Geist-Regular.ttf"),
 	),
 	(
-		"fonts/Inter-Medium.ttf",
-		include_bytes!("../assets/fonts/Inter-Medium.ttf"),
+		"fonts/Geist-Medium.ttf",
+		include_bytes!("../assets/fonts/Geist-Medium.ttf"),
 	),
 	(
-		"fonts/Inter-SemiBold.ttf",
-		include_bytes!("../assets/fonts/Inter-SemiBold.ttf"),
+		"fonts/Geist-SemiBold.ttf",
+		include_bytes!("../assets/fonts/Geist-SemiBold.ttf"),
 	),
 	(
 		"fonts/JetBrainsMono-Regular.ttf",
@@ -64,18 +66,22 @@ pub struct Assets;
 
 impl AssetSource for Assets {
 	fn load(&self, path: &str) -> gpui::Result<Option<Cow<'static, [u8]>>> {
-		Ok(FILES
-			.iter()
-			.find(|(name, _)| *name == path)
-			.map(|(_, bytes)| Cow::Borrowed(*bytes)))
+		match FILES.iter().find(|(name, _)| *name == path) {
+			Some((_, bytes)) => Ok(Some(Cow::Borrowed(*bytes))),
+			None => AllAssets.load(path),
+		}
 	}
 
 	fn list(&self, path: &str) -> gpui::Result<Vec<SharedString>> {
-		Ok(FILES
+		let mut names: Vec<SharedString> = FILES
 			.iter()
 			.filter(|(name, _)| name.starts_with(path))
 			.map(|(name, _)| SharedString::from(*name))
-			.collect())
+			.collect();
+		if !path.starts_with(FONTS) {
+			names.extend(AllAssets.list(path)?);
+		}
+		Ok(names)
 	}
 }
 

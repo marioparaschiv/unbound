@@ -1,6 +1,6 @@
 # Unbound DevTools
 
-A native React DevTools for Discord running Unbound, built in Rust with [gpui-fast](https://github.com/longbridge/gpui-fast). It shows the component tree, inspects and edits props, state and hooks, and serves an MCP endpoint so an agent can work on the same session you see.
+A native React DevTools for Discord running Unbound, built in Rust with [gpui-fast](https://github.com/longbridge/gpui-fast) and [gpui-component](https://github.com/longbridge/gpui-component). It shows the component tree, inspects and edits props, state and hooks, and serves an MCP endpoint so an agent can work on the same session you see. Its sidebar also gives the `ubd` commands that inspect a running app a page each, with a form for its options and a live transcript of its output.
 
 It runs on macOS, Windows and Linux.
 
@@ -31,15 +31,23 @@ blaze run -p unbound-devtools --release              # or: cargo run -p unbound-
 blaze run -p unbound-devtools -- --bridge 127.0.0.1:9091
 ```
 
-| Flag                               | Default                                   | Meaning                                     |
-| ---------------------------------- | ----------------------------------------- | ------------------------------------------- |
-| `--port` (`UNBOUND_DEVTOOLS_PORT`) | `8097`                                    | Port the device's backend dials             |
-| `--bind`                           | `0.0.0.0`                                 | Address to listen on                        |
-| `--bridge`                         | `127.0.0.1:<UNBOUND_BRIDGE_PORT or 9090>` | Debugger bridge used by **Connect device**  |
-| `--advertise-host`                 | from `debugger.address`                   | Host the device dials back                  |
-| `--mcp-port` / `--no-mcp`          | `8098`                                    | MCP endpoint at `http://127.0.0.1:8098/mcp` |
+Flags override the settings for one run.
 
-The **Connect device** menu saves devices as presets: a name, a bridge `host:port`, and an optional dial-back host. Presets are stored in `devices.json` in the platform config directory (`UNBOUND_DEVTOOLS_CONFIG_DIR` overrides it).
+| Flag                               | Default (setting)                              | Meaning                                     |
+| ---------------------------------- | ---------------------------------------------- | ------------------------------------------- |
+| `--port` (`UNBOUND_DEVTOOLS_PORT`) | DevTools port, `8097`                          | Port the device's backend dials             |
+| `--bind`                           | `0.0.0.0`                                      | Address to listen on                        |
+| `--bridge`                         | `127.0.0.1:<bridge port, UNBOUND_BRIDGE_PORT>` | Debugger bridge used by **Connect device**  |
+| `--advertise-host`                 | Dial-back host, else `debugger.address`        | Host the device dials back                  |
+| `--mcp-port` / `--no-mcp`          | MCP port `8098`, Serve MCP                     | MCP endpoint at `http://127.0.0.1:8098/mcp` |
+
+**Settings** (the sidebar footer, or Ctrl+, / Cmd+,) holds the theme, how to run `ubd`, the project folder commands run in, the bridge port and dial-back host, and the DevTools and MCP ports. They are stored in `settings.json`, and the **Connect device** menu's presets (a name, a bridge `host:port`, an optional dial-back host) in `devices.json`, both in the platform config directory (`UNBOUND_DEVTOOLS_CONFIG_DIR` overrides it).
+
+## Commands
+
+The sidebar lists the `ubd` commands that show something about the running app: Inspect (Components, the native view tree, text spans, the current route), Runtime (evaluate, Metro modules, native classes), Record (trace calls, hook a method, profile, latency) and Device (status, logs). Commands that scaffold, build, install or publish an addon, or manage the bridge and device state, stay in the CLI. The app reads each command's arguments and options from `ubd catalog`, a hidden command that prints them as JSON, so a newer CLI's flags show without an app update; a new command needs a line in `crates/app/src/commands/nav.rs`. It runs `ubd` as **Run ubd with** says (`ubd` by default, or for example `bunx @unbound-app/cli`). A bare `ubd` runs the copy each release ships beside the app, compiled with `bun scripts/compile-cli.ts`, so the sidebar needs no Bun or global CLI; if that fails, the sidebar says so and the page offers to open Settings.
+
+A page runs its command in the project folder and streams stdout and stderr into the transcript. Ctrl+Enter (Cmd+Enter) runs it, Ctrl+C or **Stop** ends it and its child processes, and **Copy command** copies the equivalent shell command.
 
 ## Search
 
@@ -83,4 +91,4 @@ DEPTH=600 WIDTH=2000 bun device.mjs 8097           # a Discord-scale tree
 
 On Linux, building needs `pkg-config`, `libfontconfig-dev`, `libxkbcommon-x11-dev`, `libxcb1-dev` and `libwayland-dev`.
 
-Inter and JetBrains Mono are bundled under the SIL OFL, and the icons are Lucide (ISC). Their licenses are next to the files in `crates/app/assets/`.
+Geist and JetBrains Mono are bundled under the SIL OFL, and the icons are Lucide (ISC). Their licenses are next to the files in `crates/app/assets/`.

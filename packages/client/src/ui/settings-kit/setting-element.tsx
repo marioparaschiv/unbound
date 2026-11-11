@@ -7,7 +7,6 @@ import MultilineRow from '~/ui/settings-kit/multiline-row';
 import SegmentedRow from '~/ui/settings-kit/segmented-row';
 import CheckboxRow from '~/ui/settings-kit/checkbox-row';
 import DurationRow from '~/ui/settings-kit/duration-row';
-import PaletteRow from '~/ui/settings-kit/palette-row';
 import StepperRow from '~/ui/settings-kit/stepper-row';
 import EntityRow from '~/ui/settings-kit/entity-row';
 import NumberRow from '~/ui/settings-kit/number-row';
@@ -178,15 +177,7 @@ export function settingElement({
 						/>
 					);
 				case 'color':
-					return field.palette && field.presets ? (
-						<PaletteRow
-							key={path}
-							{...shared}
-							value={text}
-							presets={field.presets}
-							onChange={onChange}
-						/>
-					) : (
+					return (
 						<ColorRow
 							key={path}
 							label={label}

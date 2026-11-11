@@ -1,9 +1,9 @@
 import type { InstalledEntry, PendingUpdate } from '~/updates/addon-updates';
+import CollapsibleGroup from '~/ui/components/collapsible-group';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { icons } from '~/assets/api';
 
-import CollapsibleGroup from './collapsible-group';
 import UpdateRow from './update-row';
 
 type AddonGroupProps = {

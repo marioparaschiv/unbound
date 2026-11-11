@@ -25,8 +25,6 @@ export type BuilderOptions = {
 	maxLength?: number;
 	placeholder?: string;
 	alpha?: boolean;
-	presets?: string[];
-	palette?: boolean;
 	maxSize?: number;
 	options?: Record<string, OptionLabel>;
 	of?: TSchema;
@@ -121,8 +119,6 @@ function string(options: BuilderOptions = {}): TSchema {
 				maxLength: options.maxLength,
 				placeholder: options.placeholder,
 				alpha: options.alpha,
-				presets: options.presets,
-				palette: options.palette,
 				maxSize: options.maxSize,
 			},
 		),

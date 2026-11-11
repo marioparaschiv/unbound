@@ -10,6 +10,8 @@ namespace loader {
 struct DownloadResult {
     int         status = 0;
     std::string etag;
+    // The response's Retry-After header, if any.
+    std::string retryAfter;
 };
 
 struct DownloadPolicy {

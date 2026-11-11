@@ -26,11 +26,19 @@ static int recordedFailures(const std::optional<std::string> &contents)
                : 0;
 }
 
-LaunchVerdict LaunchGuard::begin() const
+LaunchVerdict LaunchGuard::begin(PreviousExit previous) const
 {
     // A marker left behind means the previous launch never reached succeed().
     LaunchVerdict verdict;
-    verdict.failures      = recordedFailures(readTextFile(path())) + 1;
+    int           recorded = recordedFailures(readTextFile(path()));
+    if (recorded >= 0 && previous == PreviousExit::Ended)
+    {
+        // Swiping Discord away during startup is not a crash, and it ends the streak.
+        log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
+            "Discord's previous launch was closed before it was healthy, without crashing.");
+        recorded = -1;
+    }
+    verdict.failures      = recorded + 1;
     verdict.rollBack      = verdict.failures == kRollBackAfter;
     verdict.enterRecovery = verdict.failures == kRecoveryAfter;
 

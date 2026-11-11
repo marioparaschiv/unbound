@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 
-import { HelpMessage, HelpMessageTypes } from '~/metro/components';
+import { Discord, HelpMessage, HelpMessageTypes, isRenderable } from '~/metro/components';
 
 /** Props for `NoticeRow`. */
 export type NoticeRowProps = {
@@ -12,12 +12,23 @@ export type NoticeRowProps = {
 	tone: 'info' | 'warning' | 'danger';
 };
 
+const NOTICE_TYPES = { info: 'info', warning: 'warning', danger: 'critical' } as const;
+
 /**
- * @description A message in a settings panel, drawn with Discord's `HelpMessage` in the style of its tone; it takes no input.
+ * @description A message in a settings panel, drawn with Discord's `InlineNotice` in the style of its tone, or its
+ * `HelpMessage` on builds without one; it takes no input.
  * @param props The title, subtitle and tone.
  * @returns The message.
  */
 function NoticeRow({ title, subtitle, tone }: NoticeRowProps): ReactElement {
+	if (isRenderable(Discord.InlineNotice)) {
+		return subtitle === undefined ? (
+			<Discord.InlineNotice type={NOTICE_TYPES[tone]} message={title} />
+		) : (
+			<Discord.InlineNotice type={NOTICE_TYPES[tone]} title={title} message={subtitle} />
+		);
+	}
+
 	const messageType = {
 		info: HelpMessageTypes.INFO,
 		warning: HelpMessageTypes.WARNING,

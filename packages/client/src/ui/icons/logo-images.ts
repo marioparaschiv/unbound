@@ -1,0 +1,10 @@
+// Generated from logo-markup.ts (untextured), split into body and fringes, at 72 x 72 (24 points @3x).
+// Regenerate whenever logo-markup.ts changes.
+
+/** The logo's body in white, for a tint to colour. */
+export const LOGO_BODY_PNG =
+	'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAQAAAD/5HvMAAACTUlEQVRo3u2YvY4TMRSFP6PtCR3SFoQKUTHSijqDKCh4gC0JTwA8wf68AOINsm+wFBQUsEmNkEIFacgECbEV7NYUpvCdZD2RM3Z+lox0T3Mnd3zGjn3GPnNBoVAoFB5MfROb8RqAMx4BcGJ662bMsBPRpkUOwETiYFWGbfEAwAyWG9D6kXEWWp8bDdCQ7XJHJroDwAceAzDinpefgLScxDKclmzuZsiYqDHavnU4lPhSYq+S709bRjPqe9+6JWuEhva5DcBn9gD4xEMAfrLr5c9BWp5HM0bcrL7w9gDAHP0XDZUtvf68zNYt2c4WjOEooCGbufWlw10A3vMEgHc8BeAr9738GKTlOJVhnqfsP9esId2Hlhf1sBILsQ2/JH6XWOaHc8x4RtSAMjkCkdiXeCqxqORnLZMZVjLzx6tqaFs1NFwwIOvs5Beg3B/8ODK5/D6W9LPZ5rUaw3Zxd16Z4WyG8ume3ZGrjvi8XCx7FRtkqKgjDJozSAss+4kpAqdf12eETVZSH7VHZR57HC84uKP7UA3FaOhFjWU/NZPAQuz7DPMmuGQpfaiGmne49qYGfCxXLn6TO3+t2yv+cMvbQy756DNsW+4UtCuMuj5+p6zvBky+amg1Da3Pbi3PuLg6oJUt+xoY6oearSEbZ9ltJnX5ekYZf5Rmv/azwJuhWAPemtbl6xhv5yr4avI3WoUNVfIHpp/2cNuWz8C52v+CmmtCFfYw9d/aXCto16OhTF7C0maVNdYi9MEYXLIWmfeki/IFT1WjQqFQKBTNwT8SUIj08Awl+gAAAABJRU5ErkJggg==';
+
+/** The logo's red and cyan fringes, drawn untinted under the body. */
+export const LOGO_FRINGES_PNG =
+	'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAAAY1BMVEUAAAD/MGX/LmMj5///MGT/LmQi5f//MHAk5///MGX/MGgo5/8k5/8h5v//L2T/MWsw7/8l6v//LmQi5///LmQi5f//L2Mi5v//MGUj6P8p7/8i6P//L2Mi5/8n6f8h5v//LmPbfCttAAAAH3RSTlMAMJBgQMCAED9gICBAwFcfEDB/f4Cfv5BvVx9vn34u7plmTQAAARlJREFUWMPtl4kSgiAQhr1Nxcqj+/L9nzIhM64tQUum4Z/xXPlcF1gXx7GyMlmu1534/kADoCDsTqLovSF2291iAhC5vn0RlKQqkcx8EBQGKiCUgybzQMuVCmhdPPu+bLdK3yMiEumGD/nsoBqPrH4axarjiGgzssdYjwwHea4WKJ/KI9Er80CaMWLjtOVNu0LP0AjvQI+jqsE8UMnf9jPJH4FOXUAL8MXMuKB7WfXTZgPt+duHo+SPcKIeAFr8cYzOg8YRXZnUfIvLVcrXyADITFA4HgTkIxsjIUayVN4X+YJw1a+Q/APQTVxjK8y1eUHSyh8hOSdN6Kvqc53Nr0OE9QhQH5kJwpXta/GTyUExU7Ygu962svq97nMVEXwgaborAAAAAElFTkSuQmCC';

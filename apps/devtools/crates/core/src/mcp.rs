@@ -166,10 +166,12 @@ impl DevtoolsServer {
 	}
 
 	#[tool(
-		description = "Ask the device, over the Unbound debugger bridge, to dial this app. \
-		No arguments: the bridge this app was started with. `preset`: a saved device from \
-		list_presets (it becomes the GUI's default). `bridge` (+ optional `advertise_host`): any \
-		other bridge, once. Needs the bridge running and Discord started with loader.devtools on."
+		description = "Ask the device, over the Unbound debugger bridge, to dial this app, and \
+		make that bridge the one debugger connection (it reconnects on its own; see `link` in \
+		status). No arguments: the bridge this app was started with. `preset`: a saved device from \
+		list_presets (restored at the GUI's next launch). `bridge` (+ optional `advertise_host`): \
+		any other bridge, for this session. Needs the bridge running and Discord started with \
+		loader.devtools on."
 	)]
 	async fn connect_device(
 		&self,
@@ -187,7 +189,9 @@ impl DevtoolsServer {
 					advertise_host: parse_host(host.as_deref().unwrap_or_default())
 						.map_err(|error| error.to_string())?,
 				};
-				self.devtools.connect_device_to(target).await
+				let url = self.devtools.connect_device_to(target.clone()).await;
+				self.devtools.link_to(target, None);
+				url
 			}
 			(None, None, None) => self.devtools.connect_device().await,
 		};
@@ -207,6 +211,7 @@ impl DevtoolsServer {
 		let json = serde_json::json!({
 			"devices": presets.devices,
 			"last_used": presets.last_used,
+			"auto_connect": presets.auto_connect,
 			"default_bridge": self.devtools.default_target().bridge,
 		});
 

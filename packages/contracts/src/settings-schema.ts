@@ -82,7 +82,7 @@ const SPEC: Record<string, Spec> = {
 			'emoji',
 			...ENTITIES,
 		],
-		keys: ['minLength', 'maxLength', 'placeholder', 'alpha', 'presets', 'palette', 'maxSize'],
+		keys: ['minLength', 'maxLength', 'placeholder', 'alpha', 'maxSize'],
 	},
 	choice: { displays: ['radio', 'picker', 'segmented'], keys: ['options'] },
 	array: {
@@ -98,8 +98,6 @@ const DISPLAY_KEYS: Record<string, string[]> = {
 	maxLength: ['input', 'multiline'],
 	placeholder: ['input', 'multiline', 'secret', 'url'],
 	alpha: ['color'],
-	presets: ['color'],
-	palette: ['color'],
 	maxSize: ['image'],
 	units: ['duration'],
 };
@@ -370,10 +368,6 @@ function readDisplay(node: JsonObject, path: string, reader: Reader) {
 			'shows as a slider without both `min` and `max`',
 			"set both, or use displayAs: 'input'",
 		);
-	}
-
-	if (node.palette === true && !Array.isArray(node.presets)) {
-		issue(reader, path, 'sets `palette` without `presets`', 'add `presets`');
 	}
 
 	if (node.kind === 'choice') {

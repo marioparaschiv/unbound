@@ -84,6 +84,16 @@ public:
         host_->crashAlert(message);
     }
 
+    PreviousExit previousExit() override
+    {
+        return host_->previousExit();
+    }
+
+    bool onMeteredNetwork() override
+    {
+        return host_->onMeteredNetwork();
+    }
+
     void showUpdateProgress(bool showing) override
     {
         host_->showUpdateProgress(showing);
@@ -198,6 +208,14 @@ void Loader::markHealthy()
     if (pipeline_)
     {
         pipeline_->markHealthy();
+    }
+}
+
+void Loader::onForeground()
+{
+    if (pipeline_)
+    {
+        pipeline_->onForeground();
     }
 }
 

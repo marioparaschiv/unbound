@@ -13,6 +13,7 @@ static constexpr const char *kUpdateURL        = "loader.update.url";
 static constexpr const char *kForceUpdate      = "loader.update.force";
 static constexpr const char *kUnsignedBundles  = "loader.update.unsigned";
 static constexpr const char *kAutoClientUpdate = "updater.auto.client";
+static constexpr const char *kWaitForWifi      = "loader.update.waitForWifi";
 static constexpr const char *kBundleEtag       = "loader.update.etag";
 static constexpr const char *kBundleBaseline   = "loader.update.baseline";
 static constexpr const char *kCheckedByLoader  = "loader.update.checkedBy";
@@ -110,6 +111,11 @@ bool unsignedBundlesAllowed(const SettingsStore &settings)
 bool autoClientUpdates(const SettingsStore &settings)
 {
     return settings.getBoolean(kStore, kAutoClientUpdate, true);
+}
+
+bool updatesWaitForWifi(const SettingsStore &settings)
+{
+    return settings.getBoolean(kStore, kWaitForWifi, true);
 }
 
 std::string bundleEtag(const SettingsStore &settings)

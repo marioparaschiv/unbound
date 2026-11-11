@@ -1,12 +1,21 @@
 mod app;
+mod appearance;
 mod assets;
+mod commands;
 mod device_menu;
 mod devices;
 mod empty;
-mod input;
 mod inspection;
 mod inspector;
+mod link;
+mod nav_list;
+mod press;
+mod scaled;
 mod search;
+mod settings;
+mod settings_dialog;
+mod shell;
+mod smooth_scroll;
 mod status;
 mod theme;
 mod toolbar;
@@ -20,30 +29,32 @@ use clap::{Parser, Subcommand};
 use gpui::{
 	App, AppContext, Bounds, QuitMode, TitlebarOptions, WindowBounds, WindowOptions, px, size,
 };
-use unbound_devtools_core::{
-	Config, DEFAULT_BRIDGE_PORT, DEFAULT_DEVTOOLS_PORT, DEFAULT_MCP_PORT, Devtools, mcp,
-};
+use gpui_component::Root;
+use unbound_devtools_core::{Config, Devtools, mcp};
 
+use crate::settings::Settings;
+
+/// Flags override the settings for this run only.
 #[derive(Parser)]
 #[command(name = "unbound-devtools", version, about)]
 struct Cli {
-	/// Port the device's DevTools backend dials.
-	#[arg(long, global = true, env = "UNBOUND_DEVTOOLS_PORT", default_value_t = DEFAULT_DEVTOOLS_PORT)]
-	port: u16,
+	/// Port the device's DevTools backend dials. Defaults to the DevTools port setting.
+	#[arg(long, global = true, env = "UNBOUND_DEVTOOLS_PORT")]
+	port: Option<u16>,
 	/// Address to listen on for the device.
 	#[arg(long, global = true, default_value_t = IpAddr::V4(Ipv4Addr::UNSPECIFIED))]
 	bind: IpAddr,
-	/// The Unbound debugger bridge, for "Connect device". Defaults to 127.0.0.1:<bridge-port>.
+	/// The Unbound debugger bridge, for "Connect device". Defaults to 127.0.0.1:<bridge port setting>.
 	#[arg(long, global = true)]
 	bridge: Option<SocketAddr>,
-	#[arg(long, global = true, env = "UNBOUND_BRIDGE_PORT", default_value_t = DEFAULT_BRIDGE_PORT, hide = true)]
-	bridge_port: u16,
+	#[arg(long, global = true, env = "UNBOUND_BRIDGE_PORT", hide = true)]
+	bridge_port: Option<u16>,
 	/// Host the device should dial; defaults to the host in the device's debugger settings.
 	#[arg(long, global = true)]
 	advertise_host: Option<String>,
 	/// Port for the MCP endpoint at http://127.0.0.1:<port>/mcp.
-	#[arg(long, default_value_t = DEFAULT_MCP_PORT)]
-	mcp_port: u16,
+	#[arg(long)]
+	mcp_port: Option<u16>,
 	/// Don't serve MCP over HTTP.
 	#[arg(long)]
 	no_mcp: bool,
@@ -58,13 +69,23 @@ enum Command {
 }
 
 impl Cli {
-	fn config(&self) -> Config {
-		let bridge = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), self.bridge_port);
+	fn config(&self, settings: &Settings) -> Config {
+		let bridge_port = self.bridge_port.unwrap_or(settings.bridge_port);
+		let bridge = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), bridge_port);
+		let advertise_host = self.advertise_host.clone().or_else(|| {
+			let host = settings.advertise_host.trim();
+			(!host.is_empty()).then(|| host.to_owned())
+		});
 		Config {
-			listen: SocketAddr::new(self.bind, self.port),
+			listen: SocketAddr::new(self.bind, self.port.unwrap_or(settings.devtools_port)),
 			bridge: self.bridge.unwrap_or(bridge),
-			advertise_host: self.advertise_host.clone(),
+			advertise_host,
 		}
+	}
+
+	fn mcp_port(&self, settings: &Settings) -> Option<u16> {
+		let enabled = settings.mcp_enabled && !self.no_mcp;
+		enabled.then(|| self.mcp_port.unwrap_or(settings.mcp_port))
 	}
 }
 
@@ -77,7 +98,8 @@ fn main() -> anyhow::Result<()> {
 				.unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
 		)
 		.init();
-	let config = cli.config();
+	let settings = settings::load();
+	let config = cli.config(&settings);
 	match cli.command {
 		Some(Command::Mcp) => {
 			let devtools = Devtools::start(config);
@@ -86,7 +108,8 @@ fn main() -> anyhow::Result<()> {
 				.block_on(mcp::serve_stdio(devtools.clone()))
 		}
 		None => {
-			run_gui(config, (!cli.no_mcp).then_some(cli.mcp_port));
+			let mcp_port = cli.mcp_port(&settings);
+			run_gui(settings, config, mcp_port);
 			Ok(())
 		}
 	}
@@ -104,8 +127,9 @@ fn serve_mcp(devtools: &Devtools, port: u16) {
 	});
 }
 
-fn run_gui(config: Config, mcp_port: Option<u16>) {
+fn run_gui(settings: Settings, config: Config, mcp_port: Option<u16>) {
 	let devtools = Devtools::start(config.clone());
+	devtools.resume_link();
 	if let Some(port) = mcp_port {
 		serve_mcp(&devtools, port);
 	}
@@ -116,20 +140,31 @@ fn run_gui(config: Config, mcp_port: Option<u16>) {
 			if let Err(error) = assets::load_fonts(cx) {
 				tracing::error!("Could not load the bundled fonts: {error:#}");
 			}
+			settings::init(settings, cx);
+			appearance::init(cx);
+			appearance::apply(None, cx);
 			app::bind_keys(cx);
-			let bounds = Bounds::centered(None, size(px(1280.), px(800.)), cx);
+			commands::bind_keys(cx);
+			shell::bind_keys(cx);
+			let bounds = Bounds::centered(None, size(px(1360.), px(860.)), cx);
 			let options = WindowOptions {
 				window_bounds: Some(WindowBounds::Windowed(bounds)),
 				titlebar: Some(TitlebarOptions {
 					title: Some("Unbound DevTools".into()),
 					..TitlebarOptions::default()
 				}),
-				window_min_size: Some(size(px(900.), px(560.))),
+				window_min_size: Some(size(px(1040.), px(620.))),
 				app_id: Some("unbound-devtools".into()),
 				..WindowOptions::default()
 			};
 			let opened = cx.open_window(options, |window, cx| {
-				cx.new(|cx| app::Workspace::new(devtools, config, window, cx))
+				appearance::apply(Some(window), cx);
+				let link = cx.new(|cx| link::DebuggerLink::new(devtools.clone(), cx));
+				let workspace = cx.new(|cx| {
+					app::Workspace::new(devtools.clone(), config, link.clone(), window, cx)
+				});
+				let shell = cx.new(|cx| shell::Shell::new(devtools, workspace, link, window, cx));
+				cx.new(|cx| Root::new(shell, window, cx))
 			});
 			if let Err(error) = opened {
 				tracing::error!("Could not open the window: {error:#}");

@@ -48,10 +48,6 @@ function rowName(node: SchemaNode): string {
 	const display = String(node.displayAs);
 	const entity = ['user', 'channel', 'guild', 'role'].includes(display);
 
-	if (display === 'color' && node.palette === true) {
-		return 'PaletteRow';
-	}
-
 	return (
 		ROWS[kind] ??
 		ROWS[`${kind}:${display}`] ??

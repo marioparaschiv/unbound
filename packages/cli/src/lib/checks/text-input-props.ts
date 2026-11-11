@@ -1,10 +1,10 @@
 import { readdirSync, type Dirent } from 'node:fs';
 import { join, relative, sep } from 'node:path';
-import { Visitor } from 'rolldown/utils';
 
 import { parseFile, type ParsedFile } from '~/lib/check/parse-cache';
 import type { Diagnostic } from '~/lib/check/diagnostic';
 import { diagnostic } from '~/lib/check/diagnostic';
+import { Visitor } from '~/rollup/rolldown-utils';
 import type { Check } from '~/lib/check/check';
 
 /** The props `Discord.TextInput` ignores, each with the one it reads instead. */

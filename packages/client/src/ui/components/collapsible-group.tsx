@@ -4,20 +4,22 @@ import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
 import { Discord, TableRowDividers } from '~/metro/components';
+import useCollapseMotion from '~/ui/hooks/use-collapse-motion';
 import TintedIcon from '~/metro/fallbacks/tinted-icon';
 import { icons } from '~/assets/api';
 
-import useCollapseMotion from './use-collapse-motion';
 import useStyles from './collapsible-group.style';
 
 type CollapsibleGroupProps = {
 	label: string;
-	subLabel: string;
-	icon: ReactNode;
+	subLabel?: string;
+	icon?: ReactNode;
 	/** Whether the rows show until the header is first pressed; followed as it changes until then. */
 	defaultExpanded: boolean;
 	helperText?: string;
-	children: ReactNode;
+	/** Called with the new state each time the header is pressed. */
+	onToggle?: (expanded: boolean) => void;
+	children?: ReactNode;
 };
 
 /**
@@ -30,6 +32,7 @@ function CollapsibleGroup({
 	icon,
 	defaultExpanded,
 	helperText,
+	onToggle,
 	children,
 }: CollapsibleGroupProps) {
 	const styles = useStyles();
@@ -52,7 +55,10 @@ function CollapsibleGroup({
 							<TintedIcon source={icons.ChevronSmallDownIcon ?? 0} size={20} />
 						</Animated.View>
 					}
-					onPress={() => setToggled(!expanded)}
+					onPress={() => {
+						setToggled(!expanded);
+						onToggle?.(!expanded);
+					}}
 				/>
 				<Animated.View
 					style={[styles.body, motion.body]}

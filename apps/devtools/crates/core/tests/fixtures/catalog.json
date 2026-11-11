@@ -1,0 +1,1322 @@
+{
+	"version": 1,
+	"commands": [
+		{
+			"name": "create",
+			"description": "Scaffold a new Unbound addon or addon workspace. Prompts for anything left unset, so a fully-flagged invocation runs without prompts for use in CI.",
+			"summary": "Scaffold a new addon or workspace.",
+			"path": ["create"],
+			"positionals": [],
+			"fields": [
+				{
+					"name": "kind",
+					"required": false,
+					"schema": {
+						"enum": ["plugin", "theme"],
+						"description": "The addon kind to scaffold."
+					}
+				},
+				{
+					"name": "name",
+					"required": false,
+					"schema": { "type": "string", "description": "The addon name (kebab-case)." }
+				},
+				{
+					"name": "dir",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The target directory (default ./<name>)."
+					}
+				},
+				{
+					"name": "displayName",
+					"required": false,
+					"schema": { "type": "string", "description": "The human-readable addon name." }
+				},
+				{
+					"name": "description",
+					"required": false,
+					"schema": { "type": "string", "description": "A one-line description." }
+				},
+				{
+					"name": "authorName",
+					"required": false,
+					"schema": { "type": "string", "description": "The author name." }
+				},
+				{
+					"name": "authorId",
+					"required": false,
+					"schema": { "type": "string", "description": "The author Discord id." }
+				},
+				{
+					"name": "id",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The manifest id (default <authorName>.<name>)."
+					}
+				},
+				{
+					"name": "shape",
+					"required": false,
+					"schema": {
+						"enum": ["repository", "addon"],
+						"description": "Scaffold a repository or a single addon."
+					}
+				},
+				{
+					"name": "gitInit",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Initialize a git repository (repository shape only)."
+					}
+				},
+				{
+					"name": "install",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Install dependencies with bun (repository shape only)."
+					}
+				}
+			]
+		},
+		{
+			"name": "dev",
+			"description": "Watch every addon in the workspace and rebuild only the addon whose files change, reloading it in the running client after each successful build. Runs until interrupted.",
+			"summary": "Watch addons and rebuild on change.",
+			"path": ["dev"],
+			"positionals": [],
+			"fields": [
+				{
+					"name": "port",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "The port the debugger bridge listens on.",
+						"default": 9090
+					}
+				}
+			]
+		},
+		{
+			"name": "build",
+			"description": "Build every addon in the workspace once, then run the post-build checks on each, reporting per-addon success and failure, and each plugin's size against its budgets.",
+			"summary": "Build every addon in the workspace.",
+			"path": ["build"],
+			"positionals": [],
+			"fields": [
+				{
+					"name": "declaredCapabilities",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Keep the hand-written platforms and Capabilities of plugins that still declare them, until they select platform code with native.definePlatform.",
+						"default": false
+					}
+				},
+				{
+					"name": "strictBudget",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Fail the build when a plugin goes over a size budget, instead of warning.",
+						"default": false
+					}
+				},
+				{
+					"name": "verbose",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Also list the largest source modules of each plugin, and log each metro filter the build rewrote into a built-in filter, with its file and line.",
+						"default": false
+					}
+				}
+			]
+		},
+		{
+			"name": "check",
+			"description": "Run every check `ubd build` runs, plus the manifest, the plugin lint and the build’s rollup plugins, without producing a bundle. Exits non-zero on any error.",
+			"summary": "Check addons without building them.",
+			"path": ["check"],
+			"positionals": [],
+			"fields": [
+				{
+					"name": "plugin",
+					"required": false,
+					"schema": {
+						"type": "array",
+						"items": { "type": "string" },
+						"description": "An addon directory to check, repeatable; defaults to the addon holding the current directory.",
+						"default": []
+					}
+				},
+				{
+					"name": "all",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Check every addon in the workspace.",
+						"default": false
+					}
+				},
+				{
+					"name": "watch",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Re-check an addon on every save, printing only what changed.",
+						"default": false
+					}
+				},
+				{
+					"name": "only",
+					"required": false,
+					"schema": {
+						"type": "array",
+						"items": { "type": "string" },
+						"description": "Run only these checks, comma-separated: naming, capabilities, layout, page, i18n, messages, lint, bundle, manifest, text-input-props, types, locales, filters, assets, commands, entry, settings.",
+						"default": []
+					}
+				},
+				{
+					"name": "strict",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Fail on warnings too.",
+						"default": false
+					}
+				},
+				{
+					"name": "types",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Also type-check each addon with its tsconfig, like tsc --noEmit; slow.",
+						"default": false
+					}
+				},
+				{
+					"name": "declaredCapabilities",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Check the capabilities as `ubd build --declared-capabilities` does, keeping hand-written platforms and Capabilities.",
+						"default": false
+					}
+				},
+				{
+					"name": "json",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Print the diagnostics as JSON.",
+						"default": false
+					}
+				}
+			]
+		},
+		{
+			"name": "publish",
+			"description": "Submit the committed and pushed addon for review on Unbound; its build output must be committed. Authenticates with UNBOUND_API_KEY when set, otherwise with the `ubd auth login` session.",
+			"summary": "Submit a committed, pushed addon for review.",
+			"path": ["publish"],
+			"positionals": [],
+			"fields": [
+				{
+					"name": "addon",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The id of the addon to publish; required when the workspace has several."
+					}
+				},
+				{
+					"name": "ref",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The branch, tag or commit to submit; defaults to the tag on HEAD, else its SHA."
+					}
+				},
+				{
+					"name": "repository",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The GitHub repository to submit from; defaults to the `origin` remote."
+					}
+				}
+			]
+		},
+		{
+			"name": "check",
+			"description": "Report how far each translation in a plugin's i18n/ folder covers en-US.json, with every ICU problem. Fails on ICU problems and keys en-US lacks; --strict also fails on missing keys.",
+			"summary": "Report translation coverage and ICU problems.",
+			"path": ["i18n", "check"],
+			"positionals": [],
+			"fields": [
+				{
+					"name": "plugin",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The plugin directory. Defaults to the current directory."
+					}
+				},
+				{
+					"name": "strict",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Fail on missing and untranslated keys too.",
+						"default": false
+					}
+				}
+			]
+		},
+		{
+			"name": "fix",
+			"description": "Add each missing key to every translation, with its en-US text as a stub listed in i18n/untranslated.jsonc, then report coverage. Running it twice changes nothing.",
+			"summary": "Stub missing keys in every translation.",
+			"path": ["i18n", "fix"],
+			"positionals": [],
+			"fields": [
+				{
+					"name": "plugin",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The plugin directory. Defaults to the current directory."
+					}
+				},
+				{
+					"name": "prune",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Also remove keys en-US does not have.",
+						"default": false
+					}
+				}
+			]
+		},
+		{
+			"name": "unused",
+			"description": "List en-US keys no source uses, and used keys en-US lacks, after the coverage report. Fails on a used key en-US lacks.",
+			"summary": "List unused keys, and used keys en-US lacks.",
+			"path": ["i18n", "unused"],
+			"positionals": [],
+			"fields": [
+				{
+					"name": "plugin",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The plugin directory. Defaults to the current directory."
+					}
+				}
+			]
+		},
+		{
+			"name": "add",
+			"description": "Add a key to en-US.json, in sorted place when the file is sorted and last otherwise, and rewrite src/unbound-i18n.d.ts, then report coverage.",
+			"summary": "Add a key to en-US.json.",
+			"path": ["i18n", "add"],
+			"positionals": ["key", "text"],
+			"fields": [
+				{
+					"name": "key",
+					"required": true,
+					"schema": {
+						"type": "string",
+						"minLength": 1,
+						"description": "The key to add, such as GREETING."
+					}
+				},
+				{
+					"name": "text",
+					"required": true,
+					"schema": {
+						"type": "array",
+						"items": { "type": "string" },
+						"minItems": 1,
+						"description": "Its English text."
+					}
+				},
+				{
+					"name": "plugin",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The plugin directory. Defaults to the current directory."
+					}
+				}
+			]
+		},
+		{
+			"name": "entry",
+			"description": "Turn a plugin entry's `export default { start, stop, getSettingsPanel }` into named exports: `export function start`, `stop` and `SettingsPanel`, keeping comments.",
+			"summary": "Turn a default-export entry into named exports.",
+			"path": ["migrate", "entry"],
+			"positionals": ["dir"],
+			"fields": [
+				{
+					"name": "dir",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "A plugin folder, or a folder of plugins, whose src/index entries to migrate.",
+						"default": "."
+					}
+				}
+			]
+		},
+		{
+			"name": "start",
+			"description": "Start the debugger bridge in the background when none is listening; a running bridge is kept. Its log goes to the system temporary directory.",
+			"summary": "Start the debugger bridge in the background.",
+			"path": ["debug", "start"],
+			"positionals": [],
+			"fields": [
+				{
+					"name": "port",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "The port the debugger bridge listens on.",
+						"default": 9090
+					}
+				}
+			]
+		},
+		{
+			"name": "restart",
+			"description": "Stop the debugger bridge and start it again in the background, so it runs the current code; starts one when none is listening. Its log goes to the system temporary directory.",
+			"summary": "Restart the debugger bridge on the current code.",
+			"path": ["debug", "restart"],
+			"positionals": [],
+			"fields": [
+				{
+					"name": "port",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "The port the debugger bridge listens on.",
+						"default": 9090
+					}
+				}
+			]
+		},
+		{
+			"name": "status",
+			"description": "Show the device attached to the debugger bridge, its Discord, loader and client versions, how many plugins started, and the native hooks, surfaces and handles it holds after a garbage collection.",
+			"summary": "Show the connected device, its versions and native resources.",
+			"path": ["debug", "status"],
+			"positionals": [],
+			"fields": [
+				{
+					"name": "port",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "The port the debugger bridge listens on.",
+						"default": 9090
+					}
+				},
+				{
+					"name": "watch",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Sample the native resources repeatedly and report which ones keep growing.",
+						"default": false
+					}
+				},
+				{
+					"name": "interval",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "Milliseconds between samples when watching.",
+						"default": 5000
+					}
+				},
+				{
+					"name": "samples",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "How many samples to take when watching.",
+						"default": 12
+					}
+				}
+			]
+		},
+		{
+			"name": "push",
+			"description": "Build one plugin or theme and hot-reload it in the running client on the connected device, installing it when the device does not have it yet. Use this to try a change on a specific device.",
+			"summary": "Build an addon and hot-reload it on the device.",
+			"path": ["debug", "push"],
+			"positionals": ["addon"],
+			"fields": [
+				{
+					"name": "addon",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The plugin or theme to push, as its manifest id or directory.",
+						"default": "."
+					}
+				},
+				{
+					"name": "build",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Build the addon before pushing it.",
+						"default": true
+					}
+				},
+				{
+					"name": "port",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "The port the debugger bridge listens on.",
+						"default": 9090
+					}
+				}
+			]
+		},
+		{
+			"name": "reload",
+			"description": "Reload the JavaScript bundle on the connected device and wait until the fresh bundle reconnects to the debugger. The fresh bundle is told apart by a token the old one carried.",
+			"summary": "Reload the JavaScript bundle and wait for it to reconnect.",
+			"path": ["debug", "reload"],
+			"positionals": [],
+			"fields": [
+				{
+					"name": "timeout",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "How long to wait for the reloaded app to reconnect, in milliseconds.",
+						"default": 60000
+					}
+				},
+				{
+					"name": "port",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "The port the debugger bridge listens on.",
+						"default": 9090
+					}
+				}
+			]
+		},
+		{
+			"name": "eval",
+			"description": "Evaluate JavaScript inside the running Unbound client on the connected device and return its result plus any console output the code produced. Use this to inspect the live runtime: read globals (e.g. `unbound.metro`), call APIs, and probe Discord internals. The last expression is the return value, and a returned promise is awaited for its resolved value; `console.log`/`warn`/`error` are captured separately. Pass `timeout` for long-running code.",
+			"summary": "Run JavaScript on the connected device.",
+			"path": ["debug", "eval"],
+			"positionals": ["code"],
+			"fields": [
+				{
+					"name": "code",
+					"required": true,
+					"schema": {
+						"type": "string",
+						"description": "The JavaScript to evaluate on the device."
+					}
+				},
+				{
+					"name": "port",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "The port the debugger bridge listens on.",
+						"default": 9090
+					}
+				},
+				{
+					"name": "timeout",
+					"required": false,
+					"schema": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 86400000,
+						"description": "How long to wait for the result, in milliseconds. Defaults to the bridge's 10000ms."
+					}
+				}
+			]
+		},
+		{
+			"name": "open",
+			"description": "Open an Unbound (or Discord) settings screen on the connected device from anywhere in the app, through the root navigation ref. Prints the route key it opened.",
+			"summary": "Open a settings screen on the device.",
+			"path": ["debug", "open"],
+			"positionals": ["screen"],
+			"fields": [
+				{
+					"name": "screen",
+					"required": true,
+					"schema": {
+						"type": "string",
+						"minLength": 1,
+						"description": "The settings screen to open: a `Screens` key such as `Marketplace` or `Plugins`, or any `SETTING_RENDERER_CONFIG` route key."
+					}
+				},
+				{
+					"name": "params",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "Route parameters for the screen, as a JSON object, e.g. `{\"kind\":\"theme\"}`.",
+						"default": "{}"
+					}
+				},
+				{
+					"name": "port",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "The port the debugger bridge listens on.",
+						"default": 9090
+					}
+				}
+			]
+		},
+		{
+			"name": "route",
+			"description": "Print the focused navigation route on the connected device: its name, its params, and the navigator path leading to it.",
+			"summary": "Print the focused navigation route.",
+			"path": ["debug", "route"],
+			"positionals": [],
+			"fields": [
+				{
+					"name": "port",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "The port the debugger bridge listens on.",
+						"default": 9090
+					}
+				}
+			]
+		},
+		{
+			"name": "modules",
+			"description": "Search the client's Metro modules by tracked file path or export name and list each match with its id, whether it has loaded yet and its exports. Run it against both platforms to see why a lookup finds a module on one and not the other.",
+			"summary": "Search Discord's Metro modules by path or export.",
+			"path": ["debug", "modules"],
+			"positionals": ["pattern"],
+			"fields": [
+				{
+					"name": "pattern",
+					"required": true,
+					"schema": {
+						"type": "string",
+						"description": "A case-insensitive regular expression for file paths or export names."
+					}
+				},
+				{
+					"name": "max",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "How many modules to list.",
+						"default": 40
+					}
+				},
+				{
+					"name": "port",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "The port the debugger bridge listens on.",
+						"default": 9090
+					}
+				}
+			]
+		},
+		{
+			"name": "trace",
+			"description": "Record calls to a JavaScript function of one of Discord's modules for a while, such as generateMessageRowData, summarising the arguments and result of the first calls. The device evaluation times out after ten seconds, so keep the duration below that.",
+			"summary": "Record calls to a Discord module's function.",
+			"path": ["debug", "trace"],
+			"positionals": ["props"],
+			"fields": [
+				{
+					"name": "props",
+					"required": true,
+					"schema": {
+						"type": "array",
+						"items": { "type": "string" },
+						"minItems": 1,
+						"description": "Props of the module to find; the first is the function to trace."
+					}
+				},
+				{
+					"name": "duration",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "How long to record calls, in milliseconds.",
+						"default": 3000
+					}
+				},
+				{
+					"name": "samples",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "How many calls to describe.",
+						"default": 10
+					}
+				},
+				{
+					"name": "port",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "The port the debugger bridge listens on.",
+						"default": 9090
+					}
+				}
+			]
+		},
+		{
+			"name": "views",
+			"description": "Print the native view tree of the connected device: Android views from the current activity, iOS views from every visible window, with each view's size, visibility, text and handle. Use it to find where a plugin should hook or place its views. It reads views through a running plugin that holds native view access.",
+			"summary": "Print the native view tree.",
+			"path": ["debug", "views"],
+			"positionals": ["filter"],
+			"fields": [
+				{
+					"name": "filter",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "Keep only views whose class name contains this text, plus their ancestors.",
+						"default": ""
+					}
+				},
+				{
+					"name": "depth",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "How deep to print below each view; iOS caps this at 12 levels.",
+						"default": 40
+					}
+				},
+				{
+					"name": "max",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "How many views to visit at most.",
+						"default": 1500
+					}
+				},
+				{
+					"name": "port",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "The port the debugger bridge listens on.",
+						"default": 9090
+					}
+				}
+			]
+		},
+		{
+			"name": "inspect",
+			"description": "Inspect native code on the connected device. `class <name>` describes a Java class: its superclasses, constructors, methods with static markers and fields (iOS: the superclass chain). `views [--class <name>] [--depth n]` dumps the current activity's view tree with class names, resource ids, sizes, visibility and text. `find <class>` lists the attached views of a class. It reads through a running plugin that holds native access.",
+			"summary": "Describe a Java class, or walk or find native views.",
+			"path": ["debug", "inspect"],
+			"positionals": ["what", "name"],
+			"fields": [
+				{
+					"name": "what",
+					"required": true,
+					"schema": {
+						"enum": ["class", "views", "find"],
+						"description": "What to inspect: class, views or find."
+					}
+				},
+				{
+					"name": "name",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The class to describe (class) or to look for (find).",
+						"default": ""
+					}
+				},
+				{
+					"name": "class",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "For views: dump only the subtrees of attached views of this class.",
+						"default": ""
+					}
+				},
+				{
+					"name": "depth",
+					"required": false,
+					"schema": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "For views: how deep to print.",
+						"default": 40
+					}
+				},
+				{
+					"name": "max",
+					"required": false,
+					"schema": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "How many views to visit at most.",
+						"default": 2000
+					}
+				},
+				{
+					"name": "filter",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "For class: keep only constructors, methods and fields whose name contains this.",
+						"default": ""
+					}
+				},
+				{
+					"name": "port",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "The port the debugger bridge listens on.",
+						"default": 9090
+					}
+				},
+				{
+					"name": "timeout",
+					"required": false,
+					"schema": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 86400000,
+						"description": "How long the device may take, in milliseconds.",
+						"default": 60000
+					}
+				}
+			]
+		},
+		{
+			"name": "spans",
+			"description": "Print the text and spans of the Android text views that contain some text, with each span's class and range and the text's invisible characters escaped. Use it to see how Discord renders mentions, code blocks and links before a plugin rewrites them.",
+			"summary": "Print the spans of Android text views.",
+			"path": ["debug", "spans"],
+			"positionals": ["match"],
+			"fields": [
+				{
+					"name": "match",
+					"required": true,
+					"schema": {
+						"type": "string",
+						"description": "Text the text views must contain."
+					}
+				},
+				{
+					"name": "max",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "How many matching text views to print.",
+						"default": 5
+					}
+				},
+				{
+					"name": "port",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "The port the debugger bridge listens on.",
+						"default": 9090
+					}
+				}
+			]
+		},
+		{
+			"name": "hook",
+			"description": "Record calls to a native method on the connected device for a while and describe the first ones: an Android Java method, or an iOS Objective-C selector. Use it to learn when Discord binds, lays out or redraws a view before writing a plugin hook. Pick a method of a specific class: hooking one every view calls, such as UIView layoutSubviews, can crash the app. The device evaluation times out after ten seconds, so keep the duration below that.",
+			"summary": "Record calls to a native method.",
+			"path": ["debug", "hook"],
+			"positionals": ["className", "method"],
+			"fields": [
+				{
+					"name": "className",
+					"required": true,
+					"schema": {
+						"type": "string",
+						"description": "The class that declares or inherits the method."
+					}
+				},
+				{
+					"name": "method",
+					"required": true,
+					"schema": {
+						"type": "string",
+						"description": "The Java method name, or the Objective-C selector."
+					}
+				},
+				{
+					"name": "parameters",
+					"required": false,
+					"schema": {
+						"type": "array",
+						"items": { "type": "string" },
+						"description": "The Java parameter type names, such as int or android.view.MotionEvent.",
+						"default": []
+					}
+				},
+				{
+					"name": "duration",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "How long to record calls, in milliseconds.",
+						"default": 3000
+					}
+				},
+				{
+					"name": "samples",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "How many calls to describe.",
+						"default": 10
+					}
+				},
+				{
+					"name": "port",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "The port the debugger bridge listens on.",
+						"default": 9090
+					}
+				}
+			]
+		},
+		{
+			"name": "profile",
+			"description": "Sample the connected device's JavaScript thread with Hermes' sampling profiler for a while, then rank the functions and sources it spent the time in. Scroll or open the screen to measure while it records. `--out` also saves the raw trace.",
+			"summary": "Sample the JavaScript thread and rank where time went.",
+			"path": ["debug", "profile"],
+			"positionals": [],
+			"fields": [
+				{
+					"name": "duration",
+					"required": false,
+					"schema": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 60000,
+						"description": "How long to sample the JavaScript thread, in milliseconds.",
+						"default": 5000
+					}
+				},
+				{
+					"name": "top",
+					"required": false,
+					"schema": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "How many functions and sources to list.",
+						"default": 20
+					}
+				},
+				{
+					"name": "out",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "Also save the raw Chrome trace here, to open in Perfetto or chrome://tracing.",
+						"default": ""
+					}
+				},
+				{
+					"name": "port",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "The port the debugger bridge listens on.",
+						"default": 9090
+					}
+				}
+			]
+		},
+		{
+			"name": "timing",
+			"description": "Measure how long a zero-delay JavaScript timer and a native main-thread round trip take on the connected device right now. Large numbers mean the JavaScript thread is busy, for instance with plugin work during a cold start.",
+			"summary": "Measure JavaScript and main-thread latency.",
+			"path": ["debug", "timing"],
+			"positionals": [],
+			"fields": [
+				{
+					"name": "rounds",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "How many samples to take.",
+						"default": 3
+					}
+				},
+				{
+					"name": "port",
+					"required": false,
+					"schema": {
+						"type": "number",
+						"description": "The port the debugger bridge listens on.",
+						"default": 9090
+					}
+				}
+			]
+		},
+		{
+			"name": "install",
+			"description": "Build one plugin and copy it into Discord's plugin folder on a rooted Android device or emulator over adb, or on a jailbroken iPhone through jb-p1lot, so the next cold start loads it. Pass `restart` to relaunch Discord right away. Use `ubd debug push` to hot-reload instead.",
+			"summary": "Copy a plugin into Discord for the next cold start.",
+			"path": ["device", "install"],
+			"positionals": ["addon"],
+			"fields": [
+				{
+					"name": "addon",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The plugin to install, as its manifest id or directory.",
+						"default": "."
+					}
+				},
+				{
+					"name": "build",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Build the plugin before installing it.",
+						"default": true
+					}
+				},
+				{
+					"name": "serial",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The adb serial of the Android device, when several are attached."
+					}
+				},
+				{
+					"name": "ios",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Install on a jailbroken iPhone through jb-p1lot instead of over adb.",
+						"default": false
+					}
+				},
+				{
+					"name": "udid",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The UDID of the iPhone, when several are connected. Implies --ios."
+					}
+				},
+				{
+					"name": "restart",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Restart Discord afterwards so it loads the plugin.",
+						"default": false
+					}
+				}
+			]
+		},
+		{
+			"name": "logs",
+			"description": "Tail Discord's log, filtered to Unbound, the JavaScript console and crashes: on Android through adb logcat for com.discord, following it across restarts, or on a jailbroken iPhone through its unified log. Runs until interrupted.",
+			"summary": "Tail Discord's log, or pull the loader's log files.",
+			"path": ["device", "logs"],
+			"positionals": [],
+			"fields": [
+				{
+					"name": "serial",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The adb serial of the Android device, when several are attached."
+					}
+				},
+				{
+					"name": "ios",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Tail a jailbroken iPhone over USB instead of an Android device over adb.",
+						"default": false
+					}
+				},
+				{
+					"name": "udid",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The UDID of the iPhone, when several are connected. Implies --ios."
+					}
+				},
+				{
+					"name": "level",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The lowest level to print: verbose, debug, info, warn, error, fatal, or their first letter.",
+						"default": "verbose"
+					}
+				},
+				{
+					"name": "grep",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "Print only lines matching this regular expression."
+					}
+				},
+				{
+					"name": "since",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "Start from history: a duration such as 5m, a clock time such as 14:30, or a date. iOS history holds notices, errors and faults only."
+					}
+				},
+				{
+					"name": "follow",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Keep printing new lines; pass --follow=false to print the history and exit.",
+						"default": true
+					}
+				},
+				{
+					"name": "symbolicate",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Rewrite Hermes frames of the client bundle to source positions using packages/client/dist's maps.",
+						"default": false
+					}
+				},
+				{
+					"name": "bundle",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The Hermes bundle to symbolicate against; defaults to the bytecode version the loader reports, else the newest built."
+					}
+				},
+				{
+					"name": "pull",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Copy the loader's own log files off the device instead of tailing; they survive restarts and hold the JavaScript console too.",
+						"default": false
+					}
+				},
+				{
+					"name": "out",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The folder --pull writes the log files into; defaults to a timestamped folder here."
+					}
+				}
+			]
+		},
+		{
+			"name": "reset",
+			"description": "Move Discord's Unbound folder aside on a rooted Android device or a jailbroken iPhone, so Discord starts fresh. Nothing is deleted: the old folder stays beside the new one.",
+			"summary": "Move Unbound aside so Discord starts fresh.",
+			"path": ["device", "reset"],
+			"positionals": [],
+			"fields": [
+				{
+					"name": "serial",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The adb serial of the Android device, when several are attached."
+					}
+				},
+				{
+					"name": "ios",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Act on a jailbroken iPhone through jb-p1lot instead of over adb.",
+						"default": false
+					}
+				},
+				{
+					"name": "udid",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The UDID of the iPhone, when several are connected. Implies --ios."
+					}
+				},
+				{
+					"name": "restart",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Relaunch Discord afterwards.",
+						"default": false
+					}
+				}
+			]
+		},
+		{
+			"name": "save",
+			"description": "Copy Discord's Unbound folder off a rooted Android device or a jailbroken iPhone as a named snapshot on this computer, to put back later with `restore`.",
+			"summary": "Snapshot the device's Unbound state to this computer.",
+			"path": ["device", "save"],
+			"positionals": ["name"],
+			"fields": [
+				{
+					"name": "name",
+					"required": true,
+					"schema": { "type": "string", "description": "The snapshot to save." }
+				},
+				{
+					"name": "serial",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The adb serial of the Android device, when several are attached."
+					}
+				},
+				{
+					"name": "ios",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Act on a jailbroken iPhone through jb-p1lot instead of over adb.",
+						"default": false
+					}
+				},
+				{
+					"name": "udid",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The UDID of the iPhone, when several are connected. Implies --ios."
+					}
+				},
+				{
+					"name": "restart",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Relaunch Discord afterwards.",
+						"default": false
+					}
+				}
+			]
+		},
+		{
+			"name": "restore",
+			"description": "Replace Discord's Unbound folder on a rooted Android device or a jailbroken iPhone with a snapshot `save` took. The replaced folder stays on the device.",
+			"summary": "Put a saved snapshot back on the device.",
+			"path": ["device", "restore"],
+			"positionals": ["name"],
+			"fields": [
+				{
+					"name": "name",
+					"required": true,
+					"schema": { "type": "string", "description": "The snapshot to restore." }
+				},
+				{
+					"name": "serial",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The adb serial of the Android device, when several are attached."
+					}
+				},
+				{
+					"name": "ios",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Act on a jailbroken iPhone through jb-p1lot instead of over adb.",
+						"default": false
+					}
+				},
+				{
+					"name": "udid",
+					"required": false,
+					"schema": {
+						"type": "string",
+						"description": "The UDID of the iPhone, when several are connected. Implies --ios."
+					}
+				},
+				{
+					"name": "restart",
+					"required": false,
+					"schema": {
+						"type": "boolean",
+						"description": "Relaunch Discord afterwards.",
+						"default": false
+					}
+				}
+			]
+		},
+		{
+			"name": "snapshots",
+			"description": "List the device snapshots `save` kept on this computer, with each device, name, size and date.",
+			"summary": "List the saved snapshots.",
+			"path": ["device", "snapshots"],
+			"positionals": [],
+			"fields": []
+		},
+		{
+			"name": "login",
+			"description": "Log in to Unbound by approving a code on the website, so `ubd publish` can submit addons. Not needed in CI when UNBOUND_API_KEY is set.",
+			"summary": "Log in to Unbound for publishing.",
+			"path": ["auth", "login"],
+			"positionals": [],
+			"fields": []
+		},
+		{
+			"name": "logout",
+			"description": "Delete the credentials `ubd auth login` stored.",
+			"summary": "Delete the stored login.",
+			"path": ["auth", "logout"],
+			"positionals": [],
+			"fields": []
+		}
+	]
+}

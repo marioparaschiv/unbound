@@ -28,10 +28,25 @@ public:
         work();
     }
 
-    void runAfter(double, std::function<void()> work) override
+    void runAfter(double seconds, std::function<void()> work) override
     {
+        delays.push_back(seconds);
         delayed.push_back(std::move(work));
     }
+
+    loader::PreviousExit previousExit() override
+    {
+        return exit;
+    }
+
+    bool onMeteredNetwork() override
+    {
+        return metered;
+    }
+
+    std::vector<double>  delays;
+    loader::PreviousExit exit    = loader::PreviousExit::Unknown;
+    bool                 metered = false;
 
     std::vector<std::function<void()>> delayed;
 
@@ -331,6 +346,108 @@ void turnsOnRecoveryModeAfterRepeatedFailedLaunches()
 
     assert(launch.server.settings.getBoolean("unbound", "recovery", false));
 }
+
+void ignoresAnEarlyExitThatWasNotACrash()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    std::string marker = launch.server.path(loader::LaunchGuard::kFile);
+    assert(loader::writeTextFileAtomically(marker, R"({"failures":2})"));
+    launch.host->exit = loader::PreviousExit::Ended;
+
+    launch.pipeline.prepare();
+
+    assert(!launch.server.settings.getBoolean("unbound", "recovery", false));
+    assert(loader::readTextFile(marker) == R"({"failures":0})");
+}
+
+void countsTheLaunchHealthyShortlyAfterTheFirstRender()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    std::string marker = launch.server.path(loader::LaunchGuard::kFile);
+    launch.pipeline.prepare();
+    launch.host->delays.clear();
+    launch.host->delayed.clear();
+
+    launch.pipeline.markRendered();
+    launch.pipeline.markRendered();
+
+    assert(launch.host->delays.size() == 1);
+    assert(launch.host->delays[0] == loader::LoaderPipeline::kRenderedHealthySeconds);
+    launch.host->delayed[0]();
+    assert(!loader::fileExists(marker));
+    assert(launch.pipeline.launchTimings().find("Launch counted as healthy: not yet") ==
+           std::string::npos);
+}
+
+void waitsForWifiBeforeABackgroundUpdate()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    launch.server.publish(kBase, "2026-10-03T00:00:00.000Z", {{kBundle, "next"}});
+    launch.host->metered = true;
+    int downloads        = launch.server.downloads;
+
+    launch.pipeline.prepare();
+    assert(launch.server.downloads == downloads);
+    assert(!launch.pipeline.hasStagedBundle());
+
+    // Still metered: returning to the foreground keeps waiting.
+    launch.pipeline.onForeground();
+    assert(launch.server.downloads == downloads);
+
+    launch.host->metered = false;
+    launch.pipeline.onForeground();
+    assert(loader::readTextFile(launch.server.candidate()) == "next");
+    assert(launch.pipeline.hasStagedBundle());
+}
+
+void checksInTheForegroundOnlyOnceTheLastCheckIsOld()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    launch.pipeline.prepare();
+    int downloads = launch.server.downloads;
+
+    launch.pipeline.onForeground();
+
+    assert(launch.server.downloads == downloads);
+}
+
+void retriesAFailedCheckWhenTheServerSaysWhen()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    launch.server.publish(kBase, "2026-10-03T00:00:00.000Z", {{kBundle, "next"}});
+    launch.server.failNext = loader::DownloadResult{503, "", "7"};
+
+    launch.pipeline.prepare();
+    assert(!launch.pipeline.hasStagedBundle());
+
+    auto retry = std::find(launch.host->delays.begin(), launch.host->delays.end(), 7.0);
+    assert(retry != launch.host->delays.end());
+    launch.host->delayed[retry - launch.host->delays.begin()]();
+    assert(loader::readTextFile(launch.server.candidate()) == "next");
+    assert(launch.pipeline.hasStagedBundle());
+}
+
+void spacesRetriesWithJitter()
+{
+    using loader::LoaderPipeline;
+    assert(LoaderPipeline::retryDelay(0, std::nullopt, 0.0) == 30 * 0.8);
+    assert(LoaderPipeline::retryDelay(1, std::nullopt, 0.5) == 120);
+    assert(LoaderPipeline::retryDelay(9, std::nullopt, 0.0) == 600 * 0.8);
+    assert(LoaderPipeline::retryDelay(0, 99999.0, 0.0) == LoaderPipeline::kMaxRetryAfterSeconds);
+    assert(loader::retryAfterSeconds("120") == 120.0);
+    assert(!loader::retryAfterSeconds("Wed, 21 Oct 2026 07:28:00 GMT"));
+    assert(!loader::retryAfterSeconds(""));
+}
 }
 
 int main()
@@ -350,5 +467,11 @@ int main()
     explainsWhyAFirstLaunchHasNoBundle();
     guardsTheLaunchOncePerProcess();
     turnsOnRecoveryModeAfterRepeatedFailedLaunches();
+    ignoresAnEarlyExitThatWasNotACrash();
+    countsTheLaunchHealthyShortlyAfterTheFirstRender();
+    waitsForWifiBeforeABackgroundUpdate();
+    checksInTheForegroundOnlyOnceTheLastCheckIsOld();
+    retriesAFailedCheckWhenTheServerSaysWhen();
+    spacesRetriesWithJitter();
     return 0;
 }

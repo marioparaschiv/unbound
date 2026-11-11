@@ -1,9 +1,12 @@
-import { useState, type ReactElement } from 'react';
+import type { ReactElement } from 'react';
 
+import { confirmText } from '~/dialogs/feedback';
+import { format, messages } from '~/i18n/api';
 import { Discord } from '~/metro/components';
-import { messages } from '~/i18n/api';
+import { showDialog } from '~/dialogs/api';
 import { icons } from '~/assets/api';
 
+import { openInputDialog } from './input-dialog';
 import useStyles from './list-row.style';
 
 /** Props for `ListRow`. */
@@ -36,7 +39,9 @@ function moved(list: string[], from: number, to: number): string[] {
 }
 
 /**
- * @description A titled, editable list of strings: each row moves up or down or is removed, and an input adds one.
+ * @description A titled, editable list of strings: each row moves up or down, or is deleted after a confirmation; the
+ * delete button stands apart from the arrows so it is hard to hit by mistake. An Add row opens
+ * Discord's input dialog for a new one.
  * @param props The group's title, saved strings, limit, validation and change handler.
  * @returns The group.
  */
@@ -50,23 +55,53 @@ function ListRow({
 	onChange,
 }: ListRowProps): ReactElement {
 	const styles = useStyles();
-	const [draft, setDraft] = useState('');
-	const [error, setError] = useState<string | undefined>(undefined);
 	const full = value.length >= maxItems;
 
-	function add() {
-		const text = draft.trim();
-		const problem = text
-			? (validate?.(text) ??
-				(value.includes(text) ? messages.UNBOUND_SETTING_DUPLICATE : undefined))
-			: undefined;
+	function check(text: string) {
+		const trimmed = text.trim();
 
-		setError(problem);
+		if (!trimmed) {
+			return undefined;
+		}
 
-		if (!text || problem || full) return;
+		return (
+			validate?.(trimmed) ??
+			(value.includes(trimmed) ? messages.UNBOUND_SETTING_DUPLICATE : undefined)
+		);
+	}
 
-		onChange([...value, text]);
-		setDraft('');
+	function add(text: string) {
+		const trimmed = text.trim();
+
+		if (trimmed) {
+			onChange([...value, trimmed]);
+		}
+	}
+
+	async function remove(index: number) {
+		const confirmed = await confirmText(showDialog, {
+			title: format('UNBOUND_DELETE_TITLE', { name: value[index] ?? '' }),
+			confirm: messages.UNBOUND_DELETE,
+			cancel: messages.UNBOUND_CANCEL,
+			destructive: true,
+		});
+
+		if (confirmed) {
+			onChange(value.filter((_, at) => at !== index));
+		}
+	}
+
+	function openAdd() {
+		openInputDialog({
+			label: title,
+			subLabel: description,
+			value: '',
+			placeholder: messages.UNBOUND_SETTING_ADD_ITEM,
+			variant: 'text',
+			keyboardType: 'default',
+			validate: check,
+			onChange: add,
+		});
 	}
 
 	return (
@@ -79,32 +114,42 @@ function ListRow({
 					trailing={
 						<Discord.Stack
 							direction='horizontal'
-							spacing={4}
+							spacing={16}
 							align='center'
 							style={styles.trailing}
 						>
+							<Discord.Stack
+								direction='horizontal'
+								spacing={8}
+								align='center'
+								style={styles.trailing}
+							>
+								<Discord.IconButton
+									size='sm'
+									variant='secondary'
+									pillStyle={styles.round}
+									icon={icons['ArrowSmallUpIcon'] ?? 0}
+									accessibilityLabel={messages.UNBOUND_MOVE_UP}
+									disabled={disabled || index === 0}
+									onPress={() => onChange(moved(value, index, index - 1))}
+								/>
+								<Discord.IconButton
+									size='sm'
+									variant='secondary'
+									pillStyle={styles.round}
+									icon={icons['ArrowSmallDownIcon'] ?? 0}
+									accessibilityLabel={messages.UNBOUND_MOVE_DOWN}
+									disabled={disabled || index === value.length - 1}
+									onPress={() => onChange(moved(value, index, index + 1))}
+								/>
+							</Discord.Stack>
 							<Discord.IconButton
-								size='sm'
-								variant='secondary'
-								icon={icons['ArrowSmallUpIcon'] ?? 0}
-								accessibilityLabel={messages.UNBOUND_MOVE_UP}
-								disabled={disabled || index === 0}
-								onPress={() => onChange(moved(value, index, index - 1))}
-							/>
-							<Discord.IconButton
-								size='sm'
-								variant='secondary'
-								icon={icons['ArrowSmallDownIcon'] ?? 0}
-								accessibilityLabel={messages.UNBOUND_MOVE_DOWN}
-								disabled={disabled || index === value.length - 1}
-								onPress={() => onChange(moved(value, index, index + 1))}
-							/>
-							<Discord.Button
 								size='sm'
 								variant='destructive'
-								text={messages.UNBOUND_DELETE}
+								icon={icons['TrashIcon'] ?? 0}
+								accessibilityLabel={messages.UNBOUND_DELETE}
 								disabled={disabled}
-								onPress={() => onChange(value.filter((_, at) => at !== index))}
+								onPress={() => void remove(index)}
 							/>
 						</Discord.Stack>
 					}
@@ -112,28 +157,10 @@ function ListRow({
 			))}
 			{full ? null : (
 				<Discord.TableRow
-					label={
-						<Discord.TextInput
-							value={draft}
-							onChange={setDraft}
-							onSubmitEditing={add}
-							placeholder={messages.UNBOUND_SETTING_ADD_ITEM}
-							editable={!disabled}
-							autoCapitalize='none'
-							autoCorrect={false}
-							status={error ? 'error' : undefined}
-							errorMessage={error}
-						/>
-					}
-					trailing={
-						<Discord.Button
-							size='sm'
-							variant='primary'
-							text={messages.UNBOUND_SETTING_ADD}
-							disabled={disabled}
-							onPress={add}
-						/>
-					}
+					label={messages.UNBOUND_SETTING_ADD_ITEM}
+					icon={<Discord.TableRowIcon source={icons['PlusSmallIcon'] ?? 0} />}
+					disabled={disabled}
+					onPress={openAdd}
 				/>
 			)}
 		</Discord.TableRowGroup>

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/marioparaschiv/unbound/compare/devtools-v0.2.0...devtools-v0.3.0) (2026-11-11)
+
+
+### Features
+
+* **devtools:** bundle ubd, add settings dialog, smooth scroll ([#1083](https://github.com/marioparaschiv/unbound/issues/1083)) ([82f9aaa](https://github.com/marioparaschiv/unbound/commit/82f9aaae9c7a2a9e8dae5f31806806f8ccb7bfe6))
+
 ## [0.2.0](https://github.com/marioparaschiv/unbound/compare/devtools-v0.1.0...devtools-v0.2.0) (2026-11-05)
 
 

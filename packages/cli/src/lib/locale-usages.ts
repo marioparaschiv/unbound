@@ -1,7 +1,7 @@
-import { parseSync, Visitor, type ESTree } from 'rolldown/utils';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
 
+import { parseSync, Visitor, type ESTree } from '~/rollup/rolldown-utils';
 import { LOCALE_MODULE } from '~/rollup/locales';
 
 /** One place a plugin's source names a message key. */

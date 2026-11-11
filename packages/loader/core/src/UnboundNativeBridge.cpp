@@ -200,6 +200,12 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
                            getter(runtime, "hasStagedBundle", std::move(provider.hasStagedBundle),
                                   nlohmann::json(false)));
     }
+    if (provider.markRendered)
+    {
+        bridge.setProperty(
+            runtime, "markRendered",
+            actionFunction(runtime, "markRendered", std::move(provider.markRendered)));
+    }
     if (provider.rescanThemes)
     {
         bridge.setProperty(

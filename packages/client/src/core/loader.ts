@@ -1,6 +1,7 @@
 import { createLogger } from '@unbound-app/logger';
 
-import { watchFirstFrame } from '~/core/first-frame';
+import { afterFirstFrame, watchFirstFrame } from '~/core/first-frame';
+import { markRendered } from '~/native/unbound-native';
 import { captureMetro } from '~/metro/capture';
 import { benchMark } from '~/core/bench-span';
 
@@ -99,6 +100,7 @@ function onMainModuleRun(onReady: () => void | Promise<void>) {
 		benchMark('ready:resumed');
 
 		watchFirstFrame();
+		afterFirstFrame(markRendered);
 
 		if (initialized) {
 			markReady();

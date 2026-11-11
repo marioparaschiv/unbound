@@ -58,10 +58,11 @@ function DocsSidebar({ nav, symbol }: DocsSidebarProps) {
 		'namespaces',
 		...(activeGroup ? [activeGroup] : []),
 	]);
-	const [shownGroup, setShownGroup] = useState(activeGroup);
+	const [shownSymbol, setShownSymbol] = useState(symbol);
 
-	if (activeGroup !== shownGroup) {
-		setShownGroup(activeGroup);
+	// Every navigation reopens the open symbol's group, even one the reader collapsed; other groups keep their state.
+	if (symbol !== shownSymbol) {
+		setShownSymbol(symbol);
 
 		if (activeGroup && !openGroups.includes(activeGroup)) {
 			setOpenGroups([...openGroups, activeGroup]);

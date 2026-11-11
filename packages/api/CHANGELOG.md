@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.1.0](https://github.com/marioparaschiv/unbound/compare/api-v2.0.0...api-v2.1.0) (2026-11-11)
+
+
+### Features
+
+* **client:** draw settings-kit rows with Discord's built-ins ([#1084](https://github.com/marioparaschiv/unbound/issues/1084)) ([cb3b9e2](https://github.com/marioparaschiv/unbound/commit/cb3b9e285094a1f55d4eb75ed8e19826e61758fa))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 2.1.0
+    * @unbound-app/sdk-generator bumped to 0.11.4
+
 ## [2.0.0](https://github.com/marioparaschiv/unbound/compare/api-v1.1.1...api-v2.0.0) (2026-11-10)
 
 

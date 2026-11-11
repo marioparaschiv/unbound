@@ -24,3 +24,6 @@ regex.workspace = true
 tracing.workspace = true
 uuid.workspace = true
 dirs.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
