@@ -34,6 +34,19 @@ describe('parseAddonManifest', () => {
 		expect(() => parseAddonManifest({ ...base, unbound: { min: 1 } })).toThrow('unbound.min');
 	});
 
+	test('reads the API floor of an addon built before the native bridge rename', () => {
+		expect(
+			parseAddonManifest({ ...base, minNativePluginApi: '1.2.0' }).minNativeBridgeApi,
+		).toBe('1.2.0');
+		expect(
+			parseAddonManifest({
+				...base,
+				minNativeBridgeApi: '1.1.0',
+				minNativePluginApi: '1.2.0',
+			}).minNativeBridgeApi,
+		).toBe('1.1.0');
+	});
+
 	test('refuses a platform capability Unbound does not know', () => {
 		expect(() =>
 			parseAddonManifest({

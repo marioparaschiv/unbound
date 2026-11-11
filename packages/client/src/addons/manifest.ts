@@ -232,6 +232,13 @@ export function parseAddonManifest(
 ): AddonManifest {
 	assertAddonManifest(raw, isAcceptableMain);
 
+	// Addons built before the native bridge rename name their API floor `minNativePluginApi`.
+	const legacyMinApi: unknown = Reflect.get(raw, 'minNativePluginApi');
+
+	if (raw.minNativeBridgeApi === undefined && typeof legacyMinApi === 'string') {
+		return { ...raw, minNativeBridgeApi: legacyMinApi };
+	}
+
 	return raw;
 }
 
