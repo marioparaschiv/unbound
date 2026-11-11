@@ -2,7 +2,6 @@ import { settings } from '@unbound-app/settings';
 import { flux, metro } from '@unbound-app/api';
 
 import {
-	MessageRowData,
 	onMessageRow,
 	type MessageRow,
 	type RowAuthor,
@@ -53,18 +52,13 @@ function isShownFor(author: RowAuthor | undefined): author is RowAuthor & { id: 
  * `MessageStore.emitChange` redraws rows once a batch of PronounDB lookups lands.
  */
 export function patchMessageRows(): void {
-	if (!MessageRowData) {
-		logger.warn('Pronouns skipped: Discord moved MessageRowData.');
-
-		return;
-	}
-
 	// Without the message store, fetched pronouns show on the next re-render instead of at once.
 	const lookup = createLookup(() => MessageStore.emitChange?.());
 
 	pronounLookup = lookup;
 
 	onMessageRow({
+		feature: 'Pronouns',
 		after({ message, row }) {
 			if (!message || !isChatMessage(message) || !isShownFor(message.author)) return;
 
