@@ -11,8 +11,8 @@ import type {
 
 import { readServerJson } from '~/core/server-data';
 
-/** A version's store page as the CDN serves it beside the bundle. */
-export type StorePage = {
+/** A version's addon page as the CDN serves it beside the bundle. */
+export type AddonPageContent = {
 	/** ADDON.md after its frontmatter. */
 	body: string;
 	/** The measured `page.json`, or `null` when the version has none, so the page shows no media. */
@@ -32,7 +32,7 @@ const LIST_ITEM = /^(?:[*+-]|\d+\.)\s/;
 const INDENTED = /^\s/;
 
 // Versions are immutable on the CDN, so a page fetched once serves every later visit this session.
-const pages = new Map<string, Promise<StorePage | null>>();
+const pages = new Map<string, Promise<AddonPageContent | null>>();
 
 async function fetchText(url: string): Promise<string | null> {
 	const response = await fetch(url);
@@ -58,7 +58,10 @@ function parseMeasured(text: string | null): AddonPage | null {
 }
 
 // A version published before `store-page.json` has only ADDON.md and `page.json`, and no icons.
-async function fetchLegacyStorePage(pageUrl: string, folder: string): Promise<StorePage | null> {
+async function fetchLegacyAddonPage(
+	pageUrl: string,
+	folder: string,
+): Promise<AddonPageContent | null> {
 	const [addonMd, measured] = await Promise.all([
 		fetchText(pageUrl),
 		fetchText(folder + MEASURED_PAGE_FILENAME).catch(() => null),
@@ -75,17 +78,17 @@ async function fetchLegacyStorePage(pageUrl: string, folder: string): Promise<St
 }
 
 /**
- * @description Fetches a version's store page in one request: the `store-page.json` beside ADDON.md, or
+ * @description Fetches a version's addon page in one request: the `store-page.json` beside ADDON.md, or
  * ADDON.md and `page.json` for a version published before it.
  * @param pageUrl The catalog version's `pageUrl`.
  * @returns The page, or `null` when ADDON.md is not on the CDN; throws when the CDN fails.
  */
-export async function fetchStorePage(pageUrl: string): Promise<StorePage | null> {
+export async function fetchAddonPage(pageUrl: string): Promise<AddonPageContent | null> {
 	const folder = pageUrl.slice(0, pageUrl.lastIndexOf('/') + 1);
 	const text = await fetchText(folder + STORE_PAGE_FILENAME);
 
 	if (text === null) {
-		return fetchLegacyStorePage(pageUrl, folder);
+		return fetchLegacyAddonPage(pageUrl, folder);
 	}
 
 	// The server wrote the file from the page it validated when it published the version.
@@ -100,18 +103,18 @@ export async function fetchStorePage(pageUrl: string): Promise<StorePage | null>
 }
 
 /**
- * @description Fetches a version's store page once per session, sharing the request between callers.
+ * @description Fetches a version's addon page once per session, sharing the request between callers.
  * @param pageUrl The catalog version's `pageUrl`.
  * @returns The page, or `null` when ADDON.md is not on the CDN; a failure is not kept, so a retry fetches again.
  */
-export function loadStorePage(pageUrl: string): Promise<StorePage | null> {
+export function loadAddonPage(pageUrl: string): Promise<AddonPageContent | null> {
 	const cached = pages.get(pageUrl);
 
 	if (cached) {
 		return cached;
 	}
 
-	const request = fetchStorePage(pageUrl);
+	const request = fetchAddonPage(pageUrl);
 
 	pages.set(pageUrl, request);
 	request.catch(() => pages.delete(pageUrl));
@@ -121,11 +124,11 @@ export function loadStorePage(pageUrl: string): Promise<StorePage | null> {
 
 /**
  * @description Finds a media file the page measured, so only files the server checked are shown.
- * @param page The store page.
+ * @param page The addon page.
  * @param path The media path ADDON.md writes, such as `media/banner.png`.
  * @returns The measured file and its URL, or `undefined` when the page did not measure it.
  */
-export function findPageMedia(page: StorePage, path: string): PageMediaFile | undefined {
+export function findPageMedia(page: AddonPageContent, path: string): PageMediaFile | undefined {
 	const media = page.measured?.media.find((measured) => measured.path === path);
 
 	return media ? { ...media, url: page.folder + media.path } : undefined;

@@ -6,7 +6,7 @@ import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
 import { createSettings, generalSection, panelHostSection } from '~/settings/builtin';
-import { marketplaceSection, storePageSection } from '~/marketplace/builtin';
+import { marketplaceSection, addonPageSection } from '~/marketplace/builtin';
 import themes, { designSection, fontGroupSection } from '~/themes/builtin';
 import cloudSync, { cloudSyncSection } from '~/sync/builtin';
 import updater, { updatesSection } from '~/updates/builtin';
@@ -67,7 +67,7 @@ const SECTIONS_IN_OVERVIEW_ORDER: SectionEntry[] = [
 	cloudSyncSection,
 	...(import.meta.env.DEV_TOOLS ? [assetsSection] : []),
 	panelHostSection,
-	storePageSection,
+	addonPageSection,
 	fontGroupSection,
 ];
 

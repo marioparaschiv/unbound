@@ -15,7 +15,7 @@ type FeaturedCardProps = {
 
 /**
  * @description One addon on the Featured shelf: a compact card of its icon beside its name on one line.
- * Tapping it opens the store page.
+ * Tapping it opens the addon page.
  */
 function FeaturedCard({ addon, kind }: FeaturedCardProps) {
 	const styles = useStyles();

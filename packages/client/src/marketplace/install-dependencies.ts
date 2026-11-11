@@ -52,7 +52,7 @@ function describePlan(install: ListedDependency[], update: ListedDependency[]): 
 }
 
 /**
- * @description Before a plugin installs from the store, installs or updates the plugins it depends on,
+ * @description Before a plugin installs from the Marketplace, installs or updates the plugins it depends on,
  * each after what it needs itself, once the user agrees. Nothing installs when a dependency cannot be
  * satisfied or the user cancels. Newly installed dependencies are enabled, so the plugin can use them.
  * @param manifest The manifest of the plugin version about to install.

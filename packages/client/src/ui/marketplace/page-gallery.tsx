@@ -2,7 +2,7 @@ import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import { ScrollView } from 'react-native';
 import { useMemo } from 'react';
 
-import { findPageMedia, type StorePage } from '~/marketplace/store-page';
+import { findPageMedia, type AddonPageContent } from '~/marketplace/addon-page';
 
 import type { ScreenRect } from './screen-rect-context';
 
@@ -11,14 +11,17 @@ import GalleryThumbnail from './gallery-thumbnail';
 import useStyles from './page-gallery.style';
 
 type PageGalleryProps = {
-	page: StorePage;
+	page: AddonPageContent;
 	entries: AddonPage['frontmatter']['media'];
 };
 
 type GalleryEntry = ViewerEntry & { alt: string };
 
 // Only files the page measured are shown, so an entry the server never checked is left out.
-function resolveEntries(page: StorePage, entries: PageGalleryProps['entries']): GalleryEntry[] {
+function resolveEntries(
+	page: AddonPageContent,
+	entries: PageGalleryProps['entries'],
+): GalleryEntry[] {
 	return entries.flatMap((entry) => {
 		const media = findPageMedia(page, 'image' in entry ? entry.image : entry.video);
 		const poster =

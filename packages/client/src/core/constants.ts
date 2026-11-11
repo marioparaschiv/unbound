@@ -46,7 +46,7 @@ export const Screens = {
 	Toasts: 'UNBOUND_TOASTS',
 	Sync: 'UNBOUND_CLOUD_SYNC',
 	Marketplace: 'UNBOUND_MARKETPLACE',
-	StorePage: 'UNBOUND_STORE_PAGE',
+	AddonPage: 'UNBOUND_STORE_PAGE',
 	Updates: 'UNBOUND_UPDATES',
 	PanelHost: 'UNBOUND_CUSTOM',
 } as const;

@@ -3,8 +3,8 @@ import type { ReactElement, ReactNode } from 'react';
 import * as React from 'react';
 
 import type { PageRenderContext } from '~/ui/marketplace/render-page-inline';
+import type { AddonPageContent } from '~/marketplace/addon-page';
 import type { PageNode } from '~/marketplace/page-markdown';
-import type { StorePage } from '~/marketplace/store-page';
 
 mock.module('react-native', () => ({
 	View: 'View',
@@ -40,7 +40,7 @@ type Props = {
 
 const GEAR_SVG = '<svg viewBox="0 0 20 20"><circle r="2"/></svg>';
 
-const PAGE: StorePage = {
+const PAGE: AddonPageContent = {
 	body: '',
 	folder: 'https://cdn.unbound.rip/addons/acme.hello/1.0.0/',
 	icons: new Map([['gear', GEAR_SVG]]),
@@ -91,7 +91,7 @@ function textOf(node: ReactNode): string {
 	return React.isValidElement<Props>(node) ? textOf(node.props.children) : '';
 }
 
-describe('a store page block', () => {
+describe('a addon page block', () => {
 	test('lays a measured image out between the runs of text around it', () => {
 		const block = render({
 			type: 'paragraph',

@@ -4,12 +4,12 @@ import type { AddonKind } from '@unbound-app/types/addons';
 import { Discord } from '~/metro/components';
 import { Screens } from '~/core/constants';
 
-import type { StorePageParams } from './store-page';
+import type { AddonPageParams } from './addon-page';
 
 import { offerListedInstall } from './offer-listed-install';
 
 /**
- * @description Opens a listed addon: its store page, or, for a version without one, the install prompt.
+ * @description Opens a listed addon: its addon page, or, for a version without one, the install prompt.
  * @returns The opener, taking the addon and the manager it belongs to.
  */
 function useOpenListing() {
@@ -22,9 +22,9 @@ function useOpenListing() {
 			return;
 		}
 
-		const params: StorePageParams = { addon, kind };
+		const params: AddonPageParams = { addon, kind };
 
-		navigation.push(Screens.StorePage, params);
+		navigation.push(Screens.AddonPage, params);
 	};
 }
 

@@ -1,27 +1,27 @@
 import { ActivityIndicator, View } from 'react-native';
 
-import { findPageMedia, type StorePage } from '~/marketplace/store-page';
+import { findPageMedia, type AddonPageContent } from '~/marketplace/addon-page';
 import Empty from '~/ui/components/empty-state';
 import { Discord } from '~/metro/components';
 import { messages } from '~/i18n/api';
 
 import type { ResourceHandle } from './use-resource';
 
+import useStyles from './addon-page.style';
 import PageMarkdown from './page-markdown';
-import useStyles from './store-page.style';
 import PageGallery from './page-gallery';
 import PageMedia from './page-media';
 
-type StorePageBodyProps = {
-	resource: ResourceHandle<StorePage>;
+type AddonPageBodyProps = {
+	resource: ResourceHandle<AddonPageContent>;
 	name: string;
 };
 
 /**
- * @description The part of a store page its ADDON.md supplies: the banner, the gallery and the body in a
+ * @description The part of a addon page its ADDON.md supplies: the banner, the gallery and the body in a
  * card. It spins in place while the page loads, so the header above it never waits.
  */
-function StorePageBody({ resource, name }: StorePageBodyProps) {
+function AddonPageBody({ resource, name }: AddonPageBodyProps) {
 	const styles = useStyles();
 	const { state, retry } = resource;
 
@@ -69,4 +69,4 @@ function StorePageBody({ resource, name }: StorePageBodyProps) {
 	);
 }
 
-export default StorePageBody;
+export default AddonPageBody;
