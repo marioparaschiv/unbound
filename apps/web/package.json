@@ -71,7 +71,6 @@
 		"react": "catalog:react",
 		"react-day-picker": "^10.0.2",
 		"react-dom": "catalog:react",
-		"recharts": "3.10.1",
 		"sonner": "^2.0.8",
 		"tailwind-merge": "^3.7.0",
 		"thumbhash": "^0.1.1",
