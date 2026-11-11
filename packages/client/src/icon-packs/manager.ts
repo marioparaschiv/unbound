@@ -88,7 +88,8 @@ const defaultPack: IconPack = {
 		id: 'default',
 		name: 'Default',
 		description: "Discord's default icons.",
-		authors: [{ name: 'Discord', id: '263689920210534400' }],
+		// Discord's official system account, so the author line shows Discord's logo.
+		authors: [{ name: 'Discord', id: '643945264868098049' }],
 		main: '',
 		version: '1.0.0',
 		type: 'icon-pack',
