@@ -4577,6 +4577,7 @@ export type NativePlatformAndroidInstaller = {
 export type NativePlatformApp = {
 	/** Where Discord was installed from, such as `App Store` or `Google Play`. */
 	getAppSource(): string;
+	/** How an iOS install was signed: certificate kind, team, profile expiry, sideload tool marker and entitlement source. */
 	getInstallDetails?(): string;
 	/** The framework that injected the loader, such as Vector or LSPosed on Android and ElleKit on iOS, or an empty string. */
 	getFramework(): string;
