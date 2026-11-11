@@ -29,6 +29,11 @@ const ROOT_FILES = new Set([
 // A kind's file grows into a folder of named files, such as `patches/message-rows.ts`.
 const ROOT_FOLDERS = new Set(['native', 'flux', 'components', 'lib', 'patches', 'commands']);
 const FOLDER_LIST = 'native/, flux/, components/, lib/, patches/ or commands/';
+// Platform-native code may sit one level deeper, in `src/native/ios/<file>` and `src/native/android/<file>`.
+const NATIVE_FOLDER = 'native';
+const PLATFORM_FOLDERS = new Set(['ios', 'android']);
+const DEPTH_FIX =
+	'keep files at src/<folder>/<file>; platform-native code goes in src/native/ios/<file> and src/native/android/<file>';
 
 const MISSING_ENTRY: LayoutIssue = {
 	file: `src/${ENTRY_FILE}`,
@@ -38,7 +43,8 @@ const MISSING_ENTRY: LayoutIssue = {
 
 /**
  * @description Lists how a plugin's `src/` departs from the standard layout: the entry and the standard files at the
- * root, everything else one level down in a folder named for its kind, never deeper than `src/<folder>/<file>`.
+ * root, everything else one level down in a folder named for its kind, never deeper than `src/<folder>/<file>`
+ * except platform-native code in `src/native/ios/<file>` and `src/native/android/<file>`.
  * @param dir The plugin's directory.
  * @returns One issue per departure, empty when the plugin follows the layout.
  */
@@ -78,17 +84,35 @@ export function findLayoutIssues(dir: string): LayoutIssue[] {
 		}
 
 		for (const nested of listEntries(join(src, entry.name))) {
-			if (nested.isDirectory()) {
-				issues.push({
-					file: `src/${entry.name}/${nested.name}`,
-					message: 'is nested too deep',
-					fix: 'keep files at src/<folder>/<file>; split a platform as <kind>-android.ts and <kind>-ios.ts',
-				});
+			if (!nested.isDirectory()) {
+				continue;
 			}
+
+			if (entry.name === NATIVE_FOLDER && PLATFORM_FOLDERS.has(nested.name)) {
+				issues.push(
+					...findNestedFolders(
+						join(src, entry.name, nested.name),
+						`src/${entry.name}/${nested.name}`,
+					),
+				);
+				continue;
+			}
+
+			issues.push(tooDeep(`src/${entry.name}/${nested.name}`));
 		}
 	}
 
 	return issues;
+}
+
+function findNestedFolders(dir: string, relative: string) {
+	return listEntries(dir)
+		.filter((entry) => entry.isDirectory())
+		.map((entry) => tooDeep(`${relative}/${entry.name}`));
+}
+
+function tooDeep(file: string): LayoutIssue {
+	return { file, message: 'is nested too deep', fix: DEPTH_FIX };
 }
 
 function listEntries(dir: string) {

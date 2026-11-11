@@ -60,8 +60,9 @@ const STANDARD_LAYOUT = {
 	'src/components/toggle.tsx': 'export {};',
 	'src/lib/names.ts': 'export {};',
 	'src/flux/interceptors.ts': 'export {};',
-	'src/native/hooks-ios.ts': 'export {};',
-	'src/native/hooks-android.ts': 'export {};',
+	'src/native/hooks.ts': 'export {};',
+	'src/native/ios/hooks.ts': 'export {};',
+	'src/native/android/hooks.ts': 'export {};',
 };
 
 describe('ubd build checks', () => {
@@ -77,7 +78,7 @@ describe('ubd build checks', () => {
 			'src/index.ts': 'export default {};',
 			'src/helpers.ts': 'export {};',
 			'src/messages/hook.ts': 'export {};',
-			'src/native/android/hook.ts': 'export {};',
+			'src/native/android/deeper/hook.ts': 'export {};',
 		});
 		const result = await runUbd(['build'], dir.path, {});
 
@@ -87,7 +88,7 @@ describe('ubd build checks', () => {
 			'warning  plugins/my-plugin/src/index.ts  is not a standard root file.  Fix: move it into native/, flux/, components/, lib/, patches/ or commands/.',
 			"warning  plugins/my-plugin/src/index.tsx  is missing.  Fix: add the entry that lists the plugin's features.",
 			'warning  plugins/my-plugin/src/messages  is not a standard folder.  Fix: move its files into native/, flux/, components/, lib/, patches/ or commands/.',
-			'warning  plugins/my-plugin/src/native/android  is nested too deep.  Fix: keep files at src/<folder>/<file>; split a platform as <kind>-android.ts and <kind>-ios.ts.',
+			'warning  plugins/my-plugin/src/native/android/deeper  is nested too deep.  Fix: keep files at src/<folder>/<file>; platform-native code goes in src/native/ios/<file> and src/native/android/<file>.',
 		]);
 	});
 
