@@ -23,8 +23,8 @@ export type ButtonRowProps = {
 };
 
 /**
- * @description Discord's full-width Row Button, which runs something when pressed and asks first when `confirmation` is set;
- * `danger` leads with a red trash icon.
+ * @description A pressable `TableRow` in its settings group, as Discord draws actions such as Log Out; it asks first when
+ * `confirmation` is set. `danger` draws the label red behind a red trash icon.
  * @param props The row's label, variant, confirmation and press handler.
  * @returns The row.
  */
@@ -53,16 +53,15 @@ function ButtonRow({
 	}
 
 	return (
-		<Discord.RowButton
+		<Discord.TableRow
 			label={label}
 			subLabel={subLabel}
-			variant='secondary'
+			variant={variant === 'danger' ? 'danger' : undefined}
 			icon={
 				variant === 'danger' ? (
 					<Discord.TableRowIcon source={icons.TrashIcon} variant='danger' />
 				) : undefined
 			}
-			arrow={false}
 			disabled={disabled}
 			onPress={() => void press()}
 		/>

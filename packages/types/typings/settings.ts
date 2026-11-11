@@ -113,10 +113,6 @@ export type StringSettingSchema = {
 	placeholder?: string;
 	/** `color`: also takes an alpha channel, `#RRGGBBAA`. */
 	alpha?: boolean;
-	/** `color`: colors offered first. */
-	presets?: string[];
-	/** `color`: draws `presets` inline instead of a swatch row. */
-	palette?: boolean;
 	/** `image`: the largest file accepted, in bytes. */
 	maxSize?: number;
 };

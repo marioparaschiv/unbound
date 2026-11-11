@@ -8,16 +8,14 @@ import {
 	removeCustomIcon,
 } from '~/app-icons/custom-icons';
 import { canInstallHomeScreenIcon, canSyncAppIcons } from '~/native/unbound-native';
+import { openInputDialog } from '~/ui/settings-kit/input-dialog';
 import type { CustomAppIcon } from '~/app-icons/custom-icons';
-import InputSheet from '~/ui/settings-kit/input-sheet';
 import { format, messages } from '~/i18n/api';
 import { Discord } from '~/metro/components';
-import { ActionSheets } from '~/metro/api';
 import * as toasts from '~/toasts/api';
 import { icons } from '~/assets/api';
 
 const SHEET = 'unbound-custom-app-icons';
-const NAME_SHEET = 'unbound-custom-app-icon-name';
 const MAX_NAME = 32;
 
 async function install(name: string, image: string) {
@@ -48,7 +46,7 @@ async function install(name: string, image: string) {
 }
 
 function askName(image: string) {
-	ActionSheets.openLazy(Promise.resolve({ default: InputSheet }), NAME_SHEET, {
+	openInputDialog({
 		label: format('UNBOUND_APP_ICON_NAME'),
 		value: '',
 		variant: 'text',
@@ -59,7 +57,6 @@ function askName(image: string) {
 		onChange: (name: string) => {
 			install(name.trim(), image).catch((error) => toasts.error(error));
 		},
-		onClose: () => ActionSheets.hideActionSheet(NAME_SHEET),
 	});
 }
 

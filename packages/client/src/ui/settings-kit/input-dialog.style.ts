@@ -2,7 +2,7 @@ import { Discord } from '~/metro/components';
 
 export default Discord.createStyles({
 	content: {
-		gap: 16,
-		padding: 16,
+		gap: 12,
+		marginTop: 4,
 	},
 });

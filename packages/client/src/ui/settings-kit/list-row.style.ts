@@ -5,4 +5,8 @@ export default Discord.createStyles({
 	trailing: {
 		width: 'auto',
 	},
+	// Discord's `IconButton` takes its corner radius from the theme's button token; its `pillStyle` overrides it.
+	round: {
+		borderRadius: 999,
+	},
 });

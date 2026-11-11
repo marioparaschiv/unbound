@@ -123,18 +123,6 @@ describe('settingElement', () => {
 			{ ...labels, kind: 'string', displayAs: 'color', default: '#FFFFFF' },
 			kit.ColorRow,
 		],
-		[
-			'palette',
-			{
-				...labels,
-				kind: 'string',
-				displayAs: 'color',
-				default: '#FFFFFF',
-				palette: true,
-				presets: ['#FFFFFF'],
-			},
-			kit.PaletteRow,
-		],
 		['user', { ...labels, kind: 'string', displayAs: 'user', default: '' }, kit.EntityRow],
 		[
 			'radio',

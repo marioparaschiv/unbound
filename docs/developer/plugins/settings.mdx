@@ -91,7 +91,7 @@ Only `settings.ts` may import `@unbound-app/settings/schema`. Plugin code reads 
 | --- | --- | --- | --- |
 | `boolean` | `boolean` | `switch`, `checkbox` | |
 | `number`, `integer` | `number` | `input`, `slider` (default with `min` and `max`), `stepper`, `duration` (ms) | `min`, `max`; `slider`/`stepper`: `step` (required for a `number` stepper); `duration`: `units` |
-| `string` | `string` | `input`, `multiline`, `secret`, `url`, `color`, `user`, `channel`, `guild`, `role`, `emoji`, `image`, `font` | `input`/`multiline`: `minLength`, `maxLength`, `placeholder`; `color`: `alpha`, `presets`, `palette` |
+| `string` | `string` | `input`, `multiline`, `secret`, `url`, `color`, `user`, `channel`, `guild`, `role`, `emoji`, `image`, `font` | `input`/`multiline`: `minLength`, `maxLength`, `placeholder`; `color`: `alpha` |
 | `choice` | a key of `options` | `radio` (default up to 5), `picker` (default above 5), `segmented` (up to 4) | `options`: a key, or `{ title, subtitle }`. Only `radio` shows subtitles |
 | `array` | a list of `of` | `of: setting.string()`: `list`, `user`, `channel`, `guild`, `role`; `of: setting.choice({ options })`: `checkboxes` | `minItems`, `maxItems` |
 | `section` | an object | `group`, `collapsible` | |
@@ -210,7 +210,7 @@ function paint(color: SettingsEntry<'appearance.accent'>) {}
 
 ## Custom Panel
 
-The generated panel has a row per setting, a section per `setting.section`, and a "Reset all to defaults" row. Its rows are public in `ui`: `SwitchRow`, `CheckboxRow`, `SliderRow`, `StepperRow`, `NumberRow`, `DurationRow`, `InputRow`, `MultilineRow`, `SecretRow`, `UrlRow`, `ColorRow`, `PaletteRow`, `EntityRow`, `RadioRow`, `PickerRow`, `SegmentedRow`, `ListRow`, `ChecklistRow`, `ButtonRow`.
+The generated panel has a row per setting, a section per `setting.section`, and a "Reset all to defaults" row. Its rows are public in `ui`: `SwitchRow`, `CheckboxRow`, `SliderRow`, `StepperRow`, `NumberRow`, `DurationRow`, `InputRow`, `MultilineRow`, `SecretRow`, `UrlRow`, `ColorRow`, `EntityRow`, `RadioRow`, `PickerRow`, `SegmentedRow`, `ListRow`, `ChecklistRow`, `ButtonRow`.
 
 Export a `SettingsPanel` from your entry to replace it, such as for a live preview. It can still render the generated panel:
 
