@@ -10,7 +10,6 @@ export type PinnedLocation = {
 	repository: string;
 	tree: GitTree;
 	commitSha: string;
-	/** The bundle's path in the tree. */
 	bundlePath: string;
 	/** The bundle's git blob id, which its bytes are checked against. */
 	bundleBlobSha: string;

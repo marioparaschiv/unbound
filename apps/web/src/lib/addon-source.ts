@@ -576,9 +576,6 @@ export async function listRepositoryAddons(
 }
 
 /**
- *
- */
-/**
  * @description Reads one addon at the commit the author previewed. Refuses, in order: no push access,
  * a ref that moved (`source_changed`), a path that is not a registered addon (`addon_not_found`), an
  * invalid manifest, a missing or oversize bundle, oversize texts, a `page.json` that does not match the
