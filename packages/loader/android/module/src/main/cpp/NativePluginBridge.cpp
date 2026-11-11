@@ -16,7 +16,7 @@
 #include <vector>
 
 #include "JavaHandleRelease.h"
-#include "JniEnvironment.h"
+#include "JniCall.h"
 #include "LoaderAddonActivity.h"
 #include "LoaderBootstrap.h"
 #include "LoaderJSIJSON.h"
@@ -41,216 +41,39 @@
 namespace unbound::android {
 namespace jsi = facebook::jsi;
 
-static std::string takeJavaFailure(JNIEnv *env, const char *fallback)
+// Passes 1 to 4 string arguments to `call` as separate parameters.
+template <typename Call>
+static auto spreadArguments(const std::vector<std::string> &arguments, Call call)
 {
-    jthrowable thrown = env->ExceptionOccurred();
-    if (!thrown)
+    switch (arguments.size())
     {
-        return fallback;
+        case 1:
+            return call(arguments[0]);
+        case 2:
+            return call(arguments[0], arguments[1]);
+        case 3:
+            return call(arguments[0], arguments[1], arguments[2]);
+        case 4:
+            return call(arguments[0], arguments[1], arguments[2], arguments[3]);
+        default:
+            throw std::invalid_argument("unsupported Java adapter arity");
     }
-
-    env->ExceptionClear();
-    jclass      throwableClass = env->GetObjectClass(thrown);
-    jmethodID   describe = env->GetMethodID(throwableClass, "toString", "()Ljava/lang/String;");
-    std::string message  = fallback;
-    if (describe)
-    {
-        auto described = static_cast<jstring>(env->CallObjectMethod(thrown, describe));
-        if (described && !env->ExceptionCheck())
-        {
-            message = toStdString(env, described);
-        }
-        if (described)
-        {
-            env->DeleteLocalRef(described);
-        }
-        env->ExceptionClear();
-    }
-
-    env->DeleteLocalRef(throwableClass);
-    env->DeleteLocalRef(thrown);
-    return message;
 }
 
 static std::string callJavaString(const JavaCallbacks &callbacks, jmethodID method,
                                   const std::vector<std::string> &arguments)
 {
-    JNIEnv *env = currentEnvironment();
-    if (!env || !callbacks.bridgeClass || !method)
-    {
-        throw std::runtime_error("The Android Java adapter is unavailable");
-    }
-
-    if (arguments.empty() || arguments.size() > 4)
-    {
-        throw std::invalid_argument("unsupported Java adapter arity");
-    }
-
-    std::vector<jstring> inputs;
-    inputs.reserve(arguments.size());
-    for (const std::string &argument : arguments)
-    {
-        inputs.push_back(toJavaString(env, argument));
-    }
-
-    jobject output = nullptr;
-    if (inputs.size() == 1)
-    {
-        output = env->CallStaticObjectMethod(callbacks.bridgeClass, method, inputs[0]);
-    }
-    else if (inputs.size() == 2)
-    {
-        output = env->CallStaticObjectMethod(callbacks.bridgeClass, method, inputs[0], inputs[1]);
-    }
-    else if (inputs.size() == 3)
-    {
-        output = env->CallStaticObjectMethod(callbacks.bridgeClass, method, inputs[0], inputs[1],
-                                             inputs[2]);
-    }
-    else if (inputs.size() == 4)
-    {
-        output = env->CallStaticObjectMethod(callbacks.bridgeClass, method, inputs[0], inputs[1],
-                                             inputs[2], inputs[3]);
-    }
-
-    std::string failure =
-        env->ExceptionCheck() ? takeJavaFailure(env, "The Android Java operation failed") : "";
-    for (jstring input : inputs)
-    {
-        env->DeleteLocalRef(input);
-    }
-
-    if (!failure.empty() || !output)
-    {
-        if (output)
-        {
-            env->DeleteLocalRef(output);
-        }
-        throw std::runtime_error(failure.empty() ? "The Android Java operation returned nothing"
-                                                 : failure);
-    }
-
-    std::string result = toStdString(env, static_cast<jstring>(output));
-    env->DeleteLocalRef(output);
-    return result;
+    return spreadArguments(arguments, [&](const auto &...values) {
+        return invokeStaticString(callbacks.bridgeClass, method, values...);
+    });
 }
 
 static void callJavaVoid(const JavaCallbacks &callbacks, jmethodID method,
                          const std::vector<std::string> &arguments)
 {
-    JNIEnv *env = currentEnvironment();
-    if (!env || !callbacks.bridgeClass || !method)
-    {
-        throw std::runtime_error("The Android Java adapter is unavailable");
-    }
-
-    if (arguments.empty() || arguments.size() > 4)
-    {
-        throw std::invalid_argument("unsupported Java adapter arity");
-    }
-
-    std::vector<jstring> inputs;
-    inputs.reserve(arguments.size());
-    for (const std::string &argument : arguments)
-    {
-        inputs.push_back(toJavaString(env, argument));
-    }
-
-    if (inputs.size() == 1)
-    {
-        env->CallStaticVoidMethod(callbacks.bridgeClass, method, inputs[0]);
-    }
-    else if (inputs.size() == 2)
-    {
-        env->CallStaticVoidMethod(callbacks.bridgeClass, method, inputs[0], inputs[1]);
-    }
-    else if (inputs.size() == 3)
-    {
-        env->CallStaticVoidMethod(callbacks.bridgeClass, method, inputs[0], inputs[1], inputs[2]);
-    }
-    else if (inputs.size() == 4)
-    {
-        env->CallStaticVoidMethod(callbacks.bridgeClass, method, inputs[0], inputs[1], inputs[2],
-                                  inputs[3]);
-    }
-
-    std::string failure =
-        env->ExceptionCheck() ? takeJavaFailure(env, "The Android Java operation failed") : "";
-    for (jstring input : inputs)
-    {
-        env->DeleteLocalRef(input);
-    }
-
-    if (!failure.empty())
-    {
-        throw std::runtime_error(failure);
-    }
-}
-
-static bool callJavaBoolean(const JavaCallbacks &callbacks, jmethodID method,
-                            const std::string &argument)
-{
-    JNIEnv *env = currentEnvironment();
-    if (!env || !callbacks.bridgeClass || !method)
-    {
-        throw std::runtime_error("The Android adapter is unavailable");
-    }
-
-    jstring     input  = toJavaString(env, argument);
-    jboolean    output = env->CallStaticBooleanMethod(callbacks.bridgeClass, method, input);
-    std::string failure =
-        env->ExceptionCheck() ? takeJavaFailure(env, "The Android operation failed") : "";
-    env->DeleteLocalRef(input);
-
-    if (!failure.empty())
-    {
-        throw std::runtime_error(failure);
-    }
-
-    return output == JNI_TRUE;
-}
-
-static size_t callJavaCount(const JavaCallbacks &callbacks, jmethodID method)
-{
-    JNIEnv *env = currentEnvironment();
-    if (!env || !callbacks.bridgeClass || !method)
-    {
-        return 0;
-    }
-    jint output = env->CallStaticIntMethod(callbacks.bridgeClass, method);
-    if (env->ExceptionCheck())
-    {
-        env->ExceptionClear();
-        return 0;
-    }
-    return output > 0 ? static_cast<size_t>(output) : 0;
-}
-
-static std::string callJavaStringNoArguments(const JavaCallbacks &callbacks, jmethodID method)
-{
-    JNIEnv *env = currentEnvironment();
-    if (!env || !callbacks.bridgeClass || !method)
-    {
-        throw std::runtime_error("The Android debug adapter is unavailable");
-    }
-
-    auto output = static_cast<jstring>(env->CallStaticObjectMethod(callbacks.bridgeClass, method));
-    std::string failure =
-        env->ExceptionCheck() ? takeJavaFailure(env, "The Android debug operation failed") : "";
-
-    if (!failure.empty() || !output)
-    {
-        if (output)
-        {
-            env->DeleteLocalRef(output);
-        }
-        throw std::runtime_error(failure.empty() ? "The Android debug adapter returned nothing"
-                                                 : failure);
-    }
-
-    std::string result = toStdString(env, output);
-    env->DeleteLocalRef(output);
-    return result;
+    spreadArguments(arguments, [&](const auto &...values) {
+        invokeStaticVoid(callbacks.bridgeClass, method, values...);
+    });
 }
 
 static std::string javaName(jsi::Runtime &runtime, const jsi::Value &value)
@@ -308,27 +131,8 @@ static std::string serializeJavaBatch(jsi::Runtime &runtime, const jsi::Value &v
 static void callSetAssociatedObject(const JavaCallbacks &callbacks, const std::string &handle,
                                     const std::string &key, const std::string &value)
 {
-    JNIEnv *env = currentEnvironment();
-    if (!env || !callbacks.bridgeClass || !callbacks.javaSetAssociatedObject)
-    {
-        throw std::runtime_error("The Android Java adapter is unavailable");
-    }
-
-    jstring inputHandle = toJavaString(env, handle);
-    jstring inputKey    = toJavaString(env, key);
-    jstring inputValue  = toJavaString(env, value);
-    env->CallStaticVoidMethod(callbacks.bridgeClass, callbacks.javaSetAssociatedObject, inputHandle,
-                              inputKey, inputValue,
-                              static_cast<jint>(loader::native::kMaximumAssociationsPerObject));
-    std::string failure =
-        env->ExceptionCheck() ? takeJavaFailure(env, "The Android Java operation failed") : "";
-    env->DeleteLocalRef(inputValue);
-    env->DeleteLocalRef(inputKey);
-    env->DeleteLocalRef(inputHandle);
-    if (!failure.empty())
-    {
-        throw std::runtime_error(failure);
-    }
+    invokeStaticVoid(callbacks.bridgeClass, callbacks.javaSetAssociatedObject, handle, key, value,
+                     static_cast<jint>(loader::native::kMaximumAssociationsPerObject));
 }
 
 static std::string serializeJavaArguments(jsi::Runtime &runtime, const jsi::Value *args,
@@ -927,23 +731,6 @@ static nlohmann::json boundedArgumentsJSON(jsi::Runtime &runtime, const jsi::Val
         loader::native::serializeBoundedArguments(runtime, value, kNativeArgumentsConversion));
 }
 
-static void callBridgeVoid(const JavaCallbacks &callbacks, jmethodID method)
-{
-    JNIEnv *env = currentEnvironment();
-    if (!env || !callbacks.bridgeClass || !method)
-    {
-        throw std::runtime_error("The Android bridge adapter is unavailable");
-    }
-
-    env->CallStaticVoidMethod(callbacks.bridgeClass, method);
-    std::string failure =
-        env->ExceptionCheck() ? takeJavaFailure(env, "The Android bridge operation failed") : "";
-    if (!failure.empty())
-    {
-        throw std::runtime_error(failure);
-    }
-}
-
 static void watchRuntimeGenerations(const JavaCallbacks &callbacks)
 {
     static std::once_flag watching;
@@ -952,7 +739,7 @@ static void watchRuntimeGenerations(const JavaCallbacks &callbacks)
             retireHookListeners();
             hookReturnValues().clearAll();
             installedHooks().releaseAll();
-            callBridgeVoid(callbacks, callbacks.runtimeReplaced);
+            invokeStaticVoid(callbacks.bridgeClass, callbacks.runtimeReplaced);
         });
     });
 }
@@ -1143,8 +930,8 @@ static jsi::Object makeJavaNamespace(jsi::Runtime &runtime, const JavaCallbacks 
            });
     define(runtime, java, "createAssociationKey", 0,
            [callbacks](jsi::Runtime &rt, const jsi::Value *, size_t) {
-               return parseJavaResult(
-                   rt, callJavaStringNoArguments(callbacks, callbacks.javaCreateAssociationKey));
+               return parseJavaResult(rt, invokeStaticString(callbacks.bridgeClass,
+                                                             callbacks.javaCreateAssociationKey));
            });
     define(runtime, java, "getAssociatedObject", 2,
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
@@ -1347,14 +1134,15 @@ public:
 
     void unmount(const std::string &surface) override
     {
-        callJavaBoolean(callbacks_, callbacks_.fabricUnmount, loader::native::handleJSON(surface));
+        invokeStaticBoolean(callbacks_.bridgeClass, callbacks_.fabricUnmount,
+                            loader::native::handleJSON(surface));
     }
 
     bool detach(const std::string &surface) override
     {
         return callbacks_.fabricDetach && callbacks_.fabricAttach &&
-               callJavaBoolean(callbacks_, callbacks_.fabricDetach,
-                               loader::native::handleJSON(surface));
+               invokeStaticBoolean(callbacks_.bridgeClass, callbacks_.fabricDetach,
+                                   loader::native::handleJSON(surface));
     }
 
     bool attach(const std::string &surface, const loader::native::FabricView &container) override
@@ -1512,7 +1300,8 @@ void registerNativePluginBridge(jsi::Runtime &runtime, const JavaCallbacks &call
     watchRuntimeGenerations(callbacks);
     leaseJavaHandles(callbacks);
     loader::native::setPlatformResourceCounter(loader::native::kJavaHandleCounter, [callbacks] {
-        return callJavaCount(callbacks, callbacks.javaLiveHandles);
+        std::optional<jint> live = callStaticInt(callbacks.bridgeClass, callbacks.javaLiveHandles);
+        return live && *live > 0 ? static_cast<size_t>(*live) : 0;
     });
     loader::native::setUIRuntimeGarbageCollector(collectUIRuntimeGarbage);
 

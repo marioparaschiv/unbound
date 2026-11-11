@@ -2,6 +2,7 @@
 
 #include <jni.h>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -11,7 +12,7 @@
 // Calls into static Java methods from any thread. `std::string` arguments cross as Java strings
 // that are released after the call; every other argument passes as is, so it must already be a
 // JNI type (jint, jboolean, jlong, jobject). A missing environment or method, or a Java exception,
-// reads as failure, and the exception is cleared.
+// reads as failure, and the exception is cleared. The invoke* variants below throw instead.
 namespace unbound::android {
 namespace jni {
     class LocalReferences
@@ -101,6 +102,90 @@ std::optional<std::string> callStaticString(jclass type, jmethodID method, const
             env->DeleteLocalRef(result);
         }
         return std::nullopt;
+    }
+    std::string text = toStdString(env, result);
+    env->DeleteLocalRef(result);
+    return text;
+}
+
+// None when the call failed.
+template <typename... Args>
+std::optional<jint> callStaticInt(jclass type, jmethodID method, const Args &...args)
+{
+    JNIEnv *env = currentEnvironment();
+    if (!env || !type || !method)
+    {
+        return std::nullopt;
+    }
+    jni::LocalReferences locals(env);
+    jint result = env->CallStaticIntMethod(type, method, jni::argument(locals, args)...);
+    if (clearPendingException(env))
+    {
+        return std::nullopt;
+    }
+    return result;
+}
+
+// The invoke* variants serve plugin calls, whose caller must see why Java failed: a missing
+// environment or method throws, and a Java exception throws its `toString()`.
+namespace jni {
+    inline JNIEnv *requireEnvironment(jclass type, jmethodID method)
+    {
+        JNIEnv *env = currentEnvironment();
+        if (!env || !type || !method)
+        {
+            throw std::runtime_error("The Android Java adapter is unavailable");
+        }
+        return env;
+    }
+
+    inline void throwPendingException(JNIEnv *env)
+    {
+        if (env->ExceptionCheck())
+        {
+            throw std::runtime_error(takeJavaFailure(env, "The Android Java operation failed"));
+        }
+    }
+}
+
+template <typename... Args>
+void invokeStaticVoid(jclass type, jmethodID method, const Args &...args)
+{
+    JNIEnv              *env = jni::requireEnvironment(type, method);
+    jni::LocalReferences locals(env);
+    env->CallStaticVoidMethod(type, method, jni::argument(locals, args)...);
+    jni::throwPendingException(env);
+}
+
+template <typename... Args>
+bool invokeStaticBoolean(jclass type, jmethodID method, const Args &...args)
+{
+    JNIEnv              *env = jni::requireEnvironment(type, method);
+    jni::LocalReferences locals(env);
+    jboolean result = env->CallStaticBooleanMethod(type, method, jni::argument(locals, args)...);
+    jni::throwPendingException(env);
+    return result == JNI_TRUE;
+}
+
+// Also throws when Java returns null.
+template <typename... Args>
+std::string invokeStaticString(jclass type, jmethodID method, const Args &...args)
+{
+    JNIEnv              *env = jni::requireEnvironment(type, method);
+    jni::LocalReferences locals(env);
+    auto                 result = static_cast<jstring>(
+        env->CallStaticObjectMethod(type, method, jni::argument(locals, args)...));
+    if (env->ExceptionCheck())
+    {
+        if (result)
+        {
+            env->DeleteLocalRef(result);
+        }
+        jni::throwPendingException(env);
+    }
+    if (!result)
+    {
+        throw std::runtime_error("The Android Java operation returned nothing");
     }
     std::string text = toStdString(env, result);
     env->DeleteLocalRef(result);
