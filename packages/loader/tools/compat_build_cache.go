@@ -2,12 +2,9 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -204,19 +201,6 @@ func dkryptFileURL(base, fileURL string) string {
 
 func dkryptAPIKey() string {
 	return strings.TrimSpace(os.Getenv("DKRYPT_API_KEY"))
-}
-
-func matchesSHA256(path, expected string) bool {
-	file, err := os.Open(path)
-	if err != nil {
-		return false
-	}
-	defer file.Close()
-	digest := sha256.New()
-	if _, err := io.Copy(digest, file); err != nil {
-		return false
-	}
-	return strings.EqualFold(hex.EncodeToString(digest.Sum(nil)), expected)
 }
 
 var errNoCompatTarget = errors.New("usage: compat-scan (--ipa <path> | --apk <path>... | --channel <stable|beta|alpha>) [--android-version <v>] [--baseline <json>] [--results <json>] [--report <md>]")

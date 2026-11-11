@@ -68,15 +68,6 @@ type compatResults struct {
 	Support      map[string]*compatSupport       `json:"support,omitempty"`
 }
 
-type stringList []string
-
-func (list *stringList) String() string { return strings.Join(*list, ",") }
-
-func (list *stringList) Set(value string) error {
-	*list = append(*list, value)
-	return nil
-}
-
 func runCompatScan(args []string) error {
 	set := flag.NewFlagSet("compat-scan", flag.ContinueOnError)
 	root := set.String("root", "../..", "monorepo root")
@@ -242,15 +233,6 @@ func readCompatBaseline(path string) (*compatResults, error) {
 		return nil, fmt.Errorf("baseline: %w", err)
 	}
 	return &baseline, nil
-}
-
-func readZipEntry(file *zip.File) ([]byte, error) {
-	reader, err := file.Open()
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-	return io.ReadAll(reader)
 }
 
 func loadIOSTarget(path string) (*compatTarget, error) {
