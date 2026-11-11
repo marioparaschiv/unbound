@@ -1,5 +1,22 @@
 import type { PushedManifest } from '@unbound-app/types';
 
+import {
+	REACT_DEVTOOLS_SHUTDOWN_EVENT,
+	REACT_DEVTOOLS_STATUS_EVENT,
+	isReactDevtoolsFrame,
+	type ReactDevtoolsFrame,
+} from './react-devtools';
+import {
+	isViewFrameMessage,
+	type ViewHighlight,
+	type ViewsRequest,
+	type ViewsResult,
+} from './views';
+
+export type { ViewFrame, ViewHighlight, ViewNode, ViewsRequest, ViewsResult } from './views';
+export type { ReactDevtoolsFrame, ReactDevtoolsStatus } from './react-devtools';
+export { REACT_DEVTOOLS_SHUTDOWN_EVENT, REACT_DEVTOOLS_STATUS_EVENT };
+
 /**
  * The wire protocol shared by the bridge, the device and controllers: every frame is a JSON-encoded
  * {@link BridgeMessage}. Dependency-free at runtime so the React Native client can bundle it.
@@ -132,7 +149,11 @@ export type BridgeMessage =
 	| PushResult
 	| LogMessage
 	| DeviceHello
-	| DeviceStatus;
+	| DeviceStatus
+	| ViewsRequest
+	| ViewsResult
+	| ViewHighlight
+	| ReactDevtoolsFrame;
 
 /** The default port the bridge listens on and controllers dial. */
 export const DEFAULT_BRIDGE_PORT = 9090;
@@ -250,6 +271,12 @@ function hasRequiredFields(frame: unknown): frame is BridgeMessage {
 							frame.device === undefined ||
 							isDeviceInfo(frame.device))))
 			);
+		case 'views-request':
+		case 'views-result':
+		case 'view-highlight':
+			return isViewFrameMessage(frame);
+		case 'react-devtools':
+			return isReactDevtoolsFrame(frame);
 		default:
 			return false;
 	}
@@ -305,6 +332,8 @@ export default {
 	PUSH_TIMEOUT_MS,
 	BRIDGE_REPLY_GRACE_MS,
 	CONTROLLER_ENDPOINT_MARKER,
+	REACT_DEVTOOLS_SHUTDOWN_EVENT,
+	REACT_DEVTOOLS_STATUS_EVENT,
 	resolveEvalTimeout,
 	parseMessage,
 	serializeMessage,

@@ -14,7 +14,6 @@ pub struct Connection {
 
 impl Workspace {
 	pub fn connection(&self) -> Connection {
-		let port = self.config.listen.port();
 		let (label, failed) = match &self.status.connection {
 			ConnectionState::Connected {
 				backend_version, ..
@@ -30,16 +29,14 @@ impl Workspace {
 				};
 				(label, false)
 			}
-			ConnectionState::Listening { addr } => {
-				(format!("Waiting for a device on :{}", addr.port()), false)
-			}
-			ConnectionState::UnsupportedRenderer { .. } => {
+			// The sidebar header already says what it waits for.
+			ConnectionState::Waiting => (String::new(), false),
+			ConnectionState::UnsupportedRenderer => {
 				("Unsupported React renderer".to_string(), true)
 			}
-			ConnectionState::Failed { error } if error.to_lowercase().contains("in use") => {
-				(format!("Port {port} is in use"), true)
+			ConnectionState::Unavailable { .. } => {
+				("React DevTools is off on the device".to_string(), true)
 			}
-			ConnectionState::Failed { .. } => (format!("Can't listen on :{port}"), true),
 		};
 		Connection { label, failed }
 	}

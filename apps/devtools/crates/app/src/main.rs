@@ -2,12 +2,14 @@ mod app;
 mod appearance;
 mod assets;
 mod commands;
-mod device_menu;
-mod devices;
+mod copy_chip;
+mod copy_glyph;
 mod empty;
+mod empty_state;
 mod inspection;
 mod inspector;
 mod link;
+mod mcp_menu;
 mod nav_list;
 mod press;
 mod scaled;
@@ -18,18 +20,20 @@ mod shell;
 mod smooth_scroll;
 mod status;
 mod theme;
+mod title_bar;
 mod toolbar;
 mod tree;
 mod values;
+mod view_finder;
 mod widgets;
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use clap::{Parser, Subcommand};
 use gpui::{
-	App, AppContext, Bounds, QuitMode, TitlebarOptions, WindowBounds, WindowOptions, px, size,
+	App, AppContext, Bounds, QuitMode, WindowBounds, WindowDecorations, WindowOptions, px, size,
 };
-use gpui_component::Root;
+use gpui_component::{Root, TitleBar};
 use unbound_devtools_core::{Config, Devtools, mcp};
 
 use crate::settings::Settings;
@@ -38,20 +42,11 @@ use crate::settings::Settings;
 #[derive(Parser)]
 #[command(name = "unbound-devtools", version, about)]
 struct Cli {
-	/// Port the device's DevTools backend dials. Defaults to the DevTools port setting.
-	#[arg(long, global = true, env = "UNBOUND_DEVTOOLS_PORT")]
-	port: Option<u16>,
-	/// Address to listen on for the device.
-	#[arg(long, global = true, default_value_t = IpAddr::V4(Ipv4Addr::UNSPECIFIED))]
-	bind: IpAddr,
 	/// The Unbound debugger bridge, for "Connect device". Defaults to 127.0.0.1:<bridge port setting>.
 	#[arg(long, global = true)]
 	bridge: Option<SocketAddr>,
 	#[arg(long, global = true, env = "UNBOUND_BRIDGE_PORT", hide = true)]
 	bridge_port: Option<u16>,
-	/// Host the device should dial; defaults to the host in the device's debugger settings.
-	#[arg(long, global = true)]
-	advertise_host: Option<String>,
 	/// Port for the MCP endpoint at http://127.0.0.1:<port>/mcp.
 	#[arg(long)]
 	mcp_port: Option<u16>,
@@ -72,14 +67,8 @@ impl Cli {
 	fn config(&self, settings: &Settings) -> Config {
 		let bridge_port = self.bridge_port.unwrap_or(settings.bridge_port);
 		let bridge = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), bridge_port);
-		let advertise_host = self.advertise_host.clone().or_else(|| {
-			let host = settings.advertise_host.trim();
-			(!host.is_empty()).then(|| host.to_owned())
-		});
 		Config {
-			listen: SocketAddr::new(self.bind, self.port.unwrap_or(settings.devtools_port)),
 			bridge: self.bridge.unwrap_or(bridge),
-			advertise_host,
 		}
 	}
 
@@ -128,8 +117,10 @@ fn serve_mcp(devtools: &Devtools, port: u16) {
 }
 
 fn run_gui(settings: Settings, config: Config, mcp_port: Option<u16>) {
-	let devtools = Devtools::start(config.clone());
-	devtools.resume_link();
+	let devtools = Devtools::start(config);
+	// Discord dials the bridge, not this app, so the app always watches this machine's bridge;
+	// `--bridge` points it elsewhere.
+	devtools.link_to(devtools.default_target(), None);
 	if let Some(port) = mcp_port {
 		serve_mcp(&devtools, port);
 	}
@@ -147,22 +138,20 @@ fn run_gui(settings: Settings, config: Config, mcp_port: Option<u16>) {
 			commands::bind_keys(cx);
 			shell::bind_keys(cx);
 			let bounds = Bounds::centered(None, size(px(1360.), px(860.)), cx);
+			// The shell draws its own title bar (`title_bar.rs`), so the system's is hidden: macOS keeps
+			// its traffic lights over the bar, and Linux and Windows get client-side decorations.
 			let options = WindowOptions {
 				window_bounds: Some(WindowBounds::Windowed(bounds)),
-				titlebar: Some(TitlebarOptions {
-					title: Some("Unbound DevTools".into()),
-					..TitlebarOptions::default()
-				}),
+				titlebar: Some(title_bar::titlebar_options("Unbound DevTools")),
+				window_decorations: Some(WindowDecorations::Client),
 				window_min_size: Some(size(px(1040.), px(620.))),
 				app_id: Some("unbound-devtools".into()),
-				..WindowOptions::default()
+				..TitleBar::window_options()
 			};
 			let opened = cx.open_window(options, |window, cx| {
 				appearance::apply(Some(window), cx);
 				let link = cx.new(|cx| link::DebuggerLink::new(devtools.clone(), cx));
-				let workspace = cx.new(|cx| {
-					app::Workspace::new(devtools.clone(), config, link.clone(), window, cx)
-				});
+				let workspace = cx.new(|cx| app::Workspace::new(devtools.clone(), window, cx));
 				let shell = cx.new(|cx| shell::Shell::new(devtools, workspace, link, window, cx));
 				cx.new(|cx| Root::new(shell, window, cx))
 			});

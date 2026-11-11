@@ -38,6 +38,7 @@ jaq-core = "3.1"
 jaq-std = "3.0"
 jaq-json = "2.0"
 dirs = "5"
+if-addrs = "0.15"
 regex = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

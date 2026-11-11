@@ -9,14 +9,16 @@ pub struct Category {
 	pub commands: &'static [&'static str],
 }
 
-/// The group the Components page heads; the sidebar puts it first in this group.
+/// The group the Components and View Tree pages head; the sidebar puts them first in this group.
 pub const COMPONENTS_GROUP: &str = "Inspect";
+/// The native view finder's page title; it replaces the `views` command's page.
+pub const VIEWS_TITLE: &str = "View Tree";
 
 pub const CATEGORIES: &[Category] = &[
-	// What is on screen: the React tree (Components), the native views and their text.
+	// What is on screen: the React tree (Components), the native views (View Tree) and their text.
 	Category {
 		title: COMPONENTS_GROUP,
-		commands: &["views", "spans", "route"],
+		commands: &["spans", "route"],
 	},
 	// What is loaded: run code against it, find modules, read native classes.
 	Category {
@@ -35,7 +37,7 @@ pub const CATEGORIES: &[Category] = &[
 ];
 
 /// The catalog's commands the sidebar shows, grouped in the table's order. A group the CLI offers
-/// nothing for is left out, except [`COMPONENTS_GROUP`], which always holds Components.
+/// nothing for is left out, except [`COMPONENTS_GROUP`], which always holds Components and View Tree.
 pub fn group(catalog: &Catalog) -> Vec<(&'static str, Vec<&CommandSpec>)> {
 	CATEGORIES
 		.iter()
@@ -62,7 +64,6 @@ pub fn group_of(name: &str) -> Option<&'static str> {
 /// A command's name as a page title, in title case: `eval` is "Evaluate".
 pub fn title(name: &str) -> String {
 	let known = match name {
-		"views" => "View Tree",
 		"spans" => "Text Spans",
 		"route" => "Current Route",
 		"eval" => "Evaluate",
@@ -88,7 +89,6 @@ pub fn title(name: &str) -> String {
 /// The Lucide icon for a command, as an asset path.
 pub fn icon(name: &str) -> &'static str {
 	match name {
-		"views" => "icons/layers.svg",
 		"spans" => "icons/type.svg",
 		"route" => "icons/route.svg",
 		"eval" => "icons/square-terminal.svg",
@@ -142,10 +142,11 @@ mod tests {
 	}
 
 	#[test]
-	fn cli_only_and_unknown_commands_stay_out_of_the_sidebar() {
+	fn cli_only_unknown_and_replaced_commands_stay_out_of_the_sidebar() {
 		let catalog = Catalog {
 			commands: vec![
 				spec("logs"),
+				spec("views"),
 				spec("create"),
 				spec("eval"),
 				spec("teleport"),

@@ -107,10 +107,8 @@ async fn inspects_edits_and_filters_a_live_backend() {
 
 	device.kill();
 	wait_for(&devtools, "the disconnect", |devtools| {
-		matches!(
-			devtools.status().connection,
-			ConnectionState::Listening { .. }
-		) && devtools.store().is_empty()
+		matches!(devtools.status().connection, ConnectionState::Waiting)
+			&& devtools.store().is_empty()
 	})
 	.await;
 }
@@ -139,11 +137,11 @@ async fn a_rerendering_device_keeps_the_tree_in_step() {
 		row_keys(devtools).len() == 7
 	})
 	.await;
-	wait_for(&devtools, "back to three rows", |devtools| {
-		row_keys(devtools).len() == 3
+	// The device re-renders every 40 ms, so the keys are checked in the same read that sees three rows.
+	wait_for(&devtools, "back to rows m0 to m2", |devtools| {
+		row_keys(devtools) == ["m0", "m1", "m2"]
 	})
 	.await;
-	assert_eq!(row_keys(&devtools), ["m0", "m1", "m2"]);
 
 	let store = devtools.store();
 	for element in store.walk(None) {

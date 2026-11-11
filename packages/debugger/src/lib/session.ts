@@ -7,10 +7,15 @@ import type {
 	BridgeMessage,
 	PushResult,
 	PushRequest,
+	ReactDevtoolsFrame,
+	ViewHighlight,
+	ViewsRequest,
+	ViewsResult,
 } from '@unbound-app/debugger-protocol';
 import {
 	DEFAULT_EVAL_TIMEOUT_MS,
 	PUSH_TIMEOUT_MS,
+	REACT_DEVTOOLS_SHUTDOWN_EVENT,
 	resolveEvalTimeout,
 	serializeMessage,
 } from '@unbound-app/debugger-protocol';
@@ -31,21 +36,27 @@ export const state: {
 	device: SocketLike | null;
 	deviceInfo: DeviceInfo | null;
 	controllers: Set<SocketLike>;
+	/** The controller acting as the React DevTools frontend: the last one to send a React DevTools frame. */
+	reactDevtools: SocketLike | null;
 } = {
 	device: null,
 	deviceInfo: null,
 	controllers: new Set(),
+	reactDevtools: null,
 };
 
 // Each pending request keeps the controller that issued it (none for the REPL), so a controller
 // detach can drop its in-flight requests.
 const pending = new PendingRequests<EvalResult, SocketLike | undefined>();
 const pendingPushes = new PendingRequests<PushResult, SocketLike>();
+const pendingViews = new PendingRequests<ViewsResult, SocketLike>();
 const logListeners = new Set<(log: LogMessage) => void>();
 const deviceListeners = new Set<(connected: boolean, device: DeviceInfo | null) => void>();
 const evalListeners = new Set<(code: string) => void>();
 const resultListeners = new Set<(result: EvalResult) => void>();
 const controllerListeners = new Set<(connected: boolean, count: number) => void>();
+
+const VIEWS_TIMEOUT_MS = 15_000;
 
 /**
  * @description Registers the connected device, replacing any earlier one so a relaunched or
@@ -90,6 +101,13 @@ export function detachDevice(socket: SocketLike) {
 		code: 'device-disconnected',
 	}));
 
+	pendingViews.failAll((id) => ({
+		type: 'views-result',
+		id,
+		ok: false,
+		error: 'Device disconnected before the views were listed.',
+	}));
+
 	broadcastDeviceStatus(false);
 }
 
@@ -111,6 +129,13 @@ export function detachController(socket: SocketLike) {
 
 	pending.discard((origin) => origin === socket);
 	pendingPushes.discard((origin) => origin === socket);
+	pendingViews.discard((origin) => origin === socket);
+
+	if (state.reactDevtools === socket) {
+		state.reactDevtools = null;
+		// Ends the device's backend session, so it stops sending a tree nobody reads.
+		sendToDevice({ type: 'react-devtools', event: REACT_DEVTOOLS_SHUTDOWN_EVENT });
+	}
 
 	for (const listener of controllerListeners) listener(false, state.controllers.size);
 }
@@ -170,6 +195,63 @@ export function pushForController(socket: SocketLike, request: PushRequest) {
 		meta: socket,
 	});
 	state.device.send(serializeMessage(request));
+}
+
+/**
+ * @description Forwards a controller's {@link ViewsRequest} to the device and delivers the id-correlated
+ * {@link ViewsResult} back over that same controller's socket, or an error when no device answers.
+ * @param socket The controller that asked.
+ * @param request The request to forward verbatim; its `id` correlates the result.
+ */
+export function requestViewsForController(socket: SocketLike, request: ViewsRequest) {
+	const deliver = (result: ViewsResult) => socket.send(serializeMessage(result));
+
+	if (!state.device) {
+		deliver({
+			type: 'views-result',
+			id: request.id,
+			ok: false,
+			error: 'No device is connected to the debugger.',
+		});
+
+		return;
+	}
+
+	pendingViews.add(request.id, {
+		settle: deliver,
+		timeoutMs: VIEWS_TIMEOUT_MS,
+		onTimeout: () => ({
+			type: 'views-result',
+			id: request.id,
+			ok: false,
+			error: `Listing views timed out after ${VIEWS_TIMEOUT_MS}ms.`,
+		}),
+		meta: socket,
+	});
+	state.device.send(serializeMessage(request));
+}
+
+/**
+ * @description Forwards a controller's {@link ViewHighlight} to the device; it has no answer.
+ * @param highlight The view to outline, or `null` to clear the outline.
+ */
+export function highlightView(highlight: ViewHighlight) {
+	sendToDevice(highlight);
+}
+
+/**
+ * @description Forwards a controller's React DevTools frame to the device and makes that controller
+ * the frontend, the one the device's React DevTools frames go back to.
+ * @param socket The controller that sent the frame.
+ * @param frame The frame to forward verbatim.
+ */
+export function relayReactDevtools(socket: SocketLike, frame: ReactDevtoolsFrame) {
+	state.reactDevtools = socket;
+	sendToDevice(frame);
+}
+
+function sendToDevice(message: BridgeMessage) {
+	state.device?.send(serializeMessage(message));
 }
 
 /**
@@ -233,6 +315,18 @@ export function handleDeviceMessage(message: BridgeMessage) {
 
 	if (message.type === 'plugin-push-result') {
 		pendingPushes.resolve(message.id, message);
+
+		return;
+	}
+
+	if (message.type === 'views-result') {
+		pendingViews.resolve(message.id, message);
+
+		return;
+	}
+
+	if (message.type === 'react-devtools') {
+		state.reactDevtools?.send(serializeMessage(message));
 
 		return;
 	}

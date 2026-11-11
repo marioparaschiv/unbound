@@ -8,11 +8,9 @@ use gpui::{
 	MouseUpEvent, ScrollHandle, ScrollStrategy, Task, UniformListScrollHandle, Window, actions,
 	div, prelude::*, px,
 };
-use unbound_devtools_core::{Config, Devtools, ElementId, Row, Status};
+use unbound_devtools_core::{Devtools, ElementId, Row, Status};
 
-use crate::devices;
 use crate::inspection::Inspection;
-use crate::link::DebuggerLink;
 use crate::search::Search;
 use crate::theme;
 use gpui_component::input::{InputEvent, InputState};
@@ -34,7 +32,6 @@ actions!(search, [ClearSearch]);
 const CHANGE_COALESCING_FRAME: Duration = Duration::from_millis(16);
 
 pub fn bind_keys(cx: &mut App) {
-	devices::bind_keys(cx);
 	let tree = Some("Tree");
 	let search = Some("Search");
 	cx.bind_keys([
@@ -66,7 +63,6 @@ pub fn page_width(window: &Window) -> f32 {
 
 pub struct Workspace {
 	pub devtools: Devtools,
-	pub config: Config,
 	pub status: Status,
 	pub tree_focus: FocusHandle,
 	pub collapsed: HashSet<ElementId>,
@@ -81,9 +77,9 @@ pub struct Workspace {
 	pub inspector_width: f32,
 	pub resizing: bool,
 	pub renderer: Option<String>,
-	pub link: Entity<DebuggerLink>,
 	pub banner: Option<String>,
 	pub copied: bool,
+	pub mcp_menu: bool,
 	pub highlighted: Option<ElementId>,
 	reinspect: Option<Task<()>>,
 	banner_reset: Option<Task<()>>,
@@ -92,13 +88,7 @@ pub struct Workspace {
 }
 
 impl Workspace {
-	pub fn new(
-		devtools: Devtools,
-		config: Config,
-		link: Entity<DebuggerLink>,
-		window: &mut Window,
-		cx: &mut Context<Self>,
-	) -> Self {
+	pub fn new(devtools: Devtools, window: &mut Window, cx: &mut Context<Self>) -> Self {
 		let search_input = cx.new(|cx| {
 			InputState::new(window, cx)
 				.placeholder("Search components, or a jq filter like .name == \"View\"")
@@ -134,7 +124,6 @@ impl Workspace {
 		let mut this = Self {
 			status: devtools.status(),
 			devtools,
-			config,
 			tree_focus,
 			collapsed: HashSet::new(),
 			rows: Rc::default(),
@@ -148,9 +137,9 @@ impl Workspace {
 			inspector_width: theme::INSPECTOR_DEFAULT,
 			resizing: false,
 			renderer: None,
-			link,
 			banner: None,
 			copied: false,
+			mcp_menu: false,
 			highlighted: None,
 			reinspect: None,
 			banner_reset: None,
@@ -357,11 +346,9 @@ impl Workspace {
 		cx.notify();
 	}
 
-	pub fn copy_mcp_url(&mut self, cx: &mut Context<Self>) {
-		let Some(url) = self.status.mcp_url.clone() else {
-			return;
-		};
-		cx.write_to_clipboard(gpui::ClipboardItem::new_string(url));
+	/// Copies text and has the MCP button say so for a moment.
+	pub fn copy_text(&mut self, text: String, cx: &mut Context<Self>) {
+		cx.write_to_clipboard(gpui::ClipboardItem::new_string(text));
 		self.copied = true;
 		self.copied_reset = Some(cx.spawn(async move |this, cx| {
 			cx.background_executor()
@@ -467,6 +454,6 @@ impl Render for Workspace {
 			.on_action(cx.listener(Self::clear_search))
 			.child(self.render_toolbar(cx))
 			.child(body)
-			.child(self.render_status(cx))
+			.child(self.render_status(window, cx))
 	}
 }

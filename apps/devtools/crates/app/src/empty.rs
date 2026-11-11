@@ -1,89 +1,53 @@
-use gpui::{Context, FontWeight, SharedString, div, img, prelude::*, px};
-use unbound_devtools_core::ConnectionState;
+use gpui::{Context, SharedString, prelude::*};
+use unbound_devtools_core::{BridgeState, ConnectionState};
 
 use crate::app::Workspace;
-use crate::widgets::{Raised, raised_button};
-use crate::{assets, theme};
+use crate::empty_state::EmptyState;
+use crate::theme;
+
+/// How to get Discord talking to this app, named as Unbound's settings name them.
+pub const SETUP_STEPS: &str = "Turn on Enable Debugger and React DevTools in Unbound's Developer settings, connect your debugger with the address in the top left, then restart Discord.";
 
 impl Workspace {
-	pub fn render_empty(&self, cx: &mut Context<Self>) -> impl IntoElement {
-		let (title, body, can_connect) = match &self.status.connection {
-			ConnectionState::Failed { error } => (
-				"Can't Listen for Discord",
-				format!("{error}. Close whatever holds the port, or start with --port."),
-				false,
+	pub fn render_empty(&self, _: &mut Context<Self>) -> impl IntoElement {
+		let bridge_down = self
+			.status
+			.link
+			.as_ref()
+			.is_some_and(|link| matches!(link.state, BridgeState::Unreachable));
+		let (icon, tone, title, body): (_, _, _, SharedString) = match &self.status.connection {
+			ConnectionState::Unavailable { error } => (
+				"icons/power-off.svg",
+				theme::WARNING,
+				"React DevTools Is Off",
+				error.clone().into(),
 			),
-			ConnectionState::UnsupportedRenderer { .. } => (
+			ConnectionState::UnsupportedRenderer => (
+				"icons/triangle-alert.svg",
+				theme::ERROR,
 				"Unsupported React Renderer",
 				"The device attached, but its React renderer is newer than this DevTools backend supports."
-					.to_string(),
-				false,
+					.into(),
 			),
-			ConnectionState::Listening { addr } if self.status.link.is_none() => (
-				"Waiting for Discord",
-				format!(
-					"Listening on {addr}. Turn on loader.devtools in Unbound's loader settings and restart Discord, then connect over the debugger bridge."
-				),
-				true,
+			ConnectionState::Waiting if bridge_down => (
+				"icons/unplug.svg",
+				theme::ERROR,
+				"The Debugger Isn't Running",
+				"Start it with bunx @unbound-app/debugger. This app connects as soon as it's up.".into(),
 			),
-			ConnectionState::Listening { addr } => (
-				"Waiting for Discord",
-				format!(
-					"Listening on {addr}. The debugger connection in the sidebar asks Discord to connect as soon as it is open with loader.devtools on."
-				),
-				false,
+			ConnectionState::Waiting => (
+				"icons/smartphone.svg",
+				theme::TEXT_FAINT,
+				"No Device Connected",
+				SETUP_STEPS.into(),
 			),
 			ConnectionState::Connected { .. } => (
+				"icons/component.svg",
+				theme::TEXT_FAINT,
 				"Waiting for the Component Tree",
-				"A device is connected. Its React tree appears here as soon as it renders.".to_string(),
-				false,
+				"A device is connected. Its React tree appears here as soon as it renders.".into(),
 			),
 		};
-		let mcp = self.status.mcp_url.clone().map(|url| {
-			div()
-				.mt(px(8.))
-				.text_size(theme::TEXT_SMALL)
-				.text_color(theme::color(theme::TEXT_FAINT))
-				.child(format!("Agents can attach at {url}"))
-		});
-		div().flex_1().flex().items_center().justify_center().child(
-			div()
-				.w(px(400.))
-				.flex()
-				.flex_col()
-				.items_center()
-				.gap(px(12.))
-				.child(img(assets::LOGO).size(px(40.)).rounded(px(10.)).mb(px(4.)))
-				.child(
-					div()
-						.text_size(theme::TEXT_HERO)
-						.font_weight(FontWeight::SEMIBOLD)
-						.child(title),
-				)
-				.child(
-					div()
-						.text_center()
-						.line_height(px(20.))
-						.text_color(theme::color(theme::TEXT_SECONDARY))
-						.child(SharedString::from(body)),
-				)
-				.when(can_connect, |column| {
-					column.child(
-						raised_button(
-							"connect-empty",
-							Raised::Primary,
-							None,
-							"Connect Device",
-							true,
-						)
-						.mt(px(8.))
-						.on_click(cx.listener(|this, _, window, cx| {
-							this.link
-								.update(cx, |link, cx| link.toggle_device_menu(window, cx))
-						})),
-					)
-				})
-				.children(mcp),
-		)
+		EmptyState::new(icon, title).tone(tone).body(body)
 	}
 }

@@ -5,7 +5,7 @@ use std::process::{Child, Command, Stdio};
 use std::time::Duration;
 
 use unbound_devtools_core::query::{self, FindQuery, NameMatch};
-use unbound_devtools_core::{Config, ConnectionState, Devtools, ElementId, PathSegment};
+use unbound_devtools_core::{Config, ConnectTarget, Devtools, ElementId, PathSegment};
 
 pub struct Device(Child);
 
@@ -26,19 +26,20 @@ pub fn key(segment: &str) -> PathSegment {
 	PathSegment::Key(segment.to_owned())
 }
 
+/// A session linked to a free local port, where [`spawn_device`] starts the harness's bridge. The
+/// link retries until the harness listens.
 pub fn session() -> (Devtools, SocketAddr) {
-	let devtools = Devtools::start(Config {
-		listen: "127.0.0.1:0".parse().expect("valid addr"),
-		bridge: "127.0.0.1:9".parse().expect("valid addr"),
-		advertise_host: None,
-	});
-	let ConnectionState::Listening { addr } = devtools.status().connection else {
-		panic!(
-			"listening on an ephemeral port: {:?}",
-			devtools.status().connection
-		);
-	};
+	let addr = std::net::TcpListener::bind("127.0.0.1:0")
+		.and_then(|listener| listener.local_addr())
+		.expect("a free port");
+	let devtools = Devtools::start(Config { bridge: addr });
 
+	devtools.link_to(
+		ConnectTarget {
+			bridge: addr.into(),
+		},
+		None,
+	);
 	(devtools, addr)
 }
 

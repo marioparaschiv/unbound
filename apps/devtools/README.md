@@ -19,8 +19,8 @@ Linux builds need glibc 2.35 or newer (Ubuntu 22.04, Debian 12). The builds are 
 ## How it connects
 
 1. When `loader.devtools` is `true`, the loader evaluates `devtools.<bytecode>.bundle` before Discord's bundle. It is react-devtools-core 8's backend, which supports React 19, compiled to Hermes bytecode by the client build (`packages/client/scripts/build/devtools`) and published with the client bundles on builds.unbound.rip. The loader downloads it from wherever its bundle came from, checks it against that build's signed manifest, and caches it.
-2. **Connect device** asks the device, over the Unbound debugger bridge, to dial this app on port 8097. The device dials the host from its own `debugger.address` setting, unless you pass `--advertise-host`.
-3. The app decodes the backend's messages into the component tree and keeps it live.
+2. **Connect device** makes this app a controller on the Unbound debugger bridge. When a device is on the bridge, the app starts a React DevTools session with it. Unbound's client hands the backend's messages to the debugger socket it already has open, and the bridge relays them to this app as `react-devtools` frames. Nothing else listens or dials, so turning on the debugger and `loader.devtools` is all the setup.
+3. The app decodes the backend's messages into the component tree and keeps it live. The **View Tree** page lists the device's native views over the same connection.
 
 To move to a newer backend, bump `react-devtools-core` in `packages/client/scripts/build/package.json` and in `harness/package.json` together.
 
@@ -33,15 +33,12 @@ blaze run -p unbound-devtools -- --bridge 127.0.0.1:9091
 
 Flags override the settings for one run.
 
-| Flag                               | Default (setting)                              | Meaning                                     |
-| ---------------------------------- | ---------------------------------------------- | ------------------------------------------- |
-| `--port` (`UNBOUND_DEVTOOLS_PORT`) | DevTools port, `8097`                          | Port the device's backend dials             |
-| `--bind`                           | `0.0.0.0`                                      | Address to listen on                        |
-| `--bridge`                         | `127.0.0.1:<bridge port, UNBOUND_BRIDGE_PORT>` | Debugger bridge used by **Connect device**  |
-| `--advertise-host`                 | Dial-back host, else `debugger.address`        | Host the device dials back                  |
-| `--mcp-port` / `--no-mcp`          | MCP port `8098`, Serve MCP                     | MCP endpoint at `http://127.0.0.1:8098/mcp` |
+| Flag                      | Default (setting)                              | Meaning                                     |
+| ------------------------- | ---------------------------------------------- | ------------------------------------------- |
+| `--bridge`                | `127.0.0.1:<bridge port, UNBOUND_BRIDGE_PORT>` | Debugger bridge used by **Connect device**  |
+| `--mcp-port` / `--no-mcp` | MCP port `8098`, Serve MCP                     | MCP endpoint at `http://127.0.0.1:8098/mcp` |
 
-**Settings** (the sidebar footer, or Ctrl+, / Cmd+,) holds the theme, how to run `ubd`, the project folder commands run in, the bridge port and dial-back host, and the DevTools and MCP ports. They are stored in `settings.json`, and the **Connect device** menu's presets (a name, a bridge `host:port`, an optional dial-back host) in `devices.json`, both in the platform config directory (`UNBOUND_DEVTOOLS_CONFIG_DIR` overrides it).
+**Settings** (the sidebar footer, or Ctrl+, / Cmd+,) holds the theme, how to run `ubd`, the project folder commands run in, the bridge port and the MCP port. They are stored in `settings.json`, and the **Connect device** menu's presets (a name and a bridge `host:port`) in `devices.json`, both in the platform config directory (`UNBOUND_DEVTOOLS_CONFIG_DIR` overrides it).
 
 ## Commands
 
@@ -68,7 +65,7 @@ The window serves MCP over streamable HTTP. An agent attached there shares your 
 | Tool                                                             | Does                                                                                                                     |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `status`                                                         | Connection, bridge, element counts, selection                                                                            |
-| `connect_device`, `list_presets`, `save_preset`, `remove_preset` | Make a device dial this app, by preset or by bridge address                                                              |
+| `connect_device`, `list_presets`, `save_preset`, `remove_preset` | Connect to a device's bridge, by preset or by address                                                                    |
 | `tree`                                                           | Indented outline from any element                                                                                        |
 | `find`                                                           | findInReactTree: name (exact, contains, regex), key, kind, subtree, and a jq predicate over each match's inspected props |
 | `query`                                                          | Any jq program over the tree as JSON                                                                                     |
@@ -83,8 +80,8 @@ The window serves MCP over streamable HTTP. An agent attached there shares your 
 ```sh
 blaze test                          # RA_JIT_SANDBOX=off when a test spawns bun
 cargo clippy --workspace --all-targets -- -D warnings
-cd harness && bun install && bun device.mjs 8097   # a fake device with a React 19 tree
-DEPTH=600 WIDTH=2000 bun device.mjs 8097           # a Discord-scale tree
+cd harness && bun install && bun device.mjs 9090   # a fake bridge with a React 19 device on it
+DEPTH=600 WIDTH=2000 bun device.mjs 9090           # a Discord-scale tree
 ```
 
 `crates/core` has the wire protocol, element store, inspection, jq queries, presets and the MCP server, with no UI dependency. `crates/app` is the gpui window and the CLI.

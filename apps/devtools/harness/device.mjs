@@ -1,19 +1,18 @@
-// usage: [DEPTH=n] [WIDTH=n] [TICK_MS=n] bun device.mjs [port=8097] [host=127.0.0.1]
+// usage: [DEPTH=n] [WIDTH=n] [TICK_MS=n] bun device.mjs [port=9090]
+// A debugger bridge with a device already attached: controllers dial ws://127.0.0.1:<port>/?mcp and
+// get React DevTools over `react-devtools` frames, as Unbound's client and bridge carry them.
 // DEPTH nests the app n components deep (function, memo, host View in turn) and WIDTH adds n sibling
 // rows at the bottom, to mimic Discord-scale trees.
 import { createRequire } from 'node:module';
-import WebSocket from 'ws';
+import { WebSocketServer } from 'ws';
 
-const port = Number(process.argv[2] ?? 8097);
-const host = process.argv[3] ?? '127.0.0.1';
+const port = Number(process.argv[2] ?? 9090);
 const require = createRequire(import.meta.url);
 
 globalThis.window = globalThis;
-globalThis.WebSocket = WebSocket;
 // The same backend the client build ships as `devtools.<bytecode>.bundle`, set up the way its entry does.
 const backend = require('react-devtools-core/dist/backend.js');
 backend.initialize();
-window.DevTools = { connect: backend.connectToDevTools };
 
 const React = require('react');
 const TestRenderer = require('react-test-renderer');
@@ -109,10 +108,78 @@ function render(tick) {
 
 let tick = 0;
 const root = TestRenderer.create(render(tick));
-window.DevTools.connect({ host, port });
 
 if (process.env.TICK_MS) {
 	setInterval(() => root.update(render(++tick % 5)), Number(process.env.TICK_MS));
 }
 
-console.log(`device up, dialing ws://${host}:${port}`);
+// The device side, as `react-devtools.dev.ts` runs it: a session starts on the frontend's first frame
+// and ends on `shutdown`.
+let session = null;
+let frontend = null;
+
+function toFrontend(event, payload) {
+	frontend?.send(JSON.stringify({ type: 'react-devtools', event, payload }));
+}
+
+function receive(frame) {
+	if (frame.event === 'shutdown') {
+		endSession();
+		return;
+	}
+
+	if (!session) {
+		const listeners = new Set();
+		session = { listeners, unsubscribe: null };
+		session.unsubscribe = backend.connectWithCustomMessagingProtocol({
+			onSubscribe: (listener) => listeners.add(listener),
+			onUnsubscribe: (listener) => listeners.delete(listener),
+			onMessage: toFrontend,
+		});
+		toFrontend('unbound:backend-status', { connected: true });
+	}
+
+	for (const listener of session.listeners)
+		listener({ event: frame.event, payload: frame.payload });
+}
+
+function endSession() {
+	if (!session) return;
+
+	const { listeners, unsubscribe } = session;
+	session = null;
+
+	for (const listener of listeners) listener({ event: 'shutdown' });
+
+	unsubscribe?.();
+}
+
+const device = {
+	platform: 'android',
+	discordVersion: '300.0',
+	loaderVersion: '1.0.0',
+	clientVersion: '2.0.0',
+};
+const server = new WebSocketServer({ host: '127.0.0.1', port });
+
+server.on('connection', (socket) => {
+	socket.send(JSON.stringify({ type: 'device-status', connected: true, device }));
+
+	socket.on('message', (raw) => {
+		const frame = JSON.parse(String(raw));
+
+		if (frame.type === 'react-devtools') {
+			frontend = socket;
+			receive(frame);
+		}
+	});
+
+	socket.on('close', () => {
+		if (frontend !== socket) return;
+
+		frontend = null;
+		endSession();
+	});
+});
+
+console.log(`device up, bridge on ws://127.0.0.1:${port}`);

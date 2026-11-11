@@ -8,6 +8,7 @@ import {
 	detachDevice,
 	evaluateForController,
 	handleDeviceMessage,
+	relayReactDevtools,
 	type SocketLike,
 } from '~/lib/session';
 
@@ -110,6 +111,37 @@ describe('attachDevice', () => {
 			},
 			{ type: 'eval-result', id: 'fresh', ok: true, value: '1' },
 		]);
+	});
+});
+
+describe('React DevTools', () => {
+	const operations = { type: 'react-devtools', event: 'operations', payload: [1] } as const;
+	const inspect = { type: 'react-devtools', event: 'inspectElement', payload: {} } as const;
+
+	test('routes device frames to the controller that last sent one', () => {
+		const other = recordingSocket();
+
+		attachDevice(device);
+		attachController(controller);
+		attachController(other);
+		relayReactDevtools(controller, inspect);
+		handleDeviceMessage(operations);
+		detachController(other);
+
+		expect(device.frames).toEqual([inspect]);
+		expect(controller.frames.at(-1)).toEqual(operations);
+		expect(other.frames).toEqual([{ type: 'device-status', connected: true }]);
+	});
+
+	test('shuts the device session down when the frontend leaves', () => {
+		attachDevice(device);
+		attachController(controller);
+		relayReactDevtools(controller, inspect);
+		detachController(controller);
+		handleDeviceMessage(operations);
+
+		expect(device.frames).toEqual([inspect, { type: 'react-devtools', event: 'shutdown' }]);
+		expect(controller.frames).toEqual([{ type: 'device-status', connected: true }]);
 	});
 });
 
