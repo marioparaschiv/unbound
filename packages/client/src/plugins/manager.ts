@@ -11,6 +11,7 @@ import type { Addon, AddonResolveable } from '~/addons/addon';
 import { createPluginContext } from '~/native/plugin-context';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { readPluginEntry } from '~/plugins/legacy-entry';
+import { pluginSourceName } from '~/plugins/source-name';
 import { rememberSourceDigest } from '~/addons/digests';
 import type { ReloadResult } from '~/addons/addons';
 import { createAddonScope } from '~/addons/scope';
@@ -209,7 +210,7 @@ export class Plugins extends Addons<Plugin> {
 		}
 
 		const factory =
-			this.compiledFactory(bundle, id) ?? this.sourceFactory(this.sourceOf(bundle, id));
+			this.compiledFactory(bundle, id) ?? this.sourceFactory(this.sourceOf(bundle, id), id);
 
 		this.evaluated.set(id, { bundle, factory });
 
@@ -232,9 +233,11 @@ export class Plugins extends Addons<Plugin> {
 		return source;
 	}
 
-	private sourceFactory(bundle: string): PluginFactory {
+	private sourceFactory(bundle: string, id: string): PluginFactory {
+		const body = `return ${bundle}\n//# sourceURL=${pluginSourceName(id)}`;
+
 		// oxlint-disable-next-line typescript/no-implied-eval
-		return new Function(...ADDON_SCOPE_GLOBALS, `return ${bundle}`) as PluginFactory;
+		return new Function(...ADDON_SCOPE_GLOBALS, body) as PluginFactory;
 	}
 
 	/**
