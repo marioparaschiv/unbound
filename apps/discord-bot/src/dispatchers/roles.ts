@@ -35,7 +35,6 @@ export type RolesGuilds = { fetch: (guildId: string) => Promise<RolesGuild> };
 
 type RoleDefinition = {
 	key: string;
-	/** The id constant holding the role's id. */
 	constant: IdConstantName;
 	/** Asked only of a member with GitHub linked, the precondition of every role. */
 	qualifies: (row: Member, contributors: ReadonlySet<string> | undefined) => boolean;
@@ -74,7 +73,6 @@ export type RolesOptions = {
 	/** The bot's guilds, of which it fetches `guildId`. */
 	guilds: RolesGuilds;
 	contributors: ContributorCache;
-	/** The role id of each role's id constant. */
 	ids: Readonly<Record<RoleConstant, string>>;
 	/** The clock, in epoch milliseconds. */
 	now: () => number;

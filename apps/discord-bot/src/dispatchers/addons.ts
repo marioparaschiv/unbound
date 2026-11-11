@@ -174,7 +174,6 @@ export function createAddonsDispatcher({ channels, messages, emojis }: AddonsOpt
 		name: 'addons',
 		channel: 'addon_changed',
 		reconcile,
-		// The payload is the addon id.
 		handle: (id, context) => sync(context, id),
 	};
 }
