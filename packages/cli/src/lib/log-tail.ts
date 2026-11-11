@@ -19,7 +19,8 @@ import { safeParse, Type } from '~/lib/schema';
 
 export type TailOptions = {
 	since?: string;
-	follow: boolean;
+	/** Keep printing new lines; defaults to following only when no `since` asks for history. */
+	follow?: boolean;
 	emit: (event: LogEvent) => void;
 };
 
@@ -74,7 +75,7 @@ export async function tailAndroid(
 	target: AndroidTarget,
 	options: TailOptions,
 ): Promise<CommandOutput> {
-	const { since, follow, emit } = options;
+	const { since, follow = since === void 0, emit } = options;
 	const { program, argv } = target.adb;
 
 	function adb(args: string[], timeoutMs = ADB_TIMEOUT_MS) {
@@ -170,7 +171,13 @@ export async function tailAndroid(
  * @returns Once the history is printed when not following; otherwise only on failure.
  */
 export async function tailIOS(target: IOSTarget, options: IOSTailOptions): Promise<CommandOutput> {
-	const { since, follow, emit, run = runCommand, syslog = IDEVICESYSLOG } = options;
+	const {
+		since,
+		follow = since === void 0,
+		emit,
+		run = runCommand,
+		syslog = IDEVICESYSLOG,
+	} = options;
 	const { udid } = target;
 
 	const start = since === void 0 ? void 0 : parseSince(since, Date.now());

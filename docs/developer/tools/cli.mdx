@@ -265,8 +265,8 @@ Keys built at run time, such as `messages[name]`, are not found. The report coun
 | --- | --- |
 | `--level` | Lowest level: `verbose`, `debug`, `info`, `warn`, `error` or `fatal`. Defaults to `verbose`. |
 | `--grep` | Only lines matching a regular expression. |
-| `--since` | Start from history: a duration (`5m`), a time (`14:30`) or a date. iOS history holds only notices, errors and faults. |
-| `--follow=false` | Print history and exit. |
+| `--since` | Print history from a duration (`5m`), a time (`14:30`) or a date, then exit. iOS history holds only notices, errors and faults. |
+| `--follow` | Keep printing new lines after the `--since` history. On by default without `--since`; `--follow=false` prints the buffered history and exits. |
 | `--symbolicate` | Map Hermes frames of the client bundle to source with the maps in `packages/client/dist`. `--bundle` picks the bundle. |
 | `--pull` | Copy the loader's own log files off the device instead. They survive restarts and include the console. `--out` sets the folder. |
 

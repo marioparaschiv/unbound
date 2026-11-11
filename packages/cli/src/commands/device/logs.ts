@@ -45,12 +45,11 @@ const schema = Type.Object({
 				'Start from history: a duration such as 5m, a clock time such as 14:30, or a date. iOS history holds notices, errors and faults only.',
 		}),
 	),
-	follow: defaulted(
+	follow: Type.Optional(
 		Type.Boolean({
 			description:
-				'Keep printing new lines; pass --follow=false to print the history and exit.',
+				'Keep printing new lines. On by default without --since; --since alone prints the history and exits.',
 		}),
-		true,
 	),
 	symbolicate: defaulted(
 		Type.Boolean({
@@ -85,7 +84,7 @@ const logsCommand: CommandDefinition<typeof schema> = {
 	description:
 		"Tail Discord's log, filtered to Unbound, the JavaScript console and crashes: on Android " +
 		'through adb logcat for com.discord, following it across restarts, or on a jailbroken iPhone ' +
-		'through its unified log. Runs until interrupted.',
+		'through its unified log. Runs until interrupted, or with --since prints the history and exits.',
 	summary: "Tail Discord's log, or pull the loader's log files.",
 	mcp: false,
 	schema,
