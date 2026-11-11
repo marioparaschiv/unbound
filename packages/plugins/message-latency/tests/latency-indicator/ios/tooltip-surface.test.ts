@@ -1,34 +1,58 @@
 import { expect, test } from 'bun:test';
 import { native } from '@unbound-app/api/testing';
-import type {
-	NativeFabricBatchMutation,
-	NativeFabricBridge,
-	NativeFabricSize,
-} from '@unbound-app/api/native';
+import type { NativeFabricSize } from '@unbound-app/api/native';
 
 import { layoutTooltipSurface } from '~/latency-indicator/ios/tooltip-surface';
 
-test('sizes and positions the tooltip surface in one frame batch', async () => {
-	const calls: NativeFabricBatchMutation[][] = [];
+// `batchAsync` is always present in a plugin's scope; a loader without it gets a stand-in that throws.
+function fakeFabric() {
+	const calls: [name: string, ...args: unknown[]][] = [];
+	const record =
+		(name: string) =>
+		(...args: unknown[]) => {
+			calls.push([name, ...args]);
+
+			return Promise.resolve();
+		};
 	const fabric = {
-		batchAsync(mutations: NativeFabricBatchMutation[]) {
-			calls.push(mutations);
+		setSizeAsync: record('setSize'),
+		setFrameAsync: record('setFrame'),
+		batchAsync: record('batch'),
+	};
 
-			return Promise.resolve() as ReturnType<NativeFabricBridge['batchAsync']>;
-		},
-	} satisfies Pick<NativeFabricBridge, 'batchAsync'>;
+	return { calls, fabric: fabric as never };
+}
+
+const size: NativeFabricSize = { width: 128, height: 64 };
+
+test('sizes and positions the tooltip surface in one frame batch on native plugin API 1.2.0', async () => {
+	const { calls, fabric } = fakeFabric();
 	const surface = native.objc.create('UIView');
-	const size: NativeFabricSize = { width: 128, height: 64 };
 
-	await layoutTooltipSurface(fabric, surface, size);
+	await layoutTooltipSurface(fabric, '1.2.0', surface, size);
 
 	expect(calls).toEqual([
 		[
-			{
-				surface,
-				size: { minimum: size, maximum: size },
-				frame: { x: 0, y: 0, width: 128, height: 64 },
-			},
+			'batch',
+			[
+				{
+					surface,
+					size: { minimum: size, maximum: size },
+					frame: { x: 0, y: 0, width: 128, height: 64 },
+				},
+			],
 		],
+	]);
+});
+
+test('sizes then positions the tooltip surface on native plugin API 1.1.0', async () => {
+	const { calls, fabric } = fakeFabric();
+	const surface = native.objc.create('UIView');
+
+	await layoutTooltipSurface(fabric, '1.1.0', surface, size);
+
+	expect(calls).toEqual([
+		['setSize', surface, size, size],
+		['setFrame', surface, { x: 0, y: 0, width: 128, height: 64 }],
 	]);
 });
