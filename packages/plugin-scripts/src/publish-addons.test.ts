@@ -389,6 +389,7 @@ test('publishes an icon pack from a submodule workspace, copying its files into 
 	const image = 'design/images/SettingsIcon';
 
 	mkdirSync(join(packs, 'delta', 'design', 'images'), { recursive: true });
+	mkdirSync(join(packs, 'delta', 'media'), { recursive: true });
 	git(packs, 'init', '-q', '-b', 'main');
 	git(packs, 'config', 'user.name', 'Test');
 	git(packs, 'config', 'user.email', 'test@example.com');
@@ -406,6 +407,7 @@ test('publishes an icon pack from a submodule workspace, copying its files into 
 		}),
 	);
 	writeFileSync(join(packs, 'delta', `${image}@3x.png`), png(72, 48));
+	writeFileSync(join(packs, 'delta', 'media', 'banner.png'), png(1200, 400));
 	git(packs, 'add', '-A');
 	git(packs, 'commit', '-q', '-m', 'feat(delta): redraw the settings icon');
 	git(
@@ -449,7 +451,12 @@ test('publishes an icon pack from a submodule workspace, copying its files into 
 		height: 16,
 		scales: { '3': sha256 },
 	});
+	// The store page's banner ships as a file, not as an icon.
+	expect(Object.keys(manifest.assets)).toEqual([image]);
 	expect(JSON.parse(show('delta/icons.json'))).toEqual([`${image}@3x.png`]);
+	expect(git(work, 'cat-file', '-s', `${build}:packages/icon-packs/delta/media/banner.png`)).toBe(
+		'33',
+	);
 	expect(
 		git(work, 'cat-file', '-s', `${build}:packages/icon-packs/delta/assets/${sha256}.png`),
 	).toBe('33');

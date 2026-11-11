@@ -4980,6 +4980,8 @@ export type NewerDesignComponents = {
 	SearchBar: DesignBarrelComponents['TextField'];
 	/** Discord's status label, such as New or Beta, or custom text. */
 	Badge: React$1.ComponentType<BadgeProps>;
+	/** Discord 354's settings slider row: its label and live value over a `Slider`. */
+	TableSliderRow: React$1.ComponentType<TableSliderRowProps>;
 };
 export type NitroGem12LottieComponent = React$1.ComponentType<
 	NitroGem12LottieProps & Record<string, unknown>
@@ -5822,10 +5824,6 @@ export type StringSettingSchema = {
 	placeholder?: string;
 	/** `color`: also takes an alpha channel, `#RRGGBBAA`. */
 	alpha?: boolean;
-	/** `color`: colors offered first. */
-	presets?: string[];
-	/** `color`: draws `presets` inline instead of a swatch row. */
-	palette?: boolean;
 	/** `image`: the largest file accepted, in bytes. */
 	maxSize?: number;
 };
@@ -6072,6 +6070,28 @@ export type TableRowTrailingTextComponent = React$1.ComponentType<TableRowTraili
  */
 export type TableRowTrailingTextProps = {
 	text?: DesignTextProps['children'];
+};
+/**
+ * The props of Discord's `TableSliderRow`, read from Discord 354's `design/components/TableRow/native/TableSliderRow.native.tsx`.
+ * Any other prop, such as `maxValue` or `step`, goes to its `Slider`.
+ */
+export type TableSliderRowProps = {
+	/** The title, drawn left of the formatted value. */
+	label: string;
+	/** The value the slider starts at and follows. */
+	value: number;
+	/** The value the slider marks on its track. */
+	defaultValue?: number;
+	/** The lowest value; `0` when omitted. */
+	minValue?: number;
+	/** Formats the value shown right of the label; no value is shown when omitted. */
+	formatValue?: (value: number) => string;
+	/** Called with each value while dragging. */
+	onChange?: (value: number) => void;
+	/** Whether the row starts its group's card, when it is not in a `TableRowGroup`. */
+	start?: boolean;
+	/** Whether the row ends its group's card, when it is not in a `TableRowGroup`. */
+	end?: boolean;
 };
 export type TableSwitchRowComponent = React$1.ComponentType<
 	TableSwitchRowProps & Record<string, unknown>

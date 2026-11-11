@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.15.0](https://github.com/marioparaschiv/unbound/compare/types-v0.14.0...types-v0.15.0) (2026-11-11)
+
+
+### Features
+
+* **loader:** judge launches by render and exit, retry updates ([#1086](https://github.com/marioparaschiv/unbound/issues/1086)) ([cd39991](https://github.com/marioparaschiv/unbound/commit/cd399911d22a11fe8fbf4db09d6ad3184302eb3b))
+
+## [0.14.0](https://github.com/marioparaschiv/unbound/compare/types-v0.13.1...types-v0.14.0) (2026-11-11)
+
+
+### Features
+
+* **client:** draw settings-kit rows with Discord's built-ins ([#1084](https://github.com/marioparaschiv/unbound/issues/1084)) ([cb3b9e2](https://github.com/marioparaschiv/unbound/commit/cb3b9e285094a1f55d4eb75ed8e19826e61758fa))
+* **loader:** health-gated updates and crash recovery ([#1063](https://github.com/marioparaschiv/unbound/issues/1063)) ([0cd3772](https://github.com/marioparaschiv/unbound/commit/0cd37726daa68a2a8c4a2cae49c01e881649ce2e))
+
 ## [0.13.1](https://github.com/marioparaschiv/unbound/compare/types-v0.13.0...types-v0.13.1) (2026-11-09)
 
 

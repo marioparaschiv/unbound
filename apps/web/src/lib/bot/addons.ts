@@ -29,11 +29,11 @@ const LISTING = {
 	},
 } as const;
 
-// The website shows a plug or a palette when maintainers picked no icon; `renderAddonIcon` knows both.
+// The website shows these when maintainers picked no icon; `renderAddonIcon` knows them all.
 const DEFAULT_ICONS: Record<AddonType, string> = {
 	plugin: 'IconPlug',
-	theme: 'IconPalette',
-	'icon-pack': 'IconPlug',
+	theme: 'IconColorPalette',
+	'icon-pack': 'IconGrid',
 	font: 'IconPlug',
 };
 

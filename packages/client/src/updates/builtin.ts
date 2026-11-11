@@ -68,9 +68,12 @@ export function start() {
 	pending = setTimeout(() => void update());
 	stagedCheck = setTimeout(announceStagedBundle, STAGED_CHECK_DELAY);
 	appState = AppState.addEventListener('change', (state) => {
-		if (state === 'active') {
-			announceStagedBundle();
-		}
+		if (state !== 'active') return;
+
+		announceStagedBundle();
+		// Returning to the foreground can start a loader update check, which takes a moment to download.
+		clearTimeout(stagedCheck);
+		stagedCheck = setTimeout(announceStagedBundle, STAGED_CHECK_DELAY);
 	});
 }
 

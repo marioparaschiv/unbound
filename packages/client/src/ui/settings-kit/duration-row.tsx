@@ -1,9 +1,12 @@
 import { useEffect, useState, type ReactElement } from 'react';
+import { View } from 'react-native';
 
 import { splitDuration, UNIT_MS, type DurationUnit } from '~/ui/settings-kit/number-input';
 import SegmentedRow from '~/ui/settings-kit/segmented-row';
 import NumberRow from '~/ui/settings-kit/number-row';
 import { messages } from '~/i18n/api';
+
+import useStyles from './duration-row.style';
 
 /** Props for `DurationRow`. */
 export type DurationRowProps = {
@@ -51,6 +54,7 @@ function DurationRow({
 	onChange,
 }: DurationRowProps): ReactElement {
 	const split = splitDuration(value, units);
+	const styles = useStyles();
 	const [unit, setUnit] = useState(split.unit);
 	const scale = UNIT_MS[unit];
 
@@ -67,13 +71,20 @@ function DurationRow({
 				disabled={disabled}
 				onChange={(amount) => onChange(Math.round(amount * scale))}
 			/>
-			<SegmentedRow
-				label={messages.UNBOUND_UNIT}
-				value={unit}
-				options={units.map((each) => ({ value: each, label: messages[UNIT_LABELS[each]] }))}
-				disabled={disabled}
-				onChange={(next) => setUnit(units.find((each) => each === next) ?? unit)}
-			/>
+			<View style={styles.unit}>
+				<View style={styles.unitRow}>
+					<SegmentedRow
+						label={messages.UNBOUND_UNIT}
+						value={unit}
+						options={units.map((each) => ({
+							value: each,
+							label: messages[UNIT_LABELS[each]],
+						}))}
+						disabled={disabled}
+						onChange={(next) => setUnit(units.find((each) => each === next) ?? unit)}
+					/>
+				</View>
+			</View>
 		</>
 	);
 }

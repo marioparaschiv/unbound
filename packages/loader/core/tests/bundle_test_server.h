@@ -138,6 +138,8 @@ struct Server {
     std::map<std::string, std::string> lastHeaders;
     std::string                        lastDownload;
     int                                downloads = 0;
+    // Answers the next bundle download with this instead of the file.
+    std::optional<loader::DownloadResult> failNext;
 
     Server()
     {
@@ -180,6 +182,12 @@ struct Server {
                 lastHeaders  = headers;
                 lastDownload = url;
                 downloads++;
+                if (failNext)
+                {
+                    loader::DownloadResult failure = *failNext;
+                    failNext.reset();
+                    return failure;
+                }
                 auto file = files.find(url);
                 if (file == files.end())
                 {

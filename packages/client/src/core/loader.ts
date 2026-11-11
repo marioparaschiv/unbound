@@ -1,6 +1,7 @@
 import { createLogger } from '@unbound-app/logger';
 
-import { watchFirstFrame } from '~/core/first-frame';
+import { afterFirstFrame, watchFirstFrame } from '~/core/first-frame';
+import { markRendered } from '~/native/unbound-native';
 import { captureMetro } from '~/metro/capture';
 
 // `window` is referenced throughout the client but the host only defines it later in its own
@@ -100,6 +101,7 @@ function onMainModuleRun(onReady: () => void | Promise<void>) {
 		}
 
 		watchFirstFrame();
+		afterFirstFrame(markRendered);
 
 		if (initialized) {
 			markReady();

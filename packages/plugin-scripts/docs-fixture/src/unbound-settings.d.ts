@@ -55,19 +55,16 @@ declare module '@unbound-app/settings/schema' {
 		| ({ displayAs: 'duration'; /** The units offered, smallest first. */ units?: ('ms' | 's' | 'm' | 'h' | 'd')[] } & Range & Never<'step'>);
 
 	type TextOptions = { minLength?: number; maxLength?: number; placeholder?: MessageKey };
-	type ColorOptions = { alpha?: boolean; default: HexColor } & (
-		| { palette?: false; presets?: HexColor[] }
-		| { /** Draws `presets` inline. */ palette: true; presets: [HexColor, ...HexColor[]] }
-	);
+	type ColorOptions = { alpha?: boolean; default: HexColor };
 	type StringDisplay =
-		| ({ displayAs?: 'input' | 'multiline'; default: string } & TextOptions & Never<'alpha' | 'presets' | 'palette' | 'maxSize'>)
-		| ({ displayAs: 'secret'; default: string; placeholder?: MessageKey } & Never<'minLength' | 'maxLength' | 'alpha' | 'presets' | 'palette' | 'maxSize'>)
-		| ({ displayAs: 'url'; default: HttpUrl | ''; placeholder?: MessageKey } & Never<'minLength' | 'maxLength' | 'alpha' | 'presets' | 'palette' | 'maxSize'>)
+		| ({ displayAs?: 'input' | 'multiline'; default: string } & TextOptions & Never<'alpha' | 'maxSize'>)
+		| ({ displayAs: 'secret'; default: string; placeholder?: MessageKey } & Never<'minLength' | 'maxLength' | 'alpha' | 'maxSize'>)
+		| ({ displayAs: 'url'; default: HttpUrl | ''; placeholder?: MessageKey } & Never<'minLength' | 'maxLength' | 'alpha' | 'maxSize'>)
 		| ({ displayAs: 'color' } & ColorOptions & Never<'minLength' | 'maxLength' | 'placeholder' | 'maxSize'>)
-		| ({ displayAs: 'image'; default?: string; /** The largest file, in bytes. */ maxSize?: number } & Never<'minLength' | 'maxLength' | 'placeholder' | 'alpha' | 'presets' | 'palette'>)
-		| ({ displayAs: 'font'; default?: string } & Never<'minLength' | 'maxLength' | 'placeholder' | 'alpha' | 'presets' | 'palette' | 'maxSize'>)
-		| ({ /** `name`, or `name:id` for a custom emoji. */ displayAs: 'emoji'; default?: EmojiString } & Never<'minLength' | 'maxLength' | 'placeholder' | 'alpha' | 'presets' | 'palette' | 'maxSize'>)
-		| ({ displayAs: 'user' | 'channel' | 'guild' | 'role'; default?: Snowflake | '' } & Never<'minLength' | 'maxLength' | 'placeholder' | 'alpha' | 'presets' | 'palette' | 'maxSize'>);
+		| ({ displayAs: 'image'; default?: string; /** The largest file, in bytes. */ maxSize?: number } & Never<'minLength' | 'maxLength' | 'placeholder' | 'alpha'>)
+		| ({ displayAs: 'font'; default?: string } & Never<'minLength' | 'maxLength' | 'placeholder' | 'alpha' | 'maxSize'>)
+		| ({ /** `name`, or `name:id` for a custom emoji. */ displayAs: 'emoji'; default?: EmojiString } & Never<'minLength' | 'maxLength' | 'placeholder' | 'alpha' | 'maxSize'>)
+		| ({ displayAs: 'user' | 'channel' | 'guild' | 'role'; default?: Snowflake | '' } & Never<'minLength' | 'maxLength' | 'placeholder' | 'alpha' | 'maxSize'>);
 
 	/** An option's label: a message key, or a title and a subtitle a radio group shows under it. */
 	export type OptionLabel = MessageKey | { title: MessageKey; subtitle?: MessageKey };

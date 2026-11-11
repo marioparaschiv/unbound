@@ -1,7 +1,14 @@
+import { IconColorPalette, IconGrid, IconPlug } from 'nucleo-micro-bold';
 import type { AddonType } from '@unbound-app/contracts/addons';
-import { IconPalette, IconPlug } from 'nucleo-micro-bold';
 
 import cn from '~/lib/cn';
+
+const FALLBACKS: Record<AddonType, typeof IconPlug> = {
+	plugin: IconPlug,
+	theme: IconColorPalette,
+	'icon-pack': IconGrid,
+	font: IconPlug,
+};
 
 type AddonIconProps = {
 	type: AddonType;
@@ -10,7 +17,7 @@ type AddonIconProps = {
 	className?: string;
 };
 
-/** An addon's website icon: the one its maintainers picked, else a plug or a palette by type. */
+/** An addon's website icon: the one its maintainers picked, else its type's default. */
 function AddonIcon({ type, svg, className }: AddonIconProps) {
 	if (svg) {
 		// The markup comes from our own icon components on the server, never from user input.
@@ -23,7 +30,7 @@ function AddonIcon({ type, svg, className }: AddonIconProps) {
 		);
 	}
 
-	const Fallback = type === 'theme' ? IconPalette : IconPlug;
+	const Fallback = FALLBACKS[type];
 
 	return <Fallback className={className} aria-hidden />;
 }

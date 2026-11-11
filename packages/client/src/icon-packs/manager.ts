@@ -16,6 +16,7 @@ import type { InstalledEntry } from '~/updates/addon-updates';
 import { refreshImages } from '~/icon-packs/refresh-images';
 import { getById, onAssetRegistered } from '~/assets/api';
 import { downloadFile } from '~/native/download-file';
+import { getSha256 } from '~/native/unbound-native';
 import type { AddonFiles } from '~/addons/files';
 import { ImageSources } from '~/metro/common';
 import { Manager } from '~/addons/manager';
@@ -68,6 +69,19 @@ function isPathList(value: unknown): value is string[] {
 	return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
 }
 
+// Points an asset at a pack file, or back at Discord's own when the pack has none.
+function stamp(asset: UnboundAsset, file: IconFile | undefined) {
+	if (!file) {
+		delete asset.iconPackPath;
+		delete asset.iconPackScale;
+
+		return;
+	}
+
+	asset.iconPackPath = file.path;
+	asset.iconPackScale = file.scale;
+}
+
 /** The built-in pack: a no-op passthrough that renders Discord's own icons. */
 const defaultPack: IconPack = {
 	bundle: 'Default',
@@ -118,10 +132,20 @@ export class Icons extends Addons<Plugin> {
 
 	/**
 	 * @description Lists the installed packs for an update check, leaving out the built-in default pack.
-	 * @returns One entry per installed pack.
+	 * A pack loads from settings without its bundle, so each entry carries the digest recorded at install.
+	 * @returns One entry per installed pack; without a recorded digest, none is sent.
 	 */
 	listInstalled(): InstalledEntry[] {
-		return super.listInstalled().filter((entry) => entry.id !== defaultPack.manifest.id);
+		const digests = this.getDigests();
+
+		return super
+			.listInstalled()
+			.filter((entry) => entry.id !== defaultPack.manifest.id)
+			.map(({ kind, id, name, version }) => {
+				const sha256 = digests[id];
+
+				return sha256 ? { kind, id, name, version, sha256 } : { kind, id, name, version };
+			});
 	}
 
 	get applied(): IconPack {
@@ -163,8 +187,12 @@ export class Icons extends Addons<Plugin> {
 
 			this.settings.set('applied', pack);
 
-			this.removePack();
-			await this.applyPack(resolved.id);
+			if (resolved.id === defaultPack.manifest.id) {
+				this.removePack();
+			} else {
+				await this.applyPack(resolved.id);
+			}
+
 			refreshImages();
 
 			this.emit('enabled', resolved);
@@ -200,7 +228,6 @@ export class Icons extends Addons<Plugin> {
 
 		try {
 			this.indexes.delete(resolved.id);
-			this.removePack();
 			await this.applyPack(resolved.id);
 			refreshImages();
 		} catch (error) {
@@ -229,6 +256,7 @@ export class Icons extends Addons<Plugin> {
 			this.indexes.delete(resolved.id);
 			await fs.removeFile(this.directoryOf(resolved.id));
 			this.forgetSource(resolved.id);
+			this.forgetDigest(resolved.id);
 
 			this.emit('deleted', resolved);
 		} catch (error) {
@@ -237,20 +265,23 @@ export class Icons extends Addons<Plugin> {
 	}
 
 	/**
-	 * @description Applies a pack: stamps every registered asset with its on-disk override path, then
-	 * patches the source resolution of every `Image` render to swap numeric sources for the pack's files.
-	 * Stamps are awaited before the patch installs, so no image renders against an un-stamped asset.
+	 * @description Applies a pack, replacing the applied one: finds every registered asset's file, then stamps them all and
+	 * swaps the `Image` source patch in one synchronous step, so no frame draws Discord's icons or a mix of two packs.
 	 * Assets that register later are stamped as they register.
 	 * @param id The pack id to apply. The `default` pack is a no-op.
 	 */
 	async applyPack(id: string) {
-		if (id === 'default') return;
+		if (id === defaultPack.manifest.id) return;
 
-		const stamps: Array<Promise<void>> = [];
+		// Read once: the pack list crosses the native settings bridge whole, about 1.5 ms per read.
+		const manifest = this.findPack(id)?.manifest;
 		const files = await this.readIndex(id);
+		const assets: UnboundAsset[] = [];
 
 		this.stopStamping();
-		this.stopStamping = onAssetRegistered((asset) => void this.stampAsset(id, asset, files));
+		this.stopStamping = onAssetRegistered(
+			(asset) => void this.stampAsset(id, asset, files, manifest),
+		);
 
 		for (let assetId = 1; ; assetId++) {
 			const asset = getById(assetId);
@@ -259,10 +290,18 @@ export class Icons extends Addons<Plugin> {
 				break;
 			}
 
-			stamps.push(this.stampAsset(id, asset, files));
+			assets.push(asset);
 		}
 
-		await Promise.all(stamps);
+		const found = await Promise.all(
+			assets.map(async (asset) => this.lookupFile(id, asset, files, manifest)),
+		);
+
+		for (const [index, asset] of assets.entries()) {
+			stamp(asset, found[index]);
+		}
+
+		this.patcher.unpatchAll();
 
 		// Every `Image` render resolves its source through this helper, which it reads off the module at call time.
 		this.patcher.before(ImageSources, 'getImageSourcesFromImageProps', ({ args: [props] }) => {
@@ -304,7 +343,7 @@ export class Icons extends Addons<Plugin> {
 	async findIconFile(id: string, asset: UnboundAsset): Promise<IconFile | undefined> {
 		if (id === defaultPack.manifest.id) return;
 
-		return this.lookupFile(id, asset, await this.readIndex(id));
+		return this.lookupFile(id, asset, await this.readIndex(id), this.findPack(id)?.manifest);
 	}
 
 	/**
@@ -326,31 +365,50 @@ export class Icons extends Addons<Plugin> {
 		return icons.map(({ path, scale }) => ({ path: `${directory}/${path}`, scale }));
 	}
 
-	// A store pack lists its images in its manifest; a GitHub pack with an index is checked in memory,
-	// and one installed before indexes asks the disk per scale.
-	private async lookupFile(
+	// Manifest and index lookups answer at once: Discord registers an icon mid-render, and that render reads
+	// the stamp. Only a GitHub pack installed before indexes asks the disk.
+	private lookupFile(
 		id: string,
 		asset: UnboundAsset,
 		files: Set<string> | undefined,
-	): Promise<IconFile | undefined> {
-		const manifest = this.findPack(id)?.manifest;
+		manifest: AddonManifest | undefined,
+	): IconFile | undefined | Promise<IconFile | undefined> {
 		const scales = [...asset.scales].sort((a, b) => b - a);
 
 		if (manifest?.assets) {
 			return this.findListedFile(manifest, asset, scales);
 		}
 
-		for (const scale of scales) {
-			const relative = this.relativeAssetPath(asset, scale);
-			const path = `${this.directoryOf(id)}/${relative}`;
-			const found = files ? files.has(relative) : await fs.exists(path);
+		if (files) {
+			const scale = scales.find((value) => files.has(this.relativeAssetPath(asset, value)));
 
-			if (found) {
-				return { path: `${fs.documentsPath}/${path}`, scale };
+			return scale === undefined ? undefined : this.packFile(id, asset, scale);
+		}
+
+		return this.findFileOnDisk(id, asset, scales);
+	}
+
+	private async findFileOnDisk(
+		id: string,
+		asset: UnboundAsset,
+		scales: number[],
+	): Promise<IconFile | undefined> {
+		for (const scale of scales) {
+			if (
+				await fs.exists(`${this.directoryOf(id)}/${this.relativeAssetPath(asset, scale)}`)
+			) {
+				return this.packFile(id, asset, scale);
 			}
 		}
 
 		return undefined;
+	}
+
+	private packFile(id: string, asset: UnboundAsset, scale: number): IconFile {
+		return {
+			path: `${fs.documentsPath}/${this.directoryOf(id)}/${this.relativeAssetPath(asset, scale)}`,
+			scale,
+		};
 	}
 
 	// Store packs name each image by content, under the asset's Discord path without its scale and type.
@@ -397,6 +455,30 @@ export class Icons extends Addons<Plugin> {
 	}
 
 	/**
+	 * @description Writes a store pack's manifest and bundle, recording the bundle's SHA-256 for update checks.
+	 * @param bundle The pack's bundle, which lists its images.
+	 * @param manifest The pack's validated manifest.
+	 */
+	protected async persist(bundle: string, manifest: AddonManifest): Promise<void> {
+		await super.persist(bundle, manifest);
+		this.settings.set('digests', { ...this.getDigests(), [manifest.id]: getSha256(bundle) });
+	}
+
+	// Each store pack's bundle digest by id; `initialize` loads packs with their name in place of the bundle.
+	private getDigests(): Record<string, string> {
+		return this.settings.get('digests', {});
+	}
+
+	private forgetDigest(id: string) {
+		const digests = this.getDigests();
+
+		if (!(id in digests)) return;
+
+		delete digests[id];
+		this.settings.set('digests', digests);
+	}
+
+	/**
 	 * @description Writes a store pack's images, lists the pack, and re-applies it when it is the applied one, since an
 	 * update replaces the images its icons point at.
 	 * @param manifest The pack's validated manifest.
@@ -434,19 +516,22 @@ export class Icons extends Addons<Plugin> {
 	 * @param id The pack id.
 	 * @param asset The registered asset to stamp.
 	 * @param files The pack's file list, when it has one.
+	 * @param manifest The pack's manifest, read once per apply.
+	 * @returns A promise only when the pack must ask the disk; otherwise the asset is stamped on return.
 	 */
-	protected async stampAsset(id: string, asset: UnboundAsset, files: Set<string> | undefined) {
-		delete asset.iconPackPath;
-		delete asset.iconPackScale;
+	protected stampAsset(
+		id: string,
+		asset: UnboundAsset,
+		files: Set<string> | undefined,
+		manifest: AddonManifest | undefined,
+	): Promise<void> | void {
+		const file = this.lookupFile(id, asset, files, manifest);
 
-		const file = await this.lookupFile(id, asset, files);
-
-		if (!file) {
-			return;
+		if (file instanceof Promise) {
+			return file.then((found) => stamp(asset, found));
 		}
 
-		asset.iconPackPath = file.path;
-		asset.iconPackScale = file.scale;
+		stamp(asset, file);
 	}
 
 	/**
@@ -501,6 +586,7 @@ export class Icons extends Addons<Plugin> {
 
 			await this.downloadTree(manifest);
 			this.recordPack(manifest);
+			this.forgetDigest(manifest.id);
 
 			this.load(manifest.name, manifest);
 			const entity = this.getEntity(manifest.id);

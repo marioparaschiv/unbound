@@ -208,6 +208,11 @@ export type UnboundNativeBridge = {
 	 */
 	hasStagedBundle?(): boolean;
 	/**
+	 * Tells the loader Discord's first screen rendered, so it counts the launch as healthy shortly after rather than
+	 * waiting out its fallback timer. Missing on a loader from before it.
+	 */
+	markRendered?(): void;
+	/**
 	 * Rereads only the installed themes, so `getThemes` lists ones installed, updated or deleted since launch and native
 	 * views take the applied theme's new colours. Missing on a loader from before it.
 	 */

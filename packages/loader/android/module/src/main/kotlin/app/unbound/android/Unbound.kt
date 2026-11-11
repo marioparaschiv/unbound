@@ -164,6 +164,7 @@ class Unbound : XposedModule() {
                 val result = chain.proceed()
                 val activity = chain.thisObject as Activity
                 ActivityTracker.onActivityResumed(activity)
+                runCatching { NativeBridge.nativeOnForeground() }
                 runCatching {
                     StartupAlert.onResumed(activity)
                     Toolbox.onResumed(activity)

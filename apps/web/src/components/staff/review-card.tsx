@@ -1,4 +1,11 @@
-import { IconChevronDown, IconEye, IconLock, IconPalette, IconPlug } from 'nucleo-micro-bold';
+import {
+	IconChevronDown,
+	IconColorPalette,
+	IconEye,
+	IconGrid,
+	IconLock,
+	IconPlug,
+} from 'nucleo-micro-bold';
 import type { UserSummary } from '@unbound-app/contracts/account';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
@@ -57,7 +64,8 @@ function MaintainerChanges({ change }: MaintainerChangesProps) {
 function ReviewCard({ entry }: ReviewCardProps) {
 	const [open, setOpen] = useState(false);
 	const { submission, submitter } = entry;
-	const Icon = fieldValue(entry, 'type') === 'theme' ? IconPalette : IconPlug;
+	const type = fieldValue(entry, 'type');
+	const Icon = type === 'theme' ? IconColorPalette : type === 'icon-pack' ? IconGrid : IconPlug;
 	const description = fieldValue(entry, 'description');
 	const detailsId = `review-${submission.id}`;
 	// Approval committed but the public files did not write; the only action left is repeating it.

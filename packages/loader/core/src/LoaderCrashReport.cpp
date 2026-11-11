@@ -19,10 +19,15 @@ std::optional<std::string> crashSummary()
 }
 
 toolbox::IssueReport crashReport(const toolbox::IssueReport &environment,
-                                 const std::string &summary, const std::string &logTail)
+                                 const std::string &summary, const std::string &logTail,
+                                 const std::string &nativeStack)
 {
     toolbox::IssueReport report = environment;
     report.attachments.insert(report.attachments.begin(), {"What happened", summary});
+    if (!nativeStack.empty())
+    {
+        report.attachments.emplace_back("Native stack", nativeStack);
+    }
     if (!logTail.empty())
     {
         // Keep the newest lines when the tail is over budget.
@@ -55,15 +60,25 @@ static void dropOldestLine(std::string &log)
 }
 
 std::string crashReportURL(const toolbox::IssueReport &environment, const std::string &summary,
-                           const std::string &logTail)
+                           const std::string &logTail, const std::string &nativeStack)
 {
-    const toolbox::IssueReport base = withoutEntitlements(environment);
-    std::string                log  = logTail;
-    std::string                url  = toolbox::issueURL(crashReport(base, summary, log));
-    while (url.size() > kCrashReportURLLength && !log.empty())
+    const toolbox::IssueReport base  = withoutEntitlements(environment);
+    std::string                log   = logTail;
+    std::string                stack = nativeStack;
+    std::string                url   = toolbox::issueURL(crashReport(base, summary, log, stack));
+    // The log goes first; the stack's innermost frames matter most, so it loses its outermost.
+    while (url.size() > kCrashReportURLLength && (!log.empty() || !stack.empty()))
     {
-        dropOldestLine(log);
-        url = toolbox::issueURL(crashReport(base, summary, log));
+        if (!log.empty())
+        {
+            dropOldestLine(log);
+        }
+        else
+        {
+            size_t last = stack.find_last_of('\n', stack.size() >= 2 ? stack.size() - 2 : 0);
+            stack.erase(last == std::string::npos ? 0 : last + 1);
+        }
+        url = toolbox::issueURL(crashReport(base, summary, log, stack));
     }
     return url;
 }

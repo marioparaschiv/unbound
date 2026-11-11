@@ -54,13 +54,17 @@ $(foreach file,$(BEARSSL_FILES),$(eval $(file)_CFLAGS = -I$(VENDOR_DIR)/bearssl/
 $(TWEAK_NAME)_FILES = $(shell find sources -name "*.x*" -o -name "*.m*") $(wildcard ../core/src/*.cpp) $(wildcard ../core/src/ffi/*.cpp) $(wildcard ../vendor/monocypher/*.c) ../vendor/miniz/miniz_unbound.c shared/UBAppIcons.m $(BEARSSL_FILES)
 $(TWEAK_NAME)_CFLAGS = $(COMMON_FLAGS)
 sources/CoreBridge.mm_CFLAGS = -DCOMMIT_HASH='@"$(COMMIT_HASH)"' -DCOMMIT_SHORT_HASH='@"$(COMMIT_SHORT_HASH)"' -DCOMMIT_SUBJECT='@"$(COMMIT_SUBJECT)"' -DCOMMIT_BRANCH='@"$(COMMIT_BRANCH)"' -DBUILD_TIMESTAMP='@"$(BUILD_TIMESTAMP)"'
-../core/src/LoaderVersion.cpp_CFLAGS = -DUNBOUND_VERSION='"$(THEOS_PACKAGE_BASE_VERSION)"'
+# version.json is the release version; CI stamps it into ios/control, which local builds leave stale,
+# so the loader reports whichever is newer.
+LOADER_RELEASE_VERSION := $(shell sed -n 's/.*"version"[^"]*"\([^"]*\)".*/\1/p' ../version.json)
+LOADER_VERSION := $(shell printf '%s\n%s\n' "$(THEOS_PACKAGE_BASE_VERSION)" "$(LOADER_RELEASE_VERSION)" | sort -V | tail -n 1)
+../core/src/LoaderVersion.cpp_CFLAGS = -DUNBOUND_VERSION='"$(LOADER_VERSION)"'
 ../core/src/LoaderBundleSignature.cpp_CFLAGS = -DUNBOUND_BUNDLE_SIGNING_KEY='"$(BUNDLE_SIGNING_KEY)"' -DUNBOUND_PR_NUMBER=$(PR_NUMBER) -DUNBOUND_PR_BUNDLE_SIGNING_KEY='"$(PR_BUNDLE_SIGNING_KEY)"'
 # _CCFLAGS (not _CXXFLAGS) is what Theos applies to C++/Objective-C++ compiles.
 $(TWEAK_NAME)_CCFLAGS = $(COMMON_FLAGS) -I$(LIBFFI_HEADERS) -std=c++20 -fno-cxx-modules
 # Resolve JSI/TurboModule symbols from Discord's React dylib at load time.
 $(TWEAK_NAME)_LDFLAGS = -undefined dynamic_lookup $(LIBFFI_ARCHIVE)
-$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation AuthenticationServices UniformTypeIdentifiers Security SafariServices AVFoundation CoreHaptics CoreGraphics ImageIO
+$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation AuthenticationServices UniformTypeIdentifiers Security SafariServices AVFoundation CoreHaptics CoreGraphics ImageIO Network
 $(TWEAK_NAME)_LIBRARIES = z
 
 BUNDLE_NAME = UnboundResources

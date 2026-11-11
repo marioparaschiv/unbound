@@ -1,7 +1,6 @@
-import { useEffect, useState, type ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { View } from 'react-native';
 
-import { parseTypedColor, typedColorState } from '~/ui/settings-kit/typed-color';
 import { Discord } from '~/metro/components';
 import { findByName } from '~/metro/search';
 import { ActionSheets } from '~/metro/api';
@@ -15,11 +14,11 @@ export type ColorRowProps = {
 	label: string;
 	/** The chosen color as a `#RRGGBB` hex code, or `undefined` when the default applies. */
 	color: string | undefined;
-	/** The default color, swatched while `color` is unset and used as the hex input's placeholder. */
+	/** The default color, swatched and opened in the picker while `color` is unset. */
 	fallbackColor: string;
 	/** The text shown under the label while `color` is unset, in place of the hex code. */
 	fallbackLabel: string;
-	/** Called with the new `#RRGGBB` hex code, or `undefined` when the user resets or clears it. */
+	/** Called with the new `#RRGGBB` hex code, or `undefined` when the user resets it. */
 	onChange: (color: string | undefined) => void;
 };
 
@@ -55,7 +54,7 @@ function openPicker(color: string, onSelect: (color: string) => void): boolean {
 }
 
 /**
- * @description A settings row that shows a color swatch, opens Discord's color picker when pressed, takes a typed hex code and offers a reset back to the default. A typed code is saved even when it matches the default, which the picker cannot do: Discord's picker reports its current color when it is dismissed, so a pick that matches the color already shown is ignored.
+ * @description A settings row that shows a color swatch, opens Discord's color picker when pressed and offers a reset back to the default. Discord's picker reports its current color when dismissed, so a pick matching the shown color is ignored.
  * @param props The row's label, chosen color, the default it falls back to and the change handler.
  * @returns The row.
  */
@@ -67,66 +66,17 @@ function ColorRow({
 	onChange,
 }: ColorRowProps): ReactElement {
 	const styles = useStyles();
-	const [typing, setTyping] = useState(false);
-	const [draft, setDraft] = useState(color ?? '');
-	const state = typedColorState(draft);
-	const shown = (typing && parseTypedColor(draft)) || color || fallbackColor;
-
-	useEffect(() => setDraft(color ?? ''), [color]);
-
-	function saveDraft() {
-		if (state === 'empty') {
-			onChange(undefined);
-		} else if (state === 'complete') {
-			onChange(parseTypedColor(draft));
-		} else return;
-
-		setTyping(false);
-	}
+	const shown = color ?? fallbackColor;
 
 	return (
 		<Discord.TableRow
 			label={label}
-			subLabel={
-				<Discord.Stack spacing={8} align='flex-start'>
-					<Discord.Text variant='text-sm/medium' color='text-muted'>
-						{color ?? fallbackLabel}
-					</Discord.Text>
-					{typing ? (
-						<View style={styles.input}>
-							<Discord.TextInput
-								value={draft}
-								onChange={setDraft}
-								onEndEditing={saveDraft}
-								onSubmitEditing={saveDraft}
-								placeholder={fallbackColor}
-								autoCapitalize='characters'
-								autoCorrect={false}
-								autoFocus
-								maxLength={7}
-								status={state === 'invalid' ? 'error' : undefined}
-								errorMessage={
-									state === 'invalid'
-										? messages.UNBOUND_HEX_CODE_INVALID
-										: undefined
-								}
-							/>
-						</View>
-					) : (
-						<Discord.Button
-							size='sm'
-							variant='tertiary'
-							text={messages.UNBOUND_TYPE_HEX_CODE}
-							onPress={() => setTyping(true)}
-						/>
-					)}
-				</Discord.Stack>
-			}
+			subLabel={color ?? fallbackLabel}
 			onPress={() => openPicker(shown, onChange)}
 			trailing={
 				<Discord.Stack
 					direction='horizontal'
-					spacing={8}
+					spacing={16}
 					align='center'
 					style={styles.trailing}
 				>

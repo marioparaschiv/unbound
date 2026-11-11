@@ -1,5 +1,43 @@
 # Changelog
 
+## [2.1.1](https://github.com/marioparaschiv/unbound/compare/cli-v2.1.0...cli-v2.1.1) (2026-11-11)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger bumped to 0.10.5
+    * @unbound-app/debugger-protocol bumped to 1.0.2
+  * devDependencies
+    * @unbound-app/api bumped to 2.2.0
+    * @unbound-app/contracts bumped to 1.1.1
+    * @unbound-app/types bumped to 0.15.0
+    * @unbound-app/utils bumped to 0.10.4
+    * @unbound-app/web bumped to 1.1.1
+
+## [2.1.0](https://github.com/marioparaschiv/unbound/compare/cli-v2.0.0...cli-v2.1.0) (2026-11-11)
+
+
+### Features
+
+* **client:** draw settings-kit rows with Discord's built-ins ([#1084](https://github.com/marioparaschiv/unbound/issues/1084)) ([cb3b9e2](https://github.com/marioparaschiv/unbound/commit/cb3b9e285094a1f55d4eb75ed8e19826e61758fa))
+* **devtools:** bundle ubd, add settings dialog, smooth scroll ([#1083](https://github.com/marioparaschiv/unbound/issues/1083)) ([82f9aaa](https://github.com/marioparaschiv/unbound/commit/82f9aaae9c7a2a9e8dae5f31806806f8ccb7bfe6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger bumped to 0.10.4
+    * @unbound-app/debugger-protocol bumped to 1.0.1
+  * devDependencies
+    * @unbound-app/api bumped to 2.1.0
+    * @unbound-app/contracts bumped to 1.1.0
+    * @unbound-app/types bumped to 0.14.0
+    * @unbound-app/utils bumped to 0.10.3
+    * @unbound-app/web bumped to 1.1.0
+
 ## [2.0.0](https://github.com/marioparaschiv/unbound/compare/cli-v1.1.2...cli-v2.0.0) (2026-11-10)
 
 

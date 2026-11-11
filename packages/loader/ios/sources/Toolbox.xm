@@ -294,6 +294,7 @@ static NSString *iconForMenuItem(NSString *identifier)
             @"toggle-recovery" : @"shield",
             @"factory-reset" : @"trash.fill",
             @"open-app-folder" : @"folder",
+            @"launch-timings" : @"stopwatch",
             @"open-issue" : @"exclamationmark.bubble",
             @"gesture-shake" : @"iphone.gen3.radiowaves.left.and.right",
             @"gesture-three-finger" : @"hand.tap",
@@ -448,6 +449,10 @@ static NSString *iconForMenuItem(NSString *identifier)
     else if ([identifier isEqualToString:@"open-issue"])
     {
         [self openGitHubIssue:item];
+    }
+    else if ([identifier isEqualToString:@"launch-timings"])
+    {
+        [Utilities alert:[CoreBridge toolbox:@"launch-timings" argument:@""] title:item[@"title"]];
     }
 }
 

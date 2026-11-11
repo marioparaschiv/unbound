@@ -4,8 +4,8 @@ import type { ViewStyle } from 'react-native';
 
 import { createHookRenderer } from './helpers/render-hook';
 
-// The props the sheet's elements carry that these tests read.
-type SheetProps = {
+// The props the dialog's elements carry that these tests read.
+type DialogProps = {
 	children?: ReactNode;
 	value?: string;
 	maxLength?: number;
@@ -14,7 +14,7 @@ type SheetProps = {
 	onPress?: () => void;
 };
 
-type Element = ReactElement<SheetProps, string>;
+type Element = ReactElement<DialogProps, string>;
 
 // The fake JSX runtime's elements carry `type` and `props` like React's.
 function isElement(node: ReactNode): node is Element {
@@ -45,10 +45,11 @@ const discord = new Proxy(
 	},
 );
 
-mock.module('~/metro/components', () => ({ Discord: discord, BottomSheets: named }));
+mock.module('~/metro/components', () => ({ Discord: discord }));
 mock.module('~/i18n/api', () => ({ messages: named }));
+mock.module('~/dialogs/api', () => ({ showDialog: () => undefined }));
 
-const { default: InputSheet } = await import('~/ui/settings-kit/input-sheet');
+const { default: InputDialog } = await import('~/ui/settings-kit/input-dialog');
 
 function find(node: ReactNode, type: string): Element | undefined {
 	if (Array.isArray(node)) {
@@ -68,37 +69,36 @@ function find(node: ReactNode, type: string): Element | undefined {
 	return node.type === type ? node : find(node.props.children, type);
 }
 
-function get(node: ReactNode, type: string): SheetProps {
+function get(node: ReactNode, type: string): DialogProps {
 	const found = find(node, type);
 
 	if (!found) {
-		throw new Error(`The sheet has no ${type}.`);
+		throw new Error(`The dialog has no ${type}.`);
 	}
 
 	return found.props;
 }
 
-function mountSheet(variant: 'text' | 'multiline', onChange: (text: string) => void) {
+function mountDialog(variant: 'text' | 'multiline', onChange: (text: string) => void) {
 	const closed: string[] = [];
 	const rendered = renderHook(() =>
-		InputSheet({
-			label: 'Bio',
+		InputDialog({
 			value: 'old',
 			variant,
 			keyboardType: 'default',
 			maxLength: 190,
 			onChange,
-			onClose: () => closed.push('closed'),
+			dismiss: () => closed.push('closed'),
 		}),
 	);
 
 	return { rendered, closed };
 }
 
-describe('the settings input sheet', () => {
+describe('the settings input dialog', () => {
 	test("takes Discord's TextArea string onChange, called twice per keystroke, and writes once on Save", () => {
 		const saved: string[] = [];
-		const { rendered, closed } = mountSheet('multiline', (text) => saved.push(text));
+		const { rendered, closed } = mountDialog('multiline', (text) => saved.push(text));
 		const area = get(rendered.current, 'TextArea');
 
 		expect(area.maxLength).toBe(190);
@@ -118,14 +118,13 @@ describe('the settings input sheet', () => {
 	test('keeps a one-line input open with its error when validation rejects it', () => {
 		const saved: string[] = [];
 		const rendered = renderHook(() =>
-			InputSheet({
-				label: 'Homepage',
+			InputDialog({
 				value: '',
 				variant: 'text',
 				keyboardType: 'url',
 				validate: (text) => (text.startsWith('https://') ? undefined : 'Not a URL'),
 				onChange: (text) => saved.push(text),
-				onClose: () => saved.push('closed'),
+				dismiss: () => saved.push('closed'),
 			}),
 		);
 

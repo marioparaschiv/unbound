@@ -22,7 +22,8 @@ export type IconPackBuild = {
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const IMAGE = /^(?<name>.+?)(?:@(?<scale>[23])x)?\.png$/;
 const SCALES = ['2', '3'] as const;
-const SKIPPED_DIRS = new Set(['assets', 'node_modules']);
+// `media/` holds the store page's banner and gallery, which are not icons.
+const SKIPPED_DIRS = new Set(['assets', 'media', 'node_modules']);
 
 function listImages(dir: string, prefix: string = ''): string[] {
 	return readdirSync(join(dir, prefix), { withFileTypes: true }).flatMap((entry) => {
