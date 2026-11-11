@@ -33,9 +33,7 @@ export const accountSignInResponseSchema = Type.Object({
 
 export type UserSummary = StaticDecode<typeof userSummarySchema>;
 export type Caller = StaticDecode<typeof callerSchema>;
-export type MeResponse = StaticDecode<typeof meResponseSchema>;
 export type AccountOAuthConfig = StaticDecode<typeof accountOAuthConfigSchema>;
-export type AccountSignInRequest = StaticDecode<typeof accountSignInRequestSchema>;
 export type AccountSignInResponse = StaticDecode<typeof accountSignInResponseSchema>;
 
 export default {

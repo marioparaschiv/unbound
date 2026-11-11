@@ -113,7 +113,6 @@ export const reviewSubmissionResponseSchema = Type.Object({
 });
 
 export type ReviewQueueQuery = StaticDecode<typeof reviewQueueQuerySchema>;
-export type SubmissionContent = StaticDecode<typeof submissionContentSchema>;
 export type MaintainerChange = StaticDecode<typeof maintainerChangeSchema>;
 export type ReviewQueueItem = StaticDecode<typeof reviewQueueItemSchema>;
 export type ReviewQueueResponse = StaticDecode<typeof reviewQueueResponseSchema>;

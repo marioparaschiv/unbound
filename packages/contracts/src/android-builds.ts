@@ -76,7 +76,6 @@ export const androidBuildsResponseSchema = Type.Object({
 });
 
 export type AndroidChannel = StaticDecode<typeof androidChannelSchema>;
-export type AndroidBuildSplit = StaticDecode<typeof androidBuildSplitSchema>;
 export type AndroidBuild = StaticDecode<typeof androidBuildSchema>;
 export type PublishAndroidBuildRequest = StaticDecode<typeof publishAndroidBuildRequestSchema>;
 export type AndroidBuildsQuery = StaticDecode<typeof androidBuildsQuerySchema>;

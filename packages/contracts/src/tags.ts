@@ -21,7 +21,6 @@ export const submissionTagsSchema = Type.Refine(
 	() => 'Tag ids must be unique.',
 );
 
-export type TagId = StaticDecode<typeof tagIdSchema>;
 export type Tag = StaticDecode<typeof tagSchema>;
 
 export default { MAX_SUBMISSION_TAGS, tagIdSchema, tagSchema, submissionTagsSchema };
