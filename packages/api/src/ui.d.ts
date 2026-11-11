@@ -14,8 +14,8 @@ import { ComponentProps, ComponentType, FunctionComponent, ReactElement, ReactNo
 import * as RN from 'react-native';
 import { ImageStyle, TextStyle, ViewStyle } from 'react-native';
 /**
- * @description Discord's full-width Row Button, which runs something when pressed and asks first when `confirmation` is set;
- * `danger` leads with a red trash icon.
+ * @description A pressable `TableRow` in its settings group, as Discord draws actions such as Log Out; it asks first when
+ * `confirmation` is set. `danger` draws the label red behind a red trash icon.
  * @param props The row's label, variant, confirmation and press handler.
  * @returns The row.
  */
@@ -94,7 +94,7 @@ export declare function EntityRow({
 }: EntityRowProps): React$1.ReactElement;
 /**
  * @description A settings row, Discord's way: the label, and the saved text trailing (masked when secret). Pressing
- * it opens Discord's titled action sheet with the input, its description and error, which saves only on Save.
+ * it opens Discord's dialog with the focused input, its description and error, which saves only on Save.
  * @param props The row's label, saved text, variant, validation and change handler.
  * @returns The row.
  */
@@ -111,7 +111,9 @@ export declare function InputRow({
 	onChange,
 }: InputRowProps): React$1.ReactElement;
 /**
- * @description A titled, editable list of strings: each row moves up or down or is removed, and an input adds one.
+ * @description A titled, editable list of strings: each row moves up or down, or is deleted after a confirmation; the
+ * delete button stands apart from the arrows so it is hard to hit by mistake. An Add row opens
+ * Discord's input dialog for a new one.
  * @param props The group's title, saved strings, limit, validation and change handler.
  * @returns The group.
  */
@@ -181,8 +183,9 @@ export declare function RadioRow({
  */
 export declare function ResetRow({ label, onReset }: ResetRowProps): React$1.ReactElement;
 /**
- * @description A card saying a change applies after Discord restarts, with a full-width button that restarts it now.
- * @returns The card.
+ * @description Discord's `InlineNotice` saying a change applies after Discord restarts, with a button that restarts
+ * it now; on builds without one, a card holding the same text and button.
+ * @returns The notice.
  */
 export declare function RestartRow(): React$1.ReactElement;
 /**
@@ -232,9 +235,9 @@ export declare function SegmentedRow({
 	onChange,
 }: SegmentedRowProps): React$1.ReactElement;
 /**
- * @description A settings row with Discord's form slider, as its own settings draw one: the label, then the slider
- * with its value label and default mark. The value updates while dragging and is saved when the drag ends; Android's
- * slider and iOS's take differently named props, so it passes both.
+ * @description Discord's `TableSliderRow`, as its own settings draw one: the label and live value over the slider
+ * with its default mark. A sub-label, which that row cannot show, moves it to a `TableRow` holding the same slider.
+ * The value is saved when the drag ends; Android's slider and iOS's take differently named props, so it passes both.
  * @param props The row's label, value, default, range and change handler.
  * @returns The row, or `null` when Discord's slider is unavailable.
  */
