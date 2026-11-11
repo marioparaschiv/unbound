@@ -3,38 +3,38 @@ import { Dimensions, ScrollView, View } from 'react-native';
 import type { AddonKind } from '@unbound-app/types/addons';
 import { useCallback, useEffect, useRef } from 'react';
 
-import { loadStorePage } from '~/marketplace/store-page';
+import { loadAddonPage } from '~/marketplace/addon-page';
 import { Discord, SafeArea } from '~/metro/components';
 
 import ScreenRectContext, { type MeasureOnScreen } from './screen-rect-context';
+import AddonPageHeader from './addon-page-header';
 import VersionHistory from './version-history';
-import StorePageBody from './store-page-body';
+import AddonPageBody from './addon-page-body';
 import AboutSection from './about-section';
-import useStyles from './store-page.style';
-import StoreHeader from './store-header';
+import useStyles from './addon-page.style';
 import useResource from './use-resource';
 
 /** The listed addon whose latest version's page the screen shows. */
-export type StorePageParams = {
+export type AddonPageParams = {
 	addon: ListedAddon;
 	kind: AddonKind;
 };
 
-type StorePageScreenProps = {
-	route: { params: StorePageParams };
+type AddonPageScreenProps = {
+	route: { params: AddonPageParams };
 };
 
 /**
- * @description A listed addon's store page, laid out like the website's: the header with its install
+ * @description A listed addon's addon page, laid out like the website's: the header with its install
  * button, the ADDON.md banner, gallery and body, What's new, then About. Everything but the body comes
  * from the listing, so it draws at once; the body is fetched once per version and session.
  */
-function StorePageScreen({ route }: StorePageScreenProps) {
+function AddonPageScreen({ route }: AddonPageScreenProps) {
 	const styles = useStyles();
 	const { addon, kind } = route.params;
 	const { manifest, pageUrl } = addon.latestVersion;
 	const navigation = Discord.useNavigation();
-	const resource = useResource(pageUrl ?? null, loadStorePage);
+	const resource = useResource(pageUrl ?? null, loadAddonPage);
 	const screen = useRef<View>(null);
 
 	// Settings is a bottom-anchored sheet with its own root; the media viewer lays out from the screen's top.
@@ -70,9 +70,9 @@ function StorePageScreen({ route }: StorePageScreenProps) {
 				<ScrollView contentContainerStyle={styles.scroll}>
 					<SafeArea.SafeAreaPaddingView bottom style={styles.content}>
 						<View style={styles.inset}>
-							<StoreHeader addon={addon} kind={kind} />
+							<AddonPageHeader addon={addon} kind={kind} />
 						</View>
-						<StorePageBody resource={resource} name={manifest.name} />
+						<AddonPageBody resource={resource} name={manifest.name} />
 						<View style={styles.inset}>
 							<VersionHistory addon={addon} />
 						</View>
@@ -86,4 +86,4 @@ function StorePageScreen({ route }: StorePageScreenProps) {
 	);
 }
 
-export default StorePageScreen;
+export default AddonPageScreen;

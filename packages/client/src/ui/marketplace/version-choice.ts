@@ -30,8 +30,8 @@ const SHEET_KEY = 'unbound-addon-versions';
 export function confirmChoice(target: VersionTarget, choice: AvailableChoice): Promise<boolean> {
 	const { kind, id, name } = target;
 	const { version } = choice.version;
-	const installed = Manager.for(kind).getEntity(id)?.version;
-	const broken = brokenDependents(id, version, Manager.for(kind).getEntities());
+	const installed = Manager.for(kind).getAddon(id)?.version;
+	const broken = brokenDependents(id, version, Manager.for(kind).getAddons());
 	const downgrade = installed !== void 0 && compareVersions(version, installed) < 0;
 
 	if (!choice.holds && !downgrade && broken.length === 0) {

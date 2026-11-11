@@ -64,7 +64,7 @@ describe('addon crash guard', () => {
 			['begin', 'plugins:a', 'a'],
 			['end', 'plugins:a'],
 		]);
-		expect(manager.getEntity('a')?.failed).toBe(true);
+		expect(manager.getAddon('a')?.failed).toBe(true);
 	});
 
 	test('leaves no marker open when it cannot start an addon it does not govern', () => {
@@ -95,8 +95,8 @@ describe('addon crash guard', () => {
 
 		expect(states).toEqual({ a: false, b: true });
 		expect(persists).toHaveLength(1);
-		expect(manager.getEntity('a')?.started).toBe(false);
-		expect(manager.getEntity('b')?.started).toBe(true);
+		expect(manager.getAddon('a')?.started).toBe(false);
+		expect(manager.getAddon('b')?.started).toBe(true);
 		expect(manager.log).toEqual(['start:bundle-b']);
 		expect(calls).toEqual([
 			['begin', 'plugins:b', 'b'],
@@ -111,7 +111,7 @@ describe('addon crash guard', () => {
 		manager.load('bundle-a', makeManifest('a'));
 
 		expect(states.a).toBe(true);
-		expect(manager.getEntity('a')?.started).toBe(true);
+		expect(manager.getAddon('a')?.started).toBe(true);
 	});
 
 	test('leaves an addon the user already disabled alone', () => {
@@ -130,7 +130,7 @@ describe('addon crash guard', () => {
 
 		manager.load('bundle-a', makeManifest('a'));
 
-		expect(manager.getEntity('a')?.started).toBe(true);
+		expect(manager.getAddon('a')?.started).toBe(true);
 	});
 });
 

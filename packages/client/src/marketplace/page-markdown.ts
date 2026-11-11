@@ -9,7 +9,7 @@ export type LeadingIcon = {
 	rest: PageNode[];
 };
 
-/** A node of a store page's Markdown, as simple-markdown's block rules and the page's icon rule parse it. */
+/** A node of a addon page's Markdown, as simple-markdown's block rules and the page's icon rule parse it. */
 export type PageNode =
 	| PageList
 	| { type: 'heading'; level: number; content: PageNode[] }

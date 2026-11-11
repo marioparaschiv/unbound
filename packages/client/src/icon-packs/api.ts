@@ -5,9 +5,9 @@ import { icons } from '~/icon-packs/manager';
 import { apply, check } from '~/updates/api';
 
 /** Lists every installed icon pack. */
-export const getAll: () => AddonHandle[] = icons.getEntities.bind(icons);
+export const getAll: () => AddonHandle[] = icons.getAddons.bind(icons);
 /** Reads one installed icon pack by id. */
-export const get: (id: string) => AddonHandle | undefined = icons.getEntity.bind(icons);
+export const get: (id: string) => AddonHandle | undefined = icons.getAddon.bind(icons);
 /** Reports whether an icon pack is enabled. */
 export const isEnabled: (id: string) => boolean = icons.isEnabled.bind(icons);
 /** Enables an icon pack and applies it. */
@@ -20,7 +20,7 @@ export const toggle: (id: string) => void = icons.toggle.bind(icons);
 export const install: (url: string, digest?: string) => Promise<AddonHandle | undefined> =
 	icons.install.bind(icons);
 /** Removes an installed icon pack. */
-export const uninstall: (id: string) => Promise<void> = icons.delete.bind(icons);
+export const uninstall: (id: string) => Promise<void> = icons.uninstall.bind(icons);
 /** Swaps an icon pack's files in place, keeping its enabled state. */
 export const reload: (
 	id: string,

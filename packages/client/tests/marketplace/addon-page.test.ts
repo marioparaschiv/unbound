@@ -2,11 +2,11 @@ import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import { afterAll, describe, expect, test } from 'bun:test';
 
 import {
-	fetchStorePage,
+	fetchAddonPage,
 	findPageMedia,
-	loadStorePage,
+	loadAddonPage,
 	normalizePageBody,
-} from '~/marketplace/store-page';
+} from '~/marketplace/addon-page';
 
 let files: Record<string, string> = {};
 let status = 200;
@@ -69,11 +69,11 @@ function serve(served: Record<string, string>, answer: number = 200) {
 	status = answer;
 }
 
-describe('fetchStorePage', () => {
+describe('fetchAddonPage', () => {
 	test('reads ADDON.md without its frontmatter and the measured page beside it', async () => {
 		serve({ [PAGE_URL]: ADDON_MD, [`${FOLDER}page.json`]: JSON.stringify(MEASURED) });
 
-		expect(await fetchStorePage(PAGE_URL)).toEqual({
+		expect(await fetchAddonPage(PAGE_URL)).toEqual({
 			body: '## Usage\n\nOpen settings.',
 			measured: MEASURED,
 			icons: new Map(),
@@ -93,7 +93,7 @@ describe('fetchStorePage', () => {
 		});
 		requests = 0;
 
-		expect(await fetchStorePage(PAGE_URL)).toEqual({
+		expect(await fetchAddonPage(PAGE_URL)).toEqual({
 			body: ':gear: Settings',
 			measured: MEASURED,
 			icons: new Map([['gear', gear]]),
@@ -105,7 +105,7 @@ describe('fetchStorePage', () => {
 	test('a version without page.json has a body and no media', async () => {
 		serve({ [PAGE_URL]: 'Just text.' });
 
-		expect(await fetchStorePage(PAGE_URL)).toEqual({
+		expect(await fetchAddonPage(PAGE_URL)).toEqual({
 			body: 'Just text.',
 			measured: null,
 			icons: new Map(),
@@ -116,19 +116,19 @@ describe('fetchStorePage', () => {
 	test('a page.json that is not whole JSON counts as none', async () => {
 		serve({ [PAGE_URL]: 'Just text.', [`${FOLDER}page.json`]: '{"media": ' });
 
-		expect((await fetchStorePage(PAGE_URL))?.measured).toBeNull();
+		expect((await fetchAddonPage(PAGE_URL))?.measured).toBeNull();
 	});
 
 	test('ADDON.md missing from the CDN means no page', async () => {
 		serve({});
 
-		expect(await fetchStorePage(PAGE_URL)).toBeNull();
+		expect(await fetchAddonPage(PAGE_URL)).toBeNull();
 	});
 
 	test('a CDN error throws, so the screen can offer a retry', async () => {
 		serve({ [PAGE_URL]: ADDON_MD }, 503);
 
-		const failure = await fetchStorePage(PAGE_URL).then(
+		const failure = await fetchAddonPage(PAGE_URL).then(
 			() => '',
 			(error: Error) => error.message,
 		);
@@ -153,16 +153,16 @@ describe('findPageMedia', () => {
 	});
 });
 
-describe('loadStorePage', () => {
+describe('loadAddonPage', () => {
 	test('fetches a version once and serves later visits from memory', async () => {
 		const url = `${FOLDER}cached/ADDON.md`;
 
 		serve({ [url]: 'Cached.' });
 		requests = 0;
 
-		const [first, second] = await Promise.all([loadStorePage(url), loadStorePage(url)]);
+		const [first, second] = await Promise.all([loadAddonPage(url), loadAddonPage(url)]);
 
-		expect(await loadStorePage(url)).toBe(first);
+		expect(await loadAddonPage(url)).toBe(first);
 		expect(second).toBe(first);
 		expect(requests).toBe(3);
 	});
@@ -172,7 +172,7 @@ describe('loadStorePage', () => {
 
 		serve({ [url]: 'Back.' }, 503);
 
-		const failed = await loadStorePage(url).then(
+		const failed = await loadAddonPage(url).then(
 			() => false,
 			() => true,
 		);
@@ -180,7 +180,7 @@ describe('loadStorePage', () => {
 		serve({ [url]: 'Back.' });
 
 		expect(failed).toBe(true);
-		expect((await loadStorePage(url))?.body).toBe('Back.');
+		expect((await loadAddonPage(url))?.body).toBe('Back.');
 	});
 });
 

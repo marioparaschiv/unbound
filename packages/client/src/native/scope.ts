@@ -27,19 +27,19 @@ import type {
 import { NativePluginDisposedError, NativePluginUnavailableError } from '~/native/errors';
 import { createScopeGate, type ScopeLifecycle } from '~/native/scope-gate';
 import { createFluxRuntimeBridge } from '~/flux/runtime-bridge';
-import { unavailableNativePlugin } from '~/native/capabilities';
+import { unavailableNativeBridge } from '~/native/capabilities';
 import { createObjectFactory } from '~/native/object-factory';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { createScopedJavaBridge } from '~/native/scope-java';
-import { getNativePlugin } from '~/native/plugin-bridge';
 import { createScopedUIBridge } from '~/native/ui';
+import { getNativeBridge } from '~/native/bridge';
 
 type AssociationBinding = {
 	handle: NativeObjectHandle;
 	key: NativeAssociationKey;
 };
 
-type ScopedNativePlugin = {
+type ScopedNativeBridge = {
 	bridge: NativePluginBridge;
 	beginStop: () => void;
 	dispose: () => void;
@@ -91,20 +91,20 @@ function attributeBridge<T extends object>(source: T, attribute?: AddonAttributi
 }
 
 /**
- * @description Wraps the native plugin bridge in a scope that allows only the declared capabilities and
+ * @description Wraps the native bridge in a scope that allows only the declared capabilities and
  * releases every hook, surface, handle and subscription it handed out when disposed.
  * @param capabilities The capabilities the plugin declares for this platform.
  * @param platform The host platform.
  * @param attribute Marks the plugin as active in the loader's crash attribution while its native calls run.
  * @returns The scoped bridge and its `dispose`.
  */
-export function createScopedNativePlugin(
+export function createScopedNativeBridge(
 	capabilities: readonly NativePluginCapability[],
 	platform?: NativePluginPlatform,
 	attribute?: AddonAttribution,
-): ScopedNativePlugin {
-	const fallbackBridge = unavailableNativePlugin();
-	const bridge = getNativePlugin() ?? fallbackBridge;
+): ScopedNativeBridge {
+	const fallbackBridge = unavailableNativeBridge();
+	const bridge = getNativeBridge() ?? fallbackBridge;
 	const objcSource = bridge.objc ?? fallbackBridge.objc;
 	const ffiSource = bridge.ffi;
 	const fabricSource = withFallback(bridge.fabric, fallbackBridge.fabric);

@@ -7,7 +7,7 @@ import type { SectionEntry } from '~/settings/section';
 import type { BuiltIn } from '~/builtins/registry';
 import { onModuleLoaded } from '~/metro/wait';
 import { Discord } from '~/metro/components';
-import SettingsStore from '~/settings/state';
+import SectionStore from '~/settings/state';
 import { getIdByName } from '~/assets/api';
 import { byProps } from '~/metro/filters';
 import { messages } from '~/i18n/api';
@@ -93,7 +93,7 @@ function route({
 
 /** Merges the built-in entries with any registered via the public API. */
 function allEntries(builtIn: EntryMap): EntryMap {
-	return { ...builtIn, ...SettingsStore.getState().sections };
+	return { ...builtIn, ...SectionStore.getState().sections };
 }
 
 /**
@@ -164,7 +164,7 @@ function patchOverviewScreen(Overview: MetroExport, builtIn: EntryMap) {
 		const [, forceUpdate] = useState({});
 
 		useEffect(() => {
-			const unsubscribe = SettingsStore.subscribe(() => forceUpdate({}));
+			const unsubscribe = SectionStore.subscribe(() => forceUpdate({}));
 
 			return () => unsubscribe();
 		}, []);

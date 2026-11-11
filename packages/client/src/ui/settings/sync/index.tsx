@@ -24,13 +24,13 @@ import Page from '~/ui/components/page';
 import { messages } from '~/i18n/api';
 import { icons } from '~/assets/api';
 
-import useStyles from './cloud-sync.style';
+import useStyles from './sync.style';
 
 /**
  * @description Sync, laid out like the updates page: a status hero with the next step, then how this device
  * combines with the cloud, which way it syncs, and deleting the cloud's copy.
  */
-function CloudSyncPage() {
+function SyncPage() {
 	const styles = useStyles();
 	const settings = useBucket(SYNC_STORE);
 	const [busy, setBusy] = useState(false);
@@ -180,4 +180,4 @@ function CloudSyncPage() {
 	);
 }
 
-export default CloudSyncPage;
+export default SyncPage;

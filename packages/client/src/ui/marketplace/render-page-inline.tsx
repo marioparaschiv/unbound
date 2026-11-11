@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { Text } from 'react-native';
 
+import type { AddonPageContent } from '~/marketplace/addon-page';
 import type { PageNode } from '~/marketplace/page-markdown';
-import type { StorePage } from '~/marketplace/store-page';
 import { Linking } from '~/metro/api';
 
 import type useStyles from './page-markdown.style';
@@ -11,7 +11,7 @@ import PageIcon from './page-icon';
 
 /** What rendering a page's nodes reads besides the nodes: the page its media resolve against, and its styles. */
 export type PageRenderContext = {
-	page: StorePage;
+	page: AddonPageContent;
 	styles: ReturnType<typeof useStyles>;
 };
 

@@ -12,7 +12,7 @@ import {
 } from '~/native/errors';
 import type { AddonAttribution } from '~/addons/crash-guard';
 
-const UNAVAILABLE_BRIDGE = 'The native plugin bridge is unavailable.';
+const UNAVAILABLE_BRIDGE = 'The native bridge is unavailable.';
 
 /** A bridge method as a scope hands it out: never missing, since a missing one throws when called. */
 export type BridgeMethod<T, K extends keyof T> = Exclude<T[K], undefined>;

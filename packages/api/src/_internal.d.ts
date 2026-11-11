@@ -572,7 +572,7 @@ export type AuthoredAddonManifest = {
 	main: string;
 	/** The addon's version, in strict SemVer 2.0.0 with no `v` prefix. */
 	version: string;
-	/** The lowest native plugin API version the addon supports; an older native bridge fails its start. */
+	/** The lowest native bridge API version the addon supports; an older native bridge fails its start. */
 	minNativePluginApi?: string;
 	/** The Ed25519 signature the Unbound team's publish pipeline puts on first-party plugins. */
 	signature?: {

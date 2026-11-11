@@ -64,7 +64,7 @@ export function themeOf(addon: Addon): ThemeData | null {
 	}
 
 	// The theme manager owns it: a manifest's `type` is optional, so most themes leave it out.
-	if (Manager.for('theme').getEntity(addon.id) !== addon || !addon.bundle) return null;
+	if (Manager.for('theme').getAddon(addon.id) !== addon || !addon.bundle) return null;
 
 	if (!parsed.has(addon)) {
 		try {

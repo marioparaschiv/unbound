@@ -92,7 +92,7 @@ export declare class NativePluginDisposedError extends Error {
 	readonly code = 'NATIVE_PLUGIN_SCOPE_DISPOSED';
 	constructor();
 }
-/** Thrown when the loader does not provide the native plugin bridge, or the part of it a call needs. */
+/** Thrown when the loader does not provide the native bridge, or the part of it a call needs. */
 export declare class NativePluginUnavailableError extends Error {
 	/** A stable code to match on instead of the message. */
 	readonly code = 'NATIVE_PLUGIN_UNAVAILABLE';
@@ -105,11 +105,11 @@ export declare class NativePluginUnsupportedPlatformError extends Error {
 	readonly platforms: readonly NativePluginPlatform[];
 	constructor(platforms: readonly NativePluginPlatform[], platform: string);
 }
-/** Thrown when the native plugin API is older than the manifest's `minNativePluginApi`. */
+/** Thrown when the native bridge API is older than the manifest's `minNativePluginApi`. */
 export declare class NativePluginVersionError extends Error {
 	/** A stable code to match on instead of the message. */
 	readonly code = 'NATIVE_PLUGIN_API_VERSION_UNSUPPORTED';
-	/** The native plugin API version the loader provides. */
+	/** The native bridge API version the loader provides. */
 	readonly installedApi: string;
 	/** The manifest's `minNativePluginApi`. */
 	readonly requiredApi: string;

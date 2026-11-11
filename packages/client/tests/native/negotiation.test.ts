@@ -5,7 +5,7 @@ import {
 	NativePluginUnsupportedPlatformError,
 	NativePluginVersionError,
 	createPluginContext,
-	validateNativePluginRequirements,
+	validateNativeBridgeRequirements,
 	nativeHandle,
 	bridge,
 	iosSpecificBridges,
@@ -16,7 +16,7 @@ import {
 
 afterEach(resetNativeFixtures);
 
-describe('native plugin negotiation', () => {
+describe('native bridge negotiation', () => {
 	test('supports an Android bridge without the Objective-C namespace', () => {
 		Object.assign(nativePlatformBridge.device, { platform: 'android' });
 		Object.assign(nativePlatformBridge, { platform: 'android' });
@@ -136,10 +136,10 @@ describe('native plugin negotiation', () => {
 
 	test('rejects capabilities that the bridge does not advertise', () => {
 		expect(() =>
-			validateNativePluginRequirements(['native.objc.hooks', 'native.ffi.call'], '1.0.0'),
+			validateNativeBridgeRequirements(['native.objc.hooks', 'native.ffi.call'], '1.0.0'),
 		).not.toThrow();
 		expect(() =>
-			validateNativePluginRequirements([
+			validateNativeBridgeRequirements([
 				'native.objc.hooks',
 				'native.ffi.call',
 				'native.unknown' as never,
@@ -151,7 +151,7 @@ describe('native plugin negotiation', () => {
 		let failure: unknown;
 
 		try {
-			validateNativePluginRequirements([], '2.0.0');
+			validateNativeBridgeRequirements([], '2.0.0');
 		} catch (error) {
 			failure = error;
 		}
@@ -167,9 +167,9 @@ describe('native plugin negotiation', () => {
 	test('orders a prerelease bridge API before its release', () => {
 		Object.assign(bridge, { apiVersion: '1.0.0-beta.1' });
 
-		expect(() => validateNativePluginRequirements([], '1.0.0')).toThrow(
+		expect(() => validateNativeBridgeRequirements([], '1.0.0')).toThrow(
 			NativePluginVersionError,
 		);
-		expect(() => validateNativePluginRequirements([], '1.0.0-alpha.2')).not.toThrow();
+		expect(() => validateNativeBridgeRequirements([], '1.0.0-alpha.2')).not.toThrow();
 	});
 });

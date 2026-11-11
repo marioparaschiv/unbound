@@ -32,11 +32,11 @@ export abstract class AddonSelection<I extends object> extends AddonLifecycle<I>
 	/**
 	 * @description Enables an addon, persisting its state and starting it if not already running, and emits
 	 * `enabled`. A single-select kind first stops the addon it replaces. Twin of {@link disable}.
-	 * @param entity The addon to enable, as its id or the entity itself.
+	 * @param addon The addon to enable, as its id or the addon itself.
 	 * @returns Settles once the addon is on, or the user refused its consent.
 	 */
-	enable(entity: AddonResolveable<I>): void | Promise<void> {
-		const resolved = this.resolve(entity);
+	enable(addon: AddonResolveable<I>): void | Promise<void> {
+		const resolved = this.resolve(addon);
 
 		if (!resolved) return;
 
@@ -68,10 +68,10 @@ export abstract class AddonSelection<I extends object> extends AddonLifecycle<I>
 	/**
 	 * @description Disables an addon, persisting its state, taking it off screen when it was applied and
 	 * stopping it if currently running, and emits `disabled`. Twin of {@link enable}.
-	 * @param entity The addon to disable, as its id or the entity itself.
+	 * @param addon The addon to disable, as its id or the addon itself.
 	 */
-	disable(entity: AddonResolveable<I>): void {
-		const resolved = this.resolve(entity);
+	disable(addon: AddonResolveable<I>): void {
+		const resolved = this.resolve(addon);
 
 		if (!resolved) return;
 
@@ -98,10 +98,10 @@ export abstract class AddonSelection<I extends object> extends AddonLifecycle<I>
 
 	/**
 	 * @description Toggles an addon between enabled and disabled based on its current state, and emits `toggled`.
-	 * @param entity The addon to toggle, as its id or the entity itself.
+	 * @param addon The addon to toggle, as its id or the addon itself.
 	 */
-	toggle(entity: AddonResolveable<I>) {
-		const resolved = this.resolve(entity);
+	toggle(addon: AddonResolveable<I>) {
+		const resolved = this.resolve(addon);
 
 		if (!resolved) return;
 
@@ -133,42 +133,42 @@ export abstract class AddonSelection<I extends object> extends AddonLifecycle<I>
 
 	/**
 	 * @description Starts an addon the user has on; a single-select kind then puts it on screen through {@link apply}.
-	 * @param entity The addon.
+	 * @param addon The addon.
 	 * @param consented Whether the user just allowed its consent-gated capabilities.
 	 * @returns Settles once it is on screen; a failure to apply is recorded, not thrown.
 	 */
-	protected activate(entity: Addon<I>, consented = false): void | Promise<void> {
-		if (!entity.started) {
-			this.start(entity, consented);
+	protected activate(addon: Addon<I>, consented = false): void | Promise<void> {
+		if (!addon.started) {
+			this.start(addon, consented);
 		}
 
 		if (this.selection === 'many') return;
 
 		try {
-			const applying = this.apply(entity);
+			const applying = this.apply(addon);
 
 			if (applying instanceof Promise) {
-				return applying.catch((error) => void this.fail('apply', entity.id, error));
+				return applying.catch((error) => void this.fail('apply', addon.id, error));
 			}
 		} catch (error) {
-			this.fail('apply', entity.id, error);
+			this.fail('apply', addon.id, error);
 		}
 	}
 
 	/**
 	 * @description For a single-select kind: puts the applied addon on screen once it runs, replacing the one before. Twin of {@link unapply}.
-	 * @param _entity The applied addon.
+	 * @param _addon The applied addon.
 	 * @returns Settles once it is on screen.
 	 */
-	protected apply(_entity: Addon<I>): void | Promise<void> {
+	protected apply(_addon: Addon<I>): void | Promise<void> {
 		// Kinds the user turns on one by one have nothing to put on screen.
 	}
 
 	/**
 	 * @description For a single-select kind: takes the applied addon off screen when the user turns it off. Twin of {@link apply}.
-	 * @param _entity The addon turned off.
+	 * @param _addon The addon turned off.
 	 */
-	protected unapply(_entity: Addon<I>): void {
+	protected unapply(_addon: Addon<I>): void {
 		// Kinds the user turns on one by one have nothing to take off screen.
 	}
 
@@ -195,7 +195,7 @@ export abstract class AddonSelection<I extends object> extends AddonLifecycle<I>
 			return;
 		}
 
-		const replaced = applied === null ? undefined : this.getEntity(applied);
+		const replaced = applied === null ? undefined : this.getAddon(applied);
 
 		if (replaced !== resolved && replaced?.started) {
 			this.stop(replaced);
@@ -219,24 +219,24 @@ export abstract class AddonSelection<I extends object> extends AddonLifecycle<I>
 
 	/**
 	 * @description Asks the user to allow an addon's consent-gated capabilities and records the answer.
-	 * @param entity The addon asking.
+	 * @param addon The addon asking.
 	 * @returns Whether the user allowed it.
 	 */
-	protected async requestConsent(entity: Addon<I>): Promise<boolean> {
-		const granted = await promptForConsent(entity).catch((error) => {
-			this.logger.error(`Failed to ask for consent for ${entity.id}:`, error);
+	protected async requestConsent(addon: Addon<I>): Promise<boolean> {
+		const granted = await promptForConsent(addon).catch((error) => {
+			this.logger.error(`Failed to ask for consent for ${addon.id}:`, error);
 
 			return false;
 		});
 
 		if (!granted) {
-			this.errors.set(entity.id, new NativeConsentRequiredError(entity.name));
+			this.errors.set(addon.id, new NativeConsentRequiredError(addon.name));
 
 			return false;
 		}
 
-		this.consents.set(entity.id, consentKey(entity.manifest));
-		this.errors.delete(entity.id);
+		this.consents.set(addon.id, consentKey(addon.manifest));
+		this.errors.delete(addon.id);
 
 		return true;
 	}

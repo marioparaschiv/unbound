@@ -1,17 +1,17 @@
 import {
-	SYNC_CORE_STORE,
+	SYNC_CORE_BUCKET,
 	SYNC_DEFAULT_ICON_PACK,
 	SYNC_ID_PATTERN,
 	SYNC_KINDS,
 	SYNC_LOCAL_KEYS,
-	SYNC_LOCAL_STORE_PREFIX,
-} from '@unbound-app/contracts/sync-stores';
+	SYNC_LOCAL_BUCKET_PREFIX,
+} from '@unbound-app/contracts/sync-buckets';
 import type {
 	JsonValue,
 	SyncDocument,
 	SyncKind,
 	SyncKindDocument,
-	SyncSettingsStore,
+	SyncBucket,
 } from '@unbound-app/contracts/sync';
 import { createLogger } from '@unbound-app/logger';
 
@@ -30,7 +30,7 @@ type KindAdapter = {
 	isEnabled: (id: string) => boolean;
 	isInstalled: (id: string) => boolean;
 	install: (url: string) => Promise<object | string | undefined>;
-	delete: (id: string) => Promise<void>;
+	uninstall: (id: string) => Promise<void>;
 	setEnabled: (id: string, enabled: boolean) => void;
 	apply: (id: string | null) => void | Promise<void>;
 	getSources: () => Record<string, string>;
@@ -52,7 +52,7 @@ function isOverrideMap(value: JsonValue | undefined): value is Record<string, st
 	);
 }
 
-const RESERVED_STORES = new Set<string>(SYNC_KINDS);
+const RESERVED_BUCKETS = new Set<string>(SYNC_KINDS);
 
 // Run in this order so an applied theme or an enabled plugin is installed before it is used.
 const ACTION_ORDER: Record<SyncAction['type'], number> = {
@@ -71,9 +71,9 @@ const adapters: Record<SyncKind, KindAdapter> = {
 	plugins: {
 		getApplied: noApplied,
 		isEnabled: (id) => plugins.isEnabled(id),
-		isInstalled: (id) => Boolean(plugins.getEntity(id)),
+		isInstalled: (id) => Boolean(plugins.getAddon(id)),
 		install: (url) => plugins.install(url),
-		delete: (id) => plugins.delete(id),
+		uninstall: (id) => plugins.uninstall(id),
 		setEnabled: (id, enabled) => void (enabled ? plugins.enable(id) : plugins.disable(id)),
 		apply: ignored,
 		getSources: () => plugins.getSources(),
@@ -83,9 +83,9 @@ const adapters: Record<SyncKind, KindAdapter> = {
 	themes: {
 		getApplied: () => themes.getAppliedId(),
 		isEnabled: (id) => themes.getAppliedId() === id,
-		isInstalled: (id) => Boolean(themes.getEntity(id)),
+		isInstalled: (id) => Boolean(themes.getAddon(id)),
 		install: (url) => themes.install(url),
-		delete: (id) => themes.delete(id),
+		uninstall: (id) => themes.uninstall(id),
 		// A theme is enabled by being applied.
 		setEnabled: ignored,
 		apply: (id) => {
@@ -104,9 +104,9 @@ const adapters: Record<SyncKind, KindAdapter> = {
 	icons: {
 		getApplied: () => icons.getAppliedId(),
 		isEnabled: (id) => icons.isEnabled(id),
-		isInstalled: (id) => Boolean(icons.getEntity(id)),
+		isInstalled: (id) => Boolean(icons.getAddon(id)),
 		install: (url) => icons.install(url),
-		delete: (id) => icons.delete(id),
+		uninstall: (id) => icons.uninstall(id),
 		setEnabled: ignored,
 		apply: (id) => icons.enable(id ?? SYNC_DEFAULT_ICON_PACK),
 		getSources: () => icons.getSources(),
@@ -117,9 +117,9 @@ const adapters: Record<SyncKind, KindAdapter> = {
 	fonts: {
 		getApplied: noApplied,
 		isEnabled: () => true,
-		isInstalled: (id) => Boolean(fonts.getEntity(id)),
+		isInstalled: (id) => Boolean(fonts.getAddon(id)),
 		install: (url) => fonts.install(url),
-		delete: (id) => fonts.delete(id),
+		uninstall: (id) => fonts.uninstall(id),
 		setEnabled: ignored,
 		apply: ignored,
 		getSources: () => fonts.getSources(),
@@ -143,11 +143,11 @@ function collectKind(kind: SyncKind): SyncKindDocument {
 
 /**
  * @description Copies a Bucket, so the synced document cannot write through to the live settings.
- * @param store The store as `snapshot` reports it.
+ * @param bucket The bucket as `snapshot` reports it.
  * @returns A shallow copy of it.
  */
-function copyStore(store: SyncSettingsStore): SyncSettingsStore {
-	return { ...store };
+function copyBucket(bucket: SyncBucket): SyncBucket {
+	return { ...bucket };
 }
 
 /**
@@ -168,14 +168,14 @@ export function collectLocalDocument(): SyncDocument {
 	const synced: SyncDocument['settings'] = {};
 
 	for (const [name, store] of Object.entries(snapshot({ includeSecrets: true }))) {
-		if (name.startsWith(SYNC_LOCAL_STORE_PREFIX) || RESERVED_STORES.has(name)) {
+		if (name.startsWith(SYNC_LOCAL_BUCKET_PREFIX) || RESERVED_BUCKETS.has(name)) {
 			continue;
 		}
 
 		// The document keeps its own copy of each store; Hermes has no `structuredClone`, so a shallow
 		// copy stands in for the deep one `parse` used to make.
-		if (name === SYNC_CORE_STORE) {
-			const core = copyStore(store);
+		if (name === SYNC_CORE_BUCKET) {
+			const core = copyBucket(store);
 
 			for (const key of LOCAL_KEYS) {
 				delete core[key];
@@ -187,7 +187,7 @@ export function collectLocalDocument(): SyncDocument {
 
 			synced[name] = core;
 		} else if (ids.has(name)) {
-			synced[name] = copyStore(store);
+			synced[name] = copyBucket(store);
 		}
 	}
 
@@ -221,7 +221,7 @@ async function applyAction(action: SyncAction): Promise<boolean> {
 		case 'delete': {
 			const adapter = adapters[action.kind];
 
-			await adapter.delete(action.id);
+			await adapter.uninstall(action.id);
 
 			// A delete returns early for an addon that is not loaded, which would leave its source to resync.
 			adapter.forgetSource(action.id);
@@ -242,7 +242,7 @@ async function applyAction(action: SyncAction): Promise<boolean> {
 		}
 
 		case 'set-setting': {
-			if (action.store === SYNC_CORE_STORE && action.key === FONT_OVERRIDES) {
+			if (action.store === SYNC_CORE_BUCKET && action.key === FONT_OVERRIDES) {
 				await fonts.replaceOverrides(isOverrideMap(action.value) ? action.value : {});
 
 				return true;

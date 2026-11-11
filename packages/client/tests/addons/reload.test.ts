@@ -66,7 +66,7 @@ describe('Addons.reload', () => {
 
 		let reloaded: Addon | undefined;
 
-		manager.on('reloaded', (entity) => void (reloaded = entity));
+		manager.on('reloaded', (addon) => void (reloaded = addon));
 
 		const result = await manager.reload('a', 'new', manifest);
 
@@ -84,12 +84,12 @@ describe('Addons.reload', () => {
 
 		let reloaded: Addon | undefined;
 
-		manager.on('reloaded', (entity) => void (reloaded = entity));
+		manager.on('reloaded', (addon) => void (reloaded = addon));
 
 		const result = await manager.reload('b', 'fresh', manifest);
 
 		expect(result.ok).toBe(true);
-		expect(manager.getEntity('b')).toBeDefined();
+		expect(manager.getAddon('b')).toBeDefined();
 		expect(reloaded?.id).toBe('b');
 		expect(writes).toEqual(['Unbound/Plugins/b/manifest.json', 'Unbound/Plugins/b/index.js']);
 	});
@@ -110,7 +110,7 @@ describe('Addons.reload', () => {
 
 		expect(result.ok).toBe(true);
 		expect(manager.log).toEqual([]);
-		expect(manager.getEntity('e')?.started).toBe(false);
+		expect(manager.getAddon('e')?.started).toBe(false);
 		expect(manager.bundleOf('e')).toBe('new');
 	});
 
@@ -148,7 +148,7 @@ describe('Addons.reload', () => {
 
 		let failure: Error | undefined;
 
-		manager.on('reload-error', (_entity, error) => void (failure = error));
+		manager.on('reload-error', (_addon, error) => void (failure = error));
 
 		manager.nextStartFails = true;
 		const result = await manager.reload('d', 'new', manifest);
@@ -194,16 +194,16 @@ describe('Addons.reload', () => {
 			failed: false,
 		});
 		manager.start(manifest.id);
-		const entity = manager.getEntity(manifest.id)!;
+		const addon = manager.getAddon(manifest.id)!;
 		const context = manager.contexts[0];
 		let finishCleanup: (() => void) | undefined;
 		const cleanup = new Promise<void>((resolve) => {
 			finishCleanup = resolve;
 		});
 
-		manager.setInstance(entity, { stop: () => cleanup });
+		manager.setInstance(addon, { stop: () => cleanup });
 
-		const stopping = manager.stop(entity);
+		const stopping = manager.stop(addon);
 
 		expect(stopping).toBeInstanceOf(Promise);
 		expect(context.disposed).toBe(false);
@@ -211,7 +211,7 @@ describe('Addons.reload', () => {
 		await stopping;
 
 		expect(context.disposed).toBe(true);
-		expect(entity.started).toBe(false);
+		expect(addon.started).toBe(false);
 	});
 
 	test('restarts an addon enabled while asynchronous cleanup is pending', async () => {
@@ -226,24 +226,24 @@ describe('Addons.reload', () => {
 			failed: false,
 		});
 		manager.start(manifest.id);
-		const entity = manager.getEntity(manifest.id)!;
+		const addon = manager.getAddon(manifest.id)!;
 		const firstContext = manager.contexts[0];
 		let finishCleanup: (() => void) | undefined;
 		const cleanup = new Promise<void>((resolve) => {
 			finishCleanup = resolve;
 		});
 
-		manager.setInstance(entity, { stop: () => cleanup });
+		manager.setInstance(addon, { stop: () => cleanup });
 
-		const stopping = manager.stop(entity);
+		const stopping = manager.stop(addon);
 
-		manager.enable(entity);
+		manager.enable(addon);
 		finishCleanup!();
 		await stopping;
 
 		expect(firstContext.disposed).toBe(true);
 		expect(manager.contexts).toHaveLength(2);
-		expect(entity.started).toBe(true);
+		expect(addon.started).toBe(true);
 	});
 
 	test('does not restart an addon disabled during asynchronous cleanup', async () => {
@@ -258,25 +258,25 @@ describe('Addons.reload', () => {
 			failed: false,
 		});
 		manager.start(manifest.id);
-		const entity = manager.getEntity(manifest.id)!;
+		const addon = manager.getAddon(manifest.id)!;
 		const context = manager.contexts[0];
 		let finishCleanup: (() => void) | undefined;
 		const cleanup = new Promise<void>((resolve) => {
 			finishCleanup = resolve;
 		});
 
-		manager.setInstance(entity, { stop: () => cleanup });
+		manager.setInstance(addon, { stop: () => cleanup });
 
-		const stopping = manager.stop(entity);
+		const stopping = manager.stop(addon);
 
-		manager.enable(entity);
-		manager.disable(entity);
+		manager.enable(addon);
+		manager.disable(addon);
 		finishCleanup!();
 		await stopping;
 
 		expect(context.disposed).toBe(true);
 		expect(manager.contexts).toHaveLength(1);
-		expect(entity.started).toBe(false);
+		expect(addon.started).toBe(false);
 	});
 
 	test('a plugin start failure disposes the context before recording the error', () => {
@@ -315,14 +315,14 @@ describe('Addons.reload', () => {
 		expect(result.ok).toBe(false);
 		expect(manager.log).toEqual([]);
 		expect(manager.bundleOf('a')).toBe('old');
-		expect(manager.getEntity('renamed')).toBeUndefined();
+		expect(manager.getAddon('renamed')).toBeUndefined();
 	});
 
 	test('a manifest id that differs from the target creates no phantom addon on the load path', async () => {
 		const result = await manager.reload('f', 'fresh', makeManifest('renamed'));
 
 		expect(result.ok).toBe(false);
-		expect(manager.entities.size).toBe(0);
+		expect(manager.addons.size).toBe(0);
 		expect(writes).toEqual([]);
 	});
 
@@ -338,7 +338,7 @@ describe('Addons.reload', () => {
 			started: true,
 			failed: false,
 		});
-		manager.on('reload-error', (_entity, error) => void failures.push(error));
+		manager.on('reload-error', (_addon, error) => void failures.push(error));
 
 		const pushed = { ...manifest, authors: [] };
 		const result = await manager.reload('i', 'new', pushed);
@@ -359,7 +359,7 @@ describe('Addons.reload', () => {
 
 		expect(result.ok).toBe(false);
 		expect(manager.errors.get('j')?.message).toBe('Manifest authors must be a non-empty array');
-		expect(manager.entities.size).toBe(0);
+		expect(manager.addons.size).toBe(0);
 		expect(writes).toEqual([]);
 	});
 });
@@ -368,14 +368,14 @@ describe('Addons manifest validation', () => {
 	test('loads a manifest without an unbound requirement', () => {
 		manager.load('bundle', makeManifest('plain'));
 
-		expect(manager.getEntity('plain')).toBeDefined();
+		expect(manager.getAddon('plain')).toBeDefined();
 		expect(manager.errors.get('plain')).toBeUndefined();
 	});
 
 	test('loads a manifest with an unbound.min version', () => {
 		manager.load('bundle', { ...makeManifest('pinned'), unbound: { min: '1.2.0-beta.1' } });
 
-		expect(manager.getEntity('pinned')?.manifest.unbound?.min).toBe('1.2.0-beta.1');
+		expect(manager.getAddon('pinned')?.manifest.unbound?.min).toBe('1.2.0-beta.1');
 		expect(manager.errors.get('pinned')).toBeUndefined();
 	});
 
@@ -384,7 +384,7 @@ describe('Addons manifest validation', () => {
 
 		manager.load('bundle', { ...makeManifest('loose'), ...malformed });
 
-		expect(manager.getEntity('loose')).toBeUndefined();
+		expect(manager.getAddon('loose')).toBeUndefined();
 		expect(manager.errors.get('loose')?.message).toMatch(/unbound\.min/);
 	});
 });

@@ -32,7 +32,7 @@ export type InstallListedOptions = {
 	hold?: boolean;
 };
 
-const INSTALL_EVENTS = ['loaded', 'unloaded', 'installed', 'updated', 'deleted'] as const;
+const INSTALL_EVENTS = ['loaded', 'unloaded', 'installed', 'updated', 'uninstalled'] as const;
 
 /**
  * @description Addon distribution on top of {@link AddonSelection}: install, update, hot reload and
@@ -66,7 +66,7 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 	 * enabled state. A throwing `stop()` or a failing `start()` is caught, never aborting the swap, and
 	 * drives a `reload-error` emit for on-device feedback. Returns the outcome so the caller reports it
 	 * over the wire rather than reading it back out of shared state.
-	 * @param entity The addon to reload, as its id or the entity itself.
+	 * @param addon The addon to reload, as its id or the addon itself.
 	 * @param bundle The freshly built bundle source.
 	 * @param pushed The freshly built manifest, as received; it is validated before anything is swapped.
 	 * @param bytecode The bundle compiled for this runtime, base64-encoded, whose digest the manifest lists.
@@ -74,17 +74,17 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 	 * @returns The reload outcome: `{ ok: true }`, or `{ ok: false, error }` on failure.
 	 */
 	async reload(
-		entity: AddonResolveable<I>,
+		addon: AddonResolveable<I>,
 		bundle: string,
 		pushed: PushedManifest,
 		bytecode?: string,
 		files?: AddonFiles,
 	): Promise<ReloadResult> {
-		const resolved = this.resolve(entity);
+		const resolved = this.resolve(addon);
 
 		// Everything past here keys off `manifest.id`, so a mismatch would install a second addon under
 		// the new id and leave the old one running. A hot swap can't rename an addon.
-		const targetId = typeof entity === 'string' ? entity : entity.id;
+		const targetId = typeof addon === 'string' ? addon : addon.id;
 
 		if (targetId !== pushed.id) {
 			const error = new Error(
@@ -110,7 +110,7 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 				await this.persist(bundle, manifest, bytecode, files);
 				this.register(bundle, manifest);
 
-				const loaded = this.getEntity(manifest.id);
+				const loaded = this.getAddon(manifest.id);
 				const loadError = this.errors.get(manifest.id);
 
 				if (!loaded) {
@@ -178,7 +178,7 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 		}
 	}
 
-	// Only a loaded addon gets a `reload-error` emit; an absent one has no entity to report against.
+	// Only a loaded addon gets a `reload-error` emit; an absent one has no addon to report against.
 	// UNKNOWN: catch binds whatever was thrown, not necessarily an Error.
 	private reloadFailed(id: string, resolved: Addon<I> | undefined, error: unknown): ReloadResult {
 		const failure = this.fail('reload', id, error);
@@ -192,7 +192,7 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 
 	/**
 	 * @description Installs an addon from a manifest URL: fetches and validates the manifest, downloads
-	 * the bundle, loads it, and emits `installed`. Twin of {@link delete}.
+	 * the bundle, loads it, and emits `installed`. Twin of {@link uninstall}.
 	 * @param url The manifest URL to install from.
 	 * @param digest The SHA-256 the bundle must have, when the release lists one.
 	 * @returns The loaded addon, or `undefined` on failure.
@@ -212,7 +212,7 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 				assertTextDigest(bundle, digest);
 			}
 
-			const installedTrust = this.getEntity(manifest.id)?.manifest.trust;
+			const installedTrust = this.getAddon(manifest.id)?.manifest.trust;
 			const trusted = verifySignature(manifest, bundle, installedTrust);
 
 			await this.persist(bundle, trusted, bytecode, files);
@@ -236,16 +236,16 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 	 * @returns The installed addon, or `undefined` when it failed to load.
 	 */
 	protected installed(id: string, url: string): Addon<I> | undefined {
-		const entity = this.getEntity(id);
+		const addon = this.getAddon(id);
 
-		if (!entity) return;
+		if (!addon) return;
 
-		this.clearDevelopmentCopy(entity.id);
-		this.recordSource(entity.id, url);
-		this.releaseStaleHold(entity.id);
-		this.emit('installed', entity);
+		this.clearDevelopmentCopy(addon.id);
+		this.recordSource(addon.id, url);
+		this.releaseStaleHold(addon.id);
+		this.emit('installed', addon);
 
-		return entity;
+		return addon;
 	}
 
 	/**
@@ -309,13 +309,13 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 	 * @returns Whether the addon now runs the release's version; the manager records why when it doesn't.
 	 */
 	async applyRelease(id: string, release: AddonRelease): Promise<boolean> {
-		if (this.getEntity(id)) {
+		if (this.getAddon(id)) {
 			return this.update(id, release);
 		}
 
 		await this.install(release.manifestUrl, release.sha256);
 
-		return this.getEntity(id)?.version === release.version;
+		return this.getAddon(id)?.version === release.version;
 	}
 
 	/**
@@ -336,7 +336,7 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 			return false;
 		}
 
-		const fresh = !this.getEntity(listed.id);
+		const fresh = !this.getAddon(listed.id);
 
 		if (!(await this.applyRelease(listed.id, toRelease(listed.id, version)))) {
 			return false;
@@ -366,7 +366,7 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 	}
 
 	getInstalledVersion(listed: ListedAddon): string | undefined {
-		return this.getEntity(listed.id)?.version;
+		return this.getAddon(listed.id)?.version;
 	}
 
 	/**
@@ -391,27 +391,27 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 	 * @returns One entry per installed addon.
 	 */
 	listInstalled(): InstalledEntry[] {
-		return this.getEntities()
-			.filter((entity) => !this.isDevelopmentCopy(entity.id))
-			.map((entity) => {
-				const sha256 = digestOf(entity.id, this.stateOf(entity).bundle);
+		return this.getAddons()
+			.filter((addon) => !this.isDevelopmentCopy(addon.id))
+			.map((addon) => {
+				const sha256 = digestOf(addon.id, this.stateOf(addon).bundle);
 
 				return {
 					kind: this.kind,
-					id: entity.id,
-					name: entity.name,
-					version: entity.version,
+					id: addon.id,
+					name: addon.name,
+					version: addon.version,
 					...(sha256 ? { sha256 } : {}),
 				};
 			});
 	}
 
 	/**
-	 * @description Deletes an installed addon: unloads it and removes its folder from disk, emitting `deleted`.
-	 * @param entity The addon to delete, as its id or the entity itself.
+	 * @description Uninstalls an addon: unloads it and removes its folder from disk, emitting `uninstalled`.
+	 * @param addon The addon to uninstall, as its id or the addon itself.
 	 */
-	async delete(entity: AddonResolveable<I>): Promise<void> {
-		const resolved = this.resolve(entity);
+	async uninstall(addon: AddonResolveable<I>): Promise<void> {
+		const resolved = this.resolve(addon);
 
 		if (!resolved) return;
 
@@ -426,7 +426,7 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 			this.forgetSource(resolved.id);
 			this.clearDevelopmentCopy(resolved.id);
 			this.releaseHold(resolved.id);
-			this.emit('deleted', resolved);
+			this.emit('uninstalled', resolved);
 		} catch (error) {
 			this.fail('delete', resolved.id, error);
 		}
@@ -542,7 +542,7 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 	getHeldVersion(id: string): string | undefined {
 		const held = this.held.get(id);
 
-		return held !== void 0 && held === this.getEntity(id)?.version ? held : void 0;
+		return held !== void 0 && held === this.getAddon(id)?.version ? held : void 0;
 	}
 
 	/**

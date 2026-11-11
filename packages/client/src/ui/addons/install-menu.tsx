@@ -1,7 +1,7 @@
 import type { AddonKind } from '@unbound-app/types/addons';
 import { useMemo } from 'react';
 
-import { installOptions } from '~/ui/addons/open-install-sheet';
+import { installOptions } from '~/ui/addons/install-options';
 import { Discord } from '~/metro/components';
 import { messages } from '~/i18n/api';
 import { icons } from '~/assets/api';

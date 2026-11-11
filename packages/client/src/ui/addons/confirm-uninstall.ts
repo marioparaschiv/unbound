@@ -4,25 +4,25 @@ import { messages, format } from '~/i18n/api';
 import type { Addon } from '~/addons/addon';
 import { show } from '~/toasts/api';
 
-type DeletingManager = {
-	getEntities: () => Addon[];
-	delete: (id: string) => void | Promise<void>;
+type UninstallingManager = {
+	getAddons: () => Addon[];
+	uninstall: (id: string) => void | Promise<void>;
 };
 
-async function deleteInOrder(manager: DeletingManager, addons: Addon[]) {
+async function uninstallInOrder(manager: UninstallingManager, addons: Addon[]) {
 	for (const addon of addons) {
-		await manager.delete(addon.id);
+		await manager.uninstall(addon.id);
 	}
 }
 
 /**
- * @description Asks before deleting an addon. When other plugins depend on it, the prompt names them and
- * offers deleting the library alone or together with every plugin that needs it, dependents first.
+ * @description Asks before uninstalling an addon. When other plugins depend on it, the prompt names them and
+ * offers uninstalling the library alone or together with every plugin that needs it, dependents first.
  * @param manager The addon's manager.
- * @param addon The addon to delete.
+ * @param addon The addon to uninstall.
  */
-export function confirmDelete(manager: DeletingManager, addon: Addon) {
-	const dependents = dependentsOf(addon.id, manager.getEntities()) as Addon[];
+export function confirmUninstall(manager: UninstallingManager, addon: Addon) {
+	const dependents = dependentsOf(addon.id, manager.getAddons()) as Addon[];
 	const name = addon.name;
 
 	if (dependents.length === 0) {
@@ -31,7 +31,7 @@ export function confirmDelete(manager: DeletingManager, addon: Addon) {
 			body: 'UNBOUND_DELETE_BODY',
 			confirm: 'UNBOUND_DELETE',
 			destructive: true,
-		}).then((confirmed) => confirmed && manager.delete(addon.id));
+		}).then((confirmed) => confirmed && manager.uninstall(addon.id));
 
 		return;
 	}
@@ -48,7 +48,7 @@ export function confirmDelete(manager: DeletingManager, addon: Addon) {
 				}),
 				variant: 'destructive',
 				onPress: () =>
-					void deleteInOrder(manager, [...dependents, addon]).then(() =>
+					void uninstallInOrder(manager, [...dependents, addon]).then(() =>
 						show({
 							title: messages.UNBOUND_DELETE,
 							content: format('UNBOUND_DELETED_WITH_DEPENDENTS', {
@@ -62,11 +62,11 @@ export function confirmDelete(manager: DeletingManager, addon: Addon) {
 			{
 				label: messages.UNBOUND_DELETE_LIBRARY_ONLY,
 				variant: 'secondary',
-				onPress: () => void manager.delete(addon.id),
+				onPress: () => void manager.uninstall(addon.id),
 			},
 		],
 		cancel: messages.UNBOUND_CANCEL,
 	});
 }
 
-export default confirmDelete;
+export default confirmUninstall;

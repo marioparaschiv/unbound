@@ -10,19 +10,19 @@ import { format } from '~/i18n/api';
 import InstallCountLabel from './install-count-label';
 import useInstallAction from './use-install-action';
 import { formatListingDate } from './listing-date';
-import useStyles from './store-header.style';
+import useStyles from './addon-page-header.style';
 
-type StoreHeaderProps = {
+type AddonPageHeaderProps = {
 	addon: ListedAddon;
 	kind: AddonKind;
 };
 
 /**
- * @description The top of a store page, as the website's addon header: the icon, name, version,
+ * @description The top of a addon page, as the website's addon header: the icon, name, version,
  * update date and install count, the authors and description, and a full-width Install, Update or Installed button.
  * It reads only the listing, so it draws before the page's ADDON.md arrives.
  */
-function StoreHeader({ addon, kind }: StoreHeaderProps) {
+function AddonPageHeader({ addon, kind }: AddonPageHeaderProps) {
 	const styles = useStyles();
 	const install = useInstallAction(kind, addon);
 	const { manifest, version, publishedAt } = addon.latestVersion;
@@ -66,4 +66,4 @@ function StoreHeader({ addon, kind }: StoreHeaderProps) {
 	);
 }
 
-export default StoreHeader;
+export default AddonPageHeader;

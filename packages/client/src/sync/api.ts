@@ -1,4 +1,4 @@
-import { emptySyncDocument } from '@unbound-app/contracts/sync-stores';
+import { emptySyncDocument } from '@unbound-app/contracts/sync-buckets';
 import type { SyncDocument } from '@unbound-app/contracts/sync';
 import { ApiRequestError } from '@unbound-app/web/client';
 import { createLogger } from '@unbound-app/logger';
@@ -24,7 +24,7 @@ const MODE_STRATEGIES: Record<SyncMode, SyncStrategy> = {
 };
 
 const logger = createLogger('Sync');
-const Store = getBucket(SYNC_STORE);
+const bucket = getBucket(SYNC_STORE);
 
 let running: Promise<boolean> | undefined;
 let rerun = false;
@@ -32,12 +32,12 @@ let applying = false;
 
 /** @returns Whether this device syncs automatically. */
 export function isEnabled(): boolean {
-	return Boolean(account.getAccount()) && Store.get('enabled', false) && !needsFirstSyncChoice();
+	return Boolean(account.getAccount()) && bucket.get('enabled', false) && !needsFirstSyncChoice();
 }
 
 /** @returns Which way automatic syncs move changes on this device. */
 export function getMode(): SyncMode {
-	const mode = Store.get('mode', 'two-way');
+	const mode = bucket.get('mode', 'two-way');
 
 	return isSyncMode(mode) ? mode : 'two-way';
 }
@@ -48,7 +48,7 @@ function isSyncMode(value: string): value is SyncMode {
 
 /** @returns Whether the cloud already held a setup at sign-in and the user has not chosen how to combine it with this device. */
 function needsFirstSyncChoice(): boolean {
-	return Store.get('pendingChoice', false);
+	return bucket.get('pendingChoice', false);
 }
 
 /**
@@ -59,13 +59,13 @@ export function isApplying(): boolean {
 }
 
 function resetBase() {
-	Store.set('base', null);
-	Store.set('revision', 0);
+	bucket.set('base', null);
+	bucket.set('revision', 0);
 }
 
 function readBase(remoteRevision: number): SyncDocument {
-	const revision = Store.get('revision', 0);
-	const base = Store.get<SyncDocument | null>('base', null);
+	const revision = bucket.get('revision', 0);
+	const base = bucket.get<SyncDocument | null>('base', null);
 
 	// A remote revision behind ours means the document was deleted since, so nothing is agreed on.
 	if (!base || remoteRevision === 0 || remoteRevision < revision) {
@@ -94,8 +94,8 @@ async function attempt(request: ApiRequest, strategy: SyncStrategy) {
 					body: { revision: remote.revision, document },
 				});
 
-	Store.set('base', reconcileBase(saved.document, base, failed));
-	Store.set('revision', saved.revision);
+	bucket.set('base', reconcileBase(saved.document, base, failed));
+	bucket.set('revision', saved.revision);
 }
 
 function isConflict(error: Error): boolean {
@@ -119,13 +119,13 @@ async function run(strategy: SyncStrategy): Promise<boolean> {
 			throw error;
 		});
 
-		Store.set('lastSyncedAt', new Date().toISOString());
-		Store.set('lastError', null);
+		bucket.set('lastSyncedAt', new Date().toISOString());
+		bucket.set('lastError', null);
 
 		return true;
 	} catch (error) {
 		logger.error('Failed to sync:', error);
-		Store.set('lastError', toError(error).message);
+		bucket.set('lastError', toError(error).message);
 
 		return false;
 	}
@@ -171,13 +171,13 @@ export function now(strategy: SyncStrategy = MODE_STRATEGIES[getMode()]): Promis
 async function begin(): Promise<boolean> {
 	try {
 		const remote = await account.createClient()('GET /api/v1/sync', {});
-		const revision = Store.get('revision', 0);
+		const revision = bucket.get('revision', 0);
 		// A remote revision behind ours means the document was deleted since, so nothing is agreed on.
 		const agreed = revision > 0 && remote.revision >= revision;
 
-		Store.set('enabled', true);
-		Store.set('lastError', null);
-		Store.set('pendingChoice', remote.revision > 0 && !agreed);
+		bucket.set('enabled', true);
+		bucket.set('lastError', null);
+		bucket.set('pendingChoice', remote.revision > 0 && !agreed);
 
 		if (remote.revision === 0) {
 			return await now('push');
@@ -186,7 +186,7 @@ async function begin(): Promise<boolean> {
 		return agreed ? await now() : true;
 	} catch (error) {
 		logger.error('Failed to read the cloud setup:', error);
-		Store.set('lastError', toError(error).message);
+		bucket.set('lastError', toError(error).message);
 
 		return false;
 	}
@@ -210,10 +210,10 @@ export function connect(): Promise<boolean> {
  * @internal
  */
 export function disconnect() {
-	Store.set('pendingChoice', false);
-	Store.set('enabled', false);
-	Store.set('lastSyncedAt', null);
-	Store.set('lastError', null);
+	bucket.set('pendingChoice', false);
+	bucket.set('enabled', false);
+	bucket.set('lastSyncedAt', null);
+	bucket.set('lastError', null);
 	resetBase();
 }
 
@@ -226,8 +226,8 @@ export function disconnect() {
 export function setEnabled(enabled: boolean): Promise<boolean> {
 	if (!enabled) {
 		// Turning it off also dismisses a first-sync choice; turning it on again asks again.
-		Store.set('pendingChoice', false);
-		Store.set('enabled', false);
+		bucket.set('pendingChoice', false);
+		bucket.set('enabled', false);
 
 		return Promise.resolve(true);
 	}
@@ -240,7 +240,7 @@ export function setEnabled(enabled: boolean): Promise<boolean> {
  * @param mode The new mode.
  */
 export function setMode(mode: SyncMode) {
-	Store.set('mode', mode);
+	bucket.set('mode', mode);
 
 	if (isEnabled()) {
 		void now();
@@ -254,7 +254,7 @@ export function setMode(mode: SyncMode) {
  * @returns Whether the sync succeeded.
  */
 export function resolveFirstSync(strategy: SyncStrategy): Promise<boolean> {
-	Store.set('pendingChoice', false);
+	bucket.set('pendingChoice', false);
 
 	return now(strategy);
 }
@@ -268,15 +268,15 @@ export async function deleteData(): Promise<boolean> {
 	try {
 		await account.createClient()('DELETE /api/v1/sync');
 
-		Store.set('enabled', false);
-		Store.set('lastSyncedAt', null);
-		Store.set('lastError', null);
+		bucket.set('enabled', false);
+		bucket.set('lastSyncedAt', null);
+		bucket.set('lastError', null);
 		resetBase();
 
 		return true;
 	} catch (error) {
 		logger.error('Failed to delete the Sync data:', error);
-		Store.set('lastError', toError(error).message);
+		bucket.set('lastError', toError(error).message);
 
 		return false;
 	}

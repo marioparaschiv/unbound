@@ -2,15 +2,15 @@ import type { ReactNode } from 'react';
 
 import { Discord } from '~/metro/components';
 
-import useStyles from './store-section.style';
+import useStyles from './page-card.style';
 
-type StoreSectionProps = {
+type PageCardProps = {
 	title: string;
 	children: ReactNode;
 };
 
-/** @description A titled card on a store page, like the website's sidebar cards. */
-function StoreSection({ title, children }: StoreSectionProps) {
+/** @description A titled card on a addon page, like the website's sidebar cards. */
+function PageCard({ title, children }: PageCardProps) {
 	const styles = useStyles();
 
 	return (
@@ -23,4 +23,4 @@ function StoreSection({ title, children }: StoreSectionProps) {
 	);
 }
 
-export default StoreSection;
+export default PageCard;

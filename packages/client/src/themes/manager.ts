@@ -7,7 +7,7 @@ import { Addons } from '~/addons/addons';
 import ThemeStore from '~/themes/state';
 
 // A hot reload persists the pushed theme, so it rewrites the files on disk like an update.
-const DISK_EVENTS = ['installed', 'updated', 'deleted', 'reloaded'] as const;
+const DISK_EVENTS = ['installed', 'updated', 'uninstalled', 'reloaded'] as const;
 
 /**
  * @description Manages user themes, layering theme-specific application on top of the base {@link Addons} manager.
@@ -64,11 +64,11 @@ export class Themes extends Addons<Theme> {
 	/**
 	 * @description Reports whether a theme reaches native views only after a restart. Applying is live, but a loader
 	 * without `rescanThemes` recolours native views from the theme files it scanned at launch, so a theme installed or changed since lags.
-	 * @param entity The theme id or entity.
+	 * @param addon The theme id or addon.
 	 * @returns Whether the loader's launch copy of the theme is missing or differs.
 	 */
-	needsRestart(entity: AddonResolveable<Theme>): boolean {
-		const resolved = this.resolve(entity);
+	needsRestart(addon: AddonResolveable<Theme>): boolean {
+		const resolved = this.resolve(addon);
 
 		if (!resolved || !getLoader()) {
 			return false;

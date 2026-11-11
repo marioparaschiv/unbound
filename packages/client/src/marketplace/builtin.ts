@@ -12,13 +12,13 @@ export const marketplaceSection: SectionEntry = {
 	icon: 'img_collectibles_shop',
 };
 
-export const storePageSection: SectionEntry = {
-	key: Screens.StorePage,
+export const addonPageSection: SectionEntry = {
+	key: Screens.AddonPage,
 	titleKey: 'UNBOUND_STORE_PAGE',
 	/**
 	 * @description Loads the page when it first opens.
 	 * @returns The page.
 	 */
-	getComponent: () => require('~/ui/marketplace/store-page').default,
+	getComponent: () => require('~/ui/marketplace/addon-page').default,
 	hidden: true,
 };

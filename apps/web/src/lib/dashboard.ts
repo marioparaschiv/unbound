@@ -8,7 +8,7 @@ import type { AddonType, MaintainerRole } from '@unbound-app/contracts/addons';
 import { and, desc, eq, inArray, isNotNull, or, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 
-import { LATEST_VERSION, getManifestType } from '~/lib/addons';
+import { WITH_SERVED_VERSION, getManifestType } from '~/lib/addons';
 import { OPEN_SUBMISSION_STATUSES } from '~/lib/submissions';
 import { submission, submissionSource } from '~/db/schema';
 import type { Caller, CallerUser } from '~/lib/api/caller';
@@ -196,7 +196,7 @@ const RECORD_COLUMNS = {
 function queryMemberships(ctx: AppContext, userId: string) {
 	return ctx.db.query.addonMaintainer.findMany({
 		where: { userId },
-		with: { addon: { with: LATEST_VERSION } },
+		with: { addon: { with: WITH_SERVED_VERSION } },
 	});
 }
 
@@ -426,7 +426,7 @@ export async function loadSubmitTarget(
 	const [membership, open] = await Promise.all([
 		ctx.db.query.addonMaintainer.findFirst({
 			where: { userId: viewer.id, addonId },
-			with: { addon: { with: LATEST_VERSION } },
+			with: { addon: { with: WITH_SERVED_VERSION } },
 		}),
 		queryOpen(ctx, and(eq(submission.addonId, addonId), submissionScope(viewer.id, [addonId]))),
 	]);

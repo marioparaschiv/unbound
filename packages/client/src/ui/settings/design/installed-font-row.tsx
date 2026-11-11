@@ -33,7 +33,7 @@ function InstalledFontRow({ family }: InstalledFontRowProps) {
 		if (!confirmed) return;
 
 		for (const face of family.faces) {
-			await fonts.delete(face.id);
+			await fonts.uninstall(face.id);
 		}
 	}
 

@@ -3,7 +3,7 @@ import type { Plugin } from '@unbound-app/types';
 
 import type { AddonAttribution } from '~/addons/crash-guard';
 import type { CrashEvent } from '~/diagnostics/crash-report';
-import type { PluginScope } from '~/addons/scope';
+import type { AddonScope } from '~/addons/scope';
 import type { Addon } from '~/addons/addon';
 
 import { startFakeMetro } from './helpers/fake-metro';
@@ -143,20 +143,20 @@ describe('lazy patch targets', () => {
 
 class AttributedAddons extends FakeAddons {
 	attributed: string[] = [];
-	starts = new Map<string, (scope?: PluginScope) => void>();
+	starts = new Map<string, (scope?: AddonScope) => void>();
 
-	protected createScope(entity: Addon<Plugin>): PluginScope {
-		return createAddonScope(entity, '/plugins');
+	protected createScope(addon: Addon<Plugin>): AddonScope {
+		return createAddonScope(addon, '/plugins');
 	}
 
-	protected handleBundle(bundle: string, _id?: string, scope?: PluginScope) {
+	protected handleBundle(bundle: string, _id?: string, scope?: AddonScope) {
 		return { start: () => this.starts.get(bundle)?.(scope), stop: () => {} };
 	}
 
-	protected attribution(entity: Addon<Plugin>): AddonAttribution {
+	protected attribution(addon: Addon<Plugin>): AddonAttribution {
 		return (method) =>
 			(...args) => {
-				this.attributed.push(entity.id);
+				this.attributed.push(addon.id);
 
 				return method(...args);
 			};
@@ -186,9 +186,9 @@ describe('deferred patches', () => {
 		expect(exportsOf('sixth').sixth(2)).toBe(20);
 		expect(manager.attributed).toEqual(['addon.a']);
 		expect(manager.errors.get('addon.a')?.message).toContain('does not exist');
-		expect(manager.getEntity('addon.a')?.failed).toBe(true);
+		expect(manager.getAddon('addon.a')?.failed).toBe(true);
 		expect(manager.errors.has('addon.b')).toBe(false);
-		expect(manager.getEntity('addon.b')?.started).toBe(true);
+		expect(manager.getAddon('addon.b')?.started).toBe(true);
 		expect(crashes.map((crash) => [crash.addon?.id, crash.kind, crash.phase])).toEqual([
 			['addon.a', 'start-failure', 'running'],
 		]);
