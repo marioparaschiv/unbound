@@ -1,4 +1,8 @@
-import type { NativePluginCapability, NativePluginPlatform } from '../src/native';
+import type {
+	NativePluginCapability,
+	NativePluginMethod,
+	NativePluginPlatform,
+} from '../src/native';
 import type { CommandArgs, LogEntry } from './install-addon-globals';
 import type { OpenedDialog, ShownToast } from './fake-feedback';
 import type { CommandContext, Reply } from '../src/commands';
@@ -53,6 +57,8 @@ export type NativeRecorder = {
 	registerModule: (name: string, module: unknown) => void;
 	/** Sets what `native.has` reports. */
 	setCapabilities: (capabilities: NativePluginCapability[]) => void;
+	/** Sets the bridge methods `native.supports` denies, as on an older loader; none until set. */
+	setUnsupportedMethods: (methods: NativePluginMethod[]) => void;
 	/** The Objective-C bridge a plugin gets on iOS: register classes and objects for its calls to reach. */
 	readonly objc: FakeObjc;
 	/** The Java bridge a plugin gets on Android: register classes and objects for its calls to reach. */
@@ -114,6 +120,8 @@ function createRecorders() {
 		registerModule: (name, module) => void getSession().native.state.modules.set(name, module),
 		setCapabilities: (capabilities) =>
 			void (getSession().native.state.capabilities = capabilities),
+		setUnsupportedMethods: (methods) =>
+			void (getSession().native.state.unsupportedMethods = methods),
 		get objc() {
 			return getSession().native.objc;
 		},
