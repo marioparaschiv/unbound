@@ -170,7 +170,7 @@ describe('a pack installed from the store', () => {
 
 	test('renders an icon from the image its manifest lists for that asset', async () => {
 		icons.load(STORE_PACK, manifest);
-		await icons['persistFiles'](manifest, {});
+		await icons['persist']('', manifest, undefined, {});
 		await icons.enable(STORE_PACK);
 
 		expect(ImageSources.getImageSourcesFromImageProps({ source: 1 })).toEqual({

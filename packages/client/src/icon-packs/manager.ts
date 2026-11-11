@@ -352,11 +352,18 @@ export class Icons extends Addons<Plugin> {
 	/**
 	 * @description Writes a store pack's images, lists the pack, and re-applies it when it is the applied one, since an
 	 * update replaces the images its icons point at.
+	 * @param bundle The pack's `main` file.
 	 * @param manifest The pack's validated manifest.
+	 * @param bytecode The compiled `main`, base64-encoded; packs ship none.
 	 * @param files The images, base64-encoded, by path.
 	 */
-	protected async persistFiles(manifest: AddonManifest, files?: AddonFiles): Promise<void> {
-		await super.persistFiles(manifest, files);
+	protected async persist(
+		bundle: string,
+		manifest: AddonManifest,
+		bytecode?: string,
+		files?: AddonFiles,
+	): Promise<void> {
+		await super.persist(bundle, manifest, bytecode, files);
 		this.recordPack({ ...manifest, type: 'icon-pack', source: 'other' });
 		await this.restart(manifest.id);
 	}
