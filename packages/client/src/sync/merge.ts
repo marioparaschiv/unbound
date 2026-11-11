@@ -4,7 +4,7 @@ import type {
 	SyncInstall,
 	SyncKind,
 	SyncKindDocument,
-	SyncSettingsStore,
+	SyncBucket,
 } from '@unbound-app/contracts/sync';
 
 /** A change merging made to the remote side that this device has to carry out. */
@@ -139,12 +139,12 @@ function mergeKind(
 
 function mergeStore(
 	name: string,
-	base: SyncSettingsStore = {},
-	local: SyncSettingsStore = {},
-	remote: SyncSettingsStore = {},
+	base: SyncBucket = {},
+	local: SyncBucket = {},
+	remote: SyncBucket = {},
 	actions: SyncAction[],
-): SyncSettingsStore {
-	const store: SyncSettingsStore = {};
+): SyncBucket {
+	const store: SyncBucket = {};
 
 	for (const key of new Set([
 		...Object.keys(base),
@@ -254,7 +254,7 @@ function copyDocument(document: SyncDocument): SyncDocument {
 		icons: copyKind(document.addons.icons),
 		fonts: copyKind(document.addons.fonts),
 	};
-	const settings: Record<string, SyncSettingsStore> = {};
+	const settings: Record<string, SyncBucket> = {};
 
 	for (const [name, store] of Object.entries(document.settings)) {
 		settings[name] = { ...store };

@@ -11,7 +11,7 @@ import type {
 	SyncDocument,
 	SyncKind,
 	SyncKindDocument,
-	SyncSettingsStore,
+	SyncBucket,
 } from '@unbound-app/contracts/sync';
 import { createLogger } from '@unbound-app/logger';
 
@@ -143,11 +143,11 @@ function collectKind(kind: SyncKind): SyncKindDocument {
 
 /**
  * @description Copies a Bucket, so the synced document cannot write through to the live settings.
- * @param store The store as `snapshot` reports it.
+ * @param bucket The bucket as `snapshot` reports it.
  * @returns A shallow copy of it.
  */
-function copyStore(store: SyncSettingsStore): SyncSettingsStore {
-	return { ...store };
+function copyBucket(bucket: SyncBucket): SyncBucket {
+	return { ...bucket };
 }
 
 /**
@@ -175,7 +175,7 @@ export function collectLocalDocument(): SyncDocument {
 		// The document keeps its own copy of each store; Hermes has no `structuredClone`, so a shallow
 		// copy stands in for the deep one `parse` used to make.
 		if (name === SYNC_CORE_STORE) {
-			const core = copyStore(store);
+			const core = copyBucket(store);
 
 			for (const key of LOCAL_KEYS) {
 				delete core[key];
@@ -187,7 +187,7 @@ export function collectLocalDocument(): SyncDocument {
 
 			synced[name] = core;
 		} else if (ids.has(name)) {
-			synced[name] = copyStore(store);
+			synced[name] = copyBucket(store);
 		}
 	}
 

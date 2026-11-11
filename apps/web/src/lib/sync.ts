@@ -14,7 +14,7 @@ import type {
 	SyncInstall,
 	SyncKind,
 	SyncKindDocument,
-	SyncSettingsStore,
+	SyncBucket,
 } from '@unbound-app/contracts/sync';
 
 import { ApiError } from '~/lib/api/errors';
@@ -27,14 +27,14 @@ export type SyncLimits = Pick<
 
 type SyncKindInput = SyncDocumentInput['addons']['plugins'];
 
-type JsonValue = SyncSettingsStore[string];
+type JsonValue = SyncBucket[string];
 
 const LOCAL_KEYS = new Set<string>(SYNC_LOCAL_KEYS);
 
 // Manager stores are rebuilt from `addons`, so an addon named after one must not overwrite it.
 const RESERVED_STORES = new Set<string>(SYNC_KINDS);
 
-function byteLength(value: SyncSettingsStore | SyncDocument): number {
+function byteLength(value: SyncBucket | SyncDocument): number {
 	return Buffer.byteLength(JSON.stringify(value));
 }
 
@@ -109,12 +109,8 @@ function depth(value: JsonValue): number {
 	return deepest + 1;
 }
 
-function stripStore(
-	name: string,
-	store: SyncSettingsStore,
-	limits: SyncLimits,
-): SyncSettingsStore | undefined {
-	const stripped: SyncSettingsStore = {};
+function stripStore(name: string, store: SyncBucket, limits: SyncLimits): SyncBucket | undefined {
+	const stripped: SyncBucket = {};
 
 	for (const [key, value] of Object.entries(store)) {
 		if (name === SYNC_CORE_STORE && LOCAL_KEYS.has(key)) {
