@@ -1,5 +1,5 @@
 import type { MetroFunction } from '@unbound-app/api/metro';
-import type { FluxStore } from '@unbound-app/api/flux';
+import type { FluxChannel, FluxStore } from '@unbound-app/api/flux';
 import type { ComponentType } from 'react';
 import { metro, flux } from '@unbound-app/api';
 
@@ -63,6 +63,15 @@ type MessageStoreType = FluxStore & {
 	getLastMessage: (channelId: string) => Message | undefined;
 };
 
+/** A channel record; DMs and group DMs list the ids of their recipients. */
+export type Channel = FluxChannel & {
+	recipients?: string[];
+};
+
+type ChannelStoreType = FluxStore & {
+	getChannel: (id: string) => Channel | undefined;
+};
+
 type MessageActionsType = {
 	fetchMessage: (target: LinkTarget) => Promise<Message | null>;
 };
@@ -74,8 +83,11 @@ type ComponentHolder = {
 };
 
 export const MessageStore = flux.getStore('Message') as MessageStoreType;
-export const ChannelStore = flux.getStore('Channel');
+export const ChannelStore = flux.getStore('Channel') as ChannelStoreType;
 export const SelectedChannelStore = flux.getStore('SelectedChannel');
+export const GuildStore = flux.getStore('Guild');
+export const UserStore = flux.getStore('User');
+export const RelationshipStore = flux.getStore('Relationship');
 
 export const MessageActions = metro.api.Messages as MessageActionsType;
 
