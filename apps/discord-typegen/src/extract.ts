@@ -24,8 +24,6 @@ export function createParser(): Project {
 /**
  * @description Parses one module's factory and extracts its components, their prop evidence and its re-exports.
  * The source file is removed from the project afterwards so memory stays bounded.
- * @param project The parser project.
- * @param record The module.
  * @returns The module's facts.
  */
 export function extractModule(project: Project, record: ModuleRecord): ModuleFacts {

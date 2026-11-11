@@ -79,7 +79,6 @@ export function bundle(source: string, inlineDeclareGlobals: boolean = false): s
  * client package, matching Node's resolution walk without requiring the package to export its
  * manifest through an `exports` map. The directory is canonicalised (workspace packages are
  * symlinked), so dts-bundle-generator sees the real source path its symbol resolution needs.
- * @param library The package name to locate.
  * @returns The package directory, or `undefined` when the package is not installed.
  */
 function findPackageDir(library: string): string | undefined {
@@ -106,7 +105,6 @@ function findPackageDir(library: string): string | undefined {
  * @description Resolves the file that carries a library's typings, in the order the ecosystem
  * declares them: the root export's `types` condition, the `types`/`typings` manifest fields, then
  * a declaration file derived from `main`. Every candidate is validated on disk.
- * @param library The package name to resolve.
  * @returns The absolute typings path, or `undefined` when the package declares none that exist.
  */
 export function resolveLibraryTypes(library: string): string | undefined {

@@ -96,7 +96,6 @@ function isManifest(value: unknown): value is Manifest {
 
 /**
  * @description Reads and parses a `package.json`.
- * @param path The absolute path of the manifest.
  * @returns The parsed manifest.
  */
 export function readManifest(path: string): Manifest {
@@ -160,8 +159,6 @@ export function resolveWorkspace(
 
 /**
  * @description Lists the workspace directories a manifest depends on through `workspace:` specifiers.
- * @param manifest The dependent package's manifest.
- * @param workspaces The loaded workspaces.
  * @returns The directories of the workspace dependencies.
  */
 export function workspaceDependencies(manifest: Manifest, workspaces: Workspaces): string[] {

@@ -150,7 +150,6 @@ export function renderNativeCapabilities(): GeneratedFile[] {
 
 /**
  * @description Lists the generated files whose committed content differs from what the table renders.
- * @param root The repository root to compare against.
  * @returns The stale files' paths, empty when every one is current.
  */
 export function staleNativeCapabilityFiles(root = ROOT): string[] {

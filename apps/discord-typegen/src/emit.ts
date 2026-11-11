@@ -40,7 +40,6 @@ export function specifier(file: string): string {
 	return `./${file.replace(/\.d\.ts$/, '')}`;
 }
 
-/** Everything the emitter needs about the build. */
 export type EmitInput = {
 	build: string;
 	components: ComponentRecord[];
@@ -62,7 +61,6 @@ type Shard = { file: string; components: ComponentRecord[]; aliases: StatementSt
 
 /**
  * @description Decides whether a prop must be passed. Only unguarded use with no default is strong enough.
- * @param evidence The prop's evidence.
  * @returns True when the component reads or calls the prop without ever checking it or defaulting it.
  */
 export function isRequired(evidence: PropEvidence): boolean {

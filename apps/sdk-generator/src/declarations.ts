@@ -2,7 +2,6 @@ import { Node, SyntaxKind } from 'ts-morph';
 
 /**
  * @description Tests whether a JSDocable node carries an `@internal` tag in its leading documentation.
- * @param node The node to inspect.
  * @returns `true` when the node is tagged `@internal`.
  */
 export function isInternal(node: Node): boolean {
@@ -44,8 +43,6 @@ export function collectReferencedNames(statements: Node[]): Set<string> {
  * declaration. ts-morph exposes the declared name via `getNameNode`, so an identifier that is
  * exactly its parent's name node is a declaration name. A computed `[X]` property name is a real
  * reference to `X`, so it is excluded.
- * @param reference The identifier to classify.
- * @returns `true` when the identifier is its parent's declared name.
  */
 function isDeclarationName(reference: Node): boolean {
 	const parent = reference.getParent() as { getNameNode?: () => Node | undefined };
@@ -66,8 +63,6 @@ function isDeclarationName(reference: Node): boolean {
  * binding or specifier name. An aliased export specifier (`X as Y`) references only `X`; an import
  * specifier's names are re-bindings, not references; a declaration's own name node is not a
  * reference. A computed `[X]` property name stays a reference (handled by `isDeclarationName`).
- * @param reference The identifier to classify.
- * @returns `true` when the identifier references a declaration.
  */
 function isReference(reference: Node): boolean {
 	const parent = reference.getParent();
@@ -87,7 +82,6 @@ function isReference(reference: Node): boolean {
 
 /**
  * @description Lists the binding names a top-level declaration introduces.
- * @param statement The declaration to inspect.
  * @returns The declared identifier names (empty for anonymous statements).
  */
 export function declaredNames(statement: Node): string[] {
@@ -113,7 +107,6 @@ export function declaredNames(statement: Node): string[] {
 /**
  * @description Tests whether a declaration introduces a runtime value (a `const`, function, class or enum)
  * rather than only a type.
- * @param statement The declaration to inspect.
  * @returns `true` when the statement declares a value.
  */
 export function declaresValue(statement: Node): boolean {

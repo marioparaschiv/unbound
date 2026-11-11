@@ -26,7 +26,6 @@ export type PipelineResult = {
 /**
  * @description A PascalCase function counts as a component when it renders JSX (itself, in a nested callback or
  * through its class methods) or is wrapped by `memo` or `forwardRef`.
- * @param component The candidate.
  * @returns True for components.
  */
 export function isComponent(component: ComponentRecord): boolean {
