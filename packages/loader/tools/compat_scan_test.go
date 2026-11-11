@@ -119,6 +119,7 @@ func TestCompatPlatformReadsPluginFileSuffixes(t *testing.T) {
 		"packages/plugins/chat-bubbles/src/native/worklets-ios.ts":     "ios",
 		"packages/plugins/chat-bubbles/src/native/worklets-android.ts": "android",
 		"packages/plugins/chat-bubbles/src/native/ios/worklets.ts":     "ios",
+		"packages/plugins/chat-bubbles/src/native/android/worklets.ts": "android",
 		"packages/plugins/chat-bubbles/src/patches.ts":                 "",
 		"modules/external_pip/ExternalPipView.android.tsx":             "android",
 	}
