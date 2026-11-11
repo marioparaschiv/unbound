@@ -16,7 +16,7 @@ const std::string kBase   = "https://builds.unbound.rip/";
 const std::string kBundle = "unbound.98.bundle";
 const std::string kDev    = "unbound-dev.98.bundle";
 
-class CountingHost : public loader::LoaderHost
+class CountingHost : public loader::PipelineHost
 {
 public:
     int                      addonPreparations = 0;

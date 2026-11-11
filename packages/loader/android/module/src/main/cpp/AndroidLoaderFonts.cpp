@@ -5,31 +5,20 @@
 #include "LoaderPreferences.h"
 #include "UnboundNativeFonts.h"
 
-// The font half of AndroidLoader: the font store, the catalog plugins list, and the lookups the
-// Kotlin typeface hooks make.
+// The font half of AndroidLoader: the fonts the device and Discord ship, and the change notice the
+// Kotlin typeface hooks take.
 namespace unbound::android {
 static constexpr const char *kAssetFontPrefix = "asset:";
 
-void AndroidLoader::openFonts()
+void AndroidLoader::onFontsChanged()
 {
-    fonts_ = std::make_shared<loader::fonts::FontService>(
-        configuration_.documents,
-        [weak = weak_from_this()](const std::string &url, const std::string &destination,
-                                  const std::map<std::string, std::string> &headers,
-                                  const loader::DownloadPolicy             &policy) {
-            auto self = std::static_pointer_cast<AndroidLoader>(weak.lock());
-            return self ? self->download(url, destination, headers, policy) : std::nullopt;
-        });
-    fonts_->store().open(loader::preferences::fontOverrides(settings_));
     // Kotlin drops its cached typefaces, so text laid out after the change, such as after the
     // restart the client offers, uses the new fonts.
-    fonts_->store().setOnChange([callbacks = callbacks_] {
-        if (JNIEnv *env = currentEnvironment())
-        {
-            env->CallStaticVoidMethod(callbacks.bridgeClass, callbacks.fontsChanged);
-            clearPendingException(env);
-        }
-    });
+    if (JNIEnv *env = currentEnvironment())
+    {
+        env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.fontsChanged);
+        clearPendingException(env);
+    }
 }
 
 static std::vector<std::string> callStringArray(JNIEnv *env, jclass type, jmethodID method)
@@ -87,14 +76,8 @@ nlohmann::json AndroidLoader::appFonts()
     return fonts;
 }
 
-const nlohmann::json &AndroidLoader::systemFonts()
+nlohmann::json AndroidLoader::systemFonts()
 {
-    std::lock_guard<std::mutex> lock(systemFontsMutex_);
-    if (systemFonts_)
-    {
-        return *systemFonts_;
-    }
-
     nlohmann::json fonts = appFonts();
     if (JNIEnv *env = currentEnvironment())
     {
@@ -104,19 +87,6 @@ const nlohmann::json &AndroidLoader::systemFonts()
             fonts.push_back(std::move(font));
         }
     }
-
-    systemFonts_ = loader::fontCatalog(nlohmann::json::array(), fonts);
-    return *systemFonts_;
-}
-
-nlohmann::json AndroidLoader::fontCatalog()
-{
-    return loader::fontCatalog(fonts_->catalogEntries(), systemFonts());
-}
-
-std::string AndroidLoader::resolveFont(const std::string &family)
-{
-    const auto target = fonts_ ? fonts_->store().overrideTarget(family) : std::nullopt;
-    return target ? loader::toJSON(*target) : "{}";
+    return fonts;
 }
 }

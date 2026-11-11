@@ -154,13 +154,8 @@ void reloadApp()
     callHotReload(gHotReload.reload);
 }
 
-std::shared_ptr<loader::HotReloadController>
-createHotReloadController(loader::SettingsStore       &settings,
-                          loader::HotReloadURLResolver resolveBaseURL,
-                          loader::HotReloadScheduler   schedule)
+std::shared_ptr<loader::HotReloadTransport> createHotReloadTransport()
 {
-    return std::make_shared<loader::HotReloadController>(
-        settings, std::move(resolveBaseURL), std::make_shared<AndroidHotReloadTransport>(),
-        std::move(schedule), reloadApp);
+    return std::make_shared<AndroidHotReloadTransport>();
 }
 }

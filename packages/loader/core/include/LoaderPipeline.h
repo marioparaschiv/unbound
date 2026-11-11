@@ -15,10 +15,12 @@
 #include "UnboundNativeBridge.h"
 
 namespace loader {
-class LoaderHost
+// What the pipeline asks of the loader that runs it; `Loader` implements it over a platform's
+// `LoaderHost`, and tests fake it.
+class PipelineHost
 {
 public:
-    virtual ~LoaderHost() = default;
+    virtual ~PipelineHost() = default;
 
     virtual void runInBackground(std::function<void()> work) = 0;
     // Runs `work` off the main thread once `seconds` have passed.
@@ -52,7 +54,7 @@ public:
 class LoaderPipeline
 {
 public:
-    LoaderPipeline(std::shared_ptr<LoaderHost> host, SettingsStore &settings,
+    LoaderPipeline(std::shared_ptr<PipelineHost> host, SettingsStore &settings,
                    BundleUpdater &updater);
 
     void prepare();
@@ -106,20 +108,20 @@ private:
     void guardLaunch();
     void promotePendingBundle();
 
-    std::shared_ptr<LoaderHost> host_;
-    SettingsStore              &settings_;
-    BundleUpdater              &updater_;
-    std::optional<SavedBundle>  saved_;
-    std::mutex                  savedMutex_;
-    std::atomic_uint64_t        token_{0};
-    std::atomic_bool            bundleReady_{false};
-    std::atomic_bool            bundleStaged_{false};
-    std::atomic_bool            evaluationFailed_{false};
-    FirstDownload               firstDownload_;
-    std::condition_variable     firstDownloadSettled_;
-    std::atomic_bool            launchGuarded_{false};
-    std::atomic_bool            launchHealthy_{false};
-    std::mutex                  promotionMutex_;
-    std::optional<std::string>  pendingPromotion_;
+    std::shared_ptr<PipelineHost> host_;
+    SettingsStore                &settings_;
+    BundleUpdater                &updater_;
+    std::optional<SavedBundle>    saved_;
+    std::mutex                    savedMutex_;
+    std::atomic_uint64_t          token_{0};
+    std::atomic_bool              bundleReady_{false};
+    std::atomic_bool              bundleStaged_{false};
+    std::atomic_bool              evaluationFailed_{false};
+    FirstDownload                 firstDownload_;
+    std::condition_variable       firstDownloadSettled_;
+    std::atomic_bool              launchGuarded_{false};
+    std::atomic_bool              launchHealthy_{false};
+    std::mutex                    promotionMutex_;
+    std::optional<std::string>    pendingPromotion_;
 };
 }

@@ -604,13 +604,13 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
     }
     if (action == "issue-url")
     {
-        const auto provider = currentNativePlatformProvider();
+        const auto &provider = context.provider;
         return issueURL(issueReport(provider ? *provider : NativePlatformProvider{},
                                     context.platform, argument));
     }
     if (action == "crash-report-url")
     {
-        const auto                 provider = currentNativePlatformProvider();
+        const auto                &provider = context.provider;
         std::optional<std::string> summary  = crashSummary();
         if (!summary)
         {

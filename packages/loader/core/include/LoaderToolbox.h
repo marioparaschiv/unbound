@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -88,6 +89,8 @@ struct ToolboxContext {
     std::function<std::optional<std::string>()> updateURL;
     std::function<uint32_t()>                   bytecodeVersion;
     std::function<bool()>                       bundleReady;
+    // The device facts issue reports carry; none reads as unknown.
+    std::shared_ptr<const NativePlatformProvider> provider;
 };
 
 enum class MenuStep

@@ -14,6 +14,7 @@
 #include "LoaderDiagnostics.h"
 #include "LoaderDocuments.h"
 #include "LoaderJSI.h"
+#include "LoaderJSON.h"
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
 #include "LoaderPreferences.h"
@@ -83,9 +84,15 @@ static void nativeInitialize(JNIEnv *env, jclass, jstring documents, jstring boo
         configuration.platformInfo = std::move(info);
     }
 
-    auto loader = std::make_shared<AndroidLoader>(std::move(configuration), gCallbacks);
+    const std::string documentsPath = configuration.documents;
+    const std::string originName    = configuration.origin;
+    auto              host = std::make_shared<AndroidLoader>(std::move(configuration), gCallbacks);
+    auto              loader = std::make_shared<loader::Loader>(
+        loader::LoaderOptions{documentsPath, "Android", originName}, host,
+        host->platformProvider());
     loader->start();
-    setCurrentLoader(loader);
+    loader->prescanAddons();
+    setCurrentLoader(loader, host);
     loader::log(loader::LogLevel::Info, LOG_CATEGORY_DEFAULT, "Native loader initialized.");
 }
 
@@ -93,7 +100,7 @@ static void nativeOnLoadJSBundle(JNIEnv *, jclass)
 {
     if (auto loader = currentLoader())
     {
-        loader->onLoadJSBundle();
+        loader->prepare();
     }
 }
 
@@ -113,37 +120,39 @@ static jboolean nativeOnRuntimeCreated(JNIEnv *, jclass, jlong runtimePointer)
     }
 
     auto loader = currentLoader();
-    if (!loader)
+    auto host   = currentHost();
+    if (!loader || !host)
     {
         return JNI_FALSE;
     }
 
+    host->onRuntimeCreated();
     loader->onRuntimeCreated(*reinterpret_cast<facebook::jsi::Runtime *>(runtimePointer));
     return JNI_TRUE;
 }
 
 static void nativeDrainRuntimeWork(JNIEnv *, jclass, jlong runtimePointer)
 {
-    auto loader = currentLoader();
-    if (!loader || runtimePointer == 0)
+    auto host = currentHost();
+    if (!host || runtimePointer == 0)
     {
         return;
     }
 
     auto *runtime = reinterpret_cast<facebook::jsi::Runtime *>(runtimePointer);
-    loader->drainRuntimeWork(*runtime);
+    host->drainRuntimeWork(*runtime);
 }
 
 static jboolean nativeInstallSchedulerDrain(JNIEnv *, jclass, jlong runtimePointer)
 {
-    auto loader = currentLoader();
-    if (!loader || runtimePointer == 0)
+    auto host = currentHost();
+    if (!host || runtimePointer == 0)
     {
         return JNI_FALSE;
     }
 
     auto *runtime = reinterpret_cast<facebook::jsi::Runtime *>(runtimePointer);
-    return loader->installSchedulerDrain(*runtime) ? JNI_TRUE : JNI_FALSE;
+    return host->installSchedulerDrain(*runtime) ? JNI_TRUE : JNI_FALSE;
 }
 
 static void nativeDispatchHookEvent(JNIEnv *env, jclass, jstring token, jstring payload)
@@ -159,17 +168,17 @@ static void nativeDispatchHookEvent(JNIEnv *env, jclass, jstring token, jstring 
 
 static void nativeDrainMainWork(JNIEnv *, jclass)
 {
-    if (auto loader = currentLoader())
+    if (auto host = currentHost())
     {
-        loader->drainMainWork();
+        host->drainMainWork();
     }
 }
 
 static void nativeDrainFrameWork(JNIEnv *, jclass)
 {
-    if (auto loader = currentLoader())
+    if (auto host = currentHost())
     {
-        loader->drainMainFrameWork();
+        host->drainMainFrameWork();
     }
 }
 
@@ -331,7 +340,8 @@ static jstring nativeSettingsFileName(JNIEnv *env, jclass)
 static jstring nativeThemeColorsJSON(JNIEnv *env, jclass, jstring themeId)
 {
     auto loader = currentLoader();
-    return toJavaString(env, loader ? loader->themeColorsJSON(toStdString(env, themeId)) : "{}");
+    return toJavaString(env, loader ? loader::toJSON(loader->themeColors(toStdString(env, themeId)))
+                                    : "{}");
 }
 
 static void nativePrepareAddons(JNIEnv *, jclass)

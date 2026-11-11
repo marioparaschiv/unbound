@@ -19,14 +19,15 @@ namespace jsi = facebook::jsi;
 
 static constexpr std::chrono::seconds kFirstDownloadWait{10};
 
-LoaderPipeline::LoaderPipeline(std::shared_ptr<LoaderHost> host, SettingsStore &settings,
+LoaderPipeline::LoaderPipeline(std::shared_ptr<PipelineHost> host, SettingsStore &settings,
                                BundleUpdater &updater)
     : host_(std::move(host)), settings_(settings), updater_(updater)
 {
-    bootstrap::setScriptSource([weak = std::weak_ptr<LoaderHost>(host_)](const std::string &name) {
-        auto host = weak.lock();
-        return host ? host->resource(name) : std::nullopt;
-    });
+    bootstrap::setScriptSource(
+        [weak = std::weak_ptr<PipelineHost>(host_)](const std::string &name) {
+            auto host = weak.lock();
+            return host ? host->resource(name) : std::nullopt;
+        });
 }
 
 bool LoaderPipeline::isBundleReady() const
@@ -199,13 +200,12 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
 
 void LoaderPipeline::announceCrashDisabledAddons()
 {
-    std::shared_ptr<NativePlatformProvider> provider = currentNativePlatformProvider();
-    if (!provider || provider->documents.empty())
+    if (updater_.documents().empty())
     {
         return;
     }
 
-    for (const CrashedAddon &addon : takeUnannouncedCrashDisabledAddons(provider->documents))
+    for (const CrashedAddon &addon : takeUnannouncedCrashDisabledAddons(updater_.documents()))
     {
         recordCrashSummary(crashDisabledNotice(addon));
         host_->crashAlert(crashDisabledNotice(addon));

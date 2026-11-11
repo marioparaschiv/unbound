@@ -4,9 +4,7 @@
 
 #import "CoreBridge.h"
 #import "CoreConversions.h"
-#include "LoaderHotReload.h"
 #include "LoaderUpdater.h"
-#import "SettingsCore.h"
 #import "Unbound.h"
 #import "UpdaterCore.h"
 
@@ -83,37 +81,9 @@ download(const std::string &url, const std::string &destination,
     }
 }
 
-static loader::BundleUpdater &bundleUpdater()
+std::optional<std::string> UnboundFetchText(const std::string &url, double timeout)
 {
-    static loader::BundleUpdater *updater = nullptr;
-    static dispatch_once_t        onceToken;
-    dispatch_once(&onceToken, ^{
-        [FileSystem init];
-        updater = new loader::BundleUpdater(toStdString(FileSystem.documents),
-                                            UnboundSettingsStore(), fetchText, download);
-    });
-    return *updater;
-}
-
-static std::optional<std::string> optionalUpdateURL()
-{
-    NSString *hostAddress = [Utilities getVirtualDeviceHostAddress];
-    return loader::resolveUpdateURL(
-        UnboundSettingsStore(),
-        hostAddress ? std::optional<std::string>(toStdString(hostAddress)) : std::nullopt,
-        [](const std::string &probe, double timeout) {
-            return isServingBundle([NSURL URLWithString:toNSString(probe)], timeout);
-        });
-}
-
-loader::BundleUpdater &UnboundBundleUpdater()
-{
-    return bundleUpdater();
-}
-
-std::optional<std::string> UnboundUpdateURL()
-{
-    return optionalUpdateURL();
+    return fetchText(url, timeout);
 }
 
 std::optional<loader::DownloadResult>
@@ -122,4 +92,9 @@ UnboundDownload(const std::string &url, const std::string &destination,
                 const loader::DownloadPolicy             &policy)
 {
     return download(url, destination, headers, policy);
+}
+
+bool UnboundIsServing(const std::string &url, double timeout)
+{
+    return isServingBundle([NSURL URLWithString:toNSString(url)], timeout);
 }

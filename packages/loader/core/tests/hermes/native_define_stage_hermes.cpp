@@ -32,7 +32,7 @@ static void require(bool condition, const std::string &check)
     }
 }
 
-class Host : public loader::LoaderHost
+class Host : public loader::PipelineHost
 {
 public:
     int reloads = 0;

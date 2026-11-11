@@ -131,7 +131,7 @@ int main()
                                                 return 96u;
                                             }};
 
-    loader::setNativePlatformProvider(std::make_shared<loader::NativePlatformProvider>(ios));
+    context.provider        = std::make_shared<loader::NativePlatformProvider>(ios);
     const std::string issue = loader::toolbox::perform(context, "issue-url", "300.0 (1234)");
     assert(issue.find("template=crash-report.yml") != std::string::npos);
     assert(issue.find("&platform=iOS&") != std::string::npos);
@@ -140,9 +140,8 @@ int main()
     assert(issue.find("300.0%20stable%2C%20build%201234") != std::string::npos);
     assert(issue.find("State%3A%2A%2A%20jailbroken") != std::string::npos);
     assert(issue.find("Entitlements") != std::string::npos);
-    assert(loader::currentNativePlatformProvider()->platform == "ios");
 
-    loader::setNativePlatformProvider(nullptr);
+    context.provider          = nullptr;
     const std::string unknown = loader::toolbox::perform(context, "issue-url", "");
     assert(unknown.find("Device%3A%2A%2A%20unknown") != std::string::npos);
 

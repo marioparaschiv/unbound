@@ -16,7 +16,7 @@ struct LoggedLine {
     std::string      message;
 };
 
-class ImmediateHost : public loader::LoaderHost
+class ImmediateHost : public loader::PipelineHost
 {
 public:
     void runInBackground(std::function<void()> work) override

@@ -6,15 +6,9 @@
 
 #include "AndroidHotReload.h"
 #include "JniEnvironment.h"
-#include "LoaderAddons.h"
-#include "LoaderColor.h"
 #include "LoaderFiles.h"
 #include "LoaderJSON.h"
 #include "LoaderLog.h"
-#include "LoaderPreferences.h"
-#include "LoaderThemes.h"
-#include "LoaderToolbox.h"
-#include "NativePlatformBridge.h"
 #include "NativePluginBridge.h"
 
 namespace unbound::android {
@@ -70,24 +64,31 @@ static jint milliseconds(double seconds)
     return static_cast<jint>(seconds * 1000);
 }
 
-static std::mutex                     gLoaderMutex;
-static std::shared_ptr<AndroidLoader> gLoader;
+static std::mutex                      gLoaderMutex;
+static std::shared_ptr<loader::Loader> gLoader;
+static std::shared_ptr<AndroidLoader>  gHost;
 
-std::shared_ptr<AndroidLoader> currentLoader()
+std::shared_ptr<loader::Loader> currentLoader()
 {
     std::lock_guard<std::mutex> lock(gLoaderMutex);
     return gLoader;
 }
 
-void setCurrentLoader(std::shared_ptr<AndroidLoader> loader)
+std::shared_ptr<AndroidLoader> currentHost()
+{
+    std::lock_guard<std::mutex> lock(gLoaderMutex);
+    return gHost;
+}
+
+void setCurrentLoader(std::shared_ptr<loader::Loader> loader, std::shared_ptr<AndroidLoader> host)
 {
     std::lock_guard<std::mutex> lock(gLoaderMutex);
     gLoader = std::move(loader);
+    gHost   = std::move(host);
 }
 
 AndroidLoader::AndroidLoader(LoaderConfiguration configuration, JavaCallbacks callbacks)
-    : configuration_(std::move(configuration)), callbacks_(callbacks),
-      settings_(loader::joinPath(configuration_.documents, loader::preferences::kSettingsFile))
+    : configuration_(std::move(configuration)), callbacks_(callbacks)
 {
 }
 
@@ -127,12 +128,11 @@ static std::optional<std::string> installerCall(const JavaCallbacks &callbacks,
     return text;
 }
 
-static std::shared_ptr<loader::NativePlatformProvider>
-platformProvider(const LoaderConfiguration &configuration, const JavaCallbacks &callbacks,
-                 loader::SettingsStore &settings)
+std::shared_ptr<loader::NativePlatformProvider> AndroidLoader::platformProvider() const
 {
-    const nlohmann::json info = configuration.platformInfo;
-    auto                 text = [info](const char *key) {
+    const nlohmann::json info      = configuration_.platformInfo;
+    const JavaCallbacks  callbacks = callbacks_;
+    auto                 text      = [info](const char *key) {
         return [info, key]() {
             return info.value(key, std::string());
         };
@@ -165,102 +165,12 @@ platformProvider(const LoaderConfiguration &configuration, const JavaCallbacks &
                                              const std::string &argument) {
         return installerCall(callbacks, action, argument);
     };
-    provider->documents = configuration.documents;
-    provider->settings  = &settings;
     return provider;
 }
 
-void AndroidLoader::start()
-{
-    auto provider   = platformProvider(configuration_, callbacks_, settings_);
-    provider->fonts = [weak = weak_from_this()] {
-        auto loader = std::static_pointer_cast<AndroidLoader>(weak.lock());
-        return loader ? loader->fontCatalog() : nlohmann::json::array();
-    };
-    loader::setNativePlatformProvider(provider);
-    loader::createDirectories(configuration_.documents);
-    settings_.load();
-    runInBackground([weak = weak_from_this()] {
-        if (auto loader = std::static_pointer_cast<AndroidLoader>(weak.lock()))
-        {
-            loader->settings_.refreshCache();
-        }
-    });
-    openFonts();
-
-    updater_ = std::make_unique<loader::BundleUpdater>(
-        configuration_.documents, settings_,
-        [this](const std::string &url, double timeout) {
-            return fetchText(url, timeout);
-        },
-        [this](const std::string &url, const std::string &destination,
-               const std::map<std::string, std::string> &headers,
-               const loader::DownloadPolicy             &policy) {
-            return download(url, destination, headers, policy);
-        });
-    pipeline_  = std::make_unique<loader::LoaderPipeline>(shared_from_this(), settings_, *updater_);
-    hotReload_ = createHotReloadController(
-        settings_,
-        [this] {
-            return resolveUpdateURL();
-        },
-        [this](double seconds, std::function<void()> work) {
-            runAfter(seconds, [this, work = std::move(work)]() mutable {
-                runInBackground(std::move(work));
-            });
-        });
-    addons_.prescan(configuration_.documents, runtimeBytecodeVersion());
-}
-
-std::string AndroidLoader::toolbox(const std::string &action, const std::string &argument)
-{
-    loader::toolbox::ToolboxContext context{settings_,
-                                            *updater_,
-                                            configuration_.documents,
-                                            "Android",
-                                            [this] {
-                                                return resolveUpdateURL();
-                                            },
-                                            [this] {
-                                                return runtimeBytecodeVersion();
-                                            },
-                                            [this] {
-                                                return pipeline_->isBundleReady();
-                                            }};
-    return loader::toolbox::perform(context, action, argument);
-}
-
-loader::SettingsStore &AndroidLoader::settings()
-{
-    return settings_;
-}
-
-std::string AndroidLoader::themeColorsJSON(const std::string &themeId)
-{
-    std::optional<nlohmann::json> theme = addons_.theme(themeId);
-    return loader::toJSON(theme ? loader::themeColorsByAccessor(loader::resolveThemeColors(*theme))
-                                : nlohmann::json::object());
-}
-
-void AndroidLoader::markHealthy()
-{
-    if (pipeline_)
-    {
-        pipeline_->markHealthy();
-    }
-}
-
-void AndroidLoader::onLoadJSBundle()
-{
-    // start() loaded the file moments ago; a reloaded runtime still sees edits made since.
-    settings_.reload();
-    pipeline_->prepare();
-}
-
-void AndroidLoader::onRuntimeCreated(jsi::Runtime &runtime)
+void AndroidLoader::onRuntimeCreated()
 {
     runtimeQueue_.retryScheduling();
-    pipeline_->onRuntimeCreated(runtime);
 }
 
 bool AndroidLoader::installSchedulerDrain(jsi::Runtime &runtime)
@@ -546,14 +456,6 @@ std::optional<std::string> AndroidLoader::resource(const std::string &name)
     return script->get<std::string>();
 }
 
-std::optional<std::string> AndroidLoader::resolveUpdateURL()
-{
-    return loader::resolveUpdateURL(settings_, devServerHost(),
-                                    [this](const std::string &url, double timeout) {
-                                        return isServing(url, timeout);
-                                    });
-}
-
 std::optional<std::string> AndroidLoader::devServerHost()
 {
     JNIEnv *env = currentEnvironment();
@@ -606,9 +508,9 @@ bool AndroidLoader::installHomeScreenIcon(const std::string &name, const std::st
     return !clearPendingException(env) && installed == JNI_TRUE;
 }
 
-std::shared_ptr<loader::HotReloadController> AndroidLoader::hotReload()
+std::shared_ptr<loader::HotReloadTransport> AndroidLoader::hotReloadTransport()
 {
-    return hotReload_;
+    return createHotReloadTransport();
 }
 
 uint32_t AndroidLoader::runtimeBytecodeVersion()
@@ -616,15 +518,8 @@ uint32_t AndroidLoader::runtimeBytecodeVersion()
     return configuration_.bytecodeVersion;
 }
 
-loader::UnboundNativeProvider AndroidLoader::unboundNativeProvider()
+void AndroidLoader::extendNativeProvider(loader::UnboundNativeProvider &provider)
 {
-    loader::UnboundNativeProvider provider = loader::makeUnboundNativeProvider(
-        addons_, fonts_, configuration_.origin, runtimeBytecodeVersion(), configuration_.documents,
-        [self = shared_from_this()](const std::string &url, const std::string &destination,
-                                    const std::map<std::string, std::string> &headers,
-                                    const loader::DownloadPolicy             &policy) {
-            return self->download(url, destination, headers, policy);
-        });
     const auto     appIcons = configuration_.platformInfo.find("appIcons");
     nlohmann::json packaged = appIcons != configuration_.platformInfo.end() && appIcons->is_array()
                                   ? *appIcons
@@ -651,12 +546,6 @@ loader::UnboundNativeProvider AndroidLoader::unboundNativeProvider()
                                                                  const std::string &imagePath) {
         return self->installHomeScreenIcon(name, imagePath);
     };
-    // Themes.kt reads a theme's colours when the selection changes, so a rescan before then is
-    // enough.
-    provider.rescanThemes = [self = shared_from_this()] {
-        self->addons_.rescanThemes(self->configuration_.documents);
-    };
-    return provider;
 }
 
 void AndroidLoader::installNativeModules(jsi::Runtime &runtime)
@@ -664,18 +553,11 @@ void AndroidLoader::installNativeModules(jsi::Runtime &runtime)
     loader::native::setExecutor(
         std::static_pointer_cast<loader::native::NativePluginExecutor>(shared_from_this()));
     loader::native::registerRuntime(runtime);
-    loader::installNativePlatform(runtime, loader::currentNativePlatformProvider());
     registerNativePluginBridge(runtime, callbacks_);
-}
-
-void AndroidLoader::onAddonsPrepared()
-{
-    addons_.scan(configuration_.documents, runtimeBytecodeVersion());
 }
 
 void AndroidLoader::onBundleExecuted()
 {
-    hotReload_->sync();
     JNIEnv *env = currentEnvironment();
     if (!env)
     {
