@@ -1,9 +1,8 @@
 import type { ReactElement } from 'react';
 
 import { Discord } from '~/metro/components';
-import { ActionSheets } from '~/metro/api';
 
-import InputSheet from './input-sheet';
+import { openInputDialog } from './input-dialog';
 
 /** How an input shows its text. */
 export type InputVariant = 'text' | 'multiline' | 'secret';
@@ -40,7 +39,6 @@ export type InputRowProps = {
 	onChange: (text: string) => void;
 };
 
-const SHEET_KEY = 'UnboundSettingInput';
 const SECRET_MASK = '••••••••';
 
 function shown(value: string, variant: InputVariant): string {
@@ -58,7 +56,7 @@ function shown(value: string, variant: InputVariant): string {
 
 /**
  * @description A settings row, Discord's way: the label, and the saved text trailing (masked when secret). Pressing
- * it opens Discord's titled action sheet with the input, its description and error, which saves only on Save.
+ * it opens Discord's dialog with the focused input, its description and error, which saves only on Save.
  * @param props The row's label, saved text, variant, validation and change handler.
  * @returns The row.
  */
@@ -75,7 +73,7 @@ function InputRow({
 	onChange,
 }: InputRowProps): ReactElement {
 	function open() {
-		ActionSheets.openLazy(Promise.resolve({ default: InputSheet }), SHEET_KEY, {
+		openInputDialog({
 			label,
 			subLabel,
 			value,
@@ -85,7 +83,6 @@ function InputRow({
 			maxLength,
 			validate,
 			onChange,
-			onClose: () => ActionSheets.hideActionSheet(SHEET_KEY),
 		});
 	}
 

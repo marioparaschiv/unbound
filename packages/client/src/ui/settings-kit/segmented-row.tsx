@@ -68,7 +68,7 @@ function SegmentedRow({
 		<Discord.TableRow
 			label={label}
 			subLabel={
-				<Discord.Stack spacing={8}>
+				<>
 					{subLabel ? (
 						<Discord.Text variant='text-sm/medium' color='text-muted'>
 							{subLabel}
@@ -76,11 +76,11 @@ function SegmentedRow({
 					) : null}
 					<View
 						pointerEvents={disabled ? 'none' : 'auto'}
-						style={disabled ? styles.disabled : null}
+						style={[styles.control, disabled ? styles.disabled : null]}
 					>
 						<Discord.SegmentedControl state={state} />
 					</View>
-				</Discord.Stack>
+				</>
 			}
 		/>
 	);

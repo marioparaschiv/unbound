@@ -1,15 +1,13 @@
 import type { UnboundFontPreset } from '@unbound-app/types';
 
-import InputSheet from '~/ui/settings-kit/input-sheet';
+import { openInputDialog } from '~/ui/settings-kit/input-dialog';
 import { Discord } from '~/metro/components';
-import { ActionSheets } from '~/metro/api';
 import { icons } from '~/assets/api';
 import { format } from '~/i18n/api';
 
 import useFontPresets from './use-font-presets';
 import useFonts from './use-fonts';
 
-const NAME_SHEET = 'unbound-font-preset-name';
 const PRESET_SHEET = 'unbound-font-preset';
 
 /**
@@ -21,14 +19,13 @@ function FontPresetsGroup() {
 	const presets = useFontPresets();
 
 	function askName() {
-		ActionSheets.openLazy(Promise.resolve({ default: InputSheet }), NAME_SHEET, {
+		openInputDialog({
 			label: format('UNBOUND_FONTS_PRESET_NAME'),
 			value: '',
 			variant: 'text',
 			keyboardType: 'default',
 			maxLength: 64,
 			onChange: (name: string) => void presets.save(name),
-			onClose: () => ActionSheets.hideActionSheet(NAME_SHEET),
 		});
 	}
 

@@ -34,7 +34,6 @@ const UI = [
 	'MultilineRow',
 	'NumberRow',
 	'Page',
-	'PaletteRow',
 	'PickerRow',
 	'RadioRow',
 	'ResetRow',

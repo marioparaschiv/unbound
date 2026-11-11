@@ -67,13 +67,7 @@ export default defineSettings(
 			{ title: 'APPEARANCE', displayAs: 'collapsible' },
 			{
 				accent: setting.string({ default: '#5865F2', title: 'ACCENT', displayAs: 'color' }),
-				badge: setting.string({
-					default: '#FFFFFF',
-					title: 'BADGE',
-					displayAs: 'color',
-					palette: true,
-					presets: ['#FFFFFF', '#000000', '#ED4245', '#57F287', '#FEE75C'],
-				}),
+				badge: setting.string({ default: '#FFFFFF', title: 'BADGE', displayAs: 'color' }),
 			},
 		),
 	},

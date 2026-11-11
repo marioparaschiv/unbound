@@ -65,7 +65,7 @@ type Options = FakeModule;
 
 const COMMON = ['title', 'subtitle', 'hidden', 'requiresRestart'];
 const CONDITIONS = ['visibleWhen', 'disabledWhen'];
-const STRING = ['minLength', 'maxLength', 'placeholder', 'alpha', 'presets', 'palette', 'maxSize'];
+const STRING = ['minLength', 'maxLength', 'placeholder', 'alpha', 'maxSize'];
 
 // Mirrors the build's builders: the JSON keeps these options, and a predicate becomes `{ predicate: true }`.
 function meta(kind: string, displayAs: string, options: Options, keys: string[] = []): SchemaNode {
