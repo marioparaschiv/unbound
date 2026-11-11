@@ -11,7 +11,7 @@ import type { SyncStrategy } from '~/sync/merge';
 import { getBucket } from '~/storage/api';
 import * as account from '~/account/api';
 
-/** The settings store Sync keeps its mode and last agreed document in. Never synced. */
+/** The Bucket Sync keeps its mode and last agreed document in. Never synced. */
 export const SYNC_STORE = 'unbound::sync';
 
 /** Which way automatic syncs move changes on this device. */

@@ -5,7 +5,7 @@ import { DEFAULT_BACKGROUND_OPACITY, type ChatBackgroundSource } from '~/themes/
 import type { SettingsPayload } from '~/storage/api';
 import { getBucket, useBucket } from '~/storage/api';
 
-/** Every key of the core `unbound` settings store with its default. The keys are persisted as-is. */
+/** Every key of the core `unbound` Bucket with its default. The keys are persisted as-is. */
 const DEFAULTS = {
 	recovery: false,
 	'developer-mode': false,
@@ -44,7 +44,7 @@ const DEFAULTS = {
 /** The value type of every core setting. */
 export type UnboundSettings = typeof DEFAULTS;
 
-/** A key of the core `unbound` settings store. */
+/** A key of the core `unbound` Bucket. */
 export type UnboundSettingKey = keyof UnboundSettings;
 
 /** A core setting key whose value is a boolean, so it can be toggled. */
@@ -101,7 +101,7 @@ export function isSettingChange(payload: SettingsPayload, key: UnboundSettingKey
 }
 
 /**
- * @description React hook that re-renders on matching changes to the core settings store.
+ * @description React hook that re-renders on matching changes to the core Bucket.
  * @param predicate Optional filter deciding which changes trigger a re-render.
  * @returns The typed core setting accessors.
  */

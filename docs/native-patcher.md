@@ -1,6 +1,6 @@
-# Native plugin ABI
+# Native bridge ABI
 
-The native plugin system lets trusted JavaScript plugins run approved Objective-C runtime operations without shipping a plugin dylib. The loader contains the signed runtime primitives. The plugin supplies policy, state, rendering decisions, and lifecycle code.
+The native bridge lets trusted JavaScript plugins run approved Objective-C runtime operations without shipping a plugin dylib. The loader contains the signed runtime primitives. The plugin supplies policy, state, rendering decisions, and lifecycle code.
 
 The native layer is an ABI. Plugins use it through the versioned JavaScript API exposed as `context.native`.
 
@@ -17,7 +17,7 @@ Platform-wide helpers, such as device information and notifications, live under 
 
 The loader surface does not include feature-specific native classes, caches, network clients, renderers, or hooks. A plugin owns that behavior and uses the generic bridge to reach the app's existing Objective-C objects.
 
-## Plugin scope
+## Plugin context
 
 The addon manager validates the manifest before starting a plugin, then creates a scoped context:
 

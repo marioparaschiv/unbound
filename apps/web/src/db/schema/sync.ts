@@ -4,7 +4,7 @@ import type { SyncDocument } from '@unbound-app/contracts/sync';
 import { timestampMs } from './columns';
 import { user } from './auth';
 
-/** A user's Cloud Sync document. `revision` grows by one on every save, for optimistic concurrency. */
+/** A user's Sync document. `revision` grows by one on every save, for optimistic concurrency. */
 export const syncDocument = pgTable('sync_document', {
 	userId: text('user_id')
 		.primaryKey()

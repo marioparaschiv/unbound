@@ -42,12 +42,12 @@ Every file of `packages/plugins/character-counter`, the reference plugin. It sho
 			</Folder>
 			<File name='character-counter.test.tsx' note='The started plugin, rendered' />
 		</Folder>
-		<File name='ADDON.md' note='The store page' />
+		<File name='ADDON.md' note='The addon page' />
 		<File name='CHANGELOG.md' note='Changes per version' />
 	</Folder>
 </FileTree>
 
-A plugin with images adds `assets/`; a store page with a banner adds `media/`. Git ignores `dist/` and `node_modules/`. [Project Rules](/docs/developer/getting-started/project-rules) lists the layout rules.
+A plugin with images adds `assets/`; an addon page with a banner adds `media/`. Git ignores `dist/` and `node_modules/`. [Project Rules](/docs/developer/getting-started/project-rules) lists the layout rules.
 
 ## Root Files
 
@@ -324,9 +324,9 @@ The preset forgets registered modules before each test. See [Writing Tests](/doc
 
 Images go in `assets/` beside `src/`. Importing one gives its asset id, and the build copies it into `dist/`. See [Images](/docs/developer/plugins/assets).
 
-## Store Page
+## Addon Page
 
-`ADDON.md` has no title; the store takes the title and summary from the manifest.
+`ADDON.md` has no title; the Marketplace takes the title and summary from the manifest.
 
 ```md ADDON.md quoted
 ---
@@ -346,11 +346,11 @@ banner: media/banner.png
 ```
 
 - The frontmatter names the banner and an optional gallery, both in `media/`.
-- No frontmatter builds with a warning, and the store shows no banner.
+- No frontmatter builds with a warning, and the Marketplace shows no banner.
 - `bun run plugins:banners` draws first-party banners from the manifest and leaves hand-made ones alone.
 - `CHANGELOG.md` lists changes newest first. Its version matches `manifest.json`.
 
-See [Store Page](/docs/developer/publishing/store-page).
+See [Addon Page](/docs/developer/publishing/store-page).
 
 ## Next
 
