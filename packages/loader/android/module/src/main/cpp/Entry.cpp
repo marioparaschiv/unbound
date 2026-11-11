@@ -535,12 +535,12 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
            gCallbacks.javaFindViews && gCallbacks.javaCreateAssociationKey &&
            gCallbacks.javaGetAssociatedObject && gCallbacks.javaSetAssociatedObject &&
            gCallbacks.fabricMount && gCallbacks.fabricUpdate && gCallbacks.fabricUnmount &&
-           gCallbacks.fabricSetSize && gCallbacks.fabricSetFrame && gCallbacks.fabricMeasure &&
-           gCallbacks.fetchText && gCallbacks.download && gCallbacks.devServerHost &&
-           gCallbacks.isServing && gCallbacks.installHomeScreenIcon && gCallbacks.availableFonts &&
-           gCallbacks.appFonts && gCallbacks.appFontBytes && gCallbacks.alert &&
-           gCallbacks.crashAlert && gCallbacks.updateProgress && gCallbacks.onBundleExecuted &&
-           gCallbacks.fontsChanged;
+           gCallbacks.fabricDetach && gCallbacks.fabricAttach && gCallbacks.fabricSetSize &&
+           gCallbacks.fabricSetFrame && gCallbacks.fabricMeasure && gCallbacks.fetchText &&
+           gCallbacks.download && gCallbacks.devServerHost && gCallbacks.isServing &&
+           gCallbacks.installHomeScreenIcon && gCallbacks.availableFonts && gCallbacks.appFonts &&
+           gCallbacks.appFontBytes && gCallbacks.alert && gCallbacks.crashAlert &&
+           gCallbacks.updateProgress && gCallbacks.onBundleExecuted && gCallbacks.fontsChanged;
 }
 
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
