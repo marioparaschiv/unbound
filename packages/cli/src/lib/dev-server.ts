@@ -4,8 +4,8 @@ import toError from '@unbound-app/utils/to-error';
 import { watch, type FSWatcher } from 'node:fs';
 import { resolve, join, sep } from 'node:path';
 
-import type { ReloadTransport } from '~/lib/reload-transport';
 import { LOCALE_TYPINGS, writeLocaleTypings } from '~/rollup/locales';
+import type { ReloadTransport } from '~/lib/reload-transport';
 import { SETTINGS_TYPINGS } from '~/rollup/settings-typings';
 import type { DiscoveredAddon } from '~/lib/discovery';
 import { DEV_BUILD_CHECKS } from '~/lib/build-checks';

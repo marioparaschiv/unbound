@@ -1,6 +1,6 @@
 import type { PluginPushResult } from '@unbound-app/debugger-protocol';
-import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { describe, expect, test, afterEach } from 'bun:test';
+import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 

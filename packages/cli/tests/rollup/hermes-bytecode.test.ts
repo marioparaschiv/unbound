@@ -1,4 +1,4 @@
-import type { NormalizedOutputOptions, OutputBundle, PluginContext } from 'rollup';
+import type { NormalizedOutputOptions, OutputChunk, PluginContext } from 'rollup';
 import { ADDON_SCOPE_GLOBALS } from '@unbound-app/types/addons';
 import { runInThisContext } from 'node:vm';
 import { createHash } from 'node:crypto';
@@ -11,10 +11,13 @@ import { bytecodeSource, hermesBytecode } from '~/rollup/hermes-bytecode';
 
 import { createTempDir } from '../helpers/ubd';
 
+// The chunk fields writeBundle reads.
+type WrittenChunk = Pick<OutputChunk, 'type' | 'fileName'>;
+
 type WriteBundle = (
 	this: PluginContext,
 	options: Pick<NormalizedOutputOptions, 'dir' | 'file'>,
-	bundle: OutputBundle,
+	bundle: Record<string, WrittenChunk>,
 ) => Promise<void>;
 
 type Factory = (...globals: string[]) => string[];
@@ -33,9 +36,9 @@ test('records the digest of each written bundle, with no bytecode when it compil
 	const output = createTempDir({ 'index.js': '({})' });
 	const hook = hermesBytecode({ versions: [98], sourceName: 'sample' })
 		.writeBundle as WriteBundle;
-	const bundle = {
+	const bundle: Record<string, WrittenChunk> = {
 		'index.js': { type: 'chunk', fileName: 'index.js' },
-	} as unknown as OutputBundle;
+	};
 
 	try {
 		await hook.call(
