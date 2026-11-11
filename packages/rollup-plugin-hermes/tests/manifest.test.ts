@@ -198,7 +198,7 @@ describe('resolveHermesTargets', () => {
 			},
 		);
 
-		await expect(resolved).rejects.toThrow('hermesc does not publish bytecode 97.');
+		expect(resolved).rejects.toThrow('hermesc does not publish bytecode 97.');
 	});
 
 	test('skips the download when the binary is already cached', async () => {
