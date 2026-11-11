@@ -1,11 +1,14 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonKind } from '@unbound-app/types/addons';
+import { createLogger } from '@unbound-app/logger';
 import { useState } from 'react';
 
 import { installsFromManifest } from '~/addons/installs-from-manifest';
 import type { InstallStatus } from '~/marketplace/catalog';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { AvailableChoice } from '~/addons/versions';
+import { pickInstallVersion } from '~/addons/versions';
+import { CLIENT_VERSION } from '~/core/constants';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
@@ -33,6 +36,8 @@ export type InstallAction = {
 	hold?: () => void;
 };
 
+const logger = createLogger('Marketplace', 'Install');
+
 const ACTIONS: Record<InstallStatus, StatusAction> = {
 	install: {
 		label: () => messages.UNBOUND_INSTALL,
@@ -49,7 +54,7 @@ const ACTIONS: Record<InstallStatus, StatusAction> = {
 
 /**
  * @description Drives a listed addon's Install, Update or Installed button, judged against the installed
- * copy. A tap installs the newest version; holding offers it or a picker of every version, except for fonts.
+ * copy. A tap installs the newest version this client runs; holding offers it or a picker of every version, except for fonts.
  * @param kind The manager the addon belongs to.
  * @param addon The listed addon.
  * @returns The button's label, variant, loading state and handlers.
@@ -79,7 +84,26 @@ function useInstallAction(kind: AddonKind, addon: ListedAddon): InstallAction {
 	async function press() {
 		if (!action.offer || pending) return;
 
-		const ok = await run(() => Manager.for(kind).installListed(addon, addon.latestVersion));
+		const ok = await run(async () => {
+			const installed = Manager.for(kind).getInstalledVersion(addon);
+			const picked = await pickInstallVersion(addon, installed, CLIENT_VERSION).catch(
+				(cause: unknown) => {
+					logger.error(`Failed to fetch the versions of ${addon.id}:`, cause);
+				},
+			);
+
+			if (!picked) {
+				return false;
+			}
+
+			if (picked.type === 'incompatible') {
+				fail(format('UNBOUND_VERSION_NEEDS_CLIENT', { version: picked.requires }));
+
+				return true;
+			}
+
+			return Manager.for(kind).installListed(addon, picked.version);
+		});
 
 		if (!ok) {
 			fail(format('UNBOUND_INSTALL_FAILED', { name: manifest.name }));
