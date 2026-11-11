@@ -48,6 +48,7 @@ export type {
 	NativePluginCapability,
 	NativePluginError,
 	NativePluginErrorCode,
+	NativePluginMethod,
 	NativePluginPlatform,
 	NativePointer,
 	NativeRuntimeBridge,
@@ -91,4 +92,4 @@ export {
 } from '~/native/runtime';
 export { NativePlatform, definePlatform } from '~/native/platform';
 export type { PlatformHandlers } from '~/native/platform';
-export { has } from '~/native/capabilities';
+export { has, supports } from '~/native/capabilities';

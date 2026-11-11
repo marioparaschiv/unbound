@@ -7,7 +7,7 @@ import {
 	resetNativeFixtures,
 } from '../helpers/native-bridge';
 
-const { definePlatform, has } = await import('~/native/native');
+const { definePlatform, has, supports } = await import('~/native/native');
 
 type Handler = { name: string };
 
@@ -46,5 +46,29 @@ describe('has', () => {
 
 		expect(has('native.objc.snapshot')).toBe(false);
 		expect(has('native.runtime.events')).toBe(true);
+	});
+});
+
+describe('supports', () => {
+	test('reports whether the loader implements a bridge method', () => {
+		expect(supports('fabric.batchAsync')).toBe(true);
+
+		// A 1.1.0 loader reports `native.fabric.async` but has no `batchAsync`.
+		Object.assign(bridge, { fabric: { ...bridge.fabric, batchAsync: undefined } });
+
+		expect(supports('fabric.batchAsync')).toBe(false);
+		expect(supports('fabric.setFrameAsync')).toBe(true);
+	});
+
+	test('reports no method of a namespace the loader lacks', () => {
+		expect(supports('objc.invoke')).toBe(true);
+
+		Object.assign(bridge, { objc: undefined });
+
+		expect(supports('objc.invoke')).toBe(false);
+	});
+
+	test('always supports the runtime methods the client implements', () => {
+		expect(supports('runtime.subscribe')).toBe(true);
 	});
 });

@@ -1,6 +1,7 @@
 import type {
 	NativePluginBridge,
 	NativePluginCapability,
+	NativePluginMethod,
 	NativePluginPlatform,
 	PluginContext,
 } from '../src/native';
@@ -25,6 +26,8 @@ export type NativeState = {
 	modules: Map<string, unknown>;
 	/** The capabilities `native.has` reports. */
 	capabilities: NativePluginCapability[];
+	/** The bridge methods `native.supports` denies; every other method is supported. */
+	unsupportedMethods: NativePluginMethod[];
 };
 
 /** The fake `native`, its state, and the `PluginContext` builder. */
@@ -104,7 +107,12 @@ class NativePluginDisposedError extends Error {
  * @returns The namespace, its state, and the context builder.
  */
 export function createFakeNative(): FakeNative {
-	const state: NativeState = { platform: 'ios', modules: new Map(), capabilities: [] };
+	const state: NativeState = {
+		platform: 'ios',
+		modules: new Map(),
+		capabilities: [],
+		unsupportedMethods: [],
+	};
 	const log = createCallLog();
 	const objc = createFakeObjc(log);
 	const java = createFakeJava(log);
@@ -157,6 +165,7 @@ export function createFakeNative(): FakeNative {
 		getRuntimeProperties: () => ({}),
 		has: (capability: NativePluginCapability) => state.capabilities.includes(capability),
 		reload: async () => {},
+		supports: (method: NativePluginMethod) => !state.unsupportedMethods.includes(method),
 	};
 
 	return {
@@ -172,6 +181,7 @@ export function createFakeNative(): FakeNative {
 			state.platform = 'ios';
 			state.modules.clear();
 			state.capabilities = [];
+			state.unsupportedMethods = [];
 		},
 		context(manifest, overrides = {}) {
 			const { native, ...rest } = overrides;
