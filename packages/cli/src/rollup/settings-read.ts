@@ -8,7 +8,6 @@ import type { SettingChoice, SettingsSchema } from '@unbound-app/types/settings'
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, sep } from 'node:path';
-import { rolldown } from 'rolldown';
 
 import {
 	readActionExports,
@@ -64,7 +63,10 @@ type Labelled = {
 };
 
 // Resolved through the package's own exports: the published build bundles this file into a dist chunk, so a relative path breaks.
-const BUILDERS = fileURLToPath(import.meta.resolve('@unbound-app/cli/settings/schema'));
+// Resolved on use, since a compiled `ubd` has no package to resolve.
+function buildersPath(): string {
+	return fileURLToPath(import.meta.resolve('@unbound-app/cli/settings/schema'));
+}
 
 /**
  * @description Names a plugin's settings schema file.
@@ -81,6 +83,9 @@ export function settingsPath(pluginRoot: string): string {
  * @returns Its default export as JSON, and the files it was bundled from.
  */
 export async function evaluateSettings(path: string): Promise<EvaluatedSettings> {
+	// Imported here: rolldown loads its native binding on import, which the device commands never need.
+	const { rolldown } = await import('rolldown');
+	const builders = buildersPath();
 	const bundle = await rolldown({
 		input: path,
 		platform: 'node',
@@ -88,7 +93,7 @@ export async function evaluateSettings(path: string): Promise<EvaluatedSettings>
 		plugins: [
 			{
 				name: 'unbound-settings-schema',
-				resolveId: (source) => (source === SETTINGS_SCHEMA_MODULE ? BUILDERS : null),
+				resolveId: (source) => (source === SETTINGS_SCHEMA_MODULE ? builders : null),
 			},
 		],
 	});
@@ -97,7 +102,7 @@ export async function evaluateSettings(path: string): Promise<EvaluatedSettings>
 		const { output } = await bundle.generate({ format: 'esm' });
 		const url = `data:text/javascript;base64,${Buffer.from(output[0].code).toString('base64')}`;
 		const module = await import(url);
-		const watchFiles = (await bundle.watchFiles).filter((file) => file !== BUILDERS);
+		const watchFiles = (await bundle.watchFiles).filter((file) => file !== builders);
 
 		// TypeBox keeps its own markers in non-enumerable `~` keys, which JSON drops.
 		return { value: JSON.parse(JSON.stringify(module.default ?? null)), watchFiles };

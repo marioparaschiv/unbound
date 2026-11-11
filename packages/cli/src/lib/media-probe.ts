@@ -5,7 +5,6 @@ import { rgbaToThumbHash } from 'thumbhash';
 import { stat } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import { join } from 'node:path';
-import sharp from 'sharp';
 
 import { safeParse, Type } from './schema';
 
@@ -152,7 +151,13 @@ function checkFormat(kind: MediaKind, extension: string, probe: Probe): string |
 	return void 0;
 }
 
+// sharp loads its native binding on import, so only a check that reads an image loads it.
+async function loadSharp() {
+	return (await import('sharp')).default;
+}
+
 async function probeImage(file: string): Promise<Probe> {
+	const sharp = await loadSharp();
 	const metadata = await sharp(file).metadata();
 	const height = metadata.pageHeight ?? metadata.height;
 	const rotated = (metadata.orientation ?? 1) >= 5;
@@ -165,6 +170,7 @@ async function probeImage(file: string): Promise<Probe> {
 }
 
 async function readImagePixels(file: string): Promise<Pixels> {
+	const sharp = await loadSharp();
 	const { data, info } = await sharp(file)
 		.rotate()
 		.resize(THUMBHASH_SIZE, THUMBHASH_SIZE, { fit: 'inside', withoutEnlargement: true })

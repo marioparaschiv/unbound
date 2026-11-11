@@ -1,5 +1,6 @@
-import { parseSync, type ESTree } from 'rolldown/utils';
 import MagicString from 'magic-string';
+
+import { parseSync, type ESTree } from '~/rollup/rolldown-utils';
 
 /** What migrating one entry did: the new source, whether it changed, and what it could not migrate. */
 export type EntryMigration = { code: string; changed: boolean; problems: string[] };
