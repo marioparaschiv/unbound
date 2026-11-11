@@ -294,7 +294,7 @@ export class Icons extends Addons<Plugin> {
 		}
 
 		const found = await Promise.all(
-			assets.map((asset) => this.lookupFile(id, asset, files, manifest)),
+			assets.map(async (asset) => this.lookupFile(id, asset, files, manifest)),
 		);
 
 		for (const [index, asset] of assets.entries()) {
@@ -365,31 +365,50 @@ export class Icons extends Addons<Plugin> {
 		return icons.map(({ path, scale }) => ({ path: `${directory}/${path}`, scale }));
 	}
 
-	// A store pack lists its images in its manifest; a GitHub pack with an index is checked in memory,
-	// and one installed before indexes asks the disk per scale.
-	private async lookupFile(
+	// Manifest and index lookups answer at once: Discord registers an icon mid-render, and that render reads
+	// the stamp. Only a GitHub pack installed before indexes asks the disk.
+	private lookupFile(
 		id: string,
 		asset: UnboundAsset,
 		files: Set<string> | undefined,
 		manifest: AddonManifest | undefined,
-	): Promise<IconFile | undefined> {
+	): IconFile | undefined | Promise<IconFile | undefined> {
 		const scales = [...asset.scales].sort((a, b) => b - a);
 
 		if (manifest?.assets) {
 			return this.findListedFile(manifest, asset, scales);
 		}
 
-		for (const scale of scales) {
-			const relative = this.relativeAssetPath(asset, scale);
-			const path = `${this.directoryOf(id)}/${relative}`;
-			const found = files ? files.has(relative) : await fs.exists(path);
+		if (files) {
+			const scale = scales.find((value) => files.has(this.relativeAssetPath(asset, value)));
 
-			if (found) {
-				return { path: `${fs.documentsPath}/${path}`, scale };
+			return scale === undefined ? undefined : this.packFile(id, asset, scale);
+		}
+
+		return this.findFileOnDisk(id, asset, scales);
+	}
+
+	private async findFileOnDisk(
+		id: string,
+		asset: UnboundAsset,
+		scales: number[],
+	): Promise<IconFile | undefined> {
+		for (const scale of scales) {
+			if (
+				await fs.exists(`${this.directoryOf(id)}/${this.relativeAssetPath(asset, scale)}`)
+			) {
+				return this.packFile(id, asset, scale);
 			}
 		}
 
 		return undefined;
+	}
+
+	private packFile(id: string, asset: UnboundAsset, scale: number): IconFile {
+		return {
+			path: `${fs.documentsPath}/${this.directoryOf(id)}/${this.relativeAssetPath(asset, scale)}`,
+			scale,
+		};
 	}
 
 	// Store packs name each image by content, under the asset's Discord path without its scale and type.
@@ -498,14 +517,21 @@ export class Icons extends Addons<Plugin> {
 	 * @param asset The registered asset to stamp.
 	 * @param files The pack's file list, when it has one.
 	 * @param manifest The pack's manifest, read once per apply.
+	 * @returns A promise only when the pack must ask the disk; otherwise the asset is stamped on return.
 	 */
-	protected async stampAsset(
+	protected stampAsset(
 		id: string,
 		asset: UnboundAsset,
 		files: Set<string> | undefined,
 		manifest: AddonManifest | undefined,
-	) {
-		stamp(asset, await this.lookupFile(id, asset, files, manifest));
+	): Promise<void> | void {
+		const file = this.lookupFile(id, asset, files, manifest);
+
+		if (file instanceof Promise) {
+			return file.then((found) => stamp(asset, found));
+		}
+
+		stamp(asset, file);
 	}
 
 	/**
