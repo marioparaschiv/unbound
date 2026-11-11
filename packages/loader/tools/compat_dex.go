@@ -86,24 +86,6 @@ func (index *dexIndex) lookupMethod(className, method, parameters string) (dexLo
 	return dexMissing, ""
 }
 
-func (index *dexIndex) lookupField(className, field string) (dexLookup, string) {
-	visited := map[string]bool{}
-	current := index.Classes[className]
-	last := className
-	for current != nil && !visited[current.Name] {
-		visited[current.Name] = true
-		if current.Fields[field] {
-			return dexFound, current.Name
-		}
-		last = current.Super
-		current = index.Classes[current.Super]
-	}
-	if last != "" && index.Classes[last] == nil {
-		return dexInheritedExternally, last
-	}
-	return dexMissing, ""
-}
-
 type dexFile struct {
 	data    []byte
 	strings []string

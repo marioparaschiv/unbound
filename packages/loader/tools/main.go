@@ -157,10 +157,3 @@ func printUsage() {
 	fmt.Println("       go run ./tools dev status [--root <path>]")
 	fmt.Println("       go run ./tools dev android-avd <status|setup|start> [--name <name>] [--root <path>]")
 }
-
-func requireArgs(args []string, count int, usage string) error {
-	if len(args) < count {
-		return errors.New(usage)
-	}
-	return nil
-}

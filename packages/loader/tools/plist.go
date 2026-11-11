@@ -32,13 +32,6 @@ func plistText(value string) *plistNode {
 	return &plistNode{kind: plistStringKind, text: value}
 }
 
-func plistBool(value bool) *plistNode {
-	if value {
-		return &plistNode{kind: plistTrueKind}
-	}
-	return &plistNode{kind: plistFalseKind}
-}
-
 func plistStrings(values ...string) *plistNode {
 	array := &plistNode{kind: plistArrayKind}
 	for _, value := range values {

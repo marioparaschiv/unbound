@@ -142,9 +142,4 @@ bool installAddonCrashHandler(const std::string &markerPath)
             ".");
     return true;
 }
-
-bool addonCrashHandlerInstalled()
-{
-    return gInstalled.load();
-}
 }
