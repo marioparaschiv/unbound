@@ -22,5 +22,12 @@
 	},
 	"icon": "HeadphonesIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"bytecode": {
+		"98": "b36545672a78f6726d79d165077eb8b7872eb3705769c65a4bfd683063a74b0098517b14e40124b536dabf587a61eb6c2061bae6e5ca009c23d6948aba5fa7cb"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "O4UqSrWM8neXwjBCxHyviivcDtsNVdNk8xuOT7xN4h5fL17GMK/6GxHBsV7s2WUVnOPOkwgICuG7F4gvl3UTAQ=="
+	}
 }

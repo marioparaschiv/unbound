@@ -19,5 +19,24 @@
 	"icon": "ImageIcon",
 	"minNativeBridgeApi": "1.0.0",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"platforms": {
+		"ios": {},
+		"android": {
+			"capabilities": [
+				"native.java.batch",
+				"native.java.classes",
+				"native.java.fields",
+				"native.java.invoke",
+				"native.java.invokeAsync"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "971ab96b07853261748ec200eb9617544e8c02a07495cac305ff17bcbad5257655e608ad0fe4eec3e4682ef31310d853bc53c5468cf87a87302032db07651596"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "xnj39vNcY3nC95WWTQhvI+x9t1DZBcegkvDwWOuw2ZH9l1D5E+drnbX3Eldq4Nkjqwwj9Y4kBo5wxAPta4usCA=="
+	}
 }
