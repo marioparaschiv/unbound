@@ -214,6 +214,31 @@ void bareMarkerPathWritesTheStackInTheWorkingDirectory(const std::filesystem::pa
                .rfind("Signal " + std::to_string(SIGTRAP) + "\n", 0) == 0);
 }
 
+void adoptedStackSurvivesAnInstallWithoutAWrittenStack(const std::filesystem::path &root)
+{
+    int status = runInChild([&]() {
+        expect(!loader::adoptPreviousNativeCrash(""), 80);
+        expect(loader::adoptPreviousNativeCrash("Signal 6\n#0 0x1\n"), 81);
+        expect(!loader::adoptPreviousNativeCrash("Signal 11\n"), 82);
+        expect(loader::previousNativeCrash() == "Signal 6\n#0 0x1\n", 83);
+
+        expect(loader::installAddonCrashHandler((root / "running").string()), 84);
+        expect(loader::previousNativeCrash() == "Signal 6\n#0 0x1\n", 85);
+    });
+    assert(exitedCleanly(status));
+}
+
+void writtenStackWinsOverAnAdoptedOne(const std::filesystem::path &root)
+{
+    assert(loader::writeTextFileAtomically((root / loader::kNativeCrashFile).string(),
+                                           "Signal 11\n#0 0x2\n"));
+    int status = runInChild([&]() {
+        expect(loader::adoptPreviousNativeCrash("Signal 6\n#0 0x1\n"), 90);
+        expect(loader::installAddonCrashHandler((root / "running").string()), 91);
+        expect(loader::previousNativeCrash() == "Signal 11\n#0 0x2\n", 92);
+    });
+    assert(exitedCleanly(status));
+}
 }
 
 int main()
@@ -232,6 +257,8 @@ int main()
     run("siginfo", forwardsToASiginfoHandler);
     run("ignored", ignoredSignalsFallBackToTheDefaultAction);
     run("bare", bareMarkerPathWritesTheStackInTheWorkingDirectory);
+    run("adopted", adoptedStackSurvivesAnInstallWithoutAWrittenStack);
+    run("written", writtenStackWinsOverAnAdoptedOne);
 
     std::filesystem::remove_all(root);
     return 0;
