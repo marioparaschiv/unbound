@@ -10,19 +10,9 @@
 #include "LoaderBundleManifest.h"
 #include "LoaderBundleSignature.h"
 #include "LoaderSettings.h"
+#include "LoaderTransport.h"
 
 namespace loader {
-struct DownloadResult {
-    int         status = 0;
-    std::string etag;
-};
-
-struct DownloadPolicy {
-    double connectTimeoutSeconds = 15.0;
-    double readTimeoutSeconds    = 30.0;
-    double totalTimeoutSeconds   = 35.0;
-};
-
 constexpr DownloadPolicy kBundleDownloadPolicy{};
 constexpr double         kManifestFetchTimeoutSeconds = 5.0;
 
@@ -50,12 +40,6 @@ public:
 
 // The alert for a launch that has no saved bundle and could not download one.
 std::string bundleFailureNotice(BundleUpdateFailure failure);
-
-using TextFetcher =
-    std::function<std::optional<std::string>(const std::string &url, double timeoutSeconds)>;
-using FileDownloader = std::function<std::optional<DownloadResult>(
-    const std::string &url, const std::string &destination,
-    const std::map<std::string, std::string> &headers, const DownloadPolicy &policy)>;
 
 constexpr const char *kBundleTrustSuffix = ".trust";
 

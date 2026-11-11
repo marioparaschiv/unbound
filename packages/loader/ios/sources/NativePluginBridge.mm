@@ -28,6 +28,7 @@
 
 #import "CoreConversions.h"
 #import "LoaderAddonActivity.h"
+#import "LoaderJSIJSON.h"
 #include "LoaderPreferences.h"
 #include "LoaderThreadWarnings.h"
 #import "Logger.h"

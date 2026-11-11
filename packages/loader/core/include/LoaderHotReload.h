@@ -10,7 +10,6 @@
 #include <string_view>
 
 #include "LoaderSettings.h"
-#include "LoaderUpdater.h"
 
 namespace loader {
 constexpr int    kDevServerPort                  = 3000;

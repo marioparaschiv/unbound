@@ -13,6 +13,7 @@
 
 #include "LoaderAddonActivity.h"
 #include "LoaderBootstrap.h"
+#include "LoaderJSIJSON.h"
 #include "LoaderLog.h"
 #include "LoaderThreadWarnings.h"
 #include "NativeCallActivity.h"

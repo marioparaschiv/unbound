@@ -12,7 +12,6 @@
 #include "LoaderLogFile.h"
 #include "LoaderPreferences.h"
 #include "LoaderVersion.h"
-#include "NativePlatformBridge.h"
 
 namespace loader {
 namespace jsi = facebook::jsi;

@@ -11,7 +11,11 @@
 #include "LoaderPreferences.h"
 #include "LoaderSettings.h"
 #include "LoaderUpdater.h"
-#include "NativePlatformBridge.h"
+
+namespace loader {
+// Only named here; the toolbox reads it through NativePlatformBridge.h in its source.
+struct NativePlatformProvider;
+}
 
 namespace loader::toolbox {
 enum class AddonKind

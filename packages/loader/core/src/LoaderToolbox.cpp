@@ -13,6 +13,7 @@
 #include "LoaderLogFile.h"
 #include "LoaderPreferences.h"
 #include "LoaderVersion.h"
+#include "NativePlatformBridge.h"
 
 namespace loader::toolbox {
 static std::string lowercase(std::string value)

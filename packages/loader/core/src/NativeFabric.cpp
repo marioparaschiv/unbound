@@ -11,11 +11,11 @@
 #include <vector>
 
 #include "LoaderAddonActivity.h"
+#include "LoaderJSIJSON.h"
 #include "LoaderLog.h"
 #include "NativeBoundedValue.h"
 #include "NativeConversionBudget.h"
 #include "NativeLimits.h"
-#include "NativePlatformBridge.h"
 #include "NativePluginRuntime.h"
 #include "NativeResourceBudget.h"
 

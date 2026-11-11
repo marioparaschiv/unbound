@@ -11,7 +11,7 @@
 #include <thread>
 
 #include "LoaderHotReload.h"
-#include "LoaderUpdater.h"
+#include "LoaderTransport.h"
 #include "UnboundNativeBridge.h"
 
 namespace loader {

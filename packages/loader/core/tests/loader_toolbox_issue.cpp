@@ -7,6 +7,7 @@
 
 #include "LoaderToolbox.h"
 #include "LoaderVersion.h"
+#include "NativePlatformBridge.h"
 
 static std::filesystem::path makeTemporaryDirectory()
 {
