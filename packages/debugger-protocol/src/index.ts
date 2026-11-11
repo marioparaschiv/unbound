@@ -1,17 +1,17 @@
 import type { PushedManifest } from '@unbound-app/types';
 
 import {
-	isViewFrameMessage,
-	type ViewHighlight,
-	type ViewsRequest,
-	type ViewsResult,
-} from './views';
-import {
 	REACT_DEVTOOLS_SHUTDOWN_EVENT,
 	REACT_DEVTOOLS_STATUS_EVENT,
 	isReactDevtoolsFrame,
 	type ReactDevtoolsFrame,
 } from './react-devtools';
+import {
+	isViewFrameMessage,
+	type ViewHighlight,
+	type ViewsRequest,
+	type ViewsResult,
+} from './views';
 
 export type { ViewFrame, ViewHighlight, ViewNode, ViewsRequest, ViewsResult } from './views';
 export type { ReactDevtoolsFrame, ReactDevtoolsStatus } from './react-devtools';
