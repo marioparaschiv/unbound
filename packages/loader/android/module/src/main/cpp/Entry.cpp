@@ -165,6 +165,14 @@ static void nativeDrainMainWork(JNIEnv *, jclass)
     }
 }
 
+static void nativeDrainFrameWork(JNIEnv *, jclass)
+{
+    if (auto loader = currentLoader())
+    {
+        loader->drainMainFrameWork();
+    }
+}
+
 static jint nativeHermesBytecodeVersion(JNIEnv *env, jclass, jbyteArray header)
 {
     if (!header)
@@ -422,12 +430,13 @@ static jint nativeDevelopmentBuildBannerSeconds(JNIEnv *, jclass)
 
 static bool cacheCallbacks(JNIEnv *env, jclass bridge)
 {
-    gCallbacks.bridgeClass     = static_cast<jclass>(env->NewGlobalRef(bridge));
-    gCallbacks.scheduleRuntime = env->GetStaticMethodID(bridge, "scheduleRuntimeWork", "(Z)V");
-    gCallbacks.scheduleMain    = env->GetStaticMethodID(bridge, "scheduleMainWork", "()V");
-    gCallbacks.isMainThread    = env->GetStaticMethodID(bridge, "isMainThread", "()Z");
-    gCallbacks.isVerifiedBuild = env->GetStaticMethodID(bridge, "isVerifiedBuild", "()Z");
-    gCallbacks.installer       = env->GetStaticMethodID(
+    gCallbacks.bridgeClass       = static_cast<jclass>(env->NewGlobalRef(bridge));
+    gCallbacks.scheduleRuntime   = env->GetStaticMethodID(bridge, "scheduleRuntimeWork", "(Z)V");
+    gCallbacks.scheduleMain      = env->GetStaticMethodID(bridge, "scheduleMainWork", "()V");
+    gCallbacks.scheduleMainFrame = env->GetStaticMethodID(bridge, "scheduleMainFrameWork", "()V");
+    gCallbacks.isMainThread      = env->GetStaticMethodID(bridge, "isMainThread", "()Z");
+    gCallbacks.isVerifiedBuild   = env->GetStaticMethodID(bridge, "isVerifiedBuild", "()Z");
+    gCallbacks.installer         = env->GetStaticMethodID(
         bridge, "installer", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaGetClass =
         env->GetStaticMethodID(bridge, "javaGetClass", "(Ljava/lang/String;)Ljava/lang/String;");
@@ -516,21 +525,22 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
     gCallbacks.fontsChanged     = env->GetStaticMethodID(bridge, "fontsChanged", "()V");
 
     return !clearPendingException(env) && gCallbacks.scheduleRuntime && gCallbacks.scheduleMain &&
-           gCallbacks.isMainThread && gCallbacks.isVerifiedBuild && gCallbacks.installer &&
-           gCallbacks.javaGetClass && gCallbacks.javaClassName && gCallbacks.javaDescribe &&
-           gCallbacks.javaConstruct && gCallbacks.javaRespondsTo && gCallbacks.javaInvoke &&
-           gCallbacks.javaPrepare && gCallbacks.javaInvokePrepared && gCallbacks.javaDisposePlan &&
-           gCallbacks.javaGetField && gCallbacks.javaSetField && gCallbacks.javaRelease &&
-           gCallbacks.javaLiveHandles && gCallbacks.hooksInstall && gCallbacks.hooksRemove &&
-           gCallbacks.runtimeReplaced && gCallbacks.javaBatch && gCallbacks.javaFindViews &&
-           gCallbacks.javaCreateAssociationKey && gCallbacks.javaGetAssociatedObject &&
-           gCallbacks.javaSetAssociatedObject && gCallbacks.fabricMount &&
-           gCallbacks.fabricUpdate && gCallbacks.fabricUnmount && gCallbacks.fabricSetSize &&
-           gCallbacks.fabricSetFrame && gCallbacks.fabricMeasure && gCallbacks.fetchText &&
-           gCallbacks.download && gCallbacks.devServerHost && gCallbacks.isServing &&
-           gCallbacks.installHomeScreenIcon && gCallbacks.availableFonts && gCallbacks.appFonts &&
-           gCallbacks.appFontBytes && gCallbacks.alert && gCallbacks.crashAlert &&
-           gCallbacks.updateProgress && gCallbacks.onBundleExecuted && gCallbacks.fontsChanged;
+           gCallbacks.scheduleMainFrame && gCallbacks.isMainThread && gCallbacks.isVerifiedBuild &&
+           gCallbacks.installer && gCallbacks.javaGetClass && gCallbacks.javaClassName &&
+           gCallbacks.javaDescribe && gCallbacks.javaConstruct && gCallbacks.javaRespondsTo &&
+           gCallbacks.javaInvoke && gCallbacks.javaPrepare && gCallbacks.javaInvokePrepared &&
+           gCallbacks.javaDisposePlan && gCallbacks.javaGetField && gCallbacks.javaSetField &&
+           gCallbacks.javaRelease && gCallbacks.javaLiveHandles && gCallbacks.hooksInstall &&
+           gCallbacks.hooksRemove && gCallbacks.runtimeReplaced && gCallbacks.javaBatch &&
+           gCallbacks.javaFindViews && gCallbacks.javaCreateAssociationKey &&
+           gCallbacks.javaGetAssociatedObject && gCallbacks.javaSetAssociatedObject &&
+           gCallbacks.fabricMount && gCallbacks.fabricUpdate && gCallbacks.fabricUnmount &&
+           gCallbacks.fabricSetSize && gCallbacks.fabricSetFrame && gCallbacks.fabricMeasure &&
+           gCallbacks.fetchText && gCallbacks.download && gCallbacks.devServerHost &&
+           gCallbacks.isServing && gCallbacks.installHomeScreenIcon && gCallbacks.availableFonts &&
+           gCallbacks.appFonts && gCallbacks.appFontBytes && gCallbacks.alert &&
+           gCallbacks.crashAlert && gCallbacks.updateProgress && gCallbacks.onBundleExecuted &&
+           gCallbacks.fontsChanged;
 }
 
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
@@ -564,6 +574,7 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
         {"nativeInstallSchedulerDrain", "(J)Z",
          reinterpret_cast<void *>(nativeInstallSchedulerDrain)},
         {"nativeDrainMainWork", "()V", reinterpret_cast<void *>(nativeDrainMainWork)},
+        {"nativeDrainFrameWork", "()V", reinterpret_cast<void *>(nativeDrainFrameWork)},
         {"nativeDispatchHookEvent", "(Ljava/lang/String;Ljava/lang/String;)V",
          reinterpret_cast<void *>(nativeDispatchHookEvent)},
         {"nativeHermesBytecodeVersion", "([B)I",

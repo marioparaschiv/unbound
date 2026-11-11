@@ -148,6 +148,7 @@ export declare const NATIVE_PLUGIN_METHOD_CAPABILITIES: {
 	readonly 'fabric.updateAsync': 'native.fabric.async';
 	readonly 'fabric.setSizeAsync': 'native.fabric.async';
 	readonly 'fabric.setFrameAsync': 'native.fabric.async';
+	readonly 'fabric.batchAsync': 'native.fabric.async';
 	readonly 'fabric.measureAsync': 'native.fabric.async';
 	readonly 'fabric.unmountAsync': 'native.fabric.async';
 	readonly 'fabric.releaseIdleAsync': 'native.fabric.async';
@@ -3901,6 +3902,15 @@ export type NativeFFITypeName =
 	| 'object'
 	| 'class'
 	| 'selector';
+export type NativeFabricBatchMutation = {
+	surface: NativeFabricSurface;
+	properties?: NativeSerializableObject;
+	frame?: NativeFabricFrame;
+	size?: {
+		minimum: NativeFabricSize;
+		maximum: NativeFabricSize;
+	};
+};
 /** Mounts registered React Native components inside existing native views. Sync methods are iOS only. */
 export type NativeFabricBridge = {
 	/** Starts a surface for a registered component inside a container view. Needs `native.fabric.mount`. */
@@ -3943,6 +3953,7 @@ export type NativeFabricBridge = {
 		surface: NativeFabricSurface,
 		frame: NativeFabricFrame,
 	): NativeCancelablePromise<void>;
+	batchAsync(mutations: NativeFabricBatchMutation[]): NativeCancelablePromise<void>;
 	/** Reads a view's frame. */
 	measure(view: NativeObjectHandle): NativeFabricFrame;
 	/** Like `measure`, on the main thread. */

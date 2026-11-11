@@ -17,6 +17,7 @@
 #include "LoaderPipeline.h"
 #include "LoaderSettings.h"
 #include "LoaderUpdater.h"
+#include "NativeFrameWorkQueue.h"
 #include "NativePluginRuntime.h"
 #include "NativeWorkQueue.h"
 
@@ -25,6 +26,7 @@ struct JavaCallbacks {
     jclass    bridgeClass              = nullptr;
     jmethodID scheduleRuntime          = nullptr;
     jmethodID scheduleMain             = nullptr;
+    jmethodID scheduleMainFrame        = nullptr;
     jmethodID isMainThread             = nullptr;
     jmethodID isVerifiedBuild          = nullptr;
     jmethodID installer                = nullptr;
@@ -92,6 +94,7 @@ public:
     void markHealthy();
     void onRuntimeCreated(facebook::jsi::Runtime &runtime);
     void drainMainWork();
+    void drainMainFrameWork();
     void drainRuntimeWork(facebook::jsi::Runtime &runtime);
     bool installSchedulerDrain(facebook::jsi::Runtime &runtime);
 
@@ -107,6 +110,7 @@ public:
     void runOnRuntimeCritical(std::function<void(facebook::jsi::Runtime &)> work) override;
     bool isMainThread() override;
     void runOnMain(std::function<void()> work) override;
+    bool runOnMainNextFrame(std::function<void()> work) override;
     void runAfter(double seconds, std::function<void()> work) override;
     void runInBackground(std::function<void()> work) override;
     std::optional<std::string>    resource(const std::string &name) override;
@@ -151,6 +155,7 @@ private:
     std::mutex                                                                     mainQueueMutex_;
     std::deque<std::function<void()>>                                              mainQueue_;
     bool                                        mainDrainScheduled_ = false;
+    loader::native::NativeFrameWorkQueue        frameQueue_;
     std::atomic<bool>                           schedulerDrainLive_ = false;
     DeadlineTimer                               timer_;
     loader::AddonState                          addons_;

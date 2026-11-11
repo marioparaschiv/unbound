@@ -11,6 +11,7 @@ import registerAppSurface from '@unbound-plugins/shared/native/app-surface';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
 import { setFrame } from '~/latency-indicator/ios/views';
+import { layoutTooltipSurface } from '~/latency-indicator/ios/tooltip-surface';
 import LatencyTooltip from '~/latency-indicator/components/latency-tooltip';
 import { placeTooltip, tooltipTextWidth } from '~/latency-indicator/tooltip-layout';
 import { Icon, Tooltip } from '~/constants';
@@ -191,8 +192,7 @@ export function createTooltips(
 				label: anchor.tooltip,
 				width: frame.width,
 			});
-			await fabric.setSizeAsync(surface, size, size);
-			await fabric.setFrameAsync(surface, { x: 0, y: 0, ...size });
+			await layoutTooltipSurface(fabric, surface, size);
 
 			if (stale()) return;
 

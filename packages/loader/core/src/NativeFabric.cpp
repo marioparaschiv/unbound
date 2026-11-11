@@ -614,7 +614,98 @@ struct FabricCall {
     Operation operation;
     Result    result;
     Immediate immediate;
+    bool      nextFrame = false;
 };
+
+struct FabricFrameMutation {
+    SurfacePointer                surface;
+    std::optional<nlohmann::json> properties;
+    std::optional<NativeSize>     minimum;
+    std::optional<NativeSize>     maximum;
+    std::optional<NativeFrame>    frame;
+};
+
+static std::vector<FabricFrameMutation> frameMutations(jsi::Runtime     &runtime,
+                                                       const jsi::Value &value)
+{
+    if (!value.isObject() || !value.asObject(runtime).isArray(runtime))
+    {
+        throw std::invalid_argument("A Fabric frame batch requires an array of mutations");
+    }
+    jsi::Array batch = value.asObject(runtime).asArray(runtime);
+    if (batch.size(runtime) > kMaximumBatchSteps)
+    {
+        throw std::invalid_argument("A Fabric frame batch requires at most 64 mutations");
+    }
+
+    std::vector<FabricFrameMutation>            mutations;
+    std::unordered_map<FabricSurface *, size_t> indexes;
+    for (size_t index = 0; index < batch.size(runtime); index++)
+    {
+        jsi::Value entryValue = batch.getValueAtIndex(runtime, index);
+        if (!entryValue.isObject() || entryValue.asObject(runtime).isArray(runtime))
+        {
+            throw std::invalid_argument("A Fabric frame mutation must be an object");
+        }
+        jsi::Object    entry   = entryValue.asObject(runtime);
+        SurfacePointer surface = surfaceOf(runtime, entry.getProperty(runtime, "surface"));
+        auto [found, inserted] = indexes.emplace(surface.get(), mutations.size());
+        if (inserted)
+        {
+            mutations.push_back({surface});
+        }
+        FabricFrameMutation &mutation = mutations[found->second];
+        bool                 changed  = false;
+
+        jsi::Value properties = entry.getProperty(runtime, "properties");
+        if (!properties.isUndefined())
+        {
+            mutation.properties = propertiesOf(runtime, &properties);
+            changed             = true;
+        }
+
+        jsi::Value frame = entry.getProperty(runtime, "frame");
+        if (!frame.isUndefined())
+        {
+            mutation.frame = parseFrame(runtime, frame);
+            changed        = true;
+        }
+
+        jsi::Value size = entry.getProperty(runtime, "size");
+        if (!size.isUndefined())
+        {
+            if (!size.isObject() || size.asObject(runtime).isArray(runtime))
+            {
+                throw std::invalid_argument("A Fabric frame size mutation must be an object");
+            }
+            jsi::Object sizeObject = size.asObject(runtime);
+            jsi::Value  minimum    = sizeObject.getProperty(runtime, "minimum");
+            jsi::Value  maximum    = sizeObject.getProperty(runtime, "maximum");
+            if (minimum.isUndefined() || maximum.isUndefined())
+            {
+                throw std::invalid_argument(
+                    "A Fabric frame size mutation requires minimum and maximum sizes");
+            }
+            mutation.minimum = parseSize(runtime, minimum);
+            mutation.maximum = parseSize(runtime, maximum);
+            changed          = true;
+        }
+
+        if (!changed)
+        {
+            throw std::invalid_argument("A Fabric frame mutation has no update");
+        }
+    }
+
+    for (const FabricFrameMutation &mutation : mutations)
+    {
+        if (mutation.frame && mutation.surface->adapter().measuresLastSetFrame())
+        {
+            mutation.surface->rememberSetFrame(*mutation.frame);
+        }
+    }
+    return mutations;
+}
 
 static jsi::Value undefinedResult(jsi::Runtime &)
 {
@@ -640,7 +731,8 @@ public:
             if (!synchronous)
             {
                 return executeMainAsynchronously(
-                    rt, call.operation, call.result ? call.result : Result(undefinedResult));
+                    rt, call.operation, call.result ? call.result : Result(undefinedResult),
+                    call.nextFrame);
             }
             return runSynchronously(rt, call, *adapter, label);
         };
@@ -653,6 +745,18 @@ public:
         add((std::string(name) + "Async").c_str(), argumentCount,
             [run](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                 return run(rt, args, count, false);
+            });
+    }
+
+    template <typename Prepare>
+    void defineAsync(const char *name, unsigned int argumentCount, Prepare prepare)
+    {
+        add(name, argumentCount,
+            [prepare](jsi::Runtime &rt, const jsi::Value *args, size_t count) -> jsi::Value {
+                FabricCall call = prepare(rt, args, count);
+                return executeMainAsynchronously(
+                    rt, call.operation, call.result ? call.result : Result(undefinedResult),
+                    call.nextFrame);
             });
     }
 
@@ -819,6 +923,37 @@ jsi::Object makeFabricNamespace(jsi::Runtime &runtime, std::shared_ptr<FabricAda
                               unmount(surface);
                           },
                           nullptr, nullptr};
+    });
+    fabric.defineAsync("batchAsync", 1, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+        requireArguments(count, 1, "Batching Fabric updates requires a mutation array");
+        auto mutations =
+            std::make_shared<std::vector<FabricFrameMutation>>(frameMutations(rt, args[0]));
+        return FabricCall{[mutations]() {
+                              for (const FabricFrameMutation &mutation : *mutations)
+                              {
+                                  if (!mutation.surface->active())
+                                  {
+                                      continue;
+                                  }
+                                  if (mutation.properties)
+                                  {
+                                      mutation.surface->adapter().update(mutation.surface->id(),
+                                                                         *mutation.properties);
+                                  }
+                                  if (mutation.minimum && mutation.maximum)
+                                  {
+                                      mutation.surface->adapter().setSize(mutation.surface->id(),
+                                                                          *mutation.minimum,
+                                                                          *mutation.maximum);
+                                  }
+                                  if (mutation.frame)
+                                  {
+                                      mutation.surface->adapter().setFrame(mutation.surface->id(),
+                                                                           *mutation.frame);
+                                  }
+                              }
+                          },
+                          nullptr, nullptr, true};
     });
     return fabric.take();
 }

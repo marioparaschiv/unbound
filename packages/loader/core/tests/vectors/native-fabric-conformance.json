@@ -1,0 +1,71 @@
+{
+	"module": "ConformanceCard",
+	"initialProperties": {
+		"revision": 1
+	},
+	"mutations": [
+		{
+			"properties": {
+				"revision": 2,
+				"label": "latest"
+			}
+		},
+		{
+			"frame": {
+				"x": 4,
+				"y": 8,
+				"width": 96,
+				"height": 32
+			}
+		},
+		{
+			"size": {
+				"minimum": {
+					"width": 24,
+					"height": 16
+				},
+				"maximum": {
+					"width": 128,
+					"height": 48
+				}
+			}
+		},
+		{
+			"properties": {
+				"revision": 3,
+				"label": "final"
+			}
+		},
+		{
+			"frame": {
+				"x": 12,
+				"y": 16,
+				"width": 144,
+				"height": 40
+			}
+		}
+	],
+	"expected": {
+		"properties": {
+			"revision": 3,
+			"label": "final"
+		},
+		"minimum": {
+			"width": 24,
+			"height": 16
+		},
+		"maximum": {
+			"width": 128,
+			"height": 48
+		},
+		"frame": {
+			"x": 12,
+			"y": 16,
+			"width": 144,
+			"height": 40
+		},
+		"updateCalls": 1,
+		"sizeCalls": 1,
+		"frameCalls": 1
+	}
+}
