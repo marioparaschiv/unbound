@@ -25,28 +25,27 @@ The pre-commit hook validates every plugin folder, manifest, naming collision, a
 
 Shared modules are grouped by domain: `action-sheets/`, `assets/`, `colors/`, `composer/`, `context-menus/`, `lifecycle/`, `members/`, `metro/`, `native/`, `oauth/`, `react/`, `settings/`, `stickers/` and `text-replace/`. The ones every plugin reaches for:
 
-| Module                                      | Use it to                                                                                                                                                                                                                                                                     |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lifecycle/features`                        | Build the entry's `start`, `stop` and `selfTest` with `runFeatures`. A feature that throws is logged and recorded, and the others still start; with `atomic: true` it removes the ones already started, so the plugin is never half applied. Report a skip with `skipFeature` |
-| `metro/ensure-modules`                      | Bail out of a feature, with one log line, when a module it needs is missing. It never loads a lazy handle                                                                                                                                                                     |
-| `metro/when-loaded`                         | Patch a module whose patch target is computed from the module, once it loads                                                                                                                                                                                                  |
-| `settings/while-enabled`                    | Apply a feature only while a setting is on                                                                                                                                                                                                                                    |
-| `react/render-target`, `react/find-element` | Find the render function behind a module, and search a render result                                                                                                                                                                                                          |
+| Module                                                    | Use it to                                                                                                                                                |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lifecycle/drawn-self-test`                               | Export a `selfTest` for a plugin that draws its own UI: `drawnSelfTest(drawn, noun, settling?)` also checks that something is on screen                  |
+| `native/ensure-capabilities`, `native/ios/ensure-classes` | Check native capabilities or Objective-C classes a feature needs; each logs one `<feature> skipped: ...` warning and returns `false` when one is missing |
+| `settings/while-enabled`                                  | Apply a feature only while a setting is on                                                                                                               |
+| `react/render-target`, `react/find-element`               | Find the render function behind a module, and search a render result                                                                                     |
 
 Before writing a helper, check Unbound's API (`@unbound-app/api`) and the shared package. Use what exists.
 
 ## Failing safely
 
-A feature never runs half-working. When anything it depends on is missing, it checks with `ensureModules` at the top of its start function, logs one line, and does nothing. The rest of the plugin keeps working. Call `ensureModules` in `start` for the modules every feature needs, and at the top of a feature for the modules only it needs.
+A feature never runs half-working. It checks its own needs at the top, after its setting check, and returns early: a setting that is off returns silently; a missing module logs one `logger.warn('<Feature> skipped: Discord moved X.')`. The rest of the plugin keeps working. The developer guide's [Lifecycle](../../docs/developer/getting-started/lifecycle.mdx#starting-features) page shows the shape.
 
-- Pass `ensureModules` the handles themselves. A property read such as `{ send: Messages.sendMessage }` loads the module before the check runs.
+- Look the module up inside the feature and guard the result: a lookup is `undefined` when the metro cache knows the module is missing. A property read such as `Messages.sendMessage` before the guard loads the module.
 - A module that only makes a feature nicer, such as haptics or a theme color, is optional: use it with `?.`.
-- A missing native bridge is a truthy object whose methods throw. Check `context.native` capabilities before using it, not `ensureModules`.
-- Never wrap the happy path in `try`/`catch` to hide a broken lookup. Catch only around calls that can fail for reasons outside the plugin, such as network requests and native calls.
+- A missing native bridge is a truthy object whose methods throw. Check `context.native` capabilities with `ensureCapabilities` before using it.
+- Checks never throw, and a feature that throws is a bug: Unbound logs the failed `start` and disposes the scope. Catch only around calls that can fail for reasons outside the plugin, such as network requests and native calls.
 
 ## Self-test and device matrix
 
-Export `selfTest` from the plugin's entry, usually as `export const { start, stop, selfTest } = runFeatures([...])`. It fails while a feature skipped, failed, or waits for a module Discord has not loaded yet. A plugin that draws its own UI exports a test built on `drawnSelfTest`, which also checks that something is on screen. Two plugins export none: `aussie-mode` does nothing outside an Australian device, so it would fail the matrix everywhere else, and `settings-demo` only demonstrates the settings panel.
+Unbound builds each plugin's self-test from the first `logger.warn` or `logger.error` written during `start`, with that line as the detail, so a skipped feature fails it. Export `selfTest` from the entry only to check more: a plugin that draws its own UI exports one built on `drawnSelfTest`, which also checks that something is on screen.
 
 The device matrix runs the plugins on real devices. It restarts Discord, calls each `selfTest`, and cycles each plugin through stop, start and reload to look for leaked hooks. Configure the devices in `.device-matrix.json` (see `.device-matrix.example.json`), then run `bun packages/plugin-scripts/src/run-device-matrix.ts --out <dir>`. Use `--only <id,id>` for a few plugins and `--lenient` to fail only on problems that are new since the last run.
 
