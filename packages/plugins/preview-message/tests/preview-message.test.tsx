@@ -1,4 +1,4 @@
-import { metro, plugins, render, startPlugin } from '@unbound-app/api/testing';
+import { logs, metro, plugins, render, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, jest, test } from 'bun:test';
 import { storage } from '@unbound-app/api';
 import { memo } from 'react';
@@ -6,8 +6,7 @@ import { Text, View } from 'react-native';
 
 import type { StoreSeeds } from '@unbound-app/api/testing';
 
-import { selfTest } from '~/index';
-import { Timing } from '~/constants';
+import { Timing } from '~/lib/constants';
 
 const ChatInputRightActions = {
 	default: memo((_props: { channel: { id: string } }) => <View />),
@@ -58,8 +57,8 @@ beforeEach(async () => {
 });
 
 describe('the chat input', () => {
-	test('reports itself applied once started', () => {
-		expect(selfTest().ok).toBe(true);
+	test('starts without a warning, so the self test passes', () => {
+		expect(logs.entries.filter((entry) => entry.level === 'warn')).toEqual([]);
 	});
 
 	test('offers to preview a draft', () => {

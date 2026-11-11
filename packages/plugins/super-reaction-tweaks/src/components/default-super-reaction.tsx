@@ -1,8 +1,10 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { flux } from '@unbound-app/api';
 
-import type { PickerSession } from '~/picker-session';
-import { canSuperReact } from '~/super-reactions';
-import { UserStore } from '~/modules';
+import type { PickerSession } from '~/lib/picker-session';
+import { canSuperReact } from '~/lib/super-reactions';
+
+const UserStore = flux.getStore('User', { lazy: true });
 
 type PremiumUser = { premiumType?: unknown };
 

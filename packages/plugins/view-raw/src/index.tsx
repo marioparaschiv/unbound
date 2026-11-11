@@ -1,5 +1,13 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startViewRaw } from '~/raw';
+import { patchActionSheets } from '~/patches/action-sheets';
+import { patchContextMenus } from '~/patches/context-menus';
 
-export const { start, stop, selfTest } = runFeatures(startViewRaw);
+export function start() {
+	patchActionSheets();
+	patchContextMenus();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import type { ReactNode } from 'react';
 import { Text } from 'react-native';
 
-import { EMBED_ERROR_PATH, YOUTUBE_PATH } from '~/constants';
+import { EMBED_ERROR_PATH, YOUTUBE_PATH } from '~/lib/constants';
 
 const VIDEO_ID = 'dQw4w9WgXcQ';
 
