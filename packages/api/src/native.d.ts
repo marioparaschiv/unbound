@@ -4,6 +4,12 @@ export type {
 	NativeAssociationKey,
 	NativeBatchReference,
 	NativeBatchStep,
+	NativeBridge,
+	NativeBridgeCapability,
+	NativeBridgeError,
+	NativeBridgeErrorCode,
+	NativeBridgeMethod,
+	NativeBridgePlatform,
 	NativeCallOptions,
 	NativeCancelablePromise,
 	NativeClassHandle,
@@ -46,12 +52,6 @@ export type {
 	NativeObjCCallPlan,
 	NativeObjectHandle,
 	NativePlatformBridge,
-	NativePluginBridge,
-	NativePluginCapability,
-	NativePluginError,
-	NativePluginErrorCode,
-	NativePluginMethod,
-	NativePluginPlatform,
 	NativePointer,
 	NativeRuntimeBridge,
 	NativeRuntimeEventName,
@@ -69,10 +69,10 @@ export type {
 	PluginContext,
 } from './_internal';
 import type {
+	NativeBridgeCapability,
+	NativeBridgeMethod,
+	NativeBridgePlatform,
 	NativePlatformBridge,
-	NativePluginCapability,
-	NativePluginMethod,
-	NativePluginPlatform,
 	NativeResourceCounts,
 } from './_internal';
 import * as React$1 from 'react';
@@ -81,39 +81,39 @@ import { ComponentType } from 'react';
 declare const NativePlatform$1: NativePlatformBridge | undefined;
 
 /** Thrown when a plugin uses a Capability its manifest does not declare, or declares one that is unknown or the native bridge lacks. */
-export declare class NativePluginCapabilityError extends Error {
+export declare class NativeBridgeCapabilityError extends Error {
 	/** A stable code to match on instead of the message. */
 	readonly code = 'NATIVE_PLUGIN_CAPABILITY_DENIED';
 	/** The Capability that was missing or refused. */
-	readonly capability: NativePluginCapability;
-	constructor(capability: NativePluginCapability);
+	readonly capability: NativeBridgeCapability;
+	constructor(capability: NativeBridgeCapability);
 }
 /** Thrown when native work is called through a plugin's scope after the scope was disposed, such as after the plugin stopped. */
-export declare class NativePluginDisposedError extends Error {
+export declare class NativeBridgeDisposedError extends Error {
 	/** A stable code to match on instead of the message. */
 	readonly code = 'NATIVE_PLUGIN_SCOPE_DISPOSED';
 	constructor();
 }
 /** Thrown when the loader does not provide the native bridge, or the part of it a call needs. */
-export declare class NativePluginUnavailableError extends Error {
+export declare class NativeBridgeUnavailableError extends Error {
 	/** A stable code to match on instead of the message. */
 	readonly code = 'NATIVE_PLUGIN_UNAVAILABLE';
 }
 /** Thrown when the host platform is not one the addon runs on, by its manifest or the handlers given to `definePlatform`. */
-export declare class NativePluginUnsupportedPlatformError extends Error {
+export declare class NativeBridgeUnsupportedPlatformError extends Error {
 	/** A stable code to match on instead of the message. */
 	readonly code = 'NATIVE_PLUGIN_PLATFORM_EXCLUDED';
 	/** The platforms the addon does run on. */
-	readonly platforms: readonly NativePluginPlatform[];
-	constructor(platforms: readonly NativePluginPlatform[], platform: string);
+	readonly platforms: readonly NativeBridgePlatform[];
+	constructor(platforms: readonly NativeBridgePlatform[], platform: string);
 }
-/** Thrown when the native bridge API is older than the manifest's `minNativePluginApi`. */
-export declare class NativePluginVersionError extends Error {
+/** Thrown when the native bridge API is older than the manifest's `minNativeBridgeApi`. */
+export declare class NativeBridgeVersionError extends Error {
 	/** A stable code to match on instead of the message. */
 	readonly code = 'NATIVE_PLUGIN_API_VERSION_UNSUPPORTED';
 	/** The native bridge API version the loader provides. */
 	readonly installedApi: string;
-	/** The manifest's `minNativePluginApi`. */
+	/** The manifest's `minNativeBridgeApi`. */
 	readonly requiredApi: string;
 	constructor(requiredApi: string, installedApi: string);
 }
@@ -153,7 +153,7 @@ export declare function getRuntimeProperties(): HermesRuntimeProperties;
  * @param capability The capability to look for.
  * @returns Whether the bridge provides it.
  */
-export declare function has(capability: NativePluginCapability): boolean;
+export declare function has(capability: NativeBridgeCapability): boolean;
 /**
  * @description Persists pending settings to storage, then reloads the native bundle.
  */
@@ -163,7 +163,7 @@ export declare function reload(): Promise<void>;
  * @param method The method's path, such as `fabric.batchAsync`.
  * @returns Whether the loader implements it.
  */
-export declare function supports(method: NativePluginMethod): boolean;
+export declare function supports(method: NativeBridgeMethod): boolean;
 /** Build and release metadata reported by the native client info module. */
 export type BundleInfoType = {
 	/** Discord's app version, shown in Unbound's settings beside `Build`. */
@@ -266,7 +266,7 @@ export type DeviceInfoType = {
 /** What `HermesInternal.getRuntimeProperties()` reports; empty when the engine is not Hermes. */
 export type HermesRuntimeProperties = ReturnType<HermesInternalObject['getRuntimeProperties']>;
 /** One Platform handler per platform an addon runs on. */
-export type PlatformHandlers<Handler> = Partial<Record<NativePluginPlatform, Handler>>;
+export type PlatformHandlers<Handler> = Partial<Record<NativeBridgePlatform, Handler>>;
 /** A native method Discord exposes without documenting what its promise resolves to. */
 export type UndocumentedNativeMethod = () => Promise<unknown>;
 export { NativePlatform$1 as NativePlatform };

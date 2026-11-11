@@ -36,7 +36,7 @@ export declare const ADDON_SCOPE_GLOBALS: readonly [
 	'commands',
 ];
 /** The core Bucket; each addon's Bucket is named after the addon id. */
-export declare const CORE_SETTINGS_STORE = 'unbound';
+export declare const CORE_BUCKET = 'unbound';
 /** The components of Discord's design module, each of which Unbound can stand in for when Discord drops it. */
 export declare const DESIGN_COMPONENTS: readonly [
 	'SearchBar',
@@ -78,7 +78,7 @@ export declare const DESIGN_COMPONENTS: readonly [
 	'ContextMenu',
 ];
 /** Every capability name a manifest may declare; an unknown name fails manifest validation. */
-export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
+export declare const NATIVE_BRIDGE_CAPABILITIES: readonly [
 	'native.objc.classes',
 	'native.objc.invoke',
 	'native.objc.invokeAsync',
@@ -107,7 +107,7 @@ export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
  * The Capability each native bridge method needs; the source of every Capability name. Edit it, then run
  * `bun run generate-native-capabilities` to regenerate the client's and the loader's Capability lists.
  */
-export declare const NATIVE_PLUGIN_METHOD_CAPABILITIES: {
+export declare const NATIVE_BRIDGE_METHOD_CAPABILITIES: {
 	readonly 'objc.getClass': 'native.objc.classes';
 	readonly 'objc.alloc': 'native.objc.classes';
 	readonly 'objc.create': 'native.objc.invoke';
@@ -182,9 +182,9 @@ export declare const NATIVE_PLUGIN_METHOD_CAPABILITIES: {
 	readonly 'hooks.remove': 'native.java.hooks';
 };
 /** The host platforms a native bridge runs on. */
-export declare const NATIVE_PLUGIN_PLATFORMS: readonly ['ios', 'android'];
+export declare const NATIVE_BRIDGE_PLATFORMS: readonly ['ios', 'android'];
 /** The capabilities each platform's loader offers; Objective-C ones are iOS only and Java ones Android only. */
-export declare const NATIVE_PLUGIN_PLATFORM_CAPABILITIES: {
+export declare const NATIVE_BRIDGE_PLATFORM_CAPABILITIES: {
 	readonly ios: readonly [
 		'native.objc.classes',
 		'native.objc.invoke',
@@ -479,7 +479,7 @@ export type AddonManifest = AuthoredAddonManifest & {
 	/** Written by `ubd build` from the native calls in the code: the platforms the addon runs on, each with the capabilities it needs there; absent means every platform. */
 	platforms?: AddonPlatforms;
 	/** Legacy: capabilities needed on every platform, from a manifest that declares them by hand; `ubd build` writes `platforms` instead. */
-	capabilities?: NativePluginCapability[];
+	capabilities?: NativeBridgeCapability[];
 	/** Set by the loader for an addon it read from disk: the addon's folder name. */
 	folder?: string;
 	/** Set by the loader for an addon it read from disk: the addon's absolute directory. */
@@ -488,13 +488,13 @@ export type AddonManifest = AuthoredAddonManifest & {
 	trust?: AddonTrust;
 };
 /** What an addon declares for one platform it runs on: the capabilities that platform provides which it needs. */
-export type AddonPlatform<P extends NativePluginPlatform = NativePluginPlatform> = {
+export type AddonPlatform<P extends NativeBridgePlatform = NativeBridgePlatform> = {
 	/** Capabilities needed on this platform only, added to the manifest's top-level `capabilities`. */
-	capabilities?: NativePluginPlatformCapability<P>[];
+	capabilities?: NativeBridgePlatformCapability<P>[];
 };
 /** The platforms an addon runs on, keyed by platform. */
 export type AddonPlatforms = {
-	[P in NativePluginPlatform]?: AddonPlatform<P>;
+	[P in NativeBridgePlatform]?: AddonPlatform<P>;
 };
 /** Whether an addon's bundle carries a valid Unbound signature. */
 export type AddonTrust = 'signed' | 'unsigned';
@@ -573,7 +573,7 @@ export type AuthoredAddonManifest = {
 	/** The addon's version, in strict SemVer 2.0.0 with no `v` prefix. */
 	version: string;
 	/** The lowest native bridge API version the addon supports; an older native bridge fails its start. */
-	minNativePluginApi?: string;
+	minNativeBridgeApi?: string;
 	/** The Ed25519 signature the Unbound team's publish pipeline puts on first-party plugins. */
 	signature?: {
 		version: 1;
@@ -3089,8 +3089,8 @@ export type FloatingActionButtonProps = Omit<
 	/** @default 16 */
 	positionRight?: number;
 };
-/** A font face managed by the Fonts manager, as `UnboundNative.fonts.list()` returns it. */
-export type FontEntity = UnboundInstalledFont;
+/** An installed font, as `UnboundNative.fonts.list()` returns it. */
+export type Font = UnboundInstalledFont;
 /**
  * Props of `FormLabel` (function). Exports: default.
  * @see design/void/Form/native/FormLabel.tsx
@@ -3405,6 +3405,15 @@ export type LayerScopeProps = {
 	children?: React$1.ReactNode;
 	zIndex?: number;
 };
+/** The raw bridge the loader publishes as `globalThis.NativePlugin`; `objc` exists only on iOS, `java` and `hooks` only on Android. */
+export type LoaderNativeBridge = Pick<
+	NativeBridge,
+	'apiVersion' | 'abiVersion' | 'capabilities' | 'ffi' | 'fabric' | 'debug'
+> &
+	Partial<Pick<NativeBridge, 'hooks'>> & {
+		readonly objc?: LoaderObjCBridge;
+		readonly java?: NativeJavaBridge & NativeUIScopeFactory;
+	};
 /** The `objc` namespace the loader publishes, before the client adds `create` and scopes it to a plugin. */
 export type LoaderObjCBridge = Omit<NativeObjCBridge, 'create'> & NativeUIScopeFactory;
 /**
@@ -3788,6 +3797,65 @@ export type NativeBatchStep = {
 	/** The call's arguments, at most 16; each may be an earlier step's result. */
 	args: unknown[];
 };
+/** The native bridge a plugin reaches through `context.native`, gated by the capabilities it declares. */
+export type NativeBridge = {
+	/** The version of the JavaScript API plugins use, compared with a manifest's `minNativeBridgeApi`. */
+	readonly apiVersion: string;
+	/** The version of the native ABI the loader implements. */
+	readonly abiVersion: string;
+	/** Every capability this loader build provides, not only the ones the plugin declares. */
+	readonly capabilities: readonly NativeBridgeCapability[];
+	/** The Objective-C runtime; iOS only. */
+	readonly objc: NativeObjCBridge;
+	/** Raw calls to C functions. */
+	readonly ffi: NativeFFIBridge;
+	/** React Native surfaces mounted in native views. */
+	readonly fabric: NativeFabricBridge;
+	/** Subscriptions to Discord activity. */
+	readonly runtime: NativeRuntimeBridge;
+	/** Java reflection; Android only. */
+	readonly java: NativeJavaBridge;
+	/** Java method hooks; Android only. */
+	readonly hooks: NativeJavaHooksBridge;
+	/** Debugger support. */
+	readonly debug: NativeDebugBridge;
+	/** Worklets on the UI runtime. */
+	readonly ui: NativeUIBridge;
+};
+/** A named permission to use one part of the native bridge, declared in an addon's manifest. */
+export type NativeBridgeCapability = (typeof NATIVE_BRIDGE_METHOD_CAPABILITIES)[NativeBridgeMethod];
+/** The shape of an error the native bridge or its plugin scope throws. */
+export type NativeBridgeError = {
+	/** Which failure it is; native failures without their own code use `NATIVE_BRIDGE_ERROR`. */
+	code: NativeBridgeErrorCode;
+	/** A human-readable description. */
+	message: string;
+	/** The capability the plugin lacks, for `NATIVE_PLUGIN_CAPABILITY_DENIED`. */
+	capability?: NativeBridgeCapability;
+};
+/** The stable `code` on an error the native bridge or its plugin scope throws. */
+export type NativeBridgeErrorCode =
+	| 'NATIVE_BRIDGE_ERROR'
+	| 'NATIVE_PLUGIN_API_VERSION_UNSUPPORTED'
+	| 'NATIVE_PLUGIN_CALL_CANCELLED'
+	| 'NATIVE_PLUGIN_CALL_TIMEOUT'
+	| 'NATIVE_PLUGIN_CAPABILITY_DENIED'
+	| 'NATIVE_PLUGIN_SCOPE_DISPOSED'
+	| 'NATIVE_PLUGIN_UNAVAILABLE';
+/** A native bridge method by the path a plugin calls it through, such as `objc.invoke`. */
+export type NativeBridgeMethod = {
+	[N in NativeBridgeNamespace]: `${N}.${keyof NativeBridge[N] & string}`;
+}[NativeBridgeNamespace];
+/** A {@link NativeBridge} namespace whose methods a plugin calls, such as `objc` or `java`. */
+export type NativeBridgeNamespace = Exclude<
+	keyof NativeBridge,
+	'apiVersion' | 'abiVersion' | 'capabilities' | 'ui'
+>;
+/** A host platform the loader reports, `ios` or `android`. */
+export type NativeBridgePlatform = (typeof NATIVE_BRIDGE_PLATFORMS)[number];
+/** A capability the native bridge on platform `P` provides. */
+export type NativeBridgePlatformCapability<P extends NativeBridgePlatform> =
+	(typeof NATIVE_BRIDGE_PLATFORM_CAPABILITIES)[P][number];
 /** Options for a synchronous Objective-C call. */
 export type NativeCallOptions = {
 	/** The thread to run on. Defaults to `current`. */
@@ -4519,7 +4587,7 @@ export type NativePlatformApp = {
 /** Platform-wide helpers the loader publishes as `globalThis.NativePlatform`, not scoped to a plugin. */
 export type NativePlatformBridge = {
 	/** The host platform. */
-	readonly platform: NativePluginPlatform;
+	readonly platform: NativeBridgePlatform;
 	/** Evaluates Hermes bytecode in the current runtime; `tag` names it in errors. Throws on invalid bytecode. */
 	evaluateBytecode(bytecode: ArrayBuffer, tag?: string): unknown;
 	/** Facts about the device. */
@@ -4559,7 +4627,7 @@ export type NativePlatformCrashGuard = {
 /** Facts about the device Discord runs on. */
 export type NativePlatformDevice = {
 	/** The host platform. */
-	readonly platform: NativePluginPlatform;
+	readonly platform: NativeBridgePlatform;
 	/** The device's model name. */
 	getDeviceModel(): string;
 	/** The operating system's version. */
@@ -4612,74 +4680,6 @@ export type NativePlatformSettings = {
 	/** Reads every Bucket with no arguments, one Bucket with `store`, or one dot-path `key`; `undefined` when unset. */
 	get(store?: string, key?: string): NativeSerializable | undefined;
 };
-/** The native bridge a plugin reaches through `context.native`, gated by the capabilities it declares. */
-export type NativePluginBridge = {
-	/** The version of the JavaScript API plugins use, compared with a manifest's `minNativePluginApi`. */
-	readonly apiVersion: string;
-	/** The version of the native ABI the loader implements. */
-	readonly abiVersion: string;
-	/** Every capability this loader build provides, not only the ones the plugin declares. */
-	readonly capabilities: readonly NativePluginCapability[];
-	/** The Objective-C runtime; iOS only. */
-	readonly objc: NativeObjCBridge;
-	/** Raw calls to C functions. */
-	readonly ffi: NativeFFIBridge;
-	/** React Native surfaces mounted in native views. */
-	readonly fabric: NativeFabricBridge;
-	/** Subscriptions to Discord activity. */
-	readonly runtime: NativeRuntimeBridge;
-	/** Java reflection; Android only. */
-	readonly java: NativeJavaBridge;
-	/** Java method hooks; Android only. */
-	readonly hooks: NativeJavaHooksBridge;
-	/** Debugger support. */
-	readonly debug: NativeDebugBridge;
-	/** Worklets on the UI runtime. */
-	readonly ui: NativeUIBridge;
-};
-/** A named permission to use one part of the native bridge, declared in an addon's manifest. */
-export type NativePluginCapability = (typeof NATIVE_PLUGIN_METHOD_CAPABILITIES)[NativePluginMethod];
-/** The shape of an error the native bridge or its plugin scope throws. */
-export type NativePluginError = {
-	/** Which failure it is; native failures without their own code use `NATIVE_BRIDGE_ERROR`. */
-	code: NativePluginErrorCode;
-	/** A human-readable description. */
-	message: string;
-	/** The capability the plugin lacks, for `NATIVE_PLUGIN_CAPABILITY_DENIED`. */
-	capability?: NativePluginCapability;
-};
-/** The stable `code` on an error the native bridge or its plugin scope throws. */
-export type NativePluginErrorCode =
-	| 'NATIVE_BRIDGE_ERROR'
-	| 'NATIVE_PLUGIN_API_VERSION_UNSUPPORTED'
-	| 'NATIVE_PLUGIN_CALL_CANCELLED'
-	| 'NATIVE_PLUGIN_CALL_TIMEOUT'
-	| 'NATIVE_PLUGIN_CAPABILITY_DENIED'
-	| 'NATIVE_PLUGIN_SCOPE_DISPOSED'
-	| 'NATIVE_PLUGIN_UNAVAILABLE';
-/** A native bridge method by the path a plugin calls it through, such as `objc.invoke`. */
-export type NativePluginMethod = {
-	[N in NativePluginNamespace]: `${N}.${keyof NativePluginBridge[N] & string}`;
-}[NativePluginNamespace];
-/** A {@link NativePluginBridge} namespace whose methods a plugin calls, such as `objc` or `java`. */
-export type NativePluginNamespace = Exclude<
-	keyof NativePluginBridge,
-	'apiVersion' | 'abiVersion' | 'capabilities' | 'ui'
->;
-/** A host platform the loader reports, `ios` or `android`. */
-export type NativePluginPlatform = (typeof NATIVE_PLUGIN_PLATFORMS)[number];
-/** A capability the native bridge on platform `P` provides. */
-export type NativePluginPlatformCapability<P extends NativePluginPlatform> =
-	(typeof NATIVE_PLUGIN_PLATFORM_CAPABILITIES)[P][number];
-/** The raw bridge the loader publishes as `globalThis.NativePlugin`; `objc` exists only on iOS, `java` and `hooks` only on Android. */
-export type NativePluginRuntimeBridge = Pick<
-	NativePluginBridge,
-	'apiVersion' | 'abiVersion' | 'capabilities' | 'ffi' | 'fabric' | 'debug'
-> &
-	Partial<Pick<NativePluginBridge, 'hooks'>> & {
-		readonly objc?: LoaderObjCBridge;
-		readonly java?: NativeJavaBridge & NativeUIScopeFactory;
-	};
 /** A handle to a native symbol's address, from `ffi.symbol`; `ffi.call` accepts only these. */
 export type NativePointer = NativeHandle;
 /** How many native resources the loader holds across every plugin. */
@@ -5166,11 +5166,11 @@ export type PluginContext = {
 	/** The plugin's id, from its manifest. */
 	readonly id: string;
 	/** The host platform, or `undefined` when the loader reports none. */
-	readonly platform?: NativePluginPlatform;
+	readonly platform?: NativeBridgePlatform;
 	/** The capabilities the manifest declares for this platform; `native` allows only these. */
-	readonly capabilities: readonly NativePluginCapability[];
+	readonly capabilities: readonly NativeBridgeCapability[];
 	/** The native bridge, scoped to the plugin's capabilities. */
-	readonly native: NativePluginBridge;
+	readonly native: NativeBridge;
 	/** Releases the plugin's hooks, surfaces, handles and subscriptions; the addon manager calls it on stop, unload, reload or a failed start. */
 	dispose(): void;
 };
