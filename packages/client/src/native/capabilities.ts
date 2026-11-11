@@ -79,8 +79,8 @@ export function supports(method: NativePluginMethod): boolean {
 		return true;
 	}
 
-	const nativePlugin = getNativePlugin();
-	const source: unknown = nativePlugin && Reflect.get(nativePlugin, namespace);
+	const bridge = getNativeBridge();
+	const source: unknown = bridge && Reflect.get(bridge, namespace);
 
 	return (
 		typeof source === 'object' &&
