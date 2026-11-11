@@ -171,7 +171,9 @@ export function createPostLedger(options: PostLedgerOptions): PostLedger {
 					await adoptOne(db, rows, listed, message, channelId, claimed);
 				} catch (error) {
 					// An append-only post left unrecorded would be posted again, so the run stops here.
-					if (options.policy === 'append-only') throw error;
+					if (options.policy === 'append-only') {
+						throw error;
+					}
 
 					logger.error(
 						`Failed to adopt message ${message.id} of ${label} ${claimed.key}:`,
