@@ -12,6 +12,7 @@ describe('counterSurface', () => {
 	test('falls back to the light tint for colors it cannot read', () => {
 		expect(counterSurface(undefined)).toBe('rgba(255, 255, 255, 0.12)');
 		expect(counterSurface('hsl(0, 0%, 0%)')).toBe('rgba(255, 255, 255, 0.12)');
+		expect(counterSurface({ category: 'semantic' })).toBe('rgba(255, 255, 255, 0.12)');
 	});
 });
 
@@ -24,5 +25,6 @@ describe('toneColor', () => {
 	test('uses a fixed color when the theme has no token for the tone', () => {
 		expect(toneColor('primary', {})).toBe('#5865f2');
 		expect(toneColor('muted', {})).toBe('#f2f3f5');
+		expect(toneColor('muted', { TEXT_NORMAL: { category: 'semantic' } })).toBe('#f2f3f5');
 	});
 });

@@ -1,7 +1,12 @@
 import type { CounterTone } from '~/lib/limit';
 import { TONE_COLORS } from '~/lib/constants';
 
-export type ThemeColors = Partial<Record<string, string>>;
+// UNKNOWN: Discord's newer themes hold semantic color objects here, not strings; only strings are read.
+export type ThemeColors = Partial<Record<string, unknown>>;
+
+function isColor(value: unknown): value is string {
+	return typeof value === 'string';
+}
 
 function rgbChannels(color: string): number[] | undefined {
 	const hex = color.match(/^#?([\da-f]{6})$/i)?.[1];
@@ -23,7 +28,7 @@ function rgbChannels(color: string): number[] | undefined {
 export function toneColor(tone: CounterTone, colors: ThemeColors): string {
 	const { tokens, fallback } = TONE_COLORS[tone];
 
-	return tokens.map((token) => colors[token]).find((color) => color !== undefined) ?? fallback;
+	return tokens.map((token) => colors[token]).find(isColor) ?? fallback;
 }
 
 /**
@@ -31,8 +36,8 @@ export function toneColor(tone: CounterTone, colors: ThemeColors): string {
  * @param textColor The theme's text color, as hex or `rgb()`.
  * @returns A light tint behind light text or an unreadable color, a dark tint behind dark text.
  */
-export function counterSurface(textColor: string | undefined): string {
-	const channels = textColor ? rgbChannels(textColor) : undefined;
+export function counterSurface(textColor: unknown): string {
+	const channels = isColor(textColor) ? rgbChannels(textColor) : undefined;
 	const darkText =
 		channels && (channels[0] * 299 + channels[1] * 587 + channels[2] * 114) / 1000 <= 160;
 
