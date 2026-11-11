@@ -14,6 +14,8 @@ export default defineSettings({
 		options: { dark: 'THEME_DARK', light: 'THEME_LIGHT' },
 	}),
 	showBadge: setting.boolean({ default: true, title: 'SHOW_BADGE' }),
+	memberList: setting.boolean({ default: true, title: 'MEMBER_LIST' }),
+	emojiPicker: setting.boolean({ default: true, title: 'EMOJI_PICKER' }),
 	style: setting.choice({
 		default: 'roomy',
 		title: 'STYLE',

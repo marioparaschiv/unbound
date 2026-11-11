@@ -79,8 +79,8 @@ Every search takes these as its last argument.
 ```ts
 import { metro } from '@unbound-app/api';
 
-// Typed: the design module's components, with their props.
-const { TableRow } = metro.findByProps('TableRow', 'TableRowGroup');
+// Typed: the design module's components, with their props. `undefined` when Discord moved it.
+const Design = metro.findByProps('TableRow', 'TableRowGroup');
 
 // Not typed yet: an open object with `sendMessage` and `receiveMessage`.
 const Messages = metro.findByProps('sendMessage', 'receiveMessage');
@@ -124,6 +124,11 @@ These load the module, so avoid them at the top of a file or in `start`:
 A lazy lookup returns `undefined` when a full search of this Discord build already found the module missing; otherwise it returns the lazy handle. Check it at the top of the feature, after its setting check, and log one warning naming the feature and what moved:
 
 ```ts
+import { metro, patcher } from '@unbound-app/api';
+import { settings } from '@unbound-app/settings';
+
+declare function addFavorites(): void;
+
 export function patchEmojiPicker() {
 	if (!settings.emojiPicker) {
 		return;
@@ -143,6 +148,10 @@ export function patchEmojiPicker() {
 To act only once a module loads, without loading it, pass a filter to `onModuleLoaded`. Its `onMissing` option runs instead when the module is known missing:
 
 ```ts
+import { metro, patcher } from '@unbound-app/api';
+
+declare function addFavorites(): void;
+
 metro.onModuleLoaded(
 	metro.filters.byProps('EmojiPicker'),
 	(module) => patcher.after(module, 'render', addFavorites),

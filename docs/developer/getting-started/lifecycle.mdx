@@ -120,11 +120,11 @@ Component patches need no such care. Mounted components redraw with Discord's re
 import { patcher } from '@unbound-app/api';
 
 import { patchMemberList } from '~/patches/member-list';
-import { patchProfiles } from '~/patches/profiles';
+import { startChannelLog } from '~/channel-log';
 
 export function start() {
 	patchMemberList();
-	patchProfiles();
+	startChannelLog();
 }
 
 export function stop() {
@@ -135,6 +135,11 @@ export function stop() {
 Each feature checks its own needs first, and a failed check returns early. A setting that is off is silent; a missing module is one `logger.warn` naming the feature and what moved. Checks never throw: a feature that throws is a bug, and Unbound logs the failed `start` and disposes the scope.
 
 ```ts src/patches/member-list.ts
+import { metro, patcher } from '@unbound-app/api';
+import { settings } from '@unbound-app/settings';
+
+declare function drawIndicators(): void;
+
 export function patchMemberList() {
 	if (!settings.memberList) {
 		return;

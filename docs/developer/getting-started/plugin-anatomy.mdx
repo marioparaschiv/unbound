@@ -193,7 +193,11 @@ export function patchChatInput(): void {
 			{},
 			<>
 				{result.props.children}
-				<CharacterCounter key='character-counter' channelId={channelId} inputs={ChatInputs} />
+				<CharacterCounter
+					key='character-counter'
+					channelId={channelId}
+					inputs={ChatInputs}
+				/>
 			</>,
 		);
 	});

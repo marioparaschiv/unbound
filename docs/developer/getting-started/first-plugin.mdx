@@ -140,9 +140,14 @@ Add a feature that logs every message you send, in its own folder:
 ```ts src/message-log/index.ts
 import { metro, patcher } from '@unbound-app/api';
 
-const Messages = metro.findByProps('sendMessage', 'receiveMessage');
-
 export function startMessageLog() {
+	const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+
+	if (!Messages) {
+		logger.warn('Message log skipped: Discord moved sendMessage.');
+		return;
+	}
+
 	patcher.before(Messages, 'sendMessage', ({ args }) => {
 		logger.log('Sending a message to channel', args[0]);
 	});
@@ -151,7 +156,7 @@ export function startMessageLog() {
 
 | Call | What it does |
 | --- | --- |
-| `metro.findByProps` | Finds the module with both exports. Lazy |
+| `metro.findByProps` | Finds the module with both exports. Lazy. `undefined` when Discord moved it |
 | `patcher.before` | Runs your callback before each `sendMessage`, with its arguments |
 | `logger` | A global that prefixes each line with the plugin's name |
 

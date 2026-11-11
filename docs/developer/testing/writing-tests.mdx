@@ -196,7 +196,10 @@ import { metro, patcher } from '@unbound-app/api';
 
 const Messages = metro.findByProps('sendMessage'); // at import, or in start()
 
-patcher.after(Messages, 'sendMessage', () => 'patched'); // waits: no module yet
+if (Messages) {
+	patcher.after(Messages, 'sendMessage', () => 'patched'); // waits: no module yet
+}
+
 fake.register({ sendMessage: () => 'sent' }); // applies now
 ```
 

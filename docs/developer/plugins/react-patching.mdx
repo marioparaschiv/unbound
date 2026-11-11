@@ -13,9 +13,14 @@ Pass the module holding the component and its key, then return the tree you want
 ```tsx src/toasts/index.tsx
 import { metro, patcher } from '@unbound-app/api';
 
-const Toasts = metro.findByProps('ToastContainer');
-
 export function startToastPatch() {
+	const Toasts = metro.findByProps('ToastContainer');
+
+	if (!Toasts) {
+		logger.warn('Toast patch skipped: Discord moved ToastContainer.');
+		return;
+	}
+
 	patcher.react.after(Toasts, 'ToastContainer', ({ props, result }) => {
 		// wrap, replace, or return the original tree
 		return result;
@@ -78,13 +83,20 @@ Full signatures: [`patcher`](/docs/sdk/latest/patcher) and [`utils.react`](/docs
 		```tsx
 		import { metro, patcher } from '@unbound-app/api';
 
-		const Profile = metro.findByProps('UserProfile');
+		export function patchUserProfile() {
+			const Profile = metro.findByProps('UserProfile');
 
-		patcher.react.after(Profile, 'UserProfile', ({ props, result }) => {
-			logger.log('Rendering profile of', props.userId);
+			if (!Profile) {
+				logger.warn('Profile patch skipped: Discord moved UserProfile.');
+				return;
+			}
 
-			return result;
-		});
+			patcher.react.after(Profile, 'UserProfile', ({ props, result }) => {
+				logger.log('Rendering profile of', props.userId);
+
+				return result;
+			});
+		}
 		```
 	</Tab>
 	<Tab title='before'>
@@ -93,11 +105,18 @@ Full signatures: [`patcher`](/docs/sdk/latest/patcher) and [`utils.react`](/docs
 		```tsx
 		import { metro, patcher } from '@unbound-app/api';
 
-		const Profile = metro.findByProps('UserProfile');
+		export function patchUserProfile() {
+			const Profile = metro.findByProps('UserProfile');
 
-		patcher.react.before(Profile, 'UserProfile', ({ props }) => {
-			return { ...props, compact: true };
-		});
+			if (!Profile) {
+				logger.warn('Compact profiles skipped: Discord moved UserProfile.');
+				return;
+			}
+
+			patcher.react.before(Profile, 'UserProfile', ({ props }) => {
+				return { ...props, compact: true };
+			});
+		}
 		```
 
 		Classes render from `this.props`, so `before` can't replace them. See [Class Components](#class-components).
@@ -108,13 +127,20 @@ Full signatures: [`patcher`](/docs/sdk/latest/patcher) and [`utils.react`](/docs
 		```tsx
 		import { metro, patcher } from '@unbound-app/api';
 
-		const Profile = metro.findByProps('UserProfile');
+		export function patchUserProfile() {
+			const Profile = metro.findByProps('UserProfile');
 
-		patcher.react.instead(Profile, 'UserProfile', ({ props, original }) => {
-			if (props.isBot) return null;
+			if (!Profile) {
+				logger.warn('Hiding bot profiles skipped: Discord moved UserProfile.');
+				return;
+			}
 
-			return original();
-		});
+			patcher.react.instead(Profile, 'UserProfile', ({ props, original }) => {
+				if (props.isBot) return null;
+
+				return original();
+			});
+		}
 		```
 	</Tab>
 </Tabs>
@@ -126,17 +152,24 @@ Each element has `type`, `props` and `props.children`. `findComponent` returns t
 ```tsx
 import { metro, patcher, utils } from '@unbound-app/api';
 
-const Profile = metro.findByProps('UserProfile');
+export function patchUserProfile() {
+	const Profile = metro.findByProps('UserProfile');
 
-patcher.react.after(Profile, 'UserProfile', ({ result }) => {
-	const row = utils.react.findComponent(result, 'Row');
-
-	if (row) {
-		row.props.style = [row.props.style, { opacity: 0.5 }];
+	if (!Profile) {
+		logger.warn('Faded rows skipped: Discord moved UserProfile.');
+		return;
 	}
 
-	return result;
-});
+	patcher.react.after(Profile, 'UserProfile', ({ result }) => {
+		const row = utils.react.findComponent(result, 'Row');
+
+		if (row) {
+			row.props.style = [row.props.style, { opacity: 0.5 }];
+		}
+
+		return result;
+	});
+}
 ```
 
 - Guard every lookup. It returns `undefined` when Discord or another plugin changed the tree.
@@ -150,17 +183,24 @@ A child created fresh on each parent render can't hold a lasting patch. Patch it
 ```tsx
 import { metro, patcher, utils } from '@unbound-app/api';
 
-const Profile = metro.findByProps('UserProfile');
+export function patchUserProfile() {
+	const Profile = metro.findByProps('UserProfile');
 
-patcher.react.after(Profile, 'UserProfile', ({ result }) => {
-	const child = utils.react.findComponent(result, 'ProfileBadges');
-
-	if (child && typeof child.type !== 'string') {
-		patcher.react.after(child.type, ({ result: badges }) => badges, { once: true });
+	if (!Profile) {
+		logger.warn('Badge patch skipped: Discord moved UserProfile.');
+		return;
 	}
 
-	return result;
-});
+	patcher.react.after(Profile, 'UserProfile', ({ result }) => {
+		const child = utils.react.findComponent(result, 'ProfileBadges');
+
+		if (child && typeof child.type !== 'string') {
+			patcher.react.after(child.type, ({ result: badges }) => badges, { once: true });
+		}
+
+		return result;
+	});
+}
 ```
 
 This needs `child.type` to be a `memo`, `forwardRef` or class. Patch a plain function where its module exports it.
@@ -174,9 +214,11 @@ import { metro } from '@unbound-app/api';
 
 const SomeClass = metro.findByName('SomeClass', { lazy: false });
 
-Object.hasOwn(SomeClass.prototype, 'componentDidMount'); // true: a prototype method
-Object.hasOwn(SomeClass, 'getDerivedStateFromProps'); // true: a static method
-Object.hasOwn(SomeClass.prototype, 'onPress'); // false: a class field, on each instance
+if (SomeClass) {
+	Object.hasOwn(SomeClass.prototype, 'componentDidMount'); // true: a prototype method
+	Object.hasOwn(SomeClass, 'getDerivedStateFromProps'); // true: a static method
+	Object.hasOwn(SomeClass.prototype, 'onPress'); // false: a class field, on each instance
+}
 ```
 
 <Tabs>
@@ -186,11 +228,18 @@ Object.hasOwn(SomeClass.prototype, 'onPress'); // false: a class field, on each 
 		```tsx
 		import { metro, patcher } from '@unbound-app/api';
 
-		const SomeClass = metro.findByName('SomeClass');
+		export function patchSomeClass() {
+			const SomeClass = metro.findByName('SomeClass');
 
-		patcher.after(SomeClass.prototype, 'componentDidUpdate', ({ this: instance }) => {
-			logger.log('Updated with', instance.props);
-		});
+			if (!SomeClass) {
+				logger.warn('Update log skipped: Discord moved SomeClass.');
+				return;
+			}
+
+			patcher.after(SomeClass.prototype, 'componentDidUpdate', ({ this: instance }) => {
+				logger.log('Updated with', instance.props);
+			});
+		}
 		```
 	</Tab>
 	<Tab title='Class field'>
@@ -199,17 +248,25 @@ Object.hasOwn(SomeClass.prototype, 'onPress'); // false: a class field, on each 
 		```tsx
 		import { metro, patcher } from '@unbound-app/api';
 
-		const SomeClass = metro.findByName('SomeClass');
 		const patched = new WeakSet<object>();
 
-		patcher.react.before(SomeClass, ({ this: instance }) => {
-			if (patched.has(instance)) return;
+		export function patchSomeClass() {
+			const SomeClass = metro.findByName('SomeClass');
 
-			patched.add(instance);
-			patcher.before(instance, 'onPress', () => {
-				logger.log('Pressed');
+			if (!SomeClass) {
+				logger.warn('Press log skipped: Discord moved SomeClass.');
+				return;
+			}
+
+			patcher.react.before(SomeClass, ({ this: instance }) => {
+				if (patched.has(instance)) return;
+
+				patched.add(instance);
+				patcher.before(instance, 'onPress', () => {
+					logger.log('Pressed');
+				});
 			});
-		});
+		}
 		```
 	</Tab>
 	<Tab title='Static method'>
@@ -236,11 +293,18 @@ Object.hasOwn(SomeClass.prototype, 'onPress'); // false: a class field, on each 
 		```tsx
 		import { metro, patcher } from '@unbound-app/api';
 
-		const SomeClassModule = metro.findByProps('SomeClass');
+		export function patchSomeClass() {
+			const SomeClassModule = metro.findByProps('SomeClass');
 
-		patcher.after(SomeClassModule, 'SomeClass', ({ result: instance }) => {
-			logger.log('Created', instance);
-		});
+			if (!SomeClassModule) {
+				logger.warn('Creation log skipped: Discord moved SomeClass.');
+				return;
+			}
+
+			patcher.after(SomeClassModule, 'SomeClass', ({ result: instance }) => {
+				logger.log('Created', instance);
+			});
+		}
 		```
 	</Tab>
 </Tabs>
@@ -252,21 +316,29 @@ A class patch can't change props: `before` can't replace `this.props`, and `orig
 ```tsx
 import { metro, patcher, utils } from '@unbound-app/api';
 
-const Profile = metro.findByProps('UserProfile');
 const ProfileRow = metro.findByName('ProfileRow');
 
 // Declared once at the top level: a new function on each render would remount the row every time.
 function CompactProfileRow(props: Record<string, unknown>) {
-	return <ProfileRow {...props} compact />;
+	return ProfileRow ? <ProfileRow {...props} compact /> : null;
 }
 
-patcher.react.after(Profile, 'UserProfile', ({ result }) => {
-	const row = utils.react.findComponent(result, 'ProfileRow');
+export function patchUserProfile() {
+	const Profile = metro.findByProps('UserProfile');
 
-	if (row) row.type = CompactProfileRow;
+	if (!Profile || !ProfileRow) {
+		logger.warn('Compact rows skipped: Discord moved UserProfile or ProfileRow.');
+		return;
+	}
 
-	return result;
-});
+	patcher.react.after(Profile, 'UserProfile', ({ result }) => {
+		const row = utils.react.findComponent(result, 'ProfileRow');
+
+		if (row) row.type = CompactProfileRow;
+
+		return result;
+	});
+}
 ```
 
 The same function each render keeps the row's state. The swap goes away with the patch.
