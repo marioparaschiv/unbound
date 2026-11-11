@@ -160,8 +160,8 @@ jobs:
             - name: Verify submodule state
               run: |
                   set -euo pipefail
-                  # The icon-packs submodule is never checked out here (`update = none`), so only the loader's count.
-                  status="$(git submodule status --recursive -- packages/loader)"
+                  # Runs in packages/loader; the icon-packs submodule outside it is never checked out (`update = none`).
+                  status="$(git submodule status --recursive -- .)"
                   if printf '%s\n' "$status" | grep -Eq '^[+-U]'; then
                       printf '%s\n' "$status"
                       exit 1
