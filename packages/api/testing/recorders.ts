@@ -42,7 +42,11 @@ export type FluxRecorder = {
 };
 
 /** The fake metro's modules: `register` one for the plugin to find, such as `{ sendMessage }`. */
-export type MetroRecorder = { register: (module: FakeModule, path?: string) => void };
+export type MetroRecorder = {
+	register: (module: FakeModule, path?: string) => void;
+	/** Marks a prop name, file path or export name as missing from this build: a lazy lookup by it returns `undefined`, and `onModuleLoaded` calls `onMissing`. */
+	markMissing: (term: string) => void;
+};
 
 /** The fake `native`: the platform `definePlatform` selects by, and the modules and capabilities it reports. */
 export type NativeRecorder = {
@@ -108,6 +112,7 @@ function createRecorders() {
 	};
 	const metro: MetroRecorder = {
 		register: (module, path) => getSession().scope.metro.register(module, path),
+		markMissing: (term) => getSession().scope.metro.markMissing(term),
 	};
 	const native: NativeRecorder = {
 		setPlatform: (platform) => void (getSession().native.state.platform = platform),
