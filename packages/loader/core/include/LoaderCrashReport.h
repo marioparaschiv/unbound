@@ -17,8 +17,10 @@ std::optional<std::string> crashSummary();
 
 // A prefilled GitHub crash report: the toolbox's environment, what happened, and the end of the
 // previous launch's log. Nothing is sent until the person submits the issue.
+// `nativeStack` is the stack the crash handler wrote, when the previous process died on a signal.
 toolbox::IssueReport crashReport(const toolbox::IssueReport &environment,
-                                 const std::string &summary, const std::string &logTail);
+                                 const std::string &summary, const std::string &logTail,
+                                 const std::string &nativeStack = "");
 std::string crashReportURL(const toolbox::IssueReport &environment, const std::string &summary,
-                           const std::string &logTail);
+                           const std::string &logTail, const std::string &nativeStack = "");
 }

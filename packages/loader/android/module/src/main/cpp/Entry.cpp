@@ -105,6 +105,19 @@ static void nativeMarkHealthy(JNIEnv *, jclass)
     }
 }
 
+static void nativeOnForeground(JNIEnv *, jclass)
+{
+    if (auto loader = currentLoader())
+    {
+        loader->onForeground();
+    }
+}
+
+static jstring nativeLaunchTimings(JNIEnv *env, jclass)
+{
+    return env->NewStringUTF(loader::LoaderPipeline::currentLaunchTimings().c_str());
+}
+
 static jboolean nativeOnRuntimeCreated(JNIEnv *, jclass, jlong runtimePointer)
 {
     if (runtimePointer == 0)
@@ -509,8 +522,10 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
     gCallbacks.appFonts = env->GetStaticMethodID(bridge, "appFonts", "()[Ljava/lang/String;");
     gCallbacks.appFontBytes =
         env->GetStaticMethodID(bridge, "appFontBytes", "(Ljava/lang/String;)[B");
-    gCallbacks.alert      = env->GetStaticMethodID(bridge, "alert", "(Ljava/lang/String;)V");
-    gCallbacks.crashAlert = env->GetStaticMethodID(bridge, "crashAlert", "(Ljava/lang/String;)V");
+    gCallbacks.alert        = env->GetStaticMethodID(bridge, "alert", "(Ljava/lang/String;)V");
+    gCallbacks.crashAlert   = env->GetStaticMethodID(bridge, "crashAlert", "(Ljava/lang/String;)V");
+    gCallbacks.previousExit = env->GetStaticMethodID(bridge, "previousExit", "()I");
+    gCallbacks.isMeteredNetwork = env->GetStaticMethodID(bridge, "isMeteredNetwork", "()Z");
     gCallbacks.updateProgress   = env->GetStaticMethodID(bridge, "updateProgress", "(Z)V");
     gCallbacks.onBundleExecuted = env->GetStaticMethodID(bridge, "onBundleExecuted", "()V");
     gCallbacks.fontsChanged     = env->GetStaticMethodID(bridge, "fontsChanged", "()V");
@@ -530,7 +545,8 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
            gCallbacks.download && gCallbacks.devServerHost && gCallbacks.isServing &&
            gCallbacks.installHomeScreenIcon && gCallbacks.availableFonts && gCallbacks.appFonts &&
            gCallbacks.appFontBytes && gCallbacks.alert && gCallbacks.crashAlert &&
-           gCallbacks.updateProgress && gCallbacks.onBundleExecuted && gCallbacks.fontsChanged;
+           gCallbacks.previousExit && gCallbacks.isMeteredNetwork && gCallbacks.updateProgress &&
+           gCallbacks.onBundleExecuted && gCallbacks.fontsChanged;
 }
 
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
@@ -557,6 +573,9 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
          reinterpret_cast<void *>(nativeInitialize)},
         {"nativeOnLoadJSBundle", "()V", reinterpret_cast<void *>(nativeOnLoadJSBundle)},
         {"nativeMarkHealthy", "()V", reinterpret_cast<void *>(nativeMarkHealthy)},
+        {"nativeOnForeground", "()V", reinterpret_cast<void *>(nativeOnForeground)},
+        {"nativeLaunchTimings", "()Ljava/lang/String;",
+         reinterpret_cast<void *>(nativeLaunchTimings)},
         {"nativeIsBlockedTelemetry", "(Ljava/lang/String;)Z",
          reinterpret_cast<void *>(nativeIsBlockedTelemetry)},
         {"nativeOnRuntimeCreated", "(J)Z", reinterpret_cast<void *>(nativeOnRuntimeCreated)},

@@ -1,5 +1,8 @@
 #include "LoaderPipeline.h"
 
+#include <iterator>
+#include <random>
+
 #include "HermesBytecodeHeader.h"
 #include "HermesSampling.h"
 #include "LoaderBootstrap.h"
@@ -18,6 +21,21 @@ namespace jsi = facebook::jsi;
 
 static constexpr std::chrono::seconds kFirstDownloadWait{10};
 
+static std::atomic<LoaderPipeline *> currentPipeline{nullptr};
+
+static int64_t nowMs()
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+               std::chrono::steady_clock::now().time_since_epoch())
+        .count();
+}
+
+static double randomUnit()
+{
+    thread_local std::mt19937 generator{std::random_device{}()};
+    return std::uniform_real_distribution<double>(0.0, 1.0)(generator);
+}
+
 LoaderPipeline::LoaderPipeline(std::shared_ptr<LoaderHost> host, UpdaterSettings settings,
                                BundleUpdater &updater)
     : host_(std::move(host)), settings_(std::move(settings)), updater_(updater)
@@ -26,6 +44,19 @@ LoaderPipeline::LoaderPipeline(std::shared_ptr<LoaderHost> host, UpdaterSettings
         auto host = weak.lock();
         return host ? host->resource(name) : std::nullopt;
     });
+    currentPipeline.store(this);
+}
+
+LoaderPipeline::~LoaderPipeline()
+{
+    LoaderPipeline *self = this;
+    currentPipeline.compare_exchange_strong(self, nullptr);
+}
+
+std::string LoaderPipeline::currentLaunchTimings()
+{
+    LoaderPipeline *pipeline = currentPipeline.load();
+    return pipeline ? pipeline->launchTimings() : "Unbound's loader has not started.";
 }
 
 bool LoaderPipeline::isBundleReady() const
@@ -44,6 +75,10 @@ void LoaderPipeline::prepare()
     // here.
     log(LogLevel::Info, LOG_CATEGORY_RUNTIME, "Discord's runtime was created.");
     native::noteRuntimeCreated();
+    runtimeCreatedMs_.store(nowMs());
+    bundleExecutedMs_.store(0);
+    renderedMs_.store(0);
+    rendered_.store(false);
     bundleReady_.store(false);
     bundleStaged_.store(false);
     uint64_t token = token_.fetch_add(1) + 1;
@@ -134,11 +169,31 @@ bool LoaderPipeline::savedFlavourIsCurrent(const std::string &path) const
 // Downloads the newest bundle for the next runtime. With no saved bundle, or with
 // `loader.update.hmr`, the runtime waits for it; if that wait gives up, reloads once it arrives.
 void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bool waitForDownload,
-                                        uint64_t token)
+                                        uint64_t token, size_t attempt)
 {
     bool reloadOnUpdate = !hasSaved || settings_.getBoolean("loader.update.hmr", false);
 
-    host_->runInBackground([this, savedPath, hasSaved, waitForDownload, token, reloadOnUpdate]() {
+    if (waitsForWifi(hasSaved, waitForDownload))
+    {
+        // Checked again when Discord returns to the foreground.
+        waitingForWifi_.store(true);
+        log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
+            "On a metered network; the update check waits for Wi-Fi.");
+        return;
+    }
+    waitingForWifi_.store(false);
+    checking_.store(true);
+    lastCheckMs_.store(nowMs());
+
+    host_->runInBackground([this, savedPath, hasSaved, waitForDownload, token, reloadOnUpdate,
+                            attempt]() {
+        struct CheckDone {
+            std::atomic_bool &checking;
+            ~CheckDone()
+            {
+                checking.store(false);
+            }
+        } done{checking_};
         std::string downloaded;
         try
         {
@@ -159,9 +214,21 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
             {
                 settleFirstDownload(token, std::nullopt);
             }
-            if (!hasSaved && token == token_.load())
+            if (!hasSaved && attempt == 0 && token == token_.load())
             {
                 host_->alert(bundleFailureNotice(failure));
+            }
+            if (failure == BundleUpdateFailure::Network &&
+                attempt < std::size(kRetryDelaysSeconds) && token == token_.load())
+            {
+                double delay =
+                    retryDelay(attempt, update ? update->retryAfter : std::nullopt, randomUnit());
+                log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
+                    "Retrying the update check in " + std::to_string(static_cast<int>(delay)) +
+                        " s.");
+                host_->runAfter(delay, [this, token, attempt]() {
+                    checkForUpdate(token, attempt + 1);
+                });
             }
             return;
         }
@@ -235,6 +302,9 @@ void LoaderPipeline::injectPreBundle(jsi::Runtime &runtime, const std::string &b
         UnboundNativeProvider provider = host_->unboundNativeProvider();
         provider.hasStagedBundle       = [this]() {
             return nlohmann::json(hasStagedBundle());
+        };
+        provider.markRendered = [this]() {
+            markRendered();
         };
         installUnboundNative(runtime, std::move(provider));
     }
@@ -361,6 +431,7 @@ bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t
     host_->runAfter(kHealthySeconds, [this]() {
         promotePendingBundle();
     });
+    bundleExecutedMs_.store(nowMs());
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Unbound's bundle was successfully executed.");
     if (token == token_.load())
     {
@@ -392,7 +463,7 @@ void LoaderPipeline::guardLaunch()
     }
 
     LaunchGuard   guard(updater_.documents());
-    LaunchVerdict verdict = guard.begin();
+    LaunchVerdict verdict = guard.begin(host_->previousExit());
     if (verdict.rollBack && updater_.rollBackToPrevious())
     {
         log(LogLevel::Error, LOG_CATEGORY_DEFAULT, launchRollBackNotice(verdict.failures));
@@ -418,7 +489,90 @@ void LoaderPipeline::markHealthy()
     {
         return;
     }
+    healthyMs_.store(nowMs());
     LaunchGuard(updater_.documents()).succeed();
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Discord ran long enough to count as healthy.");
+}
+
+void LoaderPipeline::markRendered()
+{
+    if (rendered_.exchange(true))
+    {
+        return;
+    }
+    renderedMs_.store(nowMs());
+    log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Discord's first screen rendered.");
+    host_->runAfter(kRenderedHealthySeconds, [this]() {
+        markHealthy();
+    });
+}
+
+std::string LoaderPipeline::launchTimings() const
+{
+    int64_t     start = runtimeCreatedMs_.load();
+    std::string text  = "Milliseconds after Discord's runtime was created:\n";
+    auto        step  = [&](const char *name, int64_t at) {
+        text += std::string(name) + ": " +
+                (start && at ? std::to_string(at - start) + " ms" : "not yet") + "\n";
+    };
+    step("Unbound's bundle executed", bundleExecutedMs_.load());
+    step("Discord's first screen rendered", renderedMs_.load());
+    step("Launch counted as healthy", healthyMs_.load());
+    return text;
+}
+
+double LoaderPipeline::retryDelay(size_t attempt, std::optional<double> retryAfter, double unit)
+{
+    if (retryAfter && *retryAfter >= 0)
+    {
+        return std::min(*retryAfter, kMaxRetryAfterSeconds);
+    }
+    size_t last = std::size(kRetryDelaysSeconds) - 1;
+    return kRetryDelaysSeconds[std::min(attempt, last)] * (0.8 + 0.4 * unit);
+}
+
+bool LoaderPipeline::waitsForWifi(bool hasSaved, bool waitForDownload)
+{
+    // Only a launch that already has a bundle to run can put its update off.
+    return hasSaved && !waitForDownload && settings_.getBoolean(kWaitForWifiSetting, true) &&
+           host_->onMeteredNetwork();
+}
+
+void LoaderPipeline::checkForUpdate(uint64_t token, size_t attempt)
+{
+    if (token != token_.load())
+    {
+        return;
+    }
+    std::string savedPath;
+    try
+    {
+        savedPath = updater_.resolveBundlePath();
+    }
+    catch (const std::exception &error)
+    {
+        log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
+            std::string("Failed to resolve the saved bundle: ") + error.what());
+        return;
+    }
+    updateInBackground(savedPath, !savedPath.empty() && fileExists(savedPath), false, token,
+                       attempt);
+}
+
+void LoaderPipeline::onForeground()
+{
+    if (!settings_.getBoolean("loader.enabled", true) || checking_.load())
+    {
+        return;
+    }
+    int64_t last = lastCheckMs_.load();
+    bool due = last != 0 && nowMs() - last >= static_cast<int64_t>(kForegroundCheckSeconds * 1000);
+    if (!due && !waitingForWifi_.load())
+    {
+        return;
+    }
+    log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
+        "Back in the foreground; checking for a newer bundle.");
+    checkForUpdate(token_.load(), 0);
 }
 }

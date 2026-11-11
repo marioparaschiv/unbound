@@ -6,11 +6,13 @@
 #include <regex>
 #include <system_error>
 
+#include "LoaderCrashHandler.h"
 #include "LoaderCrashReport.h"
 #include "LoaderDevOverlay.h"
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
+#include "LoaderPipeline.h"
 #include "LoaderPreferences.h"
 #include "LoaderVersion.h"
 
@@ -367,6 +369,8 @@ static MenuSection utilitiesSection(const SettingsStore &settings, const MenuOpt
         section.items.push_back(platformItem("copy-app-folder-path", "Copy App Folder Path"));
     }
 
+    section.items.push_back(platformItem("launch-timings", "Launch Timings"));
+
     MenuItem issue = platformItem("open-issue", "Open GitHub Issue");
     issue.failure  = kIssueFailedMessage;
     section.items.push_back(std::move(issue));
@@ -612,6 +616,10 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
         return issueURL(issueReport(provider ? *provider : NativePlatformProvider{},
                                     context.platform, argument));
     }
+    if (action == "launch-timings")
+    {
+        return LoaderPipeline::currentLaunchTimings();
+    }
     if (action == "crash-report-url")
     {
         const auto                 provider = currentNativePlatformProvider();
@@ -622,7 +630,8 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
         }
         return crashReportURL(issueReport(provider ? *provider : NativePlatformProvider{},
                                           context.platform, argument),
-                              *summary, previousLaunchLogTail(kCrashReportLogLines));
+                              *summary, previousLaunchLogTail(kCrashReportLogLines),
+                              previousNativeCrash());
     }
     if (action == "menu")
     {

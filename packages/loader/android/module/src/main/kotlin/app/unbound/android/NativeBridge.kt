@@ -1,6 +1,10 @@
 package app.unbound.android
 
+import android.app.ActivityManager
+import android.app.ApplicationExitInfo
+import android.content.Context
 import android.graphics.fonts.SystemFonts
+import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -44,6 +48,45 @@ object NativeBridge {
     /** Counts this launch as healthy: Discord left the foreground without crashing. */
     @JvmStatic
     external fun nativeMarkHealthy()
+
+    /** Discord came back to the foreground; the loader checks for a newer bundle if one is due. */
+    @JvmStatic
+    external fun nativeOnForeground()
+
+    /** How long this launch took to reach each step, as text for the toolbox. */
+    @JvmStatic
+    external fun nativeLaunchTimings(): String
+
+    /**
+     * How Discord's main process last ended: 1 for a crash, a freeze or a failed start; 2 when the person or the
+     * system ended it; 0 when Android keeps no record (before Android 11).
+     */
+    @JvmStatic
+    fun previousExit(): Int = runCatching {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return 0
+        val context = Platform.application() ?: return 0
+        val manager = context.getSystemService(ActivityManager::class.java) ?: return 0
+        val exit = manager.getHistoricalProcessExitReasons(context.packageName, 0, 8)
+            .firstOrNull { it.processName == context.packageName } ?: return 0
+        when (exit.reason) {
+            ApplicationExitInfo.REASON_CRASH,
+            ApplicationExitInfo.REASON_CRASH_NATIVE,
+            ApplicationExitInfo.REASON_ANR,
+            ApplicationExitInfo.REASON_INITIALIZATION_FAILURE,
+            -> 1
+
+            ApplicationExitInfo.REASON_UNKNOWN -> 0
+
+            else -> 2
+        }
+    }.getOrDefault(0)
+
+    /** Whether the active network costs the person data: mobile data, a hotspot or Data Saver. */
+    @JvmStatic
+    fun isMeteredNetwork(): Boolean = runCatching {
+        val context = Platform.application() ?: return false
+        context.getSystemService(Context.CONNECTIVITY_SERVICE).let { it as ConnectivityManager }.isActiveNetworkMetered
+    }.getOrDefault(false)
 
     external fun nativeEvictIdleSurfaces()
 
@@ -306,7 +349,7 @@ object NativeBridge {
                     return null
                 }
             }
-            arrayOf(status.toString(), connection.getHeaderField("etag") ?: "")
+            arrayOf(status.toString(), connection.getHeaderField("etag") ?: "", connection.getHeaderField("Retry-After") ?: "")
         } finally {
             deadline.cancel(false)
             connection.disconnect()
