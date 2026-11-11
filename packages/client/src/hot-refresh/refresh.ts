@@ -1,6 +1,6 @@
 import type { FunctionComponent } from 'react';
 
-import { findByProps } from '~/metro/lookups';
+import type * as Lookups from '~/metro/lookups';
 
 /** Any function component; `never` props accept every component's props. */
 export type Component = FunctionComponent<never>;
@@ -52,7 +52,17 @@ type FiberRoot = {
 	pendingLanes: number;
 };
 
-const Renderer = findByProps('getPublicInstanceFromRootTag');
+let renderer: MetroExport;
+
+function getRenderer(): MetroExport {
+	// A hot build loads this runtime inside `~/metro/cache`'s imports, and the search reads that cache as it loads,
+	// so the lookups are required on first use.
+	const { findByProps } = require('~/metro/lookups') as typeof Lookups;
+
+	renderer ??= findByProps('getPublicInstanceFromRootTag', { lazy: false });
+
+	return renderer;
+}
 
 const HOST_ROOT = 3;
 const MEMO = 14;
@@ -177,7 +187,7 @@ function findRoots() {
 
 function rootFiber(tag: number): Fiber | undefined {
 	try {
-		return Renderer.getPublicInstanceFromRootTag(tag)?._documentElement?.firstElementChild
+		return getRenderer()?.getPublicInstanceFromRootTag(tag)?._documentElement?.firstElementChild
 			?.__internalInstanceHandle;
 	} catch {
 		// Tags that never mounted a surface throw on some renderer versions.
