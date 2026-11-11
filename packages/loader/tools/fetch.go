@@ -19,8 +19,6 @@ const (
 	defaultBundleID  = "com.hammerandchisel.discord"
 )
 
-var retryableStatuses = map[int]bool{408: true, 425: true, 429: true, 500: true, 502: true, 503: true, 504: true}
-
 type DkryptError struct{ Message string }
 
 func (e *DkryptError) Error() string { return e.Message }
@@ -96,7 +94,7 @@ func downloadDirect(endpoint, apiKey, output string) error {
 		}
 		if response != nil {
 			response.Body.Close()
-			if attempt == 3 || !retryableStatuses[response.StatusCode] {
+			if attempt == 3 || !retryableStatus(response.StatusCode) {
 				return fmt.Errorf("source IPA download failed with HTTP %d", response.StatusCode)
 			}
 		} else if attempt == 3 {

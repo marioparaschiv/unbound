@@ -16,11 +16,20 @@ type retryingTransport struct {
 	backoff  time.Duration
 }
 
+// retryableStatus reports whether a response status is worth retrying: a timeout, too-early, rate limit or server error.
+func retryableStatus(status int) bool {
+	switch status {
+	case http.StatusRequestTimeout, http.StatusTooEarly, http.StatusTooManyRequests:
+		return true
+	}
+	return status >= http.StatusInternalServerError
+}
+
 func retryable(response *http.Response, err error) bool {
 	if err != nil {
 		return true
 	}
-	return response.StatusCode == http.StatusTooManyRequests || response.StatusCode >= http.StatusInternalServerError
+	return retryableStatus(response.StatusCode)
 }
 
 func (transport retryingTransport) RoundTrip(request *http.Request) (*http.Response, error) {
