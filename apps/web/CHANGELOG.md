@@ -1,5 +1,33 @@
 # Changelog
 
+## [2.0.0](https://github.com/marioparaschiv/unbound/compare/web-v1.1.1...web-v2.0.0) (2026-11-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* plugins.entities is plugins.addons, FontEntity is Font, NativePlugin* types and errors are NativeBridge* (NativePluginRuntimeBridge is LoaderNativeBridge), NATIVE_PLUGIN_* constants are NATIVE_BRIDGE_*, the manifest's minNativePluginApi is minNativeBridgeApi, and CORE_SETTINGS_STORE, SYNC_STORE and SettingsStores are CORE_BUCKET, SYNC_BUCKET and SettingsByBucket.
+* @unbound-app/api/testing exports only the plugin test kit (startPlugin, stopPlugin, render, recorders, fakeAssetId, StoreSeeds, PluginTypes). The building blocks moved to @unbound-app/api/testing/fakes; act, createTestRenderer and TestRenderer are removed (use render); the @unbound-app/api/testing/icu-parse subpath is removed (the parser lives in @unbound-app/contracts).
+
+### Bug Fixes
+
+* **web:** never overwrite a published addon version's files ([#1109](https://github.com/marioparaschiv/unbound/issues/1109)) ([ab09d06](https://github.com/marioparaschiv/unbound/commit/ab09d06f1e65d5effec6b2ba0d2befc81463f372))
+* **web:** skip legacy-manifest versions in the versions list ([#1111](https://github.com/marioparaschiv/unbound/issues/1111)) ([0176d11](https://github.com/marioparaschiv/unbound/commit/0176d11590e244b8fa09730e8d6e8c28f537b653))
+
+
+### Code Refactoring
+
+* finish the plugin shape and glossary renames ([#1099](https://github.com/marioparaschiv/unbound/issues/1099)) ([81ffa53](https://github.com/marioparaschiv/unbound/commit/81ffa5324f4b350cb34a9f34d84f25259f4e6d35))
+* mirror tests in tests/ and untangle shared modules ([#1072](https://github.com/marioparaschiv/unbound/issues/1072)) ([cb7f397](https://github.com/marioparaschiv/unbound/commit/cb7f397e2570a83e25da79f609b73bcc60dd685d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.0.0
+    * @unbound-app/logger bumped to 1.0.0
+    * @unbound-app/utils bumped to 1.0.0
+
 ## [1.1.1](https://github.com/marioparaschiv/unbound/compare/web-v1.1.0...web-v1.1.1) (2026-11-11)
 
 

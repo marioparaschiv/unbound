@@ -1,5 +1,44 @@
 # Changelog
 
+## [3.0.0](https://github.com/marioparaschiv/unbound/compare/client-v2.2.0...client-v3.0.0) (2026-11-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* plugins.entities is plugins.addons, FontEntity is Font, NativePlugin* types and errors are NativeBridge* (NativePluginRuntimeBridge is LoaderNativeBridge), NATIVE_PLUGIN_* constants are NATIVE_BRIDGE_*, the manifest's minNativePluginApi is minNativeBridgeApi, and CORE_SETTINGS_STORE, SYNC_STORE and SettingsStores are CORE_BUCKET, SYNC_BUCKET and SettingsByBucket.
+* @unbound-app/api/testing exports only the plugin test kit (startPlugin, stopPlugin, render, recorders, fakeAssetId, StoreSeeds, PluginTypes). The building blocks moved to @unbound-app/api/testing/fakes; act, createTestRenderer and TestRenderer are removed (use render); the @unbound-app/api/testing/icu-parse subpath is removed (the parser lives in @unbound-app/contracts).
+
+### Features
+
+* **devtools:** inspect React and native views over the debugger ([#1098](https://github.com/marioparaschiv/unbound/issues/1098)) ([c03a7a9](https://github.com/marioparaschiv/unbound/commit/c03a7a96341f756e992bb5c39fbc74cb73dafb4d))
+* **icon-packs:** cover 129 more of Discord's icons ([#1096](https://github.com/marioparaschiv/unbound/issues/1096)) ([817e319](https://github.com/marioparaschiv/unbound/commit/817e3190565ead2f76850ecf1458fef053c6ceb7))
+* **loader:** catch frozen starts and show how installs were signed ([#1113](https://github.com/marioparaschiv/unbound/issues/1113)) ([562aa90](https://github.com/marioparaschiv/unbound/commit/562aa9051c36e82d4e3577697d73a64e3397d4db))
+
+
+### Bug Fixes
+
+* **client:** install the newest version the client can run ([#1108](https://github.com/marioparaschiv/unbound/issues/1108)) ([fd88095](https://github.com/marioparaschiv/unbound/commit/fd880956f1891ce97e682897194afa8d3389fb8d))
+* **client:** keep icon marquee across packs, credit Discord ([#1105](https://github.com/marioparaschiv/unbound/issues/1105)) ([e1a2d5f](https://github.com/marioparaschiv/unbound/commit/e1a2d5f97d4eee73a7ac647f79f0e1a51650e59e))
+* **cli:** fix four ubd bugs found during device proofs ([#1102](https://github.com/marioparaschiv/unbound/issues/1102)) ([51fb516](https://github.com/marioparaschiv/unbound/commit/51fb516a16b31f44d220e358a54d5248adddcc02))
+
+
+### Code Refactoring
+
+* finish the plugin shape and glossary renames ([#1099](https://github.com/marioparaschiv/unbound/issues/1099)) ([81ffa53](https://github.com/marioparaschiv/unbound/commit/81ffa5324f4b350cb34a9f34d84f25259f4e6d35))
+* mirror tests in tests/ and untangle shared modules ([#1072](https://github.com/marioparaschiv/unbound/issues/1072)) ([cb7f397](https://github.com/marioparaschiv/unbound/commit/cb7f397e2570a83e25da79f609b73bcc60dd685d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.0.0
+    * @unbound-app/debugger-protocol bumped to 2.0.0
+    * @unbound-app/logger bumped to 1.0.0
+    * @unbound-app/types bumped to 1.0.0
+    * @unbound-app/utils bumped to 1.0.0
+    * @unbound-app/web bumped to 2.0.0
+
 ## [2.2.0](https://github.com/marioparaschiv/unbound/compare/client-v2.1.0...client-v2.2.0) (2026-11-11)
 
 

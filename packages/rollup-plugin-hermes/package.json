@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/rollup-plugin-hermes",
-	"version": "2.0.0",
+	"version": "3.0.0",
 	"description": "Compiles rollup and rolldown bundles to Hermes bytecode with every hermesc version Discord may run.",
 	"author": {
 		"name": "Mario P.",

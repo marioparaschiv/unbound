@@ -1,5 +1,31 @@
 # Changelog
 
+## [3.0.0](https://github.com/marioparaschiv/unbound/compare/api-v2.2.0...api-v3.0.0) (2026-11-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* plugins.entities is plugins.addons, FontEntity is Font, NativePlugin* types and errors are NativeBridge* (NativePluginRuntimeBridge is LoaderNativeBridge), NATIVE_PLUGIN_* constants are NATIVE_BRIDGE_*, the manifest's minNativePluginApi is minNativeBridgeApi, and CORE_SETTINGS_STORE, SYNC_STORE and SettingsStores are CORE_BUCKET, SYNC_BUCKET and SettingsByBucket.
+* @unbound-app/api/testing exports only the plugin test kit (startPlugin, stopPlugin, render, recorders, fakeAssetId, StoreSeeds, PluginTypes). The building blocks moved to @unbound-app/api/testing/fakes; act, createTestRenderer and TestRenderer are removed (use render); the @unbound-app/api/testing/icu-parse subpath is removed (the parser lives in @unbound-app/contracts).
+
+### Bug Fixes
+
+* **client:** install the newest version the client can run ([#1108](https://github.com/marioparaschiv/unbound/issues/1108)) ([fd88095](https://github.com/marioparaschiv/unbound/commit/fd880956f1891ce97e682897194afa8d3389fb8d))
+
+
+### Code Refactoring
+
+* finish the plugin shape and glossary renames ([#1099](https://github.com/marioparaschiv/unbound/issues/1099)) ([81ffa53](https://github.com/marioparaschiv/unbound/commit/81ffa5324f4b350cb34a9f34d84f25259f4e6d35))
+* mirror tests in tests/ and untangle shared modules ([#1072](https://github.com/marioparaschiv/unbound/issues/1072)) ([cb7f397](https://github.com/marioparaschiv/unbound/commit/cb7f397e2570a83e25da79f609b73bcc60dd685d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 3.0.0
+    * @unbound-app/sdk-generator bumped to 1.0.0
+
 ## [2.2.0](https://github.com/marioparaschiv/unbound/compare/api-v2.1.0...api-v2.2.0) (2026-11-11)
 
 
