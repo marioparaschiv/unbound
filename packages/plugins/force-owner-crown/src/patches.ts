@@ -1,5 +1,4 @@
 import {
-	MessageRowData,
 	onMessageRow,
 	type MessageRow,
 	type RowMessage,
@@ -41,12 +40,6 @@ function getCrownSource(uris: AssetUris): string | number | undefined {
  * `GuildStore` and the crown's URI from the asset URI module.
  */
 export function patchMessageRows(): void {
-	if (!MessageRowData) {
-		logger.warn('Crown skipped: Discord moved MessageRowData.');
-
-		return;
-	}
-
 	const AssetUris = metro.findByProps('getAssetUriForEmbed');
 	const GuildStore = flux.getStore('Guild');
 
@@ -54,6 +47,7 @@ export function patchMessageRows(): void {
 	let source: string | number | undefined;
 
 	onMessageRow<RowMessage, Row>({
+		feature: 'Crown',
 		after({ row }) {
 			if (!row?.guildId || !row.authorId || row.roleIcon) return;
 

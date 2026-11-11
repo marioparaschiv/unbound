@@ -1,6 +1,5 @@
-import { MessageRowData } from '@unbound-plugins/shared/metro/message-rows';
 import { settings } from '@unbound-app/settings';
-import { storage } from '@unbound-app/api';
+import { metro, storage } from '@unbound-app/api';
 
 import { createLookup, requestBranding, type BrandingLookup } from '~/lib/lookup';
 import { createPendingRows, type PendingRows } from '~/lib/redraw';
@@ -28,7 +27,7 @@ let current: Session | undefined;
 export function startSession(): void {
 	current = undefined;
 
-	if (!MessageRowData) {
+	if (!metro.findByProps('generateMessageRowData')) {
 		logger.warn('DeArrow skipped: Discord moved MessageRowData.');
 
 		return;

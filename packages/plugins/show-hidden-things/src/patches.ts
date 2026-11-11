@@ -1,6 +1,5 @@
 import getTimeoutDeadline from '@unbound-plugins/shared/members/timeout-deadline';
 import {
-	MessageRowData,
 	onMessageRow,
 	type MessageRow,
 	type RowMessage,
@@ -30,16 +29,11 @@ type Row = MessageRow & {
  * channels from `ChannelStore`, and does nothing while `showTimeouts` is off.
  */
 export function patchMessageRows(): void {
-	if (!MessageRowData) {
-		logger.warn('Timeout icons skipped: Discord moved MessageRowData.');
-
-		return;
-	}
-
 	const GuildMemberStore = flux.getStore('GuildMember');
 	const ChannelStore = flux.getStore('Channel');
 
 	onMessageRow<Message, Row>({
+		feature: 'Timeout icons',
 		after({ message, row }) {
 			if (!settings.showTimeouts || !row || !message) return;
 

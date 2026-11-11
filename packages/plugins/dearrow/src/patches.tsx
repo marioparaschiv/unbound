@@ -59,6 +59,7 @@ export function patchMessageRows(): void {
 	if (!activeSession()) return;
 
 	onMessageRow<RowMessage & Message>({
+		feature: 'DeArrow',
 		before({ input, message }) {
 			const session = activeSession();
 
