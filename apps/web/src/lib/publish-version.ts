@@ -41,7 +41,7 @@ type FirstPartyPin = {
 };
 
 /** What publishing did, as first-party CI reports it. */
-export type PublishStatus = 'published' | 'replaced' | 'unchanged';
+export type PublishStatus = 'published' | 'unchanged';
 
 export type Published = {
 	status: PublishStatus;
@@ -162,16 +162,6 @@ async function makeLive(
 	if (row.kind !== 'update') return;
 
 	await tx.update(addon).set({ repository: row.repository }).where(eq(addon.id, row.addonId));
-}
-
-// A rebuild of a live version takes over its row in place: the new submission, manifest and digest.
-async function replaceLive(tx: Transaction, row: SubmissionRow, sha256: string, publishedAt: Date) {
-	const { addonId, version, ...values } = toVersionRow(row, sha256, publishedAt);
-
-	await tx
-		.update(addonVersion)
-		.set(values)
-		.where(and(eq(addonVersion.addonId, addonId), eq(addonVersion.version, version)));
 }
 
 // A user whose first listing was approved gets the `developer` role, unless their role already publishes updates.
@@ -361,13 +351,24 @@ async function claimFirstParty(
 	return claim;
 }
 
-// The live version when this build already is it, so nothing needs publishing.
+// The live version when this build already is it, so nothing needs publishing. A published version's
+// files are immutable: clients pin its SHA-256, so a different build of it is refused, never written.
 function findUnchanged({ live }: Claim, source: AddonSource): ClaimedVersion | undefined {
-	return live && !isRebuild(live, source) ? live : undefined;
+	if (!live) return;
+
+	if (isRebuild(live, source)) {
+		const { id, version } = source.manifest;
+
+		throw new ApiError(
+			'version_exists',
+			`${id} ${version} is already published with other files; publish it under a new version.`,
+		);
+	}
+
+	return live;
 }
 
 // Files land before the row commits, so a failed write never makes an unwritten version the served one.
-// A rebuild overwrites the live version's files in place.
 async function publishFirstParty(ctx: AppContext, pin: FirstPartyPin): Promise<Published> {
 	const { source, caller } = pin;
 	const { manifest, pin: sourcePin } = source;
@@ -397,7 +398,6 @@ async function publishFirstParty(ctx: AppContext, pin: FirstPartyPin): Promise<P
 		}
 
 		const id = Bun.randomUUIDv7();
-		const replace = claim.live !== undefined;
 		const row = one(
 			await tx
 				.insert(submission)
@@ -431,15 +431,10 @@ async function publishFirstParty(ctx: AppContext, pin: FirstPartyPin): Promise<P
 			ref: sourcePin.ref,
 		});
 
-		if (replace) {
-			await replaceLive(tx, row, source.sha256, now);
-		} else {
-			await makeLive(tx, row, source.sha256, now);
-		}
-
+		await makeLive(tx, row, source.sha256, now);
 		await markFilesPublished(tx, row);
 
-		return { replace, row };
+		return { row };
 	});
 
 	if (!('row' in committed)) {
@@ -449,7 +444,7 @@ async function publishFirstParty(ctx: AppContext, pin: FirstPartyPin): Promise<P
 	ctx.jobs.kick('profiles');
 
 	return {
-		status: committed.replace ? 'replaced' : 'published',
+		status: 'published',
 		sha256: source.sha256,
 		row: committed.row,
 	};

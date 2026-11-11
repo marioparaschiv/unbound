@@ -114,8 +114,8 @@ export const publishFirstPartyRequestSchema = Type.Object({
 	commitSha: commitShaSchema,
 });
 
-/** `unchanged` when that version was already published, so a re-run is a no-op. */
-export const firstPartyPublishStatusSchema = Type.Enum(['published', 'replaced', 'unchanged']);
+/** `unchanged` when that build of the version was already published, so a re-run is a no-op. */
+export const firstPartyPublishStatusSchema = Type.Enum(['published', 'unchanged']);
 
 export const publishFirstPartyResponseSchema = Type.Object({
 	status: firstPartyPublishStatusSchema,

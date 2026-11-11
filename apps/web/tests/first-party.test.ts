@@ -309,33 +309,26 @@ describe('POST /api/v1/first-party/publish', () => {
 		expect(before).toEqual([1, 1]);
 	});
 
-	test('replaces a rebuilt version in place, with its compiled bundles, and keeps the version', async () => {
+	test('refuses a different build of a published version and leaves its files untouched', async () => {
 		const first = await publish(ciKey, buildTag(fixture, 'fp.rebuilt'));
-		const rebuild = buildTag(fixture, 'fp.rebuilt', '1.0.0', FIRST_PARTY, {
-			bundle: `export default 'fp.rebuilt again';`,
-			bytecode: { 98: 'hermes 98 bytes' },
-		});
-		const replaced = await publish(ciKey, rebuild);
+		const before = await readPublic(ctx, 'fp.rebuilt', '1.0.0');
+		const rebuilds = [
+			{ bundle: `export default 'fp.rebuilt again';` },
+			{ bytecode: { 98: 'hermes 98 bytes' } },
+		].map((output) => buildTag(fixture, 'fp.rebuilt', '1.0.0', FIRST_PARTY, output));
 
-		expect(replaced).toMatchObject({
-			status: 'replaced',
-			addonId: 'fp.rebuilt',
-			version: '1.0.0',
-		});
-		expect(replaced.sha256).not.toBe(first.sha256);
-		expect(await liveSha256(ctx, 'fp.rebuilt', '1.0.0')).toBe(replaced.sha256);
+		for (const rebuild of rebuilds) {
+			expect(await failure(publish(ciKey, rebuild))).toMatchObject({
+				code: 'version_exists',
+			});
+		}
 
-		const [bundle, manifestBytes] = await readPublic(ctx, 'fp.rebuilt', '1.0.0');
-		const compiled = await ctx.storage.public
-			.file('addons/fp.rebuilt/1.0.0/index.98.hbc')
-			.bytes();
-
-		expect(new TextDecoder().decode(bundle)).toBe(`export default 'fp.rebuilt again';`);
-		expect(new TextDecoder().decode(compiled)).toBe('hermes 98 bytes');
-		expect(JSON.parse(new TextDecoder().decode(manifestBytes)).bytecode).toEqual({
-			98: sha512('hermes 98 bytes'),
-		});
-		expect(await countWrites('fp.rebuilt')).toEqual([2, 2]);
+		expect(await readPublic(ctx, 'fp.rebuilt', '1.0.0')).toEqual(before);
+		expect(await ctx.storage.public.file('addons/fp.rebuilt/1.0.0/index.98.hbc').exists()).toBe(
+			false,
+		);
+		expect(await liveSha256(ctx, 'fp.rebuilt', '1.0.0')).toBe(first.sha256);
+		expect(await countWrites('fp.rebuilt')).toEqual([1, 1]);
 
 		const { addons } = await client('GET /api/v1/first-party/addons', {
 			headers: ciKey,
@@ -344,10 +337,8 @@ describe('POST /api/v1/first-party/publish', () => {
 
 		expect(addons.find((entry) => entry.id === 'fp.rebuilt')).toMatchObject({
 			version: '1.0.0',
-			sha256: replaced.sha256,
-			bytecode: { 98: sha512('hermes 98 bytes') },
+			sha256: first.sha256,
 		});
-		expect(await publish(ciKey, rebuild)).toEqual({ ...replaced, status: 'unchanged' });
 	});
 
 	test('refuses compiled bundles that are missing or do not match their digest', async () => {

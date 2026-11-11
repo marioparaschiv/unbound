@@ -39,8 +39,8 @@ function requireFirstPartyRepository(ctx: AppContext, caller: Caller): string {
  * @param ctx The application context.
  * @param caller The caller; must use an API key.
  * @param request The repository, addon path, build tag and its commit.
- * @returns `published`, `replaced` for a rebuild of a live version, or `unchanged` with the live
- * bundle's SHA-256 when the version already exists.
+ * @returns `published`, or `unchanged` with the live bundle's SHA-256 when this build already is the
+ * live version; a different build of a published version is refused with `version_exists`.
  */
 export async function publishFirstParty(
 	ctx: AppContext,
