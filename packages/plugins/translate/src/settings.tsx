@@ -1,7 +1,7 @@
-import { openLanguagePicker } from '~/translate/components/language-picker-sheet';
+import { openLanguagePicker } from '~/components/language-picker-sheet';
 import { messages } from '@unbound-app/i18n';
 import { settings, useSetting } from '@unbound-app/settings';
-import { connectDiscord } from '~/translate/login';
+import { connectDiscord } from '~/lib/login';
 import { useState } from 'react';
 import { ui } from '@unbound-app/api';
 

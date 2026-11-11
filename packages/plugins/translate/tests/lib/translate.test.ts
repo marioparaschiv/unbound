@@ -2,7 +2,7 @@ import { metro, toasts } from '@unbound-app/api/testing';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { settings } from '@unbound-app/settings';
 
-import { copyTranslation } from '~/translate/translate';
+import { copyTranslation } from '~/lib/translate';
 
 const clipboard = { text: '' };
 const realFetch = globalThis.fetch;

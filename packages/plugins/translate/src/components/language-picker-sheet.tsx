@@ -6,7 +6,7 @@ import { messages } from '@unbound-app/i18n';
 import { View } from 'react-native';
 import { useState } from 'react';
 
-import { languageLabel, searchLanguages } from '~/translate/languages';
+import { languageLabel, searchLanguages } from '~/lib/languages';
 
 type LanguagePickerOptions = {
 	title: string;

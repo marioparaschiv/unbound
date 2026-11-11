@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
-import { LANGUAGES } from '~/constants';
+import { LANGUAGES } from '~/lib/constants';
 
-import { languageLabel, searchLanguages } from '~/translate/languages';
+import { languageLabel, searchLanguages } from '~/lib/languages';
 
 describe('languageLabel', () => {
 	test('adds the native name when it differs', () => {

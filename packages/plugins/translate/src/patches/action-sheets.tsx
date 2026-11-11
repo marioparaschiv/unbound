@@ -2,12 +2,11 @@ import { getActionSheetRow } from '@unbound-plugins/shared/action-sheets/action-
 import patchLazySheets from '@unbound-plugins/shared/action-sheets/patch-lazy-sheets';
 import { isActionSheetRowGroup } from '@unbound-plugins/shared/action-sheets/row-group';
 import { findElement } from '@unbound-plugins/shared/react/find-element';
-import { assets, patcher } from '@unbound-app/api';
+import { assets, metro, patcher } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
 
-import { showTranslation, type TranslatableMessage } from '~/translate/translate';
-import { hideInline, isShownInline } from '~/translate/inline';
-import { ActionSheets } from '~/translate/modules';
+import { showTranslation, type TranslatableMessage } from '~/lib/translate';
+import { hideInline, isShownInline } from '~/lib/inline';
 
 type Message = TranslatableMessage;
 
@@ -17,9 +16,16 @@ type SheetProps = {
 
 /**
  * @description Adds a Translate row to the message long-press action sheet, or Show Original on a message translated in the chat, patching each sheet module as Discord lazy-loads it.
- * @returns A function that removes the row and ignores sheets still loading.
  */
-export function patchActionSheets(): () => void {
+export function patchActionSheets(): void {
+	const { ActionSheets } = metro.api;
+
+	if (!ActionSheets) {
+		logger.warn('Translate row skipped: Discord moved ActionSheets.');
+
+		return;
+	}
+
 	let message: Message | undefined;
 	let sheetKey: string | undefined;
 
@@ -57,7 +63,7 @@ export function patchActionSheets(): () => void {
 		return result;
 	}
 
-	return patchLazySheets<SheetProps>(patcher, ActionSheets, (key, props) => {
+	patchLazySheets<SheetProps>(patcher, ActionSheets, (key, props) => {
 		if (!key.endsWith('MessageLongPressActionSheet')) return;
 
 		if (props.message) message = props.message;

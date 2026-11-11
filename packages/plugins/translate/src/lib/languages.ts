@@ -1,7 +1,7 @@
 import { messages } from '@unbound-app/i18n';
 
-import type { Language } from '~/types';
-import { LANGUAGES } from '~/constants';
+import type { Language } from '~/lib/types';
+import { LANGUAGES } from '~/lib/constants';
 
 /**
  * @description Formats a language for the picker, adding its native name when it differs.

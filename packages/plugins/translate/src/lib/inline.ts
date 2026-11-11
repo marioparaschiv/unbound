@@ -1,44 +1,13 @@
 import { settings } from '@unbound-app/settings';
-import { flux, patcher } from '@unbound-app/api';
+import { flux } from '@unbound-app/api';
 
-import { languageFlag } from '~/translate/flags';
+import { languageFlag } from '~/lib/flags';
 
-import { ChatManager, MessageStore, RowManager } from '~/translate/modules';
-import type { TranslationResult } from '~/translate/translate';
+import type { TranslationResult } from '~/lib/translate';
 
-const CHANGE_TYPE_NONE = 0;
-const CHANGE_TYPE_UPDATE = 2;
 const REDRAW_TIMEOUT_MS = 1000;
 
-type ContentNode = {
-	type: string;
-	content?: unknown;
-};
-
-type ChatRow = {
-	message?: {
-		id?: string;
-		content?: ContentNode[];
-	};
-};
-
-type MessageRecord = {
-	id: string;
-	content?: string;
-	set(key: string, value: unknown): MessageRecord;
-};
-
-type RowInput = {
-	message?: MessageRecord;
-};
-
-type RowGenerator = {
-	generate(input: RowInput): ChatRow;
-};
-
-type ChangeInput = {
-	message?: { id?: string };
-};
+const MessageStore = flux.getStore('Message');
 
 type StoredMessage = {
 	content?: string;
@@ -49,7 +18,8 @@ type MessageLookup = {
 	getMessage(channelId: string, messageId: string): StoredMessage | undefined;
 };
 
-type Translation = {
+/** A message shown translated: its channel, the text that was translated, and the text drawn instead. */
+export type Translation = {
 	channelId: string;
 	original: string;
 	shown: string;
@@ -76,7 +46,12 @@ function rendersHandled(): Promise<void> {
 	});
 }
 
-function handleRender(messageId: string): boolean {
+/**
+ * @description Counts a row Discord redrew after a translation changed, settling the redraw `stop` waits for once none are left.
+ * @param messageId The message whose row Discord checks for changes.
+ * @returns `true` when the row was waiting for that redraw, so it must count as changed.
+ */
+export function handleRender(messageId: string): boolean {
 	if (!pendingRenders.delete(messageId)) return false;
 	if (!pendingRenders.size) onRendersHandled?.();
 
@@ -107,6 +82,30 @@ function redraw(channelId: string, messageId: string): Promise<void> {
  */
 export function isInlineAvailable(): boolean {
 	return active;
+}
+
+/**
+ * @description Marks inline translation as running, once its row patches are applied.
+ */
+export function markInlineAvailable(): void {
+	active = true;
+}
+
+/**
+ * @description Reads the translation a message shows.
+ * @param messageId The message.
+ * @returns The translation, or `undefined` when the message shows its original text.
+ */
+export function getTranslation(messageId: string): Translation | undefined {
+	return translations.get(messageId);
+}
+
+/**
+ * @description Forgets a message's translation without redrawing it, such as once Discord drew its edited text.
+ * @param messageId The message.
+ */
+export function forgetTranslation(messageId: string): void {
+	translations.delete(messageId);
 }
 
 /**
@@ -190,87 +189,22 @@ export function hideInline(messageId: string): void {
 }
 
 /**
- * @description Draws translations in the chat: each translated message's row shows its original text, then the translation as italic subtext, ending with its languages unless they are hidden.
- * Patches `generate` on Discord's `RowManager` and `determineChangeType` on its `ChatManager`, so a translation redraws its row.
- * @returns A function that draws every translated message's original text again, then removes both patches once Discord handled the redraws.
+ * @description Draws every translated message's original text again, settling once Discord handled the redraws or after a timeout.
+ * The row patches must stay applied until it settles, so Discord sees each row as changed.
+ * @returns A promise that settles once the original text is drawn.
  */
-export function patchInlineRows(): () => Promise<void> {
-	let generatingTranslation = false;
+export function redrawOriginalText(): Promise<void> {
+	if (!active) return Promise.resolve();
 
-	function translatedContent(generator: RowGenerator, input: RowInput, text: string) {
-		if (typeof input.message?.set !== 'function') return null;
+	active = false;
 
-		generatingTranslation = true;
+	const shown = [...translations];
 
-		try {
-			const row = generator.generate({
-				...input,
-				message: input.message.set('content', text),
-			});
+	translations.clear();
 
-			return Array.isArray(row?.message?.content) ? row.message.content : null;
-		} catch {
-			return null;
-		} finally {
-			generatingTranslation = false;
-		}
-	}
-
-	const unpatchRows = patcher.after(
-		RowManager.prototype,
-		'generate',
-		({ args: [input], result, this: self }) => {
-			const row = result as ChatRow | undefined;
-			const messageId = row?.message?.id;
-			const translation = messageId ? translations.get(messageId) : undefined;
-
-			if (generatingTranslation || !row?.message || !messageId || !translation) return;
-
-			if ((input as RowInput).message?.content !== translation.original) {
-				translations.delete(messageId);
-
-				return;
-			}
-
-			const content = translatedContent(
-				self as RowGenerator,
-				input as RowInput,
-				translation.shown,
-			);
-
-			if (content) row.message.content = content;
-		},
-	);
-
-	const unpatchChanges = patcher.after(
-		ChatManager.prototype,
-		'determineChangeType',
-		({ args: [input], result }) => {
-			const messageId = (input as ChangeInput | undefined)?.message?.id;
-
-			if (!messageId || !handleRender(messageId) || result !== CHANGE_TYPE_NONE) return;
-
-			return CHANGE_TYPE_UPDATE;
-		},
-	);
-
-	active = true;
-
-	return () => {
-		active = false;
-
-		const shown = [...translations];
-
-		translations.clear();
-
-		return Promise.allSettled(
-			shown.map(([messageId, { channelId }]) => redraw(channelId, messageId)),
-		)
-			.then(rendersHandled)
-			.then(() => {
-				unpatchRows();
-				unpatchChanges();
-				pendingRenders.clear();
-			});
-	};
+	return Promise.allSettled(
+		shown.map(([messageId, { channelId }]) => redraw(channelId, messageId)),
+	)
+		.then(rendersHandled)
+		.then(() => pendingRenders.clear());
 }

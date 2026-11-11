@@ -1,4 +1,4 @@
-import type { Language } from '~/types';
+import type { Language } from '~/lib/types';
 
 export const LANGUAGES: Language[] = [
 	{ code: 'ar', name: 'Arabic', nativeName: 'العربية' },

@@ -2,8 +2,8 @@ import { format, messages } from '@unbound-app/i18n';
 import { settings } from '@unbound-app/settings';
 import { metro, toasts } from '@unbound-app/api';
 
-import { endpoint, getAccessToken, refreshSession } from '~/translate/session';
-import { isInlineAvailable, showInline } from '~/translate/inline';
+import { endpoint, getAccessToken, refreshSession } from '~/lib/session';
+import { isInlineAvailable, showInline } from '~/lib/inline';
 
 type Translation = {
 	text?: unknown;

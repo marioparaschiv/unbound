@@ -3,7 +3,7 @@ import { readQuery } from '@unbound-plugins/shared/oauth/query';
 import { messages, format } from '@unbound-app/i18n';
 import { toasts } from '@unbound-app/api';
 
-import { endpoint, saveSession, type TokenPayload } from '~/translate/session';
+import { endpoint, saveSession, type TokenPayload } from '~/lib/session';
 
 function notify(content: string) {
 	toasts.show({ title: messages.TRANSLATE, content });
