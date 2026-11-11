@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { messages, uniqueUsername } from '~/messages';
+import { messages, uniqueUsername } from '~/lib/messages';
 
 describe('uniqueUsername', () => {
 	test('uses the bare username for unique usernames', () => {

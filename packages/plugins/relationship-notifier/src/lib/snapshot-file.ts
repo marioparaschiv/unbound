@@ -1,7 +1,7 @@
 import { fs } from '@unbound-app/api';
 
-import { SNAPSHOT_DIRECTORY } from '~/constants';
-import { parseSnapshot, type Snapshot } from '~/snapshot';
+import { SNAPSHOT_DIRECTORY } from '~/lib/constants';
+import { parseSnapshot, type Snapshot } from '~/lib/snapshot';
 
 /**
  * @description Builds the path of a signed-in user's saved snapshot, so each account keeps its own.

@@ -1,8 +1,8 @@
-import { SAVE_DELAY } from '~/constants';
-import { currentUserId, isGuildUnavailable, readPart, type SnapshotPart } from '~/discord';
-import { createManualRemovals, keepUnconfirmedGuilds, type ManualRemovals } from '~/removals';
-import { saveSnapshot } from '~/snapshot-file';
-import { emptySnapshot, type Snapshot } from '~/snapshot';
+import { SAVE_DELAY } from '~/lib/constants';
+import { currentUserId, isGuildUnavailable, readPart, type SnapshotPart } from '~/lib/discord';
+import { createManualRemovals, keepUnconfirmedGuilds, type ManualRemovals } from '~/lib/removals';
+import { saveSnapshot } from '~/lib/snapshot-file';
+import { emptySnapshot, type Snapshot } from '~/lib/snapshot';
 
 export type Session = {
 	active: boolean;
@@ -79,12 +79,30 @@ export function refresh(session: Session, part: SnapshotPart, goneGuildId?: stri
 	scheduleSave(session);
 }
 
+let current = createSession();
+
 /**
- * @description Stops the session: writes a pending save and forgets manual removals.
- * @param session The running session.
+ * @description Reads the running session, which the patches and listeners share.
+ * @returns The session {@link openSession} started.
+ */
+export function getSession(): Session {
+	return current;
+}
+
+/**
+ * @description Starts a new session for the patches and listeners to share.
+ */
+export function openSession(): void {
+	current = createSession();
+}
+
+/**
+ * @description Stops the running session: writes a pending save and forgets manual removals.
  * @returns A promise that settles once the snapshot is written.
  */
-export function closeSession(session: Session): Promise<void> {
+export function closeSession(): Promise<void> {
+	const session = current;
+
 	session.active = false;
 
 	for (const removals of Object.values(session.manual)) removals.clear();

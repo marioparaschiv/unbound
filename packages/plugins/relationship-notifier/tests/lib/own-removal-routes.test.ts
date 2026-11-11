@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { ownRemovalFromRequest } from '~/own-removal-routes';
+import { ownRemovalFromRequest } from '~/lib/own-removal-routes';
 
 describe('ownRemovalFromRequest', () => {
 	test('recognises removing a friend or a request', () => {

@@ -7,8 +7,8 @@ import {
 	findOfflineRemovals,
 	keepUnconfirmedGuilds,
 	relationshipRemovalKind,
-} from '~/removals';
-import type { Snapshot } from '~/snapshot';
+} from '~/lib/removals';
+import type { Snapshot } from '~/lib/snapshot';
 
 const previous: Snapshot = {
 	guilds: [

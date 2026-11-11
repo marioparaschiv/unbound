@@ -1,4 +1,4 @@
-import { AVATAR_SIZE } from '~/constants';
+import { AVATAR_SIZE } from '~/lib/constants';
 import {
 	AsyncUsers,
 	ChannelStore,
@@ -10,7 +10,7 @@ import {
 	Profiles,
 	RelationshipStore,
 	UserStore,
-} from '~/modules';
+} from '~/lib/modules';
 import {
 	isJoinedGuild,
 	snapshotGroups,
@@ -20,8 +20,8 @@ import {
 	type GuildLike,
 	type RelationshipSource,
 	type Snapshot,
-} from '~/snapshot';
-import type { NamedUser } from '~/messages';
+} from '~/lib/snapshot';
+import type { NamedUser } from '~/lib/messages';
 
 export type DiscordUser = NamedUser & {
 	id: string;

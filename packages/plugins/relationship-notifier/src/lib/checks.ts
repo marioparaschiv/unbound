@@ -2,17 +2,19 @@ import { settings } from '@unbound-app/settings';
 
 import {
 	currentUserId,
+	isConnected,
 	isGuildUnavailable,
 	readSnapshot,
 	relationshipType,
 	resolveUser,
 	type DiscordUser,
-} from '~/discord';
-import { notify, notifyAboutUser } from '~/notify';
-import { findOfflineRemovals, keepUnconfirmedGuilds, type OfflineRemovals } from '~/removals';
-import { messages, uniqueUsername } from '~/messages';
-import { loadSnapshot } from '~/snapshot-file';
-import { flushSave, scheduleSave, type Session } from '~/session';
+} from '~/lib/discord';
+import { notify, notifyAboutUser } from '~/lib/notify';
+import { findOfflineRemovals, keepUnconfirmedGuilds, type OfflineRemovals } from '~/lib/removals';
+import { messages, uniqueUsername } from '~/lib/messages';
+import { loadSnapshot } from '~/lib/snapshot-file';
+import { flushSave, getSession, scheduleSave, type Session } from '~/lib/session';
+import { START_CHECK_DELAY } from '~/lib/constants';
 
 async function notifyUsers(ids: string[], text: (name: string) => string): Promise<void> {
 	for (const id of ids) {
@@ -78,4 +80,16 @@ export function syncAndRunChecks(session: Session): Promise<void> {
 		});
 
 	return session.checking;
+}
+
+/**
+ * @description Runs the first check a few seconds after the plugin starts while Discord is already connected, as Vencord does.
+ * The timer is scoped, so the plugin scope cancels it if the plugin stops first.
+ */
+export function scheduleStartCheck(): void {
+	const session = getSession();
+
+	setTimeout(() => {
+		if (isConnected()) void syncAndRunChecks(session);
+	}, START_CHECK_DELAY);
 }

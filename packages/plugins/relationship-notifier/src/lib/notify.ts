@@ -2,8 +2,8 @@ import type { ToastHandle, ToastOptions } from '@unbound-app/api/toasts';
 import { settings } from '@unbound-app/settings';
 import { toasts } from '@unbound-app/api';
 
-import { FALLBACK_ICON } from '~/constants';
-import { avatarURL, openProfile, type DiscordUser } from '~/discord';
+import { FALLBACK_ICON } from '~/lib/constants';
+import { avatarURL, openProfile, type DiscordUser } from '~/lib/discord';
 
 type ToastButton = NonNullable<ToastOptions['buttons']>[number];
 

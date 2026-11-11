@@ -1,7 +1,7 @@
 import type { Settings } from '@unbound-app/settings';
 
-import { RelationshipType } from '~/constants';
-import type { SimpleEntry, Snapshot } from '~/snapshot';
+import { RelationshipType } from '~/lib/constants';
+import type { SimpleEntry, Snapshot } from '~/lib/snapshot';
 
 export type OfflineRemovals = {
 	groups: SimpleEntry[];

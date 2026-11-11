@@ -1,4 +1,4 @@
-import { CDN_URL, GROUP_DM_CHANNEL_TYPE, RelationshipType } from '~/constants';
+import { CDN_URL, GROUP_DM_CHANNEL_TYPE, RelationshipType } from '~/lib/constants';
 
 export type SimpleEntry = {
 	id: string;

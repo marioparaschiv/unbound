@@ -10,7 +10,7 @@ import {
 	isJoinedGuild,
 	snapshotGuilds,
 	snapshotRelationships,
-} from '~/snapshot';
+} from '~/lib/snapshot';
 
 describe('isJoinedGuild', () => {
 	test('counts a guild the user is a member of', () => {
