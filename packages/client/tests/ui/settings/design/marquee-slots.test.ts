@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { SLOT_WIDTH, iconIndex, slotOffset, slotsFor } from './marquee-slots';
+import { SLOT_WIDTH, iconIndex, slotOffset, slotsFor } from '~/ui/settings/design/marquee-slots';
 
 const slots = 6;
 

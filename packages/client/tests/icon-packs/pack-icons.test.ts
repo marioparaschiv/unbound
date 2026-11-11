@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { indexedIcons, listedIcons } from './pack-icons';
+import { indexedIcons, listedIcons } from '~/icon-packs/pack-icons';
 
 const png = (scales: Record<string, string>) => ({
 	type: 'png' as const,

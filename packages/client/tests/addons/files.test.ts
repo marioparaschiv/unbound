@@ -25,7 +25,7 @@ mock.module('~/native/fs', () => ({
 	},
 }));
 
-const { writeAddonFiles } = await import('./files');
+const { writeAddonFiles } = await import('~/addons/files');
 
 describe('writeAddonFiles', () => {
 	test('writes many files into a new folder without racing to create it', async () => {
