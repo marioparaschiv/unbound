@@ -1,10 +1,10 @@
 import { settings } from '@unbound-app/settings';
 
-import { NotificationSettings, OptInChannels, UserGuildSettingsStore } from '~/apply/modules';
-import { buildNotificationUpdates, isApplicableGuildId } from '~/apply/payloads';
+import { NotificationSettings, OptInChannels, UserGuildSettingsStore } from '~/lib/modules';
+import { buildNotificationUpdates, isApplicableGuildId } from '~/lib/payloads';
 
 function showAllChannels(guildId: string): void {
-	const toggle = OptInChannels.toggleShowAllChannels;
+	const toggle = OptInChannels?.toggleShowAllChannels;
 	const isOptInEnabled = UserGuildSettingsStore.isOptInEnabled;
 
 	if (typeof toggle !== 'function' || typeof isOptInEnabled !== 'function') {
@@ -28,7 +28,7 @@ function showAllChannels(guildId: string): void {
 export function applyNewGuildSettings(guildId: unknown): boolean {
 	if (!isApplicableGuildId(guildId)) return false;
 
-	const update = NotificationSettings.updateGuildNotificationSettings;
+	const update = NotificationSettings?.updateGuildNotificationSettings;
 
 	if (typeof update !== 'function') {
 		logger.warn('updateGuildNotificationSettings is missing; nothing applied');

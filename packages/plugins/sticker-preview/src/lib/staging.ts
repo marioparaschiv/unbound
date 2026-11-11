@@ -1,9 +1,8 @@
-import { clearComposer, composerText, type ChatInput } from '~/sticker-staging/composer';
+import { clearComposer, composerText, type ChatInput } from '~/lib/composer';
 import {
 	sharedStagedStickers,
 	type Sticker,
 } from '@unbound-plugins/shared/stickers/staged-stickers';
-import { ChatInputs, MessageActions } from '~/sticker-staging/modules';
 
 type SendHandler = (...args: unknown[]) => unknown;
 type SendableInput = ChatInput & { handleSend: SendHandler };
@@ -11,8 +10,40 @@ type SendHook = { input: SendableInput; original: SendHandler; hooked: SendHandl
 
 type SendButton = { setHasText?: (hasText: boolean) => void };
 
+type OutgoingMessage = {
+	content: string;
+	tts: boolean;
+	invalidEmojis: unknown[];
+	validNonShortcutEmojis: unknown[];
+};
+
 export type SendButtonRef = { current?: SendButton | null };
+
+/** The Discord modules the staging reads the composer from and sends through. */
+export type StagingModules = {
+	ChatInputs: {
+		getBestActiveInputForChannelId: (channelId: string) => ChatInput | undefined;
+		getBestActiveInput?: () => ChatInput | undefined;
+	};
+	MessageActions: {
+		_sendMessage: (
+			channelId: string,
+			message: OutgoingMessage,
+			options: { stickerIds: string[] },
+		) => unknown;
+		sendStickers: (channelId: string, stickerIds: string[]) => unknown;
+	};
+};
 export type Staging = ReturnType<typeof createStaging>;
+
+function isPending(result: unknown): result is PromiseLike<unknown> {
+	return (
+		typeof result === 'object' &&
+		result !== null &&
+		'then' in result &&
+		typeof result.then === 'function'
+	);
+}
 
 function canSend(input: ChatInput | undefined): input is SendableInput {
 	return typeof input?.handleSend === 'function';
@@ -20,9 +51,10 @@ function canSend(input: ChatInput | undefined): input is SendableInput {
 
 /**
  * @description Holds the stickers picked in each channel until the user sends them from the composer.
+ * @param modules Discord's composer inputs and message actions.
  * @returns The staged stickers, the actions to `stage`, `clear` and `send` them, and `dispose` to undo everything.
  */
-export function createStaging() {
+export function createStaging({ ChatInputs, MessageActions }: StagingModules) {
 	const stickers = sharedStagedStickers();
 	const sendHooks = new Map<string, SendHook>();
 	const sendButtons = new Map<string, SendButtonRef>();
@@ -149,7 +181,7 @@ export function createStaging() {
 			clear(channelId);
 		}
 
-		if (typeof result?.then !== 'function') {
+		if (!isPending(result)) {
 			finish();
 
 			return result;

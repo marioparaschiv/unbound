@@ -5,7 +5,7 @@ import {
 	createRepeatGuard,
 	inviteGuildId,
 	memberJoinGuildId,
-} from '~/joins/join-events';
+} from '~/lib/join-events';
 
 describe('inviteGuildId', () => {
 	test('reads the invite guild', () => {

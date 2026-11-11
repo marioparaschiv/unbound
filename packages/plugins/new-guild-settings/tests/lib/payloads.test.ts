@@ -1,7 +1,7 @@
 import type { Settings } from '@unbound-app/settings';
 import { describe, expect, test } from 'bun:test';
 
-import { buildNotificationUpdates, isApplicableGuildId } from '~/apply/payloads';
+import { buildNotificationUpdates, isApplicableGuildId } from '~/lib/payloads';
 
 // Vencord's defaults.
 const DEFAULTS: Settings = {

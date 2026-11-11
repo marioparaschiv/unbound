@@ -1,6 +1,6 @@
 import type { Settings } from '@unbound-app/settings';
 
-import { HIGHLIGHTS_DISABLED, HIGHLIGHTS_UNSET, MESSAGE_NOTIFICATIONS } from '~/constants';
+import { HIGHLIGHTS_DISABLED, HIGHLIGHTS_UNSET, MESSAGE_NOTIFICATIONS } from '~/lib/constants';
 
 export type NotificationUpdate = {
 	muted?: boolean;

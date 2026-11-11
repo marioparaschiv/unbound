@@ -1,8 +1,6 @@
-import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { Pressable, View } from 'react-native';
-
-import { selfTest } from '~/index';
 
 import { createFakes } from './helpers/fakes';
 import type { Sticker } from '@unbound-plugins/shared/stickers/staged-stickers';
@@ -120,7 +118,22 @@ describe('a picked sticker', () => {
 		expect(globalThis.__unboundStagedStickers?.channels()).toEqual([]);
 	});
 
-	test('is reported as applied by the self test', () => {
-		expect(selfTest()).toMatchObject({ ok: true });
+	test('starts without a warning once its patches apply', () => {
+		expect(logs.entries.filter(({ level }) => level !== 'info')).toEqual([]);
+	});
+});
+
+describe('a Discord update', () => {
+	test('skips the staging with one warning when Discord moved the sticker picker row', async () => {
+		await stopPlugin();
+		metro.markMissing(PATHS.picker);
+		await startPlugin();
+
+		expect(logs.entries).toContainEqual({
+			level: 'warn',
+			args: [
+				'Sticker staging skipped: Discord moved ChatInputs, Messages, Sticker, StickerPickerListRow, ChatInputSendButton or FloatingChatInputContainer.',
+			],
+		});
 	});
 });

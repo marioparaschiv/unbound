@@ -1,7 +1,7 @@
 import type { SettingsEntry } from '@unbound-app/settings';
 import { storage } from '@unbound-app/api';
 
-import { MESSAGE_NOTIFICATIONS } from '~/constants';
+import { MESSAGE_NOTIFICATIONS } from '~/lib/constants';
 
 type MessageLevel = SettingsEntry<'messages'>;
 

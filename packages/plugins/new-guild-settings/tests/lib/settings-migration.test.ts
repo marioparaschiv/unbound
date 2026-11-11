@@ -2,7 +2,7 @@ import { settings } from '@unbound-app/settings';
 import { storage } from '@unbound-app/api';
 import { describe, expect, test } from 'bun:test';
 
-import { migrateSettings } from '~/settings-migration';
+import { migrateSettings } from '~/lib/settings-migration';
 
 describe('migrateSettings', () => {
 	test("keeps the notification level 1.0.x stored as Discord's number", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { addMenuItemOnce, guildSheetId } from '~/menu/menu-targets';
+import { addMenuItemOnce, guildSheetId } from '~/lib/menu-targets';
 
 describe('guildSheetId', () => {
 	test('reads the guild from a server action sheet', () => {

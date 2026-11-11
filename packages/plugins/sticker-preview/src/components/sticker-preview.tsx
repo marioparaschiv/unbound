@@ -3,19 +3,23 @@ import { Pressable, View } from 'react-native';
 import { useSyncExternalStore } from 'react';
 import { messages } from '@unbound-app/i18n';
 import { flux } from '@unbound-app/api';
+import type { ComponentType } from 'react';
 
-import { ChannelStore, SelectedChannelStore, StickerModule } from '~/sticker-staging/modules';
-import { selectedChannelId } from '~/sticker-staging/selected-channel';
-import { PREVIEW_SIZE, STICKER_SIZE } from '~/constants';
-import type { Staging } from '~/sticker-staging/staging';
-import type { SlowmodeChannel } from '~/types';
+import { selectedChannelId } from '~/lib/selected-channel';
+import { PREVIEW_SIZE, STICKER_SIZE } from '~/lib/constants';
+import type { Staging } from '~/lib/staging';
+import type { SelectedChannels, SlowmodeChannel, StickerProps } from '~/lib/types';
 
 type StickerPreviewProps = {
 	channelId: string;
 	staging: Staging;
+	Sticker: ComponentType<StickerProps>;
 };
 
-function StickerPreview({ channelId, staging }: StickerPreviewProps) {
+const SelectedChannelStore = flux.getStore('SelectedChannel') as SelectedChannels;
+const ChannelStore = flux.getStore('Channel');
+
+function StickerPreview({ channelId, staging, Sticker }: StickerPreviewProps) {
 	const sticker = useSyncExternalStore(
 		(onChange) => staging.subscribe(channelId, onChange),
 		() => staging.get(channelId)[0],
@@ -27,7 +31,6 @@ function StickerPreview({ channelId, staging }: StickerPreviewProps) {
 		(store) => store.getChannel?.(channelId),
 		{ deps: [channelId] },
 	);
-	const Sticker = StickerModule.default;
 	const top = useComposerRow({
 		channel,
 		channelId,

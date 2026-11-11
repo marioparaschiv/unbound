@@ -1,4 +1,6 @@
-import { DraftStore } from '~/sticker-staging/modules';
+import { flux } from '@unbound-app/api';
+
+const DraftStore = flux.getStore('Draft');
 
 export type ChatInput = {
 	handleSend?: (...args: unknown[]) => unknown;

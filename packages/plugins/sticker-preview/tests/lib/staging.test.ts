@@ -2,14 +2,14 @@ import { flux, metro } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
 import { createFakes, fakeInput } from '../helpers/fakes';
-import { createStaging } from '~/sticker-staging/staging';
+import { createStaging } from '~/lib/staging';
 
-let { behaviour, drafts, sent, stickerSends } = createFakes();
+let { behaviour, drafts, sent, stickerSends, ChatInputs, Messages } = createFakes();
 
 beforeEach(() => {
 	const fakes = createFakes();
 
-	({ behaviour, drafts, sent, stickerSends } = fakes);
+	({ behaviour, drafts, sent, stickerSends, ChatInputs, Messages } = fakes);
 	flux.seed({ Draft: { getDraft: (channelId: string) => drafts.get(channelId) ?? '' } });
 	metro.register(fakes.ChatInputs);
 	metro.register(fakes.Messages);
@@ -19,7 +19,7 @@ beforeEach(() => {
 
 describe('createStaging', () => {
 	test('stages a sticker once and opens the keyboard', () => {
-		const staging = createStaging();
+		const staging = createStaging({ ChatInputs, MessageActions: Messages });
 
 		staging.stage('c1', { id: 7 });
 		staging.stage('c1', { id: 7 });
@@ -30,7 +30,7 @@ describe('createStaging', () => {
 	});
 
 	test('ignores a sticker without an id', () => {
-		const staging = createStaging();
+		const staging = createStaging({ ChatInputs, MessageActions: Messages });
 
 		staging.stage('c1', undefined);
 		staging.stage('c1', { id: '' });
@@ -40,7 +40,7 @@ describe('createStaging', () => {
 	});
 
 	test('sends staged stickers alone when the composer is empty', () => {
-		const staging = createStaging();
+		const staging = createStaging({ ChatInputs, MessageActions: Messages });
 
 		staging.stage('c1', { id: 1 });
 		staging.stage('c1', { id: 2 });
@@ -53,7 +53,7 @@ describe('createStaging', () => {
 	});
 
 	test('sends the typed text with the stickers and clears the composer', () => {
-		const staging = createStaging();
+		const staging = createStaging({ ChatInputs, MessageActions: Messages });
 
 		staging.stage('c1', { id: 3 });
 		behaviour.activeInput!.text = 'look at this';
@@ -65,7 +65,7 @@ describe('createStaging', () => {
 	});
 
 	test('falls back to the saved draft when the input has no text', () => {
-		const staging = createStaging();
+		const staging = createStaging({ ChatInputs, MessageActions: Messages });
 
 		drafts.set('c1', 'from the draft');
 		staging.stage('c1', { id: 4 });
@@ -76,7 +76,7 @@ describe('createStaging', () => {
 	});
 
 	test("restores Discord's own send once nothing is staged", () => {
-		const staging = createStaging();
+		const staging = createStaging({ ChatInputs, MessageActions: Messages });
 		const input = behaviour.activeInput!;
 		const original = input.handleSend;
 
@@ -92,7 +92,7 @@ describe('createStaging', () => {
 	});
 
 	test('keeps the stickers staged when a send fails', async () => {
-		const staging = createStaging();
+		const staging = createStaging({ ChatInputs, MessageActions: Messages });
 
 		behaviour.sendResult = () => Promise.reject(new Error('offline'));
 		staging.stage('c1', { id: 6 });
@@ -103,7 +103,7 @@ describe('createStaging', () => {
 	});
 
 	test('ignores a second send while the first is pending', async () => {
-		const staging = createStaging();
+		const staging = createStaging({ ChatInputs, MessageActions: Messages });
 		let resolve: (value: unknown) => void = () => {};
 
 		behaviour.sendResult = () => new Promise((done) => (resolve = done));
@@ -119,7 +119,7 @@ describe('createStaging', () => {
 	});
 
 	test('dispose clears every channel and unhooks every input', () => {
-		const staging = createStaging();
+		const staging = createStaging({ ChatInputs, MessageActions: Messages });
 		const input = behaviour.activeInput!;
 		const original = input.handleSend;
 
@@ -133,7 +133,7 @@ describe('createStaging', () => {
 	});
 
 	test('keeps the send button on while stickers are staged', async () => {
-		const staging = createStaging();
+		const staging = createStaging({ ChatInputs, MessageActions: Messages });
 		const states: boolean[] = [];
 		const button = { setHasText: (hasText: boolean) => states.push(hasText) };
 
