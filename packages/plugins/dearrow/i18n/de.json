@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Ersetzen",
+	"REPLACE_ALL": "Titel und Vorschaubilder",
+	"REPLACE_TITLES": "Titel",
+	"REPLACE_THUMBNAILS": "Vorschaubilder",
+	"DEARROW_BY_DEFAULT": "Standardmäßig DeArrow nutzen",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Titel und Vorschaubilder ohne Nachfrage ersetzen",
+	"SHOW_TOGGLE": "Schalter anzeigen",
+	"SHOW_TOGGLE_SUBTITLE": "Eine Einbettung über das Nachrichtenmenü hin- und herschalten",
+	"SHOW_ORIGINAL_EMBED": "Originale Einbettung anzeigen",
+	"DEARROW_EMBED": "DeArrow auf Einbettung anwenden"
+}

@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Indicateur",
+	"LATENCY_THRESHOLD": "Seuil de latence",
+	"LATENCY_THRESHOLD_SUBTITLE": "Afficher un indicateur quand l’envoi d’un message prend au moins ce temps.",
+	"SHOW_MILLISECONDS": "Afficher les millisecondes",
+	"SHOW_MILLISECONDS_SUBTITLE": "Inclure une précision à la milliseconde dans l’indicateur.",
+	"IGNORE_MY_MESSAGES": "Ignorer mes messages",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Signaler uniquement les messages envoyés par les autres.",
+	"DETECT_LEGACY_ANDROID": "Détecter les anciens clients Android",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Afficher un marqueur pour le décalage d’horodatage connu des anciens clients Discord Android.",
+	"DURATION_DAYS": "{count, plural, one {# jour} many {# de jours} other {# jours}}",
+	"DURATION_HOURS": "{count, plural, one {# heure} many {# d’heures} other {# heures}}",
+	"DURATION_MINUTES": "{count, plural, one {# minute} many {# de minutes} other {# minutes}}",
+	"DURATION_SECONDS": "{count, plural, one {# seconde} many {# de secondes} other {# secondes}}",
+	"DURATION_MILLISECONDS": "{count, plural, one {# milliseconde} many {# de millisecondes} other {# millisecondes}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} et {later}",
+	"TOOLTIP_DELAYED": "Ce message a été envoyé avec un retard de {duration}.",
+	"TOOLTIP_CLOCK_AHEAD": "L’horloge de cet utilisateur avance de {duration}.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "Cet utilisateur semble utiliser un ancien client Discord Android",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} Cet utilisateur semble utiliser un ancien client Discord Android.",
+	"OLD_ANDROID_CLIENT": "Ancien client Discord Android"
+}

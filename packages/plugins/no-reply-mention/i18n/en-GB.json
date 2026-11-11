@@ -1,0 +1,18 @@
+{
+	"ADD_USER_ID": "Add user ID",
+	"ADD_USER_ID_SUBTITLE": "Replies can mention these users when the exception is enabled",
+	"CANCEL": "Cancel",
+	"DELETE": "Delete",
+	"EDIT": "Edit",
+	"EDIT_USER_ID": "Edit user ID",
+	"EXCEPTIONS": "Exceptions",
+	"INVALID_USER_ID": "Enter a numeric Discord user ID.",
+	"NO_USERS": "No users added yet.",
+	"ONLY_PING_LISTED": "Only Ping Listed Users",
+	"ONLY_PING_LISTED_OFF": "Replies do not mention anyone by default",
+	"ONLY_PING_LISTED_ON": "Replies mention only the users listed above",
+	"PLUGIN_NAME": "No Reply Mention",
+	"SAVE": "Save",
+	"TAP_TO_EDIT": "Tap to edit",
+	"USER_ID_PLACEHOLDER": "Discord user ID"
+}

@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "Preference",
+	"DISPLAY_MODE": "Način prikaza",
+	"MODE_NICK_USER": "Ime za prikaz pa korisničko ime",
+	"MODE_NICK_USER_SUBTITLE": "Ime za prikaz (@korisničkoime)",
+	"MODE_USER_NICK": "Korisničko ime pa ime za prikaz",
+	"MODE_USER_NICK_SUBTITLE": "@korisničkoime (Ime za prikaz)",
+	"MODE_USER": "Samo korisničko ime",
+	"MODE_USER_SUBTITLE": "@korisničkoime",
+	"FRIEND_NICKNAMES": "Prikaži nadimke prijatelja",
+	"FRIEND_NICKNAMES_SUBTITLE": "Daj prednost nadimku prijatelja gdje god je primjenjiv",
+	"DISPLAY_NAMES": "Koristi globalna imena",
+	"DISPLAY_NAMES_SUBTITLE": "Prikaži globalno ime računa umjesto korisničkog imena",
+	"IN_REPLIES": "Primijeni na odgovore",
+	"IN_REPLIES_SUBTITLE": "Primijeni i na preglede odgovora"
+}

@@ -1,0 +1,12 @@
+{
+	"REPLACE": "置き換え対象",
+	"REPLACE_ALL": "タイトルとサムネイル",
+	"REPLACE_TITLES": "タイトル",
+	"REPLACE_THUMBNAILS": "サムネイル",
+	"DEARROW_BY_DEFAULT": "デフォルトでDeArrowを適用",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "確認せずにタイトルとサムネイルを置き換えます",
+	"SHOW_TOGGLE": "切り替えボタンを表示",
+	"SHOW_TOGGLE_SUBTITLE": "メッセージメニューから埋め込みを切り替えられます",
+	"SHOW_ORIGINAL_EMBED": "元の埋め込みを表示",
+	"DEARROW_EMBED": "埋め込みにDeArrowを適用"
+}

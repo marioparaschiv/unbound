@@ -62,14 +62,14 @@ describe('the i18n check on shorthand keys', () => {
 				].join('\n'),
 			}),
 		).toEqual([
-			'src/index.tsx:2:1  SAVD  toasts.success(\'KEY\', vars) names SAVD, which i18n/en-US.json does not have.  Fix: add it: ubd i18n --add SAVD "<English text>".',
-			'src/index.tsx:3:1  NOPE  dialogs.confirm(\'KEY\', { body, confirm, cancel }) names NOPE, which i18n/en-US.json does not have.  Fix: add it: ubd i18n --add NOPE "<English text>".',
+			'src/index.tsx:2:1  SAVD  toasts.success(\'KEY\', vars) names SAVD, which i18n/en-US.json does not have.  Fix: add it: ubd i18n add SAVD "<English text>".',
+			'src/index.tsx:3:1  NOPE  dialogs.confirm(\'KEY\', { body, confirm, cancel }) names NOPE, which i18n/en-US.json does not have.  Fix: add it: ubd i18n add NOPE "<English text>".',
 		]);
 	});
 
 	test('reports every key when the plugin has no en-US file', async () => {
 		expect(await run(i18nCheck, { 'src/index.ts': "toasts.warning('SAVED');" })).toEqual([
-			'src/index.ts:1:1  SAVED  toasts.success(\'KEY\', vars) names SAVED, but the plugin has no i18n/en-US.json.  Fix: add i18n/en-US.json with the key: ubd i18n --add SAVED "<English text>".',
+			'src/index.ts:1:1  SAVED  toasts.success(\'KEY\', vars) names SAVED, but the plugin has no i18n/en-US.json.  Fix: add i18n/en-US.json with the key: ubd i18n add SAVED "<English text>".',
 		]);
 	});
 });

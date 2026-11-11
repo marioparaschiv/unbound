@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "Quand vous rejoignez un serveur",
+	"MUTE_SERVER": "Mettre le serveur en sourdine",
+	"MUTE_SERVER_SUBTITLE": "Mettre automatiquement les nouveaux serveurs en sourdine",
+	"SUPPRESS_EVERYONE": "Ignorer @everyone et @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Ignorer @everyone et @here dans les nouveaux serveurs",
+	"SUPPRESS_ROLES": "Ignorer toutes les @mentions de rôle",
+	"SUPPRESS_ROLES_SUBTITLE": "Ignorer les mentions de rôle dans les nouveaux serveurs",
+	"SUPPRESS_HIGHLIGHTS": "Ignorer les temps forts",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Désactiver les notifications de temps forts dans les nouveaux serveurs",
+	"MUTE_EVENTS": "Mettre en sourdine les nouveaux évènements",
+	"MUTE_EVENTS_SUBTITLE": "Mettre en sourdine les notifications d’évènements programmés",
+	"SHOW_ALL_CHANNELS": "Afficher tous les salons",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Afficher tous les salons dans les serveurs qui vous laissent choisir vos salons",
+	"SERVER_NOTIFICATION_SETTINGS": "Paramètres de notification du serveur",
+	"NOTIFY_ALL": "Tous les messages",
+	"NOTIFY_MENTIONS": "Seulement les @mentions",
+	"NOTIFY_NOTHING": "Rien",
+	"NOTIFY_DEFAULT": "Par défaut du serveur",
+	"APPLY_NEW_GUILD_SETTINGS": "Appliquer les paramètres de nouveau serveur",
+	"APPLIED_TO_GUILD": "Appliqué à {name}.",
+	"APPLIED_TO_THIS_SERVER": "Appliqué à ce serveur."
+}

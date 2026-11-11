@@ -136,6 +136,9 @@ declare module '@unbound-app/settings' {
 	export type Settings = {
 		sourceLanguage: string;
 		targetLanguage: string;
+		display: "toast" | "inline";
+		showLanguages: boolean;
+		languageFlags: boolean;
 		apiBaseUrl: string;
 		accessToken: string;
 		refreshToken: string;
@@ -146,6 +149,9 @@ declare module '@unbound-app/settings' {
 	type SettingValues = {
 		"sourceLanguage": string;
 		"targetLanguage": string;
+		"display": "toast" | "inline";
+		"showLanguages": boolean;
+		"languageFlags": boolean;
 		"apiBaseUrl": string;
 		"accessToken": string;
 		"refreshToken": string;
@@ -161,7 +167,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = never;
+	export type BooleanSettingKey = "showLanguages" | "languageFlags";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

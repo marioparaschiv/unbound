@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "เมื่อคุณเข้าร่วมเซิร์ฟเวอร์",
+	"MUTE_SERVER": "ปิดเสียงเซิร์ฟเวอร์",
+	"MUTE_SERVER_SUBTITLE": "ปิดเสียงเซิร์ฟเวอร์ใหม่โดยอัตโนมัติ",
+	"SUPPRESS_EVERYONE": "ระงับ @everyone และ @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "ไม่สนใจ @everyone และ @here ในเซิร์ฟเวอร์ใหม่",
+	"SUPPRESS_ROLES": "ระงับการ @กล่าวถึงบทบาททั้งหมด",
+	"SUPPRESS_ROLES_SUBTITLE": "ไม่สนใจการกล่าวถึงบทบาทในเซิร์ฟเวอร์ใหม่",
+	"SUPPRESS_HIGHLIGHTS": "ระงับไฮไลต์",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "ปิดการแจ้งเตือนไฮไลต์ในเซิร์ฟเวอร์ใหม่",
+	"MUTE_EVENTS": "ปิดเสียงกิจกรรมใหม่",
+	"MUTE_EVENTS_SUBTITLE": "ปิดเสียงการแจ้งเตือนกิจกรรมที่กำหนดเวลาไว้",
+	"SHOW_ALL_CHANNELS": "แสดงช่องทั้งหมด",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "แสดงทุกช่องในเซิร์ฟเวอร์ที่ให้คุณเลือกช่องได้",
+	"SERVER_NOTIFICATION_SETTINGS": "การตั้งค่าการแจ้งเตือนเซิร์ฟเวอร์",
+	"NOTIFY_ALL": "ข้อความทั้งหมด",
+	"NOTIFY_MENTIONS": "เฉพาะ @การกล่าวถึง",
+	"NOTIFY_NOTHING": "ไม่มีเลย",
+	"NOTIFY_DEFAULT": "ค่าเริ่มต้นของเซิร์ฟเวอร์",
+	"APPLY_NEW_GUILD_SETTINGS": "ใช้การตั้งค่าเซิร์ฟเวอร์ใหม่",
+	"APPLIED_TO_GUILD": "ใช้กับ {name} แล้ว",
+	"APPLIED_TO_THIS_SERVER": "ใช้กับเซิร์ฟเวอร์นี้แล้ว"
+}

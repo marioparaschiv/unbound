@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Avatars",
+	"CORNER_RADIUS": "Corner radius",
+	"CORNER_RADIUS_SUBTITLE": "From 0 for square to 64. A radius past half an avatar's size keeps it a circle."
+}

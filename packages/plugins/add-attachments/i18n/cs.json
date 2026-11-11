@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Přidat přílohy",
+	"UPLOADING": "Nahrávání, může to chvíli trvat...",
+	"ATTACHMENTS_ADDED": "{count, plural, one {Příloha byla úspěšně přidána!} few {Přílohy byly úspěšně přidány!} many {Přílohy byly úspěšně přidány!} other {Přílohy byly úspěšně přidány!}}",
+	"UPLOAD_FAILED": "Nahrání jedné z příloh se nezdařilo.",
+	"NOT_ADDED": "Přílohy se nepodařilo přidat.",
+	"PICKER_UNAVAILABLE": "Výběr médií není v tomto buildu Discordu dostupný.",
+	"PICKER_FAILED": "Výběr médií selhal.",
+	"LIMIT_REACHED": "K této zprávě už nemůžeš přidat další přílohy.",
+	"LIMIT_REMAINING": "K této zprávě můžeš přidat už jen {count, plural, one {# přílohu} few {# přílohy} many {# přílohy} other {# příloh}}."
+}

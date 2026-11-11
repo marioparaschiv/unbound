@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Replace",
+	"REPLACE_ALL": "Titles and Thumbnails",
+	"REPLACE_TITLES": "Titles",
+	"REPLACE_THUMBNAILS": "Thumbnails",
+	"DEARROW_BY_DEFAULT": "Dearrow by Default",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Replace titles and thumbnails without asking",
+	"SHOW_TOGGLE": "Show Toggle",
+	"SHOW_TOGGLE_SUBTITLE": "Switch an embed back and forth from the message menu",
+	"SHOW_ORIGINAL_EMBED": "Show Original Embed",
+	"DEARROW_EMBED": "Dearrow Embed"
+}

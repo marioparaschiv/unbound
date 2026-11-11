@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "{remaining} restantes de castigo",
+	"TIMEOUT_EXPIRES_IN": "O castigo termina em {remaining}"
+}

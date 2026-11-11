@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Chỉ báo đang nhập trong kênh",
+	"INCLUDE_CURRENT_CHANNEL": "Bao gồm kênh hiện tại",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Hiện hoạt động đang nhập trong kênh đang chọn.",
+	"INCLUDE_MUTED_CHANNELS": "Bao gồm kênh đã tắt tiếng",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Hiện hoạt động đang nhập trong các kênh đã tắt tiếng.",
+	"INCLUDE_IGNORED_USERS": "Bao gồm người dùng bị bỏ qua",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Hiện cả trạng thái đang nhập của những người dùng bạn đã bỏ qua.",
+	"INCLUDE_BLOCKED_USERS": "Bao gồm người dùng bị chặn",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Hiện cả trạng thái đang nhập của những người dùng bạn đã chặn.",
+	"APPEARANCE": "Giao diện",
+	"APPEARANCE_BOTH": "Ảnh đại diện và hiệu ứng ba chấm",
+	"APPEARANCE_DOTS": "Hiệu ứng ba chấm",
+	"APPEARANCE_AVATARS": "Ảnh đại diện",
+	"TYPING_ONE": "{a} đang nhập...",
+	"TYPING_TWO": "{a} và {b} đang nhập...",
+	"TYPING_THREE": "{a}, {b} và {c} đang nhập...",
+	"TYPING_SEVERAL": "Nhiều người đang nhập...",
+	"SOMEONE": "Ai đó"
+}

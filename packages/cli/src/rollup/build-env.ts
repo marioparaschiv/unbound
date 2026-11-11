@@ -3,7 +3,7 @@
  * the build runs as the addon's own process. {@link buildEnv} writes them; {@link readBuildEnv} reads them back.
  */
 
-/** Set by `ubd dev` and `ubd push`: components register for hot refresh and keep their hooks' state on push. */
+/** Set by `ubd dev` and `ubd debug push`: components register for hot refresh and keep their hooks' state on push. */
 export const HOT_ENV = 'UNBOUND_HOT';
 
 /** Set by `ubd build --verbose`: the build logs each metro filter and locale hook it rewrote. */

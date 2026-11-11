@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Warnai Mention",
+	"COLOR_MENTIONS_SUBTITLE": "Tampilkan warna peran anggota yang di-mention di obrolan dan kolom pesan",
+	"COLOR_MESSAGE_CONTENT": "Warnai Isi Pesan",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Beri rona pada teks pesan dengan warna peran pengirimnya",
+	"MESSAGE_COLOR_INTENSITY": "Intensitas warna pesan",
+	"TYPING_NAMES": "Nama yang Sedang Mengetik",
+	"TYPING_NAMES_SUBTITLE": "Warnai nama di indikator mengetik saluran",
+	"MEMBER_LIST_ROLE_HEADERS": "Judul Peran di Daftar Anggota",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "Warnai judul bagian peran di daftar anggota",
+	"REACTION_USERS": "Pengguna Reaksi",
+	"REACTION_USERS_SUBTITLE": "Warnai nama di daftar detail reaksi",
+	"POLL_VOTERS": "Pemilih Polling",
+	"POLL_VOTERS_SUBTITLE": "Warnai nama di detail hasil polling",
+	"VOICE_USERS": "Pengguna Suara",
+	"VOICE_USERS_SUBTITLE": "Warnai nama anggota di daftar pengguna saluran suara"
+}

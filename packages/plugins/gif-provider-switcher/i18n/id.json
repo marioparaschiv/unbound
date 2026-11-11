@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "Penyedia",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "Cari GIF di Tenor",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "Cari GIF di Giphy",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "Pencarian GIF milik Discord sendiri",
+	"PROVIDER_BUTTON_LABEL": "Penyedia GIF: {provider}. Beralih ke {next}"
+}

@@ -1,0 +1,18 @@
+{
+	"AVATARS": "아바타",
+	"AVATARS_SUBTITLE": "움직이는 아바타와 프로필 배너",
+	"DECORATIONS": "아바타 장식",
+	"DECORATIONS_SUBTITLE": "아바타 주변 장식",
+	"NAMEPLATES": "명패",
+	"NAMEPLATES_SUBTITLE": "이름 뒤의 명패를 반복 재생",
+	"PROFILE_EFFECTS": "프로필 효과",
+	"PROFILE_EFFECTS_SUBTITLE": "프로필 위에 표시되는 효과",
+	"SERVER_ICONS": "서버 아이콘",
+	"SERVER_ICONS_SUBTITLE": "움직이는 서버 아이콘과 배너",
+	"EMOJIS": "이모지",
+	"EMOJIS_SUBTITLE": "메시지, 반응, 사용자 지정 상태의 이모지",
+	"STICKERS": "스티커",
+	"STICKERS_SUBTITLE": "움직이는 스티커를 반복 재생",
+	"GIFS": "GIF",
+	"GIFS_SUBTITLE": "탭하지 않아도 GIF 재생"
+}

@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "Megjelenés",
+	"COLOR_THRESHOLDS": "Színküszöbök",
+	"COLOR_THRESHOLDS_SUBTITLE": "Figyelmeztetés, ahogy az üzenet közelít a Discord karakterkorlátjához.",
+	"COUNTER_LABEL": "{length}/{limit} karakter"
+}

@@ -1,0 +1,8 @@
+{
+	"LISTEN_ALONG": "一緒に聴く",
+	"SPOTIFY": "Spotify",
+	"PLAY_SOMETHING": "先にSpotifyで何か再生してください。",
+	"YOURSELF": "一緒に聴けるのは自分以外のユーザーだけです。",
+	"ALREADY_LISTENING": "すでに一緒に聴いています。",
+	"NOT_DETECTED": "Spotifyが検出されません。"
+}

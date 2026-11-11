@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Bubble colour",
+	"BUBBLE_COLOR_FALLBACK": "Follows the theme: black on dark themes, white on the light theme",
+	"COLORS": "Colours",
+	"CORNER_RADIUS": "Corner radius",
+	"HORIZONTAL_PADDING": "Horizontal padding",
+	"LAYOUT": "Layout",
+	"LAYOUT_CARD": "Full-width cards",
+	"LAYOUT_CARD_SUBTITLE": "One card behind each whole message, name and reactions included, like Rosiecord",
+	"LAYOUT_FIT": "Fit to message",
+	"LAYOUT_FIT_SUBTITLE": "Each bubble wraps just the text and media of its message",
+	"OPACITY": "Opacity",
+	"OWN_COLOR": "Your messages",
+	"OWN_COLOR_FALLBACK": "Same as the bubble colour",
+	"SHAPE": "Shape",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Vertical padding"
+}

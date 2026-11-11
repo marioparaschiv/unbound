@@ -1,0 +1,5 @@
+{
+	"MESSAGE_PREVIEW": "메시지 미리 보기",
+	"PREVIEW_FAILED": "미리 보기 실패: {reason}",
+	"PREVIEW_MESSAGE": "메시지 미리 보기"
+}

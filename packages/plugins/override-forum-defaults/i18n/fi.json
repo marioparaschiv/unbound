@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Oletusasettelu",
+	"LAYOUT_LIST": "Luettelo",
+	"LAYOUT_LIST_SUBTITLE": "Julkaisut luettelona",
+	"LAYOUT_GALLERY": "Galleria",
+	"LAYOUT_GALLERY_SUBTITLE": "Julkaisut korttiruudukkona",
+	"DEFAULT_SORT_ORDER": "Oletuslajittelujärjestys",
+	"SORT_RECENTLY_ACTIVE": "Viimeksi aktiivinen",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Julkaisut, joissa on uusimmat viestit, ensin",
+	"SORT_DATE_POSTED": "Julkaisupäivä",
+	"SORT_DATE_POSTED_SUBTITLE": "Uusimmat julkaisut ensin"
+}

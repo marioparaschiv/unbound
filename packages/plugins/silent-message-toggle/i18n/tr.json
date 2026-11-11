@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Otomatik Kapat",
+	"AUTO_DISABLE_SUBTITLE": "Bir sessiz mesaj gönderdikten sonra anahtarı tekrar kapat",
+	"DISABLE_SILENT_MESSAGE": "Sessiz Mesajı Kapat",
+	"ENABLE_SILENT_MESSAGE": "Sessiz Mesajı Aç",
+	"PERSIST_STATE": "Durumu Koru",
+	"PERSIST_STATE_SUBTITLE": "Başka bir kanalı açtığında anahtarı açık tut",
+	"SILENT_MESSAGE_TOGGLE": "Sessiz Mesaj Anahtarı",
+	"TOGGLE": "Aç/Kapat",
+	"TOGGLED_OFF": "Buradaki mesajların artık yine bildirim gönderiyor.",
+	"TOGGLED_ON": "Buradaki mesajların bildirim olmadan gönderiliyor."
+}

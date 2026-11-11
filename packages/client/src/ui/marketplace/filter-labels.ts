@@ -3,7 +3,13 @@ import type { CatalogSort } from '~/marketplace/catalog';
 import { messages, format } from '~/i18n/api';
 
 /** The sort sheet's rows, in order. */
-export const SORTS: CatalogSort[] = ['name', 'updated'];
+export const SORTS: CatalogSort[] = ['name', 'popular', 'updated'];
+
+const SORT_LABELS: Record<CatalogSort, () => string> = {
+	name: () => messages.UNBOUND_SORT_NAME,
+	popular: () => messages.UNBOUND_SORT_POPULAR,
+	updated: () => messages.UNBOUND_SORT_UPDATED,
+};
 
 /**
  * @description Names a sort.
@@ -11,7 +17,7 @@ export const SORTS: CatalogSort[] = ['name', 'updated'];
  * @returns Its label, such as "Recently updated".
  */
 export function sortLabel(sort: CatalogSort): string {
-	return sort === 'updated' ? messages.UNBOUND_SORT_UPDATED : messages.UNBOUND_SORT_NAME;
+	return SORT_LABELS[sort]();
 }
 
 /**

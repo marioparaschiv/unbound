@@ -1,11 +1,12 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
+import { Dimensions, ScrollView, View } from 'react-native';
 import type { AddonKind } from '@unbound-app/types/addons';
-import { ScrollView, View } from 'react-native';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { loadStorePage } from '~/marketplace/store-page';
 import { Discord, SafeArea } from '~/metro/components';
 
+import ScreenRectContext, { type MeasureOnScreen } from './screen-rect-context';
 import VersionHistory from './version-history';
 import StorePageBody from './store-page-body';
 import AboutSection from './about-section';
@@ -34,26 +35,54 @@ function StorePageScreen({ route }: StorePageScreenProps) {
 	const { manifest, pageUrl } = addon.latestVersion;
 	const navigation = Discord.useNavigation();
 	const resource = useResource(pageUrl ?? null, loadStorePage);
+	const screen = useRef<View>(null);
+
+	// Settings is a bottom-anchored sheet with its own root; the media viewer lays out from the screen's top.
+	// The gap under the page's bottom edge is how far down the sheet sits.
+	const measureOnScreen = useCallback<MeasureOnScreen>((view, done) => {
+		if (!view || !screen.current) {
+			done(undefined);
+
+			return;
+		}
+
+		const page = screen.current;
+
+		view.measureInWindow((x, y, width, height) =>
+			page.measureInWindow((_x, pageY, _width, pageHeight) =>
+				done({
+					x,
+					y: y + Dimensions.get('window').height - (pageY + pageHeight),
+					width,
+					height,
+				}),
+			),
+		);
+	}, []);
 
 	useEffect(() => {
 		navigation.setOptions({ title: manifest.name });
 	}, [manifest.name]);
 
 	return (
-		<ScrollView contentContainerStyle={styles.scroll}>
-			<SafeArea.SafeAreaPaddingView bottom style={styles.content}>
-				<View style={styles.inset}>
-					<StoreHeader addon={addon} kind={kind} />
-				</View>
-				<StorePageBody resource={resource} name={manifest.name} />
-				<View style={styles.inset}>
-					<VersionHistory addon={addon} />
-				</View>
-				<View style={styles.inset}>
-					<AboutSection addon={addon} />
-				</View>
-			</SafeArea.SafeAreaPaddingView>
-		</ScrollView>
+		<ScreenRectContext.Provider value={measureOnScreen}>
+			<View ref={screen} style={styles.screen}>
+				<ScrollView contentContainerStyle={styles.scroll}>
+					<SafeArea.SafeAreaPaddingView bottom style={styles.content}>
+						<View style={styles.inset}>
+							<StoreHeader addon={addon} kind={kind} />
+						</View>
+						<StorePageBody resource={resource} name={manifest.name} />
+						<View style={styles.inset}>
+							<VersionHistory addon={addon} />
+						</View>
+						<View style={styles.inset}>
+							<AboutSection addon={addon} />
+						</View>
+					</SafeArea.SafeAreaPaddingView>
+				</ScrollView>
+			</View>
+		</ScreenRectContext.Provider>
 	);
 }
 

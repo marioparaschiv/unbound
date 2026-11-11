@@ -26,6 +26,27 @@ using unbound::ios::toStdString;
 
 static void loaderImageAnchor(void) {}
 
+@interface Utilities ()
++ (void)alertDidFinish;
+@end
+
+// Tells the queue when an alert goes away, however it was dismissed.
+@interface UBQueuedAlertController : UIAlertController
+@end
+
+@implementation UBQueuedAlertController
+
+- (void)viewDidDisappear:(BOOL)animated
+{
+    [super viewDidDisappear:animated];
+    if (self.isBeingDismissed || !self.presentingViewController)
+    {
+        [Utilities alertDidFinish];
+    }
+}
+
+@end
+
 @implementation Utilities
 static NSString *bundle = nil;
 
@@ -214,6 +235,20 @@ static NSString *bundle = nil;
     }
 }
 
+// One Unbound alert at a time, in order, each once: startup checks fire close together, and one
+// that arrives before Discord has an active scene waits for it instead of being dropped.
+static NSMutableArray<NSDictionary *> *pendingAlerts(void)
+{
+    static NSMutableArray<NSDictionary *> *alerts = nil;
+    static dispatch_once_t                 onceToken;
+    dispatch_once(&onceToken, ^{ alerts = [NSMutableArray array]; });
+    return alerts;
+}
+
+static NSString            *showingAlertKey     = nil;
+static BOOL                 alertRetryScheduled = NO;
+static const NSTimeInterval kAlertRetrySeconds  = 0.5;
+
 + (void)presentAlert:(NSString *)message
                title:(NSString *)title
              buttons:(NSArray<UIAlertAction *> *)buttons
@@ -230,10 +265,10 @@ static NSString *bundle = nil;
         ];
     }
 
-    UIAlertController *alert =
-        [UIAlertController alertControllerWithTitle:title
-                                            message:message
-                                     preferredStyle:UIAlertControllerStyleAlert];
+    UBQueuedAlertController *alert =
+        [UBQueuedAlertController alertControllerWithTitle:title
+                                                  message:message
+                                           preferredStyle:UIAlertControllerStyleAlert];
 
     for (UIAlertAction *button in alertButtons)
     {
@@ -246,94 +281,138 @@ static NSString *bundle = nil;
         [self applyCountdownFrame:countdown->frame() toAlert:alert title:title];
     }
 
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UIViewController *controller = nil;
-
-        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes)
+    NSString *key            = [NSString stringWithFormat:@"%@\n%@", title ?: @"", message ?: @""];
+    void (^completion)(void) = ^{
+        if (warning)
         {
-            if (scene.activationState == UISceneActivationStateForegroundActive)
-            {
-                UIWindowScene *windowScene = (UIWindowScene *) scene;
-                UIWindow      *keyWindow   = windowScene.windows.firstObject;
-                for (UIWindow *window in windowScene.windows)
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC),
+                           dispatch_get_main_queue(),
+                           ^{ [self applyRedPulsatingBorderToAlert:alert]; });
+        }
+
+        if (tts)
+        {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC),
+                           dispatch_get_main_queue(),
+                           ^{ [self speakAlertContent:title message:message]; });
+        }
+
+        if (countdown->frame().running)
+        {
+            dispatch_source_t timer =
+                dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
+
+            dispatch_source_set_timer(
+                timer,
+                dispatch_time(DISPATCH_TIME_NOW,
+                              loader::alerts::kCountdownTickSeconds * NSEC_PER_SEC),
+                loader::alerts::kCountdownTickSeconds * NSEC_PER_SEC,
+                loader::alerts::kCountdownLeewaySeconds * NSEC_PER_SEC);
+
+            dispatch_source_set_event_handler(timer, ^{
+                BOOL                           presented = alert.presentingViewController != nil;
+                loader::alerts::CountdownFrame frame     = countdown->tick(presented);
+                if (presented)
                 {
-                    if (window.isKeyWindow)
-                    {
-                        keyWindow = window;
-                        break;
-                    }
+                    [self applyCountdownFrame:frame toAlert:alert title:title];
                 }
-                controller = keyWindow.rootViewController;
-                break;
-            }
-        }
+                if (!frame.running)
+                {
+                    dispatch_source_cancel(timer);
+                }
+            });
 
-        if (!controller)
-        {
-            controller = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
+            dispatch_resume(timer);
         }
+    };
 
-        while (controller.presentedViewController)
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if ([key isEqualToString:showingAlertKey])
         {
-            controller = controller.presentedViewController;
-        }
-
-        if (!controller)
-        {
-            [Logger error:LOG_CATEGORY_UTILITIES
-                   format:@"Failed to find view controller to present alert"];
             return;
         }
-
-        [controller
-            presentViewController:alert
-                         animated:YES
-                       completion:^{
-                           if (warning)
-                           {
-                               dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC),
-                                              dispatch_get_main_queue(),
-                                              ^{ [self applyRedPulsatingBorderToAlert:alert]; });
-                           }
-
-                           if (tts)
-                           {
-                               dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC),
-                                              dispatch_get_main_queue(),
-                                              ^{ [self speakAlertContent:title message:message]; });
-                           }
-
-                           if (countdown->frame().running)
-                           {
-                               dispatch_source_t timer = dispatch_source_create(
-                                   DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
-
-                               dispatch_source_set_timer(
-                                   timer,
-                                   dispatch_time(DISPATCH_TIME_NOW,
-                                                 loader::alerts::kCountdownTickSeconds *
-                                                     NSEC_PER_SEC),
-                                   loader::alerts::kCountdownTickSeconds * NSEC_PER_SEC,
-                                   loader::alerts::kCountdownLeewaySeconds * NSEC_PER_SEC);
-
-                               dispatch_source_set_event_handler(timer, ^{
-                                   BOOL presented = alert.presentingViewController != nil;
-                                   loader::alerts::CountdownFrame frame =
-                                       countdown->tick(presented);
-                                   if (presented)
-                                   {
-                                       [self applyCountdownFrame:frame toAlert:alert title:title];
-                                   }
-                                   if (!frame.running)
-                                   {
-                                       dispatch_source_cancel(timer);
-                                   }
-                               });
-
-                               dispatch_resume(timer);
-                           }
-                       }];
+        for (NSDictionary *pending in pendingAlerts())
+        {
+            if ([pending[@"key"] isEqualToString:key])
+            {
+                return;
+            }
+        }
+        [pendingAlerts() addObject:@{@"key" : key, @"alert" : alert, @"completion" : completion}];
+        [self showNextAlert];
     });
+}
+
++ (UIViewController *)alertPresenter
+{
+    UIViewController *controller = nil;
+
+    for (UIScene *scene in [UIApplication sharedApplication].connectedScenes)
+    {
+        if (scene.activationState == UISceneActivationStateForegroundActive)
+        {
+            UIWindowScene *windowScene = (UIWindowScene *) scene;
+            UIWindow      *keyWindow   = windowScene.windows.firstObject;
+            for (UIWindow *window in windowScene.windows)
+            {
+                if (window.isKeyWindow)
+                {
+                    keyWindow = window;
+                    break;
+                }
+            }
+            controller = keyWindow.rootViewController;
+            break;
+        }
+    }
+
+    if (!controller)
+    {
+        controller = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
+    }
+
+    while (controller.presentedViewController &&
+           !controller.presentedViewController.isBeingDismissed)
+    {
+        controller = controller.presentedViewController;
+    }
+    return controller;
+}
+
++ (void)showNextAlert
+{
+    if (showingAlertKey || pendingAlerts().count == 0)
+    {
+        return;
+    }
+
+    UIViewController *controller = [self alertPresenter];
+    if (!controller || controller.view.window == nil)
+    {
+        // No active scene yet: try again shortly rather than dropping the alert.
+        if (!alertRetryScheduled)
+        {
+            alertRetryScheduled = YES;
+            dispatch_after(
+                dispatch_time(DISPATCH_TIME_NOW, (int64_t) (kAlertRetrySeconds * NSEC_PER_SEC)),
+                dispatch_get_main_queue(), ^{
+                    alertRetryScheduled = NO;
+                    [self showNextAlert];
+                });
+        }
+        return;
+    }
+
+    NSDictionary *next = pendingAlerts().firstObject;
+    [pendingAlerts() removeObjectAtIndex:0];
+    showingAlertKey = next[@"key"];
+    [controller presentViewController:next[@"alert"] animated:YES completion:next[@"completion"]];
+}
+
++ (void)alertDidFinish
+{
+    showingAlertKey = nil;
+    [self showNextAlert];
 }
 
 + (void)speakAlertContent:(NSString *)title message:(NSString *)message

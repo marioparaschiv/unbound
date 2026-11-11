@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "預設匿名化",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "仍可在每個檔案的預覽面板中個別切換",
+	"METHOD": "方式",
+	"METHOD_RANDOM": "隨機字元",
+	"METHOD_CONSISTENT": "固定名稱",
+	"METHOD_TIMESTAMP": "時間戳記",
+	"LENGTH": "長度",
+	"FILE_NAME": "檔案名稱",
+	"FILE_NAME_PLACEHOLDER": "image",
+	"FILE_NAME_SUBTITLE": "每個檔案都會以此名稱加上其原本的副檔名上傳。",
+	"ANONYMISE_FILE_NAME": "匿名化檔案名稱",
+	"USING_ANONYMOUS_NAME": "使用匿名檔案名稱",
+	"USING_ORIGINAL_NAME": "使用原始檔案名稱",
+	"USE_ORIGINAL_FILE_NAME": "使用原始檔案名稱"
+}

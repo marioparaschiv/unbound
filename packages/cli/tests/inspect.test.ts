@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 
 import type { ClassReport, InspectReport, ViewRecord, ViewsReport } from '~/lib/inspect-report';
 import { formatClassReport, formatFoundViews, formatViewTree } from '~/lib/inspect-format';
-import inspectCommand, { runInspect } from '~/commands/inspect';
+import inspectCommand, { runInspect } from '~/commands/debug/inspect';
 import { parse, type StaticDecode } from '~/lib/schema';
 import type { DeviceClient } from '~/lib/device';
 
@@ -273,7 +273,7 @@ describe('inspect command', () => {
 		});
 		expect(await run({ what: 'find' }, clientAnswering(textView))).toEqual({
 			ok: false,
-			text: 'Pass the class to look for: ubd inspect find <class>.',
+			text: 'Pass the class to look for: ubd debug inspect find <class>.',
 		});
 	});
 });

@@ -23,7 +23,7 @@ Set `VPHONE_SSH`: the tailnet hub is one maintainer's own setup, so SSH is how e
 | Works over SSH                                                                                                              | Needs the personal hub                                                                                       |
 | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `claim.sh`, `release.sh`, `relaunch`, `ready.sh`, `doctor.sh`, `crashes`, `unbound-log`, `provision` without `--ipa`, `ubd` | `vphone shot`, `ui`, `wait`, `tap`, `swipe`, `type`, `logs`, `install_ipa`, `install_tweak`, `bun run bench` |
-| `vphone shell`, `app_info`, `launch`, `terminate`, `crashes`, `pid`, `get`, `put`                                           | Screens: read state with `ubd eval` and `ubd mcp route` instead                                              |
+| `vphone shell`, `app_info`, `launch`, `terminate`, `crashes`, `pid`, `get`, `put`                                           | Screens: read state with `ubd debug eval` and `ubd debug route` instead                                      |
 
 Check: `scripts/vphone pid` prints Discord's pid or `not running`. Exit 2 names the SSH error.
 

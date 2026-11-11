@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Indikatori tipkanja u kanalima",
+	"INCLUDE_CURRENT_CHANNEL": "Uključi trenutačni kanal",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Prikaži tipkanje u odabranom kanalu.",
+	"INCLUDE_MUTED_CHANNELS": "Uključi utišane kanale",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Prikaži tipkanje u utišanim kanalima.",
+	"INCLUDE_IGNORED_USERS": "Uključi ignorirane korisnike",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Prikaži tipkanje ignoriranih korisnika.",
+	"INCLUDE_BLOCKED_USERS": "Uključi blokirane korisnike",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Prikaži tipkanje blokiranih korisnika.",
+	"APPEARANCE": "Izgled",
+	"APPEARANCE_BOTH": "Avatari i animirane točke",
+	"APPEARANCE_DOTS": "Animirane točke",
+	"APPEARANCE_AVATARS": "Avatari",
+	"TYPING_ONE": "{a} tipka...",
+	"TYPING_TWO": "{a} i {b} tipkaju...",
+	"TYPING_THREE": "{a}, {b} i {c} tipkaju...",
+	"TYPING_SEVERAL": "Nekoliko osoba tipka...",
+	"SOMEONE": "Netko"
+}

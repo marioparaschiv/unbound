@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "Giao diện",
+	"COLOR_THRESHOLDS": "Ngưỡng màu",
+	"COLOR_THRESHOLDS_SUBTITLE": "Cảnh báo khi tin nhắn gần chạm giới hạn ký tự của Discord.",
+	"COUNTER_LABEL": "{length}/{limit} ký tự"
+}

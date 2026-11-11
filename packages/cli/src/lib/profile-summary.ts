@@ -154,7 +154,7 @@ function table(title: string, entries: ProfileEntry[], whole: number): string[] 
 }
 
 /**
- * @description Renders a {@link ProfileSummary} as the text `ubd profile` prints.
+ * @description Renders a {@link ProfileSummary} as the text `ubd debug profile` prints.
  * @param summary The summary to render.
  * @returns The report.
  */

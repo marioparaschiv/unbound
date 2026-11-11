@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "प्राथमिकताएँ",
+	"DISPLAY_MODE": "दिखाने का तरीका",
+	"MODE_NICK_USER": "पहले डिस्प्ले नेम, फिर यूज़रनेम",
+	"MODE_NICK_USER_SUBTITLE": "डिस्प्ले नेम (@username)",
+	"MODE_USER_NICK": "पहले यूज़रनेम, फिर डिस्प्ले नेम",
+	"MODE_USER_NICK_SUBTITLE": "@username (डिस्प्ले नेम)",
+	"MODE_USER": "सिर्फ़ यूज़रनेम",
+	"MODE_USER_SUBTITLE": "@username",
+	"FRIEND_NICKNAMES": "दोस्तों के निकनेम दिखाएँ",
+	"FRIEND_NICKNAMES_SUBTITLE": "जहाँ भी लागू हो, दोस्त के निकनेम को प्राथमिकता दें",
+	"DISPLAY_NAMES": "ग्लोबल नेम इस्तेमाल करें",
+	"DISPLAY_NAMES_SUBTITLE": "अकाउंट के यूज़रनेम के बजाय उसका ग्लोबल नेम दिखाएँ",
+	"IN_REPLIES": "जवाबों पर लागू करें",
+	"IN_REPLIES_SUBTITLE": "जवाब के प्रीव्यू पर भी लागू करें"
+}

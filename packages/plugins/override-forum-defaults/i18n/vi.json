@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Bố cục mặc định",
+	"LAYOUT_LIST": "Danh sách",
+	"LAYOUT_LIST_SUBTITLE": "Bài đăng dạng danh sách",
+	"LAYOUT_GALLERY": "Bộ sưu tập",
+	"LAYOUT_GALLERY_SUBTITLE": "Bài đăng dạng lưới thẻ",
+	"DEFAULT_SORT_ORDER": "Thứ tự sắp xếp mặc định",
+	"SORT_RECENTLY_ACTIVE": "Hoạt động gần đây",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Bài đăng có tin nhắn mới nhất lên trước",
+	"SORT_DATE_POSTED": "Ngày đăng",
+	"SORT_DATE_POSTED_SUBTITLE": "Bài đăng mới nhất lên trước"
+}

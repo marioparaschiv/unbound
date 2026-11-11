@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Avatarer",
+	"CORNER_RADIUS": "Hjørneradius",
+	"CORNER_RADIUS_SUBTITLE": "Fra 0 for firkant til 64. En radius over halve avatarens størrelse gjør den til en sirkel."
+}

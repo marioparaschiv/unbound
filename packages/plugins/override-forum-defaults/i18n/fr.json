@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Disposition par défaut",
+	"LAYOUT_LIST": "Liste",
+	"LAYOUT_LIST_SUBTITLE": "Publications sous forme de liste",
+	"LAYOUT_GALLERY": "Galerie",
+	"LAYOUT_GALLERY_SUBTITLE": "Publications sous forme de grille de cartes",
+	"DEFAULT_SORT_ORDER": "Ordre de tri par défaut",
+	"SORT_RECENTLY_ACTIVE": "Activité récente",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Les publications avec les messages les plus récents en premier",
+	"SORT_DATE_POSTED": "Date de publication",
+	"SORT_DATE_POSTED_SUBTITLE": "Les publications les plus récentes en premier"
+}

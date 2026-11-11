@@ -177,7 +177,7 @@ function HomePage() {
 						and developer tools.
 					</p>
 					<Button asChild variant='secondary' size='lg'>
-						<Link to='/docs/developer/$' params={{ _splat: 'addons/introduction' }}>
+						<Link to='/docs/developer/$' params={{ _splat: 'concepts' }}>
 							Start Building
 						</Link>
 					</Button>

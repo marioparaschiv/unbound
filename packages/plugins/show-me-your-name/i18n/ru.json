@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "Параметры",
+	"DISPLAY_MODE": "Режим отображения",
+	"MODE_NICK_USER": "Отображаемое имя, затем имя пользователя",
+	"MODE_NICK_USER_SUBTITLE": "Отображаемое имя (@username)",
+	"MODE_USER_NICK": "Имя пользователя, затем отображаемое имя",
+	"MODE_USER_NICK_SUBTITLE": "@username (Отображаемое имя)",
+	"MODE_USER": "Только имя пользователя",
+	"MODE_USER_SUBTITLE": "@username",
+	"FRIEND_NICKNAMES": "Показывать никнеймы друзей",
+	"FRIEND_NICKNAMES_SUBTITLE": "Использовать никнейм друга везде, где это возможно",
+	"DISPLAY_NAMES": "Использовать глобальные имена",
+	"DISPLAY_NAMES_SUBTITLE": "Показывать глобальное имя аккаунта вместо имени пользователя",
+	"IN_REPLIES": "Применять к ответам",
+	"IN_REPLIES_SUBTITLE": "Применять также к превью ответов"
+}

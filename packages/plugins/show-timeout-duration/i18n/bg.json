@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "Оставащо време на изолацията: {remaining}",
+	"TIMEOUT_EXPIRES_IN": "Изолацията изтича след {remaining}"
+}

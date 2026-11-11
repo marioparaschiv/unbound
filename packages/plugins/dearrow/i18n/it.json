@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Sostituisci",
+	"REPLACE_ALL": "Titoli e miniature",
+	"REPLACE_TITLES": "Titoli",
+	"REPLACE_THUMBNAILS": "Miniature",
+	"DEARROW_BY_DEFAULT": "DeArrow per impostazione predefinita",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Sostituisci titoli e miniature senza chiedere",
+	"SHOW_TOGGLE": "Mostra interruttore",
+	"SHOW_TOGGLE_SUBTITLE": "Alterna un contenuto incorporato dal menu del messaggio",
+	"SHOW_ORIGINAL_EMBED": "Mostra contenuto originale",
+	"DEARROW_EMBED": "Applica DeArrow"
+}

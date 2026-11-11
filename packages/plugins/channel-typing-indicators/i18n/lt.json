@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Rašymo indikatoriai kanaluose",
+	"INCLUDE_CURRENT_CHANNEL": "Įtraukti dabartinį kanalą",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Rodyti rašymo veiklą pasirinktame kanale.",
+	"INCLUDE_MUTED_CHANNELS": "Įtraukti nutildytus kanalus",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Rodyti rašymo veiklą nutildytuose kanaluose.",
+	"INCLUDE_IGNORED_USERS": "Įtraukti ignoruojamus naudotojus",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Rodyti ignoruojamų naudotojų rašymo veiklą.",
+	"INCLUDE_BLOCKED_USERS": "Įtraukti užblokuotus naudotojus",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Rodyti užblokuotų naudotojų rašymo veiklą.",
+	"APPEARANCE": "Išvaizda",
+	"APPEARANCE_BOTH": "Avatarai ir animuoti taškai",
+	"APPEARANCE_DOTS": "Animuoti taškai",
+	"APPEARANCE_AVATARS": "Avatarai",
+	"TYPING_ONE": "{a} rašo...",
+	"TYPING_TWO": "{a} ir {b} rašo...",
+	"TYPING_THREE": "{a}, {b} ir {c} rašo...",
+	"TYPING_SEVERAL": "Rašo keli žmonės...",
+	"SOMEONE": "Kažkas"
+}

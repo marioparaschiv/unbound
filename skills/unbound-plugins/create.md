@@ -14,6 +14,6 @@
 | `tests/`                   | `bun test` with the preset `bunfig.toml` loads (`startPlugin`, `stopPlugin` from `@unbound-app/api/testing`)                                                                                  |
 
 3. **Add a feature**: create `src/<feature>/index.ts` with its `start<Feature>()`, then call it from `start` in `src/index.tsx`.
-4. **Check**: `ubd check` reports no errors, and `ubd push <id>` shows the plugin running ([the `unbound-debugger` skill](../unbound-debugger/loop.md)).
+4. **Check**: `ubd check` reports no errors, and `ubd debug push <id>` shows the plugin running ([the `unbound-debugger` skill](../unbound-debugger/loop.md)).
 
 Globals every plugin has: `logger` (prefixed with the plugin name), `addon` (`id`, `name`, `version`, `manifest`), scoped `setTimeout` and `setInterval`, `React`.

@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Ilmaisin",
+	"LATENCY_THRESHOLD": "Viiveen raja",
+	"LATENCY_THRESHOLD_SUBTITLE": "Näytä ilmaisin, kun viestin lähettäminen kestää vähintään näin kauan.",
+	"SHOW_MILLISECONDS": "Näytä millisekunnit",
+	"SHOW_MILLISECONDS_SUBTITLE": "Näytä ilmaisimessa millisekunnin tarkkuus.",
+	"IGNORE_MY_MESSAGES": "Ohita omat viestini",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Merkitse vain muiden lähettämät viestit.",
+	"DETECT_LEGACY_ANDROID": "Tunnista vanhat Android-sovellukset",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Näytä merkki vanhempien Discord Android -sovellusten tunnetusta aikaleimapoikkeamasta.",
+	"DURATION_DAYS": "{count, plural, one {# päivä} other {# päivää}}",
+	"DURATION_HOURS": "{count, plural, one {# tunti} other {# tuntia}}",
+	"DURATION_MINUTES": "{count, plural, one {# minuutti} other {# minuuttia}}",
+	"DURATION_SECONDS": "{count, plural, one {# sekunti} other {# sekuntia}}",
+	"DURATION_MILLISECONDS": "{count, plural, one {# millisekunti} other {# millisekuntia}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} ja {later}",
+	"TOOLTIP_DELAYED": "Tämä viesti lähetettiin viiveellä: {duration}.",
+	"TOOLTIP_CLOCK_AHEAD": "Tämän käyttäjän kello on edellä: {duration}.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "Käyttäjä käyttää todennäköisesti vanhaa Discord Android -sovellusta",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} Käyttäjä käyttää todennäköisesti vanhaa Discord Android -sovellusta.",
+	"OLD_ANDROID_CLIENT": "Vanha Discord Android -sovellus"
+}

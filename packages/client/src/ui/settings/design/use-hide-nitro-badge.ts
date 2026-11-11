@@ -2,7 +2,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
 import { createPatcher } from '~/patcher/create-patcher';
-import { findComponent } from '~/utils/react';
+import { filterComponents } from '~/utils/react';
 
 import { Carousel } from './appearance-picker';
 
@@ -17,7 +17,8 @@ type TitlePartProps = { variant?: string; source?: unknown; size?: unknown };
 
 const propsOf = (node: ReactNode) => (node as ReactElement<TitlePartProps> | null)?.props;
 
-const isName = (node: ReactNode) => propsOf(node)?.variant === 'heading-sm/semibold';
+/** The swatch name: `heading-sm/semibold` on older Discord builds, `heading-xs/semibold` on newer ones. */
+const isName = (node: ReactNode) => Boolean(propsOf(node)?.variant?.startsWith('heading-'));
 
 function isIcon(node: ReactNode) {
 	const props = propsOf(node);
@@ -35,7 +36,8 @@ function watchCarousel(target: Target) {
 			return result;
 		}
 
-		const row = findComponent<RowProps>(
+		// Newer builds render the title twice, so every row is cleaned, not only the first.
+		const rows = filterComponents<RowProps>(
 			result,
 			(element) =>
 				Array.isArray(element.props.children) &&
@@ -43,12 +45,10 @@ function watchCarousel(target: Target) {
 				element.props.children.some(isIcon),
 		);
 
-		if (!row) {
-			return result;
-		}
-
 		// The carousel caches its title, so the children are replaced rather than edited in place.
-		row.props.children = row.props.children.filter((child) => !isIcon(child));
+		for (const row of rows) {
+			row.props.children = row.props.children.filter((child) => !isIcon(child));
+		}
 
 		return result;
 	});

@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Avatares",
+	"CORNER_RADIUS": "Arredondamento dos cantos",
+	"CORNER_RADIUS_SUBTITLE": "De 0, para quadrado, até 64. Um raio maior que metade do tamanho do avatar o mantém circular."
+}

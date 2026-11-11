@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "Sağlayıcı",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "Tenor’da GIF ara",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "Giphy’de GIF ara",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "Discord’un kendi GIF araması",
+	"PROVIDER_BUTTON_LABEL": "GIF sağlayıcısı: {provider}. Şuna geç: {next}"
+}

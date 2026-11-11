@@ -1,0 +1,18 @@
+{
+	"AVATARS": "頭像",
+	"AVATARS_SUBTITLE": "動態頭像和個人資料橫幅",
+	"DECORATIONS": "頭像裝飾",
+	"DECORATIONS_SUBTITLE": "頭像周圍的裝飾",
+	"NAMEPLATES": "名牌",
+	"NAMEPLATES_SUBTITLE": "名稱後方的名牌，循環播放",
+	"PROFILE_EFFECTS": "個人資料特效",
+	"PROFILE_EFFECTS_SUBTITLE": "個人資料上方的特效",
+	"SERVER_ICONS": "伺服器圖示",
+	"SERVER_ICONS_SUBTITLE": "動態伺服器圖示和橫幅",
+	"EMOJIS": "表情符號",
+	"EMOJIS_SUBTITLE": "訊息、反應和自訂狀態中的表情符號",
+	"STICKERS": "貼圖",
+	"STICKERS_SUBTITLE": "動態貼圖，循環播放",
+	"GIFS": "GIF",
+	"GIFS_SUBTITLE": "無需輕觸即可播放 GIF"
+}

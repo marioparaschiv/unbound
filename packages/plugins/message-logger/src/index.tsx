@@ -9,15 +9,18 @@ import { purgeLog } from '~/history/actions';
 import { createMessageLog } from '~/log';
 import { startHistory } from '~/history';
 import { startNonces } from '~/nonces';
+import { startPersistence } from '~/persist';
 import { startEdits } from '~/edits';
 import { startRows } from '~/rows';
 
 export const { start, stop, selfTest } = runFeatures(() => {
 	if (!ensureModules({ ActionSheets, ChatManager, MessageStore, RowManager })) return;
 
-	const log = createMessageLog();
+	let save = () => {};
+	const log = createMessageLog(() => save());
 
-	// Features end in reverse: history, then the row patches before the purge, which makes Discord draw the rows again.
+	// Features end in reverse: saving first, so the purge clears the chat but leaves the saved log; then history,
+	// then the row patches before the purge, which makes Discord draw the rows again.
 	// The interceptors have nothing to end and stay for it, until the Addon scope removes them.
 	return [
 		() => () => purgeLog(log),
@@ -26,5 +29,12 @@ export const { start, stop, selfTest } = runFeatures(() => {
 		startNonces,
 		() => startRows(log),
 		() => startHistory(log),
+		() => {
+			const persistence = startPersistence(log);
+
+			save = persistence.save;
+
+			return persistence.stop;
+		},
 	];
 });

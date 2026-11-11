@@ -1,0 +1,6 @@
+{
+	"SUPPRESS_EMBEDS": "Slėpti įterpinius",
+	"UNSUPPRESS_EMBEDS": "Rodyti įterpinius",
+	"CHANGE_FAILED": "{action} nepavyko: {reason}",
+	"CHANGE_REFUSED": "Discord atmetė pakeitimą."
+}

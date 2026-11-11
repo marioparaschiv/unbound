@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Automatski isključi",
+	"AUTO_DISABLE_SUBTITLE": "Ponovno isključi prekidač nakon slanja jedne tihe poruke",
+	"DISABLE_SILENT_MESSAGE": "Isključi tihu poruku",
+	"ENABLE_SILENT_MESSAGE": "Uključi tihu poruku",
+	"PERSIST_STATE": "Zadrži stanje",
+	"PERSIST_STATE_SUBTITLE": "Ostavi prekidač uključen kad otvoriš drugi kanal",
+	"SILENT_MESSAGE_TOGGLE": "Prekidač tihe poruke",
+	"TOGGLE": "Prebaci",
+	"TOGGLED_OFF": "Tvoje poruke ovdje ponovno šalju obavijesti.",
+	"TOGGLED_ON": "Tvoje poruke ovdje šalju se bez obavijesti."
+}

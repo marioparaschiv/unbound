@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "말풍선 색상",
+	"BUBBLE_COLOR_FALLBACK": "테마를 따라요: 어두운 테마에서는 검은색, 밝은 테마에서는 흰색",
+	"COLORS": "색상",
+	"CORNER_RADIUS": "모서리 둥글기",
+	"HORIZONTAL_PADDING": "가로 여백",
+	"LAYOUT": "레이아웃",
+	"LAYOUT_CARD": "전체 너비 카드",
+	"LAYOUT_CARD_SUBTITLE": "Rosiecord처럼 이름과 반응을 포함한 메시지 전체 뒤에 카드 하나를 깔아요",
+	"LAYOUT_FIT": "메시지에 맞춤",
+	"LAYOUT_FIT_SUBTITLE": "말풍선이 메시지의 텍스트와 미디어만 감싸요",
+	"OPACITY": "불투명도",
+	"OWN_COLOR": "내 메시지",
+	"OWN_COLOR_FALLBACK": "말풍선 색상과 같음",
+	"SHAPE": "모양",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "세로 여백"
+}

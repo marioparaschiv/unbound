@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "{image, select, avatar {Avatar} banner {Afiş} serverAvatar {Sunucu avatarı} serverIcon {Sunucu simgesi} serverBanner {Sunucu afişi} other {Grup DM simgesi}} açılamadı.",
+	"VIEW_AVATAR": "Avatarı Görüntüle",
+	"VIEW_BANNER": "Afişi Görüntüle",
+	"VIEW_GROUP_ICON": "Grup DM Simgesini Görüntüle",
+	"VIEW_ICONS": "Simgeleri Görüntüle",
+	"VIEW_SERVER_AVATAR": "Sunucu Avatarını Görüntüle",
+	"VIEW_SERVER_BANNER": "Sunucu Afişini Görüntüle",
+	"VIEW_SERVER_ICON": "Sunucu Simgesini Görüntüle"
+}

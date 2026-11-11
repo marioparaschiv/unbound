@@ -1,0 +1,12 @@
+{
+	"REPLACE": "แทนที่",
+	"REPLACE_ALL": "ชื่อวิดีโอและภาพตัวอย่าง",
+	"REPLACE_TITLES": "ชื่อวิดีโอ",
+	"REPLACE_THUMBNAILS": "ภาพตัวอย่าง",
+	"DEARROW_BY_DEFAULT": "ใช้ DeArrow เป็นค่าเริ่มต้น",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "แทนที่ชื่อวิดีโอและภาพตัวอย่างโดยไม่ต้องถาม",
+	"SHOW_TOGGLE": "แสดงปุ่มสลับ",
+	"SHOW_TOGGLE_SUBTITLE": "สลับเอ็มเบดไปมาได้จากเมนูข้อความ",
+	"SHOW_ORIGINAL_EMBED": "แสดงเอ็มเบดต้นฉบับ",
+	"DEARROW_EMBED": "ใช้ DeArrow กับเอ็มเบด"
+}

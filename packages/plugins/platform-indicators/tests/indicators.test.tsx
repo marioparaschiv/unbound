@@ -76,7 +76,7 @@ describe('the member list', () => {
 
 describe('the screen-reader list', () => {
 	test('joins in English when the plugin has no messages for the language', () => {
-		setLocale('de');
+		setLocale('ar');
 
 		const view = render(createElement(userRow.default, { user: { id: 'wumpus' } }), { stores });
 
@@ -130,7 +130,7 @@ describe('messages', () => {
 	});
 
 	test('join the list in English when the plugin has no messages for the language', () => {
-		discord.intl.currentLocale = 'de';
+		discord.intl.currentLocale = 'ar';
 
 		expect(
 			rowData.generateMessageRowData({ message }).message.timestampAccessibilityLabel,

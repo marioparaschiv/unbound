@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "When you join a server",
+	"MUTE_SERVER": "Mute Server",
+	"MUTE_SERVER_SUBTITLE": "Mute new servers automatically",
+	"SUPPRESS_EVERYONE": "Suppress @everyone and @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Ignore @everyone and @here in new servers",
+	"SUPPRESS_ROLES": "Suppress All Role @mentions",
+	"SUPPRESS_ROLES_SUBTITLE": "Ignore role mentions in new servers",
+	"SUPPRESS_HIGHLIGHTS": "Suppress Highlights",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Turn off highlight notifications in new servers",
+	"MUTE_EVENTS": "Mute New Events",
+	"MUTE_EVENTS_SUBTITLE": "Mute scheduled event notifications",
+	"SHOW_ALL_CHANNELS": "Show All Channels",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Show every channel in servers that let you pick channels",
+	"SERVER_NOTIFICATION_SETTINGS": "Server Notification Settings",
+	"NOTIFY_ALL": "All Messages",
+	"NOTIFY_MENTIONS": "Only @mentions",
+	"NOTIFY_NOTHING": "Nothing",
+	"NOTIFY_DEFAULT": "Server Default",
+	"APPLY_NEW_GUILD_SETTINGS": "Apply New Guild Settings",
+	"APPLIED_TO_GUILD": "Applied to {name}.",
+	"APPLIED_TO_THIS_SERVER": "Applied to this server."
+}

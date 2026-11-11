@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "Színes említések",
+	"COLOR_MENTIONS_SUBTITLE": "Az említett tag rangszíneinek megjelenítése a csevegésben és az üzenetszerkesztőben",
+	"COLOR_MESSAGE_CONTENT": "Színes üzenettartalom",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "Az üzenet szövegének színezése a szerző rangszínével",
+	"MESSAGE_COLOR_INTENSITY": "Üzenetszín erőssége",
+	"TYPING_NAMES": "Gépelők nevei",
+	"TYPING_NAMES_SUBTITLE": "Nevek színezése a csatorna gépelésjelzőjében",
+	"MEMBER_LIST_ROLE_HEADERS": "Rangfejlécek a taglistában",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "A rangszakaszok címeinek színezése a taglistában",
+	"REACTION_USERS": "Reagáló felhasználók",
+	"REACTION_USERS_SUBTITLE": "Nevek színezése a reakciók részletes listájában",
+	"POLL_VOTERS": "Szavazók",
+	"POLL_VOTERS_SUBTITLE": "Nevek színezése a szavazás eredményének részleteiben",
+	"VOICE_USERS": "Hangcsatorna-felhasználók",
+	"VOICE_USERS_SUBTITLE": "A tagok nevének színezése a hangcsatornák felhasználólistáiban"
+}

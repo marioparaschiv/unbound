@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Anonymiser som standard",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Hver fil kan stadig skiftes fra dens forhåndsvisning",
+	"METHOD": "Metode",
+	"METHOD_RANDOM": "Tilfældige tegn",
+	"METHOD_CONSISTENT": "Ensartet",
+	"METHOD_TIMESTAMP": "Tidsstempel",
+	"LENGTH": "Længde",
+	"FILE_NAME": "Filnavn",
+	"FILE_NAME_PLACEHOLDER": "billede",
+	"FILE_NAME_SUBTITLE": "Alle filer uploades med dette navn og deres egen filtype.",
+	"ANONYMISE_FILE_NAME": "Anonymiser filnavn",
+	"USING_ANONYMOUS_NAME": "Bruger et anonymt filnavn",
+	"USING_ORIGINAL_NAME": "Bruger det oprindelige filnavn",
+	"USE_ORIGINAL_FILE_NAME": "Brug oprindeligt filnavn"
+}

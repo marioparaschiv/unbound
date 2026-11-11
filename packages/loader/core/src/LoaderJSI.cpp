@@ -1,5 +1,10 @@
 #include "LoaderJSI.h"
 
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include "HermesBytecodeHeader.h"
 #include "LoaderLog.h"
 
@@ -16,6 +21,80 @@ size_t OwnedBuffer::size() const
 const uint8_t *OwnedBuffer::data() const
 {
     return reinterpret_cast<const uint8_t *>(data_.data());
+}
+
+std::shared_ptr<MappedFileBuffer> MappedFileBuffer::map(const std::string &path)
+{
+    int descriptor = open(path.c_str(), O_RDONLY | O_CLOEXEC);
+    if (descriptor < 0)
+    {
+        return nullptr;
+    }
+    struct stat status{};
+    if (fstat(descriptor, &status) != 0 || !S_ISREG(status.st_mode) || status.st_size <= 0)
+    {
+        close(descriptor);
+        return nullptr;
+    }
+    size_t size = static_cast<size_t>(status.st_size);
+    void  *data = mmap(nullptr, size, PROT_READ, MAP_PRIVATE, descriptor, 0);
+    close(descriptor);
+    if (data == MAP_FAILED)
+    {
+        return nullptr;
+    }
+    return std::shared_ptr<MappedFileBuffer>(new MappedFileBuffer(data, size));
+}
+
+MappedFileBuffer::MappedFileBuffer(void *data, size_t size) : data_(data), size_(size) {}
+
+MappedFileBuffer::~MappedFileBuffer()
+{
+    munmap(data_, size_);
+}
+
+size_t MappedFileBuffer::size() const
+{
+    return size_;
+}
+
+const uint8_t *MappedFileBuffer::data() const
+{
+    return static_cast<const uint8_t *>(data_);
+}
+
+static void logEvaluationFailure(const std::string &tag, const char *kind, const char *detail)
+{
+    log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
+        "JSI eval of '" + tag + "' threw " + kind + (detail ? std::string(": ") + detail : ""));
+}
+
+bool evaluateBytecodeBuffer(jsi::Runtime                             &runtime,
+                            const std::shared_ptr<const jsi::Buffer> &bytecode,
+                            const std::string                        &tag)
+{
+    if (!bytecode || !isHermesBytecode(bytecode->data(), bytecode->size()))
+    {
+        return false;
+    }
+    try
+    {
+        runtime.evaluatePreparedJavaScript(runtime.prepareJavaScript(bytecode, tag));
+        return true;
+    }
+    catch (const jsi::JSError &error)
+    {
+        logEvaluationFailure(tag, "JSError", error.what());
+    }
+    catch (const std::exception &error)
+    {
+        logEvaluationFailure(tag, "exception", error.what());
+    }
+    catch (...)
+    {
+        logEvaluationFailure(tag, "an unknown error", nullptr);
+    }
+    return false;
 }
 
 bool evaluateScript(jsi::Runtime &runtime, std::string script, const std::string &tag)

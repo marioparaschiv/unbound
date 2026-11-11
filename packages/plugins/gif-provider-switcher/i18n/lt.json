@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "Teikėjas",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "Ieškoti GIF per Tenor",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "Ieškoti GIF per Giphy",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "Paties Discord GIF paieška",
+	"PROVIDER_BUTTON_LABEL": "GIF teikėjas: {provider}. Perjungti į {next}"
+}

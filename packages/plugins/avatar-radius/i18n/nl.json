@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Avatars",
+	"CORNER_RADIUS": "Hoekradius",
+	"CORNER_RADIUS_SUBTITLE": "Van 0 voor vierkant tot 64. Bij een radius groter dan de helft van de avatar blijft die een cirkel."
+}

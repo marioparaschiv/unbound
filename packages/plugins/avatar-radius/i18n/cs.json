@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Avatary",
+	"CORNER_RADIUS": "Zaoblení rohů",
+	"CORNER_RADIUS_SUBTITLE": "Od 0 (čtverec) do 64. Při poloměru větším než polovina velikosti avataru zůstane avatar kulatý."
+}

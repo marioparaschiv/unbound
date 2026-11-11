@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Prisegti failus",
+	"UPLOADING": "Įkeliama, tai gali užtrukti...",
+	"ATTACHMENTS_ADDED": "{count, plural, one {Prisegtas failas sėkmingai pridėtas!} few {Prisegti failai sėkmingai pridėti!} many {Prisegti failai sėkmingai pridėti!} other {Prisegti failai sėkmingai pridėti!}}",
+	"UPLOAD_FAILED": "Nepavyko įkelti prisegto failo.",
+	"NOT_ADDED": "Nepavyko pridėti prisegtų failų.",
+	"PICKER_UNAVAILABLE": "Šioje Discord versijoje medijos parinkiklis nepasiekiamas.",
+	"PICKER_FAILED": "Medijos parinkiklio klaida.",
+	"LIMIT_REACHED": "Prie šios žinutės daugiau failų prisegti negalite.",
+	"LIMIT_REMAINING": "Prie šios žinutės galite prisegti dar tik {count, plural, one {# failą} few {# failus} many {# failo} other {# failų}}."
+}

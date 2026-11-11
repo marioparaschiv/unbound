@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Dezactivare automată",
+	"AUTO_DISABLE_SUBTITLE": "Dezactivează din nou comutatorul după trimiterea unui mesaj silențios",
+	"DISABLE_SILENT_MESSAGE": "Dezactivează mesajul silențios",
+	"ENABLE_SILENT_MESSAGE": "Activează mesajul silențios",
+	"PERSIST_STATE": "Păstrează starea",
+	"PERSIST_STATE_SUBTITLE": "Păstrează comutatorul activat când deschizi alt canal",
+	"SILENT_MESSAGE_TOGGLE": "Comutator pentru mesaje silențioase",
+	"TOGGLE": "Comutator",
+	"TOGGLED_OFF": "Mesajele tale de aici trimit din nou notificări.",
+	"TOGGLED_ON": "Mesajele tale de aici sunt trimise fără notificări."
+}

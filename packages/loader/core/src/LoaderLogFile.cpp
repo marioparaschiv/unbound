@@ -1,10 +1,12 @@
 #include "LoaderLogFile.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <ctime>
 #include <filesystem>
 #include <jsi/jsi.h>
+#include <vector>
 
 #include "NativePluginRuntime.h"
 
@@ -28,12 +30,68 @@ std::string RotatingLogFile::path(std::size_t generation) const
     return directory_ + "/unbound." + std::to_string(generation) + ".log";
 }
 
+// The end of the log as the previous launch left it, read before this launch writes, so a crash
+// report can show what led up to the crash.
+static std::string &previousTail()
+{
+    static std::string tail;
+    return tail;
+}
+
+static std::mutex &previousTailMutex()
+{
+    static std::mutex mutex;
+    return mutex;
+}
+
+static std::string lastLines(const std::string &text, std::size_t count)
+{
+    std::vector<std::string> lines;
+    std::size_t              begin = 0;
+    while (begin < text.size())
+    {
+        std::size_t end = text.find('\n', begin);
+        end             = end == std::string::npos ? text.size() : end;
+        if (end > begin)
+        {
+            lines.push_back(text.substr(begin, end - begin));
+        }
+        begin = end + 1;
+    }
+    std::string tail;
+    for (std::size_t index = lines.size() > count ? lines.size() - count : 0; index < lines.size();
+         index++)
+    {
+        tail += lines[index] + "\n";
+    }
+    return tail;
+}
+
+std::string previousLaunchLogTail(std::size_t lines)
+{
+    std::lock_guard<std::mutex> lock(previousTailMutex());
+    return lastLines(previousTail(), lines);
+}
+
 void RotatingLogFile::open(const std::string &directory)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     std::error_code             error;
     std::filesystem::create_directories(directory, error);
     directory_ = directory;
+    {
+        std::ifstream  previous(path(0), std::ios::binary | std::ios::ate);
+        std::streamoff size  = previous ? static_cast<std::streamoff>(previous.tellg()) : 0;
+        std::streamoff start = std::max<std::streamoff>(0, size - kPreviousTailBytes);
+        std::string tail(static_cast<std::size_t>(std::max<std::streamoff>(0, size - start)), '\0');
+        if (previous && !tail.empty())
+        {
+            previous.seekg(start);
+            previous.read(tail.data(), static_cast<std::streamsize>(tail.size()));
+        }
+        std::lock_guard<std::mutex> tailLock(previousTailMutex());
+        previousTail() = std::move(tail);
+    }
     stream_.open(path(0), std::ios::app | std::ios::binary);
     size_ = static_cast<std::size_t>(std::filesystem::file_size(path(0), error));
     if (error)

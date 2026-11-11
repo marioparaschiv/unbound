@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Standaardindeling",
+	"LAYOUT_LIST": "Lijst",
+	"LAYOUT_LIST_SUBTITLE": "Posts in een lijst",
+	"LAYOUT_GALLERY": "Galerij",
+	"LAYOUT_GALLERY_SUBTITLE": "Posts in een raster van kaarten",
+	"DEFAULT_SORT_ORDER": "Standaardsortering",
+	"SORT_RECENTLY_ACTIVE": "Recent actief",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Posts met de nieuwste berichten eerst",
+	"SORT_DATE_POSTED": "Plaatsingsdatum",
+	"SORT_DATE_POSTED_SUBTITLE": "De nieuwste posts eerst"
+}

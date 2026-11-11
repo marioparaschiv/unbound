@@ -26,7 +26,7 @@ function coverage(root: string) {
 }
 
 function i18n(root: string, ...args: string[]) {
-	return runUbd(['i18n', ...args], root, { NO_COLOR: '1' });
+	return runUbd(['i18n', 'check', ...args], root, { NO_COLOR: '1' });
 }
 
 describe('coverage', () => {
@@ -103,7 +103,7 @@ describe('coverage', () => {
 	});
 });
 
-describe('ubd i18n', () => {
+describe('ubd i18n check', () => {
 	test('exits 0 when translations are only missing, and 1 with --strict', async () => {
 		const root = plugin(PARTIAL);
 		const loose = await i18n(root);

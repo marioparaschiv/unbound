@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.0] - 2026-11-10
+
+### Added
+
+- A **Keep the log after restarts** setting, on by default. Deleted messages, earlier versions of edited messages and deleted attachments are saved, so they still show after Discord restarts. A deleted message comes back when Discord loads its channel. Turning the setting off removes the saved log.
+
+### Changed
+
+- Earlier versions of an edited message now show above its current text as small subtext, each ending with `(edited)`, without blank lines or indents.
+
 ## [1.0.4] - 2026-11-05
 
 ### Changed

@@ -12,6 +12,7 @@ const toasts: ToastOptions[] = [];
 mock.module('~/i18n/api', coreI18nMock);
 // Navigation readiness finds Discord's navigation module, which these tests never reach.
 mockLookups({});
+mock.module('~/native/runtime', () => ({ reload: async () => {} }));
 
 const actualToasts = await import('~/toasts/api');
 

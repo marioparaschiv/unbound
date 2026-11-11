@@ -1,0 +1,292 @@
+---
+title: 'CLI'
+description: 'Scaffold, build, check and publish addons with ubd.'
+icon: 'terminal'
+---
+
+`ubd` is Unbound's command line tool, published as [`@unbound-app/cli`](https://www.npmjs.com/package/@unbound-app/cli). It needs [Bun](https://bun.sh).
+
+```bash
+bunx @unbound-app/cli --help
+```
+
+Every command takes `--help` for its flags and `--json` to print the raw result. `ubd` alone lists the commands; a group alone, such as `ubd debug`, lists the commands in it.
+
+## Layout
+
+| Command | Covers |
+| --- | --- |
+| `ubd create`, `dev`, `build`, `check`, `publish` | Making an addon, from scaffold to review. |
+| `ubd i18n <check\|fix\|unused\|add>` | A plugin's translations. |
+| `ubd migrate entry` | Rewriting plugin source to the current API. |
+| `ubd debug <command>` | The running client, over the bridge: `start`, `restart`, `status`, `push`, `reload`, `eval`, `open`, `route`, `modules`, `trace`, `views`, `inspect`, `spans`, `hook`, `profile`, `timing`. |
+| `ubd device <command>` | The phone, without the bridge: `install`, `logs`, `reset`, `save`, `restore`, `snapshots`. |
+| `ubd auth <login\|logout>` | The session `publish` submits with. |
+| `ubd mcp` | The `debug` and `device` commands as MCP tools. |
+
+A command that moved into a group names its new place: `ubd eval` answers `Did you mean ubd debug eval?`.
+
+## Device Access
+
+| Commands | Reach Discord through |
+| --- | --- |
+| `ubd debug` and `ubd dev` | The [bridge](/docs/developer/tools/debugger). Start it with `ubd debug start`, or `bunx @unbound-app/debugger` in a terminal of its own. Port `9090` unless you pass `--port`. |
+| `ubd device` | `adb` on a rooted Android device or emulator, or jb-p1lot on a jailbroken iPhone with `--ios` or `--udid`. `--serial` picks one of several Android devices. |
+
+## Make an Addon
+
+<Steps>
+	<Step title='Scaffold'>
+		`ubd create` asks for anything you don't pass as a flag.
+
+		```bash
+		ubd create --kind plugin --name hello-world --shape repository --git-init --install
+		```
+
+		| Flag | Meaning |
+		| --- | --- |
+		| `--kind` | `plugin` or `theme`. |
+		| `--shape` | `repository` for a workspace of several addons, or `addon` for one. |
+		| `--name` | The addon name, in kebab-case. |
+		| `--id` | The manifest id. Defaults to `<author name>.<name>`. |
+		| `--display-name`, `--description` | The name and one-line description shown in Unbound. |
+		| `--author-name`, `--author-id` | You, and your Discord id. |
+		| `--dir` | Where to create it. Defaults to `./<name>`. |
+		| `--git-init`, `--install` | Initialize git and install dependencies. Repository shape only. |
+	</Step>
+	<Step title='Build and Hot Reload'>
+		Run these from the workspace.
+
+		```bash
+		ubd build
+		ubd dev
+		```
+
+		| Command | What it does |
+		| --- | --- |
+		| `ubd build` | Builds every addon once and reports which succeeded. `--verbose` also logs each [custom filter](/docs/developer/plugins/metro#custom-filters) rewritten into a built-in one, with file and line. |
+		| `ubd dev` | Watches every addon, rebuilds the one that changed, and reloads it on the device. |
+		| `ubd debug push <name>` | Builds one plugin, installs it if missing, and hot reloads it. `--build=false` pushes the existing build. |
+	</Step>
+	<Step title='Install for Cold Starts'>
+		`ubd device install` copies a built plugin into Discord's plugin folder, so it loads on the next cold start. `--restart` restarts Discord right away.
+
+		```bash
+		ubd device install hello-world --restart
+		ubd device install hello-world --ios --restart
+		```
+	</Step>
+	<Step title='Publish'>
+		Log in once by approving a code on the website, then submit the addon for review. Its build output must be committed and pushed.
+
+		```bash
+		ubd auth login
+		ubd publish
+		```
+
+		| Flag | Default |
+		| --- | --- |
+		| `--addon` | Required when the workspace has several addons. |
+		| `--ref` | The tag on `HEAD`, otherwise its commit. |
+		| `--repository` | The `origin` remote. |
+
+		`ubd auth logout` deletes the stored credentials.
+	</Step>
+</Steps>
+
+## Check an Addon
+
+`ubd check` runs every check `ubd build` runs, without writing a bundle. It also validates the manifest against the publish rules, runs the plugin lint with the nearest `.oxlintrc.json`, and runs the build's rollup plugins over the module graph.
+
+```bash
+ubd check                       # the addon holding the current directory
+ubd check --plugin plugins/demo # another addon; repeat --plugin for several
+ubd check --all                 # every addon in the workspace
+ubd check --only lint,manifest  # just these checks
+```
+
+Each problem prints as `file:line:column  <path>  <problem>.  Fix: <fix>.`, grouped by file, errors first. A summary such as `3 errors, 1 warning in 2 files` follows. `ubd build` prints the same way.
+
+| Flag | Meaning |
+| --- | --- |
+| `--watch` | Re-check on each save and print only problems that appeared or were fixed. |
+| `--json` | Print diagnostics as JSON. With `--watch`, one JSON line per run. |
+| `--only` | Run only the named checks, comma-separated. `ubd check --help` lists them. |
+| `--strict` | Fail on warnings too. Otherwise only an error exits non-zero. |
+| `--types` | Also type-check with the addon's `tsconfig.json`, like `tsc --noEmit`. Slow, so off by default. |
+| `--declared-capabilities` | Check capabilities as `ubd build --declared-capabilities` does. |
+
+<Tip>
+	Keep `ubd check --watch` running beside your editor. In CI, run `ubd check --all --json`; exit code `1` means at least one error.
+</Tip>
+
+## Build Report
+
+After each plugin builds, `ubd build` prints what it ships and warns when a size passes its budget:
+
+```text
+starred-users 1.2.0
+  bundle      index.js            18.4 KB   (gzip 6.1 KB)   bytecode 41.2 KB
+  inlined     en-US strings        1.1 KB
+              svg (3)              2.4 KB
+  shipped     i18n (2 locales)     2.0 KB
+              assets (4)          12.8 KB
+  metro       filters 9 keyed · 1 uncached  (src/index.tsx:12)
+  ⚠ bundle over 50 KB budget (61.2 KB)
+```
+
+| Line | Measures |
+| --- | --- |
+| `bundle` | The written `index.js`, its gzip size, and the largest Hermes bytecode file. |
+| `inlined` | What plugins inlined into the bundle, such as en-US strings and SVG icons. |
+| `shipped` | Files the manifest lists beside the bundle (translations and images). |
+| `metro` | Metro filters that got a cache key, and where each uncached one is. |
+
+`--verbose` also lists the five largest source modules. `--json` prints the same data. `ubd dev --report` prints one line per rebuild, such as `Built my-plugin: 18.4 KB · 1 uncached filter`; without `--report`, `ubd dev` skips the report so each hot rebuild stays fast.
+
+### Budgets
+
+The bundle budget is `50kb` and the assets budget is `500kb`. Change them in `rollup.config.mjs`:
+
+```js rollup.config.mjs
+import { unbound } from '@unbound-app/cli/rollup';
+
+export default unbound(import.meta.url, { budget: { bundle: '80kb', assets: '1mb' } });
+```
+
+- A size over budget is a warning. `--strict-budget` fails the build instead.
+- The report warns when the bundle contains a `node_modules` library the client already provides, such as a `lodash` file imported by path. Import it by name to use the client's copy.
+
+### Custom Report Lines
+
+A rollup plugin adds a line by emitting `reportLine(entry)` with `this.emitFile`, from any hook up to `generateBundle`. The entries never reach `dist`.
+
+```js
+import { reportLine } from '@unbound-app/cli/rollup';
+
+this.emitFile(reportLine({ section: 'inlined', label: 'svg', unit: '', bytes: xml.length }));
+```
+
+Entries with the same `section` and `label` merge:
+
+| Field | When merged |
+| --- | --- |
+| `bytes` | Adds up. |
+| `unit` | Shows how many merged. |
+| `tally` | Counts them by kind. |
+| `location` | Lists where each came from. |
+| `issue` | Names them in the `ubd dev` line. |
+
+## Translations
+
+`ubd i18n check` checks a plugin's `i18n/` folder against `i18n/en-US.json`. Every `ubd i18n` command runs in the plugin, or takes `--plugin <dir>`, and ends with this report. Per language it prints translated and missing keys, keys `en-US.json` lacks, and every ICU problem with file, line and position.
+
+```bash
+ubd i18n check
+ubd i18n fix
+ubd i18n unused
+ubd i18n add GREETING "Hello, {name}!"
+ubd i18n check --json
+```
+
+| Command | What it does |
+| --- | --- |
+| `check` | Reports coverage. `--strict` fails on missing translations too. |
+| `fix` | Adds each missing key to every translation with its English text, in `en-US.json`'s order. Keeps indentation and trailing newline. Idempotent. `--prune` also removes keys `en-US.json` lacks. |
+| `unused` | Lists `en-US.json` keys unused in `src/` or `settings.ts`, and used keys `en-US.json` lacks. |
+| `add <key> <text>` | Adds a key to `en-US.json` (sorted place if sorted, else last), then rewrites `src/unbound-i18n.d.ts` like `ubd dev`. |
+
+`--json` prints the report as JSON.
+
+ICU problems are placeholders that differ from English, a `plural` or `select` without an `other` branch, and syntax errors.
+
+### Exit Codes
+
+It exits `1` on any of these:
+
+- An ICU problem.
+- A key `en-US.json` does not have.
+- A file it cannot read.
+- For `unused`, a used key `en-US.json` lacks.
+
+Missing translations fail only `check --strict`.
+
+### Untranslated Stubs
+
+`ubd i18n fix` records each key it added in `i18n/untranslated.jsonc`, with the English text it wrote. Commit that file: the report counts those keys as missing until their text changes. The build never reads it. The next `ubd i18n fix` drops translated keys and updates stubs whose English changed.
+
+### Unused Key Detection
+
+`ubd i18n unused` finds keys passed as string literals:
+
+| Call | Keys read |
+| --- | --- |
+| `messages.KEY`, `messages['KEY']` | The property, when `messages` comes from `@unbound-app/i18n` |
+| `format('KEY', …)` | The first argument, when `format` comes from `@unbound-app/i18n` |
+| `defineSettings(...)` | `title`, `subtitle`, `label`, `options` and `confirm` values |
+| `commands.register(...)` | `description` and `label` values |
+| `option.choice({ value: 'KEY' })` | Each label key in the choice map |
+| `toasts.success('KEY', vars)`, and `error`, `info`, `warning` | The first argument |
+| `dialogs.confirm('KEY', …)`, `dialogs.alert('KEY', …)` | The first argument, and the `body`, `confirm` and `cancel` options |
+
+Keys built at run time, such as `messages[name]`, are not found. The report counts these reads so you can verify its unused list.
+
+## Run and Reload
+
+| Command | What it does |
+| --- | --- |
+| `ubd debug start`, `restart` | Starts the bridge in the background, or restarts it on the current code. Its log goes to the system temporary directory. |
+| `ubd debug status` | Shows the device, its Discord, loader and client versions, started plugins and native resources. `--watch` reports which resources keep growing. |
+| `ubd debug open <screen>` | Opens an Unbound or Discord settings screen from anywhere. `--params` takes route parameters as JSON. |
+| `ubd debug route` | Prints the focused navigation route, its params and navigator path. |
+| `ubd debug eval <code>` | Evaluates JavaScript in the client and prints the result and console output. `--timeout` in milliseconds. |
+| `ubd debug reload` | Reloads the bundle and waits for it to reconnect to the bridge. `--timeout` defaults to `60000`. |
+| `ubd debug modules [pattern]` | Searches Metro modules by file path or export name: id, loaded state, exports. `--max` defaults to `40`. |
+| `ubd debug trace <props...>` | Records calls to a Discord module function, such as `generateMessageRowData`, and summarises arguments and results. |
+| `ubd debug timing` | Measures a zero-delay JavaScript timer and a native main-thread round trip. `--rounds` defaults to `3`. |
+| `ubd debug profile` | Samples the JavaScript thread with Hermes' profiler for `--duration` ms (default `5000`) and ranks functions by self and stack time. `--top` defaults to `20`. `--out` saves a Chrome trace for Perfetto. |
+
+`trace` and `hook` record for `--duration` ms (default `3000`) and describe the first `--samples` calls (default `10`).
+
+## Inspect Native Code
+
+| Command | What it does |
+| --- | --- |
+| `ubd debug views [filter]` | Prints the native view tree: Android views of the current activity, or iOS views of every visible window, with size, visibility, text and handle. |
+| `ubd debug inspect <class\|views\|find> [name]` | `class` lists constructors, methods and fields (`--filter` narrows). `views` dumps view subtrees (`--class` keeps one view class). |
+| `ubd debug hook <className> [method]` | Records calls to an Android Java method or iOS Objective-C selector. On Android, `--parameters` gives Java parameter types, such as `android.view.MotionEvent`. |
+| `ubd debug spans [match]` | Prints the text and spans of matching Android text views, with each span's class and range and invisible characters escaped. |
+
+## Logs and Device State
+
+`ubd device logs` tails Discord's log, filtered to Unbound, the JavaScript console and crashes. On Android it follows `adb logcat` for `com.discord` across restarts. On iOS it reads the unified log.
+
+| Flag | Meaning |
+| --- | --- |
+| `--level` | Lowest level: `verbose`, `debug`, `info`, `warn`, `error` or `fatal`. Defaults to `verbose`. |
+| `--grep` | Only lines matching a regular expression. |
+| `--since` | Start from history: a duration (`5m`), a time (`14:30`) or a date. iOS history holds only notices, errors and faults. |
+| `--follow=false` | Print history and exit. |
+| `--symbolicate` | Map Hermes frames of the client bundle to source with the maps in `packages/client/dist`. `--bundle` picks the bundle. |
+| `--pull` | Copy the loader's own log files off the device instead. They survive restarts and include the console. `--out` sets the folder. |
+
+`ubd device save`, `restore`, `snapshots` and `reset` keep Discord's Unbound state, to test from a known start:
+
+```bash
+ubd device save clean
+ubd device snapshots
+ubd device restore clean --restart
+ubd device reset
+```
+
+## MCP Server
+
+`ubd mcp` serves the `ubd debug` commands (except `start` and `restart`) and the `ubd device` commands (except `logs`) as tools of a stdio [MCP](https://modelcontextprotocol.io) server. A `debug` command keeps its name as a tool (`eval`); a `device` command takes a prefix (`device_install`). The rest stay CLI only. See [AI Agents](/docs/developer/tools/ai-agents).
+
+```json
+{
+	"mcpServers": {
+		"unbound": { "command": "bunx", "args": ["--bun", "@unbound-app/cli", "mcp"] }
+	}
+}
+```

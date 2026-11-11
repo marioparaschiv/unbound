@@ -6,9 +6,11 @@
 #include <regex>
 #include <system_error>
 
+#include "LoaderCrashReport.h"
 #include "LoaderDevOverlay.h"
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
+#include "LoaderLogFile.h"
 #include "LoaderPreferences.h"
 #include "LoaderVersion.h"
 
@@ -609,6 +611,18 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
         const auto provider = currentNativePlatformProvider();
         return issueURL(issueReport(provider ? *provider : NativePlatformProvider{},
                                     context.platform, argument));
+    }
+    if (action == "crash-report-url")
+    {
+        const auto                 provider = currentNativePlatformProvider();
+        std::optional<std::string> summary  = crashSummary();
+        if (!summary)
+        {
+            return "";
+        }
+        return crashReportURL(issueReport(provider ? *provider : NativePlatformProvider{},
+                                          context.platform, argument),
+                              *summary, previousLaunchLogTail(kCrashReportLogLines));
     }
     if (action == "menu")
     {

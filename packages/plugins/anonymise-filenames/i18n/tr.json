@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Varsayılan Olarak Anonimleştir",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Her dosya yine de kendi önizleme sayfasından değiştirilebilir",
+	"METHOD": "Yöntem",
+	"METHOD_RANDOM": "Rastgele Karakterler",
+	"METHOD_CONSISTENT": "Sabit",
+	"METHOD_TIMESTAMP": "Zaman Damgası",
+	"LENGTH": "Uzunluk",
+	"FILE_NAME": "Dosya Adı",
+	"FILE_NAME_PLACEHOLDER": "görsel",
+	"FILE_NAME_SUBTITLE": "Her dosya bu adla ve kendi uzantısıyla yüklenir.",
+	"ANONYMISE_FILE_NAME": "Dosya Adını Anonimleştir",
+	"USING_ANONYMOUS_NAME": "Anonim dosya adı kullanılıyor",
+	"USING_ORIGINAL_NAME": "Orijinal dosya adı kullanılıyor",
+	"USE_ORIGINAL_FILE_NAME": "Orijinal Dosya Adını Kullan"
+}

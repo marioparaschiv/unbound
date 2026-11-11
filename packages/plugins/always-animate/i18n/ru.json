@@ -1,0 +1,18 @@
+{
+	"AVATARS": "Аватары",
+	"AVATARS_SUBTITLE": "Анимированные аватары и баннеры профиля",
+	"DECORATIONS": "Украшения аватара",
+	"DECORATIONS_SUBTITLE": "Украшения вокруг аватаров",
+	"NAMEPLATES": "Таблички с именем",
+	"NAMEPLATES_SUBTITLE": "Таблички за именами, по кругу",
+	"PROFILE_EFFECTS": "Эффекты профиля",
+	"PROFILE_EFFECTS_SUBTITLE": "Эффекты поверх профилей",
+	"SERVER_ICONS": "Значки серверов",
+	"SERVER_ICONS_SUBTITLE": "Анимированные значки и баннеры серверов",
+	"EMOJIS": "Эмодзи",
+	"EMOJIS_SUBTITLE": "Эмодзи в сообщениях, реакциях и пользовательских статусах",
+	"STICKERS": "Стикеры",
+	"STICKERS_SUBTITLE": "Анимированные стикеры, по кругу",
+	"GIFS": "GIF",
+	"GIFS_SUBTITLE": "GIF воспроизводятся без нажатия"
+}

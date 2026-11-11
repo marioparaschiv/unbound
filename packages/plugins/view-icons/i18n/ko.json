@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "{image, select, avatar {아바타} banner {배너} serverAvatar {서버 아바타} serverIcon {서버 아이콘} serverBanner {서버 배너} other {그룹 메시지 아이콘}}을(를) 열 수 없어요.",
+	"VIEW_AVATAR": "아바타 보기",
+	"VIEW_BANNER": "배너 보기",
+	"VIEW_GROUP_ICON": "그룹 메시지 아이콘 보기",
+	"VIEW_ICONS": "아이콘 보기",
+	"VIEW_SERVER_AVATAR": "서버 아바타 보기",
+	"VIEW_SERVER_BANNER": "서버 배너 보기",
+	"VIEW_SERVER_ICON": "서버 아이콘 보기"
+}

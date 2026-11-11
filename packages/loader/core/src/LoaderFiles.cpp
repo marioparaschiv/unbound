@@ -2,9 +2,9 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <cstdlib>
 #include <fcntl.h>
 #include <filesystem>
-#include <fstream>
 #include <sys/stat.h>
 #include <system_error>
 #include <unistd.h>
@@ -57,6 +57,38 @@ std::optional<std::string> readTextFile(const std::string &path)
     return contents;
 }
 
+static bool writeAll(int descriptor, const std::string &contents)
+{
+    size_t written = 0;
+    while (written < contents.size())
+    {
+        ssize_t count = write(descriptor, contents.data() + written, contents.size() - written);
+        if (count < 0 && errno == EINTR)
+        {
+            continue;
+        }
+        if (count <= 0)
+        {
+            return false;
+        }
+        written += static_cast<size_t>(count);
+    }
+    return true;
+}
+
+static void syncDirectory(const std::filesystem::path &directory)
+{
+    int descriptor = open(directory.empty() ? "." : directory.c_str(), O_RDONLY | O_CLOEXEC);
+    if (descriptor < 0)
+    {
+        return;
+    }
+    fsync(descriptor);
+    close(descriptor);
+}
+
+// A unique staging name per write, so two writers to one path never share a staging file; the
+// fsyncs keep a power loss from leaving an empty file behind the rename.
 bool writeTextFileAtomically(const std::string &path, const std::string &contents)
 {
     std::error_code       error;
@@ -66,22 +98,31 @@ bool writeTextFileAtomically(const std::string &path, const std::string &content
         std::filesystem::create_directories(target.parent_path(), error);
     }
 
-    std::string staging = path + ".tmp";
+    std::string staging    = path + ".tmp-XXXXXX";
+    int         descriptor = mkstemp(staging.data());
+    if (descriptor < 0)
     {
-        std::ofstream stream(staging, std::ios::binary | std::ios::trunc);
-        if (!stream)
-        {
-            return false;
-        }
-        stream << contents;
-        if (!stream.good())
-        {
-            return false;
-        }
+        return false;
+    }
+    fcntl(descriptor, F_SETFD, FD_CLOEXEC);
+    fchmod(descriptor, 0644);
+
+    bool written = writeAll(descriptor, contents) && fsync(descriptor) == 0;
+    written      = close(descriptor) == 0 && written;
+    if (!written)
+    {
+        unlink(staging.c_str());
+        return false;
     }
 
     std::filesystem::rename(staging, target, error);
-    return !error;
+    if (error)
+    {
+        unlink(staging.c_str());
+        return false;
+    }
+    syncDirectory(target.parent_path());
+    return true;
 }
 
 bool copyFile(const std::string &source, const std::string &destination)

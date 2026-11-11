@@ -319,7 +319,7 @@ describe('Addons.listInstalled', () => {
 describe('development markers', () => {
 	beforeEach(resetDevice);
 
-	test('a plugin installed with ubd install loads as a development copy', async () => {
+	test('a plugin installed with ubd device install loads as a development copy', async () => {
 		const manager = new FakeAddons();
 
 		existingFiles.add('Unbound/Plugins/up.installed/development');

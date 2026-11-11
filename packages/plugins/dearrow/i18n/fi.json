@@ -1,0 +1,12 @@
+{
+	"REPLACE": "Korvaa",
+	"REPLACE_ALL": "Otsikot ja pikkukuvat",
+	"REPLACE_TITLES": "Otsikot",
+	"REPLACE_THUMBNAILS": "Pikkukuvat",
+	"DEARROW_BY_DEFAULT": "DeArrow oletuksena",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "Korvaa otsikot ja pikkukuvat kysymättä",
+	"SHOW_TOGGLE": "Näytä valitsin",
+	"SHOW_TOGGLE_SUBTITLE": "Vaihda upotusta edestakaisin viestivalikosta",
+	"SHOW_ORIGINAL_EMBED": "Näytä alkuperäinen upotus",
+	"DEARROW_EMBED": "Käytä DeArrowia upotukseen"
+}

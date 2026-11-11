@@ -177,9 +177,9 @@ describe('the i18n check', () => {
 			}),
 		).toEqual([
 			'i18n/en-US.json:4:1  COUNT  {n} has no "other" branch, so a value no branch names renders nothing.  Fix: add an other {…} branch.',
-			'src/index.tsx:2:1  GONE  format(\'KEY\', …) names GONE, which i18n/en-US.json does not have.  Fix: add it: ubd i18n --add GONE "<English text>".',
+			'src/index.tsx:2:1  GONE  format(\'KEY\', …) names GONE, which i18n/en-US.json does not have.  Fix: add it: ubd i18n add GONE "<English text>".',
 			'i18n/en-US.json:3:1  UNUSED  no file in src/ or settings.ts uses it.  Fix: remove it, or use it; a key read as messages[name] is not seen.',
-			'i18n/de.json  lacks 1 of 3 keys (UNUSED), which show in English.  Fix: translate them; ubd i18n --fix stubs them with the English text.',
+			'i18n/de.json  lacks 1 of 3 keys (UNUSED), which show in English.  Fix: translate them; ubd i18n fix stubs them with the English text.',
 		]);
 	});
 

@@ -5,7 +5,7 @@ import type { ApiErrorCode } from '@unbound-app/contracts/errors';
 /** The header `ubd publish` sends an API key in, for CI publishing. */
 export const API_KEY_HEADER = 'x-api-key';
 
-/** The OAuth `client_id` `ubd login` sends to the device authorization endpoints. */
+/** The OAuth `client_id` `ubd auth login` sends to the device authorization endpoints. */
 export const CLI_CLIENT_ID = 'ubd';
 
 /** URL search parameters as a route's query schema accepts them. */

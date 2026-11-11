@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "Předvolby",
+	"DISPLAY_MODE": "Režim zobrazení",
+	"MODE_NICK_USER": "Zobrazované jméno, pak uživatelské jméno",
+	"MODE_NICK_USER_SUBTITLE": "Zobrazované jméno (@uzivatelskejmeno)",
+	"MODE_USER_NICK": "Uživatelské jméno, pak zobrazované jméno",
+	"MODE_USER_NICK_SUBTITLE": "@uzivatelskejmeno (Zobrazované jméno)",
+	"MODE_USER": "Jen uživatelské jméno",
+	"MODE_USER_SUBTITLE": "@uzivatelskejmeno",
+	"FRIEND_NICKNAMES": "Zobrazit přezdívky přátel",
+	"FRIEND_NICKNAMES_SUBTITLE": "Všude, kde to jde, upřednostní přezdívku přítele",
+	"DISPLAY_NAMES": "Použít globální jména",
+	"DISPLAY_NAMES_SUBTITLE": "Zobrazí globální jméno účtu místo uživatelského jména",
+	"IN_REPLIES": "Použít i u odpovědí",
+	"IN_REPLIES_SUBTITLE": "Použije se i v náhledech odpovědí"
+}

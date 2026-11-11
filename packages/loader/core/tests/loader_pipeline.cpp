@@ -1,8 +1,11 @@
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <string>
 #include <vector>
 
+#include "HermesBytecodeHeader.h"
+#include "LoaderLaunchGuard.h"
 #include "LoaderLog.h"
 #include "LoaderPipeline.h"
 #include "LoaderVersion.h"
@@ -24,6 +27,13 @@ public:
     {
         work();
     }
+
+    void runAfter(double, std::function<void()> work) override
+    {
+        delayed.push_back(std::move(work));
+    }
+
+    std::vector<std::function<void()>> delayed;
 
     std::optional<std::string> resource(const std::string &) override
     {
@@ -57,6 +67,13 @@ public:
     {
         reloads++;
     }
+
+    void alert(const std::string &message) override
+    {
+        alerts.push_back(message);
+    }
+
+    std::vector<std::string> alerts;
 };
 
 // Marks the running loader as having checked before, so a launch models a loader that was not just
@@ -85,6 +102,8 @@ void leavesAFirstDownloadForTheRuntime()
     assert(launch.host->addonPreparations == 1);
     assert(launch.host->reloads == 0);
     assert(loader::readTextFile(launch.server.candidate()) == "first");
+    // The runtime waits for it, so it runs this launch and is not staged.
+    assert(!launch.pipeline.hasStagedBundle());
 }
 
 void keepsTheSavedBundleUntilTheNextLaunch()
@@ -98,6 +117,7 @@ void keepsTheSavedBundleUntilTheNextLaunch()
 
     assert(launch.host->reloads == 0);
     assert(loader::readTextFile(launch.server.candidate()) == "next");
+    assert(launch.pipeline.hasStagedBundle());
 }
 
 void runsAHotReloadUpdateWithoutReloading()
@@ -240,6 +260,77 @@ void doesNothingWhenDisabled()
     assert(launch.host->reloads == 0);
     assert(launch.server.downloads == 0);
 }
+
+void mapsBytecodeAndReadsSource()
+{
+    bundle_test::Server server;
+    std::string         bytecode(64, '\0');
+    uint64_t            magic = loader::kHermesMagic;
+    std::memcpy(bytecode.data(), &magic, sizeof(magic));
+    bytecode[8] = 98;
+    assert(loader::writeTextFileAtomically(server.path("unbound.bundle"), bytecode));
+    assert(loader::writeTextFileAtomically(server.path("unbound.js"), "source"));
+
+    auto mapped = loader::LoaderPipeline::readSavedBundle(server.path("unbound.bundle"));
+    assert(mapped && mapped->bundle.empty() && mapped->bytecode && !mapped->empty());
+    assert(std::string(reinterpret_cast<const char *>(mapped->bytecode->data()),
+                       mapped->bytecode->size()) == bytecode);
+
+    auto source = loader::LoaderPipeline::readSavedBundle(server.path("unbound.js"));
+    assert(source && source->bundle == "source" && !source->bytecode);
+
+    assert(!loader::LoaderPipeline::readSavedBundle(server.path("missing.bundle")));
+}
+
+void explainsWhyAFirstLaunchHasNoBundle()
+{
+    Launch offline;
+    offline.pipeline.prepare();
+    assert(offline.host->alerts.size() == 1);
+    assert(offline.host->alerts[0] ==
+           loader::bundleFailureNotice(loader::BundleUpdateFailure::Network));
+
+    Launch outdated;
+    outdated.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "next"}}, {}, "beta",
+                            "abc1234", "999.0.0");
+    outdated.pipeline.prepare();
+    assert(outdated.host->alerts.size() == 1);
+    assert(outdated.host->alerts[0] ==
+           loader::bundleFailureNotice(loader::BundleUpdateFailure::LoaderTooOld));
+}
+
+void guardsTheLaunchOncePerProcess()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    std::string marker = launch.server.path(loader::LaunchGuard::kFile);
+
+    launch.pipeline.prepare();
+    assert(loader::fileExists(marker));
+    // A reload in the same process does not count as a failed launch.
+    launch.pipeline.prepare();
+    assert(loader::readTextFile(marker) == R"({"failures":0})");
+
+    for (const std::function<void()> &work : launch.host->delayed)
+    {
+        work();
+    }
+    assert(!loader::fileExists(marker));
+}
+
+void turnsOnRecoveryModeAfterRepeatedFailedLaunches()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    assert(loader::writeTextFileAtomically(launch.server.path(loader::LaunchGuard::kFile),
+                                           R"({"failures":2})"));
+
+    launch.pipeline.prepare();
+
+    assert(launch.server.settings.getBoolean("unbound", "recovery", false));
+}
 }
 
 int main()
@@ -255,5 +346,9 @@ int main()
     logsTheRuntimeBeforeAddonsLoadForIt();
     runsTheNewBundleOnTheFirstLaunchAfterALoaderUpdate();
     doesNothingWhenDisabled();
+    mapsBytecodeAndReadsSource();
+    explainsWhyAFirstLaunchHasNoBundle();
+    guardsTheLaunchOncePerProcess();
+    turnsOnRecoveryModeAfterRepeatedFailedLaunches();
     return 0;
 }

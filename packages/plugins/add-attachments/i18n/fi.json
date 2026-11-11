@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Lisää liitteitä",
+	"UPLOADING": "Lähetetään, tämä voi kestää hetken...",
+	"ATTACHMENTS_ADDED": "{count, plural, one {Liite lisätty!} other {Liitteet lisätty!}}",
+	"UPLOAD_FAILED": "Liitteen lähettäminen epäonnistui.",
+	"NOT_ADDED": "Liitteitä ei voitu lisätä.",
+	"PICKER_UNAVAILABLE": "Median valitsin ei ole käytettävissä tässä Discord-versiossa.",
+	"PICKER_FAILED": "Median valitsin epäonnistui.",
+	"LIMIT_REACHED": "Et voi lisätä tähän viestiin enempää liitteitä.",
+	"LIMIT_REMAINING": "Voit lisätä tähän viestiin enää {count, plural, one {# liitteen} other {# liitettä}}."
+}

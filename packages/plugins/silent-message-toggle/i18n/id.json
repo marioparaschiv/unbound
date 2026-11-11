@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Nonaktifkan Otomatis",
+	"AUTO_DISABLE_SUBTITLE": "Matikan kembali tombol setelah mengirim satu pesan senyap",
+	"DISABLE_SILENT_MESSAGE": "Nonaktifkan Pesan Senyap",
+	"ENABLE_SILENT_MESSAGE": "Aktifkan Pesan Senyap",
+	"PERSIST_STATE": "Pertahankan Status",
+	"PERSIST_STATE_SUBTITLE": "Biarkan tombol tetap aktif saat kamu membuka saluran lain",
+	"SILENT_MESSAGE_TOGGLE": "Tombol Pesan Senyap",
+	"TOGGLE": "Alihkan",
+	"TOGGLED_OFF": "Pesanmu di sini akan kembali memberi notifikasi kepada orang lain.",
+	"TOGGLED_ON": "Pesanmu di sini dikirim tanpa notifikasi."
+}

@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Aspect implicit",
+	"LAYOUT_LIST": "Listă",
+	"LAYOUT_LIST_SUBTITLE": "Postări într-o listă",
+	"LAYOUT_GALLERY": "Galerie",
+	"LAYOUT_GALLERY_SUBTITLE": "Postări într-o grilă de carduri",
+	"DEFAULT_SORT_ORDER": "Ordine de sortare implicită",
+	"SORT_RECENTLY_ACTIVE": "Activitate recentă",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Întâi postările cu cele mai noi mesaje",
+	"SORT_DATE_POSTED": "Data postării",
+	"SORT_DATE_POSTED_SUBTITLE": "Întâi cele mai noi postări"
+}

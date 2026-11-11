@@ -1,0 +1,166 @@
+---
+title: 'Lifecycle'
+description: 'Start, stop, and what the Addon scope cleans up.'
+icon: 'plug'
+---
+
+What happens to a plugin from the moment the user turns it on. Each start evaluates the bundle again with a fresh Addon scope, then calls `start`.
+
+<Flow>
+	<FlowStep title='Evaluate' detail='Top-level code runs' />
+	<FlowStep title='start()' detail='Set everything up' />
+	<FlowStep title='Running' />
+	<FlowStep title='stop()' detail='Undo the rest' />
+	<FlowStep title='Scope disposed' detail='Removes what it recorded' added />
+</Flow>
+
+Top-level code runs before `start` and, at launch, delays Discord. Keep it cheap.
+
+<Warning>
+	No eager [Metro](/docs/developer/plugins/metro) search at the top level. `{ lazy: false }` walks every module at once. `metro.find`, the `findBy*` helpers and `flux.getStore` are lazy by default, so they are safe there.
+</Warning>
+
+## Exports
+
+The entry exports its lifecycle as named functions. All are optional.
+
+| Export | Type | Called |
+| --- | --- | --- |
+| `start` | `(context: PluginContext) => void \| Promise<void>` | When turned on, and at launch if on. A rejected promise is a failed start |
+| `stop` | `() => void \| Promise<void>` | When turned off. Awaited. The scope is disposed after it, even if it throws |
+| `SettingsPanel` | React component | Rendered as `<SettingsPanel />`, with no props, when the user opens the plugin's settings. See [Settings and Storage](/docs/developer/plugins/settings) |
+| `selfTest` | `() => { ok: boolean; detail: string } \| Promise<…>` | After a restart, by the device matrix. See [Plugin Anatomy](/docs/developer/getting-started/plugin-anatomy#the-entry) |
+
+The settings button on the plugin's card:
+
+- Shows while the plugin has a panel, and opens it only while the plugin runs.
+- Is disabled while an async `start` or `stop` runs, and after a failed start.
+- Closes an open panel into a notice if the plugin stops.
+
+## Globals
+
+| Global | What it is |
+| --- | --- |
+| `unbound` | The API. `patcher`, `commands`, `metro`, `storage`, `flux`, `settings` and `assets` are the plugin's own |
+| `addon` | The plugin: `id`, `name`, `version`, `manifest` and its state |
+| `logger` | Prefixes every line with the plugin's name |
+| `setTimeout`, `setInterval` | Cleared when the plugin stops |
+| `React` | React |
+
+## The Addon Scope
+
+Imports from `@unbound-app/api` read the scoped `unbound`, so `patcher` is the plugin's own. After `stop` returns, the scope removes, newest first:
+
+- Patches and slash commands.
+- Timers from `setTimeout` and `setInterval`.
+- `metro.onModuleLoad` listeners and unresolved `metro.findLazy` waits.
+- `storage.onChange` listeners.
+- `flux.onStoreChange`, `flux.onAction` and `flux.interceptAction` listeners.
+- `settings.registerSection` sections.
+- `assets.onAssetRegistered` listeners.
+
+This feature needs no `stop`; the scope removes its Flux listener.
+
+```ts src/channel-log/index.ts
+import { flux, storage } from '@unbound-app/api';
+
+const settings = storage.getBucket();
+
+export function startChannelLog() {
+	flux.onAction('CHANNEL_SELECT', ({ channelId }) => {
+		if (!channelId) return;
+
+		settings.set('lastChannel', channelId);
+		logger.log('Selected', channelId);
+	});
+}
+```
+
+Themes, icon packs and fonts ship no code, so they have no scope.
+
+### What Stop Must Undo
+
+The scope sees only what went through it. Undo these in `stop`:
+
+- A listener added straight to a Discord module.
+- A built-in from `builtins.register`.
+- A Discord or Unbound settings section you removed.
+- A change a patch callback made outside the render, such as a value written onto a Discord object.
+
+### Unpatch Before Redrawing
+
+The scope removes patches after `stop` returns. A `stop` that makes Discord redraw, such as with `emitChange`, would still draw through your patch. Call the patch's unpatch function first:
+
+```ts src/premium-badge/index.ts
+import { flux, patcher } from '@unbound-app/api';
+
+const UserStore = flux.getStore('User');
+let unpatch: (() => void) | undefined;
+
+export function startPremiumBadge() {
+	unpatch = patcher.after(UserStore, 'getCurrentUser', ({ result }) => {
+		return result && { ...result, premiumType: 2 };
+	});
+	UserStore.emitChange();
+}
+
+export function stopPremiumBadge() {
+	// The scope removes the patch only after stop returns, so remove it here first.
+	unpatch?.();
+	unpatch = undefined;
+	UserStore.emitChange();
+}
+```
+
+Component patches need no such care. Mounted components redraw with Discord's render when the patch is removed. See [Patching Components](/docs/developer/plugins/react-patching).
+
+## Starting Features
+
+Start each feature on its own so one that throws does not stop the others. First-party plugins use `runFeatures` from `@unbound-plugins/shared`, with `atomic: true` when features depend on each other. A third-party plugin wraps each start function in `try`/`catch` with `logger.error`.
+
+## Staying Fast
+
+<Steps>
+	<Step title='Keep lookups lazy' icon='clock'>
+		Use the lazy `findBy*` helpers. The search runs the first time you read the result. See [Finding Modules](/docs/developer/plugins/metro).
+	</Step>
+	<Step title='Load heavy code on demand' icon='code-branch'>
+		Move code that pulls in many modules into its own file and `import()` it inside `start`.
+
+		```ts src/editor/index.ts
+		export function startEditor() {
+			logger.log('Editor ready');
+		}
+		```
+
+		```ts src/index.tsx
+		export async function start() {
+			const { startEditor } = await import('~/editor');
+
+			startEditor();
+		}
+		```
+	</Step>
+</Steps>
+
+## Build Checks
+
+| Entry | Result |
+| --- | --- |
+| A default export | Fails. Use named exports, or run `ubd migrate entry` to rewrite `export default { start, stop, getSettingsPanel }` |
+| A misspelt name, such as `Start`, `onStart` or `getSettingsPanel` | Fails, naming the right export |
+| A `stop` with parameters, or an `async` `SettingsPanel` | Fails |
+| Any other export | Warns. Unbound ignores it. Put settings button handlers in `src/actions.ts` |
+
+A plugin built before named exports still runs. Unbound reads its default object's `start`, `stop` and `getSettingsPanel`, and a developer build logs a note asking you to rebuild.
+
+## Next
+
+<CardGroup cols={2}>
+	<Card title='Plugin Anatomy' icon='folder-tree' href='/docs/developer/getting-started/plugin-anatomy'>
+		Every file of a real plugin.
+	</Card>
+	<Card title='Finding Modules' icon='magnifier' href='/docs/developer/plugins/metro'>
+		Find the Discord code to change.
+	</Card>
+</CardGroup>

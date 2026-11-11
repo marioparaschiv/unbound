@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Колір бульбашки",
+	"BUBBLE_COLOR_FALLBACK": "Як у темі: чорний у темних темах, білий у світлій",
+	"COLORS": "Кольори",
+	"CORNER_RADIUS": "Радіус кутів",
+	"HORIZONTAL_PADDING": "Горизонтальний відступ",
+	"LAYOUT": "Макет",
+	"LAYOUT_CARD": "Картки на всю ширину",
+	"LAYOUT_CARD_SUBTITLE": "Одна картка під усім повідомленням, разом з іменем і реакціями, як у Rosiecord",
+	"LAYOUT_FIT": "За розміром повідомлення",
+	"LAYOUT_FIT_SUBTITLE": "Кожна бульбашка охоплює лише текст і медіа свого повідомлення",
+	"OPACITY": "Непрозорість",
+	"OWN_COLOR": "Твої повідомлення",
+	"OWN_COLOR_FALLBACK": "Як колір бульбашки",
+	"SHAPE": "Форма",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Вертикальний відступ"
+}

@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Burbulo spalva",
+	"BUBBLE_COLOR_FALLBACK": "Pagal temą: juoda tamsiose temose, balta šviesioje temoje",
+	"COLORS": "Spalvos",
+	"CORNER_RADIUS": "Kampų spindulys",
+	"HORIZONTAL_PADDING": "Horizontali paraštė",
+	"LAYOUT": "Išdėstymas",
+	"LAYOUT_CARD": "Viso pločio kortelės",
+	"LAYOUT_CARD_SUBTITLE": "Viena kortelė už visos žinutės, įskaitant vardą ir reakcijas, kaip Rosiecord",
+	"LAYOUT_FIT": "Pagal žinutę",
+	"LAYOUT_FIT_SUBTITLE": "Kiekvienas burbulas apgaubia tik žinutės tekstą ir mediją",
+	"OPACITY": "Neskaidrumas",
+	"OWN_COLOR": "Jūsų žinutės",
+	"OWN_COLOR_FALLBACK": "Tokia pati kaip burbulo spalva",
+	"SHAPE": "Forma",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Vertikali paraštė"
+}

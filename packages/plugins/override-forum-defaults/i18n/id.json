@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Tata Letak Bawaan",
+	"LAYOUT_LIST": "Daftar",
+	"LAYOUT_LIST_SUBTITLE": "Postingan dalam bentuk daftar",
+	"LAYOUT_GALLERY": "Galeri",
+	"LAYOUT_GALLERY_SUBTITLE": "Postingan dalam kisi kartu",
+	"DEFAULT_SORT_ORDER": "Urutan Bawaan",
+	"SORT_RECENTLY_ACTIVE": "Aktivitas Terbaru",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Postingan dengan pesan terbaru di urutan pertama",
+	"SORT_DATE_POSTED": "Tanggal Diposting",
+	"SORT_DATE_POSTED_SUBTITLE": "Postingan terbaru di urutan pertama"
+}

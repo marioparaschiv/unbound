@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Avatar",
+	"CORNER_RADIUS": "Radius sudut",
+	"CORNER_RADIUS_SUBTITLE": "Dari 0 untuk persegi hingga 64. Radius yang melebihi setengah ukuran avatar membuatnya tetap bulat."
+}

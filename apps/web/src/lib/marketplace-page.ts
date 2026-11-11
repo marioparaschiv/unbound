@@ -65,7 +65,7 @@ export type PendingVersion = {
 
 // The page's top: the addon's summary fields, the version installs get and what it was read from.
 type PageTop = {
-	addon: Pick<AddonDetails, 'type' | 'name' | 'description' | 'icon'>;
+	addon: Pick<AddonDetails, 'type' | 'name' | 'description' | 'icon' | 'installs'>;
 	version: AddonVersion;
 	source: MarketplaceSource | null;
 };
@@ -125,6 +125,7 @@ function pendingTop(
 			name: manifest.name,
 			description: manifest.description,
 			icon: pending.icon ?? published?.icon ?? null,
+			installs: published?.installs ?? 0,
 		},
 		version: renderAddonVersion(ctx.env, {
 			addonId: id,

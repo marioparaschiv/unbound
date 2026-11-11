@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "प्रोवाइडर",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "Tenor पर GIF खोजें",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "Giphy पर GIF खोजें",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "Discord की अपनी GIF खोज",
+	"PROVIDER_BUTTON_LABEL": "GIF प्रोवाइडर: {provider}। {next} पर स्विच करें"
+}

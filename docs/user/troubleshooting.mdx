@@ -1,67 +1,68 @@
 ---
 title: 'Troubleshooting'
-description: 'Get Discord working again when an addon or Unbound breaks it, and report a bug.'
+description: 'Fix crashes and report bugs.'
 icon: 'life-ring'
 ---
 
-Start with the problem you have. Most fixes take a minute, and none of them need you to reinstall.
+Find your problem below. None of the fixes need a reinstall.
 
-## Discord crashes or won't open
+## Discord Won't Open
 
-The **toolbox** is a recovery menu built into the app. It opens even when the rest of Unbound fails to load. Work through these fixes in order, and stop once Discord works again.
+Try these in order. Stop once Discord works.
 
 <Steps>
 	<Step title='Open the toolbox'>
-		See [Open the toolbox](#open-the-toolbox) below.
+		See [Toolbox](#toolbox).
 	</Step>
 	<Step title='Tap Refetch Bundle'>
-		It downloads Unbound again if a newer version is out, and restarts.
+		Downloads a newer Unbound if there is one, and restarts.
 	</Step>
 	<Step title='Tap Enable Recovery Mode'>
-		Discord restarts with every addon turned off. If it opens now, an addon is the cause. See [An addon breaks Discord](#an-addon-breaks-discord).
+		Restarts with every addon off. If Discord opens, an addon is the cause. See [Broken Addons](#broken-addons).
 	</Step>
 	<Step title='Tap Delete Bundle'>
-		It deletes Unbound's downloaded copy, undoes any version you pinned, and downloads the latest one on the next launch. Your addons and settings stay.
+		Deletes Unbound's downloaded copy and any pinned version. The latest downloads on next launch. Addons and settings stay.
 	</Step>
 </Steps>
 
-If none of these help, [report a bug](#report-a-bug).
+Still broken? [Report a bug](#reporting-a-bug).
 
-## Open the toolbox
+## Toolbox
 
-Use either gesture. Both are on by default.
+The toolbox opens even when Unbound fails to load. Both gestures are on by default.
 
-- **Shake your device** for half a second to two seconds, then stop. Shorter shakes do nothing, and longer ones are ignored, so a bumpy ride doesn't open it.
-- **Hold three fingers** anywhere on the screen for half a second.
-
-On Android you can also press and hold Discord's app icon and pick the recovery shortcut. It turns Recovery Mode on or off, even when Discord crashes before you can shake it.
+| Gesture | How |
+| --- | --- |
+| Shake | Half a second to two seconds, then stop. Shorter or longer shakes are ignored |
+| Three fingers | Hold anywhere on the screen for half a second |
+| App icon (Android) | Press and hold Discord's icon, pick the recovery shortcut. Toggles Recovery Mode even if Discord crashes first |
 
 <Note>
-	You can turn off either gesture in the toolbox's **Settings**, but not both. Turning one off turns the other back on, so you can't lock yourself out.
+	The toolbox's **Settings** can turn off one gesture, never both.
 </Note>
 
-## An addon breaks Discord
+## Broken Addons
 
-Unbound turns a plugin off on its own when it:
+Unbound turns a plugin off when it:
 
 - crashes Discord on two launches in a row, or
-- freezes Discord for 6 seconds or more, twice in one session, or once for 20 seconds.
+- freezes Discord for 6 seconds or more twice in one session, or once for 20 seconds.
 
-Turn it back on from the **Plugins** page once the plugin has an update. To find and remove the addon yourself:
+Turn it back on from **Plugins** once it has an update. To remove an addon yourself:
 
 <Steps>
 	<Step title='Turn on Recovery Mode'>
-		On the **Unbound** page if Discord opens, or from the toolbox if it doesn't. Restart when asked, and Discord opens with every addon off.
+		On the **Unbound** page, or in the toolbox if Discord won't open. Restart when asked.
 	</Step>
 	<Step title='Delete the addon'>
-		Tap **⋯** on its card, then **Delete**. In Recovery Mode you can't turn addons on or off, but you can delete them.
+		Tap **⋯**, then **Delete**. Recovery Mode blocks toggling addons, not deleting.
 	</Step>
 	<Step title='Turn off Recovery Mode'>
 		Then restart Discord.
 	</Step>
 </Steps>
 
-If Unbound itself won't run, Recovery Mode can't help. Use the toolbox's **Addons** section, which deletes every addon of one kind at once:
+If Unbound itself won't run, use the toolbox's **Addons** section:
 
 | Action | Deletes |
 | --- | --- |
@@ -69,43 +70,43 @@ If Unbound itself won't run, Recovery Mode can't help. Use the toolbox's **Addon
 | **Wipe Themes** | Every theme |
 | **Wipe Fonts** | Every font file you added |
 | **Wipe Icon Packs** | Every icon pack |
-| **Factory Reset**, in **Utilities** | Everything: addons, settings and Unbound's downloaded copy |
+| **Factory Reset**, in **Utilities** | Addons, settings and Unbound's downloaded copy |
 
 <Warning>
-	These can't be undone, and nothing is backed up. To remove a single addon on iOS instead, tap **Open App Folder** in **Utilities**, and delete the addon's folder from **Plugins**, **Themes** or **Icons**. Then restart Discord.
+	These can't be undone. To remove one addon on iOS, tap **Open App Folder** in **Utilities**, delete its folder from **Plugins**, **Themes** or **Icons**, and restart Discord.
 </Warning>
 
-## Android shows an Unbound error dialog
+## Android Errors
 
-The dialog is titled **Unbound**, with an **Okay** button and a **Discord Server** button that opens Unbound's support server.
+A dialog titled **Unbound** has **Okay** and **Discord Server** buttons.
 
-| Message | What it means |
+| Message | Meaning |
 | --- | --- |
-| `Bundle failed to download, please report this to the developers.` | Unbound has nothing to load yet, and the download failed. Discord opens without Unbound |
-| `Bundle failed to update, loading out of date bundle.` | The download failed, so Unbound loads the older copy it has |
-| `Bundle not found, please report this to the developers.` | Unbound has nothing to load after the update step. Discord opens without Unbound |
-| `Failed to load Unbound's bundle. Please report this to the developers.` | Unbound's copy hit an error while starting |
-| `[Updater] Failed to check for updates, bundle may be out of date. Please report this to the developers.` | The update check failed. Unbound keeps the copy it has |
+| `Bundle failed to download, please report this to the developers.` | Nothing to load and the download failed. Discord opens without Unbound |
+| `Bundle failed to update, loading out of date bundle.` | Download failed. Loads the older copy |
+| `Bundle not found, please report this to the developers.` | Nothing to load after updating. Discord opens without Unbound |
+| `Failed to load Unbound's bundle. Please report this to the developers.` | Unbound hit an error while starting |
+| `[Updater] Failed to check for updates, bundle may be out of date. Please report this to the developers.` | Update check failed. Keeps the copy it has |
 
-Without internet, the first two appear on their own. Connect and open Discord again.
+Offline, the first two are expected. Connect and reopen Discord.
 
-## Obtainium doesn't find or install Unbound
+## Obtainium Problems
 
-- **No releases found, or the wrong channel.** Check the source's options against the table in [Installing](/docs/user/installing#android-patched), under **The links don't open Obtainium**.
-- **The install or update fails.** The patched Discord is signed differently from the Play Store one. Uninstall Discord, then install from Obtainium again.
-- **Going back from alpha or beta to stable fails.** The installed Discord is newer than the stable build. Uninstall Discord, then install from the stable source.
+| Problem | Fix |
+| --- | --- |
+| No releases, or wrong channel | Check the options in [Installation](/docs/user/installing#android-patched), under **Links Not Opening** |
+| Install or update fails | The installed Discord has another signature. Uninstall it, then install again |
+| Alpha or beta back to stable fails | Uninstall Discord, then install from the stable source |
 
-## Report a bug
+## Reporting a Bug
 
-If Discord opens, tap **Report Bug** at the top of the **Unbound** page. It opens a new GitHub issue that already lists your Unbound and Discord versions and your device. Describe what happened and how to make it happen again.
-
-If Discord won't open, tap **Open GitHub Issue** in the toolbox's **Utilities** section instead.
+Tap **Report Bug** on the **Unbound** page, or **Open GitHub Issue** in the toolbox's **Utilities** if Discord won't open. The issue lists your versions and device. Add what happened and how to repeat it.
 
 <AccordionGroup>
-	<Accordion title='Attach logs from iOS' icon='apple'>
-		You need a Mac. Connect your device, open Console.app, select the device, and press **Start streaming**. Filter on the subsystem `app.unbound`, make the problem happen, then copy the messages into the issue.
+	<Accordion title='iOS Logs' icon='apple'>
+		Needs a Mac. Connect the device, open Console.app, select it, and press **Start streaming**. Filter on subsystem `app.unbound`, reproduce the problem, and copy the messages.
 	</Accordion>
-	<Accordion title='Attach logs from Android' icon='mobile'>
-		Turn on USB debugging and connect the device to a computer. Run `adb logcat -s Unbound`, force stop Discord, open it again, and make the problem happen. Then copy the messages into the issue.
+	<Accordion title='Android Logs' icon='mobile'>
+		Enable USB debugging and connect to a computer. Run `adb logcat -s Unbound`, force stop and reopen Discord, reproduce the problem, and copy the messages.
 	</Accordion>
 </AccordionGroup>

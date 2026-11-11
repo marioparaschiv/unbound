@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Typindicatoren in kanalen",
+	"INCLUDE_CURRENT_CHANNEL": "Huidig kanaal meenemen",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Typactiviteit tonen in het geselecteerde kanaal.",
+	"INCLUDE_MUTED_CHANNELS": "Gedempte kanalen meenemen",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Typactiviteit tonen in gedempte kanalen.",
+	"INCLUDE_IGNORED_USERS": "Genegeerde gebruikers meenemen",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Typactiviteit van genegeerde gebruikers tonen.",
+	"INCLUDE_BLOCKED_USERS": "Geblokkeerde gebruikers meenemen",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Typactiviteit van geblokkeerde gebruikers tonen.",
+	"APPEARANCE": "Weergave",
+	"APPEARANCE_BOTH": "Avatars en geanimeerde puntjes",
+	"APPEARANCE_DOTS": "Geanimeerde puntjes",
+	"APPEARANCE_AVATARS": "Avatars",
+	"TYPING_ONE": "{a} is aan het typen...",
+	"TYPING_TWO": "{a} en {b} zijn aan het typen...",
+	"TYPING_THREE": "{a}, {b} en {c} zijn aan het typen...",
+	"TYPING_SEVERAL": "Meerdere mensen zijn aan het typen...",
+	"SOMEONE": "Iemand"
+}

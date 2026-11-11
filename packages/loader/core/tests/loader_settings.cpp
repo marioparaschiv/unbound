@@ -37,9 +37,12 @@ int main()
     assert(store.getString("unbound", "loader.update.etag", "fallback") == "fallback");
     assert(!store.get("other", "loader.enabled"));
 
-    store.set("unbound", "loader.update.etag", "\"abc\"");
-    store.set("unbound", "debugger.enabled", true);
+    assert(store.set("unbound", "loader.update.etag", "\"abc\""));
+    assert(store.set("unbound", "debugger.enabled", true));
     assert(store.save());
+    // Setting a value a key already holds reports no change, so callers skip the save.
+    assert(!store.set("unbound", "debugger.enabled", true));
+    assert(!store.set("unbound", "loader.update.url", "http://host/unbound.js"));
 
     loader::SettingsStore reloaded(path);
     reloaded.load();
@@ -47,10 +50,36 @@ int main()
     assert(reloaded.getBoolean("unbound", "debugger.enabled", false));
     assert(reloaded.getString("unbound", "loader.update.url", "") == "http://host/unbound.js");
 
+    // A corrupt file restores the last copy that loaded.
+    const std::string lastLoaded = loader::readTextFile(path).value();
+    assert(loader::readTextFile(path + ".good") == lastLoaded);
+    assert(loader::writeTextFileAtomically(path, "{not json"));
+    loader::SettingsStore restored(path);
+    restored.load();
+    assert(loader::readTextFile(path).value() == lastLoaded);
+    assert(restored.getString("unbound", "loader.update.etag", "") == "\"abc\"");
+
+    // Without a last good copy, it resets.
+    assert(loader::removeFile(path + ".good"));
     assert(loader::writeTextFileAtomically(path, "{not json"));
     loader::SettingsStore corrupt(path);
     corrupt.load();
     assert(loader::readTextFile(path).value() == "{}");
+
+    // Only the newest corrupt backups are kept.
+    for (int index = 0; index < 5; index++)
+    {
+        assert(loader::writeTextFileAtomically(path + ".corrupt-" + std::to_string(index), "x"));
+    }
+    assert(loader::writeTextFileAtomically(path, "{not json"));
+    loader::SettingsStore pruned(path);
+    pruned.load();
+    int backups = 0;
+    for (const auto &entry : std::filesystem::directory_iterator(root))
+    {
+        backups += entry.path().filename().string().rfind("settings.json.corrupt-", 0) == 0;
+    }
+    assert(backups == 3);
     bool foundBackup = false;
     for (const auto &entry : std::filesystem::directory_iterator(root))
     {
@@ -160,6 +189,7 @@ int main()
         reread.reload();
         assert(reread.getBoolean("unbound", "recovery", false));
 
+        loader::removeFile(lazy.string() + ".good");
         for (const char *corrupt : {"{\"a\":{}", "{\"a\" 1}", "{\"a\":1,}", "{\"a\":[}]}", "{} x"})
         {
             assert(loader::writeTextFileAtomically(lazy, corrupt));

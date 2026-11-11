@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Danh xưng",
+	"FORMAT_LOWERCASE": "Chữ thường",
+	"FORMAT_CAPITALIZED": "Viết hoa chữ đầu",
+	"SOURCE": "Nguồn",
+	"SOURCE_PRONOUNDB": "Ưu tiên PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "Dùng danh xưng trên hồ sơ Discord nếu không có",
+	"SOURCE_DISCORD": "Ưu tiên Discord",
+	"SOURCE_DISCORD_SUBTITLE": "Dùng PronounDB nếu không có",
+	"SHOW_FOR_YOURSELF": "Hiện cho chính bạn",
+	"PRONOUN_ANY": "Danh xưng bất kỳ",
+	"PRONOUN_ASK": "Hãy hỏi danh xưng của tôi",
+	"PRONOUN_AVOID": "Tránh dùng danh xưng, hãy gọi tên tôi",
+	"PRONOUN_HE": "He/Him",
+	"PRONOUN_IT": "It/Its",
+	"PRONOUN_OTHER": "Danh xưng khác",
+	"PRONOUN_SHE": "She/Her",
+	"PRONOUN_THEY": "They/Them",
+	"PRONOUN_UNSPECIFIED": "Chưa chỉ định danh xưng."
+}

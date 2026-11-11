@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Tambahkan Lampiran",
+	"UPLOADING": "Mengunggah, ini bisa memakan waktu...",
+	"ATTACHMENTS_ADDED": "{count, plural, other {Lampiran berhasil ditambahkan!}}",
+	"UPLOAD_FAILED": "Sebuah lampiran gagal diunggah.",
+	"NOT_ADDED": "Lampiran tidak dapat ditambahkan.",
+	"PICKER_UNAVAILABLE": "Pemilih media tidak tersedia di build Discord ini.",
+	"PICKER_FAILED": "Pemilih media gagal.",
+	"LIMIT_REACHED": "Kamu tidak dapat menambahkan lampiran lagi ke pesan ini.",
+	"LIMIT_REMAINING": "Kamu hanya dapat menambahkan {count, plural, other {# lampiran lagi}} ke pesan ini."
+}

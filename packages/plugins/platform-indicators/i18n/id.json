@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Indikator Platform",
+	"SHOW_INDICATORS": "Tampilkan Indikator",
+	"MEMBER_LIST": "Daftar Anggota",
+	"MEMBER_LIST_SUBTITLE": "Setelah nama di daftar anggota dan daftar pengguna lainnya",
+	"PROFILES": "Profil",
+	"PROFILES_SUBTITLE": "Di bawah nama dan lencana pada profil",
+	"MESSAGES": "Pesan",
+	"MESSAGES_SUBTITLE": "Setelah stempel waktu pada pesan",
+	"STATUS": "Status",
+	"COLOR_MOBILE_INDICATOR": "Warnai Indikator Seluler",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "Tampilkan bentuk status ponsel juga untuk pengguna seluler yang sedang idle atau sibuk",
+	"PLATFORM_DESKTOP": "Desktop",
+	"PLATFORM_MOBILE": "Seluler",
+	"PLATFORM_WEB": "Web",
+	"PLATFORM_EMBEDDED": "Tertanam (Konsol atau Game)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "Online di {platforms}"
+}

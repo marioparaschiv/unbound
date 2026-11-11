@@ -2,9 +2,9 @@
 
 This file holds the rules that apply to first-party plugins only. Everything a plugin author needs is in the developer guide, and the guide wins where it differs from a habit of one plugin.
 
-- [Anatomy of a Plugin](../../docs/developer/plugins/anatomy.mdx) shows every file of a plugin in the code of `character-counter`, the reference plugin. Copy its layout.
-- [Project Layout](../../docs/developer/addons/standards.mdx) lists the layout rules and the lint rule or build check behind each one.
-- [How Plugins Run](../../docs/developer/plugins/introduction.mdx) covers the lifecycle and the Addon scope, and the guide's other pages cover each API. Its code blocks are typechecked by `bun test packages/plugin-scripts/tests/docs-examples.test.ts`.
+- [Anatomy of a Plugin](../../docs/developer/getting-started/plugin-anatomy.mdx) shows every file of a plugin in the code of `character-counter`, the reference plugin. Copy its layout.
+- [Project Layout](../../docs/developer/getting-started/project-rules.mdx) lists the layout rules and the lint rule or build check behind each one.
+- [How Plugins Run](../../docs/developer/getting-started/lifecycle.mdx) covers the lifecycle and the Addon scope, and the guide's other pages cover each API. Its code blocks are typechecked by `bun test packages/plugin-scripts/tests/docs-examples.test.ts`.
 - The repository [code style](../../AGENTS.md) applies to plugin code too.
 
 ## Naming
@@ -54,7 +54,7 @@ A plugin fails the matrix when its self-test is not `ok`, when it will not start
 
 ## Tests
 
-Test behavior a user can see: what the started plugin draws, shows or sends, and the pure logic under it. Use the testing preset and its fakes, as `character-counter` does, so a test runs the plugin's real entry. Name a test after the file it covers, such as `limit.test.ts`. The [Testing](../../docs/developer/plugins/testing.mdx) page covers the preset.
+Test behavior a user can see: what the started plugin draws, shows or sends, and the pure logic under it. Use the testing preset and its fakes, as `character-counter` does, so a test runs the plugin's real entry. Name a test after the file it covers, such as `limit.test.ts`. The [Testing](../../docs/developer/testing/writing-tests.mdx) page covers the preset.
 
 Do not write tests that mock Discord modules and then assert the mock was called. They pass when the plugin is broken on a device and fail when Discord changes nothing.
 

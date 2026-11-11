@@ -1,0 +1,18 @@
+{
+	"ADD_USER_ID": "Tambahkan ID pengguna",
+	"ADD_USER_ID_SUBTITLE": "Balasan dapat me-mention pengguna ini saat pengecualian diaktifkan",
+	"CANCEL": "Batal",
+	"DELETE": "Hapus",
+	"EDIT": "Edit",
+	"EDIT_USER_ID": "Edit ID pengguna",
+	"EXCEPTIONS": "Pengecualian",
+	"INVALID_USER_ID": "Masukkan ID pengguna Discord berupa angka.",
+	"NO_USERS": "Belum ada pengguna yang ditambahkan.",
+	"ONLY_PING_LISTED": "Hanya Ping Pengguna dalam Daftar",
+	"ONLY_PING_LISTED_OFF": "Secara bawaan, balasan tidak me-mention siapa pun",
+	"ONLY_PING_LISTED_ON": "Balasan hanya me-mention pengguna yang tercantum di atas",
+	"PLUGIN_NAME": "No Reply Mention",
+	"SAVE": "Simpan",
+	"TAP_TO_EDIT": "Ketuk untuk mengedit",
+	"USER_ID_PLACEHOLDER": "ID pengguna Discord"
+}

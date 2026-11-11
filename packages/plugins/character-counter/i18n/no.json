@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "Utseende",
+	"COLOR_THRESHOLDS": "Fargeterskler",
+	"COLOR_THRESHOLDS_SUBTITLE": "Advar når meldingen nærmer seg Discords tegngrense.",
+	"COUNTER_LABEL": "{length} av {limit} tegn"
+}

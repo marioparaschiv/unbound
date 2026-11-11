@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Slå automatisk fra",
+	"AUTO_DISABLE_SUBTITLE": "Slå knappen fra igen, når du har sendt én lydløs besked",
+	"DISABLE_SILENT_MESSAGE": "Slå lydløs besked fra",
+	"ENABLE_SILENT_MESSAGE": "Slå lydløs besked til",
+	"PERSIST_STATE": "Bevar tilstand",
+	"PERSIST_STATE_SUBTITLE": "Hold knappen slået til, når du åbner en anden kanal",
+	"SILENT_MESSAGE_TOGGLE": "Skifteknap for lydløse beskeder",
+	"TOGGLE": "Slå til/fra",
+	"TOGGLED_OFF": "Dine beskeder her giver igen folk notifikationer.",
+	"TOGGLED_ON": "Dine beskeder her sendes uden notifikationer."
+}

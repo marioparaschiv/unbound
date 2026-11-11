@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Sluiten",
+	"CONTENT_COPIED": "Ruwe inhoud gekopieerd naar het klembord.",
+	"COPY_CONTENT": "Inhoud kopiëren",
+	"COPY_DATA": "Gegevens kopiëren",
+	"DATA_COPIED": "Gegevens van {type} gekopieerd naar het klembord.",
+	"MESSAGE_CONTENT": "Berichtinhoud",
+	"MESSAGE_DATA": "Berichtgegevens",
+	"RAW_TITLE": "Ruwe gegevens: {type}",
+	"TYPE_CHANNEL": "Kanaal",
+	"TYPE_GUILD": "Server",
+	"TYPE_MESSAGE": "Bericht",
+	"TYPE_PROFILE": "Profiel",
+	"TYPE_USER": "Gebruiker",
+	"VIEW_RAW": "Ruw bekijken"
+}

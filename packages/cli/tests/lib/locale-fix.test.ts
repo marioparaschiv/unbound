@@ -153,19 +153,19 @@ describe('--add', () => {
 		);
 	});
 
-	test('ubd i18n --add takes the key and its text', async () => {
+	test('ubd i18n add takes the key and its text', async () => {
 		const root = plugin(PARTIAL);
-		const result = await runUbd(['i18n', '--add', 'BYE', 'See you'], root, { NO_COLOR: '1' });
+		const result = await runUbd(['i18n', 'add', 'BYE', 'See', 'you'], root, { NO_COLOR: '1' });
 
 		expect(result.exitCode).toBe(0);
 		expect(result.stdout).toContain('added BYE, typings updated');
 		expect(readSource(root).table.BYE).toBe('See you');
 	});
 
-	test('ubd i18n --fix --prune exits 0 once the only problem was extra keys', async () => {
+	test('ubd i18n fix --prune exits 0 once the only problem was extra keys', async () => {
 		const root = plugin({ locales: { 'en-US': { A: 'a' }, de: { A: 'ä', OLD: 'alt' } } });
 
-		expect((await runUbd(['i18n'], root, {})).exitCode).toBe(1);
-		expect((await runUbd(['i18n', '--prune'], root, {})).exitCode).toBe(0);
+		expect((await runUbd(['i18n', 'check'], root, {})).exitCode).toBe(1);
+		expect((await runUbd(['i18n', 'fix', '--prune'], root, {})).exitCode).toBe(0);
 	});
 });

@@ -1,0 +1,5 @@
+{
+	"AVATARS": "Ảnh đại diện",
+	"CORNER_RADIUS": "Bán kính bo góc",
+	"CORNER_RADIUS_SUBTITLE": "Từ 0 (vuông) đến 64. Bán kính vượt quá một nửa kích thước ảnh đại diện sẽ giữ nó ở dạng tròn."
+}

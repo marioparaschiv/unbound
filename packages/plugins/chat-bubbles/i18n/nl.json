@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Ballonkleur",
+	"BUBBLE_COLOR_FALLBACK": "Volgt het thema: zwart bij donkere thema's, wit bij het lichte thema",
+	"COLORS": "Kleuren",
+	"CORNER_RADIUS": "Hoekradius",
+	"HORIZONTAL_PADDING": "Horizontale opvulling",
+	"LAYOUT": "Indeling",
+	"LAYOUT_CARD": "Kaarten over de volle breedte",
+	"LAYOUT_CARD_SUBTITLE": "Eén kaart achter elk volledig bericht, inclusief naam en reacties, zoals in Rosiecord",
+	"LAYOUT_FIT": "Passend bij bericht",
+	"LAYOUT_FIT_SUBTITLE": "Elke ballon omsluit alleen de tekst en media van het bericht",
+	"OPACITY": "Dekking",
+	"OWN_COLOR": "Je eigen berichten",
+	"OWN_COLOR_FALLBACK": "Zelfde als de ballonkleur",
+	"SHAPE": "Vorm",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Verticale opvulling"
+}

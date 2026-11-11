@@ -99,14 +99,15 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 		);
 	}
 
-	const plural = messages[Manager.for(kind).label];
+	const manager = Manager.for(kind);
+	const plural = messages[manager.label];
 
 	if (!addons.length) {
 		const message =
 			state.status === 'failed'
 				? messages.UNBOUND_MARKETPLACE_ERROR
 				: browsing
-					? format('UNBOUND_MARKETPLACE_EMPTY', { type: plural.toLowerCase() })
+					? format('UNBOUND_MARKETPLACE_EMPTY', { type: messages[manager.noun] })
 					: messages.UNBOUND_EMPTY_RESULTS;
 
 		return (

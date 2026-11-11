@@ -23,6 +23,7 @@ export class Themes extends Addons<Theme> {
 			directory: 'Unbound/Themes',
 			bucket: 'themes',
 			label: 'UNBOUND_THEMES',
+			noun: 'UNBOUND_THEMES_NOUN',
 			icon: 'PaintPaletteIcon',
 		});
 

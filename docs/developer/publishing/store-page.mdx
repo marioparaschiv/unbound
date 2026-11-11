@@ -1,0 +1,199 @@
+---
+title: 'Store Page'
+description: 'ADDON.md: banner, gallery and description.'
+icon: 'shop'
+---
+
+`ADDON.md`, beside `manifest.json`, is your addon's store page: a banner, a gallery and a Markdown body. The store takes the title and summary from the [manifest](/docs/developer/publishing/manifest), so never repeat them here.
+
+<FileTree>
+	<Folder name='my-plugin'>
+		<File name='manifest.json' />
+		<File name='ADDON.md' note='The store page' />
+		<Folder name='media' note='Every file the page shows'>
+			<File name='banner.png' />
+			<File name='settings.png' />
+			<File name='demo.mp4' />
+			<File name='demo-poster.jpg' />
+			<File name='log.png' />
+		</Folder>
+		<Folder name='src' />
+	</Folder>
+</FileTree>
+
+## Example
+
+```md ADDON.md
+---
+banner: media/banner.png
+media:
+  - image: media/settings.png
+    alt: The plugin's settings page, with the greeting text field
+  - video: media/demo.mp4
+    poster: media/demo-poster.jpg
+    alt: A message being sent, and the greeting appearing in the log
+---
+
+Hello World logs a greeting every time you send a message.
+
+## Settings
+
+- **Greeting**: the text to log. Defaults to `Hello!`.
+- **Log level**: `info` or `debug`.
+
+![Where the greeting shows up in the debug log](media/log.png)
+```
+
+## Frontmatter
+
+YAML between two `---` lines, parsed with [`yaml`](https://eemeli.org/yaml/). A duplicate key, an unknown key, `title` or `description` fails the build.
+
+<ParamField path='banner' type='string' required>
+	Image across the top. Exactly **3:1**, at least **1200x400**.
+</ParamField>
+<ParamField path='media' type='PageMedia[]' default='[]'>
+	The gallery, in order. Up to 20 entries, each between **9:16** and **21:9**. An entry has `image` or `video`, never both.
+
+	<Expandable title='Image entry'>
+		<ParamField path='image' type='string' required>
+			The image file.
+		</ParamField>
+		<ParamField path='alt' type='string' required>
+			Screen reader text, 1 to 300 characters.
+		</ParamField>
+	</Expandable>
+	<Expandable title='Video entry'>
+		<ParamField path='video' type='string' required>
+			The video file.
+		</ParamField>
+		<ParamField path='poster' type='string'>
+			Image shown before playback. Videos only.
+		</ParamField>
+		<ParamField path='alt' type='string' required>
+			Screen reader text, 1 to 300 characters.
+		</ParamField>
+	</Expandable>
+</ParamField>
+
+## Body
+
+Standard Markdown after the frontmatter. Never start with a `#` heading, since the manifest name is the title. Tables fail the build; use a list.
+
+Embed media with image syntax. The extension decides image or video:
+
+```md
+![The settings page](media/settings.png)
+![A short demo](media/demo.mp4)
+```
+
+Add icons with `:name:` shortcodes such as `:gear:`. See [Page Icons](/docs/developer/publishing/page-icons).
+
+<Note>
+	Tables on pages published before this rule still show. New builds reject them.
+</Note>
+
+## Media
+
+Every file lives in the addon's `media/` folder. Links to other sites fail the build.
+
+| Kind | Extensions |
+| --- | --- |
+| Image | `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif` |
+| Video | `.mp4` (H.264, HEVC, AV1), `.webm` (VP8, VP9, AV1) |
+
+| Where | Aspect ratio | Minimum size |
+| --- | --- | --- |
+| `banner` | Exactly 3:1 | 1200x400 |
+| `media` | 9:16 to 21:9 | None |
+
+- Paths are relative to the addon and start with `media/`. Subfolders work: `media/screens/settings.png`.
+- Names use letters, digits, `_`, `-` and `.`, and never start with `.`. Paths are at most 200 characters.
+- Extensions are case-insensitive.
+- One file: at most **10 MB**. All media: at most **50 MB**.
+- A file's contents must match its extension.
+
+## Building
+
+`ubd build` measures every referenced file (size, bytes, video length, a loading placeholder) and writes `page.json` beside the bundle and built `manifest.json`. Commit `page.json` with the bundle. The server checks the files again on publish.
+
+| Need | Detail |
+| --- | --- |
+| Videos | [FFmpeg](https://ffmpeg.org/download.html): `ffmpeg` and `ffprobe` on your `PATH` |
+| Per-file limit | `ADDON_MEDIA_MAX_BYTES`, in bytes |
+| Total limit | `ADDON_MEDIA_TOTAL_MAX_BYTES`, in bytes |
+
+The build fails on any rule broken in [Frontmatter](#frontmatter), [Body](#body) or [Media](#media), or a missing file.
+
+<Accordion title='page.json for the example' icon='file-content'>
+
+```json page.json
+{
+	"frontmatter": {
+		"banner": "media/banner.png",
+		"media": [
+			{
+				"image": "media/settings.png",
+				"alt": "The plugin's settings page, with the greeting text field"
+			},
+			{
+				"video": "media/demo.mp4",
+				"poster": "media/demo-poster.jpg",
+				"alt": "A message being sent, and the greeting appearing in the log"
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/banner.png",
+			"kind": "image",
+			"width": 1500,
+			"height": 500,
+			"thumbhash": "1QcSHQRnh493V4dIh4eXh1h4kJUI",
+			"bytes": 412038
+		},
+		{
+			"path": "media/settings.png",
+			"kind": "image",
+			"width": 1080,
+			"height": 1920,
+			"thumbhash": "HBkSHYSIeHiPiHh8eJd4eTN0EEQG",
+			"bytes": 286451
+		},
+		{
+			"path": "media/demo.mp4",
+			"kind": "video",
+			"width": 1920,
+			"height": 1080,
+			"duration": 12.5,
+			"thumbhash": "3PcNNYSFeXh/d3eld0iHZoZgVwh2",
+			"bytes": 3804112
+		},
+		{
+			"path": "media/demo-poster.jpg",
+			"kind": "image",
+			"width": 1920,
+			"height": 1080,
+			"thumbhash": "3PcNNYSFeXh/d3eld0iHZoZgVwh2",
+			"bytes": 158203
+		},
+		{
+			"path": "media/log.png",
+			"kind": "image",
+			"width": 1600,
+			"height": 900,
+			"thumbhash": "nAgKFYB4d3d/eHiHiId4h3iAeIcI",
+			"bytes": 97310
+		}
+	]
+}
+```
+
+</Accordion>
+
+## Next
+
+<CardGroup cols={2}>
+	<Card title='Page Icons' icon='shapes' href='/docs/developer/publishing/page-icons'>
+		Every icon shortcode.
+	</Card>
+</CardGroup>

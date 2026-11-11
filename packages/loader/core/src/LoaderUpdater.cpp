@@ -5,6 +5,7 @@
 #include <stdexcept>
 
 #include "LoaderBundleRecord.h"
+#include "LoaderDigestCache.h"
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
 #include "LoaderPreferences.h"
@@ -86,8 +87,16 @@ UpdaterSettings updaterSettings(SettingsStore &store)
         return store.getBoolean("unbound", key, fallback);
     };
     settings.setString = [&store](const std::string &key, const std::string &value) {
-        store.set("unbound", key, value);
-        store.save();
+        if (store.set("unbound", key, value))
+        {
+            store.save();
+        }
+    };
+    settings.setBoolean = [&store](const std::string &key, bool value) {
+        if (store.set("unbound", key, value))
+        {
+            store.save();
+        }
     };
     settings.developerMode = [&store]() {
         return preferences::developerMode(store);
@@ -203,12 +212,6 @@ std::optional<std::string> BundleUpdater::candidateProblem(const std::string &ca
         return std::nullopt;
     }
 
-    std::optional<std::string> bundle = readTextFile(candidatePath);
-    if (!bundle)
-    {
-        return std::string("it could not be read");
-    }
-
     std::string source    = bundleRecordField(record, "source");
     std::string signature = bundleRecordField(record, "signature");
     if (kind != "manifest")
@@ -227,9 +230,24 @@ std::optional<std::string> BundleUpdater::candidateProblem(const std::string &ca
         return std::string("its stored manifest is incomplete");
     }
     auto hash = manifest->sha512.find(bundleRecordField(record, "file"));
-    if (hash == manifest->sha512.end() || hash->second != sha512Hex(*bundle))
+    if (hash == manifest->sha512.end())
     {
-        return std::string("its SHA-512 does not match its signed manifest");
+        return std::string("its signed manifest does not list it");
+    }
+    // The download hashed these exact bytes; an unchanged file skips hashing it again at launch.
+    std::optional<nlohmann::json> identity = fileIdentity(candidatePath);
+    auto                          verified = record.find("identity");
+    if (!identity || verified == record.end() || *verified != *identity)
+    {
+        std::optional<std::string> bundle = readTextFile(candidatePath);
+        if (!bundle)
+        {
+            return std::string("it could not be read");
+        }
+        if (hash->second != sha512Hex(*bundle))
+        {
+            return std::string("its SHA-512 does not match its signed manifest");
+        }
     }
     if (std::optional<std::string> rollback = rollbackProblem(*manifest, source, baseline()))
     {
@@ -378,8 +396,21 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
         return plan;
     }
 
+    // The active bundle came from this exact manifest: nothing changed, so the signature and
+    // the bundle request can both be skipped.
+    if (manifestText && isActiveManifest(plan.url, *manifestText))
+    {
+        plan.unchanged = true;
+        return plan;
+    }
+
     std::optional<std::string> signature =
         manifest ? fetch(manifestURL + kBundleSignatureSuffix) : std::nullopt;
+    if (!manifestText)
+    {
+        log(LogLevel::Error, LOG_CATEGORY_UPDATER, "Could not fetch " + manifestURL + ".");
+        throw BundleUpdateError(BundleUpdateFailure::Network, "Could not fetch " + manifestURL);
+    }
     TrustedSigner signer =
         signature ? verifyTrustedSignature(*manifestText, *signature, trust_) : TrustedSigner::None;
     std::optional<BundleBaseline> active = baseline();
@@ -388,7 +419,8 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
     {
         log(LogLevel::Error, LOG_CATEGORY_UPDATER,
             "Refused the update: " + manifestURL + " has no valid signature.");
-        throw std::runtime_error("Bundle manifest failed signature verification");
+        throw BundleUpdateError(BundleUpdateFailure::Verification,
+                                "Bundle manifest failed signature verification");
     }
 
     if (!manifest->isSignable())
@@ -396,7 +428,8 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
         log(LogLevel::Error, LOG_CATEGORY_UPDATER,
             "Refused the update: the signed manifest lacks its build time, revision, channel or "
             "hashes.");
-        throw std::runtime_error("Signed bundle manifest is incomplete");
+        throw BundleUpdateError(BundleUpdateFailure::Verification,
+                                "Signed bundle manifest is incomplete");
     }
 
     if (std::optional<std::string> rollback = rollbackProblem(*manifest, plan.source, active))
@@ -404,7 +437,8 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
         log(LogLevel::Error, LOG_CATEGORY_UPDATER,
             "Refused the update: the signed manifest would roll back the active bundle, as " +
                 *rollback + ".");
-        throw std::runtime_error("Bundle manifest would roll back the active bundle");
+        throw BundleUpdateError(BundleUpdateFailure::Verification,
+                                "Bundle manifest would roll back the active bundle");
     }
 
     if (std::optional<std::string> outdated = loaderVersionProblem(*manifest, loaderVersion()))
@@ -412,7 +446,7 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
         log(LogLevel::Error, LOG_CATEGORY_UPDATER,
             "Refused the update: " + *outdated + ". Update the loader to use this bundle.");
         recordRequiredLoader(documents_, manifest->minLoaderVersion);
-        throw std::runtime_error("Bundle needs a newer loader");
+        throw BundleUpdateError(BundleUpdateFailure::LoaderTooOld, "Bundle needs a newer loader");
     }
     recordRequiredLoader(documents_, "");
 
@@ -421,7 +455,8 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
     {
         log(LogLevel::Error, LOG_CATEGORY_UPDATER,
             "Refused the update: " + *bridge + ". Update the loader to use this bundle.");
-        throw std::runtime_error("Bundle needs a different native bridge");
+        throw BundleUpdateError(BundleUpdateFailure::LoaderTooOld,
+                                "Bundle needs a different native bridge");
     }
 
     auto hash = manifest->sha512.find(urlFileName(plan.url));
@@ -430,7 +465,8 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
         log(LogLevel::Error, LOG_CATEGORY_UPDATER,
             "Refused the update: the signed manifest has no hash for " + urlFileName(plan.url) +
                 ".");
-        throw std::runtime_error("Signed bundle manifest does not list the bundle");
+        throw BundleUpdateError(BundleUpdateFailure::Verification,
+                                "Signed bundle manifest does not list the bundle");
     }
 
     log(LogLevel::Info, LOG_CATEGORY_UPDATER,
@@ -441,6 +477,24 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
     plan.manifestSignature = *signature;
     plan.expectedSha512    = hash->second;
     return plan;
+}
+
+bool BundleUpdater::isActiveManifest(const std::string &url, const std::string &manifestText) const
+{
+    std::string extension = urlPathExtension(url);
+    if (!isSupportedExtension(extension) || settings_.getBoolean("loader.update.force", false))
+    {
+        return false;
+    }
+    std::string target = bundlePath(extension);
+    if (!fileExists(target) || fileExists(target + kCandidateSuffix))
+    {
+        return false;
+    }
+    nlohmann::json record = parseBundleRecord(readTextFile(target + kBundleTrustSuffix));
+    return bundleRecordField(record, "kind") == "manifest" &&
+           bundleRecordField(record, "file") == urlFileName(url) &&
+           bundleRecordField(record, "manifest") == manifestText;
 }
 
 std::optional<std::string> BundleUpdater::verifiedRecord(const DownloadPlan &plan,
@@ -472,6 +526,10 @@ std::optional<std::string> BundleUpdater::verifiedRecord(const DownloadPlan &pla
     }
     log(LogLevel::Info, LOG_CATEGORY_UPDATER,
         "Bundle signature verified: " + urlFileName(plan.url) + " matches the signed manifest.");
+    if (std::optional<nlohmann::json> identity = fileIdentity(candidatePath))
+    {
+        record["identity"] = *identity;
+    }
     record["kind"]      = "manifest";
     record["manifest"]  = plan.manifestText;
     record["signature"] = plan.manifestSignature;
@@ -497,6 +555,26 @@ void BundleUpdater::recordBaseline(const std::string &record)
     settings_.setString(
         kBundleBaselineSetting,
         serializeBaseline(baselineFromManifest(*manifest, bundleRecordField(parsed, "source"))));
+}
+
+std::string bundleFailureNotice(BundleUpdateFailure failure)
+{
+    switch (failure)
+    {
+        case BundleUpdateFailure::Network:
+            return "Unbound could not download its bundle, so Discord started without it. Check "
+                   "your connection and reopen Discord to try again.";
+        case BundleUpdateFailure::LoaderTooOld:
+            return "Unbound's latest bundle needs a newer loader, so Discord started without it. "
+                   "Update Unbound's loader, then reopen Discord.";
+        case BundleUpdateFailure::Storage:
+            return "Unbound could not save its bundle, so Discord started without it. Free up some "
+                   "storage and reopen Discord.";
+        case BundleUpdateFailure::Verification:
+            break;
+    }
+    return "Unbound's bundle failed verification, so Discord started without it. Reopen Discord "
+           "to try again, and report this to the developers if it keeps happening.";
 }
 
 bool isAcceptedDownloadStatus(int status)
@@ -538,6 +616,11 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
     std::string  storedEtag = settings_.getString("loader.update.etag", "");
     DownloadPlan plan       = planDownload(updateURL, bytecodeVersion);
     std::string  url        = plan.url;
+    if (plan.unchanged)
+    {
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER, "No update found; the manifest is unchanged.");
+        return bundlePath(urlPathExtension(url));
+    }
 
     std::string urlExtension     = urlPathExtension(url);
     std::string currentPath      = preferredPath.empty() ? resolveBundlePath() : preferredPath;
@@ -573,14 +656,14 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
         download_ ? download_(url, candidatePath, headers, kBundleDownloadPolicy) : std::nullopt;
     if (!response)
     {
-        throw std::runtime_error("Could not download " + url);
+        throw BundleUpdateError(BundleUpdateFailure::Network, "Could not download " + url);
     }
 
     if (!isAcceptedDownloadStatus(response->status))
     {
         removeFile(candidatePath);
-        throw std::runtime_error("Bundle download returned HTTP " +
-                                 std::to_string(response->status));
+        throw BundleUpdateError(BundleUpdateFailure::Network, "Bundle download returned HTTP " +
+                                                                  std::to_string(response->status));
     }
 
     if (response->status == 304)
@@ -591,21 +674,24 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
 
     if (!fileExists(candidatePath))
     {
-        throw std::runtime_error("Downloaded bundle candidate is unavailable");
+        throw BundleUpdateError(BundleUpdateFailure::Storage,
+                                "Downloaded bundle candidate is unavailable");
     }
 
     std::optional<std::string> record = verifiedRecord(plan, candidatePath);
     if (!record)
     {
         rejectBundle(candidatePath);
-        throw std::runtime_error("Downloaded bundle failed signature verification");
+        throw BundleUpdateError(BundleUpdateFailure::Verification,
+                                "Downloaded bundle failed signature verification");
     }
 
     if (!writeTextFileAtomically(candidatePath + kBundleTrustSuffix, *record) ||
         !writeTextFileAtomically(candidatePath + ".etag", response->etag))
     {
         rejectBundle(candidatePath);
-        throw std::runtime_error("Downloaded bundle metadata could not be saved");
+        throw BundleUpdateError(BundleUpdateFailure::Storage,
+                                "Downloaded bundle metadata could not be saved");
     }
 
     log(LogLevel::Info, LOG_CATEGORY_UPDATER, "Bundle candidate is ready for validation.");
@@ -652,6 +738,17 @@ bool BundleUpdater::acceptBundle(const std::string &path)
         return false;
     }
 
+    // The replaced bundle's record goes with its backup, so a rollback restores both.
+    if (std::optional<std::string> replaced = readTextFile(targetPath + kBundleTrustSuffix);
+        replaced && hadTarget == "1")
+    {
+        writeTextFileAtomically(backupPath + kBundleTrustSuffix, *replaced);
+    }
+    else
+    {
+        removeFile(backupPath + kBundleTrustSuffix);
+    }
+
     std::optional<std::string> record = readTextFile(path + kBundleTrustSuffix);
     if (!record || !writeTextFileAtomically(targetPath + kBundleTrustSuffix, *record))
     {
@@ -689,5 +786,40 @@ void BundleUpdater::rejectBundle(const std::string &path)
     removeFile(path + ".etag");
     removeFile(path + ".attempting");
     removeFile(path + kBundleTrustSuffix);
+}
+
+bool BundleUpdater::rollBackToPrevious()
+{
+    for (const char *extension : kExtensions)
+    {
+        std::string target = bundlePath(extension);
+        std::string backup = target + ".previous";
+        if (!fileExists(target) || !fileExists(backup) || fileSize(backup) == 0)
+        {
+            continue;
+        }
+        if (!restoreNativeBundle(backup.c_str(), target.c_str()))
+        {
+            log(LogLevel::Error, LOG_CATEGORY_UPDATER,
+                "Failed to roll back to the previous bundle.");
+            return false;
+        }
+        // Keeping the ETag and baseline of the bundle that failed makes the next check answer
+        // 304 for it, so it is not downloaded again; a newer build replaces it as usual.
+        if (std::optional<std::string> record = readTextFile(backup + kBundleTrustSuffix))
+        {
+            writeTextFileAtomically(target + kBundleTrustSuffix, *record);
+        }
+        removeFile(backup);
+        removeFile(backup + kBundleTrustSuffix);
+        log(LogLevel::Warning, LOG_CATEGORY_UPDATER, "Rolled back to the previous bundle.");
+        return true;
+    }
+    return false;
+}
+
+const std::string &BundleUpdater::documents() const
+{
+    return documents_;
 }
 }

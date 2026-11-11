@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "Preferanser",
+	"DISPLAY_MODE": "Visningsmodus",
+	"MODE_NICK_USER": "Visningsnavn, så brukernavn",
+	"MODE_NICK_USER_SUBTITLE": "Visningsnavn (@brukernavn)",
+	"MODE_USER_NICK": "Brukernavn, så visningsnavn",
+	"MODE_USER_NICK_SUBTITLE": "@brukernavn (Visningsnavn)",
+	"MODE_USER": "Bare brukernavn",
+	"MODE_USER_SUBTITLE": "@brukernavn",
+	"FRIEND_NICKNAMES": "Vis kallenavn for venner",
+	"FRIEND_NICKNAMES_SUBTITLE": "Foretrekk en venns kallenavn der det gjelder",
+	"DISPLAY_NAMES": "Bruk globale navn",
+	"DISPLAY_NAMES_SUBTITLE": "Vis kontoens globale navn i stedet for brukernavnet",
+	"IN_REPLIES": "Bruk på svar",
+	"IN_REPLIES_SUBTITLE": "Bruk også på forhåndsvisninger av svar"
+}

@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Chỉ báo",
+	"LATENCY_THRESHOLD": "Ngưỡng độ trễ",
+	"LATENCY_THRESHOLD_SUBTITLE": "Hiện chỉ báo khi tin nhắn mất ít nhất khoảng thời gian này để gửi.",
+	"SHOW_MILLISECONDS": "Hiện mili giây",
+	"SHOW_MILLISECONDS_SUBTITLE": "Hiển thị độ chính xác đến mili giây trong chỉ báo.",
+	"IGNORE_MY_MESSAGES": "Bỏ qua tin nhắn của tôi",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Chỉ đánh dấu tin nhắn do người khác gửi.",
+	"DETECT_LEGACY_ANDROID": "Phát hiện client Android cũ",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Hiện dấu hiệu cho độ lệch dấu thời gian đã biết trên các client Discord Android cũ.",
+	"DURATION_DAYS": "{count, plural, other {# ngày}}",
+	"DURATION_HOURS": "{count, plural, other {# giờ}}",
+	"DURATION_MINUTES": "{count, plural, other {# phút}}",
+	"DURATION_SECONDS": "{count, plural, other {# giây}}",
+	"DURATION_MILLISECONDS": "{count, plural, other {# mili giây}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} và {later}",
+	"TOOLTIP_DELAYED": "Tin nhắn này được gửi chậm {duration}.",
+	"TOOLTIP_CLOCK_AHEAD": "Đồng hồ của người dùng này nhanh hơn {duration}.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "Người dùng có thể đang dùng client Discord Android cũ",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} Người dùng có thể đang dùng client Discord Android cũ.",
+	"OLD_ANDROID_CLIENT": "Client Discord Android cũ"
+}

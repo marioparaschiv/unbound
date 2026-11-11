@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Culoarea bulei",
+	"BUBBLE_COLOR_FALLBACK": "Urmează tema: negru pe temele întunecate, alb pe tema luminoasă",
+	"COLORS": "Culori",
+	"CORNER_RADIUS": "Rotunjirea colțurilor",
+	"HORIZONTAL_PADDING": "Spațiere orizontală",
+	"LAYOUT": "Dispunere",
+	"LAYOUT_CARD": "Carduri pe toată lățimea",
+	"LAYOUT_CARD_SUBTITLE": "Câte un card în spatele fiecărui mesaj întreg, inclusiv numele și reacțiile, ca în Rosiecord",
+	"LAYOUT_FIT": "Pe măsura mesajului",
+	"LAYOUT_FIT_SUBTITLE": "Fiecare bulă cuprinde doar textul și conținutul media al mesajului",
+	"OPACITY": "Opacitate",
+	"OWN_COLOR": "Mesajele tale",
+	"OWN_COLOR_FALLBACK": "La fel ca culoarea bulei",
+	"SHAPE": "Formă",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Spațiere verticală"
+}

@@ -1,6 +1,6 @@
 ---
 name: ubd-avd
-description: Rooted Android emulator (AVD) running Discord with Unbound, driven by `skills/ubd-avd/scripts`. Use when creating or rooting an AVD for Unbound; booting it with `up.sh` or fixing what `up.sh` reports; proving a client or addon change with `ready.sh`, `ubd eval` or `shot`; finding which built-in, plugin or module slows startup with `bench-android` traces in SigNoz; or watching and clicking its screen live in a browser.
+description: Rooted Android emulator (AVD) running Discord with Unbound, driven by `skills/ubd-avd/scripts`. Use when creating or rooting an AVD for Unbound; booting it with `up.sh` or fixing what `up.sh` reports; proving a client or addon change with `ready.sh`, `ubd debug eval` or `shot`; finding which built-in, plugin or module slows startup with `bench-android` traces in SigNoz; or watching and clicking its screen live in a browser.
 metadata:
     internal: true
 ---

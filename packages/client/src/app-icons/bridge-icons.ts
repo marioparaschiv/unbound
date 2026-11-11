@@ -79,6 +79,18 @@ function mergeDiscordAppIconRows(
 	return [...leading, ...replaced.slice(0, 1), ...missing, ...replaced.slice(1)];
 }
 
+function unlockDiscordAppIcon<T extends DiscordIconRow>(icon: T): T & { isPremium: false } {
+	return { ...icon, isPremium: false };
+}
+
+function toPickerAppIconId(current: string | undefined, provided: DiscordAppIcon[]) {
+	const icon = provided.find(
+		(entry) => entry.replacesId !== undefined && entry.nativeId === current,
+	);
+
+	return icon?.id ?? current;
+}
+
 function resolveDiscordAppIconSelection(
 	selection: DiscordAppIconSelection,
 	provided: DiscordAppIcon[],
@@ -105,4 +117,6 @@ export {
 	mergeDiscordAppIcons,
 	resolveDiscordAppIconSelection,
 	toDiscordAppIcon,
+	toPickerAppIconId,
+	unlockDiscordAppIcon,
 };

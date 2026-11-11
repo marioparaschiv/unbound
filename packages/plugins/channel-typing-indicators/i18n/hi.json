@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "चैनल टाइपिंग इंडिकेटर",
+	"INCLUDE_CURRENT_CHANNEL": "मौजूदा चैनल शामिल करें",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "चुने गए चैनल में टाइपिंग गतिविधि दिखाएँ।",
+	"INCLUDE_MUTED_CHANNELS": "म्यूट किए गए चैनल शामिल करें",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "म्यूट किए गए चैनलों में टाइपिंग गतिविधि दिखाएँ।",
+	"INCLUDE_IGNORED_USERS": "इग्नोर किए गए यूज़र शामिल करें",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "इग्नोर किए गए यूज़र की टाइपिंग गतिविधि दिखाएँ।",
+	"INCLUDE_BLOCKED_USERS": "ब्लॉक किए गए यूज़र शामिल करें",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "ब्लॉक किए गए यूज़र की टाइपिंग गतिविधि दिखाएँ।",
+	"APPEARANCE": "रूप-रंग",
+	"APPEARANCE_BOTH": "अवतार और एनिमेटेड डॉट",
+	"APPEARANCE_DOTS": "एनिमेटेड डॉट",
+	"APPEARANCE_AVATARS": "अवतार",
+	"TYPING_ONE": "{a} टाइप कर रहे हैं...",
+	"TYPING_TWO": "{a} और {b} टाइप कर रहे हैं...",
+	"TYPING_THREE": "{a}, {b} और {c} टाइप कर रहे हैं...",
+	"TYPING_SEVERAL": "कई लोग टाइप कर रहे हैं...",
+	"SOMEONE": "कोई व्यक्ति"
+}

@@ -1,0 +1,4 @@
+{
+	"TIMEOUT_REMAINING": "Pozostały czas przerwy: {remaining}",
+	"TIMEOUT_EXPIRES_IN": "Przerwa kończy się za: {remaining}"
+}

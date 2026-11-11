@@ -27,8 +27,11 @@ export type CatalogQuery = {
 	/** The result order; `name` when omitted. */
 	sort?: CatalogSort;
 };
-/** `name` sorts alphabetically, `updated` puts the most recently published versions first. */
-export type CatalogSort = 'name' | 'updated';
+/**
+ * `name` sorts alphabetically, `popular` puts the most installed addons first, `updated` the most
+ * recently published versions.
+ */
+export type CatalogSort = 'name' | 'popular' | 'updated';
 /** One addon the marketplace lists, at its newest version. */
 export type MarketplaceListing = {
 	/** The addon's id from its manifest, which installs and updates key on. */
@@ -45,6 +48,8 @@ export type MarketplaceListing = {
 	version: string;
 	/** When the newest version was published, as an ISO 8601 date-time. */
 	publishedAt: string;
+	/** How many times the addon was installed from the marketplace; 0 when the catalog predates counts. */
+	installs: number;
 };
 
 export {};

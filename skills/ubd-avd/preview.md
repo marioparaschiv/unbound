@@ -21,7 +21,7 @@ When the screen alone is enough, the emulator's own window also works: set `AVD_
 | Keys, with the video focused | gRPC key events, which only an AVD with `hw.keyboard=yes` receives                  |
 | ◀ ● ■ buttons                | `adb shell input keyevent` BACK, HOME, APP_SWITCH, which work on any AVD            |
 
-The preview is for a human to watch; agents prove changes with `ready.sh`, `ubd eval` and `shot` ([loop.md](loop.md)). In T3, `preview_act` `scroll` does not fire wheel events on the video. Drag instead, by sending `{type: 'mouse', ...}` messages from `preview_evaluate`.
+The preview is for a human to watch; agents prove changes with `ready.sh`, `ubd debug eval` and `shot` ([loop.md](loop.md)). In T3, `preview_act` `scroll` does not fire wheel events on the video. Drag instead, by sending `{type: 'mouse', ...}` messages from `preview_evaluate`.
 
 ## Faults
 

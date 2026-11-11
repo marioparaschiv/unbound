@@ -1,0 +1,402 @@
+---
+title: 'Writing Tests'
+description: 'Test a plugin with bun against fakes.'
+icon: 'circle-check'
+---
+
+Plugin tests run with `bun test` on your computer, not on a phone. The testing preset of `@unbound-app/api` fakes everything a plugin gets at runtime, so a test imports your code unchanged.
+
+## Setup
+
+Add `bunfig.toml` beside your `manifest.json`:
+
+```toml bunfig.toml
+[test]
+preload = ["@unbound-app/api/testing/preset"]
+```
+
+The preset finds your plugin from the nearest `manifest.json` above the first test file. Set `UNBOUND_PLUGIN_ROOT` to point it elsewhere.
+
+| Import | What a test gets |
+| --- | --- |
+| `@unbound-app/i18n` | Your real `i18n/*.json`, with an ICU formatter. en-US until you switch |
+| `@unbound-app/settings` | Your `settings.ts` with its defaults, in an in-memory bucket |
+| `@unbound-app/api` and every subpath | Fakes that record patches, commands, toasts, dialogs, Flux and assets. Also fakes `metro`, `native`, `plugins`, `ui`, `utils` and `fs` |
+| `react-native` | Each primitive as a plain node found by name, plus `Animated`, `Share`, `Dimensions`, `NativeEventEmitter`, `processColor`, `AccessibilityInfo`, `AppRegistry`, `AppState` and `NativeModules`. No install needed |
+| `*.png`, `*.svg`, `*.svg?asset` | A stable asset id for an image, a component for an SVG |
+
+It also installs the Addon scope: `addon` from your manifest, `patcher`, `commands`, `logger`, `React`, and the scoped timers.
+
+Before each test, every fake resets: no patches, commands, listeners, timers, registered modules, files, toasts or dialogs; default settings; iOS; en-US. You write no setup.
+
+## First Test
+
+```ts tests/index.test.ts
+import { startPlugin, stopPlugin, toasts } from '@unbound-app/api/testing';
+import { settings } from '@unbound-app/settings';
+import { expect, test } from 'bun:test';
+
+test('greets with the plugin name', async () => {
+	await startPlugin();
+
+	expect(toasts.shown).toMatchObject([{ content: 'My Plugin is running.' }]);
+	await stopPlugin();
+});
+
+test('stays quiet when greetOnStart is off', async () => {
+	settings.greetOnStart = false;
+	await startPlugin();
+
+	expect(toasts.shown).toEqual([]);
+	await stopPlugin();
+});
+```
+
+The setting change in the second test does not leak into any other test.
+
+## Reference
+
+Import these from `@unbound-app/api/testing`. Each recorder shows only the current test.
+
+| Export | What it does |
+| --- | --- |
+| `startPlugin(context?)` | Imports `src/index.tsx` (or `.ts`) and runs `start` with a `PluginContext` |
+| `stopPlugin()` | Runs `stop`, removes what the Addon scope recorded, rejects if anything is left |
+| `pluginHolds()` | Each patch, command, listener and timer added since `startPlugin()` and still held |
+| `render(element, options?)` | Draws a component with real hooks. See [Rendering](#rendering) |
+| `setLocale(locale)` | Changes the language for the rest of the test |
+| `extendApi(namespace, members)` | Adds or replaces members of a fake |
+| `toasts.shown` | Each toast's options. A shorthand such as `toasts.success('SAVED', vars)` also records `key` and `vars`, with `title` in the active locale |
+| `dialogs.opened` | Each dialog, with its title `key` for `confirm` and `alert`, and `respond(answer)` |
+| `commands.registered`, `commands.run(path, options?, context?)` | Registered commands by name, and a call as if the user sent it |
+| `patches.applied` | Each held patch: `kind`, `target`, `method`, and `pending` while it waits for its module |
+| `flux.dispatched`, `flux.seed(stores)`, `flux.emit(name)`, `flux.dispatch(action)` | Dispatched actions, seeded stores, and sending an action to the plugin's listeners |
+| `logs.entries` | Each line the plugin's `logger` wrote |
+| `metro.register(module, path?)` | Gives the plugin a Discord module to find |
+| `native` | The fake bridge. See [Testing Native Code](/docs/developer/testing/native-code) |
+| `plugins`, `fs` | Other plugins and in-memory files |
+
+## Start and Stop
+
+`stopPlugin()` removes everything the Addon scope recorded: `patcher` patches, commands, `flux`, `metro`, `storage` and `assets` listeners, and scoped timers. A `stop` that forgets one of these still passes, as on a phone. Anything else left is a leak, and `stopPlugin()` rejects. The only leak the fake detects is a change listener added straight to a Flux store:
+
+```txt
+My Plugin left 1 thing(s) behind after stop():
+  - UserStore.addChangeListener
+```
+
+Fix it with `flux.onStoreChange(store, listener)`, which Unbound removes for you.
+
+To check a feature undid itself without stopping, such as after a setting turns it off, read `pluginHolds()`:
+
+```ts
+import { pluginHolds, startPlugin } from '@unbound-app/api/testing';
+import { settings } from '@unbound-app/settings';
+import { expect } from 'bun:test';
+
+await startPlugin();
+expect(pluginHolds()).toContain('flux.onAction(MESSAGE_CREATE)');
+
+settings.greetOnStart = false;
+expect(pluginHolds()).toEqual([]);
+```
+
+Pass a context to change `platform`, `capabilities`, or the `native` members your plugin calls. Other bridge members are empty objects.
+
+```ts
+import { startPlugin } from '@unbound-app/api/testing';
+
+await startPlugin({ capabilities: ['native.ffi.call'], native: { apiVersion: '2.0.0' } });
+```
+
+## Self-Test
+
+The device matrix calls an exported `selfTest` after a restart. It catches a plugin whose features all skipped but whose `start` passed. First-party plugins export the `selfTest` that `runFeatures` from `@unbound-plugins/shared` builds (see [Plugin Anatomy](/docs/developer/getting-started/plugin-anatomy)). Without the helper:
+
+```tsx src/index.tsx
+import { flux, patcher } from '@unbound-app/api';
+
+const UserStore = flux.getStore('User');
+let applied = 0;
+
+export function start() {
+	patcher.after(UserStore, 'getCurrentUser', ({ result }) => result);
+	applied++;
+}
+
+export function selfTest() {
+	return { ok: applied > 0, detail: `${applied} features applied` };
+}
+```
+
+```ts tests/self-test.test.ts
+import { startPlugin } from '@unbound-app/api/testing';
+import { expect, test } from 'bun:test';
+
+import { selfTest } from '~/index';
+
+test('reports that a feature applied', async () => {
+	await startPlugin();
+
+	expect(await selfTest()).toMatchObject({ ok: true });
+});
+```
+
+Module state such as `applied` survives between tests. Reset it in `beforeEach`. `runFeatures` resets its own state on each `start`.
+
+## Checking Results
+
+Run a command with its name, parsed options, and optionally the channel and guild:
+
+```ts
+import { commands, startPlugin } from '@unbound-app/api/testing';
+import { expect } from 'bun:test';
+
+const user = { id: '1', username: 'wumpus' };
+
+await startPlugin();
+expect(await commands.run('star', { user })).toEqual({ ephemeral: true, content: 'Starred wumpus.' });
+```
+
+Answer a dialog with `respond`: `true` confirms or presses the first button, `false` cancels, a string presses the button with that label.
+
+```ts
+import { dialogs } from '@unbound-app/api/testing';
+import { expect } from 'bun:test';
+
+declare function clearHistory(): Promise<boolean>;
+
+// clearHistory() asks with dialogs.confirm before it deletes.
+const cleared = clearHistory();
+
+dialogs.opened[0]?.respond(true);
+expect(await cleared).toBe(true);
+```
+
+## Fake Discord
+
+In a test, `metro` finds only modules the test registers, by the same props as on a phone. Register before `startPlugin()`:
+
+```ts
+import { metro, patches, startPlugin } from '@unbound-app/api/testing';
+import { expect } from 'bun:test';
+
+const MessageActions = { sendMessage: (content: string) => content };
+
+metro.register(MessageActions);
+await startPlugin();
+expect(patches.applied).toMatchObject([{ kind: 'before', method: 'sendMessage' }]);
+```
+
+Finders return a lazy handle, so a lookup made at import finds a module registered later. A patch on it waits (`pending: true`) and applies once a matching module registers, in this test or a later one. A patch removed first never applies. `patcher.react` waits the same way.
+
+```ts
+import { metro as fake } from '@unbound-app/api/testing';
+import { metro, patcher } from '@unbound-app/api';
+
+const Messages = metro.findByProps('sendMessage'); // at import, or in start()
+
+patcher.after(Messages, 'sendMessage', () => 'patched'); // waits: no module yet
+fake.register({ sendMessage: () => 'sent' }); // applies now
+```
+
+`{ lazy: false }` returns the module now, and `{ all: true }` every match. `any`, `all` and `not` reject a `byFilePath` filter.
+
+| Namespace | Fake |
+| --- | --- |
+| `metro.api` | `Messages`, `Linking`, `Profiles`, `AsyncUsers`, `Invites`, `OAuth2`, `ActionSheets`, `UserProfiles`, found once a module with their props registers |
+| `metro.common` | The same, such as `Theme`, `Clipboard`, `Moment`. `React` and `ReactNative` are the fakes |
+| `metro.stores` | `Accessibility`, `Theme`, `Users`, `Guilds`, seeded with `flux.seed` |
+| `metro.components` | Any component by name. See below |
+| `metro.filters` | `byProps`, `byName`, `byDisplayName`, `byTypeName`, `byFilePath`, `all`, `any`, `not` |
+| `utils`, `utils.react` | The client's own `findComponent`, `filterComponents`, `findInTree`, `filterInTree`, `shallow`, `useShallow` |
+
+### Components
+
+`Discord`, `Forms`, `BottomSheets` and the other modules in `@unbound-app/api/metro/components` give any component by name, such as `Discord.Text` or `BottomSheets.ActionSheetRow.Icon`. Each draws its children and is found by name with its props: `find('ActionSheetRow.Icon')`.
+
+- `Discord.Button` draws its `text`; `RowButton` and `TableRow` draw `label` and `subLabel`.
+- `Discord.createStyles(styles)` returns a hook giving `styles`, calling a factory with no theme.
+- Replace one by assignment: `Discord.Text = MyText`.
+- `@unbound-app/api/ui` rows such as `SwitchRow`, `Page` and `SchemaPanel` work the same.
+
+### Other Plugins
+
+`plugins.get(id)`, `getAll`, `isEnabled`, `entities` and `errors` read what the test sets. The plugin under test is there, started and enabled.
+
+```ts
+import { plugins } from '@unbound-app/api/testing';
+
+plugins.set('chat-bubbles', { name: 'Chat Bubbles', enabled: true });
+plugins.set('chat-bubbles', { started: false });
+plugins.set('broken', { error: new Error('boom') }); // `failed`, and in `plugins.errors`
+plugins.remove('chat-bubbles');
+```
+
+`enable`, `disable`, `toggle`, `start` and `stop` change what the handles report. `install`, `reload` and `update` resolve at once and change nothing.
+
+### Files
+
+`fs` keeps files in memory under `/documents` (`fs.documentsPath`):
+
+```ts
+import { fs } from '@unbound-app/api/testing';
+
+fs.files.set('/documents/notes.txt', 'hi');
+```
+
+### Extending a Fake
+
+`mock.module('@unbound-app/api', ...)` replaces every fake. To add or replace members only, use `extendApi` with a namespace, dotted for nested ones. It throws on an unknown namespace.
+
+```ts
+import { extendApi } from '@unbound-app/api/testing';
+
+declare const MyComponent: () => null;
+
+extendApi('metro.components', { Extra: MyComponent });
+extendApi('metro', { custom: { value: 1 } });
+```
+
+## Rendering
+
+`render(element, options?)` draws function components, `memo`, `forwardRef`, context, and class components with their lifecycle methods. Options:
+
+| Option | Sets |
+| --- | --- |
+| `settings` | Some settings, sections in part. The rest keep defaults |
+| `locale` | The language `@unbound-app/i18n` reads |
+| `stores` | Flux stores by name, with or without `Store`, read by `flux.getStore` and `flux.useStore` |
+
+| Returns | Does |
+| --- | --- |
+| `find(match)` | First matching node. Throws, naming what did render, if none |
+| `findAll(match)` | Every matching node |
+| `text()` | All rendered text, joined |
+| `rerender(element)` | Draws a new element in place, keeping state |
+| `unmount()` | Removes the tree and runs effect cleanups |
+| `act(callback)` | Runs an interaction, then draws once |
+
+`match` is a name (a `react-native` primitive like `'Text'`, a `displayName` or function name) or a predicate. Each node has `props`, `children`, `parent`, and its own `find`, `findAll` and `text`.
+
+```tsx src/components/star-count.tsx
+import { useSetting } from '@unbound-app/settings';
+import { Pressable, Text } from 'react-native';
+import { flux } from '@unbound-app/api';
+import { useState } from 'react';
+
+const UserStore = flux.getStore('User');
+
+export default function StarCount() {
+	const [stars, setStars] = useState(0);
+	const accent = useSetting('appearance.accent');
+	const username = flux.useStore(UserStore, (store) => store.getCurrentUser()?.username);
+
+	return (
+		<Pressable onPress={() => setStars(stars + 1)}>
+			<Text style={{ color: accent }}>
+				{username}: {stars} {stars === 1 ? 'star' : 'stars'}
+			</Text>
+		</Pressable>
+	);
+}
+```
+
+```tsx tests/star-count.test.tsx
+import { render } from '@unbound-app/api/testing';
+import { expect, test } from 'bun:test';
+
+import StarCount from '~/components/star-count';
+
+test('counts each press', () => {
+	const view = render(<StarCount />, {
+		settings: { appearance: { accent: '#FF0000' } },
+		stores: { User: { getCurrentUser: () => ({ id: '1', username: 'wumpus' }) } },
+	});
+
+	view.act(() => view.find('Pressable').props.onPress?.(Object.create(null)));
+
+	expect(view.text()).toBe('wumpus: 1 star');
+	expect(view.find('Text').props.style).toMatchObject({ color: '#FF0000' });
+});
+```
+
+- A component re-renders when its state, a `useSetting` value, or a store it reads changes.
+- To change a store mid-test, call `flux.seed` again. Import it as `flux as fakeFlux` beside your plugin's `flux`.
+- Elements are not frozen, as on a phone, so assigning `element.type` works.
+- An SVG import renders as `SvgXml` inside a component named after the file, such as `Svg(star)`.
+- An image import equals `assets.getIdByName` for its name, and `fakeAssetId('icon')`.
+
+## Settings Panel
+
+`SettingsPanel` from `@unbound-app/settings` draws your generated panel as named nodes:
+
+```tsx
+import { render } from '@unbound-app/api/testing';
+import { SettingsPanel } from '@unbound-app/settings';
+import { expect } from 'bun:test';
+
+const view = render(<SettingsPanel />, { settings: { size: 22 } });
+
+expect(view.findAll('NoticeRow')).toHaveLength(1);
+expect(view.find('SliderRow').props.value).toBe(22);
+```
+
+| Node | Props |
+| --- | --- |
+| Setting row (`SwitchRow`, `SliderRow`, `ColorRow`, ...) | `path`, `title`, `subtitle`, `disabled`, `value`, `onChange(value)` |
+| `ButtonRow` (`setting.button`) | `onPress()` runs its action from `src/actions.ts`; `confirm` is the question asked first |
+| `NoticeRow` (`setting.notice`) | `tone` |
+| `Section` (`setting.section`) | `title` |
+
+Titles and subtitles are your messages in the active locale, and also the row's text. `hidden` draws nothing, `visibleWhen` and `disabledWhen` run on live settings, and the panel redraws when they change.
+
+## Switch the Language
+
+`setLocale` changes the language for the rest of the test and redraws every component reading your messages.
+
+```tsx
+import { render, setLocale } from '@unbound-app/api/testing';
+import { expect, test } from 'bun:test';
+import { messages } from '@unbound-app/i18n';
+import { Text } from 'react-native';
+
+function GreetingTitle() {
+	return <Text>{messages.GREETING_TITLE}</Text>;
+}
+
+test('shows the title in German', () => {
+	const view = render(<GreetingTitle />);
+
+	setLocale('de');
+	expect(view.text()).toBe('Willkommen zurück');
+});
+```
+
+`format` uses real plural rules and number formats: in `de`, `{count, plural, one {# Stern} other {# Sterne}}` with `1200` is `1.200 Sterne`. A missing key falls back to en-US.
+
+## Typed Options
+
+`render`'s `settings` and `locale`, and `setLocale`, accept anything until you add this file. Then an unknown setting, a wrong type, or an unshipped language is a type error.
+
+```ts tests/unbound-testing.d.ts
+import type { Settings } from '@unbound-app/settings';
+
+declare module '@unbound-app/api/testing' {
+	interface PluginTypes {
+		settings: Settings;
+		locale: 'en-US' | 'de';
+	}
+}
+```
+
+## Next
+
+<CardGroup cols={2}>
+	<Card title='Testing Native Code' icon='mobile' href='/docs/developer/testing/native-code'>
+		Fake the platform and native bridges.
+	</Card>
+	<Card title='The Manifest' icon='file-content' href='/docs/developer/publishing/manifest'>
+		Prepare your addon for release.
+	</Card>
+</CardGroup>

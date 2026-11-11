@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Оформление по подразбиране",
+	"LAYOUT_LIST": "Списък",
+	"LAYOUT_LIST_SUBTITLE": "Публикации в списък",
+	"LAYOUT_GALLERY": "Галерия",
+	"LAYOUT_GALLERY_SUBTITLE": "Публикации в мрежа от карти",
+	"DEFAULT_SORT_ORDER": "Подреждане по подразбиране",
+	"SORT_RECENTLY_ACTIVE": "Скорошна активност",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "Първо публикациите с най-нови съобщения",
+	"SORT_DATE_POSTED": "Дата на публикуване",
+	"SORT_DATE_POSTED_SUBTITLE": "Първо най-новите публикации"
+}

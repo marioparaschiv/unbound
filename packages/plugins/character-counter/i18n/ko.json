@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "모양",
+	"COLOR_THRESHOLDS": "색상 기준값",
+	"COLOR_THRESHOLDS_SUBTITLE": "메시지가 Discord 글자 수 제한에 가까워지면 경고해요.",
+	"COUNTER_LABEL": "{length}/{limit}자"
+}

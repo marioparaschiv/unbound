@@ -1,0 +1,17 @@
+{
+	"COLOR_MENTIONS": "멘션 색상",
+	"COLOR_MENTIONS_SUBTITLE": "채팅과 입력창에서 멘션된 멤버의 역할 색상을 표시해요",
+	"COLOR_MESSAGE_CONTENT": "메시지 내용 색상",
+	"COLOR_MESSAGE_CONTENT_SUBTITLE": "메시지 텍스트를 작성자의 역할 색상으로 물들여요",
+	"MESSAGE_COLOR_INTENSITY": "메시지 색상 강도",
+	"TYPING_NAMES": "입력 중인 이름",
+	"TYPING_NAMES_SUBTITLE": "채널 입력 중 표시의 이름에 색상을 입혀요",
+	"MEMBER_LIST_ROLE_HEADERS": "멤버 목록 역할 제목",
+	"MEMBER_LIST_ROLE_HEADERS_SUBTITLE": "멤버 목록의 역할 구역 제목에 색상을 입혀요",
+	"REACTION_USERS": "반응한 사용자",
+	"REACTION_USERS_SUBTITLE": "반응 세부 정보 목록의 이름에 색상을 입혀요",
+	"POLL_VOTERS": "투표한 사용자",
+	"POLL_VOTERS_SUBTITLE": "투표 결과 세부 정보의 이름에 색상을 입혀요",
+	"VOICE_USERS": "음성 채널 사용자",
+	"VOICE_USERS_SUBTITLE": "음성 사용자 목록의 멤버 이름에 색상을 입혀요"
+}

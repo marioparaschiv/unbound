@@ -1,0 +1,137 @@
+---
+title: 'Project Rules'
+description: 'Where files go, and the check behind each rule.'
+icon: 'folder-tree'
+---
+
+The layout and loading rules every plugin follows. `ubd create` scaffolds a plugin that already follows them, and lint rules from `@unbound-app/cli/oxlint` plus `ubd build` checks catch most departures.
+
+| Rule | Checked by |
+| --- | --- |
+| [Layout](#layout) | Build check `layout` (warning) |
+| [Features Start Themselves](#features-start-themselves) | Addon review |
+| [Lazy Lookups](#lazy-lookups) | Lint `unbound/no-module-scope-lookup` |
+| [Platform Code](#platform-code) | Lint `unbound/platform-check-only-in-platform-file`, build check `layout` |
+| [Scoped API](#scoped-api) | Lint `unbound/no-window-unbound` |
+| [Generated Capabilities](#generated-capabilities) | Build check `capabilities` (error) |
+| [Native Views](#native-views) | Addon review |
+| [Bundle Size](#bundle-size) | Build report |
+
+## Layout
+
+Split the plugin by [feature](/docs/developer/concepts#feature). The entry only starts features. See [Plugin Anatomy](/docs/developer/getting-started/plugin-anatomy).
+
+| Location | Holds |
+| --- | --- |
+| `src/` root | Only `index.tsx`, `settings.tsx`, `actions.ts`, `constants.ts`, `types.ts`, and the generated `unbound-settings.d.ts` and `unbound-i18n.d.ts` |
+| `src/<feature>/` | Everything one feature uses |
+| `src/<feature>/ios/`, `src/<feature>/android/` | That feature's platform code. Never at the `src/` root |
+| `src/components/` | Components several features share |
+| `src/shared/` | Other helpers several features share |
+| Beside `src/` | `settings.ts`, `i18n/`, `assets/`, `tests/`, `ADDON.md`, `media/` |
+
+`ubd build` warns for each departure. Warnings do not fail the build.
+
+## Features Start Themselves
+
+`src/index.tsx` calls each feature's start function. The feature finds its own modules and makes only the patches it needs. A patch on another module that only passes data to a feature, such as a closure value, lives in that feature's folder.
+
+The JSDoc of the feature's `index.ts` names every patch it makes on another module and every Discord module or store it depends on.
+
+```ts src/greeting/index.ts
+import { metro, patcher } from '@unbound-app/api';
+
+const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+
+/**
+ * @description Logs each message the user sends.
+ * Patches `sendMessage` on Discord's message actions module.
+ */
+export function startGreeting() {
+	patcher.before(Messages, 'sendMessage', ({ args }) => logger.log('Sending to', args[0]));
+}
+```
+
+## Lazy Lookups
+
+Top-level code runs on every start, before `start`, and delays Discord at launch. Make no eager search there: no `metro.find`, `findBy*` or `flux.getStore` with `{ lazy: false }`.
+
+```ts
+import { flux, metro } from '@unbound-app/api';
+
+// Lazy: safe at the top of a file.
+const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+const UserStore = flux.getStore('User');
+
+// Eager: move it into the function that uses it.
+const Button = metro.findByName('Button', { lazy: false });
+```
+
+## Platform Code
+
+A feature picks its platform handler once, in `platform.ts`. The rest of the feature calls the handler and never checks the platform.
+
+```ts src/greeting/android/platform-name.ts
+export function platformName() {
+	return 'Android';
+}
+```
+
+```ts src/greeting/ios/platform-name.ts
+export function platformName() {
+	return 'iOS';
+}
+```
+
+```ts src/greeting/platform.ts
+import { definePlatform } from '@unbound-app/api/native';
+
+import { platformName as android } from '~/greeting/android/platform-name';
+import { platformName as ios } from '~/greeting/ios/platform-name';
+
+export const platformName = definePlatform({ ios, android });
+```
+
+`ubd build` reads the `definePlatform` keys to learn which platforms the plugin supports.
+
+## Scoped API
+
+Import from `@unbound-app/api`, which reads the plugin's [Addon scope](/docs/developer/getting-started/lifecycle#the-addon-scope). `window.unbound` is unscoped, so anything registered through it outlives the plugin.
+
+## Generated Capabilities
+
+`ubd build` writes `platforms` and each platform's Capabilities into `dist/manifest.json`, from the native calls each handler can reach. Your `manifest.json` never lists them. A hand-written `capabilities` or `platforms` field fails the build, and so does dynamic access such as `native.objc[name]`.
+
+## Native Views
+
+Change how Discord's native views look from a worklet on the UI thread, so the change never flashes in. See [UI Thread](/docs/developer/plugins/ui-thread).
+
+## Bundle Size
+
+The bundle loads on every start. Keep it under its budget, `50kb` by default. Import a library the client provides, such as `lodash`, by name, not by file path, so the bundle carries no second copy. `ubd build` warns past a budget, and `--strict-budget` fails the build. See [CLI](/docs/developer/tools/cli).
+
+## All Checks
+
+`ubd build` runs these after bundling. Errors fail the build; warnings print.
+
+| Build check | Reports |
+| --- | --- |
+| `naming` | Warnings for a folder, id, name or description that breaks the [manifest](/docs/developer/publishing/manifest) naming rules |
+| `capabilities` | Errors for hand-written Capabilities or platforms, and dynamic `native` access |
+| `layout` | Warnings for each departure from the [layout](#layout) |
+| `page` | Errors and warnings for an `ADDON.md` that breaks the [store page](/docs/developer/publishing/store-page) rules |
+
+`ubd check` runs these checks and the lint without building. See [CLI](/docs/developer/tools/cli).
+
+A scaffolded plugin's `.oxlintrc.json` turns on the three lint rules:
+
+```json .oxlintrc.json
+{
+	"jsPlugins": [{ "name": "unbound", "specifier": "@unbound-app/cli/oxlint" }],
+	"rules": {
+		"unbound/no-window-unbound": "error",
+		"unbound/platform-check-only-in-platform-file": "error",
+		"unbound/no-module-scope-lookup": ["error", { "lazyByDefault": true }]
+	}
+}
+```

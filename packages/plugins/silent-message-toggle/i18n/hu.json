@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Automatikus kikapcsolás",
+	"AUTO_DISABLE_SUBTITLE": "A kapcsoló kikapcsolása egy néma üzenet elküldése után",
+	"DISABLE_SILENT_MESSAGE": "Néma üzenet kikapcsolása",
+	"ENABLE_SILENT_MESSAGE": "Néma üzenet bekapcsolása",
+	"PERSIST_STATE": "Állapot megőrzése",
+	"PERSIST_STATE_SUBTITLE": "A kapcsoló bekapcsolva marad, ha másik csatornát nyitsz meg",
+	"SILENT_MESSAGE_TOGGLE": "Néma üzenet kapcsoló",
+	"TOGGLE": "Kapcsoló",
+	"TOGGLED_OFF": "Az itteni üzeneteid újra értesítést küldenek.",
+	"TOGGLED_ON": "Az itteni üzeneteid értesítés nélkül lesznek elküldve."
+}

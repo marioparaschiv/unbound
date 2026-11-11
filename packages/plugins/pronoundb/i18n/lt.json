@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Įvardžiai",
+	"FORMAT_LOWERCASE": "Mažosiomis raidėmis",
+	"FORMAT_CAPITALIZED": "Didžiąja pradžios raide",
+	"SOURCE": "Šaltinis",
+	"SOURCE_PRONOUNDB": "Pirmenybė PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "Kitaip naudoti Discord profilio įvardžius",
+	"SOURCE_DISCORD": "Pirmenybė Discord",
+	"SOURCE_DISCORD_SUBTITLE": "Kitaip naudoti PronounDB",
+	"SHOW_FOR_YOURSELF": "Rodyti ir sau",
+	"PRONOUN_ANY": "Bet kokie įvardžiai",
+	"PRONOUN_ASK": "Paklauskite mano įvardžių",
+	"PRONOUN_AVOID": "Venkite įvardžių, vadinkite vardu",
+	"PRONOUN_HE": "Jis",
+	"PRONOUN_IT": "Tai",
+	"PRONOUN_OTHER": "Kiti įvardžiai",
+	"PRONOUN_SHE": "Ji",
+	"PRONOUN_THEY": "Jie / jos",
+	"PRONOUN_UNSPECIFIED": "Įvardžiai nenurodyti."
+}

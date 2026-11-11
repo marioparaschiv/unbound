@@ -4,8 +4,8 @@ A change counts as **proven** only when Discord on the AVD ran this checkout's b
 
 1. **Serve this checkout**: `scripts/up.sh`. `avd-dev` builds the client with `DEV_HOST=10.0.2.2`; `avd-bridge` takes the device's debugger connection. One AVD has one `avd-dev`: `up.sh --restart=dev` serves this checkout instead of whichever one it served before.
 2. **Get ready**: `scripts/ready.sh --fresh`. It runs `point.sh`, wakes the screen, launches Discord if it is not in front, and waits until `unbound` answers an eval with avd-dev's current bundle. `--relaunch` stops Discord first, for code in `start` or at startup.
-3. **Load edits**: the dev server rebuilds on save and the loader's `/__hot` stream restarts Discord, so rerun `ready.sh --fresh` after each edit. For plugins, run `scripts/ubd install <id> --restart`, then `ready.sh`.
-4. **Act and read state**: `scripts/ubd eval '<js>'` (`unbound` is the client global, 10 s limit), `scripts/ubd open <Screen>`, `scripts/ubd route`.
+3. **Load edits**: the dev server rebuilds on save and the loader's `/__hot` stream restarts Discord, so rerun `ready.sh --fresh` after each edit. For plugins, run `scripts/ubd device install <id> --restart`, then `ready.sh`.
+4. **Act and read state**: `scripts/ubd debug eval '<js>'` (`unbound` is the client global, 10 s limit), `scripts/ubd debug open <Screen>`, `scripts/ubd debug route`.
 5. **Evidence**: `scripts/shot /tmp/<task>-evidence/01-<what>.png`, then read the PNG. It also prints the text on screen, which is enough of an assertion when a screenshot is overkill.
 
 `scripts/ubd` runs this checkout's CLI with the AVD's bridge port and `ANDROID_SERIAL`, so `install`, `logs` and `device` reach the AVD without `--serial`.
@@ -38,6 +38,6 @@ Coordinates are device pixels. `scripts/shot <png> --bounds` prints each label w
 
 ## Logs
 
-- `scripts/ubd logs --grep <id> --since 2m`: Unbound's lines from logcat. Use it for startup crashes that the bridge misses while Discord restarts.
+- `scripts/ubd device logs --grep <id> --since 2m`: Unbound's lines from logcat. Use it for startup crashes that the bridge misses while Discord restarts.
 - `$adb logcat -b crash -d` for native crashes; `$adb logcat -d -t 500 '*:E'` for Xposed errors.
 - `avd-dev.log` and `avd-bridge.log` in `AVD_LOG_DIR`: the dev server's build errors and the bridge transcript.

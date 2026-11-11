@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Pronomes",
+	"FORMAT_LOWERCASE": "Minúsculas",
+	"FORMAT_CAPITALIZED": "Iniciais maiúsculas",
+	"SOURCE": "Fonte",
+	"SOURCE_PRONOUNDB": "Preferir PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "Usa os pronomes do perfil do Discord como alternativa",
+	"SOURCE_DISCORD": "Preferir Discord",
+	"SOURCE_DISCORD_SUBTITLE": "Usa o PronounDB como alternativa",
+	"SHOW_FOR_YOURSELF": "Mostrar para você",
+	"PRONOUN_ANY": "Qualquer pronome",
+	"PRONOUN_ASK": "Pergunte meus pronomes",
+	"PRONOUN_AVOID": "Evite pronomes, use meu nome",
+	"PRONOUN_HE": "Ele/Dele",
+	"PRONOUN_IT": "It/Its",
+	"PRONOUN_OTHER": "Outros pronomes",
+	"PRONOUN_SHE": "Ela/Dela",
+	"PRONOUN_THEY": "Elu/Delu",
+	"PRONOUN_UNSPECIFIED": "Nenhum pronome especificado."
+}

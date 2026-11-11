@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Cor do balão",
+	"BUBBLE_COLOR_FALLBACK": "Segue o tema: preto nos temas escuros, branco no tema claro",
+	"COLORS": "Cores",
+	"CORNER_RADIUS": "Arredondamento dos cantos",
+	"HORIZONTAL_PADDING": "Espaçamento horizontal",
+	"LAYOUT": "Layout",
+	"LAYOUT_CARD": "Cartões de largura total",
+	"LAYOUT_CARD_SUBTITLE": "Um cartão atrás de cada mensagem inteira, incluindo nome e reações, como no Rosiecord",
+	"LAYOUT_FIT": "Ajustar à mensagem",
+	"LAYOUT_FIT_SUBTITLE": "Cada balão envolve apenas o texto e a mídia da sua mensagem",
+	"OPACITY": "Opacidade",
+	"OWN_COLOR": "Suas mensagens",
+	"OWN_COLOR_FALLBACK": "Igual à cor do balão",
+	"SHAPE": "Formato",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Espaçamento vertical"
+}

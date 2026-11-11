@@ -4,6 +4,7 @@ import { TagDot } from '~/components/addon-filters/filter-parts';
 import { staggerStyle } from '~/components/motion/reveal-style';
 import BlurReveal from '~/components/motion/blur-reveal';
 import { formatDate } from '~/components/addon/format';
+import InstallCount from '~/components/install-count';
 import AddonIcon from '~/components/addon-icon';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
@@ -39,6 +40,11 @@ function AddonHeader({ addon }: AddonHeaderProps) {
 					>
 						<span>v{addon.version}</span>
 						{latest ? <span>· Updated {formatDate(latest.publishedAt)}</span> : null}
+						{addon.installs ? (
+							<span className='inline-flex items-center gap-1.5'>
+								· <InstallCount count={addon.installs} />
+							</span>
+						) : null}
 					</Text>
 				</div>
 				<div className='max-sm:hidden animate-reveal' style={staggerStyle(2)}>

@@ -1,7 +1,7 @@
 import type { AddonPage } from '@unbound-app/contracts/addon-page';
-import { createElement, type ReactElement } from 'react';
+import { describe, expect, spyOn, test } from 'bun:test';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, test } from 'bun:test';
+import { createElement } from 'react';
 
 import { getPinnedMediaBase, getPublishedMediaBase } from '~/lib/markdown-url';
 import { renderPageIcon } from '~/components/addon/page-icon';
@@ -155,11 +155,21 @@ describe('AddonMd', () => {
 		}
 
 		const entry = { media, alt: 'The settings screen', poster: undefined };
-		const list = AddonGallery({ entries: [entry, entry] });
-		const items: ReactElement[] = list.props.children;
-		const keys = items.map((item) => item.key);
+		const errors = spyOn(console, 'error').mockImplementation(() => {});
+		const html = renderToStaticMarkup(createElement(AddonGallery, { entries: [entry, entry] }));
 
-		expect(keys).toHaveLength(2);
-		expect(new Set(keys).size).toBe(2);
+		expect(html.match(/<li\b/g)).toHaveLength(2);
+		expect(errors).not.toHaveBeenCalled();
+		errors.mockRestore();
+	});
+
+	test('shows each gallery entry as a button and a video without its controls', () => {
+		const html = render(PAGE_SOURCE, PAGE);
+		const gallery = /<ul aria-label="Gallery".*?<\/ul>/s.exec(html)?.[0] ?? '';
+		const video = mediaTags(gallery)[1] ?? '';
+
+		expect(gallery.match(/<button\b/g)).toHaveLength(2);
+		expect(video).toStartWith('<video');
+		expect(video).not.toContain('controls');
 	});
 });

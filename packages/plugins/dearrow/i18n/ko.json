@@ -1,0 +1,12 @@
+{
+	"REPLACE": "바꿀 항목",
+	"REPLACE_ALL": "제목과 썸네일",
+	"REPLACE_TITLES": "제목",
+	"REPLACE_THUMBNAILS": "썸네일",
+	"DEARROW_BY_DEFAULT": "기본으로 DeArrow 적용",
+	"DEARROW_BY_DEFAULT_SUBTITLE": "묻지 않고 제목과 썸네일을 바꿔요",
+	"SHOW_TOGGLE": "전환 버튼 표시",
+	"SHOW_TOGGLE_SUBTITLE": "메시지 메뉴에서 임베드를 원래대로 되돌리거나 다시 바꿀 수 있어요",
+	"SHOW_ORIGINAL_EMBED": "원래 임베드 보기",
+	"DEARROW_EMBED": "임베드에 DeArrow 적용"
+}

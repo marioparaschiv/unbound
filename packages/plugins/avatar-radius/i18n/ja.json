@@ -1,0 +1,5 @@
+{
+	"AVATARS": "アバター",
+	"CORNER_RADIUS": "角の丸み",
+	"CORNER_RADIUS_SUBTITLE": "0(四角)から64まで。アバターのサイズの半分を超えると円形のままになります。"
+}

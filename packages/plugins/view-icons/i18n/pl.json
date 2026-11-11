@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "Nie można otworzyć: {image, select, avatar {awatar} banner {baner} serverAvatar {awatar serwerowy} serverIcon {ikona serwera} serverBanner {baner serwera} other {ikona grupowej wiadomości prywatnej}}.",
+	"VIEW_AVATAR": "Wyświetl awatar",
+	"VIEW_BANNER": "Wyświetl baner",
+	"VIEW_GROUP_ICON": "Wyświetl ikonę grupowej wiadomości prywatnej",
+	"VIEW_ICONS": "Wyświetlanie ikon",
+	"VIEW_SERVER_AVATAR": "Wyświetl awatar serwerowy",
+	"VIEW_SERVER_BANNER": "Wyświetl baner serwera",
+	"VIEW_SERVER_ICON": "Wyświetl ikonę serwera"
+}

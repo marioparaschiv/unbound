@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "Όταν μπαίνεις σε διακομιστή",
+	"MUTE_SERVER": "Σίγαση διακομιστή",
+	"MUTE_SERVER_SUBTITLE": "Αυτόματη σίγαση νέων διακομιστών",
+	"SUPPRESS_EVERYONE": "Καταστολή @everyone και @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Παράβλεψη των @everyone και @here σε νέους διακομιστές",
+	"SUPPRESS_ROLES": "Καταστολή όλων των @αναφορών ρόλων",
+	"SUPPRESS_ROLES_SUBTITLE": "Παράβλεψη αναφορών ρόλων σε νέους διακομιστές",
+	"SUPPRESS_HIGHLIGHTS": "Καταστολή επισημάνσεων",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Απενεργοποίηση ειδοποιήσεων επισημάνσεων σε νέους διακομιστές",
+	"MUTE_EVENTS": "Σίγαση νέων εκδηλώσεων",
+	"MUTE_EVENTS_SUBTITLE": "Σίγαση ειδοποιήσεων προγραμματισμένων εκδηλώσεων",
+	"SHOW_ALL_CHANNELS": "Εμφάνιση όλων των καναλιών",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Εμφάνιση κάθε καναλιού σε διακομιστές που σου επιτρέπουν να επιλέγεις κανάλια",
+	"SERVER_NOTIFICATION_SETTINGS": "Ρυθμίσεις ειδοποιήσεων διακομιστή",
+	"NOTIFY_ALL": "Όλα τα μηνύματα",
+	"NOTIFY_MENTIONS": "Μόνο @αναφορές",
+	"NOTIFY_NOTHING": "Τίποτα",
+	"NOTIFY_DEFAULT": "Προεπιλογή διακομιστή",
+	"APPLY_NEW_GUILD_SETTINGS": "Εφαρμογή ρυθμίσεων νέου διακομιστή",
+	"APPLIED_TO_GUILD": "Εφαρμόστηκε στον διακομιστή {name}.",
+	"APPLIED_TO_THIS_SERVER": "Εφαρμόστηκε σε αυτόν τον διακομιστή."
+}

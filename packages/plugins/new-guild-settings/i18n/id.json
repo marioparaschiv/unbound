@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "Saat kamu bergabung ke server",
+	"MUTE_SERVER": "Bisukan Server",
+	"MUTE_SERVER_SUBTITLE": "Bisukan server baru secara otomatis",
+	"SUPPRESS_EVERYONE": "Redam @everyone dan @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Abaikan @everyone dan @here di server baru",
+	"SUPPRESS_ROLES": "Redam Semua @mention Peran",
+	"SUPPRESS_ROLES_SUBTITLE": "Abaikan mention peran di server baru",
+	"SUPPRESS_HIGHLIGHTS": "Redam Sorotan",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Matikan notifikasi sorotan di server baru",
+	"MUTE_EVENTS": "Bisukan Acara Baru",
+	"MUTE_EVENTS_SUBTITLE": "Bisukan notifikasi acara terjadwal",
+	"SHOW_ALL_CHANNELS": "Tampilkan Semua Saluran",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Tampilkan setiap saluran di server yang memungkinkanmu memilih saluran",
+	"SERVER_NOTIFICATION_SETTINGS": "Pengaturan Notifikasi Server",
+	"NOTIFY_ALL": "Semua Pesan",
+	"NOTIFY_MENTIONS": "Hanya @mention",
+	"NOTIFY_NOTHING": "Tidak Ada",
+	"NOTIFY_DEFAULT": "Bawaan Server",
+	"APPLY_NEW_GUILD_SETTINGS": "Terapkan Pengaturan Server Baru",
+	"APPLIED_TO_GUILD": "Diterapkan ke {name}.",
+	"APPLIED_TO_THIS_SERVER": "Diterapkan ke server ini."
+}

@@ -1,0 +1,158 @@
+/* The addon gallery's row edge fades and its thumbnail-to-lightbox morph. Imported by `styles.css`. */
+
+@property --fade-start {
+	syntax: '<length>';
+	inherits: false;
+	initial-value: 0px;
+}
+
+@property --fade-end {
+	syntax: '<length>';
+	inherits: false;
+	initial-value: 0px;
+}
+
+@property --fade-strength {
+	syntax: '<number>';
+	inherits: false;
+	initial-value: 1;
+}
+
+@keyframes fade-start-grow {
+	to {
+		--fade-start: var(--fade-size);
+	}
+}
+
+@keyframes fade-end-shrink {
+	from {
+		--fade-end: var(--fade-size);
+	}
+}
+
+/* A horizontal scroller whose content dissolves into whatever is behind it at an edge with more past it.
+The mask's alpha eases in like a scrim, so the fade has no visible start line. Each edge grows with the
+scroll position itself; browsers without scroll-driven animations ease it in from `data-fade-*` instead. */
+@utility scroll-fade-x {
+	--fade-size: 4rem;
+	--start: calc(var(--fade-start) * var(--fade-strength));
+	--end: calc(var(--fade-end) * var(--fade-strength));
+	mask-image: linear-gradient(
+		to right,
+		transparent,
+		rgb(0 0 0 / 0.06) calc(var(--start) * 0.2),
+		rgb(0 0 0 / 0.25) calc(var(--start) * 0.4),
+		rgb(0 0 0 / 0.55) calc(var(--start) * 0.6),
+		rgb(0 0 0 / 0.85) calc(var(--start) * 0.8),
+		#000 var(--start),
+		#000 calc(100% - var(--end)),
+		rgb(0 0 0 / 0.85) calc(100% - var(--end) * 0.8),
+		rgb(0 0 0 / 0.55) calc(100% - var(--end) * 0.6),
+		rgb(0 0 0 / 0.25) calc(100% - var(--end) * 0.4),
+		rgb(0 0 0 / 0.06) calc(100% - var(--end) * 0.2),
+		transparent
+	);
+	/* Easing back in after a landing; see `data-settling` below. */
+	transition: --fade-strength 400ms var(--ease-out);
+
+	/* Off at once while a lightbox lands on a thumbnail under a fade, so the landing frame is never cut. */
+	&[data-settling] {
+		--fade-strength: 0;
+		transition: none;
+	}
+
+	@supports (animation-timeline: scroll()) {
+		animation:
+			fade-start-grow linear both,
+			fade-end-shrink linear both;
+		animation-timeline: scroll(self inline);
+		animation-range:
+			0 var(--fade-size),
+			calc(100% - var(--fade-size)) 100%;
+	}
+
+	@supports not (animation-timeline: scroll()) {
+		transition:
+			--fade-start 300ms var(--ease-out),
+			--fade-end 300ms var(--ease-out),
+			--fade-strength 400ms var(--ease-out);
+
+		&[data-fade-start] {
+			--fade-start: var(--fade-size);
+		}
+
+		&[data-fade-end] {
+			--fade-end: var(--fade-size);
+		}
+	}
+}
+
+/* A drag-scrolled row's trailing room, so it can be pulled past its end; `useDragScroll` sets the width. The
+negative margin cancels the row's gap, so at rest the row ends where its last item does. */
+@utility drag-scroll-room {
+	&::after {
+		content: '';
+		flex: none;
+		width: var(--overscroll-end, 0px);
+		margin-inline-start: calc(-1 * var(--gap, 0px));
+	}
+}
+
+/* A gallery entry grows out of its thumbnail into the lightbox and shrinks back on close; see `morph`. */
+::view-transition-group(gallery-media) {
+	overflow: clip;
+	border-radius: var(--radius-control);
+	animation-duration: 400ms;
+	animation-timing-function: var(--ease-expo);
+}
+
+/* Stepping through the lightbox: the frame reshapes to the next entry while the shown one swooshes out the
+way the user stepped and the next swooshes in behind it, both blurred in motion. */
+@keyframes gallery-swoosh-out {
+	to {
+		translate: calc(var(--swoosh) * -18%) 0;
+		filter: blur(12px);
+		opacity: 0;
+	}
+}
+
+@keyframes gallery-swoosh-in {
+	from {
+		translate: calc(var(--swoosh) * 18%) 0;
+		filter: blur(12px);
+		opacity: 0;
+	}
+}
+
+:root[data-morph='gallery-next'] {
+	--swoosh: 1;
+}
+
+:root[data-morph='gallery-previous'] {
+	--swoosh: -1;
+}
+
+:root[data-morph^='gallery-'] {
+	/* The caption row rides along as the frame reshapes, instead of crossfading between two heights. */
+	&::view-transition-group(gallery-media),
+	&::view-transition-group(gallery-controls) {
+		animation-duration: 350ms;
+		animation-timing-function: var(--ease-expo);
+	}
+
+	&::view-transition-old(gallery-media) {
+		animation: gallery-swoosh-out 250ms var(--ease-out) both;
+	}
+
+	&::view-transition-new(gallery-media) {
+		animation: gallery-swoosh-in 350ms var(--ease-expo) both;
+	}
+}
+
+/* A thumbnail crops its entry on a narrow screen, so both snapshots fill the morphing box and crop alike. */
+::view-transition-old(gallery-media),
+::view-transition-new(gallery-media) {
+	height: 100%;
+	object-fit: cover;
+	animation-duration: 200ms;
+}

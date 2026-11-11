@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "デフォルトで匿名化",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "ファイルごとにプレビューシートから切り替えることもできます",
+	"METHOD": "方式",
+	"METHOD_RANDOM": "ランダムな文字列",
+	"METHOD_CONSISTENT": "固定",
+	"METHOD_TIMESTAMP": "タイムスタンプ",
+	"LENGTH": "長さ",
+	"FILE_NAME": "ファイル名",
+	"FILE_NAME_PLACEHOLDER": "image",
+	"FILE_NAME_SUBTITLE": "すべてのファイルがこの名前と元の拡張子でアップロードされます。",
+	"ANONYMISE_FILE_NAME": "ファイル名を匿名化",
+	"USING_ANONYMOUS_NAME": "匿名のファイル名を使用中",
+	"USING_ORIGINAL_NAME": "元のファイル名を使用中",
+	"USE_ORIGINAL_FILE_NAME": "元のファイル名を使用"
+}

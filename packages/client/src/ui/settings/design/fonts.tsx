@@ -2,21 +2,22 @@ import { ScrollView } from 'react-native';
 
 import RestartRow from '~/ui/settings-kit/restart-row';
 import { Discord } from '~/metro/components';
-import { ActionSheets } from '~/metro/api';
+import { showDialog } from '~/dialogs/api';
 import { format } from '~/i18n/api';
 
-import FontInstallSheet from './font-install-sheet';
+import FontInstallDialog from './font-install-dialog';
 import FontPresetsGroup from './font-presets-group';
 import InstalledFontRow from './installed-font-row';
 import FontOverrideRow from './font-override-row';
 import useStyles from './fonts.style';
 import useFonts from './use-fonts';
 
-const INSTALL_SHEET = 'unbound-font-install';
-
-function openInstallSheet() {
-	ActionSheets.openLazy(Promise.resolve({ default: FontInstallSheet }), INSTALL_SHEET, {
-		onClose: () => ActionSheets.hideActionSheet(INSTALL_SHEET),
+function openInstallDialog() {
+	showDialog({
+		title: format('UNBOUND_FONTS_INSTALL'),
+		body: format('UNBOUND_FONTS_INSTALL_HINT'),
+		content: FontInstallDialog,
+		cancel: format('UNBOUND_CANCEL'),
 	});
 }
 
@@ -57,7 +58,7 @@ function FontsTab() {
 				<Discord.TableRow
 					label={format('UNBOUND_FONTS_INSTALL')}
 					arrow
-					onPress={openInstallSheet}
+					onPress={openInstallDialog}
 				/>
 				{fonts.getFamilies().map((family) => (
 					<InstalledFontRow key={family.family} family={family} />

@@ -6,13 +6,16 @@ import { useState } from 'react';
 import { ui } from '@unbound-app/api';
 
 /**
- * @description The plugin's settings screen: sign in to the translate service, and pick the source and target languages.
+ * @description The plugin's settings screen: sign in to the translate service, pick the source and target languages, and choose where translations show.
  */
 export function SettingsPanel() {
 	const [connecting, setConnecting] = useState(false);
 	const signedIn = Boolean(useSetting('refreshToken'));
 	const sourceLanguage = useSetting('sourceLanguage');
 	const targetLanguage = useSetting('targetLanguage');
+	const display = useSetting('display');
+	const showLanguages = useSetting('showLanguages');
+	const languageFlags = useSetting('languageFlags');
 
 	function connect() {
 		setConnecting(true);
@@ -70,6 +73,40 @@ export function SettingsPanel() {
 					}
 				/>
 			</ui.Section>
+			<ui.RadioRow
+				title={messages.DISPLAY}
+				value={display}
+				options={[
+					{
+						value: 'toast',
+						label: messages.SHOW_IN_TOAST,
+						subLabel: messages.SHOW_IN_TOAST_SUBTITLE,
+					},
+					{
+						value: 'inline',
+						label: messages.SHOW_INLINE,
+						subLabel: messages.SHOW_INLINE_SUBTITLE,
+					},
+				]}
+				onChange={(value) => (settings.display = value as typeof display)}
+			/>
+			{display === 'inline' ? (
+				<ui.Section>
+					<ui.SwitchRow
+						label={messages.SHOW_LANGUAGES}
+						subLabel={messages.SHOW_LANGUAGES_SUBTITLE}
+						value={showLanguages}
+						onValueChange={(value) => (settings.showLanguages = value)}
+					/>
+					<ui.SwitchRow
+						label={messages.LANGUAGE_FLAGS}
+						subLabel={messages.LANGUAGE_FLAGS_SUBTITLE}
+						value={languageFlags}
+						disabled={!showLanguages}
+						onValueChange={(value) => (settings.languageFlags = value)}
+					/>
+				</ui.Section>
+			) : null}
 		</ui.Page>
 	);
 }

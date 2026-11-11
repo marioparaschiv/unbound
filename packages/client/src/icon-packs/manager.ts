@@ -5,6 +5,7 @@ import noop from '@unbound-app/utils/noop';
 import { safeRelativePath, isSafeIconPackMain } from '~/addons/paths';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import type { InstalledEntry } from '~/updates/addon-updates';
+import { refreshImages } from '~/icon-packs/refresh-images';
 import { getById, onAssetRegistered } from '~/assets/api';
 import { downloadFile } from '~/native/download-file';
 import { ImageSources } from '~/metro/common';
@@ -43,6 +44,20 @@ function treeNodes(body: unknown): GitTreeNode[] {
 	return body.tree.filter(isTreeNode);
 }
 
+/** A pack file standing in for one asset: its absolute path and the scale it was drawn at. */
+export type IconFile = {
+	path: string;
+	scale: number;
+};
+
+/** The list of a GitHub pack's files, written at install so applying it reads no file per asset. */
+const INDEX_FILE = 'index.json';
+
+// UNKNOWN: the parsed index file.
+function isPathList(value: unknown): value is string[] {
+	return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
+}
+
 /** The built-in pack: a no-op passthrough that renders Discord's own icons. */
 const defaultPack: IconPack = {
 	bundle: 'Default',
@@ -78,6 +93,8 @@ export class Icons extends Addons<Plugin> {
 	protected readonly fallback = defaultPack.manifest.id;
 	// Stops stamping assets that register after the applied pack.
 	private stopStamping = noop;
+	// Each pack's file list, read once; `undefined` for a pack installed without one.
+	private indexes = new Map<string, Promise<Set<string> | undefined>>();
 
 	constructor() {
 		super({
@@ -86,6 +103,7 @@ export class Icons extends Addons<Plugin> {
 			directory: 'Unbound/Icons',
 			bucket: 'icons',
 			label: 'UNBOUND_ICONS',
+			noun: 'UNBOUND_ICONS_NOUN',
 			icon: 'ImageIcon',
 		});
 	}
@@ -129,12 +147,14 @@ export class Icons extends Addons<Plugin> {
 	 * @param pack The applied pack.
 	 * @returns Settles once every registered asset is stamped and images read from the pack.
 	 */
-	protected apply(pack: Addon): Promise<void> | void {
+	protected async apply(pack: Addon): Promise<void> {
 		this.removePack();
 
-		if (pack.id === this.fallback) return;
+		if (pack.id !== this.fallback) {
+			await this.applyPack(pack.id);
+		}
 
-		return this.applyPack(pack.id);
+		refreshImages();
 	}
 
 	/**
@@ -142,6 +162,7 @@ export class Icons extends Addons<Plugin> {
 	 */
 	protected unapply(): void {
 		this.removePack();
+		refreshImages();
 	}
 
 	/**
@@ -157,6 +178,7 @@ export class Icons extends Addons<Plugin> {
 			packs.filter((p) => p.manifest.id !== id),
 		);
 
+		this.indexes.delete(id);
 		await super.delete(entity);
 	}
 
@@ -169,9 +191,10 @@ export class Icons extends Addons<Plugin> {
 	 */
 	async applyPack(id: string) {
 		const stamps: Array<Promise<void>> = [];
+		const files = await this.readIndex(id);
 
 		this.stopStamping();
-		this.stopStamping = onAssetRegistered((asset) => void this.stampAsset(id, asset));
+		this.stopStamping = onAssetRegistered((asset) => void this.stampAsset(id, asset, files));
 
 		for (let assetId = 1; ; assetId++) {
 			const asset = getById(assetId);
@@ -180,7 +203,7 @@ export class Icons extends Addons<Plugin> {
 				break;
 			}
 
-			stamps.push(this.stampAsset(id, asset));
+			stamps.push(this.stampAsset(id, asset, files));
 		}
 
 		await Promise.all(stamps);
@@ -217,26 +240,77 @@ export class Icons extends Addons<Plugin> {
 	}
 
 	/**
-	 * @description Stamps a single asset with the highest-scale override file present in the pack, or clears it.
-	 * @param id The pack id.
-	 * @param asset The registered asset to stamp.
+	 * @description Finds the file a pack draws an asset with, without applying the pack, so a picker can preview it.
+	 * @param id The pack id; the built-in `default` pack has no files.
+	 * @param asset The asset.
+	 * @returns The highest-scale file the pack has for it, or `undefined` when it keeps Discord's.
 	 */
-	protected async stampAsset(id: string, asset: UnboundAsset) {
-		const scales = [...asset.scales].sort((a, b) => b - a);
+	async findIconFile(id: string, asset: UnboundAsset): Promise<IconFile | undefined> {
+		if (id === defaultPack.manifest.id) return;
 
-		delete asset.iconPackPath;
-		delete asset.iconPackScale;
+		return this.lookupFile(id, asset, await this.readIndex(id));
+	}
+
+	// A pack with an index is checked in memory; one installed before indexes asks the disk per scale.
+	private async lookupFile(
+		id: string,
+		asset: UnboundAsset,
+		files: Set<string> | undefined,
+	): Promise<IconFile | undefined> {
+		const scales = [...asset.scales].sort((a, b) => b - a);
 
 		for (const scale of scales) {
 			const relative = this.relativeAssetPath(asset, scale);
 			const path = `${this.directoryOf(id)}/${relative}`;
+			const found = files ? files.has(relative) : await fs.exists(path);
 
-			if (await fs.exists(path)) {
-				asset.iconPackPath = `${fs.documentsPath}/${path}`;
-				asset.iconPackScale = scale;
-				break;
+			if (found) {
+				return { path: `${fs.documentsPath}/${path}`, scale };
 			}
 		}
+
+		return undefined;
+	}
+
+	private readIndex(id: string): Promise<Set<string> | undefined> {
+		const cached = this.indexes.get(id);
+
+		if (cached) {
+			return cached;
+		}
+
+		const read = fs
+			.readFile(`${this.directoryOf(id)}/${INDEX_FILE}`)
+			.then((text) => {
+				const value: unknown = JSON.parse(text);
+
+				return isPathList(value) ? new Set(value) : undefined;
+			})
+			.catch(() => undefined);
+
+		this.indexes.set(id, read);
+
+		return read;
+	}
+
+	/**
+	 * @description Stamps a single asset with the highest-scale override file present in the pack, or clears it.
+	 * @param id The pack id.
+	 * @param asset The registered asset to stamp.
+	 * @param files The pack's file list, when it has one.
+	 */
+	protected async stampAsset(id: string, asset: UnboundAsset, files: Set<string> | undefined) {
+		delete asset.iconPackPath;
+		delete asset.iconPackScale;
+
+		const file = await this.lookupFile(id, asset, files);
+
+		if (!file) {
+			return;
+		}
+
+		asset.iconPackPath = file.path;
+		asset.iconPackScale = file.scale;
 	}
 
 	/**
@@ -324,6 +398,8 @@ export class Icons extends Addons<Plugin> {
 			(node) => node.type === 'blob' && (!sub || node.path.startsWith(`${sub}/`)),
 		);
 
+		const written: string[] = [];
+
 		for (let i = 0; i < blobs.length; i += 50) {
 			const batch = blobs.slice(i, i + 50);
 
@@ -341,9 +417,16 @@ export class Icons extends Addons<Plugin> {
 					}
 
 					await downloadFile(raw, `${this.directoryOf(manifest.id)}/${relative}`);
+					written.push(relative);
 				}),
 			);
 		}
+
+		await fs.writeFile(
+			`${this.directoryOf(manifest.id)}/${INDEX_FILE}`,
+			JSON.stringify(written),
+		);
+		this.indexes.delete(manifest.id);
 	}
 }
 

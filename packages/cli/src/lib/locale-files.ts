@@ -17,11 +17,11 @@ export type LocaleFile = {
 	error: string | undefined;
 };
 
-/** The stubs `ubd i18n --fix` wrote, by locale code then key, holding the en-US text each was stubbed with. */
+/** The stubs `ubd i18n fix` wrote, by locale code then key, holding the en-US text each was stubbed with. */
 export type UntranslatedStubs = Record<string, Record<string, string>>;
 
 /**
- * The sidecar listing the keys `--fix` stubbed with English. It does not end in `.json`, so the build never
+ * The sidecar listing the keys `ubd i18n fix` stubbed with English. It does not end in `.json`, so the build never
  * reads it as a locale and never ships it.
  */
 export const UNTRANSLATED_FILE = `${LOCALES_DIRECTORY}/untranslated.jsonc`;
@@ -145,7 +145,7 @@ export function writeIfChanged(path: string, text: string): boolean {
 }
 
 /**
- * @description Reads the stubs `--fix` wrote, ignoring a sidecar that is missing or not the expected shape.
+ * @description Reads the stubs `ubd i18n fix` wrote, ignoring a sidecar that is missing or not the expected shape.
  * @param pluginRoot The plugin's directory.
  * @returns The stubs by locale code, empty when there are none.
  */
@@ -161,7 +161,7 @@ export function readUntranslated(pluginRoot: string): UntranslatedStubs {
 	try {
 		value = JSON.parse(readFileSync(path, 'utf8'));
 	} catch {
-		// A hand-broken sidecar only loses the stub marks; the next `--fix` rewrites it.
+		// A hand-broken sidecar only loses the stub marks; the next `ubd i18n fix` rewrites it.
 		return {};
 	}
 

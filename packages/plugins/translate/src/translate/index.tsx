@@ -1,7 +1,8 @@
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
+import { ActionSheets, ChatManager, MessageStore, RowManager } from '~/translate/modules';
 import { patchActionSheets } from '~/translate/action-sheets';
-import { ActionSheets } from '~/translate/modules';
+import { patchInlineRows } from '~/translate/inline';
 
 /**
  * @description Adds a Translate row to the message long-press action sheet.
@@ -14,4 +15,15 @@ export function startTranslate(): (() => void) | undefined {
 	if (!ensureModules({ ActionSheets })) return;
 
 	return patchActionSheets();
+}
+
+/**
+ * @description Shows a translation in place of the message's text when the user chose it, through patches on
+ * `RowManager.generate` and `ChatManager.determineChangeType`.
+ * @returns A function that draws translated messages' original text again, settling once it is drawn.
+ */
+export function startInlineTranslate(): (() => Promise<void>) | undefined {
+	if (!ensureModules({ ChatManager, MessageStore, RowManager }, 'inline')) return;
+
+	return patchInlineRows();
 }

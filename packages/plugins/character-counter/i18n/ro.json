@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "Aspect",
+	"COLOR_THRESHOLDS": "Praguri de culoare",
+	"COLOR_THRESHOLDS_SUBTITLE": "Avertizează când mesajul se apropie de limita de caractere a Discord.",
+	"COUNTER_LABEL": "{length} din {limit} caractere"
+}

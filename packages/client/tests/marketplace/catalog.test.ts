@@ -90,6 +90,20 @@ describe('queryCatalog', () => {
 		expect(ids).toEqual(['a.zeta', 'a.beta', 'a.alpha']);
 	});
 
+	test('sorts by most installed, then by name, counting a catalog without counts as none', () => {
+		const counted = [
+			{ ...listing('p.few', { name: 'Few' }), installs: 3 },
+			{ ...listing('p.many', { name: 'Many' }), installs: 40 },
+			listing('p.uncounted', { name: 'Uncounted' }),
+			{ ...listing('p.also', { name: 'Also' }), installs: 3 },
+		];
+		const ids = queryCatalog(counted, { type: 'plugin', sort: 'popular' }).map(
+			(addon) => addon.id,
+		);
+
+		expect(ids).toEqual(['p.many', 'p.also', 'p.few', 'p.uncounted']);
+	});
+
 	test('does not reorder the stored catalog', () => {
 		const before = addons.map((addon) => addon.id);
 

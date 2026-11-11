@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Zaimki",
+	"FORMAT_LOWERCASE": "Małe litery",
+	"FORMAT_CAPITALIZED": "Wielka litera",
+	"SOURCE": "Źródło",
+	"SOURCE_PRONOUNDB": "Preferuj PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "W razie braku użyj zaimków z profilu Discord",
+	"SOURCE_DISCORD": "Preferuj Discorda",
+	"SOURCE_DISCORD_SUBTITLE": "W razie braku użyj PronounDB",
+	"SHOW_FOR_YOURSELF": "Pokazuj u siebie",
+	"PRONOUN_ANY": "Dowolne zaimki",
+	"PRONOUN_ASK": "Zapytaj mnie o zaimki",
+	"PRONOUN_AVOID": "Unikaj zaimków, używaj mojego imienia",
+	"PRONOUN_HE": "On/jego",
+	"PRONOUN_IT": "Ono/jego",
+	"PRONOUN_OTHER": "Inne zaimki",
+	"PRONOUN_SHE": "Ona/jej",
+	"PRONOUN_THEY": "Oni/ich",
+	"PRONOUN_UNSPECIFIED": "Nie podano zaimków."
+}

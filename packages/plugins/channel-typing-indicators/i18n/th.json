@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "ตัวบ่งชี้การพิมพ์ในช่อง",
+	"INCLUDE_CURRENT_CHANNEL": "รวมช่องปัจจุบัน",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "แสดงการพิมพ์ในช่องที่เลือกอยู่",
+	"INCLUDE_MUTED_CHANNELS": "รวมช่องที่ปิดเสียง",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "แสดงการพิมพ์ในช่องที่ปิดเสียงไว้",
+	"INCLUDE_IGNORED_USERS": "รวมผู้ใช้ที่เพิกเฉย",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "แสดงการพิมพ์จากผู้ใช้ที่คุณเพิกเฉย",
+	"INCLUDE_BLOCKED_USERS": "รวมผู้ใช้ที่บล็อก",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "แสดงการพิมพ์จากผู้ใช้ที่คุณบล็อก",
+	"APPEARANCE": "รูปลักษณ์",
+	"APPEARANCE_BOTH": "อวาตาร์และจุดเคลื่อนไหว",
+	"APPEARANCE_DOTS": "จุดเคลื่อนไหว",
+	"APPEARANCE_AVATARS": "อวาตาร์",
+	"TYPING_ONE": "{a} กำลังพิมพ์...",
+	"TYPING_TWO": "{a} และ {b} กำลังพิมพ์...",
+	"TYPING_THREE": "{a}, {b} และ {c} กำลังพิมพ์...",
+	"TYPING_SEVERAL": "หลายคนกำลังพิมพ์...",
+	"SOMEONE": "ใครบางคน"
+}

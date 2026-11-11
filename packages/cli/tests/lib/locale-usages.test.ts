@@ -110,7 +110,7 @@ export default defineSettings({
 	});
 });
 
-describe('ubd i18n --unused', () => {
+describe('ubd i18n unused', () => {
 	test('lists unused en-US keys and used keys en-US lacks', async () => {
 		const created = createPlugin({
 			locales: {
@@ -133,7 +133,7 @@ describe('ubd i18n --unused', () => {
 
 		expect(found.failures.map((failure) => failure.file)).toEqual(['src/broken.ts']);
 
-		const result = await runUbd(['i18n', '--unused', '--json'], created.path, {});
+		const result = await runUbd(['i18n', 'unused', '--json'], created.path, {});
 		const report = JSON.parse(result.stdout);
 
 		expect(result.exitCode).toBe(1);

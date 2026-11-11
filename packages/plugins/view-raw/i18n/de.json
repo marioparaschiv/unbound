@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Schließen",
+	"CONTENT_COPIED": "Rohinhalt in die Zwischenablage kopiert.",
+	"COPY_CONTENT": "Inhalt kopieren",
+	"COPY_DATA": "Daten kopieren",
+	"DATA_COPIED": "{type}-Daten in die Zwischenablage kopiert.",
+	"MESSAGE_CONTENT": "Nachrichteninhalt",
+	"MESSAGE_DATA": "Nachrichtendaten",
+	"RAW_TITLE": "Rohdaten: {type}",
+	"TYPE_CHANNEL": "Kanal",
+	"TYPE_GUILD": "Server",
+	"TYPE_MESSAGE": "Nachricht",
+	"TYPE_PROFILE": "Profil",
+	"TYPE_USER": "Nutzer",
+	"VIEW_RAW": "Rohdaten ansehen"
+}

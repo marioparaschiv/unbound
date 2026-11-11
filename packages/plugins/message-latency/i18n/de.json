@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Anzeige",
+	"LATENCY_THRESHOLD": "Latenzschwelle",
+	"LATENCY_THRESHOLD_SUBTITLE": "Zeigt eine Anzeige, wenn das Senden einer Nachricht mindestens so lange dauert.",
+	"SHOW_MILLISECONDS": "Millisekunden anzeigen",
+	"SHOW_MILLISECONDS_SUBTITLE": "Zeigt die Dauer in der Anzeige millisekundengenau.",
+	"IGNORE_MY_MESSAGES": "Meine Nachrichten ignorieren",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Nur Nachrichten von anderen Personen markieren.",
+	"DETECT_LEGACY_ANDROID": "Alte Android-Clients erkennen",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Zeigt eine Markierung für den bekannten Zeitstempel-Versatz in älteren Discord-Android-Clients.",
+	"DURATION_DAYS": "{count, plural, one {# Tag} other {# Tage}}",
+	"DURATION_HOURS": "{count, plural, one {# Stunde} other {# Stunden}}",
+	"DURATION_MINUTES": "{count, plural, one {# Minute} other {# Minuten}}",
+	"DURATION_SECONDS": "{count, plural, one {# Sekunde} other {# Sekunden}}",
+	"DURATION_MILLISECONDS": "{count, plural, one {# Millisekunde} other {# Millisekunden}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} und {later}",
+	"TOOLTIP_DELAYED": "Diese Nachricht wurde mit einer Verzögerung von {duration} gesendet.",
+	"TOOLTIP_CLOCK_AHEAD": "Die Uhr dieses Nutzers geht {duration} vor.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "Nutzer verwendet vermutlich einen alten Discord-Android-Client",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} Nutzer verwendet vermutlich einen alten Discord-Android-Client.",
+	"OLD_ANDROID_CLIENT": "Alter Discord-Android-Client"
+}

@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Anonimkan secara Bawaan",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "Setiap file tetap bisa diubah dari lembar pratinjaunya",
+	"METHOD": "Metode",
+	"METHOD_RANDOM": "Karakter Acak",
+	"METHOD_CONSISTENT": "Konsisten",
+	"METHOD_TIMESTAMP": "Stempel Waktu",
+	"LENGTH": "Panjang",
+	"FILE_NAME": "Nama File",
+	"FILE_NAME_PLACEHOLDER": "gambar",
+	"FILE_NAME_SUBTITLE": "Setiap file diunggah dengan nama ini dan ekstensinya sendiri.",
+	"ANONYMISE_FILE_NAME": "Anonimkan Nama File",
+	"USING_ANONYMOUS_NAME": "Menggunakan nama file anonim",
+	"USING_ORIGINAL_NAME": "Menggunakan nama file asli",
+	"USE_ORIGINAL_FILE_NAME": "Gunakan Nama File Asli"
+}

@@ -24,6 +24,13 @@ public:
         work();
     }
 
+    void runAfter(double, std::function<void()> work) override
+    {
+        delayed.push_back(std::move(work));
+    }
+
+    std::vector<std::function<void()>> delayed;
+
     std::optional<std::string> resource(const std::string &) override
     {
         return std::nullopt;

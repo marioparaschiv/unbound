@@ -42,7 +42,7 @@ const buildCommand: CommandDefinition<typeof schema> = {
 	description:
 		"Build every addon in the workspace once, then run the post-build checks on each, reporting per-addon success and failure, and each plugin's size against its budgets.",
 	summary: 'Build every addon in the workspace.',
-	surfaces: { cli: 'root', mcp: false },
+	mcp: false,
 	schema,
 	async handler({ declaredCapabilities, strictBudget, verbose }) {
 		const resolved = loadConfig();

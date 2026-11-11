@@ -1,0 +1,6 @@
+{
+	"SUPPRESS_EMBEDS": "Supprimer les intégrations",
+	"UNSUPPRESS_EMBEDS": "Rétablir les intégrations",
+	"CHANGE_FAILED": "Échec de l’action « {action} » : {reason}",
+	"CHANGE_REFUSED": "Discord a refusé la modification."
+}

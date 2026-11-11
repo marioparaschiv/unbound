@@ -8,7 +8,7 @@ const isMarkedDeleted = () => generateRow().ephemeralIndication !== undefined;
 test('reports healthy once every feature has started', async () => {
 	await startLogger();
 
-	expect(selfTest()).toEqual({ ok: true, detail: '6 features applied' });
+	expect(selfTest()).toEqual({ ok: true, detail: '7 features applied' });
 });
 
 test('leaves the other features running when one fails to start', async () => {

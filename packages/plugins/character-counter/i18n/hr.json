@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "Izgled",
+	"COLOR_THRESHOLDS": "Pragovi boja",
+	"COLOR_THRESHOLDS_SUBTITLE": "Upozori kad se poruka približi Discordovom ograničenju znakova.",
+	"COUNTER_LABEL": "{length} od {limit} znakova"
+}

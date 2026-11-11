@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Legg til vedlegg",
+	"UPLOADING": "Laster opp, dette kan ta litt tid …",
+	"ATTACHMENTS_ADDED": "{count, plural, one {Vedlegget ble lagt til!} other {Vedleggene ble lagt til!}}",
+	"UPLOAD_FAILED": "Et vedlegg kunne ikke lastes opp.",
+	"NOT_ADDED": "Vedleggene kunne ikke legges til.",
+	"PICKER_UNAVAILABLE": "Mediavelgeren er ikke tilgjengelig i dette Discord-bygget.",
+	"PICKER_FAILED": "Mediavelgeren mislyktes.",
+	"LIMIT_REACHED": "Du kan ikke legge til flere vedlegg i denne meldingen.",
+	"LIMIT_REMAINING": "Du kan bare legge til {count, plural, one {# vedlegg til} other {# vedlegg til}} i denne meldingen."
+}

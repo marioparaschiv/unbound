@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Ενδείξεις πληκτρολόγησης σε κανάλια",
+	"INCLUDE_CURRENT_CHANNEL": "Συμπερίληψη τρέχοντος καναλιού",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Εμφάνιση πληκτρολόγησης στο επιλεγμένο κανάλι.",
+	"INCLUDE_MUTED_CHANNELS": "Συμπερίληψη καναλιών σε σίγαση",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Εμφάνιση πληκτρολόγησης σε κανάλια σε σίγαση.",
+	"INCLUDE_IGNORED_USERS": "Συμπερίληψη χρηστών που αγνοείς",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Εμφάνιση πληκτρολόγησης από χρήστες που αγνοείς.",
+	"INCLUDE_BLOCKED_USERS": "Συμπερίληψη αποκλεισμένων χρηστών",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Εμφάνιση πληκτρολόγησης από αποκλεισμένους χρήστες.",
+	"APPEARANCE": "Εμφάνιση",
+	"APPEARANCE_BOTH": "Άβαταρ και κινούμενες τελείες",
+	"APPEARANCE_DOTS": "Κινούμενες τελείες",
+	"APPEARANCE_AVATARS": "Άβαταρ",
+	"TYPING_ONE": "Ο χρήστης {a} πληκτρολογεί...",
+	"TYPING_TWO": "Οι {a} και {b} πληκτρολογούν...",
+	"TYPING_THREE": "Οι {a}, {b} και {c} πληκτρολογούν...",
+	"TYPING_SEVERAL": "Αρκετά άτομα πληκτρολογούν...",
+	"SOMEONE": "Κάποιος"
+}

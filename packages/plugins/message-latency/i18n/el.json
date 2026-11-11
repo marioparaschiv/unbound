@@ -1,0 +1,23 @@
+{
+	"INDICATOR": "Ένδειξη",
+	"LATENCY_THRESHOLD": "Όριο καθυστέρησης",
+	"LATENCY_THRESHOLD_SUBTITLE": "Εμφάνιση ένδειξης όταν η αποστολή ενός μηνύματος διαρκεί τουλάχιστον τόσο.",
+	"SHOW_MILLISECONDS": "Εμφάνιση χιλιοστών του δευτερολέπτου",
+	"SHOW_MILLISECONDS_SUBTITLE": "Συμπερίληψη ακρίβειας χιλιοστού του δευτερολέπτου στην ένδειξη.",
+	"IGNORE_MY_MESSAGES": "Παράβλεψη των μηνυμάτων μου",
+	"IGNORE_MY_MESSAGES_SUBTITLE": "Σήμανση μόνο των μηνυμάτων που στέλνουν άλλοι.",
+	"DETECT_LEGACY_ANDROID": "Εντοπισμός παλιών client Android",
+	"DETECT_LEGACY_ANDROID_SUBTITLE": "Εμφάνιση σήμανσης για τη γνωστή απόκλιση χρονοσήμανσης στους παλαιότερους client του Discord για Android.",
+	"DURATION_DAYS": "{count, plural, one {# ημέρα} other {# ημέρες}}",
+	"DURATION_HOURS": "{count, plural, one {# ώρα} other {# ώρες}}",
+	"DURATION_MINUTES": "{count, plural, one {# λεπτό} other {# λεπτά}}",
+	"DURATION_SECONDS": "{count, plural, one {# δευτερόλεπτο} other {# δευτερόλεπτα}}",
+	"DURATION_MILLISECONDS": "{count, plural, one {# χιλιοστό του δευτερολέπτου} other {# χιλιοστά του δευτερολέπτου}}",
+	"DURATION_JOIN": "{earlier} {later}",
+	"DURATION_JOIN_LAST": "{earlier} και {later}",
+	"TOOLTIP_DELAYED": "Αυτό το μήνυμα στάλθηκε με καθυστέρηση {duration}.",
+	"TOOLTIP_CLOCK_AHEAD": "Το ρολόι αυτού του χρήστη πηγαίνει {duration} μπροστά.",
+	"TOOLTIP_OLD_ANDROID_CLIENT": "Ο χρήστης πιθανότατα χρησιμοποιεί παλιό client του Discord για Android",
+	"TOOLTIP_WITH_OLD_ANDROID_CLIENT": "{message} Ο χρήστης πιθανότατα χρησιμοποιεί παλιό client του Discord για Android.",
+	"OLD_ANDROID_CLIENT": "Παλιός client του Discord για Android"
+}

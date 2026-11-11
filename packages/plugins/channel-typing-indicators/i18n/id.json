@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Indikator mengetik di saluran",
+	"INCLUDE_CURRENT_CHANNEL": "Sertakan saluran saat ini",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Tampilkan aktivitas mengetik di saluran yang dipilih.",
+	"INCLUDE_MUTED_CHANNELS": "Sertakan saluran yang dibisukan",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Tampilkan aktivitas mengetik di saluran yang dibisukan.",
+	"INCLUDE_IGNORED_USERS": "Sertakan pengguna yang diabaikan",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Tampilkan aktivitas mengetik dari pengguna yang diabaikan.",
+	"INCLUDE_BLOCKED_USERS": "Sertakan pengguna yang diblokir",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Tampilkan aktivitas mengetik dari pengguna yang diblokir.",
+	"APPEARANCE": "Tampilan",
+	"APPEARANCE_BOTH": "Avatar dan titik animasi",
+	"APPEARANCE_DOTS": "Titik animasi",
+	"APPEARANCE_AVATARS": "Avatar",
+	"TYPING_ONE": "{a} sedang mengetik...",
+	"TYPING_TWO": "{a} dan {b} sedang mengetik...",
+	"TYPING_THREE": "{a}, {b}, dan {c} sedang mengetik...",
+	"TYPING_SEVERAL": "Beberapa orang sedang mengetik...",
+	"SOMEONE": "Seseorang"
+}

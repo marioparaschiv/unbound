@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "Gdy dołączasz do serwera",
+	"MUTE_SERVER": "Wycisz serwer",
+	"MUTE_SERVER_SUBTITLE": "Automatycznie wyciszaj nowe serwery",
+	"SUPPRESS_EVERYONE": "Wycisz @everyone i @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Ignoruj @everyone i @here na nowych serwerach",
+	"SUPPRESS_ROLES": "Wycisz wszystkie @wzmianki ról",
+	"SUPPRESS_ROLES_SUBTITLE": "Ignoruj wzmianki ról na nowych serwerach",
+	"SUPPRESS_HIGHLIGHTS": "Wycisz wyróżnienia",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Wyłącz powiadomienia o wyróżnieniach na nowych serwerach",
+	"MUTE_EVENTS": "Wycisz nowe wydarzenia",
+	"MUTE_EVENTS_SUBTITLE": "Wyciszaj powiadomienia o zaplanowanych wydarzeniach",
+	"SHOW_ALL_CHANNELS": "Pokaż wszystkie kanały",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Pokazuj wszystkie kanały na serwerach, które pozwalają wybierać kanały",
+	"SERVER_NOTIFICATION_SETTINGS": "Ustawienia powiadomień serwera",
+	"NOTIFY_ALL": "Wszystkie wiadomości",
+	"NOTIFY_MENTIONS": "Tylko @wzmianki",
+	"NOTIFY_NOTHING": "Nic",
+	"NOTIFY_DEFAULT": "Domyślne ustawienie serwera",
+	"APPLY_NEW_GUILD_SETTINGS": "Zastosuj ustawienia nowego serwera",
+	"APPLIED_TO_GUILD": "Zastosowano na serwerze {name}.",
+	"APPLIED_TO_THIS_SERVER": "Zastosowano na tym serwerze."
+}

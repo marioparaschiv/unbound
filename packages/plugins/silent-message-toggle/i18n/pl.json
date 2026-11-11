@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Wyłączaj automatycznie",
+	"AUTO_DISABLE_SUBTITLE": "Wyłącz przełącznik po wysłaniu jednej cichej wiadomości",
+	"DISABLE_SILENT_MESSAGE": "Wyłącz ciche wiadomości",
+	"ENABLE_SILENT_MESSAGE": "Włącz ciche wiadomości",
+	"PERSIST_STATE": "Zapamiętuj stan",
+	"PERSIST_STATE_SUBTITLE": "Pozostaw przełącznik włączony po przejściu na inny kanał",
+	"SILENT_MESSAGE_TOGGLE": "Przełącznik cichych wiadomości",
+	"TOGGLE": "Przełącz",
+	"TOGGLED_OFF": "Twoje wiadomości tutaj znowu powiadamiają innych.",
+	"TOGGLED_ON": "Twoje wiadomości tutaj są wysyłane bez powiadomień."
+}

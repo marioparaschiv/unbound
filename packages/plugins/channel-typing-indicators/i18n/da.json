@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Skriveindikatorer i kanaler",
+	"INCLUDE_CURRENT_CHANNEL": "Medtag nuværende kanal",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Vis skriveaktivitet i den valgte kanal.",
+	"INCLUDE_MUTED_CHANNELS": "Medtag lydløse kanaler",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Vis skriveaktivitet i lydløse kanaler.",
+	"INCLUDE_IGNORED_USERS": "Medtag ignorerede brugere",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Vis skriveaktivitet fra ignorerede brugere.",
+	"INCLUDE_BLOCKED_USERS": "Medtag blokerede brugere",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Vis skriveaktivitet fra blokerede brugere.",
+	"APPEARANCE": "Udseende",
+	"APPEARANCE_BOTH": "Avatarer og animerede prikker",
+	"APPEARANCE_DOTS": "Animerede prikker",
+	"APPEARANCE_AVATARS": "Avatarer",
+	"TYPING_ONE": "{a} skriver …",
+	"TYPING_TWO": "{a} og {b} skriver …",
+	"TYPING_THREE": "{a}, {b} og {c} skriver …",
+	"TYPING_SEVERAL": "Flere personer skriver …",
+	"SOMEONE": "Nogen"
+}

@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "添加附件",
+	"UPLOADING": "正在上传，这可能需要一些时间…",
+	"ATTACHMENTS_ADDED": "{count, plural, other {附件已成功添加！}}",
+	"UPLOAD_FAILED": "有附件上传失败。",
+	"NOT_ADDED": "无法添加附件。",
+	"PICKER_UNAVAILABLE": "此 Discord 版本无法使用媒体选择器。",
+	"PICKER_FAILED": "媒体选择器出错。",
+	"LIMIT_REACHED": "您无法再向此消息添加更多附件。",
+	"LIMIT_REMAINING": "您最多只能再向此消息添加 {count, plural, other {# 个附件}}。"
+}

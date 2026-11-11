@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "{image, select, avatar {अवतार} banner {बैनर} serverAvatar {सर्वर अवतार} serverIcon {सर्वर आइकन} serverBanner {सर्वर बैनर} other {ग्रुप DM आइकन}} नहीं खुल सका।",
+	"VIEW_AVATAR": "अवतार देखें",
+	"VIEW_BANNER": "बैनर देखें",
+	"VIEW_GROUP_ICON": "ग्रुप DM आइकन देखें",
+	"VIEW_ICONS": "आइकन देखें",
+	"VIEW_SERVER_AVATAR": "सर्वर अवतार देखें",
+	"VIEW_SERVER_BANNER": "सर्वर बैनर देखें",
+	"VIEW_SERVER_ICON": "सर्वर आइकन देखें"
+}

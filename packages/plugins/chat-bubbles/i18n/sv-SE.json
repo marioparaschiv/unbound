@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Bubbelfärg",
+	"BUBBLE_COLOR_FALLBACK": "Följer temat: svart i mörka teman, vitt i det ljusa temat",
+	"COLORS": "Färger",
+	"CORNER_RADIUS": "Hörnradie",
+	"HORIZONTAL_PADDING": "Horisontell utfyllnad",
+	"LAYOUT": "Layout",
+	"LAYOUT_CARD": "Kort i full bredd",
+	"LAYOUT_CARD_SUBTITLE": "Ett kort bakom varje helt meddelande, inklusive namn och reaktioner, som i Rosiecord",
+	"LAYOUT_FIT": "Anpassa till meddelandet",
+	"LAYOUT_FIT_SUBTITLE": "Varje bubbla omsluter bara meddelandets text och media",
+	"OPACITY": "Opacitet",
+	"OWN_COLOR": "Dina meddelanden",
+	"OWN_COLOR_FALLBACK": "Samma som bubbelfärgen",
+	"SHAPE": "Form",
+	"UNIT_PERCENT": "%",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Vertikal utfyllnad"
+}

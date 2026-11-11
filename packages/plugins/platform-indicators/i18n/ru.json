@@ -1,0 +1,19 @@
+{
+	"PLATFORM_INDICATORS": "Индикаторы платформы",
+	"SHOW_INDICATORS": "Показывать индикаторы",
+	"MEMBER_LIST": "Список участников",
+	"MEMBER_LIST_SUBTITLE": "После имён в списке участников и других списках пользователей",
+	"PROFILES": "Профили",
+	"PROFILES_SUBTITLE": "Под именем и значками в профилях",
+	"MESSAGES": "Сообщения",
+	"MESSAGES_SUBTITLE": "После времени отправки сообщения",
+	"STATUS": "Статус",
+	"COLOR_MOBILE_INDICATOR": "Цветной мобильный индикатор",
+	"COLOR_MOBILE_INDICATOR_SUBTITLE": "Показывать значок телефона и для мобильных пользователей со статусом «Неактивен» или «Не беспокоить»",
+	"PLATFORM_DESKTOP": "Компьютер",
+	"PLATFORM_MOBILE": "Телефон",
+	"PLATFORM_WEB": "Браузер",
+	"PLATFORM_EMBEDDED": "Встроенная (консоль или игра)",
+	"PLATFORM_VR": "VR",
+	"ONLINE_ON": "В сети: {platforms}"
+}

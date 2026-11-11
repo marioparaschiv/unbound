@@ -1,0 +1,20 @@
+{
+	"PRONOUNS": "Kata Ganti",
+	"FORMAT_LOWERCASE": "Huruf kecil",
+	"FORMAT_CAPITALIZED": "Huruf kapital di awal",
+	"SOURCE": "Sumber",
+	"SOURCE_PRONOUNDB": "Utamakan PronounDB",
+	"SOURCE_PRONOUNDB_SUBTITLE": "Jika tidak ada, gunakan kata ganti dari profil Discord",
+	"SOURCE_DISCORD": "Utamakan Discord",
+	"SOURCE_DISCORD_SUBTITLE": "Jika tidak ada, gunakan PronounDB",
+	"SHOW_FOR_YOURSELF": "Tampilkan untuk Diri Sendiri",
+	"PRONOUN_ANY": "Kata ganti apa saja",
+	"PRONOUN_ASK": "Tanyakan kata gantiku",
+	"PRONOUN_AVOID": "Hindari kata ganti, gunakan namaku",
+	"PRONOUN_HE": "He/Him",
+	"PRONOUN_IT": "It/Its",
+	"PRONOUN_OTHER": "Kata ganti lain",
+	"PRONOUN_SHE": "She/Her",
+	"PRONOUN_THEY": "They/Them",
+	"PRONOUN_UNSPECIFIED": "Tidak ada kata ganti yang ditentukan."
+}

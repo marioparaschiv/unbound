@@ -1,0 +1,16 @@
+{
+	"PREFERENCES": "Asetukset",
+	"DISPLAY_MODE": "Näyttötapa",
+	"MODE_NICK_USER": "Näyttönimi ja sitten käyttäjänimi",
+	"MODE_NICK_USER_SUBTITLE": "Näyttönimi (@käyttäjänimi)",
+	"MODE_USER_NICK": "Käyttäjänimi ja sitten näyttönimi",
+	"MODE_USER_NICK_SUBTITLE": "@käyttäjänimi (Näyttönimi)",
+	"MODE_USER": "Vain käyttäjänimi",
+	"MODE_USER_SUBTITLE": "@käyttäjänimi",
+	"FRIEND_NICKNAMES": "Näytä kavereiden lempinimet",
+	"FRIEND_NICKNAMES_SUBTITLE": "Suosi kaverin lempinimeä aina, kun se on mahdollista",
+	"DISPLAY_NAMES": "Käytä yleisiä nimiä",
+	"DISPLAY_NAMES_SUBTITLE": "Näytä tilin yleinen nimi sen käyttäjänimen sijaan",
+	"IN_REPLIES": "Käytä vastauksissa",
+	"IN_REPLIES_SUBTITLE": "Käytä myös vastausten esikatseluissa"
+}

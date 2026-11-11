@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "Kan ikke åpne {image, select, avatar {avataren} banner {banneret} serverAvatar {serveravataren} serverIcon {serverikonet} serverBanner {serverbanneret} other {ikonet for gruppe-DM-en}}.",
+	"VIEW_AVATAR": "Vis avatar",
+	"VIEW_BANNER": "Vis banner",
+	"VIEW_GROUP_ICON": "Vis ikon for gruppe-DM",
+	"VIEW_ICONS": "Vis ikoner",
+	"VIEW_SERVER_AVATAR": "Vis serveravatar",
+	"VIEW_SERVER_BANNER": "Vis serverbanner",
+	"VIEW_SERVER_ICON": "Vis serverikon"
+}

@@ -1,0 +1,6 @@
+{
+	"APPEARANCE": "Išvaizda",
+	"COLOR_THRESHOLDS": "Spalvų ribos",
+	"COLOR_THRESHOLDS_SUBTITLE": "Įspėti, kai žinutė artėja prie Discord simbolių limito.",
+	"COUNTER_LABEL": "{length} iš {limit} simbolių"
+}

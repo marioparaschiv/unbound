@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Indicatori de tastare în canale",
+	"INCLUDE_CURRENT_CHANNEL": "Include canalul curent",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Afișează cine tastează în canalul selectat.",
+	"INCLUDE_MUTED_CHANNELS": "Include canalele amuțite",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Afișează cine tastează în canalele amuțite.",
+	"INCLUDE_IGNORED_USERS": "Include utilizatorii ignorați",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Afișează când tastează utilizatorii ignorați.",
+	"INCLUDE_BLOCKED_USERS": "Include utilizatorii blocați",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Afișează când tastează utilizatorii blocați.",
+	"APPEARANCE": "Aspect",
+	"APPEARANCE_BOTH": "Avatare și puncte animate",
+	"APPEARANCE_DOTS": "Puncte animate",
+	"APPEARANCE_AVATARS": "Avatare",
+	"TYPING_ONE": "{a} tastează...",
+	"TYPING_TWO": "{a} și {b} tastează...",
+	"TYPING_THREE": "{a}, {b} și {c} tastează...",
+	"TYPING_SEVERAL": "Mai multe persoane tastează...",
+	"SOMEONE": "Cineva"
+}

@@ -150,6 +150,8 @@ describe('ubd publish refusals', () => {
 		const result = await publish('publish.anonymous', undefined);
 
 		expect(result.exitCode).toBe(1);
-		expect(result.stderr).toBe('Not logged in. Run `ubd login`, or set UNBOUND_API_KEY.\n');
+		expect(result.stderr).toBe(
+			'Not logged in. Run `ubd auth login`, or set UNBOUND_API_KEY.\n',
+		);
 	});
 });

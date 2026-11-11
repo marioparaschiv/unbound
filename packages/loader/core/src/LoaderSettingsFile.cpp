@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
 #include <system_error>
@@ -189,15 +190,54 @@ void SettingsStore::load()
 
     if (!adoptLocked(*contents))
     {
-        log(LogLevel::Error, LOG_CATEGORY_SETTINGS,
-            "settings.json is corrupt, backing it up and resetting.");
         backupCorruptFile();
-        resetLocked();
-        return;
+        if (!restoreLastGoodLocked())
+        {
+            log(LogLevel::Error, LOG_CATEGORY_SETTINGS,
+                "settings.json is corrupt and has no last good copy; resetting it.");
+            resetLocked();
+            return;
+        }
+    }
+    else
+    {
+        keepLastGoodLocked(*contents);
     }
 
     stamp_ = stampOnDisk();
     dirty_ = false;
+}
+
+std::string SettingsStore::lastGoodPath() const
+{
+    return path_ + ".good";
+}
+
+// A copy of the last settings.json that parsed, so a corrupt file restores instead of resetting.
+void SettingsStore::keepLastGoodLocked(const std::string &contents) const
+{
+    if (contents.size() <= 2 || readTextFile(lastGoodPath()) == contents)
+    {
+        return;
+    }
+    if (!writeTextFileAtomically(lastGoodPath(), contents))
+    {
+        log(LogLevel::Warning, LOG_CATEGORY_SETTINGS,
+            "Failed to save the last good settings.json.");
+    }
+}
+
+bool SettingsStore::restoreLastGoodLocked() const
+{
+    removeFile(cachePath());
+    std::optional<std::string> good = readTextFile(lastGoodPath());
+    if (!good || !adoptLocked(*good) || !writeTextFileAtomically(path_, *good))
+    {
+        return false;
+    }
+    log(LogLevel::Error, LOG_CATEGORY_SETTINGS,
+        "settings.json was corrupt; restored the last good copy.");
+    return true;
 }
 
 void SettingsStore::reload()
@@ -300,5 +340,29 @@ void SettingsStore::backupCorruptFile() const
     }
 
     log(LogLevel::Error, LOG_CATEGORY_SETTINGS, "Backed up corrupt settings.json to " + backup);
+    pruneCorruptBackups();
+}
+
+// Keeps the newest few corrupt backups; their names sort by timestamp.
+void SettingsStore::pruneCorruptBackups() const
+{
+    const std::filesystem::path settings(path_);
+    const std::string           prefix = settings.filename().string() + ".corrupt-";
+    std::vector<std::string>    backups;
+    for (const std::string &name : listDirectory(settings.parent_path().string()))
+    {
+        if (name.rfind(prefix, 0) == 0)
+        {
+            backups.push_back(name);
+        }
+    }
+    std::sort(
+        backups.begin(), backups.end(), [&](const std::string &left, const std::string &right) {
+            return std::stoll(left.substr(prefix.size())) < std::stoll(right.substr(prefix.size()));
+        });
+    for (size_t index = 0; index + kCorruptBackupsKept < backups.size(); index++)
+    {
+        removeFile((settings.parent_path() / backups[index]).string());
+    }
 }
 }

@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "Pružatelj",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "Pretražuj GIF-ove na Tenoru",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "Pretražuj GIF-ove na Giphyju",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "Discordova vlastita pretraga GIF-ova",
+	"PROVIDER_BUTTON_LABEL": "Pružatelj GIF-ova: {provider}. Prebaci na {next}"
+}

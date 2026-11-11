@@ -1,0 +1,5 @@
+{
+	"MESSAGE_PREVIEW": "メッセージのプレビュー",
+	"PREVIEW_FAILED": "プレビューに失敗しました: {reason}",
+	"PREVIEW_MESSAGE": "メッセージをプレビュー"
+}

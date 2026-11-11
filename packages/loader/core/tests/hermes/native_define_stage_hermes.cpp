@@ -6,6 +6,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "LoaderPipeline.h"
 
@@ -40,6 +41,13 @@ public:
     {
         work();
     }
+
+    void runAfter(double, std::function<void()> work) override
+    {
+        delayed.push_back(std::move(work));
+    }
+
+    std::vector<std::function<void()>> delayed;
 
     std::optional<std::string> resource(const std::string &name) override
     {
@@ -101,7 +109,9 @@ static void runsTheSavedBundleBeforeDiscords()
     require(order == R"(["unbound:undefined:object","discord"])",
             "Unbound runs before Discord's bundle, after UnboundNative; got " + order);
     require(pipeline.isBundleReady(), "the bundle is marked ready");
-    require(server.activeContents() == kUnbound, "the candidate that ran is promoted");
+    require(server.activeContents() != kUnbound, "the candidate waits for a healthy launch");
+    pipeline.markHealthy();
+    require(server.activeContents() == kUnbound, "the candidate that ran is promoted once healthy");
     require(host->reloads == 0, "a saved bundle needs no reload");
 }
 
@@ -131,7 +141,8 @@ static void runsTheFirstDownloadBeforeDiscordsWithoutAReload()
     require(order == R"(["unbound:undefined:object","discord"])",
             "the first download runs before Discord's bundle; got " + order);
     require(pipeline.isBundleReady(), "the first bundle is marked ready");
-    require(server.activeContents() == kUnbound, "the first bundle is promoted");
+    pipeline.markHealthy();
+    require(server.activeContents() == kUnbound, "the first bundle is promoted once healthy");
     require(host->reloads == 0, "the first download needs no reload");
 }
 

@@ -155,11 +155,16 @@ std::string SettingsStore::getString(const std::string &store, const std::string
     return value->get<std::string>();
 }
 
-void SettingsStore::set(const std::string &store, const std::string &key, nlohmann::json value)
+bool SettingsStore::set(const std::string &store, const std::string &key, nlohmann::json value)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     refreshLocked(true);
+    if (const nlohmann::json *current = findLocked(store, key); current && *current == value)
+    {
+        return false;
+    }
     setLocked(store, key, std::move(value));
+    return true;
 }
 
 void SettingsStore::remove(const std::string &store, const std::string &key)

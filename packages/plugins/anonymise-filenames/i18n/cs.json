@@ -1,0 +1,16 @@
+{
+	"ANONYMISE_BY_DEFAULT": "Anonymizovat ve výchozím stavu",
+	"ANONYMISE_BY_DEFAULT_SUBTITLE": "U každého souboru to jde i tak přepnout v jeho náhledu",
+	"METHOD": "Metoda",
+	"METHOD_RANDOM": "Náhodné znaky",
+	"METHOD_CONSISTENT": "Stálý název",
+	"METHOD_TIMESTAMP": "Časové razítko",
+	"LENGTH": "Délka",
+	"FILE_NAME": "Název souboru",
+	"FILE_NAME_PLACEHOLDER": "obrazek",
+	"FILE_NAME_SUBTITLE": "Každý soubor se nahraje s tímto názvem a svou vlastní příponou.",
+	"ANONYMISE_FILE_NAME": "Anonymizovat název souboru",
+	"USING_ANONYMOUS_NAME": "Používá se anonymní název souboru",
+	"USING_ORIGINAL_NAME": "Používá se původní název souboru",
+	"USE_ORIGINAL_FILE_NAME": "Použít původní název souboru"
+}

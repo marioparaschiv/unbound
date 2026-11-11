@@ -15,6 +15,7 @@ import { downloadAddonFiles, writeAddonFiles, type AddonFiles } from '~/addons/f
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { assertTextDigest, digestOf } from '~/addons/digests';
 import type { InstalledEntry } from '~/updates/addon-updates';
+import { countInstall } from '~/marketplace/count-install';
 import type { UpdatableKind } from '~/addons/manager-of';
 import { AddonSelection } from '~/addons/selection';
 import { getLoader } from '~/native/unbound-native';
@@ -103,8 +104,7 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 			return this.reloadFailed(targetId, resolved, error);
 		}
 
-		// Absent addon: install path over the socket bytes — load it fresh and persist it. load()
-		// consults the persisted state and starts it only if enabled.
+		// Absent addon: load the socket bytes fresh and persist them; load() starts it only if enabled.
 		if (!resolved) {
 			try {
 				await this.persist(bundle, manifest, bytecode, files);
@@ -349,6 +349,7 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 		}
 
 		if (fresh) {
+			countInstall(listed.id);
 			await this.enable(listed.id);
 		}
 
@@ -526,7 +527,7 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 	}
 
 	/**
-	 * @description Stops treating an addon as a development copy, removing the marker `ubd install` leaves, so update checks include it again.
+	 * @description Stops treating an addon as a development copy, removing the marker `ubd device install` leaves, so update checks include it again.
 	 * @param id The addon's id.
 	 */
 	clearDevelopmentCopy(id: string): void {

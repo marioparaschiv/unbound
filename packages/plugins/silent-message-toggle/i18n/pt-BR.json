@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Desativar automaticamente",
+	"AUTO_DISABLE_SUBTITLE": "Desliga a opção de novo depois de enviar uma mensagem silenciosa",
+	"DISABLE_SILENT_MESSAGE": "Desativar mensagem silenciosa",
+	"ENABLE_SILENT_MESSAGE": "Ativar mensagem silenciosa",
+	"PERSIST_STATE": "Manter estado",
+	"PERSIST_STATE_SUBTITLE": "Mantém a opção ligada quando você abre outro canal",
+	"SILENT_MESSAGE_TOGGLE": "Alternar mensagem silenciosa",
+	"TOGGLE": "Alternar",
+	"TOGGLED_OFF": "Suas mensagens aqui voltaram a notificar as pessoas.",
+	"TOGGLED_ON": "Suas mensagens aqui são enviadas sem notificações."
+}

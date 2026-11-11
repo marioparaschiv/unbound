@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "기본 레이아웃",
+	"LAYOUT_LIST": "목록",
+	"LAYOUT_LIST_SUBTITLE": "게시물을 목록으로 표시",
+	"LAYOUT_GALLERY": "갤러리",
+	"LAYOUT_GALLERY_SUBTITLE": "게시물을 카드 격자로 표시",
+	"DEFAULT_SORT_ORDER": "기본 정렬 순서",
+	"SORT_RECENTLY_ACTIVE": "최근 활동순",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "새 메시지가 있는 게시물부터 표시",
+	"SORT_DATE_POSTED": "게시일순",
+	"SORT_DATE_POSTED_SUBTITLE": "최신 게시물부터 표시"
+}

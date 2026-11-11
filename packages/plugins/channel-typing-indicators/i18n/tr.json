@@ -1,0 +1,20 @@
+{
+	"CHANNEL_TYPING_INDICATORS": "Kanal yazma göstergeleri",
+	"INCLUDE_CURRENT_CHANNEL": "Geçerli kanalı dahil et",
+	"INCLUDE_CURRENT_CHANNEL_SUBTITLE": "Seçili kanaldaki yazma etkinliğini göster.",
+	"INCLUDE_MUTED_CHANNELS": "Sessize alınmış kanalları dahil et",
+	"INCLUDE_MUTED_CHANNELS_SUBTITLE": "Sessize alınmış kanallardaki yazma etkinliğini göster.",
+	"INCLUDE_IGNORED_USERS": "Yok sayılan kullanıcıları dahil et",
+	"INCLUDE_IGNORED_USERS_SUBTITLE": "Yok sayılan kullanıcıların yazma etkinliğini göster.",
+	"INCLUDE_BLOCKED_USERS": "Engellenen kullanıcıları dahil et",
+	"INCLUDE_BLOCKED_USERS_SUBTITLE": "Engellenen kullanıcıların yazma etkinliğini göster.",
+	"APPEARANCE": "Görünüm",
+	"APPEARANCE_BOTH": "Avatarlar ve animasyonlu noktalar",
+	"APPEARANCE_DOTS": "Animasyonlu noktalar",
+	"APPEARANCE_AVATARS": "Avatarlar",
+	"TYPING_ONE": "{a} yazıyor...",
+	"TYPING_TWO": "{a} ve {b} yazıyor...",
+	"TYPING_THREE": "{a}, {b} ve {c} yazıyor...",
+	"TYPING_SEVERAL": "Birkaç kişi yazıyor...",
+	"SOMEONE": "Biri"
+}

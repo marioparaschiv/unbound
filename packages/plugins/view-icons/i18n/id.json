@@ -1,0 +1,10 @@
+{
+	"UNABLE_TO_OPEN": "Tidak dapat membuka {image, select, avatar {avatar} banner {banner} serverAvatar {avatar server} serverIcon {ikon server} serverBanner {banner server} other {ikon DM grup}}.",
+	"VIEW_AVATAR": "Lihat Avatar",
+	"VIEW_BANNER": "Lihat Banner",
+	"VIEW_GROUP_ICON": "Lihat Ikon DM Grup",
+	"VIEW_ICONS": "Lihat Ikon",
+	"VIEW_SERVER_AVATAR": "Lihat Avatar Server",
+	"VIEW_SERVER_BANNER": "Lihat Banner Server",
+	"VIEW_SERVER_ICON": "Lihat Ikon Server"
+}

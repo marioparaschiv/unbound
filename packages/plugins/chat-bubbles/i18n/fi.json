@@ -1,0 +1,19 @@
+{
+	"BUBBLE_COLOR": "Kuplan väri",
+	"BUBBLE_COLOR_FALLBACK": "Seuraa teemaa: musta tummissa teemoissa, valkoinen vaaleassa teemassa",
+	"COLORS": "Värit",
+	"CORNER_RADIUS": "Kulmien pyöristys",
+	"HORIZONTAL_PADDING": "Vaakasuuntainen täyte",
+	"LAYOUT": "Asettelu",
+	"LAYOUT_CARD": "Täysleveät kortit",
+	"LAYOUT_CARD_SUBTITLE": "Yksi kortti koko viestin takana nimineen ja reaktioineen, kuten Rosiecordissa",
+	"LAYOUT_FIT": "Sovita viestiin",
+	"LAYOUT_FIT_SUBTITLE": "Jokainen kupla ympäröi vain viestinsä tekstin ja median",
+	"OPACITY": "Peittävyys",
+	"OWN_COLOR": "Omat viestisi",
+	"OWN_COLOR_FALLBACK": "Sama kuin kuplan väri",
+	"SHAPE": "Muoto",
+	"UNIT_PERCENT": " %",
+	"UNIT_POINTS": " pt",
+	"VERTICAL_PADDING": "Pystysuuntainen täyte"
+}

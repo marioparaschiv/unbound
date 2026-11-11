@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Alapértelmezett elrendezés",
+	"LAYOUT_LIST": "Lista",
+	"LAYOUT_LIST_SUBTITLE": "Bejegyzések listában",
+	"LAYOUT_GALLERY": "Galéria",
+	"LAYOUT_GALLERY_SUBTITLE": "Bejegyzések kártyarácsban",
+	"DEFAULT_SORT_ORDER": "Alapértelmezett rendezés",
+	"SORT_RECENTLY_ACTIVE": "Legutóbb aktív",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "A legújabb üzenetekkel rendelkező bejegyzések elöl",
+	"SORT_DATE_POSTED": "Közzététel dátuma",
+	"SORT_DATE_POSTED_SUBTITLE": "A legújabb bejegyzések elöl"
+}

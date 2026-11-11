@@ -1,0 +1,23 @@
+{
+	"WHEN_YOU_JOIN": "Når du blir med i en server",
+	"MUTE_SERVER": "Demp server",
+	"MUTE_SERVER_SUBTITLE": "Demp nye servere automatisk",
+	"SUPPRESS_EVERYONE": "Undertrykk @everyone og @here",
+	"SUPPRESS_EVERYONE_SUBTITLE": "Ignorer @everyone og @here i nye servere",
+	"SUPPRESS_ROLES": "Undertrykk alle @omtaler av roller",
+	"SUPPRESS_ROLES_SUBTITLE": "Ignorer omtaler av roller i nye servere",
+	"SUPPRESS_HIGHLIGHTS": "Undertrykk høydepunkter",
+	"SUPPRESS_HIGHLIGHTS_SUBTITLE": "Slå av varsler om høydepunkter i nye servere",
+	"MUTE_EVENTS": "Demp nye arrangementer",
+	"MUTE_EVENTS_SUBTITLE": "Demp varsler om planlagte arrangementer",
+	"SHOW_ALL_CHANNELS": "Vis alle kanaler",
+	"SHOW_ALL_CHANNELS_SUBTITLE": "Vis alle kanaler i servere som lar deg velge kanaler",
+	"SERVER_NOTIFICATION_SETTINGS": "Varslingsinnstillinger for server",
+	"NOTIFY_ALL": "Alle meldinger",
+	"NOTIFY_MENTIONS": "Bare @omtaler",
+	"NOTIFY_NOTHING": "Ingenting",
+	"NOTIFY_DEFAULT": "Serverstandard",
+	"APPLY_NEW_GUILD_SETTINGS": "Bruk innstillinger for nye servere",
+	"APPLIED_TO_GUILD": "Tatt i bruk på {name}.",
+	"APPLIED_TO_THIS_SERVER": "Tatt i bruk på denne serveren."
+}

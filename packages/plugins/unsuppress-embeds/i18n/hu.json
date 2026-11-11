@@ -1,0 +1,6 @@
+{
+	"SUPPRESS_EMBEDS": "Beágyazások elrejtése",
+	"UNSUPPRESS_EMBEDS": "Beágyazások visszaállítása",
+	"CHANGE_FAILED": "Sikertelen művelet ({action}): {reason}",
+	"CHANGE_REFUSED": "A Discord elutasította a módosítást."
+}

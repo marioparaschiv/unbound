@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Disattivazione automatica",
+	"AUTO_DISABLE_SUBTITLE": "Disattiva di nuovo l’interruttore dopo aver inviato un messaggio silenzioso",
+	"DISABLE_SILENT_MESSAGE": "Disattiva messaggio silenzioso",
+	"ENABLE_SILENT_MESSAGE": "Attiva messaggio silenzioso",
+	"PERSIST_STATE": "Mantieni lo stato",
+	"PERSIST_STATE_SUBTITLE": "Lascia attivo l’interruttore quando apri un altro canale",
+	"SILENT_MESSAGE_TOGGLE": "Silent Message Toggle",
+	"TOGGLE": "Interruttore",
+	"TOGGLED_OFF": "I tuoi messaggi qui inviano di nuovo notifiche.",
+	"TOGGLED_ON": "I tuoi messaggi qui vengono inviati senza notifiche."
+}

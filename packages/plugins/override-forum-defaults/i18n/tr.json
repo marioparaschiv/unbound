@@ -1,0 +1,12 @@
+{
+	"DEFAULT_LAYOUT": "Varsayılan Düzen",
+	"LAYOUT_LIST": "Liste",
+	"LAYOUT_LIST_SUBTITLE": "Gönderiler liste halinde",
+	"LAYOUT_GALLERY": "Galeri",
+	"LAYOUT_GALLERY_SUBTITLE": "Gönderiler kart ızgarası halinde",
+	"DEFAULT_SORT_ORDER": "Varsayılan Sıralama",
+	"SORT_RECENTLY_ACTIVE": "Son Etkinlik",
+	"SORT_RECENTLY_ACTIVE_SUBTITLE": "En yeni mesajları olan gönderiler önce",
+	"SORT_DATE_POSTED": "Paylaşım Tarihi",
+	"SORT_DATE_POSTED_SUBTITLE": "En yeni gönderiler önce"
+}

@@ -17,6 +17,7 @@
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
 #include "LoaderPreferences.h"
+#include "LoaderTelemetry.h"
 #include "LoaderThreadWarnings.h"
 #include "LoaderToolboxGestures.h"
 #include "NativeFabric.h"
@@ -93,6 +94,14 @@ static void nativeOnLoadJSBundle(JNIEnv *, jclass)
     if (auto loader = currentLoader())
     {
         loader->onLoadJSBundle();
+    }
+}
+
+static void nativeMarkHealthy(JNIEnv *, jclass)
+{
+    if (auto loader = currentLoader())
+    {
+        loader->markHealthy();
     }
 }
 
@@ -230,6 +239,15 @@ static jstring nativePreference(JNIEnv *env, jclass, jstring action, jstring arg
     return toJavaString(
         env, loader::preferences::perform(loader->settings(), toStdString(env, action),
                                           argument ? toStdString(env, argument) : std::string()));
+}
+
+static jboolean nativeIsBlockedTelemetry(JNIEnv *env, jclass, jstring url)
+{
+    auto loader = currentLoader();
+    return loader && url && loader::isTelemetryURL(toStdString(env, url)) &&
+                   loader->settings().getBoolean("unbound", loader::kBlockTelemetrySetting, true)
+               ? JNI_TRUE
+               : JNI_FALSE;
 }
 
 struct ToolboxGestures {
@@ -491,7 +509,9 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
     gCallbacks.appFonts = env->GetStaticMethodID(bridge, "appFonts", "()[Ljava/lang/String;");
     gCallbacks.appFontBytes =
         env->GetStaticMethodID(bridge, "appFontBytes", "(Ljava/lang/String;)[B");
-    gCallbacks.alert            = env->GetStaticMethodID(bridge, "alert", "(Ljava/lang/String;)V");
+    gCallbacks.alert      = env->GetStaticMethodID(bridge, "alert", "(Ljava/lang/String;)V");
+    gCallbacks.crashAlert = env->GetStaticMethodID(bridge, "crashAlert", "(Ljava/lang/String;)V");
+    gCallbacks.updateProgress   = env->GetStaticMethodID(bridge, "updateProgress", "(Z)V");
     gCallbacks.onBundleExecuted = env->GetStaticMethodID(bridge, "onBundleExecuted", "()V");
     gCallbacks.fontsChanged     = env->GetStaticMethodID(bridge, "fontsChanged", "()V");
 
@@ -509,8 +529,8 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
            gCallbacks.fabricSetFrame && gCallbacks.fabricMeasure && gCallbacks.fetchText &&
            gCallbacks.download && gCallbacks.devServerHost && gCallbacks.isServing &&
            gCallbacks.installHomeScreenIcon && gCallbacks.availableFonts && gCallbacks.appFonts &&
-           gCallbacks.appFontBytes && gCallbacks.alert && gCallbacks.onBundleExecuted &&
-           gCallbacks.fontsChanged;
+           gCallbacks.appFontBytes && gCallbacks.alert && gCallbacks.crashAlert &&
+           gCallbacks.updateProgress && gCallbacks.onBundleExecuted && gCallbacks.fontsChanged;
 }
 
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
@@ -536,6 +556,9 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
          "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)V",
          reinterpret_cast<void *>(nativeInitialize)},
         {"nativeOnLoadJSBundle", "()V", reinterpret_cast<void *>(nativeOnLoadJSBundle)},
+        {"nativeMarkHealthy", "()V", reinterpret_cast<void *>(nativeMarkHealthy)},
+        {"nativeIsBlockedTelemetry", "(Ljava/lang/String;)Z",
+         reinterpret_cast<void *>(nativeIsBlockedTelemetry)},
         {"nativeOnRuntimeCreated", "(J)Z", reinterpret_cast<void *>(nativeOnRuntimeCreated)},
         {"nativeDrainRuntimeWork", "(J)V", reinterpret_cast<void *>(nativeDrainRuntimeWork)},
         {"nativeInstallSchedulerDrain", "(J)Z",

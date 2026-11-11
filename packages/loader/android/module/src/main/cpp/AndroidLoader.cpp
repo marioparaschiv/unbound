@@ -243,6 +243,14 @@ std::string AndroidLoader::themeColorsJSON(const std::string &themeId)
                                 : nlohmann::json::object());
 }
 
+void AndroidLoader::markHealthy()
+{
+    if (pipeline_)
+    {
+        pipeline_->markHealthy();
+    }
+}
+
 void AndroidLoader::onLoadJSBundle()
 {
     // start() loaded the file moments ago; a reloaded runtime still sees edits made since.
@@ -652,6 +660,18 @@ void AndroidLoader::reload()
     reloadApp();
 }
 
+void AndroidLoader::showUpdateProgress(bool showing)
+{
+    JNIEnv *env = currentEnvironment();
+    if (!env)
+    {
+        return;
+    }
+    env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.updateProgress,
+                              showing ? JNI_TRUE : JNI_FALSE);
+    clearPendingException(env);
+}
+
 void AndroidLoader::alert(const std::string &message)
 {
     JNIEnv *env = currentEnvironment();
@@ -661,6 +681,19 @@ void AndroidLoader::alert(const std::string &message)
     }
     jstring text = toJavaString(env, message);
     env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.alert, text);
+    clearPendingException(env);
+    env->DeleteLocalRef(text);
+}
+
+void AndroidLoader::crashAlert(const std::string &message)
+{
+    JNIEnv *env = currentEnvironment();
+    if (!env)
+    {
+        return;
+    }
+    jstring text = toJavaString(env, message);
+    env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.crashAlert, text);
     clearPendingException(env);
     env->DeleteLocalRef(text);
 }
