@@ -26006,12 +26006,12 @@ export type KeysExposingAll<K> = (
 	? Keys
 	: never;
 export type LoadingButtonPillComponent = React$1.ComponentType<LoadingButtonPillProps>;
-/** Widens a single result to an array when the search was made with `all: true`. */
+/** Widens a single result to an array when the search was made with `all: true`; a single one is `undefined` when the cache knows it is missing. */
 export type MetroAllValues<T extends MetroSearchOptions, U> = T extends {
 	all: true;
 }
 	? U[]
-	: U;
+	: U | undefined;
 /** Tuple of param bags followed by a `{ bulk: true }` marker, describing a bulk find. */
 export type MetroBulkFind<T extends string> = [
 	...AnyProps<MetroParamsBag<T>>[],
@@ -26048,9 +26048,9 @@ export type MetroFilter = ((mdl: any, id: number | string) => PredicateResult) &
 };
 /** A function or class exported by a Discord module, whose signature Discord does not document. */
 export type MetroFunction = DiscordFunction & (new (...args: any[]) => any);
-/** Dispatches to the bulk or single by-name result shape; a single one is `undefined` when the cache knows it is missing. */
+/** Dispatches to the bulk or single by-name result shape. */
 export type MetroFunctionSignatureOrArray<T extends any[], U extends string> =
-	T extends MetroBulkFind<U> ? MetroBulkModuleByName<T> : MetroSingleModuleByName<T> | undefined;
+	T extends MetroBulkFind<U> ? MetroBulkModuleByName<T> : MetroSingleModuleByName<T>;
 /** Options that control internal search behaviour shared across every `findBy*` helper. */
 export type MetroInternalOptions = {
 	/** Treats each argument as its own search and resolves them all in one registry pass, one result per item. */
@@ -26102,9 +26102,9 @@ export type MetroModuleLoadListener = (mdl: any, id: number) => void;
 export type MetroModuleLoadedOptions = Pick<MetroSearchOptions, 'esModules' | 'interop'>;
 /** A name `findByName` takes: a default export's runtime name, or any other string. */
 export type MetroModuleName = LiteralUnion<Extract<keyof DiscordModulesByName, string>>;
-/** Dispatches to the bulk or single by-path result shape; a single one is `undefined` when the cache knows it is missing. */
+/** Dispatches to the bulk or single by-path result shape. */
 export type MetroModuleOrArray<T extends any[], U extends string> =
-	T extends MetroBulkFind<U> ? AnyProps : MetroSingleModuleByPath<T> | undefined;
+	T extends MetroBulkFind<U> ? AnyProps : MetroSingleModuleByPath<T>;
 /** A source path `findByFilePath` takes: a Discord module's path, or any other string. */
 export type MetroModulePath = LiteralUnion<DiscordModulePath>;
 /**
@@ -26130,11 +26130,9 @@ export type MetroParamsBag<T extends string> = {
 };
 /** A prop name `findByProps` takes: an export name of a Discord module, or any other string. */
 export type MetroPropName = LiteralUnion<DiscordExportName>;
-/** Dispatches to the bulk or single by-property result shape; a single one is `undefined` when the cache knows it is missing. */
+/** Dispatches to the bulk or single by-property result shape. */
 export type MetroPropertyRecordOrArray<T extends any[], U extends string> =
-	T extends MetroBulkFind<U>
-		? MetroBulkModuleByProperty<T>
-		: MetroSingleModuleByProperty<T> | undefined;
+	T extends MetroBulkFind<U> ? MetroBulkModuleByProperty<T> : MetroSingleModuleByProperty<T>;
 /** A record keyed by the requested prop names. */
 export type MetroPropsRecord<K extends PropertyKey> = {
 	[P in K]: MetroExport;
@@ -26175,21 +26173,21 @@ export type MetroSingleModuleByName<T extends any[]> = T extends [
 					}
 				: MetroNamedExport<Exclude<T[number], object>>
 		>
-	: MetroNamedExport<Exclude<T[number], object>>;
+	: MetroNamedExport<Exclude<T[number], object>> | undefined;
 /** Result shape of a by-path search: the module's exports. */
 export type MetroSingleModuleByPath<T extends any[]> = T extends [
 	...any,
 	infer O extends MetroSearchOptions,
 ]
 	? MetroAllValues<O, MetroModuleAtPath<Exclude<T[number], object>>>
-	: MetroModuleAtPath<Exclude<T[number], object>>;
+	: MetroModuleAtPath<Exclude<T[number], object>> | undefined;
 /** Result shape of a by-property search: a record keyed by the requested props. */
 export type MetroSingleModuleByProperty<T extends any[]> = T extends [
 	...any,
 	infer O extends MetroSearchOptions,
 ]
 	? MetroAllValues<O, MetroModuleWithProps<Exclude<T[number], object>>>
-	: MetroModuleWithProps<Exclude<T[number], object>>;
+	: MetroModuleWithProps<Exclude<T[number], object>> | undefined;
 /** Search options for `flux.getStore`, adding the `short` name-matching toggle. */
 export type MetroStoreOptions = {
 	short?: boolean;
