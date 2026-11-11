@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { clearTagProblems, noteTag, tagProblem, tagProblems } from '~/tags/tag-problems';
+import { clearTagProblems, noteTag, tagProblem, tagProblems } from '~/lib/tag-problems';
 
 describe('tag problems', () => {
 	test('flags tags without text or with unreadable colors', () => {

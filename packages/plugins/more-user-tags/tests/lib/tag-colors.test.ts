@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { resolveTagColors } from '~/tags/tag-colors';
+import { resolveTagColors } from '~/lib/tag-colors';
 
 const allOn = { useRoleColor: true, useEnhancedRoleColors: true, coloredTags: true };
 const member = {

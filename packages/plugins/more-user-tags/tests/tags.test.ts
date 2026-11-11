@@ -1,4 +1,4 @@
-import { flux, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { storage } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
 import { afterEach, beforeEach, describe, expect, jest, test } from 'bun:test';
@@ -123,6 +123,7 @@ describe('the cached tag colors', () => {
 
 describe('health', () => {
 	test('the self test passes once started', async () => {
+		expect(logs.entries.filter(({ level }) => level !== 'info')).toEqual([]);
 		expect((await selfTest()).ok).toBe(true);
 	});
 });

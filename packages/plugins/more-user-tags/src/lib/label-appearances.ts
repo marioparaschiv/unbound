@@ -3,7 +3,7 @@ import {
 	type RoleColorAppearance,
 } from '@unbound-plugins/shared/colors/role-colors';
 
-import { HEX_COLOR } from '~/constants';
+import { HEX_COLOR } from '~/lib/constants';
 
 export type LabelAppearance = { primaryColor: string; appearance: RoleColorAppearance };
 
@@ -118,3 +118,6 @@ export function createLabelAppearances() {
 }
 
 export default { createLabelAppearances };
+
+/** The colors the tag patch chose for each tag text, read by the native gradients and saved between launches. */
+export const labelAppearances = createLabelAppearances();

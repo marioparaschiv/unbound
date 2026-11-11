@@ -1,6 +1,6 @@
 import { messages } from '@unbound-app/i18n';
 
-import type { Tag } from '~/types';
+import type { Tag } from '~/lib/types';
 
 export const HEX_COLOR = /^#[\da-f]{6}$/i;
 

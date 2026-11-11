@@ -1,8 +1,8 @@
 import { settings } from '@unbound-app/settings';
 
-import type { Channel, Guild, Message, PermissionName, Tag, User } from '~/types';
-import { DiscordConstants, PermissionUtils } from '~/tags/modules';
-import { TAGS } from '~/constants';
+import type { Channel, Guild, Message, PermissionName, Tag, User } from '~/lib/types';
+import { DiscordConstants, PermissionUtils } from '~/lib/modules';
+import { TAGS } from '~/lib/constants';
 
 function hasPermission(
 	user: User,
@@ -10,7 +10,9 @@ function hasPermission(
 	channel: Channel | undefined,
 	names: PermissionName[],
 ): boolean {
-	if (!guild) return false;
+	const constants = DiscordConstants;
+
+	if (!guild || !constants || !PermissionUtils) return false;
 
 	let total: bigint;
 
@@ -25,7 +27,7 @@ function hasPermission(
 	}
 
 	return names.some((name) => {
-		const bit = DiscordConstants.Permissions[name];
+		const bit = constants.Permissions[name];
 
 		return typeof bit === 'bigint' && (total & bit) === bit;
 	});

@@ -1,4 +1,4 @@
-import type { TagColors } from '~/tags/tag-properties';
+import type { TagColors } from '~/lib/tag-properties';
 
 const MAX_PROBLEMS = 64;
 const problems = new Map<string, string>();
