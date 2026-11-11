@@ -140,10 +140,6 @@ class BuiltInsManager {
 		this.initialized = false;
 	}
 
-	/**
-	 * @description Reports whether the built-ins have been initialised.
-	 * @returns `true` if {@link initialize} has run and {@link shutdown} has not.
-	 */
 	isInitialized() {
 		return this.initialized;
 	}

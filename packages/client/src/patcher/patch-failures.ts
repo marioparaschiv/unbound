@@ -8,7 +8,6 @@ export type PatchFailures = {
 	count: number;
 	/** Set by the first failure: from then on each render keeps an untouched copy of Discord's tree to fall back to. */
 	unstable: boolean;
-	/** Removes the patch. */
 	unpatch: () => void;
 };
 

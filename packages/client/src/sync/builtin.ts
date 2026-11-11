@@ -59,9 +59,6 @@ export const cloudSyncSection: SectionEntry = {
 	key: Screens.Sync,
 	titleKey: 'UNBOUND_CLOUD_SYNC',
 	/**
-	 *
-	 */
-	/**
 	 * @description Loads the page when it first opens.
 	 * @returns The page.
 	 */

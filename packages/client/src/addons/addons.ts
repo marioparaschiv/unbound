@@ -365,11 +365,6 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 		return true;
 	}
 
-	/**
-	 * @description Reads the version of a listed addon that is installed on this device.
-	 * @param listed The listed addon.
-	 * @returns The installed version, or `undefined` if absent.
-	 */
 	getInstalledVersion(listed: ListedAddon): string | undefined {
 		return this.getEntity(listed.id)?.version;
 	}
@@ -469,11 +464,6 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 		}
 	}
 
-	/**
-	 * @description Names an addon's on-disk folder, inside the manager's directory.
-	 * @param id The addon's id.
-	 * @returns The folder path relative to the documents directory.
-	 */
 	protected directoryOf(id: string): string {
 		return `${this.directory}/${id}`;
 	}
@@ -563,10 +553,6 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 		this.held.delete(id);
 	}
 
-	/**
-	 * @description Reads the URL each addon was installed from.
-	 * @returns A record of addon id to install URL.
-	 */
 	getSources(): Record<string, string> {
 		return this.sources.all();
 	}

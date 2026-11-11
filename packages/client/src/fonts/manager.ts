@@ -152,7 +152,6 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 		);
 	}
 
-	/** @returns The saved presets. */
 	getPresets(): UnboundFontPreset[] {
 		return getNativeFonts()?.listPresets() ?? [];
 	}

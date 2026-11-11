@@ -5,9 +5,6 @@ export const marketplaceSection: SectionEntry = {
 	key: Screens.Marketplace,
 	titleKey: 'UNBOUND_MARKETPLACE',
 	/**
-	 *
-	 */
-	/**
 	 * @description Loads the page when it first opens.
 	 * @returns The page.
 	 */
@@ -18,9 +15,6 @@ export const marketplaceSection: SectionEntry = {
 export const storePageSection: SectionEntry = {
 	key: Screens.StorePage,
 	titleKey: 'UNBOUND_STORE_PAGE',
-	/**
-	 *
-	 */
 	/**
 	 * @description Loads the page when it first opens.
 	 * @returns The page.

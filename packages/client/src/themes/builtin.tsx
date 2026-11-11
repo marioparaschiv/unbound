@@ -284,9 +284,6 @@ export const designSection: SectionEntry = {
 	key: Screens.Design,
 	titleKey: 'UNBOUND_DESIGN',
 	/**
-	 *
-	 */
-	/**
 	 * @description Loads the page when it first opens.
 	 * @returns The page.
 	 */
@@ -298,9 +295,6 @@ export const designSection: SectionEntry = {
 export const fontGroupSection: SectionEntry = {
 	key: Screens.FontGroup,
 	titleKey: 'UNBOUND_FONTS',
-	/**
-	 *
-	 */
 	/**
 	 * @description Loads the page when it first opens.
 	 * @returns The page.
