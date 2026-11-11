@@ -17,10 +17,13 @@ import {
 	mergeDiscordAppIcons,
 	resolveDiscordAppIconSelection,
 	toDiscordAppIcon,
+	toPickerAppIconId,
+	unlockDiscordAppIcon,
 } from './bridge-icons';
 import AppIconStore from './state';
 
 const APP_ICON_CONSTANTS = 'modules/app_icons/native/AppIconConstants.tsx';
+const APP_ICON_UTILS = 'modules/app_icons/native/AppIconUtils.tsx';
 const APP_ICON_ROWS = 'modules/app_icons/native/AppIconRows.tsx';
 const APP_ICON_ROW = 'modules/app_icons/native/AppIconRow/AppIconRow.tsx';
 
@@ -75,14 +78,49 @@ function patchConstants(constants: MetroExport) {
 		mergeDiscordAppIcons(
 			Array.isArray(result) ? result.filter(isDiscordIconRow) : [],
 			discordIcons(),
-		),
+		).map(unlockDiscordAppIcon),
 	);
 
+	// Discord gates every icon but the default behind Nitro; the picker's selection reads `isPremium` from here.
 	Patcher.instead(constants, 'getIconById', ({ args, original, this: self }) => {
 		const id = typeof args[0] === 'string' ? args[0] : undefined;
-		const icon = id === ADD_TILE_ID ? addTile() : findDiscordAppIcon(id, discordIcons());
+		const icon: unknown =
+			(id === ADD_TILE_ID ? addTile() : findDiscordAppIcon(id, discordIcons())) ??
+			original.apply(self, args);
 
-		return icon ?? original.apply(self, args);
+		return isDiscordIconRow(icon) ? unlockDiscordAppIcon(icon) : icon;
+	});
+}
+
+function patchUtils(utils: MetroExport) {
+	Patcher.after(utils, 'setAppIcon', ({ args, result }) => {
+		const id = args[0];
+
+		if (typeof id === 'string' && result instanceof Promise) {
+			result.then(
+				(applied) => applied && AppIconStore.getState().setCurrent(id),
+				() => {
+					// Discord's caller reports the failed change.
+				},
+			);
+		}
+
+		return result;
+	});
+
+	// iOS reads `UIApplication.alternateIconName`, which can lag the change, so the applied id wins this launch.
+	Patcher.after(utils, 'useCurrentAppIcon', ({ result }) => {
+		const current = AppIconStore((state) => state.current);
+
+		return current ?? result;
+	});
+
+	Patcher.after(utils, 'useAppIcons', ({ result }) => {
+		const current = AppIconStore((state) => state.current);
+
+		return current && result && typeof result === 'object'
+			? { ...result, currentAppIcon: current }
+			: result;
 	});
 }
 
@@ -92,6 +130,7 @@ type ElementProps = {
 	accessibilityRole?: string;
 	accessibilityState?: unknown;
 	icons?: DiscordIconRow[];
+	currentAppIcon?: string;
 	children?: Element | Element[];
 	onSelect?: (...args: SelectArgs) => void;
 };
@@ -100,28 +139,24 @@ type SelectArgs = [DiscordAppIconSelection];
 
 type Element = { props?: ElementProps } | null | undefined;
 
-function findRows(node: Element | Element[]): Element {
+function findRows(node: Element | Element[], found: Element[] = []): Element[] {
 	if (!node || typeof node !== 'object') {
-		return undefined;
+		return found;
 	}
 
 	if (Array.isArray(node)) {
-		for (const child of node) {
-			const found = findRows(child);
+		for (const child of node) findRows(child, found);
 
-			if (found) {
-				return found;
-			}
-		}
-
-		return undefined;
+		return found;
 	}
 
 	if (Array.isArray(node.props?.icons)) {
-		return node;
+		found.push(node);
+
+		return found;
 	}
 
-	return findRows(node.props?.children);
+	return findRows(node.props?.children, found);
 }
 
 function findTrailing(node: Element | Element[]): Element {
@@ -176,10 +211,11 @@ function patchRows(rows: MetroExport) {
 			.map(toDiscordAppIcon)
 			.sort((a, b) => Number(b.id === UNBOUND_ICON_ID) - Number(a.id === UNBOUND_ICON_ID));
 		const leading = canAddCustomIcon() ? [addTile()] : [];
-		const list = findRows(result as Element);
-		const shown = list?.props?.icons;
+		const lists = findRows(result as Element);
+		// Discord renders its official icons last, after any limited-time section.
+		const official = lists.at(-1);
 
-		if (!list?.props || !shown) {
+		if (!official?.props?.icons) {
 			Logger.warn(
 				'AppIconRows renders no icon list, so Unbound icons stay out of the picker.',
 			);
@@ -187,27 +223,42 @@ function patchRows(rows: MetroExport) {
 			return result;
 		}
 
-		const onSelect = list.props.onSelect;
+		official.props.icons = mergeDiscordAppIconRows(
+			official.props.icons,
+			icons,
+			leading,
+			ADD_TILE_ID,
+		);
 
-		list.props.icons = mergeDiscordAppIconRows(shown, icons, leading, ADD_TILE_ID);
-		list.props.onSelect = (...args: SelectArgs) => {
-			const selection = args[0];
-
-			if (isAddTile(selection)) {
-				// Required on use, so startup never evaluates the UI.
-				const {
-					openCustomIconsSheet,
-				}: typeof CustomIconsSheet = require('~/ui/app-icons/open-custom-icons-sheet');
-
-				openCustomIconsSheet().catch((error) =>
-					Logger.error('Failed to open the custom app icon sheet:', error),
-				);
-
-				return;
+		for (const list of lists) {
+			if (!list?.props?.icons) {
+				continue;
 			}
 
-			onSelect?.(resolveDiscordAppIconSelection(selection, icons));
-		};
+			const onSelect = list.props.onSelect;
+
+			list.props.icons = list.props.icons.map(unlockDiscordAppIcon);
+			// Android reports the native alias the Unbound row replaces, so map it back to the row's id.
+			list.props.currentAppIcon = toPickerAppIconId(list.props.currentAppIcon, icons);
+			list.props.onSelect = (...args: SelectArgs) => {
+				const selection = args[0];
+
+				if (isAddTile(selection)) {
+					// Required on use, so startup never evaluates the UI.
+					const {
+						openCustomIconsSheet,
+					}: typeof CustomIconsSheet = require('~/ui/app-icons/open-custom-icons-sheet');
+
+					openCustomIconsSheet().catch((error) =>
+						Logger.error('Failed to open the custom app icon sheet:', error),
+					);
+
+					return;
+				}
+
+				onSelect?.(resolveDiscordAppIconSelection(selection, icons));
+			};
+		}
 
 		return result;
 	});
@@ -221,6 +272,7 @@ export function start(): void {
 
 	stopWaiting = [
 		onModuleLoaded(byFilePath(APP_ICON_CONSTANTS), patchConstants),
+		onModuleLoaded(byFilePath(APP_ICON_UTILS), patchUtils),
 		onModuleLoaded(byFilePath(APP_ICON_ROWS), patchRows),
 		onModuleLoaded(byFilePath(APP_ICON_ROW), patchRow),
 	];

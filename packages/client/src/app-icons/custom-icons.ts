@@ -120,9 +120,9 @@ export async function pickCustomIconImage(): Promise<string | undefined> {
 
 async function leaveIcon(id: string) {
 	const module = getNativeModule<NativeAppIconModule | undefined>('NativeAppIconModule');
-	const current = await module?.getCurrentIcon();
+	const current = AppIconStore.getState().current ?? (await module?.getCurrentIcon())?.id;
 
-	if (current?.id === id) {
+	if (current === id) {
 		if (typeof AppIconUtils.setAppIcon === 'function') {
 			await AppIconUtils.setAppIcon(DEFAULT_ICON_ID);
 		} else {
