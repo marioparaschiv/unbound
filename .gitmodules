@@ -7,3 +7,8 @@
 [submodule "packages/loader/vendor/libffi"]
 	path = packages/loader/vendor/libffi
 	url = https://github.com/libffi/libffi.git
+[submodule "packages/icon-packs"]
+	path = packages/icon-packs
+	url = https://github.com/unbound-app/icon-packs
+	branch = main
+	update = none

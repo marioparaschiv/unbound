@@ -2,16 +2,11 @@ import { Discord } from '~/metro/components';
 import { Theme } from '~/metro/common';
 
 export default Discord.createStyles({
-	grid: {
-		flex: 1,
-		flexDirection: 'row',
-		flexWrap: 'wrap',
-		alignContent: 'center',
-		justifyContent: 'center',
-		gap: 16,
-		padding: 16,
-	},
-	button: {
+	// A round button like Discord's header actions, at the row's left edge until the row places it.
+	slot: {
+		position: 'absolute',
+		top: 0,
+		left: 0,
 		width: 56,
 		height: 56,
 		borderRadius: Theme.radii.round,

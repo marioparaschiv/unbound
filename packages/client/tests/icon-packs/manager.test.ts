@@ -150,3 +150,36 @@ describe('the applied icon pack', () => {
 		expect(ImageSources.getImageSourcesFromImageProps({ source: 1 })).toBe(1);
 	});
 });
+
+describe('a pack installed from the store', () => {
+	const STORE_PACK = 'acme.store-icons';
+	const sha256 = 'a'.repeat(64);
+	const manifest = {
+		...makeManifest(STORE_PACK),
+		main: 'icons.json',
+		type: 'icon-pack' as const,
+		assets: {
+			'images/native/icons/ic_star': {
+				type: 'png' as const,
+				width: 24,
+				height: 24,
+				scales: { '3': sha256 },
+			},
+		},
+	};
+
+	test('renders an icon from the image its manifest lists for that asset', async () => {
+		icons.load(STORE_PACK, manifest);
+		await icons['persistFiles'](manifest, {});
+		await icons.enable(STORE_PACK);
+
+		expect(ImageSources.getImageSourcesFromImageProps({ source: 1 })).toEqual({
+			uri: `file:///docs/Unbound/Icons/${STORE_PACK}/assets/${sha256}.png`,
+			width: 24,
+			height: 24,
+			scale: 3,
+		});
+
+		icons.disable(STORE_PACK);
+	});
+});

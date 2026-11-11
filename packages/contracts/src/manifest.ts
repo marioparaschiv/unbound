@@ -81,12 +81,15 @@ export const addonAssetSchema = Type.Object(
 		type: Type.Enum(ASSET_TYPES),
 		width: Type.Integer({ minimum: 1, maximum: 16_384 }),
 		height: Type.Integer({ minimum: 1, maximum: 16_384 }),
-		scales: Type.Record(
-			Type.Enum(ASSET_SCALES),
-			Type.String({
-				pattern: '^[\\da-f]{64}$',
-				errorMessage: 'Must be a lowercase SHA-256 digest.',
-			}),
+		// An image may ship at any of the scales, so none is required.
+		scales: Type.Partial(
+			Type.Record(
+				Type.Enum(ASSET_SCALES),
+				Type.String({
+					pattern: '^[\\da-f]{64}$',
+					errorMessage: 'Must be a lowercase SHA-256 digest.',
+				}),
+			),
 			{ additionalProperties: false, minProperties: 1 },
 		),
 	},

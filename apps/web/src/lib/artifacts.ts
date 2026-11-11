@@ -18,8 +18,32 @@ import type { SourcePin } from '@unbound-app/contracts/source';
 import type { addonVersion, submissionSource } from '~/db/schema';
 import type { PageMediaFiles } from '~/lib/addon-page-source';
 import { buildStorePageFile } from '~/lib/store-page-file';
+import { forEachAtMost } from '~/lib/for-each-at-most';
 import type { AppContext } from '~/lib/context';
 import type { Env } from '~/lib/env';
+
+/** How many extra files one version writes to the bucket at once. */
+const FILE_WRITE_CONCURRENCY = 16;
+
+/** How many times one extra file is written before the version fails. */
+const FILE_WRITE_ATTEMPTS = 4;
+
+// The bucket answers the odd write with a transient `internal incident`; the same bytes are safe to write again.
+async function writeWithRetry(write: () => Promise<number>): Promise<void> {
+	for (let attempt = 1; ; attempt++) {
+		try {
+			await write();
+
+			return;
+		} catch (error) {
+			if (attempt >= FILE_WRITE_ATTEMPTS) {
+				throw error;
+			}
+
+			await Bun.sleep(250 * attempt);
+		}
+	}
+}
 
 export type AddonVersionRow = typeof addonVersion.$inferSelect;
 
@@ -78,13 +102,16 @@ export async function writeArtifact(
 	const directory = getVersionDirectory(target.addonId, target.version);
 
 	await Promise.all([
-		...[...files].map(([path, bytes]) =>
-			ctx.storage.public.write(
-				`${directory}/${path}`,
-				bytes,
-				path.endsWith('.json') ? { type: 'application/json' } : undefined,
-			),
-		),
+		// An icon pack ships hundreds of images; the bucket fails when all of them are written at once.
+		forEachAtMost([...files], FILE_WRITE_CONCURRENCY, async ([path, bytes]) => {
+			await writeWithRetry(() =>
+				ctx.storage.public.write(
+					`${directory}/${path}`,
+					bytes,
+					path.endsWith('.json') ? { type: 'application/json' } : undefined,
+				),
+			);
+		}),
 		...[...bytecode].map(([bytecodeVersion, bytes]) =>
 			ctx.storage.public.write(getBytecodePath(keys.bundle, bytecodeVersion), bytes),
 		),

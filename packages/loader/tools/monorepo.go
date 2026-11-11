@@ -134,7 +134,7 @@ func runDependencies(args []string) error {
 		}
 	}
 	var output bytes.Buffer
-	if err := defaultRunner(rootPath, "git", []string{"submodule", "status", "--recursive"}, os.Environ(), &output, os.Stderr); err != nil {
+	if err := defaultRunner(rootPath, "git", []string{"submodule", "status", "--recursive", "--", "."}, os.Environ(), &output, os.Stderr); err != nil {
 		return err
 	}
 	if err := validateSubmoduleOutput(output.String()); err != nil {

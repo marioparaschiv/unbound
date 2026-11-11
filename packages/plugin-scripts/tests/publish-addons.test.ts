@@ -370,3 +370,90 @@ test('publishes a static theme from the themes workspace beside the plugins', as
 		'- Add the theme',
 	);
 });
+
+function png(width: number, height: number): Uint8Array {
+	const bytes = new Uint8Array(33);
+	const view = new DataView(bytes.buffer);
+
+	bytes.set([
+		0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52,
+	]);
+	view.setUint32(16, width);
+	view.setUint32(20, height);
+
+	return bytes;
+}
+
+test('publishes an icon pack from a submodule workspace, copying its files into the build commit', async () => {
+	const packs = join(root, 'icon-packs');
+	const image = 'design/images/SettingsIcon';
+
+	mkdirSync(join(packs, 'delta', 'design', 'images'), { recursive: true });
+	git(packs, 'init', '-q', '-b', 'main');
+	git(packs, 'config', 'user.name', 'Test');
+	git(packs, 'config', 'user.email', 'test@example.com');
+	writeFileSync(join(packs, 'unbound.config.json'), '{ "addons": ["*"] }\n');
+	writeFileSync(
+		join(packs, 'delta', 'manifest.json'),
+		JSON.stringify({
+			id: 'unbound.delta',
+			name: 'delta',
+			description: 'The delta icons.',
+			authors: [{ name: 'adrian', id: '1' }],
+			version: '1.0.0',
+			main: 'icons.json',
+			type: 'icon-pack',
+		}),
+	);
+	writeFileSync(join(packs, 'delta', `${image}@3x.png`), png(72, 48));
+	git(packs, 'add', '-A');
+	git(packs, 'commit', '-q', '-m', 'feat(delta): redraw the settings icon');
+	git(
+		work,
+		'-c',
+		'protocol.file.allow=always',
+		'submodule',
+		'add',
+		'-q',
+		packs,
+		'packages/icon-packs',
+	);
+
+	const head = commit('build(icon-packs): add the submodule');
+
+	state.published = new Map([
+		['unbound.alpha', { version: '1.0.0', commitSha: null }],
+		['unbound.beta', { version: '1.1.0', commitSha: null }],
+		['unbound.gamma', { version: '1.0.0', commitSha: null }],
+	]);
+	state.calls = [];
+
+	const result = await run();
+	const build = state.calls[0]?.body.commitSha ?? '';
+	const show = (path: string) => git(work, 'show', `${build}:packages/icon-packs/${path}`);
+	const manifest = JSON.parse(show('delta/manifest.json'));
+	const sha256 = manifest.assets?.[image]?.scales?.['3'];
+
+	expect(result.exitCode).toBe(0);
+	expect(state.calls.map((call) => call.body)).toEqual([
+		{
+			repository: REPOSITORY,
+			path: 'packages/icon-packs/delta',
+			ref: `plugin-builds/${head}`,
+			commitSha: build,
+		},
+	]);
+	expect(manifest.assets[image]).toEqual({
+		type: 'png',
+		width: 24,
+		height: 16,
+		scales: { '3': sha256 },
+	});
+	expect(JSON.parse(show('delta/icons.json'))).toEqual([`${image}@3x.png`]);
+	expect(
+		git(work, 'cat-file', '-s', `${build}:packages/icon-packs/delta/assets/${sha256}.png`),
+	).toBe('33');
+	expect(show('delta/CHANGELOG.md')).toContain('- Redraw the settings icon');
+	expect(show('unbound.config.json')).toContain('addons');
+	expect(git(work, 'ls-tree', head, 'packages/icon-packs')).toStartWith('160000');
+});

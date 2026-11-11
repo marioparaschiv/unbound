@@ -85,9 +85,27 @@ export async function writeAddonFiles(
 		}),
 	);
 
-	await Promise.all(
-		listAddonFiles(manifest)
-			.filter(({ path }) => Object.hasOwn(files, path))
-			.map(({ path }) => fs.writeFile(`${directory}/${path}`, files[path], 'base64')),
-	);
+	const paths = listAddonFiles(manifest)
+		.map(({ path }) => path)
+		.filter((path) => Object.hasOwn(files, path));
+	// The native write creates a missing parent folder and fails when a parallel write created it first, so
+	// each folder's first file is written alone.
+	const firsts = new Map<string, string>();
+
+	for (const path of paths) {
+		const folder = path.slice(0, path.lastIndexOf('/') + 1);
+
+		if (!firsts.has(folder)) {
+			firsts.set(folder, path);
+		}
+	}
+
+	const write = (path: string) => fs.writeFile(`${directory}/${path}`, files[path], 'base64');
+	const leading = new Set(firsts.values());
+
+	for (const path of leading) {
+		await write(path);
+	}
+
+	await Promise.all(paths.filter((path) => !leading.has(path)).map(write));
 }
