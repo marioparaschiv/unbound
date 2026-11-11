@@ -1,4 +1,11 @@
-import type { IconPack, IconPackManifest, Plugin, UnboundAsset } from '@unbound-app/types';
+import type {
+	AddonManifest,
+	IconPack,
+	IconPackManifest,
+	Plugin,
+	UnboundAsset,
+} from '@unbound-app/types';
+import { ASSET_SCALES, getAssetPath } from '@unbound-app/contracts/addon-assets';
 import toError from '@unbound-app/utils/to-error';
 import noop from '@unbound-app/utils/noop';
 
@@ -8,6 +15,7 @@ import type { InstalledEntry } from '~/updates/addon-updates';
 import { refreshImages } from '~/icon-packs/refresh-images';
 import { getById, onAssetRegistered } from '~/assets/api';
 import { downloadFile } from '~/native/download-file';
+import type { AddonFiles } from '~/addons/files';
 import { ImageSources } from '~/metro/common';
 import { Manager } from '~/addons/manager';
 import { Addons } from '~/addons/addons';
@@ -298,13 +306,19 @@ export class Icons extends Addons<Plugin> {
 		return this.lookupFile(id, asset, await this.readIndex(id));
 	}
 
-	// A pack with an index is checked in memory; one installed before indexes asks the disk per scale.
+	// A store pack lists its images in its manifest; a GitHub pack with an index is checked in memory,
+	// and one installed before indexes asks the disk per scale.
 	private async lookupFile(
 		id: string,
 		asset: UnboundAsset,
 		files: Set<string> | undefined,
 	): Promise<IconFile | undefined> {
+		const manifest = this.findPack(id)?.manifest;
 		const scales = [...asset.scales].sort((a, b) => b - a);
+
+		if (manifest?.assets) {
+			return this.findListedFile(manifest, asset, scales);
+		}
 
 		for (const scale of scales) {
 			const relative = this.relativeAssetPath(asset, scale);
@@ -317,6 +331,61 @@ export class Icons extends Addons<Plugin> {
 		}
 
 		return undefined;
+	}
+
+	// Store packs name each image by content, under the asset's Discord path without its scale and type.
+	private findListedFile(
+		manifest: AddonManifest,
+		asset: UnboundAsset,
+		scales: number[],
+	): IconFile | undefined {
+		const listed = manifest.assets?.[this.assetName(asset)];
+
+		if (!listed || listed.type !== asset.type) return;
+
+		for (const scale of scales) {
+			const key = ASSET_SCALES.find((value) => Number(value) === scale);
+			const sha256 = key && listed.scales[key];
+
+			if (sha256) {
+				const path = getAssetPath(manifest.main, sha256, listed.type);
+
+				return {
+					path: `${fs.documentsPath}/${this.directoryOf(manifest.id)}/${path}`,
+					scale,
+				};
+			}
+		}
+
+		return undefined;
+	}
+
+	private findPack(id: string): IconPack | undefined {
+		return this.settings
+			.get<IconPack[]>('packs', [defaultPack])
+			.find((p) => p.manifest.id === id);
+	}
+
+	// Every installed pack is listed here, which `initialize` loads from on the next launch.
+	private recordPack(manifest: IconPackManifest) {
+		const packs = this.settings.get<IconPack[]>('packs', [defaultPack]);
+
+		this.settings.set('packs', [
+			...packs.filter((p) => p.manifest.id !== manifest.id),
+			{ bundle: manifest.name, manifest },
+		]);
+	}
+
+	/**
+	 * @description Writes a store pack's images, lists the pack, and re-applies it when it is the applied one, since an
+	 * update replaces the images its icons point at.
+	 * @param manifest The pack's validated manifest.
+	 * @param files The images, base64-encoded, by path.
+	 */
+	protected async persistFiles(manifest: AddonManifest, files?: AddonFiles): Promise<void> {
+		await super.persistFiles(manifest, files);
+		this.recordPack({ ...manifest, type: 'icon-pack', source: 'other' });
+		await this.restart(manifest.id);
 	}
 
 	private readIndex(id: string): Promise<Set<string> | undefined> {
@@ -367,9 +436,18 @@ export class Icons extends Addons<Plugin> {
 	 * @returns The path relative to the pack folder.
 	 */
 	protected relativeAssetPath(asset: UnboundAsset, scale: number): string {
+		return `${this.assetName(asset)}${scale > 1 ? `@${scale}x` : ''}.${asset.type}`;
+	}
+
+	/**
+	 * @description Names an asset by its path in Discord's asset tree, without its scale and type.
+	 * @param asset The asset.
+	 * @returns The name, such as `design/components/Icon/native/redesign/generated/images/SettingsIcon`.
+	 */
+	protected assetName(asset: UnboundAsset): string {
 		const dir = asset.httpServerLocation.replace(/\/assets\/(.*)/, '$1');
 
-		return `${dir}/${asset.name}${scale > 1 ? `@${scale}x` : ''}.${asset.type}`;
+		return `${dir}/${asset.name}`;
 	}
 
 	/**
@@ -402,13 +480,7 @@ export class Icons extends Addons<Plugin> {
 			}
 
 			await this.downloadTree(manifest);
-
-			const packs = this.settings.get<IconPack[]>('packs', [defaultPack]);
-
-			this.settings.set('packs', [
-				...packs.filter((p) => p.manifest.id !== manifest.id),
-				{ bundle: manifest.name, manifest },
-			]);
+			this.recordPack(manifest);
 
 			this.load(manifest.name, manifest);
 			const entity = this.getEntity(manifest.id);
