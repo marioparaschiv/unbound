@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+	bottomOf,
 	framesMatch,
+	planReflow,
 	reactionAvatarFrame,
 	reactionBaseViewWidth,
 	reflowReactionItems,
@@ -123,5 +125,37 @@ describe('reflowReactionItems', () => {
 				expect(row[index - 1].x + row[index - 1].width).toBeLessThanOrEqual(row[index].x);
 			}
 		}
+	});
+});
+
+describe('bottomOf', () => {
+	test('finds the lowest bottom edge', () => {
+		expect(
+			bottomOf([
+				{ height: 34, width: 50, x: 0, y: 0 },
+				{ height: 30, width: 50, x: 0, y: 40 },
+			]),
+		).toBe(70);
+	});
+});
+
+describe('planReflow', () => {
+	const baseItems = new Map([
+		[0, { height: 34, index: 0, width: 50, x: 0, y: 0 }],
+		[1, { height: 34, index: 1, width: 50, x: 56, y: 0 }],
+	]);
+
+	test('wraps a widened pill onto a new row and plans the taller height', () => {
+		const plan = planReflow(baseItems, new Map([[1, 40]]), 3, 120);
+
+		expect(plan?.baseHeight).toBe(34);
+		expect(plan?.revision).toBe(3);
+		expect(plan?.width).toBe(120);
+		expect(plan?.frames.get(1)).toEqual({ height: 34, index: 1, width: 90, x: 0, y: 34 });
+		expect(plan?.height).toBe(68);
+	});
+
+	test('plans nothing for an empty collection', () => {
+		expect(planReflow(new Map(), new Map(), 0, 120)).toBeUndefined();
 	});
 });

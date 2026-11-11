@@ -9,7 +9,6 @@ import {
 	itemOfCell,
 	key,
 	reactionViewOf,
-	restoreFrame,
 	sectionCount,
 	sectionItemCount,
 	setContentSize,
@@ -26,12 +25,13 @@ import {
 } from '~/native/ios/tables';
 import {
 	framesMatch,
-	reflowReactionItems,
+	planReflow,
 	type Frame,
-	type LayoutFrame,
 	type LayoutItem,
+	type LayoutPlan,
 } from '~/lib/layout';
-import { clearCellHeight, clearCellHeights, updateCellHeight } from '~/native/ios/cell-heights';
+import { clearCellHeights, updateCellHeight } from '~/native/ios/cell-heights';
+import { advanceLayoutEpoch, restoreLayout, setAncestorFrames } from '~/native/ios/layout-restore';
 import { fitReactionView, releaseStates } from '~/native/ios/reaction-views';
 import { messageKey } from '~/lib/reaction-context';
 import { scheduleCell } from '~/native/ios/cell-queue';
@@ -46,14 +46,6 @@ type ViewFrame = {
 type AppliedCell = {
 	index: number;
 	revision: number;
-};
-
-type LayoutPlan = {
-	baseHeight: number;
-	frames: Map<number, LayoutFrame>;
-	height: number;
-	revision: number;
-	width: number;
 };
 
 // One message's reaction collection view, reflowed so its widened pills do not overlap.
@@ -112,46 +104,6 @@ function markChanged(session: Session, entry: LayoutEntry): void {
 	markTableDirty(session, entry.ownerTableKey);
 }
 
-function setAncestorFrames(session: Session, entry: LayoutEntry, delta: number): void {
-	for (const { frame, view } of entry.ancestorFrames) {
-		setFrame(session.objc, view, { ...frame, height: frame.height + delta });
-	}
-}
-
-function restoreAncestorFrames(session: Session, entry: LayoutEntry): void {
-	for (const { frame, view } of entry.ancestorFrames) {
-		if (session.disposing) setFrame(session.objc, view, frame);
-		else restoreFrame(session.objc, view, frame);
-	}
-}
-
-function restoreLayoutNow(
-	session: Session,
-	entry: LayoutEntry,
-	baseHeight: number | undefined,
-): void {
-	const { objc } = session;
-
-	for (const cell of toHandles(objc, safeInvoke(objc, entry.collection, 'visibleCells'))) {
-		const index = itemOfCell(objc, entry.collection, cell);
-		const frame = index === undefined ? undefined : entry.baseItems.get(index);
-
-		if (frame) setFrame(objc, cell, frame);
-	}
-
-	if (baseHeight === undefined) return;
-
-	const size = parseSize(safeInvoke(objc, entry.collection, 'contentSize'));
-	const frame = frameOf(objc, entry.collection);
-
-	setContentSize(objc, entry.collection, {
-		height: baseHeight,
-		width: size?.width ?? frame?.width ?? 0,
-	});
-
-	if (frame) setFrame(objc, entry.collection, { ...frame, height: baseHeight });
-}
-
 function planLayout(session: Session, entry: LayoutEntry): LayoutPlan | undefined {
 	const width = parseRect(safeInvoke(session.objc, entry.collection, 'bounds'))?.width;
 
@@ -159,130 +111,13 @@ function planLayout(session: Session, entry: LayoutEntry): LayoutPlan | undefine
 
 	if (entry.plan?.revision === entry.revision && entry.plan.width === width) return entry.plan;
 
-	const items = [...entry.baseItems.values()].map((item) => ({
-		...item,
-		extraWidth: entry.extraWidths.get(item.index) ?? 0,
-	}));
-	const frames = reflowReactionItems(items, width);
+	const plan = planReflow(entry.baseItems, entry.extraWidths, entry.revision, width);
 
-	if (frames.length === 0) return;
+	if (!plan) return;
 
-	entry.plan = {
-		baseHeight: Math.max(...items.map((item) => item.y + item.height)),
-		frames: new Map(frames.map((frame) => [frame.index, frame])),
-		height: Math.max(...frames.map((frame) => frame.y + frame.height)),
-		revision: entry.revision,
-		width,
-	};
+	entry.plan = plan;
 
 	return entry.plan;
-}
-
-declare global {
-	var __unboundReactionAvatarsLayoutEpochs: Map<string, number> | undefined;
-}
-
-const layoutEpochs = (globalThis.__unboundReactionAvatarsLayoutEpochs ??= new Map());
-
-function layoutEpoch(session: Session, entry: LayoutEntry): number {
-	return layoutEpochs.get(key(session.objc, entry.collection)) ?? 0;
-}
-
-function advanceLayoutEpoch(session: Session, entry: LayoutEntry): void {
-	const collectionKey = key(session.objc, entry.collection);
-
-	layoutEpochs.set(collectionKey, (layoutEpochs.get(collectionKey) ?? 0) + 1);
-}
-
-function restoreVisibleCell(
-	session: Session,
-	entry: LayoutEntry,
-	cell: NativeObjectHandle,
-	epoch: number,
-): void {
-	const { objc } = session;
-	const baseItems = new Map(entry.baseItems);
-
-	void objc
-		.batch([
-			{ target: entry.collection, selector: 'indexPathForCell:', args: [cell] },
-			{ target: { $nativeBatchResult: 0 }, selector: 'item', args: [] },
-		])
-		.then(([, item]) => {
-			const frame = baseItems.get(Math.floor(Number(item)));
-
-			if (frame && layoutEpoch(session, entry) === epoch) restoreFrame(objc, cell, frame);
-		})
-		.catch(() => undefined);
-}
-
-function restoreVisibleCells(session: Session, entry: LayoutEntry, epoch: number): void {
-	const { objc } = session;
-
-	void objc
-		.invokeAsync(entry.collection, 'visibleCells', [])
-		.then((cells) => {
-			if (layoutEpoch(session, entry) !== epoch) return;
-
-			for (const cell of toHandles(objc, cells))
-				restoreVisibleCell(session, entry, cell, epoch);
-		})
-		.catch(() => undefined);
-}
-
-function restoreCollectionHeight(
-	session: Session,
-	entry: LayoutEntry,
-	baseHeight: number,
-	epoch: number,
-): void {
-	const { objc } = session;
-	const { collection } = entry;
-
-	void objc
-		.batch([
-			{ target: collection, selector: 'contentSize', args: [] },
-			{ target: collection, selector: 'frame', args: [] },
-		])
-		.then(([size, rect]) => {
-			if (layoutEpoch(session, entry) !== epoch) return;
-
-			const frame = parseRect(rect);
-			const width = parseSize(size)?.width ?? frame?.width ?? 0;
-
-			void objc
-				.invokeAsync(collection, 'setContentSize:', [
-					objc.struct('CGSize', { height: baseHeight, width }),
-				])
-				.catch(() => undefined);
-
-			if (frame) restoreFrame(objc, collection, { ...frame, height: baseHeight });
-		})
-		.catch(() => undefined);
-}
-
-function restoreLayout(session: Session, entry: LayoutEntry): void {
-	clearCellHeight(session, entry);
-	restoreAncestorFrames(session, entry);
-
-	const baseItems = [...entry.baseItems.values()];
-	const baseHeight = baseItems.length
-		? Math.max(...baseItems.map((item) => item.y + item.height))
-		: entry.plan?.baseHeight;
-
-	if (session.disposing) {
-		restoreLayoutNow(session, entry, baseHeight);
-	} else {
-		const epoch = layoutEpoch(session, entry);
-
-		restoreVisibleCells(session, entry, epoch);
-
-		if (baseHeight !== undefined) restoreCollectionHeight(session, entry, baseHeight, epoch);
-	}
-
-	const table = markTableDirty(session, entry.ownerTableKey);
-
-	if (table) scheduleTableLayout(session, table);
 }
 
 /**

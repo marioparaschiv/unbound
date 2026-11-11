@@ -13,6 +13,15 @@ export type LayoutItem = LayoutFrame & {
 	extraWidth?: number;
 };
 
+/** A reflowed collection: Discord's height, each pill's new frame and the new height, for one revision and width. */
+export type LayoutPlan = {
+	baseHeight: number;
+	frames: Map<number, LayoutFrame>;
+	height: number;
+	revision: number;
+	width: number;
+};
+
 function average(values: number[]): number {
 	return values.length ? values.reduce((total, value) => total + value, 0) / values.length : 0;
 }
@@ -91,6 +100,46 @@ export function reflowReactionItems(items: LayoutItem[], containerWidth: number)
 	}
 
 	return frames;
+}
+
+/**
+ * @description Finds the bottom edge of a set of frames.
+ * @param frames The frames.
+ * @returns The largest `y + height`, `-Infinity` for no frames.
+ */
+export function bottomOf(frames: Frame[]): number {
+	return Math.max(...frames.map((frame) => frame.y + frame.height));
+}
+
+/**
+ * @description Plans a reflow of a collection's pills after some of them grew wider.
+ * @param baseItems Each pill's frame as Discord laid it out, by item index.
+ * @param extraWidths How much wider each pill is, by item index.
+ * @param revision The revision of the frames and widths the plan is for.
+ * @param width The collection's width.
+ * @returns The plan, or `undefined` when no pill could be placed.
+ */
+export function planReflow(
+	baseItems: Map<number, LayoutItem>,
+	extraWidths: Map<number, number>,
+	revision: number,
+	width: number,
+): LayoutPlan | undefined {
+	const items = [...baseItems.values()].map((item) => ({
+		...item,
+		extraWidth: extraWidths.get(item.index) ?? 0,
+	}));
+	const frames = reflowReactionItems(items, width);
+
+	if (frames.length === 0) return;
+
+	return {
+		baseHeight: bottomOf(items),
+		frames: new Map(frames.map((frame) => [frame.index, frame])),
+		height: bottomOf(frames),
+		revision,
+		width,
+	};
 }
 
 /**
