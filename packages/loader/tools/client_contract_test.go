@@ -76,6 +76,9 @@ func coreFabricMethods(fabric string, platform string) map[string]bool {
 			methods[match[1]] = true
 		}
 	}
+	for _, match := range regexp.MustCompile(`fabric\.defineAsync\("(\w+)"`).FindAllStringSubmatch(fabric, -1) {
+		methods[match[1]] = true
+	}
 	return methods
 }
 
