@@ -1,7 +1,5 @@
-import { metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { logs, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
-
-import { selfTest } from '~/index';
 
 type Row = { type: number };
 
@@ -64,7 +62,7 @@ describe('blocked messages', () => {
 	test('reports itself applied once started', async () => {
 		await startPlugin();
 
-		expect(selfTest().ok).toBe(true);
+		expect(logs.entries.filter((entry) => entry.level === 'warn')).toEqual([]);
 	});
 
 	test('shows them again in the open chat when the plugin stops', async () => {

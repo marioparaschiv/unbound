@@ -1,5 +1,12 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { gifPasteFeatures } from '~/gif-paste';
+import { patchMessageActions, patchReplyActions } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures(gifPasteFeatures);
+export function start() {
+	patchReplyActions();
+	patchMessageActions();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}

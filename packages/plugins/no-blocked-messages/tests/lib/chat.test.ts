@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import { chat, refreshChat } from '~/blocked/chat';
+import { chat, refreshChat } from '~/lib/chat';
 
 type Row = { type?: number };
 

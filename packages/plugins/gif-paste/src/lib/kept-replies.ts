@@ -20,3 +20,6 @@ export function createKeptReplies() {
 
 	return { keep, release };
 }
+
+/** The channels whose pending reply survives the picker's clear, shared by both patches. */
+export const keptReplies = createKeptReplies();

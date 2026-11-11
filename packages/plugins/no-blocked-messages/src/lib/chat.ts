@@ -2,17 +2,17 @@ type Row = {
 	type?: number;
 };
 
-type ChatManagerInstance = {
+export type ChatManagerInstance = {
 	setup(messages: Iterable<Row>): void;
 	createRow(row: Row): void;
 	createChangeset(): object;
 };
 
-type RowManagerInstance = {
+export type RowManagerInstance = {
 	generate(message: Row): Row;
 };
 
-type ChatUpdatesQueueInstance = {
+export type ChatUpdatesQueueInstance = {
 	add(changeset: object): void;
 	tryFlush(): void;
 };
