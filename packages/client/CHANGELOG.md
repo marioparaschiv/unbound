@@ -1,5 +1,32 @@
 # Changelog
 
+## [2.1.0](https://github.com/marioparaschiv/unbound/compare/client-v2.0.0...client-v2.1.0) (2026-11-11)
+
+
+### Features
+
+* **client:** draw settings-kit rows with Discord's built-ins ([#1084](https://github.com/marioparaschiv/unbound/issues/1084)) ([cb3b9e2](https://github.com/marioparaschiv/unbound/commit/cb3b9e285094a1f55d4eb75ed8e19826e61758fa))
+* **icon-packs:** publish first-party icon packs ([#1077](https://github.com/marioparaschiv/unbound/issues/1077)) ([16593ff](https://github.com/marioparaschiv/unbound/commit/16593ff7c42a7f76c47647b10c0df6e4e953a670))
+* **loader:** health-gated updates and crash recovery ([#1063](https://github.com/marioparaschiv/unbound/issues/1063)) ([0cd3772](https://github.com/marioparaschiv/unbound/commit/0cd37726daa68a2a8c4a2cae49c01e881649ce2e))
+
+
+### Bug Fixes
+
+* **client:** install icon packs and preview all their icons ([#1081](https://github.com/marioparaschiv/unbound/issues/1081)) ([5a46882](https://github.com/marioparaschiv/unbound/commit/5a46882d62dc311810b5c34ba513a91521a3eff6))
+* **client:** keep the last client version off Sync ([#1075](https://github.com/marioparaschiv/unbound/issues/1075)) ([47d9827](https://github.com/marioparaschiv/unbound/commit/47d982795856e4f6fbb306980cd048f44918c43c))
+* **client:** select any app icon and show the applied one ([#1076](https://github.com/marioparaschiv/unbound/issues/1076)) ([e598575](https://github.com/marioparaschiv/unbound/commit/e5985759c11b070c37ac5c6929a813ae841429c3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 1.1.0
+    * @unbound-app/debugger-protocol bumped to 1.0.1
+    * @unbound-app/types bumped to 0.14.0
+    * @unbound-app/utils bumped to 0.10.3
+    * @unbound-app/web bumped to 1.1.0
+
 ## [2.0.0](https://github.com/marioparaschiv/unbound/compare/client-v1.1.1...client-v2.0.0) (2026-11-10)
 
 
