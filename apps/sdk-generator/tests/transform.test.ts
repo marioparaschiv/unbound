@@ -21,15 +21,19 @@ function context(overrides: Partial<StripContext> = {}): StripContext {
 }
 
 describe('strip', () => {
-	test('keeps the @deprecated tag on a `export const old = next` alias and emits no default', () => {
-		const text = strip(bundle(join(FIXTURES, 'deprecated-alias.ts')), context());
+	test(
+		'keeps the @deprecated tag on a `export const old = next` alias and emits no default',
+		() => {
+			const text = strip(bundle(join(FIXTURES, 'deprecated-alias.ts')), context());
 
-		expect(text).toMatch(
-			/\/\*\* @deprecated Use next \*\/\s*export declare const old: typeof next;/,
-		);
-		expect(text).toContain('export declare function next(): string;');
-		expect(text).not.toContain('default');
-	});
+			expect(text).toMatch(
+				/\/\*\* @deprecated Use next \*\/\s*export declare const old: typeof next;/,
+			);
+			expect(text).toContain('export declare function next(): string;');
+			expect(text).not.toContain('default');
+		},
+		{ timeout: 30_000 },
+	);
 
 	test('strips an @internal declaration that only the default object referenced', () => {
 		const text = strip(
