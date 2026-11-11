@@ -104,7 +104,7 @@ export const PINNED_FIELDS = {
 } as const satisfies Record<PinnableField, number>;
 
 /** The relational `with` that loads the version an addon serves: its newest live version. */
-export const LATEST_VERSION = {
+export const WITH_SERVED_VERSION = {
 	versions: { ...SERVED_VERSION, with: VERSION_SOURCE },
 } as const;
 
@@ -348,7 +348,7 @@ export function queryListedAddons(ctx: AppContext, query: ListAddonsQuery = {}) 
 							page.where(table),
 						) ?? sql`true`,
 				},
-				with: LATEST_VERSION,
+				with: WITH_SERVED_VERSION,
 				orderBy: (table) => page.orderBy(table),
 				limit: page.limit,
 			}),
@@ -400,7 +400,7 @@ export async function listAddons(
 export async function listListedAddons(ctx: AppContext): Promise<ListedAddon[]> {
 	const rows = await ctx.db.query.addon.findMany({
 		where: LISTED_ADDONS,
-		with: LATEST_VERSION,
+		with: WITH_SERVED_VERSION,
 		orderBy: { id: 'asc' },
 	});
 
@@ -523,7 +523,7 @@ export async function listMyAddons(ctx: AppContext, caller: Caller): Promise<MyA
 	const userId = caller.user.id;
 	const memberships = await ctx.db.query.addonMaintainer.findMany({
 		where: { userId },
-		with: { addon: { with: LATEST_VERSION } },
+		with: { addon: { with: WITH_SERVED_VERSION } },
 		orderBy: { addonId: 'asc' },
 	});
 
@@ -564,7 +564,7 @@ export async function listMyAddons(ctx: AppContext, caller: Caller): Promise<MyA
 
 export default {
 	PINNED_FIELDS,
-	LATEST_VERSION,
+	WITH_SERVED_VERSION,
 	toAddon,
 	getManifestType,
 	toAddonSummary,
