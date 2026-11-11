@@ -6,9 +6,9 @@ import { apply, check } from '~/updates/api';
 import { plugins } from '~/plugins/manager';
 
 /** Lists every installed plugin. */
-export const getAll: () => AddonHandle[] = plugins.getEntities.bind(plugins);
+export const getAll: () => AddonHandle[] = plugins.getAddons.bind(plugins);
 /** Reads one installed plugin by id. */
-export const get: (id: string) => AddonHandle | undefined = plugins.getEntity.bind(plugins);
+export const get: (id: string) => AddonHandle | undefined = plugins.getAddon.bind(plugins);
 /** Reports whether a plugin is enabled. */
 export const isEnabled: (id: string) => boolean = plugins.isEnabled.bind(plugins);
 /** Enables a plugin and starts it. */
@@ -47,11 +47,11 @@ export async function update(id: string): Promise<boolean> {
  * @returns Its report, or `undefined` when it is not running or has no self-test; rejects with what the self-test threw.
  */
 export function selfTest(id: string): Promise<PluginSelfTestResult | undefined> {
-	return readSelfTest(plugins.getEntity(id));
+	return readSelfTest(plugins.getAddon(id));
 }
 
 /** Every installed plugin, keyed by id. */
-export const entities: ReadonlyMap<PropertyKey, AddonHandle> = plugins.entities;
+export const entities: ReadonlyMap<PropertyKey, AddonHandle> = plugins.addons;
 /** The error each plugin that failed to load or start threw, keyed by id. */
 export const errors: ReadonlyMap<PropertyKey, Error> = plugins.errors;
 /** How long each plugin's last start took, in milliseconds, keyed by id. */

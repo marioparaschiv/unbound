@@ -375,8 +375,8 @@ function listenToReloads() {
 	let reloaded: string[] = [];
 	let reset: ReturnType<typeof setTimeout> | undefined;
 
-	function onReloaded(entity: Addon) {
-		reloaded.push(entity.name);
+	function onReloaded(addon: Addon) {
+		reloaded.push(addon.name);
 		clearTimeout(reset);
 		reset = setTimeout(() => {
 			reloaded = [];
@@ -388,11 +388,11 @@ function listenToReloads() {
 		});
 	}
 
-	function onReloadError(entity: Addon, error: Error) {
+	function onReloadError(addon: Addon, error: Error) {
 		show({
-			id: `reload:${entity.id}`,
+			id: `reload:${addon.id}`,
 			title: 'Hot reload failed',
-			content: `${entity.name} failed to reload: ${error.message}`,
+			content: `${addon.name} failed to reload: ${error.message}`,
 		});
 	}
 

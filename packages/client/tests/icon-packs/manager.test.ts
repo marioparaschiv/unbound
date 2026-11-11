@@ -144,7 +144,7 @@ describe('the applied icon pack', () => {
 
 		await icons.delete(DELETED);
 
-		expect(icons.getEntity(DELETED)).toBeUndefined();
+		expect(icons.getAddon(DELETED)).toBeUndefined();
 		expect(icons.getAppliedId()).toBe('default');
 		expect(storedSettings.get('held')).not.toHaveProperty(DELETED);
 		expect(ImageSources.getImageSourcesFromImageProps({ source: 1 })).toBe(1);

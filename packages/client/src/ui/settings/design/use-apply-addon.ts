@@ -54,7 +54,7 @@ function useApplyAddon(kind: 'theme' | 'icon-pack', addons: Addon[]) {
 
 		picked.current = undefined;
 		Manager.for(kind)
-			.getEntities()
+			.getAddons()
 			.find((entry) => entry.isEnabled())
 			?.disable();
 	}, [kind]);

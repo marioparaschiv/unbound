@@ -10,11 +10,11 @@ const LIGHT = JSON.stringify({ type: 'light' });
 function load(id: string, bundle: string) {
 	themes.load(bundle, { ...makeManifest(id), type: 'theme' });
 
-	return themes.getEntity(id);
+	return themes.getAddon(id);
 }
 
 afterEach(async () => {
-	for (const theme of themes.getEntities()) {
+	for (const theme of themes.getAddons()) {
 		await themes.unload(theme);
 	}
 

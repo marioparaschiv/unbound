@@ -88,7 +88,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 	getFamilies(): FontFamily[] {
 		const families = new Map<string, FontEntity[]>();
 
-		for (const font of this.getEntities()) {
+		for (const font of this.getAddons()) {
 			families.set(font.family, [...(families.get(font.family) ?? []), font]);
 		}
 
@@ -128,7 +128,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 
 		for (const [family, discord] of Object.entries(this.families)) {
 			const id = discord.groups.includes(group) ? this.overrides[family] : undefined;
-			const font = id ? this.getEntity(id) : undefined;
+			const font = id ? this.getAddon(id) : undefined;
 
 			if (font) {
 				names.add(font.family);
@@ -257,7 +257,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 		}
 
 		for (const [family, id] of Object.entries(overrides)) {
-			if (this.overrides[family] !== id && this.getEntity(id)) {
+			if (this.overrides[family] !== id && this.getAddon(id)) {
 				await this.setOverride(family, id);
 			}
 		}
@@ -341,7 +341,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 	getSources(): Record<string, string> {
 		const sources: Record<string, string> = {};
 
-		for (const font of this.getEntities()) {
+		for (const font of this.getAddons()) {
 			const link = sourceLink(font.source);
 
 			if (link) {
@@ -359,7 +359,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 	 */
 	getInstalledVersion(listed: ListedAddon): string | undefined {
 		const url = listed.latestVersion.bundleUrl;
-		const installed = this.getEntities().some((font) => sourceOrigin(font.source)?.id === url);
+		const installed = this.getAddons().some((font) => sourceOrigin(font.source)?.id === url);
 
 		return installed ? listed.latestVersion.version : undefined;
 	}
@@ -402,10 +402,10 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 
 		if (!list) return;
 
-		this.entities.clear();
+		this.addons.clear();
 
 		for (const font of list.fonts) {
-			this.entities.set(font.id, font);
+			this.addons.set(font.id, font);
 		}
 
 		this.overrides = list.overrides;

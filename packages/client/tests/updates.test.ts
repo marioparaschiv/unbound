@@ -85,7 +85,7 @@ function seed(manager: FakeAddons, id: string, started: boolean, version: string
 
 function recordEvents(manager: FakeAddons): string[] {
 	const events: string[] = [];
-	const record = (name: string) => (entity: Addon) => void events.push(`${name}:${entity.id}`);
+	const record = (name: string) => (addon: Addon) => void events.push(`${name}:${addon.id}`);
 
 	manager.on('reloaded', record('reloaded'));
 	manager.on('updated', record('updated'));
@@ -235,14 +235,14 @@ describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and update', () => {
 		]);
 		expect(applied).toEqual([true, true]);
 
-		const updated = plugins.getEntity('up.applied');
+		const updated = plugins.getAddon('up.applied');
 
 		expect(updated?.version).toBe('1.1.0');
 		expect(plugins.bundleOf('up.applied')).toBe('applied-1.1.0');
 		expect(updated?.started).toBe(true);
 		expect(plugins.log).toEqual(['stop:old', 'start:applied-1.1.0']);
 
-		const disabled = others.getEntity('up.disabled');
+		const disabled = others.getAddon('up.disabled');
 
 		expect(disabled?.version).toBe('1.1.0');
 		expect(others.bundleOf('up.disabled')).toBe('disabled-1.1.0');
@@ -269,7 +269,7 @@ describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and update', () => {
 
 		expect((await check([manager])).applied).toEqual([false]);
 
-		const tampered = manager.getEntity('up.tampered');
+		const tampered = manager.getAddon('up.tampered');
 
 		expect(tampered?.version).toBe('1.0.0');
 		expect(manager.bundleOf('up.tampered')).toBe(INSTALLED);

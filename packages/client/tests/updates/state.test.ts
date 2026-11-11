@@ -65,7 +65,7 @@ test('leaves an addon deleted after the update check deleted when updates apply'
 	writes.length = 0;
 	await UpdatesStore.getState().applyAll();
 
-	expect(plugins.getEntity(ID)).toBeUndefined();
+	expect(plugins.getAddon(ID)).toBeUndefined();
 	expect(writes).toEqual([]);
 });
 
@@ -73,8 +73,8 @@ test('installs a listed release only when its bundle matches the digest', async 
 	const manager = new FakeAddons();
 
 	expect(await manager.applyRelease(ID, release('0'.repeat(64)))).toBe(false);
-	expect(manager.getEntity(ID)).toBeUndefined();
+	expect(manager.getAddon(ID)).toBeUndefined();
 
 	expect(await manager.applyRelease(ID, release(DIGEST))).toBe(true);
-	expect(manager.getEntity(ID)?.version).toBe('1.1.0');
+	expect(manager.getAddon(ID)?.version).toBe('1.1.0');
 });

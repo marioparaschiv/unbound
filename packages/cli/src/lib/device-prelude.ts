@@ -52,11 +52,11 @@ export function createDevicePrelude(unbound: UnboundGlobal): DevicePrelude {
 		plugins,
 		nativeBridge: (platform, capabilities) =>
 			[...(plugins?.entities.values() ?? [])].find(
-				(entity) =>
-					entity.started &&
-					entity.context?.platform === platform &&
+				(addon) =>
+					addon.started &&
+					addon.context?.platform === platform &&
 					capabilities.every((capability) =>
-						entity.context?.capabilities.includes(capability),
+						addon.context?.capabilities.includes(capability),
 					),
 			)?.context,
 		javaValues: {

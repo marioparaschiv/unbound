@@ -242,22 +242,22 @@ export class FakeAddons extends Addons<Plugin> {
 	}
 
 	seed({ id, manifest, bundle, ...state }: SeededAddon): Addon<Plugin> {
-		const entity = this.createAddon(manifest, bundle);
+		const addon = this.createAddon(manifest, bundle);
 
-		Object.assign(this.stateOf(entity), state);
-		this.entities.set(id, entity);
+		Object.assign(this.stateOf(addon), state);
+		this.addons.set(id, addon);
 
-		return entity;
+		return addon;
 	}
 
 	bundleOf(id: string): string | undefined {
-		const entity = this.getEntity(id);
+		const addon = this.getAddon(id);
 
-		return entity ? this.stateOf(entity).bundle : undefined;
+		return addon ? this.stateOf(addon).bundle : undefined;
 	}
 
-	setInstance(entity: Addon<Plugin>, instance: Plugin): void {
-		this.stateOf(entity).instance = instance;
+	setInstance(addon: Addon<Plugin>, instance: Plugin): void {
+		this.stateOf(addon).instance = instance;
 	}
 }
 

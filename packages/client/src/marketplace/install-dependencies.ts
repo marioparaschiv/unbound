@@ -32,7 +32,7 @@ function asDependency(listed: ListedAddon): ListedDependency {
 }
 
 function describePlan(install: ListedDependency[], update: ListedDependency[]): string {
-	const plugins = Manager.for('plugin').getEntities();
+	const plugins = Manager.for('plugin').getAddons();
 	const lines = [
 		...install.map((dependency) =>
 			format('UNBOUND_DEPENDENCY_INSTALL', { name: dependency.name }),
@@ -61,7 +61,7 @@ function describePlan(install: ListedDependency[], update: ListedDependency[]): 
 export async function installDependencies(manifest: PublishedManifest): Promise<boolean> {
 	const manager = Manager.for('plugin');
 	const listed = listedPlugins();
-	const installed = new Map(manager.getEntities().map((entity) => [entity.id, entity.version]));
+	const installed = new Map(manager.getAddons().map((addon) => [addon.id, addon.version]));
 	const plan = planDependencies(
 		manifest.dependencies,
 		installed,

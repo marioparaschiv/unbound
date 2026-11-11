@@ -71,7 +71,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 	plugins: {
 		getApplied: noApplied,
 		isEnabled: (id) => plugins.isEnabled(id),
-		isInstalled: (id) => Boolean(plugins.getEntity(id)),
+		isInstalled: (id) => Boolean(plugins.getAddon(id)),
 		install: (url) => plugins.install(url),
 		delete: (id) => plugins.delete(id),
 		setEnabled: (id, enabled) => void (enabled ? plugins.enable(id) : plugins.disable(id)),
@@ -83,7 +83,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 	themes: {
 		getApplied: () => themes.getAppliedId(),
 		isEnabled: (id) => themes.getAppliedId() === id,
-		isInstalled: (id) => Boolean(themes.getEntity(id)),
+		isInstalled: (id) => Boolean(themes.getAddon(id)),
 		install: (url) => themes.install(url),
 		delete: (id) => themes.delete(id),
 		// A theme is enabled by being applied.
@@ -104,7 +104,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 	icons: {
 		getApplied: () => icons.getAppliedId(),
 		isEnabled: (id) => icons.isEnabled(id),
-		isInstalled: (id) => Boolean(icons.getEntity(id)),
+		isInstalled: (id) => Boolean(icons.getAddon(id)),
 		install: (url) => icons.install(url),
 		delete: (id) => icons.delete(id),
 		setEnabled: ignored,
@@ -117,7 +117,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 	fonts: {
 		getApplied: noApplied,
 		isEnabled: () => true,
-		isInstalled: (id) => Boolean(fonts.getEntity(id)),
+		isInstalled: (id) => Boolean(fonts.getAddon(id)),
 		install: (url) => fonts.install(url),
 		delete: (id) => fonts.delete(id),
 		setEnabled: ignored,

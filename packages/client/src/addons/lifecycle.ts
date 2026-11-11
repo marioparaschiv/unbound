@@ -56,31 +56,31 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 	/**
 	 * @description Turns an addon on and starts it. {@link AddonSelection} decides. Twin of {@link disable}.
-	 * @param entity The addon, as its id or the entity itself.
+	 * @param addon The addon, as its id or the addon itself.
 	 * @returns Settles once the addon is on.
 	 */
-	abstract enable(entity: AddonResolveable<I>): void | Promise<void>;
+	abstract enable(addon: AddonResolveable<I>): void | Promise<void>;
 
 	/**
 	 * @description Turns an addon off and stops it. {@link AddonSelection} decides. Twin of {@link enable}.
-	 * @param entity The addon, as its id or the entity itself.
+	 * @param addon The addon, as its id or the addon itself.
 	 */
-	abstract disable(entity: AddonResolveable<I>): void;
+	abstract disable(addon: AddonResolveable<I>): void;
 
 	/**
 	 * @description Starts an addon the user has on, and puts it on screen if its kind does so.
-	 * @param entity The addon.
+	 * @param addon The addon.
 	 * @param consented Whether the user just allowed its consent-gated capabilities.
 	 * @returns Settles once it is on screen.
 	 */
-	protected abstract activate(entity: Addon<I>, consented?: boolean): void | Promise<void>;
+	protected abstract activate(addon: Addon<I>, consented?: boolean): void | Promise<void>;
 
 	/**
 	 * @description Records whether the user has an addon on.
-	 * @param entity The addon.
+	 * @param addon The addon.
 	 * @param enabled Whether it is now on.
 	 */
-	protected abstract select(entity: Addon<I>, enabled: boolean): void;
+	protected abstract select(addon: Addon<I>, enabled: boolean): void;
 
 	/**
 	 * @description Reads the consents the user gave for consent-gated capabilities.
@@ -91,7 +91,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	async shutdown(): Promise<void> {
 		this.pendingStarts.clear();
 		const pending = [...this.pendingStops.values()];
-		const stops = this.getEntities().map((entity) => this.stop(entity));
+		const stops = this.getAddons().map((addon) => this.stop(addon));
 
 		try {
 			await Promise.all([...pending, ...stops]);
@@ -166,13 +166,13 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		return failure;
 	}
 
-	protected createContext(entity: Addon<I>): PluginContext | undefined {
-		void entity;
+	protected createContext(addon: Addon<I>): PluginContext | undefined {
+		void addon;
 
 		return undefined;
 	}
 
-	protected createScope(_entity: Addon<I>): PluginScope | undefined {
+	protected createScope(_addon: Addon<I>): PluginScope | undefined {
 		return undefined;
 	}
 
@@ -201,31 +201,31 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	 */
 	protected register(bundle: string, manifest: AddonManifest) {
 		try {
-			const entity = this.createAddon(manifest, bundle);
+			const addon = this.createAddon(manifest, bundle);
 
-			this.entities.set(manifest.id, entity);
+			this.addons.set(manifest.id, addon);
 			this.registered(manifest.id);
 
-			if (this.isEnabled(manifest.id) && !this.disableAfterCrash(entity)) {
-				this.startWhenDue(entity);
+			if (this.isEnabled(manifest.id) && !this.disableAfterCrash(addon)) {
+				this.startWhenDue(addon);
 			}
 
-			this.emit('loaded', entity);
+			this.emit('loaded', addon);
 		} catch (error) {
 			this.fail('load', manifest.id, error);
 		}
 	}
 
-	private startWhenDue(entity: Addon<I>) {
-		if (!entity.manifest.startAfterFirstFrame) {
-			void this.activate(entity);
+	private startWhenDue(addon: Addon<I>) {
+		if (!addon.manifest.startAfterFirstFrame) {
+			void this.activate(addon);
 
 			return;
 		}
 
 		afterFirstFrame(() => {
-			if (this.entities.get(entity.id) === entity && this.isEnabled(entity.id)) {
-				void this.activate(entity);
+			if (this.addons.get(addon.id) === addon && this.isEnabled(addon.id)) {
+				void this.activate(addon);
 			}
 		});
 	}
@@ -240,10 +240,10 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 	/**
 	 * @description Unloads an addon from the manager, stopping it if running, and emits `unloaded`.
-	 * @param entity The addon to unload, as its id or the entity itself.
+	 * @param addon The addon to unload, as its id or the addon itself.
 	 */
-	unload(entity: AddonResolveable<I>): void | Promise<void> {
-		const resolved = this.resolve(entity);
+	unload(addon: AddonResolveable<I>): void | Promise<void> {
+		const resolved = this.resolve(addon);
 
 		if (!resolved) return;
 
@@ -262,10 +262,10 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	}
 
 	private finishUnload(resolved: Addon<I>): void {
-		if (this.entities.get(resolved.id) !== resolved) return;
+		if (this.addons.get(resolved.id) !== resolved) return;
 
 		try {
-			this.entities.delete(resolved.id);
+			this.addons.delete(resolved.id);
 			this.errors.delete(resolved.id);
 			this.emit('unloaded', resolved);
 		} catch (error) {
@@ -275,11 +275,11 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 	/**
 	 * @description Starts an addon, evaluating its bundle into an instance, running it, and emits `started`.
-	 * @param entity The addon to start, as its id or the entity itself.
+	 * @param addon The addon to start, as its id or the addon itself.
 	 * @param consented Whether the user just allowed its consent-gated capabilities.
 	 */
-	start(entity: AddonResolveable<I>, consented = false) {
-		const resolved = this.resolve(entity);
+	start(addon: AddonResolveable<I>, consented = false) {
+		const resolved = this.resolve(addon);
 
 		if (!resolved || resolved.started) return;
 
@@ -370,22 +370,22 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	 * @param freeze The freeze the loader reported.
 	 */
 	handleFreeze(freeze: AddonFreeze): void {
-		const entity = this.getEntities().find(
+		const addon = this.getAddons().find(
 			(candidate) => crashGuardKey(this.bucket, candidate.id) === freeze.id,
 		);
 
-		if (!entity) return;
+		if (!addon) return;
 
-		const count = (this.freezes.get(entity.id) ?? 0) + 1;
+		const count = (this.freezes.get(addon.id) ?? 0) + 1;
 		const disable = freezeDisables(count, freeze);
 
-		this.freezes.set(entity.id, count);
+		this.freezes.set(addon.id, count);
 
 		if (disable) {
-			this.disable(entity);
+			this.disable(addon);
 		}
 
-		announceFreeze(entity, freeze, count, disable, this.logger);
+		announceFreeze(addon, freeze, count, disable, this.logger);
 	}
 
 	// An async start or stop finished; a stop that began meanwhile keeps its own phase.
@@ -419,31 +419,31 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	/**
 	 * @description Returns how the loader attributes an addon's code to it, so a crash or freeze inside it
 	 * disables that addon. Only plugins run code, so other kinds return `undefined`.
-	 * @param _entity The addon.
+	 * @param _addon The addon.
 	 * @returns The attribution wrapper, or `undefined`.
 	 */
-	protected attribution(_entity: Addon<I>): AddonAttribution | undefined {
+	protected attribution(_addon: Addon<I>): AddonAttribution | undefined {
 		return undefined;
 	}
 
 	/**
 	 * @description Persistently disables an addon the loader reported crashing Discord on consecutive launches.
-	 * @param entity The addon about to start.
+	 * @param addon The addon about to start.
 	 * @returns Whether the addon was disabled instead of started.
 	 */
-	private disableAfterCrash(entity: Addon<I>): boolean {
-		return disableIfCrashed(entity, this.bucket, this.logger, () => {
-			this.select(entity, false);
+	private disableAfterCrash(addon: Addon<I>): boolean {
+		return disableIfCrashed(addon, this.bucket, this.logger, () => {
+			this.select(addon, false);
 			void storage.persist();
 		});
 	}
 
 	/**
 	 * @description Stops an addon, tearing down its instance, and emits `stopped`.
-	 * @param entity The addon to stop, as its id or the entity itself.
+	 * @param addon The addon to stop, as its id or the addon itself.
 	 */
-	stop(entity: AddonResolveable<I>): void | Promise<void> {
-		const resolved = this.resolve(entity);
+	stop(addon: AddonResolveable<I>): void | Promise<void> {
+		const resolved = this.resolve(addon);
 
 		if (!resolved) return;
 
@@ -564,10 +564,10 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 	/**
 	 * @description Stops a running addon and starts it again on the same bundle. An addon that isn't running stays stopped.
-	 * @param entity The addon to restart, as its id or the entity itself.
+	 * @param addon The addon to restart, as its id or the addon itself.
 	 */
-	async restart(entity: AddonResolveable<I>): Promise<void> {
-		const resolved = this.resolve(entity);
+	async restart(addon: AddonResolveable<I>): Promise<void> {
+		const resolved = this.resolve(addon);
 
 		if (!resolved?.started) return;
 
@@ -577,23 +577,23 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	}
 
 	/**
-	 * @description Resolves an addon reference, accepting either an id (matched by id then name) or the entity itself.
-	 * @param entity The addon to resolve, as its id or the entity itself.
-	 * @returns The matching entity, or `undefined` if none is found.
+	 * @description Resolves an addon reference, accepting either an id (matched by id then name) or the addon itself.
+	 * @param addon The addon to resolve, as its id or the addon itself.
+	 * @returns The matching addon, or `undefined` if none is found.
 	 */
-	protected resolve(entity: AddonResolveable<I>): Addon<I> | undefined {
-		if (typeof entity !== 'string') {
-			return entity;
+	protected resolve(addon: AddonResolveable<I>): Addon<I> | undefined {
+		if (typeof addon !== 'string') {
+			return addon;
 		}
 
-		const byId = this.entities.get(entity);
+		const byId = this.addons.get(addon);
 
 		if (byId) {
 			return byId;
 		}
 
-		for (const candidate of this.entities.values()) {
-			if (candidate.name === entity) {
+		for (const candidate of this.addons.values()) {
+			if (candidate.name === addon) {
 				return candidate;
 			}
 		}

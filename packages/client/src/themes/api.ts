@@ -5,9 +5,9 @@ import { apply, check } from '~/updates/api';
 import { themes } from '~/themes/manager';
 
 /** Lists every installed theme. */
-export const getAll: () => AddonHandle[] = themes.getEntities.bind(themes);
+export const getAll: () => AddonHandle[] = themes.getAddons.bind(themes);
 /** Reads one installed theme by id. */
-export const get: (id: string) => AddonHandle | undefined = themes.getEntity.bind(themes);
+export const get: (id: string) => AddonHandle | undefined = themes.getAddon.bind(themes);
 /** Reports whether a theme is enabled. */
 export const isEnabled: (id: string) => boolean = themes.isEnabled.bind(themes);
 /** Enables a theme and applies it. */

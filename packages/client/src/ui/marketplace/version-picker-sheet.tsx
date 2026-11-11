@@ -26,7 +26,7 @@ function VersionPickerSheet({ kind, id, name, onPick, onClose }: VersionPickerSh
 	const { ActionSheet, ActionSheetRow, BottomSheetTitleHeader } = BottomSheets;
 	const { state, retry } = useResource(id, fetchAddonVersions);
 	const held = Manager.for(kind).getHeldVersion(id);
-	const installed = Manager.for(kind).getEntity(id)?.version;
+	const installed = Manager.for(kind).getAddon(id)?.version;
 
 	function pick(choice: AvailableChoice) {
 		onClose();

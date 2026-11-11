@@ -5,7 +5,7 @@ import type { Addon } from '~/addons/addon';
 import { show } from '~/toasts/api';
 
 type DeletingManager = {
-	getEntities: () => Addon[];
+	getAddons: () => Addon[];
 	delete: (id: string) => void | Promise<void>;
 };
 
@@ -22,7 +22,7 @@ async function deleteInOrder(manager: DeletingManager, addons: Addon[]) {
  * @param addon The addon to delete.
  */
 export function confirmDelete(manager: DeletingManager, addon: Addon) {
-	const dependents = dependentsOf(addon.id, manager.getEntities()) as Addon[];
+	const dependents = dependentsOf(addon.id, manager.getAddons()) as Addon[];
 	const name = addon.name;
 
 	if (dependents.length === 0) {

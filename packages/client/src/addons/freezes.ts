@@ -23,14 +23,14 @@ export function freezeDisables(count: number, freeze: AddonFreeze): boolean {
 
 /**
  * @description Reports a freeze, logs it and tells the user, saying whether the addon was disabled for it.
- * @param entity The addon that froze Discord.
+ * @param addon The addon that froze Discord.
  * @param freeze The freeze the loader reported.
  * @param count How many times the addon froze Discord this session, this freeze included.
  * @param disabled Whether the addon is disabled for it.
  * @param logger The addon manager's logger.
  */
 export function announceFreeze(
-	entity: FrozenAddon,
+	addon: FrozenAddon,
 	freeze: AddonFreeze,
 	count: number,
 	disabled: boolean,
@@ -43,18 +43,18 @@ export function announceFreeze(
 	void reportCrash({
 		kind: 'freeze',
 		phase: 'frozen',
-		addon: crashReportAddon(entity),
+		addon: crashReportAddon(addon),
 		seconds: freeze.seconds,
 		...(freeze.detail ? { message: freeze.detail } : {}),
 		...(freeze.stack ? { stack: freeze.stack } : {}),
 	});
 	logger.warn(
-		`${entity.name} froze Discord for ${seconds} seconds (freeze ${count} this session).${detail}${stack}`,
+		`${addon.name} froze Discord for ${seconds} seconds (freeze ${count} this session).${detail}${stack}`,
 	);
 	show({
-		title: entity.name,
+		title: addon.name,
 		content: disabled
-			? `Disabled ${entity.name} because it froze Discord for ${seconds} seconds.${detail}`
-			: `${entity.name} froze Discord for ${seconds} seconds.${detail}`,
+			? `Disabled ${addon.name} because it froze Discord for ${seconds} seconds.${detail}`
+			: `${addon.name} froze Discord for ${seconds} seconds.${detail}`,
 	});
 }
