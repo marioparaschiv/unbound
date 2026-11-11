@@ -259,9 +259,13 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	updater, err := os.ReadFile(filepath.Join(root, "core", "src", "LoaderUpdater.cpp"))
-	if err != nil {
-		t.Fatal(err)
+	var updater []byte
+	for _, path := range []string{"include/LoaderUpdater.h", "src/LoaderUpdater.cpp", "src/LoaderUpdaterCandidates.cpp"} {
+		source, err := os.ReadFile(filepath.Join(root, "core", path))
+		if err != nil {
+			t.Fatal(err)
+		}
+		updater = append(updater, source...)
 	}
 	coreFFI, err := os.ReadFile(filepath.Join(root, "core", "src", "ffi", "NativeFFI.cpp"))
 	if err != nil {
