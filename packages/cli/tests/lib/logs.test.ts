@@ -340,7 +340,7 @@ describe('createFrameRewriter', () => {
 });
 
 describe('tailAndroid', () => {
-	test('prints the filtered history of Discord from logcat and exits when not following', async () => {
+	async function fakeAndroid() {
 		const directory = temporaryDirectory();
 		const calls = join(directory, 'calls');
 		const adb = join(directory, 'adb');
@@ -365,12 +365,18 @@ describe('tailAndroid', () => {
 		);
 		chmodSync(adb, 0o755);
 
-		const events: LogEvent[] = [];
 		const target = await openAndroidTarget({ serial: 'emulator-5554', adb });
 
 		if ('error' in target) {
 			throw new Error(target.error);
 		}
+
+		return { target, calls };
+	}
+
+	test('prints the filtered history of Discord from logcat and exits when not following', async () => {
+		const { target, calls } = await fakeAndroid();
+		const events: LogEvent[] = [];
 
 		const result = await tailAndroid(target, {
 			since: '5m',
@@ -389,6 +395,15 @@ describe('tailAndroid', () => {
 		expect(commands).toContain('-s emulator-5554 logcat -v threadtime -v epoch');
 		expect(commands).toContain('-T 1793049800.000 -d');
 	});
+
+	test('prints the history since a time and exits when not asked to follow', async () => {
+		const { target, calls } = await fakeAndroid();
+
+		const result = await tailAndroid(target, { since: '2m', emit: () => {} });
+
+		expect(result).toEqual({ ok: true, text: '-- End of the log. --' });
+		expect(await Bun.file(calls).text()).toContain('-T 1793049980.000 -d');
+	}, 5_000);
 });
 
 describe('parseLoaderLogLine', () => {
