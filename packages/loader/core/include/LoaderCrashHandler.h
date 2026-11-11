@@ -9,4 +9,5 @@ bool installAddonCrashHandler(const std::string &markerPath);
 constexpr const char *kNativeCrashFile = "native-crash.txt";
 // The stack the previous process wrote as it crashed, read before this one's handler reset it.
 std::string previousNativeCrash();
+bool        adoptPreviousNativeCrash(const std::string &stack);
 }

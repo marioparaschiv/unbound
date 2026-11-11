@@ -118,6 +118,37 @@ void CompleteBrowserLogin(NSString *token)
 // Mode), kept current by a path monitor so the loader can ask from any thread without waiting.
 static std::atomic_bool meteredNetwork{false};
 
+static void keepAwakeForUpdateCheck()
+{
+    UIApplication                     *application = UIApplication.sharedApplication;
+    __block UIBackgroundTaskIdentifier task =
+        [application beginBackgroundTaskWithName:@"Unbound update check"
+                               expirationHandler:^{
+                                   [application endBackgroundTask:task];
+                                   task = UIBackgroundTaskInvalid;
+                               }];
+    if (task == UIBackgroundTaskInvalid)
+    {
+        return;
+    }
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        if (UnboundLoader()->onBackground())
+        {
+            for (int waited = 0; waited < 25 && UnboundLoader()->isCheckingForUpdate(); waited++)
+            {
+                [NSThread sleepForTimeInterval:1.0];
+            }
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (task != UIBackgroundTaskInvalid)
+            {
+                [application endBackgroundTask:task];
+                task = UIBackgroundTaskInvalid;
+            }
+        });
+    });
+}
+
 static void watchNetworkCost()
 {
     static nw_path_monitor_t monitor = nullptr;
@@ -480,6 +511,7 @@ static void prepareLoading(id instance)
                 usingBlock:^(NSNotification *) {
                     dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0),
                                    ^{ UnboundLoader()->markHealthy(); });
+                    keepAwakeForUpdateCheck();
                 }];
 
 #if ATTESTATION_ENABLED

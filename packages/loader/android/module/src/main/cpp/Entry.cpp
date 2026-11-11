@@ -11,6 +11,7 @@
 #include "JniEnvironment.h"
 #include "JniSurface.h"
 #include "LoaderColor.h"
+#include "LoaderCrashHandler.h"
 #include "LoaderDevOverlay.h"
 #include "LoaderDiagnostics.h"
 #include "LoaderDocuments.h"
@@ -21,6 +22,7 @@
 #include "LoaderPreferences.h"
 #include "LoaderTelemetry.h"
 #include "LoaderThreadWarnings.h"
+#include "LoaderTombstone.h"
 #include "LoaderToolbox.h"
 #include "LoaderToolboxGestures.h"
 #include "NativeFabric.h"
@@ -118,6 +120,27 @@ static void nativeOnForeground(JNIEnv *, jclass)
     {
         loader->onForeground();
     }
+}
+
+static void nativeOnBackground(JNIEnv *, jclass)
+{
+    if (auto loader = currentLoader())
+    {
+        loader->onBackground();
+    }
+}
+
+static jboolean nativeAdoptTombstone(JNIEnv *env, jclass, jbyteArray tombstone)
+{
+    if (!tombstone)
+    {
+        return JNI_FALSE;
+    }
+    jsize       length = env->GetArrayLength(tombstone);
+    std::string bytes(static_cast<size_t>(length), '\0');
+    env->GetByteArrayRegion(tombstone, 0, length, reinterpret_cast<jbyte *>(bytes.data()));
+    std::optional<std::string> stack = loader::tombstoneStack(bytes);
+    return stack && loader::adoptPreviousNativeCrash(*stack) ? JNI_TRUE : JNI_FALSE;
 }
 
 static jstring nativeLaunchTimings(JNIEnv *env, jclass)

@@ -317,4 +317,14 @@ std::string previousNativeCrash()
 {
     return gPreviousNativeCrash;
 }
+
+bool adoptPreviousNativeCrash(const std::string &stack)
+{
+    if (stack.empty() || !gPreviousNativeCrash.empty())
+    {
+        return false;
+    }
+    gPreviousNativeCrash = stack;
+    return true;
+}
 }

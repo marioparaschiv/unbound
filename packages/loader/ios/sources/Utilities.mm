@@ -8,6 +8,7 @@
 #import <sys/sysctl.h>
 
 #import "CoreBridge.h"
+#import "Utilities+CodeSignature.h"
 
 #if __has_include(<net/route.h>)
 #import <net/route.h>
@@ -751,12 +752,27 @@ static NSString *defaultGatewayAddress(void)
 
 + (BOOL)isLiveContainerApp
 {
-    Class LCSharedUtilsClass = NSClassFromString(@"LCSharedUtils");
-    BOOL  isLiveContainer    = (LCSharedUtilsClass != nil);
+    BOOL      hasSharedUtils  = NSClassFromString(@"LCSharedUtils") != nil;
+    BOOL      hasLCBridge     = hasSharedUtils || NSClassFromString(@"LCAppInfo") != nil;
+    BOOL      hostedElsewhere = NO;
+    char      path[PATH_MAX];
+    uint32_t  size       = sizeof(path);
+    NSString *bundlePath = NSBundle.mainBundle.bundlePath.stringByStandardizingPath;
+    if (_NSGetExecutablePath(path, &size) == 0 && bundlePath.length > 0)
+    {
+        NSString *executable = [NSString stringWithUTF8String:path]
+                                   .stringByResolvingSymlinksInPath.stringByStandardizingPath;
+        NSString *bundle     = bundlePath.stringByResolvingSymlinksInPath;
+        hostedElsewhere =
+            executable.length > 0 && ![executable hasPrefix:[bundle stringByAppendingString:@"/"]];
+    }
+    BOOL isLiveContainer = hasLCBridge || hostedElsewhere;
 
     [Logger debug:LOG_CATEGORY_UTILITIES
-           format:@"LiveContainer detection - LCSharedUtils class: %@, isLiveContainer: %@",
-                  LCSharedUtilsClass ? @"Found" : @"Not found", isLiveContainer ? @"YES" : @"NO"];
+           format:@"LiveContainer detection - LCSharedUtils: %@, LiveContainer classes: %@, "
+                  @"executable outside the main bundle: %@",
+                  hasSharedUtils ? @"YES" : @"NO", hasLCBridge ? @"YES" : @"NO",
+                  hostedElsewhere ? @"YES" : @"NO"];
 
     return isLiveContainer;
 }
@@ -831,6 +847,12 @@ static NSString *defaultGatewayAddress(void)
         facts.jitAvailable            = [] {
             return static_cast<bool>([Utilities isJITAvailable]);
         };
+        id team = [self getApplicationEntitlements][@"com.apple.developer.team-identifier"];
+        if ([team isKindOfClass:[NSString class]])
+        {
+            facts.discordSigned =
+                loader::environment::isDiscordProductionTeam(toStdString((NSString *) team));
+        }
     }
     return toNSString(loader::environment::appSource(facts));
 }

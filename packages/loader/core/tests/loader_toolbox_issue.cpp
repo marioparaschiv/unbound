@@ -108,6 +108,8 @@ int main()
     assert(loader::toolbox::discordLine("351.0", "App Store") == "351.0 (App Store)");
     assert(loader::toolbox::discordLine("352.0 (52)", "TestFlight") ==
            "352.0 beta, build 52 (TestFlight)");
+    assert(loader::toolbox::discordLine("352.0 (52)", "Sideloaded (TestFlight build)") ==
+           "352.0 beta, build 52 (Sideloaded (TestFlight build))");
 
     const auto            root = makeTemporaryDirectory();
     loader::SettingsStore settings((root / "settings.json").string());

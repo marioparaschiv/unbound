@@ -253,6 +253,8 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
     jsi::Object app(runtime);
     app.setProperty(runtime, "getAppSource",
                     stringGetter(runtime, "getAppSource", provider->appSource));
+    app.setProperty(runtime, "getInstallDetails",
+                    stringGetter(runtime, "getInstallDetails", provider->installDetails));
     app.setProperty(runtime, "getFramework",
                     stringGetter(runtime, "getFramework", provider->framework));
     app.setProperty(runtime, "isVerifiedBuild",

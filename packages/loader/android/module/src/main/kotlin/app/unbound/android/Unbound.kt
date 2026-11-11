@@ -183,6 +183,7 @@ class Unbound : XposedModule() {
                 ActivityTracker.onActivityPaused(activity)
                 runCatching { Toolbox.onPaused(activity) }
                 runCatching { NativeBridge.nativeMarkHealthy() }
+                runCatching { NativeBridge.nativeOnBackground() }
                 result
             }
     }

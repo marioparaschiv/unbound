@@ -219,6 +219,16 @@ void Loader::onForeground()
     }
 }
 
+bool Loader::onBackground()
+{
+    return pipeline_ && pipeline_->onBackground();
+}
+
+bool Loader::isCheckingForUpdate() const
+{
+    return pipeline_ && pipeline_->isCheckingForUpdate();
+}
+
 SettingsStore &Loader::settings()
 {
     return settings_;

@@ -46,6 +46,45 @@ static void checkInstallSources()
     assert(appSource({false, Receipt::None, false, false, false, {}}) == "Sideloaded");
     assert(appSource({}) == "Sideloaded");
 
+    InstallFacts resigned{false, Receipt::TestFlight, false, false, false, {}, false};
+    assert(appSource(resigned) == "Sideloaded (TestFlight build)");
+    resigned.receipt = Receipt::AppStore;
+    assert(appSource(resigned) == "Sideloaded (App Store build)");
+    resigned.discordSigned = true;
+    assert(appSource(resigned) == "App Store");
+    resigned.discordSigned.reset();
+    assert(appSource(resigned) == "App Store");
+
+    SigningFacts signing;
+    assert(signingDetails(signing) == "no provisioning profile, no entitlements found");
+    signing.teamIdentifier    = "ABCDE12345";
+    signing.hasProfile        = true;
+    signing.getTaskAllow      = true;
+    signing.listsDevices      = true;
+    signing.profileExpiry     = "2026-11-18";
+    signing.altStore          = true;
+    signing.entitlementSource = "kernel";
+    assert(signingDetails(signing) ==
+           "development certificate, team ABCDE12345, profile expires "
+           "2026-11-18, AltStore/SideStore, entitlements from the kernel");
+    signing.getTaskAllow = false;
+    signing.altStore     = false;
+    assert(signingDetails(signing).rfind("ad hoc certificate, ", 0) == 0);
+    signing.provisionsAllDevices = true;
+    assert(signingDetails(signing).rfind("enterprise certificate, ", 0) == 0);
+    signing.provisionsAllDevices = false;
+    signing.listsDevices         = false;
+    assert(signingDetails(signing).rfind("distribution certificate, ", 0) == 0);
+    signing.teamIdentifier    = kDiscordTeamIdentifier;
+    signing.entitlementSource = "executable";
+    assert(signingDetails(signing) == "Discord's signature, entitlements from the executable");
+
+    assert(
+        provisioningProfilePlist("\x30\x82junk<?xml version=\"1.0\"?><plist><dict/></plist>sig") ==
+        "<?xml version=\"1.0\"?><plist><dict/></plist>");
+    assert(!provisioningProfilePlist("<?xml no end"));
+    assert(!provisioningProfilePlist("no plist"));
+
     assert(isDiscordProductionTeam("53Q6R32WPB"));
     assert(!isDiscordProductionTeam("ABCDE12345"));
     assert(!isDiscordProductionTeam(std::nullopt));

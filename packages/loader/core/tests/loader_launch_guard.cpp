@@ -35,6 +35,26 @@ void countsLaunchesThatNeverBecameHealthy()
     assert(healthy.failures == 0);
 }
 
+void countsAFrozenLaunchEvenWhenItWasSwipedAway()
+{
+    bundle_test::Server server;
+    loader::LaunchGuard guard(server.root.string());
+
+    assert(!guard.markFrozen());
+
+    guard.begin();
+    assert(guard.markFrozen());
+    assert(loader::readTextFile(server.path(loader::LaunchGuard::kFile)) ==
+           R"({"failures":0,"frozen":true})");
+
+    loader::LaunchVerdict verdict = guard.begin(loader::PreviousExit::Ended);
+    assert(verdict.failures == 1);
+    assert(loader::readTextFile(server.path(loader::LaunchGuard::kFile)) == R"({"failures":1})");
+
+    loader::LaunchVerdict ended = guard.begin(loader::PreviousExit::Ended);
+    assert(ended.failures == 0);
+}
+
 void ignoresAnUnreadableMarker()
 {
     bundle_test::Server server;
@@ -76,6 +96,7 @@ void rollsBackToTheBundleTheLastPromotionReplaced()
 int main()
 {
     countsLaunchesThatNeverBecameHealthy();
+    countsAFrozenLaunchEvenWhenItWasSwipedAway();
     ignoresAnUnreadableMarker();
     rollsBackToTheBundleTheLastPromotionReplaced();
     return 0;

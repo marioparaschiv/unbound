@@ -55,6 +55,9 @@ std::shared_ptr<NativePlatformProvider> makeNativePlatformProvider(void)
     provider->appSource = []() {
         return toStdString([Utilities getAppSource]);
     };
+    provider->installDetails = []() {
+        return toStdString([Utilities getInstallDetails]);
+    };
     provider->isVirtualDevice = []() {
         return static_cast<bool>([Utilities isVPhone]);
     };

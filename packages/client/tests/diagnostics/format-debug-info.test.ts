@@ -42,6 +42,22 @@ describe('formatDebugInfo', () => {
 		);
 	});
 
+	test('says how a sideloaded app was signed, after the device', () => {
+		const lines = formatDebugInfo({
+			...info,
+			appSource: 'Sideloaded (TestFlight build)',
+			installDetails:
+				'development certificate, team ABCDE12345, entitlements from the kernel',
+		}).split('\n');
+
+		expect(lines).toContain(
+			'- **Discord:** 351.0 stable, build 118370 (Sideloaded (TestFlight build))',
+		);
+		expect(lines[4]).toBe(
+			'- **Install:** development certificate, team ABCDE12345, entitlements from the kernel',
+		);
+	});
+
 	test('leaves out the framework when nothing injected the loader', () => {
 		expect(formatDebugInfo({ ...info, framework: '' }).split('\n')).toContain(
 			'- **Unbound:** v0.11.0 (`402cbbf6`), loader 1.0.0 (`Unbound.dylib`)',
