@@ -28,7 +28,7 @@ export type TooltipController = {
 	dispose(): Promise<void>;
 };
 
-type Native = Pick<NativePluginBridge, 'apiVersion' | 'objc' | 'fabric'>;
+type Native = Pick<NativePluginBridge, 'objc' | 'fabric'>;
 
 type Shown = {
 	host: NativeObjectHandle;
@@ -38,10 +38,10 @@ type Shown = {
 
 /**
  * @description Creates the tooltip shown when an indicator is tapped. It closes on the next touch or after a few seconds.
- * @param native The `context.native` bridge: its API version, Objective-C bridge, and Fabric bridge to mount Discord's tooltip.
+ * @param native The `context.native` bridge: its Objective-C bridge, and Fabric bridge to mount Discord's tooltip.
  * @returns The tooltip controller, or `null` when Discord's tooltip component is missing.
  */
-export function createTooltips({ apiVersion, objc, fabric }: Native): TooltipController | null {
+export function createTooltips({ objc, fabric }: Native): TooltipController | null {
 	if (!Tooltips) {
 		logger.warn('Tooltip skipped: Discord moved Tooltips.');
 
@@ -192,7 +192,7 @@ export function createTooltips({ apiVersion, objc, fabric }: Native): TooltipCon
 				label: anchor.tooltip,
 				width: frame.width,
 			});
-			await layoutTooltipSurface(fabric, apiVersion, surface, size);
+			await layoutTooltipSurface(fabric, surface, size);
 
 			if (stale()) return;
 

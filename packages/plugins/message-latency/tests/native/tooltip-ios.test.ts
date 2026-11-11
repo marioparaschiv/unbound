@@ -84,11 +84,12 @@ function fakeFabric(batches: boolean) {
 	return { calls, fabric, surface };
 }
 
-function show(apiVersion: string, batches: boolean) {
+function show(batches: boolean) {
 	const icon = registerViews();
 	const { calls, fabric, surface } = fakeFabric(batches);
+	if (!batches) native.setUnsupportedMethods(['fabric.batchAsync']);
+
 	const tooltips = createTooltips({
-		apiVersion,
 		objc: native.objc.bridge,
 		fabric: fabric as never,
 	});
@@ -102,8 +103,8 @@ function show(apiVersion: string, batches: boolean) {
 }
 
 describe('the iOS latency tooltip', () => {
-	test('sizes and positions the surface one call at a time on native plugin API 1.1.0', async () => {
-		const { calls, surface } = show('1.1.0', false);
+	test('sizes and positions the surface one call at a time on a loader without frame batches', async () => {
+		const { calls, surface } = show(false);
 
 		await settle(calls, 3);
 
@@ -114,8 +115,8 @@ describe('the iOS latency tooltip', () => {
 		expect(calls[2]?.args).toEqual([surface, { x: 0, y: 0, ...size }]);
 	});
 
-	test('sizes and positions the surface in one frame batch on native plugin API 1.2.0', async () => {
-		const { calls, surface } = show('1.2.0', true);
+	test('sizes and positions the surface in one frame batch on a loader with frame batches', async () => {
+		const { calls, surface } = show(true);
 
 		await settle(calls, 2);
 

@@ -25,11 +25,11 @@ function fakeFabric() {
 
 const size: NativeFabricSize = { width: 128, height: 64 };
 
-test('sizes and positions the tooltip surface in one frame batch on native plugin API 1.2.0', async () => {
+test('sizes and positions the tooltip surface in one frame batch on a loader with frame batches', async () => {
 	const { calls, fabric } = fakeFabric();
 	const surface = native.objc.create('UIView');
 
-	await layoutTooltipSurface(fabric, '1.2.0', surface, size);
+	await layoutTooltipSurface(fabric, surface, size);
 
 	expect(calls).toEqual([
 		[
@@ -45,11 +45,12 @@ test('sizes and positions the tooltip surface in one frame batch on native plugi
 	]);
 });
 
-test('sizes then positions the tooltip surface on native plugin API 1.1.0', async () => {
+test('sizes then positions the tooltip surface on a loader without frame batches', async () => {
 	const { calls, fabric } = fakeFabric();
 	const surface = native.objc.create('UIView');
 
-	await layoutTooltipSurface(fabric, '1.1.0', surface, size);
+	native.setUnsupportedMethods(['fabric.batchAsync']);
+	await layoutTooltipSurface(fabric, surface, size);
 
 	expect(calls).toEqual([
 		['setSize', surface, size, size],
