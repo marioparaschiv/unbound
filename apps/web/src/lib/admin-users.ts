@@ -4,7 +4,6 @@ import type { UserSummary } from '@unbound-app/contracts/account';
 import { Type } from '@unbound-app/contracts/schema';
 import { and, sql } from 'drizzle-orm';
 
-import { cursorTime, keysetList } from '~/lib/keyset';
 import { userNameSearchText, userSearchText } from '~/db/schema';
 import { listSubmissionHistory } from '~/lib/admin-submissions';
 import { DEFAULT_ROLE, hasPermission } from '~/lib/auth/access';
@@ -13,6 +12,7 @@ import type { AdminSubmission } from '~/lib/admin-submissions';
 import type { EventTimeline } from '~/lib/moderation-events';
 import { getEventTimeline } from '~/lib/moderation-events';
 import { SERVED_VERSION } from '~/lib/addon-visibility';
+import { cursorTime, keysetList } from '~/lib/keyset';
 import { requirePermission } from '~/lib/api/caller';
 import { matchesSearch } from '~/lib/admin-search';
 import type { StaffNote } from '~/lib/staff-notes';

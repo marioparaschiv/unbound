@@ -30,6 +30,7 @@ export function onRecordChange(
 	listener: () => void,
 ): () => void {
 	const manager = Manager.for(kind);
+
 	function handler({ key }: RecordChange) {
 		if (keys.includes(key)) {
 			listener();

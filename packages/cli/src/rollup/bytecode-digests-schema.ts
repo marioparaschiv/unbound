@@ -10,7 +10,7 @@ export const BYTECODE_DIGESTS_FILENAME = 'bytecode-digests.json';
 const sha512 = Type.String({ pattern: '^[0-9a-f]{128}$' });
 
 /** One bundle the build wrote: its SHA-512, and the SHA-512 of each bytecode file compiled from it, by Hermes bytecode version. */
-export const bundleDigestsSchema = Type.Object({
+const bundleDigestsSchema = Type.Object({
 	sha512,
 	bytecode: Type.Record(Type.String({ pattern: '^\\d{1,10}$' }), sha512, {
 		additionalProperties: false,
@@ -24,4 +24,4 @@ export const bytecodeDigestsSchema = Type.Record(Type.String(), bundleDigestsSch
 
 export type BytecodeDigests = StaticDecode<typeof bytecodeDigestsSchema>;
 
-export default { BYTECODE_DIGESTS_FILENAME, bundleDigestsSchema, bytecodeDigestsSchema };
+export default { BYTECODE_DIGESTS_FILENAME, bytecodeDigestsSchema };

@@ -4,8 +4,8 @@ import { createLogger } from '@unbound-app/logger';
 import type { AppContext, AuthHookContext } from '~/lib/context';
 import { OPEN_SUBMISSION_STATUSES } from '~/lib/submissions';
 import { startPeriodicJob, type Job } from '~/lib/jobs';
-import { appendEvent } from '~/lib/moderation-events';
 import { addonVersion, submission } from '~/db/schema';
+import { appendEvent } from '~/lib/moderation-events';
 
 const logger = createLogger('Web', 'Staging');
 

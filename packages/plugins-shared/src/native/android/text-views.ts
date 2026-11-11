@@ -1,4 +1,8 @@
-import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
+import {
+	DRAWEE_TEXT_SETTER,
+	DRAWEE_TEXT_VIEW,
+	draweeTextBuilder,
+} from '@unbound-plugins/shared/native/android/discord-views';
 import type {
 	NativeJavaBridge,
 	NativeJavaHooksBridge,
@@ -6,21 +10,17 @@ import type {
 	NativeJavaValue,
 } from '@unbound-app/api/native';
 import {
-	DRAWEE_TEXT_SETTER,
-	DRAWEE_TEXT_VIEW,
-	draweeTextBuilder,
-} from '@unbound-plugins/shared/native/android/discord-views';
-import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
+	currentDecorView,
+	findViewsOfClass,
+	scheduleStartupScans,
+} from '@unbound-plugins/shared/native/android/views';
 import {
 	javaFlag,
 	javaReference,
 	javaViewKey,
 } from '@unbound-plugins/shared/native/android/java-values';
-import {
-	currentDecorView,
-	findViewsOfClass,
-	scheduleStartupScans,
-} from '@unbound-plugins/shared/native/android/views';
+import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 
 export type TextViewNative = {
 	java: NativeJavaBridge;
@@ -94,7 +94,9 @@ export function watchTextViews(native: TextViewNative, watch: TextViewWatch): Te
 		({ self }) => {
 			const view = javaReference(self);
 
-			if (view) schedule(view);
+			if (view) {
+				schedule(view);
+			}
 		},
 	);
 

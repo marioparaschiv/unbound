@@ -2,10 +2,10 @@ import type { ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonKind } from '@unbound-app/types/addons';
 import { useState } from 'react';
 
+import { installsFromManifest } from '~/addons/installs-from-manifest';
 import type { InstallStatus } from '~/marketplace/catalog';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { AvailableChoice } from '~/addons/versions';
-import { installsFromManifest } from '~/addons/installs-from-manifest';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';

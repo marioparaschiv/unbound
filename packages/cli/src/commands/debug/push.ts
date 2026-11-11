@@ -2,8 +2,8 @@ import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry'
 
 import { bridgePortField, waitForDevice } from '~/lib/context';
 import { resolveAddonTarget } from '~/lib/addon-target';
-import { pushBuiltAddon } from '~/lib/built-addon';
 import { staleBuildReason } from '~/lib/stale-build';
+import { pushBuiltAddon } from '~/lib/built-addon';
 import { defaulted, Type } from '~/lib/schema';
 import { NOT_CONNECTED } from '~/lib/device';
 

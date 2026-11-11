@@ -28,6 +28,7 @@ const VIRTUAL_ID = '\0unbound-settings';
 const FIX = `read settings from '${SETTINGS_MODULE}'`;
 const PANEL_EXPORT = 'SettingsPanel';
 const REGISTER_ACTIONS = '__registerActions';
+
 /** The `ubd check` id these plugins report under. */
 export const CHECK = 'settings';
 

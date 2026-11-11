@@ -31,7 +31,7 @@ const SETTLE_POLL_MS = 500;
 /**
  * @description Waits for Discord to answer again after a relaunch: its debugger reconnects, then every enabled plugin has started or failed.
  */
-export async function waitUntilBack(device: Device): Promise<void> {
+async function waitUntilBack(device: Device): Promise<void> {
 	if (!(await device.waitForDevice(RELAUNCH_TIMEOUT_MS))) {
 		throw new Error('Discord did not come back after a relaunch.');
 	}
@@ -95,4 +95,4 @@ export async function afterRecovery<T>(
 	}
 }
 
-export default { waitUntilBack, recover, afterRecovery };
+export default { recover, afterRecovery };

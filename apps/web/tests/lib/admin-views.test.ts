@@ -1,15 +1,15 @@
 import { afterAll, describe, expect, test } from 'bun:test';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { delistAddon, relistAddon } from '~/lib/addons';
 import { createSubmission } from '~/lib/submissions';
+import { addon, addonVersion } from '~/db/schema';
 import { getAdminAddon } from '~/lib/admin-addon';
 import { addMaintainer } from '~/lib/maintainers';
 import { getAdminUser } from '~/lib/admin-users';
 import type { AppContext } from '~/lib/context';
 import { reviewSubmission } from '~/lib/review';
 import type { Role } from '~/lib/auth/access';
-import { addon } from '~/db/schema';
 
 import { authRequest, createTestContext, linkGitHub } from '../helpers/context';
 import { manifest, seedApprovedAddon, seedVersion } from '../helpers/addons';
@@ -173,6 +173,25 @@ describe('the admin addon view', () => {
 			latestVersion: '1.10.0',
 			owners: [{ id: owner.userId }],
 		});
+	});
+
+	test('reports the served version as the latest, not a newer one whose files are pending', async () => {
+		const owner = await signUp();
+		const moderator = await signUp('moderator');
+
+		await seedApprovedAddon(ctx, owner.userId, manifest('views.pending', '1.0.0'));
+		await seedVersion(ctx, owner.userId, manifest('views.pending', '1.1.0'));
+		await ctx.db
+			.update(addonVersion)
+			.set({ filesPendingSince: clock })
+			.where(
+				and(eq(addonVersion.addonId, 'views.pending'), eq(addonVersion.version, '1.1.0')),
+			);
+
+		const view = await getAdminAddon(ctx, moderator.caller, 'views.pending');
+
+		expect(view?.versions.map((version) => version.version)).toEqual(['1.1.0', '1.0.0']);
+		expect(view?.addon.latestVersion).toBe('1.0.0');
 	});
 
 	test('shows the moderation events newest first, with their actor and the users they name', async () => {

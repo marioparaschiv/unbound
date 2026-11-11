@@ -1,19 +1,19 @@
 import { deviceScript } from './device-script';
 
-export const FIXTURE_MESSAGES = [
+const FIXTURE_MESSAGES = [
 	'```ts\nconst answer: number = 42;\nfunction double(value: number) {\n\treturn value * 2;\n}\n```',
 	'Fixture mention <@{self}> with a link https://discord.com/channels/{guild}/{channel}',
 	'Plain fixture message for bubbles and avatars.',
 	'Fixture message link https://discord.com/channels/{guild}/{channel}/{message}',
 ];
 
-export const LAYOUT_FIXTURES = {
+const LAYOUT_FIXTURES = {
 	original: 'Fixture original for the reply',
 	reply: 'Fixture reply to the message above',
 	forwarded: 'Fixture forwarded text',
 };
 
-export const SCROLL_FILLER = 30;
+const SCROLL_FILLER = 30;
 
 type StagedAuthor = { author?: { id?: string } };
 type StagedMessages = { matrixStagedMessages?: { channel: string; id: string }[] };

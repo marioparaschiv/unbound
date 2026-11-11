@@ -13,6 +13,9 @@ export type CursorKey = [value: string | number, id: string];
 /** A decoded cursor's position, with a timestamp back as a `Date`. */
 export type CursorPosition = [value: string | number | Date, id: string];
 
+/** A row holding a list's key fields: the sort value and the id. */
+type KeyedRow<K extends string> = Record<K, CursorPosition[number]>;
+
 // The last millisecond of year 9999: later, toISOString() writes an extended year Postgres rejects.
 const MAX_DATE_MS = Date.UTC(10_000, 0, 1) - 1;
 
@@ -182,7 +185,7 @@ function requirePosition(value: unknown): CursorPosition {
 	throw new Error('Failed to read a keyset cursor: its schema does not decode to [value, id].');
 }
 
-function readKey<K extends string>(row: Record<K, unknown>, key: readonly [K, K]): CursorKey {
+function readKey<K extends string>(row: KeyedRow<K>, key: readonly [K, K]): CursorKey {
 	const [value, id] = [row[key[0]], row[key[1]]];
 	const sort = value instanceof Date ? value.getTime() : value;
 
@@ -203,7 +206,7 @@ function readKey<K extends string>(row: Record<K, unknown>, key: readonly [K, K]
  * @param options The key, cursor schema, request, order, page size and query.
  * @returns The page's statement and its reader.
  */
-export function keysetList<K extends string, S extends TSchema, TRow extends Record<K, unknown>>(
+export function keysetList<K extends string, S extends TSchema, TRow extends KeyedRow<K>>(
 	options: KeysetListOptions<K, S, TRow>,
 ): KeysetList<TRow> {
 	const { key, schema, request, order, size } = options;

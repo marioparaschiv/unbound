@@ -8,10 +8,10 @@ import {
 	withAddonAttribution,
 	withAddonScope,
 } from '~/addons/crash-guard';
-import { needsConsent, NativeConsentRequiredError } from '~/native/consent';
 import type { AddonAttribution, AddonFreeze, AddonScope } from '~/addons/crash-guard';
 import { parseAddonManifest, resolveManifestCapabilities } from '~/addons/manifest';
 import type { AddonEvents, AddonResolveable, AddonState } from '~/addons/addon';
+import { needsConsent, NativeConsentRequiredError } from '~/native/consent';
 import { validateNativePluginRequirements } from '~/native/capabilities';
 import { announceFreeze, freezeDisables } from '~/addons/freezes';
 import { crashReportAddon } from '~/diagnostics/crash-report';
