@@ -142,7 +142,7 @@ export function createMemoryBackend(stores: SettingsStores = {}): SettingsBacken
 }
 
 /**
- * @description Picks the loader's native settings store, or a JS-only one when no loader is present.
+ * @description Picks the loader's native settings backend, or a JS-only one when no loader is present.
  * @returns The backend.
  */
 export function createSettingsBackend(): SettingsBackend {

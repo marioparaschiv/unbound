@@ -142,7 +142,7 @@ function collectKind(kind: SyncKind): SyncKindDocument {
 }
 
 /**
- * @description Copies a settings store, so the synced document cannot write through to the live settings.
+ * @description Copies a Bucket, so the synced document cannot write through to the live settings.
  * @param store The store as `snapshot` reports it.
  * @returns A shallow copy of it.
  */
