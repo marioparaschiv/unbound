@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { keyboardRotationOffset } from '~/lib/keyboard-layout-android';
+import { keyboardRotationOffset } from '~/lib/android/keyboard-layout';
 
 test('translates the rotated composer back to its pre-keyboard screen position', () => {
 	expect(keyboardRotationOffset(96, 942)).toBe(-846);

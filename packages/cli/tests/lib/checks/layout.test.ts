@@ -33,14 +33,39 @@ describe('findLayoutIssues', () => {
 		).toEqual([]);
 	});
 
-	test('accepts platform-native files in src/native/ios/ and src/native/android/', () => {
+	test('accepts platform files in a standard folder ios/ and android/', () => {
 		expect(
 			flaggedFiles({
 				'src/native/views.ts': '',
 				'src/native/ios/views.ts': '',
 				'src/native/android/views.ts': '',
+				'src/lib/ios/colors.ts': '',
+				'src/patches/android/rows.tsx': '',
 			}),
 		).toEqual([]);
+	});
+
+	test('flags files that name their platform in a suffix', () => {
+		expect(
+			findLayoutIssues(
+				plugin({
+					'src/lib/colors-ios.ts': '',
+					'src/patches/rows-android.tsx': '',
+					'src/lib/ios-colors.ts': '',
+				}),
+			),
+		).toEqual([
+			{
+				file: 'src/lib/colors-ios.ts',
+				message: 'names its platform in a suffix',
+				fix: 'move it to src/lib/ios/colors.ts',
+			},
+			{
+				file: 'src/patches/rows-android.tsx',
+				message: 'names its platform in a suffix',
+				fix: 'move it to src/patches/android/rows.tsx',
+			},
+		]);
 	});
 
 	test('flags folders nested below a platform folder', () => {
@@ -49,13 +74,12 @@ describe('findLayoutIssues', () => {
 		]);
 	});
 
-	test('flags platform folders outside src/native/', () => {
+	test('flags folders that are not a platform', () => {
 		expect(
 			flaggedFiles({
-				'src/lib/ios/colors.ts': '',
-				'src/patches/android/rows.ts': '',
+				'src/lib/helpers/colors.ts': '',
 				'src/native/web/views.ts': '',
 			}),
-		).toEqual(['src/lib/ios', 'src/native/web', 'src/patches/android']);
+		).toEqual(['src/lib/helpers', 'src/native/web']);
 	});
 });

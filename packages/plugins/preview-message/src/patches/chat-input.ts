@@ -2,8 +2,8 @@ import { Portal } from '@unbound-app/api/metro/components';
 import { assets, native } from '@unbound-app/api';
 
 import { findPreviewModules } from '~/lib/modules';
-import { patchChatInputRightActions } from '~/patches/chat-input-ios';
-import { patchChatInputSendButton } from '~/patches/chat-input-android';
+import { patchChatInputRightActions } from '~/patches/ios/chat-input';
+import { patchChatInputSendButton } from '~/patches/android/chat-input';
 
 const patchPreviewButton = native.definePlatform({
 	ios: patchChatInputRightActions,

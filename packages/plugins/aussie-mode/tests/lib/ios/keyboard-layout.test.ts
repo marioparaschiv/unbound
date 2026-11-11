@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { keyboardRotationOffset } from '~/lib/keyboard-layout-ios';
+import { keyboardRotationOffset } from '~/lib/ios/keyboard-layout';
 
 test('keeps the rotated input at its pre-keyboard position', () => {
 	expect(

@@ -29,11 +29,11 @@ const ROOT_FILES = new Set([
 // A kind's file grows into a folder of named files, such as `patches/message-rows.ts`.
 const ROOT_FOLDERS = new Set(['native', 'flux', 'components', 'lib', 'patches', 'commands']);
 const FOLDER_LIST = 'native/, flux/, components/, lib/, patches/ or commands/';
-// Platform-native code may sit one level deeper, in `src/native/ios/<file>` and `src/native/android/<file>`.
-const NATIVE_FOLDER = 'native';
+// Platform code may sit one level deeper, in `src/<folder>/ios/<file>` and `src/<folder>/android/<file>`.
 const PLATFORM_FOLDERS = new Set(['ios', 'android']);
+const PLATFORM_SUFFIX = /^(.+)-(ios|android)(\.[cm]?[jt]sx?)$/;
 const DEPTH_FIX =
-	'keep files at src/<folder>/<file>; platform-native code goes in src/native/ios/<file> and src/native/android/<file>';
+	'keep files at src/<folder>/<file>; platform code goes in src/<folder>/ios/<file> and src/<folder>/android/<file>';
 
 const MISSING_ENTRY: LayoutIssue = {
 	file: `src/${ENTRY_FILE}`,
@@ -44,7 +44,7 @@ const MISSING_ENTRY: LayoutIssue = {
 /**
  * @description Lists how a plugin's `src/` departs from the standard layout: the entry and the standard files at the
  * root, everything else one level down in a folder named for its kind, never deeper than `src/<folder>/<file>`
- * except platform-native code in `src/native/ios/<file>` and `src/native/android/<file>`.
+ * except platform code in `src/<folder>/ios/<file>` and `src/<folder>/android/<file>`, never in `-ios`/`-android` files.
  * @param dir The plugin's directory.
  * @returns One issue per departure, empty when the plugin follows the layout.
  */
@@ -84,11 +84,16 @@ export function findLayoutIssues(dir: string): LayoutIssue[] {
 		}
 
 		for (const nested of listEntries(join(src, entry.name))) {
+			if (nested.isFile()) {
+				issues.push(...findPlatformSuffix(entry.name, nested.name));
+				continue;
+			}
+
 			if (!nested.isDirectory()) {
 				continue;
 			}
 
-			if (entry.name === NATIVE_FOLDER && PLATFORM_FOLDERS.has(nested.name)) {
+			if (PLATFORM_FOLDERS.has(nested.name)) {
 				issues.push(
 					...findNestedFolders(
 						join(src, entry.name, nested.name),
@@ -103,6 +108,24 @@ export function findLayoutIssues(dir: string): LayoutIssue[] {
 	}
 
 	return issues;
+}
+
+function findPlatformSuffix(folder: string, name: string): LayoutIssue[] {
+	const match = PLATFORM_SUFFIX.exec(name);
+
+	if (!match) {
+		return [];
+	}
+
+	const [, base, platform, extension] = match;
+
+	return [
+		{
+			file: `src/${folder}/${name}`,
+			message: 'names its platform in a suffix',
+			fix: `move it to src/${folder}/${platform}/${base}${extension}`,
+		},
+	];
 }
 
 function findNestedFolders(dir: string, relative: string) {

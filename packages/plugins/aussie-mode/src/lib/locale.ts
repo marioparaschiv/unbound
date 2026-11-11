@@ -1,7 +1,7 @@
 import { native } from '@unbound-app/api';
 
-import { deviceLocale as android } from '~/lib/device-locale-android';
-import { deviceLocale as ios } from '~/lib/device-locale-ios';
+import { deviceLocale as android } from '~/lib/android/device-locale';
+import { deviceLocale as ios } from '~/lib/ios/device-locale';
 import { TARGET_LOCALE } from '~/lib/constants';
 
 const deviceLocale = native.definePlatform({ ios, android });

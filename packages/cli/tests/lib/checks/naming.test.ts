@@ -88,7 +88,7 @@ describe('ubd build checks', () => {
 			'warning  plugins/my-plugin/src/index.ts  is not a standard root file.  Fix: move it into native/, flux/, components/, lib/, patches/ or commands/.',
 			"warning  plugins/my-plugin/src/index.tsx  is missing.  Fix: add the entry that lists the plugin's features.",
 			'warning  plugins/my-plugin/src/messages  is not a standard folder.  Fix: move its files into native/, flux/, components/, lib/, patches/ or commands/.',
-			'warning  plugins/my-plugin/src/native/android/deeper  is nested too deep.  Fix: keep files at src/<folder>/<file>; platform-native code goes in src/native/ios/<file> and src/native/android/<file>.',
+			'warning  plugins/my-plugin/src/native/android/deeper  is nested too deep.  Fix: keep files at src/<folder>/<file>; platform code goes in src/<folder>/ios/<file> and src/<folder>/android/<file>.',
 		]);
 	});
 

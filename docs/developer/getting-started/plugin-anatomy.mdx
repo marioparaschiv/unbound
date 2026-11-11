@@ -135,7 +135,7 @@ The device matrix reads a self-test after a restart. Unbound builds it from the 
 
 ## Folder Layout
 
-Never deeper than `src/<folder>/<file>`, except platform-native code in `src/native/ios/<file>` and `src/native/android/<file>`. At the top level, at most:
+Never deeper than `src/<folder>/<file>`, except platform code in `src/<folder>/ios/<file>` and `src/<folder>/android/<file>`, such as `native/ios/views.ts` or `lib/android/colors.ts`. At the top level, at most:
 
 | Entry | Holds |
 | --- | --- |
@@ -146,7 +146,7 @@ Never deeper than `src/<folder>/<file>`, except platform-native code in `src/nat
 | `components/` | React components and their hooks |
 | `lib/` | The plugin's own logic: data, network, storage, helpers. No Discord patches; tests reach it directly |
 
-A file that grows too big becomes a folder of named files: `patches.ts` becomes `patches/message-rows.ts`, `native/worklets.ts` becomes `native/android/worklets.ts` and `native/ios/worklets.ts`, selected in `native/worklets.ts` with `definePlatform`. Function names carry their kind, `patchX`, `interceptX`, `listenToX`, `registerX`, `hookX` or `drawX`, so a file moves without renames.
+A file that grows too big becomes a folder of named files: `patches.ts` becomes `patches/message-rows.ts`, `native/worklets.ts` becomes `native/android/worklets.ts` and `native/ios/worklets.ts`, selected in `native/worklets.ts` with `definePlatform`. A platform split always uses the folders, never `-ios` or `-android` file names. Function names carry their kind, `patchX`, `interceptX`, `listenToX`, `registerX`, `hookX` or `drawX`, so a file moves without renames.
 
 ## A Feature
 
