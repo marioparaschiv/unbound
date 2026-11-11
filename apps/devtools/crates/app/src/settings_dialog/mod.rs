@@ -108,8 +108,6 @@ impl SettingsDialog {
 			cli_command: input(current.cli_command.clone(), "ubd"),
 			project_dir: input(current.project_dir.clone(), "Your home folder"),
 			bridge_port: input(current.bridge_port.to_string(), "9090"),
-			advertise_host: input(current.advertise_host.clone(), "Read from the device"),
-			devtools_port: input(current.devtools_port.to_string(), "8097"),
 			mcp_port: input(current.mcp_port.to_string(), "8098"),
 		};
 		let search = input(String::new(), "Search...");
@@ -121,18 +119,10 @@ impl SettingsDialog {
 			bind(cx, &fields.project_dir, |value, s| {
 				s.project_dir = value.trim().to_owned()
 			}),
-			bind(cx, &fields.advertise_host, |value, s| {
-				s.advertise_host = value.trim().to_owned()
-			}),
 			bind(
 				cx,
 				&fields.bridge_port,
 				port_input(|s, port| s.bridge_port = port),
-			),
-			bind(
-				cx,
-				&fields.devtools_port,
-				port_input(|s, port| s.devtools_port = port),
 			),
 			bind(
 				cx,

@@ -270,7 +270,7 @@ pub fn field<E: Styled>(input: E) -> E {
 }
 
 /// The web's `--key-shadow`: a top highlight and a small drop, for the pill on a segmented track.
-fn key_shadow() -> Vec<BoxShadow> {
+pub fn key_shadow() -> Vec<BoxShadow> {
 	let dark = theme::is_dark();
 	vec![
 		BoxShadow {

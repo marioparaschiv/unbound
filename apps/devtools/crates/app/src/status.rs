@@ -1,8 +1,8 @@
-use gpui::{Context, div, prelude::*, px};
+use gpui::{Context, Window, div, prelude::*, px};
 
 use crate::app::Workspace;
-use crate::widgets::{footer_bar, ghost_button, tooltip};
-use crate::{assets, theme};
+use crate::theme;
+use crate::widgets::footer_bar;
 
 pub fn thousands(n: usize) -> String {
 	let digits = n.to_string();
@@ -21,7 +21,7 @@ fn plural(n: usize, one: &str, many: &str) -> String {
 }
 
 impl Workspace {
-	pub fn render_status(&self, cx: &mut Context<Self>) -> impl IntoElement {
+	pub fn render_status(&self, window: &Window, cx: &mut Context<Self>) -> impl IntoElement {
 		let status = &self.status;
 		let connection = self.connection();
 		let counts = (status.elements > 0).then(|| {
@@ -30,17 +30,7 @@ impl Workspace {
 				plural(status.roots, "root", "roots"),
 			]
 		});
-		let mcp = status.mcp_url.clone().map(|url| {
-			let label = if self.copied {
-				"Copied".to_string()
-			} else {
-				format!("MCP  {}", url.trim_start_matches("http://"))
-			};
-			ghost_button("mcp-url", assets::COPY, label, true)
-				.h(px(28.))
-				.tooltip(tooltip("Copy the MCP endpoint for an agent"))
-				.on_click(cx.listener(|this, _, _, cx| this.copy_mcp_url(cx)))
-		});
+		let mcp = self.render_mcp(window, cx);
 		// The ghost button pads its label by 8px, so the bar pads 8px less to end on the gutter.
 		footer_bar()
 			.pl(px(theme::GUTTER))
