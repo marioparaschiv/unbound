@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createPlayer, soundDuration } from '~/moyai/sound';
+import { createPlayer, soundDuration } from '~/lib/sound';
 
 describe('soundDuration', () => {
 	test('converts the reported duration to milliseconds', () => {

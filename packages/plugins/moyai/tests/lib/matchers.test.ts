@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { countMoyai, isMoyaiReaction } from '~/moyai/matchers';
+import { countMoyai, isMoyaiReaction } from '~/lib/matchers';
 
 describe('countMoyai', () => {
 	test('counts Unicode and static or animated custom emoji', () => {

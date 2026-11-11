@@ -5,11 +5,9 @@ import {
 	type MessageRow,
 	type RowMessage,
 } from '@unbound-plugins/shared/metro/message-rows';
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { FluxGuildMember } from '@unbound-app/api/flux';
 import { settings } from '@unbound-app/settings';
-
-import { ChannelStore, GuildMemberStore } from '~/timeouts/modules';
+import { flux, metro, patcher } from '@unbound-app/api';
 
 type Message = RowMessage & {
 	guild_id?: string;
@@ -29,21 +27,17 @@ type Row = MessageRow & {
 /**
  * @description Shows the timeout icon next to timed-out members in chat.
  * Patches `generateMessageRowData` on Discord's message row module, reads members from `GuildMemberStore` and
- * channels from `ChannelStore`, and does nothing while `showTimeouts` is off. The Addon scope removes the patch when the plugin stops.
+ * channels from `ChannelStore`, and does nothing while `showTimeouts` is off.
  */
-export function startTimeoutIcons(): void {
-	if (
-		!ensureModules(
-			{
-				MessageRowData,
-				GuildMemberStore,
-				ChannelStore,
-			},
-			'timeout icons',
-		)
-	) {
+export function patchMessageRows(): void {
+	if (!MessageRowData) {
+		logger.warn('Timeout icons skipped: Discord moved MessageRowData.');
+
 		return;
 	}
+
+	const GuildMemberStore = flux.getStore('GuildMember');
+	const ChannelStore = flux.getStore('Channel');
 
 	onMessageRow<Message, Row>({
 		after({ message, row }) {
@@ -64,4 +58,23 @@ export function startTimeoutIcons(): void {
 				row.communicationDisabled = true;
 		},
 	});
+}
+
+/**
+ * @description Shows the Pause Invites setting in Server Settings to every member, not only to moderators.
+ * Patches `useInvitesDisabledPermission` on Discord's invite permissions module, and does nothing while
+ * `showInvitesPaused` is off.
+ */
+export function patchInvitePermissions(): void {
+	const InvitePermissions = metro.findByProps('useInvitesDisabledPermission');
+
+	if (!InvitePermissions) {
+		logger.warn('Paused invites skipped: Discord moved InvitePermissions.');
+
+		return;
+	}
+
+	patcher.after(InvitePermissions, 'useInvitesDisabledPermission', ({ result }) =>
+		settings.showInvitesPaused ? true : result,
+	);
 }

@@ -4,13 +4,11 @@ import {
 	type MessageRow,
 	type RowMessage,
 } from '@unbound-plugins/shared/metro/message-rows';
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { assets } from '@unbound-app/api';
+import { assets, flux, metro } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
 import { Image } from 'react-native';
 
-import { AssetUris, GuildStore } from '~/crown/modules';
-import { platformCrownSource } from '~/crown/platform';
+import { platformCrownSource } from '~/lib/crown-source';
 
 type RoleIcon = {
 	source: string | number;
@@ -23,7 +21,9 @@ type Row = MessageRow & {
 	roleIcon?: RoleIcon;
 };
 
-function getCrownSource(): string | number | undefined {
+type AssetUris = { getAssetUriForEmbed?: (id: number) => string } | undefined;
+
+function getCrownSource(uris: AssetUris): string | number | undefined {
 	const id = assets.getIdByName('ic_crown_16px');
 
 	if (id === undefined) return;
@@ -31,17 +31,24 @@ function getCrownSource(): string | number | undefined {
 	// Discord's embed URI stays valid where the native asset's may not.
 	return (
 		platformCrownSource(assets.getById(id)) ??
-		(AssetUris.getAssetUriForEmbed?.(id) || Image.resolveAssetSource(id)?.uri || id)
+		(uris?.getAssetUriForEmbed?.(id) || Image.resolveAssetSource(id)?.uri || id)
 	);
 }
 
 /**
  * @description Shows the owner crown as the role icon on the server owner's messages that have none.
  * Patches `generateMessageRowData` on Discord's message row module, and reads the owner from
- * `GuildStore` and the crown's URI from the asset URI module. The Addon scope removes the patch when the plugin stops.
+ * `GuildStore` and the crown's URI from the asset URI module.
  */
-export function startCrown(): void {
-	if (!ensureModules({ MessageRowData, GuildStore })) return;
+export function patchMessageRows(): void {
+	if (!MessageRowData) {
+		logger.warn('Crown skipped: Discord moved MessageRowData.');
+
+		return;
+	}
+
+	const AssetUris = metro.findByProps('getAssetUriForEmbed');
+	const GuildStore = flux.getStore('Guild');
 
 	// Resolved on the first owner row rather than at start, since the asset may register later.
 	let source: string | number | undefined;
@@ -52,7 +59,7 @@ export function startCrown(): void {
 
 			if (GuildStore.getGuild(row.guildId)?.ownerId !== row.authorId) return;
 
-			source ??= getCrownSource();
+			source ??= getCrownSource(AssetUris);
 
 			if (source === undefined) return;
 

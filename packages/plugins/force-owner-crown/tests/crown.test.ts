@@ -1,8 +1,6 @@
 import { assets } from '@unbound-app/api';
-import { flux, metro, native, startPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, native, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
-
-import { selfTest } from '~/index';
 
 type Row = { message: Record<string, unknown> };
 
@@ -38,8 +36,10 @@ describe('the owner crown', () => {
 		});
 	});
 
-	test('reports the crown in its self-test once started', async () => {
-		expect(selfTest()).toEqual({ ok: true, detail: '1 feature applied' });
+	test('starts without a warning, so its self-test passes', () => {
+		expect(logs.entries.filter(({ level }) => level === 'warn' || level === 'error')).toEqual(
+			[],
+		);
 	});
 
 	test('leaves other members alone', () => {
