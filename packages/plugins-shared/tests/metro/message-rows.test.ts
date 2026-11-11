@@ -1,4 +1,4 @@
-import { createRecordingPatcher } from '@unbound-app/api/testing/fakes';
+import { createRecordingPatcher, installAddonGlobals } from '@unbound-app/api/testing/fakes';
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 
 import type { MessageRow, RowOptions } from '~/metro/message-rows';
@@ -14,9 +14,11 @@ const rowModule = {
 	}),
 };
 const patcher = createRecordingPatcher();
+const { logs } = installAddonGlobals();
+let found: typeof rowModule | undefined = rowModule;
 
 void mock.module('@unbound-app/api', () => ({
-	metro: { findByProps: () => rowModule },
+	metro: { findByProps: () => found },
 	patcher,
 }));
 
@@ -25,7 +27,10 @@ const { onMessageRow } = await import('~/metro/message-rows');
 const build = (input: Input, options?: Options, extra?: string) =>
 	rowModule.generateMessageRowData(input, options, extra).message;
 
-afterEach(() => patcher.unpatchAll());
+afterEach(() => {
+	patcher.unpatchAll();
+	found = rowModule;
+});
 
 describe('onMessageRow', () => {
 	test('hands an after handler the message, the options and the row Discord built', () => {
@@ -95,5 +100,17 @@ describe('onMessageRow', () => {
 
 		expect(seen).toEqual([]);
 		expect(patcher.patches).toEqual([]);
+	});
+
+	test('warns once naming the feature and patches nothing when Discord moved the builder', () => {
+		found = undefined;
+
+		onMessageRow({ after: () => undefined, feature: 'Pronouns' });
+
+		expect(patcher.patches).toEqual([]);
+		expect(logs.at(-1)).toEqual({
+			level: 'warn',
+			args: ['Pronouns skipped: Discord moved generateMessageRowData.'],
+		});
 	});
 });
