@@ -9,6 +9,7 @@ import type { Addon } from '~/addons/addon';
 import { startFakeMetro } from './helpers/fake-metro';
 import { createCacheMock } from './helpers/cache';
 import { mockLookups } from './helpers/lookups';
+import { present } from './helpers/present';
 
 const LOADED_ID = 1;
 const loadedExports = { loaded: (value: number) => value };
@@ -92,7 +93,7 @@ afterEach(() => {
 
 describe('lazy patch targets', () => {
 	test('a patch on a lazy target applies when its module loads, with no search before', () => {
-		const target = findByProps('first');
+		const target = present(findByProps('first'));
 
 		after(target, 'first', (ctx) => ctx.result * 10);
 
@@ -107,11 +108,11 @@ describe('lazy patch targets', () => {
 
 	test('unpatching before the module loads leaves nothing behind', () => {
 		const original = records.get(idOf('second'))?.factory;
-		const unpatch = after(findByProps('second'), 'second', () => 0);
+		const unpatch = after(present(findByProps('second')), 'second', () => 0);
 		const patcher = createPatcher('plugin');
 
-		patcher.after(findByProps('second'), 'second', () => 1);
-		createPatcher('stopped-plugin').after(findByProps('second'), 'second', () => 2);
+		patcher.after(present(findByProps('second')), 'second', () => 1);
+		createPatcher('stopped-plugin').after(present(findByProps('second')), 'second', () => 2);
 
 		unpatch();
 		patcher.unpatchAll();
@@ -126,14 +127,14 @@ describe('lazy patch targets', () => {
 	});
 
 	test('a patch on a lazy target whose module already loaded applies at once', () => {
-		after(findByProps('loaded'), 'loaded', (ctx) => ctx.result + 1);
+		after(present(findByProps('loaded')), 'loaded', (ctx) => ctx.result + 1);
 
 		expect(loadedExports.loaded(1)).toBe(2);
 		expect(searchLoads).toBe(0);
 	});
 
 	test('unpatchAll drops a patch still waiting for its module', () => {
-		after(findByProps('third'), 'third', () => 0);
+		after(present(findByProps('third')), 'third', () => 0);
 		unpatchAll();
 		load(idOf('third'));
 
@@ -171,8 +172,8 @@ describe('deferred patches', () => {
 		states['addon.a'] = true;
 		states['addon.b'] = true;
 		manager.starts.set('addon.a', () => {
-			after(findByProps('sixth'), 'sixth', (ctx) => ctx.result * 10);
-			instead(findByProps('seventh'), 'missing' as 'seventh', () => 0);
+			after(present(findByProps('sixth')), 'sixth', (ctx) => ctx.result * 10);
+			instead(present(findByProps('seventh')), 'missing' as 'seventh', () => 0);
 		});
 		manager.starts.set('addon.b', () => {
 			load(idOf('sixth'));
@@ -200,7 +201,11 @@ describe('deferred patches', () => {
 		resetDevice();
 		states['addon.c'] = true;
 		manager.starts.set('addon.c', (scope) => {
-			scope?.globals.patcher.after(findByProps('eighth'), 'eighth', (ctx) => ctx.result * 10);
+			scope?.globals.patcher.after(
+				present(findByProps('eighth')),
+				'eighth',
+				(ctx) => ctx.result * 10,
+			);
 		});
 
 		manager.load('addon.c', makeManifest('addon.c'));
@@ -214,7 +219,7 @@ describe('deferred patches', () => {
 
 describe('addon-facing lookups', () => {
 	test('are lazy by default', () => {
-		const lookup = findByProps('fourth');
+		const lookup = present(findByProps('fourth'));
 
 		expect(searchLoads).toBe(0);
 		expect(lookup.fourth(4)).toBe(4);

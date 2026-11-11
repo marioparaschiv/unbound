@@ -57,7 +57,10 @@ type Registration = {
 };
 
 // React Native's `resolveAssetSource`, whose transformers run before it builds a path inside the app bundle.
-const SourceResolver: SourceResolver = findByProps('addCustomSourceTransformer', 'pickScale');
+const SourceResolver: SourceResolver | undefined = findByProps(
+	'addCustomSourceTransformer',
+	'pickScale',
+);
 
 // Every registration by `<qualified name>.<type>`; an unregistered one keeps its id for the next registration.
 const registrations = new Map<string, Registration>();
@@ -106,7 +109,7 @@ function transform(resolver: Resolver): ResolvedSource | null {
 	const asset = resolver.asset;
 	const sources = asset?.unboundSources;
 
-	if (!asset || !sources) return null;
+	if (!asset || !sources || !SourceResolver) return null;
 
 	const scales = Object.keys(sources).map(Number);
 	const scale = SourceResolver.pickScale(scales, window.ReactNative.PixelRatio.get());
@@ -127,6 +130,10 @@ function registry(): AssetsModule {
 
 	if (!found) {
 		throw new Error("Discord's asset registry has not loaded.");
+	}
+
+	if (!SourceResolver) {
+		throw new Error("Discord's asset source resolver is missing.");
 	}
 
 	if (!transforming) {

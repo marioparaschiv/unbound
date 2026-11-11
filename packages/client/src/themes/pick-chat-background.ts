@@ -22,7 +22,7 @@ type ImagePickerModule = {
 };
 
 /** Discord's photo library picker, the one its attachment button opens. */
-const ImagePicker: ImagePickerModule = findByProps('launchImageLibraryAsync');
+const ImagePicker: ImagePickerModule | undefined = findByProps('launchImageLibraryAsync');
 
 /** Picked photos are copied here, inside the Unbound folder, so they outlive the picker's temporary copy. */
 const SAVED_PREFIX = 'Unbound/chat-background-';
@@ -50,7 +50,7 @@ export function isPickedChatBackground(url: string): boolean {
  * @throws When the picker is unavailable or fails.
  */
 export async function pickChatBackground(previous: string): Promise<string | undefined> {
-	if (typeof ImagePicker.launchImageLibraryAsync !== 'function') {
+	if (typeof ImagePicker?.launchImageLibraryAsync !== 'function') {
 		throw new Error("Discord's photo picker is unavailable.");
 	}
 

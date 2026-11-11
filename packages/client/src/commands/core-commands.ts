@@ -123,7 +123,7 @@ function confirmRecovery() {
 }
 
 function openScreen(screen: string) {
-	Navigation.getRootNavigationRef().navigate('settings', { screen });
+	Navigation?.getRootNavigationRef().navigate('settings', { screen });
 }
 
 export default { start, stop };

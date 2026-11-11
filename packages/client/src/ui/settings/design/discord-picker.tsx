@@ -106,7 +106,7 @@ function DiscordPicker({ kind }: DiscordPickerProps) {
 	useHideNitroBadge(ids);
 	useSaveIntercept();
 
-	if (!connected) {
+	if (!connected || !NavigationCore) {
 		return <Empty>{messages.UNBOUND_EMPTY_RESULTS}</Empty>;
 	}
 

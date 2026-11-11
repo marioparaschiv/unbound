@@ -70,8 +70,8 @@ function patchBadgeDirectory(Store: MetroExport) {
 const GET_YOUR_OWN_CTA = {
 	ctaLabel: () => messages.UNBOUND_SPONSOR_BADGE_CTA,
 	ctaAction() {
-		BadgeDirectoryScreen.closeBadgeDirectoryScreen();
-		UserSettings.openUserSettings({ screen: Screens.General });
+		BadgeDirectoryScreen?.closeBadgeDirectoryScreen();
+		UserSettings?.openUserSettings({ screen: Screens.General });
 	},
 };
 
