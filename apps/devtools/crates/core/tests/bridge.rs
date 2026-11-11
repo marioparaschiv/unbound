@@ -1,5 +1,4 @@
 use std::net::SocketAddr;
-use std::process::Command;
 use std::sync::OnceLock;
 
 use futures_util::{SinkExt, StreamExt};
@@ -8,7 +7,7 @@ use tokio::net::TcpListener;
 use tokio::sync::oneshot;
 use tokio_tungstenite::tungstenite::Message;
 use unbound_devtools_core::presets::CONFIG_DIR_ENV;
-use unbound_devtools_core::{BridgeState, Config, ConnectionState, Devtools, bridge};
+use unbound_devtools_core::{BridgeState, Config, Devtools};
 
 async fn fake_bridge(
 	device_connected: bool,
@@ -58,7 +57,7 @@ async fn fake_bridge(
 	(addr, code_rx)
 }
 
-/// `connect_device` remembers the debugger connection, so it writes here, not the user's config.
+/// Keeps any saved state here, not in the user's config.
 fn config_dir() {
 	static DIR: OnceLock<()> = OnceLock::new();
 	DIR.get_or_init(|| {
@@ -69,33 +68,20 @@ fn config_dir() {
 	});
 }
 
-fn session_with_bridge(bridge: SocketAddr) -> (Devtools, u16) {
+fn session_with_bridge(bridge: SocketAddr) -> Devtools {
 	config_dir();
-	let devtools = Devtools::start(Config {
-		listen: "127.0.0.1:0".parse().expect("addr"),
-		bridge,
-		advertise_host: None,
-	});
-	let ConnectionState::Listening { addr } = devtools.status().connection else {
-		panic!("listening");
-	};
-
-	(devtools, addr.port())
+	Devtools::start(Config { bridge })
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn connect_device_evaluates_the_connect_script_over_the_bridge() {
-	let (bridge_addr, code) =
-		fake_bridge(true, json!({ "ok": true, "value": "ws://10.0.0.5:8097" })).await;
-	let (devtools, port) = session_with_bridge(bridge_addr);
+async fn eval_runs_on_the_device_over_the_bridge() {
+	let (bridge_addr, code) = fake_bridge(true, json!({ "ok": true, "value": "42" })).await;
+	let devtools = session_with_bridge(bridge_addr);
 
-	let url = devtools.connect_device().await.expect("the device dials");
+	let value = devtools.eval("6 * 7").await.expect("the device answers");
 
-	assert_eq!(url, "ws://10.0.0.5:8097");
-	assert_eq!(
-		code.await.expect("eval received"),
-		bridge::connect_script(None, port)
-	);
+	assert_eq!(value, "42");
+	assert_eq!(code.await.expect("eval received"), "6 * 7");
 	assert!(matches!(
 		devtools.status().bridge,
 		BridgeState::DeviceConnected
@@ -103,95 +89,25 @@ async fn connect_device_evaluates_the_connect_script_over_the_bridge() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn connect_device_reports_the_device_error() {
-	let error = "Error: React DevTools is not loaded on this device.";
+async fn eval_reports_the_device_error() {
+	let error = "ReferenceError: nope is not defined";
 	let (bridge_addr, _) = fake_bridge(true, json!({ "ok": false, "error": error })).await;
-	let (devtools, _) = session_with_bridge(bridge_addr);
+	let devtools = session_with_bridge(bridge_addr);
 
-	let failure = devtools.connect_device().await.expect_err("the eval threw");
+	let failure = devtools.eval("nope").await.expect_err("the eval threw");
 	assert_eq!(failure.to_string(), error);
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn connect_device_without_a_device_or_bridge() {
+async fn eval_without_a_device_or_bridge() {
 	let (bridge_addr, _) = fake_bridge(false, json!({})).await;
-	let (devtools, _) = session_with_bridge(bridge_addr);
-	let failure = devtools.connect_device().await.expect_err("no device");
+	let devtools = session_with_bridge(bridge_addr);
+	let failure = devtools.eval("1").await.expect_err("no device");
 	assert!(failure.to_string().contains("No device"), "{failure}");
 	assert!(matches!(devtools.status().bridge, BridgeState::NoDevice));
 
-	let (devtools, _) = session_with_bridge("127.0.0.1:9".parse().expect("addr"));
-	let failure = devtools.connect_device().await.expect_err("no bridge");
+	let devtools = session_with_bridge("127.0.0.1:9".parse().expect("addr"));
+	let failure = devtools.eval("1").await.expect_err("no bridge");
 	assert!(failure.to_string().contains("unreachable"), "{failure}");
 	assert!(matches!(devtools.status().bridge, BridgeState::Unreachable));
-}
-
-fn run_on_fake_device(script: &str, devtools_loaded: bool, address: &str) -> Option<Json> {
-	let harness = format!(
-		r#"
-		const calls = [];
-		if ({devtools_loaded}) globalThis.DevTools = {{ connect: (options) => calls.push(options) }};
-		globalThis.unbound = {{ storage: {{ getBucket: (store) => ({{ get: (key, fallback) =>
-			store === 'unbound' && key === 'debugger.address' ? {address} : fallback }}) }} }};
-		const run = () => {{ try {{ return {{ ok: {script} }}; }} catch (e) {{ return {{ error: e.message }}; }} }};
-		console.log(JSON.stringify({{ first: run(), second: run(), calls }}));
-		"#,
-		address = Json::from(address),
-	);
-	let output = Command::new("bun").arg("-e").arg(harness).output();
-	let Ok(output) = output else {
-		eprintln!("skipping: cannot run `bun`");
-		return None;
-	};
-
-	assert!(
-		output.status.success(),
-		"{}",
-		String::from_utf8_lossy(&output.stderr)
-	);
-	Some(serde_json::from_slice(&output.stdout).expect("JSON output"))
-}
-
-#[test]
-fn the_connect_script_dials_the_debugger_host_once() {
-	let Some(out) = run_on_fake_device(
-		&bridge::connect_script(None, 8097),
-		true,
-		"192.168.1.5:9090",
-	) else {
-		return;
-	};
-
-	assert_eq!(out["first"], json!({ "ok": "ws://192.168.1.5:8097" }));
-	assert_eq!(out["second"], json!({ "ok": "ws://192.168.1.5:8097" }));
-	assert_eq!(
-		out["calls"],
-		json!([{ "host": "192.168.1.5", "port": 8097 }])
-	);
-
-	let Some(out) = run_on_fake_device(&bridge::connect_script(Some("fd7a::1"), 1234), true, "")
-	else {
-		return;
-	};
-	assert_eq!(out["first"], json!({ "ok": "ws://[fd7a::1]:1234" }));
-
-	let Some(out) = run_on_fake_device(&bridge::connect_script(None, 8097), true, "") else {
-		return;
-	};
-	assert!(
-		out["first"]["error"]
-			.as_str()
-			.is_some_and(|e| e.contains("debugger.address")),
-		"{out}"
-	);
-
-	let Some(out) = run_on_fake_device(&bridge::connect_script(None, 8097), false, "h:1") else {
-		return;
-	};
-	assert!(
-		out["first"]["error"]
-			.as_str()
-			.is_some_and(|e| e.contains("Enable loader.devtools")),
-		"{out}"
-	);
 }

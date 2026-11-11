@@ -1,5 +1,5 @@
 //! [`Devtools`]: the one handle the GUI and MCP share. It owns a tokio runtime on background
-//! threads, the WebSocket listener, the store, the pending inspect requests and the selection.
+//! threads, the debugger connection, the store, the pending inspect requests and the selection.
 //! Every observable change bumps a revision on [`Devtools::changes`].
 
 use std::collections::HashMap;
@@ -21,30 +21,21 @@ use crate::protocol::{
 };
 use crate::store::{ElementId, ElementKind, RendererId, Store};
 use crate::value::{Path, PathSegment, Value};
+use crate::views::ViewsReply;
 
 const INSPECT_TIMEOUT: Duration = Duration::from_secs(5);
 pub(crate) const EVAL_TIMEOUT_MS: u64 = 10_000;
 
 #[derive(Clone, Debug)]
 pub struct Config {
-	/// Where backends dial (`0.0.0.0:8097` so a phone on the LAN or tailnet reaches it).
-	pub listen: SocketAddr,
-	/// The Unbound debugger bridge, for `connect_device`.
+	/// The Unbound debugger bridge "This machine" connects to.
 	pub bridge: SocketAddr,
-	/// The host a device should dial to reach `listen`. `None`: derive it from the device's own
-	/// `debugger.address` setting, which already points at this machine.
-	pub advertise_host: Option<String>,
 }
 
 impl Default for Config {
 	fn default() -> Self {
 		Self {
-			listen: SocketAddr::new(
-				IpAddr::V4(Ipv4Addr::UNSPECIFIED),
-				crate::DEFAULT_DEVTOOLS_PORT,
-			),
 			bridge: SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), crate::DEFAULT_BRIDGE_PORT),
-			advertise_host: None,
 		}
 	}
 }
@@ -52,17 +43,16 @@ impl Default for Config {
 #[derive(Clone, Debug, Serialize)]
 #[serde(tag = "state", rename_all = "snake_case")]
 pub enum ConnectionState {
-	/// Bound and waiting for a backend.
-	Listening { addr: SocketAddr },
+	/// No device on the debugger connection, or no debugger connection.
+	Waiting,
 	Connected {
-		peer: SocketAddr,
 		backend_version: Option<String>,
 		since: SystemTime,
 	},
 	/// The backend attached but its renderer is newer than it supports.
-	UnsupportedRenderer { peer: SocketAddr },
-	/// Could not bind `listen`.
-	Failed { error: String },
+	UnsupportedRenderer,
+	/// The device is connected but cannot run React DevTools, such as with `loader.devtools` off.
+	Unavailable { error: String },
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -110,15 +100,14 @@ pub struct Devtools {
 	pub(crate) inner: Arc<Inner>,
 }
 
+/// The device's backend, reached through the debugger connection of the same generation.
 pub(crate) struct Backend {
 	pub(crate) generation: u64,
-	pub(crate) peer: SocketAddr,
 	pub(crate) outbound: mpsc::UnboundedSender<String>,
 }
 
 pub(crate) struct State {
 	pub(crate) connection: ConnectionState,
-	pub(crate) listen_addr: Option<SocketAddr>,
 	pub(crate) bridge: BridgeState,
 	pub(crate) selected: Option<ElementId>,
 	pub(crate) filters: Vec<ComponentFilter>,
@@ -137,6 +126,7 @@ pub(crate) struct Inner {
 	pub(crate) changes: watch::Sender<u64>,
 	pub(crate) pending: Mutex<HashMap<u64, oneshot::Sender<InspectedElementPayload>>>,
 	pub(crate) inspections: Mutex<HashMap<ElementId, InspectedElement>>,
+	pub(crate) views: Mutex<HashMap<String, oneshot::Sender<ViewsReply>>>,
 	pub(crate) next_generation: AtomicU64,
 	next_request: AtomicU64,
 	pub(crate) presets_write: Mutex<()>,
@@ -169,6 +159,17 @@ impl Inner {
 		})
 	}
 
+	/// Sends a bridge frame on the debugger connection. `false` when it is not attached.
+	pub(crate) fn send_to_bridge(&self, frame: String) -> bool {
+		let state = self.state.lock();
+
+		state
+			.link
+			.as_ref()
+			.and_then(|link| link.outbound.as_ref())
+			.is_some_and(|outbound| outbound.send(frame).is_ok())
+	}
+
 	pub(crate) fn reset_tree(&self, state: &mut State) {
 		self.store.write().clear();
 		self.inspections.lock().clear();
@@ -188,8 +189,7 @@ fn hides_host(filter: &ComponentFilter) -> bool {
 }
 
 impl Devtools {
-	/// Starts the runtime and binds `config.listen`. A bind failure is reported through
-	/// [`Status::connection`], not here, so the GUI can still open and say why.
+	/// Starts the runtime. React DevTools waits for a debugger connection ([`Self::link_to`]).
 	///
 	/// # Panics
 	///
@@ -201,29 +201,13 @@ impl Devtools {
 			.enable_all()
 			.build()
 			.expect("the devtools runtime starts");
-		let listener = std::net::TcpListener::bind(config.listen).and_then(|listener| {
-			listener.set_nonblocking(true)?;
-			Ok(listener)
-		});
-		let listener = listener.and_then(|listener| Ok((listener.local_addr()?, listener)));
-		let connection = match &listener {
-			Ok((addr, _)) => ConnectionState::Listening { addr: *addr },
-			Err(error) => ConnectionState::Failed {
-				error: format!("cannot listen on {}: {error}", config.listen),
-			},
-		};
-		let listen_addr = match &connection {
-			ConnectionState::Listening { addr } => Some(*addr),
-			_ => None,
-		};
 		let inner = Arc::new(Inner {
 			config,
 			handle: runtime.handle().clone(),
 			runtime: Mutex::new(Some(runtime)),
 			store: RwLock::new(Store::default()),
 			state: Mutex::new(State {
-				connection,
-				listen_addr,
+				connection: ConnectionState::Waiting,
 				bridge: BridgeState::Unknown,
 				selected: None,
 				filters: vec![ComponentFilter::HideKind {
@@ -238,17 +222,12 @@ impl Devtools {
 			changes: watch::channel(0).0,
 			pending: Mutex::new(HashMap::new()),
 			inspections: Mutex::new(HashMap::new()),
+			views: Mutex::new(HashMap::new()),
 			next_generation: AtomicU64::new(0),
 			next_request: AtomicU64::new(0),
 			presets_write: Mutex::new(()),
 			presets_revision: AtomicU64::new(0),
 		});
-
-		if let Ok((_, listener)) = listener {
-			inner
-				.handle
-				.spawn(crate::server::listen(Arc::downgrade(&inner), listener));
-		}
 
 		Self { inner }
 	}

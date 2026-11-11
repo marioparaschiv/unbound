@@ -4,4 +4,8 @@ import backend from 'react-devtools-core/dist/backend.js';
 
 backend.initialize();
 
-window.DevTools = { version, connect: backend.connectToDevTools };
+// The client's debugger carries the backend's messages over its own socket to the DevTools app.
+window.DevTools = {
+	version,
+	connectWithCustomMessagingProtocol: backend.connectWithCustomMessagingProtocol,
+};

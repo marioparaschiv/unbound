@@ -1,7 +1,8 @@
 //! A controller client for the Unbound debugger bridge (`packages/debugger`), mirroring
 //! `@unbound-app/debugger-protocol`'s `ControllerClient`: dial `ws://<bridge>/?mcp`, send
 //! `{type:"eval", id, code, timeout?}`, match the `eval-result` by id. [`eval`] opens one
-//! short-lived socket per call; the debugger connection (`link.rs`) keeps its own open.
+//! short-lived socket per call; the debugger connection (`link.rs`) keeps its own open and carries
+//! React DevTools and the view finder over it.
 
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -13,6 +14,8 @@ use tokio::net::TcpStream;
 use tokio::time;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, connect_async};
+
+use crate::views::ViewNode;
 
 pub(crate) type Socket = WebSocketStream<MaybeTlsStream<TcpStream>>;
 
@@ -59,6 +62,15 @@ pub(crate) enum BridgeFrame {
 		id: String,
 		ok: bool,
 		value: Option<String>,
+		error: Option<String>,
+	},
+	/// One React DevTools frame; `protocol::parse` reads it from the frame's text.
+	ReactDevtools {},
+	ViewsResult {
+		id: String,
+		ok: bool,
+		#[serde(default)]
+		nodes: Vec<ViewNode>,
 		error: Option<String>,
 	},
 	#[serde(other)]
@@ -147,6 +159,14 @@ pub(crate) async fn next_frame<S>(socket: &mut S) -> Option<BridgeFrame>
 where
 	S: futures_util::Stream<Item = Result<Message, tokio_tungstenite::tungstenite::Error>> + Unpin,
 {
+	next_text(socket).await.map(|(frame, _)| frame)
+}
+
+/// The next frame the bridge sends, with its text. `None` once the socket closes.
+pub(crate) async fn next_text<S>(socket: &mut S) -> Option<(BridgeFrame, String)>
+where
+	S: futures_util::Stream<Item = Result<Message, tokio_tungstenite::tungstenite::Error>> + Unpin,
+{
 	while let Some(message) = socket.next().await {
 		let Ok(Message::Text(text)) = message else {
 			if message.is_err() {
@@ -157,49 +177,9 @@ where
 		};
 
 		if let Ok(frame) = serde_json::from_str::<BridgeFrame>(&text) {
-			return Some(frame);
+			return Some((frame, text.to_string()));
 		}
 	}
 
 	None
 }
-
-/// The device-side script `connect_device` evaluates. With `host == None` it reads the host from
-/// the client's `debugger.address` setting (falling back to the build-time address), so the
-/// device dials the machine it already reaches. Fails with a readable error when the loader was
-/// not started with `loader.devtools` on (no `DevTools` global).
-pub fn connect_script(host: Option<&str>, port: u16) -> String {
-	let host = serde_json::to_string(&host).unwrap_or_else(|_| "null".to_owned());
-
-	CONNECT_SCRIPT
-		.replace("__HOST__", &host)
-		.replace("__PORT__", &port.to_string())
-}
-
-/// The build-time `DEBUGGER_ADDRESS` is not reachable at runtime, so the script relies on the
-/// `debugger.address` setting and asks for `--advertise-host` when it is empty.
-const CONNECT_SCRIPT: &str = r#"(() => {
-	const devtools = globalThis.DevTools;
-	if (!devtools || typeof devtools.connect !== 'function') {
-		throw new Error("React DevTools is not loaded on this device. Enable loader.devtools in Unbound's loader settings and restart Discord.");
-	}
-	const port = __PORT__;
-	let host = __HOST__;
-	if (host === null) {
-		const storage = globalThis.unbound && globalThis.unbound.storage;
-		const address = String((storage && storage.getBucket('unbound').get('debugger.address', '')) || '');
-		const match = /^\[([^\]]+)\]|^([^:/]+)/.exec(address.replace(/^wss?:\/\//, ''));
-		host = match ? match[1] || match[2] : null;
-	}
-	if (!host) {
-		throw new Error("Cannot tell which host to dial: Unbound's debugger.address setting is empty. Set it, or start the DevTools app with an advertise host.");
-	}
-	const url = 'ws://' + (host.indexOf(':') >= 0 ? '[' + host + ']' : host) + ':' + port;
-	// Each connect() starts a retry loop that never ends; a second one for the same URL would
-	// fight the first for the frontend's single slot.
-	if (globalThis.__UNBOUND_DEVTOOLS_URL__ !== url) {
-		globalThis.__UNBOUND_DEVTOOLS_URL__ = url;
-		devtools.connect({ host, port });
-	}
-	return url;
-})()"#;

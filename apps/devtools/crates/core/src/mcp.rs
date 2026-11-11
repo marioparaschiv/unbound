@@ -17,7 +17,7 @@ use serde::Deserialize;
 use serde_json::Value as Json;
 
 use crate::inspect::Section;
-use crate::presets::{ConnectTarget, DevicePreset, parse_host};
+use crate::presets::{ConnectTarget, DevicePreset};
 use crate::query::{self, FindQuery, NameMatch};
 use crate::session::Devtools;
 use crate::store::{ElementId, ElementKind};
@@ -128,9 +128,6 @@ struct ConnectParams {
 	preset: Option<String>,
 	/// A debugger bridge as host:port, e.g. `100.64.0.2:9090`, instead of a preset.
 	bridge: Option<String>,
-	/// With `bridge`: the host the device should dial back to reach this app. Omit to use the
-	/// host in the device's debugger.address setting.
-	advertise_host: Option<String>,
 }
 
 #[derive(Deserialize, JsonSchema)]
@@ -139,9 +136,6 @@ struct SavePresetParams {
 	name: String,
 	/// The device's debugger bridge as host:port, e.g. `100.64.0.2:9090`.
 	bridge: String,
-	/// The host the device should dial back to reach this app. Omit to use the host in the
-	/// device's debugger.address setting.
-	advertise_host: Option<String>,
 }
 
 #[derive(Deserialize, JsonSchema)]
@@ -166,46 +160,47 @@ impl DevtoolsServer {
 	}
 
 	#[tool(
-		description = "Ask the device, over the Unbound debugger bridge, to dial this app, and \
-		make that bridge the one debugger connection (it reconnects on its own; see `link` in \
+		description = "Make an Unbound debugger bridge the one debugger connection; the device's \
+		React DevTools and native views come over it (it reconnects on its own; see `link` in \
 		status). No arguments: the bridge this app was started with. `preset`: a saved device from \
-		list_presets (restored at the GUI's next launch). `bridge` (+ optional `advertise_host`): \
-		any other bridge, for this session. Needs the bridge running and Discord started with \
-		loader.devtools on."
+		list_presets (restored at the GUI's next launch). `bridge`: any other bridge, for this \
+		session. Needs the bridge running and Discord started with loader.devtools on."
 	)]
 	async fn connect_device(
 		&self,
 		Parameters(params): Parameters<ConnectParams>,
 	) -> Result<String, String> {
-		let connected = match (params.preset, params.bridge, params.advertise_host) {
-			(Some(_), Some(_), _) | (Some(_), _, Some(_)) => {
-				return Err("pass either preset, or bridge with advertise_host".into());
+		let bridge = match (params.preset, params.bridge) {
+			(Some(_), Some(_)) => return Err("pass either preset or bridge".into()),
+			(Some(name), None) => {
+				self.devtools
+					.connect_link(Some(&name))
+					.map_err(|error| error.to_string())?;
+				name
 			}
-			(None, None, Some(_)) => return Err("advertise_host needs a bridge".into()),
-			(Some(name), None, None) => self.devtools.connect_preset(&name).await,
-			(None, Some(bridge), host) => {
+			(None, Some(bridge)) => {
 				let target = ConnectTarget {
 					bridge: bridge.parse().map_err(|error| format!("{error}"))?,
-					advertise_host: parse_host(host.as_deref().unwrap_or_default())
-						.map_err(|error| error.to_string())?,
 				};
-				let url = self.devtools.connect_device_to(target.clone()).await;
+				let bridge = target.bridge.to_string();
 				self.devtools.link_to(target, None);
-				url
+				bridge
 			}
-			(None, None, None) => self.devtools.connect_device().await,
+			(None, None) => {
+				self.devtools
+					.connect_link(None)
+					.map_err(|error| error.to_string())?;
+				self.devtools.default_target().bridge.to_string()
+			}
 		};
-		let url = connected.map_err(|error| format!("{error:#}"))?;
 
 		Ok(format!(
-			"The device is dialing {url}; call status in a moment to see the tree."
+			"Connecting to {bridge}; call status in a moment to see the tree."
 		))
 	}
 
-	#[tool(
-		description = "Saved devices (name, bridge host:port, optional dial-back host), the \
-		last one connected, and this app's own bridge. Pass a name to connect_device as preset."
-	)]
+	#[tool(description = "Saved devices (name, bridge host:port), the \
+		last one connected, and this app's own bridge. Pass a name to connect_device as preset.")]
 	async fn list_presets(&self) -> Result<String, String> {
 		let presets = self.devtools.presets().map_err(|error| error.to_string())?;
 		let json = serde_json::json!({
@@ -226,12 +221,8 @@ impl DevtoolsServer {
 		&self,
 		Parameters(params): Parameters<SavePresetParams>,
 	) -> Result<String, String> {
-		let preset = DevicePreset::parse(
-			&params.name,
-			&params.bridge,
-			params.advertise_host.as_deref().unwrap_or_default(),
-		)
-		.map_err(|error| error.to_string())?;
+		let preset =
+			DevicePreset::parse(&params.name, &params.bridge).map_err(|error| error.to_string())?;
 		let name = preset.name.clone();
 
 		self.devtools

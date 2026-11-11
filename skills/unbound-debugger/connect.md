@@ -5,6 +5,8 @@
 3. **Restart Discord.** `debugger.enabled` is read once at startup.
 4. **Check**: the bridge prints `Device connected`, and `ubd debug status` shows the device's Discord, loader and client versions.
 
+**React DevTools and native views:** turn on **Developer**, **React DevTools** (`loader.devtools`) as well, restart Discord, and connect the Unbound DevTools app (`apps/devtools`) to the bridge. It carries React DevTools and the view finder over the debugger socket, so there is no other port or address to set. The app says `React DevTools Is Off` when the setting was off at launch.
+
 | Error                                                      | Cause and fix                                                                        |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | `No device is connected to the debugger.`                  | Nothing attached: redo steps 2 and 3, or bring Discord to the foreground             |

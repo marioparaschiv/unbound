@@ -1,100 +1,25 @@
-use std::net::SocketAddr;
-use std::sync::Weak;
-use std::sync::atomic::Ordering;
+//! The device's React DevTools backend, as the debugger connection (`link.rs`) carries it: the
+//! link attaches it when a device connects to the bridge, feeds it every `react-devtools` frame,
+//! and detaches it when the device or the bridge goes away.
+
 use std::time::SystemTime;
 
-use futures_util::{SinkExt, StreamExt};
-use tokio::net::TcpListener;
 use tokio::sync::mpsc;
-use tokio_tungstenite::tungstenite::Message;
 
 use crate::operations;
 use crate::protocol::{self, Inbound, Outbound};
 use crate::session::{Backend, ConnectionState, Inner};
 
-pub(crate) async fn listen(inner: Weak<Inner>, listener: std::net::TcpListener) {
-	let listener = match TcpListener::from_std(listener) {
-		Ok(listener) => listener,
-		Err(error) => {
-			if let Some(inner) = inner.upgrade() {
-				inner.state.lock().connection = ConnectionState::Failed {
-					error: error.to_string(),
-				};
-				inner.bump();
-			}
-
-			return;
-		}
-	};
-
-	loop {
-		let Ok((stream, peer)) = listener.accept().await else {
-			continue;
-		};
-
-		if inner.strong_count() == 0 {
-			return;
-		}
-
-		tokio::spawn(serve(inner.clone(), stream, peer));
-	}
-}
-
-async fn serve(inner: Weak<Inner>, stream: tokio::net::TcpStream, peer: SocketAddr) {
-	let socket = match tokio_tungstenite::accept_async(stream).await {
-		Ok(socket) => socket,
-		Err(error) => {
-			tracing::debug!(%peer, %error, "not a WebSocket handshake");
-			return;
-		}
-	};
-	let (mut sink, mut source) = socket.split();
-	let (outbound, mut queue) = mpsc::unbounded_channel::<String>();
-	let Some(generation) = inner.upgrade().map(|inner| inner.attach(peer, outbound)) else {
-		return;
-	};
-
-	let writer = tokio::spawn(async move {
-		while let Some(text) = queue.recv().await {
-			if sink.send(Message::text(text)).await.is_err() {
-				break;
-			}
-		}
-
-		let _ = sink.close().await;
-	});
-
-	while let Some(message) = source.next().await {
-		let Some(inner) = inner.upgrade() else {
-			break;
-		};
-
-		match message {
-			Ok(Message::Text(text)) if inner.is_current(generation) => inner.receive(&text),
-			Ok(Message::Text(_)) | Ok(Message::Close(_)) | Err(_) => break,
-			Ok(_) => {}
-		}
-	}
-
-	if let Some(inner) = inner.upgrade() {
-		inner.detach(generation);
-	}
-
-	writer.abort();
-}
-
 impl Inner {
-	fn attach(&self, peer: SocketAddr, outbound: mpsc::UnboundedSender<String>) -> u64 {
-		let generation = self.next_generation.fetch_add(1, Ordering::Relaxed) + 1;
+	/// Starts a session with the device behind link `generation`: frames for it go to `outbound`.
+	pub(crate) fn attach_backend(&self, generation: u64, outbound: mpsc::UnboundedSender<String>) {
 		let filters = {
 			let mut state = self.state.lock();
 			state.backend = Some(Backend {
 				generation,
-				peer,
 				outbound,
 			});
 			state.connection = ConnectionState::Connected {
-				peer,
 				backend_version: None,
 				since: SystemTime::now(),
 			};
@@ -103,8 +28,9 @@ impl Inner {
 		};
 
 		self.fail_pending_requests();
-		tracing::info!(%peer, "backend connected");
+		tracing::info!("backend attached");
 
+		// The first frame starts the device's session; the filter update makes it send every root.
 		for message in [
 			Outbound::GetBridgeProtocol,
 			Outbound::GetBackendVersion,
@@ -115,18 +41,10 @@ impl Inner {
 		}
 
 		self.bump();
-		generation
 	}
 
-	fn is_current(&self, generation: u64) -> bool {
-		self.state
-			.lock()
-			.backend
-			.as_ref()
-			.is_some_and(|backend| backend.generation == generation)
-	}
-
-	fn detach(&self, generation: u64) {
+	/// Ends the session of link `generation`, if it is the current one.
+	pub(crate) fn detach_backend(&self, generation: u64) {
 		let mut state = self.state.lock();
 
 		if !state
@@ -138,17 +56,12 @@ impl Inner {
 		}
 
 		state.backend = None;
-		state.connection = match state.listen_addr {
-			Some(addr) => ConnectionState::Listening { addr },
-			None => ConnectionState::Failed {
-				error: "not listening".to_owned(),
-			},
-		};
+		state.connection = ConnectionState::Waiting;
 		self.reset_tree(&mut state);
 		drop(state);
 
 		self.fail_pending_requests();
-		tracing::info!("backend disconnected");
+		tracing::info!("backend detached");
 		self.bump();
 	}
 
@@ -156,7 +69,19 @@ impl Inner {
 		self.pending.lock().clear();
 	}
 
-	fn receive(&self, text: &str) {
+	/// Handles one `react-devtools` frame from the device behind link `generation`.
+	pub(crate) fn receive(&self, generation: u64, text: &str) {
+		let current = self
+			.state
+			.lock()
+			.backend
+			.as_ref()
+			.is_some_and(|backend| backend.generation == generation);
+
+		if !current {
+			return;
+		}
+
 		let inbound = match protocol::parse(text) {
 			Ok(inbound) => inbound,
 			Err(error) => {
@@ -183,13 +108,7 @@ impl Inner {
 				self.bump();
 			}
 			Inbound::UnsupportedRendererVersion => {
-				let mut state = self.state.lock();
-
-				if let Some(peer) = state.backend.as_ref().map(|backend| backend.peer) {
-					state.connection = ConnectionState::UnsupportedRenderer { peer };
-				}
-
-				drop(state);
+				self.state.lock().connection = ConnectionState::UnsupportedRenderer;
 				self.bump();
 			}
 			Inbound::SelectElement(id) => {
@@ -202,7 +121,22 @@ impl Inner {
 				self.reset_tree(&mut self.state.lock());
 				self.bump();
 			}
-			Inbound::BackendInitialized | Inbound::BridgeProtocol(_) | Inbound::Other { .. } => {}
+			Inbound::BackendStatus {
+				connected: false,
+				error: Some(error),
+			} => {
+				// Nothing more to send until the device reconnects, after a restart with the backend on.
+				let mut state = self.state.lock();
+				state.backend = None;
+				state.connection = ConnectionState::Unavailable { error };
+				self.reset_tree(&mut state);
+				drop(state);
+				self.bump();
+			}
+			Inbound::BackendStatus { .. }
+			| Inbound::BackendInitialized
+			| Inbound::BridgeProtocol(_)
+			| Inbound::Other { .. } => {}
 		}
 	}
 

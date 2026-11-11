@@ -403,7 +403,7 @@
 	"UNBOUND_LOADER_UNSIGNED": "Allow Unsigned Bundles",
 	"UNBOUND_LOADER_UNSIGNED_DESC": "Skips the bundle signature check. Only use this with a bundle you trust.",
 	"UNBOUND_LOADER_DEVTOOLS": "React DevTools",
-	"UNBOUND_LOADER_DEVTOOLS_DESC": "Connects to React DevTools at launch.",
+	"UNBOUND_LOADER_DEVTOOLS_DESC": "Lets the Unbound DevTools app inspect the component tree over the debugger. Takes effect after a restart.",
 	"UNBOUND_ERROR_BOUNDARY_DESC": "Shows a recovery screen instead of crashing when a screen fails to render.",
 	"UNBOUND_ERROR_BOUNDARY_TEST": "Test the Error Boundary",
 	"UNBOUND_ERROR_BOUNDARY_TEST_ERROR": "This is a test of the error boundary.",

@@ -107,10 +107,8 @@ async fn inspects_edits_and_filters_a_live_backend() {
 
 	device.kill();
 	wait_for(&devtools, "the disconnect", |devtools| {
-		matches!(
-			devtools.status().connection,
-			ConnectionState::Listening { .. }
-		) && devtools.store().is_empty()
+		matches!(devtools.status().connection, ConnectionState::Waiting)
+			&& devtools.store().is_empty()
 	})
 	.await;
 }

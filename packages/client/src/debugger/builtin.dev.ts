@@ -4,12 +4,17 @@ import type {
 	PluginPushResult,
 	EvalResult,
 	LogMessage,
+	ReactDevtoolsFrame,
+	ViewsRequest,
+	ViewsResult,
 } from '@unbound-app/debugger-protocol';
 import { parseMessage } from '@unbound-app/debugger-protocol';
 import { createLogger } from '@unbound-app/logger';
 
 import { CLIENT_VERSION, DEBUGGER_ADDRESS } from '~/core/constants';
 import { getSetting, isSettingChange } from '~/settings/unbound';
+import { highlightView, listViews, resetViewFinder } from '~/debugger/view-finder.dev';
+import { endSession, receive } from '~/debugger/react-devtools.dev';
 import { reloadSummary } from '~/debugger/reload-summary.dev';
 import { createPatcher } from '~/patcher/create-patcher';
 import { currentEnvironment } from '~/core/environment';
@@ -63,6 +68,8 @@ export function stop() {
 
 	clearReconnectTimer();
 	closeSocket();
+	resetViewFinder();
+	endSession();
 
 	for (const dispose of disposers) dispose();
 
@@ -112,6 +119,8 @@ function connect(isReconnect = false) {
 	ws.addEventListener('close', ({ code }) => {
 		Logger.warn(`Socket closed with code ${code}`);
 		ws = null;
+		// The frontend starts a fresh session once the socket is back.
+		endSession();
 		scheduleReconnect();
 	});
 
@@ -165,7 +174,29 @@ function handleMessage(raw: string) {
 
 	if (request?.type === 'plugin-push') {
 		void handlePluginPush(request);
+
+		return;
 	}
+
+	if (request?.type === 'views-request') {
+		void handleViewsRequest(request);
+
+		return;
+	}
+
+	if (request?.type === 'view-highlight') {
+		highlightView(request.node);
+
+		return;
+	}
+
+	if (request?.type === 'react-devtools') {
+		receive(request, reply);
+	}
+}
+
+async function handleViewsRequest(request: ViewsRequest) {
+	reply(await listViews(request));
 }
 
 async function handleEvalRequest(id: string, code: string) {
@@ -241,7 +272,7 @@ function sayHello() {
 	}
 }
 
-function reply(payload: EvalResult | PluginPushResult) {
+function reply(payload: EvalResult | PluginPushResult | ViewsResult | ReactDevtoolsFrame) {
 	if (ws?.readyState !== WebSocket.OPEN) return;
 
 	try {

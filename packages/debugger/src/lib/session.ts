@@ -7,8 +7,16 @@ import type {
 	BridgeMessage,
 	PluginPushResult,
 	PluginPushRequest,
+	ReactDevtoolsFrame,
+	ViewHighlight,
+	ViewsRequest,
+	ViewsResult,
 } from '@unbound-app/debugger-protocol';
-import { DEFAULT_EVAL_TIMEOUT_MS, MAX_EVAL_TIMEOUT_MS } from '@unbound-app/debugger-protocol';
+import {
+	DEFAULT_EVAL_TIMEOUT_MS,
+	MAX_EVAL_TIMEOUT_MS,
+	REACT_DEVTOOLS_SHUTDOWN_EVENT,
+} from '@unbound-app/debugger-protocol';
 
 /**
  * The bridge's transport-agnostic routing core: routes each eval result back to the controller that
@@ -39,14 +47,26 @@ export const state: {
 	device: SocketLike | null;
 	deviceInfo: DeviceInfo | null;
 	controllers: Set<SocketLike>;
+	/** The controller acting as the React DevTools frontend: the last one to send a React DevTools frame. */
+	reactDevtools: SocketLike | null;
 } = {
 	device: null,
 	deviceInfo: null,
 	controllers: new Set(),
+	reactDevtools: null,
+};
+
+type PendingViews = {
+	/** Delivers the device's view listing back to the controller that asked. */
+	deliver: (result: ViewsResult) => void;
+	timer: ReturnType<typeof setTimeout>;
+	/** The controller that asked, so a controller detach can drop its in-flight requests. */
+	origin: SocketLike;
 };
 
 const pending = new Map<string, PendingEval>();
 const pendingPushes = new Map<string, PendingPush>();
+const pendingViews = new Map<string, PendingViews>();
 const logListeners = new Set<(log: LogMessage) => void>();
 const deviceListeners = new Set<(connected: boolean, device: DeviceInfo | null) => void>();
 const evalListeners = new Set<(code: string) => void>();
@@ -54,6 +74,7 @@ const resultListeners = new Set<(result: EvalResult) => void>();
 const controllerListeners = new Set<(connected: boolean, count: number) => void>();
 
 const PLUGIN_PUSH_TIMEOUT_MS = 60_000;
+const VIEWS_TIMEOUT_MS = 15_000;
 
 /**
  * @description Registers the connected device, replacing any earlier one so a relaunched or
@@ -105,6 +126,17 @@ export function detachDevice(socket: SocketLike) {
 		pendingPushes.delete(id);
 	}
 
+	for (const [id, entry] of pendingViews) {
+		clearTimeout(entry.timer);
+		entry.deliver({
+			type: 'views-result',
+			id,
+			ok: false,
+			error: 'Device disconnected before the views were listed.',
+		});
+		pendingViews.delete(id);
+	}
+
 	broadcastDeviceStatus(false);
 }
 
@@ -142,7 +174,22 @@ export function detachController(socket: SocketLike) {
 		pendingPushes.delete(id);
 	}
 
+	for (const [id, entry] of pendingViews) {
+		if (entry.origin !== socket) {
+			continue;
+		}
+
+		clearTimeout(entry.timer);
+		pendingViews.delete(id);
+	}
+
 	controllerDelivery.delete(socket);
+
+	if (state.reactDevtools === socket) {
+		state.reactDevtools = null;
+		// Ends the device's backend session, so it stops sending a tree nobody reads.
+		sendToDevice({ type: 'react-devtools', event: REACT_DEVTOOLS_SHUTDOWN_EVENT });
+	}
 
 	for (const listener of controllerListeners) listener(false, state.controllers.size);
 }
@@ -216,6 +263,63 @@ export function pushPluginForController(socket: SocketLike, request: PluginPushR
 }
 
 /**
+ * @description Forwards a controller's {@link ViewsRequest} to the device and delivers the id-correlated
+ * {@link ViewsResult} back over that same controller's socket, or an error when no device answers.
+ * @param socket The controller that asked.
+ * @param request The request to forward verbatim; its `id` correlates the result.
+ */
+export function requestViewsForController(socket: SocketLike, request: ViewsRequest) {
+	const deliver = (result: ViewsResult) => socket.send(JSON.stringify(result));
+
+	if (!state.device) {
+		deliver({
+			type: 'views-result',
+			id: request.id,
+			ok: false,
+			error: 'No device is connected to the debugger.',
+		});
+
+		return;
+	}
+
+	const timer = setTimeout(() => {
+		pendingViews.delete(request.id);
+		deliver({
+			type: 'views-result',
+			id: request.id,
+			ok: false,
+			error: `Listing views timed out after ${VIEWS_TIMEOUT_MS}ms.`,
+		});
+	}, VIEWS_TIMEOUT_MS);
+
+	pendingViews.set(request.id, { deliver, timer, origin: socket });
+	state.device.send(JSON.stringify(request));
+}
+
+/**
+ * @description Forwards a controller's {@link ViewHighlight} to the device; it has no answer.
+ * @param highlight The view to outline, or `null` to clear the outline.
+ */
+export function highlightView(highlight: ViewHighlight) {
+	sendToDevice(highlight);
+}
+
+/**
+ * @description Forwards a controller's React DevTools frame to the device and makes that controller
+ * the frontend, the one the device's React DevTools frames go back to.
+ * @param socket The controller that sent the frame.
+ * @param frame The frame to forward verbatim.
+ */
+export function relayReactDevtools(socket: SocketLike, frame: ReactDevtoolsFrame) {
+	state.reactDevtools = socket;
+	sendToDevice(frame);
+}
+
+function sendToDevice(message: BridgeMessage) {
+	state.device?.send(JSON.stringify(message));
+}
+
+/**
  * @description Runs code on the device on behalf of an in-process caller (the terminal REPL),
  * resolving with the device's answer. Rejects if no device is connected or it doesn't answer within
  * {@link DEFAULT_EVAL_TIMEOUT_MS}.
@@ -285,6 +389,24 @@ export function handleDeviceMessage(message: BridgeMessage) {
 		clearTimeout(entry.timer);
 		pendingPushes.delete(message.id);
 		entry.deliver(message);
+
+		return;
+	}
+
+	if (message.type === 'views-result') {
+		const entry = pendingViews.get(message.id);
+
+		if (!entry) return;
+
+		clearTimeout(entry.timer);
+		pendingViews.delete(message.id);
+		entry.deliver(message);
+
+		return;
+	}
+
+	if (message.type === 'react-devtools') {
+		state.reactDevtools?.send(JSON.stringify(message));
 
 		return;
 	}

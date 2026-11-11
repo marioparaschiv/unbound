@@ -101,6 +101,15 @@ Type JavaScript at `»` and press Enter. It runs in the global scope of Discord'
 | History | Up and down arrows recall inputs. Saved to `.history.json` in the `node_modules/@unbound-app` folder holding the package, so it persists between sessions. |
 | Quit | `Ctrl+C`. |
 
+## React DevTools and the View Tree
+
+The Unbound DevTools app shows Discord's React component tree and its native views over the debugger. Nothing else listens or dials:
+
+1. In **Developer**, turn on the debugger and **React DevTools** (`loader.devtools`), then restart Discord. The loader runs the React DevTools backend before Discord's bundle.
+2. In the DevTools app, choose **Connect Device** and pick the bridge. The app attaches as a controller and starts a React DevTools session with the device. Its **View Tree** page lists the native views.
+
+The client sends the backend's messages over the debugger socket it already has open, and the bridge passes them to the controller that last sent one. When that controller leaves, the bridge ends the device's session. Release bundles leave this code out.
+
 ## Controllers
 
 Other programs, such as `ubd`, attach to the bridge as controllers at `ws://127.0.0.1:<port>?mcp`. Any number can attach at once. The terminal prints `MCP connected` and `MCP disconnected` with the controller count.
@@ -110,6 +119,8 @@ A controller can:
 - Evaluate code. The terminal mirrors the request in magenta, tagged `[mcp]`, then the result.
 - Receive console output and connection status.
 - Push a built plugin bundle and manifest. The device reloads it and shows a **Hot reload** toast, or **Hot reload failed** with the error.
+- List the device's native views one level at a time, and outline one on screen.
+- Act as the [React DevTools](#react-devtools-and-the-view-tree) frontend.
 
 ## Wire Protocol
 
@@ -123,6 +134,10 @@ A controller can:
 | `plugin-push-result` | Device to the controller that asked | `id`, `ok`, `error` |
 | `log` | Device to all controllers | `level` (`1` log, `2` warn, `3` error), `message` |
 | `device-status` | Bridge to controllers | `connected` |
+| `views-request` | Controller to device | `id`, `parent` (omit for the root views) |
+| `views-result` | Device to the controller that asked | `id`, `ok`, `nodes` or `error` |
+| `view-highlight` | Controller to device | `node`, a view id or `null` to clear |
+| `react-devtools` | Controller to device, device to the controller that last sent one | React DevTools' `event` and `payload`. The device sends `unbound:backend-status` with `{ connected, error? }` when its session starts or cannot start. |
 
 A result echoes its request's `id`, which routes it back to the right controller.
 

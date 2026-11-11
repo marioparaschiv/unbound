@@ -221,8 +221,8 @@ function handleDeviceMessage(raw: string) {
 function handleControllerMessage(ws: session.SocketLike, raw: string) {
 	const message = parseMessage(raw);
 
-	// A controller sends either an eval request or a plugin-push; run it and deliver the id-correlated
-	// result back over this same controller's socket.
+	// A controller sends an eval, a plugin-push or a views-request, each answered by id over this same
+	// controller's socket, or a view-highlight or React DevTools frame, which have no answer.
 	if (message?.type === 'eval') {
 		session.evaluateForController(ws, message);
 
@@ -231,6 +231,24 @@ function handleControllerMessage(ws: session.SocketLike, raw: string) {
 
 	if (message?.type === 'plugin-push') {
 		session.pushPluginForController(ws, message);
+
+		return;
+	}
+
+	if (message?.type === 'views-request') {
+		session.requestViewsForController(ws, message);
+
+		return;
+	}
+
+	if (message?.type === 'view-highlight') {
+		session.highlightView(message);
+
+		return;
+	}
+
+	if (message?.type === 'react-devtools') {
+		session.relayReactDevtools(ws, message);
 	}
 }
 
