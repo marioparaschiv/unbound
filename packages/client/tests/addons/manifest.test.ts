@@ -6,7 +6,7 @@ import {
 	resolveManifestCapabilities,
 	resolveManifestPlatforms,
 } from '~/addons/manifest';
-import { NativePluginCapabilityError, NativePluginUnsupportedPlatformError } from '~/native/errors';
+import { NativeBridgeCapabilityError, NativeBridgeUnsupportedPlatformError } from '~/native/errors';
 
 const base: AddonManifest = {
 	id: 'unbound.example',
@@ -40,7 +40,7 @@ describe('parseAddonManifest', () => {
 				...base,
 				platforms: { ios: { capabilities: ['native.unknown'] } },
 			}),
-		).toThrow(NativePluginCapabilityError);
+		).toThrow(NativeBridgeCapabilityError);
 	});
 
 	test('accepts the platforms object and checks its shape', () => {
@@ -122,9 +122,9 @@ describe('resolveManifestCapabilities', () => {
 	test('refuses a host the manifest does not support', () => {
 		expect(() =>
 			resolveManifestCapabilities({ ...base, platforms: { ios: {} } }, 'android'),
-		).toThrow(NativePluginUnsupportedPlatformError);
+		).toThrow(NativeBridgeUnsupportedPlatformError);
 		expect(() => resolveManifestCapabilities(manifest, 'web')).toThrow(
-			NativePluginUnsupportedPlatformError,
+			NativeBridgeUnsupportedPlatformError,
 		);
 	});
 

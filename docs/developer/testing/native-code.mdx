@@ -62,7 +62,7 @@ native.java.registerClass('android.view.View', {
 
 ## Platform Handlers
 
-- `definePlatform` picks the current platform's handler, and throws `NativePluginUnsupportedPlatformError` when there is none.
+- `definePlatform` picks the current platform's handler, and throws `NativeBridgeUnsupportedPlatformError` when there is none.
 - It runs at import, before a test sets the platform. A function handler therefore calls the current platform's handler on each call. Any other handler is read once, when `definePlatform` runs.
 - `getNativeModule(...names)` returns the first module registered under one of the names.
 

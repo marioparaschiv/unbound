@@ -1,8 +1,8 @@
 import {
-	NATIVE_PLUGIN_CAPABILITIES,
-	NATIVE_PLUGIN_PLATFORM_CAPABILITIES,
-	NATIVE_PLUGIN_PLATFORMS,
-	type NativePluginCapability,
+	NATIVE_BRIDGE_CAPABILITIES,
+	NATIVE_BRIDGE_PLATFORM_CAPABILITIES,
+	NATIVE_BRIDGE_PLATFORMS,
+	type NativeBridgeCapability,
 } from '@unbound-app/types/native';
 import type { AddonPlatforms } from '@unbound-app/types/addons';
 
@@ -11,16 +11,16 @@ import { safeParse, superRefine, Type, type SchemaIssue } from './schema';
 /** The manifest fields that name Capabilities; `ubd build` generates `platforms`, and `capabilities` is legacy (ADR 0003). */
 export type CapabilityFields = {
 	platforms?: AddonPlatforms;
-	capabilities?: NativePluginCapability[];
+	capabilities?: NativeBridgeCapability[];
 };
 
-const PLATFORMS: readonly string[] = NATIVE_PLUGIN_PLATFORMS;
-const CAPABILITIES: readonly string[] = NATIVE_PLUGIN_CAPABILITIES;
-const PROVIDED: Record<string, readonly string[]> = NATIVE_PLUGIN_PLATFORM_CAPABILITIES;
+const PLATFORMS: readonly string[] = NATIVE_BRIDGE_PLATFORMS;
+const CAPABILITIES: readonly string[] = NATIVE_BRIDGE_CAPABILITIES;
+const PROVIDED: Record<string, readonly string[]> = NATIVE_BRIDGE_PLATFORM_CAPABILITIES;
 
 // The schemas check only the shape; `capabilityIssues` checks every name against the Capability table.
 /** The legacy flat Capability list, needed on every platform the addon runs on. */
-export const addonCapabilitiesSchema = Type.Unsafe<NativePluginCapability[]>(
+export const addonCapabilitiesSchema = Type.Unsafe<NativeBridgeCapability[]>(
 	Type.Array(Type.String()),
 );
 

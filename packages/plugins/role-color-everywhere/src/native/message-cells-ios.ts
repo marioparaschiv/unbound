@@ -6,7 +6,7 @@ import hookMessageCells from '@unbound-plugins/shared/native/ios/message-cell-ho
 import findVisibleCells from '@unbound-plugins/shared/native/ios/visible-cells';
 import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
-import type { NativePluginBridge } from '@unbound-app/api/native';
+import type { NativeBridge } from '@unbound-app/api/native';
 import { flux } from '@unbound-app/api';
 
 import {
@@ -110,7 +110,7 @@ function channelMentions(channelId: string | undefined): ChannelMentions {
  * @param objc The Objective-C bridge from `context.native`.
  * @returns A function that removes the hooks and restores every painted text view.
  */
-export function colorMessageMentions(native: NativePluginBridge): () => Promise<void> {
+export function colorMessageMentions(native: NativeBridge): () => Promise<void> {
 	const { objc, ui } = native;
 	if (!ensureClasses(objc, [MESSAGE_CELL_CLASS], 'Chat mentions')) {
 		return async () => {};

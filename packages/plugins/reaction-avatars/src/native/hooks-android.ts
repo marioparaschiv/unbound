@@ -1,4 +1,4 @@
-import type { NativePluginBridge } from '@unbound-app/api/native';
+import type { NativeBridge } from '@unbound-app/api/native';
 
 import { createAndroidReactions } from '~/native/reactions-android';
 
@@ -9,7 +9,7 @@ let reactions: ReturnType<typeof createAndroidReactions> | undefined;
  * @param native The plugin's native bridge.
  * @param surfaceName The registered avatar surface.
  */
-export function hookReactions(native: NativePluginBridge, surfaceName: string): void {
+export function hookReactions(native: NativeBridge, surfaceName: string): void {
 	reactions = createAndroidReactions(native, surfaceName);
 }
 

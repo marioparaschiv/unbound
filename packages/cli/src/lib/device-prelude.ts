@@ -2,8 +2,8 @@
 import type {
 	NativeJavaHandleValue,
 	NativeJavaValue,
-	NativePluginCapability,
-	NativePluginPlatform,
+	NativeBridgeCapability,
+	NativeBridgePlatform,
 	PluginContext,
 } from '@unbound-app/api/native';
 import type { AddonHandle, UnboundGlobal } from '@unbound-app/api/global';
@@ -13,7 +13,7 @@ export type DevicePlugin = AddonHandle & { context?: PluginContext };
 
 /** Unbound's plugin manager as device probes read it; clients that predate start timing lack `startDurations`. */
 export type DevicePlugins = {
-	entities: ReadonlyMap<PropertyKey, DevicePlugin>;
+	addons: ReadonlyMap<PropertyKey, DevicePlugin>;
 	startDurations?: ReadonlyMap<string, number>;
 };
 
@@ -33,8 +33,8 @@ export type DevicePrelude = {
 	plugins: DevicePlugins | undefined;
 	/** Borrows the native bridge of a running plugin on a platform that holds every capability. */
 	nativeBridge: (
-		platform: NativePluginPlatform,
-		capabilities: readonly NativePluginCapability[],
+		platform: NativeBridgePlatform,
+		capabilities: readonly NativeBridgeCapability[],
 	) => PluginContext | undefined;
 	javaValues: JavaValues;
 };
@@ -51,7 +51,7 @@ export function createDevicePrelude(unbound: UnboundGlobal): DevicePrelude {
 		unbound,
 		plugins,
 		nativeBridge: (platform, capabilities) =>
-			[...(plugins?.entities.values() ?? [])].find(
+			[...(plugins?.addons.values() ?? [])].find(
 				(addon) =>
 					addon.started &&
 					addon.context?.platform === platform &&

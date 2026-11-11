@@ -1,8 +1,8 @@
 import {
-	NATIVE_PLUGIN_PLATFORM_CAPABILITIES,
-	NATIVE_PLUGIN_PLATFORMS,
+	NATIVE_BRIDGE_PLATFORM_CAPABILITIES,
+	NATIVE_BRIDGE_PLATFORMS,
 } from '@unbound-app/types/native';
-import type { NativePluginCapability, NativePluginPlatform } from '@unbound-app/types/native';
+import type { NativeBridgeCapability, NativeBridgePlatform } from '@unbound-app/types/native';
 import { relative, sep } from 'node:path';
 import ts from 'typescript-api';
 
@@ -12,7 +12,7 @@ import { createBridgeTypes } from '~/lib/capabilities/bridge-types';
 import type { TypeScriptCache } from '~/lib/check/typescript-cache';
 import { createCachedProgram } from '~/lib/check/typescript-cache';
 
-export type PlatformCapabilities = Partial<Record<NativePluginPlatform, NativePluginCapability[]>>;
+export type PlatformCapabilities = Partial<Record<NativeBridgePlatform, NativeBridgeCapability[]>>;
 
 /** A dynamic or misplaced bridge access, at the node it starts at. */
 export type CapabilityError = {
@@ -30,8 +30,8 @@ type Graph = {
 	errors: CapabilityError[];
 };
 
-const PLATFORM_CAPABILITIES: Record<NativePluginPlatform, readonly string[]> =
-	NATIVE_PLUGIN_PLATFORM_CAPABILITIES;
+const PLATFORM_CAPABILITIES: Record<NativeBridgePlatform, readonly string[]> =
+	NATIVE_BRIDGE_PLATFORM_CAPABILITIES;
 
 const DEFAULT_OPTIONS: ts.CompilerOptions = {
 	allowJs: true,
@@ -119,13 +119,13 @@ export function analyzeCapabilities(
 	if (!handlers.length) {
 		const calls = callsIn(whole.files);
 
-		for (const platform of NATIVE_PLUGIN_PLATFORMS) {
+		for (const platform of NATIVE_BRIDGE_PLATFORMS) {
 			errors.push(...describeMisplaced(platform, misplacedCalls(platform, calls)));
 		}
 
 		return {
 			platforms: Object.fromEntries(
-				NATIVE_PLUGIN_PLATFORMS.map((platform) => [
+				NATIVE_BRIDGE_PLATFORMS.map((platform) => [
 					platform,
 					capabilitiesOf(platform, calls),
 				]),
@@ -149,7 +149,7 @@ export function analyzeCapabilities(
 
 	errors.push(...shared.errors);
 
-	for (const platform of NATIVE_PLUGIN_PLATFORMS) {
+	for (const platform of NATIVE_BRIDGE_PLATFORMS) {
 		const own = handlers.filter((handler) => handler.platform === platform);
 
 		if (!own.length) {
@@ -215,9 +215,9 @@ function createProgram(dir: string, entry: string, cache?: TypeScriptCache): ts.
 }
 
 function capabilitiesOf(
-	platform: NativePluginPlatform,
+	platform: NativeBridgePlatform,
 	calls: BridgeCall[],
-): NativePluginCapability[] {
+): NativeBridgeCapability[] {
 	const provided = calls
 		.map((call) => call.capability)
 		.filter((capability) => PLATFORM_CAPABILITIES[platform].includes(capability));
@@ -225,12 +225,12 @@ function capabilitiesOf(
 	return [...new Set(provided)].sort();
 }
 
-function misplacedCalls(platform: NativePluginPlatform, calls: BridgeCall[]): BridgeCall[] {
+function misplacedCalls(platform: NativeBridgePlatform, calls: BridgeCall[]): BridgeCall[] {
 	return calls.filter((call) => !PLATFORM_CAPABILITIES[platform].includes(call.capability));
 }
 
-function describeMisplaced(platform: NativePluginPlatform, calls: BridgeCall[]): CapabilityError[] {
-	const byCapability = new Map<NativePluginCapability, BridgeCall[]>();
+function describeMisplaced(platform: NativeBridgePlatform, calls: BridgeCall[]): CapabilityError[] {
+	const byCapability = new Map<NativeBridgeCapability, BridgeCall[]>();
 
 	for (const call of calls) {
 		byCapability.set(call.capability, [...(byCapability.get(call.capability) ?? []), call]);

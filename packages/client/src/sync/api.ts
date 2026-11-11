@@ -12,7 +12,7 @@ import { getBucket } from '~/storage/api';
 import * as account from '~/account/api';
 
 /** The Bucket Sync keeps its mode and last agreed document in. Never synced. */
-export const SYNC_STORE = 'unbound::sync';
+export const SYNC_BUCKET = 'unbound::sync';
 
 /** Which way automatic syncs move changes on this device. */
 export type SyncMode = 'two-way' | 'download' | 'upload';
@@ -24,7 +24,7 @@ const MODE_STRATEGIES: Record<SyncMode, SyncStrategy> = {
 };
 
 const logger = createLogger('Sync');
-const bucket = getBucket(SYNC_STORE);
+const bucket = getBucket(SYNC_BUCKET);
 
 let running: Promise<boolean> | undefined;
 let rerun = false;
@@ -135,7 +135,7 @@ async function run(strategy: SyncStrategy): Promise<boolean> {
  * @description Syncs now: reads the stored document, merges, applies remote changes here and saves
  * the result. A call while a sync runs queues one more run after it, in this device's mode.
  * @param strategy How to reconcile the two sides; this device's mode by default.
- * @returns Whether the sync succeeded. Failures are recorded as `lastError` in {@link SYNC_STORE}.
+ * @returns Whether the sync succeeded. Failures are recorded as `lastError` in {@link SYNC_BUCKET}.
  */
 export function now(strategy: SyncStrategy = MODE_STRATEGIES[getMode()]): Promise<boolean> {
 	if (running) {

@@ -181,7 +181,7 @@ describe('native', () => {
 		expect(pluginNative.definePlatform(handlers)).toBe('Android');
 		expect(pluginMetro.common.ReactNative.Platform.OS).toBe('android');
 		expect(() => pluginNative.definePlatform({ ios: 1 })).toThrow(
-			pluginNative.NativePluginUnsupportedPlatformError,
+			pluginNative.NativeBridgeUnsupportedPlatformError,
 		);
 	});
 

@@ -1,4 +1,4 @@
-import type { NativeHandle, NativePluginCapability } from '@unbound-app/api/native';
+import type { NativeHandle, NativeBridgeCapability } from '@unbound-app/api/native';
 
 import { deviceScript } from './device-script';
 import { Type, type Static } from '@unbound-app/contracts/schema';
@@ -38,10 +38,10 @@ type SelfTestState = {
 type SelfTestGlobal = typeof globalThis & { __unboundSelfTest?: SelfTestState };
 
 function startSelfTest(marker: string) {
-	const entities = ([...unbound.plugins.entities.values()] as DeviceAddon[]).filter(
+	const entities = ([...unbound.plugins.addons.values()] as DeviceAddon[]).filter(
 		(entity) => entity.started && entity.context?.native,
 	);
-	const can = (entity: DeviceAddon, platform: string, capability: NativePluginCapability) =>
+	const can = (entity: DeviceAddon, platform: string, capability: NativeBridgeCapability) =>
 		entity.context?.platform === platform &&
 		(entity.context.capabilities ?? []).includes(capability);
 	const ios = entities.find((entity) => can(entity, 'ios', 'native.objc.hooks'));
@@ -154,10 +154,10 @@ export function selfTestFiredScript(): string {
  * @returns A script whose result is the JSON outcome of each case: `resolved`, `cancellation`, or `other: <message>`.
  */
 function runCancellations(trackerClass: string) {
-	const entities = ([...unbound.plugins.entities.values()] as DeviceAddon[]).filter(
+	const entities = ([...unbound.plugins.addons.values()] as DeviceAddon[]).filter(
 		(entity) => entity.started && entity.context?.native,
 	);
-	const can = (entity: DeviceAddon, platform: string, capability: NativePluginCapability) =>
+	const can = (entity: DeviceAddon, platform: string, capability: NativeBridgeCapability) =>
 		entity.context?.platform === platform &&
 		(entity.context.capabilities ?? []).includes(capability);
 	const host =

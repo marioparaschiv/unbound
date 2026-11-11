@@ -1,5 +1,5 @@
 import hookMessageCells from '@unbound-plugins/shared/native/ios/message-cell-hooks';
-import type { NativePluginBridge } from '@unbound-app/api/native';
+import type { NativeBridge } from '@unbound-app/api/native';
 
 import { createVisibleCellScanner } from '~/native/visible-cells-ios';
 import { listenToSelectedChannel } from '~/flux/listeners';
@@ -14,7 +14,7 @@ import { createRenderer } from '~/native/renderer-ios';
  * @returns The renderer's health readers, `retryWaiting`, and `dispose`, which restores every rewritten text view.
  */
 export function drawMentions(
-	{ objc }: NativePluginBridge,
+	{ objc }: NativeBridge,
 	index: MentionIndex,
 	showAtSymbol: () => boolean,
 ) {

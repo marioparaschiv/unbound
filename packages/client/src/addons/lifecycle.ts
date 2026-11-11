@@ -625,7 +625,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		const parsed = parseAddonManifest(manifest, (main) => this.isAcceptableMain(main));
 		const capabilities = resolveManifestCapabilities(parsed, currentPlatform());
 
-		validateNativeBridgeRequirements(capabilities, parsed.minNativePluginApi);
+		validateNativeBridgeRequirements(capabilities, parsed.minNativeBridgeApi);
 
 		return parsed;
 	}

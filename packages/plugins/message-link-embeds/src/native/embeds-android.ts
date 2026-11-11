@@ -1,5 +1,5 @@
 import { createSurfaceListeners } from '@unbound-plugins/shared/native/surface-listeners';
-import type { NativePluginBridge } from '@unbound-app/api/native';
+import type { NativeBridge } from '@unbound-app/api/native';
 import {
 	createMessageTextSurfaces,
 	type TextSurfaceSlot,
@@ -38,10 +38,7 @@ type EmbedSlot = TextSurfaceSlot & {
  * @param renderers Discord's message renderers, shared with the iOS embeds.
  * @returns `drawn` and `dispose`, which removes every embed and restores the text, or `undefined` when the surface or the native rewrites are unavailable.
  */
-export function drawAndroidEmbeds(
-	native: NativePluginBridge,
-	renderers: Renderers,
-): Embeds | undefined {
+export function drawAndroidEmbeds(native: NativeBridge, renderers: Renderers): Embeds | undefined {
 	const bySurface = new Map<string, Embed>();
 	const heights = new Map<string, number>();
 	const listeners = createSurfaceListeners();

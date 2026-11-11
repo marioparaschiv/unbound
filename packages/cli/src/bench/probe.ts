@@ -49,7 +49,7 @@ export function idleProbe(): string {
 	}
 	out.hermes = ${HERMES_STATS};
 	var plugins = unbound.plugins;
-	out.pluginsStarted = Array.from(plugins.entities.values()).filter(function (e) { return e.started; }).length;
+	out.pluginsStarted = Array.from(plugins.addons.values()).filter(function (e) { return e.started; }).length;
 	out.pluginErrors = Array.from(plugins.errors.entries()).map(function (entry) { return entry[0] + ': ' + String(entry[1] && entry[1].message || entry[1]); });
 	var durations = plugins.startDurations;
 	out.pluginStartMs = durations && typeof durations.forEach === 'function' ? Object.fromEntries(durations) : null;

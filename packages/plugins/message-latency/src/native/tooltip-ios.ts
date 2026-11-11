@@ -2,7 +2,7 @@ import type {
 	NativeFabricSurface,
 	NativeHookToken,
 	NativeObjectHandle,
-	NativePluginBridge,
+	NativeBridge,
 } from '@unbound-app/api/native';
 import { parseRect, parseSize, toRect } from '@unbound-plugins/shared/native/ios/rect';
 import { safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke';
@@ -28,7 +28,7 @@ export type TooltipController = {
 	dispose(): Promise<void>;
 };
 
-type Native = Pick<NativePluginBridge, 'objc' | 'fabric'>;
+type Native = Pick<NativeBridge, 'objc' | 'fabric'>;
 
 type Shown = {
 	host: NativeObjectHandle;

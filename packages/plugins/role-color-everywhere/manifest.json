@@ -13,6 +13,6 @@
 	],
 	"version": "1.2.5",
 	"icon": "PaintPaletteIcon",
-	"minNativePluginApi": "1.0.0",
+	"minNativeBridgeApi": "1.0.0",
 	"main": "index.tsx"
 }

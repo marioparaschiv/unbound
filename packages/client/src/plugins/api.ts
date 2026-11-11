@@ -51,7 +51,7 @@ export function selfTest(id: string): Promise<PluginSelfTestResult | undefined> 
 }
 
 /** Every installed plugin, keyed by id. */
-export const entities: ReadonlyMap<PropertyKey, AddonHandle> = plugins.addons;
+export const addons: ReadonlyMap<PropertyKey, AddonHandle> = plugins.addons;
 /** The error each plugin that failed to load or start threw, keyed by id. */
 export const errors: ReadonlyMap<PropertyKey, Error> = plugins.errors;
 /** How long each plugin's last start took, in milliseconds, keyed by id. */

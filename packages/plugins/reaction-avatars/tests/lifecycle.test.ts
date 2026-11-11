@@ -9,7 +9,7 @@ import {
 } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import type { NativePluginBridge, NativeUIScope } from '@unbound-app/api/native';
+import type { NativeBridge, NativeUIScope } from '@unbound-app/api/native';
 
 // The kit has no UI scope: the scope runs a worklet on this thread against the fake bridges.
 const ui = {
@@ -20,7 +20,7 @@ const ui = {
 		...args: string[]
 	) => worklet(scope, ...args),
 };
-const overrides = { native: { ui } as unknown as NativePluginBridge };
+const overrides = { native: { ui } as unknown as NativeBridge };
 
 beforeEach(() => {
 	native.objc.registerClass('DCDMessageTableViewCell', {

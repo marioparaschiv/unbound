@@ -1,9 +1,5 @@
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
-import type {
-	NativeObjCBridge,
-	NativeObjectHandle,
-	NativePluginBridge,
-} from '@unbound-app/api/native';
+import type { NativeObjCBridge, NativeObjectHandle, NativeBridge } from '@unbound-app/api/native';
 import { LATEST_CALL_PER_RECEIVER } from '@unbound-plugins/shared/native/ios/hook-options';
 import { findVisibleCells } from '@unbound-plugins/shared/native/ios/visible-cells';
 import { MESSAGE_TEXT_VIEW_CLASSES } from '@unbound-plugins/shared/native/ios/text-attachments';
@@ -86,7 +82,7 @@ type NestedCheck = { parent: string | undefined; nested: boolean };
  * @param objc The Objective-C bridge.
  * @returns `refresh`, which repaints the bubbles on screen, and `dispose`, which removes them.
  */
-export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
+export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 	const scope = ui.createScope();
 	const bubbles = new Map<string, { cell: NativeObjectHandle; bubble: NativeObjectHandle }>();
 	const pending = new Map<string, PendingCell>();

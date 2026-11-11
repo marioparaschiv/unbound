@@ -2,7 +2,7 @@ import { Keyboard } from 'react-native';
 import type {
 	NativeJavaBridge,
 	NativeJavaReference,
-	NativePluginBridge,
+	NativeBridge,
 	NativeRuntimeEventToken,
 } from '@unbound-app/api/native';
 import {
@@ -100,7 +100,7 @@ function stopKeyboardTracking(session: RotationSession): void {
 }
 
 function startKeyboardTracking(
-	native: NativePluginBridge,
+	native: NativeBridge,
 	java: NativeJavaBridge,
 	content: NativeJavaReference,
 	originalTranslationY: number,
@@ -185,7 +185,7 @@ async function rotateSession(
  * @param degrees The rotation, 180 for upside down and 0 to restore it.
  * @returns Whether the content view was found and rotated.
  */
-export async function rotateScreen(native: NativePluginBridge, degrees: number): Promise<boolean> {
+export async function rotateScreen(native: NativeBridge, degrees: number): Promise<boolean> {
 	const { java } = native;
 
 	if (degrees === 0 && activeSession) {

@@ -1,10 +1,10 @@
-import type { NativePlatformBridge, NativePluginPlatform } from '@unbound-app/types';
-import { NATIVE_PLUGIN_PLATFORMS } from '@unbound-app/types/native';
+import type { NativePlatformBridge, NativeBridgePlatform } from '@unbound-app/types';
+import { NATIVE_BRIDGE_PLATFORMS } from '@unbound-app/types/native';
 
-import { NativePluginUnsupportedPlatformError } from '~/native/errors';
+import { NativeBridgeUnsupportedPlatformError } from '~/native/errors';
 
 /** One Platform handler per platform an addon runs on. */
-export type PlatformHandlers<Handler> = Partial<Record<NativePluginPlatform, Handler>>;
+export type PlatformHandlers<Handler> = Partial<Record<NativeBridgePlatform, Handler>>;
 
 /** The loader's platform bridge, read from `globalThis.NativePlatform` at import; `undefined` when no loader injected it. */
 export const NativePlatform: NativePlatformBridge | undefined = globalThis.NativePlatform;
@@ -13,7 +13,7 @@ export const NativePlatform: NativePlatformBridge | undefined = globalThis.Nativ
  * @description Reads the host platform the loader reports.
  * @returns The platform, which an unrecognised host may report as something other than `ios` or `android`.
  */
-export function currentPlatform(): NativePluginPlatform | undefined {
+export function currentPlatform(): NativeBridgePlatform | undefined {
 	const platform = globalThis.NativePlatform;
 
 	return platform?.device?.platform ?? platform?.platform;
@@ -30,9 +30,9 @@ export function definePlatform<Handler>(handlers: PlatformHandlers<Handler>): Ha
 	const handler = platform ? handlers[platform] : undefined;
 
 	if (handler === undefined) {
-		const supported = NATIVE_PLUGIN_PLATFORMS.filter((name) => handlers[name] !== undefined);
+		const supported = NATIVE_BRIDGE_PLATFORMS.filter((name) => handlers[name] !== undefined);
 
-		throw new NativePluginUnsupportedPlatformError(supported, String(platform));
+		throw new NativeBridgeUnsupportedPlatformError(supported, String(platform));
 	}
 
 	return handler;

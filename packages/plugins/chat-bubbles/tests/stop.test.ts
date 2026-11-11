@@ -1,7 +1,7 @@
 import { flux, native, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import type { NativeJavaReference, NativePluginBridge } from '@unbound-app/api/native';
+import type { NativeJavaReference, NativeBridge } from '@unbound-app/api/native';
 
 const CELL = 'DCDMessageTableViewCell';
 const MESSAGE_VIEW = 'com.discord.chat.presentation.message.MessageView';
@@ -17,11 +17,11 @@ function createUi(onScopeDispose: () => void) {
 }
 
 function overrides(onScopeDispose: () => void = () => {}) {
-	return { native: { ui: createUi(onScopeDispose) } as unknown as NativePluginBridge };
+	return { native: { ui: createUi(onScopeDispose) } as unknown as NativeBridge };
 }
 
 // The fake describes a class's members without their types, so Discord's obfuscated `MessageView` shapes are given here.
-function withMessageViewShapes(java: NativePluginBridge['java']): NativePluginBridge['java'] {
+function withMessageViewShapes(java: NativeBridge['java']): NativeBridge['java'] {
 	return new Proxy(java, {
 		get(target, key) {
 			if (key !== 'describe') return Reflect.get(target, key);

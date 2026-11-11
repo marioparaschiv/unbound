@@ -2,8 +2,8 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import type { NativeUIScope } from '@unbound-app/types';
 
 import {
-	NativePluginDisposedError,
-	NativePluginUnavailableError,
+	NativeBridgeDisposedError,
+	NativeBridgeUnavailableError,
 	bridge,
 	createPluginContext,
 	manifest,
@@ -62,14 +62,14 @@ describe('native UI scopes', () => {
 		]);
 		context.dispose();
 		expect(disposed).toBe(1);
-		expect(() => context.native.ui.createScope()).toThrow(NativePluginDisposedError);
+		expect(() => context.native.ui.createScope()).toThrow(NativeBridgeDisposedError);
 	});
 
 	test('reports a platform without a native namespace as unavailable', () => {
 		Object.assign(bridge, { objc: undefined });
 		const context = createPluginContext({ ...manifest, capabilities: [] });
 
-		expect(() => context.native.ui.createScope()).toThrow(NativePluginUnavailableError);
+		expect(() => context.native.ui.createScope()).toThrow(NativeBridgeUnavailableError);
 		context.dispose();
 	});
 });

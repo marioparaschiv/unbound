@@ -1,5 +1,5 @@
 import hookMessageCells from '@unbound-plugins/shared/native/ios/message-cell-hooks';
-import type { NativePluginBridge } from '@unbound-app/api/native';
+import type { NativeBridge } from '@unbound-app/api/native';
 
 import { disposeRenderer, messageCellHandlers, renderCell } from '~/native/renderer-ios';
 import {
@@ -20,7 +20,7 @@ let unhook: (() => void) | undefined;
  * @param native The plugin's native bridge.
  * @param surfaceName The registered avatar surface.
  */
-export function hookReactions(native: NativePluginBridge, surfaceName: string): void {
+export function hookReactions(native: NativeBridge, surfaceName: string): void {
 	const { session, close } = createSession(native, surfaceName, renderCell);
 
 	session.ui.run(installHeightHook, session.scope, NativeClass.messageCell);

@@ -1,5 +1,5 @@
-import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
 import type { AuthoredAddonManifest } from '@unbound-app/types';
+import { CORE_BUCKET } from '@unbound-app/types/settings';
 import { describe, expect, test } from 'bun:test';
 
 import {
@@ -209,6 +209,6 @@ describe('the DevTools contract', () => {
 	});
 
 	test('reads the bridge address from the core settings store', () => {
-		expect(contract.addressSetting.store).toBe(CORE_SETTINGS_STORE);
+		expect(contract.addressSetting.store).toBe(CORE_BUCKET);
 	});
 });

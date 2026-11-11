@@ -229,7 +229,7 @@ function runSelfTests() {
 		String(failure && (failure as Error).message ? (failure as Error).message : failure);
 
 	return (async () => {
-		for (const entity of unbound.plugins.entities.values()) {
+		for (const entity of unbound.plugins.addons.values()) {
 			try {
 				const report = await unbound.plugins.selfTest(entity.id);
 
@@ -258,7 +258,7 @@ export const redrawTimesSchema = Type.Record(Type.String(), Type.Number(), {
 function timeRedraws(limitMs: number, pollMs: number, drawn: typeof isDrawn) {
 	const started = Date.now();
 	const times: Record<string, number> = {};
-	const waiting = [...unbound.plugins.entities.values()]
+	const waiting = [...unbound.plugins.addons.values()]
 		.filter((entity) => entity.started)
 		.map((entity) => entity.id);
 
@@ -335,7 +335,7 @@ export function pluginLogScript(): string {
 }
 
 function readPluginsSettled() {
-	const settled = [...unbound.plugins.entities.values()].every(
+	const settled = [...unbound.plugins.addons.values()].every(
 		(entity) => !entity.isEnabled() || entity.started || entity.failed,
 	);
 

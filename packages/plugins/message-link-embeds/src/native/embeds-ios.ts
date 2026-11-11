@@ -1,7 +1,7 @@
 import { messageTextViewClass } from '@unbound-plugins/shared/native/ios/text-attachments';
 import { installReuseCleanup } from '@unbound-plugins/shared/native/ios/ui-reuse-cleanup';
 import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
-import type { NativePluginBridge } from '@unbound-app/api/native';
+import type { NativeBridge } from '@unbound-app/api/native';
 
 import type { Embeds, Renderers } from '~/lib/modules';
 import { subscribeMessageStore } from '~/native/message-sync-ios';
@@ -15,10 +15,7 @@ import { EMBED_HOST_TAG } from '~/lib/constants';
  * @param renderers Discord's message renderers.
  * @returns How many embeds are drawn and `dispose`, or `undefined` when a class or the embed surface is missing.
  */
-export function drawIOSEmbeds(
-	native: NativePluginBridge,
-	renderers: Renderers,
-): Embeds | undefined {
+export function drawIOSEmbeds(native: NativeBridge, renderers: Renderers): Embeds | undefined {
 	const { objc, fabric, ui } = native;
 
 	if (!ensureClasses(objc, ['DCDMessageTableViewCell', messageTextViewClass(objc)], 'Embeds')) {

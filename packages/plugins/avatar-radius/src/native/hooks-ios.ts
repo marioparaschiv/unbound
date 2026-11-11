@@ -1,4 +1,4 @@
-import type { NativePluginBridge } from '@unbound-app/api/native';
+import type { NativeBridge } from '@unbound-app/api/native';
 import { findVisibleCells } from '@unbound-plugins/shared/native/ios/visible-cells';
 
 import {
@@ -11,7 +11,7 @@ import { AvatarClass } from '~/lib/constants';
 
 const IMAGE_SEARCH = { maxDepth: 96, maxVisited: 8_000 };
 
-async function relayoutVisible({ objc }: NativePluginBridge) {
+async function relayoutVisible({ objc }: NativeBridge) {
 	const views = [
 		...(await findVisibleCells(objc, AvatarClass.ios)),
 		...(await findVisibleCells(objc, AvatarClass.iosImage, undefined, IMAGE_SEARCH)),
@@ -28,7 +28,7 @@ async function relayoutVisible({ objc }: NativePluginBridge) {
  * @param radius Reads the chosen radius.
  * @returns `refresh`, which applies a changed radius, the self-test counts, and `dispose`, which brings back the circles.
  */
-export function roundIOSAvatars(native: NativePluginBridge, radius: () => number) {
+export function roundIOSAvatars(native: NativeBridge, radius: () => number) {
 	const scope = native.ui.createScope();
 
 	native.ui.run(installAvatarHooks, scope, radius());

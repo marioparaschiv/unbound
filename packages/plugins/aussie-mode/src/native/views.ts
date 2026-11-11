@@ -1,4 +1,4 @@
-import type { NativePluginBridge } from '@unbound-app/api/native';
+import type { NativeBridge } from '@unbound-app/api/native';
 import { AppState } from 'react-native';
 import { native } from '@unbound-app/api';
 
@@ -16,7 +16,7 @@ function reportRotationFailure(error: unknown): void {
 	logger.error('Failed to rotate the screen:', error);
 }
 
-async function startRotation(bridge: NativePluginBridge): Promise<() => Promise<void>> {
+async function startRotation(bridge: NativeBridge): Promise<() => Promise<void>> {
 	let stopped = false;
 	let pending = Promise.resolve();
 	const rotate = (degrees: number) => {
@@ -53,7 +53,7 @@ async function startRotation(bridge: NativePluginBridge): Promise<() => Promise<
  * @param bridge The plugin's native bridge.
  * @returns A promise that settles after the first rotation.
  */
-export async function turnScreenOver(bridge: NativePluginBridge): Promise<void> {
+export async function turnScreenOver(bridge: NativeBridge): Promise<void> {
 	if (!isAussieDevice()) return;
 
 	turnBack = await startRotation(bridge);

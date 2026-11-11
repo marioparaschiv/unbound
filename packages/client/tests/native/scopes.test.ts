@@ -2,13 +2,13 @@ import type {
 	NativeFabricSurface,
 	NativeSerializableObject,
 	NativePlatformBridge,
-	NativePluginRuntimeBridge,
+	LoaderNativeBridge,
 } from '@unbound-app/types';
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import {
-	NativePluginCapabilityError,
-	NativePluginDisposedError,
+	NativeBridgeCapabilityError,
+	NativeBridgeDisposedError,
 	createPluginContext,
 	fluxSubscriptions,
 	removed,
@@ -28,7 +28,7 @@ import {
 
 type NativeBridgeGlobal = typeof globalThis & {
 	NativePlatform?: NativePlatformBridge;
-	NativePlugin?: NativePluginRuntimeBridge;
+	NativePlugin?: LoaderNativeBridge;
 };
 
 afterEach(resetNativeFixtures);
@@ -50,7 +50,7 @@ describe('native bridge capability scopes', () => {
 
 		expect(context.manifest.id).toBe('test');
 		expect(() => context.native.objc.invoke(handle, 'description', [])).toThrow(
-			NativePluginCapabilityError,
+			NativeBridgeCapabilityError,
 		);
 	});
 
@@ -80,7 +80,7 @@ describe('native bridge capability scopes', () => {
 		expect(cleared).toHaveLength(1);
 		expect(cleared[0]).toEqual([handle, key, null, 'assign']);
 		expect(() => context.native.objc.getAssociatedObject(handle, key)).toThrow(
-			NativePluginDisposedError,
+			NativeBridgeDisposedError,
 		);
 		context.dispose();
 	});
@@ -105,12 +105,12 @@ describe('native bridge capability scopes', () => {
 		const denied = createPluginContext({ ...manifest, capabilities: ['native.objc.classes'] });
 		const deniedHandle = denied.native.objc.alloc('NSObject');
 
-		expect(() => denied.native.objc.batch([])).toThrow(NativePluginCapabilityError);
+		expect(() => denied.native.objc.batch([])).toThrow(NativeBridgeCapabilityError);
 		expect(() => denied.native.objc.snapshot(deniedHandle)).toThrow(
-			NativePluginCapabilityError,
+			NativeBridgeCapabilityError,
 		);
 		expect(() => denied.native.objc.findViews(deniedHandle, 'UIView')).toThrow(
-			NativePluginCapabilityError,
+			NativeBridgeCapabilityError,
 		);
 
 		const context = createPluginContext({
@@ -268,7 +268,7 @@ describe('native bridge capability scopes', () => {
 	test('gates and cancels frame-batched Fabric mutations', () => {
 		const denied = createPluginContext({ ...manifest, capabilities: [] });
 
-		expect(() => denied.native.fabric.batchAsync([])).toThrow(NativePluginCapabilityError);
+		expect(() => denied.native.fabric.batchAsync([])).toThrow(NativeBridgeCapabilityError);
 
 		const context = createPluginContext({
 			...manifest,

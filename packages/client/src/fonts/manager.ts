@@ -1,5 +1,5 @@
 import type {
-	FontEntity,
+	Font,
 	UnboundDiscordFamily,
 	UnboundFontInstallResult,
 	UnboundFontPreset,
@@ -8,7 +8,7 @@ import type {
 	UnboundResolvedFont,
 } from '@unbound-app/types';
 import type { AddonVersion, ListedAddon } from '@unbound-app/contracts/addons';
-import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
+import { CORE_BUCKET } from '@unbound-app/types/settings';
 import toError from '@unbound-app/utils/to-error';
 
 import { presetCopy, sourceLink, sourceOrigin, type PastedPreset } from '~/fonts/sources';
@@ -31,7 +31,7 @@ export type FontTarget = {
 /** The installed faces of one family, which the override picker offers as one choice. */
 export type FontFamily = {
 	family: string;
-	faces: FontEntity[];
+	faces: Font[];
 };
 
 /** The core setting the overrides lived in before the loader's font store; the loader migrates it. */
@@ -42,7 +42,7 @@ const LEGACY_OVERRIDES = 'font-states';
  * checks, installs and applies fonts and keeps their state; this manager mirrors its list for the
  * UI and calls its actions. It patches nothing in JS.
  */
-export class Fonts extends Manager<FontEntity, FontsEvents> {
+export class Fonts extends Manager<Font, FontsEvents> {
 	private overrides: Record<string, string> = {};
 	// The overrides this JS run started with; text laid out since keeps them until a restart.
 	private launched: Record<string, string> = {};
@@ -74,7 +74,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 		}
 
 		bridge.setTargets(constants, { api: API_URL });
-		getBucket(CORE_SETTINGS_STORE).remove(LEGACY_OVERRIDES);
+		getBucket(CORE_BUCKET).remove(LEGACY_OVERRIDES);
 		this.refresh();
 		this.launched = this.overrides;
 	}
@@ -86,7 +86,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 
 	/** @returns The installed faces grouped by family, families in name order. */
 	getFamilies(): FontFamily[] {
-		const families = new Map<string, FontEntity[]>();
+		const families = new Map<string, Font[]>();
 
 		for (const font of this.getAddons()) {
 			families.set(font.family, [...(families.get(font.family) ?? []), font]);

@@ -1,5 +1,5 @@
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
-import type { NativePluginBridge } from '@unbound-app/api/native';
+import type { NativeBridge } from '@unbound-app/api/native';
 
 import type { Enqueue } from '~/native/mentions';
 import { colorMessageMentions, MESSAGE_CELL_CLASS } from '~/native/message-cells-ios';
@@ -16,7 +16,7 @@ const PAINTER_CLASSES = {
  * @param enqueue Runs a step after the previous enable or removal finished.
  * @returns A function that queues the removal of both features.
  */
-export function enableMentions(native: NativePluginBridge, enqueue: Enqueue): () => void {
+export function enableMentions(native: NativeBridge, enqueue: Enqueue): () => void {
 	const removers: (() => Promise<void>)[] = [];
 
 	enqueue(() => {
@@ -49,7 +49,7 @@ export function enableMentions(native: NativePluginBridge, enqueue: Enqueue): ()
  * @param native The plugin's native bridge.
  * @returns One skip line per missing class, empty when every painter runs.
  */
-export function findSkippedPainters(native: NativePluginBridge): string[] {
+export function findSkippedPainters(native: NativeBridge): string[] {
 	return Object.entries(PAINTER_CLASSES)
 		.filter(([, name]) => !native.objc.getClass(name))
 		.map(([feature, name]) => `${feature} skipped: native classes not found: ${name}.`);

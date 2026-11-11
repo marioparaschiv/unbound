@@ -30,6 +30,6 @@
 	],
 	"version": "1.3.4",
 	"icon": "UserPlusIcon",
-	"minNativePluginApi": "1.0.0",
+	"minNativeBridgeApi": "1.0.0",
 	"main": "index.tsx"
 }

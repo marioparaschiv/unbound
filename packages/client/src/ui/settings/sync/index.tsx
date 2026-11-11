@@ -2,7 +2,7 @@ import { Image } from 'react-native';
 import { useState } from 'react';
 
 import {
-	SYNC_STORE,
+	SYNC_BUCKET,
 	deleteData,
 	getMode,
 	resolveFirstSync,
@@ -32,7 +32,7 @@ import useStyles from './sync.style';
  */
 function SyncPage() {
 	const styles = useStyles();
-	const settings = useBucket(SYNC_STORE);
+	const settings = useBucket(SYNC_BUCKET);
 	const [busy, setBusy] = useState(false);
 	const account = useAccount();
 	const signIn = useSignIn();

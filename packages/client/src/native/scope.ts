@@ -15,16 +15,16 @@ import type {
 	NativeObjCBridge,
 	NativeObjCCallPlan,
 	NativeObjectHandle,
-	NativePluginBridge,
-	NativePluginCapability,
-	NativePluginPlatform,
+	NativeBridge,
+	NativeBridgeCapability,
+	NativeBridgePlatform,
 	NativeRuntimeBridge,
 	NativeRuntimeEventName,
 	NativeRuntimeEventToken,
 	NativeSerializableObject,
 } from '@unbound-app/types';
 
-import { NativePluginDisposedError, NativePluginUnavailableError } from '~/native/errors';
+import { NativeBridgeDisposedError, NativeBridgeUnavailableError } from '~/native/errors';
 import { createScopeGate, type ScopeLifecycle } from '~/native/scope-gate';
 import { createFluxRuntimeBridge } from '~/flux/runtime-bridge';
 import { unavailableNativeBridge } from '~/native/capabilities';
@@ -40,7 +40,7 @@ type AssociationBinding = {
 };
 
 type ScopedNativeBridge = {
-	bridge: NativePluginBridge;
+	bridge: NativeBridge;
 	beginStop: () => void;
 	dispose: () => void;
 };
@@ -99,8 +99,8 @@ function attributeBridge<T extends object>(source: T, attribute?: AddonAttributi
  * @returns The scoped bridge and its `dispose`.
  */
 export function createScopedNativeBridge(
-	capabilities: readonly NativePluginCapability[],
-	platform?: NativePluginPlatform,
+	capabilities: readonly NativeBridgeCapability[],
+	platform?: NativeBridgePlatform,
 	attribute?: AddonAttribution,
 ): ScopedNativeBridge {
 	const fallbackBridge = unavailableNativeBridge();
@@ -227,7 +227,7 @@ export function createScopedNativeBridge(
 		},
 		invokePrepared: (plan, handle, args, options) => {
 			if (!objcPlans.has(plan)) {
-				throw new NativePluginUnavailableError(
+				throw new NativeBridgeUnavailableError(
 					'The Objective-C call plan is outside this plugin scope.',
 				);
 			}
@@ -236,7 +236,7 @@ export function createScopedNativeBridge(
 		},
 		invokePreparedAsync: (plan, handle, args) => {
 			if (!objcPlans.has(plan)) {
-				throw new NativePluginUnavailableError(
+				throw new NativeBridgeUnavailableError(
 					'The Objective-C call plan is outside this plugin scope.',
 				);
 			}
@@ -245,7 +245,7 @@ export function createScopedNativeBridge(
 		},
 		disposePlan: (plan) => {
 			if (!objcPlans.has(plan)) {
-				throw new NativePluginUnavailableError(
+				throw new NativeBridgeUnavailableError(
 					'The Objective-C call plan is outside this plugin scope.',
 				);
 			}
@@ -318,7 +318,7 @@ export function createScopedNativeBridge(
 			options?: NativeHookOptions<Receiver>,
 		) => {
 			if (lifecycle.disposed) {
-				throw new NativePluginDisposedError();
+				throw new NativeBridgeDisposedError();
 			}
 
 			requireGranted('objc.hook');
@@ -332,21 +332,21 @@ export function createScopedNativeBridge(
 				},
 				setReturnValue(self, args, value) {
 					if (lifecycle.disposed) {
-						throw new NativePluginDisposedError();
+						throw new NativeBridgeDisposedError();
 					}
 
 					token.setReturnValue(self, args, value);
 				},
 				removeReturnValue(self, args) {
 					if (lifecycle.disposed) {
-						throw new NativePluginDisposedError();
+						throw new NativeBridgeDisposedError();
 					}
 
 					token.removeReturnValue(self, args);
 				},
 				clearReturnValues() {
 					if (lifecycle.disposed) {
-						throw new NativePluginDisposedError();
+						throw new NativeBridgeDisposedError();
 					}
 
 					token.clearReturnValues();
@@ -367,7 +367,7 @@ export function createScopedNativeBridge(
 	const fabric: NativeFabricBridge = {
 		mount: (container, moduleName, properties, options) => {
 			if (lifecycle.disposed) {
-				throw new NativePluginDisposedError();
+				throw new NativeBridgeDisposedError();
 			}
 
 			requireGranted('fabric.mount');
@@ -379,7 +379,7 @@ export function createScopedNativeBridge(
 		},
 		mountAsync: (container, moduleName, properties, options) => {
 			if (lifecycle.disposed) {
-				throw new NativePluginDisposedError();
+				throw new NativeBridgeDisposedError();
 			}
 
 			requireGranted('fabric.mountAsync');
@@ -435,7 +435,7 @@ export function createScopedNativeBridge(
 		),
 		unmount: (surface) => {
 			if (lifecycle.disposed) {
-				throw new NativePluginDisposedError();
+				throw new NativeBridgeDisposedError();
 			}
 
 			requireGranted('fabric.unmount');
@@ -444,7 +444,7 @@ export function createScopedNativeBridge(
 		},
 		unmountAsync: (surface) => {
 			if (lifecycle.disposed) {
-				throw new NativePluginDisposedError();
+				throw new NativeBridgeDisposedError();
 			}
 
 			requireGranted('fabric.unmountAsync');
@@ -477,7 +477,7 @@ export function createScopedNativeBridge(
 			listener: (payload: NativeSerializableObject) => void,
 		) => {
 			if (lifecycle.disposed) {
-				throw new NativePluginDisposedError();
+				throw new NativeBridgeDisposedError();
 			}
 
 			requireGranted('runtime.subscribe');
@@ -523,7 +523,7 @@ export function createScopedNativeBridge(
 			listener?: (event: NativeJavaHookEvent<Receiver>) => void,
 		) => {
 			if (lifecycle.disposed) {
-				throw new NativePluginDisposedError();
+				throw new NativeBridgeDisposedError();
 			}
 
 			requireGranted('hooks.hook');

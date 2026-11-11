@@ -2,7 +2,7 @@ import type {
 	NativeFabricBridge,
 	NativeObjCBridge,
 	NativeObjectHandle,
-	NativePluginBridge,
+	NativeBridge,
 	NativeUIScope,
 } from '@unbound-app/api/native';
 
@@ -48,7 +48,7 @@ export type Session = {
 	layoutRefreshes: Map<string, ReturnType<typeof setTimeout>>;
 	tables: Map<string, TableLayout>;
 	cellHeights: Map<string, CellHeight>;
-	ui: NativePluginBridge['ui'];
+	ui: NativeBridge['ui'];
 	scope: NativeUIScope;
 	/** Bumped to abandon a visible-cell scan that is still walking the windows. */
 	scanRevision: number;
@@ -62,11 +62,7 @@ export type Session = {
  * @param render Renders one message cell's avatars.
  * @returns The session, and `close`, which ends it so callbacks still in flight do nothing.
  */
-export function createSession(
-	native: NativePluginBridge,
-	surfaceName: string,
-	render: CellRenderer,
-) {
+export function createSession(native: NativeBridge, surfaceName: string, render: CellRenderer) {
 	const controller = new AbortController();
 	const session: Session = {
 		objc: native.objc,
