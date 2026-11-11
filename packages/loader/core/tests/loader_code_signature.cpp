@@ -133,9 +133,65 @@ int main()
         entitlementBlobs(write(root, "none", machO({{0, 0xfade0c02, "code"}})).string()).empty());
     assert(entitlementBlobs(write(root, "unsigned", machO({}, false)).string()).empty());
 
-    std::vector<uint8_t> fat = machO({{kEntitlementsSlot, kEntitlementsBlobMagic, plist}});
-    putHost(fat, 0, 0xbebafeca);
-    assert(entitlementBlobs(write(root, "fat", fat).string()).empty());
+    std::vector<uint8_t> notMachO = machO({{kEntitlementsSlot, kEntitlementsBlobMagic, plist}});
+    putHost(notMachO, 0, 0xfeedface);
+    assert(entitlementBlobs(write(root, "thin32", notMachO).string()).empty());
+
+    const std::vector<uint8_t> slice = machO({{kEntitlementsSlot, kEntitlementsBlobMagic, plist}});
+    for (bool wide : {false, true})
+    {
+        std::vector<uint8_t> fat;
+        appendBig(fat, wide ? kFatMagic64 : kFatMagic);
+        appendBig(fat, 2);
+        const uint32_t sliceOffset = 0x1000;
+        for (uint32_t offset : {uint32_t(0x40), sliceOffset})
+        {
+            appendBig(fat, 0x0100000c);
+            appendBig(fat, 0);
+            if (wide)
+            {
+                appendBig(fat, 0);
+            }
+            appendBig(fat, offset);
+            if (wide)
+            {
+                appendBig(fat, 0);
+            }
+            appendBig(fat, static_cast<uint32_t>(slice.size()));
+            appendBig(fat, 14);
+            if (wide)
+            {
+                appendBig(fat, 0);
+            }
+        }
+        fat.resize(sliceOffset, 0);
+        fat.insert(fat.end(), slice.begin(), slice.end());
+        assert(entitlementBlobs(write(root, wide ? "fat64" : "fat", fat).string()) ==
+               std::vector<std::string>{plist});
+    }
+
+    std::vector<uint8_t> fatTruncated;
+    appendBig(fatTruncated, kFatMagic);
+    appendBig(fatTruncated, 3);
+    assert(entitlementBlobs(write(root, "fat-truncated", fatTruncated).string()).empty());
+
+    std::vector<uint8_t> kernel;
+    appendBig(kernel, kEntitlementsBlobMagic);
+    appendBig(kernel, static_cast<uint32_t>(plist.size() + 8));
+    kernel.insert(kernel.end(), plist.begin(), plist.end());
+    const std::string kernelBlob(kernel.begin(), kernel.end());
+    assert(entitlementsFromBlob(kernelBlob) == plist);
+    assert(entitlementsFromBlob(kernelBlob + std::string(16, '\0')) == plist);
+    assert(!entitlementsFromBlob(kernelBlob.substr(0, kernelBlob.size() - 1)));
+    assert(!entitlementsFromBlob(kernelBlob.substr(0, 4)));
+    assert(!entitlementsFromBlob(std::string(8, '\0')));
+    std::string emptyBlob = kernelBlob.substr(0, 8);
+    emptyBlob[7]          = 8;
+    emptyBlob[6]          = 0;
+    assert(!entitlementsFromBlob(emptyBlob));
+    std::string wrongKernelMagic = kernelBlob;
+    wrongKernelMagic[3]          = 0x72;
+    assert(!entitlementsFromBlob(wrongKernelMagic));
 
     std::vector<uint8_t> truncated = machO({{kEntitlementsSlot, kEntitlementsBlobMagic, plist}});
     truncated.resize(truncated.size() - 10);

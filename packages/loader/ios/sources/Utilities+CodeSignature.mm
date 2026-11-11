@@ -1,3 +1,7 @@
+#include <errno.h>
+#include <mach-o/dyld.h>
+#include <optional>
+
 #import "Attestation.h"
 #import "CoreConversions.h"
 #include "LoaderCodeSignature.h"
@@ -5,6 +9,59 @@
 #import "Utilities+CodeSignature.h"
 
 using unbound::ios::toStdString;
+
+static constexpr unsigned int kCodeSigningOpsEntitlementsBlob = 7;
+
+static std::string kernelEntitlementsBlob()
+{
+    std::string header(8, '\0');
+    if (csops(getpid(), kCodeSigningOpsEntitlementsBlob, header.data(), header.size()) == 0)
+    {
+        return header;
+    }
+    if (errno != ERANGE)
+    {
+        return "";
+    }
+    const auto  *bytes  = reinterpret_cast<const uint8_t *>(header.data());
+    const size_t length = (size_t(bytes[4]) << 24) | (size_t(bytes[5]) << 16) |
+                          (size_t(bytes[6]) << 8) | size_t(bytes[7]);
+    if (length <= header.size() || length > 1024 * 1024)
+    {
+        return "";
+    }
+    std::string blob(length, '\0');
+    if (csops(getpid(), kCodeSigningOpsEntitlementsBlob, blob.data(), blob.size()) != 0)
+    {
+        return "";
+    }
+    return blob;
+}
+
+static NSDictionary *entitlementsPlist(const std::optional<std::string> &plist)
+{
+    if (!plist || plist->empty())
+    {
+        return nil;
+    }
+    NSData       *data         = [NSData dataWithBytes:plist->data() length:plist->size()];
+    NSError      *error        = nil;
+    NSDictionary *entitlements = [NSPropertyListSerialization propertyListWithData:data
+                                                                           options:0
+                                                                            format:nil
+                                                                             error:&error];
+    if (error || ![entitlements isKindOfClass:[NSDictionary class]] || entitlements.count == 0)
+    {
+        return nil;
+    }
+    return entitlements;
+}
+
+static NSDictionary *kernelEntitlements()
+{
+    const std::string kernelBlob = kernelEntitlementsBlob();
+    return entitlementsPlist(loader::codesign::entitlementsFromBlob(kernelBlob));
+}
 
 @implementation Utilities (CodeSignature)
 
@@ -16,33 +73,40 @@ using unbound::ios::toStdString;
 
 + (NSDictionary *)getApplicationSignatureInfo
 {
+    if (NSDictionary *entitlements = kernelEntitlements())
+    {
+        return @{@"entitlements" : entitlements, @"source" : @"kernel"};
+    }
+
+    std::vector<std::string> candidates;
+    char                     path[PATH_MAX];
+    uint32_t                 size = sizeof(path);
+    if (_NSGetExecutablePath(path, &size) == 0)
+    {
+        candidates.emplace_back(path);
+    }
     NSBundle *bundle         = [NSBundle mainBundle];
     NSString *executableName = bundle.infoDictionary[@"CFBundleExecutable"];
-    if (!executableName)
+    if (NSString *bundleExecutable =
+            executableName ? [bundle pathForResource:executableName ofType:nil] : nil)
     {
-        return @{};
+        candidates.push_back(toStdString(bundleExecutable));
     }
 
-    NSString *executablePath = [bundle pathForResource:executableName ofType:nil];
-    if (!executablePath)
+    for (const std::string &candidate : candidates)
     {
-        return @{};
-    }
-
-    for (const std::string &blob : loader::codesign::entitlementBlobs(toStdString(executablePath)))
-    {
-        NSData       *data         = [NSData dataWithBytes:blob.data() length:blob.size()];
-        NSError      *error        = nil;
-        NSDictionary *entitlements = [NSPropertyListSerialization propertyListWithData:data
-                                                                               options:0
-                                                                                format:nil
-                                                                                 error:&error];
-        if (!error && entitlements)
+        for (const std::string &blob : loader::codesign::entitlementBlobs(candidate))
         {
-            return @{@"entitlements" : entitlements};
+            if (NSDictionary *entitlements = entitlementsPlist(std::optional<std::string>(blob)))
+            {
+                return @{@"entitlements" : entitlements, @"source" : @(candidate.c_str())};
+            }
         }
     }
 
+    [Logger error:LOG_CATEGORY_UTILITIES
+           format:@"No entitlements found in the kernel or in %lu executable(s)",
+                  (unsigned long) candidates.size()];
     return @{};
 }
 
