@@ -34,10 +34,14 @@ export type NativeFabricMountOptions = {
 	reuse?: boolean;
 };
 
+/** One surface's changes in a `batchAsync` call, applied as properties, then size, then frame. */
 export type NativeFabricBatchMutation = {
 	surface: NativeFabricSurface;
+	/** New properties, as `update` sends them. */
 	properties?: NativeSerializableObject;
+	/** The view's frame, as `setFrame` sets it. */
 	frame?: NativeFabricFrame;
+	/** The layout bounds, as `setSize` sets them. */
 	size?: {
 		minimum: NativeFabricSize;
 		maximum: NativeFabricSize;
@@ -86,6 +90,7 @@ export type NativeFabricBridge = {
 		surface: NativeFabricSurface,
 		frame: NativeFabricFrame,
 	): NativeCancelablePromise<void>;
+	/** Applies every mutation in order on the main thread's next display frame, skipping stopped surfaces. Needs `native.fabric.async`. */
 	batchAsync(mutations: NativeFabricBatchMutation[]): NativeCancelablePromise<void>;
 	/** Reads a view's frame. */
 	measure(view: NativeObjectHandle): NativeFabricFrame;
