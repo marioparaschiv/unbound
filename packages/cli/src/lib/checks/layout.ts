@@ -1,9 +1,9 @@
 import { existsSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
 
-import type { Diagnostic } from '~/rollup/diagnostic';
+import type { Diagnostic } from '~/lib/check/diagnostic';
+import { diagnostic } from '~/lib/check/diagnostic';
 import { LOCALE_TYPINGS } from '~/rollup/locales';
-import { diagnostic } from '~/rollup/diagnostic';
 import type { Check } from '~/lib/check/check';
 
 /** One departure from the standard layout: the file or folder, what is wrong, and how to fix it. */

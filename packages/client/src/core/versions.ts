@@ -53,5 +53,3 @@ export function compareVersions(a: string, b: string): number {
 
 	return preA.length - preB.length;
 }
-
-export default { compareVersions };

@@ -16,7 +16,6 @@ const STAGED_CHECK_DELAY = 20_000;
 const storage = getBucket('unbound::updater');
 const LEGACY_LAST_CLIENT_VERSION = 'updater.lastClientVersion';
 
-let pending: ReturnType<typeof setTimeout> | undefined;
 let stagedCheck: ReturnType<typeof setTimeout> | undefined;
 let appState: ReturnType<typeof AppState.addEventListener> | undefined;
 let stagedAnnounced = false;
@@ -58,14 +57,10 @@ function announceClient() {
 	storage.set('lastClientVersion', CLIENT_VERSION);
 }
 
-/**
- * Toasts a newly updated client, checks for updates once after startup, and offers a restart for a staged bundle.
- */
+/** Toasts a newly updated client, and offers a restart once the loader stages the next bundle. */
 export function start() {
 	announceClient();
 
-	// Built-ins start before the addon managers load their entities.
-	pending = setTimeout(() => void update());
 	stagedCheck = setTimeout(announceStagedBundle, STAGED_CHECK_DELAY);
 	appState = AppState.addEventListener('change', (state) => {
 		if (state !== 'active') return;
@@ -77,9 +72,16 @@ export function start() {
 	});
 }
 
-/** Cancels an update check that has not started yet. */
+/**
+ * Checks for updates once the addons have loaded: applies addon updates with `updater.auto.addons` on, and toasts
+ * a too-old loader and, per `updater.notify.*`, what is left.
+ */
+export function afterAddons() {
+	void update();
+}
+
+/** Cancels the staged bundle check. */
 export function stop() {
-	clearTimeout(pending);
 	clearTimeout(stagedCheck);
 	appState?.remove();
 	appState = undefined;
@@ -89,9 +91,6 @@ export const updatesSection: SectionEntry = {
 	key: Screens.Updates,
 	titleKey: 'UNBOUND_UPDATES',
 	/**
-	 *
-	 */
-	/**
 	 * @description Loads the page when it first opens.
 	 * @returns The page.
 	 */
@@ -99,4 +98,4 @@ export const updatesSection: SectionEntry = {
 	icon: 'DownloadIcon',
 };
 
-export default { start, stop, updatesSection };
+export default { start, afterAddons, stop, updatesSection };

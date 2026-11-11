@@ -79,7 +79,7 @@ mock.module('react-native', () => ({
 	TurboModuleRegistry: { get: () => undefined },
 }));
 
-Object.assign(globalThis, { window: globalThis, modules: new Map(), $$DEV$$: false });
+Object.assign(globalThis, { window: globalThis, modules: new Map() });
 
 const patcher = await import('~/patcher/api');
 const commands = await import('~/commands/api');

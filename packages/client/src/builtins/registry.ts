@@ -4,10 +4,12 @@ import { benchSpan } from '~/core/bench-span';
 
 const Logger = createLogger('BuiltIns');
 
-/** A built-in feature exposing optional `start`/`stop` lifecycle hooks. */
+/** A built-in feature exposing optional `start`/`afterAddons`/`stop` lifecycle hooks. */
 export type BuiltIn = {
-	/** Runs when the built-in is registered; if it throws, the built-in is logged and left inactive. */
+	/** Runs when the built-in is registered, before the addon managers load; if it throws, the built-in is logged and left inactive. */
 	start?: () => void;
+	/** Runs once the addon managers have loaded their addons, for work that reads them. */
+	afterAddons?: () => void;
 	/** Runs when the built-in is unregistered or the built-ins shut down, in reverse start order. */
 	stop?: () => void;
 	/** Checked once at initialisation; returning `false` skips registering the built-in. */
@@ -103,6 +105,19 @@ class BuiltInsManager {
 	}
 
 	/**
+	 * @description Runs each active built-in's `afterAddons` hook in start order, logging any that throw.
+	 */
+	afterAddons() {
+		for (const [name, builtin] of this.active) {
+			try {
+				builtin.afterAddons?.();
+			} catch (error) {
+				Logger.error(`Failed to run afterAddons of built-in ${name}:`, error);
+			}
+		}
+	}
+
+	/**
 	 * @description Stops every active built-in in reverse registration order, clears the active set, and marks the
 	 * manager uninitialised.
 	 */
@@ -125,10 +140,6 @@ class BuiltInsManager {
 		this.initialized = false;
 	}
 
-	/**
-	 * @description Reports whether the built-ins have been initialised.
-	 * @returns `true` if {@link initialize} has run and {@link shutdown} has not.
-	 */
 	isInitialized() {
 		return this.initialized;
 	}

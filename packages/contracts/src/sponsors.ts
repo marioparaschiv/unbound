@@ -119,16 +119,13 @@ export const revokeBadgeRequestSchema = Type.Object({
 export type PerkId = StaticDecode<typeof perkIdSchema>;
 export type Badge = StaticDecode<typeof badgeSchema>;
 export type OwnedBadge = StaticDecode<typeof ownedBadgeSchema>;
-export type CreateBadgeUploadRequest = StaticDecode<typeof createBadgeUploadRequestSchema>;
 export type PresignedBadgeUpload = StaticDecode<typeof presignedBadgeUploadSchema>;
 export type UploadBadgeImageResponse = StaticDecode<typeof uploadBadgeImageResponseSchema>;
 export type SetBadgesRequest = StaticDecode<typeof setBadgesRequestSchema>;
 export type PublicBadge = StaticDecode<typeof publicBadgeSchema>;
-export type UserBadgesResponse = StaticDecode<typeof userBadgesResponseSchema>;
 export type BadgeClaim = StaticDecode<typeof badgeClaimSchema>;
 export type BadgeClaimResponse = StaticDecode<typeof badgeClaimResponseSchema>;
 export type SponsorshipState = StaticDecode<typeof sponsorshipStateSchema>;
-export type RevokeBadgeRequest = StaticDecode<typeof revokeBadgeRequestSchema>;
 
 export default {
 	BADGE_NAME_MAX_LENGTH,

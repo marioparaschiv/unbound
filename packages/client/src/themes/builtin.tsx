@@ -10,8 +10,8 @@ import { createPatcher } from '~/patcher/create-patcher';
 import type { SectionEntry } from '~/settings/section';
 import { getSetting } from '~/settings/unbound';
 import { onModuleLoaded } from '~/metro/wait';
+import { findStore } from '~/metro/lookups';
 import { Screens } from '~/core/constants';
-import { findStore } from '~/metro/search';
 import { onChange } from '~/storage/api';
 import ThemeStore from '~/themes/state';
 
@@ -121,7 +121,7 @@ function hideInputShadow(mdl: InputScrimModule) {
 
 function refreshDiscordTheme() {
 	// A theme store Discord has not loaded yet has nothing to refresh.
-	findStore('Theme', { initialize: false })?.emitChange?.();
+	findStore('Theme', { lazy: false, initialize: false })?.emitChange?.();
 }
 
 type DiscordThemeState = { theme: string };
@@ -284,9 +284,6 @@ export const designSection: SectionEntry = {
 	key: Screens.Design,
 	titleKey: 'UNBOUND_DESIGN',
 	/**
-	 *
-	 */
-	/**
 	 * @description Loads the page when it first opens.
 	 * @returns The page.
 	 */
@@ -298,9 +295,6 @@ export const designSection: SectionEntry = {
 export const fontGroupSection: SectionEntry = {
 	key: Screens.FontGroup,
 	titleKey: 'UNBOUND_FONTS',
-	/**
-	 *
-	 */
 	/**
 	 * @description Loads the page when it first opens.
 	 * @returns The page.

@@ -8,6 +8,7 @@ import type { FakePlugins } from './fake-plugins';
 import type { FakeNative } from './fake-native';
 import type { FakeFs } from './fake-fs';
 
+import { SOURCE_LOCALE } from '../src/_conventions/addon-locales';
 import { unmountAll } from './test-renderer';
 
 /** The plugin under test and every fake the preset installed for it. */
@@ -31,7 +32,6 @@ let active: TestSession | undefined;
 
 /**
  * @description Makes a session the one the recorders, `render` and `startPlugin` read. The preset calls it once.
- * @param session The session.
  */
 export function startSession(session: TestSession): void {
 	active = session;
@@ -73,5 +73,5 @@ export function resetSession(): void {
 	session.flux.reset();
 	session.toasts.shown.length = 0;
 	session.dialogs.opened.length = 0;
-	session.locales?.setLocale('en-US');
+	session.locales?.setLocale(SOURCE_LOCALE);
 }

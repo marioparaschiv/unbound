@@ -52,7 +52,6 @@ Object.assign(globalThis, {
 	},
 	window: globalThis,
 	modules: new Map(),
-	$$DEV$$: false,
 	React: { createElement: () => null },
 });
 

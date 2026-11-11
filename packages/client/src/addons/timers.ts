@@ -78,5 +78,3 @@ export function createScopedTimers(): ScopedTimers {
 		},
 	};
 }
-
-export default { createScopedTimers };

@@ -1,10 +1,7 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startIndicators } from '~/indicators';
+import { indicatorFeatures } from '~/indicators';
 
-export function start() {
-	startIndicators();
-}
+export const { start, stop, selfTest } = runFeatures(indicatorFeatures);
 
-export { featureSelfTest as selfTest };
 export { SettingsPanel } from '~/settings';

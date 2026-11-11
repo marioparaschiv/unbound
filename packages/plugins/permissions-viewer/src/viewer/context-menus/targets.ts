@@ -1,6 +1,7 @@
 import isProfileMenu from '@unbound-plugins/shared/context-menus/profile-menu';
+import { asId } from '@unbound-plugins/shared/values/as-id';
 
-import { asId, type Target } from '~/viewer/action-sheets/targets';
+import type { Target } from '~/viewer/action-sheets/targets';
 
 export type MenuItem = {
 	label?: string;

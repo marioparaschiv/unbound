@@ -37,9 +37,6 @@ export const generalSection: SectionEntry = {
 	key: Screens.General,
 	titleKey: 'UNBOUND_CLIENT',
 	/**
-	 *
-	 */
-	/**
 	 * @description Loads the page when it first opens.
 	 * @returns The page.
 	 */
@@ -55,9 +52,6 @@ export const generalSection: SectionEntry = {
 export const panelHostSection: SectionEntry = {
 	key: Screens.PanelHost,
 	titleKey: 'UNBOUND_CUSTOM',
-	/**
-	 *
-	 */
 	/**
 	 * @description Loads the page when it first opens.
 	 * @returns The page.
@@ -196,5 +190,3 @@ function patchOverviewScreen(Overview: MetroExport, builtIn: EntryMap) {
 		return result;
 	});
 }
-
-export default { generalSection, panelHostSection, createSettings };

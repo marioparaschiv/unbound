@@ -5,14 +5,14 @@ import { Platform } from 'react-native';
 import { create } from 'zustand';
 
 import { fetchLoaderUpdate, resolveRequiredLoader } from '~/updates/loader-updates';
-import { API_URL, BUILD_CHANNEL, CLIENT_VERSION } from '~/core/constants';
 import { automaticUpdates, fetchUpdates } from '~/updates/addon-updates';
+import { installsFromManifest } from '~/addons/installs-from-manifest';
 import { checkDiscordBuilds } from '~/updates/discord-builds';
 import type { DiscordBuilds } from '~/updates/discord-builds';
 import type { PendingUpdate } from '~/updates/addon-updates';
 import type { LoaderCheck } from '~/updates/loader-updates';
-import { installsFromManifest } from '~/addons/addons';
 import { getLoader } from '~/native/unbound-native';
+import { BUILD_CHANNEL } from '~/core/constants';
 import { Manager } from '~/addons/manager';
 
 const logger = createLogger('Updater');
@@ -56,7 +56,7 @@ function checkInstalled(): Promise<PendingUpdate[]> {
 		Manager.for(kind).listInstalled(),
 	);
 
-	return fetchUpdates(entries, { baseUrl: API_URL, clientVersion: CLIENT_VERSION });
+	return fetchUpdates(entries);
 }
 
 /**
@@ -69,7 +69,6 @@ export async function findLoaderUpdate(): Promise<LoaderCheck> {
 
 	try {
 		return await fetchLoaderUpdate({
-			baseUrl: API_URL,
 			platform: Platform.OS,
 			loader,
 			channel: BUILD_CHANNEL,
@@ -85,9 +84,9 @@ export async function findLoaderUpdate(): Promise<LoaderCheck> {
  * @description Reads the in-app installer's state and the installed channel's patched Discord builds.
  * @returns The builds, or `null` where the installer does not apply or the check failed.
  */
-export async function findDiscordBuilds(): Promise<DiscordBuilds | null> {
+async function findDiscordBuilds(): Promise<DiscordBuilds | null> {
 	try {
-		return await checkDiscordBuilds(API_URL);
+		return await checkDiscordBuilds();
 	} catch (error) {
 		logger.error('Failed to list the patched Discord builds:', error);
 

@@ -5,9 +5,6 @@ export const pluginsSection: SectionEntry = {
 	key: Screens.Plugins,
 	titleKey: 'UNBOUND_PLUGINS',
 	/**
-	 *
-	 */
-	/**
 	 * @description Loads the page when it first opens.
 	 * @returns The page.
 	 */
@@ -24,5 +21,3 @@ export const pluginsSection: SectionEntry = {
 		return <AddonCount kind='plugin' />;
 	},
 };
-
-export default { pluginsSection };

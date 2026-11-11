@@ -52,7 +52,6 @@ function readAsset(node: ESTree.ObjectExpression): AssetRecord | undefined {
 /**
  * @description Reads the assets a module registers: each object literal carrying `__packager_asset: true`, the
  * record Metro's asset modules pass to `registerAsset`.
- * @param module The module.
  * @returns Its assets, in source order; empty for modules that register none.
  */
 export function collectAssets(module: ModuleRecord): AssetRecord[] {

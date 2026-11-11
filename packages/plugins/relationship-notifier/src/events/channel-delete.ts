@@ -1,9 +1,9 @@
 import type { FluxActionOf } from '@unbound-app/api/flux';
+import { settings } from '@unbound-app/settings';
 import { flux } from '@unbound-app/api';
 
 import { GROUP_DM_CHANNEL_TYPE } from '~/constants';
 import { messages } from '~/messages';
-import { readSettings } from '~/modules';
 import { notify } from '~/notify';
 import { refresh, type Session } from '~/session';
 
@@ -23,7 +23,7 @@ export function subscribeChannelDelete(session: Session): () => void {
 
 		refresh(session, 'groups');
 
-		if (known && !manual && readSettings().groups) {
+		if (known && !manual && settings.groups) {
 			notify(messages.removedFromGroup(known.name), known.iconURL);
 		}
 	}

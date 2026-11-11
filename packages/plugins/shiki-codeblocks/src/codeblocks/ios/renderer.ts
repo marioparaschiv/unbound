@@ -16,7 +16,7 @@ import {
 	textEngine,
 } from '@unbound-plugins/shared/native/ios/text-attachments';
 
-import { CARD_SETTINGS, Limits, PLUGIN_NAME } from '~/constants';
+import { CARD_SETTINGS, Limits } from '~/constants';
 import {
 	locateCodeBlocks,
 	parseFencedCodeBlocks,
@@ -39,7 +39,9 @@ import {
 	rebuildSurface,
 	restoreSurface,
 } from '~/codeblocks/ios/surfaces';
-import { detachSurface, surfaceMatchesCell, visibleChannelId } from '~/codeblocks/ios/session';
+import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
+
+import { detachSurface, surfaceMatchesCell } from '~/codeblocks/ios/session';
 import { cellForLabel, messageIdentity } from '~/codeblocks/ios/cells';
 import type { Session, Surface } from '~/codeblocks/ios/session';
 import { createNativeUI } from '~/codeblocks/ios/ui';
@@ -80,7 +82,7 @@ function renderLabel(session: Session, label: NativeObjectHandle, original: Nati
 
 	if (rendered === undefined) return;
 
-	if (!surfaces.has(labelKey) && !mayShowCode(rendered, channelCodeLines(visibleChannelId())))
+	if (!surfaces.has(labelKey) && !mayShowCode(rendered, channelCodeLines(selectedChannelId())))
 		return;
 
 	const cell = cellForLabel(ui, label);
@@ -92,7 +94,7 @@ function renderLabel(session: Session, label: NativeObjectHandle, original: Nati
 	}
 
 	const identity = messageIdentity(ui, cell);
-	const channelId = visibleChannelId();
+	const channelId = selectedChannelId();
 	const previous = surfaces.get(labelKey);
 	const sameMessage =
 		!!previous &&
@@ -151,12 +153,12 @@ function renderLabel(session: Session, label: NativeObjectHandle, original: Nati
 // Labels already on screen at start never call `setAttributedText:` again, so find them once.
 async function renderVisibleLabels(session: Session): Promise<void> {
 	const { objc } = session.ui;
-	const channelId = visibleChannelId();
+	const channelId = selectedChannelId();
 
 	if (!channelId) return;
 
 	function isStale() {
-		return session.signal.aborted || channelId !== visibleChannelId();
+		return session.signal.aborted || channelId !== selectedChannelId();
 	}
 
 	const labels: NativeObjectHandle[] = [];
@@ -187,7 +189,7 @@ function labelHooks(session: Session, timers: Set<ReturnType<typeof setTimeout>>
 	const { objc } = session.ui;
 
 	function onMove(label: NativeObjectHandle) {
-		const channelId = visibleChannelId();
+		const channelId = selectedChannelId();
 
 		if (session.signal.aborted || !channelId) return;
 
@@ -199,7 +201,7 @@ function labelHooks(session: Session, timers: Set<ReturnType<typeof setTimeout>>
 				{ target: label, selector: 'attributedText', args: [] },
 			])
 			.then(([window, text]) => {
-				if (session.signal.aborted || channelId !== visibleChannelId()) return;
+				if (session.signal.aborted || channelId !== selectedChannelId()) return;
 
 				if (!window || !text) return;
 
@@ -215,7 +217,7 @@ function labelHooks(session: Session, timers: Set<ReturnType<typeof setTimeout>>
 	}
 
 	function mayRenderText(text: NativeObjectHandle): boolean {
-		const lines = channelCodeLines(visibleChannelId());
+		const lines = channelCodeLines(selectedChannelId());
 
 		if (lines?.length === 0) return false;
 
@@ -296,7 +298,7 @@ function labelLanguages(session: Session): void {
 		})
 		.catch((error) => {
 			if (!isCancellation(error)) {
-				console.error(`[${PLUGIN_NAME}] Failed to load the language catalog:`, error);
+				logger.error(`Failed to load the language catalog:`, error);
 			}
 		});
 }

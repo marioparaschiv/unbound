@@ -1,6 +1,4 @@
-import { createApiClient } from '@unbound-app/web/client';
 import { createLogger } from '@unbound-app/logger';
-import type { Api } from '@unbound-app/web/api';
 
 import { buildCrashReport } from '~/diagnostics/crash-report';
 import type { CrashEvent } from '~/diagnostics/crash-report';
@@ -40,7 +38,8 @@ export async function reportCrash(event: CrashEvent): Promise<void> {
 	}
 
 	try {
-		const { API_URL, CLIENT_VERSION } = await import('~/core/constants');
+		const { CLIENT_VERSION } = await import('~/core/constants');
+		const { createUnboundClient } = await import('~/account/client');
 		const environment = currentEnvironment(CLIENT_VERSION);
 		const report = environment && buildCrashReport(event, environment, await readLoaderLog());
 
@@ -48,7 +47,7 @@ export async function reportCrash(event: CrashEvent): Promise<void> {
 			return;
 		}
 
-		const request = createApiClient<Api>({ baseUrl: API_URL });
+		const request = createUnboundClient();
 
 		await request('POST /api/v1/crash-reports', {
 			body: report,

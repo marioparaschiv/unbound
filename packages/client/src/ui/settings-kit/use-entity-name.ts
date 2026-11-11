@@ -1,10 +1,10 @@
 import type { EntityDisplay } from '@unbound-app/types/settings';
 
-import { findStoreLazy } from '~/metro/wrappers';
+import { findStore } from '~/metro/lookups';
 
-const Users = findStoreLazy('User');
-const Channels = findStoreLazy('Channel');
-const Guilds = findStoreLazy('Guild');
+const Users = findStore('User');
+const Channels = findStore('Channel');
+const Guilds = findStore('Guild');
 
 /**
  * @description Reads the name Discord's stores hold for an id: a user's username, a channel's or server's name. Roles have no store lookup here.

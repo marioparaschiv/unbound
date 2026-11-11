@@ -1,4 +1,4 @@
-import type { SelfTestResult } from '@unbound-plugins/shared/lifecycle/health';
+import type { SelfTestResult } from '@unbound-plugins/shared/lifecycle/features';
 
 export type LoadStatus = {
 	markLoaded: (name: string) => () => void;

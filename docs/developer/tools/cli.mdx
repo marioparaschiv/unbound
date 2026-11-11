@@ -142,7 +142,7 @@ starred-users 1.2.0
 | `shipped` | Files the manifest lists beside the bundle (translations and images). |
 | `metro` | Metro filters that got a cache key, and where each uncached one is. |
 
-`--verbose` also lists the five largest source modules. `--json` prints the same data. `ubd dev` prints one line per rebuild, such as `Built my-plugin: 18.4 KB · 1 uncached filter`.
+`--verbose` also lists the five largest source modules. `--json` prints the same data. `ubd dev --report` prints one line per rebuild, such as `Built my-plugin: 18.4 KB · 1 uncached filter`; without `--report`, `ubd dev` skips the report so each hot rebuild stays fast.
 
 ### Budgets
 

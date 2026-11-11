@@ -1,8 +1,8 @@
 import noop from '@unbound-app/utils/noop';
 
 import { createPatcher } from '~/patcher/create-patcher';
+import { findByProps } from '~/metro/lookups';
 import { onModuleLoaded } from '~/metro/wait';
-import { findByProps } from '~/metro/search';
 import { byProps } from '~/metro/filters';
 
 const Patcher = createPatcher('unbound::tracking');

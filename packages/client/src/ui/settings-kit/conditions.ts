@@ -60,5 +60,3 @@ export function evaluateCondition(
 		return;
 	}
 }
-
-export default { evaluateCondition };

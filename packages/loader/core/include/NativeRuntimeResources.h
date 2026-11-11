@@ -78,14 +78,13 @@ public:
     void                                      invalidate();
     std::shared_ptr<RuntimeResourceOperation> beginOperation(uint64_t identity);
     size_t                                    pendingOperationCount() const;
-    bool                  retain(const std::string &key, std::shared_ptr<void> resource);
-    bool                  release(const std::string &key);
-    bool                  releaseOnOwnerThread(const std::string &key);
-    bool                  deferRelease(const std::string &key);
-    std::shared_ptr<void> find(const std::string &key) const;
-    size_t                size() const;
-    size_t                drainDeferredReleases();
-    void                  clear();
+    bool   retain(const std::string &key, std::shared_ptr<void> resource);
+    bool   release(const std::string &key);
+    bool   releaseOnOwnerThread(const std::string &key);
+    bool   deferRelease(const std::string &key);
+    size_t size() const;
+    size_t drainDeferredReleases();
+    void   clear();
 
 private:
     friend class RuntimeResourceOperation;
@@ -119,7 +118,6 @@ beginRuntimeResourceOperation(const std::weak_ptr<RuntimeResourceRegistry> &regi
                               uint64_t                                      identity);
 size_t drainRuntimeResourceReleases(facebook::jsi::Runtime &runtime);
 size_t drainRuntimeResourceReleases(const std::weak_ptr<RuntimeResourceRegistry> &registry);
-std::shared_ptr<void> runtimeResource(facebook::jsi::Runtime &runtime, const std::string &key);
 
 template <typename Callback>
 bool withRuntimeResource(const std::weak_ptr<RuntimeResourceRegistry> &registry, uint64_t identity,

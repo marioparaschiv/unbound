@@ -3,6 +3,7 @@ import { createLogger } from '@unbound-app/logger';
 import { afterFirstFrame, watchFirstFrame } from '~/core/first-frame';
 import { markRendered } from '~/native/unbound-native';
 import { captureMetro } from '~/metro/capture';
+import { benchMark } from '~/core/bench-span';
 
 // `window` is referenced throughout the client but the host only defines it later in its own
 // bundle, so alias it to the global object up front.
@@ -28,7 +29,7 @@ const readyState = (runtimeGlobal.__unboundReady ??= {
 });
 
 /** Marks Unbound as ready and runs every callback waiting on it. */
-export function markReady(): void {
+function markReady(): void {
 	if (readyState.ready) return;
 
 	readyState.ready = true;
@@ -96,9 +97,7 @@ function onMainModuleRun(onReady: () => void | Promise<void>) {
 
 		resumeDeferred();
 
-		if (import.meta.env.BENCH) {
-			globalThis.__ubdBench?.mark('ready:resumed');
-		}
+		benchMark('ready:resumed');
 
 		watchFirstFrame();
 		afterFirstFrame(markRendered);

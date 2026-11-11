@@ -2,7 +2,6 @@ import { addonVersionsResponseSchema } from '@unbound-app/contracts/addons';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
-import listAddonVersionsEndpoint from '~/endpoints/list-addon-versions';
 import { createApiClient } from '~/api/schema-client';
 import { serveVersion } from '~/lib/rollback';
 import { addon, user } from '~/db/schema';
@@ -10,13 +9,11 @@ import type { Api } from '~/api';
 
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from './helpers/addons';
 import { createTestContext, signInWithDiscord } from './helpers/context';
-import { failure, serveEndpoints } from './helpers/server';
+import { failure, serveApi } from './helpers/server';
 
 const base = await createTestContext();
 const ctx = base.ctx;
-const server = serveEndpoints(ctx, {
-	'GET /api/v1/addons/$id/versions': listAddonVersionsEndpoint,
-});
+const server = await serveApi(ctx);
 const client = createApiClient<Api>({ baseUrl: server.url.href });
 
 afterAll(async () => {

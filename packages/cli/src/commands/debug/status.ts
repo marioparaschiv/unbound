@@ -1,13 +1,13 @@
 import type { CommandDefinition, CommandOutput } from '@unbound-app/debugger-protocol/registry';
 import type { DeviceInfo } from '@unbound-app/debugger-protocol';
-import type { UnboundGlobal } from '@unbound-app/api/global';
 
 import { evaluateOnDevice, NOT_CONNECTED, toDeviceCode } from '~/lib/device';
 import { defaulted, Type, type StaticDecode } from '~/lib/schema';
-import { logToStderr } from '~/lib/plugin-install';
+import type { DevicePrelude } from '~/lib/device-prelude';
 import type { DeviceClient } from '~/lib/device';
 import { bridgePortField } from '~/lib/context';
 import { parseJson } from '~/lib/parse-json';
+import { logToStderr } from '~/lib/stderr';
 
 const schema = Type.Object({
 	port: bridgePortField,
@@ -85,23 +85,15 @@ const deviceStatusReportSchema = Type.Object({
 
 type DeviceStatusReport = StaticDecode<typeof deviceStatusReportSchema>;
 
-type PluginManagerView = {
-	getAll(): { id: string; started: boolean; failed: boolean }[];
-	startDurations?: ReadonlyMap<string, number>;
-};
-
-function readDeviceStatus(unbound: UnboundGlobal): string {
+function readDeviceStatus({ unbound, plugins }: DevicePrelude): string {
 	const collect = (globalThis as { gc?: () => void }).gc;
 
 	if (typeof collect === 'function') {
 		collect();
 	}
 
-	const hasPlugins = (
-		value: UnboundGlobal,
-	): value is UnboundGlobal & { plugins: PluginManagerView } => 'plugins' in value;
-	const entities = hasPlugins(unbound) ? unbound.plugins.getAll() : [];
-	const durations = hasPlugins(unbound) ? unbound.plugins.startDurations : undefined;
+	const entities = [...(plugins?.entities.values() ?? [])];
+	const durations = plugins?.startDurations;
 	const counts = unbound.native.getNativeResources?.();
 	const report: DeviceStatusReport = {
 		started: entities.filter((entity) => entity.started).length,

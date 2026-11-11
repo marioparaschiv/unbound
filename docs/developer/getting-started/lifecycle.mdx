@@ -116,7 +116,7 @@ Component patches need no such care. Mounted components redraw with Discord's re
 
 ## Starting Features
 
-Start each feature on its own so one that throws does not stop the others. First-party plugins use `startFeatures` from `@unbound-plugins/shared`, or `applyFeatures` when features depend on each other. A third-party plugin wraps each start function in `try`/`catch` with `logger.error`.
+Start each feature on its own so one that throws does not stop the others. First-party plugins use `runFeatures` from `@unbound-plugins/shared`, with `atomic: true` when features depend on each other. A third-party plugin wraps each start function in `try`/`catch` with `logger.error`.
 
 ## Staying Fast
 

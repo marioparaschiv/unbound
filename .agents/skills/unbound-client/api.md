@@ -1,6 +1,6 @@
 # Public API
 
-**Public API is the named exports of `<domain>/api.ts`** (also `native/native.ts`, `native/fs.ts`, `metro/index.ts`, and the managers from `~/addons/managers`).
+**Public API is the named exports of `<domain>/api.ts`** (also `native/native.ts`, `native/fs.ts`, and `metro/index.ts`).
 
 - Add the module to `core/api.ts`: `export * as toasts from '~/toasts/api'`.
 - New modules: named exports only. The SDK drops `default`; an existing `default` object stays and gets each new member.

@@ -1,33 +1,16 @@
-export const PLUGIN_NAME = 'New Guild Settings';
+import type { SettingsEntry } from '@unbound-app/settings';
 
-export const PLUGIN_ID = 'unbound.new-guild-settings';
-
-export const MessageNotifications = {
-	All: 0,
-	Mentions: 1,
-	Nothing: 2,
-	ServerDefault: 3,
-} as const;
-
-export type MessageNotification = (typeof MessageNotifications)[keyof typeof MessageNotifications];
+/** Discord's message notification level for each choice of the `messages` setting. */
+export const MESSAGE_NOTIFICATIONS: Record<SettingsEntry<'messages'>, number> = {
+	all: 0,
+	mentions: 1,
+	nothing: 2,
+	serverDefault: 3,
+};
 
 export const HIGHLIGHTS_DISABLED = 1;
 
 export const HIGHLIGHTS_UNSET = 0;
-
-export const DEFAULTS = {
-	guild: true,
-	messages: MessageNotifications.ServerDefault as MessageNotification,
-	everyone: true,
-	role: true,
-	highlights: true,
-	events: true,
-	showAllChannels: true,
-};
-
-export type NewGuildSettings = typeof DEFAULTS;
-
-export type SettingKey = keyof NewGuildSettings;
 
 export const REPEAT_WINDOW_MS = 10_000;
 

@@ -2,7 +2,7 @@ import { createLogger } from '@unbound-app/logger';
 import enUS from '@i18n/en-US.json';
 
 import { i18n as Discord, Moment } from '~/metro/common';
-import { DEV, I18N_BASE_URL } from '~/core/constants';
+import { I18N_BASE_URL } from '~/core/constants';
 import { onModuleLoaded } from '~/metro/wait';
 import { Dispatcher } from '~/flux/modules';
 import { byProps } from '~/metro/filters';
@@ -143,7 +143,7 @@ function createMessages(
  * @returns A promise that resolves once the cache read and revalidation attempt complete. Never throws.
  */
 async function ensureLocale(locale: string): Promise<void> {
-	if (DEV) {
+	if (import.meta.env.DEV) {
 		try {
 			const res = await fetch(`${I18N_BASE_URL}/${locale}.json`);
 

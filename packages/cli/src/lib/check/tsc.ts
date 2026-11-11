@@ -1,6 +1,6 @@
 import { dirname, join } from 'node:path';
 
-import type { Severity } from '~/rollup/diagnostic';
+import type { Severity } from '~/lib/check/diagnostic';
 
 /** One problem as `tsc --pretty false` prints it; `file` is relative to the directory tsc ran in. */
 export type TscDiagnostic = {

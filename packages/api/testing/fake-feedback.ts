@@ -2,7 +2,7 @@ import type { AlertDialogProps, DialogHandle } from '../src/dialogs';
 import type { ToastHandle, ToastOptions } from '../src/toasts';
 import type { IcuVars } from './icu-format';
 
-import { parseIcu } from './icu-parse';
+import { parseIcu } from '../src/_conventions/icu-parse';
 
 /** How the fakes resolve a plugin's message keys, as the client's scoped `resolveMessage` does. */
 export type FakeMessageLookup = {

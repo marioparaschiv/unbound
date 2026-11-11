@@ -1,25 +1,30 @@
 import { resolve } from 'node:path';
 
 import { discoverAddons, type DiscoveredAddon } from '~/lib/discovery';
-import { DEV_BUILD_CHECKS, runBuildChecks } from '~/lib/build-checks';
+import { DEV_BUILD_CHECKS } from '~/lib/build-checks';
 import { buildAddon } from '~/lib/build-addon';
 import { loadConfig } from '~/lib/config';
 
 export type AddonTarget = { addon: DiscoveredAddon } | { error: string };
 
+export type AddonTargetOptions = {
+	/** Whether to run the workspace build command for it first. */
+	build: boolean;
+	/** Build it for a running client to hot-reload. */
+	hot?: boolean;
+	/** How long the build may run before it fails; unbounded when omitted. */
+	timeoutMs?: number;
+};
+
 /**
  * @description Finds a workspace addon by its id or directory and builds it unless asked not to.
  * @param target The addon's manifest id, or a path to its directory.
- * @param build Whether to run the workspace build command for it first.
- * @param buildTimeoutMs How long the build may run before it fails; unbounded when omitted.
- * @param env Variables added to the build's environment.
+ * @param options Whether and how to build it.
  * @returns The addon, or the reason it could not be found or built.
  */
 export async function resolveAddonTarget(
 	target: string,
-	build: boolean,
-	buildTimeoutMs?: number,
-	env: Record<string, string> = {},
+	{ build, hot, timeoutMs }: AddonTargetOptions,
 ): Promise<AddonTarget> {
 	const resolved = loadConfig();
 
@@ -39,11 +44,14 @@ export async function resolveAddonTarget(
 		return { addon };
 	}
 
-	const built =
-		(await buildAddon(addon, resolved.config.build, env, buildTimeoutMs)) &&
-		(await runBuildChecks(addon, DEV_BUILD_CHECKS));
+	const built = await buildAddon(addon, {
+		command: resolved.config.build,
+		hot,
+		checks: DEV_BUILD_CHECKS,
+		timeoutMs,
+	});
 
-	if (!built) {
+	if (!built.ok) {
 		return { error: `Building ${addon.id} failed.` };
 	}
 

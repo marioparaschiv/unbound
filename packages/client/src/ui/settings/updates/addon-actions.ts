@@ -93,5 +93,3 @@ export function openAddonActions({ entry, update, openChangelog }: AddonActionsO
 		],
 	});
 }
-
-export default { openAddonActions };

@@ -36,16 +36,18 @@ Every file of `packages/plugins/character-counter`, the reference plugin. It sho
 			</Folder>
 		</Folder>
 		<Folder name='tests'>
-			<File name='limit.test.ts' note='Pure logic' />
-			<File name='colors.test.ts' note='Pure logic' />
+			<Folder name='counter'>
+				<File name='limit.test.ts' note='Pure logic' />
+				<File name='colors.test.ts' note='Pure logic' />
+			</Folder>
 			<File name='character-counter.test.tsx' note='The started plugin, rendered' />
 		</Folder>
-		<File name='ADDON.md' note='The store page' />
+		<File name='ADDON.md' note='The addon page' />
 		<File name='CHANGELOG.md' note='Changes per version' />
 	</Folder>
 </FileTree>
 
-A plugin with images adds `assets/`; a store page with a banner adds `media/`. Git ignores `dist/` and `node_modules/`. [Project Rules](/docs/developer/getting-started/project-rules) lists the layout rules.
+A plugin with images adds `assets/`; an addon page with a banner adds `media/`. Git ignores `dist/` and `node_modules/`. [Project Rules](/docs/developer/getting-started/project-rules) lists the layout rules.
 
 ## Root Files
 
@@ -107,29 +109,23 @@ preload = ["@unbound-app/api/testing/preset"]
 `src/index.tsx` starts features and holds no logic.
 
 ```tsx src/index.tsx quoted
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
 import { startCounter } from '~/counter';
 
-export function start() {
-	startCounter();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures([startCounter]);
 ```
 
-No `stop`: the Addon scope removes the patch. See [Lifecycle](/docs/developer/getting-started/lifecycle#what-stop-must-undo) for what still needs one.
+`stop` has nothing to undo here: the Addon scope removes the patch. See [Lifecycle](/docs/developer/getting-started/lifecycle#what-stop-must-undo) for what still needs one.
 
-`selfTest` runs after a restart in the device matrix and returns `{ ok, detail }`. A plugin whose features all skipped still passes `start`; the self-test fails it. `featureSelfTest` reports `ok` once a feature called `recordApplied`, and says why when one skipped or failed.
+`selfTest` runs after a restart in the device matrix and returns `{ ok, detail }`. A plugin whose features all skipped still passes `start`; the self-test fails it. `runFeatures` from `@unbound-plugins/shared/lifecycle/features` builds all three exports: `selfTest` reports `ok` while the started features run, and says why when one failed, skipped or still waits for a module Discord has not loaded.
 
-Several features start through helpers in `@unbound-plugins/shared/lifecycle`:
+`runFeatures` takes start functions that may return a cleanup, or a function of the start context that returns them. `stop` runs every cleanup in reverse. Logs go through the Addon scope's `logger`, so they carry the plugin's name.
 
-| Helper | When a feature throws | Use when |
+| Option | When a feature throws | Use when |
 | --- | --- | --- |
-| `startFeatures(name, features)` | Logs and records a failure. Others still start | Features are independent (usual) |
-| `applyFeatures(name, features)` | Removes features already applied, then rethrows | Features need each other |
-
-Each takes start functions that may return a cleanup. Both return one function that runs every cleanup in reverse. Return it from `stop`.
+| none | Logs and records a failure. Others still start | Features are independent (usual) |
+| `atomic: true` | Removes features already started and records a failure | Features need each other |
 
 ## A Feature
 
@@ -140,7 +136,6 @@ Each feature lives in its own folder under `src/` and starts itself. Character C
 Makes the patch. The JSDoc names what it patches and reads.
 
 ```tsx src/counter/index.tsx quoted
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { cloneElement, isValidElement, type ReactNode } from 'react';
 import { patcher } from '@unbound-app/api';
@@ -156,7 +151,7 @@ type ContainerProps = { channel?: { id?: string }; channelId?: string };
  * Nitro tier from `UserStore`. The Addon scope removes the patch when the plugin stops.
  */
 export function startCounter(): void {
-	if (!ensureModules('Character Counter', { ChatInputs, FloatingChatInputContainer })) return;
+	if (!ensureModules({ ChatInputs, FloatingChatInputContainer })) return;
 
 	patcher.react.after(FloatingChatInputContainer, 'default', ({ props, result }) => {
 		const container: ContainerProps = props;
@@ -174,16 +169,13 @@ export function startCounter(): void {
 			</>,
 		);
 	});
-
-	recordApplied(1);
 }
 ```
 
 | Habit | Why |
 | --- | --- |
-| `ensureModules` | Logs one line and returns `false` if a module is missing, so only this feature skips. Never loads a lazy handle |
+| `ensureModules` | Logs one line, fails the self-test and returns `false` if a module is missing, so only this feature skips. Never loads a lazy handle; until Discord loads one, the self-test reports it as waiting |
 | Patch `'default'` on the module | Reading the component itself would load the module at start |
-| `recordApplied(1)` | Tells the self-test this feature applied |
 | Add a child, keep `children` | Other plugins may patch the same component |
 
 ### modules.ts
@@ -312,7 +304,7 @@ Tests sit in `tests/`, named after what they cover.
 
 | Kind | How |
 | --- | --- |
-| Pure logic (`limit.test.ts`, `colors.test.ts`) | Import and call it. The preset is needed only for `~/` |
+| Pure logic (`counter/limit.test.ts`, `counter/colors.test.ts`) | Import and call it. The preset is needed only for `~/` |
 | Started plugin (`character-counter.test.tsx`) | Register the modules it looks up in `beforeEach`, call `startPlugin()`, render the patched container, read the pill |
 
 ```tsx tests/character-counter.test.tsx excerpt
@@ -332,9 +324,9 @@ The preset forgets registered modules before each test. See [Writing Tests](/doc
 
 Images go in `assets/` beside `src/`. Importing one gives its asset id, and the build copies it into `dist/`. See [Images](/docs/developer/plugins/assets).
 
-## Store Page
+## Addon Page
 
-`ADDON.md` has no title; the store takes the title and summary from the manifest.
+`ADDON.md` has no title; the Marketplace takes the title and summary from the manifest.
 
 ```md ADDON.md quoted
 ---
@@ -354,11 +346,11 @@ banner: media/banner.png
 ```
 
 - The frontmatter names the banner and an optional gallery, both in `media/`.
-- No frontmatter builds with a warning, and the store shows no banner.
+- No frontmatter builds with a warning, and the Marketplace shows no banner.
 - `bun run plugins:banners` draws first-party banners from the manifest and leaves hand-made ones alone.
 - `CHANGELOG.md` lists changes newest first. Its version matches `manifest.json`.
 
-See [Store Page](/docs/developer/publishing/store-page).
+See [Addon Page](/docs/developer/publishing/store-page).
 
 ## Next
 

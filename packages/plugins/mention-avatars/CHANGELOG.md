@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-10
+
+### Added
+
+- A settings panel with "Show @ symbol", which hides the @ beside a mention's avatar when turned off. It was stored before but had no switch.
+
 ## [1.0.9] - 2026-11-03
 
 ### Changed

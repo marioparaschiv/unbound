@@ -4,7 +4,7 @@ import type { NativeHandle, NativeObjCBridge } from '@unbound-app/api/native';
 
 import { asHandle, findViewerPlayerLayer } from '~/picture-in-picture/ios/player-layer';
 import { keepPlayingInBackground } from '~/picture-in-picture/ios/background-playback';
-import { IOS_POLL_MS, IOS_WATCH_MS, PLUGIN_NAME, START_TIMEOUT_MS } from '~/constants';
+import { IOS_POLL_MS, IOS_WATCH_MS, START_TIMEOUT_MS } from '~/constants';
 import type { CreateWindow, PipWindow } from '~/types';
 import { createWebPlayers } from '~/picture-in-picture/web/web-players';
 import { withWebPlayers } from '~/picture-in-picture/ios/web-window';
@@ -78,7 +78,7 @@ function createNativeWindow(
 	context: Parameters<CreateWindow>[0],
 	events: Parameters<CreateWindow>[1],
 ): PipWindow {
-	if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) return unsupported;
+	if (!ensureCapabilities(context.native, context.capabilities)) return unsupported;
 
 	const { objc } = context.native;
 	let cached: PipController | null = null;

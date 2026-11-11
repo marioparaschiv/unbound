@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { SpotifyActions, SpotifyProtocolStore, SpotifyStore, UserStore } from '~/listen/modules';
 import type { SpotifyActivity } from '~/types';
-import { LOADING_MS, PLUGIN_NAME } from '~/constants';
+import { LOADING_MS } from '~/constants';
 
 export type DisabledReason = 'YOURSELF' | 'ALREADY_LISTENING' | 'NOT_DETECTED';
 
@@ -103,7 +103,7 @@ function syncOnNextPlayerState(activity: SpotifyActivity, userId: string) {
  */
 export function listenAlong(state: ListenState, activity: SpotifyActivity): boolean {
 	if (state.disabledReason || !state.userId) {
-		toasts.show({ title: PLUGIN_NAME, content: reasonText(state.disabledReason) });
+		toasts.show({ title: addon.name, content: reasonText(state.disabledReason) });
 
 		return false;
 	}

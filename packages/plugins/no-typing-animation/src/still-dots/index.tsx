@@ -1,4 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { cloneElement, createElement, isValidElement, type ReactNode } from 'react';
 import { patcher } from '@unbound-app/api';
@@ -6,7 +5,6 @@ import { patcher } from '@unbound-app/api';
 import { Ellipsis, TypingStore } from '~/still-dots/modules';
 import { stillDots, type DotElement } from '~/still-dots/dots';
 import StillDot from '~/still-dots/components/still-dot';
-import { PLUGIN_NAME } from '~/constants';
 
 function renderStillDot({ key, props }: DotElement) {
 	return createElement(StillDot, { ...props, key });
@@ -18,7 +16,7 @@ function renderStillDot({ key, props }: DotElement) {
  * The Addon scope removes the patch when the plugin stops, and mounted dots re-render as Discord's.
  */
 export function startStillDots(): void {
-	if (!ensureModules(PLUGIN_NAME, { Ellipsis })) return;
+	if (!ensureModules({ Ellipsis })) return;
 
 	patcher.react.after(Ellipsis, 'default', ({ result }) => {
 		if (!isValidElement<{ children?: ReactNode }>(result)) return;
@@ -32,5 +30,4 @@ export function startStillDots(): void {
 	});
 
 	TypingStore.emitChange?.();
-	recordApplied(1);
 }

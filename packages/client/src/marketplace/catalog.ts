@@ -186,11 +186,3 @@ export function reduceMarketplace(
 				: { status: 'failed', error: event.error };
 	}
 }
-
-export default {
-	parseCatalog,
-	queryCatalog,
-	getInstallStatus,
-	findIconSvg,
-	reduceMarketplace,
-};

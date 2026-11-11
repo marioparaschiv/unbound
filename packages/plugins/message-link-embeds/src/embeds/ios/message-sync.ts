@@ -6,7 +6,7 @@ import { reactionSnapshot } from '~/embeds/reaction-state';
 import { scanVisibleCells } from '~/embeds/ios/cells';
 import type { Session } from '~/embeds/ios/session';
 import { WINDOW_SCAN_DELAY } from '~/constants';
-import { currentChannelId } from '~/embeds/channels';
+import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
 import { MessageStore } from '~/embeds/modules';
 
 /**
@@ -42,7 +42,7 @@ export function subscribeMessageStore(session: Session): () => void {
 	}
 
 	function scheduleWindowScan() {
-		const channelId = currentChannelId();
+		const channelId = selectedChannelId();
 		const messages = channelId ? MessageStore.getMessages(channelId)?._array : undefined;
 
 		if (!channelId || !messages) return;

@@ -29,5 +29,3 @@ export function createCommandLocales(
 		subscribe,
 	};
 }
-
-export default { createCommandLocales };

@@ -1,15 +1,5 @@
 import { isAddonId, isAddonMain } from '@unbound-app/contracts/manifest-patterns';
 
-/**
- * @description Names the bundle compiled to Hermes bytecode beside a source bundle, as the loader looks it up.
- * @param path The source bundle's path or URL, such as `dist/index.js`.
- * @param bytecodeVersion The Hermes bytecode version.
- * @returns The compiled bundle's path, such as `dist/index.98.hbc`.
- */
-export function compiledBundlePath(path: string, bytecodeVersion: number): string {
-	return `${path.replace(/\.[^./]+$/, '')}.${bytecodeVersion}.hbc`;
-}
-
 const GITHUB_TREE_URL = /^https:\/\/(?:www\.)?github\.com\/[^/\s]+\/[^/\s]+(?:\/|$)/;
 
 /**

@@ -24,7 +24,8 @@ export type BindGuard = {
 	messageView: string;
 	bindName: string;
 	bindParameters: string[];
-	messageIdGetter: string;
+	/** The row's field holding the id of the message it shows, which the bind sets. */
+	idField: string;
 	layerId: number;
 	ours: NativeJavaAssociationKey;
 	original: NativeJavaAssociationKey;
@@ -43,7 +44,6 @@ export type CachedBubble = {
 
 type BindEvent = {
 	self?: NativeJavaValue;
-	args?: NativeJavaValue[];
 };
 
 type BubbleState = {
@@ -56,17 +56,6 @@ function holder(): StateHolder {
 	'worklet';
 
 	return globalThis as unknown as StateHolder;
-}
-
-function boundMessageId(
-	java: NativeJavaBridge,
-	event: BindEvent,
-	getter: string,
-): string | undefined {
-	'worklet';
-	const message = event.args ? javaReference(event.args[0]) : null;
-
-	return message ? javaText(java.invoke(message, getter, [])) : undefined;
 }
 
 function drawCached(
@@ -118,7 +107,7 @@ function restore(java: NativeJavaBridge, guard: BindGuard, row: NativeJavaRefere
 /**
  * @description Handles each row right after Discord binds it, from a hook that runs on the UI thread: a message whose bubble was already measured gets it at once, and a row moved to a message without a known bubble gets its own background back, so neither an old bubble nor a missing one is ever drawn.
  * @param scope The plugin's UI scope.
- * @param guard The message view class, its bind method, the bound message's id getter, the bubble's layer id, and the keys the bubble, the row's own background and the bubble's message are kept under.
+ * @param guard The message view class, its bind method, the row's message id field, the bubble's layer id, and the keys the bubble, the row's own background and the bubble's message are kept under.
  * @param needsBubble Wakes the JS thread for a row the guard could not draw a known bubble for, so it gets measured.
  */
 export function installBindGuard(
@@ -146,7 +135,7 @@ export function installBindGuard(
 			}
 
 			try {
-				const shown = boundMessageId(java, event, guard.messageIdGetter);
+				const shown = javaText(java.getField(row, guard.idField));
 				const drawn = javaReference(java.getAssociatedObject(row, guard.ours));
 				const drawnFor = javaText(java.getAssociatedObject(row, guard.drawnFor));
 

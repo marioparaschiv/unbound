@@ -126,7 +126,7 @@ async function compile(
 
 /**
  * @description Compiles the bundle's output file to Hermes bytecode, once per held hermesc version, as `<name>.<version>.bundle` beside it.
- * @param options A fixed hermesc directory, or how many of npm's newest versions to hold; plus extra hermesc flags.
+ * @param options A fixed hermesc directory, or which of npm's bytecode versions to hold; plus extra hermesc flags.
  * @returns The rollup plugin, which rolldown also accepts.
  */
 export default function hermes(options: HermesOptions = {}): HermesPlugin {

@@ -2,8 +2,8 @@ import { dirname, join, relative, resolve, sep } from 'node:path';
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
 
-import { diagnostic, withoutFullStop } from '~/rollup/diagnostic';
-import type { Diagnostic, Severity } from '~/rollup/diagnostic';
+import { diagnostic, withoutFullStop } from '~/lib/check/diagnostic';
+import type { Diagnostic, Severity } from '~/lib/check/diagnostic';
 import { Type, type StaticDecode } from '~/lib/schema';
 import type { Check } from '~/lib/check/check';
 import { parseJson } from '~/lib/parse-json';

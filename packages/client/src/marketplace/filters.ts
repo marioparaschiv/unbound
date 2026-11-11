@@ -216,11 +216,3 @@ export function pickFeatured(addons: ListedAddon[], type: AddonKind, now: number
 		.slice(0, FEATURED_LIMIT)
 		.map(({ addon }) => addon);
 }
-
-export default {
-	countActiveFilters,
-	filterCatalog,
-	listAuthors,
-	listTags,
-	pickFeatured,
-};

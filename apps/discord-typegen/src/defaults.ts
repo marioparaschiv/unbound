@@ -26,7 +26,6 @@ const COMPARISONS = new Map([
 
 /**
  * @description Tells whether an operator is one of the four equality comparisons.
- * @param kind The operator token.
  * @returns True for `===`, `!==`, `==` and `!=`.
  */
 export function isComparison(kind: ts.SyntaxKind): boolean {

@@ -1,8 +1,6 @@
 {
 	"name": "message-link-embeds",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Embeds previews of messages that link to other Discord messages.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

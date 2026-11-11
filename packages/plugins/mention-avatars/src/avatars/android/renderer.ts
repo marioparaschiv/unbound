@@ -4,10 +4,7 @@ import type {
 	NativeJavaReference,
 	NativeJavaValue,
 } from '@unbound-app/api/native';
-import {
-	DRAWEE_TEXT_SETTER,
-	draweeTextBuilder,
-} from '@unbound-plugins/shared/native/android/discord-views';
+import { DRAWEE_TEXT_VIEW } from '@unbound-plugins/shared/native/android/discord-views';
 import {
 	circularBitmap,
 	decodeBitmap,
@@ -15,12 +12,8 @@ import {
 } from '@unbound-plugins/shared/native/android/images';
 import { hasSpan, spansOf } from '@unbound-plugins/shared/native/android/spans';
 import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewrite-retry';
-import {
-	currentDecorView,
-	findViewsOfClass,
-	resourceDensity,
-	scheduleStartupScans,
-} from '@unbound-plugins/shared/native/android/views';
+import { resourceDensity } from '@unbound-plugins/shared/native/android/views';
+import { watchTextViews } from '@unbound-plugins/shared/native/android/text-views';
 import {
 	javaFlag,
 	javaInt,
@@ -39,9 +32,7 @@ import {
 import { planPlacements, type Placement, type SpanRange } from '~/avatars/android/placements';
 import type { MentionIndex } from '~/avatars/mention-index';
 import type { Mention } from '~/avatars/mentions';
-import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
 
-const TEXT_VIEW = 'com.facebook.drawee.span.SimpleDraweeSpanTextView';
 const TAPPABLE_SPAN = 'android.text.style.ClickableSpan';
 const ANY_SPAN = 'java.lang.Object';
 const IMAGE_SIZE = 16;
@@ -70,19 +61,18 @@ export type AndroidRenderer = ReturnType<typeof createAndroidRenderer>;
  * @returns The renderer, whose `dispose` removes its hook.
  */
 export function createAndroidRenderer(
-	{ java, hooks }: Native,
+	native: Native,
 	index: MentionIndex,
 	showAtSymbol: () => boolean,
 ) {
+	const { java } = native;
 	const images = new Map<string, ImageEntry>();
 	const views = new Map<string, NativeJavaReference>();
-	const pending = new Set<string>();
-	let rendering = 0;
 	const waiting = new Map<string, NativeJavaReference>();
 	let resolvedCount = -1;
 	let imageSize = 0;
 	let disposed = false;
-	const rewrites = connectTextRewrites(java, TEXT_VIEW);
+	const rewrites = connectTextRewrites(java, DRAWEE_TEXT_VIEW);
 	const rules = new Set<string>();
 	const retries = createRewriteRetry();
 	const renderedTexts = new Set<string>();
@@ -329,60 +319,35 @@ export function createAndroidRenderer(
 		if (views.size > MAX_TRACKED_VIEWS) views.delete(views.keys().next().value!);
 	}
 
-	function schedule(view: NativeJavaReference) {
+	async function draw(view: NativeJavaReference) {
 		const key = javaViewKey(view as NativeJavaValue);
 
-		if (disposed || !key || pending.has(key)) return;
+		if (!key) return;
 
-		pending.add(key);
 		track(key, view);
-		setTimeout(() => {
-			pending.delete(key);
 
-			if (disposed) return;
-
-			rendering++;
-			render(view)
-				.catch(() => views.delete(key))
-				.finally(() => rendering--);
-		}, 0);
+		try {
+			await render(view);
+		} catch (error) {
+			views.delete(key);
+			throw error;
+		}
 	}
 
-	const textBuilder = draweeTextBuilder(java);
-
-	const token = hooks.hook(
-		TEXT_VIEW,
-		DRAWEE_TEXT_SETTER,
-		[textBuilder],
-		RECEIVER_ONLY_AFTER_CALL,
-		({ self }) => {
-			const view = javaReference(self);
-
-			if (view) schedule(view);
-		},
-	);
-
-	async function scanVisible() {
-		const decor = currentDecorView(java);
-
-		if (!decor || disposed) return;
-
-		for (const view of await findViewsOfClass(java, decor, TEXT_VIEW)) schedule(view);
-	}
-
-	scheduleStartupScans('Mention Avatars', scanVisible);
+	const textViews = watchTextViews(native, { className: DRAWEE_TEXT_VIEW, draw });
+	const schedule = textViews.schedule;
 
 	return {
 		retryWaiting,
 		rendered: () => rules.size,
-		settling: () => pending.size > 0 || rendering > 0,
+		settling: textViews.busy,
 		failed: () =>
 			[...images].flatMap(([url, entry]) => (!entry.pending && !entry.bitmap ? [url] : [])),
 		dispose() {
 			disposed = true;
 			waiting.clear();
 			retries.clear();
-			hooks.remove(token);
+			textViews.dispose();
 
 			for (const original of rules) rewrites?.remove(original);
 

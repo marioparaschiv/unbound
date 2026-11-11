@@ -1,5 +1,4 @@
 import { metro, render, startPlugin, stopPlugin, toasts } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { storage } from '@unbound-app/api';
 import { Share } from 'react-native';
@@ -35,7 +34,6 @@ async function settle() {
 }
 
 beforeEach(() => {
-	resetHealth();
 	sent.length = 0;
 	copied.length = 0;
 	metro.register(Messages);

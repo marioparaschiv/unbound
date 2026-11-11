@@ -1,4 +1,4 @@
-import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
+import type { Feature } from '@unbound-plugins/shared/lifecycle/features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
 import {
@@ -18,10 +18,10 @@ import { patchContextMenus } from '~/images/context-menus';
  * @description Adds View rows for avatars, banners and icons to profile and guild action sheets and to long-press menus.
  * Patches `openLazy` on Discord's action sheet module and `showContextMenu` on its context menu module, and reads
  * images from `IconUtils` and the user, profile, member, guild and channel stores. The Addon scope removes the patches when the plugin stops.
- * One patch failing is logged and recorded, and the other still applies.
+ * @returns The features, each started on its own so one failing leaves the other applied; `undefined` when the plugin skipped starting.
  */
-export function startImages(): void {
-	const ready = ensureModules('View Icons', {
+export function startImages(): Feature[] | undefined {
+	const ready = ensureModules({
 		IconUtils,
 		Media,
 		ChannelStore,
@@ -35,5 +35,5 @@ export function startImages(): void {
 
 	const opened: SheetRef = { current: null };
 
-	startFeatures('View Icons', [() => patchActionSheets(opened), () => patchContextMenus(opened)]);
+	return [() => patchActionSheets(opened), () => patchContextMenus(opened)];
 }

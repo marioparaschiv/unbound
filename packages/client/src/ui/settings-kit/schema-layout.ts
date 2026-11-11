@@ -123,5 +123,3 @@ export function schemaLayout(schema: SettingsSchema): LayoutSection[] {
 		...sections,
 	];
 }
-
-export default { isInline, schemaLayout };

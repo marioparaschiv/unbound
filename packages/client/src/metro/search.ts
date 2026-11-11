@@ -3,19 +3,6 @@ import '~/metro/registry';
 import { createLogger } from '@unbound-app/logger';
 import noop from '@unbound-app/utils/noop';
 
-import type {
-	MetroInternalOptions,
-	MetroSearchOptions,
-	MetroStoreOptions,
-	MetroBulkItem,
-	MetroStringFindWithOptions,
-	AnyProps,
-	MetroBulkFind,
-	MetroPropertyRecordOrArray,
-	MetroFunctionSignatureOrArray,
-	MetroModuleOrArray,
-	MetroModuleLoadListener,
-} from '~/metro/types';
 import {
 	addCachedIDForKey,
 	addModuleFlag,
@@ -27,25 +14,15 @@ import {
 	state,
 	ModuleFlags,
 } from '~/metro/cache';
-import {
-	byFilePath,
-	byFluxStore,
-	byName,
-	byProps,
-	byPrototypes,
-	type MetroFilter,
-} from '~/metro/filters';
+import type { MetroSearchOptions, MetroBulkItem, MetroModuleLoadListener } from '~/metro/types';
 import { couldMatch, idsNear, recordMove } from '~/metro/candidates';
 import { attachRunner, type MetroFactory } from '~/metro/capture';
 import { benchModuleName } from '~/metro/bench-module-name';
 import { blacklist, data, loadedIds } from '~/metro/state';
 import { isInvalidExport } from '~/metro/invalid-exports';
-import { createLazyModule } from '~/metro/lazy-registry';
-import { filterPresence } from '~/metro/presence';
-import { provideFinders } from '~/metro/finders';
+import type { MetroFilter } from '~/metro/filters';
 import { benchSpan } from '~/core/bench-span';
-import { onModuleLoaded } from '~/metro/wait';
-import { CACHE_KEY } from '~/core/constants';
+import { CACHE_KEY } from '~/metro/cache-key';
 
 const Logger = createLogger('Metro');
 
@@ -213,7 +190,8 @@ export function onModuleLoad(listener: MetroModuleLoadListener): () => void {
 
 /**
  * @description Core synchronous module search. Modules Discord has initialized are searched first, cached ids
- * then the registry; only when none matches does it initialize modules, unless `initialize` is false.
+ * then the registry; only when none matches does it initialize modules, unless `initialize` is false. It ignores
+ * `lazy`: a lazy handle is made by `~/metro/lookups`.
  * @param filter The filter to match modules against.
  * @param options Search options controlling interop, caching, esModule unwrapping, and `all`.
  * @returns The first matching module, an array of matches when `all` is set, or `null`.
@@ -231,10 +209,6 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 function findModule(filter: MetroFilter, options: MetroSearchOptions) {
 	if (!filter) {
 		throw new Error('You must provide a filter to search by.');
-	}
-
-	if (options.lazy) {
-		return searchWithOptions([], options, () => filter);
 	}
 
 	const {
@@ -464,86 +438,6 @@ export function bulk(...items: MetroBulkItem[]) {
 }
 
 /**
- * @description Finds a module exposing all of the given property names.
- * @template U The union of requested property names.
- * @template T The argument tuple, optionally ending in search options or a bulk marker.
- * @param args The property names to search for, optionally followed by options.
- * @returns The matched module (or matches, for a bulk/`all` search).
- */
-export function findByProps<
-	U extends string,
-	T extends U[] | MetroStringFindWithOptions<U> | MetroBulkFind<U>,
->(...args: T): MetroPropertyRecordOrArray<T, U> & {} {
-	const [props, options] = parseOptions<MetroInternalOptions, T>(args);
-
-	return searchWithOptions(props, options, byProps);
-}
-
-/**
- * @description Finds a module by a segment of its file path.
- * @template U The union of requested path segments.
- * @template T The argument tuple, optionally ending in search options or a bulk marker.
- * @param args The file path segment(s) to search for, optionally followed by options.
- * @returns The matched module.
- */
-export function findByFilePath<
-	U extends string,
-	T extends U[] | MetroStringFindWithOptions<U> | MetroBulkFind<U>,
->(...args: T): MetroModuleOrArray<T, U> {
-	const [name, options] = parseOptions<MetroInternalOptions, T>(args);
-
-	return searchWithOptions(name, options, byFilePath);
-}
-
-/**
- * @description Finds a module whose prototype exposes all of the given method names.
- * @template U The union of requested prototype method names.
- * @template T The argument tuple, optionally ending in search options or a bulk marker.
- * @param args The prototype method names to search for, optionally followed by options.
- * @returns The matched module.
- */
-export function findByPrototypes<
-	U extends string,
-	T extends U[] | MetroStringFindWithOptions<U> | MetroBulkFind<U>,
->(...args: T): AnyProps {
-	const [prototypes, options] = parseOptions<MetroInternalOptions, T>(args);
-
-	return searchWithOptions(prototypes, options, byPrototypes);
-}
-
-/**
- * @description Finds a flux store by name.
- * @template U The union of requested store names.
- * @template T The argument tuple, optionally ending in store search options.
- * @param args The store name(s) to search for, optionally followed by options (`short` defaults to `true`).
- * @returns The matched store.
- */
-export function findStore<
-	U extends string,
-	T extends U[] | MetroStringFindWithOptions<U, MetroStoreOptions>,
->(...args: T): AnyProps {
-	const [[name], { short = true, ...options }] = parseOptions<MetroStoreOptions>(args);
-
-	return searchWithOptions([name, short], options, byFluxStore);
-}
-
-/**
- * @description Finds a module by the name of its default export.
- * @template U The union of requested names.
- * @template T The argument tuple, optionally ending in search options or a bulk marker.
- * @param args The name(s) to search for, optionally followed by options.
- * @returns The matched function (or matches, for a bulk/`all` search).
- */
-export function findByName<
-	U extends string,
-	T extends U[] | MetroStringFindWithOptions<U> | MetroBulkFind<U>,
->(...args: T): MetroFunctionSignatureOrArray<T, U> {
-	const [name, options] = parseOptions<MetroInternalOptions, T>(args);
-
-	return searchWithOptions(name, options, byName);
-}
-
-/**
  * @description Forces a module to initialise via metro's `__r`, blacklisting it if it throws.
  * @param id The id of the module to initialise.
  * @returns `true` if the module is initialised, `false` if it was blacklisted.
@@ -634,74 +528,3 @@ function searchExports(
 
 	return raw ? rawModule : interop ? mdl.default : mdl;
 }
-
-/**
- * @description Shared back-end for the `findBy*` family. Handles lazy proxying, named-filter
- * resolution, and bulk dispatch before delegating to {@link find}.
- * @param args The search terms (and any per-item param bags for bulk searches).
- * @param options Internal options controlling `lazy` and `bulk` behaviour.
- * @param filter The filter builder for the search terms.
- * @returns A lazy proxy, a bulk result array, or the result of {@link find}.
- */
-function searchWithOptions(
-	args: any[],
-	options: MetroInternalOptions & MetroSearchOptions,
-	filter: (...args: any[]) => MetroFilter,
-) {
-	if (options.lazy) {
-		const search = () =>
-			searchWithOptions(args, Object.assign(options, { lazy: false }), filter);
-
-		// A bulk or `all` search stands for several modules, and a `raw` one for a module record, so a
-		// patch on such a proxy resolves it instead of waiting.
-		if (options.bulk || options.all || options.raw) {
-			return createLazyModule(search);
-		}
-
-		const { esModules, interop } = options;
-
-		return createLazyModule(search, {
-			wait: (callback) => onModuleLoaded(filter(...args), callback, { esModules, interop }),
-			presence: () => filterPresence(filter(...args), { esModules, interop }),
-		});
-	}
-
-	if (options.bulk) {
-		return bulk(
-			...args.map((payload) => {
-				if (!Array.isArray(payload) && typeof payload === 'object' && payload.params) {
-					return {
-						filter: filter(...((payload.params ?? []) as [any, any])),
-						...payload,
-					};
-				}
-
-				return {
-					filter: filter(...(payload as [any, any])),
-					interop: true,
-				};
-			}),
-		);
-	}
-
-	return find(filter(...args), options);
-}
-
-/**
- * @description Splits an argument list into its search terms and a trailing options object.
- * @template O The options type.
- * @template A The search-terms tuple type.
- * @param args The raw arguments, optionally ending in an options object.
- * @param filter Predicate deciding whether the last argument is an options object.
- * @param fallback Options to use when no trailing options object is present.
- * @returns A tuple of `[searchTerms, options]`.
- */
-function parseOptions<O, A extends any[] = string[]>(
-	args: [...A, any] | A,
-	filter = (last) => typeof last === 'object' && !Array.isArray(last),
-	fallback = {},
-): [A, O] {
-	return [args as A, filter(args[args.length - 1]) ? args.pop() : fallback];
-}
-
-provideFinders({ findByProps, findByName, findByFilePath, findByPrototypes, findStore, find });

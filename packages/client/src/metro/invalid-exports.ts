@@ -39,5 +39,3 @@ export function isInvalidExport(mdl: any): boolean {
 		isCatchAllProxy(mdl.default)
 	);
 }
-
-export default { isInvalidExport };

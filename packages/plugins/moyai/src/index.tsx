@@ -1,13 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startMoyai, stopMoyai } from '~/moyai';
+import { startMoyai } from '~/moyai';
 
-export function start() {
-	startMoyai();
-}
-
-export function stop() {
-	stopMoyai();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures([startMoyai]);

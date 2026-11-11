@@ -4,7 +4,7 @@ This file holds the rules that apply to first-party plugins only. Everything a p
 
 - [Anatomy of a Plugin](../../docs/developer/getting-started/plugin-anatomy.mdx) shows every file of a plugin in the code of `character-counter`, the reference plugin. Copy its layout.
 - [Project Layout](../../docs/developer/getting-started/project-rules.mdx) lists the layout rules and the lint rule or build check behind each one.
-- [How Plugins Run](../../docs/developer/getting-started/lifecycle.mdx) covers the lifecycle and the Addon scope, and the guide's other pages cover each API. Its code blocks are typechecked by `bun test packages/plugin-scripts/src/docs-examples.test.ts`.
+- [How Plugins Run](../../docs/developer/getting-started/lifecycle.mdx) covers the lifecycle and the Addon scope, and the guide's other pages cover each API. Its code blocks are typechecked by `bun test packages/plugin-scripts/tests/docs-examples.test.ts`.
 - The repository [code style](../../AGENTS.md) applies to plugin code too.
 
 ## Naming
@@ -25,15 +25,13 @@ The pre-commit hook validates every plugin folder, manifest, naming collision, a
 
 Shared modules are grouped by domain: `action-sheets/`, `assets/`, `colors/`, `composer/`, `context-menus/`, `lifecycle/`, `members/`, `metro/`, `native/`, `oauth/`, `react/`, `settings/`, `stickers/` and `text-replace/`. The ones every plugin reaches for:
 
-| Module                                      | Use it to                                                                                                                                                                                                                         |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lifecycle/start-features`                  | Start features that are independent. A feature that throws is logged and recorded, and the others still start                                                                                                                     |
-| `lifecycle/apply-features`                  | Apply features that depend on each other. A feature that throws removes the ones already applied, so the plugin is never half applied. Unbound never calls `stop` after a failed `start`, so this is what prevents a leaked patch |
-| `lifecycle/health`                          | Count applied features with `recordApplied`, and record `recordSkip` and `recordFailure`. Export `featureSelfTest` from the entry as `selfTest`. Call `resetHealth` in a test's `beforeEach`                                      |
-| `metro/ensure-modules`                      | Bail out of a feature, with one log line, when a module it needs is missing. It never loads a lazy handle                                                                                                                         |
-| `metro/when-loaded`                         | Patch a module whose patch target is computed from the module, once it loads                                                                                                                                                      |
-| `settings/while-enabled`                    | Apply a feature only while a setting is on                                                                                                                                                                                        |
-| `react/render-target`, `react/find-element` | Find the render function behind a module, and search a render result                                                                                                                                                              |
+| Module                                      | Use it to                                                                                                                                                                                                                                                                     |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lifecycle/features`                        | Build the entry's `start`, `stop` and `selfTest` with `runFeatures`. A feature that throws is logged and recorded, and the others still start; with `atomic: true` it removes the ones already started, so the plugin is never half applied. Report a skip with `skipFeature` |
+| `metro/ensure-modules`                      | Bail out of a feature, with one log line, when a module it needs is missing. It never loads a lazy handle                                                                                                                                                                     |
+| `metro/when-loaded`                         | Patch a module whose patch target is computed from the module, once it loads                                                                                                                                                                                                  |
+| `settings/while-enabled`                    | Apply a feature only while a setting is on                                                                                                                                                                                                                                    |
+| `react/render-target`, `react/find-element` | Find the render function behind a module, and search a render result                                                                                                                                                                                                          |
 
 Before writing a helper, check Unbound's API (`@unbound-app/api`) and the shared package. Use what exists.
 
@@ -48,7 +46,7 @@ A feature never runs half-working. When anything it depends on is missing, it ch
 
 ## Self-test and device matrix
 
-Export `selfTest` from the plugin's entry, usually as `export { featureSelfTest as selfTest }`. A plugin that draws its own UI exports a test built on `drawnSelfTest`, which also checks that something is on screen. Two plugins export none: `aussie-mode` does nothing outside an Australian device, so it would fail the matrix everywhere else, and `settings-demo` only demonstrates the settings panel.
+Export `selfTest` from the plugin's entry, usually as `export const { start, stop, selfTest } = runFeatures([...])`. It fails while a feature skipped, failed, or waits for a module Discord has not loaded yet. A plugin that draws its own UI exports a test built on `drawnSelfTest`, which also checks that something is on screen. Two plugins export none: `aussie-mode` does nothing outside an Australian device, so it would fail the matrix everywhere else, and `settings-demo` only demonstrates the settings panel.
 
 The device matrix runs the plugins on real devices. It restarts Discord, calls each `selfTest`, and cycles each plugin through stop, start and reload to look for leaked hooks. Configure the devices in `.device-matrix.json` (see `.device-matrix.example.json`), then run `bun packages/plugin-scripts/src/run-device-matrix.ts --out <dir>`. Use `--only <id,id>` for a few plugins and `--lenient` to fail only on problems that are new since the last run.
 

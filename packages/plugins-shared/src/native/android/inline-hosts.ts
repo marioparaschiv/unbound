@@ -34,36 +34,8 @@ export type HostContainer = {
 	offset: InlinePosition;
 };
 
-const ALIGN_BOTTOM = 0;
-const TRANSPARENT = 0;
 const MAX_ANCESTOR_DEPTH = 12;
 const MEASURE_EXACTLY = 1 << 30;
-
-/**
- * @description Builds a transparent image span that reserves room for a view inside text, like a TextKit attachment.
- * @param java The plugin's Java bridge.
- * @param width The room's width, in pixels.
- * @param height The room's height, in pixels.
- * @returns The `ImageSpan`, to set over one placeholder character.
- */
-export function spacerSpan(
-	java: InlineHostBridge,
-	width: number,
-	height: number,
-): NativeJavaReference {
-	const drawable = java.construct('android.graphics.drawable.ColorDrawable', [
-		javaInt(TRANSPARENT),
-	]);
-
-	java.invoke(drawable, 'setBounds', [
-		javaInt(0),
-		javaInt(0),
-		javaInt(Math.round(width)),
-		javaInt(Math.round(height)),
-	]);
-
-	return java.construct('android.text.style.ImageSpan', [drawable, javaInt(ALIGN_BOTTOM)]);
-}
 
 function hostsFreely(java: InlineHostBridge, view: NativeJavaReference): boolean {
 	return (
@@ -111,68 +83,6 @@ export async function hostContainer(
 	}
 
 	return null;
-}
-
-/**
- * @description Measures where reserved room sits inside a text view, from its laid-out text.
- * @param java The plugin's Java bridge.
- * @param textView The text view.
- * @param index The index of the placeholder character carrying the spacer span.
- * @param height The reserved room's height, in pixels.
- * @returns The room's top-left corner inside the text view, or `null` before the text is laid out.
- */
-export async function reservedPosition(
-	java: InlineHostBridge,
-	textView: NativeJavaReference,
-	index: number,
-	height: number,
-): Promise<InlinePosition | null> {
-	const [layoutValue, paddingLeft, paddingTop] = await runOnMain(
-		java,
-		readCalls(textView, ['getLayout', 'getTotalPaddingLeft', 'getTotalPaddingTop']),
-	);
-	const layout = javaReference(layoutValue);
-
-	if (!layout) return null;
-
-	const line = javaNumber(java.invoke(layout, 'getLineForOffset', [javaInt(index)])) ?? 0;
-	const bottom = javaNumber(java.invoke(layout, 'getLineBottom', [javaInt(line)])) ?? 0;
-	const left = javaNumber(java.invoke(layout, 'getPrimaryHorizontal', [javaInt(index)])) ?? 0;
-
-	return {
-		x: left + (javaNumber(paddingLeft) ?? 0),
-		y: bottom - height + (javaNumber(paddingTop) ?? 0),
-	};
-}
-
-/**
- * @description Measures where the line holding reserved room starts inside a text view, for views pinned to the top of the room rather than its bottom.
- * @param java The plugin's Java bridge.
- * @param textView The text view.
- * @param index The index of the placeholder character carrying the spacer span.
- * @returns The line's top-left corner at the placeholder inside the text view, or `null` before the text is laid out.
- */
-export async function reservedTop(
-	java: InlineHostBridge,
-	textView: NativeJavaReference,
-	index: number,
-): Promise<InlinePosition | null> {
-	const [layoutValue, paddingLeft, paddingTop] = await runOnMain(
-		java,
-		readCalls(textView, ['getLayout', 'getTotalPaddingLeft', 'getTotalPaddingTop']),
-	);
-	const layout = javaReference(layoutValue);
-
-	if (!layout) return null;
-
-	const line = javaNumber(java.invoke(layout, 'getLineForOffset', [javaInt(index)])) ?? 0;
-	const top = javaNumber(java.invoke(layout, 'getLineTop', [javaInt(line)])) ?? 0;
-	const left = javaNumber(java.invoke(layout, 'getPrimaryHorizontal', [javaInt(index)])) ?? 0;
-
-	return {
-		x: left + (javaNumber(paddingLeft) ?? 0),
-		y: top + (javaNumber(paddingTop) ?? 0),
-	};
 }
 
 /**
@@ -338,19 +248,6 @@ export async function layoutHostingList(
 }
 
 /**
- * @description Tells whether a host view still holds the surface mounted into it. Discord can drop that surface while recycling a message row, which leaves the host empty.
- * @param java The plugin's Java bridge.
- * @param host The host view.
- * @returns Whether the host has at least one child view.
- */
-export async function hostHasContent(
-	java: InlineHostBridge,
-	host: NativeJavaReference,
-): Promise<boolean> {
-	return (javaNumber(await java.invokeAsync(host, 'getChildCount', [])) ?? 0) > 0;
-}
-
-/**
  * @description Takes a host view out of whatever holds it.
  * @param java The plugin's Java bridge.
  * @param host The host view.
@@ -365,13 +262,9 @@ export async function removeHost(java: InlineHostBridge, host: NativeJavaReferen
 }
 
 export default {
-	hostHasContent,
 	createHost,
 	hostContainer,
 	layoutHostingList,
 	placeHost,
 	removeHost,
-	reservedPosition,
-	reservedTop,
-	spacerSpan,
 };

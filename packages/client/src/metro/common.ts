@@ -1,7 +1,8 @@
 import type { MarkdownParserModule, SimpleMarkdownModule } from '@unbound-app/types/markdown';
 import type { ImageProps, ImageURISource } from 'react-native';
 
-import { findByPropsLazy } from '~/metro/wrappers';
+import { byProps } from '~/metro/filters';
+import { find } from '~/metro/lookups';
 
 /** React Native's `ImageSourceUtils`, which every `Image` render resolves its source through. */
 type ImageSourcesModule = {
@@ -14,47 +15,43 @@ export const ReactNative = window.ReactNative;
 export const React = window.React;
 
 /** Discord's copy of `react-native-reanimated`; found on first access. */
-export const Reanimated = findByPropsLazy('useAnimatedStyle', 'useSharedValue');
+export const Reanimated = find(byProps('useAnimatedStyle', 'useSharedValue'));
 /** Discord's copy of `react-native-gesture-handler`; found on first access. */
-export const Gestures = findByPropsLazy('PanGestureHandler');
+export const Gestures = find(byProps('PanGestureHandler'));
 /** Discord's clipboard module, which reads and writes strings and images; found on first access. */
-export const Clipboard = findByPropsLazy('setString', 'getString', 'setImage', 'getImage');
+export const Clipboard = find(byProps('setString', 'getString', 'setImage', 'getImage'));
 /** Discord's markdown parser, which turns message text into an AST or React nodes; found on first access. */
-export const MarkdownParser: MarkdownParserModule = findByPropsLazy(
-	'parse',
-	'parseToAST',
-	'reactParserFor',
+export const MarkdownParser: MarkdownParserModule = find(
+	byProps('parse', 'parseToAST', 'reactParserFor'),
 );
 /** Discord's copy of `simple-markdown`, whose block rules parse whole documents; found on first access. */
-export const SimpleMarkdown: SimpleMarkdownModule = findByPropsLazy(
-	'parserFor',
-	'outputFor',
-	'defaultRules',
+export const SimpleMarkdown: SimpleMarkdownModule = find(
+	byProps('parserFor', 'outputFor', 'defaultRules'),
 );
 /** Discord's copy of `react-native-screens`, with `FullWindowOverlay`; found on first access. */
-export const Screens = findByPropsLazy('FullWindowOverlay');
+export const Screens = find(byProps('FullWindowOverlay'));
 /** Discord's copy of `react-native-svg`, with `Svg` and `Path`; found on first access. */
-export const SVG = findByPropsLazy('Svg', 'Path');
+export const SVG = find(byProps('Svg', 'Path'));
 /** Discord's slash command module, with `getBuiltInCommands`; found on first access. */
-export const Commands = findByPropsLazy('getBuiltInCommands');
+export const Commands = find(byProps('getBuiltInCommands'));
 /** Discord's copy of Moment.js; found on first access. */
-export const Moment = findByPropsLazy('isMoment');
+export const Moment = find(byProps('isMoment'));
 
 /** Discord's `util` module, with `inspect` for printing values; found on first access. */
-export const Util = findByPropsLazy('inspect');
+export const Util = find(byProps('inspect'));
 /** React Native's asset registry, with `registerAsset`; found on first access. */
-export const Assets = findByPropsLazy('registerAsset');
+export const Assets = find(byProps('registerAsset'));
 /** React Native's image source resolver; patching it changes the source every `Image` renders. */
-export const ImageSources: ImageSourcesModule = findByPropsLazy('getImageSourcesFromImageProps');
+export const ImageSources: ImageSourcesModule = find(byProps('getImageSourcesFromImageProps'));
 /** Discord's module with `createBotMessage`, which builds a local message from Clyde; found on first access. */
-export const Clyde = findByPropsLazy('createBotMessage');
+export const Clyde = find(byProps('createBotMessage'));
 /** Discord's constants module, with `Fonts`, `Endpoints` and more; found on first access. */
-export const Constants = findByPropsLazy('Fonts', 'Endpoints');
+export const Constants = find(byProps('Fonts', 'Endpoints'));
 /** Discord's module exporting its `Radius` corner radius tokens; found on first access. */
-export const Radius = findByPropsLazy('Radius');
+export const Radius = find(byProps('Radius'));
 /** Discord's design tokens, with `colors` and `internal`; found on first access. */
-export const Theme = findByPropsLazy('colors', 'internal');
+export const Theme = find(byProps('colors', 'internal'));
 /** Discord's HTTP client for its API, with `getAPIBaseURL`; found on first access. */
-export const REST = findByPropsLazy('getAPIBaseURL');
+export const REST = find(byProps('getAPIBaseURL'));
 /** Discord's localisation module, with `getLanguages`, `getSystemLocale` and `intl`; found on first access. */
-export const i18n = findByPropsLazy('getLanguages', 'getSystemLocale', 'intl');
+export const i18n = find(byProps('getLanguages', 'getSystemLocale', 'intl'));

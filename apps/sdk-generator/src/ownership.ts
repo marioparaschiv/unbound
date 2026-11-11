@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-import type { ModuleEntry } from './paths';
+import type { ModuleEntry } from './entry-types';
 
 import { parseSource } from './project';
 

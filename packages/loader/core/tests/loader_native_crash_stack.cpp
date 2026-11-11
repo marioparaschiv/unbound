@@ -34,6 +34,8 @@ void writesTheCrashingStackForTheNextLaunch()
     assert(child >= 0);
     if (child == 0)
     {
+        // A sanitizer's own SEGV handler would report and exit instead of dying on the signal.
+        signal(SIGSEGV, SIG_DFL);
         if (!loader::installAddonCrashHandler(marker))
         {
             _exit(2);

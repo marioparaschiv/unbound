@@ -3,8 +3,8 @@ import { join, relative, sep } from 'node:path';
 import { existsSync, statSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-import type { Diagnostic, Severity } from '~/rollup/diagnostic';
-import { diagnostic, isDiagnostic } from '~/rollup/diagnostic';
+import type { Diagnostic, Severity } from '~/lib/check/diagnostic';
+import { diagnostic, isDiagnostic } from '~/lib/check/diagnostic';
 import type { Check, CheckCache } from '~/lib/check/check';
 import { OUTPUT_ONLY } from '~/rollup/output-only';
 

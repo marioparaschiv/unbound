@@ -395,7 +395,7 @@ jobs:
                   fetch_args+=(--channel "$channel" --version "$REQUESTED_VERSION" --output source.ipa)
                   unbound-tools fetch "${fetch_args[@]}"
 
-            - name: Skip the TestFlight release without a source IPA
+            - name: Fail the TestFlight release without a source IPA
               if: steps.source.outputs.missing == 'true' && inputs.is_testflight == true
               run: |
                   echo "::error title=TestFlight IPA unavailable::dkrypt could not provide the requested IPA. The TestFlight release was not published."

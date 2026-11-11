@@ -1,15 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { AddonPage, MeasuredMedia } from '../src/addon-page';
-
 import {
 	parseAddonPage,
 	addonPageSchema,
 	splitFrontmatter,
 	measuredMediaSchema,
 	addonPageFrontmatterSchema,
-} from '../src/addon-page';
-import { parse, safeParse } from '../src/schema';
+} from '~/addon-page';
+import type { AddonPage, MeasuredMedia } from '~/addon-page';
+import { parse, safeParse } from '~/schema';
 
 const thumbhash = '1QcSHQRnh493V4dIh4eXh1h4kJUI';
 

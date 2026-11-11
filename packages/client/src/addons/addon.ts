@@ -8,6 +8,7 @@ import type {
 import type { ComponentType } from 'react';
 
 import type { AddonLifecycle } from '~/addons/lifecycle';
+import type { RecordChange } from '~/addons/records';
 import type { PluginScope } from '~/addons/scope';
 
 /** What a manager keeps for one addon it governs. The manager is its only writer. */
@@ -51,6 +52,8 @@ export type AddonEvents<T> = {
 	'consent-required': (entity: T) => void;
 	/** Any change to {@link Addon.phase} or its settings panel: a start, an async settle, a stop or a failure. */
 	changed: (entity: T) => void;
+	/** A per-addon record the manager keeps in its Bucket changed, such as its enabled state or hold. */
+	'record-changed': (change: RecordChange) => void;
 };
 
 /** The manager calls an {@link Addon} forwards to. */
@@ -98,12 +101,10 @@ export class Addon<I extends object = object> implements AddonHandle {
 		return this.#state.manifest;
 	}
 
-	/** Whether the addon is running. */
 	get started(): boolean {
 		return this.#state.started;
 	}
 
-	/** Whether the addon failed to start. */
 	get failed(): boolean {
 		return this.#state.failed;
 	}
@@ -142,38 +143,22 @@ export class Addon<I extends object = object> implements AddonHandle {
 		return this.#state.instance;
 	}
 
-	/** The bundle source. */
 	get bundle(): string {
 		return this.#state.bundle;
 	}
 
-	/**
-	 * @description Whether the user has the addon enabled.
-	 * @returns Its manager's answer.
-	 */
 	isEnabled(): boolean {
 		return this.#manager.isEnabled(this.id);
 	}
 
-	/**
-	 * @description Whether the addon is a plugin.
-	 * @returns `true` when the plugin manager governs it.
-	 */
 	isPlugin(): this is Addon<Plugin> {
 		return this.#manager.kind === 'plugin';
 	}
 
-	/**
-	 * @description Enables the addon through its manager.
-	 * @returns What the manager's `enable` returns.
-	 */
 	enable(): void | Promise<void> {
 		return this.#manager.enable(this);
 	}
 
-	/**
-	 * @description Disables the addon through its manager.
-	 */
 	disable(): void {
 		this.#manager.disable(this);
 	}

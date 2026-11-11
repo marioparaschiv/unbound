@@ -36,7 +36,7 @@ function keepDeleted(log: MessageLog, channelId: string, messageId: string): boo
  * @description Keeps deleted messages in the chat by dropping the deletions the log records. A second deletion of a logged message, such as Dismiss message, goes through.
  * @param log The message log.
  * The Addon scope removes the interceptors on `MESSAGE_DELETE` and `MESSAGE_DELETE_BULK` when the plugin stops.
- * @returns A function with nothing to undo, for `applyFeatures`.
+ * @returns A function with nothing to undo; the Addon scope removes what it added.
  */
 export function startDeletions(log: MessageLog): () => void {
 	flux.interceptAction('MESSAGE_DELETE', (action) => {

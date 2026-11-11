@@ -26,11 +26,11 @@ static std::string_view trimmed(std::string_view value)
     return value;
 }
 
-std::optional<std::string> resolveUpdateURL(const UpdaterSettings            &settings,
+std::optional<std::string> resolveUpdateURL(const SettingsStore              &settings,
                                             const std::optional<std::string> &devServerHost,
                                             const ReachabilityProbe          &isServing)
 {
-    std::string configured = settings.getString("loader.update.url", "");
+    std::string configured = preferences::updateURL(settings);
     if (!configured.empty())
     {
         return configured;
@@ -133,7 +133,7 @@ std::optional<std::string> hotReloadEtag(std::string_view event)
     return etag.empty() ? std::nullopt : std::optional<std::string>(etag);
 }
 
-bool hotReloadEventRequiresReload(const UpdaterSettings &settings, std::string_view event)
+bool hotReloadEventRequiresReload(const SettingsStore &settings, std::string_view event)
 {
     std::optional<std::string> incoming = hotReloadEtag(event);
     if (!incoming)
@@ -141,7 +141,7 @@ bool hotReloadEventRequiresReload(const UpdaterSettings &settings, std::string_v
         return false;
     }
 
-    std::string stored = settings.getString("loader.update.etag", "");
+    std::string stored = preferences::bundleEtag(settings);
     if (!stored.empty() && normalizedEtag(stored) == normalizedEtag(*incoming))
     {
         log(LogLevel::Info, LOG_CATEGORY_UPDATER,
@@ -167,7 +167,7 @@ void HotReloadBackoff::reset()
     delay_ = kHotReloadMinimumDelaySeconds;
 }
 
-HotReloadStream::HotReloadStream(UpdaterSettings settings) : settings_(std::move(settings)) {}
+HotReloadStream::HotReloadStream(const SettingsStore &settings) : settings_(settings) {}
 
 bool HotReloadStream::feed(std::string_view chunk)
 {
@@ -201,7 +201,7 @@ HotReloadController::HotReloadController(SettingsStore                      &set
                                          HotReloadScheduler schedule, HotReloadAction reload)
     : settings_(settings), resolveBaseURL_(std::move(resolveBaseURL)),
       transport_(std::move(transport)), schedule_(std::move(schedule)), reload_(std::move(reload)),
-      stream_(updaterSettings(settings))
+      stream_(settings)
 {
 }
 

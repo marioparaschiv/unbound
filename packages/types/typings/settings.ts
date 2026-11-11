@@ -1,6 +1,6 @@
 import type { ComponentType, ReactNode } from 'react';
 
-/** The core settings store; each addon's settings store is named after the addon id. */
+/** The core Bucket; each addon's Bucket is named after the addon id. */
 export const CORE_SETTINGS_STORE = 'unbound';
 
 /** The screen descriptor a settings route entry renders. */
@@ -35,10 +35,10 @@ export type SettingsEntry = {
 	screen: SettingsScreen;
 };
 
-/** A JSON value held in a settings store. */
+/** A JSON value held in a Bucket. */
 export type SettingsValue = string | number | boolean | null | SettingsValue[] | SettingsObject;
 
-/** A settings store, or a nested group of settings within one. */
+/** A Bucket, or a nested group of settings within one. */
 export type SettingsObject = { [key: string]: SettingsValue };
 
 /** A value one schema-declared setting holds. */

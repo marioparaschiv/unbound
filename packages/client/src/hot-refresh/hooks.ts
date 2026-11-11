@@ -339,16 +339,3 @@ captureMount();
 export function canInsertHooks(): boolean {
 	return mount !== null;
 }
-
-export default {
-	LateHook,
-	canInsertHooks,
-	dispatcherKind,
-	runWithBudget,
-	enterBudget,
-	leaveBudget,
-	runUnbudgeted,
-	settle,
-	hookList,
-	spliceHooks,
-};

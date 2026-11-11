@@ -1,33 +1,23 @@
-import { and, eq, exists, inArray, isNull, sql, type SQL } from 'drizzle-orm';
+import { and, eq, exists, inArray, sql, type SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 
-import { addon, addonMaintainer, addonVersion, account, sponsorship } from '~/db/schema';
 import { isSponsoring, perkGraceMs, standingOf } from '~/lib/sponsors/standing';
+import { addon, addonMaintainer, account, sponsorship } from '~/db/schema';
 import type { ReadDatabase, ResolvedReadOptions } from '~/lib/bot/reads';
 import type { Member, MemberQuery } from '~/lib/bot/types';
+import { isListedAddon } from '~/lib/addon-visibility';
 
 // Only `user_id`, `provider_id` and `account_id` of `account` are granted to the bot, never tokens.
 const discord = alias(account, 'discord');
 const github = alias(account, 'github');
 
 function maintainsListedAddon(db: ReadDatabase) {
-	const live = db
-		.select({ one: sql`1` })
-		.from(addonVersion)
-		.where(and(eq(addonVersion.addonId, addon.id), isNull(addonVersion.withdrawnBy)));
-
 	return exists(
 		db
 			.select({ one: sql`1` })
 			.from(addonMaintainer)
 			.innerJoin(addon, eq(addon.id, addonMaintainer.addonId))
-			.where(
-				and(
-					eq(addonMaintainer.userId, discord.userId),
-					isNull(addon.delistedAt),
-					exists(live),
-				),
-			),
+			.where(and(eq(addonMaintainer.userId, discord.userId), isListedAddon())),
 	);
 }
 

@@ -1,4 +1,3 @@
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { metro, native, render, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { memo, type ReactElement } from 'react';
@@ -76,7 +75,6 @@ async function badges() {
 beforeEach(async () => {
 	items = [];
 	sizes.clear();
-	resetHealth();
 	// Android is the platform whose picker needs a lookup.
 	native.setPlatform('android');
 	registerContentResolver();

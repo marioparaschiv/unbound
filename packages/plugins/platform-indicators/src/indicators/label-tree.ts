@@ -1,3 +1,5 @@
+import { isRecord } from '@unbound-plugins/shared/values/is-record';
+
 export type TreeNode = {
 	props?: { label?: unknown; children?: unknown } & Record<string, unknown>;
 };
@@ -5,10 +7,6 @@ export type TreeNode = {
 export type CloneNode = (node: TreeNode, props: Record<string, unknown>) => unknown;
 
 const MAX_DEPTH = 8;
-
-function isNode(value: unknown): value is TreeNode {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
 
 function rewriteChildren(
 	children: unknown,
@@ -52,7 +50,7 @@ export function appendToLabel(
 	clone: CloneNode,
 	depth: number = 0,
 ): unknown {
-	if (depth > MAX_DEPTH || !isNode(node) || !node.props) return;
+	if (depth > MAX_DEPTH || !isRecord<TreeNode>(node) || !node.props) return;
 
 	if (node.props.label != null) {
 		return clone(node, { label: [node.props.label, suffix] });

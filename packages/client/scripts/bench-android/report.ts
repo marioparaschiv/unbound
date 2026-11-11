@@ -1,3 +1,5 @@
+import { BENCH_MARKS } from '~/core/bench-hooks';
+
 import type { AgentReport as AgentFinal } from './schema';
 import type { MemInfo } from './device';
 
@@ -21,17 +23,8 @@ type BuildInfo = {
 	sizes: Record<string, number>;
 };
 
-const MARKS = [
-	'bundle',
-	'ready:start',
-	'preinitialize:end',
-	'initialize:start',
-	'initialize:end',
-	'core:end',
-	'ready:resumed',
-	'firstFrame',
-	'afterFirstFrame:end',
-];
+// `bundle` is the agent's own mark, taken as the bundle starts.
+const MARKS = ['bundle', ...BENCH_MARKS];
 
 const DISCORD_MARKS: Record<string, string> = {
 	'Finish Load index.tsx': 'discord: index loaded',
@@ -343,7 +336,7 @@ function scenarioTable(builds: BuildInfo[], valid: LaunchRecord[]): string[] {
  * @param valid The valid launches.
  * @returns Markdown lines.
  */
-export function moduleSections(builds: BuildInfo[], valid: LaunchRecord[]): string[] {
+function moduleSections(builds: BuildInfo[], valid: LaunchRecord[]): string[] {
 	const lines: string[] = [];
 
 	for (const b of builds) {

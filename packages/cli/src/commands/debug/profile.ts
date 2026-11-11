@@ -1,13 +1,17 @@
 import type { CommandDefinition, CommandOutput } from '@unbound-app/debugger-protocol/registry';
-import type { UnboundGlobal } from '@unbound-app/api/global';
 
-import { evaluateOnDevice, NOT_CONNECTED, toDeviceCode, type DeviceClient } from '~/lib/device';
+import {
+	evaluateOnDevice,
+	NOT_CONNECTED,
+	RECORDING_GRACE_MS,
+	toDeviceCode,
+	type DeviceClient,
+} from '~/lib/device';
 import { chromeTraceSchema, formatProfile, summarizeProfile } from '~/lib/profile-summary';
 import { defaulted, Type, type StaticDecode } from '~/lib/schema';
+import type { DevicePrelude } from '~/lib/device-prelude';
 import { bridgePortField } from '~/lib/context';
 import { parseJson } from '~/lib/parse-json';
-
-const RESULT_GRACE_MS = 10_000;
 
 const schema = Type.Object({
 	duration: defaulted(
@@ -36,7 +40,7 @@ type ProfilerGlobal = {
 	NativePlatform?: { profiler?: { start(): boolean; stop(): string | undefined } };
 };
 
-async function recordProfile(_unbound: UnboundGlobal, duration: number): Promise<string> {
+async function recordProfile(_device: DevicePrelude, duration: number): Promise<string> {
 	const profiler = (globalThis as ProfilerGlobal).NativePlatform?.profiler;
 
 	if (!profiler?.start()) {
@@ -77,7 +81,7 @@ export async function runProfile(
 	const result = await evaluateOnDevice(
 		client,
 		toDeviceCode(recordProfile, input.duration),
-		input.duration + RESULT_GRACE_MS,
+		input.duration + RECORDING_GRACE_MS,
 	);
 
 	if (!result) {

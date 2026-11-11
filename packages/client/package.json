@@ -41,6 +41,9 @@
 	"peerDependencies": {
 		"typescript": "catalog:"
 	},
+	"checks": {
+		"tests": "parallel"
+	},
 	"unbound": {
 		"minLoaderVersion": "1.1.0"
 	}

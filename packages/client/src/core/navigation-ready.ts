@@ -1,11 +1,11 @@
-import { findByPropsLazy } from '~/metro/wrappers';
+import { findByProps } from '~/metro/lookups';
 
 type NavigationRef = {
 	isReady: () => boolean;
 	navigate: <Params>(route: string, params?: Params) => void;
 };
 
-const Navigation = findByPropsLazy('getRootNavigationRef');
+const Navigation = findByProps('getRootNavigationRef');
 
 const NAVIGATION_TIMEOUT_MS = 30_000;
 const NAVIGATION_POLL_MS = 100;

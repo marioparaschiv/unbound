@@ -4,12 +4,10 @@
 #include <ostream>
 #include <streambuf>
 
-#import "AddonsCore.h"
 #import "CoreConversions.h"
 #import "FileSystem.h"
 #include "JailbreakDetection.h"
 #include "NativePlatformBridge.h"
-#import "SettingsCore.h"
 #import "Utilities+CodeSignature.h"
 #import "Utilities.h"
 
@@ -24,7 +22,7 @@ static nlohmann::json entitlementsJSON()
 
 namespace loader {
 
-void registerNativePlatformProvider(void)
+std::shared_ptr<NativePlatformProvider> makeNativePlatformProvider(void)
 {
     auto provider         = std::make_shared<NativePlatformProvider>();
     provider->platform    = "ios";
@@ -64,18 +62,7 @@ void registerNativePlatformProvider(void)
         NSString *host = [Utilities getVirtualDeviceHostAddress];
         return host ? std::optional<std::string>(toStdString(host)) : std::nullopt;
     };
-    provider->documents = toStdString(FileSystem.documents);
-    provider->settings  = &UnboundSettingsStore();
-    provider->fonts     = [] {
-        return UnboundFontCatalog();
-    };
-
-    setNativePlatformProvider(provider);
-}
-
-void registerNativePlatform(facebook::jsi::Runtime &runtime)
-{
-    installNativePlatform(runtime, currentNativePlatformProvider());
+    return provider;
 }
 
 }

@@ -7,7 +7,7 @@ import { patcher, toasts } from '@unbound-app/api';
 import { ActionSheets, ContextMenus, GuildStore, Icons } from '~/menu/modules';
 import { addMenuItemOnce, guildSheetId, type GuildSheetProps } from '~/menu/menu-targets';
 import { applyNewGuildSettings } from '~/apply';
-import { MENU_ROW_KEY, PLUGIN_NAME } from '~/constants';
+import { MENU_ROW_KEY } from '~/constants';
 
 type Renderer = ReturnType<typeof createSheetRenderer>;
 
@@ -21,7 +21,7 @@ function applyFromMenu(guildId: string): void {
 	const name = GuildStore.getGuild(guildId)?.name;
 
 	toasts.show({
-		title: PLUGIN_NAME,
+		title: addon.name,
 		content: name ? format('APPLIED_TO_GUILD', { name }) : messages.APPLIED_TO_THIS_SERVER,
 	});
 }
@@ -73,7 +73,7 @@ export function startGuildSheets(): () => void {
  * @description Adds an Apply New Guild Settings item to each server's context menu, the mobile counterpart of Vencord's `guild-header-popout` menu item.
  * Patches `showContextMenu` on the context menu module (`showContextMenu`, `hideContextMenu`) for menus keyed by a server ID in `GuildStore`.
  * The Addon scope removes the patch when the plugin stops.
- * @returns A function with nothing to undo, for `applyFeatures`.
+ * @returns A function with nothing to undo; the Addon scope removes what it added.
  */
 export function startGuildContextMenus(): () => void {
 	patcher.before(ContextMenus, 'showContextMenu', ({ args: [menu] }) => {

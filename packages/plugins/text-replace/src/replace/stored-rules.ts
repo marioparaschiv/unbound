@@ -4,11 +4,13 @@ import {
 	type TextReplaceRule,
 } from '@unbound-plugins/shared/text-replace/rules';
 
-import { hasRuleContent, type Ruleset } from '~/replace/ruleset';
-import type { RuleKind } from '~/constants';
-import { settings } from '~/replace/modules';
+import {
+	readRules,
+	type RuleKind,
+	type Ruleset,
+} from '@unbound-plugins/shared/text-replace/stored-rules';
 
-type SettingsReader = Pick<typeof settings, 'get'>;
+import { settings } from '~/replace/modules';
 
 /**
  * @description Rewrites both stored rule lists in their normalized shape, so every rule has an id.
@@ -17,28 +19,6 @@ export function normalizeStoredRules(): void {
 	for (const kind of ['stringRules', 'regexRules'] as const) {
 		settings.set(kind, normalizeRules(settings.get(kind, [])));
 	}
-}
-
-/**
- * @description Reads one stored rule list, without blank rules.
- * @param kind Which list to read.
- * @param store The store to read through; pass the `storage.useBucket` result to re-render on changes.
- * @returns The rules.
- */
-export function readRules(kind: RuleKind, store: SettingsReader = settings): TextReplaceRule[] {
-	return normalizeRules(store.get(kind, [])).filter(hasRuleContent);
-}
-
-/**
- * @description Reads both stored rule lists, without blank rules.
- * @param store The store to read through; pass the `storage.useBucket` result to re-render on changes.
- * @returns The text and regex rules.
- */
-export function readRuleset(store: SettingsReader = settings): Ruleset {
-	return {
-		stringRules: readRules('stringRules', store),
-		regexRules: readRules('regexRules', store),
-	};
 }
 
 // An empty list is stored as one blank rule.
@@ -86,8 +66,6 @@ export function deleteRule(kind: RuleKind, id: string): void {
 
 export default {
 	normalizeStoredRules,
-	readRules,
-	readRuleset,
 	saveRuleset,
 	saveRule,
 	deleteRule,

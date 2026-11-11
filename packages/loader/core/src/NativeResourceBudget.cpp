@@ -122,28 +122,10 @@ NativeResourceBudget &nativeCachedReturnBudget()
     return budget;
 }
 
-static std::mutex &platformHandleCounterMutex()
+static std::mutex &platformCounterMutex()
 {
     static std::mutex mutex;
     return mutex;
-}
-
-static std::function<size_t()> &platformHandleCounter()
-{
-    static std::function<size_t()> counter;
-    return counter;
-}
-
-void setPlatformHandleCounter(std::function<size_t()> counter)
-{
-    std::lock_guard<std::mutex> lock(platformHandleCounterMutex());
-    platformHandleCounter() = std::move(counter);
-}
-
-static size_t platformHandleCount()
-{
-    std::lock_guard<std::mutex> lock(platformHandleCounterMutex());
-    return platformHandleCounter() ? platformHandleCounter()() : 0;
 }
 
 static std::map<std::string, std::function<size_t()>> &platformResourceCounters()
@@ -154,7 +136,7 @@ static std::map<std::string, std::function<size_t()>> &platformResourceCounters(
 
 void setPlatformResourceCounter(const std::string &name, std::function<size_t()> counter)
 {
-    std::lock_guard<std::mutex> lock(platformHandleCounterMutex());
+    std::lock_guard<std::mutex> lock(platformCounterMutex());
     if (counter)
     {
         platformResourceCounters()[name] = std::move(counter);
@@ -169,7 +151,7 @@ static std::map<std::string, size_t> platformResourceCounts()
                                             {kObjCPlanCounter, 0},
                                             {kObjCRetainCounter, 0},
                                             {kJavaHandleCounter, 0}};
-    std::lock_guard<std::mutex>   lock(platformHandleCounterMutex());
+    std::lock_guard<std::mutex>   lock(platformCounterMutex());
     for (const auto &[name, counter] : platformResourceCounters())
     {
         counts[name] = counter();
@@ -179,11 +161,18 @@ static std::map<std::string, size_t> platformResourceCounts()
 
 nlohmann::json nativeResourceCounts()
 {
-    size_t         leases = leasedHandleCount();
+    // Every platform counter counts live handles, so `handles` means the same on both platforms.
+    const std::map<std::string, size_t> platform = platformResourceCounts();
+    size_t                              handles  = leasedHandleCount();
+    const size_t                        leases   = handles;
+    for (const auto &[name, count] : platform)
+    {
+        handles += count;
+    }
     nlohmann::json counts = {{"hooks", nativeHookBudget().used()},
                              {"surfaces", nativeSurfaceBudget().used()},
                              {"cachedReturns", nativeCachedReturnBudget().used()},
-                             {"handles", leases + platformHandleCount()},
+                             {"handles", handles},
                              {"leases", leases},
                              {"idleSurfaces", idleFabricSurfaces()},
                              {"createdSurfaces", createdFabricSurfaces()},
@@ -191,7 +180,7 @@ nlohmann::json nativeResourceCounts()
                              {"missedSurfaces", missedFabricSurfaces()},
                              {"mainWork", mainWorkCounts()},
                              {"mainWaits", mainWaitCounts()}};
-    for (const auto &[name, count] : platformResourceCounts())
+    for (const auto &[name, count] : platform)
     {
         counts[name] = count;
     }

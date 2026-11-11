@@ -1,13 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startMultiAccount, stopMultiAccount } from '~/multi-account';
+import { startMultiAccount } from '~/multi-account';
 
-export function start() {
-	startMultiAccount();
-}
-
-export function stop() {
-	stopMultiAccount();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures([startMultiAccount]);

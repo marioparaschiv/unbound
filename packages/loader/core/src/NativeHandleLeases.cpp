@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <unordered_map>
 
-#include "NativePlatformBridge.h"
+#include "LoaderJSIJSON.h"
 #include "NativePluginRuntime.h"
 
 namespace loader::native {

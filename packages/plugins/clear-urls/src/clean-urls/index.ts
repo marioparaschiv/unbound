@@ -32,7 +32,7 @@ export function patchedMethods(): string[] {
  * removes the patches when the plugin stops.
  */
 export function startCleanUrls(): void {
-	if (!ensureModules('Clear URLs', { MessageActions })) return;
+	if (!ensureModules({ MessageActions })) return;
 
 	const rules = compileRules(DEFAULT_RULES);
 

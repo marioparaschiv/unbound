@@ -1,4 +1,5 @@
 import type { MetroFilter, MetroModuleLoadedOptions } from '@unbound-app/api/metro';
+import { awaitModule } from '@unbound-plugins/shared/lifecycle/features';
 import { metro } from '@unbound-app/api';
 
 type Cleanup = () => void;
@@ -6,25 +7,42 @@ type Cleanup = () => void;
 /** A metro filter, or a module's source file path such as `modules/chat/native/TypingIndicator.tsx`. */
 export type ModuleSource = MetroFilter | string;
 
-export type WhenLoadedOptions = MetroModuleLoadedOptions;
+export type WhenLoadedOptions = MetroModuleLoadedOptions & {
+	/** Leaves the module out of the self test detail, for a module Discord loads only on some interaction the feature also covers otherwise. */
+	optional?: boolean;
+};
 
 function toFilter(source: ModuleSource): MetroFilter {
 	return typeof source === 'string' ? metro.filters.byFilePath(source) : source;
 }
 
+// Metro tags each filter with its search, such as `byProps::WebView`, under a symbol the API does not export.
+function nameOf(source: ModuleSource): string {
+	if (typeof source === 'string') {
+		return source;
+	}
+
+	const search = Object.getOwnPropertySymbols(source)
+		.map((key) => Reflect.get(source, key))
+		.find((value) => typeof value === 'string');
+
+	return source.filePath ?? search ?? 'a module';
+}
+
 /**
  * @description Applies a feature to a module once it loads, without loading it, so `stop` can cancel the wait or remove the feature.
  * A loaded module gets the feature at once; otherwise it is applied while the module initializes, before Discord reads it.
+ * Until then the plugin's self test detail names the module, unless `optional`.
  * @template T The module's type.
  * @param source The module's filter or file path, or several in order of preference: the first loaded wins, else the first to load.
  * @param apply Applies the feature and returns the function that removes it, or nothing when it did not apply.
- * @param options Metro wait options, such as `interop`; a file path always yields the module's exports.
+ * @param options Metro wait options, such as `interop`, and `optional`; a file path always yields the module's exports.
  * @returns A function that stops waiting and removes the feature if it was applied; call it in `stop`.
  */
 export function whenLoaded<T extends object>(
 	source: ModuleSource | ModuleSource[],
 	apply: (module: T) => Cleanup | void,
-	options: WhenLoadedOptions = {},
+	{ optional = false, ...options }: WhenLoadedOptions = {},
 ): Cleanup {
 	const sources = Array.isArray(source) ? source : [source];
 	const waits: Cleanup[] = [];
@@ -49,6 +67,10 @@ export function whenLoaded<T extends object>(
 		}
 
 		waits.push(metro.onModuleLoaded(toFilter(candidate), load, options));
+	}
+
+	if (!optional) {
+		awaitModule(sources.map(nameOf).join(' or '), () => loaded);
 	}
 
 	return () => {

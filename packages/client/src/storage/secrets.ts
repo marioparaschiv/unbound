@@ -3,7 +3,7 @@ import type { SettingsObject } from '@unbound-app/types/settings';
 import type { SettingsStores } from '~/storage/backend';
 
 /** What a secret setting reads as in a masked snapshot. */
-export const MASKED_SECRET = '[secret]';
+const MASKED_SECRET = '[secret]';
 
 // Each Bucket's secret settings, by dot-separated key: the `displayAs: 'secret'` settings of a defined schema.
 const secrets = new Map<string, Set<string>>();
@@ -68,5 +68,3 @@ export function maskSecrets(stores: SettingsStores): SettingsStores {
 
 	return copy;
 }
-
-export default { MASKED_SECRET, maskSecrets, registerSecrets };

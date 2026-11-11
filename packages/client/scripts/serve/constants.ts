@@ -20,14 +20,3 @@ export const SOURCE_BUNDLE_NAME = 'unbound.js';
 export const MANIFEST_NAME = 'manifest.json';
 
 export { BUNDLE_PATTERN };
-
-export default {
-	PORT,
-	HOST,
-	DIST_DIR,
-	LAN_URL,
-	MANIFEST_POLL_INTERVAL,
-	SOURCE_BUNDLE_NAME,
-	MANIFEST_NAME,
-	BUNDLE_PATTERN,
-};

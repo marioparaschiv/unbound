@@ -1,5 +1,3 @@
-export const PLUGIN_NAME = 'Message Logger';
-
 export const EPHEMERAL_FLAG = 64;
 
 export const CHANGE_TYPE_NONE = 0;

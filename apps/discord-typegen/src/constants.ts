@@ -45,7 +45,6 @@ export function constantOf(value: Value, depth: number = 0): ConstantValue | und
 /**
  * @description Builds the lookup from imported values to literals over every extracted module's constants,
  * following re-exports and interop defaults the way component targets resolve.
- * @param facts The extracted modules.
  * @returns The lookup.
  */
 export function createConstantLookup(facts: ModuleFacts[]): ConstantLookup {
@@ -99,8 +98,6 @@ function walk(value: ConstantValue, path: string[]): LiteralValue | undefined {
  * @description Replaces each prop's references to imported constants with the literal they hold, so the rules
  * see `variant === ButtonVariants.PRIMARY` as a comparison with `'primary'`. Unresolved comparisons are dropped
  * and unresolved defaults stay plain expressions, as before references were recorded.
- * @param components The extracted components.
- * @param lookup The constant lookup.
  */
 export function resolveConstantRefs(components: ComponentRecord[], lookup: ConstantLookup) {
 	for (const component of components) {

@@ -45,21 +45,3 @@ export function installOptions(kind: AddonKind, navigation: Navigation): Install
 		},
 	];
 }
-
-/**
- * @description Offers {@link installOptions} in an action sheet, so any trigger works without a layout
- * box to anchor a menu to.
- * @param kind The addon kind to install.
- * @param navigation The stack to push the marketplace onto.
- */
-export function openInstallSheet(kind: AddonKind, navigation: Navigation): void {
-	Discord.showSimpleActionSheet({
-		key: 'unbound-install',
-		header: { title: messages.UNBOUND_INSTALL },
-		options: installOptions(kind, navigation).map(({ label, icon, run }) => ({
-			label,
-			icon,
-			onPress: run,
-		})),
-	});
-}

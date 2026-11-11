@@ -1,4 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { cloneElement, isValidElement, type ReactNode } from 'react';
 import type { ViewStyle } from 'react-native';
@@ -54,9 +53,7 @@ function addAvatars(result: ReactNode) {
  * The Addon scope removes the patch when the plugin stops.
  */
 export function startTypingAvatars(): void {
-	if (!ensureModules('Typing Avatars', { Avatars, TypingIndicator, UserStore })) return;
+	if (!ensureModules({ Avatars, TypingIndicator, UserStore })) return;
 
 	patcher.react.after(TypingIndicator, 'default', ({ result }) => addAvatars(result));
-
-	recordApplied(1);
 }

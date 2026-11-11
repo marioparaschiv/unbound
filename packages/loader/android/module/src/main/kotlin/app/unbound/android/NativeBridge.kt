@@ -8,6 +8,7 @@ import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.view.Choreographer
 import android.widget.Toast
 import java.io.File
 import java.net.HttpURLConnection
@@ -88,6 +89,7 @@ object NativeBridge {
         context.getSystemService(Context.CONNECTIVITY_SERVICE).let { it as ConnectivityManager }.isActiveNetworkMetered
     }.getOrDefault(false)
 
+    @JvmStatic
     external fun nativeEvictIdleSurfaces()
 
     @JvmStatic
@@ -103,6 +105,9 @@ object NativeBridge {
     external fun nativeDrainMainWork()
 
     @JvmStatic
+    external fun nativeDrainFrameWork()
+
+    @JvmStatic
     external fun nativeHermesBytecodeVersion(header: ByteArray): Int
 
     @JvmStatic
@@ -110,13 +115,30 @@ object NativeBridge {
 
     @JvmStatic
     external fun nativeToolbox(action: String, argument: String?): String?
-    external fun nativePreference(action: String, argument: String?): String?
 
-    fun preferenceEnabled(action: String, argument: String? = null): Boolean =
-        nativePreference(action, argument) == "true"
+    /** The theme to apply, or null when none is applied or Recovery Mode is on. */
+    @JvmStatic
+    external fun nativeActiveThemeId(): String?
 
+    @JvmStatic
+    external fun nativeRecoveryActionLabel(): String?
+
+    @JvmStatic
+    external fun nativeGestureEnabled(gesture: String): Boolean
+
+    @JvmStatic
+    external fun nativeSetGestureEnabled(gesture: String, enabled: Boolean)
+
+    @JvmStatic
+    external fun nativeDevOverlayVisible(virtualDevice: Boolean, debugBuild: Boolean): Boolean
+
+    @JvmStatic
+    external fun nativeToolboxHoldMilliseconds(): Long
+
+    @JvmStatic
     external fun nativeShakeSample(x: Float, y: Float, z: Float, milliseconds: Long): Boolean
 
+    @JvmStatic
     external fun nativeThreeFingerEvent(event: String, pointers: Int): String
 
     @JvmStatic
@@ -184,6 +206,13 @@ object NativeBridge {
     @JvmStatic
     fun scheduleMainWork() {
         Handler(Looper.getMainLooper()).post { nativeDrainMainWork() }
+    }
+
+    @JvmStatic
+    fun scheduleMainFrameWork() {
+        Handler(Looper.getMainLooper()).post {
+            Choreographer.getInstance().postFrameCallback { nativeDrainFrameWork() }
+        }
     }
 
     @JvmStatic

@@ -71,5 +71,3 @@ export function isSameBuild(left: AndroidBuild, right: AndroidBuild | undefined)
 		left.commit === right.commit
 	);
 }
-
-export default { describeProgress, describeBuilds, isSameBuild };

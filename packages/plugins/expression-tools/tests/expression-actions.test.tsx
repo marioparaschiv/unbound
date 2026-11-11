@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { flux, metro, render, startPlugin, stopPlugin, toasts } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { createElement, memo } from 'react';
 import { Text, View } from 'react-native';
 
@@ -145,14 +144,13 @@ describe('the sticker sheet', () => {
 describe('starting', () => {
 	async function restart() {
 		await stopPlugin();
-		resetHealth();
 		await startPlugin();
 	}
 
 	test('reports both patches applied to the self test', async () => {
 		await restart();
 
-		expect(selfTest()).toEqual({ ok: true, detail: '2 features applied' });
+		expect(selfTest()).toEqual({ ok: true, detail: '3 features applied' });
 	});
 
 	test('keeps the emoji sheet buttons when the sticker sheet cannot be patched', async () => {

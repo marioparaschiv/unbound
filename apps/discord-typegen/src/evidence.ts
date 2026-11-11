@@ -27,7 +27,6 @@ const HOOK_NAME = /^use[A-Z]/;
 
 /**
  * @description Tells whether a function name follows React's hook convention (`useTextField`).
- * @param name The function's name.
  * @returns True for hook names.
  */
 export function isHookName(name: string): boolean {
@@ -36,8 +35,6 @@ export function isHookName(name: string): boolean {
 
 /**
  * @description Appends one observation to a prop's evidence.
- * @param prop The prop the observation is about.
- * @param observation What was observed.
  */
 export function observe(prop: PropValue, observation: PropObservation) {
 	const { component, name } = prop;
@@ -55,7 +52,6 @@ export function observe(prop: PropValue, observation: PropObservation) {
 
 /**
  * @description Views a value as a prop or positional parameter, the whole props object being parameter 0.
- * @param value The value.
  * @returns The prop, or undefined when the value is neither.
  */
 export function asProp(value: Value): PropValue | undefined {
@@ -169,8 +165,6 @@ function forward(value: Value, target: TargetRef, key: string) {
  * @description Attaches each literal passed at a JSX call site to the prop of the component it resolves to.
  * Only props the component reads gain evidence, so a call site never invents a prop. A value counts once per
  * module, so an observation count is how many modules pass it, not how many compiled copies of a call there are.
- * @param facts The extracted modules.
- * @param resolve The cross-module resolver.
  */
 export function bindPassed(facts: ModuleFacts[], resolve: Resolver) {
 	for (const module of facts) {
@@ -201,8 +195,6 @@ export function bindPassed(facts: ModuleFacts[], resolve: Resolver) {
 /**
  * @description Records which keys a hook sets over its spread argument in what it returns, so a component spreading
  * that result knows those keys no longer come from its own props.
- * @param hook The hook's record.
- * @param returns The values the hook returns.
  */
 export function recordOverrides(hook: ComponentRecord, returns: Value[]) {
 	for (const value of returns) {
@@ -237,8 +229,6 @@ function addOverrides(hook: ComponentRecord, value: Value, member: string) {
 /**
  * @description Records a hook call whose first argument is the props, or an object spreading them, so the caller
  * can inherit the keys the hook reads from it.
- * @param hook The called hook.
- * @param argument The first argument.
  */
 export function recordHookCall(hook: TargetRef, argument: Value | undefined) {
 	if (!argument) return;
@@ -255,10 +245,6 @@ export function recordHookCall(hook: TargetRef, argument: Value | undefined) {
 /**
  * @description Handles `base[name] = value` for the bases that matter: exports, `module.exports`, object
  * literals under construction and components (statics, `defaultProps`).
- * @param ctx The module.
- * @param base The object written to.
- * @param name The key.
- * @param value The value written.
  */
 export function assignKey(ctx: ModuleContext, base: Value, name: string, value: Value) {
 	if (base.kind === 'param' && base.index === EXPORTS) {
@@ -286,9 +272,6 @@ export function assignKey(ctx: ModuleContext, base: Value, name: string, value: 
 
 /**
  * @description Handles `base[key] = value` with a computed key: an export-star loop copying another module's exports.
- * @param ctx The module.
- * @param base The object written to.
- * @param value The value written.
  */
 export function assignComputed(ctx: ModuleContext, base: Value, value: Value) {
 	if (base.kind === 'param' && base.index === EXPORTS && value.kind === 'star') {
@@ -340,8 +323,6 @@ function staticRecord(name: string, value: Value): StaticRecord {
 
 /**
  * @description Applies `memo(...)` or `forwardRef(...)` to a component function.
- * @param wrapper The wrapper called.
- * @param inner Its argument.
  * @returns The wrapped component, keeping `forwardRef` when the inner value already had it.
  */
 export function wrap(wrapper: 'memo' | 'forwardRef', inner: Value | undefined): Value {
@@ -362,8 +343,6 @@ export function wrap(wrapper: 'memo' | 'forwardRef', inner: Value | undefined): 
 
 /**
  * @description Records `Object.defineProperty(exports, name, { get })`, resolved once the getter is walked.
- * @param ctx The module.
- * @param args The call's arguments.
  */
 export function defineExport(ctx: ModuleContext, args: Value[]) {
 	const [base, name, descriptor] = args;
@@ -381,7 +360,6 @@ export function defineExport(ctx: ModuleContext, args: Value[]) {
 
 /**
  * @description Ties Babel class methods to their class: `_createClass(Ctor, [{ key, value }])`.
- * @param args The call's arguments.
  */
 export function bindClassMethods(args: Value[]) {
 	const [ctor] = args;
@@ -414,7 +392,6 @@ export function bindClassMethods(args: Value[]) {
 
 /**
  * @description Applies the module's export assignments and export getters to its components.
- * @param ctx The walked module.
  * @returns The exports whose value is read from another module, and the exported constants.
  */
 export function bindExports(ctx: ModuleContext): BoundExports {

@@ -1,13 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startExpressionActions, stopExpressionActions } from '~/expression-actions';
+import { expressionFeatures } from '~/expression-actions';
 
-export function start() {
-	startExpressionActions();
-}
-
-export function stop() {
-	stopExpressionActions();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures(expressionFeatures);

@@ -1,8 +1,8 @@
 import type { AddonVersion, ListedAddon } from '@unbound-app/contracts/addons';
 import { DEVELOPMENT_MARKER } from '@unbound-app/contracts/manifest-files';
+import { getBytecodePath } from '@unbound-app/contracts/version-layout';
 import type { AddonManifest, PushedManifest } from '@unbound-app/types';
 import type { AddonRelease } from '@unbound-app/contracts/updates';
-import type { AddonKind } from '@unbound-app/types/addons';
 import toError from '@unbound-app/utils/to-error';
 
 import {
@@ -12,67 +12,47 @@ import {
 	verifySignature,
 } from '~/addons/download';
 import { downloadAddonFiles, writeAddonFiles, type AddonFiles } from '~/addons/files';
-import { getLoader, getSha256 } from '~/native/unbound-native';
 import type { Addon, AddonResolveable } from '~/addons/addon';
+import { assertTextDigest, digestOf } from '~/addons/digests';
 import type { InstalledEntry } from '~/updates/addon-updates';
+import { countInstall } from '~/marketplace/count-install';
 import type { UpdatableKind } from '~/addons/manager-of';
-import { AddonLifecycle } from '~/addons/lifecycle';
-import { compiledBundlePath } from '~/addons/paths';
+import { AddonSelection } from '~/addons/selection';
+import { getLoader } from '~/native/unbound-native';
+import { createRecord } from '~/addons/records';
 import { toRelease } from '~/addons/versions';
-import { Manager } from '~/addons/manager';
 import fs from '~/native/fs';
 
 /** The outcome of an addon reload: success, or failure carrying the recorded error. */
 export type ReloadResult = { ok: true } | { ok: false; error: Error };
 
-const INSTALL_EVENTS = ['loaded', 'unloaded', 'installed', 'updated', 'deleted'] as const;
-
-type BundleDigest = {
-	bundle: string;
-	digest: string;
+/** How {@link Addons.installListed} leaves a listed version once installed. */
+export type InstallListedOptions = {
+	/** Whether automatic updates should leave the addon on this version. */
+	hold?: boolean;
 };
 
-const bundleDigests = new Map<string, BundleDigest>();
-const sourceDigests = new Map<string, string>();
+const INSTALL_EVENTS = ['loaded', 'unloaded', 'installed', 'updated', 'deleted'] as const;
 
 /**
- * @description Records the SHA-256 the loader took of a plugin source it kept back, for update checks.
- * @param id The plugin's id.
- * @param digest The source's SHA-256, in hex.
- */
-export function rememberSourceDigest(id: string, digest: string): void {
-	sourceDigests.set(id, digest);
-}
-
-function cachedDigest(id: string, bundle: string): string {
-	const cached = bundleDigests.get(id);
-
-	if (cached?.bundle === bundle) {
-		return cached.digest;
-	}
-
-	const digest = getSha256(bundle);
-
-	bundleDigests.set(id, { bundle, digest });
-
-	return digest;
-}
-
-function assertTextDigest(bundle: string, expected: string): void {
-	const digest = getSha256(bundle);
-
-	if (digest !== expected) {
-		throw new Error(`Bundle SHA-256 ${digest} does not match ${expected}.`);
-	}
-}
-
-/**
- * @description Addon distribution on top of {@link AddonLifecycle}: install, update, hot reload and
+ * @description Addon distribution on top of {@link AddonSelection}: install, update, hot reload and
  * delete, the on-disk layout, development copies and version holds.
  * @template I What the bundles of the addons this manager governs evaluate to.
  */
-export abstract class Addons<I extends object> extends AddonLifecycle<I> {
+export abstract class Addons<I extends object> extends AddonSelection<I> {
 	declare readonly kind: UpdatableKind;
+	/** The version each addon is held at. */
+	protected readonly held = createRecord<string>(this.settings, 'held', (change) =>
+		this.emit('record-changed', change),
+	);
+	/** The addons pushed from a dev machine, which update checks leave alone. */
+	protected readonly development = createRecord<boolean>(this.settings, 'development', (change) =>
+		this.emit('record-changed', change),
+	);
+	/** The URL each addon was installed from; addons loaded from disk or pushed over the debugger have none. */
+	protected readonly sources = createRecord<string>(this.settings, 'sources', (change) =>
+		this.emit('record-changed', change),
+	);
 
 	protected registered(id: string): void {
 		void this.adoptDevelopmentMarker(id);
@@ -124,13 +104,10 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			return this.reloadFailed(targetId, resolved, error);
 		}
 
-		// Absent addon: install path over the socket bytes — load it fresh and persist it. load()
-		// consults the persisted state and starts it only if enabled.
+		// Absent addon: load the socket bytes fresh and persist them; load() starts it only if enabled.
 		if (!resolved) {
 			try {
-				await this.persist(bundle, manifest);
-				await this.persistBytecode(manifest, bytecode);
-				await this.persistFiles(manifest, files);
+				await this.persist(bundle, manifest, bytecode, files);
 				this.register(bundle, manifest);
 
 				const loaded = this.getEntity(manifest.id);
@@ -159,9 +136,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			// user has explicitly disabled.
 			const wasStarted = resolved.started || this.pendingStarts.has(resolved.id);
 
-			await this.persist(bundle, manifest);
-			await this.persistBytecode(manifest, bytecode);
-			await this.persistFiles(manifest, files);
+			await this.persist(bundle, manifest, bytecode, files);
 
 			this.pendingStarts.delete(resolved.id);
 
@@ -182,7 +157,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			this.clearFailure(resolved);
 
 			if (wasStarted) {
-				this.start(resolved);
+				await this.activate(resolved);
 			}
 
 			const startError = this.errors.get(resolved.id);
@@ -240,27 +215,37 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			const installedTrust = this.getEntity(manifest.id)?.manifest.trust;
 			const trusted = verifySignature(manifest, bundle, installedTrust);
 
-			await this.persist(bundle, trusted);
-			await this.persistBytecode(trusted, bytecode);
-			await this.persistFiles(trusted, files);
+			await this.persist(bundle, trusted, bytecode, files);
 
 			this.register(bundle, trusted);
-			const entity = this.getEntity(manifest.id);
 
-			if (entity) {
-				this.clearDevelopmentCopy(entity.id);
-				this.recordSource(entity.id, url);
-				this.releaseStaleHold(entity.id);
-				this.emit('installed', entity);
-			}
-
-			return entity;
+			return this.installed(manifest.id, url);
 		} catch (error) {
 			this.logger.error('Failed to install addon:', error);
 			this.emit('install-error', toError(error));
 
 			return undefined;
 		}
+	}
+
+	/**
+	 * @description Finishes an install once the addon is registered: it is no longer a development copy,
+	 * remembers its URL, drops a hold on a version it moved off, and emits `installed`.
+	 * @param id The addon's id.
+	 * @param url The manifest URL it was installed from.
+	 * @returns The installed addon, or `undefined` when it failed to load.
+	 */
+	protected installed(id: string, url: string): Addon<I> | undefined {
+		const entity = this.getEntity(id);
+
+		if (!entity) return;
+
+		this.clearDevelopmentCopy(entity.id);
+		this.recordSource(entity.id, url);
+		this.releaseStaleHold(entity.id);
+		this.emit('installed', entity);
+
+		return entity;
 	}
 
 	/**
@@ -334,18 +319,25 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	}
 
 	/**
-	 * @description Installs one version of a listed addon, newer or older than the installed one, then
-	 * holds it there or lets automatic updates move it on.
+	 * @description Installs one version of a listed addon, newer or older than the installed one, once
+	 * its requirements are in place, then holds it there or lets automatic updates move it on. A first
+	 * install turns itself on; an update keeps the user's choice.
 	 * @param listed The listed addon; only its id is read.
 	 * @param version The version to install.
-	 * @param hold Whether automatic updates should leave the addon on this version.
+	 * @param options `hold`: whether automatic updates should leave the addon on this version.
 	 * @returns Whether the addon now runs the version.
 	 */
 	async installListed(
 		listed: Pick<ListedAddon, 'id'>,
 		version: AddonVersion,
-		hold: boolean = false,
+		{ hold = false }: InstallListedOptions = {},
 	): Promise<boolean> {
+		if (!(await this.installRequirements(version))) {
+			return false;
+		}
+
+		const fresh = !this.getEntity(listed.id);
+
 		if (!(await this.applyRelease(listed.id, toRelease(listed.id, version)))) {
 			return false;
 		}
@@ -356,14 +348,23 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			this.releaseHold(listed.id);
 		}
 
+		if (fresh) {
+			countInstall(listed.id);
+			await this.enable(listed.id);
+		}
+
 		return true;
 	}
 
 	/**
-	 * @description Reads the version of a listed addon that is installed on this device.
-	 * @param listed The listed addon.
-	 * @returns The installed version, or `undefined` if absent.
+	 * @description Puts in place what a listed version needs before it installs. Plugins install their dependencies here.
+	 * @param _version The version about to install.
+	 * @returns Whether the version can install.
 	 */
+	protected async installRequirements(_version: AddonVersion): Promise<boolean> {
+		return true;
+	}
+
 	getInstalledVersion(listed: ListedAddon): string | undefined {
 		return this.getEntity(listed.id)?.version;
 	}
@@ -393,10 +394,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 		return this.getEntities()
 			.filter((entity) => !this.isDevelopmentCopy(entity.id))
 			.map((entity) => {
-				const { bundle } = this.stateOf(entity);
-				const sha256 = bundle
-					? cachedDigest(entity.id, bundle)
-					: sourceDigests.get(entity.id);
+				const sha256 = digestOf(entity.id, this.stateOf(entity).bundle);
 
 				return {
 					kind: this.kind,
@@ -418,6 +416,11 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 		if (!resolved) return;
 
 		try {
+			// A deleted addon cannot stay the applied one.
+			if (this.selection === 'one' && this.isEnabled(resolved.id)) {
+				this.disable(resolved);
+			}
+
 			await this.unload(resolved);
 			await fs.removeFile(this.directoryOf(resolved.id));
 			this.forgetSource(resolved.id);
@@ -461,55 +464,39 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 		}
 	}
 
-	/**
-	 * @description Names an addon's on-disk folder, inside the manager's directory.
-	 * @param id The addon's id.
-	 * @returns The folder path relative to the documents directory.
-	 */
 	protected directoryOf(id: string): string {
 		return `${this.directory}/${id}`;
 	}
 
 	/**
-	 * @description Writes an addon's manifest and bundle to its on-disk folder, the same layout the
-	 * loader reads at startup, so a fresh install or hot reload survives the next app launch.
+	 * @description Writes an addon to its on-disk folder, the same layout the loader reads at startup, so a
+	 * fresh install or hot reload survives the next app launch.
 	 * @param bundle The addon's bundle source.
 	 * @param manifest The addon's validated manifest.
+	 * @param bytecode The bundle compiled for this runtime, base64-encoded, written beside the source.
+	 * @param files The extra files beside the bundle, such as images, by path; the ones on disk stay when omitted.
 	 */
-	protected async persist(bundle: string, manifest: AddonManifest): Promise<void> {
+	protected async persist(
+		bundle: string,
+		manifest: AddonManifest,
+		bytecode?: string,
+		files?: AddonFiles,
+	): Promise<void> {
 		const dir = this.directoryOf(manifest.id);
+		const bytecodeVersion = getLoader()?.bytecodeVersion;
 
 		await fs.writeFile(`${dir}/manifest.json`, JSON.stringify(manifest));
 		await fs.writeFile(`${dir}/${manifest.main}`, bundle);
-	}
 
-	/**
-	 * @description Writes the bundle compiled for this runtime beside the source, where the loader looks for it on the next launch.
-	 * @param manifest The addon's validated manifest.
-	 * @param bytecode The compiled bundle, base64-encoded.
-	 */
-	protected async persistBytecode(
-		manifest: AddonManifest,
-		bytecode: string | undefined,
-	): Promise<void> {
-		const bytecodeVersion = getLoader()?.bytecodeVersion;
+		if (bytecode && bytecodeVersion) {
+			const path = `${dir}/${getBytecodePath(manifest.main, bytecodeVersion)}`;
 
-		if (!bytecode || !bytecodeVersion) return;
+			await fs.writeFile(path, bytecode, 'base64');
+		}
 
-		const path = `${this.directoryOf(manifest.id)}/${compiledBundlePath(manifest.main, bytecodeVersion)}`;
-
-		await fs.writeFile(path, bytecode, 'base64');
-	}
-
-	/**
-	 * @description Replaces the extra files beside the bundle, such as the images a plugin registers when it starts.
-	 * @param manifest The addon's validated manifest.
-	 * @param files The files, base64-encoded, by path; the ones on disk stay when omitted.
-	 */
-	protected async persistFiles(manifest: AddonManifest, files?: AddonFiles): Promise<void> {
-		if (!files) return;
-
-		await writeAddonFiles(this.directoryOf(manifest.id), manifest, files);
+		if (files) {
+			await writeAddonFiles(dir, manifest, files);
+		}
 	}
 
 	/**
@@ -517,7 +504,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	 * @param id The addon's id.
 	 */
 	markDevelopmentCopy(id: string): void {
-		this.settings.set('development', { ...this.getDevelopmentCopies(), [id]: true });
+		this.development.set(id, true);
 	}
 
 	/**
@@ -526,11 +513,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	 * @returns `true` until the addon is installed from the store or deleted.
 	 */
 	isDevelopmentCopy(id: string): boolean {
-		return this.getDevelopmentCopies()[id] === true;
-	}
-
-	private getDevelopmentCopies(): Record<string, boolean> {
-		return this.settings.get('development', {});
+		return this.development.get(id) === true;
 	}
 
 	/**
@@ -539,13 +522,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	 */
 	clearDevelopmentCopy(id: string): void {
 		void fs.removeFile(this.developmentMarkerOf(id)).catch(() => undefined);
-
-		const copies = this.getDevelopmentCopies();
-
-		if (!(id in copies)) return;
-
-		delete copies[id];
-		this.settings.set('development', copies);
+		this.development.delete(id);
 	}
 
 	/**
@@ -554,7 +531,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	 * @param version The version to hold it at.
 	 */
 	holdVersion(id: string, version: string): void {
-		this.settings.set('held', { ...this.getHolds(), [id]: version });
+		this.held.set(id, version);
 	}
 
 	/**
@@ -563,13 +540,9 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	 * @returns The held version, or `undefined` when it is not held or runs another version.
 	 */
 	getHeldVersion(id: string): string | undefined {
-		const held = this.getHolds()[id];
+		const held = this.held.get(id);
 
 		return held !== void 0 && held === this.getEntity(id)?.version ? held : void 0;
-	}
-
-	private getHolds(): Record<string, string> {
-		return this.settings.get('held', {});
 	}
 
 	/**
@@ -577,12 +550,28 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	 * @param id The addon's id.
 	 */
 	releaseHold(id: string): void {
-		const holds = this.getHolds();
+		this.held.delete(id);
+	}
 
-		if (!(id in holds)) return;
+	getSources(): Record<string, string> {
+		return this.sources.all();
+	}
 
-		delete holds[id];
-		this.settings.set('held', holds);
+	/**
+	 * @description Records the URL an addon was installed from. Twin of {@link forgetSource}.
+	 * @param id The addon's id.
+	 * @param url The install URL.
+	 */
+	recordSource(id: string, url: string): void {
+		this.sources.set(id, url);
+	}
+
+	/**
+	 * @description Forgets the URL an addon was installed from. Twin of {@link recordSource}.
+	 * @param id The addon's id.
+	 */
+	forgetSource(id: string): void {
+		this.sources.delete(id);
 	}
 
 	// A hold left on a version the addon moved off would otherwise come back if it returns there.
@@ -605,13 +594,4 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			return;
 		}
 	}
-}
-
-/**
- * @description Whether an addon kind installs from a manifest URL, which also makes it updatable and holdable.
- * @param kind The addon kind.
- * @returns Whether the kind's manager is an {@link Addons} manager.
- */
-export function installsFromManifest(kind: AddonKind): kind is UpdatableKind {
-	return Manager.for(kind) instanceof Addons;
 }

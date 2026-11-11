@@ -1,21 +1,39 @@
-import { beforeEach, describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, mock, test } from 'bun:test';
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 
-import { loadManagers, openedBuckets, rerendersOn, subscriptions } from './helpers/addons';
+import { loadManagers, makeManifest, openedBuckets } from './helpers/addons';
+import { createHookRenderer } from './helpers/render-hook';
+
+const { React, renderHook } = createHookRenderer();
+
+mock.module('react', () => React);
+
+// Applying an icon pack patches how images resolve their source.
+mock.module('~/metro/common', () => ({
+	Constants: {},
+	ImageSources: { getImageSourcesFromImageProps: () => undefined },
+}));
 
 const Manager = await loadManagers();
 
 const { default: useDevelopmentCopy } = await import('~/ui/hooks/use-development-copy');
 const { default: useAddonState } = await import('~/ui/hooks/use-addon-state');
-const { installsFromManifest } = await import('~/addons/addons');
+const { installsFromManifest } = await import('~/addons/installs-from-manifest');
 
-type ListedKind = 'plugin' | 'theme' | 'icon-pack';
+const LISTED_KINDS = ['plugin', 'theme', 'icon-pack'] as const;
+const mounted: { unmount: () => void }[] = [];
 
-const LISTED_BUCKETS: [kind: ListedKind, bucket: string][] = [
-	['plugin', 'plugins'],
-	['theme', 'themes'],
-	['icon-pack', 'icons'],
-];
+function render<T>(hook: () => T) {
+	const rendered = renderHook(hook);
+
+	mounted.push(rendered);
+
+	return rendered;
+}
+
+afterEach(() => {
+	for (const rendered of mounted.splice(0)) rendered.unmount();
+});
 
 test('resolves the manager of every addon kind', () => {
 	for (const kind of ADDON_KINDS) {
@@ -40,24 +58,40 @@ test('keeps each manager on the bucket name it has always persisted to', () => {
 });
 
 describe('addon hooks', () => {
-	beforeEach(() => {
-		subscriptions.length = 0;
-	});
+	for (const kind of LISTED_KINDS) {
+		test(`re-render ${kind} addons when their enabled state changes, and not on other records`, async () => {
+			const manager = Manager.for(kind);
+			const id = `${kind}.state`;
 
-	for (const [kind, bucket] of LISTED_BUCKETS) {
-		test(`re-renders ${kind} addons when its enabled state changes in the ${bucket} bucket`, () => {
-			useAddonState(kind, 'addon');
+			manager.load('{}', makeManifest(id));
 
-			expect(rerendersOn({ store: bucket, key: 'states' })).toBe(true);
-			expect(rerendersOn({ store: bucket, key: 'applied' })).toBe(true);
-			expect(rerendersOn({ store: kind, key: 'states' })).toBe(false);
+			const state = render(() => useAddonState(kind, id));
+
+			manager.markDevelopmentCopy(id);
+			expect(state.renders).toBe(1);
+
+			// Plugins turn on one by one, so turning one off writes its state; themes and icon packs change by applying.
+			if (kind === 'plugin') {
+				manager.disable(id);
+			} else {
+				await manager.enable(id);
+			}
+
+			expect(state.renders).toBeGreaterThan(1);
+			expect(state.current.enabled).toBe(kind !== 'plugin');
 		});
 
-		test(`re-renders ${kind} addons when its development markers change in the ${bucket} bucket`, () => {
-			useDevelopmentCopy(kind, 'addon');
+		test(`re-render ${kind} addons when their development markers change, and not on holds`, () => {
+			const manager = Manager.for(kind);
+			const id = `${kind}.development`;
+			const copy = render(() => useDevelopmentCopy(kind, id));
 
-			expect(rerendersOn({ store: bucket, key: 'development' })).toBe(true);
-			expect(rerendersOn({ store: kind, key: 'development' })).toBe(false);
+			manager.holdVersion(id, '1.0.0');
+			expect(copy.renders).toBe(1);
+
+			manager.markDevelopmentCopy(id);
+			expect(copy.renders).toBe(2);
+			expect(copy.current).toBe(true);
 		});
 	}
 });

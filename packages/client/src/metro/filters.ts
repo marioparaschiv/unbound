@@ -1,6 +1,6 @@
 import type { PredicateResult } from '@unbound-app/types';
 
-import { CACHE_KEY } from '~/core/constants';
+import { CACHE_KEY } from '~/metro/cache-key';
 
 /** A module predicate, carrying its cache key and a `raw` flag, produced by every `by*` helper. */
 export type MetroFilter = ((mdl: any, id: number | string) => PredicateResult) & {

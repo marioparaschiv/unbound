@@ -80,7 +80,7 @@ object Themes {
     }
 
     fun apply() {
-        val themeId = NativeBridge.nativePreference("active-theme", null)?.takeIf { it.isNotEmpty() }
+        val themeId = NativeBridge.nativeActiveThemeId()
         if (themeId == currentThemeId) return
         currentThemeId = themeId
 

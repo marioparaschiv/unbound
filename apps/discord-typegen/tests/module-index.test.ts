@@ -2,15 +2,14 @@ import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { ComponentRecord, ModuleRecord } from '../src/types';
-import type { ModuleShape } from '../src/module-shapes';
-
-import { emitModuleIndex, MAX_TARGETS, MODULE_INDEX_FILE, moduleKey } from '../src/emit-modules';
-import { objectKeys, shapeOf } from '../src/module-shapes';
-import { runPipeline } from '../src/pipeline';
-import { loadHostProps } from '../src/hosts';
-import { splitModules } from '../src/split';
-import { TYPES_DIR } from '../src/paths';
+import { emitModuleIndex, MAX_TARGETS, MODULE_INDEX_FILE, moduleKey } from '~/emit-modules';
+import type { ComponentRecord, ModuleRecord } from '~/types';
+import { objectKeys, shapeOf } from '~/module-shapes';
+import type { ModuleShape } from '~/module-shapes';
+import { runPipeline } from '~/pipeline';
+import { loadHostProps } from '~/hosts';
+import { splitModules } from '~/split';
+import { TYPES_DIR } from '~/paths';
 
 // Three small modules in hermes-dec's layout: an object default export, named exports, and one with no source path.
 const lines = readFileSync(join(import.meta.dir, 'fixtures', 'module-index.txt'), 'utf8').split(

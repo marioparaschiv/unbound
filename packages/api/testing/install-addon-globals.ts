@@ -12,7 +12,7 @@ import type {
 	OptionValue,
 	Reply,
 } from '../src/commands';
-import type { AddonHandle, AddonLogger, AddonManifest } from '../src/global';
+import type { AddonHandle, AddonLogger, AddonManifest, AddonScope } from '../src/global';
 
 import { createRecordingPatcher, type RecordingPatcher } from './recording-patcher';
 import { createFakeMetro, type FakeMetro, type FakeModule } from './fake-metro';
@@ -81,6 +81,16 @@ export type InstalledAddonGlobals = {
 	timers: FakeTimers;
 	uninstall: () => void;
 };
+
+// The fake each Addon scope global is; keying the installed globals by `AddonScope` fails typecheck on a new one.
+type ScopeFake =
+	| FakeReact
+	| FakeUnbound
+	| AddonHandle
+	| RecordingPatcher
+	| AddonLogger
+	| FakeCommands
+	| FakeTimers[keyof FakeTimers];
 
 const LOG_LEVELS: LogLevel[] = ['log', 'info', 'success', 'warn', 'error', 'debug'];
 
@@ -238,7 +248,7 @@ export function installAddonGlobals(options: InstallOptions = {}): InstalledAddo
 		setInterval: timers.setInterval,
 		clearTimeout: timers.clearTimeout,
 		clearInterval: timers.clearInterval,
-	};
+	} satisfies Record<keyof AddonScope, ScopeFake>;
 	const previous = new Map<string, PropertyDescriptor | undefined>();
 
 	for (const [name, value] of Object.entries(globals)) {

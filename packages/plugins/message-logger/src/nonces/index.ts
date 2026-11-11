@@ -12,7 +12,7 @@ type CreatedMessage = {
 /**
  * @description Stops another user's message from replacing an earlier sent message through a reused nonce, which would hide that message without a deletion to log.
  * The Addon scope removes the interceptor on `MESSAGE_CREATE` when the plugin stops.
- * @returns A function with nothing to undo, for `applyFeatures`.
+ * @returns A function with nothing to undo; the Addon scope removes what it added.
  */
 export function startNonces(): () => void {
 	flux.interceptAction('MESSAGE_CREATE', (action) => {

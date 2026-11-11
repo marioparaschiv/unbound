@@ -152,9 +152,7 @@ export type SubmissionDetails = StaticDecode<typeof submissionDetailsSchema>;
 export type CreateSubmissionRequest = StaticDecode<typeof createSubmissionRequestSchema>;
 export type CreateSubmissionResponse = StaticDecode<typeof createSubmissionResponseSchema>;
 export type PublishFirstPartyRequest = StaticDecode<typeof publishFirstPartyRequestSchema>;
-export type FirstPartyPublishStatus = StaticDecode<typeof firstPartyPublishStatusSchema>;
 export type PublishFirstPartyResponse = StaticDecode<typeof publishFirstPartyResponseSchema>;
-export type FirstPartyAddon = StaticDecode<typeof firstPartyAddonSchema>;
 export type ListFirstPartyAddonsResponse = StaticDecode<typeof listFirstPartyAddonsResponseSchema>;
 
 export default {

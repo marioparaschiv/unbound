@@ -8,8 +8,6 @@ export type ReExportIndex = ReadonlyMap<string, ImportRef>;
 
 /**
  * @description Keys an export of a module for the export indexes.
- * @param moduleId The exporting module.
- * @param name The export's name.
  * @returns `<moduleId>:<name>`.
  */
 export function exportKey(moduleId: number, name: string): string {
@@ -18,7 +16,6 @@ export function exportKey(moduleId: number, name: string): string {
 
 /**
  * @description Indexes every module's re-exports, so a lookup can follow a name to the module defining it.
- * @param facts The extracted modules.
  * @returns The target of each re-exported name.
  */
 export function indexReExports(facts: ModuleFacts[]): ReExportIndex {

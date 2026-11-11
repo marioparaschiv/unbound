@@ -1,6 +1,6 @@
 import type { HermesManifest, ManifestContext } from '@unbound-app/rollup-plugin-hermes/manifest';
-import { parse, Type, type StaticDecode } from '@unbound-app/contracts/schema';
 import { fetchManifest } from '@unbound-app/rollup-plugin-hermes/manifest';
+import { parse, Type } from '@unbound-app/contracts/schema';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -19,8 +19,6 @@ const hermesConfigSchema = Type.Object(
 	{ additionalProperties: true },
 );
 
-export type HermesConfig = StaticDecode<typeof hermesConfigSchema>;
-
 /**
  * @description Picks the bytecode versions the build compiles: every version `hermes.json` declares,
  * plus any newer one the hermesc manifest publishes. It never drops a version, since Discord may still
@@ -37,24 +35,6 @@ export function nextBytecodeVersions(manifest: HermesManifest, current: number[]
 	return [...new Set([...newer, ...current])]
 		.filter((version) => version >= oldest)
 		.sort((left, right) => right - left);
-}
-
-/**
- * @description Counts how many of the hermesc manifest's newest versions a build must resolve so it
- * includes every version it ships, for builds that select hermesc by count.
- * @param latest The hermesc manifest's versions, newest first.
- * @param wanted The bytecode versions the build ships.
- * @returns The count to resolve.
- */
-export function hermescCount(latest: number[], wanted: number[]): number {
-	const positions = wanted.map((version) => latest.indexOf(version));
-	const missing = wanted.filter((_, index) => (positions[index] ?? -1) < 0);
-
-	if (missing.length) {
-		throw new Error(`hermesc does not publish bytecode ${missing.join(', ')}.`);
-	}
-
-	return Math.max(...positions, 0) + 1;
 }
 
 /**

@@ -67,5 +67,3 @@ export function describeHero(state: UpdatesState, pending: number, blocked: bool
 		subtitle,
 	};
 }
-
-export default { describeHero };

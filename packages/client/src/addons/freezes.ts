@@ -9,7 +9,7 @@ import { show } from '~/toasts/api';
 type FrozenAddon = Pick<Addon, 'id' | 'name' | 'version' | 'manifest'>;
 
 /** A single freeze at least this long disables the addon at once. */
-export const LONG_FREEZE_SECONDS = 20;
+const LONG_FREEZE_SECONDS = 20;
 
 /**
  * @description Decides whether a freeze disables its addon: its second this session, or one that lasted {@link LONG_FREEZE_SECONDS}.
@@ -58,5 +58,3 @@ export function announceFreeze(
 			: `${entity.name} froze Discord for ${seconds} seconds.${detail}`,
 	});
 }
-
-export default { LONG_FREEZE_SECONDS, freezeDisables, announceFreeze };

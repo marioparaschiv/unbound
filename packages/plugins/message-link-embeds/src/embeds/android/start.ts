@@ -1,20 +1,20 @@
+import { skipFeature } from '@unbound-plugins/shared/lifecycle/features';
 import type { NativePluginBridge } from '@unbound-app/api/native';
 
 import type { Embeds, Renderers } from '~/embeds/modules';
-import { createNativeEmbeds } from '~/embeds/android/native-embeds';
 import { createAndroidEmbeds } from '~/embeds/android/embeds';
 
 /**
- * @description Embeds linked messages into Android message views, through the native text rewrites when the loader has them.
+ * @description Embeds linked messages into Android message text through the loader's native text rewrites.
  * @param native The plugin's native bridge.
  * @param renderers Discord's message renderers.
- * @returns How many embeds are drawn and `dispose`, or `undefined` when the embed surface did not register.
+ * @returns How many embeds are drawn and `dispose`, or `undefined` when the embed surface or the text rewrites are unavailable.
  */
 export function startEmbeds(native: NativePluginBridge, renderers: Renderers): Embeds | undefined {
-	const android = createNativeEmbeds(native, renderers) ?? createAndroidEmbeds(native, renderers);
+	const android = createAndroidEmbeds(native, renderers);
 
 	if (!android) {
-		console.error('[Message Link Embeds] Skipped, the embed surface did not register.');
+		skipFeature('the embed surface or the native text rewrites are unavailable');
 
 		return;
 	}

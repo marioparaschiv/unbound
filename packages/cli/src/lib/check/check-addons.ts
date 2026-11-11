@@ -1,9 +1,8 @@
-import { availableParallelism } from 'node:os';
-
 import { keepSelected, type CheckSelection } from '~/lib/check/registry';
 import { runChecks, type AddonDiagnostics } from '~/lib/check/run';
 import type { DiscoveredAddon } from '~/lib/discovery';
 import type { CheckCache } from '~/lib/check/check';
+import { mapInParallel } from '~/lib/parallel';
 
 /**
  * @description Checks addons without writing anything, a few at a time so `--all` does not start
@@ -18,25 +17,11 @@ export async function checkAddons(
 	selection: CheckSelection,
 	cache: CheckCache,
 ): Promise<AddonDiagnostics[]> {
-	const results: AddonDiagnostics[] = [];
-	const queue = addons.map((addon, index) => ({ addon, index }));
+	return mapInParallel(addons, async (addon) => {
+		const result = await runChecks(addon, selection.checks, { emit: false, cache });
 
-	async function work() {
-		for (let next = queue.shift(); next; next = queue.shift()) {
-			const result = await runChecks(next.addon, selection.checks, { emit: false, cache });
-
-			results[next.index] = {
-				addon: next.addon,
-				diagnostics: keepSelected(selection, result.diagnostics),
-			};
-		}
-	}
-
-	await Promise.all(
-		Array.from({ length: Math.min(addons.length, availableParallelism()) }, work),
-	);
-
-	return results;
+		return { addon, diagnostics: keepSelected(selection, result.diagnostics) };
+	});
 }
 
 export default checkAddons;

@@ -1,11 +1,10 @@
 import {
-	checkUpdatesEndpoint,
 	MAINTENANCE_URL,
 	createTestContext,
 	manifest,
 	seedApprovedAddon,
 	seedVersion,
-	serveEndpoints,
+	serveApi,
 	signInWithDiscord,
 } from '@unbound-app/web/testing';
 import { afterAll, beforeAll, beforeEach, describe, expect, spyOn, test } from 'bun:test';
@@ -15,6 +14,7 @@ import { parse } from '@unbound-app/contracts/schema';
 
 import type { InstalledEntry, PendingUpdate } from '~/updates/addon-updates';
 import { fetchUpdates, reinstallFromStore } from '~/updates/addon-updates';
+import { createUnboundClient } from '~/account/client';
 import type { Addon } from '~/addons/addon';
 
 import {
@@ -40,7 +40,7 @@ const cdn = Bun.serve({
 });
 
 let web: TestContext;
-let api: ReturnType<typeof serveEndpoints>;
+let api: Awaited<ReturnType<typeof serveApi>>;
 
 // Bound and stopped up front, so nothing is listening on its port.
 const closed = Bun.serve({ port: 0, fetch: () => new Response() });
@@ -121,7 +121,10 @@ async function check(
 	}
 
 	try {
-		const pending = await fetchUpdates(entries, { baseUrl, clientVersion: CLIENT_VERSION });
+		const pending = await fetchUpdates(entries, {
+			request: createUnboundClient({ baseUrl }),
+			clientVersion: CLIENT_VERSION,
+		});
 		const applied = await Promise.all(
 			pending.map(async (update) => {
 				const owner = owners.get(update.id);
@@ -155,7 +158,7 @@ describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and update', () => {
 
 	beforeAll(async () => {
 		web = await createTestContext({ CDN_URL: cdn.url.origin });
-		api = serveEndpoints(web.ctx, { 'POST /api/v1/updates': checkUpdatesEndpoint });
+		api = await serveApi(web.ctx);
 
 		const { userId } = await signInWithDiscord(web.ctx, {
 			id: '80351110224678920',
@@ -339,7 +342,7 @@ describe('reinstallFromStore', () => {
 		manager.markDevelopmentCopy('up.pushed');
 
 		const applied = await reinstallFromStore(manager, 'up.pushed', {
-			baseUrl: 'http://127.0.0.1:9',
+			request: createUnboundClient({ baseUrl: 'http://127.0.0.1:9' }),
 			clientVersion: CLIENT_VERSION,
 		}).catch(() => false);
 

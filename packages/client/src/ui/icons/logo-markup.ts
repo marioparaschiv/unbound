@@ -18,7 +18,7 @@ type LogoLayer = {
 const PIXEL = '10.03';
 
 /** The logo's viewBox. */
-export const LOGO_VIEW_BOX = '37 54.83 191.19 152.94';
+const LOGO_VIEW_BOX = '37 54.83 191.19 152.94';
 
 /** The logo's layers, bottom to top: shadow, red and cyan fringes, body, scanlines. The body takes `currentColor`, so it can be tinted while the fringes keep their colours. */
 const LOGO_LAYERS: LogoLayer[] = [

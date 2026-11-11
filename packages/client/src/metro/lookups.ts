@@ -9,21 +9,30 @@ import type {
 	MetroLookupFirst,
 	MetroModuleOrArray,
 	MetroSearchOptions,
+	MetroStoreOptions,
 	MetroBulkFind,
 	AnyProps,
 } from '~/metro/types';
-import type { MetroFilter } from '~/metro/filters';
-import * as Search from '~/metro/search';
+import {
+	byFilePath,
+	byFluxStore,
+	byName,
+	byProps,
+	byPrototypes,
+	type MetroFilter,
+} from '~/metro/filters';
+import { createLazyModule } from '~/metro/lazy-registry';
+import { bulk, find as search } from '~/metro/search';
+import { filterPresence } from '~/metro/presence';
+import { onModuleLoaded } from '~/metro/wait';
 
 type LookupOptions = MetroInternalOptions & MetroSearchOptions;
-
-// Untyped on purpose: relating the search's generic result to a lookup's would expand Discord's whole module index.
-type UntypedSearch = (...args: MetroExport[]) => MetroExport;
 
 function isOptions(value: unknown): value is LookupOptions {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+// A lookup is lazy unless it passes `lazy: false`, or stands for several modules (`all`, `bulk`).
 function lazyByDefault<T extends unknown[]>(args: T): T {
 	const last = args[args.length - 1];
 
@@ -43,9 +52,17 @@ function lazyByDefault<T extends unknown[]>(args: T): T {
  * @returns The matched module, an array of matches when `all` is set, or `null`.
  */
 export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
+	if (!filter) {
+		throw new Error('You must provide a filter to search by.');
+	}
+
 	const [, resolved] = lazyByDefault<[MetroFilter, LookupOptions]>([filter, options]);
 
-	return Search.find(filter, resolved);
+	if (resolved.lazy) {
+		return searchWithOptions([], resolved, () => filter);
+	}
+
+	return search(filter, resolved);
 }
 
 /**
@@ -65,7 +82,7 @@ export function findByProps<T extends MetroLookupArgs<string>>(
 	...args: T
 ): MetroPropertyRecordOrArray<T, string> & {};
 export function findByProps(...args: MetroExport[]) {
-	return (Search.findByProps as UntypedSearch)(...lazyByDefault(args));
+	return lookup(args, byProps);
 }
 
 /**
@@ -84,7 +101,7 @@ export function findByFilePath<T extends MetroLookupArgs<string>>(
 	...args: T
 ): MetroModuleOrArray<T, string>;
 export function findByFilePath(...args: MetroExport[]) {
-	return (Search.findByFilePath as UntypedSearch)(...lazyByDefault(args));
+	return lookup(args, byFilePath);
 }
 
 /**
@@ -98,7 +115,7 @@ export function findByPrototypes<
 	U extends string,
 	T extends U[] | MetroStringFindWithOptions<U> | MetroBulkFind<U>,
 >(...args: T): AnyProps {
-	return Search.findByPrototypes<U, T>(...lazyByDefault(args));
+	return lookup(args, byPrototypes);
 }
 
 /**
@@ -117,5 +134,93 @@ export function findByName<T extends MetroLookupArgs<string>>(
 	...args: T
 ): MetroFunctionSignatureOrArray<T, string>;
 export function findByName(...args: MetroExport[]) {
-	return (Search.findByName as UntypedSearch)(...lazyByDefault(args));
+	return lookup(args, byName);
+}
+
+/**
+ * @description Finds a Flux store by name. Lazy unless `{ lazy: false }` is passed: the search runs on first access.
+ * @template U The union of requested store names.
+ * @template T The argument tuple, optionally ending in store search options.
+ * @param args The store name(s) to search for, optionally followed by options (`short` defaults to `true`).
+ * @returns The matched store.
+ */
+export function findStore<
+	U extends string,
+	T extends U[] | MetroStringFindWithOptions<U, MetroStoreOptions>,
+>(...args: T): MetroExport {
+	const [[name], { short = true, ...options }] = parseOptions<MetroStoreOptions>(
+		lazyByDefault(args),
+	);
+
+	return searchWithOptions([name, short], options, byFluxStore);
+}
+
+function lookup(args: MetroExport[], filter: (...args: MetroExport[]) => MetroFilter) {
+	const [terms, options] = parseOptions<LookupOptions, MetroExport[]>(lazyByDefault(args));
+
+	return searchWithOptions(terms, options, filter);
+}
+
+/**
+ * @description Runs a lookup: a lazy handle that searches on first use, a bulk search, or an eager {@link search}.
+ * @param args The search terms (and any per-item param bags for bulk searches).
+ * @param options Internal options controlling `lazy` and `bulk` behaviour.
+ * @param filter The filter builder for the search terms.
+ * @returns A lazy proxy, a bulk result array, or the result of {@link search}.
+ */
+function searchWithOptions(
+	args: MetroExport[],
+	options: LookupOptions,
+	filter: (...args: MetroExport[]) => MetroFilter,
+) {
+	if (options.lazy) {
+		const resolve = () =>
+			searchWithOptions(args, Object.assign(options, { lazy: false }), filter);
+
+		// A bulk or `all` search stands for several modules, and a `raw` one for a module record, so a
+		// patch on such a proxy resolves it instead of waiting.
+		if (options.bulk || options.all || options.raw) {
+			return createLazyModule(resolve);
+		}
+
+		const { esModules, interop } = options;
+
+		return createLazyModule(resolve, {
+			wait: (callback) => onModuleLoaded(filter(...args), callback, { esModules, interop }),
+			presence: () => filterPresence(filter(...args), { esModules, interop }),
+		});
+	}
+
+	if (options.bulk) {
+		return bulk(
+			...args.map((payload) => {
+				if (!Array.isArray(payload) && typeof payload === 'object' && payload.params) {
+					return {
+						filter: filter(...((payload.params ?? []) as [MetroExport, MetroExport])),
+						...payload,
+					};
+				}
+
+				return {
+					filter: filter(...(payload as [MetroExport, MetroExport])),
+					interop: true,
+				};
+			}),
+		);
+	}
+
+	return search(filter(...args), options);
+}
+
+/**
+ * @description Splits an argument list into its search terms and a trailing options object.
+ * @template O The options type.
+ * @template A The search-terms tuple type.
+ * @param args The raw arguments, ending in an options object.
+ * @returns A tuple of `[searchTerms, options]`.
+ */
+function parseOptions<O, A extends MetroExport[] = string[]>(
+	args: [...A, MetroExport] | A,
+): [A, O] {
+	return [args as A, args.pop()];
 }

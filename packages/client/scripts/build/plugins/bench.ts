@@ -26,7 +26,7 @@ const SOURCE = /\/src\/.*\.[jt]sx?$/;
 const AGENT = /\/scripts\/bench-android\/agent\.ts$/;
 
 /** The identifier the agent reads its config from; the build swaps it for the config's JSON. */
-export const CONFIG_TOKEN = '__UBD_BENCH_CONFIG__';
+const CONFIG_TOKEN = '__UBD_BENCH_CONFIG__';
 
 /**
  * @description Reads the benchmark config from `UNBOUND_BENCH_*`; a build without `UNBOUND_BENCH=1` has none.

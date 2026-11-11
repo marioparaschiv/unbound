@@ -1,8 +1,6 @@
 {
 	"name": "typing-avatars",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Shows the avatars of people typing in the channel.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

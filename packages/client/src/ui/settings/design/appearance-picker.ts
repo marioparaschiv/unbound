@@ -1,7 +1,8 @@
 import type { StyleProp, ViewStyle } from 'react-native';
 import type { ReactElement } from 'react';
 
-import { findByFilePathLazy, findByPropsLazy } from '~/metro/wrappers';
+import { find, findByFilePath, findByProps } from '~/metro/lookups';
+import { byFilePath } from '~/metro/filters';
 
 const ROOT = 'modules/user_settings/appearance/native/';
 
@@ -45,12 +46,12 @@ type ThemeUtilsModule = {
 	handleSaveTheme: (theme: PickerTheme, locations: string[], isSynced: boolean) => void;
 };
 
-const Settings = findByPropsLazy('SETTING_RENDERER_CONFIG');
-const PickerScreen = findByFilePathLazy(`${ROOT}SettingsAppearanceThemePickerScreen.tsx`);
+const Settings = findByProps('SETTING_RENDERER_CONFIG');
+const PickerScreen = findByFilePath(`${ROOT}SettingsAppearanceThemePickerScreen.tsx`);
 
 /** Discord's theme save helpers; the Design page intercepts `handleSaveTheme` for Unbound's swatches. */
-export const ThemeUtils: ThemeUtilsModule = findByFilePathLazy(
-	`${ROOT}UserSettingsAppearanceThemeUtils.tsx`,
+export const ThemeUtils: ThemeUtilsModule = find(
+	byFilePath(`${ROOT}UserSettingsAppearanceThemeUtils.tsx`),
 );
 
 /** Reports the swatch the carousel settled on; the carousel debounces it by 180 ms while it scrolls. */
@@ -70,11 +71,11 @@ type Debounced = ThemeSelected & { cancel: () => void; flush: () => void };
 type LodashModule = { debounce: (fn: ThemeSelected, wait: number) => Debounced };
 
 /** The lodash the carousel debounces `onThemeSelected` with, reading `debounce` off it when it first renders. */
-export const Lodash: LodashModule = findByPropsLazy('debounce', 'throttle', 'memoize');
+export const Lodash: LodashModule = findByProps('debounce', 'throttle', 'memoize');
 
 /** The picker's swatch carousel; `currentThemeIndex` is the swatch it previews. */
-export const Carousel: CarouselModule = findByFilePathLazy(
-	`${ROOT}components/SettingsAppearanceThemeCarousel.tsx`,
+export const Carousel: CarouselModule = find(
+	byFilePath(`${ROOT}components/SettingsAppearanceThemeCarousel.tsx`),
 );
 
 type SelectorItemProps = { themePreset: PickerTheme; isSelected: boolean };
@@ -82,8 +83,8 @@ type SelectorItemProps = { themePreset: PickerTheme; isSelected: boolean };
 type SelectorItemModule = { default: (props: SelectorItemProps) => ReactElement };
 
 /** One swatch of the carousel: its background, as `{ item }`, inside the selection ring. */
-export const SelectorItem: SelectorItemModule = findByFilePathLazy(
-	`${ROOT}components/SettingsAppearanceThemeSelectorItem.tsx`,
+export const SelectorItem: SelectorItemModule = find(
+	byFilePath(`${ROOT}components/SettingsAppearanceThemeSelectorItem.tsx`),
 );
 
 type ChannelListPreviewProps = { themes: PickerTheme[]; themeIndex: number };
@@ -91,8 +92,8 @@ type ChannelListPreviewProps = { themes: PickerTheme[]; themeIndex: number };
 type ChannelListPreviewModule = { default: (props: ChannelListPreviewProps) => ReactElement };
 
 /** The picker's preview: a backdrop view holding its gradient, the mock "Messages" list and the Nitro upsell. */
-export const ChannelListPreview: ChannelListPreviewModule = findByFilePathLazy(
-	`${ROOT}components/SettingsAppearanceChannelList.tsx`,
+export const ChannelListPreview: ChannelListPreviewModule = find(
+	byFilePath(`${ROOT}components/SettingsAppearanceChannelList.tsx`),
 );
 
 type SwatchGradientProps = {
@@ -107,8 +108,8 @@ type GradientModule = {
 };
 
 /** Discord's gradient views, among them the one a gradient swatch draws with. */
-export const Gradients: GradientModule = findByFilePathLazy(
-	'modules/client_themes/native/ThemedGradient.tsx',
+export const Gradients: GradientModule = find(
+	byFilePath('modules/client_themes/native/ThemedGradient.tsx'),
 );
 
 /** One colour stop of the backdrop Discord's picker draws behind its preview. */
@@ -127,7 +128,7 @@ type BackdropModule = {
 };
 
 /** Converts the picker's swatches into the backdrop behind its preview. */
-export const Backdrop: BackdropModule = findByPropsLazy('convertThemesToAnimatedThemes');
+export const Backdrop: BackdropModule = findByProps('convertThemesToAnimatedThemes');
 
 /**
  * @description Loads Discord's App Theme screen. Discord loads its modules only when the screen opens,

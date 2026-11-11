@@ -1,10 +1,9 @@
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { render, startPlugin, toasts } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
 
-import { ActivityButtons, registerDiscord, synced } from './fake-discord';
+import { ActivityButtons, registerDiscord, synced } from './helpers/fake-discord';
 
 import type { StoreSeeds } from '@unbound-app/api/testing';
 
@@ -74,7 +73,6 @@ describe('Listen Along button', () => {
 
 describe('self test', () => {
 	test('passes once the plugin has started', async () => {
-		resetHealth();
 		await startPlugin();
 
 		expect(selfTest()).toMatchObject({ ok: true });

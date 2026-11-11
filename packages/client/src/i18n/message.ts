@@ -1,4 +1,4 @@
-// The SDK imports these from the plugin's generated `@unbound-app/i18n` (`generatedModules` in sdk-config.ts).
+// The SDK imports these from the plugin's generated `@unbound-app/i18n` (`generatedModules` in the SDK generator's config.ts).
 import type { FormatVars as MessageVars, MessageKey } from '@unbound-app/i18n';
 
 export type { MessageKey };
@@ -81,5 +81,3 @@ export function takeMessage(
 
 	return { text: lookup.resolveMessage(key, isVars(vars) ? vars : undefined), rest };
 }
-
-export default { hasPlaceholders, takeMessage };

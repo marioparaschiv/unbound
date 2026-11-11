@@ -142,7 +142,7 @@ function isSyncedStore(name: string, installIds: Set<string>): boolean {
 }
 
 /**
- * @description Reduces a client's document to what Cloud Sync stores: install URLs, enabled and
+ * @description Reduces a client's document to what Sync stores: install URLs, enabled and
  * applied state, and the settings of the core store and of synced addons. Anything else is dropped.
  * @param input The document as parsed from the request.
  * @param limits The install, store and document caps.

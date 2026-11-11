@@ -15,5 +15,3 @@ declare global {
 export const coreLocales: CommandLocales = createCommandLocales(enUS, coreMessages, (listener) =>
 	onLocaleChange(() => listener()),
 );
-
-export default { coreLocales };

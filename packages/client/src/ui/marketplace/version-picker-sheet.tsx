@@ -1,15 +1,13 @@
 import { fetchAddonVersions, toVersionChoices } from '~/addons/versions';
-import { CLIENT_VERSION, API_URL } from '~/core/constants';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { AvailableChoice } from '~/addons/versions';
+import { CLIENT_VERSION } from '~/core/constants';
 import { BottomSheets } from '~/metro/components';
 import { messages, format } from '~/i18n/api';
 import { Manager } from '~/addons/manager';
 
 import useResource from './use-resource';
 import VersionRow from './version-row';
-
-const loadVersions = (id: string) => fetchAddonVersions(id, { baseUrl: API_URL });
 
 type VersionPickerSheetProps = {
 	kind: UpdatableKind;
@@ -26,7 +24,7 @@ type VersionPickerSheetProps = {
  */
 function VersionPickerSheet({ kind, id, name, onPick, onClose }: VersionPickerSheetProps) {
 	const { ActionSheet, ActionSheetRow, BottomSheetTitleHeader } = BottomSheets;
-	const { state, retry } = useResource(id, loadVersions);
+	const { state, retry } = useResource(id, fetchAddonVersions);
 	const held = Manager.for(kind).getHeldVersion(id);
 	const installed = Manager.for(kind).getEntity(id)?.version;
 

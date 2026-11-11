@@ -2,13 +2,12 @@ import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { ModuleRecord } from '../src/types';
-
-import { ASSETS_FILE, collectAssets, emitAssets, namesByType } from '../src/assets';
-import { runPipeline } from '../src/pipeline';
-import { loadHostProps } from '../src/hosts';
-import { splitModules } from '../src/split';
-import { TYPES_DIR } from '../src/paths';
+import { ASSETS_FILE, collectAssets, emitAssets, namesByType } from '~/assets';
+import type { ModuleRecord } from '~/types';
+import { runPipeline } from '~/pipeline';
+import { loadHostProps } from '~/hosts';
+import { splitModules } from '~/split';
+import { TYPES_DIR } from '~/paths';
 
 // Verbatim asset modules of discord-350's main.js: WrenchIcon (png), NitroGem1 (lottie) and an intl catalog (jsona).
 const FIXTURE_IDS = [15842, 14213, 1133];

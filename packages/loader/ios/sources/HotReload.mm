@@ -5,11 +5,12 @@
 #include <ostream>
 #include <streambuf>
 
+#import "AddonsCore.h"
 #include "LoaderHotReload.h"
 #import "SettingsCore.h"
-#import "UpdaterCore.h"
 
 @interface HotReload ()
++ (instancetype)shared;
 - (void)openRequest:(const loader::HotReloadRequest &)request;
 - (void)cancelTask;
 @end
@@ -33,6 +34,17 @@ private:
     __weak HotReload *owner_;
 };
 
+std::shared_ptr<loader::HotReloadTransport> UnboundHotReloadTransport()
+{
+    return std::make_shared<IOSHotReloadTransport>([HotReload shared]);
+}
+
+// Empty only while the loader starts, as it asks for the transport before making the controller.
+static std::shared_ptr<loader::HotReloadController> controller()
+{
+    return UnboundLoader()->hotReload();
+}
+
 static uint64_t connectionOf(NSURLSessionTask *task)
 {
     return strtoull(task.taskDescription.UTF8String ?: "0", nullptr, 10);
@@ -40,10 +52,9 @@ static uint64_t connectionOf(NSURLSessionTask *task)
 
 @implementation HotReload
 {
-    dispatch_queue_t                             _queue;
-    NSURLSession                                *_session;
-    NSURLSessionDataTask                        *_task;
-    std::shared_ptr<loader::HotReloadController> _controller;
+    dispatch_queue_t      _queue;
+    NSURLSession         *_session;
+    NSURLSessionDataTask *_task;
 }
 
 + (instancetype)shared
@@ -88,22 +99,6 @@ static uint64_t connectionOf(NSURLSessionTask *task)
         _session = [NSURLSession sessionWithConfiguration:config
                                                  delegate:self
                                             delegateQueue:delegateQueue];
-
-        dispatch_queue_t queue = _queue;
-        _controller            = std::make_shared<loader::HotReloadController>(
-            UnboundSettingsStore(),
-            [] {
-                return UnboundUpdateURL();
-            },
-            std::make_shared<IOSHotReloadTransport>(self),
-            [queue](double seconds, std::function<void()> work) {
-                auto task = std::make_shared<std::function<void()>>(std::move(work));
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t) (seconds * NSEC_PER_SEC)),
-                               queue, ^{ (*task)(); });
-            },
-            [] {
-                [Utilities reloadApp];
-            });
     }
 
     return self;
@@ -111,7 +106,10 @@ static uint64_t connectionOf(NSURLSessionTask *task)
 
 - (void)sync
 {
-    _controller->sync();
+    if (auto hotReload = controller())
+    {
+        hotReload->sync();
+    }
 }
 
 - (void)openRequest:(const loader::HotReloadRequest &)request
@@ -119,7 +117,10 @@ static uint64_t connectionOf(NSURLSessionTask *task)
     NSURL *url = [NSURL URLWithString:@(request.url.c_str())];
     if (!url)
     {
-        _controller->onClosed(request.connection, std::string("invalid URL"));
+        if (auto hotReload = controller())
+        {
+            hotReload->onClosed(request.connection, std::string("invalid URL"));
+        }
         return;
     }
 
@@ -151,12 +152,14 @@ static uint64_t connectionOf(NSURLSessionTask *task)
     didReceiveResponse:(NSURLResponse *)response
      completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler
 {
-    NSInteger status = [response isKindOfClass:[NSHTTPURLResponse class]]
-                           ? [(NSHTTPURLResponse *) response statusCode]
-                           : 0;
-    completionHandler(_controller->onResponse(connectionOf(dataTask), static_cast<int>(status))
-                          ? NSURLSessionResponseAllow
-                          : NSURLSessionResponseCancel);
+    NSInteger status    = [response isKindOfClass:[NSHTTPURLResponse class]]
+                              ? [(NSHTTPURLResponse *) response statusCode]
+                              : 0;
+    auto      hotReload = controller();
+    completionHandler(
+        hotReload && hotReload->onResponse(connectionOf(dataTask), static_cast<int>(status))
+            ? NSURLSessionResponseAllow
+            : NSURLSessionResponseCancel);
 }
 
 - (void)URLSession:(NSURLSession *)session
@@ -164,7 +167,8 @@ static uint64_t connectionOf(NSURLSessionTask *task)
     didReceiveData:(NSData *)data
 {
     std::string_view chunk(static_cast<const char *>(data.bytes), data.length);
-    if (!_controller->onChunk(connectionOf(dataTask), chunk))
+    auto             hotReload = controller();
+    if (!hotReload || !hotReload->onChunk(connectionOf(dataTask), chunk))
     {
         [dataTask cancel];
     }
@@ -179,10 +183,13 @@ static uint64_t connectionOf(NSURLSessionTask *task)
         _task = nil;
     }
 
-    _controller->onClosed(
-        connectionOf(task),
-        error ? std::optional<std::string>(error.localizedDescription.UTF8String ?: "")
-              : std::nullopt);
+    if (auto hotReload = controller())
+    {
+        hotReload->onClosed(
+            connectionOf(task),
+            error ? std::optional<std::string>(error.localizedDescription.UTF8String ?: "")
+                  : std::nullopt);
+    }
 }
 
 @end

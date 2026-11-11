@@ -809,24 +809,6 @@ func copyTree(source, destination string) error {
 	})
 }
 
-func firstMatch(root, suffix string) (string, error) {
-	entries, err := os.ReadDir(root)
-	if err != nil {
-		return "", err
-	}
-	paths := []string{}
-	for _, entry := range entries {
-		if !entry.IsDir() && strings.HasSuffix(entry.Name(), suffix) {
-			paths = append(paths, filepath.Join(root, entry.Name()))
-		}
-	}
-	sort.Strings(paths)
-	if len(paths) == 0 {
-		return "", errors.New("no matching file")
-	}
-	return paths[0], nil
-}
-
 func defaultDeb(root, configuration string) (string, error) {
 	entries, err := os.ReadDir(root)
 	if err != nil {

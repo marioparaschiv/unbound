@@ -24,6 +24,9 @@
 	"peerDependencies": {
 		"typescript": "catalog:"
 	},
+	"checks": {
+		"tests": "none"
+	},
 	"trustedDependencies": [
 		"@swc/core"
 	]

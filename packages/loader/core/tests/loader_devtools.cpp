@@ -35,7 +35,7 @@ int main()
     settings.load();
 
     loader::BundleUpdater updater(
-        documents, loader::updaterSettings(settings),
+        documents, settings,
         [&](const std::string &url, double) -> std::optional<std::string> {
             return url.find("manifest.json") == std::string::npos ? std::nullopt
                                                                   : std::optional(manifest);

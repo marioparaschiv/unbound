@@ -10,6 +10,8 @@ on:
     pull_request:
         paths:
             - 'apps/devtools/**'
+            # The bridge client's contract tests read the protocol's fixture.
+            - 'packages/debugger-protocol/**'
             - '.github/workflows/devtools.yml'
     workflow_call:
         inputs:

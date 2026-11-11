@@ -1,4 +1,4 @@
-import { flux, storage } from '@unbound-app/api';
+import { flux } from '@unbound-app/api';
 
 export const ChannelStore = flux.getStore('Channel', { lazy: true });
 export const UserStore = flux.getStore('User', { lazy: true });
@@ -7,5 +7,3 @@ export const ReadStateStore = flux.getStore('ReadState', { lazy: true }) as Retu
 > & {
 	getOldestUnreadMessageId?: (channelId: string) => string | null | undefined;
 };
-
-export const settings = storage.getBucket();

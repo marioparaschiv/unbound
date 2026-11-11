@@ -10,7 +10,7 @@ import { readPreferences } from '~/codeblocks/preferences';
 import { codeBlockLayout } from '~/codeblocks/layout';
 import { isLightTheme } from '~/codeblocks/themes';
 import { copyCode } from '~/codeblocks/clipboard';
-import { Limits, PLUGIN_NAME } from '~/constants';
+import { Limits } from '~/constants';
 
 import type { Session, Surface, SurfacePart } from '~/codeblocks/ios/session';
 import { detachSurface, isMounted, isOnScreen, surfaceMatchesCell } from '~/codeblocks/ios/session';
@@ -152,10 +152,7 @@ export function applyTheme(session: Session, surface: Surface): void {
 	const pending = surface.parts.map(({ placement }) =>
 		session.highlighter.tokenize(placement.block, theme, hljs).catch((error) => {
 			if (!isCancellation(error)) {
-				console.error(
-					`[${PLUGIN_NAME}] Failed to tokenize ${placement.block.language} code block:`,
-					error,
-				);
+				logger.error(`Failed to tokenize ${placement.block.language} code block:`, error);
 			}
 
 			return null;
@@ -196,10 +193,7 @@ export function applyTheme(session: Session, surface: Surface): void {
 		})
 		.catch((error) => {
 			if (!isCancellation(error)) {
-				console.error(
-					`[${PLUGIN_NAME}] Failed to render code blocks after a theme change:`,
-					error,
-				);
+				logger.error(`Failed to render code blocks after a theme change:`, error);
 			}
 		});
 }

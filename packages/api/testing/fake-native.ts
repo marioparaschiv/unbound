@@ -48,7 +48,11 @@ function emptyMember<T>(): T {
 	return Object.create(null);
 }
 
-const PLATFORMS: readonly NativePluginPlatform[] = ['ios', 'android'];
+// Keyed by every platform the SDK names, so a new one fails to typecheck until the fake serves it.
+const PLATFORMS: NativePluginPlatform[] = Object.values({
+	ios: 'ios',
+	android: 'android',
+} as const satisfies { [P in NativePluginPlatform]: P });
 
 class NativePluginUnavailableError extends Error {
 	readonly code = 'NATIVE_PLUGIN_UNAVAILABLE';

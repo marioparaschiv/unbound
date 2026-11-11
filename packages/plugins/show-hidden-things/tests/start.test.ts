@@ -1,6 +1,5 @@
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
-import { metro, startPlugin } from '@unbound-app/api/testing';
-import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import { logs, metro, startPlugin } from '@unbound-app/api/testing';
+import { describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
 
@@ -13,8 +12,6 @@ const BrokenMessageRowData = {
 	},
 };
 
-beforeEach(() => resetHealth());
-
 describe('the plugin on start', () => {
 	test('reports both features in its self-test', async () => {
 		metro.register({ generateMessageRowData: () => ({ message: {} }) });
@@ -25,16 +22,12 @@ describe('the plugin on start', () => {
 	});
 
 	test('still starts the other feature when one cannot start', async () => {
-		const error = spyOn(console, 'error').mockImplementation(() => {});
-
 		metro.register(BrokenMessageRowData);
 		metro.register(InvitePermissions);
 		await startPlugin();
 
 		expect(InvitePermissions.useInvitesDisabledPermission()).toBe(true);
 		expect(selfTest()).toMatchObject({ ok: false });
-		expect(error).toHaveBeenCalled();
-
-		error.mockRestore();
+		expect(logs.entries.some(({ level }) => level === 'error')).toBe(true);
 	});
 });

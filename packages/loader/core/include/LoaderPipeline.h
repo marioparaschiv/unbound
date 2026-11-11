@@ -16,10 +16,12 @@
 #include "UnboundNativeBridge.h"
 
 namespace loader {
-class LoaderHost
+// What the pipeline asks of the loader that runs it; `Loader` implements it over a platform's
+// `LoaderHost`, and tests fake it.
+class PipelineHost
 {
 public:
-    virtual ~LoaderHost() = default;
+    virtual ~PipelineHost() = default;
 
     virtual void runInBackground(std::function<void()> work) = 0;
     // Runs `work` off the main thread once `seconds` have passed.
@@ -63,7 +65,7 @@ public:
 class LoaderPipeline
 {
 public:
-    LoaderPipeline(std::shared_ptr<LoaderHost> host, UpdaterSettings settings,
+    LoaderPipeline(std::shared_ptr<PipelineHost> host, SettingsStore &settings,
                    BundleUpdater &updater);
     ~LoaderPipeline();
 
@@ -144,28 +146,28 @@ private:
     void guardLaunch();
     void promotePendingBundle();
 
-    std::shared_ptr<LoaderHost> host_;
-    UpdaterSettings             settings_;
-    BundleUpdater              &updater_;
-    std::optional<SavedBundle>  saved_;
-    std::mutex                  savedMutex_;
-    std::atomic_uint64_t        token_{0};
-    std::atomic_bool            bundleReady_{false};
-    std::atomic_bool            bundleStaged_{false};
-    std::atomic_bool            evaluationFailed_{false};
-    FirstDownload               firstDownload_;
-    std::condition_variable     firstDownloadSettled_;
-    std::atomic_bool            launchGuarded_{false};
-    std::atomic_bool            launchHealthy_{false};
-    std::mutex                  promotionMutex_;
-    std::optional<std::string>  pendingPromotion_;
-    std::atomic_bool            checking_{false};
-    std::atomic_bool            waitingForWifi_{false};
-    std::atomic_bool            rendered_{false};
-    std::atomic_int64_t         lastCheckMs_{0};
-    std::atomic_int64_t         runtimeCreatedMs_{0};
-    std::atomic_int64_t         bundleExecutedMs_{0};
-    std::atomic_int64_t         renderedMs_{0};
-    std::atomic_int64_t         healthyMs_{0};
+    std::shared_ptr<PipelineHost> host_;
+    SettingsStore                &settings_;
+    BundleUpdater                &updater_;
+    std::optional<SavedBundle>    saved_;
+    std::mutex                    savedMutex_;
+    std::atomic_uint64_t          token_{0};
+    std::atomic_bool              bundleReady_{false};
+    std::atomic_bool              bundleStaged_{false};
+    std::atomic_bool              evaluationFailed_{false};
+    FirstDownload                 firstDownload_;
+    std::condition_variable       firstDownloadSettled_;
+    std::atomic_bool              launchGuarded_{false};
+    std::atomic_bool              launchHealthy_{false};
+    std::mutex                    promotionMutex_;
+    std::optional<std::string>    pendingPromotion_;
+    std::atomic_bool              checking_{false};
+    std::atomic_bool              waitingForWifi_{false};
+    std::atomic_bool              rendered_{false};
+    std::atomic_int64_t           lastCheckMs_{0};
+    std::atomic_int64_t           runtimeCreatedMs_{0};
+    std::atomic_int64_t           bundleExecutedMs_{0};
+    std::atomic_int64_t           renderedMs_{0};
+    std::atomic_int64_t           healthyMs_{0};
 };
 }

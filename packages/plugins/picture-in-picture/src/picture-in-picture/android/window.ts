@@ -13,7 +13,7 @@ import { createViewerPlayback } from '~/picture-in-picture/android/viewer-playba
 import { playerKind } from '~/picture-in-picture/source';
 import { createPipClipStore } from '~/picture-in-picture/android/pip-clip';
 import { patchPipSurface } from '~/picture-in-picture/android/pip-surface';
-import { ANDROID_SETTLE_MS, PLUGIN_NAME } from '~/constants';
+import { ANDROID_SETTLE_MS } from '~/constants';
 import type { CreateWindow, MediaSource, PipWindow } from '~/types';
 
 const MODE_CHANGED_PARAMETERS = ['boolean', 'android.content.res.Configuration'];
@@ -25,7 +25,7 @@ const unsupported: PipWindow = {
 };
 
 function report(error: unknown) {
-	if (!isCancellation(error)) console.error(`[${PLUGIN_NAME}] Android window failed:`, error);
+	if (!isCancellation(error)) logger.error(`Android window failed:`, error);
 }
 
 function videoUri(source: MediaSource | undefined): string | undefined {
@@ -46,7 +46,7 @@ function settle(): Promise<void> {
  * @returns The window, or one that never opens when the loader lacks a capability it needs.
  */
 export const createWindow: CreateWindow = (context, events) => {
-	if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) return unsupported;
+	if (!ensureCapabilities(context.native, context.capabilities)) return unsupported;
 
 	const { java, hooks } = context.native;
 	const viewer = createViewerPlayback();

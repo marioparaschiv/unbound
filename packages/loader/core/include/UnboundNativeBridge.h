@@ -9,7 +9,7 @@
 
 #include "LoaderAddons.h"
 #include "LoaderFontService.h"
-#include "LoaderUpdater.h"
+#include "LoaderTransport.h"
 
 namespace loader {
 // What `globalThis.UnboundNative` reads and does. Each member runs when the client calls its
@@ -44,6 +44,5 @@ UnboundNativeProvider makeUnboundNativeProvider(const AddonState                
                                                 std::string origin, uint32_t bytecodeVersion,
                                                 std::string documents, FileDownloader download);
 
-// Installs `globalThis.UnboundNative`.
 void installUnboundNative(facebook::jsi::Runtime &runtime, UnboundNativeProvider provider);
 }

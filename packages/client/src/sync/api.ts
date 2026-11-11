@@ -6,12 +6,12 @@ import toError from '@unbound-app/utils/to-error';
 
 import { applyActions, collectLocalDocument } from '~/sync/device';
 import { isJsonEqual, plan, reconcileBase } from '~/sync/merge';
+import type { ApiRequest } from '~/account/client';
 import type { SyncStrategy } from '~/sync/merge';
-import type { ApiRequest } from '~/account/api';
 import { getBucket } from '~/storage/api';
 import * as account from '~/account/api';
 
-/** The settings store Sync keeps its mode and last agreed document in. Never synced. */
+/** The Bucket Sync keeps its mode and last agreed document in. Never synced. */
 export const SYNC_STORE = 'unbound::sync';
 
 /** Which way automatic syncs move changes on this device. */

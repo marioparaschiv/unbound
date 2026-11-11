@@ -114,7 +114,7 @@ async function readChatInputLayout(
 }
 
 function reportLayoutFailure(operation: string, error: unknown): void {
-	console.error(`[Aussie Mode] Failed to ${operation}:`, error);
+	logger.error(`Failed to ${operation}:`, error);
 }
 
 function isKeyboardHiddenLayout(layout: ChatInputLayout): boolean {

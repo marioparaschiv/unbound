@@ -1,0 +1,160 @@
+import { afterEach, describe, expect, test } from 'bun:test';
+
+import type { Diagnostic } from '~/lib/check/diagnostic';
+import type { DiscoveredAddon } from '~/lib/discovery';
+import { BUILD_REPORT_ENV } from '~/rollup/build-env';
+import { discoverAddons } from '~/lib/discovery';
+import { buildAddon } from '~/lib/build-addon';
+import type { Check } from '~/lib/check/check';
+
+import { createTempDir, runUbd, type TempDir } from '../helpers/ubd';
+import { loadWorkspace } from '../helpers/config';
+
+const dirs: TempDir[] = [];
+
+afterEach(() => {
+	for (const dir of dirs.splice(0)) dir.remove();
+});
+
+function manifest(id: string, main: string): string {
+	return JSON.stringify({ id, name: id, description: 'x', version: '1.0.0', main });
+}
+
+function workspace(build: string): TempDir {
+	const dir = createTempDir({
+		'unbound.config.json': JSON.stringify({ addons: ['addons/*'], build, output: 'dist' }),
+		'addons/built/manifest.json': manifest('com.example.built', 'index.tsx'),
+		'addons/built/package.json': JSON.stringify({ scripts: { build } }),
+		'addons/built/index.tsx': 'export default {};',
+		'addons/static/manifest.json': manifest('com.example.static', 'index.js'),
+		'addons/static/index.js': 'module.exports = {};',
+	});
+
+	dirs.push(dir);
+
+	return dir;
+}
+
+async function findAddon(dir: TempDir, id: string): Promise<DiscoveredAddon> {
+	const addons = await discoverAddons(loadWorkspace(dir.path));
+	const addon = addons.find((entry) => entry.id === id);
+
+	if (!addon) {
+		throw new Error(`${id} was not discovered.`);
+	}
+
+	return addon;
+}
+
+function issue(severity: Diagnostic['severity'], message: string): Diagnostic {
+	return { file: 'src/index.tsx', line: 1, column: 1, severity, message };
+}
+
+function reporting(issues: Diagnostic[], seen: string[] = []): Check {
+	return {
+		id: 'fixture',
+		run({ addon }) {
+			seen.push(addon.id);
+
+			return issues;
+		},
+	};
+}
+
+async function buildWithChecks(
+	addon: DiscoveredAddon,
+	command: string,
+	checks: readonly Check[],
+): Promise<boolean> {
+	return (await buildAddon(addon, { command, checks })).ok;
+}
+
+describe('buildAddon', () => {
+	test('an error from a check fails the build', async () => {
+		const addon = await findAddon(workspace('true'), 'com.example.built');
+		const check = reporting([issue('error', 'broken layout')]);
+
+		expect(await buildWithChecks(addon, 'true', [check])).toBe(false);
+	});
+
+	test('a warning from a check does not fail the build', async () => {
+		const addon = await findAddon(workspace('true'), 'com.example.built');
+		const check = reporting([issue('warning', 'large media')]);
+
+		expect(await buildWithChecks(addon, 'true', [check])).toBe(true);
+	});
+
+	test('a check that throws fails the build', async () => {
+		const addon = await findAddon(workspace('true'), 'com.example.built');
+		const check: Check = {
+			id: 'crashing',
+			run() {
+				throw new Error('boom');
+			},
+		};
+
+		expect(await buildWithChecks(addon, 'true', [check])).toBe(false);
+	});
+
+	test('a static addon skips the bundle step but runs the checks', async () => {
+		const addon = await findAddon(workspace('exit 1'), 'com.example.static');
+		const seen: string[] = [];
+		const check = reporting([issue('error', 'broken layout')], seen);
+
+		expect(addon.static).toBe(true);
+		expect(await buildWithChecks(addon, 'exit 1', [check])).toBe(false);
+		expect(seen).toEqual(['com.example.static']);
+	});
+
+	test('a failed bundle step skips the checks', async () => {
+		const addon = await findAddon(workspace('exit 1'), 'com.example.built');
+		const seen: string[] = [];
+
+		expect(await buildWithChecks(addon, 'exit 1', [reporting([], seen)])).toBe(false);
+		expect(seen).toEqual([]);
+	});
+
+	test('runs the checks in order', async () => {
+		const addon = await findAddon(workspace('true'), 'com.example.built');
+		const seen: string[] = [];
+		const checks = ['first', 'second', 'third'].map((name) => ({
+			id: name,
+			run() {
+				seen.push(name);
+
+				return [];
+			},
+		}));
+
+		expect(await buildWithChecks(addon, 'true', checks)).toBe(true);
+		expect(seen).toEqual(['first', 'second', 'third']);
+	});
+
+	test('asks the preset for a report only when told to', async () => {
+		const addon = await findAddon(workspace('true'), 'com.example.built');
+		const build = (command: string, report: boolean) =>
+			buildAddon(addon, { command, checks: [], report });
+
+		expect((await build(`test -z "$${BUILD_REPORT_ENV}"`, false)).ok).toBe(true);
+		expect((await build(`test -n "$${BUILD_REPORT_ENV}"`, true)).ok).toBe(true);
+	});
+});
+
+describe('ubd build', () => {
+	test('builds the built addon and checks the static one', async () => {
+		const dir = workspace('true');
+		const result = await runUbd(['build'], dir.path, {});
+
+		expect(result.exitCode).toBe(0);
+		expect(result.stderr).toContain('Building com.example.built…');
+		expect(result.stderr).toContain('Checking com.example.static (static addon)…');
+		expect(result.stderr).toContain('Built com.example.static.');
+	});
+
+	test('fails when the bundle step fails', async () => {
+		const result = await runUbd(['build'], workspace('exit 1').path, {});
+
+		expect(result.exitCode).not.toBe(0);
+		expect(result.stderr).toContain('Failed to build com.example.built.');
+	});
+});

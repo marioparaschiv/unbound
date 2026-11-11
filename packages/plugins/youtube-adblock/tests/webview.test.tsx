@@ -1,6 +1,5 @@
 import { metro, render, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { forwardRef } from 'react';
 import { View, type ViewProps } from 'react-native';
 
@@ -18,7 +17,6 @@ function renderWebView(props: WebViewProps) {
 }
 
 beforeEach(async () => {
-	resetHealth();
 	metro.register({ WebView });
 	await startPlugin();
 });

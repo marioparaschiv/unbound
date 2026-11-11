@@ -12,12 +12,6 @@ int main()
     assert(unset["resources"]["hooks"] == 0);
     assert(unset["resources"]["surfaces"] == 0);
     assert(unset["resources"]["handles"] == 0);
-    loader::native::setPlatformHandleCounter([] {
-        return size_t(3);
-    });
-    assert(loader::debugEnvironment(provider)["resources"]["handles"] == 3);
-    loader::native::setPlatformHandleCounter(nullptr);
-
     nlohmann::json kinds = loader::debugEnvironment(provider)["resources"];
     for (const char *name : {"objcHandles", "objcPlans", "objcRetains", "javaHandles", "leases"})
     {
@@ -29,7 +23,12 @@ int main()
         return size_t(7);
     });
     assert(loader::debugEnvironment(provider)["resources"]["javaHandles"] == 7);
-    assert(loader::debugEnvironment(provider)["resources"]["handles"] == 0);
+    assert(loader::debugEnvironment(provider)["resources"]["handles"] == 7);
+    loader::native::setPlatformResourceCounter(loader::native::kObjCPlanCounter, [] {
+        return size_t(3);
+    });
+    assert(loader::debugEnvironment(provider)["resources"]["handles"] == 10);
+    loader::native::setPlatformResourceCounter(loader::native::kObjCPlanCounter, nullptr);
     loader::native::setPlatformResourceCounter(loader::native::kJavaHandleCounter, nullptr);
     assert(loader::debugEnvironment(provider)["resources"]["javaHandles"] == 0);
 

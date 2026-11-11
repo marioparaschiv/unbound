@@ -124,7 +124,6 @@ export function isComponentCandidate(source: string): boolean {
 
 /**
  * @description Builds the light index entry kept for every module.
- * @param module The module to summarize.
  * @returns The module's id, path and the names it assigns onto its exports object or defines getters for.
  */
 export function summarize(module: ModuleRecord): ModuleSummary {

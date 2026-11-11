@@ -1,8 +1,6 @@
 {
 	"name": "gif-provider-switcher",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Search GIFs from Tenor or Giphy instead of Klipy, and switch providers right from the GIF picker.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

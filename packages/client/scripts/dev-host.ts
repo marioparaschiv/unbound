@@ -61,7 +61,7 @@ export function lanCandidates(): Candidate[] {
  * when the guess is wrong. Falls back to `localhost` when no external interface is found.
  * @returns The best-guess LAN address, or `localhost`.
  */
-export function detectLanIp(): string {
+function detectLanIp(): string {
 	return lanCandidates()[0]?.address ?? 'localhost';
 }
 
@@ -94,5 +94,3 @@ export function resolveDevHost(): string {
 export function resolveDevServerUrl(): string {
 	return process.env.DEV_SERVER_URL || `http://${resolveDevHost()}:${PORT}`;
 }
-
-export default { lanCandidates, detectLanIp, resolveDevHost, resolveDevServerUrl };

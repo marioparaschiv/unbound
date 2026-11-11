@@ -10,33 +10,37 @@ import type {
 	Maintainer,
 	MyAddonsResponse,
 } from '@unbound-app/contracts/addons';
-import { and, desc, EmptyFilter, eq, gte, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import { addonIdSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
+import { and, EmptyFilter, eq, gte, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import type { RepositoryDetails } from '@unbound-app/contracts/source';
 import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import { Type, type TSchema } from '@unbound-app/contracts/schema';
 import type { PinnableField } from '@unbound-app/contracts/admin';
 
+import {
+	LISTED_ADDONS,
+	LIVE_VERSIONS,
+	SERVED_VERSION,
+	requireAddon,
+	servedVersionValue,
+} from '~/lib/addon-visibility';
 import { OPEN_SUBMISSION_STATUSES, requireSourced, toSubmission } from '~/lib/submissions';
-import { afterKey, cursorTime, decodeCursor, toKeysetPage } from '~/lib/keyset';
 import type { AddonVersionRow, VersionSubmission } from '~/lib/artifacts';
 import { VERSION_SOURCE, toAddonVersion } from '~/lib/artifacts';
 import { MAINTAINERS, toMaintainers } from '~/lib/maintainers';
 import { addon, addonTag, addonVersion } from '~/db/schema';
 import type { ActionMeta } from '~/lib/moderation-events';
+import { cursorTime, keysetList } from '~/lib/keyset';
 import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import { renderAddonIcon } from '~/lib/addon-icons';
-import { LIVE_VERSIONS } from '~/lib/live-versions';
 import { likeContains } from '~/lib/like-contains';
 import type { Transaction } from '~/db/database';
 import { readAddonTags } from '~/lib/addon-tags';
 import { splitList } from '~/lib/addon-filters';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
-import type { CursorKey } from '~/lib/keyset';
 import { DAY_MS } from '~/lib/calendar-date';
-import { ApiError } from '~/lib/api/errors';
 import one from '~/db/one';
 
 export type AddonRow = typeof addon.$inferSelect;
@@ -101,12 +105,7 @@ export const PINNED_FIELDS = {
 
 /** The relational `with` that loads the version an addon serves: its newest live version. */
 export const LATEST_VERSION = {
-	versions: {
-		where: LIVE_VERSIONS,
-		orderBy: { versionKey: 'desc' },
-		limit: 1,
-		with: VERSION_SOURCE,
-	},
+	versions: { ...SERVED_VERSION, with: VERSION_SOURCE },
 } as const;
 
 /**
@@ -158,12 +157,12 @@ function unlessPinned(field: PinnableField, column: PinnableColumn, value: strin
  * @returns Resolves once the summary is copied.
  */
 export async function refreshAddonSummary(tx: Transaction, addonId: string): Promise<void> {
-	const [latest] = await tx
-		.select({ manifest: addonVersion.manifest, publishedAt: addonVersion.publishedAt })
-		.from(addonVersion)
-		.where(and(eq(addonVersion.addonId, addonId), isNull(addonVersion.withdrawnBy)))
-		.orderBy(desc(addonVersion.versionKey))
-		.limit(1);
+	const row = await tx.query.addon.findFirst({
+		where: { id: addonId },
+		columns: { id: true },
+		with: { versions: { ...SERVED_VERSION, columns: { manifest: true, publishedAt: true } } },
+	});
+	const latest = row?.versions[0];
 
 	if (!latest) {
 		throw new Error(`Addon ${addonId} has no live version to summarize.`);
@@ -229,11 +228,10 @@ async function setDelisted(
 	const row = await ctx.db.transaction(async (tx) => {
 		const [current] = await tx.select().from(addon).where(eq(addon.id, addonId));
 
-		if (!current) {
-			throw new ApiError('not_found', `Addon ${addonId} does not exist.`);
-		}
-
-		return writeDelisted(tx, current, delisted, { actorId: caller.user.id, at });
+		return writeDelisted(tx, requireAddon(current, addonId), delisted, {
+			actorId: caller.user.id,
+			at,
+		});
 	});
 
 	return { addon: toAddon(row) };
@@ -272,12 +270,6 @@ export function relistAddon(
 	return setDelisted(ctx, caller, addonId, false);
 }
 
-function listingKey(row: AddonRow, sort: AddonSort): CursorKey {
-	const value = row[SORT_COLUMNS[sort]];
-
-	return [value instanceof Date ? value.getTime() : value, row.id];
-}
-
 function tagFilter(table: ListingTable, query: ListingFilters) {
 	const tags = splitList(query.tags);
 
@@ -304,8 +296,8 @@ function authorFilter(table: ListingTable, query: ListingFilters) {
 
 	if (ids.length === 0) return;
 
-	const served = sql`select ${addonVersion.manifest} -> 'authors' from ${addonVersion} where ${addonVersion.addonId} = ${table.id} and ${addonVersion.withdrawnBy} is null order by ${addonVersion.versionKey} desc limit 1`;
-	const credited = sql`exists (select 1 from json_array_elements((${served})) as author where author ->> 'id' in (${sql.join(
+	const served = servedVersionValue(table, sql`${addonVersion.manifest} -> 'authors'`);
+	const credited = sql`exists (select 1 from json_array_elements(${served}) as author where author ->> 'id' in (${sql.join(
 		ids.map((id) => sql`${id}`),
 		sql`, `,
 	)}))`;
@@ -322,39 +314,44 @@ function updatedFilter(ctx: AppContext, table: ListingTable, query: ListingFilte
 }
 
 /**
- * @description Builds the one statement behind {@link listAddons}: one page plus a lookahead row,
- * keyset-paginated over the sort column and id so every filter and sort reads one index.
+ * @description Builds one page of {@link listAddons}, keyset-paginated over the sort column and id so
+ * every filter and sort reads one index.
  * @param ctx The application context.
  * @param query The type, tag, author and update filters, search text, sort and the previous page's cursor.
- * @returns The unexecuted relational query.
+ * @returns The page's statement and its reader.
  */
 export function queryListedAddons(ctx: AppContext, query: ListAddonsQuery = {}) {
-	const { type, q, sort = 'name', order = 'asc', cursor } = query;
-	const column = SORT_COLUMNS[sort];
-	const after = cursor ? decodeCursor(cursor, CURSOR_SCHEMAS[sort]) : undefined;
+	const { type, q, sort = 'name', order = 'asc' } = query;
 
-	return ctx.db.query.addon.findMany({
-		where: {
-			delistedAt: { isNull: true },
-			type: type ?? EmptyFilter,
-			RAW: (table) =>
-				and(
-					q
-						? or(likeContains(table.name, q), likeContains(table.description, q))
-						: undefined,
-					tagFilter(table, query),
-					authorFilter(table, query),
-					updatedFilter(ctx, table, query),
-					after ? afterKey([table[column], table.id], after, order) : undefined,
-				) ?? sql`true`,
-		},
-		with: LATEST_VERSION,
-		orderBy: (table, operators) => {
-			const direction = operators[order];
-
-			return [direction(table[column]), direction(table.id)];
-		},
-		limit: ctx.env.ADDON_LIST_PAGE_SIZE + 1,
+	return keysetList({
+		key: [SORT_COLUMNS[sort], 'id'],
+		schema: CURSOR_SCHEMAS[sort],
+		request: query,
+		order,
+		size: ctx.env.ADDON_LIST_PAGE_SIZE,
+		query: (page) =>
+			ctx.db.query.addon.findMany({
+				where: {
+					...LISTED_ADDONS,
+					type: type ?? EmptyFilter,
+					RAW: (table) =>
+						and(
+							q
+								? or(
+										likeContains(table.name, q),
+										likeContains(table.description, q),
+									)
+								: undefined,
+							tagFilter(table, query),
+							authorFilter(table, query),
+							updatedFilter(ctx, table, query),
+							page.where(table),
+						) ?? sql`true`,
+				},
+				with: LATEST_VERSION,
+				orderBy: (table) => page.orderBy(table),
+				limit: page.limit,
+			}),
 	});
 }
 
@@ -390,10 +387,7 @@ export async function listAddons(
 	ctx: AppContext,
 	query: ListAddonsQuery = {},
 ): Promise<ListAddonsResponse> {
-	const rows = await queryListedAddons(ctx, query);
-	const page = toKeysetPage(rows, ctx.env.ADDON_LIST_PAGE_SIZE, query, (row) =>
-		listingKey(row, query.sort ?? 'name'),
-	);
+	const page = await queryListedAddons(ctx, query).page();
 
 	return { addons: toListedAddons(ctx, page.items), nextCursor: page.next };
 }
@@ -405,7 +399,7 @@ export async function listAddons(
  */
 export async function listListedAddons(ctx: AppContext): Promise<ListedAddon[]> {
 	const rows = await ctx.db.query.addon.findMany({
-		where: { delistedAt: { isNull: true } },
+		where: LISTED_ADDONS,
 		with: LATEST_VERSION,
 		orderBy: { id: 'asc' },
 	});
@@ -459,7 +453,7 @@ export async function getAddonDetails(
 	id: string,
 ): Promise<AddonDetails | undefined> {
 	const row = await ctx.db.query.addon.findFirst({
-		where: { id, delistedAt: { isNull: true } },
+		where: { ...LISTED_ADDONS, id },
 		with: {
 			versions: {
 				where: LIVE_VERSIONS,
@@ -503,7 +497,7 @@ export async function listAddonVersions(
 	id: string,
 ): Promise<AddonVersion[] | undefined> {
 	const row = await ctx.db.query.addon.findFirst({
-		where: { id, delistedAt: { isNull: true } },
+		where: { ...LISTED_ADDONS, id },
 		with: {
 			versions: {
 				where: LIVE_VERSIONS,

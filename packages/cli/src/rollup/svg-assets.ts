@@ -14,8 +14,9 @@ export const SVG_WARN_BYTES = 32 * 1024;
 export const SVG_ICON_MODULE = '\0unbound-svg-icon';
 
 const PREFIX = '\0unbound-svg:';
-// The `ubd check` id this plugin reports under.
-const CHECK = 'assets';
+
+/** The `ubd check` id this plugin reports under. */
+export const CHECK = 'assets';
 
 /**
  * @description The source of {@link SVG_ICON_MODULE}. `createSvgIcon(xml)` makes a component with the props of
@@ -159,4 +160,4 @@ export function svgImports(pluginRoot: string): Plugin {
 	};
 }
 
-export default { SVG_WARN_BYTES, SVG_ICON_MODULE, svgIconModuleSource, svgImports };
+export default { CHECK, SVG_WARN_BYTES, SVG_ICON_MODULE, svgIconModuleSource, svgImports };

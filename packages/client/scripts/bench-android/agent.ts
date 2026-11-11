@@ -1,4 +1,6 @@
 // Device code, run first. It imports nothing from the client, so it never changes which client modules load.
+import type { BenchHooks } from '~/core/bench-hooks';
+
 import type { BenchConfig } from '../build/plugins/bench';
 
 /** Swapped for the config's JSON by the bench build plugin. */
@@ -55,13 +57,6 @@ type Total = [ms: number, calls: number];
 
 /** A timed piece of work: its name, start and end epoch. */
 type Span = [name: string, start: number, end: number];
-
-type BenchHooks = {
-	mark: (name: string) => void;
-	now: () => number;
-	span: (name: string, start: number, end: number) => void;
-	add: (name: string, ms: number) => void;
-};
 
 /** One measured window: what ran, what loaded and how the JS thread stalled while it lasted. */
 type Window = {

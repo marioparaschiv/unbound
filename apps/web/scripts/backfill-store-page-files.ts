@@ -6,11 +6,11 @@ import {
 	STORE_PAGE_FILENAME,
 } from '@unbound-app/contracts/addon-page-text';
 import { addonPageSchema, type AddonPage } from '@unbound-app/contracts/addon-page';
+import { getVersionDirectory } from '@unbound-app/contracts/version-layout';
 import { parse } from '@unbound-app/contracts/schema';
 import { createLogger } from '@unbound-app/logger';
 
 import { buildStorePageFile } from '~/lib/store-page-file';
-import { getVersionDirectory } from '~/lib/artifacts';
 import { createDatabase } from '~/db/database';
 import { createStorage } from '~/lib/storage';
 import { addonVersion } from '~/db/schema';

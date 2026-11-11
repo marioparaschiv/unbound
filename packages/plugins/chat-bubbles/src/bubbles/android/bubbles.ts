@@ -25,8 +25,11 @@ import {
 	sameJavaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
 import {
+	MESSAGE_CONTENT_VIEW,
+	MESSAGE_VIEW,
 	messageBindMethod,
 	messageIdField,
+	messageIdOf,
 	viewByIdNameAsync,
 } from '@unbound-plugins/shared/native/android/discord-views';
 
@@ -42,7 +45,7 @@ import {
 	type Box,
 	type Edges,
 } from '~/bubbles/geometry';
-import { AndroidClass, BubbleLayout, CARD_INSET, PLUGIN_NAME } from '~/constants';
+import { AndroidClass, BubbleLayout, CARD_INSET } from '~/constants';
 import { forgetBubbles, installBindGuard, rememberBubble } from '~/bubbles/android/ui-bubbles';
 import { currentAppearance } from '~/bubbles/theme';
 import { argb } from '~/bubbles/style';
@@ -66,7 +69,6 @@ const MAX_ANCESTORS = 16;
 const VISIBLE = 0;
 const ICON_SPACING_DP = 4;
 const BUBBLE_LAYER_ID = 0x0b0b1e;
-const MESSAGE_ID_GETTER = 'getId-3Eiw7ao';
 const BIND_SETTLE_MS = 50;
 const PLACEMENT_WORKERS = 8;
 const LAYOUT_PARAMETERS = ['boolean', 'int', 'int', 'int', 'int'];
@@ -78,10 +80,9 @@ const MATCH_PARENT = -1;
  * @returns `refresh`, which repaints the bubbles it drew, and `dispose`, which brings back the rows' own backgrounds.
  */
 export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
-	const messageClass = java.getClass(AndroidClass.messageView);
-	const idField = messageIdField(java);
+	const messageClass = java.getClass(MESSAGE_VIEW);
 	const bindMessage = messageBindMethod(java);
-	const contentClass = java.getClass(AndroidClass.content);
+	const contentClass = java.getClass(MESSAGE_CONTENT_VIEW);
 	const textViewClass = java.getClass('android.widget.TextView');
 	const imageViewClass = java.getClass('android.widget.ImageView');
 	const layerDrawableClass = java.getClass('android.graphics.drawable.LayerDrawable');
@@ -103,10 +104,10 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		installBindGuard,
 		scope,
 		{
-			messageView: AndroidClass.messageView,
+			messageView: MESSAGE_VIEW,
 			bindName: bindMessage.name,
 			bindParameters: bindMessage.parameters,
-			messageIdGetter: MESSAGE_ID_GETTER,
+			idField: messageIdField(java),
 			layerId: BUBBLE_LAYER_ID,
 			ours,
 			original,
@@ -411,7 +412,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 	}
 
 	async function isNested(row: NativeJavaReference): Promise<boolean> {
-		const [outer] = await java.findViews(row, AndroidClass.messageView, {
+		const [outer] = await java.findViews(row, MESSAGE_VIEW, {
 			direction: 'ancestors',
 			maxDepth: MAX_ANCESTORS,
 			maxResults: 1,
@@ -494,13 +495,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		if (problems.size > MAX_TRACKED) problems.delete(problems.keys().next().value!);
 	}
 
-	function messageId(row: NativeJavaReference): string | undefined {
-		try {
-			return javaText(java.getField(row, idField));
-		} catch {
-			return undefined;
-		}
-	}
+	const messageId = (row: NativeJavaReference) => messageIdOf(java, row);
 
 	async function isBubble(background: NativeJavaReference): Promise<boolean> {
 		if (!isInstance(layerDrawableClass, background)) return false;
@@ -634,7 +629,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 			for (let row = queue.shift(); row && !disposed; row = queue.shift()) {
 				await place(row).catch((error) => {
 					if (!isCancellation(error)) {
-						console.error(`[${PLUGIN_NAME}] Failed to place a bubble:`, error);
+						logger.error(`Failed to place a bubble:`, error);
 					}
 				});
 			}
@@ -689,7 +684,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 
 			void scheduleRow(accessories).catch((error) => {
 				if (!isCancellation(error)) {
-					console.error(`[${PLUGIN_NAME}] Failed to find a bubble's row:`, error);
+					logger.error(`Failed to find a bubble's row:`, error);
 				}
 			});
 		},
@@ -734,14 +729,14 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 
 		if (!root) return;
 
-		for (const row of await findViewsOfClass(java, root, AndroidClass.messageView)) {
+		for (const row of await findViewsOfClass(java, root, MESSAGE_VIEW)) {
 			if (!(await isNested(row))) schedule(row);
 		}
 	}
 
 	refreshVisible().catch((error) => {
 		if (!isCancellation(error)) {
-			console.error(`[${PLUGIN_NAME}] Failed to scan the views on screen:`, error);
+			logger.error(`Failed to scan the views on screen:`, error);
 		}
 	});
 
@@ -759,10 +754,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 			if (currentAppearance().layout === BubbleLayout.card && shiftedIcons.length) {
 				runOnMain(java, shiftedIcons.splice(0).map(unshiftOperation)).catch((error) => {
 					if (!isCancellation(error)) {
-						console.error(
-							`[${PLUGIN_NAME}] Failed to put the footer icons back:`,
-							error,
-						);
+						logger.error(`Failed to put the footer icons back:`, error);
 					}
 				});
 			}
@@ -771,7 +763,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 
 			refreshVisible().catch((error) => {
 				if (!isCancellation(error)) {
-					console.error(`[${PLUGIN_NAME}] Failed to scan the views on screen:`, error);
+					logger.error(`Failed to scan the views on screen:`, error);
 				}
 			});
 		},
@@ -789,7 +781,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 				]);
 			} catch (error) {
 				if (!isCancellation(error)) {
-					console.error(`[${PLUGIN_NAME}] Failed to restore the rows:`, error);
+					logger.error(`Failed to restore the rows:`, error);
 				}
 			}
 		},

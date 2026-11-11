@@ -1,6 +1,6 @@
+import type { MarketplaceAddonDetails } from '~/lib/marketplace-page';
 import InstallAddonButton from '~/components/install-addon-button';
 import { TagDot } from '~/components/addon-filters/filter-parts';
-import type { MarketplaceAddonDetails } from '~/lib/marketplace';
 import { staggerStyle } from '~/components/motion/reveal-style';
 import BlurReveal from '~/components/motion/blur-reveal';
 import { formatDate } from '~/components/addon/format';

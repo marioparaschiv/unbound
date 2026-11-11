@@ -1,8 +1,6 @@
 {
 	"name": "aussie-mode",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Discord designed for Aussies.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

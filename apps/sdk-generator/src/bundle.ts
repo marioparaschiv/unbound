@@ -4,28 +4,25 @@ import { existsSync, realpathSync } from 'node:fs';
 import { Node } from 'ts-morph';
 
 import {
+	config,
 	SDK_TSCONFIG,
-	INLINED_LIBRARIES,
 	TYPES_INDEX,
 	UTILS_INDEX,
 	UTILS_OUT,
 	INTERNAL_OUT,
 	API_SRC,
-	isJsonObject,
-	readJson,
 	CLIENT,
-	logger,
-} from './paths';
+} from './config';
 import {
-	stripInternal,
 	declaredNames,
 	declaresValue,
 	exportedNames,
 	collectReferencedNames,
-	groupByOwner,
-	typeOnlyStatements,
-} from './transform';
+} from './declarations';
+import { stripInternal, groupByOwner, typeOnlyStatements } from './transform';
+import { isJsonObject, readJson } from './json';
 import { parseSource } from './project';
+import { logger } from './logger';
 
 export type HoistFile = {
 	/** The absolute output path of the generated hoist file. */
@@ -68,7 +65,7 @@ export type HoistFiles = {
 export function bundle(source: string, inlineDeclareGlobals: boolean = false): string {
 	const entry: EntryPointConfig = {
 		filePath: source,
-		libraries: { inlinedLibraries: INLINED_LIBRARIES },
+		libraries: { inlinedLibraries: config.inlinedLibraries },
 		output: { noBanner: true, inlineDeclareGlobals, sortNodes: true },
 	};
 
@@ -82,7 +79,6 @@ export function bundle(source: string, inlineDeclareGlobals: boolean = false): s
  * client package, matching Node's resolution walk without requiring the package to export its
  * manifest through an `exports` map. The directory is canonicalised (workspace packages are
  * symlinked), so dts-bundle-generator sees the real source path its symbol resolution needs.
- * @param library The package name to locate.
  * @returns The package directory, or `undefined` when the package is not installed.
  */
 function findPackageDir(library: string): string | undefined {
@@ -109,7 +105,6 @@ function findPackageDir(library: string): string | undefined {
  * @description Resolves the file that carries a library's typings, in the order the ecosystem
  * declares them: the root export's `types` condition, the `types`/`typings` manifest fields, then
  * a declaration file derived from `main`. Every candidate is validated on disk.
- * @param library The package name to resolve.
  * @returns The absolute typings path, or `undefined` when the package declares none that exist.
  */
 export function resolveLibraryTypes(library: string): string | undefined {
@@ -305,15 +300,15 @@ export function buildHoistFiles(): HoistFiles {
 	const sources: { library: string; out: string }[] = [
 		{ library: UTILS_INDEX, out: UTILS_OUT },
 		{ library: TYPES_INDEX, out: INTERNAL_OUT },
-		...INLINED_LIBRARIES.filter((library) => library !== '@unbound-app/types').map(
-			(library) => {
+		...config.inlinedLibraries
+			.filter((library) => library !== '@unbound-app/types')
+			.map((library) => {
 				const out = outFor(library);
 
 				assigned.add(out);
 
 				return { library, out };
-			},
-		),
+			}),
 	];
 
 	for (const { library, out } of sources) {

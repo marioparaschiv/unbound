@@ -3,15 +3,15 @@ import { describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 import { Glob } from 'bun';
 
-import { createSubmissionRequestSchema, createSubmissionResponseSchema } from '../src/publish';
-import { updatesRequestSchema, updatesResponseSchema } from '../src/updates';
-import { addonManifestSchema, semverSchema } from '../src/manifest';
-import { reviewSubmissionRequestSchema } from '../src/review';
-import { apiErrorResponseSchema } from '../src/errors';
-import { catalogResponseSchema } from '../src/addons';
-import { parse, safeParse } from '../src/schema';
-import { isPostgresSafe } from '../src/text';
-import { apiUrlSchema } from '../src/api';
+import { createSubmissionRequestSchema, createSubmissionResponseSchema } from '~/publish';
+import { updatesRequestSchema, updatesResponseSchema } from '~/updates';
+import { addonManifestSchema, semverSchema } from '~/manifest';
+import { reviewSubmissionRequestSchema } from '~/review';
+import { apiErrorResponseSchema } from '~/errors';
+import { catalogResponseSchema } from '~/addons';
+import { parse, safeParse } from '~/schema';
+import { isPostgresSafe } from '~/text';
+import { apiUrlSchema } from '~/api';
 
 const manifest = {
 	id: 'mario.hello-world',

@@ -2,13 +2,12 @@ import { getActionSheetRow } from '@unbound-plugins/shared/action-sheets/action-
 import patchLazySheets from '@unbound-plugins/shared/action-sheets/patch-lazy-sheets';
 import { isElementNode } from '@unbound-plugins/shared/react/find-element';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import { assets, patcher } from '@unbound-app/api';
 
 import { ActionSheets, ChannelStore, PermissionStore, REST, UserStore } from '~/unsuppress/modules';
 import { actionLabel, getEmbedAction, type Message } from '~/unsuppress/embeds';
 import { findTargetRows, insertionIndex } from '~/unsuppress/row-groups';
-import { ICONS, PLUGIN_NAME, SHEET_ROW_KEY } from '~/constants';
+import { ICONS, SHEET_ROW_KEY } from '~/constants';
 import { getDeleteLabel } from '~/unsuppress/delete-label';
 import { getChannelAccess } from '~/unsuppress/access';
 import { changeEmbeds } from '~/unsuppress/suppress';
@@ -23,7 +22,6 @@ type OpenSheet = {
 };
 
 let open: OpenSheet | null = null;
-let stopSheets: (() => void) | undefined;
 
 // UNKNOWN: an action sheet may render any node.
 function addRow(result: unknown) {
@@ -70,10 +68,11 @@ function addRow(result: unknown) {
  * @description Adds a Suppress Embeds or Unsuppress Embeds row above Delete in the message long-press action sheet.
  * Patches `openLazy` on Discord's action sheets and each message long-press sheet's render. Reads channels from
  * `ChannelStore`, the viewer from `UserStore`, permissions from `PermissionStore`, and changes flags with `REST`.
+ * @returns A function that ignores sheets still loading, which the Addon scope can't see.
  */
-export function startUnsuppress(): void {
+export function startUnsuppress(): (() => void) | undefined {
 	if (
-		!ensureModules(PLUGIN_NAME, {
+		!ensureModules({
 			ActionSheets,
 			REST,
 			ChannelStore,
@@ -84,7 +83,7 @@ export function startUnsuppress(): void {
 		return;
 	}
 
-	stopSheets = patchLazySheets<SheetProps>(patcher, ActionSheets, (key, props) => {
+	const stopSheets = patchLazySheets<SheetProps>(patcher, ActionSheets, (key, props) => {
 		if (!key.endsWith('MessageLongPressActionSheet')) return;
 
 		open = props.message ? { key, message: props.message } : null;
@@ -92,14 +91,8 @@ export function startUnsuppress(): void {
 		return open ? addRow : undefined;
 	});
 
-	recordApplied(1);
-}
-
-/**
- * @description Ignores sheets that are still loading, which the Addon scope can't see.
- */
-export function stopUnsuppress(): void {
-	stopSheets?.();
-	stopSheets = undefined;
-	open = null;
+	return () => {
+		stopSheets();
+		open = null;
+	};
 }

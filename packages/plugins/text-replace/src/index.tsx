@@ -1,8 +1,8 @@
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+
 import { replaceSelfTest, startReplace } from '~/replace';
 import SettingsPanel from '~/components/settings-panel';
 
-export function start() {
-	startReplace();
-}
+export const { start, stop, selfTest } = runFeatures([startReplace], { selfTest: replaceSelfTest });
 
-export { replaceSelfTest as selfTest, SettingsPanel };
+export { SettingsPanel };

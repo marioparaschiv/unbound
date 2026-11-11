@@ -1,6 +1,4 @@
-import { createApiClient } from '@unbound-app/web/client';
 import { createLogger } from '@unbound-app/logger';
-import type { Api } from '@unbound-app/web/api';
 
 import {
 	isSponsorBadgeId,
@@ -8,19 +6,20 @@ import {
 	type SponsorBadges,
 } from '~/builtins/sponsor-badge-shapes';
 import { byFluxStore, byProps, byPrototypes } from '~/metro/filters';
-import { findByPropsLazy, findStoreLazy } from '~/metro/wrappers';
+import { findByProps, findStore } from '~/metro/lookups';
 import { createPatcher } from '~/patcher/create-patcher';
-import { API_URL, Screens } from '~/core/constants';
+import { createUnboundClient } from '~/account/client';
 import { onModuleLoaded } from '~/metro/wait';
+import { Screens } from '~/core/constants';
 import { Users } from '~/metro/stores';
 import { messages } from '~/i18n/api';
 
 const Patcher = createPatcher('unbound::sponsor-badges');
 const Logger = createLogger('SponsorBadges');
 
-const UserProfiles = findStoreLazy('UserProfile');
-const BadgeDirectoryScreen = findByPropsLazy('closeBadgeDirectoryScreen');
-const UserSettings = findByPropsLazy('openUserSettings');
+const UserProfiles = findStore('UserProfile');
+const BadgeDirectoryScreen = findByProps('closeBadgeDirectoryScreen');
+const UserSettings = findByProps('openUserSettings');
 
 // `null` while a user's badges load, so each user is asked for once per session.
 const badgesByUser = new Map<string, SponsorBadges | null>();
@@ -116,7 +115,7 @@ async function load(userId: string) {
 	badgesByUser.set(userId, null);
 
 	try {
-		const request = createApiClient<Api>({ baseUrl: API_URL });
+		const request = createUnboundClient();
 		const { badges } = await request('GET /api/v1/users/$id/badges', {
 			params: { id: userId },
 		});

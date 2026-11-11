@@ -88,5 +88,3 @@ function warnIfUnowned(owner: string) {
 		`Commands of "${owner}" are not removed automatically: no plugin has that id. Pass your manifest id, or call unregisterAll() in stop.`,
 	);
 }
-
-export default { createOwnerCommands };

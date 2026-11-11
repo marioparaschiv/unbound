@@ -1,3 +1,5 @@
+import { asId } from '@unbound-plugins/shared/values/as-id';
+
 import type { Guild } from '~/images/targets';
 
 export type OpenedSheet =
@@ -14,16 +16,6 @@ export type SheetProps = {
 	guildId?: unknown;
 	guild?: unknown;
 };
-
-/**
- * @description Reads an ID Discord passed untyped.
- * @param value A sheet prop or menu field.
- * @returns The ID, or `undefined` unless it is a non-empty string.
- */
-// UNKNOWN: sheet props and menu fields come from Discord untyped.
-export function asId(value: unknown): string | undefined {
-	return typeof value === 'string' && value ? value : undefined;
-}
 
 function isGuild(value: unknown): value is Guild {
 	return typeof value === 'object' && value !== null;
@@ -47,4 +39,4 @@ export function toOpenedSheet(key: string, props: SheetProps): OpenedSheet | nul
 	}
 }
 
-export default { asId, toOpenedSheet };
+export default { toOpenedSheet };

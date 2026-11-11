@@ -4,14 +4,14 @@ import type { AddonKind } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
 import type { ShareDestination } from '~/ui/share/share-destination-sheet';
-import { findByPropsLazy, findStoreLazy } from '~/metro/wrappers';
-import { getInstalledVersion } from '~/marketplace/install';
 import { navigationReady } from '~/core/navigation-ready';
+import { findByProps, findStore } from '~/metro/lookups';
 import { createPatcher } from '~/patcher/create-patcher';
 import { ActionSheets, Linking } from '~/metro/api';
 import MarketplaceStore from '~/marketplace/state';
 import { getNativeModule } from '~/native/runtime';
 import { messages, format } from '~/i18n/api';
+import { Manager } from '~/addons/manager';
 import { Screens } from '~/core/constants';
 import { show } from '~/toasts/api';
 import fs from '~/native/fs';
@@ -57,18 +57,18 @@ const MAX_RECENT_DMS = 8;
 const DRAFT_CHANNEL_MESSAGE = 0;
 const UPLOAD_PLATFORM_REACT_NATIVE = 0;
 
-const Uploads = findByPropsLazy('addFiles', 'popFirstFile');
-const Router = findByPropsLazy('transitionToGuild');
-const Constants = findByPropsLazy('Permissions', 'ChannelTypes');
-const GuildStore = findByPropsLazy('getGuild', 'getGuilds');
-const ChannelStore = findStoreLazy('Channel');
-const SelectedChannelStore = findStoreLazy('SelectedChannel');
-const PrivateChannelSortStore = findStoreLazy('PrivateChannelSort');
-const FrecencyStore = findStoreLazy('Frecency');
-const PermissionStore = findStoreLazy('Permission');
-const UserStore = findStoreLazy('User');
+const Uploads = findByProps('addFiles', 'popFirstFile');
+const Router = findByProps('transitionToGuild');
+const Constants = findByProps('Permissions', 'ChannelTypes');
+const GuildStore = findByProps('getGuild', 'getGuilds');
+const ChannelStore = findStore('Channel');
+const SelectedChannelStore = findStore('SelectedChannel');
+const PrivateChannelSortStore = findStore('PrivateChannelSort');
+const FrecencyStore = findStore('Frecency');
+const PermissionStore = findStore('Permission');
+const UserStore = findStore('User');
 // Discord's one entry for tapped links (messages, embeds, buttons): it shows the leaving-Discord prompt, then opens the URL.
-const LinkClicks = findByPropsLazy('handleClick', 'isLinkTrusted');
+const LinkClicks = findByProps('handleClick', 'isLinkTrusted');
 
 let subscription: LinkSubscription | undefined;
 let handling = false;
@@ -267,7 +267,7 @@ const targets: LinkTargets = {
 	load: () => MarketplaceStore.getState().load(),
 	refresh: () => MarketplaceStore.getState().refresh(),
 	state: () => MarketplaceStore.getState().state,
-	installedVersion: getInstalledVersion,
+	installedVersion: (kind, listed) => Manager.for(kind).getInstalledVersion(listed),
 	open,
 };
 

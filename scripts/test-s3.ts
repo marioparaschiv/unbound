@@ -1,10 +1,10 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import { join } from 'node:path';
+
+import { ROOT } from './workspaces';
 
 // Runs the `*.s3.ts` integration tests against a throwaway MinIO container. They are kept out of
 // the default `bun test` run because they need podman.
 
-const ROOT = join(import.meta.dir, '..');
 const IMAGE = process.env.MINIO_IMAGE ?? 'cgr.dev/chainguard/minio';
 const CONTAINER = `unbound-test-minio-${process.pid}`;
 const USER = 'unbound-test';

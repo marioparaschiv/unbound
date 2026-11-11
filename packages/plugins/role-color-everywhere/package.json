@@ -1,8 +1,6 @@
 {
 	"name": "role-color-everywhere",
-	"version": "1.0.0",
 	"private": true,
-	"description": "Colors mentions, typing names, voice users, reaction users, poll voters, and role headers.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",

@@ -1,9 +1,9 @@
+import { settings } from '@unbound-app/settings';
 import { flux } from '@unbound-app/api';
 
 import { createPlayingTracker, hasEffectShape, type BurstEffect } from '~/playing';
-import { isDiscordLimit, playingLimit } from '~/settings';
+import { isDiscordLimit } from '~/super-reactions';
 import { EFFECT_LIFETIME_MS } from '~/constants';
-import { settings } from '~/modules';
 
 export const PLAY_ACTION = 'BURST_REACTION_EFFECT_PLAY';
 
@@ -30,7 +30,7 @@ export function limitPlayingEffects(): () => void {
 
 	const removePlay = flux.interceptAction(PLAY_ACTION, (action) => {
 		const effect = action as BurstEffect;
-		const limit = playingLimit(settings.get('superReactionPlayingLimit', undefined));
+		const limit = settings.superReactionPlayingLimit;
 
 		warnUnexpectedShape(effect);
 

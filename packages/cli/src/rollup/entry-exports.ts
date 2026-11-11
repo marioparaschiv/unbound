@@ -8,8 +8,8 @@ import {
 } from './diagnostic.ts';
 import { parseSync, type ESTree } from './rolldown-utils.ts';
 
-// The `ubd check` id this plugin reports under.
-const CHECK = 'entry';
+/** The `ubd check` id this plugin reports under. */
+export const CHECK = 'entry';
 
 /** The exports the client reads from a plugin's entry, each with how many parameters it may take. */
 export const LIFECYCLE_EXPORTS = {
@@ -324,4 +324,4 @@ export function entryExports(entry: string, pluginRoot: string): Plugin {
 	};
 }
 
-export default { entryExports, lifecycleTypo, readEntryExports };
+export default { CHECK, entryExports, lifecycleTypo, readEntryExports };

@@ -1,11 +1,14 @@
+import type { NATIVE_PLUGIN_PLATFORM_CAPABILITIES } from './native-capabilities.gen';
 import type { NativeJavaBridge, NativeJavaHooksBridge } from './native-java';
 import type { LoaderObjCBridge, NativeObjCBridge } from './native-objc';
 import type { NativeUIBridge, NativeUIScopeFactory } from './native-ui';
 import type { NativeSerializableObject } from './native-handles';
+import type { NativePluginCapability } from './native-methods';
 import type { NativeFabricBridge } from './native-fabric';
 import type { NativeFFIBridge } from './native-ffi';
 import type { AddonManifest } from './addons';
 
+export * from './native-capabilities.gen';
 export * from './native-platform';
 export * from './native-handles';
 export * from './native-methods';
@@ -16,78 +19,11 @@ export * from './native-objc';
 export * from './native-ffi';
 export * from './native-ui';
 
-/** Every capability name a manifest may declare; an unknown name fails manifest validation. */
-export const NATIVE_PLUGIN_CAPABILITIES = [
-	'native.objc.classes',
-	'native.objc.invoke',
-	'native.objc.invokeAsync',
-	'native.objc.batch',
-	'native.objc.snapshot',
-	'native.objc.ivars',
-	'native.objc.associations',
-	'native.objc.hooks',
-	'native.ffi.symbols',
-	'native.ffi.call',
-	'native.fabric.mount',
-	'native.fabric.async',
-	'native.runtime.events',
-	'native.java.classes',
-	'native.java.construct',
-	'native.java.fields',
-	'native.java.invoke',
-	'native.java.invokeAsync',
-	'native.java.hooks',
-	'native.java.batch',
-	'native.java.associations',
-	'native.debug.evaluations',
-	'native.debug.environment',
-] as const;
-
-/** A named permission to use one part of the native bridge, declared in an addon's manifest. */
-export type NativePluginCapability = (typeof NATIVE_PLUGIN_CAPABILITIES)[number];
-
 /** The host platforms a native bridge runs on. */
 export const NATIVE_PLUGIN_PLATFORMS = ['ios', 'android'] as const;
 
 /** A host platform the loader reports, `ios` or `android`. */
 export type NativePluginPlatform = (typeof NATIVE_PLUGIN_PLATFORMS)[number];
-
-/** The capabilities each platform's loader offers; Objective-C ones are iOS only and Java ones Android only. */
-export const NATIVE_PLUGIN_PLATFORM_CAPABILITIES = {
-	android: [
-		'native.java.classes',
-		'native.java.construct',
-		'native.java.fields',
-		'native.java.invoke',
-		'native.fabric.async',
-		'native.ffi.call',
-		'native.ffi.symbols',
-		'native.java.associations',
-		'native.java.batch',
-		'native.java.hooks',
-		'native.java.invokeAsync',
-		'native.runtime.events',
-		'native.debug.environment',
-		'native.debug.evaluations',
-	],
-	ios: [
-		'native.fabric.async',
-		'native.fabric.mount',
-		'native.ffi.call',
-		'native.ffi.symbols',
-		'native.objc.associations',
-		'native.objc.batch',
-		'native.objc.classes',
-		'native.objc.hooks',
-		'native.objc.invoke',
-		'native.objc.invokeAsync',
-		'native.objc.ivars',
-		'native.objc.snapshot',
-		'native.debug.environment',
-		'native.debug.evaluations',
-		'native.runtime.events',
-	],
-} as const satisfies Record<NativePluginPlatform, readonly NativePluginCapability[]>;
 
 /** A capability the native bridge on platform `P` provides. */
 export type NativePluginPlatformCapability<P extends NativePluginPlatform> =

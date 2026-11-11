@@ -55,5 +55,3 @@ export function authorizeWithDiscord(config: AccountOAuthConfig): Promise<string
 		});
 	});
 }
-
-export default { authorizeWithDiscord };

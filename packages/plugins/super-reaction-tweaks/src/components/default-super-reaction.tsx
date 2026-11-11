@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 
 import type { PickerSession } from '~/picker-session';
-import { canSuperReact } from '~/settings';
+import { canSuperReact } from '~/super-reactions';
 import { UserStore } from '~/modules';
 
 type PremiumUser = { premiumType?: unknown };

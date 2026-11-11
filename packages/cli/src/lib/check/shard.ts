@@ -3,7 +3,7 @@ import { execFile } from 'node:child_process';
 
 import type { AddonDiagnostics } from '~/lib/check/run';
 import type { DiscoveredAddon } from '~/lib/discovery';
-import { diagnostic } from '~/rollup/diagnostic';
+import { diagnostic } from '~/lib/check/diagnostic';
 import { parseJson } from '~/lib/parse-json';
 import { Type } from '~/lib/schema';
 

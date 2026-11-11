@@ -1,12 +1,6 @@
 import { DiscordAPIError, RESTJSONErrorCodes } from 'discord.js';
 
-import type {
-	JoinedMember,
-	RolesClient,
-	RolesGuild,
-	RolesMember,
-	RolesRole,
-} from '~/dispatchers/roles';
+import type { RolesGuild, RolesGuilds, RolesMember, RolesRole } from '~/dispatchers/roles';
 
 export type FakeDiscordOptions = {
 	guildId?: string;
@@ -14,6 +8,8 @@ export type FakeDiscordOptions = {
 	members: Record<string, string[]>;
 	/** Discord ids of deleted accounts, answered with 10013 Unknown User. */
 	deleted?: string[];
+	/** Answers every member fetch with 10004 Unknown Guild, as after the bot is removed. */
+	guildGone?: boolean;
 	guildRoles?: RolesRole[];
 	/** Role ids moved above the bot's highest role. */
 	aboveBot?: string[];
@@ -25,13 +21,10 @@ export type FakeDiscordOptions = {
 export type Added = { discordId: string; roleId: string };
 
 export type FakeDiscord = {
-	client: RolesClient;
+	guilds: RolesGuilds;
 	added: Added[];
 	fetched: string[];
-	listeners: number;
-	/** Adds the member to the guild and fires `guildMemberAdd`. */
-	join: (discordId: string, guildId?: string) => void;
-	/** Adds the member to the guild with no `guildMemberAdd`, as a bot without the GuildMembers intent sees it. */
+	/** Adds the member to the guild, as a bot without the GuildMembers intent sees it: no event fires. */
 	enter: (discordId: string) => void;
 	/** The roles a member holds now; a moderator may edit the set. */
 	held: (discordId: string) => Set<string> | undefined;
@@ -61,7 +54,7 @@ function discordError(code: RESTJSONErrorCodes, message: string, method: string,
 /**
  * @description A guild with one bot member, recording every fetch and role add.
  * @param options Members, guild roles, hierarchy and permission.
- * @returns The client, the recorded calls and `join()`.
+ * @returns The guilds, the recorded calls and `enter()`.
  */
 export function fakeDiscord(options: FakeDiscordOptions): FakeDiscord {
 	const {
@@ -71,6 +64,7 @@ export function fakeDiscord(options: FakeDiscordOptions): FakeDiscord {
 		manageRoles = true,
 		failAdd = [],
 		deleted = [],
+		guildGone = false,
 	} = options;
 	const members = new Map(
 		Object.entries(options.members).map(([id, roles]) => [id, new Set(roles)]),
@@ -81,7 +75,6 @@ export function fakeDiscord(options: FakeDiscordOptions): FakeDiscord {
 			aboveBot.includes(role.id) ? { ...role, position: BOT_ROLE.position + 1 } : role,
 		]),
 	);
-	const listeners: ((member: JoinedMember) => void)[] = [];
 	const added: Added[] = [];
 	const fetched: string[] = [];
 
@@ -128,6 +121,15 @@ export function fakeDiscord(options: FakeDiscordOptions): FakeDiscord {
 
 				const held = members.get(user);
 
+				if (guildGone) {
+					throw discordError(
+						RESTJSONErrorCodes.UnknownGuild,
+						'Unknown Guild',
+						'GET',
+						`/guilds/${guildId}/members/${user}`,
+					);
+				}
+
 				if (deleted.includes(user)) {
 					throw discordError(
 						RESTJSONErrorCodes.UnknownUser,
@@ -152,32 +154,17 @@ export function fakeDiscord(options: FakeDiscordOptions): FakeDiscord {
 	};
 
 	return {
-		client: {
-			guilds: {
-				async fetch(id) {
-					if (id !== guildId) {
-						throw new Error(`Unknown guild ${id}`);
-					}
+		guilds: {
+			async fetch(id) {
+				if (id !== guildId) {
+					throw new Error(`Unknown guild ${id}`);
+				}
 
-					return guild;
-				},
-			},
-			on(_, listener) {
-				listeners.push(listener);
+				return guild;
 			},
 		},
 		added,
 		fetched,
-		get listeners() {
-			return listeners.length;
-		},
-		join(discordId, joinedGuildId = guildId) {
-			members.set(discordId, members.get(discordId) ?? new Set());
-
-			for (const listener of listeners) {
-				listener({ id: discordId, guild: { id: joinedGuildId } });
-			}
-		},
 		enter(discordId) {
 			members.set(discordId, members.get(discordId) ?? new Set());
 		},

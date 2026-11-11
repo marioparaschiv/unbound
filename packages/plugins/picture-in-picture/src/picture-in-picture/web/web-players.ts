@@ -1,11 +1,11 @@
 import { findRenderTarget, type RenderTarget } from '@unbound-plugins/shared/react/render-target';
-import { recordSkip } from '@unbound-plugins/shared/lifecycle/health';
+import { skipFeature } from '@unbound-plugins/shared/lifecycle/features';
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import type { AnyProps } from '@unbound-app/api/metro';
 import { metro, patcher } from '@unbound-app/api';
 
 import { frameScript, readPipResult, requestScript } from '~/picture-in-picture/web/scripts';
-import { PLUGIN_NAME, WEB_PIP_TIMEOUT_MS } from '~/constants';
+import { WEB_PIP_TIMEOUT_MS } from '~/constants';
 
 type WebViewHandle = { injectJavaScript?: (script: string) => void };
 
@@ -49,11 +49,6 @@ function earlyScript(props: WebViewProps): string {
 	const kept = existingInFrames ? existing : `if (window === window.top) {\n${existing}\n}`;
 
 	return `${kept}\n;\n${frameScript()}`;
-}
-
-function skip(reason: string) {
-	console.error(`[${PLUGIN_NAME}] Skipped web players, ${reason}.`);
-	recordSkip(reason);
 }
 
 function exportKeys(module: AnyProps, target: RenderTarget): string[] {
@@ -121,10 +116,10 @@ export function createWebPlayers(): WebPlayers {
 		(module) => {
 			const target = findRenderTarget(module, 'WebView');
 
-			if (!target) return skip('WebView has no render function');
+			if (!target) return skipFeature('web players: WebView has no render function');
 
 			if (target.holder[target.key]?.prototype?.isReactComponent) {
-				return skip('WebView is a class component');
+				return skipFeature('web players: WebView is a class component');
 			}
 
 			const unpatches = exportKeys(module, target).map((key) =>

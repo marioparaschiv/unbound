@@ -64,7 +64,7 @@ LOADER_VERSION := $(shell printf '%s\n%s\n' "$(THEOS_PACKAGE_BASE_VERSION)" "$(L
 $(TWEAK_NAME)_CCFLAGS = $(COMMON_FLAGS) -I$(LIBFFI_HEADERS) -std=c++20 -fno-cxx-modules
 # Resolve JSI/TurboModule symbols from Discord's React dylib at load time.
 $(TWEAK_NAME)_LDFLAGS = -undefined dynamic_lookup $(LIBFFI_ARCHIVE)
-$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation AuthenticationServices UniformTypeIdentifiers Security SafariServices AVFoundation CoreHaptics CoreGraphics ImageIO Network
+$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation AuthenticationServices UniformTypeIdentifiers Security SafariServices AVFoundation CoreHaptics CoreGraphics QuartzCore ImageIO Network
 $(TWEAK_NAME)_LIBRARIES = z
 
 BUNDLE_NAME = UnboundResources

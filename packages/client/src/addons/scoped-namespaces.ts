@@ -352,15 +352,3 @@ export function scopeCommands(owner: string, getLocales: LocalesGetter): ScopedC
 
 	return { namespace: overlay('commands', { ...handle, createCommands }), dispose };
 }
-
-export default {
-	scopeMetro,
-	scopeStorage,
-	scopeFlux,
-	scopeSettings,
-	scopeAssets,
-	scopeI18n,
-	scopeToasts,
-	scopeDialogs,
-	scopeCommands,
-};

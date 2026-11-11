@@ -36,12 +36,12 @@ Keys are dot-paths into nested objects. `loader.update.url` is stored as:
 ```
 
 <Note>
-	The loader shares the `unbound` store with Unbound's JavaScript. Keys it doesn't read, such as `staff-mode` or `toasts.*`, belong to the client and are documented with their features.
+	The loader shares the `unbound` bucket with Unbound's JavaScript. Keys it doesn't read, such as `staff-mode` or `toasts.*`, belong to the client and are documented with their features.
 </Note>
 
 ## Keys
 
-All keys are in the `unbound` store.
+All keys are in the `unbound` bucket.
 
 <ParamField path="loader.enabled" type="boolean" default="true">
 	Turns the loader on or off. When `false`, it logs `Loader is disabled. Aborting.` and hands the bundle load back to Discord: no plugins, themes, fonts, updater or hot reload. See [Disabling the Loader](#disabling-the-loader).

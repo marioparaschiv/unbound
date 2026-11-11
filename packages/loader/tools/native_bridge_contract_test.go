@@ -23,15 +23,10 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	types, err := os.ReadFile(filepath.Join(root, "core", "src", "NativeTypeEncoding.cpp"))
-	if err != nil {
-		t.Fatal(err)
-	}
 	headerText := string(header)
 	sourceText := string(source)
-	typeText := string(types)
-	if !containsCode(headerText, `kNativePluginApiVersion[] = "1.1.0"`) {
-		t.Fatal("native plugin API version is not v1")
+	if !containsCode(headerText, `kNativePluginApiVersion[] = "1.2.0"`) {
+		t.Fatal("native plugin API version does not report fabric.batchAsync (1.2.0)")
 	}
 	if !containsCode(headerText, `kNativePluginAbiVersion[] = "1.0.0"`) {
 		t.Fatal("native plugin ABI version is not v1")
@@ -108,10 +103,6 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 	if !containsCode(sourceText, `{"bool", "i8"}`) {
 		t.Fatal("native boolean hooks do not share the i8 precompiled fallbacks")
 	}
-	if !containsCode(typeText, `fields == "{CGPoint=dd}{CGSize=dd}"`) ||
-		!containsCode(typeText, `fields == "dd"`) {
-		t.Fatal("native type parsing must validate CGRect and CGPoint field layouts")
-	}
 	if !containsCode(sourceText, "Native hook original() cannot cross runtime threads") {
 		t.Fatal("native hook original thread safety diagnostic is missing from the loader")
 	}
@@ -146,14 +137,6 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 	}
 	if containsCode(sourceText[registration:registration+registrationEnd], "dispatcher->original = method_getImplementation(method)") {
 		t.Fatal("native hook registration can wrap an external IMP that already chains through its dispatcher")
-	}
-	ffiCall, err := os.ReadFile(filepath.Join(root, "core", "src", "ffi", "NativeFFICall.cpp"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !containsCode(string(ffiCall), "class CallInterfaceCache") ||
-		!containsCode(string(ffiCall), "entries_.size() > kCallInterfaceCacheCapacity") {
-		t.Fatal("native FFI call interface cache is missing or unbounded")
 	}
 	for _, shared := range []string{
 		`makeFunction("symbol", 2, runtime, loader::ffi::lookupSymbol)`,
@@ -352,7 +335,7 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 	if containsCode(string(bridge), "result = invokeObject(runtime, target, selector, arguments)") {
 		t.Fatal("Objective-C invocation still creates JSI values on the main thread")
 	}
-	for _, required := range []string{"[HotReload observe];", "pipeline().prepare()", "pipeline().onRuntimeCreated(runtime)"} {
+	for _, required := range []string{"[HotReload observe];", "UnboundLoader()->prepare()", "UnboundLoader()->onRuntimeCreated(runtime)"} {
 		if !containsCode(string(loader), required) {
 			t.Fatalf("loader lifecycle guard %q is missing", required)
 		}
@@ -381,7 +364,7 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 			t.Fatalf("bundle promotion step %q is missing", required)
 		}
 	}
-	for _, required := range []string{".candidate", "Downloaded bundle candidate is unavailable", "promoteNativeBundle(path.c_str()", "restoreNativeBundle(backup.c_str()", ".attempting", ".promoting"} {
+	for _, required := range []string{".candidate", "Downloaded bundle candidate is unavailable", "promoteNativeBundle(path.c_str()", "restoreNativeBundle(backup.c_str()", ".promoting"} {
 		if !containsCode(string(updater), required) {
 			t.Fatalf("transactional bundle step %q is missing", required)
 		}

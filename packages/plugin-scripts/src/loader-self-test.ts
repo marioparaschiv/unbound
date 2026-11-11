@@ -1,3 +1,5 @@
+import type { NativeHandle, NativePluginCapability } from '@unbound-app/api/native';
+
 import { deviceScript } from './device-script';
 import { Type, type Static } from '@unbound-app/contracts/schema';
 
@@ -36,10 +38,10 @@ type SelfTestState = {
 type SelfTestGlobal = typeof globalThis & { __unboundSelfTest?: SelfTestState };
 
 function startSelfTest(marker: string) {
-	const entities = [...unbound.plugins.entities.values()].filter(
+	const entities = ([...unbound.plugins.entities.values()] as DeviceAddon[]).filter(
 		(entity) => entity.started && entity.context?.native,
 	);
-	const can = (entity: DeviceEntity, platform: string, capability: string) =>
+	const can = (entity: DeviceAddon, platform: string, capability: NativePluginCapability) =>
 		entity.context?.platform === platform &&
 		(entity.context.capabilities ?? []).includes(capability);
 	const ios = entities.find((entity) => can(entity, 'ios', 'native.objc.hooks'));
@@ -83,13 +85,19 @@ function startSelfTest(marker: string) {
 
 		state.platform = 'android';
 		state.host = android.manifest.name;
-		state.tokens.push(
-			hooks.hook('android.view.View', 'onAttachedToWindow', [], { notify: true }, () => {
+		const token = hooks.hook(
+			'android.view.View',
+			'onAttachedToWindow',
+			[],
+			{ notify: true },
+			() => {
 				state.base++;
 				throwOnce();
-			}),
+			},
 		);
-		state.remove = () => state.tokens.forEach((token) => hooks.remove(token));
+
+		state.tokens.push(token);
+		state.remove = () => hooks.remove(token);
 
 		return state.host;
 	}
@@ -126,15 +134,30 @@ export function selfTestFinishScript(): string {
 	return deviceScript(finishSelfTest);
 }
 
+function readSelfTestFired() {
+	const state = (globalThis as SelfTestGlobal).__unboundSelfTest;
+	const fired = Boolean(state?.base) && (state?.platform !== 'ios' || Boolean(state.derived));
+
+	return !state || fired ? 'fired' : 'waiting';
+}
+
+/**
+ * @description Reads whether the self-test hooks have fired, the superclass and subclass hook on iOS, without removing them.
+ * @returns A script whose result is `fired`, or `waiting`; `fired` too when the self-test never started, so the wait ends and the finish reports it.
+ */
+export function selfTestFiredScript(): string {
+	return deviceScript(readSelfTestFired);
+}
+
 /**
  * @description Runs native calls that end early through the self-test host: one cancelled straight away, one still queued when the host stops (the host is started again after), and on Android one made on a released handle to an object the test constructs itself, since releasing a shared handle would revoke it for every plugin.
  * @returns A script whose result is the JSON outcome of each case: `resolved`, `cancellation`, or `other: <message>`.
  */
 function runCancellations(trackerClass: string) {
-	const entities = [...unbound.plugins.entities.values()].filter(
+	const entities = ([...unbound.plugins.entities.values()] as DeviceAddon[]).filter(
 		(entity) => entity.started && entity.context?.native,
 	);
-	const can = (entity: DeviceEntity, platform: string, capability: string) =>
+	const can = (entity: DeviceAddon, platform: string, capability: NativePluginCapability) =>
 		entity.context?.platform === platform &&
 		(entity.context.capabilities ?? []).includes(capability);
 	const host =
@@ -157,10 +180,13 @@ function runCancellations(trackerClass: string) {
 	const settle = (call: Promise<unknown>) => call.then(() => 'resolved', classify);
 	const native = host.context.native;
 	const ios = host.context.platform === 'ios';
-	const target = ios
-		? native.objc.call(native.objc.getClass('UIApplication'), 'sharedApplication')
-		: native.java.getField(native.java.getClass(trackerClass), 'INSTANCE');
-	const call = (handle: DeviceHandle) =>
+	// The shared application and the tracker's INSTANCE are objects, so both reads return a handle.
+	const target = (
+		ios
+			? native.objc.call(native.objc.getClass('UIApplication')!, 'sharedApplication')
+			: native.java.getField(native.java.getClass(trackerClass)!, 'INSTANCE')
+	) as NativeHandle;
+	const call = (handle: NativeHandle) =>
 		ios
 			? native.objc.invokeAsync(handle, 'description', [])
 			: native.java.invokeAsync(handle, 'toString', []);

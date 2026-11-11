@@ -2,6 +2,11 @@ import * as React from 'react';
 
 import type { AnyObject } from '../src/patcher';
 
+import {
+	API_PROPS as CLIENT_API_PROPS,
+	COMMON_PROPS,
+	LAZY_MARKER,
+} from '../src/_conventions/metro';
 import { createFakeReactNative } from './fake-react-native';
 import { createFakeComponents } from './fake-components';
 
@@ -24,40 +29,8 @@ type FindAll = { all: true };
 
 type Presence = 'loaded' | 'missing';
 
-const LAZY_MARKER = '__METRO_LAZY__';
-
-// The props each `metro.common` member is found by, as in the client's metro/common.ts.
-const COMMON_PROPS = {
-	Reanimated: ['useAnimatedStyle', 'useSharedValue'],
-	Gestures: ['PanGestureHandler'],
-	Clipboard: ['setString', 'getString', 'setImage', 'getImage'],
-	MarkdownParser: ['parse', 'parseToAST', 'reactParserFor'],
-	Screens: ['FullWindowOverlay'],
-	SVG: ['Svg', 'Path'],
-	Commands: ['getBuiltInCommands'],
-	Moment: ['isMoment'],
-	Util: ['inspect'],
-	Assets: ['registerAsset'],
-	ImageSources: ['getImageSourcesFromImageProps'],
-	Clyde: ['createBotMessage'],
-	Constants: ['Fonts', 'Endpoints'],
-	Radius: ['Radius'],
-	Theme: ['colors', 'internal'],
-	REST: ['getAPIBaseURL'],
-	i18n: ['getLanguages', 'getSystemLocale', 'intl'],
-};
-
-// The props each `metro.api` member is found by, as in the client's metro/api.ts.
-const API_PROPS = {
-	Messages: ['sendMessage', 'receiveMessage'],
-	Linking: ['openURL', 'openSettings'],
-	Profiles: ['showUserProfile'],
-	AsyncUsers: ['fetchProfile'],
-	Invites: ['acceptInviteAndTransitionToInviteChannel'],
-	OAuth2: ['openOAuth2Modal'],
-	ActionSheets: ['openLazy', 'hideActionSheet'],
-	UserProfiles: ['getUserProfileActionSheetKey', 'showUserProfileActionSheetPostConnection'],
-};
+// On device `metro.api.Linking` is React Native's; here a test registers a module with its methods.
+const API_PROPS = { ...CLIENT_API_PROPS, Linking: ['openURL', 'openSettings'] };
 
 /** What a lazy handle looks its module up by. */
 type LazyLookup = {

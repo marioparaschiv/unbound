@@ -1,5 +1,6 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
+import { openDeviceTarget } from '~/lib/device-target';
 import { restoreSnapshot } from '~/lib/device-state';
 import { Type } from '~/lib/schema';
 
@@ -19,8 +20,14 @@ const restoreCommand: CommandDefinition<typeof schema> = {
 	mcp: true,
 	schema,
 	cli: { positionals: ['name'] },
-	handler({ name, ...options }) {
-		return restoreSnapshot(name, options);
+	async handler({ name, serial, ios, udid, restart }) {
+		const target = await openDeviceTarget({ serial, ios, udid });
+
+		if ('error' in target) {
+			return { ok: false, text: target.error };
+		}
+
+		return restoreSnapshot(name, target, { restart });
 	},
 };
 

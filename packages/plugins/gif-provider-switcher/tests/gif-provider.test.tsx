@@ -1,5 +1,4 @@
 import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { settings } from '@unbound-app/settings';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { memo } from 'react';
@@ -31,7 +30,6 @@ const GIFPickerHeader = memo(
 const realFetch = globalThis.fetch;
 
 beforeEach(() => {
-	resetHealth();
 	metro.register(REST);
 	metro.register({ default: GIFPickerHeader }, 'modules/gif_picker/native/GIFPickerHeader.tsx');
 	calls.length = 0;

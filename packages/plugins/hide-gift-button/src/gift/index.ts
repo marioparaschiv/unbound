@@ -1,4 +1,4 @@
-import startFeatures from '@unbound-plugins/shared/lifecycle/start-features';
+import type { Feature } from '@unbound-plugins/shared/lifecycle/features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { patcher } from '@unbound-app/api';
 
@@ -13,14 +13,13 @@ type RightActionsProps = { shouldShowGiftButton?: boolean };
  * Patches the render of `ChatInputActionButtonGiftOrThread` to hide the gift, or itself when it cannot,
  * and of `ChatInputRightActions` to drop the animated slot that holds the gift button.
  * The Addon scope removes both patches when the plugin stops.
+ * @returns One feature per patch, or nothing when a module is missing.
  */
-export function startGift(): () => Promise<void> {
-	if (!ensureModules('Hide Gift Button', { GiftOrThreadButton, ChatInputRightActions })) {
-		return async () => {};
-	}
+export function giftFeatures(): Feature[] | undefined {
+	if (!ensureModules({ GiftOrThreadButton, ChatInputRightActions })) return;
 
 	// One patch throwing on an unexpected component shape must not cost the other.
-	return startFeatures('Hide Gift Button', [
+	return [
 		() => {
 			patcher.react.instead(GiftOrThreadButton, 'default', ({ props, original }) => {
 				const { hideGiftButton }: GiftOrThreadProps = props ?? {};
@@ -39,5 +38,5 @@ export function startGift(): () => Promise<void> {
 				return withoutGiftItem(result);
 			});
 		},
-	]);
+	];
 }

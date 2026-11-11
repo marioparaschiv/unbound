@@ -30,9 +30,7 @@ export function createTagGradients(
 	let problems: () => Promise<string[]> = () => Promise.resolve([]);
 
 	function start(): () => void {
-		if (
-			!ensureCapabilities('More User Tags: gradients', context.native, context.capabilities)
-		) {
+		if (!ensureCapabilities(context.native, context.capabilities, 'gradients')) {
 			return () => {};
 		}
 
@@ -65,11 +63,11 @@ export function createTagGradients(
 		ui.call(installTagGradients, scope, settings())
 			.then((installed) => {
 				if (!installed) {
-					console.error('[More User Tags: gradients] Skipped, native classes not found.');
+					logger.error('Skipped gradients, native classes not found.');
 				}
 			})
 			.catch((error) => {
-				console.error('[More User Tags: gradients] Failed to install the hooks:', error);
+				logger.error('Failed to install the gradient hooks:', error);
 			});
 
 		const unsubscribe = appearances.subscribe(schedulePush);

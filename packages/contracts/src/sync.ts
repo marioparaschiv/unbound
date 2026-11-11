@@ -45,7 +45,7 @@ export type JsonValue = string | number | boolean | null | JsonValue[] | JsonObj
 // Values arrive as parsed JSON, so any value is already JSON; the type restores what `z.json()` gave.
 const jsonValueSchema = Type.Unsafe<JsonValue>(Type.Any());
 
-/** A settings store as JSON. */
+/** A Bucket as JSON. */
 export const syncSettingsStoreSchema = Type.Record(Type.String(), jsonValueSchema, {
 	additionalProperties: false,
 });
@@ -57,7 +57,7 @@ export const syncDocumentSchema = Type.Object({
 		icons: syncKindDocumentSchema,
 		fonts: syncKindDocumentSchema,
 	}),
-	/** Settings stores by name. */
+	/** Buckets by name. */
 	settings: Type.Record(Type.String(), syncSettingsStoreSchema, { additionalProperties: false }),
 });
 
@@ -117,8 +117,6 @@ export type SyncSettingsStore = StaticDecode<typeof syncSettingsStoreSchema>;
 export type SyncDocument = StaticDecode<typeof syncDocumentSchema>;
 export type SyncState = StaticDecode<typeof syncStateSchema>;
 export type SyncDocumentInput = StaticDecode<typeof syncDocumentInputSchema>;
-export type SyncPutRequest = StaticDecode<typeof syncPutRequestSchema>;
-export type SyncDeleteResponse = StaticDecode<typeof syncDeleteResponseSchema>;
 
 export default {
 	SYNC_KINDS,

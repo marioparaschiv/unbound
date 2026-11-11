@@ -31,7 +31,7 @@ const CONSOLE_METHODS = [
  * The loader runs the backend before React Native defines `window` and `console`, so both are bound
  * inside the bundle. The stand-in console forwards to the real one once React Native installs it.
  */
-export const DEVTOOLS_INTRO = [
+const DEVTOOLS_INTRO = [
 	'var window = globalThis;',
 	'var self = window;',
 	'var console = globalThis.console || {',
@@ -51,7 +51,7 @@ const output: OutputOptions = {
 };
 
 /** The rolldown config for the DevTools backend: `dist/devtools.js` and `dist/devtools.<bytecode>.bundle`. */
-export const devtoolsConfig: RolldownOptions = {
+const devtoolsConfig: RolldownOptions = {
 	input: join(__dirname, 'entry.js'),
 	cwd: root,
 	output,

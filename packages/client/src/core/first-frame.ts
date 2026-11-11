@@ -1,3 +1,5 @@
+import { benchMark } from '~/core/bench-span';
+
 type FirstFrameCallback = () => void;
 
 const waiting: FirstFrameCallback[] = [];
@@ -29,9 +31,7 @@ function runNextWaiting() {
 		} else {
 			phase = 'drawn';
 
-			if (import.meta.env.BENCH) {
-				globalThis.__ubdBench?.mark('afterFirstFrame:end');
-			}
+			benchMark('afterFirstFrame:end');
 		}
 	}
 }
@@ -41,9 +41,7 @@ function flushFirstFrame() {
 
 	phase = 'draining';
 
-	if (import.meta.env.BENCH) {
-		globalThis.__ubdBench?.mark('firstFrame');
-	}
+	benchMark('firstFrame');
 
 	runNextWaiting();
 }

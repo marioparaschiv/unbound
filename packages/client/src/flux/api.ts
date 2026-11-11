@@ -14,7 +14,7 @@ import { createLogger } from '@unbound-app/logger';
 import type { DependencyList } from 'react';
 
 import { Dispatcher, FluxHooks } from '~/flux/modules';
-import { finder } from '~/metro/finders';
+import { findStore } from '~/metro/lookups';
 
 export type * from '@unbound-app/types/flux';
 
@@ -72,8 +72,6 @@ export function getStore<K extends FluxStoreName>(
 	name: K,
 	options: GetStoreOptions = {},
 ): FluxStoreOf<K> {
-	const findStore = finder('findStore');
-
 	if (options.lazy === false) {
 		return findStore(name, options);
 	}

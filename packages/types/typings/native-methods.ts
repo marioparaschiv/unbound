@@ -1,4 +1,4 @@
-import type { NativePluginBridge, NativePluginCapability } from './native';
+import type { NativePluginBridge } from './native';
 
 /** A {@link NativePluginBridge} namespace whose methods a plugin calls, such as `objc` or `java`. */
 type NativePluginNamespace = Exclude<
@@ -11,7 +11,10 @@ export type NativePluginMethod = {
 	[N in NativePluginNamespace]: `${N}.${keyof NativePluginBridge[N] & string}`;
 }[NativePluginNamespace];
 
-/** The Capability each native bridge method needs. */
+/**
+ * The Capability each native bridge method needs; the source of every Capability name. Edit it, then run
+ * `bun run generate-native-capabilities` to regenerate the client's and the loader's Capability lists.
+ */
 export const NATIVE_PLUGIN_METHOD_CAPABILITIES = {
 	'objc.getClass': 'native.objc.classes',
 	'objc.alloc': 'native.objc.classes',
@@ -53,6 +56,7 @@ export const NATIVE_PLUGIN_METHOD_CAPABILITIES = {
 	'fabric.updateAsync': 'native.fabric.async',
 	'fabric.setSizeAsync': 'native.fabric.async',
 	'fabric.setFrameAsync': 'native.fabric.async',
+	'fabric.batchAsync': 'native.fabric.async',
 	'fabric.measureAsync': 'native.fabric.async',
 	'fabric.unmountAsync': 'native.fabric.async',
 	'fabric.releaseIdleAsync': 'native.fabric.async',
@@ -84,4 +88,7 @@ export const NATIVE_PLUGIN_METHOD_CAPABILITIES = {
 	'hooks.removeReturnValue': 'native.java.hooks',
 	'hooks.clearReturnValues': 'native.java.hooks',
 	'hooks.remove': 'native.java.hooks',
-} as const satisfies Record<NativePluginMethod, NativePluginCapability>;
+} as const satisfies Record<NativePluginMethod, `native.${string}.${string}`>;
+
+/** A named permission to use one part of the native bridge, declared in an addon's manifest. */
+export type NativePluginCapability = (typeof NATIVE_PLUGIN_METHOD_CAPABILITIES)[NativePluginMethod];

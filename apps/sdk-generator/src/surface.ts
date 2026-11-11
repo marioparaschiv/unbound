@@ -1,7 +1,7 @@
 import { Node, Project, SyntaxKind, ts, type Symbol as MorphSymbol, type Type } from 'ts-morph';
 import { join } from 'node:path';
 
-import { ALIAS_ROOT, API_SRC, CLIENT, ROOT, ENTRY } from './paths';
+import { ALIAS_ROOT, GLOBAL_OUT, ROOT, ENTRY, SDK_TSCONFIG } from './config';
 
 /** A state of `window.unbound`: initialized (`live`), or cleared down after `shutdown()`. */
 export type Shape = 'live' | 'shutdown';
@@ -48,9 +48,9 @@ const SHAPES: Shape[] = ['live', 'shutdown'];
 
 export const DEFAULT_SOURCES: SurfaceSources = {
 	entry: ENTRY,
-	clientConfig: join(CLIENT, 'tsconfig.sdk.json'),
+	clientConfig: SDK_TSCONFIG,
 	clientRoot: ALIAS_ROOT,
-	global: join(API_SRC, 'global.d.ts'),
+	global: GLOBAL_OUT,
 	apiConfig: join(ROOT, 'packages', 'api', 'tsconfig.json'),
 };
 

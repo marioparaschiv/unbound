@@ -21,5 +21,3 @@ export function formatInstalls(count: number, short: boolean = false): string {
 
 	return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(value)}${unit.suffix}`;
 }
-
-export default { formatInstalls };

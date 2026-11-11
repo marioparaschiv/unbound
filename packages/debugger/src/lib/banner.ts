@@ -69,7 +69,6 @@ function printBox(title: string, lines: Line[], inner: number) {
 	terminal.bold.colorRgbHex(PINK, center(title, inner));
 	terminal.colorRgbHex(PINK, `${pad}│\n`);
 
-	// Separator.
 	terminal.colorRgbHex(PINK, `├${horizontal}┤\n`);
 
 	// One row per connection target: pink label, grey value, left-aligned and padded to width.

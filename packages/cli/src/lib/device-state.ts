@@ -15,60 +15,62 @@ import { join } from 'node:path';
 import {
 	ANDROID_FILES_DIRECTORY,
 	DISCORD_BUNDLE_ID,
-	DISCORD_PACKAGE,
 	IOS_CONTAINERS_DIRECTORY,
+	IOS_GZIP,
+	IOS_SPLIT,
 	IOS_TAR,
-	IOS_UIOPEN,
 } from '~/lib/device-paths';
-import {
-	ERROR_MARKER,
-	IOS_TIMEOUTS,
-	pickDevice,
-	pilotShell,
-	readMarker,
-	resolvePilot,
-} from '~/lib/pilot';
-import type { CommandResult, CommandRunner } from '~/lib/run-command';
-import { ANDROID_TIMEOUTS } from '~/lib/android-install';
-import { runCommand } from '~/lib/run-command';
+import type { DevicePlatform, DeviceTarget } from '~/lib/device-target';
+import { ANDROID_TIMEOUTS } from '~/lib/android-target';
+import { ERROR_MARKER, readMarker } from '~/lib/pilot';
+import type { CommandResult } from '~/lib/run-command';
 
-const ANDROID_STAGING = '/data/local/tmp';
-const IOS_STAGING = '/var/tmp';
-const IOS_GZIP = '/var/jb/usr/bin/gzip';
-const IOS_SPLIT = '/var/jb/usr/bin/split';
 const IOS_PART_BYTES = 2 * 1024 * 1024;
 const RESULT_MARKER = 'UBD_RESULT=';
 const SNAPSHOT_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 const TRANSFER_TIMEOUT_MS = 600_000;
 
-export type DevicePlatform = 'android' | 'ios';
-
 export type DeviceStateOptions = {
-	serial?: string;
-	ios?: boolean;
-	udid?: string;
 	restart?: boolean;
-	run?: CommandRunner;
-	pilot?: string;
 	snapshotRoot?: string;
 };
 
 type ScriptResult = { ok: true; value: string } | { ok: false; error: string };
 
-type DeviceTarget = {
-	platform: DevicePlatform;
-	id: string;
+/** The scripts that find, pack, unpack and hand back Discord's Unbound folder on one platform. */
+type SnapshotScripts = {
 	parentScript: string;
-	staging: string;
 	packCommand: (archive: string) => string;
 	unpackCommand: (archive: string) => string;
 	ownerScript: string;
-	stopScript: string;
-	startScript: string;
-	run(script: string, timeoutMs: number): Promise<ScriptResult>;
-	push(local: string, remote: string): Promise<CommandResult>;
-	pull(remote: string, local: string): Promise<CommandResult>;
 };
+
+type SnapshotTarget = SnapshotScripts & { stopScript: string };
+
+const SNAPSHOT_SCRIPTS: Record<DevicePlatform, SnapshotScripts> = {
+	android: {
+		parentScript: `parent='${ANDROID_FILES_DIRECTORY}'`,
+		packCommand: (archive) => `tar -czf '${archive}' -C "$parent" Unbound`,
+		unpackCommand: (archive) => `tar -xzf '${archive}' -C "$parent"`,
+		ownerScript: 'chown -R $(stat -c %u:%g "$parent") "$parent/Unbound"',
+	},
+	ios: {
+		parentScript: [
+			"parent=''",
+			`for plist in $(grep -l '${DISCORD_BUNDLE_ID}' ${IOS_CONTAINERS_DIRECTORY}/*/.com.apple.mobile_container_manager.metadata.plist 2>/dev/null); do parent="\${plist%/*}/Documents"; break; done`,
+			`if [ -z "$parent" ]; then echo '${ERROR_MARKER}Discord has no data container on this device.'; exit 1; fi`,
+		].join('\n'),
+		packCommand: (archive) =>
+			`${IOS_TAR} -cf - -C "$parent" Unbound | ${IOS_GZIP} > '${archive}'`,
+		unpackCommand: (archive) =>
+			`${IOS_GZIP} -dc '${archive}' | ${IOS_TAR} -xf - -C "$parent" --no-same-owner`,
+		ownerScript: 'chown -R mobile:mobile "$parent/Unbound"',
+	},
+};
+
+function snapshotTarget(target: DeviceTarget): SnapshotTarget {
+	return { ...SNAPSHOT_SCRIPTS[target.platform], stopScript: target.stopDiscordScript };
+}
 
 function scriptResult(ok: boolean, output: string, error: string): ScriptResult {
 	const value = readMarker(output, RESULT_MARKER);
@@ -81,6 +83,18 @@ function scriptResult(ok: boolean, output: string, error: string): ScriptResult 
 		ok: false,
 		error: readMarker(output, ERROR_MARKER) ?? (error.trim() || output.trim()),
 	};
+}
+
+async function runScript(
+	target: Pick<DeviceTarget, 'shell'>,
+	script: string,
+	timeoutMs?: number,
+): Promise<ScriptResult> {
+	const result = await target.shell(script, timeoutMs);
+
+	return result.ok
+		? scriptResult(true, result.output, '')
+		: scriptResult(false, '', result.error);
 }
 
 /**
@@ -112,7 +126,7 @@ export function isSnapshotName(name: string): boolean {
  * @param target The device.
  * @returns The script, which prints where the old folder went.
  */
-export function resetScript(target: Pick<DeviceTarget, 'parentScript' | 'stopScript'>): string {
+export function resetScript(target: Pick<SnapshotTarget, 'parentScript' | 'stopScript'>): string {
 	return [
 		target.parentScript,
 		target.stopScript,
@@ -129,7 +143,7 @@ export function resetScript(target: Pick<DeviceTarget, 'parentScript' | 'stopScr
  * @returns The script, which prints the archive's path.
  */
 export function saveScript(
-	target: Pick<DeviceTarget, 'parentScript' | 'packCommand'>,
+	target: Pick<SnapshotTarget, 'parentScript' | 'packCommand'>,
 	archive: string,
 ): string {
 	return [
@@ -146,7 +160,7 @@ export function saveScript(
  * @returns The script, which prints where the replaced folder went.
  */
 export function restoreScript(
-	target: Pick<DeviceTarget, 'parentScript' | 'stopScript' | 'unpackCommand' | 'ownerScript'>,
+	target: Pick<SnapshotTarget, 'parentScript' | 'stopScript' | 'unpackCommand' | 'ownerScript'>,
 	archive: string,
 ): string {
 	return [
@@ -164,61 +178,22 @@ export function restoreScript(
 	].join('\n');
 }
 
-function androidTarget(
-	serial: string | undefined,
-	run: CommandRunner,
-	asRoot: boolean,
-): DeviceTarget {
-	const adb = (args: string[], timeoutMs: number) =>
-		run('adb', [...(serial ? ['-s', serial] : []), ...args], timeoutMs);
-
-	return {
-		platform: 'android',
-		id: serial ?? 'device',
-		parentScript: `parent='${ANDROID_FILES_DIRECTORY}'`,
-		staging: ANDROID_STAGING,
-		packCommand: (archive) => `tar -czf '${archive}' -C "$parent" Unbound`,
-		unpackCommand: (archive) => `tar -xzf '${archive}' -C "$parent"`,
-		ownerScript: 'chown -R $(stat -c %u:%g "$parent") "$parent/Unbound"',
-		stopScript: `am force-stop ${DISCORD_PACKAGE}`,
-		startScript: `monkey -p ${DISCORD_PACKAGE} -c android.intent.category.LAUNCHER 1 >/dev/null`,
-		async run(script, timeoutMs) {
-			const quoted = script.replaceAll("'", "'\\''");
-			const result = await adb(['shell', asRoot ? script : `su -c '${quoted}'`], timeoutMs);
-
-			return result.ok
-				? scriptResult(true, result.stdout, '')
-				: scriptResult(false, '', result.error);
-		},
-		push: (local, remote) => adb(['push', local, remote], TRANSFER_TIMEOUT_MS),
-		pull: (remote, local) => adb(['pull', remote, local], TRANSFER_TIMEOUT_MS),
-	};
-}
-
-type Transfer = (
-	direction: 'host_to_device' | 'device_to_host',
-	source: string,
-	destination: string,
-) => Promise<CommandResult>;
-
-type Shell = (script: string) => Promise<ScriptResult>;
-
 /**
  * @description Copies a device file to this computer in parts small enough for one jb-p1lot frame.
  * @param remote The file on the device.
  * @param local Where to write it here.
- * @param transfer Copies one file across.
- * @param shell Runs a device script.
+ * @param target The device.
  * @returns Whether every part arrived.
  */
 export async function pullInParts(
 	remote: string,
 	local: string,
-	transfer: Transfer,
-	shell: Shell,
+	target: Pick<DeviceTarget, 'pull' | 'shell'>,
 ): Promise<CommandResult> {
-	const split = await shell(
+	const split = await runScript(
+		target,
 		`${IOS_SPLIT} -b ${IOS_PART_BYTES} '${remote}' '${remote}.part-' && echo "UBD_RESULT=$(ls '${remote}'.part-* | tr '\\n' ' ')"`,
+		TRANSFER_TIMEOUT_MS,
 	);
 
 	if (!split.ok) {
@@ -232,7 +207,7 @@ export async function pullInParts(
 	try {
 		for (const part of parts) {
 			const destination = join(directory, part.slice(part.lastIndexOf('/') + 1));
-			const copied = await transfer('device_to_host', part, destination);
+			const copied = await target.pull(part, destination, TRANSFER_TIMEOUT_MS);
 
 			if (!copied.ok) {
 				return copied;
@@ -246,7 +221,11 @@ export async function pullInParts(
 		return { ok: true, stdout: local };
 	} finally {
 		rmSync(directory, { recursive: true, force: true });
-		await shell(`rm -f '${remote}'.part-*\necho "UBD_RESULT=removed"`);
+		await runScript(
+			target,
+			`rm -f '${remote}'.part-*\necho "UBD_RESULT=removed"`,
+			TRANSFER_TIMEOUT_MS,
+		);
 	}
 }
 
@@ -254,15 +233,13 @@ export async function pullInParts(
  * @description Copies a file here to the device in parts small enough for one jb-p1lot frame, then joins them.
  * @param local The file here.
  * @param remote Where to write it on the device.
- * @param transfer Copies one file across.
- * @param shell Runs a device script.
+ * @param target The device.
  * @returns Whether the joined file arrived.
  */
 export async function pushInParts(
 	local: string,
 	remote: string,
-	transfer: Transfer,
-	shell: Shell,
+	target: Pick<DeviceTarget, 'push' | 'shell'>,
 ): Promise<CommandResult> {
 	const data = readFileSync(local);
 	const directory = mkdtempSync(join(tmpdir(), 'ubd-push-'));
@@ -280,7 +257,7 @@ export async function pushInParts(
 
 			writeFileSync(source, data.subarray(offset, offset + IOS_PART_BYTES));
 
-			const copied = await transfer('host_to_device', source, destination);
+			const copied = await target.push(source, destination, TRANSFER_TIMEOUT_MS);
 
 			if (!copied.ok) {
 				return copied;
@@ -292,99 +269,41 @@ export async function pushInParts(
 		rmSync(directory, { recursive: true, force: true });
 	}
 
-	const joined = await shell(
+	const joined = await runScript(
+		target,
 		`cat ${parts.map((part) => `'${part}'`).join(' ')} > '${remote}' && rm -f ${parts.map((part) => `'${part}'`).join(' ')} && echo "UBD_RESULT=${remote}"`,
+		TRANSFER_TIMEOUT_MS,
 	);
 
 	return joined.ok ? { ok: true, stdout: remote } : { ok: false, error: joined.error };
 }
 
-function iosTarget(udid: string, run: CommandRunner, pilot: string): DeviceTarget {
-	const device = { udid, pilot, run };
-	const transfer: Transfer = (direction, source, destination) =>
-		run(
-			pilot,
-			[
-				'file_transfer',
-				'--device',
-				udid,
-				'--direction',
-				direction,
-				'--source',
-				source,
-				'--destination',
-				destination,
-			],
-			TRANSFER_TIMEOUT_MS,
-		);
-
-	async function runScript(script: string, timeoutMs: number): Promise<ScriptResult> {
-		const result = await pilotShell(device, script, { timeoutMs, onDevice: true });
-
-		return result.ok
-			? scriptResult(true, result.output, '')
-			: scriptResult(false, '', result.error);
-	}
-
-	const shell: Shell = (script) => runScript(script, TRANSFER_TIMEOUT_MS);
-
-	return {
-		platform: 'ios',
-		id: udid,
-		parentScript: [
-			"parent=''",
-			`for plist in $(grep -l '${DISCORD_BUNDLE_ID}' ${IOS_CONTAINERS_DIRECTORY}/*/.com.apple.mobile_container_manager.metadata.plist 2>/dev/null); do parent="\${plist%/*}/Documents"; break; done`,
-			`if [ -z "$parent" ]; then echo '${ERROR_MARKER}Discord has no data container on this device.'; exit 1; fi`,
-		].join('\n'),
-		staging: IOS_STAGING,
-		packCommand: (archive) =>
-			`${IOS_TAR} -cf - -C "$parent" Unbound | ${IOS_GZIP} > '${archive}'`,
-		unpackCommand: (archive) =>
-			`${IOS_GZIP} -dc '${archive}' | ${IOS_TAR} -xf - -C "$parent" --no-same-owner`,
-		ownerScript: 'chown -R mobile:mobile "$parent/Unbound"',
-		stopScript: 'killall -9 Discord 2>/dev/null; sleep 1',
-		startScript: `${IOS_UIOPEN} --bundleid ${DISCORD_BUNDLE_ID}`,
-		run: runScript,
-		push: (local, remote) => pushInParts(local, remote, transfer, shell),
-		pull: (remote, local) => pullInParts(remote, local, transfer, shell),
-	};
+// jb-p1lot carries a limited frame, so an iPhone moves snapshot archives in parts.
+function pushArchive(target: DeviceTarget, local: string, remote: string) {
+	return target.platform === 'ios'
+		? pushInParts(local, remote, target)
+		: target.push(local, remote, TRANSFER_TIMEOUT_MS);
 }
 
-async function resolveTarget(
-	options: DeviceStateOptions,
-): Promise<DeviceTarget | { error: string }> {
-	const run = options.run ?? runCommand;
-	const onIOS = options.ios || options.udid !== undefined;
+function pullArchive(target: DeviceTarget, remote: string, local: string) {
+	return target.platform === 'ios'
+		? pullInParts(remote, local, target)
+		: target.pull(remote, local, TRANSFER_TIMEOUT_MS);
+}
 
-	if (onIOS && options.serial !== undefined) {
-		return {
-			error: 'Pass either --serial for an Android device or --ios/--udid for an iPhone, not both.',
-		};
+// Snapshots are kept per device, so an Android device picked without --serial is named by its serial.
+async function snapshotOwner(target: DeviceTarget): Promise<string> {
+	if (target.platform === 'ios') {
+		return target.udid;
 	}
 
-	if (onIOS) {
-		const pilot = options.pilot ?? resolvePilot();
-		const udid =
-			options.udid ?? (await pickDevice((args, timeoutMs) => run(pilot, args, timeoutMs)));
-
-		return typeof udid === 'string' ? iosTarget(udid, run, pilot) : udid;
+	if (target.serial) {
+		return target.serial;
 	}
 
-	const adbArgs = options.serial ? ['-s', options.serial] : [];
-	const state = await run('adb', [...adbArgs, 'get-state'], ANDROID_TIMEOUTS.state);
+	const serial = await target.adb.run(['get-serialno'], ANDROID_TIMEOUTS.state);
 
-	if (!state.ok) {
-		return { error: `No Android device is ready over adb. ${state.error}` };
-	}
-
-	const identity = await run('adb', [...adbArgs, 'shell', 'id -u'], ANDROID_TIMEOUTS.shell);
-	const serial = options.serial ?? (await run('adb', ['get-serialno'], ANDROID_TIMEOUTS.state));
-
-	return androidTarget(
-		typeof serial === 'string' ? serial : serial.ok ? serial.stdout.trim() : undefined,
-		run,
-		identity.ok && identity.stdout.trim() === '0',
-	);
+	return (serial.ok && serial.stdout.trim()) || 'device';
 }
 
 async function restartIfAsked(target: DeviceTarget, restart: boolean | undefined): Promise<string> {
@@ -392,10 +311,7 @@ async function restartIfAsked(target: DeviceTarget, restart: boolean | undefined
 		return ' Launch Discord to load it.';
 	}
 
-	const started = await target.run(
-		`${target.startScript}\necho "UBD_RESULT=started"`,
-		IOS_TIMEOUTS.restart,
-	);
+	const started = await target.restartDiscord();
 
 	return started.ok ? ' Discord was restarted.' : ` Restarting Discord failed: ${started.error}`;
 }
@@ -403,17 +319,15 @@ async function restartIfAsked(target: DeviceTarget, restart: boolean | undefined
 /**
  * @description Moves Discord's Unbound folder aside on a device, so the next launch starts from a fresh state.
  * Nothing is deleted: the old folder stays next to the new one as `Unbound.reset-<time>`.
- * @param options The device and whether to restart Discord.
+ * @param target The device.
+ * @param options Whether to restart Discord.
  * @returns Where the old folder went, or why the reset failed.
  */
-export async function resetDevice(options: DeviceStateOptions): Promise<CommandOutput> {
-	const target = await resolveTarget(options);
-
-	if ('error' in target) {
-		return { ok: false, text: target.error };
-	}
-
-	const moved = await target.run(resetScript(target), ANDROID_TIMEOUTS.shell);
+export async function resetDevice(
+	target: DeviceTarget,
+	options: DeviceStateOptions = {},
+): Promise<CommandOutput> {
+	const moved = await runScript(target, resetScript(snapshotTarget(target)));
 
 	if (!moved.ok) {
 		return { ok: false, text: `Resetting ${target.id} failed: ${moved.error}` };
@@ -430,12 +344,14 @@ export async function resetDevice(options: DeviceStateOptions): Promise<CommandO
 /**
  * @description Saves Discord's Unbound folder on a device as a named snapshot on this computer.
  * @param name The snapshot's name.
- * @param options The device and where snapshots are kept.
+ * @param target The device.
+ * @param options Where snapshots are kept.
  * @returns Where the snapshot was saved, or why it failed.
  */
 export async function saveSnapshot(
 	name: string,
-	options: DeviceStateOptions,
+	target: DeviceTarget,
+	options: DeviceStateOptions = {},
 ): Promise<CommandOutput> {
 	if (!isSnapshotName(name)) {
 		return {
@@ -444,42 +360,43 @@ export async function saveSnapshot(
 		};
 	}
 
-	const target = await resolveTarget(options);
-
-	if ('error' in target) {
-		return { ok: false, text: target.error };
-	}
-
-	const directory = snapshotDirectory(target.platform, target.id, options.snapshotRoot);
+	const owner = await snapshotOwner(target);
+	const directory = snapshotDirectory(target.platform, owner, options.snapshotRoot);
 	const local = join(directory, `${name}.tar.gz`);
 	const remote = `${target.staging}/ubd-snapshot-${name}-${crypto.randomUUID()}.tar.gz`;
-	const archived = await target.run(saveScript(target, remote), TRANSFER_TIMEOUT_MS);
+	const archived = await runScript(
+		target,
+		saveScript(snapshotTarget(target), remote),
+		TRANSFER_TIMEOUT_MS,
+	);
 
 	if (!archived.ok) {
-		return { ok: false, text: `Archiving Unbound on ${target.id} failed: ${archived.error}` };
+		return { ok: false, text: `Archiving Unbound on ${owner} failed: ${archived.error}` };
 	}
 
 	mkdirSync(directory, { recursive: true });
 
-	const pulled = await target.pull(remote, local);
+	const pulled = await pullArchive(target, remote, local);
 
-	await target.run(`rm -f '${remote}'\necho "UBD_RESULT=removed"`, ANDROID_TIMEOUTS.shell);
+	await runScript(target, `rm -f '${remote}'\necho "UBD_RESULT=removed"`);
 
 	return pulled.ok
-		? { ok: true, text: `Saved ${target.id}'s Unbound state as ${name} (${local}).` }
-		: { ok: false, text: `Copying the snapshot from ${target.id} failed: ${pulled.error}` };
+		? { ok: true, text: `Saved ${owner}'s Unbound state as ${name} (${local}).` }
+		: { ok: false, text: `Copying the snapshot from ${owner} failed: ${pulled.error}` };
 }
 
 /**
  * @description Replaces Discord's Unbound folder on a device with a saved snapshot. The current folder
  * stays on the device as `Unbound.before-restore-<time>`.
  * @param name The snapshot's name.
- * @param options The device, where snapshots are kept, and whether to restart Discord.
+ * @param target The device.
+ * @param options Where snapshots are kept, and whether to restart Discord.
  * @returns What was restored, or why it failed.
  */
 export async function restoreSnapshot(
 	name: string,
-	options: DeviceStateOptions,
+	target: DeviceTarget,
+	options: DeviceStateOptions = {},
 ): Promise<CommandOutput> {
 	if (!isSnapshotName(name)) {
 		return {
@@ -488,32 +405,31 @@ export async function restoreSnapshot(
 		};
 	}
 
-	const target = await resolveTarget(options);
-
-	if ('error' in target) {
-		return { ok: false, text: target.error };
-	}
-
+	const owner = await snapshotOwner(target);
 	const local = join(
-		snapshotDirectory(target.platform, target.id, options.snapshotRoot),
+		snapshotDirectory(target.platform, owner, options.snapshotRoot),
 		`${name}.tar.gz`,
 	);
 
 	if (!existsSync(local)) {
-		return { ok: false, text: `There is no snapshot named ${name} for ${target.id}.` };
+		return { ok: false, text: `There is no snapshot named ${name} for ${owner}.` };
 	}
 
 	const remote = `${target.staging}/ubd-restore-${name}-${crypto.randomUUID()}.tar.gz`;
-	const pushed = await target.push(local, remote);
+	const pushed = await pushArchive(target, local, remote);
 
 	if (!pushed.ok) {
-		return { ok: false, text: `Copying the snapshot to ${target.id} failed: ${pushed.error}` };
+		return { ok: false, text: `Copying the snapshot to ${owner} failed: ${pushed.error}` };
 	}
 
-	const restored = await target.run(restoreScript(target, remote), TRANSFER_TIMEOUT_MS);
+	const restored = await runScript(
+		target,
+		restoreScript(snapshotTarget(target), remote),
+		TRANSFER_TIMEOUT_MS,
+	);
 
 	if (!restored.ok) {
-		return { ok: false, text: `Restoring ${name} on ${target.id} failed: ${restored.error}` };
+		return { ok: false, text: `Restoring ${name} on ${owner} failed: ${restored.error}` };
 	}
 
 	const aside =
@@ -521,7 +437,7 @@ export async function restoreSnapshot(
 
 	return {
 		ok: true,
-		text: `Restored ${name} on ${target.id}.${aside}${await restartIfAsked(target, options.restart)}`,
+		text: `Restored ${name} on ${owner}.${aside}${await restartIfAsked(target, options.restart)}`,
 	};
 }
 

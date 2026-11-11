@@ -41,11 +41,9 @@ static loader::browserlogin::PendingLogin &pendingBrowserLogin(void)
     return pending;
 }
 
-static loader::LoaderPipeline &pipeline(void);
-
 BOOL UnboundBundleIsReady(void)
 {
-    return pipeline().isBundleReady();
+    return UnboundLoader()->isBundleReady();
 }
 
 static void applyPendingBrowserLogin(void)
@@ -160,14 +158,55 @@ public:
         return std::string(static_cast<const char *>(data.bytes), data.length);
     }
 
-    std::optional<std::string> resolveUpdateURL() override
-    {
-        return UnboundUpdateURL();
-    }
-
     uint32_t runtimeBytecodeVersion() override
     {
         return [CoreBridge mainBundleBytecodeVersion];
+    }
+
+    std::optional<std::string> fetchText(const std::string &url, double timeoutSeconds) override
+    {
+        return UnboundFetchText(url, timeoutSeconds);
+    }
+
+    std::optional<loader::DownloadResult>
+    download(const std::string &url, const std::string &destination,
+             const std::map<std::string, std::string> &headers,
+             const loader::DownloadPolicy             &policy) override
+    {
+        return UnboundDownload(url, destination, headers, policy);
+    }
+
+    bool isServing(const std::string &url, double timeoutSeconds) override
+    {
+        return UnboundIsServing(url, timeoutSeconds);
+    }
+
+    std::optional<std::string> devServerHost() override
+    {
+        NSString *host = [Utilities getVirtualDeviceHostAddress];
+        return host ? std::optional<std::string>(toStdString(host)) : std::nullopt;
+    }
+
+    std::shared_ptr<loader::HotReloadTransport> hotReloadTransport() override
+    {
+        return UnboundHotReloadTransport();
+    }
+
+    nlohmann::json systemFonts() override
+    {
+        return UnboundPlatformFontEntries();
+    }
+
+    // Text laid out from now on, such as after the restart the client offers, uses the new table.
+    void onFontsChanged() override
+    {
+        dispatch_async(dispatch_get_main_queue(), ^{ [Fonts apply]; });
+    }
+
+    // The rescan finishes before the call returns; recolouring runs on main.
+    void onThemesRescanned() override
+    {
+        dispatch_async(dispatch_get_main_queue(), ^{ [Themes refreshThemes]; });
     }
 
     static std::string iconImageURL(NSArray<NSString *> *files)
@@ -230,13 +269,8 @@ public:
         return icons;
     }
 
-    loader::UnboundNativeProvider unboundNativeProvider() override
+    void extendNativeProvider(loader::UnboundNativeProvider &provider) override
     {
-        loader::UnboundNativeProvider provider = loader::makeUnboundNativeProvider(
-            UnboundAddonState(), UnboundFonts(), toStdString([Utilities getCurrentDylibName]),
-            runtimeBytecodeVersion(), toStdString(FileSystem.documents), UnboundDownload);
-        // The scan finishes before the call returns, so the client's next `getThemes` lists the
-        // theme; recolouring runs on main.
         provider.getAppIcons = [] {
             return declaredUnboundIcons();
         };
@@ -249,23 +283,16 @@ public:
                     .firstObject;
             return toStdString(UBBuildIconIPA(documents) ?: @"");
         };
-        provider.rescanThemes = [] {
-            [CoreBridge rescanThemes];
-            dispatch_async(dispatch_get_main_queue(), ^{ [Themes refreshThemes]; });
-        };
-        return provider;
     }
 
     void installNativeModules(jsi::Runtime &runtime) override
     {
         loader::setNativePluginRuntimeExecutor(gInstance);
         loader::registerNativePluginBridge(runtime);
-        loader::registerNativePlatform(runtime);
     }
 
     void onAddonsPrepared() override
     {
-        [CoreBridge scanAddons];
         [Themes init];
         [Fonts init];
     }
@@ -338,15 +365,19 @@ public:
     }
 };
 
-static loader::LoaderPipeline &pipeline(void)
+std::shared_ptr<loader::Loader> UnboundLoader()
 {
-    static loader::LoaderPipeline *shared = nullptr;
-    static dispatch_once_t         onceToken;
+    static std::shared_ptr<loader::Loader> shared;
+    static dispatch_once_t                 onceToken;
     dispatch_once(&onceToken, ^{
-        shared = new loader::LoaderPipeline(std::make_shared<IOSLoaderHost>(),
-                                            UnboundUpdaterSettings(), UnboundBundleUpdater());
+        [FileSystem init];
+        shared = std::make_shared<loader::Loader>(
+            loader::LoaderOptions{toStdString(FileSystem.documents), "iOS",
+                                  toStdString([Utilities getCurrentDylibName])},
+            std::make_shared<IOSLoaderHost>(), loader::makeNativePlatformProvider());
+        shared->start();
     });
-    return *shared;
+    return shared;
 }
 
 static void prepareLoading(id instance)
@@ -358,7 +389,7 @@ static void prepareLoading(id instance)
 
     gInstance = instance;
     dispatch_async(dispatch_get_main_queue(), ^{ [DevOverlay refreshOverlay]; });
-    pipeline().prepare();
+    UnboundLoader()->prepare();
 }
 
 #pragma mark - Hooks
@@ -372,7 +403,7 @@ static void prepareLoading(id instance)
     loader::setNativePluginFabricHost(self);
     prepareLoading(instance);
     // The last point before Discord's bundle is read, so Unbound's bundle runs first.
-    pipeline().onRuntimeCreated(runtime);
+    UnboundLoader()->onRuntimeCreated(runtime);
     %orig;
 }
 
@@ -410,7 +441,6 @@ static void prepareLoading(id instance)
     [FileSystem init];
     [CoreBridge openLogFile];
     [Settings init];
-    loader::registerNativePlatformProvider();
 
     if (![Utilities isRNNewArchEnabled])
     {
@@ -431,7 +461,7 @@ static void prepareLoading(id instance)
                      queue:nil
                 usingBlock:^(NSNotification *) {
                     dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0),
-                                   ^{ pipeline().onForeground(); });
+                                   ^{ UnboundLoader()->onForeground(); });
                 }];
 
     // iOS ending Discord without a crash (rather than suspending it) is not a failed launch.
@@ -439,7 +469,7 @@ static void prepareLoading(id instance)
         addObserverForName:UIApplicationWillTerminateNotification
                     object:nil
                      queue:nil
-                usingBlock:^(NSNotification *) { pipeline().markHealthy(); }];
+                usingBlock:^(NSNotification *) { UnboundLoader()->markHealthy(); }];
 
     // Leaving the foreground without crashing counts the launch as healthy; a suspended app's
     // health timer would otherwise never fire before iOS ends it.
@@ -449,7 +479,7 @@ static void prepareLoading(id instance)
                      queue:nil
                 usingBlock:^(NSNotification *) {
                     dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0),
-                                   ^{ pipeline().markHealthy(); });
+                                   ^{ UnboundLoader()->markHealthy(); });
                 }];
 
 #if ATTESTATION_ENABLED

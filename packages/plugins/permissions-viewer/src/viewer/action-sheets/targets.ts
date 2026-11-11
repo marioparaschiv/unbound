@@ -1,3 +1,5 @@
+import { asId } from '@unbound-plugins/shared/values/as-id';
+
 export type Target =
 	| { kind: 'member'; guildId: string; userId: string }
 	| { kind: 'channel'; channelId: string }
@@ -11,15 +13,6 @@ export type SheetProps = {
 	channel?: { id?: unknown } | null;
 	user?: { id?: unknown } | null;
 };
-
-/**
- * @description Reads an ID Discord passed untyped.
- * @param value A sheet prop or menu field.
- * @returns The ID, or `undefined` unless it is a non-empty string.
- */
-export function asId(value: unknown): string | undefined {
-	return typeof value === 'string' && value ? value : undefined;
-}
 
 /**
  * @description Recognizes the action sheets that get a View Permissions row: a profile opened from a server, a channel's long-press sheet and a server's sheet.

@@ -7,6 +7,7 @@ import type { SponsorshipLifecycle, SponsorshipValues } from '~/lib/sponsors/spo
 import { sponsorship, sponsorWebhookDelivery } from '~/db/schema';
 import { upsertSponsorship } from '~/lib/sponsors/sponsorships';
 import type { Sponsorship } from '~/lib/sponsors/standing';
+import { startPeriodicJob, type Job } from '~/lib/jobs';
 import type { AppContext } from '~/lib/context';
 import type { Env } from '~/lib/env';
 
@@ -305,37 +306,25 @@ export async function reconcileSponsorships(ctx: AppContext): Promise<ReconcileR
 
 /**
  * @description Runs {@link reconcileSponsorships} at boot and every `SPONSOR_RECONCILE_INTERVAL_SECONDS`
- * when the Sponsors login and token are set. A failed run is logged and retried on the next tick; a
- * slow run is never overlapped.
+ * as a periodic job when the Sponsors login and token are set.
  * @param ctx The application context.
- * @returns The interval timer, or `undefined` when Sponsors is not configured.
+ * @returns The started job, or `undefined` when Sponsors is not configured.
  */
-export function startSponsorReconciler(ctx: AppContext): Timer | undefined {
+export function startSponsorReconciler(ctx: AppContext): Job | undefined {
 	if (!sponsorsConfig(ctx.env)) return;
 
-	let running = false;
-
-	async function reconcile() {
-		if (running) return;
-
-		running = true;
-
-		try {
+	return startPeriodicJob(
+		ctx.jobs,
+		'sponsors',
+		ctx.env.SPONSOR_RECONCILE_INTERVAL_SECONDS,
+		async () => {
 			const { fetched, updated } = await reconcileSponsorships(ctx);
 
 			if (updated > 0) {
 				logger.info(`Reconciled ${fetched} sponsorships, ${updated} changed.`);
 			}
-		} catch (error) {
-			logger.error('Failed to reconcile sponsorships:', error);
-		} finally {
-			running = false;
-		}
-	}
-
-	void reconcile();
-
-	return setInterval(() => void reconcile(), ctx.env.SPONSOR_RECONCILE_INTERVAL_SECONDS * 1000);
+		},
+	);
 }
 
 export default {

@@ -1,0 +1,7 @@
+{
+	"SUPER_REACTIONS": "Super Reactions",
+	"SUPER_REACT_BY_DEFAULT": "Super React by Default",
+	"SUPER_REACT_BY_DEFAULT_SUBTITLE": "The reaction picker opens on Super Reactions. Needs Nitro.",
+	"PLAYING_LIMIT": "Playing Limit",
+	"PLAYING_LIMIT_SUBTITLE": "How many Super Reaction animations play at once on one message. 0 plays none, and 5 leaves Discord's own limit in charge."
+}

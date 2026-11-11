@@ -11,7 +11,6 @@ import {
 } from '~/invite/modules';
 import { currentListenableActivity, sendListenAlongInvite } from '~/invite/send';
 import type { OverflowButton } from '~/types';
-import { PLUGIN_NAME } from '~/constants';
 
 type ActionsProps = { overflowButtons?: OverflowButton[] };
 
@@ -31,12 +30,15 @@ function spotifyButton(): OverflowButton {
  */
 export function startListenAlongInvite(): void {
 	if (
-		!ensureModules(`${PLUGIN_NAME}: invite`, {
-			MediaKeyboardActions,
-			Icons,
-			MessageActions,
-			DraftActions,
-		})
+		!ensureModules(
+			{
+				MediaKeyboardActions,
+				Icons,
+				MessageActions,
+				DraftActions,
+			},
+			'invite',
+		)
 	) {
 		return;
 	}

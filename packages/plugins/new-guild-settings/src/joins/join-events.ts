@@ -1,3 +1,5 @@
+import { asId } from '@unbound-plugins/shared/values/as-id';
+
 type InviteGuild = { id?: unknown };
 
 export type InviteAcceptAction = {
@@ -15,10 +17,6 @@ export type JoinRequestAction = {
 };
 
 export type JoinGuildOptions = { lurker?: unknown } | null | undefined;
-
-function asId(value: unknown): string | undefined {
-	return typeof value === 'string' && value ? value : undefined;
-}
 
 /**
  * @description Picks the server an accepted invite joined, skipping group DM invites and servers the user was already in.

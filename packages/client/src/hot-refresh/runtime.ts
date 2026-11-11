@@ -228,5 +228,3 @@ function isMemo(type: RefreshType): type is MemoType {
 function isForwardRef(type: RefreshType): type is ForwardRefType {
 	return typeof type === 'object' && '$$typeof' in type && type.$$typeof === FORWARD_REF;
 }
-
-export default { canonical, withRefreshScope, createScopedReact, stableType, performRefresh };

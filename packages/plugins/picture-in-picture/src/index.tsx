@@ -1,14 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
-import type { PluginContext } from '@unbound-app/api/native';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startPictureInPicture, stopPictureInPicture } from '~/picture-in-picture';
+import { startPictureInPicture } from '~/picture-in-picture';
 
-export function start(context: PluginContext) {
-	startPictureInPicture(context);
-}
-
-export function stop() {
-	stopPictureInPicture();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures([startPictureInPicture]);

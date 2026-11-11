@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/api",
-	"version": "2.2.0",
+	"version": "2.2.0-b54dedab6654bf4106909e98c8df984b350e19c4fe72bde2faaaf20974f59d5d",
 	"author": {
 		"name": "Mario P.",
 		"email": "contact@marioparaschiv.com",
@@ -45,7 +45,7 @@
 		"./storage": "./src/storage.d.ts",
 		"./sync": "./src/sync.d.ts",
 		"./testing": "./testing/index.ts",
-		"./testing/icu-parse": "./testing/icu-parse.ts",
+		"./testing/fakes": "./testing/fakes.ts",
 		"./testing/preset": "./testing/preset.ts",
 		"./themes": "./src/themes.d.ts",
 		"./toasts": "./src/toasts.d.ts",

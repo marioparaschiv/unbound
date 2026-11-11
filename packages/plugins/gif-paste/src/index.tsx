@@ -1,9 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startGifPaste } from '~/gif-paste';
+import { gifPasteFeatures } from '~/gif-paste';
 
-export function start() {
-	startGifPaste();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures(gifPasteFeatures);

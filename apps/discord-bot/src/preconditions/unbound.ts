@@ -1,8 +1,6 @@
 import type { CommandInteraction, ContextMenuCommandInteraction, Guild, Message } from 'discord.js';
 import { Precondition } from '@sapphire/framework';
 
-import { GUILD_ID } from '~/lib/constants';
-
 export class UnboundPrecondition extends Precondition {
 	public override messageRun(message: Message) {
 		return this.checkEligibility(message.guild);
@@ -21,7 +19,7 @@ export class UnboundPrecondition extends Precondition {
 			return this.error({ message: 'I am not available in DMs.' });
 		}
 
-		if (guild.id !== GUILD_ID) {
+		if (guild.id !== this.container.config.guildId) {
 			return this.error({ message: 'I am not available in this server.' });
 		}
 

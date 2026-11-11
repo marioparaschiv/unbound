@@ -1,4 +1,4 @@
-import { recordApplied, recordSkip } from '@unbound-plugins/shared/lifecycle/health';
+import { skipFeature } from '@unbound-plugins/shared/lifecycle/features';
 import { patcher, metro } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
 
@@ -35,8 +35,6 @@ function overrideDefaults(prototype: ChannelPrototype) {
 			original.apply(channel, args),
 		),
 	);
-
-	recordApplied(1);
 }
 
 /**
@@ -50,10 +48,7 @@ export function startForumDefaults(): void {
 		const prototype = module.ChannelRecordBase?.prototype;
 
 		if (!hasDefaultGetters(prototype)) {
-			const reason = 'ChannelRecordBase has no getDefaultLayout or getDefaultSortOrder';
-
-			logger.error(`Skipped, ${reason}.`);
-			recordSkip(reason);
+			skipFeature('ChannelRecordBase has no getDefaultLayout or getDefaultSortOrder');
 
 			return;
 		}

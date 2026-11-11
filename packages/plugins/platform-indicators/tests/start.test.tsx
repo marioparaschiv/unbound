@@ -1,6 +1,5 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { createElement, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
@@ -29,7 +28,6 @@ const stores: StoreSeeds = {
 const rowModule = { default: userRow };
 
 async function start({ profile = () => <View />, isMobileOnline = true } = {}) {
-	resetHealth();
 	flux.seed({
 		...stores,
 		Presence: {

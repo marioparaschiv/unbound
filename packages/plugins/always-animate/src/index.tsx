@@ -1,15 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startAnimate } from '~/animate';
+import { animateFeatures } from '~/animate';
 
-let stopAnimate = async () => {};
-
-export function start() {
-	stopAnimate = startAnimate();
-}
-
-export function stop() {
-	return stopAnimate();
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures(animateFeatures());

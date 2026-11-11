@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { parseRepository, repositoryInputSchema } from '../src/source';
-import { parse, safeParse } from '../src/schema';
+import { parseRepository, repositoryInputSchema } from '~/source';
+import { parse, safeParse } from '~/schema';
 
 describe('parseRepository', () => {
 	test('reads every form a user pastes or git prints', () => {

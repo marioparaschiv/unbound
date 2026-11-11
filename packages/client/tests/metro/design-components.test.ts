@@ -1,0 +1,116 @@
+import { DESIGN_COMPONENTS, NEWER_DESIGN_COMPONENTS } from '@unbound-app/types/components';
+import type { DesignComponents, DesignHelpers } from '@unbound-app/types/components';
+import { describe, expect, mock, test } from 'bun:test';
+import { forwardRef, memo } from 'react';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+import { mockLookups } from '../helpers/lookups';
+
+await import('../helpers/addons');
+
+mockLookups({});
+// The fallbacks' style sheets read colour tokens, which `~/metro/common` takes off Discord's `window`.
+mock.module('~/metro/common', () => ({
+	Theme: { colors: new Proxy({}, { get: (_target, key) => String(key) }) },
+}));
+
+const components = await import('~/metro/components');
+const { auditDesignComponents } = await import('~/metro/design');
+const { default: FallbackHeading } = await import('~/metro/fallbacks/fallback-heading');
+const { default: FallbackSwitch } = await import('~/metro/fallbacks/fallback-switch');
+const { default: FallbackStack } = await import('~/metro/fallbacks/fallback-stack');
+const { default: FallbackText } = await import('~/metro/fallbacks/fallback-text');
+const { default: FallbackCard } = await import('~/metro/fallbacks/fallback-card');
+const { default: FallbackBadge } = await import('~/metro/fallbacks/fallback-badge');
+
+const BARREL_MEMBER = /^\s*(\w+): \w+Component;$/;
+
+// The members of the generated `DesignBarrelComponents`, the export map of `design/native.tsx`.
+function generatedBarrelComponents(): string[] {
+	const barrels = join(import.meta.dir, '../../../discord-types/src/barrels.gen.d.ts');
+	const source = readFileSync(barrels, 'utf8');
+	const block = source.slice(source.indexOf('export type DesignBarrelComponents = {'));
+	const body = block.slice(0, block.indexOf('};'));
+
+	return body
+		.split('\n')
+		.map((line) => BARREL_MEMBER.exec(line)?.[1])
+		.filter((key): key is string => key !== undefined);
+}
+
+// Compiles only while no hand-typed helper shadows a generated component.
+const helpersShadowNoComponent: [Extract<keyof DesignHelpers, keyof DesignComponents>] extends [
+	never,
+]
+	? true
+	: false = true;
+
+describe('design components', () => {
+	test('names only components the generated design barrel exports, or a newer build adds', () => {
+		const newer: readonly string[] = NEWER_DESIGN_COMPONENTS;
+		const generated = DESIGN_COMPONENTS.filter((name) => !newer.includes(name));
+
+		expect(generatedBarrelComponents()).toEqual(expect.arrayContaining(generated));
+		expect(generatedBarrelComponents()).not.toEqual(expect.arrayContaining([...newer]));
+	});
+
+	test('keeps hand-typed helpers apart from generated components', () => {
+		expect(helpersShadowNoComponent).toBe(true);
+	});
+
+	test('recognises every kind of renderable React type', () => {
+		expect(components.isRenderable(() => null)).toBe(true);
+		expect(components.isRenderable(memo(() => null))).toBe(true);
+		expect(components.isRenderable(forwardRef(() => null))).toBe(true);
+		expect(components.isRenderable({ Text: () => null })).toBe(false);
+		expect(components.isRenderable(undefined)).toBe(false);
+	});
+
+	test('exports only renderable components even without Discord', () => {
+		expect(components.isRenderable(components.Switch)).toBe(true);
+		expect(components.isRenderable(components.HelpMessage)).toBe(true);
+	});
+
+	test('stands in with fallbacks for components the build lacks', () => {
+		expect(components.Discord.Text).toBe(FallbackText);
+		expect(components.Discord.Heading).toBe(FallbackHeading);
+		expect(components.Discord.FormSwitch).toBe(FallbackSwitch);
+		expect(components.Discord.Stack).toBe(FallbackStack);
+		expect(components.Discord.Card).toBe(FallbackCard);
+		expect(components.isRenderable(components.Discord.SearchField)).toBe(true);
+		expect(components.isRenderable(components.Discord.SearchBar)).toBe(true);
+		expect(components.Discord.Badge).toBe(FallbackBadge);
+		expect(components.Discord.Button).toBeUndefined();
+		expect('Text' in components.Discord).toBe(true);
+	});
+
+	test('registered fallbacks take over for missing components', () => {
+		const Slider = () => null;
+
+		components.registerDesignFallback('Slider', Slider);
+
+		expect(components.Discord.Slider).toBe(Slider);
+	});
+
+	test('audits how each component resolves', () => {
+		const audit = auditDesignComponents();
+
+		expect(audit.native).toEqual([]);
+		expect(audit.fallback).toEqual(
+			expect.arrayContaining([
+				'SearchBar',
+				'Badge',
+				'SearchField',
+				'Text',
+				'Heading',
+				'FormSwitch',
+				'Stack',
+				'Card',
+			]),
+		);
+		expect<string[]>([...audit.native, ...audit.fallback, ...audit.missing].sort()).toEqual(
+			[...DESIGN_COMPONENTS].sort(),
+		);
+	});
+});

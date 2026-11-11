@@ -1,13 +1,14 @@
 import type { BundleChannel, LoaderUpdate, LoaderUpdateQuery } from '@unbound-app/contracts/loader';
 import { isSemver } from '@unbound-app/contracts/manifest-patterns';
 import type { UnboundLoaderInfo } from '@unbound-app/types';
-import { createApiClient } from '@unbound-app/web/client';
-import type { Api } from '@unbound-app/web/api';
 
+import { createUnboundClient } from '~/account/client';
+import type { ApiRequest } from '~/account/client';
 import { compareVersions } from '~/core/versions';
 
 export type LoaderUpdateCheckOptions = {
-	baseUrl: string;
+	/** The Unbound API client to ask; this client's when absent. */
+	request?: ApiRequest;
 	/** The OS the client runs on, as React Native's `Platform.OS` names it. */
 	platform: string;
 	/** The native loader the client runs on; absent when no loader installed `UnboundNative`. */
@@ -78,7 +79,7 @@ export function resolveRequiredLoader(
 /**
  * @description Asks `GET /api/v1/loader/updates` whether a newer native loader release exists, and whether
  * the newest bundle needs one.
- * @param options The API origin, the OS, the loader's info and the bundle channel.
+ * @param options The API client, the OS, the loader's info and the bundle channel.
  * @returns The check; without a checkable loader only the native loader's own requirement. Rejects when
  * the server can't be reached or answers with an error.
  */
@@ -89,12 +90,10 @@ export async function fetchLoaderUpdate(options: LoaderUpdateCheckOptions): Prom
 		return { update: null, requiredVersion: resolveRequiredLoader(options.loader) };
 	}
 
-	const request = createApiClient<Api>({ baseUrl: options.baseUrl });
+	const { request = createUnboundClient() } = options;
 	const { update, requiredVersion } = await request('GET /api/v1/loader/updates', {
 		query,
 	});
 
 	return { update, requiredVersion: resolveRequiredLoader(options.loader, requiredVersion) };
 }
-
-export default { buildLoaderUpdateQuery, resolveRequiredLoader, fetchLoaderUpdate };

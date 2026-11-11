@@ -226,7 +226,6 @@ const identity = (value: number) => value;
 
 /**
  * @description Passes an easing curve through, since the fake draws no frames.
- * @param curve The curve.
  * @returns The same curve.
  */
 function keep(curve: Curve): Curve {

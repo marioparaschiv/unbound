@@ -1,5 +1,4 @@
 import { flux, metro, startPlugin } from '@unbound-app/api/testing';
-import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { afterEach, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
@@ -17,7 +16,6 @@ test('a picker that cannot be patched leaves the requests answered and fails the
 		post: async () => ({}),
 	};
 
-	resetHealth();
 	metro.register(REST);
 	metro.register({ default: 'not a component' }, 'modules/gif_picker/native/GIFPickerHeader.tsx');
 	flux.seed({ Locale: { locale: 'en-US' }, GIFPickerView: { getQuery: () => '' } });

@@ -5,6 +5,7 @@ import {
 	type DocsPackage,
 	type DocsVersion,
 } from '@unbound-app/contracts/docs';
+import { getCdnUrl } from '@unbound-app/contracts/version-layout';
 import { createServerFn } from '@tanstack/react-start';
 import { Type } from '@unbound-app/contracts/schema';
 
@@ -12,10 +13,9 @@ import { getDocsNav, getDocsPage, type DocsNav, type DocsPageData } from '~/lib/
 import { createDocsSource } from '~/lib/docs/docs-source';
 import { schemaValidator } from '~/lib/schema-validator';
 import type { DocsIndex } from '~/lib/docs/docs-index';
-import { getCdnUrl } from '~/lib/artifacts';
-import app from '~/lib/app';
+import { getApp } from '~/lib/app';
 
-const docs = createDocsSource({ cdnUrl: (key) => getCdnUrl(app.env, key) });
+const docs = createDocsSource({ cdnUrl: (key) => getCdnUrl(getApp().env.CDN_URL, key) });
 
 const versionParamsSchema = Type.Object({ package: docsPackageSchema, version: docsVersionSchema });
 

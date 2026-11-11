@@ -1,25 +1,13 @@
-import {
-	NATIVE_PLUGIN_CAPABILITIES,
-	NATIVE_PLUGIN_PLATFORM_CAPABILITIES,
-} from '@unbound-app/types/native';
-
 export const ADDON_FOLDER_MAX_LENGTH = 48;
 export const ADDON_NAME_MAX_LENGTH = 64;
 export const ADDON_DESCRIPTION_MAX_LENGTH = 160;
 
-/** The manifest fields the naming and capability conventions read, each still unvalidated. */
+/** The manifest fields the naming conventions read, each still unvalidated. */
 export type ConventionManifest = {
 	id?: unknown;
 	name?: unknown;
 	description?: unknown;
-	capabilities?: unknown;
-	platforms?: unknown;
 };
-
-const SUPPORTED_CAPABILITIES: readonly string[] = NATIVE_PLUGIN_CAPABILITIES;
-const SUPPORTED_PLATFORMS = Object.keys(NATIVE_PLUGIN_PLATFORM_CAPABILITIES).sort();
-const PLATFORM_CAPABILITIES: Record<string, readonly string[]> =
-	NATIVE_PLUGIN_PLATFORM_CAPABILITIES;
 
 const FOLDER_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const ID_PATTERN = /^[a-z][a-z0-9-]*\.[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -77,21 +65,6 @@ export function validateAddonNaming(manifest: ConventionManifest, folder?: strin
 	return errors;
 }
 
-/**
- * @description Checks that an addon's `platforms` and `capabilities` name supported values, and that
- * each platform can provide every Capability declared for it.
- * @param manifest The addon's parsed manifest.
- * @returns Every problem found, empty when the declarations are consistent.
- */
-export function validateAddonCapabilities(manifest: ConventionManifest): string[] {
-	const errors: string[] = [];
-	const platforms = validatePlatforms(manifest, errors);
-
-	validateFlatCapabilities(manifest, platforms, errors);
-
-	return errors;
-}
-
 function validateText(
 	manifest: ConventionManifest,
 	label: 'name' | 'description',
@@ -131,135 +104,10 @@ function hasControlCharacter(value: string) {
 	return false;
 }
 
-function providingPlatforms(capability: string) {
-	return SUPPORTED_PLATFORMS.filter((platform) =>
-		PLATFORM_CAPABILITIES[platform]?.includes(capability),
-	);
-}
-
-function validatePlatforms(manifest: ConventionManifest, errors: string[]): string[] {
-	const value = manifest.platforms;
-
-	if (value === void 0) {
-		return SUPPORTED_PLATFORMS;
-	}
-
-	if (!isPlainObject(value)) {
-		errors.push('platforms must be an object');
-
-		return SUPPORTED_PLATFORMS;
-	}
-
-	return validatePlatformEntries(Object.entries(value), errors);
-}
-
-function isPlainObject(value: unknown): value is object {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-// UNKNOWN: each platform's entry is an unvalidated manifest field.
-function validatePlatformEntries(entries: [string, unknown][], errors: string[]): string[] {
-	const values = new Map(entries);
-	const platforms = [...values.keys()].filter((platform) => {
-		if (!SUPPORTED_PLATFORMS.includes(platform)) {
-			errors.push(`platforms contains an unsupported platform: ${platform}`);
-
-			return false;
-		}
-
-		return true;
-	});
-
-	if (!platforms.length) {
-		errors.push('platforms must not be empty');
-
-		return SUPPORTED_PLATFORMS;
-	}
-
-	for (const platform of platforms) {
-		const entry = values.get(platform);
-
-		if (!isPlainObject(entry)) {
-			errors.push(`platforms.${platform} must be an object`);
-
-			continue;
-		}
-
-		if ('capabilities' in entry) {
-			validateCapabilityList(entry.capabilities, platform, `platforms.${platform}`, errors);
-		}
-	}
-
-	return platforms.sort();
-}
-
-// UNKNOWN: an unvalidated manifest field.
-function validateCapabilityList(value: unknown, platform: string, label: string, errors: string[]) {
-	if (!Array.isArray(value)) {
-		errors.push(`${label} must be an array`);
-
-		return;
-	}
-
-	for (const capability of value) {
-		if (typeof capability !== 'string' || !SUPPORTED_CAPABILITIES.includes(capability)) {
-			errors.push(`${label} contains an unsupported value: ${String(capability)}`);
-
-			continue;
-		}
-
-		if (!PLATFORM_CAPABILITIES[platform]?.includes(capability)) {
-			errors.push(`${label} cannot provide ${capability}`);
-		}
-	}
-}
-
-function validateFlatCapabilities(
-	manifest: ConventionManifest,
-	platforms: string[],
-	errors: string[],
-) {
-	const value = manifest.capabilities;
-
-	if (value === void 0) return;
-
-	if (!Array.isArray(value)) {
-		errors.push('capabilities must be an array');
-
-		return;
-	}
-
-	for (const capability of value) {
-		if (typeof capability !== 'string' || !SUPPORTED_CAPABILITIES.includes(capability)) {
-			errors.push(`capabilities contains an unsupported value: ${String(capability)}`);
-
-			continue;
-		}
-
-		const missing = platforms.filter(
-			(platform) => !PLATFORM_CAPABILITIES[platform]?.includes(capability),
-		);
-
-		if (missing.length === 0) {
-			continue;
-		}
-
-		const providers = providingPlatforms(capability);
-		const suggestion = providers.length
-			? `; declare it under ${providers.map((platform) => `platforms.${platform}.capabilities`).join(' and ')}`
-			: '';
-
-		errors.push(
-			`capabilities contains ${capability}, which ${missing.join(', ')} cannot provide${suggestion}`,
-		);
-	}
-}
-
 export default {
 	ADDON_FOLDER_MAX_LENGTH,
 	ADDON_NAME_MAX_LENGTH,
 	ADDON_DESCRIPTION_MAX_LENGTH,
 	validateAddonFolder,
 	validateAddonNaming,
-	validateAddonCapabilities,
 };

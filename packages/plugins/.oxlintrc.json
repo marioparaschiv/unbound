@@ -24,6 +24,7 @@
 			}
 		],
 		"unbound/no-window-unbound": "error",
+		"unbound/test-file-location": "error",
 		"unbound/platform-check-only-in-platform-file": "error",
 		"unbound/no-module-scope-lookup": ["error", { "lazyByDefault": true }]
 	},

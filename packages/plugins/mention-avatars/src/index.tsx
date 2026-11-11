@@ -1,13 +1,5 @@
-import type { PluginContext } from '@unbound-app/api/native';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { avatarsSelfTest, startAvatars, stopAvatars } from '~/avatars';
+import { avatarsSelfTest, startAvatars } from '~/avatars';
 
-export function start(context: PluginContext) {
-	startAvatars(context);
-}
-
-export function stop() {
-	stopAvatars();
-}
-
-export { avatarsSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures([startAvatars], { selfTest: avatarsSelfTest });

@@ -4,7 +4,7 @@ import { Type } from '@unbound-app/contracts/schema';
 
 import { getDeveloper, listDevelopers } from '~/lib/developers';
 import { schemaValidator } from '~/lib/schema-validator';
-import app from '~/lib/app';
+import { getApp } from '~/lib/app';
 
 /**
  * @description Loads one page of the Team page's people, filtered by a name search.
@@ -19,7 +19,7 @@ export const fetchDevelopers = createServerFn({ method: 'GET' })
 			}),
 		),
 	)
-	.handler(({ data }) => listDevelopers(app, data));
+	.handler(({ data }) => listDevelopers(getApp(), data));
 
 /**
  * @description Loads one person's Team profile with the listed addons that credit them.
@@ -27,6 +27,6 @@ export const fetchDevelopers = createServerFn({ method: 'GET' })
  */
 export const fetchDeveloper = createServerFn({ method: 'GET' })
 	.validator(schemaValidator(addonAuthorSchema.properties.id))
-	.handler(async ({ data }) => (await getDeveloper(app, data)) ?? null);
+	.handler(async ({ data }) => (await getDeveloper(getApp(), data)) ?? null);
 
 export default { fetchDevelopers, fetchDeveloper };

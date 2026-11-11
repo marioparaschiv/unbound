@@ -7,7 +7,7 @@
 #include <string>
 
 #include "LoaderFontStore.h"
-#include "LoaderUpdater.h"
+#include "LoaderTransport.h"
 
 namespace loader::fonts {
 // What `UnboundNative.fonts` does: resolves fonts through Unbound's API, downloads and checks

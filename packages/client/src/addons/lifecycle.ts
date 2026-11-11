@@ -8,15 +8,10 @@ import {
 	withAddonAttribution,
 	withAddonScope,
 } from '~/addons/crash-guard';
-import {
-	consentKey,
-	needsConsent,
-	NativeConsentRequiredError,
-	promptForConsent,
-} from '~/native/consent';
 import type { AddonAttribution, AddonFreeze, AddonScope } from '~/addons/crash-guard';
 import { parseAddonManifest, resolveManifestCapabilities } from '~/addons/manifest';
 import type { AddonEvents, AddonResolveable, AddonState } from '~/addons/addon';
+import { needsConsent, NativeConsentRequiredError } from '~/native/consent';
 import { validateNativePluginRequirements } from '~/native/capabilities';
 import { announceFreeze, freezeDisables } from '~/addons/freezes';
 import { crashReportAddon } from '~/diagnostics/crash-report';
@@ -37,8 +32,8 @@ import { Addon } from '~/addons/addon';
 import storage from '~/storage/api';
 
 /**
- * @description Runtime lifecycle shared by every addon kind: load/unload, start/stop, enable/disable,
- * consent, and freeze/crash handling. {@link Addons} layers distribution on top.
+ * @description Runtime lifecycle shared by every addon kind: load/unload, start/stop and freeze/crash
+ * handling. {@link AddonSelection} decides which addons are on; {@link Addons} layers distribution on top.
  * @template I What the bundles of the addons this manager governs evaluate to.
  */
 export abstract class AddonLifecycle<I extends object> extends Manager<
@@ -51,6 +46,47 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	protected pendingStarts = new Set<string>();
 	protected stopTimeoutMs = 5000;
 	private readonly records = new WeakMap<Addon<I>, AddonState<I>>();
+
+	/**
+	 * @description Whether the user has an addon on. {@link AddonSelection} decides.
+	 * @param id The addon's id.
+	 * @returns Its persisted state.
+	 */
+	abstract isEnabled(id: string): boolean;
+
+	/**
+	 * @description Turns an addon on and starts it. {@link AddonSelection} decides. Twin of {@link disable}.
+	 * @param entity The addon, as its id or the entity itself.
+	 * @returns Settles once the addon is on.
+	 */
+	abstract enable(entity: AddonResolveable<I>): void | Promise<void>;
+
+	/**
+	 * @description Turns an addon off and stops it. {@link AddonSelection} decides. Twin of {@link enable}.
+	 * @param entity The addon, as its id or the entity itself.
+	 */
+	abstract disable(entity: AddonResolveable<I>): void;
+
+	/**
+	 * @description Starts an addon the user has on, and puts it on screen if its kind does so.
+	 * @param entity The addon.
+	 * @param consented Whether the user just allowed its consent-gated capabilities.
+	 * @returns Settles once it is on screen.
+	 */
+	protected abstract activate(entity: Addon<I>, consented?: boolean): void | Promise<void>;
+
+	/**
+	 * @description Records whether the user has an addon on.
+	 * @param entity The addon.
+	 * @param enabled Whether it is now on.
+	 */
+	protected abstract select(entity: Addon<I>, enabled: boolean): void;
+
+	/**
+	 * @description Reads the consents the user gave for consent-gated capabilities.
+	 * @returns The consents keyed by addon id.
+	 */
+	protected abstract getConsents(): NativeConsents;
 
 	async shutdown(): Promise<void> {
 		this.pendingStarts.clear();
@@ -170,9 +206,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 			this.entities.set(manifest.id, entity);
 			this.registered(manifest.id);
 
-			const states = this.getStates();
-
-			if (states[manifest.id] && !this.disableAfterCrash(entity)) {
+			if (this.isEnabled(manifest.id) && !this.disableAfterCrash(entity)) {
 				this.startWhenDue(entity);
 			}
 
@@ -184,14 +218,14 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 	private startWhenDue(entity: Addon<I>) {
 		if (!entity.manifest.startAfterFirstFrame) {
-			this.start(entity);
+			void this.activate(entity);
 
 			return;
 		}
 
 		afterFirstFrame(() => {
-			if (this.entities.get(entity.id) === entity && this.getStates()[entity.id]) {
-				this.start(entity);
+			if (this.entities.get(entity.id) === entity && this.isEnabled(entity.id)) {
+				void this.activate(entity);
 			}
 		});
 	}
@@ -399,10 +433,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	 */
 	private disableAfterCrash(entity: Addon<I>): boolean {
 		return disableIfCrashed(entity, this.bucket, this.logger, () => {
-			const states = this.getStates();
-
-			states[entity.id] = false;
-			this.settings.set('states', states);
+			this.select(entity, false);
 			void storage.persist();
 		});
 	}
@@ -467,7 +498,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 						const shouldRestart = this.pendingStarts.delete(resolved.id);
 
-						if (stopped && shouldRestart && this.getStates()[resolved.id]) {
+						if (stopped && shouldRestart && this.isEnabled(resolved.id)) {
 							this.start(resolved);
 						}
 					});
@@ -542,123 +573,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 		await this.stop(resolved);
 		this.clearFailure(resolved);
-		this.start(resolved);
-	}
-
-	/**
-	 * @description Enables an addon, persisting its state and starting it if not already running, and emits `enabled`.
-	 * @param entity The addon to enable, as its id or the entity itself.
-	 */
-	enable(entity: AddonResolveable<I>): void | Promise<void> {
-		const resolved = this.resolve(entity);
-
-		if (!resolved) return;
-
-		if (needsConsent(resolved.manifest, this.getConsents())) {
-			return this.requestConsent(resolved).then((granted) => {
-				if (granted) {
-					this.enableNow(resolved, true);
-				}
-			});
-		}
-
-		this.enableNow(resolved, false);
-	}
-
-	private enableNow(resolved: Addon<I>, consented: boolean): void {
-		try {
-			const states = this.getStates();
-
-			states[resolved.id] = true;
-			this.settings.set('states', states);
-
-			if (!resolved.started) {
-				this.start(resolved, consented);
-			}
-
-			this.emit('enabled', resolved);
-		} catch (error) {
-			this.fail('enable', resolved.id, error);
-		}
-	}
-
-	/**
-	 * @description Disables an addon, persisting its state and stopping it if currently running, and emits `disabled`.
-	 * @param entity The addon to disable, as its id or the entity itself.
-	 */
-	disable(entity: AddonResolveable<I>) {
-		const resolved = this.resolve(entity);
-
-		if (!resolved) return;
-
-		try {
-			this.pendingStarts.delete(resolved.id);
-			const states = this.getStates();
-
-			states[resolved.id] = false;
-			this.settings.set('states', states);
-
-			if (resolved.started) {
-				this.stop(resolved);
-			}
-
-			this.emit('disabled', resolved);
-		} catch (error) {
-			this.fail('disable', resolved.id, error);
-		}
-	}
-
-	/**
-	 * @description Reads the consents the user gave for consent-gated capabilities.
-	 * @returns The consents keyed by addon id.
-	 */
-	protected getConsents(): NativeConsents {
-		return this.settings.get<NativeConsents>('consents', {});
-	}
-
-	/**
-	 * @description Asks the user to allow an addon's consent-gated capabilities and records the answer.
-	 * @param entity The addon asking.
-	 * @returns Whether the user allowed it.
-	 */
-	protected async requestConsent(entity: Addon<I>): Promise<boolean> {
-		const granted = await promptForConsent(entity).catch((error) => {
-			this.logger.error(`Failed to ask for consent for ${entity.id}:`, error);
-
-			return false;
-		});
-
-		if (!granted) {
-			this.errors.set(entity.id, new NativeConsentRequiredError(entity.name));
-
-			return false;
-		}
-
-		this.settings.set('consents', {
-			...this.getConsents(),
-			[entity.id]: consentKey(entity.manifest),
-		});
-		this.errors.delete(entity.id);
-
-		return true;
-	}
-
-	/**
-	 * @description Toggles an addon between enabled and disabled based on its current state, and emits `toggled`.
-	 * @param entity The addon to toggle, as its id or the entity itself.
-	 */
-	toggle(entity: AddonResolveable<I>) {
-		const resolved = this.resolve(entity);
-
-		if (!resolved) return;
-
-		if (this.isEnabled(resolved.id)) {
-			this.disable(resolved);
-		} else {
-			this.enable(resolved);
-		}
-
-		this.emit('toggled', resolved);
+		await this.activate(resolved);
 	}
 
 	/**
@@ -682,23 +597,6 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 				return candidate;
 			}
 		}
-	}
-
-	/**
-	 * @description Whether the user has an addon enabled.
-	 * @param id The addon's id.
-	 * @returns Its persisted enabled state.
-	 */
-	isEnabled(id: string): boolean {
-		return Boolean(this.getStates()[id]);
-	}
-
-	/**
-	 * @description Reads the persisted enabled/disabled state map for this manager's addons.
-	 * @returns A record of addon id to its enabled state.
-	 */
-	protected getStates(): Record<string, boolean> {
-		return this.settings.get('states', {});
 	}
 
 	/**

@@ -7,6 +7,8 @@ import { join, relative } from 'node:path';
 import Logger from '@unbound-app/logger';
 import { swc } from 'rollup-plugin-swc3';
 
+import type { PatchMessage } from '../../src/hot-refresh/messages';
+
 import {
 	API_URL,
 	IS_DEV_BUILD,
@@ -43,7 +45,7 @@ import signBundles from './sign';
 /** What the dev engine reports after a source change. */
 export type HotUpdate =
 	| { type: 'change'; file: string }
-	| { type: 'patch'; clientId: string; code: string; filename: string; changedIds: string[] }
+	| (PatchMessage & { clientId: string })
 	| { type: 'reload'; reason: string }
 	| { type: 'failed'; error: string }
 	| { type: 'built' };
@@ -64,8 +66,8 @@ export type Flavour = {
 };
 
 /** The bundle every loader downloads, and the larger one Developer mode loads instead. */
-export const DEFAULT_FLAVOUR: Flavour = { name: 'unbound', devTools: false };
-export const DEV_FLAVOUR: Flavour = { name: 'unbound-dev', devTools: true };
+const DEFAULT_FLAVOUR: Flavour = { name: 'unbound', devTools: false };
+const DEV_FLAVOUR: Flavour = { name: 'unbound-dev', devTools: true };
 
 /** The modules the default bundle swaps for the release twin that drops the developer tooling. */
 const RELEASE_MODULES: Record<string, string> = {
@@ -99,7 +101,6 @@ function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 		// bundle and DCE prunes the branch and the `*.dev.ts` modules only it imports.
 		transform: {
 			define: {
-				$$DEV$$: JSON.stringify(IS_DEV_BUILD),
 				'import.meta.env.DEV': JSON.stringify(IS_DEV_BUILD),
 				'import.meta.env.DEV_TOOLS': JSON.stringify(devTools),
 				'import.meta.env.BENCH': JSON.stringify(Boolean(benchmark)),
@@ -413,7 +414,7 @@ async function hotBuild(onUpdate: (update: HotUpdate) => void) {
 	return engine;
 }
 
-export { build, watchBuild, hotBuild };
+export { build, hotBuild };
 
 if (import.meta.main) {
 	if (process.argv.includes('--watch')) {

@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -10,7 +11,11 @@
 #include "LoaderPreferences.h"
 #include "LoaderSettings.h"
 #include "LoaderUpdater.h"
-#include "NativePlatformBridge.h"
+
+namespace loader {
+// Only named here; the toolbox reads it through NativePlatformBridge.h in its source.
+struct NativePlatformProvider;
+}
 
 namespace loader::toolbox {
 enum class AddonKind
@@ -88,6 +93,8 @@ struct ToolboxContext {
     std::function<std::optional<std::string>()> updateURL;
     std::function<uint32_t()>                   bytecodeVersion;
     std::function<bool()>                       bundleReady;
+    // The device facts issue reports carry; none reads as unknown.
+    std::shared_ptr<const NativePlatformProvider> provider;
 };
 
 enum class MenuStep

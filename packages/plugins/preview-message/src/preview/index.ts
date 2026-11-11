@@ -1,4 +1,4 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
+import { skipFeature } from '@unbound-plugins/shared/lifecycle/features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { Portal } from '@unbound-app/api/metro/components';
 import { assets } from '@unbound-app/api';
@@ -23,7 +23,7 @@ import { patchPreviewButton } from '~/preview/platform';
 export function startPreview(): void {
 	const EyeIcon = assets.getIdByName('EyeIcon');
 
-	const ready = ensureModules('Preview Message', {
+	const ready = ensureModules({
 		ChatItem,
 		MessageRecord,
 		RowManager,
@@ -36,11 +36,10 @@ export function startPreview(): void {
 	if (!ready) return;
 
 	if (EyeIcon === undefined) {
-		console.error('[Preview Message] Skipped, the EyeIcon asset was not found.');
+		skipFeature('the EyeIcon asset was not found');
 
 		return;
 	}
 
 	patchPreviewButton(EyeIcon);
-	recordApplied(1);
 }

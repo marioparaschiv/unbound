@@ -1,8 +1,8 @@
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 
 import type { SourceSeed } from '../../../../../apps/web/tests/helpers/addons.ts';
-import type { AppContext } from '../../../../../apps/web/tests/helpers/index.ts';
 import type { Caller } from '../../../../../apps/web/src/lib/api/caller.ts';
+import type { AppContext } from '../../../../../apps/web/testing/index.ts';
 import type { EnvSource } from '../../../../../apps/web/src/lib/env.ts';
 
 import {
@@ -10,10 +10,10 @@ import {
 	manifest,
 	seedSubmission,
 	signInWithDiscord,
-} from '../../../../../apps/web/tests/helpers/index.ts';
+} from '../../../../../apps/web/testing/index.ts';
 
-// Replays the TLC counterexamples against the real reviewSubmission, real Postgres and an in-memory
-// object store whose public writes can be held open. Invariant names match spec/ReviewPublish.tla.
+// Replays TLC counterexamples on the real reviewSubmission, real Postgres and an in-memory object
+// store that can hold public writes open. Invariant names match spec/ReviewPublishProperties.tla.
 export type Checks = Record<string, boolean>;
 
 export type Replay = {

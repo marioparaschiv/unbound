@@ -1,6 +1,5 @@
-import { flux, metro, storage } from '@unbound-app/api';
+import { flux, metro } from '@unbound-app/api';
 
-import { PLUGIN_ID } from '~/constants';
 import type { NotificationUpdate } from '~/apply/payloads';
 
 type NotificationSettingsActions = {
@@ -25,5 +24,3 @@ export const UserGuildSettingsStore = flux.getStore('UserGuildSettings') as Retu
 	typeof flux.getStore
 > &
 	UserGuildSettings;
-
-export const settings = storage.getBucket(PLUGIN_ID);

@@ -7,11 +7,6 @@ import type { ManagerOf } from '~/addons/manager-of';
 import { EventEmitter } from '~/core/event-emitter';
 import storage from '~/storage/api';
 
-type BaseManagerEvents<T> = {
-	load: (entity: T) => void;
-	unload: (entity: T) => void;
-};
-
 /** What a manager is called, where it keeps its addons, and how the UI shows its kind. */
 export type ManagerInfo = {
 	kind: AddonKind;
@@ -32,21 +27,20 @@ export type ManagerInfo = {
 const registry: Partial<ManagerOf> = {};
 
 /**
- * @description Base contract every addon-style manager subclasses. Extends tseep's `EventEmitter`,
- * intersecting `BaseManagerEvents<T>` (the `load`/`unload` pair) onto the subclass event map, and
- * holds an `entities` map of governed addons alongside an `errors` map recording per-entity failures.
+ * @description Base contract every addon-style manager subclasses. Extends tseep's `EventEmitter` with the
+ * subclass event map, and holds an `entities` map of governed addons alongside an `errors` map recording
+ * per-entity failures.
  * @template T The entity type the manager governs.
- * @template EventMap The subclass-specific event map, merged with `BaseManagerEvents<T>`.
+ * @template EventMap The subclass-specific event map.
  */
-export abstract class Manager<T, EventMap extends DefaultEventMap = {}> extends EventEmitter<
-	EventMap & BaseManagerEvents<T>
-> {
+export abstract class Manager<
+	T,
+	EventMap extends DefaultEventMap = {},
+> extends EventEmitter<EventMap> {
 	/** The entities currently governed by this manager, keyed by id. */
 	entities = new Map<PropertyKey, T>();
 	/** Errors recorded per entity id when an operation fails. */
 	errors = new Map<PropertyKey, Error>();
-	/** Whether {@link initialize} has completed for this manager. */
-	initialized = false;
 
 	readonly kind: AddonKind;
 	readonly name: string;
@@ -81,7 +75,7 @@ export abstract class Manager<T, EventMap extends DefaultEventMap = {}> extends 
 	}
 
 	/**
-	 * @description Resolves the manager singleton of an addon kind. Twin of {@link register}.
+	 * @description Resolves the manager singleton of an addon kind, once core has registered it.
 	 * @template K The addon kind.
 	 * @param kind The addon kind.
 	 * @returns The kind's manager.
@@ -97,13 +91,20 @@ export abstract class Manager<T, EventMap extends DefaultEventMap = {}> extends 
 	}
 
 	/**
-	 * @description Makes a manager the singleton {@link Manager.for} resolves for its kind. Twin of {@link for}.
-	 * @template K The addon kind.
-	 * @param kind The addon kind.
-	 * @param manager The kind's manager.
+	 * @description Makes each kind's manager the singleton {@link Manager.for} resolves. Twin of {@link unregister}.
+	 * @param managers Every kind's manager.
 	 */
-	protected static register<K extends AddonKind>(kind: K, manager: ManagerOf[K]) {
-		registry[kind] = manager;
+	static register(managers: ManagerOf) {
+		Object.assign(registry, managers);
+	}
+
+	/**
+	 * @description Forgets every registered manager, so {@link Manager.for} throws again. Twin of {@link register}.
+	 */
+	static unregister() {
+		for (const kind of Object.keys(registry) as AddonKind[]) {
+			delete registry[kind];
+		}
 	}
 
 	/**
@@ -111,51 +112,12 @@ export abstract class Manager<T, EventMap extends DefaultEventMap = {}> extends 
 	 */
 	abstract initialize(): void;
 
-	/**
-	 * @description Lists every entity currently governed by this manager.
-	 * @returns An array of all governed entities.
-	 */
 	getEntities(): T[] {
 		return [...this.entities.values()];
 	}
 
-	/**
-	 * @description Looks up a single governed entity by its id.
-	 * @param id The id of the entity to retrieve.
-	 * @returns The matching entity, or `undefined` if none is governed under that id.
-	 */
 	getEntity(id: PropertyKey): T | undefined {
 		return this.entities.get(id);
-	}
-
-	/**
-	 * @description Reads the URL each entity was installed from. Entities loaded from disk or pushed
-	 * over the debugger have none.
-	 * @returns A record of entity id to install URL.
-	 */
-	getSources(): Record<string, string> {
-		return this.settings.get('sources', {});
-	}
-
-	/**
-	 * @description Records the URL an entity was installed from. Twin of {@link forgetSource}.
-	 * @param id The entity id.
-	 * @param url The install URL.
-	 */
-	recordSource(id: string, url: string) {
-		this.settings.set('sources', { ...this.getSources(), [id]: url });
-	}
-
-	/**
-	 * @description Forgets the URL an entity was installed from. Twin of {@link recordSource}.
-	 * @param id The entity id.
-	 */
-	forgetSource(id: string) {
-		const { [id]: removed, ...sources } = this.getSources();
-
-		if (removed === undefined) return;
-
-		this.settings.set('sources', sources);
 	}
 
 	/**
@@ -165,6 +127,5 @@ export abstract class Manager<T, EventMap extends DefaultEventMap = {}> extends 
 		this.patcher.unpatchAll();
 		this.entities.clear();
 		this.errors.clear();
-		this.initialized = false;
 	}
 }

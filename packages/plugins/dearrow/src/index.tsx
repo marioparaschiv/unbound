@@ -1,19 +1,5 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
 
-import { startEmbeds } from '~/embeds';
+import { embedFeatures } from '~/embeds';
 
-let stopEmbeds: () => Promise<void> | void = () => undefined;
-
-export function start() {
-	stopEmbeds = startEmbeds();
-}
-
-export function stop() {
-	const pending = stopEmbeds();
-
-	stopEmbeds = () => undefined;
-
-	return pending;
-}
-
-export { featureSelfTest as selfTest };
+export const { start, stop, selfTest } = runFeatures(embedFeatures);

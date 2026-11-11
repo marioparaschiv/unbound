@@ -8,7 +8,12 @@
 		"declaration": true,
 		"declarationMap": true,
 		"esModuleInterop": true,
-		"forceConsistentCasingInFileNames": true
+		"forceConsistentCasingInFileNames": true,
+		"paths": {
+			"~/testing": ["./testing/index.ts"],
+			"~/testing/*": ["./testing/*"],
+			"~/*": ["./src/*"]
+		}
 	},
 	"include": ["src/**/*", "testing/**/*", "tests/**/*"],
 	"exclude": ["tests/fixtures/plugin/**"]

@@ -1,18 +1,18 @@
-import { DiscordAPIError, PermissionFlagsBits, RESTJSONErrorCodes } from 'discord.js';
 import type { Member, MemberQuery, MemberSubject } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
+import { PermissionFlagsBits } from 'discord.js';
 import { inArray } from 'drizzle-orm';
 
-import { DISCORD_IDS, type IdConstantName } from '~/lib/constants';
+import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
 import type { ContributorCache } from '~/lib/github-contributors';
-import createSerialQueue from '~/runtime/serial-queue';
-import type { Stores } from '~/dispatchers/types';
+import { IDS_SOURCE, type IdConstantName } from '~/lib/config';
+import { discordFailure } from '~/lib/discord-messages';
 import type { Database } from '~/db/database';
 import { roleGrant } from '~/db/schema';
 
 const logger = createLogger('Bot', 'Roles');
 
-// Verbatim subsets of the discord.js surface this file touches; `Dispatcher[]` in index.ts proves a real client fits.
+// Verbatim subsets of the discord.js surface this file touches; index.ts proves a real client's guilds fit.
 export type FetchMember = { user: string; force: true };
 export type RolesRole = { id: string; name: string; position: number };
 export type HighestRole = RolesRole & { comparePositionTo: (roleId: string) => number };
@@ -31,16 +31,10 @@ export type RolesGuild = {
 	roles: { cache: { get: (roleId: string) => RolesRole | undefined } };
 	members: { me: BotMember | null; fetch: (options: FetchMember) => Promise<RolesMember> };
 };
-export type JoinedMember = { id: string; guild: { id: string } };
-export type RolesClient = {
-	guilds: { fetch: (guildId: string) => Promise<RolesGuild> };
-	on: (event: 'guildMemberAdd', listener: (member: JoinedMember) => void) => void;
-};
-export type RolesContext = Stores & { client: RolesClient };
+export type RolesGuilds = { fetch: (guildId: string) => Promise<RolesGuild> };
 
 type RoleDefinition = {
 	key: string;
-	/** The id constant in `src/lib/constants.ts` holding the role's id. */
 	constant: IdConstantName;
 	/** Asked only of a member with GitHub linked, the precondition of every role. */
 	qualifies: (row: Member, contributors: ReadonlySet<string> | undefined) => boolean;
@@ -63,7 +57,10 @@ const ROLES = [
 ] as const satisfies readonly RoleDefinition[];
 
 export type RoleKey = (typeof ROLES)[number]['key'];
-export type RoleIds = Record<RoleKey, string>;
+export type RoleConstant = (typeof ROLES)[number]['constant'];
+
+/** The id constants the roles dispatcher needs; it is not started while one is unset. */
+export const ROLE_CONSTANTS: readonly RoleConstant[] = ROLES.map((role) => role.constant);
 /** One Discord account: the union of every member with this discord id. */
 type Claim = { discordId: string; wanted: ReadonlySet<RoleKey>; granted: ReadonlySet<string> };
 /** Role id per key; a role blocked by the guild is absent and was logged. */
@@ -73,25 +70,17 @@ type RoleCheck = { grantable: Map<RoleKey, string>; problems: string[] };
 
 export type RolesOptions = {
 	guildId: string;
+	/** The bot's guilds, of which it fetches `guildId`. */
+	guilds: RolesGuilds;
 	contributors: ContributorCache;
-	/** Role id per key; the id constants by default, where an unset one is never granted. */
-	roleIds?: RoleIds;
-	now?: () => number;
-};
-
-export type RolesDispatcher = {
-	name: 'roles';
-	channel: 'member_changed';
-	requires: readonly IdConstantName[];
-	reconcile: (context: RolesContext) => Promise<void>;
-	handle: (payload: string, context: RolesContext) => Promise<void>;
-	/** Resolves once every queued sync, including joins, has settled. */
-	drain: () => Promise<void>;
+	ids: Readonly<Record<RoleConstant, string>>;
+	/** The clock, in epoch milliseconds. */
+	now: () => number;
 };
 
 const DELETED_RETRY_MS = 60 * 60 * 1000;
 const ALL_MEMBERS: MemberQuery = { by: 'all' };
-// The subjects the bot's triggers write into `member_changed` payloads; `discord` is for joins only.
+// The subjects the bot's triggers write into `member_changed` payloads.
 const PAYLOAD_SUBJECTS: ReadonlySet<string> = new Set<MemberSubject>(['user', 'github', 'addon']);
 
 function isPayloadSubject(value: string): value is MemberSubject {
@@ -150,41 +139,24 @@ function pendingRoles(claim: Claim, roles: Grantable, held: ReadonlySet<string>)
 	return pending;
 }
 
-function isNotInGuild(error: unknown): error is DiscordAPIError {
-	return error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMember;
-}
-
-function isDeletedUser(error: unknown): error is DiscordAPIError {
-	return error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownUser;
-}
-
-function isMissingPermissions(error: unknown): error is DiscordAPIError {
-	return error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingPermissions;
-}
-
 /**
  * @description Creates the grant-only role-sync dispatcher.
- * @param options Guild and contributor cache; role ids and clock default to the constants and `Date.now`.
- * @returns A dispatcher assignable to `Dispatcher`, plus `drain()`.
+ * @param options The guild, the contributor cache, the role ids and the clock.
+ * @returns The `member_changed` dispatcher.
  */
-export function createRolesDispatcher(options: RolesOptions): RolesDispatcher {
-	const { guildId, contributors, roleIds, now = Date.now } = options;
-	const allRoles: Grantable = new Map(
-		ROLES.flatMap(({ key, constant }): Pending[] => {
-			const roleId = roleIds ? roleIds[key] : DISCORD_IDS[constant];
-
-			return roleId === undefined ? [] : [[key, roleId]];
-		}),
-	);
-	const queue = createSerialQueue();
+export function createRolesDispatcher(options: RolesOptions): Dispatcher {
+	const { guildId, guilds, contributors, ids, now } = options;
+	const allRoles: Grantable = new Map(ROLES.map(({ key, constant }) => [key, ids[constant]]));
 	// `discordId:roleId` pairs seen held by hand; per process, so a restart checks them once more.
 	const held = new Set<string>();
 	// Discord id -> epoch ms before which a deleted account is not fetched again; one not in the guild is retried every run.
 	const deleted = new Map<string, number>();
 	let reported = new Set<string>();
-	let attached = false;
 
-	async function loadClaims({ db, web }: Stores, query: MemberQuery): Promise<Claim[]> {
+	async function loadClaims(
+		{ db, web }: DispatcherContext,
+		query: MemberQuery,
+	): Promise<Claim[]> {
 		const ids = await contributors.get();
 		const rows = await web.members(query);
 		const wanted = new Map<string, Set<RoleKey>>();
@@ -251,17 +223,12 @@ export function createRolesDispatcher(options: RolesOptions): RolesDispatcher {
 		}
 
 		for (const { key, constant } of ROLES) {
-			const roleId = allRoles.get(key);
-
-			if (roleId === undefined) {
-				continue;
-			}
-
+			const roleId = ids[constant];
 			const role = guild.roles.cache.get(roleId);
 
 			if (!role) {
 				problems.push(
-					`Cannot grant ${key}: role ${constant}=${roleId} does not exist in guild ${guildId}. Fix it in src/lib/constants.ts.`,
+					`Cannot grant ${key}: role ${constant}=${roleId} does not exist in guild ${guildId}. Fix it in ${IDS_SOURCE}.`,
 				);
 
 				continue;
@@ -331,7 +298,10 @@ export function createRolesDispatcher(options: RolesOptions): RolesDispatcher {
 			target = await guild.members.fetch({ user: claim.discordId, force: true });
 			deleted.delete(claim.discordId);
 		} catch (error) {
-			if (isNotInGuild(error)) {
+			const failure = discordFailure(error);
+
+			// The account exists but is not in the guild; any other missing resource is an error.
+			if (failure === 'unknown-member') {
 				logger.debug(
 					`Discord user ${claim.discordId} is not in the guild; retrying on the next reconcile.`,
 				);
@@ -339,7 +309,8 @@ export function createRolesDispatcher(options: RolesOptions): RolesDispatcher {
 				return;
 			}
 
-			if (isDeletedUser(error)) {
+			// 10013 Unknown User: the account was deleted.
+			if (failure === 'undeliverable') {
 				deleted.set(claim.discordId, now() + DELETED_RETRY_MS);
 				logger.debug(
 					`Discord user ${claim.discordId} is a deleted account; retrying in an hour.`,
@@ -364,7 +335,7 @@ export function createRolesDispatcher(options: RolesOptions): RolesDispatcher {
 			try {
 				await grantRole(db, target, claim.discordId, role);
 			} catch (error) {
-				if (!isMissingPermissions(error)) {
+				if (discordFailure(error) !== 'forbidden') {
 					logger.error(
 						`Failed to grant ${key} to Discord user ${claim.discordId}:`,
 						error,
@@ -381,12 +352,12 @@ export function createRolesDispatcher(options: RolesOptions): RolesDispatcher {
 		}
 	}
 
-	async function sync(current: RolesContext, query: MemberQuery) {
+	async function sync(current: DispatcherContext, query: MemberQuery) {
 		const claims = await loadClaims(current, query);
 
 		if (!claims.length) return;
 
-		const guild = await current.client.guilds.fetch(guildId);
+		const guild = await guilds.fetch(guildId);
 		const { grantable, problems } = checkRoles(guild);
 
 		report(problems);
@@ -400,34 +371,11 @@ export function createRolesDispatcher(options: RolesOptions): RolesDispatcher {
 		}
 	}
 
-	// The bot runs without the privileged GuildMembers intent, so this never fires today and the timed reconcile grants joins; it costs nothing if the intent is approved.
-	function attach(context: RolesContext) {
-		if (attached) return;
-
-		attached = true;
-		context.client.on('guildMemberAdd', (joined) => {
-			if (joined.guild.id !== guildId) return;
-
-			queue
-				.enqueue(() => sync(context, { by: 'discord', ids: [joined.id] }))
-				.catch((error) => {
-					logger.error(
-						`Failed to sync roles for joined Discord user ${joined.id}:`,
-						error,
-					);
-				});
-		});
-	}
-
+	// The bot runs without the privileged GuildMembers intent, so the timed reconcile grants joins.
 	return {
 		name: 'roles',
 		channel: 'member_changed',
-		requires: ROLES.map((role) => role.constant),
-		reconcile(current) {
-			attach(current);
-
-			return queue.enqueue(() => sync(current, ALL_MEMBERS));
-		},
+		reconcile: (current) => sync(current, ALL_MEMBERS),
 		handle(payload, current) {
 			const query = parseMemberPayload(payload);
 
@@ -435,9 +383,8 @@ export function createRolesDispatcher(options: RolesOptions): RolesDispatcher {
 				return Promise.resolve();
 			}
 
-			return queue.enqueue(() => sync(current, query));
+			return sync(current, query);
 		},
-		drain: () => queue.drain(),
 	};
 }
 

@@ -1,4 +1,5 @@
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
+import { asId } from '@unbound-plugins/shared/values/as-id';
 import { patcher } from '@unbound-app/api';
 
 import {
@@ -10,7 +11,7 @@ import {
 	type ImageTarget,
 	type User,
 } from '~/images/targets';
-import { asId, type OpenedSheet, type SheetRef } from '~/images/opened-sheet';
+import type { OpenedSheet, SheetRef } from '~/images/opened-sheet';
 import { ChannelStore, ContextMenus, GuildStore, Theme, UserStore } from '~/images/modules';
 import ViewIcon from '~/images/components/view-icon';
 import { openImage } from '~/images/open-image';
@@ -70,7 +71,7 @@ function resolveTargets(menu: ContextMenu, opened: OpenedSheet | null): ImageTar
  * @param opened The last opened profile or guild sheet, for menus opened from inside it.
  */
 export function patchContextMenus(opened: SheetRef): void {
-	if (!ensureModules('View Icons: context menus', { Theme })) return;
+	if (!ensureModules({ Theme }, 'context menus')) return;
 
 	patcher.before(
 		ContextMenus,

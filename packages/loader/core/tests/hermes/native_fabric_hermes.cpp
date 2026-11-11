@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
+#include <fstream>
 #include <hermes/hermes.h>
 #include <jsi/jsi.h>
 #include <memory>
@@ -41,6 +42,31 @@ public:
         work();
     }
 
+    bool runOnMainNextFrame(std::function<void()> work) override
+    {
+        frameSchedules++;
+        if (!frameSchedulingSucceeds)
+        {
+            return false;
+        }
+        frameHeld.push_back(std::move(work));
+        if (!holding)
+        {
+            releaseFrame();
+        }
+        return true;
+    }
+
+    void releaseFrame()
+    {
+        std::vector<std::function<void()>> pending;
+        pending.swap(frameHeld);
+        for (const auto &work : pending)
+        {
+            work();
+        }
+    }
+
     void release()
     {
         holding = false;
@@ -70,8 +96,11 @@ public:
         work();
     }
 
-    bool                               holding = false;
+    bool                               holding                 = false;
+    bool                               frameSchedulingSucceeds = true;
+    size_t                             frameSchedules          = 0;
     std::vector<std::function<void()>> held;
+    std::vector<std::function<void()>> frameHeld;
     std::vector<std::function<void()>> delayed;
 };
 
@@ -271,6 +300,19 @@ static const char *const kKnownFrameChecks = R"JS((function () {
 	return JSON.stringify(failures);
 })())JS";
 
+static const char *const kAsyncOnlyChecks = R"JS((function () {
+	return JSON.stringify({
+		mount: typeof androidFabric.mount,
+		mountAsync: typeof androidFabric.mountAsync,
+		update: typeof androidFabric.update,
+		updateAsync: typeof androidFabric.updateAsync,
+		batch: typeof androidFabric.batch,
+		batchAsync: typeof androidFabric.batchAsync,
+		iOSBatch: typeof fabric.batch,
+		iOSBatchAsync: typeof fabric.batchAsync
+	});
+})())JS";
+
 static void servesKnownFrames(jsi::Runtime &runtime, RecordingAdapter &adapter)
 {
     adapter.knowsFrames = true;
@@ -316,6 +358,76 @@ static bool called(const RecordingAdapter &adapter, const std::string &call)
 static void evaluate(jsi::Runtime &runtime, const std::string &source, const char *name)
 {
     runtime.evaluateJavaScript(std::make_shared<jsi::StringBuffer>(source), name);
+}
+
+static nlohmann::json readFrameConformanceFixture()
+{
+    std::ifstream input(std::string(UNBOUND_CORE_TEST_VECTORS_DIR) +
+                        "/native-fabric-conformance.json");
+    return nlohmann::json::parse(input);
+}
+
+static void batchesFabricMutationsOnOneFrame(jsi::Runtime &runtime, RecordingAdapter &adapter,
+                                             InlineExecutor &executor)
+{
+    const nlohmann::json fixture   = readFrameConformanceFixture();
+    const std::string    surfaceId = "surface-" + std::to_string(adapter.mounted + 1);
+    evaluate(runtime,
+             "globalThis.frameFixture = " + fixture.dump() +
+                 "; "
+                 "globalThis.frameSurface = fabric.mount('frame-row', frameFixture.module, "
+                 "frameFixture.initialProperties)",
+             "native-fabric-frame-mount.js");
+    adapter.calls.clear();
+    executor.holding        = true;
+    executor.frameSchedules = 0;
+    evaluate(runtime,
+             "fabric.batchAsync(frameFixture.mutations.map(function (mutation) { return "
+             "Object.assign({ surface: frameSurface }, mutation); }))",
+             "native-fabric-frame-batch.js");
+    require(executor.frameSchedules == 1, "a frame batch schedules one display frame");
+    require(adapter.calls.empty(), "frame mutations wait for the next display frame");
+    executor.releaseFrame();
+
+    const nlohmann::json expected = fixture["expected"];
+    require(adapter.calls.size() == 3, "repeated properties collapse to one platform operation");
+    require(called(adapter, "update " + surfaceId + " " + expected["properties"].dump()),
+            "the last property update wins in the shared frame batch");
+    require(called(adapter, "setSize " + surfaceId + " " + expected["minimum"].dump() + " " +
+                                expected["maximum"].dump()),
+            "the frame batch applies the size mutation");
+    require(called(adapter, "setFrame " + surfaceId + " " + expected["frame"].dump()),
+            "the last frame update wins in the shared frame batch");
+    executor.release();
+    executor.holding = false;
+    evaluate(runtime, "fabric.unmount(frameSurface)", "native-fabric-frame-unmount.js");
+}
+
+static void rejectsFabricBatchWhenFrameSchedulingFails(jsi::Runtime     &runtime,
+                                                       RecordingAdapter &adapter,
+                                                       InlineExecutor   &executor)
+{
+    evaluate(
+        runtime,
+        "globalThis.failedFrameSurface = fabric.mount('frame-failure-row', 'ConformanceCard', {})",
+        "native-fabric-frame-failure-mount.js");
+    adapter.calls.clear();
+    executor.frameSchedulingSucceeds = false;
+    evaluate(runtime,
+             "globalThis.frameBatchFailure = null; "
+             "fabric.batchAsync([{ surface: failedFrameSurface, frame: { x: 0, y: 0, width: "
+             "16, height: 16 } }]).catch(function (error) { frameBatchFailure = error.code; })",
+             "native-fabric-frame-schedule-failure.js");
+    runtime.drainMicrotasks();
+    jsi::Value failure = runtime.evaluateJavaScript(
+        std::make_shared<jsi::StringBuffer>("JSON.stringify(frameBatchFailure)"),
+        "native-fabric-frame-schedule-failure-result.js");
+    require(failure.getString(runtime).utf8(runtime) == "\"NATIVE_FRAME_SCHEDULING_FAILED\"",
+            "failed display-frame scheduling rejects the native operation immediately");
+    require(adapter.calls.empty(), "failed display-frame scheduling does not mutate the surface");
+    executor.frameSchedulingSucceeds = true;
+    evaluate(runtime, "fabric.unmount(failedFrameSurface)",
+             "native-fabric-frame-failure-unmount.js");
 }
 
 static void reusesIdleSurfaces(jsi::Runtime &runtime, RecordingAdapter &adapter)
@@ -487,7 +599,10 @@ int main()
 {
     auto executor = std::make_shared<InlineExecutor>();
     loader::native::setExecutor(executor);
-    auto runtime = facebook::hermes::makeHermesRuntime();
+    // The microtask queue settles promises in drainMicrotasks instead of through setImmediate,
+    // which a bare Hermes runtime lacks.
+    auto runtime = facebook::hermes::makeHermesRuntime(
+        ::hermes::vm::RuntimeConfig::Builder().withMicrotaskQueue(true).build());
     loader::native::registerRuntime(*runtime);
 
     auto adapter = std::make_shared<RecordingAdapter>();
@@ -495,6 +610,22 @@ int main()
         *runtime, "fabric",
         loader::native::makeFabricNamespace(*runtime, adapter,
                                             loader::native::FabricCalls::SyncAndAsync));
+    runtime->global().setProperty(*runtime, "androidFabric",
+                                  loader::native::makeFabricNamespace(
+                                      *runtime, adapter, loader::native::FabricCalls::AsyncOnly));
+
+    jsi::Value asyncResult = runtime->evaluateJavaScript(
+        std::make_shared<jsi::StringBuffer>(kAsyncOnlyChecks), "native-fabric-async-only.js");
+    nlohmann::json asyncMethods =
+        nlohmann::json::parse(asyncResult.getString(*runtime).utf8(*runtime));
+    require(asyncMethods["mount"] == "undefined" && asyncMethods["update"] == "undefined" &&
+                asyncMethods["batch"] == "undefined",
+            "async-only platforms do not expose blocking Fabric methods");
+    require(asyncMethods["mountAsync"] == "function" && asyncMethods["updateAsync"] == "function" &&
+                asyncMethods["batchAsync"] == "function",
+            "async-only platforms expose the asynchronous Fabric contract");
+    require(asyncMethods["iOSBatch"] == "undefined" && asyncMethods["iOSBatchAsync"] == "function",
+            "frame-batched Fabric updates are asynchronous on the iOS compatibility surface");
 
     jsi::Value result = runtime->evaluateJavaScript(
         std::make_shared<jsi::StringBuffer>(kFabricChecks), "native-fabric-checks.js");
@@ -542,6 +673,11 @@ int main()
     servesKnownFrames(*runtime, *adapter);
     require(loader::native::mountedFabricSurfaces() == 1,
             "known frames leave only the kept surface");
+
+    batchesFabricMutationsOnOneFrame(*runtime, *adapter, *executor);
+    rejectsFabricBatchWhenFrameSchedulingFails(*runtime, *adapter, *executor);
+    require(loader::native::mountedFabricSurfaces() == 1,
+            "frame batching leaves only the kept surface");
 
     auto replacement = facebook::hermes::makeHermesRuntime();
     loader::native::registerRuntime(*replacement);
