@@ -1,7 +1,7 @@
 import { flux } from '@unbound-app/api';
 
-import { statusColor } from '~/indicators/status-colors';
-import { Theme, ThemeStore } from '~/indicators/modules';
+import { statusColor } from '~/lib/status-colors';
+import { Theme, ThemeStore } from '~/lib/modules';
 
 function resolver(theme: string | undefined) {
 	return (token: string): unknown => {

@@ -3,9 +3,9 @@ import { toasts } from '@unbound-app/api';
 import { messages, useMessages } from '@unbound-app/i18n';
 import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import PlatformIcon from '~/indicators/components/platform-icon';
-import { describePlatforms, platformLabel } from '~/indicators/platforms';
-import { usePlatformStatuses } from '~/indicators/status-map';
+import PlatformIcon from '~/components/platform-icon';
+import { describePlatforms, platformLabel } from '~/lib/platforms';
+import { usePlatformStatuses } from '~/lib/status-map';
 
 type PlatformIndicatorsProps = {
 	setting: 'memberList' | 'profiles';

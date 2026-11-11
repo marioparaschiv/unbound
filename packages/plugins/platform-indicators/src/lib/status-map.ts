@@ -8,8 +8,8 @@ import {
 	statusesKey,
 	type ClientStatusMap,
 	type PlatformStatus,
-} from '~/indicators/platforms';
-import { PresenceStore, SessionsStore, UserStore } from '~/indicators/modules';
+} from '~/lib/platforms';
+import { PresenceStore, SessionsStore, UserStore } from '~/lib/modules';
 
 /**
  * @description Reads where a user is online: from their presence, or from the session list for the signed-in user.

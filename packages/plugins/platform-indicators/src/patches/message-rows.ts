@@ -1,9 +1,13 @@
-import { onMessageRow, type RowMessage } from '@unbound-plugins/shared/metro/message-rows';
+import {
+	MessageRowData,
+	onMessageRow,
+	type RowMessage,
+} from '@unbound-plugins/shared/metro/message-rows';
 import { settings } from '@unbound-app/settings';
 
-import { getPlatformStatuses } from '~/indicators/status-map';
-import { addPlatforms } from '~/indicators/header';
-import { i18n } from '~/indicators/modules';
+import { getPlatformStatuses } from '~/lib/status-map';
+import { addPlatforms } from '~/lib/header';
+import { i18n } from '~/lib/modules';
 
 function isChatMessage(message: RowMessage) {
 	return message.type === 0 || message.type === 19;
@@ -12,7 +16,13 @@ function isChatMessage(message: RowMessage) {
 /**
  * @description Shows each message author's platforms after the message timestamp.
  */
-export function patchMessageRow(): void {
+export function patchMessageRows(): void {
+	if (!MessageRowData) {
+		logger.warn('Messages skipped: Discord moved MessageRowData.');
+
+		return;
+	}
+
 	onMessageRow({
 		after({ message, row }) {
 			if (!settings.messages) return;

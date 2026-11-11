@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { statusColor } from '~/indicators/status-colors';
+import { statusColor } from '~/lib/status-colors';
 
 describe('statusColor', () => {
 	test("uses the theme's color for the status", () => {

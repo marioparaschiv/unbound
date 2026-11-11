@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readdirSync } from 'node:fs';
 
-import { MESSAGE_LOCALES } from '~/constants';
+import { MESSAGE_LOCALES } from '~/lib/constants';
 import {
 	describePlatforms,
 	listLocale,
@@ -12,7 +12,7 @@ import {
 	platformLabel,
 	platformStatuses,
 	statusesKey,
-} from '~/indicators/platforms';
+} from '~/lib/platforms';
 
 function session(client: string, status: string) {
 	return { status, clientInfo: { client, os: 'x', version: 0 } };

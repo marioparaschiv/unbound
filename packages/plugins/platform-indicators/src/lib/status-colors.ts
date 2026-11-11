@@ -1,4 +1,4 @@
-import { STATUS_COLOR_TOKENS, STATUS_FALLBACK_COLORS } from '~/constants';
+import { STATUS_COLOR_TOKENS, STATUS_FALLBACK_COLORS } from '~/lib/constants';
 
 export type SemanticColorResolver = (token: string) => unknown;
 

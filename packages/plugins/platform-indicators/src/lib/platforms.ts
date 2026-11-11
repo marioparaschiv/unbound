@@ -1,6 +1,6 @@
 import { format, messages } from '@unbound-app/i18n';
 
-import { MESSAGE_LOCALES, PLATFORM_GLYPHS, type Platform } from '~/constants';
+import { MESSAGE_LOCALES, PLATFORM_GLYPHS, type Platform } from '~/lib/constants';
 
 export type ClientStatusMap = Partial<Record<string, string>>;
 

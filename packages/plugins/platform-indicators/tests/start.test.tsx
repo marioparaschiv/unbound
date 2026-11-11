@@ -1,11 +1,9 @@
 import { describe, expect, spyOn, test } from 'bun:test';
-import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { createElement, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
 import type { StoreSeeds } from '@unbound-app/api/testing';
-
-import { selfTest } from '~/index';
 
 const USER_ROW_PATH = 'modules/main_tabs_v2/native/shared_components/user_list/UserRow.tsx';
 const PROFILE_PATH = 'modules/user_profile/native/UserProfilePrimaryInfo.tsx';
@@ -26,6 +24,10 @@ const stores: StoreSeeds = {
 };
 
 const rowModule = { default: userRow };
+
+function warnings() {
+	return logs.entries.filter(({ level }) => level === 'warn' || level === 'error');
+}
 
 async function start({ profile = () => <View />, isMobileOnline = true } = {}) {
 	flux.seed({
@@ -48,7 +50,7 @@ describe('starting', () => {
 	test('reports every feature applied to the self test', async () => {
 		await start();
 
-		expect(selfTest()).toEqual({ ok: true, detail: '4 features applied' });
+		expect(warnings()).toEqual([]);
 		await stopPlugin();
 	});
 
@@ -65,20 +67,37 @@ describe('starting', () => {
 		expect(
 			row.findAll((node) => typeof node.props.accessibilityLabel === 'string'),
 		).toHaveLength(1);
-		expect(selfTest()).toMatchObject({
-			ok: false,
-			detail: expect.stringContaining('Failed to patch component'),
-		});
+		expect(warnings()).toMatchObject([
+			{
+				level: 'error',
+				args: [
+					'Failed to patch UserProfilePrimaryInfo:',
+					{ message: expect.stringContaining('Failed to patch component') },
+				],
+			},
+		]);
 		await stopPlugin();
 	});
 
 	test('skips the mobile shape when Discord has no isMobileOnline', async () => {
 		await start({ isMobileOnline: false });
 
-		expect(selfTest()).toMatchObject({
-			ok: false,
-			detail: expect.stringContaining('isMobileOnline'),
-		});
+		expect(warnings()).toEqual([
+			{
+				level: 'warn',
+				args: ['Mobile status skipped: Discord moved PresenceStore.isMobileOnline.'],
+			},
+		]);
+		await stopPlugin();
+	});
+
+	test('skips the member list with one warning when Discord moved UserRow', async () => {
+		metro.markMissing(USER_ROW_PATH);
+		await start();
+
+		expect(warnings()).toEqual([
+			{ level: 'warn', args: ['Member list skipped: Discord moved UserRow or Theme.'] },
+		]);
 		await stopPlugin();
 	});
 });

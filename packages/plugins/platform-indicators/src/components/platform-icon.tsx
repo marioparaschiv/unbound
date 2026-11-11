@@ -1,7 +1,7 @@
 import { metro } from '@unbound-app/api';
 
-import { PLATFORM_ICONS, type Platform } from '~/constants';
-import { useStatusColor } from '~/indicators/theme';
+import { PLATFORM_ICONS, type Platform } from '~/lib/constants';
+import { useStatusColor } from '~/lib/theme';
 
 type PlatformIconProps = {
 	platform: string;

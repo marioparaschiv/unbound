@@ -1,4 +1,4 @@
-import { describePlatforms, platformGlyph, type PlatformStatus } from '~/indicators/platforms';
+import { describePlatforms, platformGlyph, type PlatformStatus } from '~/lib/platforms';
 
 export type MessageRow = {
 	timestamp?: string;

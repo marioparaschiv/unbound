@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { addPlatforms, platformSuffix, type MessageRow } from '~/indicators/header';
+import { addPlatforms, platformSuffix, type MessageRow } from '~/lib/header';
 
 const desktopAndMobile = [
 	{ platform: 'desktop', status: 'online' },
