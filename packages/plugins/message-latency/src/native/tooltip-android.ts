@@ -21,12 +21,11 @@ import {
 } from '@unbound-plugins/shared/native/android/java-values';
 import { currentDecorView } from '@unbound-plugins/shared/native/android/views';
 import registerAppSurface from '@unbound-plugins/shared/native/app-surface';
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
-import { placeTooltip, tooltipTextWidth } from '~/latency-indicator/tooltip-layout';
-import LatencyTooltip from '~/latency-indicator/components/latency-tooltip';
+import { placeTooltip, tooltipTextWidth } from '~/lib/tooltip-layout';
+import LatencyTooltip from '~/components/latency-tooltip';
 import { Icon, Tooltip } from '~/constants';
-import { Tooltips } from '~/latency-indicator/modules';
+import { Tooltips } from '~/lib/modules';
 
 type Native = {
 	java: NativeJavaBridge;
@@ -63,7 +62,11 @@ type Metrics = {
  * @returns The tooltip controller, or `null` when Discord's tooltip component is missing.
  */
 export function createAndroidTooltips({ java, hooks, fabric }: Native): AndroidTooltips | null {
-	if (!ensureModules({ Tooltips }, 'tooltip')) return null;
+	if (!Tooltips) {
+		logger.warn('Tooltip skipped: Discord moved Tooltips.');
+
+		return null;
+	}
 
 	const tasks = new Set<Promise<void>>();
 	let shown: Shown | null = null;

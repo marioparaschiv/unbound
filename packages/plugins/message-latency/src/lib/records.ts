@@ -5,8 +5,8 @@ import {
 	latencyTooltip,
 	type LatencyDetails,
 	type LatencyMessage,
-} from '~/latency-indicator/latency';
-import { UserStore } from '~/latency-indicator/modules';
+} from '~/lib/latency';
+import { UserStore } from '~/lib/modules';
 import { MAX_LATENCY_RECORDS } from '~/constants';
 
 export type LatencyRecord = {

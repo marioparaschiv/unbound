@@ -1,6 +1,6 @@
 import { flux } from '@unbound-app/api';
 
-import { Theme, ThemeStore } from '~/latency-indicator/modules';
+import { Theme, ThemeStore } from '~/lib/modules';
 
 /**
  * @description Reads the theme Discord is currently showing.

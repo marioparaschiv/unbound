@@ -28,10 +28,10 @@ import { viewByIdNameAsync } from '@unbound-plugins/shared/native/android/discor
 import { watchMessageRows } from '@unbound-plugins/shared/native/android/message-rows';
 import { displayDensity, readCalls, runOnMain } from '@unbound-plugins/shared/native/android/views';
 
-import { registerLatencyIconSurface } from '~/latency-indicator/components/latency-icon';
-import type { LatencyRecord, LatencyRecords } from '~/latency-indicator/records';
-import type { AndroidTooltips } from '~/latency-indicator/android/tooltip';
-import { subscribeTheme } from '~/latency-indicator/theme';
+import { registerLatencyIconSurface } from '~/components/latency-icon';
+import type { LatencyRecord, LatencyRecords } from '~/lib/records';
+import type { AndroidTooltips } from '~/native/tooltip-android';
+import { subscribeTheme } from '~/lib/theme';
 import { Icon } from '~/constants';
 
 const DRAWABLE = 'android.graphics.drawable.Drawable';

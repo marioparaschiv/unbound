@@ -11,13 +11,13 @@ import { readNativeMessageInfo } from '@unbound-plugins/shared/native/ios/messag
 import { safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke';
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
 
-import { createIcon, describeIcon, fillKey, recolorIcon } from '~/latency-indicator/ios/icon';
-import { installLayout, restoreLayout, type Layout } from '~/latency-indicator/ios/layout';
-import type { TooltipController } from '~/latency-indicator/ios/tooltip';
-import type { LatencyRecord, LatencyRecords } from '~/latency-indicator/records';
-import { findUsernameHeader } from '~/latency-indicator/username-header';
+import { createIcon, describeIcon, fillKey, recolorIcon } from '~/native/icon-ios';
+import { installLayout, restoreLayout, type Layout } from '~/native/layout-ios';
+import type { TooltipController } from '~/native/tooltip-ios';
+import type { LatencyRecord, LatencyRecords } from '~/lib/records';
+import { findUsernameHeader } from '~/lib/username-header';
 import { CELL_SNAPSHOT } from '~/constants';
-import { subscribeTheme } from '~/latency-indicator/theme';
+import { subscribeTheme } from '~/lib/theme';
 
 type LatencyView = {
 	cellKey: string;

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { metro, native } from '@unbound-app/api/testing';
 import type { NativeFabricSize } from '@unbound-app/api/native';
 
-import { createTooltips, type TooltipController } from '~/latency-indicator/ios/tooltip';
+import { createTooltips, type TooltipController } from '~/native/tooltip-ios';
 
 const POLL_MS = 5;
 const GIVE_UP_MS = 2000;

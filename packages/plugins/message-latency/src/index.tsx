@@ -1,5 +1,17 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import type { PluginContext } from '@unbound-app/api/native';
+import { patcher } from '@unbound-app/api';
 
-import { latencyFeatures } from '~/latency-indicator';
+import { drawIndicators, removeIndicators } from '~/native/indicators';
+import { listenToMessages } from '~/flux/listeners';
+import { patchMessageRows } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures(latencyFeatures, { atomic: true });
+export function start(context: PluginContext) {
+	drawIndicators(context);
+	patchMessageRows();
+	listenToMessages(context);
+}
+
+export async function stop() {
+	patcher.unpatchAll();
+	await removeIndicators();
+}

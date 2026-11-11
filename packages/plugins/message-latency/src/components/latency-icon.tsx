@@ -3,9 +3,9 @@ import { Pressable, View } from 'react-native';
 import { messages } from '@unbound-app/i18n';
 import { useSyncExternalStore } from 'react';
 
-import type { LatencyRecord } from '~/latency-indicator/records';
+import type { LatencyRecord } from '~/lib/records';
 import { FILL_TOKENS, Icon } from '~/constants';
-import { resolveColor } from '~/latency-indicator/theme';
+import { resolveColor } from '~/lib/theme';
 
 export type IconSource = {
 	record(surfaceId: string): LatencyRecord | undefined;

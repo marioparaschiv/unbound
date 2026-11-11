@@ -1,11 +1,11 @@
 import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/native';
 import { safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke';
 
-import { currentTheme, resolveColor } from '~/latency-indicator/theme';
+import { currentTheme, resolveColor } from '~/lib/theme';
 import { FILL_TOKENS, ICON_TAG, Icon } from '~/constants';
-import type { LatencyRecord } from '~/latency-indicator/records';
-import type { LatencyFill } from '~/latency-indicator/latency';
-import { getSubviews, setFrame } from '~/latency-indicator/ios/views';
+import type { LatencyRecord } from '~/lib/records';
+import type { LatencyFill } from '~/lib/latency';
+import { getSubviews, setFrame } from '~/native/frames-ios';
 
 /**
  * @description Identifies the colors an icon was drawn with, so a theme or fill change can be detected.

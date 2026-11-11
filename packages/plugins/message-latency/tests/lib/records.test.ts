@@ -2,7 +2,7 @@ import { flux } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { settings } from '@unbound-app/settings';
 
-import { createLatencyRecords } from '~/latency-indicator/records';
+import { createLatencyRecords } from '~/lib/records';
 import { DISCORD_EPOCH } from '~/constants';
 
 function snowflake(timestamp: number): string {

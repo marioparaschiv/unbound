@@ -7,14 +7,13 @@ import type {
 import { parseRect, parseSize, toRect } from '@unbound-plugins/shared/native/ios/rect';
 import { safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke';
 import registerAppSurface from '@unbound-plugins/shared/native/app-surface';
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
-import { setFrame } from '~/latency-indicator/ios/views';
-import { layoutTooltipSurface } from '~/latency-indicator/ios/tooltip-surface';
-import LatencyTooltip from '~/latency-indicator/components/latency-tooltip';
-import { placeTooltip, tooltipTextWidth } from '~/latency-indicator/tooltip-layout';
+import { setFrame } from '~/native/frames-ios';
+import { layoutTooltipSurface } from '~/native/tooltip-surface-ios';
+import LatencyTooltip from '~/components/latency-tooltip';
+import { placeTooltip, tooltipTextWidth } from '~/lib/tooltip-layout';
 import { Icon, Tooltip } from '~/constants';
-import { Tooltips } from '~/latency-indicator/modules';
+import { Tooltips } from '~/lib/modules';
 
 export type TooltipAnchor = {
 	cellKey: string;
@@ -43,7 +42,11 @@ type Shown = {
  * @returns The tooltip controller, or `null` when Discord's tooltip component is missing.
  */
 export function createTooltips({ apiVersion, objc, fabric }: Native): TooltipController | null {
-	if (!ensureModules({ Tooltips }, 'tooltip')) return null;
+	if (!Tooltips) {
+		logger.warn('Tooltip skipped: Discord moved Tooltips.');
+
+		return null;
+	}
 
 	const tasks = new Set<Promise<void>>();
 	let shown: Shown | null = null;
