@@ -120,41 +120,19 @@ static NSString *bundle = nil;
 
 + (void)alert:(NSString *)message
 {
-    [self presentAlert:message title:@"Unbound" buttons:nil timeout:0 warning:NO tts:NO];
+    [self presentAlert:message title:@"Unbound" buttons:nil timeout:0 warning:NO];
 }
 
 + (void)alert:(NSString *)message title:(NSString *)title
 {
-    [self presentAlert:message title:title buttons:nil timeout:0 warning:NO tts:NO];
+    [self presentAlert:message title:title buttons:nil timeout:0 warning:NO];
 }
 
 + (void)alert:(NSString *)message
         title:(NSString *)title
       buttons:(NSArray<UIAlertAction *> *)buttons
 {
-    [self presentAlert:message title:title buttons:buttons timeout:0 warning:NO tts:NO];
-}
-
-+ (void)alert:(NSString *)message
-        title:(NSString *)title
-      buttons:(NSArray<UIAlertAction *> *)buttons
-      timeout:(NSInteger)timeout
-{
-    [self presentAlert:message title:title buttons:buttons timeout:timeout warning:NO tts:NO];
-}
-
-+ (void)alert:(NSString *)message title:(NSString *)title timeout:(NSInteger)timeout
-{
-    [self presentAlert:message title:title buttons:nil timeout:timeout warning:NO tts:NO];
-}
-
-+ (void)alert:(NSString *)message
-        title:(NSString *)title
-      buttons:(NSArray<UIAlertAction *> *)buttons
-      timeout:(NSInteger)timeout
-      warning:(BOOL)warning
-{
-    [self presentAlert:message title:title buttons:buttons timeout:timeout warning:warning tts:NO];
+    [self presentAlert:message title:title buttons:buttons timeout:0 warning:NO];
 }
 
 + (void)alert:(NSString *)message
@@ -162,66 +140,7 @@ static NSString *bundle = nil;
       timeout:(NSInteger)timeout
       warning:(BOOL)warning
 {
-    [self presentAlert:message title:title buttons:nil timeout:timeout warning:warning tts:NO];
-}
-
-+ (void)alert:(NSString *)message
-        title:(NSString *)title
-      timeout:(NSInteger)timeout
-      warning:(BOOL)warning
-          tts:(BOOL)tts
-{
-    [self presentAlert:message title:title buttons:nil timeout:timeout warning:warning tts:tts];
-}
-
-+ (void)alert:(NSString *)message title:(NSString *)title warning:(BOOL)warning
-{
-    [self presentAlert:message title:title buttons:nil timeout:0 warning:warning tts:NO];
-}
-
-+ (void)alert:(NSString *)message
-        title:(NSString *)title
-      buttons:(NSArray<UIAlertAction *> *)buttons
-      warning:(BOOL)warning
-{
-    [self presentAlert:message title:title buttons:buttons timeout:0 warning:warning tts:NO];
-}
-
-+ (void)alert:(NSString *)message title:(NSString *)title tts:(BOOL)tts
-{
-    [self presentAlert:message title:title buttons:nil timeout:0 warning:NO tts:tts];
-}
-
-+ (void)alert:(NSString *)message
-        title:(NSString *)title
-      buttons:(NSArray<UIAlertAction *> *)buttons
-          tts:(BOOL)tts
-{
-    [self presentAlert:message title:title buttons:buttons timeout:0 warning:NO tts:tts];
-}
-
-+ (void)alert:(NSString *)message title:(NSString *)title warning:(BOOL)warning tts:(BOOL)tts
-{
-    [self presentAlert:message title:title buttons:nil timeout:0 warning:warning tts:tts];
-}
-
-+ (void)alert:(NSString *)message
-        title:(NSString *)title
-      buttons:(NSArray<UIAlertAction *> *)buttons
-      warning:(BOOL)warning
-          tts:(BOOL)tts
-{
-    [self presentAlert:message title:title buttons:buttons timeout:0 warning:warning tts:tts];
-}
-
-+ (void)alert:(NSString *)message
-        title:(NSString *)title
-      buttons:(NSArray<UIAlertAction *> *)buttons
-      timeout:(NSInteger)timeout
-      warning:(BOOL)warning
-          tts:(BOOL)tts
-{
-    [self presentAlert:message title:title buttons:buttons timeout:timeout warning:warning tts:tts];
+    [self presentAlert:message title:title buttons:nil timeout:timeout warning:warning];
 }
 
 + (void)applyCountdownFrame:(const loader::alerts::CountdownFrame &)frame
@@ -254,7 +173,6 @@ static const NSTimeInterval kAlertRetrySeconds  = 0.5;
              buttons:(NSArray<UIAlertAction *> *)buttons
              timeout:(NSInteger)timeout
              warning:(BOOL)warning
-                 tts:(BOOL)tts
 {
     NSArray<UIAlertAction *> *alertButtons = buttons;
     if (!alertButtons || alertButtons.count == 0)
@@ -288,13 +206,6 @@ static const NSTimeInterval kAlertRetrySeconds  = 0.5;
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC),
                            dispatch_get_main_queue(),
                            ^{ [self applyRedPulsatingBorderToAlert:alert]; });
-        }
-
-        if (tts)
-        {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC),
-                           dispatch_get_main_queue(),
-                           ^{ [self speakAlertContent:title message:message]; });
         }
 
         if (countdown->frame().running)
@@ -413,44 +324,6 @@ static const NSTimeInterval kAlertRetrySeconds  = 0.5;
 {
     showingAlertKey = nil;
     [self showNextAlert];
-}
-
-+ (void)speakAlertContent:(NSString *)title message:(NSString *)message
-{
-    if (UIAccessibilityIsVoiceOverRunning())
-    {
-        NSString *announcement = [NSString stringWithFormat:@"%@. %@", title, message];
-        UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, announcement);
-        return;
-    }
-
-    static AVSpeechSynthesizer *synthesizer = nil;
-    if (!synthesizer)
-    {
-        synthesizer = [[AVSpeechSynthesizer alloc] init];
-    }
-
-    if ([synthesizer isSpeaking])
-    {
-        [synthesizer stopSpeakingAtBoundary:AVSpeechBoundaryImmediate];
-    }
-
-    NSString *cleanTitle = [title stringByReplacingOccurrencesOfString:@"⚠️" withString:@"Warning:"];
-
-    NSString *speechText = [NSString stringWithFormat:@"%@. %@", cleanTitle, message];
-
-    AVSpeechUtterance *utterance = [AVSpeechUtterance speechUtteranceWithString:speechText];
-    utterance.rate               = AVSpeechUtteranceDefaultSpeechRate;
-    utterance.volume             = 1.0;
-
-    AVSpeechSynthesisVoice *voice = [AVSpeechSynthesisVoice voiceWithLanguage:@"en-GB"];
-    if (voice)
-    {
-        utterance.voice = voice;
-    }
-
-    [Logger info:LOG_CATEGORY_UTILITIES format:@"Speaking alert content via TTS"];
-    [synthesizer speakUtterance:utterance];
 }
 
 + (void)applyRedPulsatingBorderToAlert:(UIAlertController *)alert

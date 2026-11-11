@@ -337,13 +337,6 @@ bool RuntimeResourceRegistry::deferRelease(const std::string &key)
     return true;
 }
 
-std::shared_ptr<void> RuntimeResourceRegistry::find(const std::string &key) const
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    auto                        found = resources_.find(key);
-    return found == resources_.end() ? nullptr : found->second;
-}
-
 size_t RuntimeResourceRegistry::size() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -476,14 +469,5 @@ size_t drainRuntimeResourceReleases(const std::weak_ptr<RuntimeResourceRegistry>
 {
     auto resources = registry.lock();
     return resources ? resources->drainDeferredReleases() : 0;
-}
-
-std::shared_ptr<void> runtimeResource(jsi::Runtime &runtime, const std::string &key)
-{
-    auto existing = runtime.getRuntimeData(kRuntimeResourcesId);
-    return existing
-               ? std::static_pointer_cast<RuntimeResourceRuntimeData>(existing)->resources->find(
-                     key)
-               : nullptr;
 }
 }

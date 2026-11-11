@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -244,35 +243,4 @@ func (index *javaFrameworkIndex) lookupMethod(className, method, parameters stri
 		return dexSignatureMismatch, ""
 	}
 	return dexMissing, ""
-}
-
-func (index *javaFrameworkIndex) lookupField(className, field string) bool {
-	visited := map[string]bool{}
-	queue := []string{className}
-	for len(queue) > 0 {
-		name := queue[0]
-		queue = queue[1:]
-		class := index.Classes[name]
-		if class == nil || visited[name] {
-			continue
-		}
-		visited[name] = true
-		if class.Fields[field] {
-			return true
-		}
-		if class.Super != "" {
-			queue = append(queue, class.Super)
-		}
-		queue = append(queue, class.Interfaces...)
-	}
-	return false
-}
-
-func (index *javaFrameworkIndex) classNames() []string {
-	names := make([]string, 0, len(index.Classes))
-	for name := range index.Classes {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-	return names
 }

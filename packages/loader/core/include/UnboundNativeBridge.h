@@ -42,6 +42,5 @@ UnboundNativeProvider makeUnboundNativeProvider(const AddonState                
                                                 std::string origin, uint32_t bytecodeVersion,
                                                 std::string documents, FileDownloader download);
 
-// Installs `globalThis.UnboundNative`.
 void installUnboundNative(facebook::jsi::Runtime &runtime, UnboundNativeProvider provider);
 }
