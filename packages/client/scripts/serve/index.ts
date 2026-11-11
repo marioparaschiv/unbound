@@ -64,5 +64,3 @@ export function startServer(reloadOnRebuild: boolean = true) {
 
 	return server;
 }
-
-export default { startServer };

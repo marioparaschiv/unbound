@@ -22,5 +22,3 @@ export const storePageSection: SectionEntry = {
 	getComponent: () => require('~/ui/marketplace/store-page').default,
 	hidden: true,
 };
-
-export default { marketplaceSection, storePageSection };

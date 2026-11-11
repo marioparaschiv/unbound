@@ -287,5 +287,3 @@ export function resolveManifestCapabilities(
 
 	return Object.freeze([...new Set(manifest.capabilities ?? [])]);
 }
-
-export default { parseAddonManifest, resolveManifestPlatforms, resolveManifestCapabilities };

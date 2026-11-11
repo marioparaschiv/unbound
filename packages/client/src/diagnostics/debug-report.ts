@@ -188,5 +188,3 @@ export async function sendDebugReport(channelId?: string): Promise<string | unde
 
 	return undefined;
 }
-
-export default { readDebugInfo, readEntitlements, sendDebugReport };

@@ -162,5 +162,3 @@ export function createAddonLocales(
 		},
 	};
 }
-
-export default { createAddonLocales };

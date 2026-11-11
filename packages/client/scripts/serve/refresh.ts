@@ -170,5 +170,3 @@ export const websocket: WebSocketHandler<SocketData> = {
 		logger.info(`Device disconnected (${sockets.size} total).`);
 	},
 };
-
-export default { attach, upgrade, deliver, websocket };

@@ -196,12 +196,3 @@ export async function reinstallFromStore(
 
 	return pending ? manager.update(pending.id, pending.update) : false;
 }
-
-export default {
-	buildUpdatesRequest,
-	toPendingUpdates,
-	fetchUpdates,
-	autoApplies,
-	automaticUpdates,
-	reinstallFromStore,
-};

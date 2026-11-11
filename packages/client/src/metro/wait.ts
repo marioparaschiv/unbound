@@ -272,5 +272,3 @@ function forget(waiter: Waiter) {
 
 	waiter.ids.clear();
 }
-
-export default { onModuleLoaded, findLazy };

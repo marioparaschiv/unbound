@@ -156,5 +156,3 @@ export function createFeedbackDialogs({
 		alert,
 	};
 }
-
-export default { confirmText, createFeedbackDialogs };

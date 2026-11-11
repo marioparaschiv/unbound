@@ -86,5 +86,3 @@ export function toRelease(id: string, version: AddonVersion): AddonRelease {
 
 	return { id, version: version.version, manifestUrl, bundleUrl, sha256, changelog, changes };
 }
-
-export default { fetchAddonVersions, toVersionChoices, toRelease };

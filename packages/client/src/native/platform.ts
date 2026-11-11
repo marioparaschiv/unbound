@@ -37,5 +37,3 @@ export function definePlatform<Handler>(handlers: PlatformHandlers<Handler>): Ha
 
 	return handler;
 }
-
-export default { NativePlatform, currentPlatform, definePlatform };

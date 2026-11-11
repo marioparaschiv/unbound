@@ -159,5 +159,3 @@ export function fitPlan(plan: HookPlan, length: number): HookSplice | null {
 
 	return { start: keep, remove, insert: plan.insert };
 }
-
-export default { HOOK_COSTS, hookName, planHooks, fitPlan };

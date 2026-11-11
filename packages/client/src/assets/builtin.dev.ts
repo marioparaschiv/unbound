@@ -12,5 +12,3 @@ export const assetsSection: SectionEntry = {
 	getComponent: () => AssetsPage,
 	hidden: true,
 };
-
-export default { assetsSection };

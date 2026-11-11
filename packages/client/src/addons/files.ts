@@ -91,5 +91,3 @@ export async function writeAddonFiles(
 			.map(({ path }) => fs.writeFile(`${directory}/${path}`, files[path], 'base64')),
 	);
 }
-
-export default { downloadAddonFiles, writeAddonFiles };

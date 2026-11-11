@@ -175,5 +175,3 @@ export function normalizePageBody(body: string): string {
 
 	return `${lines.join('\n')}\n\n`;
 }
-
-export default { fetchStorePage, loadStorePage, findPageMedia, normalizePageBody };

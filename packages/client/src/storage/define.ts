@@ -256,5 +256,3 @@ export function createDefinedSettings(
 
 	return { schema, values: view('', schema.properties), get, set, reset, useSetting, useVersion };
 }
-
-export default { affects, createDefinedSettings };

@@ -160,5 +160,3 @@ export function getLoadedModule<T>(handle: T): T | undefined {
 function lazyModuleOf(value: MetroExport) {
 	return typeof value === 'object' && value !== null ? lazyModules.get(value) : void 0;
 }
-
-export default { createLazyModule, whenModuleLoads, getModulePresence, getLoadedModule };

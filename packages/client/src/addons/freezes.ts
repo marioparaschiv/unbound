@@ -58,5 +58,3 @@ export function announceFreeze(
 			: `${entity.name} froze Discord for ${seconds} seconds.${detail}`,
 	});
 }
-
-export default { LONG_FREEZE_SECONDS, freezeDisables, announceFreeze };

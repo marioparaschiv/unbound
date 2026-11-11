@@ -38,5 +38,3 @@ export function parsePageMarkdown(body: string): PageNode[] {
 
 	return parser(normalizePageBody(body), { inline: false });
 }
-
-export default { parsePageMarkdown };

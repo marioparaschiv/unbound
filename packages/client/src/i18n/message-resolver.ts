@@ -56,5 +56,3 @@ export function createMessageResolver(
 
 	return resolver;
 }
-
-export default { createMessageResolver };

@@ -61,5 +61,3 @@ export function createSubscriptions(): Subscriptions {
 		},
 	};
 }
-
-export default { createSubscriptions, disposeInReverse };

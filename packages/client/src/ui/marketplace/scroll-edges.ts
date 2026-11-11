@@ -15,5 +15,3 @@ const SLACK = 1;
 export function scrollEdges({ offset, width, content }: ScrollMetrics): ScrollEdges {
 	return { start: offset > SLACK, end: offset + width < content - SLACK };
 }
-
-export default { scrollEdges };

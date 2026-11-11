@@ -146,5 +146,3 @@ export function createAddonScope(addon: Addon<Plugin>, directory: string): Plugi
 		},
 	};
 }
-
-export default { createAddonScope };

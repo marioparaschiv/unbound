@@ -140,5 +140,3 @@ export function createFeedbackToasts({
 		error,
 	};
 }
-
-export default { VARIANT_ICONS, errorText, createFeedbackToasts };

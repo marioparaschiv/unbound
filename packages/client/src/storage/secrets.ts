@@ -68,5 +68,3 @@ export function maskSecrets(stores: SettingsStores): SettingsStores {
 
 	return copy;
 }
-
-export default { MASKED_SECRET, maskSecrets, registerSecrets };

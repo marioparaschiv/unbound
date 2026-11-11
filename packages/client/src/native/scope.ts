@@ -620,5 +620,3 @@ export function createScopedNativePlugin(
 		},
 	};
 }
-
-export default { createScopedNativePlugin };

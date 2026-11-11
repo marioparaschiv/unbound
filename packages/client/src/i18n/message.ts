@@ -81,5 +81,3 @@ export function takeMessage(
 
 	return { text: lookup.resolveMessage(key, isVars(vars) ? vars : undefined), rest };
 }
-
-export default { hasPlaceholders, takeMessage };

@@ -150,5 +150,3 @@ export function createScopeGate({
 			>,
 	};
 }
-
-export default { createScopeGate };

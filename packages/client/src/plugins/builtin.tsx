@@ -21,5 +21,3 @@ export const pluginsSection: SectionEntry = {
 		return <AddonCount kind='plugin' />;
 	},
 };
-
-export default { pluginsSection };

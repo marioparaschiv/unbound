@@ -94,5 +94,3 @@ export function resolveDevHost(): string {
 export function resolveDevServerUrl(): string {
 	return process.env.DEV_SERVER_URL || `http://${resolveDevHost()}:${PORT}`;
 }
-
-export default { lanCandidates, detectLanIp, resolveDevHost, resolveDevServerUrl };

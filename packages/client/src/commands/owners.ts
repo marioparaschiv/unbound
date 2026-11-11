@@ -19,5 +19,3 @@ export function setOwnerCheck(ownerCheck: ((owner: string) => boolean) | undefin
 export function isKnownOwner(owner: string): boolean {
 	return check(owner);
 }
-
-export default { setOwnerCheck, isKnownOwner };

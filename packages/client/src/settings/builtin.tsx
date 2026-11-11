@@ -190,5 +190,3 @@ function patchOverviewScreen(Overview: MetroExport, builtIn: EntryMap) {
 		return result;
 	});
 }
-
-export default { generalSection, panelHostSection, createSettings };

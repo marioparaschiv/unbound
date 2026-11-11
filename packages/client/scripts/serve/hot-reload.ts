@@ -161,5 +161,3 @@ function manifestModifiedTime(): number {
 		return 0;
 	}
 }
-
-export default { bundleEtag, broadcast, gateReloads, handleHot, watchBundle };

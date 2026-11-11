@@ -105,5 +105,3 @@ export function openVersionPicker(
 		onClose: () => ActionSheets.hideActionSheet(SHEET_KEY),
 	});
 }
-
-export default { confirmChoice, installChoice, openVersionPicker };

@@ -29,5 +29,3 @@ export function requireNativePlugin(): NativePluginRuntimeBridge {
 
 	return nativePluginBridge;
 }
-
-export default { getNativePlugin, requireNativePlugin };

@@ -36,5 +36,3 @@ export function formatWith(messages: LocaleStrings, key: string, vars?: FormatVa
 
 	return new Format(messages[key]).format(vars);
 }
-
-export default { formatWith };

@@ -73,5 +73,3 @@ export function idsNear(hint: number): number[] {
 export function recordMove(hint: number, id: number) {
 	moves.push([hint, id - hint]);
 }
-
-export default { isAssetModule, couldMatch, idsNear, recordMove };

@@ -34,5 +34,3 @@ export function filterPresence(
 
 	return cached ? 'present' : 'unknown';
 }
-
-export default { filterPresence };

@@ -80,5 +80,3 @@ export function splitDuration(ms: number, units: DurationUnit[]): DurationSplit 
 
 	return { amount: ms / UNIT_MS[unit], unit };
 }
-
-export default { parseNumberInput, splitDuration, UNIT_MS };
