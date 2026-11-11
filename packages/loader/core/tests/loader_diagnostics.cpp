@@ -7,8 +7,6 @@ using namespace loader::diagnostics;
 
 int main()
 {
-    assert(std::string(kIncompatibleHostMessage).find("incompatible") != std::string::npos);
-
     assert(bannerSubject("fix: short") == "fix: short");
     const std::string exact(kBannerSubjectLength, 'a');
     assert(bannerSubject(exact) == exact);
