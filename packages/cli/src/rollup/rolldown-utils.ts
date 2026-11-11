@@ -1,6 +1,10 @@
 import type * as RolldownUtils from 'rolldown/utils';
+import { createRequire } from 'node:module';
 
 export type { ESTree, ParseResult } from 'rolldown/utils';
+
+// Rollup runs plugins as Node ESM, where `require` is not defined.
+const require = createRequire(import.meta.url);
 
 let loaded: typeof RolldownUtils | undefined;
 
@@ -34,15 +38,18 @@ export function transformSync(
 	return load().transformSync(...args);
 }
 
-/** Rolldown's ESTree visitor, created on first use like {@link parseSync}. */
+/**
+ * Rolldown's ESTree visitor, created when it first visits like {@link parseSync}. No private
+ * fields: the CLI's bundled typings cannot declare them on an exported class.
+ */
 export class Visitor {
-	readonly #inner: RolldownUtils.Visitor;
+	readonly visitor: RolldownUtils.VisitorObject;
 
 	constructor(visitor: RolldownUtils.VisitorObject) {
-		this.#inner = new (load().Visitor)(visitor);
+		this.visitor = visitor;
 	}
 
 	visit(program: RolldownUtils.ESTree.Program): void {
-		this.#inner.visit(program);
+		new (load().Visitor)(this.visitor).visit(program);
 	}
 }
