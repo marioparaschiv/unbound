@@ -1,8 +1,6 @@
-import { flux, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
-
-import { selfTest } from '~/index';
 
 type Row = { username?: string; authorId?: string; referencedMessage?: { message?: Row } };
 type Author = { id: string; username: string; globalName?: string };
@@ -85,8 +83,8 @@ describe('the reply preview', () => {
 });
 
 describe('the plugin', () => {
-	test('reports healthy once it has patched the message rows', async () => {
-		expect((await selfTest()).ok).toBe(true);
+	test('starts without a warning once it has patched the message rows', () => {
+		expect(logs.entries.filter((entry) => entry.level !== 'info')).toEqual([]);
 	});
 
 	test('leaves the names as Discord shows them once it stops', async () => {

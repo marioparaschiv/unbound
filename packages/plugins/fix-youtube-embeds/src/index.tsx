@@ -1,7 +1,18 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { selfTestYoutubeEmbeds, youtubeEmbedFeatures } from '~/youtube-embeds';
+import { patchMediaModalYoutube, patchMediaModalYoutubeEmbedError } from '~/patches';
+import { loadSelfTest } from '~/lib/load-status';
+import { loadStatus } from '~/lib/viewer-state';
 
-export const { start, stop, selfTest } = runFeatures(youtubeEmbedFeatures, {
-	selfTest: selfTestYoutubeEmbeds,
-});
+export function start() {
+	patchMediaModalYoutube();
+	patchMediaModalYoutubeEmbedError();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}
+
+export function selfTest() {
+	return loadSelfTest(loadStatus.pending());
+}

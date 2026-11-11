@@ -11,7 +11,7 @@ import useStyles from './addon-icon.style';
 type AddonIconProps = {
 	id: string;
 	kind: AddonKind;
-	/** `large` heads a store page, as the website's addon header does. */
+	/** `large` heads a addon page, as the website's addon header does. */
 	size?: 'default' | 'large';
 };
 

@@ -39,6 +39,11 @@ function watchCarousel(lookup: Lookup, preview: Preview) {
 		report(themes, currentThemeIndex);
 	});
 
+	// Without Discord's lodash, only the carousel's renders report the swatch.
+	if (!Lodash) {
+		return unpatchCarousel;
+	}
+
 	const unpatchDebounce = Patcher.after(Lodash, 'debounce', ({ args: [selected], result }) => {
 		const themes = selected && themesOf.get(selected);
 

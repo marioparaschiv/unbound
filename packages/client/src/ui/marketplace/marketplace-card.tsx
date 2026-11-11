@@ -24,7 +24,7 @@ type MarketplaceCardProps = {
  * @description One listed addon, laid out like an installed addon's card: icon, name and authors on top
  * with an Install, Update or Installed button judged against the installed copy at its top right, the
  * description below, then the tags in a scrolling row beside the install count and version. Holding the button offers
- * the newest version or a picker of every version, except for fonts. Tapping the card opens the store page.
+ * the newest version or a picker of every version, except for fonts. Tapping the card opens the addon page.
  */
 function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 	const styles = useStyles();

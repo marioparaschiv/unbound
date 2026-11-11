@@ -1,5 +1,14 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startBlocked } from '~/blocked';
+import { refreshChat } from '~/lib/chat';
+import { patchChatRows } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startBlocked]);
+export function start() {
+	patchChatRows();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+	// Shows blocked messages in the open chat again, once `createRow` is no longer patched.
+	refreshChat();
+}

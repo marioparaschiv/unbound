@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import {
-	NativePluginCapabilityError,
-	NativePluginUnsupportedPlatformError,
-	NativePluginVersionError,
+	NativeBridgeCapabilityError,
+	NativeBridgeUnsupportedPlatformError,
+	NativeBridgeVersionError,
 	createPluginContext,
-	validateNativePluginRequirements,
+	validateNativeBridgeRequirements,
 	nativeHandle,
 	bridge,
 	iosSpecificBridges,
@@ -16,7 +16,7 @@ import {
 
 afterEach(resetNativeFixtures);
 
-describe('native plugin negotiation', () => {
+describe('native bridge negotiation', () => {
 	test('supports an Android bridge without the Objective-C namespace', () => {
 		Object.assign(nativePlatformBridge.device, { platform: 'android' });
 		Object.assign(nativePlatformBridge, { platform: 'android' });
@@ -34,10 +34,10 @@ describe('native plugin negotiation', () => {
 		expect(context.native.ffi).toBeDefined();
 		expect(context.native.fabric).toBeDefined();
 		expect(context.native.runtime).toBeDefined();
-		expect(() => context.native.objc.alloc('NSObject')).toThrow(NativePluginCapabilityError);
-		expect(() => context.native.ffi.symbol('malloc')).toThrow(NativePluginCapabilityError);
+		expect(() => context.native.objc.alloc('NSObject')).toThrow(NativeBridgeCapabilityError);
+		expect(() => context.native.ffi.symbol('malloc')).toThrow(NativeBridgeCapabilityError);
 		expect(() => context.native.fabric.mount(nativeHandle, 'TestSurface')).toThrow(
-			NativePluginCapabilityError,
+			NativeBridgeCapabilityError,
 		);
 		context.dispose();
 
@@ -92,7 +92,7 @@ describe('native plugin negotiation', () => {
 				...manifest,
 				platforms: { android: { capabilities: ['native.java.hooks'] } },
 			}),
-		).toThrow(NativePluginCapabilityError);
+		).toThrow(NativeBridgeCapabilityError);
 	});
 
 	test('rejects a plugin that does not support the host platform', () => {
@@ -106,7 +106,7 @@ describe('native plugin negotiation', () => {
 				platforms: { ios: { capabilities: ['native.objc.classes'] } },
 			});
 
-		expect(build).toThrow(NativePluginUnsupportedPlatformError);
+		expect(build).toThrow(NativeBridgeUnsupportedPlatformError);
 		expect(build).toThrow(/\bios\b/);
 		expect(build).toThrow(/\bandroid\b/);
 	});
@@ -131,32 +131,32 @@ describe('native plugin negotiation', () => {
 				...manifest,
 				platforms: { android: { capabilities: ['native.java.classes'] } },
 			}),
-		).toThrow(NativePluginUnsupportedPlatformError);
+		).toThrow(NativeBridgeUnsupportedPlatformError);
 	});
 
 	test('rejects capabilities that the bridge does not advertise', () => {
 		expect(() =>
-			validateNativePluginRequirements(['native.objc.hooks', 'native.ffi.call'], '1.0.0'),
+			validateNativeBridgeRequirements(['native.objc.hooks', 'native.ffi.call'], '1.0.0'),
 		).not.toThrow();
 		expect(() =>
-			validateNativePluginRequirements([
+			validateNativeBridgeRequirements([
 				'native.objc.hooks',
 				'native.ffi.call',
 				'native.unknown' as never,
 			]),
-		).toThrow(NativePluginCapabilityError);
+		).toThrow(NativeBridgeCapabilityError);
 	});
 
 	test('rejects a plugin that requires a newer bridge API', () => {
 		let failure: unknown;
 
 		try {
-			validateNativePluginRequirements([], '2.0.0');
+			validateNativeBridgeRequirements([], '2.0.0');
 		} catch (error) {
 			failure = error;
 		}
 
-		expect(failure).toBeInstanceOf(NativePluginVersionError);
+		expect(failure).toBeInstanceOf(NativeBridgeVersionError);
 		expect(failure).toMatchObject({
 			code: 'NATIVE_PLUGIN_API_VERSION_UNSUPPORTED',
 			installedApi: '1.0.0',
@@ -167,9 +167,9 @@ describe('native plugin negotiation', () => {
 	test('orders a prerelease bridge API before its release', () => {
 		Object.assign(bridge, { apiVersion: '1.0.0-beta.1' });
 
-		expect(() => validateNativePluginRequirements([], '1.0.0')).toThrow(
-			NativePluginVersionError,
+		expect(() => validateNativeBridgeRequirements([], '1.0.0')).toThrow(
+			NativeBridgeVersionError,
 		);
-		expect(() => validateNativePluginRequirements([], '1.0.0-alpha.2')).not.toThrow();
+		expect(() => validateNativeBridgeRequirements([], '1.0.0-alpha.2')).not.toThrow();
 	});
 });

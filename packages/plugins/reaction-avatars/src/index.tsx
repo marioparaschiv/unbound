@@ -1,5 +1,13 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import type { PluginContext } from '@unbound-app/api/native';
+import { patcher } from '@unbound-app/api';
 
-import { startReactions } from '~/reactions';
+import { hookReactions, unhookReactions } from '~/native/hooks';
 
-export const { start, stop, selfTest } = runFeatures(startReactions, { atomic: true });
+export function start(context: PluginContext) {
+	hookReactions(context);
+}
+
+export function stop() {
+	patcher.unpatchAll();
+	unhookReactions();
+}

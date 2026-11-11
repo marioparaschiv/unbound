@@ -242,7 +242,7 @@ func downloadDiscordSplitOnce(ctx context.Context, client *http.Client, endpoint
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		return retryableStatuses[response.StatusCode], fmt.Errorf("download %s returned HTTP %d", filepath.Base(output), response.StatusCode)
+		return retryableStatus(response.StatusCode), fmt.Errorf("download %s returned HTTP %d", filepath.Base(output), response.StatusCode)
 	}
 	file, err := os.Create(output)
 	if err != nil {

@@ -1,16 +1,10 @@
 import type { PushedManifest } from '@unbound-app/types';
 
-import type {
-	DeviceInfo,
-	EvalResult,
-	LogMessage,
-	PluginPushResult,
-	PushedAddonKind,
-} from './index';
+import type { DeviceInfo, EvalResult, LogMessage, PushResult, PushedAddonKind } from './index';
 
 import {
 	BRIDGE_REPLY_GRACE_MS,
-	PLUGIN_PUSH_TIMEOUT_MS,
+	PUSH_TIMEOUT_MS,
 	resolveEvalTimeout,
 	serializeMessage,
 	parseMessage,
@@ -22,7 +16,7 @@ import { PendingRequests } from './pending-requests';
  * against the results the bridge routes back. Reconnects so it outlives bridge restarts.
  */
 
-type PluginPush = {
+type AddonPush = {
 	addonId: string;
 	kind?: PushedAddonKind;
 	bundle: string;
@@ -37,7 +31,7 @@ export class ControllerClient {
 	private ws: WebSocket | null = null;
 	/** Each pending eval keeps the console output seen since its dispatch, so side effects surface too. */
 	private readonly pending = new PendingRequests<EvalResult, LogMessage[]>();
-	private readonly pendingPushes = new PendingRequests<PluginPushResult>();
+	private readonly pendingPushes = new PendingRequests<PushResult>();
 	private deviceConnected = false;
 	private deviceInfo: DeviceInfo | undefined;
 	private closed = false;
@@ -140,12 +134,12 @@ export class ControllerClient {
 	 * @description Pushes a freshly built plugin or theme to the device via the bridge and resolves with the
 	 * device's reload outcome. Fails fast if the socket isn't open or the bridge doesn't answer in time.
 	 * @param push The addon id plus the built bundle and manifest to swap in.
-	 * @returns The device's {@link PluginPushResult}.
+	 * @returns The device's {@link PushResult}.
 	 */
-	pushPlugin(push: PluginPush): Promise<PluginPushResult> {
+	pushAddon(push: AddonPush): Promise<PushResult> {
 		const id = crypto.randomUUID();
 
-		return new Promise<PluginPushResult>((resolve) => {
+		return new Promise<PushResult>((resolve) => {
 			if (this.ws?.readyState !== WebSocket.OPEN) {
 				resolve({
 					type: 'plugin-push-result',
@@ -160,12 +154,12 @@ export class ControllerClient {
 
 			this.pendingPushes.add(id, {
 				settle: resolve,
-				timeoutMs: PLUGIN_PUSH_TIMEOUT_MS + BRIDGE_REPLY_GRACE_MS,
+				timeoutMs: PUSH_TIMEOUT_MS + BRIDGE_REPLY_GRACE_MS,
 				onTimeout: () => ({
 					type: 'plugin-push-result',
 					id,
 					ok: false,
-					error: `Plugin push timed out after ${PLUGIN_PUSH_TIMEOUT_MS}ms.`,
+					error: `Push timed out after ${PUSH_TIMEOUT_MS}ms.`,
 					code: 'timeout',
 				}),
 				meta: void 0,

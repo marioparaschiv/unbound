@@ -1,10 +1,8 @@
-import { metro, startPlugin } from '@unbound-app/api/testing';
+import { logs, metro, startPlugin } from '@unbound-app/api/testing';
 import { describe, expect, test } from 'bun:test';
 
-import { selfTest } from '~/index';
-
 describe('self test', () => {
-	test('passes once the plugin has started', async () => {
+	test('passes once the plugin has started, with no warning', async () => {
 		metro.register({
 			downloadMediaAsset: () => undefined,
 			downloadMediaAssetWithContentType: () => undefined,
@@ -13,6 +11,8 @@ describe('self test', () => {
 		metro.register({ useMediaShareActions: () => undefined });
 		await startPlugin();
 
-		expect(selfTest()).toMatchObject({ ok: true });
+		expect(logs.entries.filter(({ level }) => level === 'warn' || level === 'error')).toEqual(
+			[],
+		);
 	});
 });

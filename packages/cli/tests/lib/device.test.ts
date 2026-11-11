@@ -19,7 +19,7 @@ describe('toDeviceCode', () => {
 		const unbound = {
 			marker: 'fake',
 			plugins: {
-				entities: new Map([
+				addons: new Map([
 					[
 						'shiki',
 						{

@@ -16,7 +16,7 @@ describe('Addon', () => {
 
 		manager.load('bundle', manifest);
 
-		const addon = manager.getEntity('reader')!;
+		const addon = manager.getAddon('reader')!;
 
 		expect(addon.id).toBe('reader');
 		expect(addon.name).toBe('reader');
@@ -34,7 +34,7 @@ describe('Addon', () => {
 		manager.load('secret bundle', manifest);
 		manager.enable('json');
 
-		const addon = manager.getEntity('json')!;
+		const addon = manager.getAddon('json')!;
 
 		expect(addon.started).toBe(true);
 		expect(JSON.stringify(addon)).toBe(JSON.stringify(manifest));
@@ -44,7 +44,7 @@ describe('Addon', () => {
 	test('exposes no writable state', () => {
 		manager.load('bundle', makeManifest('sealed'));
 
-		const addon = manager.getEntity('sealed')!;
+		const addon = manager.getAddon('sealed')!;
 
 		expect(Object.keys(addon)).toEqual([]);
 		expect(Reflect.set(addon, 'started', true)).toBe(false);
@@ -54,7 +54,7 @@ describe('Addon', () => {
 	test('enables and disables through its manager', () => {
 		manager.load('bundle', makeManifest('toggled'));
 
-		const addon = manager.getEntity('toggled')!;
+		const addon = manager.getAddon('toggled')!;
 
 		addon.enable();
 
@@ -71,7 +71,7 @@ describe('Addon', () => {
 	test('reloads a running addon on the same bundle', async () => {
 		manager.load('bundle', makeManifest('running'));
 
-		const addon = manager.getEntity('running')!;
+		const addon = manager.getAddon('running')!;
 
 		addon.enable();
 		await addon.reload();
@@ -83,7 +83,7 @@ describe('Addon', () => {
 	test('leaves a stopped addon stopped on reload', async () => {
 		manager.load('bundle', makeManifest('stopped'));
 
-		const addon = manager.getEntity('stopped')!;
+		const addon = manager.getAddon('stopped')!;
 
 		await addon.reload();
 
@@ -94,7 +94,7 @@ describe('Addon', () => {
 	test('reports a failed restart through its failed flag', async () => {
 		manager.load('bundle', makeManifest('flaky'));
 
-		const addon = manager.getEntity('flaky')!;
+		const addon = manager.getAddon('flaky')!;
 
 		addon.enable();
 		manager.nextInstanceStartFails = true;

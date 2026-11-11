@@ -1,8 +1,14 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startReplyMention } from '~/reply-mention';
+import { patchPendingReplyActions } from '~/patches';
 import SettingsPanel from '~/settings';
 
-export const { start, stop, selfTest } = runFeatures([startReplyMention]);
+export function start() {
+	patchPendingReplyActions();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}
 
 export { SettingsPanel };

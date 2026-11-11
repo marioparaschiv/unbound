@@ -1,7 +1,15 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { typingIndicatorFeatures } from '~/typing-indicator';
+import { patchThreadChannel } from '~/patches/thread-channel';
+import { patchTextChannel } from '~/patches/text-channel';
 
 export { SettingsPanel } from '~/settings';
 
-export const { start, stop, selfTest } = runFeatures(typingIndicatorFeatures);
+export function start() {
+	patchTextChannel();
+	patchThreadChannel();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}

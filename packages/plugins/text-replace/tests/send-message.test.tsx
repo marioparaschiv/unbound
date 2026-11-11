@@ -5,7 +5,7 @@ import { Share } from 'react-native';
 
 import { selfTest } from '~/index';
 import RulesetTransfer from '~/components/ruleset-transfer';
-import { RULES_CHANNEL_ID } from '~/constants';
+import { RULES_CHANNEL_ID } from '~/lib/constants';
 
 type Sent = { channelId: string; content: string };
 

@@ -7,8 +7,8 @@ import { Discord } from '~/metro/components';
 import { useAccount } from '~/account/api';
 import { useBucket } from '~/storage/api';
 import { reload } from '~/native/native';
+import { SYNC_BUCKET } from '~/sync/api';
 import { confirm } from '~/dialogs/api';
-import { SYNC_STORE } from '~/sync/api';
 import Page from '~/ui/components/page';
 import { messages } from '~/i18n/api';
 import { icons } from '~/assets/api';
@@ -38,7 +38,7 @@ function GeneralPage() {
 	const settings = useUnboundSettings();
 	const account = useAccount();
 	const signIn = useSignIn();
-	const sync = useBucket(SYNC_STORE, ({ key }) => key === 'enabled');
+	const sync = useBucket(SYNC_BUCKET, ({ key }) => key === 'enabled');
 
 	async function openSync() {
 		if (account) {

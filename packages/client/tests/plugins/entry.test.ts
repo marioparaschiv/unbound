@@ -78,18 +78,18 @@ describe('plugin entry named exports', () => {
 			'start(context){log.push("start:"+typeof context.dispose)},stop(){log.push("stop")}',
 		);
 
-		expect(plugins.getEntity(ID)?.started).toBe(true);
+		expect(plugins.getAddon(ID)?.started).toBe(true);
 
 		await plugins.stop(ID);
 
 		expect(log()).toEqual(['start:function', 'stop']);
-		expect(plugins.getEntity(ID)?.started).toBe(false);
+		expect(plugins.getAddon(ID)?.started).toBe(false);
 	});
 
 	test('starts a plugin that exports no start and no stop', async () => {
 		const plugins = startEntry('');
 
-		expect(plugins.getEntity(ID)?.started).toBe(true);
+		expect(plugins.getAddon(ID)?.started).toBe(true);
 		expect(plugins.errors.get(ID)).toBeUndefined();
 
 		await plugins.stop(ID);
@@ -114,7 +114,7 @@ describe('plugin entry named exports', () => {
 		await Promise.resolve();
 
 		expect(plugins.errors.get(ID)?.message).toBe('late');
-		expect(plugins.getEntity(ID)?.failed).toBe(true);
+		expect(plugins.getAddon(ID)?.failed).toBe(true);
 	});
 
 	test('evaluates the module afresh on each start', async () => {
@@ -131,7 +131,7 @@ describe('plugin entry named exports', () => {
 		const plugins = startLegacy(
 			'start(){log.push("start:"+this.name)},stop(){log.push("stop")},getSettingsPanel(){return "legacy-panel"},name:"old"',
 		);
-		const addon = plugins.getEntity(ID)!;
+		const addon = plugins.getAddon(ID)!;
 		const Panel = addon.SettingsPanel as () => string;
 
 		expect(addon.started).toBe(true);
@@ -146,7 +146,7 @@ describe('plugin entry named exports', () => {
 		const plugins = startFlatLegacy(
 			'start(){},getSettingsPanel(){return "legacy-panel:"+this.name},name:"old"',
 		);
-		const Panel = plugins.getEntity(ID)!.SettingsPanel as () => string;
+		const Panel = plugins.getAddon(ID)!.SettingsPanel as () => string;
 
 		expect(Panel()).toBe('legacy-panel:old');
 	});
@@ -155,7 +155,7 @@ describe('plugin entry named exports', () => {
 type Phase = { phase: string; button: SettingsButtonState; opens: boolean };
 
 function phaseOf(plugins: InstanceType<typeof Plugins>): Phase {
-	const addon = plugins.getEntity(ID)!;
+	const addon = plugins.getAddon(ID)!;
 
 	return {
 		phase: addon.phase,
@@ -188,7 +188,7 @@ describe.each(SHAPES)('the settings button over $name', ({ start, panel }) => {
 		const plugins = start(`start(){},${panel}`);
 		const changes: string[] = [];
 
-		plugins.on('changed', (entity) => changes.push(entity.phase));
+		plugins.on('changed', (addon) => changes.push(addon.phase));
 
 		expect(phaseOf(plugins)).toEqual({ phase: 'running', button: SHOWN, opens: true });
 

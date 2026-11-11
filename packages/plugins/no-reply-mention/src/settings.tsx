@@ -4,13 +4,7 @@ import { messages } from '@unbound-app/i18n';
 import { toasts, ui } from '@unbound-app/api';
 import { useState } from 'react';
 
-import {
-	addUserId,
-	editUserId,
-	isUserId,
-	parseUserList,
-	removeUserId,
-} from '~/reply-mention/user-list';
+import { addUserId, editUserId, isUserId, parseUserList, removeUserId } from '~/lib/user-list';
 import UserIdEditor from '~/components/user-id-editor';
 
 // `original` is the ID being edited, or `null` while adding a new one.

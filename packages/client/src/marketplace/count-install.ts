@@ -7,7 +7,7 @@ import { API_URL } from '~/core/constants';
 const logger = createLogger('Marketplace', 'Installs');
 
 /**
- * @description Reports a fresh marketplace install so the store can rank addons by popularity. The request
+ * @description Reports a fresh marketplace install so the Marketplace can rank addons by popularity. The request
  * carries only the addon id: no account, device or token. Runs in the background; a failure only logs.
  * @param id The installed addon's id.
  */

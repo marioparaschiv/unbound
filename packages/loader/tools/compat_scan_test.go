@@ -114,6 +114,22 @@ func TestPictureInPictureAndroidModulePathIsPlatformScoped(t *testing.T) {
 	}
 }
 
+func TestCompatPlatformReadsPluginFileSuffixes(t *testing.T) {
+	cases := map[string]string{
+		"packages/plugins/chat-bubbles/src/native/worklets-ios.ts":     "ios",
+		"packages/plugins/chat-bubbles/src/native/worklets-android.ts": "android",
+		"packages/plugins/chat-bubbles/src/native/ios/worklets.ts":     "ios",
+		"packages/plugins/chat-bubbles/src/native/android/worklets.ts": "android",
+		"packages/plugins/chat-bubbles/src/patches.ts":                 "",
+		"modules/external_pip/ExternalPipView.android.tsx":             "android",
+	}
+	for path, want := range cases {
+		if got := compatPlatform(path); got != want {
+			t.Errorf("compatPlatform(%q) = %q, want %q", path, got, want)
+		}
+	}
+}
+
 func TestCompatLogosExtraction(t *testing.T) {
 	set := newCompatSourceSet()
 	source := "%hook AppDelegate\n- (BOOL)application:(UIApplication *)application\n    didFinishLaunchingWithOptions:(NSDictionary *)options\n{\n    return %orig;\n}\n- (void)layoutSubviews\n{\n}\n%end\nClass theme = NSClassFromString(@\"DCDThemeColor\");\n"

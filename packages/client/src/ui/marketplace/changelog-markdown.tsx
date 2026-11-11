@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import type { StorePage } from '~/marketplace/store-page';
+import type { AddonPageContent } from '~/marketplace/addon-page';
 
 import PageMarkdown from './page-markdown';
 
@@ -8,10 +8,10 @@ type ChangelogMarkdownProps = {
 	text: string;
 };
 
-/** @description A release's markdown changelog, rendered like a store page: headings, lists, bold and links. */
+/** @description A release's markdown changelog, rendered like a addon page: headings, lists, bold and links. */
 function ChangelogMarkdown({ text }: ChangelogMarkdownProps) {
 	// A changelog has no page folder, media or icon sprite to resolve against.
-	const page = useMemo<StorePage>(
+	const page = useMemo<AddonPageContent>(
 		() => ({ body: text, measured: null, icons: new Map(), folder: '' }),
 		[text],
 	);

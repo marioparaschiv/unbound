@@ -39,6 +39,8 @@ declare module '@unbound-app/i18n' {
 		readonly DELETE_TITLE: string;
 		/** Duration */
 		readonly DURATION: string;
+		/** Emoji picker favourites */
+		readonly EMOJI_PICKER: string;
 		/** Failed to save {name} */
 		readonly FAILED_TO_SAVE: string;
 		/** Failed to sync */
@@ -53,6 +55,8 @@ declare module '@unbound-app/i18n' {
 		readonly GREET_ON_START_SUBTITLE: string;
 		/** Locked */
 		readonly LOCKED: string;
+		/** Member list indicators */
+		readonly MEMBER_LIST: string;
 		/** Add a note */
 		readonly NOTES_ADD_DESC: string;
 		/** Keep short notes */

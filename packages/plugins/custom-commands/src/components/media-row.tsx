@@ -3,8 +3,8 @@ import { format, messages } from '@unbound-app/i18n';
 import { assets } from '@unbound-app/api';
 import { Image } from 'react-native';
 
-import { isSaved, mediaUri } from '~/commands/media';
-import type { DraftMedia } from '~/commands/media';
+import { isSaved, mediaUri } from '~/lib/media';
+import type { DraftMedia } from '~/lib/media';
 
 type MediaRowProps = {
 	media: DraftMedia;

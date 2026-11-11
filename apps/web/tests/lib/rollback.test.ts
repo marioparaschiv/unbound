@@ -1,7 +1,7 @@
 import type { UpdatesRequest } from '@unbound-app/contracts/updates';
 import { afterAll, describe, expect, test } from 'bun:test';
 
-import { LATEST_VERSION, getAddonDetails, getCatalog, listAddons } from '~/lib/addons';
+import { WITH_SERVED_VERSION, getAddonDetails, getCatalog, listAddons } from '~/lib/addons';
 import { findUpdates, newestCompatibleVersions } from '~/lib/updates';
 import { createSubmission } from '~/lib/submissions';
 import { getAdminAddon } from '~/lib/admin-addon';
@@ -277,7 +277,7 @@ describe('serveVersion', () => {
 describe('served-version reads', () => {
 	test('the catalog reads the served version through the live index', async () => {
 		const query = ctx.db.query.addon
-			.findMany({ where: { delistedAt: { isNull: true } }, with: LATEST_VERSION })
+			.findMany({ where: { delistedAt: { isNull: true } }, with: WITH_SERVED_VERSION })
 			.toSQL();
 		const root = await explain(ctx.db, query);
 

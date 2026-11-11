@@ -2,8 +2,8 @@ import { Discord } from '@unbound-app/api/metro/components';
 import { format, messages } from '@unbound-app/i18n';
 import { dialogs } from '@unbound-app/api';
 
-import { deleteTag } from '~/commands/saved-commands';
-import type { Tag } from '~/commands/tags';
+import { deleteTag } from '~/lib/saved-commands';
+import type { Tag } from '~/lib/tags';
 
 type CommandListProps = {
 	tags: Tag[];

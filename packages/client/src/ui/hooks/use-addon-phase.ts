@@ -24,8 +24,8 @@ function useAddonPhase(
 	useEffect(() => {
 		const manager = Manager.for(kind);
 
-		function handler(entity: Addon) {
-			if (entity.id === addon.id) {
+		function handler(changed: Addon) {
+			if (changed.id === addon.id) {
 				setVersion((version) => version + 1);
 			}
 		}

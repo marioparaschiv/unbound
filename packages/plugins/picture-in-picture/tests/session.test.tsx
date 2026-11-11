@@ -2,7 +2,7 @@ import { metro, native, render, startPlugin, stopPlugin, toasts } from '@unbound
 import { beforeEach, expect, test } from 'bun:test';
 import { Pressable, View } from 'react-native';
 
-import { OVERLAY_BUTTON_PATH, OVERLAY_HEADER_PATH } from '~/constants';
+import { OVERLAY_BUTTON_PATH, OVERLAY_HEADER_PATH } from '~/lib/constants';
 
 const VIDEO = { videoURI: 'https://cdn.discordapp.com/attachments/1/2/clip.mp4' };
 

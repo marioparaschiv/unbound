@@ -1,4 +1,4 @@
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { reportDrawn } from '~/lib/self-test';
 
 export function start() {
 	patch();
@@ -6,4 +6,4 @@ export function start() {
 
 const stop = () => unpatch();
 
-export { stop, featureSelfTest as selfTest };
+export { stop, reportDrawn as selfTest };

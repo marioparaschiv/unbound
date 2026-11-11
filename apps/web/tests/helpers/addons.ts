@@ -1,7 +1,7 @@
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { RepositoryDetails } from '@unbound-app/contracts/source';
 
-import { makeLive, markFilesPublished, promoteDeveloper } from '~/lib/publish-version';
+import { markFilesPublished, recordApproval } from '~/lib/publish-version';
 import { submission, submissionSource } from '~/db/schema';
 import type { SubmissionRow } from '~/lib/submissions';
 import type { AppContext } from '~/lib/context';
@@ -127,15 +127,10 @@ export async function seedSubmission(
 	return row;
 }
 
-// Makes a seeded approved submission live as publishing does, its files already written.
+// Makes a seeded approved submission live as review publishing does, its files already written.
 async function seedLive(ctx: AppContext, row: SubmissionRow, sha256: string): Promise<void> {
 	await ctx.db.transaction(async (tx) => {
-		await makeLive(tx, row, sha256, ctx.now());
-
-		if (row.kind === 'listing') {
-			await promoteDeveloper(tx, row.authorId);
-		}
-
+		await recordApproval(tx, row, sha256, ctx.now());
 		await markFilesPublished(tx, row);
 	});
 }

@@ -23,11 +23,11 @@ describe('native consent', () => {
 		const addons = new ConsentAddons();
 		const required: string[] = [];
 
-		addons.on('consent-required', (entity) => void required.push(entity.id));
+		addons.on('consent-required', (addon) => void required.push(addon.id));
 		addons.load('bundle', ffiManifest('ffi.unapproved'));
 		addons.start('ffi.unapproved');
 
-		expect(addons.getEntity('ffi.unapproved')?.started).toBe(false);
+		expect(addons.getAddon('ffi.unapproved')?.started).toBe(false);
 		expect(addons.errors.get('ffi.unapproved')).toBeInstanceOf(NativeConsentRequiredError);
 		expect(required).toEqual(['ffi.unapproved']);
 	});
@@ -45,7 +45,7 @@ describe('native consent', () => {
 		await addons.enable('ffi.refused');
 
 		expect(asked).toEqual(['ffi.refused:native.ffi.call']);
-		expect(addons.getEntity('ffi.refused')?.started).toBe(false);
+		expect(addons.getAddon('ffi.refused')?.started).toBe(false);
 		setConsentPrompt(undefined);
 	});
 
@@ -61,14 +61,14 @@ describe('native consent', () => {
 		addons.load('bundle', ffiManifest('ffi.allowed'));
 		await addons.enable('ffi.allowed');
 
-		expect(addons.getEntity('ffi.allowed')?.started).toBe(true);
+		expect(addons.getAddon('ffi.allowed')?.started).toBe(true);
 		expect(addons.consentFor('ffi.allowed')).toBe('native.ffi.call');
 
 		addons.disable('ffi.allowed');
 		await addons.enable('ffi.allowed');
 
 		expect(asked).toBe(1);
-		expect(addons.getEntity('ffi.allowed')?.started).toBe(true);
+		expect(addons.getAddon('ffi.allowed')?.started).toBe(true);
 		setConsentPrompt(undefined);
 	});
 
@@ -82,7 +82,7 @@ describe('native consent', () => {
 		addons.load('bundle', ffiManifest('ffi.crashed'));
 		await addons.enable('ffi.crashed');
 
-		expect(addons.getEntity('ffi.crashed')?.started).toBe(false);
+		expect(addons.getAddon('ffi.crashed')?.started).toBe(false);
 		expect(addons.errors.get('ffi.crashed')).toBeInstanceOf(NativeConsentRequiredError);
 		expect(logged).toHaveBeenCalledTimes(1);
 		setConsentPrompt(undefined);
@@ -94,7 +94,7 @@ describe('native consent', () => {
 		addons.load('bundle', ffiManifest('ffi.noprompt'));
 		await addons.enable('ffi.noprompt');
 
-		expect(addons.getEntity('ffi.noprompt')?.started).toBe(false);
+		expect(addons.getAddon('ffi.noprompt')?.started).toBe(false);
 	});
 
 	test('starts signed first-party FFI plugins without asking', async () => {
@@ -106,7 +106,7 @@ describe('native consent', () => {
 		await addons.enable('ffi.signed');
 
 		expect(asked).toBe(false);
-		expect(addons.getEntity('ffi.signed')?.started).toBe(true);
+		expect(addons.getAddon('ffi.signed')?.started).toBe(true);
 		setConsentPrompt(undefined);
 	});
 });

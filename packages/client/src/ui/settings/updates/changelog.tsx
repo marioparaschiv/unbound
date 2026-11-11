@@ -2,8 +2,8 @@ import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
 import type { TimelineVersion } from '~/ui/marketplace/version-entry';
-import StoreSection from '~/ui/marketplace/store-section';
 import VersionEntry from '~/ui/marketplace/version-entry';
+import PageCard from '~/ui/marketplace/page-card';
 import { Discord } from '~/metro/components';
 import Page from '~/ui/components/page';
 import { messages } from '~/i18n/api';
@@ -35,7 +35,7 @@ function Changelog({ name, icon, installed, offered, changelogs, children }: Cha
 				/>
 			</Discord.TableRowGroup>
 
-			<StoreSection title={messages.UNBOUND_UPDATES_CHANGELOG}>
+			<PageCard title={messages.UNBOUND_UPDATES_CHANGELOG}>
 				{changelogs.map((version, index) => (
 					<VersionEntry
 						key={version.version}
@@ -44,7 +44,7 @@ function Changelog({ name, icon, installed, offered, changelogs, children }: Cha
 						last={index === changelogs.length - 1}
 					/>
 				))}
-			</StoreSection>
+			</PageCard>
 
 			<View>{children}</View>
 		</Page>

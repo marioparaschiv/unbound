@@ -1,5 +1,13 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startBlurNsfw } from '~/blur-nsfw';
+import { restoreBlurredRows } from '~/lib/blur';
+import { patchRowManager } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startBlurNsfw]);
+export function start() {
+	patchRowManager();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+	restoreBlurredRows();
+}

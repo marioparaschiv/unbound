@@ -1,5 +1,5 @@
-import type { PluginPushResult } from '@unbound-app/debugger-protocol';
 import { describe, expect, test, afterEach, spyOn } from 'bun:test';
+import type { PushResult } from '@unbound-app/debugger-protocol';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import type { PushedManifest } from '@unbound-app/types';
 import { tmpdir } from 'node:os';
@@ -27,7 +27,7 @@ const builtPlugin = () => makeBuiltPlugin(roots);
 type FakeClient = {
 	isDeviceConnected: boolean;
 	pushes: RecordedPush[];
-	result: PluginPushResult;
+	result: PushResult;
 };
 
 function fakeContext(client: FakeClient): ReloadContext {
@@ -36,7 +36,7 @@ function fakeContext(client: FakeClient): ReloadContext {
 			get isDeviceConnected() {
 				return client.isDeviceConnected;
 			},
-			async pushPlugin(push) {
+			async pushAddon(push) {
 				client.pushes.push({
 					addonId: push.addonId,
 					kind: push.kind,
@@ -50,7 +50,7 @@ function fakeContext(client: FakeClient): ReloadContext {
 	};
 }
 
-const ok: PluginPushResult = { type: 'plugin-push-result', id: 'x', ok: true };
+const ok: PushResult = { type: 'plugin-push-result', id: 'x', ok: true };
 
 describe('createReloadTransport', () => {
 	test('pushes the built bundle and manifest when the device is connected', async () => {

@@ -5,8 +5,8 @@ import { ADDON_SCOPE_GLOBALS } from '@unbound-app/types/addons';
 import { attributeAddon, crashGuardKey, setFreezeListener } from '~/addons/crash-guard';
 import { performRefresh, withRefreshScope } from '~/hot-refresh/runtime';
 import { installDependencies } from '~/marketplace/install-dependencies';
-import type { AddonGlobals, PluginScope } from '~/addons/scope';
 import { getLoader, getPlugins } from '~/native/unbound-native';
+import type { AddonGlobals, AddonScope } from '~/addons/scope';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { createPluginContext } from '~/native/plugin-context';
 import type { AddonAttribution } from '~/addons/crash-guard';
@@ -75,7 +75,7 @@ export class Plugins extends Addons<Plugin> {
 	 */
 	initialize() {
 		setFreezeListener((freeze) => this.handleFreeze(freeze));
-		setOwnerCheck((owner) => Boolean(this.getEntity(owner)));
+		setOwnerCheck((owner) => Boolean(this.getAddon(owner)));
 
 		for (const entry of benchSpan('native getPlugins', getPlugins)) {
 			const { manifest } = entry;
@@ -106,18 +106,18 @@ export class Plugins extends Addons<Plugin> {
 
 	/**
 	 * @description Unloads a plugin and forgets its evaluated bundle, so a deleted plugin's code is not kept.
-	 * @param entity The plugin to unload, as its id or the entity itself.
+	 * @param addon The plugin to unload, as its id or the addon itself.
 	 */
-	unload(entity: AddonResolveable): void | Promise<void> {
-		this.evaluated.delete(typeof entity === 'string' ? entity : entity.id);
+	unload(addon: AddonResolveable): void | Promise<void> {
+		this.evaluated.delete(typeof addon === 'string' ? addon : addon.id);
 
-		return super.unload(entity);
+		return super.unload(addon);
 	}
 
 	/**
 	 * @description Restarts a plugin on its new bundle, then re-renders its mounted components in place.
 	 * A component whose hooks changed can't keep its state, so the app reloads instead.
-	 * @param entity The plugin to reload, as its id or the entity itself.
+	 * @param addon The plugin to reload, as its id or the addon itself.
 	 * @param bundle The freshly built bundle source.
 	 * @param manifest The freshly built manifest, as received; {@link Addons.reload} validates it.
 	 * @param bytecode The bundle compiled for this runtime, base64-encoded, which then runs instead of the source.
@@ -125,7 +125,7 @@ export class Plugins extends Addons<Plugin> {
 	 * @returns The reload outcome.
 	 */
 	async reload(
-		entity: AddonResolveable,
+		addon: AddonResolveable,
 		bundle: string,
 		manifest: PushedManifest,
 		bytecode?: string,
@@ -138,7 +138,7 @@ export class Plugins extends Addons<Plugin> {
 			this.scanned.set(manifest.id, { bundle, folder: manifest.id });
 		}
 
-		const result = await super.reload(entity, bundle, manifest, bytecode, files);
+		const result = await super.reload(addon, bundle, manifest, bytecode, files);
 
 		if (!result.ok && bytecode) {
 			if (previous) {
@@ -170,10 +170,10 @@ export class Plugins extends Addons<Plugin> {
 		return installDependencies(version.manifest);
 	}
 
-	protected createScope(entity: Addon<Plugin>): PluginScope {
+	protected createScope(addon: Addon<Plugin>): AddonScope {
 		return createAddonScope(
-			entity,
-			entity.manifest.path ?? `${fs.documentsPath}/${this.directoryOf(entity.id)}`,
+			addon,
+			addon.manifest.path ?? `${fs.documentsPath}/${this.directoryOf(addon.id)}`,
 		);
 	}
 
@@ -185,7 +185,7 @@ export class Plugins extends Addons<Plugin> {
 	 * @param scope The globals {@link createScope} made for this start.
 	 * @returns The entry's named exports: `start`, `stop` and `SettingsPanel`.
 	 */
-	protected handleBundle(bundle: string, id: string, scope: PluginScope): Plugin {
+	protected handleBundle(bundle: string, id: string, scope: AddonScope): Plugin {
 		const iife = this.factoryFor(bundle, id);
 		const globals = ADDON_SCOPE_GLOBALS.map((name) => scope.globals[name]);
 
@@ -262,8 +262,8 @@ export class Plugins extends Addons<Plugin> {
 		}
 	}
 
-	protected createContext(entity: Addon): PluginContext {
-		const context = createPluginContext(entity.manifest, this.attribution(entity));
+	protected createContext(addon: Addon): PluginContext {
+		const context = createPluginContext(addon.manifest, this.attribution(addon));
 
 		return {
 			...context,
@@ -272,14 +272,14 @@ export class Plugins extends Addons<Plugin> {
 					context.dispose();
 				} finally {
 					// Every way a plugin ends disposes its context, a failed start and a throwing stop included.
-					registry.release(entity.id);
+					registry.release(addon.id);
 				}
 			},
 		};
 	}
 
-	protected attribution(entity: Addon): AddonAttribution | undefined {
-		return attributeAddon(crashGuardKey(this.bucket, entity.id), entity.name);
+	protected attribution(addon: Addon): AddonAttribution | undefined {
+		return attributeAddon(crashGuardKey(this.bucket, addon.id), addon.name);
 	}
 }
 

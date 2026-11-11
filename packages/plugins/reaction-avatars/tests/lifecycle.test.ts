@@ -1,5 +1,6 @@
 import {
 	flux,
+	logs,
 	metro,
 	native,
 	pluginHolds,
@@ -8,9 +9,7 @@ import {
 } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import type { NativePluginBridge, NativeUIScope } from '@unbound-app/api/native';
-
-import { selfTest } from '~/index';
+import type { NativeBridge, NativeUIScope } from '@unbound-app/api/native';
 
 // The kit has no UI scope: the scope runs a worklet on this thread against the fake bridges.
 const ui = {
@@ -21,7 +20,7 @@ const ui = {
 		...args: string[]
 	) => worklet(scope, ...args),
 };
-const overrides = { native: { ui } as unknown as NativePluginBridge };
+const overrides = { native: { ui } as unknown as NativeBridge };
 
 beforeEach(() => {
 	native.objc.registerClass('DCDMessageTableViewCell', {
@@ -53,13 +52,11 @@ describe('starting and stopping', () => {
 		await expect(stopPlugin()).resolves.toBeUndefined();
 	});
 
-	test('reports its features applied after starting, and not after stopping', async () => {
+	test('starts without a warning, so the self test passes', async () => {
 		await startPlugin(overrides);
 
-		expect(selfTest()).toMatchObject({ ok: true });
+		expect(logs.entries.filter((entry) => entry.level === 'warn')).toEqual([]);
 
 		await stopPlugin();
-
-		expect(selfTest()).toMatchObject({ ok: false });
 	});
 });

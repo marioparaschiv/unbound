@@ -7,7 +7,7 @@ import {
 	type PageList,
 	type PageNode,
 } from '~/marketplace/page-markdown';
-import { findPageMedia } from '~/marketplace/store-page';
+import { findPageMedia } from '~/marketplace/addon-page';
 import { Discord } from '~/metro/components';
 
 import { renderPageInline, type PageRenderContext } from './render-page-inline';
@@ -136,7 +136,7 @@ function renderTable(rows: PageNode[][][], ctx: PageRenderContext, key: number):
 }
 
 /**
- * @description Renders one block node of a store page: a heading, paragraph, list, code block, quote,
+ * @description Renders one block node of a addon page: a heading, paragraph, list, code block, quote,
  * rule, table or measured image.
  * @param node The node.
  * @param ctx The page and its styles.

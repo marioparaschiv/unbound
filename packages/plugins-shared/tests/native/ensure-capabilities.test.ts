@@ -14,7 +14,7 @@ test('passes when the loader offers every capability', () => {
 test('fails and names the capabilities a missing bridge lacks', () => {
 	expect(ensureCapabilities({ capabilities: [] }, ['native.objc.hooks'])).toBe(false);
 	expect(logs.at(-1)).toEqual({
-		level: 'error',
-		args: ['Skipped, native capabilities not available: native.objc.hooks.'],
+		level: 'warn',
+		args: ['Plugin skipped: native capabilities not available: native.objc.hooks.'],
 	});
 });

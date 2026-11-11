@@ -49,9 +49,9 @@ function patchStore(Store: MetroExport) {
 }
 
 function withStaffMode<T>(operation: () => T): T {
-	const original = UserConstants.isStaffEnv;
+	const original = UserConstants?.isStaffEnv;
 
-	if (typeof original !== 'function') {
+	if (!UserConstants || typeof original !== 'function') {
 		if (!warnedMissingStaffHelper) {
 			Logger.warn('Discord staff environment helper was not found.');
 			warnedMissingStaffHelper = true;

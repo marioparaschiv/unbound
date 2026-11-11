@@ -1,7 +1,5 @@
-import { metro, render, startPlugin } from '@unbound-app/api/testing';
+import { logs, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
-
-import { selfTest } from '~/index';
 import type { ReactNode } from 'react';
 import { Text } from 'react-native';
 
@@ -61,7 +59,21 @@ describe('the typing indicator', () => {
 		expect(renderIndicator(['x', 'y']).text()).toBe('typing');
 	});
 
-	test('reports the typing indicator patch as applied', async () => {
-		expect((await selfTest()).ok).toBe(true);
+	test('starts without a warning, so the self test passes', () => {
+		expect(logs.entries.filter((entry) => entry.level === 'warn')).toEqual([]);
+	});
+});
+
+describe('a Discord update', () => {
+	test('skips the avatars with one warning when Discord moved TypingIndicator', async () => {
+		await stopPlugin();
+		metro.markMissing('modules/chat/native/TypingIndicator.tsx');
+		await startPlugin();
+
+		expect(renderIndicator(['a']).text()).toBe('typing');
+		expect(logs.entries).toContainEqual({
+			level: 'warn',
+			args: ['Typing avatars skipped: Discord moved Avatars or TypingIndicator.'],
+		});
 	});
 });

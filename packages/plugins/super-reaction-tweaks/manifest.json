@@ -17,6 +17,9 @@
 		}
 	],
 	"version": "1.0.1",
+	"unbound": {
+		"min": "3.0.0"
+	},
 	"icon": "SuperReactionIcon",
 	"main": "index.tsx"
 }

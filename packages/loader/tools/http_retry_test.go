@@ -16,6 +16,31 @@ func retryingTestClient() *http.Client {
 	}
 }
 
+func TestRetryableStatusCoversTimeoutsRateLimitsAndServerErrors(t *testing.T) {
+	cases := []struct {
+		status int
+		want   bool
+	}{
+		{http.StatusOK, false},
+		{http.StatusBadRequest, false},
+		{http.StatusNotFound, false},
+		{http.StatusRequestTimeout, true},
+		{http.StatusTooEarly, true},
+		{http.StatusTooManyRequests, true},
+		{http.StatusInternalServerError, true},
+		{http.StatusNotImplemented, true},
+		{http.StatusBadGateway, true},
+		{http.StatusServiceUnavailable, true},
+		{http.StatusGatewayTimeout, true},
+		{599, true},
+	}
+	for _, test := range cases {
+		if got := retryableStatus(test.status); got != test.want {
+			t.Errorf("retryableStatus(%d) = %v, want %v", test.status, got, test.want)
+		}
+	}
+}
+
 func TestLookupsRetryAServerErrorOnce(t *testing.T) {
 	var calls atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {

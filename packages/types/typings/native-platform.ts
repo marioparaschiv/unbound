@@ -1,13 +1,13 @@
 import type * as React from 'react';
 
 import type { NativeSerializable, NativeSerializableObject } from './native-handles';
-import type { NativePluginPlatform } from './native';
+import type { NativeBridgePlatform } from './native';
 import type { Plugin } from './addons';
 
 /** Facts about the device Discord runs on. */
 export type NativePlatformDevice = {
 	/** The host platform. */
-	readonly platform: NativePluginPlatform;
+	readonly platform: NativeBridgePlatform;
 	/** The device's model name. */
 	getDeviceModel(): string;
 	/** The operating system's version. */
@@ -229,7 +229,7 @@ export type NativePlatformSettings = {
 /** Platform-wide helpers the loader publishes as `globalThis.NativePlatform`, not scoped to a plugin. */
 export type NativePlatformBridge = {
 	/** The host platform. */
-	readonly platform: NativePluginPlatform;
+	readonly platform: NativeBridgePlatform;
 	/** Evaluates Hermes bytecode in the current runtime; `tag` names it in errors. Throws on invalid bytecode. */
 	// UNKNOWN: returns the completion value of arbitrary evaluated bytecode.
 	evaluateBytecode(bytecode: ArrayBuffer, tag?: string): unknown;

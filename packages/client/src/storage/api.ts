@@ -4,7 +4,7 @@ import { settingEntries } from '@unbound-app/contracts/settings-schema';
 import type { SettingsSchema } from '@unbound-app/types/settings';
 import debounce from '@unbound-app/utils/debounce';
 
-import { createSettingsBackend, type SettingsStores } from '~/storage/backend';
+import { createSettingsBackend, type SettingsByBucket } from '~/storage/backend';
 import { createDefinedSettings, type DefinedSettings } from '~/storage/define';
 import { maskSecrets, registerSecrets } from '~/storage/secrets';
 import { EventEmitter } from '~/core/event-emitter';
@@ -62,7 +62,7 @@ const revisions = new Map<string, number>();
  */
 export function snapshot({
 	includeSecrets = false,
-}: { includeSecrets?: boolean } = {}): SettingsStores {
+}: { includeSecrets?: boolean } = {}): SettingsByBucket {
 	const stores = backend.readAll();
 
 	return includeSecrets ? stores : maskSecrets(stores);

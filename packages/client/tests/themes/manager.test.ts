@@ -10,11 +10,11 @@ const LIGHT = JSON.stringify({ type: 'light' });
 function load(id: string, bundle: string) {
 	themes.load(bundle, { ...makeManifest(id), type: 'theme' });
 
-	return themes.getEntity(id);
+	return themes.getAddon(id);
 }
 
 afterEach(async () => {
-	for (const theme of themes.getEntities()) {
+	for (const theme of themes.getAddons()) {
 		await themes.unload(theme);
 	}
 
@@ -81,7 +81,7 @@ describe('applying one theme at a time', () => {
 		load('theme.deleted', MIDNIGHT);
 		themes.enable('theme.deleted');
 
-		await themes.delete('theme.deleted');
+		await themes.uninstall('theme.deleted');
 
 		expect(themes.getAppliedId()).toBeNull();
 		expect(ThemeStore.getState().applied).toBeNull();

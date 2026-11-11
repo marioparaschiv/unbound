@@ -103,6 +103,37 @@ bool clearPendingException(JNIEnv *env)
     return true;
 }
 
+std::string takeJavaFailure(JNIEnv *env, const char *fallback)
+{
+    jthrowable thrown = env->ExceptionOccurred();
+    if (!thrown)
+    {
+        return fallback;
+    }
+
+    env->ExceptionClear();
+    jclass      throwableClass = env->GetObjectClass(thrown);
+    jmethodID   describe = env->GetMethodID(throwableClass, "toString", "()Ljava/lang/String;");
+    std::string message  = fallback;
+    if (describe)
+    {
+        auto described = static_cast<jstring>(env->CallObjectMethod(thrown, describe));
+        if (described && !env->ExceptionCheck())
+        {
+            message = toStdString(env, described);
+        }
+        if (described)
+        {
+            env->DeleteLocalRef(described);
+        }
+        env->ExceptionClear();
+    }
+
+    env->DeleteLocalRef(throwableClass);
+    env->DeleteLocalRef(thrown);
+    return message;
+}
+
 LocalClass::LocalClass(JNIEnv *env, jclass cls) : env_(env), class_(cls) {}
 
 LocalClass::~LocalClass()

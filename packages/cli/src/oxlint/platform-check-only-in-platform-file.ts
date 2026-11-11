@@ -2,7 +2,8 @@ import type { Rule } from './rule';
 
 import propertyName from './property-name.ts';
 
-const PLATFORM_FILE = /(^|\/)platform\.[cm]?[jt]sx?$/;
+// `platform.ts` selects a handler; a file in `src/native/`, `src/native/ios/` or `src/native/android/` may branch on the platform itself.
+const PLATFORM_FILE = /(^|\/)platform\.[cm]?[jt]sx?$|(^|\/)src\/native\/((ios|android)\/)?[^/]+$/;
 
 const PLATFORM_KEY_BY_OBJECT = new Map([
 	['Platform', 'OS'],
@@ -13,7 +14,7 @@ const platformCheckOnlyInPlatformFile: Rule = {
 	meta: {
 		type: 'suggestion',
 		messages: {
-			check: '`{{read}}` checks the platform outside `platform.ts`. Select the platform handler once in `platform.ts` with `definePlatform` and keep platform code in `ios/` and `android/`.',
+			check: '`{{read}}` checks the platform outside `src/native/` and `platform.ts`. Branch in one small `src/native/` file, or split it into `src/native/android/<kind>.ts` and `src/native/ios/<kind>.ts`.',
 		},
 	},
 	create(context) {

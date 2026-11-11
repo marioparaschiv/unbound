@@ -9,7 +9,7 @@ import type { ComponentType } from 'react';
 
 import type { AddonLifecycle } from '~/addons/lifecycle';
 import type { RecordChange } from '~/addons/records';
-import type { PluginScope } from '~/addons/scope';
+import type { AddonScope } from '~/addons/scope';
 
 /** What a manager keeps for one addon it governs. The manager is its only writer. */
 export type AddonState<I extends object> = {
@@ -18,7 +18,7 @@ export type AddonState<I extends object> = {
 	/** What the bundle evaluated to. Every addon kind may implement the {@link Plugin} lifecycle hooks. */
 	instance: (Plugin & I) | null;
 	context: PluginContext | undefined;
-	scope: PluginScope | undefined;
+	scope: AddonScope | undefined;
 	started: boolean;
 	failed: boolean;
 	/** An async `start` or `stop` still in flight. */
@@ -35,23 +35,23 @@ export type AddonResolveable<I extends object = object> = string | Addon<I>;
 
 /** Every event an addon manager emits, across its lifecycle and its distribution. */
 export type AddonEvents<T> = {
-	loaded: (entity: T) => void;
-	unloaded: (entity: T) => void;
-	started: (entity: T) => void;
-	stopped: (entity: T) => void;
-	enabled: (entity: T) => void;
-	disabled: (entity: T) => void;
-	toggled: (entity: T) => void;
-	reloaded: (entity: T) => void;
-	'reload-error': (entity: T, error: Error) => void;
-	installed: (entity: T) => void;
+	loaded: (addon: T) => void;
+	unloaded: (addon: T) => void;
+	started: (addon: T) => void;
+	stopped: (addon: T) => void;
+	enabled: (addon: T) => void;
+	disabled: (addon: T) => void;
+	toggled: (addon: T) => void;
+	reloaded: (addon: T) => void;
+	'reload-error': (addon: T, error: Error) => void;
+	installed: (addon: T) => void;
 	'install-error': (error: Error) => void;
-	updated: (entity: T) => void;
-	'update-error': (entity: T, error: Error) => void;
-	deleted: (entity: T) => void;
-	'consent-required': (entity: T) => void;
+	updated: (addon: T) => void;
+	'update-error': (addon: T, error: Error) => void;
+	uninstalled: (addon: T) => void;
+	'consent-required': (addon: T) => void;
 	/** Any change to {@link Addon.phase} or its settings panel: a start, an async settle, a stop or a failure. */
-	changed: (entity: T) => void;
+	changed: (addon: T) => void;
 	/** A per-addon record the manager keeps in its Bucket changed, such as its enabled state or hold. */
 	'record-changed': (change: RecordChange) => void;
 };
@@ -141,6 +141,11 @@ export class Addon<I extends object = object> implements AddonHandle {
 	/** What the bundle evaluated to. */
 	get instance(): (Plugin & I) | null {
 		return this.#state.instance;
+	}
+
+	/** The warnings and errors a running plugin logged while it started. */
+	get startIssues(): readonly string[] {
+		return this.#state.scope?.startIssues ?? [];
 	}
 
 	get bundle(): string {

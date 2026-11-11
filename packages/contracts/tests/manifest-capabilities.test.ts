@@ -1,12 +1,12 @@
-import { NATIVE_PLUGIN_PLATFORM_CAPABILITIES } from '@unbound-app/types/native';
+import { NATIVE_BRIDGE_PLATFORM_CAPABILITIES } from '@unbound-app/types/native';
 import { describe, expect, test } from 'bun:test';
 
 import { validateAddonCapabilities } from '~/manifest-capabilities';
 import { addonManifestSchema } from '~/manifest';
 import { safeParse } from '~/schema';
 
-const androidCapabilities: readonly string[] = NATIVE_PLUGIN_PLATFORM_CAPABILITIES.android;
-const [iosOnlyCapability = ''] = NATIVE_PLUGIN_PLATFORM_CAPABILITIES.ios.filter(
+const androidCapabilities: readonly string[] = NATIVE_BRIDGE_PLATFORM_CAPABILITIES.android;
+const [iosOnlyCapability = ''] = NATIVE_BRIDGE_PLATFORM_CAPABILITIES.ios.filter(
 	(capability) => !androidCapabilities.includes(capability),
 );
 
@@ -24,7 +24,7 @@ describe('validateAddonCapabilities', () => {
 		expect(
 			validateAddonCapabilities({
 				platforms: Object.fromEntries(
-					Object.entries(NATIVE_PLUGIN_PLATFORM_CAPABILITIES).map(
+					Object.entries(NATIVE_BRIDGE_PLATFORM_CAPABILITIES).map(
 						([platform, capabilities]) => [platform, { capabilities }],
 					),
 				),

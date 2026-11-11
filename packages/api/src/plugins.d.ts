@@ -3,12 +3,12 @@
 import type { AddonHandle, PluginSelfTestResult, PushedManifest } from './_internal';
 /** Stops a running plugin without changing its enabled state. */
 declare const stop$1: (id: string) => void | Promise<void>;
+/** Every installed plugin, keyed by id. */
+export declare const addons: ReadonlyMap<PropertyKey, AddonHandle>;
 /** Disables a plugin and stops it. */
 export declare const disable: (id: string) => void;
 /** Enables a plugin and starts it. */
 export declare const enable: (id: string) => void | Promise<void>;
-/** Every installed plugin, keyed by id. */
-export declare const entities: ReadonlyMap<PropertyKey, AddonHandle>;
 /** The error each plugin that failed to load or start threw, keyed by id. */
 export declare const errors: ReadonlyMap<PropertyKey, Error>;
 /** Reads one installed plugin by id. */

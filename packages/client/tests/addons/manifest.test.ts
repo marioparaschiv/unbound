@@ -6,7 +6,7 @@ import {
 	resolveManifestCapabilities,
 	resolveManifestPlatforms,
 } from '~/addons/manifest';
-import { NativePluginCapabilityError, NativePluginUnsupportedPlatformError } from '~/native/errors';
+import { NativeBridgeCapabilityError, NativeBridgeUnsupportedPlatformError } from '~/native/errors';
 
 const base: AddonManifest = {
 	id: 'unbound.example',
@@ -34,13 +34,26 @@ describe('parseAddonManifest', () => {
 		expect(() => parseAddonManifest({ ...base, unbound: { min: 1 } })).toThrow('unbound.min');
 	});
 
+	test('reads the API floor of an addon built before the native bridge rename', () => {
+		expect(
+			parseAddonManifest({ ...base, minNativePluginApi: '1.2.0' }).minNativeBridgeApi,
+		).toBe('1.2.0');
+		expect(
+			parseAddonManifest({
+				...base,
+				minNativeBridgeApi: '1.1.0',
+				minNativePluginApi: '1.2.0',
+			}).minNativeBridgeApi,
+		).toBe('1.1.0');
+	});
+
 	test('refuses a platform capability Unbound does not know', () => {
 		expect(() =>
 			parseAddonManifest({
 				...base,
 				platforms: { ios: { capabilities: ['native.unknown'] } },
 			}),
-		).toThrow(NativePluginCapabilityError);
+		).toThrow(NativeBridgeCapabilityError);
 	});
 
 	test('accepts the platforms object and checks its shape', () => {
@@ -122,9 +135,9 @@ describe('resolveManifestCapabilities', () => {
 	test('refuses a host the manifest does not support', () => {
 		expect(() =>
 			resolveManifestCapabilities({ ...base, platforms: { ios: {} } }, 'android'),
-		).toThrow(NativePluginUnsupportedPlatformError);
+		).toThrow(NativeBridgeUnsupportedPlatformError);
 		expect(() => resolveManifestCapabilities(manifest, 'web')).toThrow(
-			NativePluginUnsupportedPlatformError,
+			NativeBridgeUnsupportedPlatformError,
 		);
 	});
 

@@ -1,5 +1,15 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import type { PluginContext } from '@unbound-app/api/native';
+import { patcher } from '@unbound-app/api';
 
-import { startPictureInPicture } from '~/picture-in-picture';
+import { closeWindow, openWindow } from '~/native/window';
+import { patchOverlayHeader } from '~/patches/overlay-header';
 
-export const { start, stop, selfTest } = runFeatures([startPictureInPicture]);
+export function start(context: PluginContext) {
+	openWindow(context);
+	patchOverlayHeader();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+	closeWindow();
+}

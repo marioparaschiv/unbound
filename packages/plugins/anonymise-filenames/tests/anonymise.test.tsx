@@ -3,8 +3,7 @@ import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { View } from 'react-native';
 
-import { selfTest } from '~/index';
-import { UPLOAD_PREVIEW_SHEET } from '~/constants';
+import { UPLOAD_PREVIEW_SHEET } from '~/lib/constants';
 
 type Upload = { id: string; filename: string };
 
@@ -138,26 +137,19 @@ describe('the upload preview sheet', () => {
 });
 
 describe('the plugin as a whole', () => {
-	test('reports every patch applied to the self test', async () => {
+	test('starts every patch without a warning, so its self-test passes', async () => {
 		registerModules(sheet);
 		await startPlugin();
 
-		expect((await selfTest()).ok).toBe(true);
+		expect(logs.entries.filter(({ level }) => level === 'warn' || level === 'error')).toEqual(
+			[],
+		);
 	});
 
-	test('keeps anonymising uploads when the preview sheet has an unexpected shape', async () => {
+	test('fails to start when the preview sheet has an unexpected shape', async () => {
 		registerModules({ default: 'not a component' });
-		await startPlugin();
 
-		expect(new CloudUpload('1', 'passport scan.png').upload()).not.toBe('passport scan.png');
-		expect((await selfTest()).detail).toContain('start failed');
-	});
-
-	test("logs a failed patch through the plugin's logger", async () => {
-		registerModules({ default: 'not a component' });
-		await startPlugin();
-
-		expect(logs.entries.map(({ args }) => args[0])).toContain('Failed to start a feature:');
+		await expect(startPlugin()).rejects.toThrow('Failed to patch component');
 	});
 
 	test('sends files under their original names again once the plugin stops', async () => {

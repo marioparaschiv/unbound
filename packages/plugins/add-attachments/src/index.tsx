@@ -1,6 +1,13 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startEditUploads } from '~/editing';
-import { startSheet } from '~/sheet';
+import { interceptUploadAddFiles } from '~/flux/interceptors';
+import { patchMessageLongPressSheet } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startEditUploads, startSheet]);
+export function start() {
+	interceptUploadAddFiles();
+	patchMessageLongPressSheet();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}

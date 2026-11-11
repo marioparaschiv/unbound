@@ -267,6 +267,12 @@ function patchIndex() {
 }
 
 function patchAccess() {
+	if (!Access) {
+		Logger.warn('Command access skipped: Discord moved hasAccess.');
+
+		return;
+	}
+
 	Patcher.after(Access, 'hasAccess', ({ args: [command], result }) => {
 		if (!getIndex().sectionIds.has(command?.applicationId)) return;
 
@@ -277,6 +283,12 @@ function patchAccess() {
 }
 
 function patchIcons() {
+	if (!Icons) {
+		Logger.warn('Command icons skipped: Discord moved getApplicationCommandsIconSource.');
+
+		return;
+	}
+
 	Patcher.after(Icons, 'getApplicationCommandsIconSource', ({ args: [section] }) => {
 		const icon = getIndex().icons.get(section?.id);
 
@@ -299,6 +311,12 @@ function patchBuiltIns() {
 }
 
 function patchInstall() {
+	if (!Install) {
+		Logger.warn('Command install skipped: Discord moved installApplicationOnDemandIfNeeded.');
+
+		return;
+	}
+
 	// Sending a command first installs its application, which fetches /applications/<id>/public and rejects for ours.
 	Patcher.instead(
 		Install,

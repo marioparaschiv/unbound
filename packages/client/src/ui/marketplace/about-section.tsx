@@ -9,7 +9,7 @@ import { icons } from '~/assets/api';
 
 import { formatListingDate } from './listing-date';
 import useStyles from './about-section.style';
-import StoreSection from './store-section';
+import PageCard from './page-card';
 
 type AboutSectionProps = {
 	addon: ListedAddon;
@@ -18,7 +18,7 @@ type AboutSectionProps = {
 const PLATFORM_LABELS: Record<string, string> = { ios: 'iOS', android: 'Android' };
 
 /**
- * @description The store page's About card, as on the website: when the listed version was published,
+ * @description The addon page's About card, as on the website: when the listed version was published,
  * its size, the Unbound it needs, its platforms, and a link to its source at the pinned commit.
  */
 function AboutSection({ addon }: AboutSectionProps) {
@@ -42,7 +42,7 @@ function AboutSection({ addon }: AboutSectionProps) {
 	];
 
 	return (
-		<StoreSection title={messages.UNBOUND_STORE_PAGE_ABOUT}>
+		<PageCard title={messages.UNBOUND_STORE_PAGE_ABOUT}>
 			<View style={styles.facts}>
 				{facts.map(([label, value]) => (
 					<View key={label} style={styles.fact}>
@@ -64,7 +64,7 @@ function AboutSection({ addon }: AboutSectionProps) {
 					onPress={() => void Linking.openURL(sourceUrl(source))}
 				/>
 			) : null}
-		</StoreSection>
+		</PageCard>
 	);
 }
 

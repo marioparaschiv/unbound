@@ -5,9 +5,9 @@ import { apply, check } from '~/updates/api';
 import { themes } from '~/themes/manager';
 
 /** Lists every installed theme. */
-export const getAll: () => AddonHandle[] = themes.getEntities.bind(themes);
+export const getAll: () => AddonHandle[] = themes.getAddons.bind(themes);
 /** Reads one installed theme by id. */
-export const get: (id: string) => AddonHandle | undefined = themes.getEntity.bind(themes);
+export const get: (id: string) => AddonHandle | undefined = themes.getAddon.bind(themes);
 /** Reports whether a theme is enabled. */
 export const isEnabled: (id: string) => boolean = themes.isEnabled.bind(themes);
 /** Enables a theme and applies it. */
@@ -20,7 +20,7 @@ export const toggle: (id: string) => void = themes.toggle.bind(themes);
 export const install: (url: string, digest?: string) => Promise<AddonHandle | undefined> =
 	themes.install.bind(themes);
 /** Removes an installed theme. */
-export const uninstall: (id: string) => Promise<void> = themes.delete.bind(themes);
+export const uninstall: (id: string) => Promise<void> = themes.uninstall.bind(themes);
 /** Swaps a theme's files in place, keeping its enabled state. */
 export const reload: (
 	id: string,

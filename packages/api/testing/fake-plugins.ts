@@ -38,7 +38,7 @@ export function createFakePlugins(own: AddonManifest): FakePlugins {
 	const states = new Map<string, State>();
 	const handles = new Map<string, AddonHandle>();
 	const errors = new Map<PropertyKey, Error>();
-	const entities = new Map<PropertyKey, AddonHandle>();
+	const addons = new Map<PropertyKey, AddonHandle>();
 	const startDurations = new Map<string, number>();
 
 	function stateOf(id: string): State | undefined {
@@ -110,7 +110,7 @@ export function createFakePlugins(own: AddonManifest): FakePlugins {
 			const handle = handleOf(id, id === own.id ? own : undefined);
 
 			handles.set(id, handle);
-			entities.set(id, handle);
+			addons.set(id, handle);
 		}
 
 		const error = stateOf(id)?.error;
@@ -125,7 +125,7 @@ export function createFakePlugins(own: AddonManifest): FakePlugins {
 	function remove(id: string) {
 		states.delete(id);
 		handles.delete(id);
-		entities.delete(id);
+		addons.delete(id);
 		errors.delete(id);
 	}
 
@@ -155,7 +155,7 @@ export function createFakePlugins(own: AddonManifest): FakePlugins {
 	reset();
 
 	const namespace: FakeModule = {
-		entities,
+		addons,
 		errors,
 		startDurations,
 		get: (id: string) => handles.get(id),

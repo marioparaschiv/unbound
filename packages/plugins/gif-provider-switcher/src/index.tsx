@@ -1,7 +1,17 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startRequests } from '~/requests';
-import { startPicker } from '~/picker';
+import { patchGifPickerHeader } from '~/patches/gif-picker-header';
+import { patchRest, restoreTrending } from '~/patches/rest';
+import { markPickerStopped } from '~/lib/picker-running';
 
-// One feature throwing must not cost the other.
-export const { start, stop, selfTest } = runFeatures([startPicker, startRequests]);
+export function start() {
+	patchGifPickerHeader();
+	patchRest();
+}
+
+export function stop() {
+	// The patches go first, or Discord's trending refresh would be answered by the provider.
+	patcher.unpatchAll();
+	restoreTrending();
+	markPickerStopped();
+}

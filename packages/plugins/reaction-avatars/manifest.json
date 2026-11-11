@@ -24,8 +24,11 @@
 			"id": "224617799434108928"
 		}
 	],
-	"minNativePluginApi": "1.0.0",
-	"version": "1.2.5",
+	"minNativeBridgeApi": "1.0.0",
+	"version": "1.2.6",
+	"unbound": {
+		"min": "3.0.0"
+	},
 	"icon": "ReactionIcon",
 	"main": "index.tsx"
 }

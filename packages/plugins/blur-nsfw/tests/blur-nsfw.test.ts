@@ -1,8 +1,6 @@
-import { flux, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
-
-import { selfTest } from '~/index';
 
 type Row = {
 	message: {
@@ -50,7 +48,7 @@ describe('starting', () => {
 		metro.register(RowManager);
 		await startPlugin();
 
-		expect((await selfTest()).ok).toBe(true);
+		expect(logs.entries.filter((entry) => entry.level === 'warn')).toEqual([]);
 	});
 });
 

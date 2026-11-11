@@ -110,7 +110,7 @@ const LABELS: Record<string, string> = {
 	WritePage: 'writeFiles (after decide) writes the public ADDON.md, page.json and media/',
 	WriteFiles: 'writeFiles (after decide) writes the public extra files and compiled bundles',
 	MarkPublished: 'markFilesPublished clears files_pending_since, so the version is served',
-	Decide: 'commitReview transaction (decideSubmission, makeLive)',
+	Decide: 'commitReview transaction (decideSubmission, recordApproval)',
 	Cleanup: 'staging.delete(row.stagingKey)',
 };
 

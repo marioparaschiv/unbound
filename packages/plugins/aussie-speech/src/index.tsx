@@ -1,16 +1,22 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startTranslation, isTranslating } from '~/translation';
-import { translate } from '~/translation/translator';
+import { isTranslating, patchMessageActions } from '~/patches';
+import { translate } from '~/lib/translator';
 
-export const { start, stop, selfTest } = runFeatures([startTranslation], {
-	selfTest() {
-		const translated = translate('thank you');
-		const ok = isTranslating() && translated !== 'thank you';
+export function start() {
+	patchMessageActions();
+}
 
-		return {
-			ok,
-			detail: `${isTranslating() ? 'patched' : 'not patched'} sending, "thank you" became "${translated}"`,
-		};
-	},
-});
+export function stop() {
+	patcher.unpatchAll();
+}
+
+export function selfTest() {
+	const translated = translate('thank you');
+	const ok = isTranslating() && translated !== 'thank you';
+
+	return {
+		ok,
+		detail: `${isTranslating() ? 'patched' : 'not patched'} sending, "thank you" became "${translated}"`,
+	};
+}

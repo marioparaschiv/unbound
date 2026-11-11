@@ -1,4 +1,4 @@
-import { flux, metro, patches, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, patches, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
@@ -37,9 +37,14 @@ describe('starting', () => {
 	});
 
 	test('does nothing while Discord has no row generator', async () => {
+		metro.markMissing('generateMessageRowData');
 		await startPlugin();
 
 		expect(patches.applied).toEqual([]);
+		expect(logs.entries).toContainEqual({
+			level: 'warn',
+			args: ['Mention avatars skipped: Discord moved MessageRowData.'],
+		});
 		await stopPlugin();
 	});
 });

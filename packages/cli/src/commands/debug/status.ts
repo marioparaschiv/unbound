@@ -92,15 +92,13 @@ function readDeviceStatus({ unbound, plugins }: DevicePrelude): string {
 		collect();
 	}
 
-	const entities = [...(plugins?.entities.values() ?? [])];
+	const addons = [...(plugins?.addons.values() ?? [])];
 	const durations = plugins?.startDurations;
 	const counts = unbound.native.getNativeResources?.();
 	const report: DeviceStatusReport = {
-		started: entities.filter((entity) => entity.started).length,
-		failed: entities.filter((entity) => entity.failed).map((entity) => entity.id),
-		stopped: entities
-			.filter((entity) => !entity.started && !entity.failed)
-			.map((entity) => entity.id),
+		started: addons.filter((addon) => addon.started).length,
+		failed: addons.filter((addon) => addon.failed).map((addon) => addon.id),
+		stopped: addons.filter((addon) => !addon.started && !addon.failed).map((addon) => addon.id),
 		resources: counts
 			? Object.fromEntries(
 					Object.entries(counts).filter(

@@ -79,9 +79,9 @@ describe('Addons.installListed', () => {
 	test('a first install turns the addon on', async () => {
 		expect(await manager.installListed({ id: ID }, listedVersion('1.0.0'))).toBe(true);
 
-		expect(manager.getEntity(ID)?.version).toBe('1.0.0');
+		expect(manager.getAddon(ID)?.version).toBe('1.0.0');
 		expect(manager.isEnabled(ID)).toBe(true);
-		expect(manager.getEntity(ID)?.started).toBe(true);
+		expect(manager.getAddon(ID)?.started).toBe(true);
 	});
 
 	test('an update keeps the addon off when the user turned it off', async () => {
@@ -90,7 +90,7 @@ describe('Addons.installListed', () => {
 
 		expect(await manager.installListed({ id: ID }, listedVersion('2.0.0'))).toBe(true);
 
-		expect(manager.getEntity(ID)?.version).toBe('2.0.0');
+		expect(manager.getAddon(ID)?.version).toBe('2.0.0');
 		expect(manager.isEnabled(ID)).toBe(false);
 	});
 
@@ -110,7 +110,7 @@ describe('Addons.installListed', () => {
 		expect(await manager.installListed({ id: ID }, listedVersion('1.0.0'))).toBe(false);
 
 		expect(manager.asked).toEqual(['1.0.0']);
-		expect(manager.getEntity(ID)).toBeUndefined();
+		expect(manager.getAddon(ID)).toBeUndefined();
 		expect(states[ID]).toBeUndefined();
 	});
 });

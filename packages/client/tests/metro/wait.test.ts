@@ -4,6 +4,7 @@ import type { MetroFilter } from '~/metro/filters';
 
 import { startFakeMetro, type FakeFactory } from '../helpers/fake-metro';
 import { createCacheMock } from '../helpers/cache';
+import { present } from '../helpers/present';
 
 type Exports = Record<string, (...args: number[]) => number | null>;
 
@@ -198,8 +199,12 @@ describe('onModuleLoaded', () => {
 
 		const calls: string[] = [];
 
-		onModuleLoaded(missing, () => calls.push('missing'));
-		onModuleLoaded(byProps('absent'), () => calls.push('cached'));
+		onModuleLoaded(missing, () => calls.push('missing'), {
+			onMissing: () => calls.push('onMissing'),
+		});
+		onModuleLoaded(byProps('absent'), () => calls.push('cached'), {
+			onMissing: () => calls.push('never'),
+		});
 		onModuleLoaded(
 			(mdl) => mdl.absent !== void 0,
 			() => calls.push('keyless'),
@@ -207,7 +212,7 @@ describe('onModuleLoaded', () => {
 		metroRequire(26);
 
 		expect(tested).toBe(0);
-		expect(calls.sort()).toEqual(['cached', 'keyless']);
+		expect(calls.sort()).toEqual(['cached', 'keyless', 'onMissing']);
 	});
 });
 
@@ -244,7 +249,7 @@ describe('findLazy', () => {
 
 describe('patching a lazy module', () => {
 	test('patches a loaded module at once', () => {
-		const Doubler = lookups.findByProps('double');
+		const Doubler = present(lookups.findByProps('double'));
 
 		after(Doubler, 'double', ({ result }) => result + 1);
 
@@ -252,7 +257,7 @@ describe('patching a lazy module', () => {
 	});
 
 	test('does not load the module, and patches it before Discord captures the method', () => {
-		const Tripler = lookups.findByProps('triple');
+		const Tripler = present(lookups.findByProps('triple'));
 
 		createPatcher('lazy.triple').after(Tripler, 'triple', ({ result }) => result + 1);
 
@@ -271,7 +276,7 @@ describe('patching a lazy module', () => {
 	});
 
 	test('the returned unpatch cancels a patch that is still waiting', () => {
-		const Negator = lookups.findByProps('negate');
+		const Negator = present(lookups.findByProps('negate'));
 
 		after(Negator, 'negate', () => 0)();
 
@@ -279,7 +284,7 @@ describe('patching a lazy module', () => {
 	});
 
 	test('a stopped addon never patches a module that loads after it stopped', () => {
-		const Halver = lookups.findByProps('half');
+		const Halver = present(lookups.findByProps('half'));
 
 		createPatcher('lazy.half').after(Halver, 'half', () => 0);
 		unpatchAllByCaller('lazy.half');
@@ -288,10 +293,18 @@ describe('patching a lazy module', () => {
 		expect(metroRequire(5).half(8)).toBe(4);
 	});
 
-	test('a patch on a handle whose key is marked missing never applies', () => {
+	test('a lookup whose key is marked missing returns undefined and loads nothing', () => {
 		cachedIds['byProps::absentHandle'] = [];
 
-		const Absent = lookups.findByProps('absentHandle');
+		expect(lookups.findByProps('absentHandle')).toBeUndefined();
+		expect(lookups.find(byProps('absentHandle'))).toBeUndefined();
+		expect(isLoaded(28)).toBe(false);
+	});
+
+	test('a patch on a handle whose key is marked missing after the lookup never applies', () => {
+		const Absent = present(lookups.findByProps('absentHandle'));
+
+		cachedIds['byProps::absentHandle'] = [];
 
 		expect(() => after(Absent, 'absentHandle', () => 0)).not.toThrow();
 		expect(isLoaded(28)).toBe(false);
@@ -301,7 +314,7 @@ describe('patching a lazy module', () => {
 
 describe('a lazy findByProps handle', () => {
 	test('a patch on it waits for the module instead of loading it', () => {
-		const Quadrupler = lookups.findByProps('quadruple');
+		const Quadrupler = present(lookups.findByProps('quadruple'));
 
 		createPatcher('lazy.quadruple').after(Quadrupler, 'quadruple', ({ result }) => result + 1);
 
@@ -313,7 +326,7 @@ describe('a lazy findByProps handle', () => {
 	test('reading it loads the module and behaves as the module for every operation', () => {
 		cachedIds['byProps::fifth'] = [15];
 
-		const Fifth = lookups.findByProps('fifth');
+		const Fifth = present(lookups.findByProps('fifth'));
 
 		expect(Fifth.fifth(10)).toBe(2);
 		expect(isLoaded(15)).toBe(true);
@@ -328,13 +341,16 @@ describe('getModulePresence', () => {
 	test('reports a lazy handle as loaded, present, missing or unknown without loading anything', () => {
 		metroRequire(23);
 		cachedIds['byProps::presentCached'] = [24];
+
+		const gone = lookups.findByProps('presentGone');
+
 		cachedIds['byProps::presentGone'] = [];
 
 		const before = loadedIds();
 		const presence = {
 			loaded: getModulePresence(lookups.findByProps('presentLoaded')),
 			present: getModulePresence(lookups.findByProps('presentCached')),
-			missing: getModulePresence(lookups.findByProps('presentGone')),
+			missing: getModulePresence(gone),
 			unknown: getModulePresence(lookups.findByProps('presentUnseen')),
 		};
 
@@ -368,7 +384,7 @@ describe('find', () => {
 
 		const before = loadedIds();
 
-		expect(lookups.findByProps('picked', { lazy: false }).picked()).toBe(17);
+		expect(present(lookups.findByProps('picked', { lazy: false })).picked()).toBe(17);
 		expect(loadedIds()).toEqual(before);
 	});
 
@@ -378,7 +394,7 @@ describe('find', () => {
 
 		const before = loadedIds();
 
-		expect(lookups.findByProps('remembered', { lazy: false }).remembered()).toBe(18);
+		expect(present(lookups.findByProps('remembered', { lazy: false })).remembered()).toBe(18);
 		expect(loadedIds()).toEqual([...before, 18].sort((a, b) => a - b));
 	});
 
@@ -387,7 +403,7 @@ describe('find', () => {
 
 		const before = loadedIds();
 
-		expect(lookups.findByProps('forced', { lazy: false }).forced()).toBe(20);
+		expect(present(lookups.findByProps('forced', { lazy: false })).forced()).toBe(20);
 		expect(loadedIds()).toEqual([...before, 20].sort((a, b) => a - b));
 	});
 

@@ -199,11 +199,11 @@ export class Icons extends Addons<Plugin> {
 	}
 
 	/**
-	 * @description Deletes a pack, forgetting it from the packs loaded at launch.
-	 * @param entity The pack to delete, as its id or the entity itself.
+	 * @description Uninstalls a pack, forgetting it from the packs loaded at launch.
+	 * @param addon The pack to uninstall, as its id or the addon itself.
 	 */
-	async delete(entity: AddonResolveable): Promise<void> {
-		const id = typeof entity === 'string' ? entity : entity.id;
+	async uninstall(addon: AddonResolveable): Promise<void> {
+		const id = typeof addon === 'string' ? addon : addon.id;
 		const packs = this.settings.get<IconPack[]>('packs', [defaultPack]);
 
 		this.settings.set(
@@ -213,7 +213,7 @@ export class Icons extends Addons<Plugin> {
 
 		this.indexes.delete(id);
 		this.forgetDigest(id);
-		await super.delete(entity);
+		await super.uninstall(addon);
 	}
 
 	/**
@@ -508,7 +508,7 @@ export class Icons extends Addons<Plugin> {
 	 * folder; other manifests fall back to the shared bundle install.
 	 * @param url The manifest URL.
 	 * @param digest The SHA-256 a bundle-based pack's bundle must have, when the release lists one.
-	 * @returns The loaded pack entity, or `undefined` on failure.
+	 * @returns The loaded pack addon, or `undefined` on failure.
 	 */
 	async install(url: string, digest?: string): Promise<Addon | undefined> {
 		try {

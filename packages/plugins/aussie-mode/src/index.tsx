@@ -1,19 +1,17 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import type { PluginContext } from '@unbound-app/api/native';
+import { patcher } from '@unbound-app/api';
 
-import { isAussieDevice } from '~/locale';
-import { startRotation } from '~/rotation';
-import { startUpsideDownText } from '~/text';
+import { turnScreenBack, turnScreenOver } from '~/native/views';
+import { patchMessageActions } from '~/patches';
 
-// Off an Australian device the plugin starts nothing, and it has no self test the device matrix would fail.
-export const { start, stop } = runFeatures(() => {
-	if (!isAussieDevice()) return;
+// Off an Australian device each feature returns at once, and the plugin has no self test the device matrix would fail.
+export async function start(context: PluginContext) {
+	patchMessageActions();
+	// `start` waits for the first rotation.
+	await turnScreenOver(context.native);
+}
 
-	return [
-		startUpsideDownText,
-		// `start` waits for the first rotation.
-		(context) =>
-			startRotation(context.native, (error) =>
-				logger.error('Failed to rotate the screen:', error),
-			),
-	];
-});
+export async function stop() {
+	patcher.unpatchAll();
+	await turnScreenBack();
+}

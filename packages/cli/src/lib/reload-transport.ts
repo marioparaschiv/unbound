@@ -3,7 +3,7 @@ import type { ControllerClient } from '@unbound-app/debugger-protocol/controller
 import { pushBuiltAddon, type BuiltAddon } from '~/lib/built-addon';
 import { waitForDevice } from '~/lib/context';
 
-export type ReloadClient = Pick<ControllerClient, 'isDeviceConnected' | 'pushPlugin'>;
+export type ReloadClient = Pick<ControllerClient, 'isDeviceConnected' | 'pushAddon'>;
 
 export type ReloadContext = { client: ReloadClient };
 

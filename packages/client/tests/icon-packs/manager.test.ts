@@ -143,9 +143,9 @@ describe('the applied icon pack', () => {
 		await icons.enable(DELETED);
 		icons.holdVersion(DELETED, '1.0.0');
 
-		await icons.delete(DELETED);
+		await icons.uninstall(DELETED);
 
-		expect(icons.getEntity(DELETED)).toBeUndefined();
+		expect(icons.getAddon(DELETED)).toBeUndefined();
 		expect(icons.getAppliedId()).toBe('default');
 		expect(storedSettings.get('held')).not.toHaveProperty(DELETED);
 		expect(ImageSources.getImageSourcesFromImageProps({ source: 1 })).toBe(1);

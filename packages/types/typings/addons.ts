@@ -1,9 +1,9 @@
 import type { ComponentType } from 'react';
 
 import type {
-	NativePluginPlatformCapability,
-	NativePluginCapability,
-	NativePluginPlatform,
+	NativeBridgePlatformCapability,
+	NativeBridgeCapability,
+	NativeBridgePlatform,
 	PluginContext,
 } from './native';
 import type { UnboundInstalledFont } from './unbound-native';
@@ -46,14 +46,14 @@ export type AddonAuthor = {
 };
 
 /** What an addon declares for one platform it runs on: the capabilities that platform provides which it needs. */
-export type AddonPlatform<P extends NativePluginPlatform = NativePluginPlatform> = {
+export type AddonPlatform<P extends NativeBridgePlatform = NativeBridgePlatform> = {
 	/** Capabilities needed on this platform only, added to the manifest's top-level `capabilities`. */
-	capabilities?: NativePluginPlatformCapability<P>[];
+	capabilities?: NativeBridgePlatformCapability<P>[];
 };
 
 /** The platforms an addon runs on, keyed by platform. */
 export type AddonPlatforms = {
-	[P in NativePluginPlatform]?: AddonPlatform<P>;
+	[P in NativeBridgePlatform]?: AddonPlatform<P>;
 };
 
 /** One image a plugin ships beside its bundle, as `ubd build` lists it in the manifest. */
@@ -86,8 +86,8 @@ export type AuthoredAddonManifest = {
 	main: string;
 	/** The addon's version, in strict SemVer 2.0.0 with no `v` prefix. */
 	version: string;
-	/** The lowest native plugin API version the addon supports; an older native bridge fails its start. */
-	minNativePluginApi?: string;
+	/** The lowest native bridge API version the addon supports; an older native bridge fails its start. */
+	minNativeBridgeApi?: string;
 	/** The Ed25519 signature the Unbound team's publish pipeline puts on first-party plugins. */
 	signature?: {
 		version: 1;
@@ -117,7 +117,7 @@ export type AddonManifest = AuthoredAddonManifest & {
 	/** Written by `ubd build` from the native calls in the code: the platforms the addon runs on, each with the capabilities it needs there; absent means every platform. */
 	platforms?: AddonPlatforms;
 	/** Legacy: capabilities needed on every platform, from a manifest that declares them by hand; `ubd build` writes `platforms` instead. */
-	capabilities?: NativePluginCapability[];
+	capabilities?: NativeBridgeCapability[];
 	/** Set by the loader for an addon it read from disk: the addon's folder name. */
 	folder?: string;
 	/** Set by the loader for an addon it read from disk: the addon's absolute directory. */
@@ -250,5 +250,5 @@ export type IconPack = {
 	manifest: IconPackManifest;
 };
 
-/** A font face managed by the Fonts manager, as `UnboundNative.fonts.list()` returns it. */
-export type FontEntity = UnboundInstalledFont;
+/** An installed font, as `UnboundNative.fonts.list()` returns it. */
+export type Font = UnboundInstalledFont;

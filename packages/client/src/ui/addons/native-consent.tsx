@@ -1,4 +1,4 @@
-import type { NativePluginCapability } from '@unbound-app/types';
+import type { NativeBridgeCapability } from '@unbound-app/types';
 
 import type { Addon } from '~/addons/addon';
 import { confirm } from '~/dialogs/api';
@@ -11,7 +11,7 @@ import { confirm } from '~/dialogs/api';
  */
 export function askForNativeConsent(
 	addon: Addon,
-	_capabilities: readonly NativePluginCapability[],
+	_capabilities: readonly NativeBridgeCapability[],
 ): Promise<boolean> {
 	return confirm('UNBOUND_FFI_CONSENT_TITLE', {
 		body: 'UNBOUND_FFI_CONSENT_BODY',

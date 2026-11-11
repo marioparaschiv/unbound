@@ -3,11 +3,11 @@ import { messages } from '@unbound-app/i18n';
 import { toasts, ui } from '@unbound-app/api';
 import { useState } from 'react';
 
-import { readClipboard, shareRuleset } from '~/replace/transfer';
+import { readClipboard, shareRuleset } from '~/lib/transfer';
 import type { Ruleset } from '@unbound-plugins/shared/text-replace/stored-rules';
 
-import { parseRuleset } from '~/replace/ruleset';
-import { saveRuleset } from '~/replace/stored-rules';
+import { parseRuleset } from '~/lib/ruleset';
+import { saveRuleset } from '~/lib/stored-rules';
 
 type RulesetTransferProps = {
 	ruleset: Ruleset;

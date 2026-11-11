@@ -1,5 +1,12 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startUnsuppress } from '~/unsuppress';
+import { forgetOpenSheet, patchActionSheets } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startUnsuppress]);
+export function start() {
+	patchActionSheets();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+	forgetOpenSheet();
+}

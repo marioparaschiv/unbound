@@ -24,7 +24,10 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.3",
+	"version": "1.0.4",
+	"unbound": {
+		"min": "3.0.0"
+	},
 	"icon": "UserSquareIcon",
 	"main": "index.tsx"
 }

@@ -1,5 +1,15 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startMoyai } from '~/moyai';
+import { listenToMessages, listenToReactions } from '~/flux/listeners';
+import { preparePlayer, releasePlayer } from '~/lib/player';
 
-export const { start, stop, selfTest } = runFeatures([startMoyai]);
+export function start() {
+	preparePlayer();
+	listenToMessages();
+	listenToReactions();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+	releasePlayer();
+}

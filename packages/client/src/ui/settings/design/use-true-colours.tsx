@@ -1,5 +1,6 @@
 import type { ReactElement, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
+import noop from '@unbound-app/utils/noop';
 
 import { createPatcher } from '~/patcher/create-patcher';
 import { findComponent } from '~/utils/react';
@@ -26,6 +27,10 @@ function isOwn(target: Target, theme: PickerTheme | undefined) {
  * so they convert as before.
  */
 function watchBackdrop(target: Target) {
+	if (!Backdrop) {
+		return noop;
+	}
+
 	return Patcher.after(Backdrop, 'convertThemesToAnimatedThemes', ({ args: [themes], result }) =>
 		result.map((backdrop, index) => {
 			const theme = themes[index];

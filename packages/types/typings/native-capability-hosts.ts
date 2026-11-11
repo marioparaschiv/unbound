@@ -1,11 +1,11 @@
-import type { NativePluginCapability, NativePluginMethod } from './native-methods';
-import type { NativePluginPlatform } from './native';
+import type { NativeBridgeCapability, NativeBridgeMethod } from './native-methods';
+import type { NativeBridgePlatform } from './native';
 
 /**
- * Which platforms' loaders provide each Capability, in the order `NATIVE_PLUGIN_CAPABILITIES` lists them.
- * With {@link NATIVE_PLUGIN_METHOD_CAPABILITIES} it is the source `bun run generate-native-capabilities` reads.
+ * Which platforms' loaders provide each Capability, in the order `NATIVE_BRIDGE_CAPABILITIES` lists them.
+ * With {@link NATIVE_BRIDGE_METHOD_CAPABILITIES} it is the source `bun run generate-native-capabilities` reads.
  */
-export const NATIVE_PLUGIN_CAPABILITY_PLATFORMS = {
+export const NATIVE_BRIDGE_CAPABILITY_PLATFORMS = {
 	'native.objc.classes': ['ios'],
 	'native.objc.invoke': ['ios'],
 	'native.objc.invokeAsync': ['ios'],
@@ -29,10 +29,10 @@ export const NATIVE_PLUGIN_CAPABILITY_PLATFORMS = {
 	'native.java.associations': ['android'],
 	'native.debug.evaluations': ['ios', 'android'],
 	'native.debug.environment': ['ios', 'android'],
-} as const satisfies Record<NativePluginCapability, readonly NativePluginPlatform[]>;
+} as const satisfies Record<NativeBridgeCapability, readonly NativeBridgePlatform[]>;
 
 /** The methods the client implements in JavaScript, so the loader's bridge need not install them. */
-export const NATIVE_PLUGIN_CLIENT_METHODS = [
+export const NATIVE_BRIDGE_CLIENT_METHODS = [
 	'objc.create',
 	'runtime.subscribe',
-] as const satisfies readonly NativePluginMethod[];
+] as const satisfies readonly NativeBridgeMethod[];

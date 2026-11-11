@@ -71,7 +71,7 @@ type Debounced = ThemeSelected & { cancel: () => void; flush: () => void };
 type LodashModule = { debounce: (fn: ThemeSelected, wait: number) => Debounced };
 
 /** The lodash the carousel debounces `onThemeSelected` with, reading `debounce` off it when it first renders. */
-export const Lodash: LodashModule = findByProps('debounce', 'throttle', 'memoize');
+export const Lodash: LodashModule | undefined = findByProps('debounce', 'throttle', 'memoize');
 
 /** The picker's swatch carousel; `currentThemeIndex` is the swatch it previews. */
 export const Carousel: CarouselModule = find(
@@ -128,7 +128,7 @@ type BackdropModule = {
 };
 
 /** Converts the picker's swatches into the backdrop behind its preview. */
-export const Backdrop: BackdropModule = findByProps('convertThemesToAnimatedThemes');
+export const Backdrop: BackdropModule | undefined = findByProps('convertThemesToAnimatedThemes');
 
 /**
  * @description Loads Discord's App Theme screen. Discord loads its modules only when the screen opens,
@@ -136,7 +136,7 @@ export const Backdrop: BackdropModule = findByProps('convertThemesToAnimatedThem
  * @returns The connected picker screen, or `undefined` when this Discord build has none.
  */
 export function loadThemePicker(): ConnectedThemePicker | undefined {
-	Settings.SETTING_RENDERER_CONFIG?.APPEARANCE_THEME_PICKER?.screen?.getComponent?.();
+	Settings?.SETTING_RENDERER_CONFIG?.APPEARANCE_THEME_PICKER?.screen?.getComponent?.();
 
-	return PickerScreen.default;
+	return PickerScreen?.default;
 }

@@ -1,4 +1,4 @@
-import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
+import { CORE_BUCKET } from '@unbound-app/types/settings';
 import { expect, test } from 'bun:test';
 
 import { getSetting, isSettingChange, setSetting, toggleSetting } from '~/settings/unbound';
@@ -9,7 +9,7 @@ import contract from '../../../debugger-protocol/tests/fixtures/devtools-contrac
 const settings = snapshot();
 
 test('falls back to the default until a value is stored', () => {
-	delete settings[CORE_SETTINGS_STORE];
+	delete settings[CORE_BUCKET];
 
 	expect(getSetting('toasts.duration')).toBe(5000);
 	expect(getSetting('toasts.maxOnScreen')).toBe(3);
@@ -21,7 +21,7 @@ test('falls back to the default until a value is stored', () => {
 });
 
 test('reads and writes the persisted key paths saved settings already use', () => {
-	settings[CORE_SETTINGS_STORE] = { toasts: { maxOnScreen: 7 }, recovery: true };
+	settings[CORE_BUCKET] = { toasts: { maxOnScreen: 7 }, recovery: true };
 
 	expect(getSetting('toasts.maxOnScreen')).toBe(7);
 	expect(getSetting('recovery')).toBe(true);
@@ -29,7 +29,7 @@ test('reads and writes the persisted key paths saved settings already use', () =
 	toggleSetting('recovery');
 	setSetting('debugger.address', '10.0.0.2:9090');
 
-	expect(settings[CORE_SETTINGS_STORE]).toEqual({
+	expect(settings[CORE_BUCKET]).toEqual({
 		toasts: { maxOnScreen: 7 },
 		recovery: false,
 		debugger: { address: '10.0.0.2:9090' },
@@ -47,10 +47,7 @@ test('keeps the debugger address where the DevTools app reads it', () => {
 
 test('matches a change only to the same key of the core store', () => {
 	expect(
-		isSettingChange(
-			{ store: CORE_SETTINGS_STORE, key: 'staff-mode', value: true },
-			'staff-mode',
-		),
+		isSettingChange({ store: CORE_BUCKET, key: 'staff-mode', value: true }, 'staff-mode'),
 	).toBe(true);
 	expect(
 		isSettingChange({ store: 'plugins', key: 'staff-mode', value: true }, 'staff-mode'),
