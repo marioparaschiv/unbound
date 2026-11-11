@@ -267,6 +267,7 @@ describe('native plugin capability scopes', () => {
 
 	test('gates and cancels frame-batched Fabric mutations', () => {
 		const denied = createPluginContext({ ...manifest, capabilities: [] });
+
 		expect(() => denied.native.fabric.batchAsync([])).toThrow(NativePluginCapabilityError);
 
 		const context = createPluginContext({
@@ -274,6 +275,7 @@ describe('native plugin capability scopes', () => {
 			capabilities: ['native.fabric.async'],
 		});
 		const surface: NativeFabricSurface = Object.create(null);
+
 		context.native.fabric.batchAsync([
 			{ surface, frame: { x: 0, y: 0, width: 10, height: 10 } },
 		]);

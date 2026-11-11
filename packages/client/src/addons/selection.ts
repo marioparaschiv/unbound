@@ -4,11 +4,10 @@ import {
 	NativeConsentRequiredError,
 	promptForConsent,
 } from '~/native/consent';
-import type { AddonResolveable } from '~/addons/addon';
+import type { Addon, AddonResolveable } from '~/addons/addon';
 import type { NativeConsents } from '~/native/consent';
 import { AddonLifecycle } from '~/addons/lifecycle';
 import { createRecord } from '~/addons/records';
-import type { Addon } from '~/addons/addon';
 
 /**
  * @description Which addons the user has on, on top of {@link AddonLifecycle}: enable, disable and
