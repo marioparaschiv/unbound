@@ -65,7 +65,7 @@
 		"loader:fmt": "go -C packages/loader run ./tools format",
 		"loader:fmt:check": "go -C packages/loader run ./tools format --check",
 		"loader:lint": "go -C packages/loader run ./tools lint",
-		"loader:test": "go -C packages/loader test -count=1 ./tools && go -C packages/loader/workflow-tests test -count=1 ./...",
+		"loader:test": "go -C packages/loader test -count=1 ./tools && go -C packages/loader/workflow-tests test -count=1 ./... && go -C packages/loader run ./tools core-test",
 		"plugins:test": "bun test --parallel packages/plugins-shared packages/plugin-scripts && bun packages/plugin-scripts/src/test-plugins.ts",
 		"plugins:lint": "bun run --filter @unbound-app/plugins --filter @unbound-app/plugin-scripts lint",
 		"plugins:typecheck": "bun packages/plugin-scripts/src/typecheck-plugins.ts",
