@@ -1,5 +1,15 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startSilent } from '~/silent';
+import { patchMessageActions } from '~/patches/message-actions';
+import { listenToChannelSwitch } from '~/flux/listeners';
+import { patchChatInput } from '~/patches/chat-input';
 
-export const { start, stop, selfTest } = runFeatures(startSilent);
+export function start() {
+	patchMessageActions();
+	listenToChannelSwitch();
+	patchChatInput();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}

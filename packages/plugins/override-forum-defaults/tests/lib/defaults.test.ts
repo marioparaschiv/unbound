@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { defaultLayout, defaultSortOrder } from '~/forum-defaults/defaults';
+import { defaultLayout, defaultSortOrder } from '~/lib/defaults';
 
 const forum = {
 	isMediaChannel: () => false,

@@ -1,4 +1,4 @@
-import { SUPPRESS_NOTIFICATIONS } from '~/constants';
+import { SUPPRESS_NOTIFICATIONS } from '~/lib/constants';
 
 export type ToggleOptions = {
 	persist: boolean;

@@ -2,22 +2,34 @@ import { Image, Pressable, View, type PressableStateCallbackType } from 'react-n
 import { useSyncExternalStore } from 'react';
 import { messages } from '@unbound-app/i18n';
 import { useSetting } from '@unbound-app/settings';
-import { toasts } from '@unbound-app/api';
+import { metro, toasts } from '@unbound-app/api';
 
-import { Button, FallbackColors } from '~/constants';
-import { Haptics, Theme } from '~/silent/modules';
-import { silentToggle } from '~/silent/toggle';
+import { Button, FallbackColors } from '~/lib/constants';
+import { silentToggle } from '~/lib/toggle';
 
 export type ToggleIcons = {
 	on: number;
 	off: number;
 };
 
-type SilentToggleButtonProps = {
-	channelId: string;
+/** What the toggle needs beside its channel: its asset ids, and Discord's haptics when found. */
+export type ToggleTools = {
 	icons: ToggleIcons;
+	haptics:
+		| {
+				// UNKNOWN: Discord's feedback type is an opaque enum value passed straight back.
+				triggerHapticFeedback?: (type: unknown) => void;
+				HapticFeedbackTypes?: { IMPACT_LIGHT?: unknown };
+		  }
+		| undefined;
+};
+
+type SilentToggleButtonProps = ToggleTools & {
+	channelId: string;
 	trailingGap?: number;
 };
+
+const { Theme } = metro.common;
 
 function useActive(channelId: string, persist: boolean): boolean {
 	return useSyncExternalStore(silentToggle.subscribe, () =>
@@ -25,7 +37,12 @@ function useActive(channelId: string, persist: boolean): boolean {
 	);
 }
 
-function SilentToggleButton({ channelId, icons, trailingGap = 0 }: SilentToggleButtonProps) {
+function SilentToggleButton({
+	channelId,
+	icons,
+	haptics,
+	trailingGap = 0,
+}: SilentToggleButtonProps) {
 	const persist = useSetting('persistState');
 	const active = useActive(channelId, persist);
 
@@ -48,7 +65,7 @@ function SilentToggleButton({ channelId, icons, trailingGap = 0 }: SilentToggleB
 				}
 				onPress={toggle}
 				onPressIn={() =>
-					Haptics.triggerHapticFeedback?.(Haptics.HapticFeedbackTypes?.IMPACT_LIGHT)
+					haptics?.triggerHapticFeedback?.(haptics.HapticFeedbackTypes?.IMPACT_LIGHT)
 				}
 				hitSlop={8}
 				style={({ pressed }: PressableStateCallbackType) => ({

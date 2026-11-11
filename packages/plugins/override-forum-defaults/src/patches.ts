@@ -1,9 +1,7 @@
-import { skipFeature } from '@unbound-plugins/shared/lifecycle/features';
 import { patcher, metro } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
 
-import { defaultLayout, defaultSortOrder, type ForumChannel } from '~/forum-defaults/defaults';
-import { ChannelRecord } from '~/forum-defaults/modules';
+import { defaultLayout, defaultSortOrder, type ForumChannel } from '~/lib/defaults';
 
 type ChannelPrototype = ForumChannel & {
 	getDefaultLayout: () => unknown;
@@ -43,16 +41,25 @@ function overrideDefaults(prototype: ChannelPrototype) {
  * reads for a forum you have not changed yourself and the display settings sheet resets to.
  * The Addon scope ends the wait and removes the patches when the plugin stops.
  */
-export function startForumDefaults(): void {
-	metro.onModuleLoaded(ChannelRecord, (module: ChannelRecordModule) => {
-		const prototype = module.ChannelRecordBase?.prototype;
+export function patchChannelRecord(): void {
+	metro.onModuleLoaded(
+		metro.filters.byFilePath('records/ChannelRecord.tsx'),
+		(module: ChannelRecordModule) => {
+			const prototype = module.ChannelRecordBase?.prototype;
 
-		if (!hasDefaultGetters(prototype)) {
-			skipFeature('ChannelRecordBase has no getDefaultLayout or getDefaultSortOrder');
+			if (!hasDefaultGetters(prototype)) {
+				logger.warn(
+					'Forum defaults skipped: ChannelRecordBase has no getDefaultLayout or getDefaultSortOrder.',
+				);
 
-			return;
-		}
+				return;
+			}
 
-		overrideDefaults(prototype);
-	});
+			overrideDefaults(prototype);
+		},
+		{
+			onMissing: () =>
+				logger.warn('Forum defaults skipped: Discord moved records/ChannelRecord.tsx.'),
+		},
+	);
 }

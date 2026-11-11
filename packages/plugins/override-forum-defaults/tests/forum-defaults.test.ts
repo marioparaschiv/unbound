@@ -1,8 +1,6 @@
-import { metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { logs, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { describe, expect, test } from 'bun:test';
-
-import { selfTest } from '~/index';
 
 const DISCORD_LAYOUT = 2;
 const DISCORD_SORT_ORDER = 1;
@@ -76,11 +74,21 @@ describe('forum defaults', () => {
 		expect(new ChannelRecordBase().getDefaultLayout()).toBe(1);
 	});
 
-	test('reports its patches applied to the self test', async () => {
+	test('starts without a warning once its patches apply', async () => {
 		registerChannelRecord();
 		await startPlugin();
 
-		expect((await selfTest()).ok).toBe(true);
+		expect(logs.entries.filter((entry) => entry.level !== 'info')).toEqual([]);
+	});
+
+	test('warns once when Discord moved the channel record module', async () => {
+		metro.markMissing('records/ChannelRecord.tsx');
+		await startPlugin();
+
+		expect(logs.entries).toContainEqual({
+			level: 'warn',
+			args: ['Forum defaults skipped: Discord moved records/ChannelRecord.tsx.'],
+		});
 	});
 
 	test('gives Discord its own defaults back once the plugin stops', async () => {

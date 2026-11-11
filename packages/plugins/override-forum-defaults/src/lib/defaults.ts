@@ -1,6 +1,6 @@
 import type { SettingsEntry } from '@unbound-app/settings';
 
-import { FORUM_LAYOUTS, THREAD_SORT_ORDERS } from '~/constants';
+import { FORUM_LAYOUTS, THREAD_SORT_ORDERS } from '~/lib/constants';
 
 export type ForumChannel = {
 	isMediaChannel?: () => boolean;

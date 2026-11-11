@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createSilentToggle, withSilentFlag } from '~/silent/toggle';
+import { createSilentToggle, withSilentFlag } from '~/lib/toggle';
 
 const DEFAULTS = { persist: false, autoDisable: true };
 

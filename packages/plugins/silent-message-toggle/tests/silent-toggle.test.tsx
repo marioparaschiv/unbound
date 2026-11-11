@@ -5,8 +5,6 @@ import { View } from 'react-native';
 
 import type { ReactNode } from 'react';
 
-import { selfTest } from '~/index';
-
 let channelId = 'a';
 
 const sent: unknown[][] = [];
@@ -134,21 +132,27 @@ describe('the silent toggle on Android', () => {
 });
 
 describe('the plugin on start', () => {
-	test('reports its three features in its self-test', async () => {
+	test('starts without a warning once its features apply', async () => {
 		register();
 		await startPlugin();
 
-		expect(selfTest()).toEqual({ ok: true, detail: '3 features applied' });
+		expect(logs.entries.filter(({ level }) => level !== 'info')).toEqual([]);
 	});
 
-	test('keeps the other features when one cannot start', async () => {
+	test('fails to start when a feature throws, so Unbound removes the rest', async () => {
 		register({ brokenMessages: true });
+
+		await expect(startPlugin()).rejects.toThrow('The message module changed shape.');
+	});
+
+	test('skips the toggle with one warning when Discord moved the right-hand actions', async () => {
+		register();
+		metro.markMissing('modules/chat_input/native/action_buttons/ChatInputRightActions.tsx');
 		await startPlugin();
 
-		expect(
-			render(<rightActions.default channel={{ id: 'a' }} />).find('Pressable'),
-		).toBeDefined();
-		expect(selfTest()).toMatchObject({ ok: false });
-		expect(logs.entries.some(({ level }) => level === 'error')).toBe(true);
+		expect(logs.entries).toContainEqual({
+			level: 'warn',
+			args: ['Silent toggle skipped: Discord moved ChatInputRightActions.'],
+		});
 	});
 });

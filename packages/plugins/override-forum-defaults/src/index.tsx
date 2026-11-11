@@ -1,5 +1,11 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startForumDefaults } from '~/forum-defaults';
+import { patchChannelRecord } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startForumDefaults]);
+export function start() {
+	patchChannelRecord();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}

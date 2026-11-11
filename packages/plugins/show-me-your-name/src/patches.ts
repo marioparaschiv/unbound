@@ -1,10 +1,9 @@
 import { MessageRowData, onMessageRow } from '@unbound-plugins/shared/metro/message-rows';
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { settings } from '@unbound-app/settings';
+import { flux } from '@unbound-app/api';
 
-import { RelationshipStore, UserStore } from '~/names/modules';
-import { AUTOMOD_MESSAGE_TYPE } from '~/constants';
-import { formatName } from '~/names/format-name';
+import { AUTOMOD_MESSAGE_TYPE } from '~/lib/constants';
+import { formatName } from '~/lib/format-name';
 
 type Author = {
 	id?: string;
@@ -26,6 +25,9 @@ type Row = {
 	username?: string;
 	referencedMessage?: { message?: Row };
 };
+
+const RelationshipStore = flux.getStore('Relationship');
+const UserStore = flux.getStore('User');
 
 function isAutomod(message: Message | undefined): boolean {
 	const type = message?.type;
@@ -68,8 +70,12 @@ function relabel(row: Row | undefined, messageAuthor: Author | undefined) {
  * Patches `generateMessageRowData` on Discord's message row data module and reads authors from `UserStore` and
  * friend nicknames from `RelationshipStore`. The Addon scope removes the patch when the plugin stops.
  */
-export function startNames(): void {
-	if (!ensureModules({ MessageRowData, UserStore })) return;
+export function patchMessageRows(): void {
+	if (!MessageRowData) {
+		logger.warn('Names skipped: Discord moved generateMessageRowData.');
+
+		return;
+	}
 
 	onMessageRow<Message, Row>({
 		after({ message, row }) {
