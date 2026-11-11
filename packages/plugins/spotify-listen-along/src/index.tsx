@@ -1,6 +1,12 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startListenAlongInvite } from '~/invite';
-import { startListenAlong } from '~/listen';
+import { patchActivityButtons, patchMediaKeyboardActions } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startListenAlong, startListenAlongInvite]);
+export function start() {
+	patchActivityButtons();
+	patchMediaKeyboardActions();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}

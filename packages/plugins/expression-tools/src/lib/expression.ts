@@ -1,4 +1,4 @@
-import { StickerFormat } from '~/constants';
+import { StickerFormat } from '~/lib/constants';
 
 type EmojiSheetProps = {
 	emoji?: { id?: string | null; name?: string; animated?: boolean };

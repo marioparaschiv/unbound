@@ -2,16 +2,12 @@ import { messages } from '@unbound-app/i18n';
 import { Pressable, Text, View } from 'react-native';
 import { useState } from 'react';
 
-import {
-	getEmojiMarkup,
-	getExpressionLink,
-	type Expression,
-} from '~/expression-actions/expression';
-import { copyText, isFavoriteSticker, setFavoriteSticker } from '~/expression-actions/actions';
-import { closeExpressionSheet, openCloneSheet } from '~/expression-actions/sheets';
-import { notifyError } from '~/expression-actions/notify';
+import { getEmojiMarkup, getExpressionLink, type Expression } from '~/lib/expression';
+import { copyText, isFavoriteSticker, setFavoriteSticker } from '~/lib/actions';
+import { closeExpressionSheet, openCloneSheet } from '~/lib/sheets';
+import { notifyError } from '~/lib/notify';
 
-import styles from '~/expression-actions/components/expression-action-bar.style';
+import styles from '~/components/expression-action-bar.style';
 
 type ExpressionActionBarProps = {
 	expression: Expression;

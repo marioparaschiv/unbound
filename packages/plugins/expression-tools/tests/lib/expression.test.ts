@@ -8,7 +8,7 @@ import {
 	parseEmoji,
 	parseSticker,
 	type Sticker,
-} from '~/expression-actions/expression';
+} from '~/lib/expression';
 
 function sticker(formatType: number): Sticker {
 	return {

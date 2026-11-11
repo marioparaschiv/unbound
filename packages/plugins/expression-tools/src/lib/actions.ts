@@ -1,8 +1,8 @@
 import { format, messages } from '@unbound-app/i18n';
 
-import { Clipboard, StickerActions, StickerFavorites } from '~/expression-actions/modules';
-import { notify, notifyError } from '~/expression-actions/notify';
-import type { Sticker } from '~/expression-actions/expression';
+import { Clipboard, StickerActions, StickerFavorites } from '~/lib/modules';
+import { notify, notifyError } from '~/lib/notify';
+import type { Sticker } from '~/lib/expression';
 
 /**
  * @description Copies text to the clipboard and confirms it with a toast.
@@ -21,7 +21,7 @@ export function copyText(text: string, confirmation: string): void {
  * @returns Whether it is in the user's favorites.
  */
 export function isFavoriteSticker(sticker: Sticker): boolean {
-	return StickerFavorites.isFavoriteSticker?.(sticker.id) ?? false;
+	return StickerFavorites?.isFavoriteSticker?.(sticker.id) ?? false;
 }
 
 /**
@@ -31,7 +31,7 @@ export function isFavoriteSticker(sticker: Sticker): boolean {
  * @returns A promise that settles once Discord saved the change.
  */
 export async function setFavoriteSticker(sticker: Sticker, favorite: boolean): Promise<void> {
-	if (!StickerActions.favoriteSticker) {
+	if (!StickerActions?.favoriteSticker) {
 		throw new Error(messages.FAVORITES_UNAVAILABLE);
 	}
 

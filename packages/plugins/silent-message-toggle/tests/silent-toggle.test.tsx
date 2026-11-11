@@ -142,7 +142,9 @@ describe('the plugin on start', () => {
 	test('fails to start when a feature throws, so Unbound removes the rest', async () => {
 		register({ brokenMessages: true });
 
-		await expect(startPlugin()).rejects.toThrow('The message module changed shape.');
+		const failure = await startPlugin().catch((error: unknown) => error);
+
+		expect(failure).toEqual(new Error('The message module changed shape.'));
 	});
 
 	test('skips the toggle with one warning when Discord moved the right-hand actions', async () => {

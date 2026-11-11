@@ -3,13 +3,13 @@ import { messages } from '@unbound-app/i18n';
 import { Image, Text, View } from 'react-native';
 import { useMemo, useState } from 'react';
 
-import { getAssetUrl, type Expression } from '~/expression-actions/expression';
-import { getOwnedGuilds, type Guild } from '~/expression-actions/guilds';
-import { cloneExpression } from '~/expression-actions/clone';
-import { notifyError } from '~/expression-actions/notify';
+import { getAssetUrl, type Expression } from '~/lib/expression';
+import { getOwnedGuilds, type Guild } from '~/lib/guilds';
+import { cloneExpression } from '~/lib/clone';
+import { notifyError } from '~/lib/notify';
 
-import styles from '~/expression-actions/components/clone-sheet.style';
-import GuildRow from '~/expression-actions/components/guild-row';
+import styles from '~/components/clone-sheet.style';
+import GuildRow from '~/components/guild-row';
 
 type CloneSheetProps = {
 	expression: Expression;

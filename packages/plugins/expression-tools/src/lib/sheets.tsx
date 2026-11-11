@@ -1,6 +1,6 @@
-import { ActionSheets, StickerSheets } from '~/expression-actions/modules';
-import type { Expression } from '~/expression-actions/expression';
-import CloneSheet from '~/expression-actions/components/clone-sheet';
+import { ActionSheets, StickerSheets } from '~/lib/modules';
+import type { Expression } from '~/lib/expression';
+import CloneSheet from '~/components/clone-sheet';
 
 /**
  * @description Opens the sheet that clones an expression to one of the user's servers.
@@ -26,7 +26,7 @@ export function openCloneSheet(expression: Expression): void {
  * @param sheetKey The key the sheet was opened with.
  */
 export function closeExpressionSheet(expression: Expression, sheetKey: string): void {
-	if (expression.kind === 'sticker' && StickerSheets.hideStickerDetailActionSheet) {
+	if (expression.kind === 'sticker' && StickerSheets?.hideStickerDetailActionSheet) {
 		StickerSheets.hideStickerDetailActionSheet();
 
 		return;

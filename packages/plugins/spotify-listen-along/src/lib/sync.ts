@@ -2,9 +2,18 @@ import { flux, toasts } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
 import { useEffect, useState } from 'react';
 
-import { SpotifyActions, SpotifyProtocolStore, SpotifyStore, UserStore } from '~/listen/modules';
-import type { SpotifyActivity } from '~/types';
-import { LOADING_MS } from '~/constants';
+import type { SpotifyActivity } from '~/lib/types';
+import { LOADING_MS } from '~/lib/constants';
+
+const SpotifyStore = flux.getStore('Spotify');
+const SpotifyProtocolStore = flux.getStore('SpotifyProtocol');
+const UserStore = flux.getStore('User');
+
+/** Discord's Spotify actions, which start playback and sync it to another user's activity. */
+export type SpotifyActions = {
+	play: (activity: SpotifyActivity, userId: string) => unknown;
+	sync: (activity: SpotifyActivity, userId: string) => unknown;
+};
 
 export type DisabledReason = 'YOURSELF' | 'ALREADY_LISTENING' | 'NOT_DETECTED';
 
@@ -88,10 +97,10 @@ function reasonText(reason: DisabledReason | null): string {
 	}
 }
 
-function syncOnNextPlayerState(activity: SpotifyActivity, userId: string) {
+function syncOnNextPlayerState(actions: SpotifyActions, activity: SpotifyActivity, userId: string) {
 	const stop = flux.onAction('SPOTIFY_PLAYER_STATE', () => {
 		stop();
-		SpotifyActions.sync(activity, userId);
+		actions.sync(activity, userId);
 	});
 }
 
@@ -99,9 +108,14 @@ function syncOnNextPlayerState(activity: SpotifyActivity, userId: string) {
  * @description Starts listening along: syncs to the activity right away when Spotify is already playing, otherwise starts playback and syncs once Spotify reports its player state.
  * @param state The activity's listen state.
  * @param activity The Spotify activity.
+ * @param actions Discord's Spotify actions.
  * @returns Whether listening along started.
  */
-export function listenAlong(state: ListenState, activity: SpotifyActivity): boolean {
+export function listenAlong(
+	state: ListenState,
+	activity: SpotifyActivity,
+	actions: SpotifyActions,
+): boolean {
 	if (state.disabledReason || !state.userId) {
 		toasts.show({ title: addon.name, content: reasonText(state.disabledReason) });
 
@@ -109,13 +123,13 @@ export function listenAlong(state: ListenState, activity: SpotifyActivity): bool
 	}
 
 	if (SpotifyStore.getActivity()) {
-		SpotifyActions.sync(activity, state.userId);
+		actions.sync(activity, state.userId);
 
 		return true;
 	}
 
-	syncOnNextPlayerState(activity, state.userId);
-	SpotifyActions.play(activity, state.userId);
+	syncOnNextPlayerState(actions, activity, state.userId);
+	actions.play(activity, state.userId);
 
 	return true;
 }

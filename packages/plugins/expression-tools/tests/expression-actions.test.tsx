@@ -1,9 +1,15 @@
-import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
-import { flux, metro, render, startPlugin, stopPlugin, toasts } from '@unbound-app/api/testing';
+import { beforeEach, describe, expect, test } from 'bun:test';
+import {
+	flux,
+	logs,
+	metro,
+	render,
+	startPlugin,
+	stopPlugin,
+	toasts,
+} from '@unbound-app/api/testing';
 import { createElement, memo } from 'react';
 import { Text, View } from 'react-native';
-
-import { selfTest } from '~/index';
 
 const copied: string[] = [];
 const favorites = new Set<string>();
@@ -147,26 +153,28 @@ describe('starting', () => {
 		await startPlugin();
 	}
 
-	test('reports both patches applied to the self test', async () => {
+	test('starts without a warning once both patches apply', async () => {
 		await restart();
 
-		expect(selfTest()).toEqual({ ok: true, detail: '3 features applied' });
+		expect(logs.entries.filter(({ level }) => level !== 'info')).toEqual([]);
 	});
 
 	test('keeps the emoji sheet buttons when the sticker sheet cannot be patched', async () => {
-		const errors = spyOn(console, 'error').mockImplementation(() => {});
-
 		const sheet = stickerSheet.default;
 
 		stickerSheet.default = 'not a component' as never;
 		await restart();
-		errors.mockRestore();
 		stickerSheet.default = sheet;
 
 		const view = await openSheet('EmojiDetailActionSheet', createSheet(), emoji);
 
 		expect(view.findAll('Pressable')).toHaveLength(3);
-		expect(selfTest()).toMatchObject({ ok: false });
+		expect(logs.entries).toContainEqual({
+			level: 'warn',
+			args: [
+				'Sticker detail sheet skipped: Discord moved ActionSheets or StickerDetailActionSheet.',
+			],
+		});
 	});
 
 	test('draws the buttons again after the plugin stops and starts', async () => {

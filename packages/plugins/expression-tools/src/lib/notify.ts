@@ -1,6 +1,6 @@
 import { toasts } from '@unbound-app/api';
 
-import { getErrorMessage } from '~/expression-actions/errors';
+import { getErrorMessage } from '~/lib/errors';
 import { messages } from '@unbound-app/i18n';
 
 /**

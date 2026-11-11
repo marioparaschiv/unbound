@@ -7,11 +7,11 @@ import {
 	type Emoji,
 	type Expression,
 	type Sticker,
-} from '~/expression-actions/expression';
-import { Auth, EmojiActions, UserStore } from '~/expression-actions/modules';
-import { getErrorMessage } from '~/expression-actions/errors';
-import type { Guild } from '~/expression-actions/guilds';
-import { notify } from '~/expression-actions/notify';
+} from '~/lib/expression';
+import { Auth, EmojiActions, UserStore } from '~/lib/modules';
+import { getErrorMessage } from '~/lib/errors';
+import type { Guild } from '~/lib/guilds';
+import { notify } from '~/lib/notify';
 
 type StickerResponse = {
 	message?: string;
@@ -42,7 +42,7 @@ async function readDataUrl(emoji: Emoji): Promise<string> {
 }
 
 async function uploadEmoji(emoji: Emoji, guild: Guild, name: string): Promise<void> {
-	if (!EmojiActions.uploadEmoji) {
+	if (!EmojiActions?.uploadEmoji) {
 		throw new Error(messages.EMOJI_UPLOADS_UNAVAILABLE);
 	}
 
@@ -79,7 +79,7 @@ function postSticker(guild: Guild, form: FormData, token: string): Promise<Stick
 }
 
 async function uploadSticker(sticker: Sticker, guild: Guild, name: string): Promise<void> {
-	const token = Auth.getToken?.();
+	const token = Auth?.getToken?.();
 
 	if (!token) {
 		throw new Error(messages.STICKER_UPLOADS_UNAVAILABLE);

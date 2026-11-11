@@ -1,4 +1,4 @@
-import { GuildStore, UserStore } from '~/expression-actions/modules';
+import { GuildStore, UserStore } from '~/lib/modules';
 
 export type Guild = {
 	id: string;

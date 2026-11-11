@@ -7,16 +7,13 @@ import type { AnyProps } from '@unbound-app/api/metro';
 import { patcher } from '@unbound-app/api';
 import { createElement } from 'react';
 
-import {
-	getSheetKind,
-	parseExpression,
-	type Expression,
-	type ExpressionKind,
-} from '~/expression-actions/expression';
-import ExpressionActionBar from '~/expression-actions/components/expression-action-bar';
-import { ActionSheets } from '~/expression-actions/modules';
+import { parseExpression, type Expression, type ExpressionKind } from '~/lib/expression';
+import ExpressionActionBar from '~/components/expression-action-bar';
 
 export type ExpressionSheetPatches = ReturnType<typeof createExpressionSheetPatches>;
+
+// The running plugin's sheet patches, shared by both features; fresh per start, since stopping marks them stopped for good.
+let current: ExpressionSheetPatches | undefined;
 
 // UNKNOWN: a render result can be any React node.
 function findChildren(node: unknown, depth: number = 0): unknown[] | null {
@@ -62,7 +59,7 @@ function isDetailSheet({ props }: ElementNode): boolean {
  * @description Creates the patches that add the action bar to emoji and sticker detail sheets. Discord creates these components lazily, so each one is patched when it first appears.
  * @returns Functions that patch a sheet module or a detail element once, and `stop`, which ignores sheets that load after the plugin stops.
  */
-export function createExpressionSheetPatches() {
+function createExpressionSheetPatches() {
 	const patched = new WeakSet<object>();
 	let stopped = false;
 
@@ -106,22 +103,19 @@ export function createExpressionSheetPatches() {
 }
 
 /**
- * @description Watches `openLazy` for emoji and sticker sheets, and patches each sheet's component once it loads.
- * @param sheets The patches that add the action bar to a loaded sheet.
+ * @description The running plugin's sheet patches, created on first use after each start.
+ * @returns Functions that patch a sheet module or a detail element once.
  */
-export function patchActionSheets(sheets: ExpressionSheetPatches): void {
-	patcher.before(ActionSheets, 'openLazy', ({ args: [load, key] }) => {
-		if (typeof key !== 'string' || !load?.then) return;
+export function expressionSheets(): ExpressionSheetPatches {
+	current ??= createExpressionSheetPatches();
 
-		const kind = getSheetKind(key);
-
-		if (!kind) return;
-
-		load.then((module?: AnyProps) => {
-			if (module && typeof module === 'object')
-				sheets.patchExpressionSheet(module, kind, key);
-		}).catch(() => undefined);
-	});
+	return current;
 }
 
-export default { createExpressionSheetPatches, patchActionSheets };
+/**
+ * @description Ignores the sheets that finish loading after the plugin stops, which the Addon scope cannot patch away.
+ */
+export function ignoreLateSheets(): void {
+	current?.stop();
+	current = undefined;
+}

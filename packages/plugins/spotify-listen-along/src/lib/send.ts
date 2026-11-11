@@ -1,15 +1,30 @@
-import { toasts } from '@unbound-app/api';
+import { flux, toasts } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
 
-import {
-	DraftActions,
-	DraftStore,
-	MessageActions,
-	SelectedChannelStore,
-	SpotifyStore,
-} from '~/invite/modules';
-import type { SpotifyActivity } from '~/types';
-import { ACTIVITY_ACTION_LISTEN, DRAFT_TYPE_CHANNEL_MESSAGE } from '~/constants';
+import type { SpotifyActivity } from '~/lib/types';
+import { ACTIVITY_ACTION_LISTEN, DRAFT_TYPE_CHANNEL_MESSAGE } from '~/lib/constants';
+
+const SpotifyStore = flux.getStore('Spotify');
+const SelectedChannelStore = flux.getStore('SelectedChannel');
+const DraftStore = flux.getStore('Draft');
+
+/** Discord's message and draft actions the invite sends and clears the draft with. */
+export type InviteActions = {
+	MessageActions: {
+		sendMessage: (
+			channelId: string,
+			message: {
+				content: string;
+				tts: boolean;
+				invalidEmojis: [];
+				validNonShortcutEmojis: [];
+			},
+			waitForChannel: boolean,
+			options: { activityAction: { activity: SpotifyActivity; type: number } },
+		) => unknown;
+	};
+	DraftActions: { clearDraft: (channelId: string, draftType: number) => unknown };
+};
 
 /**
  * @description Reads your current Spotify activity when it can be listened along to.
@@ -23,8 +38,9 @@ export function currentListenableActivity(): SpotifyActivity | undefined {
 
 /**
  * @description Sends a listen-along invite for your Spotify activity to the selected channel, with your draft as the message text, and clears the draft.
+ * @param actions Discord's message and draft actions.
  */
-export function sendListenAlongInvite() {
+export function sendListenAlongInvite({ MessageActions, DraftActions }: InviteActions): void {
 	const activity = currentListenableActivity();
 	const channelId = SelectedChannelStore.getChannelId?.();
 

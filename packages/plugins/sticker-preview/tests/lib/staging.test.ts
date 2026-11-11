@@ -97,7 +97,9 @@ describe('createStaging', () => {
 		behaviour.sendResult = () => Promise.reject(new Error('offline'));
 		staging.stage('c1', { id: 6 });
 
-		await expect(Promise.resolve(staging.send('c1'))).rejects.toThrow('offline');
+		const failure = await Promise.resolve(staging.send('c1')).catch((error: unknown) => error);
+
+		expect(failure).toEqual(new Error('offline'));
 		expect(staging.get('c1')).toEqual([{ id: 6 }]);
 		staging.dispose();
 	});

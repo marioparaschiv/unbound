@@ -29,7 +29,9 @@ test('starts without a warning once every feature has applied', async () => {
 });
 
 test('fails to start when the context menu cannot be patched, so Unbound removes the rest', async () => {
-	await expect(startGuildSettings(false, true)).rejects.toThrow('The menu module changed shape.');
+	const failure = await startGuildSettings(false, true).catch((error: unknown) => error);
+
+	expect(failure).toEqual(new Error('The menu module changed shape.'));
 });
 
 test('keeps the action sheet row with one warning when Discord moved the context menus', async () => {
