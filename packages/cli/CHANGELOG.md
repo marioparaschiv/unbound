@@ -1,5 +1,39 @@
 # Changelog
 
+## [3.0.0](https://github.com/marioparaschiv/unbound/compare/cli-v2.1.1...cli-v3.0.0) (2026-11-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* plugins.entities is plugins.addons, FontEntity is Font, NativePlugin* types and errors are NativeBridge* (NativePluginRuntimeBridge is LoaderNativeBridge), NATIVE_PLUGIN_* constants are NATIVE_BRIDGE_*, the manifest's minNativePluginApi is minNativeBridgeApi, and CORE_SETTINGS_STORE, SYNC_STORE and SettingsStores are CORE_BUCKET, SYNC_BUCKET and SettingsByBucket.
+* @unbound-app/api/testing exports only the plugin test kit (startPlugin, stopPlugin, render, recorders, fakeAssetId, StoreSeeds, PluginTypes). The building blocks moved to @unbound-app/api/testing/fakes; act, createTestRenderer and TestRenderer are removed (use render); the @unbound-app/api/testing/icu-parse subpath is removed (the parser lives in @unbound-app/contracts).
+
+### Bug Fixes
+
+* **cli:** fix four ubd bugs found during device proofs ([#1102](https://github.com/marioparaschiv/unbound/issues/1102)) ([51fb516](https://github.com/marioparaschiv/unbound/commit/51fb516a16b31f44d220e358a54d5248adddcc02))
+
+
+### Code Refactoring
+
+* finish the plugin shape and glossary renames ([#1099](https://github.com/marioparaschiv/unbound/issues/1099)) ([81ffa53](https://github.com/marioparaschiv/unbound/commit/81ffa5324f4b350cb34a9f34d84f25259f4e6d35))
+* mirror tests in tests/ and untangle shared modules ([#1072](https://github.com/marioparaschiv/unbound/issues/1072)) ([cb7f397](https://github.com/marioparaschiv/unbound/commit/cb7f397e2570a83e25da79f609b73bcc60dd685d))
+* **plugins:** move platform files into ios/ and android/ ([#1103](https://github.com/marioparaschiv/unbound/issues/1103)) ([60977d9](https://github.com/marioparaschiv/unbound/commit/60977d9c30226a7784d2c81081745285d70814df))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger bumped to 1.0.0
+    * @unbound-app/debugger-protocol bumped to 2.0.0
+    * @unbound-app/rollup-plugin-hermes bumped to 3.0.0
+  * devDependencies
+    * @unbound-app/api bumped to 3.0.0
+    * @unbound-app/contracts bumped to 2.0.0
+    * @unbound-app/types bumped to 1.0.0
+    * @unbound-app/utils bumped to 1.0.0
+    * @unbound-app/web bumped to 2.0.0
+
 ## [2.1.1](https://github.com/marioparaschiv/unbound/compare/cli-v2.1.0...cli-v2.1.1) (2026-11-11)
 
 
