@@ -73,6 +73,9 @@ function mentionsIn(message: Message, guildId: string): Mention[] {
 
 const PUSH_DELAY_MS = 100;
 
+/** The Discord class whose cells {@link colorMessageMentions} paints. */
+export const MESSAGE_CELL_CLASS = 'DCDMessageTableViewCell';
+
 function channelMentions(channelId: string | undefined): ChannelMentions {
 	const messages: ChannelMentions = {};
 	const loaded = channelId ? (MessageStore.getMessages(channelId)?._array ?? []) : [];
@@ -109,7 +112,7 @@ function channelMentions(channelId: string | undefined): ChannelMentions {
  */
 export function colorMessageMentions(native: NativePluginBridge): () => Promise<void> {
 	const { objc, ui } = native;
-	if (!ensureClasses(objc, ['DCDMessageTableViewCell'], 'Chat mentions')) {
+	if (!ensureClasses(objc, [MESSAGE_CELL_CLASS], 'Chat mentions')) {
 		return async () => {};
 	}
 

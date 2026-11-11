@@ -15,6 +15,9 @@ import { currentGuildId, guildAliases } from '~/lib/composer-aliases';
 
 const REFRESH_DELAY_MS = 250;
 
+/** The Discord class whose text {@link colorChatInputMentions} paints. */
+export const CHAT_INPUT_CLASS = 'DCDChatInputComponentView';
+
 function composerMentions(): ComposerMentions {
 	const guildId = currentGuildId();
 
@@ -48,7 +51,7 @@ function composerMentions(): ComposerMentions {
  */
 export function colorChatInputMentions(native: NativePluginBridge): () => Promise<void> {
 	const { objc, ui } = native;
-	if (!ensureClasses(objc, ['DCDChatInputComponentView'], 'Composer mentions')) {
+	if (!ensureClasses(objc, [CHAT_INPUT_CLASS], 'Composer mentions')) {
 		return async () => {};
 	}
 

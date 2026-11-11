@@ -15,6 +15,14 @@ export function enableMentions(native: NativePluginBridge, enqueue: Enqueue): ()
 	return () => enqueue(remove);
 }
 
+/**
+ * @description Names the painters {@link enableMentions} skipped; the Android painter needs no Discord class, so none.
+ * @returns An empty list.
+ */
+export function findSkippedPainters(): string[] {
+	return [];
+}
+
 export default enableMentions;
 
 export const ROLE_MENTION_COLORS = false;

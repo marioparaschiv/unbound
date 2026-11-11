@@ -13,6 +13,8 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import { createElement, memo, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
+import { selfTest } from '~/index';
+
 const RED = '#ff0000';
 
 const members: Record<string, object> = {
@@ -315,6 +317,8 @@ describe('self test', () => {
 		native.objc.registerClass('DCDMessageTableViewCell');
 		native.objc.registerClass('DCDChatInputComponentView');
 		await startPlugin();
+
+		expect(await selfTest()).toEqual({ ok: true, detail: 'started without warnings' });
 		await stopPlugin();
 
 		// Only skips warn; the fake bridge has no UI thread, so painting itself logs errors here.
@@ -323,7 +327,12 @@ describe('self test', () => {
 
 	test('names only the native painters as skipped when Discord lacks their classes', async () => {
 		await startPlugin();
-		// The native painters start on a queue; stopping waits for it.
+
+		// The native painters start on a queue after `start` returns; the self-test waits for it.
+		expect(await selfTest()).toEqual({
+			ok: false,
+			detail: 'Chat mentions skipped: native classes not found: DCDMessageTableViewCell. Composer mentions skipped: native classes not found: DCDChatInputComponentView.',
+		});
 		await stopPlugin();
 
 		expect(warnings()).toEqual([

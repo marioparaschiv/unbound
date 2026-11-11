@@ -4,7 +4,11 @@ import type { PluginContext } from '@unbound-app/api/native';
 import { patchMessageReactions, plainMessageReactions } from '~/patches/message-reactions';
 import { patchTypingIndicator, plainTypingIndicator } from '~/patches/typing-indicator';
 import { patchUsersFastList, plainUsersFastList } from '~/patches/users-fast-list';
-import { colorNativeMentions, restoreNativeMentions } from '~/native/mentions';
+import {
+	colorNativeMentions,
+	restoreNativeMentions,
+	selfTestNativeMentions,
+} from '~/native/mentions';
 import { patchVoiceUserNameItem } from '~/patches/voice-user-name-item';
 import { patchPollVotes, plainPollVotes } from '~/patches/poll-votes';
 import { patchRowManager } from '~/patches/row-manager';
@@ -26,4 +30,8 @@ export async function stop() {
 	plainMessageReactions();
 	plainPollVotes();
 	await restoreNativeMentions();
+}
+
+export function selfTest() {
+	return selfTestNativeMentions();
 }

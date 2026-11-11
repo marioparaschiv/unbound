@@ -2,8 +2,13 @@ import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type { NativePluginBridge } from '@unbound-app/api/native';
 
 import type { Enqueue } from '~/native/mentions';
-import { colorMessageMentions } from '~/native/message-cells-ios';
-import { colorChatInputMentions } from '~/native/chat-input-ios';
+import { colorMessageMentions, MESSAGE_CELL_CLASS } from '~/native/message-cells-ios';
+import { CHAT_INPUT_CLASS, colorChatInputMentions } from '~/native/chat-input-ios';
+
+const PAINTER_CLASSES = {
+	'Chat mentions': MESSAGE_CELL_CLASS,
+	'Composer mentions': CHAT_INPUT_CLASS,
+};
 
 /**
  * @description Colors mentions in native message cells and the chat input on iOS.
@@ -37,6 +42,17 @@ export function enableMentions(native: NativePluginBridge, enqueue: Enqueue): ()
 				}
 			}
 		});
+}
+
+/**
+ * @description Names the painters {@link enableMentions} skipped because Discord lacks their class.
+ * @param native The plugin's native bridge.
+ * @returns One skip line per missing class, empty when every painter runs.
+ */
+export function findSkippedPainters(native: NativePluginBridge): string[] {
+	return Object.entries(PAINTER_CLASSES)
+		.filter(([, name]) => !native.objc.getClass(name))
+		.map(([feature, name]) => `${feature} skipped: native classes not found: ${name}.`);
 }
 
 export default enableMentions;

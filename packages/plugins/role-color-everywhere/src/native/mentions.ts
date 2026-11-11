@@ -1,15 +1,18 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
-import type { PluginContext } from '@unbound-app/api/native';
+import type { NativePluginBridge, PluginContext } from '@unbound-app/api/native';
+import type { PluginSelfTestResult } from '@unbound-app/api/global';
 import { native } from '@unbound-app/api';
 
 import {
 	enableMentions as enableAndroidMentions,
+	findSkippedPainters as findAndroidSkippedPainters,
 	ROLE_MENTION_COLORS as androidRoleMentionColors,
 } from '~/native/mentions-android';
 import {
 	enableMentions as enableIosMentions,
+	findSkippedPainters as findIosSkippedPainters,
 	ROLE_MENTION_COLORS as iosRoleMentionColors,
 } from '~/native/mentions-ios';
 
@@ -20,6 +23,11 @@ const enableNativeMentions = native.definePlatform({
 	android: enableAndroidMentions,
 });
 
+const findSkippedPainters = native.definePlatform<(bridge: NativePluginBridge) => string[]>({
+	ios: findIosSkippedPainters,
+	android: findAndroidSkippedPainters,
+});
+
 /** Whether chat rows color role mentions themselves; iOS does, Android leaves them to Discord. */
 export const roleMentionColors = native.definePlatform({
 	ios: iosRoleMentionColors,
@@ -28,6 +36,8 @@ export const roleMentionColors = native.definePlatform({
 
 let queue = Promise.resolve();
 let stopNativeMentions: (() => void) | undefined;
+// The bridge the painters run on while `chatMentions` is on and the loader offers it.
+let painting: NativePluginBridge | undefined;
 
 function enqueue(step: Parameters<Enqueue>[0]) {
 	queue = queue.then(step).catch((error) => {
@@ -48,8 +58,31 @@ export function colorNativeMentions(context: PluginContext): void {
 			return () => {};
 		}
 
-		return enableNativeMentions(context.native, enqueue);
+		painting = context.native;
+		const disable = enableNativeMentions(context.native, enqueue);
+
+		return () => {
+			painting = undefined;
+			disable();
+		};
 	});
+}
+
+/**
+ * @description Reports the native painters Discord lacks classes for. They start on the queue after `start` returns,
+ * so their skips miss the default self-test, which reads only what `start` logged.
+ * @returns Not ok with each skipped painter, else ok.
+ */
+export async function selfTestNativeMentions(): Promise<PluginSelfTestResult> {
+	await queue;
+
+	const skipped = painting ? findSkippedPainters(painting) : [];
+
+	if (skipped.length) {
+		return { ok: false, detail: skipped.join(' ') };
+	}
+
+	return { ok: true, detail: 'started without warnings' };
 }
 
 /**
