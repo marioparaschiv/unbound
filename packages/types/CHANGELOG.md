@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0](https://github.com/marioparaschiv/unbound/compare/types-v0.14.0...types-v0.15.0) (2026-11-11)
+
+
+### Features
+
+* **loader:** judge launches by render and exit, retry updates ([#1086](https://github.com/marioparaschiv/unbound/issues/1086)) ([cd39991](https://github.com/marioparaschiv/unbound/commit/cd399911d22a11fe8fbf4db09d6ad3184302eb3b))
+
 ## [0.14.0](https://github.com/marioparaschiv/unbound/compare/types-v0.13.1...types-v0.14.0) (2026-11-11)
 
 

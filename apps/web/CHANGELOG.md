@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.1.1](https://github.com/marioparaschiv/unbound/compare/web-v1.1.0...web-v1.1.1) (2026-11-11)
+
+
+### Bug Fixes
+
+* **web:** give themes and icon packs their own default icons ([#1089](https://github.com/marioparaschiv/unbound/issues/1089)) ([840e0b8](https://github.com/marioparaschiv/unbound/commit/840e0b8163e299fd8fe049585c2de4ce46015e38))
+* **web:** reopen the open page's sidebar category on every navigation ([#1094](https://github.com/marioparaschiv/unbound/issues/1094)) ([b43a1a3](https://github.com/marioparaschiv/unbound/commit/b43a1a33360c3bb1cd1a3d156d9473e0268bea1b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 1.1.1
+    * @unbound-app/utils bumped to 0.10.4
+
 ## [1.1.0](https://github.com/marioparaschiv/unbound/compare/web-v1.0.0...web-v1.1.0) (2026-11-11)
 
 

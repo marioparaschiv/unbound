@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.2.0](https://github.com/marioparaschiv/unbound/compare/api-v2.1.0...api-v2.2.0) (2026-11-11)
+
+
+### Miscellaneous Chores
+
+* **api:** Synchronize client versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 2.2.0
+    * @unbound-app/sdk-generator bumped to 0.11.5
+
 ## [2.1.0](https://github.com/marioparaschiv/unbound/compare/api-v2.0.0...api-v2.1.0) (2026-11-11)
 
 
