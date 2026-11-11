@@ -34,7 +34,7 @@ import java.lang.ref.WeakReference
 
 object Toolbox {
     private val MENU_OPTIONS = JSONObject().put("copyAppFolderPath", true).toString()
-    private val holdMs by lazy { NativeBridge.nativeToolbox("hold-milliseconds", null)?.toLongOrNull() ?: 0L }
+    private val holdMs by lazy { NativeBridge.nativeToolboxHoldMilliseconds() }
 
     private val main = Handler(Looper.getMainLooper())
     private var holdActivity: WeakReference<Activity>? = null
@@ -123,7 +123,7 @@ object Toolbox {
         activity.window?.decorView?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
     }
 
-    private fun enabled(gesture: String): Boolean = NativeBridge.preferenceEnabled("gesture", gesture)
+    private fun enabled(gesture: String): Boolean = NativeBridge.nativeGestureEnabled(gesture)
 
     private fun menuModel(): JSONObject =
         runCatching { JSONObject(NativeBridge.nativeToolbox("menu", MENU_OPTIONS).orEmpty()) }.getOrDefault(JSONObject())
@@ -150,7 +150,7 @@ object Toolbox {
 
         for (switch in switches) {
             switch.setOnCheckedChangeListener { changed, checked ->
-                NativeBridge.nativePreference("set-gesture", "${changed.tag}=$checked")
+                NativeBridge.nativeSetGestureEnabled(changed.tag as String, checked)
                 for (other in switches) other.isChecked = enabled(other.tag as String)
             }
         }

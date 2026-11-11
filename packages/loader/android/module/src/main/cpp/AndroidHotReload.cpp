@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "AndroidLoader.h"
+#include "JniCall.h"
 #include "JniEnvironment.h"
 
 namespace unbound::android {
@@ -26,13 +27,7 @@ static jint milliseconds(double seconds)
 
 static void callHotReload(jmethodID method)
 {
-    JNIEnv *env = currentEnvironment();
-    if (!env)
-    {
-        return;
-    }
-    env->CallStaticVoidMethod(gHotReload.hotReloadClass, method);
-    clearPendingException(env);
+    callStaticVoid(gHotReload.hotReloadClass, method);
 }
 
 class AndroidHotReloadTransport final : public loader::HotReloadTransport
@@ -154,13 +149,8 @@ void reloadApp()
     callHotReload(gHotReload.reload);
 }
 
-std::shared_ptr<loader::HotReloadController>
-createHotReloadController(loader::SettingsStore       &settings,
-                          loader::HotReloadURLResolver resolveBaseURL,
-                          loader::HotReloadScheduler   schedule)
+std::shared_ptr<loader::HotReloadTransport> createHotReloadTransport()
 {
-    return std::make_shared<loader::HotReloadController>(
-        settings, std::move(resolveBaseURL), std::make_shared<AndroidHotReloadTransport>(),
-        std::move(schedule), reloadApp);
+    return std::make_shared<AndroidHotReloadTransport>();
 }
 }

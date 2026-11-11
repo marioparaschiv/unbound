@@ -9,7 +9,7 @@
 
 #include "LoaderAddons.h"
 #include "LoaderFontService.h"
-#include "LoaderUpdater.h"
+#include "LoaderTransport.h"
 
 namespace loader {
 // What `globalThis.UnboundNative` reads and does. Each member runs when the client calls its

@@ -13,6 +13,7 @@
 #include "LoaderLogFile.h"
 #include "LoaderPreferences.h"
 #include "LoaderVersion.h"
+#include "NativePlatformBridge.h"
 
 namespace loader::toolbox {
 static std::string lowercase(std::string value)
@@ -114,9 +115,7 @@ bool factoryReset(const std::string &documents)
 
 void deleteBundle(SettingsStore &settings, BundleUpdater &updater, const std::string &documents)
 {
-    settings.set("unbound", "loader.update.url", nullptr);
-    settings.set("unbound", "loader.update.force", nullptr);
-    settings.save();
+    preferences::clearCustomBundle(settings);
 
     for (const char *extension : {"bundle", "js"})
     {
@@ -150,9 +149,7 @@ bool useCustomBundle(SettingsStore &settings, const std::string &input)
         return false;
     }
 
-    settings.set("unbound", "loader.update.url", url);
-    settings.set("unbound", "loader.update.force", true);
-    return settings.save();
+    return preferences::setCustomBundle(settings, url);
 }
 
 bool toggleRecovery(SettingsStore &settings)
@@ -547,15 +544,6 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
     {
         return flag(toggleRecovery(context.settings));
     }
-    if (action == "recovery-shortcut")
-    {
-        const RecoveryToggle toggle = toggleRecoveryFromShortcut(
-            context.settings, context.bundleReady && context.bundleReady());
-        return nlohmann::json{{"enabled", toggle.enabled},
-                              {"status", toggle.status},
-                              {"restartRequired", toggle.restartRequired}}
-            .dump();
-    }
     if (action == "recovery-shortcut-action")
     {
         return kRecoveryShortcutAction;
@@ -608,13 +596,13 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
     }
     if (action == "issue-url")
     {
-        const auto provider = currentNativePlatformProvider();
+        const auto &provider = context.provider;
         return issueURL(issueReport(provider ? *provider : NativePlatformProvider{},
                                     context.platform, argument));
     }
     if (action == "crash-report-url")
     {
-        const auto                 provider = currentNativePlatformProvider();
+        const auto                &provider = context.provider;
         std::optional<std::string> summary  = crashSummary();
         if (!summary)
         {
@@ -627,10 +615,6 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
     if (action == "menu")
     {
         return menuJSON(context.settings, menuOptions(argument)).dump();
-    }
-    if (action == "hold-milliseconds")
-    {
-        return std::to_string(kThreeFingerHoldMilliseconds);
     }
     if (action == "menu-step")
     {

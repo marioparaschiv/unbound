@@ -5,6 +5,7 @@
 #include <ostream>
 #include <streambuf>
 
+#import "AddonsCore.h"
 #import "CoreConversions.h"
 #include "LoaderPreferences.h"
 #import "SettingsCore.h"
@@ -13,24 +14,15 @@ using unbound::ios::toStdString;
 
 NSString *const SettingsDidChangeNotification = @"SettingsDidChange";
 
-static std::unique_ptr<loader::SettingsStore> gStore;
-
 static void refreshSettingsCache()
 {
-    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{ gStore->refreshCache(); });
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0),
+                   ^{ UnboundSettingsStore().refreshCache(); });
 }
 
 loader::SettingsStore &UnboundSettingsStore()
 {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSString *path = [NSString
-            pathWithComponents:@[ FileSystem.documents, @(loader::preferences::kSettingsFile) ]];
-        gStore         = std::make_unique<loader::SettingsStore>(toStdString(path));
-        gStore->load();
-        refreshSettingsCache();
-    });
-    return *gStore;
+    return UnboundLoader()->settings();
 }
 
 @implementation Settings

@@ -1,29 +1,16 @@
 #include <cassert>
-#include <map>
+#include <cstdlib>
+#include <filesystem>
 #include <string>
 
 #include "LoaderHotReload.h"
 
-static loader::UpdaterSettings memorySettings(std::map<std::string, std::string> &values)
-{
-    loader::UpdaterSettings settings;
-    settings.getString = [&values](const std::string &key, const std::string &fallback) {
-        auto found = values.find(key);
-        return found == values.end() ? fallback : found->second;
-    };
-    settings.getBoolean = [](const std::string &, bool fallback) {
-        return fallback;
-    };
-    settings.setString = [&values](const std::string &key, const std::string &value) {
-        values[key] = value;
-    };
-    return settings;
-}
-
 int main()
 {
-    std::map<std::string, std::string> values;
-    auto                               settings = memorySettings(values);
+    std::string templatePath =
+        (std::filesystem::temp_directory_path() / "loader-hot-reload-XXXXXX").string();
+    const std::filesystem::path root(mkdtemp(templatePath.data()));
+    loader::SettingsStore       settings((root / "settings.json").string());
 
     std::string probed;
     auto        reachable = [&probed](const std::string &url, double timeout) {
@@ -40,10 +27,10 @@ int main()
            std::optional<std::string>("http://10.0.2.2:3000/"));
     assert(probed == "http://10.0.2.2:3000/manifest.json");
     assert(!loader::resolveUpdateURL(settings, std::string("10.0.2.2"), unreachable));
-    values["loader.update.url"] = "https://example.com/unbound.bundle";
+    settings.set("unbound", "loader.update.url", "https://example.com/unbound.bundle");
     assert(loader::resolveUpdateURL(settings, std::nullopt, unreachable) ==
            std::optional<std::string>("https://example.com/unbound.bundle"));
-    values.erase("loader.update.url");
+    settings.remove("unbound", "loader.update.url");
 
     assert(loader::hotReloadURL("http://10.0.2.2:3000/unbound.bundle") ==
            std::optional<std::string>("http://10.0.2.2:3000/__hot"));
@@ -61,7 +48,7 @@ int main()
     assert(!loader::hotReloadEtag("event: reload\ndata: not json"));
     assert(!loader::hotReloadEtag(": comment"));
 
-    values["loader.update.etag"] = "\"1\"";
+    settings.set("unbound", "loader.update.etag", "\"1\"");
     loader::HotReloadStream stream(settings);
     assert(!stream.feed("event: reload\r\ndata: {\"etag\":\"W/\\\"1\\\"\"}\r\n"));
     assert(!stream.feed("\r\n"));
@@ -81,5 +68,6 @@ int main()
     assert(backoff.next() == loader::kHotReloadMaximumDelaySeconds);
     backoff.reset();
     assert(backoff.next() == 1.0);
+    std::filesystem::remove_all(root);
     return 0;
 }

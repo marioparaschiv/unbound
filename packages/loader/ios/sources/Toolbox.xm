@@ -83,7 +83,7 @@ static NSString *const kThreeFingerGesture = @"three-finger";
 
 static BOOL toolboxGestureEnabled(NSString *gesture)
 {
-    return [[CoreBridge preference:@"gesture" argument:gesture] isEqualToString:@"true"];
+    return [CoreBridge toolboxGestureEnabled:gesture];
 }
 
 %hook UIWindow
@@ -598,9 +598,7 @@ static NSString *iconForMenuItem(NSString *identifier)
 
     if (item[@"gesture"])
     {
-        [CoreBridge preference:@"set-gesture"
-                      argument:[NSString stringWithFormat:@"%@=%@", item[@"gesture"],
-                                                          sender.on ? @"true" : @"false"]];
+        [CoreBridge setToolboxGesture:item[@"gesture"] enabled:sender.on];
         [self setupMenuItems];
         for (NSDictionary *section in self.menuSections)
         {

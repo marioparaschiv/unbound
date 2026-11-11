@@ -10,19 +10,9 @@
 #include "LoaderBundleManifest.h"
 #include "LoaderBundleSignature.h"
 #include "LoaderSettings.h"
+#include "LoaderTransport.h"
 
 namespace loader {
-struct DownloadResult {
-    int         status = 0;
-    std::string etag;
-};
-
-struct DownloadPolicy {
-    double connectTimeoutSeconds = 15.0;
-    double readTimeoutSeconds    = 30.0;
-    double totalTimeoutSeconds   = 35.0;
-};
-
 constexpr DownloadPolicy kBundleDownloadPolicy{};
 constexpr double         kManifestFetchTimeoutSeconds = 5.0;
 
@@ -51,34 +41,12 @@ public:
 // The alert for a launch that has no saved bundle and could not download one.
 std::string bundleFailureNotice(BundleUpdateFailure failure);
 
-using TextFetcher =
-    std::function<std::optional<std::string>(const std::string &url, double timeoutSeconds)>;
-using FileDownloader = std::function<std::optional<DownloadResult>(
-    const std::string &url, const std::string &destination,
-    const std::map<std::string, std::string> &headers, const DownloadPolicy &policy)>;
-
-struct UpdaterSettings {
-    std::function<std::string(const std::string &key, const std::string &fallback)> getString;
-    std::function<bool(const std::string &key, bool fallback)>                      getBoolean;
-    std::function<void(const std::string &key, const std::string &value)>           setString;
-    std::function<void(const std::string &key, bool value)>                         setBoolean;
-    std::function<bool()>                                                           developerMode;
-};
-
-UpdaterSettings updaterSettings(SettingsStore &store);
-
-constexpr const char *kBundleTrustSuffix     = ".trust";
-constexpr const char *kBundleBaselineSetting = "loader.update.baseline";
-// The Updates screen's switch for automatic client updates; off keeps the cached client bundle
-// instead of checking for one. Absent means on.
-constexpr const char *kAutoClientSetting = "updater.auto.client";
-// The loader version that last checked for a bundle, so a loader update is noticed once.
-constexpr const char *kCheckedLoaderSetting = "loader.update.checkedBy";
+constexpr const char *kBundleTrustSuffix = ".trust";
 
 class BundleUpdater
 {
 public:
-    BundleUpdater(std::string documents, UpdaterSettings settings, TextFetcher fetchText,
+    BundleUpdater(std::string documents, SettingsStore &settings, TextFetcher fetchText,
                   FileDownloader download, BundleTrust trust = compiledBundleTrust());
 
     std::string resolveBundlePath();
@@ -141,10 +109,10 @@ private:
                                             uint32_t bytecodeVersion) const;
     void                       recordBaseline(const std::string &record);
 
-    std::string     documents_;
-    UpdaterSettings settings_;
-    TextFetcher     fetchText_;
-    FileDownloader  download_;
-    BundleTrust     trust_;
+    std::string    documents_;
+    SettingsStore &settings_;
+    TextFetcher    fetchText_;
+    FileDownloader download_;
+    BundleTrust    trust_;
 };
 }

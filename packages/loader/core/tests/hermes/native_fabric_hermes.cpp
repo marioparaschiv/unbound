@@ -599,7 +599,10 @@ int main()
 {
     auto executor = std::make_shared<InlineExecutor>();
     loader::native::setExecutor(executor);
-    auto runtime = facebook::hermes::makeHermesRuntime();
+    // The microtask queue settles promises in drainMicrotasks instead of through setImmediate,
+    // which a bare Hermes runtime lacks.
+    auto runtime = facebook::hermes::makeHermesRuntime(
+        ::hermes::vm::RuntimeConfig::Builder().withMicrotaskQueue(true).build());
     loader::native::registerRuntime(*runtime);
 
     auto adapter = std::make_shared<RecordingAdapter>();

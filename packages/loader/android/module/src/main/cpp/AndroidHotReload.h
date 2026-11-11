@@ -9,8 +9,6 @@ namespace unbound::android {
 bool registerHotReloadNatives(JNIEnv *env);
 void reloadApp();
 
-std::shared_ptr<loader::HotReloadController>
-createHotReloadController(loader::SettingsStore       &settings,
-                          loader::HotReloadURLResolver resolveBaseURL,
-                          loader::HotReloadScheduler   schedule);
+// The stream connection `loader::Loader` runs hot reload over, through Kotlin's HotReload.
+std::shared_ptr<loader::HotReloadTransport> createHotReloadTransport();
 }

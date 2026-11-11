@@ -38,10 +38,10 @@ int main()
 
     loader::SettingsStore settings((root / "settings.json").string());
     settings.load();
-    settings.set("unbound", loader::kAutoClientSetting, false);
+    settings.set("unbound", "updater.auto.client", false);
 
     loader::BundleUpdater updater(
-        documents, loader::updaterSettings(settings),
+        documents, settings,
         [&](const std::string &, double) -> std::optional<std::string> {
             fetches++;
             return std::string(R"({"bytecodeVersions":[98]})");

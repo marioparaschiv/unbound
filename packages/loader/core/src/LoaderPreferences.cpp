@@ -3,12 +3,29 @@
 #include <cstdio>
 
 namespace loader::preferences {
-static constexpr const char *kRecovery      = "recovery";
-static constexpr const char *kDeveloperMode = "developer-mode";
-static constexpr const char *kHotReload     = "loader.update.hmr";
-static constexpr const char *kLoaderEnabled = "loader.enabled";
-static constexpr const char *kFontStates    = "font-states";
-static constexpr const char *kAppliedTheme  = "applied";
+static constexpr const char *kRecovery         = "recovery";
+static constexpr const char *kDeveloperMode    = "developer-mode";
+static constexpr const char *kHotReload        = "loader.update.hmr";
+static constexpr const char *kLoaderEnabled    = "loader.enabled";
+static constexpr const char *kDevtools         = "loader.devtools";
+static constexpr const char *kBlockTelemetry   = "loader.telemetry.block";
+static constexpr const char *kUpdateURL        = "loader.update.url";
+static constexpr const char *kForceUpdate      = "loader.update.force";
+static constexpr const char *kUnsignedBundles  = "loader.update.unsigned";
+static constexpr const char *kAutoClientUpdate = "updater.auto.client";
+static constexpr const char *kBundleEtag       = "loader.update.etag";
+static constexpr const char *kBundleBaseline   = "loader.update.baseline";
+static constexpr const char *kCheckedByLoader  = "loader.update.checkedBy";
+static constexpr const char *kFontStates       = "font-states";
+static constexpr const char *kAppliedTheme     = "applied";
+
+static void setIfChanged(SettingsStore &settings, const char *key, nlohmann::json value)
+{
+    if (settings.set(kStore, key, std::move(value)))
+    {
+        settings.save();
+    }
+}
 
 static const char *gestureKey(ToolboxGesture gesture)
 {
@@ -49,6 +66,80 @@ bool devOverlayVisible(const SettingsStore &settings, bool virtualDevice, bool d
 bool hotReloadEnabled(const SettingsStore &settings)
 {
     return settings.getBoolean(kStore, kHotReload, false);
+}
+
+bool devtoolsEnabled(const SettingsStore &settings)
+{
+    return settings.getBoolean(kStore, kDevtools, false);
+}
+
+bool telemetryBlocked(const SettingsStore &settings)
+{
+    return settings.getBoolean(kStore, kBlockTelemetry, true);
+}
+
+std::string updateURL(const SettingsStore &settings)
+{
+    return settings.getString(kStore, kUpdateURL, "");
+}
+
+bool forceUpdate(const SettingsStore &settings)
+{
+    return settings.getBoolean(kStore, kForceUpdate, false);
+}
+
+bool setCustomBundle(SettingsStore &settings, const std::string &url)
+{
+    settings.set(kStore, kUpdateURL, url);
+    settings.set(kStore, kForceUpdate, true);
+    return settings.save();
+}
+
+bool clearCustomBundle(SettingsStore &settings)
+{
+    settings.set(kStore, kUpdateURL, nullptr);
+    settings.set(kStore, kForceUpdate, nullptr);
+    return settings.save();
+}
+
+bool unsignedBundlesAllowed(const SettingsStore &settings)
+{
+    return settings.getBoolean(kStore, kUnsignedBundles, false);
+}
+
+bool autoClientUpdates(const SettingsStore &settings)
+{
+    return settings.getBoolean(kStore, kAutoClientUpdate, true);
+}
+
+std::string bundleEtag(const SettingsStore &settings)
+{
+    return settings.getString(kStore, kBundleEtag, "");
+}
+
+void setBundleEtag(SettingsStore &settings, const std::string &etag)
+{
+    setIfChanged(settings, kBundleEtag, etag);
+}
+
+std::string bundleBaseline(const SettingsStore &settings)
+{
+    return settings.getString(kStore, kBundleBaseline, "");
+}
+
+void setBundleBaseline(SettingsStore &settings, const std::string &record)
+{
+    setIfChanged(settings, kBundleBaseline, record);
+}
+
+std::string checkedByLoader(const SettingsStore &settings)
+{
+    return settings.getString(kStore, kCheckedByLoader, "");
+}
+
+void setCheckedByLoader(SettingsStore &settings, const std::string &version)
+{
+    setIfChanged(settings, kCheckedByLoader, version);
 }
 
 std::optional<std::string> appliedThemeId(const SettingsStore &settings)
@@ -112,67 +203,5 @@ std::string recoveryActionLabel(bool enabled)
 std::string recoveryStatusText(bool enabled)
 {
     return enabled ? "Recovery Mode enabled" : "Recovery Mode disabled";
-}
-
-static std::string flag(bool value)
-{
-    return value ? "true" : "false";
-}
-
-std::string perform(SettingsStore &settings, const std::string &action, const std::string &argument)
-{
-    if (action == "loader-enabled")
-    {
-        return flag(loaderEnabled(settings));
-    }
-    if (action == "recovery")
-    {
-        return flag(recoveryEnabled(settings));
-    }
-    if (action == "recovery-label")
-    {
-        return recoveryActionLabel(recoveryEnabled(settings));
-    }
-    if (action == "recovery-status")
-    {
-        return recoveryStatusText(recoveryEnabled(settings));
-    }
-    if (action == "dev-overlay")
-    {
-        return flag(devOverlayVisible(settings,
-                                      argument.find("virtual-device") != std::string::npos,
-                                      argument.find("debug-build") != std::string::npos));
-    }
-    if (action == "developer-mode")
-    {
-        return flag(developerMode(settings));
-    }
-    if (action == "hot-reload")
-    {
-        return flag(hotReloadEnabled(settings));
-    }
-    if (action == "active-theme")
-    {
-        return activeThemeId(settings).value_or("");
-    }
-    if (action == "applied-theme")
-    {
-        return appliedThemeId(settings).value_or("");
-    }
-    if (action == "gesture" || action == "set-gesture")
-    {
-        const auto separator = argument.find('=');
-        const auto gesture   = gestureNamed(argument.substr(0, separator));
-        if (!gesture)
-        {
-            return "";
-        }
-        if (action == "set-gesture" && separator != std::string::npos)
-        {
-            setGestureEnabled(settings, *gesture, argument.substr(separator + 1) == "true");
-        }
-        return flag(gestureEnabled(settings, *gesture));
-    }
-    return "";
 }
 }

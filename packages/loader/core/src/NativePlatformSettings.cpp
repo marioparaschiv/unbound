@@ -1,6 +1,6 @@
 #include "NativePlatformSettings.h"
 
-#include "NativePlatformBridge.h"
+#include "LoaderJSIJSON.h"
 #include "NativePluginRuntime.h"
 
 namespace loader {
