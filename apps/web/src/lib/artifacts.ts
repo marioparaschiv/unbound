@@ -12,8 +12,12 @@ import type { SourcePin } from '@unbound-app/contracts/source';
 import type { addonVersion, submissionSource } from '~/db/schema';
 import type { PageMediaFiles } from '~/lib/addon-page-source';
 import { buildStorePageFile } from '~/lib/store-page-file';
+import { forEachAtMost } from '~/lib/for-each-at-most';
 import type { AppContext } from '~/lib/context';
 import type { Env } from '~/lib/env';
+
+/** How many extra files one version writes to the bucket at once. */
+const FILE_WRITE_CONCURRENCY = 16;
 
 export type AddonVersionRow = typeof addonVersion.$inferSelect;
 
@@ -111,13 +115,14 @@ export async function writeArtifact(
 	const directory = getVersionDirectory(target.addonId, target.version);
 
 	await Promise.all([
-		...[...files].map(([path, bytes]) =>
-			ctx.storage.public.write(
+		// An icon pack ships hundreds of images; the bucket fails when all of them are written at once.
+		forEachAtMost([...files], FILE_WRITE_CONCURRENCY, async ([path, bytes]) => {
+			await ctx.storage.public.write(
 				`${directory}/${path}`,
 				bytes,
 				path.endsWith('.json') ? { type: 'application/json' } : undefined,
-			),
-		),
+			);
+		}),
 		...[...bytecode].map(([bytecodeVersion, bytes]) =>
 			ctx.storage.public.write(getBytecodeKey(keys.bundle, bytecodeVersion), bytes),
 		),
