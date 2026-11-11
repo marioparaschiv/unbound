@@ -15,15 +15,17 @@ export type EvalRequest = {
 };
 
 /**
- * Why a request failed before the device answered it, so callers branch on a code instead of the error text:
- * `no-device` (the bridge has no device), `device-disconnected` (it dropped mid-request), `timeout`,
- * `bridge-unreachable` (the controller has no socket to the bridge) and `shut-down` (the controller closed).
+ * Why a request failed before the device answered it, so callers branch on a code instead of the error text.
  */
 export type RequestFailureCode =
+	/** The bridge has no device. */
 	| 'no-device'
+	/** The device dropped mid-request. */
 	| 'device-disconnected'
 	| 'timeout'
+	/** The controller has no socket to the bridge. */
 	| 'bridge-unreachable'
+	/** The controller closed. */
 	| 'shut-down';
 
 /** The outcome of an {@link EvalRequest}, sent device → bridge → the one waiting controller. */
