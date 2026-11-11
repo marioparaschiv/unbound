@@ -60,7 +60,7 @@ sources/CoreBridge.mm_CFLAGS = -DCOMMIT_HASH='@"$(COMMIT_HASH)"' -DCOMMIT_SHORT_
 $(TWEAK_NAME)_CCFLAGS = $(COMMON_FLAGS) -I$(LIBFFI_HEADERS) -std=c++20 -fno-cxx-modules
 # Resolve JSI/TurboModule symbols from Discord's React dylib at load time.
 $(TWEAK_NAME)_LDFLAGS = -undefined dynamic_lookup $(LIBFFI_ARCHIVE)
-$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation AuthenticationServices UniformTypeIdentifiers Security SafariServices AVFoundation CoreHaptics CoreGraphics ImageIO
+$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation AuthenticationServices UniformTypeIdentifiers Security SafariServices AVFoundation CoreHaptics CoreGraphics QuartzCore ImageIO
 $(TWEAK_NAME)_LIBRARIES = z
 
 BUNDLE_NAME = UnboundResources

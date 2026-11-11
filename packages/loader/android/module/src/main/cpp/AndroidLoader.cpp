@@ -399,6 +399,11 @@ void AndroidLoader::drainMainWork()
     loader::native::recordMainDrain(work.size(), std::chrono::steady_clock::now() - startedAt);
 }
 
+void AndroidLoader::drainMainFrameWork()
+{
+    frameQueue_.drain();
+}
+
 void AndroidLoader::runOnRuntime(std::function<void(jsi::Runtime &)> work)
 {
     enqueueRuntime(std::move(work), loader::native::NativeWorkPriority::Deferred);
@@ -477,6 +482,32 @@ void AndroidLoader::runOnMain(std::function<void()> work)
     }
     env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.scheduleMain);
     clearPendingException(env);
+}
+
+bool AndroidLoader::runOnMainNextFrame(std::function<void()> work)
+{
+    if (!frameQueue_.enqueue(std::move(work)))
+    {
+        return true;
+    }
+
+    JNIEnv *env = currentEnvironment();
+    if (!env || !callbacks_.scheduleMainFrame)
+    {
+        frameQueue_.clear();
+        loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
+                    "Failed to schedule frame-batched native work.");
+        return false;
+    }
+    env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.scheduleMainFrame);
+    if (clearPendingException(env))
+    {
+        frameQueue_.clear();
+        loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
+                    "Failed to schedule frame-batched native work.");
+        return false;
+    }
+    return true;
 }
 
 void AndroidLoader::runAfter(double seconds, std::function<void()> work)

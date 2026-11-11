@@ -12,6 +12,7 @@ export type {
 	NativeFFISignature,
 	NativeFFIType,
 	NativeFFITypeName,
+	NativeFabricBatchMutation,
 	NativeFabricBridge,
 	NativeFabricFrame,
 	NativeFabricMountOptions,

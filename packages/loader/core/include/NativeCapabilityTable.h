@@ -73,11 +73,12 @@ inline constexpr std::array<std::string_view, 7> kFabricMountMethods = {
     "unmount",
     "releaseIdle",
 };
-inline constexpr std::array<std::string_view, 7> kFabricAsyncMethods = {
+inline constexpr std::array<std::string_view, 8> kFabricAsyncMethods = {
     "mountAsync",
     "updateAsync",
     "setSizeAsync",
     "setFrameAsync",
+    "batchAsync",
     "measureAsync",
     "unmountAsync",
     "releaseIdleAsync",

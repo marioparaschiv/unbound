@@ -108,7 +108,7 @@ The `fabric` namespace lets a plugin register a React Native component and mount
 
 All UIKit work is marshalled to the main thread, and surface handles are scoped to the plugin.
 
-The `native.fabric.mount` capability gates the synchronous operations and is only offered on iOS. The `native.fabric.async` capability gates `mountAsync`, `updateAsync`, `setSizeAsync`, `setFrameAsync`, `measureAsync`, and `unmountAsync` on both platforms. These return cancellable promises; queued main-thread work is skipped if the plugin stops or the runtime is replaced. A plugin should mount into the host view that owns the message layout, not create a window-level overlay.
+The `native.fabric.mount` capability gates the synchronous operations and is only offered on iOS. The `native.fabric.async` capability gates `mountAsync`, `updateAsync`, `setSizeAsync`, `setFrameAsync`, `batchAsync`, `measureAsync`, and `unmountAsync` on both platforms. These return cancellable promises; `batchAsync` applies several surfaces' properties, sizes and frames together on the next display frame; queued main-thread work is skipped if the plugin stops or the runtime is replaced. A plugin should mount into the host view that owns the message layout, not create a window-level overlay.
 
 ## Mention avatars migration
 

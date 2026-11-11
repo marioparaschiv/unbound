@@ -16,7 +16,7 @@ export function createIndicators(
 	context: PluginContext,
 	records: LatencyRecords,
 ): (() => () => Promise<void>) | null {
-	const { objc, fabric, ui } = context.native;
+	const { objc, ui } = context.native;
 
 	if (
 		!ensureClasses(objc, ['DCDMessageTableViewCell', 'NSLayoutConstraint', 'UIColor', 'UIFont'])
@@ -24,7 +24,7 @@ export function createIndicators(
 		return null;
 	}
 
-	const cells = createMessageCells(objc, records, createTooltips(objc, fabric));
+	const cells = createMessageCells(objc, records, createTooltips(context.native));
 
 	return () => {
 		const scope = ui.createScope();
