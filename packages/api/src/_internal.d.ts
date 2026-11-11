@@ -6088,8 +6088,9 @@ export type TableSliderRowProps = {
 	formatValue?: (value: number) => string;
 	/** Called with each value while dragging. */
 	onChange?: (value: number) => void;
-	/** Whether the row starts or ends its group's card, when it is not in a `TableRowGroup`. */
+	/** Whether the row starts its group's card, when it is not in a `TableRowGroup`. */
 	start?: boolean;
+	/** Whether the row ends its group's card, when it is not in a `TableRowGroup`. */
 	end?: boolean;
 };
 export type TableSwitchRowComponent = React$1.ComponentType<
