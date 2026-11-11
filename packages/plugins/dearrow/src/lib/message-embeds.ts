@@ -1,4 +1,4 @@
-import { embedVideoId, type Branding } from '~/embeds/branding';
+import { embedVideoId, type Branding } from '~/lib/branding';
 import type { ReplaceMode } from '~/types';
 
 type Media = {

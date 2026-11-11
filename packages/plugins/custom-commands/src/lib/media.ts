@@ -1,11 +1,11 @@
 import { messages } from '@unbound-app/i18n';
 import { fs } from '@unbound-app/api';
 
-import { fileExtension, localPath, resolvePickedMedia } from '~/commands/picked-media';
-import type { PickedMedia, PickerAsset } from '~/commands/picked-media';
+import { fileExtension, localPath, resolvePickedMedia } from '~/lib/picked-media';
+import type { PickedMedia, PickerAsset } from '~/lib/picked-media';
 import { MAX_ATTACHMENTS } from '~/constants';
-import type { TagMedia } from '~/commands/tags';
-import { ImagePicker } from '~/commands/modules';
+import type { TagMedia } from '~/lib/tags';
+import { ImagePicker } from '~/lib/modules';
 
 /** An attachment in the command form: already saved, or just picked and not yet copied. */
 export type DraftMedia = PickedMedia | TagMedia;
@@ -40,7 +40,7 @@ export function mediaUri(media: TagMedia): string {
  * @throws When the picker is unavailable, fails, or returns an unusable asset.
  */
 export async function pickMedia(): Promise<PickedMedia[]> {
-	if (!ImagePicker.launchImageLibraryAsync) {
+	if (!ImagePicker?.launchImageLibraryAsync) {
 		throw new Error(messages.PICKER_UNAVAILABLE);
 	}
 

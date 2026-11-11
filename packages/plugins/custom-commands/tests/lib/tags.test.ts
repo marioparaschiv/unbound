@@ -8,7 +8,7 @@ import {
 	renderTagMessage,
 	type Tag,
 	validateTag,
-} from '~/commands/tags';
+} from '~/lib/tags';
 
 function tag(name: string, message: string): Tag {
 	return { name, message, media: [] };

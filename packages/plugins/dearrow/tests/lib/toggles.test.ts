@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createToggles } from '~/embeds/toggles';
+import { createToggles } from '~/lib/toggles';
 
 describe('createToggles', () => {
 	test('follows the default until switched', () => {

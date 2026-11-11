@@ -1,13 +1,13 @@
 import { format, messages } from '@unbound-app/i18n';
 import { flux } from '@unbound-app/api';
 
-import { CloudUploader, Messages, PendingReplyStore } from '~/commands/modules';
-import { getOptionValue, renderTagMessage } from '~/commands/tags';
-import type { CommandOption, TagMedia } from '~/commands/tags';
-import type { CommandContext } from '~/commands/commands';
-import { notify, notifyError } from '~/commands/notify';
-import { getTags } from '~/commands/saved-commands';
-import { mediaUri } from '~/commands/media';
+import { CloudUploader, Messages, PendingReplyStore } from '~/lib/modules';
+import { getOptionValue, renderTagMessage } from '~/lib/tags';
+import type { CommandOption, TagMedia } from '~/lib/tags';
+import type { CommandContext } from '~/lib/commands';
+import { notify, notifyError } from '~/lib/notify';
+import { getTags } from '~/lib/saved-commands';
+import { mediaUri } from '~/lib/media';
 
 type CloudUpload = {
 	status: string;
@@ -17,7 +17,9 @@ type CloudUpload = {
 async function uploadMedia(media: TagMedia[], channelId: string): Promise<CloudUpload[]> {
 	if (!media.length) return [];
 
-	if (!CloudUploader.CloudUpload) {
+	const Upload = CloudUploader?.CloudUpload;
+
+	if (!Upload) {
 		throw new Error(messages.UPLOADS_UNAVAILABLE);
 	}
 
@@ -38,7 +40,7 @@ async function uploadMedia(media: TagMedia[], channelId: string): Promise<CloudU
 			progress: 0,
 		};
 
-		return new CloudUploader.CloudUpload(file, channelId, index, true);
+		return new Upload(file, channelId, index, true);
 	});
 
 	await Promise.all(uploads.map((upload) => upload.upload()));

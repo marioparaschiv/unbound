@@ -1,8 +1,8 @@
-import { isSaved, persistMedia, removeStoredMedia } from '~/commands/media';
-import type { Tag, TagMedia } from '~/commands/tags';
-import type { DraftMedia } from '~/commands/media';
-import { normalizeTags } from '~/commands/tags';
-import { settings } from '~/commands/modules';
+import { isSaved, persistMedia, removeStoredMedia } from '~/lib/media';
+import type { Tag, TagMedia } from '~/lib/tags';
+import type { DraftMedia } from '~/lib/media';
+import { normalizeTags } from '~/lib/tags';
+import { settings } from '~/lib/modules';
 
 /** A command's text fields, as entered in the form. */
 export type TagFields = Omit<Tag, 'media'>;

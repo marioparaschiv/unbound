@@ -7,7 +7,7 @@ import {
 	parseBranding,
 	thumbnailUrl,
 	videoIdFromUrl,
-} from '~/embeds/branding';
+} from '~/lib/branding';
 
 const ID = 'dQw4w9WgXcQ';
 

@@ -8,8 +8,8 @@ import {
 	replaceEmbed,
 	selectReplacements,
 	type Embed,
-} from '~/embeds/message-embeds';
-import type { Branding } from '~/embeds/branding';
+} from '~/lib/message-embeds';
+import type { Branding } from '~/lib/branding';
 
 const ID = 'dQw4w9WgXcQ';
 const OTHER = 'aaaaaaaaaaa';

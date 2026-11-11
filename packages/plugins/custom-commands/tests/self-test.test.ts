@@ -1,24 +1,28 @@
-import { flux, metro, startPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
-
-import { selfTest } from '~/index';
 
 beforeEach(() => {
 	flux.seed({ PendingReply: { getPendingReply: () => undefined } });
 });
 
 describe('the self test', () => {
-	test('reports ok once the commands are listed', async () => {
+	test('passes once the commands are listed, with no warning', async () => {
 		metro.register({ getBuiltInCommands: () => [] });
 		metro.register({ sendMessage: () => undefined, receiveMessage: () => undefined });
 		await startPlugin();
 
-		expect(selfTest().ok).toBe(true);
+		expect(logs.entries.filter(({ level }) => level === 'warn' || level === 'error')).toEqual(
+			[],
+		);
 	});
 
-	test('reports the missing module when Discord has none of them', async () => {
+	test('fails with the missing module when Discord moved Commands', async () => {
+		metro.markMissing('getBuiltInCommands');
 		await startPlugin();
 
-		expect(selfTest()).toMatchObject({ ok: false });
+		expect(logs.entries).toContainEqual({
+			level: 'warn',
+			args: ['Saved commands skipped: Discord moved Commands or Messages.'],
+		});
 	});
 });

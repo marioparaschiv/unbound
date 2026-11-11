@@ -1,4 +1,4 @@
-import { brandingUrl, parseBranding, type Branding } from '~/embeds/branding';
+import { brandingUrl, parseBranding, type Branding } from '~/lib/branding';
 
 export type FetchBranding = (videoId: string) => Promise<unknown>;
 

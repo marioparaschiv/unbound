@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 
-import { appendSavedCommands, createCommand } from '~/commands/commands';
-import type { BuiltInCommand } from '~/commands/commands';
+import { appendSavedCommands, createCommand } from '~/lib/commands';
+import type { BuiltInCommand } from '~/lib/commands';
 
 const tags = [{ name: 'dope', message: 'lol', media: [] }];
 

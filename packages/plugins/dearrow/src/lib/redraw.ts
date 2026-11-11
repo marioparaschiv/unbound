@@ -1,9 +1,8 @@
-import { flux, storage } from '@unbound-app/api';
+import { flux } from '@unbound-app/api';
 
-import { MessageStore } from '~/embeds/modules';
-
-const REDRAW_KEYS: readonly (string | null)[] = ['replaceElements', 'dearrowByDefault', null];
 const REBIND_ALL_MS = 1500;
+
+const MessageStore = flux.getStore('Message');
 
 type StoredMessage = {
 	content: string;
@@ -97,15 +96,3 @@ export function createPendingRows() {
 }
 
 export type PendingRows = ReturnType<typeof createPendingRows>;
-
-/**
- * @description Redraws the chat when a setting that changes how embeds look changes.
- * @param pending The rows waiting for branding, used to bind every row again.
- * @returns A function that stops listening.
- */
-export function subscribeSettings(pending: PendingRows): () => void {
-	return storage.onChange(
-		(payload) => payload.store === addon.id && REDRAW_KEYS.includes(payload.key),
-		pending.rebindAll,
-	);
-}

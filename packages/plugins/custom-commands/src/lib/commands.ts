@@ -5,8 +5,8 @@ import {
 } from '~/constants';
 import { messages } from '@unbound-app/i18n';
 
-import type { CommandOption, Tag } from '~/commands/tags';
-import { getTagDescription, parseTagArguments } from '~/commands/tags';
+import type { CommandOption, Tag } from '~/lib/tags';
+import { getTagDescription, parseTagArguments } from '~/lib/tags';
 
 export type CommandContext = {
 	channel?: { id?: string };
