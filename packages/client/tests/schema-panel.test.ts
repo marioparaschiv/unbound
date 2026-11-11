@@ -22,6 +22,7 @@ const discord = new Proxy(
 
 mock.module('~/metro/components', () => ({
 	Discord: discord,
+	isRenderable: () => true,
 	SafeArea: named,
 	BottomSheets: named,
 	HelpMessage: named,
@@ -34,6 +35,8 @@ mock.module('~/metro/search', () => ({
 mock.module('~/metro/wrappers', () => ({ findStoreLazy: () => undefined }));
 mock.module('~/metro/api', () => ({ ActionSheets: undefined }));
 mock.module('~/assets/api', () => ({ icons: named }));
+// Loads Reanimated, which has no test runtime; these tests never render it.
+mock.module('~/ui/components/collapsible-group', () => ({ default: () => null }));
 mock.module('~/i18n/api', () => ({ messages: named, format: (key: string) => key }));
 // A confirmation answers yes, by pressing its confirm button.
 mock.module('~/dialogs/api', () => ({
