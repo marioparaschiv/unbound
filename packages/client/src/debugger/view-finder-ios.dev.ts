@@ -4,7 +4,7 @@ import type {
 	NativeObjectHandle,
 	NativeViewSnapshotNode,
 } from '@unbound-app/types';
-import type { ViewNode } from '@unbound-app/debugger-protocol';
+import type { ViewFrame, ViewNode } from '@unbound-app/debugger-protocol';
 
 import type { OutlineTarget, ViewSource } from '~/debugger/view-finder.dev';
 import { clipText, type PixelRect } from '~/debugger/view-node.dev';
@@ -13,9 +13,11 @@ type Entry = { view: NativeObjectHandle; rect: PixelRect };
 type Border = { layer: NativeObjectHandle; width: NativeObjCResult; color: NativeObjCResult };
 
 const OUTLINE_WIDTH = 2;
+const FILL_ALPHA = 0.2;
 
 /**
- * @description Reads the visible windows' UIView trees one level at a time, and outlines a view with its layer border.
+ * @description Reads the visible windows' UIView trees one level at a time, and outlines a view with its layer border
+ * or a window rectangle with an overlay view.
  * @param objc The loader's unscoped Objective-C bridge.
  * @returns The iOS view source.
  */
@@ -23,6 +25,8 @@ export function createIosViewSource(objc: LoaderObjCBridge): ViewSource {
 	const entries = new Map<string, Entry>();
 	let nextId = 0;
 	let saved: Border | undefined;
+	let overlay: NativeObjectHandle | undefined;
+	let overlaid = false;
 
 	function describe(
 		view: NativeObjectHandle,
@@ -108,6 +112,11 @@ export function createIosViewSource(objc: LoaderObjCBridge): ViewSource {
 	}
 
 	async function clearOutline() {
+		if (overlaid && overlay) {
+			overlaid = false;
+			await objc.invokeAsync(overlay, 'removeFromSuperview', []);
+		}
+
 		if (!saved) return;
 
 		const { layer, width, color } = saved;
@@ -117,9 +126,57 @@ export function createIosViewSource(objc: LoaderObjCBridge): ViewSource {
 		await objc.invokeAsync(layer, 'setBorderColor:', [color]);
 	}
 
-	// Only listed views are outlined; a bare frame, as React DevTools sends, has no layer to border on iOS yet.
+	/** A teal, untouchable view, made once and moved for each rectangle React DevTools highlights. */
+	async function prepareOverlay(): Promise<NativeObjectHandle | undefined> {
+		if (overlay) {
+			return overlay;
+		}
+
+		const viewClass = objc.getClass('UIView');
+		const palette = objc.getClass('UIColor');
+		const view = viewClass ? (objc.call(viewClass, 'new') as NativeObjectHandle | null) : null;
+
+		if (!view || !palette) {
+			return undefined;
+		}
+
+		const teal = objc.call(palette, 'systemTealColor') as NativeObjectHandle;
+		const fill = objc.invoke(teal, 'colorWithAlphaComponent:', [FILL_ALPHA]);
+		const layer = objc.call(view, 'layer') as NativeObjectHandle;
+
+		await objc.invokeAsync(view, 'setUserInteractionEnabled:', [false]);
+		await objc.invokeAsync(view, 'setBackgroundColor:', [fill]);
+		await objc.invokeAsync(layer, 'setBorderWidth:', [OUTLINE_WIDTH]);
+		await objc.invokeAsync(layer, 'setBorderColor:', [objc.invoke(teal, 'CGColor', [])]);
+		overlay = view;
+
+		return view;
+	}
+
+	// The key window spans the screen, so its coordinates are the points React Native measures in.
+	async function outlineFrame({ x, y, width, height }: ViewFrame) {
+		const application = objc.getClass('UIApplication');
+		const shared = application ? objc.call(application, 'sharedApplication') : undefined;
+		const window = shared ? objc.call(shared as NativeObjectHandle, 'keyWindow') : undefined;
+		const view = window ? await prepareOverlay() : undefined;
+
+		if (!window || !view) return;
+
+		const rect = objc.struct('CGRect', { origin: { x, y }, size: { width, height } });
+
+		await objc.invokeAsync(view, 'setFrame:', [rect]);
+		await objc.invokeAsync(window as NativeObjectHandle, 'addSubview:', [view]);
+		overlaid = true;
+	}
+
 	async function highlight(target: OutlineTarget) {
 		await clearOutline();
+
+		if (target && typeof target === 'object') {
+			await outlineFrame(target);
+
+			return;
+		}
 
 		const entry = typeof target === 'string' ? entries.get(target) : undefined;
 		const layer = entry ? (objc.call(entry.view, 'layer') as NativeObjectHandle | null) : null;
