@@ -19,7 +19,6 @@ export const MAX_TARGETS = 3;
 /** How many distinctive names a target needs to be indexed. */
 export const MIN_DISTINCTIVE = 2;
 
-/** Everything the module index needs about the build. */
 export type ModuleIndexInput = {
 	build: string;
 	shapes: ModuleShape[];
@@ -41,7 +40,6 @@ type ModuleEntry = {
 /**
  * @description Keys a module the same way in every build: by its source path, else by a hash of its export names,
  * since numeric module ids change with every Discord build.
- * @param shape The module's shape.
  * @returns The source path, or `~` and ten hex digits of the export-name set's SHA-1.
  */
 export function moduleKey(shape: ModuleShape): string {

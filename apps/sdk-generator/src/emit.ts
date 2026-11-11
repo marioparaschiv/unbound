@@ -265,7 +265,6 @@ export function buildGlobal(
 /**
  * @description Builds the `@unbound-app/api` `exports` map: the root, the globals, each module, and the
  * shared types, and the hand-written testing kit in `packages/api/testing` (its preset and the fakes it is built from).
- * @param entries The emitted module entries.
  * @returns The map, sorted by subpath.
  */
 export function buildExports(entries: ModuleEntry[]): Record<string, string> {

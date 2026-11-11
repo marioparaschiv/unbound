@@ -103,7 +103,6 @@ export function parseBucketEnv(
 
 /**
  * @description Connects to the public bucket. Writes go through a presigned PUT, because `Bun.S3Client` cannot set `Cache-Control`.
- * @param env The validated bucket environment.
  * @returns The bucket operations the upload needs.
  */
 export function createDocsBucket(env: BucketEnv): DocsBucket {

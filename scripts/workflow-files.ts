@@ -157,7 +157,6 @@ function vendorProblems(root: string): string[] {
 
 /**
  * @description Checks the files the workflows read besides secrets and variables: the zizmor config, the label list and the loader's vendored versions.
- * @param root The repository root.
  * @returns Each problem found, empty when all three files are sound.
  */
 export function workflowFileProblems(root: string): string[] {

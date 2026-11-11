@@ -145,7 +145,6 @@ export function renderConfigSummary(statuses: ConfigStatus[]): string {
 
 /**
  * @description Names the environment variable the health workflow sets to whether a name is configured.
- * @param name The secret or variable name.
  * @returns The environment variable name.
  */
 export function presenceVariable(name: string): string {

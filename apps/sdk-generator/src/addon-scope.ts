@@ -73,7 +73,6 @@ const ADDON_SCOPE: Record<string, ScopeGlobal> = {
 
 /**
  * @description Reads the names in a typings file's `ADDON_SCOPE_GLOBALS` array.
- * @param path The typings file.
  * @returns The names, in parameter order.
  */
 export function readScopeGlobalNames(path: string = ADDONS_TYPINGS): string[] {

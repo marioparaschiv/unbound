@@ -35,13 +35,11 @@ describe('resolveLibraryTypes', () => {
 		);
 	});
 
-	test('resolves an exports types condition (possess)', () => {
-		const root = readManifest('packages/client/node_modules/possess/package.json').exports?.[
-			'.'
-		];
-		const typings = typeof root === 'object' ? root.types : root;
-
-		expect(resolveLibraryTypes('possess')).toEndWith(join('possess', String(typings)));
+	// Its `types` field names the `types` directory, so only the exports condition reaches the file.
+	test('prefers the exports types condition over the types field (react-native)', () => {
+		expect(resolveLibraryTypes('react-native')).toEndWith(
+			join('react-native', 'types', 'index.d.ts'),
+		);
 	});
 
 	test('returns undefined for a package without a typings entry (@unbound-app/utils)', () => {

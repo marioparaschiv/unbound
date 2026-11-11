@@ -19,8 +19,6 @@ function pascal(segment: string): string {
 
 /**
  * @description Orders strings by code unit, unlike `localeCompare`, so output does not depend on the machine.
- * @param a The first string.
- * @param b The second string.
  * @returns A negative, zero or positive number.
  */
 export function compare(a: string, b: string): number {
@@ -43,7 +41,6 @@ function prefixes(component: ComponentRecord): string[] {
 
 /**
  * @description Sorts components into the order every later stage iterates in, so output is deterministic.
- * @param components The components.
  * @returns A new array sorted by source path, then name, then module id.
  */
 export function sortComponents(components: ComponentRecord[]): ComponentRecord[] {

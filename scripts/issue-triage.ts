@@ -22,7 +22,6 @@ const PLATFORM_LABELS: Record<string, string> = { iOS: 'iOS', Android: 'Android'
 
 /**
  * @description Reads the answers GitHub renders into an issue form's body, one `### Label` section per field.
- * @param body The issue body.
  * @returns Each field's label and its answer, empty when the reporter left it blank.
  */
 export function parseFormAnswers(body: string): FormAnswers {

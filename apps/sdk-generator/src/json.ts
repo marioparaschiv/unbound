@@ -6,7 +6,6 @@ export type JsonObject = { [key: string]: JsonValue };
 
 /**
  * @description Narrows a JSON value to a plain object, excluding `null` and arrays.
- * @param value The JSON value to test.
  * @returns `true` when the value is a JSON object.
  */
 export function isJsonObject(value: JsonValue | undefined): value is JsonObject {
@@ -16,7 +15,6 @@ export function isJsonObject(value: JsonValue | undefined): value is JsonObject 
 /**
  * @description Reads and parses a JSON object file, naming the file in the error so a malformed
  * or non-object manifest is attributable at a glance.
- * @param path The absolute path of the JSON file to read.
  * @returns The parsed object.
  */
 export function readJson(path: string): JsonObject {

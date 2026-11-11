@@ -20,8 +20,6 @@ export type Frame = {
 /**
  * @description Reads parameter `index`; past the props object, a walked function's parameters are positional
  * parameters of its record.
- * @param frame The function being walked.
- * @param index The parameter index.
  * @returns What the parameter holds.
  */
 export function param(frame: Frame, index: number): Value {
@@ -32,8 +30,6 @@ export function param(frame: Frame, index: number): Value {
 
 /**
  * @description Reads a closure slot. Inside a generator hermes-dec numbers slots from another base, so none is trusted.
- * @param frame The function being walked.
- * @param name The slot name.
  * @returns What the slot holds.
  */
 export function readSlot(frame: Frame, name: string): Value {
@@ -42,9 +38,6 @@ export function readSlot(frame: Frame, name: string): Value {
 
 /**
  * @description Writes a closure slot, logging the previous value so the write can be undone.
- * @param frame The function being walked.
- * @param name The slot name.
- * @param value The value written.
  */
 export function writeSlot(frame: Frame, name: string, value: Value) {
 	const { ctx } = frame;
