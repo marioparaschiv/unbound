@@ -7,7 +7,7 @@ export const get = fonts.getAddon.bind(fonts);
 /** Installs a font by family name or link, optionally only some weights and styles. */
 export const install = fonts.install.bind(fonts);
 /** Removes an installed face by id. */
-export const uninstall = fonts.delete.bind(fonts);
+export const uninstall = fonts.uninstall.bind(fonts);
 /** Points a Discord family, or a group such as `PRIMARY`, at an installed face. */
 export const setOverride = fonts.setOverride.bind(fonts);
 /** Gives a Discord family, or a group, back its own font. */

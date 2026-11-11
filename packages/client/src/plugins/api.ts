@@ -21,7 +21,7 @@ export const toggle: (id: string) => void = plugins.toggle.bind(plugins);
 export const install: (url: string, digest?: string) => Promise<AddonHandle | undefined> =
 	plugins.install.bind(plugins);
 /** Stops and removes an installed plugin. */
-export const uninstall: (id: string) => Promise<void> = plugins.delete.bind(plugins);
+export const uninstall: (id: string) => Promise<void> = plugins.uninstall.bind(plugins);
 /** Swaps a plugin's bundle in place, keeping its enabled state. */
 export const reload: (
 	id: string,

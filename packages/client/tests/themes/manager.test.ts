@@ -81,7 +81,7 @@ describe('applying one theme at a time', () => {
 		load('theme.deleted', MIDNIGHT);
 		themes.enable('theme.deleted');
 
-		await themes.delete('theme.deleted');
+		await themes.uninstall('theme.deleted');
 
 		expect(themes.getAppliedId()).toBeNull();
 		expect(ThemeStore.getState().applied).toBeNull();

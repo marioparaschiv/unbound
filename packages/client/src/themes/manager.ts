@@ -7,7 +7,7 @@ import { Addons } from '~/addons/addons';
 import ThemeStore from '~/themes/state';
 
 // A hot reload persists the pushed theme, so it rewrites the files on disk like an update.
-const DISK_EVENTS = ['installed', 'updated', 'deleted', 'reloaded'] as const;
+const DISK_EVENTS = ['installed', 'updated', 'uninstalled', 'reloaded'] as const;
 
 /**
  * @description Manages user themes, layering theme-specific application on top of the base {@link Addons} manager.

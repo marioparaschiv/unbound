@@ -20,7 +20,7 @@ export const toggle: (id: string) => void = themes.toggle.bind(themes);
 export const install: (url: string, digest?: string) => Promise<AddonHandle | undefined> =
 	themes.install.bind(themes);
 /** Removes an installed theme. */
-export const uninstall: (id: string) => Promise<void> = themes.delete.bind(themes);
+export const uninstall: (id: string) => Promise<void> = themes.uninstall.bind(themes);
 /** Swaps a theme's files in place, keeping its enabled state. */
 export const reload: (
 	id: string,

@@ -61,7 +61,7 @@ test('leaves an addon deleted after the update check deleted when updates apply'
 		},
 	});
 
-	await plugins.delete(ID);
+	await plugins.uninstall(ID);
 	writes.length = 0;
 	await UpdatesStore.getState().applyAll();
 

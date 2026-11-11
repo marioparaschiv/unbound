@@ -20,7 +20,7 @@ export const toggle: (id: string) => void = icons.toggle.bind(icons);
 export const install: (url: string, digest?: string) => Promise<AddonHandle | undefined> =
 	icons.install.bind(icons);
 /** Removes an installed icon pack. */
-export const uninstall: (id: string) => Promise<void> = icons.delete.bind(icons);
+export const uninstall: (id: string) => Promise<void> = icons.uninstall.bind(icons);
 /** Swaps an icon pack's files in place, keeping its enabled state. */
 export const reload: (
 	id: string,

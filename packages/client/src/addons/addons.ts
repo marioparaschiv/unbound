@@ -32,7 +32,7 @@ export type InstallListedOptions = {
 	hold?: boolean;
 };
 
-const INSTALL_EVENTS = ['loaded', 'unloaded', 'installed', 'updated', 'deleted'] as const;
+const INSTALL_EVENTS = ['loaded', 'unloaded', 'installed', 'updated', 'uninstalled'] as const;
 
 /**
  * @description Addon distribution on top of {@link AddonSelection}: install, update, hot reload and
@@ -192,7 +192,7 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 
 	/**
 	 * @description Installs an addon from a manifest URL: fetches and validates the manifest, downloads
-	 * the bundle, loads it, and emits `installed`. Twin of {@link delete}.
+	 * the bundle, loads it, and emits `installed`. Twin of {@link uninstall}.
 	 * @param url The manifest URL to install from.
 	 * @param digest The SHA-256 the bundle must have, when the release lists one.
 	 * @returns The loaded addon, or `undefined` on failure.
@@ -407,10 +407,10 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 	}
 
 	/**
-	 * @description Deletes an installed addon: unloads it and removes its folder from disk, emitting `deleted`.
-	 * @param addon The addon to delete, as its id or the addon itself.
+	 * @description Uninstalls an addon: unloads it and removes its folder from disk, emitting `uninstalled`.
+	 * @param addon The addon to uninstall, as its id or the addon itself.
 	 */
-	async delete(addon: AddonResolveable<I>): Promise<void> {
+	async uninstall(addon: AddonResolveable<I>): Promise<void> {
 		const resolved = this.resolve(addon);
 
 		if (!resolved) return;
@@ -426,7 +426,7 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 			this.forgetSource(resolved.id);
 			this.clearDevelopmentCopy(resolved.id);
 			this.releaseHold(resolved.id);
-			this.emit('deleted', resolved);
+			this.emit('uninstalled', resolved);
 		} catch (error) {
 			this.fail('delete', resolved.id, error);
 		}

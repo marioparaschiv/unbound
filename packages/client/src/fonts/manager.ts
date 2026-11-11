@@ -173,7 +173,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 	}
 
 	/**
-	 * @description Installs a font by family name or link and emits `changed`. Twin of {@link delete}.
+	 * @description Installs a font by family name or link and emits `changed`. Twin of {@link uninstall}.
 	 * @param input The family name or link.
 	 * @param variants The weights and styles to install; every file when omitted.
 	 * @returns What installed, or `undefined` with the failure in `errors` under `input`.
@@ -201,7 +201,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 	 * Twin of {@link install}.
 	 * @param id The face id.
 	 */
-	async delete(id: string): Promise<void> {
+	async uninstall(id: string): Promise<void> {
 		try {
 			await this.bridge().remove(id);
 

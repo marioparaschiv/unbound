@@ -48,7 +48,7 @@ export type AddonEvents<T> = {
 	'install-error': (error: Error) => void;
 	updated: (addon: T) => void;
 	'update-error': (addon: T, error: Error) => void;
-	deleted: (addon: T) => void;
+	uninstalled: (addon: T) => void;
 	'consent-required': (addon: T) => void;
 	/** Any change to {@link Addon.phase} or its settings panel: a start, an async settle, a stop or a failure. */
 	changed: (addon: T) => void;

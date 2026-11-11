@@ -175,10 +175,10 @@ export class Icons extends Addons<Plugin> {
 	}
 
 	/**
-	 * @description Deletes a pack, forgetting it from the packs loaded at launch.
-	 * @param addon The pack to delete, as its id or the addon itself.
+	 * @description Uninstalls a pack, forgetting it from the packs loaded at launch.
+	 * @param addon The pack to uninstall, as its id or the addon itself.
 	 */
-	async delete(addon: AddonResolveable): Promise<void> {
+	async uninstall(addon: AddonResolveable): Promise<void> {
 		const id = typeof addon === 'string' ? addon : addon.id;
 		const packs = this.settings.get<IconPack[]>('packs', [defaultPack]);
 
@@ -188,7 +188,7 @@ export class Icons extends Addons<Plugin> {
 		);
 
 		this.indexes.delete(id);
-		await super.delete(addon);
+		await super.uninstall(addon);
 	}
 
 	/**

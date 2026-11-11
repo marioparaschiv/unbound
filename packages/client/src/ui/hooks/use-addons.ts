@@ -24,7 +24,7 @@ function useAddons(kind: AddonListKind): Addon[] {
 			'enabled',
 			'disabled',
 			'installed',
-			'deleted',
+			'uninstalled',
 		] as const;
 
 		for (const event of events) {

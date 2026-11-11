@@ -30,7 +30,7 @@ type KindAdapter = {
 	isEnabled: (id: string) => boolean;
 	isInstalled: (id: string) => boolean;
 	install: (url: string) => Promise<object | string | undefined>;
-	delete: (id: string) => Promise<void>;
+	uninstall: (id: string) => Promise<void>;
 	setEnabled: (id: string, enabled: boolean) => void;
 	apply: (id: string | null) => void | Promise<void>;
 	getSources: () => Record<string, string>;
@@ -73,7 +73,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 		isEnabled: (id) => plugins.isEnabled(id),
 		isInstalled: (id) => Boolean(plugins.getAddon(id)),
 		install: (url) => plugins.install(url),
-		delete: (id) => plugins.delete(id),
+		uninstall: (id) => plugins.uninstall(id),
 		setEnabled: (id, enabled) => void (enabled ? plugins.enable(id) : plugins.disable(id)),
 		apply: ignored,
 		getSources: () => plugins.getSources(),
@@ -85,7 +85,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 		isEnabled: (id) => themes.getAppliedId() === id,
 		isInstalled: (id) => Boolean(themes.getAddon(id)),
 		install: (url) => themes.install(url),
-		delete: (id) => themes.delete(id),
+		uninstall: (id) => themes.uninstall(id),
 		// A theme is enabled by being applied.
 		setEnabled: ignored,
 		apply: (id) => {
@@ -106,7 +106,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 		isEnabled: (id) => icons.isEnabled(id),
 		isInstalled: (id) => Boolean(icons.getAddon(id)),
 		install: (url) => icons.install(url),
-		delete: (id) => icons.delete(id),
+		uninstall: (id) => icons.uninstall(id),
 		setEnabled: ignored,
 		apply: (id) => icons.enable(id ?? SYNC_DEFAULT_ICON_PACK),
 		getSources: () => icons.getSources(),
@@ -119,7 +119,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 		isEnabled: () => true,
 		isInstalled: (id) => Boolean(fonts.getAddon(id)),
 		install: (url) => fonts.install(url),
-		delete: (id) => fonts.delete(id),
+		uninstall: (id) => fonts.uninstall(id),
 		setEnabled: ignored,
 		apply: ignored,
 		getSources: () => fonts.getSources(),
@@ -221,7 +221,7 @@ async function applyAction(action: SyncAction): Promise<boolean> {
 		case 'delete': {
 			const adapter = adapters[action.kind];
 
-			await adapter.delete(action.id);
+			await adapter.uninstall(action.id);
 
 			// A delete returns early for an addon that is not loaded, which would leave its source to resync.
 			adapter.forgetSource(action.id);
