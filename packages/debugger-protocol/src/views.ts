@@ -52,7 +52,7 @@ export type ViewHighlight = {
 
 const VISIBILITIES: ReadonlySet<unknown> = new Set(['visible', 'invisible', 'gone']);
 
-function isRecord(value: unknown): value is Record<string, unknown> {
+function isObject(value: unknown): value is object {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
@@ -62,10 +62,14 @@ function isNullableString(value: unknown): value is string | null {
 
 function isViewFrame(value: unknown): value is ViewFrame {
 	return (
-		isRecord(value) &&
+		isObject(value) &&
+		'x' in value &&
 		typeof value.x === 'number' &&
+		'y' in value &&
 		typeof value.y === 'number' &&
+		'width' in value &&
 		typeof value.width === 'number' &&
+		'height' in value &&
 		typeof value.height === 'number'
 	);
 }
@@ -77,14 +81,22 @@ function isViewFrame(value: unknown): value is ViewFrame {
  */
 export function isViewNode(value: unknown): value is ViewNode {
 	return (
-		isRecord(value) &&
+		isObject(value) &&
+		'id' in value &&
 		typeof value.id === 'string' &&
+		'className' in value &&
 		typeof value.className === 'string' &&
+		'resourceName' in value &&
 		isNullableString(value.resourceName) &&
+		'frame' in value &&
 		isViewFrame(value.frame) &&
+		'visibility' in value &&
 		VISIBILITIES.has(value.visibility) &&
+		'alpha' in value &&
 		(value.alpha === null || typeof value.alpha === 'number') &&
+		'text' in value &&
 		isNullableString(value.text) &&
+		'childCount' in value &&
 		typeof value.childCount === 'number'
 	);
 }
@@ -97,23 +109,32 @@ export function isViewNode(value: unknown): value is ViewNode {
 export function isViewFrameMessage(
 	frame: unknown,
 ): frame is ViewsRequest | ViewsResult | ViewHighlight {
-	if (!isRecord(frame)) return false;
+	if (!isObject(frame) || !('type' in frame)) {
+		return false;
+	}
 
 	switch (frame.type) {
 		case 'views-request':
 			return (
+				'id' in frame &&
 				typeof frame.id === 'string' &&
-				(frame.parent === undefined || typeof frame.parent === 'string')
+				(!('parent' in frame) ||
+					frame.parent === undefined ||
+					typeof frame.parent === 'string')
 			);
 		case 'views-result':
 			return (
+				'id' in frame &&
 				typeof frame.id === 'string' &&
+				'ok' in frame &&
 				(frame.ok === true
-					? Array.isArray(frame.nodes) && frame.nodes.every(isViewNode)
-					: frame.ok === false && typeof frame.error === 'string')
+					? 'nodes' in frame &&
+						Array.isArray(frame.nodes) &&
+						frame.nodes.every(isViewNode)
+					: frame.ok === false && 'error' in frame && typeof frame.error === 'string')
 			);
 		case 'view-highlight':
-			return isNullableString(frame.node);
+			return 'node' in frame && isNullableString(frame.node);
 		default:
 			return false;
 	}

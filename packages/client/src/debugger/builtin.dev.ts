@@ -11,10 +11,10 @@ import type {
 import { parseMessage } from '@unbound-app/debugger-protocol';
 import { createLogger } from '@unbound-app/logger';
 
-import { CLIENT_VERSION, DEBUGGER_ADDRESS } from '~/core/constants';
-import { getSetting, isSettingChange } from '~/settings/unbound';
 import { highlightView, listViews, resetViewFinder } from '~/debugger/view-finder.dev';
+import { CLIENT_VERSION, DEBUGGER_ADDRESS } from '~/core/constants';
 import { endSession, receive } from '~/debugger/react-devtools.dev';
+import { getSetting, isSettingChange } from '~/settings/unbound';
 import { reloadSummary } from '~/debugger/reload-summary.dev';
 import { createPatcher } from '~/patcher/create-patcher';
 import { currentEnvironment } from '~/core/environment';

@@ -3,6 +3,9 @@ import type { ViewFrame, ViewNode } from '@unbound-app/debugger-protocol';
 /** A rectangle in window pixels, as Android lays views out. */
 export type PixelRect = { x: number; y: number; width: number; height: number };
 
+/** A view's `getScrollX()` and `getScrollY()`, in pixels. */
+type ScrollOffset = { x: number; y: number };
+
 const MAX_TEXT_LENGTH = 200;
 const ANDROID_VISIBILITIES: Record<number, ViewNode['visibility']> = {
 	0: 'visible',
@@ -46,11 +49,7 @@ export function clipText(text: string): string | null {
  * @param scroll The parent's `getScrollX()` and `getScrollY()`.
  * @returns The child's rectangle in window pixels.
  */
-export function placeChild(
-	parent: PixelRect,
-	child: PixelRect,
-	scroll: { x: number; y: number },
-): PixelRect {
+export function placeChild(parent: PixelRect, child: PixelRect, scroll: ScrollOffset): PixelRect {
 	return {
 		x: parent.x + child.x - scroll.x,
 		y: parent.y + child.y - scroll.y,

@@ -16,6 +16,7 @@ type WallListener = (message: WallMessage) => void;
 type MessagingOptions = {
 	onSubscribe: (listener: WallListener) => void;
 	onUnsubscribe: (listener: WallListener) => void;
+	// UNKNOWN: React DevTools' payloads differ per event; they pass through to the bridge untouched.
 	onMessage: (event: string, payload: unknown) => void;
 };
 

@@ -32,6 +32,11 @@ export const REACT_DEVTOOLS_SHUTDOWN_EVENT = 'shutdown';
  * @param frame The parsed frame.
  * @returns Whether the frame names an event.
  */
-export function isReactDevtoolsFrame(frame: object): frame is ReactDevtoolsFrame {
-	return 'event' in frame && typeof frame.event === 'string';
+export function isReactDevtoolsFrame(frame: unknown): frame is ReactDevtoolsFrame {
+	return (
+		typeof frame === 'object' &&
+		frame !== null &&
+		'event' in frame &&
+		typeof frame.event === 'string'
+	);
 }
