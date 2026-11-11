@@ -25,7 +25,10 @@
 		}
 	],
 	"minNativeBridgeApi": "1.0.0",
-	"version": "1.2.5",
+	"version": "1.2.6",
+	"unbound": {
+		"min": "3.0.0"
+	},
 	"icon": "ReactionIcon",
 	"main": "index.tsx"
 }

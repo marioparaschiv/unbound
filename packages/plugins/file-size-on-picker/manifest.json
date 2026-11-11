@@ -12,7 +12,10 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.8",
+	"version": "1.0.9",
+	"unbound": {
+		"min": "3.0.0"
+	},
 	"icon": "ImageIcon",
 	"minNativeBridgeApi": "1.0.0",
 	"main": "index.tsx",
