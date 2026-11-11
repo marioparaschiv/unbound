@@ -1,12 +1,12 @@
 import type { LoaderUpdate } from '@unbound-app/contracts/loader';
 
 import type { DiscordBuilds } from '~/updates/discord-builds';
+import { CLIENT_VERSION, VERSION } from '~/core/constants';
 import { readInstallKind } from '~/updates/install-kind';
 import { useUnboundSettings } from '~/settings/unbound';
 import { getLoader } from '~/native/unbound-native';
 import LogoRowIcon from '~/ui/icons/logo-row-icon';
 import { loaderName } from '~/updates/loader-name';
-import { CLIENT_VERSION } from '~/core/constants';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { icons } from '~/assets/api';
@@ -14,6 +14,9 @@ import { icons } from '~/assets/api';
 import LoaderUpdateRow from './loader-update-row';
 import CheckingIcon from './checking-icon';
 import StatusIcon from './status-icon';
+
+// Beta bundles keep the last release's version, so only the revision tells them apart.
+const CLIENT_BUILD = `${CLIENT_VERSION} · ${VERSION}`;
 
 type UnboundGroupProps = {
 	/** Whether the last check finished, so a loader without an update is known to be current. */
@@ -47,8 +50,8 @@ function UnboundGroup({ checked, checking, loader, requiredLoader, discord }: Un
 				label={messages.UNBOUND_UPDATES_CLIENT}
 				subLabel={
 					clientManual
-						? format('UNBOUND_UPDATES_VERSION_PAUSED', { version: CLIENT_VERSION })
-						: `v${CLIENT_VERSION}`
+						? format('UNBOUND_UPDATES_VERSION_PAUSED', { version: CLIENT_BUILD })
+						: `v${CLIENT_BUILD}`
 				}
 				icon={<LogoRowIcon />}
 				trailing={
