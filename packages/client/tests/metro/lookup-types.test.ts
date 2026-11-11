@@ -61,10 +61,14 @@ describe('findByProps types', () => {
 		).toBeUndefined();
 	});
 
-	test('options and `all` keep the module type', () => {
+	test('options keep the module type, and `all` always gives an array', () => {
 		type All = ReturnType<typeof findByProps<'AlertModal', ['AlertActions', { all: true }]>>;
+		type Eager = ReturnType<
+			typeof findByProps<'AlertModal', ['AlertActions', { lazy: false }]>
+		>;
 
-		expect(expectType<Equal<All, AnyProps<AlertModalModule>[] | undefined>>()).toBeUndefined();
+		expect(expectType<Equal<All, AnyProps<AlertModalModule>[]>>()).toBeUndefined();
+		expect(expectType<Equal<Eager, AnyProps<AlertModalModule> | undefined>>()).toBeUndefined();
 	});
 
 	test('props several typed modules expose give the union of them', () => {
