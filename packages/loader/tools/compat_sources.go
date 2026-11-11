@@ -365,7 +365,6 @@ var scriptLookupCalls = map[string]string{
 	"findByPrototypes": referencePrototypes, "byPrototypes": referencePrototypes,
 	"findStore": referenceStore, "byStore": referenceStore,
 	"findByName": referenceName, "byName": referenceName,
-	"findByDisplayName": referenceName, "byDisplayName": referenceName,
 	"findByFilePath": referenceModulePath, "byFilePath": referenceModulePath,
 }
 
