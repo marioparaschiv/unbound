@@ -30,5 +30,12 @@
 	},
 	"icon": "ChevronLargeRightIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"bytecode": {
+		"98": "063524312b0062d077c08c2782d6948236cd5314d6b36bba4cd4b0191d3c40ab9f0c3d89c0dc8432caafd584c90ce753982e7c6b171c80ee8db38957e1d2662b"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "OMSMeKX6nfkGTjfCXdmtMfMj6DP6OJ2vVlwnefSCbJOJmW+CnXRW35Xab/AZECs8OPbIL1sLyNA45bu/mM9YCQ=="
+	}
 }
