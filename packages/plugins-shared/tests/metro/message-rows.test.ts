@@ -1,5 +1,5 @@
+import { createRecordingPatcher } from '@unbound-app/api/testing/fakes';
 import { afterEach, describe, expect, mock, test } from 'bun:test';
-import { createRecordingPatcher } from '@unbound-app/api/testing';
 
 import type { MessageRow, RowOptions } from '~/metro/message-rows';
 

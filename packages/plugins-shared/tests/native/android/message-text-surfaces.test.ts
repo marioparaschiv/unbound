@@ -1,4 +1,4 @@
-import { installAddonGlobals } from '@unbound-app/api/testing';
+import { installAddonGlobals } from '@unbound-app/api/testing/fakes';
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import {

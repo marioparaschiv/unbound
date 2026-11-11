@@ -1,11 +1,5 @@
-import {
-	flux,
-	metro,
-	native,
-	startPlugin,
-	stopPlugin,
-	type JavaPlain,
-} from '@unbound-app/api/testing';
+import { flux, metro, native, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import type { JavaPlain } from '@unbound-app/api/testing/fakes';
 import type { NativeJavaValue } from '@unbound-app/api/native';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 

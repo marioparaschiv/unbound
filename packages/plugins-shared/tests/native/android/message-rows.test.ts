@@ -10,7 +10,7 @@ import {
 	installAddonGlobals,
 	withMissingMembers,
 	type JavaPlain,
-} from '@unbound-app/api/testing';
+} from '@unbound-app/api/testing/fakes';
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import { watchMessageRows, type MessageRows } from '~/native/android/message-rows';

@@ -11,7 +11,7 @@ import {
 	settled,
 	withMissingMembers,
 	type JavaPlain,
-} from '@unbound-app/api/testing';
+} from '@unbound-app/api/testing/fakes';
 
 export const DRAWEE_TEXT_VIEW = 'com.facebook.drawee.span.SimpleDraweeSpanTextView';
 export const MESSAGE_CONTENT_VIEW = 'com.discord.chat.presentation.message.view.MessageContentView';
