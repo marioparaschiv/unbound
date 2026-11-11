@@ -1,5 +1,6 @@
 import type { FunctionComponent } from 'react';
 
+import { whenModuleLoads } from '~/metro/lazy-registry';
 import type * as Lookups from '~/metro/lookups';
 
 /** Any function component; `never` props accept every component's props. */
@@ -53,13 +54,19 @@ type FiberRoot = {
 };
 
 let renderer: MetroExport;
+let waiting = false;
 
 function getRenderer(): MetroExport {
-	// A hot build loads this runtime inside `~/metro/cache`'s imports, and the search reads that cache as it loads,
-	// so the lookups are required on first use.
-	const { findByProps } = require('~/metro/lookups') as typeof Lookups;
+	if (!waiting) {
+		waiting = true;
 
-	renderer ??= findByProps('getPublicInstanceFromRootTag', { lazy: false });
+		// A hot build loads this runtime inside `~/metro/cache`'s imports, and the search reads that cache as it
+		// loads, so the lookups are required on first use.
+		const { findByProps } = require('~/metro/lookups') as typeof Lookups;
+
+		// Waiting never loads a module, and a renderer that has not loaded yet is set once it does, not searched again.
+		whenModuleLoads(findByProps('getPublicInstanceFromRootTag'), (mdl) => (renderer = mdl));
+	}
 
 	return renderer;
 }
