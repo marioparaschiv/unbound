@@ -79,12 +79,27 @@ const CHIP_CLOSING = '\uFFFC\u2068\u2069\u2060\u2009\u200B';
 const CHIP_ICON = /[\uFFFC\u200B]/;
 
 /**
- * @description Locates the rendered channel mention of a message link inside a label's text.
+ * @description Locates the rendered chip of a message link inside a label's text.
  * @param text The label's plain text.
- * @param channelName The name of the linked message's channel.
- * @returns The range of the mention, including its attachment and bidi markers, or `undefined`.
+ * @param names The names Discord may label the chip with, from `linkChipNames`.
+ * @returns The range of the earliest chip, including its attachment and bidi markers, or `undefined`.
  */
-export function findRenderedLinkRange(text: string, channelName: string): TextRange | undefined {
+export function findRenderedLinkRange(
+	text: string,
+	names: readonly string[],
+): TextRange | undefined {
+	let earliest: TextRange | undefined;
+
+	for (const name of names) {
+		const range = findChip(text, name);
+
+		if (range && (!earliest || range.location < earliest.location)) earliest = range;
+	}
+
+	return earliest;
+}
+
+function findChip(text: string, channelName: string): TextRange | undefined {
 	if (!channelName) return;
 
 	let searchFrom = 0;

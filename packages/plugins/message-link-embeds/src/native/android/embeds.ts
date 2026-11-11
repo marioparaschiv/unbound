@@ -17,7 +17,7 @@ import { buildEmbeddedContent } from '~/lib/embedded-content';
 import { createLinkedMessages } from '~/lib/linked-messages';
 import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
 
-import { linkedChannelName } from '~/lib/channels';
+import { linkChipNames } from '~/lib/channels';
 import { Surface } from '~/lib/constants';
 
 const INSERTION = '\n\ufffc';
@@ -88,8 +88,8 @@ export function drawAndroidEmbeds(native: NativeBridge, renderers: Renderers): E
 				return;
 			}
 
-			const channelName = linkedChannelName(target, linkedMessage);
-			const range = channelName ? findRenderedLinkRange(text.string, channelName) : undefined;
+			const chipNames = linkChipNames(target, linkedMessage);
+			const range = chipNames ? findRenderedLinkRange(text.string, chipNames) : undefined;
 			const content = buildEmbeddedContent(renderers, linkedMessage, target.channelId);
 
 			if (!range || !content) return;

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.5] - 2026-11-11
+
+### Fixed
+
+- Previews show again on Discord 355 and later, which label a message link with the server's name, or for a DM link the person's name, instead of the channel's.
+
 ## [1.1.4] - 2026-11-11
 
 ### Changed

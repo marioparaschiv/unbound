@@ -41,7 +41,7 @@ describe('linked message targets', () => {
 describe('rendered message link ranges', () => {
 	test('includes directional markers and native attachments around the channel label', () => {
 		const text = 'body\n\n\u2068\u2068\uFFFCdevelopment\u2069\uFFFC\u2068\uFFFC\u2069\u2069';
-		const range = findRenderedLinkRange(text, 'development');
+		const range = findRenderedLinkRange(text, ['development']);
 
 		expect(range).toEqual({
 			location: text.indexOf('\u2068\u2068'),
@@ -54,7 +54,7 @@ describe('rendered message link ranges', () => {
 		const chip =
 			'\u2068\uFFFC\u2060development\u2060\uFFFC\u2060\uFFFC\u2060\u2060\u2009\u2069';
 
-		expect(findRenderedLinkRange(`${prefix}${chip} after`, 'development')).toEqual({
+		expect(findRenderedLinkRange(`${prefix}${chip} after`, ['development'])).toEqual({
 			location: prefix.length,
 			length: chip.length,
 		});
@@ -64,14 +64,35 @@ describe('rendered message link ranges', () => {
 		const prefix = 'fresh cross-channel link ';
 		const chip = '\u2068\u2068\u200Bshowcase\u2069\u200B\u2068\u200B\u2069\u2069';
 
-		expect(findRenderedLinkRange(`${prefix}${chip}`, 'showcase')).toEqual({
+		expect(findRenderedLinkRange(`${prefix}${chip}`, ['showcase'])).toEqual({
 			location: prefix.length,
 			length: chip.length,
 		});
 	});
 
 	test('ignores plain text that shares a channel name', () => {
-		expect(findRenderedLinkRange('development and more', 'development')).toBeUndefined();
+		expect(findRenderedLinkRange('development and more', ['development'])).toBeUndefined();
+	});
+
+	// Discord 355 labels the chip with the server name, or a DM's name, instead of the channel name.
+	test('finds the chip by whichever of the names Discord rendered', () => {
+		const prefix = 'link embed proof ';
+		const chip = '\u2068\u2068\u200BVancord\u2069\u200B\u2068\u200B\u2069\u2069';
+
+		expect(findRenderedLinkRange(`${prefix}${chip}`, ['rules', 'Vancord'])).toEqual({
+			location: prefix.length,
+			length: chip.length,
+		});
+	});
+
+	test('returns the earliest chip when several names match', () => {
+		const first = '\u2068\u2068\u200BMe\u2069\u200B\u2068\u200B\u2069\u2069';
+		const second = '\u2068\u2068\u200Brules\u2069\u200B\u2068\u200B\u2069\u2069';
+
+		expect(findRenderedLinkRange(`${first} and ${second}`, ['rules', 'Me'])).toEqual({
+			location: 0,
+			length: first.length,
+		});
 	});
 });
 

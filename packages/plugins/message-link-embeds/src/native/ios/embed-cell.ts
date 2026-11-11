@@ -6,7 +6,7 @@ import { findRenderedLinkRange, linkedTargets, targetKey } from '~/lib/link-targ
 import { buildEmbeddedContent } from '~/lib/embedded-content';
 import { reactionSnapshot } from '~/lib/reaction-state';
 import type { Session } from '~/native/ios/session';
-import { linkedChannelName } from '~/lib/channels';
+import { linkChipNames } from '~/lib/channels';
 import { readLabelText } from '~/native/ios/objc';
 import { MessageStore } from '~/lib/modules';
 
@@ -59,9 +59,9 @@ export async function embedCell(
 		return 'waiting';
 	}
 
-	const channelName = linkedChannelName(target, linked);
+	const chipNames = linkChipNames(target, linked);
 
-	if (!channelName) return 'retry';
+	if (!chipNames) return 'retry';
 
 	if (existing?.messageId === info.messageId && existing.target.messageId === target.messageId) {
 		const label = await readLabelText(session.objc, existing.label);
@@ -70,7 +70,7 @@ export async function embedCell(
 		if (!label) return 'retry';
 		if (label.text === existing.renderedText) return 'done';
 
-		const range = findRenderedLinkRange(label.text, channelName);
+		const range = findRenderedLinkRange(label.text, chipNames);
 
 		if (!range) return 'retry';
 
@@ -87,7 +87,7 @@ export async function embedCell(
 		if (!isCurrent()) return 'done';
 		if (!text) continue;
 
-		const range = findRenderedLinkRange(text.text, channelName);
+		const range = findRenderedLinkRange(text.text, chipNames);
 
 		if (!range) continue;
 
@@ -102,7 +102,7 @@ export async function embedCell(
 				cellKey: key,
 				messageId: info.messageId,
 				target,
-				channelName,
+				chipNames,
 				label,
 				attributedText: text.attributedText,
 				range,

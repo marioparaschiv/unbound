@@ -36,7 +36,7 @@ export type SurfaceInit = {
 	cellKey: string;
 	messageId: string;
 	target: LinkTarget;
-	channelName: string;
+	chipNames: string[];
 	label: NativeObjectHandle;
 	attributedText: NativeObjectHandle;
 	range: TextRange;
@@ -51,7 +51,7 @@ export type EmbeddedSurface = {
 	cellKey: string;
 	messageId: string;
 	target: LinkTarget;
-	channelName: string;
+	chipNames: string[];
 	record: Message;
 	generator: RowGenerator;
 	reactionSnapshot: string;
@@ -224,7 +224,7 @@ export async function reconcileSurfaceText(session: Session, surface: EmbeddedSu
 
 		if (surface.disposed || !label || label.text === surface.renderedText) return;
 
-		const range = findRenderedLinkRange(label.text, surface.channelName);
+		const range = findRenderedLinkRange(label.text, surface.chipNames);
 
 		if (range) updateSurface(session, surface, label.attributedText, range);
 	} catch {
@@ -333,7 +333,7 @@ export async function createSurface(
 		cellKey,
 		messageId: init.messageId,
 		target,
-		channelName: init.channelName,
+		chipNames: init.chipNames,
 		record: init.content.record,
 		generator: init.content.generator,
 		reactionSnapshot: init.reactionSnapshot,
