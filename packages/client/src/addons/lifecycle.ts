@@ -338,12 +338,18 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 			if (starting && typeof starting.then === 'function') {
 				state.settling = 'starting';
 				starting.then(
-					() => this.settle(resolved, 'starting'),
+					() => {
+						pluginScope?.endStart();
+						this.settle(resolved, 'starting');
+					},
 					(cause: unknown) => {
+						pluginScope?.endStart();
 						this.settle(resolved, 'starting');
 						this.recordStartFailure(resolved, toError(cause), 'running');
 					},
 				);
+			} else {
+				pluginScope?.endStart();
 			}
 
 			state.started = true;

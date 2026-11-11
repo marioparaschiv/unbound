@@ -143,6 +143,11 @@ export class Addon<I extends object = object> implements AddonHandle {
 		return this.#state.instance;
 	}
 
+	/** The warnings and errors a running plugin logged while it started. */
+	get startIssues(): readonly string[] {
+		return this.#state.scope?.startIssues ?? [];
+	}
+
 	get bundle(): string {
 		return this.#state.bundle;
 	}

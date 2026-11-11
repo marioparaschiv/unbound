@@ -47,6 +47,11 @@ export type MetroStoreOptions = {
 /** Options for {@link onModuleLoaded}: whether to also match a module's `default` export, and to return it on such a match. */
 export type MetroModuleLoadedOptions = Pick<MetroSearchOptions, 'esModules' | 'interop'>;
 
+/** Options for {@link onModuleLoaded}'s wait, adding `onMissing`, run at once instead of waiting when the cache knows the module is missing. */
+export type MetroWaitOptions = MetroModuleLoadedOptions & {
+	onMissing?: () => void;
+};
+
 /**
  * What is known of a module without loading it: `loaded` once loaded, `present` when an earlier search
  * found it in this build, `missing` when a full search of this build found nothing, and `unknown` otherwise.
@@ -180,19 +185,19 @@ export type MetroBulkModuleByName<T extends any[]> = {
 		: MetroNamedExport<T[K]['params'][number]>;
 };
 
-/**
- * Dispatches to the bulk or single by-property result shape based on the argument tuple.
- */
+/** Dispatches to the bulk or single by-property result shape; a single one is `undefined` when the cache knows it is missing. */
 export type MetroPropertyRecordOrArray<T extends any[], U extends string> =
-	T extends MetroBulkFind<U> ? MetroBulkModuleByProperty<T> : MetroSingleModuleByProperty<T>;
+	T extends MetroBulkFind<U>
+		? MetroBulkModuleByProperty<T>
+		: MetroSingleModuleByProperty<T> | undefined;
 
-/** Dispatches to the bulk or single by-path result shape based on the argument tuple. */
+/** Dispatches to the bulk or single by-path result shape; a single one is `undefined` when the cache knows it is missing. */
 export type MetroModuleOrArray<T extends any[], U extends string> =
-	T extends MetroBulkFind<U> ? AnyProps : MetroSingleModuleByPath<T>;
+	T extends MetroBulkFind<U> ? AnyProps : MetroSingleModuleByPath<T> | undefined;
 
-/** Dispatches to the bulk or single by-name result shape based on the argument tuple. */
+/** Dispatches to the bulk or single by-name result shape; a single one is `undefined` when the cache knows it is missing. */
 export type MetroFunctionSignatureOrArray<T extends any[], U extends string> =
-	T extends MetroBulkFind<U> ? MetroBulkModuleByName<T> : MetroSingleModuleByName<T>;
+	T extends MetroBulkFind<U> ? MetroBulkModuleByName<T> : MetroSingleModuleByName<T> | undefined;
 
 /** Convenience alias for a by-property result derived from a union of prop names. */
 export type MetroModule<TProps extends string> = MetroPropertyRecordOrArray<TProps[], TProps>;

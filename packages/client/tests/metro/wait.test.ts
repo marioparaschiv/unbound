@@ -198,8 +198,12 @@ describe('onModuleLoaded', () => {
 
 		const calls: string[] = [];
 
-		onModuleLoaded(missing, () => calls.push('missing'));
-		onModuleLoaded(byProps('absent'), () => calls.push('cached'));
+		onModuleLoaded(missing, () => calls.push('missing'), {
+			onMissing: () => calls.push('onMissing'),
+		});
+		onModuleLoaded(byProps('absent'), () => calls.push('cached'), {
+			onMissing: () => calls.push('never'),
+		});
 		onModuleLoaded(
 			(mdl) => mdl.absent !== void 0,
 			() => calls.push('keyless'),
@@ -207,7 +211,7 @@ describe('onModuleLoaded', () => {
 		metroRequire(26);
 
 		expect(tested).toBe(0);
-		expect(calls.sort()).toEqual(['cached', 'keyless']);
+		expect(calls.sort()).toEqual(['cached', 'keyless', 'onMissing']);
 	});
 });
 
@@ -288,10 +292,18 @@ describe('patching a lazy module', () => {
 		expect(metroRequire(5).half(8)).toBe(4);
 	});
 
-	test('a patch on a handle whose key is marked missing never applies', () => {
+	test('a lookup whose key is marked missing returns undefined and loads nothing', () => {
 		cachedIds['byProps::absentHandle'] = [];
 
+		expect(lookups.findByProps('absentHandle')).toBeUndefined();
+		expect(lookups.find(byProps('absentHandle'))).toBeUndefined();
+		expect(isLoaded(28)).toBe(false);
+	});
+
+	test('a patch on a handle whose key is marked missing after the lookup never applies', () => {
 		const Absent = lookups.findByProps('absentHandle');
+
+		cachedIds['byProps::absentHandle'] = [];
 
 		expect(() => after(Absent, 'absentHandle', () => 0)).not.toThrow();
 		expect(isLoaded(28)).toBe(false);
@@ -328,13 +340,16 @@ describe('getModulePresence', () => {
 	test('reports a lazy handle as loaded, present, missing or unknown without loading anything', () => {
 		metroRequire(23);
 		cachedIds['byProps::presentCached'] = [24];
+
+		const gone = lookups.findByProps('presentGone');
+
 		cachedIds['byProps::presentGone'] = [];
 
 		const before = loadedIds();
 		const presence = {
 			loaded: getModulePresence(lookups.findByProps('presentLoaded')),
 			present: getModulePresence(lookups.findByProps('presentCached')),
-			missing: getModulePresence(lookups.findByProps('presentGone')),
+			missing: getModulePresence(gone),
 			unknown: getModulePresence(lookups.findByProps('presentUnseen')),
 		};
 

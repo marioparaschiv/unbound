@@ -1,8 +1,12 @@
 import { createLogger } from '@unbound-app/logger';
 import noop from '@unbound-app/utils/noop';
 
+import type {
+	MetroLazySearchOptions,
+	MetroModuleLoadedOptions,
+	MetroWaitOptions,
+} from '~/metro/types';
 import { addCachedIDForKey, getModuleCacheForKey, isKeyMissing } from '~/metro/cache';
-import type { MetroLazySearchOptions, MetroModuleLoadedOptions } from '~/metro/types';
 import type { MetroFilter } from '~/metro/filters';
 import { blacklist, data } from '~/metro/state';
 import { benchTotal } from '~/core/bench-span';
@@ -34,19 +38,23 @@ data.listeners.add(
 /**
  * @description Calls `onLoad` with the module matching `filter` once it initializes, without ever initializing it.
  * A loaded module is passed at once; otherwise `onLoad` runs inside the module's factory, before its importer reads it.
- * A module a full search of this Discord build found missing never loads, so `onLoad` never runs for it.
+ * A module a full search of this Discord build found missing never loads, so `onLoad` never runs for it; `onMissing` runs instead.
  * @param filter The filter to match against.
  * @param onLoad Receives the matched module, once.
- * @param options Whether to also match the `default` export (`esModules`) and return it on such a match (`interop`).
+ * @param waitOptions Whether to also match the `default` export (`esModules`) and return it on such a match (`interop`), and `onMissing`.
  * @returns A function that stops waiting; it does nothing once `onLoad` has run.
  */
 export function onModuleLoaded(
 	filter: MetroFilter,
 	onLoad: (mdl: MetroExport) => void,
-	options: MetroModuleLoadedOptions = {},
+	waitOptions: MetroWaitOptions = {},
 ): () => void {
+	const { onMissing, ...options } = waitOptions;
+
 	// Waiting would test this filter against every module Discord loads for the rest of the session.
 	if (isKeyMissing(filter[CACHE_KEY])) {
+		onMissing?.();
+
 		return noop;
 	}
 
