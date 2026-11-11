@@ -1,6 +1,6 @@
-import type { NativePluginCapability, NativePluginPlatform } from '@unbound-app/types/native';
-import { NATIVE_PLUGIN_METHOD_CAPABILITIES } from '@unbound-app/types/native-methods';
-import { NATIVE_PLUGIN_PLATFORMS } from '@unbound-app/types/native';
+import type { NativeBridgeCapability, NativeBridgePlatform } from '@unbound-app/types/native';
+import { NATIVE_BRIDGE_METHOD_CAPABILITIES } from '@unbound-app/types/native-methods';
+import { NATIVE_BRIDGE_PLATFORMS } from '@unbound-app/types/native';
 import { relative, sep } from 'node:path';
 import { realpathSync } from 'node:fs';
 import ts from 'typescript-api';
@@ -16,7 +16,7 @@ export type Site = {
 
 export type BridgeCall = {
 	method: string;
-	capability: NativePluginCapability;
+	capability: NativeBridgeCapability;
 	site: Site;
 };
 
@@ -31,7 +31,7 @@ export type ImportEdge = {
 };
 
 export type PlatformHandler = {
-	platform: NativePluginPlatform;
+	platform: NativeBridgePlatform;
 	file: string;
 	declaredIn: string;
 };
@@ -49,9 +49,9 @@ export type FactsContext = {
 	siteRoot: string;
 };
 
-const METHOD_CAPABILITIES: Record<string, NativePluginCapability> =
-	NATIVE_PLUGIN_METHOD_CAPABILITIES;
-const PLATFORMS: readonly string[] = NATIVE_PLUGIN_PLATFORMS;
+const METHOD_CAPABILITIES: Record<string, NativeBridgeCapability> =
+	NATIVE_BRIDGE_METHOD_CAPABILITIES;
+const PLATFORMS: readonly string[] = NATIVE_BRIDGE_PLATFORMS;
 const DEFINE_PLATFORM = 'definePlatform';
 const NODE_MODULES = `${sep}node_modules${sep}`;
 
@@ -312,7 +312,7 @@ export function readFileFacts(file: ts.SourceFile, context: FactsContext): FileF
 	return facts;
 }
 
-function isPlatform(value: string): value is NativePluginPlatform {
+function isPlatform(value: string): value is NativeBridgePlatform {
 	return PLATFORMS.includes(value);
 }
 

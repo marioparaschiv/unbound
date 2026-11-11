@@ -2,7 +2,7 @@ import { Keyboard } from 'react-native';
 import type {
 	NativeObjCBridge,
 	NativeObjectHandle,
-	NativePluginBridge,
+	NativeBridge,
 	NativeRuntimeEventToken,
 	NativeStruct,
 } from '@unbound-app/api/native';
@@ -193,7 +193,7 @@ function stopKeyboardTracking(): void {
 }
 
 function startKeyboardTracking(
-	native: NativePluginBridge,
+	native: NativeBridge,
 	rootView: NativeObjectHandle,
 ): RotationSession {
 	if (activeSession?.rootView === rootView) return activeSession;
@@ -272,7 +272,7 @@ function startKeyboardTracking(
 	return session;
 }
 
-export async function rotateScreen(native: NativePluginBridge, degrees: number): Promise<boolean> {
+export async function rotateScreen(native: NativeBridge, degrees: number): Promise<boolean> {
 	const { objc } = native;
 
 	if (degrees === 0) {

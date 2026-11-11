@@ -1,4 +1,4 @@
-import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
+import { CORE_BUCKET } from '@unbound-app/types/settings';
 
 import type { SyncDocument } from './sync';
 
@@ -6,7 +6,7 @@ import type { SyncDocument } from './sync';
 export const SYNC_KINDS = ['plugins', 'themes', 'icons', 'fonts'] as const;
 
 /** The core Bucket; addon Buckets are named after the addon id. */
-export const SYNC_CORE_BUCKET = CORE_SETTINGS_STORE;
+export const SYNC_CORE_BUCKET = CORE_BUCKET;
 
 /** Buckets under this prefix hold caches and session state, and never sync. */
 export const SYNC_LOCAL_BUCKET_PREFIX = 'unbound::';

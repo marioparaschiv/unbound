@@ -32,7 +32,7 @@ export function createPluginContext(
 	const platform = currentPlatform();
 	const capabilities = resolveManifestCapabilities(manifest, platform);
 
-	validateNativeBridgeRequirements(capabilities, manifest.minNativePluginApi);
+	validateNativeBridgeRequirements(capabilities, manifest.minNativeBridgeApi);
 	const scoped = createScopedNativeBridge(capabilities, platform, attribute);
 
 	stoppers.set(scoped.bridge, scoped.beginStop);

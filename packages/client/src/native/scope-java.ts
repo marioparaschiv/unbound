@@ -3,10 +3,10 @@ import type {
 	NativeJavaCallPlan,
 	NativeJavaHandle,
 	NativeJavaReference,
-	NativePluginMethod,
+	NativeBridgeMethod,
 } from '@unbound-app/types';
 
-import { NativePluginUnavailableError } from '~/native/errors';
+import { NativeBridgeUnavailableError } from '~/native/errors';
 
 const JAVA_HANDLE_PRUNE_SIZE = 1_024;
 const javaHandleHolders = new WeakMap<NativeJavaReference, number>();
@@ -32,7 +32,7 @@ function dropJavaHandle(handle: NativeJavaReference): boolean {
 type ScopeBridgeMethod = <K extends keyof NativeJavaBridge>(
 	source: NativeJavaBridge,
 	name: K,
-	path: NativePluginMethod,
+	path: NativeBridgeMethod,
 	unavailableMessage?: string,
 ) => Exclude<NativeJavaBridge[K], undefined>;
 
@@ -160,7 +160,7 @@ export function createScopedJavaBridge({
 		},
 		invokePrepared: (plan, target, args) => {
 			if (!plans.has(plan)) {
-				throw new NativePluginUnavailableError(
+				throw new NativeBridgeUnavailableError(
 					'The Java call plan is outside this plugin scope.',
 				);
 			}
@@ -169,7 +169,7 @@ export function createScopedJavaBridge({
 		},
 		invokePreparedAsync: (plan, target, args) => {
 			if (!plans.has(plan)) {
-				throw new NativePluginUnavailableError(
+				throw new NativeBridgeUnavailableError(
 					'The Java call plan is outside this plugin scope.',
 				);
 			}
@@ -178,7 +178,7 @@ export function createScopedJavaBridge({
 		},
 		disposePlan: (plan) => {
 			if (!plans.has(plan)) {
-				throw new NativePluginUnavailableError(
+				throw new NativeBridgeUnavailableError(
 					'The Java call plan is outside this plugin scope.',
 				);
 			}

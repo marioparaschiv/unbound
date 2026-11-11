@@ -7,11 +7,11 @@ import type {
 import isEmpty from '@unbound-app/utils/is-empty';
 
 /** Every Bucket's settings, keyed by Bucket name, as the loader persists them. */
-export type SettingsStores = Record<string, SettingsObject>;
+export type SettingsByBucket = Record<string, SettingsObject>;
 
 export type SettingsBackend = {
 	read: (store: string, key: string) => SettingsValue | undefined;
-	readAll: () => SettingsStores;
+	readAll: () => SettingsByBucket;
 	write: (change: NativeSettingsChange) => void;
 	flush: () => void;
 };
@@ -31,14 +31,14 @@ export function createNativeBackend(bridge: NativePlatformSettings): SettingsBac
 		readAll() {
 			const stores = bridge.get();
 
-			return isSettingsObject(stores) ? (stores as SettingsStores) : {};
+			return isSettingsObject(stores) ? (stores as SettingsByBucket) : {};
 		},
 		write: (change) => void bridge.stage([change]),
 		flush: () => void bridge.flush(),
 	};
 }
 
-function readPath(stores: SettingsStores, store: string, key: string): SettingsValue | undefined {
+function readPath(stores: SettingsByBucket, store: string, key: string): SettingsValue | undefined {
 	let result: SettingsValue | undefined = stores[store];
 
 	if (!key) {
@@ -56,7 +56,7 @@ function readPath(stores: SettingsStores, store: string, key: string): SettingsV
 	return result;
 }
 
-function writePath(stores: SettingsStores, store: string, key: string, value: SettingsValue) {
+function writePath(stores: SettingsByBucket, store: string, key: string, value: SettingsValue) {
 	const keys = key.split('.');
 	const last = keys.pop() ?? key;
 	let current = (stores[store] ??= {});
@@ -74,7 +74,7 @@ function writePath(stores: SettingsStores, store: string, key: string, value: Se
 	current[last] = value;
 }
 
-function removePath(stores: SettingsStores, store: string, key: string): boolean {
+function removePath(stores: SettingsByBucket, store: string, key: string): boolean {
 	const keys = key.split('.');
 	const last = keys.pop() ?? key;
 	const parents: SettingsObject[] = [];
@@ -124,7 +124,7 @@ function removePath(stores: SettingsStores, store: string, key: string): boolean
  * @param stores The initial settings.
  * @returns The backend.
  */
-export function createMemoryBackend(stores: SettingsStores = {}): SettingsBackend {
+export function createMemoryBackend(stores: SettingsByBucket = {}): SettingsBackend {
 	return {
 		read: (store, key) => readPath(stores, store, key),
 		readAll: () => stores,

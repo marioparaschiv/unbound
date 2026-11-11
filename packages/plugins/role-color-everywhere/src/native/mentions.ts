@@ -1,7 +1,7 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
-import type { NativePluginBridge, PluginContext } from '@unbound-app/api/native';
+import type { NativeBridge, PluginContext } from '@unbound-app/api/native';
 import type { PluginSelfTestResult } from '@unbound-app/api/global';
 import { native } from '@unbound-app/api';
 
@@ -23,7 +23,7 @@ const enableNativeMentions = native.definePlatform({
 	android: enableAndroidMentions,
 });
 
-const findSkippedPainters = native.definePlatform<(bridge: NativePluginBridge) => string[]>({
+const findSkippedPainters = native.definePlatform<(bridge: NativeBridge) => string[]>({
 	ios: findIosSkippedPainters,
 	android: findAndroidSkippedPainters,
 });
@@ -37,7 +37,7 @@ export const roleMentionColors = native.definePlatform({
 let queue = Promise.resolve();
 let stopNativeMentions: (() => void) | undefined;
 // The bridge the painters run on while `chatMentions` is on and the loader offers it.
-let painting: NativePluginBridge | undefined;
+let painting: NativeBridge | undefined;
 
 function enqueue(step: Parameters<Enqueue>[0]) {
 	queue = queue.then(step).catch((error) => {

@@ -1,4 +1,4 @@
-import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
+import { CORE_BUCKET } from '@unbound-app/types/settings';
 import { AppState } from 'react-native';
 
 import { notifyClientUpdated, notifyStagedBundle, notifyUpdates } from '~/updates/notify';
@@ -46,7 +46,7 @@ async function update() {
 function announceClient() {
 	const previous = storage.get('lastClientVersion', '');
 
-	getBucket(CORE_SETTINGS_STORE).remove(LEGACY_LAST_CLIENT_VERSION);
+	getBucket(CORE_BUCKET).remove(LEGACY_LAST_CLIENT_VERSION);
 
 	if (previous === CLIENT_VERSION) return;
 

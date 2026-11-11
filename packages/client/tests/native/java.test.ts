@@ -2,9 +2,9 @@ import type { NativeFabricSurface } from '@unbound-app/types';
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import {
-	NativePluginCapabilityError,
-	NativePluginDisposedError,
-	NativePluginUnavailableError,
+	NativeBridgeCapabilityError,
+	NativeBridgeDisposedError,
+	NativeBridgeUnavailableError,
 	createPluginContext,
 	javaInvokeArguments,
 	javaReleased,
@@ -40,10 +40,10 @@ describe('native Java bridge', () => {
 			value: 'invoked',
 		});
 		expect(() => context.native.java.getField(nativeHandle, 'value')).toThrow(
-			NativePluginCapabilityError,
+			NativeBridgeCapabilityError,
 		);
 		expect(() => context.native.java.construct('java.lang.StringBuilder')).toThrow(
-			NativePluginCapabilityError,
+			NativeBridgeCapabilityError,
 		);
 		context.dispose();
 	});
@@ -121,7 +121,7 @@ describe('native Java bridge', () => {
 		context.dispose();
 
 		expect(() => context.native.java.getClass('java.lang.Integer')).toThrow(
-			NativePluginDisposedError,
+			NativeBridgeDisposedError,
 		);
 	});
 
@@ -189,10 +189,10 @@ describe('native Java bridge', () => {
 		).toBe(androidSurface);
 		expect(mountOptions).toEqual([{ reuse: true }]);
 		expect(() => context.native.fabric.mount(nativeHandle, 'AndroidSurface')).toThrow(
-			NativePluginCapabilityError,
+			NativeBridgeCapabilityError,
 		);
 		expect(() => context.native.fabric.measureAsync(nativeHandle)).toThrow(
-			NativePluginUnavailableError,
+			NativeBridgeUnavailableError,
 		);
 		context.dispose();
 		expect(androidUnmounted).toEqual([androidSurface]);
@@ -211,7 +211,7 @@ describe('native Java bridge', () => {
 		});
 
 		expect(() => denied.native.hooks.hook('java.lang.Integer', 'toString', [])).toThrow(
-			NativePluginCapabilityError,
+			NativeBridgeCapabilityError,
 		);
 		denied.dispose();
 
@@ -237,11 +237,11 @@ describe('native Java bridge', () => {
 			capabilities: ['native.java.classes'],
 		});
 
-		expect(() => denied.native.java.batch([])).toThrow(NativePluginCapabilityError);
+		expect(() => denied.native.java.batch([])).toThrow(NativeBridgeCapabilityError);
 		expect(() => denied.native.java.createAssociationKey()).toThrow(
-			NativePluginCapabilityError,
+			NativeBridgeCapabilityError,
 		);
-		expect(() => denied.native.debug.environment()).toThrow(NativePluginCapabilityError);
+		expect(() => denied.native.debug.environment()).toThrow(NativeBridgeCapabilityError);
 		denied.dispose();
 
 		const context = createPluginContext({

@@ -1,4 +1,4 @@
-import type { NativePluginBridge } from '@unbound-app/api/native';
+import type { NativeBridge } from '@unbound-app/api/native';
 
 import { createAndroidRenderer } from '~/native/renderer-android';
 import type { MentionIndex } from '~/lib/mention-index';
@@ -11,7 +11,7 @@ import type { MentionIndex } from '~/lib/mention-index';
  * @returns The renderer's health readers, `retryWaiting`, and `dispose`, which removes its text rewrites.
  */
 export function drawMentions(
-	native: NativePluginBridge,
+	native: NativeBridge,
 	index: MentionIndex,
 	showAtSymbol: () => boolean,
 ) {

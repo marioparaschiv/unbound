@@ -1,5 +1,5 @@
 import { expect, mock, test } from 'bun:test';
-import type { NativeJavaValue, NativePluginBridge } from '@unbound-app/api/native';
+import type { NativeJavaValue, NativeBridge } from '@unbound-app/api/native';
 
 const listeners = new Map<string, () => Promise<void> | void>();
 const composer = { type: 'handle', value: 'composer' } as const;
@@ -33,7 +33,7 @@ mock.module('@unbound-plugins/shared/native/android/views', () => ({
 
 const { rotateScreen } = await import('~/native/views-android');
 
-function createNative(): NativePluginBridge {
+function createNative(): NativeBridge {
 	const java = {
 		construct: () => rect,
 		findViews: async () => {

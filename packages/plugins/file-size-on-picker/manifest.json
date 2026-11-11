@@ -14,7 +14,7 @@
 	],
 	"version": "1.0.8",
 	"icon": "ImageIcon",
-	"minNativePluginApi": "1.0.0",
+	"minNativeBridgeApi": "1.0.0",
 	"main": "index.tsx",
 	"startAfterFirstFrame": true
 }

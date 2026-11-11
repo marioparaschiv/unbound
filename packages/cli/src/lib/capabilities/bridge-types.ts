@@ -7,10 +7,10 @@ export type BridgeTypes = {
 	isOpaque(type: ts.Type | undefined): boolean;
 };
 
-const ROOT_BRIDGE = 'NativePluginBridge';
+const ROOT_BRIDGE = 'NativeBridge';
 
 /**
- * @description Reads the bridge type aliases from `NativePluginBridge` in the program's declaration
+ * @description Reads the bridge type aliases from `NativeBridge` in the program's declaration
  * files, so a member access resolves to its namespace by the type checker rather than by name.
  * @param program The addon's program.
  * @returns The lookups over the program's bridge types.

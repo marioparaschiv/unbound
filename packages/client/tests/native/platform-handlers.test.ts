@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import {
-	NativePluginUnsupportedPlatformError,
+	NativeBridgeUnsupportedPlatformError,
 	bridge,
 	nativePlatformBridge,
 	resetNativeFixtures,
@@ -33,7 +33,7 @@ describe('definePlatform', () => {
 		runOn('android');
 
 		expect(() => definePlatform<Handler>({ ios: handlers.ios })).toThrow(
-			NativePluginUnsupportedPlatformError,
+			NativeBridgeUnsupportedPlatformError,
 		);
 	});
 });

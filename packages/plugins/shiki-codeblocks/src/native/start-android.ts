@@ -1,4 +1,4 @@
-import type { NativePluginBridge } from '@unbound-app/api/native';
+import type { NativeBridge } from '@unbound-app/api/native';
 
 import { createAndroidCards } from '~/native/cards-android';
 import type { Cards } from '~/lib/types';
@@ -8,7 +8,7 @@ import type { Cards } from '~/lib/types';
  * @param native The plugin's native bridge.
  * @returns The cards, or `undefined` when the card surface or the loader's text rewrites are unavailable.
  */
-export function startCards(native: NativePluginBridge): Cards | undefined {
+export function startCards(native: NativeBridge): Cards | undefined {
 	const cards = createAndroidCards(native);
 
 	if (!cards) return;

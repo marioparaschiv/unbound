@@ -1,5 +1,5 @@
-import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
 import type { PredicateResult, Widen } from '@unbound-app/types';
+import { CORE_BUCKET } from '@unbound-app/types/settings';
 
 import { DEFAULT_BACKGROUND_OPACITY, type ChatBackgroundSource } from '~/themes/chat-background';
 import type { SettingsPayload } from '~/storage/api';
@@ -59,7 +59,7 @@ export type BooleanSettingKey = {
  * @returns The stored value, or the key's default.
  */
 export function getSetting<K extends UnboundSettingKey>(key: K): Widen<UnboundSettings[K]> {
-	return getBucket(CORE_SETTINGS_STORE).get(key, DEFAULTS[key]);
+	return getBucket(CORE_BUCKET).get(key, DEFAULTS[key]);
 }
 
 /**
@@ -79,7 +79,7 @@ export function getDefault<K extends UnboundSettingKey>(key: K): UnboundSettings
  * @param value The value to store.
  */
 export function setSetting<K extends UnboundSettingKey>(key: K, value: UnboundSettings[K]): void {
-	getBucket(CORE_SETTINGS_STORE).set(key, value);
+	getBucket(CORE_BUCKET).set(key, value);
 }
 
 /**
@@ -87,7 +87,7 @@ export function setSetting<K extends UnboundSettingKey>(key: K, value: UnboundSe
  * @param key The setting key.
  */
 export function toggleSetting(key: BooleanSettingKey): void {
-	getBucket(CORE_SETTINGS_STORE).toggle(key, DEFAULTS[key]);
+	getBucket(CORE_BUCKET).toggle(key, DEFAULTS[key]);
 }
 
 /**
@@ -97,7 +97,7 @@ export function toggleSetting(key: BooleanSettingKey): void {
  * @returns `true` when the change wrote that key of the core store.
  */
 export function isSettingChange(payload: SettingsPayload, key: UnboundSettingKey): boolean {
-	return payload.store === CORE_SETTINGS_STORE && payload.key === key;
+	return payload.store === CORE_BUCKET && payload.key === key;
 }
 
 /**
@@ -106,7 +106,7 @@ export function isSettingChange(payload: SettingsPayload, key: UnboundSettingKey
  * @returns The typed core setting accessors.
  */
 export function useUnboundSettings(predicate?: (payload: SettingsPayload) => PredicateResult) {
-	useBucket(CORE_SETTINGS_STORE, predicate);
+	useBucket(CORE_BUCKET, predicate);
 
 	return { get: getSetting, set: setSetting, toggle: toggleSetting };
 }

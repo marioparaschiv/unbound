@@ -92,7 +92,7 @@ function readDeviceStatus({ unbound, plugins }: DevicePrelude): string {
 		collect();
 	}
 
-	const addons = [...(plugins?.entities.values() ?? [])];
+	const addons = [...(plugins?.addons.values() ?? [])];
 	const durations = plugins?.startDurations;
 	const counts = unbound.native.getNativeResources?.();
 	const report: DeviceStatusReport = {

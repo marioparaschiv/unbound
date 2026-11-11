@@ -39,7 +39,11 @@ export declare function persist(): Promise<void>;
  * @param options Set `includeSecrets` to read `displayAs: 'secret'` settings as they are; otherwise they are masked.
  * @returns Every Bucket by name.
  */
-export declare function snapshot({ includeSecrets }?: { includeSecrets?: boolean }): SettingsStores;
+export declare function snapshot({
+	includeSecrets,
+}?: {
+	includeSecrets?: boolean;
+}): SettingsByBucket;
 /**
  * @description React hook that re-renders the component whenever a matching change occurs in the Bucket.
  * @param name The Bucket to subscribe to.
@@ -90,6 +94,8 @@ export type DefinedSettings = {
 	/** React hook that re-renders on any change to the settings while `enabled`, and returns a number that changes with them. */
 	useVersion: (enabled?: boolean) => number;
 };
+/** Every Bucket's settings, keyed by Bucket name, as the loader persists them. */
+export type SettingsByBucket = Record<string, SettingsObject>;
 /** Payload describing a settings change, passed to `onChange` listeners and predicates. */
 export type SettingsPayload = {
 	/** The name of the Bucket that changed. */
@@ -101,8 +107,6 @@ export type SettingsPayload = {
 };
 /** Decides whether a settings change should reach a listener. */
 export type SettingsPredicate = (payload: SettingsPayload) => PredicateResult;
-/** Every Bucket's settings, keyed by Bucket name, as the loader persists them. */
-export type SettingsStores = Record<string, SettingsObject>;
 /** A plugin's settings as an object: reads apply defaults, writes are validated and saved. Sections are nested objects. */
 export type SettingsValues = {
 	[key: string]: SettingValue | SettingsValues;

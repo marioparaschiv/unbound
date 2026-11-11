@@ -6,7 +6,7 @@ import type {
 import type { FluxAction } from '@unbound-app/types/flux';
 import { createLogger } from '@unbound-app/logger';
 
-import { NativePluginUnavailableError } from '~/native/errors';
+import { NativeBridgeUnavailableError } from '~/native/errors';
 import { Dispatcher } from '~/flux/modules';
 import { onAction } from '~/flux/api';
 
@@ -196,7 +196,7 @@ export function createFluxRuntimeBridge(): NativeRuntimeBridge {
 	return {
 		subscribe(eventName, listener) {
 			if (!Dispatcher?.subscribe || !Dispatcher.unsubscribe) {
-				throw new NativePluginUnavailableError(
+				throw new NativeBridgeUnavailableError(
 					'The Discord runtime event dispatcher is unavailable.',
 				);
 			}

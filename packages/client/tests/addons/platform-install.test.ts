@@ -3,7 +3,7 @@ import type { AddonManifest } from '@unbound-app/types';
 
 import { FakeAddons, makeManifest, resetDevice, writes } from '../helpers/addons';
 
-const { NativePluginUnsupportedPlatformError } = await import('~/native/errors');
+const { NativeBridgeUnsupportedPlatformError } = await import('~/native/errors');
 
 const ID = 'platform.example';
 
@@ -61,7 +61,7 @@ describe('installing an addon', () => {
 		const { installed, errors } = await install();
 
 		expect(installed).toBeUndefined();
-		expect(errors[0]).toBeInstanceOf(NativePluginUnsupportedPlatformError);
+		expect(errors[0]).toBeInstanceOf(NativeBridgeUnsupportedPlatformError);
 		expect(writes).toEqual([]);
 	});
 

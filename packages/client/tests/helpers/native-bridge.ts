@@ -1,8 +1,8 @@
 import type {
 	AddonManifest,
 	NativeFabricSurface,
-	NativePluginBridge,
-	NativePluginRuntimeBridge,
+	NativeBridge,
+	LoaderNativeBridge,
 	NativeJavaBridge,
 	NativeResourceCounts,
 	NativeUIScope,
@@ -28,7 +28,7 @@ import { mockLookups } from './lookups';
 // fixtures needs its own module registry: run them with `bun test --isolate`.
 type NativeBridgeGlobal = typeof globalThis & {
 	NativePlatform?: NativePlatformBridge;
-	NativePlugin?: NativePluginRuntimeBridge;
+	NativePlugin?: LoaderNativeBridge;
 };
 
 mock.module('react-native', () => ({
@@ -138,7 +138,7 @@ export function cancellable<T>(promise: Promise<T>, name: string) {
 	return Object.assign(promise, { cancel: () => cancelled.push(name) });
 }
 
-type LoaderBridge = Omit<NativePluginBridge, 'objc' | 'java' | 'runtime' | 'ui'> & {
+type LoaderBridge = Omit<NativeBridge, 'objc' | 'java' | 'runtime' | 'ui'> & {
 	objc: LoaderObjCBridge;
 	java: NativeJavaBridge & NativeUIScopeFactory;
 };
@@ -360,11 +360,11 @@ export const nativePlatformBridge = fakePlatformBridge;
 (globalThis as NativeBridgeGlobal).NativePlatform = nativePlatformBridge;
 
 export const {
-	NativePluginCapabilityError,
-	NativePluginDisposedError,
-	NativePluginUnavailableError,
-	NativePluginUnsupportedPlatformError,
-	NativePluginVersionError,
+	NativeBridgeCapabilityError,
+	NativeBridgeDisposedError,
+	NativeBridgeUnavailableError,
+	NativeBridgeUnsupportedPlatformError,
+	NativeBridgeVersionError,
 } = require('~/native/native') as typeof import('~/native/native');
 export const { validateNativeBridgeRequirements } =
 	require('~/native/capabilities') as typeof import('~/native/capabilities');

@@ -2,7 +2,7 @@ import { getRoleColorAppearance, roleColorRuns } from '@unbound-plugins/shared/c
 import findVisibleCells from '@unbound-plugins/shared/native/ios/visible-cells';
 import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
-import type { NativePluginBridge } from '@unbound-app/api/native';
+import type { NativeBridge } from '@unbound-app/api/native';
 
 import {
 	installComposerHooks,
@@ -49,7 +49,7 @@ function composerMentions(): ComposerMentions {
  * @param native The plugin's native bridge.
  * @returns A function that removes the hooks and restores the input's text and selection.
  */
-export function colorChatInputMentions(native: NativePluginBridge): () => Promise<void> {
+export function colorChatInputMentions(native: NativeBridge): () => Promise<void> {
 	const { objc, ui } = native;
 	if (!ensureClasses(objc, [CHAT_INPUT_CLASS], 'Composer mentions')) {
 		return async () => {};

@@ -1,15 +1,15 @@
 import type {
-	NativePluginCapability,
-	NativePluginMethod,
-	NativePluginPlatform,
+	NativeBridgeCapability,
+	NativeBridgeMethod,
+	NativeBridgePlatform,
 	NativeUIArgument,
 	NativeUIBridge,
 	NativeUIScope,
 	NativeSerializable,
 } from '@unbound-app/types';
-import { NATIVE_PLUGIN_METHOD_CAPABILITIES } from '@unbound-app/types/native';
+import { NATIVE_BRIDGE_METHOD_CAPABILITIES } from '@unbound-app/types/native';
 
-import { NativePluginDisposedError, NativePluginUnavailableError } from '~/native/errors';
+import { NativeBridgeDisposedError, NativeBridgeUnavailableError } from '~/native/errors';
 import { getNativeBridge } from '~/native/bridge';
 import { findByProps } from '~/metro/lookups';
 
@@ -70,7 +70,7 @@ const JS_CALLBACK = {
 	code: '(function unboundJSCallback(){const{runOnJS,listener}=this.__closure;runOnJS(listener).apply(undefined,arguments);})',
 };
 
-const PREPARED_CALL_METHODS: ReadonlySet<NativePluginMethod> = new Set([
+const PREPARED_CALL_METHODS: ReadonlySet<NativeBridgeMethod> = new Set([
 	'objc.prepare',
 	'objc.invokePrepared',
 	'objc.disposePlan',
@@ -79,7 +79,7 @@ const PREPARED_CALL_METHODS: ReadonlySet<NativePluginMethod> = new Set([
 	'java.disposePlan',
 ]);
 
-const PROMISE_METHODS: ReadonlySet<NativePluginMethod> = new Set([
+const PROMISE_METHODS: ReadonlySet<NativeBridgeMethod> = new Set([
 	'objc.batch',
 	'objc.snapshot',
 	'objc.findViews',
@@ -92,11 +92,11 @@ const PROMISE_METHODS: ReadonlySet<NativePluginMethod> = new Set([
  * @returns The method paths.
  */
 export function uiScopePaths(
-	capabilities: readonly NativePluginCapability[],
-): NativePluginMethod[] {
-	return (Object.keys(NATIVE_PLUGIN_METHOD_CAPABILITIES) as NativePluginMethod[]).filter(
+	capabilities: readonly NativeBridgeCapability[],
+): NativeBridgeMethod[] {
+	return (Object.keys(NATIVE_BRIDGE_METHOD_CAPABILITIES) as NativeBridgeMethod[]).filter(
 		(path) =>
-			capabilities.includes(NATIVE_PLUGIN_METHOD_CAPABILITIES[path]) &&
+			capabilities.includes(NATIVE_BRIDGE_METHOD_CAPABILITIES[path]) &&
 			!path.endsWith('Async') &&
 			!PROMISE_METHODS.has(path) &&
 			!PREPARED_CALL_METHODS.has(path),
@@ -104,14 +104,14 @@ export function uiScopePaths(
 }
 
 function createUIScope(
-	platform: NativePluginPlatform | undefined,
+	platform: NativeBridgePlatform | undefined,
 	paths: readonly string[],
 ): NativeUIScope {
 	const bridge = getNativeBridge();
 	const factory = platform === 'android' ? bridge?.java : bridge?.objc;
 
 	if (!factory) {
-		throw new NativePluginUnavailableError('UI-runtime native scopes are unavailable.');
+		throw new NativeBridgeUnavailableError('UI-runtime native scopes are unavailable.');
 	}
 
 	return factory.createUIScope(paths);
@@ -121,7 +121,7 @@ function uiRuntime(): ResolvedUIRuntime {
 	const runtime = Reanimated as UIRuntime | undefined;
 
 	if (!runtime?.runOnJS || !runtime.runOnUI) {
-		throw new NativePluginUnavailableError('The UI runtime is unavailable.');
+		throw new NativeBridgeUnavailableError('The UI runtime is unavailable.');
 	}
 
 	const version = Reflect.get(globalThis, '_REANIMATED_VERSION_JS');
@@ -132,7 +132,7 @@ function uiRuntime(): ResolvedUIRuntime {
 		version !== nativeVersion ||
 		!SUPPORTED_WORKLET_RUNTIMES.has(version)
 	) {
-		throw new NativePluginUnavailableError(
+		throw new NativeBridgeUnavailableError(
 			`The UI runtime version is unsupported (JS ${String(version)}, native ${String(nativeVersion)}).`,
 		);
 	}
@@ -145,7 +145,7 @@ function uiRuntime(): ResolvedUIRuntime {
 		workletsVersion !== undefined &&
 		(workletsJS !== workletsVersion || workletsNative !== workletsVersion)
 	) {
-		throw new NativePluginUnavailableError(
+		throw new NativeBridgeUnavailableError(
 			`The worklets runtime version is unsupported (Reanimated ${version}, JS ${String(workletsJS)}, native ${String(workletsNative)}).`,
 		);
 	}
@@ -176,8 +176,8 @@ function guardWorklet<A extends NativeUIArgument[]>(
  * @returns The bridge and its `dispose`.
  */
 export function createScopedUIBridge(
-	capabilities: readonly NativePluginCapability[],
-	platform?: NativePluginPlatform,
+	capabilities: readonly NativeBridgeCapability[],
+	platform?: NativeBridgePlatform,
 ): ScopedUIBridge {
 	const scopes = new Set<NativeUIScope>();
 	const pendingCalls = new Set<(error: Error) => void>();
@@ -185,7 +185,7 @@ export function createScopedUIBridge(
 
 	function requireActive() {
 		if (disposed) {
-			throw new NativePluginDisposedError();
+			throw new NativeBridgeDisposedError();
 		}
 	}
 
@@ -297,7 +297,7 @@ export function createScopedUIBridge(
 			disposed = true;
 
 			for (const rejectCall of pendingCalls) {
-				rejectCall(new NativePluginDisposedError());
+				rejectCall(new NativeBridgeDisposedError());
 			}
 
 			pendingCalls.clear();

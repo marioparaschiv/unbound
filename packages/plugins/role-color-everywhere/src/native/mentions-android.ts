@@ -1,4 +1,4 @@
-import type { NativePluginBridge } from '@unbound-app/api/native';
+import type { NativeBridge } from '@unbound-app/api/native';
 
 import { colorAndroidChatInputMentions } from '~/native/chat-input-android';
 import type { Enqueue } from '~/native/mentions';
@@ -9,7 +9,7 @@ import type { Enqueue } from '~/native/mentions';
  * @param enqueue Runs a step after the previous enable or removal finished.
  * @returns A function that queues the removal.
  */
-export function enableMentions(native: NativePluginBridge, enqueue: Enqueue): () => void {
+export function enableMentions(native: NativeBridge, enqueue: Enqueue): () => void {
 	const remove = colorAndroidChatInputMentions(native);
 
 	return () => enqueue(remove);

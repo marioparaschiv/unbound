@@ -132,7 +132,7 @@ export const addonManifestSchema = superRefine(
 			platforms: Type.Optional(addonPlatformsSchema),
 			/** Legacy: Capabilities needed on every platform; `ubd build` writes `platforms` instead. */
 			capabilities: Type.Optional(addonCapabilitiesSchema),
-			minNativePluginApi: Type.Optional(Type.String()),
+			minNativeBridgeApi: Type.Optional(Type.String()),
 			unbound: Type.Optional(Type.Object({ min: Type.Optional(semverSchema) })),
 			bytecode: Type.Optional(bytecodeDigestsSchema),
 			/** The locale files `ubd build` emits beside the bundle, by code; en-US is in the bundle. */
