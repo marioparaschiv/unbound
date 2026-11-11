@@ -1,5 +1,30 @@
 # Changelog
 
+## [2.2.0](https://github.com/marioparaschiv/unbound/compare/client-v2.1.0...client-v2.2.0) (2026-11-11)
+
+
+### Features
+
+* **icon-packs:** add Lucide, Phosphor and Tabler packs ([#1087](https://github.com/marioparaschiv/unbound/issues/1087)) ([f511100](https://github.com/marioparaschiv/unbound/commit/f511100d837c652d6b24f8eb2f44483d09d5a810))
+* **loader:** judge launches by render and exit, retry updates ([#1086](https://github.com/marioparaschiv/unbound/issues/1086)) ([cd39991](https://github.com/marioparaschiv/unbound/commit/cd399911d22a11fe8fbf4db09d6ad3184302eb3b))
+
+
+### Bug Fixes
+
+* **client:** draw pack icons whose assets register mid-render ([#1095](https://github.com/marioparaschiv/unbound/issues/1095)) ([3a9cc5b](https://github.com/marioparaschiv/unbound/commit/3a9cc5b9ce4bd9054515fad3963293fb043331a7))
+* **client:** stop repeat icon pack updates and smooth pack switching ([#1091](https://github.com/marioparaschiv/unbound/issues/1091)) ([383798c](https://github.com/marioparaschiv/unbound/commit/383798ce69efb46b953a973f1a70002e4f120320))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 1.1.1
+    * @unbound-app/debugger-protocol bumped to 1.0.2
+    * @unbound-app/types bumped to 0.15.0
+    * @unbound-app/utils bumped to 0.10.4
+    * @unbound-app/web bumped to 1.1.1
+
 ## [2.1.0](https://github.com/marioparaschiv/unbound/compare/client-v2.0.0...client-v2.1.0) (2026-11-11)
 
 
