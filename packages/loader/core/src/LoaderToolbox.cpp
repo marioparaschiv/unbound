@@ -543,15 +543,6 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
     {
         return flag(toggleRecovery(context.settings));
     }
-    if (action == "recovery-shortcut")
-    {
-        const RecoveryToggle toggle = toggleRecoveryFromShortcut(
-            context.settings, context.bundleReady && context.bundleReady());
-        return nlohmann::json{{"enabled", toggle.enabled},
-                              {"status", toggle.status},
-                              {"restartRequired", toggle.restartRequired}}
-            .dump();
-    }
     if (action == "recovery-shortcut-action")
     {
         return kRecoveryShortcutAction;
@@ -623,10 +614,6 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
     if (action == "menu")
     {
         return menuJSON(context.settings, menuOptions(argument)).dump();
-    }
-    if (action == "hold-milliseconds")
-    {
-        return std::to_string(kThreeFingerHoldMilliseconds);
     }
     if (action == "menu-step")
     {

@@ -121,7 +121,7 @@ static void showRecoveryStatus(NSString *status)
 + (NSArray<UIApplicationShortcutItem *> *)itemsWithRecoveryAction:
     (NSArray<UIApplicationShortcutItem *> *)items
 {
-    NSString                  *title = [CoreBridge preference:@"recovery-label" argument:@""];
+    NSString                  *title = [CoreBridge recoveryActionLabel];
     UIApplicationShortcutIcon *icon = [UIApplicationShortcutIcon iconWithSystemImageName:@"shield"];
     UIApplicationShortcutItem *recovery =
         [[UIApplicationShortcutItem alloc] initWithType:recoveryShortcutType()

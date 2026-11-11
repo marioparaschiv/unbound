@@ -64,14 +64,14 @@ int main()
                                                 return ready;
                                             }};
 
-    const nlohmann::json first =
-        nlohmann::json::parse(loader::toolbox::perform(context, "recovery-shortcut", ""));
+    const nlohmann::json first = nlohmann::json::parse(loader::toolbox::perform(
+        context, "recovery-shortcut-activate", loader::toolbox::kRecoveryShortcutAction));
     assert(first["enabled"] == true && first["restartRequired"] == true);
     assert(first["status"] == "Recovery Mode enabled");
 
-    ready = false;
-    const nlohmann::json second =
-        nlohmann::json::parse(loader::toolbox::perform(context, "recovery-shortcut", ""));
+    ready                       = false;
+    const nlohmann::json second = nlohmann::json::parse(loader::toolbox::perform(
+        context, "recovery-shortcut-activate", loader::toolbox::kRecoveryShortcutAction));
     assert(second["enabled"] == false && second["restartRequired"] == false);
 
     loader::toolbox::ToolboxContext unready{settings,
@@ -84,8 +84,8 @@ int main()
                                             [] {
                                                 return 96u;
                                             }};
-    const nlohmann::json            third =
-        nlohmann::json::parse(loader::toolbox::perform(unready, "recovery-shortcut", ""));
+    const nlohmann::json            third = nlohmann::json::parse(loader::toolbox::perform(
+        unready, "recovery-shortcut-activate", loader::toolbox::kRecoveryShortcutAction));
     assert(third["restartRequired"] == false);
 
     assert(loader::toolbox::perform(context, "recovery-shortcut-action", "") ==

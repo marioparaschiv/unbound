@@ -151,7 +151,6 @@ int main()
     const nlohmann::json            performed = nlohmann::json::parse(
         loader::toolbox::perform(context, "menu", R"({"copyAppFolderPath":true})"));
     assert(performed["sections"][2]["items"][2]["id"] == "copy-app-folder-path");
-    assert(loader::toolbox::perform(context, "hold-milliseconds", "") == "500");
     assert(loader::toolbox::perform(context, "message", "refetch-failed").empty());
 
     std::filesystem::remove_all(root);

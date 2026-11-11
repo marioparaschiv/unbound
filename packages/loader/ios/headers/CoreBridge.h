@@ -27,8 +27,10 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSArray *)toolboxArray:(NSString *)action argument:(NSString *)argument;
 + (NSDictionary *)toolboxMenu:(NSDictionary *)options;
 + (NSTimeInterval)toolboxHoldDuration;
-+ (NSString *)preference:(NSString *)action argument:(NSString *)argument;
-+ (BOOL)preferenceEnabled:(NSString *)action;
++ (NSString *)activeThemeId;
++ (NSString *)recoveryActionLabel;
++ (BOOL)toolboxGestureEnabled:(NSString *)gesture;
++ (void)setToolboxGesture:(NSString *)gesture enabled:(BOOL)enabled;
 
 + (CGFloat)devOverlayButtonSide;
 + (CGPoint)devOverlayCenterInBounds:(CGSize)bounds insets:(UIEdgeInsets)insets;

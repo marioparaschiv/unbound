@@ -21,6 +21,7 @@
 #include "LoaderPreferences.h"
 #include "LoaderTelemetry.h"
 #include "LoaderThreadWarnings.h"
+#include "LoaderToolbox.h"
 #include "LoaderToolboxGestures.h"
 #include "NativeFabric.h"
 #include "NativePluginBridge.h"
@@ -245,16 +246,53 @@ static void nativeWarnOffMainViewCall(JNIEnv *env, jclass, jstring call)
     }
 }
 
-static jstring nativePreference(JNIEnv *env, jclass, jstring action, jstring argument)
+static jstring nativeActiveThemeId(JNIEnv *env, jclass)
+{
+    auto loader  = currentLoader();
+    auto themeId = loader ? loader::preferences::activeThemeId(loader->settings()) : std::nullopt;
+    return themeId ? toJavaString(env, *themeId) : nullptr;
+}
+
+static jstring nativeRecoveryActionLabel(JNIEnv *env, jclass)
 {
     auto loader = currentLoader();
-    if (!loader || !action)
+    return loader ? toJavaString(env, loader::preferences::recoveryActionLabel(
+                                          loader::preferences::recoveryEnabled(loader->settings())))
+                  : nullptr;
+}
+
+static jboolean nativeGestureEnabled(JNIEnv *env, jclass, jstring name)
+{
+    auto loader  = currentLoader();
+    auto gesture = name ? loader::preferences::gestureNamed(toStdString(env, name)) : std::nullopt;
+    return loader && gesture && loader::preferences::gestureEnabled(loader->settings(), *gesture)
+               ? JNI_TRUE
+               : JNI_FALSE;
+}
+
+static void nativeSetGestureEnabled(JNIEnv *env, jclass, jstring name, jboolean enabled)
+{
+    auto loader  = currentLoader();
+    auto gesture = name ? loader::preferences::gestureNamed(toStdString(env, name)) : std::nullopt;
+    if (loader && gesture)
     {
-        return nullptr;
+        loader::preferences::setGestureEnabled(loader->settings(), *gesture, enabled == JNI_TRUE);
     }
-    return toJavaString(
-        env, loader::preferences::perform(loader->settings(), toStdString(env, action),
-                                          argument ? toStdString(env, argument) : std::string()));
+}
+
+static jboolean nativeDevOverlayVisible(JNIEnv *, jclass, jboolean virtualDevice,
+                                        jboolean debugBuild)
+{
+    auto loader = currentLoader();
+    return loader && loader::preferences::devOverlayVisible(
+                         loader->settings(), virtualDevice == JNI_TRUE, debugBuild == JNI_TRUE)
+               ? JNI_TRUE
+               : JNI_FALSE;
+}
+
+static jlong nativeToolboxHoldMilliseconds(JNIEnv *, jclass)
+{
+    return static_cast<jlong>(loader::toolbox::kThreeFingerHoldMilliseconds);
 }
 
 static jboolean nativeIsBlockedTelemetry(JNIEnv *env, jclass, jstring url)

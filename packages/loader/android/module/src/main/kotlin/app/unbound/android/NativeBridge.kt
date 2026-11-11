@@ -73,11 +73,24 @@ object NativeBridge {
     @JvmStatic
     external fun nativeToolbox(action: String, argument: String?): String?
 
+    /** The theme to apply, or null when none is applied or Recovery Mode is on. */
     @JvmStatic
-    external fun nativePreference(action: String, argument: String?): String?
+    external fun nativeActiveThemeId(): String?
 
-    fun preferenceEnabled(action: String, argument: String? = null): Boolean =
-        nativePreference(action, argument) == "true"
+    @JvmStatic
+    external fun nativeRecoveryActionLabel(): String?
+
+    @JvmStatic
+    external fun nativeGestureEnabled(gesture: String): Boolean
+
+    @JvmStatic
+    external fun nativeSetGestureEnabled(gesture: String, enabled: Boolean)
+
+    @JvmStatic
+    external fun nativeDevOverlayVisible(virtualDevice: Boolean, debugBuild: Boolean): Boolean
+
+    @JvmStatic
+    external fun nativeToolboxHoldMilliseconds(): Long
 
     @JvmStatic
     external fun nativeShakeSample(x: Float, y: Float, z: Float, milliseconds: Long): Boolean

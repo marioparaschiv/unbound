@@ -247,30 +247,44 @@ static loader::FontOverrideRegistry &UnboundFontOverrides()
     return [NSString stringWithUTF8String:result.c_str()] ?: @"";
 }
 
-+ (NSString *)preference:(NSString *)action argument:(NSString *)argument
++ (NSString *)activeThemeId
 {
-    std::string result = loader::preferences::perform(UnboundSettingsStore(), toStdString(action),
-                                                      toStdString(argument));
-    return [NSString stringWithUTF8String:result.c_str()] ?: @"";
+    std::optional<std::string> themeId = loader::preferences::activeThemeId(UnboundSettingsStore());
+    return [NSString stringWithUTF8String:themeId.value_or("").c_str()] ?: @"";
 }
 
-+ (BOOL)preferenceEnabled:(NSString *)action
++ (NSString *)recoveryActionLabel
 {
-    return [[self preference:action argument:@""] isEqualToString:@"true"];
+    const bool enabled = loader::preferences::recoveryEnabled(UnboundSettingsStore());
+    return @(loader::preferences::recoveryActionLabel(enabled).c_str());
+}
+
++ (BOOL)toolboxGestureEnabled:(NSString *)gesture
+{
+    auto named = loader::preferences::gestureNamed(toStdString(gesture));
+    return named && loader::preferences::gestureEnabled(UnboundSettingsStore(), *named);
+}
+
++ (void)setToolboxGesture:(NSString *)gesture enabled:(BOOL)enabled
+{
+    if (auto named = loader::preferences::gestureNamed(toStdString(gesture)))
+    {
+        loader::preferences::setGestureEnabled(UnboundSettingsStore(), *named, enabled);
+    }
 }
 
 + (NSDictionary *)toolboxObject:(NSString *)action argument:(NSString *)argument
 {
-    nlohmann::json parsed =
-        nlohmann::json::parse(toStdString([self toolbox:action argument:argument]), nullptr, false);
+    nlohmann::json parsed = nlohmann::json::parse(
+        UnboundLoader()->toolbox(toStdString(action), toStdString(argument)), nullptr, false);
     id converted = parsed.is_object() ? objectFromJSON(parsed) : nil;
     return [converted isKindOfClass:[NSDictionary class]] ? converted : @{};
 }
 
 + (NSArray *)toolboxArray:(NSString *)action argument:(NSString *)argument
 {
-    return arrayFromJSON(nlohmann::json::parse(toStdString([self toolbox:action argument:argument]),
-                                               nullptr, false));
+    return arrayFromJSON(nlohmann::json::parse(
+        UnboundLoader()->toolbox(toStdString(action), toStdString(argument)), nullptr, false));
 }
 
 + (NSDictionary *)toolboxMenu:(NSDictionary *)options

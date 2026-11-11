@@ -68,7 +68,4 @@ bool setGestureEnabled(SettingsStore &settings, ToolboxGesture gesture, bool ena
 
 std::string recoveryActionLabel(bool enabled);
 std::string recoveryStatusText(bool enabled);
-
-std::string perform(SettingsStore &settings, const std::string &action,
-                    const std::string &argument);
 }

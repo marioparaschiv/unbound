@@ -101,8 +101,12 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
       nativeHookReturnValue)                                                                       \
     X("nativeToolbox", "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING,           \
       nativeToolbox)                                                                               \
-    X("nativePreference", "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING,        \
-      nativePreference)                                                                            \
+    X("nativeActiveThemeId", "()" UNBOUND_JNI_STRING, nativeActiveThemeId)                         \
+    X("nativeRecoveryActionLabel", "()" UNBOUND_JNI_STRING, nativeRecoveryActionLabel)             \
+    X("nativeGestureEnabled", "(" UNBOUND_JNI_STRING ")Z", nativeGestureEnabled)                   \
+    X("nativeSetGestureEnabled", "(" UNBOUND_JNI_STRING "Z)V", nativeSetGestureEnabled)            \
+    X("nativeDevOverlayVisible", "(ZZ)Z", nativeDevOverlayVisible)                                 \
+    X("nativeToolboxHoldMilliseconds", "()J", nativeToolboxHoldMilliseconds)                       \
     X("nativeShakeSample", "(FFFJ)Z", nativeShakeSample)                                           \
     X("nativeThreeFingerEvent", "(" UNBOUND_JNI_STRING "I)" UNBOUND_JNI_STRING,                    \
       nativeThreeFingerEvent)                                                                      \
