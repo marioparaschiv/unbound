@@ -1,10 +1,10 @@
 import {
-	SYNC_CORE_STORE,
+	SYNC_CORE_BUCKET,
 	SYNC_DEFAULT_ICON_PACK,
 	SYNC_ID_PATTERN,
 	SYNC_KINDS,
 	SYNC_LOCAL_KEYS,
-	SYNC_LOCAL_STORE_PREFIX,
+	SYNC_LOCAL_BUCKET_PREFIX,
 	SYNC_SETTINGS_MAX_DEPTH,
 	SYNC_URL_MAX_LENGTH,
 } from '@unbound-app/contracts/sync';
@@ -113,7 +113,7 @@ function stripStore(name: string, store: SyncBucket, limits: SyncLimits): SyncBu
 	const stripped: SyncBucket = {};
 
 	for (const [key, value] of Object.entries(store)) {
-		if (name === SYNC_CORE_STORE && LOCAL_KEYS.has(key)) {
+		if (name === SYNC_CORE_BUCKET && LOCAL_KEYS.has(key)) {
 			continue;
 		}
 
@@ -130,11 +130,11 @@ function stripStore(name: string, store: SyncBucket, limits: SyncLimits): SyncBu
 }
 
 function isSyncedStore(name: string, installIds: Set<string>): boolean {
-	if (name.startsWith(SYNC_LOCAL_STORE_PREFIX) || RESERVED_STORES.has(name)) {
+	if (name.startsWith(SYNC_LOCAL_BUCKET_PREFIX) || RESERVED_STORES.has(name)) {
 		return false;
 	}
 
-	return name === SYNC_CORE_STORE || installIds.has(name);
+	return name === SYNC_CORE_BUCKET || installIds.has(name);
 }
 
 /**

@@ -1,4 +1,4 @@
-import { SYNC_LOCAL_STORE_PREFIX } from '@unbound-app/contracts/sync-stores';
+import { SYNC_LOCAL_BUCKET_PREFIX } from '@unbound-app/contracts/sync-buckets';
 import debounce from '@unbound-app/utils/debounce';
 
 import { connect, disconnect, getMode, isApplying, isEnabled, now } from '~/sync/api';
@@ -34,7 +34,7 @@ export function start() {
 
 	// Install sources, enabled and applied state all live in settings, so one listener sees every change.
 	unsubscribe = onChange(
-		(payload) => !payload.store.startsWith(SYNC_LOCAL_STORE_PREFIX) && !isApplying(),
+		(payload) => !payload.store.startsWith(SYNC_LOCAL_BUCKET_PREFIX) && !isApplying(),
 		scheduleSync,
 	);
 }
@@ -55,16 +55,16 @@ export function stop() {
 	unsubscribe = null;
 }
 
-export const cloudSyncSection: SectionEntry = {
+export const syncSection: SectionEntry = {
 	key: Screens.Sync,
 	titleKey: 'UNBOUND_CLOUD_SYNC',
 	/**
 	 * @description Loads the page when it first opens.
 	 * @returns The page.
 	 */
-	getComponent: () => require('~/ui/settings/cloud-sync').default,
+	getComponent: () => require('~/ui/settings/sync').default,
 	// Listed on the General page, so the overview stays short.
 	hidden: true,
 };
 
-export default { start, afterAddons, stop, cloudSyncSection };
+export default { start, afterAddons, stop, syncSection };

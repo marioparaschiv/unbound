@@ -12,7 +12,7 @@ import type { Account } from '~/account/account';
 import { API_URL } from '~/core/constants';
 
 /** The Bucket the account keeps its session in. Never synced. */
-export const ACCOUNT_STORE = 'unbound::account';
+export const ACCOUNT_BUCKET = 'unbound::account';
 
 export type { Account } from '~/account/account';
 
@@ -34,7 +34,7 @@ type EventMap = {
 };
 
 const logger = createLogger('Account');
-const Store = getBucket(ACCOUNT_STORE);
+const bucket = getBucket(ACCOUNT_BUCKET);
 const Events = new EventEmitter<EventMap>();
 
 /** Listens for `signedIn` and `signedOut`, which also fires when the server rejects the session. */
@@ -43,7 +43,7 @@ export const off = Events.off.bind(Events);
 
 function readSession(): Session | undefined {
 	// Written by `signIn` from the server's answer, so it is read back as stored.
-	return Store.get<Session | null>('session', null) ?? undefined;
+	return bucket.get<Session | null>('session', null) ?? undefined;
 }
 
 function toAccount(user: Caller): Account {
@@ -51,7 +51,7 @@ function toAccount(user: Caller): Account {
 }
 
 function clearSession(session: Session) {
-	Store.remove('session');
+	bucket.remove('session');
 	Events.emit('signedOut', { account: toAccount(session.user) });
 }
 
@@ -79,7 +79,7 @@ export function getAccount(): Account | undefined {
  * @returns The signed-in account, or `undefined`.
  */
 export function useAccount(): Account | undefined {
-	useBucket(ACCOUNT_STORE);
+	useBucket(ACCOUNT_BUCKET);
 
 	return getAccount();
 }
@@ -128,7 +128,7 @@ export async function signIn(): Promise<SignInResult> {
 		});
 		const account = toAccount(session.user);
 
-		Store.set('session', session);
+		bucket.set('session', session);
 		Events.emit('signedIn', { account });
 
 		return { status: 'signed-in', account };
@@ -181,7 +181,7 @@ export async function refresh(): Promise<void> {
 		const { user } = await createClient()('GET /api/v1/me');
 
 		if (readSession()?.token === session.token) {
-			Store.set('session', { token: session.token, user });
+			bucket.set('session', { token: session.token, user });
 		}
 	} catch (error) {
 		logger.warn(`Failed to refresh account ${session.user.id}:`, error);

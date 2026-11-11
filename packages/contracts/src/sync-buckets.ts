@@ -6,12 +6,12 @@ import type { SyncDocument } from './sync';
 export const SYNC_KINDS = ['plugins', 'themes', 'icons', 'fonts'] as const;
 
 /** The core Bucket; addon Buckets are named after the addon id. */
-export const SYNC_CORE_STORE = CORE_SETTINGS_STORE;
+export const SYNC_CORE_BUCKET = CORE_SETTINGS_STORE;
 
-/** Stores under this prefix hold caches and session state, and never sync. */
-export const SYNC_LOCAL_STORE_PREFIX = 'unbound::';
+/** Buckets under this prefix hold caches and session state, and never sync. */
+export const SYNC_LOCAL_BUCKET_PREFIX = 'unbound::';
 
-/** Keys of the core store that only make sense on the device that set them. `developer-mode` picks the bundle the loader runs. */
+/** Keys of the core Bucket that only make sense on the device that set them. `developer-mode` picks the bundle the loader runs. */
 export const SYNC_LOCAL_KEYS = ['recovery', 'debugger', 'loader', 'developer-mode'] as const;
 
 /** The built-in icon pack, which is always installed and may be applied without a synced install. */
@@ -34,8 +34,8 @@ export function emptySyncDocument(): SyncDocument {
 
 export default {
 	SYNC_KINDS,
-	SYNC_CORE_STORE,
-	SYNC_LOCAL_STORE_PREFIX,
+	SYNC_CORE_BUCKET,
+	SYNC_LOCAL_BUCKET_PREFIX,
 	SYNC_LOCAL_KEYS,
 	SYNC_DEFAULT_ICON_PACK,
 	SYNC_ID_PATTERN,

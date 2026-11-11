@@ -1,11 +1,11 @@
 import {
-	SYNC_CORE_STORE,
+	SYNC_CORE_BUCKET,
 	SYNC_DEFAULT_ICON_PACK,
 	SYNC_ID_PATTERN,
 	SYNC_KINDS,
 	SYNC_LOCAL_KEYS,
-	SYNC_LOCAL_STORE_PREFIX,
-} from '@unbound-app/contracts/sync-stores';
+	SYNC_LOCAL_BUCKET_PREFIX,
+} from '@unbound-app/contracts/sync-buckets';
 import type {
 	JsonValue,
 	SyncDocument,
@@ -52,7 +52,7 @@ function isOverrideMap(value: JsonValue | undefined): value is Record<string, st
 	);
 }
 
-const RESERVED_STORES = new Set<string>(SYNC_KINDS);
+const RESERVED_BUCKETS = new Set<string>(SYNC_KINDS);
 
 // Run in this order so an applied theme or an enabled plugin is installed before it is used.
 const ACTION_ORDER: Record<SyncAction['type'], number> = {
@@ -168,13 +168,13 @@ export function collectLocalDocument(): SyncDocument {
 	const synced: SyncDocument['settings'] = {};
 
 	for (const [name, store] of Object.entries(snapshot({ includeSecrets: true }))) {
-		if (name.startsWith(SYNC_LOCAL_STORE_PREFIX) || RESERVED_STORES.has(name)) {
+		if (name.startsWith(SYNC_LOCAL_BUCKET_PREFIX) || RESERVED_BUCKETS.has(name)) {
 			continue;
 		}
 
 		// The document keeps its own copy of each store; Hermes has no `structuredClone`, so a shallow
 		// copy stands in for the deep one `parse` used to make.
-		if (name === SYNC_CORE_STORE) {
+		if (name === SYNC_CORE_BUCKET) {
 			const core = copyBucket(store);
 
 			for (const key of LOCAL_KEYS) {
@@ -242,7 +242,7 @@ async function applyAction(action: SyncAction): Promise<boolean> {
 		}
 
 		case 'set-setting': {
-			if (action.store === SYNC_CORE_STORE && action.key === FONT_OVERRIDES) {
+			if (action.store === SYNC_CORE_BUCKET && action.key === FONT_OVERRIDES) {
 				await fonts.replaceOverrides(isOverrideMap(action.value) ? action.value : {});
 
 				return true;

@@ -4,20 +4,20 @@ import {
 	SYNC_ID_PATTERN,
 	SYNC_KINDS,
 	SYNC_LOCAL_KEYS,
-	SYNC_LOCAL_STORE_PREFIX,
-	SYNC_CORE_STORE,
-} from './sync-stores';
+	SYNC_LOCAL_BUCKET_PREFIX,
+	SYNC_CORE_BUCKET,
+} from './sync-buckets';
 import { Type, type StaticDecode } from './schema';
 
 export {
 	SYNC_KINDS,
-	SYNC_CORE_STORE,
-	SYNC_LOCAL_STORE_PREFIX,
+	SYNC_CORE_BUCKET,
+	SYNC_LOCAL_BUCKET_PREFIX,
 	SYNC_LOCAL_KEYS,
 	SYNC_DEFAULT_ICON_PACK,
 	SYNC_ID_PATTERN,
 	emptySyncDocument,
-} from './sync-stores';
+} from './sync-buckets';
 
 export const SYNC_URL_MAX_LENGTH = 2048;
 export const SYNC_SETTINGS_MAX_DEPTH = 8;
@@ -120,8 +120,8 @@ export type SyncDocumentInput = StaticDecode<typeof syncDocumentInputSchema>;
 
 export default {
 	SYNC_KINDS,
-	SYNC_CORE_STORE,
-	SYNC_LOCAL_STORE_PREFIX,
+	SYNC_CORE_BUCKET,
+	SYNC_LOCAL_BUCKET_PREFIX,
 	SYNC_LOCAL_KEYS,
 	SYNC_DEFAULT_ICON_PACK,
 	SYNC_ID_PATTERN,
