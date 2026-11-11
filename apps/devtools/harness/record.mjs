@@ -1,24 +1,25 @@
-// usage: bun record.mjs <out.jsonl> [port=8097]
-import { WebSocketServer } from 'ws';
+// usage: bun record.mjs <out.jsonl> [port=9090]
+// Dials the bridge (or `device.mjs`) as the React DevTools frontend and records the session.
+import WebSocket from 'ws';
 import { writeFileSync, appendFileSync } from 'node:fs';
 
 const out = process.argv[2];
-const port = Number(process.argv[3] ?? 8097);
+const port = Number(process.argv[3] ?? 9090);
 writeFileSync(out, '');
-const wss = new WebSocketServer({ port });
-console.log('listening', port);
+const ws = new WebSocket(`ws://127.0.0.1:${port}/?mcp`);
 
-wss.on('connection', (ws) => {
+ws.on('open', () => {
 	const log = (dir, frame) => appendFileSync(out, JSON.stringify({ dir, ...frame }) + '\n');
 	const send = (event, payload) => {
 		log('out', { event, payload });
-		ws.send(JSON.stringify({ event, payload }));
+		ws.send(JSON.stringify({ type: 'react-devtools', event, payload }));
 	};
 	const ids = [];
 	let rid = 0;
 
 	ws.on('message', (raw) => {
-		const frame = JSON.parse(String(raw));
+		const { type, ...frame } = JSON.parse(String(raw));
+		if (type !== 'react-devtools') return;
 		log('in', frame);
 
 		if (frame.event === 'operations') {

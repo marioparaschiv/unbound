@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use gpui::{App, BorrowAppContext, Global};
 use serde::{Deserialize, Serialize};
 use unbound_devtools_core::presets::PresetFile;
-use unbound_devtools_core::{DEFAULT_BRIDGE_PORT, DEFAULT_DEVTOOLS_PORT, DEFAULT_MCP_PORT};
+use unbound_devtools_core::{DEFAULT_BRIDGE_PORT, DEFAULT_MCP_PORT};
 
 const FILE_NAME: &str = "settings.json";
 
@@ -48,9 +48,6 @@ pub struct Settings {
 	/// Where commands run; the addon workspace for `build`, `check` and `dev`. Empty is the home folder.
 	pub project_dir: String,
 	pub bridge_port: u16,
-	/// The host a device dials back to; empty reads it from the device's debugger settings.
-	pub advertise_host: String,
-	pub devtools_port: u16,
 	pub mcp_enabled: bool,
 	pub mcp_port: u16,
 }
@@ -62,8 +59,6 @@ impl Default for Settings {
 			cli_command: "ubd".into(),
 			project_dir: String::new(),
 			bridge_port: DEFAULT_BRIDGE_PORT,
-			advertise_host: String::new(),
-			devtools_port: DEFAULT_DEVTOOLS_PORT,
 			mcp_enabled: true,
 			mcp_port: DEFAULT_MCP_PORT,
 		}

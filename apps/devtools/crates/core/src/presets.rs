@@ -20,8 +20,6 @@ pub enum PresetError {
 	EmptyName,
 	#[error("{0:?} is not a bridge address; use host:port, like 100.64.0.2:9090")]
 	InvalidBridge(String),
-	#[error("{0:?} is not a host name; use a host or IP without a port, like 100.64.0.5")]
-	InvalidHost(String),
 	#[error("a device named {0:?} already exists")]
 	Duplicate(String),
 	#[error("no device named {0:?}")]
@@ -125,61 +123,39 @@ fn is_host_name(host: &str) -> bool {
 			.all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '.' | '-' | '_'))
 }
 
-/// Where to ask a device to connect from: the bridge it is attached to, and the host it should
-/// dial back. `advertise_host: None` reads the host from the device's `debugger.address`.
+/// The debugger bridge a debugger connection dials. The device's React DevTools and view finder
+/// travel over it, so nothing else is needed to reach the device.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ConnectTarget {
 	pub bridge: BridgeAddr,
-	pub advertise_host: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DevicePreset {
 	pub name: String,
 	pub bridge: BridgeAddr,
-	#[serde(default, skip_serializing_if = "Option::is_none")]
-	pub advertise_host: Option<String>,
 }
 
 impl DevicePreset {
-	/// Parses user input; blank `advertise_host` means "ask the device".
-	pub fn parse(name: &str, bridge: &str, advertise_host: &str) -> Result<Self, PresetError> {
+	/// Parses user input.
+	pub fn parse(name: &str, bridge: &str) -> Result<Self, PresetError> {
 		let name = name.trim();
 
 		if name.is_empty() {
 			return Err(PresetError::EmptyName);
 		}
 
-		let advertise_host = parse_host(advertise_host)?;
-
 		Ok(Self {
 			name: name.to_owned(),
 			bridge: bridge.parse()?,
-			advertise_host,
 		})
 	}
 
 	pub fn target(&self) -> ConnectTarget {
 		ConnectTarget {
 			bridge: self.bridge.clone(),
-			advertise_host: self.advertise_host.clone(),
 		}
 	}
-}
-
-/// A dial-back host: a name or an IP literal, never a port or a URL. Blank is `None`.
-pub fn parse_host(text: &str) -> Result<Option<String>, PresetError> {
-	let text = text.trim();
-
-	if text.is_empty() {
-		return Ok(None);
-	}
-
-	if text.parse::<std::net::IpAddr>().is_ok() || is_host_name(text) {
-		return Ok(Some(text.to_owned()));
-	}
-
-	Err(PresetError::InvalidHost(text.to_owned()))
 }
 
 /// The saved devices, in the order they were added, and the debugger connection to restore.
@@ -360,7 +336,7 @@ mod tests {
 	}
 
 	fn vm() -> DevicePreset {
-		DevicePreset::parse("iPhone VM", "100.64.0.2:9090", "").expect("valid")
+		DevicePreset::parse("iPhone VM", "100.64.0.2:9090").expect("valid")
 	}
 
 	#[test]
@@ -371,10 +347,7 @@ mod tests {
 		let mut presets = Presets::default();
 		presets.insert(vm()).expect("inserted");
 		presets
-			.insert(
-				DevicePreset::parse("Pixel", "pixel.tailnet.ts.net:9091", " 100.64.0.9 ")
-					.expect("valid"),
-			)
+			.insert(DevicePreset::parse("Pixel", "pixel.tailnet.ts.net:9091").expect("valid"))
 			.expect("inserted");
 		presets.last_used = Some("Pixel".to_owned());
 		file.save(&presets).expect("saved");
@@ -384,12 +357,6 @@ mod tests {
 		assert_eq!(
 			loaded.last_used().map(|preset| preset.bridge.port()),
 			Some(9091)
-		);
-		assert_eq!(
-			loaded
-				.get("pixel")
-				.and_then(|preset| preset.advertise_host.as_deref()),
-			Some("100.64.0.9")
 		);
 	}
 
@@ -418,7 +385,7 @@ mod tests {
 			"ws://host:9090",
 			"a b:1",
 		] {
-			let error = DevicePreset::parse("x", bridge, "").expect_err(bridge);
+			let error = DevicePreset::parse("x", bridge).expect_err(bridge);
 			assert!(
 				matches!(error, PresetError::InvalidBridge(_)),
 				"{bridge}: {error}"
@@ -427,17 +394,12 @@ mod tests {
 		}
 
 		assert!(matches!(
-			DevicePreset::parse(" ", "h:1", ""),
+			DevicePreset::parse(" ", "h:1"),
 			Err(PresetError::EmptyName)
 		));
-		assert!(matches!(
-			DevicePreset::parse("x", "h:1", "h:8097"),
-			Err(PresetError::InvalidHost(_))
-		));
 
-		let v6 = DevicePreset::parse("x", "[fd7a::1]:9090", "fd7a::2").expect("IPv6");
+		let v6 = DevicePreset::parse("x", "[fd7a::1]:9090").expect("IPv6");
 		assert_eq!(v6.bridge.to_string(), "[fd7a::1]:9090");
-		assert_eq!(v6.advertise_host.as_deref(), Some("fd7a::2"));
 	}
 
 	#[test]

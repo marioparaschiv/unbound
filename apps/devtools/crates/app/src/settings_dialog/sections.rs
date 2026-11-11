@@ -25,7 +25,6 @@ impl Scale {
 pub enum Section {
 	Appearance,
 	Device,
-	ReactDevtools,
 	CommandLine,
 	Agents,
 	About,
@@ -44,7 +43,7 @@ pub const CATEGORIES: &[Category] = &[
 	},
 	Category {
 		label: "Connection",
-		sections: &[Section::Device, Section::ReactDevtools],
+		sections: &[Section::Device],
 	},
 	Category {
 		label: "Tools",
@@ -61,7 +60,6 @@ impl Section {
 		match self {
 			Self::Appearance => "Appearance",
 			Self::Device => "Device",
-			Self::ReactDevtools => "React DevTools",
 			Self::CommandLine => "Command Line",
 			Self::Agents => "Agents",
 			Self::About => "About",
@@ -72,7 +70,6 @@ impl Section {
 		match self {
 			Self::Appearance => "icons/palette.svg",
 			Self::Device => "icons/smartphone.svg",
-			Self::ReactDevtools => "icons/atom.svg",
 			Self::CommandLine => "icons/square-terminal.svg",
 			Self::Agents => "icons/bot.svg",
 			Self::About => "icons/info.svg",
@@ -85,8 +82,6 @@ pub struct Fields {
 	pub cli_command: Entity<InputState>,
 	pub project_dir: Entity<InputState>,
 	pub bridge_port: Entity<InputState>,
-	pub advertise_host: Entity<InputState>,
-	pub devtools_port: Entity<InputState>,
 	pub mcp_port: Entity<InputState>,
 }
 
@@ -94,28 +89,11 @@ pub struct Fields {
 pub fn render(section: Section, fields: &Fields, s: Scale, cx: &App) -> Vec<Div> {
 	match section {
 		Section::Appearance => vec![card(s, "icons/sun-moon.svg", "Theme").child(theme_choice(s, cx))],
-		Section::Device => vec![
-			card(s, "icons/cable.svg", "Debugger Bridge")
-				.child(row(
-					s,
-					"Bridge Port",
-					"The port ubd dials for device commands. Connect device reads it when DevTools starts.",
-					port(s, &fields.bridge_port),
-				))
-				.child(stacked(
-					s,
-					"Device Dials Back To",
-					&format!(
-						"The host the device connects to DevTools on. Empty reads it from the device's debugger settings. {RESTART}"
-					),
-					text(s, &fields.advertise_host),
-				)),
-		],
-		Section::ReactDevtools => vec![card(s, "icons/plug.svg", "Device Connection").child(row(
+		Section::Device => vec![card(s, "icons/cable.svg", "Debugger Bridge").child(row(
 			s,
-			"DevTools Port",
-			&format!("The port the device's DevTools backend dials. {RESTART}"),
-			port(s, &fields.devtools_port),
+			"Bridge Port",
+			"The port of the bridge on this machine. React DevTools, the view finder and ubd reach the device through it. Connect device reads it when DevTools starts.",
+			port(s, &fields.bridge_port),
 		))],
 		Section::CommandLine => vec![
 			card(s, "icons/terminal.svg", "ubd")

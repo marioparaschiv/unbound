@@ -3,48 +3,14 @@ use std::sync::atomic::Ordering;
 
 use crate::bridge;
 use crate::presets::{ConnectTarget, DevicePreset, PresetError, PresetFile, Presets};
-use crate::session::{BridgeState, Devtools, EVAL_TIMEOUT_MS, Inner};
-
-impl Inner {
-	/// The script that asks a device to dial this frontend, as `target` says to reach it.
-	pub(crate) fn connect_script(&self, target: &ConnectTarget) -> String {
-		let port = self
-			.state
-			.lock()
-			.listen_addr
-			.map_or(self.config.listen.port(), |addr| addr.port());
-
-		bridge::connect_script(target.advertise_host.as_deref(), port)
-	}
-}
+use crate::session::{BridgeState, Devtools, EVAL_TIMEOUT_MS};
 
 impl Devtools {
-	/// The bridge and dial-back host from the command line: "This machine" in the GUI.
+	/// The bridge from the command line: "This machine" in the GUI.
 	pub fn default_target(&self) -> ConnectTarget {
 		ConnectTarget {
 			bridge: self.inner.config.bridge.into(),
-			advertise_host: self.inner.config.advertise_host.clone(),
 		}
-	}
-
-	/// Asks the device on the command line's bridge to dial this frontend now, then keeps it as the
-	/// debugger connection.
-	pub async fn connect_device(&self) -> anyhow::Result<String> {
-		let url = self.connect_device_to(self.default_target()).await;
-		self.connect_link(None)?;
-		url
-	}
-
-	/// Dials a saved device now, then keeps it as the debugger connection.
-	pub async fn connect_preset(&self, name: &str) -> anyhow::Result<String> {
-		let preset = self
-			.presets()?
-			.get(name)
-			.cloned()
-			.ok_or_else(|| PresetError::NotFound(name.to_owned()))?;
-		let url = self.connect_device_to(preset.target()).await;
-		self.connect_link(Some(&preset.name))?;
-		url
 	}
 
 	/// Makes a saved device (or this machine's bridge, `None`) the debugger connection, and turns
@@ -93,15 +59,6 @@ impl Devtools {
 			Some(preset) => self.link_to(preset.target(), Some(preset.name.clone())),
 			None => self.link_to(self.default_target(), None),
 		}
-	}
-
-	/// Asks the device behind `target.bridge`, over the Unbound debugger bridge, to dial this
-	/// frontend (`DevTools.connect`). Returns the address the device was told to dial.
-	pub async fn connect_device_to(&self, target: ConnectTarget) -> anyhow::Result<String> {
-		let script = self.inner.connect_script(&target);
-		let address = self.resolve(&target).await?;
-
-		self.eval_at(address, &script).await
 	}
 
 	async fn resolve(&self, target: &ConnectTarget) -> anyhow::Result<SocketAddr> {

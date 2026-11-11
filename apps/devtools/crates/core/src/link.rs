@@ -1,25 +1,23 @@
 //! The debugger connection: the one Unbound debugger bridge this app stays attached to. Its
-//! supervisor keeps a controller socket open, mirrors the bridge's `device-status`, and asks an
-//! attached device to dial this frontend whenever no backend is connected. A lost bridge is
-//! redialled with backoff, so a restarted bridge or Discord reconnects on its own.
+//! supervisor keeps a controller socket open, mirrors the bridge's `device-status`, and carries
+//! the device's React DevTools backend and view finder over it. A lost bridge is redialled with
+//! backoff, so a restarted bridge or Discord reconnects on its own.
 
 use std::sync::{Arc, Weak};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use futures_util::SinkExt;
 use serde::Serialize;
+use tokio::sync::mpsc;
+use tokio_tungstenite::tungstenite::Message;
 
 use crate::bridge::{self, BridgeFrame, DeviceInfo};
 use crate::presets::{BridgeAddr, ConnectTarget};
-use crate::session::{BridgeState, ConnectionState, Devtools, EVAL_TIMEOUT_MS, Inner};
+use crate::session::{BridgeState, Devtools, Inner};
+use crate::views;
 
 const MIN_BACKOFF: Duration = Duration::from_secs(1);
 const MAX_BACKOFF: Duration = Duration::from_secs(10);
-/// How often an attached link checks that a backend is still connected.
-const CHECK_EVERY: Duration = Duration::from_secs(2);
-/// The least time between two connect scripts, so a device that cannot dial is not flooded.
-const REDIAL_AFTER: Duration = Duration::from_secs(10);
-const EVAL_GIVE_UP: Duration = Duration::from_millis(EVAL_TIMEOUT_MS + bridge::REPLY_GRACE_MS);
 
 /// What the debugger connection is doing, for the GUI's banner and MCP's `status`.
 #[derive(Clone, Debug, Serialize)]
@@ -31,7 +29,7 @@ pub struct LinkStatus {
 	pub state: BridgeState,
 	/// The attached device, once it has said hello.
 	pub device: Option<DeviceInfo>,
-	/// Why the device could not connect or the bridge was lost, until the next attempt succeeds.
+	/// Why the bridge was lost, until the next attempt succeeds.
 	pub error: Option<String>,
 }
 
@@ -39,6 +37,8 @@ pub(crate) struct Link {
 	generation: u64,
 	pub(crate) target: ConnectTarget,
 	pub(crate) status: LinkStatus,
+	/// Frames for the bridge, while the controller socket is open.
+	pub(crate) outbound: Option<mpsc::UnboundedSender<String>>,
 	task: tokio::task::JoinHandle<()>,
 }
 
@@ -75,17 +75,26 @@ impl Devtools {
 					error: None,
 				},
 				target,
+				outbound: None,
 				task,
 			})
 		};
-		drop(replaced);
+
+		if let Some(replaced) = replaced {
+			self.inner.detach_backend(replaced.generation);
+		}
+
 		self.inner.bump();
 	}
 
-	/// Drops the debugger connection. A device already dialling keeps its own retry loop.
+	/// Drops the debugger connection and the React DevTools session it carried.
 	pub fn unlink(&self) {
 		let removed = self.inner.state.lock().link.take();
-		drop(removed);
+
+		if let Some(removed) = removed {
+			self.inner.detach_backend(removed.generation);
+		}
+
 		self.inner.bump();
 	}
 
@@ -105,7 +114,15 @@ async fn supervise(inner: Weak<Inner>, generation: u64, target: ConnectTarget) {
 	let mut backoff = MIN_BACKOFF;
 
 	loop {
-		let Some(lost) = attach(&inner, generation, &target).await else {
+		let lost = attach(&inner, generation, &target).await;
+
+		if let Some(inner) = inner.upgrade() {
+			inner.detach_backend(generation);
+			// Dropping the waiters fails each view request still out with `NotConnected`.
+			inner.views.lock().clear();
+		}
+
+		let Some(lost) = lost else {
 			return;
 		};
 
@@ -114,9 +131,10 @@ async fn supervise(inner: Weak<Inner>, generation: u64, target: ConnectTarget) {
 		}
 
 		let updated = update(&inner, generation, |link| {
-			link.state = BridgeState::Unreachable;
-			link.device = None;
-			link.error = Some(lost.reason);
+			link.status.state = BridgeState::Unreachable;
+			link.status.device = None;
+			link.status.error = Some(lost.reason);
+			link.outbound = None;
 		});
 
 		if !updated {
@@ -148,99 +166,73 @@ async fn attach(inner: &Weak<Inner>, generation: u64, target: &ConnectTarget) ->
 			});
 		}
 	};
-	let lost = |reason: &str| {
+	let lost = || {
 		Some(Lost {
-			reason: reason.to_owned(),
+			reason: "the bridge closed the connection".to_owned(),
 			attached: true,
 		})
 	};
-	let mut check = tokio::time::interval(CHECK_EVERY);
+	let (outbound, mut queue) = mpsc::unbounded_channel::<String>();
+	let sender = outbound.clone();
+
+	if !update(inner, generation, |link| link.outbound = Some(sender)) {
+		return None;
+	}
+
 	let mut device_connected = false;
-	let mut pending: Option<(String, Instant)> = None;
-	let mut last_dial: Option<Instant> = None;
 
 	loop {
 		tokio::select! {
-			frame = bridge::next_frame(&mut socket) => match frame {
-				None => return lost("the bridge closed the connection"),
-				Some(BridgeFrame::DeviceStatus { connected, device }) => {
-					// A device that just attached is dialled at once, not after the redial pause.
-					if connected && !device_connected {
-						last_dial = None;
-					}
-					device_connected = connected;
-					let updated = update(inner, generation, |link| {
-						link.state = if connected { BridgeState::DeviceConnected } else { BridgeState::NoDevice };
-						link.device = device;
-						if !connected {
-							link.error = None;
+			frame = bridge::next_text(&mut socket) => {
+				let Some((frame, text)) = frame else {
+					return lost();
+				};
+				let inner = inner.upgrade()?;
+
+				match frame {
+					BridgeFrame::DeviceStatus { connected, device } => {
+						let updated = update_with(&inner, generation, |link| {
+							link.status.state = if connected { BridgeState::DeviceConnected } else { BridgeState::NoDevice };
+							link.status.device = device;
+							link.status.error = None;
+						});
+						if !updated {
+							return None;
 						}
-					});
-					if !updated {
-						return None;
+						// A device that connects gets a fresh React DevTools session; its hello
+						// repeats `connected`, which keeps the session.
+						if connected && !device_connected {
+							inner.attach_backend(generation, outbound.clone());
+						} else if !connected && device_connected {
+							inner.detach_backend(generation);
+						}
+						device_connected = connected;
 					}
-				}
-				Some(BridgeFrame::EvalResult { id, ok, error, .. })
-					if pending.as_ref().is_some_and(|(pending, _)| *pending == id) =>
-				{
-					pending = None;
-					let error = (!ok).then(|| error.unwrap_or_default());
-					if !update(inner, generation, |link| link.error = error) {
-						return None;
+					BridgeFrame::ReactDevtools {} => inner.receive(generation, &text),
+					BridgeFrame::ViewsResult { id, ok, nodes, error } => {
+						let reply = if ok { Ok(nodes) } else { Err(error.unwrap_or_default()) };
+						views::settle(&inner, &id, reply);
 					}
+					BridgeFrame::EvalResult { .. } | BridgeFrame::Other => {}
 				}
-				Some(_) => {}
-			},
-			_ = check.tick() => {}
-		}
-
-		if pending
-			.as_ref()
-			.is_some_and(|(_, sent)| sent.elapsed() > EVAL_GIVE_UP)
-		{
-			pending = None;
-		}
-
-		let due = last_dial.is_none_or(|sent| sent.elapsed() >= REDIAL_AFTER);
-
-		if !device_connected || pending.is_some() || !due {
-			continue;
-		}
-
-		let script = {
-			let inner = inner.upgrade()?;
-			let backend_connected = matches!(
-				inner.state.lock().connection,
-				ConnectionState::Connected { .. } | ConnectionState::UnsupportedRenderer { .. }
-			);
-
-			if backend_connected {
-				continue;
 			}
-
-			inner.connect_script(target)
-		};
-		let id = uuid::Uuid::new_v4().to_string();
-
-		if socket
-			.send(bridge::eval_request(&id, &script, EVAL_TIMEOUT_MS))
-			.await
-			.is_err()
-		{
-			return lost("the bridge closed the connection");
+			Some(text) = queue.recv() => {
+				if socket.send(Message::text(text)).await.is_err() {
+					return lost();
+				}
+			}
 		}
-
-		pending = Some((id, Instant::now()));
-		last_dial = Some(Instant::now());
 	}
 }
 
 /// Applies `change` while `generation` is still the link. `false` once it was replaced.
-fn update(inner: &Weak<Inner>, generation: u64, change: impl FnOnce(&mut LinkStatus)) -> bool {
-	let Some(inner) = inner.upgrade() else {
-		return false;
-	};
+fn update(inner: &Weak<Inner>, generation: u64, change: impl FnOnce(&mut Link)) -> bool {
+	inner
+		.upgrade()
+		.is_some_and(|inner| update_with(&inner, generation, change))
+}
 
+fn update_with(inner: &Inner, generation: u64, change: impl FnOnce(&mut Link)) -> bool {
 	{
 		let mut state = inner.state.lock();
 		let Some(link) = state
@@ -250,7 +242,7 @@ fn update(inner: &Weak<Inner>, generation: u64, change: impl FnOnce(&mut LinkSta
 		else {
 			return false;
 		};
-		change(&mut link.status);
+		change(link);
 	}
 
 	inner.bump();

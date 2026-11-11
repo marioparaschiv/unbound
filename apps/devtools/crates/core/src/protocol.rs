@@ -1,4 +1,5 @@
-//! Bridge frames: every WebSocket text message is `{"event": string, "payload": any}`.
+//! React DevTools frames: `{"event": string, "payload": any}`, carried over the debugger
+//! connection as `{"type": "react-devtools", ...}` (`ReactDevtoolsFrame` in the protocol).
 //! Inbound frames are parsed once here; the rest of the crate never sees raw JSON events.
 
 use serde::{Deserialize, Serialize};
@@ -19,6 +20,11 @@ pub enum Inbound {
 	/// The user picked an element on device (`selectElement` / `selectFiber`).
 	SelectElement(ElementId),
 	ShutdownBackend,
+	/// Unbound's own event: the device started a backend session, could not, or ended one.
+	BackendStatus {
+		connected: bool,
+		error: Option<String>,
+	},
 	/// Anything else, kept for logging.
 	Other {
 		event: String,
@@ -101,6 +107,18 @@ pub enum ComponentFilter {
 /// `ComponentFilterElementType` in react-devtools-shared's `types.js`.
 const COMPONENT_FILTER_ELEMENT_TYPE: i64 = 1;
 
+/// The bridge message type that wraps one React DevTools frame.
+pub const FRAME_TYPE: &str = "react-devtools";
+/// `REACT_DEVTOOLS_STATUS_EVENT` in the protocol.
+const STATUS_EVENT: &str = "unbound:backend-status";
+
+#[derive(Deserialize)]
+struct RawStatus {
+	connected: bool,
+	#[serde(default)]
+	error: Option<String>,
+}
+
 #[derive(Deserialize)]
 struct Frame {
 	event: String,
@@ -160,10 +178,15 @@ pub fn parse(text: &str) -> Result<Inbound, serde_json::Error> {
 			None => Inbound::Other { event },
 		},
 		"shutdown" | "shutdownBackend" => Inbound::ShutdownBackend,
+		STATUS_EVENT => {
+			let RawStatus { connected, error } = serde_json::from_value(payload)?;
+			Inbound::BackendStatus { connected, error }
+		}
 		_ => Inbound::Other { event },
 	})
 }
 
+/// The bridge frame for `message`, ready to send on the debugger connection.
 pub fn encode(message: &Outbound) -> String {
 	let (event, payload) = match message {
 		Outbound::GetBridgeProtocol => ("getBridgeProtocol", Json::Null),
@@ -255,8 +278,8 @@ pub fn encode(message: &Outbound) -> String {
 	};
 
 	let frame = match payload {
-		Json::Null => json!({ "event": event }),
-		payload => json!({ "event": event, "payload": payload }),
+		Json::Null => json!({ "type": FRAME_TYPE, "event": event }),
+		payload => json!({ "type": FRAME_TYPE, "event": event, "payload": payload }),
 	};
 
 	frame.to_string()

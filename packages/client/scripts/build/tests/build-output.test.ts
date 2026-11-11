@@ -144,7 +144,13 @@ describe('bundle flavours', () => {
 		expect(devModules.filter(isDeveloperModule).map(workspacePath).sort()).toEqual([
 			'packages/client/src/assets/builtin.dev.ts',
 			'packages/client/src/debugger/builtin.dev.ts',
+			'packages/client/src/debugger/react-devtools-highlight.dev.ts',
+			'packages/client/src/debugger/react-devtools.dev.ts',
 			'packages/client/src/debugger/reload-summary.dev.ts',
+			'packages/client/src/debugger/view-finder-android.dev.ts',
+			'packages/client/src/debugger/view-finder-ios.dev.ts',
+			'packages/client/src/debugger/view-finder.dev.ts',
+			'packages/client/src/debugger/view-node.dev.ts',
 			'packages/client/src/hot-refresh/families.ts',
 			'packages/client/src/hot-refresh/runtime.ts',
 			'packages/client/src/settings/builtin.dev.ts',
@@ -154,6 +160,8 @@ describe('bundle flavours', () => {
 			'packages/client/src/ui/settings/text-setting-modal.dev.tsx',
 			'packages/client/src/ui/settings/text-setting-row.dev.tsx',
 			'packages/debugger-protocol/src/index.ts',
+			'packages/debugger-protocol/src/react-devtools.ts',
+			'packages/debugger-protocol/src/views.ts',
 		]);
 	});
 });
