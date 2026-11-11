@@ -24,7 +24,6 @@ const viewIds = new Map<string, number>();
 
 /**
  * @description Finds the method a `MessageView` binds a message with. Discord obfuscates its name and most parameter types, but on every build it takes the message first and has the most parameters.
- * @param java The Java bridge.
  * @returns The method's name and parameter types, ready to hook.
  */
 export function messageBindMethod(java: NativeJavaBridge): NativeJavaMethodDescription {
@@ -41,7 +40,6 @@ export function messageBindMethod(java: NativeJavaBridge): NativeJavaMethodDescr
 
 /**
  * @description Finds the span builder class that Discord's drawee text views take. Fresco's class is obfuscated on newer builds, but it stays the only parameter of the setter.
- * @param java The Java bridge.
  * @returns The builder's class name.
  */
 export function draweeTextBuilder(java: NativeJavaBridge): string {
@@ -56,7 +54,6 @@ export function draweeTextBuilder(java: NativeJavaBridge): string {
 
 /**
  * @description Names the field holding the id of the message a `MessageView` shows, its only `String` field.
- * @param java The Java bridge.
  * @returns The field name.
  */
 export function messageIdField(java: NativeJavaBridge): string {

@@ -253,7 +253,6 @@ export function isSettingValue(field: SettingSchema, value: unknown): value is S
 
 /**
  * @description Lists every stored setting of a schema with its Bucket key, sections flattened to `section.key`; buttons and notices are left out.
- * @param schema The schema.
  * @returns The settings, in declaration order.
  */
 export function settingEntries(schema: SettingsSchema): SettingEntry[] {

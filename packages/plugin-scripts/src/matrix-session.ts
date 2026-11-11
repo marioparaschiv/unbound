@@ -30,7 +30,6 @@ const SETTLE_POLL_MS = 500;
 
 /**
  * @description Waits for Discord to answer again after a relaunch: its debugger reconnects, then every enabled plugin has started or failed.
- * @param device The device.
  */
 export async function waitUntilBack(device: Device): Promise<void> {
 	if (!(await device.waitForDevice(RELAUNCH_TIMEOUT_MS))) {

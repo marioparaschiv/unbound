@@ -32,7 +32,6 @@ let active: TestSession | undefined;
 
 /**
  * @description Makes a session the one the recorders, `render` and `startPlugin` read. The preset calls it once.
- * @param session The session.
  */
 export function startSession(session: TestSession): void {
 	active = session;
