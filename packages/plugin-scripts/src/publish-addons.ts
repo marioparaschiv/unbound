@@ -25,7 +25,6 @@ import {
 	publishFirstPartyResponseSchema,
 } from '@unbound-app/contracts/publish';
 import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
-import { readBytecodeVersion } from '@unbound-app/contracts/version-layout';
 
 import type { LocalPlugin, PluginDecision, PublishedVersions } from './select-plugins';
 import type { PluginCommit } from './plugin-changelog';
