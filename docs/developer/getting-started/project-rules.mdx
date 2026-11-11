@@ -19,13 +19,13 @@ The layout and loading rules every plugin follows. `ubd create` scaffolds a plug
 
 ## Layout
 
-Split the plugin by kind: what it patches, intercepts, draws and computes. The entry only lists features. Never nest deeper than `src/<folder>/<file>`. See [Plugin Anatomy](/docs/developer/getting-started/plugin-anatomy#folder-layout).
+Split the plugin by kind: what it patches, intercepts, draws and computes. The entry only lists features. Never nest deeper than `src/<folder>/<file>`, except platform-native code in `src/native/ios/<file>` and `src/native/android/<file>`. See [Plugin Anatomy](/docs/developer/getting-started/plugin-anatomy#folder-layout).
 
 | Location | Holds |
 | --- | --- |
 | `src/` root | Only `index.tsx`, `settings.tsx`, `actions.ts`, `patches.ts`, `commands.ts`, and the generated `unbound-settings.d.ts` and `unbound-i18n.d.ts` |
 | `src/patches/`, `src/commands/` | `patches.ts` or `commands.ts` once it grows, as named files such as `patches/message-rows.ts` |
-| `src/native/` | `hooks.ts`, `views.ts`, `worklets.ts`, `calls.ts`, split per platform as `<kind>-android.ts` and `<kind>-ios.ts` |
+| `src/native/` | `hooks.ts`, `views.ts`, `worklets.ts`, `calls.ts`, split per platform into `native/android/<kind>.ts` and `native/ios/<kind>.ts` |
 | `src/flux/` | `interceptors.ts`, `listeners.ts` |
 | `src/components/` | Components and their hooks |
 | `src/lib/` | The plugin's own logic: data, network, storage, helpers. No Discord patches |
@@ -75,15 +75,15 @@ const Button = metro.findByName('Button', { lazy: false });
 
 ## Platform Code
 
-Platform code lives in `src/native/`. One small file there may branch on the platform; a larger one splits into `<kind>-android.ts` and `<kind>-ios.ts`, and `definePlatform` picks between them. Nowhere else checks the platform.
+Platform code lives in `src/native/`. One small file there may branch on the platform; a larger one splits into `src/native/android/<kind>.ts` and `src/native/ios/<kind>.ts`, and `definePlatform` in `src/native/<kind>.ts` picks between them. Nowhere else checks the platform.
 
-```ts src/native/views-android.ts
+```ts src/native/android/views.ts
 export function platformName() {
 	return 'Android';
 }
 ```
 
-```ts src/native/views-ios.ts
+```ts src/native/ios/views.ts
 export function platformName() {
 	return 'iOS';
 }
@@ -92,8 +92,8 @@ export function platformName() {
 ```ts src/native/views.ts
 import { definePlatform } from '@unbound-app/api/native';
 
-import { platformName as android } from '~/native/views-android';
-import { platformName as ios } from '~/native/views-ios';
+import { platformName as android } from '~/native/android/views';
+import { platformName as ios } from '~/native/ios/views';
 
 export const platformName = definePlatform({ ios, android });
 ```

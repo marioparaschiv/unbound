@@ -15,7 +15,7 @@
 | `i18n/en-US.json`                   | Every string shown; `title`, `subtitle` and toast arguments are its keys                                                                                                                      |
 | `tests/`                            | Mirrors `src/`; `bun test` with the preset `bunfig.toml` loads (`startPlugin`, `stopPlugin` from `@unbound-app/api/testing`)                                                                  |
 
-Never deeper than `src/<folder>/<file>`. A kind file that grows too big becomes a folder of named files: `patches/message-rows.ts`, `native/worklets-android.ts` and `native/worklets-ios.ts`. Function names carry their kind (`patchX`, `interceptX`, `listenToX`, `registerX`, `hookX`, `drawX`), so a file moves without renames. State several features share, such as a log, is its own module in `lib/` that they import.
+Never deeper than `src/<folder>/<file>`, except platform-native code in `src/native/ios/<file>` and `src/native/android/<file>`. A kind file that grows too big becomes a folder of named files: `patches/message-rows.ts`; a platform split becomes `native/android/worklets.ts` and `native/ios/worklets.ts`, selected by `definePlatform` in `native/worklets.ts`. Function names carry their kind (`patchX`, `interceptX`, `listenToX`, `registerX`, `hookX`, `drawX`), so a file moves without renames. State several features share, such as a log, is its own module in `lib/` that they import.
 
 3. **Add a feature**: one function in the file of its kind. It checks its needs first, then patches:
 
