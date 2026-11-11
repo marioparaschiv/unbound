@@ -4,10 +4,10 @@
  */
 
 /** Set by `ubd dev` and `ubd debug push`: components register for hot refresh and keep their hooks' state on push. */
-export const HOT_ENV = 'UNBOUND_HOT';
+const HOT_ENV = 'UNBOUND_HOT';
 
 /** Set by `ubd build --verbose`: the build logs each metro filter and locale hook it rewrote. */
-export const VERBOSE_ENV = 'UNBOUND_VERBOSE';
+const VERBOSE_ENV = 'UNBOUND_VERBOSE';
 
 /** Where the preset writes the build report as JSON; nothing is written without it. */
 export const BUILD_REPORT_ENV = 'UNBOUND_BUILD_REPORT';
@@ -44,4 +44,4 @@ export function readBuildEnv(env: Record<string, string | undefined> = process.e
 	};
 }
 
-export default { HOT_ENV, VERBOSE_ENV, BUILD_REPORT_ENV, buildEnv, readBuildEnv };
+export default { BUILD_REPORT_ENV, buildEnv, readBuildEnv };
