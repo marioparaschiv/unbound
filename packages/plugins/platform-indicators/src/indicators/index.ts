@@ -1,18 +1,12 @@
 import { skipFeature, type Feature } from '@unbound-plugins/shared/lifecycle/features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
+import { MessageRowData } from '@unbound-plugins/shared/metro/message-rows';
 
 import { patchUserProfilePrimaryInfo } from '~/indicators/profile';
 import { patchMobileStatus } from '~/indicators/mobile-status';
 import { patchMessageRow } from '~/indicators/message-row';
 import { patchUserRow } from '~/indicators/member-list';
-import {
-	MessageRowData,
-	PresenceStore,
-	SessionsStore,
-	Theme,
-	ThemeStore,
-	UserStore,
-} from '~/indicators/modules';
+import { PresenceStore, SessionsStore, Theme, ThemeStore, UserStore } from '~/indicators/modules';
 
 /**
  * @description Shows the platforms a user is online on in the member list, on profiles and in message headers, and

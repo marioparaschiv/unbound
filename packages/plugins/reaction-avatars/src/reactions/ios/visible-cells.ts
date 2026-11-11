@@ -1,6 +1,6 @@
 import { findVisibleCells } from '@unbound-plugins/shared/native/ios/visible-cells';
 
-import { selectedChannelId } from '~/reactions/selected-channel';
+import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
 import { scheduleCell } from '~/reactions/ios/cell-queue';
 import type { Session } from '~/reactions/ios/session';
 import { NativeClass } from '~/constants';

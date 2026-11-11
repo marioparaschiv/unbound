@@ -21,38 +21,22 @@ import {
 	javaInt,
 	javaNumber,
 	javaReference,
-	javaString,
-	javaText,
 	javaViewKey,
 	sameJavaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
-import {
-	MESSAGE_VIEW,
-	messageBindMethod,
-	messageIdField,
-	viewByIdNameAsync,
-} from '@unbound-plugins/shared/native/android/discord-views';
-import {
-	currentDecorView,
-	displayDensity,
-	findViewsOfClass,
-	readCalls,
-	runOnMain,
-	scheduleStartupScans,
-} from '@unbound-plugins/shared/native/android/views';
+import { viewByIdNameAsync } from '@unbound-plugins/shared/native/android/discord-views';
+import { watchMessageRows } from '@unbound-plugins/shared/native/android/message-rows';
+import { displayDensity, readCalls, runOnMain } from '@unbound-plugins/shared/native/android/views';
 
 import { registerLatencyIconSurface } from '~/latency-indicator/components/latency-icon';
 import type { LatencyRecord, LatencyRecords } from '~/latency-indicator/records';
 import type { AndroidTooltips } from '~/latency-indicator/android/tooltip';
 import { subscribeTheme } from '~/latency-indicator/theme';
 import { Icon } from '~/constants';
-import { installRebindGuard } from '~/latency-indicator/android/rebind-guard';
-import { FIRST_ARGUMENT_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
 
 const DRAWABLE = 'android.graphics.drawable.Drawable';
 const NO_DRAWABLE = { type: 'null', class: DRAWABLE } as const;
 const VISIBLE = 0;
-const MESSAGE_ID_GETTER = 'getId-3Eiw7ao';
 const SETTLE_DELAYS = [0, 120, 600];
 
 type Native = {
@@ -84,17 +68,14 @@ type Indicator = {
  * @returns `dispose`, which removes every indicator and resolves once the rows are restored, or `undefined` when the icon surface did not register.
  */
 export function createAndroidIndicators(
-	{ java, hooks, fabric, ui }: Native,
+	native: Native,
 	records: LatencyRecords,
 	tooltips: AndroidTooltips | null,
 ) {
+	const { java, fabric } = native;
 	const indicators = new Map<string, Indicator>();
 	const byId = new Map<string, Indicator>();
-	const hostKey = java.createAssociationKey();
-	const drawnForKey = java.createAssociationKey();
-	const bound = new Map<string, { messageView: NativeJavaReference; messageId: string }>();
 	const listeners = createSurfaceListeners();
-	const queues = new Map<string, Promise<void>>();
 	let nextId = 0;
 	let disposed = false;
 
@@ -152,17 +133,12 @@ export function createAndroidIndicators(
 	}
 
 	function mark(indicator: Indicator) {
-		java.setAssociatedObject(indicator.messageView, hostKey, indicator.host);
-		java.setAssociatedObject(
-			indicator.messageView,
-			drawnForKey,
-			javaString(indicator.messageId),
-		);
+		rows.markDrawn(indicator.messageView, indicator.messageId, [indicator.host]);
 	}
 
 	async function remove(indicator: Indicator) {
 		indicator.disposed = true;
-		java.setAssociatedObject(indicator.messageView, hostKey, { type: 'null' });
+		rows.markDrawn(indicator.messageView, indicator.messageId, []);
 		byId.delete(indicator.id);
 		indicators.delete(javaViewKey(indicator.messageView as NativeJavaValue) ?? '');
 		tooltips?.dismissFor(indicator.id);
@@ -325,95 +301,28 @@ export function createAndroidIndicators(
 		settle(indicator);
 	}
 
-	function schedule(messageView: NativeJavaReference, messageId: string) {
-		const key = javaViewKey(messageView as NativeJavaValue);
+	async function clear(messageView: NativeJavaReference) {
+		const indicator = indicators.get(javaViewKey(messageView as NativeJavaValue) ?? '');
 
-		if (!key || disposed) return;
-
-		bound.set(key, { messageView, messageId });
-
-		const next = (queues.get(key) ?? Promise.resolve())
-			.then(() =>
-				bound.get(key)?.messageId === messageId
-					? render(messageView, messageId)
-					: undefined,
-			)
-			.catch((error) => {
-				if (!isCancellation(error)) {
-					logger.error('Failed to draw an Android indicator:', error);
-				}
-			})
-			.finally(() => {
-				if (queues.get(key) === next) queues.delete(key);
-			});
-
-		queues.set(key, next);
+		if (indicator) await remove(indicator);
 	}
 
-	const bindMessage = messageBindMethod(java);
-	const idField = messageIdField(java);
-	const scope = ui.createScope();
+	const rows = watchMessageRows(native, { draw: render, clear });
 
-	ui.run(installRebindGuard, scope, {
-		messageView: MESSAGE_VIEW,
-		bindName: bindMessage.name,
-		bindParameters: bindMessage.parameters,
-		messageIdGetter: MESSAGE_ID_GETTER,
-		host: hostKey,
-		drawnFor: drawnForKey,
-	});
-
-	const token = hooks.hook(
-		MESSAGE_VIEW,
-		bindMessage.name,
-		bindMessage.parameters,
-		FIRST_ARGUMENT_AFTER_CALL,
-		({ self, args }) => {
-			const messageView = javaReference(self);
-			const message = javaReference(args[0]);
-			const messageId = message
-				? javaText(java.invoke(message, MESSAGE_ID_GETTER, []))
-				: undefined;
-
-			if (messageView && messageId) setTimeout(() => schedule(messageView, messageId), 0);
-		},
-	);
-
-	const unsubscribeRecords = records.subscribe((messageId) => {
-		for (const { messageView, messageId: boundId } of bound.values()) {
-			if (boundId === messageId) schedule(messageView, messageId);
-		}
-	});
+	const unsubscribeRecords = records.subscribe((messageId) => rows.redraw(messageId));
 
 	const unsubscribeTheme = subscribeTheme(() => {
 		for (const indicator of indicators.values()) publish(indicator);
 	});
 
-	async function scanVisible() {
-		const decor = currentDecorView(java);
-
-		if (!decor || disposed) return;
-
-		for (const messageView of await findViewsOfClass(java, decor, MESSAGE_VIEW)) {
-			const messageId = javaText(java.getField(messageView, idField));
-
-			if (messageId) schedule(messageView, messageId);
-		}
-	}
-
-	scheduleStartupScans(scanVisible);
-
 	return {
 		async dispose() {
 			disposed = true;
-			scope.dispose();
-			hooks.remove(token);
 			unsubscribeRecords();
 			unsubscribeTheme();
-			await Promise.all([...queues.values()]);
+			await rows.dispose();
 			await Promise.all([...indicators.values()].map(remove));
 			await tooltips?.dispose();
-			bound.clear();
 			listeners.clear();
 		},
 	};

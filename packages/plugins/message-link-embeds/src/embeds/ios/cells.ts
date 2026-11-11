@@ -9,7 +9,7 @@ import { CellRetry, INITIAL_SCAN_DELAYS } from '~/constants';
 import { teardownSurface } from '~/embeds/ios/surfaces';
 import type { Session } from '~/embeds/ios/session';
 import { linkedTargets } from '~/embeds/link-targets';
-import { currentChannelId } from '~/embeds/channels';
+import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
 import { MessageStore } from '~/embeds/modules';
 
 type Timer = ReturnType<typeof setTimeout>;
@@ -138,7 +138,7 @@ function refreshCell(session: Session, cell: NativeObjectHandle) {
 async function lookUpCell(session: Session, cell: NativeObjectHandle, isCurrent: () => boolean) {
 	const { objc } = session;
 	const info = await readNativeMessageInfo(cell, objc);
-	const channelId = info?.channelId ?? currentChannelId();
+	const channelId = info?.channelId ?? selectedChannelId();
 	const source = info && channelId ? MessageStore.getMessage(channelId, info.messageId) : null;
 	const labels =
 		source && linkedTargets(source).length > 0 ? await findTextViews(session, cell) : [];

@@ -7,11 +7,3 @@ export const RECEIVER_ONLY_AFTER_CALL: NativeJavaHookOptions<true> = {
 	notify: 'after',
 	payload: { receiver: true, arguments: [] },
 };
-
-/**
- * @description Like {@link RECEIVER_ONLY_AFTER_CALL}, keeping only the call's first argument, such as the message a view was bound to.
- */
-export const FIRST_ARGUMENT_AFTER_CALL: NativeJavaHookOptions<true> = {
-	notify: 'after',
-	payload: { receiver: true, arguments: [0] },
-};

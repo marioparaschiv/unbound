@@ -1,3 +1,5 @@
+import { isRecord } from '@unbound-plugins/shared/values/is-record';
+
 import { DEFAULT_LOCALE, DEFAULT_MEDIA_FORMAT } from '~/constants';
 import type { ProviderContext } from '~/types';
 
@@ -19,10 +21,6 @@ export type MatchedRoute = {
 type Params = Record<string, unknown>;
 
 const API_PREFIX = /^(?:https?:\/\/[^/]+)?(?:\/api(?:\/v\d+)?)?/i;
-
-function isRecord(value: unknown): value is Params {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
 
 function text(value: unknown): string | undefined {
 	if (typeof value === 'string') return value;
@@ -48,14 +46,14 @@ function splitUrl(url: string): { path: string; params: Params } {
 function readRequest(request: unknown): { path: string; params: Params; body: Params } | null {
 	const options = typeof request === 'string' ? { url: request } : request;
 
-	if (!isRecord(options) || typeof options.url !== 'string') return null;
+	if (!isRecord<Params>(options) || typeof options.url !== 'string') return null;
 
 	const { path, params } = splitUrl(options.url);
 
 	return {
 		path,
-		params: { ...params, ...(isRecord(options.query) ? options.query : {}) },
-		body: isRecord(options.body) ? options.body : {},
+		params: { ...params, ...(isRecord<Params>(options.query) ? options.query : {}) },
+		body: isRecord<Params>(options.body) ? options.body : {},
 	};
 }
 

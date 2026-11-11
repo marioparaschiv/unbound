@@ -40,9 +40,7 @@ export const MEDIA_VIEW_CLASSES = [
 ];
 
 export const AndroidClass = {
-	messageView: 'com.discord.chat.presentation.message.MessageView',
 	accessories: 'com.discord.chat.presentation.message.MessageAccessoriesView',
-	content: 'com.discord.chat.presentation.message.view.MessageContentView',
 };
 
 export const CONTENT_COLUMN_SEARCH_DEPTH = 6;

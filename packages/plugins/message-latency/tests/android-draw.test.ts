@@ -1,4 +1,11 @@
-import { flux, metro, native, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import {
+	flux,
+	metro,
+	native,
+	startPlugin,
+	stopPlugin,
+	type JavaPlain,
+} from '@unbound-app/api/testing';
 import type { NativeJavaValue } from '@unbound-app/api/native';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
@@ -10,7 +17,6 @@ const DISCORD_EPOCH = 1_420_070_400_000;
 const VISIBLE = 0;
 const INVISIBLE = 4;
 const CONTAINER = 'test.MessageList';
-const MESSAGE_ID_GETTER = 'getId-3Eiw7ao';
 
 function snowflake(timestamp: number): string {
 	return (BigInt(timestamp - DISCORD_EPOCH) << 22n).toString();
@@ -125,14 +131,31 @@ function registerRow() {
 			removeView: () => null,
 		},
 	});
-	native.java.registerClass(MESSAGE, {
-		methods: { [MESSAGE_ID_GETTER]: () => shown.id },
+	native.java.registerClass(MESSAGE);
+	const lists = new Map<unknown, JavaPlain[]>();
+	const list = (self: unknown) => lists.get(self) ?? [];
+
+	native.java.registerClass('java.util.ArrayList', {
+		methods: {
+			add: (self, item) => {
+				lists.set(self, [...list(self), item]);
+
+				return true;
+			},
+			size: (self) => list(self).length,
+			get: (self, index) => list(self)[Number(index)],
+		},
 	});
 	native.java.registerClass(MESSAGE_VIEW, {
 		superclass: VIEW,
 		methods: {
 			configureAuthor: () => null,
-			setMessage: () => null,
+			// Discord's bind keeps the shown message's id in the row's only `String` field.
+			setMessage: (self) => {
+				native.java.bridge.setField(self, 'messageId', { type: 'string', value: shown.id });
+
+				return null;
+			},
 			findViewById: (_self, id) => (id === 1 ? header : author),
 		},
 		staticMethods: { create: () => null },

@@ -1,13 +1,5 @@
-import { ChannelStore, SelectedChannelStore, type Message } from '~/embeds/modules';
+import { ChannelStore, type Message } from '~/embeds/modules';
 import type { LinkTarget } from '~/embeds/link-targets';
-
-/**
- * @description Reads the channel the user is looking at.
- * @returns The selected channel, or the last selected one while none is.
- */
-export function currentChannelId(): string | undefined {
-	return SelectedChannelStore.getChannelId() ?? SelectedChannelStore.getLastSelectedChannelId();
-}
 
 /**
  * @description Finds the channel name Discord renders in the mention of a message link.

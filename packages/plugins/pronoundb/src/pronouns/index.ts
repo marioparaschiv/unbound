@@ -1,24 +1,22 @@
 import { settings } from '@unbound-app/settings';
-import { metro, patcher } from '@unbound-app/api';
+import { metro } from '@unbound-app/api';
 
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-
 import {
-	ChannelStore,
 	MessageRowData,
-	MessageStore,
-	UserProfileStore,
-	UserStore,
-} from '~/pronouns/modules';
+	onMessageRow,
+	type MessageRow,
+	type RowAuthor,
+	type RowMessage,
+} from '@unbound-plugins/shared/metro/message-rows';
+
+import { ChannelStore, MessageStore, UserProfileStore, UserStore } from '~/pronouns/modules';
 import { cleanProfilePronouns, pickPronouns } from '~/pronouns/format';
 import { createLookup } from '~/pronouns/lookup';
-import { addPronouns } from '~/pronouns/header';
-
-type Author = { id?: string; bot?: boolean; system?: boolean; username?: string };
-type Message = { author?: Author; channel_id?: string; type?: number };
+import { addPronouns, type MessageRow as HeaderRow } from '~/pronouns/header';
 
 // Default (0) and reply (19) messages; other types, such as poll results, have no author header.
-function isChatMessage(message: Message) {
+function isChatMessage(message: RowMessage) {
 	return message.type === 0 || message.type === 19;
 }
 
@@ -34,7 +32,11 @@ function discordPronouns(userId: string, channelId: string | undefined) {
 	);
 }
 
-function isShownFor(author: Author | undefined): author is Author & { id: string } {
+function hasTimestamp(row: MessageRow | undefined): row is HeaderRow {
+	return typeof row?.timestamp === 'string';
+}
+
+function isShownFor(author: RowAuthor | undefined): author is RowAuthor & { id: string } {
 	if (!author?.id || author.bot || author.system) return false;
 
 	return settings.showSelf || author.id !== UserStore.getCurrentUser()?.id;
@@ -53,27 +55,26 @@ export function startPronouns(): (() => void) | undefined {
 	// Without the message store, fetched pronouns show on the next re-render instead of at once.
 	const pronounLookup = createLookup(() => MessageStore.emitChange?.());
 
-	patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
-		const message: Message | undefined = args[0]?.message;
+	onMessageRow({
+		after({ message, row }) {
+			if (!message || !isChatMessage(message) || !isShownFor(message.author)) return;
 
-		if (!message || !isChatMessage(message) || !isShownFor(message.author)) return;
+			const { id, username } = message.author;
+			const pronouns = pickPronouns(
+				discordPronouns(id, message.channel_id),
+				pronounLookup.get(id),
+				settings.priority === 'discord',
+			);
 
-		const { id, username } = message.author;
-		const pronouns = pickPronouns(
-			discordPronouns(id, message.channel_id),
-			pronounLookup.get(id),
-			settings.priority === 'discord',
-		);
-		const row = result?.message;
+			if (!pronouns || !hasTimestamp(row)) return;
 
-		if (!pronouns || typeof row?.timestamp !== 'string') return;
-
-		addPronouns(
-			row,
-			pronouns,
-			username,
-			metro.common.ReactNative.Dimensions.get('window').width,
-		);
+			addPronouns(
+				row,
+				pronouns,
+				username,
+				metro.common.ReactNative.Dimensions.get('window').width,
+			);
+		},
 	});
 
 	return () => pronounLookup.dispose();

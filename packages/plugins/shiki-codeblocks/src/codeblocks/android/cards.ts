@@ -1,73 +1,32 @@
 import { createSurfaceListeners } from '@unbound-plugins/shared/native/surface-listeners';
-import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeFabricBridge,
-	NativeFabricSurface,
 	NativeJavaBridge,
-	NativeJavaHandle,
 	NativeJavaHooksBridge,
-	NativeJavaReference,
-	NativeJavaValue,
 } from '@unbound-app/api/native';
 import {
-	DRAWEE_TEXT_SETTER,
-	DRAWEE_TEXT_VIEW,
-	draweeTextBuilder,
-} from '@unbound-plugins/shared/native/android/discord-views';
-import {
-	createHost,
-	hostContainer,
-	layoutHostingList,
-	hostHasContent,
-	placeHost,
-	removeHost,
-	reservedTop,
-	spacerSpan,
-} from '@unbound-plugins/shared/native/android/inline-hosts';
-import {
-	javaFlag,
-	javaInt,
-	javaNumber,
-	javaReference,
-	javaString,
-	javaText,
-	javaViewKey,
-} from '@unbound-plugins/shared/native/android/java-values';
-import { readViewText, spansOf } from '@unbound-plugins/shared/native/android/spans';
-import {
-	currentDecorView,
-	findViewsOfClass,
-	resourceDensity,
-	scheduleStartupScans,
-} from '@unbound-plugins/shared/native/android/views';
+	createMessageTextSurfaces,
+	type TextSurfaceSlot,
+} from '@unbound-plugins/shared/native/android/message-text-surfaces';
+import { storage } from '@unbound-app/api';
 
-import { createBlockBackgroundFinder } from '~/codeblocks/android/block-backgrounds';
 import {
-	codeSlots,
-	placeholderOffsets,
-	sourceBlock,
-	type CodeSlot,
-} from '~/codeblocks/android/code-ranges';
+	createBlockBackgroundFinder,
+	LINE_BACKGROUND_SPAN,
+} from '~/codeblocks/android/block-backgrounds';
+import { codeSlots, placeholderTexts, sourceBlock } from '~/codeblocks/android/code-ranges';
 import { registerCodeCardSurface, type CardContent } from '~/codeblocks/components/code-card';
 import { channelBlocks } from '~/codeblocks/android/channel-blocks';
-import { storage } from '@unbound-app/api';
 import { CARD_SETTINGS, Limits } from '~/constants';
+import { createFlatRecovery } from '~/codeblocks/flat-recovery';
+import { onAppForeground } from '~/codeblocks/foreground';
 import { createHighlighter } from '~/codeblocks/highlighter';
 import { readPreferences } from '~/codeblocks/preferences';
 import type { CodeBlock } from '~/codeblocks/fences';
 import { codeBlockLayout } from '~/codeblocks/layout';
-import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
 
-const MESSAGE_CONTENT_VIEW = 'com.discord.chat.presentation.message.view.MessageContentView';
-const IMAGE_SPAN = 'android.text.style.ImageSpan';
-const ANY_SPAN = 'java.lang.Object';
-const SIZE_SPAN = 'android.text.style.AbsoluteSizeSpan';
-const SPAN_EXCLUSIVE_EXCLUSIVE = 33;
-const PLACEHOLDER = '￼';
 const TOP_GAP = 2;
-const MIN_WIDTH = 80;
-const SIZE_PARAMETERS = ['int', 'int', 'int', 'int'];
-const SETTLE_DELAYS = [0, 120, 600];
+const CONTENT_CACHE_LIMIT = 64;
 
 type Native = {
 	java: NativeJavaBridge;
@@ -76,463 +35,142 @@ type Native = {
 };
 
 type Card = CardContent & {
-	id: string;
 	block: CodeBlock;
-	host: NativeJavaHandle;
-	mounting: Promise<NativeFabricSurface> | null;
-	placeholder: number;
-	height: number;
 	revision: number;
-	disposed: boolean;
 };
 
-type ViewCards = {
-	textView: NativeJavaReference;
-	original: NativeJavaReference;
-	density: number;
-	renderedText: string;
-	cards: Card[];
+type CardSlot = TextSurfaceSlot & {
+	block: CodeBlock;
 };
 
 /**
- * @description Replaces the code blocks in Discord's Android message text with Shiki cards drawn like the iOS ones.
+ * @description Replaces the code blocks in Discord's Android message text with Shiki cards through the loader's native text rewrites, so cards stay in place while the chat scrolls.
  * @param native The plugin's Java, hook and Fabric bridges.
- * @returns `dispose`, which removes the hook and every card and resolves once the views are restored, or `undefined` when the card surface did not register.
+ * @returns `progress` and `dispose`, which removes the cards and restores the text, or `undefined` when the card surface or the native rewrites are unavailable.
  */
-export function createAndroidCards({ java, hooks, fabric }: Native) {
+export function createAndroidCards(native: Native) {
+	const { java } = native;
 	const highlighter = createHighlighter();
-	const views = new Map<string, ViewCards>();
-	const byId = new Map<string, Card>();
-	const pending = new Set<string>();
-	const renders = new Map<string, Promise<void>>();
-	const blockBackgrounds = createBlockBackgroundFinder(java);
-	const awaitingSize = new Map<string, NativeJavaReference>();
-	let nextId = 0;
-	let disposed = false;
 
+	highlighter.warm(readPreferences().theme);
+	const cards = new Map<string, Card>();
 	const listeners = createSurfaceListeners();
+	const contentCache = new Map<string, Promise<CardContent>>();
+	const blockBackgrounds = createBlockBackgroundFinder(java);
+
 	const surfaceModule = registerCodeCardSurface({
-		card: (surfaceId) => byId.get(surfaceId),
-		revision: (surfaceId) => byId.get(surfaceId)?.revision ?? -1,
+		card: (surfaceId) => cards.get(surfaceId),
+		revision: (surfaceId) => cards.get(surfaceId)?.revision ?? -1,
 		subscribe: listeners.subscribe,
 	});
 
 	if (!surfaceModule) return undefined;
 
-	function displayDensity(textView: NativeJavaReference): number {
-		return resourceDensity(java, javaReference(java.invoke(textView, 'getResources', [])));
-	}
-
-	function textWidth(textView: NativeJavaReference, density: number): number {
-		return (
-			((javaNumber(java.invoke(textView, 'getWidth', [])) ?? 0) -
-				(javaNumber(java.invoke(textView, 'getTotalPaddingLeft', [])) ?? 0) -
-				(javaNumber(java.invoke(textView, 'getTotalPaddingRight', [])) ?? 0)) /
-			density
-		);
-	}
-
-	async function teardown(card: Card) {
-		card.disposed = true;
-		byId.delete(card.id);
-
-		const mounted = await card.mounting?.catch(() => null);
-
-		if (mounted) await fabric.unmountAsync(mounted).catch(() => undefined);
-
-		await removeHost(java, card.host).catch(() => undefined);
-	}
-
-	async function cardContent(block: CodeBlock, width: number) {
+	function cardContent(block: CodeBlock, width: number): Promise<CardContent> {
 		const preferences = readPreferences();
-		const tokens = await highlighter
-			.tokenize(block, preferences.theme, preferences.hljs)
-			.catch(() => null);
-
-		return {
-			code: block.code,
-			copyText: block.originalCode ?? block.code,
-			language: block.language,
-			tokens,
+		const key = [
+			block.language,
+			block.code,
+			block.originalCode,
 			width,
-			appearance: highlighter.appearance(preferences.theme),
-			opacity: preferences.opacity,
-			overflow: preferences.overflow,
-			iconMode: preferences.iconMode,
-		} satisfies CardContent;
-	}
+			JSON.stringify(preferences),
+		].join('\u0000');
+		const cached = contentCache.get(key);
 
-	function setSpacer(builder: NativeJavaReference, entry: ViewCards, card: Card) {
-		for (const hit of spansOf(java, builder, entry.renderedText.length, IMAGE_SPAN)) {
-			if (hit.start === card.placeholder) java.invoke(builder, 'removeSpan', [hit.span]);
-		}
+		if (cached) return cached;
 
-		java.invoke(builder, 'setSpan', [
-			spacerSpan(java, card.width * entry.density, (card.height + TOP_GAP) * entry.density),
-			javaInt(card.placeholder),
-			javaInt(card.placeholder + 1),
-			javaInt(SPAN_EXCLUSIVE_EXCLUSIVE),
-		]);
-	}
+		const content = highlighter
+			.tokenize(block, preferences.theme, preferences.hljs)
+			.catch(() => null)
+			.then((tokens): CardContent => ({
+				code: block.code,
+				copyText: block.originalCode ?? block.code,
+				language: block.language,
+				tokens,
+				width,
+				appearance: highlighter.appearance(preferences.theme),
+				opacity: preferences.opacity,
+				overflow: preferences.overflow,
+				iconMode: preferences.iconMode,
+			}));
 
-	function collapseLineEnd(builder: NativeJavaReference, entry: ViewCards, card: Card) {
-		if (entry.renderedText[card.placeholder + 1] !== '\n') return;
+		if (contentCache.size >= CONTENT_CACHE_LIMIT)
+			contentCache.delete(contentCache.keys().next().value!);
 
-		java.invoke(builder, 'setSpan', [
-			java.construct(SIZE_SPAN, [javaInt(1)]),
-			javaInt(card.placeholder + 1),
-			javaInt(card.placeholder + 2),
-			javaInt(SPAN_EXCLUSIVE_EXCLUSIVE),
-		]);
-	}
-
-	async function restore(entry: ViewCards) {
-		const current = readViewText(java, entry.textView);
-
-		if (current?.string === entry.renderedText) {
-			await java.invokeAsync(entry.textView, 'setText', [entry.original]);
-			await java.invokeAsync(entry.textView, 'requestLayout', []);
-			await layoutHostingList(java, entry.textView);
-		}
-	}
-
-	async function commit(entry: ViewCards, builder: NativeJavaReference) {
-		entry.renderedText = javaText(java.invoke(builder, 'toString', [])) ?? '';
-		await java.invokeAsync(entry.textView, 'setText', [builder]);
-		await java.invokeAsync(entry.textView, 'requestLayout', []);
-		await layoutHostingList(java, entry.textView);
-	}
-
-	function isCurrent(entry: ViewCards, card: Card): boolean {
-		return (
-			!card.disposed &&
-			views.get(javaViewKey(entry.textView as NativeJavaValue) ?? '') === entry &&
-			entry.cards.includes(card) &&
-			readViewText(java, entry.textView)?.string === entry.renderedText
-		);
-	}
-
-	async function place(entry: ViewCards, card: Card) {
-		if (!isCurrent(entry, card)) return;
-
-		const height = card.height * entry.density;
-		const container = await hostContainer(java, entry.textView);
-		const position = await reservedTop(java, entry.textView, card.placeholder);
-
-		if (!container || !position) return;
-
-		await placeHost(
-			java,
-			card.host,
-			container.container,
-			{
-				x: container.offset.x + position.x,
-				y: container.offset.y + position.y + TOP_GAP * entry.density,
-			},
-			{ width: card.width * entry.density, height },
-		);
-
-		if (!isCurrent(entry, card)) {
-			if (card.disposed || !entry.cards.includes(card)) {
-				await removeHost(java, card.host).catch(() => undefined);
-			}
-
-			return;
-		}
-
-		if (card.mounting && !card.disposed) {
-			const mounted = await card.mounting.catch(() => null);
-
-			if (!(await hostHasContent(java, card.host))) {
-				card.mounting = null;
-
-				if (mounted) await fabric.unmountAsync(mounted).catch(() => undefined);
-			}
-		}
-
-		if (!card.mounting && !card.disposed) {
-			card.mounting = fabric.mountAsync(card.host, surfaceModule!, { surfaceId: card.id });
-			await card.mounting.catch((error: unknown) => {
-				card.mounting = null;
-				throw error;
-			});
-		}
-	}
-
-	function settle(entry: ViewCards) {
-		for (const delay of SETTLE_DELAYS) {
-			setTimeout(() => {
-				for (const card of entry.cards) {
-					place(entry, card).catch((error) => {
-						if (!isCancellation(error)) {
-							logger.error(`Failed to place an Android code card:`, error);
-						}
-					});
-				}
-			}, delay);
-		}
-	}
-
-	function isMessageText(textView: NativeJavaReference): boolean {
-		return javaFlag(java.invoke(java.getClass(MESSAGE_CONTENT_VIEW), 'isInstance', [textView]));
-	}
-
-	function sourceBlocks(slots: CodeSlot[]): CodeBlock[] {
-		const blocks = channelBlocks();
-
-		return slots.map((slot) => {
-			const block = sourceBlock(slot.code, blocks);
-
-			return block ? { ...block, code: slot.code } : { code: slot.code, language: 'plain' };
+		contentCache.set(key, content);
+		void content.then(({ tokens }) => {
+			if (!tokens && contentCache.get(key) === content) contentCache.delete(key);
 		});
+
+		return content;
 	}
 
-	async function render(textView: NativeJavaReference) {
-		const key = javaViewKey(textView as NativeJavaValue);
-		const content = readViewText(java, textView);
+	const surfaces = createMessageTextSurfaces<CardSlot>(native, {
+		surfaceModule,
+		prefix: 'shiki-card-android',
+		spanClass: LINE_BACKGROUND_SPAN,
+		async slots({ spanned, string }) {
+			const slots = codeSlots(string, blockBackgrounds(spanned, string.length)).filter(
+				(slot) => slot.code.length <= Limits.codeLength,
+			);
+			const texts = placeholderTexts(string, slots);
+			const blocks = channelBlocks();
 
-		if (!key || !content) return;
-
-		const existing = views.get(key);
-
-		if (existing?.renderedText === content.string) {
-			settle(existing);
-
-			return;
-		}
-
-		const hits = blockBackgrounds(content.text, content.string.length);
-		const slots = codeSlots(content.string, hits).filter(
-			(slot) => slot.code.length <= Limits.codeLength,
-		);
-
-		if (!slots.length || !isMessageText(textView)) {
-			if (existing) {
-				views.delete(key);
-
-				for (const card of existing.cards) void teardown(card);
-			}
-
-			return;
-		}
-
-		const density = displayDensity(textView);
-		const width = textWidth(textView, density);
-
-		if (width < MIN_WIDTH) {
-			awaitingSize.set(key, textView);
-
-			return;
-		}
-
-		const blocks = sourceBlocks(slots);
-		const contents = await Promise.all(blocks.map((block) => cardContent(block, width)));
-		const current = readViewText(java, textView);
-
-		if (disposed || current?.string !== content.string) return;
-
-		const reusable = existing?.cards ?? [];
-		const offsets = placeholderOffsets(slots);
-		const cards = await Promise.all(
-			contents.map(async (cardContent, index): Promise<Card> => {
-				const previous = reusable[index];
-				const fields = {
-					...cardContent,
-					block: blocks[index]!,
-					placeholder: offsets[index]!,
-					height: codeBlockLayout(cardContent.code, width, cardContent.overflow).height,
-				};
-
-				if (previous && !previous.disposed && previous.code === cardContent.code) {
-					return Object.assign(previous, fields, { revision: previous.revision + 1 });
-				}
+			return slots.map((slot, index) => {
+				const block = sourceBlock(slot.code, blocks);
 
 				return {
-					...fields,
-					id: `shiki-card-android-${nextId++}`,
-					host: await createHost(java, textView),
-					mounting: null,
-					revision: 0,
-					disposed: false,
+					start: slot.start,
+					end: slot.end,
+					text: texts[index]!,
+					placeholder: 0,
+					gap: TOP_GAP,
+					pinTop: true,
+					clearTo: slot.blockEnd,
+					block: block
+						? { ...block, code: slot.code }
+						: { code: slot.code, language: 'plain' },
 				};
-			}),
-		);
-
-		for (const card of reusable) {
-			if (!cards.includes(card)) void teardown(card);
-		}
-
-		const entry: ViewCards = {
-			textView,
-			original: current.text,
-			density,
-			renderedText: '',
-			cards,
-		};
-		const builder = java.construct('android.text.SpannableStringBuilder', [current.text]);
-		const length = current.string.length;
-
-		for (const hit of spansOf(java, builder, length, ANY_SPAN)) {
-			if (slots.some((slot) => hit.start >= slot.start && hit.end <= slot.blockEnd)) {
-				java.invoke(builder, 'removeSpan', [hit.span]);
-			}
-		}
-
-		for (const slot of slots.slice().reverse()) {
-			java.invoke(builder, 'replace', [
-				javaInt(slot.start),
-				javaInt(slot.end),
-				javaString(PLACEHOLDER),
-			]);
-		}
-
-		entry.renderedText = javaText(java.invoke(builder, 'toString', [])) ?? '';
-
-		for (const card of cards) {
-			byId.set(card.id, card);
-			setSpacer(builder, entry, card);
-			collapseLineEnd(builder, entry, card);
-			listeners.notify(card.id);
-		}
-
-		views.set(key, entry);
-		await commit(entry, builder);
-		settle(entry);
-	}
-
-	async function repaint(entry: ViewCards) {
-		const content = readViewText(java, entry.textView);
-
-		if (!content || content.string !== entry.renderedText) return;
-
-		const width = textWidth(entry.textView, entry.density);
-
-		for (const card of entry.cards) {
-			Object.assign(card, await cardContent(card.block, width), {
-				revision: card.revision + 1,
 			});
-			card.height = codeBlockLayout(card.code, card.width, card.overflow).height;
-		}
-
-		const current = readViewText(java, entry.textView);
-
-		if (disposed || current?.string !== entry.renderedText) return;
-
-		const builder = java.construct('android.text.SpannableStringBuilder', [current.text]);
-
-		for (const card of entry.cards) {
-			setSpacer(builder, entry, card);
-			listeners.notify(card.id);
-		}
-
-		await commit(entry, builder);
-		settle(entry);
-	}
-
-	function schedule(textView: NativeJavaReference) {
-		const key = javaViewKey(textView as NativeJavaValue);
-
-		if (disposed || !key || pending.has(key)) return;
-
-		pending.add(key);
-		setTimeout(() => {
-			pending.delete(key);
-
-			if (disposed) return;
-
-			const previous = renders.get(key) ?? Promise.resolve();
-			const next = previous
-				.then(() => render(textView))
-				.catch((error) => {
-					if (!isCancellation(error)) {
-						logger.error(`Failed to draw an Android code card:`, error);
-					}
-				})
-				.finally(() => {
-					if (renders.get(key) === next) renders.delete(key);
-				});
-
-			renders.set(key, next);
-		}, 0);
-	}
-
-	const textBuilder = draweeTextBuilder(java);
-	const token = hooks.hook(
-		DRAWEE_TEXT_VIEW,
-		DRAWEE_TEXT_SETTER,
-		[textBuilder],
-		RECEIVER_ONLY_AFTER_CALL,
-		({ self }) => {
-			const textView = javaReference(self);
-
-			if (textView) schedule(textView);
 		},
-	);
+		async layout(surfaceId, slot, width) {
+			const content = await cardContent(slot.block, width);
+			const previous = cards.get(surfaceId);
 
-	const sizeToken = hooks.hook(
-		MESSAGE_CONTENT_VIEW,
-		'onSizeChanged',
-		SIZE_PARAMETERS,
-		RECEIVER_ONLY_AFTER_CALL,
-		({ self }) => {
-			const key = javaViewKey(self);
-			const textView = key ? awaitingSize.get(key) : undefined;
+			recovery.mark(surfaceId, !content.tokens);
+			cards.set(surfaceId, {
+				...content,
+				block: slot.block,
+				revision: (previous?.revision ?? -1) + 1,
+			});
+			listeners.notify(surfaceId);
 
-			if (!key || !textView) return;
-
-			awaitingSize.delete(key);
-			schedule(textView);
+			return codeBlockLayout(content.code, width, content.overflow).height;
 		},
-	);
+	});
+
+	if (!surfaces) return undefined;
+
+	const drawing = surfaces;
+	const recovery = createFlatRecovery((surfaceId: string) => {
+		if (cards.has(surfaceId)) drawing.redraw(surfaceId);
+		else recovery.mark(surfaceId, false);
+	}, onAppForeground);
 
 	const unsubscribe = storage.onChange(
 		({ store, key }) => store === addon.id && CARD_SETTINGS.includes(key ?? ''),
-		() => {
-			for (const entry of views.values()) {
-				repaint(entry).catch((error) => {
-					if (!isCancellation(error)) {
-						logger.error(`Failed to repaint an Android code card:`, error);
-					}
-				});
-			}
-		},
+		() => drawing.redraw(),
 	);
 
-	async function scanVisible() {
-		const decor = currentDecorView(java);
-
-		if (!decor || disposed) return;
-
-		for (const textView of await findViewsOfClass(java, decor, MESSAGE_CONTENT_VIEW)) {
-			schedule(textView);
-		}
-	}
-
-	const scans = scheduleStartupScans(scanVisible);
-
 	return {
-		progress: () => ({
-			drawn: views.size,
-			settling: pending.size > 0 || awaitingSize.size > 0,
-		}),
+		progress: () => ({ drawn: drawing.drawn(), settling: drawing.settling() }),
 		dispose() {
-			for (const scan of scans) clearTimeout(scan);
-
-			disposed = true;
-			hooks.remove(token);
-			hooks.remove(sizeToken);
-			awaitingSize.clear();
+			recovery.dispose();
 			unsubscribe();
-
-			const pending = [...views.values()].flatMap((entry) => [
-				...entry.cards.map(teardown),
-				restore(entry),
-			]);
-
-			views.clear();
 			listeners.clear();
+			cards.clear();
 
-			return Promise.all(pending).then(() => undefined);
+			return drawing.dispose();
 		},
 	};
 }
