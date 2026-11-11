@@ -53,6 +53,16 @@ beforeAll(async () => {
 		reason: '1.1.0 crashes',
 	});
 
+	// Published before `platforms` became an object; the stored manifest no longer matches the contract.
+	const legacy = {
+		platforms: ['ios', 'android'],
+		platformCapabilities: { ios: ['native.objc.classes'] },
+		minNativePluginApi: '1.0.0',
+	};
+
+	await seedApprovedAddon(ctx, ownerId, Object.assign(manifest('ver.legacy', '1.0.0'), legacy));
+	await seedVersion(ctx, ownerId, manifest('ver.legacy', '1.1.0'));
+
 	await seedApprovedAddon(ctx, ownerId, manifest('ver.hidden', '1.0.0'));
 	await ctx.db.update(addon).set({ delistedAt: ctx.now() }).where(eq(addon.id, 'ver.hidden'));
 });
@@ -78,6 +88,12 @@ describe('GET /api/v1/addons/$id/versions', () => {
 		const { versions } = await versionsOf('ver.rolledback');
 
 		expect(versions.map((version) => version.version)).toEqual(['1.0.0']);
+	});
+
+	test('leaves out versions whose stored manifest no longer parses', async () => {
+		const { versions } = await versionsOf('ver.legacy');
+
+		expect(versions.map((version) => version.version)).toEqual(['1.1.0']);
 	});
 
 	test('answers not_found for an unknown or delisted addon', async () => {
