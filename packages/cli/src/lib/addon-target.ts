@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { discoverAddons, type DiscoveredAddon } from '~/lib/discovery';
@@ -17,7 +18,7 @@ export type AddonTargetOptions = {
 };
 
 /**
- * @description Finds a workspace addon by its id or directory and builds it unless asked not to.
+ * @description Finds a workspace addon by its id or directory and builds it unless asked not to. A directory is looked up in the workspace that holds it, so it resolves from any working directory.
  * @param target The addon's manifest id, or a path to its directory.
  * @param options Whether and how to build it.
  * @returns The addon, or the reason it could not be found or built.
@@ -26,14 +27,14 @@ export async function resolveAddonTarget(
 	target: string,
 	{ build, hot, timeoutMs }: AddonTargetOptions,
 ): Promise<AddonTarget> {
-	const resolved = loadConfig();
+	const directory = resolve(target);
+	const resolved = loadConfig(existsSync(directory) ? directory : void 0);
 
 	if ('error' in resolved) {
 		return resolved;
 	}
 
 	const addons = await discoverAddons(resolved);
-	const directory = resolve(target);
 	const addon = addons.find((entry) => entry.id === target || resolve(entry.dir) === directory);
 
 	if (!addon) {
