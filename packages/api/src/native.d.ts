@@ -50,6 +50,7 @@ export type {
 	NativePluginCapability,
 	NativePluginError,
 	NativePluginErrorCode,
+	NativePluginMethod,
 	NativePluginPlatform,
 	NativePointer,
 	NativeRuntimeBridge,
@@ -70,6 +71,7 @@ export type {
 import type {
 	NativePlatformBridge,
 	NativePluginCapability,
+	NativePluginMethod,
 	NativePluginPlatform,
 	NativeResourceCounts,
 } from './_internal';
@@ -156,6 +158,12 @@ export declare function has(capability: NativePluginCapability): boolean;
  * @description Persists pending settings to storage, then reloads the native bundle.
  */
 export declare function reload(): Promise<void>;
+/**
+ * @description Checks whether the loader on this device implements a bridge method, for methods newer than the capability that gates them.
+ * @param method The method's path, such as `fabric.batchAsync`.
+ * @returns Whether the loader implements it.
+ */
+export declare function supports(method: NativePluginMethod): boolean;
 /** Build and release metadata reported by the native client info module. */
 export type BundleInfoType = {
 	/** Discord's app version, shown in Unbound's settings beside `Build`. */

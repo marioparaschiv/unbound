@@ -7,6 +7,7 @@ import type {
 	NativeObjCBridge,
 	NativePluginBridge,
 	NativePluginCapability,
+	NativePluginMethod,
 	NativeRuntimeBridge,
 	NativeUIBridge,
 } from '@unbound-app/types';
@@ -65,6 +66,29 @@ export function validateNativePluginRequirements(
  */
 export function has(capability: NativePluginCapability): boolean {
 	return Boolean(getNativePlugin()?.capabilities.includes(capability));
+}
+
+/**
+ * @description Checks whether the loader on this device implements a bridge method, for methods newer than the capability that gates them.
+ * @param method The method's path, such as `fabric.batchAsync`.
+ * @returns Whether the loader implements it.
+ */
+export function supports(method: NativePluginMethod): boolean {
+	const [namespace = '', name = ''] = method.split('.');
+
+	// The client implements `runtime` over Flux, so no loader lacks it.
+	if (namespace === 'runtime') {
+		return true;
+	}
+
+	const nativePlugin = getNativePlugin();
+	const source: unknown = nativePlugin && Reflect.get(nativePlugin, namespace);
+
+	return (
+		typeof source === 'object' &&
+		source !== null &&
+		typeof Reflect.get(source, name) === 'function'
+	);
 }
 
 /**
