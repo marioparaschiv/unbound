@@ -9,7 +9,6 @@ import type {
 } from '@unbound-app/api/native';
 import {
 	currentDecorView,
-	displayDensity,
 	findViewsOfClass,
 	readCalls,
 	runOnMain,
@@ -18,35 +17,22 @@ import {
 	javaFlag,
 	javaFloat,
 	javaInt,
-	javaNumber,
 	javaReference,
 	javaString,
 	javaText,
 	sameJavaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
 import {
-	MESSAGE_CONTENT_VIEW,
 	MESSAGE_VIEW,
 	messageBindMethod,
 	messageIdField,
 	messageIdOf,
-	viewByIdNameAsync,
 } from '@unbound-plugins/shared/native/android/discord-views';
 
-import {
-	bubbleFrame,
-	bubbleProblem,
-	cardFrame,
-	columnEndFrom,
-	isLaidOut,
-	rowContentStart,
-	rowInsets,
-	union,
-	type Box,
-	type Edges,
-} from '~/lib/geometry';
+import { bubbleFrame, bubbleProblem, cardFrame, rowInsets, type Box } from '~/lib/geometry';
 import { AndroidClass, BubbleLayout, CARD_INSET } from '~/lib/constants';
 import { forgetBubbles, installBindGuard, rememberBubble } from '~/native/android/worklets';
+import { createRowMeasure, isInstanceOf, readNumber } from '~/native/android/row-measure';
 import { currentAppearance } from '~/lib/theme';
 import { argb } from '~/lib/style';
 import { isOwnMessage } from '~/lib/author';
@@ -66,13 +52,10 @@ type PlacedRow = {
 	revision: number;
 };
 const MAX_ANCESTORS = 16;
-const VISIBLE = 0;
-const ICON_SPACING_DP = 4;
 const BUBBLE_LAYER_ID = 0x0b0b1e;
 const BIND_SETTLE_MS = 50;
 const PLACEMENT_WORKERS = 8;
 const LAYOUT_PARAMETERS = ['boolean', 'int', 'int', 'int', 'int'];
-const MATCH_PARENT = -1;
 
 /**
  * @description Draws a rounded bubble behind each Android message as the row's background, sized to its content or, in the card layout, covering its whole content column, without changing the row's padding.
@@ -82,9 +65,6 @@ const MATCH_PARENT = -1;
 export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 	const messageClass = java.getClass(MESSAGE_VIEW);
 	const bindMessage = messageBindMethod(java);
-	const contentClass = java.getClass(MESSAGE_CONTENT_VIEW);
-	const textViewClass = java.getClass('android.widget.TextView');
-	const imageViewClass = java.getClass('android.widget.ImageView');
 	const layerDrawableClass = java.getClass('android.graphics.drawable.LayerDrawable');
 	const ours = java.createAssociationKey();
 	const original = java.createAssociationKey();
@@ -124,6 +104,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 	let disposed = false;
 	let appearanceRevision = 0;
 	const placedRows = new Map<string, PlacedRow>();
+	const { measureRow, density } = createRowMeasure(java, { shiftedIcons, remeasure });
 
 	function rememberPlaced(id: string, width: number, height: number) {
 		placedRows.delete(id);
@@ -145,156 +126,13 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		}
 
 		return (
-			number(row, 'getWidth') === placed.width && number(row, 'getHeight') === placed.height
+			readNumber(java, row, 'getWidth') === placed.width &&
+			readNumber(java, row, 'getHeight') === placed.height
 		);
 	}
 
-	const number = (view: NativeJavaReference, method: string) =>
-		javaNumber(java.invoke(view, method, [])) ?? 0;
 	const isInstance = (type: NativeJavaReference, view: NativeJavaReference) =>
-		javaFlag(java.invoke(type, 'isInstance', [view]));
-
-	async function directChildren(group: NativeJavaReference, className: string) {
-		const found = await java.findViews(group, className, { maxDepth: 1, maxResults: 256 });
-
-		return found
-			.map((child) => javaReference(child))
-			.filter(
-				(child): child is NativeJavaReference =>
-					!!child && !sameJavaReference(child, group),
-			);
-	}
-
-	async function textWidth(view: NativeJavaReference, width: number): Promise<number> {
-		const [layoutValue, paddingLeft, paddingRight] = await runOnMain(
-			java,
-			readCalls(view, ['getLayout', 'getTotalPaddingLeft', 'getTotalPaddingRight']),
-		);
-		const layout = javaReference(layoutValue);
-
-		if (!layout) return width;
-
-		let widest = 0;
-
-		for (let line = 0; line < number(layout, 'getLineCount'); line++) {
-			widest = Math.max(
-				widest,
-				javaNumber(java.invoke(layout, 'getLineWidth', [javaInt(line)])) ?? 0,
-			);
-		}
-
-		return Math.ceil(widest) + (javaNumber(paddingLeft) ?? 0) + (javaNumber(paddingRight) ?? 0);
-	}
-
-	const CHILD_READS = [
-		'getVisibility',
-		'getWidth',
-		'getHeight',
-		'getLeft',
-		'getRight',
-		'getTop',
-		'getBottom',
-	];
-
-	const ROW_READS = ['getWidth', 'getHeight', 'getBackground'];
-
-	const ACCESSORIES_READS = ['getLeft', 'getTop', 'getWidth'];
-
-	const columnGutters = new Map<number, number>();
-	const awaitingGutter: NativeJavaReference[] = [];
-
-	type RowHeader = { left: number; top: number; bottom: number; shown: boolean };
-
-	type RowMeasure = {
-		area: Edges | undefined;
-		column: Edges | undefined;
-		columnLeft: number | undefined;
-		header: RowHeader | undefined;
-		width: number;
-		height: number;
-		background: NativeJavaReference | null;
-		iconShifts: NativeJavaBatchOperation[];
-	};
-
-	async function measureRow(
-		row: NativeJavaReference,
-		tight: boolean,
-	): Promise<RowMeasure | undefined> {
-		const [[accessories], header] = await Promise.all([
-			directChildren(row, AndroidClass.accessories),
-			readHeader(row),
-		]);
-
-		if (!accessories) return;
-
-		const kids = await directChildren(accessories, 'android.view.View');
-		const values = await runOnMain(java, [
-			...readCalls(row, ROW_READS),
-			...readCalls(accessories, ACCESSORIES_READS),
-			...kids.flatMap((child) => readCalls(child, CHILD_READS)),
-		]);
-		const [rowWidth, rowHeight, background, accessoriesLeft, accessoriesTop, accessoriesWidth] =
-			values;
-		const childValues = values.slice(ROW_READS.length + ACCESSORIES_READS.length);
-		const measured = kids.map((child, index) => {
-			const [visibility, width, height, left, right, top, bottom] = childValues
-				.slice(index * CHILD_READS.length, (index + 1) * CHILD_READS.length)
-				.map((value) => javaNumber(value) ?? 0);
-
-			return { child, visibility, width, height, left, right, top, bottom };
-		});
-		const shown = measured.filter(
-			(child) => child.visibility === VISIBLE && child.width > 0 && child.height > 0,
-		);
-		const iconShifts: NativeJavaBatchOperation[] = [];
-		const rights = tight
-			? await Promise.all(shown.map((child) => tightRight(child, iconShifts)))
-			: shown.map((child) => child.right);
-		const x = javaNumber(accessoriesLeft);
-		const y = javaNumber(accessoriesTop) ?? 0;
-		const columnLeft = header && isLaidOut(header.left) ? header.left : undefined;
-		const edges = (right: (index: number) => number) =>
-			union(
-				shown.map((child, index) => ({
-					left: child.left,
-					top: child.top,
-					right: right(index),
-					bottom: child.bottom,
-				})),
-			);
-		const whole = offsetArea(
-			edges((index) => shown[index]!.right),
-			x,
-			y,
-			columnLeft,
-		);
-		const end =
-			tight || !whole || x === undefined
-				? undefined
-				: await columnEnd(row, shown, javaNumber(accessoriesWidth) ?? 0);
-
-		return {
-			area: tight
-				? offsetArea(
-						edges((index) => rights[index]!),
-						x,
-						y,
-						columnLeft,
-					)
-				: whole,
-			column: whole && {
-				...whole,
-				top: header?.shown ? Math.min(header.top, whole.top) : whole.top,
-				right: Math.max(whole.right, end === undefined ? 0 : end + x!),
-			},
-			columnLeft,
-			header,
-			width: javaNumber(rowWidth) ?? 0,
-			height: javaNumber(rowHeight) ?? 0,
-			background: javaReference(background),
-			iconShifts,
-		};
-	}
+		isInstanceOf(java, type, view);
 
 	function remeasure(row: NativeJavaReference) {
 		const id = messageId(row);
@@ -302,113 +140,6 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		if (id) placedRows.delete(id);
 
 		schedule(row);
-	}
-
-	async function columnEnd(
-		row: NativeJavaReference,
-		shown: { child: NativeJavaReference; right: number }[],
-		width: number,
-	): Promise<number | undefined> {
-		const params = await runOnMain(
-			java,
-			shown.flatMap(({ child }) => readCalls(child, ['getLayoutParams'])),
-		);
-		const filling = shown.filter((_, index) => {
-			const layout = javaReference(params[index]);
-
-			return layout && javaNumber(java.getField(layout, 'width')) === MATCH_PARENT;
-		});
-
-		const known = columnGutters.get(width);
-		const { end, gutter } = columnEndFrom(
-			filling.map((child) => child.right),
-			width,
-			known,
-		);
-
-		if (end !== undefined) {
-			if (gutter !== undefined) columnGutters.set(width, gutter);
-
-			if (known === undefined) awaitingGutter.splice(0).forEach(remeasure);
-
-			return end;
-		}
-
-		if (!awaitingGutter.some((entry) => sameJavaReference(entry, row)))
-			awaitingGutter.push(row);
-
-		if (awaitingGutter.length > MAX_TRACKED) awaitingGutter.shift();
-	}
-
-	function offsetArea(
-		area: Edges | undefined,
-		x: number | undefined,
-		y: number,
-		columnLeft: number | undefined,
-	): Edges | undefined {
-		if (!area || x === undefined || !isLaidOut(area.left + x)) return;
-
-		return {
-			left: rowContentStart(area.left + x, columnLeft),
-			top: area.top + y,
-			right: area.right + x,
-			bottom: area.bottom + y,
-		};
-	}
-
-	type MeasuredChild = { child: NativeJavaReference; width: number; left: number; right: number };
-
-	async function tightRight(
-		measured: MeasuredChild,
-		iconShifts: NativeJavaBatchOperation[],
-	): Promise<number> {
-		if (isInstance(contentClass, measured.child)) {
-			return Math.min(
-				measured.right,
-				measured.left + (await textWidth(measured.child, measured.width)),
-			);
-		}
-
-		return (await footerRight(measured, iconShifts)) ?? measured.right;
-	}
-
-	async function footerRight(
-		footer: MeasuredChild,
-		iconShifts: NativeJavaBatchOperation[],
-	): Promise<number | undefined> {
-		const children = await directChildren(footer.child, 'android.view.View');
-
-		if (children.length !== 3) return;
-
-		const reads = await runOnMain(
-			java,
-			children.flatMap((child) => readCalls(child, ['getVisibility', 'getWidth'])),
-		);
-
-		if (reads.some((value, index) => index % 2 === 0 && javaNumber(value) !== VISIBLE)) return;
-
-		const [, label, icon] = children as [
-			NativeJavaReference,
-			NativeJavaReference,
-			NativeJavaReference,
-		];
-
-		if (!isInstance(textViewClass, label) || !isInstance(imageViewClass, icon)) return;
-
-		const labelWidth = javaNumber(reads[3]) ?? 0;
-		const spacing = ICON_SPACING_DP * (await density(icon));
-		const gap = Math.max(0, labelWidth - (await textWidth(label, labelWidth)) - spacing);
-
-		if (!shiftedIcons.some((entry) => sameJavaReference(entry, icon))) shiftedIcons.push(icon);
-
-		iconShifts.push({
-			op: 'invoke',
-			handle: icon,
-			name: 'setTranslationX',
-			args: [javaFloat(-gap)],
-		});
-
-		return footer.right - gap;
 	}
 
 	async function isNested(row: NativeJavaReference): Promise<boolean> {
@@ -420,26 +151,6 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		});
 
 		return !!javaReference(outer);
-	}
-
-	async function readHeader(row: NativeJavaReference): Promise<RowHeader | undefined> {
-		const header = await viewByIdNameAsync(java, row, 'header');
-
-		if (!header) return;
-
-		const [visibility, height, left, top, bottom] = (
-			await runOnMain(
-				java,
-				readCalls(header, ['getVisibility', 'getHeight', 'getLeft', 'getTop', 'getBottom']),
-			)
-		).map((value) => javaNumber(value) ?? 0);
-
-		return {
-			left: left!,
-			top: top!,
-			bottom: bottom!,
-			shown: visibility === VISIBLE && height! > 0,
-		};
 	}
 
 	function track(row: NativeJavaReference) {
@@ -510,14 +221,6 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		]);
 
 		return !!javaReference(layer);
-	}
-
-	let densityValue: Promise<number> | undefined;
-
-	function density(view: NativeJavaReference): Promise<number> {
-		densityValue ??= displayDensity(java, view);
-
-		return densityValue;
 	}
 
 	async function place(row: NativeJavaReference) {
