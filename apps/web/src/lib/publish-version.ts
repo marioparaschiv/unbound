@@ -25,9 +25,6 @@ import type { Caller } from '~/lib/api/caller';
 import { ApiError } from '~/lib/api/errors';
 import one from '~/db/one';
 
-/** How a version reaches the public bucket: a reviewer approves a submission, or first-party CI publishes a build. */
-export type PublishMode = 'review' | 'first-party';
-
 /**
  * What to make live. A review pins a stored submission (pending, or approved with its files unwritten);
  * first-party pins a build commit `readAddonSource` already read and checked.
