@@ -1,8 +1,4 @@
-import {
-	MessageRowData,
-	onMessageRow,
-	type RowMessage,
-} from '@unbound-plugins/shared/metro/message-rows';
+import { onMessageRow, type RowMessage } from '@unbound-plugins/shared/metro/message-rows';
 import { settings } from '@unbound-app/settings';
 
 import { getPlatformStatuses } from '~/lib/status-map';
@@ -17,13 +13,8 @@ function isChatMessage(message: RowMessage) {
  * @description Shows each message author's platforms after the message timestamp.
  */
 export function patchMessageRows(): void {
-	if (!MessageRowData) {
-		logger.warn('Messages skipped: Discord moved MessageRowData.');
-
-		return;
-	}
-
 	onMessageRow({
+		feature: 'Messages',
 		after({ message, row }) {
 			if (!settings.messages) return;
 

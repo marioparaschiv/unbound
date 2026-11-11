@@ -22,18 +22,13 @@ export function patchGiftOrThreadButton(): void {
 		return;
 	}
 
-	// An unexpected component shape must not cost the other patch, so it is logged instead of failing the start.
-	try {
-		patcher.react.instead(GiftOrThreadButton, 'default', ({ props, original }) => {
-			const { hideGiftButton }: GiftOrThreadProps = props ?? {};
+	patcher.react.instead(GiftOrThreadButton, 'default', ({ props, original }) => {
+		const { hideGiftButton }: GiftOrThreadProps = props ?? {};
 
-			return typeof hideGiftButton === 'boolean'
-				? original({ ...props, hideGiftButton: true })
-				: null;
-		});
-	} catch (error) {
-		logger.error('Failed to patch ChatInputActionButtonGiftOrThread:', error);
-	}
+		return typeof hideGiftButton === 'boolean'
+			? original({ ...props, hideGiftButton: true })
+			: null;
+	});
 }
 
 /**
@@ -48,16 +43,11 @@ export function patchChatInputRightActions(): void {
 		return;
 	}
 
-	// An unexpected component shape must not cost the other patch, so it is logged instead of failing the start.
-	try {
-		patcher.react.after(ChatInputRightActions, 'default', ({ props, result }) => {
-			const { shouldShowGiftButton }: RightActionsProps = props ?? {};
+	patcher.react.after(ChatInputRightActions, 'default', ({ props, result }) => {
+		const { shouldShowGiftButton }: RightActionsProps = props ?? {};
 
-			if (!shouldShowGiftButton) return;
+		if (!shouldShowGiftButton) return;
 
-			return withoutGiftItem(result);
-		});
-	} catch (error) {
-		logger.error('Failed to patch ChatInputRightActions:', error);
-	}
+		return withoutGiftItem(result);
+	});
 }

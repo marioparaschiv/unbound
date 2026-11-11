@@ -1,6 +1,5 @@
 import getTimeoutDeadline from '@unbound-plugins/shared/members/timeout-deadline';
 import {
-	MessageRowData,
 	onMessageRow,
 	type MessageRow,
 	type RowMessage,
@@ -33,16 +32,11 @@ function getDeadline({ channel_id, author }: FluxMessage): number | null {
  * `generateMessageRowData` on Discord's message row module. A scoped timer ticks the countdown.
  */
 export function patchMessageRows(): void {
-	if (!MessageRowData) {
-		logger.warn('Timeout duration skipped: Discord moved MessageRowData.');
-
-		return;
-	}
-
 	const timedOut = new Map<string, FluxMessage>();
 	const stamped = new WeakSet<MessageRow>();
 
 	onMessageRow<RowMessage & FluxMessage>({
+		feature: 'Timeout duration',
 		after({ message, row }) {
 			if (!message?.id) return;
 

@@ -23,38 +23,33 @@ export function patchUserProfilePrimaryInfo(): void {
 		return;
 	}
 
-	// An unexpected component shape must not cost the other surfaces, so it is logged instead of failing the start.
-	try {
-		patcher.react.after(UserProfilePrimaryInfo, 'default', ({ props, result }) => {
-			const user = (props as PrimaryInfoProps | undefined)?.user;
+	patcher.react.after(UserProfilePrimaryInfo, 'default', ({ props, result }) => {
+		const user = (props as PrimaryInfoProps | undefined)?.user;
 
-			if (!settings.profiles || !result || !user?.id || user.bot) return;
+		if (!settings.profiles || !result || !user?.id || user.bot) return;
 
-			const indicators = (
-				<PlatformIndicators
-					key='platform-indicators'
-					setting='profiles'
-					userId={user.id}
-					small={false}
-					pressable
-					style={{ marginTop: 8 }}
-				/>
+		const indicators = (
+			<PlatformIndicators
+				key='platform-indicators'
+				setting='profiles'
+				userId={user.id}
+				small={false}
+				pressable
+				style={{ marginTop: 8 }}
+			/>
+		);
+		const element = result as ReactElement<{ children?: unknown }>;
+		const children = element.props?.children;
+
+		if (children === undefined) {
+			return (
+				<>
+					{result}
+					{indicators}
+				</>
 			);
-			const element = result as ReactElement<{ children?: unknown }>;
-			const children = element.props?.children;
+		}
 
-			if (children === undefined) {
-				return (
-					<>
-						{result}
-						{indicators}
-					</>
-				);
-			}
-
-			return cloneElement(element, { children: [...[children].flat(), indicators] });
-		});
-	} catch (error) {
-		logger.error('Failed to patch UserProfilePrimaryInfo:', error);
-	}
+		return cloneElement(element, { children: [...[children].flat(), indicators] });
+	});
 }

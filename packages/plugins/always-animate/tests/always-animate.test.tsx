@@ -174,13 +174,9 @@ describe('health', () => {
 		expect(patches.applied).toEqual([]);
 	});
 
-	test('a part that cannot start leaves the others animating', async () => {
+	test('a part that cannot be patched fails the start', async () => {
 		modules.nameplate.default = 'not a component';
 
-		await startPlugin();
-
-		expect(rendered(components.decoration)).toBe('animate:true loop:false');
-		expect(avatarUtils.getGuildIconURL({ canAnimate: false })).toBe('icon.gif');
-		expect(logs.entries.some(({ level }) => level === 'error')).toBe(true);
+		await expect(startPlugin()).rejects.toThrow('Failed to patch component');
 	});
 });

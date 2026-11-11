@@ -1,8 +1,4 @@
-import {
-	MessageRowData,
-	onMessageRow,
-	type RowOptions,
-} from '@unbound-plugins/shared/metro/message-rows';
+import { onMessageRow, type RowOptions } from '@unbound-plugins/shared/metro/message-rows';
 import type { AnyProps } from '@unbound-app/api/metro';
 import { metro, patcher } from '@unbound-app/api';
 
@@ -106,8 +102,7 @@ export function forceResult(module: AnyProps, method: string, value: unknown): C
 }
 
 /**
- * @description Renders a component with some props always set. A component Discord moved, or one that cannot be
- * patched, is logged and left alone, so it costs only itself.
+ * @description Renders a component with some props always set. A component Discord moved is logged and left alone.
  * @param path The source path of the module that holds the component as its `default` export.
  * @param props The props to set.
  * @returns A function that removes the patch.
@@ -121,16 +116,10 @@ export function forceProps(path: string, props: Record<string, unknown>): Cleanu
 		return noop;
 	}
 
-	try {
-		return patcher.react.before(component, 'default', ({ props: current }) => ({
-			...current,
-			...props,
-		}));
-	} catch (error) {
-		logger.error(`Failed to patch ${nameOf(path)}:`, error);
-
-		return noop;
-	}
+	return patcher.react.before(component, 'default', ({ props: current }) => ({
+		...current,
+		...props,
+	}));
 }
 
 /**
@@ -159,13 +148,8 @@ export function forceUserSetting(name: string, value: unknown): Cleanup {
  * @returns A function that removes the patch.
  */
 export function forceRowFields(fieldsFor: (messageId: string | undefined) => RowOptions): Cleanup {
-	if (!MessageRowData) {
-		logger.warn('Animating message rows skipped: Discord moved MessageRowData.');
-
-		return noop;
-	}
-
 	return onMessageRow({
+		feature: 'Animating message rows',
 		before: ({ message, options }) =>
 			options && { options: { ...options, ...fieldsFor(message?.id) } },
 	});

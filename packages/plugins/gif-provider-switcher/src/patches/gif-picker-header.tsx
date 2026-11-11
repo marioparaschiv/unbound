@@ -21,14 +21,9 @@ export function patchGifPickerHeader(): void {
 
 	markPickerRunning();
 
-	// An unexpected component shape must not cost the GIF requests, so it is logged instead of failing the start.
-	try {
-		patcher.react.after(GIFPickerHeader, 'default', ({ props, result }) => {
-			if (!result || !findSearchField(result)) return;
+	patcher.react.after(GIFPickerHeader, 'default', ({ props, result }) => {
+		if (!result || !findSearchField(result)) return;
 
-			return <ProviderHeader header={result} onQueryChange={props?.onQueryChange} />;
-		});
-	} catch (error) {
-		logger.error('Failed to patch GIFPickerHeader:', error);
-	}
+		return <ProviderHeader header={result} onQueryChange={props?.onQueryChange} />;
+	});
 }

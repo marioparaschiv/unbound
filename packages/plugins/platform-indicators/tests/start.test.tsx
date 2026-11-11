@@ -1,6 +1,6 @@
-import { describe, expect, spyOn, test } from 'bun:test';
-import { flux, logs, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
-import { createElement, type ReactNode } from 'react';
+import { describe, expect, test } from 'bun:test';
+import { flux, logs, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
 import type { StoreSeeds } from '@unbound-app/api/testing';
@@ -54,29 +54,10 @@ describe('starting', () => {
 		await stopPlugin();
 	});
 
-	test('keeps the other features when one cannot start', async () => {
-		const errors = spyOn(console, 'error').mockImplementation(() => {});
-
-		await start({ profile: 'not a component' as never });
-		errors.mockRestore();
-
-		const row = render(createElement(rowModule.default, { user: { id: 'wumpus' } }), {
-			stores,
-		});
-
-		expect(
-			row.findAll((node) => typeof node.props.accessibilityLabel === 'string'),
-		).toHaveLength(1);
-		expect(warnings()).toMatchObject([
-			{
-				level: 'error',
-				args: [
-					'Failed to patch UserProfilePrimaryInfo:',
-					{ message: expect.stringContaining('Failed to patch component') },
-				],
-			},
-		]);
-		await stopPlugin();
+	test('fails the start when a feature cannot be patched', async () => {
+		await expect(start({ profile: 'not a component' as never })).rejects.toThrow(
+			'Failed to patch component',
+		);
 	});
 
 	test('skips the mobile shape when Discord has no isMobileOnline', async () => {

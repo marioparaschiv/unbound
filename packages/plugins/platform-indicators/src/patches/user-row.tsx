@@ -28,26 +28,21 @@ export function patchUserRow(): void {
 		return;
 	}
 
-	// An unexpected component shape must not cost the other surfaces, so it is logged instead of failing the start.
-	try {
-		patcher.react.after(UserRow, 'default', ({ props, result }) => {
-			const user = (props as UserRowProps | undefined)?.user;
+	patcher.react.after(UserRow, 'default', ({ props, result }) => {
+		const user = (props as UserRowProps | undefined)?.user;
 
-			if (!settings.memberList || !user?.id || user.bot) return;
+		if (!settings.memberList || !user?.id || user.bot) return;
 
-			return appendToLabel(
-				result,
-				<PlatformIndicators
-					key='platform-indicators'
-					setting='memberList'
-					userId={user.id}
-					small
-					pressable={false}
-				/>,
-				cloneNode,
-			) as ReactNode;
-		});
-	} catch (error) {
-		logger.error('Failed to patch UserRow:', error);
-	}
+		return appendToLabel(
+			result,
+			<PlatformIndicators
+				key='platform-indicators'
+				setting='memberList'
+				userId={user.id}
+				small
+				pressable={false}
+			/>,
+			cloneNode,
+		) as ReactNode;
+	});
 }
