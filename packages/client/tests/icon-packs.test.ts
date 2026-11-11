@@ -1,5 +1,6 @@
 import type { DiscordAsset, UnboundAsset } from '@unbound-app/types';
 import { afterEach, describe, expect, mock, test } from 'bun:test';
+import sha256Of from '@unbound-app/utils/sha256';
 import type { ImageProps } from 'react-native';
 
 type Listener = (asset: UnboundAsset, id: number) => void;
@@ -154,5 +155,38 @@ describe('a pack installed from the store', () => {
 		});
 
 		icons.disable(STORE_PACK);
+	});
+
+	test('keeps drawing the applied pack until the next one is ready', async () => {
+		icons.load(STORE_PACK, manifest);
+		await icons['persistFiles'](manifest, {});
+		await icons.enable(PACK);
+
+		const switching = icons.enable(STORE_PACK);
+
+		expect(ImageSources.getImageSourcesFromImageProps({ source: 1 })).toMatchObject({
+			uri: `file:///docs/${packFile('ic_star')}`,
+		});
+
+		await switching;
+
+		expect(ImageSources.getImageSourcesFromImageProps({ source: 1 })).toMatchObject({
+			uri: `file:///docs/Unbound/Icons/${STORE_PACK}/assets/${sha256}.png`,
+		});
+
+		icons.disable(STORE_PACK);
+	});
+
+	// A pack reloads from settings with its name as its bundle; hashing that offered the same version forever.
+	test('reports the digest of the bundle it installed, not the bundle it loaded with', async () => {
+		const bundle = '["assets/a.png"]\n';
+
+		icons.load(STORE_PACK, manifest);
+		await icons['persist'](bundle, manifest);
+
+		const entries = icons.listInstalled();
+
+		expect(entries.find((entry) => entry.id === STORE_PACK)?.sha256).toBe(sha256Of(bundle));
+		expect(entries.find((entry) => entry.id === PACK)?.sha256).toBeUndefined();
 	});
 });
