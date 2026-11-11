@@ -21,8 +21,8 @@ export async function layoutTooltipSurface(
 ): Promise<void> {
 	const frame = { x: 0, y: 0, ...size };
 
-	// A plugin's scope always has `batchAsync`; only the loader knows whether it is real.
-	if (!native.supports('fabric.batchAsync')) {
+	// A plugin's scope always has `batchAsync`; only the loader knows whether it is real. Clients before `native.supports` lack it.
+	if (!native.supports?.('fabric.batchAsync')) {
 		await fabric.setSizeAsync(surface, size, size);
 		await fabric.setFrameAsync(surface, frame);
 
