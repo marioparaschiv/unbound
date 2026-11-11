@@ -38,11 +38,12 @@ export class DevServer {
 		private readonly report = false,
 	) {}
 
-	/** @description Runs initial discovery, builds every addon once, then watches until {@link stop}ped. */
+	/** @description Runs initial discovery, builds every addon once without pushing it, then watches until {@link stop}ped. */
 	async start(): Promise<void> {
 		await this.rediscover();
 
-		for (const addon of this.addons.values()) await this.rebuild(addon);
+		// Pushing here would install every workspace addon on the device; only an addon being edited reloads.
+		for (const addon of this.addons.values()) await this.rebuild(addon, false);
 
 		this.watcher = watch(this.resolved.dir, { recursive: true }, (_event, filename) => {
 			if (!filename) return;
@@ -114,7 +115,7 @@ export class DevServer {
 		this.timers.set(addon.dir, timer);
 	}
 
-	private async rebuild(addon: DiscoveredAddon) {
+	private async rebuild(addon: DiscoveredAddon, reload = true) {
 		if (!addon.static) {
 			process.stdout.write(`Building ${addon.id}…\n`);
 		}
@@ -139,7 +140,9 @@ export class DevServer {
 			);
 		}
 
-		await this.transport.reload(addon);
+		if (reload) {
+			await this.transport.reload(addon);
+		}
 	}
 
 	private async rediscover() {

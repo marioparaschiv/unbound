@@ -72,14 +72,21 @@ describe('DevServer build-failure isolation', () => {
 		expect(transport.calls).toEqual([]);
 	});
 
-	test('a passing build reaches the transport once per addon', async () => {
-		const resolved = loadWorkspace(workspace('true'));
+	test('starting pushes no addon; a change pushes only the changed addon', async () => {
+		const root = workspace('true');
 		const transport = recordingTransport();
-		const server = new DevServer(resolved, transport);
+		const server = new DevServer(loadWorkspace(root), transport);
 
 		await server.start();
+		expect(transport.calls).toEqual([]);
+
+		edit(server, join(root, 'plugins', 'sample', 'index.tsx'));
+
+		const pushed = await waitFor(() => transport.calls.length > 0, 5_000);
+
 		server.stop();
 
+		expect(pushed).toBe(true);
 		expect(transport.calls.map((addon) => addon.id)).toEqual(['com.example.sample']);
 	});
 });
@@ -126,6 +133,8 @@ export function start(context: PluginContext) {
 		});
 
 		await server.start();
+		edit(server, join(pluginDir, 'index.tsx'));
+		await waitFor(() => manifests.length > 0, 5_000);
 		server.stop();
 
 		expect(manifests).toEqual([
@@ -135,6 +144,11 @@ export function start(context: PluginContext) {
 		]);
 	});
 });
+
+// Feeds a saved path to the watcher's handler, as `fs.watch` would.
+function edit(server: DevServer, path: string) {
+	Reflect.apply(Reflect.get(server, 'onChange'), server, [path]);
+}
 
 async function waitFor(check: () => boolean, timeoutMs: number): Promise<boolean> {
 	const deadline = Date.now() + timeoutMs;
