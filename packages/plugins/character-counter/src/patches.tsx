@@ -1,19 +1,27 @@
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { cloneElement, isValidElement, type ReactNode } from 'react';
-import { patcher } from '@unbound-app/api';
+import { flux, metro, patcher } from '@unbound-app/api';
 
-import { ChatInputs, FloatingChatInputContainer, SelectedChannelStore } from '~/counter/modules';
-import { CharacterCounter } from '~/counter/components/character-counter';
+import { CharacterCounter } from '~/components/character-counter';
 
 type ContainerProps = { channel?: { id?: string }; channelId?: string };
 
 /**
- * @description Shows the counter above the composer without changing the composer's layout.
- * Patches the render of `FloatingChatInputContainer`, reads the draft from `ChatInputs`, and the
- * Nitro tier from `UserStore`. The Addon scope removes the patch when the plugin stops.
+ * @description Shows the counter above the composer without changing the composer's layout, by patching the render of
+ * Discord's `FloatingChatInputContainer`; the counter reads the draft from `ChatInputs`.
  */
-export function startCounter(): void {
-	if (!ensureModules({ ChatInputs, FloatingChatInputContainer })) return;
+export function patchChatInput(): void {
+	const ChatInputs = metro.findByProps('getBestActiveInputForChannelId');
+	const FloatingChatInputContainer = metro.findByFilePath(
+		'modules/chat_input/native/FloatingChatInputContainer.tsx',
+	);
+
+	if (!ChatInputs || !FloatingChatInputContainer) {
+		logger.warn('Counter skipped: Discord moved ChatInputs or FloatingChatInputContainer.');
+
+		return;
+	}
+
+	const SelectedChannelStore = flux.getStore('SelectedChannel');
 
 	patcher.react.after(FloatingChatInputContainer, 'default', ({ props, result }) => {
 		const container: ContainerProps = props;
@@ -27,7 +35,11 @@ export function startCounter(): void {
 			{},
 			<>
 				{result.props.children}
-				<CharacterCounter key='character-counter' channelId={channelId} />
+				<CharacterCounter
+					key='character-counter'
+					channelId={channelId}
+					inputs={ChatInputs}
+				/>
 			</>,
 		);
 	});

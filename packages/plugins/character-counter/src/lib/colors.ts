@@ -1,5 +1,5 @@
-import type { CounterTone } from '~/counter/limit';
-import { TONE_COLORS } from '~/constants';
+import type { CounterTone } from '~/lib/limit';
+import { TONE_COLORS } from '~/lib/constants';
 
 export type ThemeColors = Partial<Record<string, string>>;
 

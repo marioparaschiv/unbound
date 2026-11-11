@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { counterSurface, toneColor } from '~/counter/colors';
+import { counterSurface, toneColor } from '~/lib/colors';
 
 describe('counterSurface', () => {
 	test('chooses a subtle surface against dark and light theme text', () => {

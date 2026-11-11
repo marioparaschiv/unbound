@@ -1,4 +1,4 @@
-import { metro, render, startPlugin } from '@unbound-app/api/testing';
+import { logs, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { memo } from 'react';
 import { View } from 'react-native';
@@ -62,6 +62,21 @@ describe('the composer counter', () => {
 		expect(renderComposer().find('Text').props.style).toMatchObject({ color: '#ed4245' });
 		expect(renderComposer({ colorEffects: false }).find('Text').props.style).toMatchObject({
 			color: '#5865f2',
+		});
+	});
+});
+
+describe('a Discord update', () => {
+	test('skips the counter with one warning when Discord moved ChatInputs', async () => {
+		await stopPlugin();
+		metro.markMissing('getBestActiveInputForChannelId');
+		await startPlugin();
+		draft.text = 'hello';
+
+		expect(renderComposer().findAll('Text')).toEqual([]);
+		expect(logs.entries).toContainEqual({
+			level: 'warn',
+			args: ['Counter skipped: Discord moved ChatInputs or FloatingChatInputContainer.'],
 		});
 	});
 });

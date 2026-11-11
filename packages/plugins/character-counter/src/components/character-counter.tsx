@@ -4,20 +4,22 @@ import { flux, metro } from '@unbound-app/api';
 import { format } from '@unbound-app/i18n';
 import { Text, View } from 'react-native';
 
-import { characterLimit, counterTone } from '~/counter/limit';
-import { counterSurface, toneColor } from '~/counter/colors';
-import { ChannelStore, UserStore } from '~/counter/modules';
-import { useDraftLength } from '~/counter/use-draft-length';
-import { COUNTER_HEIGHT } from '~/constants';
+import { characterLimit, counterTone } from '~/lib/limit';
+import { counterSurface, toneColor } from '~/lib/colors';
+import { useDraftLength, type ChatInputs } from '~/components/use-draft-length';
+import { COUNTER_HEIGHT } from '~/lib/constants';
 
-type CharacterCounterProps = { channelId: string };
+type CharacterCounterProps = { channelId: string; inputs: ChatInputs };
+
+const ChannelStore = flux.getStore('Channel');
+const UserStore = flux.getStore('User');
 
 /**
  * @description The `length/limit` pill above a channel's composer, shown while a message is being written.
- * @param props The channel whose draft it counts.
+ * @param props The channel whose draft it counts, and Discord's composer inputs that hold the draft.
  */
-export function CharacterCounter({ channelId }: CharacterCounterProps) {
-	const length = useDraftLength(channelId);
+export function CharacterCounter({ channelId, inputs }: CharacterCounterProps) {
+	const length = useDraftLength(inputs, channelId);
 	const limit = flux.useStore(UserStore, (store) => characterLimit(store.getCurrentUser()));
 	const colorEffects = useSetting('colorEffects');
 	const top = useComposerRow({
