@@ -5,6 +5,7 @@
 #include <thread>
 
 #include "AndroidHotReload.h"
+#include "JniCall.h"
 #include "JniEnvironment.h"
 #include "LoaderFiles.h"
 #include "LoaderJSON.h"
@@ -92,42 +93,6 @@ AndroidLoader::AndroidLoader(LoaderConfiguration configuration, JavaCallbacks ca
 {
 }
 
-static bool verifiedBuild(const JavaCallbacks &callbacks)
-{
-    JNIEnv *env = currentEnvironment();
-    if (!env)
-    {
-        return false;
-    }
-    jboolean verified =
-        env->CallStaticBooleanMethod(callbacks.bridgeClass, callbacks.isVerifiedBuild);
-    return !clearPendingException(env) && verified == JNI_TRUE;
-}
-
-static std::optional<std::string> installerCall(const JavaCallbacks &callbacks,
-                                                const std::string   &action,
-                                                const std::string   &argument)
-{
-    JNIEnv *env = currentEnvironment();
-    if (!env)
-    {
-        return std::nullopt;
-    }
-    jstring javaAction   = toJavaString(env, action);
-    jstring javaArgument = toJavaString(env, argument);
-    auto    result       = static_cast<jstring>(env->CallStaticObjectMethod(
-        callbacks.bridgeClass, callbacks.installer, javaAction, javaArgument));
-    env->DeleteLocalRef(javaAction);
-    env->DeleteLocalRef(javaArgument);
-    if (clearPendingException(env) || !result)
-    {
-        return std::nullopt;
-    }
-    std::string text = toStdString(env, result);
-    env->DeleteLocalRef(result);
-    return text;
-}
-
 std::shared_ptr<loader::NativePlatformProvider> AndroidLoader::platformProvider() const
 {
     const nlohmann::json info      = configuration_.platformInfo;
@@ -152,7 +117,7 @@ std::shared_ptr<loader::NativePlatformProvider> AndroidLoader::platformProvider(
     provider->appSource       = text("appSource");
     provider->framework       = text("framework");
     provider->isVerifiedBuild = [callbacks]() {
-        return verifiedBuild(callbacks);
+        return callStaticBoolean(callbacks.bridgeClass, callbacks.isVerifiedBuild);
     };
     provider->isVirtualDevice   = flag("isVirtualDevice");
     provider->virtualDeviceHost = [info]() -> std::optional<std::string> {
@@ -163,7 +128,7 @@ std::shared_ptr<loader::NativePlatformProvider> AndroidLoader::platformProvider(
     };
     provider->androidInstaller = [callbacks](const std::string &action,
                                              const std::string &argument) {
-        return installerCall(callbacks, action, argument);
+        return callStaticString(callbacks.bridgeClass, callbacks.installer, action, argument);
     };
     return provider;
 }
@@ -347,27 +312,18 @@ void AndroidLoader::scheduleRuntimeDrain()
 
 void AndroidLoader::requestRuntimeDrain(bool throughScheduler)
 {
-    JNIEnv *env = currentEnvironment();
-    if (!env)
+    if (!currentEnvironment())
     {
         runtimeQueue_.retryScheduling();
         return;
     }
-    env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.scheduleRuntime,
-                              static_cast<jboolean>(throughScheduler));
-    clearPendingException(env);
+    callStaticVoid(callbacks_.bridgeClass, callbacks_.scheduleRuntime,
+                   static_cast<jboolean>(throughScheduler));
 }
 
 bool AndroidLoader::isMainThread()
 {
-    JNIEnv *env = currentEnvironment();
-    if (!env)
-    {
-        return false;
-    }
-
-    jboolean result = env->CallStaticBooleanMethod(callbacks_.bridgeClass, callbacks_.isMainThread);
-    return !clearPendingException(env) && result;
+    return callStaticBoolean(callbacks_.bridgeClass, callbacks_.isMainThread);
 }
 
 void AndroidLoader::runOnMain(std::function<void()> work)
@@ -382,15 +338,13 @@ void AndroidLoader::runOnMain(std::function<void()> work)
         mainDrainScheduled_ = true;
     }
 
-    JNIEnv *env = currentEnvironment();
-    if (!env)
+    if (!currentEnvironment())
     {
         std::lock_guard<std::mutex> lock(mainQueueMutex_);
         mainDrainScheduled_ = false;
         return;
     }
-    env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.scheduleMain);
-    clearPendingException(env);
+    callStaticVoid(callbacks_.bridgeClass, callbacks_.scheduleMain);
 }
 
 bool AndroidLoader::runOnMainNextFrame(std::function<void()> work)
@@ -400,16 +354,7 @@ bool AndroidLoader::runOnMainNextFrame(std::function<void()> work)
         return true;
     }
 
-    JNIEnv *env = currentEnvironment();
-    if (!env || !callbacks_.scheduleMainFrame)
-    {
-        frameQueue_.clear();
-        loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
-                    "Failed to schedule frame-batched native work.");
-        return false;
-    }
-    env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.scheduleMainFrame);
-    if (clearPendingException(env))
+    if (!callStaticVoid(callbacks_.bridgeClass, callbacks_.scheduleMainFrame))
     {
         frameQueue_.clear();
         loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
@@ -458,54 +403,19 @@ std::optional<std::string> AndroidLoader::resource(const std::string &name)
 
 std::optional<std::string> AndroidLoader::devServerHost()
 {
-    JNIEnv *env = currentEnvironment();
-    if (!env)
-    {
-        return std::nullopt;
-    }
-
-    auto host = static_cast<jstring>(
-        env->CallStaticObjectMethod(callbacks_.bridgeClass, callbacks_.devServerHost));
-    if (clearPendingException(env) || !host)
-    {
-        return std::nullopt;
-    }
-
-    std::string value = toStdString(env, host);
-    env->DeleteLocalRef(host);
-    return value;
+    return callStaticString(callbacks_.bridgeClass, callbacks_.devServerHost);
 }
 
 bool AndroidLoader::isServing(const std::string &url, double timeoutSeconds)
 {
-    JNIEnv *env = currentEnvironment();
-    if (!env)
-    {
-        return false;
-    }
-
-    jstring  javaURL = toJavaString(env, url);
-    jboolean serving = env->CallStaticBooleanMethod(callbacks_.bridgeClass, callbacks_.isServing,
-                                                    javaURL, milliseconds(timeoutSeconds));
-    env->DeleteLocalRef(javaURL);
-    return !clearPendingException(env) && serving == JNI_TRUE;
+    return callStaticBoolean(callbacks_.bridgeClass, callbacks_.isServing, url,
+                             milliseconds(timeoutSeconds));
 }
 
 bool AndroidLoader::installHomeScreenIcon(const std::string &name, const std::string &imagePath)
 {
-    JNIEnv *env = currentEnvironment();
-    if (!env)
-    {
-        return false;
-    }
-
-    jstring  javaName      = toJavaString(env, name);
-    jstring  javaImagePath = toJavaString(env, imagePath);
-    jboolean installed     = env->CallStaticBooleanMethod(
-        callbacks_.bridgeClass, callbacks_.installHomeScreenIcon, javaName, javaImagePath);
-    env->DeleteLocalRef(javaImagePath);
-    env->DeleteLocalRef(javaName);
-    return !clearPendingException(env) && installed == JNI_TRUE;
+    return callStaticBoolean(callbacks_.bridgeClass, callbacks_.installHomeScreenIcon, name,
+                             imagePath);
 }
 
 std::shared_ptr<loader::HotReloadTransport> AndroidLoader::hotReloadTransport()
@@ -558,13 +468,7 @@ void AndroidLoader::installNativeModules(jsi::Runtime &runtime)
 
 void AndroidLoader::onBundleExecuted()
 {
-    JNIEnv *env = currentEnvironment();
-    if (!env)
-    {
-        return;
-    }
-    env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.onBundleExecuted);
-    clearPendingException(env);
+    callStaticVoid(callbacks_.bridgeClass, callbacks_.onBundleExecuted);
 }
 
 void AndroidLoader::reload()
@@ -574,62 +478,24 @@ void AndroidLoader::reload()
 
 void AndroidLoader::showUpdateProgress(bool showing)
 {
-    JNIEnv *env = currentEnvironment();
-    if (!env)
-    {
-        return;
-    }
-    env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.updateProgress,
-                              showing ? JNI_TRUE : JNI_FALSE);
-    clearPendingException(env);
+    callStaticVoid(callbacks_.bridgeClass, callbacks_.updateProgress,
+                   static_cast<jboolean>(showing ? JNI_TRUE : JNI_FALSE));
 }
 
 void AndroidLoader::alert(const std::string &message)
 {
-    JNIEnv *env = currentEnvironment();
-    if (!env)
-    {
-        return;
-    }
-    jstring text = toJavaString(env, message);
-    env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.alert, text);
-    clearPendingException(env);
-    env->DeleteLocalRef(text);
+    callStaticVoid(callbacks_.bridgeClass, callbacks_.alert, message);
 }
 
 void AndroidLoader::crashAlert(const std::string &message)
 {
-    JNIEnv *env = currentEnvironment();
-    if (!env)
-    {
-        return;
-    }
-    jstring text = toJavaString(env, message);
-    env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.crashAlert, text);
-    clearPendingException(env);
-    env->DeleteLocalRef(text);
+    callStaticVoid(callbacks_.bridgeClass, callbacks_.crashAlert, message);
 }
 
 std::optional<std::string> AndroidLoader::fetchText(const std::string &url, double timeoutSeconds)
 {
-    JNIEnv *env = currentEnvironment();
-    if (!env)
-    {
-        return std::nullopt;
-    }
-
-    jstring javaURL = toJavaString(env, url);
-    auto    result  = static_cast<jstring>(env->CallStaticObjectMethod(
-        callbacks_.bridgeClass, callbacks_.fetchText, javaURL, milliseconds(timeoutSeconds)));
-    env->DeleteLocalRef(javaURL);
-    if (clearPendingException(env) || !result)
-    {
-        return std::nullopt;
-    }
-
-    std::string text = toStdString(env, result);
-    env->DeleteLocalRef(result);
-    return text;
+    return callStaticString(callbacks_.bridgeClass, callbacks_.fetchText, url,
+                            milliseconds(timeoutSeconds));
 }
 
 std::optional<loader::DownloadResult>

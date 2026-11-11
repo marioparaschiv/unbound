@@ -9,6 +9,7 @@
 #include "AndroidLoader.h"
 #include "HermesBytecodeHeader.h"
 #include "JniEnvironment.h"
+#include "JniSurface.h"
 #include "LoaderColor.h"
 #include "LoaderDevOverlay.h"
 #include "LoaderDiagnostics.h"
@@ -25,8 +26,6 @@
 #include "NativePluginBridge.h"
 
 using namespace unbound::android;
-
-static const char *const kBridgeClass = "app/unbound/android/NativeBridge";
 
 static JavaCallbacks gCallbacks;
 
@@ -438,119 +437,23 @@ static jint nativeDevelopmentBuildBannerSeconds(JNIEnv *, jclass)
     return static_cast<jint>(loader::diagnostics::kBannerSeconds);
 }
 
+// Looks up every UNBOUND_BRIDGE_CALLBACKS entry; false, naming each missing one, when any is
+// absent.
 static bool cacheCallbacks(JNIEnv *env, jclass bridge)
 {
-    gCallbacks.bridgeClass       = static_cast<jclass>(env->NewGlobalRef(bridge));
-    gCallbacks.scheduleRuntime   = env->GetStaticMethodID(bridge, "scheduleRuntimeWork", "(Z)V");
-    gCallbacks.scheduleMain      = env->GetStaticMethodID(bridge, "scheduleMainWork", "()V");
-    gCallbacks.scheduleMainFrame = env->GetStaticMethodID(bridge, "scheduleMainFrameWork", "()V");
-    gCallbacks.isMainThread      = env->GetStaticMethodID(bridge, "isMainThread", "()Z");
-    gCallbacks.isVerifiedBuild   = env->GetStaticMethodID(bridge, "isVerifiedBuild", "()Z");
-    gCallbacks.installer         = env->GetStaticMethodID(
-        bridge, "installer", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.javaGetClass =
-        env->GetStaticMethodID(bridge, "javaGetClass", "(Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.javaClassName =
-        env->GetStaticMethodID(bridge, "javaClassName", "(Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.javaDescribe =
-        env->GetStaticMethodID(bridge, "javaDescribe", "(Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.javaConstruct = env->GetStaticMethodID(
-        bridge, "javaConstruct", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.javaRespondsTo = env->GetStaticMethodID(
-        bridge, "javaRespondsTo",
-        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.javaInvoke = env->GetStaticMethodID(
-        bridge, "javaInvoke",
-        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.javaPrepare = env->GetStaticMethodID(
-        bridge, "javaPrepare",
-        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.javaInvokePrepared = env->GetStaticMethodID(
-        bridge, "javaInvokePrepared",
-        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.javaDisposePlan =
-        env->GetStaticMethodID(bridge, "javaDisposePlan", "(Ljava/lang/String;)V");
-    gCallbacks.javaGetField = env->GetStaticMethodID(
-        bridge, "javaGetField", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.javaSetField = env->GetStaticMethodID(
-        bridge, "javaSetField", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
-    gCallbacks.javaRelease = env->GetStaticMethodID(bridge, "javaRelease", "(Ljava/lang/String;)V");
-    gCallbacks.javaLiveHandles = env->GetStaticMethodID(bridge, "javaLiveHandles", "()I");
-    gCallbacks.hooksInstall    = env->GetStaticMethodID(
-        bridge, "hooksInstall",
-        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/"
-        "String;");
-    gCallbacks.hooksRemove = env->GetStaticMethodID(bridge, "hooksRemove", "(Ljava/lang/String;)V");
-    gCallbacks.runtimeReplaced = env->GetStaticMethodID(bridge, "runtimeReplaced", "()V");
-    gCallbacks.javaBatch =
-        env->GetStaticMethodID(bridge, "javaBatch", "(Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.javaFindViews = env->GetStaticMethodID(
-        bridge, "javaFindViews",
-        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.javaCreateAssociationKey =
-        env->GetStaticMethodID(bridge, "javaCreateAssociationKey", "()Ljava/lang/String;");
-    gCallbacks.javaGetAssociatedObject =
-        env->GetStaticMethodID(bridge, "javaGetAssociatedObject",
-                               "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.javaSetAssociatedObject =
-        env->GetStaticMethodID(bridge, "javaSetAssociatedObject",
-                               "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V");
-    gCallbacks.fabricMount = env->GetStaticMethodID(
-        bridge, "fabricMount",
-        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.fabricUpdate =
-        env->GetStaticMethodID(bridge, "fabricUpdate", "(Ljava/lang/String;Ljava/lang/String;)V");
-    gCallbacks.fabricUnmount =
-        env->GetStaticMethodID(bridge, "fabricUnmount", "(Ljava/lang/String;)Z");
-    gCallbacks.fabricDetach =
-        env->GetStaticMethodID(bridge, "fabricDetach", "(Ljava/lang/String;)Z");
-    gCallbacks.fabricAttach =
-        env->GetStaticMethodID(bridge, "fabricAttach", "(Ljava/lang/String;Ljava/lang/String;)V");
-    gCallbacks.fabricSetSize = env->GetStaticMethodID(
-        bridge, "fabricSetSize", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
-    gCallbacks.fabricSetFrame =
-        env->GetStaticMethodID(bridge, "fabricSetFrame", "(Ljava/lang/String;Ljava/lang/String;)V");
-    gCallbacks.fabricMeasure =
-        env->GetStaticMethodID(bridge, "fabricMeasure", "(Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.fetchText =
-        env->GetStaticMethodID(bridge, "fetchText", "(Ljava/lang/String;I)Ljava/lang/String;");
-    gCallbacks.download = env->GetStaticMethodID(
-        bridge, "download",
-        "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;III)[Ljava/lang/"
-        "String;");
-    gCallbacks.devServerHost =
-        env->GetStaticMethodID(bridge, "devServerHost", "()Ljava/lang/String;");
-    gCallbacks.isServing = env->GetStaticMethodID(bridge, "isServing", "(Ljava/lang/String;I)Z");
-    gCallbacks.installHomeScreenIcon = env->GetStaticMethodID(
-        bridge, "installHomeScreenIcon", "(Ljava/lang/String;Ljava/lang/String;)Z");
-    gCallbacks.availableFonts =
-        env->GetStaticMethodID(bridge, "availableFonts", "()[Ljava/lang/String;");
-    gCallbacks.appFonts = env->GetStaticMethodID(bridge, "appFonts", "()[Ljava/lang/String;");
-    gCallbacks.appFontBytes =
-        env->GetStaticMethodID(bridge, "appFontBytes", "(Ljava/lang/String;)[B");
-    gCallbacks.alert      = env->GetStaticMethodID(bridge, "alert", "(Ljava/lang/String;)V");
-    gCallbacks.crashAlert = env->GetStaticMethodID(bridge, "crashAlert", "(Ljava/lang/String;)V");
-    gCallbacks.updateProgress   = env->GetStaticMethodID(bridge, "updateProgress", "(Z)V");
-    gCallbacks.onBundleExecuted = env->GetStaticMethodID(bridge, "onBundleExecuted", "()V");
-    gCallbacks.fontsChanged     = env->GetStaticMethodID(bridge, "fontsChanged", "()V");
-
-    return !clearPendingException(env) && gCallbacks.scheduleRuntime && gCallbacks.scheduleMain &&
-           gCallbacks.scheduleMainFrame && gCallbacks.isMainThread && gCallbacks.isVerifiedBuild &&
-           gCallbacks.installer && gCallbacks.javaGetClass && gCallbacks.javaClassName &&
-           gCallbacks.javaDescribe && gCallbacks.javaConstruct && gCallbacks.javaRespondsTo &&
-           gCallbacks.javaInvoke && gCallbacks.javaPrepare && gCallbacks.javaInvokePrepared &&
-           gCallbacks.javaDisposePlan && gCallbacks.javaGetField && gCallbacks.javaSetField &&
-           gCallbacks.javaRelease && gCallbacks.javaLiveHandles && gCallbacks.hooksInstall &&
-           gCallbacks.hooksRemove && gCallbacks.runtimeReplaced && gCallbacks.javaBatch &&
-           gCallbacks.javaFindViews && gCallbacks.javaCreateAssociationKey &&
-           gCallbacks.javaGetAssociatedObject && gCallbacks.javaSetAssociatedObject &&
-           gCallbacks.fabricMount && gCallbacks.fabricUpdate && gCallbacks.fabricUnmount &&
-           gCallbacks.fabricDetach && gCallbacks.fabricAttach && gCallbacks.fabricSetSize &&
-           gCallbacks.fabricSetFrame && gCallbacks.fabricMeasure && gCallbacks.fetchText &&
-           gCallbacks.download && gCallbacks.devServerHost && gCallbacks.isServing &&
-           gCallbacks.installHomeScreenIcon && gCallbacks.availableFonts && gCallbacks.appFonts &&
-           gCallbacks.appFontBytes && gCallbacks.alert && gCallbacks.crashAlert &&
-           gCallbacks.updateProgress && gCallbacks.onBundleExecuted && gCallbacks.fontsChanged;
+    gCallbacks.bridgeClass = static_cast<jclass>(env->NewGlobalRef(bridge));
+    bool found             = true;
+#define UNBOUND_CACHE_CALLBACK(field, name, signature)                                             \
+    gCallbacks.field = env->GetStaticMethodID(bridge, name, signature);                            \
+    if (clearPendingException(env) || !gCallbacks.field)                                           \
+    {                                                                                              \
+        loader::log(loader::LogLevel::Error, LOG_CATEGORY_DEFAULT,                                 \
+                    std::string("Failed to find NativeBridge.") + name + " " + signature);         \
+        found = false;                                                                             \
+    }
+    UNBOUND_BRIDGE_CALLBACKS(UNBOUND_CACHE_CALLBACK)
+#undef UNBOUND_CACHE_CALLBACK
+    return found;
 }
 
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
@@ -572,63 +475,10 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
     }
 
     static const JNINativeMethod methods[] = {
-        {"nativeInitialize",
-         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)V",
-         reinterpret_cast<void *>(nativeInitialize)},
-        {"nativeOnLoadJSBundle", "()V", reinterpret_cast<void *>(nativeOnLoadJSBundle)},
-        {"nativeMarkHealthy", "()V", reinterpret_cast<void *>(nativeMarkHealthy)},
-        {"nativeIsBlockedTelemetry", "(Ljava/lang/String;)Z",
-         reinterpret_cast<void *>(nativeIsBlockedTelemetry)},
-        {"nativeOnRuntimeCreated", "(J)Z", reinterpret_cast<void *>(nativeOnRuntimeCreated)},
-        {"nativeDrainRuntimeWork", "(J)V", reinterpret_cast<void *>(nativeDrainRuntimeWork)},
-        {"nativeInstallSchedulerDrain", "(J)Z",
-         reinterpret_cast<void *>(nativeInstallSchedulerDrain)},
-        {"nativeDrainMainWork", "()V", reinterpret_cast<void *>(nativeDrainMainWork)},
-        {"nativeDrainFrameWork", "()V", reinterpret_cast<void *>(nativeDrainFrameWork)},
-        {"nativeDispatchHookEvent", "(Ljava/lang/String;Ljava/lang/String;)V",
-         reinterpret_cast<void *>(nativeDispatchHookEvent)},
-        {"nativeHermesBytecodeVersion", "([B)I",
-         reinterpret_cast<void *>(nativeHermesBytecodeVersion)},
-        {"nativeHookReturnValue",
-         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
-         reinterpret_cast<void *>(nativeHookReturnValue)},
-        {"nativeToolbox", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
-         reinterpret_cast<void *>(nativeToolbox)},
-        {"nativePreference", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
-         reinterpret_cast<void *>(nativePreference)},
-        {"nativeShakeSample", "(FFFJ)Z", reinterpret_cast<void *>(nativeShakeSample)},
-        {"nativeThreeFingerEvent", "(Ljava/lang/String;I)Ljava/lang/String;",
-         reinterpret_cast<void *>(nativeThreeFingerEvent)},
-        {"nativeResolveFont", "(Ljava/lang/String;)Ljava/lang/String;",
-         reinterpret_cast<void *>(nativeResolveFont)},
-        {"nativeDocumentsDirectory", "(Ljava/lang/String;)Ljava/lang/String;",
-         reinterpret_cast<void *>(nativeDocumentsDirectory)},
-        {"nativeSettingsFileName", "()Ljava/lang/String;",
-         reinterpret_cast<void *>(nativeSettingsFileName)},
-        {"nativeThemeColorsJSON", "(Ljava/lang/String;)Ljava/lang/String;",
-         reinterpret_cast<void *>(nativeThemeColorsJSON)},
-        {"nativePrepareAddons", "()V", reinterpret_cast<void *>(nativePrepareAddons)},
-        {"nativeLog", "(ILjava/lang/String;Ljava/lang/String;)V",
-         reinterpret_cast<void *>(nativeLog)},
-        {"nativeAppendLogFile", "(ILjava/lang/String;Ljava/lang/String;)V",
-         reinterpret_cast<void *>(nativeAppendLogFile)},
-        {"nativeDevOverlayButtonSide", "()D", reinterpret_cast<void *>(nativeDevOverlayButtonSide)},
-        {"nativeAttestation", "()Ljava/lang/String;", reinterpret_cast<void *>(nativeAttestation)},
-        {"nativeWarnOffMainViewCall", "(Ljava/lang/String;)V",
-         reinterpret_cast<void *>(nativeWarnOffMainViewCall)},
-        {"nativeEvictIdleSurfaces", "()V", reinterpret_cast<void *>(nativeEvictIdleSurfaces)},
-        {"nativeIncompatibleHostMessage", "()Ljava/lang/String;",
-         reinterpret_cast<void *>(nativeIncompatibleHostMessage)},
-        {"nativeDevelopmentBuildBanner",
-         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
-         reinterpret_cast<void *>(nativeDevelopmentBuildBanner)},
-        {"nativeDevelopmentBuildBannerSeconds", "()I",
-         reinterpret_cast<void *>(nativeDevelopmentBuildBannerSeconds)},
-        {"nativeDevOverlayCenter", "([D)[D", reinterpret_cast<void *>(nativeDevOverlayCenter)},
-        {"nativeClampDevOverlayCenter", "(DD[D)[D",
-         reinterpret_cast<void *>(nativeClampDevOverlayCenter)},
-        {"nativeSaveDevOverlayCenter", "(DD[D)V",
-         reinterpret_cast<void *>(nativeSaveDevOverlayCenter)},
+#define UNBOUND_NATIVE_METHOD(name, signature, function)                                           \
+    {name, signature, reinterpret_cast<void *>(function)},
+        UNBOUND_BRIDGE_NATIVES(UNBOUND_NATIVE_METHOD)
+#undef UNBOUND_NATIVE_METHOD
     };
 
     if (env->RegisterNatives(bridge.get(), methods, sizeof(methods) / sizeof(methods[0])) !=

@@ -1,4 +1,5 @@
 #include "AndroidLoader.h"
+#include "JniCall.h"
 #include "JniEnvironment.h"
 #include "LoaderFonts.h"
 #include "LoaderJSON.h"
@@ -14,11 +15,7 @@ void AndroidLoader::onFontsChanged()
 {
     // Kotlin drops its cached typefaces, so text laid out after the change, such as after the
     // restart the client offers, uses the new fonts.
-    if (JNIEnv *env = currentEnvironment())
-    {
-        env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.fontsChanged);
-        clearPendingException(env);
-    }
+    callStaticVoid(callbacks_.bridgeClass, callbacks_.fontsChanged);
 }
 
 static std::vector<std::string> callStringArray(JNIEnv *env, jclass type, jmethodID method)

@@ -11,6 +11,7 @@
 #include <string>
 
 #include "DeadlineTimer.h"
+#include "JniSurface.h"
 #include "Loader.h"
 #include "LoaderHost.h"
 #include "NativeFrameWorkQueue.h"
@@ -19,56 +20,12 @@
 #include "NativeWorkQueue.h"
 
 namespace unbound::android {
+// NativeBridge's static methods, one field per UNBOUND_BRIDGE_CALLBACKS entry.
 struct JavaCallbacks {
-    jclass    bridgeClass              = nullptr;
-    jmethodID scheduleRuntime          = nullptr;
-    jmethodID scheduleMain             = nullptr;
-    jmethodID scheduleMainFrame        = nullptr;
-    jmethodID isMainThread             = nullptr;
-    jmethodID isVerifiedBuild          = nullptr;
-    jmethodID installer                = nullptr;
-    jmethodID javaGetClass             = nullptr;
-    jmethodID javaClassName            = nullptr;
-    jmethodID javaDescribe             = nullptr;
-    jmethodID javaConstruct            = nullptr;
-    jmethodID javaRespondsTo           = nullptr;
-    jmethodID javaInvoke               = nullptr;
-    jmethodID javaPrepare              = nullptr;
-    jmethodID javaInvokePrepared       = nullptr;
-    jmethodID javaDisposePlan          = nullptr;
-    jmethodID javaGetField             = nullptr;
-    jmethodID javaSetField             = nullptr;
-    jmethodID javaRelease              = nullptr;
-    jmethodID javaLiveHandles          = nullptr;
-    jmethodID hooksInstall             = nullptr;
-    jmethodID hooksRemove              = nullptr;
-    jmethodID runtimeReplaced          = nullptr;
-    jmethodID javaBatch                = nullptr;
-    jmethodID javaFindViews            = nullptr;
-    jmethodID javaCreateAssociationKey = nullptr;
-    jmethodID javaGetAssociatedObject  = nullptr;
-    jmethodID javaSetAssociatedObject  = nullptr;
-    jmethodID fabricMount              = nullptr;
-    jmethodID fabricUpdate             = nullptr;
-    jmethodID fabricUnmount            = nullptr;
-    jmethodID fabricDetach             = nullptr;
-    jmethodID fabricAttach             = nullptr;
-    jmethodID fabricSetSize            = nullptr;
-    jmethodID fabricSetFrame           = nullptr;
-    jmethodID fabricMeasure            = nullptr;
-    jmethodID fetchText                = nullptr;
-    jmethodID download                 = nullptr;
-    jmethodID devServerHost            = nullptr;
-    jmethodID isServing                = nullptr;
-    jmethodID installHomeScreenIcon    = nullptr;
-    jmethodID availableFonts           = nullptr;
-    jmethodID appFonts                 = nullptr;
-    jmethodID appFontBytes             = nullptr;
-    jmethodID alert                    = nullptr;
-    jmethodID crashAlert               = nullptr;
-    jmethodID updateProgress           = nullptr;
-    jmethodID onBundleExecuted         = nullptr;
-    jmethodID fontsChanged             = nullptr;
+    jclass bridgeClass = nullptr;
+#define UNBOUND_CALLBACK_FIELD(field, name, signature) jmethodID field = nullptr;
+    UNBOUND_BRIDGE_CALLBACKS(UNBOUND_CALLBACK_FIELD)
+#undef UNBOUND_CALLBACK_FIELD
 };
 
 struct LoaderConfiguration {

@@ -46,6 +46,7 @@ object NativeBridge {
     @JvmStatic
     external fun nativeMarkHealthy()
 
+    @JvmStatic
     external fun nativeEvictIdleSurfaces()
 
     @JvmStatic
@@ -71,13 +72,17 @@ object NativeBridge {
 
     @JvmStatic
     external fun nativeToolbox(action: String, argument: String?): String?
+
+    @JvmStatic
     external fun nativePreference(action: String, argument: String?): String?
 
     fun preferenceEnabled(action: String, argument: String? = null): Boolean =
         nativePreference(action, argument) == "true"
 
+    @JvmStatic
     external fun nativeShakeSample(x: Float, y: Float, z: Float, milliseconds: Long): Boolean
 
+    @JvmStatic
     external fun nativeThreeFingerEvent(event: String, pointers: Int): String
 
     @JvmStatic
