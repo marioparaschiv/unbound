@@ -27,7 +27,7 @@ function IconMarquee({ icons }: IconMarqueeProps) {
 	const styles = useStyles();
 	const [size, setSize] = useState<Size>();
 	const count = size
-		? Math.max(1, Math.min(icons.length, Math.floor((size.height - SPARE_HEIGHT) / ROW_HEIGHT)))
+		? Math.min(icons.length, Math.max(1, Math.floor((size.height - SPARE_HEIGHT) / ROW_HEIGHT)))
 		: 0;
 	const rows = useMemo(
 		() =>
