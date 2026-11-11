@@ -1,11 +1,16 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
+import { createLogger } from '@unbound-app/logger';
 
 import type { CatalogQuery, MarketplaceListing } from '~/marketplace/catalog';
+import { pickInstallVersion } from '~/addons/versions';
 import { queryCatalog } from '~/marketplace/catalog';
 import MarketplaceStore from '~/marketplace/state';
+import { CLIENT_VERSION } from '~/core/constants';
 import { Manager } from '~/addons/manager';
 
 export type { CatalogQuery, CatalogSort, MarketplaceListing } from '~/marketplace/catalog';
+
+const logger = createLogger('Marketplace', 'API');
 
 function toListing(listed: ListedAddon): MarketplaceListing {
 	const { manifest, version, publishedAt } = listed.latestVersion;
@@ -46,7 +51,7 @@ export function search(query: CatalogQuery): MarketplaceListing[] {
 }
 
 /**
- * @description Installs the latest version of a marketplace addon, with the plugins it depends on once the user agrees.
+ * @description Installs the newest version of a marketplace addon this client runs, with the plugins it depends on once the user agrees.
  * @param id The addon's id in the catalog.
  * @returns Whether the addon now runs that version.
  */
@@ -67,5 +72,18 @@ export async function install(id: string): Promise<boolean> {
 		return false;
 	}
 
-	return Manager.for(listed.type).installListed(listed, listed.latestVersion);
+	const manager = Manager.for(listed.type);
+	const picked = await pickInstallVersion(
+		listed,
+		manager.getInstalledVersion(listed),
+		CLIENT_VERSION,
+	).catch((cause: unknown) => {
+		logger.error(`Failed to fetch the versions of ${id}:`, cause);
+	});
+
+	if (!picked || picked.type === 'incompatible') {
+		return false;
+	}
+
+	return manager.installListed(listed, picked.version);
 }
