@@ -5,12 +5,12 @@ import type {
 	EvalResult,
 	EvalRequest,
 	BridgeMessage,
-	PluginPushResult,
-	PluginPushRequest,
+	PushResult,
+	PushRequest,
 } from '@unbound-app/debugger-protocol';
 import {
 	DEFAULT_EVAL_TIMEOUT_MS,
-	PLUGIN_PUSH_TIMEOUT_MS,
+	PUSH_TIMEOUT_MS,
 	resolveEvalTimeout,
 	serializeMessage,
 } from '@unbound-app/debugger-protocol';
@@ -40,7 +40,7 @@ export const state: {
 // Each pending request keeps the controller that issued it (none for the REPL), so a controller
 // detach can drop its in-flight requests.
 const pending = new PendingRequests<EvalResult, SocketLike | undefined>();
-const pendingPushes = new PendingRequests<PluginPushResult, SocketLike>();
+const pendingPushes = new PendingRequests<PushResult, SocketLike>();
 const logListeners = new Set<(log: LogMessage) => void>();
 const deviceListeners = new Set<(connected: boolean, device: DeviceInfo | null) => void>();
 const evalListeners = new Set<(code: string) => void>();
@@ -136,14 +136,14 @@ export function evaluateForController(socket: SocketLike, request: EvalRequest) 
 }
 
 /**
- * @description Forwards a controller's {@link PluginPushRequest} to the device and delivers the
- * id-correlated {@link PluginPushResult} back over that same controller's socket. Replies with an
- * error frame instead if no device is connected or it doesn't answer within {@link PLUGIN_PUSH_TIMEOUT_MS}.
+ * @description Forwards a controller's {@link PushRequest} to the device and delivers the
+ * id-correlated {@link PushResult} back over that same controller's socket. Replies with an
+ * error frame instead if no device is connected or it doesn't answer within {@link PUSH_TIMEOUT_MS}.
  * @param socket The controller that issued the push.
  * @param request The push to forward verbatim; its `id` correlates the result.
  */
-export function pushPluginForController(socket: SocketLike, request: PluginPushRequest) {
-	const deliver = (result: PluginPushResult) => socket.send(serializeMessage(result));
+export function pushForController(socket: SocketLike, request: PushRequest) {
+	const deliver = (result: PushResult) => socket.send(serializeMessage(result));
 
 	if (!state.device) {
 		deliver({
@@ -159,12 +159,12 @@ export function pushPluginForController(socket: SocketLike, request: PluginPushR
 
 	pendingPushes.add(request.id, {
 		settle: deliver,
-		timeoutMs: PLUGIN_PUSH_TIMEOUT_MS,
+		timeoutMs: PUSH_TIMEOUT_MS,
 		onTimeout: () => ({
 			type: 'plugin-push-result',
 			id: request.id,
 			ok: false,
-			error: `Plugin push timed out after ${PLUGIN_PUSH_TIMEOUT_MS}ms.`,
+			error: `Push timed out after ${PUSH_TIMEOUT_MS}ms.`,
 			code: 'timeout',
 		}),
 		meta: socket,

@@ -1,4 +1,4 @@
-import type { PluginPushResult } from '@unbound-app/debugger-protocol';
+import type { PushResult } from '@unbound-app/debugger-protocol';
 import { describe, expect, test, afterEach } from 'bun:test';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -164,17 +164,17 @@ describe('listBuiltFiles', () => {
 });
 
 describe('pushBuiltAddon', () => {
-	const ok: PluginPushResult = { type: 'plugin-push-result', id: 'x', ok: true };
+	const ok: PushResult = { type: 'plugin-push-result', id: 'x', ok: true };
 
 	test('pushes the build tagged with its kind and sums it up', async () => {
 		const plugin = builtPlugin();
-		const pushes: Parameters<PushClient['pushPlugin']>[0][] = [];
+		const pushes: Parameters<PushClient['pushAddon']>[0][] = [];
 
 		writeBuiltBytecode(plugin.output, 'index.js', { 98: 'compiled' });
 
 		const pushed = await pushBuiltAddon(
 			{
-				async pushPlugin(push) {
+				async pushAddon(push) {
 					pushes.push(push);
 
 					return ok;
@@ -193,7 +193,7 @@ describe('pushBuiltAddon', () => {
 
 		const result = await pushBuiltAddon(
 			{
-				async pushPlugin() {
+				async pushAddon() {
 					pushed = true;
 
 					return ok;

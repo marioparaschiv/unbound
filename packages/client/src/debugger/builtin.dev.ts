@@ -1,7 +1,7 @@
 import type {
 	DeviceHello,
-	PluginPushRequest,
-	PluginPushResult,
+	PushRequest,
+	PushResult,
 	EvalResult,
 	LogMessage,
 } from '@unbound-app/debugger-protocol';
@@ -36,7 +36,7 @@ let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 const disposers = new Set<() => void>();
 
-/** Connects to the debugger bridge and streams logs, evals and plugin pushes over it. */
+/** Connects to the debugger bridge and streams logs, evals and pushes over it. */
 export function start() {
 	stopped = false;
 
@@ -164,7 +164,7 @@ function handleMessage(raw: string) {
 	}
 
 	if (request?.type === 'plugin-push') {
-		void handlePluginPush(request);
+		void handlePush(request);
 	}
 }
 
@@ -182,13 +182,13 @@ async function handleEvalRequest(id: string, code: string) {
 
 // A thin transport caller: the reload lifecycle lives on the Plugins manager. Report the manager's
 // own returned outcome straight back over the wire so the CLI stages the reload result.
-function runtimeBytecode(request: PluginPushRequest): string | undefined {
+function runtimeBytecode(request: PushRequest): string | undefined {
 	const version = getLoader()?.bytecodeVersion;
 
 	return version ? request.bytecode?.[String(version)] : void 0;
 }
 
-async function handlePluginPush(request: PluginPushRequest) {
+async function handlePush(request: PushRequest) {
 	const manager = request.kind === 'theme' ? themes : plugins;
 
 	try {
@@ -241,7 +241,7 @@ function sayHello() {
 	}
 }
 
-function reply(payload: EvalResult | PluginPushResult) {
+function reply(payload: EvalResult | PushResult) {
 	if (ws?.readyState !== WebSocket.OPEN) return;
 
 	try {
