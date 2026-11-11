@@ -6,6 +6,8 @@ import {
 	mergeDiscordAppIcons,
 	resolveDiscordAppIconSelection,
 	toDiscordAppIcon,
+	toPickerAppIconId,
+	unlockDiscordAppIcon,
 } from './bridge-icons';
 
 const defaultIcon = {
@@ -80,5 +82,22 @@ describe('app icon bridge', () => {
 			'BrandInvertedIcon',
 		);
 		expect(resolveDiscordAppIconSelection('AppIcon', [unboundIcon])).toBe('AppIcon');
+	});
+
+	test('selects the Unbound row when the native alias it replaces is current', () => {
+		expect(toPickerAppIconId('BrandInvertedIcon', [unboundIcon])).toBe('UnboundIcon');
+		expect(toPickerAppIconId('AppIcon', [unboundIcon])).toBe('AppIcon');
+		const customIcon = {
+			id: 'UnboundCustom1',
+			nativeId: 'UnboundCustom1',
+			name: 'Custom',
+			isPremium: false,
+		};
+
+		expect(toPickerAppIconId('UnboundCustom1', [customIcon])).toBe('UnboundCustom1');
+	});
+
+	test('unlocks Nitro icons', () => {
+		expect(unlockDiscordAppIcon({ ...brandIcon, isPremium: true }).isPremium).toBe(false);
 	});
 });
