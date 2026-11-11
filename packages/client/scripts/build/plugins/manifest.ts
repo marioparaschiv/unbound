@@ -8,7 +8,7 @@ import { BUNDLE_PATTERN, bundleHashes } from '../sign';
 const logger = Logger.create('Build', 'Manifest');
 const root = resolve(__dirname, '..', '..', '..');
 const dist = resolve(root, 'dist');
-const nativePluginVersionHeader = resolve(
+const nativeBridgeVersionHeader = resolve(
 	root,
 	'..',
 	'loader',
@@ -152,7 +152,7 @@ export function writeManifest(options: ManifestOptions): string | null {
 		channel: options.channel,
 		buildTime: new Date().toISOString(),
 		bytecodeVersions,
-		nativeBridge: parseNativeBridgeVersion(readFileSync(nativePluginVersionHeader, 'utf8')),
+		nativeBridge: parseNativeBridgeVersion(readFileSync(nativeBridgeVersionHeader, 'utf8')),
 		minLoaderVersion: options.minLoaderVersion,
 		sha512: bundleHashes(dist),
 	};

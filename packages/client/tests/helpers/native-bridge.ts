@@ -26,7 +26,7 @@ import { mockLookups } from './lookups';
 
 // Importing the native API captures and deletes `globalThis.NativePlugin`, so each file using these
 // fixtures needs its own module registry: run them with `bun test --isolate`.
-type NativePluginGlobal = typeof globalThis & {
+type NativeBridgeGlobal = typeof globalThis & {
 	NativePlatform?: NativePlatformBridge;
 	NativePlugin?: NativePluginRuntimeBridge;
 };
@@ -351,13 +351,13 @@ const fakePlatformBridge: NativePlatformBridge = {
 	ios: iosPlatformDetails,
 };
 
-/** The fake native plugin bridge the loader would install; tests swap its namespaces with `Object.assign`. */
+/** The fake native bridge the loader would install; tests swap its namespaces with `Object.assign`. */
 export const bridge = fakeBridge;
 /** The fake host platform bridge; tests switch its platform with `Object.assign`. */
 export const nativePlatformBridge = fakePlatformBridge;
 
-(globalThis as NativePluginGlobal).NativePlugin = bridge;
-(globalThis as NativePluginGlobal).NativePlatform = nativePlatformBridge;
+(globalThis as NativeBridgeGlobal).NativePlugin = bridge;
+(globalThis as NativeBridgeGlobal).NativePlatform = nativePlatformBridge;
 
 export const {
 	NativePluginCapabilityError,
@@ -366,7 +366,7 @@ export const {
 	NativePluginUnsupportedPlatformError,
 	NativePluginVersionError,
 } = require('~/native/native') as typeof import('~/native/native');
-export const { validateNativePluginRequirements } =
+export const { validateNativeBridgeRequirements } =
 	require('~/native/capabilities') as typeof import('~/native/capabilities');
 export const { createPluginContext } =
 	require('~/native/plugin-context') as typeof import('~/native/plugin-context');

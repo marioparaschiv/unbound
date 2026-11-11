@@ -26,21 +26,21 @@ import {
 	resetNativeFixtures,
 } from '../helpers/native-bridge';
 
-type NativePluginGlobal = typeof globalThis & {
+type NativeBridgeGlobal = typeof globalThis & {
 	NativePlatform?: NativePlatformBridge;
 	NativePlugin?: NativePluginRuntimeBridge;
 };
 
 afterEach(resetNativeFixtures);
 
-describe('native plugin capability scopes', () => {
+describe('native bridge capability scopes', () => {
 	test('hides the raw bridge after capturing it for scoped access', async () => {
 		const nativeApi = await import('~/native/native');
 
-		expect((globalThis as NativePluginGlobal).NativePlugin).toBeUndefined();
+		expect((globalThis as NativeBridgeGlobal).NativePlugin).toBeUndefined();
 		expect(nativeApi).not.toHaveProperty('NativePlugin');
 		expect(nativeApi).not.toHaveProperty('createPluginContext');
-		expect(nativeApi).not.toHaveProperty('validateNativePluginRequirements');
+		expect(nativeApi).not.toHaveProperty('validateNativeBridgeRequirements');
 	});
 
 	test('denies operations that are outside the declared scope', () => {

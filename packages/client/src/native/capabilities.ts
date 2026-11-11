@@ -17,19 +17,19 @@ import {
 	NativePluginUnavailableError,
 	NativePluginVersionError,
 } from '~/native/errors';
-import { getNativePlugin, requireNativePlugin } from '~/native/plugin-bridge';
+import { getNativeBridge, requireNativeBridge } from '~/native/bridge';
 import { compareVersions } from '~/core/versions';
 
 /**
- * @description Throws unless the native plugin bridge grants every capability and meets the API version.
+ * @description Throws unless the native bridge grants every capability and meets the API version.
  * @param capabilities The capabilities the plugin declares.
- * @param minimumApi The lowest native plugin API version the plugin supports.
+ * @param minimumApi The lowest native bridge API version the plugin supports.
  */
-export function validateNativePluginRequirements(
+export function validateNativeBridgeRequirements(
 	capabilities: readonly NativePluginCapability[] = [],
 	minimumApi?: string,
 ): void {
-	const nativePlugin = getNativePlugin();
+	const bridge = getNativeBridge();
 	const invalidCapability = capabilities.find(
 		(capability) => !NATIVE_PLUGIN_CAPABILITIES.includes(capability),
 	);
@@ -38,22 +38,20 @@ export function validateNativePluginRequirements(
 		throw new NativePluginCapabilityError(invalidCapability);
 	}
 
-	if ((capabilities.length > 0 || minimumApi) && !nativePlugin) {
-		requireNativePlugin();
+	if ((capabilities.length > 0 || minimumApi) && !bridge) {
+		requireNativeBridge();
 	}
 
-	if (!nativePlugin) return;
+	if (!bridge) return;
 
-	const unknown = capabilities.find(
-		(capability) => !nativePlugin.capabilities.includes(capability),
-	);
+	const unknown = capabilities.find((capability) => !bridge.capabilities.includes(capability));
 
 	if (unknown) {
 		throw new NativePluginCapabilityError(unknown);
 	}
 
-	if (minimumApi && compareVersions(nativePlugin.apiVersion, minimumApi) < 0) {
-		throw new NativePluginVersionError(minimumApi, nativePlugin.apiVersion);
+	if (minimumApi && compareVersions(bridge.apiVersion, minimumApi) < 0) {
+		throw new NativePluginVersionError(minimumApi, bridge.apiVersion);
 	}
 }
 
@@ -64,16 +62,16 @@ export function validateNativePluginRequirements(
  * @returns Whether the bridge provides it.
  */
 export function has(capability: NativePluginCapability): boolean {
-	return Boolean(getNativePlugin()?.capabilities.includes(capability));
+	return Boolean(getNativeBridge()?.capabilities.includes(capability));
 }
 
 /**
  * @description Builds a bridge whose every method throws {@link NativePluginUnavailableError}, standing in for namespaces the loader lacks.
  * @returns The unavailable bridge.
  */
-export function unavailableNativePlugin(): NativePluginBridge {
+export function unavailableNativeBridge(): NativePluginBridge {
 	function unavailableMethod(): never {
-		throw new NativePluginUnavailableError('The native plugin bridge is unavailable.');
+		throw new NativePluginUnavailableError('The native bridge is unavailable.');
 	}
 
 	const unavailableObjC = new Proxy({}, { get: () => unavailableMethod }) as NativeObjCBridge;

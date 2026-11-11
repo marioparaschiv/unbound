@@ -1,10 +1,10 @@
 import type { AddonManifest } from '@unbound-app/types/addons';
 import type { PluginContext } from '@unbound-app/types';
 
-import { validateNativePluginRequirements } from '~/native/capabilities';
+import { validateNativeBridgeRequirements } from '~/native/capabilities';
 import { resolveManifestCapabilities } from '~/addons/manifest';
 import type { AddonAttribution } from '~/addons/crash-guard';
-import { createScopedNativePlugin } from '~/native/scope';
+import { createScopedNativeBridge } from '~/native/scope';
 import { currentPlatform } from '~/native/platform';
 
 const stoppers = new WeakMap<object, () => void>();
@@ -32,8 +32,8 @@ export function createPluginContext(
 	const platform = currentPlatform();
 	const capabilities = resolveManifestCapabilities(manifest, platform);
 
-	validateNativePluginRequirements(capabilities, manifest.minNativePluginApi);
-	const scoped = createScopedNativePlugin(capabilities, platform, attribute);
+	validateNativeBridgeRequirements(capabilities, manifest.minNativePluginApi);
+	const scoped = createScopedNativeBridge(capabilities, platform, attribute);
 
 	stoppers.set(scoped.bridge, scoped.beginStop);
 

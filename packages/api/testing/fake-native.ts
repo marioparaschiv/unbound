@@ -63,7 +63,7 @@ class NativePluginCapabilityError extends Error {
 	readonly capability: NativePluginCapability;
 
 	constructor(capability: NativePluginCapability) {
-		super(`Native plugin capability is not declared: ${capability}`);
+		super(`Native bridge capability is not declared: ${capability}`);
 		this.capability = capability;
 	}
 }
@@ -84,7 +84,7 @@ class NativePluginVersionError extends Error {
 	readonly requiredApi: string;
 
 	constructor(requiredApi: string, installedApi: string) {
-		super(`Native plugin API ${requiredApi} is required, but ${installedApi} is installed.`);
+		super(`Native bridge API ${requiredApi} is required, but ${installedApi} is installed.`);
 		this.installedApi = installedApi;
 		this.requiredApi = requiredApi;
 	}
@@ -94,7 +94,7 @@ class NativePluginDisposedError extends Error {
 	readonly code = 'NATIVE_PLUGIN_SCOPE_DISPOSED';
 
 	constructor() {
-		super('The native plugin scope has been disposed.');
+		super('The native bridge scope has been disposed.');
 	}
 }
 

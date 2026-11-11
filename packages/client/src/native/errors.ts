@@ -1,6 +1,6 @@
 import type { NativePluginCapability, NativePluginPlatform } from '@unbound-app/types';
 
-/** Thrown when the loader does not provide the native plugin bridge, or the part of it a call needs. */
+/** Thrown when the loader does not provide the native bridge, or the part of it a call needs. */
 export class NativePluginUnavailableError extends Error {
 	/** A stable code to match on instead of the message. */
 	readonly code = 'NATIVE_PLUGIN_UNAVAILABLE';
@@ -14,7 +14,7 @@ export class NativePluginCapabilityError extends Error {
 	readonly capability: NativePluginCapability;
 
 	constructor(capability: NativePluginCapability) {
-		super(`Native plugin capability is not declared: ${capability}`);
+		super(`Native bridge capability is not declared: ${capability}`);
 		this.capability = capability;
 	}
 }
@@ -32,17 +32,17 @@ export class NativePluginUnsupportedPlatformError extends Error {
 	}
 }
 
-/** Thrown when the native plugin API is older than the manifest's `minNativePluginApi`. */
+/** Thrown when the native bridge API is older than the manifest's `minNativePluginApi`. */
 export class NativePluginVersionError extends Error {
 	/** A stable code to match on instead of the message. */
 	readonly code = 'NATIVE_PLUGIN_API_VERSION_UNSUPPORTED';
-	/** The native plugin API version the loader provides. */
+	/** The native bridge API version the loader provides. */
 	readonly installedApi: string;
 	/** The manifest's `minNativePluginApi`. */
 	readonly requiredApi: string;
 
 	constructor(requiredApi: string, installedApi: string) {
-		super(`Native plugin API ${requiredApi} is required, but ${installedApi} is installed.`);
+		super(`Native bridge API ${requiredApi} is required, but ${installedApi} is installed.`);
 		this.installedApi = installedApi;
 		this.requiredApi = requiredApi;
 	}
@@ -54,6 +54,6 @@ export class NativePluginDisposedError extends Error {
 	readonly code = 'NATIVE_PLUGIN_SCOPE_DISPOSED';
 
 	constructor() {
-		super('The native plugin scope has been disposed.');
+		super('The native bridge scope has been disposed.');
 	}
 }

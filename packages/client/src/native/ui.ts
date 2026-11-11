@@ -10,7 +10,7 @@ import type {
 import { NATIVE_PLUGIN_METHOD_CAPABILITIES } from '@unbound-app/types/native';
 
 import { NativePluginDisposedError, NativePluginUnavailableError } from '~/native/errors';
-import { getNativePlugin } from '~/native/plugin-bridge';
+import { getNativeBridge } from '~/native/bridge';
 import { findByProps } from '~/metro/lookups';
 
 type UIWorklet<A extends NativeUIArgument[], R> = (...args: A) => R;
@@ -103,11 +103,11 @@ export function uiScopePaths(
 	);
 }
 
-function createNativeScope(
+function createUIScope(
 	platform: NativePluginPlatform | undefined,
 	paths: readonly string[],
 ): NativeUIScope {
-	const bridge = getNativePlugin();
+	const bridge = getNativeBridge();
 	const factory = platform === 'android' ? bridge?.java : bridge?.objc;
 
 	if (!factory) {
@@ -193,7 +193,7 @@ export function createScopedUIBridge(
 		bridge: {
 			createScope() {
 				requireActive();
-				const scope = createNativeScope(platform, uiScopePaths(capabilities));
+				const scope = createUIScope(platform, uiScopePaths(capabilities));
 
 				scopes.add(scope);
 

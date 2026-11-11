@@ -1,7 +1,7 @@
 import { NativeModules, TurboModuleRegistry } from 'react-native';
 import type { NativeResourceCounts } from '@unbound-app/types';
 
-import { getNativePlugin } from '~/native/plugin-bridge';
+import { getNativeBridge } from '~/native/bridge';
 
 /** How the native file manager encodes file contents: UTF-8 text or base64 for binary data. */
 export type DCDFileManagerEncoding = 'utf-8' | 'utf8' | 'base64';
@@ -192,7 +192,7 @@ export function getRuntimeProperties(): HermesRuntimeProperties {
  */
 export function getNativeResources(): NativeResourceCounts | undefined {
 	try {
-		return getNativePlugin()?.debug.environment().resources;
+		return getNativeBridge()?.debug.environment().resources;
 	} catch {
 		return undefined;
 	}

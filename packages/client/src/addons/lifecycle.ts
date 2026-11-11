@@ -12,7 +12,7 @@ import type { AddonAttribution, AddonFreeze, RunningAddon } from '~/addons/crash
 import { parseAddonManifest, resolveManifestCapabilities } from '~/addons/manifest';
 import type { AddonEvents, AddonResolveable, AddonState } from '~/addons/addon';
 import { needsConsent, NativeConsentRequiredError } from '~/native/consent';
-import { validateNativePluginRequirements } from '~/native/capabilities';
+import { validateNativeBridgeRequirements } from '~/native/capabilities';
 import { announceFreeze, freezeDisables } from '~/addons/freezes';
 import { crashReportAddon } from '~/diagnostics/crash-report';
 import { disableIfCrashed } from '~/addons/crash-disable';
@@ -619,7 +619,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		const parsed = parseAddonManifest(manifest, (main) => this.isAcceptableMain(main));
 		const capabilities = resolveManifestCapabilities(parsed, currentPlatform());
 
-		validateNativePluginRequirements(capabilities, parsed.minNativePluginApi);
+		validateNativeBridgeRequirements(capabilities, parsed.minNativePluginApi);
 
 		return parsed;
 	}
