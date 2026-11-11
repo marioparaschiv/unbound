@@ -5,8 +5,8 @@ import { ADDON_SCOPE_GLOBALS } from '@unbound-app/types/addons';
 import { attributeAddon, crashGuardKey, setFreezeListener } from '~/addons/crash-guard';
 import { performRefresh, withRefreshScope } from '~/hot-refresh/runtime';
 import { installDependencies } from '~/marketplace/install-dependencies';
-import type { AddonGlobals, PluginScope } from '~/addons/scope';
 import { getLoader, getPlugins } from '~/native/unbound-native';
+import type { AddonGlobals, AddonScope } from '~/addons/scope';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { createPluginContext } from '~/native/plugin-context';
 import type { AddonAttribution } from '~/addons/crash-guard';
@@ -170,7 +170,7 @@ export class Plugins extends Addons<Plugin> {
 		return installDependencies(version.manifest);
 	}
 
-	protected createScope(addon: Addon<Plugin>): PluginScope {
+	protected createScope(addon: Addon<Plugin>): AddonScope {
 		return createAddonScope(
 			addon,
 			addon.manifest.path ?? `${fs.documentsPath}/${this.directoryOf(addon.id)}`,
@@ -185,7 +185,7 @@ export class Plugins extends Addons<Plugin> {
 	 * @param scope The globals {@link createScope} made for this start.
 	 * @returns The entry's named exports: `start`, `stop` and `SettingsPanel`.
 	 */
-	protected handleBundle(bundle: string, id: string, scope: PluginScope): Plugin {
+	protected handleBundle(bundle: string, id: string, scope: AddonScope): Plugin {
 		const iife = this.factoryFor(bundle, id);
 		const globals = ADDON_SCOPE_GLOBALS.map((name) => scope.globals[name]);
 

@@ -6,9 +6,9 @@ import {
 	crashGuardKey,
 	finishAddonStart,
 	withAddonAttribution,
-	withAddonScope,
+	runAsAddon,
 } from '~/addons/crash-guard';
-import type { AddonAttribution, AddonFreeze, AddonScope } from '~/addons/crash-guard';
+import type { AddonAttribution, AddonFreeze, RunningAddon } from '~/addons/crash-guard';
 import { parseAddonManifest, resolveManifestCapabilities } from '~/addons/manifest';
 import type { AddonEvents, AddonResolveable, AddonState } from '~/addons/addon';
 import { needsConsent, NativeConsentRequiredError } from '~/native/consent';
@@ -23,8 +23,8 @@ import { afterFirstFrame } from '~/core/first-frame';
 import { monotonicNow } from '~/core/monotonic-now';
 import { currentPlatform } from '~/native/platform';
 import { unpatchAllByCaller } from '~/patcher/api';
-import type { PluginScope } from '~/addons/scope';
 import { isSafeAddonMain } from '~/addons/paths';
+import type { AddonScope } from '~/addons/scope';
 import { getSetting } from '~/settings/unbound';
 import { benchSpan } from '~/core/bench-span';
 import { Manager } from '~/addons/manager';
@@ -112,7 +112,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	protected abstract handleBundle(
 		bundle: string,
 		id: string,
-		scope: PluginScope | undefined,
+		scope: AddonScope | undefined,
 	): (Plugin & I) | null;
 
 	protected createAddon(manifest: AddonManifest, bundle: string): Addon<I> {
@@ -172,7 +172,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		return undefined;
 	}
 
-	protected createScope(_addon: Addon<I>): PluginScope | undefined {
+	protected createScope(_addon: Addon<I>): AddonScope | undefined {
 		return undefined;
 	}
 
@@ -311,19 +311,19 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		}
 
 		try {
-			const scope: AddonScope = {
+			const running: RunningAddon = {
 				attribution: this.attribution(resolved),
 				recordDeferredFailure: (failure) =>
 					this.recordStartFailure(resolved, failure, 'running'),
 			};
 
 			state.scope = this.createScope(resolved);
-			const pluginScope = state.scope;
+			const addonScope = state.scope;
 
 			state.instance = recoveryMode
 				? null
-				: withAddonScope(scope, () =>
-						this.handleBundle(state.bundle, resolved.id, pluginScope),
+				: runAsAddon(running, () =>
+						this.handleBundle(state.bundle, resolved.id, addonScope),
 					);
 
 			state.panel = state.instance?.SettingsPanel;
@@ -331,7 +331,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 			const context = state.context;
 
 			const starting = benchSpan(`addon ${resolved.id} start`, () =>
-				withAddonScope(scope, () => state.instance?.start?.(context)),
+				runAsAddon(running, () => state.instance?.start?.(context)),
 			);
 
 			// An async start runs on in the background, so its rejection is recorded like a deferred failure.
@@ -519,7 +519,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	private finishStop(
 		resolved: Addon<I>,
 		context: PluginContext | undefined,
-		scope: PluginScope | undefined,
+		scope: AddonScope | undefined,
 		error?: Error,
 	): boolean {
 		const newestFirst = [context, scope];

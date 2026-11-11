@@ -9,7 +9,7 @@ import type { ComponentType } from 'react';
 
 import type { AddonLifecycle } from '~/addons/lifecycle';
 import type { RecordChange } from '~/addons/records';
-import type { PluginScope } from '~/addons/scope';
+import type { AddonScope } from '~/addons/scope';
 
 /** What a manager keeps for one addon it governs. The manager is its only writer. */
 export type AddonState<I extends object> = {
@@ -18,7 +18,7 @@ export type AddonState<I extends object> = {
 	/** What the bundle evaluated to. Every addon kind may implement the {@link Plugin} lifecycle hooks. */
 	instance: (Plugin & I) | null;
 	context: PluginContext | undefined;
-	scope: PluginScope | undefined;
+	scope: AddonScope | undefined;
 	started: boolean;
 	failed: boolean;
 	/** An async `start` or `stop` still in flight. */

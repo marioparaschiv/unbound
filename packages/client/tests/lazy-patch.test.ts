@@ -3,7 +3,7 @@ import type { Plugin } from '@unbound-app/types';
 
 import type { AddonAttribution } from '~/addons/crash-guard';
 import type { CrashEvent } from '~/diagnostics/crash-report';
-import type { PluginScope } from '~/addons/scope';
+import type { AddonScope } from '~/addons/scope';
 import type { Addon } from '~/addons/addon';
 
 import { startFakeMetro } from './helpers/fake-metro';
@@ -143,13 +143,13 @@ describe('lazy patch targets', () => {
 
 class AttributedAddons extends FakeAddons {
 	attributed: string[] = [];
-	starts = new Map<string, (scope?: PluginScope) => void>();
+	starts = new Map<string, (scope?: AddonScope) => void>();
 
-	protected createScope(addon: Addon<Plugin>): PluginScope {
+	protected createScope(addon: Addon<Plugin>): AddonScope {
 		return createAddonScope(addon, '/plugins');
 	}
 
-	protected handleBundle(bundle: string, _id?: string, scope?: PluginScope) {
+	protected handleBundle(bundle: string, _id?: string, scope?: AddonScope) {
 		return { start: () => this.starts.get(bundle)?.(scope), stop: () => {} };
 	}
 

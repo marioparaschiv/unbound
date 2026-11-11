@@ -2,7 +2,7 @@ import toError from '@unbound-app/utils/to-error';
 import noop from '@unbound-app/utils/noop';
 import type { PatchParent } from 'possess';
 
-import { currentAddonScope, withAddonScope } from '~/addons/crash-guard';
+import { currentRunningAddon, runAsAddon } from '~/addons/crash-guard';
 import { whenModuleLoads } from '~/metro/lazy-registry';
 
 /** Every patch still waiting for its module, with the caller id it was made under. */
@@ -10,7 +10,7 @@ export const pendingPatchCallers = new Map<() => void, string | undefined>();
 
 /**
  * @description Applies a patch once its target module loads, at once when it already has. A deferred patch
- * runs inside the Addon scope that asked for it, so a failure is charged to that addon.
+ * runs as the addon that asked for it, so a failure is charged to that addon.
  * @param parent The object holding the method, or a lazy module proxy.
  * @param caller The caller id the pending patch is filed under, for `unpatchAllByCaller`.
  * @param apply Patches the loaded target and returns its remover.
@@ -21,7 +21,7 @@ export function patchWhenLoaded(
 	caller: string | undefined,
 	apply: (target: PatchParent) => () => void,
 ): () => void {
-	const scope = currentAddonScope();
+	const running = currentRunningAddon();
 	let deferred = false;
 	let unpatch = noop;
 	let stopWaiting = noop;
@@ -42,13 +42,13 @@ export function patchWhenLoaded(
 		}
 
 		try {
-			unpatch = withAddonScope(scope, () => apply(target));
+			unpatch = runAsAddon(running, () => apply(target));
 		} catch (error) {
-			if (!scope?.recordDeferredFailure) {
+			if (!running?.recordDeferredFailure) {
 				throw error;
 			}
 
-			scope.recordDeferredFailure(toError(error));
+			running.recordDeferredFailure(toError(error));
 		}
 	});
 	deferred = true;

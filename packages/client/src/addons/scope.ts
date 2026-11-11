@@ -46,7 +46,7 @@ export type AddonGlobals = {
 };
 
 /** A plugin's globals, and the `dispose` that undoes everything they registered. */
-export type PluginScope = {
+export type AddonScope = {
 	globals: AddonGlobals;
 	dispose: () => void;
 };
@@ -83,7 +83,7 @@ function liveUnbound(): object {
  * @param directory The plugin's folder, as an absolute path, which holds its images and locale files.
  * @returns The globals, and a `dispose` that undoes each scoped part in reverse order of creation.
  */
-export function createAddonScope(addon: Addon<Plugin>, directory: string): PluginScope {
+export function createAddonScope(addon: Addon<Plugin>, directory: string): AddonScope {
 	const tagged = createPatcher(addon.id);
 	const timers = createScopedTimers();
 	const subscriptions = createSubscriptions();
