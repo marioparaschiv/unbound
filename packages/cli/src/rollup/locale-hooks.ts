@@ -1,9 +1,9 @@
-import { parseSync, type ESTree } from 'rolldown/utils';
 import { extname, relative, sep } from 'node:path';
 import MagicString from 'magic-string';
 import type { Plugin } from 'rollup';
 
 import { collectNames, isFunction, walkScopes, type Reference } from './estree-scope.ts';
+import { parseSync, type ESTree } from './rolldown-utils.ts';
 import { LOCALE_MODULE } from './locales.ts';
 
 type AnyFunction = ESTree.Function | ESTree.ArrowFunctionExpression;

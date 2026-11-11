@@ -1,13 +1,28 @@
-use gpui::{AnyElement, Context, SharedString, Window, div, prelude::*, px};
-use unbound_devtools_core::{ElementKind, InspectedElement, Path};
+use gpui::{AnyElement, Context, FontWeight, SharedString, Window, div, prelude::*, px};
+use unbound_devtools_core::{ElementKind, InspectedElement, Path, Value};
 
 use crate::app::Workspace;
 use crate::inspection::{Inspection, key};
+use crate::smooth_scroll::SmoothScroll;
 use crate::values::Rows;
-use crate::widgets::{badge, chevron, eyebrow, icon_button, panel_header, tooltip};
+use crate::widgets::{badge, chevron, hairline, icon, icon_button, panel_header, tooltip};
 use crate::{assets, theme};
 
-fn centered(text: impl Into<SharedString>, color: u32) -> gpui::Div {
+/// The gap around and between the section cards.
+const CARD_GAP: f32 = 10.;
+const CARD_HEADER_HEIGHT: f32 = 34.;
+
+/// How many rows a section's root value lists at its top level.
+fn entry_count(value: Option<&Value>) -> usize {
+	match value {
+		None => 0,
+		Some(Value::Array(items)) => items.len(),
+		Some(Value::Object(entries)) => entries.len(),
+		Some(_) => 1,
+	}
+}
+
+fn centered(text: impl Into<SharedString>, color: theme::Token) -> gpui::Div {
 	div()
 		.flex_1()
 		.flex()
@@ -18,22 +33,41 @@ fn centered(text: impl Into<SharedString>, color: u32) -> gpui::Div {
 		.child(text.into())
 }
 
-fn section_row() -> gpui::Div {
+/// A row inside a card, on the value rows' inset so its text starts on their line.
+fn card_row() -> gpui::Div {
 	div()
 		.flex()
 		.items_center()
 		.gap(px(6.))
 		.min_h(theme::VALUE_ROW_HEIGHT)
-		.pl(px(theme::INSET + theme::INDENT))
-		.pr(px(theme::INSET))
+		.mx(px(4.))
+		.px(px(8.))
+		.rounded(theme::RADIUS_ITEM - px(2.))
 		.whitespace_nowrap()
 		.overflow_hidden()
 }
 
-fn mono_row() -> gpui::Div {
-	section_row()
+/// A component as a chip: `<Name>` on a raised pill, as the tree draws it. Clicking selects it.
+fn component_chip(name: SharedString, kind: ElementKind) -> gpui::Div {
+	let color = if kind == ElementKind::Host {
+		theme::SYN_HOST
+	} else {
+		theme::SYN_COMPONENT
+	};
+	div()
+		.flex()
+		.items_center()
+		.h(px(26.))
+		.px(px(10.))
+		.rounded(theme::RADIUS_ITEM)
+		.bg(theme::color(theme::SECONDARY))
+		.border_1()
+		.border_color(hairline())
 		.font_family(theme::mono_font())
-		.text_size(theme::TEXT_MONO)
+		.text_size(theme::TEXT_SMALL)
+		.child(div().text_color(theme::color(theme::TEXT_FAINT)).child("<"))
+		.child(div().text_color(theme::color(color)).child(name))
+		.child(div().text_color(theme::color(theme::TEXT_FAINT)).child(">"))
 }
 
 impl Workspace {
@@ -50,7 +84,7 @@ impl Workspace {
 			.flex_col()
 			.bg(theme::color(theme::PANEL));
 		let Some(inspection) = self.inspection.as_ref() else {
-			return panel.child(centered("Select a component", theme::TEXT_MUTED));
+			return panel.child(centered("Select a Component", theme::TEXT_MUTED));
 		};
 		let Some(element) = inspection.element.as_ref() else {
 			return match &inspection.error {
@@ -59,16 +93,23 @@ impl Workspace {
 			};
 		};
 		let sections = self.render_sections(inspection, element, cx);
-		panel.child(self.render_header(element, cx)).child(
-			div()
-				.id("inspector-scroll")
-				.flex_1()
-				.min_h_0()
-				.overflow_y_scroll()
-				.pt(px(4.))
-				.pb(px(8.))
-				.children(sections),
-		)
+		panel
+			.child(self.render_header(element, cx))
+			.child(SmoothScroll::new(
+				"inspector-glide",
+				&self.inspector_scroll,
+				div()
+					.id("inspector-scroll")
+					.flex_1()
+					.min_h_0()
+					.overflow_y_scroll()
+					.track_scroll(&self.inspector_scroll)
+					.flex()
+					.flex_col()
+					.gap(px(CARD_GAP))
+					.p(px(CARD_GAP))
+					.children(sections),
+			))
 	}
 
 	fn render_header(
@@ -90,6 +131,7 @@ impl Workspace {
 					.max_w(px(200.))
 					.truncate()
 					.text_size(theme::TEXT_TITLE)
+					.font_weight(FontWeight::SEMIBOLD)
 					.child(name),
 			)
 			.child(badge(element.kind.label(), theme::TEXT_SECONDARY))
@@ -141,24 +183,28 @@ impl Workspace {
 			)
 	}
 
+	/// One section as a card: a header that folds it, with a count of its entries, over its body.
 	fn render_section(
 		&self,
 		title: &'static str,
-		rows: Vec<AnyElement>,
+		count: usize,
+		body: Vec<AnyElement>,
 		cx: &mut Context<Self>,
 	) -> Option<AnyElement> {
-		if rows.is_empty() {
+		if body.is_empty() {
 			return None;
 		}
 		let folded = self.folded_sections.contains(title);
 		let header = div()
 			.id(title)
+			.flex_none()
 			.flex()
 			.items_center()
-			.h(theme::VALUE_ROW_HEIGHT + px(4.))
-			.pl(px(theme::INSET))
-			.pr(px(theme::INSET))
+			.gap(px(4.))
+			.h(px(CARD_HEADER_HEIGHT))
+			.px(px(8.))
 			.cursor_pointer()
+			.hover(|header| header.bg(theme::color(theme::HOVER)))
 			.child(
 				div()
 					.flex_none()
@@ -167,7 +213,21 @@ impl Workspace {
 					.justify_center()
 					.child(chevron(!folded)),
 			)
-			.child(eyebrow(title))
+			.child(
+				div()
+					.flex_1()
+					.text_size(theme::TEXT_SMALL)
+					.font_weight(FontWeight::SEMIBOLD)
+					.text_color(theme::color(theme::TEXT))
+					.child(title),
+			)
+			.child(
+				div()
+					.flex_none()
+					.text_size(theme::TEXT_EYEBROW)
+					.text_color(theme::color(theme::TEXT_MUTED))
+					.child(count.to_string()),
+			)
 			.on_click(cx.listener(move |this, _, _, cx| {
 				if !this.folded_sections.remove(title) {
 					this.folded_sections.insert(title);
@@ -176,9 +236,26 @@ impl Workspace {
 			}));
 		Some(
 			div()
-				.pb(px(4.))
+				.flex_none()
+				.flex()
+				.flex_col()
+				.overflow_hidden()
+				.rounded(theme::RADIUS_CONTROL)
+				.bg(theme::color(theme::ELEVATED))
+				.border_1()
+				.border_color(hairline())
 				.child(header)
-				.when(!folded, |section| section.children(rows))
+				.when(!folded, |card| {
+					card.child(
+						div()
+							.flex()
+							.flex_col()
+							.py(px(4.))
+							.border_t_1()
+							.border_color(hairline())
+							.children(body),
+					)
+				})
 				.into_any_element(),
 		)
 	}
@@ -198,7 +275,8 @@ impl Workspace {
 			if let Some(value) = value {
 				rows.push_entries(value, vec![key(section)], cx);
 			}
-			sections.extend(self.render_section(title, rows.out, cx));
+			let count = entry_count(value.as_ref());
+			sections.extend(self.render_section(title, count, rows.out, cx));
 		}
 
 		let mut hooks = Rows::new(inspection, element);
@@ -206,46 +284,47 @@ impl Workspace {
 			let path: Path = vec![key("hooks"), unbound_devtools_core::PathSegment::Index(ix)];
 			hooks.push_hook(hook, path, 0, cx);
 		}
-		sections.extend(self.render_section("Hooks", hooks.out, cx));
+		sections.extend(self.render_section("Hooks", element.hooks.len(), hooks.out, cx));
 
 		let mut context = Rows::new(inspection, element);
 		if let Some(value) = &element.context {
 			context.push_entries(value, vec![key("context")], cx);
 		}
-		sections.extend(self.render_section("Context", context.out, cx));
+		let count = entry_count(element.context.as_ref());
+		sections.extend(self.render_section("Context", count, context.out, cx));
 
-		let owners = element
+		let owners: Vec<AnyElement> = element
 			.owners
 			.iter()
 			.map(|owner| {
 				let id = owner.id;
-				let color = if owner.kind == ElementKind::Host {
-					theme::SYN_HOST
-				} else {
-					theme::SYN_COMPONENT
-				};
-				mono_row()
+				component_chip(owner.name.clone().into(), owner.kind)
 					.id(SharedString::from(format!("owner{}", id.0)))
 					.cursor_pointer()
-					.hover(|row| row.bg(theme::color(theme::HOVER)))
-					.child(
-						div()
-							.flex()
-							.child(div().text_color(theme::color(theme::TEXT_FAINT)).child("<"))
-							.child(
-								div()
-									.text_color(theme::color(color))
-									.child(owner.name.clone()),
-							)
-							.child(div().text_color(theme::color(theme::TEXT_FAINT)).child(">")),
-					)
+					.hover(|chip| chip.bg(theme::color(theme::SECONDARY_HOVER)))
 					.on_click(cx.listener(move |this, _, _, cx| this.select(Some(id), cx)))
 					.into_any_element()
 			})
 			.collect();
-		sections.extend(self.render_section("Rendered by", owners, cx));
+		let owner_count = owners.len();
+		let owners = if owners.is_empty() {
+			Vec::new()
+		} else {
+			// The chips wrap, nearest owner first, like a breadcrumb read upward.
+			vec![
+				div()
+					.flex()
+					.flex_wrap()
+					.gap(px(6.))
+					.px(px(CARD_GAP))
+					.py(px(6.))
+					.children(owners)
+					.into_any_element(),
+			]
+		};
+		sections.extend(self.render_section("Rendered By", owner_count, owners, cx));
 
-		let source = element
+		let source: Vec<AnyElement> = element
 			.source
 			.iter()
 			.map(|source| {
@@ -253,8 +332,11 @@ impl Workspace {
 				for part in [source.line, source.column].into_iter().flatten() {
 					location.push_str(&format!(":{part}"));
 				}
-				mono_row()
+				card_row()
+					.font_family(theme::mono_font())
+					.text_size(theme::TEXT_SMALL)
 					.text_color(theme::color(theme::TEXT_SECONDARY))
+					.child(icon("icons/file-code.svg", theme::ICON, theme::TEXT_MUTED))
 					.child(
 						div()
 							.min_w_0()
@@ -265,15 +347,15 @@ impl Workspace {
 					.into_any_element()
 			})
 			.collect();
-		sections.extend(self.render_section("Source", source, cx));
+		sections.extend(self.render_section("Source", source.len(), source, cx));
 
-		let errors = element
+		let errors: Vec<AnyElement> = element
 			.errors
 			.iter()
 			.map(|entry| (entry, theme::ERROR))
 			.chain(element.warnings.iter().map(|entry| (entry, theme::WARNING)))
 			.map(|((message, count), color)| {
-				section_row()
+				card_row()
 					.child(
 						div()
 							.min_w_0()
@@ -286,7 +368,7 @@ impl Workspace {
 					.into_any_element()
 			})
 			.collect();
-		sections.extend(self.render_section("Errors", errors, cx));
+		sections.extend(self.render_section("Errors", errors.len(), errors, cx));
 		sections
 	}
 }

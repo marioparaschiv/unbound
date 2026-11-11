@@ -1,5 +1,3 @@
-import { parseSync, Visitor, type ESTree } from 'rolldown/utils';
-
 import {
 	contextObjectMarker,
 	functionHooks,
@@ -11,6 +9,7 @@ import {
 	objectHooks,
 	workletClassMarker,
 } from './worklet-callbacks.ts';
+import { parseSync, Visitor, type ESTree } from './rolldown-utils.ts';
 
 type Language = 'js' | 'jsx' | 'ts' | 'tsx';
 

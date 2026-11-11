@@ -1,4 +1,3 @@
-import { parseSync, transformSync, Visitor } from 'rolldown/utils';
 import { relative, resolve, sep } from 'node:path';
 import MagicString from 'magic-string';
 import type { Plugin } from 'rollup';
@@ -18,6 +17,7 @@ import {
 	type Diagnostic,
 } from './diagnostic.ts';
 import { settingsTypings, writeSettingsTypings } from './settings-typings.ts';
+import { parseSync, transformSync, Visitor } from './rolldown-utils.ts';
 import { isGuardedSource, valueImports } from './settings-guard.ts';
 import { lineStarts, toLocation } from './settings-source.ts';
 

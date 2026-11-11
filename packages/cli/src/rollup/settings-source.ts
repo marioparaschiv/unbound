@@ -1,6 +1,5 @@
-import { parseSync, type ESTree } from 'rolldown/utils';
-
 import { checkPredicate, type PredicateProblem } from './predicate-scope.ts';
+import { parseSync, type ESTree } from './rolldown-utils.ts';
 
 /** A 1-based line and column in a source file. */
 export type Location = { line: number; column: number };

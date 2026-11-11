@@ -8,6 +8,7 @@
 pub mod bridge;
 mod connect;
 pub mod inspect;
+mod link;
 pub mod mcp;
 pub mod operations;
 pub mod presets;
@@ -16,9 +17,12 @@ pub mod query;
 mod server;
 mod session;
 pub mod store;
+pub mod ubd;
 pub mod value;
 
+pub use bridge::DeviceInfo;
 pub use inspect::{Hook, InspectedElement, OwnerRef, Section};
+pub use link::LinkStatus;
 pub use presets::{BridgeAddr, ConnectTarget, DevicePreset, PresetError, Presets};
 pub use query::{FindQuery, JqFilter, NameMatch};
 pub use session::{BridgeState, Config, ConnectionState, Devtools, RequestError, Status};

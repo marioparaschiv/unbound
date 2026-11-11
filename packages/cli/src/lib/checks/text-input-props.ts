@@ -1,9 +1,9 @@
 import { readdirSync, type Dirent } from 'node:fs';
 import { join, relative, sep } from 'node:path';
-import { Visitor } from 'rolldown/utils';
 
 import { parseFile, type ParsedFile } from '~/lib/check/parse-cache';
 import type { Diagnostic } from '~/rollup/diagnostic';
+import { Visitor } from '~/rollup/rolldown-utils';
 import { diagnostic } from '~/rollup/diagnostic';
 import type { Check } from '~/lib/check/check';
 

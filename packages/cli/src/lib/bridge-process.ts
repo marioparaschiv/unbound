@@ -11,6 +11,9 @@ const LISTEN_TIMEOUT_MS = 15_000;
 const LISTEN_POLL_MS = 250;
 const LOOKUP_TIMEOUT_MS = 5_000;
 
+/** The unlisted command a compiled `ubd` runs the bridge under, since it has no Bun to run it with. */
+export const SERVE_BRIDGE_COMMAND = 'serve-bridge';
+
 function isListening(port: number): Promise<boolean> {
 	return new Promise((resolve) => {
 		const socket = connect({ host: '127.0.0.1', port });
@@ -66,9 +69,12 @@ function bridgeLogPath(port: number): string {
 function startDetached(port: number): string {
 	const log = bridgeLogPath(port);
 	const output = openSync(log, 'a');
-	// The debugger's entry is its source in the workspace and its build once published.
-	const entry = Bun.resolveSync('@unbound-app/debugger', import.meta.dir);
-	const child = spawn('bun', [entry, '--port', String(port)], {
+	// A compiled `ubd` carries the bridge and runs it as itself. Otherwise Bun runs the debugger's
+	// entry: its source in the workspace and its build once published.
+	const [command, args] = Bun.isStandaloneExecutable
+		? [process.execPath, [SERVE_BRIDGE_COMMAND]]
+		: ['bun', [Bun.resolveSync('@unbound-app/debugger', import.meta.dir)]];
+	const child = spawn(command, [...args, '--port', String(port)], {
 		detached: true,
 		stdio: ['ignore', output, output],
 	});

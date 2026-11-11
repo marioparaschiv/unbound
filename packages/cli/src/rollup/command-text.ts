@@ -1,4 +1,4 @@
-import { parseSync, Visitor, type ESTree } from 'rolldown/utils';
+import { parseSync, Visitor, type ESTree } from './rolldown-utils.ts';
 
 /** One message-key problem in a `commands.register(...)` literal, at the node it points to. */
 export type CommandTextProblem = {
