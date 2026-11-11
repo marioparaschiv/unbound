@@ -3,7 +3,7 @@ import { settings, useSetting } from '@unbound-app/settings';
 import { messages } from '@unbound-app/i18n';
 import { ui } from '@unbound-app/api';
 
-import { IndicatorMode } from '~/constants';
+import { IndicatorMode } from '~/lib/constants';
 
 /**
  * @description The settings panel: the filters as switches, and the indicator's appearance as a radio group,

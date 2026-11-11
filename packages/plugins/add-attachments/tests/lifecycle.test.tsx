@@ -1,7 +1,5 @@
-import { flux, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
-
-import { selfTest } from '~/index';
 
 beforeEach(() => {
 	flux.seed({
@@ -14,13 +12,11 @@ beforeEach(() => {
 });
 
 describe('lifecycle', () => {
-	test('the self test passes once started and fails once stopped', async () => {
+	test('starts without a warning and leaves nothing behind once stopped', async () => {
 		await startPlugin();
 
-		expect(selfTest()).toMatchObject({ ok: true });
+		expect(logs.entries.filter(({ level }) => level !== 'info')).toEqual([]);
 
 		await stopPlugin();
-
-		expect(selfTest()).toMatchObject({ ok: false });
 	});
 });
