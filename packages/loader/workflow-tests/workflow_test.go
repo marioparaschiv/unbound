@@ -556,9 +556,8 @@ func TestParsedAndroidSmokeTestGatesTheAndroidBuild(t *testing.T) {
 	smoke := android.job(t, "smoke")
 	requireNeeds(t, "smoke", smoke, "patch-discord")
 	requireNeeds(t, "smoke", smoke, "build-module")
-	// Off unless the repository variable SMOKE_TESTS is true, to save runner time.
-	if smoke.If != "vars.SMOKE_TESTS == 'true' && needs.build-module.outputs.attested == 'true'" || smoke.ContinueOnError {
-		t.Fatalf("the Android smoke test must stay disabled until it is turned back on, runs if %q", smoke.If)
+	if smoke.If != "(vars.SMOKE_TESTS == 'true' || inputs.smoke == true) && needs.build-module.outputs.attested == 'true'" || smoke.ContinueOnError {
+		t.Fatalf("the Android smoke test must run before a publish and otherwise only with SMOKE_TESTS, runs if %q", smoke.If)
 	}
 	runner := smoke.stepUsing(t, "reactivecircus/android-emulator-runner@")
 	if !regexp.MustCompile(`@[0-9a-f]{40}$`).MatchString(runner.Uses) {
@@ -593,9 +592,8 @@ func TestParsedIOSSmokeTestGatesTheIOSBuild(t *testing.T) {
 	if smoke.step(t, "Wait for the simulator build").ContinueOnError != "" {
 		t.Fatal("a failed simulator build must fail the smoke test")
 	}
-	// Off unless the repository variable SMOKE_TESTS is true, to save runner time.
-	if smoke.If != "vars.SMOKE_TESTS == 'true' && inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true" || smoke.ContinueOnError {
-		t.Fatalf("the iOS smoke test must stay disabled until it is turned back on, runs if %q", smoke.If)
+	if smoke.If != "(vars.SMOKE_TESTS == 'true' || inputs.smoke == true) && inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true" || smoke.ContinueOnError {
+		t.Fatalf("the iOS smoke test must run before a publish and otherwise only with SMOKE_TESTS, runs if %q", smoke.If)
 	}
 	if smoke.step(t, "Download the simulator build").With["name"] != "ios-simulator" {
 		t.Fatal("the smoke test must install this run's simulator build")
@@ -960,6 +958,11 @@ func TestParsedInAppAndroidBuildsPublishOnlySignedSmokeTestedMainBuilds(t *testi
 	}
 	if got := build.job(t, "android").With["release"]; got != "${{ inputs.release || inputs.android_publish_only || inputs.loader_publish_only || false }}" {
 		t.Fatalf("publish-only builds must require the release signing key, release is %q", got)
+	}
+	for _, platform := range []string{"android", "ios"} {
+		if got := build.job(t, platform).With["smoke"]; got != "${{ inputs.loader_publish_only || false }}" {
+			t.Fatalf("a loader publish must smoke test %s before publishing it, smoke is %q", platform, got)
+		}
 	}
 	publish := build.job(t, "android-builds")
 	for _, guard := range []string{
