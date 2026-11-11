@@ -36,10 +36,19 @@ type StepProps = { step: number };
 
 const user = { id: '1', username: 'wumpus' };
 
+// A single lookup is typed `undefined` when the cache knows the module is missing; these lazy handles never are.
+function requireHandle<T>(handle: T | undefined, props: string): T {
+	if (!handle) {
+		throw new Error(`Failed to find the lazy handle for ${props}.`);
+	}
+
+	return handle;
+}
+
 // A lookup made at import, before any test registers the module.
 const lateModule = pluginMetro.findByProps('lateProp');
-const patchedModule = pluginMetro.findByProps('lazyPatchProp');
-const patchedComponent = pluginMetro.findByProps('LazyPatched');
+const patchedModule = requireHandle(pluginMetro.findByProps('lazyPatchProp'), 'lazyPatchProp');
+const patchedComponent = requireHandle(pluginMetro.findByProps('LazyPatched'), 'LazyPatched');
 
 // Selected as the plugin's platform.ts does, when it imports, before any test sets the platform.
 const choosePlatform = pluginNative.definePlatform({
