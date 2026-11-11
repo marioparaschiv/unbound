@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { pickKlipyGif } from '~/gif/klipy';
+import { pickKlipyGif } from '~/lib/klipy';
 
 const result = (slug: string, folder: string, file: string) => ({
 	slug,

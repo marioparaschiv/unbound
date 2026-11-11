@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { buildAdblockScript, INJECTED_FLAG } from '~/webview/adblock-script';
+import { buildAdblockScript, INJECTED_FLAG } from '~/lib/adblock-script';
 
 type FakeElement = {
 	localName?: string;

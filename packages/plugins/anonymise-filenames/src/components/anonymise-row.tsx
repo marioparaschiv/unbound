@@ -4,7 +4,7 @@ import { messages } from '@unbound-app/i18n';
 import { assets } from '@unbound-app/api';
 import { useState } from 'react';
 
-import type { Upload, UploadChoices } from '~/anonymise/uploads';
+import type { Upload, UploadChoices } from '~/lib/uploads';
 
 type Props = {
 	upload: Upload;

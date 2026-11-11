@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { holdsRows, insertRowOnce } from '~/anonymise/sheet-rows';
+import { holdsRows, insertRowOnce } from '~/lib/sheet-rows';
 
 const noop = () => undefined;
 

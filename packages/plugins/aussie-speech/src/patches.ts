@@ -1,8 +1,6 @@
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { patcher } from '@unbound-app/api';
+import { metro, patcher } from '@unbound-app/api';
 
-import { Messages } from '~/translation/modules';
-import { translate } from '~/translation/translator';
+import { translate } from '~/lib/translator';
 
 type Message = { content: string };
 
@@ -33,10 +31,15 @@ export function isTranslating(): boolean {
 /**
  * @description Rewrites each message the user sends or edits into Aussie English before Discord sends it.
  * Patches `sendMessage` and `editMessage` on Discord's message actions, which both platforms share.
- * The Addon scope removes the patches when the plugin stops.
  */
-export function startTranslation(): void {
-	if (!ensureModules({ Messages })) return;
+export function patchMessageActions(): void {
+	const Messages = metro.api.Messages;
+
+	if (!Messages) {
+		logger.warn('Translation skipped: Discord moved Messages.');
+
+		return;
+	}
 
 	for (const method of ['sendMessage', 'editMessage'] as const) {
 		if (typeof Messages[method] !== 'function') continue;

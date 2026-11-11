@@ -1,6 +1,6 @@
-import { getDiscordProxyTarget, isDiscordExternalProxy } from '~/gif/discord-proxy';
+import { getDiscordProxyTarget, isDiscordExternalProxy } from '~/lib/discord-proxy';
 import { NESTED_KEYS, SOURCE_KEYS } from '~/constants';
-import { isRecord } from '~/gif/media-record';
+import { isRecord } from '~/lib/media-record';
 
 function isGifProvider(value: string): boolean {
 	return /(?:klipy|tenor|giphy)/i.test(value);

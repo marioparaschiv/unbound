@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import type { Settings } from '@unbound-app/settings';
 
-import { createUploadChoices } from '~/anonymise/uploads';
+import { createUploadChoices } from '~/lib/uploads';
 
 const SETTINGS: Settings = {
 	anonymiseByDefault: true,

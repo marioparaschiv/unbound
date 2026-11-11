@@ -1,6 +1,12 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startShareActions } from '~/share';
-import { startDownloads } from '~/download';
+import { patchMediaManager, patchMediaShareActions } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startShareActions, startDownloads]);
+export function start() {
+	patchMediaShareActions();
+	patchMediaManager();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}

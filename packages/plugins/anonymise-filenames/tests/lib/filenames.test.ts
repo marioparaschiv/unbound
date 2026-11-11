@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { anonymiseFilename, fileExtension, toConsistentName } from '~/anonymise/filenames';
+import { anonymiseFilename, fileExtension, toConsistentName } from '~/lib/filenames';
 import { RANDOM_CHARACTERS } from '~/constants';
 
 const SETTINGS = {
