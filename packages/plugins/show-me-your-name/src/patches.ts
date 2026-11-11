@@ -1,4 +1,4 @@
-import { MessageRowData, onMessageRow } from '@unbound-plugins/shared/metro/message-rows';
+import { onMessageRow } from '@unbound-plugins/shared/metro/message-rows';
 import { settings } from '@unbound-app/settings';
 import { flux } from '@unbound-app/api';
 
@@ -71,13 +71,8 @@ function relabel(row: Row | undefined, messageAuthor: Author | undefined) {
  * friend nicknames from `RelationshipStore`. The Addon scope removes the patch when the plugin stops.
  */
 export function patchMessageRows(): void {
-	if (!MessageRowData) {
-		logger.warn('Names skipped: Discord moved generateMessageRowData.');
-
-		return;
-	}
-
 	onMessageRow<Message, Row>({
+		feature: 'Names',
 		after({ message, row }) {
 			if (!isAutomod(message)) relabel(row, message?.author);
 
