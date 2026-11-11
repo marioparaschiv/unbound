@@ -1,7 +1,7 @@
 import {
 	IconGrid,
+	IconColorPalette,
 	IconMagnifierMinus,
-	IconPalette,
 	IconPaintbrush,
 	IconPlug,
 	IconPlus,
@@ -80,7 +80,7 @@ const COPY: Record<ListingType, ListingCopy> = {
 		title: 'Themes',
 		description: 'Customize the appearance of your app to the fullest.',
 		plural: 'themes',
-		icon: IconPalette,
+		icon: IconColorPalette,
 	},
 	'icon-pack': {
 		title: 'Icons',
