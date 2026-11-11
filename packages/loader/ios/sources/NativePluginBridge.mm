@@ -50,7 +50,7 @@
 #import "NativeStructLayouts.h"
 #import "NativeTraversalOptions.h"
 #import "NativeTypeEncoding.h"
-#import "NativeUIScopeCache.h"
+#import "NativeUIScope.h"
 #import "NativeWorkQueue.h"
 #import "SettingsCore.h"
 
@@ -2835,8 +2835,6 @@ static void logDroppedHookCall(loader::AddonSlot addon, SEL selector, const std:
 
 static bool executeRuntimeSynchronously(std::function<void(Runtime &)> callback);
 
-static thread_local Runtime *gUIScopeRuntime = nullptr;
-
 static bool hookRuntimeMatches(const std::shared_ptr<HookState> &state, Runtime &runtime)
 {
     auto runtimeResources = loader::native::runtimeResourceRegistry(runtime);
@@ -4154,7 +4152,7 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
     state->payloadArgumentIndexes = std::move(payloadArgumentIndexes);
     state->instanceTarget         = instanceTarget;
     state->dispatcher             = dispatcher;
-    state->inlineRuntime          = gUIScopeRuntime;
+    state->inlineRuntime          = loader::native::currentUIScopeRuntime();
     state->addon                  = loader::currentAddon();
     {
         std::lock_guard<std::mutex> lock(gHookMutex);
@@ -4498,128 +4496,47 @@ static objc_AssociationPolicy associationPolicy(Runtime &runtime, const Value *v
 
 static void installObjC(Runtime &runtime, Object &objc);
 
-struct ObjCUIScopeState {
-    loader::AddonSlot                       addon = loader::kNoAddon;
-    std::vector<std::string>                allowed;
-    std::mutex                              mutex;
-    std::vector<std::shared_ptr<HookState>> hooks;
-    bool                                    disposed = false;
-};
-
-static void disposeUIScope(const std::shared_ptr<ObjCUIScopeState> &scope)
+// iOS scopes name `objc.` paths and keep them without the prefix.
+static Object makeScopedObjC(Runtime                                        &runtime,
+                             const std::shared_ptr<loader::native::UIScope> &scope)
 {
-    std::vector<std::shared_ptr<HookState>> hooks;
+    Object full(runtime);
+    installObjC(runtime, full);
+    Object scoped(runtime);
+    for (const std::string &allowed : scope->allowed())
     {
-        std::lock_guard<std::mutex> lock(scope->mutex);
-        scope->disposed = true;
-        hooks.swap(scope->hooks);
+        if (allowed == "hook")
+        {
+            scoped.setProperty(
+                runtime, "hook",
+                makeFunction(
+                    "hook", 3, runtime,
+                    [scope](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                        return scope->hook(
+                            rt, [&]() -> std::pair<Value, loader::native::UIScope::Release> {
+                                Value token = makeHook(rt, args, count);
+                                if (!token.isObject() ||
+                                    !token.asObject(rt).isHostObject<HookTokenHost>(rt))
+                                {
+                                    return {std::move(token), nullptr};
+                                }
+                                std::shared_ptr<HookState> state =
+                                    token.asObject(rt).getHostObject<HookTokenHost>(rt)->state();
+                                return {std::move(token), [state] {
+                                            removeHook(state);
+                                        }};
+                            });
+                    }));
+            continue;
+        }
+        Value value = full.getProperty(runtime, allowed.c_str());
+        if (!value.isUndefined())
+        {
+            scoped.setProperty(runtime, allowed.c_str(), std::move(value));
+        }
     }
-    for (const std::shared_ptr<HookState> &state : hooks)
-    {
-        removeHook(state);
-    }
+    return scoped;
 }
-
-static Value makeUIScopeHook(Runtime &runtime, const std::shared_ptr<ObjCUIScopeState> &scope,
-                             const Value *args, size_t count)
-{
-    {
-        std::lock_guard<std::mutex> lock(scope->mutex);
-        if (scope->disposed)
-        {
-            throw JSError(runtime, "The plugin's UI thread scope was disposed");
-        }
-    }
-
-    loader::AddonScope addonScope(scope->addon);
-    Runtime           *previousRuntime = gUIScopeRuntime;
-    gUIScopeRuntime                    = &runtime;
-    Value token;
-    try
-    {
-        token = makeHook(runtime, args, count);
-    }
-    catch (...)
-    {
-        gUIScopeRuntime = previousRuntime;
-        throw;
-    }
-    gUIScopeRuntime = previousRuntime;
-    if (token.isObject() && token.asObject(runtime).isHostObject<HookTokenHost>(runtime))
-    {
-        std::shared_ptr<HookState> state =
-            token.asObject(runtime).getHostObject<HookTokenHost>(runtime)->state();
-        std::lock_guard<std::mutex> lock(scope->mutex);
-        scope->hooks.push_back(state);
-    }
-    return token;
-}
-
-class ObjCUIScopeHost final : public HostObject
-{
-public:
-    explicit ObjCUIScopeHost(std::shared_ptr<ObjCUIScopeState> scope) : scope_(std::move(scope)) {}
-
-    ~ObjCUIScopeHost() override
-    {
-        disposeUIScope(scope_);
-    }
-
-    Value get(Runtime &runtime, const PropNameID &name) override
-    {
-        std::string property = name.utf8(runtime);
-        if (property == "dispose")
-        {
-            auto scope = scope_;
-            return makeFunction("dispose", 0, runtime,
-                                [scope](Runtime &, const Value &, const Value *, size_t) -> Value {
-                                    disposeUIScope(scope);
-                                    return Value::undefined();
-                                });
-        }
-        if (property != "objc")
-        {
-            return Value::undefined();
-        }
-
-        auto scope = scope_;
-        return loader::native::cachedUIScopeNamespace(
-            runtime, std::to_string(cacheId_) + ":objc",
-            [&] {
-                Object full(runtime);
-                installObjC(runtime, full);
-                Object scoped(runtime);
-                for (const std::string &allowed : scope->allowed)
-                {
-                    if (allowed == "hook")
-                    {
-                        scoped.setProperty(
-                            runtime, "hook",
-                            makeFunction("hook", 3, runtime,
-                                         [scope](Runtime &rt, const Value &, const Value *args,
-                                                 size_t count) -> Value {
-                                             return makeUIScopeHook(rt, scope, args, count);
-                                         }));
-                        continue;
-                    }
-                    Value value = full.getProperty(runtime, allowed.c_str());
-                    if (!value.isUndefined())
-                    {
-                        scoped.setProperty(runtime, allowed.c_str(), std::move(value));
-                    }
-                }
-                return scoped;
-            },
-            [scope] {
-                std::lock_guard<std::mutex> lock(scope->mutex);
-                return !scope->disposed;
-            });
-    }
-
-private:
-    std::shared_ptr<ObjCUIScopeState> scope_;
-    uint64_t                          cacheId_ = loader::native::nextUIScopeCacheId();
-};
 
 static Value createUIScope(Runtime &runtime, const Value *args, size_t count)
 {
@@ -4627,8 +4544,8 @@ static Value createUIScope(Runtime &runtime, const Value *args, size_t count)
     {
         throw JSError(runtime, "objc.createUIScope expects the method paths the scope may use");
     }
-    auto  scope = std::make_shared<ObjCUIScopeState>();
-    Array names = args[0].asObject(runtime).asArray(runtime);
+    std::vector<std::string> allowed;
+    Array                    names = args[0].asObject(runtime).asArray(runtime);
     for (size_t index = 0; index < names.size(runtime); index++)
     {
         Value value = names.getValueAtIndex(runtime, index);
@@ -4639,11 +4556,15 @@ static Value createUIScope(Runtime &runtime, const Value *args, size_t count)
         std::string path = value.getString(runtime).utf8(runtime);
         if (path.rfind("objc.", 0) == 0)
         {
-            scope->allowed.push_back(path.substr(5));
+            allowed.push_back(path.substr(5));
         }
     }
-    scope->addon = loader::currentAddon();
-    return Object::createFromHostObject(runtime, std::make_shared<ObjCUIScopeHost>(scope));
+    auto scope =
+        std::make_shared<loader::native::UIScope>(loader::currentAddon(), std::move(allowed));
+    return loader::native::makeUIScopeObject(runtime, scope, {"objc"},
+                                             [scope](Runtime &rt, const std::string &) {
+                                                 return makeScopedObjC(rt, scope);
+                                             });
 }
 
 static void installObjC(Runtime &runtime, Object &objc)
@@ -5178,9 +5099,6 @@ void registerNativePluginBridge(Runtime &runtime)
         loader::native::onRuntimeGenerationChanged(invalidateRuntimeResources);
     });
     loader::native::registerRuntime(runtime);
-    loader::native::setPlatformHandleCounter([] {
-        return gLiveObjCHandles.load() + gLiveObjCCallPlans.load() + gLiveObjCRetains.load();
-    });
     loader::native::setPlatformResourceCounter(loader::native::kObjCHandleCounter, [] {
         return gLiveObjCHandles.load();
     });

@@ -35,7 +35,7 @@
 #include "NativeRuntimeResources.h"
 #include "NativeTaggedValue.h"
 #include "NativeTraversalOptions.h"
-#include "NativeUIScopeCache.h"
+#include "NativeUIScope.h"
 
 namespace unbound::android {
 namespace jsi = facebook::jsi;
@@ -586,8 +586,6 @@ struct HookListener {
     uint64_t                                                       runtimeGeneration = 0;
 };
 
-static thread_local jsi::Runtime *gUIScopeRuntime = nullptr;
-
 static bool onMainThread()
 {
     return gettid() == getpid();
@@ -798,7 +796,7 @@ static void rememberHookListener(jsi::Runtime &runtime, const std::string &token
                                        callbacks,
                                        loader::currentAddon(),
                                        coalesce,
-                                       gUIScopeRuntime,
+                                       loader::native::currentUIScopeRuntime(),
                                        resources->identity(),
                                        loader::native::runtimeGeneration()};
     std::lock_guard<std::mutex> lock(gHookMutex);
@@ -1376,47 +1374,18 @@ private:
     JavaCallbacks callbacks_;
 };
 
-struct UIScopeState {
-    JavaCallbacks            callbacks;
-    loader::AddonSlot        addon = loader::kNoAddon;
-    std::vector<std::string> allowed;
-    std::mutex               mutex;
-    std::vector<std::string> hooks;
-    bool                     disposed = false;
-};
-
-static void disposeUIScope(UIScopeState &scope)
-{
-    std::vector<std::string> tokens;
-    {
-        std::lock_guard<std::mutex> lock(scope.mutex);
-        if (scope.disposed)
-        {
-            return;
-        }
-        scope.disposed = true;
-        tokens.swap(scope.hooks);
-    }
-    for (const std::string &token : tokens)
-    {
-        if (installedHooks().contains(token))
-        {
-            removeHook(scope.callbacks, token);
-        }
-    }
-}
-
-static bool scopeAllows(const UIScopeState &scope, const std::string &path)
+// Android scopes name full paths (`java.invoke`, `hooks.hook`) and never allow `*Async` methods.
+static bool scopeAllows(const loader::native::UIScope &scope, const std::string &path)
 {
     if (path.size() > 5 && path.compare(path.size() - 5, 5, "Async") == 0)
     {
         return false;
     }
-    return std::find(scope.allowed.begin(), scope.allowed.end(), path) != scope.allowed.end();
+    return scope.allows(path);
 }
 
 static jsi::Object filterNamespace(jsi::Runtime &runtime, jsi::Object source,
-                                   const UIScopeState &scope, const std::string &prefix)
+                                   const loader::native::UIScope &scope, const std::string &prefix)
 {
     jsi::Object filtered(runtime);
     jsi::Array  names = source.getPropertyNames(runtime);
@@ -1431,49 +1400,30 @@ static jsi::Object filterNamespace(jsi::Runtime &runtime, jsi::Object source,
     return filtered;
 }
 
-static jsi::Value scopedHook(jsi::Runtime &runtime, const std::shared_ptr<UIScopeState> &scope,
-                             const jsi::Function &install, const jsi::Value *args, size_t count)
-{
-    {
-        std::lock_guard<std::mutex> lock(scope->mutex);
-        if (scope->disposed)
-        {
-            throw jsi::JSError(runtime, "The UI scope has been disposed");
-        }
-    }
-    loader::AddonScope addonScope(scope->addon);
-    jsi::Runtime      *previousRuntime = gUIScopeRuntime;
-    gUIScopeRuntime                    = &runtime;
-    jsi::Value token;
-    try
-    {
-        token = install.call(runtime, args, count);
-    }
-    catch (...)
-    {
-        gUIScopeRuntime = previousRuntime;
-        throw;
-    }
-    gUIScopeRuntime                = previousRuntime;
-    std::string                 id = hookTokenId(runtime, token);
-    std::lock_guard<std::mutex> lock(scope->mutex);
-    scope->hooks.push_back(id);
-    return token;
-}
-
-static jsi::Object makeScopedHooks(jsi::Runtime                        &runtime,
-                                   const std::shared_ptr<UIScopeState> &scope)
+static jsi::Object makeScopedHooks(jsi::Runtime                                   &runtime,
+                                   const std::shared_ptr<loader::native::UIScope> &scope,
+                                   const JavaCallbacks                            &callbacks)
 {
     jsi::Object hooks =
-        filterNamespace(runtime, makeHooksNamespace(runtime, scope->callbacks), *scope, "hooks.");
+        filterNamespace(runtime, makeHooksNamespace(runtime, callbacks), *scope, "hooks.");
     if (!hooks.hasProperty(runtime, "hook"))
     {
         return hooks;
     }
     auto install = std::make_shared<jsi::Function>(hooks.getPropertyAsFunction(runtime, "hook"));
     define(runtime, hooks, "hook", 5,
-           [scope, install](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               return scopedHook(rt, scope, *install, args, count);
+           [scope, install, callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               return scope->hook(rt,
+                                  [&]() -> std::pair<jsi::Value, loader::native::UIScope::Release> {
+                                      jsi::Value  token = install->call(rt, args, count);
+                                      std::string id    = hookTokenId(rt, token);
+                                      return {std::move(token), [callbacks, id] {
+                                                  if (installedHooks().contains(id))
+                                                  {
+                                                      removeHook(callbacks, id);
+                                                  }
+                                              }};
+                                  });
            });
     return hooks;
 }
@@ -1526,59 +1476,6 @@ static bool collectUIRuntimeGarbage()
     return collected;
 }
 
-class UIScopeHost final : public jsi::HostObject
-{
-public:
-    explicit UIScopeHost(std::shared_ptr<UIScopeState> scope) : scope_(std::move(scope)) {}
-
-    ~UIScopeHost() override
-    {
-        disposeUIScope(*scope_);
-    }
-
-    // Hermes on Android cannot take a C++ exception, so a failed read returns a failure envelope.
-    jsi::Value get(jsi::Runtime &runtime, const jsi::PropNameID &property) override
-    {
-        return loader::native::guard(runtime, [&]() -> jsi::Value {
-            std::string name = property.utf8(runtime);
-            rememberUIRuntime(runtime);
-            if (name == "dispose")
-            {
-                auto scope = scope_;
-                return loader::native::makeFunction(
-                    runtime, "dispose", 0,
-                    [scope](jsi::Runtime &, const jsi::Value &, const jsi::Value *, size_t) {
-                        disposeUIScope(*scope);
-                        return jsi::Value::undefined();
-                    });
-            }
-            if (name == "java" || name == "hooks")
-            {
-                auto scope = scope_;
-                return loader::native::cachedUIScopeNamespace(
-                    runtime, std::to_string(cacheId_) + ":" + name,
-                    [&] {
-                        loader::AddonScope addonScope(scope->addon);
-                        return name == "java"
-                                   ? filterNamespace(runtime,
-                                                     makeJavaNamespace(runtime, scope->callbacks),
-                                                     *scope, "java.")
-                                   : makeScopedHooks(runtime, scope);
-                    },
-                    [scope] {
-                        std::lock_guard<std::mutex> lock(scope->mutex);
-                        return !scope->disposed;
-                    });
-            }
-            return jsi::Value::undefined();
-        });
-    }
-
-private:
-    std::shared_ptr<UIScopeState> scope_;
-    uint64_t                      cacheId_ = loader::native::nextUIScopeCacheId();
-};
-
 static jsi::Value createUIScope(jsi::Runtime &runtime, const JavaCallbacks &callbacks,
                                 const jsi::Value *args, size_t count)
 {
@@ -1587,19 +1484,26 @@ static jsi::Value createUIScope(jsi::Runtime &runtime, const JavaCallbacks &call
         throw jsi::JSError(runtime,
                            "java.createUIScope expects the method paths the scope may use");
     }
-    auto scope       = std::make_shared<UIScopeState>();
-    scope->callbacks = callbacks;
-    scope->addon     = loader::currentAddon();
-    jsi::Array paths = args[0].asObject(runtime).asArray(runtime);
+    std::vector<std::string> allowed;
+    jsi::Array               paths = args[0].asObject(runtime).asArray(runtime);
     for (size_t index = 0; index < paths.size(runtime); index++)
     {
         jsi::Value path = paths.getValueAtIndex(runtime, index);
         if (path.isString())
         {
-            scope->allowed.push_back(path.getString(runtime).utf8(runtime));
+            allowed.push_back(path.getString(runtime).utf8(runtime));
         }
     }
-    return jsi::Object::createFromHostObject(runtime, std::make_shared<UIScopeHost>(scope));
+    auto scope =
+        std::make_shared<loader::native::UIScope>(loader::currentAddon(), std::move(allowed));
+    return loader::native::makeUIScopeObject(
+        runtime, scope, {"java", "hooks"},
+        [scope, callbacks](jsi::Runtime &rt, const std::string &name) {
+            return name == "java"
+                       ? filterNamespace(rt, makeJavaNamespace(rt, callbacks), *scope, "java.")
+                       : makeScopedHooks(rt, scope, callbacks);
+        },
+        rememberUIRuntime);
 }
 
 void registerNativePluginBridge(jsi::Runtime &runtime, const JavaCallbacks &callbacks)
