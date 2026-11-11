@@ -361,12 +361,12 @@ var (
 )
 
 var scriptLookupCalls = map[string]string{
-	"findByProps": referenceProps, "findByPropsLazy": referenceProps, "byProps": referenceProps,
-	"findByPrototypes": referencePrototypes, "findByPrototypesLazy": referencePrototypes, "byPrototypes": referencePrototypes,
-	"findStore": referenceStore, "findStoreLazy": referenceStore, "byStore": referenceStore,
-	"findByName": referenceName, "findByNameLazy": referenceName, "byName": referenceName,
-	"findByDisplayName": referenceName, "findByDisplayNameLazy": referenceName, "byDisplayName": referenceName,
-	"findByFilePath": referenceModulePath, "findByFilePathLazy": referenceModulePath, "byFilePath": referenceModulePath,
+	"findByProps": referenceProps, "byProps": referenceProps,
+	"findByPrototypes": referencePrototypes, "byPrototypes": referencePrototypes,
+	"findStore": referenceStore, "byStore": referenceStore,
+	"findByName": referenceName, "byName": referenceName,
+	"findByDisplayName": referenceName, "byDisplayName": referenceName,
+	"findByFilePath": referenceModulePath, "byFilePath": referenceModulePath,
 }
 
 var (
