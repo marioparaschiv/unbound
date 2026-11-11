@@ -124,7 +124,7 @@ function toVersionRow(row: SubmissionRow, sha256: string, publishedAt: Date) {
  * @param sha256 The verified SHA-256 of the published bundle.
  * @param publishedAt The approval time.
  */
-export async function makeLive(
+async function makeLive(
 	tx: Transaction,
 	row: SubmissionRow,
 	sha256: string,
@@ -174,17 +174,33 @@ async function replaceLive(tx: Transaction, row: SubmissionRow, sha256: string, 
 		.where(and(eq(addonVersion.addonId, addonId), eq(addonVersion.version, version)));
 }
 
-/**
- * @description Gives a user whose first listing was approved the `developer` role, unless their role
- * already publishes updates.
- * @param tx The approval's transaction.
- * @param userId The listing's author.
- */
-export async function promoteDeveloper(tx: Transaction, userId: string): Promise<void> {
+// A user whose first listing was approved gets the `developer` role, unless their role already publishes updates.
+async function promoteDeveloper(tx: Transaction, userId: string) {
 	const [author] = await tx.select({ role: user.role }).from(user).where(eq(user.id, userId));
 
 	if (author && !hasPermission(author.role, { update: ['create'] })) {
 		await tx.update(user).set({ role: 'developer' }).where(eq(user.id, userId));
+	}
+}
+
+/**
+ * @description Records what approving a submission changes besides its status, inside the approving
+ * transaction: its version, pending files ({@link makeLive}), and a listing author's `developer` role.
+ * @param tx The approval's transaction.
+ * @param row The approved submission.
+ * @param sha256 The verified SHA-256 of the published bundle.
+ * @param approvedAt The approval time.
+ */
+export async function recordApproval(
+	tx: Transaction,
+	row: SubmissionRow,
+	sha256: string,
+	approvedAt: Date,
+): Promise<void> {
+	await makeLive(tx, row, sha256, approvedAt);
+
+	if (row.kind === 'listing') {
+		await promoteDeveloper(tx, row.authorId);
 	}
 }
 
@@ -317,11 +333,7 @@ async function commitReview(ctx: AppContext, { row, decision }: ReviewPin): Prom
 	const decided = await ctx.db.transaction(async (tx) => {
 		const updated = await decideSubmission(tx, row, decision);
 
-		await makeLive(tx, row, row.sha256, decision.reviewedAt);
-
-		if (row.kind === 'listing') {
-			await promoteDeveloper(tx, row.authorId);
-		}
+		await recordApproval(tx, row, row.sha256, decision.reviewedAt);
 
 		return updated;
 	});
@@ -464,4 +476,4 @@ export async function publish(ctx: AppContext, pin: PublishPin): Promise<Publish
 	return { status: 'published', sha256: row.sha256, row };
 }
 
-export default { isSameRepository, makeLive, promoteDeveloper, markFilesPublished, publish };
+export default { isSameRepository, recordApproval, markFilesPublished, publish };

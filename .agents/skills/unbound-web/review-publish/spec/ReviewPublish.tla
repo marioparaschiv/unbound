@@ -130,7 +130,7 @@ Orphan(s) ==
 
 (* ---------------- reviewSubmission (review.ts:188-218) ---------------- *)
 
-\* requireReviewable (review.ts:141-176): reads the row, then commitReview's status check (publish-version.ts:308).
+\* requireReviewable (review.ts:141-176): reads the row, then commitReview's status check (publish-version.ts:324).
 Start(r, s, d) ==
     /\ pc[r] = "idle"
     /\ status[s] = "pending_review"
@@ -145,7 +145,7 @@ Start(r, s, d) ==
     /\ wroteF' = [wroteF EXCEPT ![r] = FALSE]
     /\ UNCHANGED <<status, kind, staged, recordedSha, StoreVars>>
 
-\* reviewSubmission repeated for an approved submission (publish-version.ts commitReview 306-313, hasPendingFiles 297-304): the
+\* reviewSubmission repeated for an approved submission (publish-version.ts commitReview 322-330, hasPendingFiles 313-320): the
 \* row is approved, its addon_version row still names this submission and its files are pending. Any
 \* reviewer may repeat it. Skips decide() and goes to the reads.
 RetryStart(r, s) ==
@@ -174,9 +174,9 @@ Got(r, b) ==
     /\ pc' = [pc EXCEPT ![r] = IF dec[r] = "republish" \/ ~PublishAfterCommit THEN "write" ELSE "decide"]
     /\ UNCHANGED <<target, dec, rowSha, wroteB, wroteM, wroteP, wroteF>>
 
-\* readVerified (publish-version.ts readAtPin 210-245): the staged bytes, or, when the object
+\* readVerified (publish-version.ts readAtPin 226-261): the staged bytes, or, when the object
 \* is gone, the pinned blob read again (readBlob 223, or readPinnedFiles). The blob is content-addressed and readBlob checks its
-\* SHA-1, so a refetch yields the honest bytes or fails with github_unavailable. Then the re-hash (verifyBundle 247-260); a
+\* SHA-1, so a refetch yields the honest bytes or fails with github_unavailable. Then the re-hash (verifyBundle 263-276); a
 \* mismatch throws artifact_mismatch and the request ends. Two reads run alongside in one Promise.all:
 \* readPageMedia (addon-page-source.ts 220-233) re-reads every media file, and readPinnedFiles (pinned-files.ts
 \* 38-53, addon-files.ts readListedFiles 47-104) every extra file listAddonFiles names and compiled bundle, each checked against the SHA-256 the
@@ -202,7 +202,7 @@ ReadStaged(r) == ReadFail(r) \/ ReadOk(r)
 
 AfterWrite == IF PublishAfterCommit THEN "mark" ELSE "decide"
 
-\* writeFiles writes after decide commits (publish-version.ts 292-295): writeArtifact (artifacts.ts 71-96) PUTs the bundle, the
+\* writeFiles writes after decide commits (publish-version.ts 308-311): writeArtifact (artifacts.ts 71-96) PUTs the bundle, the
 \* manifest, each compiled bundle and each extra file at addons/{id}/{version}/<path>. writeStorePage (artifacts.ts 105-132) PUTs ADDON.md, page.json and each media file. All run
 \* at once. Every submission here has a store page and extra files, the case with the most writes. The
 \* page's PUTs are one action, and so are the extra files'.
@@ -248,7 +248,7 @@ WriteFiles(r) ==
                    publicManifest, publicPage, decisions, fails, pending, target, dec, rowSha, bytes, wroteB,
                    wroteM, wroteP>>
 
-\* markFilesPublished (publish-version.ts 197-207), one transaction after every write landed: clears
+\* markFilesPublished (publish-version.ts 213-222), one transaction after every write landed: clears
 \* files_pending_since on the row that still names this submission, so the version starts being served.
 MarkPublished(r) ==
     LET s == target[r]
@@ -275,9 +275,9 @@ WriteFail(r) ==
     /\ UNCHANGED <<status, kind, staged, recordedSha, addonExists, versionRow, publicBundle,
                    publicManifest, publicPage, publicFiles, decisions, pending>>
 
-\* decide (publish-version.ts commitReview 317-328): one serializable transaction, retried whole on a
-\* serialization failure. CAS at submission-decision.ts 40, throw at 44-46. Approval runs makeLive (320),
-\* which inserts addon (134, PK id) for a listing and addon_version (149, PK addonId+version); a conflict throws and rolls it all back.
+\* decide (publish-version.ts commitReview 333-339): one serializable transaction, retried whole on a
+\* serialization failure. CAS at submission-decision.ts 40, throw at 44-46. Approval runs recordApproval (336), whose makeLive
+\* inserts addon (134, PK id) for a listing and addon_version (149, PK addonId+version); a conflict throws and rolls it all back.
 Decide(r) ==
     LET s == target[r]
         v == VersionOf(s)
