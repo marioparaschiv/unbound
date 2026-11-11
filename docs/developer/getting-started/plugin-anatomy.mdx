@@ -52,7 +52,7 @@ A plugin with images adds `assets/`; an addon page with a banner adds `media/`. 
 
 ### manifest.json
 
-`main` names the entry inside `src/`. `icon` names one of Discord's icons. See [The Manifest](/docs/developer/publishing/manifest).
+`main` names the entry inside `src/`. `icon` names one of Discord's icons. `unbound.min` is the oldest Unbound client the plugin runs on; older clients keep the version they have. See [The Manifest](/docs/developer/publishing/manifest).
 
 ```json manifest.json quoted
 {
@@ -73,7 +73,10 @@ A plugin with images adds `assets/`; an addon page with a banner adds `media/`. 
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.4",
+	"version": "1.0.5",
+	"unbound": {
+		"min": "3.0.0"
+	},
 	"icon": "TextIcon",
 	"main": "index.tsx"
 }
