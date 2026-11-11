@@ -15,5 +15,12 @@
 	"version": "1.0.4",
 	"icon": "GifIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"bytecode": {
+		"98": "f3941ed029b010335315dcad2d109e163b3f281be25821d5f9e13c945a02e80b8a641973b39c3b56e1f23377115faf833c04b721a56611e98d47e27eb32296d5"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "Zc+755131AfqKaxjLJCkZLvs9+GpWNLZwyy9CzfC2c4JSyMPv4pkzVpdEE5twUc0K049x2JrRQqmzGSU80qvDA=="
+	}
 }

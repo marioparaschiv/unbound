@@ -10,5 +10,34 @@
 	],
 	"version": "1.1.0",
 	"icon": "GlobeEarthIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.objc.batch",
+				"native.objc.classes",
+				"native.objc.invokeAsync",
+				"native.objc.snapshot",
+				"native.runtime.events"
+			]
+		},
+		"android": {
+			"capabilities": [
+				"native.java.batch",
+				"native.java.classes",
+				"native.java.construct",
+				"native.java.fields",
+				"native.java.invoke",
+				"native.java.invokeAsync",
+				"native.runtime.events"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "de123602d7e1db472c55256f8b5e66a0cb04d8597bb9867d2f4a26f2a2607d0f166d7cb09071f358006f8388fb05a7ec936f4f3c0cacb5f75178f96158d90c23"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "N05g39Qvq068+K5bC7JP9FX7YQ9WUI2U8+DGkGwGlaLeWAWA0ELRhE66xjwtaFC9o5bUAXrK58NygNm1Ye0jCA=="
+	}
 }

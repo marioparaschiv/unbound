@@ -35,5 +35,12 @@
 	"version": "1.0.1",
 	"icon": "MusicIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"bytecode": {
+		"98": "5076068cc200b6db14f526d4f4e81f37d16cf40ae4055b38a7e30cb66a564968feb2edd6cd66fea6c18d55e320b4b36ab83122791150851b9d3644a69b68d91e"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "CeOIczWmXAN/EIZ52rOcJM/jTJ+LaFjTnAf1vJPuKr/x0XU2owJVIAaSapYvUipMw2ePPnukwYS1mQoWjOvWAA=="
+	}
 }

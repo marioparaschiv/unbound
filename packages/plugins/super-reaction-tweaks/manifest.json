@@ -18,5 +18,12 @@
 	],
 	"version": "1.0.1",
 	"icon": "SuperReactionIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "02f0e6edc6b5f2cc9bd3ebb0dc934ec14a42aa746c5eb61a0dc638b388e75dec449f128d9b8727da9db279509a058ee8e926a51d5a413868922111b55a38e27c"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "DvVFo/uDuOno8okTAk4XZtcL7WS8DYG9oPn5VWELBheykf6sgiDAn6mJhzqiiPok4vnG7t2wrJQU6mKR6OjkCQ=="
+	}
 }

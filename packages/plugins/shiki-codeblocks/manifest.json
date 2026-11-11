@@ -15,5 +15,37 @@
 	"minNativePluginApi": "1.1.0",
 	"version": "1.1.5",
 	"icon": "TextIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.objc.batch",
+				"native.objc.classes",
+				"native.objc.hooks",
+				"native.objc.invoke",
+				"native.objc.invokeAsync",
+				"native.objc.ivars",
+				"native.objc.snapshot"
+			]
+		},
+		"android": {
+			"capabilities": [
+				"native.fabric.async",
+				"native.java.batch",
+				"native.java.classes",
+				"native.java.construct",
+				"native.java.fields",
+				"native.java.hooks",
+				"native.java.invoke",
+				"native.java.invokeAsync"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "b5bc5f0ec975213afce19acc53c346f3ee033be1ec2d0b2a269f4e6a6adfc1fc3f60a97658a317dfb969789e73297918591ce5dc57559a7cf8ae9237ebede119"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "gW7/e94lHUQLdT/SJSssbExfgw1Isg2D+GHUlQgNWWh6sXJkxw7SQKZayOKGisUgR9mJla7Bwx5Lhvy1O+PZDQ=="
+	}
 }
