@@ -1,14 +1,13 @@
+import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
 import { AppState } from 'react-native';
 
 import { notifyClientUpdated, notifyStagedBundle, notifyUpdates } from '~/updates/notify';
-import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
-
-import { getSetting } from '~/settings/unbound';
-import { getBucket } from '~/storage/api';
 import { CLIENT_VERSION, Screens } from '~/core/constants';
 import { hasStagedBundle } from '~/native/unbound-native';
 import type { SectionEntry } from '~/settings/section';
+import { getSetting } from '~/settings/unbound';
 import UpdatesStore from '~/updates/state';
+import { getBucket } from '~/storage/api';
 
 // The loader downloads the next bundle in the background, usually within seconds of launch.
 const STAGED_CHECK_DELAY = 20_000;
