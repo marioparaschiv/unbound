@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
 
 import { broadcast, bundleEtag, gateReloads, handleHot } from '../hot-reload';
 
@@ -34,5 +34,19 @@ describe('broadcast', () => {
 
 		expect(unquoted(etag ?? '')).not.toBe(unquoted(bundleEtag()));
 		expect(unquoted(etag ?? '')).toStartWith(unquoted(bundleEtag()));
+	});
+
+	test('logs the etag it sent, with the -patched suffix when forced', () => {
+		const info = spyOn(console, 'info').mockImplementation(() => {});
+		let logged = '';
+
+		try {
+			broadcast(true);
+			logged = info.mock.calls.flat().join(' ');
+		} finally {
+			info.mockRestore();
+		}
+
+		expect(logged).toContain(`etag "${bundleEtag().replaceAll('"', '')}-patched"`);
 	});
 });

@@ -62,13 +62,12 @@ export function broadcast(force: boolean = false): number {
 	etag = bundleEtag();
 
 	// No bundle has this etag, so the loader reloads and then revalidates the bundle it holds, getting a 304.
-	const payload = frame('reload', {
-		etag: force ? `"${etag.replaceAll('"', '')}-patched"` : etag,
-	});
+	const sent = force ? `"${etag.replaceAll('"', '')}-patched"` : etag;
+	const payload = frame('reload', { etag: sent });
 
 	for (const controller of hotClients) send(controller, payload);
 
-	logger.info(`Sent the bundle etag ${etag} to ${hotClients.size} loader(s).`);
+	logger.info(`Sent the bundle etag ${sent} to ${hotClients.size} loader(s).`);
 
 	return hotClients.size;
 }
