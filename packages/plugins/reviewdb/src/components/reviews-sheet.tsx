@@ -5,14 +5,14 @@ import { useSetting } from '@unbound-app/settings';
 import { messages } from '@unbound-app/i18n';
 import { useCallback, useEffect, useState } from 'react';
 
-import ReviewComposer from '~/reviews/components/review-composer';
-import ReviewsHeader from '~/reviews/components/reviews-header';
-import { RelationshipStore, UserStore } from '~/reviews/modules';
-import { getReviewColors } from '~/reviews/colors';
-import ReviewItem from '~/reviews/components/review-item';
-import type { UserReviewsData } from '~/reviews/entities';
-import { getReviews } from '~/reviews/api';
-import { signIn } from '~/reviews/login';
+import ReviewComposer from '~/components/review-composer';
+import ReviewsHeader from '~/components/reviews-header';
+import { RelationshipStore, UserStore } from '~/lib/modules';
+import { getReviewColors } from '~/lib/colors';
+import ReviewItem from '~/components/review-item';
+import type { UserReviewsData } from '~/lib/entities';
+import { getReviews } from '~/lib/api';
+import { signIn } from '~/lib/login';
 
 type ReviewsSheetProps = {
 	discordId: string;

@@ -2,7 +2,7 @@ import { messages } from '@unbound-app/i18n';
 import { settings } from '@unbound-app/settings';
 import { toasts } from '@unbound-app/api';
 
-import { fetchCurrentUser } from '~/reviews/api';
+import { fetchCurrentUser } from '~/lib/api';
 
 /**
  * @description Fetches the signed-in account, then toasts when its profile got reviews since the last check and records the newest one.

@@ -4,7 +4,7 @@ import { messages } from '@unbound-app/i18n';
 import { settings } from '@unbound-app/settings';
 import { toasts } from '@unbound-app/api';
 
-import { AUTH_REDIRECT_URI } from '~/constants';
+import { AUTH_REDIRECT_URI } from '~/lib/constants';
 
 type AuthPayload = {
 	token?: unknown;

@@ -1,8 +1,7 @@
-import { patcher } from '@unbound-app/api';
+import { metro, patcher } from '@unbound-app/api';
 import type { ReactNode } from 'react';
 
-import ReviewsButton from '~/reviews/components/reviews-button';
-import { UserProfileCard } from '~/reviews/modules';
+import ReviewsButton from '~/components/reviews-button';
 
 type ProfileCardProps = {
 	title?: ReactNode;
@@ -20,9 +19,17 @@ function findUserId({ title, children }: ProfileCardProps): string | undefined {
 }
 
 /**
- * @description Adds a View Reviews button under the user info card on profiles.
+ * @description Adds a View Reviews button under the user info card on profiles, by patching the render of `UserProfileCard`.
  */
 export function patchUserProfileCard(): void {
+	const UserProfileCard = metro.findByFilePath('modules/user_profile/native/UserProfileCard.tsx');
+
+	if (!UserProfileCard) {
+		logger.warn('Reviews button skipped: Discord moved UserProfileCard.');
+
+		return;
+	}
+
 	patcher.react.after(UserProfileCard, 'default', ({ props, result }) => {
 		const userId = findUserId(props as ProfileCardProps);
 

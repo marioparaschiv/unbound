@@ -2,8 +2,8 @@ import { Discord } from '@unbound-app/api/metro/components';
 import { messages } from '@unbound-app/i18n';
 import { View } from 'react-native';
 
-import { openReviewsSheet } from '~/reviews/components/reviews-sheet';
-import { UserStore } from '~/reviews/modules';
+import { openReviewsSheet } from '~/components/reviews-sheet';
+import { UserStore } from '~/lib/modules';
 
 type ReviewsButtonProps = {
 	userId: string;

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { format, messages } from '@unbound-app/i18n';
 import { Text, View } from 'react-native';
 
-import type { ReviewColors } from '~/reviews/colors';
+import type { ReviewColors } from '~/lib/colors';
 
 type PillProps = {
 	color: string;

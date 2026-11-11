@@ -2,8 +2,8 @@ import { messages } from '@unbound-app/i18n';
 import { Pressable, Text, View } from 'react-native';
 import { useState } from 'react';
 
-import type { ReviewPermissions } from '~/reviews/permissions';
-import type { ReviewColors } from '~/reviews/colors';
+import type { ReviewPermissions } from '~/lib/permissions';
+import type { ReviewColors } from '~/lib/colors';
 
 type ActionButtonProps = {
 	label: string;

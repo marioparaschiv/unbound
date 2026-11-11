@@ -9,15 +9,15 @@ import {
 	reportReview,
 	setReviewVote,
 	setUserBlocked,
-} from '~/reviews/api';
-import { getReviewColors, type ReviewColors } from '~/reviews/colors';
-import { ReviewType, UserType, type Review } from '~/reviews/entities';
-import { UserStore } from '~/reviews/modules';
-import ReviewActions from '~/reviews/components/review-actions';
-import VoteControls from '~/reviews/components/vote-controls';
-import { getReviewPermissions } from '~/reviews/permissions';
-import { COMMENT_PREVIEW_LENGTH } from '~/constants';
-import { changeVote, type Vote } from '~/reviews/votes';
+} from '~/lib/api';
+import { getReviewColors, type ReviewColors } from '~/lib/colors';
+import { ReviewType, UserType, type Review } from '~/lib/entities';
+import { UserStore } from '~/lib/modules';
+import ReviewActions from '~/components/review-actions';
+import VoteControls from '~/components/vote-controls';
+import { getReviewPermissions } from '~/lib/permissions';
+import { COMMENT_PREVIEW_LENGTH } from '~/lib/constants';
+import { changeVote, type Vote } from '~/lib/votes';
 
 type BadgeProps = {
 	label: string;

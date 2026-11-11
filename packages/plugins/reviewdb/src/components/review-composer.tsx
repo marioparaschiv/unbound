@@ -2,9 +2,9 @@ import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-nativ
 import { format, messages } from '@unbound-app/i18n';
 import { useState } from 'react';
 
-import type { ReviewColors } from '~/reviews/colors';
-import { COMMENT_MAX_LENGTH } from '~/constants';
-import { addReview } from '~/reviews/api';
+import type { ReviewColors } from '~/lib/colors';
+import { COMMENT_MAX_LENGTH } from '~/lib/constants';
+import { addReview } from '~/lib/api';
 
 type ReviewComposerProps = {
 	discordId: string;

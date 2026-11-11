@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { getReviewPermissions } from '~/reviews/permissions';
-import type { Review } from '~/reviews/entities';
+import { getReviewPermissions } from '~/lib/permissions';
+import type { Review } from '~/lib/entities';
 
 const ME = '100';
 const AUTHOR = '200';

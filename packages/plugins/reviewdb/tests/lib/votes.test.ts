@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { Review } from '~/reviews/entities';
-import { changeVote, withVotes } from '~/reviews/votes';
+import type { Review } from '~/lib/entities';
+import { changeVote, withVotes } from '~/lib/votes';
 
 function review(id: number): Review {
 	return {

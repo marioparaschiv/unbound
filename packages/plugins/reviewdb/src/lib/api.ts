@@ -3,13 +3,13 @@ import type {
 	ReviewDBUser,
 	ReviewVote,
 	UserReviewsData,
-} from '~/reviews/entities';
+} from '~/lib/entities';
 import { format, messages } from '@unbound-app/i18n';
 import { settings } from '@unbound-app/settings';
 import { toasts } from '@unbound-app/api';
 
-import { API_URL } from '~/constants';
-import { withVotes } from '~/reviews/votes';
+import { API_URL } from '~/lib/constants';
+import { withVotes } from '~/lib/votes';
 
 type Body = Record<string, string | number | boolean>;
 

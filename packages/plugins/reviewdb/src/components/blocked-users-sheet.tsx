@@ -4,8 +4,8 @@ import { Discord } from '@unbound-app/api/metro/components';
 import { messages } from '@unbound-app/i18n';
 import { useEffect, useState } from 'react';
 
-import { getBlockedUsers, setUserBlocked } from '~/reviews/api';
-import type { ReviewDBUser } from '~/reviews/entities';
+import { getBlockedUsers, setUserBlocked } from '~/lib/api';
+import type { ReviewDBUser } from '~/lib/entities';
 
 function BlockedUsersSheet() {
 	const [users, setUsers] = useState<ReviewDBUser[] | null>(null);
