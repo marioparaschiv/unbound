@@ -1,40 +1,26 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
+import { patcher } from '@unbound-app/api';
 
-import { ChatManager, RowManager } from '~/rows/modules';
-import { ActionSheets } from '~/history/modules';
-import { startDeletions } from '~/deletions';
-import { MessageStore } from '~/log/modules';
-import { purgeLog } from '~/history/actions';
-import { createMessageLog } from '~/log';
-import { startHistory } from '~/history';
-import { startNonces } from '~/nonces';
-import { startPersistence } from '~/persist';
-import { startEdits } from '~/edits';
-import { startRows } from '~/rows';
+import { interceptDeletions, interceptEdits, trackNonces } from '~/flux/interceptors';
+import { patchMessageActions } from '~/patches/message-actions';
+import { patchMessageRows } from '~/patches/message-rows';
+import { startSaving, stopSaving } from '~/lib/persist';
+import { closeHistorySheet } from '~/lib/sheet';
+import { clearLog } from '~/lib/clear';
 
-export const { start, stop, selfTest } = runFeatures(() => {
-	if (!ensureModules({ ActionSheets, ChatManager, MessageStore, RowManager })) return;
+export function start() {
+	interceptDeletions();
+	interceptEdits();
+	trackNonces();
+	patchMessageRows();
+	patchMessageActions();
+	startSaving();
+}
 
-	let save = () => {};
-	const log = createMessageLog(() => save());
-
-	// Features end in reverse: saving first, so the purge clears the chat but leaves the saved log; then history,
-	// then the row patches before the purge, which makes Discord draw the rows again.
-	// The interceptors have nothing to end and stay for it, until the Addon scope removes them.
-	return [
-		() => () => purgeLog(log),
-		() => startDeletions(log),
-		() => startEdits(log),
-		startNonces,
-		() => startRows(log),
-		() => startHistory(log),
-		() => {
-			const persistence = startPersistence(log);
-
-			save = persistence.save;
-
-			return persistence.stop;
-		},
-	];
-});
+// Saving stops before the log clears, so the saved file keeps it. The row patches go first, so the cleared rows draw plain;
+// the interceptors stay on for `clearLog` until the Addon scope removes them.
+export function stop() {
+	patcher.unpatchAll();
+	stopSaving();
+	closeHistorySheet();
+	clearLog();
+}

@@ -1,7 +1,5 @@
-import { metro, startPlugin } from '@unbound-app/api/testing';
+import { logs, metro, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
-
-import { selfTest } from '~/index';
 
 const channelId = 'channel';
 const gifSelection = [
@@ -76,7 +74,7 @@ describe('selecting a GIF from a reply', () => {
 });
 
 describe('starting', () => {
-	test('reports both patches as applied', async () => {
-		expect((await selfTest()).ok).toBe(true);
+	test('reports both patches as applied', () => {
+		expect(logs.entries.filter((entry) => entry.level === 'warn')).toEqual([]);
 	});
 });

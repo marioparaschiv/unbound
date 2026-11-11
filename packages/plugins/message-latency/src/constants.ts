@@ -1,4 +1,4 @@
-import type { LatencyColor } from '~/latency-indicator/latency';
+import type { LatencyColor } from '~/lib/latency';
 
 export const ICON_TAG = 0x1a7e9c;
 

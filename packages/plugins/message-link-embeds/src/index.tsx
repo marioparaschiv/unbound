@@ -1,8 +1,21 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import type { PluginContext } from '@unbound-app/api/native';
+import { patcher } from '@unbound-app/api';
 
-import { embedFeatures, selfTestEmbeds } from '~/embeds';
+import { drawEmbeds, eraseEmbeds, selfTestEmbeds } from '~/native/embeds';
+import { patchFastImage, restoreLottieViews, swapLottieViews } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures(embedFeatures, {
-	atomic: true,
-	selfTest: selfTestEmbeds,
-});
+export function start(context: PluginContext) {
+	drawEmbeds(context);
+	patchFastImage();
+	swapLottieViews();
+}
+
+export async function stop() {
+	patcher.unpatchAll();
+	restoreLottieViews();
+	await eraseEmbeds();
+}
+
+export function selfTest() {
+	return selfTestEmbeds();
+}

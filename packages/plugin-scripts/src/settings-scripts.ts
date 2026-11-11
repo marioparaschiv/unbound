@@ -34,8 +34,13 @@ type ReactFiber = {
 function openSettingsScreen(id: string) {
 	const entity = unbound.plugins.get(id) as DeviceAddon | undefined;
 	const SettingsPanel = entity?.SettingsPanel;
+	const Navigation = unbound.metro.findByProps('getRootNavigationRef');
 
 	if (!entity || !SettingsPanel) return 'none';
+
+	if (!Navigation) {
+		throw new Error("Discord's navigation module is missing.");
+	}
 
 	const { React } = unbound.metro.common;
 	const probe: SettingsProbeState = { rendered: false, closed: false, error: '', boundary: null };
@@ -74,16 +79,13 @@ function openSettingsScreen(id: string) {
 		return React.createElement(SettingsPanel);
 	};
 
-	unbound.metro
-		.findByProps('getRootNavigationRef')
-		.getRootNavigationRef()
-		.navigate('settings', {
-			screen: 'UNBOUND_CUSTOM',
-			params: {
-				title: entity.manifest.name,
-				render: () => React.createElement(Boundary, null, React.createElement(Panel)),
-			},
-		});
+	Navigation.getRootNavigationRef().navigate('settings', {
+		screen: 'UNBOUND_CUSTOM',
+		params: {
+			title: entity.manifest.name,
+			render: () => React.createElement(Boundary, null, React.createElement(Panel)),
+		},
+	});
 
 	return 'opened';
 }
@@ -143,7 +145,13 @@ export function settingsProbeScript(): string {
  * @returns A script whose result is `closed`.
  */
 function closeScreen() {
-	const navigation = unbound.metro.findByProps('getRootNavigationRef').getRootNavigationRef();
+	const Navigation = unbound.metro.findByProps('getRootNavigationRef');
+
+	if (!Navigation) {
+		throw new Error("Discord's navigation module is missing.");
+	}
+
+	const navigation = Navigation.getRootNavigationRef();
 
 	if (navigation.canGoBack()) navigation.goBack();
 

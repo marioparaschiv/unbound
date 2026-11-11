@@ -11,7 +11,7 @@ The layout and loading rules every plugin follows. `ubd create` scaffolds a plug
 | [Layout](#layout) | Build check `layout` (warning) |
 | [Features Start Themselves](#features-start-themselves) | Addon review |
 | [Lazy Lookups](#lazy-lookups) | Lint `unbound/no-module-scope-lookup` |
-| [Platform Code](#platform-code) | Lint `unbound/platform-check-only-in-platform-file`, build check `layout` |
+| [Platform Code](#platform-code) | Lint `unbound/platform-check-only-in-platform-file` (allows `src/native/` and `platform.ts`), build check `layout` |
 | [Scoped API](#scoped-api) | Lint `unbound/no-window-unbound` |
 | [Generated Capabilities](#generated-capabilities) | Build check `capabilities` (error) |
 | [Native Views](#native-views) | Addon review |
@@ -19,35 +19,41 @@ The layout and loading rules every plugin follows. `ubd create` scaffolds a plug
 
 ## Layout
 
-Split the plugin by [feature](/docs/developer/concepts#feature). The entry only starts features. See [Plugin Anatomy](/docs/developer/getting-started/plugin-anatomy).
+Split the plugin by kind: what it patches, intercepts, draws and computes. The entry only lists features. Never nest deeper than `src/<folder>/<file>`. See [Plugin Anatomy](/docs/developer/getting-started/plugin-anatomy#folder-layout).
 
 | Location | Holds |
 | --- | --- |
-| `src/` root | Only `index.tsx`, `settings.tsx`, `actions.ts`, `constants.ts`, `types.ts`, and the generated `unbound-settings.d.ts` and `unbound-i18n.d.ts` |
-| `src/<feature>/` | Everything one feature uses |
-| `src/<feature>/ios/`, `src/<feature>/android/` | That feature's platform code. Never at the `src/` root |
-| `src/components/` | Components several features share |
-| `src/shared/` | Other helpers several features share |
+| `src/` root | Only `index.tsx`, `settings.tsx`, `actions.ts`, `patches.ts`, `commands.ts`, and the generated `unbound-settings.d.ts` and `unbound-i18n.d.ts` |
+| `src/patches/`, `src/commands/` | `patches.ts` or `commands.ts` once it grows, as named files such as `patches/message-rows.ts` |
+| `src/native/` | `hooks.ts`, `views.ts`, `worklets.ts`, `calls.ts`, split per platform as `<kind>-android.ts` and `<kind>-ios.ts` |
+| `src/flux/` | `interceptors.ts`, `listeners.ts` |
+| `src/components/` | Components and their hooks |
+| `src/lib/` | The plugin's own logic: data, network, storage, helpers. No Discord patches |
 | Beside `src/` | `settings.ts`, `i18n/`, `assets/`, `tests/`, `ADDON.md`, `media/` |
 
 `ubd build` warns for each departure. Warnings do not fail the build.
 
 ## Features Start Themselves
 
-`src/index.tsx` calls each feature's start function. The feature finds its own modules and makes only the patches it needs. A patch on another module that only passes data to a feature, such as a closure value, lives in that feature's folder.
+`src/index.tsx` calls each feature. The feature checks its setting, finds its own modules and makes only the patches it needs. A function's name says its kind: `patchX`, `interceptX`, `listenToX`, `registerX`, `hookX` or `drawX`.
 
-The JSDoc of the feature's `index.ts` names every patch it makes on another module and every Discord module or store it depends on.
+The feature's JSDoc names every patch it makes and every Discord module or store it depends on.
 
-```ts src/greeting/index.ts
+```ts src/patches.ts
 import { metro, patcher } from '@unbound-app/api';
-
-const Messages = metro.findByProps('sendMessage', 'receiveMessage');
 
 /**
  * @description Logs each message the user sends.
  * Patches `sendMessage` on Discord's message actions module.
  */
-export function startGreeting() {
+export function patchSendMessage() {
+	const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+
+	if (!Messages) {
+		logger.warn('Greeting skipped: Discord moved sendMessage.');
+		return;
+	}
+
 	patcher.before(Messages, 'sendMessage', ({ args }) => logger.log('Sending to', args[0]));
 }
 ```
@@ -69,25 +75,25 @@ const Button = metro.findByName('Button', { lazy: false });
 
 ## Platform Code
 
-A feature picks its platform handler once, in `platform.ts`. The rest of the feature calls the handler and never checks the platform.
+Platform code lives in `src/native/`. One small file there may branch on the platform; a larger one splits into `<kind>-android.ts` and `<kind>-ios.ts`, and `definePlatform` picks between them. Nowhere else checks the platform.
 
-```ts src/greeting/android/platform-name.ts
+```ts src/native/views-android.ts
 export function platformName() {
 	return 'Android';
 }
 ```
 
-```ts src/greeting/ios/platform-name.ts
+```ts src/native/views-ios.ts
 export function platformName() {
 	return 'iOS';
 }
 ```
 
-```ts src/greeting/platform.ts
+```ts src/native/views.ts
 import { definePlatform } from '@unbound-app/api/native';
 
-import { platformName as android } from '~/greeting/android/platform-name';
-import { platformName as ios } from '~/greeting/ios/platform-name';
+import { platformName as android } from '~/native/views-android';
+import { platformName as ios } from '~/native/views-ios';
 
 export const platformName = definePlatform({ ios, android });
 ```

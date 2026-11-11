@@ -111,38 +111,38 @@ await startPlugin({ capabilities: ['native.ffi.call'], native: { apiVersion: '2.
 
 ## Self-Test
 
-The device matrix calls an exported `selfTest` after a restart. It catches a plugin whose features all skipped but whose `start` passed. First-party plugins export the `selfTest` that `runFeatures` from `@unbound-plugins/shared` builds (see [Plugin Anatomy](/docs/developer/getting-started/plugin-anatomy)). Without the helper:
+The device matrix reads each plugin's self-test after a restart. Unbound builds it for you: a warning or error the plugin's `logger` wrote during `start` fails it, with that line as the detail. So a feature that skips because Discord moved a module fails the self-test without any code of yours.
+
+Test that warning with `metro.markMissing`, which makes a lookup by that prop, path or name return `undefined`, as on a Discord build that lacks the module:
+
+```tsx tests/character-counter.test.tsx excerpt
+	test('skips the counter with one warning when Discord moved ChatInputs', async () => {
+		await stopPlugin();
+		metro.markMissing('getBestActiveInputForChannelId');
+		await startPlugin();
+		draft.text = 'hello';
+
+		expect(renderComposer().findAll('Text')).toEqual([]);
+		expect(logs.entries).toContainEqual({
+			level: 'warn',
+			args: ['Counter skipped: Discord moved ChatInputs or FloatingChatInputContainer.'],
+		});
+	});
+```
+
+Export `selfTest` only to check more than a clean start, such as that something is drawn on screen. Unbound still fails the plugin first when it warned while starting.
 
 ```tsx src/index.tsx
-import { flux, patcher } from '@unbound-app/api';
-
-const UserStore = flux.getStore('User');
-let applied = 0;
-
-export function start() {
-	patcher.after(UserStore, 'getCurrentUser', ({ result }) => result);
-	applied++;
-}
+let drawn = 0;
 
 export function selfTest() {
-	return { ok: applied > 0, detail: `${applied} features applied` };
+	return drawn > 0
+		? { ok: true, detail: `${drawn} badges drawn on screen` }
+		: { ok: false, detail: 'no badges are drawn on screen', nothingDrawn: true };
 }
 ```
 
-```ts tests/self-test.test.ts
-import { startPlugin } from '@unbound-app/api/testing';
-import { expect, test } from 'bun:test';
-
-import { selfTest } from '~/index';
-
-test('reports that a feature applied', async () => {
-	await startPlugin();
-
-	expect(await selfTest()).toMatchObject({ ok: true });
-});
-```
-
-Module state such as `applied` survives between tests. Reset it in `beforeEach`. `runFeatures` resets its own state on each `start`.
+Module state such as `drawn` survives between tests. Reset it in `beforeEach`.
 
 ## Checking Results
 
@@ -196,7 +196,10 @@ import { metro, patcher } from '@unbound-app/api';
 
 const Messages = metro.findByProps('sendMessage'); // at import, or in start()
 
-patcher.after(Messages, 'sendMessage', () => 'patched'); // waits: no module yet
+if (Messages) {
+	patcher.after(Messages, 'sendMessage', () => 'patched'); // waits: no module yet
+}
+
 fake.register({ sendMessage: () => 'sent' }); // applies now
 ```
 

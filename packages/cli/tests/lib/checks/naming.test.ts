@@ -56,15 +56,12 @@ function workspace(folder: string, files: Record<string, string>, fields?: Manif
 const STANDARD_LAYOUT = {
 	'src/index.tsx': 'export default {};',
 	'src/settings.tsx': 'export default null;',
-	'src/constants.ts': 'export {};',
-	'src/types.ts': 'export {};',
+	'src/patches.ts': 'export {};',
 	'src/components/toggle.tsx': 'export {};',
-	'src/shared/names.ts': 'export {};',
-	'src/messages/index.ts': 'export {};',
-	'src/messages/platform.ts': 'export {};',
-	'src/messages/ios/hook.ts': 'export {};',
-	'src/messages/android/hook.ts': 'export {};',
-	'src/messages/components/badge.tsx': 'export {};',
+	'src/lib/names.ts': 'export {};',
+	'src/flux/interceptors.ts': 'export {};',
+	'src/native/hooks-ios.ts': 'export {};',
+	'src/native/hooks-android.ts': 'export {};',
 };
 
 describe('ubd build checks', () => {
@@ -78,19 +75,19 @@ describe('ubd build checks', () => {
 	test('a plugin outside the standard layout warns but still builds', async () => {
 		const dir = workspace('my-plugin', {
 			'src/index.ts': 'export default {};',
-			'src/patches.ts': 'export {};',
-			'src/ios/hook.ts': 'export {};',
-			'src/messages/android/hook.ts': 'export {};',
+			'src/helpers.ts': 'export {};',
+			'src/messages/hook.ts': 'export {};',
+			'src/native/android/hook.ts': 'export {};',
 		});
 		const result = await runUbd(['build'], dir.path, {});
 
 		expect(result.exitCode).toBe(0);
 		expect(reportLines(result.stderr)).toEqual([
-			'warning  plugins/my-plugin/src/index.ts  is not a standard root file.  Fix: move it into a domain folder.',
-			"warning  plugins/my-plugin/src/index.tsx  is missing.  Fix: add the entry that registers the addon's features.",
-			'warning  plugins/my-plugin/src/ios  holds platform code outside a domain.  Fix: move it into the domain it belongs to.',
-			'warning  plugins/my-plugin/src/messages  has android/ but no platform.ts.  Fix: add platform.ts to select the platform handler.',
-			'warning  plugins/my-plugin/src/patches.ts  is not a standard root file.  Fix: move it into a domain folder.',
+			'warning  plugins/my-plugin/src/helpers.ts  is not a standard root file.  Fix: move it into native/, flux/, components/, lib/, patches/ or commands/.',
+			'warning  plugins/my-plugin/src/index.ts  is not a standard root file.  Fix: move it into native/, flux/, components/, lib/, patches/ or commands/.',
+			"warning  plugins/my-plugin/src/index.tsx  is missing.  Fix: add the entry that lists the plugin's features.",
+			'warning  plugins/my-plugin/src/messages  is not a standard folder.  Fix: move its files into native/, flux/, components/, lib/, patches/ or commands/.',
+			'warning  plugins/my-plugin/src/native/android  is nested too deep.  Fix: keep files at src/<folder>/<file>; split a platform as <kind>-android.ts and <kind>-ios.ts.',
 		]);
 	});
 

@@ -5,8 +5,8 @@ import { View } from 'react-native';
 import { useState } from 'react';
 import { ui } from '@unbound-app/api';
 
-import { HLJS_PREFERENCES, ICON_MODES, THEME_IDS } from '~/constants';
-import { isThemeUrl, themeLabel } from '~/codeblocks/themes';
+import { HLJS_PREFERENCES, ICON_MODES, THEME_IDS } from '~/lib/constants';
+import { isThemeUrl, themeLabel } from '~/lib/themes';
 
 const ICON_MODE_LABELS: Record<(typeof ICON_MODES)[number], MessageKey> = {
 	disabled: 'ICONS_DISABLED',

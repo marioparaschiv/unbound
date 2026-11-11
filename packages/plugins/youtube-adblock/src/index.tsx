@@ -1,5 +1,11 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startWebViewAdblock } from '~/webview';
+import { patchWebView } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startWebViewAdblock]);
+export function start() {
+	patchWebView();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}

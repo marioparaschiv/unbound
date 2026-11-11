@@ -1,4 +1,4 @@
-import { flux, metro, render, startPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, render, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { Pressable, Text, View } from 'react-native';
 import type { ReactNode } from 'react';
@@ -78,32 +78,37 @@ beforeEach(() => {
 	});
 });
 
-async function selfTest() {
-	const plugin = await import('~/index');
-
-	return plugin.selfTest();
+function warnings() {
+	return logs.entries.filter((entry) => entry.level === 'warn');
 }
 
 describe('starting without Discord’s context menu module', () => {
 	test('still adds the View Raw row to action sheets', async () => {
+		metro.markMissing('showContextMenu');
 		await startPlugin();
 
 		expect(await renderedLabels()).toEqual(['Reply', 'View Raw', 'Copy Text']);
 	});
 
-	test('reports the missing module in the self test', async () => {
+	test('warns about the missing module, which fails the self test', async () => {
+		metro.markMissing('showContextMenu');
 		await startPlugin();
 
-		expect(await selfTest()).toMatchObject({ ok: false });
+		expect(warnings()).toEqual([
+			{
+				level: 'warn',
+				args: ['View Raw menu items skipped: Discord moved ActionSheets or ContextMenus.'],
+			},
+		]);
 	});
 });
 
 describe('the self test', () => {
-	test('reports ok once both features are applied', async () => {
+	test('passes once both features are applied', async () => {
 		metro.register(ContextMenus);
 		await startPlugin();
 
-		expect(await selfTest()).toEqual({ ok: true, detail: '2 features applied' });
+		expect(warnings()).toEqual([]);
 	});
 });
 

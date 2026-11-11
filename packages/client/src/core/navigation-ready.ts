@@ -15,6 +15,10 @@ const NAVIGATION_POLL_MS = 100;
  * @returns The root navigation ref.
  */
 export async function navigationReady(): Promise<NavigationRef> {
+	if (!Navigation) {
+		throw new Error("Discord's root navigation is missing.");
+	}
+
 	const ref: NavigationRef = Navigation.getRootNavigationRef();
 
 	for (let waited = 0; !ref.isReady(); waited += NAVIGATION_POLL_MS) {

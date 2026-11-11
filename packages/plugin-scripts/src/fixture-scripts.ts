@@ -25,8 +25,13 @@ function stageFixtures(
 	messages: string[],
 ) {
 	const { metro, flux } = unbound;
+	const router = metro.findByProps('transitionToGuild');
 
-	metro.findByProps('transitionToGuild').transitionToGuild(guild, channel);
+	if (!router) {
+		throw new Error("Discord's router is missing.");
+	}
+
+	router.transitionToGuild(guild, channel);
 
 	return (async () => {
 		await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -39,6 +44,11 @@ function stageFixtures(
 			.filter((message) => message.author && !message.author.bot && /^\d+$/.test(message.id))
 			.pop();
 		const dispatcher = metro.findByProps('dispatch', 'subscribe');
+
+		if (!actions || !bot || !dispatcher) {
+			throw new Error("Discord's message actions, bot messages or dispatcher are missing.");
+		}
+
 		const holder = globalThis as StagedMessages;
 		const staged = holder.matrixStagedMessages ?? [];
 
@@ -153,6 +163,11 @@ function stageScrollFiller(channel: string, count: number) {
 	const { metro, flux } = unbound;
 	const actions = metro.findByProps('sendMessage', 'receiveMessage');
 	const bot = metro.findByProps('createBotMessage');
+
+	if (!actions || !bot) {
+		throw new Error("Discord's message actions or bot messages are missing.");
+	}
+
 	const self = flux.getStore('User').getCurrentUser()!.id;
 	const holder = globalThis as StagedMessages;
 	const staged = holder.matrixStagedMessages ?? [];
@@ -179,6 +194,11 @@ function clearStaged(channel: string) {
 	const { metro, flux } = unbound;
 	const bot = metro.findByProps('createBotMessage');
 	const dispatcher = metro.findByProps('dispatch', 'subscribe');
+
+	if (!bot || !dispatcher) {
+		throw new Error("Discord's bot messages or dispatcher are missing.");
+	}
+
 	const author = (bot.createBotMessage({ channelId: channel, content: '' }) as StagedAuthor)
 		.author?.id;
 	const loaded = flux.getStore('Message').getMessages(channel);

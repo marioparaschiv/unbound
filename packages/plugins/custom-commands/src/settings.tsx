@@ -6,8 +6,8 @@ import { useState } from 'react';
 
 import CommandList from '~/components/command-list';
 import CommandForm from '~/components/command-form';
-import { getTags } from '~/commands/saved-commands';
-import type { Tag } from '~/commands/tags';
+import { getTags } from '~/lib/saved-commands';
+import type { Tag } from '~/lib/tags';
 
 // The multiline response field can cover Save and Cancel, so a tap anywhere else closes the keyboard.
 function dismissKeyboardOutsideInput({ target }: GestureResponderEvent) {

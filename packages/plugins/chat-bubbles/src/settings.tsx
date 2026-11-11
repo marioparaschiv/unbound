@@ -4,8 +4,8 @@ import { messages } from '@unbound-app/i18n';
 import { ui } from '@unbound-app/api';
 
 import { BubbleLayout, BubbleLimits, BubbleStyle } from '~/constants';
-import { bubbleLayout, parseHexColor } from '~/bubbles/style';
-import { ThemeStore } from '~/bubbles/modules';
+import { bubbleLayout, parseHexColor } from '~/lib/style';
+import { ThemeStore } from '~/lib/modules';
 
 type NumberKey = 'radius' | 'horizontalPadding' | 'verticalPadding' | 'opacity';
 

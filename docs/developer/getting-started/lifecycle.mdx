@@ -29,7 +29,7 @@ The entry exports its lifecycle as named functions. All are optional.
 | `start` | `(context: PluginContext) => void \| Promise<void>` | When turned on, and at launch if on. A rejected promise is a failed start |
 | `stop` | `() => void \| Promise<void>` | When turned off. Awaited. The scope is disposed after it, even if it throws |
 | `SettingsPanel` | React component | Rendered as `<SettingsPanel />`, with no props, when the user opens the plugin's settings. See [Settings and Storage](/docs/developer/plugins/settings) |
-| `selfTest` | `() => { ok: boolean; detail: string } \| Promise<…>` | After a restart, by the device matrix. See [Plugin Anatomy](/docs/developer/getting-started/plugin-anatomy#the-entry) |
+| `selfTest` | `() => { ok: boolean; detail: string } \| Promise<…>` | After a restart, by the device matrix, unless the plugin warned while starting. Unbound builds one from those warnings when you export none. See [Plugin Anatomy](/docs/developer/getting-started/plugin-anatomy#the-entry) |
 
 The settings button on the plugin's card:
 
@@ -53,7 +53,7 @@ Imports from `@unbound-app/api` read the scoped `unbound`, so `patcher` is the p
 
 - Patches and slash commands.
 - Timers from `setTimeout` and `setInterval`.
-- `metro.onModuleLoad` listeners and unresolved `metro.findLazy` waits.
+- `metro.onModuleLoad` listeners, and unsettled `metro.onModuleLoaded` and `metro.findLazy` waits.
 - `storage.onChange` listeners.
 - `flux.onStoreChange`, `flux.onAction` and `flux.interceptAction` listeners.
 - `settings.registerSection` sections.
@@ -89,25 +89,23 @@ The scope sees only what went through it. Undo these in `stop`:
 
 ### Unpatch Before Redrawing
 
-The scope removes patches after `stop` returns. A `stop` that makes Discord redraw, such as with `emitChange`, would still draw through your patch. Call the patch's unpatch function first:
+The scope removes patches after `stop` returns. A `stop` that makes Discord redraw, such as with `emitChange`, would still draw through your patch. Call `patcher.unpatchAll()` first; it removes only this plugin's patches:
 
-```ts src/premium-badge/index.ts
+```ts src/index.tsx
 import { flux, patcher } from '@unbound-app/api';
 
 const UserStore = flux.getStore('User');
-let unpatch: (() => void) | undefined;
 
-export function startPremiumBadge() {
-	unpatch = patcher.after(UserStore, 'getCurrentUser', ({ result }) => {
+export function start() {
+	patcher.after(UserStore, 'getCurrentUser', ({ result }) => {
 		return result && { ...result, premiumType: 2 };
 	});
 	UserStore.emitChange();
 }
 
-export function stopPremiumBadge() {
-	// The scope removes the patch only after stop returns, so remove it here first.
-	unpatch?.();
-	unpatch = undefined;
+export function stop() {
+	patcher.unpatchAll();
+	// The patch is gone, so Discord redraws with the real user.
 	UserStore.emitChange();
 }
 ```
@@ -116,7 +114,49 @@ Component patches need no such care. Mounted components redraw with Discord's re
 
 ## Starting Features
 
-Start each feature on its own so one that throws does not stop the others. First-party plugins use `runFeatures` from `@unbound-plugins/shared`, with `atomic: true` when features depend on each other. A third-party plugin wraps each start function in `try`/`catch` with `logger.error`.
+`start` and `stop` only list features. `stop` calls `patcher.unpatchAll()`, then any cleanup the patcher does not own, in the order it matters.
+
+```ts src/index.tsx
+import { patcher } from '@unbound-app/api';
+
+import { patchMemberList } from '~/patches/member-list';
+import { startChannelLog } from '~/channel-log';
+
+export function start() {
+	patchMemberList();
+	startChannelLog();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}
+```
+
+Each feature checks its own needs first, and a failed check returns early. A setting that is off is silent; a missing module is one `logger.warn` naming the feature and what moved. Checks never throw: a feature that throws is a bug, and Unbound logs the failed `start` and disposes the scope.
+
+```ts src/patches/member-list.ts
+import { metro, patcher } from '@unbound-app/api';
+import { settings } from '@unbound-app/settings';
+
+declare function drawIndicators(): void;
+
+export function patchMemberList() {
+	if (!settings.memberList) {
+		return;
+	}
+
+	const UserRow = metro.findByFilePath('modules/members/native/UserRow.tsx');
+
+	if (!UserRow) {
+		logger.warn('Member list skipped: Discord moved UserRow.');
+		return;
+	}
+
+	patcher.after(UserRow, 'default', drawIndicators);
+}
+```
+
+Name a feature after what it does: `patchX` patches Discord's `X`, `interceptX` intercepts a Flux action, and anything else is a plain verb such as `startSaving` or `clearLog`. State several features share, such as a log, is its own module they import.
 
 ## Staying Fast
 

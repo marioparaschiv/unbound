@@ -1,5 +1,17 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import type { PluginContext } from '@unbound-app/api/native';
+import { patcher } from '@unbound-app/api';
 
-import { selfTestAvatars, startAvatars } from '~/avatars';
+import { hookAvatarViews, restoreAvatarCircles, selfTestAvatars } from '~/native/hooks';
 
-export const { start, stop, selfTest } = runFeatures([startAvatars], { selfTest: selfTestAvatars });
+export function start(context: PluginContext) {
+	hookAvatarViews(context);
+}
+
+export async function stop() {
+	patcher.unpatchAll();
+	await restoreAvatarCircles();
+}
+
+export function selfTest() {
+	return selfTestAvatars();
+}

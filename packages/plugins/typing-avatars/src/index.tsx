@@ -1,5 +1,11 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startTypingAvatars } from '~/typing-avatars';
+import { patchTypingIndicator } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startTypingAvatars]);
+export function start() {
+	patchTypingIndicator();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}

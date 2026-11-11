@@ -1,11 +1,11 @@
 import { messages } from '@unbound-app/i18n';
 import { metro } from '@unbound-app/api';
 
-import { openBlockedUsersSheet } from '~/reviews/components/blocked-users-sheet';
-import { openReviewsSheet } from '~/reviews/components/reviews-sheet';
-import { SUPPORT_SERVER_URL, WEBSITE_URL } from '~/constants';
-import { UserStore } from '~/reviews/modules';
-import { signIn } from '~/reviews/login';
+import { openBlockedUsersSheet } from '~/components/blocked-users-sheet';
+import { openReviewsSheet } from '~/components/reviews-sheet';
+import { SUPPORT_SERVER_URL, WEBSITE_URL } from '~/lib/constants';
+import { UserStore } from '~/lib/modules';
+import { signIn } from '~/lib/login';
 
 export async function authorize() {
 	await signIn();

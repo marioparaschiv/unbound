@@ -1,5 +1,14 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startReviews } from '~/reviews';
+import { notifyNewReviews } from '~/lib/new-reviews';
+import { patchUserProfileCard } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startReviews]);
+export function start() {
+	// The check waits on ReviewDB's server, so start does not.
+	void notifyNewReviews();
+	patchUserProfileCard();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}

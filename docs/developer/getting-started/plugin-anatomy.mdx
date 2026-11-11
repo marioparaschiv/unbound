@@ -20,23 +20,22 @@ Every file of `packages/plugins/character-counter`, the reference plugin. It sho
 			<File name='en-US.json' note='Every string. Required; the fallback language' />
 		</Folder>
 		<Folder name='src'>
-			<File name='index.tsx' note='The entry: starts each feature' />
-			<File name='constants.ts' note='Constants shared across files' />
+			<File name='index.tsx' note='The entry: lists the features' />
+			<File name='patches.tsx' note='The one feature: patchChatInput' />
 			<File name='unbound-settings.d.ts' note='Generated. Commit it' />
 			<File name='unbound-i18n.d.ts' note='Generated. Commit it' />
-			<Folder name='counter' note='The one feature'>
-				<File name='index.tsx' note='Starts the feature: the patch' />
-				<File name='modules.ts' note='Every module and store lookup' />
-				<File name='limit.ts' note='Pure logic: limit and tone' />
-				<File name='colors.ts' note='Pure logic: theme colors' />
+			<Folder name='components'>
+				<File name='character-counter.tsx' note='The pill' />
 				<File name='use-draft-length.ts' note='Hook that reads the draft' />
-				<Folder name='components'>
-					<File name='character-counter.tsx' note='The pill' />
-				</Folder>
+			</Folder>
+			<Folder name='lib' note='Own logic, no patches'>
+				<File name='limit.ts' note='Limit and tone' />
+				<File name='colors.ts' note='Theme colors' />
+				<File name='constants.ts' note='Constants shared across files' />
 			</Folder>
 		</Folder>
 		<Folder name='tests'>
-			<Folder name='counter'>
+			<Folder name='lib'>
 				<File name='limit.test.ts' note='Pure logic' />
 				<File name='colors.test.ts' note='Pure logic' />
 			</Folder>
@@ -106,52 +105,81 @@ preload = ["@unbound-app/api/testing/preset"]
 
 ## The Entry
 
-`src/index.tsx` starts features and holds no logic.
+`src/index.tsx` lists the features and holds no logic: no ifs, no state.
 
 ```tsx src/index.tsx quoted
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startCounter } from '~/counter';
+import { patchChatInput } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startCounter]);
+export function start() {
+	patchChatInput();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}
 ```
 
-`stop` has nothing to undo here: the Addon scope removes the patch. See [Lifecycle](/docs/developer/getting-started/lifecycle#what-stop-must-undo) for what still needs one.
+| Export | Does |
+| --- | --- |
+| `start` | Calls each feature in order. A feature checks its own needs, so `start` never branches |
+| `stop` | `patcher.unpatchAll()` removes this plugin's patches only. Then undo what the patcher does not own (timers kept outside the scope, outside listeners, store redraws, saved state), in the order it matters |
 
-`selfTest` runs after a restart in the device matrix and returns `{ ok, detail }`. A plugin whose features all skipped still passes `start`; the self-test fails it. `runFeatures` from `@unbound-plugins/shared/lifecycle/features` builds all three exports: `selfTest` reports `ok` while the started features run, and says why when one failed, skipped or still waits for a module Discord has not loaded.
+A feature that throws is a bug: Unbound logs the failed `start` and disposes the scope. See [Lifecycle](/docs/developer/getting-started/lifecycle#what-stop-must-undo) for what `stop` still undoes.
 
-`runFeatures` takes start functions that may return a cleanup, or a function of the start context that returns them. `stop` runs every cleanup in reverse. Logs go through the Addon scope's `logger`, so they carry the plugin's name.
+The device matrix reads a self-test after a restart. Unbound builds it from the warnings and errors the plugin's `logger` wrote during `start`: the first one fails it, with that line as the detail. Export `selfTest` only to check more, such as that something is drawn on screen.
 
-| Option | When a feature throws | Use when |
-| --- | --- | --- |
-| none | Logs and records a failure. Others still start | Features are independent (usual) |
-| `atomic: true` | Removes features already started and records a failure | Features need each other |
+## Folder Layout
+
+Never deeper than `src/<folder>/<file>`. At the top level, at most:
+
+| Entry | Holds |
+| --- | --- |
+| `index.tsx`, `settings.tsx` | The entry, and a settings panel when the plugin draws its own |
+| `patches.ts`, `commands.ts` | Each kind in one file while it is small |
+| `native/` | `hooks.ts`, `views.ts`, `worklets.ts`, `calls.ts` |
+| `flux/` | `interceptors.ts`, `listeners.ts` |
+| `components/` | React components and their hooks |
+| `lib/` | The plugin's own logic: data, network, storage, helpers. No Discord patches; tests reach it directly |
+
+A file that grows too big becomes a folder of named files: `patches.ts` becomes `patches/message-rows.ts`, `native/worklets.ts` becomes `native/worklets-android.ts` and `native/worklets-ios.ts`. Function names carry their kind, `patchX`, `interceptX`, `listenToX`, `registerX`, `hookX` or `drawX`, so a file moves without renames.
 
 ## A Feature
 
-Each feature lives in its own folder under `src/` and starts itself. Character Counter has one, `src/counter/`.
+A feature is one function. It checks its own needs first, and each failed check returns early:
 
-### index.tsx
+1. A setting that is off returns silently.
+2. A missing module logs one `logger.warn` naming the feature and what moved, then returns.
+3. Then it patches. No unpatch variables: `stop` removes every patch at once.
 
-Makes the patch. The JSDoc names what it patches and reads.
+Character Counter has one feature, `patchChatInput`. The JSDoc names what it patches and reads.
 
-```tsx src/counter/index.tsx quoted
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
+```tsx src/patches.tsx quoted
 import { cloneElement, isValidElement, type ReactNode } from 'react';
-import { patcher } from '@unbound-app/api';
+import { flux, metro, patcher } from '@unbound-app/api';
 
-import { ChatInputs, FloatingChatInputContainer, SelectedChannelStore } from '~/counter/modules';
-import { CharacterCounter } from '~/counter/components/character-counter';
+import { CharacterCounter } from '~/components/character-counter';
 
 type ContainerProps = { channel?: { id?: string }; channelId?: string };
 
 /**
- * @description Shows the counter above the composer without changing the composer's layout.
- * Patches the render of `FloatingChatInputContainer`, reads the draft from `ChatInputs`, and the
- * Nitro tier from `UserStore`. The Addon scope removes the patch when the plugin stops.
+ * @description Shows the counter above the composer without changing the composer's layout, by patching the render of
+ * Discord's `FloatingChatInputContainer`; the counter reads the draft from `ChatInputs`.
  */
-export function startCounter(): void {
-	if (!ensureModules({ ChatInputs, FloatingChatInputContainer })) return;
+export function patchChatInput(): void {
+	const ChatInputs = metro.findByProps('getBestActiveInputForChannelId');
+	const FloatingChatInputContainer = metro.findByFilePath(
+		'modules/chat_input/native/FloatingChatInputContainer.tsx',
+	);
+
+	if (!ChatInputs || !FloatingChatInputContainer) {
+		logger.warn('Counter skipped: Discord moved ChatInputs or FloatingChatInputContainer.');
+
+		return;
+	}
+
+	const SelectedChannelStore = flux.getStore('SelectedChannel');
 
 	patcher.react.after(FloatingChatInputContainer, 'default', ({ props, result }) => {
 		const container: ContainerProps = props;
@@ -165,7 +193,11 @@ export function startCounter(): void {
 			{},
 			<>
 				{result.props.children}
-				<CharacterCounter key='character-counter' channelId={channelId} />
+				<CharacterCounter
+					key='character-counter'
+					channelId={channelId}
+					inputs={ChatInputs}
+				/>
 			</>,
 		);
 	});
@@ -174,34 +206,18 @@ export function startCounter(): void {
 
 | Habit | Why |
 | --- | --- |
-| `ensureModules` | Logs one line, fails the self-test and returns `false` if a module is missing, so only this feature skips. Never loads a lazy handle; until Discord loads one, the self-test reports it as waiting |
+| Lookups inside the feature | A lazy lookup returns `undefined` when this Discord build is known to lack the module, so the check is a plain `if`. A feature that is off makes no lookups |
 | Patch `'default'` on the module | Reading the component itself would load the module at start |
 | Add a child, keep `children` | Other plugins may patch the same component |
+| Pass handles down as props | The component needs no lookup of its own. Only handles several features share go in a `modules.ts` |
 
-### modules.ts
+`flux.getStore` is typed and never `undefined`. Prefer `metro.api`, `metro.common` and `metro.stores` when they hold what you need; the component reads `metro.common.Theme`. When Discord renames a module, the fix is one line at the top of the feature. See [Finding Modules](/docs/developer/plugins/metro#modules-unbound-already-found).
 
-Every handle to something outside the plugin. When Discord renames a module, the fix is one line here.
+### lib/limit.ts
 
-```ts src/counter/modules.ts quoted
-import { flux, metro } from '@unbound-app/api';
+Decision logic goes in `lib/`, in plain files with no API imports, so tests reach it directly. `lib/colors.ts` does the same for theme colors.
 
-export const ChatInputs = metro.findByProps('getBestActiveInputForChannelId');
-export const FloatingChatInputContainer = metro.findByFilePath(
-	'modules/chat_input/native/FloatingChatInputContainer.tsx',
-);
-
-export const SelectedChannelStore = flux.getStore('SelectedChannel');
-export const ChannelStore = flux.getStore('Channel');
-export const UserStore = flux.getStore('User');
-```
-
-All lazy, so this file costs nothing at launch. `flux.getStore` is typed. Prefer `metro.api`, `metro.common` and `metro.stores` when they hold what you need; the component reads `metro.common.Theme`. See [Finding Modules](/docs/developer/plugins/metro#modules-unbound-already-found).
-
-### limit.ts
-
-Decision logic goes in plain files with no API imports, so tests reach it directly. `colors.ts` does the same for theme colors.
-
-```ts src/counter/limit.ts quoted
+```ts src/lib/limit.ts quoted
 import type { FluxUser } from '@unbound-app/api/flux';
 
 export type CounterTone = 'primary' | 'muted' | 'yellow' | 'orange' | 'red';
@@ -239,17 +255,17 @@ export function counterTone(length: number, limit: number, colorEffects: boolean
 
 The pill reads the draft, the Nitro tier and the user's setting:
 
-```tsx src/counter/components/character-counter.tsx excerpt
-	const length = useDraftLength(channelId);
+```tsx src/components/character-counter.tsx excerpt
+	const length = useDraftLength(inputs, channelId);
 	const limit = flux.useStore(UserStore, (store) => characterLimit(store.getCurrentUser()));
 	const colorEffects = useSetting('colorEffects');
 ```
 
 `format('COUNTER_LABEL', { length, limit })` gives its accessibility label. The build redraws it when the language changes.
 
-A constant read by more than one file goes in `src/constants.ts`. A value one file uses stays there. Character Counter's colors try Discord's theme tokens in order, then a fixed fallback:
+A constant read by more than one file goes in `src/lib/constants.ts`. A value one file uses stays there. Character Counter's colors try Discord's theme tokens in order, then a fixed fallback:
 
-```ts src/constants.ts quoted
+```ts src/lib/constants.ts quoted
 // Each tone tries Discord's theme tokens in order, then a fixed color when the theme has none.
 export const TONE_COLORS = {
 	primary: { tokens: ['BRAND_330', 'BRAND_500'], fallback: '#5865f2' },
@@ -304,7 +320,7 @@ Tests sit in `tests/`, named after what they cover.
 
 | Kind | How |
 | --- | --- |
-| Pure logic (`counter/limit.test.ts`, `counter/colors.test.ts`) | Import and call it. The preset is needed only for `~/` |
+| Pure logic (`lib/limit.test.ts`, `lib/colors.test.ts`) | Import and call it. The preset is needed only for `~/` |
 | Started plugin (`character-counter.test.tsx`) | Register the modules it looks up in `beforeEach`, call `startPlugin()`, render the patched container, read the pill |
 
 ```tsx tests/character-counter.test.tsx excerpt
@@ -318,7 +334,7 @@ Tests sit in `tests/`, named after what they cover.
 	});
 ```
 
-The preset forgets registered modules before each test. See [Writing Tests](/docs/developer/testing/writing-tests).
+The preset forgets registered modules before each test. `metro.markMissing` makes a lookup return `undefined`, as on a Discord build that lacks the module, to test a feature's warning. See [Writing Tests](/docs/developer/testing/writing-tests).
 
 ## Images
 
@@ -356,7 +372,7 @@ See [Addon Page](/docs/developer/publishing/store-page).
 
 <CardGroup cols={2}>
 	<Card title='Finding Modules' icon='magnifier' href='/docs/developer/plugins/metro'>
-		Write the lookups in `modules.ts`.
+		Write the lookups at the top of each feature.
 	</Card>
 	<Card title='Patching Components' icon='layers' href='/docs/developer/plugins/react-patching'>
 		Change what Discord draws.

@@ -1,5 +1,15 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import type { PluginContext } from '@unbound-app/api/native';
+import { patcher } from '@unbound-app/api';
 
-import { avatarsSelfTest, startAvatars } from '~/avatars';
+import { drawMentionAvatars, restoreMentionText, selfTest } from '~/native/views';
 
-export const { start, stop, selfTest } = runFeatures([startAvatars], { selfTest: avatarsSelfTest });
+export function start(context: PluginContext) {
+	drawMentionAvatars(context);
+}
+
+export function stop() {
+	patcher.unpatchAll();
+	restoreMentionText();
+}
+
+export { selfTest };

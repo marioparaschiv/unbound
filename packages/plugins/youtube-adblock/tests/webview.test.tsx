@@ -1,10 +1,9 @@
-import { metro, render, startPlugin } from '@unbound-app/api/testing';
+import { logs, metro, render, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { forwardRef } from 'react';
 import { View, type ViewProps } from 'react-native';
 
-import { INJECTED_FLAG } from '~/webview/adblock-script';
-import { selfTest } from '~/index';
+import { INJECTED_FLAG } from '~/lib/adblock-script';
 
 type WebViewProps = { source?: { uri?: string }; injectedJavaScript?: string };
 
@@ -56,7 +55,9 @@ describe('a WebView', () => {
 });
 
 describe('the self test', () => {
-	test('reports ok once the WebView is patched', () => {
-		expect(selfTest().ok).toBe(true);
+	test('passes once the WebView is patched, with no warning', () => {
+		expect(logs.entries.filter(({ level }) => level === 'warn' || level === 'error')).toEqual(
+			[],
+		);
 	});
 });

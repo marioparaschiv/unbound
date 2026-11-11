@@ -74,17 +74,17 @@ let subscription: LinkSubscription | undefined;
 let handling = false;
 let sharing = false;
 
-function isPrivate(channel: ChannelRecord): boolean {
-	const { DM, GROUP_DM } = Constants.ChannelTypes;
+function isPrivate(channel: ChannelRecord, constants: MetroExport): boolean {
+	const { DM, GROUP_DM } = constants.ChannelTypes;
 
 	return channel.type === DM || channel.type === GROUP_DM;
 }
 
-function acceptsFiles(channel: ChannelRecord): boolean {
+function acceptsFiles(channel: ChannelRecord, constants: MetroExport): boolean {
 	const { GUILD_TEXT, GUILD_ANNOUNCEMENT, PUBLIC_THREAD, PRIVATE_THREAD, ANNOUNCEMENT_THREAD } =
-		Constants.ChannelTypes;
+		constants.ChannelTypes;
 
-	if (isPrivate(channel)) {
+	if (isPrivate(channel, constants)) {
 		return true;
 	}
 
@@ -100,15 +100,19 @@ function acceptsFiles(channel: ChannelRecord): boolean {
 		return false;
 	}
 
-	const { SEND_MESSAGES, ATTACH_FILES } = Constants.Permissions;
+	const { SEND_MESSAGES, ATTACH_FILES } = constants.Permissions;
 
 	return Boolean(
 		PermissionStore.can(SEND_MESSAGES, channel) && PermissionStore.can(ATTACH_FILES, channel),
 	);
 }
 
-function describe(channel: ChannelRecord): ShareDestination {
-	if (isPrivate(channel)) {
+function describe(
+	channel: ChannelRecord,
+	constants: MetroExport,
+	guilds: MetroExport,
+): ShareDestination {
+	if (isPrivate(channel, constants)) {
 		const recipient: UserRecord | undefined = channel.recipients?.[0]
 			? UserStore.getUser(channel.recipients[0])
 			: undefined;
@@ -123,7 +127,7 @@ function describe(channel: ChannelRecord): ShareDestination {
 	}
 
 	const guild: GuildRecord | undefined = channel.guild_id
-		? GuildStore.getGuild(channel.guild_id)
+		? guilds.getGuild(channel.guild_id)
 		: undefined;
 
 	return {
@@ -135,6 +139,12 @@ function describe(channel: ChannelRecord): ShareDestination {
 }
 
 function destinations(): ShareDestination[] {
+	if (!Constants || !GuildStore) {
+		ShareLogger.warn('Share destinations skipped: Discord moved ChannelTypes or getGuild.');
+
+		return [];
+	}
+
 	const recent: (ChannelRecord | undefined)[] = [
 		ChannelStore.getChannel(SelectedChannelStore.getChannelId()),
 		...(FrecencyStore.getFrequentlyWithoutFetchingLatest() ?? []),
@@ -152,8 +162,8 @@ function destinations(): ShareDestination[] {
 
 		seen.add(channel.id);
 
-		if (acceptsFiles(channel)) {
-			found.push(describe(channel));
+		if (acceptsFiles(channel, Constants)) {
+			found.push(describe(channel, Constants, GuildStore));
 		}
 
 		if (found.length === MAX_DESTINATIONS) {
@@ -173,6 +183,13 @@ async function readable(files: SharedFile[]): Promise<SharedFile[]> {
 }
 
 async function stage(destination: ShareDestination, files: SharedFile[]) {
+	if (!Router || !Uploads) {
+		ShareLogger.warn('Sharing skipped: Discord moved transitionToGuild or addFiles.');
+		failed(messages.UNBOUND_SHARE_FAILED);
+
+		return;
+	}
+
 	Router.transitionToGuild(destination.guildId, destination.channelId);
 	Uploads.addFiles({
 		channelId: destination.channelId,
@@ -346,7 +363,24 @@ function claimLaunchURL(subject: string): boolean {
 /** Hands Unbound links to the Marketplace and shared files to a destination picker: the launch URL once per process, every link opened while running, and install links tapped in Discord. */
 export function start() {
 	subscription = Linking.addEventListener('url', (event: LinkEvent) => handleURL(event.url));
-	// An install link tapped inside Discord installs in place, before any prompt or browser.
+	patchLinkClicks();
+	readLaunchURL()
+		.then((url: string | null) => {
+			if (url) {
+				handleURL(url, true);
+			}
+		})
+		.catch((error: Error) => Logger.error('Failed to read the launch URL:', error));
+}
+
+// An install link tapped inside Discord installs in place, before any prompt or browser.
+function patchLinkClicks() {
+	if (!LinkClicks) {
+		Logger.warn('Install links in Discord skipped: Discord moved handleClick.');
+
+		return;
+	}
+
 	Patcher.instead(LinkClicks, 'handleClick', ({ args, original, this: self }) => {
 		const [options] = args as [LinkClick | undefined];
 		const link = options?.href ? parseUnboundLink(options.href) : undefined;
@@ -357,13 +391,6 @@ export function start() {
 
 		void receive(link);
 	});
-	readLaunchURL()
-		.then((url: string | null) => {
-			if (url) {
-				handleURL(url, true);
-			}
-		})
-		.catch((error: Error) => Logger.error('Failed to read the launch URL:', error));
 }
 
 /** Stops listening for links. */

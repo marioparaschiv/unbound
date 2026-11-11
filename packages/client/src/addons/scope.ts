@@ -20,6 +20,7 @@ import { manifestRegistrations } from '~/assets/plugin-assets';
 import { createScopedReact } from '~/hot-refresh/runtime';
 import { createPatcher } from '~/patcher/create-patcher';
 import { createScopedTimers } from '~/addons/timers';
+import { createStartLog } from '~/addons/start-log';
 import type { Addon } from '~/addons/addon';
 import * as patcherApi from '~/patcher/api';
 import type * as api from '~/core/api';
@@ -45,10 +46,13 @@ export type AddonGlobals = {
 	clearInterval: ScopedTimers['clearInterval'];
 };
 
-/** A plugin's globals, and the `dispose` that undoes everything they registered. */
+/** A plugin's globals, the `dispose` that undoes everything they registered, and what its logger warned while starting. */
 export type AddonScope = {
 	globals: AddonGlobals;
 	dispose: () => void;
+	/** The warnings and errors the plugin logged from evaluation until `endStart`. */
+	startIssues: readonly string[];
+	endStart: () => void;
 };
 
 type ScopedNamespaces = Pick<AddonGlobals, 'patcher' | 'commands'> & {
@@ -87,7 +91,8 @@ export function createAddonScope(addon: Addon<Plugin>, directory: string): Addon
 	const tagged = createPatcher(addon.id);
 	const timers = createScopedTimers();
 	const subscriptions = createSubscriptions();
-	const logger = createLogger('Plugins', addon.name);
+	const startLog = createStartLog(createLogger('Plugins', addon.name));
+	const { logger } = startLog;
 	const assets = scopeAssets(subscriptions, addon.id);
 	const { main, assets: listed = {} } = addon.manifest;
 	const i18n = scopeI18n(subscriptions, {
@@ -144,5 +149,7 @@ export function createAddonScope(addon: Addon<Plugin>, directory: string): Addon
 		dispose() {
 			disposeInReverse(parts.map((part) => part.dispose));
 		},
+		startIssues: startLog.issues,
+		endStart: startLog.end,
 	};
 }

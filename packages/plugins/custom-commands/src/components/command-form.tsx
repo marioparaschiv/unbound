@@ -3,14 +3,14 @@ import { format, messages } from '@unbound-app/i18n';
 import { useState } from 'react';
 
 import { MAX_ATTACHMENTS, MAX_DESCRIPTION_LENGTH } from '~/constants';
-import { parseTagArguments, validateTag } from '~/commands/tags';
-import { saveTag } from '~/commands/saved-commands';
+import { parseTagArguments, validateTag } from '~/lib/tags';
+import { saveTag } from '~/lib/saved-commands';
 import MediaRow from '~/components/media-row';
-import { notify, notifyError } from '~/commands/notify';
-import { isSaved, pickMedia } from '~/commands/media';
-import type { DraftMedia } from '~/commands/media';
-import type { Tag } from '~/commands/tags';
-import { Commands } from '~/commands/modules';
+import { notify, notifyError } from '~/lib/notify';
+import { isSaved, pickMedia } from '~/lib/media';
+import type { DraftMedia } from '~/lib/media';
+import type { Tag } from '~/lib/tags';
+import { Commands } from '~/lib/modules';
 
 type DiscordCommand = {
 	displayName: string;

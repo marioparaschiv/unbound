@@ -1,7 +1,6 @@
 import { findRenderTarget } from '@unbound-plugins/shared/react/render-target';
-import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
+import { metro, type patcher } from '@unbound-app/api';
 import type { AnyProps } from '@unbound-app/api/metro';
-import type { patcher } from '@unbound-app/api';
 
 type Cleanup = () => void;
 type Patcher = Pick<typeof patcher, 'after' | 'before'>;
@@ -57,26 +56,23 @@ export function patchLazySheets<P>(
 		unpatches.push(Patcher.after(target.holder, target.key, ({ result }) => render(result)));
 	}
 
+	// Each loads only when a user long-presses its target, so its patch waits for it.
 	for (const [path, key] of DIRECT_SHEETS) {
 		unpatches.push(
-			whenLoaded<AnyProps>(
-				path,
-				(module) => {
-					const target = findRenderTarget(module);
+			metro.onModuleLoaded(metro.filters.byFilePath(path), (module: AnyProps) => {
+				const target = findRenderTarget(module);
 
-					if (disposed || !target || patchedModules.has(module)) return;
+				if (disposed || !target || patchedModules.has(module)) return;
 
-					patchedModules.add(module);
-
-					return Patcher.after(target.holder, target.key, ({ args: [props], result }) => {
+				patchedModules.add(module);
+				unpatches.push(
+					Patcher.after(target.holder, target.key, ({ args: [props], result }) => {
 						const render = props ? onOpen(key, props as P) : undefined;
 
 						return render ? render(result) : result;
-					});
-					// Each loads only when a user long-presses its target, so waiting would fail every self test until then.
-				},
-				{ optional: true },
-			),
+					}),
+				);
+			}),
 		);
 	}
 

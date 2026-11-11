@@ -1,6 +1,12 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startInvitePermissions } from '~/invites';
-import { startTimeoutIcons } from '~/timeouts';
+import { patchInvitePermissions, patchMessageRows } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startTimeoutIcons, startInvitePermissions]);
+export function start() {
+	patchMessageRows();
+	patchInvitePermissions();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}

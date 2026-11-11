@@ -1,5 +1,11 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startCounter } from '~/counter';
+import { patchChatInput } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startCounter]);
+export function start() {
+	patchChatInput();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}

@@ -1,5 +1,12 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { giftFeatures } from '~/gift';
+import { patchChatInputRightActions, patchGiftOrThreadButton } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures(giftFeatures);
+export function start() {
+	patchGiftOrThreadButton();
+	patchChatInputRightActions();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}

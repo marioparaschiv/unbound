@@ -1,8 +1,6 @@
-import { logs, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { logs, metro, patches, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
-
-import { selfTest } from '~/index';
 import { memo, type ReactNode } from 'react';
 import { Text } from 'react-native';
 
@@ -167,21 +165,18 @@ describe('health', () => {
 	test('the self test passes once started and fails once stopped', async () => {
 		await startPlugin();
 
-		expect(selfTest()).toEqual({ ok: true, detail: '8 features applied' });
+		expect(logs.entries.filter(({ level }) => level === 'warn' || level === 'error')).toEqual(
+			[],
+		);
 
 		await stopPlugin();
 
-		expect(selfTest().ok).toBe(false);
+		expect(patches.applied).toEqual([]);
 	});
 
-	test('a part that cannot start leaves the others animating', async () => {
+	test('a part that cannot be patched fails the start', async () => {
 		modules.nameplate.default = 'not a component';
 
-		await startPlugin();
-
-		expect(rendered(components.decoration)).toBe('animate:true loop:false');
-		expect(avatarUtils.getGuildIconURL({ canAnimate: false })).toBe('icon.gif');
-		expect(selfTest()).toMatchObject({ ok: false });
-		expect(logs.entries.some(({ level }) => level === 'error')).toBe(true);
+		await expect(startPlugin()).rejects.toThrow('Failed to patch component');
 	});
 });

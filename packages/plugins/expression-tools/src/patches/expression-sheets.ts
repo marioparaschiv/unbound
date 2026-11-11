@@ -1,0 +1,121 @@
+import {
+	findElement,
+	isElementNode,
+	type ElementNode,
+} from '@unbound-plugins/shared/react/find-element';
+import type { AnyProps } from '@unbound-app/api/metro';
+import { patcher } from '@unbound-app/api';
+import { createElement } from 'react';
+
+import { parseExpression, type Expression, type ExpressionKind } from '~/lib/expression';
+import ExpressionActionBar from '~/components/expression-action-bar';
+
+export type ExpressionSheetPatches = ReturnType<typeof createExpressionSheetPatches>;
+
+// The running plugin's sheet patches, shared by both features; fresh per start, since stopping marks them stopped for good.
+let current: ExpressionSheetPatches | undefined;
+
+// UNKNOWN: a render result can be any React node.
+function findChildren(node: unknown, depth: number = 0): unknown[] | null {
+	if (depth > 12 || !isElementNode(node)) return null;
+
+	if (Array.isArray(node)) return node;
+
+	const { props } = node;
+
+	if (Array.isArray(props?.children)) return props.children;
+
+	return findChildren(props?.children, depth + 1);
+}
+
+// UNKNOWN: a child can be any React node.
+function isActionBar(child: unknown): boolean {
+	return isElementNode(child) && child.type === ExpressionActionBar;
+}
+
+// UNKNOWN: a render result can be any React node.
+function appendActionBar(result: unknown, expression: Expression, sheetKey: string): void {
+	const children = findChildren(result);
+
+	if (!children || children.some(isActionBar)) return;
+
+	children.push(
+		createElement(ExpressionActionBar, {
+			expression,
+			key: 'unbound.expression-tools-action',
+			sheetKey,
+		}),
+	);
+}
+
+function isDetailSheet({ props }: ElementNode): boolean {
+	// The shared element props do not declare these, so `in` narrows them.
+	if (!props || !('emojiNode' in props) || !('nonce' in props)) return false;
+
+	return Boolean(props.emojiNode) && props.nonce !== undefined;
+}
+
+/**
+ * @description Creates the patches that add the action bar to emoji and sticker detail sheets. Discord creates these components lazily, so each one is patched when it first appears.
+ * @returns Functions that patch a sheet module or a detail element once, and `stop`, which ignores sheets that load after the plugin stops.
+ */
+function createExpressionSheetPatches() {
+	const patched = new WeakSet<object>();
+	let stopped = false;
+
+	function afterOnce(
+		owner: AnyProps,
+		method: string,
+		callback: Parameters<typeof patcher.after<AnyProps, string>>[2],
+	) {
+		if (stopped || patched.has(owner) || typeof owner[method] !== 'function') return;
+
+		patched.add(owner);
+		patcher.after(owner, method, callback);
+	}
+
+	function patchDetailSheet(detail: AnyProps, expression: Expression, sheetKey: string) {
+		afterOnce(detail, 'type', ({ result }) => appendActionBar(result, expression, sheetKey));
+	}
+
+	function patchExpressionSheet(module: AnyProps, kind: ExpressionKind, sheetKey: string) {
+		afterOnce(module, 'default', ({ args: [props], result }) => {
+			const expression = parseExpression(kind, props);
+
+			if (!expression || !result || typeof result !== 'object') return;
+
+			appendActionBar(result, expression, sheetKey);
+			afterOnce(result, 'type', ({ result: content }) => {
+				const detail = findElement(content, isDetailSheet);
+
+				if (detail) patchDetailSheet(detail, expression, sheetKey);
+
+				appendActionBar(content, expression, sheetKey);
+			});
+		});
+	}
+
+	function stop() {
+		stopped = true;
+	}
+
+	return { patchExpressionSheet, patchDetailSheet, stop };
+}
+
+/**
+ * @description The running plugin's sheet patches, created on first use after each start.
+ * @returns Functions that patch a sheet module or a detail element once.
+ */
+export function expressionSheets(): ExpressionSheetPatches {
+	current ??= createExpressionSheetPatches();
+
+	return current;
+}
+
+/**
+ * @description Ignores the sheets that finish loading after the plugin stops, which the Addon scope cannot patch away.
+ */
+export function ignoreLateSheets(): void {
+	current?.stop();
+	current = undefined;
+}

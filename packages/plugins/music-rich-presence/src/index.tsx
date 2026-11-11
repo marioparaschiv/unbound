@@ -1,6 +1,12 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startPresence } from '~/presence';
+import { startPresence, stopPresence } from '~/lib/presence';
 
-// Stopping clears the activity the plugin sent, which the Addon scope cannot see.
-export const { start, stop, selfTest } = runFeatures([startPresence]);
+export function start() {
+	startPresence();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+	stopPresence();
+}

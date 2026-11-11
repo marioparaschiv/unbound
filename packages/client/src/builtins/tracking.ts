@@ -14,8 +14,13 @@ let stopWaiting: (() => void) | null = null;
 
 /** Disables Discord's analytics trackers as Discord loads them. */
 export function start() {
-	Patcher.instead(Metadata, 'trackWithMetadata', noop);
-	Patcher.instead(Properties, 'track', noop);
+	if (Metadata) {
+		Patcher.instead(Metadata, 'trackWithMetadata', noop);
+	}
+
+	if (Properties) {
+		Patcher.instead(Properties, 'track', noop);
+	}
 
 	stopWaiting = onModuleLoaded(byProps('AnalyticsActionHandlers'), (Handlers) => {
 		const { AnalyticsActionHandlers } = Handlers;

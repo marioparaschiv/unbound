@@ -153,6 +153,14 @@ declare module '@unbound-app/settings' {
 		 */
 		showBadge: boolean;
 		/**
+		 * Member list indicators
+		 */
+		memberList: boolean;
+		/**
+		 * Emoji picker favourites
+		 */
+		emojiPicker: boolean;
+		/**
 		 * Style
 		 */
 		style: "compact" | "roomy";
@@ -200,6 +208,14 @@ declare module '@unbound-app/settings' {
 		 */
 		"showBadge": boolean;
 		/**
+		 * Member list indicators
+		 */
+		"memberList": boolean;
+		/**
+		 * Emoji picker favourites
+		 */
+		"emojiPicker": boolean;
+		/**
 		 * Style
 		 */
 		"style": "compact" | "roomy";
@@ -235,7 +251,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = Extract<{ [K in keyof Actions]: Actions[K] extends () => void | Promise<void> ? K : never }[keyof Actions], string>;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "greetOnStart" | "showBadge" | "locked";
+	export type BooleanSettingKey = "greetOnStart" | "showBadge" | "memberList" | "emojiPicker" | "locked";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

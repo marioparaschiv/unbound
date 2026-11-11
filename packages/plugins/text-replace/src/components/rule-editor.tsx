@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 import { ruleKindMessages } from '~/components/rule-kind-messages';
 import type { RuleKind } from '@unbound-plugins/shared/text-replace/stored-rules';
-import { deleteRule, saveRule } from '~/replace/stored-rules';
+import { deleteRule, saveRule } from '~/lib/stored-rules';
 
 type RuleEditorProps = {
 	kind: RuleKind;

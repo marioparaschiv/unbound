@@ -47,6 +47,11 @@ export type MetroStoreOptions = {
 /** Options for {@link onModuleLoaded}: whether to also match a module's `default` export, and to return it on such a match. */
 export type MetroModuleLoadedOptions = Pick<MetroSearchOptions, 'esModules' | 'interop'>;
 
+/** Options for {@link onModuleLoaded}'s wait, adding `onMissing`, run at once instead of waiting when the cache knows the module is missing. */
+export type MetroWaitOptions = MetroModuleLoadedOptions & {
+	onMissing?: () => void;
+};
+
 /**
  * What is known of a module without loading it: `loaded` once loaded, `present` when an earlier search
  * found it in this build, `missing` when a full search of this build found nothing, and `unknown` otherwise.
@@ -132,12 +137,12 @@ export type MetroBulkFind<T extends string> = [
 	AnyProps<MetroBulkMarker>,
 ];
 
-/** Widens a single result to an array when the search was made with `all: true`. */
+/** Widens a single result to an array when the search was made with `all: true`; a single one is `undefined` when the cache knows it is missing. */
 export type MetroAllValues<T extends MetroSearchOptions, U> = T extends {
 	all: true;
 }
 	? U[]
-	: U;
+	: U | undefined;
 
 /** Result shape of a by-property search: a record keyed by the requested props. */
 export type MetroSingleModuleByProperty<T extends any[]> = T extends [
@@ -145,7 +150,7 @@ export type MetroSingleModuleByProperty<T extends any[]> = T extends [
 	infer O extends MetroSearchOptions,
 ]
 	? MetroAllValues<O, MetroModuleWithProps<Exclude<T[number], object>>>
-	: MetroModuleWithProps<Exclude<T[number], object>>;
+	: MetroModuleWithProps<Exclude<T[number], object>> | undefined;
 
 /** Result shape of a by-name search: the matched function (or its default export). */
 export type MetroSingleModuleByName<T extends any[]> = T extends [
@@ -158,7 +163,7 @@ export type MetroSingleModuleByName<T extends any[]> = T extends [
 				? { default: MetroNamedExport<Exclude<T[number], object>> }
 				: MetroNamedExport<Exclude<T[number], object>>
 		>
-	: MetroNamedExport<Exclude<T[number], object>>;
+	: MetroNamedExport<Exclude<T[number], object>> | undefined;
 
 /** Result shape of a by-path search: the module's exports. */
 export type MetroSingleModuleByPath<T extends any[]> = T extends [
@@ -166,7 +171,7 @@ export type MetroSingleModuleByPath<T extends any[]> = T extends [
 	infer O extends MetroSearchOptions,
 ]
 	? MetroAllValues<O, MetroModuleAtPath<Exclude<T[number], object>>>
-	: MetroModuleAtPath<Exclude<T[number], object>>;
+	: MetroModuleAtPath<Exclude<T[number], object>> | undefined;
 
 /** Result shape of a bulk by-property search, one record per requested item. */
 export type MetroBulkModuleByProperty<T extends any[]> = {
@@ -180,17 +185,15 @@ export type MetroBulkModuleByName<T extends any[]> = {
 		: MetroNamedExport<T[K]['params'][number]>;
 };
 
-/**
- * Dispatches to the bulk or single by-property result shape based on the argument tuple.
- */
+/** Dispatches to the bulk or single by-property result shape. */
 export type MetroPropertyRecordOrArray<T extends any[], U extends string> =
 	T extends MetroBulkFind<U> ? MetroBulkModuleByProperty<T> : MetroSingleModuleByProperty<T>;
 
-/** Dispatches to the bulk or single by-path result shape based on the argument tuple. */
+/** Dispatches to the bulk or single by-path result shape. */
 export type MetroModuleOrArray<T extends any[], U extends string> =
 	T extends MetroBulkFind<U> ? AnyProps : MetroSingleModuleByPath<T>;
 
-/** Dispatches to the bulk or single by-name result shape based on the argument tuple. */
+/** Dispatches to the bulk or single by-name result shape. */
 export type MetroFunctionSignatureOrArray<T extends any[], U extends string> =
 	T extends MetroBulkFind<U> ? MetroBulkModuleByName<T> : MetroSingleModuleByName<T>;
 
