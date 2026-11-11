@@ -46,6 +46,7 @@ function isPending<T>(result: T | Promise<T>): result is Promise<T> {
 	return typeof (result as Promise<T> | undefined)?.then === 'function';
 }
 
+// UNKNOWN: catch binds whatever was thrown, not necessarily an Error.
 function messageOf(error: unknown): string {
 	return error instanceof Error ? error.message : String(error);
 }

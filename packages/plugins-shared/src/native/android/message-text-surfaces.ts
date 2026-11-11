@@ -1,14 +1,3 @@
-import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
-import type { NativeJavaReference, NativeJavaValue } from '@unbound-app/api/native';
-import {
-	MESSAGE_CONTENT_VIEW,
-	messageIdAbove,
-} from '@unbound-plugins/shared/native/android/discord-views';
-import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
-import {
-	createInlineSurfaces,
-	type InlineSurfaceNative,
-} from '@unbound-plugins/shared/native/android/inline-surfaces';
 import {
 	javaFlag,
 	javaNumber,
@@ -16,11 +5,22 @@ import {
 	javaText,
 	javaViewKey,
 } from '@unbound-plugins/shared/native/android/java-values';
+import {
+	createInlineSurfaces,
+	type InlineSurfaceNative,
+} from '@unbound-plugins/shared/native/android/inline-surfaces';
+import {
+	MESSAGE_CONTENT_VIEW,
+	messageIdAbove,
+} from '@unbound-plugins/shared/native/android/discord-views';
+import { displayDensity, readCalls, runOnMain } from '@unbound-plugins/shared/native/android/views';
+import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
+import type { TextRewriteEdit } from '@unbound-plugins/shared/native/android/text-rewrites';
 import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewrite-retry';
 import { hasSpan, readViewTextAsync } from '@unbound-plugins/shared/native/android/spans';
-import type { TextRewriteEdit } from '@unbound-plugins/shared/native/android/text-rewrites';
+import type { NativeJavaReference, NativeJavaValue } from '@unbound-app/api/native';
 import { watchTextViews } from '@unbound-plugins/shared/native/android/text-views';
-import { displayDensity, readCalls, runOnMain } from '@unbound-plugins/shared/native/android/views';
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 
 const MIN_WIDTH = 80;
 const SIZE_PARAMETERS = ['int', 'int', 'int', 'int'];
@@ -126,7 +126,7 @@ export function createMessageTextSurfaces<T extends TextSurfaceSlot>(
 		groupPrefix: options.prefix,
 	});
 
-	if (!inline) return undefined;
+	if (!inline) return;
 
 	const surfaces = inline;
 	const layouts = new Map<string, Layout<T>>();
@@ -157,7 +157,7 @@ export function createMessageTextSurfaces<T extends TextSurfaceSlot>(
 	async function define(layout: Layout<T>) {
 		const heights = await Promise.all(
 			layout.slots.map((slot, index) =>
-				options.layout(layout.surfaceIds[index]!, slot, layout.width),
+				options.layout(layout.surfaceIds[index], slot, layout.width),
 			),
 		);
 
@@ -171,7 +171,7 @@ export function createMessageTextSurfaces<T extends TextSurfaceSlot>(
 			text: slot.text,
 			spacerOffset: slot.placeholder,
 			width: px(layout.width),
-			height: px(heights[index]! + slot.gap),
+			height: px(heights[index] + slot.gap),
 			...(slot.clearTo === undefined
 				? {}
 				: { clearFrom: slot.start, clearTo: slot.clearTo, collapseNext: true }),
@@ -182,10 +182,10 @@ export function createMessageTextSurfaces<T extends TextSurfaceSlot>(
 			textView: layout.textView,
 			edits,
 			slots: layout.slots.map((slot, index) => ({
-				surfaceId: layout.surfaceIds[index]!,
-				placeholder: indexes[index]!,
+				surfaceId: layout.surfaceIds[index],
+				placeholder: indexes[index],
 				width: px(layout.width),
-				height: px(heights[index]!),
+				height: px(heights[index]),
 				...(slot.pinTop ? { pinTop: true, offsetY: px(slot.gap) } : {}),
 			})),
 		});
@@ -316,8 +316,9 @@ export function createMessageTextSurfaces<T extends TextSurfaceSlot>(
 		settling: () => views.busy() || awaitingSize.size > 0,
 		redraw(surfaceId) {
 			for (const layout of layouts.values()) {
-				if (surfaceId === undefined || layout.surfaceIds.includes(surfaceId))
+				if (surfaceId === undefined || layout.surfaceIds.includes(surfaceId)) {
 					redefine(layout);
+				}
 			}
 		},
 		dispose() {
