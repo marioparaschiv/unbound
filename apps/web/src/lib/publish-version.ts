@@ -29,9 +29,16 @@ import one from '~/db/one';
  * What to make live. A review pins a stored submission (pending, or approved with its files unwritten);
  * first-party pins a build commit `readAddonSource` already read and checked.
  */
-export type PublishPin =
-	| { mode: 'review'; row: SourcedSubmissionRow; decision: Decision }
-	| { mode: 'first-party'; source: AddonSource; caller: Caller; repository: string };
+export type PublishPin = ReviewPin | FirstPartyPin;
+
+type ReviewPin = { mode: 'review'; row: SourcedSubmissionRow; decision: Decision };
+
+type FirstPartyPin = {
+	mode: 'first-party';
+	source: AddonSource;
+	caller: Caller;
+	repository: string;
+};
 
 /** What publishing did, as first-party CI reports it. */
 export type PublishStatus = 'published' | 'replaced' | 'unchanged';
@@ -52,9 +59,6 @@ type Commit = {
 	/** The files to write after the commit. */
 	artifact: Artifact;
 };
-
-type FirstPartyPin = Extract<PublishPin, { mode: 'first-party' }>;
-type ReviewPin = Extract<PublishPin, { mode: 'review' }>;
 
 /**
  * @description Compares two `owner/name` repositories as GitHub does, ignoring case.
@@ -201,8 +205,8 @@ export async function markFilesPublished(
 	await refreshAddonSummary(tx, row.addonId);
 }
 
-// Extra files, compiled bundles and media are never staged: they are re-read from the pinned commit's
-// blobs. b2/staging-lifecycle.json hides staged objects after 14 days, so a missing bundle is re-read too.
+// Re-reads from the pinned commit's blobs what is never staged (extra files, compiled bundles, media)
+// and a bundle b2/staging-lifecycle.json already expired (14 days).
 async function readAtPin(ctx: AppContext, row: SourcedSubmissionRow): Promise<Artifact> {
 	const { manifest, repository, source } = row;
 	const staged = ctx.storage.staging.file(row.stagingKey);

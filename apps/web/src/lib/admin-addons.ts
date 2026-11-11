@@ -6,9 +6,9 @@ import type { UserSummary } from '@unbound-app/contracts/account';
 import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import type { SQL } from 'drizzle-orm';
 
-import { cursorTime, keysetList } from '~/lib/keyset';
 import { addonMaintainer, addonSearchText, submission } from '~/db/schema';
 import { SERVED_VERSION } from '~/lib/addon-visibility';
+import { cursorTime, keysetList } from '~/lib/keyset';
 import { requirePermission } from '~/lib/api/caller';
 import { renderAddonIcon } from '~/lib/addon-icons';
 import { matchesSearch } from '~/lib/admin-search';
