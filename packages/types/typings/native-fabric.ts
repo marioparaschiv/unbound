@@ -36,6 +36,7 @@ export type NativeFabricMountOptions = {
 
 /** One surface's changes in a `batchAsync` call, applied as properties, then size, then frame. */
 export type NativeFabricBatchMutation = {
+	/** The surface these changes apply to. */
 	surface: NativeFabricSurface;
 	/** New properties, as `update` sends them. */
 	properties?: NativeSerializableObject;
