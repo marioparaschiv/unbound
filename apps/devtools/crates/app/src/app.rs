@@ -5,16 +5,17 @@ use std::time::Duration;
 
 use gpui::{
 	App, Context, Entity, FocusHandle, Focusable, KeyBinding, MouseButton, MouseMoveEvent,
-	MouseUpEvent, ScrollStrategy, Task, UniformListScrollHandle, Window, actions, div, prelude::*,
-	px,
+	MouseUpEvent, ScrollHandle, ScrollStrategy, Task, UniformListScrollHandle, Window, actions,
+	div, prelude::*, px,
 };
-use unbound_devtools_core::{Config, Devtools, ElementId, Presets, Row, Status};
+use unbound_devtools_core::{Config, Devtools, ElementId, Row, Status};
 
-use crate::devices::{self, DeviceMenu};
-use crate::input::{self, TextInput};
+use crate::devices;
 use crate::inspection::Inspection;
+use crate::link::DebuggerLink;
 use crate::search::Search;
 use crate::theme;
+use gpui_component::input::{InputEvent, InputState};
 
 actions!(
 	tree,
@@ -28,12 +29,11 @@ actions!(
 		FocusSearch
 	]
 );
-actions!(search, [NextMatch, PrevMatch, ClearSearch]);
+actions!(search, [ClearSearch]);
 
 const CHANGE_COALESCING_FRAME: Duration = Duration::from_millis(16);
 
 pub fn bind_keys(cx: &mut App) {
-	input::bind_keys(cx);
 	devices::bind_keys(cx);
 	let tree = Some("Tree");
 	let search = Some("Search");
@@ -45,8 +45,6 @@ pub fn bind_keys(cx: &mut App) {
 		KeyBinding::new("home", SelectFirst, tree),
 		KeyBinding::new("end", SelectLast, tree),
 		KeyBinding::new("/", FocusSearch, tree),
-		KeyBinding::new("enter", NextMatch, search),
-		KeyBinding::new("shift-enter", PrevMatch, search),
 		KeyBinding::new("escape", ClearSearch, search),
 	]);
 }
@@ -61,6 +59,11 @@ pub fn on_runtime<T: Send + 'static, F: Future<Output = T> + Send + 'static>(
 	async move { handle.await.ok() }
 }
 
+/// The window's width less the sidebar's: what this page lays out in.
+pub fn page_width(window: &Window) -> f32 {
+	f32::from(window.viewport_size().width) - f32::from(theme::SIDEBAR_WIDTH)
+}
+
 pub struct Workspace {
 	pub devtools: Devtools,
 	pub config: Config,
@@ -71,16 +74,14 @@ pub struct Workspace {
 	pub scroll: UniformListScrollHandle,
 	pub synced_selection: Option<ElementId>,
 	pub search: Search,
-	pub search_input: Entity<TextInput>,
+	pub search_input: Entity<InputState>,
 	pub inspection: Option<Inspection>,
 	pub folded_sections: HashSet<&'static str>,
+	pub inspector_scroll: ScrollHandle,
 	pub inspector_width: f32,
 	pub resizing: bool,
 	pub renderer: Option<String>,
-	pub connecting: bool,
-	pub presets: Result<Presets, String>,
-	pub presets_revision: u64,
-	pub device_menu: Option<DeviceMenu>,
+	pub link: Entity<DebuggerLink>,
 	pub banner: Option<String>,
 	pub copied: bool,
 	pub highlighted: Option<ElementId>,
@@ -94,18 +95,22 @@ impl Workspace {
 	pub fn new(
 		devtools: Devtools,
 		config: Config,
+		link: Entity<DebuggerLink>,
 		window: &mut Window,
 		cx: &mut Context<Self>,
 	) -> Self {
 		let search_input = cx.new(|cx| {
-			TextInput::new(
-				"Search components, or a jq filter like .name == \"View\"",
-				cx,
-			)
+			InputState::new(window, cx)
+				.placeholder("Search components, or a jq filter like .name == \"View\"")
 		});
-		cx.subscribe(&search_input, |this, _, _: &input::Changed, cx| {
-			this.query_changed(cx)
-		})
+		cx.subscribe(
+			&search_input,
+			|this, _, event: &InputEvent, cx| match event {
+				InputEvent::Change => this.query_changed(cx),
+				InputEvent::PressEnter { shift, .. } => this.step_match(!shift, cx),
+				_ => {}
+			},
+		)
 		.detach();
 		let watch = cx.spawn({
 			let mut changes = devtools.changes();
@@ -139,13 +144,11 @@ impl Workspace {
 			search_input,
 			inspection: None,
 			folded_sections: HashSet::new(),
+			inspector_scroll: ScrollHandle::new(),
 			inspector_width: theme::INSPECTOR_DEFAULT,
 			resizing: false,
 			renderer: None,
-			connecting: false,
-			presets: Ok(Presets::default()),
-			presets_revision: 0,
-			device_menu: None,
+			link,
 			banner: None,
 			copied: false,
 			highlighted: None,
@@ -154,7 +157,6 @@ impl Workspace {
 			copied_reset: None,
 			_watch: watch,
 		};
-		this.reload_presets();
 		this.revision_changed(cx);
 		this
 	}
@@ -162,9 +164,6 @@ impl Workspace {
 	fn revision_changed(&mut self, cx: &mut Context<Self>) {
 		let was_host = self.status.show_host_components;
 		self.status = self.devtools.status();
-		if self.presets_revision != self.devtools.presets_revision() {
-			self.reload_presets();
-		}
 		if was_host != self.status.show_host_components {
 			// The backend remounts with new ids, so per-id view state is stale.
 			self.collapsed.clear();
@@ -320,7 +319,7 @@ impl Workspace {
 	}
 
 	fn query_changed(&mut self, cx: &mut Context<Self>) {
-		let query = self.search_input.read(cx).text().to_string();
+		let query = self.search_input.read(cx).value().to_string();
 		self.search.set_query(query, self.devtools.clone(), cx);
 	}
 
@@ -330,21 +329,14 @@ impl Workspace {
 		}
 	}
 
-	fn next_match(&mut self, _: &NextMatch, _: &mut Window, cx: &mut Context<Self>) {
-		self.step_match(true, cx);
-	}
-
-	fn prev_match(&mut self, _: &PrevMatch, _: &mut Window, cx: &mut Context<Self>) {
-		self.step_match(false, cx);
-	}
-
 	fn clear_search(&mut self, _: &ClearSearch, window: &mut Window, cx: &mut Context<Self>) {
 		self.clear_query(window, cx);
 	}
 
 	pub fn clear_query(&mut self, window: &mut Window, cx: &mut Context<Self>) {
 		self.search_input
-			.update(cx, |input, cx| input.clear(window, cx));
+			.update(cx, |input, cx| input.set_value("", window, cx));
+		self.query_changed(cx);
 		window.focus(&self.tree_focus, cx);
 	}
 
@@ -403,7 +395,7 @@ impl Workspace {
 	}
 
 	pub fn inspector_width(&self, window: &Window) -> f32 {
-		let room = f32::from(window.viewport_size().width) - theme::TREE_MIN;
+		let room = page_width(window) - theme::TREE_MIN;
 		self.inspector_width.min(room).max(theme::INSPECTOR_MIN)
 	}
 
@@ -472,12 +464,9 @@ impl Render for Workspace {
 			.on_action(cx.listener(Self::collapse_or_parent))
 			.on_action(cx.listener(Self::expand_or_child))
 			.on_action(cx.listener(Self::focus_search))
-			.on_action(cx.listener(Self::next_match))
-			.on_action(cx.listener(Self::prev_match))
 			.on_action(cx.listener(Self::clear_search))
-			.child(self.render_toolbar(window, cx))
+			.child(self.render_toolbar(cx))
 			.child(body)
 			.child(self.render_status(cx))
-			.children(self.render_menu_backdrop(window, cx))
 	}
 }

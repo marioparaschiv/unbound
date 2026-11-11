@@ -1,11 +1,13 @@
 use std::net::SocketAddr;
 use std::process::Command;
+use std::sync::OnceLock;
 
 use futures_util::{SinkExt, StreamExt};
 use serde_json::{Value as Json, json};
 use tokio::net::TcpListener;
 use tokio::sync::oneshot;
 use tokio_tungstenite::tungstenite::Message;
+use unbound_devtools_core::presets::CONFIG_DIR_ENV;
 use unbound_devtools_core::{BridgeState, Config, ConnectionState, Devtools, bridge};
 
 async fn fake_bridge(
@@ -56,7 +58,19 @@ async fn fake_bridge(
 	(addr, code_rx)
 }
 
+/// `connect_device` remembers the debugger connection, so it writes here, not the user's config.
+fn config_dir() {
+	static DIR: OnceLock<()> = OnceLock::new();
+	DIR.get_or_init(|| {
+		let dir =
+			std::env::temp_dir().join(format!("unbound-devtools-bridge-{}", std::process::id()));
+		// SAFETY: set once, before any test reads it, under the OnceLock.
+		unsafe { std::env::set_var(CONFIG_DIR_ENV, dir) };
+	});
+}
+
 fn session_with_bridge(bridge: SocketAddr) -> (Devtools, u16) {
+	config_dir();
 	let devtools = Devtools::start(Config {
 		listen: "127.0.0.1:0".parse().expect("addr"),
 		bridge,
