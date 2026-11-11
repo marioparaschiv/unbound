@@ -69,6 +69,27 @@ void corruptLastGoodCopyResets(const std::filesystem::path &root)
     assert(countPrefixed(root, "settings.json.corrupt-") == 1);
 }
 
+void corruptBackupsWithOtherNamesDoNotStopLoading(const std::filesystem::path &root)
+{
+    const std::string path = settingsPath(root);
+    assert(loader::writeTextFileAtomically(path + ".corrupt-manual", "kept"));
+    assert(loader::writeTextFileAtomically(path + ".corrupt-", "kept"));
+    for (int index = 0; index < 4; index++)
+    {
+        assert(loader::writeTextFileAtomically(path + ".corrupt-" + std::to_string(index), "x"));
+    }
+    assert(loader::writeTextFileAtomically(path, "{broken"));
+
+    loader::SettingsStore store(path);
+    store.load();
+    assert(loader::readTextFile(path) == "{}");
+    assert(loader::readTextFile(path + ".corrupt-manual") == "kept");
+    assert(loader::readTextFile(path + ".corrupt-") == "kept");
+    assert(!loader::fileExists(path + ".corrupt-0"));
+    assert(!loader::fileExists(path + ".corrupt-1"));
+    assert(countPrefixed(root, "settings.json.corrupt-") == 5);
+}
+
 void undecodablePackedStoreReadsFromTheJson(const std::filesystem::path &root)
 {
     const std::string path = settingsPath(root);
@@ -207,6 +228,7 @@ int main()
 
     run("empty-good", emptySettingsAreNotKeptAsTheLastGoodCopy);
     run("corrupt-good", corruptLastGoodCopyResets);
+    run("backup-names", corruptBackupsWithOtherNamesDoNotStopLoading);
     run("packed", undecodablePackedStoreReadsFromTheJson);
     run("malformed", refreshCacheSkipsMalformedStores);
     run("changed", refreshCacheSkipsAFileChangedSinceLoading);
