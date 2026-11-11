@@ -6,7 +6,7 @@ import {
 	noteChange,
 	notePlaced,
 	startSettle,
-} from '~/bubbles/reuse-settle';
+} from '~/lib/reuse-settle';
 
 describe('reuse settle', () => {
 	test('settles a reused cell that was never placed', () => {

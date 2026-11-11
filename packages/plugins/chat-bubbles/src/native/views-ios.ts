@@ -11,12 +11,12 @@ import { readRect } from '@unbound-plugins/shared/native/ios/rect';
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
 import { readNativeMessageInfo } from '@unbound-plugins/shared/native/ios/message-info';
 
-import { messageLayout, type SnapshotNode } from '~/bubbles/message-layout';
-import { drawBubble, forgetBubbles, installBubbleGuards } from '~/bubbles/ios/ui-bubbles';
+import { messageLayout, type SnapshotNode } from '~/lib/message-layout';
+import { drawBubble, forgetBubbles, installBubbleGuards } from '~/native/worklets-ios';
 import { BubbleLayout, CARD_INSET, IOSClass } from '~/constants';
-import { bubbleFrame, bubbleProblem, cardFrame, frameDrift } from '~/bubbles/geometry';
-import { currentAppearance } from '~/bubbles/theme';
-import { messageOwnership } from '~/bubbles/author';
+import { bubbleFrame, bubbleProblem, cardFrame, frameDrift } from '~/lib/geometry';
+import { currentAppearance } from '~/lib/theme';
+import { messageOwnership } from '~/lib/author';
 import {
 	createDrawnSignatures,
 	needsSettle,
@@ -24,7 +24,7 @@ import {
 	notePlaced,
 	startSettle,
 	type ReuseSettle,
-} from '~/bubbles/reuse-settle';
+} from '~/lib/reuse-settle';
 
 const SNAPSHOT = { maxDepth: 12, maxNodes: 512 };
 const BUBBLE_TAG = 0x0b0b1e;

@@ -44,12 +44,12 @@ import {
 	union,
 	type Box,
 	type Edges,
-} from '~/bubbles/geometry';
+} from '~/lib/geometry';
 import { AndroidClass, BubbleLayout, CARD_INSET } from '~/constants';
-import { forgetBubbles, installBindGuard, rememberBubble } from '~/bubbles/android/ui-bubbles';
-import { currentAppearance } from '~/bubbles/theme';
-import { argb } from '~/bubbles/style';
-import { isOwnMessage } from '~/bubbles/author';
+import { forgetBubbles, installBindGuard, rememberBubble } from '~/native/worklets-android';
+import { currentAppearance } from '~/lib/theme';
+import { argb } from '~/lib/style';
+import { isOwnMessage } from '~/lib/author';
 import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
 
 type AndroidNative = {

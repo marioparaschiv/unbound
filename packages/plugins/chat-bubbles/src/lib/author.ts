@@ -1,4 +1,4 @@
-import { MessageStore, SelectedChannelStore, UserStore } from '~/bubbles/modules';
+import { MessageStore, SelectedChannelStore, UserStore } from '~/lib/modules';
 
 /**
  * @description Tells who sent a message, as far as the loaded messages know.

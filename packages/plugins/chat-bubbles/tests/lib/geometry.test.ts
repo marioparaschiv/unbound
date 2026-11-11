@@ -10,7 +10,7 @@ import {
 	union,
 	bubbleProblem,
 	frameDrift,
-} from '~/bubbles/geometry';
+} from '~/lib/geometry';
 
 const padding = { horizontal: 8, vertical: 4 };
 

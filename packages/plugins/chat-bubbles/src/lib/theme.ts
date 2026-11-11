@@ -1,8 +1,8 @@
-import { bubbleAppearance, type BubbleAppearance } from '~/bubbles/style';
+import { bubbleAppearance, type BubbleAppearance } from '~/lib/style';
 import { settings } from '@unbound-app/settings';
 import { flux, storage } from '@unbound-app/api';
 
-import { ThemeStore } from '~/bubbles/modules';
+import { ThemeStore } from '~/lib/modules';
 
 function readSetting(key: string): unknown {
 	return Reflect.get(settings, key);

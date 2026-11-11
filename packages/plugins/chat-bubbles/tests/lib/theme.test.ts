@@ -2,7 +2,7 @@ import { flux } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { settings } from '@unbound-app/settings';
 
-import { currentAppearance, watchAppearance } from '~/bubbles/theme';
+import { currentAppearance, watchAppearance } from '~/lib/theme';
 
 beforeEach(() => {
 	flux.seed({ Theme: { theme: 'dark' } });
