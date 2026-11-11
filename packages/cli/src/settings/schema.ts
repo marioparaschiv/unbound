@@ -88,20 +88,10 @@ function choices({ options = {} }: BuilderOptions) {
 	);
 }
 
-/**
- * @description Builds a `boolean` setting.
- * @param options Its labels, default and display.
- * @returns Its schema.
- */
 function boolean(options: BuilderOptions): TSchema {
 	return Type.Boolean(meta('boolean', options.displayAs ?? 'switch', options));
 }
 
-/**
- * @description Builds a `number` setting.
- * @param options Its labels, default, range and display.
- * @returns Its schema.
- */
 function number(options: BuilderOptions): TSchema {
 	return Type.Number(numeric('number', options));
 }

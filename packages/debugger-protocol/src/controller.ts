@@ -31,7 +31,6 @@ type PluginPush = {
 	files?: Record<string, string>;
 };
 
-/** How long to wait between reconnection attempts when the bridge is unreachable. */
 const RECONNECT_DELAY_MS = 1_000;
 
 export class ControllerClient {
@@ -80,7 +79,6 @@ export class ControllerClient {
 		}));
 	}
 
-	/** @description Whether a device is currently connected to the bridge. */
 	get isDeviceConnected(): boolean {
 		return this.deviceConnected;
 	}

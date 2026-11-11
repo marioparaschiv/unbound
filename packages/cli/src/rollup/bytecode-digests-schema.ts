@@ -22,8 +22,6 @@ export const bytecodeDigestsSchema = Type.Record(Type.String(), bundleDigestsSch
 	additionalProperties: false,
 });
 
-export type BundleDigests = StaticDecode<typeof bundleDigestsSchema>;
-
 export type BytecodeDigests = StaticDecode<typeof bytecodeDigestsSchema>;
 
 export default { BYTECODE_DIGESTS_FILENAME, bundleDigestsSchema, bytecodeDigestsSchema };

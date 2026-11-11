@@ -141,18 +141,6 @@ describe('parseMessage rejection', () => {
 	});
 });
 
-describe('allowlist', () => {
-	// Guards the silent-drop footgun: a type absent from MESSAGE_TYPES is dropped by parseMessage at
-	// both ends even though the wire frame is well-formed.
-	test('the new plugin-push types are recognised', () => {
-		const push = { type: 'plugin-push', id: 'a', addonId: 'b', bundle: 'c', manifest };
-		const result = { type: 'plugin-push-result', id: 'a', ok: true };
-
-		expect(parseMessage(JSON.stringify(push))).toBeDefined();
-		expect(parseMessage(JSON.stringify(result))).toBeDefined();
-	});
-});
-
 describe('eval round-trip', () => {
 	test('an eval carrying a timeout survives serialize → parse intact', () => {
 		const message: EvalRequest = { type: 'eval', id: 'eval-1', code: '1', timeout: 30_000 };

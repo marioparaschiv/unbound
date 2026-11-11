@@ -10,7 +10,6 @@ import { formatResult } from '~/lib/format';
 /** The global the running bundle is tagged with, so the reloaded one can be told apart. */
 const TOKEN_KEY = '__UBD_RELOAD__';
 
-/** How often the reload command probes for the fresh bundle. */
 const RELOAD_POLL_MS = 500;
 
 const schema = Type.Object({

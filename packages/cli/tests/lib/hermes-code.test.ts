@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { runInNewContext } from 'node:vm';
 
 import { lowerForHermes } from '~/lib/hermes-code';
 
@@ -9,7 +10,7 @@ describe('lowerForHermes', () => {
 		);
 
 		expect(code).not.toMatch(/\b(const|let)\b/);
-		expect(code).toMatch(/var _loop = function \(x\)/);
+		expect(runInNewContext(code)).toBe('1,2,3');
 	});
 
 	test('keeps the value of the last expression and top-level await', () => {
