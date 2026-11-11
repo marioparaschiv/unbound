@@ -193,7 +193,7 @@ describe('a pack installed from the store', () => {
 	// Discord requires an icon's module mid-render, so the render that registers it reads it straight away.
 	test('renders an icon whose asset registers during that render', async () => {
 		icons.load(STORE_PACK, manifest);
-		await icons['persistFiles'](manifest, {});
+		await icons['persist']('', manifest, undefined, {});
 		await icons.enable(STORE_PACK);
 
 		register('ic_lazy', [2, 3]);
@@ -210,7 +210,7 @@ describe('a pack installed from the store', () => {
 
 	test('keeps drawing the applied pack until the next one is ready', async () => {
 		icons.load(STORE_PACK, manifest);
-		await icons['persistFiles'](manifest, {});
+		await icons['persist']('', manifest, undefined, {});
 		await icons.enable(PACK);
 
 		const switching = icons.enable(STORE_PACK);
