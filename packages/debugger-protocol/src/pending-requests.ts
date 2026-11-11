@@ -12,7 +12,6 @@ type Entry<R, M> = {
 type PendingRequest<R, M> = {
 	/** Receives the reply, the timeout result or the fail-all result. */
 	settle: (result: R) => void;
-	/** How long to wait for the reply, in milliseconds. */
 	timeoutMs: number;
 	/** Builds the result delivered when the reply doesn't arrive in time. */
 	onTimeout: () => R;

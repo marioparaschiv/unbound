@@ -60,11 +60,6 @@ async function listenerPids(port: number): Promise<number[] | { error: string }>
 		.filter((pid) => Number.isInteger(pid) && pid > 0);
 }
 
-/**
- * @description Names the log file a detached bridge writes to.
- * @param port The bridge's port.
- * @returns The path in the system temporary directory.
- */
 function bridgeLogPath(port: number): string {
 	return join(tmpdir(), `unbound-bridge-${port}.log`);
 }

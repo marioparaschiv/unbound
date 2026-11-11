@@ -43,7 +43,6 @@ export async function takeReplInput() {
 			terminal.white.bold(`» ${input}\n`);
 			addHistoryItem(input);
 
-			// Evaluate on the device and print the id-correlated result, then re-prompt.
 			session.evaluate(input).then((result) => {
 				if (result.ok) {
 					terminal.gray(`« ${result.value}\n`);

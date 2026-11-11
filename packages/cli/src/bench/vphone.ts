@@ -180,7 +180,6 @@ export class Vphone {
 		}
 	}
 
-	/** @description Launches Discord. */
 	async launchDiscord(): Promise<void> {
 		await this.call('launch', { bundle_id: DISCORD_BUNDLE_ID });
 	}

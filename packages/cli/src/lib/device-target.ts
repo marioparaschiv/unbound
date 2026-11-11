@@ -38,7 +38,6 @@ type TargetBase = {
 	push(local: string, remote: string, timeoutMs?: number): Promise<CommandResult>;
 	/** @description Copies a file from the device to this computer. */
 	pull(remote: string, local: string, timeoutMs?: number): Promise<CommandResult>;
-	/** @description Stops Discord and launches it again. */
 	restartDiscord(): Promise<ShellResult>;
 };
 

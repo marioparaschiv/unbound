@@ -19,7 +19,6 @@ export const IOS_TAR = '/var/jb/usr/bin/tar';
 /** The jailbreak's `uiopen`, which launches an app by its bundle id. */
 export const IOS_UIOPEN = '/var/jb/usr/bin/uiopen';
 
-/** The jailbreak's `gzip`. */
 export const IOS_GZIP = '/var/jb/usr/bin/gzip';
 
 /** The jailbreak's `split`, which cuts a file into parts small enough for one jb-p1lot frame. */
