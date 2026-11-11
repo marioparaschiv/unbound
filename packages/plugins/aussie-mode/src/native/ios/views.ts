@@ -7,7 +7,7 @@ import type {
 	NativeStruct,
 } from '@unbound-app/api/native';
 
-import { keyboardRotationOffset, type ChatInputLayout } from '~/lib/keyboard-layout-ios';
+import { keyboardRotationOffset, type ChatInputLayout } from '~/lib/ios/keyboard-layout';
 
 type CGRectFields = {
 	origin: { x: number; y: number };

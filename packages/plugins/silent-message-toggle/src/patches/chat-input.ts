@@ -1,8 +1,8 @@
 import { definePlatform } from '@unbound-app/api/native';
 import { assets, metro } from '@unbound-app/api';
 
-import { patchChatInputSendButton as android } from '~/patches/chat-input-android';
-import { patchChatInputRightActions as ios } from '~/patches/chat-input-ios';
+import { patchChatInputSendButton as android } from '~/patches/android/chat-input';
+import { patchChatInputRightActions as ios } from '~/patches/ios/chat-input';
 import { Icons } from '~/lib/constants';
 
 const drawToggle = definePlatform({ ios, android });

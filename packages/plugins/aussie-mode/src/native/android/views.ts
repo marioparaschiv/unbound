@@ -15,7 +15,7 @@ import {
 } from '@unbound-plugins/shared/native/android/java-values';
 import { currentDecorView } from '@unbound-plugins/shared/native/android/views';
 
-import { keyboardRotationOffset } from '~/lib/keyboard-layout-android';
+import { keyboardRotationOffset } from '~/lib/android/keyboard-layout';
 
 const CHAT_INPUT = 'com.discord.chat.input.views.DCDChatInput';
 const CHAT_INPUT_SEARCH = { maxDepth: 128, maxVisited: 8192, maxResults: 16, attachedOnly: true };
