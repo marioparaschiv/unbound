@@ -41,7 +41,7 @@ int main()
     assert(lines.size() == 2);
 
     loader::BundleUpdater updater(
-        root.string(), loader::updaterSettings(settings),
+        root.string(), settings,
         [](const std::string &, double) -> std::optional<std::string> {
             return std::nullopt;
         },

@@ -189,7 +189,7 @@ void AndroidLoader::start()
     openFonts();
 
     updater_ = std::make_unique<loader::BundleUpdater>(
-        configuration_.documents, loader::updaterSettings(settings_),
+        configuration_.documents, settings_,
         [this](const std::string &url, double timeout) {
             return fetchText(url, timeout);
         },
@@ -198,8 +198,7 @@ void AndroidLoader::start()
                const loader::DownloadPolicy             &policy) {
             return download(url, destination, headers, policy);
         });
-    pipeline_ = std::make_unique<loader::LoaderPipeline>(
-        shared_from_this(), loader::updaterSettings(settings_), *updater_);
+    pipeline_  = std::make_unique<loader::LoaderPipeline>(shared_from_this(), settings_, *updater_);
     hotReload_ = createHotReloadController(
         settings_,
         [this] {
@@ -549,7 +548,7 @@ std::optional<std::string> AndroidLoader::resource(const std::string &name)
 
 std::optional<std::string> AndroidLoader::resolveUpdateURL()
 {
-    return loader::resolveUpdateURL(loader::updaterSettings(settings_), devServerHost(),
+    return loader::resolveUpdateURL(settings_, devServerHost(),
                                     [this](const std::string &url, double timeout) {
                                         return isServing(url, timeout);
                                     });

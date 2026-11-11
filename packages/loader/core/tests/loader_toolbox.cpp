@@ -53,7 +53,7 @@ int main()
     assert(settings.getBoolean("unbound", "loader.update.force", false));
 
     loader::BundleUpdater updater(
-        root.string(), loader::updaterSettings(settings),
+        root.string(), settings,
         [](const std::string &, double) -> std::optional<std::string> {
             return std::nullopt;
         },
@@ -91,7 +91,7 @@ int main()
            "https://example.com/padded.bundle");
 
     loader::BundleUpdater failing(
-        root.string(), loader::updaterSettings(settings),
+        root.string(), settings,
         [](const std::string &, double) -> std::optional<std::string> {
             return std::nullopt;
         },

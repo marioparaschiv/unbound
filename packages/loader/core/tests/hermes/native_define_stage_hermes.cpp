@@ -102,7 +102,7 @@ static void runsTheSavedBundleBeforeDiscords()
     loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
     require(server.download(updater, std::nullopt), "the bundle downloads");
     auto                   host = std::make_shared<Host>();
-    loader::LoaderPipeline pipeline(host, loader::updaterSettings(server.settings), updater);
+    loader::LoaderPipeline pipeline(host, server.settings, updater);
 
     std::string order = launch(pipeline);
 
@@ -120,7 +120,7 @@ static void runsNothingEarlyWithoutASavedBundle()
     bundle_test::Server    server;
     loader::BundleUpdater  updater = server.updater(bundle_test::productionTrust());
     auto                   host    = std::make_shared<Host>();
-    loader::LoaderPipeline pipeline(host, loader::updaterSettings(server.settings), updater);
+    loader::LoaderPipeline pipeline(host, server.settings, updater);
 
     std::string order = launch(pipeline);
 
@@ -134,7 +134,7 @@ static void runsTheFirstDownloadBeforeDiscordsWithoutAReload()
     server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, kUnbound}});
     loader::BundleUpdater  updater = server.updater(bundle_test::productionTrust());
     auto                   host    = std::make_shared<Host>();
-    loader::LoaderPipeline pipeline(host, loader::updaterSettings(server.settings), updater);
+    loader::LoaderPipeline pipeline(host, server.settings, updater);
 
     std::string order = launch(pipeline);
 
@@ -153,7 +153,7 @@ static void doesNotReloadIntoABundleAfterOneFailed()
     loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
     require(server.download(updater, std::nullopt), "the broken bundle downloads");
     auto                   host = std::make_shared<Host>();
-    loader::LoaderPipeline pipeline(host, loader::updaterSettings(server.settings), updater);
+    loader::LoaderPipeline pipeline(host, server.settings, updater);
 
     std::string order = launch(pipeline);
 

@@ -22,13 +22,13 @@ constexpr double kHotReloadReadTimeoutSeconds    = 86400.0;
 
 using ReachabilityProbe = std::function<bool(const std::string &url, double timeoutSeconds)>;
 
-std::optional<std::string> resolveUpdateURL(const UpdaterSettings            &settings,
+std::optional<std::string> resolveUpdateURL(const SettingsStore              &settings,
                                             const std::optional<std::string> &devServerHost,
                                             const ReachabilityProbe          &isServing);
 std::optional<std::string> hotReloadURL(const std::string &base);
 std::string                normalizedEtag(std::string_view etag);
 std::optional<std::string> hotReloadEtag(std::string_view event);
-bool hotReloadEventRequiresReload(const UpdaterSettings &settings, std::string_view event);
+bool hotReloadEventRequiresReload(const SettingsStore &settings, std::string_view event);
 
 class HotReloadBackoff
 {
@@ -43,14 +43,14 @@ private:
 class HotReloadStream
 {
 public:
-    explicit HotReloadStream(UpdaterSettings settings);
+    explicit HotReloadStream(const SettingsStore &settings);
 
     bool feed(std::string_view chunk);
     void reset();
 
 private:
-    UpdaterSettings settings_;
-    std::string     buffer_;
+    const SettingsStore &settings_;
+    std::string          buffer_;
 };
 
 struct HotReloadRequest {

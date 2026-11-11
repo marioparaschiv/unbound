@@ -112,7 +112,7 @@ int main()
     loader::SettingsStore settings((root / "settings.json").string());
     settings.load();
     loader::BundleUpdater updater(
-        root.string(), loader::updaterSettings(settings),
+        root.string(), settings,
         [](const std::string &, double) -> std::optional<std::string> {
             return std::nullopt;
         },

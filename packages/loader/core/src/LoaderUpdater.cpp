@@ -77,37 +77,10 @@ static bool isSupportedExtension(const std::string &extension)
     return extension == "bundle" || extension == "js";
 }
 
-UpdaterSettings updaterSettings(SettingsStore &store)
-{
-    UpdaterSettings settings;
-    settings.getString = [&store](const std::string &key, const std::string &fallback) {
-        return store.getString("unbound", key, fallback);
-    };
-    settings.getBoolean = [&store](const std::string &key, bool fallback) {
-        return store.getBoolean("unbound", key, fallback);
-    };
-    settings.setString = [&store](const std::string &key, const std::string &value) {
-        if (store.set("unbound", key, value))
-        {
-            store.save();
-        }
-    };
-    settings.setBoolean = [&store](const std::string &key, bool value) {
-        if (store.set("unbound", key, value))
-        {
-            store.save();
-        }
-    };
-    settings.developerMode = [&store]() {
-        return preferences::developerMode(store);
-    };
-    return settings;
-}
-
-BundleUpdater::BundleUpdater(std::string documents, UpdaterSettings settings, TextFetcher fetchText,
+BundleUpdater::BundleUpdater(std::string documents, SettingsStore &settings, TextFetcher fetchText,
                              FileDownloader download, BundleTrust trust)
-    : documents_(std::move(documents)), settings_(std::move(settings)),
-      fetchText_(std::move(fetchText)), download_(std::move(download)), trust_(std::move(trust))
+    : documents_(std::move(documents)), settings_(settings), fetchText_(std::move(fetchText)),
+      download_(std::move(download)), trust_(std::move(trust))
 {
 }
 
@@ -125,12 +98,12 @@ std::optional<std::string> BundleUpdater::fetch(const std::string &url) const
 
 std::optional<BundleBaseline> BundleUpdater::baseline() const
 {
-    return parseBaseline(settings_.getString(kBundleBaselineSetting, ""));
+    return parseBaseline(preferences::bundleBaseline(settings_));
 }
 
 bool BundleUpdater::developerMode() const
 {
-    return settings_.developerMode && settings_.developerMode();
+    return preferences::developerMode(settings_);
 }
 
 // The developer mode a bundle was downloaded for; a manifest without the dev files leaves the
@@ -151,7 +124,7 @@ std::optional<std::string> BundleUpdater::exemptionFor(const std::string &url) c
         return "unkeyed";
     }
 
-    if (settings_.getBoolean("loader.update.unsigned", false))
+    if (preferences::unsignedBundlesAllowed(settings_))
     {
         log(LogLevel::Info, LOG_CATEGORY_UPDATER,
             "Bundle signature check skipped: loader.update.unsigned is on.");
@@ -176,7 +149,7 @@ bool BundleUpdater::isExemptionCurrent(const std::string &reason, const std::str
     }
     if (reason == "unsigned")
     {
-        return settings_.getBoolean("loader.update.unsigned", false);
+        return preferences::unsignedBundlesAllowed(settings_);
     }
     return reason == "development" && isDevelopmentBundleURL(url);
 }
@@ -282,7 +255,7 @@ std::string BundleUpdater::resolveBundlePath()
             rejectBundle(candidate);
             removeFile(target + kBundleTrustSuffix);
             removeFile(promoting);
-            settings_.setString("loader.update.etag", "");
+            preferences::setBundleEtag(settings_, "");
         }
 
         if (fileExists(candidate + ".attempting"))
@@ -482,7 +455,7 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
 bool BundleUpdater::isActiveManifest(const std::string &url, const std::string &manifestText) const
 {
     std::string extension = urlPathExtension(url);
-    if (!isSupportedExtension(extension) || settings_.getBoolean("loader.update.force", false))
+    if (!isSupportedExtension(extension) || preferences::forceUpdate(settings_))
     {
         return false;
     }
@@ -541,7 +514,7 @@ void BundleUpdater::recordBaseline(const std::string &record)
     nlohmann::json parsed = parseBundleRecord(record);
     if (bundleRecordField(parsed, "kind") != "manifest")
     {
-        settings_.setString(kBundleBaselineSetting, "");
+        preferences::setBundleBaseline(settings_, "");
         return;
     }
 
@@ -549,12 +522,11 @@ void BundleUpdater::recordBaseline(const std::string &record)
         parseBundleManifest(bundleRecordField(parsed, "manifest"));
     if (!manifest)
     {
-        settings_.setString(kBundleBaselineSetting, "");
+        preferences::setBundleBaseline(settings_, "");
         return;
     }
-    settings_.setString(
-        kBundleBaselineSetting,
-        serializeBaseline(baselineFromManifest(*manifest, bundleRecordField(parsed, "source"))));
+    preferences::setBundleBaseline(settings_, serializeBaseline(baselineFromManifest(
+                                                  *manifest, bundleRecordField(parsed, "source"))));
 }
 
 std::string bundleFailureNotice(BundleUpdateFailure failure)
@@ -593,7 +565,7 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
         return preferredPath;
     }
 
-    bool paused = !settings_.getBoolean(kAutoClientSetting, true);
+    bool paused = !preferences::autoClientUpdates(settings_);
     if (paused && ignorePause)
     {
         log(LogLevel::Info, LOG_CATEGORY_UPDATER,
@@ -613,7 +585,7 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
             "Automatic client updates are off, but " + *problem + "; checking for a bundle.");
     }
 
-    std::string  storedEtag = settings_.getString("loader.update.etag", "");
+    std::string  storedEtag = preferences::bundleEtag(settings_);
     DownloadPlan plan       = planDownload(updateURL, bytecodeVersion);
     std::string  url        = plan.url;
     if (plan.unchanged)
@@ -635,8 +607,8 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
     std::string candidatePath = targetPath + kCandidateSuffix;
 
     std::map<std::string, std::string> headers;
-    bool forceUpdate = settings_.getBoolean("loader.update.force", false);
-    bool isVerified  = fileExists(targetPath + kBundleTrustSuffix);
+    bool                               forceUpdate = preferences::forceUpdate(settings_);
+    bool                               isVerified  = fileExists(targetPath + kBundleTrustSuffix);
     if (fileExists(targetPath) && !isVerified)
     {
         log(LogLevel::Info, LOG_CATEGORY_UPDATER,
@@ -758,7 +730,7 @@ bool BundleUpdater::acceptBundle(const std::string &path)
     removeFile(path + kBundleTrustSuffix);
 
     std::optional<std::string> etag = readTextFile(path + ".etag");
-    settings_.setString("loader.update.etag", etag.value_or(""));
+    preferences::setBundleEtag(settings_, etag.value_or(""));
     removeFile(path + ".etag");
     removeFile(path + ".attempting");
 

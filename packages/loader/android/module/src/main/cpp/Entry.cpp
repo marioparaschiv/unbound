@@ -253,7 +253,7 @@ static jboolean nativeIsBlockedTelemetry(JNIEnv *env, jclass, jstring url)
 {
     auto loader = currentLoader();
     return loader && url && loader::isTelemetryURL(toStdString(env, url)) &&
-                   loader->settings().getBoolean("unbound", loader::kBlockTelemetrySetting, true)
+                   loader::preferences::telemetryBlocked(loader->settings())
                ? JNI_TRUE
                : JNI_FALSE;
 }

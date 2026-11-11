@@ -42,11 +42,6 @@ static bool isServingBundle(NSURL *url, NSTimeInterval timeout)
     return serving;
 }
 
-static loader::UpdaterSettings iosUpdaterSettings()
-{
-    return loader::updaterSettings(UnboundSettingsStore());
-}
-
 static std::optional<std::string> fetchText(const std::string &url, double timeout)
 {
     NSData *data = [Utilities fetchDataWithTimeout:[NSURL URLWithString:toNSString(url)]
@@ -94,8 +89,8 @@ static loader::BundleUpdater &bundleUpdater()
     static dispatch_once_t        onceToken;
     dispatch_once(&onceToken, ^{
         [FileSystem init];
-        updater = new loader::BundleUpdater(toStdString(FileSystem.documents), iosUpdaterSettings(),
-                                            fetchText, download);
+        updater = new loader::BundleUpdater(toStdString(FileSystem.documents),
+                                            UnboundSettingsStore(), fetchText, download);
     });
     return *updater;
 }
@@ -104,7 +99,7 @@ static std::optional<std::string> optionalUpdateURL()
 {
     NSString *hostAddress = [Utilities getVirtualDeviceHostAddress];
     return loader::resolveUpdateURL(
-        iosUpdaterSettings(),
+        UnboundSettingsStore(),
         hostAddress ? std::optional<std::string>(toStdString(hostAddress)) : std::nullopt,
         [](const std::string &probe, double timeout) {
             return isServingBundle([NSURL URLWithString:toNSString(probe)], timeout);
@@ -114,11 +109,6 @@ static std::optional<std::string> optionalUpdateURL()
 loader::BundleUpdater &UnboundBundleUpdater()
 {
     return bundleUpdater();
-}
-
-loader::UpdaterSettings UnboundUpdaterSettings()
-{
-    return iosUpdaterSettings();
 }
 
 std::optional<std::string> UnboundUpdateURL()

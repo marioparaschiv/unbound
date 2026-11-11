@@ -68,7 +68,7 @@ loader::BundleUpdater unreachableUpdater(const std::filesystem::path &root,
                                          loader::SettingsStore       &settings)
 {
     return loader::BundleUpdater(
-        root.string(), loader::updaterSettings(settings),
+        root.string(), settings,
         [](const std::string &, double) -> std::optional<std::string> {
             return std::nullopt;
         },
@@ -86,8 +86,7 @@ std::vector<LoggedLine> prepareAndCapture(loader::SettingsStore &settings,
         lines.push_back({level, text});
     });
 
-    loader::LoaderPipeline pipeline(std::make_shared<ImmediateHost>(),
-                                    loader::updaterSettings(settings), updater);
+    loader::LoaderPipeline pipeline(std::make_shared<ImmediateHost>(), settings, updater);
     pipeline.prepare();
 
     loader::setLogSink(nullptr);

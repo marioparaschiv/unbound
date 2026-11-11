@@ -52,7 +52,7 @@ public:
 class LoaderPipeline
 {
 public:
-    LoaderPipeline(std::shared_ptr<LoaderHost> host, UpdaterSettings settings,
+    LoaderPipeline(std::shared_ptr<LoaderHost> host, SettingsStore &settings,
                    BundleUpdater &updater);
 
     void prepare();
@@ -107,7 +107,7 @@ private:
     void promotePendingBundle();
 
     std::shared_ptr<LoaderHost> host_;
-    UpdaterSettings             settings_;
+    SettingsStore              &settings_;
     BundleUpdater              &updater_;
     std::optional<SavedBundle>  saved_;
     std::mutex                  savedMutex_;

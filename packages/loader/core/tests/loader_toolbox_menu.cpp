@@ -130,7 +130,7 @@ int main()
     assert(json["sections"][2]["items"][2]["kind"] == "platform");
 
     loader::BundleUpdater updater(
-        root.string(), loader::updaterSettings(settings),
+        root.string(), settings,
         [](const std::string &, double) -> std::optional<std::string> {
             return std::nullopt;
         },

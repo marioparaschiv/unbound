@@ -1,6 +1,7 @@
 #include "HermesBytecodeHeader.h"
 #include "LoaderBundleRecord.h"
 #include "LoaderFiles.h"
+#include "LoaderPreferences.h"
 #include "LoaderUpdater.h"
 #include "LoaderVersion.h"
 #include "NativePluginVersion.h"
@@ -13,7 +14,7 @@ std::optional<std::string> BundleUpdater::pauseProblem(const std::string        
                                                        const std::optional<std::string> &updateURL,
                                                        uint32_t bytecodeVersion) const
 {
-    if (settings_.getBoolean("loader.update.force", false))
+    if (preferences::forceUpdate(settings_))
     {
         return std::string("loader.update.force is on");
     }
@@ -21,7 +22,7 @@ std::optional<std::string> BundleUpdater::pauseProblem(const std::string        
     {
         return "the bundle comes from " + *updateURL;
     }
-    if (settings_.getBoolean("loader.update.hmr", false))
+    if (preferences::hotReloadEnabled(settings_))
     {
         return std::string("loader.update.hmr is on");
     }

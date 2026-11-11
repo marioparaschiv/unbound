@@ -168,7 +168,7 @@ struct Server {
     loader::BundleUpdater updater(const loader::BundleTrust &trust)
     {
         return loader::BundleUpdater(
-            root.string(), loader::updaterSettings(settings),
+            root.string(), settings,
             [this](const std::string &url, double) -> std::optional<std::string> {
                 auto file = files.find(url);
                 return file == files.end() ? std::nullopt

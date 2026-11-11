@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 
 #import "CoreConversions.h"
+#include "LoaderPreferences.h"
 #include "LoaderTelemetry.h"
 #import "Logger.h"
 #import "SettingsCore.h"
@@ -18,7 +19,7 @@ using unbound::ios::toStdString;
 {
     NSString *url = request.URL.absoluteString;
     return url && loader::isTelemetryURL(toStdString(url)) &&
-           UnboundSettingsStore().getBoolean("unbound", loader::kBlockTelemetrySetting, true);
+           loader::preferences::telemetryBlocked(UnboundSettingsStore());
 }
 
 + (NSURLRequest *)canonicalRequestForRequest:(NSURLRequest *)request

@@ -72,7 +72,7 @@ int main()
     assert(editResultJSON(syntax)["error"] == kInvalidSettingsMessage);
 
     loader::BundleUpdater updater(
-        templatePath, loader::updaterSettings(settings),
+        templatePath, settings,
         [](const std::string &, double) -> std::optional<std::string> {
             return std::nullopt;
         },

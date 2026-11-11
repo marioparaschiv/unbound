@@ -319,7 +319,7 @@ static loader::LoaderPipeline &pipeline(void)
     static dispatch_once_t         onceToken;
     dispatch_once(&onceToken, ^{
         shared = new loader::LoaderPipeline(std::make_shared<IOSLoaderHost>(),
-                                            UnboundUpdaterSettings(), UnboundBundleUpdater());
+                                            UnboundSettingsStore(), UnboundBundleUpdater());
     });
     return *shared;
 }
