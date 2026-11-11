@@ -41,12 +41,12 @@ mock.module('~/metro/common', () => ({
 	ImageSources,
 }));
 
-function register(name: string) {
+function register(name: string, scales = [1, 2]) {
 	const asset: UnboundAsset = {
 		httpServerLocation: star.httpServerLocation,
 		width: 24,
 		height: 24,
-		scales: [1, 2],
+		scales,
 		hash: name,
 		name,
 		type: 'png',
@@ -138,6 +138,12 @@ describe('a pack installed from the store', () => {
 				height: 24,
 				scales: { '3': sha256 },
 			},
+			'images/native/icons/ic_lazy': {
+				type: 'png' as const,
+				width: 24,
+				height: 24,
+				scales: { '3': sha256 },
+			},
 		},
 	};
 
@@ -147,6 +153,24 @@ describe('a pack installed from the store', () => {
 		await icons.enable(STORE_PACK);
 
 		expect(ImageSources.getImageSourcesFromImageProps({ source: 1 })).toEqual({
+			uri: `file:///docs/Unbound/Icons/${STORE_PACK}/assets/${sha256}.png`,
+			width: 24,
+			height: 24,
+			scale: 3,
+		});
+
+		icons.disable(STORE_PACK);
+	});
+
+	// Discord requires an icon's module mid-render, so the render that registers it reads it straight away.
+	test('renders an icon whose asset registers during that render', async () => {
+		icons.load(STORE_PACK, manifest);
+		await icons['persistFiles'](manifest, {});
+		await icons.enable(STORE_PACK);
+
+		register('ic_lazy', [2, 3]);
+
+		expect(ImageSources.getImageSourcesFromImageProps({ source: registered.length })).toEqual({
 			uri: `file:///docs/Unbound/Icons/${STORE_PACK}/assets/${sha256}.png`,
 			width: 24,
 			height: 24,
