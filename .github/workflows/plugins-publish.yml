@@ -1,4 +1,5 @@
-# Publishes every first-party plugin and theme whose manifest version is newer than the live one, without review.
+# Publishes every first-party plugin, theme and icon pack whose manifest version is newer than the live one, without review.
+# The icon packs are the unbound-app/icon-packs submodule; when it cannot be fetched, only they are skipped.
 #
 # Secret `UNBOUND_API_KEY`: an API key of the CI account, whose role is `ci`. To mint it, an admin sets
 # that account's role to `ci` on /admin/users; then, signed in as that account, create the key on
@@ -13,6 +14,7 @@ on:
         paths:
             - packages/plugins/**
             - packages/themes/**
+            - packages/icon-packs
     workflow_dispatch:
 
 permissions:
@@ -34,6 +36,11 @@ jobs:
                   persist-credentials: false
                   fetch-depth: 0
                   fetch-tags: true
+            # `.gitmodules` sets `update = none` so no other checkout needs the icon-packs repository.
+            - name: Checkout icon packs
+              run: |
+                  git submodule update --init --checkout packages/icon-packs \
+                      || echo "::warning::Could not fetch packages/icon-packs; icon packs are not published."
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
               with:

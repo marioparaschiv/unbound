@@ -2,8 +2,12 @@ import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { listAddonFiles } from '@unbound-app/contracts/addon-files';
 
 import type { GitHubClient, GitTree } from '~/lib/github';
+import { forEachAtMost } from '~/lib/for-each-at-most';
 import { ApiError } from '~/lib/api/errors';
 import type { Env } from '~/lib/env';
+
+/** How many listed files one read downloads at once, to stay under GitHub's concurrency limit. */
+const FILE_READ_CONCURRENCY = 32;
 
 /** Where an addon's committed files are read from. */
 export type AddonFileLocation = {
@@ -78,29 +82,30 @@ export async function readListedFiles(
 		return { file, path, entry };
 	});
 
-	const read = await Promise.all(
-		entries.map(async ({ file, path, entry }) => {
-			const bytes = await github.readBlob(repository, entry.sha);
+	const read = new Map<string, Uint8Array>();
 
-			if (new Bun.CryptoHasher('sha256').update(bytes).digest('hex') !== file.sha256) {
-				throw new ApiError(
-					'artifact_mismatch',
-					`${path} does not match the SHA-256 the manifest lists for ${file.label}.`,
-				);
-			}
+	// An icon pack lists hundreds of images, more than GitHub allows in flight at once.
+	await forEachAtMost(entries, FILE_READ_CONCURRENCY, async ({ file, path, entry }) => {
+		const bytes = await github.readBlob(repository, entry.sha);
 
-			if (file.kind === 'locale' && !isStringTable(bytes)) {
-				throw new ApiError(
-					'invalid_manifest',
-					`${path} must be a JSON object of message keys to strings.`,
-				);
-			}
+		if (new Bun.CryptoHasher('sha256').update(bytes).digest('hex') !== file.sha256) {
+			throw new ApiError(
+				'artifact_mismatch',
+				`${path} does not match the SHA-256 the manifest lists for ${file.label}.`,
+			);
+		}
 
-			return [file.path, bytes] as const;
-		}),
-	);
+		if (file.kind === 'locale' && !isStringTable(bytes)) {
+			throw new ApiError(
+				'invalid_manifest',
+				`${path} must be a JSON object of message keys to strings.`,
+			);
+		}
 
-	return new Map(read);
+		read.set(file.path, bytes);
+	});
+
+	return read;
 }
 
 export default { readListedFiles };

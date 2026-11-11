@@ -5,7 +5,7 @@ import type { WorkspaceFiles } from '@unbound-app/contracts/workspace';
 import type { KeyObject } from 'node:crypto';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
-import { basename, dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 
 import {
@@ -31,16 +31,12 @@ import type { PluginCommit } from './plugin-changelog';
 import { createRelease, mergeRelease, renderRelease } from './plugin-changelog';
 import { getSelected, selectPlugins } from './select-plugins';
 import { readPluginManifest } from './plugin-manifests';
-import {
-	parsePluginSigningKey,
-	PLUGIN_SIGNING_KEY_VARIABLE,
-	bytecodeDigests,
-	signPlugin,
-	withSignature,
-} from './sign-plugin';
+import { isSubmodule } from './vendor-workspace';
+import { collectFiles, findCompiledBundles, type BuildFile } from './build-files';
+import { parsePluginSigningKey, PLUGIN_SIGNING_KEY_VARIABLE, bytecodeDigests } from './sign-plugin';
 
-/** The workspaces whose addons CI publishes: first-party plugins and themes. */
-const WORKSPACE_DIRS = ['packages/plugins', 'packages/themes'];
+/** The workspaces whose addons CI publishes: first-party plugins, themes and icon packs, the last a submodule. */
+const WORKSPACE_DIRS = ['packages/plugins', 'packages/themes', 'packages/icon-packs'];
 const TAG_PREFIX = 'plugin-builds/';
 const FIELD = '\u001f';
 const RECORD = '\u001e';
@@ -74,11 +70,6 @@ type PluginRelease = {
 	entry: string;
 };
 
-type BuildFile = {
-	path: string;
-	contents: Uint8Array;
-};
-
 type Build = {
 	tag: string;
 	commit: string;
@@ -88,6 +79,13 @@ type Build = {
 type PublishOutcome = {
 	ok: boolean;
 	line: string;
+};
+
+/** Where an addon's history lives: the root, or the repository of the submodule holding its workspace. */
+type HistorySource = {
+	git: string;
+	/** The addon's folder, relative to `git`. */
+	path: string;
 };
 
 function git(root: string, args: string[], options: GitOptions = {}): string {
@@ -220,6 +218,12 @@ function discoverWorkspace(root: string, workspaceDir: string): LocalPlugin[] {
 	return plugins;
 }
 
+function historyOf(root: string, plugin: LocalPlugin): HistorySource {
+	return isSubmodule(root, plugin.workspace)
+		? { git: join(root, plugin.workspace), path: plugin.dir }
+		: { git: root, path: `${plugin.workspace}/${plugin.dir}` };
+}
+
 // The public listing hides delisted addons; this one does not, so a delisted plugin is never rebuilt.
 async function fetchPublished(options: Options): Promise<PublishedVersions> {
 	const url = `${options.apiUrl}/api/v1/first-party/addons`;
@@ -249,8 +253,8 @@ async function fetchPublished(options: Options): Promise<PublishedVersions> {
 function findChangelogBase(options: Options, decision: SelectedDecision): string | undefined {
 	if (decision.reason === 'unpublished') return;
 
-	const { root } = options;
 	const { published, plugin } = decision;
+	const { git: root, path } = historyOf(options.root, plugin);
 
 	if (
 		published.commitSha &&
@@ -268,7 +272,7 @@ function findChangelogBase(options: Options, decision: SelectedDecision): string
 		}
 	}
 
-	const manifest = `${plugin.workspace}/${plugin.dir}/manifest.json`;
+	const manifest = `${path}/manifest.json`;
 	const needle = `"version": "${published.version}"`;
 	const candidates = git(root, ['log', '--format=%H', '-S', needle, 'HEAD', '--', manifest]);
 
@@ -294,10 +298,10 @@ function listCommits(root: string, path: string, base: string | undefined): Plug
 }
 
 function prepareRelease(options: Options, decision: SelectedDecision, date: string): PluginRelease {
-	const { root } = options;
 	const { plugin } = decision;
+	const history = historyOf(options.root, plugin);
 	const path = `${plugin.workspace}/${plugin.dir}/CHANGELOG.md`;
-	const existing = tryGit(root, ['show', `HEAD:${path}`]);
+	const existing = tryGit(history.git, ['show', `HEAD:${history.path}/CHANGELOG.md`]);
 	const current = existing.ok
 		? selectRelease(parseChangelog(existing.stdout), plugin.version)
 		: undefined;
@@ -311,11 +315,7 @@ function prepareRelease(options: Options, decision: SelectedDecision, date: stri
 	}
 
 	const release = createRelease({
-		commits: listCommits(
-			root,
-			`${plugin.workspace}/${plugin.dir}`,
-			findChangelogBase(options, decision),
-		),
+		commits: listCommits(history.git, history.path, findChangelogBase(options, decision)),
 		date,
 		firstRelease: decision.reason === 'unpublished',
 	});
@@ -350,103 +350,6 @@ function readSigningKey(): KeyObject | undefined {
 	return parsePluginSigningKey(pem);
 }
 
-const GENERATED_MANIFEST_FIELDS = ['platforms', 'capabilities'] as const;
-
-/**
- * @description Builds the manifest to publish: the source manifest with the platforms and Capabilities `ubd build` generated into `dist/manifest.json`, which the source never holds.
- * @param root The repository root.
- * @param dir The addon's folder, relative to the root, such as `packages/plugins/moyai`.
- * @returns The manifest's JSON text.
- */
-export function publishedManifest(root: string, dir: string): string {
-	const source = JSON.parse(readFileSync(join(root, dir, 'manifest.json'), 'utf8')) as Record<
-		string,
-		unknown
-	>;
-	const builtPath = join(root, dir, 'dist', 'manifest.json');
-
-	if (!existsSync(builtPath)) return JSON.stringify(source);
-
-	const built = JSON.parse(readFileSync(builtPath, 'utf8')) as Record<string, unknown>;
-
-	for (const field of GENERATED_MANIFEST_FIELDS) {
-		if (built[field] !== undefined) source[field] = built[field];
-	}
-
-	return JSON.stringify(source);
-}
-
-/**
- * @description Finds the bundles a plugin build compiled to Hermes bytecode beside its source bundle.
- * @param root The repository root.
- * @param bundle The source bundle's path from the root, such as `packages/plugins/x/dist/index.js`.
- * @returns Each compiled bundle as a build file, by Hermes bytecode version.
- */
-export function findCompiledBundles(root: string, bundle: string): Map<number, BuildFile> {
-	const directory = dirname(bundle);
-	const stem = basename(bundle).replace(/\.[^.]+$/, '');
-	const prefix = `${stem}.`;
-	const compiled = new Map<number, BuildFile>();
-
-	for (const name of readdirSync(join(root, directory)).sort()) {
-		const version =
-			name.startsWith(prefix) && name.endsWith('.hbc')
-				? name.slice(prefix.length, -'.hbc'.length)
-				: '';
-
-		if (/^\d{1,10}$/.test(version)) {
-			compiled.set(Number(version), {
-				path: `${directory}/${name}`,
-				contents: readFileSync(join(root, directory, name)),
-			});
-		}
-	}
-
-	return compiled;
-}
-
-function collectFiles(root: string, releases: PluginRelease[], key?: KeyObject): BuildFile[] {
-	const files: BuildFile[] = [];
-
-	for (const { plugin, changelog } of releases) {
-		const directory = `${plugin.workspace}/${plugin.dir}`;
-		const bundle = `${plugin.workspace}/${plugin.bundle}`;
-
-		if (!existsSync(join(root, bundle))) {
-			throw new Error(
-				`${plugin.id}: ${bundle} is missing. Run \`bun run plugins:build\` first.`,
-			);
-		}
-
-		const contents = readFileSync(join(root, bundle));
-
-		files.push({ path: bundle, contents });
-
-		if (key) {
-			const manifest = `${directory}/manifest.json`;
-			const compiled = findCompiledBundles(root, bundle);
-			const digests = bytecodeDigests(
-				new Map([...compiled].map(([version, file]) => [version, file.contents])),
-			);
-			const signature = signPlugin(key, plugin.id, plugin.version, contents, digests);
-
-			files.push(...compiled.values());
-			files.push({
-				path: manifest,
-				contents: new TextEncoder().encode(
-					withSignature(publishedManifest(root, directory), signature, digests),
-				),
-			});
-		}
-		files.push({
-			path: `${directory}/CHANGELOG.md`,
-			contents: new TextEncoder().encode(changelog),
-		});
-	}
-
-	return files;
-}
-
 // A temporary index keeps the working tree, the real index and HEAD untouched.
 function createBuildCommit(
 	root: string,
@@ -465,6 +368,13 @@ function createBuildCommit(
 
 	try {
 		git(root, ['read-tree', head], { env });
+
+		// A submodule's entry would block the files copied in under its path.
+		for (const workspace of WORKSPACE_DIRS.filter((dir) => isSubmodule(root, dir))) {
+			if (files.some(({ path }) => path.startsWith(`${workspace}/`))) {
+				git(root, ['update-index', '--force-remove', '--', workspace], { env });
+			}
+		}
 
 		for (const file of files) {
 			const blob = git(root, ['hash-object', '-w', '--stdin'], { env, stdin: file.contents });

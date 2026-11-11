@@ -10,6 +10,7 @@ import { safeParse } from '@unbound-app/contracts/schema';
 
 import type { GitHubClient, GitTree, TreeEntry } from '~/lib/github';
 import { matchesMediaFormat } from '~/lib/media-format';
+import { forEachAtMost } from '~/lib/for-each-at-most';
 import { ApiError } from '~/lib/api/errors';
 import type { Env } from '~/lib/env';
 
@@ -131,18 +132,6 @@ function listsExactly(page: AddonPage, paths: string[]): boolean {
 	const measured = new Set(page.media.map((media) => media.path));
 
 	return measured.size === paths.length && paths.every((path) => measured.has(path));
-}
-
-async function forEachAtMost<T>(items: T[], limit: number, fn: (item: T) => Promise<void>) {
-	const queue = items.values();
-
-	async function worker() {
-		for (const item of queue) {
-			await fn(item);
-		}
-	}
-
-	await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
 }
 
 async function readMedia(

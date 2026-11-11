@@ -25,6 +25,8 @@ for await (const path of assets.scan(join(dist, 'client'))) {
 
 Bun.serve({
 	port: env.PORT,
+	// Publishing an icon pack reads and writes hundreds of files in one request, past Bun's 10 second default.
+	idleTimeout: 60,
 	routes,
 	fetch: (request) => server.fetch(request),
 });
