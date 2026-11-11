@@ -200,8 +200,18 @@ private:
     std::string id_;
 };
 
-static std::mutex                         gStartMarkersMutex;
-static std::map<std::string, StartMarker> gStartMarkers;
+struct StartMarkers {
+    std::mutex                         mutex;
+    std::map<std::string, StartMarker> markers;
+};
+
+// Built on first use, like LoaderBootstrap's scripts: a namespace-scope map is constructed by this
+// file's static initializer, which would reset markers written before it ran.
+static StartMarkers &startMarkers()
+{
+    static StartMarkers instance;
+    return instance;
+}
 
 bool AddonCrashGuard::beginStart(const std::string &id, const std::string &name) const
 {
@@ -210,15 +220,17 @@ bool AddonCrashGuard::beginStart(const std::string &id, const std::string &name)
         return false;
     }
     std::string                 record = recordJSON({id, name.empty() ? id : name}, 0).dump();
-    std::lock_guard<std::mutex> lock(gStartMarkersMutex);
-    return gStartMarkers[startingPath()].write(directory_, startingPath(), id, record);
+    StartMarkers               &state  = startMarkers();
+    std::lock_guard<std::mutex> lock(state.mutex);
+    return state.markers[startingPath()].write(directory_, startingPath(), id, record);
 }
 
 bool AddonCrashGuard::finishStart(const std::string &id) const
 {
-    std::lock_guard<std::mutex> lock(gStartMarkersMutex);
-    auto                        marker = gStartMarkers.find(startingPath());
-    return marker != gStartMarkers.end() && marker->second.clear(id);
+    StartMarkers               &state = startMarkers();
+    std::lock_guard<std::mutex> lock(state.mutex);
+    auto                        marker = state.markers.find(startingPath());
+    return marker != state.markers.end() && marker->second.clear(id);
 }
 
 std::vector<CrashedAddon> crashDisabledAddons(const std::string &directory)
