@@ -145,8 +145,15 @@ async fn a_saved_preset_connects_and_becomes_the_default() {
 	assert!(file.path().starts_with(config_dir()));
 	let on_disk = file.load().expect("loaded");
 	assert_eq!(on_disk.last_used.as_deref(), Some(name.as_str()));
+	assert!(on_disk.auto_connect);
+	let link = devtools.status().link.expect("linked");
+	assert_eq!(link.name.as_deref(), Some(name.as_str()));
 
 	devtools.remove_preset(&name).expect("removed");
 	assert!(devtools.presets().expect("loaded").get(&name).is_none());
+	assert!(
+		devtools.status().link.is_none(),
+		"removing the linked device drops the link"
+	);
 	assert!(devtools.connect_preset(&name).await.is_err());
 }

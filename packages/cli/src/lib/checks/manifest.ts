@@ -1,9 +1,9 @@
 import { addonManifestSchema, MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
-import { parseSync, type ESTree } from 'rolldown/utils';
 import toError from '@unbound-app/utils/to-error';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { parseSync, type ESTree } from '~/rollup/rolldown-utils';
 import { diagnostic } from '~/lib/check/diagnostic';
 import { locate } from '~/lib/check/parse-cache';
 import type { Check } from '~/lib/check/check';

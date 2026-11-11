@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.11.5](https://github.com/marioparaschiv/unbound/compare/sdk-generator-v0.11.4...sdk-generator-v0.11.5) (2026-11-11)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 1.1.1
+
+## [0.11.4](https://github.com/marioparaschiv/unbound/compare/sdk-generator-v0.11.3...sdk-generator-v0.11.4) (2026-11-11)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 1.1.0
+
 ## [0.11.3](https://github.com/marioparaschiv/unbound/compare/sdk-generator-v0.11.2...sdk-generator-v0.11.3) (2026-11-10)
 
 

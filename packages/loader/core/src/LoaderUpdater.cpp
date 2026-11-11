@@ -371,6 +371,16 @@ std::string bundleFailureNotice(BundleUpdateFailure failure)
            "to try again, and report this to the developers if it keeps happening.";
 }
 
+std::optional<double> retryAfterSeconds(const std::string &header)
+{
+    if (header.empty() || header.size() > 9 ||
+        header.find_first_not_of("0123456789") != std::string::npos)
+    {
+        return std::nullopt;
+    }
+    return std::stod(header);
+}
+
 bool isAcceptedDownloadStatus(int status)
 {
     return status == 200 || status == 304;
@@ -456,8 +466,9 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
     if (!isAcceptedDownloadStatus(response->status))
     {
         removeFile(candidatePath);
-        throw BundleUpdateError(BundleUpdateFailure::Network, "Bundle download returned HTTP " +
-                                                                  std::to_string(response->status));
+        throw BundleUpdateError(BundleUpdateFailure::Network,
+                                "Bundle download returned HTTP " + std::to_string(response->status),
+                                retryAfterSeconds(response->retryAfter));
     }
 
     if (response->status == 304)

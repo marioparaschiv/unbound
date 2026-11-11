@@ -11,6 +11,7 @@
 #include <thread>
 
 #include "LoaderHotReload.h"
+#include "LoaderLaunchGuard.h"
 #include "LoaderTransport.h"
 #include "UnboundNativeBridge.h"
 
@@ -72,6 +73,16 @@ public:
     virtual void crashAlert(const std::string &message)
     {
         alert(message);
+    }
+    // How the previous process ended, where the platform keeps a record of it.
+    virtual PreviousExit previousExit()
+    {
+        return PreviousExit::Unknown;
+    }
+    // Whether the active network is metered (mobile data, a hotspot or Low Data Mode).
+    virtual bool onMeteredNetwork()
+    {
+        return false;
     }
     // Shown while Discord's launch waits for Unbound's bundle to download.
     virtual void showUpdateProgress(bool showing) {}

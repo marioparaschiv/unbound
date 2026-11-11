@@ -3,7 +3,7 @@ resolver = "3"
 members = ["crates/core", "crates/app"]
 
 [workspace.package]
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/marioparaschiv/unbound"
@@ -15,7 +15,16 @@ thiserror = "2"
 parking_lot = "0.12"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tokio = { version = "1", features = ["rt-multi-thread", "net", "sync", "macros", "time", "io-std"] }
+tokio = { version = "1", features = [
+	"rt-multi-thread",
+	"net",
+	"sync",
+	"macros",
+	"time",
+	"io-std",
+	"io-util",
+	"process",
+] }
 tokio-tungstenite = "0.30"
 futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
 rmcp = { version = "3.8", features = [
@@ -34,8 +43,10 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 clap = { version = "4", features = ["derive", "env"] }
 uuid = { version = "1", features = ["v4"] }
-gpui = { package = "gpui-fast", version = "0.1.12" }
-gpui_platform = { package = "gpui-fast-platform", version = "0.1.12", features = [
+gpui = { package = "gpui-fast", version = "0.1.14" }
+gpui-component = { version = "0.9.1", features = ["gpui-fast"] }
+gpui-kit-assets = { version = "0.9.1", features = ["gpui-fast"] }
+gpui_platform = { package = "gpui-fast-platform", version = "0.1.14", features = [
 	"x11",
 	"wayland",
 ] }

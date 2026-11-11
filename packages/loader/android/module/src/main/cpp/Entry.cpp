@@ -112,6 +112,19 @@ static void nativeMarkHealthy(JNIEnv *, jclass)
     }
 }
 
+static void nativeOnForeground(JNIEnv *, jclass)
+{
+    if (auto loader = currentLoader())
+    {
+        loader->onForeground();
+    }
+}
+
+static jstring nativeLaunchTimings(JNIEnv *env, jclass)
+{
+    return env->NewStringUTF(loader::LoaderPipeline::currentLaunchTimings().c_str());
+}
+
 static jboolean nativeOnRuntimeCreated(JNIEnv *, jclass, jlong runtimePointer)
 {
     if (runtimePointer == 0)

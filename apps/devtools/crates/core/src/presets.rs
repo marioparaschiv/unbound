@@ -182,7 +182,7 @@ pub fn parse_host(text: &str) -> Result<Option<String>, PresetError> {
 	Err(PresetError::InvalidHost(text.to_owned()))
 }
 
-/// The saved devices, in the order they were added, and the one the main button dials.
+/// The saved devices, in the order they were added, and the debugger connection to restore.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Presets {
 	#[serde(default)]
@@ -190,6 +190,9 @@ pub struct Presets {
 	/// A preset name; `None` is the CLI's bridge.
 	#[serde(default, skip_serializing_if = "Option::is_none")]
 	pub last_used: Option<String>,
+	/// Whether the debugger connection to `last_used` comes back on at launch.
+	#[serde(default, skip_serializing_if = "std::ops::Not::not")]
+	pub auto_connect: bool,
 }
 
 impl Presets {
@@ -200,7 +203,7 @@ impl Presets {
 			.find(|preset| preset.name.eq_ignore_ascii_case(name.trim()))
 	}
 
-	/// The preset the main button dials, if `last_used` still names one.
+	/// The preset the debugger connection dials, if `last_used` still names one.
 	pub fn last_used(&self) -> Option<&DevicePreset> {
 		self.get(self.last_used.as_deref()?)
 	}

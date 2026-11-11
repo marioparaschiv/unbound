@@ -20,6 +20,7 @@ import spansCommand from '~/commands/debug/spans';
 import startCommand from '~/commands/debug/start';
 import traceCommand from '~/commands/debug/trace';
 import viewsCommand from '~/commands/debug/views';
+import type { CatalogEntry } from '~/lib/catalog';
 import loginCommand from '~/commands/auth/login';
 import logsCommand from '~/commands/device/logs';
 import saveCommand from '~/commands/device/save';
@@ -183,6 +184,19 @@ export function mcpTools(): McpTool[] {
 	);
 
 	return [...root, ...grouped].filter((tool) => tool.definition.mcp);
+}
+
+/**
+ * @description Lists every command with the group words before its name, for `ubd catalog`.
+ * @returns The root commands, then each group's, in menu order.
+ */
+export function catalogEntries(): CatalogEntry[] {
+	return [
+		...rootCommands.map((definition) => ({ definition, prefix: [] })),
+		...groups.flatMap((entry) =>
+			groupCommands(entry).map((definition) => ({ definition, prefix: [entry.name] })),
+		),
+	];
 }
 
 export default layout;

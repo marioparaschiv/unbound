@@ -83,6 +83,24 @@ bool callStaticBoolean(jclass type, jmethodID method, const Args &...args)
     return !clearPendingException(env) && result == JNI_TRUE;
 }
 
+// None when the call failed.
+template <typename... Args>
+std::optional<jint> callStaticInt(jclass type, jmethodID method, const Args &...args)
+{
+    JNIEnv *env = currentEnvironment();
+    if (!env || !type || !method)
+    {
+        return std::nullopt;
+    }
+    jni::LocalReferences locals(env);
+    jint result = env->CallStaticIntMethod(type, method, jni::argument(locals, args)...);
+    if (clearPendingException(env))
+    {
+        return std::nullopt;
+    }
+    return result;
+}
+
 // None when the call failed or returned null.
 template <typename... Args>
 std::optional<std::string> callStaticString(jclass type, jmethodID method, const Args &...args)
@@ -106,24 +124,6 @@ std::optional<std::string> callStaticString(jclass type, jmethodID method, const
     std::string text = toStdString(env, result);
     env->DeleteLocalRef(result);
     return text;
-}
-
-// None when the call failed.
-template <typename... Args>
-std::optional<jint> callStaticInt(jclass type, jmethodID method, const Args &...args)
-{
-    JNIEnv *env = currentEnvironment();
-    if (!env || !type || !method)
-    {
-        return std::nullopt;
-    }
-    jni::LocalReferences locals(env);
-    jint result = env->CallStaticIntMethod(type, method, jni::argument(locals, args)...);
-    if (clearPendingException(env))
-    {
-        return std::nullopt;
-    }
-    return result;
 }
 
 // The invoke* variants serve plugin calls, whose caller must see why Java failed: a missing

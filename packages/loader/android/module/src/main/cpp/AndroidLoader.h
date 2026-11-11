@@ -76,13 +76,15 @@ public:
     std::shared_ptr<loader::HotReloadTransport> hotReloadTransport() override;
     nlohmann::json                              systemFonts() override;
     void                                        onFontsChanged() override;
-    void installNativeModules(facebook::jsi::Runtime &runtime) override;
-    void extendNativeProvider(loader::UnboundNativeProvider &provider) override;
-    void onBundleExecuted() override;
-    void alert(const std::string &message) override;
-    void crashAlert(const std::string &message) override;
-    void showUpdateProgress(bool showing) override;
-    void reload() override;
+    void                 installNativeModules(facebook::jsi::Runtime &runtime) override;
+    void                 extendNativeProvider(loader::UnboundNativeProvider &provider) override;
+    void                 onBundleExecuted() override;
+    void                 alert(const std::string &message) override;
+    void                 crashAlert(const std::string &message) override;
+    loader::PreviousExit previousExit() override;
+    bool                 onMeteredNetwork() override;
+    void                 showUpdateProgress(bool showing) override;
+    void                 reload() override;
 
 private:
     void           enqueueRuntime(std::function<void(facebook::jsi::Runtime &)> work,

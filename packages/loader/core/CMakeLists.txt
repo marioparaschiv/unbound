@@ -107,6 +107,13 @@ target_compile_options(unbound_core PRIVATE -fvisibility=hidden $<$<COMPILE_LANG
 if(NOT UNBOUND_VERSION)
     file(STRINGS ${CMAKE_CURRENT_LIST_DIR}/../ios/control UNBOUND_CONTROL_VERSION REGEX "^Version:")
     string(REGEX REPLACE "^Version:[ \t]*" "" UNBOUND_VERSION "${UNBOUND_CONTROL_VERSION}")
+    # version.json is the release version; CI stamps it into ios/control, which local builds leave
+    # stale, so the newer one wins.
+    file(READ ${CMAKE_CURRENT_LIST_DIR}/../version.json UNBOUND_VERSION_JSON)
+    string(JSON UNBOUND_RELEASE_VERSION GET "${UNBOUND_VERSION_JSON}" version)
+    if(UNBOUND_VERSION VERSION_LESS UNBOUND_RELEASE_VERSION)
+        set(UNBOUND_VERSION "${UNBOUND_RELEASE_VERSION}")
+    endif()
 endif()
 set_source_files_properties(${CMAKE_CURRENT_LIST_DIR}/src/LoaderVersion.cpp PROPERTIES
     COMPILE_DEFINITIONS UNBOUND_VERSION="${UNBOUND_VERSION}")

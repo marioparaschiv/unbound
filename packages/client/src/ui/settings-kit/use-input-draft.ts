@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-/** What an input sheet edits: the typed text, why it cannot be saved, and the save itself. */
+/** What an input dialog edits: the typed text, why it cannot be saved, and the save itself. */
 export type InputDraft = {
 	draft: string;
 	error: string | undefined;
@@ -11,7 +11,7 @@ export type InputDraft = {
 };
 
 /**
- * @description Holds an input sheet's draft apart from the saved value, so typing never writes: only `save` does,
+ * @description Holds an input dialog's draft apart from the saved value, so typing never writes: only `save` does,
  * once, after `validate` accepts the text.
  * @param value The saved text the draft starts from.
  * @param onSave Receives the accepted draft, only when it differs from `value`.

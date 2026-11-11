@@ -50,6 +50,8 @@ public:
     void onRuntimeCreated(facebook::jsi::Runtime &runtime);
     // Counts Discord as healthy now: the app went to the background or is about to reload.
     void markHealthy();
+    // Discord returned to the foreground: checks for a newer bundle if one is due.
+    void onForeground();
 
     SettingsStore                       &settings();
     BundleUpdater                       &updater();

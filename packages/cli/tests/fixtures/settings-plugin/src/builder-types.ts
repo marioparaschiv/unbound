@@ -63,7 +63,7 @@ setting.integer({ default: 1, title: 'LIMIT', units: ['s'] });
 setting.string({ default: '', title: 'BIO', alpha: true });
 // @ts-expect-error A color default is a hex string.
 setting.string({ default: 'red', title: 'ACCENT', displayAs: 'color' });
-// @ts-expect-error A palette needs presets.
+// @ts-expect-error A color takes no palette.
 setting.string({ default: '#000000', title: 'ACCENT', displayAs: 'color', palette: true });
 // @ts-expect-error A URL default is http or https.
 setting.string({ default: 'ftp://x', title: 'HOMEPAGE', displayAs: 'url' });

@@ -473,6 +473,7 @@ export type {
 	TableRowStatics,
 	TableRowTrailingTextComponent,
 	TableRowTrailingTextProps,
+	TableSliderRowProps,
 	TableSwitchRowComponent,
 	TableSwitchRowProps,
 	TabsComponent,

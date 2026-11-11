@@ -1,8 +1,8 @@
-import { parseSync, type ParseResult } from 'rolldown/utils';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { extname } from 'node:path';
 
+import { parseSync, type ParseResult } from '~/rollup/rolldown-utils';
 import type { Site } from '~/lib/capabilities/file-facts';
 
 /** oxc parse results by file extension and content hash. */

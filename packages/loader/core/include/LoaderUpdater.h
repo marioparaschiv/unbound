@@ -17,6 +17,8 @@ constexpr DownloadPolicy kBundleDownloadPolicy{};
 constexpr double         kManifestFetchTimeoutSeconds = 5.0;
 
 bool isAcceptedDownloadStatus(int status);
+// Seconds a Retry-After header asks to wait; HTTP dates and nonsense give nothing.
+std::optional<double> retryAfterSeconds(const std::string &header);
 
 // Why a bundle update failed, so a launch without a saved bundle can say what to do about it.
 enum class BundleUpdateFailure
@@ -30,12 +32,14 @@ enum class BundleUpdateFailure
 class BundleUpdateError : public std::runtime_error
 {
 public:
-    BundleUpdateError(BundleUpdateFailure failure, const std::string &message)
-        : std::runtime_error(message), failure(failure)
+    BundleUpdateError(BundleUpdateFailure failure, const std::string &message,
+                      std::optional<double> retryAfter = std::nullopt)
+        : std::runtime_error(message), failure(failure), retryAfter(retryAfter)
     {
     }
 
-    BundleUpdateFailure failure;
+    BundleUpdateFailure   failure;
+    std::optional<double> retryAfter;
 };
 
 // The alert for a launch that has no saved bundle and could not download one.

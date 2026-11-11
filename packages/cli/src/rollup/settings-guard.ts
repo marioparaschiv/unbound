@@ -1,5 +1,6 @@
-import { parseSync, Visitor, type ESTree } from 'rolldown/utils';
 import { extname } from 'node:path';
+
+import { parseSync, Visitor, type ESTree } from './rolldown-utils.ts';
 
 /** A value import in plugin source: one that would put the module into the bundle. */
 export type ValueImport = { source: string; start: number };

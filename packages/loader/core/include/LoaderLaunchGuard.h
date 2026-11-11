@@ -3,6 +3,17 @@
 #include <string>
 
 namespace loader {
+// How the platform says the previous process ended, where it can tell.
+enum class PreviousExit
+{
+    // No record, or a platform that cannot tell: an unfinished launch counts as a failure.
+    Unknown,
+    // A crash, a native signal, a freeze or a failed start.
+    Crashed,
+    // The person or the system ended it: swiped away, force-stopped, low memory, an update.
+    Ended,
+};
+
 // What the launch guard decided about the launches before this one.
 struct LaunchVerdict {
     // Launches in a row that ended before Discord ran for a while.
@@ -22,8 +33,9 @@ public:
 
     explicit LaunchGuard(std::string directory);
 
-    // Counts an unfinished previous launch and arms the marker for this one.
-    LaunchVerdict begin() const;
+    // Counts an unfinished previous launch, unless the platform says it ended without a crash,
+    // and arms the marker for this one.
+    LaunchVerdict begin(PreviousExit previous = PreviousExit::Unknown) const;
     // Disarms the marker once this launch has run long enough to count as healthy.
     bool succeed() const;
 

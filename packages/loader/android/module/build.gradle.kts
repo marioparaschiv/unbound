@@ -7,10 +7,19 @@ plugins {
 }
 
 val repositoryRoot: File = rootDir.parentFile
-val packageVersion: String = repositoryRoot.resolve("ios/control").readLines()
+val controlVersion: String = repositoryRoot.resolve("ios/control").readLines()
     .first { it.startsWith("Version:") }
     .substringAfter(":")
     .trim()
+// version.json is the release version; CI stamps it into ios/control, which local builds leave stale,
+// so the newer one wins.
+val releaseVersion: String = Regex("\"version\"\\s*:\\s*\"([^\"]+)\"")
+    .find(repositoryRoot.resolve("version.json").readText())
+    ?.groupValues?.get(1) ?: controlVersion
+fun versionParts(version: String) = version.split(".").map { part -> part.takeWhile(Char::isDigit).toIntOrNull() ?: 0 }
+val packageVersion: String = listOf(controlVersion, releaseVersion).maxWith { a, b ->
+    versionParts(a).zip(versionParts(b)).map { (x, y) -> x.compareTo(y) }.firstOrNull { it != 0 } ?: 0
+}
 val buildNumber = providers.gradleProperty("unboundBuildNumber").orNull?.toIntOrNull()
 val packageVersionCode = packageVersion.split(".").take(3).fold(0) { code, part ->
     code * 100 + (part.filter(Char::isDigit).toIntOrNull() ?: 0)

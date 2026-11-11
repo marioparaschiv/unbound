@@ -2,7 +2,6 @@ import type { InputPluginOption, Plugin, RollupCache, RollupLog, RollupOptions }
 import { join, relative, sep } from 'node:path';
 import { existsSync, statSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { rollup } from 'rollup';
 
 import type { Diagnostic, Severity } from '~/lib/check/diagnostic';
 import { diagnostic, isDiagnostic } from '~/lib/check/diagnostic';
@@ -143,6 +142,8 @@ export async function checkModuleGraph(dir: string, cache: CheckCache): Promise<
 		fresh.set(id, [...(fresh.get(id) ?? []), ...found]);
 	}
 
+	// Imported here: rollup loads its native binding on import, which the device commands never need.
+	const { rollup } = await import('rollup');
 	const results = await Promise.all(
 		(await loadOptions(join(dir, CONFIG_FILE))).map(async (options, index) => {
 			try {

@@ -7,9 +7,15 @@
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <mutex>
+#if defined(__APPLE__)
+#include <sys/ucontext.h>
+#else
+#include <ucontext.h>
+#endif
 #include <unistd.h>
 
 #include "LoaderAddonActivity.h"
+#include "LoaderFiles.h"
 #include "LoaderLog.h"
 
 namespace loader {
@@ -20,6 +26,162 @@ static std::array<struct sigaction, kCrashSignals.size()> gPreviousActions;
 static std::atomic<int>                                   gMarkerDescriptor{-1};
 static std::atomic_bool                                   gRecorded{false};
 static std::atomic_bool                                   gInstalled{false};
+static std::atomic<int>                                   gStackDescriptor{-1};
+static std::string                                        gPreviousNativeCrash;
+static constexpr size_t                                   kMaxNativeFrames = 32;
+
+static void writeText(int descriptor, const char *text)
+{
+    size_t length = 0;
+    while (text[length])
+    {
+        length++;
+    }
+    while (length > 0)
+    {
+        ssize_t written = write(descriptor, text, length);
+        if (written <= 0)
+        {
+            return;
+        }
+        text += written;
+        length -= static_cast<size_t>(written);
+    }
+}
+
+static void writeHex(int descriptor, uintptr_t value)
+{
+    char  digits[2 + sizeof(uintptr_t) * 2 + 1];
+    char *end    = digits + sizeof(digits) - 1;
+    *end         = '\0';
+    char *cursor = end;
+    do
+    {
+        *--cursor = "0123456789abcdef"[value & 0xf];
+        value >>= 4;
+    } while (value && cursor > digits + 2);
+    *--cursor = 'x';
+    *--cursor = '0';
+    writeText(descriptor, cursor);
+}
+
+static void writeDecimal(int descriptor, unsigned value)
+{
+    char  digits[12];
+    char *cursor = digits + sizeof(digits) - 1;
+    *cursor      = '\0';
+    do
+    {
+        *--cursor = static_cast<char>('0' + value % 10);
+        value /= 10;
+    } while (value);
+    writeText(descriptor, cursor);
+}
+
+// The crashing pc, the return address and the saved frame pointer, where this platform's context
+// exposes them.
+static bool crashRegisters(void *context, uintptr_t &pc, uintptr_t &lr, uintptr_t &fp)
+{
+    if (!context)
+    {
+        return false;
+    }
+    auto *ucontext = static_cast<ucontext_t *>(context);
+#if defined(__APPLE__) && defined(__arm64__)
+    pc = static_cast<uintptr_t>(__darwin_arm_thread_state64_get_pc(ucontext->uc_mcontext->__ss));
+    lr = static_cast<uintptr_t>(__darwin_arm_thread_state64_get_lr(ucontext->uc_mcontext->__ss));
+    fp = static_cast<uintptr_t>(__darwin_arm_thread_state64_get_fp(ucontext->uc_mcontext->__ss));
+    return true;
+#elif defined(__linux__) && defined(__aarch64__)
+    pc = static_cast<uintptr_t>(ucontext->uc_mcontext.pc);
+    lr = static_cast<uintptr_t>(ucontext->uc_mcontext.regs[30]);
+    fp = static_cast<uintptr_t>(ucontext->uc_mcontext.regs[29]);
+    return true;
+#elif defined(__linux__) && defined(__x86_64__)
+    pc = static_cast<uintptr_t>(ucontext->uc_mcontext.gregs[REG_RIP]);
+    lr = 0;
+    fp = static_cast<uintptr_t>(ucontext->uc_mcontext.gregs[REG_RBP]);
+    return true;
+#else
+    (void) ucontext;
+    return false;
+#endif
+}
+
+static void writeFrame(int descriptor, size_t index, uintptr_t address)
+{
+    writeText(descriptor, "#");
+    writeDecimal(descriptor, static_cast<unsigned>(index));
+    writeText(descriptor, " ");
+    writeHex(descriptor, address);
+    // Best effort: the process is already going down, and an image offset is what makes the
+    // address useful in a report.
+    Dl_info info = {};
+    if (dladdr(reinterpret_cast<void *>(address), &info) && info.dli_fname)
+    {
+        const char *image = info.dli_fname;
+        for (const char *cursor = image; *cursor; cursor++)
+        {
+            if (*cursor == '/')
+            {
+                image = cursor + 1;
+            }
+        }
+        writeText(descriptor, " ");
+        writeText(descriptor, image);
+        writeText(descriptor, " + ");
+        writeHex(descriptor, address - reinterpret_cast<uintptr_t>(info.dli_fbase));
+        if (info.dli_sname)
+        {
+            writeText(descriptor, " ");
+            writeText(descriptor, info.dli_sname);
+        }
+    }
+    writeText(descriptor, "\n");
+}
+
+// Async-signal-safe apart from dladdr: walks the frame-pointer chain of the crashing thread.
+static void writeNativeStack(int signal, void *context)
+{
+    int descriptor = gStackDescriptor.exchange(-1);
+    if (descriptor < 0)
+    {
+        return;
+    }
+    writeText(descriptor, "Signal ");
+    writeDecimal(descriptor, static_cast<unsigned>(signal));
+    writeText(descriptor, "\n");
+
+    uintptr_t pc = 0, lr = 0, fp = 0;
+    if (crashRegisters(context, pc, lr, fp))
+    {
+        size_t index = 0;
+        writeFrame(descriptor, index++, pc);
+        if (lr)
+        {
+            writeFrame(descriptor, index++, lr);
+        }
+        for (; index < kMaxNativeFrames && fp && (fp % sizeof(uintptr_t)) == 0; index++)
+        {
+            const auto *frame    = reinterpret_cast<const uintptr_t *>(fp);
+            uintptr_t   next     = frame[0];
+            uintptr_t   returnTo = frame[1];
+            if (!returnTo)
+            {
+                break;
+            }
+            writeFrame(descriptor, index, returnTo);
+            // Frames grow towards higher addresses as the walk unwinds; anything else is corrupt.
+            if (next <= fp || next - fp > 1024 * 1024)
+            {
+                break;
+            }
+            fp = next;
+        }
+    }
+    fsync(descriptor);
+    close(descriptor);
+}
 
 static int crashSignalIndex(int signal)
 {
@@ -76,6 +238,7 @@ static void recordCrashingAddon(int signal, siginfo_t *info, void *context)
     {
         writeCrashingAddonRecord(descriptor);
     }
+    writeNativeStack(signal, context);
     errno = savedErrno;
     forwardToPreviousHandler(signal, info, context);
 }
@@ -123,6 +286,13 @@ bool installAddonCrashHandler(const std::string &markerPath)
     }
     gMarkerDescriptor.store(descriptor, std::memory_order_release);
 
+    size_t      slash = markerPath.find_last_of('/');
+    std::string stackPath =
+        joinPath(slash == std::string::npos ? "." : markerPath.substr(0, slash), kNativeCrashFile);
+    gPreviousNativeCrash = readTextFile(stackPath).value_or("");
+    int stack            = open(stackPath.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
+    gStackDescriptor.store(stack, std::memory_order_release);
+
     struct sigaction action = {};
     action.sa_sigaction     = recordCrashingAddon;
     action.sa_flags         = SA_SIGINFO | SA_ONSTACK;
@@ -141,5 +311,10 @@ bool installAddonCrashHandler(const std::string &markerPath)
             describeHandler(gPreviousActions[static_cast<size_t>(crashSignalIndex(SIGABRT))]) +
             ".");
     return true;
+}
+
+std::string previousNativeCrash()
+{
+    return gPreviousNativeCrash;
 }
 }

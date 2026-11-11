@@ -20,4 +20,9 @@ tracing-subscriber.workspace = true
 clap.workspace = true
 gpui.workspace = true
 gpui_platform.workspace = true
-unicode-segmentation = "1.13"
+gpui-component.workspace = true
+gpui-kit-assets.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+gpui = { workspace = true, features = ["test-support"] }

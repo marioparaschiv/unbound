@@ -78,6 +78,13 @@ export function hasStagedBundle(): boolean {
 }
 
 /**
+ * @description Tells the loader Discord's first screen rendered, so it counts this launch as healthy.
+ */
+export function markRendered(): void {
+	read('markRendered', (bridge) => bridge.markRendered?.());
+}
+
+/**
  * @description Reads the native loader's origin, version and the runtime's Hermes bytecode version.
  * @returns The loader info, or `undefined` when no loader installed `UnboundNative`.
  */

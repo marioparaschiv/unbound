@@ -1,4 +1,3 @@
-import { parseSync, type ESTree } from 'rolldown/utils';
 import type { Plugin } from 'rollup';
 
 import {
@@ -7,6 +6,7 @@ import {
 	type Diagnostic,
 	type Severity,
 } from './diagnostic.ts';
+import { parseSync, type ESTree } from './rolldown-utils.ts';
 
 /** The `ubd check` id this plugin reports under. */
 export const CHECK = 'entry';

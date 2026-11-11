@@ -1,9 +1,18 @@
 import { cli } from 'cleye';
 
-import { groupCommands, groups, layout, rootCommands, type CommandGroup } from '~/registry';
+import {
+	catalogEntries,
+	groupCommands,
+	groups,
+	layout,
+	rootCommands,
+	type CommandGroup,
+} from '~/registry';
 import { renderMenu, type Menu, type MenuEntry } from '~/lib/menu';
+import { SERVE_BRIDGE_COMMAND } from '~/lib/bridge-process';
 import { mcpCommand, mcpMenuEntry } from '~/commands/mcp';
 import { toCleyeCommand } from '~/adapters/cleye';
+import { buildCatalog } from '~/lib/catalog';
 
 const HELP = new Set(['help', '--help', '-h']);
 
@@ -91,6 +100,21 @@ export function runCli(argv: string[]): void {
 
 	if (name === undefined || HELP.has(name)) {
 		print(rootMenu());
+
+		return;
+	}
+
+	// Unlisted plumbing for front ends such as Unbound DevTools, which build their forms from it.
+	if (name === 'catalog') {
+		process.stdout.write(`${JSON.stringify(buildCatalog(catalogEntries()))}\n`);
+
+		return;
+	}
+
+	// What `ubd debug start` spawns from a compiled `ubd`; the debugger reads `--port` itself.
+	if (name === SERVE_BRIDGE_COMMAND) {
+		// Its source, which the package's `module` names but types do not resolve.
+		void import('@unbound-app/debugger/src/index.ts');
 
 		return;
 	}

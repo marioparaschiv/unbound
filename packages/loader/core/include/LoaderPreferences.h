@@ -46,6 +46,8 @@ bool clearCustomBundle(SettingsStore &settings);
 bool unsignedBundlesAllowed(const SettingsStore &settings);
 // The Updates screen's switch for automatic client updates. Absent means on.
 bool autoClientUpdates(const SettingsStore &settings);
+// Whether background update checks on a metered network wait for Wi-Fi. Absent means on.
+bool updatesWaitForWifi(const SettingsStore &settings);
 
 // The ETag of the bundle last downloaded, or empty.
 std::string bundleEtag(const SettingsStore &settings);

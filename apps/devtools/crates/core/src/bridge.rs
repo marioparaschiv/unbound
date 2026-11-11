@@ -1,17 +1,30 @@
 //! A controller client for the Unbound debugger bridge (`packages/debugger`), mirroring
 //! `@unbound-app/debugger-protocol`'s `ControllerClient`: dial `ws://<bridge>/?mcp`, send
-//! `{type:"eval", id, code, timeout?}`, match the `eval-result` by id. One short-lived socket per
-//! call keeps it stateless.
+//! `{type:"eval", id, code, timeout?}`, match the `eval-result` by id. [`eval`] opens one
+//! short-lived socket per call; the debugger connection (`link.rs`) keeps its own open.
 
 use std::net::SocketAddr;
 use std::time::Duration;
 
 use futures_util::{SinkExt, StreamExt};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
+use tokio::net::TcpStream;
 use tokio::time;
-use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::Message;
+use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, connect_async};
+
+pub(crate) type Socket = WebSocketStream<MaybeTlsStream<TcpStream>>;
+
+/// What a device reports about itself once it says hello (`DeviceInfo` in the protocol).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeviceInfo {
+	pub platform: String,
+	pub discord_version: String,
+	pub loader_version: String,
+	pub client_version: String,
+}
 
 #[derive(Debug)]
 pub struct EvalOutcome {
@@ -36,9 +49,11 @@ pub enum BridgeError {
 
 #[derive(Deserialize)]
 #[serde(tag = "type", rename_all = "kebab-case")]
-enum BridgeFrame {
+pub(crate) enum BridgeFrame {
 	DeviceStatus {
 		connected: bool,
+		#[serde(default)]
+		device: Option<DeviceInfo>,
 	},
 	EvalResult {
 		id: String,
@@ -55,14 +70,15 @@ const CONTROLLER_ENDPOINT_MARKER: &str = "mcp";
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
 /// The bridge sends `device-status` right after a controller attaches.
 const STATUS_WAIT: Duration = Duration::from_millis(1500);
-const REPLY_GRACE_MS: u64 = 2000;
+pub(crate) const REPLY_GRACE_MS: u64 = 2000;
 
-pub async fn eval(bridge: SocketAddr, code: &str, timeout_ms: u64) -> anyhow::Result<EvalOutcome> {
+/// Opens a controller socket to the bridge at `bridge`.
+pub(crate) async fn dial(bridge: SocketAddr) -> Result<Socket, BridgeError> {
 	let unreachable = |reason: String| BridgeError::Unreachable {
 		addr: bridge,
 		reason,
 	};
-	let (mut socket, _) = time::timeout(
+	let (socket, _) = time::timeout(
 		CONNECT_TIMEOUT,
 		connect_async(format!("ws://{bridge}/?{CONTROLLER_ENDPOINT_MARKER}")),
 	)
@@ -70,8 +86,21 @@ pub async fn eval(bridge: SocketAddr, code: &str, timeout_ms: u64) -> anyhow::Re
 	.map_err(|_| unreachable("timed out".to_owned()))?
 	.map_err(|error| unreachable(error.to_string()))?;
 
+	Ok(socket)
+}
+
+/// An `eval` request frame; the reply is the `eval-result` with the same `id`.
+pub(crate) fn eval_request(id: &str, code: &str, timeout_ms: u64) -> Message {
+	Message::text(
+		json!({ "type": "eval", "id": id, "code": code, "timeout": timeout_ms }).to_string(),
+	)
+}
+
+pub async fn eval(bridge: SocketAddr, code: &str, timeout_ms: u64) -> anyhow::Result<EvalOutcome> {
+	let mut socket = dial(bridge).await?;
+
 	let device_connected = match time::timeout(STATUS_WAIT, next_frame(&mut socket)).await {
-		Ok(Some(BridgeFrame::DeviceStatus { connected })) => connected,
+		Ok(Some(BridgeFrame::DeviceStatus { connected, .. })) => connected,
 		Ok(None) => return Err(BridgeError::Closed.into()),
 		// An older bridge that does not announce: let the eval itself say whether a device answers.
 		_ => true,
@@ -86,8 +115,7 @@ pub async fn eval(bridge: SocketAddr, code: &str, timeout_ms: u64) -> anyhow::Re
 	}
 
 	let id = uuid::Uuid::new_v4().to_string();
-	let request = eval_request(&id, code, timeout_ms);
-	socket.send(Message::text(request.to_string())).await?;
+	socket.send(eval_request(&id, code, timeout_ms)).await?;
 
 	let reply = async {
 		while let Some(frame) = next_frame(&mut socket).await {
@@ -117,11 +145,7 @@ pub async fn eval(bridge: SocketAddr, code: &str, timeout_ms: u64) -> anyhow::Re
 	Ok(outcome)
 }
 
-fn eval_request(id: &str, code: &str, timeout_ms: u64) -> serde_json::Value {
-	json!({ "type": "eval", "id": id, "code": code, "timeout": timeout_ms })
-}
-
-async fn next_frame<S>(socket: &mut S) -> Option<BridgeFrame>
+pub(crate) async fn next_frame<S>(socket: &mut S) -> Option<BridgeFrame>
 where
 	S: futures_util::Stream<Item = Result<Message, tokio_tungstenite::tungstenite::Error>> + Unpin,
 {
@@ -227,8 +251,10 @@ mod contract {
 			expected["code"].as_str().unwrap(),
 			expected["timeout"].as_u64().unwrap(),
 		);
+		let sent: Value = serde_json::from_str(request.to_text().expect("the request is text"))
+			.expect("the request is JSON");
 
-		assert_eq!(&request, expected);
+		assert_eq!(&sent, expected);
 	}
 
 	#[test]
@@ -253,11 +279,17 @@ mod contract {
 		));
 		assert!(matches!(
 			frame(&contract, "deviceConnected"),
-			BridgeFrame::DeviceStatus { connected: true }
+			BridgeFrame::DeviceStatus {
+				connected: true,
+				..
+			}
 		));
 		assert!(matches!(
 			frame(&contract, "deviceDisconnected"),
-			BridgeFrame::DeviceStatus { connected: false }
+			BridgeFrame::DeviceStatus {
+				connected: false,
+				..
+			}
 		));
 	}
 

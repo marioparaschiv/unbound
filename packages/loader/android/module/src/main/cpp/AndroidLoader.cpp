@@ -492,6 +492,24 @@ void AndroidLoader::crashAlert(const std::string &message)
     callStaticVoid(callbacks_.bridgeClass, callbacks_.crashAlert, message);
 }
 
+loader::PreviousExit AndroidLoader::previousExit()
+{
+    switch (callStaticInt(callbacks_.bridgeClass, callbacks_.previousExit).value_or(0))
+    {
+        case 1:
+            return loader::PreviousExit::Crashed;
+        case 2:
+            return loader::PreviousExit::Ended;
+        default:
+            return loader::PreviousExit::Unknown;
+    }
+}
+
+bool AndroidLoader::onMeteredNetwork()
+{
+    return callStaticBoolean(callbacks_.bridgeClass, callbacks_.isMeteredNetwork);
+}
+
 std::optional<std::string> AndroidLoader::fetchText(const std::string &url, double timeoutSeconds)
 {
     return callStaticString(callbacks_.bridgeClass, callbacks_.fetchText, url,
@@ -543,6 +561,12 @@ AndroidLoader::download(const std::string &url, const std::string &destination,
     loader::DownloadResult result;
     result.status = std::stoi(toStdString(env, status));
     result.etag   = toStdString(env, etag);
+    if (env->GetArrayLength(response) >= 3)
+    {
+        auto retryAfter   = static_cast<jstring>(env->GetObjectArrayElement(response, 2));
+        result.retryAfter = retryAfter ? toStdString(env, retryAfter) : "";
+        env->DeleteLocalRef(retryAfter);
+    }
 
     env->DeleteLocalRef(status);
     env->DeleteLocalRef(etag);

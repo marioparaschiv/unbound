@@ -9,12 +9,12 @@ const PREVIEW_CHARS: usize = 96;
 
 struct Preview {
 	text: String,
-	color: u32,
+	color: theme::Token,
 	italic: bool,
 }
 
 impl Preview {
-	fn plain(text: String, color: u32) -> Self {
+	fn plain(text: String, color: theme::Token) -> Self {
 		Self {
 			text,
 			color,
@@ -85,19 +85,44 @@ fn chevron(expandable: bool, expanded: bool) -> impl IntoElement {
 		.when(expandable, |slot| slot.child(widgets::chevron(expanded)))
 }
 
+/// A value row inside an inspector card: inset 4px so its hover sits inside the card's rim, with
+/// the label on the card rows' 12px line plus one indent per level.
 fn base_row(path: &Path, depth: usize) -> gpui::Stateful<gpui::Div> {
 	div()
 		.id(row_id(path))
 		.flex()
 		.items_center()
 		.h(theme::VALUE_ROW_HEIGHT)
-		.pl(px(theme::INSET + depth as f32 * theme::INDENT))
-		.pr(px(theme::INSET))
+		.mx(px(4.))
+		.rounded(theme::RADIUS_ITEM - px(2.))
+		.pl(px(4. + depth as f32 * theme::INDENT))
+		.pr(px(8.))
 		.whitespace_nowrap()
 		.overflow_hidden()
 		.font_family(theme::mono_font())
 		.text_size(theme::TEXT_MONO)
 		.hover(|row| row.bg(theme::color(theme::HOVER)))
+}
+
+/// A value's preview. An editable one (a boolean) sits on a small raised chip, so it reads as a
+/// control before it is hovered.
+fn value_text(text: String, color: theme::Token, italic: bool, editable: bool) -> gpui::Div {
+	div()
+		.min_w_0()
+		.truncate()
+		.text_color(theme::color(color))
+		.when(italic, |text| text.italic())
+		.when(editable, |text| {
+			text.flex_none()
+				.px(px(6.))
+				.rounded(px(5.))
+				.bg(theme::color(theme::SECONDARY))
+				.border_1()
+				.border_color(widgets::hairline())
+				.cursor_pointer()
+				.hover(|text| text.bg(theme::color(theme::SECONDARY_HOVER)))
+		})
+		.child(text)
 }
 
 pub struct Rows<'a> {
@@ -158,17 +183,7 @@ impl<'a> Rows<'a> {
 						.child(": "),
 				);
 		}
-		row = row.child(
-			div()
-				.min_w_0()
-				.truncate()
-				.text_color(theme::color(color))
-				.when(italic, |text| text.italic())
-				.when(editable, |text| {
-					text.cursor_pointer().hover(|text| text.underline())
-				})
-				.child(text),
-		);
+		row = row.child(value_text(text, color, italic, editable));
 		let click_path = path.clone();
 		if expandable {
 			row = row.cursor_pointer().on_click(
@@ -232,13 +247,23 @@ impl<'a> Rows<'a> {
 		let edit_path = value_path.clone();
 		let row = base_row(&path, depth)
 			.child(chevron(expandable, expanded))
+			// The slot stays for a hook with no id (`useContext`), so every hook name starts on one line.
 			.child(
 				div()
 					.flex_none()
-					.min_w(px(16.))
-					.pr(px(4.))
-					.text_color(theme::color(theme::TEXT_FAINT))
-					.children(hook.id.map(|id| id.to_string())),
+					.mr(px(6.))
+					.min_w(px(18.))
+					.h(px(18.))
+					.flex()
+					.items_center()
+					.justify_center()
+					.rounded(px(5.))
+					.text_size(theme::TEXT_EYEBROW)
+					.text_color(theme::color(theme::TEXT_MUTED))
+					.when_some(hook.id, |slot, id| {
+						slot.bg(theme::color(theme::SECONDARY))
+							.child(id.to_string())
+					}),
 			)
 			.child(
 				div()
@@ -253,17 +278,7 @@ impl<'a> Rows<'a> {
 						.text_color(theme::color(theme::TEXT_MUTED))
 						.child(": "),
 				)
-				.child(
-					div()
-						.min_w_0()
-						.truncate()
-						.text_color(theme::color(color))
-						.when(italic, |text| text.italic())
-						.when(editable, |text| {
-							text.cursor_pointer().hover(|text| text.underline())
-						})
-						.child(text),
-				)
+				.child(value_text(text, color, italic, editable))
 			})
 			.when(expandable, |row| {
 				row.cursor_pointer().on_click(

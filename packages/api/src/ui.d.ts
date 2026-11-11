@@ -14,8 +14,8 @@ import { ComponentProps, ComponentType, FunctionComponent, ReactElement, ReactNo
 import * as RN from 'react-native';
 import { ImageStyle, TextStyle, ViewStyle } from 'react-native';
 /**
- * @description Discord's full-width Row Button, which runs something when pressed and asks first when `confirmation` is set;
- * `danger` leads with a red trash icon.
+ * @description A pressable `TableRow` in its settings group, as Discord draws actions such as Log Out; it asks first when
+ * `confirmation` is set. `danger` draws the label red behind a red trash icon.
  * @param props The row's label, variant, confirmation and press handler.
  * @returns The row.
  */
@@ -54,7 +54,7 @@ export declare function ChecklistRow({
 	onChange,
 }: ChecklistRowProps): React$1.ReactElement;
 /**
- * @description A settings row that shows a color swatch, opens Discord's color picker when pressed, takes a typed hex code and offers a reset back to the default. A typed code is saved even when it matches the default, which the picker cannot do: Discord's picker reports its current color when it is dismissed, so a pick that matches the color already shown is ignored.
+ * @description A settings row that shows a color swatch, opens Discord's color picker when pressed and offers a reset back to the default. Discord's picker reports its current color when dismissed, so a pick matching the shown color is ignored.
  * @param props The row's label, chosen color, the default it falls back to and the change handler.
  * @returns The row.
  */
@@ -94,7 +94,7 @@ export declare function EntityRow({
 }: EntityRowProps): React$1.ReactElement;
 /**
  * @description A settings row, Discord's way: the label, and the saved text trailing (masked when secret). Pressing
- * it opens Discord's titled action sheet with the input, its description and error, which saves only on Save.
+ * it opens Discord's dialog with the focused input, its description and error, which saves only on Save.
  * @param props The row's label, saved text, variant, validation and change handler.
  * @returns The row.
  */
@@ -111,7 +111,9 @@ export declare function InputRow({
 	onChange,
 }: InputRowProps): React$1.ReactElement;
 /**
- * @description A titled, editable list of strings: each row moves up or down or is removed, and an input adds one.
+ * @description A titled, editable list of strings: each row moves up or down, or is deleted after a confirmation; the
+ * delete button stands apart from the arrows so it is hard to hit by mistake. An Add row opens
+ * Discord's input dialog for a new one.
  * @param props The group's title, saved strings, limit, validation and change handler.
  * @returns The group.
  */
@@ -150,19 +152,6 @@ export declare function NumberRow({
  */
 export declare function Page({ children }: PageProps): React$1.ReactElement;
 /**
- * @description A settings row with a grid of color swatches, the picked one ringed, for a fixed set of colors.
- * @param props The row's label, picked color, colors and change handler.
- * @returns The row.
- */
-export declare function PaletteRow({
-	label,
-	subLabel,
-	value,
-	presets,
-	disabled,
-	onChange,
-}: PaletteRowProps): React$1.ReactElement;
-/**
  * @description A row showing the picked option that opens Discord's action sheet listing every option, for choices too many for a radio group.
  * @param props The row's label, picked value, options and change handler.
  * @returns The row.
@@ -194,8 +183,9 @@ export declare function RadioRow({
  */
 export declare function ResetRow({ label, onReset }: ResetRowProps): React$1.ReactElement;
 /**
- * @description A card saying a change applies after Discord restarts, with a full-width button that restarts it now.
- * @returns The card.
+ * @description Discord's `InlineNotice` saying a change applies after Discord restarts, with a button that restarts
+ * it now; on builds without one, a card holding the same text and button.
+ * @returns The notice.
  */
 export declare function RestartRow(): React$1.ReactElement;
 /**
@@ -245,9 +235,9 @@ export declare function SegmentedRow({
 	onChange,
 }: SegmentedRowProps): React$1.ReactElement;
 /**
- * @description A settings row with Discord's form slider, as its own settings draw one: the label, then the slider
- * with its value label and default mark. The value updates while dragging and is saved when the drag ends; Android's
- * slider and iOS's take differently named props, so it passes both.
+ * @description Discord's `TableSliderRow`, as its own settings draw one: the label and live value over the slider
+ * with its default mark. A sub-label, which that row cannot show, moves it to a `TableRow` holding the same slider.
+ * The value is saved when the drag ends; Android's slider and iOS's take differently named props, so it passes both.
  * @param props The row's label, value, default, range and change handler.
  * @returns The row, or `null` when Discord's slider is unavailable.
  */
@@ -350,11 +340,11 @@ export type ColorRowProps = {
 	label: string;
 	/** The chosen color as a `#RRGGBB` hex code, or `undefined` when the default applies. */
 	color: string | undefined;
-	/** The default color, swatched while `color` is unset and used as the hex input's placeholder. */
+	/** The default color, swatched and opened in the picker while `color` is unset. */
 	fallbackColor: string;
 	/** The text shown under the label while `color` is unset, in place of the hex code. */
 	fallbackLabel: string;
-	/** Called with the new `#RRGGBB` hex code, or `undefined` when the user resets or clears it. */
+	/** Called with the new `#RRGGBB` hex code, or `undefined` when the user resets it. */
 	onChange: (color: string | undefined) => void;
 };
 /** What `storage.define` returns: a schema's settings, bound to one Bucket. */
@@ -484,21 +474,6 @@ export type NumberRowProps = NumberConstraints & {
 export type PageProps = {
 	/** The page's form groups, laid out top to bottom with a 24px gap. */
 	children: React$1.ReactNode;
-};
-/** Props for `PaletteRow`. */
-export type PaletteRowProps = {
-	/** The row's label. */
-	label: string;
-	/** Text shown under the label; none when omitted. */
-	subLabel?: string;
-	/** The picked color, `#RRGGBB`. */
-	value: string;
-	/** The colors offered, `#RRGGBB`. */
-	presets: string[];
-	/** Dims the row and ignores input. Defaults to false. */
-	disabled?: boolean;
-	/** Called with the color the user presses. */
-	onChange: (color: string) => void;
 };
 /** Props for `PickerRow`. */
 export type PickerRowProps = {

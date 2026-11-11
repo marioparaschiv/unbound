@@ -160,17 +160,28 @@ jobs:
             - name: Build release
               run: cargo build --locked --release -p unbound-devtools --target ${{ matrix.target }}
 
+            - name: Setup Bun
+              uses: ./.github/actions/setup-bun-deps
+              with:
+                  frozen-lockfile: 'true'
+
+            # The app runs the `ubd` beside it, so its sidebar works without Bun or a global CLI.
+            - name: Compile ubd
+              working-directory: .
+              shell: bash
+              run: bun scripts/compile-cli.ts 'apps/devtools/target/${{ matrix.target }}/release/ubd${{ runner.os == 'Windows' && '.exe' || '' }}'
+
             # tar keeps the executable bit on Linux and macOS; Windows users expect a zip.
             - name: Package binary (Unix)
               if: runner.os != 'Windows'
               working-directory: apps/devtools/target/${{ matrix.target }}/release
-              run: tar -czf '${{ matrix.asset }}' unbound-devtools
+              run: tar -czf '${{ matrix.asset }}' unbound-devtools ubd
 
             - name: Package binary (Windows)
               if: runner.os == 'Windows'
               shell: pwsh
               working-directory: apps/devtools/target/${{ matrix.target }}/release
-              run: Compress-Archive -Path unbound-devtools.exe -DestinationPath '${{ matrix.asset }}'
+              run: Compress-Archive -Path unbound-devtools.exe, ubd.exe -DestinationPath '${{ matrix.asset }}'
 
             - name: Upload binary
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9

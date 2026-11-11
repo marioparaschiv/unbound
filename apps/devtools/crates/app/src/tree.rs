@@ -7,6 +7,7 @@ use gpui::{
 use unbound_devtools_core::{Element, ElementKind, Row, Store};
 
 use crate::app::Workspace;
+use crate::smooth_scroll::SmoothScroll;
 use crate::widgets::{badge, chevron, icon, icon_button, panel_header, tooltip};
 use crate::{assets, theme};
 
@@ -130,6 +131,8 @@ impl Workspace {
 			.pr(px(theme::INSET))
 			.whitespace_nowrap()
 			.overflow_hidden()
+			.mx(px(4.))
+			.rounded(theme::RADIUS_ITEM)
 			.border_1()
 			.map(|row| match (selected, focused) {
 				(true, true) => row
@@ -265,7 +268,7 @@ impl Workspace {
 					div()
 						.px(px(CRUMB_PADDING))
 						.text_color(theme::color(theme::TEXT_FAINT))
-						.child("No selection"),
+						.child("No Selection"),
 				)
 			})
 			.children(crumbs)
@@ -298,7 +301,7 @@ impl Workspace {
 		window: &mut Window,
 		cx: &mut Context<Self>,
 	) -> impl IntoElement {
-		let width = f32::from(window.viewport_size().width) - self.inspector_width(window) - 1.;
+		let width = crate::app::page_width(window) - self.inspector_width(window) - 1.;
 		let list = uniform_list(
 			"tree",
 			self.rows.len(),
@@ -322,7 +325,14 @@ impl Workspace {
 				cx.listener(|this, _, window, cx| window.focus(&this.tree_focus, cx)),
 			)
 			.child(self.render_tree_header(cx))
-			.child(div().flex_1().min_h_0().flex().flex_col().child(list))
+			.child(
+				div()
+					.flex_1()
+					.min_h_0()
+					.flex()
+					.flex_col()
+					.child(SmoothScroll::new("tree-glide", &self.scroll, list)),
+			)
 			.child(self.render_breadcrumbs(width, window, cx))
 	}
 }

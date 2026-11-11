@@ -69,8 +69,9 @@ download(const std::string &url, const std::string &destination,
                                                 requestTimeout:policy.readTimeoutSeconds
                                                   totalTimeout:policy.totalTimeoutSeconds];
         loader::DownloadResult result;
-        result.status = static_cast<int>(response.statusCode);
-        result.etag   = toStdString([response valueForHTTPHeaderField:@"etag"] ?: @"");
+        result.status     = static_cast<int>(response.statusCode);
+        result.etag       = toStdString([response valueForHTTPHeaderField:@"etag"] ?: @"");
+        result.retryAfter = toStdString([response valueForHTTPHeaderField:@"Retry-After"] ?: @"");
         return result;
     }
     @catch (NSException *exception)

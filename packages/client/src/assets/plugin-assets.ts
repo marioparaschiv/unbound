@@ -149,11 +149,13 @@ function registry(): AssetsModule {
  * restarted plugin's images keep theirs.
  * @param owner The plugin that owns the asset, whose id prefixes its name; `undefined` keeps the name as given.
  * @param options The image.
+ * @param directory The asset's folder in the asset tree, which icon packs mirror, such as `unbound/images`.
  * @returns The asset's id, and the function that unregisters it.
  */
 export function registerOwnedAsset(
 	owner: string | undefined,
 	options: AssetRegistration,
+	directory = `unbound/${owner ?? 'runtime'}`,
 ): RegisteredAsset {
 	const target = registry();
 	const name = qualify(owner, options.name);
@@ -161,7 +163,7 @@ export function registerOwnedAsset(
 	const known = registrations.get(key);
 	const fields: UnboundAsset = {
 		__packager_asset: false,
-		httpServerLocation: `/assets/unbound/${owner ?? 'runtime'}`,
+		httpServerLocation: `/assets/${directory}`,
 		name,
 		type: options.type,
 		width: options.width,

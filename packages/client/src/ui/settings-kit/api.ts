@@ -9,7 +9,6 @@ export { default as SegmentedRow, type SegmentedRowProps } from '~/ui/settings-k
 export { default as CheckboxRow, type CheckboxRowProps } from '~/ui/settings-kit/checkbox-row';
 export { default as DurationRow, type DurationRowProps } from '~/ui/settings-kit/duration-row';
 export { default as SchemaPanel, type SchemaPanelProps } from '~/ui/settings-kit/schema-panel';
-export { default as PaletteRow, type PaletteRowProps } from '~/ui/settings-kit/palette-row';
 export { default as StepperRow, type StepperRowProps } from '~/ui/settings-kit/stepper-row';
 export { default as ButtonRow, type ButtonRowProps } from '~/ui/settings-kit/button-row';
 export { default as EntityRow, type EntityRowProps } from '~/ui/settings-kit/entity-row';

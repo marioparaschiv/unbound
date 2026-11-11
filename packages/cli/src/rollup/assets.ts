@@ -7,10 +7,10 @@ import {
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import type { AddonAsset } from '@unbound-app/types/addons';
-import { parseSync, Visitor } from 'rolldown/utils';
 import { createHash } from 'node:crypto';
 import type { Plugin } from 'rollup';
 
+import { parseSync, Visitor } from './rolldown-utils.ts';
 import { reportProblem } from './diagnostic.ts';
 
 /** The scales an image ships at, as its `@2x` and `@3x` suffixes name them. */
