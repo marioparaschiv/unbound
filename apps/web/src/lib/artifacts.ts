@@ -19,6 +19,26 @@ import type { Env } from '~/lib/env';
 /** How many extra files one version writes to the bucket at once. */
 const FILE_WRITE_CONCURRENCY = 16;
 
+/** How many times one extra file is written before the version fails. */
+const FILE_WRITE_ATTEMPTS = 4;
+
+// The bucket answers the odd write with a transient `internal incident`; the same bytes are safe to write again.
+async function writeWithRetry(write: () => Promise<number>): Promise<void> {
+	for (let attempt = 1; ; attempt++) {
+		try {
+			await write();
+
+			return;
+		} catch (error) {
+			if (attempt >= FILE_WRITE_ATTEMPTS) {
+				throw error;
+			}
+
+			await Bun.sleep(250 * attempt);
+		}
+	}
+}
+
 export type AddonVersionRow = typeof addonVersion.$inferSelect;
 
 export type SubmissionSourceRow = typeof submissionSource.$inferSelect;
@@ -117,10 +137,12 @@ export async function writeArtifact(
 	await Promise.all([
 		// An icon pack ships hundreds of images; the bucket fails when all of them are written at once.
 		forEachAtMost([...files], FILE_WRITE_CONCURRENCY, async ([path, bytes]) => {
-			await ctx.storage.public.write(
-				`${directory}/${path}`,
-				bytes,
-				path.endsWith('.json') ? { type: 'application/json' } : undefined,
+			await writeWithRetry(() =>
+				ctx.storage.public.write(
+					`${directory}/${path}`,
+					bytes,
+					path.endsWith('.json') ? { type: 'application/json' } : undefined,
+				),
 			);
 		}),
 		...[...bytecode].map(([bytecodeVersion, bytes]) =>
