@@ -6,11 +6,11 @@ import type {
 	NativeUIScope,
 } from '@unbound-app/api/native';
 
-import type { ReactionViewState } from '~/native/reaction-views-ios';
-import type { ReactionCellViews } from '~/native/cell-views-ios';
-import type { LayoutEntry } from '~/native/collections-ios';
-import type { CellHeight } from '~/native/cell-heights-ios';
-import type { TableLayout } from '~/native/tables-ios';
+import type { ReactionViewState } from '~/native/ios/reaction-views';
+import type { ReactionCellViews } from '~/native/ios/cell-views';
+import type { LayoutEntry } from '~/native/ios/collections';
+import type { CellHeight } from '~/native/ios/cell-heights';
+import type { TableLayout } from '~/native/ios/tables';
 import ReactionUserCache from '~/lib/reactor-cache';
 import type { Reactor } from '~/lib/avatars';
 

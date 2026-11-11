@@ -9,7 +9,7 @@ import {
 	restoreComposer,
 	setComposerMentions,
 	type ComposerMentions,
-} from '~/native/ui-chat-input-ios';
+} from '~/native/ios/ui-chat-input';
 import { GuildMemberStore, SelectedChannelStore } from '~/lib/modules';
 import { currentGuildId, guildAliases } from '~/lib/composer-aliases';
 

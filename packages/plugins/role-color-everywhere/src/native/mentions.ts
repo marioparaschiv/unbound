@@ -9,12 +9,12 @@ import {
 	enableMentions as enableAndroidMentions,
 	findSkippedPainters as findAndroidSkippedPainters,
 	ROLE_MENTION_COLORS as androidRoleMentionColors,
-} from '~/native/mentions-android';
+} from '~/native/android/mentions';
 import {
 	enableMentions as enableIosMentions,
 	findSkippedPainters as findIosSkippedPainters,
 	ROLE_MENTION_COLORS as iosRoleMentionColors,
-} from '~/native/mentions-ios';
+} from '~/native/ios/mentions';
 
 export type Enqueue = (step: () => void | Promise<void>) => void;
 

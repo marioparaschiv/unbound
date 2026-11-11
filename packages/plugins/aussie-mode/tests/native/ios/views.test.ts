@@ -32,7 +32,7 @@ mock.module('react-native', () => ({
 	},
 }));
 
-const { rotateScreen } = await import('~/native/views-ios');
+const { rotateScreen } = await import('~/native/ios/views');
 
 function createNative() {
 	const rootView = { id: 'root-view' };

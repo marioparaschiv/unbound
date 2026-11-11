@@ -17,13 +17,13 @@ import {
 	UserStore,
 } from '~/lib/modules';
 import { longestFirst, matchMention, mentionedUserIds } from '~/lib/mentions';
-import { createMentionPainter } from '~/native/mention-painter-ios';
+import { createMentionPainter } from '~/native/ios/mention-painter';
 import {
 	installMessageMentionHooks,
 	restoreMessageMentions,
 	setMessageMentions,
 	type ChannelMentions,
-} from '~/native/ui-message-cells-ios';
+} from '~/native/ios/ui-message-cells';
 import { CELL_SCAN_DELAYS } from '~/lib/constants';
 import type { Message, NativeValue } from '~/lib/types';
 import { presentNames } from '~/lib/names';

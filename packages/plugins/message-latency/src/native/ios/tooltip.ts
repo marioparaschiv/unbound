@@ -8,8 +8,8 @@ import { parseRect, parseSize, toRect } from '@unbound-plugins/shared/native/ios
 import { safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke';
 import registerAppSurface from '@unbound-plugins/shared/native/app-surface';
 
-import { setFrame } from '~/native/frames-ios';
-import { layoutTooltipSurface } from '~/native/tooltip-surface-ios';
+import { setFrame } from '~/native/ios/frames';
+import { layoutTooltipSurface } from '~/native/ios/tooltip-surface';
 import LatencyTooltip from '~/components/latency-tooltip';
 import { placeTooltip, tooltipTextWidth } from '~/lib/tooltip-layout';
 import { Icon, Tooltip } from '~/lib/constants';

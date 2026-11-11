@@ -13,10 +13,10 @@ import { storage } from '@unbound-app/api';
 import {
 	createBlockBackgroundFinder,
 	LINE_BACKGROUND_SPAN,
-} from '~/native/block-backgrounds-android';
-import { codeSlots, placeholderTexts, sourceBlock } from '~/native/code-ranges-android';
+} from '~/native/android/block-backgrounds';
+import { codeSlots, placeholderTexts, sourceBlock } from '~/native/android/code-ranges';
 import { registerCodeCardSurface, type CardContent } from '~/components/code-card';
-import { channelBlocks } from '~/native/channel-blocks-android';
+import { channelBlocks } from '~/native/android/channel-blocks';
 import { CARD_SETTINGS, Limits } from '~/lib/constants';
 import { createFlatRecovery } from '~/lib/flat-recovery';
 import { onAppForeground } from '~/lib/foreground';

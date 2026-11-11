@@ -8,7 +8,7 @@ import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
 import { readNativeMessageInfo } from '@unbound-plugins/shared/native/ios/message-info';
 
 import { messageLayout, type SnapshotNode } from '~/lib/message-layout';
-import { drawBubble, forgetBubbles, installBubbleGuards } from '~/native/worklets-ios';
+import { drawBubble, forgetBubbles, installBubbleGuards } from '~/native/ios/worklets';
 import { BubbleLayout, CARD_INSET, IOSClass } from '~/lib/constants';
 import { bubbleFrame, bubbleProblem, cardFrame, frameDrift } from '~/lib/geometry';
 import { currentAppearance } from '~/lib/theme';

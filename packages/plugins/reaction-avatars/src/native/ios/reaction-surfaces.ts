@@ -8,17 +8,17 @@ import {
 	reactionAvatarStackWidth,
 	shouldMeasureReactionAvatarWidth,
 } from '~/lib/avatars';
-import { releaseState, unmountSurface, type ReactionViewState } from '~/native/reaction-views-ios';
-import { baseItemWidth, invalidateLayout, setExtraWidth } from '~/native/collections-ios';
+import { releaseState, unmountSurface, type ReactionViewState } from '~/native/ios/reaction-views';
+import { baseItemWidth, invalidateLayout, setExtraWidth } from '~/native/ios/collections';
 import { framesMatch, reactionAvatarFrame, reactionBaseViewWidth } from '~/lib/layout';
 import type { ReactionContext } from '~/lib/reaction-context';
-import { rescheduleCell } from '~/native/cell-queue-ios';
+import { rescheduleCell } from '~/native/ios/cell-queue';
 import { Avatar, REACTION_VIEW_TRAILING_INSET, SURFACE_HEIGHT } from '~/lib/constants';
-import type { Session } from '~/native/session-ios';
+import type { Session } from '~/native/ios/session';
 import { surfaceStates } from '~/lib/surface-states';
 import { fetchReactors } from '~/lib/reactors';
 import { ChannelStore } from '~/lib/modules';
-import { key } from '~/native/views-ios';
+import { key } from '~/native/ios/views';
 
 export type ReactionViewTarget = {
 	cellKey: string;

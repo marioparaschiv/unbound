@@ -20,7 +20,7 @@ import { CARD_SETTINGS, Limits } from '~/lib/constants';
 import { locateCodeBlocks, parseFencedCodeBlocks, type CodeBlockPlacement } from '~/lib/fences';
 import { getLanguageMetadata, loadLanguageCatalog } from '~/lib/catalog';
 import { MessageStore } from '~/lib/modules';
-import { channelCodeLines, mayShowCode } from '~/native/code-lines-ios';
+import { channelCodeLines, mayShowCode } from '~/native/ios/code-lines';
 import { storage } from '@unbound-app/api';
 import { createFlatRecovery } from '~/lib/flat-recovery';
 import { onAppForeground } from '~/lib/foreground';
@@ -34,14 +34,14 @@ import {
 	mountSurface,
 	rebuildSurface,
 	restoreSurface,
-} from '~/native/surfaces-ios';
+} from '~/native/ios/surfaces';
 import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
 
-import { detachSurface, surfaceMatchesCell } from '~/native/session-ios';
-import { cellForLabel, messageIdentity } from '~/native/cells-ios';
-import type { Session, Surface } from '~/native/session-ios';
-import { createNativeUI } from '~/native/ui-ios';
-import { CARD_TAG, removeStrayCards, removeStrayCardsAsync } from '~/native/code-host-ios';
+import { detachSurface, surfaceMatchesCell } from '~/native/ios/session';
+import { cellForLabel, messageIdentity } from '~/native/ios/cells';
+import type { Session, Surface } from '~/native/ios/session';
+import { createNativeUI } from '~/native/ios/ui';
+import { CARD_TAG, removeStrayCards, removeStrayCardsAsync } from '~/native/ios/code-host';
 
 type HookSpec = [className: string, selector: string, handlers: NativeHookHandlers];
 

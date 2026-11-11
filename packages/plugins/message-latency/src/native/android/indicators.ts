@@ -1,8 +1,8 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import type { PluginContext } from '@unbound-app/api/native';
 
-import { createAndroidIndicators } from '~/native/views-android';
-import { createAndroidTooltips } from '~/native/tooltip-android';
+import { createAndroidIndicators } from '~/native/android/views';
+import { createAndroidTooltips } from '~/native/android/tooltip';
 import type { LatencyRecords } from '~/lib/records';
 import type { Indicators } from '~/native/indicators';
 

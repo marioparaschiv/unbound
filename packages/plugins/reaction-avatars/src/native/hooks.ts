@@ -6,8 +6,8 @@ import { native } from '@unbound-app/api';
 import {
 	hookReactions as hookAndroid,
 	unhookReactions as unhookAndroid,
-} from '~/native/hooks-android';
-import { hookReactions as hookIos, unhookReactions as unhookIos } from '~/native/hooks-ios';
+} from '~/native/android/hooks';
+import { hookReactions as hookIos, unhookReactions as unhookIos } from '~/native/ios/hooks';
 import ReactionAvatarSurface from '~/components/reaction-avatar-surface';
 import { ReactionActions } from '~/lib/modules';
 

@@ -1,11 +1,11 @@
 import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
 import { flux } from '@unbound-app/api';
 
-import { cancelLayoutRefreshes, scheduleLayoutRefresh } from '~/native/collections-ios';
-import { reloadReactors } from '~/native/reaction-surfaces-ios';
-import { clearRenderedCells } from '~/native/renderer-ios';
-import { scanVisibleCells } from '~/native/visible-cells-ios';
-import type { Session } from '~/native/session-ios';
+import { cancelLayoutRefreshes, scheduleLayoutRefresh } from '~/native/ios/collections';
+import { reloadReactors } from '~/native/ios/reaction-surfaces';
+import { clearRenderedCells } from '~/native/ios/renderer';
+import { scanVisibleCells } from '~/native/ios/visible-cells';
+import type { Session } from '~/native/ios/session';
 import { SelectedChannelStore } from '~/lib/modules';
 import { REACTION_ACTIONS } from '~/lib/constants';
 import type { ReactionChange } from '~/lib/types';

@@ -1,8 +1,8 @@
 import type { PluginContext } from '@unbound-app/api/native';
 import { native } from '@unbound-app/api';
 
-import { createIndicators as android } from '~/native/indicators-android';
-import { createIndicators as ios } from '~/native/indicators-ios';
+import { createIndicators as android } from '~/native/android/indicators';
+import { createIndicators as ios } from '~/native/ios/indicators';
 import { createLatencyRecords, type LatencyRecords } from '~/lib/records';
 import { Theme } from '~/lib/modules';
 

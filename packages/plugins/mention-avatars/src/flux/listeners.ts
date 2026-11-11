@@ -9,8 +9,8 @@ import {
 	SelectedChannelStore,
 	UserStore,
 } from '~/lib/modules';
-import type { VisibleCellScanner } from '~/native/visible-cells-ios';
-import type { Renderer } from '~/native/renderer-ios';
+import type { VisibleCellScanner } from '~/native/ios/visible-cells';
+import type { Renderer } from '~/native/ios/renderer';
 
 type ChangeSource = Partial<FluxStore> | undefined;
 

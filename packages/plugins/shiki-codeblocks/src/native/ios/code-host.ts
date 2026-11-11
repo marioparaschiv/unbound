@@ -9,7 +9,7 @@ import { languageLabel } from '~/lib/languages';
 import { codeScrollHeight } from '~/lib/layout';
 import { Palette } from '~/lib/constants';
 
-import type { NativeUI } from '~/native/ui-ios';
+import type { NativeUI } from '~/native/ios/ui';
 
 /** The views of one code card: a header with icon, language and Copy, above the code. */
 export type CodeHost = {

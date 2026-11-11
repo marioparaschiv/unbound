@@ -1,10 +1,10 @@
 import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
 import type { PluginContext } from '@unbound-app/api/native';
 
-import { createMessageCells } from '~/native/views-ios';
-import { installReuseGuard } from '~/native/worklets-ios';
+import { createMessageCells } from '~/native/ios/views';
+import { installReuseGuard } from '~/native/ios/worklets';
 import type { LatencyRecords } from '~/lib/records';
-import { createTooltips } from '~/native/tooltip-ios';
+import { createTooltips } from '~/native/ios/tooltip';
 import type { Indicators } from '~/native/indicators';
 
 /**

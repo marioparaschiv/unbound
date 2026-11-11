@@ -2,8 +2,8 @@ import type { NativeBridge } from '@unbound-app/api/native';
 import { AppState } from 'react-native';
 import { native } from '@unbound-app/api';
 
-import { rotateScreen as android } from '~/native/views-android';
-import { rotateScreen as ios } from '~/native/views-ios';
+import { rotateScreen as android } from '~/native/android/views';
+import { rotateScreen as ios } from '~/native/ios/views';
 import { isAussieDevice } from '~/lib/locale';
 
 const UPSIDE_DOWN = 180;

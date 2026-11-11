@@ -15,18 +15,18 @@ import {
 	type TextEngine,
 } from '@unbound-plugins/shared/native/ios/text-attachments';
 
-import { availableMessageWidth, findTable, nativeString, readLabelText } from '~/native/objc-ios';
+import { availableMessageWidth, findTable, nativeString, readLabelText } from '~/native/ios/objc';
 import {
 	captureBottomAnchor,
 	clearReactionLayout,
 	refreshRowSize,
-} from '~/native/scroll-anchor-ios';
+} from '~/native/ios/scroll-anchor';
 import { findRenderedLinkRange, type LinkTarget, type TextRange } from '~/lib/link-targets';
 import { BottomAnchorTracker, surfaceHeightCacheKey } from '~/lib/surface-layout';
-import { linkFont, surfaceInsertion } from '~/native/attachment-ios';
+import { linkFont, surfaceInsertion } from '~/native/ios/attachment';
 import type { EmbeddedContent } from '~/lib/embedded-content';
 import type { Message, RowGenerator } from '~/lib/modules';
-import type { Session } from '~/native/session-ios';
+import type { Session } from '~/native/ios/session';
 import { EMBED_HOST_TAG, Surface } from '~/lib/constants';
 
 type Timer = ReturnType<typeof setTimeout>;

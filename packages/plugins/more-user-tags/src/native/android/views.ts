@@ -21,7 +21,7 @@ import {
 	installAndroidTagGradients,
 	removeAndroidTagGradients,
 	setAndroidTagAppearances,
-} from '~/native/worklets-android';
+} from '~/native/android/worklets';
 import type { LabelAppearances } from '~/lib/label-appearances';
 import type { TagGradients } from '~/lib/types';
 import { HEX_COLOR } from '~/lib/constants';

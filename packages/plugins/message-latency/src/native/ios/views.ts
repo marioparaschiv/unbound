@@ -11,9 +11,9 @@ import { readNativeMessageInfo } from '@unbound-plugins/shared/native/ios/messag
 import { safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke';
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
 
-import { createIcon, describeIcon, fillKey, recolorIcon } from '~/native/icon-ios';
-import { installLayout, restoreLayout, type Layout } from '~/native/layout-ios';
-import type { TooltipController } from '~/native/tooltip-ios';
+import { createIcon, describeIcon, fillKey, recolorIcon } from '~/native/ios/icon';
+import { installLayout, restoreLayout, type Layout } from '~/native/ios/layout';
+import type { TooltipController } from '~/native/ios/tooltip';
 import type { LatencyRecord, LatencyRecords } from '~/lib/records';
 import { findUsernameHeader } from '~/lib/username-header';
 import { CELL_SNAPSHOT } from '~/lib/constants';

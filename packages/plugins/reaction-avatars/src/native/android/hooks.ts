@@ -1,6 +1,6 @@
 import type { NativeBridge } from '@unbound-app/api/native';
 
-import { createAndroidReactions } from '~/native/reactions-android';
+import { createAndroidReactions } from '~/native/android/reactions';
 
 let reactions: ReturnType<typeof createAndroidReactions> | undefined;
 

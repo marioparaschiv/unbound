@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { codeSlots, placeholderTexts, sourceBlock } from '~/native/code-ranges-android';
+import { codeSlots, placeholderTexts, sourceBlock } from '~/native/android/code-ranges';
 
 describe('android code blocks', () => {
 	const text = 'fresh shiki fixture\nconst answer = 42;\nconsole.log(answer); \n​';

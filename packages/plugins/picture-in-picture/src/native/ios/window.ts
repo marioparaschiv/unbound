@@ -2,12 +2,12 @@ import { safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke'
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import type { NativeHandle, NativeObjCBridge } from '@unbound-app/api/native';
 
-import { asHandle, findViewerPlayerLayer } from '~/native/player-layer-ios';
-import { keepPlayingInBackground } from '~/native/background-playback-ios';
+import { asHandle, findViewerPlayerLayer } from '~/native/ios/player-layer';
+import { keepPlayingInBackground } from '~/native/ios/background-playback';
 import { IOS_POLL_MS, IOS_WATCH_MS, START_TIMEOUT_MS } from '~/lib/constants';
 import type { CreateWindow, PipWindow } from '~/lib/types';
 import { patchWebViews } from '~/patches/web-views';
-import { withWebPlayers } from '~/native/web-window-ios';
+import { withWebPlayers } from '~/native/ios/web-window';
 
 const STEP_TIMEOUT_MS = START_TIMEOUT_MS / 2;
 

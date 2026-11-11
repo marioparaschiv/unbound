@@ -3,8 +3,8 @@ import type { PluginContext } from '@unbound-app/api/native';
 import { settings } from '@unbound-app/settings';
 import { native, storage } from '@unbound-app/api';
 
-import { roundAndroidAvatars as android } from '~/native/hooks-android';
-import { roundIOSAvatars as ios } from '~/native/hooks-ios';
+import { roundAndroidAvatars as android } from '~/native/android/hooks';
+import { roundIOSAvatars as ios } from '~/native/ios/hooks';
 
 const roundAvatars = native.definePlatform({ ios, android });
 

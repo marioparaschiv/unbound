@@ -1,10 +1,10 @@
 import { readNativeMessageInfo } from '@unbound-plugins/shared/native/ios/message-info';
 import type { NativeObjectHandle } from '@unbound-app/api/native';
 
-import { readReactionCellViews } from '~/native/cell-views-ios';
+import { readReactionCellViews } from '~/native/ios/cell-views';
 import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
-import type { Session } from '~/native/session-ios';
-import { key } from '~/native/views-ios';
+import type { Session } from '~/native/ios/session';
+import { key } from '~/native/ios/views';
 import { MessageStore } from '~/lib/modules';
 
 function hasReactions(channelId: string, messageId: string): boolean {

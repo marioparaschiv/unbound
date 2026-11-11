@@ -1,6 +1,6 @@
 import type { NativeBridge } from '@unbound-app/api/native';
 
-import { createAndroidCards } from '~/native/cards-android';
+import { createAndroidCards } from '~/native/android/cards';
 import type { Cards } from '~/lib/types';
 
 /**

@@ -31,7 +31,7 @@ mock.module('@unbound-plugins/shared/native/android/views', () => ({
 	currentDecorView: () => decor,
 }));
 
-const { rotateScreen } = await import('~/native/views-android');
+const { rotateScreen } = await import('~/native/android/views');
 
 function createNative(): NativeBridge {
 	const java = {

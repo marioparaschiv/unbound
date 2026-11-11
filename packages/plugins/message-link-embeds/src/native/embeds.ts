@@ -6,8 +6,8 @@ import { native } from '@unbound-app/api';
 
 import { MessageActions, MessageRecord, renderers, RowManager } from '~/lib/modules';
 import { emptyEmbeds } from '~/components/message-surface';
-import { drawAndroidEmbeds as android } from '~/native/embeds-android';
-import { drawIOSEmbeds as ios } from '~/native/embeds-ios';
+import { drawAndroidEmbeds as android } from '~/native/android/embeds';
+import { drawIOSEmbeds as ios } from '~/native/ios/embeds';
 
 const drawPlatformEmbeds = native.definePlatform({ ios, android });
 

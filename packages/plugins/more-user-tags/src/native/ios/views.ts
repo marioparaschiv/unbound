@@ -9,7 +9,7 @@ import {
 	removeTagGradients,
 	setTagSettings,
 	type TagSettings,
-} from '~/native/worklets-ios';
+} from '~/native/ios/worklets';
 import type { LabelAppearances } from '~/lib/label-appearances';
 import type { TagGradients } from '~/lib/types';
 

@@ -4,9 +4,9 @@ import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
 import type { NativeBridge } from '@unbound-app/api/native';
 
 import type { Embeds, Renderers } from '~/lib/modules';
-import { subscribeMessageStore } from '~/native/message-sync-ios';
-import { hookMessageCells } from '~/native/cells-ios';
-import { createSession } from '~/native/session-ios';
+import { subscribeMessageStore } from '~/native/ios/message-sync';
+import { hookMessageCells } from '~/native/ios/cells';
+import { createSession } from '~/native/ios/session';
 import { EMBED_HOST_TAG } from '~/lib/constants';
 
 /**

@@ -13,7 +13,7 @@ import {
 	javaText,
 } from '@unbound-plugins/shared/native/android/java-values';
 
-import type { TagAppearanceTable } from '~/native/worklets-ios';
+import type { TagAppearanceTable } from '~/native/ios/worklets';
 
 const STATE_KEY = '__unboundMoreUserTagsAndroid';
 const TAG_VIEW = 'com.discord.chat.presentation.message.MessageTagView';

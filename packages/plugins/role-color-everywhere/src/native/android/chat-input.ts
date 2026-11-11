@@ -11,7 +11,7 @@ import {
 	restoreAndroidComposer,
 	setAndroidComposerMentions,
 	type AndroidComposerMentions,
-} from '~/native/ui-chat-input-android';
+} from '~/native/android/ui-chat-input';
 import { currentGuildId, guildAliases } from '~/lib/composer-aliases';
 import { GuildMemberStore, SelectedChannelStore } from '~/lib/modules';
 

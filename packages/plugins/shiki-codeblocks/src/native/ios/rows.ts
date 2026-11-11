@@ -2,11 +2,11 @@ import type { NativeObjectHandle } from '@unbound-app/api/native';
 import { shouldCorrectRow } from '~/lib/layout';
 import { Limits } from '~/lib/constants';
 
-import type { Session, Surface } from '~/native/session-ios';
+import type { Session, Surface } from '~/native/ios/session';
 import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
 
-import { detachSurface, isMounted, isOnScreen } from '~/native/session-ios';
-import { measureRow, tableForCell } from '~/native/cells-ios';
+import { detachSurface, isMounted, isOnScreen } from '~/native/ios/session';
+import { measureRow, tableForCell } from '~/native/ios/cells';
 
 const ROW_RETRY_MS = 80;
 const SCROLL_RETRY_MS = 150;

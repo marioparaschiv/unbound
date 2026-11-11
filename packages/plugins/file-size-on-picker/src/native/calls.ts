@@ -2,8 +2,8 @@ import type { PluginContext } from '@unbound-app/api/native';
 import { native } from '@unbound-app/api';
 
 import type { FileSizes } from '~/lib/types';
-import { createFileSizes as android } from '~/native/calls-android';
-import { createFileSizes as ios } from '~/native/calls-ios';
+import { createFileSizes as android } from '~/native/android/calls';
+import { createFileSizes as ios } from '~/native/ios/calls';
 
 const createFileSizes = native.definePlatform({ ios, android });
 

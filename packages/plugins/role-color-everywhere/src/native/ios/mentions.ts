@@ -2,8 +2,8 @@ import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type { NativeBridge } from '@unbound-app/api/native';
 
 import type { Enqueue } from '~/native/mentions';
-import { colorMessageMentions, MESSAGE_CELL_CLASS } from '~/native/message-cells-ios';
-import { CHAT_INPUT_CLASS, colorChatInputMentions } from '~/native/chat-input-ios';
+import { colorMessageMentions, MESSAGE_CELL_CLASS } from '~/native/ios/message-cells';
+import { CHAT_INPUT_CLASS, colorChatInputMentions } from '~/native/ios/chat-input';
 
 const PAINTER_CLASSES = {
 	'Chat mentions': MESSAGE_CELL_CLASS,

@@ -3,8 +3,8 @@ import { installReuseCleanup } from '@unbound-plugins/shared/native/ios/ui-reuse
 import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
 import type { NativeBridge } from '@unbound-app/api/native';
 
-import { cardProgress, misplacedCards, startRenderer } from '~/native/renderer-ios';
-import { CARD_TAG } from '~/native/code-host-ios';
+import { cardProgress, misplacedCards, startRenderer } from '~/native/ios/renderer';
+import { CARD_TAG } from '~/native/ios/code-host';
 import type { Cards } from '~/lib/types';
 
 /**

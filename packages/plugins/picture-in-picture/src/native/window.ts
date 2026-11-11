@@ -1,8 +1,8 @@
 import type { PluginContext } from '@unbound-app/api/native';
 import { native } from '@unbound-app/api';
 
-import { createWindow as android } from '~/native/window-android';
-import { createWindow as ios } from '~/native/window-ios';
+import { createWindow as android } from '~/native/android/window';
+import { createWindow as ios } from '~/native/ios/window';
 import { createController, type Controller } from '~/lib/controller';
 import { createSessionStore } from '~/lib/session-store';
 import { showStartFailed } from '~/lib/failed-toast';

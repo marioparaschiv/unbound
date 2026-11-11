@@ -5,8 +5,8 @@ import type { PluginContext } from '@unbound-app/api/native';
 import { settings } from '@unbound-app/settings';
 import { metro, native } from '@unbound-app/api';
 
-import { drawMentions as android } from '~/native/views-android';
-import { drawMentions as ios } from '~/native/views-ios';
+import { drawMentions as android } from '~/native/android/views';
+import { drawMentions as ios } from '~/native/ios/views';
 import { listenToMentionSources } from '~/flux/listeners';
 import { createMentionIndex } from '~/lib/mention-index';
 import { RoleStore } from '~/lib/modules';

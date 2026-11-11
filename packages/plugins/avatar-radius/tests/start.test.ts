@@ -2,7 +2,7 @@ import { native, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { afterEach, describe, expect, test } from 'bun:test';
 import { settings } from '@unbound-app/settings';
 
-import { installAvatarHooks, restoreAvatars, setAvatarRadius } from '~/native/worklets-ios';
+import { installAvatarHooks, restoreAvatars, setAvatarRadius } from '~/native/ios/worklets';
 import { selfTest, stop } from '~/index';
 
 function fakeUI() {

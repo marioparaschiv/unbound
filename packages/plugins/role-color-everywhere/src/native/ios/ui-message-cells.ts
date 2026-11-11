@@ -1,6 +1,6 @@
 import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
 
-import type { ColorRun } from '~/native/ui-chat-input-ios';
+import type { ColorRun } from '~/native/ios/ui-chat-input';
 
 const STATE_KEY = '__unboundRoleColorMessages';
 const CELL_CLASS = 'DCDMessageTableViewCell';

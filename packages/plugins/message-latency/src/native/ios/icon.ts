@@ -5,7 +5,7 @@ import { currentTheme, resolveColor } from '~/lib/theme';
 import { FILL_TOKENS, ICON_TAG, Icon } from '~/lib/constants';
 import type { LatencyRecord } from '~/lib/records';
 import type { LatencyFill } from '~/lib/latency';
-import { getSubviews, setFrame } from '~/native/frames-ios';
+import { getSubviews, setFrame } from '~/native/ios/frames';
 
 /**
  * @description Identifies the colors an icon was drawn with, so a theme or fill change can be detected.

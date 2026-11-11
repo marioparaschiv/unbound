@@ -30,7 +30,7 @@ import { displayDensity, readCalls, runOnMain } from '@unbound-plugins/shared/na
 
 import { registerLatencyIconSurface } from '~/components/latency-icon';
 import type { LatencyRecord, LatencyRecords } from '~/lib/records';
-import type { AndroidTooltips } from '~/native/tooltip-android';
+import type { AndroidTooltips } from '~/native/android/tooltip';
 import { subscribeTheme } from '~/lib/theme';
 import { Icon } from '~/lib/constants';
 

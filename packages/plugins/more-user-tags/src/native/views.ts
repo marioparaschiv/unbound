@@ -1,7 +1,7 @@
 import { definePlatform, type PluginContext } from '@unbound-app/api/native';
 
-import { createTagGradients as android } from '~/native/views-android';
-import { createTagGradients as ios } from '~/native/views-ios';
+import { createTagGradients as android } from '~/native/android/views';
+import { createTagGradients as ios } from '~/native/ios/views';
 import { labelAppearances } from '~/lib/label-appearances';
 import type { TagGradients } from '~/lib/types';
 import { tagProblems } from '~/lib/tag-problems';

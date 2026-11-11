@@ -1,7 +1,7 @@
 import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/native';
 import { readRect } from '@unbound-plugins/shared/native/ios/rect';
 
-import type { NativeUI } from '~/native/ui-ios';
+import type { NativeUI } from '~/native/ios/ui';
 
 export type MessageIdentity = {
 	messageId: string;

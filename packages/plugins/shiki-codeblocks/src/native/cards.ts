@@ -3,8 +3,8 @@ import type { PluginSelfTestResult } from '@unbound-app/api/global';
 import type { PluginContext } from '@unbound-app/api/native';
 import { native } from '@unbound-app/api';
 
-import { startCards as android } from '~/native/start-android';
-import { startCards as ios } from '~/native/start-ios';
+import { startCards as android } from '~/native/android/start';
+import { startCards as ios } from '~/native/ios/start';
 import { createHighlighter } from '~/lib/highlighter';
 import { readPreferences } from '~/lib/preferences';
 import type { Cards } from '~/lib/types';

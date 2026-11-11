@@ -1,13 +1,13 @@
 import type { NativeMessageInfo } from '@unbound-plugins/shared/native/ios/message-info';
 import type { NativeObjectHandle } from '@unbound-app/api/native';
 
-import { createSurface, teardownSurface, updateSurface } from '~/native/surfaces-ios';
+import { createSurface, teardownSurface, updateSurface } from '~/native/ios/surfaces';
 import { findRenderedLinkRange, linkedTargets, targetKey } from '~/lib/link-targets';
 import { buildEmbeddedContent } from '~/lib/embedded-content';
 import { reactionSnapshot } from '~/lib/reaction-state';
-import type { Session } from '~/native/session-ios';
+import type { Session } from '~/native/ios/session';
 import { linkedChannelName } from '~/lib/channels';
-import { readLabelText } from '~/native/objc-ios';
+import { readLabelText } from '~/native/ios/objc';
 import { MessageStore } from '~/lib/modules';
 
 /**

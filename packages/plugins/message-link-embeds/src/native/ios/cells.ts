@@ -4,10 +4,10 @@ import viewKey from '@unbound-plugins/shared/native/ios/view-key';
 import { LATEST_CALL_PER_RECEIVER } from '@unbound-plugins/shared/native/ios/hook-options';
 import { MESSAGE_TEXT_VIEW_CLASSES } from '@unbound-plugins/shared/native/ios/text-attachments';
 
-import { embedCell, type CellStatus } from '~/native/embed-cell-ios';
+import { embedCell, type CellStatus } from '~/native/ios/embed-cell';
 import { CellRetry, INITIAL_SCAN_DELAYS } from '~/lib/constants';
-import { teardownSurface } from '~/native/surfaces-ios';
-import type { Session } from '~/native/session-ios';
+import { teardownSurface } from '~/native/ios/surfaces';
+import type { Session } from '~/native/ios/session';
 import { linkedTargets } from '~/lib/link-targets';
 import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
 import { MessageStore } from '~/lib/modules';

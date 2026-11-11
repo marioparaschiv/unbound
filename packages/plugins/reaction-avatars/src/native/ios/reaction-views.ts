@@ -1,8 +1,8 @@
 import type { NativeFabricSurface, NativeObjectHandle } from '@unbound-app/api/native';
 
 import type { ReactionContext } from '~/lib/reaction-context';
-import { frameOf, restoreFrame, setFrame } from '~/native/views-ios';
-import type { Session } from '~/native/session-ios';
+import { frameOf, restoreFrame, setFrame } from '~/native/ios/views';
+import type { Session } from '~/native/ios/session';
 import { surfaceStates } from '~/lib/surface-states';
 import type { Reactor } from '~/lib/avatars';
 import type { Frame } from '~/lib/layout';

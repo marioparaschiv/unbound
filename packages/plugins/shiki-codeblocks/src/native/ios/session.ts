@@ -11,9 +11,9 @@ import type { Highlighter } from '~/lib/highlighter';
 import type { CodeBlockPlacement } from '~/lib/fences';
 import type { Preferences } from '~/lib/preferences';
 
-import type { CodeHost } from '~/native/code-host-ios';
-import type { NativeUI } from '~/native/ui-ios';
-import { messageIdentity } from '~/native/cells-ios';
+import type { CodeHost } from '~/native/ios/code-host';
+import type { NativeUI } from '~/native/ios/ui';
+import { messageIdentity } from '~/native/ios/cells';
 
 export type SurfacePart = {
 	placement: CodeBlockPlacement;

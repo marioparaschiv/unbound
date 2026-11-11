@@ -7,7 +7,7 @@ import {
 	type TextEngine,
 } from '@unbound-plugins/shared/native/ios/text-attachments';
 
-import { nativeString } from '~/native/objc-ios';
+import { nativeString } from '~/native/ios/objc';
 import type { TextRange } from '~/lib/link-targets';
 import { Surface } from '~/lib/constants';
 

@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { codeLinesOf, mayShowCode } from '~/native/code-lines-ios';
+import { codeLinesOf, mayShowCode } from '~/native/ios/code-lines';
 
 test('collects the first code line of every fence, forwarded messages included', () => {
 	const lines = codeLinesOf([

@@ -1,6 +1,6 @@
 import type { NativeStruct } from '@unbound-app/api/native';
 
-import type { Bridge, Handle } from '~/native/bridge-ios';
+import type { Bridge, Handle } from '~/native/ios/bridge';
 
 type Size = {
 	width: number;

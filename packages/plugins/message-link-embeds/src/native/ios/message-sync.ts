@@ -1,10 +1,10 @@
 import { flux } from '@unbound-app/api';
 
-import { captureBottomAnchor, scheduleReactionScrollCorrection } from '~/native/scroll-anchor-ios';
-import { reconcileSurfaceText, type EmbeddedSurface } from '~/native/surfaces-ios';
+import { captureBottomAnchor, scheduleReactionScrollCorrection } from '~/native/ios/scroll-anchor';
+import { reconcileSurfaceText, type EmbeddedSurface } from '~/native/ios/surfaces';
 import { reactionSnapshot } from '~/lib/reaction-state';
-import { scanVisibleCells } from '~/native/cells-ios';
-import type { Session } from '~/native/session-ios';
+import { scanVisibleCells } from '~/native/ios/cells';
+import type { Session } from '~/native/ios/session';
 import { WINDOW_SCAN_DELAY } from '~/lib/constants';
 import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
 import { MessageStore } from '~/lib/modules';

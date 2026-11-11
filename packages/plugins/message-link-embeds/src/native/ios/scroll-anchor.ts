@@ -3,9 +3,9 @@ import { safeInvoke } from '@unbound-plugins/shared/native/ios/safe-invoke';
 
 import { BottomScroll, SCROLL_STATE, Surface, TABLE_METRICS } from '~/lib/constants';
 import { layoutMetricsFromNative, readSurfaceAnchor } from '~/lib/surface-layout';
-import type { EmbeddedSurface } from '~/native/surfaces-ios';
-import type { Session } from '~/native/session-ios';
-import { findTable } from '~/native/objc-ios';
+import type { EmbeddedSurface } from '~/native/ios/surfaces';
+import type { Session } from '~/native/ios/session';
+import { findTable } from '~/native/ios/objc';
 import { MessageStore } from '~/lib/modules';
 
 function steps(target: NativeObjectHandle, selectors: string[]): NativeBatchStep[] {

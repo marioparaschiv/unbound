@@ -1,8 +1,8 @@
 import { flux } from '@unbound-app/api/testing';
 import { describe, expect, test } from 'bun:test';
 
-import { subscribeMessageStore } from '~/native/message-sync-ios';
-import type { Session } from '~/native/session-ios';
+import { subscribeMessageStore } from '~/native/ios/message-sync';
+import type { Session } from '~/native/ios/session';
 
 function seedStore() {
 	const reads: string[] = [];

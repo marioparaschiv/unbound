@@ -12,12 +12,12 @@ import { isLightTheme } from '~/lib/themes';
 import { copyCode } from '~/lib/clipboard';
 import { Limits } from '~/lib/constants';
 
-import type { Session, Surface, SurfacePart } from '~/native/session-ios';
-import { detachSurface, isMounted, isOnScreen, surfaceMatchesCell } from '~/native/session-ios';
-import { createCodeHost, fitCodeContent, paintCodeHost } from '~/native/code-host-ios';
-import { highlightedCode, textWithCards } from '~/native/attributed-text-ios';
-import { scheduleRowCorrection, updateRow } from '~/native/rows-ios';
-import { measureCardWidth } from '~/native/cells-ios';
+import type { Session, Surface, SurfacePart } from '~/native/ios/session';
+import { detachSurface, isMounted, isOnScreen, surfaceMatchesCell } from '~/native/ios/session';
+import { createCodeHost, fitCodeContent, paintCodeHost } from '~/native/ios/code-host';
+import { highlightedCode, textWithCards } from '~/native/ios/attributed-text';
+import { scheduleRowCorrection, updateRow } from '~/native/ios/rows';
+import { measureCardWidth } from '~/native/ios/cells';
 
 export type MountTarget = {
 	label: NativeObjectHandle;

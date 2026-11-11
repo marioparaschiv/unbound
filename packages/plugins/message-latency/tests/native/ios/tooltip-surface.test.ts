@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import { native } from '@unbound-app/api/testing';
 import type { NativeFabricSize } from '@unbound-app/api/native';
 
-import { layoutTooltipSurface } from '~/native/tooltip-surface-ios';
+import { layoutTooltipSurface } from '~/native/ios/tooltip-surface';
 
 // `batchAsync` is always present in a plugin's scope; a loader without it gets a stand-in that throws.
 function fakeFabric() {

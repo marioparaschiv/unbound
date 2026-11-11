@@ -3,8 +3,8 @@ import type { PluginContext } from '@unbound-app/api/native';
 import type { PluginSelfTestResult } from '@unbound-app/api/global';
 import { native } from '@unbound-app/api';
 
-import { drawAndroidBubbles as android } from '~/native/views-android';
-import { drawIOSBubbles as ios } from '~/native/views-ios';
+import { drawAndroidBubbles as android } from '~/native/android/views';
+import { drawIOSBubbles as ios } from '~/native/ios/views';
 import { watchAppearance } from '~/lib/theme';
 
 const drawPlatformBubbles = native.definePlatform({ ios, android });

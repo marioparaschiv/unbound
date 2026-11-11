@@ -6,8 +6,8 @@ import type { TokenLines } from '~/lib/highlighter';
 import { buildCodeMarkup } from '~/lib/markup';
 import { Palette } from '~/lib/constants';
 
-import type { Session, Surface } from '~/native/session-ios';
-import type { NativeUI } from '~/native/ui-ios';
+import type { Session, Surface } from '~/native/ios/session';
+import type { NativeUI } from '~/native/ios/ui';
 
 /**
  * @description Builds the highlighted, line-numbered attributed string shown in a code card.

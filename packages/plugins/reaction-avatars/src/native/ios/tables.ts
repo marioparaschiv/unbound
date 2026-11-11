@@ -5,9 +5,9 @@ import type {
 } from '@unbound-app/api/native';
 import { safeInvoke } from '@unbound-plugins/shared/native/ios/safe-invoke';
 
-import type { Session } from '~/native/session-ios';
+import type { Session } from '~/native/ios/session';
 import { NativeClass } from '~/lib/constants';
-import { key } from '~/native/views-ios';
+import { key } from '~/native/ios/views';
 
 // A table re-measures its rows on an empty `beginUpdates`/`endUpdates` pair; `dirty` marks one as needed.
 export type TableLayout = {

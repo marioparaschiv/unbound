@@ -1,8 +1,8 @@
 import type { NativeFabricBridge, NativeObjCBridge } from '@unbound-app/api/native';
 
-import { removeLabelHooks, wakeWaitingCells, type TrackedCell } from '~/native/cells-ios';
+import { removeLabelHooks, wakeWaitingCells, type TrackedCell } from '~/native/ios/cells';
 import { createLinkedMessages, type LinkedMessages } from '~/lib/linked-messages';
-import { reportSurfaceLayout, teardownSurface, type EmbeddedSurface } from '~/native/surfaces-ios';
+import { reportSurfaceLayout, teardownSurface, type EmbeddedSurface } from '~/native/ios/surfaces';
 import { registerMessageSurface } from '~/components/message-surface';
 import { SurfaceHeightCache } from '~/lib/surface-layout';
 import type { Renderers } from '~/lib/modules';

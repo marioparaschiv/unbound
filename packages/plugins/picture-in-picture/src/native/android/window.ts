@@ -9,7 +9,7 @@ import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type { NativeJavaHookToken } from '@unbound-app/api/native';
 import { AppState } from 'react-native';
 
-import { createViewerPlayback } from '~/native/viewer-playback-android';
+import { createViewerPlayback } from '~/native/android/viewer-playback';
 import { playerKind } from '~/lib/source';
 import { createPipClipStore } from '~/lib/pip-clip';
 import { patchPipSurface } from '~/patches/pip-surface';

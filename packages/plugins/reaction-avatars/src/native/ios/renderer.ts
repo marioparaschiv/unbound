@@ -10,14 +10,14 @@ import {
 	layoutEntry,
 	restoreAllLayouts,
 	restoreCellLayouts,
-} from '~/native/collections-ios';
-import { disposeState, followReactionView, syncReactionView } from '~/native/reaction-surfaces-ios';
+} from '~/native/ios/collections';
+import { disposeState, followReactionView, syncReactionView } from '~/native/ios/reaction-surfaces';
 import { messageKey, reactionContext, type Reaction } from '~/lib/reaction-context';
-import { forgetCell, forgetCells, scheduleCell } from '~/native/cell-queue-ios';
-import { itemOfCell, key, reactionViewOf, toHandles } from '~/native/views-ios';
-import type { MessageInfo, Session } from '~/native/session-ios';
-import type { ReactionCellViews } from '~/native/cell-views-ios';
-import { releaseStates } from '~/native/reaction-views-ios';
+import { forgetCell, forgetCells, scheduleCell } from '~/native/ios/cell-queue';
+import { itemOfCell, key, reactionViewOf, toHandles } from '~/native/ios/views';
+import type { MessageInfo, Session } from '~/native/ios/session';
+import type { ReactionCellViews } from '~/native/ios/cell-views';
+import { releaseStates } from '~/native/ios/reaction-views';
 import { surfaceStates } from '~/lib/surface-states';
 import { MessageStore } from '~/lib/modules';
 import { MAX_UNMEASURED_RETRIES, UNMEASURED_RETRY_MS } from '~/lib/constants';

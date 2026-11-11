@@ -1,15 +1,15 @@
 import hookMessageCells from '@unbound-plugins/shared/native/ios/message-cell-hooks';
 import type { NativeBridge } from '@unbound-app/api/native';
 
-import { disposeRenderer, messageCellHandlers, renderCell } from '~/native/renderer-ios';
+import { disposeRenderer, messageCellHandlers, renderCell } from '~/native/ios/renderer';
 import {
 	listenToChannelChanges,
 	listenToConnectionOpen,
 	listenToReactionChanges,
 } from '~/flux/listeners';
-import { scanInitialCells } from '~/native/visible-cells-ios';
-import { createSession } from '~/native/session-ios';
-import { installHeightHook } from '~/native/ui-cell-heights-ios';
+import { scanInitialCells } from '~/native/ios/visible-cells';
+import { createSession } from '~/native/ios/session';
+import { installHeightHook } from '~/native/ios/ui-cell-heights';
 import { NativeClass } from '~/lib/constants';
 
 let unhook: (() => void) | undefined;

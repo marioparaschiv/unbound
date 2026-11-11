@@ -3,9 +3,9 @@ import {
 	textEngine,
 } from '@unbound-plugins/shared/native/ios/text-attachments';
 
-import { insertMentionImages } from '~/native/attributed-text-ios';
-import type { ImageCache } from '~/native/image-cache-ios';
-import type { Bridge, Handle } from '~/native/bridge-ios';
+import { insertMentionImages } from '~/native/ios/attributed-text';
+import type { ImageCache } from '~/native/ios/image-cache';
+import type { Bridge, Handle } from '~/native/ios/bridge';
 import viewKey from '@unbound-plugins/shared/native/ios/view-key';
 
 import { MENTION_PLACEHOLDER } from '~/lib/constants';

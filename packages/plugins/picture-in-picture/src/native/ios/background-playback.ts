@@ -1,7 +1,7 @@
 import { safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke';
 import type { NativeHandle, NativeObjCBridge } from '@unbound-app/api/native';
 
-import { asHandle } from '~/native/player-layer-ios';
+import { asHandle } from '~/native/ios/player-layer';
 import { IOS_WATCH_MS } from '~/lib/constants';
 
 const KVO_SUBCLASS_PREFIX = 'NSKVONotifying_';

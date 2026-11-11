@@ -1,11 +1,11 @@
 import type { NativeObjectHandle } from '@unbound-app/api/native';
 import { safeInvoke } from '@unbound-plugins/shared/native/ios/safe-invoke';
 
-import { clearCellFloor, clearCellFloors, setCellFloor } from '~/native/ui-cell-heights-ios';
+import { clearCellFloor, clearCellFloors, setCellFloor } from '~/native/ios/ui-cell-heights';
 
-import type { LayoutEntry } from '~/native/collections-ios';
-import type { Session } from '~/native/session-ios';
-import { frameOf, key } from '~/native/views-ios';
+import type { LayoutEntry } from '~/native/ios/collections';
+import type { Session } from '~/native/ios/session';
+import { frameOf, key } from '~/native/ios/views';
 
 // A message cell keeps the tallest height any of its reaction collections asks for.
 export type CellHeight = {

@@ -46,7 +46,7 @@ import {
 	type Edges,
 } from '~/lib/geometry';
 import { AndroidClass, BubbleLayout, CARD_INSET } from '~/lib/constants';
-import { forgetBubbles, installBindGuard, rememberBubble } from '~/native/worklets-android';
+import { forgetBubbles, installBindGuard, rememberBubble } from '~/native/android/worklets';
 import { currentAppearance } from '~/lib/theme';
 import { argb } from '~/lib/style';
 import { isOwnMessage } from '~/lib/author';

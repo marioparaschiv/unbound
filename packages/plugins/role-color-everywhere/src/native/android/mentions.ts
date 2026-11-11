@@ -1,6 +1,6 @@
 import type { NativeBridge } from '@unbound-app/api/native';
 
-import { colorAndroidChatInputMentions } from '~/native/chat-input-android';
+import { colorAndroidChatInputMentions } from '~/native/android/chat-input';
 import type { Enqueue } from '~/native/mentions';
 
 /**

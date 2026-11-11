@@ -27,7 +27,7 @@ import {
 	installOutlineHook,
 	restoreOutlines,
 	setOutlineRadius,
-} from '~/native/worklets-android';
+} from '~/native/android/worklets';
 import { AvatarClass } from '~/lib/constants';
 import { mayBeAvatar } from '~/lib/image-sources';
 import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';

@@ -15,7 +15,7 @@ import {
 	setContentSize,
 	setFrame,
 	toHandles,
-} from '~/native/views-ios';
+} from '~/native/ios/views';
 import {
 	flushTableLayout,
 	hookTableLayout,
@@ -23,7 +23,7 @@ import {
 	restoreTables,
 	scheduleTableLayout,
 	tableLayout,
-} from '~/native/tables-ios';
+} from '~/native/ios/tables';
 import {
 	framesMatch,
 	reflowReactionItems,
@@ -31,11 +31,11 @@ import {
 	type LayoutFrame,
 	type LayoutItem,
 } from '~/lib/layout';
-import { clearCellHeight, clearCellHeights, updateCellHeight } from '~/native/cell-heights-ios';
-import { fitReactionView, releaseStates } from '~/native/reaction-views-ios';
+import { clearCellHeight, clearCellHeights, updateCellHeight } from '~/native/ios/cell-heights';
+import { fitReactionView, releaseStates } from '~/native/ios/reaction-views';
 import { messageKey } from '~/lib/reaction-context';
-import { scheduleCell } from '~/native/cell-queue-ios';
-import type { Session } from '~/native/session-ios';
+import { scheduleCell } from '~/native/ios/cell-queue';
+import type { Session } from '~/native/ios/session';
 import { NativeClass } from '~/lib/constants';
 
 type ViewFrame = {

@@ -6,7 +6,7 @@ import {
 	installAvatarHooks,
 	restoreAvatars,
 	setAvatarRadius,
-} from '~/native/worklets-ios';
+} from '~/native/ios/worklets';
 import { AvatarClass } from '~/lib/constants';
 
 const IMAGE_SEARCH = { maxDepth: 96, maxVisited: 8_000 };

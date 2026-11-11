@@ -1,10 +1,10 @@
 import hookMessageCells from '@unbound-plugins/shared/native/ios/message-cell-hooks';
 import type { NativeBridge } from '@unbound-app/api/native';
 
-import { createVisibleCellScanner } from '~/native/visible-cells-ios';
+import { createVisibleCellScanner } from '~/native/ios/visible-cells';
 import { listenToSelectedChannel } from '~/flux/listeners';
 import type { MentionIndex } from '~/lib/mention-index';
-import { createRenderer } from '~/native/renderer-ios';
+import { createRenderer } from '~/native/ios/renderer';
 
 /**
  * @description Draws mention images into Discord's iOS message cells. The native scope removes the cell hooks.

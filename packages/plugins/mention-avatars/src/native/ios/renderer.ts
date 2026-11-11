@@ -5,9 +5,9 @@ import {
 import type { NativeObjCBridge } from '@unbound-app/api/native';
 import viewKey from '@unbound-plugins/shared/native/ios/view-key';
 
-import { createTextViews, findTextViews } from '~/native/text-views-ios';
-import { createBridge, type Handle } from '~/native/bridge-ios';
-import { createImageCache } from '~/native/image-cache-ios';
+import { createTextViews, findTextViews } from '~/native/ios/text-views';
+import { createBridge, type Handle } from '~/native/ios/bridge';
+import { createImageCache } from '~/native/ios/image-cache';
 import type { MentionIndex } from '~/lib/mention-index';
 import {
 	createCellMessages,
