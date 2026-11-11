@@ -1,7 +1,7 @@
-import { collectMentions, type Message } from '~/avatars/resolve-mentions';
-import { MessageStore, SelectedChannelStore } from '~/avatars/modules';
-import { MAX_MENTION_REFRESHES } from '~/constants';
-import type { Mention } from '~/avatars/mentions';
+import { collectMentions, type Message } from '~/lib/resolve-mentions';
+import { MessageStore, SelectedChannelStore } from '~/lib/modules';
+import { MAX_MENTION_REFRESHES } from '~/lib/constants';
+import type { Mention } from '~/lib/mentions';
 
 export type MentionIndex = ReturnType<typeof createMentionIndex>;
 

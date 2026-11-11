@@ -1,8 +1,8 @@
 import { flux, metro } from '@unbound-app/api/testing';
 import { beforeEach, expect, test } from 'bun:test';
 
-import { createMentionIndex } from '~/avatars/mention-index';
-import { patchRowGenerator } from '~/avatars/patches/row-generator';
+import { createMentionIndex } from '~/lib/mention-index';
+import { patchMessageRows } from '~/patches';
 
 const rowGenerator = {
 	generateMessageRowData: (_input: unknown) => ({}),
@@ -26,7 +26,7 @@ beforeEach(() => {
 test('indexes the mentions of each message Discord builds a row for', () => {
 	const index = createMentionIndex(false);
 
-	patchRowGenerator(index);
+	patchMessageRows(index);
 	rowGenerator.generateMessageRowData({
 		message: { id: 'm1', channel_id: 'c1', content: 'hi <@42>' },
 	});
@@ -42,7 +42,7 @@ test('indexes the mentions of each message Discord builds a row for', () => {
 test('has nothing for a message without mentions', () => {
 	const index = createMentionIndex(false);
 
-	patchRowGenerator(index);
+	patchMessageRows(index);
 	rowGenerator.generateMessageRowData({
 		message: { id: 'm2', channel_id: 'c1', content: 'hello' },
 	});

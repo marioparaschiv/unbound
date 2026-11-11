@@ -7,7 +7,7 @@ import {
 	rebuildsFromLiveText,
 	roleImageSource,
 	selectMentionLabel,
-} from '~/avatars/mentions';
+} from '~/lib/mentions';
 
 describe('extractMentionTokens', () => {
 	test('preserves message order for adjacent user and role mentions', () => {

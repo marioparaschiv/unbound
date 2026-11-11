@@ -6,7 +6,7 @@ import {
 	planRetries,
 	retryTargets,
 	shouldWait,
-} from '~/avatars/ios/render-plan';
+} from '~/lib/render-plan';
 
 function fakeIndex({
 	exhausted = [] as string[],

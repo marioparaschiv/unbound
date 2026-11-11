@@ -6,10 +6,10 @@ import {
 	type TextEngine,
 } from '@unbound-plugins/shared/native/ios/text-attachments';
 
-import type { Bridge, Handle, TextAttributes } from '~/avatars/ios/bridge';
-import type { Mention, MentionType } from '~/avatars/mentions';
-import { MENTION_PLACEHOLDER, PILL_PADDING, PILL_PADDING_ATTRIBUTE } from '~/constants';
-import { selectMentionLabel } from '~/avatars/mentions';
+import type { Bridge, Handle, TextAttributes } from '~/native/bridge-ios';
+import type { Mention, MentionType } from '~/lib/mentions';
+import { MENTION_PLACEHOLDER, PILL_PADDING, PILL_PADDING_ATTRIBUTE } from '~/lib/constants';
+import { selectMentionLabel } from '~/lib/mentions';
 
 type MentionMatch = {
 	attributes: TextAttributes;

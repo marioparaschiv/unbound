@@ -1,8 +1,8 @@
 import { flux } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import { createMentionIndex } from '~/avatars/mention-index';
-import { MAX_MENTION_REFRESHES } from '~/constants';
+import { createMentionIndex } from '~/lib/mention-index';
+import { MAX_MENTION_REFRESHES } from '~/lib/constants';
 
 type TestMessage = { id: string; channel_id: string; content: string };
 

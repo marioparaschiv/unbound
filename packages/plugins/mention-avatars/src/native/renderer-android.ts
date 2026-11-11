@@ -29,9 +29,9 @@ import {
 	type TextRewriteEdit,
 } from '@unbound-plugins/shared/native/android/text-rewrites';
 
-import { planPlacements, type Placement, type SpanRange } from '~/avatars/android/placements';
-import type { MentionIndex } from '~/avatars/mention-index';
-import type { Mention } from '~/avatars/mentions';
+import { planPlacements, type Placement, type SpanRange } from '~/lib/placements';
+import type { MentionIndex } from '~/lib/mention-index';
+import type { Mention } from '~/lib/mentions';
 
 const TAPPABLE_SPAN = 'android.text.style.ClickableSpan';
 const ANY_SPAN = 'java.lang.Object';

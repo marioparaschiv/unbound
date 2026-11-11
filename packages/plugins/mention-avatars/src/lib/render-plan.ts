@@ -1,4 +1,4 @@
-import type { MentionIndex } from '~/avatars/mention-index';
+import type { MentionIndex } from '~/lib/mention-index';
 
 type IndexState = Pick<MentionIndex, 'exhausted' | 'isUnresolved' | 'isSettledEmpty'>;
 

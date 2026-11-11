@@ -1,9 +1,9 @@
 import type { FluxChannel } from '@unbound-app/api/flux';
 import { metro } from '@unbound-app/api';
 
-import { avatarPngURL, extractMentionTokens, roleImageSource } from '~/avatars/mentions';
-import { ChannelStore, GuildMemberStore, RoleStore, UserStore } from '~/avatars/modules';
-import type { Mention, Role } from '~/avatars/mentions';
+import { avatarPngURL, extractMentionTokens, roleImageSource } from '~/lib/mentions';
+import { ChannelStore, GuildMemberStore, RoleStore, UserStore } from '~/lib/modules';
+import type { Mention, Role } from '~/lib/mentions';
 
 type Channel = FluxChannel & {
 	guildId?: string;
@@ -66,7 +66,7 @@ function userMention(userId: string, guildId?: string): Mention | undefined {
 }
 
 function roleMention(roleId: string, guildId?: string): Mention | undefined {
-	if (!guildId) return;
+	if (!guildId || !RoleStore) return;
 
 	const role: Role | undefined =
 		RoleStore.getRole(guildId, roleId) ??

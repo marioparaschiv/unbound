@@ -1,4 +1,4 @@
-import { MENTION_PLACEHOLDER } from '~/constants';
+import { MENTION_PLACEHOLDER } from '~/lib/constants';
 
 export type MentionType = 'role' | 'user';
 
