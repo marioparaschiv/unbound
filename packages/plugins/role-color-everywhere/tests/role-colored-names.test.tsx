@@ -1,11 +1,17 @@
-import { flux, metro, native, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import {
+	flux,
+	logs,
+	metro,
+	native,
+	render,
+	startPlugin,
+	stopPlugin,
+} from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
 import { createElement, memo, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
-
-import { selfTest } from '~/index';
 
 const RED = '#ff0000';
 
@@ -22,6 +28,10 @@ function colorsOf(view: { findAll: (name: 'Text') => { props: { style?: unknown 
 			| { color: string }
 			| undefined;
 	});
+}
+
+function warnings() {
+	return logs.entries.filter(({ level }) => level === 'warn' || level === 'error');
 }
 
 function call<T extends unknown[]>(render: (...args: T) => ReactNode, ...args: T) {
@@ -305,42 +315,35 @@ describe('self test', () => {
 		native.objc.registerClass('DCDMessageTableViewCell');
 		native.objc.registerClass('DCDChatInputComponentView');
 		await startPlugin();
+		await stopPlugin();
 
-		expect(await selfTest()).toMatchObject({ ok: true });
+		// Only skips warn; the fake bridge has no UI thread, so painting itself logs errors here.
+		expect(logs.entries.filter(({ level }) => level === 'warn')).toEqual([]);
 	});
 
 	test('names only the native painters as skipped when Discord lacks their classes', async () => {
 		await startPlugin();
+		// The native painters start on a queue; stopping waits for it.
+		await stopPlugin();
 
-		const { ok, detail } = await selfTest();
-
-		expect(ok).toBe(false);
-		expect(detail).toBe(
-			'skipped: chat mentions: native classes not found: DCDMessageTableViewCell; composer mentions: native classes not found: DCDChatInputComponentView',
-		);
+		expect(warnings()).toEqual([
+			{
+				level: 'warn',
+				args: ['Chat mentions skipped: native classes not found: DCDMessageTableViewCell.'],
+			},
+			{
+				level: 'warn',
+				args: [
+					'Composer mentions skipped: native classes not found: DCDChatInputComponentView.',
+				],
+			},
+		]);
 	});
 
-	test('keeps the other features when one throws on start', async () => {
-		const voice = {
-			default: (props: { guildId: string; user: { id: string } }) =>
-				createElement(
-					View,
-					null,
-					createElement(Text, null, props.user.id),
-					createElement(Text, null, 'muted'),
-				),
-		};
-
-		// Patching a render function that is not there throws; the typing feature fails alone.
+	test('fails the start when a feature cannot be patched', async () => {
+		// Patching a render function that is not there throws.
 		metro.register({ default: 'not a component' }, 'modules/chat/native/TypingIndicator.tsx');
-		metro.register(voice, 'modules/guild_sidebar/native/VoiceUserNameItem.tsx');
-		await startPlugin();
 
-		const view = render(
-			createElement(voice.default, { guildId: 'guild', user: { id: 'red' } }),
-		);
-
-		expect(colorsOf(view)).toEqual([undefined, { color: RED }, undefined]);
-		expect((await selfTest()).detail).toContain('start failed');
+		await expect(startPlugin()).rejects.toThrow('Failed to patch component');
 	});
 });
