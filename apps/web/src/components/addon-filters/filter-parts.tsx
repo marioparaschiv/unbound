@@ -158,8 +158,9 @@ export function TagList({ tags, max = tags.length }: TagListProps) {
 		);
 	}
 
+	// A clipped row is still a scroll container, so `scroll-fade-x` fades the end only when pills overflow.
 	return (
-		<div className='flex gap-1.5 min-w-0 overflow-hidden'>
+		<div className='flex gap-1.5 min-w-0 overflow-hidden scroll-fade-x'>
 			{tags.map((tag) => (
 				<span key={tag.id} className={TAG_PILL}>
 					<TagDot color={tag.color} className='size-1.5' />

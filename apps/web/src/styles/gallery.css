@@ -1,4 +1,4 @@
-/* The addon gallery's row edge fades and its thumbnail-to-lightbox morph. Imported by `styles.css`. */
+/* Row edge fades, used by the addon gallery and addon card tags, and the gallery's thumbnail-to-lightbox morph. Imported by `styles.css`. */
 
 @property --fade-start {
 	syntax: '<length>';
