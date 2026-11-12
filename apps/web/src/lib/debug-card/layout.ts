@@ -411,6 +411,19 @@ function stateSpans(flags: string[], jailbreak?: string): Span[] {
 	});
 }
 
+function fittedState(spans: Span[], room: number): Span[] {
+	for (let shown = spans.length; shown > 0; shown--) {
+		const hidden = spans.length - shown;
+		const kept = [...spans.slice(0, shown), ...(hidden ? [dim(`  +${hidden}`)] : [])];
+
+		if (kept.reduce((length, span) => length + span.text.length, 0) <= room) {
+			return kept;
+		}
+	}
+
+	return clipped(spans, room);
+}
+
 /**
  * @description Lays the debug report out as a terminal-style card: a title bar, one aligned row per component and the report time and a state footer that leaves room on the left for Discord's ALT badge.
  * @param info The versions and device details.
@@ -499,7 +512,7 @@ export function layoutDebugCard(
 	}
 
 	const footerRoom = Math.floor((WIDTH - PADDING - BADGE_CLEARANCE) / CHAR_WIDTH);
-	const state = clipped(stateSpans(info.flags, info.jailbreak), footerRoom);
+	const state = fittedState(stateSpans(info.flags, info.jailbreak), footerRoom);
 	const stateLength = state.reduce((length, span) => length + span.text.length, 0);
 	const summary = addonSummaries(info).find(
 		(candidate) => stateLength + 2 + candidate.length <= footerRoom,
