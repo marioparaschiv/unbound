@@ -1,3 +1,5 @@
+import { describeRequiredLoaderTitle } from '~/updates/describe-required-loader';
+import { readInstallKind } from '~/updates/install-kind';
 import type { UpdatesState } from '~/updates/state';
 import { messages, format } from '~/i18n/api';
 import { Moment } from '~/metro/common';
@@ -60,9 +62,18 @@ export function describeHero(state: UpdatesState, pending: number, blocked: bool
 		};
 	}
 
+	if (blocked) {
+		return {
+			tone: 'warning',
+			icon: 'WarningIcon',
+			title: describeRequiredLoaderTitle(readInstallKind()),
+			subtitle,
+		};
+	}
+
 	return {
-		tone: blocked ? 'warning' : 'positive',
-		icon: blocked ? 'WarningIcon' : 'CircleCheckIcon',
+		tone: 'positive',
+		icon: 'CircleCheckIcon',
 		title: messages.UNBOUND_UPDATES_STATUS_UP_TO_DATE,
 		subtitle,
 	};
