@@ -109,7 +109,12 @@ func runSymbolicateIssue(args []string) error {
 		fmt.Println("No release has symbols matching this crash's image.")
 		return nil
 	}
-	comment := issueSymbolsComment(tag, crash.version, output)
+	headline := crashHeadline(crash)
+	duplicate := ""
+	if headline != "" {
+		duplicate = findDuplicateCrash(cli, *repository, *number, headline)
+	}
+	comment := issueSymbolsComment(tag, crash.version, output, headline, duplicate)
 	if *dryRun {
 		fmt.Print(comment)
 		return nil
@@ -118,8 +123,71 @@ func runSymbolicateIssue(args []string) error {
 	if err := os.WriteFile(file, []byte(comment), 0o600); err != nil {
 		return err
 	}
-	_, err = cli.run("issue", "comment", strconv.Itoa(*number), "--repo", *repository, "--body-file", file)
+	if _, err := cli.run("issue", "comment", strconv.Itoa(*number), "--repo", *repository, "--body-file", file); err != nil {
+		return err
+	}
+	if addonOf(crash.stack) != "" {
+		_, err = cli.run("issue", "edit", strconv.Itoa(*number), "--repo", *repository, "--add-label", "Plugin")
+	}
 	return err
+}
+
+var signalNames = map[string]map[int]string{
+	"ios":     {4: "SIGILL", 5: "SIGTRAP", 6: "SIGABRT", 8: "SIGFPE", 10: "SIGBUS", 11: "SIGSEGV"},
+	"android": {4: "SIGILL", 5: "SIGTRAP", 6: "SIGABRT", 7: "SIGBUS", 8: "SIGFPE", 11: "SIGSEGV"},
+}
+
+var (
+	signalLinePattern = regexp.MustCompile(`(?m)^Signal (\d+)$`)
+	addonLinePattern  = regexp.MustCompile(`(?m)^Addon (.+)$`)
+)
+
+func addonOf(stack string) string {
+	match := addonLinePattern.FindStringSubmatch(stack)
+	if match == nil {
+		return ""
+	}
+	var record struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+	}
+	if json.Unmarshal([]byte(match[1]), &record) == nil {
+		if record.Name != "" {
+			return record.Name
+		}
+		return record.ID
+	}
+	return strings.TrimSpace(match[1])
+}
+
+func crashHeadline(crash issueCrash) string {
+	match := signalLinePattern.FindStringSubmatch(crash.stack)
+	if match == nil {
+		return ""
+	}
+	number, _ := strconv.Atoi(match[1])
+	name, ok := signalNames[crash.platform][number]
+	if !ok {
+		name = "signal " + match[1]
+	}
+	if addon := addonOf(crash.stack); addon != "" {
+		return name + " in " + addon
+	}
+	return name
+}
+
+func findDuplicateCrash(cli ghCLI, repository string, number int, headline string) string {
+	output, err := cli.run("issue", "list", "--repo", repository, "--state", "open", "--label", "Crash",
+		"--search", `"Crash: `+headline+`" in:comments`, "--json", "number", "--jq", ".[].number")
+	if err != nil {
+		return ""
+	}
+	for _, line := range strings.Fields(string(output)) {
+		if line != strconv.Itoa(number) {
+			return line
+		}
+	}
+	return ""
 }
 
 func parseIssueCrash(body string) (issueCrash, bool) {
@@ -315,8 +383,18 @@ func symbolicateLoaderStack(text, object string, symbolize symbolizeFunc) (strin
 	return output.String(), len(addresses), nil
 }
 
-func issueSymbolsComment(tag, version, stack string) string {
-	return symbolicatedMarker + "\n" +
+func issueSymbolsComment(tag, version, stack, headline, duplicate string) string {
+	summary := ""
+	if headline != "" {
+		summary = "Crash: " + headline + "\n"
+	}
+	if duplicate != "" {
+		summary += "Looks like the same crash as #" + duplicate + ".\n"
+	}
+	if summary != "" {
+		summary += "\n"
+	}
+	return symbolicatedMarker + "\n" + summary +
 		"Unbound's frames, symbolicated for loader " + version + " with the symbols from release `" + tag + "`:\n\n" +
 		"```\n" + strings.TrimRight(stack, "\n") + "\n```\n"
 }

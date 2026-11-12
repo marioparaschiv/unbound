@@ -78,8 +78,25 @@ func TestNamesOnlyUnboundFrames(t *testing.T) {
 	if strings.Contains(output, "UIKitCore + 0x40\n    ") {
 		t.Fatal("a system frame was annotated")
 	}
-	comment := issueSymbolsComment("discord-355.0-ios", "1.3.0", output)
+	comment := issueSymbolsComment("discord-355.0-ios", "1.3.0", output, crashHeadline(crash), "41")
+	if !strings.Contains(comment, "Crash: SIGSEGV in Chat Bubbles\nLooks like the same crash as #41.") {
+		t.Fatalf("comment summary %q", comment)
+	}
 	if !strings.HasPrefix(comment, symbolicatedMarker) || !strings.Contains(comment, "`discord-355.0-ios`") {
 		t.Fatalf("comment %q", comment)
+	}
+}
+
+func TestNamesSignalsPerPlatform(t *testing.T) {
+	ios := issueCrash{platform: "ios", stack: "Signal 10\nAddon {\"id\":\"chat-bubbles\",\"name\":\"Chat Bubbles\"}\n"}
+	android := issueCrash{platform: "android", stack: "Signal 7\n#0 0x1\n"}
+	if got := crashHeadline(ios); got != "SIGBUS in Chat Bubbles" {
+		t.Fatalf("iOS headline %q", got)
+	}
+	if got := crashHeadline(android); got != "SIGBUS" {
+		t.Fatalf("Android headline %q", got)
+	}
+	if crashHeadline(issueCrash{platform: "ios", stack: "#0 0x1"}) != "" {
+		t.Fatal("a stack without a signal got a headline")
 	}
 }
