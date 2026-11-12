@@ -14,7 +14,7 @@ import useReducedMotion from '~/ui/hooks/use-reduced-motion';
 /**
  * @description Scrolls a marquee row forever at a steady pace, on the UI thread, and reports each whole slot it
  * passes so the row can swap the icon in the slot that just left. Reduced motion holds it still.
- * @param loop The slot widths after which the row looks as it started: a multiple of its slot and icon counts.
+ * @param loop The slot widths after which the row starts over: a multiple of its slot count, so its slots line up again.
  * @param msPerSlot How long the row takes to travel one slot width.
  * @returns The row's travel in slot widths, and the whole slots passed.
  */

@@ -60,8 +60,8 @@ export const loaderUpdateSchema = Type.Object({
 });
 
 /**
- * `update` is `null` when the installed loader is the newest release it may move to. `requiredVersion`
- * is the loader the channel's newest bundle needs, or `null` when the installed loader runs it.
+ * `update` is `null` when the installed loader is the newest release it may move to. `requiredVersion` is the
+ * loader the newest bundle needs, or `null` when the installed loader runs it or no release meets it yet.
  */
 export const loaderUpdateResponseSchema = Type.Object({
 	update: Type.Union([loaderUpdateSchema, Type.Null()]),

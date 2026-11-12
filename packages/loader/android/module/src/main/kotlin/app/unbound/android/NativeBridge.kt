@@ -261,6 +261,9 @@ object NativeBridge {
     fun hooksRemove(tokenJSON: String) = NativeHooks.remove(tokenJSON)
 
     @JvmStatic
+    fun hooksProxy(interfacesJSON: String): String = NativeHooks.proxy(interfacesJSON)
+
+    @JvmStatic
     fun fabricMount(containerHandleJSON: String, moduleName: String, propsJSON: String): String =
         NativeFabric.mount(containerHandleJSON, moduleName, propsJSON)
 

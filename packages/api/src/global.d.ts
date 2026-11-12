@@ -296,6 +296,8 @@ export type {
 	NativeJavaHookToken,
 	NativeJavaHooksBridge,
 	NativeJavaMethodDescription,
+	NativeJavaProxy,
+	NativeJavaProxyCall,
 	NativeJavaReference,
 	NativeJavaValue,
 	NativeMainWaitCounts,

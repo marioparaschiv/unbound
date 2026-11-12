@@ -73,6 +73,7 @@ struct HookListener {
     loader::AddonSlot                                              addon    = loader::kNoAddon;
     bool                                                           coalesce = false;
     bool                                                           rewritesArguments = false;
+    bool                                                           returnsValue      = false;
     jsi::Runtime                                                  *inlineRuntime     = nullptr;
     uint64_t                                                       runtimeIdentity   = 0;
     uint64_t                                                       runtimeGeneration = 0;
@@ -89,6 +90,20 @@ static std::unordered_map<std::string, HookListener> gHookListeners;
 static std::string hookListenerKey(const std::string &token)
 {
     return loader::native::hookCallbackKey(loader::native::kAndroidHookPlatform, token);
+}
+
+static std::optional<std::string> returnedValue(jsi::Runtime &runtime, const jsi::Value &returned)
+{
+    if (!returned.isObject())
+    {
+        return std::nullopt;
+    }
+    jsi::Value result = returned.asObject(runtime).getProperty(runtime, "result");
+    if (result.isUndefined())
+    {
+        return std::nullopt;
+    }
+    return serializeJavaValue(runtime, result);
 }
 
 static std::optional<std::string> rewrittenArguments(jsi::Runtime     &runtime,
@@ -155,7 +170,8 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
     auto               deliver =
         [callback = listener.callback, operations = listener.operations, operation,
          identity = listener.runtimeIdentity, generation = listener.runtimeGeneration,
-         addon = listener.addon, pendingEvent, rewrites = listener.rewritesArguments](
+         addon = listener.addon, pendingEvent, rewrites = listener.rewritesArguments,
+         returns = listener.returnsValue](
             jsi::Runtime                            &runtime,
             loader::native::RuntimeResourceRegistry &resources) -> std::optional<std::string> {
         if (!operations->active() || !operation->active() ||
@@ -191,6 +207,10 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
             runtime, jsi::Value(runtime, *activeCallback), std::move(*event));
         if (!failure.isString())
         {
+            if (returns)
+            {
+                return returnedValue(runtime, failure);
+            }
             return rewrites ? rewrittenArguments(runtime, failure) : std::nullopt;
         }
         std::optional<std::string> message =
@@ -275,11 +295,12 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
             }
         });
     }
+    return std::nullopt;
 }
 
 void rememberHookListener(jsi::Runtime &runtime, const std::string &token,
                           const jsi::Value &listener, bool coalesce, bool rewritesArguments,
-                          JavaCallbacks callbacks)
+                          bool returnsValue, JavaCallbacks callbacks)
 {
     if (!listener.isObject() || !listener.asObject(runtime).isFunction(runtime))
     {
@@ -297,6 +318,7 @@ void rememberHookListener(jsi::Runtime &runtime, const std::string &token,
                                        loader::currentAddon(),
                                        coalesce,
                                        rewritesArguments,
+                                       returnsValue,
                                        loader::native::currentUIScopeRuntime(),
                                        resources->identity(),
                                        loader::native::runtimeGeneration()};

@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 import type { Addon } from '~/addons/addon';
 
 import { loadPackIcons } from './icon-pack-icons';
@@ -18,4 +20,5 @@ function IconPackPreview({ pack }: IconPackPreviewProps) {
 	return <IconMarquee icons={icons} />;
 }
 
-export default IconPackPreview;
+// The picker re-renders its preview several times per swipe; the marquee only needs to when the pack changes.
+export default memo(IconPackPreview);

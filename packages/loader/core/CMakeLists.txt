@@ -112,7 +112,7 @@ target_include_directories(unbound_core PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/include
     ${UNBOUND_VENDOR_DIR}
     ${UNBOUND_VENDOR_DIR}/react)
-target_compile_options(unbound_core PRIVATE -fvisibility=hidden $<$<COMPILE_LANGUAGE:CXX>:-fexceptions -frtti>)
+target_compile_options(unbound_core PRIVATE -fvisibility=hidden $<$<COMPILE_LANGUAGE:CXX>:-fexceptions -frtti -Werror=return-type>)
 
 if(NOT UNBOUND_VERSION)
     file(STRINGS ${CMAKE_CURRENT_LIST_DIR}/../ios/control UNBOUND_CONTROL_VERSION REGEX "^Version:")

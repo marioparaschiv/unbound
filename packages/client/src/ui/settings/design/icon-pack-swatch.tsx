@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import { memo } from 'react';
 
 import TintedIcon from '~/metro/fallbacks/tinted-icon';
 import type { Addon } from '~/addons/addon';
@@ -24,4 +25,4 @@ function IconPackSwatch({ pack }: IconPackSwatchProps) {
 	);
 }
 
-export default IconPackSwatch;
+export default memo(IconPackSwatch);

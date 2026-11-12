@@ -119,10 +119,12 @@ describe('fetchLoaderUpdate', () => {
 });
 
 describe('resolveRequiredLoader', () => {
-	test("prefers the server's requirement, then the loader's own refusal", () => {
+	test("trusts the server's answer, and the loader's own refusal only without one", () => {
 		expect(resolveRequiredLoader(loader('3.0.0', '3.1.0'), '3.2.0')).toBe('3.2.0');
-		expect(resolveRequiredLoader(loader('3.0.0', '3.1.0'), null)).toBe('3.1.0');
-		expect(resolveRequiredLoader(loader('3.0.0'), null)).toBeNull();
+		// The server names no loader until a release meets the requirement.
+		expect(resolveRequiredLoader(loader('3.0.0', '3.1.0'), null)).toBeNull();
+		expect(resolveRequiredLoader(loader('3.0.0', '3.1.0'))).toBe('3.1.0');
+		expect(resolveRequiredLoader(loader('3.0.0'))).toBeNull();
 	});
 
 	test('drops a requirement the installed loader already meets', () => {

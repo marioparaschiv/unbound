@@ -3,16 +3,58 @@
 declare module '@unbound-app/i18n' {
 	/** Every en-US message, read in the user's locale. */
 	export type Messages = {
+		/** Avatar by the last message */
+		readonly AVATAR_LAST: string;
+		/** Move each group's avatar down beside its last bubble, like Messages */
+		readonly AVATAR_LAST_SUBTITLE: string;
+		/** Blur */
+		readonly BLUR: string;
+		/** Light */
+		readonly BLUR_LIGHT: string;
+		/** Medium */
+		readonly BLUR_MEDIUM: string;
+		/** Lower the opacity to see the chat background blur behind bubbles */
+		readonly BLUR_NEEDS_OPACITY: string;
+		/** Off */
+		readonly BLUR_OFF: string;
+		/** Strong */
+		readonly BLUR_STRONG: string;
+		/** Blurs the chat background behind each bubble */
+		readonly BLUR_SUBTITLE: string;
 		/** Bubble color */
 		readonly BUBBLE_COLOR: string;
-		/** Follows the theme: black on dark themes, white on the light theme */
+		/** Follows the theme: a shade darker than the chat's background */
 		readonly BUBBLE_COLOR_FALLBACK: string;
 		/** Colors */
 		readonly COLORS: string;
+		/** Corner curve */
+		readonly CORNER_CURVE: string;
 		/** Corner radius */
 		readonly CORNER_RADIUS: string;
+		/** Circular */
+		readonly CURVE_CIRCULAR: string;
+		/** Continuous */
+		readonly CURVE_CONTINUOUS: string;
+		/** Consecutive messages */
+		readonly GROUPING: string;
+		/** How one author's messages in a row sit together */
+		readonly GROUPING_SUBTITLE: string;
+		/** Groups */
+		readonly GROUPS: string;
+		/** Inside a group */
+		readonly GROUP_SPACING: string;
+		/** Grouped */
+		readonly GROUPING_GROUPED: string;
+		/** Joined */
+		readonly GROUPING_JOINED: string;
+		/** Separate */
+		readonly GROUPING_SEPARATE: string;
 		/** Horizontal padding */
 		readonly HORIZONTAL_PADDING: string;
+		/** Curve into wider bubbles */
+		readonly JOIN_CURVES: string;
+		/** Fill the step under a wider neighbour's corner with an inward curve, so the group reads as one shape */
+		readonly JOIN_CURVES_SUBTITLE: string;
 		/** Layout */
 		readonly LAYOUT: string;
 		/** Full-width cards */
@@ -23,14 +65,128 @@ declare module '@unbound-app/i18n' {
 		readonly LAYOUT_FIT: string;
 		/** Each bubble wraps just the text and media of its message */
 		readonly LAYOUT_FIT_SUBTITLE: string;
+		/** Concentric */
+		readonly MEDIA_CONCENTRIC: string;
+		/** The bubble's corners grow to curve around the media's */
+		readonly MEDIA_CONCENTRIC_SUBTITLE: string;
+		/** Media corners */
+		readonly MEDIA_CORNERS: string;
+		/** Flush */
+		readonly MEDIA_FLUSH: string;
+		/** The bubble ends at the media's edge, with the media's corners */
+		readonly MEDIA_FLUSH_SUBTITLE: string;
+		/** Unchanged */
+		readonly MEDIA_NONE: string;
+		/** The bubble keeps its own corners around the media */
+		readonly MEDIA_NONE_SUBTITLE: string;
+		/** Reround media */
+		readonly MEDIA_REROUND: string;
+		/** The media's corners shrink or grow to match the bubble's */
+		readonly MEDIA_REROUND_SUBTITLE: string;
+		/** Mention color */
+		readonly MENTION_COLOR: string;
+		/** Name, avatar and replies */
+		readonly NAME_AVATAR: string;
+		/** Name inside the bubble */
+		readonly NAME_INSIDE: string;
+		/** Turn on Make room for padding to use this */
+		readonly NAME_INSIDE_NEEDS_ROOM: string;
+		/** Show the author's name and the time at the top of the group's first bubble */
+		readonly NAME_INSIDE_SUBTITLE: string;
+		/** Discord's mention color */
+		readonly MENTION_COLOR_FALLBACK: string;
+		/** Outline opacity */
+		readonly MENTION_OPACITY: string;
+		/** Fill tint */
+		readonly MENTION_TINT: string;
+		/** Outline width */
+		readonly MENTION_WIDTH: string;
+		/** Mentions */
+		readonly MENTIONS: string;
 		/** Opacity */
 		readonly OPACITY: string;
 		/** Your messages */
 		readonly OWN_COLOR: string;
 		/** Same as the bubble color */
 		readonly OWN_COLOR_FALLBACK: string;
+		/** Alex */
+		readonly PREVIEW_FRIEND: string;
+		/** Have you seen the new bubbles? */
+		readonly PREVIEW_FRIEND_FIRST: string;
+		/** So clean */
+		readonly PREVIEW_FRIEND_SECOND: string;
+		/** what do you think? */
+		readonly PREVIEW_FRIEND_THIRD: string;
+		/** You */
+		readonly PREVIEW_YOU: string;
+		/** Love them */
+		readonly PREVIEW_YOU_FIRST: string;
+		/** Tweaking the corners right now */
+		readonly PREVIEW_YOU_SECOND: string;
+		/** Joined */
+		readonly PRESET_JOINED: string;
+		/** A group's bubbles touch and read as one shape */
+		readonly PRESET_JOINED_SUBTITLE: string;
+		/** Messages */
+		readonly PRESET_MESSAGES: string;
+		/** Round bubbles a few points apart, square only where they meet by the avatar */
+		readonly PRESET_MESSAGES_SUBTITLE: string;
+		/** Replace your custom style? */
+		readonly PRESET_REPLACE: string;
+		/** Your shape, grouping and colors change to this preset. Mention settings stay. */
+		readonly PRESET_REPLACE_BODY: string;
+		/** Replace */
+		readonly PRESET_REPLACE_CONFIRM: string;
+		/** Rounded */
+		readonly PRESET_ROUNDED: string;
+		/** Every bubble fully round, set apart from the next */
+		readonly PRESET_ROUNDED_SUBTITLE: string;
+		/** Style */
+		readonly PRESETS: string;
+		/** Start from a look, then fine-tune it below */
+		readonly PRESETS_DESCRIPTION: string;
+		/** Replies */
+		readonly REPLY: string;
+		/** Automatic */
+		readonly REPLY_AUTO: string;
+		/** Above */
+		readonly REPLY_ICON: string;
+		/** Turn on Name inside the bubble to quote replies inside it */
+		readonly REPLY_NEEDS_NAME: string;
+		/** Turn on Make room for padding to quote replies inside the bubble */
+		readonly REPLY_NEEDS_ROOM: string;
+		/** Inside */
+		readonly REPLY_QUOTE: string;
+		/** Show the message being replied to in a box inside the bubble, or above it with a reply icon */
+		readonly REPLY_SUBTITLE: string;
+		/** Make room for padding */
+		readonly ROOMY_ROWS: string;
+		/** Spaces messages apart and lines bubbles up with the author's name, so every bubble keeps its full padding */
+		readonly ROOMY_ROWS_SUBTITLE: string;
+		/** Round exposed corners */
+		readonly ROUND_EXPOSED: string;
+		/** Round a right corner that reaches past the bubble next to it */
+		readonly ROUND_EXPOSED_SUBTITLE: string;
+		/** Round the outer side */
+		readonly ROUND_OUTER: string;
+		/** Keep every right corner round, squaring only the side by the avatar where bubbles meet */
+		readonly ROUND_OUTER_SUBTITLE: string;
 		/** Shape */
 		readonly SHAPE: string;
+		/** Smooth small steps */
+		readonly SMOOTH_STEPS: string;
+		/** Widen a bubble to a neighbour that reaches past it by less than the corner radius */
+		readonly SMOOTH_STEPS_SUBTITLE: string;
+		/** Between groups */
+		readonly SPACING: string;
+		/** Spacing */
+		readonly SPACING_SECTION: string;
+		/** Tail */
+		readonly TAIL: string;
+		/** Points the bubble beside the avatar towards it, at the top or bottom of the group with the avatar */
+		readonly TAIL_SUBTITLE: string;
+		/** Tail size */
+		readonly TAIL_SIZE: string;
 		/** % */
 		readonly UNIT_PERCENT: string;
 		/**  pt */

@@ -4,6 +4,7 @@ import type {
 	NativeJavaHandle,
 	NativeJavaReference,
 	NativeJavaValue,
+	NativeUIBridge,
 } from '@unbound-app/api/native';
 import {
 	brand,
@@ -17,11 +18,10 @@ export const DRAWEE_TEXT_VIEW = 'com.facebook.drawee.span.SimpleDraweeSpanTextVi
 export const MESSAGE_CONTENT_VIEW = 'com.discord.chat.presentation.message.view.MessageContentView';
 
 const BUILDER = 'com.facebook.drawee.span.DraweeSpanStringBuilder';
-const TEXT_REWRITES = 'app.unbound.android.TextRewrites';
 const PADDING = 10;
 const DENSITY = 2;
 
-/** A call the plugin made on the loader's `TextRewrites`, with its plain arguments. */
+/** A text rewrite worklet the plugin queued, named as the loader's old `TextRewrites` method, with its plain arguments. */
 export type RewriteCall = { method: string; args: JavaPlain[] };
 
 class FakeSurface {
@@ -48,13 +48,6 @@ export function fakeMessageText({ rewrites = true } = {}) {
 	const mounted: string[] = [];
 	const unmounted: string[] = [];
 	const notContent = new Set<string>();
-	const record =
-		(method: string, result: JavaPlain = null) =>
-		(_self: NativeJavaHandle, ...args: JavaPlain[]) => {
-			calls.push({ method, args });
-
-			return result;
-		};
 
 	fake.registerClass(BUILDER);
 	fake.registerClass('android.text.SpannableString', {
@@ -102,26 +95,6 @@ export function fakeMessageText({ rewrites = true } = {}) {
 	// No activity has resumed, so the startup scan finds nothing on screen.
 	fake.registerClass('app.unbound.android.ActivityTracker', { staticFields: { INSTANCE: null } });
 
-	if (rewrites) {
-		const spec = {
-			methods: {
-				watch: record('watch'),
-				put: record('put', true),
-				remove: record('remove'),
-				addHost: record('addHost'),
-				updateAnchor: record('updateAnchor'),
-				removeGroup: record('removeGroup'),
-				reapply: record('reapply'),
-				refresh: record('refresh'),
-				refreshAll: record('refreshAll'),
-			},
-			staticFields: { INSTANCE: null as JavaPlain },
-		};
-
-		fake.registerClass(TEXT_REWRITES, spec);
-		spec.staticFields.INSTANCE = fake.create(TEXT_REWRITES);
-	}
-
 	const java = fake.bridge;
 	const fabric = withMissingMembers<NativeFabricBridge>('fabric', {
 		mountAsync(host) {
@@ -138,12 +111,40 @@ export function fakeMessageText({ rewrites = true } = {}) {
 		},
 	});
 
+	const names: Record<string, string> = {
+		installTextRewrites: 'watch',
+		putRule: 'put',
+		removeRule: 'remove',
+		disposeTextRewrites: 'dispose',
+	};
+	const plainArgument = (arg: unknown): JavaPlain =>
+		typeof arg === 'object' && arg !== null && !Reflect.has(arg, 'id')
+			? JSON.stringify(arg)
+			: (arg as JavaPlain);
+	const ui = withMissingMembers<NativeUIBridge>('ui', {
+		createScope: () => ({ dispose() {} }),
+		run(worklet, ...args) {
+			const [, ...rest] = args;
+			const name =
+				worklet.name === 'refresh' && rest.length === 0 ? 'refreshAll' : worklet.name;
+
+			calls.push({ method: names[name] ?? name, args: rest.map(plainArgument) });
+		},
+		callback: (listener) => listener,
+	});
+
 	return {
-		native: { java, hooks: fake.hooks, fabric },
+		native: {
+			apiVersion: rewrites ? '1.4.0' : '1.3.0',
+			java,
+			hooks: fake.hooks,
+			ui,
+			fabric,
+		},
 		calls,
 		mounted,
 		unmounted,
-		/** The calls made on `TextRewrites` with one method name, in order. */
+		/** The text rewrite calls with one method name, in order. */
 		callsTo: (method: string) => calls.filter((call) => call.method === method),
 		/** A message content view `width` pixels wide, before padding. */
 		contentView(width = 500): NativeJavaReference {

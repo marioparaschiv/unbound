@@ -135,9 +135,29 @@ declare module '@unbound-app/settings' {
 		radius: number;
 		horizontalPadding: number;
 		verticalPadding: number;
+		spacing: number;
 		opacity: number;
+		blur: "off" | "light" | "medium" | "strong";
+		mediaCorners: "none" | "concentric" | "flush" | "reround";
+		cornerCurve: "continuous" | "circular";
+		grouping: "grouped" | "separate" | "joined";
+		roundExposed: boolean;
+		roundOuter: boolean;
+		joinCurves: boolean;
+		smoothSteps: boolean;
+		groupSpacing: number;
+		roomyRows: boolean;
+		avatarLast: boolean;
+		nameInside: boolean;
+		reply: "auto" | "quote" | "icon";
+		tail: boolean;
+		tailSize: number;
 		color: string;
 		ownColor: string;
+		mentionColor: string;
+		mentionOpacity: number;
+		mentionTint: number;
+		mentionWidth: number;
 	};
 
 	/** Each setting and section by its dot-separated key. */
@@ -146,9 +166,29 @@ declare module '@unbound-app/settings' {
 		"radius": number;
 		"horizontalPadding": number;
 		"verticalPadding": number;
+		"spacing": number;
 		"opacity": number;
+		"blur": "off" | "light" | "medium" | "strong";
+		"mediaCorners": "none" | "concentric" | "flush" | "reround";
+		"cornerCurve": "continuous" | "circular";
+		"grouping": "grouped" | "separate" | "joined";
+		"roundExposed": boolean;
+		"roundOuter": boolean;
+		"joinCurves": boolean;
+		"smoothSteps": boolean;
+		"groupSpacing": number;
+		"roomyRows": boolean;
+		"avatarLast": boolean;
+		"nameInside": boolean;
+		"reply": "auto" | "quote" | "icon";
+		"tail": boolean;
+		"tailSize": number;
 		"color": string;
 		"ownColor": string;
+		"mentionColor": string;
+		"mentionOpacity": number;
+		"mentionTint": number;
+		"mentionWidth": number;
 	};
 
 	/** Every setting and section by its dot-separated key; buttons and notices are not settings. */
@@ -160,7 +200,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = never;
+	export type BooleanSettingKey = "roundExposed" | "roundOuter" | "joinCurves" | "smoothSteps" | "roomyRows" | "avatarLast" | "nameInside" | "tail";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

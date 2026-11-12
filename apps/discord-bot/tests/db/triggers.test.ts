@@ -205,7 +205,7 @@ describe.skipIf(!DATABASE_URL)('triggers on the web tables', () => {
 		]);
 	});
 
-	test('an addon insert, a listed field and a delist wake it; updated_at alone does not', async () => {
+	test('an addon insert, a listed field, an icon pick and a delist wake it; updated_at alone does not', async () => {
 		const id = await insertAddon();
 
 		expect(await received()).toEqual([{ channel: 'addon_changed', payload: id }]);
@@ -216,6 +216,10 @@ describe.skipIf(!DATABASE_URL)('triggers on the web tables', () => {
 		expect(await received()).toEqual([]);
 
 		await database.web.db.update(addon).set({ name: 'Renamed' }).where(eq(addon.id, id));
+
+		expect(await received()).toEqual([{ channel: 'addon_changed', payload: id }]);
+
+		await database.web.db.update(addon).set({ icon: 'IconRocket' }).where(eq(addon.id, id));
 
 		expect(await received()).toEqual([{ channel: 'addon_changed', payload: id }]);
 
@@ -271,6 +275,30 @@ describe.skipIf(!DATABASE_URL)('triggers on the web tables', () => {
 			.update(addonVersion)
 			.set({ withdrawnBy: eventId })
 			.where(and(eq(addonVersion.addonId, id), eq(addonVersion.version, '1.1.0')));
+
+		expect(sorted(await received())).toEqual([
+			{ channel: 'addon_changed', payload: id },
+			{ channel: 'member_changed', payload: `addon:${id}` },
+		]);
+	});
+
+	test("a reviewed version's files being written wakes the addon and its maintainers; other columns do not", async () => {
+		const { userId } = await signUp();
+		const id = uniqueId('pending');
+		const where = and(eq(addonVersion.addonId, id), eq(addonVersion.version, '1.0.0'));
+
+		await seedApprovedAddon(database.web, userId, manifest(id));
+		// Review approves a version with its files pending, and a later transaction publishes them.
+		await database.web.db
+			.update(addonVersion)
+			.set({ filesPendingSince: new Date() })
+			.where(where);
+		await received();
+		await database.web.db.update(addonVersion).set({ changelog: 'Edited.' }).where(where);
+
+		expect(await received()).toEqual([]);
+
+		await database.web.db.update(addonVersion).set({ filesPendingSince: null }).where(where);
 
 		expect(sorted(await received())).toEqual([
 			{ channel: 'addon_changed', payload: id },
