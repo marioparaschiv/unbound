@@ -8,13 +8,31 @@ import { join } from 'node:path';
 import { resolveDevServerUrl, resolveDevHost } from '../dev-host';
 import { version, unbound } from '../../package.json';
 
-export const GIT_REVISION = (() => {
+const packageVersionSchema = Type.Object({ version: semverSchema });
+
+/**
+ * @description Reads the checkout's short git revision now, so a long-running dev server stamps each rebuild with the current one.
+ * @returns The revision, or `N/A` when git is unavailable.
+ */
+export function gitRevision(): string {
 	try {
 		return execSync('git rev-parse --short HEAD').toString().trim();
 	} catch {
 		return 'N/A';
 	}
-})();
+}
+
+/**
+ * @description Reads the client's version from `package.json` now, so a dev rebuild picks up a version bump.
+ * @returns The semantic version.
+ */
+export function clientVersion(): string {
+	const manifest = JSON.parse(readFileSync(join(__dirname, '..', '..', 'package.json'), 'utf8'));
+
+	return parse(packageVersionSchema, manifest).version;
+}
+
+export const GIT_REVISION = gitRevision();
 
 export const CLIENT_VERSION = parse(semverSchema, version);
 

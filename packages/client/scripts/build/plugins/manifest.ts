@@ -173,7 +173,7 @@ export function writeManifest(options: ManifestOptions): string | null {
  * @returns A rolldown plugin writing the manifest after the bundle.
  */
 export default function generateManifest(
-	revision: string,
+	revision: () => string,
 	declared: number[],
 	lenient: boolean,
 	channel: string,
@@ -183,7 +183,7 @@ export default function generateManifest(
 		name: 'generate-manifest',
 		writeBundle() {
 			const problem = writeManifest({
-				revision,
+				revision: revision(),
 				declared,
 				lenient,
 				channel,

@@ -14,6 +14,7 @@ import {
 	IS_DEV_BUILD,
 	BUILD_CHANNEL,
 	GIT_REVISION,
+	gitRevision,
 	I18N_BASE_URL,
 	CLIENT_VERSION,
 	DEV_SERVER_URL,
@@ -36,6 +37,7 @@ import releaseModules from './plugins/release-modules';
 import bench, { benchConfig } from './plugins/bench';
 import staticAssets from './plugins/static-assets';
 import { bytecodeVersions } from './hermes.json';
+import stampBuild from './plugins/stamp-build';
 import { buildDevtools } from './devtools';
 import worklets from './plugins/worklets';
 import libraries from './shim-libraries';
@@ -134,10 +136,12 @@ function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 			releaseModules(devTools ? {} : RELEASE_MODULES),
 			worklets(),
 			...(benchmark ? [bench(root, benchmark)] : []),
+			...(IS_DEV_BUILD ? [stampBuild()] : []),
 			replace({
 				preventAssignment: true,
-				$$VERSION$$: GIT_REVISION,
-				$$CLIENT_VERSION$$: CLIENT_VERSION,
+				...(IS_DEV_BUILD
+					? {}
+					: { $$VERSION$$: GIT_REVISION, $$CLIENT_VERSION$$: CLIENT_VERSION }),
 				$$BUILD_CHANNEL$$: BUILD_CHANNEL,
 				$$API_URL$$: API_URL,
 				$$I18N_BASE_URL$$: I18N_BASE_URL,
@@ -171,7 +175,7 @@ function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 			...(manifest
 				? [
 						generateManifest(
-							GIT_REVISION,
+							gitRevision,
 							bytecodeVersions,
 							IS_DEV_BUILD,
 							BUILD_CHANNEL,
@@ -269,7 +273,7 @@ async function build() {
 
 	try {
 		logger.debug('Building Unbound...');
-		logger.info('Revision:', GIT_REVISION);
+		logger.info('Revision:', gitRevision());
 
 		if (IS_DEV_BUILD) {
 			logger.info('Dev mode - device will connect to:', DEV_SERVER_URL);
@@ -284,7 +288,7 @@ async function build() {
 		await buildDevtools();
 
 		const problem = writeManifest({
-			revision: GIT_REVISION,
+			revision: gitRevision(),
 			declared: bytecodeVersions,
 			lenient: IS_DEV_BUILD,
 			channel: BUILD_CHANNEL,
