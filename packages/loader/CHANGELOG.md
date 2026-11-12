@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.3.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.2.0...loader-v1.3.0) (2026-11-12)
+
+
+### Features
+
+* **client:** add support, issues and context to /debug ([#1147](https://github.com/marioparaschiv/unbound/issues/1147)) ([05b2839](https://github.com/marioparaschiv/unbound/commit/05b2839cb43f575aaad7bd2b96cbe9580c374815))
+* **loader:** add WOFF2 and variable fonts, centre tall fonts ([#1142](https://github.com/marioparaschiv/unbound/issues/1142)) ([ccf0462](https://github.com/marioparaschiv/unbound/commit/ccf04625b5eb6baf4c6560f0513de63f701f2587))
+* **loader:** let UI scopes implement Java interfaces ([f8ca349](https://github.com/marioparaschiv/unbound/commit/f8ca3499ea8627dfc5f57560928676278b65dea9))
+
+
+### Bug Fixes
+
+* **loader:** return from off-main Android hook dispatch ([#1139](https://github.com/marioparaschiv/unbound/issues/1139)) ([050f74f](https://github.com/marioparaschiv/unbound/commit/050f74f10ac66a468e1657226bd592d8f3f7b3ab))
+* tidy the install and state debug lines ([#1143](https://github.com/marioparaschiv/unbound/issues/1143)) ([f1a2a2f](https://github.com/marioparaschiv/unbound/commit/f1a2a2f3999db8da506373b0248eef644b11bcef))
+
 ## [1.2.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.1.1...loader-v1.2.0) (2026-11-12)
 
 
