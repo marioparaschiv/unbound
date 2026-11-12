@@ -109,6 +109,7 @@ function PerksCard({ user }: PerksCardProps) {
 						claim={sponsor.badge}
 						perk={badgePerk}
 						editable={badgePerk.claimable}
+						limit={sponsor.badgeLimit}
 						heading={<PerkText perk={badgePerk} />}
 					/>
 				) : null}

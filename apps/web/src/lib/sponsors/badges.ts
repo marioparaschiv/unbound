@@ -19,7 +19,13 @@ import {
 	getBadgeImageType,
 	hashBadgeImage,
 } from '~/lib/sponsors/badge-image';
-import { canClaimPerk, isPerkUnlocked, PERKS, roleGrantsPerks } from '~/lib/sponsors/perks';
+import {
+	canClaimPerk,
+	getBadgeLimit,
+	isPerkUnlocked,
+	PERKS,
+	roleGrantsPerks,
+} from '~/lib/sponsors/perks';
 import { getUserSponsorship, graceMs } from '~/lib/sponsors/sponsorships';
 import { account, perkClaim, sponsorship, user } from '~/db/schema';
 import { findBadgeNameProblem } from '~/lib/sponsors/moderation';
@@ -111,7 +117,8 @@ async function claimResponse(ctx: AppContext, userId: string): Promise<BadgeClai
 	return { claim: toBadgeClaim(ctx.env, await findBadgeClaim(ctx, userId)) };
 }
 
-async function requireClaimable(ctx: AppContext, userId: string): Promise<void> {
+// Returns how many badges the user may set.
+async function requireClaimable(ctx: AppContext, userId: string): Promise<number> {
 	const [{ standing }, [owner]] = await Promise.all([
 		getUserSponsorship(ctx, userId),
 		ctx.db.select({ role: user.role }).from(user).where(eq(user.id, userId)),
@@ -123,6 +130,8 @@ async function requireClaimable(ctx: AppContext, userId: string): Promise<void> 
 			`A monthly GitHub sponsorship of ${formatPrice(PERKS[PERK_ID].minimumMonthlyCents)} or more, or a one-time sponsorship of ${formatPrice(PERKS[PERK_ID].minimumOneTimeCents)} or more, unlocks a custom badge.`,
 		);
 	}
+
+	return getBadgeLimit(standing, owner?.role);
 }
 
 async function findBadgesProblem(ctx: AppContext, badges: Badge[]): Promise<string | undefined> {
@@ -252,8 +261,9 @@ export async function completeBadgeUpload(
 }
 
 /**
- * @description Replaces the caller's custom badges. Needs an active sponsorship that unlocks them, a
- * claim staff have not revoked, distinct names that all pass moderation, and uploaded images.
+ * @description Replaces the caller's custom badges. Needs an active sponsorship that unlocks them, no
+ * more badges than its tier allows, a claim staff have not revoked, distinct names that all pass
+ * moderation, and uploaded images.
  * @param ctx The application context.
  * @param userId The badge owner.
  * @param badges The badges in display order, already validated against the contract schema.
@@ -264,7 +274,14 @@ export async function claimBadges(
 	userId: string,
 	badges: Badge[],
 ): Promise<BadgeClaimResponse> {
-	await requireClaimable(ctx, userId);
+	const limit = await requireClaimable(ctx, userId);
+
+	if (badges.length > limit) {
+		throw new ApiError(
+			'badge_rejected',
+			`Your sponsorship allows ${limit} ${limit === 1 ? 'badge' : 'badges'}; a higher tier allows more.`,
+		);
+	}
 
 	const problem = await findBadgesProblem(ctx, badges);
 
@@ -401,7 +418,10 @@ export async function getVisibleBadges(
 	for (const row of rows) {
 		const standing = standingOf(row.sponsorship ?? undefined, now, graceMs(ctx.env));
 		const unlocked = isPerkUnlocked(PERK_ID, standing) || roleGrantsPerks(row.role);
-		const shown = unlocked ? parseBadges(row.claim) : undefined;
+		// A sponsor who moved to a lower tier shows only the first badges it allows.
+		const shown = unlocked
+			? parseBadges(row.claim)?.slice(0, getBadgeLimit(standing, row.role))
+			: undefined;
 
 		if (!shown) {
 			continue;

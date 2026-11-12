@@ -289,9 +289,54 @@ describe('several badges', () => {
 		{ name: 'Early Bird', image: LEAF },
 		{ name: 'Theme Fan', image: SUN },
 	];
+	const FOUR: Badge[] = [...THREE, { name: 'Fourth', image: SPARE }];
+	const TOP_TIER = { monthlyPriceCents: 2000, tierName: '$20 a month' };
 
-	test('a sponsor shows up to three badges, in the order they saved them', async () => {
-		const sponsor = await signUp();
+	test.each([
+		['$5 a month', { monthlyPriceCents: 500 }, 1],
+		['$10 a month', { monthlyPriceCents: 1000 }, 2],
+		['$20 a month', TOP_TIER, 4],
+		['$30 once', { oneTime: true, monthlyPriceCents: 3000, largestOneTimeCents: 3000 }, 1],
+		[
+			'$100 once, long ended',
+			{
+				oneTime: true,
+				largestOneTimeCents: 10_000,
+				state: 'cancelled' as const,
+				endsAt: new Date(NOW.getTime() - 365 * DAY),
+			},
+			3,
+		],
+		['$5 a month after $60 once', { monthlyPriceCents: 500, largestOneTimeCents: 6000 }, 2],
+	])('%s allows its badge count', async (_name, sponsorship, limit) => {
+		const sponsor = await signUp({ sponsorship });
+
+		expect((await setBadges(sponsor.client, FOUR.slice(0, limit))).claim?.badges).toEqual(
+			owned(...FOUR.slice(0, limit)),
+		);
+
+		if (limit < FOUR.length) {
+			expect(await failure(setBadges(sponsor.client, FOUR.slice(0, limit + 1)))).toEqual({
+				status: 400,
+				code: 'badge_rejected',
+			});
+		}
+	});
+
+	test('a sponsor who moves to a lower tier shows only the first badges it allows', async () => {
+		const sponsor = await signUp({ sponsorship: TOP_TIER });
+
+		await setBadges(sponsor.client, FOUR);
+		await ctx.db
+			.update(sponsorship)
+			.set({ monthlyPriceCents: 1000 })
+			.where(eq(sponsorship.githubId, sponsor.userId));
+
+		expect(await publicBadges(sponsor.userId)).toEqual(shown(...FOUR.slice(0, 2)));
+	});
+
+	test('a sponsor shows their badges in the order they saved them', async () => {
+		const sponsor = await signUp({ sponsorship: TOP_TIER });
 
 		expect((await setBadges(sponsor.client, THREE)).claim?.badges).toEqual(owned(...THREE));
 		expect(await publicBadges(sponsor.userId)).toEqual(shown(...THREE));
@@ -302,11 +347,11 @@ describe('several badges', () => {
 		expect(await publicBadges(sponsor.userId)).toEqual(shown(...reordered));
 	});
 
-	test('refuses an empty list or a fourth badge', async () => {
-		const sponsor = await signUp();
-		const four = [...THREE, { name: 'Fourth', image: SPARE }];
+	test('refuses an empty list or a fifth badge', async () => {
+		const sponsor = await signUp({ sponsorship: TOP_TIER });
+		const five = [...FOUR, { name: 'Fifth', image: MOON }];
 
-		for (const badges of [[], four]) {
+		for (const badges of [[], five]) {
 			expect(await failure(setBadges(sponsor.client, badges))).toEqual({
 				status: 400,
 				code: 'invalid_request',
@@ -315,7 +360,7 @@ describe('several badges', () => {
 	});
 
 	test('refuses two badges with the same name, ignoring case', async () => {
-		const sponsor = await signUp();
+		const sponsor = await signUp({ sponsorship: TOP_TIER });
 
 		expect(
 			await failure(setBadges(sponsor.client, [BADGE, { name: 'night owl', image: LEAF }])),
@@ -323,7 +368,7 @@ describe('several badges', () => {
 	});
 
 	test('one refused name refuses the whole list and keeps the saved one', async () => {
-		const sponsor = await signUp();
+		const sponsor = await signUp({ sponsorship: TOP_TIER });
 
 		await setBadge(sponsor.client);
 
@@ -336,11 +381,12 @@ describe('several badges', () => {
 	test('a revoke, a ban, an unlink or the end of grace hides all of them', async () => {
 		const moderator = await signUp({ role: 'moderator', github: false });
 		const [revoked, banned, unlinked, lapsed] = await Promise.all([
-			signUp(),
-			signUp(),
-			signUp(),
+			signUp({ sponsorship: TOP_TIER }),
+			signUp({ sponsorship: TOP_TIER }),
+			signUp({ sponsorship: TOP_TIER }),
 			signUp({
 				sponsorship: {
+					...TOP_TIER,
 					state: 'pending_cancellation',
 					endsAt: new Date(NOW.getTime() + DAY),
 				},

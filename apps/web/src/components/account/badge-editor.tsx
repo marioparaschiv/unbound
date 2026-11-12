@@ -1,5 +1,5 @@
-import { BADGE_IMAGE_TYPES, BADGE_LIMIT } from '@unbound-app/contracts/sponsors';
 import type { Badge, BadgeClaim } from '@unbound-app/contracts/sponsors';
+import { BADGE_IMAGE_TYPES } from '@unbound-app/contracts/sponsors';
 import { IconPen, IconTrash, IconUpload } from 'nucleo-micro-bold';
 import { useRef, useState, type ReactNode } from 'react';
 import { useMutation } from '@tanstack/react-query';
@@ -20,6 +20,8 @@ type BadgeEditorProps = {
 	claim: BadgeClaim | null;
 	perk: PerkStatus;
 	editable: boolean;
+	/** How many badges the user's tier allows. */
+	limit: number;
 	/** The perk's name and description, which the upload button sits beside while badges are editable. */
 	heading: ReactNode;
 };
@@ -36,7 +38,7 @@ function lockedNote(perk: PerkStatus, editable: boolean): string | null {
 	return editable ? null : 'Sponsor again to change your badges.';
 }
 
-function BadgeEditor({ claim, perk, editable, heading }: BadgeEditorProps) {
+function BadgeEditor({ claim, perk, editable, limit, heading }: BadgeEditorProps) {
 	const [mode, setMode] = useState<Mode>(CLOSED);
 	const addPicker = useRef<HTMLInputElement>(null);
 	const replacePicker = useRef<HTMLInputElement>(null);
@@ -48,8 +50,7 @@ function BadgeEditor({ claim, perk, editable, heading }: BadgeEditorProps) {
 	const isPending = saveBadges.isPending || removeBadges.isPending;
 	const badges = claim?.badges ?? [];
 	const note = lockedNote(perk, editable);
-	const freeSlots =
-		BADGE_LIMIT - badges.length - (mode.kind === 'adding' ? drafts.drafts.length : 0);
+	const freeSlots = limit - badges.length - (mode.kind === 'adding' ? drafts.drafts.length : 0);
 
 	function pickReplacement(id: string) {
 		replacing.current = id;
@@ -183,15 +184,13 @@ function BadgeEditor({ claim, perk, editable, heading }: BadgeEditorProps) {
 						variant='outline'
 						size='sm'
 						className='gap-2'
-						disabled={
-							isPending || mode.kind !== 'closed' || badges.length >= BADGE_LIMIT
-						}
+						disabled={isPending || mode.kind !== 'closed' || badges.length >= limit}
 						onClick={() => addPicker.current?.click()}
 					>
 						<IconUpload size={14} />
 						Upload badges
 						<span className='text-muted-foreground tabular-nums'>
-							{BADGE_LIMIT - freeSlots} of {BADGE_LIMIT}
+							{limit - freeSlots} of {limit}
 						</span>
 					</Button>
 				</div>
@@ -205,8 +204,9 @@ function BadgeEditor({ claim, perk, editable, heading }: BadgeEditorProps) {
 
 			{badges.length === 0 && mode.kind === 'closed' ? (
 				<Text variant='text-sm' color='muted'>
-					No badges yet. Upload up to {BADGE_LIMIT} PNGs or animated GIFs and name each
-					one.
+					No badges yet. Upload{' '}
+					{limit === 1 ? 'a PNG or animated GIF' : `up to ${limit} PNGs or animated GIFs`}{' '}
+					and name each one.
 				</Text>
 			) : null}
 
