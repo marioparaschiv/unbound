@@ -116,6 +116,7 @@ std::shared_ptr<loader::NativePlatformProvider> AndroidLoader::platformProvider(
     provider->isSystemApp     = flag("isSystemApp");
     provider->appSource       = text("appSource");
     provider->framework       = text("framework");
+    provider->jailbreak       = text("jailbreak");
     provider->isVerifiedBuild = [callbacks]() {
         return callStaticBoolean(callbacks.bridgeClass, callbacks.isVerifiedBuild);
     };

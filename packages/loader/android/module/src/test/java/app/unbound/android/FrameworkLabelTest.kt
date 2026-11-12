@@ -15,6 +15,13 @@ class FrameworkLabelTest {
     }
 
     @Test
+    fun theRootManagerIsNamedByItsDataDirectory() {
+        assertEquals("KernelSU", Platform.rootManager { it == "/data/adb/ksu" })
+        assertEquals("Magisk", Platform.rootManager { it == "/data/adb/magisk" || it == "/data/adb/ap" })
+        assertEquals("", Platform.rootManager { false })
+    }
+
+    @Test
     fun aMissingVersionIsLeftOut() {
         assertEquals("Vector", Platform.frameworkLabel("Vector", "", false))
     }

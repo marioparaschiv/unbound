@@ -50,6 +50,15 @@ object Platform {
 
     private const val LSPATCH_LOADER = "org.lsposed.lspatch.loader.LSPApplication"
 
+    private val ROOT_MANAGERS = listOf(
+        "/data/adb/magisk" to "Magisk",
+        "/data/adb/ksu" to "KernelSU",
+        "/data/adb/ap" to "APatch",
+    )
+
+    fun rootManager(exists: (String) -> Boolean = { File(it).exists() }): String =
+        ROOT_MANAGERS.firstOrNull { (path, _) -> exists(path) }?.second ?: ""
+
     fun frameworkLabel(name: String, version: String, patched: Boolean): String =
         listOf(if (patched) "LSPatch" else name, version).filter { it.isNotBlank() }.joinToString(" ")
 
@@ -64,6 +73,7 @@ object Platform {
         .put("isSystemApp", appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0)
         .put("appSource", InstallSource.current(application()))
         .put("framework", frameworkName)
+        .put("jailbreak", rootManager())
         .put("isVirtualDevice", isEmulator())
         .put("virtualDeviceHost", emulatorHostAddress() ?: JSONObject.NULL)
 
