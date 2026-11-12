@@ -7,7 +7,7 @@
 -- `lock` hands the trigger functions to a NOLOGIN role (`-v hooks_role=…`, default `<bot_role>_hooks`) and
 -- revokes TRIGGER, so the bot cannot run code as the web's role. Rerun `grant` when the bot reads a new
 -- web table. To change or reinstall the triggers (a web migration rebuilt a hooked table, or the bot logs
--- one missing): run `grant`, apply the trigger migration SQL, run `lock`. Both roles must exist; their
+-- one missing): run `grant`, apply the trigger migrations' SQL in order, run `lock`. Both roles must exist; their
 -- passwords are set outside this script. Rerunning either phase converges to the same state.
 \set ON_ERROR_STOP on
 \set QUIET on
