@@ -22,8 +22,10 @@ enum class ToolboxGesture
     ThreeFinger,
 };
 
-bool loaderEnabled(const SettingsStore &settings);
-bool recoveryEnabled(const SettingsStore &settings);
+bool        loaderEnabled(const SettingsStore &settings);
+bool        recoveryEnabled(const SettingsStore &settings);
+std::string automaticRecoveryKey(const SettingsStore &settings);
+void        setAutomaticRecoveryKey(SettingsStore &settings, const std::string &key);
 // Always saves, so the toggle reports whether the file was written.
 bool setRecoveryEnabled(SettingsStore &settings, bool enabled);
 bool developerMode(const SettingsStore &settings);

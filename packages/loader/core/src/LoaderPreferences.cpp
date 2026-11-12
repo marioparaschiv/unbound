@@ -3,23 +3,24 @@
 #include <cstdio>
 
 namespace loader::preferences {
-static constexpr const char *kRecovery         = "recovery";
-static constexpr const char *kDeveloperMode    = "developer-mode";
-static constexpr const char *kHotReload        = "loader.update.hmr";
-static constexpr const char *kLoaderEnabled    = "loader.enabled";
-static constexpr const char *kDevtools         = "loader.devtools";
-static constexpr const char *kBlockTelemetry   = "loader.telemetry.block";
-static constexpr const char *kUpdateURL        = "loader.update.url";
-static constexpr const char *kForceUpdate      = "loader.update.force";
-static constexpr const char *kUnsignedBundles  = "loader.update.unsigned";
-static constexpr const char *kAutoClientUpdate = "updater.auto.client";
-static constexpr const char *kWaitForWifi      = "loader.update.waitForWifi";
-static constexpr const char *kBundleEtag       = "loader.update.etag";
-static constexpr const char *kRejectedRevision = "loader.update.rejectedRevision";
-static constexpr const char *kBundleBaseline   = "loader.update.baseline";
-static constexpr const char *kCheckedByLoader  = "loader.update.checkedBy";
-static constexpr const char *kFontStates       = "font-states";
-static constexpr const char *kAppliedTheme     = "applied";
+static constexpr const char *kRecovery             = "recovery";
+static constexpr const char *kDeveloperMode        = "developer-mode";
+static constexpr const char *kHotReload            = "loader.update.hmr";
+static constexpr const char *kLoaderEnabled        = "loader.enabled";
+static constexpr const char *kDevtools             = "loader.devtools";
+static constexpr const char *kBlockTelemetry       = "loader.telemetry.block";
+static constexpr const char *kUpdateURL            = "loader.update.url";
+static constexpr const char *kForceUpdate          = "loader.update.force";
+static constexpr const char *kUnsignedBundles      = "loader.update.unsigned";
+static constexpr const char *kAutoClientUpdate     = "updater.auto.client";
+static constexpr const char *kWaitForWifi          = "loader.update.waitForWifi";
+static constexpr const char *kBundleEtag           = "loader.update.etag";
+static constexpr const char *kRejectedRevision     = "loader.update.rejectedRevision";
+static constexpr const char *kAutomaticRecoveryKey = "loader.recovery.automaticFrom";
+static constexpr const char *kBundleBaseline       = "loader.update.baseline";
+static constexpr const char *kCheckedByLoader      = "loader.update.checkedBy";
+static constexpr const char *kFontStates           = "font-states";
+static constexpr const char *kAppliedTheme         = "applied";
 
 static void setIfChanged(SettingsStore &settings, const char *key, nlohmann::json value)
 {
@@ -52,7 +53,19 @@ bool recoveryEnabled(const SettingsStore &settings)
 bool setRecoveryEnabled(SettingsStore &settings, bool enabled)
 {
     settings.set(kStore, kRecovery, enabled);
+    settings.set(kStore, kAutomaticRecoveryKey, "");
     return settings.save();
+}
+
+std::string automaticRecoveryKey(const SettingsStore &settings)
+{
+    return settings.getString(kStore, kAutomaticRecoveryKey, "");
+}
+
+void setAutomaticRecoveryKey(SettingsStore &settings, const std::string &key)
+{
+    settings.set(kStore, kAutomaticRecoveryKey, key);
+    settings.save();
 }
 
 bool developerMode(const SettingsStore &settings)
