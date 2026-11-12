@@ -50,6 +50,17 @@ export const Grouping = { grouped: 'grouped', separate: 'separate', joined: 'joi
 /** Where a reply's preview sits: `quote` in a box inside the bubble, `icon` above it behind a reply icon, `auto` as `icon` while the avatar sits by a group's last bubble, otherwise `quote`. */
 export const ReplyStyle = { auto: 'auto', quote: 'quote', icon: 'icon' } as const;
 
+/** How strongly a translucent bubble blurs what lies behind it, such as a chat background. */
+export const BubbleBlur = {
+	off: 'off',
+	light: 'light',
+	medium: 'medium',
+	strong: 'strong',
+} as const;
+
+/** The blur radius of each `BubbleBlur`, in points. */
+export const BLUR_RADIUS = { off: 0, light: 6, medium: 14, strong: 28 };
+
 /** Which bubble of a group points a tail at the avatar. */
 export const TailPosition = { off: 'off', first: 'first', last: 'last' } as const;
 

@@ -1,4 +1,6 @@
 import {
+	BLUR_RADIUS,
+	BubbleBlur,
 	BubbleLayout,
 	BubbleLimits,
 	BubbleStyle,
@@ -55,6 +57,8 @@ export type BubbleAppearance = {
 	tailSize: number;
 	color: BubbleColor;
 	ownColor: BubbleColor;
+	/** How far what lies behind a bubble blurs, in points; 0 for none, and while bubbles are opaque, which would hide it. */
+	blur: number;
 	/** The user's mention color, `undefined` for Discord's, the outline's opacity and width in points, and how far the fill tints, from 0 to 1. */
 	mention: {
 		color: Omit<BubbleColor, 'alpha'> | undefined;
@@ -191,6 +195,7 @@ export function bubbleAppearance(
 		tailSize: bounded(read('tailSize'), BubbleStyle.tailSize, BubbleLimits.tailSize),
 		color: { ...base, alpha: opacity / 100 },
 		ownColor: { ...own, alpha: opacity / 100 },
+		blur: opacity < BubbleLimits.opacity ? BLUR_RADIUS[choice(read('blur'), BubbleBlur)] : 0,
 		mention: {
 			color: parseHexColor(read('mentionColor')),
 			alpha: percent('mentionOpacity', BubbleStyle.mentionOpacity),

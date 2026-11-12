@@ -8,6 +8,7 @@ import type {
 import type { Fillets } from '~/bubbles/group';
 import type { BubbleColor } from '~/bubbles/style';
 import { messageIdOf, messageIdOfViewModel } from '~/bubbles/ios/message-id';
+import { paintBlur } from '~/bubbles/ios/ui-blur';
 import {
 	paintCell,
 	paintUnmeasured,
@@ -49,6 +50,8 @@ export type CachedBubble = {
 	/** The inward curves at the top and bottom right that join the bubble to a wider neighbour it touches. */
 	fillets: Fillets;
 	color: BubbleColor;
+	/** How far what lies behind the bubble blurs, in points; 0 for none. */
+	blur: number;
 	/** The outline of a bubble whose message mentions the user, and its width in points. */
 	border?: { color: BubbleColor; width: number };
 	/** What else the cell shows: moved name, time and reply, the quote box and the avatar. */
@@ -390,6 +393,7 @@ function paintBubble(
 	if (fill) {
 		paintMasked(objc, fill, drawn, outline, color, 0);
 		paintOutline(objc, UIColor, fill, drawn, outline);
+		paintBlur(objc, bubble, fill, drawn, outline);
 	}
 
 	paintFillet(objc, bubble, drawn, 'top', color);

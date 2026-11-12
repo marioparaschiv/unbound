@@ -22,9 +22,13 @@ export type BubbleDrawing = {
 		color: number;
 		radius: number;
 	};
+	/** The blurred chat background, painted in the bubble's outline under its color. */
+	backdrop?: NativeJavaReference;
 };
 
 const TOP_LEFT = 0x33;
+/** Opaque black, so a shader paints at full strength. */
+const OPAQUE = 0xff000000 | 0;
 
 function pathShape(java: NativeJavaBridge, data: string, width: number, height: number) {
 	'worklet';
@@ -52,7 +56,7 @@ function paintOf(java: NativeJavaBridge, drawable: NativeJavaReference) {
 }
 
 /**
- * @description Builds a bubble as a `LayerDrawable` for a row's background: its path filled, an outline inside its edge, and a quote box, each pinned to the row's top left so a taller row never stretches them.
+ * @description Builds a bubble as a `LayerDrawable` for a row's background: the blurred chat background in its path, its path filled, an outline inside its edge, and a quote box, each pinned to the row's top left so a taller row never stretches them.
  * @param java The UI scope's Java bridge.
  * @param drawing The bubble's paths, colors and size in pixels.
  * @param layerId The id the fill layer gets, so the bubble can be told apart from Discord's backgrounds.
@@ -71,7 +75,21 @@ export function bubbleDrawable(
 
 	const fillPaint = paintOf(java, fill);
 
-	if (fillPaint) java.invoke(fillPaint, 'setColor', [javaInt(drawing.color)]);
+	if (fillPaint && drawing.backdrop) {
+		// One pass paints the blurred background with the bubble's color over it, as the color filter lays the color over what the shader draws.
+		const over = java.getField(java.getClass('android.graphics.PorterDuff$Mode'), 'SRC_OVER');
+
+		java.invoke(fillPaint, 'setColor', [javaInt(OPAQUE)]);
+		java.invoke(fillPaint, 'setShader', [drawing.backdrop]);
+		java.invoke(fillPaint, 'setColorFilter', [
+			java.construct('android.graphics.PorterDuffColorFilter', [
+				javaInt(drawing.color),
+				over,
+			]),
+		]);
+	} else if (fillPaint) {
+		java.invoke(fillPaint, 'setColor', [javaInt(drawing.color)]);
+	}
 
 	const layers: NativeJavaReference[] = [fill];
 	const sizes: { x: number; y: number; width: number; height: number }[] = [

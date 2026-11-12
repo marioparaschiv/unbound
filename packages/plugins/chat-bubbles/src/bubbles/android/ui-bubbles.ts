@@ -16,6 +16,13 @@ import {
 } from '@unbound-plugins/shared/native/android/java-values';
 
 import type { RowPaint } from '~/bubbles/android/row-paint';
+import {
+	blurShader,
+	forgetBlurs,
+	installBlurScroll,
+	prepareBlur,
+	trackBlur,
+} from '~/bubbles/android/ui-blur';
 import { bubbleDrawable } from '~/bubbles/android/ui-drawable';
 import {
 	moveHeading,
@@ -61,13 +68,20 @@ export type BindHook = {
 	accessories: string;
 };
 
+/** A message's bubble, its blur's shader, and which blurred background that came from, -1 for none. */
+type CachedDrawable = {
+	drawable: NativeJavaReference;
+	shader: NativeJavaReference | undefined;
+	generation: number;
+};
+
 type BubbleState = {
 	java: NativeJavaBridge;
 	config: RowConfig;
 	/** The message row's class. */
 	messageView: string;
 	paints: Map<string, RowPaint>;
-	drawables: Map<string, NativeJavaReference>;
+	drawables: Map<string, CachedDrawable>;
 	/** The row each message was last bound to. */
 	rows: Map<string, NativeJavaReference>;
 	/** The rows showing a message without a paint that fits them, by handle. */
@@ -176,21 +190,29 @@ export function relayoutList() {
 	}
 }
 
+// A bubble that blurs is drawn again once the chat background behind it is blurred anew, or first found.
 function drawableFor(current: BubbleState, id: string, paint: RowPaint, height: number) {
 	'worklet';
+	const { java, list } = current;
+	const generation = paint.blur && list ? (prepareBlur(java, list, paint.blur) ?? -1) : -1;
 	const cached = current.drawables.get(id);
 
-	if (cached) return cached;
+	if (cached?.generation === generation) return cached;
 
+	const shader = generation === -1 ? undefined : blurShader(java);
 	const drawable = bubbleDrawable(
-		current.java,
-		{ ...paint, width: paint.rowWidth, height },
+		java,
+		{ ...paint, width: paint.rowWidth, height, ...(shader ? { backdrop: shader } : {}) },
 		current.config.layerId,
 	);
 
-	if (drawable) remember(current.drawables, id, drawable);
+	if (!drawable) return null;
 
-	return drawable ?? null;
+	const made = { drawable, shader, generation };
+
+	remember(current.drawables, id, made);
+
+	return made;
 }
 
 function paintRow(current: BubbleState, row: NativeJavaReference, id: string, kind: RowKind) {
@@ -218,6 +240,7 @@ function paintRow(current: BubbleState, row: NativeJavaReference, id: string, ki
 
 	if (!paint || !fits) {
 		paintBackground(java, config, row, null);
+		trackBlur(java, row, null, undefined);
 
 		const fallback = config.fallback;
 		const none = { x: 0, y: 0 };
@@ -243,7 +266,10 @@ function paintRow(current: BubbleState, row: NativeJavaReference, id: string, ki
 		return false;
 	}
 
-	paintBackground(java, config, row, drawableFor(current, id, paint, paint.rowHeight));
+	const drawn = drawableFor(current, id, paint, paint.rowHeight);
+
+	paintBackground(java, config, row, drawn?.drawable ?? null);
+	trackBlur(java, row, viewIn(java, row, config.layerId), drawn?.shader);
 	moveHeading(java, config, row, paint);
 
 	if (paint.picture) {
@@ -341,6 +367,7 @@ export function installRowHooks(
 
 	holder()[STATE_KEY] = current;
 
+	installBlurScroll(hooks, java);
 	hooks.hook(
 		bind.messageView,
 		bind.bindName,
@@ -525,6 +552,7 @@ export function setRowConfig(config: Pick<RowConfig, 'rooms' | 'inset' | 'fallba
 	current.config = { ...current.config, ...config };
 	current.paints.clear();
 	current.drawables.clear();
+	forgetBlurs();
 
 	for (const [id, row] of current.rows) {
 		try {
@@ -558,6 +586,8 @@ export function restoreRows() {
 		current.java.invoke(current.list, 'setClipChildren', [javaBoolean(true)]);
 		relayoutList();
 	}
+
+	forgetBlurs();
 
 	holder()[STATE_KEY] = undefined;
 }

@@ -7,6 +7,20 @@ declare module '@unbound-app/i18n' {
 		readonly AVATAR_LAST: string;
 		/** Move each group's avatar down beside its last bubble, like Messages */
 		readonly AVATAR_LAST_SUBTITLE: string;
+		/** Blur */
+		readonly BLUR: string;
+		/** Light */
+		readonly BLUR_LIGHT: string;
+		/** Medium */
+		readonly BLUR_MEDIUM: string;
+		/** Lower the opacity to see the chat background blur behind bubbles */
+		readonly BLUR_NEEDS_OPACITY: string;
+		/** Off */
+		readonly BLUR_OFF: string;
+		/** Strong */
+		readonly BLUR_STRONG: string;
+		/** Blurs the chat background behind each bubble */
+		readonly BLUR_SUBTITLE: string;
 		/** Bubble color */
 		readonly BUBBLE_COLOR: string;
 		/** Follows the theme: a shade darker than the chat's background */

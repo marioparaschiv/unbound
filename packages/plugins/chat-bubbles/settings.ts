@@ -11,6 +11,16 @@ export default defineSettings({
 	verticalPadding: setting.number({ default: 10, hidden: true }),
 	spacing: setting.number({ default: 6, hidden: true }),
 	opacity: setting.number({ default: 100, hidden: true }),
+	blur: setting.choice({
+		default: 'off',
+		hidden: true,
+		options: {
+			off: 'BLUR_OFF',
+			light: 'BLUR_LIGHT',
+			medium: 'BLUR_MEDIUM',
+			strong: 'BLUR_STRONG',
+		},
+	}),
 	mediaCorners: setting.choice({
 		default: 'none',
 		hidden: true,

@@ -90,6 +90,8 @@ export type RowPaint = {
 	color: number;
 	outline?: { path: string; color: number; width: number };
 	quote?: { box: Box; color: number; radius: number };
+	/** How far the chat background behind the bubble blurs, in pixels. */
+	blur?: number;
 	name: Move;
 	avatar: Move;
 	reply: Move;
@@ -250,6 +252,7 @@ export function rowPaint(input: PaintInput): RowPaint {
 		rowHeight: Math.round(layout.height * scale),
 		fill,
 		color: argb(painted.color),
+		...(style.blur ? { blur: style.blur * scale } : {}),
 		...('border' in painted && painted.border.width > 0
 			? {
 					outline: outlinePaint(

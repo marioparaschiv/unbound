@@ -35,6 +35,7 @@ const LOOK_KEYS: (keyof Settings)[] = [
 	'verticalPadding',
 	'spacing',
 	'opacity',
+	'blur',
 	'mediaCorners',
 	'cornerCurve',
 	'grouping',

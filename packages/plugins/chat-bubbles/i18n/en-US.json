@@ -1,6 +1,13 @@
 {
 	"AVATAR_LAST": "Avatar by the last message",
 	"AVATAR_LAST_SUBTITLE": "Move each group's avatar down beside its last bubble, like Messages",
+	"BLUR": "Blur",
+	"BLUR_LIGHT": "Light",
+	"BLUR_MEDIUM": "Medium",
+	"BLUR_NEEDS_OPACITY": "Lower the opacity to see the chat background blur behind bubbles",
+	"BLUR_OFF": "Off",
+	"BLUR_STRONG": "Strong",
+	"BLUR_SUBTITLE": "Blurs the chat background behind each bubble",
 	"BUBBLE_COLOR": "Bubble color",
 	"BUBBLE_COLOR_FALLBACK": "Follows the theme: a shade darker than the chat's background",
 	"COLORS": "Colors",

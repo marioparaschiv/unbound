@@ -36,6 +36,7 @@ describe('bubble style', () => {
 			tailSize: 8,
 			color: { red: 0x22 / 255, green: 0x22 / 255, blue: 0x22 / 255, alpha: 1 },
 			ownColor: { red: 0x22 / 255, green: 0x22 / 255, blue: 0x22 / 255, alpha: 1 },
+			blur: 0,
 			mention: { color: undefined, alpha: 0.4, width: 0.5, tint: 0.12 },
 		});
 		expect(
@@ -61,6 +62,18 @@ describe('bubble style', () => {
 		expect(appearance.verticalPadding).toBe(0);
 		expect(appearance.spacing).toBe(16);
 		expect(appearance.color).toEqual({ red: 1, green: 136 / 255, blue: 0, alpha: 0.75 });
+	});
+
+	test('blurs by the chosen radius only while bubbles let the background through', () => {
+		const blur = (values: Record<string, unknown>) =>
+			bubbleAppearance(reader(values), dark).blur;
+
+		expect(blur({ opacity: 60 })).toBe(0);
+		expect(blur({ opacity: 60, blur: 'light' })).toBe(6);
+		expect(blur({ opacity: 60, blur: 'medium' })).toBe(14);
+		expect(blur({ opacity: 60, blur: 'strong' })).toBe(28);
+		expect(blur({ opacity: 60, blur: 'blurry' })).toBe(0);
+		expect(blur({ blur: 'strong' })).toBe(0);
 	});
 
 	test('points the tail from the bubble beside the avatar', () => {

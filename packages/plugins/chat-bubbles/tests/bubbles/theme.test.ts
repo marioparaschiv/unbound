@@ -32,6 +32,7 @@ describe('the bubble appearance', () => {
 			tailSize: 8,
 			color: { red: 0x22 / 255, green: 0x22 / 255, blue: 0x22 / 255, alpha: 1 },
 			ownColor: { red: 0x22 / 255, green: 0x22 / 255, blue: 0x22 / 255, alpha: 1 },
+			blur: 0,
 			mention: { color: undefined, alpha: 0.4, width: 0.5, tint: 0.12 },
 		});
 	});

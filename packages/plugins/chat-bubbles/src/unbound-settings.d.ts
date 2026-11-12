@@ -137,6 +137,7 @@ declare module '@unbound-app/settings' {
 		verticalPadding: number;
 		spacing: number;
 		opacity: number;
+		blur: "off" | "light" | "medium" | "strong";
 		mediaCorners: "none" | "concentric" | "flush" | "reround";
 		cornerCurve: "continuous" | "circular";
 		grouping: "grouped" | "separate" | "joined";
@@ -167,6 +168,7 @@ declare module '@unbound-app/settings' {
 		"verticalPadding": number;
 		"spacing": number;
 		"opacity": number;
+		"blur": "off" | "light" | "medium" | "strong";
 		"mediaCorners": "none" | "concentric" | "flush" | "reround";
 		"cornerCurve": "continuous" | "circular";
 		"grouping": "grouped" | "separate" | "joined";

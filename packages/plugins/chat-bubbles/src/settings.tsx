@@ -5,6 +5,7 @@ import { dialogs, ui } from '@unbound-app/api';
 import { View } from 'react-native';
 
 import {
+	BubbleBlur,
 	BubbleLayout,
 	BubbleLimits,
 	BubbleStyle,
@@ -209,6 +210,8 @@ function LayoutPicker({ layout }: { layout: BubbleLayoutName }) {
 function ColorsSection() {
 	const color = storedColor(useSetting('color'));
 	const ownColor = storedColor(useSetting('ownColor'));
+	const blur = choice(useSetting('blur'), BubbleBlur);
+	const opaque = storedNumber(useSetting('opacity'), LIMITS.opacity) >= BubbleLimits.opacity;
 
 	return (
 		<ui.Section title={messages.COLORS}>
@@ -231,6 +234,20 @@ function ColorsSection() {
 				}}
 			/>
 			<NumberRow setting='opacity' label={messages.OPACITY} unit='percent' />
+			<ui.SegmentedRow
+				label={messages.BLUR}
+				subLabel={opaque ? messages.BLUR_NEEDS_OPACITY : messages.BLUR_SUBTITLE}
+				value={blur}
+				options={[
+					{ value: BubbleBlur.off, label: messages.BLUR_OFF },
+					{ value: BubbleBlur.light, label: messages.BLUR_LIGHT },
+					{ value: BubbleBlur.medium, label: messages.BLUR_MEDIUM },
+					{ value: BubbleBlur.strong, label: messages.BLUR_STRONG },
+				]}
+				onChange={(value) => {
+					settings.blur = choice(value, BubbleBlur);
+				}}
+			/>
 		</ui.Section>
 	);
 }

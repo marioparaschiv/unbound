@@ -323,6 +323,7 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 			corners: rounded,
 			tailSize,
 			fillets,
+			blur: style.blur,
 			...(measured.mention
 				? mentionPaint(color, measured.mention, style.mention)
 				: { color }),
