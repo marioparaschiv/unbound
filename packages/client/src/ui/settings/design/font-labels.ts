@@ -3,7 +3,6 @@ import { format } from '~/i18n/api';
 // Discord's groups by what they draw; an unknown group shows its own name.
 const GROUPS: Record<string, string> = {
 	PRIMARY: 'UNBOUND_FONTS_GROUP_PRIMARY',
-	DISPLAY: 'UNBOUND_FONTS_GROUP_DISPLAY',
 	CODE: 'UNBOUND_FONTS_GROUP_CODE',
 	GINTO: 'UNBOUND_FONTS_GROUP_GINTO',
 };
