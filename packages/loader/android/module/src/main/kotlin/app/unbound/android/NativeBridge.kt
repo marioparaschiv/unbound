@@ -63,8 +63,8 @@ object NativeBridge {
     @JvmStatic
     external fun nativeAdoptTombstone(tombstone: ByteArray): Boolean
 
-    /** How long this launch took to reach each step, as text for the toolbox. */
     @JvmStatic
+    external fun nativeAdoptAnrTrace(trace: ByteArray, at: Long): Boolean
 
     /**
      * How Discord's main process last ended: 1 for a crash, a freeze or a failed start; 2 when the person or the
@@ -93,6 +93,7 @@ object NativeBridge {
         val exit = manager.getHistoricalProcessExitReasons(context.packageName, 0, 8)
             .firstOrNull { it.processName == context.packageName } ?: return 0
         if (exit.reason == ApplicationExitInfo.REASON_CRASH_NATIVE) adoptTombstone(exit)
+        if (exit.reason == ApplicationExitInfo.REASON_ANR) adoptAnrTrace(exit)
         when (exit.reason) {
             ApplicationExitInfo.REASON_CRASH,
             ApplicationExitInfo.REASON_CRASH_NATIVE,
@@ -106,19 +107,31 @@ object NativeBridge {
         }
     }.getOrDefault(0)
 
+    private fun readTrace(exit: ApplicationExitInfo): ByteArray? = exit.traceInputStream?.use { stream ->
+        val buffer = java.io.ByteArrayOutputStream()
+        val chunk = ByteArray(16 * 1024)
+        while (buffer.size() < MAX_TOMBSTONE_BYTES) {
+            val read = stream.read(chunk)
+            if (read < 0) break
+            buffer.write(chunk, 0, read)
+        }
+        buffer.toByteArray()
+    }
+
+    private fun adoptAnrTrace(exit: ApplicationExitInfo) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
+        runCatching {
+            val bytes = readTrace(exit) ?: return
+            if (nativeAdoptAnrTrace(bytes, exit.timestamp)) {
+                Logger.info(LogCategory.DEFAULT, "Read the previous ANR's main thread stack from Android's trace.")
+            }
+        }.onFailure { Logger.error(LogCategory.DEFAULT, "Failed to read Android's ANR trace", it) }
+    }
+
     private fun adoptTombstone(exit: ApplicationExitInfo) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
         runCatching {
-            val bytes = exit.traceInputStream?.use { stream ->
-                val buffer = java.io.ByteArrayOutputStream()
-                val chunk = ByteArray(16 * 1024)
-                while (buffer.size() < MAX_TOMBSTONE_BYTES) {
-                    val read = stream.read(chunk)
-                    if (read < 0) break
-                    buffer.write(chunk, 0, read)
-                }
-                buffer.toByteArray()
-            } ?: return
+            val bytes = readTrace(exit) ?: return
             if (nativeAdoptTombstone(bytes)) {
                 Logger.info(LogCategory.DEFAULT, "Read the previous native crash's stack from Android's tombstone.")
             }
