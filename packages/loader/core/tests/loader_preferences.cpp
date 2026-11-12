@@ -24,6 +24,11 @@ int main()
     assert(recoveryEnabled(settings));
     assert(recoveryActionLabel(recoveryEnabled(settings)) == "Disable Recovery Mode");
     assert(recoveryStatusText(recoveryEnabled(settings)) == "Recovery Mode enabled");
+    assert(automaticRecoveryKey(settings).empty());
+    setAutomaticRecoveryKey(settings, "1.3.0|abc1234");
+    assert(automaticRecoveryKey(settings) == "1.3.0|abc1234");
+    assert(setRecoveryEnabled(settings, true));
+    assert(automaticRecoveryKey(settings).empty());
     assert(!developerMode(settings));
     assert(!devOverlayVisible(settings, false, false));
     assert(devOverlayVisible(settings, true, false));

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <filesystem>
 #include <stdexcept>
 
 #include "LoaderBundleRecord.h"
@@ -396,6 +397,18 @@ bool isAcceptedDownloadStatus(int status)
     return status == 200 || status == 304;
 }
 
+std::optional<std::string> BundleUpdater::spaceProblem() const
+{
+    std::error_code             error;
+    std::filesystem::space_info space = std::filesystem::space(documents_, error);
+    if (error || space.available >= kMinimumFreeBytes)
+    {
+        return std::nullopt;
+    }
+    return "Not enough space to download the bundle (" +
+           std::to_string(space.available / (1024 * 1024)) + " MB free)";
+}
+
 std::string BundleUpdater::downloadBundle(const std::string                &preferredPath,
                                           const std::optional<std::string> &updateURL,
                                           uint32_t bytecodeVersion, bool ignorePause)
@@ -464,6 +477,11 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
         activeFile == urlFileName(url))
     {
         headers["If-None-Match"] = storedEtag;
+    }
+
+    if (std::optional<std::string> problem = spaceProblem())
+    {
+        throw BundleUpdateError(BundleUpdateFailure::Storage, *problem);
     }
 
     std::optional<DownloadResult> response =

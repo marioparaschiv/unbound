@@ -540,6 +540,7 @@ void LoaderPipeline::guardLaunch()
     if (verdict.enterRecovery)
     {
         preferences::setRecoveryEnabled(settings_, true);
+        preferences::setAutomaticRecoveryKey(settings_, recoveryKey());
         log(LogLevel::Error, LOG_CATEGORY_DEFAULT, launchRecoveryNotice(verdict.failures));
         recordCrashSummary(launchRecoveryNotice(verdict.failures));
         host_->crashAlert(launchRecoveryNotice(verdict.failures));
@@ -573,7 +574,28 @@ void LoaderPipeline::markHealthy()
     }
     healthyMs_.store(nowMs());
     LaunchGuard(updater_.documents()).succeed();
+    leaveAutomaticRecoveryIfChanged();
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Discord ran long enough to count as healthy.");
+}
+
+std::string LoaderPipeline::recoveryKey() const
+{
+    std::optional<BundleBaseline> baseline = parseBaseline(preferences::bundleBaseline(settings_));
+    return std::string(loaderVersion()) + "|" + (baseline ? baseline->revision : "");
+}
+
+void LoaderPipeline::leaveAutomaticRecoveryIfChanged()
+{
+    std::string enteredWith = preferences::automaticRecoveryKey(settings_);
+    if (!preferences::recoveryEnabled(settings_) || enteredWith.empty() ||
+        enteredWith == recoveryKey())
+    {
+        return;
+    }
+    preferences::setRecoveryEnabled(settings_, false);
+    log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
+        "Left Recovery Mode for the next launch: the loader or bundle changed since it turned on "
+        "automatically. It turns on again if Discord keeps closing during startup.");
 }
 
 void LoaderPipeline::markRendered()

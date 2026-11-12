@@ -90,6 +90,10 @@ private:
         std::optional<std::string> directURL;
     };
 
+    static constexpr uintmax_t kMinimumFreeBytes = 50ull * 1024 * 1024;
+
+    std::optional<std::string> spaceProblem() const;
+
     struct DownloadPlan {
         std::string url;
         std::string source;
