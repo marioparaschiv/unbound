@@ -1,11 +1,14 @@
 import { reconcile, type Fiber } from '~/hot-refresh/refresh';
+import { ReactNative } from '~/metro/common';
 
-// A component handed an asset id resolves it to a file while it renders, so only these need to run again.
+// Only React Native's `Image` resolves an asset id to a file, while it renders. Wrappers handed the same id, such
+// as icons and avatars, render the same output again, so re-rendering them is wasted work.
 function drawsAsset(fiber: Fiber): boolean {
 	const props = fiber.memoizedProps;
 
 	return (
-		typeof fiber.type !== 'string' &&
+		// `Object.is`, as the typings declare `Image` a class while Discord's build makes it a function component.
+		Object.is(fiber.type, ReactNative.Image) &&
 		props !== null &&
 		'source' in props &&
 		typeof props.source === 'number'
@@ -13,8 +16,8 @@ function drawsAsset(fiber: Fiber): boolean {
 }
 
 /**
- * @description Re-renders, in place, every mounted component drawing an asset by id, so a pack applied or removed
- * shows at once. Host views and everything else are left alone.
+ * @description Re-renders, in place, every mounted `Image` drawing an asset by id, so a pack applied or removed
+ * shows at once. Everything else is left alone.
  * @returns How many components were scheduled.
  */
 export function refreshImages(): number {
