@@ -6,8 +6,8 @@ import { messages } from '~/i18n/api';
 import { show } from '~/toasts/api';
 import fs from '~/native/fs';
 
+import { readAccessibility, readDebugInfo, readEntitlements } from './read-debug-info';
 import formatDebugInfo, { type DebugInfo } from './format-debug-info';
-import { readDebugInfo, readEntitlements } from './read-debug-info';
 import { crashLogExcerpt } from './crash-report';
 
 type CloudUpload = {
@@ -164,7 +164,10 @@ export async function sendDebugReport(
 	note?: string,
 	{ log = false }: DebugReportOptions = {},
 ): Promise<string | undefined> {
-	const info = readDebugInfo();
+	const base = readDebugInfo();
+	const info: DebugInfo = base.display
+		? { ...base, display: { ...base.display, ...(await readAccessibility()) } }
+		: base;
 	const message = note?.trim() ?? '';
 	const target: string | undefined = channelId ?? selectedChannelId();
 	const textReport = [message, formatDebugInfo(info)].filter(Boolean).join('\n\n');

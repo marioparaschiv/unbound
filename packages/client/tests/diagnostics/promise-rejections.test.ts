@@ -1,7 +1,11 @@
-import { describe, expect, spyOn, test } from 'bun:test';
+import { describe, expect, mock, spyOn, test } from 'bun:test';
 
-import { setRejectionTracker } from '~/diagnostics/promise-rejections';
-import diagnostics from '~/diagnostics/builtin';
+mock.module('react-native', () => ({
+	AppState: { addEventListener: () => ({ remove: () => undefined }) },
+}));
+
+const { setRejectionTracker } = await import('~/diagnostics/promise-rejections');
+const { default: diagnostics } = await import('~/diagnostics/builtin');
 
 function installHermes() {
 	let options: PromiseRejectionTrackerOptions | undefined;

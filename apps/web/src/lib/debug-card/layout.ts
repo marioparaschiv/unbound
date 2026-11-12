@@ -264,6 +264,24 @@ function memoryNotes(memory?: DebugCardMemory): string[] {
 	return notes.filter((note): note is string => typeof note === 'string');
 }
 
+function displaySummary(display: NonNullable<DebugInfo['display']>): string {
+	return joined([
+		`${display.width}x${display.height} @${display.scale}x`,
+		`font ${display.fontScale}`,
+		display.tablet ? 'tablet' : undefined,
+		display.reduceMotion ? 'reduce motion' : undefined,
+		display.boldText ? 'bold text' : undefined,
+	]);
+}
+
+function sessionSummary(session: NonNullable<DebugInfo['session']>): string {
+	const hours = Math.floor(session.uptimeS / 3600);
+	const minutes = Math.floor((session.uptimeS % 3600) / 60);
+	const uptime = hours ? `${hours} h ${minutes} min` : `${minutes} min`;
+
+	return `up ${uptime} · backgrounded ${session.backgrounded}`;
+}
+
 function memorySummary(memory: DebugCardMemory): string {
 	return joined([
 		memory.availableMB !== undefined ? `${memory.availableMB} MB free` : undefined,
@@ -619,6 +637,9 @@ export function debugAltText(
 		...(info.patches?.length && {
 			patches: info.patches.map((patch) => `${patch.caller} ${patch.count}`),
 		}),
+		...(info.enabledPlugins?.length && { enabledPlugins: info.enabledPlugins }),
+		...(info.display && { display: displaySummary(info.display) }),
+		...(info.session && { session: sessionSummary(info.session) }),
 		...(info.native && {
 			native: `${info.native.hooks} hooks · ${info.native.surfaces} surfaces · ${info.native.handles} handles`,
 		}),
@@ -633,6 +654,7 @@ export function debugAltText(
 	let text = JSON.stringify(report);
 
 	for (const key of [
+		'enabledPlugins',
 		'patches',
 		'native',
 		'heap',
