@@ -106,6 +106,24 @@ export const debugCardRequestSchema = Type.Object({
 			{ maxItems: 8 },
 		),
 	),
+	enabledPlugins: Type.Optional(Type.Array(text(96), { maxItems: 60 })),
+	display: Type.Optional(
+		Type.Object({
+			width: Type.Integer({ minimum: 0, maximum: 100_000 }),
+			height: Type.Integer({ minimum: 0, maximum: 100_000 }),
+			scale: Type.Number({ minimum: 0, maximum: 10 }),
+			fontScale: Type.Number({ minimum: 0, maximum: 10 }),
+			tablet: Type.Optional(Type.Boolean()),
+			reduceMotion: Type.Optional(Type.Boolean()),
+			boldText: Type.Optional(Type.Boolean()),
+		}),
+	),
+	session: Type.Optional(
+		Type.Object({
+			uptimeS: Type.Integer({ minimum: 0 }),
+			backgrounded: Type.Integer({ minimum: 0, maximum: 1_000_000 }),
+		}),
+	),
 	native: Type.Optional(
 		Type.Object({
 			hooks: Type.Integer({ minimum: 0 }),

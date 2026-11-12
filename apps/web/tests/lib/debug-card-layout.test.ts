@@ -346,4 +346,31 @@ describe('debug card', () => {
 			native: '2 hooks · 0 surfaces · 5 handles',
 		});
 	});
+	test('adds plugin versions, display and session to the alt text, dropping the plugin list first', () => {
+		const report: DebugCardRequest = {
+			...info,
+			enabledPlugins: ['unbound.message-logger@1.4.2'],
+			display: { width: 390, height: 844, scale: 3, fontScale: 1.24, reduceMotion: true },
+			session: { uptimeS: 7_380, backgrounded: 4 },
+		};
+
+		expect(JSON.parse(debugAltText(report))).toMatchObject({
+			enabledPlugins: ['unbound.message-logger@1.4.2'],
+			display: '390x844 @3x · font 1.24 · reduce motion',
+			session: 'up 2 h 3 min · backgrounded 4',
+		});
+
+		const crowded = JSON.parse(
+			debugAltText({
+				...report,
+				enabledPlugins: Array.from(
+					{ length: 60 },
+					(_, index) => `plugin.number-${index}@1.0.0`,
+				),
+			}),
+		);
+
+		expect(crowded.enabledPlugins).toBeUndefined();
+		expect(crowded.display).toBe('390x844 @3x · font 1.24 · reduce motion');
+	});
 });

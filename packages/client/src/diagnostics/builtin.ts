@@ -1,5 +1,6 @@
 import noop from '@unbound-app/utils/noop';
 
+import { startAppSession, stopAppSession } from './app-session';
 import { setRejectionTracker } from './promise-rejections';
 import { recordError } from './recent-errors';
 
@@ -13,6 +14,7 @@ let previousHandler: ErrorHandler | undefined;
  */
 export function start() {
 	setRejectionTracker();
+	startAppSession();
 
 	if (typeof ErrorUtils === 'undefined') {
 		return;
@@ -31,6 +33,7 @@ export function start() {
 /** Stops logging rejections; Hermes cannot remove a tracker, so a silent one replaces it. */
 export function stop() {
 	setRejectionTracker(noop);
+	stopAppSession();
 
 	if (!previousHandler) {
 		return;

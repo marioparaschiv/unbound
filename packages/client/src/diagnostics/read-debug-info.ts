@@ -1,9 +1,9 @@
 import type { NativeDeviceState, UnboundLaunchReport } from '@unbound-app/types';
 
 import { NativeBridgeCapabilityError, NativeBridgeVersionError } from '~/native/errors';
+import { DeviceInfo, getNativeResources, getRuntimeProperties } from '~/native/native';
 import { CLIENT_VERSION, MINIMUM_DISCORD_VERSIONS, VERSION } from '~/core/constants';
 import { isOlderThanSupported, discordChannel } from '~/core/discord-support';
-import { getNativeResources, getRuntimeProperties } from '~/native/native';
 import { readBundleInfo } from '~/native/read-bundle-info';
 import { currentEnvironment } from '~/core/environment';
 import { crashedAddons } from '~/addons/crash-guard';
@@ -19,9 +19,11 @@ import { patches } from '~/patcher/api';
 
 import type { AddonCount, DebugInfo, DiscordSupport } from './format-debug-info';
 
+import { readAppSession } from './app-session';
 import { recentErrors } from './recent-errors';
 
 const MAX_PATCH_CALLERS = 8;
+const MAX_LISTED_PLUGINS = 60;
 
 const CRASH_PHASES: Record<string, string> = {
 	starting: 'crashed on start',
@@ -133,6 +135,45 @@ function launchOf(launch?: UnboundLaunchReport): DebugInfo['launch'] {
 		lastCheck,
 		settings,
 	};
+}
+
+function enabledPlugins(): string[] {
+	return plugins
+		.getAddons()
+		.filter((addon) => plugins.isEnabled(addon.id))
+		.map((addon) => `${addon.id}@${addon.version}`)
+		.slice(0, MAX_LISTED_PLUGINS);
+}
+
+function displayOf(): DebugInfo['display'] {
+	const { Dimensions, PixelRatio } = ReactNative;
+	const { width, height } = Dimensions.get('window');
+
+	return {
+		width: Math.round(width),
+		height: Math.round(height),
+		scale: PixelRatio.get(),
+		fontScale: Math.round(PixelRatio.getFontScale() * 100) / 100,
+		tablet: DeviceInfo?.isTablet,
+	};
+}
+
+/**
+ * @description Reads the accessibility settings React Native only answers asynchronously, for `/debug`.
+ * @returns Whether Reduce Motion and Bold Text are on; a setting the platform lacks is left out.
+ */
+export async function readAccessibility(): Promise<
+	Pick<NonNullable<DebugInfo['display']>, 'reduceMotion' | 'boldText'>
+> {
+	const { AccessibilityInfo, Platform } = ReactNative;
+	const [reduceMotion, boldText] = await Promise.all([
+		AccessibilityInfo.isReduceMotionEnabled().catch(() => undefined),
+		Platform.OS === 'ios'
+			? AccessibilityInfo.isBoldTextEnabled().catch(() => undefined)
+			: undefined,
+	]);
+
+	return { reduceMotion, boldText };
 }
 
 function storageOf(state?: NativeDeviceState): DebugInfo['storage'] {
@@ -249,6 +290,9 @@ export function readDebugInfo(): DebugInfo {
 		errors: recentErrors(),
 		patches: attempt(patchCounts, undefined),
 		native: attempt(nativeCounts, undefined),
+		enabledPlugins: attempt(enabledPlugins, undefined),
+		display: attempt(displayOf, undefined),
+		session: readAppSession(),
 		heap: attempt(getHeapUsage, undefined),
 	};
 }
