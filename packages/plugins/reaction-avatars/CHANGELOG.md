@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.8] - 2026-11-12
+
+### Fixed
+
+- The avatars no longer cover a reaction's count after it grows, such as from 9 to 10.
+
 ## [1.2.7] - 2026-11-12
 
 ### Fixed

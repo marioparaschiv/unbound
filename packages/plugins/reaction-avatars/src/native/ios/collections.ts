@@ -32,7 +32,7 @@ import {
 } from '~/lib/layout';
 import { clearCellHeights, updateCellHeight } from '~/native/ios/cell-heights';
 import { advanceLayoutEpoch, restoreLayout, setAncestorFrames } from '~/native/ios/layout-restore';
-import { fitReactionView, releaseStates } from '~/native/ios/reaction-views';
+import { fitReactionView, rebaseReactionView, releaseStates } from '~/native/ios/reaction-views';
 import { messageKey } from '~/lib/reaction-context';
 import { scheduleCell } from '~/native/ios/cell-queue';
 import type { Session } from '~/native/ios/session';
@@ -520,8 +520,13 @@ export function applyLayout(session: Session, entry: LayoutEntry): void {
 
 		const reactionView = reactionViewOf(objc, cell);
 		const state = reactionView ? session.reactions.get(key(objc, reactionView)) : undefined;
+		const base = entry.baseItems.get(index);
 
-		if (state) fitReactionView(session, state);
+		if (!state) continue;
+
+		if (base) rebaseReactionView(state, base.width);
+
+		fitReactionView(session, state);
 	}
 
 	const size = parseSize(safeInvoke(objc, entry.collection, 'contentSize'));
