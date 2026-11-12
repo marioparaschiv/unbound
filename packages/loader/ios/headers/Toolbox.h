@@ -26,10 +26,9 @@ void showToolboxSheet(void);
 @interface ToolboxViewController : UIViewController <UITableViewDelegate,
                                                      UITableViewDataSource,
                                                      SFSafariViewControllerDelegate,
-                                                     UIGestureRecognizerDelegate>
+                                                     UISheetPresentationControllerDelegate>
 
 @property (nonatomic, strong) UITableView *tableView;
-@property (nonatomic, strong) UIView      *cardView;
 
 - (void)dismiss;
 
