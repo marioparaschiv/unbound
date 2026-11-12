@@ -2,7 +2,12 @@ import { unpackDebugAltText } from '@unbound-app/contracts/debug-card-alt-text';
 import type { DebugCardRequest } from '@unbound-app/contracts/debug-cards';
 import { describe, expect, test } from 'bun:test';
 
-import { debugCardSvg, layoutDebugCard, type CardText } from '~/lib/debug-card/layout';
+import {
+	debugCardSvg,
+	layoutDebugCard,
+	networkSummary,
+	type CardText,
+} from '~/lib/debug-card/layout';
 import { debugAltText } from '~/lib/debug-card/alt-text';
 
 const altJson = (...args: Parameters<typeof debugAltText>) =>
@@ -406,5 +411,18 @@ describe('debug card', () => {
 
 		expect(crowded.enabledPlugins).toBeUndefined();
 		expect(crowded.display).toBe('390x844 @3x · font 1.24 · reduce motion');
+	});
+});
+
+describe('networkSummary', () => {
+	test('names the connection, then whatever applies to it', () => {
+		expect(networkSummary({ type: 'wifi', vpn: true, proxy: true, lowData: false })).toBe(
+			'wifi · VPN · proxy',
+		);
+		expect(networkSummary({ type: 'cellular', metered: true, lowData: true })).toBe(
+			'cellular · low data',
+		);
+		expect(networkSummary({ type: 'wifi', metered: true })).toBe('wifi · metered');
+		expect(networkSummary({ type: 'offline' })).toBe('offline');
 	});
 });

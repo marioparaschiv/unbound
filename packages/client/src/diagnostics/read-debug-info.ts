@@ -286,6 +286,7 @@ export function readDebugInfo(): DebugInfo {
 		launch: launchOf(loader?.launch),
 		bundleChannel: loader?.launch?.channel,
 		memory: attempt(() => memoryOf(state), undefined),
+		network: attempt(() => state?.network, undefined),
 		storage: attempt(() => storageOf(state), undefined),
 		errors: recentErrors(),
 		patches: attempt(patchCounts, undefined),
