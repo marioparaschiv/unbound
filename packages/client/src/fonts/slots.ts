@@ -27,7 +27,9 @@ export function groupSlots(
 	const slots = new Map<string, FontSlot>();
 
 	for (const [family, discord] of Object.entries(families)) {
-		if (!discord.groups.includes(group)) continue;
+		if (!discord.groups.includes(group)) {
+			continue;
+		}
 
 		const italic = discord.style === 'italic';
 		const key = italic ? `${discord.weight}-italic` : String(discord.weight);
@@ -61,7 +63,9 @@ export function nearestSlot(slots: FontSlot[], weight: number): FontSlot | undef
 	let best: FontSlot | undefined;
 
 	for (const slot of slots) {
-		if (slot.italic) continue;
+		if (slot.italic) {
+			continue;
+		}
 
 		if (!best || Math.abs(slot.weight - weight) < Math.abs(best.weight - weight)) {
 			best = slot;
@@ -90,7 +94,9 @@ export function nearestFace(faces: Font[], weight: number, italic = false): Font
  * @returns The face, or `undefined` when none of them is variable.
  */
 export function variableFace(slot: FontSlot, faces: Font[]): Font | undefined {
-	if (slot.face?.axes?.length) return slot.face;
+	if (slot.face?.axes?.length) {
+		return slot.face;
+	}
 
 	return closest(
 		faces.filter((face) => face.axes?.length),

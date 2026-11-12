@@ -5,9 +5,9 @@ import '~/metro';
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
+import themes, { designSection, fontAxesSection, fontGroupSection } from '~/themes/builtin';
 import { createSettings, generalSection, panelHostSection } from '~/settings/builtin';
 import { marketplaceSection, addonPageSection } from '~/marketplace/builtin';
-import themes, { designSection, fontAxesSection, fontGroupSection } from '~/themes/builtin';
 import updater, { updatesSection } from '~/updates/builtin';
 import { developerSection } from '~/settings/builtin.dev';
 import { themes as themeManager } from '~/themes/manager';

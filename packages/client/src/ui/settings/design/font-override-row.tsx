@@ -1,5 +1,5 @@
-import { nearestSlot } from '~/fonts/slots';
 import { Discord } from '~/metro/components';
+import { nearestSlot } from '~/fonts/slots';
 import { Manager } from '~/addons/manager';
 import { Screens } from '~/core/constants';
 import { format } from '~/i18n/api';

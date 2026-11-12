@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 
-import { nearestSlot } from '~/fonts/slots';
 import { Discord } from '~/metro/components';
+import { nearestSlot } from '~/fonts/slots';
 import { Manager } from '~/addons/manager';
 import { format } from '~/i18n/api';
 

@@ -1,5 +1,5 @@
-import type { FontFamily } from '~/fonts/manager';
 import { variableFace, type FontSlot } from '~/fonts/slots';
+import type { FontFamily } from '~/fonts/manager';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
 import { Screens } from '~/core/constants';

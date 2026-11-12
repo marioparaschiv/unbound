@@ -96,7 +96,9 @@ export class Fonts extends Manager<Font, FontsEvents> {
 
 	/** @returns The installed faces grouped by family, families in name order. */
 	getFamilies(): FontFamily[] {
-		if (this.installed) return this.installed;
+		if (this.installed) {
+			return this.installed;
+		}
 
 		const families = new Map<string, Font[]>();
 
@@ -114,7 +116,9 @@ export class Fonts extends Manager<Font, FontsEvents> {
 
 	/** @returns Discord's font groups (PRIMARY, DISPLAY, CODE, ...) and the families each holds. */
 	getTargets(): FontTarget[] {
-		if (this.targets) return this.targets;
+		if (this.targets) {
+			return this.targets;
+		}
 
 		const groups = new Map<string, string[]>();
 
@@ -149,7 +153,9 @@ export class Fonts extends Manager<Font, FontsEvents> {
 	getSlots(group: string): FontSlot[] {
 		const cached = this.slots.get(group);
 
-		if (cached) return cached;
+		if (cached) {
+			return cached;
+		}
 
 		const slots = groupSlots(group, this.families, (family) => this.getFace(family));
 
