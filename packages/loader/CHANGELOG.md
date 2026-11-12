@@ -1,5 +1,42 @@
 # Changelog
 
+## [1.2.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.1.1...loader-v1.2.0) (2026-11-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* plugins.entities is plugins.addons, FontEntity is Font, NativePlugin* types and errors are NativeBridge* (NativePluginRuntimeBridge is LoaderNativeBridge), NATIVE_PLUGIN_* constants are NATIVE_BRIDGE_*, the manifest's minNativePluginApi is minNativeBridgeApi, and CORE_SETTINGS_STORE, SYNC_STORE and SettingsStores are CORE_BUCKET, SYNC_BUCKET and SettingsByBucket.
+* @unbound-app/api/testing exports only the plugin test kit (startPlugin, stopPlugin, render, recorders, fakeAssetId, StoreSeeds, PluginTypes). The building blocks moved to @unbound-app/api/testing/fakes; act, createTestRenderer and TestRenderer are removed (use render); the @unbound-app/api/testing/icu-parse subpath is removed (the parser lives in @unbound-app/contracts).
+* **cli:** root commands such as `ubd eval`, `ubd push`, `ubd install` and `ubd login` now live under groups (`ubd debug eval`, `ubd device install`, `ubd auth login`); `i18n` flags became subcommands; MCP tools `install` and `device` became `device_install`, `device_reset`, `device_save`, `device_restore` and `device_snapshots`.
+
+### Features
+
+* **icon-packs:** publish first-party icon packs ([#1077](https://github.com/marioparaschiv/unbound/issues/1077)) ([16593ff](https://github.com/marioparaschiv/unbound/commit/16593ff7c42a7f76c47647b10c0df6e4e953a670))
+* **loader:** catch frozen starts and show how installs were signed ([#1113](https://github.com/marioparaschiv/unbound/issues/1113)) ([562aa90](https://github.com/marioparaschiv/unbound/commit/562aa9051c36e82d4e3577697d73a64e3397d4db))
+* **loader:** health-gated updates and crash recovery ([#1063](https://github.com/marioparaschiv/unbound/issues/1063)) ([0cd3772](https://github.com/marioparaschiv/unbound/commit/0cd37726daa68a2a8c4a2cae49c01e881649ce2e))
+* **loader:** judge launches by render and exit, retry updates ([#1086](https://github.com/marioparaschiv/unbound/issues/1086)) ([cd39991](https://github.com/marioparaschiv/unbound/commit/cd399911d22a11fe8fbf4db09d6ad3184302eb3b))
+* **loader:** let UI-scope Java hooks rewrite their arguments ([#1130](https://github.com/marioparaschiv/unbound/issues/1130)) ([20893e2](https://github.com/marioparaschiv/unbound/commit/20893e2e907eec6a81f2279ac714eb01aab100e9))
+* **loader:** show the iOS toolbox as a sheet with a microbold wrench ([#1131](https://github.com/marioparaschiv/unbound/issues/1131)) ([8aa3174](https://github.com/marioparaschiv/unbound/commit/8aa3174e233d3008f26065bd18fbce4c854d7514))
+
+
+### Bug Fixes
+
+* **client:** download the IPA for sideloaded loader updates ([#1048](https://github.com/marioparaschiv/unbound/issues/1048)) ([880fa81](https://github.com/marioparaschiv/unbound/commit/880fa812b96d85b4ec6f1f436b6d47e0ccb5f552))
+* **loader:** keep addon start markers across iOS static init ([#1110](https://github.com/marioparaschiv/unbound/issues/1110)) ([a238e8a](https://github.com/marioparaschiv/unbound/commit/a238e8aa6eef4e026efabc019cf47f9f78a7cbc8))
+* **loader:** keep bootstrap scripts across iOS static init ([#1107](https://github.com/marioparaschiv/unbound/issues/1107)) ([c23d042](https://github.com/marioparaschiv/unbound/commit/c23d0424ec9e0bdf3be909c90c5579cdb0502541))
+* **loader:** keep the release changelog under the API limit ([#1115](https://github.com/marioparaschiv/unbound/issues/1115)) ([638b698](https://github.com/marioparaschiv/unbound/commit/638b698a71d864b252b37b36f78bf8c4f2e8e0d1))
+* **loader:** let the compat gate pass LiveContainer LCAppInfo ([#1129](https://github.com/marioparaschiv/unbound/issues/1129)) ([46e85a0](https://github.com/marioparaschiv/unbound/commit/46e85a061ce4ef2785531b956bd39c3ffadd3122))
+* **loader:** read entitlements from the kernel inside LiveContainer ([#1112](https://github.com/marioparaschiv/unbound/issues/1112)) ([50d53d0](https://github.com/marioparaschiv/unbound/commit/50d53d0ee823876b9faea50ca28e34fe347d1dbf))
+* **loader:** republish the sideloaded IPA on loader updates ([#1050](https://github.com/marioparaschiv/unbound/issues/1050)) ([5664844](https://github.com/marioparaschiv/unbound/commit/5664844740e43449ce55dc1caa4dc05e2bec9d2f))
+* **loader:** warn when the loader lacks native bridge API 1.3.0 ([#1136](https://github.com/marioparaschiv/unbound/issues/1136)) ([7e15ee3](https://github.com/marioparaschiv/unbound/commit/7e15ee37dcb9c48e7d07d765e11d63c60bccd855))
+
+
+### Code Refactoring
+
+* **cli:** group commands under debug, device, i18n and auth ([#1065](https://github.com/marioparaschiv/unbound/issues/1065)) ([122791d](https://github.com/marioparaschiv/unbound/commit/122791ddec70095a679380c5a48dfe6419dba939))
+* finish the plugin shape and glossary renames ([#1099](https://github.com/marioparaschiv/unbound/issues/1099)) ([81ffa53](https://github.com/marioparaschiv/unbound/commit/81ffa5324f4b350cb34a9f34d84f25259f4e6d35))
+* mirror tests in tests/ and untangle shared modules ([#1072](https://github.com/marioparaschiv/unbound/issues/1072)) ([cb7f397](https://github.com/marioparaschiv/unbound/commit/cb7f397e2570a83e25da79f609b73bcc60dd685d))
+
 ## [1.1.1](https://github.com/marioparaschiv/unbound/compare/loader-v1.1.0...loader-v1.1.1) (2026-11-10)
 
 
