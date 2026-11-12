@@ -1,5 +1,3 @@
-import { reactionAvatarPrefix } from '~/lib/avatars';
-
 type CacheEntry<T> = {
 	expiresAt: number;
 	users: T[];
@@ -78,15 +76,6 @@ export class ReactionUserCache<T> {
 
 	invalidate(prefix: string): void {
 		this.invalidateMatching((key) => key.startsWith(prefix));
-	}
-
-	invalidateMessage(messageId: string, channelId?: string): void {
-		const channelPrefix = channelId ? reactionAvatarPrefix(channelId, messageId) : null;
-		const encodedMessageId = encodeURIComponent(messageId);
-
-		this.invalidateMatching((key) =>
-			channelPrefix ? key.startsWith(channelPrefix) : key.split(':')[1] === encodedMessageId,
-		);
 	}
 
 	cancelQueuedOutsideChannel(channelId: string | undefined): void {
