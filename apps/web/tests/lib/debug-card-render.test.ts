@@ -1,3 +1,4 @@
+import { unpackDebugAltText } from '@unbound-app/contracts/debug-card-alt-text';
 import { describe, expect, test } from 'bun:test';
 
 import { renderDebugCard } from '~/lib/debug-card/render';
@@ -36,6 +37,9 @@ describe('renderDebugCard', () => {
 		expect([...png.subarray(0, 4)]).toEqual(PNG_SIGNATURE);
 		expect(card.width).toBe(432 * 3);
 		expect(card.height).toBeGreaterThan(card.width / 2);
-		expect(JSON.parse(card.altText)).toMatchObject({ loader: '1.3.0', support: 'supported' });
+		expect(JSON.parse(unpackDebugAltText(card.altText) ?? '{}')).toMatchObject({
+			loader: '1.3.0',
+			support: 'supported',
+		});
 	});
 });
