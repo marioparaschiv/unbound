@@ -11,8 +11,11 @@ use gpui_component::input::{Input as TextField, InputEvent};
 use gpui_component::scroll::ScrollableElement;
 use gpui_component::switch::Switch;
 use tokio::sync::oneshot;
-use unbound_devtools_core::ubd::{self, CommandSpec, FieldValue, Launcher, RunEvent};
+use unbound_devtools_core::ubd::{
+	self, CommandError, CommandSpec, FieldValue, JSON_FLAG, Launcher, RunEvent,
+};
 
+use super::failure;
 use super::form::{self, BRIDGE_PORT_FIELD, Control, Input};
 use super::nav;
 use super::transcript::{LineKind, RunState, Transcript};
@@ -49,6 +52,8 @@ pub struct CommandPage {
 	runtime: tokio::runtime::Handle,
 	controls: Vec<Control>,
 	error: Option<String>,
+	/// Why the last run failed, when it said.
+	failure: Option<CommandError>,
 	transcript: Transcript,
 	stop: Option<oneshot::Sender<()>>,
 	scroll: ScrollHandle,
@@ -86,6 +91,7 @@ impl CommandPage {
 			runtime,
 			controls,
 			error: None,
+			failure: None,
 			transcript: Transcript::default(),
 			stop: None,
 			scroll: ScrollHandle::new(),
@@ -117,9 +123,16 @@ impl CommandPage {
 		let args = ubd::arguments(&self.spec, &values).map_err(|error| error.to_string())?;
 		let launcher = Launcher::resolve(&settings.cli_command)
 			.ok_or_else(|| "Set how to run ubd in Settings.".to_owned())?;
+		let json = asks_for_json(&self.spec).then(|| JSON_FLAG.to_owned());
 		Ok((
 			launcher,
-			self.spec.path.iter().cloned().chain(args).collect(),
+			self.spec
+				.path
+				.iter()
+				.cloned()
+				.chain(json)
+				.chain(args)
+				.collect(),
 		))
 	}
 
@@ -158,7 +171,9 @@ impl CommandPage {
 			}
 		};
 		self.error = None;
-		self.transcript.begin(launcher.display(&argv));
+		self.failure = None;
+		let json = argv.iter().any(|arg| arg == JSON_FLAG);
+		self.transcript.begin(launcher.display(&argv), json);
 		let cwd = settings::get(cx).working_dir();
 		let run = ubd::spawn(&self.runtime, &launcher, &argv, cwd);
 		self.stop = Some(run.stop);
@@ -197,6 +212,7 @@ impl CommandPage {
 	fn apply(&mut self, event: RunEvent) {
 		match event {
 			RunEvent::Line(stream, line) => self.transcript.push_output(stream, line),
+			RunEvent::Error(error) => self.failure = Some(error),
 			RunEvent::Exited(code) => {
 				self.stop = None;
 				self.transcript.finish(RunState::Exited(code));
@@ -238,6 +254,7 @@ impl CommandPage {
 		cx: &mut Context<Self>,
 	) -> gpui::AnyElement {
 		let field = &control.field;
+		let flagged = failure::is_about(self.failure.as_ref(), &field.name);
 		let heading = div()
 			.flex()
 			.items_baseline()
@@ -249,7 +266,11 @@ impl CommandPage {
 					.flex()
 					.text_size(theme::TEXT_UI)
 					.font_weight(FontWeight::MEDIUM)
-					.text_color(theme::color(theme::TEXT))
+					.text_color(theme::color(if flagged {
+						theme::ERROR
+					} else {
+						theme::TEXT
+					}))
 					.child(form::label(&field.name))
 					.when(field.required, |label| {
 						label.child(
@@ -268,12 +289,23 @@ impl CommandPage {
 					.text_color(theme::color(theme::TEXT_FAINT))
 					.child(form::syntax(field)),
 			);
-		let description = field.description.clone().map(|text| {
-			div()
-				.text_size(theme::TEXT_SMALL)
-				.line_height(px(17.))
-				.child(prose(&text, theme::TEXT_MUTED))
-		});
+		let note = self
+			.failure
+			.as_ref()
+			.filter(|_| flagged)
+			.map(failure::field_note);
+		let description = field
+			.description
+			.clone()
+			.map(|text| {
+				div()
+					.text_size(theme::TEXT_SMALL)
+					.line_height(px(17.))
+					.child(prose(&text, theme::TEXT_MUTED))
+					.into_any_element()
+			})
+			.into_iter()
+			.chain(note.map(IntoElement::into_any_element));
 		let column = div().flex().flex_col().gap(px(6.));
 		match &control.input {
 			Input::Bool(on) => {
@@ -591,6 +623,7 @@ impl CommandPage {
 						),
 					),
 			)
+			.children(self.failure.as_ref().map(failure::card))
 			.child(body)
 			.child(self.render_shortcuts())
 	}
@@ -614,6 +647,12 @@ impl CommandPage {
 					.child(format!("{action} from anywhere on this page")),
 			)
 	}
+}
+
+/// Whether a run asks for `--json`, so a failure arrives with its code: every command that prints
+/// once, except one that prints its own JSON under a `json` option.
+fn asks_for_json(spec: &CommandSpec) -> bool {
+	!nav::is_long_running(&spec.name) && !spec.fields.iter().any(|field| field.name == "json")
 }
 
 impl Focusable for CommandPage {
