@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.5] - 2026-11-12
+
+### Fixed
+
+- On iOS, bubbles stay around their message when row spacing moves it, instead of hanging below it or starting at the screen's edge.
+- Tapping the avatar of a message whose reply is quoted inline opens the profile again.
+
 ## [1.6.4] - 2026-11-12
 
 ### Fixed

@@ -2,6 +2,7 @@ import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbou
 
 import type { RowRoom, RowRooms } from '~/lib/style';
 import { isStandaloneCell } from '~/native/ios/standalone-cell';
+import { contentOrigin, keepInCell } from '~/native/ios/host-offset';
 
 const STATE_KEY = '__unboundChatBubbleRows';
 
@@ -127,8 +128,14 @@ function insetContent(objc: NativeObjCBridge, cell: NativeObjectHandle, inset: P
  * @param scope The plugin's UI scope, which removes every hook on dispose.
  * @param messageCell The message cell's class name.
  * @param contentView The class of a table cell's content view.
+ * @param followTags The tags of the views the plugin adds to the content view, which keep their place when it moves.
  */
-export function installRowPadding(scope: NativeUIScope, messageCell: string, contentView: string) {
+export function installRowPadding(
+	scope: NativeUIScope,
+	messageCell: string,
+	contentView: string,
+	followTags: number[],
+) {
 	'worklet';
 	const objc = scope.objc as NativeObjCBridge;
 	const none = { top: 0, bottom: 0 };
@@ -181,21 +188,31 @@ export function installRowPadding(scope: NativeUIScope, messageCell: string, con
 	// out of line with its bubble and avatar until the next layout.
 	objc.hook(contentView, 'setFrame:', {
 		replace: ({ self, args, original }) => {
+			const before = contentOrigin(objc, self);
+			let frame: unknown;
+
 			try {
 				const cell = objc.invoke(self, 'superview', []) as NativeObjectHandle | null;
-				const frame =
+
+				frame =
 					cell && objc.className(cell) === messageCell && !isStandaloneCell(objc, cell)
 						? paddedFrame(objc, cell, state.rooms)
 						: undefined;
-
-				if (frame) return original(frame);
 			} catch (error) {
 				console.error(
 					`[Chat Bubbles] Failed to keep a message row centred: ${String(error)}`,
 				);
 			}
 
-			return original(...args);
+			const result = frame ? original(frame) : original(...args);
+
+			try {
+				keepInCell(objc, self, before, followTags);
+			} catch (error) {
+				console.error(`[Chat Bubbles] Failed to keep a bubble in place: ${String(error)}`);
+			}
+
+			return result;
 		},
 	});
 }

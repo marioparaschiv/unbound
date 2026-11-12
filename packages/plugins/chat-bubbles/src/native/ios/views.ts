@@ -49,6 +49,7 @@ import {
 	type ReuseSettle,
 } from '~/lib/reuse-settle';
 import { isStandaloneCell } from '~/native/ios/standalone-cell';
+import { AVATAR_TAG } from '~/native/ios/ui-cell';
 
 const BUBBLE_TAG = 0x0b0b1e;
 const MAX_NESTED_CHECKS = 256;
@@ -434,7 +435,10 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 		}),
 	);
 
-	ui.run(installRowPadding, scope, IOSClass.messageCell, IOSClass.contentView);
+	ui.run(installRowPadding, scope, IOSClass.messageCell, IOSClass.contentView, [
+		BUBBLE_TAG,
+		AVATAR_TAG,
+	]);
 	ui.run(installMovedTaps, scope, IOSClass.messageCell);
 
 	async function setRows(next: { rooms: RowRooms; inset: number; below: number }) {
