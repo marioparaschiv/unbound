@@ -1,18 +1,9 @@
-import {
-	IconGrid,
-	IconColorPalette,
-	IconMagnifierMinus,
-	IconPaintbrush,
-	IconPlug,
-	IconPlus,
-	IconXmark,
-} from 'nucleo-micro-bold';
+import { IconMagnifierMinus, IconPaintbrush, IconPlus, IconXmark } from 'nucleo-micro-bold';
 import { Link, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import type { AddonSort } from '@unbound-app/contracts/addons';
 import { useCallback, useMemo, useState } from 'react';
 import debounce from '@unbound-app/utils/debounce';
-import type { ComponentType } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -29,30 +20,23 @@ import {
 	type AddonFilter,
 	type MarketplaceSearch,
 } from '~/lib/addon-filters';
+import {
+	LISTING_COPY,
+	LISTING_GRID_STYLE,
+	type ListingType,
+} from '~/components/addon-listing-copy';
+import { EndSentinel } from '~/components/addon-filters/skeleton-rows';
 import { TagList } from '~/components/addon-filters/filter-parts';
+import AddonCardSkeleton from '~/components/addon-card-skeleton';
 import { staggerStyle } from '~/components/motion/reveal-style';
 import FilterBar from '~/components/addon-filters/filter-bar';
 import { listingQuery } from '~/queries/marketplace/listing';
 import SortMenu from '~/components/addon-filters/sort-menu';
-import type { CssVariables } from '~/lib/css-variables';
 import PageHeader from '~/components/page-header';
 import AddonCard from '~/components/addon-card';
 import { Button } from '~/components/ui/button';
 import Spinner from '~/components/ui/spinner';
 import cn from '~/lib/cn';
-
-type ListingType = 'plugin' | 'theme' | 'icon-pack';
-
-type IconProps = {
-	className?: string;
-};
-
-type ListingCopy = {
-	title: string;
-	description: string;
-	plural: string;
-	icon: ComponentType<IconProps>;
-};
 
 type AddonListingProps = {
 	type: ListingType;
@@ -67,28 +51,8 @@ type AddonResultsProps = {
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-const GRID_STYLE: CssVariables = { '--col-width': '300px' };
-
-const COPY: Record<ListingType, ListingCopy> = {
-	plugin: {
-		title: 'Plugins',
-		description: 'Extend your app with powerful plugins built by the community.',
-		plural: 'plugins',
-		icon: IconPlug,
-	},
-	theme: {
-		title: 'Themes',
-		description: 'Customize the appearance of your app to the fullest.',
-		plural: 'themes',
-		icon: IconColorPalette,
-	},
-	'icon-pack': {
-		title: 'Icons',
-		description: 'Swap the icons across your app for a whole new set.',
-		plural: 'icon packs',
-		icon: IconGrid,
-	},
-};
+// One row of the widest grid under the cards while the next page loads.
+const NEXT_PAGE_SKELETON_CARDS = 3;
 
 function SubmitButton() {
 	const session = useRouteContext({ from: '__root__', select: (context) => context.session });
@@ -115,7 +79,7 @@ function CreateThemeButton() {
 }
 
 function AddonResults({ type, search, onClearFilters }: AddonResultsProps) {
-	const copy = COPY[type];
+	const copy = LISTING_COPY[type];
 	// A new search or filter keeps the old cards up, dimmed, until its results arrive.
 	const { data, isPlaceholderData, fetchNextPage, hasNextPage, isFetchingNextPage } =
 		useInfiniteQuery({ ...listingQuery(type, search), placeholderData: keepPreviousData });
@@ -180,7 +144,7 @@ function AddonResults({ type, search, onClearFilters }: AddonResultsProps) {
 	return (
 		<>
 			<div
-				style={GRID_STYLE}
+				style={LISTING_GRID_STYLE}
 				aria-busy={isPlaceholderData}
 				className={cn(
 					'transition-opacity fill-grid',
@@ -203,26 +167,29 @@ function AddonResults({ type, search, onClearFilters }: AddonResultsProps) {
 						}
 					/>
 				))}
+				{isFetchingNextPage
+					? Array.from({ length: NEXT_PAGE_SKELETON_CARDS }, (_, index) => (
+							<AddonCardSkeleton key={index} />
+						))
+					: null}
 			</div>
 
-			{hasNextPage ? (
-				<div className='flex justify-center border-t border-border pt-4'>
-					<Button
-						variant='outline'
-						onClick={() => void loadMore()}
-						disabled={isFetchingNextPage || isPlaceholderData}
-					>
-						{isFetchingNextPage ? <Spinner /> : null}
-						Load More
-					</Button>
-				</div>
-			) : null}
+			{/* Keyed by card count: a remount re-observes, so a page that still leaves the end in view asks for the next. */}
+			<EndSentinel
+				page
+				key={addons.length}
+				onReached={
+					hasNextPage && !isFetchingNextPage && !isPlaceholderData
+						? () => void loadMore()
+						: undefined
+				}
+			/>
 		</>
 	);
 }
 
 function AddonListing({ type, search }: AddonListingProps) {
-	const copy = COPY[type];
+	const copy = LISTING_COPY[type];
 	const navigate = useNavigate();
 	const onSearchChange = useCallback(
 		(next: MarketplaceSearch) => void navigate({ to: '.', search: next }),

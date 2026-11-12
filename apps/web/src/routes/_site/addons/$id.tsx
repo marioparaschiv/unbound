@@ -13,6 +13,7 @@ import {
 	EmptyTitle,
 } from '~/components/ui/empty';
 import { addonQuery, submissionPreviewQuery } from '~/queries/marketplace/addon';
+import AddonPageSkeleton from '~/components/addon/addon-page-skeleton';
 import PreviewBanner from '~/components/addon/preview-banner';
 import AddonPageView from '~/components/addon/addon-page';
 import { Button } from '~/components/ui/button';
@@ -130,6 +131,9 @@ export const Route = createFileRoute('/_site/addons/$id')({
 			...(loaderData ? [{ name: 'description', content: loaderData.description }] : []),
 		],
 	}),
+	// Shows the skeleton soon after a slow navigation starts, rather than leaving the last page up.
+	pendingMs: 150,
+	pendingComponent: AddonPageSkeleton,
 	component: AddonPage,
 	notFoundComponent: AddonNotFound,
 });
