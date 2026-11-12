@@ -14,6 +14,8 @@
 + (NSString *)getFontNameByRef:(CGFontRef)ref;
 
 + (NSDictionary<NSString *, NSString *> *)overrides;
+// Whether `font` is a face an override or a settings preview drew in place of Discord's.
++ (BOOL)isReplacement:(UIFont *)font;
 + (UIFont *)replacementFor:(NSString *)name
                       size:(CGFloat)size
                   original:(UIFontDescriptor *)original;

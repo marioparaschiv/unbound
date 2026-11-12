@@ -21,6 +21,11 @@ object Fonts {
     private val resolutions = ConcurrentHashMap<String, String>()
     private val pendingFallback = ThreadLocal<Typeface?>()
 
+    /** Whether a font override has replaced one of Discord's fonts since the last change. */
+    @Volatile
+    var active = false
+        private set
+
     internal data class AssetFont(val family: String, val style: Int)
 
     internal sealed interface Source {
@@ -58,6 +63,7 @@ object Fonts {
         resolutions.clear()
         typefaces.clear()
         ReactFontCache.clear()
+        active = false
     }
 
     fun install(xposed: XposedInterface, classLoader: ClassLoader) {
@@ -172,7 +178,7 @@ object Fonts {
             axes.keys().asSequence().associateWith { axes.getDouble(it) }
         }.orEmpty()
         val source = replacement(name, font.optString("path"), font.optString("error"), variations) ?: return null
-        return typefaces.getOrPut(name) { load(name, source, assets) }.typeface
+        return typefaces.getOrPut(name) { load(name, source, assets) }.typeface?.also { active = true }
     }
 
     private fun load(name: String, source: Source, assets: AssetManager): LoadedFont {

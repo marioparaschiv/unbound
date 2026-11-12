@@ -15,6 +15,8 @@ static NSMutableSet<NSString *> *unknownNames = nil;
 // Families of the files the overrides' variable instances draw from.
 static NSMutableSet<NSString *> *instanceFamilies = nil;
 static NSString *const           chosenFaceKey    = @"UnboundFontsChosenFace";
+// Names of the faces `chose:` handed out, which `FontOverflow` centres in their line boxes.
+static NSMutableSet<NSString *> *replacementNames = nil;
 // Set while a hook builds its replacement, whose own UIFont calls must reach the originals.
 static _Thread_local BOOL replacing = NO;
 
@@ -81,8 +83,21 @@ static _Thread_local BOOL replacing = NO;
     {
         NSThread.currentThread.threadDictionary[chosenFaceKey] =
             @[ font.familyName, font.fontName ];
+        @synchronized([Fonts class])
+        {
+            replacementNames = replacementNames ?: [NSMutableSet set];
+            [replacementNames addObject:font.fontName];
+        }
     }
     return font;
+}
+
++ (BOOL)isReplacement:(UIFont *)font
+{
+    @synchronized([Fonts class])
+    {
+        return font.fontName && [replacementNames containsObject:font.fontName];
+    }
 }
 
 // The face `chose:` noted for `family` on this thread, once.
