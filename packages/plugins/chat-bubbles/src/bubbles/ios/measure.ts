@@ -10,7 +10,7 @@ import { bubbleFrame, cardFrame } from '~/bubbles/geometry';
 import { separateFrame } from '~/bubbles/group';
 import { headingRoom } from '~/bubbles/heading';
 import { textWidth } from '~/bubbles/ios/text-width';
-import { cardPadding, namesInside, nameShift } from '~/bubbles/style';
+import { cardPadding, headingMoves, namesInside } from '~/bubbles/style';
 import { currentAppearance } from '~/bubbles/theme';
 
 const SNAPSHOT = { maxDepth: 12, maxNodes: 512 };
@@ -61,13 +61,12 @@ export function createMeasure({ objc, media, highlight, inset: readInset }: Meas
 		const dynamic = style.layout === BubbleLayout.dynamic;
 		const inside = namesInside(style) && layout.heading !== undefined;
 		const lifted = !inside && style.roomyRows && dynamic ? style.verticalPadding : 0;
-		const shifted = nameShift(style);
 		const heading = {
 			heading: layout.heading,
 			bodyTop: layout.body.y,
 			inside,
 			lifted,
-			shifted,
+			moves: headingMoves(style),
 		};
 		const mention = layout.highlight
 			? await highlight.apply(

@@ -188,6 +188,11 @@ export type RowRoom = { top: number; bottom: number };
 
 export type Padding = { horizontal: number; vertical: number };
 
+type Move = { x: number; y: number };
+
+/** How a row's name, avatar and reply preview move while they sit outside its bubble. */
+export type HeadingMoves = { name: Move; avatar: Move; reply: Move };
+
 export type RowRooms = {
 	/** A row that starts a group, showing the author's name. */
 	first: RowRoom;
@@ -260,12 +265,25 @@ export function rowInset({ roomyRows, layout, horizontalPadding }: BubbleAppeara
 }
 
 /**
- * @description Works out how far the author's name moves right to line up with the content Discord lays in for a card.
+ * @description Works out how a row's name, avatar and reply preview move while they sit outside its bubble: up into the room a fitted row makes, or for a card, the name in line with the content and the reply clear of the card's taller top.
  * @param appearance The bubble's look.
- * @returns The move in points, 0 outside the card layout.
+ * @returns Each view's move in points.
  */
-export function nameShift(appearance: BubbleAppearance): number {
-	return appearance.layout === BubbleLayout.card ? rowInset(appearance) : 0;
+export function headingMoves(appearance: BubbleAppearance): HeadingMoves {
+	const { roomyRows, layout, verticalPadding } = appearance;
+	const up = (amount: number) => ({ x: 0, y: amount ? -amount : 0 });
+
+	if (layout === BubbleLayout.card) {
+		return {
+			name: { x: rowInset(appearance), y: 0 },
+			avatar: up(0),
+			reply: up(cardPadding(appearance).vertical),
+		};
+	}
+
+	const lifted = roomyRows ? verticalPadding : 0;
+
+	return { name: up(lifted), avatar: up(lifted), reply: up(lifted) };
 }
 
 /**
@@ -307,7 +325,7 @@ export default {
 	cardPadding,
 	choice,
 	namesInside,
-	nameShift,
+	headingMoves,
 	parseHexColor,
 	rowInset,
 	rowRooms,

@@ -9,11 +9,11 @@ import { shadeColor } from '~/bubbles/shade';
 import {
 	argb,
 	cardPadding,
+	headingMoves,
 	namesInside,
-	nameShift,
-	rowInset,
 	type BubbleAppearance,
 	type BubbleColor,
+	type HeadingMoves,
 } from '~/bubbles/style';
 import { filletData, pathData } from '~/bubbles/android/path-data';
 import {
@@ -57,8 +57,8 @@ export type RowFrame = {
 	mediaRadius?: number;
 	inside: boolean;
 	lifted: number;
-	/** How far the name moves right, in line with a card's content. */
-	shifted: number;
+	/** How the name, avatar and reply move while they sit outside the bubble. */
+	moves: HeadingMoves;
 };
 
 /** Where the avatar goes on a row of a group whose avatar sits by its last bubble. */
@@ -96,7 +96,6 @@ export type RowPaint = {
 	mediaRadius?: number;
 };
 
-const lift = (amount: number, x = 0): Move => ({ x, y: amount ? -amount : 0 });
 const scaled = (move: Move, scale: number): Move => ({ x: move.x * scale, y: move.y * scale });
 const scaledBox = (box: Box, scale: number): Box => ({
 	x: box.x * scale,
@@ -126,7 +125,7 @@ export function rowFrame(layout: RowLayout, style: BubbleAppearance): RowFrame {
 			radius: style.radius,
 			inside,
 			lifted,
-			shifted: nameShift(style),
+			moves: headingMoves(style),
 		};
 	}
 
@@ -158,7 +157,7 @@ export function rowFrame(layout: RowLayout, style: BubbleAppearance): RowFrame {
 		frame: separateFrame(fitted.frame, floor, style.spacing, hard),
 		inside,
 		lifted,
-		shifted: 0,
+		moves: headingMoves(style),
 	};
 }
 
@@ -288,11 +287,7 @@ type HeadingPaint = Pick<RowPaint, 'name' | 'avatar' | 'reply' | 'time' | 'clip'
 function headingPaint({ layout, measured, style, color }: PaintInput, frame: Box): HeadingPaint {
 	const { heading } = layout;
 
-	if (!measured.inside || !heading) {
-		const moved = lift(measured.lifted);
-
-		return { name: lift(measured.lifted, measured.shifted), avatar: moved, reply: moved };
-	}
+	if (!measured.inside || !heading) return measured.moves;
 
 	const place = headingPlace(
 		heading,

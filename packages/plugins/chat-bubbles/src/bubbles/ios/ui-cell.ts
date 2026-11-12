@@ -9,6 +9,8 @@ const AVATAR_TAG = 0x0b0b26;
 const PICTURE_TAG = 0x0b0b27;
 const DECORATION_TAG = 0x0b0b28;
 const QUOTE_TAG = 0x0b0b29;
+const REPLY_ICON_TAG = 0x0b0b2a;
+const REPLY_ICON = { symbol: 'arrowshape.turn.up.left.fill', size: 14, inset: 6, top: 2 };
 const MAX_PICTURES = 128;
 const SPINE_CLASS = 'DCDSpine';
 
@@ -159,13 +161,89 @@ function moveViews(
 function spineOf(
 	objc: NativeObjCBridge,
 	holder: NativeObjectHandle,
-): NativeObjectHandle | undefined {
+): { preview: NativeObjectHandle; spine: NativeObjectHandle } | undefined {
 	'worklet';
 	const [preview] = subviewsOf(objc, holder);
-
-	return preview
+	const spine = preview
 		? subviewsOf(objc, preview).find((view) => objc.className(view) === SPINE_CLASS)
 		: undefined;
+
+	return preview && spine ? { preview, spine } : undefined;
+}
+
+function replyIconIn(
+	objc: NativeObjCBridge,
+	preview: NativeObjectHandle,
+): NativeObjectHandle | null {
+	'worklet';
+	const existing = objc.invoke(preview, 'viewWithTag:', [
+		REPLY_ICON_TAG,
+	]) as NativeObjectHandle | null;
+
+	if (existing) return existing;
+
+	const image = objc.call(
+		objc.getClass('UIImage') as NativeObjectHandle,
+		'systemImageNamed:',
+		REPLY_ICON.symbol,
+	) as NativeObjectHandle | null;
+	const icon = objc.call(
+		objc.getClass('UIImageView') as NativeObjectHandle,
+		'new',
+	) as NativeObjectHandle | null;
+
+	if (!image || !icon) return null;
+
+	objc.invoke(icon, 'setImage:', [image]);
+	objc.invoke(icon, 'setTag:', [REPLY_ICON_TAG]);
+	// 1 is UIViewContentModeScaleAspectFit.
+	objc.invoke(icon, 'setContentMode:', [1]);
+	objc.invoke(icon, 'setUserInteractionEnabled:', [false]);
+	objc.invoke(icon, 'setTintColor:', [
+		objc.call(objc.getClass('UIColor') as NativeObjectHandle, 'secondaryLabelColor'),
+	]);
+	objc.invoke(preview, 'addSubview:', [icon]);
+
+	return icon;
+}
+
+// Bubbles swap Discord's branching spine for a reply icon at its tip, or hide both while the preview sits in a quote box.
+function paintSpine(
+	objc: NativeObjCBridge,
+	holder: NativeObjectHandle | null,
+	active: boolean,
+	quoted: boolean,
+) {
+	'worklet';
+	const found = holder ? spineOf(objc, holder) : undefined;
+
+	if (!found) return;
+
+	const { preview, spine } = found;
+	const showIcon = active && !quoted;
+
+	objc.invoke(spine, 'setAlpha:', [active ? 0 : 1]);
+
+	const icon = showIcon
+		? replyIconIn(objc, preview)
+		: (objc.invoke(preview, 'viewWithTag:', [REPLY_ICON_TAG]) as NativeObjectHandle | null);
+
+	if (!icon) return;
+
+	if (showIcon) {
+		const frame = readBox(objc.invoke(spine, 'frame', []));
+
+		objc.invoke(icon, 'setFrame:', [
+			cgRect(objc, {
+				x: frame.x + frame.width - REPLY_ICON.size - REPLY_ICON.inset,
+				y: frame.y + REPLY_ICON.top,
+				width: REPLY_ICON.size,
+				height: REPLY_ICON.size,
+			}),
+		]);
+	}
+
+	objc.invoke(icon, 'setHidden:', [!showIcon]);
 }
 
 function quoteIn(objc: NativeObjCBridge, fill: NativeObjectHandle): NativeObjectHandle | null {
@@ -193,13 +271,13 @@ function paintQuote(
 	cell: NativeObjectHandle,
 	fill: NativeObjectHandle | null,
 	quote: CellQuote | undefined,
+	active: boolean,
 ) {
 	'worklet';
 	const holder = objc.getIvar(cell, '_headerView') as NativeObjectHandle | null;
 	const layer = holder ? (objc.invoke(holder, 'layer', []) as NativeObjectHandle) : null;
-	const spine = holder ? spineOf(objc, holder) : undefined;
 
-	if (spine) objc.invoke(spine, 'setAlpha:', [quote ? 0 : 1]);
+	paintSpine(objc, holder, active, Boolean(quote));
 
 	if (!quote) {
 		const existing = fill && objc.invoke(fill, 'viewWithTag:', [QUOTE_TAG]);
@@ -482,7 +560,7 @@ export function paintCell(
 		if (time) objc.invoke(time, 'setFrame:', [cgRect(objc, paint.time)]);
 	}
 
-	paintQuote(objc, cell, fill, paint?.quote);
+	paintQuote(objc, cell, fill, paint?.quote, true);
 	paintPicture(objc, state, cache, cell, painted, messageId);
 }
 
@@ -518,7 +596,7 @@ export function paintUnmeasured(
 export function resetCell(objc: NativeObjCBridge, cell: NativeObjectHandle) {
 	'worklet';
 	moveViews(objc, cell, { name: NO_MOVE, avatar: NO_MOVE, reply: NO_MOVE });
-	paintQuote(objc, cell, null, undefined);
+	paintQuote(objc, cell, null, undefined, false);
 	setAvatarShown(objc, cell, true);
 	hidePicture(objc, cell);
 }
