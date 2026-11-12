@@ -42,6 +42,9 @@ func evaluateObjCReference(reference *compatReference, target *compatTarget, see
 			if objc.Selectors[reference.Name] || sdk != nil && sdk.Selectors[reference.Name] {
 				return compatOK, "", true
 			}
+			if reason, ok := compatEnvironmentSelectors[reference.Name]; ok {
+				return compatExternal, reason, true
+			}
 			if sdk != nil {
 				if seen[key] {
 					return compatBroken, "no Discord or iOS SDK class declares `" + reference.Name + "` any more", true
