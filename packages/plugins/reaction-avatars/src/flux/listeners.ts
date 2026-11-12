@@ -7,29 +7,38 @@ import { clearRenderedCells } from '~/native/ios/renderer';
 import { scanVisibleCells } from '~/native/ios/visible-cells';
 import type { Session } from '~/native/ios/session';
 import { SelectedChannelStore } from '~/lib/modules';
+import {
+	changedReactorsPrefix,
+	createRefreshThrottle,
+	REACTOR_REFRESH_COOLDOWN_MS,
+} from '~/lib/reaction-refresh';
 import { REACTION_ACTIONS } from '~/lib/constants';
 import type { ReactionChange } from '~/lib/types';
 
 /**
- * @description Refetches a message's reactors and reflows its pills whenever its reactions change, for every `MESSAGE_REACTION_*` action.
- * The Addon scope removes the listeners when the plugin stops.
+ * @description Reflows a message's pills whenever its reactions change, for every `MESSAGE_REACTION_*` action, and refetches the
+ * changed reaction's reactors at most once per cooldown, so a busy message does not refetch every reaction on each change.
+ * The Addon scope removes the listeners when the plugin stops; the pending refetches stop with the session.
  * @param session The running iOS session.
  */
 export function listenToReactionChanges(session: Session): void {
+	const refetches = createRefreshThrottle(REACTOR_REFRESH_COOLDOWN_MS, (prefix) => {
+		session.reactors.invalidate(prefix);
+		reloadReactors(session, ({ context }) => context.key.startsWith(prefix));
+	});
+
+	session.signal.addEventListener('abort', refetches.cancel);
+
 	function onReactionChange(event: ReactionChange) {
 		const messageId = event.messageId ?? event.message_id;
 
 		if (!messageId) return;
 
-		const channelId = event.channelId ?? event.channel_id;
+		scheduleLayoutRefresh(session, messageId, event.channelId ?? event.channel_id);
 
-		session.reactors.invalidateMessage(messageId, channelId);
-		scheduleLayoutRefresh(session, messageId, channelId);
-		reloadReactors(
-			session,
-			({ context }) =>
-				context.messageId === messageId && (!channelId || context.channelId === channelId),
-		);
+		const prefix = changedReactorsPrefix(event);
+
+		if (prefix) refetches.request(prefix);
 	}
 
 	for (const action of REACTION_ACTIONS) flux.onAction(action, onReactionChange);

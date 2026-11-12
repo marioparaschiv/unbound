@@ -391,7 +391,8 @@ export function invalidateLayout(session: Session, layoutKey: string): void {
 }
 
 /**
- * @description Re-measures a message's reaction pills shortly after its reactions changed.
+ * @description Re-measures a message's reaction pills shortly after its reactions changed, at most once per interval while
+ * they keep changing, so a busy message still settles.
  * @param session The running session.
  * @param messageId The message.
  * @param channelId Its channel, when the event carried one.
@@ -404,7 +405,8 @@ export function scheduleLayoutRefresh(
 	const { layoutRefreshes, objc, signal } = session;
 	const refreshKey = `${channelId ?? '*'}:${messageId}`;
 
-	clearTimeout(layoutRefreshes.get(refreshKey));
+	if (layoutRefreshes.has(refreshKey)) return;
+
 	layoutRefreshes.set(
 		refreshKey,
 		setTimeout(() => {

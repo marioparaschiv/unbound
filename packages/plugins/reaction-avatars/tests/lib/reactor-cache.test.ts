@@ -1,6 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 
 import { ReactionUserCache } from '~/lib/reactor-cache';
+import { changedReactorsPrefix } from '~/lib/reaction-refresh';
 import { reactionAvatarKey, type Reactor } from '~/lib/avatars';
 
 function deferred() {
@@ -13,28 +14,27 @@ function deferred() {
 }
 
 describe('ReactionUserCache', () => {
-	test('invalidates all cached reactions for one message without clearing other messages', async () => {
+	test("invalidates one changed emoji and keeps the message's other reactions", async () => {
 		const cache = new ReactionUserCache<Reactor>();
-		const emoji = { id: 'emoji', name: 'wave' };
-		const affectedNormal = reactionAvatarKey('channel', 'message', emoji, [0]);
-		const affectedBurst = reactionAvatarKey('channel', 'message', emoji, [1]);
-		const unrelated = reactionAvatarKey('channel', 'another-message', emoji, [0]);
+		const wave = { id: 'emoji', name: 'wave' };
+		const affectedNormal = reactionAvatarKey('channel', 'message', wave, [0]);
+		const affectedBurst = reactionAvatarKey('channel', 'message', wave, [1]);
+		const otherEmoji = reactionAvatarKey('channel', 'message', { id: null, name: '🔥' }, [0]);
 		const load = async () => [{ id: 'user' }];
 
 		await Promise.all([
 			cache.load(affectedNormal, load),
 			cache.load(affectedBurst, load),
-			cache.load(unrelated, load),
+			cache.load(otherEmoji, load),
 		]);
-		cache.invalidateMessage('message', 'channel');
+		cache.invalidate(
+			changedReactorsPrefix({ channelId: 'channel', messageId: 'message', emoji: wave }) ??
+				'',
+		);
 
 		expect(cache.get(affectedNormal)).toBeUndefined();
 		expect(cache.get(affectedBurst)).toBeUndefined();
-		expect(cache.get(unrelated)).toEqual([{ id: 'user' }]);
-
-		cache.invalidateMessage('another-message');
-
-		expect(cache.get(unrelated)).toBeUndefined();
+		expect(cache.get(otherEmoji)).toEqual([{ id: 'user' }]);
 	});
 
 	test('deduplicates concurrent requests for the same reaction', async () => {

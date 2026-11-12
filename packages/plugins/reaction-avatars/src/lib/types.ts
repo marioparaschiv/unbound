@@ -7,6 +7,7 @@ export type ReactionChange = {
 	channel_id?: string;
 	messageId?: string;
 	message_id?: string;
+	emoji?: { id?: string | null; name?: string | null };
 };
 
 export type ReactedMessage = {
