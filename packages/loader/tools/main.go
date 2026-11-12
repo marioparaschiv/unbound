@@ -100,6 +100,8 @@ func run(args []string) error {
 		return runSmokeRegression(args[1:])
 	case "symbolicate-android":
 		return runSymbolicateAndroid(args[1:])
+	case "symbolicate-issue":
+		return runSymbolicateIssue(args[1:])
 	case "compat-scan":
 		return runCompatScan(args[1:])
 	case "compat-issue":
@@ -124,7 +126,7 @@ func run(args []string) error {
 }
 
 func printUsage() {
-	fmt.Println("usage: go run ./tools <build|platform|core-test|validate|deps|packages|libffi-build|fetch|ipa-info|ipa-icons|discord-version|discord-apk|android-app-icon|android-version|released-android-code|build-watch|release-candidate|generate-loader-changelog|publish-loader-releases|attest|bundle-key|smoke|smoke-regression|smoke-failure-summary|pr-comment|actions-cleanup|wait-artifact|symbolicate-android|doctor|dev|compat-scan|compat-issue|compat-legacy-issue|compat-support-issue|format|lint>")
+	fmt.Println("usage: go run ./tools <build|platform|core-test|validate|deps|packages|libffi-build|fetch|ipa-info|ipa-icons|discord-version|discord-apk|android-app-icon|android-version|released-android-code|build-watch|release-candidate|generate-loader-changelog|publish-loader-releases|attest|bundle-key|smoke|smoke-regression|smoke-failure-summary|pr-comment|actions-cleanup|wait-artifact|symbolicate-android|symbolicate-issue|doctor|dev|compat-scan|compat-issue|compat-legacy-issue|compat-support-issue|format|lint>")
 	fmt.Println("       go run ./tools build <tweak|ipa|simulator|all> [flags]")
 	fmt.Println("       go run ./tools platform <build|test> <ios|android> [flags]")
 	fmt.Println("       go run ./tools core-test [--hermes]")

@@ -1,0 +1,48 @@
+name: Crash symbols
+
+on:
+    issues:
+        types: [opened]
+
+permissions:
+    contents: read
+
+jobs:
+    symbolicate:
+        name: Name Unbound's native frames
+        if: github.event.issue.pull_request == null && contains(github.event.issue.body, '### Native stack')
+        runs-on: ubuntu-26.04
+        timeout-minutes: 10
+        permissions:
+            contents: read
+            issues: write
+        concurrency:
+            group: crash-symbols-${{ github.event.issue.number }}
+            cancel-in-progress: true
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+                  fetch-depth: 1
+
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
+
+            - name: Install llvm-symbolizer
+              run: |
+                  set -euo pipefail
+                  if ! command -v llvm-symbolizer >/dev/null; then
+                    sudo apt-get update -qq
+                    sudo apt-get install -y -qq llvm >/dev/null
+                  fi
+
+            - name: Comment the symbolicated stack
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  set -euo pipefail
+                  unbound-tools symbolicate-issue \
+                    --repo "$GITHUB_REPOSITORY" \
+                    --issue "${{ github.event.issue.number }}" \
+                    --symbolizer "$(command -v llvm-symbolizer)"

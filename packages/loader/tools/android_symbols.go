@@ -218,7 +218,7 @@ func describeLocations(locations []sourceLocation) []string {
 func trimBuildRoot(file string) string {
 	slashed := filepath.ToSlash(file)
 	if index := strings.LastIndex(slashed, "/packages/loader/"); index >= 0 {
-		return slashed[index+1:]
+		return path.Clean(slashed[index+1:])
 	}
 	return file
 }
