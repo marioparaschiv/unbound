@@ -1,4 +1,4 @@
-import { badgesSchema } from '@unbound-app/contracts/sponsors';
+import { BADGE_LIMIT, badgesSchema } from '@unbound-app/contracts/sponsors';
 import type { PerkId } from '@unbound-app/contracts/sponsors';
 import type { TSchema } from '@unbound-app/contracts/schema';
 
@@ -26,6 +26,13 @@ export const PERKS = {
 		config: badgesSchema,
 	},
 } satisfies Record<PerkId, PerkDefinition>;
+
+/** Badges each recurring tier allows, highest first, as the GitHub Sponsors tier descriptions promise. */
+const MONTHLY_BADGE_TIERS = [
+	{ minimumMonthlyCents: 2000, badges: BADGE_LIMIT },
+	{ minimumMonthlyCents: 1000, badges: 2 },
+	{ minimumMonthlyCents: 500, badges: 1 },
+];
 
 /**
  * @description Checks whether a sponsor ever made a one-time payment large enough to keep a perk for good.
@@ -71,6 +78,35 @@ export function canClaimPerk(perkId: PerkId, standing: SponsorStanding): boolean
 }
 
 /**
+ * @description Counts the badges a sponsor may set and show: the best of their recurring tier, while it
+ * lasts, and one permanent badge per one-time minimum in their largest one-time payment. Staff get the most.
+ * @param standing The sponsor's standing.
+ * @param role The user's `role` column.
+ * @returns How many badges are allowed; 0 when the perk is locked.
+ */
+export function getBadgeLimit(standing: SponsorStanding, role: string | null | undefined): number {
+	if (roleGrantsPerks(role)) {
+		return BADGE_LIMIT;
+	}
+
+	const permanent =
+		standing.kind === 'none'
+			? 0
+			: Math.floor(
+					standing.sponsorship.largestOneTimeCents /
+						PERKS['custom-badge'].minimumOneTimeCents,
+				);
+	const monthly =
+		isSponsoring(standing) && !standing.sponsorship.oneTime
+			? (MONTHLY_BADGE_TIERS.find(
+					(tier) => standing.sponsorship.monthlyPriceCents >= tier.minimumMonthlyCents,
+				)?.badges ?? 0)
+			: 0;
+
+	return Math.min(BADGE_LIMIT, Math.max(permanent, monthly));
+}
+
+/**
  * @description Checks whether a role grants every perk without a sponsorship, as staff roles do.
  * @param role The user's `role` column.
  * @returns Whether the role grants perks.
@@ -79,4 +115,11 @@ export function roleGrantsPerks(role: string | null | undefined): boolean {
 	return hasPermission(role, { perk: ['claim'] });
 }
 
-export default { PERKS, isPerkPermanent, isPerkUnlocked, canClaimPerk, roleGrantsPerks };
+export default {
+	PERKS,
+	isPerkPermanent,
+	isPerkUnlocked,
+	canClaimPerk,
+	getBadgeLimit,
+	roleGrantsPerks,
+};

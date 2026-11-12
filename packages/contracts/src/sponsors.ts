@@ -18,8 +18,8 @@ export const BADGE_IMAGE_TYPES = ['image/png', 'image/gif'];
 /** The rules a badge image follows, in one line. */
 export const BADGE_IMAGE_RULES = `Square PNG or GIF (animated GIFs play on your profile), ${BADGE_IMAGE_MIN_SIZE} to ${BADGE_IMAGE_MAX_SIZE} px, up to ${BADGE_IMAGE_MAX_LABEL}`;
 
-/** How many badges one sponsor shows; as many as fit on a Discord profile. */
-export const BADGE_LIMIT = 3;
+/** The most badges anyone can set, at the top sponsor tier; lower tiers allow fewer. */
+export const BADGE_LIMIT = 4;
 
 export const perkIdSchema = Type.Enum(['custom-badge']);
 

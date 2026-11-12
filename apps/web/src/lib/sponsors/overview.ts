@@ -1,7 +1,13 @@
 import type { BadgeClaim, PerkId } from '@unbound-app/contracts/sponsors';
 import { perkIdSchema } from '@unbound-app/contracts/sponsors';
 
-import { canClaimPerk, isPerkUnlocked, PERKS, roleGrantsPerks } from '~/lib/sponsors/perks';
+import {
+	canClaimPerk,
+	getBadgeLimit,
+	isPerkUnlocked,
+	PERKS,
+	roleGrantsPerks,
+} from '~/lib/sponsors/perks';
 import type { SponsorStanding, Sponsorship } from '~/lib/sponsors/standing';
 import { findBadgeClaim, toBadgeClaim } from '~/lib/sponsors/badges';
 import { getUserSponsorship } from '~/lib/sponsors/sponsorships';
@@ -34,6 +40,8 @@ export type SponsorOverview = {
 	graceUntil: Date | null;
 	perks: PerkStatus[];
 	badge: BadgeClaim | null;
+	/** How many badges the user's tier allows now; 0 while the perk is locked. */
+	badgeLimit: number;
 };
 
 /**
@@ -81,6 +89,7 @@ export async function getSponsorOverview(
 		graceUntil: standing.kind === 'grace' ? standing.until : null,
 		perks,
 		badge: toBadgeClaim(ctx.env, claim),
+		badgeLimit: getBadgeLimit(standing, role),
 	};
 }
 
