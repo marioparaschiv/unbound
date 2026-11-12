@@ -13,7 +13,7 @@
 	},
 	"dependencies": {
 		"@opentelemetry/api": "^1.10.0",
-		"@opentelemetry/exporter-logs-otlp-http": "^0.300.0",
+		"@opentelemetry/exporter-logs-otlp-http": "^0.301.1",
 		"@opentelemetry/resources": "^3.0.0",
 		"@opentelemetry/sdk-logs": "^3.0.0",
 		"@sapphire/decorators": "^6.2.0",
@@ -28,7 +28,7 @@
 		"colorette": "^2.0.20",
 		"discord.js": "^14.28.1",
 		"drizzle-orm": "1.0.0-rc.5",
-		"postgres": "^4.0.0",
+		"postgres": "^4.1.0",
 		"sharp": "^0.35.5"
 	},
 	"devDependencies": {
