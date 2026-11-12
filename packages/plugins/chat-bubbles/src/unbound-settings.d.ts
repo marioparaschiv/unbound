@@ -148,7 +148,7 @@ declare module '@unbound-app/settings' {
 		roomyRows: boolean;
 		avatarLast: boolean;
 		nameInside: boolean;
-		tail: "off" | "first" | "last";
+		tail: boolean;
 		tailSize: number;
 		color: string;
 		ownColor: string;
@@ -177,7 +177,7 @@ declare module '@unbound-app/settings' {
 		"roomyRows": boolean;
 		"avatarLast": boolean;
 		"nameInside": boolean;
-		"tail": "off" | "first" | "last";
+		"tail": boolean;
 		"tailSize": number;
 		"color": string;
 		"ownColor": string;
@@ -196,7 +196,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "roundExposed" | "roundOuter" | "joinCurves" | "smoothSteps" | "roomyRows" | "avatarLast" | "nameInside";
+	export type BooleanSettingKey = "roundExposed" | "roundOuter" | "joinCurves" | "smoothSteps" | "roomyRows" | "avatarLast" | "nameInside" | "tail";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

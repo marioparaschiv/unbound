@@ -13,7 +13,6 @@ import {
 	Grouping,
 	MediaCorners,
 	MENTION_WIDTH_STEP,
-	TailPosition,
 } from '~/constants';
 import { bubbleLayout, choice, parseHexColor } from '~/bubbles/style';
 import { themeBubbleColor } from '~/bubbles/theme';
@@ -40,7 +39,8 @@ type SwitchKey =
 	| 'roundOuter'
 	| 'roundExposed'
 	| 'joinCurves'
-	| 'smoothSteps';
+	| 'smoothSteps'
+	| 'tail';
 
 type Limits = { fallback: number; maximum: number; step?: number };
 
@@ -98,6 +98,8 @@ function NumberRow({ setting, label, unit }: { setting: NumberKey; label: string
 	);
 }
 
+const OFF_BY_DEFAULT = new Set<SwitchKey>(['avatarLast', 'tail']);
+
 function SwitchRow({
 	setting,
 	label,
@@ -110,8 +112,7 @@ function SwitchRow({
 	disabled?: boolean;
 }) {
 	const stored = useSetting(setting);
-	// Only `avatarLast` is off by default.
-	const value = setting === 'avatarLast' ? stored === true : stored !== false;
+	const value = OFF_BY_DEFAULT.has(setting) ? stored === true : stored !== false;
 
 	return (
 		<ui.SwitchRow
@@ -235,7 +236,7 @@ function ColorsSection() {
 
 function ShapeSection() {
 	const cornerCurve = choice(useSetting('cornerCurve'), CornerCurve);
-	const tail = choice(useSetting('tail'), TailPosition);
+	const tail = useSetting('tail') === true;
 
 	return (
 		<ui.Section title={messages.SHAPE}>
@@ -251,19 +252,8 @@ function ShapeSection() {
 					settings.cornerCurve = choice(value, CornerCurve);
 				}}
 			/>
-			<ui.SegmentedRow
-				label={messages.TAIL}
-				value={tail}
-				options={[
-					{ value: TailPosition.off, label: messages.TAIL_OFF },
-					{ value: TailPosition.first, label: messages.TAIL_FIRST },
-					{ value: TailPosition.last, label: messages.TAIL_LAST },
-				]}
-				onChange={(value) => {
-					settings.tail = choice(value, TailPosition);
-				}}
-			/>
-			{tail === TailPosition.off ? null : (
+			<SwitchRow setting='tail' label={messages.TAIL} subLabel={messages.TAIL_SUBTITLE} />
+			{!tail ? null : (
 				<NumberRow setting='tailSize' label={messages.TAIL_SIZE} unit='points' />
 			)}
 		</ui.Section>

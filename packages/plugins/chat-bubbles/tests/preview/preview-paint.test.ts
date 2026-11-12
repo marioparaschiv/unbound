@@ -42,7 +42,7 @@ describe('previewPaints', () => {
 	});
 
 	test('leaves room for the tail left of the bubble', () => {
-		const [paint] = previewPaints([bubble(100)], look({ tail: 'first', tailSize: 8 }));
+		const [paint] = previewPaints([bubble(100)], look({ tail: true, tailSize: 8 }));
 
 		expect(paint!.left).toBe(8);
 		expect(paint!.fill.startsWith('M')).toBe(true);

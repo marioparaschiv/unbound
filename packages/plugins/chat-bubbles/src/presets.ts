@@ -40,7 +40,7 @@ const MESSAGES: Look = {
 	smoothSteps: true,
 	groupSpacing: 4,
 	roomyRows: true,
-	tail: 'off',
+	tail: false,
 	tailSize: 8,
 	color: '',
 	ownColor: '',

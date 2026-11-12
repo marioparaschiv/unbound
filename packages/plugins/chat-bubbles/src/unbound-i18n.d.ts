@@ -155,12 +155,8 @@ declare module '@unbound-app/i18n' {
 		readonly SPACING_SECTION: string;
 		/** Tail */
 		readonly TAIL: string;
-		/** First */
-		readonly TAIL_FIRST: string;
-		/** Last */
-		readonly TAIL_LAST: string;
-		/** Off */
-		readonly TAIL_OFF: string;
+		/** Points the bubble beside the avatar towards it, at the top or bottom of the group with the avatar */
+		readonly TAIL_SUBTITLE: string;
 		/** Tail size */
 		readonly TAIL_SIZE: string;
 		/** % */

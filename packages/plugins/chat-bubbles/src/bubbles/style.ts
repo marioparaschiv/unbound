@@ -46,6 +46,7 @@ export type BubbleAppearance = {
 	avatarLast: boolean;
 	/** Whether the author's name, the time and a reply's preview sit inside the group's first bubble. */
 	nameInside: boolean;
+	/** Which bubble of a group points a tail at the avatar: the last when the avatar moves down to it, otherwise the first. */
 	tail: ValueOf<typeof TailPosition>;
 	tailSize: number;
 	color: BubbleColor;
@@ -131,6 +132,7 @@ export function bubbleAppearance(
 	const base = parseHexColor(read('color')) ?? themeColor;
 	const own = parseHexColor(read('ownColor')) ?? base;
 	const opacity = bounded(read('opacity'), BubbleStyle.opacity, BubbleLimits.opacity);
+	const avatarLast = flag(read('avatarLast'), false);
 	const percent = (key: string, fallback: number) =>
 		bounded(read(key), fallback, BubbleLimits.opacity) / 100;
 
@@ -157,9 +159,13 @@ export function bubbleAppearance(
 		joinCurves: flag(read('joinCurves'), true),
 		smoothSteps: flag(read('smoothSteps'), true),
 		roomyRows: flag(read('roomyRows'), true),
-		avatarLast: flag(read('avatarLast'), false),
+		avatarLast,
 		nameInside: flag(read('nameInside'), true),
-		tail: choice(read('tail'), TailPosition),
+		tail: !flag(read('tail'), false)
+			? TailPosition.off
+			: avatarLast
+				? TailPosition.last
+				: TailPosition.first,
 		tailSize: bounded(read('tailSize'), BubbleStyle.tailSize, BubbleLimits.tailSize),
 		color: { ...base, alpha: opacity / 100 },
 		ownColor: { ...own, alpha: opacity / 100 },

@@ -62,6 +62,15 @@ describe('bubble style', () => {
 		expect(appearance.color).toEqual({ red: 1, green: 136 / 255, blue: 0, alpha: 0.75 });
 	});
 
+	test('points the tail from the bubble beside the avatar', () => {
+		const tail = (values: Record<string, unknown>) =>
+			bubbleAppearance(reader(values), dark).tail;
+
+		expect(tail({ tail: true })).toBe('first');
+		expect(tail({ tail: true, avatarLast: true })).toBe('last');
+		expect(tail({ tail: false, avatarLast: true })).toBe('off');
+	});
+
 	test("uses its own color for the user's messages, falling back to the bubble color", () => {
 		const custom = bubbleAppearance(
 			reader({ color: '#000', ownColor: '#5865f2', opacity: 50 }),
