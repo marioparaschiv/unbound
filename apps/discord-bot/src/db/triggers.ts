@@ -55,7 +55,7 @@ export async function checkTriggers(
 	// Wake-ups from that table are lost; the timed reconcile still converges, only later.
 	for (const { name, table } of missing) {
 		logger.error(
-			`Trigger ${name} on public.${table} is missing, so its changes reach Discord only on the timed reconcile. Fix: run scripts/provision.sql with phase grant, apply the bot's trigger migration SQL, then run it with -v phase=lock.`,
+			`Trigger ${name} on public.${table} is missing, so its changes reach Discord only on the timed reconcile. Fix: run scripts/provision.sql with phase grant, apply the bot's trigger migrations' SQL in order, then run it with -v phase=lock.`,
 		);
 	}
 
