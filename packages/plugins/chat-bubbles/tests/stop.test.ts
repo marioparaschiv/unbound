@@ -8,16 +8,17 @@ const MESSAGE_VIEW = 'com.discord.chat.presentation.message.MessageView';
 const ACCESSORIES = 'com.discord.chat.presentation.message.MessageAccessoriesView';
 
 // The kit has no UI scope: it runs no worklet, and `onScopeDispose` stands for what disposing the scope does.
-function createUi(onScopeDispose: () => void) {
+function createUi(onScopeDispose: () => void, runs: unknown[][] = []) {
 	return {
 		createScope: () => ({ dispose: onScopeDispose }),
-		run: () => {},
+		run: (...args: unknown[]) => void runs.push(args),
+		call: async () => null,
 		callback: (fn: unknown) => fn,
 	};
 }
 
-function overrides(onScopeDispose: () => void = () => {}) {
-	return { native: { ui: createUi(onScopeDispose) } as unknown as NativePluginBridge };
+function overrides(onScopeDispose: () => void = () => {}, runs: unknown[][] = []) {
+	return { native: { ui: createUi(onScopeDispose, runs) } as unknown as NativePluginBridge };
 }
 
 // The fake describes a class's members without their types, so Discord's obfuscated `MessageView` shapes are given here.
@@ -53,6 +54,14 @@ function withMessageViewShapes(java: NativePluginBridge['java']): NativePluginBr
 // The scan of the rows on screen starts with the plugin and finishes on later ticks.
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+function isBindHook(value: unknown) {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		(value as { accessories?: unknown }).accessories === ACCESSORIES
+	);
+}
+
 function hooked() {
 	return native.calls.filter((call) => call.method === 'hook');
 }
@@ -75,6 +84,7 @@ describe('stopping the bubbles on iOS', () => {
 		const before = native.calls.length;
 
 		flux.emit('Theme');
+		await settle();
 
 		expect(native.calls.length).toBeGreaterThan(before);
 	});
@@ -100,14 +110,16 @@ describe('stopping the bubbles on iOS', () => {
 	});
 
 	test('does not repaint when the theme changes while the bubbles are being removed', async () => {
-		let repaint = () => {};
+		let before = 0;
 
-		repaint = () => flux.emit('Theme');
-		await startPlugin(overrides(() => repaint()));
+		// Counts from the scope's disposal, since stopping first sizes the rows back on its own.
+		await startPlugin(
+			overrides(() => {
+				before = native.calls.length;
+				flux.emit('Theme');
+			}),
+		);
 		await settle();
-
-		const before = native.calls.length;
-
 		await stopPlugin();
 
 		expect(native.calls).toHaveLength(before);
@@ -123,50 +135,64 @@ describe('stopping the bubbles on Android', () => {
 			'android.widget.TextView',
 			'android.widget.ImageView',
 			'android.graphics.drawable.LayerDrawable',
+			'java.lang.reflect.Array',
+			'android.text.Spanned',
+			'android.text.style.LeadingMarginSpan',
+			'android.text.style.LineBackgroundSpan',
+			'android.util.PathParser',
+			'android.graphics.Paint$Style',
 		]) {
 			native.java.registerClass(name);
 		}
 
 		native.java.registerClass(ACCESSORIES, {
-			methods: { onLayout: () => null, getParent: () => null },
+			methods: { onLayout: () => null },
+		});
+		native.java.registerClass('android.content.res.Resources', {
+			methods: { getIdentifier: () => 1, getDisplayMetrics: () => null },
+		});
+		native.java.registerClass('android.app.Activity', {
+			methods: {
+				getResources: () => native.java.create('android.content.res.Resources'),
+				getWindow: () => null,
+			},
 		});
 		native.java.registerClass('app.unbound.android.ActivityTracker', {
-			methods: { currentActivity: () => null },
+			methods: { currentActivity: () => native.java.create('android.app.Activity') },
 			staticFields: { INSTANCE: native.java.create('app.unbound.android.ActivityTracker') },
 		});
 	});
 
-	function androidOverrides(onScopeDispose: () => void = () => {}) {
+	function androidOverrides(onScopeDispose: () => void = () => {}, runs: unknown[][] = []) {
 		return {
 			native: {
-				...overrides(onScopeDispose).native,
+				...overrides(onScopeDispose, runs).native,
 				java: withMessageViewShapes(native.java.bridge),
 			},
 		};
 	}
 
-	test('hooks the message accessories and removes the hook on stop', async () => {
-		await startPlugin(androidOverrides());
+	// The accessories' layout hook runs on the UI thread, installed with the row hooks in the scope that stopping disposes.
+	test('hooks the message accessories on the UI thread and drops the hook on stop', async () => {
+		const runs: unknown[][] = [];
+		let disposed = false;
+
+		await startPlugin(androidOverrides(() => (disposed = true), runs));
 		await settle();
 
-		expect(hooked()).toMatchObject([
-			{ bridge: 'hooks', target: ACCESSORIES, name: 'onLayout' },
-		]);
+		expect(hooked()).toEqual([]);
+		expect(runs.some((args) => args.some((arg) => isBindHook(arg)))).toBe(true);
 
 		const accessories = native.java.create(ACCESSORIES) as NativeJavaReference;
-		const layOut = () => {
-			const before = native.calls.length;
+		const before = native.calls.length;
 
-			native.java.bridge.invoke(accessories, 'onLayout', []);
+		native.java.bridge.invoke(accessories, 'onLayout', []);
 
-			return native.calls.slice(before).map((call) => call.name);
-		};
-
-		expect(layOut()).toContain('getParent');
+		expect(native.calls.slice(before).map((call) => call.name)).toEqual(['onLayout']);
 
 		await stopPlugin();
 
-		expect(layOut()).toEqual(['onLayout']);
+		expect(disposed).toBe(true);
 	});
 
 	test('does not repaint when the theme changes while the bubbles are being removed', async () => {

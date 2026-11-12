@@ -1,5 +1,4 @@
 import type {
-	NativeJavaAssociationKey,
 	NativeJavaBridge,
 	NativeJavaHooksBridge,
 	NativeJavaReference,
@@ -8,46 +7,81 @@ import type {
 	NativeUIScope,
 } from '@unbound-app/api/native';
 import {
-	javaFloat,
+	javaBoolean,
+	javaFlag,
 	javaInt,
 	javaNumber,
 	javaReference,
-	javaString,
 	javaText,
 } from '@unbound-plugins/shared/native/android/java-values';
+
+import type { RowPaint } from '~/bubbles/android/row-paint';
+import { bubbleDrawable } from '~/bubbles/android/ui-drawable';
+import {
+	moveHeading,
+	padRow,
+	paintBackground,
+	placeAvatar,
+	roundMosaic,
+	viewIn,
+	readTaps,
+	resetAvatar,
+	restoreRow,
+	rowKind,
+	type AuthorTaps,
+	type MessageInfo,
+	type RowConfig,
+	type RowKind,
+} from '~/bubbles/android/ui-row';
 
 const STATE_KEY = '__unboundChatBubblesAndroid';
 const MAX_CACHED = 400;
 const WIDTH_TOLERANCE = 1;
+const HEIGHT_TOLERANCE = 1;
+const MOSAIC_DEPTH = 4;
+/** `ViewGroup.onLayout`'s parameters. */
+const LAYOUT_PARAMETERS = ['boolean', 'int', 'int', 'int', 'int'];
+/** `View.MeasureSpec`: the size bits, and the mode that fixes the size. */
+const MEASURE_SIZE = 0x3fffffff;
+const MEASURE_EXACTLY = 0x40000000;
 
-export type BindGuard = {
+/** The method that paints Discord's mention and highlight tint behind a row, and the fields it reads the colors from. */
+export type HighlightPainter = {
+	className: string;
+	method: string;
+	background: string;
+	bar: string;
+};
+
+export type BindHook = {
 	messageView: string;
 	bindName: string;
 	bindParameters: string[];
-	/** The row's field holding the id of the message it shows, which the bind sets. */
-	idField: string;
-	layerId: number;
-	ours: NativeJavaAssociationKey;
-	original: NativeJavaAssociationKey;
-	drawnFor: NativeJavaAssociationKey;
-};
-
-export type CachedBubble = {
-	left: number;
-	top: number;
-	right: number;
-	bottom: number;
-	radius: number;
-	color: number;
-	rowWidth: number;
-};
-
-type BindEvent = {
-	self?: NativeJavaValue;
+	/** The row's accessories list, whose layout pass runs once the row's content has its final size. */
+	accessories: string;
 };
 
 type BubbleState = {
-	cache: Map<string, CachedBubble>;
+	java: NativeJavaBridge;
+	config: RowConfig;
+	/** The message row's class. */
+	messageView: string;
+	paints: Map<string, RowPaint>;
+	drawables: Map<string, NativeJavaReference>;
+	/** The row each message was last bound to. */
+	rows: Map<string, NativeJavaReference>;
+	/** The rows showing a message without a paint that fits them, by handle. */
+	waiting: Set<string>;
+	/** Every row this side changed, to restore when the plugin stops. */
+	touched: Map<string, NativeJavaReference>;
+	infos: Map<string, MessageInfo>;
+	/** The picture each author's latest group starts with. */
+	pictures: Map<string, MessageInfo>;
+	taps: Map<string, AuthorTaps>;
+	/** The channel the rows were last bound in. */
+	channel: string | undefined;
+	bars: Map<string, number>;
+	list: NativeJavaReference | null;
 };
 
 type StateHolder = Record<typeof STATE_KEY, BubbleState | undefined>;
@@ -58,111 +92,309 @@ function holder(): StateHolder {
 	return globalThis as unknown as StateHolder;
 }
 
-function drawCached(
-	java: NativeJavaBridge,
-	guard: BindGuard,
-	row: NativeJavaReference,
-	messageId: string,
-	cached: CachedBubble,
-) {
+function remember<T>(map: Map<string, T>, key: string, value: T) {
 	'worklet';
-	const shape = java.construct('android.graphics.drawable.GradientDrawable', []);
+	map.delete(key);
+	map.set(key, value);
 
-	java.invoke(shape, 'setCornerRadius', [javaFloat(cached.radius)]);
-	java.invoke(shape, 'setColor', [javaInt(cached.color)]);
-
-	const bubble = java.construct('android.graphics.drawable.LayerDrawable', [
-		{ type: 'array', componentType: 'android.graphics.drawable.Drawable', value: [shape] },
-	]);
-
-	java.invoke(bubble, 'setId', [javaInt(0), javaInt(guard.layerId)]);
-	java.invoke(bubble, 'setLayerInset', [
-		javaInt(0),
-		javaInt(cached.left),
-		javaInt(cached.top),
-		javaInt(cached.right),
-		javaInt(cached.bottom),
-	]);
-	java.invoke(bubble, 'setPadding', [javaInt(0), javaInt(0), javaInt(0), javaInt(0)]);
-
-	if (!javaReference(java.getAssociatedObject(row, guard.ours))) {
-		java.setAssociatedObject(row, guard.original, java.invoke(row, 'getBackground', []));
-	}
-
-	java.setAssociatedObject(row, guard.ours, bubble);
-	java.setAssociatedObject(row, guard.drawnFor, javaString(messageId));
-	java.invoke(row, 'setBackground', [bubble]);
+	if (map.size > MAX_CACHED) map.delete(map.keys().next().value as string);
 }
 
-function restore(java: NativeJavaBridge, guard: BindGuard, row: NativeJavaReference) {
+function keyOf(view: NativeJavaReference): string {
 	'worklet';
-	const background = javaReference(java.getAssociatedObject(row, guard.original));
 
-	java.setAssociatedObject(row, guard.ours, { type: 'null' });
-	java.invoke(row, 'setBackground', [
-		background ?? { type: 'null', class: 'android.graphics.drawable.Drawable' },
-	]);
+	return 'value' in view ? String(view.value) : '';
+}
+
+function textField(java: NativeJavaBridge, from: NativeJavaReference, name: string) {
+	'worklet';
+
+	try {
+		return javaText(java.getField(from, name));
+	} catch {
+		// A build without the field shows no such value.
+		return undefined;
+	}
+}
+
+// Ids come wrapped, such as `UserId(id=263689920210534400)`, whose text keeps every digit, or as longs, which a JS number rounds but still tells apart.
+function idField(java: NativeJavaBridge, from: NativeJavaReference, name: string) {
+	'worklet';
+
+	try {
+		const value = java.getField(from, name);
+		const wrapped = javaReference(value);
+		const text = wrapped
+			? javaText(java.invoke(wrapped, 'toString', []))
+			: String(javaNumber(value) ?? '');
+
+		return text?.match(/\d+/)?.[0];
+	} catch {
+		// A build without the field shows no such value.
+		return undefined;
+	}
+}
+
+// Rows draw their bubbles past their own bounds, into the room of the rows around them.
+function unclipList(current: BubbleState, row: NativeJavaReference) {
+	'worklet';
+
+	const { java } = current;
+	const list = javaReference(java.invoke(row, 'getParent', []));
+
+	// Each chat screen has its own list.
+	if (!list || (current.list && javaFlag(java.invoke(current.list, 'equals', [list])))) return;
+
+	current.list = list;
+	java.invoke(list, 'setClipChildren', [javaBoolean(false)]);
 }
 
 /**
- * @description Handles each row right after Discord binds it, from a hook that runs on the UI thread: a message whose bubble was already measured gets it at once, and a row moved to a message without a known bubble gets its own background back, so neither an old bubble nor a missing one is ever drawn.
- * @param scope The plugin's UI scope.
- * @param guard The message view class, its bind method, the row's message id field, the bubble's layer id, and the keys the bubble, the row's own background and the bubble's message are kept under.
- * @param needsBubble Wakes the JS thread for a row the guard could not draw a known bubble for, so it gets measured.
+ * @description Lays the chat list out again after rows changed size outside its layout pass. React Native drops the list's own layout requests, so a row padded from the JS thread keeps its old height until the list is measured and laid out by hand.
  */
-export function installBindGuard(
+export function relayoutList() {
+	'worklet';
+	const current = holder()[STATE_KEY];
+	const list = current?.list;
+
+	if (!current || !list) return;
+
+	const { java } = current;
+
+	try {
+		if (!javaFlag(java.invoke(list, 'isLayoutRequested', []))) return;
+
+		const [left, top, right, bottom] = ['getLeft', 'getTop', 'getRight', 'getBottom'].map(
+			(name) => javaNumber(java.invoke(list, name, [])) ?? 0,
+		) as [number, number, number, number];
+		const exactly = (size: number) => javaInt((size & MEASURE_SIZE) | MEASURE_EXACTLY);
+
+		java.invoke(list, 'measure', [exactly(right - left), exactly(bottom - top)]);
+		java.invoke(list, 'layout', [javaInt(left), javaInt(top), javaInt(right), javaInt(bottom)]);
+	} catch (error) {
+		console.error(`[Chat Bubbles] ${String(error)}`);
+	}
+}
+
+function drawableFor(current: BubbleState, id: string, paint: RowPaint, height: number) {
+	'worklet';
+	const cached = current.drawables.get(id);
+
+	if (cached) return cached;
+
+	const drawable = bubbleDrawable(
+		current.java,
+		{ ...paint, width: paint.rowWidth, height },
+		current.config.layerId,
+	);
+
+	if (drawable) remember(current.drawables, id, drawable);
+
+	return drawable ?? null;
+}
+
+function paintRow(current: BubbleState, row: NativeJavaReference, id: string, kind: RowKind) {
+	'worklet';
+	const { java, config } = current;
+	const paint = current.paints.get(id);
+	const width = javaNumber(java.invoke(row, 'getWidth', []));
+	// A row Discord just made has no width until its first layout, which gives it the list's.
+	const fits =
+		paint &&
+		width !== undefined &&
+		(width === 0 || Math.abs(width - paint.rowWidth) <= WIDTH_TOLERANCE);
+
+	remember(current.touched, keyOf(row), row);
+
+	if (paint && fits) current.waiting.delete(keyOf(row));
+	else current.waiting.add(keyOf(row));
+
+	padRow(java, config, row, kind);
+	resetAvatar(java, config, row, kind);
+
+	const mosaic = viewIn(java, row, config.ids.mosaic);
+
+	if (mosaic) roundMosaic(java, config, mosaic, fits ? paint?.mediaRadius : undefined);
+
+	if (!paint || !fits) {
+		paintBackground(java, config, row, null);
+
+		const fallback = config.fallback;
+		const none = { x: 0, y: 0 };
+		const starts = kind !== 'next';
+
+		moveHeading(java, config, row, {
+			name: starts && fallback ? fallback.name : none,
+			avatar: starts && fallback ? fallback.avatar : none,
+			reply: starts && fallback ? fallback.reply : none,
+		});
+
+		if (starts && fallback?.hideStart) {
+			placeAvatar(
+				java,
+				config,
+				row,
+				{ start: true, end: false, author: '', bottom: 0, top: 0, height: 0 },
+				undefined,
+				undefined,
+			);
+		}
+
+		return false;
+	}
+
+	paintBackground(java, config, row, drawableFor(current, id, paint, paint.rowHeight));
+	moveHeading(java, config, row, paint);
+
+	if (paint.picture) {
+		placeAvatar(
+			java,
+			config,
+			row,
+			paint.picture,
+			current.infos.get(id)?.avatar
+				? current.infos.get(id)
+				: (current.pictures.get(paint.picture.author) ?? {
+						avatar: paint.picture.url,
+						decoration: paint.picture.decoration,
+					}),
+			current.taps.get(paint.picture.author),
+		);
+	}
+
+	return true;
+}
+
+function noteMessage(
+	current: BubbleState,
+	row: NativeJavaReference,
+	id: string,
+	message: NativeJavaValue | undefined,
+	kind: RowKind,
+) {
+	'worklet';
+	const { java } = current;
+	const bridge = javaReference(message);
+
+	if (!bridge) return;
+
+	const key = idField(java, bridge, 'authorId');
+	const channel = idField(java, bridge, 'channelId');
+
+	// A member's picture can differ between servers, so a new channel starts without any.
+	if (channel && channel !== current.channel) {
+		current.channel = channel;
+		current.pictures.clear();
+		current.taps.clear();
+	}
+
+	const info = {
+		avatar: textField(java, bridge, 'avatarURL'),
+		decoration: textField(java, bridge, 'avatarDecorationURL'),
+		author: key,
+	};
+
+	remember(current.infos, id, info);
+
+	if (kind === 'next' || !key) return;
+
+	// A group's first row always carries the author's picture, for later rows that may not.
+	if (info.avatar) remember(current.pictures, key, info);
+
+	const taps = readTaps(java, current.config, row);
+
+	if (taps) remember(current.taps, key, taps);
+}
+
+/**
+ * @description Lays out and paints each row right after Discord binds it, from a hook on the UI thread: a measured message gets its bubble, moves and avatar at once, and any other row gets its room and Discord's own look until it is measured.
+ * @param scope The plugin's UI scope.
+ * @param bind The message view class and its bind method.
+ * @param config The row views, room, inset and fallback layout.
+ * @param needsBubble Wakes the JS thread for a row whose message has no paint yet.
+ */
+export function installRowHooks(
 	scope: NativeUIScope,
-	guard: BindGuard,
+	bind: BindHook,
+	config: RowConfig,
 	needsBubble: NativeUICallback<[NativeJavaValue]>,
 ) {
 	'worklet';
 	const java = scope.java as NativeJavaBridge;
 	const hooks = scope.hooks as NativeJavaHooksBridge;
-	const current: BubbleState = { cache: new Map() };
+	const current: BubbleState = {
+		java,
+		config,
+		messageView: bind.messageView,
+		paints: new Map(),
+		drawables: new Map(),
+		rows: new Map(),
+		waiting: new Set(),
+		touched: new Map(),
+		infos: new Map(),
+		pictures: new Map(),
+		taps: new Map(),
+		channel: undefined,
+		bars: new Map(),
+		list: null,
+	};
 
 	holder()[STATE_KEY] = current;
 
 	hooks.hook(
-		guard.messageView,
-		guard.bindName,
-		guard.bindParameters,
+		bind.messageView,
+		bind.bindName,
+		bind.bindParameters,
 		{ notify: 'after' },
-		(event: BindEvent) => {
+		(event: { self?: NativeJavaValue; args?: NativeJavaValue[] }) => {
 			const row = javaReference(event.self);
 
-			if (!row) {
-				return;
-			}
+			if (!row) return;
 
 			try {
-				const shown = javaText(java.getField(row, guard.idField));
-				const drawn = javaReference(java.getAssociatedObject(row, guard.ours));
-				const drawnFor = javaText(java.getAssociatedObject(row, guard.drawnFor));
+				const id = javaText(java.getField(row, current.config.idField));
 
-				if (drawn && shown && shown === drawnFor) {
-					return;
-				}
+				if (!id) return;
 
-				const cached = shown ? current.cache.get(shown) : undefined;
-				const width = javaNumber(java.invoke(row, 'getWidth', []));
+				const kind = rowKind(java, current.config, row);
+
+				unclipList(current, row);
+				noteMessage(current, row, id, event.args?.[0], kind);
+				remember(current.rows, id, row);
+
+				if (!paintRow(current, row, id, kind) && event.self) needsBubble(event.self);
+			} catch (error) {
+				console.error(`[Chat Bubbles] ${String(error)}`);
+			}
+		},
+	);
+
+	// A row bound ahead of the scroll is laid out only once it shows, and media or reactions change a row's height later, so each layout of a row's content checks its paint still fits.
+	hooks.hook(
+		bind.accessories,
+		'onLayout',
+		LAYOUT_PARAMETERS,
+		{ notify: 'after' },
+		(event: { self?: NativeJavaValue }) => {
+			const accessories = javaReference(event.self);
+
+			if (!accessories || holder()[STATE_KEY] !== current) return;
+
+			try {
+				const row = javaReference(java.invoke(accessories, 'getParent', []));
+				const id = row ? javaText(java.getField(row, current.config.idField)) : undefined;
+
+				if (!row || !id) return;
+
+				const paint = current.paints.get(id);
+				const height = javaNumber(java.invoke(row, 'getHeight', [])) ?? 0;
 
 				if (
-					shown &&
-					cached &&
-					width !== undefined &&
-					Math.abs(width - cached.rowWidth) <= WIDTH_TOLERANCE
+					current.waiting.has(keyOf(row)) ||
+					!paint ||
+					Math.abs(height - paint.rowHeight) > HEIGHT_TOLERANCE
 				) {
-					drawCached(java, guard, row, shown, cached);
-
-					return;
-				}
-
-				if (drawn) {
-					restore(java, guard, row);
-				}
-
-				if (event.self) {
-					needsBubble(event.self);
+					needsBubble(row as unknown as NativeJavaValue);
 				}
 			} catch (error) {
 				console.error(`[Chat Bubbles] ${String(error)}`);
@@ -172,32 +404,170 @@ export function installBindGuard(
 }
 
 /**
- * @description Remembers a message's measured bubble, so the next bind of that message draws it at once.
- * @param messageId The message.
- * @param bubble The bubble's insets, corner radius and color in pixels, and the row width it was measured at.
+ * @description Rounds a media mosaic as its message's bubble asks, from the mosaic's own layout pass, which runs after its row is bound.
+ * @param mosaic The mosaic's list view.
  */
-export function rememberBubble(messageId: string, bubble: CachedBubble) {
+export function roundMosaicOf(mosaic: NativeJavaReference) {
 	'worklet';
 	const current = holder()[STATE_KEY];
 
-	if (!current) {
-		return;
+	if (!current) return;
+
+	const { java, config } = current;
+	let row: NativeJavaReference | null = mosaic;
+
+	// The mosaic sits in a media item, in the row's accessories list, in the row.
+	for (let depth = 0; row && depth < MOSAIC_DEPTH; depth++) {
+		row = javaReference(java.invoke(row, 'getParent', []));
+
+		if (row && javaText(java.className(row)) === current.messageView) break;
 	}
 
-	current.cache.delete(messageId);
-	current.cache.set(messageId, bubble);
+	if (!row || javaText(java.className(row)) !== current.messageView) return;
 
-	if (current.cache.size > MAX_CACHED) {
-		current.cache.delete(current.cache.keys().next().value as string);
+	const id = javaText(java.getField(row, config.idField));
+	const paint = id ? current.paints.get(id) : undefined;
+
+	roundMosaic(java, config, mosaic, paint?.mediaRadius);
+}
+
+/**
+ * @description Stops Discord painting its mention and highlight tint behind rows with a bubble, which shows the mention itself, and tells the JS thread the tint's bar color.
+ * @param scope The plugin's UI scope.
+ * @param painter The tint's painter method and color fields.
+ * @param onBar Called with a message id and its bar color the first time it shows, or when it changes.
+ */
+export function installHighlightHook(
+	scope: NativeUIScope,
+	painter: HighlightPainter,
+	onBar: NativeUICallback<[string, number]>,
+) {
+	'worklet';
+	const java = scope.java as NativeJavaBridge;
+	const hooks = scope.hooks as NativeJavaHooksBridge;
+
+	hooks.hook(
+		painter.className,
+		painter.method,
+		['android.graphics.Canvas', 'android.view.View'],
+		{ notify: true },
+		(event: { self?: NativeJavaValue; args?: NativeJavaValue[] }) => {
+			const current = holder()[STATE_KEY];
+			const self = javaReference(event.self);
+			const row = javaReference(event.args?.[1]);
+
+			if (!current || !self || !row) return;
+
+			try {
+				const id = javaText(java.getField(row, current.config.idField));
+
+				if (!id || !current.paints.has(id)) return;
+
+				const boxed = javaReference(java.getField(self, painter.bar));
+				const bar = boxed ? javaNumber(java.invoke(boxed, 'intValue', [])) : undefined;
+
+				java.setField(self, painter.background, { type: 'null' });
+				java.setField(self, painter.bar, { type: 'null' });
+
+				if (bar !== undefined && current.bars.get(id) !== bar) {
+					remember(current.bars, id, bar);
+					onBar(id, bar);
+				}
+			} catch (error) {
+				console.error(`[Chat Bubbles] ${String(error)}`);
+			}
+		},
+	);
+}
+
+/**
+ * @description Remembers a message's measured paint and paints the row showing it, if it still does.
+ * @param id The message.
+ * @param paint Its bubble, moves and avatar, in pixels.
+ * @param measured The handle of the row it was measured in, for a row bound before the hooks were installed.
+ */
+export function paintMessage(id: string, paint: RowPaint, measured: string | null) {
+	'worklet';
+	const current = holder()[STATE_KEY];
+
+	if (!current) return;
+
+	remember(current.paints, id, paint);
+	current.drawables.delete(id);
+
+	const row = measured
+		? ({ type: 'handle', value: measured } as NativeJavaReference)
+		: current.rows.get(id);
+
+	if (!row) return;
+
+	try {
+		if (javaText(current.java.getField(row, current.config.idField)) !== id) return;
+
+		unclipList(current, row);
+		remember(current.rows, id, row);
+		paintRow(current, row, id, rowKind(current.java, current.config, row));
+	} catch (error) {
+		console.error(`[Chat Bubbles] ${String(error)}`);
 	}
 }
 
 /**
- * @description Forgets every remembered bubble, after the appearance changes.
+ * @description Changes the room, inset and fallback layout, forgets every paint, and lays out the rows on screen again.
+ * @param config The new room, inset and fallback.
  */
-export function forgetBubbles() {
+export function setRowConfig(config: Pick<RowConfig, 'rooms' | 'inset' | 'fallback'>) {
 	'worklet';
-	holder()[STATE_KEY]?.cache.clear();
+	const current = holder()[STATE_KEY];
+
+	if (!current) return;
+
+	current.config = { ...current.config, ...config };
+	current.paints.clear();
+	current.drawables.clear();
+
+	for (const [id, row] of current.rows) {
+		try {
+			if (javaText(current.java.getField(row, current.config.idField)) === id) {
+				paintRow(current, row, id, rowKind(current.java, current.config, row));
+			}
+		} catch (error) {
+			console.error(`[Chat Bubbles] ${String(error)}`);
+		}
+	}
 }
 
-export default { installBindGuard, rememberBubble, forgetBubbles };
+/**
+ * @description Puts every row this side changed back the way Discord laid it out, and forgets everything.
+ */
+export function restoreRows() {
+	'worklet';
+	const current = holder()[STATE_KEY];
+
+	if (!current) return;
+
+	for (const row of current.touched.values()) {
+		try {
+			restoreRow(current.java, current.config, row);
+		} catch (error) {
+			console.error(`[Chat Bubbles] ${String(error)}`);
+		}
+	}
+
+	if (current.list) {
+		current.java.invoke(current.list, 'setClipChildren', [javaBoolean(true)]);
+		relayoutList();
+	}
+
+	holder()[STATE_KEY] = undefined;
+}
+
+export default {
+	installRowHooks,
+	installHighlightHook,
+	roundMosaicOf,
+	paintMessage,
+	setRowConfig,
+	restoreRows,
+	relayoutList,
+};
