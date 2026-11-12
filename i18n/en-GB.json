@@ -434,6 +434,7 @@
 	"UNBOUND_COMMAND_EVAL_SEND_DESC": "Send the result to the channel",
 	"UNBOUND_COMMAND_RELOAD_DESC": "Reload Discord",
 	"UNBOUND_COMMAND_DEBUG_DESC": "Send debug info",
+	"UNBOUND_COMMAND_DEBUG_MESSAGE_DESC": "A note to send with the report, such as what went wrong",
 	"UNBOUND_COMMAND_RECOVERY_DESC": "Turn recovery mode on or off and restart",
 	"UNBOUND_COMMAND_PLUGINS_DESC": "Open the Unbound plugins settings",
 	"UNBOUND_COMMAND_THEMES_DESC": "Open the Unbound themes settings",
