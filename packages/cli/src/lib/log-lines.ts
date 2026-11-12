@@ -1,8 +1,8 @@
 import pc from 'picocolors';
 
-export const LOG_LEVELS = ['verbose', 'debug', 'info', 'warn', 'error', 'fatal'] as const;
+import { LOG_LEVELS, type LogLevel } from './log-levels';
 
-export type LogLevel = (typeof LOG_LEVELS)[number];
+export { LOG_LEVELS, type LogLevel };
 
 export type LogEntry = {
 	kind: 'entry';
@@ -256,7 +256,10 @@ export function createAndroidLogSource(pid?: number): LogSource {
 				return [entry];
 			}
 
-			return ANDROID_CRASH_TAGS.has(tag) && rank(level) >= rank('error') ? [entry] : [];
+			return ANDROID_CRASH_TAGS.has(tag) &&
+				LOG_LEVELS.indexOf(level) >= LOG_LEVELS.indexOf('error')
+				? [entry]
+				: [];
 		},
 	};
 }
@@ -454,7 +457,7 @@ export function unquoteConsoleArguments(message: string): string {
  * @returns A function that renders an event, or returns `undefined` for one filtered out.
  */
 export function createLogPrinter(options: PrinterOptions): (event: LogEvent) => string | undefined {
-	const minimum = rank(options.level);
+	const minimum = LOG_LEVELS.indexOf(options.level);
 	const colors = pc.createColors(options.colors ?? pc.isColorSupported);
 
 	return (event) => {
@@ -462,7 +465,7 @@ export function createLogPrinter(options: PrinterOptions): (event: LogEvent) => 
 			return colors.cyan(`-- ${event.message} --`);
 		}
 
-		if (rank(event.level) < minimum) {
+		if (LOG_LEVELS.indexOf(event.level) < minimum) {
 			return;
 		}
 
@@ -498,10 +501,6 @@ function formatClock(epochMs: number): string {
 	const pad = (value: number, width = 2) => String(value).padStart(width, '0');
 
 	return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.${pad(date.getMilliseconds(), 3)}`;
-}
-
-function rank(level: LogLevel): number {
-	return LOG_LEVELS.indexOf(level);
 }
 
 function notice(message: string): LogNotice {

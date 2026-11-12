@@ -1,8 +1,9 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
+import { lazyHandler } from '~/lib/lazy-handler';
 import { Type } from '~/lib/schema';
 
-import { pluginField, runI18n } from './run';
+import { pluginField } from './plugin-field';
 
 const schema = Type.Object({
 	key: Type.String({ minLength: 1, description: 'The key to add, such as GREETING.' }),
@@ -19,9 +20,7 @@ const addCommand: CommandDefinition<typeof schema> = {
 	mcp: false,
 	schema,
 	cli: { positionals: ['key', 'text'] },
-	handler({ key, text, plugin }) {
-		return runI18n({ plugin, add: { key, text: text.join(' ') } });
-	},
+	handler: lazyHandler(() => import('./add-handler')),
 };
 
 export default addCommand;

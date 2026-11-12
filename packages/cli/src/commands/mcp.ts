@@ -1,12 +1,7 @@
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { DEFAULT_BRIDGE_PORT } from '@unbound-app/debugger-protocol';
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { command, type Command } from 'cleye';
 
-import { registerTools } from '~/adapters/mcp';
-import { createContext } from '~/lib/context';
 import type { MenuEntry } from '~/lib/menu';
-import { mcpTools } from '~/registry';
 
 const DESCRIPTION =
 	'Serve the debug and device commands as stdio MCP tools for AI clients, over one long-lived ' +
@@ -31,18 +26,7 @@ export const mcpCommand: Command = command(
 		help: { description: DESCRIPTION },
 	},
 	(parsed) => {
-		const context = createContext(parsed.flags.port);
-
-		const server = new Server(
-			{ name: 'ubd', version: '1.0.0' },
-			{ capabilities: { tools: {} } },
-		);
-
-		registerTools(server, mcpTools(), context);
-
-		const transport = new StdioServerTransport();
-
-		void server.connect(transport);
+		void import('./mcp-server').then(({ serveMcp }) => serveMcp(parsed.flags.port));
 	},
 );
 

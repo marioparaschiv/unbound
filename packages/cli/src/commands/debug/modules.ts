@@ -1,9 +1,8 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { runOnDevice, toDeviceCode } from '~/lib/device';
+import { lazyHandler } from '~/lib/lazy-handler';
 import { bridgePortField } from '~/lib/context';
 import { defaulted, Type } from '~/lib/schema';
-import { searchModules } from '~/lib/probes';
 
 const schema = Type.Object({
 	pattern: Type.String({
@@ -23,9 +22,7 @@ const modulesCommand: CommandDefinition<typeof schema> = {
 	mcp: true,
 	schema,
 	cli: { positionals: ['pattern'] },
-	handler({ pattern, max }, { client }) {
-		return runOnDevice(client, toDeviceCode(searchModules, pattern, max));
-	},
+	handler: lazyHandler(() => import('./modules-handler')),
 };
 
 export default modulesCommand;

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { analyzeSamples } from '~/commands/debug/status';
+import { analyzeSamples } from '~/commands/debug/status-handler';
 
 const sample = (handles: number, hooks = 12) => ({ handles, hooks, surfaces: 1, cachedReturns: 0 });
 

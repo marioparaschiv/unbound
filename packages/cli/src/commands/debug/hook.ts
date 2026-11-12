@@ -1,7 +1,6 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { RECORDING_GRACE_MS, runOnDevice, toDeviceCode } from '~/lib/device';
-import { captureNativeHook } from '~/lib/probes';
+import { lazyHandler } from '~/lib/lazy-handler';
 import { bridgePortField } from '~/lib/context';
 import { defaulted, Type } from '~/lib/schema';
 
@@ -33,13 +32,7 @@ const hookCommand: CommandDefinition<typeof schema> = {
 	mcp: true,
 	schema,
 	cli: { positionals: ['className', 'method'] },
-	handler({ className, method, parameters, duration, samples }, { client }) {
-		return runOnDevice(
-			client,
-			toDeviceCode(captureNativeHook, className, method, parameters, duration, samples),
-			duration + RECORDING_GRACE_MS,
-		);
-	},
+	handler: lazyHandler(() => import('./hook-handler')),
 };
 
 export default hookCommand;

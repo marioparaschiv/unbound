@@ -1,6 +1,6 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { launchBridge } from '~/lib/bridge-process';
+import { lazyHandler } from '~/lib/lazy-handler';
 import { bridgePortField } from '~/lib/context';
 import { Type } from '~/lib/schema';
 
@@ -16,9 +16,7 @@ const startCommand: CommandDefinition<typeof schema> = {
 	summary: 'Start the debugger bridge in the background.',
 	mcp: false,
 	schema,
-	handler({ port }) {
-		return launchBridge(port, false);
-	},
+	handler: lazyHandler(() => import('./start-handler')),
 };
 
 export default startCommand;

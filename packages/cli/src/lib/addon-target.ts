@@ -1,3 +1,4 @@
+import type { CommandErrorCode } from '@unbound-app/debugger-protocol/registry';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -6,7 +7,8 @@ import { DEV_BUILD_CHECKS } from '~/lib/build-checks';
 import { buildAddon } from '~/lib/build-addon';
 import { loadConfig } from '~/lib/config';
 
-export type AddonTarget = { addon: DiscoveredAddon } | { error: string };
+/** The addon, or why it could not be found (`not-found`) or built (no code). */
+export type AddonTarget = { addon: DiscoveredAddon } | { error: string; code?: CommandErrorCode };
 
 export type AddonTargetOptions = {
 	/** Whether to run the workspace build command for it first. */
@@ -38,7 +40,10 @@ export async function resolveAddonTarget(
 	const addon = addons.find((entry) => entry.id === target || resolve(entry.dir) === directory);
 
 	if (!addon) {
-		return { error: `No addon in this workspace has the id or directory ${target}.` };
+		return {
+			error: `No addon in this workspace has the id or directory ${target}.`,
+			code: 'not-found',
+		};
 	}
 
 	if (!build) {

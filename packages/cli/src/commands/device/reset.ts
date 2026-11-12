@@ -1,7 +1,6 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { openDeviceTarget } from '~/lib/device-target';
-import { resetDevice } from '~/lib/device-state';
+import { lazyHandler } from '~/lib/lazy-handler';
 import { Type } from '~/lib/schema';
 
 import { deviceTargetFields } from './target-fields';
@@ -16,15 +15,7 @@ const resetCommand: CommandDefinition<typeof schema> = {
 	summary: 'Move Unbound aside so Discord starts fresh.',
 	mcp: true,
 	schema,
-	async handler({ serial, ios, udid, restart }) {
-		const target = await openDeviceTarget({ serial, ios, udid });
-
-		if ('error' in target) {
-			return { ok: false, text: target.error };
-		}
-
-		return resetDevice(target, { restart });
-	},
+	handler: lazyHandler(() => import('./reset-handler')),
 };
 
 export default resetCommand;

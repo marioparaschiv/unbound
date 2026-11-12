@@ -24,6 +24,7 @@ describe('devicePlatform', () => {
 		expect(devicePlatform({ udid: 'phone' })).toBe('ios');
 		expect(devicePlatform({ serial: 'emulator-5554', ios: true })).toEqual({
 			error: 'Pass either --serial for an Android device or --ios/--udid for an iPhone, not both.',
+			code: 'invalid-input',
 		});
 	});
 });
@@ -37,6 +38,7 @@ describe('openDeviceTarget on Android', () => {
 
 		expect(await openDeviceTarget({ run })).toEqual({
 			error: 'No Android device is ready over adb. adb get-state timed out after 15s.',
+			code: 'no-device',
 		});
 		expect(calls).toHaveLength(1);
 	});
@@ -92,6 +94,7 @@ describe('openDeviceTarget on iOS', () => {
 
 		expect(await openDeviceTarget({ ios: true, run, pilot: 'jb-p1lot' })).toEqual({
 			error: 'Several iOS devices are connected (one, two); pass --udid to pick one.',
+			code: 'no-device',
 		});
 	});
 

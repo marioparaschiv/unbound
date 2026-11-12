@@ -1,9 +1,8 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { RECORDING_GRACE_MS, runOnDevice, toDeviceCode } from '~/lib/device';
+import { lazyHandler } from '~/lib/lazy-handler';
 import { bridgePortField } from '~/lib/context';
 import { defaulted, Type } from '~/lib/schema';
-import { traceFunction } from '~/lib/probes';
 
 const schema = Type.Object({
 	props: Type.Array(Type.String(), {
@@ -27,13 +26,7 @@ const traceCommand: CommandDefinition<typeof schema> = {
 	mcp: true,
 	schema,
 	cli: { positionals: ['props'] },
-	handler({ props, duration, samples }, { client }) {
-		return runOnDevice(
-			client,
-			toDeviceCode(traceFunction, props, duration, samples),
-			duration + RECORDING_GRACE_MS,
-		);
-	},
+	handler: lazyHandler(() => import('./trace-handler')),
 };
 
 export default traceCommand;
