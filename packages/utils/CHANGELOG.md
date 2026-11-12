@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.1](https://github.com/marioparaschiv/unbound/compare/utils-v1.0.0...utils-v1.0.1) (2026-11-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/types bumped to 1.1.0
+
 ## [1.0.0](https://github.com/marioparaschiv/unbound/compare/utils-v0.10.4...utils-v1.0.0) (2026-11-11)
 
 

@@ -1,5 +1,27 @@
 # Changelog
 
+## [3.1.0](https://github.com/marioparaschiv/unbound/compare/api-v3.0.0...api-v3.1.0) (2026-11-12)
+
+
+### Features
+
+* **loader:** add WOFF2 and variable fonts, centre tall fonts ([#1142](https://github.com/marioparaschiv/unbound/issues/1142)) ([ccf0462](https://github.com/marioparaschiv/unbound/commit/ccf04625b5eb6baf4c6560f0513de63f701f2587))
+* **loader:** let UI scopes implement Java interfaces ([f8ca349](https://github.com/marioparaschiv/unbound/commit/f8ca3499ea8627dfc5f57560928676278b65dea9))
+* **loader:** let UI-scope Java hooks rewrite their arguments ([#1130](https://github.com/marioparaschiv/unbound/issues/1130)) ([20893e2](https://github.com/marioparaschiv/unbound/commit/20893e2e907eec6a81f2279ac714eb01aab100e9))
+
+
+### Bug Fixes
+
+* **api:** regenerate the SDK for getInstallDetails ([#1118](https://github.com/marioparaschiv/unbound/issues/1118)) ([cbe7bce](https://github.com/marioparaschiv/unbound/commit/cbe7bce664f1991b027820276944e03a481510a2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 3.1.0
+    * @unbound-app/sdk-generator bumped to 1.0.1
+
 ## [3.0.0](https://github.com/marioparaschiv/unbound/compare/api-v2.2.0...api-v3.0.0) (2026-11-11)
 
 
