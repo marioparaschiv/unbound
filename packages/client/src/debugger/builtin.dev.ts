@@ -15,6 +15,7 @@ import { highlightView, listViews, resetViewFinder } from '~/debugger/view-finde
 import { CLIENT_VERSION, DEBUGGER_ADDRESS } from '~/core/constants';
 import { endSession, receive } from '~/debugger/react-devtools.dev';
 import { getSetting, isSettingChange } from '~/settings/unbound';
+import { readDebugReport } from '~/diagnostics/read-debug-info';
 import { reloadSummary } from '~/debugger/reload-summary.dev';
 import { createPatcher } from '~/patcher/create-patcher';
 import { currentEnvironment } from '~/core/environment';
@@ -41,9 +42,12 @@ let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 const disposers = new Set<() => void>();
 
+const DEBUG_REPORT_GLOBAL = '__UNBOUND_DEBUG_REPORT__';
+
 /** Connects to the debugger bridge and streams logs, evals and pushes over it. */
 export function start() {
 	stopped = false;
+	Reflect.set(globalThis, DEBUG_REPORT_GLOBAL, readDebugReport);
 
 	patchLoggingHook();
 
@@ -64,6 +68,7 @@ export function start() {
 /** Disconnects from the debugger bridge and removes every listener and patch. */
 export function stop() {
 	stopped = true;
+	Reflect.deleteProperty(globalThis, DEBUG_REPORT_GLOBAL);
 	Patcher.unpatchAll();
 
 	clearReconnectTimer();
