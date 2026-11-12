@@ -5,6 +5,7 @@ import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import publishBundleReleaseEndpoint from '~/endpoints/publish-bundle-release';
+import publishLoaderReleaseEndpoint from '~/endpoints/publish-loader-release';
 import checkLoaderUpdateEndpoint from '~/endpoints/check-loader-update';
 import type { AppContext } from '~/lib/context';
 import { API_KEY_HEADER } from '~/api/client';
@@ -67,6 +68,23 @@ async function publishAt(minutes: number, body: PublishBundleReleaseRequest) {
 	}
 }
 
+async function releaseLoader(version: string) {
+	const response = await publishLoaderReleaseEndpoint.handle(
+		ctx,
+		new Request(new URL('/api/v1/loader/releases', ctx.env.PUBLIC_URL), {
+			method: 'POST',
+			headers: admin,
+			body: JSON.stringify({
+				platform: 'ios',
+				version,
+				url: `https://example.com/${version}`,
+			}),
+		}),
+	);
+
+	expect(response.status).toBe(200);
+}
+
 async function requiredFor(version: string, channel?: string) {
 	const url = new URL('/api/v1/loader/updates', ctx.env.PUBLIC_URL);
 
@@ -121,10 +139,22 @@ describe('GET /api/v1/loader/updates requiredVersion', () => {
 	test("names the loader the channel's newest bundle needs when the installed one is older", async () => {
 		await publishAt(10, { channel: 'stable', version: '1.0.0', minLoaderVersion: '1.1.0' });
 		await publishAt(20, { channel: 'stable', version: '1.1.0', minLoaderVersion: '1.3.0' });
+		await releaseLoader('1.3.0');
 
 		expect(await requiredFor('1.2.0', 'stable')).toBe('1.3.0');
 		expect(await requiredFor('1.3.0', 'stable')).toBeNull();
 		expect(await requiredFor('2.0.0', 'stable')).toBeNull();
+	});
+
+	test('answers null until a published loader release meets the requirement', async () => {
+		await publishAt(30, { channel: 'beta', version: 'def5678', minLoaderVersion: '1.5.0' });
+		await releaseLoader('1.4.0');
+
+		expect(await requiredFor('1.2.0', 'beta')).toBeNull();
+
+		await releaseLoader('1.5.0');
+
+		expect(await requiredFor('1.2.0', 'beta')).toBe('1.5.0');
 	});
 
 	test('answers null without a channel', async () => {

@@ -129,7 +129,8 @@ export function newerLoaderReleases(ctx: AppContext, query: LoaderUpdateQuery) {
 
 /**
  * @description Resolves a loader update check: the newest release the installed loader may move to,
- * with the changelog of every version it skips over, and the loader the channel's newest bundle needs.
+ * with the changelog of every version it skips over, and the loader the channel's newest bundle needs once a
+ * release that meets it is published, so the client never asks for a loader no one can install.
  * @param ctx The application context.
  * @param query The installed loader's platform and version, and the client's bundle channel.
  * @returns The update, or `null` when the installed loader is current.
@@ -145,11 +146,13 @@ export async function findLoaderUpdate(
 	const [newest] = rows;
 
 	if (!newest) {
-		return { update: null, requiredVersion };
+		return { update: null, requiredVersion: null };
 	}
 
+	const installable = requiredVersion && newest.versionKey >= toVersionKey(requiredVersion);
+
 	return {
-		requiredVersion,
+		requiredVersion: installable ? requiredVersion : null,
 		update: {
 			...toLoaderRelease(newest),
 			changelogs: rows.map((row) => ({
