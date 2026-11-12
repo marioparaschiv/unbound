@@ -98,22 +98,11 @@ jobs:
         timeout-minutes: 5
         permissions:
             actions: write
-            contents: read
         steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-              with:
-                  persist-credentials: false
-                  ref: main
-
-            - name: Publish the bundles that need this loader
+            - name: Publish the bundle that needs this loader
               env:
                   GH_TOKEN: ${{ github.token }}
-              run: |
-                  set -euo pipefail
-                  gh workflow run build-bundle.yml --repo "$GITHUB_REPOSITORY" --ref main
-                  gh workflow run build-bundle.yml --repo "$GITHUB_REPOSITORY" --ref main \
-                      -f version="$(jq -r '."packages/client"' .release-please-manifest.json)"
+              run: gh workflow run build-bundle.yml --repo "$GITHUB_REPOSITORY" --ref main
 
     alpha:
         needs: beta

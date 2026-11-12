@@ -25,8 +25,10 @@ func TestParsedBundlesPublishOnlyOnceTheirLoaderIsOut(t *testing.T) {
 
 	bundles := loadWorkflow(t, "loader-publish.yml").job(t, "bundles")
 	requireNeeds(t, "bundles", bundles, "stable")
-	dispatch := bundles.step(t, "Publish the bundles that need this loader").Run
-	if strings.Count(dispatch, "gh workflow run build-bundle.yml") != 2 || !strings.Contains(dispatch, `-f version="$(jq -r '."packages/client"' .release-please-manifest.json)"`) {
-		t.Fatalf("a published loader must publish beta and the latest client release, runs %q", dispatch)
+	if dispatch := bundles.step(t, "Publish the bundle that needs this loader").Run; !strings.Contains(dispatch, "gh workflow run build-bundle.yml") {
+		t.Fatalf("a published loader must publish the bundle that waited for it, runs %q", dispatch)
+	}
+	if _, ok := loadWorkflow(t, "release.yml").Jobs["bundle"]; ok {
+		t.Fatal("bundles have one channel, published from main; a client release must not publish another")
 	}
 }
