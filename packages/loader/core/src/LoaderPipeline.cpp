@@ -26,6 +26,13 @@ static constexpr std::chrono::seconds kFirstDownloadWait{10};
 
 static std::atomic<LoaderPipeline *> currentPipeline{nullptr};
 
+static int64_t epochMs()
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+               std::chrono::system_clock::now().time_since_epoch())
+        .count();
+}
+
 static int64_t nowMs()
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -222,9 +229,9 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
             downloaded = updater_.downloadBundle(savedPath, host_->resolveUpdateURL(),
                                                  host_->runtimeBytecodeVersion());
             preferences::setCheckedByLoader(settings_, loaderVersion());
-            recordUpdateCheck(nowMs(), downloaded != savedPath && fileExists(downloaded)
-                                           ? "downloaded"
-                                           : "current");
+            recordUpdateCheck(epochMs(), downloaded != savedPath && fileExists(downloaded)
+                                             ? "downloaded"
+                                             : "current");
         }
         catch (const std::exception &error)
         {
@@ -232,7 +239,7 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
             BundleUpdateFailure failure = update ? update->failure : BundleUpdateFailure::Network;
             // Even a failed check counts, so an offline launch does not wait again next time.
             preferences::setCheckedByLoader(settings_, loaderVersion());
-            recordUpdateCheck(nowMs(), "failed", error.what());
+            recordUpdateCheck(epochMs(), "failed", error.what());
             log(hasSaved ? LogLevel::Warning : LogLevel::Error, LOG_CATEGORY_DEFAULT,
                 std::string("Bundle download failed. (") + error.what() + ")" +
                     (hasSaved ? "; using the cached bundle" : ""));

@@ -10,8 +10,8 @@ int main()
     std::filesystem::path root =
         std::filesystem::temp_directory_path() / "unbound-storage-state-test";
     std::filesystem::remove_all(root);
-    std::filesystem::create_directories(root / "Unbound" / "Fonts");
-    assert(loader::writeTextFileAtomically((root / "Unbound" / "Fonts" / "a.ttf").string(),
+    std::filesystem::create_directories(root / "Fonts");
+    assert(loader::writeTextFileAtomically((root / "Fonts" / "a.ttf").string(),
                                            std::string(3 * 1024 * 1024, 'x')));
 
     nlohmann::json state = loader::storageState(root.string());

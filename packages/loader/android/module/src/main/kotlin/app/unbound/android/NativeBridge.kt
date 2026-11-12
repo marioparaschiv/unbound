@@ -13,6 +13,7 @@ import android.view.Choreographer
 import android.widget.Toast
 import org.json.JSONObject
 import java.io.File
+import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.Executors
@@ -411,22 +412,38 @@ object NativeBridge {
         connection.readTimeout = readTimeoutMs
         connection.useCaches = false
         headerKeys.zip(headerValues).forEach { (key, value) -> connection.setRequestProperty(key, value) }
+        val staging = File("$destination.download")
+        val validator = File("$destination.download.etag")
+        val resumeFrom = if (staging.length() > 0 && validator.isFile) staging.length() else 0L
+        if (resumeFrom > 0) {
+            connection.setRequestProperty("Range", "bytes=$resumeFrom-")
+            connection.setRequestProperty("If-Range", validator.readText())
+        }
         val deadline = downloadWatchdog.schedule({ connection.disconnect() }, totalTimeoutMs.toLong(), TimeUnit.MILLISECONDS)
 
         try {
             val status = connection.responseCode
-            if (status == HttpURLConnection.HTTP_OK) {
+            val resumed = status == HttpURLConnection.HTTP_PARTIAL && resumeFrom > 0
+            if (status == HttpURLConnection.HTTP_OK || resumed) {
                 val target = File(destination)
                 target.parentFile?.mkdirs()
-                val staging = File("$destination.download")
-                connection.inputStream.use { input -> staging.outputStream().use { input.copyTo(it) } }
+                if (!resumed) {
+                    val etag = connection.getHeaderField("etag")
+                    if (etag.isNullOrEmpty()) validator.delete() else validator.writeText(etag)
+                }
+                connection.inputStream.use { input -> FileOutputStream(staging, resumed).use { input.copyTo(it) } }
+                validator.delete()
                 if (!staging.renameTo(target)) {
                     staging.delete()
                     Logger.info(LogCategory.UPDATER, "Downloading $url failed: the bundle could not be saved to $destination")
                     return null
                 }
+            } else if (status == HttpURLConnection.HTTP_NOT_MODIFIED) {
+                staging.delete()
+                validator.delete()
             }
-            arrayOf(status.toString(), connection.getHeaderField("etag") ?: "", connection.getHeaderField("Retry-After") ?: "")
+            val reported = if (resumed) HttpURLConnection.HTTP_OK else status
+            arrayOf(reported.toString(), connection.getHeaderField("etag") ?: "", connection.getHeaderField("Retry-After") ?: "")
         } finally {
             deadline.cancel(false)
             connection.disconnect()

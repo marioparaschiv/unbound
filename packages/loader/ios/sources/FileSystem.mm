@@ -216,34 +216,64 @@ static NSString      *documents = nil;
         [request setValue:value forHTTPHeaderField:header];
     }
 
-    NSURLSessionTask *task = [[NSURLSession sharedSession]
-        dataTaskWithRequest:request
-          completionHandler:^(NSData *data, NSURLResponse *res, NSError *error) {
-              response = (NSHTTPURLResponse *) res;
+    NSString *resumePath = [path stringByAppendingString:@".resume"];
+    NSData   *resumeData = [NSData dataWithContentsOfFile:resumePath];
+    [[NSFileManager defaultManager] removeItemAtPath:resumePath error:nil];
+    if (resumeData)
+    {
+        NSDictionary *saved = [NSPropertyListSerialization propertyListWithData:resumeData
+                                                                        options:0
+                                                                         format:nil
+                                                                          error:nil];
+        id            savedURL =
+            [saved isKindOfClass:NSDictionary.class] ? saved[@"NSURLSessionDownloadURL"] : nil;
+        if (![savedURL isKindOfClass:NSString.class] ||
+            ![savedURL isEqualToString:url.absoluteString])
+        {
+            resumeData = nil;
+        }
+    }
 
-              if (error != nil)
-              {
-                  NSString *reason =
-                      [NSString stringWithFormat:@"%@ %d", error.domain, (int32_t) error.code];
-                  exception = [[NSException alloc] initWithName:@"DownloadFailed"
-                                                         reason:reason
-                                                       userInfo:nil];
-              }
-              else if ([response statusCode] == 200)
-              {
-                  [Logger info:LOG_CATEGORY_FILESYSTEM
-                        format:@"Saving file from %@ to %@", url, path];
-                  if (![data writeToFile:path atomically:YES])
-                  {
-                      exception =
-                          [[NSException alloc] initWithName:@"DownloadWriteFailed"
-                                                     reason:@"Downloaded bundle could not be saved"
-                                                   userInfo:nil];
-                  }
-              }
+    void (^finished)(NSURL *, NSURLResponse *, NSError *) =
+        ^(NSURL *location, NSURLResponse *res, NSError *error) {
+            response = (NSHTTPURLResponse *) res;
 
-              dispatch_semaphore_signal(semaphore);
-          }];
+            if (error != nil)
+            {
+                NSData *partial = error.userInfo[NSURLSessionDownloadTaskResumeData];
+                if (partial)
+                {
+                    [partial writeToFile:resumePath atomically:YES];
+                }
+                NSString *reason =
+                    [NSString stringWithFormat:@"%@ %d", error.domain, (int32_t) error.code];
+                exception = [[NSException alloc] initWithName:@"DownloadFailed"
+                                                       reason:reason
+                                                     userInfo:nil];
+            }
+            else if ([response statusCode] == 200 || [response statusCode] == 206)
+            {
+                [Logger info:LOG_CATEGORY_FILESYSTEM
+                      format:@"Saving file from %@ to %@%@", url, path,
+                             resumeData ? @" (resumed)" : @""];
+                NSFileManager *files = [NSFileManager defaultManager];
+                [files removeItemAtPath:path error:nil];
+                if (![files moveItemAtURL:location toURL:[NSURL fileURLWithPath:path] error:nil])
+                {
+                    exception =
+                        [[NSException alloc] initWithName:@"DownloadWriteFailed"
+                                                   reason:@"Downloaded bundle could not be saved"
+                                                 userInfo:nil];
+                }
+            }
+
+            dispatch_semaphore_signal(semaphore);
+        };
+
+    NSURLSession             *session = [NSURLSession sharedSession];
+    NSURLSessionDownloadTask *task =
+        resumeData ? [session downloadTaskWithResumeData:resumeData completionHandler:finished]
+                   : [session downloadTaskWithRequest:request completionHandler:finished];
 
     [task resume];
 
@@ -251,7 +281,12 @@ static NSString      *documents = nil;
             semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t) (totalTimeout * NSEC_PER_SEC))) !=
         0)
     {
-        [task cancel];
+        [task cancelByProducingResumeData:^(NSData *partial) {
+            if (partial)
+            {
+                [partial writeToFile:resumePath atomically:YES];
+            }
+        }];
         @throw [[NSException alloc] initWithName:@"DownloadTimedOut"
                                           reason:@"Bundle download exceeded its time limit"
                                         userInfo:nil];
@@ -260,6 +295,14 @@ static NSString      *documents = nil;
     if (exception)
     {
         @throw exception;
+    }
+
+    if (response.statusCode == 206)
+    {
+        return [[NSHTTPURLResponse alloc] initWithURL:response.URL
+                                           statusCode:200
+                                          HTTPVersion:@"HTTP/1.1"
+                                         headerFields:response.allHeaderFields];
     }
 
     return response;
