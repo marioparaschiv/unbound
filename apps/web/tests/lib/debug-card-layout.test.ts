@@ -275,4 +275,18 @@ describe('debug card', () => {
 
 		expect(texts(card).some((run) => run.text === 'first screen 7.2 s')).toBe(true);
 	});
+	test('marks broken or scanned Discord builds and flags updates from the server context', () => {
+		const alpha = { ...info, discordSupport: 'untested' as const };
+		const broken = layoutDebugCard(alpha, new Date(), { compat: { broken: 2, fallbacks: 0 } });
+		const clean = layoutDebugCard(alpha, new Date(), { compat: { broken: 0, fallbacks: 3 } });
+		const behind = layoutDebugCard(info, new Date(), {
+			clientBehind: true,
+			loaderBehind: true,
+		});
+
+		expect(texts(broken).find((run) => run.text === 'broken')?.color).toBe('#ef4444');
+		expect(texts(clean).some((run) => run.text === 'supported')).toBe(true);
+		expect(texts(behind).filter((run) => run.text === ' · update available')).toHaveLength(2);
+		expect(JSON.parse(debugAltText(info, { loaderBehind: true })).updates).toEqual(['loader']);
+	});
 });

@@ -2,7 +2,7 @@ import { Type, type StaticDecode } from './schema';
 
 export const DEBUG_CARD_ALT_TEXT_LIMIT = 1024;
 
-export const DEBUG_CARD_SUPPORT = ['supported', 'untested', 'unsupported'] as const;
+export const DEBUG_CARD_SUPPORT = ['supported', 'untested', 'unsupported', 'broken'] as const;
 
 export const DEBUG_CARD_BUNDLE_STATES = ['active', 'trial', 'discarded', 'rolled back'] as const;
 
@@ -71,6 +71,7 @@ export const debugCardRequestSchema = Type.Object({
 	theme: Type.Optional(text()),
 	iconPack: Type.Optional(text()),
 	launch: Type.Optional(launchSchema),
+	bundleChannel: Type.Optional(text(16)),
 	memory: Type.Optional(memorySchema),
 	heap: Type.Optional(heapSchema),
 });

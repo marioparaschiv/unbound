@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { Resvg } from '@resvg/resvg-js';
 
 import { debugAltText, debugCardSvg, layoutDebugCard } from '~/lib/debug-card/layout';
+import type { DebugCardContext } from '~/lib/debug-card/context';
 
 const FONT_PATH = fileURLToPath(import.meta.resolve('@unbound-app/web/debug-card-font'));
 
@@ -10,10 +11,15 @@ const FONT_PATH = fileURLToPath(import.meta.resolve('@unbound-app/web/debug-card
  * @description Draws the `/debug` card for a report and renders it as a PNG at the card's scale.
  * @param info The report the client sent.
  * @param now When the report was taken, shown in the title bar.
+ * @param context What the server adds: the compat scan and whether the client or loader is behind.
  * @returns The PNG as base64, its pixel size and the report as alt text JSON.
  */
-export function renderDebugCard(info: DebugCardRequest, now = new Date()): DebugCardResponse {
-	const card = layoutDebugCard(info, now);
+export function renderDebugCard(
+	info: DebugCardRequest,
+	now = new Date(),
+	context: DebugCardContext = {},
+): DebugCardResponse {
+	const card = layoutDebugCard(info, now, context);
 	const rendered = new Resvg(debugCardSvg(card), {
 		fitTo: { mode: 'zoom', value: card.scale },
 		font: {
@@ -28,7 +34,7 @@ export function renderDebugCard(info: DebugCardRequest, now = new Date()): Debug
 		image: Buffer.from(rendered.asPng()).toString('base64'),
 		width: rendered.width,
 		height: rendered.height,
-		altText: debugAltText(info),
+		altText: debugAltText(info, context),
 	};
 }
 
