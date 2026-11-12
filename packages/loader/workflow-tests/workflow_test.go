@@ -946,6 +946,17 @@ func TestParsedLoaderReleasesPublishTheLoaderAndEveryChannelsInAppBuild(t *testi
 			t.Fatalf("the %s job must run only upstream, create no release and build against the released Discord, got if %q with %+v", name, job.If, job.With)
 		}
 	}
+	source := publish.job(t, "testflight-source")
+	if !slices.Equal(source.Needs, []string{"stable"}) || !strings.Contains(source.If, "needs.stable.result == 'success'") || !strings.Contains(source.step(t, "Find the newest TestFlight release").Run, "-ios-testflight$") {
+		t.Fatalf("only a published loader may refresh the newest TestFlight release, needs %v if %q", source.Needs, source.If)
+	}
+	testflight := publish.job(t, "testflight")
+	if testflight.Uses != "./.github/workflows/loader-build.yml" || testflight.With["release"] != "true" || testflight.With["is_testflight"] != "true" || testflight.With["version"] != "${{ needs.testflight-source.outputs.version }}" {
+		t.Fatalf("the testflight job must rebuild the newest TestFlight release with this loader, got %+v", testflight)
+	}
+	if !slices.Equal(testflight.Needs, []string{"testflight-source", "alpha"}) || !strings.Contains(testflight.If, "!cancelled()") {
+		t.Fatalf("calls share artifact names, so testflight must run after alpha whatever its result, needs %v if %q", testflight.Needs, testflight.If)
+	}
 	poll := string(mustReadWorkflow(t, "loader-release-poll.yml"))
 	if strings.Contains(poll, "android_publish_only") || strings.Contains(poll, "loader_publish_only") {
 		t.Fatal("the release poll must keep publishing releases, not publish-only builds")

@@ -883,6 +883,19 @@ jobs:
                   fail_on_unmatched_files: true
                   token: ${{ github.token }}
 
+            # A loader publish rebuilds an existing TestFlight release; the app-repo deploy reads the loader version from its deb, so older debs go.
+            - name: Drop older debs from the TestFlight prerelease
+              if: needs.resolve-source.outputs.is_testflight == 'true' && inputs.release_dry_run != true
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  TAG: ${{ needs.resolve-source.outputs.ios_release_tag }}
+                  DEB_FILENAME: ${{ needs.ios.outputs.deb_filename }}
+              run: |
+                  set -euo pipefail
+                  gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' \
+                    | { grep -E '^app\.unbound\.ios_.*_iphoneos-arm64\.deb$' | grep -vxF "$DEB_FILENAME" || true; } \
+                    | while read -r stale; do gh release delete-asset "$TAG" "$stale" --repo "$GITHUB_REPOSITORY" --yes; done
+
             - name: Publish loader update records
               if: needs.resolve-source.outputs.is_testflight != 'true'
               env:

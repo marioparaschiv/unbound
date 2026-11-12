@@ -130,3 +130,57 @@ jobs:
             DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
             GPG_KEY: ${{ secrets.GPG_KEY }}
             GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+    # The TestFlight IPA carries the loader too, and the release poll only builds a TestFlight Discord it has not released.
+    testflight-source:
+        needs: stable
+        if: ${{ needs.stable.result == 'success' && github.repository == 'marioparaschiv/unbound' }}
+        runs-on: ubuntu-26.04
+        timeout-minutes: 5
+        permissions:
+            contents: read
+        outputs:
+            version: ${{ steps.latest.outputs.version }}
+        steps:
+            - name: Find the newest TestFlight release
+              id: latest
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  set -euo pipefail
+                  tag=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName --jq '[.[] | select(.tagName | test("^discord-[0-9.]+_[0-9]+-ios-testflight$"))][0].tagName // empty')
+                  if [ -z "$tag" ]; then
+                    echo "::notice title=TestFlight not refreshed::$GITHUB_REPOSITORY has no TestFlight release yet."
+                    exit 0
+                  fi
+                  version=${tag#discord-}
+                  echo "version=${version%-ios-testflight}" >> "$GITHUB_OUTPUT"
+
+    # Rebuilds that TestFlight Discord's IPA with this loader and replaces its prerelease's assets. It runs last: calls share artifact names.
+    testflight:
+        needs: [testflight-source, alpha]
+        if: ${{ !cancelled() && needs.testflight-source.outputs.version != '' && github.repository == 'marioparaschiv/unbound' }}
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+            actions: read
+        uses: ./.github/workflows/loader-build.yml
+        with:
+            version: ${{ needs.testflight-source.outputs.version }}
+            release: true
+            is_testflight: true
+            skip_core: true
+        secrets:
+            ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+            ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+            ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+            ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+            UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
+            S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+            S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+            GPG_KEY: ${{ secrets.GPG_KEY }}
+            GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
