@@ -224,9 +224,12 @@ int main()
     assert(refuses("https://offline.invalid", "Fonts/c.ttf"));
     assert(refuses("https://missing.invalid", "Fonts/c.ttf"));
     assert(!loader::fileExists((root.parent_path() / "b.ttf").string()));
-    assert(provider.getLoader() == nlohmann::json({{"origin", "Unbound.dylib"},
-                                                   {"version", loader::loaderVersion()},
-                                                   {"bytecodeVersion", 98}}));
+    nlohmann::json loaderInfo = provider.getLoader();
+    assert(loaderInfo["origin"] == "Unbound.dylib");
+    assert(loaderInfo["version"] == loader::loaderVersion());
+    assert(loaderInfo["bytecodeVersion"] == 98);
+    assert(loaderInfo["launch"]["bundle"] == "active");
+    assert(!loaderInfo.contains("requiredVersion"));
     loader::recordRequiredLoader(root.string(), "9.0.0");
     assert(provider.getLoader()["requiredVersion"] == "9.0.0");
     loader::recordRequiredLoader(root.string(), "");

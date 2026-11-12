@@ -1,5 +1,7 @@
 import type { AddonCount, DebugInfo, DiscordSupport } from './format-debug-info';
 
+import { launchNotes } from './launch-notes';
+
 /** A rounded rectangle, filled or outlined, in the card's points. */
 export type CardRect = {
 	kind: 'rect';
@@ -148,6 +150,14 @@ function rows(info: DebugInfo): [string, Span[]][] {
 		...(signing ? [['install', installSpans(signing)] as [string, Span[]]] : []),
 		['react', [value(info.react), dim(` · react native ${info.reactNative}`)]],
 		['hermes', [value(info.hermes), dim(` · bytecode ${info.bytecode}`)]],
+		...(launchNotes(info.launch).length
+			? [
+					['launch', [warn(fittedList(launchNotes(info.launch), VALUE_ROOM))]] as [
+						string,
+						Span[],
+					],
+				]
+			: []),
 		...(info.disabledAddons?.length
 			? [
 					['disabled', [warn(fittedList(info.disabledAddons, VALUE_ROOM))]] as [
@@ -426,6 +436,7 @@ export function debugAltText(info: DebugInfo): string {
 		bytecode: info.bytecode,
 		state: info.flags,
 		...(info.discordSupport && { support: info.discordSupport }),
+		...(launchNotes(info.launch).length && { launch: launchNotes(info.launch) }),
 		...(info.disabledAddons?.length && { disabled: info.disabledAddons }),
 		...(info.locale && { locale: info.locale }),
 		...(info.theme && { theme: info.theme }),

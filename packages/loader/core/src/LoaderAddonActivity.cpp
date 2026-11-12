@@ -261,6 +261,22 @@ bool writeCrashingAddonRecord(int descriptor)
     return true;
 }
 
+bool writeCrashingAddonLine(int descriptor)
+{
+    AddonSlot slot = crashingThreadAddon();
+    if (descriptor < 0 || slot == kNoAddon || slot >= kAddonSlotCapacity)
+    {
+        return false;
+    }
+
+    const AddonRecord &record   = gRecords[slot];
+    uint32_t           length   = __atomic_load_n(&record.length, __ATOMIC_ACQUIRE);
+    const char         prefix[] = "Addon ";
+    const char         newline  = '\n';
+    return write(descriptor, prefix, sizeof(prefix) - 1) > 0 &&
+           write(descriptor, record.text, length) > 0 && write(descriptor, &newline, 1) > 0;
+}
+
 AddonScope::AddonScope(AddonSlot slot)
 {
     if (slot == kNoAddon)

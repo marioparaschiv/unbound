@@ -1,6 +1,21 @@
 import type { AddonManifest } from './addons';
 
 /**
+ * What the loader learned about this launch: which bundle runs and how the launches before it ended.
+ * @internal
+ */
+export type UnboundLaunchReport = {
+	/** `trial` runs a new bundle until Discord stays healthy; `discarded` and `rolled back` fell back to an older one. */
+	bundle: 'active' | 'trial' | 'discarded' | 'rolled back';
+	/** Launches in a row that ended before Discord ran for a while. */
+	earlyCloses: number;
+	recovery: boolean;
+	previousExit: 'crashed' | 'ended' | 'unknown';
+	/** The previous native crash as one line, such as `SIGSEGV in Chat Bubbles`. */
+	lastCrash?: string;
+};
+
+/**
  * The native loader's origin and version.
  * @internal
  */
@@ -10,6 +25,8 @@ export type UnboundLoaderInfo = {
 	bytecodeVersion: number;
 	/** The loader version the newest bundle needs, set while this loader refused it as too old. */
 	requiredVersion?: string;
+	/** Missing on loaders older than 1.3.0. */
+	launch?: UnboundLaunchReport;
 };
 
 /**

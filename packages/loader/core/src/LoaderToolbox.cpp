@@ -10,6 +10,7 @@
 #include "LoaderCrashReport.h"
 #include "LoaderDevOverlay.h"
 #include "LoaderFiles.h"
+#include "LoaderLaunchReport.h"
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
 #include "LoaderPipeline.h"
@@ -276,12 +277,21 @@ std::vector<std::pair<std::string, std::string>> issueEnvironment(const IssueFac
         state += " · system app";
     }
 
-    return {
+    std::vector<std::pair<std::string, std::string>> lines{
         {"Unbound", loader},
         {"Discord", discordLine(facts.discordVersion, facts.appSource)},
         {"Device", known(facts.device) + " on " + facts.platform + " " + known(facts.osVersion)},
-        {"State", state},
     };
+    if (!facts.install.empty())
+    {
+        lines.emplace_back("Install", facts.install);
+    }
+    lines.emplace_back("State", state);
+    if (!facts.launch.empty())
+    {
+        lines.emplace_back("Launch", facts.launch);
+    }
+    return lines;
 }
 
 static MenuItem restartingAction(std::string id, std::string title, std::string action,
@@ -508,6 +518,8 @@ IssueFacts issueFacts(const NativePlatformProvider &provider, const std::string 
     {
         facts.registration = provider.isSystemApp() ? "System" : "User";
     }
+    facts.install = provided(provider.installDetails);
+    facts.launch  = launchReportLine(launchReport(), previousNativeCrash());
     return facts;
 }
 
@@ -619,7 +631,7 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
         return crashReportURL(issueReport(provider ? *provider : NativePlatformProvider{},
                                           context.platform, argument),
                               *summary, previousLaunchLogTail(kCrashReportLogLines),
-                              previousNativeCrash());
+                              describeNativeCrash(previousNativeCrash()));
     }
     if (action == "menu")
     {

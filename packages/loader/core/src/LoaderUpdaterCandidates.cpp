@@ -3,6 +3,7 @@
 #include "LoaderBundleRecord.h"
 #include "LoaderDigestCache.h"
 #include "LoaderFiles.h"
+#include "LoaderLaunchReport.h"
 #include "LoaderLog.h"
 #include "LoaderPreferences.h"
 #include "LoaderUpdater.h"
@@ -125,6 +126,10 @@ std::string BundleUpdater::resolveBundlePath()
 
         if (fileExists(candidate + ".attempting"))
         {
+            log(LogLevel::Warning, LOG_CATEGORY_UPDATER,
+                "Discarded the new bundle: Discord closed before it ran long enough to count as "
+                "healthy. The active bundle runs instead.");
+            setBundleState(BundleState::Discarded);
             rejectBundle(candidate);
         }
 

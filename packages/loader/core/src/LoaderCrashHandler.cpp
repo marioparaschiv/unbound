@@ -153,6 +153,7 @@ static void writeNativeStack(int signal, void *context)
     writeText(descriptor, "Signal ");
     writeDecimal(descriptor, static_cast<unsigned>(signal));
     writeText(descriptor, "\n");
+    writeCrashingAddonLine(descriptor);
 
     uintptr_t pc = 0, lr = 0, fp = 0;
     if (crashRegisters(context, pc, lr, fp))
