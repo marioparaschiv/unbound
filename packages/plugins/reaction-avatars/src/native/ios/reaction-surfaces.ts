@@ -273,10 +273,15 @@ function createState(
 	};
 
 	if (baseFrame.width < 1) return null;
+
 	const state: ReactionViewState = {
 		...target,
 		avatarWidth: 0,
 		baseFrame,
+		layoutInset:
+			layoutWidth === undefined
+				? REACTION_VIEW_TRAILING_INSET
+				: Math.max(0, layoutWidth - baseFrame.width),
 		context,
 		extraWidth: 0,
 		loading: false,

@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.8] - 2026-11-12
+
+### Fixed
+
+- The avatars no longer cover a reaction's count after it grows, such as from 9 to 10.
+
+## [1.2.7] - 2026-11-12
+
+### Fixed
+
+- Busy messages no longer refetch every reaction's avatars on each new reaction; only the changed reaction refetches, at most every 10 seconds, so pills stop flickering.
+
 ## [1.2.6] - 2026-11-11
 
 ### Changed

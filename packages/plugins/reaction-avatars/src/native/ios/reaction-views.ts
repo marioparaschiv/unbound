@@ -17,6 +17,7 @@ export type ReactionViewState = {
 	context: ReactionContext;
 	extraWidth: number;
 	itemIndex: number;
+	layoutInset: number;
 	layoutKey: string;
 	loading: boolean;
 	// Bumped to discard reactor requests that started before the pill changed.
@@ -93,6 +94,19 @@ export function releaseStates(
 	}
 
 	return released;
+}
+
+/**
+ * @description Moves a pill's base width to its layout item's new width, after its count changed it.
+ * @param state The pill.
+ * @param layoutWidth The pill's layout item width as Discord now lays it out.
+ */
+export function rebaseReactionView(state: ReactionViewState, layoutWidth: number): void {
+	const width = Math.max(1, layoutWidth - state.layoutInset);
+
+	if (Math.abs(width - state.baseFrame.width) < 0.5) return;
+
+	state.baseFrame = { ...state.baseFrame, width };
 }
 
 /**

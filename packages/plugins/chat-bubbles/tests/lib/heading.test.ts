@@ -42,6 +42,14 @@ describe('heading', () => {
 		expect(place.reply).toBeUndefined();
 	});
 
+	test('clips a name and tags that would run under the time, and leaves a short one whole', () => {
+		const long = { ...plain, nameWidth: 180 };
+
+		expect(headingPlace(long, bubble, 79, 14).nameClip).toBe(250 - 14 * 2 - 8 - 93);
+		expect(headingPlace(plain, bubble, 79, 14).nameClip).toBeUndefined();
+		expect(headingPlace(long, bubble, 79, 14, 14, { keepTime: true }).nameClip).toBeUndefined();
+	});
+
 	test('puts the reply in a box between the name and the text, clipped to the box', () => {
 		const place = headingPlace(reply, bubble, 79, 14);
 

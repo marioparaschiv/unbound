@@ -1,6 +1,7 @@
 import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
 
 import type { RowRoom, RowRooms } from '~/lib/style';
+import { isStandaloneCell } from '~/native/ios/standalone-cell';
 
 const STATE_KEY = '__unboundChatBubbleRows';
 
@@ -137,6 +138,8 @@ export function installRowPadding(scope: NativeUIScope, messageCell: string, con
 
 	objc.hook(messageCell, 'sizeThatFits:', {
 		replace: ({ self, args, original }) => {
+			if (isStandaloneCell(objc, self)) return original(...args);
+
 			if (state.inset !== null) {
 				try {
 					insetContent(objc, self, state.inset);
@@ -158,7 +161,9 @@ export function installRowPadding(scope: NativeUIScope, messageCell: string, con
 	objc.hook(messageCell, 'layoutSubviews', {
 		after: ({ self }) => {
 			try {
-				const frame = paddedFrame(objc, self, state.rooms);
+				const frame = isStandaloneCell(objc, self)
+					? undefined
+					: paddedFrame(objc, self, state.rooms);
 
 				if (frame) {
 					objc.invoke(
@@ -179,7 +184,7 @@ export function installRowPadding(scope: NativeUIScope, messageCell: string, con
 			try {
 				const cell = objc.invoke(self, 'superview', []) as NativeObjectHandle | null;
 				const frame =
-					cell && objc.className(cell) === messageCell
+					cell && objc.className(cell) === messageCell && !isStandaloneCell(objc, cell)
 						? paddedFrame(objc, cell, state.rooms)
 						: undefined;
 

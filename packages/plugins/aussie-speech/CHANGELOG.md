@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0] - 2026-11-12
+
+### Added
+
+- A toggle in the chat input turns Aussie Speech on and off, with Persist State and Auto Disable settings like Silent Message Toggle.
+- About 150 more phrases, from "ta" and "arvo" to "no wukkas" and "Buckley's chance".
+
 ## [1.0.4] - 2026-11-11
 
 ### Changed

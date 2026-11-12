@@ -5,6 +5,7 @@ import type { BubbleColor } from '~/lib/style';
 import { lastAvatarFrame } from '~/native/ios/last-avatar';
 import { messageIdOf } from '~/native/ios/message-id';
 import { ReplyIcon } from '~/lib/constants';
+import { hostOffset } from '~/native/ios/host-offset';
 
 const AVATAR_TAG = 0x0b0b26;
 const PICTURE_TAG = 0x0b0b27;
@@ -37,6 +38,8 @@ export type CellPaint = {
 	reply: CellMove;
 	/** The timestamp's frame in the name row. */
 	time?: Box;
+	/** How wide the name and its tags may draw before the time. */
+	nameClip?: number;
 	quote?: CellQuote;
 	picture?: CellAvatar;
 };
@@ -157,6 +160,72 @@ function moveViews(
 		moves.avatar,
 	);
 	moveView(objc, objc.getIvar(cell, '_headerView') as NativeObjectHandle | null, moves.reply);
+}
+
+function nameRowOf(objc: NativeObjCBridge, cell: NativeObjectHandle): NativeObjectHandle | null {
+	'worklet';
+	const header = objc.getIvar(cell, '_messageHeaderView') as NativeObjectHandle | null;
+	const time = objc.getIvar(cell, '_timestampLabel') as NativeObjectHandle | null;
+
+	if (!header) return null;
+
+	let widest: NativeObjectHandle | null = null;
+	let widestWidth = 0;
+
+	for (const view of subviewsOf(objc, header)) {
+		if (time && objc.call(view, 'isEqual:', time)) continue;
+
+		const width = readBox(objc.invoke(view, 'frame', [])).width;
+
+		if (width > widestWidth) {
+			widest = view;
+			widestWidth = width;
+		}
+	}
+
+	return widest;
+}
+
+function clipName(objc: NativeObjCBridge, cell: NativeObjectHandle, width: number | undefined) {
+	'worklet';
+	const row = nameRowOf(objc, cell);
+
+	if (!row) return;
+
+	const layer = objc.invoke(row, 'layer', []) as NativeObjectHandle;
+	const mask = objc.invoke(layer, 'mask', []) as NativeObjectHandle | null;
+
+	if (width === undefined) {
+		if (mask) objc.invoke(layer, 'setMask:', [null]);
+
+		return;
+	}
+
+	const height = readBox(objc.invoke(row, 'bounds', [])).height;
+	const clip =
+		mask ??
+		(objc.call(
+			objc.getClass('CALayer') as NativeObjectHandle,
+			'new',
+		) as NativeObjectHandle | null);
+
+	if (!clip) return;
+
+	objc.invoke(clip, 'setFrame:', [cgRect(objc, { x: 0, y: 0, width, height })]);
+
+	if (!mask) {
+		objc.invoke(clip, 'setBackgroundColor:', [
+			objc.invoke(
+				objc.call(
+					objc.getClass('UIColor') as NativeObjectHandle,
+					'blackColor',
+				) as NativeObjectHandle,
+				'CGColor',
+				[],
+			),
+		]);
+		objc.invoke(layer, 'setMask:', [clip]);
+	}
 }
 
 function spineOf(
@@ -400,7 +469,11 @@ function pictureView(objc: NativeObjCBridge, cell: NativeObjectHandle): NativeOb
 		objc.invoke(holder, 'addSubview:', [decoration]);
 	}
 
-	objc.invoke(cell, 'addSubview:', [holder]);
+	objc.invoke(
+		(objc.invoke(cell, 'contentView', []) as NativeObjectHandle | null) ?? cell,
+		'addSubview:',
+		[holder],
+	);
 
 	return holder;
 }
@@ -423,8 +496,11 @@ function showPicture(
 
 	const frame = lastAvatarFrame(bubble, picture.avatar);
 	const layer = objc.invoke(view, 'layer', []) as NativeObjectHandle;
+	const offset = hostOffset(objc, holder);
 
-	objc.invoke(holder, 'setFrame:', [cgRect(objc, frame)]);
+	objc.invoke(holder, 'setFrame:', [
+		cgRect(objc, { ...frame, x: frame.x - offset.x, y: frame.y - offset.y }),
+	]);
 	objc.invoke(view, 'setFrame:', [
 		cgRect(objc, { x: 0, y: 0, width: frame.width, height: frame.height }),
 	]);
@@ -562,6 +638,8 @@ export function paintCell(
 		if (time) objc.invoke(time, 'setFrame:', [cgRect(objc, paint.time)]);
 	}
 
+	clipName(objc, cell, paint?.nameClip);
+
 	paintQuote(objc, cell, fill, paint?.quote, true);
 	paintPicture(objc, state, cache, cell, painted, messageId);
 }
@@ -598,6 +676,7 @@ export function paintUnmeasured(
 export function resetCell(objc: NativeObjCBridge, cell: NativeObjectHandle) {
 	'worklet';
 	moveViews(objc, cell, { name: NO_MOVE, avatar: NO_MOVE, reply: NO_MOVE });
+	clipName(objc, cell, undefined);
 	paintQuote(objc, cell, null, undefined, false);
 	setAvatarShown(objc, cell, true);
 	hidePicture(objc, cell);

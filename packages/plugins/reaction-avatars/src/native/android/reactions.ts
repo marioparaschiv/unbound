@@ -32,6 +32,11 @@ import {
 	type Reactor,
 } from '~/lib/avatars';
 import { reactionContext, type Reaction, type ReactionContext } from '~/lib/reaction-context';
+import {
+	changedReactorsPrefix,
+	createRefreshThrottle,
+	REACTOR_REFRESH_COOLDOWN_MS,
+} from '~/lib/reaction-refresh';
 import { Avatar, REACTION_ACTIONS } from '~/lib/constants';
 import { ChannelStore, MessageStore } from '~/lib/modules';
 import { selectedChannelId } from '@unbound-plugins/shared/metro/selected-channel';
@@ -370,12 +375,19 @@ export function createAndroidReactions(native: Native, surfaceName: string) {
 
 	const rows = watchMessageRows(native, { draw: render, clear });
 
+	const refetches = createRefreshThrottle(REACTOR_REFRESH_COOLDOWN_MS, (prefix) => {
+		reactors.invalidate(prefix);
+	});
+
 	function onReactionChange(event: ReactionChange) {
 		const messageId = event.messageId ?? event.message_id;
 
 		if (!messageId) return;
 
-		reactors.invalidateMessage(messageId, event.channelId);
+		const prefix = changedReactorsPrefix(event);
+
+		if (prefix) refetches.request(prefix);
+
 		rows.redraw(messageId);
 	}
 
@@ -384,6 +396,7 @@ export function createAndroidReactions(native: Native, surfaceName: string) {
 	return {
 		async dispose() {
 			disposed = true;
+			refetches.cancel();
 
 			const cleared = rows
 				.dispose()

@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.6.4] - 2026-11-12
+
+### Fixed
+
+- On iOS, bubbles and the moved avatar line up with their message again instead of hanging below it or starting at the screen's edge.
+
+## [1.6.3] - 2026-11-12
+
+### Fixed
+
+- On iOS, pinned messages and in-app notifications keep Discord's own look instead of losing their text.
+
+## [1.6.2] - 2026-11-12
+
+### Fixed
+
+- On iOS, a long name with several tags is cut off before the time instead of running under it or out of the bubble.
+
+## [1.6.1] - 2026-11-12
+
+### Fixed
+
+- On iOS, the bubble and avatar slide with the message when you swipe to reply instead of staying behind.
+
 ## [1.6.0] - 2026-11-12
 
 ### Added

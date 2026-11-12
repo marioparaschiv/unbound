@@ -32,7 +32,7 @@ import {
 } from '~/lib/layout';
 import { clearCellHeights, updateCellHeight } from '~/native/ios/cell-heights';
 import { advanceLayoutEpoch, restoreLayout, setAncestorFrames } from '~/native/ios/layout-restore';
-import { fitReactionView, releaseStates } from '~/native/ios/reaction-views';
+import { fitReactionView, rebaseReactionView, releaseStates } from '~/native/ios/reaction-views';
 import { messageKey } from '~/lib/reaction-context';
 import { scheduleCell } from '~/native/ios/cell-queue';
 import type { Session } from '~/native/ios/session';
@@ -391,7 +391,8 @@ export function invalidateLayout(session: Session, layoutKey: string): void {
 }
 
 /**
- * @description Re-measures a message's reaction pills shortly after its reactions changed.
+ * @description Re-measures a message's reaction pills shortly after its reactions changed, at most once per interval while
+ * they keep changing, so a busy message still settles.
  * @param session The running session.
  * @param messageId The message.
  * @param channelId Its channel, when the event carried one.
@@ -404,7 +405,8 @@ export function scheduleLayoutRefresh(
 	const { layoutRefreshes, objc, signal } = session;
 	const refreshKey = `${channelId ?? '*'}:${messageId}`;
 
-	clearTimeout(layoutRefreshes.get(refreshKey));
+	if (layoutRefreshes.has(refreshKey)) return;
+
 	layoutRefreshes.set(
 		refreshKey,
 		setTimeout(() => {
@@ -518,8 +520,13 @@ export function applyLayout(session: Session, entry: LayoutEntry): void {
 
 		const reactionView = reactionViewOf(objc, cell);
 		const state = reactionView ? session.reactions.get(key(objc, reactionView)) : undefined;
+		const base = entry.baseItems.get(index);
 
-		if (state) fitReactionView(session, state);
+		if (!state) continue;
+
+		if (base) rebaseReactionView(state, base.width);
+
+		fitReactionView(session, state);
 	}
 
 	const size = parseSize(safeInvoke(objc, entry.collection, 'contentSize'));
