@@ -40,6 +40,8 @@ export type CellPaint = {
 	time?: Box;
 	/** How wide the name and its tags may draw before the time. */
 	nameClip?: number;
+	/** Whether the timestamp hides to leave the name's tags room. */
+	hideTime?: boolean;
 	quote?: CellQuote;
 	picture?: CellAvatar;
 };
@@ -632,11 +634,11 @@ export function paintCell(
 
 	moveViews(objc, cell, paint ?? { name: NO_MOVE, avatar: NO_MOVE, reply: NO_MOVE });
 
-	if (paint?.time) {
-		const time = objc.getIvar(cell, '_timestampLabel') as NativeObjectHandle | null;
+	const time = objc.getIvar(cell, '_timestampLabel') as NativeObjectHandle | null;
 
-		if (time) objc.invoke(time, 'setFrame:', [cgRect(objc, paint.time)]);
-	}
+	if (time && paint?.time) objc.invoke(time, 'setFrame:', [cgRect(objc, paint.time)]);
+
+	if (time) objc.invoke(time, 'setAlpha:', [paint?.hideTime ? 0 : 1]);
 
 	clipName(objc, cell, paint?.nameClip);
 
@@ -677,6 +679,10 @@ export function resetCell(objc: NativeObjCBridge, cell: NativeObjectHandle) {
 	'worklet';
 	moveViews(objc, cell, { name: NO_MOVE, avatar: NO_MOVE, reply: NO_MOVE });
 	clipName(objc, cell, undefined);
+
+	const time = objc.getIvar(cell, '_timestampLabel') as NativeObjectHandle | null;
+
+	if (time) objc.invoke(time, 'setAlpha:', [1]);
 	paintQuote(objc, cell, null, undefined, false);
 	setAvatarShown(objc, cell, true);
 	hidePicture(objc, cell);

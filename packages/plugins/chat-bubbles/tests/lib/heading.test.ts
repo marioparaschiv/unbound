@@ -42,12 +42,20 @@ describe('heading', () => {
 		expect(place.reply).toBeUndefined();
 	});
 
-	test('clips a name and tags that would run under the time, and leaves a short one whole', () => {
-		const long = { ...plain, nameWidth: 180 };
+	test('hides the time instead of cutting tags, and clips only a name wider than the bubble', () => {
+		const long = headingPlace({ ...plain, nameWidth: 180 }, bubble, 79, 14);
 
-		expect(headingPlace(long, bubble, 79, 14).nameClip).toBe(250 - 14 * 2 - 8 - 93);
-		expect(headingPlace(plain, bubble, 79, 14).nameClip).toBeUndefined();
-		expect(headingPlace(long, bubble, 79, 14, 14, { keepTime: true }).nameClip).toBeUndefined();
+		expect(long.hideTime).toBe(true);
+		expect(long.time).toBeUndefined();
+		expect(long.nameClip).toBeUndefined();
+		expect(headingPlace(plain, bubble, 79, 14).hideTime).toBeUndefined();
+		expect(headingPlace({ ...plain, nameWidth: 300 }, bubble, 79, 14).nameClip).toBe(
+			250 - 14 * 2,
+		);
+		expect(
+			headingPlace({ ...plain, nameWidth: 180 }, bubble, 79, 14, 14, { keepTime: true })
+				.hideTime,
+		).toBeUndefined();
 	});
 
 	test('puts the reply in a box between the name and the text, clipped to the box', () => {
