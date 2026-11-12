@@ -73,48 +73,45 @@ std::string signingDetails(const SigningFacts &facts)
     const bool               discord = isDiscordProductionTeam(facts.teamIdentifier);
     if (discord)
     {
-        parts.emplace_back("Discord's signature");
+        parts.emplace_back("Discord-signed");
     }
     else if (facts.provisionsAllDevices)
     {
-        parts.emplace_back("enterprise certificate");
+        parts.emplace_back("Enterprise");
     }
     else if (facts.getTaskAllow)
     {
-        parts.emplace_back("development certificate");
+        parts.emplace_back("Development");
     }
     else if (facts.listsDevices)
     {
-        parts.emplace_back("ad hoc certificate");
+        parts.emplace_back("Ad Hoc");
     }
     else if (facts.hasProfile)
     {
-        parts.emplace_back("distribution certificate");
+        parts.emplace_back("Distribution");
     }
     else
     {
-        parts.emplace_back("no provisioning profile");
+        parts.emplace_back("Unprovisioned");
     }
     if (facts.teamIdentifier && !discord && !facts.teamIdentifier->empty())
     {
-        parts.push_back("team " + *facts.teamIdentifier);
+        parts.front() += " (`" + *facts.teamIdentifier + "`)";
     }
     if (facts.profileExpiry && !discord)
     {
-        parts.push_back("profile expires " + *facts.profileExpiry);
+        parts.push_back("expires " + *facts.profileExpiry);
     }
     if (facts.altStore)
     {
         parts.emplace_back("AltStore/SideStore");
     }
-    parts.push_back(facts.entitlementSource.empty()
-                        ? "no entitlements found"
-                        : "entitlements from the " + facts.entitlementSource);
 
     std::string joined;
     for (const std::string &part : parts)
     {
-        joined += (joined.empty() ? "" : ", ") + part;
+        joined += (joined.empty() ? "" : " · ") + part;
     }
     return joined;
 }

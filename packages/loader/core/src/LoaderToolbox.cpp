@@ -266,14 +266,14 @@ std::vector<std::pair<std::string, std::string>> issueEnvironment(const IssueFac
     loader += ")";
 
     std::string state =
-        android ? (facts.rooted ? "rooted" : "stock") : (facts.rooted ? "jailbroken" : "jailed");
+        android ? (facts.rooted ? "Rooted" : "Stock") : (facts.rooted ? "Jailbroken" : "Jailed");
     if (facts.virtualDevice)
     {
-        state += android ? ", emulator" : ", simulator";
+        state += android ? " · emulator" : " · simulator";
     }
     if (facts.registration == "System")
     {
-        state += ", system app";
+        state += " · system app";
     }
 
     return {

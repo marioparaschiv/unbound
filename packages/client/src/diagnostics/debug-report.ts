@@ -55,10 +55,10 @@ function deviceFlags(android: boolean): string[] {
 	const device = globalThis.NativePlatform?.device;
 	const rooted = attempt(() => device?.isRooted(), false);
 	const flags = [
-		android ? (rooted ? 'rooted' : 'stock') : rooted ? 'jailbroken' : 'jailed',
+		android ? (rooted ? 'Rooted' : 'Stock') : rooted ? 'Jailbroken' : 'Jailed',
 		attempt(() => globalThis.NativePlatform?.app.isVerifiedBuild(), false)
-			? 'verified'
-			: 'unverified',
+			? 'verified build'
+			: 'unverified build',
 		attempt(() => device?.isVirtualDevice(), false) && (android ? 'emulator' : 'simulator'),
 		attempt(() => device?.isSystemApp(), false) && 'system app',
 	];

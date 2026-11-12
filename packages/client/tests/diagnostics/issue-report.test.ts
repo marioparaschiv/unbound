@@ -19,7 +19,7 @@ const info = {
 	platform: 'Android',
 	os: '15 (SDK 35)',
 	device: 'Google Pixel 8 Pro',
-	flags: ['rooted'],
+	flags: ['Rooted', 'verified build'],
 };
 
 describe('issue report', () => {

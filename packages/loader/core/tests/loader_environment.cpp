@@ -56,7 +56,7 @@ static void checkInstallSources()
     assert(appSource(resigned) == "App Store");
 
     SigningFacts signing;
-    assert(signingDetails(signing) == "no provisioning profile, no entitlements found");
+    assert(signingDetails(signing) == "Unprovisioned");
     signing.teamIdentifier    = "ABCDE12345";
     signing.hasProfile        = true;
     signing.getTaskAllow      = true;
@@ -65,19 +65,18 @@ static void checkInstallSources()
     signing.altStore          = true;
     signing.entitlementSource = "kernel";
     assert(signingDetails(signing) ==
-           "development certificate, team ABCDE12345, profile expires "
-           "2026-11-18, AltStore/SideStore, entitlements from the kernel");
+           "Development (`ABCDE12345`) · expires 2026-11-18 · AltStore/SideStore");
     signing.getTaskAllow = false;
     signing.altStore     = false;
-    assert(signingDetails(signing).rfind("ad hoc certificate, ", 0) == 0);
+    assert(signingDetails(signing).rfind("Ad Hoc (`ABCDE12345`)", 0) == 0);
     signing.provisionsAllDevices = true;
-    assert(signingDetails(signing).rfind("enterprise certificate, ", 0) == 0);
+    assert(signingDetails(signing).rfind("Enterprise (`ABCDE12345`)", 0) == 0);
     signing.provisionsAllDevices = false;
     signing.listsDevices         = false;
-    assert(signingDetails(signing).rfind("distribution certificate, ", 0) == 0);
+    assert(signingDetails(signing).rfind("Distribution (`ABCDE12345`)", 0) == 0);
     signing.teamIdentifier    = kDiscordTeamIdentifier;
     signing.entitlementSource = "executable";
-    assert(signingDetails(signing) == "Discord's signature, entitlements from the executable");
+    assert(signingDetails(signing) == "Discord-signed");
 
     assert(
         provisioningProfilePlist("\x30\x82junk<?xml version=\"1.0\"?><plist><dict/></plist>sig") ==
