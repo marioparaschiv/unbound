@@ -394,7 +394,7 @@ nlohmann::json storageState(const std::string &documents)
     uintmax_t       bytes = 0;
     std::error_code walkError;
     for (std::filesystem::recursive_directory_iterator
-             entry(std::filesystem::path(documents) / "Unbound",
+             entry(std::filesystem::path(documents),
                    std::filesystem::directory_options::skip_permission_denied, walkError),
          end;
          !walkError && entry != end; entry.increment(walkError))

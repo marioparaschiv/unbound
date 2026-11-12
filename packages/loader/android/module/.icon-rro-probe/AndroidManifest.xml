@@ -1,0 +1,4 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="app.unbound.iconprobe">
+    <application android:hasCode="false" android:label="Unbound Icon Probe" />
+    <overlay android:targetPackage="com.discord" android:resourcesMap="@xml/overlays" android:isStatic="false" android:priority="999" />
+</manifest>

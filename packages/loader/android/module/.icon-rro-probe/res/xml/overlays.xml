@@ -1,0 +1,3 @@
+<overlay xmlns:android="http://schemas.android.com/apk/res/android">
+    <item target="mipmap/brand_inverted" value="@mipmap/brand_inverted" />
+</overlay>
