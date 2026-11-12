@@ -71,13 +71,13 @@ declare module '@unbound-app/i18n' {
 		readonly MEDIA_REROUND_SUBTITLE: string;
 		/** Mention color */
 		readonly MENTION_COLOR: string;
-		/** Name and avatar */
+		/** Name, avatar and replies */
 		readonly NAME_AVATAR: string;
-		/** Name and reply inside the bubble */
+		/** Name inside the bubble */
 		readonly NAME_INSIDE: string;
 		/** Turn on Make room for padding to use this */
 		readonly NAME_INSIDE_NEEDS_ROOM: string;
-		/** Show the author's name, the time and the message being replied to at the top of the group's first bubble */
+		/** Show the author's name and the time at the top of the group's first bubble */
 		readonly NAME_INSIDE_SUBTITLE: string;
 		/** Discord's mention color */
 		readonly MENTION_COLOR_FALLBACK: string;
@@ -131,6 +131,20 @@ declare module '@unbound-app/i18n' {
 		readonly PRESETS: string;
 		/** Start from a look, then fine-tune it below */
 		readonly PRESETS_DESCRIPTION: string;
+		/** Replies */
+		readonly REPLY: string;
+		/** Automatic */
+		readonly REPLY_AUTO: string;
+		/** Above */
+		readonly REPLY_ICON: string;
+		/** Turn on Name inside the bubble to quote replies inside it */
+		readonly REPLY_NEEDS_NAME: string;
+		/** Turn on Make room for padding to quote replies inside the bubble */
+		readonly REPLY_NEEDS_ROOM: string;
+		/** Inside */
+		readonly REPLY_QUOTE: string;
+		/** Show the message being replied to in a box inside the bubble, or above it with a reply icon */
+		readonly REPLY_SUBTITLE: string;
 		/** Make room for padding */
 		readonly ROOMY_ROWS: string;
 		/** Spaces messages apart and lines bubbles up with the author's name, so every bubble keeps its full padding */

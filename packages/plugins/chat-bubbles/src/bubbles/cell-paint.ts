@@ -1,7 +1,7 @@
 import type { Box } from '~/bubbles/geometry';
 import type { Heading } from '~/bubbles/message-layout';
 import type { CellAvatar, CellFallback, CellPaint } from '~/bubbles/ios/ui-cell';
-import { headingPlace } from '~/bubbles/heading';
+import { headingPlace, type HeadingSpot } from '~/bubbles/heading';
 import { shadeColor } from '~/bubbles/shade';
 import {
 	headingMoves,
@@ -10,16 +10,17 @@ import {
 	type BubbleAppearance,
 	type BubbleColor,
 	type HeadingMoves,
+	type Padding,
 } from '~/bubbles/style';
 import { Quote } from '~/constants';
 
 /** What the measure found about a cell's heading. */
-export type MeasuredHeading = {
+export type MeasuredHeading = HeadingSpot & {
 	heading?: Heading;
 	/** Where the message's text starts in the cell. */
 	bodyTop: number;
-	/** Whether the name and reply sit inside the bubble. */
-	inside: boolean;
+	/** Whether the timestamp stays where Discord put it, as on a card. */
+	keepTime: boolean;
 	/** How far the name, reply and avatar lift into the room above the bubble when they sit outside it. */
 	lifted: number;
 	/** How the name, avatar and reply move while they sit outside the bubble. */
@@ -30,7 +31,7 @@ export type MeasuredHeading = {
  * @description Works out everything a cell shows besides its bubble: where its name, time, avatar and reply move, its quote box and the avatar by its group's last bubble.
  * @param measured The cell's heading as measured.
  * @param bubble The fitted bubble's frame in the cell.
- * @param padding The bubble's horizontal padding.
+ * @param padding The room between the bubble's edges and the heading it holds.
  * @param color The bubble's color, which the quote box is shaded from.
  * @param picture Whose avatar the row shows and where it sits in the group, or `undefined` to leave it to Discord.
  * @returns The cell's paint.
@@ -38,30 +39,38 @@ export type MeasuredHeading = {
 export function cellPaint(
 	measured: MeasuredHeading,
 	bubble: Box,
-	padding: number,
+	padding: Padding,
 	color: BubbleColor,
 	picture: CellAvatar | undefined,
 ): CellPaint {
-	const { heading, inside, moves } = measured;
+	const { heading, inside, quoted, keepTime, moves } = measured;
 	const extra = picture ? { picture } : {};
 
 	if (!inside || !heading) {
 		return { ...moves, ...extra };
 	}
 
-	const place = headingPlace(heading, bubble, measured.bodyTop, padding);
+	const place = headingPlace(
+		heading,
+		bubble,
+		measured.bodyTop,
+		padding.horizontal,
+		padding.vertical,
+		{ quoted, keepTime },
+	);
 	const reply = place.reply;
+	const quote = reply?.quote;
 
 	return {
 		name: place.name,
 		avatar: place.avatar,
 		reply: reply?.move ?? { x: 0, y: 0 },
 		...(place.time ? { time: place.time } : {}),
-		...(reply
+		...(quote
 			? {
 					quote: {
-						box: { ...reply.box, x: reply.box.x - bubble.x, y: reply.box.y - bubble.y },
-						clip: reply.clip,
+						box: { ...quote.box, x: quote.box.x - bubble.x, y: quote.box.y - bubble.y },
+						clip: quote.clip,
 						color: { ...shadeColor(color, Quote.shade), alpha: color.alpha },
 						radius: Quote.radius,
 					},

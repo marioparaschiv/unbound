@@ -9,6 +9,7 @@ import {
 	MediaCorners,
 	MENTION_WIDTH_STEP,
 	Quote,
+	ReplyStyle,
 	TailPosition,
 	type BubbleLayoutName,
 } from '~/constants';
@@ -45,8 +46,10 @@ export type BubbleAppearance = {
 	roomyRows: boolean;
 	/** Whether a group's avatar moves down beside its last bubble. */
 	avatarLast: boolean;
-	/** Whether the author's name, the time and a reply's preview sit inside the group's first bubble. */
+	/** Whether the author's name and the time sit inside the group's first bubble. */
 	nameInside: boolean;
+	/** Where a reply's preview sits: in a quote box inside the bubble, or above it behind a reply icon. */
+	reply: Exclude<ValueOf<typeof ReplyStyle>, 'auto'>;
 	/** Which bubble of a group points a tail at the avatar: the last when the avatar moves down to it, otherwise the first. */
 	tail: ValueOf<typeof TailPosition>;
 	tailSize: number;
@@ -88,6 +91,23 @@ export function choice<T extends Record<string, string>>(value: unknown, options
 
 function flag(value: unknown, fallback: boolean): boolean {
 	return typeof value === 'boolean' ? value : fallback;
+}
+
+/**
+ * @description Reads where a reply's preview sits.
+ * @param value The stored setting.
+ * @param avatarLast Whether the avatar sits by a group's last bubble, which makes `icon` the default.
+ * @returns `quote` or `icon`.
+ */
+export function replyStyle(
+	value: unknown,
+	avatarLast: boolean,
+): Exclude<ValueOf<typeof ReplyStyle>, 'auto'> {
+	const stored = choice(value, ReplyStyle);
+
+	if (stored !== ReplyStyle.auto) return stored;
+
+	return avatarLast ? ReplyStyle.icon : ReplyStyle.quote;
 }
 
 /**
@@ -162,6 +182,7 @@ export function bubbleAppearance(
 		roomyRows: flag(read('roomyRows'), true),
 		avatarLast,
 		nameInside: flag(read('nameInside'), true),
+		reply: replyStyle(read('reply'), avatarLast),
 		tail: !flag(read('tail'), false)
 			? TailPosition.off
 			: avatarLast
@@ -219,18 +240,53 @@ export function namesInside({ nameInside, roomyRows, layout }: BubbleAppearance)
 }
 
 /**
+ * @description Tells whether a reply's preview sits in a quote box inside the bubble, which needs rows with room, and in fitted bubbles the name inside too.
+ * @param appearance The bubble's look.
+ * @returns Whether replies are quoted inside.
+ */
+export function repliesQuoted(appearance: BubbleAppearance): boolean {
+	const { reply, roomyRows, layout } = appearance;
+
+	return (
+		reply === ReplyStyle.quote &&
+		roomyRows &&
+		(layout === BubbleLayout.card || namesInside(appearance))
+	);
+}
+
+/**
+ * @description Works out the room between a bubble's edges and the name and quote box it holds.
+ * @param appearance The bubble's look.
+ * @returns The padding in points: a card's reach plus the row inset, otherwise the bubble's padding.
+ */
+export function headingPadding(appearance: BubbleAppearance): Padding {
+	if (appearance.layout === BubbleLayout.dynamic) {
+		return { horizontal: appearance.horizontalPadding, vertical: appearance.verticalPadding };
+	}
+
+	const { horizontal, vertical } = cardPadding(appearance);
+
+	return { horizontal: horizontal + rowInset(appearance), vertical };
+}
+
+// A quoted reply needs room for its box; one above a bubble holding the name needs room to clear the bubble's top padding.
+function replyRoom(appearance: BubbleAppearance): number {
+	if (repliesQuoted(appearance)) return Quote.room;
+
+	return namesInside(appearance) ? Quote.above : 0;
+}
+
+/**
  * @description Works out how much each message row grows above and below its content for its bubble to keep its padding and spacing.
  * @param appearance The bubble's look.
- * @returns The room in points. Joined rows keep a group's lines close, so the first row of the next group also holds the bottom padding the last bubble above hangs into it. A reply's row grows by the quote's room when names sit inside.
+ * @returns The room in points. Joined rows keep a group's lines close, so the first row of the next group also holds the bottom padding the last bubble above hangs into it. A reply's row grows by the room its preview needs.
  */
 export function rowRooms(appearance: BubbleAppearance): RowRooms {
 	const { roomyRows, layout, grouping, verticalPadding, spacing } = appearance;
 	const even = (room: number) => ({ top: room, bottom: room });
 	const withReply = (rooms: Omit<RowRooms, 'reply'>): RowRooms => ({
 		...rooms,
-		reply: namesInside(appearance)
-			? { ...rooms.first, top: rooms.first.top + Quote.room }
-			: rooms.first,
+		reply: { ...rooms.first, top: rooms.first.top + replyRoom(appearance) },
 	});
 
 	if (!roomyRows) return NO_ROW_ROOM;
@@ -324,9 +380,12 @@ export default {
 	bubbleLayout,
 	cardPadding,
 	choice,
-	namesInside,
 	headingMoves,
+	headingPadding,
+	namesInside,
 	parseHexColor,
+	repliesQuoted,
+	replyStyle,
 	rowInset,
 	rowRooms,
 };

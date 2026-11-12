@@ -3,14 +3,21 @@ import type { Fitted } from '~/bubbles/android/neighbours';
 import { bubbleFrame, cardFrame, type Box } from '~/bubbles/geometry';
 import { bubbleTail, cornerShape, separateFrame, withoutTailCorner } from '~/bubbles/group';
 import { bubblePath, cornerRadii } from '~/bubbles/bubble-path';
-import { headingPlace, headingRoom, type Move } from '~/bubbles/heading';
+import {
+	headingPlace,
+	headingRoom,
+	headingSpot,
+	quotedCard,
+	type HeadingSpot,
+	type Move,
+} from '~/bubbles/heading';
 import { mentionPaint } from '~/bubbles/mention-paint';
 import { shadeColor } from '~/bubbles/shade';
 import {
 	argb,
 	cardPadding,
 	headingMoves,
-	namesInside,
+	headingPadding,
 	type BubbleAppearance,
 	type BubbleColor,
 	type HeadingMoves,
@@ -50,12 +57,11 @@ export type RowLayout = {
 };
 
 /** A bubble fitted to its row, before its neighbours are known. */
-export type RowFrame = {
+export type RowFrame = HeadingSpot & {
 	frame: Box;
 	radius: number;
 	/** The radius to round the row's media to, or `undefined` to keep Discord's. */
 	mediaRadius?: number;
-	inside: boolean;
 	lifted: number;
 	/** How the name, avatar and reply move while they sit outside the bubble. */
 	moves: HeadingMoves;
@@ -112,18 +118,22 @@ const scaledBox = (box: Box, scale: number): Box => ({
  */
 export function rowFrame(layout: RowLayout, style: BubbleAppearance): RowFrame {
 	const dynamic = style.layout === BubbleLayout.dynamic;
-	const inside = namesInside(style) && layout.heading !== undefined;
+	const { inside, quoted } = headingSpot(style, layout.heading);
 	const lifted = !inside && style.roomyRows && dynamic ? style.verticalPadding : 0;
 
 	if (!dynamic) {
 		return {
 			frame: separateFrame(
-				cardFrame(layout.column, cardPadding(style)),
+				quotedCard(cardFrame(layout.column, cardPadding(style)), layout.heading, {
+					quoted,
+					vertical: cardPadding(style).vertical,
+				}),
 				layout.height,
 				style.spacing,
 			),
 			radius: style.radius,
 			inside,
+			quoted,
 			lifted,
 			moves: headingMoves(style),
 		};
@@ -132,7 +142,7 @@ export function rowFrame(layout: RowLayout, style: BubbleAppearance): RowFrame {
 	const padding = style.horizontalPadding;
 	const room =
 		inside && layout.heading
-			? headingRoom(layout.heading, layout.replyTextWidth, padding)
+			? headingRoom(layout.heading, layout.replyTextWidth, padding, quoted)
 			: undefined;
 	const contentWidth = Math.max(
 		0,
@@ -156,6 +166,7 @@ export function rowFrame(layout: RowLayout, style: BubbleAppearance): RowFrame {
 		...fitted,
 		frame: separateFrame(fitted.frame, floor, style.spacing, hard),
 		inside,
+		quoted,
 		lifted,
 		moves: headingMoves(style),
 	};
@@ -289,14 +300,20 @@ function headingPaint({ layout, measured, style, color }: PaintInput, frame: Box
 
 	if (!measured.inside || !heading) return measured.moves;
 
+	const padding = headingPadding(style);
 	const place = headingPlace(
 		heading,
 		frame,
 		layout.body.y,
-		style.horizontalPadding,
-		style.verticalPadding,
+		padding.horizontal,
+		padding.vertical,
+		{
+			quoted: measured.quoted,
+			keepTime: style.layout === BubbleLayout.card,
+		},
 	);
 	const reply = place.reply;
+	const quote = reply?.quote;
 
 	return {
 		name: place.name,
@@ -306,11 +323,11 @@ function headingPaint({ layout, measured, style, color }: PaintInput, frame: Box
 		...(place.time && heading.time
 			? { time: place.time.x - (heading.time.x - heading.name.x) }
 			: {}),
-		...(reply
+		...(quote
 			? {
-					clip: reply.clip,
+					clip: quote.clip,
 					quote: {
-						box: reply.box,
+						box: quote.box,
 						color: argb({ ...shadeColor(color, Quote.shade), alpha: color.alpha }),
 						radius: Quote.radius,
 					},

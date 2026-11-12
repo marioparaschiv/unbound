@@ -8,9 +8,9 @@ import { messageLayout, type SnapshotNode } from '~/bubbles/message-layout';
 import { BubbleLayout, Grouping } from '~/constants';
 import { bubbleFrame, cardFrame } from '~/bubbles/geometry';
 import { separateFrame } from '~/bubbles/group';
-import { headingRoom } from '~/bubbles/heading';
+import { headingRoom, headingSpot, quotedCard } from '~/bubbles/heading';
 import { textWidth } from '~/bubbles/ios/text-width';
-import { cardPadding, headingMoves, namesInside } from '~/bubbles/style';
+import { cardPadding, headingMoves } from '~/bubbles/style';
 import { currentAppearance } from '~/bubbles/theme';
 
 const SNAPSHOT = { maxDepth: 12, maxNodes: 512 };
@@ -59,12 +59,14 @@ export function createMeasure({ objc, media, highlight, inset: readInset }: Meas
 		const height = nodes[0]!.frame.height;
 		const startsGroup = layout.headerBottom !== undefined;
 		const dynamic = style.layout === BubbleLayout.dynamic;
-		const inside = namesInside(style) && layout.heading !== undefined;
+		const { inside, quoted } = headingSpot(style, layout.heading);
 		const lifted = !inside && style.roomyRows && dynamic ? style.verticalPadding : 0;
 		const heading = {
 			heading: layout.heading,
 			bodyTop: layout.body.y,
 			inside,
+			quoted,
+			keepTime: !dynamic,
 			lifted,
 			moves: headingMoves(style),
 		};
@@ -79,7 +81,10 @@ export function createMeasure({ objc, media, highlight, inset: readInset }: Meas
 			return {
 				...heading,
 				frame: separateFrame(
-					cardFrame(layout.column, cardPadding(style)),
+					quotedCard(cardFrame(layout.column, cardPadding(style)), layout.heading, {
+						quoted,
+						vertical: cardPadding(style).vertical,
+					}),
 					height,
 					style.spacing,
 				),
@@ -107,8 +112,9 @@ export function createMeasure({ objc, media, highlight, inset: readInset }: Meas
 			inside && layout.heading
 				? headingRoom(
 						layout.heading,
-						await replyTextWidth(nodes, layout.heading.reply?.label),
+						quoted ? await replyTextWidth(nodes, layout.heading.reply?.label) : 0,
 						padding,
+						quoted,
 					)
 				: undefined;
 		const body = {

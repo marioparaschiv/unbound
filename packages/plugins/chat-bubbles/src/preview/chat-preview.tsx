@@ -46,6 +46,7 @@ const LOOK_KEYS: (keyof Settings)[] = [
 	'roomyRows',
 	'avatarLast',
 	'nameInside',
+	'reply',
 	'tail',
 	'tailSize',
 	'color',

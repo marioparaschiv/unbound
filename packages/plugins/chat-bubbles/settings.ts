@@ -43,6 +43,11 @@ export default defineSettings({
 	roomyRows: setting.boolean({ default: true, hidden: true }),
 	avatarLast: setting.boolean({ default: false, hidden: true }),
 	nameInside: setting.boolean({ default: true, hidden: true }),
+	reply: setting.choice({
+		default: 'auto',
+		hidden: true,
+		options: { auto: 'REPLY_AUTO', quote: 'REPLY_QUOTE', icon: 'REPLY_ICON' },
+	}),
 	tail: setting.boolean({ default: false, hidden: true }),
 	tailSize: setting.number({ default: 8, hidden: true }),
 	color: setting.string({ default: '', hidden: true }),

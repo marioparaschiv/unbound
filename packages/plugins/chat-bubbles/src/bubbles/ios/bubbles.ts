@@ -26,7 +26,14 @@ import { createNeighbours } from '~/bubbles/ios/neighbours';
 import { createMediaCorners } from '~/bubbles/ios/media-corners';
 import { createMentionHighlight, mentionPaint } from '~/bubbles/ios/mention';
 import { installRowPadding, setRowRoom } from '~/bubbles/ios/row-padding';
-import { accessoryGap, NO_ROW_ROOM, rowInset, rowRooms, type RowRooms } from '~/bubbles/style';
+import {
+	accessoryGap,
+	headingPadding,
+	NO_ROW_ROOM,
+	rowInset,
+	rowRooms,
+	type RowRooms,
+} from '~/bubbles/style';
 import { resizeRows } from '~/bubbles/ios/resize-rows';
 import { installMovedTaps } from '~/bubbles/ios/moved-taps';
 import { packInset, removeContentInsets } from '~/bubbles/ios/content-inset';
@@ -322,7 +329,7 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 			paint: cellPaint(
 				measured,
 				frame,
-				style.horizontalPadding,
+				headingPadding(style),
 				color,
 				style.avatarLast && sender.author !== undefined
 					? { author: sender.author, ...edges }

@@ -17,6 +17,7 @@ const heading: Heading = {
 };
 const bubble = { x: 68, y: 19, width: 250, height: 80 };
 const color = { red: 0.5, green: 0.5, blue: 0.5, alpha: 0.9 };
+const padding = { horizontal: 14, vertical: 10 };
 const NO_MOVES = { name: { x: 0, y: 0 }, avatar: { x: 0, y: 0 }, reply: { x: 0, y: 0 } };
 const appearance = (values: Record<string, unknown>) =>
 	bubbleAppearance((key) => values[key], { red: 0, green: 0, blue: 0 });
@@ -25,10 +26,18 @@ describe('cell paint', () => {
 	test('lifts the name, avatar and reply when they sit outside the bubble', () => {
 		const up = { x: 0, y: -10 };
 		const moves = { name: up, avatar: up, reply: up };
-		const measured = { heading, bodyTop: 79, inside: false, lifted: 10, moves };
+		const measured = {
+			heading,
+			bodyTop: 79,
+			inside: false,
+			quoted: false,
+			keepTime: false,
+			lifted: 10,
+			moves,
+		};
 		const picture = { author: 'c/low', start: true, end: false };
 
-		expect(cellPaint(measured, bubble, 14, color, picture)).toEqual({
+		expect(cellPaint(measured, bubble, padding, color, picture)).toEqual({
 			name: { x: 0, y: -10 },
 			avatar: { x: 0, y: -10 },
 			reply: { x: 0, y: -10 },
@@ -38,9 +47,17 @@ describe('cell paint', () => {
 
 	test("draws the quote box in the bubble's own coordinates, shaded from the bubble", () => {
 		const paint = cellPaint(
-			{ heading, bodyTop: 79, inside: true, lifted: 0, moves: NO_MOVES },
+			{
+				heading,
+				bodyTop: 79,
+				inside: true,
+				quoted: true,
+				keepTime: false,
+				lifted: 0,
+				moves: NO_MOVES,
+			},
 			bubble,
-			14,
+			padding,
 			color,
 			undefined,
 		);

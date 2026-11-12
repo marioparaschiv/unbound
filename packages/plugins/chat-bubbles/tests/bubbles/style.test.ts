@@ -31,6 +31,7 @@ describe('bubble style', () => {
 			roomyRows: true,
 			avatarLast: false,
 			nameInside: true,
+			reply: 'quote',
 			tail: 'off',
 			tailSize: 8,
 			color: { red: 0x22 / 255, green: 0x22 / 255, blue: 0x22 / 255, alpha: 1 },
@@ -69,6 +70,16 @@ describe('bubble style', () => {
 		expect(tail({ tail: true })).toBe('first');
 		expect(tail({ tail: true, avatarLast: true })).toBe('last');
 		expect(tail({ tail: false, avatarLast: true })).toBe('off');
+	});
+
+	test('quotes replies by default, or puts them above while the avatar sits by the last bubble', () => {
+		const reply = (values: Record<string, unknown>) =>
+			bubbleAppearance(reader(values), dark).reply;
+
+		expect(reply({})).toBe('quote');
+		expect(reply({ avatarLast: true })).toBe('icon');
+		expect(reply({ avatarLast: true, reply: 'quote' })).toBe('quote');
+		expect(reply({ reply: 'icon' })).toBe('icon');
 	});
 
 	test("uses its own color for the user's messages, falling back to the bubble color", () => {
@@ -140,10 +151,15 @@ describe('bubble style', () => {
 			reply: { top: 25, bottom: 13 },
 		});
 		expect(rowRooms({ ...fitted, nameInside: false }).reply).toEqual(even);
+		expect(rowRooms({ ...fitted, reply: 'icon' }).reply).toEqual({ top: 21, bottom: 13 });
 		expect(rowRooms({ ...fitted, layout: 'card' })).toEqual({
 			first: { top: 9, bottom: 9 },
 			next: { top: 9, bottom: 9 },
-			reply: { top: 9, bottom: 9 },
+			reply: { top: 21, bottom: 9 },
+		});
+		expect(rowRooms({ ...fitted, layout: 'card', reply: 'icon' }).reply).toEqual({
+			top: 9,
+			bottom: 9,
 		});
 		expect(rowRooms({ ...fitted, roomyRows: false })).toEqual({
 			first: { top: 0, bottom: 0 },

@@ -148,6 +148,7 @@ declare module '@unbound-app/settings' {
 		roomyRows: boolean;
 		avatarLast: boolean;
 		nameInside: boolean;
+		reply: "auto" | "quote" | "icon";
 		tail: boolean;
 		tailSize: number;
 		color: string;
@@ -177,6 +178,7 @@ declare module '@unbound-app/settings' {
 		"roomyRows": boolean;
 		"avatarLast": boolean;
 		"nameInside": boolean;
+		"reply": "auto" | "quote" | "icon";
 		"tail": boolean;
 		"tailSize": number;
 		"color": string;

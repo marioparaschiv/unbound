@@ -13,8 +13,9 @@ import {
 	Grouping,
 	MediaCorners,
 	MENTION_WIDTH_STEP,
+	ReplyStyle,
 } from '~/constants';
-import { bubbleLayout, choice, parseHexColor } from '~/bubbles/style';
+import { bubbleLayout, choice, parseHexColor, replyStyle } from '~/bubbles/style';
 import { themeBubbleColor } from '~/bubbles/theme';
 import { hexColor } from '~/bubbles/shade';
 import { matchingPreset, PRESETS, type Look, type PresetName } from '~/presets';
@@ -315,6 +316,36 @@ function GroupsSection() {
 	);
 }
 
+// Quoting a reply needs room in the row, and in fitted bubbles the name inside too; otherwise it sits above.
+function replyNote(fitted: boolean, roomyRows: boolean, nameInside: boolean): string {
+	if (!roomyRows) return messages.REPLY_NEEDS_ROOM;
+
+	return fitted && !nameInside ? messages.REPLY_NEEDS_NAME : messages.REPLY_SUBTITLE;
+}
+
+function ReplyRow({ fitted }: { fitted: boolean }) {
+	const roomyRows = useSetting('roomyRows') !== false;
+	const nameInside = useSetting('nameInside') !== false;
+	const reply = replyStyle(useSetting('reply'), useSetting('avatarLast') === true);
+	const usable = roomyRows && (!fitted || nameInside);
+
+	return (
+		<ui.SegmentedRow
+			label={messages.REPLY}
+			subLabel={replyNote(fitted, roomyRows, nameInside)}
+			value={usable ? reply : ReplyStyle.icon}
+			disabled={!usable}
+			options={[
+				{ value: ReplyStyle.quote, label: messages.REPLY_QUOTE },
+				{ value: ReplyStyle.icon, label: messages.REPLY_ICON },
+			]}
+			onChange={(value) => {
+				settings.reply = choice(value, ReplyStyle);
+			}}
+		/>
+	);
+}
+
 function NameSection({ fitted }: { fitted: boolean }) {
 	const roomyRows = useSetting('roomyRows') !== false;
 
@@ -335,6 +366,7 @@ function NameSection({ fitted }: { fitted: boolean }) {
 				label={messages.AVATAR_LAST}
 				subLabel={messages.AVATAR_LAST_SUBTITLE}
 			/>
+			<ReplyRow fitted={fitted} />
 		</ui.Section>
 	);
 }

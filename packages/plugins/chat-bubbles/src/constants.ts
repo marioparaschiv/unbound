@@ -47,6 +47,9 @@ export const CornerCurve = { continuous: 'continuous', circular: 'circular' } as
 /** `grouped` squares the corners where a group's bubbles meet; `separate` rounds every bubble fully; `joined` makes a group's bubbles touch and read as one shape. */
 export const Grouping = { grouped: 'grouped', separate: 'separate', joined: 'joined' } as const;
 
+/** Where a reply's preview sits: `quote` in a box inside the bubble, `icon` above it behind a reply icon, `auto` as `icon` while the avatar sits by a group's last bubble, otherwise `quote`. */
+export const ReplyStyle = { auto: 'auto', quote: 'quote', icon: 'icon' } as const;
+
 /** Which bubble of a group points a tail at the avatar. */
 export const TailPosition = { off: 'off', first: 'first', last: 'last' } as const;
 
@@ -73,6 +76,8 @@ export const Quote = {
 	radius: 8,
 	/** How much taller a reply's row grows, so the box fits between the name and the text. */
 	room: 12,
+	/** How much taller a reply's row grows when its preview sits above a bubble holding the name, so it clears the bubble's top padding. */
+	above: 8,
 	/** How far the box's color is shaded from the bubble's, as a share of full lightness. */
 	shade: 0.06,
 };

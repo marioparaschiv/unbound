@@ -27,6 +27,7 @@ describe('the bubble appearance', () => {
 			roomyRows: true,
 			avatarLast: false,
 			nameInside: true,
+			reply: 'quote',
 			tail: 'off',
 			tailSize: 8,
 			color: { red: 0x22 / 255, green: 0x22 / 255, blue: 0x22 / 255, alpha: 1 },
