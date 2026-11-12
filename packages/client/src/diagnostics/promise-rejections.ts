@@ -1,9 +1,12 @@
 import { createLogger } from '@unbound-app/logger';
 
+import { recordError } from './recent-errors';
+
 const Logger = createLogger('Core', 'PromiseRejections');
 
 // UNKNOWN: a promise can be rejected with any value.
 function logRejection(id: number, error: unknown) {
+	recordError(error);
 	Logger.error(`Unhandled promise rejection ${id}:`, error);
 }
 

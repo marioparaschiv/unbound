@@ -84,6 +84,35 @@ export const debugCardRequestSchema = Type.Object({
 	bundleChannel: Type.Optional(text(16)),
 	memory: Type.Optional(memorySchema),
 	heap: Type.Optional(heapSchema),
+	storage: Type.Optional(
+		Type.Object({
+			freeMB: Type.Optional(Type.Integer({ minimum: 0, maximum: 100_000_000 })),
+			unboundMB: Type.Optional(Type.Integer({ minimum: 0, maximum: 100_000_000 })),
+		}),
+	),
+	errors: Type.Optional(
+		Type.Array(
+			Type.Object({
+				at: Type.Integer({ minimum: 0 }),
+				message: text(160),
+				addon: Type.Optional(text()),
+			}),
+			{ maxItems: 3 },
+		),
+	),
+	patches: Type.Optional(
+		Type.Array(
+			Type.Object({ caller: text(), count: Type.Integer({ minimum: 0, maximum: 100_000 }) }),
+			{ maxItems: 8 },
+		),
+	),
+	native: Type.Optional(
+		Type.Object({
+			hooks: Type.Integer({ minimum: 0 }),
+			surfaces: Type.Integer({ minimum: 0 }),
+			handles: Type.Integer({ minimum: 0 }),
+		}),
+	),
 });
 
 export const debugCardResponseSchema = Type.Object({

@@ -1,6 +1,7 @@
 #include "NativePlatformBridge.h"
 
 #include <atomic>
+#include <filesystem>
 #include <mutex>
 #include <stdexcept>
 
@@ -229,10 +230,12 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
                        native::makeFunction(runtime, "getState", 0,
                                             [provider](jsi::Runtime &rt, const jsi::Value &,
                                                        const jsi::Value *, size_t) -> jsi::Value {
-                                                return toJSIValue(rt,
-                                                                  provider->deviceState
-                                                                      ? provider->deviceState()
-                                                                      : nlohmann::json::object());
+                                                nlohmann::json state =
+                                                    provider->deviceState
+                                                        ? provider->deviceState()
+                                                        : nlohmann::json::object();
+                                                state.update(storageState(provider->documents));
+                                                return toJSIValue(rt, state);
                                             }));
     platform.setProperty(runtime, "device", std::move(device));
 
@@ -372,6 +375,38 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
     platform.setProperty(runtime, "platform",
                          jsi::String::createFromUtf8(runtime, provider->platform));
     runtime.global().setProperty(runtime, "NativePlatform", std::move(platform));
+}
+
+nlohmann::json storageState(const std::string &documents)
+{
+    constexpr uintmax_t kMegabyte = 1024 * 1024;
+    nlohmann::json      state     = nlohmann::json::object();
+    if (documents.empty())
+    {
+        return state;
+    }
+    std::error_code             error;
+    std::filesystem::space_info space = std::filesystem::space(documents, error);
+    if (!error)
+    {
+        state["freeMB"] = space.available / kMegabyte;
+    }
+    uintmax_t       bytes = 0;
+    std::error_code walkError;
+    for (std::filesystem::recursive_directory_iterator
+             entry(std::filesystem::path(documents) / "Unbound",
+                   std::filesystem::directory_options::skip_permission_denied, walkError),
+         end;
+         !walkError && entry != end; entry.increment(walkError))
+    {
+        std::error_code sizeError;
+        if (entry->is_regular_file(sizeError))
+        {
+            bytes += entry->file_size(sizeError);
+        }
+    }
+    state["unboundMB"] = bytes / kMegabyte;
+    return state;
 }
 
 nlohmann::json debugEnvironment(const NativePlatformProvider &provider)
