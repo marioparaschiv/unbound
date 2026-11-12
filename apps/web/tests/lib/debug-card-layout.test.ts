@@ -280,14 +280,20 @@ describe('debug card', () => {
 		const broken = layoutDebugCard(alpha, new Date(), { compat: { broken: 2, fallbacks: 0 } });
 		const clean = layoutDebugCard(alpha, new Date(), { compat: { broken: 0, fallbacks: 3 } });
 		const behind = layoutDebugCard(info, new Date(), {
-			clientBehind: true,
-			loaderBehind: true,
+			clientUpdate: '85af3ea15',
+			loaderUpdate: '1.4.0',
 		});
 
 		expect(texts(broken).find((run) => run.text === 'broken')?.color).toBe('#ef4444');
 		expect(texts(clean).some((run) => run.text === 'supported')).toBe(true);
-		expect(texts(behind).filter((run) => run.text === ' · update available')).toHaveLength(2);
-		expect(JSON.parse(debugAltText(info, { loaderBehind: true })).updates).toEqual(['loader']);
+		expect(texts(behind).find((run) => run.text.startsWith('loader 1.4.0'))?.text).toBe(
+			'loader 1.4.0 · client 85af3ea15',
+		);
+		expect(texts(behind).find((run) => run.text.startsWith('1.2.0'))).toBeDefined();
+		expect(texts(behind).some((run) => run.text.includes('…'))).toBe(false);
+		expect(JSON.parse(debugAltText(info, { loaderUpdate: '1.4.0' })).updates).toEqual([
+			'loader 1.4.0',
+		]);
 	});
 	test('tags custom and PR bundles and reports the last update check', () => {
 		const now = new Date('2026-11-12T18:00:00Z');
@@ -317,7 +323,7 @@ describe('debug card', () => {
 			settings: 'restored',
 		});
 	});
-	test('shows recent errors and low storage, and keeps the loader row whole when it is behind', () => {
+	test('shows recent errors and low storage', () => {
 		const report: DebugCardRequest = {
 			...info,
 			errors: [{ at: 1, message: 'undefined is not a function', addon: 'chat-bubbles' }],
@@ -325,7 +331,7 @@ describe('debug card', () => {
 			patches: [{ caller: 'chat-bubbles', count: 12 }],
 			native: { hooks: 2, surfaces: 0, handles: 5 },
 		};
-		const card = layoutDebugCard(report, new Date(), { loaderBehind: true });
+		const card = layoutDebugCard(report, new Date());
 		const labels = texts(card)
 			.filter((run) => run.x === 14)
 			.map((run) => run.text);

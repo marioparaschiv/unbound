@@ -10,9 +10,13 @@ import { bundleRelease } from '~/db/schema';
 /** What the server knows that the device does not: the compat scan of its Discord and whether it is behind. */
 export type DebugCardContext = {
 	compat?: DiscordCompatResult;
-	clientBehind?: boolean;
-	loaderBehind?: boolean;
+	/** The newest bundle's short commit on the client's channel, when the client runs an older one. */
+	clientUpdate?: string;
+	/** The newest loader release for the platform, when the installed loader is older. */
+	loaderUpdate?: string;
 };
+
+const SHORT_COMMIT_LENGTH = 9;
 
 function platformOf(info: DebugCardRequest): DiscordCompatPlatform | undefined {
 	const platform = info.platform.toLowerCase();
@@ -20,9 +24,9 @@ function platformOf(info: DebugCardRequest): DiscordCompatPlatform | undefined {
 	return platform === 'ios' || platform === 'android' ? platform : undefined;
 }
 
-async function clientBehind(ctx: AppContext, info: DebugCardRequest): Promise<boolean> {
+async function clientUpdate(ctx: AppContext, info: DebugCardRequest): Promise<string | undefined> {
 	if (info.bundleChannel !== 'stable' && info.bundleChannel !== 'beta') {
-		return false;
+		return undefined;
 	}
 
 	const [newest] = await ctx.db
@@ -32,19 +36,23 @@ async function clientBehind(ctx: AppContext, info: DebugCardRequest): Promise<bo
 		.orderBy(desc(bundleRelease.publishedAt))
 		.limit(1);
 
-	return Boolean(newest && info.commit && !newest.version.startsWith(info.commit));
+	if (!newest || !info.commit || newest.version.startsWith(info.commit)) {
+		return undefined;
+	}
+
+	return newest.version.slice(0, info.commit.length || SHORT_COMMIT_LENGTH);
 }
 
-async function loaderBehind(ctx: AppContext, info: DebugCardRequest): Promise<boolean> {
+async function loaderUpdate(ctx: AppContext, info: DebugCardRequest): Promise<string | undefined> {
 	const platform = platformOf(info);
 
 	if (!platform || !/^\d+\.\d+\.\d+/.test(info.loader)) {
-		return false;
+		return undefined;
 	}
 
-	const newer = await newerLoaderReleases(ctx, { platform, version: info.loader });
+	const [newest] = await newerLoaderReleases(ctx, { platform, version: info.loader });
 
-	return newer.length > 0;
+	return newest?.version;
 }
 
 /**
@@ -62,11 +70,11 @@ export async function debugCardContext(
 		platform
 			? findDiscordCompat(ctx, platform, info.discord).catch(() => undefined)
 			: undefined,
-		clientBehind(ctx, info).catch(() => false),
-		loaderBehind(ctx, info).catch(() => false),
+		clientUpdate(ctx, info).catch(() => undefined),
+		loaderUpdate(ctx, info).catch(() => undefined),
 	]);
 
-	return { compat, clientBehind: client, loaderBehind: loader };
+	return { compat, clientUpdate: client, loaderUpdate: loader };
 }
 
 export default debugCardContext;

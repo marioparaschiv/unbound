@@ -164,8 +164,11 @@ function lastCheckSummary(launch: DebugCardLaunch | undefined, now: Date): strin
 	return [check.outcome, ago, check.detail].filter(Boolean).join(' · ');
 }
 
-function updateNote(behind?: boolean): Span[] {
-	return behind ? [warn(' · update available')] : [];
+function updateNotes(context: DebugCardContext): string[] {
+	return [
+		context.loaderUpdate && `loader ${context.loaderUpdate}`,
+		context.clientUpdate && `client ${context.clientUpdate}`,
+	].filter((note): note is string => typeof note === 'string');
 }
 
 function supportOf(info: DebugInfo, context: DebugCardContext): DiscordSupport | undefined {
@@ -190,19 +193,9 @@ function rows(info: DebugInfo, now: Date, context: DebugCardContext): [string, S
 				value(info.client.replace(/^v/, '')),
 				accent(` @${info.commit}`),
 				...sourceNote(info.launch),
-				...updateNote(context.clientBehind),
 			],
 		],
-		[
-			'loader',
-			[
-				value(info.loader),
-				...updateNote(context.loaderBehind),
-				dim(
-					` ${context.loaderBehind ? `· ${info.loaderOrigin}` : joined([info.loaderOrigin, info.framework])}`,
-				),
-			],
-		],
+		['loader', [value(info.loader), dim(` ${joined([info.loaderOrigin, info.framework])}`)]],
 		[
 			'discord',
 			[
@@ -224,7 +217,7 @@ function rows(info: DebugInfo, now: Date, context: DebugCardContext): [string, S
 		...(signing ? [['install', installSpans(signing)] as [string, Span[]]] : []),
 		['react', [value(info.react), dim(` · react native ${info.reactNative}`)]],
 		['hermes', [value(info.hermes), dim(` · bytecode ${info.bytecode}`)]],
-		...diagnosticRows(info, now).slice(0, MAX_DIAGNOSTIC_ROWS),
+		...diagnosticRows(info, now, context).slice(0, MAX_DIAGNOSTIC_ROWS),
 	];
 }
 
@@ -297,7 +290,7 @@ function lowStorage(storage: DebugInfo['storage']): string | undefined {
 	]);
 }
 
-function diagnosticRows(info: DebugInfo, now: Date): [string, Span[]][] {
+function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): [string, Span[]][] {
 	const crashes = crashSummary(info.launch?.crashes ?? [], now);
 	const launch = launchNotes(info.launch);
 	const memory = memoryNotes(info.memory);
@@ -305,6 +298,10 @@ function diagnosticRows(info: DebugInfo, now: Date): [string, Span[]][] {
 	const storage = lowStorage(info.storage);
 	const candidates: [string, Span[]][] = [
 		['crashes', crashes],
+		[
+			'updates',
+			updateNotes(context).length ? [warn(fittedList(updateNotes(context), VALUE_ROOM))] : [],
+		],
 		[
 			'issues',
 			info.disabledAddons?.length ? [warn(fittedList(info.disabledAddons, VALUE_ROOM))] : [],
@@ -596,11 +593,7 @@ export function debugAltText(
 		bytecode: info.bytecode,
 		state: info.flags,
 		...(supportOf(info, context) && { support: supportOf(info, context) }),
-		...((context.clientBehind || context.loaderBehind) && {
-			updates: [context.clientBehind && 'client', context.loaderBehind && 'loader'].filter(
-				(part): part is string => typeof part === 'string',
-			),
-		}),
+		...(updateNotes(context).length && { updates: updateNotes(context) }),
 		...(launchNotes(info.launch).length && { launch: launchNotes(info.launch) }),
 		...(info.disabledAddons?.length && { disabled: info.disabledAddons }),
 		...(info.locale && { locale: info.locale }),
