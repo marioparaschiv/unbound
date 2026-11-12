@@ -23,5 +23,42 @@
 			}
 		},
 		"deviceDisconnected": { "type": "device-status", "connected": false }
+	},
+	"commandErrorCodes": [
+		"invalid-input",
+		"no-device",
+		"device-disconnected",
+		"timeout",
+		"bridge-unreachable",
+		"shut-down",
+		"device-error",
+		"not-found",
+		"tool-failed",
+		"unsupported",
+		"command-failed"
+	],
+	"cliFailures": {
+		"coded": {
+			"ok": false,
+			"text": "No device is connected to the debugger. Start the bridge.",
+			"error": {
+				"code": "no-device",
+				"message": "No device is connected to the debugger.",
+				"hint": "Start the bridge."
+			}
+		},
+		"invalidInput": {
+			"ok": false,
+			"text": "must be >= 1 (at /timeout)",
+			"error": {
+				"code": "invalid-input",
+				"message": "must be >= 1 (at /timeout)",
+				"field": "timeout"
+			}
+		},
+		"withData": {
+			"summary": { "errors": 1 },
+			"error": { "code": "command-failed", "message": "1 error." }
+		}
 	}
 }
