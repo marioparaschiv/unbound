@@ -221,5 +221,124 @@ export type NativeObjCBridge = {
 	): NativeHookToken;
 };
 
+/** A kind of a class's own members `objc.inspectMembers` lists. */
+export type NativeInspectKind = 'properties' | 'ivars' | 'methods' | 'classMethods' | 'protocols';
+
+/** One class of an inspected class chain, from the class itself to its root. */
+export type NativeInspectedClass = {
+	name: string;
+	/** The superclass's name, or `null` at the root. */
+	superclass: string | null;
+	/** The path of the image that defines the class, or `null` when unknown. */
+	image: string | null;
+	instanceSize: number;
+	/** How many of each kind of member the class itself declares. */
+	counts: Record<NativeInspectKind, number>;
+};
+
+/** One member of a class; fields that do not apply to its kind are omitted. */
+export type NativeInspectedMember = {
+	name: string;
+	kind: NativeInspectKind;
+	/** The decoded type, such as `NSString *` or `CGRect`. */
+	type?: string;
+	/** The declaration, such as `- (void)setFoo:(id)foo`. */
+	signature?: string;
+	returnType?: string;
+	parameters?: string[];
+	/** The raw Objective-C type encoding. */
+	encoding?: string;
+	/** Property attributes, such as `nonatomic`, `strong`, `readonly`, `weak`, `copy` or `class`. */
+	attributes?: string[];
+	getter?: string;
+	setter?: string;
+	/** The instance variable backing a property. */
+	ivar?: string;
+	offset?: number;
+	size?: number;
+	image?: string;
+	/** Whether reading the value runs no code (`auto`), runs a getter (`manual`), or is unsafe (`never`). */
+	read: 'auto' | 'manual' | 'never';
+};
+
+/** One value read by `objc.inspectValues`; `text` describes it for display. */
+export type NativeInspectedValue = {
+	name: string;
+	kind:
+		| 'nil'
+		| 'number'
+		| 'bool'
+		| 'string'
+		| 'object'
+		| 'class'
+		| 'struct'
+		| 'pointer'
+		| 'selector'
+		| 'other'
+		| 'skipped'
+		| 'error';
+	/** The value as text, strings cut to 500 characters. */
+	text: string;
+	/** A handle to the value, for `kind: 'object'`. */
+	object?: NativeObjectHandle;
+	className?: string;
+};
+
+/** Narrows a page of inspected members, images or classes. */
+export type NativeInspectPage = {
+	offset?: number;
+	/** At most 200. */
+	limit?: number;
+	/** A case-insensitive substring of the name. */
+	filter?: string;
+};
+
+/** One loaded image that defines Objective-C classes. */
+export type NativeInspectedImage = { path: string; name: string; classCount: number };
+
+/** One page of a class's members of one kind, and how many match in all. */
+export type NativeInspectedMembers = { total: number; members: NativeInspectedMember[] };
+
+/** One page of loaded images, and how many match in all. */
+export type NativeInspectedImages = { total: number; images: NativeInspectedImage[] };
+
+/** One page of an image's class names, and how many match in all. */
+export type NativeInspectedClasses = { total: number; classes: string[] };
+
+/** Options for `objc.inspectValues`. */
+export type NativeInspectValuesOptions = {
+	/** Runs the getters of computed properties, which automatic reads skip. */
+	invokeGetters?: boolean;
+};
+
+/**
+ * The debugger's Objective-C reflection, iOS only and never in a plugin's scope. Needs `native.objc.inspect`.
+ * Throws `INSPECTOR_DISABLED` without developer mode or the debugger, `INSPECTOR_UNAVAILABLE` when the library cannot load.
+ */
+export type NativeObjCInspector = {
+	/** Describes a class, or an object's class, and its superclasses; throws `INSPECTOR_UNKNOWN_CLASS` for an unknown name. */
+	inspectClass(target: NativeObjectHandle | string): NativeInspectedClass[];
+	/** Lists one page of one kind of a class's own members. */
+	inspectMembers(
+		className: string,
+		kind: NativeInspectKind,
+		page?: NativeInspectPage,
+	): NativeInspectedMembers;
+	/** Reads up to 50 properties or ivars of an object on the main thread; getters run only with `invokeGetters`. */
+	inspectValues(
+		object: NativeObjectHandle,
+		className: string,
+		kind: 'properties' | 'ivars',
+		names: string[],
+		options?: NativeInspectValuesOptions,
+	): NativeCancelablePromise<NativeInspectedValue[]>;
+	/** Lists one page of the loaded images that define Objective-C classes. */
+	inspectImages(page?: NativeInspectPage): NativeInspectedImages;
+	/** Lists one page of the class names an image defines, sorted. */
+	inspectClasses(imagePath: string, page?: NativeInspectPage): NativeInspectedClasses;
+};
+
 /** The `objc` namespace the loader publishes, before the client adds `create` and scopes it to a plugin. */
-export type LoaderObjCBridge = Omit<NativeObjCBridge, 'create'> & NativeUIScopeFactory;
+export type LoaderObjCBridge = Omit<NativeObjCBridge, 'create'> &
+	Partial<NativeObjCInspector> &
+	NativeUIScopeFactory;

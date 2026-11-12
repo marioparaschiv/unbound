@@ -1,3 +1,4 @@
+import type { NativeObjCInspector } from './native-objc';
 import type { NativeBridge } from './native';
 
 /** A {@link NativeBridge} namespace whose methods a plugin calls, such as `objc` or `java`. */
@@ -6,10 +7,12 @@ type NativeBridgeNamespace = Exclude<
 	'apiVersion' | 'abiVersion' | 'capabilities' | 'ui'
 >;
 
-/** A native bridge method by the path a plugin calls it through, such as `objc.invoke`. */
-export type NativeBridgeMethod = {
-	[N in NativeBridgeNamespace]: `${N}.${keyof NativeBridge[N] & string}`;
-}[NativeBridgeNamespace];
+/** A native bridge method by the path a plugin calls it through, such as `objc.invoke`, or the debugger's `objc.inspect*`. */
+export type NativeBridgeMethod =
+	| {
+			[N in NativeBridgeNamespace]: `${N}.${keyof NativeBridge[N] & string}`;
+	  }[NativeBridgeNamespace]
+	| `objc.${keyof NativeObjCInspector}`;
 
 /**
  * The Capability each native bridge method needs; the source of every Capability name. Edit it, then run
@@ -43,6 +46,11 @@ export const NATIVE_BRIDGE_METHOD_CAPABILITIES = {
 	'objc.array': 'native.objc.classes',
 	'objc.data': 'native.objc.classes',
 	'objc.hook': 'native.objc.hooks',
+	'objc.inspectClass': 'native.objc.inspect',
+	'objc.inspectMembers': 'native.objc.inspect',
+	'objc.inspectValues': 'native.objc.inspect',
+	'objc.inspectImages': 'native.objc.inspect',
+	'objc.inspectClasses': 'native.objc.inspect',
 	'ffi.symbol': 'native.ffi.symbols',
 	'ffi.call': 'native.ffi.call',
 	'fabric.mount': 'native.fabric.mount',

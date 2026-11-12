@@ -217,6 +217,9 @@ export type LoaderNativeBridge = Pick<
 
 /** The stable `code` on an error the native bridge or its plugin scope throws. */
 export type NativeBridgeErrorCode =
+	| 'INSPECTOR_DISABLED'
+	| 'INSPECTOR_UNAVAILABLE'
+	| 'INSPECTOR_UNKNOWN_CLASS'
 	| 'NATIVE_BRIDGE_ERROR'
 	| 'NATIVE_PLUGIN_API_VERSION_UNSUPPORTED'
 	| 'NATIVE_PLUGIN_CALL_CANCELLED'
