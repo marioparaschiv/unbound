@@ -1,6 +1,9 @@
-import type { AddonCount, DebugInfo, DiscordSupport } from './format-debug-info';
-
-import { launchNotes } from './launch-notes';
+import type {
+	DebugCardAddonCount as AddonCount,
+	DebugCardRequest as DebugInfo,
+	DebugCardSupport as DiscordSupport,
+} from '@unbound-app/contracts/debug-cards';
+import { launchNotes } from '@unbound-app/contracts/debug-card-launch';
 
 /** A rounded rectangle, filled or outlined, in the card's points. */
 export type CardRect = {
@@ -159,12 +162,7 @@ function rows(info: DebugInfo): [string, Span[]][] {
 				]
 			: []),
 		...(info.disabledAddons?.length
-			? [
-					['disabled', [warn(fittedList(info.disabledAddons, VALUE_ROOM))]] as [
-						string,
-						Span[],
-					],
-				]
+			? [['issues', [warn(fittedList(info.disabledAddons, VALUE_ROOM))]] as [string, Span[]]]
 			: []),
 	];
 }
@@ -383,7 +381,7 @@ function escapeXml(text: string): string {
 }
 
 /**
- * @description Writes the card as SVG, for previews and tests; devices render the same operations natively.
+ * @description Writes the card as SVG in JetBrains Mono, for the server to render as a PNG.
  * @param card The laid-out card.
  * @returns The SVG document.
  */
@@ -403,7 +401,7 @@ export function debugCardSvg(card: DebugCard): string {
 	});
 
 	return [
-		`<svg xmlns="http://www.w3.org/2000/svg" width="${card.width}" height="${card.height}" viewBox="0 0 ${card.width} ${card.height}" font-family="ui-monospace, Menlo, monospace">`,
+		`<svg xmlns="http://www.w3.org/2000/svg" width="${card.width}" height="${card.height}" viewBox="0 0 ${card.width} ${card.height}" font-family="JetBrains Mono">`,
 		...shapes,
 		'</svg>',
 	].join('');

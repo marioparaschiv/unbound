@@ -1,43 +1,18 @@
-import type { UnboundLaunchReport } from '@unbound-app/types';
-
-import { launchNotes } from './launch-notes';
+import type {
+	DebugCardAddonCount,
+	DebugCardRequest,
+	DebugCardSupport,
+} from '@unbound-app/contracts/debug-cards';
+import { launchNotes } from '@unbound-app/contracts/debug-card-launch';
 
 /** How many addons of one kind are installed and enabled. */
-export type AddonCount = { enabled: number; installed: number };
+export type AddonCount = DebugCardAddonCount;
 
 /** Whether Unbound supports the running Discord: `unsupported` is older than the minimum, `untested` an Alpha build. */
-export type DiscordSupport = 'supported' | 'untested' | 'unsupported';
+export type DiscordSupport = DebugCardSupport;
 
-/** What `/debug` reports about the running client. Every field but the addon counts is already a display string. */
-export type DebugInfo = {
-	client: string;
-	commit: string;
-	loader: string;
-	loaderOrigin: string;
-	framework: string;
-	jailbreak?: string;
-	discord: string;
-	discordChannel: string;
-	discordBuild: string;
-	appSource: string;
-	installDetails?: string;
-	react: string;
-	reactNative: string;
-	hermes: string;
-	bytecode: string;
-	platform: string;
-	os: string;
-	device: string;
-	flags: string[];
-	plugins?: AddonCount;
-	themes?: AddonCount;
-	discordSupport?: DiscordSupport;
-	disabledAddons?: string[];
-	locale?: string;
-	theme?: string;
-	iconPack?: string;
-	launch?: UnboundLaunchReport;
-};
+/** What `/debug` reports about the running client, as the server's card endpoint takes it. */
+export type DebugInfo = DebugCardRequest;
 
 function sentenceCase(text: string): string {
 	return text.charAt(0).toUpperCase() + text.slice(1);

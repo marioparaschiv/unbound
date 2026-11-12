@@ -1,11 +1,11 @@
-import type { UnboundLaunchReport } from '@unbound-app/types';
+import type { DebugCardLaunch } from './debug-cards';
 
 /**
- * @description Lists what needs attention about this launch, the most telling first: a native crash, a fallback bundle, Recovery Mode, early closes.
+ * @description Lists what needs attention about a launch, the most telling first: a native crash, a fallback bundle, Recovery Mode, early closes.
  * @param launch The loader's launch report, missing on loaders older than 1.3.0.
  * @returns The notes; empty when the launch is unremarkable.
  */
-export function launchNotes(launch?: UnboundLaunchReport): string[] {
+export function launchNotes(launch?: DebugCardLaunch): string[] {
 	if (!launch) {
 		return [];
 	}

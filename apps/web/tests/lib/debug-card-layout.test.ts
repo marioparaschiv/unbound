@@ -5,7 +5,7 @@ import {
 	debugCardSvg,
 	layoutDebugCard,
 	type CardText,
-} from '~/diagnostics/debug-card';
+} from '~/lib/debug-card/layout';
 
 const info = {
 	client: 'v3.0.0',
@@ -208,5 +208,10 @@ describe('debug card', () => {
 		});
 
 		expect(texts(card).some((run) => run.text === '● magisk')).toBe(true);
+	});
+	test('labels crashed and failed addons as issues', () => {
+		const card = layoutDebugCard({ ...info, disabledAddons: ['Chat Bubbles (crashed)'] });
+
+		expect(texts(card).some((run) => run.text === 'issues')).toBe(true);
 	});
 });
