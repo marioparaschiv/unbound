@@ -3,8 +3,10 @@
 
 pub mod argv;
 pub mod catalog;
+pub mod failure;
 pub mod process;
 
 pub use argv::{ArgError, FieldValue, Launcher, arguments, list_items};
 pub use catalog::{Catalog, CatalogError, CommandSpec, Field, FieldKind};
-pub use process::{LoadError, Run, RunEvent, Stream, load_catalog, spawn};
+pub use failure::{CommandError, ErrorCode};
+pub use process::{JSON_FLAG, LoadError, Run, RunEvent, Stream, load_catalog, spawn};

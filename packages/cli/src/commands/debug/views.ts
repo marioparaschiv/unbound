@@ -1,9 +1,8 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { runOnDevice, toDeviceCode } from '~/lib/device';
+import { lazyHandler } from '~/lib/lazy-handler';
 import { bridgePortField } from '~/lib/context';
 import { defaulted, Type } from '~/lib/schema';
-import { viewTree } from '~/lib/probes';
 
 const schema = Type.Object({
 	filter: defaulted(
@@ -34,9 +33,7 @@ const viewsCommand: CommandDefinition<typeof schema> = {
 	mcp: true,
 	schema,
 	cli: { positionals: ['filter'] },
-	handler({ filter, depth, max }, { client }) {
-		return runOnDevice(client, toDeviceCode(viewTree, filter, depth, max));
-	},
+	handler: lazyHandler(() => import('./views-handler')),
 };
 
 export default viewsCommand;

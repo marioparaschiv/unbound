@@ -1,11 +1,8 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import toError from '@unbound-app/utils/to-error';
 
-import { runOnDevice, toDeviceCode } from '~/lib/device';
-import { defaulted, parse, Type } from '~/lib/schema';
-import type { ScreenParams } from '~/lib/navigation';
+import { lazyHandler } from '~/lib/lazy-handler';
 import { bridgePortField } from '~/lib/context';
-import { openScreen } from '~/lib/navigation';
+import { defaulted, Type } from '~/lib/schema';
 
 const schema = Type.Object({
 	screen: Type.String({
@@ -23,11 +20,6 @@ const schema = Type.Object({
 	port: bridgePortField,
 });
 
-const paramsSchema = Type.Record(
-	Type.String(),
-	Type.Union([Type.String(), Type.Number(), Type.Boolean(), Type.Null()]),
-);
-
 const openCommand: CommandDefinition<typeof schema> = {
 	name: 'open',
 	description:
@@ -37,20 +29,7 @@ const openCommand: CommandDefinition<typeof schema> = {
 	mcp: true,
 	schema,
 	cli: { positionals: ['screen'] },
-	async handler({ screen, params }, { client }) {
-		let parsed: ScreenParams;
-
-		try {
-			parsed = parse(paramsSchema, JSON.parse(params));
-		} catch (error) {
-			return {
-				ok: false,
-				text: `params must be a JSON object of plain values: ${toError(error).message}`,
-			};
-		}
-
-		return runOnDevice(client, toDeviceCode(openScreen, screen, parsed));
-	},
+	handler: lazyHandler(() => import('./open-handler')),
 };
 
 export default openCommand;

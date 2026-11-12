@@ -37,6 +37,9 @@ pub struct EvalOutcome {
 	pub ok: bool,
 	/// `value` when ok, `error` otherwise.
 	pub text: String,
+	/// Why the bridge or controller failed the eval (`RequestFailureCode`, such as `timeout`); `None`
+	/// when it succeeded or the code itself threw.
+	pub code: Option<String>,
 	/// Whether the bridge reported a device on attach (`device-status`).
 	pub device_connected: bool,
 }
@@ -66,6 +69,8 @@ pub(crate) enum BridgeFrame {
 		ok: bool,
 		value: Option<String>,
 		error: Option<String>,
+		#[serde(default)]
+		code: Option<String>,
 	},
 	/// One React DevTools frame; `protocol::parse` reads it from the frame's text.
 	ReactDevtools {},
@@ -172,6 +177,7 @@ pub async fn eval(bridge: SocketAddr, code: &str, timeout_ms: u64) -> anyhow::Re
 		return Ok(EvalOutcome {
 			ok: false,
 			text: "No device is connected to the debugger bridge. Open Discord with Unbound's debugger enabled.".to_owned(),
+			code: Some("no-device".to_owned()),
 			device_connected,
 		});
 	}
@@ -186,12 +192,14 @@ pub async fn eval(bridge: SocketAddr, code: &str, timeout_ms: u64) -> anyhow::Re
 				ok,
 				value,
 				error,
+				code,
 			} = frame && reply_id == id
 			{
 				let text = if ok { value } else { error };
 				return Ok(EvalOutcome {
 					ok,
 					text: text.unwrap_or_default(),
+					code,
 					device_connected,
 				});
 			}
@@ -304,8 +312,9 @@ mod contract {
 			BridgeFrame::EvalResult {
 				ok: false,
 				error: Some(_),
+				code: Some(code),
 				..
-			}
+			} if code == "timeout"
 		));
 		assert!(matches!(
 			frame(&contract, "deviceConnected"),

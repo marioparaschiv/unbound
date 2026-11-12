@@ -5,8 +5,9 @@ import type { BubbleColor } from '~/lib/style';
 import { lastAvatarFrame } from '~/native/ios/last-avatar';
 import { messageIdOf } from '~/native/ios/message-id';
 import { ReplyIcon } from '~/lib/constants';
+import { hostOffset } from '~/native/ios/host-offset';
 
-const AVATAR_TAG = 0x0b0b26;
+export const AVATAR_TAG = 0x0b0b26;
 const PICTURE_TAG = 0x0b0b27;
 const DECORATION_TAG = 0x0b0b28;
 const QUOTE_TAG = 0x0b0b29;
@@ -185,7 +186,6 @@ function nameRowOf(objc: NativeObjCBridge, cell: NativeObjectHandle): NativeObje
 	return widest;
 }
 
-// A mask cuts the name and its tags off before the time, and removing it gives Discord's row back untouched.
 function clipName(objc: NativeObjCBridge, cell: NativeObjectHandle, width: number | undefined) {
 	'worklet';
 	const row = nameRowOf(objc, cell);
@@ -496,8 +496,11 @@ function showPicture(
 
 	const frame = lastAvatarFrame(bubble, picture.avatar);
 	const layer = objc.invoke(view, 'layer', []) as NativeObjectHandle;
+	const offset = hostOffset(objc, holder);
 
-	objc.invoke(holder, 'setFrame:', [cgRect(objc, frame)]);
+	objc.invoke(holder, 'setFrame:', [
+		cgRect(objc, { ...frame, x: frame.x - offset.x, y: frame.y - offset.y }),
+	]);
 	objc.invoke(view, 'setFrame:', [
 		cgRect(objc, { x: 0, y: 0, width: frame.width, height: frame.height }),
 	]);

@@ -1,8 +1,9 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
+import { lazyHandler } from '~/lib/lazy-handler';
 import { defaulted, Type } from '~/lib/schema';
 
-import { pluginField, runI18n } from './run';
+import { pluginField } from './plugin-field';
 
 const schema = Type.Object({
 	plugin: pluginField,
@@ -17,9 +18,7 @@ const fixCommand: CommandDefinition<typeof schema> = {
 	summary: 'Stub missing keys in every translation.',
 	mcp: false,
 	schema,
-	handler({ plugin, prune }) {
-		return runI18n({ plugin, fix: true, prune });
-	},
+	handler: lazyHandler(() => import('./fix-handler')),
 };
 
 export default fixCommand;

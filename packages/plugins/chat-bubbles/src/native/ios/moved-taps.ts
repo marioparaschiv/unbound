@@ -1,7 +1,8 @@
 import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
+import { isStandaloneCell } from '~/native/ios/standalone-cell';
 
-/** The cell's views whose drawing `moveView` shifts through their bounds: the reply preview's holder, then the name row. */
-const MOVED_VIEWS = ['_headerView', '_messageHeaderView'];
+/** The cell's views whose drawing `moveView` shifts through their bounds: the reply preview's holder, the name row, then the avatar. */
+const MOVED_VIEWS = ['_headerView', '_messageHeaderView', '_avatarWrapperView'];
 
 type BoxedRect = { value?: BoxedRect; origin?: BoxedRect; x?: number; y?: number };
 
@@ -54,7 +55,7 @@ function hitMoved(
 }
 
 /**
- * @description Sends touches on a message row's moved name and reply preview to Discord's own views where they are drawn, so tapping the reply still jumps to its message and tapping the name still opens the profile.
+ * @description Sends touches on a message row's moved name, avatar and reply preview to Discord's own views where they are drawn, so tapping the reply still jumps to its message and tapping the name or avatar still opens the profile.
  * @param scope The plugin's UI scope, which removes the hook on dispose.
  * @param messageCell The message cell's class name.
  */
@@ -65,7 +66,9 @@ export function installMovedTaps(scope: NativeUIScope, messageCell: string) {
 	objc.hook(messageCell, 'hitTest:withEvent:', {
 		replace: ({ self, args, original }) => {
 			try {
-				const hit = hitMoved(objc, self, args[0], args[1]);
+				const hit = isStandaloneCell(objc, self)
+					? undefined
+					: hitMoved(objc, self, args[0], args[1]);
 
 				if (hit) return hit;
 			} catch (error) {

@@ -12,6 +12,8 @@ bunx @unbound-app/cli --help
 
 Every command takes `--help` for its flags and `--json` to print the raw result. `ubd` alone lists the commands; a group alone, such as `ubd debug`, lists the commands in it.
 
+With `--json`, a failure prints `{ "ok": false, "text": ..., "error": { "code": ..., "message": ... } }` on stdout, or the command's own data with `error` added. The `error` may also carry a `hint`, the `field` a rejected flag or argument names, and a `stack`. Scripts can branch on `code`: `invalid-input`, `no-device`, `timeout`, `not-found`, `tool-failed` and so on. Exit codes do not change: `1` for a failed command, `2` for a usage error or no connected device.
+
 ## Layout
 
 | Command | Covers |

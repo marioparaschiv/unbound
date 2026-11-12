@@ -1,4 +1,5 @@
 import { debugCardResponseSchema, type DebugCardRequest } from '@unbound-app/contracts/debug-cards';
+import { unpackDebugAltText } from '@unbound-app/contracts/debug-card-alt-text';
 import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
 import { afterAll, describe, expect, test } from 'bun:test';
 import { parse } from '@unbound-app/contracts/schema';
@@ -54,7 +55,10 @@ describe('debug cards', () => {
 		const card = parse(debugCardResponseSchema, await response.json());
 
 		expect(Buffer.from(card.image, 'base64').subarray(1, 4).toString()).toBe('PNG');
-		expect(JSON.parse(card.altText)).toMatchObject({ unbound: '3.0.0', loader: '1.3.0' });
+		expect(JSON.parse(unpackDebugAltText(card.altText) ?? '')).toMatchObject({
+			unbound: '3.0.0',
+			loader: '1.3.0',
+		});
 	});
 
 	test('refuses malformed and oversized reports', async () => {

@@ -27,6 +27,7 @@ In the Unbound repo run `bun packages/cli/src/index.ts <command>`; elsewhere `bu
 
 - **Flags** are the camelCase schema names in kebab-case (`--strict-budget`); a boolean turns off with `--no-<flag>` or `--<flag>=false`.
 - **`--json`** prints the result's data as one JSON line on stdout. Progress and warnings go to stderr.
+- **A failure under `--json`** prints `{ ok: false, text, error }`, or the command's data with `error` added. `error` is `{ code, message, hint?, field?, stack? }`; branch on `code`: `invalid-input` (`field` names the flag or argument), `no-device`, `timeout`, `bridge-unreachable`, `device-disconnected`, `device-error`, `not-found`, `tool-failed`, `unsupported`, `command-failed`. A failed `eval` prints its `eval-result`, whose `code` is set only when the bridge failed it. MCP tools return the same `error` as structured content.
 - **Exit codes**: `0` done; `1` the command ran and failed (a check error, a thrown `eval`); `2` a usage error, an unknown command, or no device connected.
 - **Stdin**: a missing required first argument is read from a pipe: `echo 'unbound.version' | ubd debug eval`.
 - **Port**: `ubd debug` commands, `dev` and `mcp` take `--port` (default `9090`).

@@ -1,9 +1,8 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { runOnDevice, toDeviceCode } from '~/lib/device';
+import { lazyHandler } from '~/lib/lazy-handler';
 import { bridgePortField } from '~/lib/context';
 import { defaulted, Type } from '~/lib/schema';
-import { measureTiming } from '~/lib/probes';
 
 const schema = Type.Object({
 	rounds: defaulted(Type.Number({ description: 'How many samples to take.' }), 3),
@@ -19,9 +18,7 @@ const timingCommand: CommandDefinition<typeof schema> = {
 	summary: 'Measure JavaScript and main-thread latency.',
 	mcp: true,
 	schema,
-	handler({ rounds }, { client }) {
-		return runOnDevice(client, toDeviceCode(measureTiming, rounds));
-	},
+	handler: lazyHandler(() => import('./timing-handler')),
 };
 
 export default timingCommand;

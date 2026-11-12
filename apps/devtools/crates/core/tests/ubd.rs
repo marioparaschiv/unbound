@@ -157,6 +157,55 @@ async fn streams_both_outputs_then_the_exit_code() {
 
 #[cfg(unix)]
 #[tokio::test]
+async fn a_failed_json_run_reports_its_error() {
+	use unbound_devtools_core::ubd::{ErrorCode, JSON_FLAG, RunEvent, spawn};
+
+	let launcher = Launcher {
+		program: "sh".into(),
+		prefix: vec!["-c".into()],
+	};
+	let failure = r#"{"ok":false,"text":"Bad.","error":{"code":"invalid-input","message":"Bad.","field":"timeout"}}"#;
+	let run_with = |args: Vec<String>| {
+		let mut run = spawn(&tokio::runtime::Handle::current(), &launcher, &args, None);
+		async move {
+			// Dropping `stop` ends the run, so it lives as long as the loop.
+			let _stop = run.stop;
+			let mut events = Vec::new();
+			while let Some(event) = run.events.recv().await {
+				events.push(event);
+			}
+			events
+		}
+	};
+
+	let events = run_with(vec![format!("echo '{failure}'; exit 2"), JSON_FLAG.into()]).await;
+	let error = events.iter().find_map(|event| match event {
+		RunEvent::Error(error) => Some(error),
+		_ => None,
+	});
+	assert_eq!(error.map(|error| error.code), Some(ErrorCode::InvalidInput));
+	assert_eq!(
+		error.and_then(|error| error.field.as_deref()),
+		Some("timeout")
+	);
+	assert_eq!(events.last(), Some(&RunEvent::Exited(Some(2))));
+
+	// Without --json, or on success, the same line is only output.
+	for args in [
+		vec![format!("echo '{failure}'; exit 2")],
+		vec![format!("echo '{failure}'"), JSON_FLAG.into()],
+	] {
+		let events = run_with(args).await;
+		assert!(
+			!events
+				.iter()
+				.any(|event| matches!(event, RunEvent::Error(_)))
+		);
+	}
+}
+
+#[cfg(unix)]
+#[tokio::test]
 async fn stop_kills_a_long_run() {
 	use unbound_devtools_core::ubd::{RunEvent, spawn};
 

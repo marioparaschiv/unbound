@@ -17,7 +17,6 @@ export type ReactionViewState = {
 	context: ReactionContext;
 	extraWidth: number;
 	itemIndex: number;
-	// How much narrower the pill's view is than its layout item, so its width follows when the count changes.
 	layoutInset: number;
 	layoutKey: string;
 	loading: boolean;

@@ -48,6 +48,8 @@ import {
 	startSettle,
 	type ReuseSettle,
 } from '~/lib/reuse-settle';
+import { isStandaloneCell } from '~/native/ios/standalone-cell';
+import { AVATAR_TAG } from '~/native/ios/ui-cell';
 
 const BUBBLE_TAG = 0x0b0b1e;
 const MAX_NESTED_CHECKS = 256;
@@ -105,7 +107,6 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 
 	async function bubbleFor(key: string, cell: NativeObjectHandle): Promise<NativeObjectHandle> {
 		const existing = bubbles.get(key);
-		// Swipe to reply moves the content view, so the bubble lives in it to move along.
 		const host =
 			((await objc.invokeAsync(cell, 'contentView', [])) as NativeObjectHandle | null) ??
 			cell;
@@ -242,6 +243,8 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 		placedSizes.set(key, size);
 
 		notePlaced(settlingReuse.get(key));
+
+		if (isStandaloneCell(objc, cell)) return;
 
 		if (await isNested(key, cell)) {
 			await objc.invokeAsync(cell, 'setBackgroundColor:', [clear]);
@@ -432,7 +435,10 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 		}),
 	);
 
-	ui.run(installRowPadding, scope, IOSClass.messageCell, IOSClass.contentView);
+	ui.run(installRowPadding, scope, IOSClass.messageCell, IOSClass.contentView, [
+		BUBBLE_TAG,
+		AVATAR_TAG,
+	]);
 	ui.run(installMovedTaps, scope, IOSClass.messageCell);
 
 	async function setRows(next: { rooms: RowRooms; inset: number; below: number }) {

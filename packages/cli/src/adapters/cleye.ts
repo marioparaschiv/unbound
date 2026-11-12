@@ -1,6 +1,11 @@
-import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
+import type {
+	CommandDefinition,
+	CommandError,
+	CommandOutput,
+} from '@unbound-app/debugger-protocol/registry';
 import { command, type Command } from 'cleye';
 
+import { commandError, failure, inputFailure, type FailedOutput } from '~/lib/command-error';
 import { fieldToFlag, isArrayField, negatedFlags } from '~/lib/flags';
 import { readStdin, isStdinPiped } from '~/lib/stdin';
 import { createContext } from '~/lib/context';
@@ -103,6 +108,45 @@ export function toCleyeCommand(definition: CommandDefinition<TObject>): Command 
 	);
 }
 
+// UNKNOWN: a command's data is whatever it chose to return.
+function isPlainObject(value: unknown): value is object {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * @description Shapes a failure for `--json`: `{ ok, text, error }`, or the command's data as before
+ * with `error` added when the data is an object that has no `error` of its own.
+ * @param output The failed output.
+ * @returns What to print.
+ */
+// UNKNOWN: the command's own data passes through as it returned it.
+export function failureJson(output: FailedOutput): unknown {
+	const error: CommandError = commandError(output);
+	const { data } = output;
+
+	if (data === void 0) {
+		return { ok: false, text: output.text, error };
+	}
+
+	return isPlainObject(data) && !Object.hasOwn(data, 'error') ? { ...data, error } : data;
+}
+
+/**
+ * @description Ends the run on input the command cannot take: plain text on stderr, or the failure
+ * as JSON on stdout under `--json`. Exits `2`, a usage error.
+ * @param output The `invalid-input` failure.
+ * @param json Whether the run asked for JSON.
+ */
+function invalidInput(output: FailedOutput, json: boolean): never {
+	if (json) {
+		process.stdout.write(`${JSON.stringify(failureJson(output))}\n`);
+	} else {
+		process.stderr.write(`${output.text}\n`);
+	}
+
+	process.exit(2);
+}
+
 async function run(
 	definition: CommandDefinition<TObject>,
 	input: CommandInput,
@@ -111,8 +155,9 @@ async function run(
 ) {
 	if (stdinField && (input[stdinField] === void 0 || input[stdinField] === STDIN_MARKER)) {
 		if (!isStdinPiped()) {
-			process.stderr.write(`Missing required argument: ${stdinField}.\n`);
-			process.exit(2);
+			const text = `Missing required argument: ${stdinField}.`;
+
+			invalidInput(failure('invalid-input', text, { field: stdinField }), json);
 		}
 
 		input[stdinField] = await readStdin();
@@ -121,8 +166,7 @@ async function run(
 	const parsed = safeParse(definition.schema, input);
 
 	if (!parsed.success) {
-		process.stderr.write(`${parsed.error.message}\n`);
-		process.exit(2);
+		invalidInput(inputFailure(parsed.error), json);
 	}
 
 	// Commands that never dial the bridge have no `port`; their context is never connected.
@@ -130,10 +174,12 @@ async function run(
 	const context = createContext(typeof port === 'number' ? port : Number.NaN);
 
 	try {
-		const output = await definition.handler(parsed.data, context);
+		const output = await handle(definition, parsed.data, context, json);
 
 		if (json) {
-			process.stdout.write(`${JSON.stringify(output.data ?? output)}\n`);
+			const printed = output.ok ? (output.data ?? output) : failureJson(output);
+
+			process.stdout.write(`${JSON.stringify(printed)}\n`);
 		} else if (output.ok) {
 			process.stdout.write(`${output.text}\n`);
 		} else {
@@ -149,6 +195,27 @@ async function run(
 		process.exit(connectionError ? 2 : 1);
 	} finally {
 		context.close();
+	}
+}
+
+/**
+ * @description Runs the handler. Under `--json` a throw becomes a `command-failed` output with its
+ * stack, so the reader still gets one JSON line; otherwise it propagates as before.
+ */
+async function handle(
+	definition: CommandDefinition<TObject>,
+	input: Parameters<CommandDefinition<TObject>['handler']>[0],
+	context: ReturnType<typeof createContext>,
+	json: boolean,
+): Promise<CommandOutput> {
+	try {
+		return await definition.handler(input, context);
+	} catch (error) {
+		if (!json || !(error instanceof Error)) {
+			throw error;
+		}
+
+		return failure('command-failed', error.message, error.stack ? { stack: error.stack } : {});
 	}
 }
 

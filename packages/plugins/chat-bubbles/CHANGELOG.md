@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.6.5] - 2026-11-12
+
+### Fixed
+
+- On iOS, bubbles stay around their message when row spacing moves it, instead of hanging below it or starting at the screen's edge.
+- Tapping the avatar of a message whose reply is quoted inline opens the profile again.
+
+## [1.6.4] - 2026-11-12
+
+### Fixed
+
+- On iOS, bubbles and the moved avatar line up with their message again instead of hanging below it or starting at the screen's edge.
+
+## [1.6.3] - 2026-11-12
+
+### Fixed
+
+- On iOS, pinned messages and in-app notifications keep Discord's own look instead of losing their text.
+
 ## [1.6.2] - 2026-11-12
 
 ### Fixed

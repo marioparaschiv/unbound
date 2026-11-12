@@ -58,7 +58,11 @@ const client = new SapphireClient({
 	intents: [
 		GatewayIntentBits.DirectMessages,
 		GatewayIntentBits.GuildMessages,
+		// The notifications help waits for a reaction once the asker opens their DMs.
+		GatewayIntentBits.GuildMessageReactions,
 		GatewayIntentBits.Guilds,
+		// Privileged: the notifications help reads questions and the `/debug` card's alt text.
+		GatewayIntentBits.MessageContent,
 	],
 	loadMessageCommandListeners: true,
 	// Sent on every identify, so the status survives reconnects.

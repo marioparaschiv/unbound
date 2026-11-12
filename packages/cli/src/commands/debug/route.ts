@@ -1,8 +1,7 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { runOnDevice, toDeviceCode } from '~/lib/device';
+import { lazyHandler } from '~/lib/lazy-handler';
 import { bridgePortField } from '~/lib/context';
-import { currentRoute } from '~/lib/navigation';
 import { Type } from '~/lib/schema';
 
 const schema = Type.Object({
@@ -17,9 +16,7 @@ const routeCommand: CommandDefinition<typeof schema> = {
 	summary: 'Print the focused navigation route.',
 	mcp: true,
 	schema,
-	handler(_input, { client }) {
-		return runOnDevice(client, toDeviceCode(currentRoute));
-	},
+	handler: lazyHandler(() => import('./route-handler')),
 };
 
 export default routeCommand;

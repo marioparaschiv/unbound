@@ -8,12 +8,6 @@ import { addSourceKey, fixTranslations } from '~/lib/locale-fix';
 import { collectPluginKeys } from '~/lib/locale-usages';
 import { readLocaleFile } from '~/lib/locale-files';
 import type { LocaleTable } from '~/rollup/locales';
-import { Type } from '~/lib/schema';
-
-/** The `--plugin` flag every `ubd i18n` command takes. */
-export const pluginField = Type.Optional(
-	Type.String({ description: 'The plugin directory. Defaults to the current directory.' }),
-);
 
 /** What one `ubd i18n` command asks of {@link runI18n}, beyond the coverage report all of them print. */
 export type I18nOptions = {

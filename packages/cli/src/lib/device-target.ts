@@ -1,3 +1,5 @@
+import type { CommandErrorCode } from '@unbound-app/debugger-protocol/registry';
+
 import type { CommandResult, CommandRunner } from '~/lib/run-command';
 import type { PilotTarget, ShellResult } from '~/lib/pilot';
 import { openAndroidTarget } from '~/lib/android-target';
@@ -9,6 +11,9 @@ import { openIOSTarget } from '~/lib/ios-target';
  */
 
 export type DevicePlatform = 'android' | 'ios';
+
+/** Why no device could be opened: `invalid-input` for contradicting flags, else `no-device`. */
+export type DeviceTargetError = { error: string; code: CommandErrorCode };
 
 /** The flags device commands take to pick a device. */
 export type DeviceFlags = { serial?: string; ios?: boolean; udid?: string };
@@ -70,12 +75,13 @@ export type DeviceTarget = AndroidTarget | IOSTarget;
  * @param flags The command's device flags.
  * @returns The platform, or why the flags contradict each other.
  */
-export function devicePlatform(flags: DeviceFlags): DevicePlatform | { error: string } {
+export function devicePlatform(flags: DeviceFlags): DevicePlatform | DeviceTargetError {
 	const onIOS = Boolean(flags.ios) || flags.udid !== void 0;
 
 	if (onIOS && flags.serial !== void 0) {
 		return {
 			error: 'Pass either --serial for an Android device or --ios/--udid for an iPhone, not both.',
+			code: 'invalid-input',
 		};
 	}
 
@@ -90,14 +96,16 @@ export function devicePlatform(flags: DeviceFlags): DevicePlatform | { error: st
  */
 export async function openDeviceTarget(
 	options: DeviceTargetOptions,
-): Promise<DeviceTarget | { error: string }> {
+): Promise<DeviceTarget | DeviceTargetError> {
 	const platform = devicePlatform(options);
 
 	if (typeof platform !== 'string') {
 		return platform;
 	}
 
-	return platform === 'ios' ? openIOSTarget(options) : openAndroidTarget(options);
+	const target = await (platform === 'ios' ? openIOSTarget(options) : openAndroidTarget(options));
+
+	return 'error' in target ? { error: target.error, code: 'no-device' } : target;
 }
 
 export default { devicePlatform, openDeviceTarget };

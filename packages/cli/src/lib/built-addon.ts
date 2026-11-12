@@ -1,4 +1,5 @@
 import type { ControllerClient } from '@unbound-app/debugger-protocol/controller';
+import type { CommandErrorCode } from '@unbound-app/debugger-protocol/registry';
 import { getBytecodePath } from '@unbound-app/contracts/version-layout';
 import { listAddonFiles } from '@unbound-app/contracts/addon-files';
 import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
@@ -38,7 +39,10 @@ export type ReadAddon = {
 
 export type PushClient = Pick<ControllerClient, 'pushAddon'>;
 
-export type PushedAddon = { ok: true; summary: string } | { ok: false; error: string };
+/** What was pushed, or why: a request failure code, `device-error` when the reload failed, `command-failed` when the build is unreadable. */
+export type PushedAddon =
+	| { ok: true; summary: string }
+	| { ok: false; error: string; code: CommandErrorCode };
 
 function sha512(contents: Buffer | string) {
 	return createHash('sha512').update(contents).digest('hex');
@@ -154,13 +158,13 @@ export async function pushBuiltAddon(client: PushClient, addon: BuiltAddon): Pro
 	try {
 		built = readBuiltAddon(addon);
 	} catch (error) {
-		return { ok: false, error: toError(error).message };
+		return { ok: false, error: toError(error).message, code: 'command-failed' };
 	}
 
 	const result = await client.pushAddon({ addonId: addon.id, kind: addon.kind, ...built });
 
 	if (!result.ok) {
-		return { ok: false, error: result.error };
+		return { ok: false, error: result.error, code: result.code ?? 'device-error' };
 	}
 
 	const compiled = Object.keys(built.bytecode ?? {});

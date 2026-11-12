@@ -1,7 +1,6 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { openDeviceTarget } from '~/lib/device-target';
-import { saveSnapshot } from '~/lib/device-state';
+import { lazyHandler } from '~/lib/lazy-handler';
 import { Type } from '~/lib/schema';
 
 import { deviceTargetFields } from './target-fields';
@@ -20,15 +19,7 @@ const saveCommand: CommandDefinition<typeof schema> = {
 	mcp: true,
 	schema,
 	cli: { positionals: ['name'] },
-	async handler({ name, serial, ios, udid }) {
-		const target = await openDeviceTarget({ serial, ios, udid });
-
-		if ('error' in target) {
-			return { ok: false, text: target.error };
-		}
-
-		return saveSnapshot(name, target);
-	},
+	handler: lazyHandler(() => import('./save-handler')),
 };
 
 export default saveCommand;
