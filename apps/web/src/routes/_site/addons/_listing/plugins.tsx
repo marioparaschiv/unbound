@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
+import AddonListingSkeleton from '~/components/addon-listing-skeleton';
 import { prefetchListing } from '~/queries/marketplace/listing';
 import { marketplaceSearchSchema } from '~/lib/addon-filters';
 import { schemaValidator } from '~/lib/schema-validator';
@@ -15,5 +16,8 @@ export const Route = createFileRoute('/_site/addons/_listing/plugins')({
 	loaderDeps: ({ search }) => search,
 	loader: ({ context, deps, cause }) =>
 		prefetchListing(context.queryClient, 'plugin', deps, cause),
+	// Shows the skeleton soon after a slow navigation starts, rather than leaving the last page up.
+	pendingMs: 150,
+	pendingComponent: () => <AddonListingSkeleton type='plugin' />,
 	component: PluginsTab,
 });

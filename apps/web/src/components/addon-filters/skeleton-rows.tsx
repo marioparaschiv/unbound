@@ -11,6 +11,8 @@ type SkeletonRowsProps = {
 type EndSentinelProps = {
 	/** Omitted while a page loads or after the last one; the marker stays so the list's height never changes by it. */
 	onReached?: () => void;
+	/** Watches the window's scroll rather than the parent box's, for a list that scrolls with the page. */
+	page?: boolean;
 };
 
 // Varied widths read as names; the same list every render so rows never jitter while pulsing.
@@ -52,7 +54,7 @@ export function SkeletonRows({ count, touch }: SkeletonRowsProps) {
  * @param props Called each time the marker comes within reach.
  * @returns The marker.
  */
-export function EndSentinel({ onReached }: EndSentinelProps) {
+export function EndSentinel({ onReached, page = false }: EndSentinelProps) {
 	const node = useRef<HTMLDivElement>(null);
 	const reached = useRef(onReached);
 
@@ -73,14 +75,16 @@ export function EndSentinel({ onReached }: EndSentinelProps) {
 					reached.current?.();
 				}
 			},
-			// The list scrolls inside its menu, so the margin is measured against that box, not the page.
-			{ root: target.parentElement, rootMargin: '0px 0px 160px 0px' },
+			// A menu's list scrolls inside its box, so the margin is measured against that box; a page list, the viewport.
+			page
+				? { root: null, rootMargin: '0px 0px 600px 0px' }
+				: { root: target.parentElement, rootMargin: '0px 0px 160px 0px' },
 		);
 
 		observer.observe(target);
 
 		return () => observer.disconnect();
-	}, []);
+	}, [page]);
 
 	return <div ref={node} aria-hidden className='h-px shrink-0' />;
 }
