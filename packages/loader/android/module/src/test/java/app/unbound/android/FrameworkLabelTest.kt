@@ -18,6 +18,7 @@ class FrameworkLabelTest {
     fun theRootManagerIsNamedByItsDataDirectory() {
         assertEquals("KernelSU", Platform.rootManager { it == "/data/adb/ksu" })
         assertEquals("Magisk", Platform.rootManager { it == "/data/adb/magisk" || it == "/data/adb/ap" })
+        assertEquals("Magisk", Platform.rootManager { it == "/debug_ramdisk/magisk" })
         assertEquals("", Platform.rootManager { false })
     }
 

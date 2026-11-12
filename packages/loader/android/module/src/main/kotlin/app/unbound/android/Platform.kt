@@ -51,6 +51,8 @@ object Platform {
     private const val LSPATCH_LOADER = "org.lsposed.lspatch.loader.LSPApplication"
 
     private val ROOT_MANAGERS = listOf(
+        "/debug_ramdisk/magisk" to "Magisk",
+        "/sbin/magisk" to "Magisk",
         "/data/adb/magisk" to "Magisk",
         "/data/adb/ksu" to "KernelSU",
         "/data/adb/ap" to "APatch",
