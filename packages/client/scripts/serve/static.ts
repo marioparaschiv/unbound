@@ -25,6 +25,16 @@ function formatBytes(bytes: number): string {
 }
 
 /**
+ * @description Maps a request for the developer flavour (`/unbound-dev.98.bundle`) to the default flavour's file, which a
+ * hot build keeps current; a dev build's default flavour already carries the developer runtime.
+ * @param pathname The request pathname.
+ * @returns The pathname to serve.
+ */
+export function hotBuildPath(pathname: string): string {
+	return pathname.replace(/^\/unbound-dev\./, '/unbound.');
+}
+
+/**
  * @description Serves a file from `dist/` for a GET request, guarding against path traversal and
  * logging the outcome.
  * @param pathname The request pathname (e.g. `/unbound.98.bundle`).
