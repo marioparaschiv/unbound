@@ -100,10 +100,7 @@ func TestPlatformBridgesInstallEveryAdvertisedCapabilityMethod(t *testing.T) {
 		t.Fatal(err)
 	}
 	bindings := coreCapabilityBindings(t, string(header))
-	ios, err := os.ReadFile(filepath.Join(root, "ios", "sources", "NativePluginBridge.mm"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	ios := iosNativeBridgeSource(t, root)
 	android, err := os.ReadFile(filepath.Join(root, "android", "module", "src", "main", "cpp", "NativePluginBridge.cpp"))
 	if err != nil {
 		t.Fatal(err)
@@ -123,7 +120,7 @@ func TestPlatformBridgesInstallEveryAdvertisedCapabilityMethod(t *testing.T) {
 	setProperty := regexp.MustCompile(`\b(objc|ffi|fabric|debug)\.setProperty\(\s*runtime,\s*"(\w+)"`)
 	defined := regexp.MustCompile(`define\(\s*runtime,\s*(\w+),\s*"(\w+)"`)
 	platforms := map[string]map[string]map[string]bool{
-		"kIOSNativePluginCapabilities":     withCoreFabric(installedBridgeMethods(string(ios), setProperty), string(fabric), string(ios)),
+		"kIOSNativePluginCapabilities":     withCoreFabric(installedBridgeMethods(ios, setProperty), string(fabric), ios),
 		"kAndroidNativePluginCapabilities": withCoreFabric(installedBridgeMethods(string(android), defined, setProperty), string(fabric), string(android)),
 	}
 	for list, installed := range platforms {

@@ -87,6 +87,41 @@ void UIScope::dispose()
     }
 }
 
+std::vector<std::string> uiScopePaths(const std::vector<std::string> &paths,
+                                      std::string_view                namespacePrefix)
+{
+    std::vector<std::string> allowed;
+    for (const std::string &path : paths)
+    {
+        if (path.rfind(namespacePrefix, 0) == 0)
+        {
+            allowed.push_back(path.substr(namespacePrefix.size()));
+        }
+    }
+    return allowed;
+}
+
+std::vector<std::string> parseUIScopePaths(jsi::Runtime &runtime, const jsi::Value *args,
+                                           size_t count, const char *usage,
+                                           std::string_view namespacePrefix)
+{
+    if (count < 1 || !args[0].isObject() || !args[0].asObject(runtime).isArray(runtime))
+    {
+        throw jsi::JSError(runtime, usage);
+    }
+    std::vector<std::string> paths;
+    jsi::Array               names = args[0].asObject(runtime).asArray(runtime);
+    for (size_t index = 0; index < names.size(runtime); index++)
+    {
+        jsi::Value path = names.getValueAtIndex(runtime, index);
+        if (path.isString())
+        {
+            paths.push_back(path.getString(runtime).utf8(runtime));
+        }
+    }
+    return uiScopePaths(paths, namespacePrefix);
+}
+
 namespace {
     class UIScopeHost final : public jsi::HostObject
     {

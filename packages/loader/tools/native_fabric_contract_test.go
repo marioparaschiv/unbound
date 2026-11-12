@@ -44,6 +44,7 @@ func TestNativeFabricConformanceIsSharedAcrossPlatforms(t *testing.T) {
 		"core/src/NativeFabric.cpp",
 		"core/tests/hermes/native_fabric_hermes.cpp",
 		"ios/sources/NativePluginBridge.mm",
+		"ios/sources/NativePluginExecutor.mm",
 		"ios/sources/NativePluginFabricAdapter.mm",
 		"ios/sources/NativePluginFrameScheduler.mm",
 		"android/module/src/main/cpp/AndroidLoader.cpp",

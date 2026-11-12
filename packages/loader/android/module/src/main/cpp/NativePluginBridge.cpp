@@ -28,6 +28,8 @@
 #include "NativeFabric.h"
 #include "NativeGeometry.h"
 #include "NativeHandleLeases.h"
+#include "NativeHookCallbacks.h"
+#include "NativeHookKeys.h"
 #include "NativeHookReturnCache.h"
 #include "NativeLimits.h"
 #include "NativePlatformBridge.h"
@@ -399,27 +401,9 @@ static bool onMainThread()
 static std::mutex                                    gHookMutex;
 static std::unordered_map<std::string, HookListener> gHookListeners;
 
-static std::optional<std::string> coalescedHookKey(const std::string &token,
-                                                   const std::string &payload)
+static std::string hookListenerKey(const std::string &token)
 {
-    nlohmann::json parsed = nlohmann::json::parse(payload, nullptr, false);
-    if (!parsed.is_object())
-    {
-        return std::nullopt;
-    }
-    auto self = parsed.find("self");
-    if (self == parsed.end() || !self->is_object())
-    {
-        return std::nullopt;
-    }
-    auto type  = self->find("type");
-    auto value = self->find("value");
-    if (type == self->end() || !type->is_string() || *type != "handle" || value == self->end() ||
-        !value->is_string())
-    {
-        return std::nullopt;
-    }
-    return "android-hook:" + token + ":" + value->get<std::string>();
+    return loader::native::hookCallbackKey(loader::native::kAndroidHookPlatform, token);
 }
 
 void dispatchHookEvent(const std::string &token, const std::string &payload)
@@ -512,7 +496,8 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
 
     if (listener.coalesce)
     {
-        std::optional<std::string> key = coalescedHookKey(token, payload);
+        std::optional<std::string> key =
+            loader::native::coalescedHookKey(loader::native::kAndroidHookPlatform, token, payload);
         if (key)
         {
             loader::native::executeRuntimeCoalesced(
@@ -594,7 +579,7 @@ static void rememberHookListener(jsi::Runtime &runtime, const std::string &token
     auto callback = std::make_shared<jsi::Function>(listener.asObject(runtime).asFunction(runtime));
     auto resources  = loader::native::runtimeResourceRegistry(runtime);
     auto operations = std::make_shared<loader::native::RuntimeResourceOperationScope>();
-    loader::native::retainRuntimeResource(runtime, "android-hook:" + token, callback);
+    loader::native::retainRuntimeResource(runtime, hookListenerKey(token), callback);
     HookListener                stored{callback,
                                        resources,
                                        operations,
@@ -608,32 +593,19 @@ static void rememberHookListener(jsi::Runtime &runtime, const std::string &token
     gHookListeners[token] = std::move(stored);
 }
 
-static void scheduleHookListenerRelease(const HookListener &listener)
+static void postToMain(std::function<void()> work)
 {
-    auto resources = listener.resources;
-    auto identity  = listener.runtimeIdentity;
-    if (listener.inlineRuntime)
+    if (auto target = loader::native::executor())
     {
-        if (auto target = loader::native::executor())
-        {
-            target->runOnMain([resources, identity]() {
-                loader::native::withRuntimeResource(
-                    resources, identity, [](loader::native::RuntimeResourceRegistry &owner) {
-                        owner.drainDeferredReleases();
-                    });
-            });
-        }
-        return;
+        target->runOnMain(std::move(work));
     }
-    loader::native::executeRuntimeAsynchronously([resources, identity](jsi::Runtime &runtime) {
-        loader::native::withRuntimeResource(
-            resources, identity, [&](loader::native::RuntimeResourceRegistry &owner) {
-                if (loader::native::runtimeResourceRegistry(runtime)->identity() == identity)
-                {
-                    owner.drainDeferredReleases();
-                }
-            });
-    });
+}
+
+static loader::native::HookCallbackOwner hookListenerOwner(const std::string  &token,
+                                                           const HookListener &listener)
+{
+    return {listener.resources, listener.runtimeIdentity, hookListenerKey(token),
+            listener.inlineRuntime != nullptr};
 }
 
 static void forgetHookListener(const std::string &token)
@@ -655,15 +627,7 @@ static void forgetHookListener(const std::string &token)
         return;
     }
     listener.operations->cancelPending();
-    const std::string key = "android-hook:" + token;
-    if (loader::native::releaseRuntimeResourceOnOwnerThread(listener.resources, key))
-    {
-        return;
-    }
-    if (loader::native::deferRuntimeResourceRelease(listener.resources, key))
-    {
-        scheduleHookListenerRelease(listener);
-    }
+    loader::native::releaseHookCallbacks(hookListenerOwner(token, listener), postToMain);
 }
 
 static void retireHookListeners()
@@ -676,11 +640,7 @@ static void retireHookListeners()
     for (const auto &[token, listener] : retired)
     {
         listener.operations->cancelPending();
-        const std::string key = "android-hook:" + token;
-        if (loader::native::deferRuntimeResourceRelease(listener.resources, key))
-        {
-            scheduleHookListenerRelease(listener);
-        }
+        loader::native::deferHookCallbackRelease(hookListenerOwner(token, listener), postToMain);
     }
 }
 
@@ -1268,21 +1228,8 @@ static bool collectUIRuntimeGarbage()
 static jsi::Value createUIScope(jsi::Runtime &runtime, const JavaCallbacks &callbacks,
                                 const jsi::Value *args, size_t count)
 {
-    if (count < 1 || !args[0].isObject() || !args[0].asObject(runtime).isArray(runtime))
-    {
-        throw jsi::JSError(runtime,
-                           "java.createUIScope expects the method paths the scope may use");
-    }
-    std::vector<std::string> allowed;
-    jsi::Array               paths = args[0].asObject(runtime).asArray(runtime);
-    for (size_t index = 0; index < paths.size(runtime); index++)
-    {
-        jsi::Value path = paths.getValueAtIndex(runtime, index);
-        if (path.isString())
-        {
-            allowed.push_back(path.getString(runtime).utf8(runtime));
-        }
-    }
+    std::vector<std::string> allowed = loader::native::parseUIScopePaths(
+        runtime, args, count, "java.createUIScope expects the method paths the scope may use", "");
     auto scope =
         std::make_shared<loader::native::UIScope>(loader::currentAddon(), std::move(allowed));
     return loader::native::makeUIScopeObject(

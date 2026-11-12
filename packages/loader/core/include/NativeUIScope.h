@@ -4,6 +4,7 @@
 #include <jsi/jsi.h>
 #include <mutex>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "LoaderAddonActivity.h"
@@ -54,4 +55,10 @@ facebook::jsi::Object makeUIScopeObject(facebook::jsi::Runtime                  
                                         std::vector<std::string>                      namespaces,
                                         UIScopeNamespaceFactory                       create,
                                         std::function<void(facebook::jsi::Runtime &)> onRead = {});
+
+std::vector<std::string> uiScopePaths(const std::vector<std::string> &paths,
+                                      std::string_view                namespacePrefix);
+std::vector<std::string> parseUIScopePaths(facebook::jsi::Runtime     &runtime,
+                                           const facebook::jsi::Value *args, size_t count,
+                                           const char *usage, std::string_view namespacePrefix);
 }
