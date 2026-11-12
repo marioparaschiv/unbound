@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.6] - 2026-11-13
+
+### Changed
+
+- When a name and its tags leave no room for the time, the time hides instead of cutting tags off.
+
 ## [1.6.5] - 2026-11-12
 
 ### Fixed

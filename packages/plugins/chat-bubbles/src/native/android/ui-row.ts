@@ -242,7 +242,7 @@ export function moveHeading(
 	java: NativeJavaBridge,
 	config: RowConfig,
 	row: NativeJavaReference,
-	paint: Pick<RowPaint, 'name' | 'avatar' | 'reply' | 'time' | 'clip'>,
+	paint: Pick<RowPaint, 'name' | 'avatar' | 'reply' | 'time' | 'timeHidden' | 'clip'>,
 	active = true,
 ) {
 	'worklet';
@@ -255,7 +255,10 @@ export function moveHeading(
 	move(java, viewIn(java, row, ids.author_avatar_decoration), paint.avatar);
 	move(java, preview, paint.reply);
 
-	if (time) java.invoke(time, 'setTranslationX', [javaFloat(paint.time ?? 0)]);
+	if (time) {
+		java.invoke(time, 'setTranslationX', [javaFloat(paint.time ?? 0)]);
+		java.invoke(time, 'setAlpha', [javaFloat(paint.timeHidden ? 0 : 1)]);
+	}
 
 	if (!preview) return;
 
