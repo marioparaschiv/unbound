@@ -32,6 +32,20 @@ func iosNativeBridgeSource(t *testing.T, root string) string {
 	return source.String()
 }
 
+func androidNativeBridgeSource(t *testing.T, root string) string {
+	t.Helper()
+	var source strings.Builder
+	for _, name := range []string{"NativePluginBridge.cpp", "AndroidJavaValues.cpp", "AndroidHookListeners.cpp", "AndroidFabricAdapter.cpp"} {
+		contents, err := os.ReadFile(filepath.Join(root, "android", "module", "src", "main", "cpp", name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		source.Write(contents)
+		source.WriteString("\n")
+	}
+	return source.String()
+}
+
 func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
@@ -203,11 +217,7 @@ func TestAndroidNativeBridgeContractIsSynchronized(t *testing.T) {
 		t.Fatal("could not locate test source")
 	}
 	root := filepath.Dir(filepath.Dir(filename))
-	source, err := os.ReadFile(filepath.Join(root, "android", "module", "src", "main", "cpp", "NativePluginBridge.cpp"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	sourceText := string(source)
+	sourceText := androidNativeBridgeSource(t, root)
 	for _, contract := range []string{
 		"loader::native::NativePluginRootBuilder bridge(runtime, loader::native::NativePluginPlatform::Android);",
 		`define(runtime, java, "getClass",`,

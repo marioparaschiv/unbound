@@ -61,7 +61,7 @@ check(globalThis.__unboundGuardNativeFunction === guard, 'the guard must be cach
 
 func TestHostFunctionsOnlyComeFromTheGuardedFactory(t *testing.T) {
 	root := loaderRoot(t)
-	allowed := filepath.Join(root, "core", "src", "NativePluginRuntime.cpp")
+	allowed := filepath.Join(root, "core", "src", "NativeErrors.cpp")
 	directories := []string{
 		filepath.Join(root, "core", "src"),
 		filepath.Join(root, "core", "include"),

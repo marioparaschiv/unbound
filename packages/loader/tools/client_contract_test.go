@@ -101,10 +101,7 @@ func TestPlatformBridgesInstallEveryAdvertisedCapabilityMethod(t *testing.T) {
 	}
 	bindings := coreCapabilityBindings(t, string(header))
 	ios := iosNativeBridgeSource(t, root)
-	android, err := os.ReadFile(filepath.Join(root, "android", "module", "src", "main", "cpp", "NativePluginBridge.cpp"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	android := []byte(androidNativeBridgeSource(t, root))
 	fabric, err := os.ReadFile(filepath.Join(root, "core", "src", "NativeFabric.cpp"))
 	if err != nil {
 		t.Fatal(err)
