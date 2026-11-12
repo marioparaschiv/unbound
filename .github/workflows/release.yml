@@ -169,7 +169,7 @@ jobs:
             id-token: write
             attestations: write
             artifact-metadata: write
-            actions: read
+            actions: write
         uses: ./.github/workflows/loader-publish.yml
         secrets:
             ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}

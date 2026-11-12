@@ -3,7 +3,9 @@ name: Build Bundle
 # Every build is uploaded to the public bucket under `unbound/{channel}/{version}/`, served through
 # the CDN: pushes to main publish to `beta` as the commit SHA, client releases (called from
 # release.yml) publish to `stable` as the client version. Versions are immutable; a version that is already
-# published is skipped, never overwritten.
+# published is skipped, never overwritten. A bundle whose `minLoaderVersion` no published loader meets on
+# iOS and Android fails before anything is published; loader-publish.yml runs this again for beta and the
+# latest client release once the loader ships.
 #
 # Configure in the repository settings:
 #   vars:    S3_ENDPOINT, S3_REGION, S3_PUBLIC_BUCKET
@@ -12,6 +14,11 @@ name: Build Bundle
 
 on:
     workflow_dispatch:
+        inputs:
+            version:
+                description: The client release version to publish to the stable channel; empty publishes main to beta.
+                type: string
+                required: false
     push:
         branches:
             - main
@@ -85,6 +92,24 @@ jobs:
               run: |
                   for bundle in packages/client/dist/unbound.*.bundle; do
                       test -f "$bundle.map" || { echo "::error::$bundle has no source map"; exit 1; }
+                  done
+
+            # A bundle that needs a loader no one can install yet would leave users unable to update.
+            - name: Check a published loader runs the bundle
+              if: ${{ vars.UNBOUND_API_URL != '' }}
+              env:
+                  UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
+              run: |
+                  set -euo pipefail
+                  required="$(jq -r '.minLoaderVersion' packages/client/dist/manifest.json)"
+                  for platform in ios android; do
+                      newest="$(curl --fail-with-body --silent --show-error \
+                          "${UNBOUND_API_URL%/}/api/v1/loader/updates?platform=$platform&version=0.0.0" \
+                          | jq -r '.update.version // "none"')"
+                      if [ "$newest" = none ] || [ "$(printf '%s\n%s\n' "$required" "$newest" | sort -V | head -n 1)" != "$required" ]; then
+                          echo "::error::The bundle needs loader $required, but the newest published $platform loader is $newest. Release the loader first; its publish runs this again."
+                          exit 1
+                      fi
                   done
 
             - name: Keep source maps
