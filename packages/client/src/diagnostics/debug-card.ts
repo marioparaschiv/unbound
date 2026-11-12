@@ -43,7 +43,7 @@ export type DebugCard = {
 
 type Span = { text: string; color: string };
 
-const WIDTH = 496;
+const WIDTH = 432;
 const SCALE = 3;
 const PADDING = 14;
 const TITLE_HEIGHT = 28;
@@ -51,9 +51,9 @@ const FONT_SIZE = 12;
 const LINE_HEIGHT = 21;
 const CHAR_WIDTH = FONT_SIZE * 0.6;
 const LABEL_WIDTH = 9;
-const BADGE_CLEARANCE = 76;
+const BADGE_CLEARANCE = 66;
 const MAX_ALT_TEXT = 1024;
-const FOOTER_HEIGHT = 46;
+const FOOTER_HEIGHT = 52;
 
 const COLORS = {
 	background: '#111214',
@@ -109,7 +109,14 @@ function rows(info: DebugInfo): [string, Span[]][] {
 				dim(` ${joined([info.discordChannel.toLowerCase(), info.discordBuild])}`),
 			],
 		],
-		['source', [value(info.appSource), ...(sideloader ? [dim(` · ${sideloader}`)] : [])]],
+		[
+			'source',
+			[
+				value(
+					sideloader ? info.appSource.replace(/^Sideloaded/, sideloader) : info.appSource,
+				),
+			],
+		],
 		['device', [value(info.device)]],
 		['system', [value(`${info.platform} ${info.os}`)]],
 		...(signing ? [['install', installSpans(signing)] as [string, Span[]]] : []),
@@ -179,9 +186,9 @@ function textRuns(spans: Span[], x: number, y: number): CardText[] {
 }
 
 function stateLabel(flag: string, jailbreak = ''): string {
-	return flag === 'Jailbroken' && jailbreak
-		? `jailbroken · ${jailbreak.toLowerCase()}`
-		: flag.toLowerCase();
+	return (flag === 'Jailbroken' && jailbreak ? jailbreak : flag)
+		.replace(/ build$/, '')
+		.toLowerCase();
 }
 
 function stateSpans(flags: string[], jailbreak?: string): Span[] {

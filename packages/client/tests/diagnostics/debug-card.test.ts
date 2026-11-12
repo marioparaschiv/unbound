@@ -66,9 +66,7 @@ describe('debug card', () => {
 			'hermes',
 		]);
 		expect(texts(card).find((run) => run.text === 'BZJHJ764K7')?.color).toBe('#a78bfa');
-		expect(texts(card).find((run) => run.text.includes('verified build'))?.color).toBe(
-			'#22c55e',
-		);
+		expect(texts(card).find((run) => run.text.includes('verified'))?.color).toBe('#22c55e');
 	});
 
 	test('right-aligns the addon counts in the footer, leaving out kinds with none installed', () => {
@@ -84,8 +82,8 @@ describe('debug card', () => {
 		const state = texts(card).filter((run) => run.text.includes('●'));
 		const stamp = texts(card).find((run) => run.text === '2026-11-12 17:06 utc');
 
-		expect(state[0]?.x).toBe(76);
-		expect(state.every((run) => run.y > card.height - 46)).toBe(true);
+		expect(state[0]?.x).toBe(66);
+		expect(state.every((run) => run.y > card.height - 52)).toBe(true);
 		expect(stamp?.y).toBeLessThan(28);
 	});
 
@@ -108,15 +106,16 @@ describe('debug card', () => {
 
 		expect(baselines.size).toBe(1 + 9 + 1);
 		expect(texts(card).some((run) => run.text.includes('…'))).toBe(false);
+		expect(texts(card).some((run) => run.text === '12/60 plugins')).toBe(true);
 		expect(texts(card).find((run) => run.text.includes('dopamine'))?.text).toBe(
-			'● jailbroken · dopamine 3.0.9',
+			'● dopamine 3.0.9',
 		);
 	});
 
 	test('writes escaped SVG with the same size', () => {
 		const svg = debugCardSvg(layoutDebugCard({ ...info, device: '<iPad & "mini">' }));
 
-		expect(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" width="496"')).toBe(true);
+		expect(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" width="432"')).toBe(true);
 		expect(svg).toContain('&#60;iPad &#38; &#34;mini&#34;&#62;');
 	});
 
