@@ -1,5 +1,6 @@
+import { Image } from 'react-native';
+
 import { reconcile, type Fiber } from '~/hot-refresh/refresh';
-import { ReactNative } from '~/metro/common';
 
 // Only React Native's `Image` resolves an asset id to a file, while it renders. Wrappers handed the same id, such
 // as icons and avatars, render the same output again, so re-rendering them is wasted work.
@@ -8,7 +9,7 @@ function drawsAsset(fiber: Fiber): boolean {
 
 	return (
 		// `Object.is`, as the typings declare `Image` a class while Discord's build makes it a function component.
-		Object.is(fiber.type, ReactNative.Image) &&
+		Object.is(fiber.type, Image) &&
 		props !== null &&
 		'source' in props &&
 		typeof props.source === 'number'
