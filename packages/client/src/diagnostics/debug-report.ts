@@ -8,8 +8,6 @@ import fs from '~/native/fs';
 
 import formatDebugInfo, { type DebugInfo } from './format-debug-info';
 import { readDebugInfo, readEntitlements } from './read-debug-info';
-import { debugAltText, layoutDebugCard } from './debug-card';
-import { renderDebugCard } from './render-debug-card';
 
 type CloudUpload = {
 	status: string;
@@ -28,7 +26,7 @@ type UploadFile = {
 type SendResult = { ok?: boolean; status?: number } | undefined;
 
 const ENTITLEMENTS_PATH = 'Unbound/cache/debug/Entitlements.xml';
-const CARD_PATH = 'Unbound/cache/debug/unbound-debug.png';
+const CARD_DIRECTORY = 'Unbound/cache/debug';
 const UPLOAD_ORIGIN_FILE = 1;
 const UPLOAD_PLATFORM_REACT_NATIVE = 0;
 
@@ -98,25 +96,26 @@ async function uploadEntitlements(channelId: string): Promise<CloudUpload | unde
 	});
 }
 
-async function uploadCard(channelId: string, info: DebugInfo): Promise<CloudUpload | undefined> {
-	const card = layoutDebugCard(info);
+async function uploadCard(
+	channelId: string,
+	info: DebugInfo,
+	path: string,
+): Promise<CloudUpload | undefined> {
+	const { createUnboundClient } = await import('~/account/client');
+	const card = await createUnboundClient()('POST /api/v1/debug-cards', { body: info });
 
-	await fs.writeFile(CARD_PATH, '');
-
-	if (!renderDebugCard(card, `${fs.documentsPath}/${CARD_PATH}`)) {
-		return undefined;
-	}
+	await fs.writeFile(path, card.image, 'base64');
 
 	const upload = await uploadFile(channelId, {
-		path: CARD_PATH,
+		path,
 		mimeType: 'image/png',
-		filename: 'unbound-debug.png',
-		width: card.width * card.scale,
-		height: card.height * card.scale,
+		filename: path.slice(path.lastIndexOf('/') + 1),
+		width: card.width,
+		height: card.height,
 	});
 
 	if (upload) {
-		upload.description = debugAltText(info);
+		upload.description = card.altText;
 	}
 
 	return upload;
@@ -149,7 +148,23 @@ export async function sendDebugReport(
 		return textReport;
 	}
 
-	const card = await uploadQuietly('card', () => uploadCard(target, info));
+	const cardPath = `${CARD_DIRECTORY}/unbound-debug-${Date.now()}.png`;
+
+	try {
+		return await sendWithCard(target, info, cardPath, message, textReport);
+	} finally {
+		await fs.removeFile(cardPath).catch(() => false);
+	}
+}
+
+async function sendWithCard(
+	target: string,
+	info: DebugInfo,
+	cardPath: string,
+	message: string,
+	textReport: string,
+): Promise<string | undefined> {
+	const card = await uploadQuietly('card', () => uploadCard(target, info, cardPath));
 	const entitlements = await uploadQuietly('entitlements', () => uploadEntitlements(target));
 	const attachments = [card, entitlements].filter((upload): upload is CloudUpload =>
 		Boolean(upload),

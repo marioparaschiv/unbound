@@ -41,6 +41,7 @@ import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiV1AddonsRouteImport } from './routes/api/v1/addons'
 import { Route as ApiV1CatalogRouteImport } from './routes/api/v1/catalog'
 import { Route as ApiV1CrashReportsRouteImport } from './routes/api/v1/crash-reports'
+import { Route as ApiV1DebugCardsRouteImport } from './routes/api/v1/debug-cards'
 import { Route as ApiV1MeRouteImport } from './routes/api/v1/me'
 import { Route as ApiV1OpenapiDotjsonRouteImport } from './routes/api/v1/openapi[.]json'
 import { Route as ApiV1SubmissionsRouteImport } from './routes/api/v1/submissions'
@@ -249,6 +250,11 @@ const ApiV1CatalogRoute = ApiV1CatalogRouteImport.update({
 const ApiV1CrashReportsRoute = ApiV1CrashReportsRouteImport.update({
   id: '/api/v1/crash-reports',
   path: '/api/v1/crash-reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1DebugCardsRoute = ApiV1DebugCardsRouteImport.update({
+  id: '/api/v1/debug-cards',
+  path: '/api/v1/debug-cards',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiV1MeRoute = ApiV1MeRouteImport.update({
@@ -546,6 +552,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
   '/api/v1/crash-reports': typeof ApiV1CrashReportsRoute
+  '/api/v1/debug-cards': typeof ApiV1DebugCardsRoute
   '/api/v1/me': typeof ApiV1MeRouteWithChildren
   '/api/v1/openapi.json': typeof ApiV1OpenapiDotjsonRoute
   '/api/v1/submissions': typeof ApiV1SubmissionsRouteWithChildren
@@ -628,6 +635,7 @@ export interface FileRoutesByTo {
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
   '/api/v1/crash-reports': typeof ApiV1CrashReportsRoute
+  '/api/v1/debug-cards': typeof ApiV1DebugCardsRoute
   '/api/v1/me': typeof ApiV1MeRouteWithChildren
   '/api/v1/openapi.json': typeof ApiV1OpenapiDotjsonRoute
   '/api/v1/submissions': typeof ApiV1SubmissionsRouteWithChildren
@@ -712,6 +720,7 @@ export interface FileRoutesById {
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
   '/api/v1/crash-reports': typeof ApiV1CrashReportsRoute
+  '/api/v1/debug-cards': typeof ApiV1DebugCardsRoute
   '/api/v1/me': typeof ApiV1MeRouteWithChildren
   '/api/v1/openapi.json': typeof ApiV1OpenapiDotjsonRoute
   '/api/v1/submissions': typeof ApiV1SubmissionsRouteWithChildren
@@ -797,6 +806,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons'
     | '/api/v1/catalog'
     | '/api/v1/crash-reports'
+    | '/api/v1/debug-cards'
     | '/api/v1/me'
     | '/api/v1/openapi.json'
     | '/api/v1/submissions'
@@ -879,6 +889,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons'
     | '/api/v1/catalog'
     | '/api/v1/crash-reports'
+    | '/api/v1/debug-cards'
     | '/api/v1/me'
     | '/api/v1/openapi.json'
     | '/api/v1/submissions'
@@ -962,6 +973,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons'
     | '/api/v1/catalog'
     | '/api/v1/crash-reports'
+    | '/api/v1/debug-cards'
     | '/api/v1/me'
     | '/api/v1/openapi.json'
     | '/api/v1/submissions'
@@ -1029,6 +1041,7 @@ export interface RootRouteChildren {
   ApiV1AddonsRoute: typeof ApiV1AddonsRouteWithChildren
   ApiV1CatalogRoute: typeof ApiV1CatalogRoute
   ApiV1CrashReportsRoute: typeof ApiV1CrashReportsRoute
+  ApiV1DebugCardsRoute: typeof ApiV1DebugCardsRoute
   ApiV1MeRoute: typeof ApiV1MeRouteWithChildren
   ApiV1OpenapiDotjsonRoute: typeof ApiV1OpenapiDotjsonRoute
   ApiV1SubmissionsRoute: typeof ApiV1SubmissionsRouteWithChildren
@@ -1274,6 +1287,13 @@ declare module '@tanstack/react-router' {
       path: '/api/v1/crash-reports'
       fullPath: '/api/v1/crash-reports'
       preLoaderRoute: typeof ApiV1CrashReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/debug-cards': {
+      id: '/api/v1/debug-cards'
+      path: '/api/v1/debug-cards'
+      fullPath: '/api/v1/debug-cards'
+      preLoaderRoute: typeof ApiV1DebugCardsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/v1/me': {
@@ -1879,6 +1899,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiV1AddonsRoute: ApiV1AddonsRouteWithChildren,
   ApiV1CatalogRoute: ApiV1CatalogRoute,
   ApiV1CrashReportsRoute: ApiV1CrashReportsRoute,
+  ApiV1DebugCardsRoute: ApiV1DebugCardsRoute,
   ApiV1MeRoute: ApiV1MeRouteWithChildren,
   ApiV1OpenapiDotjsonRoute: ApiV1OpenapiDotjsonRoute,
   ApiV1SubmissionsRoute: ApiV1SubmissionsRouteWithChildren,
