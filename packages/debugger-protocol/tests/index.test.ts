@@ -181,6 +181,57 @@ describe('hello', () => {
 	});
 });
 
+/** A malformed override for one view property. */
+type PropertyPatch = { value?: string[]; kind?: string; unit?: number };
+
+describe('view finder frames', () => {
+	const { viewsRequest, viewsPage, viewDetailsOk } = contract.frames;
+	const [property] = viewDetailsOk.details.sections[0]?.properties ?? [];
+	const withProperty = (patch: PropertyPatch) => ({
+		...viewDetailsOk,
+		details: {
+			...viewDetailsOk.details,
+			sections: [{ title: 'Text', properties: [{ ...property, ...patch }] }],
+		},
+	});
+
+	test('a views-request pages with a whole, non-negative offset and limit', () => {
+		const { offset: _, limit: __, ...firstPage } = viewsRequest;
+		const raw = JSON.stringify(firstPage);
+
+		expect(JSON.stringify(parseMessage(raw))).toBe(raw);
+
+		for (const bad of [{ offset: -1 }, { offset: 1.5 }, { limit: '100' }]) {
+			expect(parseMessage(JSON.stringify({ ...viewsRequest, ...bad }))).toBeUndefined();
+		}
+	});
+
+	test('a views-result may omit its total but not carry a bad one', () => {
+		const { total: _, ...unpaged } = viewsPage;
+		const raw = JSON.stringify(unpaged);
+
+		expect(JSON.stringify(parseMessage(raw))).toBe(raw);
+		expect(parseMessage(JSON.stringify({ ...viewsPage, total: -1 }))).toBeUndefined();
+	});
+
+	test('rejects view details whose chain, sections or properties are malformed', () => {
+		const bad = [
+			{ ...viewDetailsOk, details: { ...viewDetailsOk.details, classChain: [1] } },
+			{ ...viewDetailsOk, details: { classChain: [] } },
+			{ ...viewDetailsOk, details: { classChain: [], sections: [{ title: 'Text' }] } },
+			withProperty({ value: ['16'] }),
+			withProperty({ kind: 'gradient' }),
+			withProperty({ unit: 4 }),
+			{ type: 'view-details-result', id: 'x', ok: true },
+			{ type: 'view-details-request', id: 'x' },
+		];
+
+		for (const frame of bad) {
+			expect(parseMessage(JSON.stringify(frame))).toBeUndefined();
+		}
+	});
+});
+
 describe('resolveEvalTimeout', () => {
 	test('honours a positive timeout and falls back to the default otherwise', () => {
 		expect(resolveEvalTimeout(30_000)).toBe(30_000);

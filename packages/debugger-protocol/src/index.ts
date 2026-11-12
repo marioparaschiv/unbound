@@ -1,19 +1,78 @@
 import type { PushedManifest } from '@unbound-app/types';
 
 import {
+	EXPLORER_CLASSES_PAGE_SIZE,
+	EXPLORER_MEMBERS_PAGE_SIZE,
+	EXPLORER_RESULT_TYPES,
+	EXPLORER_VALUES_LIMIT,
+	failExplorerRequest,
+	isExplorerFrame,
+	isExplorerRequest,
+	isExplorerResult,
+	type ExplorerRequest,
+	type ExplorerResult,
+} from './explorer';
+import {
+	VIEWS_PAGE_SIZE,
+	isViewFrameMessage,
+	type ViewDetailsRequest,
+	type ViewDetailsResult,
+	type ViewHighlight,
+	type ViewsRequest,
+	type ViewsResult,
+} from './views';
+import {
 	REACT_DEVTOOLS_SHUTDOWN_EVENT,
 	REACT_DEVTOOLS_STATUS_EVENT,
 	isReactDevtoolsFrame,
 	type ReactDevtoolsFrame,
 } from './react-devtools';
-import {
-	isViewFrameMessage,
-	type ViewHighlight,
-	type ViewsRequest,
-	type ViewsResult,
-} from './views';
 
-export type { ViewFrame, ViewHighlight, ViewNode, ViewsRequest, ViewsResult } from './views';
+export type {
+	ExplorerClass,
+	ExplorerClassesRequest,
+	ExplorerClassesResult,
+	ExplorerError,
+	ExplorerErrorCode,
+	ExplorerImage,
+	ExplorerMember,
+	ExplorerMemberKind,
+	ExplorerMembersRequest,
+	ExplorerMembersResult,
+	ExplorerObject,
+	ExplorerObjectRequest,
+	ExplorerObjectResult,
+	ExplorerRequest,
+	ExplorerResult,
+	ExplorerTarget,
+	ExplorerValue,
+	ExplorerValueKind,
+	ExplorerValuesRequest,
+	ExplorerValuesResult,
+} from './explorer';
+export { VIEWS_PAGE_SIZE };
+export type {
+	ViewDetails,
+	ViewDetailsRequest,
+	ViewDetailsResult,
+	ViewFrame,
+	ViewHighlight,
+	ViewNode,
+	ViewProperty,
+	ViewPropertyValue,
+	ViewSection,
+	ViewsRequest,
+	ViewsResult,
+} from './views';
+export {
+	EXPLORER_CLASSES_PAGE_SIZE,
+	EXPLORER_MEMBERS_PAGE_SIZE,
+	EXPLORER_RESULT_TYPES,
+	EXPLORER_VALUES_LIMIT,
+	failExplorerRequest,
+	isExplorerRequest,
+	isExplorerResult,
+};
 export type { ReactDevtoolsFrame, ReactDevtoolsStatus } from './react-devtools';
 export { REACT_DEVTOOLS_SHUTDOWN_EVENT, REACT_DEVTOOLS_STATUS_EVENT };
 
@@ -152,7 +211,11 @@ export type BridgeMessage =
 	| DeviceStatus
 	| ViewsRequest
 	| ViewsResult
+	| ViewDetailsRequest
+	| ViewDetailsResult
 	| ViewHighlight
+	| ExplorerRequest
+	| ExplorerResult
 	| ReactDevtoolsFrame;
 
 /** The default port the bridge listens on and controllers dial. */
@@ -273,8 +336,19 @@ function hasRequiredFields(frame: unknown): frame is BridgeMessage {
 			);
 		case 'views-request':
 		case 'views-result':
+		case 'view-details-request':
+		case 'view-details-result':
 		case 'view-highlight':
 			return isViewFrameMessage(frame);
+		case 'explorer-object-request':
+		case 'explorer-object-result':
+		case 'explorer-members-request':
+		case 'explorer-members-result':
+		case 'explorer-values-request':
+		case 'explorer-values-result':
+		case 'explorer-classes-request':
+		case 'explorer-classes-result':
+			return isExplorerFrame(frame);
 		case 'react-devtools':
 			return isReactDevtoolsFrame(frame);
 		default:

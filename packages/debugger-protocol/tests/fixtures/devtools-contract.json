@@ -22,6 +22,198 @@
 				"clientVersion": "1.0.0"
 			}
 		},
-		"deviceDisconnected": { "type": "device-status", "connected": false }
+		"deviceDisconnected": { "type": "device-status", "connected": false },
+		"viewsRequest": {
+			"type": "views-request",
+			"id": "views-1",
+			"parent": "3",
+			"offset": 100,
+			"limit": 100
+		},
+		"viewsPage": {
+			"type": "views-result",
+			"id": "views-1",
+			"ok": true,
+			"nodes": [
+				{
+					"id": "104",
+					"className": "com.facebook.react.views.image.ReactImageView",
+					"resourceName": "emoji_row_13",
+					"frame": { "x": 0, "y": 1124, "width": 51.4, "height": 48 },
+					"visibility": "visible",
+					"alpha": 1,
+					"text": null,
+					"childCount": 0
+				}
+			],
+			"total": 240
+		},
+		"viewDetailsRequest": { "type": "view-details-request", "id": "details-1", "node": "104" },
+		"viewDetailsOk": {
+			"type": "view-details-result",
+			"id": "details-1",
+			"ok": true,
+			"details": {
+				"classChain": ["UILabel", "UIView", "UIResponder"],
+				"sections": [
+					{
+						"title": "Text",
+						"properties": [
+							{ "key": "pointSize", "value": 16, "unit": "pt" },
+							{ "key": "textColor", "value": "#F2F3F5FF", "kind": "color" },
+							{ "key": "hidden", "value": false },
+							{ "key": "font", "value": null }
+						]
+					}
+				]
+			}
+		},
+		"viewDetailsError": {
+			"type": "view-details-result",
+			"id": "details-1",
+			"ok": false,
+			"error": "Failed to find view 104; refresh the tree."
+		},
+		"explorerObjectRequest": {
+			"type": "explorer-object-request",
+			"id": "explorer-1",
+			"target": { "node": "104" }
+		},
+		"explorerObjectOk": {
+			"type": "explorer-object-result",
+			"id": "explorer-1",
+			"ok": true,
+			"object": {
+				"ref": "k3f9:1",
+				"className": "UILabel",
+				"description": "<UILabel: 0x10a2b3c40; frame = (0 0; 120 20); text = 'General'>",
+				"platform": "ios",
+				"chain": [
+					{
+						"name": "UILabel",
+						"image": "/System/Library/PrivateFrameworks/UIKitCore.framework/UIKitCore",
+						"instanceSize": 720,
+						"counts": {
+							"properties": 64,
+							"ivars": 31,
+							"methods": 310,
+							"classMethods": 12,
+							"protocols": 3
+						}
+					},
+					{
+						"name": "NSObject",
+						"image": null,
+						"instanceSize": null,
+						"counts": {}
+					}
+				]
+			}
+		},
+		"explorerMembersRequest": {
+			"type": "explorer-members-request",
+			"id": "explorer-2",
+			"className": "UILabel",
+			"kind": "properties",
+			"offset": 0,
+			"limit": 100,
+			"filter": "text"
+		},
+		"explorerMembersOk": {
+			"type": "explorer-members-result",
+			"id": "explorer-2",
+			"ok": true,
+			"members": [
+				{
+					"name": "textColor",
+					"kind": "properties",
+					"type": "UIColor *",
+					"signature": "@property (nonatomic, strong) UIColor *textColor",
+					"attributes": ["nonatomic", "strong"],
+					"image": "/System/Library/PrivateFrameworks/UIKitCore.framework/UIKitCore",
+					"read": "auto"
+				},
+				{
+					"name": "setText:",
+					"kind": "methods",
+					"type": "void",
+					"signature": "- (void)setText:(NSString *)text",
+					"returnType": "void",
+					"parameters": ["NSString *"],
+					"static": false,
+					"read": "never"
+				},
+				{
+					"name": "_textColor",
+					"kind": "ivars",
+					"type": "UIColor *",
+					"signature": null,
+					"offset": 488,
+					"size": 8,
+					"read": "auto"
+				}
+			],
+			"total": 3
+		},
+		"explorerValuesRequest": {
+			"type": "explorer-values-request",
+			"id": "explorer-3",
+			"object": "k3f9:1",
+			"className": "UILabel",
+			"kind": "properties",
+			"names": ["textColor", "text", "numberOfLines"],
+			"invokeGetters": false
+		},
+		"explorerValuesOk": {
+			"type": "explorer-values-result",
+			"id": "explorer-3",
+			"ok": true,
+			"values": [
+				{
+					"name": "textColor",
+					"kind": "object",
+					"text": "UIExtendedSRGBColorSpace 1 1 1 1",
+					"object": "k3f9:2",
+					"className": "UIDynamicSystemColor"
+				},
+				{ "name": "text", "kind": "skipped", "text": "Computed; read it explicitly" },
+				{ "name": "numberOfLines", "kind": "number", "text": "1" }
+			]
+		},
+		"explorerValuesStale": {
+			"type": "explorer-values-result",
+			"id": "explorer-3",
+			"ok": false,
+			"error": "Object k3f9:1 is gone; it was read before a reload or reconnect.",
+			"code": "stale"
+		},
+		"explorerClassesRequest": {
+			"type": "explorer-classes-request",
+			"id": "explorer-4",
+			"image": "/System/Library/PrivateFrameworks/UIKitCore.framework/UIKitCore",
+			"filter": "Label",
+			"offset": 0,
+			"limit": 200
+		},
+		"explorerClassesOk": {
+			"type": "explorer-classes-result",
+			"id": "explorer-4",
+			"ok": true,
+			"total": 2,
+			"classes": ["UILabel", "_UILabelLayer"]
+		},
+		"explorerImagesOk": {
+			"type": "explorer-classes-result",
+			"id": "explorer-5",
+			"ok": true,
+			"total": 412,
+			"images": [
+				{
+					"path": "/System/Library/PrivateFrameworks/UIKitCore.framework/UIKitCore",
+					"name": "UIKitCore",
+					"classCount": 5120
+				}
+			]
+		}
 	}
 }
