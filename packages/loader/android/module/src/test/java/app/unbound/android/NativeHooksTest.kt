@@ -3,6 +3,8 @@ package app.unbound.android
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -48,6 +50,7 @@ class NativeHooksTest {
 
     private class FakeChain(private val self: Any?, private val arguments: List<Any?>, private val original: Any?) : NativeHooks.Chain {
         var proceeded = false
+        var proceededWith: List<Any?>? = null
 
         override fun target(): Any? = self
         override fun argument(index: Int): Any? = arguments[index]
@@ -56,10 +59,16 @@ class NativeHooksTest {
             proceeded = true
             return original
         }
+
+        override fun proceedWith(arguments: Array<Any?>): Any? {
+            proceededWith = arguments.toList()
+            return original
+        }
     }
 
     private lateinit var installer: FakeInstaller
     private val dispatched = ArrayList<Pair<String, String>>()
+    private var rewriteResponse: String? = null
     private val cached = HashMap<Triple<String, String, String>, String>()
     private val lookups = ArrayList<Triple<String, String, String>>()
 
@@ -77,9 +86,11 @@ class NativeHooksTest {
         installer = FakeInstaller()
         NativeHooks.useInstaller(installer)
         dispatched.clear()
+        rewriteResponse = null
         NativeHooks.useDispatcher(object : NativeHooks.Dispatcher {
-            override fun dispatch(token: String, payloadJSON: String) {
+            override fun dispatch(token: String, payloadJSON: String): String? {
                 dispatched.add(token to payloadJSON)
+                return rewriteResponse
             }
         })
     }
@@ -380,5 +391,58 @@ class NativeHooksTest {
 
         assertEquals(0, NativeHooks.installedCount())
         assertTrue(installer.installed.all { it.removed })
+    }
+
+    @Test
+    fun rewritingHooksProceedWithTheListenersArguments() {
+        NativeHooks.hook("java.lang.String", "concat", """["java.lang.String"]""", """{"rewriteArguments":true}""")
+        rewriteResponse = """[{"type":"string","value":"rewritten"}]"""
+        val chain = FakeChain("a", listOf("b"), "ab")
+
+        installer.installed[0].hook.intercept(chain)
+
+        assertEquals(listOf<Any?>("rewritten"), chain.proceededWith)
+        assertFalse(chain.proceeded)
+        assertEquals(1, dispatched.size)
+    }
+
+    @Test
+    fun rewritingHooksProceedNormallyWhenTheListenerReturnsNothing() {
+        NativeHooks.hook("java.lang.String", "concat", """["java.lang.String"]""", """{"rewriteArguments":true}""")
+        val chain = FakeChain("a", listOf("b"), "ab")
+
+        installer.installed[0].hook.intercept(chain)
+
+        assertTrue(chain.proceeded)
+        assertNull(chain.proceededWith)
+    }
+
+    @Test
+    fun rewritingHooksIgnoreArgumentsThatDoNotMatchTheMethod() {
+        NativeHooks.hook("java.lang.String", "concat", """["java.lang.String"]""", """{"rewriteArguments":true}""")
+        rewriteResponse = """[{"type":"string","value":"x"},{"type":"string","value":"y"}]"""
+        val chain = FakeChain("a", listOf("b"), "ab")
+
+        installer.installed[0].hook.intercept(chain)
+
+        assertTrue(chain.proceeded)
+        assertNull(chain.proceededWith)
+    }
+
+    @Test
+    fun hooksWithoutTheOptionNeverRewriteArguments() {
+        NativeHooks.hook("java.lang.String", "concat", """["java.lang.String"]""", "{}")
+        rewriteResponse = """[{"type":"string","value":"rewritten"}]"""
+        val chain = FakeChain("a", listOf("b"), "ab")
+
+        installer.installed[0].hook.intercept(chain)
+
+        assertTrue(chain.proceeded)
+        assertNull(chain.proceededWith)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rewritingArgumentsRequiresABeforeNotification() {
+        NativeHooks.hook("java.lang.String", "concat", """["java.lang.String"]""", """{"rewriteArguments":true,"notify":"after"}""")
     }
 }

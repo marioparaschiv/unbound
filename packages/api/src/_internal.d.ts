@@ -4301,8 +4301,15 @@ export type NativeJavaHookOptions<Receiver extends boolean = boolean> = {
 	replace?: boolean;
 	/** Whether the listener hears calls: before the method by default, `after` once it has run, `false` never. */
 	notify?: boolean | 'after';
+	/** Lets a `before` listener hooked from a UI scope return `{ arguments }` to run the method with them instead. */
+	rewriteArguments?: boolean;
 	/** Trims the receiver, arguments and phase each event sends, to cut crossing cost on hot methods. */
 	payload?: NativeHookPayload<Receiver>;
+};
+/** What a `rewriteArguments` listener returns to run the hooked method with other arguments, one per parameter. */
+export type NativeJavaHookRewrite = {
+	/** The arguments to run the method with, in parameter order. */
+	arguments: NativeJavaArgument[];
 };
 /** An installed Java hook; the plugin scope removes it on dispose. */
 export type NativeJavaHookToken = {
@@ -4317,7 +4324,7 @@ export type NativeJavaHooksBridge = {
 		methodName: string,
 		parameterTypes: string[],
 		options?: NativeJavaHookOptions<Receiver>,
-		listener?: (event: NativeJavaHookEvent<Receiver>) => void,
+		listener?: (event: NativeJavaHookEvent<Receiver>) => NativeJavaHookRewrite | void,
 	): NativeJavaHookToken;
 	/** Sets the result a `replace` hook returns for calls with this receiver and these arguments. */
 	setReturnValue(

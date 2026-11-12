@@ -247,7 +247,7 @@ object NativeBridge {
     fun isMainThread(): Boolean = Looper.myLooper() == Looper.getMainLooper()
 
     @JvmStatic
-    external fun nativeDispatchHookEvent(token: String, payloadJSON: String)
+    external fun nativeDispatchHookEvent(token: String, payloadJSON: String): String?
 
     @JvmStatic
     fun hooksInstall(
