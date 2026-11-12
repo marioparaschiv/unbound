@@ -59,11 +59,12 @@ public:
 
     void runAfter(double, std::function<void()>) override {}
 
-    void drain(jsi::Runtime &runtime, size_t expected)
+    // The freeze watchdog queues a heartbeat every second too, so this waits on `settled`, not a
+    // task count.
+    void drain(jsi::Runtime &runtime, const std::function<bool()> &settled)
     {
-        auto   deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
-        size_t ran      = 0;
-        while (ran < expected && std::chrono::steady_clock::now() < deadline)
+        auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+        while (!settled() && std::chrono::steady_clock::now() < deadline)
         {
             std::deque<std::function<void(jsi::Runtime &)>> work;
             {
@@ -73,12 +74,11 @@ public:
             for (auto &task : work)
             {
                 task(runtime);
-                ran++;
             }
             runtime.drainMicrotasks();
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
-        require(ran == expected, "every background download settles on the runtime");
+        require(settled(), "every background download settles on the runtime");
     }
 
 private:
@@ -302,7 +302,10 @@ int main()
     runtime->global().setProperty(*runtime, "expectedDigests", digests);
 
     requireChecks(*runtime, kUnboundNativeChecks, "unbound-native-checks.js");
-    executor->drain(*runtime, 3);
+    executor->drain(*runtime, [&runtime] {
+        jsi::Object downloads = runtime->global().getPropertyAsObject(*runtime, "downloads");
+        return downloads.getPropertyNames(*runtime).size(*runtime) == 3;
+    });
     requireChecks(*runtime, kDownloadChecks, "download-checks.js");
     require(loader::readTextFile((documents / "Fonts" / "a.ttf").string()) ==
                 "https://fonts.invalid/a.ttf",
