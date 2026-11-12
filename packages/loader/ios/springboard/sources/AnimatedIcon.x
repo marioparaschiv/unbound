@@ -124,6 +124,12 @@ static UIView *iconImageViewIn(UIView *view, NSInteger depth)
     return nil;
 }
 
+static void removeOverlay(UIView *iconView)
+{
+    [[iconView viewWithTag:kOverlayTag] removeFromSuperview];
+    [gDiscordIconViews removeObject:iconView];
+}
+
 static void applyOverlay(UIView *iconView)
 {
     UIImageView *overlay = (UIImageView *) [iconView viewWithTag:kOverlayTag];
@@ -164,6 +170,7 @@ static void applyOverlay(UIView *iconView)
     %orig;
     if (!isDiscordIconView(self))
     {
+        removeOverlay(self);
         return;
     }
     if (!gResolved)
@@ -184,7 +191,14 @@ static void applyOverlay(UIView *iconView)
         resolveState();
         for (UIView *view in gDiscordIconViews.allObjects)
         {
-            applyOverlay(view);
+            if (isDiscordIconView(view))
+            {
+                applyOverlay(view);
+            }
+            else
+            {
+                removeOverlay(view);
+            }
         }
     });
     %init;
