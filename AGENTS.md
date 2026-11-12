@@ -8,7 +8,7 @@ Rules describe the code as written. When a rule and a neighbouring file disagree
 
 - `turn-check` formats and lint-fixes changed files each turn. A lint message ending `(AGENTS.md)` states its own fix.
 - Shared lint rules and commitlint come from `@marioparaschiv/oxc-config`; repo rules live in `scripts/oxlint/` with fixture tests.
-- Run `bun run typecheck` before finishing. Plugins: `bun run plugins:test`, `plugins:validate`. Native loaders (`packages/loader`, Go): `bun run loader:test`, `loader:validate`.
+- Run `bun run typecheck` before finishing. Client: `bun run client:test` (each file needs its own module registry, so plain `bun test` fails). Plugins: `bun run plugins:test`, `plugins:validate`. Native loaders (`packages/loader`, Go): `bun run loader:test`, `loader:validate`.
 - Commit as `type(scope): subject`, scope = package or app.
 
 Test: `turn-check` is clean and `bun run typecheck` passes.

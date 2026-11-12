@@ -8,6 +8,7 @@
 		"url": "https://github.com/marioparaschiv"
 	},
 	"scripts": {
+		"test": "bun test --isolate",
 		"build": "bun --bun scripts/build/index.ts",
 		"build:dev": "bun --bun scripts/build/index.ts --dev",
 		"dev": "bun --bun scripts/dev --dev",
