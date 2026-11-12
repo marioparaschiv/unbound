@@ -14,6 +14,7 @@ use serde::Serialize;
 use serde_json::Value as Json;
 use tokio::sync::{mpsc, oneshot, watch};
 
+use crate::explorer::ExplorerOutcome;
 use crate::inspect::{InspectedElement, Section};
 use crate::link::{Link, LinkStatus};
 use crate::protocol::{
@@ -127,6 +128,7 @@ pub(crate) struct Inner {
 	pub(crate) pending: Mutex<HashMap<u64, oneshot::Sender<InspectedElementPayload>>>,
 	pub(crate) inspections: Mutex<HashMap<ElementId, InspectedElement>>,
 	pub(crate) views: Mutex<HashMap<String, oneshot::Sender<ViewsReply>>>,
+	pub(crate) explorer: Mutex<HashMap<String, oneshot::Sender<ExplorerOutcome>>>,
 	pub(crate) next_generation: AtomicU64,
 	next_request: AtomicU64,
 	pub(crate) presets_write: Mutex<()>,
@@ -223,6 +225,7 @@ impl Devtools {
 			pending: Mutex::new(HashMap::new()),
 			inspections: Mutex::new(HashMap::new()),
 			views: Mutex::new(HashMap::new()),
+			explorer: Mutex::new(HashMap::new()),
 			next_generation: AtomicU64::new(0),
 			next_request: AtomicU64::new(0),
 			presets_write: Mutex::new(()),

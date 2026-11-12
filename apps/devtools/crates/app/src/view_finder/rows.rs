@@ -88,6 +88,26 @@ fn row_shell(ix: usize, depth: u32) -> gpui::Stateful<gpui::Div> {
 		.children(guides(depth))
 }
 
+/// A row of text in place of views: a level loading or failing, or the rest of a long level.
+fn note_row(
+	ix: usize,
+	depth: u32,
+	text: gpui::SharedString,
+	tone: theme::Token,
+) -> gpui::Stateful<gpui::Div> {
+	row_shell(ix, depth)
+		.border_color(gpui::transparent_black())
+		.child(div().flex_none().w(px(theme::CHEVRON_SLOT)))
+		.child(
+			div()
+				.min_w_0()
+				.truncate()
+				.text_size(theme::TEXT_SMALL)
+				.text_color(theme::color(tone))
+				.child(text),
+		)
+}
+
 impl ViewFinder {
 	fn indent_shift(&self) -> u32 {
 		let selected = self.selected.as_deref();
@@ -112,23 +132,46 @@ impl ViewFinder {
 						Some(self.render_view(ix, node, depth, *expanded, cx))
 					}
 					Row::Note { text, error, .. } => Some(
-						row_shell(ix, depth)
-							.border_color(gpui::transparent_black())
-							.child(div().flex_none().w(px(theme::CHEVRON_SLOT)))
-							.child(
-								div()
-									.min_w_0()
-									.truncate()
-									.text_size(theme::TEXT_SMALL)
-									.text_color(theme::color(if *error {
-										theme::ERROR
-									} else {
-										theme::TEXT_FAINT
-									}))
-									.child(text.clone()),
-							)
-							.into_any_element(),
+						note_row(
+							ix,
+							depth,
+							text.clone(),
+							if *error {
+								theme::ERROR
+							} else {
+								theme::TEXT_FAINT
+							},
+						)
+						.into_any_element(),
 					),
+					Row::More {
+						parent,
+						text,
+						loading,
+						..
+					} => {
+						let row = note_row(
+							ix,
+							depth,
+							text.clone(),
+							if *loading {
+								theme::TEXT_FAINT
+							} else {
+								theme::ACCENT
+							},
+						);
+						let parent = parent.clone();
+						Some(
+							row.when(!*loading, |row| {
+								row.cursor_pointer()
+									.hover(|row| row.bg(theme::color(theme::HOVER)))
+									.on_click(cx.listener(move |this, _, _, cx| {
+										this.show_more(parent.clone(), cx);
+									}))
+							})
+							.into_any_element(),
+						)
+					}
 				}
 			})
 			.collect()

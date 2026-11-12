@@ -61,7 +61,19 @@ pub fn tooltip(text: &'static str) -> impl Fn(&mut Window, &mut App) -> AnyView 
 	move |_, cx| cx.new(|_| Tooltip(text.into())).into()
 }
 
-pub fn icon_button(id: &'static str, path: &'static str, active: bool) -> Stateful<Div> {
+/// A tooltip with text made at runtime, such as a member's full signature.
+pub fn text_tooltip(
+	text: impl Into<SharedString>,
+) -> impl Fn(&mut Window, &mut App) -> AnyView + 'static {
+	let text = text.into();
+	move |_, cx| cx.new(|_| Tooltip(text.clone())).into()
+}
+
+pub fn icon_button(
+	id: impl Into<gpui::ElementId>,
+	path: &'static str,
+	active: bool,
+) -> Stateful<Div> {
 	div()
 		.id(id)
 		.flex_none()

@@ -1,10 +1,18 @@
-// usage: [DEPTH=n] [WIDTH=n] [TICK_MS=n] bun device.mjs [port=9090]
+// usage: [DEPTH=n] [WIDTH=n] [TICK_MS=n] [PLATFORM=ios] bun device.mjs [port=9090]
 // A debugger bridge with a device already attached: controllers dial ws://127.0.0.1:<port>/?mcp and
 // get React DevTools over `react-devtools` frames, as Unbound's client and bridge carry them.
 // DEPTH nests the app n components deep (function, memo, host View in turn) and WIDTH adds n sibling
-// rows at the bottom, to mimic Discord-scale trees.
+// rows at the bottom, to mimic Discord-scale trees. `views-request` and `view-details-request` frames
+// get a spoofed native view tree from `views.mjs`, Android's or, with PLATFORM=ios, UIKit's.
+// `explorer-*-request` frames get spoofed classes, members and values from `explorer.mjs`.
 import { createRequire } from 'node:module';
 import { WebSocketServer } from 'ws';
+
+import { answerExplorer } from './explorer.mjs';
+import { answerDetails, answerViews, platform } from './views.mjs';
+
+// Explorer answers arrive a moment late, as the device's bridge calls make them.
+const EXPLORER_DELAY_MS = 30;
 
 const port = Number(process.argv[2] ?? 9090);
 const require = createRequire(import.meta.url);
@@ -155,7 +163,7 @@ function endSession() {
 }
 
 const device = {
-	platform: 'android',
+	platform,
 	discordVersion: '300.0',
 	loaderVersion: '1.0.0',
 	clientVersion: '2.0.0',
@@ -171,6 +179,20 @@ server.on('connection', (socket) => {
 		if (frame.type === 'react-devtools') {
 			frontend = socket;
 			receive(frame);
+		}
+
+		if (frame.type === 'views-request') {
+			socket.send(JSON.stringify(answerViews(frame)));
+		}
+
+		if (frame.type === 'view-details-request') {
+			socket.send(JSON.stringify(answerDetails(frame)));
+		}
+
+		const explored = answerExplorer(frame);
+
+		if (explored) {
+			setTimeout(() => socket.send(JSON.stringify(explored)), EXPLORER_DELAY_MS);
 		}
 	});
 

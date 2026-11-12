@@ -11,7 +11,8 @@ use tokio::sync::mpsc;
 use tokio_tungstenite::tungstenite::Message;
 use unbound_devtools_core::presets::CONFIG_DIR_ENV;
 use unbound_devtools_core::{
-	BridgeState, Config, ConnectTarget, ConnectionState, Devtools, LinkStatus,
+	BridgeState, Config, ConnectTarget, ConnectionState, Devtools, LinkStatus, PropertyKind,
+	PropertyValue,
 };
 
 fn config_dir() {
@@ -26,7 +27,8 @@ fn config_dir() {
 }
 
 /// Accepts controllers forever: announces a device, reports each frame a controller sends, and
-/// answers every `react-devtools` frame with `reply` and every `views-request` with one view.
+/// answers every `react-devtools` frame with `reply`, every `views-request` with one view of a level of
+/// three, and every `view-details-request` with one section.
 async fn fake_bridge(reply: Json) -> (SocketAddr, mpsc::UnboundedReceiver<Json>) {
 	let listener = TcpListener::bind("127.0.0.1:0")
 		.await
@@ -73,6 +75,24 @@ async fn fake_bridge(reply: Json) -> (SocketAddr, mpsc::UnboundedReceiver<Json>)
 								"text": null,
 								"childCount": 1,
 							}],
+							"total": 3,
+						})),
+						Some("view-details-request") => Some(json!({
+							"type": "view-details-result",
+							"id": frame["id"],
+							"ok": true,
+							"details": {
+								"classChain": ["com.discord.MainActivity$Root", "android.view.View"],
+								"sections": [{
+									"title": "Drawing",
+									"properties": [
+										{ "key": "background", "value": "#313338FF", "kind": "color" },
+										{ "key": "elevation", "value": 1.5, "unit": "dp" },
+										{ "key": "opaque", "value": false },
+										{ "key": "foreground", "value": null },
+									],
+								}],
+							},
 						})),
 						_ => None,
 					};
@@ -201,17 +221,48 @@ async fn a_link_lists_and_highlights_native_views() {
 	let (bridge_addr, mut frames) = fake_bridge(json!({})).await;
 	let devtools = session();
 
-	assert!(devtools.list_views(None).await.is_err(), "no link yet");
+	assert!(devtools.list_views(None, 0).await.is_err(), "no link yet");
 	link(&devtools, bridge_addr);
 	link_until(&devtools, |link| {
 		matches!(link.state, BridgeState::DeviceConnected)
 	})
 	.await;
 
-	let views = devtools.list_views(None).await.expect("the device lists");
-	assert_eq!(views.len(), 1);
-	assert_eq!(views[0].short_name(), "Root");
-	assert_eq!(views[0].resource_name.as_deref(), Some("content"));
+	let page = devtools
+		.list_views(Some("7".into()), 100)
+		.await
+		.expect("the device lists");
+	assert_eq!(page.total, Some(3));
+	assert_eq!(page.nodes.len(), 1);
+	assert_eq!(page.nodes[0].short_name(), "Root");
+	assert_eq!(page.nodes[0].resource_name.as_deref(), Some("content"));
+	let request = async {
+		loop {
+			let frame = frames.recv().await.expect("a frame");
+			if frame["type"] == "views-request" {
+				return frame;
+			}
+		}
+	};
+	let request = tokio::time::timeout(Duration::from_secs(5), request)
+		.await
+		.expect("the request arrives");
+	assert_eq!(
+		(&request["parent"], &request["offset"], &request["limit"]),
+		(&json!("7"), &json!(100), &json!(100))
+	);
+
+	let details = devtools
+		.view_details("0")
+		.await
+		.expect("the device reads the view");
+	assert_eq!(details.class_chain[1], "android.view.View");
+	let properties = &details.sections[0].properties;
+	assert_eq!(properties[0].kind, Some(PropertyKind::Color));
+	assert_eq!(properties[1].value, PropertyValue::Number(1.5));
+	assert_eq!(properties[1].unit.as_deref(), Some("dp"));
+	assert_eq!(properties[2].value, PropertyValue::Bool(false));
+	assert_eq!(properties[3].value, PropertyValue::Null);
 
 	devtools.highlight_view(Some("0"));
 	let highlight = async {

@@ -276,11 +276,16 @@ impl Render for DebuggerLink {
 }
 
 fn device_summary(device: &DeviceInfo) -> String {
-	let mut platform = device.platform.chars();
-	let platform: String = platform
-		.next()
-		.map(|first| first.to_uppercase().chain(platform).collect())
-		.unwrap_or_default();
+	let platform: String = match device.platform.as_str() {
+		"ios" => "iOS".to_owned(),
+		other => {
+			let mut chars = other.chars();
+			chars
+				.next()
+				.map(|first| first.to_uppercase().chain(chars).collect())
+				.unwrap_or_default()
+		}
+	};
 	format!("{platform} · Discord {}", device.discord_version)
 }
 

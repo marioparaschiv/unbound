@@ -14,7 +14,7 @@ use tokio_tungstenite::tungstenite::Message;
 use crate::bridge::{self, BridgeFrame, DeviceInfo};
 use crate::presets::{BridgeAddr, ConnectTarget};
 use crate::session::{BridgeState, Devtools, Inner};
-use crate::views;
+use crate::{explorer, views};
 
 const MIN_BACKOFF: Duration = Duration::from_secs(1);
 const MAX_BACKOFF: Duration = Duration::from_secs(10);
@@ -118,8 +118,9 @@ async fn supervise(inner: Weak<Inner>, generation: u64, target: ConnectTarget) {
 
 		if let Some(inner) = inner.upgrade() {
 			inner.detach_backend(generation);
-			// Dropping the waiters fails each view request still out with `NotConnected`.
+			// Dropping the waiters fails each view and explorer request still out with `NotConnected`.
 			inner.views.lock().clear();
+			inner.explorer.lock().clear();
 		}
 
 		let Some(lost) = lost else {
@@ -209,10 +210,25 @@ async fn attach(inner: &Weak<Inner>, generation: u64, target: &ConnectTarget) ->
 						device_connected = connected;
 					}
 					BridgeFrame::ReactDevtools {} => inner.receive(generation, &text),
-					BridgeFrame::ViewsResult { id, ok, nodes, error } => {
-						let reply = if ok { Ok(nodes) } else { Err(error.unwrap_or_default()) };
+					BridgeFrame::ViewsResult { id, ok, nodes, total, error } => {
+						let reply = if ok {
+							Ok(views::ViewReply::Page(views::ViewPage { nodes, total }))
+						} else {
+							Err(error.unwrap_or_default())
+						};
 						views::settle(&inner, &id, reply);
 					}
+					BridgeFrame::ViewDetailsResult { id, ok, details, error } => {
+						let reply = match details {
+							Some(details) if ok => Ok(views::ViewReply::Details(details)),
+							_ => Err(error.unwrap_or_else(|| "The device sent no details.".into())),
+						};
+						views::settle(&inner, &id, reply);
+					}
+					frame @ (BridgeFrame::ExplorerObjectResult { .. }
+					| BridgeFrame::ExplorerMembersResult { .. }
+					| BridgeFrame::ExplorerValuesResult { .. }
+					| BridgeFrame::ExplorerClassesResult { .. }) => explorer::settle(&inner, frame),
 					BridgeFrame::EvalResult { .. } | BridgeFrame::Other => {}
 				}
 			}
