@@ -85,6 +85,7 @@ mock.module('~/assets/plugin-assets', () => ({
 
 mock.module('react-native', () => ({
 	Alert: { alert: () => undefined },
+	Image: 'Image',
 	NativeModules: {},
 	Platform: { OS: 'ios' },
 	TurboModuleRegistry: { get: () => undefined },
