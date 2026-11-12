@@ -48,6 +48,7 @@ import {
 	startSettle,
 	type ReuseSettle,
 } from '~/lib/reuse-settle';
+import { isStandaloneCell } from '~/native/ios/standalone-cell';
 
 const BUBBLE_TAG = 0x0b0b1e;
 const MAX_NESTED_CHECKS = 256;
@@ -242,6 +243,9 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 		placedSizes.set(key, size);
 
 		notePlaced(settlingReuse.get(key));
+
+		// Pinned messages and in-app notifications draw a message on its own, where it keeps Discord's look.
+		if (isStandaloneCell(objc, cell)) return;
 
 		if (await isNested(key, cell)) {
 			await objc.invokeAsync(cell, 'setBackgroundColor:', [clear]);

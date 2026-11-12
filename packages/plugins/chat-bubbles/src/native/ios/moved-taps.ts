@@ -1,4 +1,5 @@
 import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
+import { isStandaloneCell } from '~/native/ios/standalone-cell';
 
 /** The cell's views whose drawing `moveView` shifts through their bounds: the reply preview's holder, then the name row. */
 const MOVED_VIEWS = ['_headerView', '_messageHeaderView'];
@@ -65,7 +66,9 @@ export function installMovedTaps(scope: NativeUIScope, messageCell: string) {
 	objc.hook(messageCell, 'hitTest:withEvent:', {
 		replace: ({ self, args, original }) => {
 			try {
-				const hit = hitMoved(objc, self, args[0], args[1]);
+				const hit = isStandaloneCell(objc, self)
+					? undefined
+					: hitMoved(objc, self, args[0], args[1]);
 
 				if (hit) return hit;
 			} catch (error) {
