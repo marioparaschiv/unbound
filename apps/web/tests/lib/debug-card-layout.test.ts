@@ -1,12 +1,16 @@
+import { unpackDebugAltText } from '@unbound-app/contracts/debug-card-alt-text';
 import type { DebugCardRequest } from '@unbound-app/contracts/debug-cards';
 import { describe, expect, test } from 'bun:test';
 
-import {
-	debugAltText,
-	debugCardSvg,
-	layoutDebugCard,
-	type CardText,
-} from '~/lib/debug-card/layout';
+import { debugCardSvg, layoutDebugCard, type CardText } from '~/lib/debug-card/layout';
+import { debugAltText } from '~/lib/debug-card/alt-text';
+
+const altJson = (...args: Parameters<typeof debugAltText>) =>
+	unpackDebugAltText(debugAltText(...args)) ?? '';
+
+// Random hex does not compress, so it fills the alt text as fast as the schema allows.
+const noise = (length: number) =>
+	Array.from({ length }, () => Math.floor(Math.random() * 16).toString(16)).join('');
 
 const info = {
 	client: 'v3.0.0',
@@ -75,7 +79,7 @@ describe('debug card', () => {
 		const summary = texts(card).find((run) => run.text === '12/60 plugins');
 
 		expect(summary && summary.x + summary.text.length * 7.8).toBeCloseTo(card.width - 14, 0);
-		expect(JSON.parse(debugAltText(info))).toMatchObject({ plugins: '12/60', themes: '0/0' });
+		expect(JSON.parse(altJson(info))).toMatchObject({ plugins: '12/60', themes: '0/0' });
 	});
 
 	test('starts the footer state after the ALT badge and stamps the title bar', () => {
@@ -120,9 +124,12 @@ describe('debug card', () => {
 		expect(svg).toContain('&#60;iPad &#38; &#34;mini&#34;&#62;');
 	});
 
-	test('carries the report as JSON within Discord alt text limits', () => {
+	test('packs the report within Discord alt text limits', () => {
 		const alt = debugAltText(info);
-		const parsed = JSON.parse(alt);
+		const parsed = JSON.parse(altJson(info));
+
+		expect(alt.startsWith('ubd1:')).toBe(true);
+		expect(alt.length).toBeLessThan(JSON.stringify(parsed).length / 2);
 
 		expect(parsed).toMatchObject({
 			unbound: '3.0.0',
@@ -130,12 +137,42 @@ describe('debug card', () => {
 			install: 'Ad Hoc (BZJHJ764K7) · expires 2027-09-16',
 			state: ['Jailed', 'verified build'],
 		});
-		expect(
-			JSON.parse(debugAltText({ ...info, appSource: 'x'.repeat(900) })).source,
-		).toBeUndefined();
-		expect(debugAltText({ ...info, device: 'y'.repeat(2000) }).length).toBeLessThanOrEqual(
-			1024,
-		);
+		const crowded = {
+			...info,
+			appSource: noise(128),
+			disabledAddons: Array.from({ length: 64 }, () => noise(160)),
+		};
+
+		expect(debugAltText(crowded).length).toBeLessThanOrEqual(1024);
+		expect(JSON.parse(altJson(crowded))).toMatchObject({
+			unbound: '3.0.0',
+			device: info.device,
+		});
+		expect(JSON.parse(altJson(crowded)).disabled).toBeUndefined();
+	});
+
+	test('carries the entitlements plist as JSON', () => {
+		const entitlements = [
+			'<?xml version="1.0" encoding="UTF-8"?>',
+			'<plist version="1.0">',
+			'<dict>',
+			'\t<key>application-identifier</key>',
+			'\t<string>BZJHJ764K7.com.skawt.*</string>',
+			'\t<key>get-task-allow</key>',
+			'\t<false/>',
+			'\t<key>keychain-access-groups</key>',
+			'\t<array>',
+			'\t\t<string>BZJHJ764K7.*</string>',
+			'\t</array>',
+			'</dict>',
+			'</plist>',
+		].join('\n');
+
+		expect(JSON.parse(altJson({ ...info, entitlements })).entitlements).toEqual({
+			'application-identifier': 'BZJHJ764K7.com.skawt.*',
+			'get-task-allow': false,
+			'keychain-access-groups': ['BZJHJ764K7.*'],
+		});
 	});
 	test('colours the Discord support status and lists disabled addons on one row', () => {
 		const card = layoutDebugCard({
@@ -197,7 +234,7 @@ describe('debug card', () => {
 		expect(texts(card).find((run) => run.text.startsWith('crash'))?.text).toBe(
 			'crash SIGSEGV in Chat Bubbles · +2 more',
 		);
-		expect(JSON.parse(debugAltText({ ...info, launch: quiet })).launch).toBeUndefined();
+		expect(JSON.parse(altJson({ ...info, launch: quiet })).launch).toBeUndefined();
 		expect(card.height / card.width).toBeLessThanOrEqual(0.85);
 	});
 	test('names the Android root manager in place of the generic rooted state', () => {
@@ -255,7 +292,7 @@ describe('debug card', () => {
 			'180 MB free · 2 warnings · thermal serious',
 		);
 
-		const alt = JSON.parse(debugAltText(busy));
+		const alt = JSON.parse(altJson(busy));
 
 		expect(alt).toMatchObject({ firstRenderMs: '7200', heap: '121.6 MB · gc 844 ms' });
 		expect(alt.crashes).toHaveLength(3);
@@ -291,7 +328,7 @@ describe('debug card', () => {
 		);
 		expect(texts(behind).find((run) => run.text.startsWith('1.2.0'))).toBeDefined();
 		expect(texts(behind).some((run) => run.text.includes('…'))).toBe(false);
-		expect(JSON.parse(debugAltText(info, { loaderUpdate: '1.4.0' })).updates).toEqual([
+		expect(JSON.parse(altJson(info, { loaderUpdate: '1.4.0' })).updates).toEqual([
 			'loader 1.4.0',
 		]);
 	});
@@ -317,7 +354,7 @@ describe('debug card', () => {
 		const card = layoutDebugCard(report, now);
 
 		expect(texts(card).some((run) => run.text === ' · pr #42')).toBe(true);
-		expect(JSON.parse(debugAltText(report, {}, now))).toMatchObject({
+		expect(JSON.parse(altJson(report, {}, now))).toMatchObject({
 			bundleSource: 'pr #42',
 			lastCheck: 'failed · 2 h ago · HTTP 503',
 			settings: 'restored',
@@ -339,7 +376,7 @@ describe('debug card', () => {
 		expect(labels).toContain('errors');
 		expect(labels).toContain('storage');
 		expect(texts(card).some((run) => run.text.includes('…'))).toBe(false);
-		expect(JSON.parse(debugAltText(report))).toMatchObject({
+		expect(JSON.parse(altJson(report))).toMatchObject({
 			errors: ['chat-bubbles: undefined is not a function'],
 			storage: '320 MB free · unbound 41 MB',
 			patches: ['chat-bubbles 12'],
@@ -354,19 +391,16 @@ describe('debug card', () => {
 			session: { uptimeS: 7_380, backgrounded: 4 },
 		};
 
-		expect(JSON.parse(debugAltText(report))).toMatchObject({
+		expect(JSON.parse(altJson(report))).toMatchObject({
 			enabledPlugins: ['unbound.message-logger@1.4.2'],
 			display: '390x844 @3x · font 1.24 · reduce motion',
 			session: 'up 2 h 3 min · backgrounded 4',
 		});
 
 		const crowded = JSON.parse(
-			debugAltText({
+			altJson({
 				...report,
-				enabledPlugins: Array.from(
-					{ length: 60 },
-					(_, index) => `plugin.number-${index}@1.0.0`,
-				),
+				enabledPlugins: Array.from({ length: 60 }, () => noise(96)),
 			}),
 		);
 
