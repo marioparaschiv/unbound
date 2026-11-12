@@ -20,8 +20,9 @@ uint32_t *claimActivityCell();
 uintptr_t currentActivityThread();
 AddonSlot addonOnThread(uintptr_t thread);
 
-bool writeCrashingAddonRecord(int descriptor);
-bool writeCrashingAddonLine(int descriptor);
+bool   writeCrashingAddonRecord(int descriptor);
+bool   writeCrashingAddonLine(int descriptor);
+size_t crashingAddonMessage(char *out, size_t capacity);
 
 class AddonScope
 {
