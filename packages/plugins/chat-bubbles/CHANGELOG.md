@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.4] - 2026-11-12
+
+### Fixed
+
+- On iOS, bubbles and the moved avatar line up with their message again instead of hanging below it or starting at the screen's edge.
+
 ## [1.6.3] - 2026-11-12
 
 ### Fixed

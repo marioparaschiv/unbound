@@ -18,6 +18,7 @@ import {
 	type CellState,
 } from '~/native/ios/ui-cell';
 import { isStandaloneCell } from '~/native/ios/standalone-cell';
+import { hostOffset } from '~/native/ios/host-offset';
 
 const STATE_KEY = '__unboundChatBubbles';
 const MAX_CACHED = 400;
@@ -404,8 +405,14 @@ function paintBubble(
 
 	paintFillet(objc, bubble, drawn, 'top', color);
 	paintFillet(objc, bubble, drawn, 'bottom', color);
+
+	const offset = hostOffset(objc, bubble);
+
 	objc.invoke(bubble, 'setFrame:', [
-		objc.struct('CGRect', rect(drawn.x, drawn.y, drawn.width, drawn.height)),
+		objc.struct(
+			'CGRect',
+			rect(drawn.x - offset.x, drawn.y - offset.y, drawn.width, drawn.height),
+		),
 	]);
 	objc.invoke(bubble, 'setHidden:', [false]);
 
