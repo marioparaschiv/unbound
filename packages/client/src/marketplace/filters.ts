@@ -44,7 +44,7 @@ export const TAG_MATCHES: readonly TagMatch[] = ['any', 'all', 'none'];
 export const UPDATED_WINDOWS = [7, 30, 90, 365] as const;
 
 export const DEFAULT_FILTERS: MarketplaceFilters = {
-	sort: 'popular',
+	sort: 'new',
 	tags: [],
 	tagMatch: 'any',
 	authors: [],

@@ -78,7 +78,7 @@ type SourcedVersionRow = AddonVersionRow & { submission: VersionSubmission | nul
 
 type ListedAddonRow = Pick<
 	AddonRow,
-	'id' | 'type' | 'name' | 'description' | 'icon' | 'installs'
+	'id' | 'type' | 'name' | 'description' | 'icon' | 'installs' | 'createdAt'
 > & {
 	versions: SourcedVersionRow[];
 };
@@ -377,6 +377,7 @@ function toListedAddons(ctx: AppContext, rows: ListedAddonRow[]): ListedAddon[] 
 						icon: row.icon,
 						iconSvg: renderAddonIcon(row.icon),
 						installs: row.installs,
+						createdAt: row.createdAt.toISOString(),
 						latestVersion: toAddonVersion(ctx.env, latest, latest.submission),
 					},
 				]
