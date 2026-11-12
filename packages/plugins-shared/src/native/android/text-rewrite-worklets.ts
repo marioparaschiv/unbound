@@ -99,6 +99,8 @@ type State = {
 
 type SetTextEvent = { self?: NativeJavaValue; args: NativeJavaValue[] };
 
+type Stretched = { span: NativeJavaReference; flags: number; stretch: boolean };
+
 function holder(): Record<string, unknown> {
 	'worklet';
 
@@ -147,7 +149,11 @@ function textOf(java: NativeJavaBridge, value: NativeJavaArgument): string | und
 
 	if (text !== undefined) return text;
 
-	const reference = javaReference(value as unknown as NativeJavaValue);
+	const tagged = value as unknown as { type?: unknown };
+	const reference =
+		typeof value === 'object' && value !== null && typeof tagged.type !== 'string'
+			? (value as NativeJavaReference)
+			: javaReference(value as unknown as NativeJavaValue);
 
 	return reference ? javaText(java.invoke(reference, 'toString', [])) : undefined;
 }
@@ -198,6 +204,36 @@ function isRecycler(state: State, view: NativeJavaReference): boolean {
 	return classNames(state.java, view).includes(RECYCLER_VIEW);
 }
 
+function setVisibility(java: NativeJavaBridge, host: NativeJavaValue, visibility: number) {
+	'worklet';
+	const reference = javaReference(host);
+
+	if (reference && invokeNumber(java, reference, 'getVisibility') !== visibility) {
+		java.invoke(reference, 'setVisibility', [javaInt(visibility)]);
+	}
+}
+
+function release(state: State, group: Group) {
+	'worklet';
+	group.owner = undefined;
+
+	for (const slot of group.slots) setVisibility(state.java, slot.host, GONE);
+}
+
+function forgetView(state: State, key: string) {
+	'worklet';
+
+	for (const group of state.groupsById.values()) {
+		if (group.owner === key) release(state, group);
+	}
+
+	state.views.delete(key);
+	state.pendingShow.delete(key);
+	state.pendingLayout.delete(key);
+	state.settleQueue.delete(key);
+	state.retryQueue.delete(key);
+}
+
 function rememberView(state: State, key: string, view: NativeJavaValue): ViewEntry {
 	'worklet';
 	const existing = state.views.get(key);
@@ -220,20 +256,6 @@ function rememberView(state: State, key: string, view: NativeJavaValue): ViewEnt
 	}
 
 	return entry;
-}
-
-function forgetView(state: State, key: string) {
-	'worklet';
-
-	for (const group of state.groupsById.values()) {
-		if (group.owner === key) release(state, group);
-	}
-
-	state.views.delete(key);
-	state.pendingShow.delete(key);
-	state.pendingLayout.delete(key);
-	state.settleQueue.delete(key);
-	state.retryQueue.delete(key);
 }
 
 function clearSpans(
@@ -260,8 +282,6 @@ function clearSpans(
 		if (start >= from && end <= to) java.invoke(builder, 'removeSpan', [reference]);
 	}
 }
-
-type Stretched = { span: NativeJavaReference; flags: number; stretch: boolean };
 
 function stretchedSpans(state: State, builder: NativeJavaReference, edit: TextEdit): Stretched[] {
 	'worklet';
@@ -430,6 +450,41 @@ function apply(state: State, text: NativeJavaArgument, rule: Rule): NativeJavaAr
 	return textOf(java, builder) === rule.rendered ? builder : null;
 }
 
+function observe(state: State, key: string) {
+	'worklet';
+	const view = viewReference(state, key);
+	const observer = view
+		? javaReference(state.java.invoke(view, 'getViewTreeObserver', []))
+		: null;
+
+	if (!observer || !javaFlag(state.java.invoke(observer, 'isAlive', []))) return false;
+
+	const observerKey = keyOf(observer);
+
+	if (observerKey && !state.observers.has(observerKey)) {
+		state.java.invoke(observer, 'addOnPreDrawListener', [state.proxies.preDraw]);
+		state.observers.set(observerKey, observer);
+	}
+
+	return true;
+}
+
+function showBeforeNextDraw(state: State, key: string) {
+	'worklet';
+
+	if (!state.pendingShow.has(key) && observe(state, key)) state.pendingShow.add(key);
+}
+
+function settleLayout(state: State, key: string) {
+	'worklet';
+	const view = viewReference(state, key);
+
+	if (!view || state.settleQueue.has(key)) return;
+
+	state.settleQueue.add(key);
+	state.java.invoke(view, 'post', [state.proxies.settle]);
+}
+
 function rewrite(
 	state: State,
 	key: string,
@@ -478,31 +533,6 @@ function rewrite(
 	return current;
 }
 
-function observe(state: State, key: string) {
-	'worklet';
-	const view = viewReference(state, key);
-	const observer = view
-		? javaReference(state.java.invoke(view, 'getViewTreeObserver', []))
-		: null;
-
-	if (!observer || !javaFlag(state.java.invoke(observer, 'isAlive', []))) return false;
-
-	const observerKey = keyOf(observer);
-
-	if (observerKey && !state.observers.has(observerKey)) {
-		state.java.invoke(observer, 'addOnPreDrawListener', [state.proxies.preDraw]);
-		state.observers.set(observerKey, observer);
-	}
-
-	return true;
-}
-
-function showBeforeNextDraw(state: State, key: string) {
-	'worklet';
-
-	if (!state.pendingShow.has(key) && observe(state, key)) state.pendingShow.add(key);
-}
-
 function schedulePosition(state: State, key: string) {
 	'worklet';
 
@@ -513,16 +543,6 @@ function schedulePosition(state: State, key: string) {
 	const view = viewReference(state, key);
 
 	if (view) state.java.invoke(view, 'invalidate', []);
-}
-
-function settleLayout(state: State, key: string) {
-	'worklet';
-	const view = viewReference(state, key);
-
-	if (!view || state.settleQueue.has(key)) return;
-
-	state.settleQueue.add(key);
-	state.java.invoke(view, 'post', [state.proxies.settle]);
 }
 
 function outermostList(state: State, view: NativeJavaReference): NativeJavaReference | null {
@@ -592,22 +612,6 @@ function isFree(state: State, group: Group): boolean {
 	if (!group.owner || !isAttached(state, group.owner)) return true;
 
 	return !state.views.get(group.owner)?.shown?.includes(group.rendered);
-}
-
-function setVisibility(java: NativeJavaBridge, host: NativeJavaValue, visibility: number) {
-	'worklet';
-	const reference = javaReference(host);
-
-	if (reference && invokeNumber(java, reference, 'getVisibility') !== visibility) {
-		java.invoke(reference, 'setVisibility', [javaInt(visibility)]);
-	}
-}
-
-function release(state: State, group: Group) {
-	'worklet';
-	group.owner = undefined;
-
-	for (const slot of group.slots) setVisibility(state.java, slot.host, GONE);
 }
 
 function container(state: State, view: NativeJavaReference): NativeJavaReference | null {
@@ -1041,6 +1045,33 @@ export function installTextRewrites(
 	);
 }
 
+function unshare(state: State, rendered: string) {
+	'worklet';
+	const common = shared().rendered;
+	const count = (common.get(rendered) ?? 1) - 1;
+
+	state.rendered.delete(rendered);
+
+	if (count > 0) common.set(rendered, count);
+	else common.delete(rendered);
+}
+
+/**
+ * @description Removes a rule.
+ * @param stateKey The connection's state key.
+ * @param original The text the rule matched.
+ */
+export function removeRule(stateKey: string, original: string) {
+	'worklet';
+	const state = stateOf(stateKey);
+	const rule = state?.rules.get(original);
+
+	if (!state || !rule) return;
+
+	state.rules.delete(original);
+	unshare(state, rule.rendered);
+}
+
 /**
  * @description Adds or replaces a rule that turns one text into its rendered form.
  * @param stateKey The connection's state key.
@@ -1076,33 +1107,6 @@ export function putRule(
 
 		if (oldest !== undefined) removeRule(stateKey, oldest);
 	}
-}
-
-function unshare(state: State, rendered: string) {
-	'worklet';
-	const common = shared().rendered;
-	const count = (common.get(rendered) ?? 1) - 1;
-
-	state.rendered.delete(rendered);
-
-	if (count > 0) common.set(rendered, count);
-	else common.delete(rendered);
-}
-
-/**
- * @description Removes a rule.
- * @param stateKey The connection's state key.
- * @param original The text the rule matched.
- */
-export function removeRule(stateKey: string, original: string) {
-	'worklet';
-	const state = stateOf(stateKey);
-	const rule = state?.rules.get(original);
-
-	if (!state || !rule) return;
-
-	state.rules.delete(original);
-	unshare(state, rule.rendered);
 }
 
 /**

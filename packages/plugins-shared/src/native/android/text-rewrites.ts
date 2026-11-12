@@ -69,7 +69,11 @@ export function supportsTextRewrites(apiVersion: string): boolean {
 }
 
 function tagged(reference: NativeJavaReference): NativeJavaValue {
-	return reference as NativeJavaValue;
+	const { type, value, id } = reference as { type?: unknown; value?: unknown; id?: unknown };
+
+	if (type === 'handle' && typeof value === 'string') return { type: 'handle', value };
+
+	return { type: 'handle', value: String(id) };
 }
 
 /**
