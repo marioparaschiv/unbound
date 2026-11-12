@@ -25,6 +25,7 @@ struct NativePlatformProvider {
     std::function<std::string()>                framework;
     std::function<bool()>                       isVirtualDevice;
     std::function<std::optional<std::string>()> virtualDeviceHost;
+    std::function<nlohmann::json()>             deviceState;
     // Android's in-app Discord installer: runs `action` with a JSON `argument` and returns JSON, or
     // nullopt on failure.
     std::function<std::optional<std::string>(const std::string &, const std::string &)>

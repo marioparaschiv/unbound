@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <mutex>
 #include <string>
+#include <sys/stat.h>
 #include <utility>
 #if defined(__APPLE__)
 #include <sys/ucontext.h>
@@ -18,6 +19,7 @@
 
 #include "LoaderAddonActivity.h"
 #include "LoaderFiles.h"
+#include "LoaderLaunchReport.h"
 #include "LoaderLog.h"
 
 namespace loader {
@@ -295,6 +297,11 @@ bool installAddonCrashHandler(const std::string &markerPath)
     std::string writtenStack = readTextFile(stackPath).value_or("");
     if (!writtenStack.empty())
     {
+        struct stat info = {};
+        int64_t     at =
+            stat(stackPath.c_str(), &info) == 0 ? static_cast<int64_t>(info.st_mtime) * 1000 : 0;
+        recordCrash(slash == std::string::npos ? "." : markerPath.substr(0, slash), writtenStack,
+                    at);
         gPreviousNativeCrash = std::move(writtenStack);
     }
     int stack = open(stackPath.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);

@@ -54,6 +54,8 @@ std::string bundleEtag(const SettingsStore &settings);
 void        setBundleEtag(SettingsStore &settings, const std::string &etag);
 // The bundle record a promotion replaced, so a rollback can restore it; empty when none.
 std::string bundleBaseline(const SettingsStore &settings);
+std::string rejectedRevision(const SettingsStore &settings);
+void        setRejectedRevision(SettingsStore &settings, const std::string &revision);
 void        setBundleBaseline(SettingsStore &settings, const std::string &record);
 // The loader version that last checked for a bundle, so a loader update is noticed once.
 std::string checkedByLoader(const SettingsStore &settings);

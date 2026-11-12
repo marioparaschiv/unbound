@@ -211,6 +211,16 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
         return plan;
     }
 
+    if (manifest && !manifest->revision.empty() && !preferences::forceUpdate(settings_) &&
+        manifest->revision == preferences::rejectedRevision(settings_))
+    {
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+            "Skipped build " + manifest->revision +
+                ", which failed on this device; waiting for a newer one.");
+        plan.unchanged = true;
+        return plan;
+    }
+
     // The active bundle came from this exact manifest: nothing changed, so the signature and
     // the bundle request can both be skipped.
     if (manifestText && isActiveManifest(plan.url, *manifestText))

@@ -2,6 +2,8 @@ import type {
 	DebugCardAddonCount as AddonCount,
 	DebugCardRequest as DebugInfo,
 	DebugCardSupport as DiscordSupport,
+	DebugCardMemory,
+	DebugCardLaunch,
 } from '@unbound-app/contracts/debug-cards';
 import { launchNotes } from '@unbound-app/contracts/debug-card-launch';
 
@@ -57,6 +59,9 @@ const LINE_HEIGHT = 22;
 const CHAR_WIDTH = FONT_SIZE * 0.6;
 const LABEL_WIDTH = 9;
 const BADGE_CLEARANCE = 66;
+const MAX_DIAGNOSTIC_ROWS = 2;
+const DAY_MS = 86_400_000;
+const CRASH_WINDOW_MS = 7 * DAY_MS;
 const VALUE_ROOM = Math.floor((WIDTH - PADDING * 2) / CHAR_WIDTH) - LABEL_WIDTH;
 const MAX_ALT_TEXT = 1024;
 const FOOTER_HEIGHT = 52;
@@ -126,7 +131,7 @@ function fittedList(items: string[], room: number): string {
 	return `${items.length} addons`;
 }
 
-function rows(info: DebugInfo): [string, Span[]][] {
+function rows(info: DebugInfo, now: Date): [string, Span[]][] {
 	const { signing, sideloader } = installParts(info.installDetails);
 
 	return [
@@ -153,18 +158,77 @@ function rows(info: DebugInfo): [string, Span[]][] {
 		...(signing ? [['install', installSpans(signing)] as [string, Span[]]] : []),
 		['react', [value(info.react), dim(` · react native ${info.reactNative}`)]],
 		['hermes', [value(info.hermes), dim(` · bytecode ${info.bytecode}`)]],
-		...(launchNotes(info.launch).length
-			? [
-					['launch', [warn(fittedList(launchNotes(info.launch), VALUE_ROOM))]] as [
-						string,
-						Span[],
-					],
-				]
-			: []),
-		...(info.disabledAddons?.length
-			? [['issues', [warn(fittedList(info.disabledAddons, VALUE_ROOM))]] as [string, Span[]]]
-			: []),
+		...diagnosticRows(info, now).slice(0, MAX_DIAGNOSTIC_ROWS),
 	];
+}
+
+type DebugCardCrash = NonNullable<DebugCardLaunch['crashes']>[number];
+
+function crashSummary(crashes: DebugCardCrash[], now: Date): Span[] {
+	const newest = crashes.at(-1);
+
+	if (!newest || now.getTime() - newest.at > CRASH_WINDOW_MS) {
+		return [];
+	}
+
+	const recent = crashes.filter((crash) => now.getTime() - crash.at <= DAY_MS).length;
+	const when = recent
+		? `${recent} in 24 h`
+		: `${Math.ceil((now.getTime() - newest.at) / DAY_MS)} d ago`;
+
+	return [{ text: `${when} · ${newest.crash}`, color: recent ? COLORS.bad : COLORS.warn }];
+}
+
+function memoryNotes(memory?: DebugCardMemory): string[] {
+	if (!memory) {
+		return [];
+	}
+
+	const pressured =
+		memory.lowMemory ||
+		(memory.memoryWarnings ?? 0) > 0 ||
+		memory.thermal === 'serious' ||
+		memory.thermal === 'critical';
+
+	if (!pressured) {
+		return [];
+	}
+
+	const warnings = memory.memoryWarnings ?? 0;
+	const notes = [
+		memory.availableMB !== undefined && `${memory.availableMB} MB free`,
+		memory.lowMemory && 'low memory',
+		warnings > 0 && `${warnings} ${warnings === 1 ? 'warning' : 'warnings'}`,
+		memory.thermal && memory.thermal !== 'nominal' && `thermal ${memory.thermal}`,
+	];
+
+	return notes.filter((note): note is string => typeof note === 'string');
+}
+
+function memorySummary(memory: DebugCardMemory): string {
+	return joined([
+		memory.availableMB !== undefined ? `${memory.availableMB} MB free` : undefined,
+		memory.lowMemory ? 'low memory' : undefined,
+		memory.memoryWarnings ? `${memory.memoryWarnings} warnings` : undefined,
+		memory.thermal ? `thermal ${memory.thermal}` : undefined,
+	]);
+}
+
+function diagnosticRows(info: DebugInfo, now: Date): [string, Span[]][] {
+	const crashes = crashSummary(info.launch?.crashes ?? [], now);
+	const launch = launchNotes(info.launch);
+	const memory = memoryNotes(info.memory);
+	const candidates: [string, Span[]][] = [
+		['crashes', crashes],
+		[
+			'issues',
+			info.disabledAddons?.length ? [warn(fittedList(info.disabledAddons, VALUE_ROOM))] : [],
+		],
+		['launch', launch.length ? [warn(fittedList(launch, VALUE_ROOM))] : []],
+		['memory', memory.length ? [warn(fittedList(memory, VALUE_ROOM))] : []],
+	];
+
+	return candidates.filter(([, spans]) => spans.length > 0);
 }
 
 function clipped(spans: Span[], room: number): Span[] {
@@ -255,7 +319,7 @@ export function layoutDebugCard(info: DebugInfo, now = new Date()): DebugCard {
 	const room = Math.floor((WIDTH - PADDING * 2) / CHAR_WIDTH);
 	const valueRoom = room - LABEL_WIDTH;
 	const valueX = PADDING + LABEL_WIDTH * CHAR_WIDTH;
-	const lines = rows(info).map(([label, spans]) => ({
+	const lines = rows(info, now).map(([label, spans]) => ({
 		label,
 		line: clipped(spans, valueRoom),
 	}));
@@ -441,10 +505,20 @@ export function debugAltText(info: DebugInfo): string {
 		...(info.iconPack && { iconPack: info.iconPack }),
 		...(info.plugins && { plugins: `${info.plugins.enabled}/${info.plugins.installed}` }),
 		...(info.themes && { themes: `${info.themes.enabled}/${info.themes.installed}` }),
+		...(info.launch?.firstRenderMs && { firstRenderMs: String(info.launch.firstRenderMs) }),
+		...(info.memory && { memory: memorySummary(info.memory) }),
+		...(info.heap && { heap: `${info.heap.heapMB} MB · gc ${info.heap.gcMs} ms` }),
+		...(info.launch?.crashes?.length && {
+			crashes: info.launch.crashes.map(
+				(crash) => `${new Date(crash.at).toISOString().slice(0, 16)}Z ${crash.crash}`,
+			),
+		}),
 	};
 	let text = JSON.stringify(report);
 
 	for (const key of [
+		'heap',
+		'memory',
 		'iconPack',
 		'theme',
 		'locale',
@@ -453,6 +527,7 @@ export function debugAltText(info: DebugInfo): string {
 		'framework',
 		'loaderOrigin',
 		'jailbreak',
+		'crashes',
 	] as const) {
 		if (text.length <= MAX_ALT_TEXT) {
 			break;

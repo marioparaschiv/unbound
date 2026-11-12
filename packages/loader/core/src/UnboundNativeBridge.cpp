@@ -57,7 +57,8 @@ UnboundNativeProvider makeUnboundNativeProvider(const AddonState                
         {
             loader["requiredVersion"] = *required;
         }
-        loader["launch"] = launchReportJSON(launchReport(), previousNativeCrash());
+        loader["launch"] =
+            launchReportJSON(launchReport(), previousNativeCrash(), readCrashHistory(documents));
         return loader;
     };
     provider.getPlugins = [&addons] {

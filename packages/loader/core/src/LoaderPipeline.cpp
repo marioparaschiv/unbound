@@ -6,6 +6,7 @@
 #include "HermesBytecodeHeader.h"
 #include "HermesSampling.h"
 #include "LoaderBootstrap.h"
+#include "LoaderBundleRecord.h"
 #include "LoaderBundleSignature.h"
 #include "LoaderCrashGuard.h"
 #include "LoaderCrashReport.h"
@@ -438,7 +439,7 @@ bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t
     {
         global.setProperty(runtime, "__loaderBundleInstalled", jsi::Value(false));
         evaluationFailed_.store(true);
-        updater_.rejectBundle(saved.path);
+        updater_.discardFailedBundle(saved.path);
         return false;
     }
 
@@ -458,6 +459,7 @@ bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t
             promotePendingBundle();
         });
     }
+    recordRunningBundle(saved.path);
     bundleExecutedMs_.store(nowMs());
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Unbound's bundle was successfully executed.");
     if (token == token_.load())
@@ -466,6 +468,17 @@ bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t
         host_->onBundleExecuted();
     }
     return true;
+}
+
+void LoaderPipeline::recordRunningBundle(const std::string &path)
+{
+    nlohmann::json record = parseBundleRecord(readTextFile(path + kBundleTrustSuffix));
+    std::optional<BundleManifest> manifest =
+        parseBundleManifest(bundleRecordField(record, "manifest"));
+    if (manifest)
+    {
+        setRunningBundle(manifest->revision, manifest->channel);
+    }
 }
 
 void LoaderPipeline::promotePendingBundle()
@@ -555,7 +568,13 @@ void LoaderPipeline::markRendered()
     {
         return;
     }
-    renderedMs_.store(nowMs());
+    int64_t rendered = nowMs();
+    renderedMs_.store(rendered);
+    if (int64_t created = runtimeCreatedMs_.load(); created != 0)
+    {
+        int64_t executed = bundleExecutedMs_.load();
+        recordLaunchTiming(executed ? executed - created : 0, rendered - created);
+    }
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Discord's first screen rendered.");
     host_->runAfter(kRenderedHealthySeconds, [this]() {
         markHealthy();

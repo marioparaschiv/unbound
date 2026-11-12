@@ -58,6 +58,13 @@ object Platform {
         "/data/adb/ap" to "APatch",
     )
 
+    fun thermalName(status: Int): String = when {
+        status <= 0 -> "nominal"
+        status == 1 -> "fair"
+        status == 2 -> "serious"
+        else -> "critical"
+    }
+
     fun rootManager(exists: (String) -> Boolean = { File(it).exists() }): String =
         ROOT_MANAGERS.firstOrNull { (path, _) -> exists(path) }?.second ?: ""
 

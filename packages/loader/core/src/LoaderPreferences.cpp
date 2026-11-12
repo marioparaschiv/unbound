@@ -15,6 +15,7 @@ static constexpr const char *kUnsignedBundles  = "loader.update.unsigned";
 static constexpr const char *kAutoClientUpdate = "updater.auto.client";
 static constexpr const char *kWaitForWifi      = "loader.update.waitForWifi";
 static constexpr const char *kBundleEtag       = "loader.update.etag";
+static constexpr const char *kRejectedRevision = "loader.update.rejectedRevision";
 static constexpr const char *kBundleBaseline   = "loader.update.baseline";
 static constexpr const char *kCheckedByLoader  = "loader.update.checkedBy";
 static constexpr const char *kFontStates       = "font-states";
@@ -126,6 +127,16 @@ std::string bundleEtag(const SettingsStore &settings)
 void setBundleEtag(SettingsStore &settings, const std::string &etag)
 {
     setIfChanged(settings, kBundleEtag, etag);
+}
+
+std::string rejectedRevision(const SettingsStore &settings)
+{
+    return settings.getString(kStore, kRejectedRevision, "");
+}
+
+void setRejectedRevision(SettingsStore &settings, const std::string &revision)
+{
+    setIfChanged(settings, kRejectedRevision, revision);
 }
 
 std::string bundleBaseline(const SettingsStore &settings)

@@ -108,15 +108,21 @@ std::shared_ptr<loader::NativePlatformProvider> AndroidLoader::platformProvider(
         };
     };
 
-    auto provider             = std::make_shared<loader::NativePlatformProvider>();
-    provider->platform        = "android";
-    provider->deviceModel     = text("deviceModel");
-    provider->osVersion       = text("osVersion");
-    provider->isRooted        = flag("isRooted");
-    provider->isSystemApp     = flag("isSystemApp");
-    provider->appSource       = text("appSource");
-    provider->framework       = text("framework");
-    provider->jailbreak       = text("jailbreak");
+    auto provider         = std::make_shared<loader::NativePlatformProvider>();
+    provider->platform    = "android";
+    provider->deviceModel = text("deviceModel");
+    provider->osVersion   = text("osVersion");
+    provider->isRooted    = flag("isRooted");
+    provider->isSystemApp = flag("isSystemApp");
+    provider->appSource   = text("appSource");
+    provider->framework   = text("framework");
+    provider->jailbreak   = text("jailbreak");
+    provider->deviceState = [callbacks]() {
+        nlohmann::json state = nlohmann::json::parse(
+            callStaticString(callbacks.bridgeClass, callbacks.deviceState).value_or("{}"), nullptr,
+            false);
+        return state.is_object() ? state : nlohmann::json::object();
+    };
     provider->isVerifiedBuild = [callbacks]() {
         return callStaticBoolean(callbacks.bridgeClass, callbacks.isVerifiedBuild);
     };
