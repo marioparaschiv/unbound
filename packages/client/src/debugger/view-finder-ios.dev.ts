@@ -1,23 +1,36 @@
 import type {
 	LoaderObjCBridge,
+	NativeBatchStep,
 	NativeObjCResult,
 	NativeObjectHandle,
-	NativeViewSnapshotNode,
 } from '@unbound-app/types';
 import type { ViewFrame, ViewNode } from '@unbound-app/debugger-protocol';
 
-import type { OutlineTarget, ViewSource } from '~/debugger/view-finder.dev';
+import type { OutlineTarget, ViewLevel, ViewPage, ViewSource } from '~/debugger/view-finder.dev';
+import { asNumber, asText, onMainThread } from '~/debugger/objc-values.dev';
 import { clipText, type PixelRect } from '~/debugger/view-node.dev';
+import { readIosDetails } from '~/debugger/view-details-ios.dev';
 
 type Entry = { view: NativeObjectHandle; rect: PixelRect };
 type Border = { layer: NativeObjectHandle; width: NativeObjCResult; color: NativeObjCResult };
+type Listed = {
+	view: NativeObjectHandle;
+	className: string;
+	frame: PixelRect;
+	text: string | null;
+	visible: boolean;
+};
 
 const OUTLINE_WIDTH = 2;
 const FILL_ALPHA = 0.2;
+/** `objc.snapshot` returns at most 256 views, the root among them, so a level reads its first 255 children. */
+const SNAPSHOT_CHILDREN = 255;
+/** What a listing reads about each view, on the main thread, after the snapshot. */
+const VIEW_STEPS = 4;
 
 /**
- * @description Reads the visible windows' UIView trees one level at a time, and outlines a view with its layer border
- * or a window rectangle with an overlay view.
+ * @description Reads the visible windows' UIView trees a page of one level at a time, on the main thread, and outlines
+ * a view with its layer border or a window rectangle with an overlay view.
  * @param objc The loader's unscoped Objective-C bridge.
  * @returns The iOS view source.
  */
@@ -28,41 +41,49 @@ export function createIosViewSource(objc: LoaderObjCBridge): ViewSource {
 	let overlay: NativeObjectHandle | undefined;
 	let overlaid = false;
 
-	function describe(
-		view: NativeObjectHandle,
-		node: NativeViewSnapshotNode,
-		rect: PixelRect,
-		childCount: number,
-	): ViewNode {
-		const id = String(++nextId);
-		const identifier = objc.call(view, 'accessibilityIdentifier');
-		const alpha = objc.call(view, 'alpha');
+	/** Reads each view's subview count, alpha and accessibility identifier in batches on the main thread. */
+	async function describeAll(
+		listed: Listed[],
+		origin: { x: number; y: number },
+	): Promise<ViewNode[]> {
+		const steps = listed.flatMap(({ view }, index): NativeBatchStep[] => {
+			const base = index * VIEW_STEPS;
 
-		entries.set(id, { view, rect });
+			return [
+				{ target: view, selector: 'subviews', args: [] },
+				{ target: { $nativeBatchResult: base }, selector: 'count', args: [] },
+				{ target: view, selector: 'alpha', args: [] },
+				{ target: view, selector: 'accessibilityIdentifier', args: [] },
+			];
+		});
+		const results = await onMainThread(objc, steps, VIEW_STEPS);
 
-		return {
-			id,
-			className: node.className,
-			resourceName: typeof identifier === 'string' && identifier ? identifier : null,
-			frame: rect,
-			visibility: node.visible ? 'visible' : 'invisible',
-			alpha: typeof alpha === 'number' ? alpha : null,
-			text: node.text ? clipText(node.text) : null,
-			childCount,
-		};
+		return listed.map((node, index) => {
+			const base = index * VIEW_STEPS;
+			const id = String(++nextId);
+			const rect = {
+				x: origin.x + node.frame.x,
+				y: origin.y + node.frame.y,
+				width: node.frame.width,
+				height: node.frame.height,
+			};
+
+			entries.set(id, { view: node.view, rect });
+
+			return {
+				id,
+				className: node.className,
+				resourceName: asText(results[base + 3]) || null,
+				frame: rect,
+				visibility: node.visible ? 'visible' : 'invisible',
+				alpha: asNumber(results[base + 2]) ?? null,
+				text: node.text ? clipText(node.text) : null,
+				childCount: Math.min(asNumber(results[base + 1]) ?? 0, SNAPSHOT_CHILDREN),
+			};
+		});
 	}
 
-	// Two levels: the view's children, and theirs only to count them.
-	async function level(view: NativeObjectHandle) {
-		const nodes = await objc.snapshot(view, { maxDepth: 2, maxNodes: 256 });
-		const counts = new Map<number, number>();
-
-		for (const node of nodes) counts.set(node.parent, (counts.get(node.parent) ?? 0) + 1);
-
-		return { nodes, counts };
-	}
-
-	async function roots(): Promise<ViewNode[]> {
+	async function roots({ offset, limit }: ViewPage): Promise<ViewLevel> {
 		await reset();
 
 		const application = objc.getClass('UIApplication');
@@ -72,43 +93,47 @@ export function createIosViewSource(objc: LoaderObjCBridge): ViewSource {
 			list ? objc.array(list as NativeObjectHandle) : []
 		) as NativeObjectHandle[];
 		const visible = windows.filter((window) => objc.call(window, 'isHidden') !== true);
-		const nodes: ViewNode[] = [];
+		const page = visible.slice(offset, offset + limit);
+		const listed: Listed[] = [];
 
-		for (const window of visible) {
-			const { nodes: snapshot, counts } = await level(window);
-			const root = snapshot[0];
+		for (const window of page) {
+			const [root] = await objc.snapshot(window, { maxDepth: 0, maxNodes: 1 });
 
 			if (root) {
-				nodes.push(describe(window, root, root.frame, counts.get(0) ?? 0));
+				listed.push({ ...root, view: window });
 			}
 		}
 
-		return nodes;
+		return { nodes: await describeAll(listed, { x: 0, y: 0 }), total: visible.length };
 	}
 
-	async function children(id: string): Promise<ViewNode[]> {
+	async function children(id: string, { offset, limit }: ViewPage): Promise<ViewLevel> {
 		const parent = entries.get(id);
 
 		if (!parent) {
 			throw new Error(`Failed to find view ${id}; refresh the tree.`);
 		}
 
-		const { nodes, counts } = await level(parent.view);
+		const end = Math.min(offset + limit, SNAPSHOT_CHILDREN);
+		const nodes = await objc.snapshot(parent.view, { maxDepth: 1, maxNodes: end + 1 });
+		const level = nodes.filter((node) => node.parent === 0);
+		const [, count] = await objc.batch([
+			{ target: parent.view, selector: 'subviews', args: [] },
+			{ target: { $nativeBatchResult: 0 }, selector: 'count', args: [] },
+		]);
+		const total = Math.min(asNumber(count) ?? level.length, SNAPSHOT_CHILDREN);
 
-		return nodes.flatMap((node, index) => {
-			if (node.parent !== 0) {
-				return [];
-			}
+		return { nodes: await describeAll(level.slice(offset, end), parent.rect), total };
+	}
 
-			const rect = {
-				x: parent.rect.x + node.frame.x,
-				y: parent.rect.y + node.frame.y,
-				width: node.frame.width,
-				height: node.frame.height,
-			};
+	async function details(id: string) {
+		const entry = entries.get(id);
 
-			return [describe(node.view, node, rect, counts.get(index) ?? 0)];
-		});
+		if (!entry) {
+			throw new Error(`Failed to find view ${id}; refresh the tree.`);
+		}
+
+		return await readIosDetails(objc, entry.view);
 	}
 
 	async function clearOutline() {
@@ -201,7 +226,9 @@ export function createIosViewSource(objc: LoaderObjCBridge): ViewSource {
 	}
 
 	return {
-		list: (parent) => (parent === undefined ? roots() : children(parent)),
+		list: (parent, page) => (parent === undefined ? roots(page) : children(parent, page)),
+		details,
+		handle: (id) => entries.get(id)?.view,
 		highlight,
 		reset,
 	};
