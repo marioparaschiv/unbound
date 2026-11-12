@@ -1,5 +1,6 @@
 import { createSurfaceListeners } from '@unbound-plugins/shared/native/surface-listeners';
 import type {
+	NativeBridge,
 	NativeFabricBridge,
 	NativeJavaBridge,
 	NativeJavaHooksBridge,
@@ -28,7 +29,7 @@ import { codeBlockLayout } from '~/lib/layout';
 const TOP_GAP = 2;
 const CONTENT_CACHE_LIMIT = 64;
 
-type Native = {
+type Native = Pick<NativeBridge, 'apiVersion' | 'ui'> & {
 	java: NativeJavaBridge;
 	hooks: NativeJavaHooksBridge;
 	fabric: NativeFabricBridge;

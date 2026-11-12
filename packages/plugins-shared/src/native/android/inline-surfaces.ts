@@ -1,26 +1,21 @@
 import {
 	connectTextRewrites,
-	TEXT_REWRITES_CLASS,
 	type TextRewriteAnchor,
 	type TextRewriteEdit,
 	type TextRewrites,
 } from '@unbound-plugins/shared/native/android/text-rewrites';
 import type {
-	NativeFabricBridge,
+	NativeBridge,
 	NativeFabricSurface,
-	NativeJavaBridge,
 	NativeJavaHandle,
-	NativeJavaHooksBridge,
 	NativeJavaReference,
 } from '@unbound-app/api/native';
 import {
 	javaInt,
 	javaNumber,
 	javaReference,
-	javaText,
 } from '@unbound-plugins/shared/native/android/java-values';
 
-const NEEDS_HOST_PARAMETERS = ['android.widget.TextView', 'java.lang.String'];
 const MAX_GROUPS_PER_TEXT = 4;
 const INITIAL_GROUPS = 2;
 const MAX_DEFINITIONS = 48;
@@ -56,11 +51,10 @@ export type InlineSurfaces = {
 	dispose(): Promise<void>;
 };
 
-export type InlineSurfaceNative = {
-	java: NativeJavaBridge;
-	hooks: NativeJavaHooksBridge;
-	fabric: NativeFabricBridge;
-};
+export type InlineSurfaceNative = Pick<
+	NativeBridge,
+	'apiVersion' | 'java' | 'hooks' | 'ui' | 'fabric'
+>;
 
 export type InlineSurfaceOptions = {
 	watchedClass: string;
@@ -95,13 +89,20 @@ export function createInlineSurfaces(
 	native: InlineSurfaceNative,
 	options: InlineSurfaceOptions,
 ): InlineSurfaces | null {
-	const { java, hooks, fabric } = native;
-	const rewrites: TextRewrites | null = connectTextRewrites(java, options.watchedClass);
+	const { java, fabric } = native;
+	const entries = new Map<string, Entry>();
+	const rewrites: TextRewrites | null = connectTextRewrites(native, options.watchedClass, {
+		label: options.groupPrefix,
+		onNeedsHost(rendered) {
+			const entry = entries.get(rendered);
 
-	if (!rewrites) return null;
+			if (entry) createGroup(entry);
+		},
+	});
+
+	if (!rewrites || !java || !fabric) return null;
 
 	const active = rewrites;
-	const entries = new Map<string, Entry>();
 	let nextGroup = 0;
 	let disposed = false;
 
@@ -217,21 +218,6 @@ export function createInlineSurfaces(
 		for (const group of entry.groups) void removeGroup(group);
 	}
 
-	const token = hooks.hook(
-		TEXT_REWRITES_CLASS,
-		'needsHost',
-		NEEDS_HOST_PARAMETERS,
-		{ notify: true },
-		({ args }) => {
-			const rendered = javaText(args[1]);
-			const entry = rendered ? entries.get(rendered) : undefined;
-
-			if (entry) {
-				createGroup(entry);
-			}
-		},
-	);
-
 	return {
 		define(definition) {
 			if (disposed) {
@@ -290,7 +276,6 @@ export function createInlineSurfaces(
 		definitions: () => [...entries.values()],
 		async dispose() {
 			disposed = true;
-			hooks.remove(token);
 
 			const groups = [...entries.values()].flatMap((entry) => {
 				active.remove(entry.original);
@@ -299,8 +284,8 @@ export function createInlineSurfaces(
 			});
 
 			entries.clear();
-			active.refreshAll();
 			await Promise.all(groups.map(removeGroup));
+			active.dispose();
 		},
 	};
 }

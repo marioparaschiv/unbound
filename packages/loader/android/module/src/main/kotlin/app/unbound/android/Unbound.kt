@@ -106,8 +106,6 @@ class Unbound : XposedModule() {
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to install the Recovery Mode shortcut", it) }
         runCatching { Toolbox.install(this) }
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to install the toolbox gestures", it) }
-        runCatching { TextRewrites.install(this) }
-            .onFailure { Logger.error(LogCategory.PLUGINS, "Failed to hook text rewrites", it) }
     }
 
     private fun attestationVerified(): Boolean {
