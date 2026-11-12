@@ -275,6 +275,7 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
             }
         });
     }
+    return std::nullopt;
 }
 
 void rememberHookListener(jsi::Runtime &runtime, const std::string &token,
