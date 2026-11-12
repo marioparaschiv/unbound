@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3] - 2026-11-12
+
+### Changed
+
+- The toggle now shares its code with Aussie Speech's. It works the same as before.
+
 ## [1.0.2] - 2026-11-11
 
 ### Changed

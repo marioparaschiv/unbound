@@ -1,15 +1,13 @@
-import { definePlatform } from '@unbound-app/api/native';
-import { assets, metro } from '@unbound-app/api';
+import { patchChatInputToggle } from '@unbound-plugins/shared/composer/input-toggle';
+import { useSetting } from '@unbound-app/settings';
+import { messages } from '@unbound-app/i18n';
+import { metro } from '@unbound-app/api';
 
-import { patchChatInputSendButton as android } from '~/patches/android/chat-input';
-import { patchChatInputRightActions as ios } from '~/patches/ios/chat-input';
+import { silentToggle } from '~/lib/toggle';
 import { Icons } from '~/lib/constants';
 
-const drawToggle = definePlatform({ ios, android });
-
 /**
- * @description Adds the silent toggle to the chat input: in front of `ChatInputRightActions` on iOS, or of
- * `ChatInputSendButton` on Android.
+ * @description Adds the silent toggle to the chat input.
  */
 export function patchChatInput(): void {
 	// Without Messages the toggle could not flag a send; patchMessageActions already warned.
@@ -17,17 +15,18 @@ export function patchChatInput(): void {
 		return;
 	}
 
-	const on = assets.getIdByName(Icons.on);
-	const off = assets.getIdByName(Icons.off);
-
-	if (on === undefined || off === undefined) {
-		logger.warn('Silent toggle skipped: the bell icon assets were not found.');
-
-		return;
-	}
-
-	drawToggle({
-		icons: { on, off },
-		haptics: metro.findByFilePath('modules/haptics/HapticUtils.native.tsx'),
+	patchChatInputToggle({
+		key: 'unbound-silent-message-toggle',
+		name: 'Silent',
+		icons: Icons,
+		toggle: silentToggle,
+		usePersist: () => useSetting('persistState'),
+		labels: () => ({
+			name: messages.SILENT_MESSAGE_TOGGLE,
+			toggledOn: messages.TOGGLED_ON,
+			toggledOff: messages.TOGGLED_OFF,
+			enable: messages.ENABLE_SILENT_MESSAGE,
+			disable: messages.DISABLE_SILENT_MESSAGE,
+		}),
 	});
 }

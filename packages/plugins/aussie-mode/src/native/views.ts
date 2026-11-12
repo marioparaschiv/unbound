@@ -4,7 +4,6 @@ import { native } from '@unbound-app/api';
 
 import { rotateScreen as android } from '~/native/android/views';
 import { rotateScreen as ios } from '~/native/ios/views';
-import { isAussieDevice } from '~/lib/locale';
 
 const UPSIDE_DOWN = 180;
 
@@ -47,15 +46,13 @@ async function startRotation(bridge: NativeBridge): Promise<() => Promise<void>>
 }
 
 /**
- * @description Turns Discord upside down on an Australian device by rotating its root native view, so the whole screen
+ * @description Turns Discord upside down by rotating its root native view, so the whole screen
  * turns, dialogs and sheets included, and touches and scrolling turn with it. It rotates again whenever Discord
  * returns to the foreground, in case the system rebuilt the view while it was away.
  * @param bridge The plugin's native bridge.
  * @returns A promise that settles after the first rotation.
  */
 export async function turnScreenOver(bridge: NativeBridge): Promise<void> {
-	if (!isAussieDevice()) return;
-
 	turnBack = await startRotation(bridge);
 }
 

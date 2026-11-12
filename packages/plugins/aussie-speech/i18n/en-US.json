@@ -1,0 +1,12 @@
+{
+	"AUSSIE_SPEECH": "Aussie Speech",
+	"AUTO_DISABLE": "Auto Disable",
+	"AUTO_DISABLE_SUBTITLE": "Turn the toggle off again after sending one message in Aussie English",
+	"DISABLE_AUSSIE_SPEECH": "Disable Aussie Speech",
+	"ENABLE_AUSSIE_SPEECH": "Enable Aussie Speech",
+	"PERSIST_STATE": "Persist State",
+	"PERSIST_STATE_SUBTITLE": "Keep the toggle on when you open another channel",
+	"TOGGLE": "Toggle",
+	"TOGGLED_OFF": "Your messages are sent as you write them again.",
+	"TOGGLED_ON": "Your messages are sent in Aussie English."
+}

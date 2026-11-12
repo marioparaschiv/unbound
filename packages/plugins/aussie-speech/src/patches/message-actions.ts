@@ -1,6 +1,9 @@
 import { metro, patcher } from '@unbound-app/api';
 
+import { settings } from '@unbound-app/settings';
+
 import { translate } from '~/lib/translator';
+import { aussieToggle } from '~/lib/toggle';
 
 type Message = { content: string };
 
@@ -13,9 +16,19 @@ function isMessage(argument: unknown): argument is Message {
 }
 
 function translateOutgoing({ args }: { args: unknown[] }) {
+	const [channelId] = args;
 	const message = args.find(isMessage);
 
-	if (message?.content) {
+	if (!message?.content || typeof channelId !== 'string') {
+		return;
+	}
+
+	const active = aussieToggle.takeForSend(channelId, {
+		persist: settings.persistState,
+		autoDisable: settings.autoDisable,
+	});
+
+	if (active) {
 		message.content = translate(message.content);
 	}
 }

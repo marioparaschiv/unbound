@@ -11,4 +11,6 @@ banner: media/banner.png
 
 ## :gear: Settings
 
-None. Every message you send gets the treatment.
+- **Toggle:** the language button in the chat input turns translation on or off. It starts on.
+- **Persist State:** keeps the toggle on in every channel instead of the one you set it in.
+- **Auto Disable:** turns the toggle off after one message.

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-12
+
+### Changed
+
+- Runs on every device, whatever its language. Turning the plugin on is now the only switch.
+
 ## [1.1.1] - 2026-11-11
 
 ### Changed

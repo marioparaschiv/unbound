@@ -1,7 +1,6 @@
 import { metro, patcher } from '@unbound-app/api';
 
 import { flipUpsideDown } from '~/lib/flip';
-import { isAussieDevice } from '~/lib/locale';
 
 type Message = { content: string };
 
@@ -20,12 +19,10 @@ function flipOutgoing({ args }: { args: unknown[] }) {
 }
 
 /**
- * @description Turns each message the user sends or edits upside down before Discord sends it, on an Australian device.
+ * @description Turns each message the user sends or edits upside down before Discord sends it.
  * Patches `sendMessage` and `editMessage` on Discord's message actions, which both platforms share.
  */
 export function patchMessageActions(): void {
-	if (!isAussieDevice()) return;
-
 	const Messages = metro.api.Messages;
 
 	if (!Messages) {
