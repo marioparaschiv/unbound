@@ -70,6 +70,9 @@ public:
     std::optional<std::string> devtoolsScript(const std::string &bundlePath,
                                               uint32_t           bytecodeVersion);
 
+    std::optional<std::string> integrityProblem(const std::string &path);
+    void                       healDamagedBundle(const std::string &path);
+
     bool markBundleAttempted(const std::string &path);
     bool acceptBundle(const std::string &path);
     void rejectBundle(const std::string &path);

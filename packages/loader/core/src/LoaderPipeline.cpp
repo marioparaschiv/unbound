@@ -122,6 +122,17 @@ void LoaderPipeline::prepare()
             std::string("Failed to resolve the saved bundle: ") + error.what());
     }
 
+    if (!savedPath.empty() && fileExists(savedPath))
+    {
+        if (std::optional<std::string> problem = updater_.integrityProblem(savedPath))
+        {
+            log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
+                "The saved bundle is damaged (" + *problem + "); downloading a fresh copy.");
+            updater_.healDamagedBundle(savedPath);
+            savedPath = updater_.resolveBundlePath();
+        }
+    }
+
     if (savedPath.ends_with(kBundleCandidateSuffix))
     {
         setBundleState(BundleState::Trial);

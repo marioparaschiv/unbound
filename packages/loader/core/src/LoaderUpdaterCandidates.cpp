@@ -278,6 +278,63 @@ void BundleUpdater::discardFailedBundle(const std::string &path)
     rejectBundle(path);
 }
 
+std::optional<std::string> BundleUpdater::integrityProblem(const std::string &path)
+{
+    if (fileSize(path) == 0)
+    {
+        return std::string("it is empty");
+    }
+    nlohmann::json record = parseBundleRecord(readTextFile(path + kBundleTrustSuffix));
+    if (record.is_null() || bundleRecordField(record, "kind") != "manifest")
+    {
+        return std::nullopt;
+    }
+    std::optional<BundleManifest> manifest =
+        parseBundleManifest(bundleRecordField(record, "manifest"));
+    if (!manifest)
+    {
+        return std::nullopt;
+    }
+    auto hash = manifest->sha512.find(bundleRecordField(record, "file"));
+    if (hash == manifest->sha512.end())
+    {
+        return std::nullopt;
+    }
+    std::optional<nlohmann::json> identity = fileIdentity(path);
+    auto                          verified = record.find("identity");
+    if (identity && verified != record.end() && *verified == *identity)
+    {
+        return std::nullopt;
+    }
+    std::optional<std::string> bundle = readTextFile(path);
+    if (!bundle)
+    {
+        return std::string("it could not be read");
+    }
+    if (sha512Hex(*bundle) != hash->second)
+    {
+        return std::string("its SHA-512 no longer matches its signed manifest");
+    }
+    if (identity)
+    {
+        record["identity"] = *identity;
+        writeTextFileAtomically(path + kBundleTrustSuffix, record.dump());
+    }
+    return std::nullopt;
+}
+
+void BundleUpdater::healDamagedBundle(const std::string &path)
+{
+    if (path.ends_with(kBundleCandidateSuffix))
+    {
+        rejectBundle(path);
+        return;
+    }
+    removeFile(path);
+    removeFile(path + kBundleTrustSuffix);
+    preferences::setBundleEtag(settings_, "");
+}
+
 void BundleUpdater::rejectBundle(const std::string &path)
 {
     if (!path.ends_with(kBundleCandidateSuffix))
