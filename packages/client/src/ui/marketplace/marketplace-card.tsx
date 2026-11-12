@@ -3,11 +3,13 @@ import type { AddonKind } from '@unbound-app/types/addons';
 import { View } from 'react-native';
 import { memo } from 'react';
 
+import { isNewListing } from '~/marketplace/catalog';
 import AddonAuthors from '~/ui/addons/addon-authors';
 import AddonTitle from '~/ui/components/addon-title';
 import AddonIcon from '~/ui/components/addon-icon';
 import AddonTag from '~/ui/components/addon-tag';
 import { Discord } from '~/metro/components';
+import { messages } from '~/i18n/api';
 
 import InstallCountLabel from './install-count-label';
 import useInstallAction from './use-install-action';
@@ -53,7 +55,11 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 			<Discord.Stack direction='horizontal' spacing={12} align='center'>
 				<AddonIcon id={addon.id} kind={kind} />
 				<View style={styles.heading}>
-					<AddonTitle name={name} />
+					<AddonTitle
+						name={name}
+						tag={isNewListing(addon) ? messages.UNBOUND_MARKETPLACE_NEW : undefined}
+						tagVariant='new'
+					/>
 					{manifest.authors.length ? <AddonAuthors authors={manifest.authors} /> : null}
 				</View>
 				<Discord.Button

@@ -77,6 +77,7 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
     X(appFontBytes, "appFontBytes", "(" UNBOUND_JNI_STRING ")[B")                                  \
     X(alert, "alert", "(" UNBOUND_JNI_STRING ")V")                                                 \
     X(crashAlert, "crashAlert", "(" UNBOUND_JNI_STRING ")V")                                       \
+    X(stuckLaunch, "stuckLaunch", "(" UNBOUND_JNI_STRING ")V")                                     \
     X(previousExit, "previousExit", "()I")                                                         \
     X(deviceState, "deviceState", "()" UNBOUND_JNI_STRING)                                         \
     X(isMeteredNetwork, "isMeteredNetwork", "()Z")                                                 \
@@ -94,7 +95,7 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
     X("nativeOnForeground", "()V", nativeOnForeground)                                             \
     X("nativeOnBackground", "()V", nativeOnBackground)                                             \
     X("nativeAdoptTombstone", "([B)Z", nativeAdoptTombstone)                                       \
-    X("nativeLaunchTimings", "()" UNBOUND_JNI_STRING, nativeLaunchTimings)                         \
+    X("nativeAdoptAnrTrace", "([BJ)Z", nativeAdoptAnrTrace)                                        \
     X("nativeIsBlockedTelemetry", "(" UNBOUND_JNI_STRING ")Z", nativeIsBlockedTelemetry)           \
     X("nativeOnRuntimeCreated", "(J)Z", nativeOnRuntimeCreated)                                    \
     X("nativeDrainRuntimeWork", "(J)V", nativeDrainRuntimeWork)                                    \

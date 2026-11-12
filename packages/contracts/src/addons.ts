@@ -131,6 +131,7 @@ export const listedAddonSchema = Type.Object({
 	tags: Type.Optional(Type.Array(tagSchema)),
 	/** How many times clients installed the addon from the marketplace. Optional so catalogs stored before it still parse. */
 	installs: Type.Optional(Type.Integer({ minimum: 0 })),
+	createdAt: Type.Optional(Type.String({ format: 'date-time' })),
 	latestVersion: addonVersionSchema,
 });
 

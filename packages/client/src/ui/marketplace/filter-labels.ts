@@ -3,9 +3,10 @@ import type { CatalogSort } from '~/marketplace/catalog';
 import { messages, format } from '~/i18n/api';
 
 /** The sort sheet's rows, in order. */
-export const SORTS: CatalogSort[] = ['name', 'popular', 'updated'];
+export const SORTS: CatalogSort[] = ['new', 'popular', 'updated', 'name'];
 
 const SORT_LABELS: Record<CatalogSort, () => string> = {
+	new: () => messages.UNBOUND_SORT_NEW,
 	name: () => messages.UNBOUND_SORT_NAME,
 	popular: () => messages.UNBOUND_SORT_POPULAR,
 	updated: () => messages.UNBOUND_SORT_UPDATED,

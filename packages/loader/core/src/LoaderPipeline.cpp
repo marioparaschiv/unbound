@@ -24,8 +24,6 @@ namespace jsi = facebook::jsi;
 
 static constexpr std::chrono::seconds kFirstDownloadWait{10};
 
-static std::atomic<LoaderPipeline *> currentPipeline{nullptr};
-
 static int64_t epochMs()
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -55,20 +53,9 @@ LoaderPipeline::LoaderPipeline(std::shared_ptr<PipelineHost> host, SettingsStore
             auto host = weak.lock();
             return host ? host->resource(name) : std::nullopt;
         });
-    currentPipeline.store(this);
 }
 
-LoaderPipeline::~LoaderPipeline()
-{
-    LoaderPipeline *self = this;
-    currentPipeline.compare_exchange_strong(self, nullptr);
-}
-
-std::string LoaderPipeline::currentLaunchTimings()
-{
-    LoaderPipeline *pipeline = currentPipeline.load();
-    return pipeline ? pipeline->launchTimings() : "Unbound's loader has not started.";
-}
+LoaderPipeline::~LoaderPipeline() = default;
 
 bool LoaderPipeline::isBundleReady() const
 {
@@ -120,6 +107,17 @@ void LoaderPipeline::prepare()
     {
         log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
             std::string("Failed to resolve the saved bundle: ") + error.what());
+    }
+
+    if (!savedPath.empty() && fileExists(savedPath))
+    {
+        if (std::optional<std::string> problem = updater_.integrityProblem(savedPath))
+        {
+            log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
+                "The saved bundle is damaged (" + *problem + "); downloading a fresh copy.");
+            updater_.healDamagedBundle(savedPath);
+            savedPath = updater_.resolveBundlePath();
+        }
     }
 
     if (savedPath.ends_with(kBundleCandidateSuffix))
@@ -549,6 +547,19 @@ void LoaderPipeline::guardLaunch()
     host_->runAfter(kHealthySeconds, [this]() {
         markHealthy();
     });
+    host_->runAfter(kStuckLaunchSeconds, [this]() {
+        offerHelpIfStuck();
+    });
+}
+
+void LoaderPipeline::offerHelpIfStuck()
+{
+    if (rendered_.load() || stuckOffered_.exchange(true))
+    {
+        return;
+    }
+    log(LogLevel::Warning, LOG_CATEGORY_DEFAULT, kStuckLaunchNotice);
+    host_->stuckLaunch(kStuckLaunchNotice);
 }
 
 void LoaderPipeline::markHealthy()
@@ -617,20 +628,6 @@ void LoaderPipeline::markRendered()
     });
 }
 
-std::string LoaderPipeline::launchTimings() const
-{
-    int64_t     start = runtimeCreatedMs_.load();
-    std::string text  = "Milliseconds after Discord's runtime was created:\n";
-    auto        step  = [&](const char *name, int64_t at) {
-        text += std::string(name) + ": " +
-                (start && at ? std::to_string(at - start) + " ms" : "not yet") + "\n";
-    };
-    step("Unbound's bundle executed", bundleExecutedMs_.load());
-    step("Discord's first screen rendered", renderedMs_.load());
-    step("Launch counted as healthy", healthyMs_.load());
-    return text;
-}
-
 double LoaderPipeline::retryDelay(size_t attempt, std::optional<double> retryAfter, double unit)
 {
     if (retryAfter && *retryAfter >= 0)
@@ -669,14 +666,14 @@ void LoaderPipeline::checkForUpdate(uint64_t token, size_t attempt)
                        attempt);
 }
 
-bool LoaderPipeline::checkIfDue(const char *reason)
+bool LoaderPipeline::checkIfDue(const char *reason, double intervalSeconds)
 {
     if (!preferences::loaderEnabled(settings_) || checking_.load())
     {
         return false;
     }
     int64_t last = lastCheckMs_.load();
-    bool due = last != 0 && nowMs() - last >= static_cast<int64_t>(kForegroundCheckSeconds * 1000);
+    bool    due  = last != 0 && nowMs() - last >= static_cast<int64_t>(intervalSeconds * 1000);
     if (!due && !waitingForWifi_.load())
     {
         return false;
@@ -688,12 +685,13 @@ bool LoaderPipeline::checkIfDue(const char *reason)
 
 void LoaderPipeline::onForeground()
 {
-    checkIfDue("Back in the foreground; checking for a newer bundle.");
+    checkIfDue("Back in the foreground; checking for a newer bundle.", kForegroundCheckSeconds);
 }
 
 bool LoaderPipeline::onBackground()
 {
-    checkIfDue("Going to the background; checking for a newer bundle while there is time.");
+    checkIfDue("Going to the background; checking for a newer bundle while there is time.",
+               kBackgroundCheckSeconds);
     return checking_.load();
 }
 

@@ -97,6 +97,8 @@ export type RowPaint = {
 	reply: Move;
 	/** How far the timestamp moves right. */
 	time?: number;
+	/** Whether the timestamp hides to leave the name's tags room. */
+	timeHidden?: boolean;
 	/** The reply preview's visible part, in its own coordinates. */
 	clip?: Box;
 	picture?: RowPicture;
@@ -296,7 +298,10 @@ export function rowPaint(input: PaintInput): RowPaint {
 	};
 }
 
-type HeadingPaint = Pick<RowPaint, 'name' | 'avatar' | 'reply' | 'time' | 'clip' | 'quote'>;
+type HeadingPaint = Pick<
+	RowPaint,
+	'name' | 'avatar' | 'reply' | 'time' | 'timeHidden' | 'clip' | 'quote'
+>;
 
 function headingPaint({ layout, measured, style, color }: PaintInput, frame: Box): HeadingPaint {
 	const { heading } = layout;
@@ -326,6 +331,7 @@ function headingPaint({ layout, measured, style, color }: PaintInput, frame: Box
 		...(place.time && heading.time
 			? { time: place.time.x - (heading.time.x - heading.name.x) }
 			: {}),
+		...(place.hideTime ? { timeHidden: true } : {}),
 		...(quote
 			? {
 					clip: quote.clip,

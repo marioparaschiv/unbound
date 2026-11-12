@@ -35,6 +35,17 @@ export type NativeDeviceState = {
 	/** Free space on the volume holding Discord's documents, and the size of Unbound's folder there. */
 	freeMB?: number;
 	unboundMB?: number;
+	/** The active connection, and whether a VPN, a proxy, a metered plan or Low Data Mode (Data Saver) applies. */
+	network?: NativeNetworkState;
+};
+
+/** The device's active connection. */
+export type NativeNetworkState = {
+	type: 'wifi' | 'cellular' | 'ethernet' | 'other' | 'offline';
+	metered?: boolean;
+	lowData?: boolean;
+	vpn?: boolean;
+	proxy?: boolean;
 };
 
 /** iOS-only facts about Discord's code signature. */

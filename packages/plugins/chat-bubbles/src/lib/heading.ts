@@ -16,8 +16,10 @@ export type HeadingPlace = {
 	avatar: Move;
 	/** The timestamp's frame in the name row. */
 	time?: Box;
-	/** How wide the name and its tags may draw, when they would otherwise run under the time or past the bubble. */
+	/** How wide the name and its tags may draw, when they alone would run past the bubble. */
 	nameClip?: number;
+	/** Whether the timestamp hides because the name and its tags fill the row, which keeps every tag in view. */
+	hideTime?: boolean;
 	reply?: {
 		move: Move;
 		/** The quote box in the cell, and the box in the reply holder's own coordinates to clip the preview to; none while the preview sits above the bubble. */
@@ -106,11 +108,14 @@ export function headingPlace(
 	};
 	const right = bubble.x + bubble.width - padding;
 	const place: HeadingPlace = { name: nameMove, avatar: { x: 0, y: top - name.y } };
-	const nameRoom = bubble.width - padding * 2 - (time ? NAME_TIME_GAP + time.width : 0);
+	const nameRoom = bubble.width - padding * 2;
+	const timeFits = Boolean(time) && heading.nameWidth + NAME_TIME_GAP + time!.width <= nameRoom;
+
+	if (time && !timeFits) place.hideTime = true;
 
 	if (heading.nameWidth > nameRoom) place.nameClip = Math.max(0, nameRoom);
 
-	if (time) {
+	if (time && timeFits) {
 		place.time = {
 			x: right - time.width - name.x - nameMove.x,
 			y: time.y - name.y,

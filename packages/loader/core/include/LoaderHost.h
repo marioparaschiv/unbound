@@ -75,6 +75,8 @@ public:
         alert(message);
     }
     // How the previous process ended, where the platform keeps a record of it.
+    virtual void stuckLaunch(const std::string &message) {}
+
     virtual PreviousExit previousExit()
     {
         return PreviousExit::Unknown;

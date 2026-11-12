@@ -47,6 +47,7 @@ public:
     {
         alert(message);
     }
+    virtual void stuckLaunch(const std::string &message) {}
     // How the previous process ended, where the platform keeps a record of it.
     virtual PreviousExit previousExit()
     {
@@ -100,13 +101,19 @@ public:
     void markHealthy();
 
     // Seconds after Discord's first screen renders before the launch counts as healthy.
-    static constexpr double kRenderedHealthySeconds = 3.0;
+    static constexpr double      kRenderedHealthySeconds = 3.0;
+    static constexpr double      kStuckLaunchSeconds     = 25.0;
+    static constexpr const char *kStuckLaunchNotice =
+        "Discord has not finished starting after 25 seconds. Unbound's Toolbox can turn on "
+        "Recovery Mode or remove the downloaded bundle.";
     // Discord's first screen rendered: counts the launch as healthy shortly after, unless the
     // fallback timer already did.
     void markRendered();
+    void offerHelpIfStuck();
 
     // Seconds since the last update check before returning to the foreground checks again.
     static constexpr double kForegroundCheckSeconds = 4 * 60 * 60;
+    static constexpr double kBackgroundCheckSeconds = 30 * 60;
     // Discord returned to the foreground: checks for a newer bundle if the last check is old, or
     // if one waited for Wi-Fi.
     void onForeground();
@@ -119,11 +126,6 @@ public:
     // The wait before the given retry: Retry-After when the server sent one, otherwise the
     // schedule with up to 20% jitter either way. `unit` is a random number in [0, 1).
     static double retryDelay(size_t attempt, std::optional<double> retryAfter, double unit);
-
-    // Milliseconds from Discord's runtime being created to each launch step this process reached.
-    std::string launchTimings() const;
-    // The timings of the pipeline this process created, for the toolbox.
-    static std::string currentLaunchTimings();
 
 private:
     struct FirstDownload {
@@ -138,7 +140,7 @@ private:
     void updateInBackground(std::string savedPath, bool hasSaved, bool waitForDownload,
                             uint64_t token, size_t attempt = 0);
     void checkForUpdate(uint64_t token, size_t attempt);
-    bool checkIfDue(const char *reason);
+    bool checkIfDue(const char *reason, double intervalSeconds);
     bool waitsForWifi(bool hasSaved, bool waitForDownload);
     bool savedFlavourIsCurrent(const std::string &path) const;
     bool settleFirstDownload(uint64_t token, std::optional<std::string> path);
@@ -171,6 +173,7 @@ private:
     std::atomic_bool              waitingForWifi_{false};
     std::atomic_bool              rendered_{false};
     std::atomic_bool              frozen_{false};
+    std::atomic_bool              stuckOffered_{false};
     std::atomic_int64_t           lastCheckMs_{0};
     std::atomic_int64_t           runtimeCreatedMs_{0};
     std::atomic_int64_t           bundleExecutedMs_{0};

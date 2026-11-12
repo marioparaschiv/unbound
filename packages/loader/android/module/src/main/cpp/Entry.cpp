@@ -17,6 +17,7 @@
 #include "LoaderDocuments.h"
 #include "LoaderJSI.h"
 #include "LoaderJSON.h"
+#include "LoaderLaunchReport.h"
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
 #include "LoaderPreferences.h"
@@ -130,6 +131,27 @@ static void nativeOnBackground(JNIEnv *, jclass)
     }
 }
 
+static jboolean nativeAdoptAnrTrace(JNIEnv *env, jclass, jbyteArray trace, jlong at)
+{
+    if (!trace)
+    {
+        return JNI_FALSE;
+    }
+    jsize       length = env->GetArrayLength(trace);
+    std::string bytes(static_cast<size_t>(length), '\0');
+    env->GetByteArrayRegion(trace, 0, length, reinterpret_cast<jbyte *>(bytes.data()));
+    std::optional<std::string> stack = loader::anrTraceStack(bytes);
+    if (!stack || !loader::adoptPreviousNativeCrash(*stack))
+    {
+        return JNI_FALSE;
+    }
+    if (auto loader = currentLoader())
+    {
+        loader::recordCrash(loader->documents(), *stack, static_cast<int64_t>(at));
+    }
+    return JNI_TRUE;
+}
+
 static jboolean nativeAdoptTombstone(JNIEnv *env, jclass, jbyteArray tombstone)
 {
     if (!tombstone)
@@ -141,11 +163,6 @@ static jboolean nativeAdoptTombstone(JNIEnv *env, jclass, jbyteArray tombstone)
     env->GetByteArrayRegion(tombstone, 0, length, reinterpret_cast<jbyte *>(bytes.data()));
     std::optional<std::string> stack = loader::tombstoneStack(bytes);
     return stack && loader::adoptPreviousNativeCrash(*stack) ? JNI_TRUE : JNI_FALSE;
-}
-
-static jstring nativeLaunchTimings(JNIEnv *env, jclass)
-{
-    return env->NewStringUTF(loader::LoaderPipeline::currentLaunchTimings().c_str());
 }
 
 static jboolean nativeOnRuntimeCreated(JNIEnv *, jclass, jlong runtimePointer)

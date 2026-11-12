@@ -224,6 +224,10 @@ static std::optional<std::string> addonName(const std::string &line)
 std::string nativeCrashHeadline(const std::string &stack)
 {
     std::vector<std::string> lines = linesOf(stack);
+    if (!lines.empty() && lines.front().starts_with("ANR "))
+    {
+        return "ANR (not responding)";
+    }
     if (lines.empty() || !lines.front().starts_with("Signal "))
     {
         return "";
