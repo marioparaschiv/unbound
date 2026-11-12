@@ -6,7 +6,7 @@ import { metro } from '@unbound-app/api';
 import useStyles from '~/preview/chat-preview.style';
 import { namesInside, type BubbleAppearance } from '~/bubbles/style';
 import type { PreviewPaint } from '~/preview/preview-paint';
-import { BubbleLayout, TailPosition } from '~/constants';
+import { BubbleLayout, CARD_INSET, TailPosition } from '~/constants';
 
 export type Size = { width: number; height: number };
 
@@ -85,52 +85,36 @@ function PreviewMessage(props: PreviewMessageProps) {
 		</View>
 	);
 
-	if (card) {
-		return (
-			<View style={{ marginTop: gap, marginLeft: tailRoom }}>
-				<View
-					style={styles.card}
-					onLayout={({ nativeEvent: { layout } }: LayoutChangeEvent) =>
-						onMeasure({ width: layout.width, height: layout.height })
-					}
-				>
-					<BubbleShape paint={paint} />
-					<View style={styles.row}>
-						{avatar}
-						<View style={styles.column}>
-							{start ? name : null}
-							{text}
-						</View>
-					</View>
-				</View>
-			</View>
+	// A card spans the text column and holds the name, a few points around the content, as in the chat.
+	const inside = start && (card || namesInside(style));
+	const horizontal = card ? CARD_INSET : style.horizontalPadding;
+	const vertical = card ? CARD_INSET : style.verticalPadding;
+	const measure = ({ nativeEvent: { layout } }: LayoutChangeEvent) =>
+		onMeasure(
+			card
+				? { width: layout.width, height: layout.height }
+				: { width: layout.width + horizontal * 2, height: layout.height + vertical * 2 },
 		);
-	}
-
-	const inside = start && namesInside(style);
-	const { horizontalPadding, verticalPadding } = style;
 
 	return (
 		<View style={[styles.row, { marginTop: gap }]}>
 			<View style={{ marginRight: tailRoom }}>{avatar}</View>
 			<View style={styles.column}>
 				{start && !inside ? name : null}
-				<View style={[styles.bubble, paint ? { minWidth: paint.width } : null]}>
+				<View
+					style={[
+						card ? styles.card : styles.bubble,
+						paint && !card ? { minWidth: paint.width } : null,
+					]}
+					onLayout={card ? measure : undefined}
+				>
 					<BubbleShape paint={paint} />
 					<View
 						style={[
 							styles.content,
-							{
-								marginHorizontal: horizontalPadding,
-								marginVertical: verticalPadding,
-							},
+							{ marginHorizontal: horizontal, marginVertical: vertical },
 						]}
-						onLayout={({ nativeEvent: { layout } }: LayoutChangeEvent) =>
-							onMeasure({
-								width: layout.width + horizontalPadding * 2,
-								height: layout.height + verticalPadding * 2,
-							})
-						}
+						onLayout={card ? undefined : measure}
 					>
 						{inside ? name : null}
 						{text}

@@ -49,7 +49,6 @@ export default Discord.createStyles(() => ({
 	},
 	card: {
 		alignSelf: 'stretch',
-		padding: 8,
 	},
 	shape: {
 		left: 0,
