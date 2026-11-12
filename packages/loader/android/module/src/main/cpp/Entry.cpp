@@ -143,11 +143,6 @@ static jboolean nativeAdoptTombstone(JNIEnv *env, jclass, jbyteArray tombstone)
     return stack && loader::adoptPreviousNativeCrash(*stack) ? JNI_TRUE : JNI_FALSE;
 }
 
-static jstring nativeLaunchTimings(JNIEnv *env, jclass)
-{
-    return env->NewStringUTF(loader::LoaderPipeline::currentLaunchTimings().c_str());
-}
-
 static jboolean nativeOnRuntimeCreated(JNIEnv *, jclass, jlong runtimePointer)
 {
     if (runtimePointer == 0)

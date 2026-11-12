@@ -88,7 +88,13 @@ public:
         alerts.push_back(message);
     }
 
+    void stuckLaunch(const std::string &message) override
+    {
+        stuck.push_back(message);
+    }
+
     std::vector<std::string> alerts;
+    std::vector<std::string> stuck;
 };
 
 // Marks the running loader as having checked before, so a launch models a loader that was not just
@@ -402,8 +408,44 @@ void countsTheLaunchHealthyShortlyAfterTheFirstRender()
     assert(launch.host->delays[0] == loader::LoaderPipeline::kRenderedHealthySeconds);
     launch.host->delayed[0]();
     assert(!loader::fileExists(marker));
-    assert(launch.pipeline.launchTimings().find("Launch counted as healthy: not yet") ==
-           std::string::npos);
+}
+
+void runDelayed(CountingHost &host, double seconds)
+{
+    for (size_t index = 0; index < host.delays.size(); index++)
+    {
+        if (host.delays[index] == seconds)
+        {
+            host.delayed[index]();
+        }
+    }
+}
+
+void offersTheToolboxOnceWhenDiscordNeverRenders()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    launch.pipeline.prepare();
+
+    runDelayed(*launch.host, loader::LoaderPipeline::kStuckLaunchSeconds);
+    runDelayed(*launch.host, loader::LoaderPipeline::kStuckLaunchSeconds);
+
+    assert(launch.host->stuck.size() == 1);
+    assert(launch.host->stuck[0] == loader::LoaderPipeline::kStuckLaunchNotice);
+}
+
+void staysQuietWhenDiscordRendered()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    launch.pipeline.prepare();
+    launch.pipeline.markRendered();
+
+    runDelayed(*launch.host, loader::LoaderPipeline::kStuckLaunchSeconds);
+
+    assert(launch.host->stuck.empty());
 }
 
 void waitsForWifiBeforeABackgroundUpdate()
@@ -500,6 +542,8 @@ void spacesRetriesWithJitter()
 
 int main()
 {
+    offersTheToolboxOnceWhenDiscordNeverRenders();
+    staysQuietWhenDiscordRendered();
     leavesAFirstDownloadForTheRuntime();
     keepsTheSavedBundleUntilTheNextLaunch();
     waitsForAMatchingBundleWhenDiscordsBytecodeChanges();

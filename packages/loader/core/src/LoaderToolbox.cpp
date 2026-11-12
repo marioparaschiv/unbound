@@ -376,8 +376,6 @@ static MenuSection utilitiesSection(const SettingsStore &settings, const MenuOpt
         section.items.push_back(platformItem("copy-app-folder-path", "Copy App Folder Path"));
     }
 
-    section.items.push_back(platformItem("launch-timings", "Launch Timings"));
-
     MenuItem issue = platformItem("open-issue", "Open GitHub Issue");
     issue.failure  = kIssueFailedMessage;
     section.items.push_back(std::move(issue));
@@ -615,10 +613,6 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
         const auto &provider = context.provider;
         return issueURL(issueReport(provider ? *provider : NativePlatformProvider{},
                                     context.platform, argument));
-    }
-    if (action == "launch-timings")
-    {
-        return LoaderPipeline::currentLaunchTimings();
     }
     if (action == "crash-report-url")
     {
