@@ -115,7 +115,7 @@ function SponsorshipCard() {
 				>
 					{active
 						? 'Your sponsorship keeps Unbound free and built in the open. Your perks are active on your Discord profile.'
-						: 'Unbound is free and built in the open. Sponsor it on GitHub to keep it going, and from $5 a month get your own badge on your Discord profile, shown to everyone using Unbound.'}
+						: 'Unbound is free and built in the open. Sponsor it on GitHub to keep it going, and from $5 a month, or $30 once for good, get your own badge on your Discord profile, shown to everyone using Unbound.'}
 				</Text>
 			</CardHeader>
 			<CardContent className='flex flex-col gap-3'>

@@ -84,9 +84,10 @@ type SponsorshipsPage = Static<
 	typeof pageSchema
 >['data']['repositoryOwner']['sponsorshipsAsMaintainer'];
 
-export type RemoteSponsorship = SponsorshipValues & {
-	active: boolean;
-};
+export type RemoteSponsorship = SponsorshipValues &
+	Pick<Sponsorship, 'largestOneTimeCents'> & {
+		active: boolean;
+	};
 
 export type ReconcileResult = {
 	fetched: number;
@@ -134,7 +135,8 @@ async function fetchPage(config: SponsorsConfig, after: string | null): Promise<
  * @description Reads every sponsorship of the sponsored account, past ones included, page by page.
  * Any failed or malformed page fails the whole read.
  * @param env The validated environment, with the Sponsors login and token set.
- * @returns The sponsorships by sponsor GitHub id; an active one wins over an inactive one.
+ * @returns The sponsorships by sponsor GitHub id; an active one wins over an inactive one, and each
+ * carries the sponsor's largest one-time payment across all of theirs.
  */
 export async function fetchRemoteSponsorships(env: Env): Promise<Map<string, RemoteSponsorship>> {
 	const config = sponsorsConfig(env);
@@ -156,8 +158,14 @@ export async function fetchRemoteSponsorships(env: Env): Promise<Map<string, Rem
 			}
 
 			const githubId = String(node.sponsorEntity.databaseId);
+			const previous = remote.get(githubId);
+			const largestOneTimeCents = Math.max(
+				previous?.largestOneTimeCents ?? 0,
+				node.isOneTimePayment ? (node.tier?.monthlyPriceInCents ?? 0) : 0,
+			);
 
-			if (remote.get(githubId)?.active) {
+			if (previous?.active) {
+				remote.set(githubId, { ...previous, largestOneTimeCents });
 				continue;
 			}
 
@@ -169,6 +177,7 @@ export async function fetchRemoteSponsorships(env: Env): Promise<Map<string, Rem
 				oneTime: node.isOneTimePayment,
 				isPublic: node.privacyLevel === 'PUBLIC',
 				since: new Date(node.createdAt),
+				largestOneTimeCents,
 				active: node.isActive,
 			});
 		}
@@ -194,7 +203,12 @@ function nextLifecycle(
 		return { state: 'active', endsAt: null };
 	}
 
-	if (!current) return;
+	if (!current) {
+		// A past one-time payment is stored anyway, since the perks it unlocks are permanent.
+		return remote?.largestOneTimeCents
+			? { state: 'cancelled', endsAt: remote.since }
+			: undefined;
+	}
 
 	if (current.state === 'cancelled') {
 		return { state: current.state, endsAt: current.endsAt };
@@ -210,6 +224,7 @@ function isSameSponsorship(current: Sponsorship, next: Sponsorship): boolean {
 		current.tierName === next.tierName &&
 		current.monthlyPriceCents === next.monthlyPriceCents &&
 		current.oneTime === next.oneTime &&
+		current.largestOneTimeCents === next.largestOneTimeCents &&
 		current.isPublic === next.isPublic &&
 		current.since.getTime() === next.since.getTime() &&
 		current.endsAt?.getTime() === next.endsAt?.getTime()
@@ -257,6 +272,10 @@ export function planReconcile(
 			oneTime: values.oneTime,
 			isPublic: values.isPublic,
 			since: values.since,
+			largestOneTimeCents: Math.max(
+				current?.largestOneTimeCents ?? 0,
+				reported?.largestOneTimeCents ?? 0,
+			),
 			...lifecycle,
 			updatedAt: now,
 		};

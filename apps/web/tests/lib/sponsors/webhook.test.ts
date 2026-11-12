@@ -140,6 +140,33 @@ describe('webhook events', () => {
 		});
 	});
 
+	test('a one-time payment is remembered through later, smaller sponsorships', async () => {
+		const id = '370';
+
+		await deliver(
+			ctx,
+			sponsorshipPayload({ action: 'created', sponsorId: id, cents: 10_000, oneTime: true }),
+			{ id: 'once-1' },
+		);
+		expect(await storedSponsorship(ctx, id)).toMatchObject({ largestOneTimeCents: 10_000 });
+
+		await deliver(
+			ctx,
+			sponsorshipPayload({
+				action: 'created',
+				sponsorId: id,
+				createdAt: '2026-02-01T00:00:00+00:00',
+				cents: 100,
+			}),
+			{ id: 'once-2' },
+		);
+		expect(await storedSponsorship(ctx, id)).toMatchObject({
+			oneTime: false,
+			monthlyPriceCents: 100,
+			largestOneTimeCents: 10_000,
+		});
+	});
+
 	test('replaying a delivery id changes nothing, even after a later event', async () => {
 		const id = '400';
 		const created = sponsorshipPayload({ action: 'created', sponsorId: id });

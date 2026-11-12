@@ -120,7 +120,7 @@ async function requireClaimable(ctx: AppContext, userId: string): Promise<void> 
 	if (!canClaimPerk(PERK_ID, standing) && !roleGrantsPerks(owner?.role)) {
 		throw new ApiError(
 			'sponsorship_required',
-			`A monthly GitHub sponsorship of ${formatPrice(PERKS[PERK_ID].minimumMonthlyCents)} or more unlocks a custom badge.`,
+			`A monthly GitHub sponsorship of ${formatPrice(PERKS[PERK_ID].minimumMonthlyCents)} or more, or a one-time sponsorship of ${formatPrice(PERKS[PERK_ID].minimumOneTimeCents)} or more, unlocks a custom badge.`,
 		);
 	}
 }

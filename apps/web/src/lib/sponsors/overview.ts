@@ -16,6 +16,8 @@ export type PerkStatus = {
 	description: string;
 	/** The smallest recurring monthly tier that unlocks the perk, in cents. */
 	minimumMonthlyCents: number;
+	/** The smallest one-time payment that unlocks the perk for good, in cents. */
+	minimumOneTimeCents: number;
 	unlocked: boolean;
 	/** Whether the user can set up or change the perk now, which a grace period alone does not allow. */
 	claimable: boolean;
@@ -24,7 +26,10 @@ export type PerkStatus = {
 export type SponsorOverview = {
 	sponsorUrl: string;
 	githubLinked: boolean;
-	sponsorship: Omit<Sponsorship, 'githubId' | 'githubLogin' | 'isPublic' | 'updatedAt'> | null;
+	sponsorship: Omit<
+		Sponsorship,
+		'githubId' | 'githubLogin' | 'isPublic' | 'largestOneTimeCents' | 'updatedAt'
+	> | null;
 	standing: SponsorStanding['kind'];
 	graceUntil: Date | null;
 	perks: PerkStatus[];
@@ -54,6 +59,7 @@ export async function getSponsorOverview(
 		name: PERKS[id].name,
 		description: PERKS[id].description,
 		minimumMonthlyCents: PERKS[id].minimumMonthlyCents,
+		minimumOneTimeCents: PERKS[id].minimumOneTimeCents,
 		unlocked: granted || isPerkUnlocked(id, standing),
 		claimable: granted || canClaimPerk(id, standing),
 	}));
