@@ -5,6 +5,7 @@ import android.app.ApplicationExitInfo
 import android.content.Context
 import android.graphics.fonts.SystemFonts
 import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -78,6 +79,7 @@ object NativeBridge {
         val state = JSONObject()
             .put("availableMB", memory.availMem / (1024 * 1024))
             .put("lowMemory", memory.lowMemory)
+        networkState(context)?.let { state.put("network", it) }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val power = context.getSystemService(PowerManager::class.java)
             power?.let { state.put("thermal", Platform.thermalName(it.currentThermalStatus)) }
@@ -106,6 +108,25 @@ object NativeBridge {
             else -> 2
         }
     }.getOrDefault(0)
+
+    private fun networkState(context: Context): JSONObject? = runCatching {
+        val connectivity = context.getSystemService(ConnectivityManager::class.java) ?: return null
+        val network = connectivity.activeNetwork
+        val capabilities = network?.let { connectivity.getNetworkCapabilities(it) }
+        val type = when {
+            capabilities == null -> "offline"
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "wifi"
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> "cellular"
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> "ethernet"
+            else -> "other"
+        }
+        JSONObject()
+            .put("type", type)
+            .put("metered", connectivity.isActiveNetworkMetered)
+            .put("lowData", connectivity.restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED)
+            .put("vpn", capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true)
+            .put("proxy", network?.let { connectivity.getLinkProperties(it)?.httpProxy } != null)
+    }.getOrNull()
 
     private fun readTrace(exit: ApplicationExitInfo): ByteArray? = exit.traceInputStream?.use { stream ->
         val buffer = java.io.ByteArrayOutputStream()

@@ -9,6 +9,7 @@ import {
 	joined,
 	lastCheckSummary,
 	memorySummary,
+	networkSummary,
 	sessionSummary,
 	sourceLabel,
 	supportOf,
@@ -109,6 +110,7 @@ export function debugAltText(
 			native: `${info.native.hooks} hooks · ${info.native.surfaces} surfaces · ${info.native.handles} handles`,
 		}),
 		...(info.memory && { memory: memorySummary(info.memory) }),
+		...(info.network && { network: networkSummary(info.network) }),
 		...(info.heap && { heap: `${info.heap.heapMB} MB · gc ${info.heap.gcMs} ms` }),
 		...(info.launch?.crashes?.length && {
 			crashes: info.launch.crashes.map(

@@ -3,6 +3,7 @@ import type {
 	DebugCardRequest as DebugInfo,
 	DebugCardSupport as DiscordSupport,
 	DebugCardMemory,
+	DebugCardNetwork,
 	DebugCardLaunch,
 } from '@unbound-app/contracts/debug-cards';
 import { launchNotes } from '@unbound-app/contracts/debug-card-launch';
@@ -319,6 +320,23 @@ export function sessionSummary(session: NonNullable<DebugInfo['session']>): stri
 	const uptime = hours ? `${hours} h ${minutes} min` : `${minutes} min`;
 
 	return `up ${uptime} · backgrounded ${session.backgrounded}`;
+}
+
+/**
+ * @description Summarises the active connection: its type, then a metered plan, Low Data Mode, a VPN and a proxy when they apply.
+ * @param network The network report.
+ * @returns The summary, such as `wifi · VPN`.
+ */
+export function networkSummary(network: DebugCardNetwork): string {
+	return [
+		network.type,
+		network.metered && network.type !== 'cellular' ? 'metered' : undefined,
+		network.lowData ? 'low data' : undefined,
+		network.vpn ? 'VPN' : undefined,
+		network.proxy ? 'proxy' : undefined,
+	]
+		.filter(Boolean)
+		.join(' · ');
 }
 
 /**

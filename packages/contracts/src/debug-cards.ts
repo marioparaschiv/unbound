@@ -10,6 +10,8 @@ export const DEBUG_CARD_EXITS = ['crashed', 'ended', 'unknown'] as const;
 
 export const DEBUG_CARD_THERMAL = ['nominal', 'fair', 'serious', 'critical'] as const;
 
+export const DEBUG_CARD_NETWORKS = ['wifi', 'cellular', 'ethernet', 'other', 'offline'] as const;
+
 const text = (maxLength = 128) => Type.String({ maxLength });
 
 const addonCountSchema = Type.Object({
@@ -48,6 +50,14 @@ const memorySchema = Type.Object({
 	thermal: Type.Optional(Type.Enum(DEBUG_CARD_THERMAL)),
 });
 
+const networkSchema = Type.Object({
+	type: Type.Enum(DEBUG_CARD_NETWORKS),
+	metered: Type.Optional(Type.Boolean()),
+	lowData: Type.Optional(Type.Boolean()),
+	vpn: Type.Optional(Type.Boolean()),
+	proxy: Type.Optional(Type.Boolean()),
+});
+
 const heapSchema = Type.Object({
 	heapMB: Type.Number({ minimum: 0, maximum: 1_000_000 }),
 	gcMs: Type.Number({ minimum: 0, maximum: 1_000_000_000 }),
@@ -83,6 +93,7 @@ export const debugCardRequestSchema = Type.Object({
 	launch: Type.Optional(launchSchema),
 	bundleChannel: Type.Optional(text(16)),
 	memory: Type.Optional(memorySchema),
+	network: Type.Optional(networkSchema),
 	heap: Type.Optional(heapSchema),
 	storage: Type.Optional(
 		Type.Object({
@@ -154,12 +165,15 @@ export type DebugCardSupport = (typeof DEBUG_CARD_SUPPORT)[number];
 
 export type DebugCardMemory = StaticDecode<typeof memorySchema>;
 
+export type DebugCardNetwork = StaticDecode<typeof networkSchema>;
+
 export default {
 	DEBUG_CARD_ALT_TEXT_LIMIT,
 	DEBUG_CARD_SUPPORT,
 	DEBUG_CARD_BUNDLE_STATES,
 	DEBUG_CARD_EXITS,
 	DEBUG_CARD_THERMAL,
+	DEBUG_CARD_NETWORKS,
 	debugCardRequestSchema,
 	debugCardResponseSchema,
 };

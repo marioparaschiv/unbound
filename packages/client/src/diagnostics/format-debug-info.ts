@@ -42,7 +42,20 @@ export function debugLines(info: DebugInfo): string[] {
 			? [`- **Launch:** ${launchNotes(info.launch).join(' · ')}`]
 			: []),
 		`- **Runtime:** React ${info.react}, React Native ${info.reactNative}, Hermes ${info.hermes} (HBC ${info.bytecode})`,
+		...(info.network ? [`- **Network:** ${networkLine(info.network)}`] : []),
 	];
+}
+
+function networkLine(network: NonNullable<DebugInfo['network']>): string {
+	return [
+		network.type === 'wifi' ? 'Wi-Fi' : sentenceCase(network.type),
+		network.metered && network.type !== 'cellular' ? 'metered' : undefined,
+		network.lowData ? 'Low Data Mode' : undefined,
+		network.vpn ? 'VPN' : undefined,
+		network.proxy ? 'proxy' : undefined,
+	]
+		.filter(Boolean)
+		.join(' · ');
 }
 
 /**
