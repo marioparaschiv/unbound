@@ -4,6 +4,7 @@ import { describe, expect, test } from 'bun:test';
 import {
 	findIconSvg,
 	getInstallStatus,
+	isNewListing,
 	parseCatalog,
 	queryCatalog,
 	reduceMarketplace,
@@ -102,6 +103,29 @@ describe('queryCatalog', () => {
 		);
 
 		expect(ids).toEqual(['p.many', 'p.also', 'p.few', 'p.uncounted']);
+	});
+
+	test('sorts the most recently listed first, falling back to the newest version for old catalogs', () => {
+		const listed = [
+			{ ...listing('p.older'), createdAt: '2026-09-01T00:00:00.000Z' },
+			{ ...listing('p.newest'), createdAt: '2026-11-10T00:00:00.000Z' },
+			listing('p.undated', { publishedAt: '2026-10-15T00:00:00.000Z' }),
+		];
+		const ids = queryCatalog(listed, { type: 'plugin', sort: 'new' }).map((addon) => addon.id);
+
+		expect(ids).toEqual(['p.newest', 'p.undated', 'p.older']);
+	});
+
+	test('counts an addon as new for 14 days after it is listed', () => {
+		const now = Date.parse('2026-11-13T00:00:00.000Z');
+
+		expect(
+			isNewListing({ ...listing('p.a'), createdAt: '2026-11-01T00:00:00.000Z' }, now),
+		).toBe(true);
+		expect(
+			isNewListing({ ...listing('p.b'), createdAt: '2026-10-20T00:00:00.000Z' }, now),
+		).toBe(false);
+		expect(isNewListing(listing('p.c'), now)).toBe(false);
 	});
 
 	test('does not reorder the stored catalog', () => {

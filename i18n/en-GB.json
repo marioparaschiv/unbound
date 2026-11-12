@@ -195,6 +195,8 @@
 	"UNBOUND_SORT_FILTER": "Sort & Filter",
 	"UNBOUND_SORT_BY": "Sort by",
 	"UNBOUND_SORT_NAME": "Name",
+	"UNBOUND_SORT_NEW": "Newest",
+	"UNBOUND_MARKETPLACE_NEW": "NEW",
 	"UNBOUND_SORT_UPDATED": "Recently updated",
 	"UNBOUND_FILTER_UPDATED": "Updated",
 	"UNBOUND_FILTER_ANY": "Any",

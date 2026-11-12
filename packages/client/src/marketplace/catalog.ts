@@ -8,10 +8,15 @@ import { compareVersions } from '~/core/versions';
 export type Catalog = CatalogResponse;
 
 /**
- * `name` sorts alphabetically, `popular` puts the most installed addons first, `updated` the most
- * recently published versions.
+ * `new` puts the most recently listed addons first, `name` sorts alphabetically, `popular` the most
+ * installed addons first, `updated` the most recently published versions.
  */
-export type CatalogSort = 'name' | 'popular' | 'updated';
+export type CatalogSort = 'new' | 'name' | 'popular' | 'updated';
+
+/** How long an addon counts as new after it is first listed. */
+export const NEW_LISTING_DAYS = 14;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** What `marketplace.search` filters the catalog by. */
 export type CatalogQuery = {
@@ -63,7 +68,12 @@ export type MarketplaceListing = {
 /** What a marketplace card offers for an addon, judged against the installed copy. */
 export type InstallStatus = 'install' | 'installed' | 'update';
 
+function listedAt(addon: ListedAddon): string {
+	return addon.createdAt ?? addon.latestVersion.publishedAt;
+}
+
 const SORTERS: Record<CatalogSort, (a: ListedAddon, b: ListedAddon) => number> = {
+	new: (a, b) => listedAt(b).localeCompare(listedAt(a)) || a.id.localeCompare(b.id),
 	name: (a, b) =>
 		a.latestVersion.manifest.name.localeCompare(b.latestVersion.manifest.name) ||
 		a.id.localeCompare(b.id),
@@ -72,6 +82,18 @@ const SORTERS: Record<CatalogSort, (a: ListedAddon, b: ListedAddon) => number> =
 		b.latestVersion.publishedAt.localeCompare(a.latestVersion.publishedAt) ||
 		a.id.localeCompare(b.id),
 };
+
+/**
+ * @description Tells whether an addon was first listed within the last `NEW_LISTING_DAYS` days.
+ * @param addon The listed addon.
+ * @param now The current time in milliseconds.
+ * @returns `false` when the catalog predates listing dates.
+ */
+export function isNewListing(addon: ListedAddon, now: number = Date.now()): boolean {
+	const listed = addon.createdAt ? Date.parse(addon.createdAt) : Number.NaN;
+
+	return Number.isFinite(listed) && now - listed < NEW_LISTING_DAYS * DAY_MS;
+}
 
 /**
  * @description Reads a catalog the server sent or this client cached from it.

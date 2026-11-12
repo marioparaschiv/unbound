@@ -14,4 +14,10 @@ export default Discord.createStyles({
 	brandLabel: {
 		color: Theme.colors.TEXT_BRAND ?? Theme.colors.TEXT_MUTED,
 	},
+	newTag: {
+		backgroundColor: Theme.colors.STATUS_DANGER ?? '#da373c',
+	},
+	newLabel: {
+		color: Theme.colors.WHITE ?? '#ffffff',
+	},
 });
