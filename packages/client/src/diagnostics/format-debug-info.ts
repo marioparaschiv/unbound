@@ -1,3 +1,7 @@
+import type { UnboundLaunchReport } from '@unbound-app/types';
+
+import { launchNotes } from './launch-notes';
+
 /** How many addons of one kind are installed and enabled. */
 export type AddonCount = { enabled: number; installed: number };
 
@@ -32,6 +36,7 @@ export type DebugInfo = {
 	locale?: string;
 	theme?: string;
 	iconPack?: string;
+	launch?: UnboundLaunchReport;
 };
 
 function sentenceCase(text: string): string {
@@ -57,6 +62,9 @@ export function debugLines(info: DebugInfo): string[] {
 		`- **State:** ${info.flags.join(' · ')}`,
 		...(info.disabledAddons?.length
 			? [`- **Disabled:** ${info.disabledAddons.join(' · ')}`]
+			: []),
+		...(launchNotes(info.launch).length
+			? [`- **Launch:** ${launchNotes(info.launch).join(' · ')}`]
 			: []),
 		`- **Runtime:** React ${info.react}, React Native ${info.reactNative}, Hermes ${info.hermes} (HBC ${info.bytecode})`,
 	];

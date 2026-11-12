@@ -170,4 +170,33 @@ describe('debug card', () => {
 		expect(Math.min(...texts(card).map((run) => run.size))).toBeGreaterThanOrEqual(13);
 		expect(card.height / card.width).toBeLessThanOrEqual(0.85);
 	});
+	test('shows a launch row only when the bundle or the launches before it need attention', () => {
+		const quiet = {
+			bundle: 'active',
+			earlyCloses: 0,
+			recovery: false,
+			previousExit: 'ended',
+		} as const;
+
+		expect(
+			texts(layoutDebugCard({ ...info, launch: quiet })).some((run) => run.text === 'launch'),
+		).toBe(false);
+
+		const card = layoutDebugCard({
+			...info,
+			launch: {
+				...quiet,
+				bundle: 'rolled back',
+				earlyCloses: 2,
+				lastCrash: 'SIGSEGV in Chat Bubbles',
+			},
+			disabledAddons: ['Chat Bubbles (crashed)'],
+		});
+
+		expect(texts(card).find((run) => run.text.startsWith('crash'))?.text).toBe(
+			'crash SIGSEGV in Chat Bubbles · +2 more',
+		);
+		expect(JSON.parse(debugAltText({ ...info, launch: quiet })).launch).toBeUndefined();
+		expect(card.height / card.width).toBeLessThanOrEqual(0.85);
+	});
 });

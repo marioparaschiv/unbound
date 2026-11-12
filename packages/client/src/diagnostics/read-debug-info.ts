@@ -136,6 +136,7 @@ export function readDebugInfo(): DebugInfo {
 		locale: attempt(getLocale, ''),
 		theme: attempt(() => selectedAddon(themes), ''),
 		iconPack: attempt(() => selectedAddon(icons), ''),
+		launch: loader?.launch,
 	};
 }
 

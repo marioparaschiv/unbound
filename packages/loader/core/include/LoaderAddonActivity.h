@@ -21,6 +21,7 @@ uintptr_t currentActivityThread();
 AddonSlot addonOnThread(uintptr_t thread);
 
 bool writeCrashingAddonRecord(int descriptor);
+bool writeCrashingAddonLine(int descriptor);
 
 class AddonScope
 {

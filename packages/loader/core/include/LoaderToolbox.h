@@ -83,6 +83,8 @@ struct IssueFacts {
     bool        virtualDevice = false;
     std::string framework;
     bool        rooted = false;
+    std::string install;
+    std::string launch;
 };
 
 struct ToolboxContext {

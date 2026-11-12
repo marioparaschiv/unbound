@@ -6,9 +6,11 @@
 #include <stdexcept>
 #include <utility>
 
+#include "LoaderCrashHandler.h"
 #include "LoaderCrypto.h"
 #include "LoaderFiles.h"
 #include "LoaderJSIJSON.h"
+#include "LoaderLaunchReport.h"
 #include "LoaderRequiredLoader.h"
 #include "LoaderVersion.h"
 #include "NativePluginRuntime.h"
@@ -55,6 +57,7 @@ UnboundNativeProvider makeUnboundNativeProvider(const AddonState                
         {
             loader["requiredVersion"] = *required;
         }
+        loader["launch"] = launchReportJSON(launchReport(), previousNativeCrash());
         return loader;
     };
     provider.getPlugins = [&addons] {

@@ -6,11 +6,13 @@
 #include "HermesBytecodeHeader.h"
 #include "HermesSampling.h"
 #include "LoaderBootstrap.h"
+#include "LoaderBundleSignature.h"
 #include "LoaderCrashGuard.h"
 #include "LoaderCrashReport.h"
 #include "LoaderFiles.h"
 #include "LoaderJSI.h"
 #include "LoaderLaunchGuard.h"
+#include "LoaderLaunchReport.h"
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
 #include "LoaderPreferences.h"
@@ -110,6 +112,11 @@ void LoaderPipeline::prepare()
     {
         log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
             std::string("Failed to resolve the saved bundle: ") + error.what());
+    }
+
+    if (savedPath.ends_with(kBundleCandidateSuffix))
+    {
+        setBundleState(BundleState::Trial);
     }
 
     // A local read, so the bundle can run before Discord's without waiting on the network.
@@ -441,9 +448,16 @@ bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t
         std::lock_guard<std::mutex> lock(promotionMutex_);
         pendingPromotion_ = saved.path;
     }
-    host_->runAfter(kHealthySeconds, [this]() {
+    if (isDevelopmentBundleURL(preferences::updateURL(settings_)))
+    {
         promotePendingBundle();
-    });
+    }
+    else
+    {
+        host_->runAfter(kHealthySeconds, [this]() {
+            promotePendingBundle();
+        });
+    }
     bundleExecutedMs_.store(nowMs());
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Unbound's bundle was successfully executed.");
     if (token == token_.load())
@@ -461,9 +475,20 @@ void LoaderPipeline::promotePendingBundle()
         std::lock_guard<std::mutex> lock(promotionMutex_);
         path.swap(pendingPromotion_);
     }
-    if (path && !updater_.acceptBundle(*path))
+    if (!path)
+    {
+        return;
+    }
+    if (!updater_.acceptBundle(*path))
     {
         log(LogLevel::Error, LOG_CATEGORY_DEFAULT, "Validated bundle could not be promoted.");
+        return;
+    }
+    if (path->ends_with(kBundleCandidateSuffix))
+    {
+        setBundleState(BundleState::Active);
+        log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
+            "Promoted the new bundle; it is now the active one.");
     }
 }
 
@@ -476,9 +501,11 @@ void LoaderPipeline::guardLaunch()
     }
 
     LaunchGuard   guard(updater_.documents());
-    LaunchVerdict verdict = guard.begin(host_->previousExit());
+    PreviousExit  previous = host_->previousExit();
+    LaunchVerdict verdict  = guard.begin(previous);
     if (verdict.rollBack && updater_.rollBackToPrevious())
     {
+        setBundleState(BundleState::RolledBack);
         log(LogLevel::Error, LOG_CATEGORY_DEFAULT, launchRollBackNotice(verdict.failures));
         recordCrashSummary(launchRollBackNotice(verdict.failures));
         host_->crashAlert(launchRollBackNotice(verdict.failures));
@@ -490,6 +517,7 @@ void LoaderPipeline::guardLaunch()
         recordCrashSummary(launchRecoveryNotice(verdict.failures));
         host_->crashAlert(launchRecoveryNotice(verdict.failures));
     }
+    recordLaunchVerdict(verdict.failures, preferences::recoveryEnabled(settings_), previous);
     host_->runAfter(kHealthySeconds, [this]() {
         markHealthy();
     });
