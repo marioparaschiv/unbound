@@ -13,7 +13,9 @@
 #import "IconIPA.h"
 #include "LoaderBootstrap.h"
 #include "LoaderBrowserLogin.h"
+#include "LoaderCrashHandler.h"
 #include "LoaderDiagnostics.h"
+#include "LoaderExitRecord.h"
 #import "LoaderJSI.h"
 #import "LoaderPipeline.h"
 #import "LoaderShared.h"
@@ -192,6 +194,12 @@ public:
     uint32_t runtimeBytecodeVersion() override
     {
         return [CoreBridge mainBundleBytecodeVersion];
+    }
+
+    loader::PreviousExit previousExit() override
+    {
+        std::string documents = toStdString(FileSystem.documents);
+        return loader::ExitRecord(documents).take(loader::nativeCrashRecorded(documents));
     }
 
     std::optional<std::string> fetchText(const std::string &url, double timeoutSeconds) override
@@ -491,6 +499,7 @@ static void prepareLoading(id instance)
                     object:nil
                      queue:nil
                 usingBlock:^(NSNotification *) {
+                    loader::ExitRecord(toStdString(FileSystem.documents)).clear();
                     dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0),
                                    ^{ UnboundLoader()->onForeground(); });
                 }];
@@ -500,7 +509,10 @@ static void prepareLoading(id instance)
         addObserverForName:UIApplicationWillTerminateNotification
                     object:nil
                      queue:nil
-                usingBlock:^(NSNotification *) { UnboundLoader()->markHealthy(); }];
+                usingBlock:^(NSNotification *) {
+                    loader::ExitRecord(toStdString(FileSystem.documents)).markEnded();
+                    UnboundLoader()->markHealthy();
+                }];
 
     // Leaving the foreground without crashing counts the launch as healthy; a suspended app's
     // health timer would otherwise never fire before iOS ends it.
@@ -509,6 +521,7 @@ static void prepareLoading(id instance)
                     object:nil
                      queue:nil
                 usingBlock:^(NSNotification *) {
+                    loader::ExitRecord(toStdString(FileSystem.documents)).markEnded();
                     dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0),
                                    ^{ UnboundLoader()->markHealthy(); });
                     keepAwakeForUpdateCheck();
