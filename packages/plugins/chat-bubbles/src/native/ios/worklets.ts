@@ -132,7 +132,6 @@ function bubbleIn(
 
 	objc.invoke(bubble, 'setTag:', [tag]);
 	objc.invoke(bubble, 'setUserInteractionEnabled:', [false]);
-	// Swipe to reply moves the content view, so the bubble lives in it to move along.
 	objc.invoke(
 		(objc.invoke(cell, 'contentView', []) as NativeObjectHandle | null) ?? cell,
 		'insertSubview:atIndex:',

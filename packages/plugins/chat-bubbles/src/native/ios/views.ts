@@ -106,7 +106,6 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 
 	async function bubbleFor(key: string, cell: NativeObjectHandle): Promise<NativeObjectHandle> {
 		const existing = bubbles.get(key);
-		// Swipe to reply moves the content view, so the bubble lives in it to move along.
 		const host =
 			((await objc.invokeAsync(cell, 'contentView', [])) as NativeObjectHandle | null) ??
 			cell;
@@ -244,7 +243,6 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 
 		notePlaced(settlingReuse.get(key));
 
-		// Pinned messages and in-app notifications draw a message on its own, where it keeps Discord's look.
 		if (isStandaloneCell(objc, cell)) return;
 
 		if (await isNested(key, cell)) {

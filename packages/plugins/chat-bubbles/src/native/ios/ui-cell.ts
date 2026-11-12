@@ -186,7 +186,6 @@ function nameRowOf(objc: NativeObjCBridge, cell: NativeObjectHandle): NativeObje
 	return widest;
 }
 
-// A mask cuts the name and its tags off before the time, and removing it gives Discord's row back untouched.
 function clipName(objc: NativeObjCBridge, cell: NativeObjectHandle, width: number | undefined) {
 	'worklet';
 	const row = nameRowOf(objc, cell);
