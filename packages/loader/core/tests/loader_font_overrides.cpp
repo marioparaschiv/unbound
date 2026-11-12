@@ -31,6 +31,27 @@ static void plansRegistrationsAndTable()
     assert(registry.plan({{"x", {{"error", 3}}}}).errors == std::vector<std::string>{"3"});
 }
 
+static void plansVariableInstances()
+{
+    FontOverrideRegistry   registry;
+    const nlohmann::json   bold = {{"wght", 700}};
+    const FontOverridePlan plan = registry.plan({
+        {"ggsans-Bold", {{"name", "Vector-Bold"}, {"path", "/v.ttf"}, {"variations", bold}}},
+        {"ggsans-Normal", {{"name", "Inter"}, {"path", "/inter.ttf"}}},
+    });
+    assert((plan.registrations == std::vector<std::string>{"/v.ttf", "/inter.ttf"}));
+    assert(plan.instances.size() == 1);
+    assert((plan.instances.at("Vector-Bold") ==
+            nlohmann::json{{"path", "/v.ttf"}, {"variations", bold}}));
+    assert(fontOverridePlanJSON(plan)["instances"]["Vector-Bold"]["variations"] == bold);
+
+    const FontOverridePlan every = registry.plan({
+        {"*", {{"name", "Vector-Bold"}, {"path", "/v.ttf"}, {"variations", bold}}},
+        {"x", {{"name", "Vector-Light"}, {"path", "/v.ttf"}, {"variations", {{"wght", 300}}}}},
+    });
+    assert(every.instances.size() == 1 && every.instances.count("Vector-Bold"));
+}
+
 static void letsEveryFamilyWin()
 {
     FontOverrideRegistry   registry;
@@ -69,12 +90,14 @@ static void serialisesPlans()
     plan.table         = {{"ggsans", "Inter"}};
     assert(fontOverridePlanJSON(plan) == nlohmann::json({{"registrations", {"/fonts/a.ttf"}},
                                                          {"errors", {"missing"}},
-                                                         {"table", {{"ggsans", "Inter"}}}}));
+                                                         {"table", {{"ggsans", "Inter"}}},
+                                                         {"instances", nlohmann::json::object()}}));
 }
 
 int main()
 {
     plansRegistrationsAndTable();
+    plansVariableInstances();
     letsEveryFamilyWin();
     looksUpExactFamilies();
     serialisesPlans();

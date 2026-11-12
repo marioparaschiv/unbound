@@ -35,7 +35,11 @@ public:
     // with an installed id replaces it. Throws when either step fails, leaving nothing behind.
     std::vector<InstalledFont> commitInstall(const std::string         &staged,
                                              std::vector<InstalledFont> faces);
-    bool                       remove(const std::string &id);
+    // Deletes the face, and its file once no other face of a variable font draws from it.
+    bool remove(const std::string &id);
+    // Adds variable face `id` drawn at `variations` (other axes at their defaults), or returns the
+    // face already there. Throws for an unknown id, a static face or an axis the font lacks.
+    InstalledFont addInstance(const std::string &id, const FontVariations &variations);
     // Fails for an unknown font id; see `withOverride`.
     bool       setOverride(const std::string &key, const std::optional<std::string> &fontId);
     void       replaceOverrides(std::map<std::string, std::string> overrides);
@@ -44,7 +48,8 @@ public:
 
     // `{ family: { name, path } }` for `FontOverrideRegistry::plan`.
     nlohmann::json overrideTargets() const;
-    // `{ name, path }` of the face replacing `family`, honouring a `*` override of every family.
+    // `{ name, path }` of the face drawing `family`: an installed face's own PostScript name, else
+    // the face replacing it, honouring a `*` override of every family.
     std::optional<nlohmann::json> overrideTarget(const std::string &family) const;
 
 private:

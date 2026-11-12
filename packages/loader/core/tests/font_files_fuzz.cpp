@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "FontFixtures.h"
+#include "FontVectors.h"
 
 #include "fuzz/FontFilesFuzz.h"
 
@@ -23,12 +24,15 @@ static std::vector<std::string> seeds()
         font_fixtures::font(bold),
         font_fixtures::font(variable),
         font_fixtures::collection(regular),
+        font_vectors::variable(),
+        font_vectors::woff(),
+        font_vectors::woff2(),
         font_fixtures::zip({{"a/A.ttf", regular}, {"B.otf", font_fixtures::font(bold)}}),
         font_fixtures::zip({{"Deflated.ttf", regular, static_cast<uint32_t>(regular.size())}}),
         font_fixtures::zip({{"Bomb.ttf", regular, 0x7FFFFFFF}}),
         font_fixtures::zip({{"../x.ttf", regular}}),
         R"({"name":"P","overrides":{"ggsans-Normal":{"google":"Inter","weight":400,"style":"normal"},"ggsans-Bold":{"url":"https://a.test/b.ttf"}}})",
-        R"({"version":1,"fonts":[{"id":"A","postScriptName":"A","file":"files/x/A.ttf","weight":400,"style":"normal","source":{"local":"A"}}],"overrides":{"ggsans-Normal":"A"},"presets":[]})",
+        R"({"version":1,"fonts":[{"id":"A","postScriptName":"A","file":"files/x/A.ttf","weight":400,"style":"normal","source":{"local":"A"},"axes":[{"tag":"wght","min":100,"default":400,"max":900}],"variations":{"wght":700}}],"overrides":{"ggsans-Normal":"A"},"presets":[]})",
         R"({"PRIMARY_SEMIBOLD":"ggsans-Semibold, NotoSans","CODE":"SourceCodePro-Regular"})",
     };
 }

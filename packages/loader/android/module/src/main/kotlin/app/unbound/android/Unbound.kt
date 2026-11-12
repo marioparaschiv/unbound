@@ -96,6 +96,8 @@ class Unbound : XposedModule() {
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to block Discord's analytics requests", it) }
         runCatching { Fonts.install(this, param.classLoader) }
             .onFailure { Logger.error(LogCategory.FONTS, "Failed to hook React Native fonts", it) }
+        runCatching { FontOverflow.install(this, param.classLoader) }
+            .onFailure { Logger.error(LogCategory.FONTS, "Failed to hook React Native text views", it) }
         runCatching { Themes.install(this, param.classLoader) }
             .onFailure { Logger.error(LogCategory.THEMES, "Failed to apply the theme", it) }
         if (launcherIcons) {

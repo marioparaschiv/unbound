@@ -7,6 +7,7 @@
 #include <string>
 
 #include "FontFixtures.h"
+#include "FontVectors.h"
 #include "LoaderFontService.h"
 
 namespace fs = std::filesystem;
@@ -84,7 +85,13 @@ static Server interServer()
                              {"id", "typo"},
                              {"family", "Typo"},
                              {"files", {file("https://d.test/typo", nullptr, nullptr, "archive")}}};
-    server.routes[kResolve + "typo"]     = {200, broken.dump()};
+    nlohmann::json vector = {{"provider", "url"},
+                             {"id", "https://v.test/vector.woff2"},
+                             {"family", "Vector Sans"},
+                             {"files", {file("https://v.test/vector.woff2", nullptr, nullptr)}}};
+    server.routes[kResolve + "https%3A%2F%2Fv.test%2Fvector.woff2"] = {200, vector.dump()};
+    server.routes["https://v.test/vector.woff2"]                    = {200, font_vectors::woff2()};
+    server.routes[kResolve + "typo"]                                = {200, broken.dump()};
     server.routes["https://d.test/typo"] = {200, "<!DOCTYPE html><title>dafont</title>"};
     server.routes[kResolve + "Nothing"]  = {404, ""};
     return server;
@@ -104,6 +111,40 @@ static void installsChosenVariants(FontService &service, Server &server)
     assert(listed["fonts"][0]["source"] ==
            nlohmann::json({{"google", "Inter"}, {"weight", 400}, {"style", "normal"}}));
     assert(fs::exists(listed["fonts"][0]["path"].get<std::string>()));
+}
+
+static void installsVariableWebFonts(FontService &service)
+{
+    const std::string    link = "https://v.test/vector.woff2";
+    const nlohmann::json all  = service.install(link, nullptr);
+    assert(all["installed"].size() == 3 && all["errors"].empty());
+    const nlohmann::json bold = all["installed"][1];
+    assert(bold["postScriptName"] == "VectorSans-Bold" && bold["weight"] == 700);
+    assert(bold["variations"] == nlohmann::json({{"wght", 700.0}, {"wdth", 100.0}}));
+    assert(bold["axes"].size() == 2 && bold["axes"][0]["max"] == 900.0);
+    // One decoded TrueType file serves every instance.
+    assert(bold["file"] == all["installed"][0]["file"]);
+    assert(bold["file"].get<std::string>().ends_with(".ttf"));
+
+    const nlohmann::json light = service.install(link, {{{"weight", 250}, {"style", "normal"}}});
+    assert(light["installed"].size() == 1 && light["installed"][0]["weight"] == 250);
+
+    const nlohmann::json wide =
+        service.addInstance("VectorSans-Bold", {{"wght", 640.0}, {"wdth", 90}});
+    assert(wide["postScriptName"] == "VectorSans-wght640wdth90" && wide["weight"] == 640);
+    for (const nlohmann::json &bad : {nlohmann::json::array(), nlohmann::json({{"wght", "x"}})})
+    {
+        bool threw = false;
+        try
+        {
+            service.addInstance("VectorSans-Bold", bad);
+        }
+        catch (const std::runtime_error &)
+        {
+            threw = true;
+        }
+        assert(threw);
+    }
 }
 
 static void refusesPagesAndUnknownFonts(FontService &service)
@@ -203,6 +244,7 @@ int main()
     refusesPagesAndUnknownFonts(service);
     appliesPresetsLazily(service, server);
     validatesPresets(service);
+    installsVariableWebFonts(service);
     assert(percentEncode("a b/é") == "a%20b%2F%C3%A9");
     fs::remove_all(root);
     return 0;

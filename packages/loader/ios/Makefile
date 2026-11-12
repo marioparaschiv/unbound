@@ -39,7 +39,7 @@ PR_NUMBER_NON_DIGITS := $(subst 0,,$(subst 1,,$(subst 2,,$(subst 3,,$(subst 4,,$
 $(if $(or $(PR_NUMBER_NON_DIGITS),$(filter-out 1,$(words $(PR_NUMBER))),$(filter-out 0,$(filter 0%,$(PR_NUMBER)))),$(error UNBOUND_PR_NUMBER must be a pull request number, not "$(UNBOUND_PR_NUMBER)"))
 PR_BUNDLE_SIGNING_KEY := $(if $(filter-out 0,$(PR_NUMBER)),$(shell cat "$(PR_BUNDLE_SIGNING_KEY_FILE)" 2>/dev/null | LC_ALL=C tr -cd 'A-Za-z0-9+/='))
 $(if $(filter-out 0,$(PR_NUMBER)),$(if $(PR_BUNDLE_SIGNING_KEY),$(if $(filter 0,$(MAKELEVEL)),$(info Pull request build #$(PR_NUMBER): also trusts $(PR_BUNDLE_SIGNING_KEY_FILE))),$(error A pull request build needs $(PR_BUNDLE_SIGNING_KEY_FILE))))
-COMMON_FLAGS = -fobjc-arc -DATTESTATION_ENABLED=$(ATTESTATION_ENABLED) -I$(THEOS_PROJECT_DIR)/headers -I$(CORE_DIR)/include -I$(VENDOR_DIR) -I$(VENDOR_DIR)/react -I$(VENDOR_DIR)/bearssl/inc
+COMMON_FLAGS = -fobjc-arc -DATTESTATION_ENABLED=$(ATTESTATION_ENABLED) -I$(THEOS_PROJECT_DIR)/headers -I$(CORE_DIR)/include -I$(VENDOR_DIR) -I$(VENDOR_DIR)/react -I$(VENDOR_DIR)/bearssl/inc -I$(VENDOR_DIR)/woff2/include -I$(VENDOR_DIR)/brotli/c/include
 ifneq ($(strip $(UNBOUND_BUNDLE_URL)),)
 ../core/src/LoaderUpdater.cpp_CFLAGS = -DUNBOUND_DEFAULT_BUNDLE_URL='"$(UNBOUND_BUNDLE_URL)"'
 $(if $(filter 0,$(MAKELEVEL)),$(info Default bundle URL: $(UNBOUND_BUNDLE_URL)))
@@ -50,8 +50,11 @@ LIBFFI_HEADERS := $(LIBFFI_OUTPUT)/include
 
 BEARSSL_FILES := $(shell find ../vendor/bearssl/src -name "*.c")
 $(foreach file,$(BEARSSL_FILES),$(eval $(file)_CFLAGS = -I$(VENDOR_DIR)/bearssl/src))
+# Google's WOFF2 decoder and the Brotli decoder it needs, for installing `.woff2` fonts.
+WOFF2_FILES := $(wildcard ../vendor/brotli/c/common/*.c) $(wildcard ../vendor/brotli/c/dec/*.c) $(wildcard ../vendor/woff2/src/*.cc)
+$(foreach file,$(WOFF2_FILES),$(eval $(file)_CFLAGS = -w))
 
-$(TWEAK_NAME)_FILES = $(shell find sources -name "*.x*" -o -name "*.m*") $(wildcard ../core/src/*.cpp) $(wildcard ../core/src/ffi/*.cpp) $(wildcard ../vendor/monocypher/*.c) ../vendor/miniz/miniz_unbound.c shared/UBAppIcons.m $(BEARSSL_FILES)
+$(TWEAK_NAME)_FILES = $(shell find sources -name "*.x*" -o -name "*.m*") $(wildcard ../core/src/*.cpp) $(wildcard ../core/src/ffi/*.cpp) $(wildcard ../vendor/monocypher/*.c) ../vendor/miniz/miniz_unbound.c shared/UBAppIcons.m $(BEARSSL_FILES) $(WOFF2_FILES)
 $(TWEAK_NAME)_CFLAGS = $(COMMON_FLAGS)
 sources/CoreBridge.mm_CFLAGS = -DCOMMIT_HASH='@"$(COMMIT_HASH)"' -DCOMMIT_SHORT_HASH='@"$(COMMIT_SHORT_HASH)"' -DCOMMIT_SUBJECT='@"$(COMMIT_SUBJECT)"' -DCOMMIT_BRANCH='@"$(COMMIT_BRANCH)"' -DBUILD_TIMESTAMP='@"$(BUILD_TIMESTAMP)"'
 # version.json is the release version; CI stamps it into ios/control, which local builds leave stale,

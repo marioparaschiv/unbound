@@ -236,6 +236,18 @@ static loader::FontOverrideRegistry &UnboundFontOverrides()
     return [converted isKindOfClass:[NSDictionary class]] ? converted : @{};
 }
 
++ (nullable NSDictionary *)installedFont:(NSString *)postScriptName
+{
+    std::optional<nlohmann::json> target =
+        UnboundFonts()->store().overrideTarget(toStdString(postScriptName));
+    id converted = target ? objectFromJSON(*target) : nil;
+    // `overrideTarget` also answers for a Discord family; only the face's own name counts here.
+    return [converted isKindOfClass:[NSDictionary class]] &&
+                   [converted[@"name"] isEqual:postScriptName]
+               ? converted
+               : nil;
+}
+
 + (NSString *)everyFontFamily
 {
     return @(loader::kAllFontFamilies);

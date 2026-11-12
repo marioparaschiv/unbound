@@ -303,4 +303,16 @@ export const fontGroupSection: SectionEntry = {
 	hidden: true,
 };
 
-export default { start, stop, designSection, fontGroupSection };
+/** One weight of a font group set along a variable font's axes, opened from that group's page. */
+export const fontAxesSection: SectionEntry = {
+	key: Screens.FontAxes,
+	titleKey: 'UNBOUND_FONTS',
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
+	 */
+	getComponent: () => require('~/ui/settings/design/font-axes-page').default,
+	hidden: true,
+};
+
+export default { start, stop, designSection, fontGroupSection, fontAxesSection };

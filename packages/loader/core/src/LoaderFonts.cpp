@@ -278,6 +278,17 @@ std::optional<FontNames> fontNamesFromData(const std::string &data)
     return namesFromTable(data.substr(table->offset, table->length));
 }
 
+std::optional<std::string> fontNameFromData(const std::string &data, uint16_t nameID)
+{
+    const auto fontOffset = fontOffsetIn(data);
+    const auto table      = fontOffset ? nameTableIn(data, *fontOffset) : std::nullopt;
+    if (!table || table->offset + table->length > data.size())
+    {
+        return std::nullopt;
+    }
+    return nameFromNameTable(data.substr(table->offset, table->length), nameID);
+}
+
 std::optional<std::string> fontFullName(const std::string &path)
 {
     const auto names = fontNames(path);
@@ -427,18 +438,33 @@ FontOverridePlan FontOverrideRegistry::plan(const nlohmann::json &targets)
         {
             plan.table[family] = name->get<std::string>();
         }
+        const auto variations = target.find("variations");
+        if (name != target.end() && name->is_string() && path != target.end() &&
+            path->is_string() && variations != target.end() && variations->is_object() &&
+            !variations->empty())
+        {
+            plan.instances[name->get<std::string>()] = {{"path", *path},
+                                                        {"variations", *variations}};
+        }
     }
     const auto everyFamily = plan.table.find(kAllFontFamilies);
     if (everyFamily != plan.table.end())
     {
-        plan.table = {{kAllFontFamilies, everyFamily->second}};
+        const std::string name = everyFamily->second;
+        plan.table             = {{kAllFontFamilies, name}};
+        std::erase_if(plan.instances, [&](const auto &entry) {
+            return entry.first != name;
+        });
     }
     return plan;
 }
 
 nlohmann::json fontOverridePlanJSON(const FontOverridePlan &plan)
 {
-    return {{"registrations", plan.registrations}, {"errors", plan.errors}, {"table", plan.table}};
+    return {{"registrations", plan.registrations},
+            {"errors", plan.errors},
+            {"table", plan.table},
+            {"instances", plan.instances}};
 }
 
 std::optional<std::string> fontOverrideLookup(const FontOverrideTable &table,

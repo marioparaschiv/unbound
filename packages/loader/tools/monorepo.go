@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -348,10 +349,19 @@ func runCoreTests(root string, runner commandRunner) error {
 	if err := runner(root, "cmake", configureArgs, os.Environ(), os.Stdout, os.Stderr); err != nil {
 		return err
 	}
-	if err := runner(root, "cmake", []string{"--build", buildPath, "--parallel"}, os.Environ(), os.Stdout, os.Stderr); err != nil {
+	if err := runner(root, "cmake", []string{"--build", buildPath, "--parallel", coreBuildJobs()}, os.Environ(), os.Stdout, os.Stderr); err != nil {
 		return err
 	}
 	return runner(root, "ctest", []string{"--test-dir", buildPath, "--output-on-failure"}, os.Environ(), os.Stdout, os.Stderr)
+}
+
+// A bare `--parallel` lets Make start every job at once, and sanitizer builds of the JSON-heavy core
+// take gigabytes each, which runs a many-core machine out of memory. CMAKE_BUILD_PARALLEL_LEVEL overrides.
+func coreBuildJobs() string {
+	if jobs := os.Getenv("CMAKE_BUILD_PARALLEL_LEVEL"); jobs != "" {
+		return jobs
+	}
+	return strconv.Itoa(min(runtime.NumCPU(), 8))
 }
 
 func gradleCommand() string {

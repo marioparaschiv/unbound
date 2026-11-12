@@ -3,7 +3,7 @@
 #include <optional>
 
 namespace loader::dynamicisland {
-constexpr double kLogoHeightRatio    = 0.92;
+constexpr double kLogoHeightRatio    = 0.8;
 constexpr double kNotchCornerRatio   = 0.65;
 constexpr double kHoleLogoRatio      = 0.6;
 constexpr double kRevealSeconds      = 0.2;

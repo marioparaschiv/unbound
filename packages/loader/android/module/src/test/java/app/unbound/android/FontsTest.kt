@@ -29,5 +29,15 @@ class FontsTest {
         assertEquals(Fonts.Source.System("serif"), Fonts.replacement("serif", "", ""))
         assertEquals(Fonts.Source.Asset("fonts/inter.ttf"), Fonts.replacement("Inter", "asset:fonts/inter.ttf", ""))
         assertEquals(Fonts.Source.File("/data/inter.ttf"), Fonts.replacement("Inter", "/data/inter.ttf", ""))
+        assertEquals(
+            Fonts.Source.File("/data/inter.ttf", "'wght' 650.0, 'ital' 1.0"),
+            Fonts.replacement("Inter-wght650", "/data/inter.ttf", "", linkedMapOf("wght" to 650.0, "ital" to 1.0)),
+        )
+    }
+
+    @Test
+    fun padsShortAxisTagsAndSkipsLongOnes() {
+        assertEquals("'MY  ' 2.0", Fonts.variationSettings(linkedMapOf("MY" to 2.0, "TOOLONG" to 1.0)))
+        assertEquals("", Fonts.variationSettings(emptyMap()))
     }
 }

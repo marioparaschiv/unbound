@@ -6548,6 +6548,21 @@ export type UnboundAsset = DiscordAsset & {
 	/** The URI of a registered plugin asset at each scale; set while it is registered. */
 	unboundSources?: Record<number, string>;
 };
+/** One design axis of a variable font, such as `wght` from 100 to 900. */
+export type UnboundFontAxis = {
+	/** The four-letter tag, such as `wght`, `wdth` or `slnt`. */
+	tag: string;
+	/** The name the font gives it, such as `Weight`. */
+	name: string;
+	/** The lowest value the axis accepts. */
+	min: number;
+	/** The value a face draws at when the axis is not set. */
+	default: number;
+	/** The highest value the axis accepts. */
+	max: number;
+	/** The font asks apps not to offer it. */
+	hidden: boolean;
+};
 /**
  * One installed face in the loader's font store.
  * @internal
@@ -6565,6 +6580,10 @@ type UnboundInstalledFont = {
 	/** The file's absolute path; `list()` adds it. */
 	path?: string;
 	source: UnboundFontSource;
+	/** A variable font's design axes; absent for a static face. */
+	axes?: UnboundFontAxis[];
+	/** The coordinate on each axis this face draws at, such as `{ wght: 650 }`; absent for a static face. */
+	variations?: Record<string, number>;
 };
 /** A value the generator could not type with confidence, so a loose prop accepts anything for it. */
 export type UncertainValue = any;

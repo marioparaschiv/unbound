@@ -11,6 +11,7 @@
 
 #include "LoaderFiles.h"
 #include "LoaderFontFiles.h"
+#include "LoaderFontVariations.h"
 #include "LoaderJSON.h"
 #include "LoaderLog.h"
 
@@ -63,7 +64,8 @@ static std::vector<InstalledFont> adoptLooseFonts(const std::string &directory)
         fonts.push_back(
             {uniqueId(fonts, fontIdFor(face->postScriptName)), face->family, face->postScriptName,
              face->fullName, face->weight, face->italic, name,
-             FontSource{kLocalProvider, face->postScriptName, std::nullopt, std::nullopt}});
+             FontSource{kLocalProvider, face->postScriptName, std::nullopt, std::nullopt},
+             face->axes, instanceCoordinates(face->axes, {}, error).value_or(FontVariations{})});
     }
     return fonts;
 }
@@ -217,9 +219,16 @@ void FontStore::notify()
     }
 }
 
-static void removeFontFile(const std::string &directory, const std::string &file)
+// Deletes `file` unless a face of `state` still draws from it, as a variable font's faces share
+// one.
+static void removeFontFile(const std::string &directory, const FontState &state,
+                           const std::string &file)
 {
-    if (!isContainedRelativePath(file))
+    const bool shared =
+        std::any_of(state.fonts.begin(), state.fonts.end(), [&](const InstalledFont &font) {
+            return font.file == file;
+        });
+    if (shared || !isContainedRelativePath(file))
     {
         return;
     }
@@ -279,9 +288,10 @@ std::vector<InstalledFont> FontStore::commitInstall(const std::string         &s
         removeTree(directory_, std::string(kFilesFolder) + "/" + name);
         throw;
     }
+    const FontState current = state();
     for (const std::string &file : replaced)
     {
-        removeFontFile(directory_, file);
+        removeFontFile(directory_, current, file);
     }
     return faces;
 }
@@ -306,9 +316,66 @@ bool FontStore::remove(const std::string &id)
     });
     if (removed)
     {
-        removeFontFile(directory_, file);
+        removeFontFile(directory_, state(), file);
     }
     return removed;
+}
+
+InstalledFont FontStore::addInstance(const std::string &id, const FontVariations &variations)
+{
+    InstalledFont added;
+    update([&](FontState &state) {
+        const InstalledFont *base = findFont(state.fonts, id);
+        if (!base)
+        {
+            throw std::runtime_error("No installed font has the id " + id);
+        }
+        if (base->axes.empty())
+        {
+            throw std::runtime_error(base->fullName + " is not a variable font");
+        }
+        std::string error;
+        const auto  coordinates = instanceCoordinates(base->axes, variations, error);
+        if (!coordinates)
+        {
+            throw std::runtime_error(error);
+        }
+        // The same coordinates of the same file are the face already installed.
+        const auto existing =
+            std::find_if(state.fonts.begin(), state.fonts.end(), [&](const InstalledFont &font) {
+                return font.file == base->file && font.variations == *coordinates;
+            });
+        if (existing != state.fonts.end())
+        {
+            added = *existing;
+            return false;
+        }
+        if (state.fonts.size() >= kMaximumFonts)
+        {
+            throw std::runtime_error("There are too many fonts");
+        }
+        // `base` may be any instance, so the defaults get a name of their own.
+        FontFace font;
+        font.family          = base->family;
+        font.postScriptName  = fontIdFor(base->family) + "-Default";
+        font.fullName        = base->family + " Default";
+        font.weight          = base->weight;
+        font.italic          = base->italic;
+        font.axes            = base->axes;
+        const FontFace face  = instanceFace(font, *coordinates);
+        added                = *base;
+        added.id             = uniqueId(state.fonts, fontIdFor(face.postScriptName));
+        added.postScriptName = face.postScriptName;
+        added.fullName       = face.fullName;
+        added.weight         = face.weight;
+        added.italic         = face.italic;
+        added.variations     = *coordinates;
+        added.source.weight  = face.weight;
+        added.source.style   = face.italic ? "italic" : "normal";
+        state.fonts.push_back(added);
+        return true;
+    });
+    return added;
 }
 
 bool FontStore::setOverride(const std::string &key, const std::optional<std::string> &fontId)
@@ -404,7 +471,13 @@ bool FontStore::removePreset(const std::string &id)
 
 static nlohmann::json targetOf(const std::string &directory, const InstalledFont &font)
 {
-    return {{"name", font.postScriptName}, {"path", joinPath(directory, font.file)}};
+    nlohmann::json target = {{"name", font.postScriptName},
+                             {"path", joinPath(directory, font.file)}};
+    if (!font.variations.empty())
+    {
+        target["variations"] = font.variations;
+    }
+    return target;
 }
 
 nlohmann::json FontStore::overrideTargets() const
@@ -424,6 +497,15 @@ nlohmann::json FontStore::overrideTargets() const
 std::optional<nlohmann::json> FontStore::overrideTarget(const std::string &family) const
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    // An installed face's own name draws that face, so settings can preview it before it overrides.
+    const auto own =
+        std::find_if(state_.fonts.begin(), state_.fonts.end(), [&](const InstalledFont &font) {
+            return font.postScriptName == family;
+        });
+    if (own != state_.fonts.end())
+    {
+        return targetOf(directory_, *own);
+    }
     for (const std::string &key : {std::string("*"), family})
     {
         const auto found = state_.overrides.find(key);

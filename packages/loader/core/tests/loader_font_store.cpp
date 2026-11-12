@@ -1,7 +1,9 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "FontFixtures.h"
 #include "LoaderFiles.h"
@@ -87,6 +89,58 @@ static void installsReplacesAndRemoves(const fs::path &root)
     assert(!fs::exists(store.pathOf(again[0])));
 }
 
+static void sharesVariableFiles(const fs::path &root)
+{
+    FontStore store(root.string());
+    store.open(nlohmann::json::object());
+    const std::vector<FontAxis> axes    = {{"wght", "Weight", 100, 400, 900}};
+    InstalledFont               regular = face("Vector-Regular", 400, false, "Vector");
+    InstalledFont               bold    = face("Vector-Bold", 700, false, "Vector");
+    regular.file = bold.file = "Vector.ttf";
+    regular.axes = bold.axes = axes;
+    regular.variations       = {{"wght", 400}};
+    bold.variations          = {{"wght", 700}};
+    const auto installed = store.commitInstall(staged(store, "Vector.ttf", "v"), {regular, bold});
+    assert(installed[0].file == installed[1].file);
+
+    const InstalledFont medium = store.addInstance("Vector-Bold", {{"wght", 520}});
+    assert(medium.id == "Vector-wght520" && medium.fullName == "Vector Weight 520");
+    assert(medium.weight == 520 && medium.file == installed[0].file);
+    assert(medium.source.weight == 520 && medium.source.style == "normal");
+    assert(store.addInstance("Vector-Regular", {{"wght", 520}}).id == medium.id);
+    assert(store.addInstance("Vector-Regular", {{"wght", 400}}).id == "Vector-Regular");
+    assert(store.state().fonts.size() == 3);
+    for (const auto &[id, variations] : std::vector<std::pair<std::string, FontVariations>>{
+             {"Missing", {}}, {"Vector-Bold", {{"opsz", 9}}}})
+    {
+        bool threw = false;
+        try
+        {
+            store.addInstance(id, variations);
+        }
+        catch (const std::runtime_error &)
+        {
+            threw = true;
+        }
+        assert(threw);
+    }
+
+    // A reload keeps the axes and coordinates, and overrides carry them to the platform.
+    FontStore reopened(root.string());
+    reopened.open(nlohmann::json::object());
+    assert(reopened.state().fonts[2].variations == medium.variations);
+    assert(reopened.state().fonts[2].axes.size() == 1);
+    assert(reopened.setOverride("ggsans-Normal", medium.id));
+    const auto target = reopened.overrideTarget("ggsans-Normal");
+    assert(target->at("name") == "Vector-wght520" && target->at("variations")["wght"] == 520);
+    assert(!reopened.overrideTarget("Vector-Regular")->at("variations").empty());
+
+    // The file stays until its last face goes.
+    const std::string path = reopened.pathOf(installed[0]);
+    assert(reopened.remove("Vector-Regular") && reopened.remove("Vector-Bold") && fs::exists(path));
+    assert(reopened.remove(medium.id) && !fs::exists(path));
+}
+
 static void expandsGroupsByWeight(const fs::path &root)
 {
     FontStore store(root.string());
@@ -123,6 +177,8 @@ static void expandsGroupsByWeight(const fs::path &root)
 
     assert(store.setOverride("*", std::string("Lobster")));
     assert(store.overrideTarget("anything")->at("name") == "Lobster");
+    // A face's own name previews that face, even under a `*` override.
+    assert(store.overrideTarget("Inter-Bold")->at("name") == "Inter-Bold");
 }
 
 static void keepsPresets(const fs::path &root)
@@ -146,8 +202,8 @@ int main()
 {
     const fs::path base  = fs::temp_directory_path() / "unbound-font-store";
     int            case_ = 0;
-    for (auto test : {migratesTheOldFolderOnce, installsReplacesAndRemoves, expandsGroupsByWeight,
-                      keepsPresets})
+    for (auto test : {migratesTheOldFolderOnce, installsReplacesAndRemoves, sharesVariableFiles,
+                      expandsGroupsByWeight, keepsPresets})
     {
         const fs::path root = base / std::to_string(case_++);
         fs::remove_all(root);

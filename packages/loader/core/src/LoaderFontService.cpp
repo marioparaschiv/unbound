@@ -7,6 +7,7 @@
 
 #include "LoaderFiles.h"
 #include "LoaderFontFiles.h"
+#include "LoaderFontVariations.h"
 #include "LoaderJSON.h"
 #include "LoaderLog.h"
 
@@ -186,15 +187,7 @@ nlohmann::json FontService::resolve(const std::string &input)
     return resolveLocked(input);
 }
 
-struct Variant {
-    int  weight;
-    bool italic;
-
-    bool operator<(const Variant &other) const
-    {
-        return std::tie(weight, italic) < std::tie(other.weight, other.italic);
-    }
-};
+using Variant = FontVariant;
 
 static std::optional<std::set<Variant>> variantsOf(const nlohmann::json &value)
 {
@@ -229,36 +222,92 @@ struct Staging {
     std::vector<InstalledFont> faces;
     nlohmann::json             errors = nlohmann::json::array();
 
-    void add(const std::string &name, const std::string &data, const nlohmann::json &file,
+    void add(const std::string &name, const std::string &download, const nlohmann::json &file,
              const std::optional<std::set<Variant>> &variants)
     {
         std::string error;
-        const auto  face = readFontFace(data, error);
+        const bool  web  = sniffFontFile(download) == FontFileType::WebFont;
+        const auto  data = web ? decodeWebFont(download, error) : std::optional(download);
+        const auto  face = data ? readFontFace(*data, error) : std::nullopt;
         if (!face)
         {
             errors.push_back(name + ": " + error);
             return;
         }
+        if (!face->axes.empty())
+        {
+            addVariable(name, *data, *face, variants);
+            return;
+        }
         const int weight =
             file["weight"].is_number_integer() ? file["weight"].get<int>() : face->weight;
-        const bool italic    = file["style"].is_string() ? file["style"] == "italic" : face->italic;
-        const std::string id = fontIdFor(face->postScriptName);
-        if ((variants && !variants->count({weight, italic})) || findFont(faces, id))
+        const bool italic = file["style"].is_string() ? file["style"] == "italic" : face->italic;
+        if ((variants && !variants->count({weight, italic})))
+        {
+            return;
+        }
+        FontFace styled = *face;
+        styled.weight   = weight;
+        styled.italic   = italic;
+        if (findFont(faces, fontIdFor(face->postScriptName)))
+        {
+            return;
+        }
+        const std::string fileName = save(name, *data, fontIdFor(face->postScriptName));
+        if (!fileName.empty())
+        {
+            push(styled, fileName);
+        }
+    }
+
+private:
+    // One file, and a face per named instance or wanted variant, all drawing from it.
+    void addVariable(const std::string &name, const std::string &data, const FontFace &font,
+                     const std::optional<std::set<Variant>> &variants)
+    {
+        std::vector<FontFace> instances = variableFaces(font, variants);
+        std::erase_if(instances, [&](const FontFace &face) {
+            return findFont(faces, fontIdFor(face.postScriptName)) != nullptr;
+        });
+        const std::string fileName =
+            instances.empty() ? "" : save(name, data, fontIdFor(font.postScriptName));
+        for (const FontFace &face : fileName.empty() ? std::vector<FontFace>{} : instances)
+        {
+            push(face, fileName);
+        }
+    }
+
+    // Writes `data` as `<id>.ttf` or `.otf`, numbered past a file already staged; empty on failure.
+    std::string save(const std::string &name, const std::string &data, const std::string &id)
+    {
+        const std::string extension = "." + fontFileExtension(sniffFontFile(data));
+        std::string       fileName  = id + extension;
+        for (int suffix = 2; fileExists(joinPath(directory, fileName)); suffix++)
+        {
+            fileName = id + "-" + std::to_string(suffix) + extension;
+        }
+        if (!writeTextFileAtomically(joinPath(directory, fileName), data))
+        {
+            errors.push_back(name + ": failed to save it");
+            return "";
+        }
+        return fileName;
+    }
+
+    void push(const FontFace &face, const std::string &fileName)
+    {
+        const std::string id = fontIdFor(face.postScriptName);
+        if (findFont(faces, id))
         {
             return;
         }
         const std::string provider = resolved["provider"].get<std::string>();
-        const std::string fileName = id + "." + fontFileExtension(sniffFontFile(data));
-        if (!writeTextFileAtomically(joinPath(directory, fileName), data))
-        {
-            errors.push_back(name + ": failed to save it");
-            return;
-        }
         faces.push_back(
-            {id, namesItsFamily(provider) ? resolved["family"].get<std::string>() : face->family,
-             face->postScriptName, face->fullName, weight, italic, fileName,
-             FontSource{provider, resolved["id"].get<std::string>(), weight,
-                        italic ? "italic" : "normal"}});
+            {id, namesItsFamily(provider) ? resolved["family"].get<std::string>() : face.family,
+             face.postScriptName, face.fullName, face.weight, face.italic, fileName,
+             FontSource{provider, resolved["id"].get<std::string>(), face.weight,
+                        face.italic ? "italic" : "normal"},
+             face.axes, face.variations});
     }
 };
 
@@ -355,6 +404,24 @@ void FontService::remove(const std::string &id)
     {
         throw std::runtime_error("No installed font has the id " + id);
     }
+}
+
+nlohmann::json FontService::addInstance(const std::string &id, const nlohmann::json &variations)
+{
+    if (!variations.is_object())
+    {
+        throw std::runtime_error("Variations must be an object of axis tags to numbers");
+    }
+    FontVariations wanted;
+    for (const auto &[tag, value] : variations.items())
+    {
+        if (!value.is_number())
+        {
+            throw std::runtime_error("The " + tag + " axis needs a number");
+        }
+        wanted[tag] = value.get<double>();
+    }
+    return installedFontJSON(store_.addInstance(id, wanted));
 }
 
 void FontService::setOverride(const std::string &family, const std::optional<std::string> &fontId)

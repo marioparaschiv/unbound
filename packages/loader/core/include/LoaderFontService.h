@@ -29,6 +29,8 @@ public:
     // is null or empty). Returns `{ installed, errors }`; throws when nothing installed.
     nlohmann::json install(const std::string &input, const nlohmann::json &variants);
     void           remove(const std::string &id);
+    // Adds a face of variable font `id` at `variations` (`{ wght: 450 }`) and returns it.
+    nlohmann::json addInstance(const std::string &id, const nlohmann::json &variations);
     void           setOverride(const std::string &family, const std::optional<std::string> &fontId);
     void           setTargets(const nlohmann::json &constants, const nlohmann::json &options);
 

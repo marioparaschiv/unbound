@@ -203,6 +203,42 @@ describe('resolveFont', () => {
 		});
 	});
 
+	test('keeps a variable or web-font-only face, with a null weight for the variable one', async () => {
+		const css = `@font-face {
+  font-family: 'Inter';
+  src: url('//cdn.fontshare.com/wf/V/A/R.woff2') format('woff2'),
+       url('//cdn.fontshare.com/wf/V/A/R.woff') format('woff');
+  font-weight: 100 900;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('//cdn.fontshare.com/wf/S/T/A.woff') format('woff');
+  font-weight: 400;
+  font-style: italic;
+}`;
+		const fetch = recorded({
+			'https://api.fontshare.com/v2/css?f[]=inter@all': () => new Response(css),
+		});
+
+		expect(await resolveFont('https://www.fontshare.com/fonts/inter', fetch)).toMatchObject({
+			files: [
+				{
+					url: 'https://cdn.fontshare.com/wf/S/T/A.woff',
+					kind: 'font',
+					weight: 400,
+					style: 'italic',
+				},
+				{
+					url: 'https://cdn.fontshare.com/wf/V/A/R.woff2',
+					kind: 'font',
+					weight: null,
+					style: 'normal',
+				},
+			],
+		});
+	});
+
 	test('treats an empty Fontshare stylesheet as not_found', async () => {
 		const fetch = recorded({
 			'https://api.fontshare.com/v2/css?f[]=nope@all': () => new Response('/* nothing */'),
@@ -299,6 +335,11 @@ describe('resolveFont', () => {
 			provider: 'url',
 			family: 'My Font',
 			files: [{ url: 'https://example.com/fonts/My%20Font.ttf', kind: 'font' }],
+		});
+		expect(await resolveFont('https://example.com/fonts/Inter.woff2', fetch)).toMatchObject({
+			provider: 'url',
+			family: 'Inter',
+			files: [{ url: 'https://example.com/fonts/Inter.woff2', kind: 'font' }],
 		});
 		expect(fetch.requests).toEqual([]);
 	});

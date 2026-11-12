@@ -41,6 +41,7 @@ export const Screens = {
 	Plugins: 'UNBOUND_PLUGINS',
 	Design: 'UNBOUND_DESIGN',
 	FontGroup: 'UNBOUND_FONT_GROUP',
+	FontAxes: 'UNBOUND_FONT_AXES',
 	Developer: 'UNBOUND_DEVELOPER',
 	Assets: 'UNBOUND_ASSETS',
 	Toasts: 'UNBOUND_TOASTS',

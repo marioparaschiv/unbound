@@ -516,6 +516,7 @@ export type {
 	TransitionState,
 	UnboundAppIcon,
 	UnboundAsset,
+	UnboundFontAxis,
 	UncertainValue,
 	VisualEffectViewProps,
 	VoidIconProps,

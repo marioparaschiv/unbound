@@ -11,6 +11,7 @@
 
 #include "LoaderFontFiles.h"
 #include "LoaderFontState.h"
+#include "LoaderFontVariations.h"
 #include "LoaderJSON.h"
 
 namespace font_files_fuzz {
@@ -35,10 +36,31 @@ inline void fuzzOne(const uint8_t *data, size_t size)
         require(!face->postScriptName.empty(), "a read face has a PostScript name");
         require(face->weight >= 1 && face->weight <= 1000, "a read weight is in range");
         require(!fontIdFor(face->postScriptName).empty(), "every face gets an id");
+        for (const FontFace &instance :
+             face->axes.empty() ? std::vector<FontFace>{} : variableFaces(*face, std::nullopt))
+        {
+            for (const FontAxis &axis : face->axes)
+            {
+                const double value = instance.variations.at(axis.tag);
+                require(value >= axis.minimum && value <= axis.maximum,
+                        "an instance stays inside its axes");
+            }
+        }
     }
     else
     {
         require(!error.empty(), "a refused font says why");
+    }
+
+    error.clear();
+    if (const auto decoded = decodeWebFont(input, error))
+    {
+        require(decoded->size() <= kMaxDecodedFontBytes, "a decoded font stays under the limit");
+        readFontFace(*decoded, error);
+    }
+    else
+    {
+        require(!error.empty(), "a refused web font says why");
     }
 
     ArchiveLimits limits;

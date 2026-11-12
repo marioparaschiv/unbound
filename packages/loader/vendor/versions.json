@@ -7,6 +7,13 @@
 		"url": "https://bearssl.org"
 	},
 	{
+		"path": "vendor/brotli",
+		"name": "Brotli (decoder)",
+		"version": "1.2.0",
+		"license": "MIT",
+		"url": "https://github.com/google/brotli"
+	},
+	{
 		"path": "vendor/libffi",
 		"name": "libffi",
 		"license": "MIT",
@@ -31,6 +38,13 @@
 		"version": "3.11.3",
 		"license": "MIT",
 		"url": "https://github.com/nlohmann/json"
+	},
+	{
+		"path": "vendor/woff2",
+		"name": "WOFF2 (decoder)",
+		"version": "7b67e12",
+		"license": "MIT",
+		"url": "https://github.com/google/woff2"
 	},
 	{
 		"path": "vendor/react",
