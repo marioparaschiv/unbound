@@ -79,8 +79,27 @@ static void checkCrashHistory()
     std::filesystem::remove_all(root);
 }
 
+static void checkSourcesAndChecks()
+{
+    assert(bundleSourceOf("", false).empty());
+    assert(bundleSourceOf("http://192.168.2.154:3000/", true) == "dev");
+    assert(bundleSourceOf("https://cdn.example.com/unbound/pr/42/", false) == "pr");
+    assert(pullRequestOf("https://cdn.example.com/unbound/pr/42/") == 42);
+    assert(bundleSourceOf("https://example.com/bundle/", false) == "custom");
+
+    setBundleSource("pr", 42);
+    recordUpdateCheck(1000, "failed", "Bundle download returned HTTP 503");
+    recordSettingsRecovery("restored");
+    nlohmann::json json = launchReportJSON(launchReport(), "");
+    assert(json["source"] == "pr" && json["pullRequest"] == 42);
+    assert(json["lastCheck"]["outcome"] == "failed");
+    assert(json["lastCheck"]["detail"] == "Bundle download returned HTTP 503");
+    assert(json["settings"] == "restored");
+}
+
 int main()
 {
+    checkSourcesAndChecks();
     checkCrashHistory();
     checkNativeCrashes();
     checkReport();

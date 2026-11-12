@@ -134,6 +134,35 @@ function fittedList(items: string[], room: number): string {
 	return `${items.length} addons`;
 }
 
+function sourceLabel(launch?: DebugCardLaunch): string | undefined {
+	if (!launch?.source) {
+		return undefined;
+	}
+
+	return launch.source === 'pr' && launch.pullRequest
+		? `pr #${launch.pullRequest}`
+		: launch.source;
+}
+
+function sourceNote(launch?: DebugCardLaunch): Span[] {
+	const label = sourceLabel(launch);
+
+	return label ? [warn(` · ${label}`)] : [];
+}
+
+function lastCheckSummary(launch: DebugCardLaunch | undefined, now: Date): string | undefined {
+	const check = launch?.lastCheck;
+
+	if (!check) {
+		return undefined;
+	}
+
+	const minutes = Math.max(0, Math.round((now.getTime() - check.at) / 60_000));
+	const ago = minutes < 60 ? `${minutes} min ago` : `${Math.round(minutes / 60)} h ago`;
+
+	return [check.outcome, ago, check.detail].filter(Boolean).join(' · ');
+}
+
 function updateNote(behind?: boolean): Span[] {
 	return behind ? [warn(' · update available')] : [];
 }
@@ -159,6 +188,7 @@ function rows(info: DebugInfo, now: Date, context: DebugCardContext): [string, S
 			[
 				value(info.client.replace(/^v/, '')),
 				accent(` @${info.commit}`),
+				...sourceNote(info.launch),
 				...updateNote(context.clientBehind),
 			],
 		],
@@ -513,9 +543,14 @@ export function debugCardSvg(card: DebugCard): string {
  * @description Writes the report as compact JSON for the image's alt text, so bots can read it; long fields are cut to fit Discord's limit.
  * @param info The versions and device details.
  * @param context What the server adds: the compat scan and whether the client or loader is behind.
+ * @param now When the report was taken, to say how long ago the last update check ran.
  * @returns The JSON, at most 1024 characters.
  */
-export function debugAltText(info: DebugInfo, context: DebugCardContext = {}): string {
+export function debugAltText(
+	info: DebugInfo,
+	context: DebugCardContext = {},
+	now = new Date(),
+): string {
 	const report: Record<string, string | string[]> = {
 		unbound: info.client.replace(/^v/, ''),
 		commit: info.commit,
@@ -550,6 +585,11 @@ export function debugAltText(info: DebugInfo, context: DebugCardContext = {}): s
 		...(info.plugins && { plugins: `${info.plugins.enabled}/${info.plugins.installed}` }),
 		...(info.themes && { themes: `${info.themes.enabled}/${info.themes.installed}` }),
 		...(info.launch?.firstRenderMs && { firstRenderMs: String(info.launch.firstRenderMs) }),
+		...(sourceLabel(info.launch) && { bundleSource: sourceLabel(info.launch) }),
+		...(lastCheckSummary(info.launch, now) && {
+			lastCheck: lastCheckSummary(info.launch, now),
+		}),
+		...(info.launch?.settings && { settings: info.launch.settings }),
 		...(info.memory && { memory: memorySummary(info.memory) }),
 		...(info.heap && { heap: `${info.heap.heapMB} MB · gc ${info.heap.gcMs} ms` }),
 		...(info.launch?.crashes?.length && {

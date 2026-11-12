@@ -34,7 +34,7 @@ export function renderDebugCard(
 		image: Buffer.from(rendered.asPng()).toString('base64'),
 		width: rendered.width,
 		height: rendered.height,
-		altText: debugAltText(info, context),
+		altText: debugAltText(info, context, now),
 	};
 }
 

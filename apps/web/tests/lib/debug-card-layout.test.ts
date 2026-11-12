@@ -289,4 +289,32 @@ describe('debug card', () => {
 		expect(texts(behind).filter((run) => run.text === ' · update available')).toHaveLength(2);
 		expect(JSON.parse(debugAltText(info, { loaderBehind: true })).updates).toEqual(['loader']);
 	});
+	test('tags custom and PR bundles and reports the last update check', () => {
+		const now = new Date('2026-11-12T18:00:00Z');
+		const report: DebugCardRequest = {
+			...info,
+			launch: {
+				bundle: 'active',
+				earlyCloses: 0,
+				recovery: false,
+				previousExit: 'ended',
+				source: 'pr',
+				pullRequest: 42,
+				lastCheck: {
+					at: now.getTime() - 2 * 3_600_000,
+					outcome: 'failed',
+					detail: 'HTTP 503',
+				},
+				settings: 'restored',
+			},
+		};
+		const card = layoutDebugCard(report, now);
+
+		expect(texts(card).some((run) => run.text === ' · pr #42')).toBe(true);
+		expect(JSON.parse(debugAltText(report, {}, now))).toMatchObject({
+			bundleSource: 'pr #42',
+			lastCheck: 'failed · 2 h ago · HTTP 503',
+			settings: 'restored',
+		});
+	});
 });

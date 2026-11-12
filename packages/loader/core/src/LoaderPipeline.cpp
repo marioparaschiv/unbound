@@ -222,6 +222,9 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
             downloaded = updater_.downloadBundle(savedPath, host_->resolveUpdateURL(),
                                                  host_->runtimeBytecodeVersion());
             preferences::setCheckedByLoader(settings_, loaderVersion());
+            recordUpdateCheck(nowMs(), downloaded != savedPath && fileExists(downloaded)
+                                           ? "downloaded"
+                                           : "current");
         }
         catch (const std::exception &error)
         {
@@ -229,6 +232,7 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
             BundleUpdateFailure failure = update ? update->failure : BundleUpdateFailure::Network;
             // Even a failed check counts, so an offline launch does not wait again next time.
             preferences::setCheckedByLoader(settings_, loaderVersion());
+            recordUpdateCheck(nowMs(), "failed", error.what());
             log(hasSaved ? LogLevel::Warning : LogLevel::Error, LOG_CATEGORY_DEFAULT,
                 std::string("Bundle download failed. (") + error.what() + ")" +
                     (hasSaved ? "; using the cached bundle" : ""));
@@ -479,6 +483,9 @@ void LoaderPipeline::recordRunningBundle(const std::string &path)
     {
         setRunningBundle(manifest->revision, manifest->channel);
     }
+    std::string updateURL = preferences::updateURL(settings_);
+    setBundleSource(bundleSourceOf(updateURL, isDevelopmentBundleURL(updateURL)),
+                    pullRequestOf(updateURL));
 }
 
 void LoaderPipeline::promotePendingBundle()

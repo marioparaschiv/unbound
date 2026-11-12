@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <mutex>
 #include <optional>
+#include <regex>
 #include <vector>
 
 #include "LoaderFiles.h"
@@ -44,6 +45,47 @@ void recordLaunchTiming(int64_t bundleMs, int64_t firstRenderMs)
     std::lock_guard<std::mutex> lock(reportMutex);
     currentReport.bundleMs      = bundleMs;
     currentReport.firstRenderMs = firstRenderMs;
+}
+
+void setBundleSource(const std::string &source, int pullRequest)
+{
+    std::lock_guard<std::mutex> lock(reportMutex);
+    currentReport.source      = source;
+    currentReport.pullRequest = pullRequest;
+}
+
+void recordUpdateCheck(int64_t at, const std::string &outcome, const std::string &detail)
+{
+    std::lock_guard<std::mutex> lock(reportMutex);
+    currentReport.checkedAt    = at;
+    currentReport.checkOutcome = outcome;
+    currentReport.checkDetail  = detail.substr(0, 160);
+}
+
+void recordSettingsRecovery(const std::string &recovery)
+{
+    std::lock_guard<std::mutex> lock(reportMutex);
+    currentReport.settingsRecovery = recovery;
+}
+
+int pullRequestOf(const std::string &updateURL)
+{
+    static const std::regex pullRequestPath(R"(/pr/(\d+)(/|$))");
+    std::smatch             match;
+    return std::regex_search(updateURL, match, pullRequestPath) ? std::stoi(match[1].str()) : 0;
+}
+
+std::string bundleSourceOf(const std::string &updateURL, bool development)
+{
+    if (updateURL.empty())
+    {
+        return "";
+    }
+    if (development)
+    {
+        return "dev";
+    }
+    return pullRequestOf(updateURL) ? "pr" : "custom";
 }
 
 std::vector<NativeCrashRecord> readCrashHistory(const std::string &directory)
@@ -223,6 +265,26 @@ nlohmann::json launchReportJSON(const LaunchReport &report, const std::string &n
     {
         json["bundleMs"]      = report.bundleMs;
         json["firstRenderMs"] = report.firstRenderMs;
+    }
+    if (!report.source.empty())
+    {
+        json["source"] = report.source;
+    }
+    if (report.pullRequest > 0)
+    {
+        json["pullRequest"] = report.pullRequest;
+    }
+    if (report.checkedAt > 0)
+    {
+        json["lastCheck"] = {{"at", report.checkedAt}, {"outcome", report.checkOutcome}};
+        if (!report.checkDetail.empty())
+        {
+            json["lastCheck"]["detail"] = report.checkDetail;
+        }
+    }
+    if (!report.settingsRecovery.empty())
+    {
+        json["settings"] = report.settingsRecovery;
     }
     if (!report.revision.empty())
     {

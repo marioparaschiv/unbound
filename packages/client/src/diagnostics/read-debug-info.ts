@@ -101,10 +101,33 @@ function launchOf(launch?: UnboundLaunchReport): DebugInfo['launch'] {
 		return undefined;
 	}
 
-	const { bundle, earlyCloses, recovery, previousExit, lastCrash, firstRenderMs, crashes } =
-		launch;
+	const {
+		bundle,
+		earlyCloses,
+		recovery,
+		previousExit,
+		lastCrash,
+		firstRenderMs,
+		crashes,
+		source,
+		pullRequest,
+		lastCheck,
+		settings,
+	} = launch;
 
-	return { bundle, earlyCloses, recovery, previousExit, lastCrash, firstRenderMs, crashes };
+	return {
+		bundle,
+		earlyCloses,
+		recovery,
+		previousExit,
+		lastCrash,
+		firstRenderMs,
+		crashes,
+		source,
+		pullRequest,
+		lastCheck,
+		settings,
+	};
 }
 
 function memoryOf(state?: NativeDeviceState): DebugInfo['memory'] {

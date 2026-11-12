@@ -8,6 +8,7 @@
 #include "LoaderFiles.h"
 #include "LoaderJSON.h"
 #include "LoaderJSONMembers.h"
+#include "LoaderLaunchReport.h"
 #include "LoaderLog.h"
 #include "LoaderSettings.h"
 #include "LoaderSettingsCache.h"
@@ -215,6 +216,7 @@ void SettingsStore::load()
         {
             log(LogLevel::Error, LOG_CATEGORY_SETTINGS,
                 "settings.json is corrupt and has no last good copy; resetting it.");
+            recordSettingsRecovery("reset");
             resetLocked();
             return;
         }
@@ -257,6 +259,7 @@ bool SettingsStore::restoreLastGoodLocked() const
     }
     log(LogLevel::Error, LOG_CATEGORY_SETTINGS,
         "settings.json was corrupt; restored the last good copy.");
+    recordSettingsRecovery("restored");
     return true;
 }
 
