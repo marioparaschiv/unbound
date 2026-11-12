@@ -6,7 +6,6 @@
 		"packages/loader": {
 			"component": "loader",
 			"release-type": "simple",
-			"release-as": "1.2.0",
 			"initial-version": "1.0.971",
 			"extra-files": [
 				{
