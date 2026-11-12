@@ -73,7 +73,7 @@ describe('debug card', () => {
 		const card = layoutDebugCard(info);
 		const summary = texts(card).find((run) => run.text === '12/60 plugins');
 
-		expect(summary && summary.x + summary.text.length * 7.2).toBeCloseTo(card.width - 14, 0);
+		expect(summary && summary.x + summary.text.length * 7.8).toBeCloseTo(card.width - 14, 0);
 		expect(JSON.parse(debugAltText(info))).toMatchObject({ plugins: '12/60', themes: '0/0' });
 	});
 
@@ -135,5 +135,39 @@ describe('debug card', () => {
 		expect(debugAltText({ ...info, device: 'y'.repeat(2000) }).length).toBeLessThanOrEqual(
 			1024,
 		);
+	});
+	test('colours the Discord support status and lists disabled addons on one row', () => {
+		const card = layoutDebugCard({
+			...info,
+			discordSupport: 'untested',
+			disabledAddons: [
+				'Chat Bubbles (crashed)',
+				'Mention Avatars (froze)',
+				'Message Latency (failed to start)',
+			],
+		});
+
+		expect(texts(card).find((run) => run.text === 'untested')?.color).toBe('#eab308');
+		expect(texts(card).find((run) => run.text.startsWith('Chat Bubbles'))?.text).toBe(
+			'Chat Bubbles (crashed) · +2 more',
+		);
+	});
+
+	test('keeps the plugin count when plugins and themes do not both fit', () => {
+		const card = layoutDebugCard({ ...info, themes: { enabled: 1, installed: 3 } });
+
+		expect(texts(card).some((run) => run.text === '12/60 plugins')).toBe(true);
+	});
+
+	test('stays comfortably readable: 13pt text on a 432pt card that never turns tall', () => {
+		const card = layoutDebugCard({
+			...info,
+			discordSupport: 'unsupported',
+			disabledAddons: ['A (crashed)'],
+		});
+
+		expect(card.width).toBe(432);
+		expect(Math.min(...texts(card).map((run) => run.size))).toBeGreaterThanOrEqual(13);
+		expect(card.height / card.width).toBeLessThanOrEqual(0.85);
 	});
 });

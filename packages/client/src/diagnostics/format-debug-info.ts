@@ -1,6 +1,9 @@
 /** How many addons of one kind are installed and enabled. */
 export type AddonCount = { enabled: number; installed: number };
 
+/** Whether Unbound supports the running Discord: `unsupported` is older than the minimum, `untested` an Alpha build. */
+export type DiscordSupport = 'supported' | 'untested' | 'unsupported';
+
 /** What `/debug` reports about the running client. Every field but the addon counts is already a display string. */
 export type DebugInfo = {
 	client: string;
@@ -24,6 +27,11 @@ export type DebugInfo = {
 	flags: string[];
 	plugins?: AddonCount;
 	themes?: AddonCount;
+	discordSupport?: DiscordSupport;
+	disabledAddons?: string[];
+	locale?: string;
+	theme?: string;
+	iconPack?: string;
 };
 
 function sentenceCase(text: string): string {
@@ -43,10 +51,13 @@ export function debugLines(info: DebugInfo): string[] {
 
 	return [
 		`- **Unbound:** ${info.client} (\`${info.commit}\`), loader ${info.loader} ${loader}`,
-		`- **Discord:** ${info.discord} ${info.discordChannel.toLowerCase()}, build ${info.discordBuild} (${info.appSource})`,
+		`- **Discord:** ${info.discord} ${info.discordChannel.toLowerCase()}, build ${info.discordBuild} (${info.appSource})${info.discordSupport && info.discordSupport !== 'supported' ? `, ${info.discordSupport}` : ''}`,
 		`- **Device:** ${info.device} on ${info.platform} ${info.os}`,
 		...(info.installDetails ? [`- **Install:** ${sentenceCase(info.installDetails)}`] : []),
 		`- **State:** ${info.flags.join(' · ')}`,
+		...(info.disabledAddons?.length
+			? [`- **Disabled:** ${info.disabledAddons.join(' · ')}`]
+			: []),
 		`- **Runtime:** React ${info.react}, React Native ${info.reactNative}, Hermes ${info.hermes} (HBC ${info.bytecode})`,
 	];
 }

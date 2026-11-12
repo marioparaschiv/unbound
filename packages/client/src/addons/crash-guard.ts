@@ -107,6 +107,16 @@ export function crashedAddon(key: CrashGuardKey): NativeCrashedAddon | undefined
 }
 
 /**
+ * @description Lists every addon the loader disabled after consecutive crashes or a freeze.
+ * @returns The crashed addons reported by the loader.
+ */
+export function crashedAddons(): NativeCrashedAddon[] {
+	disabledAfterCrash ??= new Map((bridge()?.disabled() ?? []).map((addon) => [addon.id, addon]));
+
+	return [...disabledAfterCrash.values()];
+}
+
+/**
  * @description Describes why the loader disabled an addon after consecutive crashes.
  * @param addon The crashed addon reported by the loader.
  * @param name The addon's display name.

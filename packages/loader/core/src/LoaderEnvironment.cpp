@@ -73,7 +73,7 @@ std::string signingDetails(const SigningFacts &facts)
     const bool               discord = isDiscordProductionTeam(facts.teamIdentifier);
     if (discord)
     {
-        parts.emplace_back("Discord-signed");
+        parts.emplace_back("Distribution");
     }
     else if (facts.provisionsAllDevices)
     {
@@ -95,7 +95,7 @@ std::string signingDetails(const SigningFacts &facts)
     {
         parts.emplace_back("Unprovisioned");
     }
-    if (facts.teamIdentifier && !discord && !facts.teamIdentifier->empty())
+    if (facts.teamIdentifier && !facts.teamIdentifier->empty())
     {
         parts.front() += " (`" + *facts.teamIdentifier + "`)";
     }
