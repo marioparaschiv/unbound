@@ -133,12 +133,14 @@ describe('bubble problems', () => {
 });
 
 describe('card frame', () => {
-	test('covers the whole content column and reaches past both sides', () => {
-		expect(cardFrame({ x: 68, y: 16, width: 291, height: 72 }, 5)).toEqual({
+	test('covers the whole content column and reaches past every side', () => {
+		expect(
+			cardFrame({ x: 68, y: 16, width: 291, height: 72 }, { horizontal: 5, vertical: 6 }),
+		).toEqual({
 			x: 63,
-			y: 16,
+			y: 10,
 			width: 301,
-			height: 72,
+			height: 84,
 		});
 	});
 });

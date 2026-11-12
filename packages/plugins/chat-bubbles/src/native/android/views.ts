@@ -1,6 +1,5 @@
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
-	NativeJavaBatchOperation,
 	NativeJavaBridge,
 	NativeJavaHooksBridge,
 	NativeJavaReference,
@@ -10,33 +9,51 @@ import type {
 import {
 	currentDecorView,
 	findViewsOfClass,
-	readCalls,
 	runOnMain,
 } from '@unbound-plugins/shared/native/android/views';
 import {
-	javaFlag,
-	javaFloat,
 	javaInt,
+	javaNumber,
 	javaReference,
-	javaString,
-	javaText,
-	sameJavaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
 import {
 	MESSAGE_VIEW,
 	messageBindMethod,
 	messageIdField,
-	messageIdOf,
 } from '@unbound-plugins/shared/native/android/discord-views';
 
-import { bubbleFrame, bubbleProblem, cardFrame, rowInsets, type Box } from '~/lib/geometry';
-import { AndroidClass, BubbleLayout, CARD_INSET } from '~/lib/constants';
-import { forgetBubbles, installBindGuard, rememberBubble } from '~/native/android/worklets';
-import { createRowMeasure, isInstanceOf, readNumber } from '~/native/android/row-measure';
+import type { RowConfig } from '~/native/android/ui-row';
+import {
+	installHighlightHook,
+	installRowHooks,
+	paintMessage,
+	relayoutList,
+	restoreRows,
+	setRowConfig,
+} from '~/native/android/worklets';
+import { installMosaicHook, mosaicShape, restoreMosaics } from '~/native/android/ui-media';
+import { readRow } from '~/native/android/ui-measure';
+import { rowViewIds } from '~/native/android/ids';
+import { authorPicture } from '~/native/android/author-picture';
+import { createMeasure } from '~/native/android/measure';
+import { createNeighbours } from '~/native/android/neighbours';
+import { createStoreGroups } from '~/native/android/store-groups';
+import { rowFrame, rowPaint } from '~/native/android/row-paint';
+import { colorFromArgb, findHighlightPainter } from '~/native/android/highlight';
+import { cellFallback } from '~/lib/cell-paint';
+import { bubbleProblem } from '~/lib/geometry';
+import { createRowGroups } from '~/lib/row-groups';
+import {
+	accessoryGap,
+	parseHexColor,
+	rowInset,
+	rowRooms,
+	type BubbleAppearance,
+} from '~/lib/style';
 import { currentAppearance } from '~/lib/theme';
-import { argb } from '~/lib/style';
-import { isOwnMessage } from '~/lib/author';
-import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
+import { messageAuthor, isOwnMessage } from '~/lib/author';
+import { MessageStore, SelectedChannelStore } from '~/lib/modules';
+import { AndroidClass, BubbleStyle, ReplyIcon } from '~/lib/constants';
 
 type AndroidNative = {
 	java: NativeJavaBridge;
@@ -44,387 +61,286 @@ type AndroidNative = {
 	ui: NativeUIBridge;
 };
 
-const MAX_TRACKED = 256;
-
-type PlacedRow = {
-	width: number;
-	height: number;
-	revision: number;
-};
-const MAX_ANCESTORS = 16;
 const BUBBLE_LAYER_ID = 0x0b0b1e;
-const BIND_SETTLE_MS = 50;
-const PLACEMENT_WORKERS = 8;
-const LAYOUT_PARAMETERS = ['boolean', 'int', 'int', 'int', 'int'];
+const REPLY_ICON_ID = 0x0b0b1f;
+const PLACEMENT_WORKERS = 4;
+const MAX_TRACKED = 256;
+const MENTION_BAR = { ...parseHexColor(BubbleStyle.mentionColor)!, alpha: 1 };
+
+function bounded<T>(map: Map<string, T>, key: string, value: T) {
+	map.delete(key);
+	map.set(key, value);
+
+	if (map.size > MAX_TRACKED) map.delete(map.keys().next().value!);
+}
+
+function report(action: string) {
+	return (error: unknown) => {
+		if (!isCancellation(error)) logger.error(`Failed to ${action}:`, error);
+	};
+}
 
 /**
- * @description Draws a rounded bubble behind each Android message as the row's background, sized to its content or, in the card layout, covering its whole content column, without changing the row's padding.
- * @param native The plugin's Java and hook bridges.
- * @returns `refresh`, which repaints the bubbles it drew, and `dispose`, which brings back the rows' own backgrounds.
+ * @description Draws a bubble behind each Android message as its row's background, grouped, tailed and highlighted like iOS, and moves Discord's own name, time, reply and avatar views around it.
+ * @param native The plugin's Java, hook and UI bridges.
+ * @returns `refresh`, which repaints every bubble, and `dispose`, which puts every row back.
  */
-export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
-	const messageClass = java.getClass(MESSAGE_VIEW);
-	const bindMessage = messageBindMethod(java);
-	const layerDrawableClass = java.getClass('android.graphics.drawable.LayerDrawable');
-	const ours = java.createAssociationKey();
-	const original = java.createAssociationKey();
-	const drawnFor = java.createAssociationKey();
+export function drawAndroidBubbles({ java, ui }: AndroidNative) {
+	const found = rowViewIds(java);
+
+	if (!found) throw new Error('Failed to find the message row views: no activity is showing.');
+
+	const { ids, replyIcon, scale } = found;
+	const bind = messageBindMethod(java);
+	const idField = messageIdField(java);
 	const scope = ui.createScope();
-	const needsBubble = ui.callback((self: NativeJavaValue) => {
-		const row = javaReference(self);
+	const keys = {
+		padding: java.createAssociationKey(),
+		avatar: java.createAssociationKey(),
+		media: java.createAssociationKey(),
+		mediaRadius: java.createAssociationKey(),
+	};
+	const measure = createMeasure(
+		java,
+		(row) =>
+			'value' in row
+				? ui.call(readRow, scope, row.value, ids, idField)
+				: Promise.resolve(null),
+		keys.media,
+	);
+	const neighbours = createNeighbours(currentAppearance, (id) => redraw([id]));
+	const groups = createRowGroups(redraw);
+	const stored = createStoreGroups((id) => redraw([id]));
+	const rows = new Map<string, NativeJavaReference>();
+	const pushed = new Map<string, string>();
+	const sizes = new Map<string, string>();
+	const bars = new Map<string, number>();
+	const problems = new Map<string, string>();
+	const reactions = new Map<string, NativeJavaReference>();
+	const pending = new Map<string, { row: NativeJavaReference; force: boolean }>();
+	const unpainted = new Set<string>();
+	const workers = new Set<Promise<void>>();
+	let disposed = false;
+	let painterSearched = false;
 
-		if (!row) return;
+	function rowConfig(style: BubbleAppearance): Pick<RowConfig, 'rooms' | 'inset' | 'fallback'> {
+		const rooms = rowRooms(style);
+		const px = ({ top, bottom }: { top: number; bottom: number }) => ({
+			top: top * scale,
+			bottom: bottom * scale,
+		});
+		const fallback = cellFallback(style);
+		const move = ({ x, y }: { x: number; y: number }) => ({ x: x * scale, y: y * scale });
 
-		setTimeout(() => {
-			if (!disposed) schedule(row);
-		}, BIND_SETTLE_MS);
-	});
+		return {
+			rooms: { first: px(rooms.first), next: px(rooms.next), reply: px(rooms.reply) },
+			inset: rowInset(style) * scale,
+			fallback: {
+				name: move(fallback.name),
+				avatar: move(fallback.avatar),
+				reply: move(fallback.reply),
+				hideStart: fallback.hideStart,
+			},
+		};
+	}
 
 	ui.run(
-		installBindGuard,
+		installRowHooks,
 		scope,
 		{
 			messageView: MESSAGE_VIEW,
-			bindName: bindMessage.name,
-			bindParameters: bindMessage.parameters,
-			idField: messageIdField(java),
-			layerId: BUBBLE_LAYER_ID,
-			ours,
-			original,
-			drawnFor,
+			bindName: bind.name,
+			bindParameters: bind.parameters,
+			accessories: AndroidClass.accessories,
 		},
-		needsBubble,
+		{
+			ids,
+			idField,
+			layerId: BUBBLE_LAYER_ID,
+			replyIcon: {
+				drawable: replyIcon,
+				id: REPLY_ICON_ID,
+				size: Math.round(ReplyIcon.size * scale),
+				gap: Math.round(ReplyIcon.gap * scale),
+			},
+			keys,
+			...rowConfig(currentAppearance()),
+		},
+		ui.callback((self: NativeJavaValue) => {
+			const row = javaReference(self);
+
+			if (!row || !('value' in row)) return;
+
+			// The row has no paint it can use, so its next one is sent even when unchanged.
+			unpainted.add(row.value);
+			schedule(row, true);
+		}),
 	);
-	const tracked: NativeJavaReference[] = [];
-	const shiftedIcons: NativeJavaReference[] = [];
-	const problems = new Map<string, string>();
-	const pending: NativeJavaReference[] = [];
-	let scheduled = false;
-	let placing = 0;
-	let disposed = false;
-	let appearanceRevision = 0;
-	const placedRows = new Map<string, PlacedRow>();
-	const { measureRow, density } = createRowMeasure(java, { shiftedIcons, remeasure });
 
-	function rememberPlaced(id: string, width: number, height: number) {
-		placedRows.delete(id);
-		placedRows.set(id, { width, height, revision: appearanceRevision });
+	const mosaic = mosaicShape(java);
 
-		if (placedRows.size > MAX_TRACKED) placedRows.delete(placedRows.keys().next().value!);
+	if (mosaic) ui.run(installMosaicHook, scope, mosaic);
+	else logger.warn('Found no media mosaic layout; wide media keeps Discord’s width.');
+
+	const onBar = ui.callback((id: string, bar: number) => {
+		bounded(bars, id, bar);
+		redraw([id]);
+	});
+
+	async function findPainter(row: NativeJavaReference) {
+		if (painterSearched) return;
+
+		painterSearched = true;
+
+		const painter = await findHighlightPainter(java, row);
+
+		if (painter && !disposed) ui.run(installHighlightHook, scope, painter, onBar);
+		else if (!painter)
+			logger.warn('Found no mention highlight painter; mentions keep Discord’s tint.');
 	}
 
-	function alreadyPlaced(row: NativeJavaReference, id: string): boolean {
-		const placed = placedRows.get(id);
+	function redraw(changed: string[]) {
+		for (const id of changed) {
+			const row = rows.get(id);
 
-		if (
-			!placed ||
-			placed.revision !== appearanceRevision ||
-			!javaReference(java.getAssociatedObject(row, ours)) ||
-			javaText(java.getAssociatedObject(row, drawnFor)) !== id
-		) {
-			return false;
+			if (row) schedule(row, true);
+		}
+	}
+
+	function mentionOf(id: string, channelId: string | undefined) {
+		const bar = bars.get(id);
+
+		if (bar !== undefined) return colorFromArgb(bar);
+
+		const message = channelId ? MessageStore.getMessage?.(channelId, id) : undefined;
+
+		return (message as { mentioned?: boolean } | undefined)?.mentioned
+			? MENTION_BAR
+			: undefined;
+	}
+
+	async function moveReactions(id: string, view: NativeJavaReference | undefined, gap: number) {
+		if (!view) return;
+
+		const params = javaReference(java.invoke(view, 'getLayoutParams', []));
+		const top = Math.round(gap * scale);
+
+		if (!params || javaNumber(java.getField(params, 'topMargin')) === top) return;
+
+		bounded(reactions, id, view);
+		await runOnMain(java, [
+			{ op: 'setField', handle: params, name: 'topMargin', value: javaInt(top) },
+			{ op: 'invoke', handle: view, name: 'setLayoutParams', args: [params] },
+		]);
+	}
+
+	async function place(row: NativeJavaReference, force: boolean) {
+		const style = currentAppearance();
+		const measured = await measure(row, scale, rowInset(style));
+
+		if (!measured || disposed) return;
+
+		void findPainter(row).catch(report('find the mention highlight painter'));
+
+		const { id, layout } = measured;
+		const size = `${layout.width}x${layout.height}`;
+
+		bounded(rows, id, row);
+
+		const repaint = 'value' in row && unpainted.has(row.value);
+
+		if (!force && !repaint && sizes.get(id) === size && pushed.has(id)) return;
+
+		bounded(sizes, id, size);
+
+		const channelId = SelectedChannelStore.getChannelId?.() as string | undefined;
+		// The channel's data knows the messages off screen too, so it decides where a group ends; the rows on screen are the fallback.
+		const place = groups.place(channelId, id) ?? stored.place(channelId, id, layout.start);
+		const edges = { start: place.start, end: place.end };
+		const frame = rowFrame(layout, style);
+		// Reactions sit between a bubble and the next one of its group, so the bubble stretches only down to them.
+		const reach = measured.reactionsTop ?? layout.height;
+		const fitted = neighbours.fit(id, frame.frame, reach, place);
+		const author = messageAuthor(id, channelId);
+		const mention = mentionOf(id, channelId);
+		const paint = rowPaint({
+			layout,
+			measured: frame,
+			fitted,
+			place: edges,
+			style,
+			color: isOwnMessage(id, channelId) ? style.ownColor : style.color,
+			...(mention ? { mention } : {}),
+			...(author ? { author } : {}),
+			...(measured.avatar ? { avatarBox: measured.avatar } : {}),
+			scale,
+		});
+		// A group's last row shows the author's picture, which only its first row's bind carries.
+		if (paint.picture?.end && !paint.picture.start) {
+			Object.assign(paint.picture, authorPicture(paint.picture.author, channelId));
 		}
 
-		return (
-			readNumber(java, row, 'getWidth') === placed.width &&
-			readNumber(java, row, 'getHeight') === placed.height
-		);
+		const problem = bubbleProblem(fitted.frame, layout.width, layout.body.width);
+
+		if (problem) bounded(problems, id, problem);
+		else problems.delete(id);
+
+		await moveReactions(id, measured.reactions, accessoryGap(style));
+
+		const signature = JSON.stringify(paint);
+
+		if ('value' in row) unpainted.delete(row.value);
+
+		if (disposed || (!repaint && pushed.get(id) === signature)) return;
+
+		bounded(pushed, id, signature);
+		ui.run(paintMessage, id, paint, 'value' in row ? row.value : null);
 	}
 
-	const isInstance = (type: NativeJavaReference, view: NativeJavaReference) =>
-		isInstanceOf(java, type, view);
+	// Rows without a usable paint go first: while the list scrolls they show no bubble, while the rest only check theirs.
+	function takeNext() {
+		let next: [string, { row: NativeJavaReference; force: boolean }] | undefined;
 
-	function remeasure(row: NativeJavaReference) {
-		const id = messageId(row);
+		for (const entry of pending) {
+			if (unpainted.has(entry[0])) {
+				next = entry;
+				break;
+			}
 
-		if (id) placedRows.delete(id);
+			next ??= entry;
+		}
 
-		schedule(row);
+		if (next) pending.delete(next[0]);
+
+		return next?.[1];
 	}
 
-	async function isNested(row: NativeJavaReference): Promise<boolean> {
-		const [outer] = await java.findViews(row, MESSAGE_VIEW, {
-			direction: 'ancestors',
-			maxDepth: MAX_ANCESTORS,
-			maxResults: 1,
-			stopAtMatch: true,
+	async function work() {
+		for (let next = takeNext(); next && !disposed; next = takeNext()) {
+			await place(next.row, next.force).catch(report('place a bubble'));
+		}
+	}
+
+	// Each worker drains the queue and ends; a row queued while all of them are busy waits only for the next free one.
+	function startWorker() {
+		const worker = work().finally(() => {
+			workers.delete(worker);
+
+			// Rows painted from here changed size outside the list's layout pass.
+			if (!workers.size && !disposed) ui.run(relayoutList);
 		});
 
-		return !!javaReference(outer);
+		workers.add(worker);
 	}
 
-	function track(row: NativeJavaReference) {
-		if (tracked.some((entry) => sameJavaReference(entry, row))) return;
+	function schedule(row: NativeJavaReference, force = false) {
+		if (disposed || !('value' in row)) return;
 
-		tracked.push(row);
+		const queued = pending.get(row.value);
 
-		if (tracked.length > MAX_TRACKED) tracked.shift();
-	}
+		pending.set(row.value, { row, force: force || Boolean(queued?.force) });
 
-	async function restore(row: NativeJavaReference) {
-		const drawn = javaReference(java.getAssociatedObject(row, ours));
-
-		if (!drawn) return;
-
-		const background = javaReference(java.getAssociatedObject(row, original));
-
-		java.setAssociatedObject(row, ours, { type: 'null' });
-		await java.invokeAsync(row, 'setBackground', [
-			background ?? { type: 'null', class: 'android.graphics.drawable.Drawable' },
-		]);
-	}
-
-	function restoreOperations(row: NativeJavaReference): NativeJavaBatchOperation[] {
-		const drawn = javaReference(java.getAssociatedObject(row, ours));
-
-		if (!drawn) return [];
-
-		const background = javaReference(java.getAssociatedObject(row, original));
-
-		java.setAssociatedObject(row, ours, { type: 'null' });
-
-		return [
-			{
-				op: 'invoke',
-				handle: row,
-				name: 'setBackground',
-				args: [background ?? { type: 'null', class: 'android.graphics.drawable.Drawable' }],
-			},
-		];
-	}
-
-	function unshiftOperation(icon: NativeJavaReference): NativeJavaBatchOperation {
-		return { op: 'invoke', handle: icon, name: 'setTranslationX', args: [javaFloat(0)] };
-	}
-
-	function noteProblem(id: string | undefined, problem: string | undefined) {
-		const key = id ?? 'unknown message';
-
-		if (problem) problems.set(key, problem);
-		else problems.delete(key);
-
-		if (problems.size > MAX_TRACKED) problems.delete(problems.keys().next().value!);
-	}
-
-	const messageId = (row: NativeJavaReference) => messageIdOf(java, row);
-
-	async function isBubble(background: NativeJavaReference): Promise<boolean> {
-		if (!isInstance(layerDrawableClass, background)) return false;
-
-		const [layer] = await runOnMain(java, [
-			{
-				op: 'invoke',
-				handle: background,
-				name: 'findDrawableByLayerId',
-				args: [javaInt(BUBBLE_LAYER_ID)],
-			},
-		]);
-
-		return !!javaReference(layer);
-	}
-
-	async function place(row: NativeJavaReference) {
-		const placedId = messageId(row);
-
-		if (placedId && alreadyPlaced(row, placedId)) return;
-
-		const style = currentAppearance();
-		const card = style.layout === BubbleLayout.card;
-		const [measure, scale] = await Promise.all([measureRow(row, !card), density(row)]);
-		const area = card ? measure?.column : measure?.area;
-
-		if (disposed) return;
-
-		if (!measure || !area) {
-			if (placedId) placedRows.delete(placedId);
-
-			await runOnMain(java, measure?.iconShifts ?? []);
-
-			return restore(row);
-		}
-
-		const box: Box = {
-			x: area.left,
-			y: area.top,
-			width: area.right - area.left,
-			height: area.bottom - area.top,
-		};
-		const inset = card ? CARD_INSET * scale : style.horizontalPadding * scale;
-		const frame = card
-			? cardFrame(box, inset)
-			: bubbleFrame(
-					box,
-					0,
-					{ horizontal: inset, vertical: style.verticalPadding * scale },
-					measure.header?.shown ? measure.header.bottom : undefined,
-				);
-		const insets = rowInsets(frame, measure.width, measure.height);
-
-		noteProblem(
-			messageId(row),
-			bubbleProblem(
-				frame,
-				measure.width,
-				box.width,
-				measure.columnLeft === undefined ? undefined : measure.columnLeft - inset,
-			),
-		);
-		const shape = java.construct('android.graphics.drawable.GradientDrawable', []);
-
-		java.invoke(shape, 'setCornerRadius', [javaFloat(style.radius * scale)]);
-		java.invoke(shape, 'setColor', [
-			javaInt(argb(isOwnMessage(messageId(row)) ? style.ownColor : style.color)),
-		]);
-
-		const bubble = java.construct('android.graphics.drawable.LayerDrawable', [
-			{ type: 'array', componentType: 'android.graphics.drawable.Drawable', value: [shape] },
-		]);
-
-		java.invoke(bubble, 'setId', [javaInt(0), javaInt(BUBBLE_LAYER_ID)]);
-		java.invoke(bubble, 'setLayerInset', [
-			javaInt(0),
-			javaInt(insets.left),
-			javaInt(insets.top),
-			javaInt(insets.right),
-			javaInt(insets.bottom),
-		]);
-		java.invoke(bubble, 'setPadding', [javaInt(0), javaInt(0), javaInt(0), javaInt(0)]);
-		const current = measure.background;
-		const drawn = javaReference(java.getAssociatedObject(row, ours));
-
-		if (!drawn || !current || !sameJavaReference(current, drawn)) {
-			const stale = current && (await isBubble(current));
-
-			java.setAssociatedObject(row, original, stale || !current ? { type: 'null' } : current);
-		}
-
-		if (disposed) return;
-
-		java.setAssociatedObject(row, ours, bubble);
-		const drawnMessage = messageId(row);
-
-		java.setAssociatedObject(row, drawnFor, javaString(drawnMessage ?? ''));
-		track(row);
-		await runOnMain(java, [
-			...measure.iconShifts,
-			{ op: 'invoke', handle: row, name: 'setBackground', args: [bubble] },
-		]);
-
-		if (drawnMessage) {
-			rememberPlaced(drawnMessage, measure.width, measure.height);
-			ui.run(rememberBubble, drawnMessage, {
-				...insets,
-				radius: style.radius * scale,
-				color: argb(isOwnMessage(drawnMessage) ? style.ownColor : style.color),
-				rowWidth: measure.width,
-			});
-		}
-	}
-
-	let flushing: Promise<void> = Promise.resolve();
-
-	async function placeAll() {
-		const queue = pending.splice(0);
-
-		placing++;
-
-		async function worker() {
-			for (let row = queue.shift(); row && !disposed; row = queue.shift()) {
-				await place(row).catch((error) => {
-					if (!isCancellation(error)) {
-						logger.error(`Failed to place a bubble:`, error);
-					}
-				});
-			}
-		}
-
-		try {
-			await Promise.all(Array.from({ length: PLACEMENT_WORKERS }, worker));
-		} finally {
-			placing--;
-		}
-	}
-
-	function flush() {
-		scheduled = false;
-		flushing = flushing.then(placeAll);
-
-		return flushing;
-	}
-
-	function schedule(row: NativeJavaReference) {
-		if (disposed || pending.some((entry) => sameJavaReference(entry, row))) return;
-
-		pending.push(row);
-
-		if (!scheduled) {
-			scheduled = true;
-			setTimeout(() => void flush(), 0);
-		}
-	}
-
-	async function scheduleRow(accessories: NativeJavaReference) {
-		const row = javaReference(await java.invokeAsync(accessories, 'getParent', []));
-
-		if (!row || !isInstance(messageClass, row)) return;
-
-		const id = messageId(row);
-
-		if (id && alreadyPlaced(row, id)) return;
-
-		if (!(await isNested(row))) schedule(row);
-	}
-
-	const token = hooks.hook(
-		AndroidClass.accessories,
-		'onLayout',
-		LAYOUT_PARAMETERS,
-		RECEIVER_ONLY_AFTER_CALL,
-		({ self }) => {
-			const accessories = javaReference(self);
-
-			if (!accessories) return;
-
-			void scheduleRow(accessories).catch((error) => {
-				if (!isCancellation(error)) {
-					logger.error(`Failed to find a bubble's row:`, error);
-				}
-			});
-		},
-	);
-
-	async function lostBubbles(): Promise<string[]> {
-		const drawn = tracked.filter((row) => javaReference(java.getAssociatedObject(row, ours)));
-		const states = await runOnMain(
-			java,
-			drawn.flatMap((row) => readCalls(row, ['isAttachedToWindow', 'getBackground'])),
-		);
-		const attached = drawn
-			.map((row, index) => ({
-				row,
-				attached: javaFlag(states[index * 2]),
-				background: javaReference(states[index * 2 + 1]),
-			}))
-			.filter((entry) => entry.attached);
-		const layered = attached.filter(
-			(entry) => entry.background && isInstance(layerDrawableClass, entry.background),
-		);
-		const layers = await runOnMain(
-			java,
-			layered.map((entry) => ({
-				op: 'invoke' as const,
-				handle: entry.background!,
-				name: 'findDrawableByLayerId',
-				args: [javaInt(BUBBLE_LAYER_ID)],
-			})),
-		);
-		const bubbled = new Set(
-			layered.filter((_, index) => javaReference(layers[index])).map((entry) => entry.row),
-		);
-
-		return attached
-			.filter((entry) => !bubbled.has(entry.row))
-			.map((entry) => `${messageId(entry.row) ?? 'a row'} lost its bubble`);
+		if (workers.size < PLACEMENT_WORKERS) startWorker();
 	}
 
 	async function refreshVisible() {
@@ -432,61 +348,53 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 
 		if (!root) return;
 
-		for (const row of await findViewsOfClass(java, root, MESSAGE_VIEW)) {
-			if (!(await isNested(row))) schedule(row);
-		}
+		for (const row of await findViewsOfClass(java, root, MESSAGE_VIEW)) schedule(row, true);
 	}
 
-	refreshVisible().catch((error) => {
-		if (!isCancellation(error)) {
-			logger.error(`Failed to scan the views on screen:`, error);
-		}
-	});
+	refreshVisible().catch(report('scan the rows on screen'));
 
 	return {
-		placed: () => tracked.length,
-		settling: () => scheduled || placing > 0 || pending.length > 0,
-		problems: async () => [
-			...[...problems].map(([id, problem]) => `${id} ${problem}`),
-			...(await lostBubbles()),
-		],
+		placed: () => pushed.size,
+		settling: () => workers.size > 0 || pending.size > 0,
+		problems: async () => [...problems].map(([id, problem]) => `${id} ${problem}`),
 		refresh() {
-			appearanceRevision++;
-			ui.run(forgetBubbles);
-
-			if (currentAppearance().layout === BubbleLayout.card && shiftedIcons.length) {
-				runOnMain(java, shiftedIcons.splice(0).map(unshiftOperation)).catch((error) => {
-					if (!isCancellation(error)) {
-						logger.error(`Failed to put the footer icons back:`, error);
-					}
-				});
-			}
-
-			for (const row of tracked) schedule(row);
-
-			refreshVisible().catch((error) => {
-				if (!isCancellation(error)) {
-					logger.error(`Failed to scan the views on screen:`, error);
-				}
-			});
+			ui.run(setRowConfig, rowConfig(currentAppearance()));
+			ui.run(relayoutList);
+			neighbours.clear();
+			pushed.clear();
+			sizes.clear();
+			refreshVisible().catch(report('scan the rows on screen'));
 		},
 		async dispose() {
 			disposed = true;
-			scope.dispose();
-			hooks.remove(token);
-			pending.length = 0;
-			await flushing;
+			pending.clear();
+			await Promise.all(workers);
+			await ui.call(restoreRows).catch(report('restore the rows'));
+			await ui.call(restoreMosaics).catch(report('restore the media mosaics'));
+			await runOnMain(
+				java,
+				[...reactions.values()].flatMap((view) => {
+					const params = javaReference(java.invoke(view, 'getLayoutParams', []));
 
-			try {
-				await runOnMain(java, [
-					...tracked.splice(0).flatMap(restoreOperations),
-					...shiftedIcons.splice(0).map(unshiftOperation),
-				]);
-			} catch (error) {
-				if (!isCancellation(error)) {
-					logger.error(`Failed to restore the rows:`, error);
-				}
-			}
+					return params
+						? [
+								{
+									op: 'setField' as const,
+									handle: params,
+									name: 'topMargin',
+									value: javaInt(0),
+								},
+								{
+									op: 'invoke' as const,
+									handle: view,
+									name: 'setLayoutParams',
+									args: [params],
+								},
+							]
+						: [];
+				}),
+			).catch(report('put the reactions back'));
+			scope.dispose();
 		},
 	};
 }
