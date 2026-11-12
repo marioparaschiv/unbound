@@ -680,14 +680,14 @@ void LoaderPipeline::checkForUpdate(uint64_t token, size_t attempt)
                        attempt);
 }
 
-bool LoaderPipeline::checkIfDue(const char *reason)
+bool LoaderPipeline::checkIfDue(const char *reason, double intervalSeconds)
 {
     if (!preferences::loaderEnabled(settings_) || checking_.load())
     {
         return false;
     }
     int64_t last = lastCheckMs_.load();
-    bool due = last != 0 && nowMs() - last >= static_cast<int64_t>(kForegroundCheckSeconds * 1000);
+    bool    due  = last != 0 && nowMs() - last >= static_cast<int64_t>(intervalSeconds * 1000);
     if (!due && !waitingForWifi_.load())
     {
         return false;
@@ -699,12 +699,13 @@ bool LoaderPipeline::checkIfDue(const char *reason)
 
 void LoaderPipeline::onForeground()
 {
-    checkIfDue("Back in the foreground; checking for a newer bundle.");
+    checkIfDue("Back in the foreground; checking for a newer bundle.", kForegroundCheckSeconds);
 }
 
 bool LoaderPipeline::onBackground()
 {
-    checkIfDue("Going to the background; checking for a newer bundle while there is time.");
+    checkIfDue("Going to the background; checking for a newer bundle while there is time.",
+               kBackgroundCheckSeconds);
     return checking_.load();
 }
 

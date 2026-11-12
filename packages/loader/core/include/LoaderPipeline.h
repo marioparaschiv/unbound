@@ -107,6 +107,7 @@ public:
 
     // Seconds since the last update check before returning to the foreground checks again.
     static constexpr double kForegroundCheckSeconds = 4 * 60 * 60;
+    static constexpr double kBackgroundCheckSeconds = 30 * 60;
     // Discord returned to the foreground: checks for a newer bundle if the last check is old, or
     // if one waited for Wi-Fi.
     void onForeground();
@@ -138,7 +139,7 @@ private:
     void updateInBackground(std::string savedPath, bool hasSaved, bool waitForDownload,
                             uint64_t token, size_t attempt = 0);
     void checkForUpdate(uint64_t token, size_t attempt);
-    bool checkIfDue(const char *reason);
+    bool checkIfDue(const char *reason, double intervalSeconds);
     bool waitsForWifi(bool hasSaved, bool waitForDownload);
     bool savedFlavourIsCurrent(const std::string &path) const;
     bool settleFirstDownload(uint64_t token, std::optional<std::string> path);
