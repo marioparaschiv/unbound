@@ -1,7 +1,7 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { logs, metro, native, patches, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import type { NativeObjectHandle } from '@unbound-app/api/native';
-import { AppState, NativeModules } from 'react-native';
+import { AppState } from 'react-native';
 
 const sent: string[] = [];
 const appState = new Set<(state: string) => void>();
@@ -9,10 +9,6 @@ const runtimeListeners = new Set<(payload: unknown) => void>();
 const rotations: number[] = [];
 let inputTop = 601;
 let inputView: NativeObjectHandle | undefined;
-
-function setDeviceLocale(locale: string) {
-	Object.assign(NativeModules, { SettingsManager: { settings: { AppleLocale: locale } } });
-}
 
 function registerScreen() {
 	let rootView: NativeObjectHandle;
@@ -70,7 +66,6 @@ beforeEach(() => {
 	runtimeListeners.clear();
 	rotations.length = 0;
 	inputTop = 601;
-	setDeviceLocale('en_AU');
 	registerScreen();
 	metro.register(Messages);
 	// The kit's AppState never fires, so a test collects the listener to fire it.
@@ -83,8 +78,6 @@ beforeEach(() => {
 		return { remove: () => appState.delete(listener) };
 	}) as never);
 });
-
-afterEach(() => void delete (NativeModules as Record<string, unknown>).SettingsManager);
 
 // The rotation awaits the bridge a few times, so a test lets those settle.
 async function settle() {
@@ -107,7 +100,7 @@ async function startAussie() {
 	await settle();
 }
 
-describe('on an Australian device', () => {
+describe('once started', () => {
 	test('turns a message you send or edit upside down', async () => {
 		await startAussie();
 
@@ -161,71 +154,5 @@ describe('on an Australian device', () => {
 		await stopPlugin();
 
 		expect(logs.entries.some(({ level }) => level === 'error')).toBe(true);
-	});
-});
-
-test('does nothing on a device that is not set to Australian English', async () => {
-	setDeviceLocale('en_US');
-	await startAussie();
-
-	Messages.sendMessage('1', { content: 'hello' });
-
-	expect(sent).toEqual(['hello']);
-	expect(rotations).toEqual([]);
-	expect(patches.applied).toEqual([]);
-	await stopPlugin();
-});
-
-test('accepts Australian English in either separator form and with extensions', async () => {
-	const { isAussieLocale } = await import('~/lib/locale');
-
-	for (const locale of ['en-AU', 'en_AU', 'en-AU-u-ca-gregory']) {
-		expect(isAussieLocale(locale)).toBe(true);
-	}
-	for (const locale of ['en-US', 'en-AUS', 'de-AT', '']) {
-		expect(isAussieLocale(locale)).toBe(false);
-	}
-});
-
-describe('on Android', () => {
-	beforeEach(() => {
-		native.setPlatform('android');
-		spyOn(console, 'error').mockImplementation(() => {});
-	});
-
-	afterEach(() => void delete (NativeModules as Record<string, unknown>).I18nManager);
-
-	async function startWith(modules: Record<string, unknown>) {
-		Object.assign(NativeModules, modules);
-		await startAussie();
-
-		const applied = patches.applied.length;
-
-		await stopPlugin();
-
-		return applied;
-	}
-
-	test('reads the locale from the TurboModule constants when the property is missing', async () => {
-		const applied = await startWith({
-			I18nManager: { getConstants: () => ({ localeIdentifier: 'en_AU' }) },
-		});
-
-		expect(applied).toBe(2);
-	});
-
-	test('prefers the legacy property', async () => {
-		const applied = await startWith({
-			I18nManager: {
-				localeIdentifier: 'en_GB',
-				getConstants: () => ({ localeIdentifier: 'en_AU' }),
-			},
-		});
-
-		expect(applied).toBe(0);
-	});
-
-	test('survives a missing module', async () => {
-		expect(await startWith({})).toBe(0);
 	});
 });
