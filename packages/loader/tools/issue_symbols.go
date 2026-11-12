@@ -1,6 +1,7 @@
 package main
 
 import (
+	"debug/macho"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -17,6 +19,7 @@ var (
 	loaderStackFramePattern = regexp.MustCompile(`#(\d+)\s+0x[0-9a-fA-F]+\s+(Unbound\.dylib|libunbound[^\s]*\.so)\s+\+\s+0x([0-9a-fA-F]+)`)
 	issueLoaderPattern      = regexp.MustCompile(`loader (\d+\.\d+\.\d+)`)
 	issuePlatformPattern    = regexp.MustCompile(`\bon (iOS|Android)\b`)
+	imageLinePattern        = regexp.MustCompile(`(?m)^Image (\S+) ([0-9A-Fa-f-]+)$`)
 )
 
 const symbolicatedMarker = "<!-- unbound-symbolicated -->"
@@ -25,6 +28,12 @@ type issueCrash struct {
 	platform string
 	version  string
 	stack    string
+	image    imageIdentity
+}
+
+type imageIdentity struct {
+	name string
+	id   string
 }
 
 type releaseAsset struct {
@@ -66,8 +75,8 @@ func runSymbolicateIssue(args []string) error {
 	if err := json.Unmarshal(listing, &releases); err != nil {
 		return fmt.Errorf("read releases: %w", err)
 	}
-	tag, ok := pickSymbolRelease(releases, crash)
-	if !ok {
+	candidates := symbolReleaseCandidates(releases, crash)
+	if len(candidates) == 0 {
 		fmt.Printf("No release carries %s symbols for loader %s.\n", crash.platform, crash.version)
 		return nil
 	}
@@ -76,20 +85,28 @@ func runSymbolicateIssue(args []string) error {
 		return err
 	}
 	defer os.RemoveAll(directory)
-	archive := symbolArchiveName(crash.platform)
-	if _, err := cli.run("release", "download", tag, "--repo", *repository, "--pattern", archive, "--dir", directory); err != nil {
-		return err
-	}
 	binaryPath, err := findLLVMSymbolizer(*symbolizer)
 	if err != nil {
 		return err
 	}
-	output, count, err := symbolicateIssueStack(crash, filepath.Join(directory, archive), llvmSymbolizer(binaryPath))
-	if err != nil {
-		return err
+	archive := symbolArchiveName(crash.platform)
+	var tag, output string
+	for index, candidate := range candidates {
+		target := filepath.Join(directory, strconv.Itoa(index))
+		if _, err := cli.run("release", "download", candidate, "--repo", *repository, "--pattern", archive, "--dir", target); err != nil {
+			continue
+		}
+		symbolicated, count, matched, err := symbolicateIssueStack(crash, filepath.Join(target, archive), llvmSymbolizer(binaryPath))
+		if err != nil {
+			return err
+		}
+		if matched && count > 0 {
+			tag, output = candidate, symbolicated
+			break
+		}
 	}
-	if count == 0 {
-		fmt.Println("The native stack has no Unbound frames.")
+	if tag == "" {
+		fmt.Println("No release has symbols matching this crash's image.")
 		return nil
 	}
 	comment := issueSymbolsComment(tag, crash.version, output)
@@ -112,7 +129,11 @@ func parseIssueCrash(body string) (issueCrash, bool) {
 	if stack == "" || version == nil || platform == nil || strings.Contains(body, symbolicatedMarker) {
 		return issueCrash{}, false
 	}
-	return issueCrash{platform: strings.ToLower(platform[1]), version: version[1], stack: stack}, true
+	crash := issueCrash{platform: strings.ToLower(platform[1]), version: version[1], stack: stack}
+	if match := imageLinePattern.FindStringSubmatch(stack); match != nil {
+		crash.image = imageIdentity{name: match[1], id: match[2]}
+	}
+	return crash, true
 }
 
 func nativeStackSection(body string) string {
@@ -132,6 +153,34 @@ func symbolArchiveName(platform string) string {
 	return "unbound-" + platform + "-symbols.zip"
 }
 
+const maxSymbolCandidates = 10
+
+func symbolReleaseCandidates(releases []symbolRelease, crash issueCrash) []string {
+	var candidates []string
+	if tag, ok := pickSymbolRelease(releases, crash); ok {
+		candidates = append(candidates, tag)
+	}
+	if crash.image.id == "" {
+		return candidates
+	}
+	archive := symbolArchiveName(crash.platform)
+	for _, release := range releases {
+		if len(candidates) >= maxSymbolCandidates {
+			break
+		}
+		if release.TagName == "" || slices.Contains(candidates, release.TagName) {
+			continue
+		}
+		for _, asset := range release.Assets {
+			if asset.Name == archive {
+				candidates = append(candidates, release.TagName)
+				break
+			}
+		}
+	}
+	return candidates
+}
+
 func pickSymbolRelease(releases []symbolRelease, crash issueCrash) (string, bool) {
 	archive := symbolArchiveName(crash.platform)
 	versioned := "app.unbound.ios_" + crash.version + "_iphoneos-arm64.deb"
@@ -148,25 +197,59 @@ func pickSymbolRelease(releases []symbolRelease, crash issueCrash) (string, bool
 	return "", false
 }
 
-func symbolicateIssueStack(crash issueCrash, archive string, symbolize symbolizeFunc) (string, int, error) {
+func symbolicateIssueStack(crash issueCrash, archive string, symbolize symbolizeFunc) (string, int, bool, error) {
 	directory, cleanup, err := openSymbolDirectory(archive)
 	if err != nil {
-		return "", 0, err
+		return "", 0, false, err
 	}
 	defer cleanup()
 	if crash.platform == "android" {
 		files, err := loadSymbolFiles(directory)
 		if err != nil {
-			return "", 0, err
+			return "", 0, false, err
 		}
-		return symbolicateAndroidBacktrace(crash.stack, "arm64-v8a", files, symbolize)
+		if crash.image.id != "" {
+			for _, file := range files {
+				if strings.EqualFold(file.buildID, crash.image.id) {
+					output, count, err := symbolicateLoaderStack(crash.stack, file.path, symbolize)
+					return output, count, true, err
+				}
+			}
+		}
+		output, count, err := symbolicateAndroidBacktrace(crash.stack, "arm64-v8a", files, symbolize)
+		return output, count, err == nil && count > 0 && !strings.Contains(output, "symbols are for build ID"), err
 	}
 	object, err := findDSYMObject(directory)
 	if err != nil {
-		return "", 0, err
+		return "", 0, false, err
 	}
-	return symbolicateLoaderStack(crash.stack, object, symbolize)
+	if crash.image.id != "" {
+		uuid, err := machOUUID(object)
+		if err != nil || !strings.EqualFold(uuid, crash.image.id) {
+			return "", 0, false, nil
+		}
+	}
+	output, count, err := symbolicateLoaderStack(crash.stack, object, symbolize)
+	return output, count, true, err
 }
+
+func machOUUID(path string) (string, error) {
+	file, err := macho.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+	for _, load := range file.Loads {
+		raw := load.Raw()
+		if len(raw) >= 24 && file.ByteOrder.Uint32(raw[0:4]) == machOUUIDCommand {
+			hex := strings.ToUpper(fmt.Sprintf("%x", raw[8:24]))
+			return hex[0:8] + "-" + hex[8:12] + "-" + hex[12:16] + "-" + hex[16:20] + "-" + hex[20:], nil
+		}
+	}
+	return "", errors.New("the dSYM has no LC_UUID")
+}
+
+const machOUUIDCommand = 0x1b
 
 func findDSYMObject(directory string) (string, error) {
 	var found string

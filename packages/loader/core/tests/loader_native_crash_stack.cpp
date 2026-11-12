@@ -49,7 +49,8 @@ void writesTheCrashingStackForTheNextLaunch()
 
     std::optional<std::string> stack =
         loader::readTextFile((directory / loader::kNativeCrashFile).string());
-    assert(stack && stack->rfind("Signal 11\n#0 0x", 0) == 0);
+    assert(stack && stack->rfind("Signal 11\nImage ", 0) == 0);
+    assert(stack->find("\n#0 0x") != std::string::npos);
 
     // The next process reads it before its own handler starts a fresh file.
     assert(loader::installAddonCrashHandler(marker));

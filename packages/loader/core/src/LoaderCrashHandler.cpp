@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cerrno>
 #include <csignal>
+#include <cstring>
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <mutex>
@@ -23,6 +24,7 @@
 
 #include "LoaderAddonActivity.h"
 #include "LoaderFiles.h"
+#include "LoaderImageIdentity.h"
 #include "LoaderLaunchReport.h"
 #include "LoaderLog.h"
 
@@ -33,6 +35,8 @@ static constexpr std::array<int, 6> kCrashSignals = {SIGSEGV, SIGBUS, SIGABRT,
 static std::array<struct sigaction, kCrashSignals.size()> gPreviousActions;
 static std::atomic<int>                                   gMarkerDescriptor{-1};
 static std::atomic_bool                                   gRecorded{false};
+static char                                               gImageLine[256];
+static size_t                                             gImageLineLength = 0;
 static std::atomic_bool                                   gInstalled{false};
 static std::atomic<int>                                   gStackDescriptor{-1};
 static std::string                                        gPreviousNativeCrash;
@@ -159,6 +163,11 @@ static void writeNativeStack(int signal, void *context)
     writeText(descriptor, "Signal ");
     writeDecimal(descriptor, static_cast<unsigned>(signal));
     writeText(descriptor, "\n");
+    if (gImageLineLength > 0)
+    {
+        ssize_t written = write(descriptor, gImageLine, gImageLineLength);
+        (void) written;
+    }
     writeCrashingAddonLine(descriptor);
 
     uintptr_t pc = 0, lr = 0, fp = 0;
@@ -290,6 +299,13 @@ bool installAddonCrashHandler(const std::string &markerPath)
     if (gInstalled.load())
     {
         return true;
+    }
+
+    std::string imageLine = imageIdentityLine(loaderImageIdentity());
+    if (imageLine.size() < sizeof(gImageLine))
+    {
+        std::memcpy(gImageLine, imageLine.data(), imageLine.size());
+        gImageLineLength = imageLine.size();
     }
 
     int descriptor = open(markerPath.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
