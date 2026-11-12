@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.1] - 2026-11-12
+
+### Fixed
+
+- On iOS, the bubble and avatar slide with the message when you swipe to reply instead of staying behind.
+
 ## [1.6.0] - 2026-11-12
 
 ### Added

@@ -105,6 +105,10 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 
 	async function bubbleFor(key: string, cell: NativeObjectHandle): Promise<NativeObjectHandle> {
 		const existing = bubbles.get(key);
+		// Swipe to reply moves the content view, so the bubble lives in it to move along.
+		const host =
+			((await objc.invokeAsync(cell, 'contentView', [])) as NativeObjectHandle | null) ??
+			cell;
 		// A stopping instance's last draw can remove this bubble and keep its own, so a detached bubble is dropped for the cell's.
 		const parent = existing
 			? ((await objc.invokeAsync(
@@ -114,7 +118,7 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 				)) as NativeObjectHandle | null)
 			: null;
 
-		if (existing && parent && objc.call(parent, 'isEqual:', cell)) return existing.bubble;
+		if (existing && parent && objc.call(parent, 'isEqual:', host)) return existing.bubble;
 
 		bubbles.delete(key);
 		drawnBubbles.forget(key);
@@ -136,7 +140,7 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 			{ target: bubble, selector: 'setTag:', args: [BUBBLE_TAG] },
 			{ target: bubble, selector: 'setHidden:', args: [true] },
 			{ target: bubble, selector: 'setUserInteractionEnabled:', args: [false] },
-			{ target: cell, selector: 'insertSubview:atIndex:', args: [bubble, 0] },
+			{ target: host, selector: 'insertSubview:atIndex:', args: [bubble, 0] },
 		]);
 
 		if (disposed) await objc.invokeAsync(bubble, 'removeFromSuperview', []);

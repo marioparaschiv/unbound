@@ -400,7 +400,11 @@ function pictureView(objc: NativeObjCBridge, cell: NativeObjectHandle): NativeOb
 		objc.invoke(holder, 'addSubview:', [decoration]);
 	}
 
-	objc.invoke(cell, 'addSubview:', [holder]);
+	objc.invoke(
+		(objc.invoke(cell, 'contentView', []) as NativeObjectHandle | null) ?? cell,
+		'addSubview:',
+		[holder],
+	);
 
 	return holder;
 }
