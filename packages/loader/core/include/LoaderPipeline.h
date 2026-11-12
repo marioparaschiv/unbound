@@ -143,12 +143,14 @@ private:
     bool savedFlavourIsCurrent(const std::string &path) const;
     bool settleFirstDownload(uint64_t token, std::optional<std::string> path);
     std::optional<SavedBundle> awaitFirstDownload(uint64_t token);
-    bool evaluate(facebook::jsi::Runtime &runtime, SavedBundle saved, uint64_t token);
-    void injectPreBundle(facebook::jsi::Runtime &runtime, const std::string &bundlePath);
-    void announceCrashDisabledAddons();
-    void guardLaunch();
-    void promotePendingBundle();
-    void recordRunningBundle(const std::string &path);
+    bool        evaluate(facebook::jsi::Runtime &runtime, SavedBundle saved, uint64_t token);
+    void        injectPreBundle(facebook::jsi::Runtime &runtime, const std::string &bundlePath);
+    void        announceCrashDisabledAddons();
+    void        guardLaunch();
+    void        promotePendingBundle();
+    void        recordRunningBundle(const std::string &path);
+    std::string recoveryKey() const;
+    void        leaveAutomaticRecoveryIfChanged();
 
     std::shared_ptr<PipelineHost> host_;
     SettingsStore                &settings_;
