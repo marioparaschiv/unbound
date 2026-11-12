@@ -125,7 +125,11 @@ async function uploadCard(
 	path: string,
 ): Promise<CloudUpload | undefined> {
 	const { createUnboundClient } = await import('~/account/client');
-	const card = await createUnboundClient()('POST /api/v1/debug-cards', { body: info });
+	// The plist goes to the server alone, which reduces it to JSON in the alt text.
+	const entitlements = readEntitlements() || undefined;
+	const card = await createUnboundClient()('POST /api/v1/debug-cards', {
+		body: { ...info, entitlements },
+	});
 
 	await fs.writeFile(path, card.image, 'base64');
 
