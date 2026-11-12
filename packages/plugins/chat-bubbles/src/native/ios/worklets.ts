@@ -17,6 +17,7 @@ import {
 	type CellPaint,
 	type CellState,
 } from '~/native/ios/ui-cell';
+import { isStandaloneCell } from '~/native/ios/standalone-cell';
 
 const STATE_KEY = '__unboundChatBubbles';
 const MAX_CACHED = 400;
@@ -500,6 +501,8 @@ export function installBubbleGuards(
 		const color = args[0] as NativeObjectHandle | null;
 
 		try {
+			if (isStandaloneCell(objc, self)) return;
+
 			if (!color || !objc.call(color, 'isEqual:', clear)) {
 				objc.invoke(self, 'setBackgroundColor:', [clear]);
 			}
@@ -539,6 +542,8 @@ export function installBubbleGuards(
 	objc.hook(classes.messageCell, 'layoutSubviews', {
 		after: ({ self }) => {
 			try {
+				if (isStandaloneCell(objc, self)) return;
+
 				placeCached(objc, current, self, classes.bubbleTag);
 			} catch (error) {
 				report(error);

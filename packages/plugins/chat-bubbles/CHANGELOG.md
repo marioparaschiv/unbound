@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.3] - 2026-11-12
+
+### Fixed
+
+- On iOS, pinned messages and in-app notifications keep Discord's own look instead of losing their text.
+
 ## [1.6.2] - 2026-11-12
 
 ### Fixed
