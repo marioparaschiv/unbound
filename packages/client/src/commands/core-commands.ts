@@ -42,7 +42,12 @@ export function start() {
 		},
 		debug: {
 			description: 'UNBOUND_COMMAND_DEBUG_DESC',
-			execute: (_args, context) => sendDebugReport(context?.channel?.id),
+			options: {
+				message: option.string({
+					description: 'UNBOUND_COMMAND_DEBUG_MESSAGE_DESC',
+				}),
+			},
+			execute: ({ message }, context) => sendDebugReport(context?.channel?.id, message),
 		},
 		recovery: {
 			description: 'UNBOUND_COMMAND_RECOVERY_DESC',

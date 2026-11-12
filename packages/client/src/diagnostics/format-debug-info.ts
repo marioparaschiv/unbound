@@ -1,4 +1,7 @@
-/** What `/debug` reports about the running client. Every field is already a display string. */
+/** How many addons of one kind are installed and enabled. */
+export type AddonCount = { enabled: number; installed: number };
+
+/** What `/debug` reports about the running client. Every field but the addon counts is already a display string. */
 export type DebugInfo = {
 	client: string;
 	commit: string;
@@ -19,6 +22,8 @@ export type DebugInfo = {
 	os: string;
 	device: string;
 	flags: string[];
+	plugins?: AddonCount;
+	themes?: AddonCount;
 };
 
 function sentenceCase(text: string): string {
