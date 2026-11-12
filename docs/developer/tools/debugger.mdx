@@ -119,7 +119,8 @@ A controller can:
 - Evaluate code. The terminal mirrors the request in magenta, tagged `[mcp]`, then the result.
 - Receive console output and connection status.
 - Push a built plugin bundle and manifest. The device reloads it and shows a **Hot reload** toast, or **Hot reload failed** with the error.
-- List the device's native views one level at a time, and outline one on screen.
+- List the device's native views one level at a time, 100 at most per request, read one view's class chain and properties, and outline one on screen.
+- Explore a native object or class: its superclass chain, its members a page at a time, and the values of its fields, properties and ivars.
 - Act as the [React DevTools](#react-devtools-and-the-view-tree) frontend.
 
 ## Wire Protocol
@@ -134,12 +135,35 @@ A controller can:
 | `plugin-push-result` | Device to the controller that asked | `id`, `ok`, `error` |
 | `log` | Device to all controllers | `level` (`1` log, `2` warn, `3` error), `message` |
 | `device-status` | Bridge to controllers | `connected` |
-| `views-request` | Controller to device | `id`, `parent` (omit for the root views) |
-| `views-result` | Device to the controller that asked | `id`, `ok`, `nodes` or `error` |
+| `views-request` | Controller to device | `id`, `parent` (omit for the root views), `offset`, `limit` (at most `VIEWS_PAGE_SIZE`, 100) |
+| `views-result` | Device to the controller that asked | `id`, `ok`, `nodes` and `total` (the level's size), or `error` |
+| `view-details-request` | Controller to device | `id`, `node`, a listed view id |
+| `view-details-result` | Device to the controller that asked | `id`, `ok`, `details` (`classChain`, `sections` of `{ key, value, kind?, unit? }` properties) or `error` |
 | `view-highlight` | Controller to device | `node`, a view id or `null` to clear |
+| `explorer-object-request` | Controller to device | `id`, `target`: `{ node }` (a listed view id), `{ object }` (a ref from an earlier result) or `{ className }` |
+| `explorer-object-result` | Device to the controller that asked | `id`, `ok`, `object` (`ref`, `className`, `description`, `platform`, `chain` of classes with their `image`, `instanceSize` and member `counts`) or `error` and `code` |
+| `explorer-members-request` | Controller to device | `id`, `className`, `kind`, `offset`, `limit` (at most `EXPLORER_MEMBERS_PAGE_SIZE`, 100), `filter` |
+| `explorer-members-result` | Device to the controller that asked | `id`, `ok`, `members` and `total` (matches for the filter), or `error` and `code` |
+| `explorer-values-request` | Controller to device | `id`, `object` (a ref), `className`, `kind` (`properties` or `ivars` on iOS, `fields` on Android), `names` (at most `EXPLORER_VALUES_LIMIT`, 50), `invokeGetters` |
+| `explorer-values-result` | Device to the controller that asked | `id`, `ok`, `values` of `{ name, kind, text, object?, className? }`, one per name, or `error` and `code` |
+| `explorer-classes-request` | Controller to device | `id`, `image` (omit to list images), `filter`, `offset`, `limit` (at most `EXPLORER_CLASSES_PAGE_SIZE`, 200) |
+| `explorer-classes-result` | Device to the controller that asked | `id`, `ok`, `total` and `images` (`{ path, name, classCount }`) or `classes` (names), or `error` and `code` |
 | `react-devtools` | Controller to device, device to the controller that last sent one | React DevTools' `event` and `payload`. The device sends `unbound:backend-status` with `{ connected, error? }` when its session starts or cannot start. |
 
 A result echoes its request's `id`, which routes it back to the right controller.
+
+A failed explorer result carries a `code`:
+
+| `code` | Meaning |
+| --- | --- |
+| `stale` | The ref or view is gone: the object was released, the tree was refreshed, or Discord reloaded. Open the class by name instead. |
+| `disabled` | iOS: neither developer mode nor the debugger is on, so the loader won't load `UnboundInspector.dylib`. |
+| `unavailable` | iOS: the inspector failed to load. `error` holds the reason. |
+| `unsupported` | The platform can't answer. Android has no class list, so open classes by name. |
+| `unknown-class` | No class has that name. |
+| `failed` | Anything else. `error` says what. |
+
+Values come back for the rows asked for, and each one fails on its own as `kind: "error"`. A value that holds an object includes an `object` ref, which you can open with another `explorer-object-request`. On iOS, reading a property only runs code when its getter is computed and the request sets `invokeGetters`. Until then the value comes back as `skipped`. Getters and ivars that are known to be unsafe always come back as `skipped`.
 
 ## Troubleshooting
 
