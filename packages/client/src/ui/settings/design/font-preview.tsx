@@ -48,7 +48,7 @@ function FontPreview({ lines }: FontPreviewProps) {
 					<>
 						<FontSample
 							text={format('UNBOUND_FONTS_PREVIEW_HEADING')}
-							family={familyOf('DISPLAY', 600)}
+							family={familyOf('PRIMARY', 600)}
 							variant='heading-lg/semibold'
 						/>
 						<View style={styles.line}>

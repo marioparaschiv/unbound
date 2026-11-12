@@ -12,7 +12,7 @@ import { CORE_BUCKET } from '@unbound-app/types/settings';
 import toError from '@unbound-app/utils/to-error';
 
 import { presetCopy, sourceLink, sourceOrigin, type PastedPreset } from '~/fonts/sources';
-import { groupSlots, type FontSlot } from '~/fonts/slots';
+import { groupSlots, groupTargets, type FontSlot, type FontTarget } from '~/fonts/slots';
 import { getNativeFonts } from '~/native/unbound-native';
 import { Manager } from '~/addons/manager';
 import { API_URL } from '~/core/constants';
@@ -23,11 +23,7 @@ type FontsEvents = {
 	changed: () => void;
 };
 
-/** A semantic override target: a Discord font group and the families it holds. */
-export type FontTarget = {
-	group: string;
-	families: string[];
-};
+export type { FontTarget } from '~/fonts/slots';
 
 /** The installed faces of one family, which the override picker offers as one choice. */
 export type FontFamily = {
@@ -114,24 +110,13 @@ export class Fonts extends Manager<Font, FontsEvents> {
 			.sort((a, b) => a.family.localeCompare(b.family)));
 	}
 
-	/** @returns Discord's font groups (PRIMARY, DISPLAY, CODE, ...) and the families each holds. */
+	/** @returns Discord's font groups (PRIMARY, CODE, GINTO, ...) and the families each holds. */
 	getTargets(): FontTarget[] {
 		if (this.targets) {
 			return this.targets;
 		}
 
-		const groups = new Map<string, string[]>();
-
-		for (const [family, discord] of Object.entries(this.families)) {
-			for (const group of discord.groups) {
-				groups.set(group, [...(groups.get(group) ?? []), family]);
-			}
-		}
-
-		return (this.targets = [...groups.entries()].map(([group, families]) => ({
-			group,
-			families,
-		})));
+		return (this.targets = groupTargets(this.families));
 	}
 
 	/**

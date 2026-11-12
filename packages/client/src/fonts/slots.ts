@@ -12,6 +12,47 @@ export type FontSlot = {
 	face: Font | undefined;
 };
 
+/** A semantic override target: a Discord font group and the families it holds. */
+export type FontTarget = {
+	group: string;
+	families: string[];
+};
+
+// Groups by how much text they draw; a group Discord adds goes last.
+const GROUP_ORDER = ['PRIMARY', 'GINTO', 'CODE'];
+
+const groupRank = (group: string) =>
+	GROUP_ORDER.includes(group) ? GROUP_ORDER.indexOf(group) : GROUP_ORDER.length;
+
+/**
+ * @description Lists the font groups that can differ from each other. A group whose families all belong to a
+ * larger group, such as DISPLAY inside PRIMARY, draws that group's files, so it is left out.
+ * @param families Discord's families and the groups each belongs to.
+ * @returns The groups, Body first, each with its families.
+ */
+export function groupTargets(families: Record<string, UnboundDiscordFamily>): FontTarget[] {
+	const groups = new Map<string, string[]>();
+
+	for (const [family, discord] of Object.entries(families)) {
+		for (const group of discord.groups) {
+			groups.set(group, [...(groups.get(group) ?? []), family]);
+		}
+	}
+
+	const targets = [...groups.entries()].map(([group, members]) => ({ group, families: members }));
+
+	return targets
+		.filter(
+			(target) =>
+				!targets.some(
+					(other) =>
+						other.families.length > target.families.length &&
+						target.families.every((family) => other.families.includes(family)),
+				),
+		)
+		.sort((a, b) => groupRank(a.group) - groupRank(b.group));
+}
+
 /**
  * @description Splits a Discord font group into its weights and styles, upright before italic, light to heavy.
  * @param group A group such as `PRIMARY`.

@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 
 import {
 	groupSlots,
+	groupTargets,
 	nearestFace,
 	nearestSlot,
 	slotCoordinates,
@@ -36,6 +37,22 @@ const FAMILIES = {
 };
 
 describe('font slots', () => {
+	test('a group inside a larger one is left out, and groups list Body first', () => {
+		const targets = groupTargets({
+			'SourceCodePro-Normal': family(['CODE'], 400),
+			'ggsans-Bold': family(['DISPLAY', 'PRIMARY'], 700),
+			'ggsans-Normal': family(['DISPLAY', 'PRIMARY'], 400),
+			'ggsans-NormalItalic': family(['PRIMARY'], 400, true),
+			'ABCGintoNord-ExtraBold': family(['GINTO'], 800),
+		});
+
+		expect(targets).toEqual([
+			{ group: 'PRIMARY', families: ['ggsans-Bold', 'ggsans-Normal', 'ggsans-NormalItalic'] },
+			{ group: 'GINTO', families: ['ABCGintoNord-ExtraBold'] },
+			{ group: 'CODE', families: ['SourceCodePro-Normal'] },
+		]);
+	});
+
 	test('a group splits into weights, upright before italic, fallbacks sharing a slot', () => {
 		const bold = face('Inter-Bold', 700);
 		const slots = groupSlots('PRIMARY', FAMILIES, (name) =>
