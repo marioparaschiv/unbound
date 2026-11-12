@@ -291,4 +291,50 @@ std::optional<std::string> tombstoneStack(const std::string &tombstone)
     }
     return text;
 }
+
+static std::string trimmed(const std::string &line)
+{
+    size_t start = line.find_first_not_of(" \t\r");
+    size_t end   = line.find_last_not_of(" \t\r");
+    return start == std::string::npos ? "" : line.substr(start, end - start + 1);
+}
+
+std::optional<std::string> anrTraceStack(const std::string &trace)
+{
+    constexpr size_t kMaxFrames = 60;
+    std::string      text;
+    size_t           frames = 0;
+    bool             inMain = false;
+    size_t           start  = 0;
+    while (start <= trace.size())
+    {
+        size_t      end = trace.find('\n', start);
+        std::string line =
+            trace.substr(start, end == std::string::npos ? std::string::npos : end - start);
+        start            = end == std::string::npos ? trace.size() + 1 : end + 1;
+        std::string body = trimmed(line);
+        if (!inMain)
+        {
+            inMain = body.starts_with("\"main\" ");
+            continue;
+        }
+        if (body.empty())
+        {
+            break;
+        }
+        bool frame = body.starts_with("at ") || body.starts_with("native: #") ||
+                     body.starts_with("- waiting") || body.starts_with("- locked") ||
+                     body.starts_with("- blocked");
+        if (frame && frames < kMaxFrames)
+        {
+            text += body + "\n";
+            frames++;
+        }
+    }
+    if (frames == 0)
+    {
+        return std::nullopt;
+    }
+    return "ANR in thread 1 (main), from Android's ANR trace\n" + text;
+}
 }
