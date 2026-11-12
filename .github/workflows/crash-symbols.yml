@@ -10,10 +10,11 @@ permissions:
 jobs:
     symbolicate:
         name: Name Unbound's native frames
-        if: github.event.issue.pull_request == null && contains(github.event.issue.body, '### Native stack')
+        if: github.event.issue.pull_request == null && (contains(github.event.issue.body, '### Native stack') || contains(github.event.issue.body, 'address at unbound:'))
         runs-on: ubuntu-26.04
         timeout-minutes: 10
         permissions:
+            actions: read
             contents: read
             issues: write
         concurrency:
@@ -38,6 +39,8 @@ jobs:
                   fi
 
             - name: Comment the symbolicated stack
+              if: contains(github.event.issue.body, '### Native stack')
+              continue-on-error: true
               env:
                   GH_TOKEN: ${{ github.token }}
               run: |
@@ -46,3 +49,14 @@ jobs:
                     --repo "$GITHUB_REPOSITORY" \
                     --issue "${{ github.event.issue.number }}" \
                     --symbolizer "$(command -v llvm-symbolizer)"
+
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+
+            - name: Install dependencies
+              run: bun install --frozen-lockfile
+
+            - name: Comment the mapped JavaScript stack
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: bun scripts/symbolicate-client-issue.ts "$GITHUB_REPOSITORY" "${{ github.event.issue.number }}"
