@@ -48,6 +48,26 @@ jobs:
               with:
                   key: core-tests
 
+    core-tests-macos:
+        name: Shared core tests on macOS
+        runs-on: macos-15
+        timeout-minutes: 15
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+                  fetch-depth: 1
+
+            - name: Configure core
+              run: cmake -S core -B build/core -DUNBOUND_CORE_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined"
+
+            - name: Build core
+              run: cmake --build build/core -j"$(sysctl -n hw.ncpu)"
+
+            - name: Run core tests
+              run: ctest --test-dir build/core --output-on-failure --timeout 120 -j"$(sysctl -n hw.ncpu)" -E '_fuzz$'
+
     native-jsi-fuzz:
         name: Host Hermes bridge tests
         runs-on: ubuntu-26.04
