@@ -84,17 +84,20 @@ export function bubbleFrame(
 }
 
 /**
- * @description Draws one card behind a message's whole content column, the way Rosiecord's Flowercord does: as tall as the column and reaching `inset` past both of its sides.
+ * @description Draws one card behind a message's whole content column, the way Rosiecord's Flowercord does: reaching past the column by the padding on every side.
  * @param column The content column's frame, right of the avatar.
- * @param inset How far the card reaches past the column's sides.
+ * @param padding How far the card reaches past the column's sides, and above and below it.
  * @returns The card's frame.
  */
-export function cardFrame(column: Box, inset: number): Box {
+export function cardFrame(
+	column: Box,
+	{ horizontal, vertical }: { horizontal: number; vertical: number },
+): Box {
 	return {
-		x: column.x - inset,
-		y: column.y,
-		width: column.width + inset * 2,
-		height: column.height,
+		x: column.x - horizontal,
+		y: column.y - vertical,
+		width: column.width + horizontal * 2,
+		height: column.height + vertical * 2,
 	};
 }
 

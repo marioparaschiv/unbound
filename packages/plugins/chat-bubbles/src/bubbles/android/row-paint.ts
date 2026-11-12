@@ -8,7 +8,9 @@ import { mentionPaint } from '~/bubbles/mention-paint';
 import { shadeColor } from '~/bubbles/shade';
 import {
 	argb,
+	cardPadding,
 	namesInside,
+	nameShift,
 	rowInset,
 	type BubbleAppearance,
 	type BubbleColor,
@@ -16,7 +18,6 @@ import {
 import { filletData, pathData } from '~/bubbles/android/path-data';
 import {
 	BubbleLayout,
-	CARD_INSET,
 	CornerCurve,
 	Grouping,
 	MediaCorners,
@@ -56,6 +57,8 @@ export type RowFrame = {
 	mediaRadius?: number;
 	inside: boolean;
 	lifted: number;
+	/** How far the name moves right, in line with a card's content. */
+	shifted: number;
 };
 
 /** Where the avatar goes on a row of a group whose avatar sits by its last bubble. */
@@ -93,7 +96,7 @@ export type RowPaint = {
 	mediaRadius?: number;
 };
 
-const lift = (amount: number): Move => ({ x: 0, y: amount ? -amount : 0 });
+const lift = (amount: number, x = 0): Move => ({ x, y: amount ? -amount : 0 });
 const scaled = (move: Move, scale: number): Move => ({ x: move.x * scale, y: move.y * scale });
 const scaledBox = (box: Box, scale: number): Box => ({
 	x: box.x * scale,
@@ -116,13 +119,14 @@ export function rowFrame(layout: RowLayout, style: BubbleAppearance): RowFrame {
 	if (!dynamic) {
 		return {
 			frame: separateFrame(
-				cardFrame(layout.column, CARD_INSET),
+				cardFrame(layout.column, cardPadding(style)),
 				layout.height,
 				style.spacing,
 			),
 			radius: style.radius,
 			inside,
 			lifted,
+			shifted: nameShift(style),
 		};
 	}
 
@@ -154,6 +158,7 @@ export function rowFrame(layout: RowLayout, style: BubbleAppearance): RowFrame {
 		frame: separateFrame(fitted.frame, floor, style.spacing, hard),
 		inside,
 		lifted,
+		shifted: 0,
 	};
 }
 
@@ -286,7 +291,7 @@ function headingPaint({ layout, measured, style, color }: PaintInput, frame: Box
 	if (!measured.inside || !heading) {
 		const moved = lift(measured.lifted);
 
-		return { name: moved, avatar: moved, reply: moved };
+		return { name: lift(measured.lifted, measured.shifted), avatar: moved, reply: moved };
 	}
 
 	const place = headingPlace(

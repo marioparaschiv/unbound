@@ -3,7 +3,13 @@ import type { Heading } from '~/bubbles/message-layout';
 import type { CellAvatar, CellFallback, CellPaint } from '~/bubbles/ios/ui-cell';
 import { headingPlace } from '~/bubbles/heading';
 import { shadeColor } from '~/bubbles/shade';
-import { namesInside, rowInset, type BubbleAppearance, type BubbleColor } from '~/bubbles/style';
+import {
+	namesInside,
+	nameShift,
+	rowInset,
+	type BubbleAppearance,
+	type BubbleColor,
+} from '~/bubbles/style';
 import { BubbleLayout, Quote } from '~/constants';
 
 /** What the measure found about a cell's heading. */
@@ -15,9 +21,11 @@ export type MeasuredHeading = {
 	inside: boolean;
 	/** How far the name, reply and avatar lift into the room above the bubble when they sit outside it. */
 	lifted: number;
+	/** How far the name moves right, in line with a card's content. */
+	shifted: number;
 };
 
-const lift = (amount: number) => ({ x: 0, y: amount ? -amount : 0 });
+const lift = (amount: number, x = 0) => ({ x, y: amount ? -amount : 0 });
 
 /**
  * @description Works out everything a cell shows besides its bubble: where its name, time, avatar and reply move, its quote box and the avatar by its group's last bubble.
@@ -35,11 +43,16 @@ export function cellPaint(
 	color: BubbleColor,
 	picture: CellAvatar | undefined,
 ): CellPaint {
-	const { heading, inside, lifted } = measured;
+	const { heading, inside, lifted, shifted } = measured;
 	const extra = picture ? { picture } : {};
 
 	if (!inside || !heading) {
-		return { name: lift(lifted), avatar: lift(lifted), reply: lift(lifted), ...extra };
+		return {
+			name: lift(lifted, shifted),
+			avatar: lift(lifted),
+			reply: lift(lifted),
+			...extra,
+		};
 	}
 
 	const place = headingPlace(heading, bubble, measured.bodyTop, padding);
@@ -84,7 +97,12 @@ export function cellFallback(appearance: BubbleAppearance): CellFallback {
 
 	const lifted = roomyRows && layout === BubbleLayout.dynamic ? verticalPadding : 0;
 
-	return { name: lift(lifted), avatar: lift(lifted), reply: lift(lifted), hideStart: avatarLast };
+	return {
+		name: lift(lifted, nameShift(appearance)),
+		avatar: lift(lifted),
+		reply: lift(lifted),
+		hideStart: avatarLast,
+	};
 }
 
 export default { cellFallback, cellPaint };

@@ -2,6 +2,7 @@ import {
 	BubbleLayout,
 	BubbleLimits,
 	BubbleStyle,
+	CardPadding,
 	CornerCurve,
 	Grouping,
 	JOINED_ROW_ROOM,
@@ -185,6 +186,8 @@ export function bubbleAppearance(
 
 export type RowRoom = { top: number; bottom: number };
 
+export type Padding = { horizontal: number; vertical: number };
+
 export type RowRooms = {
 	/** A row that starts a group, showing the author's name. */
 	first: RowRoom;
@@ -228,7 +231,9 @@ export function rowRooms(appearance: BubbleAppearance): RowRooms {
 	if (!roomyRows) return NO_ROW_ROOM;
 
 	if (layout === BubbleLayout.card) {
-		return withReply({ first: even(spacing / 2), next: even(spacing / 2) });
+		const card = spacing / 2 + CardPadding.vertical;
+
+		return withReply({ first: even(card), next: even(card) });
 	}
 
 	const outer = verticalPadding + spacing / 2;
@@ -246,7 +251,30 @@ export function rowRooms(appearance: BubbleAppearance): RowRooms {
  * @returns The inset in points: the horizontal padding for fitted bubbles with roomy rows, otherwise 0.
  */
 export function rowInset({ roomyRows, layout, horizontalPadding }: BubbleAppearance): number {
-	return roomyRows && layout === BubbleLayout.dynamic ? horizontalPadding : 0;
+	if (!roomyRows) return 0;
+
+	// A card keeps its left edge where the tight card's was, so it stays clear of the avatar.
+	return layout === BubbleLayout.dynamic
+		? horizontalPadding
+		: CardPadding.horizontal - CardPadding.tight;
+}
+
+/**
+ * @description Works out how far the author's name moves right to line up with the content Discord lays in for a card.
+ * @param appearance The bubble's look.
+ * @returns The move in points, 0 outside the card layout.
+ */
+export function nameShift(appearance: BubbleAppearance): number {
+	return appearance.layout === BubbleLayout.card ? rowInset(appearance) : 0;
+}
+
+/**
+ * @description Works out how far a card reaches past Discord's content column. The sides always reach `tight` past it; the row inset lays the content further in.
+ * @param appearance The bubble's look.
+ * @returns The reach in points: above and below too when rows make room for it.
+ */
+export function cardPadding({ roomyRows }: BubbleAppearance): Padding {
+	return { horizontal: CardPadding.tight, vertical: roomyRows ? CardPadding.vertical : 0 };
 }
 
 /**
@@ -276,8 +304,10 @@ export default {
 	argb,
 	bubbleAppearance,
 	bubbleLayout,
+	cardPadding,
 	choice,
 	namesInside,
+	nameShift,
 	parseHexColor,
 	rowInset,
 	rowRooms,

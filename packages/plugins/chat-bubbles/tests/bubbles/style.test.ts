@@ -126,7 +126,8 @@ describe('bubble style', () => {
 
 		expect(rowInset(fitted)).toBe(14);
 		expect(rowInset({ ...fitted, roomyRows: false })).toBe(0);
-		expect(rowInset({ ...fitted, layout: 'card' })).toBe(0);
+		expect(rowInset({ ...fitted, layout: 'card' })).toBe(5);
+		expect(rowInset({ ...fitted, layout: 'card', roomyRows: false })).toBe(0);
 	});
 
 	test('grows every row by the padding on both sides and the spacing', () => {
@@ -140,9 +141,9 @@ describe('bubble style', () => {
 		});
 		expect(rowRooms({ ...fitted, nameInside: false }).reply).toEqual(even);
 		expect(rowRooms({ ...fitted, layout: 'card' })).toEqual({
-			first: { top: 3, bottom: 3 },
-			next: { top: 3, bottom: 3 },
-			reply: { top: 3, bottom: 3 },
+			first: { top: 9, bottom: 9 },
+			next: { top: 9, bottom: 9 },
+			reply: { top: 9, bottom: 9 },
 		});
 		expect(rowRooms({ ...fitted, roomyRows: false })).toEqual({
 			first: { top: 0, bottom: 0 },

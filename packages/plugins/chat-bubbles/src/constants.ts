@@ -50,7 +50,8 @@ export const Grouping = { grouped: 'grouped', separate: 'separate', joined: 'joi
 /** Which bubble of a group points a tail at the avatar. */
 export const TailPosition = { off: 'off', first: 'first', last: 'last' } as const;
 
-export const CARD_INSET = 5;
+/** How far a card reaches past its message's content: `tight` to each side while rows keep Discord's height, otherwise `horizontal` and `vertical`. */
+export const CardPadding = { tight: 5, horizontal: 10, vertical: 6 };
 
 /** The share of the corner radius a grouped bubble keeps where it meets its neighbour, so the join looks softened, not cut. */
 export const SQUARED_CORNER_RATIO = 0.3;

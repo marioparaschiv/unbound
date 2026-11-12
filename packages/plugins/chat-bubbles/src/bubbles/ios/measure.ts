@@ -5,12 +5,12 @@ import type { Box } from '~/bubbles/geometry';
 import type { createMediaCorners } from '~/bubbles/ios/media-corners';
 import type { createMentionHighlight } from '~/bubbles/ios/mention';
 import { messageLayout, type SnapshotNode } from '~/bubbles/message-layout';
-import { BubbleLayout, CARD_INSET, Grouping } from '~/constants';
+import { BubbleLayout, Grouping } from '~/constants';
 import { bubbleFrame, cardFrame } from '~/bubbles/geometry';
 import { separateFrame } from '~/bubbles/group';
 import { headingRoom } from '~/bubbles/heading';
 import { textWidth } from '~/bubbles/ios/text-width';
-import { namesInside } from '~/bubbles/style';
+import { cardPadding, namesInside, nameShift } from '~/bubbles/style';
 import { currentAppearance } from '~/bubbles/theme';
 
 const SNAPSHOT = { maxDepth: 12, maxNodes: 512 };
@@ -61,7 +61,14 @@ export function createMeasure({ objc, media, highlight, inset: readInset }: Meas
 		const dynamic = style.layout === BubbleLayout.dynamic;
 		const inside = namesInside(style) && layout.heading !== undefined;
 		const lifted = !inside && style.roomyRows && dynamic ? style.verticalPadding : 0;
-		const heading = { heading: layout.heading, bodyTop: layout.body.y, inside, lifted };
+		const shifted = nameShift(style);
+		const heading = {
+			heading: layout.heading,
+			bodyTop: layout.body.y,
+			inside,
+			lifted,
+			shifted,
+		};
 		const mention = layout.highlight
 			? await highlight.apply(
 					nodes[layout.highlight.view]?.view,
@@ -72,7 +79,11 @@ export function createMeasure({ objc, media, highlight, inset: readInset }: Meas
 		if (!dynamic) {
 			return {
 				...heading,
-				frame: separateFrame(cardFrame(layout.column, CARD_INSET), height, style.spacing),
+				frame: separateFrame(
+					cardFrame(layout.column, cardPadding(style)),
+					height,
+					style.spacing,
+				),
 				height,
 				reach: height,
 				contentWidth: layout.column.width,

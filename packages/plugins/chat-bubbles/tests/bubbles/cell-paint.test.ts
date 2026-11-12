@@ -22,7 +22,7 @@ const appearance = (values: Record<string, unknown>) =>
 
 describe('cell paint', () => {
 	test('lifts the name, avatar and reply when they sit outside the bubble', () => {
-		const measured = { heading, bodyTop: 79, inside: false, lifted: 10 };
+		const measured = { heading, bodyTop: 79, inside: false, lifted: 10, shifted: 0 };
 		const picture = { author: 'c/low', start: true, end: false };
 
 		expect(cellPaint(measured, bubble, 14, color, picture)).toEqual({
@@ -35,7 +35,7 @@ describe('cell paint', () => {
 
 	test("draws the quote box in the bubble's own coordinates, shaded from the bubble", () => {
 		const paint = cellPaint(
-			{ heading, bodyTop: 79, inside: true, lifted: 0 },
+			{ heading, bodyTop: 79, inside: true, lifted: 0, shifted: 0 },
 			bubble,
 			14,
 			color,
@@ -60,6 +60,6 @@ describe('cell paint', () => {
 			hideStart: true,
 		});
 		expect(cellFallback(appearance({ nameInside: false })).name).toEqual({ x: 0, y: -10 });
-		expect(cellFallback(appearance({ layout: 'card' })).name).toEqual({ x: 0, y: 0 });
+		expect(cellFallback(appearance({ layout: 'card' })).name).toEqual({ x: 5, y: 0 });
 	});
 });

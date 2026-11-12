@@ -4,9 +4,9 @@ import { messages } from '@unbound-app/i18n';
 import { metro } from '@unbound-app/api';
 
 import useStyles from '~/preview/chat-preview.style';
-import { namesInside, type BubbleAppearance } from '~/bubbles/style';
+import { cardPadding, namesInside, rowInset, type BubbleAppearance } from '~/bubbles/style';
 import type { PreviewPaint } from '~/preview/preview-paint';
-import { BubbleLayout, CARD_INSET, TailPosition } from '~/constants';
+import { BubbleLayout, TailPosition } from '~/constants';
 
 export type Size = { width: number; height: number };
 
@@ -87,8 +87,12 @@ function PreviewMessage(props: PreviewMessageProps) {
 
 	// A card spans the text column and holds the name, a few points around the content, as in the chat.
 	const inside = start && (card || namesInside(style));
-	const horizontal = card ? CARD_INSET : style.horizontalPadding;
-	const vertical = card ? CARD_INSET : style.verticalPadding;
+	const { horizontal, vertical } = card
+		? {
+				horizontal: cardPadding(style).horizontal + rowInset(style),
+				vertical: cardPadding(style).vertical,
+			}
+		: { horizontal: style.horizontalPadding, vertical: style.verticalPadding };
 	const measure = ({ nativeEvent: { layout } }: LayoutChangeEvent) =>
 		onMeasure(
 			card
