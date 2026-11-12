@@ -121,7 +121,7 @@ int main()
         {"Android", "Pixel", "16", "350.8", "1.0.0", "", "", true});
     assert(rows.size() == 4);
     assert(rows[0].first == "Unbound" && rows[2].second == "Pixel on Android 16");
-    assert(rows.back().first == "State" && rows.back().second == "stock, emulator");
+    assert(rows.back().first == "State" && rows.back().second == "Stock · emulator");
 
     assert(loader::toolbox::factoryReset(root.string()));
     assert(loader::listDirectory(root.string()).empty());

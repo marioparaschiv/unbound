@@ -67,7 +67,7 @@ int main()
     assert(std::isdigit(static_cast<unsigned char>(loader::loaderVersion()[0])));
     assert(row(report, "Discord") == "300.0 stable, build 1234 (TrollStore)");
     assert(row(report, "Device") == "iPhone SE on iOS 26.0.1");
-    assert(row(report, "State") == "jailbroken, system app");
+    assert(row(report, "State") == "Jailbroken · system app");
     assert(report.attachments.size() == 1);
     assert(report.attachments[0].first == "Entitlements" &&
            report.attachments[0].second == "<plist/>");
@@ -99,7 +99,7 @@ int main()
            std::string("loader ") + loader::loaderVersion() + " (`libunbound.so`, `Vector`)");
     assert(row(androidReport, "Discord") == "352.10 beta, build 352110 (Google Play)");
     assert(row(androidReport, "Device") == "Google Pixel 9 on Android 16");
-    assert(row(androidReport, "State") == "stock, emulator");
+    assert(row(androidReport, "State") == "Stock · emulator");
     assert(androidReport.attachments.empty());
 
     const auto bare = loader::toolbox::issueReport({}, "Android", "");
@@ -141,7 +141,7 @@ int main()
     assert(issue.find("iPhone%20SE") != std::string::npos);
     assert(issue.find("Unbound%3A%2A%2A") < issue.find("Device%3A%2A%2A"));
     assert(issue.find("300.0%20stable%2C%20build%201234") != std::string::npos);
-    assert(issue.find("State%3A%2A%2A%20jailbroken") != std::string::npos);
+    assert(issue.find("State%3A%2A%2A%20Jailbroken") != std::string::npos);
     assert(issue.find("Entitlements") != std::string::npos);
 
     context.provider          = nullptr;

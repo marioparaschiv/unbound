@@ -21,6 +21,10 @@ export type DebugInfo = {
 	flags: string[];
 };
 
+function sentenceCase(text: string): string {
+	return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 /**
  * @description Lists the client's debug information as Markdown bullets, one labelled line per component.
  * @param info The versions and device details.
@@ -36,8 +40,8 @@ export function debugLines(info: DebugInfo): string[] {
 		`- **Unbound:** ${info.client} (\`${info.commit}\`), loader ${info.loader} ${loader}`,
 		`- **Discord:** ${info.discord} ${info.discordChannel.toLowerCase()}, build ${info.discordBuild} (${info.appSource})`,
 		`- **Device:** ${info.device} on ${info.platform} ${info.os}`,
-		...(info.installDetails ? [`- **Install:** ${info.installDetails}`] : []),
-		`- **State:** ${info.flags.join(', ')}`,
+		...(info.installDetails ? [`- **Install:** ${sentenceCase(info.installDetails)}`] : []),
+		`- **State:** ${info.flags.join(' · ')}`,
 		`- **Runtime:** React ${info.react}, React Native ${info.reactNative}, Hermes ${info.hermes} (HBC ${info.bytecode})`,
 	];
 }

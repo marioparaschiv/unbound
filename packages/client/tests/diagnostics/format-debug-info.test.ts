@@ -19,7 +19,7 @@ const info = {
 	platform: 'iOS',
 	os: '26.0.1 (23A355)',
 	device: 'iPhone SE (2nd generation)',
-	flags: ['jailbroken'],
+	flags: ['Jailbroken', 'verified build'],
 };
 
 describe('formatDebugInfo', () => {
@@ -36,7 +36,7 @@ describe('formatDebugInfo', () => {
 				'- **Unbound:** v0.11.0 (`402cbbf6`), loader 1.0.0 (`Unbound.dylib`) (`ElleKit`)',
 				'- **Discord:** 351.0 stable, build 118370 (App Store)',
 				'- **Device:** iPhone SE (2nd generation) on iOS 26.0.1 (23A355)',
-				'- **State:** jailbroken',
+				'- **State:** Jailbroken · verified build',
 				'- **Runtime:** React 19.2.3, React Native 0.86.0, Hermes 250829098.0.15 (HBC 98)',
 			].join('\n'),
 		);
@@ -46,15 +46,23 @@ describe('formatDebugInfo', () => {
 		const lines = formatDebugInfo({
 			...info,
 			appSource: 'Sideloaded (TestFlight build)',
-			installDetails:
-				'development certificate, team ABCDE12345, entitlements from the kernel',
+			installDetails: 'Development (`ABCDE12345`) · expires 2027-09-16',
 		}).split('\n');
 
 		expect(lines).toContain(
 			'- **Discord:** 351.0 stable, build 118370 (Sideloaded (TestFlight build))',
 		);
+		expect(lines[4]).toBe('- **Install:** Development (`ABCDE12345`) · expires 2027-09-16');
+	});
+
+	test('capitalises install details from loaders that send them in lower case', () => {
+		const lines = formatDebugInfo({
+			...info,
+			installDetails: 'ad hoc certificate, team ABCDE12345, entitlements from the kernel',
+		}).split('\n');
+
 		expect(lines[4]).toBe(
-			'- **Install:** development certificate, team ABCDE12345, entitlements from the kernel',
+			'- **Install:** Ad hoc certificate, team ABCDE12345, entitlements from the kernel',
 		);
 	});
 
