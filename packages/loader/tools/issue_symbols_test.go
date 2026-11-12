@@ -1,6 +1,7 @@
 package main
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
@@ -8,13 +9,16 @@ import (
 const iosIssueBody = "- **Unbound:** loader 1.3.0 (`Unbound.dylib`, `ElleKit 1.2`)\n" +
 	"- **Device:** iPhone SE (2nd generation) on iOS 26.0.1 (23A355)\n\n" +
 	"### What happened\n```\nDiscord crashed.\n```\n\n" +
-	"### Native stack\n```\nSignal 11\nAddon Chat Bubbles\n#0 0x100a0 Unbound.dylib + 0x1a2b\n#1 0x18c00 UIKitCore + 0x40\n#2 0x100b0 Unbound.dylib + 0x2000 loader::run\n```\n\n" +
+	"### Native stack\n```\nSignal 11\nImage Unbound.dylib 01234567-89AB-CDEF-0123-456789ABCDEF\nAddon Chat Bubbles\n#0 0x100a0 Unbound.dylib + 0x1a2b\n#1 0x18c00 UIKitCore + 0x40\n#2 0x100b0 Unbound.dylib + 0x2000 loader::run\n```\n\n" +
 	"### Previous launch log\n```\nline\n```\n"
 
 func TestParsesTheCrashIssue(t *testing.T) {
 	crash, ok := parseIssueCrash(iosIssueBody)
 	if !ok || crash.platform != "ios" || crash.version != "1.3.0" {
 		t.Fatalf("parsed %+v, %v", crash, ok)
+	}
+	if crash.image.name != "Unbound.dylib" || crash.image.id != "01234567-89AB-CDEF-0123-456789ABCDEF" {
+		t.Fatalf("image %+v", crash.image)
 	}
 	if !strings.HasPrefix(crash.stack, "Signal 11") || strings.Contains(crash.stack, "Previous launch log") {
 		t.Fatalf("stack section %q", crash.stack)
@@ -41,6 +45,13 @@ func TestPicksTheReleaseCarryingTheLoaderVersion(t *testing.T) {
 	}
 	if tag, _ := pickSymbolRelease(releases, issueCrash{platform: "android", version: "1.3.0"}); tag != "android" {
 		t.Fatalf("picked %q for Android", tag)
+	}
+	identified := issueCrash{platform: "ios", version: "1.3.0", image: imageIdentity{id: "X"}}
+	if got := symbolReleaseCandidates(releases, identified); !slices.Equal(got, []string{"match", "newest"}) {
+		t.Fatalf("candidates %v", got)
+	}
+	if got := symbolReleaseCandidates(releases, issueCrash{platform: "ios", version: "1.3.0"}); !slices.Equal(got, []string{"match"}) {
+		t.Fatalf("candidates without an image %v", got)
 	}
 }
 

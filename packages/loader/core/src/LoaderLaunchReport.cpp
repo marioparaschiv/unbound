@@ -229,11 +229,12 @@ std::string nativeCrashHeadline(const std::string &stack)
         return "";
     }
     std::string headline = signalName(std::atoi(lines.front().c_str() + 7));
-    if (lines.size() > 1)
+    for (size_t index = 1; index < lines.size(); index++)
     {
-        if (std::optional<std::string> name = addonName(lines[1]))
+        if (std::optional<std::string> name = addonName(lines[index]))
         {
             headline += " in " + *name;
+            break;
         }
     }
     return headline;

@@ -14,6 +14,10 @@ static const std::string kStack = "Signal " + std::to_string(SIGSEGV) +
 static void checkNativeCrashes()
 {
     assert(nativeCrashHeadline(kStack) == "SIGSEGV in Chat Bubbles");
+    assert(nativeCrashHeadline("Signal " + std::to_string(SIGSEGV) +
+                               "\nImage Unbound.dylib 01234567-89AB-CDEF-0123-456789ABCDEF\n"
+                               "Addon {\"id\":\"x\",\"name\":\"Chat Bubbles\"}\n") ==
+           "SIGSEGV in Chat Bubbles");
     assert(nativeCrashHeadline("Signal " + std::to_string(SIGABRT) + "\n#0 0x1\n") == "SIGABRT");
     assert(nativeCrashHeadline("").empty());
     assert(nativeCrashHeadline("garbage").empty());
