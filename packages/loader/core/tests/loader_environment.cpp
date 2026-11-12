@@ -76,7 +76,8 @@ static void checkInstallSources()
     assert(signingDetails(signing).rfind("Distribution (`ABCDE12345`)", 0) == 0);
     signing.teamIdentifier    = kDiscordTeamIdentifier;
     signing.entitlementSource = "executable";
-    assert(signingDetails(signing) == "Discord-signed");
+    assert(signingDetails(signing) ==
+           std::string("Distribution (`") + kDiscordTeamIdentifier + "`)");
 
     assert(
         provisioningProfilePlist("\x30\x82junk<?xml version=\"1.0\"?><plist><dict/></plist>sig") ==

@@ -1,4 +1,4 @@
-import type { AddonCount, DebugInfo } from './format-debug-info';
+import type { AddonCount, DebugInfo, DiscordSupport } from './format-debug-info';
 
 /** A rounded rectangle, filled or outlined, in the card's points. */
 export type CardRect = {
@@ -47,11 +47,12 @@ const WIDTH = 432;
 const SCALE = 3;
 const PADDING = 14;
 const TITLE_HEIGHT = 28;
-const FONT_SIZE = 12;
-const LINE_HEIGHT = 21;
+const FONT_SIZE = 13;
+const LINE_HEIGHT = 22;
 const CHAR_WIDTH = FONT_SIZE * 0.6;
 const LABEL_WIDTH = 9;
 const BADGE_CLEARANCE = 66;
+const VALUE_ROOM = Math.floor((WIDTH - PADDING * 2) / CHAR_WIDTH) - LABEL_WIDTH;
 const MAX_ALT_TEXT = 1024;
 const FOOTER_HEIGHT = 52;
 
@@ -70,6 +71,7 @@ const COLORS = {
 
 const value = (text: string): Span => ({ text, color: COLORS.value });
 const dim = (text: string): Span => ({ text, color: COLORS.dim });
+const warn = (text: string): Span => ({ text, color: COLORS.warn });
 const accent = (text: string): Span => ({ text, color: COLORS.accent });
 
 function joined(parts: (string | undefined)[]): string {
@@ -96,6 +98,29 @@ function installSpans(details: string): Span[] {
 		.filter((span) => span.text);
 }
 
+const SUPPORT_COLORS: Record<DiscordSupport, string> = {
+	supported: COLORS.good,
+	untested: COLORS.warn,
+	unsupported: COLORS.bad,
+};
+
+function supportSpans(support?: DiscordSupport): Span[] {
+	return support ? [dim(' · '), { text: support, color: SUPPORT_COLORS[support] }] : [];
+}
+
+function fittedList(items: string[], room: number): string {
+	for (let shown = items.length; shown > 0; shown--) {
+		const more = items.length - shown;
+		const text = joined([...items.slice(0, shown), more ? `+${more} more` : undefined]);
+
+		if (text.length <= room) {
+			return text;
+		}
+	}
+
+	return `${items.length} addons`;
+}
+
 function rows(info: DebugInfo): [string, Span[]][] {
 	const { signing, sideloader } = installParts(info.installDetails);
 
@@ -107,6 +132,7 @@ function rows(info: DebugInfo): [string, Span[]][] {
 			[
 				value(info.discord),
 				dim(` ${joined([info.discordChannel.toLowerCase(), info.discordBuild])}`),
+				...supportSpans(info.discordSupport),
 			],
 		],
 		[
@@ -122,6 +148,14 @@ function rows(info: DebugInfo): [string, Span[]][] {
 		...(signing ? [['install', installSpans(signing)] as [string, Span[]]] : []),
 		['react', [value(info.react), dim(` · react native ${info.reactNative}`)]],
 		['hermes', [value(info.hermes), dim(` · bytecode ${info.bytecode}`)]],
+		...(info.disabledAddons?.length
+			? [
+					['disabled', [warn(fittedList(info.disabledAddons, VALUE_ROOM))]] as [
+						string,
+						Span[],
+					],
+				]
+			: []),
 	];
 }
 
@@ -149,17 +183,16 @@ function clipped(spans: Span[], room: number): Span[] {
 	return kept;
 }
 
-function addonSummary({ plugins, themes }: DebugInfo): string {
+function addonSummaries({ plugins, themes }: DebugInfo): string[] {
 	const counts: [string, AddonCount | undefined][] = [
 		['plugins', plugins],
 		['themes', themes],
 	];
-
-	return joined(
-		counts.map(([kind, count]) =>
-			count?.installed ? `${count.enabled}/${count.installed} ${kind}` : undefined,
-		),
+	const parts = counts.flatMap(([kind, count]) =>
+		count?.installed ? [`${count.enabled}/${count.installed} ${kind}`] : [],
 	);
+
+	return parts.length > 1 ? [joined(parts), ...parts] : parts;
 }
 
 function timestamp(now: Date): string {
@@ -289,8 +322,9 @@ export function layoutDebugCard(info: DebugInfo, now = new Date()): DebugCard {
 	const footerRoom = Math.floor((WIDTH - PADDING - BADGE_CLEARANCE) / CHAR_WIDTH);
 	const state = clipped(stateSpans(info.flags, info.jailbreak), footerRoom);
 	const stateLength = state.reduce((length, span) => length + span.text.length, 0);
-	const summary = addonSummary(info);
-	const summaryFits = summary && stateLength + 2 + summary.length <= footerRoom;
+	const summary = addonSummaries(info).find(
+		(candidate) => stateLength + 2 + candidate.length <= footerRoom,
+	);
 
 	ops.push(
 		{
@@ -312,7 +346,7 @@ export function layoutDebugCard(info: DebugInfo, now = new Date()): DebugCard {
 			color: COLORS.titleBar,
 		},
 		...textRuns(state, BADGE_CLEARANCE, footerBaseline),
-		...(summaryFits
+		...(summary
 			? textRuns(
 					[dim(summary)],
 					WIDTH - PADDING - summary.length * CHAR_WIDTH,
@@ -391,12 +425,26 @@ export function debugAltText(info: DebugInfo): string {
 		hermes: info.hermes,
 		bytecode: info.bytecode,
 		state: info.flags,
+		...(info.discordSupport && { support: info.discordSupport }),
+		...(info.disabledAddons?.length && { disabled: info.disabledAddons }),
+		...(info.locale && { locale: info.locale }),
+		...(info.theme && { theme: info.theme }),
+		...(info.iconPack && { iconPack: info.iconPack }),
 		...(info.plugins && { plugins: `${info.plugins.enabled}/${info.plugins.installed}` }),
 		...(info.themes && { themes: `${info.themes.enabled}/${info.themes.installed}` }),
 	};
 	let text = JSON.stringify(report);
 
-	for (const key of ['install', 'source', 'framework', 'loaderOrigin', 'jailbreak'] as const) {
+	for (const key of [
+		'iconPack',
+		'theme',
+		'locale',
+		'install',
+		'source',
+		'framework',
+		'loaderOrigin',
+		'jailbreak',
+	] as const) {
 		if (text.length <= MAX_ALT_TEXT) {
 			break;
 		}

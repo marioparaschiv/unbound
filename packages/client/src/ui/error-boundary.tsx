@@ -3,7 +3,7 @@ import { ScrollView } from 'react-native';
 import { useState } from 'react';
 
 import { bugReportURL, crashDiagnostics, pluginsLine } from '~/ui/error-fallback';
-import { readDebugInfo } from '~/diagnostics/debug-report';
+import { readDebugInfo } from '~/diagnostics/read-debug-info';
 import { Discord, SafeArea } from '~/metro/components';
 import type { CaughtError } from '~/ui/error-fallback';
 import { getAll as getPlugins } from '~/plugins/api';

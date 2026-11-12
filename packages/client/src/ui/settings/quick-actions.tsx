@@ -1,4 +1,4 @@
-import { readDebugInfo, readEntitlements } from '~/diagnostics/debug-report';
+import { readDebugInfo, readEntitlements } from '~/diagnostics/read-debug-info';
 import { issueURL } from '~/diagnostics/issue-report';
 import { Discord } from '~/metro/components';
 import { Screens } from '~/core/constants';

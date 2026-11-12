@@ -1,27 +1,15 @@
 import { createLogger } from '@unbound-app/logger';
 
-import { BundleInfo, getRuntimeProperties } from '~/native/native';
-import { CLIENT_VERSION, VERSION } from '~/core/constants';
 import { Messages as MessageActions } from '~/metro/api';
 import { findByProps, findStore } from '~/metro/lookups';
-import { discordChannel } from '~/core/discord-support';
-import type { BundleInfoType } from '~/native/native';
-import { React, ReactNative } from '~/metro/common';
-import { getLoader } from '~/native/unbound-native';
-import type { Addons } from '~/addons/addons';
-import { plugins } from '~/plugins/manager';
-import { themes } from '~/themes/manager';
 import { messages } from '~/i18n/api';
 import { show } from '~/toasts/api';
 import fs from '~/native/fs';
 
-import formatDebugInfo, { type AddonCount, type DebugInfo } from './format-debug-info';
+import formatDebugInfo, { type DebugInfo } from './format-debug-info';
+import { readDebugInfo, readEntitlements } from './read-debug-info';
 import { debugAltText, layoutDebugCard } from './debug-card';
 import { renderDebugCard } from './render-debug-card';
-
-type NativeBundleInfo = Partial<BundleInfoType> & {
-	getConstants?: () => Partial<BundleInfoType>;
-};
 
 type CloudUpload = {
 	status: string;
@@ -48,104 +36,13 @@ const CloudUploader = findByProps('CloudUpload');
 const SelectedChannelStore = findStore('SelectedChannel');
 const Logger = createLogger('Diagnostics', 'DebugReport');
 
-// A TurboModule serves its constants through getConstants() instead of as properties.
-function addonCount<I extends object>(manager: Addons<I>): AddonCount {
-	const installed = manager.getAddons();
-
-	return {
-		enabled: installed.filter((addon) => manager.isEnabled(addon.id)).length,
-		installed: installed.length,
-	};
-}
-
-function resignedInstall(details: string): string {
-	return details.startsWith('Discord') ? '' : details;
-}
-
-function readBundleInfo(): Partial<BundleInfoType> {
-	const info: NativeBundleInfo = BundleInfo ?? {};
-
-	return info.getConstants?.() ?? info;
-}
-
-function attempt<T>(read: () => T | null | undefined, fallback: T): T {
+function selectedChannelId(): string | undefined {
 	try {
-		return read() ?? fallback;
+		return SelectedChannelStore.getChannelId() ?? undefined;
 	} catch {
-		return fallback;
+		// The store is missing before Discord's flux stores load; the caller then has no channel.
+		return undefined;
 	}
-}
-
-function channelOf(version: string, appSource: string) {
-	const parsed = discordChannel(version, appSource);
-
-	return { discord: parsed.version, discordChannel: parsed.channel };
-}
-
-function deviceFlags(android: boolean): string[] {
-	const device = globalThis.NativePlatform?.device;
-	const rooted = attempt(() => device?.isRooted(), false);
-	const flags = [
-		android ? (rooted ? 'Rooted' : 'Stock') : rooted ? 'Jailbroken' : 'Jailed',
-		attempt(() => globalThis.NativePlatform?.app.isVerifiedBuild(), false)
-			? 'verified build'
-			: 'unverified build',
-		attempt(() => device?.isVirtualDevice(), false) && (android ? 'emulator' : 'simulator'),
-		attempt(() => device?.isSystemApp(), false) && 'system app',
-	];
-
-	return flags.filter((flag): flag is string => typeof flag === 'string');
-}
-
-/**
- * @description Reads everything `/debug` reports: Unbound, the loader, Discord, React Native and the device.
- * @returns The details, each already a display string.
- */
-export function readDebugInfo(): DebugInfo {
-	const platform = globalThis.NativePlatform;
-	const loader = getLoader();
-	const bundle = readBundleInfo();
-	const { Platform } = ReactNative;
-	const android = Platform.OS === 'android';
-	const rn = Platform.constants.reactNativeVersion;
-	const runtime = getRuntimeProperties();
-	const appSource = attempt(() => platform?.app.getAppSource(), '') || 'unknown source';
-	const os = android
-		? `${Platform.constants.Release} (SDK ${Platform.Version})`
-		: attempt(() => platform?.device.getOSVersionString(), String(Platform.Version));
-
-	return {
-		client: `v${CLIENT_VERSION}`,
-		commit: String(VERSION),
-		loader: String(loader?.version ?? 'unknown'),
-		loaderOrigin: String(loader?.origin ?? 'unknown origin'),
-		...channelOf(String(bundle.Version ?? 'unknown'), appSource),
-		discordBuild: String(bundle.Build ?? 'unknown'),
-		appSource,
-		installDetails: android
-			? ''
-			: resignedInstall(attempt(() => platform?.app.getInstallDetails?.(), '')),
-		framework: attempt(() => platform?.app.getFramework(), ''),
-		jailbreak: android ? '' : attempt(() => platform?.device.getJailbreak?.(), ''),
-		react: React.version,
-		reactNative: rn ? `${rn.major}.${rn.minor}.${rn.patch}` : 'unknown',
-		hermes: String(runtime['OSS Release Version'] ?? 'unknown'),
-		bytecode: String(runtime['Bytecode Version'] ?? 'unknown'),
-		platform: android ? 'Android' : 'iOS',
-		os,
-		device: attempt(() => platform?.device.getDeviceModel(), 'unknown device'),
-		flags: deviceFlags(android),
-		plugins: attempt(() => addonCount(plugins), undefined),
-		themes: attempt(() => addonCount(themes), undefined),
-	};
-}
-
-/**
- * @description Reads the app's entitlements as a plist on iOS.
- * @returns The plist, or an empty string on Android or when the loader cannot read them.
- */
-export function readEntitlements(): string {
-	return attempt(() => globalThis.NativePlatform?.ios?.getEntitlementsAsPlist(), '');
 }
 
 function warnTextOnly() {
@@ -245,8 +142,7 @@ export async function sendDebugReport(
 ): Promise<string | undefined> {
 	const info = readDebugInfo();
 	const message = note?.trim() ?? '';
-	const target: string | undefined =
-		channelId ?? attempt(() => SelectedChannelStore.getChannelId(), undefined);
+	const target: string | undefined = channelId ?? selectedChannelId();
 	const textReport = [message, formatDebugInfo(info)].filter(Boolean).join('\n\n');
 
 	if (!target) {
