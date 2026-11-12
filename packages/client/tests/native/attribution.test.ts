@@ -1,10 +1,10 @@
-import type { NativePluginCapability } from '@unbound-app/types';
+import type { NativeBridgeCapability } from '@unbound-app/types';
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import {
-	NativePluginCapabilityError,
-	NativePluginDisposedError,
-	NativePluginUnavailableError,
+	NativeBridgeCapabilityError,
+	NativeBridgeDisposedError,
+	NativeBridgeUnavailableError,
 	createPluginContext,
 	withNativeConstants,
 	nativeHandle,
@@ -134,7 +134,7 @@ describe('the scoped native call wrapper', () => {
 
 	test('grants only the capabilities declared when the scope was built', async () => {
 		const { createScopeGate } = await import('~/native/scope-gate');
-		const capabilities: NativePluginCapability[] = ['native.ffi.symbols'];
+		const capabilities: NativeBridgeCapability[] = ['native.ffi.symbols'];
 		const { scopeMethod, requireGranted } = createScopeGate({
 			capabilities,
 			lifecycle: { disposed: false },
@@ -144,9 +144,9 @@ describe('the scoped native call wrapper', () => {
 
 		capabilities.push('native.ffi.call');
 
-		expect(() => call()).toThrow(NativePluginCapabilityError);
-		expect(() => requireGranted('ffi.call')).toThrow(NativePluginCapabilityError);
-		expect(scopeMethod(() => 'called', 'ffi.call')).toThrow(NativePluginCapabilityError);
+		expect(() => call()).toThrow(NativeBridgeCapabilityError);
+		expect(() => requireGranted('ffi.call')).toThrow(NativeBridgeCapabilityError);
+		expect(scopeMethod(() => 'called', 'ffi.call')).toThrow(NativeBridgeCapabilityError);
 	});
 
 	test('reports disposal before a missing capability, and a missing capability before a missing method', () => {
@@ -165,17 +165,17 @@ describe('the scoped native call wrapper', () => {
 			});
 
 			expect(() => declared.native.objc.invokeAsync(nativeHandle, 'description', [])).toThrow(
-				NativePluginUnavailableError,
+				NativeBridgeUnavailableError,
 			);
 			expect(() =>
 				undeclared.native.objc.invokeAsync(nativeHandle, 'description', []),
-			).toThrow(NativePluginCapabilityError);
+			).toThrow(NativeBridgeCapabilityError);
 
 			undeclared.dispose();
 
 			expect(() =>
 				undeclared.native.objc.invokeAsync(nativeHandle, 'description', []),
-			).toThrow(NativePluginDisposedError);
+			).toThrow(NativeBridgeDisposedError);
 			declared.dispose();
 		} finally {
 			Object.assign(bridge, { objc });

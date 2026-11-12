@@ -1,9 +1,7 @@
-import { logs, flux, metro, pluginHolds, render, startPlugin } from '@unbound-app/api/testing';
+import { logs, flux, metro, render, startPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { View } from 'react-native';
-
-import { selfTest } from '~/index';
 
 type MenuItem = { label?: string; action?: () => void };
 type Menu = { items: MenuItem[]; key?: string; guild?: { id: string } };
@@ -142,18 +140,29 @@ describe('the overflow menu of a server profile', () => {
 });
 
 describe('the plugin on start', () => {
-	test('reports its three patches in its self-test', async () => {
+	test('starts without a warning once its three patches apply', async () => {
 		await launch();
 
-		expect(selfTest()).toEqual({ ok: true, detail: '3 features applied' });
+		expect(logs.entries.filter(({ level }) => level !== 'info')).toEqual([]);
 	});
 
-	test('keeps the other patches when one cannot be applied', async () => {
+	test('fails to start when a patch throws, so Unbound removes the rest', async () => {
 		registerDiscord({ brokenContextMenus: true });
+
+		const failure = await startPlugin().catch((error: unknown) => error);
+
+		expect(failure).toEqual(new Error('The menu module changed shape.'));
+	});
+
+	test('keeps the other patches with one warning when Discord moved the roles card', async () => {
+		registerDiscord();
+		metro.markMissing('modules/user_profile/native/UserProfileRolesCard.tsx');
 		await startPlugin();
 
-		expect(pluginHolds().join()).toContain('openLazy');
-		expect(selfTest()).toMatchObject({ ok: false });
-		expect(logs.entries.some(({ level }) => level === 'error')).toBe(true);
+		expect(open({ items: [], key: 'g' })).toEqual(['View Permissions']);
+		expect(logs.entries).toContainEqual({
+			level: 'warn',
+			args: ['Roles card button skipped: Discord moved UserProfileRolesCard or Constants.'],
+		});
 	});
 });

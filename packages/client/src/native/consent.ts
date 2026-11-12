@@ -1,10 +1,10 @@
-import type { AddonManifest, NativePluginCapability } from '@unbound-app/types';
+import type { AddonManifest, NativeBridgeCapability } from '@unbound-app/types';
 
 import { resolveManifestPlatforms } from '~/addons/manifest';
 import type { Addon } from '~/addons/addon';
 
 /** Capabilities that reach native code without the bridge's type and object checks. */
-const CONSENT_CAPABILITIES: readonly NativePluginCapability[] = [
+const CONSENT_CAPABILITIES: readonly NativeBridgeCapability[] = [
 	'native.ffi.symbols',
 	'native.ffi.call',
 ];
@@ -15,7 +15,7 @@ export type NativeConsents = Record<string, string>;
 /** Asks the user whether an addon may use consent-gated capabilities; resolves to their answer. */
 export type ConsentPrompt = (
 	addon: Addon,
-	capabilities: readonly NativePluginCapability[],
+	capabilities: readonly NativeBridgeCapability[],
 ) => Promise<boolean>;
 
 let consentPrompt: ConsentPrompt | undefined;
@@ -54,7 +54,7 @@ export class NativeConsentRequiredError extends Error {
  * @param manifest The addon's manifest.
  * @returns The sorted, de-duplicated capabilities that need the user's consent.
  */
-export function consentCapabilities(manifest: AddonManifest): NativePluginCapability[] {
+export function consentCapabilities(manifest: AddonManifest): NativeBridgeCapability[] {
 	const requested = Object.values(resolveManifestPlatforms(manifest).capabilities).flatMap(
 		(capabilities) => capabilities ?? [],
 	);

@@ -14,12 +14,12 @@ import { describeMaintainerChanges } from '~/lib/maintainers';
 import type { SourcedSubmissionRow } from '~/lib/submissions';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
+import { WITH_SERVED_VERSION } from '~/lib/addons';
 import { hasPermission } from '~/lib/auth/access';
 import { toAddonVersion } from '~/lib/artifacts';
 import type { AppContext } from '~/lib/context';
 import { publish } from '~/lib/publish-version';
 import type { Caller } from '~/lib/api/caller';
-import { LATEST_VERSION } from '~/lib/addons';
 import { readTags } from '~/lib/addon-tags';
 import { ApiError } from '~/lib/api/errors';
 import { addonVersion } from '~/db/schema';
@@ -92,7 +92,7 @@ export async function listReviewQueue(
 	const [addons, memberships, tags, maintainerChanges] = await Promise.all([
 		ctx.db.query.addon.findMany({
 			where: { id: { in: updated } },
-			with: LATEST_VERSION,
+			with: WITH_SERVED_VERSION,
 		}),
 		ctx.db.query.addonMaintainer.findMany({
 			where: { userId: caller.user.id, addonId: { in: rows.map((row) => row.addonId) } },

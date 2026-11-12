@@ -146,12 +146,12 @@ export function setFreezeListener(listener: ((freeze: AddonFreeze) => void) | un
 	(globalThis as FreezeListenerGlobal).__UnboundFreezeListener = listener;
 }
 
-export type AddonScope = {
+export type RunningAddon = {
 	attribution?: AddonAttribution;
 	recordDeferredFailure?: (error: Error) => void;
 };
 
-let activeScope: AddonScope | undefined;
+let activeAddon: RunningAddon | undefined;
 
 /**
  * @description Runs addon code with the loader attributing it to the addon, so a crash or freeze inside it
@@ -168,33 +168,33 @@ export function withAddonAttribution<R>(
 		return run();
 	}
 
-	return withAddonScope({ attribution }, run);
+	return runAsAddon({ attribution }, run);
 }
 
 /**
- * @description Runs code as an addon's, or as no addon's when `scope` is `undefined`, restoring the previous scope after.
- * @param scope The addon's scope, as {@link currentAddonScope} returned it.
+ * @description Runs code as an addon's, or as no addon's when `addon` is `undefined`, restoring the previous one after.
+ * @param addon The running addon, as {@link currentRunningAddon} returned it.
  * @param run The code to run.
  * @returns What `run` returned.
  */
-export function withAddonScope<R>(scope: AddonScope | undefined, run: () => R): R {
-	const previous = activeScope;
+export function runAsAddon<R>(addon: RunningAddon | undefined, run: () => R): R {
+	const previous = activeAddon;
 
-	activeScope = scope;
+	activeAddon = addon;
 
 	try {
-		return scope?.attribution ? scope.attribution(run)() : run();
+		return addon?.attribution ? addon.attribution(run)() : run();
 	} finally {
-		activeScope = previous;
+		activeAddon = previous;
 	}
 }
 
 /**
- * @description Returns the scope of the addon whose code is running.
- * @returns The active scope, or `undefined` outside addon code.
+ * @description Returns the addon whose code is running.
+ * @returns The running addon, or `undefined` outside addon code.
  */
-export function currentAddonScope(): AddonScope | undefined {
-	return activeScope;
+export function currentRunningAddon(): RunningAddon | undefined {
+	return activeAddon;
 }
 
 /**
@@ -202,7 +202,7 @@ export function currentAddonScope(): AddonScope | undefined {
  * @returns The active attribution, or `undefined` outside addon code.
  */
 export function currentAddonAttribution(): AddonAttribution | undefined {
-	return activeScope?.attribution;
+	return activeAddon?.attribution;
 }
 
 /**

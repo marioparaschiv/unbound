@@ -14,6 +14,8 @@ std::optional<std::string> toOptionalString(JNIEnv *env, jstring value);
 jstring                    toJavaString(JNIEnv *env, const std::string &value);
 jobjectArray               toJavaStringArray(JNIEnv *env, const std::vector<std::string> &values);
 bool                       clearPendingException(JNIEnv *env);
+// Clears the pending Java exception and returns its `toString()`, or `fallback` without one.
+std::string takeJavaFailure(JNIEnv *env, const char *fallback);
 
 class LocalClass
 {

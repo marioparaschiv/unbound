@@ -1,4 +1,8 @@
-import type { NativePluginCapability, NativePluginPlatform } from '../src/native';
+import type {
+	NativeBridgeCapability,
+	NativeBridgeMethod,
+	NativeBridgePlatform,
+} from '../src/native';
 import type { CommandArgs, LogEntry } from './install-addon-globals';
 import type { OpenedDialog, ShownToast } from './fake-feedback';
 import type { CommandContext, Reply } from '../src/commands';
@@ -42,17 +46,23 @@ export type FluxRecorder = {
 };
 
 /** The fake metro's modules: `register` one for the plugin to find, such as `{ sendMessage }`. */
-export type MetroRecorder = { register: (module: FakeModule, path?: string) => void };
+export type MetroRecorder = {
+	register: (module: FakeModule, path?: string) => void;
+	/** Marks a prop name, file path or export name as missing from this build: a lazy lookup by it returns `undefined`, and `onModuleLoaded` calls `onMissing`. */
+	markMissing: (term: string) => void;
+};
 
 /** The fake `native`: the platform `definePlatform` selects by, and the modules and capabilities it reports. */
 export type NativeRecorder = {
 	/** Switches the host platform, `ios` until set; `definePlatform` and `Platform.OS` follow it. */
-	setPlatform: (platform: NativePluginPlatform) => void;
+	setPlatform: (platform: NativeBridgePlatform) => void;
 	/** Gives `getNativeModule(name)` a module to return. */
 	// UNKNOWN: a native module has whatever shape the plugin reads.
 	registerModule: (name: string, module: unknown) => void;
 	/** Sets what `native.has` reports. */
-	setCapabilities: (capabilities: NativePluginCapability[]) => void;
+	setCapabilities: (capabilities: NativeBridgeCapability[]) => void;
+	/** Sets the bridge methods `native.supports` denies, as on an older loader; none until set. */
+	setUnsupportedMethods: (methods: NativeBridgeMethod[]) => void;
 	/** The Objective-C bridge a plugin gets on iOS: register classes and objects for its calls to reach. */
 	readonly objc: FakeObjc;
 	/** The Java bridge a plugin gets on Android: register classes and objects for its calls to reach. */
@@ -108,12 +118,15 @@ function createRecorders() {
 	};
 	const metro: MetroRecorder = {
 		register: (module, path) => getSession().scope.metro.register(module, path),
+		markMissing: (term) => getSession().scope.metro.markMissing(term),
 	};
 	const native: NativeRecorder = {
 		setPlatform: (platform) => void (getSession().native.state.platform = platform),
 		registerModule: (name, module) => void getSession().native.state.modules.set(name, module),
 		setCapabilities: (capabilities) =>
 			void (getSession().native.state.capabilities = capabilities),
+		setUnsupportedMethods: (methods) =>
+			void (getSession().native.state.unsupportedMethods = methods),
 		get objc() {
 			return getSession().native.objc;
 		},

@@ -26,6 +26,8 @@ let reloadReason: string | undefined;
 let reloadSent = false;
 let sentEtag = '';
 let reconnectedSinceSent = false;
+// Patches move the device's code past the bundle it loaded, so a reload must not be skipped for holding that bundle.
+let patchedSinceReconnect = false;
 let last: Outcome | undefined;
 
 /**
@@ -42,6 +44,7 @@ export function changed(file: string) {
 /** @description Records that a patch for the latest change went to the client. */
 export function sent() {
 	sentGeneration = generation;
+	patchedSinceReconnect = true;
 }
 
 /**
@@ -64,6 +67,7 @@ export function reloadPending(): boolean {
 /** @description Settles a reload once a fresh bundle opens its socket, unless a newer change is still building. */
 export function reconnected() {
 	reconnectedSinceSent = true;
+	patchedSinceReconnect = false;
 
 	if (reloadSent && reloadReason !== undefined && builtGeneration === generation) {
 		settle('reloaded', reloadReason);
@@ -113,7 +117,7 @@ function broadcastWhenBuilt() {
 	const etag = bundleEtag();
 
 	// A rewrite that built the same bundle, such as a formatter pass, is already loaded; the loader would skip it.
-	if (etag === sentEtag && reconnectedSinceSent) {
+	if (etag === sentEtag && reconnectedSinceSent && !patchedSinceReconnect) {
 		settle('reloaded', reloadReason);
 
 		return;
@@ -123,7 +127,7 @@ function broadcastWhenBuilt() {
 	sentEtag = etag;
 	reconnectedSinceSent = false;
 
-	if (!broadcast()) {
+	if (!broadcast(patchedSinceReconnect)) {
 		settle('unchanged', `built, but no loader is connected to reload (${reloadReason})`);
 	}
 }

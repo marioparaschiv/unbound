@@ -6,9 +6,8 @@ import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
 import { createSettings, generalSection, panelHostSection } from '~/settings/builtin';
-import { marketplaceSection, storePageSection } from '~/marketplace/builtin';
+import { marketplaceSection, addonPageSection } from '~/marketplace/builtin';
 import themes, { designSection, fontGroupSection } from '~/themes/builtin';
-import cloudSync, { cloudSyncSection } from '~/sync/builtin';
 import updater, { updatesSection } from '~/updates/builtin';
 import { developerSection } from '~/settings/builtin.dev';
 import { themes as themeManager } from '~/themes/manager';
@@ -24,6 +23,7 @@ import { assetsSection } from '~/assets/builtin.dev';
 import coreCommands from '~/commands/core-commands';
 import hotRefresh from '~/hot-refresh/builtin.dev';
 import { pluginsSection } from '~/plugins/builtin';
+import sync, { syncSection } from '~/sync/builtin';
 import { builtins } from '~/builtins/registry';
 import staffMode from '~/builtins/staff-mode';
 import { icons } from '~/icon-packs/manager';
@@ -64,17 +64,17 @@ const SECTIONS_IN_OVERVIEW_ORDER: SectionEntry[] = [
 	updatesSection,
 	...(import.meta.env.DEV_TOOLS ? [developerSection] : []),
 	toastsSection,
-	cloudSyncSection,
+	syncSection,
 	...(import.meta.env.DEV_TOOLS ? [assetsSection] : []),
 	panelHostSection,
-	storePageSection,
+	addonPageSection,
 	fontGroupSection,
 ];
 
 // The account starts first, so its session refresh is already in flight when other built-ins reach unbound.rip.
 const BUILT_INS: BuiltInEntry[] = [
 	['account', account],
-	['cloudSync', cloudSync],
+	['sync', sync],
 	['commands', commands],
 	['coreCommands', coreCommands],
 	['discordSupport', discordSupport],

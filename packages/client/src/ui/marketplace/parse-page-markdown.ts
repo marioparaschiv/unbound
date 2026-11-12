@@ -1,6 +1,6 @@
 import type { MarkdownRule, SimpleMarkdownParser } from '@unbound-app/types/markdown';
 
-import { normalizePageBody } from '~/marketplace/store-page';
+import { normalizePageBody } from '~/marketplace/addon-page';
 import type { PageNode } from '~/marketplace/page-markdown';
 import { isPageIcon } from '~/marketplace/page-icons';
 import { SimpleMarkdown } from '~/metro/common';
@@ -29,7 +29,7 @@ function createParser(): SimpleMarkdownParser<PageNode> {
 }
 
 /**
- * @description Parses a store page's body into block nodes, building the parser on first use.
+ * @description Parses a addon page's body into block nodes, building the parser on first use.
  * @param body ADDON.md after its frontmatter.
  * @returns The page's blocks in order.
  */

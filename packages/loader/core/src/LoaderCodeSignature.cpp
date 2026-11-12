@@ -1,5 +1,7 @@
 #include "LoaderCodeSignature.h"
 
+#include <algorithm>
+#include <climits>
 #include <cstring>
 #include <fstream>
 #include <optional>
@@ -13,6 +15,7 @@ namespace {
     constexpr std::streamoff kSuperBlobHeaderSize = 12;
     constexpr std::streamoff kBlobIndexSize       = 8;
     constexpr std::streamoff kBlobHeaderSize      = 8;
+    constexpr uint32_t       kMaxFatSlices        = 16;
 
     class BinaryReader
     {
@@ -124,10 +127,10 @@ namespace {
         return blobs;
     }
 
-    std::vector<std::string> machOEntitlements(BinaryReader &reader)
+    std::vector<std::string> machOEntitlements(BinaryReader &reader, uint64_t base)
     {
         uint8_t header[kMachHeaderSize];
-        if (!reader.read(header, sizeof(header)))
+        if (!reader.seek(static_cast<std::streamoff>(base)) || !reader.read(header, sizeof(header)))
         {
             return {};
         }
@@ -148,9 +151,59 @@ namespace {
                 {
                     return {};
                 }
-                return signatureEntitlements(reader, hostValue(linkedit + 8));
+                const uint64_t signature = base + hostValue(linkedit + 8);
+                if (signature > UINT32_MAX)
+                {
+                    return {};
+                }
+                return signatureEntitlements(reader, static_cast<uint32_t>(signature));
             }
             reader.seek(commandStart + hostValue(command + 4));
+        }
+        return {};
+    }
+
+    bool isMachO64(BinaryReader &reader, uint64_t offset)
+    {
+        uint8_t magicBytes[sizeof(uint32_t)];
+        if (!reader.seek(static_cast<std::streamoff>(offset)) ||
+            !reader.read(magicBytes, sizeof(magicBytes)))
+        {
+            return false;
+        }
+        const uint32_t magic = hostValue(magicBytes);
+        return magic == kMachOMagic64 || magic == kMachOSwappedMagic64;
+    }
+
+    std::vector<std::string> fatEntitlements(BinaryReader &reader, bool wide)
+    {
+        uint8_t count[sizeof(uint32_t)];
+        if (!reader.seek(4) || !reader.read(count, sizeof(count)))
+        {
+            return {};
+        }
+        const uint32_t       slices    = std::min<uint32_t>(bigEndianValue(count), kMaxFatSlices);
+        const std::streamoff entrySize = wide ? 32 : 20;
+        for (uint32_t index = 0; index < slices; index++)
+        {
+            uint8_t entry[32];
+            if (!reader.seek(8 + entrySize * index) || !reader.read(entry, entrySize))
+            {
+                return {};
+            }
+            const uint64_t offset = wide
+                                        ? (static_cast<uint64_t>(bigEndianValue(entry + 8)) << 32) |
+                                              bigEndianValue(entry + 12)
+                                        : bigEndianValue(entry + 8);
+            if (!isMachO64(reader, offset))
+            {
+                continue;
+            }
+            std::vector<std::string> blobs = machOEntitlements(reader, offset);
+            if (!blobs.empty())
+            {
+                return blobs;
+            }
         }
         return {};
     }
@@ -164,12 +217,37 @@ std::vector<std::string> entitlementBlobs(const std::string &executablePath)
     {
         return {};
     }
-    const uint32_t magic = hostValue(magicBytes);
-    if (magic != kMachOMagic64 && magic != kMachOSwappedMagic64)
+    const uint32_t magic = bigEndianValue(magicBytes);
+    if (magic == kFatMagic || magic == kFatMagic64)
+    {
+        return fatEntitlements(reader, magic == kFatMagic64);
+    }
+    if (!isMachO64(reader, 0))
     {
         return {};
     }
-    reader.seek(0);
-    return machOEntitlements(reader);
+    return machOEntitlements(reader, 0);
+}
+
+std::optional<std::string> entitlementsFromBlob(const std::string &blob)
+{
+    constexpr size_t headerSize = static_cast<size_t>(kBlobHeaderSize);
+    if (blob.size() < headerSize)
+    {
+        return std::nullopt;
+    }
+    const auto    *bytes  = reinterpret_cast<const uint8_t *>(blob.data());
+    const uint32_t length = bigEndianValue(bytes + 4);
+    if (bigEndianValue(bytes) != kEntitlementsBlobMagic || length < headerSize ||
+        length > blob.size())
+    {
+        return std::nullopt;
+    }
+    std::string payload = blob.substr(headerSize, length - headerSize);
+    if (payload.empty())
+    {
+        return std::nullopt;
+    }
+    return payload;
 }
 }

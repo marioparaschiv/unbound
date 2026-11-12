@@ -21,8 +21,15 @@ export type CurrentRoute = { name: string; params: ScreenParams; path: string[] 
  * Discord's own entries name their route apart from their key (`APPEARANCE_THEME_PICKER` → `Appearance Theme Picker`), so it navigates to `screen.route`.
  */
 export function openScreen({ unbound }: DevicePrelude, name: string, params: ScreenParams): string {
-	const { SETTING_RENDERER_CONFIG } = unbound.metro.findByProps('SETTING_RENDERER_CONFIG');
-	const { getRootNavigationRef } = unbound.metro.findByProps('getRootNavigationRef');
+	const Settings = unbound.metro.findByProps('SETTING_RENDERER_CONFIG');
+	const Navigation = unbound.metro.findByProps('getRootNavigationRef');
+
+	if (!Settings || !Navigation) {
+		throw new Error("Discord's settings or navigation module is missing.");
+	}
+
+	const { SETTING_RENDERER_CONFIG } = Settings;
+	const { getRootNavigationRef } = Navigation;
 
 	function normalize(key: string) {
 		return key
@@ -57,7 +64,13 @@ export function openScreen({ unbound }: DevicePrelude, name: string, params: Scr
  * @returns The route as a JSON string of {@link CurrentRoute}.
  */
 export function currentRoute({ unbound }: DevicePrelude): string {
-	const ref = unbound.metro.findByProps('getRootNavigationRef').getRootNavigationRef();
+	const Navigation = unbound.metro.findByProps('getRootNavigationRef');
+
+	if (!Navigation) {
+		throw new Error("Discord's navigation module is missing.");
+	}
+
+	const ref = Navigation.getRootNavigationRef();
 	const path: string[] = [];
 	let state: NavigationState | undefined = ref.getRootState();
 

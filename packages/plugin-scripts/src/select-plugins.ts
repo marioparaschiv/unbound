@@ -29,10 +29,10 @@ export type PublishedVersions = Map<string, PublishedVersion>;
 export type PluginDecision =
 	| { status: 'selected'; reason: 'unpublished'; plugin: LocalPlugin }
 	| { status: 'selected'; reason: 'newer'; plugin: LocalPlugin; published: PublishedVersion }
-	| { status: 'selected'; reason: 'rebuilt'; plugin: LocalPlugin; published: PublishedVersion }
 	| {
 			status: 'skipped';
-			reason: 'already-published' | 'behind-published';
+			/** `unbumped`: the build differs from the live one of the same version, which is never overwritten. */
+			reason: 'already-published' | 'behind-published' | 'unbumped';
 			plugin: LocalPlugin;
 			published: PublishedVersion;
 	  };
@@ -88,13 +88,13 @@ function decide(plugin: LocalPlugin, published: PublishedVersion | undefined): P
 		return { status: 'selected', reason: 'newer', plugin, published };
 	}
 
-	if (order === 0 && isRebuilt(plugin, published)) {
-		return { status: 'selected', reason: 'rebuilt', plugin, published };
+	if (order < 0) {
+		return { status: 'skipped', reason: 'behind-published', plugin, published };
 	}
 
 	return {
 		status: 'skipped',
-		reason: order === 0 ? 'already-published' : 'behind-published',
+		reason: isRebuilt(plugin, published) ? 'unbumped' : 'already-published',
 		plugin,
 		published,
 	};

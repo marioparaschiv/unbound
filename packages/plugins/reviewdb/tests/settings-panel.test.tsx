@@ -3,7 +3,7 @@ import { SettingsPanel, settings } from '@unbound-app/settings';
 import { messages } from '@unbound-app/i18n';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
-import { AUTH_REDIRECT_URI } from '~/constants';
+import { AUTH_REDIRECT_URI } from '~/lib/constants';
 
 import { startReviewdb } from './helpers/start-reviewdb';
 

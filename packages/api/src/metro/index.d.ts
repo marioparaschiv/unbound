@@ -205,7 +205,7 @@ export declare function filter<A extends FilterArgument[]>(
  * @description Finds a module matching a filter. Lazy unless `{ lazy: false }` is passed, or `all` is set: the search runs on first access.
  * @param filter The filter to match modules against: a built-in, a combination, or a predicate you write, which the build keys for the cache.
  * @param options Search options controlling interop, caching, esModule unwrapping, and `all`.
- * @returns The matched module, an array of matches when `all` is set, or `null`.
+ * @returns The matched module, an array of matches when `all` is set, `undefined` when the cache knows it is missing, or `null`.
  */
 export declare function find(filter: MetroFilter, options?: MetroSearchOptions): any;
 /**
@@ -249,10 +249,10 @@ export declare function findByName<T extends MetroLookupArgs<string>>(
 export declare function findByProps<
 	K extends MetroLookupFirst<MetroPropName>,
 	T extends MetroLookupArgs<string>,
->(first: K, ...rest: T): MetroPropertyRecordOrArray<[K, ...T], string> & {};
+>(first: K, ...rest: T): MetroPropertyRecordOrArray<[K, ...T], string>;
 export declare function findByProps<T extends MetroLookupArgs<string>>(
 	...args: T
-): MetroPropertyRecordOrArray<T, string> & {};
+): MetroPropertyRecordOrArray<T, string>;
 /**
  * @description Finds a module whose prototype exposes all of the given method names. Lazy unless `{ lazy: false }` is passed: the search runs on first access.
  * @template U The union of requested prototype method names.
@@ -302,16 +302,16 @@ export declare function onModuleLoad(listener: MetroModuleLoadListener): () => v
 /**
  * @description Calls `onLoad` with the module matching `filter` once it initializes, without ever initializing it.
  * A loaded module is passed at once; otherwise `onLoad` runs inside the module's factory, before its importer reads it.
- * A module a full search of this Discord build found missing never loads, so `onLoad` never runs for it.
+ * A module a full search of this Discord build found missing never loads, so `onLoad` never runs for it; `onMissing` runs instead.
  * @param filter The filter to match against.
  * @param onLoad Receives the matched module, once.
- * @param options Whether to also match the `default` export (`esModules`) and return it on such a match (`interop`).
+ * @param waitOptions Whether to also match the `default` export (`esModules`) and return it on such a match (`interop`), and `onMissing`.
  * @returns A function that stops waiting; it does nothing once `onLoad` has run.
  */
 export declare function onModuleLoaded(
 	filter: MetroFilter,
 	onLoad: (mdl: MetroExport) => void,
-	options?: MetroModuleLoadedOptions,
+	waitOptions?: MetroWaitOptions,
 ): () => void;
 export type AlertActionsComponent = React$1.ComponentType<AlertActionsProps>;
 /** An object of shape `T` widened with an arbitrary property index. */
@@ -26006,12 +26006,12 @@ export type KeysExposingAll<K> = (
 	? Keys
 	: never;
 export type LoadingButtonPillComponent = React$1.ComponentType<LoadingButtonPillProps>;
-/** Widens a single result to an array when the search was made with `all: true`. */
+/** Widens a single result to an array when the search was made with `all: true`; a single one is `undefined` when the cache knows it is missing. */
 export type MetroAllValues<T extends MetroSearchOptions, U> = T extends {
 	all: true;
 }
 	? U[]
-	: U;
+	: U | undefined;
 /** Tuple of param bags followed by a `{ bulk: true }` marker, describing a bulk find. */
 export type MetroBulkFind<T extends string> = [
 	...AnyProps<MetroParamsBag<T>>[],
@@ -26048,7 +26048,7 @@ export type MetroFilter = ((mdl: any, id: number | string) => PredicateResult) &
 };
 /** A function or class exported by a Discord module, whose signature Discord does not document. */
 export type MetroFunction = DiscordFunction & (new (...args: any[]) => any);
-/** Dispatches to the bulk or single by-name result shape based on the argument tuple. */
+/** Dispatches to the bulk or single by-name result shape. */
 export type MetroFunctionSignatureOrArray<T extends any[], U extends string> =
 	T extends MetroBulkFind<U> ? MetroBulkModuleByName<T> : MetroSingleModuleByName<T>;
 /** Options that control internal search behaviour shared across every `findBy*` helper. */
@@ -26102,7 +26102,7 @@ export type MetroModuleLoadListener = (mdl: any, id: number) => void;
 export type MetroModuleLoadedOptions = Pick<MetroSearchOptions, 'esModules' | 'interop'>;
 /** A name `findByName` takes: a default export's runtime name, or any other string. */
 export type MetroModuleName = LiteralUnion<Extract<keyof DiscordModulesByName, string>>;
-/** Dispatches to the bulk or single by-path result shape based on the argument tuple. */
+/** Dispatches to the bulk or single by-path result shape. */
 export type MetroModuleOrArray<T extends any[], U extends string> =
 	T extends MetroBulkFind<U> ? AnyProps : MetroSingleModuleByPath<T>;
 /** A source path `findByFilePath` takes: a Discord module's path, or any other string. */
@@ -26130,9 +26130,7 @@ export type MetroParamsBag<T extends string> = {
 };
 /** A prop name `findByProps` takes: an export name of a Discord module, or any other string. */
 export type MetroPropName = LiteralUnion<DiscordExportName>;
-/**
- * Dispatches to the bulk or single by-property result shape based on the argument tuple.
- */
+/** Dispatches to the bulk or single by-property result shape. */
 export type MetroPropertyRecordOrArray<T extends any[], U extends string> =
 	T extends MetroBulkFind<U> ? MetroBulkModuleByProperty<T> : MetroSingleModuleByProperty<T>;
 /** A record keyed by the requested prop names. */
@@ -26175,21 +26173,21 @@ export type MetroSingleModuleByName<T extends any[]> = T extends [
 					}
 				: MetroNamedExport<Exclude<T[number], object>>
 		>
-	: MetroNamedExport<Exclude<T[number], object>>;
+	: MetroNamedExport<Exclude<T[number], object>> | undefined;
 /** Result shape of a by-path search: the module's exports. */
 export type MetroSingleModuleByPath<T extends any[]> = T extends [
 	...any,
 	infer O extends MetroSearchOptions,
 ]
 	? MetroAllValues<O, MetroModuleAtPath<Exclude<T[number], object>>>
-	: MetroModuleAtPath<Exclude<T[number], object>>;
+	: MetroModuleAtPath<Exclude<T[number], object>> | undefined;
 /** Result shape of a by-property search: a record keyed by the requested props. */
 export type MetroSingleModuleByProperty<T extends any[]> = T extends [
 	...any,
 	infer O extends MetroSearchOptions,
 ]
 	? MetroAllValues<O, MetroModuleWithProps<Exclude<T[number], object>>>
-	: MetroModuleWithProps<Exclude<T[number], object>>;
+	: MetroModuleWithProps<Exclude<T[number], object>> | undefined;
 /** Search options for `flux.getStore`, adding the `short` name-matching toggle. */
 export type MetroStoreOptions = {
 	short?: boolean;
@@ -26199,6 +26197,10 @@ export type MetroStringFindWithOptions<T extends string, Options = MetroSearchOp
 	...T[],
 	Options,
 ];
+/** Options for {@link onModuleLoaded}'s wait, adding `onMissing`, run at once instead of waiting when the cache knows the module is missing. */
+export type MetroWaitOptions = MetroModuleLoadedOptions & {
+	onMissing?: () => void;
+};
 /** `T`, or `Fallback` when `T` is `never`. */
 export type Otherwise<T, Fallback> = [T] extends [never] ? Fallback : T;
 export type PressableHighlightComponent = React$1.ComponentType<

@@ -2,7 +2,7 @@ import type { SettingsEntry } from '@unbound-app/types/settings';
 import { createLogger } from '@unbound-app/logger';
 
 import { stableType } from '~/hot-refresh/runtime';
-import SettingsStore from '~/settings/state';
+import SectionStore from '~/settings/state';
 
 const Logger = createLogger('API', 'Settings');
 
@@ -11,7 +11,7 @@ const Logger = createLogger('API', 'Settings');
  * @param entries The settings entries to register.
  */
 export function registerSection(...entries: SettingsEntry[]) {
-	const state = SettingsStore.getState();
+	const state = SectionStore.getState();
 
 	for (const entry of entries) {
 		if (state.sections[entry.key]) {
@@ -36,7 +36,7 @@ function withStableScreen(entry: SettingsEntry): SettingsEntry {
  * @param keys The entry keys to remove.
  */
 export function removeSection(...keys: string[]) {
-	const state = SettingsStore.getState();
+	const state = SectionStore.getState();
 
 	for (const key of keys) {
 		state.removeSection(key);
@@ -48,7 +48,7 @@ export function removeSection(...keys: string[]) {
  * @returns A record of entry key to its {@link SettingsEntry}.
  */
 export function getSections(): Record<string, SettingsEntry> {
-	return SettingsStore.getState().sections;
+	return SectionStore.getState().sections;
 }
 
 export default {

@@ -5,18 +5,18 @@ import {
 	joinFillets,
 	snapRights,
 	withoutTailCorner,
-} from '~/bubbles/group';
+} from '~/lib/group';
 import {
 	BubbleStyle,
 	CornerCurve,
 	Grouping,
 	SQUARED_CORNER_RATIO,
 	TailPosition,
-} from '~/constants';
-import { parseHexColor, type BubbleAppearance, type BubbleColor } from '~/bubbles/style';
-import { filletData, pathData } from '~/bubbles/android/path-data';
-import { bubblePath, cornerRadii } from '~/bubbles/bubble-path';
-import { mentionPaint } from '~/bubbles/mention-paint';
+} from '~/lib/constants';
+import { parseHexColor, type BubbleAppearance, type BubbleColor } from '~/lib/style';
+import { filletData, pathData } from '~/native/android/path-data';
+import { bubblePath, cornerRadii } from '~/lib/bubble-path';
+import { mentionPaint } from '~/lib/mention-paint';
 
 /** One sample message's bubble, at the size its content asks for. */
 export type PreviewBubble = {

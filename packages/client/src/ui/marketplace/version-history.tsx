@@ -6,16 +6,16 @@ import { fetchAddonVersions } from '~/addons/versions';
 import { Discord } from '~/metro/components';
 import { messages } from '~/i18n/api';
 
-import StoreSection from './store-section';
 import VersionEntry from './version-entry';
 import useResource from './use-resource';
+import PageCard from './page-card';
 
 type VersionHistoryProps = {
 	addon: ListedAddon;
 };
 
 /**
- * @description The store page's What's new card: the listed version's changes from the catalog, then
+ * @description The addon page's What's new card: the listed version's changes from the catalog, then
  * every version on a timeline once asked for, which is the only request the card makes.
  */
 function VersionHistory({ addon }: VersionHistoryProps) {
@@ -24,7 +24,7 @@ function VersionHistory({ addon }: VersionHistoryProps) {
 	const versions = state.status === 'ready' ? state.value : [addon.latestVersion];
 
 	return (
-		<StoreSection title={messages.UNBOUND_UPDATES_CHANGELOG}>
+		<PageCard title={messages.UNBOUND_UPDATES_CHANGELOG}>
 			{versions.map((version, index) => (
 				<VersionEntry
 					key={version.version}
@@ -50,7 +50,7 @@ function VersionHistory({ addon }: VersionHistoryProps) {
 					onPress={retry}
 				/>
 			) : null}
-		</StoreSection>
+		</PageCard>
 	);
 }
 

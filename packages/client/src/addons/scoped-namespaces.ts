@@ -11,7 +11,7 @@ import type { AddonLogger } from '@unbound-app/types';
 import noop from '@unbound-app/utils/noop';
 
 import type {
-	MetroModuleLoadedOptions,
+	MetroWaitOptions,
 	MetroLazySearchOptions,
 	MetroModuleLoadListener,
 } from '~/metro/types';
@@ -119,7 +119,7 @@ export function scopeMetro(subscriptions: Subscriptions): Api['metro'] {
 	function onModuleLoaded(
 		filter: MetroFilter,
 		onLoad: (mdl: MetroExport) => void,
-		options?: MetroModuleLoadedOptions,
+		options?: MetroWaitOptions,
 	) {
 		let settled = false;
 		let release = noop;

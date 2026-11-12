@@ -1,13 +1,12 @@
-import { flux as fakeFlux, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import type { FluxStore } from '@unbound-app/api/flux';
+import { flux as fakeFlux, logs, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { expect, test } from 'bun:test';
 import { flux } from '@unbound-app/api';
 
-import { MultiAccountStore } from '~/multi-account/modules';
-import { selfTest } from '~/index';
 function seedStore() {
 	fakeFlux.seed({ MultiAccount: { getCanUseMultiAccountMobile: () => false } });
 
-	return MultiAccountStore;
+	return flux.getStore('MultiAccount') as FluxStore & { getCanUseMultiAccountMobile(): boolean };
 }
 
 test('reports multi-account as available on mobile while the plugin runs', async () => {
@@ -41,7 +40,7 @@ test('reports healthy after it starts', async () => {
 
 	await startPlugin();
 
-	expect((await selfTest()).ok).toBe(true);
+	expect(logs.entries.filter((entry) => entry.level === 'warn')).toEqual([]);
 });
 
 test('skips quietly when Discord renamed the store method', async () => {
@@ -49,6 +48,9 @@ test('skips quietly when Discord renamed the store method', async () => {
 
 	await startPlugin();
 
-	expect((await selfTest()).ok).toBe(false);
+	expect(logs.entries).toContainEqual({
+		level: 'warn',
+		args: ['Multi-account skipped: Discord moved getCanUseMultiAccountMobile.'],
+	});
 	await stopPlugin();
 });

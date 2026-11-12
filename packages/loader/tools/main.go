@@ -64,6 +64,9 @@ func run(args []string) error {
 	case "platform":
 		return runPlatform(args[1:])
 	case "core-test":
+		if len(args) > 1 && args[1] == "--hermes" {
+			return runHermesCoreTests(".", defaultRunner)
+		}
 		return runCoreTests(".", defaultRunner)
 	case "validate":
 		return runValidate(args[1:])
@@ -124,7 +127,7 @@ func printUsage() {
 	fmt.Println("usage: go run ./tools <build|platform|core-test|validate|deps|packages|libffi-build|fetch|ipa-info|ipa-icons|discord-version|discord-apk|android-app-icon|android-version|released-android-code|build-watch|release-candidate|generate-loader-changelog|publish-loader-releases|attest|bundle-key|smoke|smoke-regression|smoke-failure-summary|pr-comment|actions-cleanup|wait-artifact|symbolicate-android|doctor|dev|compat-scan|compat-issue|compat-legacy-issue|compat-support-issue|format|lint>")
 	fmt.Println("       go run ./tools build <tweak|ipa|simulator|all> [flags]")
 	fmt.Println("       go run ./tools platform <build|test> <ios|android> [flags]")
-	fmt.Println("       go run ./tools core-test")
+	fmt.Println("       go run ./tools core-test [--hermes]")
 	fmt.Println("       go run ./tools validate [--root <path>]")
 	fmt.Println("       go run ./tools deps [--root <path>]")
 	fmt.Println("       go run ./tools packages <list|validate> [--root <path>]")

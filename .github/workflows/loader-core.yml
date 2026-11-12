@@ -48,6 +48,26 @@ jobs:
               with:
                   key: core-tests
 
+    core-tests-macos:
+        name: Shared core tests on macOS
+        runs-on: macos-15
+        timeout-minutes: 15
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+                  fetch-depth: 1
+
+            - name: Configure core
+              run: cmake -S core -B build/core -DUNBOUND_CORE_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined"
+
+            - name: Build core
+              run: cmake --build build/core -j"$(sysctl -n hw.ncpu)"
+
+            - name: Run core tests
+              run: ctest --test-dir build/core --output-on-failure --timeout 120 -j"$(sysctl -n hw.ncpu)" -E '_fuzz$'
+
     native-jsi-fuzz:
         name: Host Hermes bridge tests
         runs-on: ubuntu-26.04
@@ -77,9 +97,9 @@ jobs:
                   key: jsi-fuzz-ninja-${{ runner.os }}-${{ env.HERMES_TAG }}-${{ hashFiles('packages/loader/vendor/**') }}
 
             - name: Install libffi, Ninja and lld
-              run: |
-                  sudo apt-get update -qq
-                  sudo apt-get install -y -qq libffi-dev ninja-build lld
+              uses: ./.github/actions/apt-install
+              with:
+                  packages: libffi-dev ninja-build lld
 
             - name: Setup ccache
               uses: ./.github/actions/setup-ccache
@@ -90,7 +110,7 @@ jobs:
               run: cmake -S core -B build/jsi-fuzz -G Ninja -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DUNBOUND_CORE_TESTS=ON -DUNBOUND_CORE_JSI_FUZZ=ON -DUNBOUND_HERMES_SOURCE_DIR="$PWD/build/hermes-src" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all"
 
             - name: Build the Hermes tests and fuzzer
-              run: cmake --build build/jsi-fuzz --target native_platform_hermes native_runtime_hermes unbound_native_hermes native_define_stage_hermes native_fabric_hermes native_handle_leases_hermes native_struct_layouts_hermes native_jsi_fuzz -j"$(nproc)"
+              run: cmake --build build/jsi-fuzz -j"$(nproc)"
 
             - name: Save ccache
               if: ${{ !cancelled() }}
@@ -100,12 +120,7 @@ jobs:
 
             - name: Test the native bridge on Hermes
               run: |
-                  build/jsi-fuzz/native_platform_hermes
-                  build/jsi-fuzz/unbound_native_hermes
-                  build/jsi-fuzz/native_define_stage_hermes
-                  build/jsi-fuzz/native_fabric_hermes
-                  build/jsi-fuzz/native_handle_leases_hermes
-                  build/jsi-fuzz/native_struct_layouts_hermes
+                  ctest --test-dir build/jsi-fuzz --output-on-failure -R '_hermes$' -j"$(nproc)"
                   build/jsi-fuzz/native_runtime_hermes | tee runtime.log
                   grep -q "FFI included" runtime.log
 

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { bubbleAppearance, type BubbleAppearance } from '~/bubbles/style';
+import { bubbleAppearance, type BubbleAppearance } from '~/lib/style';
 import { previewPaints, type PreviewBubble } from '~/preview/preview-paint';
 
 const GREY = { red: 0.5, green: 0.5, blue: 0.5 };

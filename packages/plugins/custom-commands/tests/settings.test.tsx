@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import { storage } from '@unbound-app/api';
 
 import SettingsPanel from '~/settings';
-import { getTags } from '~/commands/saved-commands';
+import { getTags } from '~/lib/saved-commands';
 
 const greet = { name: 'greet', message: 'Hi {{user}}', media: [] };
 const dope = { name: 'dope', description: 'Says lol', message: 'lol', media: [] };

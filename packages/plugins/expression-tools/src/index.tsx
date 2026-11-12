@@ -1,5 +1,15 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { expressionFeatures } from '~/expression-actions';
+import { patchStickerDetailActionSheet } from '~/patches/sticker-detail-sheet';
+import { patchActionSheets } from '~/patches/action-sheets';
+import { ignoreLateSheets } from '~/patches/expression-sheets';
 
-export const { start, stop, selfTest } = runFeatures(expressionFeatures);
+export function start() {
+	patchActionSheets();
+	patchStickerDetailActionSheet();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+	ignoreLateSheets();
+}

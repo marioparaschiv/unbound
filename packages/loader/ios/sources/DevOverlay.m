@@ -1,6 +1,7 @@
 #import "DevOverlay.h"
 
 #import "CoreBridge.h"
+#import "WrenchIcon.h"
 
 @interface DevOverlayPassthroughWindow : UIWindow
 @end
@@ -372,11 +373,7 @@ static CGPoint devOverlayDragStartCenter = {0, 0};
     button.tintColor       = UIColor.labelColor;
     button.backgroundColor = UIColor.clearColor;
 
-    UIImageSymbolConfiguration *symbolConfig =
-        [UIImageSymbolConfiguration configurationWithPointSize:15
-                                                        weight:UIImageSymbolWeightRegular];
-    [button setImage:[UIImage systemImageNamed:@"wrench" withConfiguration:symbolConfig]
-            forState:UIControlStateNormal];
+    [button setImage:wrenchIcon(20) forState:UIControlStateNormal];
     [button addTarget:self
                   action:@selector(showDeveloperMenu)
         forControlEvents:UIControlEventTouchUpInside];

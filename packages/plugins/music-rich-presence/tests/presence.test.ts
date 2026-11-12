@@ -1,8 +1,6 @@
-import { flux, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-
-import { selfTest } from '~/index';
 
 const nowPlaying = {
 	recenttracks: {
@@ -79,9 +77,9 @@ describe('the presence', () => {
 		});
 	});
 
-	test('reports the presence in its self-test once started', async () => {
+	test('starts without a warning', async () => {
 		await startPlugin();
 
-		expect(selfTest()).toEqual({ ok: true, detail: '1 feature applied' });
+		expect(logs.entries.filter(({ level }) => level !== 'info')).toEqual([]);
 	});
 });

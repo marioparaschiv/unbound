@@ -69,6 +69,17 @@ describe('plugin bytecode', () => {
 		]);
 	});
 
+	test('names the source it falls back to after the plugin, so its stack frames show it', () => {
+		compiled = undefined;
+		scan('({ start() { globalThis.__bytecodeTestStack = new Error().stack; }, stop() {} })');
+		new Plugins().initialize();
+
+		expect(Reflect.get(globalThis, '__bytecodeTestStack')).toContain(
+			'unbound-plugin/bytecode.example.js',
+		);
+		Reflect.deleteProperty(globalThis, '__bytecodeTestStack');
+	});
+
 	test('falls back to the source when there is no matching bytecode', () => {
 		compiled = undefined;
 		scan('({ start() { globalThis.__bytecodeTestSource = true; }, stop() {} })');

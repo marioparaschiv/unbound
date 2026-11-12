@@ -1,10 +1,8 @@
-import { metro, startPlugin } from '@unbound-app/api/testing';
+import { logs, metro, startPlugin } from '@unbound-app/api/testing';
 import { describe, expect, test } from 'bun:test';
 
-async function selfTest() {
-	const plugin = await import('~/index');
-
-	return plugin.selfTest();
+function warnings() {
+	return logs.entries.filter(({ level }) => level === 'warn' || level === 'error');
 }
 
 describe('the self test', () => {
@@ -12,12 +10,15 @@ describe('the self test', () => {
 		metro.register({ createPendingReply: (reply: object) => reply });
 		await startPlugin();
 
-		expect(await selfTest()).toMatchObject({ ok: true });
+		expect(warnings()).toEqual([]);
 	});
 
 	test('reports the missing module when Discord has none', async () => {
+		metro.markMissing('createPendingReply');
 		await startPlugin();
 
-		expect(await selfTest()).toMatchObject({ ok: false });
+		expect(warnings()).toEqual([
+			{ level: 'warn', args: ['Reply mention skipped: Discord moved PendingReplyActions.'] },
+		]);
 	});
 });

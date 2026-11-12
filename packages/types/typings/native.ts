@@ -1,9 +1,9 @@
-import type { NATIVE_PLUGIN_PLATFORM_CAPABILITIES } from './native-capabilities.gen';
+import type { NATIVE_BRIDGE_PLATFORM_CAPABILITIES } from './native-capabilities.gen';
 import type { NativeJavaBridge, NativeJavaHooksBridge } from './native-java';
 import type { LoaderObjCBridge, NativeObjCBridge } from './native-objc';
 import type { NativeUIBridge, NativeUIScopeFactory } from './native-ui';
 import type { NativeSerializableObject } from './native-handles';
-import type { NativePluginCapability } from './native-methods';
+import type { NativeBridgeCapability } from './native-methods';
 import type { NativeFabricBridge } from './native-fabric';
 import type { NativeFFIBridge } from './native-ffi';
 import type { AddonManifest } from './addons';
@@ -20,14 +20,14 @@ export * from './native-ffi';
 export * from './native-ui';
 
 /** The host platforms a native bridge runs on. */
-export const NATIVE_PLUGIN_PLATFORMS = ['ios', 'android'] as const;
+export const NATIVE_BRIDGE_PLATFORMS = ['ios', 'android'] as const;
 
 /** A host platform the loader reports, `ios` or `android`. */
-export type NativePluginPlatform = (typeof NATIVE_PLUGIN_PLATFORMS)[number];
+export type NativeBridgePlatform = (typeof NATIVE_BRIDGE_PLATFORMS)[number];
 
 /** A capability the native bridge on platform `P` provides. */
-export type NativePluginPlatformCapability<P extends NativePluginPlatform> =
-	(typeof NATIVE_PLUGIN_PLATFORM_CAPABILITIES)[P][number];
+export type NativeBridgePlatformCapability<P extends NativeBridgePlatform> =
+	(typeof NATIVE_BRIDGE_PLATFORM_CAPABILITIES)[P][number];
 
 /** A Discord activity a plugin can subscribe to; the client derives each from Flux actions, such as `MESSAGE_CREATE`. */
 export type NativeRuntimeEventName =
@@ -180,13 +180,13 @@ export type NativeDebugBridge = {
 };
 
 /** The native bridge a plugin reaches through `context.native`, gated by the capabilities it declares. */
-export type NativePluginBridge = {
-	/** The version of the JavaScript API plugins use, compared with a manifest's `minNativePluginApi`. */
+export type NativeBridge = {
+	/** The version of the JavaScript API plugins use, compared with a manifest's `minNativeBridgeApi`. */
 	readonly apiVersion: string;
 	/** The version of the native ABI the loader implements. */
 	readonly abiVersion: string;
 	/** Every capability this loader build provides, not only the ones the plugin declares. */
-	readonly capabilities: readonly NativePluginCapability[];
+	readonly capabilities: readonly NativeBridgeCapability[];
 	/** The Objective-C runtime; iOS only. */
 	readonly objc: NativeObjCBridge;
 	/** Raw calls to C functions. */
@@ -206,17 +206,17 @@ export type NativePluginBridge = {
 };
 
 /** The raw bridge the loader publishes as `globalThis.NativePlugin`; `objc` exists only on iOS, `java` and `hooks` only on Android. */
-export type NativePluginRuntimeBridge = Pick<
-	NativePluginBridge,
+export type LoaderNativeBridge = Pick<
+	NativeBridge,
 	'apiVersion' | 'abiVersion' | 'capabilities' | 'ffi' | 'fabric' | 'debug'
 > &
-	Partial<Pick<NativePluginBridge, 'hooks'>> & {
+	Partial<Pick<NativeBridge, 'hooks'>> & {
 		readonly objc?: LoaderObjCBridge;
 		readonly java?: NativeJavaBridge & NativeUIScopeFactory;
 	};
 
 /** The stable `code` on an error the native bridge or its plugin scope throws. */
-export type NativePluginErrorCode =
+export type NativeBridgeErrorCode =
 	| 'NATIVE_BRIDGE_ERROR'
 	| 'NATIVE_PLUGIN_API_VERSION_UNSUPPORTED'
 	| 'NATIVE_PLUGIN_CALL_CANCELLED'
@@ -226,13 +226,13 @@ export type NativePluginErrorCode =
 	| 'NATIVE_PLUGIN_UNAVAILABLE';
 
 /** The shape of an error the native bridge or its plugin scope throws. */
-export type NativePluginError = {
+export type NativeBridgeError = {
 	/** Which failure it is; native failures without their own code use `NATIVE_BRIDGE_ERROR`. */
-	code: NativePluginErrorCode;
+	code: NativeBridgeErrorCode;
 	/** A human-readable description. */
 	message: string;
 	/** The capability the plugin lacks, for `NATIVE_PLUGIN_CAPABILITY_DENIED`. */
-	capability?: NativePluginCapability;
+	capability?: NativeBridgeCapability;
 };
 
 /** What the addon manager passes to a plugin's `start`. */
@@ -242,11 +242,11 @@ export type PluginContext = {
 	/** The plugin's id, from its manifest. */
 	readonly id: string;
 	/** The host platform, or `undefined` when the loader reports none. */
-	readonly platform?: NativePluginPlatform;
+	readonly platform?: NativeBridgePlatform;
 	/** The capabilities the manifest declares for this platform; `native` allows only these. */
-	readonly capabilities: readonly NativePluginCapability[];
+	readonly capabilities: readonly NativeBridgeCapability[];
 	/** The native bridge, scoped to the plugin's capabilities. */
-	readonly native: NativePluginBridge;
+	readonly native: NativeBridge;
 	/** Releases the plugin's hooks, surfaces, handles and subscriptions; the addon manager calls it on stop, unload, reload or a failed start. */
 	dispose(): void;
 };

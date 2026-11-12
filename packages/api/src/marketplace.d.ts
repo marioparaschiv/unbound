@@ -2,7 +2,7 @@
 
 import type { AddonAuthor, AddonKind } from './_internal';
 /**
- * @description Installs the latest version of a marketplace addon, with the plugins it depends on once the user agrees.
+ * @description Installs the newest version of a marketplace addon this client runs, with the plugins it depends on once the user agrees.
  * @param id The addon's id in the catalog.
  * @returns Whether the addon now runs that version.
  */

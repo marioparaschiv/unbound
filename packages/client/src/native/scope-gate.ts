@@ -1,18 +1,18 @@
 import type {
 	NativeCancelablePromise,
-	NativePluginCapability,
-	NativePluginMethod,
+	NativeBridgeCapability,
+	NativeBridgeMethod,
 } from '@unbound-app/types';
-import { NATIVE_PLUGIN_METHOD_CAPABILITIES } from '@unbound-app/types/native';
+import { NATIVE_BRIDGE_METHOD_CAPABILITIES } from '@unbound-app/types/native';
 
 import {
-	NativePluginCapabilityError,
-	NativePluginDisposedError,
-	NativePluginUnavailableError,
+	NativeBridgeCapabilityError,
+	NativeBridgeDisposedError,
+	NativeBridgeUnavailableError,
 } from '~/native/errors';
 import type { AddonAttribution } from '~/addons/crash-guard';
 
-const UNAVAILABLE_BRIDGE = 'The native plugin bridge is unavailable.';
+const UNAVAILABLE_BRIDGE = 'The native bridge is unavailable.';
 
 /** A bridge method as a scope hands it out: never missing, since a missing one throws when called. */
 export type BridgeMethod<T, K extends keyof T> = Exclude<T[K], undefined>;
@@ -23,7 +23,7 @@ export type ScopeLifecycle = { disposed: boolean };
 type Track = <T>(pending: NativeCancelablePromise<T>) => NativeCancelablePromise<T>;
 
 type ScopeGateOptions = {
-	capabilities: readonly NativePluginCapability[];
+	capabilities: readonly NativeBridgeCapability[];
 	attribute?: AddonAttribution;
 	lifecycle: ScopeLifecycle;
 	track: Track;
@@ -31,26 +31,26 @@ type ScopeGateOptions = {
 
 /** The wrappers a plugin scope gates its native calls with. */
 export type ScopeGate = {
-	requireGranted: (path: NativePluginMethod) => void;
+	requireGranted: (path: NativeBridgeMethod) => void;
 	scopeMethod: <A extends unknown[], R>(
 		method: (...args: A) => R,
-		path: NativePluginMethod,
+		path: NativeBridgeMethod,
 	) => (...args: A) => R;
 	scopeAsyncMethod: <A extends unknown[], R>(
 		method: ((...args: A) => NativeCancelablePromise<R>) | undefined,
-		path: NativePluginMethod,
+		path: NativeBridgeMethod,
 		unavailableMessage: string,
 	) => (...args: A) => NativeCancelablePromise<R>;
 	scopeBridgeMethod: <T extends object, K extends keyof T>(
 		source: T,
 		name: K,
-		path: NativePluginMethod,
+		path: NativeBridgeMethod,
 		unavailableMessage?: string,
 	) => BridgeMethod<T, K>;
 	scopeBridgeAsyncMethod: <T extends object, K extends keyof T>(
 		source: T,
 		name: K,
-		path: NativePluginMethod,
+		path: NativeBridgeMethod,
 		unavailableMessage?: string,
 	) => BridgeMethod<T, K>;
 };
@@ -79,37 +79,37 @@ export function createScopeGate({
 	const granted = new Set(capabilities);
 	const activity = attribute?.activity;
 
-	function requireGranted(path: NativePluginMethod): void {
-		const capability = NATIVE_PLUGIN_METHOD_CAPABILITIES[path];
+	function requireGranted(path: NativeBridgeMethod): void {
+		const capability = NATIVE_BRIDGE_METHOD_CAPABILITIES[path];
 
 		if (!granted.has(capability)) {
-			throw new NativePluginCapabilityError(capability);
+			throw new NativeBridgeCapabilityError(capability);
 		}
 	}
 
 	function gate<S, A extends unknown[], R>(
 		method: ((...args: A) => R) | undefined,
-		path: NativePluginMethod,
+		path: NativeBridgeMethod,
 		unavailableMessage: string,
 		receiver: S,
 		tracked: boolean,
 	): (...args: A) => R {
-		const capability = NATIVE_PLUGIN_METHOD_CAPABILITIES[path];
+		const capability = NATIVE_BRIDGE_METHOD_CAPABILITIES[path];
 		const allowed = granted.has(capability);
 		const call = method && attribute && !activity ? attribute(method.bind(receiver)) : method;
 		const target = call === method ? receiver : undefined;
 
 		return (...args: A) => {
 			if (lifecycle.disposed) {
-				throw new NativePluginDisposedError();
+				throw new NativeBridgeDisposedError();
 			}
 
 			if (!allowed) {
-				throw new NativePluginCapabilityError(capability);
+				throw new NativeBridgeCapabilityError(capability);
 			}
 
 			if (!call) {
-				throw new NativePluginUnavailableError(unavailableMessage);
+				throw new NativeBridgeUnavailableError(unavailableMessage);
 			}
 
 			let result: R;

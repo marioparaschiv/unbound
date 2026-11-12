@@ -9,7 +9,7 @@ type FakePlugin = {
 	context?: { id: string; platform: string; capabilities: string[] };
 };
 
-type FakeUnbound = { plugins?: { entities: Map<string, FakePlugin> } };
+type FakeUnbound = { plugins?: { addons: Map<string, FakePlugin> } };
 
 function isUnbound(value: FakeUnbound): value is FakeUnbound & UnboundGlobal {
 	return typeof value === 'object';
@@ -17,7 +17,7 @@ function isUnbound(value: FakeUnbound): value is FakeUnbound & UnboundGlobal {
 
 function unboundWith(plugins: FakePlugin[] | undefined) {
 	const unbound: FakeUnbound = plugins
-		? { plugins: { entities: new Map(plugins.map((plugin) => [plugin.id, plugin])) } }
+		? { plugins: { addons: new Map(plugins.map((plugin) => [plugin.id, plugin])) } }
 		: {};
 
 	if (!isUnbound(unbound)) {

@@ -302,18 +302,6 @@ function prepareRelease(options: Options, decision: SelectedDecision, date: stri
 	const history = historyOf(options.root, plugin);
 	const path = `${plugin.workspace}/${plugin.dir}/CHANGELOG.md`;
 	const existing = tryGit(history.git, ['show', `HEAD:${history.path}/CHANGELOG.md`]);
-	const current = existing.ok
-		? selectRelease(parseChangelog(existing.stdout), plugin.version)
-		: undefined;
-
-	if (decision.reason === 'rebuilt' && existing.ok && current) {
-		return {
-			plugin,
-			changelog: existing.stdout,
-			entry: renderRelease(plugin.version, current).trimEnd(),
-		};
-	}
-
 	const release = createRelease({
 		commits: listCommits(history.git, history.path, findChangelogBase(options, decision)),
 		date,
@@ -493,10 +481,10 @@ function describeDecision(decision: PluginDecision): string {
 			return `publish ${label} (unpublished)`;
 		case 'newer':
 			return `publish ${label} (live: ${decision.published.version})`;
-		case 'rebuilt':
-			return `publish ${label} (rebuilt: its output differs from the live build)`;
 		case 'already-published':
 			return `skip    ${label} (already published)`;
+		case 'unbumped':
+			return `skip    ${label} (its output differs from the live build; bump its version to publish it)`;
 		case 'behind-published':
 			return `skip    ${label} (live is newer: ${decision.published.version})`;
 	}

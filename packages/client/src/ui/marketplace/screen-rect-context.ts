@@ -21,7 +21,7 @@ function measureInWindow(view: View | null, done: (rect: ScreenRect | undefined)
 }
 
 /**
- * The store page's measure, which corrects for the settings sheet it sits in; outside one a view's
+ * The addon page's measure, which corrects for the settings sheet it sits in; outside one a view's
  * window frame is already its screen frame.
  */
 const ScreenRectContext = createContext<MeasureOnScreen>(measureInWindow);

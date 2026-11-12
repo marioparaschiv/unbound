@@ -54,6 +54,12 @@ object NativeBridge {
     @JvmStatic
     external fun nativeOnForeground()
 
+    @JvmStatic
+    external fun nativeOnBackground()
+
+    @JvmStatic
+    external fun nativeAdoptTombstone(tombstone: ByteArray): Boolean
+
     /** How long this launch took to reach each step, as text for the toolbox. */
     @JvmStatic
     external fun nativeLaunchTimings(): String
@@ -69,6 +75,7 @@ object NativeBridge {
         val manager = context.getSystemService(ActivityManager::class.java) ?: return 0
         val exit = manager.getHistoricalProcessExitReasons(context.packageName, 0, 8)
             .firstOrNull { it.processName == context.packageName } ?: return 0
+        if (exit.reason == ApplicationExitInfo.REASON_CRASH_NATIVE) adoptTombstone(exit)
         when (exit.reason) {
             ApplicationExitInfo.REASON_CRASH,
             ApplicationExitInfo.REASON_CRASH_NATIVE,
@@ -81,6 +88,27 @@ object NativeBridge {
             else -> 2
         }
     }.getOrDefault(0)
+
+    private fun adoptTombstone(exit: ApplicationExitInfo) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        runCatching {
+            val bytes = exit.traceInputStream?.use { stream ->
+                val buffer = java.io.ByteArrayOutputStream()
+                val chunk = ByteArray(16 * 1024)
+                while (buffer.size() < MAX_TOMBSTONE_BYTES) {
+                    val read = stream.read(chunk)
+                    if (read < 0) break
+                    buffer.write(chunk, 0, read)
+                }
+                buffer.toByteArray()
+            } ?: return
+            if (nativeAdoptTombstone(bytes)) {
+                Logger.info(LogCategory.DEFAULT, "Read the previous native crash's stack from Android's tombstone.")
+            }
+        }.onFailure { Logger.error(LogCategory.DEFAULT, "Failed to read Android's tombstone", it) }
+    }
+
+    private const val MAX_TOMBSTONE_BYTES = 4 * 1024 * 1024
 
     /** Whether the active network costs the person data: mobile data, a hotspot or Data Saver. */
     @JvmStatic
@@ -219,7 +247,7 @@ object NativeBridge {
     fun isMainThread(): Boolean = Looper.myLooper() == Looper.getMainLooper()
 
     @JvmStatic
-    external fun nativeDispatchHookEvent(token: String, payloadJSON: String)
+    external fun nativeDispatchHookEvent(token: String, payloadJSON: String): String?
 
     @JvmStatic
     fun hooksInstall(

@@ -1,7 +1,9 @@
 #include <algorithm>
+#include <charconv>
 #include <chrono>
 #include <filesystem>
 #include <system_error>
+#include <utility>
 
 #include "LoaderFiles.h"
 #include "LoaderJSON.h"
@@ -17,6 +19,24 @@ static std::string packStore(const nlohmann::json &value)
     std::string packed;
     nlohmann::json::to_msgpack(value, packed);
     return packed;
+}
+
+static std::optional<int64_t> corruptBackupTimestamp(const std::string &name,
+                                                     const std::string &prefix)
+{
+    if (name.size() <= prefix.size() || name.rfind(prefix, 0) != 0)
+    {
+        return std::nullopt;
+    }
+    const char *first     = name.data() + prefix.size();
+    const char *last      = name.data() + name.size();
+    int64_t     timestamp = 0;
+    auto [end, error]     = std::from_chars(first, last, timestamp);
+    if (error != std::errc() || end != last)
+    {
+        return std::nullopt;
+    }
+    return timestamp;
 }
 
 std::string SettingsStore::cachePath() const
@@ -348,21 +368,18 @@ void SettingsStore::pruneCorruptBackups() const
 {
     const std::filesystem::path settings(path_);
     const std::string           prefix = settings.filename().string() + ".corrupt-";
-    std::vector<std::string>    backups;
+    std::vector<std::pair<int64_t, std::string>> backups;
     for (const std::string &name : listDirectory(settings.parent_path().string()))
     {
-        if (name.rfind(prefix, 0) == 0)
+        if (std::optional<int64_t> timestamp = corruptBackupTimestamp(name, prefix))
         {
-            backups.push_back(name);
+            backups.emplace_back(*timestamp, name);
         }
     }
-    std::sort(
-        backups.begin(), backups.end(), [&](const std::string &left, const std::string &right) {
-            return std::stoll(left.substr(prefix.size())) < std::stoll(right.substr(prefix.size()));
-        });
+    std::sort(backups.begin(), backups.end());
     for (size_t index = 0; index + kCorruptBackupsKept < backups.size(); index++)
     {
-        removeFile((settings.parent_path() / backups[index]).string());
+        removeFile((settings.parent_path() / backups[index].second).string());
     }
 }
 }

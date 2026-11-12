@@ -15,10 +15,10 @@ import {
 	MediaCorners,
 	MENTION_WIDTH_STEP,
 	ReplyStyle,
-} from '~/constants';
-import { bubbleLayout, choice, parseHexColor, replyStyle } from '~/bubbles/style';
-import { themeBubbleColor } from '~/bubbles/theme';
-import { hexColor } from '~/bubbles/shade';
+} from '~/lib/constants';
+import { bubbleLayout, choice, parseHexColor, replyStyle } from '~/lib/style';
+import { themeBubbleColor } from '~/lib/theme';
+import { hexColor } from '~/lib/shade';
 import { matchingPreset, PRESETS, type Look, type PresetName } from '~/presets';
 import ChatPreview from '~/preview/chat-preview';
 

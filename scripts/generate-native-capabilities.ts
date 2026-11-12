@@ -2,10 +2,10 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
-	NATIVE_PLUGIN_CAPABILITY_PLATFORMS,
-	NATIVE_PLUGIN_CLIENT_METHODS,
+	NATIVE_BRIDGE_CAPABILITY_PLATFORMS,
+	NATIVE_BRIDGE_CLIENT_METHODS,
 } from '../packages/types/typings/native-capability-hosts';
-import { NATIVE_PLUGIN_METHOD_CAPABILITIES } from '../packages/types/typings/native-methods';
+import { NATIVE_BRIDGE_METHOD_CAPABILITIES } from '../packages/types/typings/native-methods';
 import { ROOT } from './workspaces';
 
 /** A file the generator writes, by its path from the repository root. */
@@ -32,18 +32,18 @@ export const TYPES_OUTPUT = 'packages/types/typings/native-capabilities.gen.ts';
 export const LOADER_OUTPUT = 'packages/loader/core/include/NativeCapabilityTable.h';
 
 function capabilities(): string[] {
-	return Object.keys(NATIVE_PLUGIN_CAPABILITY_PLATFORMS);
+	return Object.keys(NATIVE_BRIDGE_CAPABILITY_PLATFORMS);
 }
 
 function platformCapabilities(platform: (typeof PLATFORMS)[number]): string[] {
-	return Object.entries(NATIVE_PLUGIN_CAPABILITY_PLATFORMS)
+	return Object.entries(NATIVE_BRIDGE_CAPABILITY_PLATFORMS)
 		.filter(([, platforms]) => platforms.some((candidate) => candidate === platform))
 		.map(([capability]) => capability);
 }
 
 function bindings(): Binding[] {
-	const clientMethods = new Set<string>(NATIVE_PLUGIN_CLIENT_METHODS);
-	const entries = Object.entries(NATIVE_PLUGIN_METHOD_CAPABILITIES);
+	const clientMethods = new Set<string>(NATIVE_BRIDGE_CLIENT_METHODS);
+	const entries = Object.entries(NATIVE_BRIDGE_METHOD_CAPABILITIES);
 
 	return capabilities().map((capability) => {
 		const paths = entries.filter(([, owner]) => owner === capability).map(([path]) => path);
@@ -79,16 +79,16 @@ function renderTypes(): string {
 	).join('');
 
 	return `${BANNER}
-import type { NativePluginCapability } from './native-methods';
-import type { NativePluginPlatform } from './native';
+import type { NativeBridgeCapability } from './native-methods';
+import type { NativeBridgePlatform } from './native';
 
 /** Every capability name a manifest may declare; an unknown name fails manifest validation. */
-export const NATIVE_PLUGIN_CAPABILITIES = [
-${quotedLines(capabilities(), '\t', "'")}] as const satisfies readonly NativePluginCapability[];
+export const NATIVE_BRIDGE_CAPABILITIES = [
+${quotedLines(capabilities(), '\t', "'")}] as const satisfies readonly NativeBridgeCapability[];
 
 /** The capabilities each platform's loader offers; Objective-C ones are iOS only and Java ones Android only. */
-export const NATIVE_PLUGIN_PLATFORM_CAPABILITIES = {
-${platforms}} as const satisfies Record<NativePluginPlatform, readonly NativePluginCapability[]>;
+export const NATIVE_BRIDGE_PLATFORM_CAPABILITIES = {
+${platforms}} as const satisfies Record<NativeBridgePlatform, readonly NativeBridgeCapability[]>;
 `;
 }
 

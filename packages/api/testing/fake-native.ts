@@ -1,7 +1,8 @@
 import type {
-	NativePluginBridge,
-	NativePluginCapability,
-	NativePluginPlatform,
+	NativeBridge,
+	NativeBridgeCapability,
+	NativeBridgeMethod,
+	NativeBridgePlatform,
 	PluginContext,
 } from '../src/native';
 import type { AddonManifest } from '../src/global';
@@ -14,17 +15,19 @@ import { createFakeObjc, type FakeObjc } from './fake-objc';
 /** What `startPlugin` takes to build the `PluginContext` its `start` receives; the rest is filled in as the client would. */
 export type StartContext = Partial<Omit<PluginContext, 'native'>> & {
 	/** The bridge members the plugin calls; the others are empty objects. */
-	native?: Partial<NativePluginBridge>;
+	native?: Partial<NativeBridge>;
 };
 
 /** The fake `native` namespace's state, which a test sets through the `native` recorder. */
 export type NativeState = {
 	/** The host platform `definePlatform` selects by and `Platform.OS` reports; `ios` until a test sets it. */
-	platform: NativePluginPlatform;
+	platform: NativeBridgePlatform;
 	/** The native modules `getNativeModule` finds, by name. */
 	modules: Map<string, unknown>;
 	/** The capabilities `native.has` reports. */
-	capabilities: NativePluginCapability[];
+	capabilities: NativeBridgeCapability[];
+	/** The bridge methods `native.supports` denies; every other method is supported. */
+	unsupportedMethods: NativeBridgeMethod[];
 };
 
 /** The fake `native`, its state, and the `PluginContext` builder. */
@@ -49,52 +52,52 @@ function emptyMember<T>(): T {
 }
 
 // Keyed by every platform the SDK names, so a new one fails to typecheck until the fake serves it.
-const PLATFORMS: NativePluginPlatform[] = Object.values({
+const PLATFORMS: NativeBridgePlatform[] = Object.values({
 	ios: 'ios',
 	android: 'android',
-} as const satisfies { [P in NativePluginPlatform]: P });
+} as const satisfies { [P in NativeBridgePlatform]: P });
 
-class NativePluginUnavailableError extends Error {
+class NativeBridgeUnavailableError extends Error {
 	readonly code = 'NATIVE_PLUGIN_UNAVAILABLE';
 }
 
-class NativePluginCapabilityError extends Error {
+class NativeBridgeCapabilityError extends Error {
 	readonly code = 'NATIVE_PLUGIN_CAPABILITY_DENIED';
-	readonly capability: NativePluginCapability;
+	readonly capability: NativeBridgeCapability;
 
-	constructor(capability: NativePluginCapability) {
-		super(`Native plugin capability is not declared: ${capability}`);
+	constructor(capability: NativeBridgeCapability) {
+		super(`Native bridge capability is not declared: ${capability}`);
 		this.capability = capability;
 	}
 }
 
-class NativePluginUnsupportedPlatformError extends Error {
+class NativeBridgeUnsupportedPlatformError extends Error {
 	readonly code = 'NATIVE_PLUGIN_PLATFORM_EXCLUDED';
-	readonly platforms: readonly NativePluginPlatform[];
+	readonly platforms: readonly NativeBridgePlatform[];
 
-	constructor(platforms: readonly NativePluginPlatform[], platform: string) {
+	constructor(platforms: readonly NativeBridgePlatform[], platform: string) {
 		super(`This plugin supports ${platforms.join(', ')}; the host platform is ${platform}.`);
 		this.platforms = platforms;
 	}
 }
 
-class NativePluginVersionError extends Error {
+class NativeBridgeVersionError extends Error {
 	readonly code = 'NATIVE_PLUGIN_API_VERSION_UNSUPPORTED';
 	readonly installedApi: string;
 	readonly requiredApi: string;
 
 	constructor(requiredApi: string, installedApi: string) {
-		super(`Native plugin API ${requiredApi} is required, but ${installedApi} is installed.`);
+		super(`Native bridge API ${requiredApi} is required, but ${installedApi} is installed.`);
 		this.installedApi = installedApi;
 		this.requiredApi = requiredApi;
 	}
 }
 
-class NativePluginDisposedError extends Error {
+class NativeBridgeDisposedError extends Error {
 	readonly code = 'NATIVE_PLUGIN_SCOPE_DISPOSED';
 
 	constructor() {
-		super('The native plugin scope has been disposed.');
+		super('The native bridge scope has been disposed.');
 	}
 }
 
@@ -104,16 +107,21 @@ class NativePluginDisposedError extends Error {
  * @returns The namespace, its state, and the context builder.
  */
 export function createFakeNative(): FakeNative {
-	const state: NativeState = { platform: 'ios', modules: new Map(), capabilities: [] };
+	const state: NativeState = {
+		platform: 'ios',
+		modules: new Map(),
+		capabilities: [],
+		unsupportedMethods: [],
+	};
 	const log = createCallLog();
 	const objc = createFakeObjc(log);
 	const java = createFakeJava(log);
 
-	function select<Handler>(handlers: Partial<Record<NativePluginPlatform, Handler>>): Handler {
+	function select<Handler>(handlers: Partial<Record<NativeBridgePlatform, Handler>>): Handler {
 		const handler = handlers[state.platform];
 
 		if (handler === undefined) {
-			throw new NativePluginUnsupportedPlatformError(
+			throw new NativeBridgeUnsupportedPlatformError(
 				PLATFORMS.filter((name) => handlers[name] !== undefined),
 				state.platform,
 			);
@@ -125,7 +133,7 @@ export function createFakeNative(): FakeNative {
 	// A plugin selects as it imports platform.ts, before a test sets the platform, so a function handler
 	// is a forwarder to the current platform's handler. Any other value is read now.
 	function definePlatform<Handler>(
-		handlers: Partial<Record<NativePluginPlatform, Handler>>,
+		handlers: Partial<Record<NativeBridgePlatform, Handler>>,
 	): Handler {
 		const selected = select(handlers);
 
@@ -142,11 +150,11 @@ export function createFakeNative(): FakeNative {
 	}
 
 	const namespace: FakeModule = {
-		NativePluginUnavailableError,
-		NativePluginCapabilityError,
-		NativePluginUnsupportedPlatformError,
-		NativePluginVersionError,
-		NativePluginDisposedError,
+		NativeBridgeUnavailableError,
+		NativeBridgeCapabilityError,
+		NativeBridgeUnsupportedPlatformError,
+		NativeBridgeVersionError,
+		NativeBridgeDisposedError,
 		BundleInfo: {},
 		BundleManager: {},
 		DeviceInfo: {},
@@ -155,8 +163,9 @@ export function createFakeNative(): FakeNative {
 			names.map((name) => state.modules.get(name)).find(Boolean),
 		getNativeResources: () => undefined,
 		getRuntimeProperties: () => ({}),
-		has: (capability: NativePluginCapability) => state.capabilities.includes(capability),
+		has: (capability: NativeBridgeCapability) => state.capabilities.includes(capability),
 		reload: async () => {},
+		supports: (method: NativeBridgeMethod) => !state.unsupportedMethods.includes(method),
 	};
 
 	return {
@@ -172,11 +181,12 @@ export function createFakeNative(): FakeNative {
 			state.platform = 'ios';
 			state.modules.clear();
 			state.capabilities = [];
+			state.unsupportedMethods = [];
 		},
 		context(manifest, overrides = {}) {
 			const { native, ...rest } = overrides;
 			const capabilities = rest.capabilities ?? state.capabilities;
-			const bridge: NativePluginBridge = {
+			const bridge: NativeBridge = {
 				apiVersion: '1.0.0',
 				abiVersion: '1',
 				capabilities,

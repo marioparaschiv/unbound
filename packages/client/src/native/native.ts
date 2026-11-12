@@ -44,11 +44,12 @@ export type {
 	NativeObjCCallPlan,
 	NativeObjectHandle,
 	NativePlatformBridge,
-	NativePluginBridge,
-	NativePluginCapability,
-	NativePluginError,
-	NativePluginErrorCode,
-	NativePluginPlatform,
+	NativeBridge,
+	NativeBridgeCapability,
+	NativeBridgeError,
+	NativeBridgeErrorCode,
+	NativeBridgeMethod,
+	NativeBridgePlatform,
 	NativePointer,
 	NativeRuntimeBridge,
 	NativeRuntimeEventName,
@@ -66,11 +67,11 @@ export type {
 	PluginContext,
 } from '@unbound-app/types/native';
 export {
-	NativePluginCapabilityError,
-	NativePluginDisposedError,
-	NativePluginUnavailableError,
-	NativePluginUnsupportedPlatformError,
-	NativePluginVersionError,
+	NativeBridgeCapabilityError,
+	NativeBridgeDisposedError,
+	NativeBridgeUnavailableError,
+	NativeBridgeUnsupportedPlatformError,
+	NativeBridgeVersionError,
 } from '~/native/errors';
 export type {
 	BundleInfoType,
@@ -91,4 +92,4 @@ export {
 } from '~/native/runtime';
 export { NativePlatform, definePlatform } from '~/native/platform';
 export type { PlatformHandlers } from '~/native/platform';
-export { has } from '~/native/capabilities';
+export { has, supports } from '~/native/capabilities';

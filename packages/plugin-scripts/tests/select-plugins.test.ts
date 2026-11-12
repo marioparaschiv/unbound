@@ -65,7 +65,7 @@ test('getSelected keeps only the selected plugins, in order', () => {
 	]);
 });
 
-test('an equal version whose build differs from the live one is selected as rebuilt', () => {
+test('an equal version whose build differs from the live one is skipped as unbumped', () => {
 	const built: LocalPlugin = {
 		...plugin('1.0.0'),
 		sha256: 'a'.repeat(64),
@@ -79,8 +79,16 @@ test('an equal version whose build differs from the live one is selected as rebu
 	).toEqual(['already-published']);
 	expect(
 		reasons({ ...live('1.0.0'), sha256: 'c'.repeat(64), bytecode: { 98: 'b'.repeat(128) } }),
-	).toEqual(['rebuilt']);
-	expect(reasons({ ...live('1.0.0'), sha256: 'a'.repeat(64) })).toEqual(['rebuilt']);
+	).toEqual(['unbumped']);
+	expect(reasons({ ...live('1.0.0'), sha256: 'a'.repeat(64) })).toEqual(['unbumped']);
+	expect(
+		getSelected(
+			selectPlugins(
+				[built],
+				new Map([['unbound.example', { ...live('1.0.0'), sha256: 'c'.repeat(64) }]]),
+			),
+		),
+	).toEqual([]);
 	expect(reasons(live('1.0.0'))).toEqual(['already-published']);
 	expect(
 		selectPlugins(

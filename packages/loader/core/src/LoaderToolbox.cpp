@@ -234,7 +234,7 @@ std::string discordLine(const std::string &label, const std::string &appSource)
     std::string channel = match[2].str();
     if (channel.empty())
     {
-        channel = appSource == "TestFlight" ? "beta" : "stable";
+        channel = appSource.find("TestFlight") != std::string::npos ? "beta" : "stable";
     }
     else
     {

@@ -1,7 +1,7 @@
 import type { ComponentType, ReactNode } from 'react';
 
 /** The core Bucket; each addon's Bucket is named after the addon id. */
-export const CORE_SETTINGS_STORE = 'unbound';
+export const CORE_BUCKET = 'unbound';
 
 /** The screen descriptor a settings route entry renders. */
 export type SettingsScreen = {

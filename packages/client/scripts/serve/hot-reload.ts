@@ -55,16 +55,19 @@ function send(controller: ReadableStreamDefaultController<Uint8Array>, payload: 
 
 /**
  * @description Broadcasts the bundle's etag on disk to every connected loader; one storing another etag reloads.
+ * @param force Reload even a loader holding this bundle, because hot patches moved its code past it.
  * @returns How many loaders it was sent to.
  */
-export function broadcast(): number {
+export function broadcast(force: boolean = false): number {
 	etag = bundleEtag();
 
-	const payload = frame('reload', { etag });
+	// No bundle has this etag, so the loader reloads and then revalidates the bundle it holds, getting a 304.
+	const sent = force ? `"${etag.replaceAll('"', '')}-patched"` : etag;
+	const payload = frame('reload', { etag: sent });
 
 	for (const controller of hotClients) send(controller, payload);
 
-	logger.info(`Sent the bundle etag ${etag} to ${hotClients.size} loader(s).`);
+	logger.info(`Sent the bundle etag ${sent} to ${hotClients.size} loader(s).`);
 
 	return hotClients.size;
 }

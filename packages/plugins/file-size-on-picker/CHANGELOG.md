@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.9] - 2026-11-11
+
+### Changed
+
+- Needs Unbound 3.0.0 or newer. The plugin was reorganised for it and works the same as before.
+
 ## [1.0.8] - 2026-11-05
 
 ### Changed

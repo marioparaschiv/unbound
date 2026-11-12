@@ -33,7 +33,7 @@ type ImagePickerModule = {
 	launchImageLibraryAsync?: (options: PickerOptions) => Promise<PickerResult>;
 };
 
-const ImagePicker: ImagePickerModule = findByProps('launchImageLibraryAsync');
+const ImagePicker: ImagePickerModule | undefined = findByProps('launchImageLibraryAsync');
 
 type CurrentAppIcon = { id?: string };
 
@@ -97,7 +97,7 @@ async function writeCustomIcons(icons: CustomAppIcon[]) {
  * @throws When Discord's photo picker is unavailable or fails.
  */
 export async function pickCustomIconImage(): Promise<string | undefined> {
-	if (typeof ImagePicker.launchImageLibraryAsync !== 'function') {
+	if (typeof ImagePicker?.launchImageLibraryAsync !== 'function') {
 		throw new Error("Discord's photo picker is unavailable.");
 	}
 

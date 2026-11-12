@@ -5,55 +5,54 @@ import type {
 	NativeJavaBridge,
 	NativeJavaHooksBridge,
 	NativeObjCBridge,
-	NativePluginBridge,
-	NativePluginCapability,
+	NativeBridge,
+	NativeBridgeCapability,
+	NativeBridgeMethod,
 	NativeRuntimeBridge,
 	NativeUIBridge,
 } from '@unbound-app/types';
-import { NATIVE_PLUGIN_CAPABILITIES } from '@unbound-app/types/native';
+import { NATIVE_BRIDGE_CAPABILITIES } from '@unbound-app/types/native';
 
 import {
-	NativePluginCapabilityError,
-	NativePluginUnavailableError,
-	NativePluginVersionError,
+	NativeBridgeCapabilityError,
+	NativeBridgeUnavailableError,
+	NativeBridgeVersionError,
 } from '~/native/errors';
-import { getNativePlugin, requireNativePlugin } from '~/native/plugin-bridge';
+import { getNativeBridge, requireNativeBridge } from '~/native/bridge';
 import { compareVersions } from '~/core/versions';
 
 /**
- * @description Throws unless the native plugin bridge grants every capability and meets the API version.
+ * @description Throws unless the native bridge grants every capability and meets the API version.
  * @param capabilities The capabilities the plugin declares.
- * @param minimumApi The lowest native plugin API version the plugin supports.
+ * @param minimumApi The lowest native bridge API version the plugin supports.
  */
-export function validateNativePluginRequirements(
-	capabilities: readonly NativePluginCapability[] = [],
+export function validateNativeBridgeRequirements(
+	capabilities: readonly NativeBridgeCapability[] = [],
 	minimumApi?: string,
 ): void {
-	const nativePlugin = getNativePlugin();
+	const bridge = getNativeBridge();
 	const invalidCapability = capabilities.find(
-		(capability) => !NATIVE_PLUGIN_CAPABILITIES.includes(capability),
+		(capability) => !NATIVE_BRIDGE_CAPABILITIES.includes(capability),
 	);
 
 	if (invalidCapability) {
-		throw new NativePluginCapabilityError(invalidCapability);
+		throw new NativeBridgeCapabilityError(invalidCapability);
 	}
 
-	if ((capabilities.length > 0 || minimumApi) && !nativePlugin) {
-		requireNativePlugin();
+	if ((capabilities.length > 0 || minimumApi) && !bridge) {
+		requireNativeBridge();
 	}
 
-	if (!nativePlugin) return;
+	if (!bridge) return;
 
-	const unknown = capabilities.find(
-		(capability) => !nativePlugin.capabilities.includes(capability),
-	);
+	const unknown = capabilities.find((capability) => !bridge.capabilities.includes(capability));
 
 	if (unknown) {
-		throw new NativePluginCapabilityError(unknown);
+		throw new NativeBridgeCapabilityError(unknown);
 	}
 
-	if (minimumApi && compareVersions(nativePlugin.apiVersion, minimumApi) < 0) {
-		throw new NativePluginVersionError(minimumApi, nativePlugin.apiVersion);
+	if (minimumApi && compareVersions(bridge.apiVersion, minimumApi) < 0) {
+		throw new NativeBridgeVersionError(minimumApi, bridge.apiVersion);
 	}
 }
 
@@ -63,17 +62,40 @@ export function validateNativePluginRequirements(
  * @param capability The capability to look for.
  * @returns Whether the bridge provides it.
  */
-export function has(capability: NativePluginCapability): boolean {
-	return Boolean(getNativePlugin()?.capabilities.includes(capability));
+export function has(capability: NativeBridgeCapability): boolean {
+	return Boolean(getNativeBridge()?.capabilities.includes(capability));
 }
 
 /**
- * @description Builds a bridge whose every method throws {@link NativePluginUnavailableError}, standing in for namespaces the loader lacks.
+ * @description Checks whether the loader on this device implements a bridge method, for methods newer than the capability that gates them.
+ * @param method The method's path, such as `fabric.batchAsync`.
+ * @returns Whether the loader implements it.
+ */
+export function supports(method: NativeBridgeMethod): boolean {
+	const [namespace = '', name = ''] = method.split('.');
+
+	// The client implements `runtime` over Flux, so no loader lacks it.
+	if (namespace === 'runtime') {
+		return true;
+	}
+
+	const bridge = getNativeBridge();
+	const source: unknown = bridge && Reflect.get(bridge, namespace);
+
+	return (
+		typeof source === 'object' &&
+		source !== null &&
+		typeof Reflect.get(source, name) === 'function'
+	);
+}
+
+/**
+ * @description Builds a bridge whose every method throws {@link NativeBridgeUnavailableError}, standing in for namespaces the loader lacks.
  * @returns The unavailable bridge.
  */
-export function unavailableNativePlugin(): NativePluginBridge {
+export function unavailableNativeBridge(): NativeBridge {
 	function unavailableMethod(): never {
-		throw new NativePluginUnavailableError('The native plugin bridge is unavailable.');
+		throw new NativeBridgeUnavailableError('The native bridge is unavailable.');
 	}
 
 	const unavailableObjC = new Proxy({}, { get: () => unavailableMethod }) as NativeObjCBridge;

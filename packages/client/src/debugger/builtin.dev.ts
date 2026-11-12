@@ -1,7 +1,7 @@
 import type {
 	DeviceHello,
-	PluginPushRequest,
-	PluginPushResult,
+	PushRequest,
+	PushResult,
 	EvalResult,
 	LogMessage,
 	ReactDevtoolsFrame,
@@ -41,7 +41,7 @@ let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 const disposers = new Set<() => void>();
 
-/** Connects to the debugger bridge and streams logs, evals and plugin pushes over it. */
+/** Connects to the debugger bridge and streams logs, evals and pushes over it. */
 export function start() {
 	stopped = false;
 
@@ -173,7 +173,7 @@ function handleMessage(raw: string) {
 	}
 
 	if (request?.type === 'plugin-push') {
-		void handlePluginPush(request);
+		void handlePush(request);
 
 		return;
 	}
@@ -213,13 +213,13 @@ async function handleEvalRequest(id: string, code: string) {
 
 // A thin transport caller: the reload lifecycle lives on the Plugins manager. Report the manager's
 // own returned outcome straight back over the wire so the CLI stages the reload result.
-function runtimeBytecode(request: PluginPushRequest): string | undefined {
+function runtimeBytecode(request: PushRequest): string | undefined {
 	const version = getLoader()?.bytecodeVersion;
 
 	return version ? request.bytecode?.[String(version)] : void 0;
 }
 
-async function handlePluginPush(request: PluginPushRequest) {
+async function handlePush(request: PushRequest) {
 	const manager = request.kind === 'theme' ? themes : plugins;
 
 	try {
@@ -272,7 +272,7 @@ function sayHello() {
 	}
 }
 
-function reply(payload: EvalResult | PluginPushResult | ViewsResult | ReactDevtoolsFrame) {
+function reply(payload: EvalResult | PushResult | ViewsResult | ReactDevtoolsFrame) {
 	if (ws?.readyState !== WebSocket.OPEN) return;
 
 	try {
@@ -406,8 +406,8 @@ function listenToReloads() {
 	let reloaded: string[] = [];
 	let reset: ReturnType<typeof setTimeout> | undefined;
 
-	function onReloaded(entity: Addon) {
-		reloaded.push(entity.name);
+	function onReloaded(addon: Addon) {
+		reloaded.push(addon.name);
 		clearTimeout(reset);
 		reset = setTimeout(() => {
 			reloaded = [];
@@ -419,11 +419,11 @@ function listenToReloads() {
 		});
 	}
 
-	function onReloadError(entity: Addon, error: Error) {
+	function onReloadError(addon: Addon, error: Error) {
 		show({
-			id: `reload:${entity.id}`,
+			id: `reload:${addon.id}`,
 			title: 'Hot reload failed',
-			content: `${entity.name} failed to reload: ${error.message}`,
+			content: `${addon.name} failed to reload: ${error.message}`,
 		});
 	}
 

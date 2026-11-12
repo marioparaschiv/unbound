@@ -1,13 +1,13 @@
 import type {
 	AddonManifest,
-	NativePluginCapability,
-	NativePluginPlatform,
+	NativeBridgeCapability,
+	NativeBridgePlatform,
 } from '@unbound-app/types';
-import { NATIVE_PLUGIN_CAPABILITIES, NATIVE_PLUGIN_PLATFORMS } from '@unbound-app/types/native';
+import { NATIVE_BRIDGE_CAPABILITIES, NATIVE_BRIDGE_PLATFORMS } from '@unbound-app/types/native';
 import { ASSET_SCALES, isAssetName, isAssetType } from '@unbound-app/contracts/addon-assets';
 import { isLocaleCode } from '@unbound-app/contracts/addon-locales';
 
-import { NativePluginCapabilityError, NativePluginUnsupportedPlatformError } from '~/native/errors';
+import { NativeBridgeCapabilityError, NativeBridgeUnsupportedPlatformError } from '~/native/errors';
 import { isSafeAddonId, isSafeAddonMain } from '~/addons/paths';
 
 /** Checks a manifest's `main`; icon packs accept more than a relative path. */
@@ -16,20 +16,20 @@ export type MainCheck = (main: unknown) => main is string;
 /** The platforms an addon runs on and the capabilities it needs on each of them. */
 export type ManifestPlatforms = {
 	/** Every platform when the manifest lists none. */
-	platforms: readonly NativePluginPlatform[];
+	platforms: readonly NativeBridgePlatform[];
 	capabilities: Readonly<
-		Partial<Record<NativePluginPlatform, readonly NativePluginCapability[]>>
+		Partial<Record<NativeBridgePlatform, readonly NativeBridgeCapability[]>>
 	>;
 };
 
 const REQUIRED_FIELDS = ['id', 'name', 'description', 'authors', 'version', 'main'] as const;
 
-function isKnownPlatform(platform: unknown): platform is NativePluginPlatform {
+function isKnownPlatform(platform: unknown): platform is NativeBridgePlatform {
 	return platform === 'ios' || platform === 'android';
 }
 
-function isCapability(capability: unknown): capability is NativePluginCapability {
-	return NATIVE_PLUGIN_CAPABILITIES.some((known) => known === capability);
+function isCapability(capability: unknown): capability is NativeBridgeCapability {
+	return NATIVE_BRIDGE_CAPABILITIES.some((known) => known === capability);
 }
 
 // UNKNOWN: the manifest arrives as JSON from the network, the loader or the debugger socket.
@@ -41,7 +41,7 @@ function assertCapabilityList(declared: unknown, field: string): void {
 	const unsupported = declared.find((capability) => !isCapability(capability));
 
 	if (unsupported !== undefined) {
-		throw new NativePluginCapabilityError(unsupported);
+		throw new NativeBridgeCapabilityError(unsupported);
 	}
 }
 
@@ -232,6 +232,13 @@ export function parseAddonManifest(
 ): AddonManifest {
 	assertAddonManifest(raw, isAcceptableMain);
 
+	// Addons built before the native bridge rename name their API floor `minNativePluginApi`.
+	const legacyMinApi: unknown = Reflect.get(raw, 'minNativePluginApi');
+
+	if (raw.minNativeBridgeApi === undefined && typeof legacyMinApi === 'string') {
+		return { ...raw, minNativeBridgeApi: legacyMinApi };
+	}
+
 	return raw;
 }
 
@@ -244,9 +251,9 @@ export function parseAddonManifest(
 export function resolveManifestPlatforms(manifest: AddonManifest): ManifestPlatforms {
 	const listed = manifest.platforms;
 	const platforms = listed
-		? NATIVE_PLUGIN_PLATFORMS.filter((platform) => listed[platform])
-		: NATIVE_PLUGIN_PLATFORMS;
-	const capabilities: Partial<Record<NativePluginPlatform, readonly NativePluginCapability[]>> =
+		? NATIVE_BRIDGE_PLATFORMS.filter((platform) => listed[platform])
+		: NATIVE_BRIDGE_PLATFORMS;
+	const capabilities: Partial<Record<NativeBridgePlatform, readonly NativeBridgeCapability[]>> =
 		{};
 
 	for (const platform of platforms) {
@@ -270,19 +277,19 @@ export function resolveManifestPlatforms(manifest: AddonManifest): ManifestPlatf
 export function resolveManifestCapabilities(
 	manifest: AddonManifest,
 	platform: string | undefined,
-): readonly NativePluginCapability[] {
+): readonly NativeBridgeCapability[] {
 	const { platforms, capabilities } = resolveManifestPlatforms(manifest);
 
 	if (isKnownPlatform(platform)) {
 		if (!platforms.includes(platform)) {
-			throw new NativePluginUnsupportedPlatformError(platforms, platform);
+			throw new NativeBridgeUnsupportedPlatformError(platforms, platform);
 		}
 
 		return capabilities[platform] ?? [];
 	}
 
 	if (manifest.platforms) {
-		throw new NativePluginUnsupportedPlatformError(platforms, String(platform));
+		throw new NativeBridgeUnsupportedPlatformError(platforms, String(platform));
 	}
 
 	return Object.freeze([...new Set(manifest.capabilities ?? [])]);

@@ -21,6 +21,7 @@ object NativeHooks {
         fun argument(index: Int): Any?
         fun argumentCount(): Int
         fun proceed(): Any?
+        fun proceedWith(arguments: Array<Any?>): Any?
     }
 
     interface Hook {
@@ -36,8 +37,10 @@ object NativeHooks {
 
     private data class Description(val receiver: String?, val arguments: String, val issued: List<String>)
 
+    private data class Notified(val description: Description, val rewrittenArguments: String?)
+
     interface Dispatcher {
-        fun dispatch(token: String, payloadJSON: String)
+        fun dispatch(token: String, payloadJSON: String): String?
     }
 
     fun interface ReturnValues {
@@ -49,6 +52,7 @@ object NativeHooks {
         val method: Executable,
         val receiver: Class<*>?,
         val replaces: Boolean,
+        val rewritesArguments: Boolean,
         val notifies: Boolean,
         val payload: PayloadSelection,
         var removable: Removable?,
@@ -104,11 +108,19 @@ object NativeHooks {
         ) {
             "Receiver coalescing requires a non-replacing after-observation hook with its receiver"
         }
+        val rewritesArguments = options.optBoolean("rewriteArguments", false)
+        require(
+            !rewritesArguments ||
+                (notify != false && payload.phase == HookPhase.BEFORE && !coalesce && !options.optBoolean("replace", false)),
+        ) {
+            "Rewriting arguments requires a non-replacing, uncoalesced hook that notifies before the method runs"
+        }
         val registration = Registration(
             token,
             method,
             owner.takeIf { method.declaringClass != it },
             options.optBoolean("replace", false),
+            rewritesArguments,
             notify != false,
             payload,
             null,
@@ -150,15 +162,18 @@ object NativeHooks {
             val arguments = (0 until chain.argumentCount()).map { chain.argument(it) }
             val cacheDescription = if (registration.replaces) describe(self, arguments) else null
             var eventDescription: Description? = null
+            var rewritten: Array<Any?>? = null
 
             if (registration.notifies && registration.payload.phase == HookPhase.BEFORE) {
-                eventDescription = notify(registration, self, arguments, cacheDescription, HookPhase.BEFORE)
+                val notified = notify(registration, self, arguments, cacheDescription, HookPhase.BEFORE)
+                eventDescription = notified?.description
+                rewritten = notified?.rewrittenArguments?.let { rewrittenArguments(registration, it) }
             }
 
-            val result = result(registration, chain, cacheDescription)
+            val result = if (rewritten != null) chain.proceedWith(rewritten) else result(registration, chain, cacheDescription)
 
             if (registration.notifies && registration.payload.phase == HookPhase.AFTER) {
-                eventDescription = notify(registration, self, arguments, cacheDescription, HookPhase.AFTER)
+                eventDescription = notify(registration, self, arguments, cacheDescription, HookPhase.AFTER)?.description
             }
 
             if (cacheDescription != null && cacheDescription !== eventDescription) {
@@ -185,6 +200,13 @@ object NativeHooks {
         return coerceReturn(registration.method, value)
     }
 
+    private fun rewrittenArguments(registration: Registration, argumentsJSON: String): Array<Any?>? {
+        if (!registration.rewritesArguments) return null
+        return runCatching { NativeJava.decodeArguments(registration.method.parameterTypes, argumentsJSON) }
+            .onFailure { Logger.error(LogCategory.HOOKS, "Failed to decode rewritten Android hook arguments", it) }
+            .getOrNull()
+    }
+
     private fun coerceReturn(method: Executable, value: Any?): Any? {
         if (method !is Method) return value
         return NativeJava.coerceTo(method.returnType, value)
@@ -196,7 +218,7 @@ object NativeHooks {
         arguments: List<Any?>,
         cacheDescription: Description?,
         phase: HookPhase,
-    ): Description? {
+    ): Notified? {
         val target = synchronized(this) { dispatcher } ?: return null
         val indexes = registration.payload.arguments ?: arguments.indices.toList()
         val useCacheDescription =
@@ -222,12 +244,12 @@ object NativeHooks {
             target.dispatch(registration.token, payload.toString())
         }.onFailure {
             Logger.error(LogCategory.HOOKS, "Failed to dispatch an Android hook event", it)
-        }.isSuccess
-        if (!dispatched) {
+        }
+        if (dispatched.isFailure) {
             NativeJava.releaseIssued(description.issued)
             return null
         }
-        return description
+        return Notified(description, dispatched.getOrNull())
     }
 
     private fun describe(

@@ -361,6 +361,14 @@ object NativeJava {
 
     fun coerceTo(type: Class<*>, value: Any?): Any? = coerce(type, value)
 
+    fun decodeArguments(parameterTypes: Array<Class<*>>, argumentsJSON: String): Array<Any?> {
+        val arguments = parseArguments(argumentsJSON)
+        require(arguments.size == parameterTypes.size) {
+            "Expected ${parameterTypes.size} rewritten arguments but got ${arguments.size}"
+        }
+        return values(parameterTypes, arguments)
+    }
+
     private fun loadClass(name: String): Class<*> {
         val loaders = listOfNotNull(pluginClassLoader, NativeJava::class.java.classLoader)
         for (loader in loaders) {

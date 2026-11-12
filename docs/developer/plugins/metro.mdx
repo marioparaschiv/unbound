@@ -49,7 +49,7 @@ Every function is on `metro`, from `@unbound-app/api`. `find` and each `findBy*`
 | `bulk(...items)` | Runs several searches in one pass. Returns one result per item |
 | `filter(predicate)` | Defines a reusable filter that takes arguments |
 | `onModuleLoad(listener)` | Calls `listener` with every module as it loads. Returns a remover |
-| `onModuleLoaded(filter, onLoad, options?)` | Calls `onLoad` once with the matching module when it loads |
+| `onModuleLoaded(filter, onLoad, options?)` | Calls `onLoad` once with the matching module when it loads, or `options.onMissing` when it is known missing |
 | `getLoadedModule(handle)` | The module behind a lazy handle, or `undefined` if not loaded. Never loads it |
 | `getModulePresence(handle)` | `'loaded'`, `'present'`, `'missing'` or `'unknown'`, without loading |
 
@@ -79,8 +79,8 @@ Every search takes these as its last argument.
 ```ts
 import { metro } from '@unbound-app/api';
 
-// Typed: the design module's components, with their props.
-const { TableRow } = metro.findByProps('TableRow', 'TableRowGroup');
+// Typed: the design module's components, with their props. `undefined` when Discord moved it.
+const Design = metro.findByProps('TableRow', 'TableRowGroup');
 
 // Not typed yet: an open object with `sendMessage` and `receiveMessage`.
 const Messages = metro.findByProps('sendMessage', 'receiveMessage');
@@ -121,7 +121,45 @@ These load the module, so avoid them at the top of a file or in `start`:
 | Passing the stand-in to a function that reads it, such as `patcher.react.after(Component, callback)` | Pass module and key: `patcher.react.after(Module, 'default', callback)` |
 | Searching with `{ all: true }` | `onModuleLoad` for later modules, `find(filter, { all: true, initialize: false })` for loaded ones |
 
-To check a module exists without loading it, use `getModulePresence(handle)`. First-party plugins call `ensureModules` from `@unbound-plugins/shared`, which checks a group of handles and logs missing names.
+A lazy lookup returns `undefined` when a full search of this Discord build already found the module missing; otherwise it returns the lazy handle. Check it at the top of the feature, after its setting check, and log one warning naming the feature and what moved:
+
+```ts
+import { metro, patcher } from '@unbound-app/api';
+import { settings } from '@unbound-app/settings';
+
+declare function addFavorites(): void;
+
+export function patchEmojiPicker() {
+	if (!settings.emojiPicker) {
+		return;
+	}
+
+	const EmojiPicker = metro.findByProps('EmojiPicker');
+
+	if (!EmojiPicker) {
+		logger.warn('Emoji picker skipped: Discord moved EmojiPicker.');
+		return;
+	}
+
+	patcher.after(EmojiPicker, 'render', addFavorites);
+}
+```
+
+To act only once a module loads, without loading it, pass a filter to `onModuleLoaded`. Its `onMissing` option runs instead when the module is known missing:
+
+```ts
+import { metro, patcher } from '@unbound-app/api';
+
+declare function addFavorites(): void;
+
+metro.onModuleLoaded(
+	metro.filters.byProps('EmojiPicker'),
+	(module) => patcher.after(module, 'render', addFavorites),
+	{ onMissing: () => logger.warn('Emoji picker skipped: Discord moved EmojiPicker.') },
+);
+```
+
+The plugin's scope ends a wait that has not settled when it stops. `getModulePresence(handle)` reports what is known of a handle without loading it.
 
 ## Custom Filters
 

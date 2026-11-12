@@ -1,7 +1,7 @@
 import { Image, Pressable, type StyleProp, type View, type ViewStyle } from 'react-native';
 import { useContext, useRef } from 'react';
 
-import type { PageMediaFile } from '~/marketplace/store-page';
+import type { PageMediaFile } from '~/marketplace/addon-page';
 import { Video } from '~/metro/components';
 
 import ScreenRectContext from './screen-rect-context';
@@ -18,7 +18,7 @@ type PageMediaProps = {
 };
 
 /**
- * @description One image or video of a store page at its measured aspect ratio. Tapping an image opens
+ * @description One image or video of a addon page at its measured aspect ratio. Tapping an image opens
  * Discord's media viewer out of it; a video plays in place with the player's own controls.
  */
 function PageMedia({ media, alt, poster, style }: PageMediaProps) {

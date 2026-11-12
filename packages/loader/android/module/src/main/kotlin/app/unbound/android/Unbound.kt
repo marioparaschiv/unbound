@@ -140,6 +140,7 @@ class Unbound : XposedModule() {
                             override fun argument(index: Int): Any? = chain.getArg(index)
                             override fun argumentCount(): Int = chain.args.size
                             override fun proceed(): Any? = chain.proceed()
+                            override fun proceedWith(arguments: Array<Any?>): Any? = chain.proceed(arguments)
                         })
                     }
 
@@ -150,9 +151,8 @@ class Unbound : XposedModule() {
         })
 
         NativeHooks.useDispatcher(object : NativeHooks.Dispatcher {
-            override fun dispatch(token: String, payloadJSON: String) {
+            override fun dispatch(token: String, payloadJSON: String): String? =
                 NativeBridge.nativeDispatchHookEvent(token, payloadJSON)
-            }
         })
     }
 
@@ -183,6 +183,7 @@ class Unbound : XposedModule() {
                 ActivityTracker.onActivityPaused(activity)
                 runCatching { Toolbox.onPaused(activity) }
                 runCatching { NativeBridge.nativeMarkHealthy() }
+                runCatching { NativeBridge.nativeOnBackground() }
                 result
             }
     }

@@ -5,10 +5,10 @@ import { View } from 'react-native';
 
 import PreviewMessage, { type Size } from '~/preview/preview-message';
 import { previewPaints, type PreviewBubble } from '~/preview/preview-paint';
-import { bubbleAppearance, type BubbleAppearance } from '~/bubbles/style';
+import { bubbleAppearance, type BubbleAppearance } from '~/lib/style';
 import useStyles from '~/preview/chat-preview.style';
-import { themeBubbleColor } from '~/bubbles/theme';
-import { Grouping } from '~/constants';
+import { themeBubbleColor } from '~/lib/theme';
+import { Grouping } from '~/lib/constants';
 
 type Sample = { own: boolean; mention: boolean; text: string };
 

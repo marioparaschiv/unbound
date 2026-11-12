@@ -230,7 +230,7 @@ function handleControllerMessage(ws: session.SocketLike, raw: string) {
 	}
 
 	if (message?.type === 'plugin-push') {
-		session.pushPluginForController(ws, message);
+		session.pushForController(ws, message);
 
 		return;
 	}

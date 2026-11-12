@@ -50,6 +50,11 @@ std::string appSource(const InstallFacts &facts)
         const bool jit = facts.jitAvailable && facts.jitAvailable();
         return jit ? "LiveContainer (JIT)" : "LiveContainer (Signed)";
     }
+    if (facts.receipt != Receipt::None && facts.discordSigned == false)
+    {
+        return facts.receipt == Receipt::TestFlight ? "Sideloaded (TestFlight build)"
+                                                    : "Sideloaded (App Store build)";
+    }
     switch (facts.receipt)
     {
         case Receipt::AppStore:
@@ -60,6 +65,74 @@ std::string appSource(const InstallFacts &facts)
             break;
     }
     return "Sideloaded";
+}
+
+std::string signingDetails(const SigningFacts &facts)
+{
+    std::vector<std::string> parts;
+    const bool               discord = isDiscordProductionTeam(facts.teamIdentifier);
+    if (discord)
+    {
+        parts.emplace_back("Discord's signature");
+    }
+    else if (facts.provisionsAllDevices)
+    {
+        parts.emplace_back("enterprise certificate");
+    }
+    else if (facts.getTaskAllow)
+    {
+        parts.emplace_back("development certificate");
+    }
+    else if (facts.listsDevices)
+    {
+        parts.emplace_back("ad hoc certificate");
+    }
+    else if (facts.hasProfile)
+    {
+        parts.emplace_back("distribution certificate");
+    }
+    else
+    {
+        parts.emplace_back("no provisioning profile");
+    }
+    if (facts.teamIdentifier && !discord && !facts.teamIdentifier->empty())
+    {
+        parts.push_back("team " + *facts.teamIdentifier);
+    }
+    if (facts.profileExpiry && !discord)
+    {
+        parts.push_back("profile expires " + *facts.profileExpiry);
+    }
+    if (facts.altStore)
+    {
+        parts.emplace_back("AltStore/SideStore");
+    }
+    parts.push_back(facts.entitlementSource.empty()
+                        ? "no entitlements found"
+                        : "entitlements from the " + facts.entitlementSource);
+
+    std::string joined;
+    for (const std::string &part : parts)
+    {
+        joined += (joined.empty() ? "" : ", ") + part;
+    }
+    return joined;
+}
+
+std::optional<std::string> provisioningProfilePlist(const std::string &profile)
+{
+    const size_t start = profile.find("<?xml");
+    if (start == std::string::npos)
+    {
+        return std::nullopt;
+    }
+    static const std::string kEnd = "</plist>";
+    const size_t             end  = profile.find(kEnd, start);
+    if (end == std::string::npos)
+    {
+        return std::nullopt;
+    }
+    return profile.substr(start, end + kEnd.size() - start);
 }
 
 bool isDiscordProductionTeam(const std::optional<std::string> &teamIdentifier)

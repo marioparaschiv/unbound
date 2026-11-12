@@ -1,12 +1,12 @@
 import { fileURLToPath } from 'node:url';
 import { readFile } from 'node:fs/promises';
 
-const bundledModule = fileURLToPath(new URL('../src/codeblocks/bundled.ts', import.meta.url));
+const bundledModule = fileURLToPath(new URL('../src/lib/bundled.ts', import.meta.url));
 
 function listed(source, constant) {
 	const match = source.match(new RegExp(`export const ${constant} = \\[([^\\]]*)\\]`));
 
-	if (!match) throw new Error(`${constant} is missing from src/codeblocks/bundled.ts`);
+	if (!match) throw new Error(`${constant} is missing from src/lib/bundled.ts`);
 
 	return [...match[1].matchAll(/'([^']+)'/g)].map(([, name]) => name);
 }

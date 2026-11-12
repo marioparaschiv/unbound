@@ -24,7 +24,9 @@ import {
 import { createLazyModule } from '~/metro/lazy-registry';
 import { bulk, find as search } from '~/metro/search';
 import { filterPresence } from '~/metro/presence';
+import { CACHE_KEY } from '~/metro/cache-key';
 import { onModuleLoaded } from '~/metro/wait';
+import { isKeyMissing } from '~/metro/cache';
 
 type LookupOptions = MetroInternalOptions & MetroSearchOptions;
 
@@ -49,7 +51,7 @@ function lazyByDefault<T extends unknown[]>(args: T): T {
  * @description Finds a module matching a filter. Lazy unless `{ lazy: false }` is passed, or `all` is set: the search runs on first access.
  * @param filter The filter to match modules against: a built-in, a combination, or a predicate you write, which the build keys for the cache.
  * @param options Search options controlling interop, caching, esModule unwrapping, and `all`.
- * @returns The matched module, an array of matches when `all` is set, or `null`.
+ * @returns The matched module, an array of matches when `all` is set, `undefined` when the cache knows it is missing, or `null`.
  */
 export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 	if (!filter) {
@@ -57,6 +59,8 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 	}
 
 	const [, resolved] = lazyByDefault<[MetroFilter, LookupOptions]>([filter, options]);
+
+	if (knownMissing(filter, resolved)) return;
 
 	if (resolved.lazy) {
 		return searchWithOptions([], resolved, () => filter);
@@ -77,10 +81,10 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 export function findByProps<
 	K extends MetroLookupFirst<MetroPropName>,
 	T extends MetroLookupArgs<string>,
->(first: K, ...rest: T): MetroPropertyRecordOrArray<[K, ...T], string> & {};
+>(first: K, ...rest: T): MetroPropertyRecordOrArray<[K, ...T], string>;
 export function findByProps<T extends MetroLookupArgs<string>>(
 	...args: T
-): MetroPropertyRecordOrArray<T, string> & {};
+): MetroPropertyRecordOrArray<T, string>;
 export function findByProps(...args: MetroExport[]) {
 	return lookup(args, byProps);
 }
@@ -158,7 +162,14 @@ export function findStore<
 function lookup(args: MetroExport[], filter: (...args: MetroExport[]) => MetroFilter) {
 	const [terms, options] = parseOptions<LookupOptions, MetroExport[]>(lazyByDefault(args));
 
+	if (!options.bulk && knownMissing(filter(...terms), options)) return;
+
 	return searchWithOptions(terms, options, filter);
+}
+
+// A lazy handle on a module a full search of this build found missing would never resolve, so the lookup returns nothing.
+function knownMissing(filter: MetroFilter, options: LookupOptions): boolean {
+	return Boolean(options.lazy && !options.all && !options.raw && isKeyMissing(filter[CACHE_KEY]));
 }
 
 /**

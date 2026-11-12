@@ -10,6 +10,7 @@ export type DebugInfo = {
 	discordChannel: string;
 	discordBuild: string;
 	appSource: string;
+	installDetails?: string;
 	react: string;
 	reactNative: string;
 	hermes: string;
@@ -35,6 +36,7 @@ export function debugLines(info: DebugInfo): string[] {
 		`- **Unbound:** ${info.client} (\`${info.commit}\`), loader ${info.loader} ${loader}`,
 		`- **Discord:** ${info.discord} ${info.discordChannel.toLowerCase()}, build ${info.discordBuild} (${info.appSource})`,
 		`- **Device:** ${info.device} on ${info.platform} ${info.os}`,
+		...(info.installDetails ? [`- **Install:** ${info.installDetails}`] : []),
 		`- **State:** ${info.flags.join(', ')}`,
 		`- **Runtime:** React ${info.react}, React Native ${info.reactNative}, Hermes ${info.hermes} (HBC ${info.bytecode})`,
 	];

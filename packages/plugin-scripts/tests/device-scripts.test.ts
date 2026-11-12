@@ -10,7 +10,7 @@ function fakePlugins(reports: Record<string, () => Report | undefined>) {
 
 	return {
 		plugins: {
-			entities: new Map(ids.map((id) => [id, { id, started: true }])),
+			addons: new Map(ids.map((id) => [id, { id, started: true }])),
 			selfTest: async (id: string) => {
 				const report = reports[id]?.();
 

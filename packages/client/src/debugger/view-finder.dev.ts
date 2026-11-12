@@ -8,8 +8,8 @@ import { createLogger } from '@unbound-app/logger';
 
 import { createAndroidViewSource } from '~/debugger/view-finder-android.dev';
 import { createIosViewSource } from '~/debugger/view-finder-ios.dev';
-import { getNativePlugin } from '~/native/plugin-bridge';
 import { currentPlatform } from '~/native/platform';
+import { getNativeBridge } from '~/native/bridge';
 
 /** What to outline: a listed view's id, a window rectangle in dp (Android) or points (iOS), or nothing. */
 export type OutlineTarget = string | ViewFrame | null;
@@ -36,7 +36,7 @@ function resolveSource(): ViewSource {
 		return source;
 	}
 
-	const bridge = getNativePlugin();
+	const bridge = getNativeBridge();
 	const platform = currentPlatform();
 
 	if (platform === 'android' && bridge?.java) {

@@ -2,7 +2,7 @@ import type { NativeObjectHandle } from '@unbound-app/types';
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import {
-	NativePluginCapabilityError,
+	NativeBridgeCapabilityError,
 	bridge,
 	createPluginContext,
 	iosSpecificBridges,
@@ -63,7 +63,7 @@ describe('objc.create', () => {
 		const context = createPluginContext({ ...manifest, capabilities: ['native.objc.classes'] });
 
 		expect(() => context.native.objc.create('NSObject', 'init')).toThrow(
-			NativePluginCapabilityError,
+			NativeBridgeCapabilityError,
 		);
 		expect(invocations).toEqual([]);
 		context.dispose();

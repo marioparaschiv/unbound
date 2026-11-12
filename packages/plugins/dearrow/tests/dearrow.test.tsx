@@ -1,9 +1,8 @@
-import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
 
-import { selfTest } from '~/index';
 import type { StoreSeeds } from '@unbound-app/api/testing';
 
 const VIDEO = 'dQw4w9WgXcQ';
@@ -122,10 +121,12 @@ describe('YouTube embeds', () => {
 });
 
 describe('self test', () => {
-	test('passes once the plugin has started', async () => {
+	test('passes once the plugin has started, with no warning', async () => {
 		await startPlugin();
 
-		expect(selfTest()).toMatchObject({ ok: true });
+		expect(logs.entries.filter(({ level }) => level === 'warn' || level === 'error')).toEqual(
+			[],
+		);
 	});
 });
 

@@ -1,5 +1,5 @@
-import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
 import type { AuthoredAddonManifest } from '@unbound-app/types';
+import { CORE_BUCKET } from '@unbound-app/types/settings';
 import { describe, expect, test } from 'bun:test';
 
 import {
@@ -11,8 +11,8 @@ import {
 	serializeMessage,
 	parseMessage,
 	type EvalRequest,
-	type PluginPushRequest,
-	type PluginPushResult,
+	type PushRequest,
+	type PushResult,
 } from '~/index';
 
 import contract from './fixtures/devtools-contract.json';
@@ -28,7 +28,7 @@ const manifest: AuthoredAddonManifest = {
 
 describe('plugin-push round-trip', () => {
 	test('a valid plugin-push survives serialize → parse intact', () => {
-		const message: PluginPushRequest = {
+		const message: PushRequest = {
 			type: 'plugin-push',
 			id: 'push-1',
 			addonId: manifest.id,
@@ -40,7 +40,7 @@ describe('plugin-push round-trip', () => {
 	});
 
 	test('a plugin-push carrying bytecode survives intact, and malformed bytecode is rejected', () => {
-		const message: PluginPushRequest = {
+		const message: PushRequest = {
 			type: 'plugin-push',
 			id: 'push-1',
 			addonId: manifest.id,
@@ -55,7 +55,7 @@ describe('plugin-push round-trip', () => {
 	});
 
 	test('a theme push keeps its kind, and an unknown kind is rejected', () => {
-		const message: PluginPushRequest = {
+		const message: PushRequest = {
 			type: 'plugin-push',
 			id: 'push-1',
 			addonId: manifest.id,
@@ -69,8 +69,8 @@ describe('plugin-push round-trip', () => {
 	});
 
 	test('a valid plugin-push-result survives serialize → parse intact', () => {
-		const ok: PluginPushResult = { type: 'plugin-push-result', id: 'push-1', ok: true };
-		const failed: PluginPushResult = {
+		const ok: PushResult = { type: 'plugin-push-result', id: 'push-1', ok: true };
+		const failed: PushResult = {
 			type: 'plugin-push-result',
 			id: 'push-2',
 			ok: false,
@@ -209,6 +209,6 @@ describe('the DevTools contract', () => {
 	});
 
 	test('reads the bridge address from the core settings store', () => {
-		expect(contract.addressSetting.store).toBe(CORE_SETTINGS_STORE);
+		expect(contract.addressSetting.store).toBe(CORE_BUCKET);
 	});
 });

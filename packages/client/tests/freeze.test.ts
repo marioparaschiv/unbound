@@ -37,9 +37,9 @@ type Counter = {
 class FreezeAddons extends FakeAddons {
 	disabled: string[] = [];
 
-	disable(entity: Parameters<InstanceType<typeof FakeAddons>['disable']>[0]) {
-		this.disabled.push(typeof entity === 'string' ? entity : entity.id);
-		super.disable(entity);
+	disable(addon: Parameters<InstanceType<typeof FakeAddons>['disable']>[0]) {
+		this.disabled.push(typeof addon === 'string' ? addon : addon.id);
+		super.disable(addon);
 	}
 }
 

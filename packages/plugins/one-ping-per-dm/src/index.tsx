@@ -1,22 +1,20 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
+import { patcher } from '@unbound-app/api';
 
-import { readStateSelfTest, resetReadStateReport } from '~/read-state';
-import { patchPlayInAppMessageSound } from '~/patches/play-in-app-message-sound';
-import { RECENT_MESSAGE_LIMIT, RECENT_MESSAGE_MAX_AGE } from '~/constants';
-import { ChannelStore, ReadStateStore, UserStore } from '~/modules';
-import { recordMessageCreate } from '~/events/message-create';
-import { createRecentMessages } from '~/sound-target';
+import { interceptMessageCreate } from '~/flux/interceptors';
+import { readStateSelfTest } from '~/lib/read-state';
+import { clearRecentMessages } from '~/lib/sound-target';
+import { patchPlayInAppMessageSound } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures(
-	() => {
-		if (!ensureModules({ ChannelStore, ReadStateStore, UserStore })) return;
+export function start() {
+	interceptMessageCreate();
+	patchPlayInAppMessageSound();
+}
 
-		resetReadStateReport();
+export function stop() {
+	patcher.unpatchAll();
+	clearRecentMessages();
+}
 
-		const recent = createRecentMessages(RECENT_MESSAGE_LIMIT, RECENT_MESSAGE_MAX_AGE);
-
-		return [() => recordMessageCreate(recent), () => patchPlayInAppMessageSound(recent)];
-	},
-	{ atomic: true, selfTest: readStateSelfTest },
-);
+export function selfTest() {
+	return readStateSelfTest();
+}

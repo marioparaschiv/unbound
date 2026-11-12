@@ -26,6 +26,8 @@ int main()
     assert(nativeCachedReturnBudget().limit() == kMaximumNativeCachedReturnValues);
     assert(kMaximumNativeHooks == 256);
     assert(kMaximumNativeCachedReturnValues == 512);
+    assert(nativePreparedCallBudget().limit() == kMaximumPreparedNativeCalls);
+    assert(kMaximumPreparedNativeCalls == 256);
 
     NativeResourceBudget budget(2);
     assert(budget.acquire());

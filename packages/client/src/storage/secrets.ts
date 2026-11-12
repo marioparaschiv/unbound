@@ -1,6 +1,6 @@
 import type { SettingsObject } from '@unbound-app/types/settings';
 
-import type { SettingsStores } from '~/storage/backend';
+import type { SettingsByBucket } from '~/storage/backend';
 
 /** What a secret setting reads as in a masked snapshot. */
 const MASKED_SECRET = '[secret]';
@@ -50,13 +50,13 @@ function masked(store: SettingsObject, keys: Set<string>): SettingsObject {
  * @param stores Every Bucket by name.
  * @returns The masked copy, or the stores themselves when none holds a secret.
  */
-export function maskSecrets(stores: SettingsStores): SettingsStores {
+export function maskSecrets(stores: SettingsByBucket): SettingsByBucket {
 	// With no secret held anywhere, the live stores are returned as they are, as `snapshot` always did.
 	if (![...secrets.keys()].some((store) => stores[store])) {
 		return stores;
 	}
 
-	const copy: SettingsStores = { ...stores };
+	const copy: SettingsByBucket = { ...stores };
 
 	for (const [store, keys] of secrets) {
 		const data = copy[store];

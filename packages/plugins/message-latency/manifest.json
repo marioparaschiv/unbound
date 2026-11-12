@@ -12,8 +12,11 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.2.7",
+	"version": "1.2.8",
+	"unbound": {
+		"min": "3.0.0"
+	},
 	"icon": "TimerIcon",
-	"minNativePluginApi": "1.0.0",
+	"minNativeBridgeApi": "1.0.0",
 	"main": "index.tsx"
 }

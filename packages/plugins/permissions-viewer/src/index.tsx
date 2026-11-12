@@ -1,5 +1,15 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { viewerFeatures } from '~/viewer';
+import { patchUserProfileRolesCard } from '~/patches/roles-card';
+import { patchContextMenus } from '~/patches/context-menus';
+import { patchActionSheets } from '~/patches/action-sheets';
 
-export const { start, stop, selfTest } = runFeatures(viewerFeatures);
+export function start() {
+	patchActionSheets();
+	patchContextMenus();
+	patchUserProfileRolesCard();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}

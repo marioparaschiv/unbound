@@ -1,9 +1,25 @@
-import type { AddonVersion } from '@unbound-app/contracts/addons';
-import { describe, expect, test } from 'bun:test';
+import type { AddonVersion, ListedAddon } from '@unbound-app/contracts/addons';
+import { afterAll, describe, expect, test } from 'bun:test';
 
-import { toRelease, toVersionChoices } from '~/addons/versions';
+import { pickInstallVersion, toRelease, toVersionChoices } from '~/addons/versions';
+import { createUnboundClient } from '~/account/client';
 
 const ID = 'dev.alpha';
+
+const served: { versions: AddonVersion[]; requests: number } = { versions: [], requests: 0 };
+
+const server = Bun.serve({
+	port: 0,
+	routes: {
+		[`/api/v1/addons/${ID}/versions`]: () => {
+			served.requests++;
+
+			return Response.json({ versions: served.versions });
+		},
+	},
+});
+
+afterAll(() => server.stop(true));
 
 function version(semver: string, min?: string): AddonVersion {
 	return {
@@ -96,6 +112,57 @@ describe('toVersionChoices', () => {
 			['2.0.0', 'installed', false],
 			['1.0.0', 'available', true, false],
 		]);
+	});
+});
+
+function listed(latest: AddonVersion): ListedAddon {
+	return { id: ID, type: 'plugin', latestVersion: latest };
+}
+
+async function pick(versions: AddonVersion[], installed: string | undefined, client: string) {
+	served.versions = versions;
+	served.requests = 0;
+
+	const request = createUnboundClient({ baseUrl: server.url.origin });
+	const result = await pickInstallVersion(listed(versions[0]), installed, client, request);
+
+	return {
+		result: result.type === 'available' ? result.version.version : result,
+		requests: served.requests,
+	};
+}
+
+describe('pickInstallVersion', () => {
+	test('installs the latest without asking for every version when this client runs it', async () => {
+		const versions = [version('2.0.0', '1.0.0'), version('1.0.0')];
+
+		expect(await pick(versions, undefined, '1.0.0')).toEqual({ result: '2.0.0', requests: 0 });
+	});
+
+	test('falls back to the newest version this client runs when the latest needs a newer one', async () => {
+		const versions = [version('3.0.0', '3.0.0'), version('2.0.0', '2.5.0'), version('1.0.0')];
+
+		expect(await pick(versions, undefined, '2.2.0')).toEqual({ result: '1.0.0', requests: 1 });
+		expect(await pick(versions, undefined, '2.5.0')).toEqual({ result: '2.0.0', requests: 1 });
+	});
+
+	test('names the client the latest needs when no version runs here', async () => {
+		const versions = [version('2.0.0', '3.0.0'), version('1.0.0', '3.0.0')];
+
+		expect(await pick(versions, undefined, '2.2.0')).toEqual({
+			result: { type: 'incompatible', requires: '3.0.0' },
+			requests: 1,
+		});
+	});
+
+	test('names the client the latest needs when the newest runnable is not newer than the installed', async () => {
+		const versions = [version('2.0.0', '3.0.0'), version('1.0.0')];
+
+		expect(await pick(versions, '1.0.0', '2.2.0')).toEqual({
+			result: { type: 'incompatible', requires: '3.0.0' },
+			requests: 1,
+		});
+		expect(await pick(versions, '0.9.0', '2.2.0')).toEqual({ result: '1.0.0', requests: 1 });
 	});
 });
 

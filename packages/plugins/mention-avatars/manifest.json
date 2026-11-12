@@ -17,7 +17,10 @@
 		}
 	],
 	"version": "1.1.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
 	"icon": "UserCircleIcon",
-	"minNativePluginApi": "1.0.0",
+	"minNativeBridgeApi": "1.0.0",
 	"main": "index.tsx"
 }

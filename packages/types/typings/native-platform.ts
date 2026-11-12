@@ -1,13 +1,13 @@
 import type * as React from 'react';
 
 import type { NativeSerializable, NativeSerializableObject } from './native-handles';
-import type { NativePluginPlatform } from './native';
+import type { NativeBridgePlatform } from './native';
 import type { Plugin } from './addons';
 
 /** Facts about the device Discord runs on. */
 export type NativePlatformDevice = {
 	/** The host platform. */
-	readonly platform: NativePluginPlatform;
+	readonly platform: NativeBridgePlatform;
 	/** The device's model name. */
 	getDeviceModel(): string;
 	/** The operating system's version. */
@@ -107,6 +107,8 @@ export type NativePlatformAndroidBridge = {
 export type NativePlatformApp = {
 	/** Where Discord was installed from, such as `App Store` or `Google Play`. */
 	getAppSource(): string;
+	/** How an iOS install was signed: certificate kind, team, profile expiry, sideload tool marker and entitlement source. */
+	getInstallDetails?(): string;
 	/** The framework that injected the loader, such as Vector or LSPosed on Android and ElleKit on iOS, or an empty string. */
 	getFramework(): string;
 	/** Whether the loader's embedded attestation verified against Unbound's pinned key. False for development builds. */
@@ -229,7 +231,7 @@ export type NativePlatformSettings = {
 /** Platform-wide helpers the loader publishes as `globalThis.NativePlatform`, not scoped to a plugin. */
 export type NativePlatformBridge = {
 	/** The host platform. */
-	readonly platform: NativePluginPlatform;
+	readonly platform: NativeBridgePlatform;
 	/** Evaluates Hermes bytecode in the current runtime; `tag` names it in errors. Throws on invalid bytecode. */
 	// UNKNOWN: returns the completion value of arbitrary evaluated bytecode.
 	evaluateBytecode(bytecode: ArrayBuffer, tag?: string): unknown;

@@ -29,6 +29,9 @@
 		}
 	],
 	"version": "1.0.2",
+	"unbound": {
+		"min": "3.0.0"
+	},
 	"icon": "BellIcon",
 	"main": "index.tsx"
 }

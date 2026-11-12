@@ -5,9 +5,46 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"sort"
 	"strings"
 	"testing"
 )
+
+func iosNativeBridgeSource(t *testing.T, root string) string {
+	t.Helper()
+	paths, err := filepath.Glob(filepath.Join(root, "ios", "sources", "NativePlugin*.mm"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(paths) == 0 {
+		t.Fatal("the iOS native bridge sources are missing")
+	}
+	sort.Strings(paths)
+	var source strings.Builder
+	for _, path := range paths {
+		contents, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		source.Write(contents)
+		source.WriteString("\n")
+	}
+	return source.String()
+}
+
+func androidNativeBridgeSource(t *testing.T, root string) string {
+	t.Helper()
+	var source strings.Builder
+	for _, name := range []string{"NativePluginBridge.cpp", "AndroidJavaValues.cpp", "AndroidHookListeners.cpp", "AndroidFabricAdapter.cpp"} {
+		contents, err := os.ReadFile(filepath.Join(root, "android", "module", "src", "main", "cpp", name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		source.Write(contents)
+		source.WriteString("\n")
+	}
+	return source.String()
+}
 
 func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 	_, filename, _, ok := runtime.Caller(0)
@@ -19,14 +56,10 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	source, err := os.ReadFile(filepath.Join(root, "ios", "sources", "NativePluginBridge.mm"))
-	if err != nil {
-		t.Fatal(err)
-	}
 	headerText := string(header)
-	sourceText := string(source)
-	if !containsCode(headerText, `kNativePluginApiVersion[] = "1.2.0"`) {
-		t.Fatal("native plugin API version does not report fabric.batchAsync (1.2.0)")
+	sourceText := iosNativeBridgeSource(t, root)
+	if !containsCode(headerText, `kNativePluginApiVersion[] = "1.3.0"`) {
+		t.Fatal("native plugin API version does not report hook argument rewriting (1.3.0)")
 	}
 	if !containsCode(headerText, `kNativePluginAbiVersion[] = "1.0.0"`) {
 		t.Fatal("native plugin ABI version is not v1")
@@ -75,7 +108,7 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 		!containsCode(sourceText, "[value isKindOfClass:[NSData class]]") {
 		t.Fatal("native Objective-C data results are not converted to JavaScript byte arrays")
 	}
-	if !containsCode(sourceText, "static Value objcHandleResult(Runtime &runtime, id value)") ||
+	if !containsCode(sourceText, "Value objcHandleResult(Runtime &runtime, id value)") ||
 		!containsCode(sourceText, "return objcHandleResult(rt, [[cls alloc] init]);") {
 		t.Fatal("native Objective-C allocation does not always return a native handle")
 	}
@@ -184,11 +217,7 @@ func TestAndroidNativeBridgeContractIsSynchronized(t *testing.T) {
 		t.Fatal("could not locate test source")
 	}
 	root := filepath.Dir(filepath.Dir(filename))
-	source, err := os.ReadFile(filepath.Join(root, "android", "module", "src", "main", "cpp", "NativePluginBridge.cpp"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	sourceText := string(source)
+	sourceText := androidNativeBridgeSource(t, root)
 	for _, contract := range []string{
 		"loader::native::NativePluginRootBuilder bridge(runtime, loader::native::NativePluginPlatform::Android);",
 		`define(runtime, java, "getClass",`,
@@ -247,10 +276,7 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 		t.Fatal("could not locate test source")
 	}
 	root := filepath.Dir(filepath.Dir(filename))
-	bridge, err := os.ReadFile(filepath.Join(root, "ios", "sources", "NativePluginBridge.mm"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	bridge := iosNativeBridgeSource(t, root)
 	loader, err := os.ReadFile(filepath.Join(root, "ios", "sources", "Unbound.xm"))
 	if err != nil {
 		t.Fatal(err)
@@ -259,9 +285,13 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	updater, err := os.ReadFile(filepath.Join(root, "core", "src", "LoaderUpdater.cpp"))
-	if err != nil {
-		t.Fatal(err)
+	var updater []byte
+	for _, path := range []string{"include/LoaderUpdater.h", "src/LoaderUpdater.cpp", "src/LoaderUpdaterCandidates.cpp"} {
+		source, err := os.ReadFile(filepath.Join(root, "core", path))
+		if err != nil {
+			t.Fatal(err)
+		}
+		updater = append(updater, source...)
 	}
 	coreFFI, err := os.ReadFile(filepath.Join(root, "core", "src", "ffi", "NativeFFI.cpp"))
 	if err != nil {
@@ -300,18 +330,35 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 		"loader::native::makeFabricNamespace(",
 		"loader::native::FabricCalls::SyncAndAsync",
 		"NATIVE_WRONG_THREAD",
-		"static Value invokeBatch(Runtime &runtime, const Value *args, size_t count)",
+		"Value invokeBatch(Runtime &runtime, const Value *args, size_t count)",
 		"Native batch requires at most 64 steps",
-		"Native batch can only reference earlier results",
+		"loader::native::batchResultIndex(runtime, value, stepIndex)",
 		"Native batch method return type is unsupported",
+		"loader::native::validateBatchArgument(argument, encoding)",
+		"loader::native::validateScalarArgument(nativeNumberArgument(value), type)",
+		"executeMainAsynchronously(",
+	} {
+		if !containsCode(bridge, required) {
+			t.Fatalf("native bridge safety guard %q is missing", required)
+		}
+	}
+	var argumentGuards []byte
+	for _, path := range []string{"src/NativeBatchReferences.cpp", "src/NativeArgumentValidation.cpp"} {
+		source, err := os.ReadFile(filepath.Join(root, "core", path))
+		if err != nil {
+			t.Fatal(err)
+		}
+		argumentGuards = append(argumentGuards, source...)
+	}
+	for _, required := range []string{
+		"Native batch can only reference earlier results",
 		"Native batch method argument type is unsupported",
 		"Native scalar argument is out of range",
 		"Native batch object argument cannot be a pointer",
 		"Native batch struct argument has the wrong layout",
-		"executeMainAsynchronously(",
 	} {
-		if !containsCode(string(bridge), required) {
-			t.Fatalf("native bridge safety guard %q is missing", required)
+		if !containsCode(string(argumentGuards), required) {
+			t.Fatalf("shared native argument guard %q is missing", required)
 		}
 	}
 	runtimeSource, err := os.ReadFile(filepath.Join(root, "core", "src", "NativePluginRuntime.cpp"))
@@ -329,10 +376,10 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 			t.Fatalf("native runtime safety guard %q is missing", required)
 		}
 	}
-	if !containsCode(string(bridge), "loader::native::setExecutor(std::make_shared<IOSNativePluginExecutor>());") {
+	if !containsCode(bridge, "loader::native::setExecutor(std::make_shared<IOSNativePluginExecutor>());") {
 		t.Fatal("the iOS bridge does not run on the shared native runtime executor")
 	}
-	if containsCode(string(bridge), "result = invokeObject(runtime, target, selector, arguments)") {
+	if containsCode(bridge, "result = invokeObject(runtime, target, selector, arguments)") {
 		t.Fatal("Objective-C invocation still creates JSI values on the main thread")
 	}
 	for _, required := range []string{"[HotReload observe];", "UnboundLoader()->prepare()", "UnboundLoader()->onRuntimeCreated(runtime)"} {
@@ -350,13 +397,13 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 		containsCode(string(corePipeline), "condition_variable") {
 		t.Fatal("the shared loader pipeline may only block the JS thread for the first download, when no saved bundle exists")
 	}
-	if containsCode(string(bridge), "dispatch_sync(dispatch_get_main_queue()") {
+	if containsCode(bridge, "dispatch_sync(dispatch_get_main_queue()") {
 		t.Fatal("native bridge still uses an unbounded synchronous main-thread dispatch")
 	}
-	superStart := codeIndex(string(bridge), "static void setSuperFFIArgument(")
-	superEnd := codeIndex(string(bridge), "static Value invokeSuperObject(")
+	superStart := codeIndex(bridge, "static void setSuperFFIArgument(")
+	superEnd := codeIndex(bridge, "Value invokeSuperObject(")
 	if superStart < 0 || superEnd <= superStart ||
-		!containsCode(string(bridge)[superStart:superEnd], "validateNativeScalarArgument(object, scalarType);") {
+		!containsCode(bridge[superStart:superEnd], "validateNativeScalarArgument(object, scalarType);") {
 		t.Fatal("Objective-C super arguments bypass scalar validation")
 	}
 	for _, required := range []string{"updater_.markBundleAttempted(saved.path)", "updater_.acceptBundle(*path)", "pendingPromotion_ = saved.path", "updater_.rejectBundle(saved.path)"} {

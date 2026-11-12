@@ -7,6 +7,8 @@
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <mutex>
+#include <string>
+#include <utility>
 #if defined(__APPLE__)
 #include <sys/ucontext.h>
 #else
@@ -289,8 +291,12 @@ bool installAddonCrashHandler(const std::string &markerPath)
     size_t      slash = markerPath.find_last_of('/');
     std::string stackPath =
         joinPath(slash == std::string::npos ? "." : markerPath.substr(0, slash), kNativeCrashFile);
-    gPreviousNativeCrash = readTextFile(stackPath).value_or("");
-    int stack            = open(stackPath.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
+    std::string writtenStack = readTextFile(stackPath).value_or("");
+    if (!writtenStack.empty())
+    {
+        gPreviousNativeCrash = std::move(writtenStack);
+    }
+    int stack = open(stackPath.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
     gStackDescriptor.store(stack, std::memory_order_release);
 
     struct sigaction action = {};
@@ -316,5 +322,15 @@ bool installAddonCrashHandler(const std::string &markerPath)
 std::string previousNativeCrash()
 {
     return gPreviousNativeCrash;
+}
+
+bool adoptPreviousNativeCrash(const std::string &stack)
+{
+    if (stack.empty() || !gPreviousNativeCrash.empty())
+    {
+        return false;
+    }
+    gPreviousNativeCrash = stack;
+    return true;
 }
 }

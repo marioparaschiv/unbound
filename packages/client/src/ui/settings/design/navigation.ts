@@ -1,4 +1,4 @@
-import type { Context, ReactNode } from 'react';
+import { createContext, type Context, type ReactNode } from 'react';
 
 import { findByProps } from '~/metro/lookups';
 
@@ -23,7 +23,17 @@ type HeaderModule = {
 };
 
 /** React Navigation's core: its context is what `useNavigation` reads. */
-export const NavigationCore: NavigationModule = findByProps('NavigationContext', 'useNavigation');
+export const NavigationCore: NavigationModule | undefined = findByProps(
+	'NavigationContext',
+	'useNavigation',
+);
+
+// Stands in when Discord moved the header elements, so the Design page's hooks still run, with no inset.
+const NoHeaderElements: HeaderModule = {
+	HeaderHeightContext: createContext<number | undefined>(undefined),
+	useHeaderHeight: () => 0,
+};
 
 /** `@react-navigation/elements`: the header height a transparent header leaves screens to inset by. */
-export const HeaderElements: HeaderModule = findByProps('HeaderHeightContext', 'useHeaderHeight');
+export const HeaderElements: HeaderModule =
+	findByProps('HeaderHeightContext', 'useHeaderHeight') ?? NoHeaderElements;

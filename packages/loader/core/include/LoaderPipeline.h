@@ -110,6 +110,8 @@ public:
     // Discord returned to the foreground: checks for a newer bundle if the last check is old, or
     // if one waited for Wi-Fi.
     void onForeground();
+    bool onBackground();
+    bool isCheckingForUpdate() const;
 
     // Delays before retrying a failed update check, before jitter.
     static constexpr double kRetryDelaysSeconds[] = {30, 120, 600};
@@ -136,6 +138,7 @@ private:
     void updateInBackground(std::string savedPath, bool hasSaved, bool waitForDownload,
                             uint64_t token, size_t attempt = 0);
     void checkForUpdate(uint64_t token, size_t attempt);
+    bool checkIfDue(const char *reason);
     bool waitsForWifi(bool hasSaved, bool waitForDownload);
     bool savedFlavourIsCurrent(const std::string &path) const;
     bool settleFirstDownload(uint64_t token, std::optional<std::string> path);
@@ -164,6 +167,7 @@ private:
     std::atomic_bool              checking_{false};
     std::atomic_bool              waitingForWifi_{false};
     std::atomic_bool              rendered_{false};
+    std::atomic_bool              frozen_{false};
     std::atomic_int64_t           lastCheckMs_{0};
     std::atomic_int64_t           runtimeCreatedMs_{0};
     std::atomic_int64_t           bundleExecutedMs_{0};

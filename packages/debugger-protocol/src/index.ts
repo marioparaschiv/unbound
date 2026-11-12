@@ -77,9 +77,9 @@ export type PushedAddonKind = 'plugin' | 'theme';
  * A request to hot-reload a plugin or theme on the device, sent controller → bridge → device. Carries
  * the freshly built bundle and manifest so the device swaps them in without a re-fetch.
  */
-export type PluginPushRequest = {
+export type PushRequest = {
 	type: 'plugin-push';
-	/** Correlation id echoed back on the matching {@link PluginPushResult}. */
+	/** Correlation id echoed back on the matching {@link PushResult}. */
 	id: string;
 	addonId: string;
 	/** Which manager reloads the addon; a plugin when omitted, as pushes from older CLIs are. */
@@ -93,10 +93,10 @@ export type PluginPushRequest = {
 	files?: Record<string, string>;
 };
 
-/** The outcome of a {@link PluginPushRequest}, sent device → bridge → the one waiting controller. */
-export type PluginPushResult = {
+/** The outcome of a {@link PushRequest}, sent device → bridge → the one waiting controller. */
+export type PushResult = {
 	type: 'plugin-push-result';
-	/** The `id` of the {@link PluginPushRequest} this answers. */
+	/** The `id` of the {@link PushRequest} this answers. */
 	id: string;
 } & (
 	| { ok: true }
@@ -145,8 +145,8 @@ export type DeviceStatus = { type: 'device-status' } & (
 export type BridgeMessage =
 	| EvalRequest
 	| EvalResult
-	| PluginPushRequest
-	| PluginPushResult
+	| PushRequest
+	| PushResult
 	| LogMessage
 	| DeviceHello
 	| DeviceStatus
@@ -163,7 +163,7 @@ export const DEFAULT_EVAL_TIMEOUT_MS = 10_000;
 export const MAX_EVAL_TIMEOUT_MS = 86_400_000;
 
 /** How long the bridge waits for the device to reload a pushed addon. */
-export const PLUGIN_PUSH_TIMEOUT_MS = 60_000;
+export const PUSH_TIMEOUT_MS = 60_000;
 
 /**
  * How much longer a controller waits than the bridge, so the bridge's own timeout reply always
@@ -329,7 +329,7 @@ export default {
 	DEFAULT_BRIDGE_PORT,
 	DEFAULT_EVAL_TIMEOUT_MS,
 	MAX_EVAL_TIMEOUT_MS,
-	PLUGIN_PUSH_TIMEOUT_MS,
+	PUSH_TIMEOUT_MS,
 	BRIDGE_REPLY_GRACE_MS,
 	CONTROLLER_ENDPOINT_MARKER,
 	REACT_DEVTOOLS_SHUTDOWN_EVENT,

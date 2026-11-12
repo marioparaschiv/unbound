@@ -33,6 +33,8 @@ const AssetHandler = findByProps('getAssetUriForEmbed', { lazy: true });
  * passed as `originViewOrOriginLayout`; without one the viewer zooms in from the middle of the screen.
  */
 function openAsset(id: number, origin: Rect) {
+	if (!AssetHandler) return;
+
 	const uri = AssetHandler.getAssetUriForEmbed(id);
 
 	Image.getSize(uri, (width, height) => {

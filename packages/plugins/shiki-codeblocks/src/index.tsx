@@ -1,10 +1,20 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import type { PluginContext } from '@unbound-app/api/native';
+import { patcher } from '@unbound-app/api';
 
-import { codeblocksSelfTest, startCodeblocks } from '~/codeblocks';
+import { checkCodeCards, drawCodeCards, stopCodeCards } from '~/native/cards';
 
-export const { start, stop, selfTest } = runFeatures(startCodeblocks, {
-	atomic: true,
-	selfTest: codeblocksSelfTest,
-});
+export function start(context: PluginContext) {
+	drawCodeCards(context);
+}
+
+// The native hooks are outside the Addon scope, so their cleanup must finish before it closes.
+export async function stop() {
+	patcher.unpatchAll();
+	await stopCodeCards();
+}
+
+export function selfTest() {
+	return checkCodeCards();
+}
 
 export { SettingsPanel } from '~/settings';

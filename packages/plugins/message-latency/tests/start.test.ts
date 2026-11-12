@@ -1,14 +1,13 @@
 import {
 	flux,
+	logs,
 	metro,
 	native,
 	pluginHolds,
 	startPlugin,
 	stopPlugin,
 } from '@unbound-app/api/testing';
-import { describe, expect, spyOn, test } from 'bun:test';
-
-import { selfTest } from '~/index';
+import { describe, expect, test } from 'bun:test';
 
 const IOS_CLASSES = ['DCDMessageTableViewCell', 'NSLayoutConstraint', 'UIColor', 'UIFont'];
 
@@ -79,25 +78,23 @@ describe('the latency indicator on iOS', () => {
 		expect(pluginHolds().some((held) => held.includes('MESSAGE_CREATE'))).toBe(false);
 	});
 
-	test('reports its features as applied to the self test', async () => {
+	test('starts without a warning, so its self-test passes', async () => {
 		registerIosClasses();
 		seedDiscord();
 		await startPlugin({ native: { ui: fakeUi().ui } as never });
 
-		expect(selfTest()).toMatchObject({ ok: true });
+		expect(logs.entries.filter(({ level }) => level === 'warn' || level === 'error')).toEqual(
+			[],
+		);
 	});
 
-	test('takes the row patch back when a later feature fails to start', async () => {
-		const error = spyOn(console, 'error').mockImplementation(() => undefined);
-
+	test('fails to start, patching no row, when the cell feature cannot open its scope', async () => {
 		registerIosClasses();
 		seedDiscord();
-		// Without a `ui` bridge the cell feature throws as it opens its scope.
-		await startPlugin();
 
+		// Without a `ui` bridge the cell feature throws as it opens its scope.
+		await expect(startPlugin()).rejects.toThrow();
 		expect(pluginHolds().some((held) => held.includes('generateMessageRowData'))).toBe(false);
-		expect(selfTest()).toMatchObject({ ok: false });
-		error.mockRestore();
 	});
 
 	test('does not start without the native classes it draws with', async () => {
@@ -112,8 +109,6 @@ describe('the latency indicator on iOS', () => {
 
 describe('the latency indicator on Android', () => {
 	test('skips and fails the self test when the loader lacks the Java capabilities', async () => {
-		const error = spyOn(console, 'error').mockImplementation(() => undefined);
-
 		native.setPlatform('android');
 		seedDiscord();
 		await startPlugin({
@@ -122,8 +117,7 @@ describe('the latency indicator on Android', () => {
 		});
 
 		expect(pluginHolds()).toEqual([]);
-		expect(selfTest()).toMatchObject({ ok: false });
-		error.mockRestore();
+		expect(logs.entries.some(({ level }) => level === 'warn')).toBe(true);
 	});
 
 	test('fails to start, patching nothing, when this Discord build has no message view', async () => {

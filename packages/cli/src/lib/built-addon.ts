@@ -36,7 +36,7 @@ export type ReadAddon = {
 	files?: Record<string, string>;
 };
 
-export type PushClient = Pick<ControllerClient, 'pushPlugin'>;
+export type PushClient = Pick<ControllerClient, 'pushAddon'>;
 
 export type PushedAddon = { ok: true; summary: string } | { ok: false; error: string };
 
@@ -157,7 +157,7 @@ export async function pushBuiltAddon(client: PushClient, addon: BuiltAddon): Pro
 		return { ok: false, error: toError(error).message };
 	}
 
-	const result = await client.pushPlugin({ addonId: addon.id, kind: addon.kind, ...built });
+	const result = await client.pushAddon({ addonId: addon.id, kind: addon.kind, ...built });
 
 	if (!result.ok) {
 		return { ok: false, error: result.error };

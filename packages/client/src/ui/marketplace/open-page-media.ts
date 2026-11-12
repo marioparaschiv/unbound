@@ -1,4 +1,4 @@
-import type { PageMediaFile } from '~/marketplace/store-page';
+import type { PageMediaFile } from '~/marketplace/addon-page';
 import { Media } from '~/metro/components';
 
 import type { ScreenRect } from './screen-rect-context';
@@ -30,7 +30,7 @@ function toSource({ media, poster }: ViewerEntry, index: number) {
 }
 
 /**
- * @description Opens store page media in Discord's fullscreen viewer, growing out of the view the
+ * @description Opens addon page media in Discord's fullscreen viewer, growing out of the view the
  * entry sat in and swiping between every entry.
  * @param entries The images and videos the viewer pages through, in order.
  * @param index The entry it opens on.

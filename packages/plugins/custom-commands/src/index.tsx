@@ -1,8 +1,14 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startCommands } from '~/commands';
+import { patchCommands } from '~/patches';
 import SettingsPanel from '~/settings';
 
-export const { start, stop, selfTest } = runFeatures([startCommands]);
+export function start() {
+	patchCommands();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}
 
 export { SettingsPanel };

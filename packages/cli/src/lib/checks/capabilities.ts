@@ -1,7 +1,7 @@
 import { MANIFEST_FILENAME, validateAddonCapabilities } from '@unbound-app/contracts/manifest';
-import type { NativePluginCapability, NativePluginPlatform } from '@unbound-app/types/native';
+import type { NativeBridgeCapability, NativeBridgePlatform } from '@unbound-app/types/native';
 import { existsSync, mkdirSync, renameSync, writeFileSync } from 'node:fs';
-import { NATIVE_PLUGIN_PLATFORMS } from '@unbound-app/types/native';
+import { NATIVE_BRIDGE_PLATFORMS } from '@unbound-app/types/native';
 import { getBundleName } from '@unbound-app/contracts/workspace';
 import { join } from 'node:path';
 
@@ -16,9 +16,9 @@ import { findFile } from '~/rollup/source-alias';
 
 type DevManifest = ReturnType<typeof readDevManifest>;
 
-type GeneratedPlatform = { capabilities?: NativePluginCapability[] };
+type GeneratedPlatform = { capabilities?: NativeBridgeCapability[] };
 
-type GeneratedPlatforms = Partial<Record<NativePluginPlatform, GeneratedPlatform>>;
+type GeneratedPlatforms = Partial<Record<NativeBridgePlatform, GeneratedPlatform>>;
 
 const GENERATED_FIELDS = ['capabilities', 'platforms'] as const;
 
@@ -31,10 +31,10 @@ function findEntry(dir: string, main: string): string | null {
 }
 
 function toPlatformsField(platforms: PlatformCapabilities): GeneratedPlatforms | undefined {
-	const listed = NATIVE_PLUGIN_PLATFORMS.filter((platform) => platforms[platform]);
+	const listed = NATIVE_BRIDGE_PLATFORMS.filter((platform) => platforms[platform]);
 	const needsCapabilities = listed.some((platform) => platforms[platform]?.length);
 
-	if (listed.length === NATIVE_PLUGIN_PLATFORMS.length && !needsCapabilities) {
+	if (listed.length === NATIVE_BRIDGE_PLATFORMS.length && !needsCapabilities) {
 		return void 0;
 	}
 

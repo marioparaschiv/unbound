@@ -177,7 +177,7 @@ test('does nothing on a device that is not set to Australian English', async () 
 });
 
 test('accepts Australian English in either separator form and with extensions', async () => {
-	const { isAussieLocale } = await import('~/locale');
+	const { isAussieLocale } = await import('~/lib/locale');
 
 	for (const locale of ['en-AU', 'en_AU', 'en-AU-u-ca-gregory']) {
 		expect(isAussieLocale(locale)).toBe(true);

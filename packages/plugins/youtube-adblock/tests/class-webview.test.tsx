@@ -1,9 +1,7 @@
-import { metro, pluginHolds, render, startPlugin } from '@unbound-app/api/testing';
+import { logs, metro, pluginHolds, render, startPlugin } from '@unbound-app/api/testing';
 import { describe, expect, test } from 'bun:test';
 import { Component } from 'react';
 import { View, type ViewProps } from 'react-native';
-
-import { selfTest } from '~/index';
 
 type WebViewProps = { source?: { uri?: string }; injectedJavaScript?: string };
 
@@ -22,9 +20,9 @@ describe('a WebView that is a class component', () => {
 			<ClassWebView source={{ uri: 'https://www.youtube.com/embed/x' }} />,
 		).find('View').props as WebViewProps;
 
-		expect(selfTest()).toMatchObject({
-			ok: false,
-			detail: expect.stringContaining('class component'),
+		expect(logs.entries).toContainEqual({
+			level: 'warn',
+			args: ['WebView ad blocker skipped: WebView is a class component.'],
 		});
 		expect(pluginHolds()).toEqual([]);
 		expect(props.injectedJavaScript).toBeUndefined();

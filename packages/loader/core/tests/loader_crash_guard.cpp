@@ -15,6 +15,19 @@ static std::filesystem::path makeTemporaryDirectory()
     return std::filesystem::path(directory);
 }
 
+// iOS's %ctor starts the loader on another thread while the image's static initializers still
+// run, so a start marker can be written before LoaderCrashGuard.cpp's own globals are initialized.
+// This test's initializer runs before the library's, which reproduces that order.
+static const std::filesystem::path earlyRoot = makeTemporaryDirectory();
+
+struct EarlyStart {
+    EarlyStart()
+    {
+        assert(loader::AddonCrashGuard(earlyRoot.string()).beginStart("plugins:early", "Early"));
+    }
+};
+static EarlyStart earlyStart;
+
 static void crashWhileStarting(const loader::AddonCrashGuard &guard, const std::string &id)
 {
     assert(guard.beginStart(id, "Plugin " + id));
@@ -37,6 +50,16 @@ static bool markerExists(const std::filesystem::path &root)
 {
     std::string marker = (root / loader::AddonCrashGuard::kStartingFile).string();
     return loader::fileExists(marker) && loader::fileSize(marker) > 0;
+}
+
+static void earlyStartSurvivesStaticInit()
+{
+    // A marker written before the library's static initializers is still cleared by its start.
+    loader::AddonCrashGuard guard(earlyRoot.string());
+    assert(markerExists(earlyRoot));
+    assert(guard.finishStart("plugins:early"));
+    assert(!markerExists(earlyRoot));
+    std::filesystem::remove_all(earlyRoot);
 }
 
 static void cleanLaunchClearsNothing(const std::filesystem::path &root)
@@ -198,6 +221,7 @@ int main()
         test(directory);
     };
 
+    earlyStartSurvivesStaticInit();
     run("clean", cleanLaunchClearsNothing);
     run("consecutive", secondConsecutiveCrashDisables);
     run("reset", cleanLaunchBetweenCrashesResets);

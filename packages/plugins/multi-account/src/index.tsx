@@ -1,5 +1,12 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startMultiAccount } from '~/multi-account';
+import { patchMultiAccountStore, redrawMultiAccount } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startMultiAccount]);
+export function start() {
+	patchMultiAccountStore();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+	redrawMultiAccount();
+}

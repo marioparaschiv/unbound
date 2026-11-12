@@ -1,5 +1,12 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startStickerStaging } from '~/sticker-staging';
+import { clearStagedStickers, stageStickers } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures(startStickerStaging, { atomic: true });
+export function start() {
+	stageStickers();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+	clearStagedStickers();
+}

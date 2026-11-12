@@ -1,9 +1,7 @@
-import { metro, native, render, startPlugin } from '@unbound-app/api/testing';
+import { logs, metro, native, render, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { memo, type ReactElement } from 'react';
 import { View } from 'react-native';
-
-import { selfTest } from '~/index';
 
 const sizes = new Map<string, number>();
 
@@ -124,6 +122,18 @@ describe('the self test', () => {
 	test('reports the badges applied once the plugin starts', async () => {
 		await startPlugin();
 
-		expect(selfTest().ok).toBe(true);
+		expect(logs.entries.filter(({ level }) => level === 'warn' || level === 'error')).toEqual(
+			[],
+		);
+	});
+
+	test('skips the badges with one warning when Discord moved MediaKeyboardItem', async () => {
+		metro.markMissing(PICKER_PATH);
+		await startPlugin();
+
+		expect(logs.entries).toContainEqual({
+			level: 'warn',
+			args: ['File sizes skipped: Discord moved MediaKeyboardItem.'],
+		});
 	});
 });

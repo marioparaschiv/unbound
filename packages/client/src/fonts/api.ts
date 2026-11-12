@@ -1,13 +1,13 @@
 import { fonts } from '~/fonts/manager';
 
 /** Lists every installed font face. */
-export const getAll = fonts.getEntities.bind(fonts);
+export const getAll = fonts.getAddons.bind(fonts);
 /** Reads one installed face by id. */
-export const get = fonts.getEntity.bind(fonts);
+export const get = fonts.getAddon.bind(fonts);
 /** Installs a font by family name or link, optionally only some weights and styles. */
 export const install = fonts.install.bind(fonts);
 /** Removes an installed face by id. */
-export const uninstall = fonts.delete.bind(fonts);
+export const uninstall = fonts.uninstall.bind(fonts);
 /** Points a Discord family, or a group such as `PRIMARY`, at an installed face. */
 export const setOverride = fonts.setOverride.bind(fonts);
 /** Gives a Discord family, or a group, back its own font. */

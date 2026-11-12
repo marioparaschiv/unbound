@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.5] - 2026-11-11
+
+### Fixed
+
+- Previews show again on Discord 355 and later, which label a message link with the server's name, or for a DM link the person's name, instead of the channel's.
+
+## [1.1.4] - 2026-11-11
+
+### Changed
+
+- Needs Unbound 3.0.0 or newer. The plugin was reorganised for it and works the same as before.
+
 ## [1.1.3] - 2026-11-03
 
 ### Changed

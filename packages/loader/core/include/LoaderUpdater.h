@@ -46,6 +46,10 @@ public:
 std::string bundleFailureNotice(BundleUpdateFailure failure);
 
 constexpr const char *kBundleTrustSuffix = ".trust";
+// A downloaded bundle waiting to be promoted is `unbound.<extension>.candidate`.
+inline const std::string kBundleCandidateSuffix = ".candidate";
+// The bundle's file extensions, in the order a launch looks for them.
+constexpr const char *kBundleExtensions[] = {"bundle", "js"};
 
 class BundleUpdater
 {

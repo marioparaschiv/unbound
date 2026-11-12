@@ -13,8 +13,8 @@ import { createFakeComponents } from './fake-components';
 /** A module the fake metro serves: the exports a plugin finds. */
 export type FakeModule = AnyObject;
 
-/** A fake metro filter. `path` marks a file-path filter, which matches the path a module was registered under. */
-export type FakeFilter = ((module: FakeModule) => boolean) & { path?: string };
+/** A fake metro filter. `path` marks a file-path filter, which matches the path a module was registered under; `terms` are the props, path or name it searches by. */
+export type FakeFilter = ((module: FakeModule) => boolean) & { path?: string; terms?: string[] };
 
 type LazyOptions = {
 	signal?: AbortSignal;
@@ -43,12 +43,16 @@ type Wait = {
 	onLoad: (module: FakeModule) => void;
 };
 
+type WaitOptions = { onMissing?: () => void };
+
 /** A metro over modules a test registers, with the finders and filters plugins call. */
 export type FakeMetro = {
 	/** Adds a module, settling any `findLazy` or `onModuleLoaded` waiting for it and calling `onModuleLoad` listeners. */
 	register: (module: FakeModule, path?: string) => void;
-	/** Forgets every registered module and waiting `findLazy` or `onModuleLoaded`, so a lazy handle made earlier finds only what is registered next. */
+	/** Forgets every registered module, missing mark and waiting `findLazy` or `onModuleLoaded`, so a lazy handle made earlier finds only what is registered next. */
 	reset: () => void;
+	/** Marks a prop name, file path or export name as missing from this build, as the device's cache knows after a full search: a lazy lookup by it returns `undefined`, and `onModuleLoaded` calls `onMissing`. */
+	markMissing: (term: string) => void;
 	/** Discord's Flux stores, by the name `metro.stores` gives them, such as `Users`; the preset binds each to the seeded store. */
 	stores: Record<string, FakeModule>;
 	/** Discord's components: each module a bag of fake components that draw their children and are found by name, such as `Discord.Text`. */
@@ -85,7 +89,11 @@ export type FakeMetro = {
 		filter: FakeFilter,
 		options?: LazyOptions,
 	) => FakeModule | Promise<FakeModule | undefined>;
-	onModuleLoaded: (filter: FakeFilter, onLoad: (module: FakeModule) => void) => () => void;
+	onModuleLoaded: (
+		filter: FakeFilter,
+		onLoad: (module: FakeModule) => void,
+		options?: WaitOptions,
+	) => () => void;
 	/** Calls `onLoad` with the module a lazy handle finds, at once when one is registered, else when it registers; a plain object is passed at once. Returns what stops waiting. */
 	whenLoaded: (target: FakeModule, onLoad: (module: FakeModule) => void) => () => void;
 	onModuleLoad: (listener: (module: FakeModule) => void) => () => void;
@@ -151,17 +159,28 @@ export function createFakeMetro(): FakeMetro {
 	const paths = new Map<FakeModule, string>();
 	const waits = new Set<Wait>();
 	const listeners = new Set<(module: FakeModule) => void>();
+	const missing = new Set<string>();
+
+	function isMissing(filter: FakeFilter): boolean {
+		return Boolean(filter.terms?.some((term) => missing.has(term)));
+	}
 
 	const filters: FakeMetro['filters'] = {
-		byProps:
-			(...props) =>
-			(module) =>
-				props.every((prop) => prop in module),
-		byName: (name) => (module) => 'name' in module && module.name === name,
+		byProps: (...props) =>
+			Object.assign((module: FakeModule) => props.every((prop) => prop in module), {
+				terms: props,
+			}),
+		byName: (name) =>
+			Object.assign((module: FakeModule) => 'name' in module && module.name === name, {
+				terms: [name],
+			}),
 		byDisplayName: (name) => (module) => module.displayName === name,
 		byTypeName: (name) => (module) => module.type?.name === name,
 		byFilePath: (path) =>
-			Object.assign((module: FakeModule) => paths.get(module) === path, { path }),
+			Object.assign((module: FakeModule) => paths.get(module) === path, {
+				path,
+				terms: [path],
+			}),
 		all: (...parts) => {
 			for (const part of parts) assertCombinable('all', part);
 
@@ -200,6 +219,8 @@ export function createFakeMetro(): FakeMetro {
 			return first(filter);
 		}
 
+		if (isMissing(filter)) return;
+
 		const resolve = () => first(filter);
 		const handle = lazyHandle(resolve, description);
 
@@ -217,7 +238,17 @@ export function createFakeMetro(): FakeMetro {
 		) as Record<keyof T, FakeModule>;
 	}
 
-	function onModuleLoaded(filter: FakeFilter, onLoad: (module: FakeModule) => void) {
+	function onModuleLoaded(
+		filter: FakeFilter,
+		onLoad: (module: FakeModule) => void,
+		{ onMissing }: WaitOptions = {},
+	) {
+		if (isMissing(filter)) {
+			onMissing?.();
+
+			return () => void 0;
+		}
+
 		const found = first(filter);
 
 		if (found) {
@@ -298,6 +329,10 @@ export function createFakeMetro(): FakeMetro {
 			paths.clear();
 			waits.clear();
 			listeners.clear();
+			missing.clear();
+		},
+		markMissing(term) {
+			missing.add(term);
 		},
 		register(module, path) {
 			modules.push(module);

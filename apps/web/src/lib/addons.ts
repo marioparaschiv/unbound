@@ -10,12 +10,17 @@ import type {
 	Maintainer,
 	MyAddonsResponse,
 } from '@unbound-app/contracts/addons';
-import { addonIdSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
+import {
+	addonIdSchema,
+	addonManifestSchema,
+	type PublishedManifest,
+} from '@unbound-app/contracts/manifest';
 import { and, EmptyFilter, eq, gte, inArray, isNull, lt, or, sql } from 'drizzle-orm';
+import { safeParse, Type, type TSchema } from '@unbound-app/contracts/schema';
 import type { RepositoryDetails } from '@unbound-app/contracts/source';
 import type { AddonPage } from '@unbound-app/contracts/addon-page';
-import { Type, type TSchema } from '@unbound-app/contracts/schema';
 import type { PinnableField } from '@unbound-app/contracts/admin';
+import { createLogger } from '@unbound-app/logger';
 
 import {
 	LISTED_ADDONS,
@@ -42,6 +47,8 @@ import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { DAY_MS } from '~/lib/calendar-date';
 import one from '~/db/one';
+
+const logger = createLogger('Web', 'Addons');
 
 export type AddonRow = typeof addon.$inferSelect;
 
@@ -104,7 +111,7 @@ export const PINNED_FIELDS = {
 } as const satisfies Record<PinnableField, number>;
 
 /** The relational `with` that loads the version an addon serves: its newest live version. */
-export const LATEST_VERSION = {
+export const WITH_SERVED_VERSION = {
 	versions: { ...SERVED_VERSION, with: VERSION_SOURCE },
 } as const;
 
@@ -348,7 +355,7 @@ export function queryListedAddons(ctx: AppContext, query: ListAddonsQuery = {}) 
 							page.where(table),
 						) ?? sql`true`,
 				},
-				with: LATEST_VERSION,
+				with: WITH_SERVED_VERSION,
 				orderBy: (table) => page.orderBy(table),
 				limit: page.limit,
 			}),
@@ -400,7 +407,7 @@ export async function listAddons(
 export async function listListedAddons(ctx: AppContext): Promise<ListedAddon[]> {
 	const rows = await ctx.db.query.addon.findMany({
 		where: LISTED_ADDONS,
-		with: LATEST_VERSION,
+		with: WITH_SERVED_VERSION,
 		orderBy: { id: 'asc' },
 	});
 
@@ -487,7 +494,8 @@ export async function getAddonDetails(
 }
 
 /**
- * @description Lists every approved version of a listed addon that no rollback withdrew, newest first.
+ * @description Lists every approved version of a listed addon that no rollback withdrew and whose
+ * manifest still parses, newest first.
  * @param ctx The application context.
  * @param id The addon id.
  * @returns The versions, or `undefined` when the addon does not exist or is delisted.
@@ -509,7 +517,19 @@ export async function listAddonVersions(
 
 	if (!row) return;
 
-	return row.versions.map((version) => toAddonVersion(ctx.env, version, version.submission));
+	return row.versions.flatMap((version) => {
+		// Versions published before the manifest format changed (`platforms` as an array) no longer
+		// match the contract, and no current client can install them.
+		if (!safeParse(addonManifestSchema, version.manifest).success) {
+			logger.warn(
+				`Skipped version ${version.version} of ${id}: its manifest no longer parses.`,
+			);
+
+			return [];
+		}
+
+		return [toAddonVersion(ctx.env, version, version.submission)];
+	});
 }
 
 /**
@@ -523,7 +543,7 @@ export async function listMyAddons(ctx: AppContext, caller: Caller): Promise<MyA
 	const userId = caller.user.id;
 	const memberships = await ctx.db.query.addonMaintainer.findMany({
 		where: { userId },
-		with: { addon: { with: LATEST_VERSION } },
+		with: { addon: { with: WITH_SERVED_VERSION } },
 		orderBy: { addonId: 'asc' },
 	});
 
@@ -564,7 +584,7 @@ export async function listMyAddons(ctx: AppContext, caller: Caller): Promise<MyA
 
 export default {
 	PINNED_FIELDS,
-	LATEST_VERSION,
+	WITH_SERVED_VERSION,
 	toAddon,
 	getManifestType,
 	toAddonSummary,

@@ -1,5 +1,11 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import { patcher } from '@unbound-app/api';
 
-import { startCrown } from '~/crown';
+import { patchMessageRows } from '~/patches';
 
-export const { start, stop, selfTest } = runFeatures([startCrown]);
+export function start() {
+	patchMessageRows();
+}
+
+export function stop() {
+	patcher.unpatchAll();
+}

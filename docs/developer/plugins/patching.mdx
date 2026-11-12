@@ -11,9 +11,14 @@ Wrap one of Discord's functions so every call to it also runs your callback. Pas
 ```ts src/message-log/index.ts
 import { metro, patcher } from '@unbound-app/api';
 
-const Messages = metro.findByProps('sendMessage', 'receiveMessage');
-
 export function startMessageLog() {
+	const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+
+	if (!Messages) {
+		logger.warn('Message log skipped: Discord moved sendMessage.');
+		return;
+	}
+
 	patcher.before(Messages, 'sendMessage', ({ args }) => {
 		logger.log('Sending to channel', args[0]);
 	});
@@ -43,13 +48,20 @@ Every function is on `patcher`, from `@unbound-app/api`. Each returns a function
 		```ts
 		import { metro, patcher } from '@unbound-app/api';
 
-		const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+		export function patchSendMessage() {
+			const Messages = metro.findByProps('sendMessage', 'receiveMessage');
 
-		patcher.before(Messages, 'sendMessage', ({ args }) => {
-			const [channelId, message] = args;
+			if (!Messages) {
+				logger.warn('Trimming skipped: Discord moved sendMessage.');
+				return;
+			}
 
-			return [channelId, { ...message, content: message.content.trim() }];
-		});
+			patcher.before(Messages, 'sendMessage', ({ args }) => {
+				const [channelId, message] = args;
+
+				return [channelId, { ...message, content: message.content.trim() }];
+			});
+		}
 		```
 	</Tab>
 	<Tab title='after'>
@@ -71,14 +83,22 @@ Every function is on `patcher`, from `@unbound-app/api`. Each returns a function
 		```ts
 		import { metro, patcher } from '@unbound-app/api';
 
-		const Messages = metro.findByProps('sendMessage', 'receiveMessage');
 		const quietChannels = new Set(['1234567890']);
 
-		patcher.instead(Messages, 'sendMessage', ({ args, original }) => {
-			if (quietChannels.has(args[0])) return;
+		export function patchSendMessage() {
+			const Messages = metro.findByProps('sendMessage', 'receiveMessage');
 
-			return original(...args);
-		});
+			if (!Messages) {
+				logger.warn('Quiet channels skipped: Discord moved sendMessage.');
+				return;
+			}
+
+			patcher.instead(Messages, 'sendMessage', ({ args, original }) => {
+				if (quietChannels.has(args[0])) return;
+
+				return original(...args);
+			});
+		}
 		```
 	</Tab>
 </Tabs>

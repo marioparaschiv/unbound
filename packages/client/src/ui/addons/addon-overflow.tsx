@@ -10,7 +10,7 @@ import { show } from '~/toasts/api';
 
 import type { MenuTriggerProps } from './menu-trigger';
 
-import confirmDelete from './confirm-delete';
+import confirmUninstall from './confirm-uninstall';
 import useStyles from './round-pill.style';
 
 type AddonOverflowProps = {
@@ -43,7 +43,7 @@ function AddonOverflow({ addon, kind, developmentCopy, variant = 'inline' }: Add
 			{
 				label: messages.UNBOUND_DELETE,
 				variant: 'destructive',
-				action: () => confirmDelete(manager, addon),
+				action: () => confirmUninstall(manager, addon),
 			},
 		],
 		[manager, addon, kind, developmentCopy],

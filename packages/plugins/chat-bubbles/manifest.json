@@ -16,8 +16,11 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.5.3",
+	"version": "1.6.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
 	"icon": "PaintPaletteIcon",
-	"minNativePluginApi": "1.0.0",
+	"minNativeBridgeApi": "1.0.0",
 	"main": "index.tsx"
 }

@@ -45,26 +45,30 @@ describe('findByProps types', () => {
 	test('props one typed module exposes give that module', () => {
 		type Found = ReturnType<typeof findByProps<'AlertModal', ['AlertActions']>>;
 
-		expect(expectType<Equal<Found, AnyProps<AlertModalModule>>>()).toBeUndefined();
+		expect(expectType<Equal<Found, AnyProps<AlertModalModule> | undefined>>()).toBeUndefined();
 	});
 
 	test('a result stays open: an export the index lacks reads and destructures as MetroExport', () => {
 		type Found = ReturnType<typeof findByProps<'AlertModal', ['AlertActions']>>;
 
-		const found = valueOf<Found>();
+		const found = valueOf<NonNullable<Found>>();
 		const { notInIndex } = found;
 
 		expect(expectType<Equal<typeof found.notInIndex, MetroExport>>()).toBeUndefined();
 		expect(expectType<Equal<typeof notInIndex, MetroExport>>()).toBeUndefined();
 		expect(
-			expectType<Equal<Found['AlertModal'], AlertModalModule['AlertModal']>>(),
+			expectType<Equal<NonNullable<Found>['AlertModal'], AlertModalModule['AlertModal']>>(),
 		).toBeUndefined();
 	});
 
-	test('options and `all` keep the module type', () => {
+	test('options keep the module type, and `all` always gives an array', () => {
 		type All = ReturnType<typeof findByProps<'AlertModal', ['AlertActions', { all: true }]>>;
+		type Eager = ReturnType<
+			typeof findByProps<'AlertModal', ['AlertActions', { lazy: false }]>
+		>;
 
 		expect(expectType<Equal<All, AnyProps<AlertModalModule>[]>>()).toBeUndefined();
+		expect(expectType<Equal<Eager, AnyProps<AlertModalModule> | undefined>>()).toBeUndefined();
 	});
 
 	test('props several typed modules expose give the union of them', () => {
@@ -75,25 +79,25 @@ describe('findByProps types', () => {
 			>
 		>;
 
-		expect(expectType<Equal<Found, Expected>>()).toBeUndefined();
+		expect(expectType<Equal<Found, Expected | undefined>>()).toBeUndefined();
 	});
 
 	test('props of a module with no typed export fall back to a record of them', () => {
 		type Found = ReturnType<typeof findByProps<'sendMessage', ['receiveMessage']>>;
 
-		expect(expectType<Equal<Found, AnyProps<MessagesFallback>>>()).toBeUndefined();
+		expect(expectType<Equal<Found, AnyProps<MessagesFallback> | undefined>>()).toBeUndefined();
 	});
 
 	test('an unknown prop falls back to a record of the requested props', () => {
 		type Unknown = ReturnType<typeof findByProps<'notADiscordExport', []>>;
 
-		expect(expectType<Equal<Unknown, AnyProps<UnknownOnly>>>()).toBeUndefined();
+		expect(expectType<Equal<Unknown, AnyProps<UnknownOnly> | undefined>>()).toBeUndefined();
 	});
 
 	test('props known only at runtime fall back too', () => {
 		type Found = ReturnType<typeof findByProps<string, string[]>>;
 
-		expect(expectType<Equal<Found, AnyProps<AnyExports>>>()).toBeUndefined();
+		expect(expectType<Equal<Found, AnyProps<AnyExports> | undefined>>()).toBeUndefined();
 	});
 });
 
@@ -136,14 +140,21 @@ describe('findByName types', () => {
 			typeof findByName<'SimpleActionSheet', [{ interop: false }]>
 		>;
 
-		expect(expectType<Equal<Found, MetroModuleByName<'SimpleActionSheet'>>>()).toBeUndefined();
-		expect(expectType<Equal<WithoutInterop, SheetWithoutInterop>>()).toBeUndefined();
+		expect(
+			expectType<Equal<Found, MetroModuleByName<'SimpleActionSheet'> | undefined>>(),
+		).toBeUndefined();
+		expect(
+			expectType<Equal<WithoutInterop, SheetWithoutInterop | undefined>>(),
+		).toBeUndefined();
 	});
 
 	test('an unknown name falls back to an untyped function', () => {
 		expect(
 			expectType<
-				Equal<ReturnType<typeof findByName<'NotADiscordName', []>>, MetroFunction>
+				Equal<
+					ReturnType<typeof findByName<'NotADiscordName', []>>,
+					MetroFunction | undefined
+				>
 			>(),
 		).toBeUndefined();
 	});
@@ -153,15 +164,17 @@ describe('findByFilePath types', () => {
 	test('a typed module path gives its module', () => {
 		type Found = ReturnType<typeof findByFilePath<'design/native.tsx', []>>;
 
-		expect(expectType<Equal<Found, AnyProps<DesignModuleExports>>>()).toBeUndefined();
+		expect(
+			expectType<Equal<Found, AnyProps<DesignModuleExports> | undefined>>(),
+		).toBeUndefined();
 	});
 
 	test('any other path falls back to an open module', () => {
 		type Untyped = ReturnType<typeof findByFilePath<'actions/MessageActionCreators.tsx', []>>;
 		type Unknown = ReturnType<typeof findByFilePath<'not/a/discord/path.tsx', []>>;
 
-		expect(expectType<Equal<Untyped, AnyProps>>()).toBeUndefined();
-		expect(expectType<Equal<Unknown, AnyProps>>()).toBeUndefined();
+		expect(expectType<Equal<Untyped, AnyProps | undefined>>()).toBeUndefined();
+		expect(expectType<Equal<Unknown, AnyProps | undefined>>()).toBeUndefined();
 	});
 });
 
@@ -200,7 +213,7 @@ describe('autocomplete', () => {
 	test('a spread array of terms still types, loosely', () => {
 		type Spread = ReturnType<typeof findByProps<string[]>>;
 
-		expect(expectType<Equal<Spread, AnyProps<AnyExports>>>()).toBeUndefined();
+		expect(expectType<Equal<Spread, AnyProps<AnyExports> | undefined>>()).toBeUndefined();
 	});
 
 	test('a hashed module key is never offered as a path', () => {

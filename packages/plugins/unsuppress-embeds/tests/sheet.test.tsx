@@ -1,5 +1,6 @@
 import {
 	flux,
+	logs,
 	metro,
 	patches,
 	render,
@@ -10,8 +11,6 @@ import {
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { View } from 'react-native';
 import { createElement } from 'react';
-
-import { selfTest } from '~/index';
 
 const ME = '1';
 const SUPPRESS_FLAG = 4;
@@ -135,14 +134,21 @@ describe('starting', () => {
 		registerDiscord();
 		await startPlugin();
 
-		expect((await selfTest()).ok).toBe(true);
+		expect(logs.entries.filter(({ level }) => level === 'warn' || level === 'error')).toEqual(
+			[],
+		);
 		await stopPlugin();
 	});
 
 	test('patches nothing while a Discord module is missing', async () => {
+		metro.markMissing('openLazy');
 		await startPlugin();
 
 		expect(patches.applied).toEqual([]);
+		expect(logs.entries).toContainEqual({
+			level: 'warn',
+			args: ['Embeds row skipped: Discord moved ActionSheets or REST.'],
+		});
 	});
 });
 

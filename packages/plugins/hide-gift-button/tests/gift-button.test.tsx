@@ -1,9 +1,7 @@
-import { metro, render, startPlugin } from '@unbound-app/api/testing';
+import { logs, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { memo, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
-
-import { selfTest } from '~/index';
 
 type ButtonProps = { hideGiftButton?: boolean };
 type ActionsProps = { shouldShowGiftButton?: boolean };
@@ -58,7 +56,21 @@ describe('the composer actions', () => {
 });
 
 describe('health', () => {
-	test('the self test passes once started', () => {
-		expect(selfTest()).toEqual({ ok: true, detail: '2 features applied' });
+	test('starts without a warning', () => {
+		expect(logs.entries.filter(({ level }) => level === 'warn' || level === 'error')).toEqual(
+			[],
+		);
+	});
+
+	test('skips the gift slot with one warning when Discord moved ChatInputRightActions', async () => {
+		await stopPlugin();
+		metro.markMissing(`${folder}ChatInputRightActions.tsx`);
+		await startPlugin();
+
+		expect(render(<GiftOrThreadButton hideGiftButton={false} />).text()).toBe('thread only');
+		expect(logs.entries).toContainEqual({
+			level: 'warn',
+			args: ['Gift slot skipped: Discord moved ChatInputRightActions.'],
+		});
 	});
 });

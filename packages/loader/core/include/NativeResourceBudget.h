@@ -10,6 +10,7 @@
 namespace loader::native {
 inline constexpr size_t kMaximumNativeHooks              = 256;
 inline constexpr size_t kMaximumNativeCachedReturnValues = 512;
+inline constexpr size_t kMaximumPreparedNativeCalls      = 256;
 
 class NativeResourceBudget
 {
@@ -63,6 +64,7 @@ private:
 NativeResourceBudget &nativeHookBudget();
 NativeResourceBudget &nativeCachedReturnBudget();
 NativeResourceBudget &nativeSurfaceBudget();
+NativeResourceBudget &nativePreparedCallBudget();
 
 inline constexpr const char *kObjCHandleCounter = "objcHandles";
 inline constexpr const char *kObjCPlanCounter   = "objcPlans";

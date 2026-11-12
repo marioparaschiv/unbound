@@ -1,10 +1,8 @@
-import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { createElement, memo, type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
-
-import { selfTest } from '~/index';
 
 const typing: { ids: Record<string, number> } = { ids: {} };
 const users: Record<string, { id: string; username: string }> = {
@@ -194,9 +192,19 @@ describe('typing indicators on channel rows', () => {
 	});
 });
 
+// A throwing feature fails the whole start, which Unbound logs and reverts by disposing the plugin's scope.
 describe('a thread row with an unexpected shape', () => {
-	beforeEach(async () => {
+	test('fails the start', async () => {
 		registerModules({ default: 'not a component' });
+
+		await expect(startPlugin()).rejects.toThrow('Failed to patch component');
+	});
+});
+
+describe('a Discord update that moved ThreadChannel', () => {
+	beforeEach(async () => {
+		registerModules(threadModule);
+		metro.markMissing('modules/channel_list_v2/native/items/ThreadChannel.tsx');
 		await startPlugin();
 	});
 
@@ -210,7 +218,10 @@ describe('a thread row with an unexpected shape', () => {
 		).toEqual(['#', 'avatar:alice', 'general']);
 	});
 
-	test('fails the self test', async () => {
-		expect((await selfTest()).detail).toContain('start failed');
+	test('skips thread rows with one warning', () => {
+		expect(logs.entries).toContainEqual({
+			level: 'warn',
+			args: ['Thread channels skipped: Discord moved ThreadChannel or Theme.'],
+		});
 	});
 });

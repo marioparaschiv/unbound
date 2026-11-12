@@ -28,18 +28,18 @@ const registry: Partial<ManagerOf> = {};
 
 /**
  * @description Base contract every addon-style manager subclasses. Extends tseep's `EventEmitter` with the
- * subclass event map, and holds an `entities` map of governed addons alongside an `errors` map recording
- * per-entity failures.
- * @template T The entity type the manager governs.
+ * subclass event map, and holds an `addons` map of governed addons alongside an `errors` map recording
+ * per-addon failures.
+ * @template T The addon type the manager governs.
  * @template EventMap The subclass-specific event map.
  */
 export abstract class Manager<
 	T,
 	EventMap extends DefaultEventMap = {},
 > extends EventEmitter<EventMap> {
-	/** The entities currently governed by this manager, keyed by id. */
-	entities = new Map<PropertyKey, T>();
-	/** Errors recorded per entity id when an operation fails. */
+	/** The addons currently governed by this manager, keyed by id. */
+	addons = new Map<PropertyKey, T>();
+	/** Errors recorded per addon id when an operation fails. */
 	errors = new Map<PropertyKey, Error>();
 
 	readonly kind: AddonKind;
@@ -108,24 +108,24 @@ export abstract class Manager<
 	}
 
 	/**
-	 * @description Sets up the manager and loads its entities. Implemented by each subclass.
+	 * @description Sets up the manager and loads its addons. Implemented by each subclass.
 	 */
 	abstract initialize(): void;
 
-	getEntities(): T[] {
-		return [...this.entities.values()];
+	getAddons(): T[] {
+		return [...this.addons.values()];
 	}
 
-	getEntity(id: PropertyKey): T | undefined {
-		return this.entities.get(id);
+	getAddon(id: PropertyKey): T | undefined {
+		return this.addons.get(id);
 	}
 
 	/**
-	 * @description Tears the manager down, reverting all patches and clearing its entities and errors.
+	 * @description Tears the manager down, reverting all patches and clearing its addons and errors.
 	 */
 	shutdown(): void | Promise<void> {
 		this.patcher.unpatchAll();
-		this.entities.clear();
+		this.addons.clear();
 		this.errors.clear();
 	}
 }

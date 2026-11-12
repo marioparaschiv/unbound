@@ -91,6 +91,7 @@ export function readDebugInfo(): DebugInfo {
 		...channelOf(String(bundle.Version ?? 'unknown'), appSource),
 		discordBuild: String(bundle.Build ?? 'unknown'),
 		appSource,
+		installDetails: android ? '' : attempt(() => platform?.app.getInstallDetails?.(), ''),
 		framework: attempt(() => platform?.app.getFramework(), ''),
 		jailbreak: android ? '' : attempt(() => platform?.device.getJailbreak?.(), ''),
 		react: React.version,
@@ -123,7 +124,7 @@ function warnTextOnly() {
 async function uploadEntitlements(channelId: string): Promise<CloudUpload | undefined> {
 	const plist = readEntitlements();
 
-	if (!plist || !CloudUploader.CloudUpload) {
+	if (!plist || !CloudUploader?.CloudUpload) {
 		return undefined;
 	}
 

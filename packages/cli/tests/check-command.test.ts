@@ -70,19 +70,19 @@ describe('ubd check', () => {
 	});
 
 	test('a warning passes, and fails with --strict', async () => {
-		const dir = plugin({ 'src/patches.ts': 'export {};\n' });
+		const dir = plugin({ 'src/helpers.ts': 'export {};\n' });
 		const relaxed = await runUbd(['check', '--only', 'layout'], pluginDir(dir), {});
 		const strict = await runUbd(['check', '--only', 'layout', '--strict'], pluginDir(dir), {});
 
 		expect(relaxed.exitCode).toBe(0);
 		expect(reportLines(relaxed.stdout)).toEqual([
-			'warning  src/patches.ts  is not a standard root file.  Fix: move it into a domain folder.',
+			'warning  src/helpers.ts  is not a standard root file.  Fix: move it into native/, flux/, components/, lib/, patches/ or commands/.',
 		]);
 		expect(strict.exitCode).toBe(1);
 	});
 
 	test('--only runs just the named checks, and --json prints them', async () => {
-		const dir = plugin({ 'src/patches.ts': 'export {};\n' }, { version: 'one' });
+		const dir = plugin({ 'src/helpers.ts': 'export {};\n' }, { version: 'one' });
 		const result = await runUbd(
 			['check', '--only', 'manifest,layout', '--json'],
 			pluginDir(dir),
@@ -104,7 +104,7 @@ describe('ubd check', () => {
 					severity: 'error',
 					message: 'Must be a semver version.',
 				},
-				{ check: 'layout', file: 'src/patches.ts', severity: 'warning' },
+				{ check: 'layout', file: 'src/helpers.ts', severity: 'warning' },
 			],
 		});
 	});
@@ -117,7 +117,7 @@ describe('ubd check', () => {
 	});
 
 	test('--all spreads the addons over processes and merges what they found', async () => {
-		const dir = plugin({ 'src/patches.ts': 'export {};\n' });
+		const dir = plugin({ 'src/helpers.ts': 'export {};\n' });
 		const second = join(dir.path, 'plugins', 'other');
 
 		await Bun.write(
@@ -133,9 +133,9 @@ describe('ubd check', () => {
 		const result = await runUbd(['check', '--all', '--only', 'layout'], dir.path, {});
 
 		expect(reportLines(result.stdout)).toEqual([
-			'warning  plugins/demo/src/patches.ts  is not a standard root file.  Fix: move it into a domain folder.',
-			'warning  plugins/other/src/extra.ts  is not a standard root file.  Fix: move it into a domain folder.',
-			"warning  plugins/other/src/index.tsx  is missing.  Fix: add the entry that registers the addon's features.",
+			'warning  plugins/demo/src/helpers.ts  is not a standard root file.  Fix: move it into native/, flux/, components/, lib/, patches/ or commands/.',
+			'warning  plugins/other/src/extra.ts  is not a standard root file.  Fix: move it into native/, flux/, components/, lib/, patches/ or commands/.',
+			"warning  plugins/other/src/index.tsx  is missing.  Fix: add the entry that lists the plugin's features.",
 		]);
 		expect(result.stdout).toContain('0 errors, 3 warnings in 3 files');
 	});

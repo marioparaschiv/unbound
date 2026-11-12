@@ -1,7 +1,5 @@
-import { render, startPlugin, toasts } from '@unbound-app/api/testing';
+import { logs, metro, render, startPlugin, toasts } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
-
-import { selfTest } from '~/index';
 
 import { ActivityButtons, registerDiscord, synced } from './helpers/fake-discord';
 
@@ -71,10 +69,22 @@ describe('Listen Along button', () => {
 	});
 });
 
-describe('self test', () => {
-	test('passes once the plugin has started', async () => {
+describe('start', () => {
+	test('passes without a warning once the plugin has started', async () => {
 		await startPlugin();
 
-		expect(selfTest()).toMatchObject({ ok: true });
+		expect(logs.entries.filter(({ level }) => level !== 'info')).toEqual([]);
+	});
+
+	test('skips the button with one warning when Discord moved PlayOnSpotifyButton', async () => {
+		metro.markMissing('PlayOnSpotifyButton');
+		await startPlugin();
+
+		expect(logs.entries).toContainEqual({
+			level: 'warn',
+			args: [
+				'Listen along skipped: Discord moved PlayOnSpotifyButton or the Spotify actions.',
+			],
+		});
 	});
 });

@@ -1,9 +1,7 @@
-import { logs, render } from '@unbound-app/api/testing';
+import { logs, metro, render } from '@unbound-app/api/testing';
 import { expect, test } from 'bun:test';
 import { View } from 'react-native';
 import { createElement } from 'react';
-
-import { selfTest } from '~/index';
 
 import { sheets, startGuildSettings } from './helpers/discord';
 function ActionSheetRow(_props: { label: string; onPress: () => void }) {
@@ -24,14 +22,21 @@ function GuildSheet() {
 	);
 }
 
-test('reports healthy once every feature has started', async () => {
+test('starts without a warning once every feature has applied', async () => {
 	await startGuildSettings();
 
-	expect(await selfTest()).toEqual({ ok: true, detail: '3 features applied' });
+	expect(logs.entries.filter(({ level }) => level !== 'info')).toEqual([]);
 });
 
-test('keeps the action sheet row when the context menu cannot be patched', async () => {
-	await startGuildSettings(false, true);
+test('fails to start when the context menu cannot be patched, so Unbound removes the rest', async () => {
+	const failure = await startGuildSettings(false, true).catch((error: unknown) => error);
+
+	expect(failure).toEqual(new Error('The menu module changed shape.'));
+});
+
+test('keeps the action sheet row with one warning when Discord moved the context menus', async () => {
+	metro.markMissing('showContextMenu');
+	await startGuildSettings();
 
 	const module = { default: GuildSheet };
 
@@ -44,6 +49,10 @@ test('keeps the action sheet row when the context menu cannot be patched', async
 	expect(view.findAll('ActionSheetRow').map((node) => node.props.label)).toContain(
 		'Apply New Guild Settings',
 	);
-	expect((await selfTest()).ok).toBe(false);
-	expect(logs.entries.some(({ level }) => level === 'error')).toBe(true);
+	expect(logs.entries).toContainEqual({
+		level: 'warn',
+		args: [
+			'Context menu item skipped: Discord moved updateGuildNotificationSettings, showContextMenu or SettingsIcon.',
+		],
+	});
 });

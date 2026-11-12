@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.6.0] - 2026-11-12
+
+### Added
+
+- Messages in a row from the same author share one grouped bubble, with only the outer corners rounded, on iOS and Android.
+- A tail points from the bubble beside the author's avatar.
+- Cards such as embeds and attachments get padding around their content.
+- Bubbles can blur the chat background behind them.
+- Replies can be shown quoted inside the bubble or above it, in both layouts.
+- eternal is listed as an author.
+
+### Changed
+
+- The settings are grouped, with a live chat preview at the top.
+- Replies show a reply icon instead of the spine, lifted above cards.
+
+## [1.5.4] - 2026-11-11
+
+### Changed
+
+- Needs Unbound 3.0.0 or newer. The plugin was reorganised for it and works the same as before.
+
 ## [1.5.3] - 2026-11-05
 
 ### Changed

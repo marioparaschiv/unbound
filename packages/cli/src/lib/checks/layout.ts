@@ -14,29 +14,37 @@ export type LayoutIssue = {
 };
 
 const ENTRY_FILE = 'index.tsx';
-// `actions.ts` holds what settings buttons run; the `.d.ts` files are the typings the build generates.
+// `actions.ts` holds what settings buttons run; `patches` and `commands` stay one file until they grow; the `.d.ts` files are the typings the build generates.
 const ROOT_FILES = new Set([
 	ENTRY_FILE,
 	'settings.tsx',
 	'actions.ts',
-	'constants.ts',
-	'types.ts',
+	'patches.ts',
+	'patches.tsx',
+	'commands.ts',
+	'commands.tsx',
 	'unbound-settings.d.ts',
 	basename(LOCALE_TYPINGS),
 ]);
-const PLATFORM_FOLDERS = ['ios', 'android'];
-const PLATFORM_FILE = 'platform.ts';
+// A kind's file grows into a folder of named files, such as `patches/message-rows.ts`.
+const ROOT_FOLDERS = new Set(['native', 'flux', 'components', 'lib', 'patches', 'commands']);
+const FOLDER_LIST = 'native/, flux/, components/, lib/, patches/ or commands/';
+// Platform code may sit one level deeper, in `src/<folder>/ios/<file>` and `src/<folder>/android/<file>`.
+const PLATFORM_FOLDERS = new Set(['ios', 'android']);
+const PLATFORM_SUFFIX = /^(.+)-(ios|android)(\.[cm]?[jt]sx?)$/;
+const DEPTH_FIX =
+	'keep files at src/<folder>/<file>; platform code goes in src/<folder>/ios/<file> and src/<folder>/android/<file>';
 
 const MISSING_ENTRY: LayoutIssue = {
 	file: `src/${ENTRY_FILE}`,
 	message: 'is missing',
-	fix: "add the entry that registers the addon's features",
+	fix: "add the entry that lists the plugin's features",
 };
 
 /**
- * @description Lists how a plugin's `src/` departs from the standard addon layout: the entry and
- * the standard files at the root, everything else in domain folders, and platform code in a
- * domain's `ios/` and `android/` next to the `platform.ts` that selects between them.
+ * @description Lists how a plugin's `src/` departs from the standard layout: the entry and the standard files at the
+ * root, everything else one level down in a folder named for its kind, never deeper than `src/<folder>/<file>`
+ * except platform code in `src/<folder>/ios/<file>` and `src/<folder>/android/<file>`, never in `-ios`/`-android` files.
  * @param dir The plugin's directory.
  * @returns One issue per departure, empty when the plugin follows the layout.
  */
@@ -59,7 +67,7 @@ export function findLayoutIssues(dir: string): LayoutIssue[] {
 			issues.push({
 				file: `src/${entry.name}`,
 				message: 'is not a standard root file',
-				fix: 'move it into a domain folder',
+				fix: `move it into ${FOLDER_LIST}`,
 			});
 		}
 
@@ -67,47 +75,67 @@ export function findLayoutIssues(dir: string): LayoutIssue[] {
 			continue;
 		}
 
-		if (PLATFORM_FOLDERS.includes(entry.name)) {
+		if (!ROOT_FOLDERS.has(entry.name)) {
 			issues.push({
 				file: `src/${entry.name}`,
-				message: 'holds platform code outside a domain',
-				fix: 'move it into the domain it belongs to',
+				message: 'is not a standard folder',
+				fix: `move its files into ${FOLDER_LIST}`,
 			});
-
-			continue;
 		}
 
-		issues.push(...findPlatformIssues(join(src, entry.name), `src/${entry.name}`));
+		for (const nested of listEntries(join(src, entry.name))) {
+			if (nested.isFile()) {
+				issues.push(...findPlatformSuffix(entry.name, nested.name));
+				continue;
+			}
+
+			if (!nested.isDirectory()) {
+				continue;
+			}
+
+			if (PLATFORM_FOLDERS.has(nested.name)) {
+				issues.push(
+					...findNestedFolders(
+						join(src, entry.name, nested.name),
+						`src/${entry.name}/${nested.name}`,
+					),
+				);
+				continue;
+			}
+
+			issues.push(tooDeep(`src/${entry.name}/${nested.name}`));
+		}
 	}
 
 	return issues;
 }
 
-function findPlatformIssues(dir: string, relative: string): LayoutIssue[] {
-	const entries = listEntries(dir);
-	const platforms = PLATFORM_FOLDERS.filter((name) =>
-		entries.some((entry) => entry.isDirectory() && entry.name === name),
-	);
-	const issues: LayoutIssue[] = [];
+function findPlatformSuffix(folder: string, name: string): LayoutIssue[] {
+	const match = PLATFORM_SUFFIX.exec(name);
 
-	if (
-		platforms.length > 0 &&
-		!entries.some((entry) => entry.isFile() && entry.name === PLATFORM_FILE)
-	) {
-		issues.push({
-			file: relative,
-			message: `has ${platforms.map((name) => `${name}/`).join(' and ')} but no ${PLATFORM_FILE}`,
-			fix: `add ${PLATFORM_FILE} to select the platform handler`,
-		});
+	if (!match) {
+		return [];
 	}
 
-	for (const entry of entries) {
-		if (entry.isDirectory() && !PLATFORM_FOLDERS.includes(entry.name)) {
-			issues.push(...findPlatformIssues(join(dir, entry.name), `${relative}/${entry.name}`));
-		}
-	}
+	const [, base, platform, extension] = match;
 
-	return issues;
+	return [
+		{
+			file: `src/${folder}/${name}`,
+			message: 'names its platform in a suffix',
+			fix: `move it to src/${folder}/${platform}/${base}${extension}`,
+		},
+	];
+}
+
+function findNestedFolders(dir: string, relative: string) {
+	return listEntries(dir)
+		.filter((entry) => entry.isDirectory())
+		.map((entry) => tooDeep(`${relative}/${entry.name}`));
+}
+
+function tooDeep(file: string): LayoutIssue {
+	return { file, message: 'is nested too deep', fix: DEPTH_FIX };
 }
 
 function listEntries(dir: string) {

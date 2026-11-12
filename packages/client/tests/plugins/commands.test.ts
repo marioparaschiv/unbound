@@ -43,7 +43,7 @@ class CommandPlugins extends Plugins {
 	}
 
 	seed(id: string) {
-		this.entities.set(id, this.createAddon(makeManifest(id), 'bundle'));
+		this.addons.set(id, this.createAddon(makeManifest(id), 'bundle'));
 	}
 }
 

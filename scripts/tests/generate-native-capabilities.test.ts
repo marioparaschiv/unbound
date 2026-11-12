@@ -10,7 +10,7 @@ import {
 	TYPES_OUTPUT,
 } from '~/generate-native-capabilities';
 
-import { NATIVE_PLUGIN_METHOD_CAPABILITIES } from '../../packages/types/typings/native-methods';
+import { NATIVE_BRIDGE_METHOD_CAPABILITIES } from '../../packages/types/typings/native-methods';
 
 function rendered(path: string): string {
 	return renderNativeCapabilities().find((file) => file.path === path)?.content ?? '';
@@ -42,7 +42,7 @@ describe('generated native capability files', () => {
 		expect(loader).toContain('{"native.java.hooks", "hooks", kJavaHooksMethods}');
 		expect(loader).toContain('std::array<std::string_view, 0> kRuntimeEventsMethods = {\n};');
 		expect(loader).not.toContain('"create"');
-		expect(Object.keys(NATIVE_PLUGIN_METHOD_CAPABILITIES)).toContain('objc.create');
+		expect(Object.keys(NATIVE_BRIDGE_METHOD_CAPABILITIES)).toContain('objc.create');
 	});
 
 	test('list each platform only the Capabilities its loader provides', () => {

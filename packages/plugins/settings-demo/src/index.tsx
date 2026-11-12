@@ -1,5 +1,5 @@
-import { startDemo } from '~/demo';
+import { logStyle } from '~/lib/log-style';
 
 export function start() {
-	startDemo();
+	logStyle();
 }

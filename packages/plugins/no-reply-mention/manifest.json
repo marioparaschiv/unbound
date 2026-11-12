@@ -24,7 +24,10 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.5",
+	"version": "1.0.6",
+	"unbound": {
+		"min": "3.0.0"
+	},
 	"icon": "ic_swipe_reply_24px",
 	"main": "index.tsx",
 	"startAfterFirstFrame": true

@@ -1,8 +1,5 @@
 import { metro, patcher } from '@unbound-app/api';
 
-/** Discord's message row module, whose `generateMessageRowData(input, options, …)` builds each chat row. */
-export const MessageRowData = metro.findByProps('generateMessageRowData');
-
 /** The author of a message Discord builds a chat row for. */
 export type RowAuthor = {
 	id?: string;
@@ -64,6 +61,8 @@ export type MessageRowHandlers<M extends RowMessage, R extends MessageRow> = {
 	before?: (call: MessageRowCall<M>) => MessageRowReplacement<M> | undefined;
 	/** Runs once the row is built, to read it or change it in place. */
 	after?: (built: BuiltMessageRow<M, R>) => void;
+	/** The feature hooking the rows, named in the warning when Discord moved the row builder; `Message rows` when omitted. */
+	feature?: string;
 };
 
 function rowCall<M extends RowMessage>(
@@ -79,17 +78,25 @@ function rowCall<M extends RowMessage>(
 
 /**
  * @description Hooks every chat row Discord builds, before it is built, after, or both.
+ * Looks up Discord's row builder, `generateMessageRowData`, and warns once naming `feature` when Discord moved it.
  * The Addon scope removes the patches when the plugin stops; the returned function removes them sooner.
  * @template M The message fields the handlers read, past the shared ones.
  * @template R The row fields the handlers read or set, past the shared ones.
- * @param handlers What runs before and after a row is built.
- * @returns A function that removes the patches.
+ * @param handlers What runs before and after a row is built, and the feature's name.
+ * @returns A function that removes the patches; it does nothing when the builder is missing.
  */
 export function onMessageRow<M extends RowMessage = RowMessage, R extends MessageRow = MessageRow>(
 	handlers: MessageRowHandlers<M, R>,
 ): () => void {
-	const { before, after } = handlers;
+	const { before, after, feature = 'Message rows' } = handlers;
 	const unpatches: (() => void)[] = [];
+	const MessageRowData = metro.findByProps('generateMessageRowData');
+
+	if (!MessageRowData) {
+		logger.warn(`${feature} skipped: Discord moved generateMessageRowData.`);
+
+		return () => undefined;
+	}
 
 	if (before) {
 		unpatches.push(
@@ -119,4 +126,4 @@ export function onMessageRow<M extends RowMessage = RowMessage, R extends Messag
 	};
 }
 
-export default { MessageRowData, onMessageRow };
+export default onMessageRow;

@@ -1,5 +1,7 @@
 import { flux, metro, startPlugin } from '@unbound-app/api/testing';
 
+import { messageLog } from '~/lib/log';
+
 // UNKNOWN: a test sends Discord's action payloads, which FluxAction does not type.
 export type Action = { type: string } & Record<string, unknown>;
 
@@ -67,7 +69,10 @@ export function generateRow(fields: Partial<typeof message> = {}) {
 	return new RowManager().generate({ message: immutable({ ...message, ...fields }) }).message;
 }
 
-/** Registers the Discord modules the plugin needs (with the given action sheets, when a test brings its own), seeds the stores it reads and starts the plugin. */
+/**
+ * Registers the Discord modules the plugin needs (with the given action sheets, when a test brings its own), seeds the stores it reads and starts the plugin.
+ * Empties the plugin's log first, which outlives a test that never stops the plugin.
+ */
 export async function startLogger(
 	sheets: object = { openLazy: () => {}, hideActionSheet: () => {} },
 ) {
@@ -83,5 +88,6 @@ export async function startLogger(
 		User: { getCurrentUser: () => ({ id: ME }) },
 	});
 
+	messageLog.clear();
 	await startPlugin();
 }

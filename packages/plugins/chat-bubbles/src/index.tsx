@@ -1,8 +1,21 @@
-import { runFeatures } from '@unbound-plugins/shared/lifecycle/features';
+import type { PluginContext } from '@unbound-app/api/native';
+import { patcher } from '@unbound-app/api';
 
-import { bubblesSelfTest, startBubbles } from '~/bubbles';
+import { bubblesSelfTest, drawBubbles, listenToAppearance, removeBubbles } from '~/native/views';
 import SettingsPanel from '~/settings';
 
-export const { start, stop, selfTest } = runFeatures([startBubbles], { selfTest: bubblesSelfTest });
+export function start(context: PluginContext) {
+	drawBubbles(context);
+	listenToAppearance();
+}
+
+export async function stop() {
+	patcher.unpatchAll();
+	await removeBubbles();
+}
+
+export function selfTest() {
+	return bubblesSelfTest();
+}
 
 export { SettingsPanel };

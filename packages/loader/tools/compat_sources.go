@@ -83,6 +83,10 @@ func newCompatSourceSet() *compatSourceSet {
 }
 
 func (set *compatSourceSet) add(reference compatReference, location compatLocation) {
+	// A Discord module path such as `Foo.android.tsx` names its own platform, whatever file refers to it.
+	if reference.Platform == "" && reference.Kind == referenceModulePath {
+		reference.Platform = compatPlatform(reference.Name)
+	}
 	identity := reference.Component + "#" + reference.Platform + "#" + reference.key() + "#" + reference.Group + "#" + strconv.Itoa(reference.Alternative) + "#" + strconv.FormatBool(reference.Legacy)
 	if existing := set.references[identity]; existing != nil {
 		existing.Strict = existing.Strict || reference.Strict
@@ -154,9 +158,9 @@ func compatPlatform(relative string) string {
 	}
 	base := filepath.Base(relative)
 	switch {
-	case strings.Contains(base, ".ios."):
+	case strings.Contains(base, ".ios."), strings.Contains(base, "-ios."):
 		return "ios"
-	case strings.Contains(base, ".android."):
+	case strings.Contains(base, ".android."), strings.Contains(base, "-android."):
 		return "android"
 	}
 	return ""

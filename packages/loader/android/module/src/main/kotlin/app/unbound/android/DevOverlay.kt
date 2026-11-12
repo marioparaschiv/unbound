@@ -107,14 +107,13 @@ object DevOverlay {
     private fun createButton(activity: Activity): View {
         val side = (NativeBridge.nativeDevOverlayButtonSide() * activity.resources.displayMetrics.density).roundToInt()
         val view = ImageView(activity).apply {
-            setImageResource(android.R.drawable.ic_menu_manage)
+            setImageDrawable(WrenchIcon(dp(activity, 20)))
             setColorFilter(Color.WHITE)
             scaleType = ImageView.ScaleType.CENTER_INSIDE
             setPadding(dp(activity, 10), dp(activity, 10), dp(activity, 10), dp(activity, 10))
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(Color.argb(200, 30, 31, 34))
-                setStroke(dp(activity, 1), Color.argb(90, 255, 255, 255))
             }
             elevation = dp(activity, 6).toFloat()
             contentDescription = "Unbound developer menu"

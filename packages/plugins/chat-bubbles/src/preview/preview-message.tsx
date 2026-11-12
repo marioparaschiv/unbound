@@ -4,9 +4,9 @@ import { messages } from '@unbound-app/i18n';
 import { metro } from '@unbound-app/api';
 
 import useStyles from '~/preview/chat-preview.style';
-import { cardPadding, namesInside, rowInset, type BubbleAppearance } from '~/bubbles/style';
+import { cardPadding, namesInside, rowInset, type BubbleAppearance } from '~/lib/style';
 import type { PreviewPaint } from '~/preview/preview-paint';
-import { BubbleLayout, TailPosition } from '~/constants';
+import { BubbleLayout, TailPosition } from '~/lib/constants';
 
 export type Size = { width: number; height: number };
 

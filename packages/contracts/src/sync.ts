@@ -4,20 +4,20 @@ import {
 	SYNC_ID_PATTERN,
 	SYNC_KINDS,
 	SYNC_LOCAL_KEYS,
-	SYNC_LOCAL_STORE_PREFIX,
-	SYNC_CORE_STORE,
-} from './sync-stores';
+	SYNC_LOCAL_BUCKET_PREFIX,
+	SYNC_CORE_BUCKET,
+} from './sync-buckets';
 import { Type, type StaticDecode } from './schema';
 
 export {
 	SYNC_KINDS,
-	SYNC_CORE_STORE,
-	SYNC_LOCAL_STORE_PREFIX,
+	SYNC_CORE_BUCKET,
+	SYNC_LOCAL_BUCKET_PREFIX,
 	SYNC_LOCAL_KEYS,
 	SYNC_DEFAULT_ICON_PACK,
 	SYNC_ID_PATTERN,
 	emptySyncDocument,
-} from './sync-stores';
+} from './sync-buckets';
 
 export const SYNC_URL_MAX_LENGTH = 2048;
 export const SYNC_SETTINGS_MAX_DEPTH = 8;
@@ -46,7 +46,7 @@ export type JsonValue = string | number | boolean | null | JsonValue[] | JsonObj
 const jsonValueSchema = Type.Unsafe<JsonValue>(Type.Any());
 
 /** A Bucket as JSON. */
-export const syncSettingsStoreSchema = Type.Record(Type.String(), jsonValueSchema, {
+export const syncBucketSchema = Type.Record(Type.String(), jsonValueSchema, {
 	additionalProperties: false,
 });
 
@@ -58,7 +58,7 @@ export const syncDocumentSchema = Type.Object({
 		fonts: syncKindDocumentSchema,
 	}),
 	/** Buckets by name. */
-	settings: Type.Record(Type.String(), syncSettingsStoreSchema, { additionalProperties: false }),
+	settings: Type.Record(Type.String(), syncBucketSchema, { additionalProperties: false }),
 });
 
 /** The stored document. `revision` is `0` and `updatedAt` is `null` before the first save. */
@@ -91,7 +91,7 @@ export const syncDocumentInputSchema = Type.Object({
 		{ default: {} },
 	),
 	settings: Type.Refine(
-		Type.Record(Type.String({ maxLength: 256 }), syncSettingsStoreSchema, {
+		Type.Record(Type.String({ maxLength: 256 }), syncBucketSchema, {
 			additionalProperties: false,
 			default: {},
 		}),
@@ -113,15 +113,15 @@ export const syncDeleteResponseSchema = Type.Object({
 export type SyncKind = StaticDecode<typeof syncKindSchema>;
 export type SyncInstall = StaticDecode<typeof syncInstallSchema>;
 export type SyncKindDocument = StaticDecode<typeof syncKindDocumentSchema>;
-export type SyncSettingsStore = StaticDecode<typeof syncSettingsStoreSchema>;
+export type SyncBucket = StaticDecode<typeof syncBucketSchema>;
 export type SyncDocument = StaticDecode<typeof syncDocumentSchema>;
 export type SyncState = StaticDecode<typeof syncStateSchema>;
 export type SyncDocumentInput = StaticDecode<typeof syncDocumentInputSchema>;
 
 export default {
 	SYNC_KINDS,
-	SYNC_CORE_STORE,
-	SYNC_LOCAL_STORE_PREFIX,
+	SYNC_CORE_BUCKET,
+	SYNC_LOCAL_BUCKET_PREFIX,
 	SYNC_LOCAL_KEYS,
 	SYNC_DEFAULT_ICON_PACK,
 	SYNC_ID_PATTERN,
@@ -130,7 +130,7 @@ export default {
 	syncKindSchema,
 	syncInstallSchema,
 	syncKindDocumentSchema,
-	syncSettingsStoreSchema,
+	syncBucketSchema,
 	syncDocumentSchema,
 	syncStateSchema,
 	syncDocumentInputSchema,

@@ -90,6 +90,8 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
     X("nativeOnLoadJSBundle", "()V", nativeOnLoadJSBundle)                                         \
     X("nativeMarkHealthy", "()V", nativeMarkHealthy)                                               \
     X("nativeOnForeground", "()V", nativeOnForeground)                                             \
+    X("nativeOnBackground", "()V", nativeOnBackground)                                             \
+    X("nativeAdoptTombstone", "([B)Z", nativeAdoptTombstone)                                       \
     X("nativeLaunchTimings", "()" UNBOUND_JNI_STRING, nativeLaunchTimings)                         \
     X("nativeIsBlockedTelemetry", "(" UNBOUND_JNI_STRING ")Z", nativeIsBlockedTelemetry)           \
     X("nativeOnRuntimeCreated", "(J)Z", nativeOnRuntimeCreated)                                    \
@@ -97,7 +99,7 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
     X("nativeInstallSchedulerDrain", "(J)Z", nativeInstallSchedulerDrain)                          \
     X("nativeDrainMainWork", "()V", nativeDrainMainWork)                                           \
     X("nativeDrainFrameWork", "()V", nativeDrainFrameWork)                                         \
-    X("nativeDispatchHookEvent", "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING ")V",                   \
+    X("nativeDispatchHookEvent", "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING, \
       nativeDispatchHookEvent)                                                                     \
     X("nativeHermesBytecodeVersion", "([B)I", nativeHermesBytecodeVersion)                         \
     X("nativeHookReturnValue",                                                                     \
