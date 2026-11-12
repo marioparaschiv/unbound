@@ -139,36 +139,13 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
 {
     [super viewDidLoad];
     [self setupMenuItems];
-    [self setupCardAndTableView];
+    [self setupSheetAndTableView];
 }
 
-- (void)setupCardAndTableView
+- (void)setupSheetAndTableView
 {
-    self.view.backgroundColor = [UIColor.blackColor colorWithAlphaComponent:0.45];
-
-    UITapGestureRecognizer *backdropTap =
-        [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(backdropTapped:)];
-    backdropTap.delegate = self;
-    [self.view addGestureRecognizer:backdropTap];
-
-    UIVisualEffectView *card                       = [[UIVisualEffectView alloc]
-        initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemMaterial]];
-    card.layer.cornerRadius                        = 28;
-    card.layer.cornerCurve                         = kCACornerCurveContinuous;
-    card.layer.masksToBounds                       = YES;
-    card.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:card];
-    self.cardView  = card;
-    card.alpha     = 0;
-    card.transform = CGAffineTransformMakeScale(0.97, 0.97);
-
-    [NSLayoutConstraint activateConstraints:@[
-        [card.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:12],
-        [card.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-12],
-        [card.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:8],
-        [card.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor
-                                          constant:-8],
-    ]];
+    self.view.backgroundColor = UIColor.systemGroupedBackgroundColor;
+    UIView *container         = self.view;
 
     UILabel *titleLabel  = [[UILabel alloc] init];
     titleLabel.text      = self.menu[@"title"];
@@ -176,7 +153,7 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
     titleLabel.textColor = UIColor.labelColor;
     titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
 
-    UIButton *closeButton = [self addCloseButtonToView:card.contentView];
+    UIButton *closeButton = [self addCloseButtonToView:container];
 
     UIView *divider         = [[UIView alloc] init];
     divider.backgroundColor = [UIColor.labelColor colorWithAlphaComponent:0.08];
@@ -191,46 +168,25 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
     self.tableView.separatorColor = [UIColor.labelColor colorWithAlphaComponent:0.08];
     self.tableView.separatorInset = UIEdgeInsetsMake(0, 20, 0, 20);
 
-    [card.contentView addSubview:titleLabel];
-    [card.contentView addSubview:divider];
-    [card.contentView addSubview:self.tableView];
+    [container addSubview:titleLabel];
+    [container addSubview:divider];
+    [container addSubview:self.tableView];
 
+    // addCloseButtonToView: sets the close button's top constraint below the sheet grabber.
     [NSLayoutConstraint activateConstraints:@[
-        [closeButton.topAnchor constraintEqualToAnchor:card.contentView.topAnchor constant:12],
-        [closeButton.trailingAnchor constraintEqualToAnchor:card.contentView.trailingAnchor
-                                                   constant:-12],
-        [closeButton.widthAnchor constraintEqualToConstant:36],
-        [closeButton.heightAnchor constraintEqualToConstant:36],
-
-        [titleLabel.leadingAnchor constraintEqualToAnchor:card.contentView.leadingAnchor
-                                                 constant:20],
+        [titleLabel.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:20],
         [titleLabel.centerYAnchor constraintEqualToAnchor:closeButton.centerYAnchor],
 
-        [divider.leadingAnchor constraintEqualToAnchor:card.contentView.leadingAnchor],
-        [divider.trailingAnchor constraintEqualToAnchor:card.contentView.trailingAnchor],
+        [divider.leadingAnchor constraintEqualToAnchor:container.leadingAnchor],
+        [divider.trailingAnchor constraintEqualToAnchor:container.trailingAnchor],
         [divider.topAnchor constraintEqualToAnchor:closeButton.bottomAnchor constant:12],
         [divider.heightAnchor constraintEqualToConstant:1.0 / UIScreen.mainScreen.scale],
 
         [self.tableView.topAnchor constraintEqualToAnchor:divider.bottomAnchor],
-        [self.tableView.leadingAnchor constraintEqualToAnchor:card.contentView.leadingAnchor],
-        [self.tableView.trailingAnchor constraintEqualToAnchor:card.contentView.trailingAnchor],
-        [self.tableView.bottomAnchor constraintEqualToAnchor:card.contentView.bottomAnchor],
+        [self.tableView.leadingAnchor constraintEqualToAnchor:container.leadingAnchor],
+        [self.tableView.trailingAnchor constraintEqualToAnchor:container.trailingAnchor],
+        [self.tableView.bottomAnchor constraintEqualToAnchor:container.bottomAnchor],
     ]];
-}
-
-- (void)viewDidAppear:(BOOL)animated
-{
-    [super viewDidAppear:animated];
-    [UIView animateWithDuration:0.2
-                          delay:0
-         usingSpringWithDamping:0.9
-          initialSpringVelocity:0.2
-                        options:UIViewAnimationOptionCurveEaseOut
-                     animations:^{
-                         self.cardView.alpha     = 1;
-                         self.cardView.transform = CGAffineTransformIdentity;
-                     }
-                     completion:nil];
 }
 
 - (UIButton *)addCloseButtonToView:(UIView *)container
@@ -249,7 +205,7 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
     [container addSubview:button];
 
     [NSLayoutConstraint activateConstraints:@[
-        [button.topAnchor constraintEqualToAnchor:container.topAnchor constant:12],
+        [button.topAnchor constraintEqualToAnchor:container.topAnchor constant:16],
         [button.trailingAnchor constraintEqualToAnchor:container.trailingAnchor constant:-12],
         [button.widthAnchor constraintEqualToConstant:36],
         [button.heightAnchor constraintEqualToConstant:36],
@@ -258,16 +214,9 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
     return button;
 }
 
-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer
-       shouldReceiveTouch:(UITouch *)touch
+- (void)presentationControllerDidDismiss:(UIPresentationController *)presentationController
 {
-    CGPoint point = [touch locationInView:self.view];
-    return !CGRectContainsPoint(self.cardView.frame, point);
-}
-
-- (void)backdropTapped:(UITapGestureRecognizer *)gesture
-{
-    [self dismiss];
+    [self finishDismissal];
 }
 
 - (void)setupMenuItems
@@ -326,7 +275,7 @@ static NSString *iconForMenuItem(NSString *identifier)
     {
         cell                 = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
                                                       reuseIdentifier:@"Cell"];
-        cell.backgroundColor = [UIColor.labelColor colorWithAlphaComponent:0.05];
+        cell.backgroundColor = UIColor.secondarySystemGroupedBackgroundColor;
 
         UIView *selectedBackground         = [[UIView alloc] init];
         selectedBackground.backgroundColor = [UIColor.labelColor colorWithAlphaComponent:0.12];
@@ -632,15 +581,7 @@ static NSString *iconForMenuItem(NSString *identifier)
     }
 
     self.dismissalInProgress = YES;
-    [UIView animateWithDuration:0.16
-        animations:^{
-            self.cardView.alpha       = 0;
-            self.cardView.transform   = CGAffineTransformMakeScale(0.97, 0.97);
-            self.view.backgroundColor = UIColor.clearColor;
-        }
-        completion:^(BOOL finished) {
-            [self dismissViewControllerAnimated:NO completion:^{ [self finishDismissal]; }];
-        }];
+    [self dismissViewControllerAnimated:YES completion:^{ [self finishDismissal]; }];
 }
 
 - (void)finishDismissal
@@ -663,8 +604,16 @@ static NSString *iconForMenuItem(NSString *identifier)
 void showToolboxSheet(void)
 {
     ToolboxViewController *settingsVC = [[ToolboxViewController alloc] init];
-    settingsVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
-    settingsVC.modalTransitionStyle   = UIModalTransitionStyleCrossDissolve;
+    settingsVC.modalPresentationStyle = UIModalPresentationPageSheet;
+
+    UISheetPresentationController *sheet = settingsVC.sheetPresentationController;
+    sheet.detents                        = @[
+        UISheetPresentationControllerDetent.mediumDetent,
+        UISheetPresentationControllerDetent.largeDetent,
+    ];
+    sheet.prefersGrabberVisible = YES;
+    // A swipe-down dismissal skips -dismiss; the delegate still tears down the top window.
+    sheet.delegate = settingsVC;
 
     UIWindowScene *activeScene = activeWindowScene();
     if (!activeScene)
