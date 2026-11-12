@@ -7,12 +7,14 @@ static NSString                             *everyFamily = nil;
 static NSMutableDictionary<NSString *, id> *registered = nil;
 // Font file -> `{ name, family }` it registered under, which a variable font's instances draw from.
 static NSMutableDictionary<NSString *, NSDictionary *> *registeredFiles = nil;
-// Face name -> `{ path, variations }` for each variable font instance an override points at.
-static NSDictionary<NSString *, NSDictionary *> *instances = nil;
-// Families of the files those instances draw from.
-static NSSet<NSString *> *instanceFamilies = nil;
-// An instance's CoreText name, such as `Inter-Regular_Medium` -> the Discord family it replaced.
-static NSMutableDictionary<NSString *, NSString *> *instanceNames = nil;
+// An installed face's name -> the name CoreText registered it under, such as `Inter-Medium` ->
+// `Inter-Regular_Medium` for a variable font's instance.
+static NSMutableDictionary<NSString *, NSString *> *faceNames = nil;
+// Names asked for that no installed face has; a face installed later is asked for only after.
+static NSMutableSet<NSString *> *unknownNames = nil;
+// Families of the files the overrides' variable instances draw from.
+static NSMutableSet<NSString *> *instanceFamilies = nil;
+static NSString *const           chosenFaceKey    = @"UnboundFontsChosenFace";
 // Set while a hook builds its replacement, whose own UIFont calls must reach the originals.
 static _Thread_local BOOL replacing = NO;
 
@@ -48,22 +50,18 @@ static _Thread_local BOOL replacing = NO;
 
     NSDictionary<NSString *, NSString *> *table    = plan[@"table"];
     NSDictionary                         *variable = plan[@"instances"];
+    if ([variable isKindOfClass:[NSDictionary class]])
+    {
+        for (NSString *name in variable)
+        {
+            NSDictionary *instance = variable[name];
+            [Fonts registerInstance:name path:instance[@"path"] variations:instance[@"variations"]];
+        }
+    }
+
     @synchronized([Fonts class])
     {
         overrides = [table isKindOfClass:[NSDictionary class]] ? table : @{};
-        instances = [variable isKindOfClass:[NSDictionary class]] ? variable : @{};
-
-        NSMutableSet *families = [NSMutableSet set];
-        for (NSDictionary *instance in instances.allValues)
-        {
-            NSString *family = registeredFiles[instance[@"path"]][@"family"];
-            if (family.length)
-            {
-                [families addObject:family];
-            }
-        }
-        instanceFamilies = families;
-        instanceNames    = [NSMutableDictionary dictionary];
     }
 }
 
@@ -72,6 +70,65 @@ static _Thread_local BOOL replacing = NO;
     @synchronized([Fonts class])
     {
         return family && [instanceFamilies containsObject:family];
+    }
+}
+
+// Notes `font` as the face this thread just drew for an override or preview: the family lookup
+// that follows it lists only this face.
++ (UIFont *)chose:(UIFont *)font
+{
+    if (font.familyName && font.fontName)
+    {
+        NSThread.currentThread.threadDictionary[chosenFaceKey] =
+            @[ font.familyName, font.fontName ];
+    }
+    return font;
+}
+
+// The face `chose:` noted for `family` on this thread, once.
++ (NSString *)takeChosenFaceOf:(NSString *)family
+{
+    NSMutableDictionary *thread = NSThread.currentThread.threadDictionary;
+    NSArray             *chosen = thread[chosenFaceKey];
+    if (!chosen || ![chosen[0] isEqualToString:family])
+    {
+        return nil;
+    }
+    [thread removeObjectForKey:chosenFaceKey];
+    return chosen[1];
+}
+
++ (NSDictionary *)registeredFile:(NSString *)path
+{
+    @synchronized([Fonts class])
+    {
+        return path ? registeredFiles[path] : nil;
+    }
+}
+
+// Registers `ref` under `name`, replacing a font registered under it before.
++ (BOOL)registerGraphicsFont:(CGFontRef)ref name:(NSString *)name
+{
+    @synchronized([Fonts class])
+    {
+        registered  = registered ?: [NSMutableDictionary dictionary];
+        id previous = registered[name];
+        if (previous)
+        {
+            CTFontManagerUnregisterGraphicsFont((__bridge CGFontRef) previous, nil);
+        }
+
+        CFErrorRef error = nil;
+        if (!CTFontManagerRegisterGraphicsFont(ref, &error))
+        {
+            NSError *reason = CFBridgingRelease(error);
+            [Logger error:LOG_CATEGORY_FONTS
+                   format:@"Failed to register font %@. (%@)", name, reason.localizedDescription];
+            return NO;
+        }
+
+        registered[name] = (__bridge id) ref;
+        return YES;
     }
 }
 
@@ -96,36 +153,17 @@ static _Thread_local BOOL replacing = NO;
     }
 
     NSString *postScriptName = CFBridgingRelease(CGFontCopyPostScriptName(ref));
-    @synchronized([Fonts class])
+    if (postScriptName && [Fonts registerGraphicsFont:ref name:postScriptName])
     {
-        registered  = registered ?: [NSMutableDictionary dictionary];
-        id previous = postScriptName ? registered[postScriptName] : nil;
-        if (previous)
+        CTFontRef font   = CTFontCreateWithGraphicsFont(ref, 0, NULL, NULL);
+        NSString *family = CFBridgingRelease(CTFontCopyFamilyName(font));
+        CFRelease(font);
+        @synchronized([Fonts class])
         {
-            CTFontManagerUnregisterGraphicsFont((__bridge CGFontRef) previous, nil);
+            registeredFiles       = registeredFiles ?: [NSMutableDictionary dictionary];
+            registeredFiles[path] = @{@"name" : postScriptName, @"family" : family ?: @""};
         }
-
-        CFErrorRef error = nil;
-        if (CTFontManagerRegisterGraphicsFont(ref, &error))
-        {
-            if (postScriptName)
-            {
-                registered[postScriptName] = (__bridge id) ref;
-                CTFontRef font             = CTFontCreateWithGraphicsFont(ref, 0, NULL, NULL);
-                NSString *family           = CFBridgingRelease(CTFontCopyFamilyName(font));
-                CFRelease(font);
-                registeredFiles       = registeredFiles ?: [NSMutableDictionary dictionary];
-                registeredFiles[path] = @{@"name" : postScriptName, @"family" : family ?: @""};
-            }
-            [Logger info:LOG_CATEGORY_FONTS
-                  format:@"Loaded font: %@.", [Fonts getFontNameByRef:ref]];
-        }
-        else
-        {
-            NSError *reason = CFBridgingRelease(error);
-            [Logger error:LOG_CATEGORY_FONTS
-                   format:@"Failed to register font %@. (%@)", path, reason.localizedDescription];
-        }
+        [Logger info:LOG_CATEGORY_FONTS format:@"Loaded font: %@.", [Fonts getFontNameByRef:ref]];
     }
 
     CGFontRelease(ref);
@@ -149,65 +187,135 @@ static _Thread_local BOOL replacing = NO;
     }
 }
 
-// `{ wght: 700 }` as CoreText's variation attribute, keyed by each axis tag's four bytes.
-+ (NSDictionary<NSNumber *, NSNumber *> *)variationAttribute:(NSDictionary *)variations
+// `{ wght: 700 }` keyed by the axis names CoreGraphics wants, such as `{ Weight: 700 }`.
++ (NSDictionary *)axisNames:(NSDictionary *)variations of:(CGFontRef)graphics
 {
-    NSMutableDictionary *attribute = [NSMutableDictionary dictionary];
-    for (NSString *tag in variations)
+    CTFontRef font = CTFontCreateWithGraphicsFont(graphics, 0, NULL, NULL);
+    NSArray  *axes = CFBridgingRelease(CTFontCopyVariationAxes(font));
+    CFRelease(font);
+
+    NSMutableDictionary *named = [NSMutableDictionary dictionary];
+    for (NSDictionary *axis in axes)
     {
-        NSString *padded = [tag stringByPaddingToLength:4 withString:@" " startingAtIndex:0];
-        NSData   *bytes  = [padded dataUsingEncoding:NSASCIIStringEncoding];
-        NSNumber *value  = variations[tag];
-        if (bytes.length != 4 || ![value isKindOfClass:[NSNumber class]])
+        NSNumber *tag  = axis[(__bridge NSString *) kCTFontVariationAxisIdentifierKey];
+        NSString *name = axis[(__bridge NSString *) kCTFontVariationAxisNameKey];
+        uint32_t  code = tag.unsignedIntValue;
+        char bytes[5]  = {(char) (code >> 24), (char) (code >> 16), (char) (code >> 8), (char) code,
+                          0};
+        NSNumber *value = variations[[[NSString stringWithUTF8String:bytes]
+            stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]]];
+        if (name && [value isKindOfClass:[NSNumber class]])
         {
-            continue;
+            named[name] = value;
         }
-        const uint8_t *tagBytes = (const uint8_t *) bytes.bytes;
-        uint32_t       key      = ((uint32_t) tagBytes[0] << 24) | ((uint32_t) tagBytes[1] << 16) |
-                                  ((uint32_t) tagBytes[2] << 8) | tagBytes[3];
-        attribute[@(key)]       = value;
     }
-    return attribute;
+    return named;
 }
 
-// A UIFont descriptor ignores variations on a registered graphics font, so the instance is a CTFont
-// copied from it at the coordinates. CTFont and UIFont are toll-free bridged.
-+ (UIFont *)instanceOf:(CGFontRef)graphics
-            variations:(NSDictionary *)variations
-                  size:(CGFloat)size
-            attributes:(NSDictionary *)attributes
-                family:(NSString *)family
+// Registers face `name`, a variable font file drawn at `variations`, as a font of its own:
+// Discord's text matches fonts by their descriptor's name, which an unregistered instance lacks.
++ (NSString *)registerInstance:(NSString *)name
+                          path:(NSString *)path
+                    variations:(NSDictionary *)variations
 {
-    NSMutableDictionary *all                             = [attributes mutableCopy];
-    all[(__bridge NSString *) kCTFontVariationAttribute] = [Fonts variationAttribute:variations];
-    CTFontDescriptorRef descriptor =
-        CTFontDescriptorCreateWithAttributes((__bridge CFDictionaryRef) all);
-    CTFontRef base = CTFontCreateWithGraphicsFont(graphics, size, NULL, NULL);
-    CTFontRef font = CTFontCreateCopyWithAttributes(base, size, NULL, descriptor);
-    CFRelease(base);
-    CFRelease(descriptor);
+    NSString *fileName = [Fonts registeredFile:path][@"name"];
+    id        graphics;
+    @synchronized([Fonts class])
+    {
+        graphics = fileName ? registered[fileName] : nil;
+    }
+    if (!graphics || ![variations isKindOfClass:[NSDictionary class]])
+    {
+        return nil;
+    }
 
-    UIFont *result = CFBridgingRelease(font);
-    // A family mismatch means the copy fell back to another font; keep Discord's instead.
-    return [result.familyName isEqualToString:family] ? result : nil;
+    NSDictionary *named = [Fonts axisNames:variations of:(__bridge CGFontRef) graphics];
+    CGFontRef     copy  = CGFontCreateCopyWithVariations((__bridge CGFontRef) graphics,
+                                                         (__bridge CFDictionaryRef) named);
+    if (!copy)
+    {
+        [Logger error:LOG_CATEGORY_FONTS format:@"Failed to create font instance %@", name];
+        return nil;
+    }
+
+    NSString *postScriptName = CFBridgingRelease(CGFontCopyPostScriptName(copy));
+    // The file's default coordinates name the file's own font, already registered.
+    BOOL ready = [postScriptName isEqualToString:fileName] ||
+                 (postScriptName && [Fonts registerGraphicsFont:copy name:postScriptName]);
+    CGFontRelease(copy);
+    if (!ready)
+    {
+        return nil;
+    }
+
+    NSString *family = [Fonts registeredFile:path][@"family"];
+    @synchronized([Fonts class])
+    {
+        faceNames        = faceNames ?: [NSMutableDictionary dictionary];
+        faceNames[name]  = postScriptName;
+        instanceFamilies = instanceFamilies ?: [NSMutableSet set];
+        if (family.length)
+        {
+            [instanceFamilies addObject:family];
+        }
+    }
+    return postScriptName;
+}
+
+// The name CoreText knows installed face `name` by, registering it on first use: only the faces an
+// override uses load at launch, but settings previews any installed face.
++ (NSString *)registeredName:(NSString *)name
+{
+    if (!name.length)
+    {
+        return nil;
+    }
+
+    @synchronized([Fonts class])
+    {
+        NSString *known = faceNames[name];
+        if (known || [unknownNames containsObject:name])
+        {
+            return known;
+        }
+    }
+
+    NSDictionary *face = [CoreBridge installedFont:name];
+    NSString     *path = face[@"path"];
+    NSString     *registeredName;
+    if ([path isKindOfClass:[NSString class]])
+    {
+        if (![Fonts registeredFile:path])
+        {
+            [Fonts loadFont:path];
+        }
+
+        NSDictionary *variations = face[@"variations"];
+        registeredName = [variations isKindOfClass:[NSDictionary class]] && variations.count
+                             ? [Fonts registerInstance:name path:path variations:variations]
+                             : [Fonts registeredFile:path][@"name"];
+    }
+
+    @synchronized([Fonts class])
+    {
+        faceNames    = faceNames ?: [NSMutableDictionary dictionary];
+        unknownNames = unknownNames ?: [NSMutableSet set];
+        if (registeredName)
+        {
+            faceNames[name] = registeredName;
+        }
+        else
+        {
+            [unknownNames addObject:name];
+        }
+    }
+    return registeredName;
 }
 
 + (UIFont *)replacementFor:(NSString *)name size:(CGFloat)size original:(UIFontDescriptor *)original
 {
     // `fontWithDescriptor:size:0` means the descriptor's size; CoreText reads 0 as 12 pt.
     size = size > 0 ? size : original.pointSize;
-
-    // An instance asked for by its own name, as text layout does, is the family it replaced.
-    NSString *replaced;
-    @synchronized([Fonts class])
-    {
-        replaced = name ? instanceNames[name] : nil;
-    }
-    if (replaced)
-    {
-        name     = replaced;
-        original = nil;
-    }
 
     NSDictionary *table       = [Fonts overrides];
     NSString     *replacement = table[everyFamily] ?: table[name];
@@ -216,43 +324,12 @@ static _Thread_local BOOL replacing = NO;
         return nil;
     }
 
-    // A variable font's instance draws the file's registered font at its coordinates.
-    NSDictionary *instance;
-    NSDictionary *file;
-    id            graphics;
-    @synchronized([Fonts class])
-    {
-        instance = instances[replacement];
-        file     = instance ? registeredFiles[instance[@"path"]] : nil;
-        graphics = file ? registered[file[@"name"]] : nil;
-    }
-    if (instance && !graphics)
-    {
-        return nil;
-    }
+    replacement = [Fonts registeredName:replacement] ?: replacement;
 
     // Glyphs the replacement lacks fall back to the original font, not the system one.
     UIFontDescriptor *fallback =
         original ?: [UIFontDescriptor fontDescriptorWithName:name size:size];
-    NSDictionary *cascade = @{UIFontDescriptorCascadeListAttribute : @[ fallback ]};
-
-    if (instance)
-    {
-        UIFont *font = [Fonts instanceOf:(__bridge CGFontRef) graphics
-                              variations:instance[@"variations"]
-                                    size:size
-                              attributes:cascade
-                                  family:file[@"family"]];
-        if (font.fontName)
-        {
-            @synchronized([Fonts class])
-            {
-                instanceNames[font.fontName] = name;
-            }
-        }
-        return font;
-    }
-
+    NSDictionary     *cascade    = @{UIFontDescriptorCascadeListAttribute : @[ fallback ]};
     UIFontDescriptor *descriptor = [[UIFontDescriptor fontDescriptorWithName:replacement size:size]
         fontDescriptorByAddingAttributes:cascade];
 
@@ -261,7 +338,22 @@ static _Thread_local BOOL replacing = NO;
     replacing    = NO;
 
     // An unregistered name resolves to a system font; keep Discord's instead.
-    return [font.fontName isEqualToString:replacement] ? font : nil;
+    return [font.fontName isEqualToString:replacement] ? [Fonts chose:font] : nil;
+}
+
+// An installed face asked for by its own name, as settings previews do, before an override uses it.
++ (UIFont *)installedFace:(NSString *)name size:(CGFloat)size
+{
+    NSString *registeredName = [Fonts registeredName:name];
+    if (!registeredName)
+    {
+        return nil;
+    }
+
+    replacing    = YES;
+    UIFont *font = [UIFont fontWithName:registeredName size:size];
+    replacing    = NO;
+    return [Fonts chose:font];
 }
 
 @end
@@ -273,13 +365,19 @@ static _Thread_local BOOL replacing = NO;
     {
         return %orig;
     }
-    return [Fonts replacementFor:name size:size original:nil] ?: %orig;
+    return [Fonts replacementFor:name size:size original:nil] ?: %orig
+                                                              ?: [Fonts installedFace:name size:size];
 }
 
-// React Native swaps a font for the closest weight among its family's names, which would trade a
-// variable instance for the file's default one; such a family lists no names, so it stays.
+// React Native and Discord swap a font for the closest weight among its family's names, which would
+// trade the face an override picked for a sibling; the family lists only that face, or none.
 + (NSArray<NSString *> *)fontNamesForFamilyName:(NSString *)family
 {
+    NSString *chosen = [Fonts takeChosenFaceOf:family];
+    if (chosen)
+    {
+        return @[ chosen ];
+    }
     return [Fonts isInstanceFamily:family] ? @[] : %orig;
 }
 

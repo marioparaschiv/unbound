@@ -20,6 +20,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)prescanAddons;
 + (NSArray *)themes;
 + (NSDictionary *)fontOverridePlan;
+// An installed face's `{ name, path, variations? }` by its PostScript name, or nil.
++ (nullable NSDictionary *)installedFont:(NSString *)postScriptName;
 + (NSString *)everyFontFamily;
 
 + (NSString *)toolbox:(NSString *)action argument:(NSString *)argument;
