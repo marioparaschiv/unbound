@@ -1,8 +1,8 @@
 (listener, value) => {
 	try {
-		listener(value);
+		const result = listener(value);
 
-		return undefined;
+		return result === undefined ? undefined : { result };
 	} catch (error) {
 		return String(error && error.message ? error.message : error);
 	}

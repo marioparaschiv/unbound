@@ -289,6 +289,18 @@ static jsi::Object makeHooksNamespace(jsi::Runtime &runtime, const JavaCallbacks
             {
                 throw std::invalid_argument("Receiver coalescing requires an observation callback");
             }
+            jsi::Value rewriteOption =
+                count > 3 && args[3].isObject()
+                    ? args[3].asObject(rt).getProperty(rt, "rewriteArguments")
+                    : jsi::Value::undefined();
+            bool rewritesArguments = rewriteOption.isBool() && rewriteOption.getBool();
+            if (rewritesArguments &&
+                (count <= 4 || !args[4].isObject() || !args[4].asObject(rt).isFunction(rt) ||
+                 !loader::native::currentUIScopeRuntime()))
+            {
+                throw std::invalid_argument(
+                    "Rewriting arguments requires a callback hooked from a UI scope");
+            }
             loader::native::NativeResourceReservation reservation(
                 loader::native::nativeHookBudget(), "Too many native hooks are installed");
             std::string token =
@@ -304,7 +316,7 @@ static jsi::Object makeHooksNamespace(jsi::Runtime &runtime, const JavaCallbacks
             if (count > 4)
             {
                 rememberHookListener(rt, parsed["id"].get<std::string>(), args[4], coalesce,
-                                     callbacks);
+                                     rewritesArguments, callbacks);
             }
             return loader::toJSIValue(rt, parsed);
         });

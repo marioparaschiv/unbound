@@ -58,8 +58,8 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 	}
 	headerText := string(header)
 	sourceText := iosNativeBridgeSource(t, root)
-	if !containsCode(headerText, `kNativePluginApiVersion[] = "1.2.0"`) {
-		t.Fatal("native plugin API version does not report fabric.batchAsync (1.2.0)")
+	if !containsCode(headerText, `kNativePluginApiVersion[] = "1.3.0"`) {
+		t.Fatal("native plugin API version does not report hook argument rewriting (1.3.0)")
 	}
 	if !containsCode(headerText, `kNativePluginAbiVersion[] = "1.0.0"`) {
 		t.Fatal("native plugin ABI version is not v1")

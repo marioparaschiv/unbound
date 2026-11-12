@@ -292,6 +292,7 @@ export type {
 	NativeJavaHandleValue,
 	NativeJavaHookEvent,
 	NativeJavaHookOptions,
+	NativeJavaHookRewrite,
 	NativeJavaHookToken,
 	NativeJavaHooksBridge,
 	NativeJavaMethodDescription,

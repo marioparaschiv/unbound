@@ -191,15 +191,16 @@ static jboolean nativeInstallSchedulerDrain(JNIEnv *, jclass, jlong runtimePoint
     return host->installSchedulerDrain(*runtime) ? JNI_TRUE : JNI_FALSE;
 }
 
-static void nativeDispatchHookEvent(JNIEnv *env, jclass, jstring token, jstring payload)
+static jstring nativeDispatchHookEvent(JNIEnv *env, jclass, jstring token, jstring payload)
 {
     if (!token || !payload)
     {
-        return;
+        return nullptr;
     }
 
-    unbound::android::dispatchHookEvent(unbound::android::toStdString(env, token),
-                                        unbound::android::toStdString(env, payload));
+    std::optional<std::string> rewritten = unbound::android::dispatchHookEvent(
+        unbound::android::toStdString(env, token), unbound::android::toStdString(env, payload));
+    return rewritten ? unbound::android::toJavaString(env, *rewritten) : nullptr;
 }
 
 static void nativeDrainMainWork(JNIEnv *, jclass)

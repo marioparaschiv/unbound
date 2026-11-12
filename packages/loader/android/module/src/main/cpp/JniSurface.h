@@ -99,7 +99,7 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
     X("nativeInstallSchedulerDrain", "(J)Z", nativeInstallSchedulerDrain)                          \
     X("nativeDrainMainWork", "()V", nativeDrainMainWork)                                           \
     X("nativeDrainFrameWork", "()V", nativeDrainFrameWork)                                         \
-    X("nativeDispatchHookEvent", "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING ")V",                   \
+    X("nativeDispatchHookEvent", "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING, \
       nativeDispatchHookEvent)                                                                     \
     X("nativeHermesBytecodeVersion", "([B)I", nativeHermesBytecodeVersion)                         \
     X("nativeHookReturnValue",                                                                     \

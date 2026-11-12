@@ -16,11 +16,12 @@
 namespace unbound::android {
 namespace jsi = facebook::jsi;
 
-bool onMainThread();
-void rememberHookListener(jsi::Runtime &runtime, const std::string &token,
-                          const jsi::Value &listener, bool coalesce, JavaCallbacks callbacks);
-void forgetHookListener(const std::string &token);
-std::string                             hookTokenId(jsi::Runtime &runtime, const jsi::Value &value);
+bool        onMainThread();
+void        rememberHookListener(jsi::Runtime &runtime, const std::string &token,
+                                 const jsi::Value &listener, bool coalesce, bool rewritesArguments,
+                                 JavaCallbacks callbacks);
+void        forgetHookListener(const std::string &token);
+std::string hookTokenId(jsi::Runtime &runtime, const jsi::Value &value);
 loader::native::NativeResourceRegistry &installedHooks();
 loader::native::HookReturnCache        &hookReturnValues();
 std::string    installedHookToken(jsi::Runtime &runtime, const jsi::Value &value);

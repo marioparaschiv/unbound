@@ -6,6 +6,7 @@ import type {
 	NativeFFIBridge,
 	NativeJavaHookEvent,
 	NativeJavaHookOptions,
+	NativeJavaHookRewrite,
 	NativeDebugBridge,
 	NativeJavaHooksBridge,
 	NativeJavaHookToken,
@@ -520,7 +521,7 @@ export function createScopedNativeBridge(
 			methodName: string,
 			parameterTypes: string[],
 			options?: NativeJavaHookOptions<Receiver>,
-			listener?: (event: NativeJavaHookEvent<Receiver>) => void,
+			listener?: (event: NativeJavaHookEvent<Receiver>) => NativeJavaHookRewrite | void,
 		) => {
 			if (lifecycle.disposed) {
 				throw new NativeBridgeDisposedError();
