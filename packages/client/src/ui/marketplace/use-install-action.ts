@@ -8,7 +8,7 @@ import type { InstallStatus } from '~/marketplace/catalog';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { AvailableChoice } from '~/addons/versions';
 import { pickInstallVersion } from '~/addons/versions';
-import { CLIENT_VERSION } from '~/core/constants';
+import { CLIENT_VERSION, Screens } from '~/core/constants';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
@@ -54,12 +54,14 @@ const ACTIONS: Record<InstallStatus, StatusAction> = {
 
 /**
  * @description Drives a listed addon's Install, Update or Installed button, judged against the installed
- * copy. A tap installs the newest version this client runs; holding offers it or a picker of every version, except for fonts.
+ * copy. A tap installs the newest version this client runs, or opens the installed copy's settings page once
+ * installed; holding offers it or a picker of every version, except for fonts.
  * @param kind The manager the addon belongs to.
  * @param addon The listed addon.
  * @returns The button's label, variant, loading state and handlers.
  */
 function useInstallAction(kind: AddonKind, addon: ListedAddon): InstallAction {
+	const navigation = Discord.useNavigation();
 	const status = useInstallStatus(kind, addon);
 	// Holds the pressed action until it settles, so the label doesn't flip while the button spins.
 	const [pending, setPending] = useState<InstallStatus | null>(null);
@@ -81,8 +83,25 @@ function useInstallAction(kind: AddonKind, addon: ListedAddon): InstallAction {
 		show({ title: manifest.name, content, icon: 'CircleXIcon' });
 	}
 
+	// Plugins list on their own page; themes, icon packs and fonts on the Design tab of their kind.
+	function openInstalled() {
+		if (kind === 'plugin') {
+			navigation.push(Screens.Plugins, { id: addon.id });
+
+			return;
+		}
+
+		navigation.push(Screens.Design, { tab: kind });
+	}
+
 	async function press() {
-		if (!action.offer || pending) return;
+		if (pending) return;
+
+		if (!action.offer) {
+			openInstalled();
+
+			return;
+		}
 
 		const ok = await run(async () => {
 			const installed = Manager.for(kind).getInstalledVersion(addon);

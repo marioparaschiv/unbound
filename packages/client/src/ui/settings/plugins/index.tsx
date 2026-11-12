@@ -21,17 +21,32 @@ import FilterMenu from './filter-menu';
 
 type CardInfo = { item: Addon };
 
+type PluginsParams = {
+	/** Opens with the search narrowed to this plugin, e.g. from its Installed button in the Marketplace. */
+	id?: string;
+};
+
+type PluginsPageProps = {
+	route: { params?: PluginsParams };
+};
+
 const keyOf = (addon: Addon) => addon.id;
 
 /**
  * @description The Plugins settings page: a pinned round search field beside round install and filter buttons, over
  * a virtualised list of plugin cards that runs to the bottom edge. Library plugins stay hidden behind a toggle that
- * counts them.
+ * counts them. Opened with a plugin's id, it starts searching for that plugin's name.
  */
-function PluginsPage() {
+function PluginsPage({ route }: PluginsPageProps) {
 	const styles = useStyles();
-	const { listed, libraries, shown, toggle } = useLibraries(useAddons('plugin'));
-	const { query, setQuery, filter, setFilter, visible, counts } = usePluginFilter(listed);
+	const plugins = useAddons('plugin');
+	const { listed, libraries, shown, toggle } = useLibraries(plugins);
+	const id = route.params?.id;
+	const focused = id ? plugins.find((addon) => addon.id === id) : undefined;
+	const { query, setQuery, filter, setFilter, visible, counts } = usePluginFilter(
+		listed,
+		focused?.manifest.name,
+	);
 	const list = useRef<FlashListHandle>(null);
 
 	// Another filter shows another list, so it starts from the top.

@@ -18,6 +18,8 @@ export type DesignTab = (typeof TABS)[number]['id'];
 type DesignTabsProps = {
 	/** Renders the Themes or Icons page; called once per tab, when the tabs mount. */
 	renderPage: (kind: PickerKind) => ReactNode;
+	/** The tab shown first. */
+	initialTab?: DesignTab;
 	onTabChange?: (tab: DesignTab) => void;
 };
 
@@ -54,7 +56,7 @@ function renderTab(id: DesignTab, renderPage: DesignTabsProps['renderPage']) {
  * each page frozen until a swipe or press first reaches it, so it mounts as it slides in. Themes and Icons are
  * Discord's theme picker; Fonts is the shared override list; Chat holds the chat's look, such as its background.
  */
-function DesignTabs({ renderPage, onTabChange = noop }: DesignTabsProps) {
+function DesignTabs({ renderPage, initialTab = 'theme', onTabChange = noop }: DesignTabsProps) {
 	const styles = useStyles();
 	const headerHeight = HeaderElements.useHeaderHeight();
 	const [tabsHeight, setTabsHeight] = useState(0);
@@ -73,7 +75,10 @@ function DesignTabs({ renderPage, onTabChange = noop }: DesignTabsProps) {
 	const state = Discord.useSegmentedControlState({
 		items,
 		pageWidth: width,
-		defaultIndex: 0,
+		defaultIndex: Math.max(
+			TABS.findIndex(({ id }) => id === initialTab),
+			0,
+		),
 		onPageChange: (index: number) => onTabChange(TABS[index]?.id ?? 'theme'),
 	});
 
