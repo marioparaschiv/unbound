@@ -2,8 +2,9 @@ import type { DebugCardRequest, DebugCardResponse } from '@unbound-app/contracts
 import { fileURLToPath } from 'node:url';
 import { Resvg } from '@resvg/resvg-js';
 
-import { debugAltText, debugCardSvg, layoutDebugCard } from '~/lib/debug-card/layout';
+import { debugCardSvg, layoutDebugCard } from '~/lib/debug-card/layout';
 import type { DebugCardContext } from '~/lib/debug-card/context';
+import { debugAltText } from '~/lib/debug-card/alt-text';
 
 const FONT_PATH = fileURLToPath(import.meta.resolve('@unbound-app/web/debug-card-font'));
 
@@ -12,7 +13,7 @@ const FONT_PATH = fileURLToPath(import.meta.resolve('@unbound-app/web/debug-card
  * @param info The report the client sent.
  * @param now When the report was taken, shown in the title bar.
  * @param context What the server adds: the compat scan and whether the client or loader is behind.
- * @returns The PNG as base64, its pixel size and the report as alt text JSON.
+ * @returns The PNG as base64, its pixel size and the report packed as alt text.
  */
 export function renderDebugCard(
 	info: DebugCardRequest,

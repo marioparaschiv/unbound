@@ -1,5 +1,6 @@
 import { publishDiscordCompatResponseSchema } from '@unbound-app/contracts/discord-compat';
 import type { PublishDiscordCompatRequest } from '@unbound-app/contracts/discord-compat';
+import { unpackDebugAltText } from '@unbound-app/contracts/debug-card-alt-text';
 import { debugCardResponseSchema } from '@unbound-app/contracts/debug-cards';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { parse } from '@unbound-app/contracts/schema';
@@ -125,6 +126,6 @@ describe('POST /api/v1/loader/compat', () => {
 		);
 		const card = parse(debugCardResponseSchema, await response.json());
 
-		expect(JSON.parse(card.altText).support).toBe('broken');
+		expect(JSON.parse(unpackDebugAltText(card.altText) ?? '{}').support).toBe('broken');
 	});
 });

@@ -66,7 +66,6 @@ const LOW_STORAGE_MB = 500;
 const DAY_MS = 86_400_000;
 const CRASH_WINDOW_MS = 7 * DAY_MS;
 const VALUE_ROOM = Math.floor((WIDTH - PADDING * 2) / CHAR_WIDTH) - LABEL_WIDTH;
-const MAX_ALT_TEXT = 1024;
 const FOOTER_HEIGHT = 52;
 
 const COLORS = {
@@ -87,7 +86,12 @@ const dim = (text: string): Span => ({ text, color: COLORS.dim });
 const warn = (text: string): Span => ({ text, color: COLORS.warn });
 const accent = (text: string): Span => ({ text, color: COLORS.accent });
 
-function joined(parts: (string | undefined)[]): string {
+/**
+ * @description Joins the parts that are set with the card's ` · ` separator.
+ * @param parts The parts; empty and `undefined` ones are skipped.
+ * @returns The joined text.
+ */
+export function joined(parts: (string | undefined)[]): string {
 	return parts.filter(Boolean).join(' · ');
 }
 
@@ -135,7 +139,12 @@ function fittedList(items: string[], room: number): string {
 	return `${items.length} addons`;
 }
 
-function sourceLabel(launch?: DebugCardLaunch): string | undefined {
+/**
+ * @description Names a bundle that did not come from the release channel.
+ * @param launch The loader's launch report.
+ * @returns `custom`, `dev` or `pr #<n>`, or `undefined` for a release bundle.
+ */
+export function sourceLabel(launch?: DebugCardLaunch): string | undefined {
 	if (!launch?.source) {
 		return undefined;
 	}
@@ -151,7 +160,16 @@ function sourceNote(launch?: DebugCardLaunch): Span[] {
 	return label ? [warn(` · ${label}`)] : [];
 }
 
-function lastCheckSummary(launch: DebugCardLaunch | undefined, now: Date): string | undefined {
+/**
+ * @description Summarises the loader's last update check.
+ * @param launch The loader's launch report.
+ * @param now When the report was taken.
+ * @returns The outcome, how long ago and any detail, or `undefined` without a check.
+ */
+export function lastCheckSummary(
+	launch: DebugCardLaunch | undefined,
+	now: Date,
+): string | undefined {
 	const check = launch?.lastCheck;
 
 	if (!check) {
@@ -164,14 +182,25 @@ function lastCheckSummary(launch: DebugCardLaunch | undefined, now: Date): strin
 	return [check.outcome, ago, check.detail].filter(Boolean).join(' · ');
 }
 
-function updateNotes(context: DebugCardContext): string[] {
+/**
+ * @description Lists the loader and client updates the server knows of.
+ * @param context What the server adds to the report.
+ * @returns One note per available update.
+ */
+export function updateNotes(context: DebugCardContext): string[] {
 	return [
 		context.loaderUpdate && `loader ${context.loaderUpdate}`,
 		context.clientUpdate && `client ${context.clientUpdate}`,
 	].filter((note): note is string => typeof note === 'string');
 }
 
-function supportOf(info: DebugInfo, context: DebugCardContext): DiscordSupport | undefined {
+/**
+ * @description Decides the Discord support status, letting the compat scan override the client's guess.
+ * @param info The report.
+ * @param context What the server adds to the report.
+ * @returns The status, or `undefined` when neither side knows.
+ */
+export function supportOf(info: DebugInfo, context: DebugCardContext): DiscordSupport | undefined {
 	if (context.compat?.broken) {
 		return 'broken';
 	}
@@ -264,7 +293,12 @@ function memoryNotes(memory?: DebugCardMemory): string[] {
 	return notes.filter((note): note is string => typeof note === 'string');
 }
 
-function displaySummary(display: NonNullable<DebugInfo['display']>): string {
+/**
+ * @description Summarises the screen size, scale and accessibility settings.
+ * @param display The display report.
+ * @returns The summary.
+ */
+export function displaySummary(display: NonNullable<DebugInfo['display']>): string {
 	return joined([
 		`${display.width}x${display.height} @${display.scale}x`,
 		`font ${display.fontScale}`,
@@ -274,7 +308,12 @@ function displaySummary(display: NonNullable<DebugInfo['display']>): string {
 	]);
 }
 
-function sessionSummary(session: NonNullable<DebugInfo['session']>): string {
+/**
+ * @description Summarises how long the app has run and how often it was backgrounded.
+ * @param session The session report.
+ * @returns The summary.
+ */
+export function sessionSummary(session: NonNullable<DebugInfo['session']>): string {
 	const hours = Math.floor(session.uptimeS / 3600);
 	const minutes = Math.floor((session.uptimeS % 3600) / 60);
 	const uptime = hours ? `${hours} h ${minutes} min` : `${minutes} min`;
@@ -282,7 +321,12 @@ function sessionSummary(session: NonNullable<DebugInfo['session']>): string {
 	return `up ${uptime} · backgrounded ${session.backgrounded}`;
 }
 
-function memorySummary(memory: DebugCardMemory): string {
+/**
+ * @description Summarises free memory, warnings and thermal state.
+ * @param memory The memory report.
+ * @returns The summary.
+ */
+export function memorySummary(memory: DebugCardMemory): string {
 	return joined([
 		memory.availableMB !== undefined ? `${memory.availableMB} MB free` : undefined,
 		memory.lowMemory ? 'low memory' : undefined,
@@ -291,7 +335,12 @@ function memorySummary(memory: DebugCardMemory): string {
 	]);
 }
 
-function errorNotes(errors: DebugInfo['errors'] = []): string[] {
+/**
+ * @description Lists recent errors newest first, each prefixed with its addon.
+ * @param errors The recent errors.
+ * @returns One note per error.
+ */
+export function errorNotes(errors: DebugInfo['errors'] = []): string[] {
 	return errors
 		.toReversed()
 		.map((error) => (error.addon ? `${error.addon}: ${error.message}` : error.message));
@@ -591,107 +640,4 @@ export function debugCardSvg(card: DebugCard): string {
 	].join('');
 }
 
-/**
- * @description Writes the report as compact JSON for the image's alt text, so bots can read it; long fields are cut to fit Discord's limit.
- * @param info The versions and device details.
- * @param context What the server adds: the compat scan and whether the client or loader is behind.
- * @param now When the report was taken, to say how long ago the last update check ran.
- * @returns The JSON, at most 1024 characters.
- */
-export function debugAltText(
-	info: DebugInfo,
-	context: DebugCardContext = {},
-	now = new Date(),
-): string {
-	const report: Record<string, string | string[]> = {
-		unbound: info.client.replace(/^v/, ''),
-		commit: info.commit,
-		loader: info.loader,
-		loaderOrigin: info.loaderOrigin,
-		framework: info.framework,
-		jailbreak: info.jailbreak ?? '',
-		discord: info.discord,
-		channel: info.discordChannel.toLowerCase(),
-		build: info.discordBuild,
-		source: info.appSource,
-		install: (info.installDetails ?? '').replaceAll('`', ''),
-		device: info.device,
-		platform: info.platform,
-		os: info.os,
-		react: info.react,
-		reactNative: info.reactNative,
-		hermes: info.hermes,
-		bytecode: info.bytecode,
-		state: info.flags,
-		...(supportOf(info, context) && { support: supportOf(info, context) }),
-		...(updateNotes(context).length && { updates: updateNotes(context) }),
-		...(launchNotes(info.launch).length && { launch: launchNotes(info.launch) }),
-		...(info.disabledAddons?.length && { disabled: info.disabledAddons }),
-		...(info.locale && { locale: info.locale }),
-		...(info.theme && { theme: info.theme }),
-		...(info.iconPack && { iconPack: info.iconPack }),
-		...(info.plugins && { plugins: `${info.plugins.enabled}/${info.plugins.installed}` }),
-		...(info.themes && { themes: `${info.themes.enabled}/${info.themes.installed}` }),
-		...(info.launch?.firstRenderMs && { firstRenderMs: String(info.launch.firstRenderMs) }),
-		...(sourceLabel(info.launch) && { bundleSource: sourceLabel(info.launch) }),
-		...(lastCheckSummary(info.launch, now) && {
-			lastCheck: lastCheckSummary(info.launch, now),
-		}),
-		...(info.launch?.settings && { settings: info.launch.settings }),
-		...(info.errors?.length && { errors: errorNotes(info.errors) }),
-		...(info.storage && {
-			storage: joined([
-				info.storage.freeMB === undefined ? undefined : `${info.storage.freeMB} MB free`,
-				info.storage.unboundMB === undefined
-					? undefined
-					: `unbound ${info.storage.unboundMB} MB`,
-			]),
-		}),
-		...(info.patches?.length && {
-			patches: info.patches.map((patch) => `${patch.caller} ${patch.count}`),
-		}),
-		...(info.enabledPlugins?.length && { enabledPlugins: info.enabledPlugins }),
-		...(info.display && { display: displaySummary(info.display) }),
-		...(info.session && { session: sessionSummary(info.session) }),
-		...(info.native && {
-			native: `${info.native.hooks} hooks · ${info.native.surfaces} surfaces · ${info.native.handles} handles`,
-		}),
-		...(info.memory && { memory: memorySummary(info.memory) }),
-		...(info.heap && { heap: `${info.heap.heapMB} MB · gc ${info.heap.gcMs} ms` }),
-		...(info.launch?.crashes?.length && {
-			crashes: info.launch.crashes.map(
-				(crash) => `${new Date(crash.at).toISOString().slice(0, 16)}Z ${crash.crash}`,
-			),
-		}),
-	};
-	let text = JSON.stringify(report);
-
-	for (const key of [
-		'enabledPlugins',
-		'patches',
-		'native',
-		'heap',
-		'storage',
-		'memory',
-		'iconPack',
-		'theme',
-		'locale',
-		'install',
-		'source',
-		'framework',
-		'loaderOrigin',
-		'jailbreak',
-		'crashes',
-	] as const) {
-		if (text.length <= MAX_ALT_TEXT) {
-			break;
-		}
-
-		delete report[key];
-		text = JSON.stringify(report);
-	}
-
-	return text.slice(0, MAX_ALT_TEXT);
-}
-
-export default { debugAltText, debugCardSvg, layoutDebugCard };
+export default { debugCardSvg, layoutDebugCard };
