@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.2] - 2026-11-12
+
+### Fixed
+
+- On iOS, a long name with several tags is cut off before the time instead of running under it or out of the bubble.
+
 ## [1.6.1] - 2026-11-12
 
 ### Fixed

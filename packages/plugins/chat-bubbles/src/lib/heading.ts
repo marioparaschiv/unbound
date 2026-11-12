@@ -16,6 +16,8 @@ export type HeadingPlace = {
 	avatar: Move;
 	/** The timestamp's frame in the name row. */
 	time?: Box;
+	/** How wide the name and its tags may draw, when they would otherwise run under the time or past the bubble. */
+	nameClip?: number;
 	reply?: {
 		move: Move;
 		/** The quote box in the cell, and the box in the reply holder's own coordinates to clip the preview to; none while the preview sits above the bubble. */
@@ -85,7 +87,7 @@ export function headingRoom(
  * @param padding The bubble's horizontal padding.
  * @param capitalGap How far below the bubble's top the name's capitals sit, where the heading knows where they start.
  * @param options Whether the reply is quoted and whether the time stays put.
- * @returns How far each view moves, the time's frame in the name row, and the quote box.
+ * @returns How far each view moves, the time's frame in the name row, how wide the name may draw, and the quote box.
  */
 export function headingPlace(
 	heading: Heading,
@@ -104,6 +106,9 @@ export function headingPlace(
 	};
 	const right = bubble.x + bubble.width - padding;
 	const place: HeadingPlace = { name: nameMove, avatar: { x: 0, y: top - name.y } };
+	const nameRoom = bubble.width - padding * 2 - (time ? NAME_TIME_GAP + time.width : 0);
+
+	if (heading.nameWidth > nameRoom) place.nameClip = Math.max(0, nameRoom);
 
 	if (time) {
 		place.time = {
