@@ -298,6 +298,18 @@ export function readDebugInfo(): DebugInfo {
 }
 
 /**
+ * @description Reads everything `/debug` reports, including the accessibility settings React Native only answers asynchronously.
+ * @returns The full report the card endpoint takes.
+ */
+export async function readDebugReport(): Promise<DebugInfo> {
+	const info = readDebugInfo();
+
+	return info.display
+		? { ...info, display: { ...info.display, ...(await readAccessibility()) } }
+		: info;
+}
+
+/**
  * @description Reads the app's entitlements as a plist on iOS.
  * @returns The plist, or an empty string on Android or when the loader cannot read them.
  */
