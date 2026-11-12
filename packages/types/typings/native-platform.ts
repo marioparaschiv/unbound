@@ -32,6 +32,9 @@ export type NativeDeviceState = {
 	/** iOS: memory warnings Discord received this session. */
 	memoryWarnings?: number;
 	thermal?: 'nominal' | 'fair' | 'serious' | 'critical';
+	/** Free space on the volume holding Discord's documents, and the size of Unbound's folder there. */
+	freeMB?: number;
+	unboundMB?: number;
 };
 
 /** iOS-only facts about Discord's code signature. */

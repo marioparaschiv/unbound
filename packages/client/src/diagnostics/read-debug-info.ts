@@ -3,9 +3,9 @@ import type { NativeDeviceState, UnboundLaunchReport } from '@unbound-app/types'
 import { NativeBridgeCapabilityError, NativeBridgeVersionError } from '~/native/errors';
 import { CLIENT_VERSION, MINIMUM_DISCORD_VERSIONS, VERSION } from '~/core/constants';
 import { isOlderThanSupported, discordChannel } from '~/core/discord-support';
+import { getNativeResources, getRuntimeProperties } from '~/native/native';
 import { readBundleInfo } from '~/native/read-bundle-info';
 import { currentEnvironment } from '~/core/environment';
-import { getRuntimeProperties } from '~/native/native';
 import { crashedAddons } from '~/addons/crash-guard';
 import { React, ReactNative } from '~/metro/common';
 import { getLoader } from '~/native/unbound-native';
@@ -15,8 +15,13 @@ import { icons } from '~/icon-packs/manager';
 import { plugins } from '~/plugins/manager';
 import { getLocale } from '~/i18n/locale';
 import { themes } from '~/themes/manager';
+import { patches } from '~/patcher/api';
 
 import type { AddonCount, DebugInfo, DiscordSupport } from './format-debug-info';
+
+import { recentErrors } from './recent-errors';
+
+const MAX_PATCH_CALLERS = 8;
 
 const CRASH_PHASES: Record<string, string> = {
 	starting: 'crashed on start',
@@ -130,6 +135,45 @@ function launchOf(launch?: UnboundLaunchReport): DebugInfo['launch'] {
 	};
 }
 
+function storageOf(state?: NativeDeviceState): DebugInfo['storage'] {
+	if (state?.freeMB === undefined && state?.unboundMB === undefined) {
+		return undefined;
+	}
+
+	return { freeMB: state.freeMB, unboundMB: state.unboundMB };
+}
+
+function patchCounts(): DebugInfo['patches'] {
+	const counts = new Map<string, number>();
+
+	for (const patched of patches) {
+		for (const list of Object.values(patched.patches)) {
+			for (const patch of list) {
+				const caller = patch.caller ?? 'unknown';
+
+				counts.set(caller, (counts.get(caller) ?? 0) + 1);
+			}
+		}
+	}
+
+	return [...counts.entries()]
+		.map(([caller, count]) => ({ caller, count }))
+		.sort((a, b) => b.count - a.count)
+		.slice(0, MAX_PATCH_CALLERS);
+}
+
+function nativeCounts(): DebugInfo['native'] {
+	const resources = getNativeResources();
+
+	return (
+		resources && {
+			hooks: resources.hooks,
+			surfaces: resources.surfaces,
+			handles: resources.handles,
+		}
+	);
+}
+
 function memoryOf(state?: NativeDeviceState): DebugInfo['memory'] {
 	if (!state) {
 		return undefined;
@@ -156,6 +200,7 @@ function installDetailsOf(details: string): string {
  */
 export function readDebugInfo(): DebugInfo {
 	const platform = globalThis.NativePlatform;
+	const state = attempt(() => platform?.device.getState?.(), undefined);
 	const environment = currentEnvironment(CLIENT_VERSION);
 	const loader = getLoader();
 	const bundle = readBundleInfo();
@@ -199,7 +244,11 @@ export function readDebugInfo(): DebugInfo {
 		iconPack: attempt(() => selectedAddon(icons), ''),
 		launch: launchOf(loader?.launch),
 		bundleChannel: loader?.launch?.channel,
-		memory: attempt(() => memoryOf(platform?.device.getState?.()), undefined),
+		memory: attempt(() => memoryOf(state), undefined),
+		storage: attempt(() => storageOf(state), undefined),
+		errors: recentErrors(),
+		patches: attempt(patchCounts, undefined),
+		native: attempt(nativeCounts, undefined),
 		heap: attempt(getHeapUsage, undefined),
 	};
 }

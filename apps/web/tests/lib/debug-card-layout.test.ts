@@ -317,4 +317,27 @@ describe('debug card', () => {
 			settings: 'restored',
 		});
 	});
+	test('shows recent errors and low storage, and keeps the loader row whole when it is behind', () => {
+		const report: DebugCardRequest = {
+			...info,
+			errors: [{ at: 1, message: 'undefined is not a function', addon: 'chat-bubbles' }],
+			storage: { freeMB: 320, unboundMB: 41 },
+			patches: [{ caller: 'chat-bubbles', count: 12 }],
+			native: { hooks: 2, surfaces: 0, handles: 5 },
+		};
+		const card = layoutDebugCard(report, new Date(), { loaderBehind: true });
+		const labels = texts(card)
+			.filter((run) => run.x === 14)
+			.map((run) => run.text);
+
+		expect(labels).toContain('errors');
+		expect(labels).toContain('storage');
+		expect(texts(card).some((run) => run.text.includes('…'))).toBe(false);
+		expect(JSON.parse(debugAltText(report))).toMatchObject({
+			errors: ['chat-bubbles: undefined is not a function'],
+			storage: '320 MB free · unbound 41 MB',
+			patches: ['chat-bubbles 12'],
+			native: '2 hooks · 0 surfaces · 5 handles',
+		});
+	});
 });

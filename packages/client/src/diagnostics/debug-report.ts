@@ -8,6 +8,7 @@ import fs from '~/native/fs';
 
 import formatDebugInfo, { type DebugInfo } from './format-debug-info';
 import { readDebugInfo, readEntitlements } from './read-debug-info';
+import { crashLogExcerpt } from './crash-report';
 
 type CloudUpload = {
 	status: string;
@@ -23,9 +24,14 @@ type UploadFile = {
 	height?: number;
 };
 
+/** What `/debug` attaches beyond the card and entitlements. */
+export type DebugReportOptions = { log?: boolean };
+
 type SendResult = { ok?: boolean; status?: number } | undefined;
 
 const ENTITLEMENTS_PATH = 'Unbound/cache/debug/Entitlements.xml';
+const LOG_PATH = 'Unbound/cache/debug/unbound.log';
+const LOADER_LOG = 'Unbound/Logs/unbound.log';
 const CARD_DIRECTORY = 'Unbound/cache/debug';
 const UPLOAD_ORIGIN_FILE = 1;
 const UPLOAD_PLATFORM_REACT_NATIVE = 0;
@@ -96,6 +102,23 @@ async function uploadEntitlements(channelId: string): Promise<CloudUpload | unde
 	});
 }
 
+async function uploadLog(channelId: string): Promise<CloudUpload | undefined> {
+	const log = (await fs.exists(LOADER_LOG)) ? await fs.readFile(LOADER_LOG) : '';
+	const excerpt = crashLogExcerpt(log);
+
+	if (!excerpt) {
+		return undefined;
+	}
+
+	await fs.writeFile(LOG_PATH, excerpt);
+
+	return uploadFile(channelId, {
+		path: LOG_PATH,
+		mimeType: 'text/plain',
+		filename: 'unbound.log',
+	});
+}
+
 async function uploadCard(
 	channelId: string,
 	info: DebugInfo,
@@ -133,11 +156,13 @@ function uploadQuietly(what: string, run: () => Promise<CloudUpload | undefined>
  * @description Sends the debug report as a rendered card whose alt text carries it as JSON, with the user's note and the app's entitlements on iOS; falls back to the text report when the card cannot be drawn.
  * @param channelId The channel the command ran in, or the open channel when it is not known.
  * @param note Text the user added to the command, sent as the message.
+ * @param options `log` attaches the newest loader log lines, scrubbed of secrets.
  * @returns The text for Discord to send when nothing could be attached, otherwise nothing once it is sent.
  */
 export async function sendDebugReport(
 	channelId?: string,
 	note?: string,
+	{ log = false }: DebugReportOptions = {},
 ): Promise<string | undefined> {
 	const info = readDebugInfo();
 	const message = note?.trim() ?? '';
@@ -151,7 +176,7 @@ export async function sendDebugReport(
 	const cardPath = `${CARD_DIRECTORY}/unbound-debug-${Date.now()}.png`;
 
 	try {
-		return await sendWithCard(target, info, cardPath, message, textReport);
+		return await sendWithCard(target, info, cardPath, message, textReport, log);
 	} finally {
 		await fs.removeFile(cardPath).catch(() => false);
 	}
@@ -163,10 +188,12 @@ async function sendWithCard(
 	cardPath: string,
 	message: string,
 	textReport: string,
+	log: boolean,
 ): Promise<string | undefined> {
 	const card = await uploadQuietly('card', () => uploadCard(target, info, cardPath));
 	const entitlements = await uploadQuietly('entitlements', () => uploadEntitlements(target));
-	const attachments = [card, entitlements].filter((upload): upload is CloudUpload =>
+	const logFile = log ? await uploadQuietly('log', () => uploadLog(target)) : undefined;
+	const attachments = [card, entitlements, logFile].filter((upload): upload is CloudUpload =>
 		Boolean(upload),
 	);
 

@@ -62,6 +62,7 @@ const CHAR_WIDTH = FONT_SIZE * 0.6;
 const LABEL_WIDTH = 9;
 const BADGE_CLEARANCE = 66;
 const MAX_DIAGNOSTIC_ROWS = 2;
+const LOW_STORAGE_MB = 500;
 const DAY_MS = 86_400_000;
 const CRASH_WINDOW_MS = 7 * DAY_MS;
 const VALUE_ROOM = Math.floor((WIDTH - PADDING * 2) / CHAR_WIDTH) - LABEL_WIDTH;
@@ -197,7 +198,9 @@ function rows(info: DebugInfo, now: Date, context: DebugCardContext): [string, S
 			[
 				value(info.loader),
 				...updateNote(context.loaderBehind),
-				dim(` ${joined([info.loaderOrigin, info.framework])}`),
+				dim(
+					` ${context.loaderBehind ? `· ${info.loaderOrigin}` : joined([info.loaderOrigin, info.framework])}`,
+				),
 			],
 		],
 		[
@@ -277,18 +280,39 @@ function memorySummary(memory: DebugCardMemory): string {
 	]);
 }
 
+function errorNotes(errors: DebugInfo['errors'] = []): string[] {
+	return errors
+		.toReversed()
+		.map((error) => (error.addon ? `${error.addon}: ${error.message}` : error.message));
+}
+
+function lowStorage(storage: DebugInfo['storage']): string | undefined {
+	if (storage?.freeMB === undefined || storage.freeMB >= LOW_STORAGE_MB) {
+		return undefined;
+	}
+
+	return joined([
+		`${storage.freeMB} MB free`,
+		storage.unboundMB === undefined ? undefined : `unbound ${storage.unboundMB} MB`,
+	]);
+}
+
 function diagnosticRows(info: DebugInfo, now: Date): [string, Span[]][] {
 	const crashes = crashSummary(info.launch?.crashes ?? [], now);
 	const launch = launchNotes(info.launch);
 	const memory = memoryNotes(info.memory);
+	const errors = errorNotes(info.errors);
+	const storage = lowStorage(info.storage);
 	const candidates: [string, Span[]][] = [
 		['crashes', crashes],
 		[
 			'issues',
 			info.disabledAddons?.length ? [warn(fittedList(info.disabledAddons, VALUE_ROOM))] : [],
 		],
+		['errors', errors.length ? [warn(fittedList(errors, VALUE_ROOM))] : []],
 		['launch', launch.length ? [warn(fittedList(launch, VALUE_ROOM))] : []],
 		['memory', memory.length ? [warn(fittedList(memory, VALUE_ROOM))] : []],
+		['storage', storage ? [warn(storage)] : []],
 	];
 
 	return candidates.filter(([, spans]) => spans.length > 0);
@@ -590,6 +614,21 @@ export function debugAltText(
 			lastCheck: lastCheckSummary(info.launch, now),
 		}),
 		...(info.launch?.settings && { settings: info.launch.settings }),
+		...(info.errors?.length && { errors: errorNotes(info.errors) }),
+		...(info.storage && {
+			storage: joined([
+				info.storage.freeMB === undefined ? undefined : `${info.storage.freeMB} MB free`,
+				info.storage.unboundMB === undefined
+					? undefined
+					: `unbound ${info.storage.unboundMB} MB`,
+			]),
+		}),
+		...(info.patches?.length && {
+			patches: info.patches.map((patch) => `${patch.caller} ${patch.count}`),
+		}),
+		...(info.native && {
+			native: `${info.native.hooks} hooks · ${info.native.surfaces} surfaces · ${info.native.handles} handles`,
+		}),
 		...(info.memory && { memory: memorySummary(info.memory) }),
 		...(info.heap && { heap: `${info.heap.heapMB} MB · gc ${info.heap.gcMs} ms` }),
 		...(info.launch?.crashes?.length && {
@@ -601,7 +640,10 @@ export function debugAltText(
 	let text = JSON.stringify(report);
 
 	for (const key of [
+		'patches',
+		'native',
 		'heap',
+		'storage',
 		'memory',
 		'iconPack',
 		'theme',

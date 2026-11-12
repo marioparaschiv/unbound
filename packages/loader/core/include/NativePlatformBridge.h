@@ -39,6 +39,7 @@ void setNativePlatformProvider(std::shared_ptr<NativePlatformProvider> provider)
 std::shared_ptr<NativePlatformProvider> currentNativePlatformProvider();
 
 nlohmann::json debugEnvironment(const NativePlatformProvider &provider);
+nlohmann::json storageState(const std::string &documents);
 nlohmann::json currentDebugEnvironment();
 
 void installNativePlatform(facebook::jsi::Runtime                 &runtime,
