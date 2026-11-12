@@ -24,8 +24,8 @@ type UploadFile = {
 	height?: number;
 };
 
-/** What `/debug` attaches beyond the card and entitlements. */
-export type DebugReportOptions = { log?: boolean };
+/** What `/debug` attaches beyond the card. */
+export type DebugReportOptions = { log?: boolean; entitlements?: boolean };
 
 type SendResult = { ok?: boolean; status?: number } | undefined;
 
@@ -153,16 +153,16 @@ function uploadQuietly(what: string, run: () => Promise<CloudUpload | undefined>
 }
 
 /**
- * @description Sends the debug report as a rendered card whose alt text carries it as JSON, with the user's note and the app's entitlements on iOS; falls back to the text report when the card cannot be drawn.
+ * @description Sends the debug report as a rendered card whose alt text carries it as JSON, with the user's note; falls back to the text report when the card cannot be drawn.
  * @param channelId The channel the command ran in, or the open channel when it is not known.
  * @param note Text the user added to the command, sent as the message.
- * @param options `log` attaches the newest loader log lines, scrubbed of secrets.
+ * @param options `log` attaches the newest loader log lines, scrubbed of secrets; `entitlements` attaches the app's Entitlements.xml on iOS.
  * @returns The text for Discord to send when nothing could be attached, otherwise nothing once it is sent.
  */
 export async function sendDebugReport(
 	channelId?: string,
 	note?: string,
-	{ log = false }: DebugReportOptions = {},
+	options: DebugReportOptions = {},
 ): Promise<string | undefined> {
 	const info = await readDebugReport();
 	const message = note?.trim() ?? '';
@@ -176,7 +176,7 @@ export async function sendDebugReport(
 	const cardPath = `${CARD_DIRECTORY}/unbound-debug-${Date.now()}.png`;
 
 	try {
-		return await sendWithCard(target, info, cardPath, message, textReport, log);
+		return await sendWithCard(target, info, cardPath, message, textReport, options);
 	} finally {
 		await fs.removeFile(cardPath).catch(() => false);
 	}
@@ -188,17 +188,19 @@ async function sendWithCard(
 	cardPath: string,
 	message: string,
 	textReport: string,
-	log: boolean,
+	{ log = false, entitlements: withEntitlements = false }: DebugReportOptions,
 ): Promise<string | undefined> {
 	const card = await uploadQuietly('card', () => uploadCard(target, info, cardPath));
-	const entitlements = await uploadQuietly('entitlements', () => uploadEntitlements(target));
+	const entitlements = withEntitlements
+		? await uploadQuietly('entitlements', () => uploadEntitlements(target))
+		: undefined;
 	const logFile = log ? await uploadQuietly('log', () => uploadLog(target)) : undefined;
 	const attachments = [card, entitlements, logFile].filter((upload): upload is CloudUpload =>
 		Boolean(upload),
 	);
 
 	if (!attachments.length) {
-		if (readEntitlements()) {
+		if (withEntitlements && readEntitlements()) {
 			warnTextOnly();
 		}
 

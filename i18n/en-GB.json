@@ -432,6 +432,7 @@
 	"UNBOUND_COMMAND_EVAL_SEND_DESC": "Send the result to the channel",
 	"UNBOUND_COMMAND_RELOAD_DESC": "Reload Discord",
 	"UNBOUND_COMMAND_DEBUG_DESC": "Send debug info",
+	"UNBOUND_COMMAND_DEBUG_ENTITLEMENTS_DESC": "Attach the app's Entitlements.xml (iOS)",
 	"UNBOUND_COMMAND_DEBUG_LOG_DESC": "Attach the newest loader log lines, with tokens and email addresses removed",
 	"UNBOUND_COMMAND_DEBUG_MESSAGE_DESC": "A note to send with the report, such as what went wrong",
 	"UNBOUND_COMMAND_RECOVERY_DESC": "Turn recovery mode on or off and restart",

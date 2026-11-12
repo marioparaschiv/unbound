@@ -47,9 +47,12 @@ export function start() {
 					description: 'UNBOUND_COMMAND_DEBUG_MESSAGE_DESC',
 				}),
 				log: option.boolean({ description: 'UNBOUND_COMMAND_DEBUG_LOG_DESC' }),
+				entitlements: option.boolean({
+					description: 'UNBOUND_COMMAND_DEBUG_ENTITLEMENTS_DESC',
+				}),
 			},
-			execute: ({ message, log }, context) =>
-				sendDebugReport(context?.channel?.id, message, { log }),
+			execute: ({ message, log, entitlements }, context) =>
+				sendDebugReport(context?.channel?.id, message, { log, entitlements }),
 		},
 		recovery: {
 			description: 'UNBOUND_COMMAND_RECOVERY_DESC',
