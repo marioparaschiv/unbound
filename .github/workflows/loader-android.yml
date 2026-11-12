@@ -42,6 +42,10 @@ on:
             GRADLE_ENCRYPTION_KEY:
                 required: false
         inputs:
+            smoke:
+                default: false
+                description: 'Run the smoke tests even when the repository variable SMOKE_TESTS is not true'
+                type: boolean
             ios_version:
                 description: 'Discord app version to match'
                 required: false
@@ -104,10 +108,10 @@ defaults:
         working-directory: packages/loader
 
 jobs:
-    # Smoke tests are disabled to save runner time; set the repository variable SMOKE_TESTS to true to turn them back on.
+    # Smoke tests run before a loader publish (smoke input) and otherwise only when the repository variable SMOKE_TESTS is true, to save runner time.
     smoke-inputs:
         name: Build the smoke test's client and plugins
-        if: vars.SMOKE_TESTS == 'true'
+        if: vars.SMOKE_TESTS == 'true' || inputs.smoke == true
         runs-on: ubuntu-26.04
         timeout-minutes: 15
         permissions:
@@ -551,7 +555,7 @@ jobs:
     smoke:
         name: Smoke test patched Discord
         needs: [build-module, patch-discord, smoke-inputs]
-        if: vars.SMOKE_TESTS == 'true' && needs.build-module.outputs.attested == 'true'
+        if: (vars.SMOKE_TESTS == 'true' || inputs.smoke == true) && needs.build-module.outputs.attested == 'true'
         runs-on: ubuntu-26.04
         timeout-minutes: 20
         permissions:

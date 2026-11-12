@@ -660,6 +660,7 @@ jobs:
             android_code: ${{ needs.resolve-source.outputs.android_code }}
             pr_number: ${{ inputs.pr_number || '' }}
             loader_version: ${{ needs.resolve-source.outputs.loader_version }}
+            smoke: ${{ inputs.loader_publish_only || false }}
         secrets:
             ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
             ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
@@ -683,6 +684,7 @@ jobs:
             ipa_url: ${{ inputs.ipa_url }}
             source_ipa_artifact: ${{ needs.resolve-source.result == 'success' && 'discord-source-ipa' || '' }}
             skip_smoke: ${{ inputs.skip_ios_smoke || false }}
+            smoke: ${{ inputs.loader_publish_only || false }}
             release: ${{ inputs.release || false }}
             is_testflight: ${{ inputs.is_testflight || false }}
             authenticated_source: ${{ inputs.authenticated_source || false }}
@@ -1044,7 +1046,7 @@ jobs:
             GPG_KEY: ${{ secrets.GPG_KEY }}
 
     # Publishes the deb and module of this loader commit for jailbroken iOS and rooted Android, without a GitHub release.
-    # The module must be attested, and the same attestation key signed the deb.
+    # The module must be attested, the same attestation key signed the deb, and both platforms' smoke tests passed.
     loader-publish:
         name: Publish the loader
         if: ${{ !cancelled() && inputs.loader_publish_only == true && github.event_name != 'pull_request' && inputs.release_dry_run != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && needs.android.result == 'success' && needs.android.outputs.attested == 'true' }}
