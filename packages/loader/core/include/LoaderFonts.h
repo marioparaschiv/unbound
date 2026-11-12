@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <map>
 #include <mutex>
 #include <nlohmann/json.hpp>
@@ -21,6 +22,8 @@ struct FontNames {
 std::optional<FontNames>   fontNames(const std::string &path);
 std::optional<std::string> fontFullName(const std::string &path);
 std::optional<FontNames>   fontNamesFromData(const std::string &data);
+// One `name` table entry by its id, such as a variable font's axis or instance names.
+std::optional<std::string> fontNameFromData(const std::string &data, uint16_t nameID);
 nlohmann::json             fontEntry(const std::string &path, const std::string &source);
 nlohmann::json             fontEntryFromData(const std::string &data, const std::string &path,
                                              const std::string &source, const std::string &name);
@@ -36,6 +39,9 @@ struct FontOverridePlan {
     std::vector<std::string> registrations;
     std::vector<std::string> errors;
     FontOverrideTable        table;
+    // A variable font's instance, by the name `table` points at: `{ path, variations: { tag: n }
+    // }`.
+    std::map<std::string, nlohmann::json> instances;
 };
 
 class FontOverrideRegistry

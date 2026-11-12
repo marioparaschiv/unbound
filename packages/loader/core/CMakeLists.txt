@@ -76,6 +76,16 @@ target_include_directories(unbound_bearssl PRIVATE ${UNBOUND_VENDOR_DIR}/bearssl
 target_include_directories(unbound_bearssl PUBLIC ${UNBOUND_VENDOR_DIR}/bearssl/inc)
 target_compile_options(unbound_bearssl PRIVATE -fvisibility=hidden)
 
+# Google's WOFF2 decoder and the Brotli decoder it needs, for installing `.woff2` fonts.
+file(GLOB UNBOUND_WOFF2_SOURCES CONFIGURE_DEPENDS
+    ${UNBOUND_VENDOR_DIR}/brotli/c/common/*.c
+    ${UNBOUND_VENDOR_DIR}/brotli/c/dec/*.c
+    ${UNBOUND_VENDOR_DIR}/woff2/src/*.cc)
+add_library(unbound_woff2 STATIC ${UNBOUND_WOFF2_SOURCES})
+target_include_directories(unbound_woff2 PRIVATE ${UNBOUND_VENDOR_DIR}/brotli/c/include)
+target_include_directories(unbound_woff2 PUBLIC ${UNBOUND_VENDOR_DIR}/woff2/include)
+target_compile_options(unbound_woff2 PRIVATE -fvisibility=hidden -w)
+
 file(GLOB UNBOUND_CORE_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp)
 list(APPEND UNBOUND_CORE_SOURCES
     ${UNBOUND_VENDOR_DIR}/monocypher/monocypher.c
@@ -91,7 +101,7 @@ if(UNBOUND_CORE_FFI_TARGET)
 endif()
 
 add_library(unbound_core STATIC ${UNBOUND_CORE_SOURCES})
-target_link_libraries(unbound_core PRIVATE unbound_bearssl)
+target_link_libraries(unbound_core PRIVATE unbound_bearssl unbound_woff2)
 if(UNBOUND_CORE_FFI_TARGET)
     target_link_libraries(unbound_core PUBLIC ${UNBOUND_CORE_FFI_TARGET})
 endif()

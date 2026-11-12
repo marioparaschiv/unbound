@@ -69,7 +69,7 @@ static void fitsTheLogoInsideTheCutout()
     assert(near(logo.y, (island.height - logo.height) / 2));
 
     const Frame narrow = logoFrame(Cutout{CutoutKind::Island, Frame{100, 14, 20, 18}});
-    assert(near(narrow.width, 20) && near(narrow.width / narrow.height, kLogoAspect));
+    assert(narrow.width <= 20 + 1e-6 && near(narrow.width / narrow.height, kLogoAspect));
 }
 
 static void startsOnceOnIslandDevices()

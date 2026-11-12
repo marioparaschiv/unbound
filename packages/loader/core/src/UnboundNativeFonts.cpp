@@ -95,6 +95,17 @@ jsi::Object makeFontsBridge(jsi::Runtime &runtime, std::shared_ptr<FontService> 
                 return nlohmann::json();
             });
         }));
+    bridge.setProperty(runtime, "addInstance",
+                       asyncMethod(runtime, "addInstance", 2,
+                                   [service](jsi::Runtime &rt, auto args, size_t count) {
+                                       const std::string id =
+                                           stringArgument(rt, args, count, 0, "addInstance");
+                                       const nlohmann::json variations =
+                                           jsonArgument(rt, args, count, 1);
+                                       return Work([service, id, variations] {
+                                           return service->addInstance(id, variations);
+                                       });
+                                   }));
     bridge.setProperty(runtime, "setOverride",
                        asyncMethod(runtime, "setOverride", 2,
                                    [service](jsi::Runtime &rt, auto args, size_t count) {

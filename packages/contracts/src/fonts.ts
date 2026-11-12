@@ -15,7 +15,7 @@ export const fontProviderSchema = Type.Enum(FONT_PROVIDERS);
 
 export const fontStyleSchema = Type.Enum(['normal', 'italic']);
 
-/** `font` is one `.ttf`/`.otf` file; `archive` is a zip the loader unpacks. */
+/** `font` is one `.ttf`/`.otf`/`.woff`/`.woff2` file; `archive` is a zip the loader unpacks. */
 export const fontFileKindSchema = Type.Enum(['font', 'archive']);
 
 /** The longest input the resolver reads: a family name or a link. */
@@ -26,7 +26,7 @@ export const MAX_FONT_FILES = 64;
 
 /**
  * One downloadable file. `weight` and `style` are `null` when only the file itself says, as for
- * direct links and archives; the loader reads them from the font.
+ * direct links, archives and variable fonts' weight; the loader reads them from the font.
  */
 export const fontFileSchema = Type.Object({
 	url: Type.String({ format: 'url', pattern: /^https:\/\//i }),

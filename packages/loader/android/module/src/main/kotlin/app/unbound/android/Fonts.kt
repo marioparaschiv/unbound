@@ -28,7 +28,8 @@ object Fonts {
 
         data class Asset(val path: String) : Source
 
-        data class File(val path: String) : Source
+        /** A font file; for a variable font's instance, `variations` such as `'wght' 700`. */
+        data class File(val path: String, val variations: String = "") : Source
 
         data class Failed(val error: String) : Source
     }
@@ -36,13 +37,18 @@ object Fonts {
     internal fun assetFont(path: String): AssetFont? =
         ASSET_FONT.matchEntire(path)?.let { AssetFont(it.groupValues[1], assetStyle(it.groupValues[2])) }
 
-    internal fun replacement(name: String, path: String, error: String): Source? = when {
+    internal fun replacement(name: String, path: String, error: String, variations: Map<String, Double> = emptyMap()): Source? = when {
         name.isEmpty() -> null
         error.isNotEmpty() -> Source.Failed(error)
         path.isEmpty() -> Source.System(name)
         path.startsWith(ASSET_PREFIX) -> Source.Asset(path.removePrefix(ASSET_PREFIX))
-        else -> Source.File(path)
+        else -> Source.File(path, variationSettings(variations))
     }
+
+    /** `{ wght: 700, wdth: 90 }` as `'wght' 700, 'wdth' 90`, the CSS form `Typeface.Builder` reads. */
+    internal fun variationSettings(variations: Map<String, Double>): String = variations.entries
+        .filter { it.key.length in 1..4 }
+        .joinToString(", ") { (tag, value) -> "'${tag.padEnd(4)}' $value" }
 
     /**
      * Drops every cached lookup and typeface, React Native's included: its font manager outlives a
@@ -113,17 +119,26 @@ object Fonts {
             .intercept { chain ->
                 val font = assetFont(chain.getArg(1) as String)
                 if (font != null) ReactFontCache.discover()
-                pendingFallback.set(
-                    font?.let { found ->
-                        guarded { resolve(found.family, chain.getArg(0) as AssetManager) }?.let { styled(it, found.style) }
-                    },
-                )
-                chain.proceed()
+                // Discord chains each family with its fallbacks, such as ggsans then NotoSans; the first replaced one draws.
+                val pending = pendingFallback.get() == null && font != null
+                if (pending) {
+                    pendingFallback.set(
+                        font?.let { found ->
+                            guarded { resolve(found.family, chain.getArg(0) as AssetManager) }?.let { styled(it, found.style) }
+                        },
+                    )
+                }
+                // A missing asset throws before its typeface is built; a font left pending would replace the next one.
+                runCatching { chain.proceed() }
+                    .onFailure { if (pending) pendingFallback.set(null) }
+                    .getOrThrow()
             }
 
         xposed.hook(Typeface.CustomFallbackBuilder::class.java.getDeclaredMethod("build"))
             .setExceptionMode(ExceptionMode.PROTECTIVE)
             .intercept { chain ->
+                // Typeface.Builder builds our own files through here; those take no Discord font's replacement.
+                if (resolving.get() == true) return@intercept chain.proceed()
                 val replacement = pendingFallback.get()
                 pendingFallback.set(null)
                 replacement ?: chain.proceed()
@@ -153,7 +168,10 @@ object Fonts {
     private fun resolve(family: String, assets: AssetManager): Typeface? {
         val font = JSONObject(resolutions.getOrPut(family) { NativeBridge.nativeResolveFont(family) })
         val name = font.optString("name")
-        val source = replacement(name, font.optString("path"), font.optString("error")) ?: return null
+        val variations = font.optJSONObject("variations")?.let { axes ->
+            axes.keys().asSequence().associateWith { axes.getDouble(it) }
+        }.orEmpty()
+        val source = replacement(name, font.optString("path"), font.optString("error"), variations) ?: return null
         return typefaces.getOrPut(name) { load(name, source, assets) }.typeface
     }
 
@@ -168,7 +186,13 @@ object Fonts {
 
             is Source.Asset -> loadFile(name) { Typeface.createFromAsset(assets, source.path) }
 
-            is Source.File -> loadFile(name) { Typeface.createFromFile(File(source.path)) }
+            is Source.File -> loadFile(name) {
+                if (source.variations.isEmpty()) {
+                    Typeface.createFromFile(File(source.path))
+                } else {
+                    Typeface.Builder(File(source.path)).setFontVariationSettings(source.variations).build()
+                }
+            }
         }
         return LoadedFont(typeface)
     }

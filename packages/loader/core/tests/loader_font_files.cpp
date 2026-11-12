@@ -2,6 +2,7 @@
 #include <string>
 
 #include "FontFixtures.h"
+#include "FontVectors.h"
 #include "LoaderFontFiles.h"
 
 using namespace loader::fonts;
@@ -48,16 +49,36 @@ static void readsFaces()
     assert(first && first->postScriptName == "TestSans-BoldItalic");
 }
 
-static void refusesWhatIsNotAStaticFont()
+static void readsVariableFonts()
+{
+    std::string error;
+    const auto  font = readFontFace(font_vectors::variable(), error);
+    assert(font && font->postScriptName == "VectorSans-Regular" && font->family == "Vector Sans");
+    assert(font->axes.size() == 2 && font->variations.empty());
+    assert(font->axes[0].tag == "wght" && font->axes[0].name == "Weight");
+    assert(font->axes[0].minimum == 100 && font->axes[0].defaultValue == 400 &&
+           font->axes[0].maximum == 900 && !font->axes[0].hidden);
+    assert(font->axes[1].tag == "wdth" && font->axes[1].minimum == 75);
+
+    assert(font->instances.size() == 3);
+    // Regular has no PostScript name of its own, so it is built from the family and style.
+    assert(font->instances[0].postScriptName == "VectorSans-Regular");
+    assert(font->instances[1].postScriptName == "VectorSans-Bold");
+    assert(font->instances[1].style == "Bold" && font->instances[1].coordinates.at("wght") == 700);
+    assert(font->instances[2].postScriptName == "VectorSans-Condensed");
+    assert(font->instances[2].coordinates.at("wdth") == 75);
+}
+
+static void refusesWhatIsNotAFont()
 {
     std::string error;
     FaceSpec    variable;
     variable.variable = true;
     assert(!readFontFace(font_fixtures::font(variable), error));
-    assert(error.find("Variable") != std::string::npos);
+    assert(error.find("axes are damaged") != std::string::npos);
 
     assert(!readFontFace("wOFF" + std::string(64, '\0'), error));
-    assert(error.find("WOFF") != std::string::npos);
+    assert(error.find("decoded first") != std::string::npos);
     assert(!readFontFace("<html><body>Not found</body></html>", error));
     assert(!readFontFace(font_fixtures::font().substr(0, 40), error));
     assert(!readFontFace(std::string("\x00\x01\x00\x00\xFF\xFF", 6), error));
@@ -142,7 +163,8 @@ int main()
 {
     sniffsByMagicBytes();
     readsFaces();
-    refusesWhatIsNotAStaticFont();
+    readsVariableFonts();
+    refusesWhatIsNotAFont();
     checksArchivePaths();
     extractsFontsFromZips();
     boundsWhatArchivesUnpackTo();

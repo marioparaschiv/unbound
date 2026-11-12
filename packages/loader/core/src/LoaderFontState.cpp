@@ -6,6 +6,8 @@
 #include <cstdlib>
 #include <functional>
 
+#include "LoaderFontVariations.h"
+
 namespace loader::fonts {
 static constexpr size_t kMaximumSourceId    = 2048;
 static constexpr size_t kMaximumPresetName  = 64;
@@ -138,20 +140,64 @@ std::string fontSourceInput(const FontSource &source)
 
 nlohmann::json installedFontJSON(const InstalledFont &font)
 {
-    return {{"id", font.id},
-            {"family", font.family},
-            {"postScriptName", font.postScriptName},
-            {"fullName", font.fullName},
-            {"weight", font.weight},
-            {"style", font.italic ? "italic" : "normal"},
-            {"file", font.file},
-            {"source", fontSourceJSON(font.source)}};
+    nlohmann::json json = {{"id", font.id},
+                           {"family", font.family},
+                           {"postScriptName", font.postScriptName},
+                           {"fullName", font.fullName},
+                           {"weight", font.weight},
+                           {"style", font.italic ? "italic" : "normal"},
+                           {"file", font.file},
+                           {"source", fontSourceJSON(font.source)}};
+    if (!font.axes.empty())
+    {
+        nlohmann::json axes = nlohmann::json::array();
+        for (const FontAxis &axis : font.axes)
+        {
+            axes.push_back({{"tag", axis.tag},
+                            {"name", axis.name},
+                            {"min", axis.minimum},
+                            {"default", axis.defaultValue},
+                            {"max", axis.maximum},
+                            {"hidden", axis.hidden}});
+        }
+        json["axes"]       = std::move(axes);
+        json["variations"] = font.variations;
+    }
+    return json;
 }
 
 static std::string stringField(const nlohmann::json &value, const char *key)
 {
     const auto found = value.find(key);
     return found != value.end() && found->is_string() ? found->get<std::string>() : "";
+}
+
+static std::optional<double> numberField(const nlohmann::json &value, const char *key)
+{
+    const auto found = value.find(key);
+    return found != value.end() && found->is_number() ? std::optional(found->get<double>())
+                                                      : std::nullopt;
+}
+
+// The axes of a stored face, or `std::nullopt` for a malformed one.
+static std::optional<std::vector<FontAxis>> parseAxes(const nlohmann::json &value)
+{
+    std::vector<FontAxis> axes;
+    for (const nlohmann::json &axis : value.is_array() ? value : nlohmann::json::array())
+    {
+        const auto minimum = axis.is_object() ? numberField(axis, "min") : std::nullopt;
+        const auto initial = axis.is_object() ? numberField(axis, "default") : std::nullopt;
+        const auto maximum = axis.is_object() ? numberField(axis, "max") : std::nullopt;
+        const auto tag     = axis.is_object() ? stringField(axis, "tag") : "";
+        if (tag.empty() || tag.size() > 4 || !minimum || !initial || !maximum ||
+            !(*minimum <= *initial && *initial <= *maximum))
+        {
+            return std::nullopt;
+        }
+        axes.push_back({tag, stringField(axis, "name"), *minimum, *initial, *maximum,
+                        axis.value("hidden", false) == true});
+    }
+    return axes;
 }
 
 std::optional<InstalledFont> parseInstalledFont(const nlohmann::json &value)
@@ -171,11 +217,27 @@ std::optional<InstalledFont> parseInstalledFont(const nlohmann::json &value)
     font.weight = weight != value.end() && weight->is_number_integer() ? weight->get<int>() : 400;
     const auto source = value.find("source");
     const auto parsed = source != value.end() ? parseFontSource(*source) : std::nullopt;
-    if (font.id.empty() || font.postScriptName.empty() || font.file.empty() || !parsed)
+    const auto axes   = parseAxes(value.value("axes", nlohmann::json::array()));
+    if (font.id.empty() || font.postScriptName.empty() || font.file.empty() || !parsed || !axes)
     {
         return std::nullopt;
     }
     font.source = *parsed;
+    font.axes   = *axes;
+    std::string          error;
+    const nlohmann::json variations = value.value("variations", nlohmann::json::object());
+    for (const auto &[tag, coordinate] : variations.items())
+    {
+        if (coordinate.is_number())
+        {
+            font.variations[tag] = coordinate.get<double>();
+        }
+    }
+    // Coordinates past an axis clamp to it; a face naming an axis the font lacks draws at the
+    // defaults.
+    auto coordinates = instanceCoordinates(font.axes, font.variations, error);
+    coordinates      = coordinates ? coordinates : instanceCoordinates(font.axes, {}, error);
+    font.variations  = font.axes.empty() ? FontVariations{} : *coordinates;
     return font;
 }
 

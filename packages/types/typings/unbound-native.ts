@@ -70,6 +70,23 @@ export type UnboundInstalledFont = {
 	/** The file's absolute path; `list()` adds it. */
 	path?: string;
 	source: UnboundFontSource;
+	/** A variable font's design axes; absent for a static face. */
+	axes?: UnboundFontAxis[];
+	/** The coordinate on each axis this face draws at, such as `{ wght: 650 }`; absent for a static face. */
+	variations?: Record<string, number>;
+};
+
+/** One design axis of a variable font, such as `wght` from 100 to 900. */
+export type UnboundFontAxis = {
+	/** The four-letter tag, such as `wght`, `wdth` or `slnt`. */
+	tag: string;
+	/** The name the font gives it, such as `Weight`. */
+	name: string;
+	min: number;
+	default: number;
+	max: number;
+	/** The font asks apps not to offer it. */
+	hidden: boolean;
 };
 
 /**
@@ -164,6 +181,8 @@ export type UnboundNativeFonts = {
 	/** Installs `input`'s files whose weight and style are in `variants`, or every file. */
 	install(input: string, variants?: UnboundFontVariant[]): Promise<UnboundFontInstallResult>;
 	remove(id: string): Promise<void>;
+	/** Adds a face of variable face `id`'s font at `variations`, other axes at their defaults, or returns the one there. */
+	addInstance(id: string, variations: Record<string, number>): Promise<UnboundInstalledFont>;
 	/** Points a Discord family, or a whole group such as `PRIMARY`, at a face; `null` clears it. */
 	setOverride(family: string, fontId: string | null): Promise<void>;
 	/** Passes Discord's `Constants.Fonts` once, and the API origin the loader resolves fonts through. */

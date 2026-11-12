@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "LoaderFontFiles.h"
+
 // The data Unbound's font store keeps in `Unbound/Fonts/state.json`, its JSON shapes, and the pure
 // rules over it: which face fills a Discord family, how a group expands, what a preset holds.
 namespace loader::fonts {
@@ -33,9 +35,12 @@ struct InstalledFont {
     std::string fullName;
     int         weight = 400;
     bool        italic = false;
-    // Relative to the Fonts folder.
+    // Relative to the Fonts folder. A variable font's faces share one file.
     std::string file;
     FontSource  source;
+    // A variable font's axes and the coordinates this face draws at; both empty for a static face.
+    std::vector<FontAxis> axes;
+    FontVariations        variations;
 };
 
 struct FontPreset {

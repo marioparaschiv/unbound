@@ -18,6 +18,10 @@ static constexpr uint32_t kWOFFTag       = 0x774F4646; // wOFF
 static constexpr uint32_t kWOFF2Tag      = 0x774F4632; // wOF2
 static constexpr uint32_t kHeadMagic     = 0x5F0F3CF5;
 static constexpr uint16_t kMaximumTables = 512;
+// Real fonts have a handful of axes and a few dozen instances; more is a damaged table.
+static constexpr uint16_t kMaximumAxes      = 64;
+static constexpr uint16_t kMaximumInstances = 256;
+static constexpr uint16_t kNoName           = 0xFFFF;
 
 static std::optional<uint32_t> readU32(std::string_view data, size_t offset)
 {
@@ -142,12 +146,99 @@ static std::string withoutSpaces(std::string text)
     return text;
 }
 
+static double fixedValue(uint32_t value)
+{
+    return static_cast<int32_t>(value) / 65536.0;
+}
+
+// `wght`, or `ital` for a tag padded with spaces.
+static std::string tagText(uint32_t value)
+{
+    std::string text;
+    for (int shift = 24; shift >= 0; shift -= 8)
+    {
+        text += static_cast<char>((value >> shift) & 0xFF);
+    }
+    return text.substr(0, text.find_last_not_of(' ') + 1);
+}
+
+// Reads `fvar` into `face.axes` and `face.instances`; false for a table too damaged to trust.
+static bool readVariations(const std::string &data, const Table &fvar, FontFace &face)
+{
+    const std::string_view table(data.data() + fvar.offset, fvar.length);
+    const auto             axesOffset    = readU16(table, 4);
+    const auto             axisCount     = readU16(table, 8);
+    const auto             axisSize      = readU16(table, 10);
+    const auto             instanceCount = readU16(table, 12);
+    const auto             instanceSize  = readU16(table, 14);
+    if (!axesOffset || !axisCount || !axisSize || !instanceCount || !instanceSize ||
+        *axisCount == 0 || *axisCount > kMaximumAxes || *axisSize < 20 ||
+        *instanceSize < 4 + *axisCount * 4)
+    {
+        return false;
+    }
+
+    for (uint16_t index = 0; index < *axisCount; index++)
+    {
+        const size_t record  = *axesOffset + static_cast<size_t>(index) * *axisSize;
+        const auto   tag     = readU32(table, record);
+        const auto   minimum = readU32(table, record + 4);
+        const auto   value   = readU32(table, record + 8);
+        const auto   maximum = readU32(table, record + 12);
+        const auto   flags   = readU16(table, record + 16);
+        const auto   nameID  = readU16(table, record + 18);
+        if (!tag || !minimum || !value || !maximum || !flags || !nameID)
+        {
+            return false;
+        }
+        FontAxis axis{tagText(*tag),        "",
+                      fixedValue(*minimum), fixedValue(*value),
+                      fixedValue(*maximum), (*flags & 0x1) != 0};
+        if (axis.tag.empty() || !(axis.minimum <= axis.defaultValue) ||
+            !(axis.defaultValue <= axis.maximum))
+        {
+            return false;
+        }
+        axis.name = fontNameFromData(data, *nameID).value_or(axis.tag);
+        face.axes.push_back(std::move(axis));
+    }
+
+    const size_t first = *axesOffset + static_cast<size_t>(*axisCount) * *axisSize;
+    const bool   named = *instanceSize >= 6 + *axisCount * 4;
+    for (uint16_t index = 0; index < std::min(*instanceCount, kMaximumInstances); index++)
+    {
+        const size_t record  = first + static_cast<size_t>(index) * *instanceSize;
+        const auto   styleID = readU16(table, record);
+        if (!styleID || record + *instanceSize > table.size())
+        {
+            break;
+        }
+        FontInstance instance;
+        instance.style = fontNameFromData(data, *styleID).value_or("");
+        for (size_t axis = 0; axis < face.axes.size(); axis++)
+        {
+            const double coordinate = fixedValue(*readU32(table, record + 4 + axis * 4));
+            instance.coordinates[face.axes[axis].tag] =
+                std::clamp(coordinate, face.axes[axis].minimum, face.axes[axis].maximum);
+        }
+        const auto psID = named ? readU16(table, record + 4 + face.axes.size() * 4) : std::nullopt;
+        const auto psName = psID && *psID != kNoName ? fontNameFromData(data, *psID) : std::nullopt;
+        instance.postScriptName =
+            psName ? *psName : withoutSpaces(face.family) + "-" + withoutSpaces(instance.style);
+        if (!instance.style.empty())
+        {
+            face.instances.push_back(std::move(instance));
+        }
+    }
+    return true;
+}
+
 std::optional<FontFace> readFontFace(const std::string &data, std::string &error)
 {
     const FontFileType type = sniffFontFile(data);
     if (type == FontFileType::WebFont)
     {
-        error = "WOFF and WOFF2 fonts are not supported yet";
+        error = "WOFF and WOFF2 fonts must be decoded first";
         return std::nullopt;
     }
     const auto font = fontFileExtension(type).empty() ? std::nullopt : firstFontOffset(data);
@@ -163,14 +254,10 @@ std::optional<FontFace> readFontFace(const std::string &data, std::string &error
     const auto head = findTable(data, *font, tag("head"));
     if (!head || head->length < 54 || readU32(data, head->offset + 12) != kHeadMagic ||
         !findTable(data, *font, tag("cmap")) || !findTable(data, *font, tag("name")) ||
-        !(findTable(data, *font, tag("glyf")) || findTable(data, *font, tag("CFF "))))
+        !(findTable(data, *font, tag("glyf")) || findTable(data, *font, tag("CFF ")) ||
+          findTable(data, *font, tag("CFF2"))))
     {
         error = "The font is missing tables it needs";
-        return std::nullopt;
-    }
-    if (findTable(data, *font, tag("fvar")))
-    {
-        error = "Variable fonts are not supported yet";
         return std::nullopt;
     }
 
@@ -194,6 +281,12 @@ std::optional<FontFace> readFontFace(const std::string &data, std::string &error
         const auto selection     = readU16(data, os2->offset + 62).value_or(0);
         const bool italicOrSlant = (selection & 0x1) != 0 || (selection & 0x200) != 0;
         face.italic              = face.italic || italicOrSlant;
+    }
+    if (const auto fvar = findTable(data, *font, tag("fvar"));
+        fvar && !readVariations(data, *fvar, face))
+    {
+        error = "The variable font's axes are damaged";
+        return std::nullopt;
     }
     return face;
 }
@@ -238,7 +331,8 @@ static bool isFontEntry(std::string_view name)
         return false;
     }
     const std::string lower = lowercase(file);
-    return lower.ends_with(".ttf") || lower.ends_with(".otf");
+    return lower.ends_with(".ttf") || lower.ends_with(".otf") || lower.ends_with(".woff") ||
+           lower.ends_with(".woff2");
 }
 
 static ArchiveContents archiveError(std::string message)
@@ -322,7 +416,7 @@ ArchiveContents extractFontArchive(const std::string &zip, const ArchiveLimits &
     }
     if (contents.fonts.empty())
     {
-        contents.error = "The archive has no .ttf or .otf font";
+        contents.error = "The archive has no .ttf, .otf, .woff or .woff2 font";
     }
     return contents;
 }
