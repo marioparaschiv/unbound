@@ -1,7 +1,6 @@
 package main
 
 import (
-	"archive/zip"
 	"bufio"
 	"crypto/ecdsa"
 	"errors"
@@ -12,7 +11,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 )
 
@@ -228,6 +226,10 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 	if _, err := os.Stat(input); err != nil {
 		return fmt.Errorf("IPA not found: %s", input)
 	}
+	inspector, err := debInspector(options.deb, work, runner, options.root)
+	if err != nil {
+		return err
+	}
 	var unboundArgs, unboundFiles []string
 	if options.channel != "testflight" {
 		unboundArgs, unboundFiles, err = cyanInputs(input, work)
@@ -270,6 +272,13 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 		if err := os.Rename(injectionOutput, options.output); err != nil {
 			return err
 		}
+	}
+	// Added after cyan, which would give any *.dylib it injects a load command.
+	if err := addInspectorToIPA(options.output, inspector); err != nil {
+		return fmt.Errorf("adding the inspector to the IPA failed: %w", err)
+	}
+	if err := validateIPAInspector(options.output); err != nil {
+		return err
 	}
 	finalEntries, err := zipList(options.output, runner, options.root)
 	if err != nil {
@@ -335,6 +344,9 @@ func buildSimulator(options buildOptions, runner commandRunner) error {
 		_ = runner(options.root, "codesign", []string{"-f", "-s", "-", framework}, os.Environ(), os.Stdout, os.Stderr)
 	}
 	if err := runner(options.root, "codesign", []string{"-f", "-s", "-", app}, os.Environ(), os.Stdout, os.Stderr); err != nil {
+		return err
+	}
+	if err := validateAppInspector(app); err != nil {
 		return err
 	}
 	dylib, err := findFile(app, "Unbound.dylib")
@@ -460,70 +472,6 @@ func attestationKeys() (*ecdsa.PrivateKey, *ecdsa.PublicKey, error) {
 	return private, public, nil
 }
 
-func provisionCyan(root string, runner commandRunner) (string, error) {
-	cache := filepath.Join(root, ".tools-cache", "cyan-"+cyanCommit)
-	python := filepath.Join(cache, "venv", "bin", "python3")
-	binary := filepath.Join(cache, "venv", "bin", "cyan")
-	if executableExists(binary) {
-		return binary, nil
-	}
-	if err := os.MkdirAll(cache, 0o755); err != nil {
-		return "", err
-	}
-	if err := runner(root, "python3", []string{"-m", "venv", filepath.Join(cache, "venv")}, os.Environ(), os.Stdout, os.Stderr); err != nil {
-		return "", err
-	}
-	archive := cyanRepository + "/archive/" + cyanCommit + ".zip"
-	if err := runner(root, python, []string{"-m", "pip", "install", "--disable-pip-version-check", "--force-reinstall", archive, "Pillow==" + pillowVersion}, os.Environ(), os.Stdout, os.Stderr); err != nil {
-		return "", err
-	}
-	return binary, nil
-}
-
-func provisionSimforge(root string, runner commandRunner) (string, error) {
-	cache := filepath.Join(root, ".tools-cache", "simforge-"+simforgeCommit)
-	derivedData := filepath.Join(cache, "derived-data")
-	product := filepath.Join(derivedData, "Build", "Products", "Release", "simforge")
-	if err := os.MkdirAll(filepath.Dir(cache), 0o755); err != nil {
-		return "", err
-	}
-	if _, err := os.Stat(cache); errors.Is(err, os.ErrNotExist) {
-		if err := runner(root, "git", []string{"clone", simforgeRepository, cache}, os.Environ(), os.Stdout, os.Stderr); err != nil {
-			return "", err
-		}
-		if err := runner(cache, "git", []string{"checkout", "--detach", simforgeCommit}, os.Environ(), os.Stdout, os.Stderr); err != nil {
-			return "", err
-		}
-	} else if err != nil {
-		return "", err
-	} else {
-		revision, err := gitOutput(cache, runner, "rev-parse", "HEAD")
-		if err != nil {
-			return "", err
-		}
-		if strings.TrimSpace(revision) != simforgeCommit {
-			return "", fmt.Errorf("simforge cache is not at pinned commit: %s", cache)
-		}
-		status, err := gitOutput(cache, runner, "status", "--porcelain", "--untracked-files=no")
-		if err != nil {
-			return "", err
-		}
-		if strings.TrimSpace(status) != "" {
-			return "", fmt.Errorf("simforge cache has tracked changes: %s", cache)
-		}
-	}
-	if executableExists(product) {
-		return product, nil
-	}
-	if err := runXcodebuild(runner, cache, []string{"-project", "simforge.xcodeproj", "-scheme", "simforge", "-configuration", "Release", "-derivedDataPath", derivedData, "MACOSX_DEPLOYMENT_TARGET=12.0", "build"}); err != nil {
-		return "", err
-	}
-	if !executableExists(product) {
-		return "", fmt.Errorf("simforge build did not produce executable: %s", product)
-	}
-	return product, nil
-}
-
 func buildExtensions(options buildOptions, work string, runner commandRunner) ([]string, error) {
 	if runtime.GOOS != "darwin" {
 		return nil, errors.New("extensions require macOS")
@@ -596,96 +544,6 @@ func runXcodebuild(runner commandRunner, directory string, args []string) error 
 	return buildErr
 }
 
-func ipaExtensions(entries []string) map[string]struct{} {
-	extensions := map[string]struct{}{}
-	for _, entry := range entries {
-		parts := strings.Split(entry, "/")
-		if len(parts) != 5 || parts[0] != "Payload" || !strings.HasSuffix(parts[1], ".app") ||
-			parts[2] != "PlugIns" || !strings.HasSuffix(parts[3], ".appex") || parts[4] != "Info.plist" {
-			continue
-		}
-		extensions[parts[1]+"/"+strings.TrimSuffix(parts[3], ".appex")] = struct{}{}
-	}
-	return extensions
-}
-
-func validateIPAExtensions(sourceEntries, finalEntries []string) error {
-	appName := "Discord.app"
-	for _, entry := range sourceEntries {
-		parts := strings.Split(entry, "/")
-		if len(parts) >= 3 && parts[0] == "Payload" && strings.HasSuffix(parts[1], ".app") {
-			appName = parts[1]
-			break
-		}
-	}
-	required := ipaExtensions(sourceEntries)
-	required[appName+"/OpenInDiscord"] = struct{}{}
-	required[appName+"/Share"] = struct{}{}
-	installed := ipaExtensions(finalEntries)
-	missing := []string{}
-	for name := range required {
-		if _, ok := installed[name]; !ok {
-			missing = append(missing, name)
-		}
-	}
-	if len(missing) == 0 {
-		return nil
-	}
-	sort.Strings(missing)
-	return fmt.Errorf("final IPA is missing required extensions: %s", strings.Join(missing, ", "))
-}
-
-func validateIPAExtensionExecutables(path string) error {
-	archive, err := zip.OpenReader(path)
-	if err != nil {
-		return err
-	}
-	defer archive.Close()
-	entries := make(map[string]*zip.File, len(archive.File))
-	for _, file := range archive.File {
-		entries[file.Name] = file
-	}
-	for _, file := range archive.File {
-		parts := strings.Split(file.Name, "/")
-		if len(parts) != 5 || parts[0] != "Payload" || !strings.HasSuffix(parts[1], ".app") ||
-			parts[2] != "PlugIns" || !strings.HasSuffix(parts[3], ".appex") || parts[4] != "Info.plist" {
-			continue
-		}
-		reader, err := file.Open()
-		if err != nil {
-			return fmt.Errorf("could not read extension %s: %w", parts[3], err)
-		}
-		info, err := os.CreateTemp("", "loader-ipa-extension-*.plist")
-		if err != nil {
-			reader.Close()
-			return err
-		}
-		_, copyErr := io.Copy(info, reader)
-		readCloseErr := reader.Close()
-		writeCloseErr := info.Close()
-		if copyErr != nil || readCloseErr != nil || writeCloseErr != nil {
-			os.Remove(info.Name())
-			return fmt.Errorf("could not extract extension %s Info.plist: %w", parts[3], errors.Join(copyErr, readCloseErr, writeCloseErr))
-		}
-		executable, readErr := plistExecutable(info.Name())
-		removeErr := os.Remove(info.Name())
-		if readErr != nil {
-			return fmt.Errorf("could not read extension %s executable: %w", parts[3], readErr)
-		}
-		if removeErr != nil {
-			return removeErr
-		}
-		if executable == "" || filepath.Base(executable) != executable {
-			return fmt.Errorf("extension %s has an invalid executable name %q", parts[3], executable)
-		}
-		binary := strings.TrimSuffix(file.Name, "Info.plist") + executable
-		if candidate := entries[binary]; candidate == nil || candidate.UncompressedSize64 == 0 {
-			return fmt.Errorf("final IPA is missing executable %s", binary)
-		}
-	}
-	return nil
-}
-
 func rewritePlist(path string) error {
 	if _, err := os.Stat(path); err != nil {
 		return err
@@ -694,119 +552,6 @@ func rewritePlist(path string) error {
 		return nil
 	}
 	return exec.Command("/usr/libexec/PlistBuddy", "-c", "Add :URLScheme string unbound", path).Run()
-}
-
-func rejectInjectedIPA(ipa, work string, runner commandRunner) error {
-	info := filepath.Join(work, "Info.plist")
-	if err := unzipEntry(ipa, "Payload/*.app/Info.plist", info, runner, "."); err != nil {
-		return err
-	}
-	executable, err := plistExecutable(info)
-	if err != nil {
-		return err
-	}
-	entries, err := zipList(ipa, runner, ".")
-	if err != nil {
-		return err
-	}
-	for _, entry := range entries {
-		if strings.HasSuffix(entry, ".app/"+executable) {
-			binary := filepath.Join(work, "executable")
-			if err := unzipEntry(ipa, entry, binary, runner, "."); err != nil {
-				return err
-			}
-			output, _ := exec.Command("otool", "-L", binary).CombinedOutput()
-			if strings.Contains(string(output), "Unbound.dylib") {
-				return errors.New("input IPA already contains Unbound.dylib; use a clean Discord IPA")
-			}
-			return nil
-		}
-	}
-	return nil
-}
-
-func verifyIPA(ipa, work string, runner commandRunner) error {
-	verification := filepath.Join(work, "verify")
-	if err := unzip(ipa, verification, runner, "."); err != nil {
-		return err
-	}
-	dylib, err := findFile(filepath.Join(verification, "Payload"), "Unbound.dylib")
-	if err != nil {
-		return errors.New("final IPA contains no Unbound.dylib")
-	}
-	public, err := pinnedPublicKey()
-	if err != nil {
-		return err
-	}
-	if _, err := verifyFile(dylib, public); err != nil {
-		return fmt.Errorf("final IPA contains an invalid embedded tweak attestation: %w", err)
-	}
-	return nil
-}
-
-func plistExecutable(path string) (string, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return "", fmt.Errorf("could not read IPA executable name: %w", err)
-	}
-	info, err := readPlist(data)
-	if err != nil {
-		return "", fmt.Errorf("could not read IPA executable name: %w", err)
-	}
-	executable := info.get("CFBundleExecutable")
-	if executable == nil || strings.TrimSpace(executable.text) == "" {
-		return "", fmt.Errorf("could not read IPA executable name: %s has no CFBundleExecutable", path)
-	}
-	return strings.TrimSpace(executable.text), nil
-}
-
-func unzip(path, destination string, runner commandRunner, root string) error {
-	return runner(root, "unzip", []string{"-q", path, "-d", destination}, os.Environ(), os.Stdout, os.Stderr)
-}
-
-func unzipEntry(path, entry, destination string, runner commandRunner, root string) error {
-	file, err := os.Create(destination)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	command := exec.Command("unzip", "-p", path, entry)
-	command.Stdout = file
-	command.Stderr = os.Stderr
-	return command.Run()
-}
-
-func zipList(path string, runner commandRunner, root string) ([]string, error) {
-	output, err := captureCommand(root, runner, "unzip", []string{"-Z1", path}, os.Environ())
-	if err != nil {
-		return nil, err
-	}
-	return strings.Split(strings.TrimSpace(output), "\n"), nil
-}
-
-func zipDirectory(payload, output string, runner commandRunner, root string) error {
-	return runner(payload, "zip", []string{"-q", "-r", output, "Discord.app"}, os.Environ(), os.Stdout, os.Stderr)
-}
-
-func copyTree(source, destination string) error {
-	return filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		relative, err := filepath.Rel(source, path)
-		if err != nil {
-			return err
-		}
-		target := filepath.Join(destination, relative)
-		if info.IsDir() {
-			return os.MkdirAll(target, info.Mode().Perm())
-		}
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		return os.WriteFile(target, data, info.Mode().Perm())
-	})
 }
 
 func defaultDeb(root, configuration string) (string, error) {

@@ -20,6 +20,7 @@
 #import "NativePluginFFICodecs.h"
 #import "NativePluginFabricAdapter.h"
 #import "NativePluginHooks.h"
+#import "NativePluginInspector.h"
 #import "NativePluginInvocation.h"
 #import "NativePluginIvars.h"
 #import "NativePluginObjCValues.h"
@@ -456,6 +457,7 @@ static void installObjC(Runtime &runtime, Object &objc)
                      }));
 
     objc.setProperty(runtime, "hook", makeFunction("hook", 3, runtime, makeHook));
+    installInspector(runtime, objc);
     objc.setProperty(runtime, "createUIScope",
                      makeFunction("createUIScope", 1, runtime, createUIScope));
 }

@@ -30,6 +30,11 @@ void        setAutomaticRecoveryKey(SettingsStore &settings, const std::string &
 bool setRecoveryEnabled(SettingsStore &settings, bool enabled);
 bool developerMode(const SettingsStore &settings);
 bool devOverlayVisible(const SettingsStore &settings, bool virtualDevice, bool debugBuild);
+// Whether the client's debugger connection is switched on.
+bool debuggerEnabled(const SettingsStore &settings);
+// Whether the debugger may load the native object inspector: developer mode, the debugger or a
+// debug build.
+bool inspectorEnabled(const SettingsStore &settings, bool debugBuild);
 bool hotReloadEnabled(const SettingsStore &settings);
 // Whether React's DevTools backend runs before the bundle.
 bool devtoolsEnabled(const SettingsStore &settings);
