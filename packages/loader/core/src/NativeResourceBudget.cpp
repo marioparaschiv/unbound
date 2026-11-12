@@ -122,6 +122,12 @@ NativeResourceBudget &nativeCachedReturnBudget()
     return budget;
 }
 
+NativeResourceBudget &nativePreparedCallBudget()
+{
+    static NativeResourceBudget budget(kMaximumPreparedNativeCalls);
+    return budget;
+}
+
 static std::mutex &platformCounterMutex()
 {
     static std::mutex mutex;
