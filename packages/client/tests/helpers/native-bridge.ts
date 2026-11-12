@@ -291,6 +291,7 @@ const fakeBridge: LoaderBridge = {
 		remove: (token: NativeJavaHookToken) => {
 			hooksRemoved.push(token);
 		},
+		proxy: () => ({ token: javaHookToken, object: javaHandle }),
 	},
 	debug: {
 		recordEvaluation: () => true,

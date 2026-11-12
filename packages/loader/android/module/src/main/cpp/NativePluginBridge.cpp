@@ -316,10 +316,37 @@ static jsi::Object makeHooksNamespace(jsi::Runtime &runtime, const JavaCallbacks
             if (count > 4)
             {
                 rememberHookListener(rt, parsed["id"].get<std::string>(), args[4], coalesce,
-                                     rewritesArguments, callbacks);
+                                     rewritesArguments, false, callbacks);
             }
             return loader::toJSIValue(rt, parsed);
         });
+    define(runtime, hooks, "proxy", 2,
+           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               requireArguments(count, 2, "Java proxies require interface names and a handler");
+               if (!args[1].isObject() || !args[1].asObject(rt).isFunction(rt) ||
+                   !loader::native::currentUIScopeRuntime())
+               {
+                   throw std::invalid_argument(
+                       "Java proxies require a handler created in a UI scope");
+               }
+               loader::native::NativeResourceReservation reservation(
+                   loader::native::nativeHookBudget(), "Too many native hooks are installed");
+               std::string response  = callJavaString(callbacks, callbacks.hooksProxy,
+                                                      {serializeJavaArguments(rt, args, count, 0)});
+               nlohmann::json parsed = nlohmann::json::parse(response, nullptr, false);
+               if (parsed.is_discarded() || !parsed.contains("id") || !parsed["id"].is_string() ||
+                   !parsed.contains("object"))
+               {
+                   throw std::runtime_error("The Android proxy adapter returned no proxy");
+               }
+               std::string id = parsed["id"].get<std::string>();
+               installedHooks().adopt(id, reservation);
+               rememberHookListener(rt, id, args[1], false, false, true, callbacks);
+               jsi::Object proxy(rt);
+               proxy.setProperty(rt, "token", loader::toJSIValue(rt, nlohmann::json{{"id", id}}));
+               proxy.setProperty(rt, "object", adoptJavaValue(rt, parsed["object"]));
+               return jsi::Value(rt, proxy);
+           });
     define(runtime, hooks, "remove", 1,
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                requireArguments(count, 1, "Removing a hook requires its token");
@@ -398,6 +425,26 @@ static jsi::Object makeScopedHooks(jsi::Runtime                                 
 {
     jsi::Object hooks =
         filterNamespace(runtime, makeHooksNamespace(runtime, callbacks), *scope, "hooks.");
+    if (hooks.hasProperty(runtime, "proxy"))
+    {
+        auto create =
+            std::make_shared<jsi::Function>(hooks.getPropertyAsFunction(runtime, "proxy"));
+        define(runtime, hooks, "proxy", 2,
+               [scope, create, callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+                   return scope->hook(
+                       rt, [&]() -> std::pair<jsi::Value, loader::native::UIScope::Release> {
+                           jsi::Value  proxy = create->call(rt, args, count);
+                           std::string id =
+                               hookTokenId(rt, proxy.asObject(rt).getProperty(rt, "token"));
+                           return {std::move(proxy), [callbacks, id] {
+                                       if (installedHooks().contains(id))
+                                       {
+                                           removeHook(callbacks, id);
+                                       }
+                                   }};
+                       });
+               });
+    }
     if (!hooks.hasProperty(runtime, "hook"))
     {
         return hooks;

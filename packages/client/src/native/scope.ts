@@ -555,6 +555,15 @@ export function createScopedNativeBridge(
 			javaHookTokens.delete(token);
 			removeJavaHook(token);
 		},
+		proxy: (interfaces, handler) => {
+			if (lifecycle.disposed) {
+				throw new NativeBridgeDisposedError();
+			}
+
+			requireGranted('hooks.proxy');
+
+			return hooksBridge.proxy(interfaces, handler);
+		},
 	};
 
 	return {

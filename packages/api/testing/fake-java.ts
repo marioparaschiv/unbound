@@ -8,6 +8,7 @@ import type {
 	NativeJavaHookEvent,
 	NativeJavaHookOptions,
 	NativeJavaHooksBridge,
+	NativeJavaProxyCall,
 	NativeJavaReference,
 	NativeJavaValue,
 } from '../src/native';
@@ -72,7 +73,9 @@ export type FakeJava = {
 	registerClass: (name: string, spec?: JavaClassSpec) => void;
 	/** Makes an object of a registered class, with its fields, as the plugin sees it: a tagged `handle` value. */
 	create: (className: string, fields?: Record<string, JavaPlain>) => NativeJavaValue;
-	/** Forgets every class, object and hook. */
+	/** Calls `method` on a proxy made with `hooks.proxy`, as Java would, and returns what its handler returned. */
+	callProxy: (proxy: NativeJavaArgument, method: string, args?: JavaPlain[]) => unknown;
+	/** Forgets every class, object, hook and proxy. */
 	reset: () => void;
 };
 
@@ -139,6 +142,8 @@ export function createFakeJava(log: NativeCallLog = createCallLog()): FakeJava {
 	const classes = new Map<string, JavaClassSpec>();
 	const objects = new Map<string, JavaObject>();
 	const hookEntries = new Map<string, HookEntry>();
+	const proxyHandlers = new Map<string, (call: NativeJavaProxyCall) => unknown>();
+	const proxyTokens = new Map<string, string>();
 	let next = 0;
 
 	function chain(className: string): string[] {
@@ -496,18 +501,52 @@ export function createFakeJava(log: NativeCallLog = createCallLog()): FakeJava {
 		removeReturnValue: (token, self) =>
 			void hookEntries.get(token.id)?.results.delete(tagKey(self)),
 		clearReturnValues: (token) => hookEntries.get(token.id)?.results.clear(),
-		remove: (token) => void hookEntries.delete(token.id),
+		remove(token) {
+			hookEntries.delete(token.id);
+
+			const object = proxyTokens.get(token.id);
+
+			if (object) {
+				proxyHandlers.delete(object);
+				proxyTokens.delete(token.id);
+			}
+		},
+		proxy(interfaces, handler) {
+			const object = spawn(interfaces[0] ?? 'java.lang.Object', false);
+			const id = `proxy-${++next}`;
+
+			log.record({
+				bridge: 'hooks',
+				method: 'proxy',
+				target: interfaces.join(','),
+				name: 'proxy',
+				args: [],
+			});
+			proxyHandlers.set(object.id, handler);
+			proxyTokens.set(id, object.id);
+
+			return { token: { id }, object: brand<NativeJavaHandle>(object) };
+		},
 	});
+
+	function callProxy(proxy: NativeJavaArgument, method: string, args: JavaPlain[] = []) {
+		const object = resolve(proxy as NativeJavaReference, 'callProxy');
+
+		return proxyHandlers.get(object.id)?.({ method, args: args.map(tagged) });
+	}
 
 	return {
 		bridge,
 		hooks,
 		registerClass: (name, spec = {}) => void classes.set(name, spec),
 		create: (className, fields) => tagged(brand<NativeJavaHandle>(instance(className, fields))),
+		callProxy,
 		reset() {
 			classes.clear();
 			objects.clear();
 			hookEntries.clear();
+			proxyHandlers.clear();
+			proxyTokens.clear();
 		},
 	};
 }

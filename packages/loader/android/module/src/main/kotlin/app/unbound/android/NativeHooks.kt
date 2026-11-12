@@ -4,8 +4,10 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.json.JSONTokener
 import java.lang.reflect.Executable
+import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import java.lang.reflect.Proxy
 
 object NativeHooks {
     interface Installer {
@@ -58,7 +60,10 @@ object NativeHooks {
         var removable: Removable?,
     )
 
+    private class ProxyRegistration(val token: String, @Volatile var active: Boolean = true)
+
     private val registrations = HashMap<String, Registration>()
+    private val proxies = HashMap<String, ProxyRegistration>()
     private var nextToken = 1L
 
     private var installer: Installer? = null
@@ -139,20 +144,87 @@ object NativeHooks {
 
     fun remove(tokenJSON: String) {
         val token = parseToken(tokenJSON)
+        synchronized(this) { proxies.remove(token) }?.active = false
         val registration = synchronized(this) { registrations.remove(token) } ?: return
         registration.removable?.remove()
     }
 
     fun removeAll() {
-        val current = synchronized(this) {
-            val all = registrations.values.toList()
+        val (current, currentProxies) = synchronized(this) {
+            val all = registrations.values.toList() to proxies.values.toList()
             registrations.clear()
+            proxies.clear()
             all
         }
+        for (proxy in currentProxies) proxy.active = false
         for (registration in current) registration.removable?.remove()
     }
 
-    fun installedCount(): Int = synchronized(this) { registrations.size }
+    fun installedCount(): Int = synchronized(this) { registrations.size + proxies.size }
+
+    fun proxy(interfacesJSON: String): String {
+        val names = JSONArray(interfacesJSON)
+        require(names.length() > 0) { "A Java proxy needs at least one interface" }
+        val interfaces = (0 until names.length()).map { NativeJava.loadHostClass(names.getString(it)) }
+        for (type in interfaces) {
+            require(type.isInterface) { "${type.name} is not an interface" }
+        }
+        val registration = synchronized(this) { ProxyRegistration("proxy-${nextToken++}") }
+        val instance = Proxy.newProxyInstance(
+            interfaces.first().classLoader,
+            interfaces.toTypedArray(),
+            proxyHandler(registration),
+        )
+        synchronized(this) { proxies[registration.token] = registration }
+        return JSONObject()
+            .put("id", registration.token)
+            .put("object", JSONTokener(NativeJava.describe(instance)).nextValue())
+            .toString()
+    }
+
+    private fun proxyHandler(registration: ProxyRegistration) = InvocationHandler { proxy, method, arguments ->
+        when {
+            method.declaringClass == Any::class.java -> objectMethod(proxy, method, arguments, registration)
+            !registration.active -> defaultReturn(method.returnType)
+            else -> answer(registration, method, arguments.orEmpty().toList())
+        }
+    }
+
+    private fun objectMethod(proxy: Any, method: Method, arguments: Array<Any?>?, registration: ProxyRegistration): Any? =
+        when (method.name) {
+            "equals" -> proxy === arguments?.firstOrNull()
+            "hashCode" -> System.identityHashCode(proxy)
+            else -> "UnboundProxy(${registration.token})"
+        }
+
+    private fun answer(registration: ProxyRegistration, method: Method, arguments: List<Any?>): Any? {
+        val target = synchronized(this) { dispatcher } ?: return defaultReturn(method.returnType)
+        val (described, issued) = NativeJava.recordingIssues { NativeJava.describeAll(arguments) }
+        val payload = JSONObject().put("method", method.name).put("args", JSONArray(described))
+        val reply = runCatching { target.dispatch(registration.token, payload.toString()) }
+            .onFailure {
+                NativeJava.releaseIssued(issued)
+                Logger.error(LogCategory.HOOKS, "Failed to dispatch a Java proxy call to ${method.name}", it)
+            }
+            .getOrNull()
+        if (reply == null || method.returnType == Void.TYPE) return defaultReturn(method.returnType)
+        return runCatching { NativeJava.coerceTo(method.returnType, NativeJava.decode(reply)) }
+            .onFailure { Logger.error(LogCategory.HOOKS, "Failed to decode a Java proxy result for ${method.name}", it) }
+            .getOrNull()
+            ?: defaultReturn(method.returnType)
+    }
+
+    private fun defaultReturn(type: Class<*>): Any? = when (type) {
+        java.lang.Boolean.TYPE -> false
+        java.lang.Integer.TYPE -> 0
+        java.lang.Long.TYPE -> 0L
+        java.lang.Float.TYPE -> 0f
+        java.lang.Double.TYPE -> 0.0
+        java.lang.Short.TYPE -> 0.toShort()
+        java.lang.Byte.TYPE -> 0.toByte()
+        java.lang.Character.TYPE -> 0.toChar()
+        else -> null
+    }
 
     private fun interceptor(registration: Registration): Hook = object : Hook {
         override fun intercept(chain: Chain): Any? {

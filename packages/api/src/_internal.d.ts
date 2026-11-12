@@ -180,6 +180,7 @@ export declare const NATIVE_BRIDGE_METHOD_CAPABILITIES: {
 	readonly 'hooks.removeReturnValue': 'native.java.hooks';
 	readonly 'hooks.clearReturnValues': 'native.java.hooks';
 	readonly 'hooks.remove': 'native.java.hooks';
+	readonly 'hooks.proxy': 'native.java.hooks';
 };
 /** The host platforms a native bridge runs on. */
 export declare const NATIVE_BRIDGE_PLATFORMS: readonly ['ios', 'android'];
@@ -4341,8 +4342,16 @@ export type NativeJavaHooksBridge = {
 	): void;
 	/** Removes every result set on a hook. */
 	clearReturnValues(token: NativeJavaHookToken): void;
-	/** Removes a hook. */
+	/** Removes a hook or a proxy. */
 	remove(token: NativeJavaHookToken): void;
+	/**
+	 * Creates a Java object implementing `interfaces`, from a UI scope only. Calls on the main thread run `handler`
+	 * inline and return its value; calls on other threads reach it later and return the type's default.
+	 */
+	proxy(
+		interfaces: string[],
+		handler: (call: NativeJavaProxyCall) => NativeJavaArgument | void,
+	): NativeJavaProxy;
 };
 /** One method a Java class declares, from `java.describe`. */
 export type NativeJavaMethodDescription = {
@@ -4354,6 +4363,20 @@ export type NativeJavaMethodDescription = {
 	returnType: string;
 	/** Whether the method is static. */
 	static: boolean;
+};
+/** A Java object implementing interfaces through a handler; remove its token to stop it answering. */
+export type NativeJavaProxy = {
+	/** Removes the proxy with `hooks.remove`; the UI scope removes it on dispose. */
+	token: NativeJavaHookToken;
+	/** The object to pass wherever Java expects one of the interfaces. */
+	object: NativeJavaHandle;
+};
+/** What a proxy handler receives for one call of an interface method. */
+export type NativeJavaProxyCall = {
+	/** The interface method's name, such as `onPreDraw`. */
+	method: string;
+	/** The call's arguments. */
+	args: NativeJavaValue[];
 };
 /** A Java object, as a handle or as a tagged handle value from a result. */
 export type NativeJavaReference = NativeJavaHandle | NativeJavaHandleValue;
