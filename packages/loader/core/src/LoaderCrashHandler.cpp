@@ -325,6 +325,11 @@ std::string previousNativeCrash()
     return gPreviousNativeCrash;
 }
 
+bool nativeCrashRecorded(const std::string &directory)
+{
+    return !readTextFile(joinPath(directory, kNativeCrashFile)).value_or("").empty();
+}
+
 bool adoptPreviousNativeCrash(const std::string &stack)
 {
     if (stack.empty() || !gPreviousNativeCrash.empty())
