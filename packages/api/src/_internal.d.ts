@@ -6554,8 +6554,11 @@ export type UnboundFontAxis = {
 	tag: string;
 	/** The name the font gives it, such as `Weight`. */
 	name: string;
+	/** The lowest value the axis accepts. */
 	min: number;
+	/** The value a face draws at when the axis is not set. */
 	default: number;
+	/** The highest value the axis accepts. */
 	max: number;
 	/** The font asks apps not to offer it. */
 	hidden: boolean;
