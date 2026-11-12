@@ -24,8 +24,6 @@ namespace jsi = facebook::jsi;
 
 static constexpr std::chrono::seconds kFirstDownloadWait{10};
 
-static std::atomic<LoaderPipeline *> currentPipeline{nullptr};
-
 static int64_t epochMs()
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -55,20 +53,9 @@ LoaderPipeline::LoaderPipeline(std::shared_ptr<PipelineHost> host, SettingsStore
             auto host = weak.lock();
             return host ? host->resource(name) : std::nullopt;
         });
-    currentPipeline.store(this);
 }
 
-LoaderPipeline::~LoaderPipeline()
-{
-    LoaderPipeline *self = this;
-    currentPipeline.compare_exchange_strong(self, nullptr);
-}
-
-std::string LoaderPipeline::currentLaunchTimings()
-{
-    LoaderPipeline *pipeline = currentPipeline.load();
-    return pipeline ? pipeline->launchTimings() : "Unbound's loader has not started.";
-}
+LoaderPipeline::~LoaderPipeline() = default;
 
 bool LoaderPipeline::isBundleReady() const
 {
@@ -560,6 +547,19 @@ void LoaderPipeline::guardLaunch()
     host_->runAfter(kHealthySeconds, [this]() {
         markHealthy();
     });
+    host_->runAfter(kStuckLaunchSeconds, [this]() {
+        offerHelpIfStuck();
+    });
+}
+
+void LoaderPipeline::offerHelpIfStuck()
+{
+    if (rendered_.load() || stuckOffered_.exchange(true))
+    {
+        return;
+    }
+    log(LogLevel::Warning, LOG_CATEGORY_DEFAULT, kStuckLaunchNotice);
+    host_->stuckLaunch(kStuckLaunchNotice);
 }
 
 void LoaderPipeline::markHealthy()
@@ -626,20 +626,6 @@ void LoaderPipeline::markRendered()
     host_->runAfter(kRenderedHealthySeconds, [this]() {
         markHealthy();
     });
-}
-
-std::string LoaderPipeline::launchTimings() const
-{
-    int64_t     start = runtimeCreatedMs_.load();
-    std::string text  = "Milliseconds after Discord's runtime was created:\n";
-    auto        step  = [&](const char *name, int64_t at) {
-        text += std::string(name) + ": " +
-                (start && at ? std::to_string(at - start) + " ms" : "not yet") + "\n";
-    };
-    step("Unbound's bundle executed", bundleExecutedMs_.load());
-    step("Discord's first screen rendered", renderedMs_.load());
-    step("Launch counted as healthy", healthyMs_.load());
-    return text;
 }
 
 double LoaderPipeline::retryDelay(size_t attempt, std::optional<double> retryAfter, double unit)

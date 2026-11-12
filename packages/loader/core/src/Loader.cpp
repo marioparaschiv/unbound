@@ -84,6 +84,11 @@ public:
         host_->crashAlert(message);
     }
 
+    void stuckLaunch(const std::string &message) override
+    {
+        host_->stuckLaunch(message);
+    }
+
     PreviousExit previousExit() override
     {
         return host_->previousExit();

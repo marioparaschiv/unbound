@@ -65,7 +65,6 @@ object NativeBridge {
 
     /** How long this launch took to reach each step, as text for the toolbox. */
     @JvmStatic
-    external fun nativeLaunchTimings(): String
 
     /**
      * How Discord's main process last ended: 1 for a crash, a freeze or a failed start; 2 when the person or the
@@ -508,6 +507,11 @@ object NativeBridge {
     @JvmStatic
     fun crashAlert(message: String) {
         StartupAlert.reportCrash(message)
+    }
+
+    @JvmStatic
+    fun stuckLaunch(message: String) {
+        StartupAlert.offerToolbox(message)
     }
 
     private var updateToast: Toast? = null

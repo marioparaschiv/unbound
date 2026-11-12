@@ -27,6 +27,20 @@ object StartupAlert {
         }
     }
 
+    @JvmStatic
+    fun offerToolbox(message: String) {
+        Handler(Looper.getMainLooper()).post {
+            val activity = ActivityTracker.currentActivity() ?: return@post
+            if (activity.isFinishing) return@post
+            AlertDialog.Builder(activity, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+                .setTitle(TITLE)
+                .setMessage(message)
+                .setPositiveButton("Open Toolbox") { _, _ -> Toolbox.show() }
+                .setNegativeButton("Keep Waiting", null)
+                .show()
+        }
+    }
+
     fun onResumed(activity: Activity) {
         val alert = pending ?: return
         pending = null

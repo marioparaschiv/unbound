@@ -24,6 +24,7 @@
 #import "NativePluginBridge.h"
 #import "RCTHost.h"
 #import "SettingsCore.h"
+#import "Toolbox.h"
 #import "UpdateBanner.h"
 #import "UpdaterCore.h"
 
@@ -346,6 +347,25 @@ public:
     {
         NSString *text = toNSString(message);
         dispatch_async(dispatch_get_main_queue(), ^{ [Utilities alert:text]; });
+    }
+
+    void stuckLaunch(const std::string &message) override
+    {
+        NSString *text = toNSString(message);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (UIApplication.sharedApplication.applicationState != UIApplicationStateActive)
+            {
+                return;
+            }
+            UIAlertAction *open = [UIAlertAction
+                actionWithTitle:@"Open Toolbox"
+                          style:UIAlertActionStyleDefault
+                        handler:^(UIAlertAction *action) { [Toolbox showToolboxMenu]; }];
+            UIAlertAction *wait = [UIAlertAction actionWithTitle:@"Keep Waiting"
+                                                           style:UIAlertActionStyleCancel
+                                                         handler:nil];
+            [Utilities alert:text title:@"Unbound" buttons:@[ open, wait ]];
+        });
     }
 
     void crashAlert(const std::string &message) override

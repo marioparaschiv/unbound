@@ -81,6 +81,7 @@ public:
     void                 onBundleExecuted() override;
     void                 alert(const std::string &message) override;
     void                 crashAlert(const std::string &message) override;
+    void                 stuckLaunch(const std::string &message) override;
     loader::PreviousExit previousExit() override;
     bool                 onMeteredNetwork() override;
     void                 showUpdateProgress(bool showing) override;

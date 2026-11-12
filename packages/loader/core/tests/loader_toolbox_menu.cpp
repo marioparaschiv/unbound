@@ -55,8 +55,8 @@ int main()
             std::vector<std::string>{"refetch-bundle", "delete-bundle", "custom-bundle"}));
     assert((ids(plain[1]) ==
             std::vector<std::string>{"wipe-plugins", "wipe-themes", "wipe-fonts", "wipe-icons"}));
-    assert((ids(plain[2]) == std::vector<std::string>{"toggle-recovery", "factory-reset",
-                                                      "launch-timings", "open-issue"}));
+    assert((ids(plain[2]) ==
+            std::vector<std::string>{"toggle-recovery", "factory-reset", "open-issue"}));
     assert((ids(plain[3]) == std::vector<std::string>{"gesture-shake", "gesture-three-finger"}));
 
     const auto &icons = item(plain, "wipe-icons");
@@ -102,15 +102,13 @@ int main()
     assert(!item(ios, "gesture-shake").on);
     assert(item(ios, "gesture-three-finger").on);
     assert((ids(ios[2]) == std::vector<std::string>{"toggle-recovery", "factory-reset",
-                                                    "open-app-folder", "launch-timings",
-                                                    "open-issue"}));
+                                                    "open-app-folder", "open-issue"}));
     assert((ids(ios[3]) == std::vector<std::string>{"gesture-shake", "gesture-three-finger"}));
 
     const auto android = loader::toolbox::menu(
         settings, loader::toolbox::menuOptions(R"({"copyAppFolderPath":true})"));
     assert((ids(android[2]) == std::vector<std::string>{"toggle-recovery", "factory-reset",
-                                                        "copy-app-folder-path", "launch-timings",
-                                                        "open-issue"}));
+                                                        "copy-app-folder-path", "open-issue"}));
     assert(ids(android[3]).size() == 2);
     assert(loader::toolbox::menuOptions("not json").openAppFolder == false);
 

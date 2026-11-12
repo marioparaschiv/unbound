@@ -499,6 +499,11 @@ void AndroidLoader::crashAlert(const std::string &message)
     callStaticVoid(callbacks_.bridgeClass, callbacks_.crashAlert, message);
 }
 
+void AndroidLoader::stuckLaunch(const std::string &message)
+{
+    callStaticVoid(callbacks_.bridgeClass, callbacks_.stuckLaunch, message);
+}
+
 loader::PreviousExit AndroidLoader::previousExit()
 {
     switch (callStaticInt(callbacks_.bridgeClass, callbacks_.previousExit).value_or(0))
