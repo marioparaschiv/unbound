@@ -1,4 +1,4 @@
-import type { EvalResult } from '@unbound-app/debugger-protocol';
+import type { EvalResult, ViewDetailsResult } from '@unbound-app/debugger-protocol';
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import {
@@ -9,6 +9,7 @@ import {
 	evaluateForController,
 	handleDeviceMessage,
 	relayReactDevtools,
+	requestViewDetailsForController,
 	type SocketLike,
 } from '~/lib/session';
 
@@ -142,6 +143,70 @@ describe('React DevTools', () => {
 
 		expect(device.frames).toEqual([inspect, { type: 'react-devtools', event: 'shutdown' }]);
 		expect(controller.frames).toEqual([{ type: 'device-status', connected: true }]);
+	});
+});
+
+describe('requestViewDetailsForController', () => {
+	const request = { type: 'view-details-request', id: 'details-1', node: '7' } as const;
+	const result: ViewDetailsResult = {
+		type: 'view-details-result',
+		id: 'details-1',
+		ok: true,
+		details: { classChain: ['UILabel', 'UIView'], sections: [] },
+	};
+
+	test('forwards the request and routes the answer to the controller that asked', () => {
+		const other = recordingSocket();
+
+		attachDevice(device);
+		attachController(controller);
+		attachController(other);
+		requestViewDetailsForController(controller, request);
+		handleDeviceMessage(result);
+		detachController(other);
+
+		expect(device.frames).toEqual([request]);
+		expect(controller.frames.at(-1)).toEqual(result);
+		expect(other.frames).toEqual([{ type: 'device-status', connected: true }]);
+	});
+
+	test('fails at once without a device, and in flight when the device leaves', () => {
+		attachController(controller);
+		requestViewDetailsForController(controller, request);
+		attachDevice(device);
+		requestViewDetailsForController(controller, { ...request, id: 'details-2' });
+		detachDevice(device);
+
+		expect(
+			controller.frames.filter(
+				(frame) => (frame as { type: string }).type === 'view-details-result',
+			),
+		).toEqual([
+			{
+				type: 'view-details-result',
+				id: 'details-1',
+				ok: false,
+				error: 'No device is connected to the debugger.',
+			},
+			{
+				type: 'view-details-result',
+				id: 'details-2',
+				ok: false,
+				error: 'Device disconnected before the view was read.',
+			},
+		]);
+	});
+
+	test('drops an answer for a controller that left', () => {
+		attachDevice(device);
+		attachController(controller);
+		requestViewDetailsForController(controller, request);
+		detachController(controller);
+		controller.frames.length = 0;
+
+		handleDeviceMessage(result);
+
+		expect(controller.frames).toEqual([]);
 	});
 });
 

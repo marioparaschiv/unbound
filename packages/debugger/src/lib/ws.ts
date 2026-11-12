@@ -1,5 +1,6 @@
 import {
 	CONTROLLER_ENDPOINT_MARKER,
+	isExplorerRequest,
 	parseMessage,
 	type DeviceInfo,
 } from '@unbound-app/debugger-protocol';
@@ -221,8 +222,7 @@ function handleDeviceMessage(raw: string) {
 function handleControllerMessage(ws: session.SocketLike, raw: string) {
 	const message = parseMessage(raw);
 
-	// A controller sends an eval, a plugin-push or a views-request, each answered by id over this same
-	// controller's socket, or a view-highlight or React DevTools frame, which have no answer.
+	// Requests are answered by id over this same controller's socket; a view-highlight or React DevTools frame has no answer.
 	if (message?.type === 'eval') {
 		session.evaluateForController(ws, message);
 
@@ -237,6 +237,18 @@ function handleControllerMessage(ws: session.SocketLike, raw: string) {
 
 	if (message?.type === 'views-request') {
 		session.requestViewsForController(ws, message);
+
+		return;
+	}
+
+	if (message?.type === 'view-details-request') {
+		session.requestViewDetailsForController(ws, message);
+
+		return;
+	}
+
+	if (message && isExplorerRequest(message)) {
+		session.requestExplorerForController(ws, message);
 
 		return;
 	}
