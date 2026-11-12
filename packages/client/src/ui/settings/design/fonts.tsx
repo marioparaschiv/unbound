@@ -1,15 +1,15 @@
-import { ScrollView } from 'react-native';
-
 import RestartRow from '~/ui/settings-kit/restart-row';
 import { Discord } from '~/metro/components';
 import { showDialog } from '~/dialogs/api';
+import Page from '~/ui/components/page';
+import { icons } from '~/assets/api';
 import { format } from '~/i18n/api';
 
 import FontInstallDialog from './font-install-dialog';
 import FontPresetsGroup from './font-presets-group';
 import InstalledFontRow from './installed-font-row';
 import FontOverrideRow from './font-override-row';
-import useStyles from './fonts.style';
+import FontPreview from './font-preview';
 import useFonts from './use-fonts';
 
 function openInstallDialog() {
@@ -22,33 +22,33 @@ function openInstallDialog() {
 }
 
 /**
- * @description The Fonts tab: one override row per Discord font group, the installed fonts with an
+ * @description The Fonts tab: a live preview, one row per Discord font group, the installed fonts with an
  * install row, and the presets. An override change offers a restart, which lays every text out again;
  * an older loader gets an update prompt.
  */
 function FontsTab() {
-	const styles = useStyles();
 	const fonts = useFonts();
 
 	if (!fonts.isSupported()) {
 		return (
-			<ScrollView contentContainerStyle={styles.content}>
+			<Page>
 				<Discord.TableRowGroup title={format('UNBOUND_FONTS')}>
 					<Discord.TableRow
 						label={format('UNBOUND_FONTS_UPDATE_LOADER')}
 						subLabel={format('UNBOUND_FONTS_UPDATE_LOADER_HINT')}
 					/>
 				</Discord.TableRowGroup>
-			</ScrollView>
+			</Page>
 		);
 	}
 
 	return (
-		<ScrollView contentContainerStyle={styles.content}>
+		<Page>
 			{fonts.needsRestart() ? <RestartRow /> : null}
+			<FontPreview />
 			<Discord.TableRowGroup
 				title={format('UNBOUND_FONTS_GROUPS')}
-				description={format('UNBOUND_FONTS_HINT')}
+				helperText={format('UNBOUND_FONTS_GROUPS_HINT')}
 			>
 				{fonts.getTargets().map((target) => (
 					<FontOverrideRow key={target.group} group={target.group} />
@@ -57,6 +57,7 @@ function FontsTab() {
 			<Discord.TableRowGroup title={format('UNBOUND_FONTS_INSTALLED')}>
 				<Discord.TableRow
 					label={format('UNBOUND_FONTS_INSTALL')}
+					icon={<Discord.TableRowIcon source={icons.DownloadIcon} />}
 					arrow
 					onPress={openInstallDialog}
 				/>
@@ -65,7 +66,7 @@ function FontsTab() {
 				))}
 			</Discord.TableRowGroup>
 			<FontPresetsGroup />
-		</ScrollView>
+		</Page>
 	);
 }
 

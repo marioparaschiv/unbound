@@ -7,7 +7,7 @@ import { createLogger } from '@unbound-app/logger';
 
 import { createSettings, generalSection, panelHostSection } from '~/settings/builtin';
 import { marketplaceSection, addonPageSection } from '~/marketplace/builtin';
-import themes, { designSection, fontGroupSection } from '~/themes/builtin';
+import themes, { designSection, fontAxesSection, fontGroupSection } from '~/themes/builtin';
 import updater, { updatesSection } from '~/updates/builtin';
 import { developerSection } from '~/settings/builtin.dev';
 import { themes as themeManager } from '~/themes/manager';
@@ -69,6 +69,7 @@ const SECTIONS_IN_OVERVIEW_ORDER: SectionEntry[] = [
 	panelHostSection,
 	addonPageSection,
 	fontGroupSection,
+	fontAxesSection,
 ];
 
 // The account starts first, so its session refresh is already in flight when other built-ins reach unbound.rip.

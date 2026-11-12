@@ -12,6 +12,7 @@ import { CORE_BUCKET } from '@unbound-app/types/settings';
 import toError from '@unbound-app/utils/to-error';
 
 import { presetCopy, sourceLink, sourceOrigin, type PastedPreset } from '~/fonts/sources';
+import { groupSlots, type FontSlot } from '~/fonts/slots';
 import { getNativeFonts } from '~/native/unbound-native';
 import { Manager } from '~/addons/manager';
 import { API_URL } from '~/core/constants';
@@ -47,6 +48,15 @@ export class Fonts extends Manager<Font, FontsEvents> {
 	// The overrides this JS run started with; text laid out since keeps them until a restart.
 	private launched: Record<string, string> = {};
 	private families: Record<string, UnboundDiscordFamily> = {};
+	// Derived on first read after each refresh; settings rows read them on every render.
+	private installed: FontFamily[] | undefined;
+	private targets: FontTarget[] | undefined;
+	private slots = new Map<string, FontSlot[]>();
+	// Instances `customizeSlot` added this run; each goes once the next drag replaces it and nothing uses it.
+	private custom = new Set<string>();
+
+	/** Counts store changes; text drawn in an overridden font remounts on it to pick up the new face. */
+	revision = 0;
 
 	constructor() {
 		super({
@@ -86,22 +96,26 @@ export class Fonts extends Manager<Font, FontsEvents> {
 
 	/** @returns The installed faces grouped by family, families in name order. */
 	getFamilies(): FontFamily[] {
+		if (this.installed) return this.installed;
+
 		const families = new Map<string, Font[]>();
 
 		for (const font of this.getAddons()) {
 			families.set(font.family, [...(families.get(font.family) ?? []), font]);
 		}
 
-		return [...families.entries()]
+		return (this.installed = [...families.entries()]
 			.map(([family, faces]) => ({
 				family,
 				faces: faces.sort((a, b) => a.weight - b.weight),
 			}))
-			.sort((a, b) => a.family.localeCompare(b.family));
+			.sort((a, b) => a.family.localeCompare(b.family)));
 	}
 
 	/** @returns Discord's font groups (PRIMARY, DISPLAY, CODE, ...) and the families each holds. */
 	getTargets(): FontTarget[] {
+		if (this.targets) return this.targets;
+
 		const groups = new Map<string, string[]>();
 
 		for (const [family, discord] of Object.entries(this.families)) {
@@ -110,7 +124,101 @@ export class Fonts extends Manager<Font, FontsEvents> {
 			}
 		}
 
-		return [...groups.entries()].map(([group, families]) => ({ group, families }));
+		return (this.targets = [...groups.entries()].map(([group, families]) => ({
+			group,
+			families,
+		})));
+	}
+
+	/**
+	 * @description Reads the face drawing a Discord family, honouring an override of every family.
+	 * @param family A Discord family such as `ggsans-Bold`.
+	 * @returns The face, or `undefined` while the family keeps Discord's font.
+	 */
+	getFace(family: string): Font | undefined {
+		const id = this.overrides[family] ?? this.overrides['*'];
+
+		return id ? this.getAddon(id) : undefined;
+	}
+
+	/**
+	 * @description Splits a Discord font group into its weights and styles, each with the face drawing it.
+	 * @param group A group such as `PRIMARY`.
+	 * @returns The slots, upright before italic, light to heavy.
+	 */
+	getSlots(group: string): FontSlot[] {
+		const cached = this.slots.get(group);
+
+		if (cached) return cached;
+
+		const slots = groupSlots(group, this.families, (family) => this.getFace(family));
+
+		this.slots.set(group, slots);
+
+		return slots;
+	}
+
+	/**
+	 * @description Points every Discord family of one slot at a face, or back at Discord's font, then emits
+	 * `changed` once. The fine-tuning twin of {@link setOverride}.
+	 * @param slot The slot.
+	 * @param fontId The face id, or `undefined` for Discord's font.
+	 */
+	async setSlot(slot: FontSlot, fontId: string | undefined): Promise<void> {
+		try {
+			for (const family of slot.families) {
+				await this.bridge().setOverride(family, fontId ?? null);
+			}
+		} catch (error) {
+			this.logger.error(`Failed to set font slot ${slot.key}:`, error);
+			this.errors.set(slot.key, toError(error));
+		}
+
+		this.refresh();
+	}
+
+	/**
+	 * @description Draws one slot in a variable face at `variations`, adding that instance first, then emits
+	 * `changed` once. The instance it replaces goes when this run added it and nothing else uses it.
+	 * @param slot The slot.
+	 * @param face A face of the variable font.
+	 * @param variations Axis tag to coordinate, such as `{ wght: 650 }`.
+	 */
+	async customizeSlot(
+		slot: FontSlot,
+		face: Font,
+		variations: Record<string, number>,
+	): Promise<void> {
+		const replaced = slot.face?.id;
+
+		try {
+			const created = await this.bridge().addInstance(face.id, variations);
+
+			if (!this.addons.has(created.id)) {
+				this.custom.add(created.id);
+			}
+
+			for (const family of slot.families) {
+				await this.bridge().setOverride(family, created.id);
+			}
+
+			const used = Object.values(this.bridge().list().overrides);
+
+			if (
+				replaced &&
+				replaced !== created.id &&
+				this.custom.has(replaced) &&
+				!used.includes(replaced)
+			) {
+				await this.bridge().remove(replaced);
+				this.custom.delete(replaced);
+			}
+		} catch (error) {
+			this.logger.error(`Failed to customize font slot ${slot.key}:`, error);
+			this.errors.set(slot.key, toError(error));
+		}
+
+		this.refresh();
 	}
 
 	/** @returns The override map, Discord family to face id. */
@@ -410,6 +518,10 @@ export class Fonts extends Manager<Font, FontsEvents> {
 
 		this.overrides = list.overrides;
 		this.families = list.families;
+		this.installed = undefined;
+		this.targets = undefined;
+		this.slots.clear();
+		this.revision++;
 		this.emit('changed');
 	}
 }

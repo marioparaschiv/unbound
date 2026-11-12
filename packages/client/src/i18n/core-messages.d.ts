@@ -79,6 +79,8 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_FONTS_PRESET_APPLIED: { name: string | number };
 		UNBOUND_FONTS_PRESET_APPLIED_PARTIAL: { name: string | number; unavailable: string | number; skipped: string | number };
 		UNBOUND_FONTS_PRESET_FONTS: { count: number };
+		UNBOUND_FONTS_AXES_HINT: { family: string | number };
+		UNBOUND_FONTS_WEIGHT_ITALIC: { weight: string | number };
 		UNBOUND_FFI_CONSENT_BODY: { name: string | number };
 		UNBOUND_SHARE_PICK: { count: number };
 		UNBOUND_SHARE_ADDED: { count: number; destination: string | number };

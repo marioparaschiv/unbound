@@ -23,8 +23,8 @@ type DesignTabsProps = {
 
 const TABS = [
 	{ id: 'theme', label: () => messages.UNBOUND_THEMES },
-	{ id: 'font', label: () => messages.UNBOUND_FONTS },
 	{ id: 'icon-pack', label: () => messages.UNBOUND_ICONS },
+	{ id: 'font', label: () => messages.UNBOUND_FONTS },
 	{ id: 'chat', label: () => messages.UNBOUND_CHAT },
 ] as const;
 
@@ -49,7 +49,7 @@ function renderTab(id: DesignTab, renderPage: DesignTabsProps['renderPage']) {
 }
 
 /**
- * @description The Design page's frame: Discord's large segmented control over Themes, Fonts, Icons and Chat, floating
+ * @description The Design page's frame: Discord's large segmented control over Themes, Icons, Fonts and Chat, floating
  * below a transparent header over full-screen pages, which inset past both through the header height. Discord keeps
  * each page frozen until a swipe or press first reaches it, so it mounts as it slides in. Themes and Icons are
  * Discord's theme picker; Fonts is the shared override list; Chat holds the chat's look, such as its background.
