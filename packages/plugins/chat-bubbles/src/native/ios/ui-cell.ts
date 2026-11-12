@@ -7,7 +7,7 @@ import { messageIdOf } from '~/native/ios/message-id';
 import { ReplyIcon } from '~/lib/constants';
 import { hostOffset } from '~/native/ios/host-offset';
 
-const AVATAR_TAG = 0x0b0b26;
+export const AVATAR_TAG = 0x0b0b26;
 const PICTURE_TAG = 0x0b0b27;
 const DECORATION_TAG = 0x0b0b28;
 const QUOTE_TAG = 0x0b0b29;
