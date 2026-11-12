@@ -1,5 +1,6 @@
 #include "LoaderAddonActivity.h"
 
+#include <algorithm>
 #include <atomic>
 #include <cerrno>
 #include <csignal>
@@ -275,6 +276,25 @@ bool writeCrashingAddonLine(int descriptor)
     const char         newline  = '\n';
     return write(descriptor, prefix, sizeof(prefix) - 1) > 0 &&
            write(descriptor, record.text, length) > 0 && write(descriptor, &newline, 1) > 0;
+}
+
+size_t crashingAddonMessage(char *out, size_t capacity)
+{
+    AddonSlot        slot          = crashingThreadAddon();
+    constexpr char   kPrefix[]     = "Unbound addon ";
+    constexpr size_t kPrefixLength = sizeof(kPrefix) - 1;
+    if (!out || slot == kNoAddon || slot >= kAddonSlotCapacity || capacity <= kPrefixLength + 1)
+    {
+        return 0;
+    }
+
+    const AddonRecord &record = gRecords[slot];
+    uint32_t           length = __atomic_load_n(&record.length, __ATOMIC_ACQUIRE);
+    size_t             copied = std::min<size_t>(length, capacity - kPrefixLength - 1);
+    std::memcpy(out, kPrefix, kPrefixLength);
+    std::memcpy(out + kPrefixLength, record.text, copied);
+    out[kPrefixLength + copied] = '\0';
+    return kPrefixLength + copied;
 }
 
 AddonScope::AddonScope(AddonSlot slot)

@@ -57,6 +57,23 @@ static void slotsAreStablePerAddon()
     assert(nlohmann::json::parse(loader::addonRecord(verbose))["name"] == "plugins:verbose");
 }
 
+static void namesTheRunningAddonForTheAbortMessage()
+{
+    char              message[64];
+    loader::AddonSlot slot = loader::registerAddonSlot("plugins:bubbles", "Chat Bubbles");
+    assert(loader::crashingAddonMessage(message, sizeof(message)) == 0);
+    {
+        loader::AddonScope scope(slot);
+        size_t             length = loader::crashingAddonMessage(message, sizeof(message));
+        assert(length > 0 && std::string(message).find("Unbound addon {") == 0);
+        assert(std::string(message).find("Chat Bubbles") != std::string::npos);
+
+        char tiny[20];
+        assert(loader::crashingAddonMessage(tiny, sizeof(tiny)) == sizeof(tiny) - 1);
+        assert(loader::crashingAddonMessage(tiny, 10) == 0);
+    }
+}
+
 static void scopesNestAndRestore()
 {
     loader::AddonSlot outer = loader::registerAddonSlot("plugins:outer", "Outer");
@@ -275,6 +292,7 @@ int main()
 
     slotsAreStablePerAddon();
     scopesNestAndRestore();
+    namesTheRunningAddonForTheAbortMessage();
     threadsTrackTheirOwnAddon();
     activityCellIsTheThreadsCell();
     mainThreadWorkKeepsTheCallersAddon();

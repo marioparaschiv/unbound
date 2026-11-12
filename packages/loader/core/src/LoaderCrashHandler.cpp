@@ -17,6 +17,10 @@
 #endif
 #include <unistd.h>
 
+#if defined(__ANDROID__)
+#include <android/set_abort_message.h>
+#endif
+
 #include "LoaderAddonActivity.h"
 #include "LoaderFiles.h"
 #include "LoaderLaunchReport.h"
@@ -244,6 +248,13 @@ static void recordCrashingAddon(int signal, siginfo_t *info, void *context)
         writeCrashingAddonRecord(descriptor);
     }
     writeNativeStack(signal, context);
+#if defined(__ANDROID__)
+    static char abortMessage[kAddonRecordByteLimit + 32];
+    if (crashingAddonMessage(abortMessage, sizeof(abortMessage)) > 0)
+    {
+        android_set_abort_message(abortMessage);
+    }
+#endif
     errno = savedErrno;
     forwardToPreviousHandler(signal, info, context);
 }
