@@ -131,6 +131,8 @@ export const debugCardRequestSchema = Type.Object({
 			handles: Type.Integer({ minimum: 0 }),
 		}),
 	),
+	/** The app's entitlements plist on iOS; the server reduces it to the signing team and push environment. */
+	entitlements: Type.Optional(text(65_536)),
 });
 
 export const debugCardResponseSchema = Type.Object({
