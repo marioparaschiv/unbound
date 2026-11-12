@@ -21,6 +21,8 @@ export function launchNotes(launch?: DebugCardLaunch): string[] {
 		launch.bundle !== 'active' && `bundle ${launch.bundle}`,
 		launch.recovery && 'recovery mode',
 		closes > 0 && `${closes} early ${closes === 1 ? 'close' : 'closes'}`,
+		launch.lastCheck?.outcome === 'failed' && 'update check failed',
+		launch.settings && `settings ${launch.settings}`,
 		(launch.firstRenderMs ?? 0) > SLOW_FIRST_RENDER_MS &&
 			`first screen ${((launch.firstRenderMs ?? 0) / 1000).toFixed(1)} s`,
 	];

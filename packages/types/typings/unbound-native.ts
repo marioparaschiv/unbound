@@ -21,6 +21,13 @@ export type UnboundLaunchReport = {
 	firstRenderMs?: number;
 	/** The newest native crashes, oldest first; `at` is milliseconds since the epoch. */
 	crashes?: { at: number; crash: string }[];
+	/** Where the bundle comes from when the update URL is not the default. */
+	source?: 'custom' | 'dev' | 'pr';
+	pullRequest?: number;
+	/** The newest update check this launch: when, and whether it downloaded a bundle, found none or failed. */
+	lastCheck?: { at: number; outcome: 'downloaded' | 'current' | 'failed'; detail?: string };
+	/** Set when `settings.json` was corrupt: restored from its last good copy, or reset. */
+	settings?: 'restored' | 'reset';
 };
 
 /**

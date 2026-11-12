@@ -24,6 +24,16 @@ const launchSchema = Type.Object({
 	previousExit: Type.Enum(DEBUG_CARD_EXITS),
 	lastCrash: Type.Optional(text(200)),
 	firstRenderMs: Type.Optional(Type.Integer({ minimum: 0, maximum: 3_600_000 })),
+	source: Type.Optional(Type.Enum(['custom', 'dev', 'pr'])),
+	pullRequest: Type.Optional(Type.Integer({ minimum: 1, maximum: 10_000_000 })),
+	lastCheck: Type.Optional(
+		Type.Object({
+			at: Type.Integer({ minimum: 0 }),
+			outcome: Type.Enum(['downloaded', 'current', 'failed']),
+			detail: Type.Optional(text(160)),
+		}),
+	),
+	settings: Type.Optional(Type.Enum(['restored', 'reset'])),
 	crashes: Type.Optional(
 		Type.Array(Type.Object({ at: Type.Integer({ minimum: 0 }), crash: text(200) }), {
 			maxItems: 5,
