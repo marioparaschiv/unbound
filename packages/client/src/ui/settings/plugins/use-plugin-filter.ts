@@ -15,10 +15,11 @@ function matches(addon: Addon, query: string): boolean {
 /**
  * @description Narrows plugins by a search query and an enabled filter, counting each filter's matches.
  * @param addons Every plugin to choose from.
+ * @param initialQuery The search the page opens with.
  * @returns The query, filter and their setters, the visible plugins and each filter's count.
  */
-function usePluginFilter(addons: Addon[]) {
-	const [query, setQuery] = useState('');
+function usePluginFilter(addons: Addon[], initialQuery = '') {
+	const [query, setQuery] = useState(initialQuery);
 	const [filter, setFilter] = useState<Filter>('all');
 
 	const searched = useMemo(() => {

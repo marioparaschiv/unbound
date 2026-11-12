@@ -10,14 +10,24 @@ import DiscordPicker from './discord-picker';
 
 const renderPicker = (kind: PickerKind) => <DiscordPicker kind={kind} />;
 
+type DesignParams = {
+	/** Opens on this tab, e.g. an installed theme's from its Installed button in the Marketplace. */
+	tab?: DesignTab;
+};
+
+type DesignPageProps = {
+	route: { params?: DesignParams };
+};
+
 /**
  * @description The Design settings page: Discord's App Theme picker for themes and icon packs, beside Fonts and Chat,
  * full-screen under its transparent header. The active picker owns the header; Fonts and Chat keep the back
  * button and title only.
  */
-function DesignPage() {
+function DesignPage({ route }: DesignPageProps) {
 	const navigation = Discord.useNavigation();
-	const [tab, setTab] = useState<DesignTab>('theme');
+	const initialTab = route.params?.tab ?? 'theme';
+	const [tab, setTab] = useState<DesignTab>(initialTab);
 	const [headers, setHeaders] = useState<Partial<Record<PickerKind, HeaderOptions>>>({});
 
 	const report = useCallback(
@@ -37,7 +47,7 @@ function DesignPage() {
 
 	return (
 		<ReportPicker.Provider value={report}>
-			<DesignTabs renderPage={renderPicker} onTabChange={setTab} />
+			<DesignTabs renderPage={renderPicker} initialTab={initialTab} onTabChange={setTab} />
 		</ReportPicker.Provider>
 	);
 }
