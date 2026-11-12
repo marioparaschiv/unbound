@@ -165,7 +165,7 @@ describe('createMessageTextSurfaces', () => {
 		await settle();
 
 		expect(android.callsTo('remove').map((call) => call.args)).toEqual([[TWO_SLOTS]]);
-		expect(android.callsTo('refreshAll')).toHaveLength(1);
+		expect(android.callsTo('dispose')).toHaveLength(1);
 		expect(android.callsTo('removeGroup').map((call) => call.args[0])).toEqual([
 			'card-0',
 			'card-1',

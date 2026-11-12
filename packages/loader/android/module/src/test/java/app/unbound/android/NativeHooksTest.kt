@@ -445,4 +445,58 @@ class NativeHooksTest {
     fun rewritingArgumentsRequiresABeforeNotification() {
         NativeHooks.hook("java.lang.String", "concat", """["java.lang.String"]""", """{"rewriteArguments":true,"notify":"after"}""")
     }
+
+    private fun proxyObject(interfaces: String): Pair<String, Any?> {
+        val created = JSONObject(NativeHooks.proxy(interfaces))
+        return created.getString("id") to NativeJava.decode(created.getJSONObject("object").toString())
+    }
+
+    @Test
+    fun proxiesSendInterfaceCallsToTheHandler() {
+        val (token, runnable) = proxyObject("""["java.lang.Runnable"]""")
+
+        (runnable as Runnable).run()
+
+        assertEquals(token, dispatched.single().first)
+        assertEquals("run", JSONObject(dispatched.single().second).getString("method"))
+    }
+
+    @Test
+    fun proxiesReturnWhatTheHandlerReturned() {
+        val (_, callable) = proxyObject("""["java.util.concurrent.Callable"]""")
+        rewriteResponse = """{"type":"string","value":"answered"}"""
+
+        assertEquals("answered", (callable as java.util.concurrent.Callable<*>).call())
+    }
+
+    @Test
+    fun proxiesReturnThePrimitiveDefaultWithoutAnAnswer() {
+        val (_, supplier) = proxyObject("""["java.util.function.BooleanSupplier"]""")
+
+        assertFalse((supplier as java.util.function.BooleanSupplier).asBoolean)
+    }
+
+    @Test
+    fun removedProxiesStopCallingTheHandler() {
+        val (token, runnable) = proxyObject("""["java.lang.Runnable"]""")
+        NativeHooks.remove(JSONObject().put("id", token).toString())
+
+        (runnable as Runnable).run()
+
+        assertTrue(dispatched.isEmpty())
+    }
+
+    @Test
+    fun proxiesAnswerObjectMethodsThemselves() {
+        val (token, runnable) = proxyObject("""["java.lang.Runnable"]""")
+
+        assertTrue(runnable.toString().contains(token))
+        assertTrue(runnable == runnable)
+        assertTrue(dispatched.isEmpty())
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun proxiesRequireInterfaces() {
+        NativeHooks.proxy("""["java.lang.String"]""")
+    }
 }

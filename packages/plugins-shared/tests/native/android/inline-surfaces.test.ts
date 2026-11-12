@@ -12,45 +12,22 @@ type Call = {
 	args: FakeValue[];
 };
 
-type HookContext = {
-	args: FakeValue[];
-};
-
-type HookHandler = (context: HookContext) => void;
-
 type FakeState = {
 	calls: Call[];
-	handler: HookHandler | null;
-	removed: boolean;
+	needsHost: ((rendered: string) => void) | null;
+	scopeDisposed: boolean;
 	unmounted: FakeValue[];
 	mounted: FakeValue[];
 	blank: Set<string>;
-	declined: boolean;
 };
 
 const handle = (value: string): FakeValue => ({ type: 'handle', value });
 
-function fakeNative(available: boolean, state: FakeState) {
+function fakeNative(apiVersion: string, state: FakeState) {
 	let hosts = 0;
 
 	const java = {
-		getClass(name: string): FakeValue {
-			if (!available) {
-				throw new Error(`${name} is missing`);
-			}
-
-			return { type: 'class', value: name };
-		},
-		getField: () => handle('rewrites'),
-		invoke(target: FakeValue, method: string, args: FakeValue[] = []): FakeValue {
-			if (target.value === 'rewrites') {
-				state.calls.push({ method, args });
-			}
-
-			if (method === 'put') {
-				return { type: 'boolean', value: !state.declined };
-			}
-
+		invoke(target: FakeValue, method: string): FakeValue {
 			if (method === 'getChildAt') {
 				return handle(`root-${target.value}`);
 			}
@@ -63,28 +40,29 @@ function fakeNative(available: boolean, state: FakeState) {
 
 			return handle('context');
 		},
-		invokeAsync(target: FakeValue, method: string, args: FakeValue[] = []): Promise<FakeValue> {
-			return Promise.resolve(java.invoke(target, method, args));
+		invokeAsync(target: FakeValue, method: string): Promise<FakeValue> {
+			return Promise.resolve(java.invoke(target, method));
 		},
 		construct: () => handle(`host-${hosts++}`),
 	};
 
 	return {
+		apiVersion,
 		java,
-		hooks: {
-			hook(
-				_class: string,
-				_method: string,
-				_args: string[],
-				_options: Record<string, boolean>,
-				handler: HookHandler,
-			) {
-				state.handler = handler;
-
-				return handle('token');
+		hooks: {},
+		ui: {
+			createScope: () => ({
+				dispose() {
+					state.scopeDisposed = true;
+				},
+			}),
+			run(worklet: (...args: unknown[]) => void, ...args: FakeValue[]) {
+				state.calls.push({ method: worklet.name, args });
 			},
-			remove() {
-				state.removed = true;
+			callback(listener: (rendered: string) => void) {
+				state.needsHost = listener;
+
+				return listener;
 			},
 		},
 		fabric: {
@@ -103,19 +81,18 @@ function fakeNative(available: boolean, state: FakeState) {
 	};
 }
 
-function setup(available = true) {
+function setup(apiVersion = '1.4.0') {
 	const state: FakeState = {
 		calls: [],
-		handler: null,
-		removed: false,
+		needsHost: null,
+		scopeDisposed: false,
 		unmounted: [],
 		mounted: [],
 		blank: new Set(),
-		declined: false,
 	};
 	const native: Parameters<typeof createInlineSurfaces>[0] = Object.assign(
 		Object.create(null),
-		fakeNative(available, state),
+		fakeNative(apiVersion, state),
 	);
 
 	return { state, surfaces: createInlineSurfaces(native, options) };
@@ -136,8 +113,8 @@ const methods = (state: FakeState) => state.calls.map((call) => call.method);
 const settled = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('createInlineSurfaces', () => {
-	test('is unavailable when the loader has no native text rewrites', () => {
-		expect(setup(false).surfaces).toBeNull();
+	test('is unavailable when the loader cannot rewrite hooked arguments or implement interfaces', () => {
+		expect(setup('1.3.0').surfaces).toBeNull();
 	});
 
 	test('registers the rule, reapplies the text and hands over hosts once they mount', async () => {
@@ -145,11 +122,17 @@ describe('createInlineSurfaces', () => {
 
 		surfaces!.define(definition);
 
-		expect(methods(state)).toEqual(['watch', 'put', 'reapply']);
+		expect(methods(state)).toEqual(['installTextRewrites', 'putRule', 'reapply']);
 
 		await settled();
 
-		expect(methods(state)).toEqual(['watch', 'put', 'reapply', 'addHost', 'addHost']);
+		expect(methods(state)).toEqual([
+			'installTextRewrites',
+			'putRule',
+			'reapply',
+			'addHost',
+			'addHost',
+		]);
 		expect(surfaces!.isDefined('code ￼')).toBe(true);
 	});
 
@@ -220,16 +203,15 @@ describe('createInlineSurfaces', () => {
 		}
 	});
 
-	test('backs off when another rule already rewrites the same text', async () => {
+	test('backs off when its own rule already rewrites the same text differently', async () => {
 		const { state, surfaces } = setup();
 
-		state.declined = true;
+		surfaces!.define({ ...definition, rendered: 'code ￼￼' });
+		await settled();
+		state.calls.length = 0;
 
 		expect(surfaces!.define(definition)).toBe(false);
-
-		await settled();
-
-		expect(methods(state)).toEqual(['watch', 'put', 'reapply']);
+		expect(methods(state)).toEqual(['reapply']);
 		expect(surfaces!.isDefined('code ￼')).toBe(false);
 	});
 
@@ -237,7 +219,7 @@ describe('createInlineSurfaces', () => {
 		const { state, surfaces } = setup();
 
 		surfaces!.define(definition);
-		state.handler?.({ args: [handle('other'), { type: 'string', value: 'code ￼' }] });
+		state.needsHost?.('code ￼');
 		await settled();
 
 		expect(methods(state).filter((method) => method === 'addHost')).toHaveLength(3);
@@ -264,17 +246,16 @@ describe('createInlineSurfaces', () => {
 		expect(methods(state)).not.toContain('addHost');
 	});
 
-	test('removes its rules, groups and hook on dispose', async () => {
+	test('removes its rules and groups, then tears the rewrites down, on dispose', async () => {
 		const { state, surfaces } = setup();
 
 		surfaces!.define(definition);
 		await settled();
 		await surfaces!.dispose();
 
-		expect(methods(state)).toContain('remove');
-		expect(methods(state)).toContain('refreshAll');
+		expect(methods(state)).toContain('removeRule');
 		expect(methods(state).filter((method) => method === 'removeGroup')).toHaveLength(2);
+		expect(methods(state).at(-1)).toBe('disposeTextRewrites');
 		expect(state.unmounted).toHaveLength(2);
-		expect(state.removed).toBe(true);
 	});
 });

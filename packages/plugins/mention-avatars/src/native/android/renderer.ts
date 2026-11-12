@@ -1,4 +1,5 @@
 import type {
+	NativeBridge,
 	NativeJavaBridge,
 	NativeJavaHooksBridge,
 	NativeJavaReference,
@@ -41,7 +42,7 @@ const SPAN_EXCLUSIVE_EXCLUSIVE = 33;
 const MAX_IMAGE_BYTES = 12_000;
 const MAX_TRACKED_VIEWS = 64;
 
-type Native = {
+type Native = Pick<NativeBridge, 'apiVersion' | 'ui'> & {
 	java: NativeJavaBridge;
 	hooks: NativeJavaHooksBridge;
 };
@@ -72,7 +73,7 @@ export function createAndroidRenderer(
 	let resolvedCount = -1;
 	let imageSize = 0;
 	let disposed = false;
-	const rewrites = connectTextRewrites(java, DRAWEE_TEXT_VIEW);
+	const rewrites = connectTextRewrites(native, DRAWEE_TEXT_VIEW, { label: 'mention-avatars' });
 	const rules = new Set<string>();
 	const retries = createRewriteRetry();
 	const renderedTexts = new Set<string>();
@@ -351,7 +352,7 @@ export function createAndroidRenderer(
 
 			for (const original of rules) rewrites?.remove(original);
 
-			if (rules.size) rewrites?.refreshAll();
+			rewrites?.dispose();
 
 			rules.clear();
 			renderedTexts.clear();
