@@ -1,6 +1,6 @@
 import type { FontFile } from '@unbound-app/contracts/fonts';
 
-const FONT_EXTENSION = /\.(?:ttf|otf)$/i;
+const FONT_EXTENSION = /\.(?:ttf|otf|woff2?)$/i;
 const ARCHIVE_EXTENSION = /\.zip$/i;
 
 /**

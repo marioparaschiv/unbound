@@ -71,7 +71,7 @@ export async function resolveFont(
 	if (!found) {
 		throw new ApiError(
 			'invalid_request',
-			'Enter a Google Fonts family name or a link to a font page, .ttf, .otf or .zip file.',
+			'Enter a Google Fonts family name or a link to a font page, .ttf, .otf, .woff, .woff2 or .zip file.',
 		);
 	}
 

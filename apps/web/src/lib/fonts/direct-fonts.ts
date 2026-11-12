@@ -2,7 +2,7 @@ import type { FontSource } from './font-source';
 
 import { familyFromPath, fontFileKind } from './font-file-kind';
 
-/** Any other `https:` link to a `.ttf`, `.otf` or `.zip`, passed through as it is. */
+/** Any other `https:` link to a `.ttf`, `.otf`, `.woff`, `.woff2` or `.zip`, passed through as it is. */
 const directFonts: FontSource = {
 	provider: 'url',
 	match(url) {
