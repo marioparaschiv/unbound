@@ -15,6 +15,7 @@ import {
 
 import type { RowViewIds } from '~/bubbles/android/ids';
 import type { RowPaint } from '~/bubbles/android/row-paint';
+import { paintReplySpine, type ReplyIconConfig } from '~/bubbles/android/ui-reply-icon';
 
 const VISIBLE = 0;
 const INVISIBLE = 4;
@@ -35,6 +36,8 @@ export type RowConfig = {
 	ids: RowViewIds;
 	idField: string;
 	layerId: number;
+	/** The reply icon shown in place of a reply's spine. */
+	replyIcon: ReplyIconConfig;
 	keys: {
 		padding: NativeJavaAssociationKey;
 		avatar: NativeJavaAssociationKey;
@@ -232,13 +235,15 @@ function removeBubble(java: NativeJavaBridge, config: RowConfig, row: NativeJava
 }
 
 /**
- * @description Moves a row's name row, time, avatar and reply preview, clips the preview to its quote box and hides its spine.
+ * @description Moves a row's name row, time, avatar and reply preview, clips the preview to its quote box and swaps its spine for a reply icon.
+ * @param active Whether bubbles paint the row; `false` gives Discord's spine back.
  */
 export function moveHeading(
 	java: NativeJavaBridge,
 	config: RowConfig,
 	row: NativeJavaReference,
 	paint: Pick<RowPaint, 'name' | 'avatar' | 'reply' | 'time' | 'clip'>,
+	active = true,
 ) {
 	'worklet';
 	const { ids } = config;
@@ -254,9 +259,17 @@ export function moveHeading(
 
 	if (!preview) return;
 
-	const spine = viewIn(java, row, ids.reply_spline);
-
-	if (spine) java.invoke(spine, 'setAlpha', [javaFloat(paint.clip ? 0 : 1)]);
+	paintReplySpine(
+		java,
+		config.replyIcon,
+		{
+			preview,
+			spine: viewIn(java, row, ids.reply_spline),
+			leading: viewIn(java, row, ids.reply_leading_views),
+			text: viewIn(java, row, ids.reply_text),
+		},
+		{ active, quoted: Boolean(paint.clip) },
+	);
 
 	if (!paint.clip) {
 		java.invoke(preview, 'setClipBounds', [{ type: 'null', class: 'android.graphics.Rect' }]);
@@ -509,7 +522,7 @@ export function restoreRow(java: NativeJavaBridge, config: RowConfig, row: Nativ
 
 	if (mosaic) roundMosaic(java, config, mosaic, undefined);
 
-	moveHeading(java, config, row, { name: none, avatar: none, reply: none });
+	moveHeading(java, config, row, { name: none, avatar: none, reply: none }, false);
 	resetAvatar(java, config, row, rowKind(java, config, row));
 
 	if (original) {

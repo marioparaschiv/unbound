@@ -28,30 +28,35 @@ export type RowViewName = (typeof ROW_VIEWS)[number];
 /** Each row view's resource id, 0 when this build has no such view. */
 export type RowViewIds = Record<RowViewName, number>;
 
+/** Discord's swipe-to-reply arrow, shown where a reply's spine was. */
+const REPLY_ICON_DRAWABLE = 'ic_swipe_reply';
+
 /**
  * @description Looks up the resource id of each message row view once, so the UI thread finds them with `findViewById`.
  * @param java The plugin's Java bridge.
- * @returns The ids and how many pixels make one point, or `undefined` while no activity is showing.
+ * @returns The ids, the reply icon's drawable id, 0 when this build has none, and how many pixels make one point, or `undefined` while no activity is showing.
  */
-export function rowViewIds(java: NativeJavaBridge): { ids: RowViewIds; scale: number } | undefined {
+export function rowViewIds(
+	java: NativeJavaBridge,
+): { ids: RowViewIds; replyIcon: number; scale: number } | undefined {
 	const activity = currentActivity(java);
 	const resources = activity ? javaReference(java.invoke(activity, 'getResources', [])) : null;
 
 	if (!resources) return;
 
-	const entries = ROW_VIEWS.map((name) => [
-		name,
+	const identifier = (name: string, type: string) =>
 		javaNumber(
 			java.invoke(resources, 'getIdentifier', [
 				javaString(name),
-				javaString('id'),
+				javaString(type),
 				javaString(DISCORD_PACKAGE),
 			]),
-		) ?? 0,
-	]);
+		) ?? 0;
+	const entries = ROW_VIEWS.map((name) => [name, identifier(name, 'id')]);
 
 	return {
 		ids: Object.fromEntries(entries) as RowViewIds,
+		replyIcon: identifier(REPLY_ICON_DRAWABLE, 'drawable'),
 		scale: resourceDensity(java, resources),
 	};
 }

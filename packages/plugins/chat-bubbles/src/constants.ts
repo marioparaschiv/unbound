@@ -82,6 +82,9 @@ export const Quote = {
 	shade: 0.06,
 };
 
+/** The reply icon shown in place of a reply's spine: its size, and the gap left before the preview's avatar, in points. */
+export const ReplyIcon = { size: 14, gap: 6 };
+
 export const BubbleLimits = {
 	radius: 32,
 	padding: 24,

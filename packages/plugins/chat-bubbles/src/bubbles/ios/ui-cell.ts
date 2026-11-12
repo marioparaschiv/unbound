@@ -4,13 +4,14 @@ import type { Box } from '~/bubbles/geometry';
 import type { BubbleColor } from '~/bubbles/style';
 import { lastAvatarFrame } from '~/bubbles/ios/last-avatar';
 import { messageIdOf } from '~/bubbles/ios/message-id';
+import { ReplyIcon } from '~/constants';
 
 const AVATAR_TAG = 0x0b0b26;
 const PICTURE_TAG = 0x0b0b27;
 const DECORATION_TAG = 0x0b0b28;
 const QUOTE_TAG = 0x0b0b29;
 const REPLY_ICON_TAG = 0x0b0b2a;
-const REPLY_ICON = { symbol: 'arrowshape.turn.up.left.fill', size: 14, inset: 6, top: 2 };
+const REPLY_SYMBOL = { name: 'arrowshape.turn.up.left.fill', top: 2 };
 const MAX_PICTURES = 128;
 const SPINE_CLASS = 'DCDSpine';
 
@@ -185,7 +186,7 @@ function replyIconIn(
 	const image = objc.call(
 		objc.getClass('UIImage') as NativeObjectHandle,
 		'systemImageNamed:',
-		REPLY_ICON.symbol,
+		REPLY_SYMBOL.name,
 	) as NativeObjectHandle | null;
 	const icon = objc.call(
 		objc.getClass('UIImageView') as NativeObjectHandle,
@@ -235,10 +236,11 @@ function paintSpine(
 
 		objc.invoke(icon, 'setFrame:', [
 			cgRect(objc, {
-				x: frame.x + frame.width - REPLY_ICON.size - REPLY_ICON.inset,
-				y: frame.y + REPLY_ICON.top,
-				width: REPLY_ICON.size,
-				height: REPLY_ICON.size,
+				// The spine's right edge is where the preview's avatar starts.
+				x: frame.x + frame.width - ReplyIcon.size - ReplyIcon.gap,
+				y: frame.y + REPLY_SYMBOL.top,
+				width: ReplyIcon.size,
+				height: ReplyIcon.size,
 			}),
 		]);
 	}

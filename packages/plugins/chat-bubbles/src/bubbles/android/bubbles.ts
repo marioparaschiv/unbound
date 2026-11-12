@@ -53,7 +53,7 @@ import {
 import { currentAppearance } from '~/bubbles/theme';
 import { messageAuthor, isOwnMessage } from '~/bubbles/author';
 import { MessageStore, SelectedChannelStore } from '~/bubbles/modules';
-import { AndroidClass, BubbleStyle } from '~/constants';
+import { AndroidClass, BubbleStyle, ReplyIcon } from '~/constants';
 
 type AndroidNative = {
 	java: NativeJavaBridge;
@@ -62,6 +62,7 @@ type AndroidNative = {
 };
 
 const BUBBLE_LAYER_ID = 0x0b0b1e;
+const REPLY_ICON_ID = 0x0b0b1f;
 const PLACEMENT_WORKERS = 4;
 const MAX_TRACKED = 256;
 const MENTION_BAR = { ...parseHexColor(BubbleStyle.mentionColor)!, alpha: 1 };
@@ -89,7 +90,7 @@ export function drawAndroidBubbles({ java, ui }: AndroidNative) {
 
 	if (!found) throw new Error('Failed to find the message row views: no activity is showing.');
 
-	const { ids, scale } = found;
+	const { ids, replyIcon, scale } = found;
 	const bind = messageBindMethod(java);
 	const idField = messageIdField(java);
 	const scope = ui.createScope();
@@ -156,6 +157,12 @@ export function drawAndroidBubbles({ java, ui }: AndroidNative) {
 			ids,
 			idField,
 			layerId: BUBBLE_LAYER_ID,
+			replyIcon: {
+				drawable: replyIcon,
+				id: REPLY_ICON_ID,
+				size: Math.round(ReplyIcon.size * scale),
+				gap: Math.round(ReplyIcon.gap * scale),
+			},
 			keys,
 			...rowConfig(currentAppearance()),
 		},
