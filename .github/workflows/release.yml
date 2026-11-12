@@ -101,20 +101,6 @@ jobs:
             - name: Publish packages
               run: bun scripts/publish-all.ts
 
-    bundle:
-        needs: release
-        if: needs.release.outputs.client-released == 'true'
-        permissions:
-            contents: write
-        uses: ./.github/workflows/build-bundle.yml
-        with:
-            version: ${{ needs.release.outputs.client-version }}
-        secrets:
-            UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}
-            S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
-            S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
-            UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
-
     # Every push to main republishes the `main` API docs; a client release also publishes its tag's docs,
     # generated from this same commit, which is the one release-please tagged.
     docs:
@@ -169,7 +155,7 @@ jobs:
             id-token: write
             attestations: write
             artifact-metadata: write
-            actions: read
+            actions: write
         uses: ./.github/workflows/loader-publish.yml
         secrets:
             ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}

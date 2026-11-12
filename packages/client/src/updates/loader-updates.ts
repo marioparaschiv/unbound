@@ -55,17 +55,18 @@ export function buildLoaderUpdateQuery(
 }
 
 /**
- * @description Picks the loader version the newest bundle needs, from the server or else from the native
- * loader's own refusal, dropping one the installed loader already meets.
+ * @description Picks the loader version the newest bundle needs, dropping one the installed loader already
+ * meets. The server's answer wins, since it names only loaders with a published release; without one, the
+ * native loader's own refusal.
  * @param loader The native loader's info, if one injected it.
- * @param fromServer The version the server reported, if any.
+ * @param fromServer The server's answer: a version, `null` for none, or `undefined` when it gave none.
  * @returns The required version, or `null` when the installed loader runs the newest bundle.
  */
 export function resolveRequiredLoader(
 	loader: UnboundLoaderInfo | undefined,
-	fromServer: string | null = null,
+	fromServer?: string | null,
 ): string | null {
-	const required = fromServer ?? loader?.requiredVersion;
+	const required = fromServer === undefined ? loader?.requiredVersion : fromServer;
 
 	if (!required || !isSemver(required)) return null;
 

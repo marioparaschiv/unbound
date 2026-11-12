@@ -1,9 +1,10 @@
 name: Build Bundle
 
-# Every build is uploaded to the public bucket under `unbound/{channel}/{version}/`, served through
-# the CDN: pushes to main publish to `beta` as the commit SHA, client releases (called from
-# release.yml) publish to `stable` as the client version. Versions are immutable; a version that is already
-# published is skipped, never overwritten.
+# Unbound has one bundle channel: each push to main publishes to builds.unbound.rip, which every loader reads,
+# and to the public bucket under `unbound/beta/{sha}/`. The channel keeps the name `beta` because loaders pin
+# the manifest's channel against rollback. Versions are immutable; a version that is already published is
+# skipped, never overwritten. A bundle whose `minLoaderVersion` no published loader meets on iOS and Android
+# fails before anything is published; loader-publish.yml runs this again once the loader ships.
 #
 # Configure in the repository settings:
 #   vars:    S3_ENDPOINT, S3_REGION, S3_PUBLIC_BUCKET
@@ -22,21 +23,6 @@ on:
     repository_dispatch:
         types:
             - hermesc-published
-    workflow_call:
-        inputs:
-            version:
-                description: The client release version to publish to the stable channel.
-                type: string
-                required: true
-        secrets:
-            S3_ACCESS_KEY_ID:
-                required: true
-            S3_SECRET_ACCESS_KEY:
-                required: true
-            UNBOUND_BUNDLE_SIGNING_KEY:
-                required: true
-            UNBOUND_API_KEY:
-                required: false
 
 permissions:
     contents: write
@@ -45,16 +31,15 @@ jobs:
     build:
         runs-on: ubuntu-26.04
         timeout-minutes: 15
-        # A release upload must never be cancelled by a later push.
+        # A later push replaces a build in flight.
         concurrency:
-            group: build-bundle-${{ inputs.version || 'beta' }}
-            cancel-in-progress: ${{ !inputs.version }}
+            group: build-bundle
+            cancel-in-progress: true
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
                   persist-credentials: false
-                  ref: ${{ inputs.version && format('client-v{0}', inputs.version) || '' }}
                   fetch-depth: 0
 
             # bun.lock is lockfileVersion 2, which stable bun cannot parse until 1.4 releases.
@@ -67,7 +52,7 @@ jobs:
               run: bun run --cwd packages/client build
               env:
                   TMPDIR: ${{ runner.temp }}
-                  UNBOUND_CHANNEL: ${{ inputs.version && 'stable' || 'beta' }}
+                  UNBOUND_CHANNEL: beta
                   UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}
 
             - name: Check every bundle and the manifest are signed
@@ -87,15 +72,32 @@ jobs:
                       test -f "$bundle.map" || { echo "::error::$bundle has no source map"; exit 1; }
                   done
 
+            # A bundle that needs a loader no one can install yet would leave users unable to update.
+            - name: Check a published loader runs the bundle
+              if: ${{ vars.UNBOUND_API_URL != '' }}
+              env:
+                  UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
+              run: |
+                  set -euo pipefail
+                  required="$(jq -r '.minLoaderVersion' packages/client/dist/manifest.json)"
+                  for platform in ios android; do
+                      newest="$(curl --fail-with-body --silent --show-error \
+                          "${UNBOUND_API_URL%/}/api/v1/loader/updates?platform=$platform&version=0.0.0" \
+                          | jq -r '.update.version // "none"')"
+                      if [ "$newest" = none ] || [ "$(printf '%s\n%s\n' "$required" "$newest" | sort -V | head -n 1)" != "$required" ]; then
+                          echo "::error::The bundle needs loader $required, but the newest published $platform loader is $newest. Release the loader first; its publish runs this again."
+                          exit 1
+                      fi
+                  done
+
             - name: Keep source maps
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
-                  name: source-maps-${{ inputs.version || github.sha }}
+                  name: source-maps-${{ github.sha }}
                   path: packages/client/dist/*.map
                   if-no-files-found: error
 
             - name: Publish bundles to builds branch
-              if: ${{ !inputs.version }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
@@ -136,8 +138,8 @@ jobs:
               if: ${{ vars.S3_PUBLIC_BUCKET != '' }}
               run: bun run --cwd packages/client upload
               env:
-                  UNBOUND_CHANNEL: ${{ inputs.version && 'stable' || 'beta' }}
-                  UNBOUND_VERSION: ${{ inputs.version || github.sha }}
+                  UNBOUND_CHANNEL: beta
+                  UNBOUND_VERSION: ${{ github.sha }}
                   S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
                   S3_REGION: ${{ vars.S3_REGION }}
                   S3_PUBLIC_BUCKET: ${{ vars.S3_PUBLIC_BUCKET }}
@@ -150,8 +152,8 @@ jobs:
               env:
                   UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
                   UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
-                  UNBOUND_CHANNEL: ${{ inputs.version && 'stable' || 'beta' }}
-                  UNBOUND_VERSION: ${{ inputs.version || github.sha }}
+                  UNBOUND_CHANNEL: beta
+                  UNBOUND_VERSION: ${{ github.sha }}
               run: |
                   set -euo pipefail
                   : "${UNBOUND_API_KEY:?UNBOUND_API_KEY is required to record the bundle}"
