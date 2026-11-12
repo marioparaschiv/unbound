@@ -229,7 +229,7 @@ function textRuns(spans: Span[], x: number, y: number): CardText[] {
 }
 
 function stateLabel(flag: string, jailbreak = ''): string {
-	return (flag === 'Jailbroken' && jailbreak ? jailbreak : flag)
+	return ((flag === 'Jailbroken' || flag === 'Rooted') && jailbreak ? jailbreak : flag)
 		.replace(/ build$/, '')
 		.toLowerCase();
 }

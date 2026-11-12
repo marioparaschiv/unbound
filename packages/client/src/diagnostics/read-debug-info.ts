@@ -1,3 +1,4 @@
+import { NativeBridgeCapabilityError, NativeBridgeVersionError } from '~/native/errors';
 import { CLIENT_VERSION, MINIMUM_DISCORD_VERSIONS, VERSION } from '~/core/constants';
 import { isOlderThanSupported, discordChannel } from '~/core/discord-support';
 import { readBundleInfo } from '~/native/read-bundle-info';
@@ -60,12 +61,25 @@ function selectedAddon<I extends object>(manager: Addons<I>): string {
 	return manager.getAddons().find((addon) => manager.isEnabled(addon.id))?.id ?? '';
 }
 
+function startFailure(error: Error): string {
+	if (error instanceof NativeBridgeVersionError) {
+		return `needs bridge API ${error.requiredApi}`;
+	}
+
+	if (error instanceof NativeBridgeCapabilityError) {
+		return `loader lacks ${error.capability}`;
+	}
+
+	return 'failed to start';
+}
+
 function disabledAddons(): string[] {
 	const crashed = crashedAddons().map(
 		(addon) => `${addon.name} (${CRASH_PHASES[addon.phase] ?? addon.phase})`,
 	);
-	const failed = [...plugins.errors.keys()].map(
-		(id) => `${plugins.getAddon(String(id))?.name ?? String(id)} (failed to start)`,
+	const failed = [...plugins.errors.entries()].map(
+		([id, error]) =>
+			`${plugins.getAddon(String(id))?.name ?? String(id)} (${startFailure(error)})`,
 	);
 
 	return [...new Set([...crashed, ...failed])];
@@ -121,7 +135,7 @@ export function readDebugInfo(): DebugInfo {
 			? ''
 			: installDetailsOf(attempt(() => platform?.app.getInstallDetails?.(), '')),
 		framework: attempt(() => platform?.app.getFramework(), ''),
-		jailbreak: android ? '' : attempt(() => platform?.device.getJailbreak?.(), ''),
+		jailbreak: attempt(() => platform?.device.getJailbreak?.(), ''),
 		react: React.version,
 		reactNative: rn ? `${rn.major}.${rn.minor}.${rn.patch}` : 'unknown',
 		hermes: String(runtime['OSS Release Version'] ?? 'unknown'),

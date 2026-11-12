@@ -199,4 +199,14 @@ describe('debug card', () => {
 		expect(JSON.parse(debugAltText({ ...info, launch: quiet })).launch).toBeUndefined();
 		expect(card.height / card.width).toBeLessThanOrEqual(0.85);
 	});
+	test('names the Android root manager in place of the generic rooted state', () => {
+		const card = layoutDebugCard({
+			...info,
+			platform: 'Android',
+			jailbreak: 'Magisk',
+			flags: ['Rooted', 'verified build'],
+		});
+
+		expect(texts(card).some((run) => run.text === '● magisk')).toBe(true);
+	});
 });
