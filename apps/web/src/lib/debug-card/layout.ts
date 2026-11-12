@@ -7,6 +7,8 @@ import type {
 } from '@unbound-app/contracts/debug-cards';
 import { launchNotes } from '@unbound-app/contracts/debug-card-launch';
 
+import type { DebugCardContext } from '~/lib/debug-card/context';
+
 /** A rounded rectangle, filled or outlined, in the card's points. */
 export type CardRect = {
 	kind: 'rect';
@@ -112,6 +114,7 @@ const SUPPORT_COLORS: Record<DiscordSupport, string> = {
 	supported: COLORS.good,
 	untested: COLORS.warn,
 	unsupported: COLORS.bad,
+	broken: COLORS.bad,
 };
 
 function supportSpans(support?: DiscordSupport): Span[] {
@@ -131,18 +134,48 @@ function fittedList(items: string[], room: number): string {
 	return `${items.length} addons`;
 }
 
-function rows(info: DebugInfo, now: Date): [string, Span[]][] {
+function updateNote(behind?: boolean): Span[] {
+	return behind ? [warn(' · update available')] : [];
+}
+
+function supportOf(info: DebugInfo, context: DebugCardContext): DiscordSupport | undefined {
+	if (context.compat?.broken) {
+		return 'broken';
+	}
+
+	if (context.compat && info.discordSupport !== 'unsupported') {
+		return 'supported';
+	}
+
+	return info.discordSupport;
+}
+
+function rows(info: DebugInfo, now: Date, context: DebugCardContext): [string, Span[]][] {
 	const { signing, sideloader } = installParts(info.installDetails);
 
 	return [
-		['unbound', [value(info.client.replace(/^v/, '')), accent(` @${info.commit}`)]],
-		['loader', [value(info.loader), dim(` ${joined([info.loaderOrigin, info.framework])}`)]],
+		[
+			'unbound',
+			[
+				value(info.client.replace(/^v/, '')),
+				accent(` @${info.commit}`),
+				...updateNote(context.clientBehind),
+			],
+		],
+		[
+			'loader',
+			[
+				value(info.loader),
+				...updateNote(context.loaderBehind),
+				dim(` ${joined([info.loaderOrigin, info.framework])}`),
+			],
+		],
 		[
 			'discord',
 			[
 				value(info.discord),
 				dim(` ${joined([info.discordChannel.toLowerCase(), info.discordBuild])}`),
-				...supportSpans(info.discordSupport),
+				...supportSpans(supportOf(info, context)),
 			],
 		],
 		[
@@ -313,13 +346,18 @@ function stateSpans(flags: string[], jailbreak?: string): Span[] {
  * @description Lays the debug report out as a terminal-style card: a title bar, one aligned row per component and the report time and a state footer that leaves room on the left for Discord's ALT badge.
  * @param info The versions and device details.
  * @param now When the report was taken, shown in the title bar.
+ * @param context What the server adds: the compat scan and whether the client or loader is behind.
  * @returns The card's size, render scale and drawing operations.
  */
-export function layoutDebugCard(info: DebugInfo, now = new Date()): DebugCard {
+export function layoutDebugCard(
+	info: DebugInfo,
+	now = new Date(),
+	context: DebugCardContext = {},
+): DebugCard {
 	const room = Math.floor((WIDTH - PADDING * 2) / CHAR_WIDTH);
 	const valueRoom = room - LABEL_WIDTH;
 	const valueX = PADDING + LABEL_WIDTH * CHAR_WIDTH;
-	const lines = rows(info, now).map(([label, spans]) => ({
+	const lines = rows(info, now, context).map(([label, spans]) => ({
 		label,
 		line: clipped(spans, valueRoom),
 	}));
@@ -474,9 +512,10 @@ export function debugCardSvg(card: DebugCard): string {
 /**
  * @description Writes the report as compact JSON for the image's alt text, so bots can read it; long fields are cut to fit Discord's limit.
  * @param info The versions and device details.
+ * @param context What the server adds: the compat scan and whether the client or loader is behind.
  * @returns The JSON, at most 1024 characters.
  */
-export function debugAltText(info: DebugInfo): string {
+export function debugAltText(info: DebugInfo, context: DebugCardContext = {}): string {
 	const report: Record<string, string | string[]> = {
 		unbound: info.client.replace(/^v/, ''),
 		commit: info.commit,
@@ -497,7 +536,12 @@ export function debugAltText(info: DebugInfo): string {
 		hermes: info.hermes,
 		bytecode: info.bytecode,
 		state: info.flags,
-		...(info.discordSupport && { support: info.discordSupport }),
+		...(supportOf(info, context) && { support: supportOf(info, context) }),
+		...((context.clientBehind || context.loaderBehind) && {
+			updates: [context.clientBehind && 'client', context.loaderBehind && 'loader'].filter(
+				(part): part is string => typeof part === 'string',
+			),
+		}),
 		...(launchNotes(info.launch).length && { launch: launchNotes(info.launch) }),
 		...(info.disabledAddons?.length && { disabled: info.disabledAddons }),
 		...(info.locale && { locale: info.locale }),

@@ -175,6 +175,7 @@ export function readDebugInfo(): DebugInfo {
 		theme: attempt(() => selectedAddon(themes), ''),
 		iconPack: attempt(() => selectedAddon(icons), ''),
 		launch: launchOf(loader?.launch),
+		bundleChannel: loader?.launch?.channel,
 		memory: attempt(() => memoryOf(platform?.device.getState?.()), undefined),
 		heap: attempt(getHeapUsage, undefined),
 	};

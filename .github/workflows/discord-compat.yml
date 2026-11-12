@@ -153,6 +153,24 @@ jobs:
                       packages/loader/report.md
                   retention-days: 90
 
+            - name: Record the scan for /debug
+              if: ${{ github.ref_name == github.event.repository.default_branch && vars.UNBOUND_API_URL != '' }}
+              continue-on-error: true
+              env:
+                  UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
+                  UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
+              run: |
+                  set -euo pipefail
+                  : "${UNBOUND_API_KEY:?UNBOUND_API_KEY is required to record the scan}"
+                  jq --arg channel "$CHANNEL" -f ../../scripts/compat-summary.jq compat.json > compat-summary.json
+                  if jq -e '.scans | length > 0' compat-summary.json >/dev/null; then
+                    curl --fail-with-body --silent --show-error --request POST \
+                      --header 'Content-Type: application/json' \
+                      --header "X-API-Key: $UNBOUND_API_KEY" \
+                      --data @compat-summary.json \
+                      "${UNBOUND_API_URL%/}/api/v1/loader/compat"
+                  fi
+
             - name: Open, supersede or close the issue
               if: github.ref_name == github.event.repository.default_branch
               run: |

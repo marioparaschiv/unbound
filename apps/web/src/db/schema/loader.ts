@@ -3,6 +3,7 @@ import type {
 	AndroidChannel,
 } from '@unbound-app/contracts/android-builds';
 import { pgTable, text, index, primaryKey, integer, jsonb } from 'drizzle-orm/pg-core';
+import type { DiscordCompatPlatform } from '@unbound-app/contracts/discord-compat';
 import type { BundleChannel, LoaderPlatform } from '@unbound-app/contracts/loader';
 
 import { timestampMs } from './columns';
@@ -61,4 +62,18 @@ export const androidBuild = pgTable(
 			table.publishedAt,
 		),
 	],
+);
+
+export const discordCompat = pgTable(
+	'discord_compat',
+	{
+		platform: text('platform').$type<DiscordCompatPlatform>().notNull(),
+		version: text('version').notNull(),
+		build: text('build'),
+		channel: text('channel').notNull(),
+		broken: integer('broken').notNull(),
+		fallbacks: integer('fallbacks').notNull(),
+		scannedAt: timestampMs('scanned_at').notNull(),
+	},
+	(table) => [primaryKey({ columns: [table.platform, table.version] })],
 );
