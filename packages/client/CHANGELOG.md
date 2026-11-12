@@ -1,5 +1,48 @@
 # Changelog
 
+## [3.1.0](https://github.com/marioparaschiv/unbound/compare/client-v3.0.0...client-v3.1.0) (2026-11-12)
+
+
+### Features
+
+* **client:** add support, issues and context to /debug ([#1147](https://github.com/marioparaschiv/unbound/issues/1147)) ([05b2839](https://github.com/marioparaschiv/unbound/commit/05b2839cb43f575aaad7bd2b96cbe9580c374815))
+* **client:** send /debug as a rendered card ([#1144](https://github.com/marioparaschiv/unbound/issues/1144)) ([6a4b847](https://github.com/marioparaschiv/unbound/commit/6a4b8474da557280ed9771ddeecc54261ad6dc4d))
+* **loader:** add WOFF2 and variable fonts, centre tall fonts ([#1142](https://github.com/marioparaschiv/unbound/issues/1142)) ([ccf0462](https://github.com/marioparaschiv/unbound/commit/ccf04625b5eb6baf4c6560f0513de63f701f2587))
+* **loader:** let UI scopes implement Java interfaces ([f8ca349](https://github.com/marioparaschiv/unbound/commit/f8ca3499ea8627dfc5f57560928676278b65dea9))
+* **loader:** let UI-scope Java hooks rewrite their arguments ([#1130](https://github.com/marioparaschiv/unbound/issues/1130)) ([20893e2](https://github.com/marioparaschiv/unbound/commit/20893e2e907eec6a81f2279ac714eb01aab100e9))
+* **loader:** name the Android root manager and bridge failures ([#1150](https://github.com/marioparaschiv/unbound/issues/1150)) ([aa68889](https://github.com/marioparaschiv/unbound/commit/aa68889f9085501378b1d5e4b09728fe6ef12edc))
+* **loader:** report bundle state, launches and native crashes ([#1148](https://github.com/marioparaschiv/unbound/issues/1148)) ([f0a0e86](https://github.com/marioparaschiv/unbound/commit/f0a0e8625bfce64c1bbb6133ff154bb5eabee047))
+* **web:** render /debug cards on the server ([#1151](https://github.com/marioparaschiv/unbound/issues/1151)) ([6e39c74](https://github.com/marioparaschiv/unbound/commit/6e39c74b8c4bf68578b1a45c9cdb13054c5d4569))
+
+
+### Bug Fixes
+
+* **client:** name plugin source in stack frames ([#1116](https://github.com/marioparaschiv/unbound/issues/1116)) ([ab03e95](https://github.com/marioparaschiv/unbound/commit/ab03e95d159bc837d1575a8b12fe5c5281c4980c))
+* **client:** restore the debug card size and seat the ALT badge ([#1145](https://github.com/marioparaschiv/unbound/issues/1145)) ([418cd0d](https://github.com/marioparaschiv/unbound/commit/418cd0ddb8508f79e0595b3dfb3ea1beb46bbafa))
+* **loader:** warn when the loader lacks native bridge API 1.3.0 ([#1136](https://github.com/marioparaschiv/unbound/issues/1136)) ([7e15ee3](https://github.com/marioparaschiv/unbound/commit/7e15ee37dcb9c48e7d07d765e11d63c60bccd855))
+* tidy the install and state debug lines ([#1143](https://github.com/marioparaschiv/unbound/issues/1143)) ([f1a2a2f](https://github.com/marioparaschiv/unbound/commit/f1a2a2f3999db8da506373b0248eef644b11bcef))
+
+
+### Performance Improvements
+
+* **client:** swap icon packs in place with fewer re-renders ([#1133](https://github.com/marioparaschiv/unbound/issues/1133)) ([e859eca](https://github.com/marioparaschiv/unbound/commit/e859eca7f2dafbf44def62deda3e3ea4c58ed469))
+
+
+### Continuous Integration
+
+* **client:** one bundle channel, gated on a released loader ([#1137](https://github.com/marioparaschiv/unbound/issues/1137)) ([5e7efe3](https://github.com/marioparaschiv/unbound/commit/5e7efe37934f314788dcbb4b5f6c140ded00ec0b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.1.0
+    * @unbound-app/debugger-protocol bumped to 2.0.1
+    * @unbound-app/types bumped to 1.1.0
+    * @unbound-app/utils bumped to 1.0.1
+    * @unbound-app/web bumped to 2.1.0
+
 ## [3.0.0](https://github.com/marioparaschiv/unbound/compare/client-v2.2.0...client-v3.0.0) (2026-11-11)
 
 

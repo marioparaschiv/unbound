@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.1.0](https://github.com/marioparaschiv/unbound/compare/contracts-v2.0.0...contracts-v2.1.0) (2026-11-12)
+
+
+### Features
+
+* **loader:** add WOFF2 and variable fonts, centre tall fonts ([#1142](https://github.com/marioparaschiv/unbound/issues/1142)) ([ccf0462](https://github.com/marioparaschiv/unbound/commit/ccf04625b5eb6baf4c6560f0513de63f701f2587))
+* **web:** render /debug cards on the server ([#1151](https://github.com/marioparaschiv/unbound/issues/1151)) ([6e39c74](https://github.com/marioparaschiv/unbound/commit/6e39c74b8c4bf68578b1a45c9cdb13054c5d4569))
+
+
+### Continuous Integration
+
+* **client:** one bundle channel, gated on a released loader ([#1137](https://github.com/marioparaschiv/unbound/issues/1137)) ([5e7efe3](https://github.com/marioparaschiv/unbound/commit/5e7efe37934f314788dcbb4b5f6c140ded00ec0b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/types bumped to 1.1.0
+
 ## [2.0.0](https://github.com/marioparaschiv/unbound/compare/contracts-v1.1.1...contracts-v2.0.0) (2026-11-11)
 
 
