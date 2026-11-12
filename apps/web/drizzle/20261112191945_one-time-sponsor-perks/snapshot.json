@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "23151da4-2e94-4a97-bdc4-70c9df2e2c33",
+  "prevIds": [
+    "464c8259-8fa7-4572-8726-c1271d13bc09"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "sponsorship",
+        "largest_one_time_cents"
+      ],
+      "writes": [
+        "s|col|public.sponsorship.largest_one_time_cents",
+        "n|col|public.sponsorship.largest_one_time_cents",
+        "e|col|public.sponsorship.largest_one_time_cents"
+      ],
+      "reads": [
+        "n|tbl|public.sponsorship",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "sponsorship",
+        "name": "largest_one_time_cents",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

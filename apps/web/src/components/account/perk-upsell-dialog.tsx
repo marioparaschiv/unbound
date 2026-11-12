@@ -11,7 +11,7 @@ import {
 } from '~/components/ui/dialog';
 import DiscordProfilePreview from '~/components/account/discord-profile-preview';
 import type { PerkStatus, SponsorOverview } from '~/lib/sponsors/overview';
-import { formatMonthlyPrice } from '~/lib/sponsors/price';
+import { formatMonthlyPrice, formatPrice } from '~/lib/sponsors/price';
 import { Button } from '~/components/ui/button';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
@@ -25,13 +25,14 @@ type PerkUpsellDialogProps = {
 
 function tierNote(perk: PerkStatus, sponsor: SponsorOverview): string {
 	const tier = formatMonthlyPrice(perk.minimumMonthlyCents);
+	const once = formatPrice(perk.minimumOneTimeCents);
 	const current = sponsor.sponsorship;
 
 	if (sponsor.standing === 'active' && current && !current.oneTime) {
-		return `Thanks for sponsoring ${formatMonthlyPrice(current.monthlyPriceCents)}. Moving to ${tier} unlocks this.`;
+		return `Thanks for sponsoring ${formatMonthlyPrice(current.monthlyPriceCents)}. Moving to ${tier} unlocks this, or ${once} once unlocks it for good.`;
 	}
 
-	return `Sponsoring Unbound on GitHub at ${tier} or more unlocks this, and helps keep Unbound going.`;
+	return `Sponsoring Unbound on GitHub at ${tier} or more unlocks this, or ${once} once unlocks it for good, and helps keep Unbound going.`;
 }
 
 /** Shows what a locked perk looks like and the tier that unlocks it. */

@@ -6,9 +6,9 @@ import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { removeBadgesMutation, saveBadgesMutation } from '~/queries/account/account';
+import { formatMonthlyPrice, formatPrice } from '~/lib/sponsors/price';
 import useBadgeDrafts from '~/components/account/use-badge-drafts';
 import type { PerkStatus } from '~/lib/sponsors/overview';
-import { formatMonthlyPrice } from '~/lib/sponsors/price';
 import UserBadgeList from '~/components/user-badge-list';
 import getApiErrorMessage from '~/lib/api/error-message';
 import BadgeForm from '~/components/account/badge-form';
@@ -30,7 +30,7 @@ const CLOSED: Mode = { kind: 'closed' };
 
 function lockedNote(perk: PerkStatus, editable: boolean): string | null {
 	if (!perk.unlocked) {
-		return `Your badges are hidden until your sponsorship is ${formatMonthlyPrice(perk.minimumMonthlyCents)} or more.`;
+		return `Your badges are hidden until your sponsorship is ${formatMonthlyPrice(perk.minimumMonthlyCents)} or more, or you sponsor ${formatPrice(perk.minimumOneTimeCents)} once.`;
 	}
 
 	return editable ? null : 'Sponsor again to change your badges.';

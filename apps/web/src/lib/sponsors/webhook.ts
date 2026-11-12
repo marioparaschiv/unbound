@@ -161,7 +161,14 @@ function applyDelivery(
 			return 'unchanged';
 		}
 
-		await upsertSponsorship(tx, { ...event.values, ...lifecycle, updatedAt: now });
+		const oneTimeCents = event.values.oneTime ? event.values.monthlyPriceCents : 0;
+
+		await upsertSponsorship(tx, {
+			...event.values,
+			largestOneTimeCents: Math.max(current?.largestOneTimeCents ?? 0, oneTimeCents),
+			...lifecycle,
+			updatedAt: now,
+		});
 
 		return 'applied';
 	});

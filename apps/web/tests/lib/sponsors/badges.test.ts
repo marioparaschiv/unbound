@@ -58,6 +58,7 @@ function row(overrides: Partial<Sponsorship>): Sponsorship {
 		tierName: '$5 a month',
 		monthlyPriceCents: 500,
 		oneTime: false,
+		largestOneTimeCents: 0,
 		isPublic: false,
 		since: new Date('2026-01-01T00:00:00Z'),
 		endsAt: null,
@@ -85,6 +86,27 @@ describe('standing and eligibility', () => {
 		['active at $4.99', row({ monthlyPriceCents: 499 }), NOW, 'active', false],
 		['active at $1', row({ monthlyPriceCents: 100 }), NOW, 'active', false],
 		['one-time $10', row({ oneTime: true, monthlyPriceCents: 1000 }), NOW, 'active', false],
+		[
+			'one-time $29.99 ever',
+			row({ oneTime: true, monthlyPriceCents: 2999, largestOneTimeCents: 2999 }),
+			NOW,
+			'active',
+			false,
+		],
+		[
+			'one-time $30 ever, long ended',
+			row({ oneTime: true, state: 'cancelled', endsAt: ends, largestOneTimeCents: 3000 }),
+			new Date(ends.getTime() + 365 * DAY),
+			'lapsed',
+			true,
+		],
+		[
+			'$1 a month now, $100 once before',
+			row({ monthlyPriceCents: 100, largestOneTimeCents: 10_000 }),
+			NOW,
+			'active',
+			true,
+		],
 		[
 			'pending, before it takes effect',
 			row({ state: 'pending_cancellation', endsAt: ends }),
@@ -161,6 +183,23 @@ describe('claiming a badge', () => {
 		}
 
 		expect(await failure(setBadge(anonymous))).toEqual({ status: 401, code: 'unauthorized' });
+	});
+
+	test('a one-time sponsorship of $30 or more sets and shows badges long after it ended', async () => {
+		const donor = await signUp({
+			sponsorship: {
+				oneTime: true,
+				monthlyPriceCents: 10_000,
+				largestOneTimeCents: 10_000,
+				state: 'cancelled',
+				endsAt: new Date(NOW.getTime() - 365 * DAY),
+			},
+		});
+
+		expect(await setBadge(donor.client)).toEqual({
+			claim: { badges: owned(BADGE), revokedAt: null, revokeReason: null },
+		});
+		expect(await publicBadges(donor.userId)).toEqual(shown(BADGE));
 	});
 
 	test('lists the badges under the Discord id of the linked account, as the Discord client asks', async () => {

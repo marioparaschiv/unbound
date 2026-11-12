@@ -15,6 +15,7 @@ type RemoteNode = {
 	id: number;
 	active: boolean;
 	cents?: number;
+	oneTime?: boolean;
 	createdAt?: string;
 	privacy?: 'PUBLIC' | 'PRIVATE';
 };
@@ -43,9 +44,13 @@ function toGraphQLNode(node: RemoteNode) {
 	return {
 		createdAt: node.createdAt ?? '2026-01-01T00:00:00Z',
 		isActive: node.active,
-		isOneTimePayment: false,
+		isOneTimePayment: node.oneTime ?? false,
 		privacyLevel: node.privacy ?? 'PRIVATE',
-		tier: { name: 'Monthly', monthlyPriceInCents: node.cents ?? 500, isOneTime: false },
+		tier: {
+			name: node.oneTime ? 'One time' : 'Monthly',
+			monthlyPriceInCents: node.cents ?? 500,
+			isOneTime: node.oneTime ?? false,
+		},
 		sponsorEntity: { __typename: 'User', databaseId: node.id, login: `sponsor-${node.id}` },
 	};
 }
@@ -178,6 +183,40 @@ describe('reconcileSponsorships', () => {
 			endsAt: later,
 		});
 		expect(await storedSponsorship(ctx, '21')).toMatchObject({ state: 'active', endsAt: null });
+	});
+
+	test('a past one-time payment is stored, and the largest one is kept for good', async () => {
+		const ctx = await setup();
+
+		remote.nodes = [
+			{ id: 70, active: false, oneTime: true, cents: 10_000 },
+			{ id: 71, active: false, oneTime: true, cents: 2500 },
+			{ id: 71, active: true, cents: 100 },
+		];
+
+		await reconcileSponsorships(ctx);
+
+		expect(await storedSponsorship(ctx, '70')).toMatchObject({
+			state: 'cancelled',
+			oneTime: true,
+			largestOneTimeCents: 10_000,
+		});
+		expect(await storedSponsorship(ctx, '71')).toMatchObject({
+			state: 'active',
+			monthlyPriceCents: 100,
+			largestOneTimeCents: 2500,
+		});
+
+		remote.nodes = [{ id: 70, active: true, oneTime: true, cents: 500 }];
+
+		await reconcileSponsorships(ctx);
+
+		expect(await storedSponsorship(ctx, '70')).toMatchObject({
+			state: 'active',
+			monthlyPriceCents: 500,
+			largestOneTimeCents: 10_000,
+		});
+		expect((await storedSponsorship(ctx, '71'))?.largestOneTimeCents).toBe(2500);
 	});
 
 	test('a privacy change alone is written, both ways', async () => {
