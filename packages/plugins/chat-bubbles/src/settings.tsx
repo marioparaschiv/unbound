@@ -2,11 +2,13 @@ import { resetSettings, settings, useSetting } from '@unbound-app/settings';
 import { Discord } from '@unbound-app/api/metro/components';
 import { messages } from '@unbound-app/i18n';
 import { dialogs, ui } from '@unbound-app/api';
+import { View } from 'react-native';
 
 import {
 	BubbleLayout,
 	BubbleLimits,
 	BubbleStyle,
+	type BubbleLayoutName,
 	CornerCurve,
 	Grouping,
 	MediaCorners,
@@ -17,71 +19,56 @@ import { bubbleLayout, choice, parseHexColor } from '~/bubbles/style';
 import { themeBubbleColor } from '~/bubbles/theme';
 import { hexColor } from '~/bubbles/shade';
 import { matchingPreset, PRESETS, type Look, type PresetName } from '~/presets';
+import ChatPreview from '~/preview/chat-preview';
 
-type NumberKey = 'radius' | 'horizontalPadding' | 'verticalPadding' | 'spacing' | 'opacity';
+type NumberKey =
+	| 'radius'
+	| 'horizontalPadding'
+	| 'verticalPadding'
+	| 'spacing'
+	| 'groupSpacing'
+	| 'opacity'
+	| 'tailSize'
+	| 'mentionOpacity'
+	| 'mentionTint'
+	| 'mentionWidth';
 
-type NumberSetting = {
-	key: NumberKey;
-	title: string;
-	fallback: number;
-	maximum: number;
-	unit: string;
-	dynamicOnly?: boolean;
+type SwitchKey =
+	| 'roomyRows'
+	| 'avatarLast'
+	| 'nameInside'
+	| 'roundOuter'
+	| 'roundExposed'
+	| 'joinCurves'
+	| 'smoothSteps';
+
+type Limits = { fallback: number; maximum: number; step?: number };
+
+type Unit = 'points' | 'percent';
+
+const LIMITS: Record<NumberKey, Limits> = {
+	radius: { fallback: BubbleStyle.radius, maximum: BubbleLimits.radius },
+	horizontalPadding: { fallback: BubbleStyle.horizontalPadding, maximum: BubbleLimits.padding },
+	verticalPadding: { fallback: BubbleStyle.verticalPadding, maximum: BubbleLimits.padding },
+	spacing: { fallback: BubbleStyle.spacing, maximum: BubbleLimits.spacing },
+	groupSpacing: { fallback: BubbleStyle.groupSpacing, maximum: BubbleLimits.spacing },
+	opacity: { fallback: BubbleStyle.opacity, maximum: BubbleLimits.opacity },
+	tailSize: { fallback: BubbleStyle.tailSize, maximum: BubbleLimits.tailSize },
+	mentionOpacity: { fallback: BubbleStyle.mentionOpacity, maximum: BubbleLimits.opacity },
+	mentionTint: { fallback: BubbleStyle.mentionTint, maximum: BubbleLimits.opacity },
+	mentionWidth: {
+		fallback: BubbleStyle.mentionWidth,
+		maximum: BubbleLimits.mentionWidth,
+		step: MENTION_WIDTH_STEP,
+	},
 };
 
-// Built when the panel renders, so each title and unit follows the user's language.
-function numberSettings(): NumberSetting[] {
-	return [
-		{
-			key: 'radius',
-			title: messages.CORNER_RADIUS,
-			fallback: BubbleStyle.radius,
-			maximum: BubbleLimits.radius,
-			unit: messages.UNIT_POINTS,
-		},
-		{
-			key: 'horizontalPadding',
-			title: messages.HORIZONTAL_PADDING,
-			fallback: BubbleStyle.horizontalPadding,
-			maximum: BubbleLimits.padding,
-			unit: messages.UNIT_POINTS,
-			dynamicOnly: true,
-		},
-		{
-			key: 'verticalPadding',
-			title: messages.VERTICAL_PADDING,
-			fallback: BubbleStyle.verticalPadding,
-			maximum: BubbleLimits.padding,
-			unit: messages.UNIT_POINTS,
-			dynamicOnly: true,
-		},
-		{
-			key: 'spacing',
-			title: messages.SPACING,
-			fallback: BubbleStyle.spacing,
-			maximum: BubbleLimits.spacing,
-			unit: messages.UNIT_POINTS,
-		},
-		{
-			key: 'opacity',
-			title: messages.OPACITY,
-			fallback: BubbleStyle.opacity,
-			maximum: BubbleLimits.opacity,
-			unit: messages.UNIT_PERCENT,
-		},
-	];
-}
-
-function storedNumber(
-	value: unknown,
-	setting: Pick<NumberSetting, 'fallback' | 'maximum'>,
-	step = 1,
-): number {
+function storedNumber(value: unknown, { fallback, maximum, step = 1 }: Limits): number {
 	const number = Number(value);
 
 	return Number.isFinite(number)
-		? Math.max(0, Math.min(setting.maximum, Math.round(number / step) * step))
-		: setting.fallback;
+		? Math.max(0, Math.min(maximum, Math.round(number / step) * step))
+		: fallback;
 }
 
 function storedColor(value: unknown): string | undefined {
@@ -90,6 +77,53 @@ function storedColor(value: unknown): string | undefined {
 
 function themeColor(): string {
 	return hexColor(themeBubbleColor());
+}
+
+function NumberRow({ setting, label, unit }: { setting: NumberKey; label: string; unit: Unit }) {
+	const limits = LIMITS[setting];
+
+	return (
+		<ui.SliderRow
+			label={label}
+			value={storedNumber(useSetting(setting), limits)}
+			defaultValue={limits.fallback}
+			minimum={0}
+			maximum={limits.maximum}
+			{...(limits.step ? { step: limits.step } : {})}
+			unit={unit === 'points' ? messages.UNIT_POINTS : messages.UNIT_PERCENT}
+			onChange={(value) => {
+				settings[setting] = value;
+			}}
+		/>
+	);
+}
+
+function SwitchRow({
+	setting,
+	label,
+	subLabel,
+	disabled = false,
+}: {
+	setting: SwitchKey;
+	label: string;
+	subLabel: string;
+	disabled?: boolean;
+}) {
+	const stored = useSetting(setting);
+	// Only `avatarLast` is off by default.
+	const value = setting === 'avatarLast' ? stored === true : stored !== false;
+
+	return (
+		<ui.SwitchRow
+			label={label}
+			subLabel={subLabel}
+			value={value}
+			disabled={disabled}
+			onValueChange={(next: boolean) => {
+				settings[setting] = next;
+			}}
+		/>
+	);
 }
 
 function applyPreset(name: PresetName) {
@@ -123,6 +157,7 @@ function PresetPicker() {
 	return (
 		<ui.RadioRow
 			title={messages.PRESETS}
+			description={messages.PRESETS_DESCRIPTION}
 			value={picked ?? ''}
 			options={[
 				{
@@ -146,320 +181,285 @@ function PresetPicker() {
 	);
 }
 
-function SettingsPanel() {
-	const storedLayout = useSetting('layout');
+function LayoutPicker({ layout }: { layout: BubbleLayoutName }) {
+	return (
+		<Discord.TableRadioGroup
+			title={messages.LAYOUT}
+			value={layout}
+			onChange={(value: string) => {
+				settings.layout = bubbleLayout(value);
+			}}
+		>
+			<Discord.TableRadioRow
+				label={messages.LAYOUT_FIT}
+				subLabel={messages.LAYOUT_FIT_SUBTITLE}
+				value={BubbleLayout.dynamic}
+			/>
+			<Discord.TableRadioRow
+				label={messages.LAYOUT_CARD}
+				subLabel={messages.LAYOUT_CARD_SUBTITLE}
+				value={BubbleLayout.card}
+			/>
+		</Discord.TableRadioGroup>
+	);
+}
+
+function ColorsSection() {
 	const color = storedColor(useSetting('color'));
 	const ownColor = storedColor(useSetting('ownColor'));
-	const mentionColor = storedColor(useSetting('mentionColor'));
-	const mentionOpacity = storedNumber(useSetting('mentionOpacity'), {
-		fallback: BubbleStyle.mentionOpacity,
-		maximum: BubbleLimits.opacity,
-	});
-	const mentionTint = storedNumber(useSetting('mentionTint'), {
-		fallback: BubbleStyle.mentionTint,
-		maximum: BubbleLimits.opacity,
-	});
-	const mentionWidth = storedNumber(
-		useSetting('mentionWidth'),
-		{ fallback: BubbleStyle.mentionWidth, maximum: BubbleLimits.mentionWidth },
-		MENTION_WIDTH_STEP,
-	);
-	const values = {
-		radius: useSetting('radius'),
-		horizontalPadding: useSetting('horizontalPadding'),
-		verticalPadding: useSetting('verticalPadding'),
-		spacing: useSetting('spacing'),
-		opacity: useSetting('opacity'),
-	};
-	const groupSpacing = storedNumber(useSetting('groupSpacing'), {
-		fallback: BubbleStyle.groupSpacing,
-		maximum: BubbleLimits.spacing,
-	});
-	const mediaCorners = choice(useSetting('mediaCorners'), MediaCorners);
-	const cornerCurve = choice(useSetting('cornerCurve'), CornerCurve);
-	const grouping = choice(useSetting('grouping'), Grouping);
-	const roundExposed = useSetting('roundExposed') !== false;
-	const roundOuter = useSetting('roundOuter') !== false;
-	const joinCurves = useSetting('joinCurves') !== false;
-	const smoothSteps = useSetting('smoothSteps') !== false;
-	const joined = grouping === Grouping.joined;
-	const roomyRows = useSetting('roomyRows') !== false;
-	const avatarLast = useSetting('avatarLast') === true;
-	const nameInside = useSetting('nameInside') !== false;
-	const tail = choice(useSetting('tail'), TailPosition);
-	const tailSize = storedNumber(useSetting('tailSize'), {
-		fallback: BubbleStyle.tailSize,
-		maximum: BubbleLimits.tailSize,
-	});
-	const layout = bubbleLayout(storedLayout);
-	const shapeSettings = numberSettings().filter(
-		(setting) => layout === BubbleLayout.dynamic || !setting.dynamicOnly,
-	);
 
 	return (
-		<ui.Page>
-			<PresetPicker />
-			<Discord.TableRadioGroup
-				title={messages.LAYOUT}
-				value={layout}
-				onChange={(value: string) => {
-					settings.layout = bubbleLayout(value);
+		<ui.Section title={messages.COLORS}>
+			<ui.ColorRow
+				label={messages.BUBBLE_COLOR}
+				color={color}
+				fallbackColor={themeColor()}
+				fallbackLabel={messages.BUBBLE_COLOR_FALLBACK}
+				onChange={(value) => {
+					settings.color = value ?? '';
 				}}
-			>
-				<Discord.TableRadioRow
-					label={messages.LAYOUT_FIT}
-					subLabel={messages.LAYOUT_FIT_SUBTITLE}
-					value={BubbleLayout.dynamic}
-				/>
-				<Discord.TableRadioRow
-					label={messages.LAYOUT_CARD}
-					subLabel={messages.LAYOUT_CARD_SUBTITLE}
-					value={BubbleLayout.card}
-				/>
-			</Discord.TableRadioGroup>
-			<ui.Section title={messages.SHAPE}>
-				{shapeSettings.map((setting) => (
-					<ui.SliderRow
-						key={setting.key}
-						label={setting.title}
-						value={storedNumber(values[setting.key], setting)}
-						defaultValue={setting.fallback}
-						minimum={0}
-						maximum={setting.maximum}
-						unit={setting.unit}
-						onChange={(value) => {
-							settings[setting.key] = value;
-						}}
-					/>
-				))}
-				<ui.SwitchRow
-					label={messages.ROOMY_ROWS}
-					subLabel={messages.ROOMY_ROWS_SUBTITLE}
-					value={roomyRows}
-					onValueChange={(value: boolean) => {
-						settings.roomyRows = value;
-					}}
-				/>
-				<ui.SegmentedRow
-					label={messages.CORNER_CURVE}
-					value={cornerCurve}
-					options={[
-						{ value: CornerCurve.continuous, label: messages.CURVE_CONTINUOUS },
-						{ value: CornerCurve.circular, label: messages.CURVE_CIRCULAR },
-					]}
-					onChange={(value) => {
-						settings.cornerCurve = choice(value, CornerCurve);
-					}}
-				/>
-			</ui.Section>
-			<ui.Section title={messages.GROUPING}>
-				<ui.SegmentedRow
-					label={messages.GROUPING}
-					value={grouping}
-					options={[
-						{ value: Grouping.separate, label: messages.GROUPING_SEPARATE },
-						{ value: Grouping.grouped, label: messages.GROUPING_GROUPED },
-						{ value: Grouping.joined, label: messages.GROUPING_JOINED },
-					]}
-					onChange={(value) => {
-						settings.grouping = choice(value, Grouping);
-					}}
-				/>
-				{joined ? null : (
-					<ui.SliderRow
-						label={messages.GROUP_SPACING}
-						value={groupSpacing}
-						defaultValue={BubbleStyle.groupSpacing}
-						minimum={0}
-						maximum={BubbleLimits.spacing}
-						unit={messages.UNIT_POINTS}
-						onChange={(value) => {
-							settings.groupSpacing = value;
-						}}
-					/>
-				)}
-				<ui.SwitchRow
+			/>
+			<ui.ColorRow
+				label={messages.OWN_COLOR}
+				color={ownColor}
+				fallbackColor={color ?? themeColor()}
+				fallbackLabel={messages.OWN_COLOR_FALLBACK}
+				onChange={(value) => {
+					settings.ownColor = value ?? '';
+				}}
+			/>
+			<NumberRow setting='opacity' label={messages.OPACITY} unit='percent' />
+		</ui.Section>
+	);
+}
+
+function ShapeSection() {
+	const cornerCurve = choice(useSetting('cornerCurve'), CornerCurve);
+	const tail = choice(useSetting('tail'), TailPosition);
+
+	return (
+		<ui.Section title={messages.SHAPE}>
+			<NumberRow setting='radius' label={messages.CORNER_RADIUS} unit='points' />
+			<ui.SegmentedRow
+				label={messages.CORNER_CURVE}
+				value={cornerCurve}
+				options={[
+					{ value: CornerCurve.continuous, label: messages.CURVE_CONTINUOUS },
+					{ value: CornerCurve.circular, label: messages.CURVE_CIRCULAR },
+				]}
+				onChange={(value) => {
+					settings.cornerCurve = choice(value, CornerCurve);
+				}}
+			/>
+			<ui.SegmentedRow
+				label={messages.TAIL}
+				value={tail}
+				options={[
+					{ value: TailPosition.off, label: messages.TAIL_OFF },
+					{ value: TailPosition.first, label: messages.TAIL_FIRST },
+					{ value: TailPosition.last, label: messages.TAIL_LAST },
+				]}
+				onChange={(value) => {
+					settings.tail = choice(value, TailPosition);
+				}}
+			/>
+			{tail === TailPosition.off ? null : (
+				<NumberRow setting='tailSize' label={messages.TAIL_SIZE} unit='points' />
+			)}
+		</ui.Section>
+	);
+}
+
+// Only the corner options the picked grouping uses are shown.
+function GroupsSection() {
+	const grouping = choice(useSetting('grouping'), Grouping);
+	const roundOuter = useSetting('roundOuter') !== false;
+	const roundExposed = useSetting('roundExposed') !== false;
+	const grouped = grouping === Grouping.grouped;
+	const joined = grouping === Grouping.joined;
+
+	return (
+		<ui.Section title={messages.GROUPS}>
+			<ui.SegmentedRow
+				label={messages.GROUPING}
+				subLabel={messages.GROUPING_SUBTITLE}
+				value={grouping}
+				options={[
+					{ value: Grouping.separate, label: messages.GROUPING_SEPARATE },
+					{ value: Grouping.grouped, label: messages.GROUPING_GROUPED },
+					{ value: Grouping.joined, label: messages.GROUPING_JOINED },
+				]}
+				onChange={(value) => {
+					settings.grouping = choice(value, Grouping);
+				}}
+			/>
+			{grouped ? (
+				<SwitchRow
+					setting='roundOuter'
 					label={messages.ROUND_OUTER}
 					subLabel={messages.ROUND_OUTER_SUBTITLE}
-					value={roundOuter}
-					disabled={grouping !== Grouping.grouped}
-					onValueChange={(value: boolean) => {
-						settings.roundOuter = value;
-					}}
-				/>
-				<ui.SwitchRow
-					label={messages.ROUND_EXPOSED}
-					subLabel={messages.ROUND_EXPOSED_SUBTITLE}
-					value={roundExposed}
-					disabled={
-						grouping === Grouping.separate ||
-						(grouping === Grouping.grouped && roundOuter)
-					}
-					onValueChange={(value: boolean) => {
-						settings.roundExposed = value;
-					}}
-				/>
-				<ui.SwitchRow
-					label={messages.JOIN_CURVES}
-					subLabel={messages.JOIN_CURVES_SUBTITLE}
-					value={joinCurves}
-					disabled={!joined || !roundExposed}
-					onValueChange={(value: boolean) => {
-						settings.joinCurves = value;
-					}}
-				/>
-				<ui.SwitchRow
-					label={messages.SMOOTH_STEPS}
-					subLabel={messages.SMOOTH_STEPS_SUBTITLE}
-					value={smoothSteps}
-					disabled={!joined}
-					onValueChange={(value: boolean) => {
-						settings.smoothSteps = value;
-					}}
-				/>
-				<ui.SwitchRow
-					label={messages.AVATAR_LAST}
-					subLabel={messages.AVATAR_LAST_SUBTITLE}
-					value={avatarLast}
-					onValueChange={(value: boolean) => {
-						settings.avatarLast = value;
-					}}
-				/>
-				<ui.SwitchRow
-					label={messages.NAME_INSIDE}
-					subLabel={messages.NAME_INSIDE_SUBTITLE}
-					value={nameInside}
-					disabled={!roomyRows || layout !== BubbleLayout.dynamic}
-					onValueChange={(value: boolean) => {
-						settings.nameInside = value;
-					}}
-				/>
-			</ui.Section>
-			<ui.Section title={messages.TAIL}>
-				<ui.SegmentedRow
-					label={messages.TAIL}
-					value={tail}
-					options={[
-						{ value: TailPosition.off, label: messages.TAIL_OFF },
-						{ value: TailPosition.first, label: messages.TAIL_FIRST },
-						{ value: TailPosition.last, label: messages.TAIL_LAST },
-					]}
-					onChange={(value) => {
-						settings.tail = choice(value, TailPosition);
-					}}
-				/>
-				{tail === TailPosition.off ? null : (
-					<ui.SliderRow
-						label={messages.TAIL_SIZE}
-						value={tailSize}
-						defaultValue={BubbleStyle.tailSize}
-						minimum={0}
-						maximum={BubbleLimits.tailSize}
-						unit={messages.UNIT_POINTS}
-						onChange={(value) => {
-							settings.tailSize = value;
-						}}
-					/>
-				)}
-			</ui.Section>
-			{layout === BubbleLayout.dynamic ? (
-				<ui.RadioRow
-					title={messages.MEDIA_CORNERS}
-					value={mediaCorners}
-					options={[
-						{
-							value: MediaCorners.none,
-							label: messages.MEDIA_NONE,
-							subLabel: messages.MEDIA_NONE_SUBTITLE,
-						},
-						{
-							value: MediaCorners.concentric,
-							label: messages.MEDIA_CONCENTRIC,
-							subLabel: messages.MEDIA_CONCENTRIC_SUBTITLE,
-						},
-						{
-							value: MediaCorners.flush,
-							label: messages.MEDIA_FLUSH,
-							subLabel: messages.MEDIA_FLUSH_SUBTITLE,
-						},
-						{
-							value: MediaCorners.reround,
-							label: messages.MEDIA_REROUND,
-							subLabel: messages.MEDIA_REROUND_SUBTITLE,
-						},
-					]}
-					onChange={(value) => {
-						settings.mediaCorners = choice(value, MediaCorners);
-					}}
 				/>
 			) : null}
-			<ui.Section title={messages.COLORS}>
-				<ui.ColorRow
-					label={messages.BUBBLE_COLOR}
-					color={color}
-					fallbackColor={themeColor()}
-					fallbackLabel={messages.BUBBLE_COLOR_FALLBACK}
-					onChange={(value) => {
-						settings.color = value ?? '';
-					}}
+			{joined || (grouped && !roundOuter) ? (
+				<SwitchRow
+					setting='roundExposed'
+					label={messages.ROUND_EXPOSED}
+					subLabel={messages.ROUND_EXPOSED_SUBTITLE}
 				/>
-				<ui.ColorRow
-					label={messages.OWN_COLOR}
-					color={ownColor}
-					fallbackColor={color ?? themeColor()}
-					fallbackLabel={messages.OWN_COLOR_FALLBACK}
-					onChange={(value) => {
-						settings.ownColor = value ?? '';
-					}}
+			) : null}
+			{joined && roundExposed ? (
+				<SwitchRow
+					setting='joinCurves'
+					label={messages.JOIN_CURVES}
+					subLabel={messages.JOIN_CURVES_SUBTITLE}
 				/>
-			</ui.Section>
-			<ui.Section title={messages.MENTIONS}>
-				<ui.ColorRow
-					label={messages.MENTION_COLOR}
-					color={mentionColor}
-					fallbackColor={BubbleStyle.mentionColor}
-					fallbackLabel={messages.MENTION_COLOR_FALLBACK}
-					onChange={(value) => {
-						settings.mentionColor = value ?? '';
-					}}
+			) : null}
+			{joined ? (
+				<SwitchRow
+					setting='smoothSteps'
+					label={messages.SMOOTH_STEPS}
+					subLabel={messages.SMOOTH_STEPS_SUBTITLE}
 				/>
-				<ui.SliderRow
-					label={messages.MENTION_WIDTH}
-					value={mentionWidth}
-					defaultValue={BubbleStyle.mentionWidth}
-					minimum={0}
-					maximum={BubbleLimits.mentionWidth}
-					step={MENTION_WIDTH_STEP}
-					unit={messages.UNIT_POINTS}
-					onChange={(value) => {
-						settings.mentionWidth = value;
-					}}
+			) : null}
+		</ui.Section>
+	);
+}
+
+function NameSection({ fitted }: { fitted: boolean }) {
+	const roomyRows = useSetting('roomyRows') !== false;
+
+	return (
+		<ui.Section title={messages.NAME_AVATAR}>
+			{fitted ? (
+				<SwitchRow
+					setting='nameInside'
+					label={messages.NAME_INSIDE}
+					subLabel={
+						roomyRows ? messages.NAME_INSIDE_SUBTITLE : messages.NAME_INSIDE_NEEDS_ROOM
+					}
+					disabled={!roomyRows}
 				/>
-				<ui.SliderRow
-					label={messages.MENTION_OPACITY}
-					value={mentionOpacity}
-					defaultValue={BubbleStyle.mentionOpacity}
-					minimum={0}
-					maximum={BubbleLimits.opacity}
-					unit={messages.UNIT_PERCENT}
-					onChange={(value) => {
-						settings.mentionOpacity = value;
-					}}
+			) : null}
+			<SwitchRow
+				setting='avatarLast'
+				label={messages.AVATAR_LAST}
+				subLabel={messages.AVATAR_LAST_SUBTITLE}
+			/>
+		</ui.Section>
+	);
+}
+
+function SpacingSection({ fitted }: { fitted: boolean }) {
+	const joined = choice(useSetting('grouping'), Grouping) === Grouping.joined;
+
+	return (
+		<ui.Section title={messages.SPACING_SECTION}>
+			<NumberRow setting='spacing' label={messages.SPACING} unit='points' />
+			{joined ? null : (
+				<NumberRow setting='groupSpacing' label={messages.GROUP_SPACING} unit='points' />
+			)}
+			{fitted ? (
+				<NumberRow
+					setting='horizontalPadding'
+					label={messages.HORIZONTAL_PADDING}
+					unit='points'
 				/>
-				<ui.SliderRow
-					label={messages.MENTION_TINT}
-					value={mentionTint}
-					defaultValue={BubbleStyle.mentionTint}
-					minimum={0}
-					maximum={BubbleLimits.opacity}
-					unit={messages.UNIT_PERCENT}
-					onChange={(value) => {
-						settings.mentionTint = value;
-					}}
+			) : null}
+			{fitted ? (
+				<NumberRow
+					setting='verticalPadding'
+					label={messages.VERTICAL_PADDING}
+					unit='points'
 				/>
-			</ui.Section>
-			<ui.ResetRow onReset={resetSettings} />
-		</ui.Page>
+			) : null}
+			<SwitchRow
+				setting='roomyRows'
+				label={messages.ROOMY_ROWS}
+				subLabel={messages.ROOMY_ROWS_SUBTITLE}
+			/>
+		</ui.Section>
+	);
+}
+
+function MediaPicker() {
+	const mediaCorners = choice(useSetting('mediaCorners'), MediaCorners);
+
+	return (
+		<ui.RadioRow
+			title={messages.MEDIA_CORNERS}
+			value={mediaCorners}
+			options={[
+				{
+					value: MediaCorners.none,
+					label: messages.MEDIA_NONE,
+					subLabel: messages.MEDIA_NONE_SUBTITLE,
+				},
+				{
+					value: MediaCorners.concentric,
+					label: messages.MEDIA_CONCENTRIC,
+					subLabel: messages.MEDIA_CONCENTRIC_SUBTITLE,
+				},
+				{
+					value: MediaCorners.flush,
+					label: messages.MEDIA_FLUSH,
+					subLabel: messages.MEDIA_FLUSH_SUBTITLE,
+				},
+				{
+					value: MediaCorners.reround,
+					label: messages.MEDIA_REROUND,
+					subLabel: messages.MEDIA_REROUND_SUBTITLE,
+				},
+			]}
+			onChange={(value) => {
+				settings.mediaCorners = choice(value, MediaCorners);
+			}}
+		/>
+	);
+}
+
+function MentionsSection() {
+	const mentionColor = storedColor(useSetting('mentionColor'));
+
+	return (
+		<ui.Section title={messages.MENTIONS}>
+			<ui.ColorRow
+				label={messages.MENTION_COLOR}
+				color={mentionColor}
+				fallbackColor={BubbleStyle.mentionColor}
+				fallbackLabel={messages.MENTION_COLOR_FALLBACK}
+				onChange={(value) => {
+					settings.mentionColor = value ?? '';
+				}}
+			/>
+			<NumberRow setting='mentionWidth' label={messages.MENTION_WIDTH} unit='points' />
+			<NumberRow setting='mentionOpacity' label={messages.MENTION_OPACITY} unit='percent' />
+			<NumberRow setting='mentionTint' label={messages.MENTION_TINT} unit='percent' />
+		</ui.Section>
+	);
+}
+
+// The preview stays above the scrolling settings, so every change shows while it is made.
+// The most changed settings come first: the style and colors, then shape and groups, then fine spacing.
+function SettingsPanel() {
+	const layout = bubbleLayout(useSetting('layout'));
+	const fitted = layout === BubbleLayout.dynamic;
+
+	return (
+		<View style={{ flex: 1 }}>
+			<ChatPreview />
+			<ui.Page>
+				<PresetPicker />
+				<LayoutPicker layout={layout} />
+				<ColorsSection />
+				<ShapeSection />
+				<GroupsSection />
+				<NameSection fitted={fitted} />
+				<SpacingSection fitted={fitted} />
+				{fitted ? <MediaPicker /> : null}
+				<MentionsSection />
+				<ui.ResetRow onReset={resetSettings} />
+			</ui.Page>
+		</View>
 	);
 }
 

@@ -21,9 +21,13 @@ declare module '@unbound-app/i18n' {
 		readonly CURVE_CIRCULAR: string;
 		/** Continuous */
 		readonly CURVE_CONTINUOUS: string;
-		/** Grouping */
+		/** Consecutive messages */
 		readonly GROUPING: string;
-		/** Spacing inside groups */
+		/** How one author's messages in a row sit together */
+		readonly GROUPING_SUBTITLE: string;
+		/** Groups */
+		readonly GROUPS: string;
+		/** Inside a group */
 		readonly GROUP_SPACING: string;
 		/** Grouped */
 		readonly GROUPING_GROUPED: string;
@@ -67,8 +71,12 @@ declare module '@unbound-app/i18n' {
 		readonly MEDIA_REROUND_SUBTITLE: string;
 		/** Mention color */
 		readonly MENTION_COLOR: string;
+		/** Name and avatar */
+		readonly NAME_AVATAR: string;
 		/** Name and reply inside the bubble */
 		readonly NAME_INSIDE: string;
+		/** Turn on Make room for padding to use this */
+		readonly NAME_INSIDE_NEEDS_ROOM: string;
 		/** Show the author's name, the time and the message being replied to at the top of the group's first bubble */
 		readonly NAME_INSIDE_SUBTITLE: string;
 		/** Discord's mention color */
@@ -87,6 +95,20 @@ declare module '@unbound-app/i18n' {
 		readonly OWN_COLOR: string;
 		/** Same as the bubble color */
 		readonly OWN_COLOR_FALLBACK: string;
+		/** Alex */
+		readonly PREVIEW_FRIEND: string;
+		/** Have you seen the new bubbles? */
+		readonly PREVIEW_FRIEND_FIRST: string;
+		/** So clean */
+		readonly PREVIEW_FRIEND_SECOND: string;
+		/** what do you think? */
+		readonly PREVIEW_FRIEND_THIRD: string;
+		/** You */
+		readonly PREVIEW_YOU: string;
+		/** Love them */
+		readonly PREVIEW_YOU_FIRST: string;
+		/** Tweaking the corners right now */
+		readonly PREVIEW_YOU_SECOND: string;
 		/** Joined */
 		readonly PRESET_JOINED: string;
 		/** A group's bubbles touch and read as one shape */
@@ -105,8 +127,10 @@ declare module '@unbound-app/i18n' {
 		readonly PRESET_ROUNDED: string;
 		/** Every bubble fully round, set apart from the next */
 		readonly PRESET_ROUNDED_SUBTITLE: string;
-		/** Presets */
+		/** Style */
 		readonly PRESETS: string;
+		/** Start from a look, then fine-tune it below */
+		readonly PRESETS_DESCRIPTION: string;
 		/** Make room for padding */
 		readonly ROOMY_ROWS: string;
 		/** Spaces messages apart and lines bubbles up with the author's name, so every bubble keeps its full padding */
@@ -125,8 +149,10 @@ declare module '@unbound-app/i18n' {
 		readonly SMOOTH_STEPS: string;
 		/** Widen a bubble to a neighbour that reaches past it by less than the corner radius */
 		readonly SMOOTH_STEPS_SUBTITLE: string;
-		/** Spacing between groups */
+		/** Between groups */
 		readonly SPACING: string;
+		/** Spacing */
+		readonly SPACING_SECTION: string;
 		/** Tail */
 		readonly TAIL: string;
 		/** First */
