@@ -13,6 +13,14 @@ export type UnboundLaunchReport = {
 	previousExit: 'crashed' | 'ended' | 'unknown';
 	/** The previous native crash as one line, such as `SIGSEGV in Chat Bubbles`. */
 	lastCrash?: string;
+	/** The running bundle's manifest revision and channel; missing for unsigned dev bundles. */
+	revision?: string;
+	channel?: string;
+	/** Milliseconds from Discord's runtime starting to Unbound's bundle running and the first screen. */
+	bundleMs?: number;
+	firstRenderMs?: number;
+	/** The newest native crashes, oldest first; `at` is milliseconds since the epoch. */
+	crashes?: { at: number; crash: string }[];
 };
 
 /**

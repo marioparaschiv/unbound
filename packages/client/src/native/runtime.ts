@@ -187,6 +187,24 @@ export function getRuntimeProperties(): HermesRuntimeProperties {
 }
 
 /**
+ * @description Reads the Hermes heap's size and the time garbage collection has taken so far.
+ * @returns Megabytes and milliseconds, or `undefined` when the engine reports neither.
+ */
+export function getHeapUsage(): HeapUsage | undefined {
+	const hermes = typeof HermesInternal === 'undefined' ? null : HermesInternal;
+	const stats = hasInstrumentedStats(hermes) ? hermes.getInstrumentedStats() : undefined;
+
+	if (typeof stats?.js_heapSize !== 'number' || typeof stats.js_gcTime !== 'number') {
+		return undefined;
+	}
+
+	return {
+		heapMB: Math.round((stats.js_heapSize / BYTES_PER_MB) * 10) / 10,
+		gcMs: Math.round(stats.js_gcTime * 1000),
+	};
+}
+
+/**
  * @description Reads how many native resources the loader holds: installed hooks, mounted surfaces, cached hook return values and Java handles still referenced from JavaScript.
  * @returns The counts, or `undefined` when the loader does not report them.
  */
@@ -200,6 +218,19 @@ export function getNativeResources(): NativeResourceCounts | undefined {
 
 /** What `HermesInternal.getRuntimeProperties()` reports; empty when the engine is not Hermes. */
 type HermesRuntimeProperties = ReturnType<HermesInternalObject['getRuntimeProperties']>;
+
+type HermesInstrumentedStats = { js_heapSize?: number; js_gcTime?: number };
+
+/** The Hermes heap in megabytes and the garbage collection time in milliseconds. */
+export type HeapUsage = { heapMB: number; gcMs: number };
+
+const BYTES_PER_MB = 1024 * 1024;
+
+function hasInstrumentedStats(
+	value: typeof HermesInternal,
+): value is { getInstrumentedStats(): HermesInstrumentedStats } {
+	return value !== null && 'getInstrumentedStats' in value;
+}
 
 // React Native types the global `HermesInternal` as `null | {}`.
 function isHermesInternal(value: typeof HermesInternal): value is HermesInternalObject {

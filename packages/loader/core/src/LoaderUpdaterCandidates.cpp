@@ -130,7 +130,7 @@ std::string BundleUpdater::resolveBundlePath()
                 "Discarded the new bundle: Discord closed before it ran long enough to count as "
                 "healthy. The active bundle runs instead.");
             setBundleState(BundleState::Discarded);
-            rejectBundle(candidate);
+            discardFailedBundle(candidate);
         }
 
         if (fileExists(candidate))
@@ -261,6 +261,21 @@ bool BundleUpdater::acceptBundle(const std::string &path)
 
     removeFile(promotingPath);
     return true;
+}
+
+void BundleUpdater::discardFailedBundle(const std::string &path)
+{
+    nlohmann::json record = parseBundleRecord(readTextFile(path + kBundleTrustSuffix));
+    std::optional<BundleManifest> manifest =
+        parseBundleManifest(bundleRecordField(record, "manifest"));
+    if (manifest && !manifest->revision.empty())
+    {
+        preferences::setRejectedRevision(settings_, manifest->revision);
+        log(LogLevel::Warning, LOG_CATEGORY_UPDATER,
+            "Build " + manifest->revision +
+                " failed on this device; it is skipped until a newer build is published.");
+    }
+    rejectBundle(path);
 }
 
 void BundleUpdater::rejectBundle(const std::string &path)

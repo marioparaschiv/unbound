@@ -1,3 +1,4 @@
+import type { DebugCardRequest } from '@unbound-app/contracts/debug-cards';
 import { describe, expect, test } from 'bun:test';
 
 import {
@@ -213,5 +214,65 @@ describe('debug card', () => {
 		const card = layoutDebugCard({ ...info, disabledAddons: ['Chat Bubbles (crashed)'] });
 
 		expect(texts(card).some((run) => run.text === 'issues')).toBe(true);
+	});
+	test('shows crash history, memory pressure and slow launches, two diagnostic rows at most', () => {
+		const now = new Date('2026-11-12T18:00:00Z');
+		const hour = 3_600_000;
+		const busy: DebugCardRequest = {
+			...info,
+			launch: {
+				bundle: 'active',
+				earlyCloses: 0,
+				recovery: false,
+				previousExit: 'crashed',
+				firstRenderMs: 7_200,
+				crashes: [
+					{ at: now.getTime() - 30 * hour, crash: 'SIGABRT' },
+					{ at: now.getTime() - 2 * hour, crash: 'SIGSEGV in Chat Bubbles' },
+					{ at: now.getTime() - hour, crash: 'SIGSEGV in Chat Bubbles' },
+				],
+			},
+			memory: { availableMB: 180, memoryWarnings: 2, thermal: 'serious' },
+			heap: { heapMB: 121.6, gcMs: 844 },
+			disabledAddons: ['Chat Bubbles (crashed)'],
+		};
+		const card = layoutDebugCard(busy, now);
+		const labels = texts(card)
+			.filter((run) => run.x === 14)
+			.map((run) => run.text);
+
+		expect(texts(card).find((run) => run.text.startsWith('2 in 24 h'))?.text).toBe(
+			'2 in 24 h · SIGSEGV in Chat Bubbles',
+		);
+		expect(labels).toContain('crashes');
+		expect(labels).toContain('issues');
+		expect(labels).not.toContain('memory');
+		expect(card.height / card.width).toBeLessThanOrEqual(0.85);
+
+		const quiet = layoutDebugCard({ ...busy, launch: undefined, disabledAddons: [] }, now);
+
+		expect(texts(quiet).find((run) => run.text.startsWith('180 MB'))?.text).toBe(
+			'180 MB free · 2 warnings · thermal serious',
+		);
+
+		const alt = JSON.parse(debugAltText(busy));
+
+		expect(alt).toMatchObject({ firstRenderMs: '7200', heap: '121.6 MB · gc 844 ms' });
+		expect(alt.crashes).toHaveLength(3);
+	});
+
+	test('notes a slow first screen in the launch row', () => {
+		const card = layoutDebugCard({
+			...info,
+			launch: {
+				bundle: 'active',
+				earlyCloses: 0,
+				recovery: false,
+				previousExit: 'ended',
+				firstRenderMs: 7_200,
+			},
+		});
+
+		expect(texts(card).some((run) => run.text === 'first screen 7.2 s')).toBe(true);
 	});
 });

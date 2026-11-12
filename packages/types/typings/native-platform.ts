@@ -20,6 +20,18 @@ export type NativePlatformDevice = {
 	isSystemApp(): boolean;
 	/** Whether Discord runs in a simulator, emulator or virtual machine. */
 	isVirtualDevice(): boolean;
+	/** Memory and thermal pressure right now; empty on loaders older than 1.4.0. */
+	getState?(): NativeDeviceState;
+};
+
+/** Memory and thermal pressure, as each platform reports it. */
+export type NativeDeviceState = {
+	availableMB?: number;
+	/** Android: the system considers itself low on memory. */
+	lowMemory?: boolean;
+	/** iOS: memory warnings Discord received this session. */
+	memoryWarnings?: number;
+	thermal?: 'nominal' | 'fair' | 'serious' | 'critical';
 };
 
 /** iOS-only facts about Discord's code signature. */

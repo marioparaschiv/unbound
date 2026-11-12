@@ -23,6 +23,14 @@ class FrameworkLabelTest {
     }
 
     @Test
+    fun thermalStatusesMapToTheSameNamesAsIOS() {
+        assertEquals("nominal", Platform.thermalName(0))
+        assertEquals("fair", Platform.thermalName(1))
+        assertEquals("serious", Platform.thermalName(2))
+        assertEquals("critical", Platform.thermalName(6))
+    }
+
+    @Test
     fun aMissingVersionIsLeftOut() {
         assertEquals("Vector", Platform.frameworkLabel("Vector", "", false))
     }

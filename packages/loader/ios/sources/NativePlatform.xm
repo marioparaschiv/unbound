@@ -1,6 +1,8 @@
 #import "NativePlatform.h"
 
+#include <atomic>
 #include <istream>
+#include <os/proc.h>
 #include <ostream>
 #include <streambuf>
 
@@ -13,6 +15,42 @@
 
 using unbound::ios::jsonFromObject;
 using unbound::ios::toStdString;
+
+static std::atomic<int> memoryWarnings{0};
+
+static void countMemoryWarnings()
+{
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        [[NSNotificationCenter defaultCenter]
+            addObserverForName:UIApplicationDidReceiveMemoryWarningNotification
+                        object:nil
+                         queue:nil
+                    usingBlock:^(NSNotification *) { memoryWarnings.fetch_add(1); }];
+    });
+}
+
+static std::string thermalName(NSProcessInfoThermalState state)
+{
+    switch (state)
+    {
+        case NSProcessInfoThermalStateFair:
+            return "fair";
+        case NSProcessInfoThermalStateSerious:
+            return "serious";
+        case NSProcessInfoThermalStateCritical:
+            return "critical";
+        default:
+            return "nominal";
+    }
+}
+
+static nlohmann::json deviceStateJSON()
+{
+    return {{"availableMB", static_cast<int64_t>(os_proc_available_memory() / (1024 * 1024))},
+            {"memoryWarnings", memoryWarnings.load()},
+            {"thermal", thermalName(NSProcessInfo.processInfo.thermalState)}};
+}
 
 static nlohmann::json entitlementsJSON()
 {
@@ -35,7 +73,9 @@ std::shared_ptr<NativePlatformProvider> makeNativePlatformProvider(void)
     provider->isRooted = []() {
         return static_cast<bool>([Utilities isJailbroken]);
     };
-    provider->jailbreak   = detectedJailbreak;
+    provider->jailbreak = detectedJailbreak;
+    countMemoryWarnings();
+    provider->deviceState = deviceStateJSON;
     provider->isSystemApp = []() {
         return static_cast<bool>([Utilities isSystemApp]);
     };

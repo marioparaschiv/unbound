@@ -1,5 +1,6 @@
 #include <cassert>
 #include <csignal>
+#include <filesystem>
 #include <string>
 
 #include "LoaderLaunchReport.h"
@@ -45,10 +46,42 @@ static void checkState()
     assert(report.bundle == BundleState::Trial);
     assert(report.earlyCloses == 1);
     assert(report.previousExit == PreviousExit::Ended);
+    recordLaunchTiming(120, 1800);
+    assert(launchReportJSON(launchReport(), "")["firstRenderMs"] == 1800);
+}
+
+static void checkCrashHistory()
+{
+    std::filesystem::path root =
+        std::filesystem::temp_directory_path() / "unbound-crash-history-test";
+    std::filesystem::remove_all(root);
+    std::filesystem::create_directories(root);
+
+    assert(readCrashHistory(root.string()).empty());
+    assert(!recordCrash(root.string(), "garbage", 1));
+    for (int64_t at = 1; at <= 7; at++)
+    {
+        assert(recordCrash(root.string(), kStack, at));
+    }
+    std::vector<NativeCrashRecord> history = readCrashHistory(root.string());
+    assert(history.size() == kCrashHistoryLimit);
+    assert(history.front().at == 3);
+    assert(history.back().crash == "SIGSEGV in Chat Bubbles");
+
+    LaunchReport report;
+    report.revision     = "abc1234";
+    report.channel      = "stable";
+    nlohmann::json json = launchReportJSON(report, "", history);
+    assert(json["revision"] == "abc1234");
+    assert(json["crashes"].size() == kCrashHistoryLimit);
+    assert(json["crashes"][0]["at"] == 3);
+
+    std::filesystem::remove_all(root);
 }
 
 int main()
 {
+    checkCrashHistory();
     checkNativeCrashes();
     checkReport();
     checkState();

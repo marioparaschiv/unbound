@@ -8,8 +8,10 @@ import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.view.Choreographer
 import android.widget.Toast
+import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
@@ -68,6 +70,21 @@ object NativeBridge {
      * How Discord's main process last ended: 1 for a crash, a freeze or a failed start; 2 when the person or the
      * system ended it; 0 when Android keeps no record (before Android 11).
      */
+    @JvmStatic
+    fun deviceState(): String = runCatching {
+        val context = Platform.application() ?: return "{}"
+        val memory = ActivityManager.MemoryInfo()
+        context.getSystemService(ActivityManager::class.java)?.getMemoryInfo(memory)
+        val state = JSONObject()
+            .put("availableMB", memory.availMem / (1024 * 1024))
+            .put("lowMemory", memory.lowMemory)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val power = context.getSystemService(PowerManager::class.java)
+            power?.let { state.put("thermal", Platform.thermalName(it.currentThermalStatus)) }
+        }
+        state.toString()
+    }.getOrDefault("{}")
+
     @JvmStatic
     fun previousExit(): Int = runCatching {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return 0

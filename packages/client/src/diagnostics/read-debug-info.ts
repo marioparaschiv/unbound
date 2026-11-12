@@ -1,3 +1,5 @@
+import type { NativeDeviceState, UnboundLaunchReport } from '@unbound-app/types';
+
 import { NativeBridgeCapabilityError, NativeBridgeVersionError } from '~/native/errors';
 import { CLIENT_VERSION, MINIMUM_DISCORD_VERSIONS, VERSION } from '~/core/constants';
 import { isOlderThanSupported, discordChannel } from '~/core/discord-support';
@@ -7,6 +9,7 @@ import { getRuntimeProperties } from '~/native/native';
 import { crashedAddons } from '~/addons/crash-guard';
 import { React, ReactNative } from '~/metro/common';
 import { getLoader } from '~/native/unbound-native';
+import { getHeapUsage } from '~/native/runtime';
 import type { Addons } from '~/addons/addons';
 import { icons } from '~/icon-packs/manager';
 import { plugins } from '~/plugins/manager';
@@ -93,6 +96,27 @@ function discordSupport(version: string, channel: string, android: boolean): Dis
 	return channel === 'Alpha' ? 'untested' : 'supported';
 }
 
+function launchOf(launch?: UnboundLaunchReport): DebugInfo['launch'] {
+	if (!launch) {
+		return undefined;
+	}
+
+	const { bundle, earlyCloses, recovery, previousExit, lastCrash, firstRenderMs, crashes } =
+		launch;
+
+	return { bundle, earlyCloses, recovery, previousExit, lastCrash, firstRenderMs, crashes };
+}
+
+function memoryOf(state?: NativeDeviceState): DebugInfo['memory'] {
+	if (!state) {
+		return undefined;
+	}
+
+	const { availableMB, lowMemory, memoryWarnings, thermal } = state;
+
+	return { availableMB, lowMemory, memoryWarnings, thermal };
+}
+
 const LEGACY_SIGNATURE = /^Discord's signature$/;
 
 function installDetailsOf(details: string): string {
@@ -124,7 +148,7 @@ export function readDebugInfo(): DebugInfo {
 
 	return {
 		client: `v${CLIENT_VERSION}`,
-		commit: String(VERSION),
+		commit: loader?.launch?.revision || String(VERSION),
 		loader: environment?.loaderVersion ?? 'unknown',
 		loaderOrigin: String(loader?.origin ?? 'unknown origin'),
 		...channel,
@@ -150,7 +174,9 @@ export function readDebugInfo(): DebugInfo {
 		locale: attempt(getLocale, ''),
 		theme: attempt(() => selectedAddon(themes), ''),
 		iconPack: attempt(() => selectedAddon(icons), ''),
-		launch: loader?.launch,
+		launch: launchOf(loader?.launch),
+		memory: attempt(() => memoryOf(platform?.device.getState?.()), undefined),
+		heap: attempt(getHeapUsage, undefined),
 	};
 }
 

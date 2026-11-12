@@ -148,6 +148,7 @@ private:
     void announceCrashDisabledAddons();
     void guardLaunch();
     void promotePendingBundle();
+    void recordRunningBundle(const std::string &path);
 
     std::shared_ptr<PipelineHost> host_;
     SettingsStore                &settings_;

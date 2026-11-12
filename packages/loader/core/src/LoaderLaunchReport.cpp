@@ -6,6 +6,8 @@
 #include <optional>
 #include <vector>
 
+#include "LoaderFiles.h"
+
 namespace loader {
 static std::mutex   reportMutex;
 static LaunchReport currentReport;
@@ -28,6 +30,62 @@ void recordLaunchVerdict(int earlyCloses, bool recovery, PreviousExit previousEx
     currentReport.earlyCloses  = earlyCloses;
     currentReport.recovery     = recovery;
     currentReport.previousExit = previousExit;
+}
+
+void setRunningBundle(const std::string &revision, const std::string &channel)
+{
+    std::lock_guard<std::mutex> lock(reportMutex);
+    currentReport.revision = revision;
+    currentReport.channel  = channel;
+}
+
+void recordLaunchTiming(int64_t bundleMs, int64_t firstRenderMs)
+{
+    std::lock_guard<std::mutex> lock(reportMutex);
+    currentReport.bundleMs      = bundleMs;
+    currentReport.firstRenderMs = firstRenderMs;
+}
+
+std::vector<NativeCrashRecord> readCrashHistory(const std::string &directory)
+{
+    nlohmann::json parsed = nlohmann::json::parse(
+        readTextFile(joinPath(directory, kCrashHistoryFile)).value_or("[]"), nullptr, false);
+    std::vector<NativeCrashRecord> history;
+    if (!parsed.is_array())
+    {
+        return history;
+    }
+    for (const nlohmann::json &entry : parsed)
+    {
+        if (entry.is_object() && entry.contains("at") && entry["at"].is_number_integer() &&
+            entry.contains("crash") && entry["crash"].is_string())
+        {
+            history.push_back({entry["at"].get<int64_t>(), entry["crash"].get<std::string>()});
+        }
+    }
+    return history;
+}
+
+bool recordCrash(const std::string &directory, const std::string &stack, int64_t at)
+{
+    std::string crash = nativeCrashHeadline(stack);
+    if (crash.empty())
+    {
+        return false;
+    }
+    std::vector<NativeCrashRecord> history = readCrashHistory(directory);
+    history.push_back({at, crash});
+    if (history.size() > kCrashHistoryLimit)
+    {
+        history.erase(history.begin(),
+                      history.begin() + static_cast<long>(history.size() - kCrashHistoryLimit));
+    }
+    nlohmann::json json = nlohmann::json::array();
+    for (const NativeCrashRecord &record : history)
+    {
+        json.push_back({{"at", record.at}, {"crash", record.crash}});
+    }
+    return writeTextFileAtomically(joinPath(directory, kCrashHistoryFile), json.dump());
 }
 
 std::string bundleStateName(BundleState state)
@@ -150,7 +208,8 @@ std::string describeNativeCrash(const std::string &stack)
     return described;
 }
 
-nlohmann::json launchReportJSON(const LaunchReport &report, const std::string &nativeCrash)
+nlohmann::json launchReportJSON(const LaunchReport &report, const std::string &nativeCrash,
+                                const std::vector<NativeCrashRecord> &history)
 {
     nlohmann::json json{{"bundle", bundleStateName(report.bundle)},
                         {"earlyCloses", report.earlyCloses},
@@ -159,6 +218,25 @@ nlohmann::json launchReportJSON(const LaunchReport &report, const std::string &n
     if (std::string headline = nativeCrashHeadline(nativeCrash); !headline.empty())
     {
         json["lastCrash"] = headline;
+    }
+    if (report.firstRenderMs > 0)
+    {
+        json["bundleMs"]      = report.bundleMs;
+        json["firstRenderMs"] = report.firstRenderMs;
+    }
+    if (!report.revision.empty())
+    {
+        json["revision"] = report.revision;
+        json["channel"]  = report.channel;
+    }
+    if (!history.empty())
+    {
+        nlohmann::json crashes = nlohmann::json::array();
+        for (const NativeCrashRecord &record : history)
+        {
+            crashes.push_back({{"at", record.at}, {"crash", record.crash}});
+        }
+        json["crashes"] = crashes;
     }
     return json;
 }

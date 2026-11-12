@@ -8,6 +8,8 @@ export const DEBUG_CARD_BUNDLE_STATES = ['active', 'trial', 'discarded', 'rolled
 
 export const DEBUG_CARD_EXITS = ['crashed', 'ended', 'unknown'] as const;
 
+export const DEBUG_CARD_THERMAL = ['nominal', 'fair', 'serious', 'critical'] as const;
+
 const text = (maxLength = 128) => Type.String({ maxLength });
 
 const addonCountSchema = Type.Object({
@@ -21,6 +23,24 @@ const launchSchema = Type.Object({
 	recovery: Type.Boolean(),
 	previousExit: Type.Enum(DEBUG_CARD_EXITS),
 	lastCrash: Type.Optional(text(200)),
+	firstRenderMs: Type.Optional(Type.Integer({ minimum: 0, maximum: 3_600_000 })),
+	crashes: Type.Optional(
+		Type.Array(Type.Object({ at: Type.Integer({ minimum: 0 }), crash: text(200) }), {
+			maxItems: 5,
+		}),
+	),
+});
+
+const memorySchema = Type.Object({
+	availableMB: Type.Optional(Type.Integer({ minimum: 0, maximum: 10_000_000 })),
+	lowMemory: Type.Optional(Type.Boolean()),
+	memoryWarnings: Type.Optional(Type.Integer({ minimum: 0, maximum: 100_000 })),
+	thermal: Type.Optional(Type.Enum(DEBUG_CARD_THERMAL)),
+});
+
+const heapSchema = Type.Object({
+	heapMB: Type.Number({ minimum: 0, maximum: 1_000_000 }),
+	gcMs: Type.Number({ minimum: 0, maximum: 1_000_000_000 }),
 });
 
 export const debugCardRequestSchema = Type.Object({
@@ -51,6 +71,8 @@ export const debugCardRequestSchema = Type.Object({
 	theme: Type.Optional(text()),
 	iconPack: Type.Optional(text()),
 	launch: Type.Optional(launchSchema),
+	memory: Type.Optional(memorySchema),
+	heap: Type.Optional(heapSchema),
 });
 
 export const debugCardResponseSchema = Type.Object({
@@ -70,11 +92,14 @@ export type DebugCardLaunch = StaticDecode<typeof launchSchema>;
 
 export type DebugCardSupport = (typeof DEBUG_CARD_SUPPORT)[number];
 
+export type DebugCardMemory = StaticDecode<typeof memorySchema>;
+
 export default {
 	DEBUG_CARD_ALT_TEXT_LIMIT,
 	DEBUG_CARD_SUPPORT,
 	DEBUG_CARD_BUNDLE_STATES,
 	DEBUG_CARD_EXITS,
+	DEBUG_CARD_THERMAL,
 	debugCardRequestSchema,
 	debugCardResponseSchema,
 };

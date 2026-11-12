@@ -73,6 +73,7 @@ public:
     bool markBundleAttempted(const std::string &path);
     bool acceptBundle(const std::string &path);
     void rejectBundle(const std::string &path);
+    void discardFailedBundle(const std::string &path);
     // Puts back the bundle the last promotion replaced; false when there is none to put back.
     bool rollBackToPrevious();
 

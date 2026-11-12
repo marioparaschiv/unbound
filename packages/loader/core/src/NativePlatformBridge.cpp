@@ -225,6 +225,15 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
                        booleanGetter(runtime, "isSystemApp", provider->isSystemApp));
     device.setProperty(runtime, "isVirtualDevice",
                        booleanGetter(runtime, "isVirtualDevice", provider->isVirtualDevice));
+    device.setProperty(runtime, "getState",
+                       native::makeFunction(runtime, "getState", 0,
+                                            [provider](jsi::Runtime &rt, const jsi::Value &,
+                                                       const jsi::Value *, size_t) -> jsi::Value {
+                                                return toJSIValue(rt,
+                                                                  provider->deviceState
+                                                                      ? provider->deviceState()
+                                                                      : nlohmann::json::object());
+                                            }));
     platform.setProperty(runtime, "device", std::move(device));
 
     if (provider->platform == "ios")
