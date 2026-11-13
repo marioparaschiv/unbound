@@ -22,5 +22,12 @@
 	},
 	"icon": "KeyboardIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"bytecode": {
+		"98": "3561612f15cc1978ee8e56a40f865a5c0f386570a9994e60f8fcabca6cae4c1addd4de0f35f82e789550f423ea814521db0d8905432f23fda151d2504320f215"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "hU4gAKliI0MgOXHlqdlNnYL0VKc651k+DDCl667ORS2QhkPC2Ymy3jJwON/bbXL5TsxWE5v6L45iO8d7tyGACQ=="
+	}
 }

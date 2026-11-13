@@ -29,5 +29,12 @@
 		"min": "3.0.0"
 	},
 	"icon": "GlobeEarthIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "1bea995783828e09acde3f4bccd3f96601cb4d7cdb5274a7635d1c7b900b6a8b6ec195844abca9e6309f49a780ddbd351a4543318fd4aa73700462d5063cb2d1"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "dmoygeMBNm8isZV85HPBQtcVDWxhTkx08t/iG9F/UufYr5ecTa4whksRmRE5aH2W3rTtUVGNUMtNT6apT+aODA=="
+	}
 }

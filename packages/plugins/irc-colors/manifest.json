@@ -21,5 +21,12 @@
 		"min": "3.0.0"
 	},
 	"icon": "PaintPaletteIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "aa3e69014c2a75f791ff8dbcd540f44f7043b0c1f8b8bc9b136aafa66e2b54548d1ce78ad09aebdd25ec265ab8f9d0b5c16a81cd860916b9a27075de86f4e0c0"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "GmzjDtPbLZwW56ZAVlaZL36aQV6USLR60PuEZ+sPVeVgnOgxf6vzBFat7FkExPegICd2d42mOipWqR0xJUWsDg=="
+	}
 }
