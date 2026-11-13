@@ -89,6 +89,10 @@ export type NativeHookOptions<Receiver extends boolean = boolean> = {
 	/** Removes the hook after its first call. */
 	once?: boolean;
 	payload?: NativeHookPayload<Receiver>;
+	/** Also hooks every loaded subclass that implements the selector itself. */
+	subclasses?: boolean;
+	/** Waits for a class that is not loaded yet, retrying with backoff for up to ten minutes. */
+	waitForClass?: boolean;
 } & NativeCallOptions;
 
 /** An installed Objective-C hook; the plugin scope removes it on dispose. */
@@ -238,12 +242,34 @@ export type NativeObjCBridge = {
 	 * Defines an Objective-C class at runtime whose methods run JavaScript, for delegates, data sources and
 	 * target-action receivers; defining it again replaces its methods. Needs `native.objc.classDefinition`.
 	 */
+	/** Finds loaded classes by shape, so a lookup survives renamed classes. Needs `native.objc.classSearch`. */
+	findClasses(query: NativeObjCClassQuery): string[];
 	defineClass(
 		name: string,
 		superclass: string,
 		methods: Record<string, NativeObjCMethodDefinition>,
 		protocols?: string[],
 	): NativeClassHandle;
+};
+
+/** What `objc.findClasses` matches; every given part must match, and names come back sorted. */
+export type NativeObjCClassQuery = {
+	/** The class name starts with it. */
+	prefix?: string;
+	/** The path of the image the class is in contains it, such as `Discord.app/Discord`. */
+	image?: string;
+	/** The class inherits from it, directly or further up. */
+	superclass?: string;
+	/** The class conforms to every one. */
+	protocols?: string[];
+	/** The class responds to every instance selector, its own or inherited. */
+	methods?: string[];
+	/** The class itself implements every instance selector. */
+	ownMethods?: string[];
+	/** The class responds to every class selector. */
+	classMethods?: string[];
+	/** At most this many names, 50 by default and 1000 at most. */
+	limit?: number;
 };
 
 /** One method of a class `objc.defineClass` makes: its signature without `self` and `_cmd`, and what runs. */

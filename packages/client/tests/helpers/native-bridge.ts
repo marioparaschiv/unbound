@@ -100,6 +100,8 @@ export const javaInvokeFailure = Object.assign(new Error('No method noSuchMethod
 });
 export const nativeHandle: NativeHandle = Object.create(null);
 
+export const hookedClasses: string[] = [];
+
 export const nativeCallbacks: ((...args: never[]) => NativeObjCResult | void)[] = [];
 const capabilities = [
 	'native.objc.classes',
@@ -112,6 +114,7 @@ const capabilities = [
 	'native.objc.hooks',
 	'native.objc.blocks',
 	'native.objc.classDefinition',
+	'native.objc.classSearch',
 	'native.ffi.symbols',
 	'native.ffi.call',
 	'native.ffi.memory',
@@ -121,6 +124,7 @@ const capabilities = [
 	'native.fabric.async',
 	'native.runtime.events',
 	'native.java.classes',
+	'native.java.classSearch',
 	'native.java.construct',
 	'native.java.fields',
 	'native.java.invoke',
@@ -204,8 +208,8 @@ const fakeBridge: LoaderBridge = {
 		findViews: () => cancellable(Promise.resolve([]), 'findViews'),
 		invokeSuper: () => undefined,
 		invokeSuperAsync: () => cancellable(new Promise(() => undefined), 'invokeSuper'),
-		hook: () => ({
-			active: true,
+		hook: (className: string) => ({
+			active: hookedClasses.push(className) > 0,
 			setReturnValue: () => undefined,
 			removeReturnValue: () => undefined,
 			clearReturnValues: () => undefined,
@@ -221,6 +225,7 @@ const fakeBridge: LoaderBridge = {
 			return nativeHandle;
 		},
 		callBlock: () => undefined,
+		findClasses: () => ['UnboundTestSubclass'],
 		defineClass: (_name, _superclass, methods) => {
 			for (const method of Object.values(methods))
 				nativeCallbacks.push(method.implementation);
@@ -275,6 +280,7 @@ const fakeBridge: LoaderBridge = {
 			fields: [],
 		}),
 		construct: () => javaHandle,
+		findClasses: () => cancellable(Promise.resolve([]), 'findClasses'),
 		respondsTo: () => ({ type: 'boolean', value: true }),
 		invoke: (_handle: NativeJavaReference, _name: string, args?: NativeJavaArgument[]) => {
 			javaInvokeArguments.push(args);

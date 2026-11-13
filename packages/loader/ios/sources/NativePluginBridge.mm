@@ -19,6 +19,7 @@
 #import "NativePluginBatch.h"
 #import "NativePluginBlocks.h"
 #import "NativePluginCallPlans.h"
+#import "NativePluginClassSearch.h"
 #import "NativePluginFFICodecs.h"
 #import "NativePluginFabricAdapter.h"
 #import "NativePluginHooks.h"
@@ -461,6 +462,7 @@ static void installObjC(Runtime &runtime, Object &objc)
     objc.setProperty(runtime, "hook", makeFunction("hook", 3, runtime, makeHook));
     installObjCBlocks(runtime, objc);
     installObjCClassDefinition(runtime, objc);
+    installObjCClassSearch(runtime, objc);
     installInspector(runtime, objc);
     objc.setProperty(runtime, "createUIScope",
                      makeFunction("createUIScope", 1, runtime, createUIScope));

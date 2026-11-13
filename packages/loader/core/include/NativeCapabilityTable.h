@@ -65,6 +65,9 @@ inline constexpr std::array<std::string_view, 2> kObjcBlocksMethods = {
 inline constexpr std::array<std::string_view, 1> kObjcClassDefinitionMethods = {
     "defineClass",
 };
+inline constexpr std::array<std::string_view, 1> kObjcClassSearchMethods = {
+    "findClasses",
+};
 inline constexpr std::array<std::string_view, 5> kObjcInspectMethods = {
     "inspectClass",
     "inspectMembers",
@@ -120,6 +123,9 @@ inline constexpr std::array<std::string_view, 5> kJavaClassesMethods = {
     "respondsTo",
     "release",
 };
+inline constexpr std::array<std::string_view, 1> kJavaClassSearchMethods = {
+    "findClasses",
+};
 inline constexpr std::array<std::string_view, 1> kJavaConstructMethods = {
     "construct",
 };
@@ -162,7 +168,7 @@ inline constexpr std::array<std::string_view, 1> kDebugEnvironmentMethods = {
     "environment",
 };
 
-inline constexpr std::array<NativeCapabilityBinding, 29> kNativeCapabilityBindings = {{
+inline constexpr std::array<NativeCapabilityBinding, 31> kNativeCapabilityBindings = {{
     {"native.objc.classes", "objc", kObjcClassesMethods},
     {"native.objc.invoke", "objc", kObjcInvokeMethods},
     {"native.objc.invokeAsync", "objc", kObjcInvokeAsyncMethods},
@@ -173,6 +179,7 @@ inline constexpr std::array<NativeCapabilityBinding, 29> kNativeCapabilityBindin
     {"native.objc.hooks", "objc", kObjcHooksMethods},
     {"native.objc.blocks", "objc", kObjcBlocksMethods},
     {"native.objc.classDefinition", "objc", kObjcClassDefinitionMethods},
+    {"native.objc.classSearch", "objc", kObjcClassSearchMethods},
     {"native.objc.inspect", "objc", kObjcInspectMethods},
     {"native.ffi.symbols", "ffi", kFfiSymbolsMethods},
     {"native.ffi.call", "ffi", kFfiCallMethods},
@@ -183,6 +190,7 @@ inline constexpr std::array<NativeCapabilityBinding, 29> kNativeCapabilityBindin
     {"native.fabric.async", "fabric", kFabricAsyncMethods},
     {"native.runtime.events", "runtime", kRuntimeEventsMethods},
     {"native.java.classes", "java", kJavaClassesMethods},
+    {"native.java.classSearch", "java", kJavaClassSearchMethods},
     {"native.java.construct", "java", kJavaConstructMethods},
     {"native.java.fields", "java", kJavaFieldsMethods},
     {"native.java.invoke", "java", kJavaInvokeMethods},
@@ -194,7 +202,7 @@ inline constexpr std::array<NativeCapabilityBinding, 29> kNativeCapabilityBindin
     {"native.debug.environment", "debug", kDebugEnvironmentMethods},
 }};
 
-inline constexpr std::array<const char *, 21> kIOSNativePluginCapabilities = {
+inline constexpr std::array<const char *, 22> kIOSNativePluginCapabilities = {
     "native.objc.classes",
     "native.objc.invoke",
     "native.objc.invokeAsync",
@@ -205,6 +213,7 @@ inline constexpr std::array<const char *, 21> kIOSNativePluginCapabilities = {
     "native.objc.hooks",
     "native.objc.blocks",
     "native.objc.classDefinition",
+    "native.objc.classSearch",
     "native.objc.inspect",
     "native.ffi.symbols",
     "native.ffi.call",
@@ -218,7 +227,7 @@ inline constexpr std::array<const char *, 21> kIOSNativePluginCapabilities = {
     "native.debug.environment",
 };
 
-inline constexpr std::array<const char *, 17> kAndroidNativePluginCapabilities = {
+inline constexpr std::array<const char *, 18> kAndroidNativePluginCapabilities = {
     "native.ffi.symbols",
     "native.ffi.call",
     "native.ffi.memory",
@@ -227,6 +236,7 @@ inline constexpr std::array<const char *, 17> kAndroidNativePluginCapabilities =
     "native.fabric.async",
     "native.runtime.events",
     "native.java.classes",
+    "native.java.classSearch",
     "native.java.construct",
     "native.java.fields",
     "native.java.invoke",

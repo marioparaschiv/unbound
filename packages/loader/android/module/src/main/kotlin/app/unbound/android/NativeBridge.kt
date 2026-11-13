@@ -362,6 +362,9 @@ object NativeBridge {
     fun javaDescribe(name: String): String = NativeJava.describe(name)
 
     @JvmStatic
+    fun javaFindClasses(queryJSON: String): String = NativeJava.findClasses(queryJSON)
+
+    @JvmStatic
     fun javaConstruct(name: String, argumentsJSON: String): String =
         NativeJava.construct(name, argumentsJSON)
 

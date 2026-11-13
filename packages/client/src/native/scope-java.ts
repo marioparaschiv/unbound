@@ -148,6 +148,12 @@ export function createScopedJavaBridge({
 		getClass: (name) => trackHandle(getClass(name)),
 		className: scopeBridgeMethod(source, 'className', 'java.className'),
 		describe: scopeBridgeMethod(source, 'describe', 'java.describe'),
+		findClasses: scopeBridgeAsyncMethod(
+			source,
+			'findClasses',
+			'java.findClasses',
+			'Java class searches are unavailable.',
+		),
 		construct: (name, args) => trackHandle(construct(name, args ?? [])),
 		respondsTo: (handle, name, args) => respondsTo(handle, name, args ?? []),
 		invoke: (handle, name, args) => invoke(handle, name, args ?? []),
