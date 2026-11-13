@@ -11,7 +11,7 @@ import {
 import { cleanProfilePronouns, pickPronouns } from '~/lib/format';
 import { createLookup, type PronounLookup } from '~/lib/lookup';
 import { addPronouns, type MessageRow as HeaderRow, type NativePillColors } from '~/lib/header';
-import { pillColors } from '~/lib/pill';
+import { pillColors, readablePill, type PillColors } from '~/lib/pill';
 
 const UserProfileStore = flux.getStore('UserProfile');
 const ChannelStore = flux.getStore('Channel');
@@ -20,8 +20,9 @@ const UserStore = flux.getStore('User');
 
 let pronounLookup: PronounLookup | undefined;
 
-function nativePillColors(color: string): NativePillColors | undefined {
-	const colors = pillColors(color);
+type ThemeStore = { theme?: string };
+
+function toNative(colors: PillColors | undefined): NativePillColors | undefined {
 	const { processColor } = metro.common.ReactNative;
 	const background = colors && processColor(colors.background);
 	const text = colors && processColor(colors.text);
@@ -29,6 +30,21 @@ function nativePillColors(color: string): NativePillColors | undefined {
 	return typeof background === 'number' && typeof text === 'number'
 		? { background, text }
 		: undefined;
+}
+
+function themePill(): PillColors | undefined {
+	const raw = metro.common.Theme.unsafe_rawColors as Record<string, string> | undefined;
+	const light = (flux.getStore('Theme') as unknown as ThemeStore).theme === 'light';
+	const background = light ? raw?.BRAND_200 : raw?.BRAND_260;
+	const text = light ? raw?.PRIMARY_630 : raw?.PRIMARY_300;
+
+	return background && text ? readablePill(background, text) : undefined;
+}
+
+function pillColorsFor(style: string): NativePillColors | undefined {
+	if (style === 'custom') return toNative(pillColors(settings.pillColor));
+
+	return style === 'pill' ? toNative(themePill()) : undefined;
 }
 
 // Default (0) and reply (19) messages; other types, such as poll results, have no author header.
@@ -89,7 +105,7 @@ export function patchMessageRows(): void {
 				username,
 				metro.common.ReactNative.Dimensions.get('window').width,
 				settings.style === 'text' ? 'text' : 'pill',
-				settings.style === 'custom' ? nativePillColors(settings.pillColor) : undefined,
+				pillColorsFor(settings.style),
 			);
 		},
 	});
