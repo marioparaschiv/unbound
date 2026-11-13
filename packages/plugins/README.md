@@ -1,6 +1,6 @@
 # Plugins
 
-95 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+96 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -11,6 +11,7 @@
 - <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Aussie Mode](https://unbound.rip/addons/adrian.aussie-mode): Discord designed for Aussies.
 - <img src="../../assets/plugins/readme-icons/microphone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Aussie Speech](https://unbound.rip/addons/adrian.aussie-speech): Turns every message into Aussie English before you send it.
 - <img src="../../assets/plugins/readme-icons/user-square-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Avatar Radius](https://unbound.rip/addons/unbound.avatar-radius): Rounds avatars to a corner radius you choose instead of circles.
+- <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Badges In Chat](https://unbound.rip/addons/unbound.badges-in-chat): Shows a profile badge next to people's names in chat, where a role icon would go.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better GIF Alt Text](https://unbound.rip/addons/unbound.better-gif-alt-text): Names GIFs in chat for screen readers by their tags or file name, instead of just 'GIF'.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better GIF Picker](https://unbound.rip/addons/unbound.better-gif-picker): Opens the GIF picker on your favourite GIFs instead of the category grid.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better Search](https://unbound.rip/addons/unbound.better-search): Adds search filters Discord supports but doesn't offer, such as embedType:, repliedToUserId: and includeNsfw:.

@@ -1,0 +1,6 @@
+{
+	"HIDDEN_BADGES": "Badges to skip",
+	"HIDDEN_BADGES_SUBTITLE": "Badge ids, such as legacy_username or quest_completed, never shown in chat.",
+	"OVER_ROLE_ICONS": "Show over role icons",
+	"OVER_ROLE_ICONS_SUBTITLE": "Uses the badge even where a role icon would show."
+}
