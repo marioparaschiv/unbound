@@ -1,0 +1,21 @@
+{
+	"id": "unbound.no-unblock-to-jump",
+	"name": "No Unblock To Jump",
+	"description": "Jumps to messages from blocked or ignored users and likely spammers without asking you to unblock them.",
+	"authors": [
+		{
+			"name": "rini",
+			"id": "0"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ChevronLargeRightIcon",
+	"main": "index.tsx"
+}

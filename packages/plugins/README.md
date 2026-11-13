@@ -1,6 +1,6 @@
 # Plugins
 
-68 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+71 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -11,6 +11,7 @@
 - <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Aussie Mode](https://unbound.rip/addons/adrian.aussie-mode): Discord designed for Aussies.
 - <img src="../../assets/plugins/readme-icons/microphone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Aussie Speech](https://unbound.rip/addons/adrian.aussie-speech): Turns every message into Aussie English before you send it.
 - <img src="../../assets/plugins/readme-icons/user-square-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Avatar Radius](https://unbound.rip/addons/unbound.avatar-radius): Rounds avatars to a corner radius you choose instead of circles.
+- <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better GIF Picker](https://unbound.rip/addons/unbound.better-gif-picker): Opens the GIF picker on your favourite GIFs instead of the category grid.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Blur NSFW](https://unbound.rip/addons/unbound.blur-nsfw): Blurs attachments and embedded media in age-restricted channels until you tap them.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Channel Typing Indicators](https://unbound.rip/addons/unbound.channel-typing-indicators): Shows animated typing dots and avatars beside channels where people are typing.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Character Counter](https://unbound.rip/addons/unbound.character-counter): Shows the current message length and Discord's character limit in the composer.
@@ -19,6 +20,7 @@
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom Commands](https://unbound.rip/addons/unbound.custom-commands): Create slash commands that send saved text, images, and videos.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Dearrow](https://unbound.rip/addons/unbound.dearrow): Makes YouTube embed titles and thumbnails less sensationalist, powered by DeArrow.
 - <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Expression Tools](https://unbound.rip/addons/unbound.expression-tools): Useful tools for custom emojis and stickers.
+- <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Favourite Emoji First](https://unbound.rip/addons/unbound.favourite-emoji-first): Puts your favourite emoji first in the emoji suggestions while you type a colon.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [File Size On Picker](https://unbound.rip/addons/unbound.file-size-on-picker): Shows file sizes on media picker thumbnails.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Fix GIF Downloads](https://unbound.rip/addons/unbound.fix-gif-download): Save Discord GIFs as GIF files instead of videos.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Fix Youtube Embeds](https://unbound.rip/addons/unbound.fix-youtube-embeds): Plays YouTube videos that are blocked from playing in Discord, such as music videos from UMG, instead of showing an error.
@@ -43,6 +45,7 @@
 - <img src="../../assets/plugins/readme-icons/bell-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [No Pending Count](https://unbound.rip/addons/unbound.no-pending-count): Hides the red counts for incoming friend requests and message requests.
 - <img src="../../assets/plugins/readme-icons/ic-swipe-reply-24px.svg" width="20" height="20" align="absmiddle" alt=""> [No Reply Mention](https://unbound.rip/addons/unbound.no-reply-mention): Disable reply mentions by default.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [No Typing Animation](https://unbound.rip/addons/unbound.no-typing-animation): Stops the typing dots from animating, so they sit still wherever someone is typing.
+- <img src="../../assets/plugins/readme-icons/chevron-large-right-icon.svg" width="20" height="20" align="absmiddle" alt=""> [No Unblock To Jump](https://unbound.rip/addons/unbound.no-unblock-to-jump): Jumps to messages from blocked or ignored users and likely spammers without asking you to unblock them.
 - <img src="../../assets/plugins/readme-icons/bell-z-icon.svg" width="20" height="20" align="absmiddle" alt=""> [One Ping Per DM](https://unbound.rip/addons/unbound.one-ping-per-dm): Plays the in-app message sound only for the first unread message in a DM, until you read it.
 - <img src="../../assets/plugins/readme-icons/forum-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Override Forum Defaults](https://unbound.rip/addons/unbound.override-forum-defaults): Sets your own default layout and sort order for forum channels. You can still change them per channel.
 - <img src="../../assets/plugins/readme-icons/shield-user-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Permissions Viewer](https://unbound.rip/addons/unbound.permissions-viewer): View the permissions a member or channel has, and the roles of a server.
