@@ -23,6 +23,7 @@ public:
                            std::chrono::milliseconds diskRecheck = std::chrono::milliseconds(500));
 
     void load();
+    bool readable() const;
     // Loads again only when the file changed on disk or unsaved changes would be discarded.
     void reload();
     bool save() const;
@@ -94,6 +95,7 @@ private:
     mutable uint64_t                              jsonHash_   = 0;
     mutable bool                                  cacheStale_ = true;
     mutable bool                                  dirty_      = false;
+    mutable bool                                  unreadable_ = false;
     mutable std::mutex                            mutex_;
     std::chrono::milliseconds                     diskRecheck_;
     mutable std::chrono::steady_clock::time_point checkedAt_{};

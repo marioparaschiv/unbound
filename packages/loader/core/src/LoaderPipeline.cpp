@@ -1,5 +1,6 @@
 #include "LoaderPipeline.h"
 
+#include <algorithm>
 #include <iterator>
 #include <random>
 
@@ -84,6 +85,14 @@ void LoaderPipeline::prepare()
         std::lock_guard<std::mutex> lock(savedMutex_);
         saved_.reset();
         firstDownload_ = FirstDownload{token};
+    }
+
+    if (!settings_.readable())
+    {
+        log(LogLevel::Warning, LOG_CATEGORY_DEFAULT,
+            "Discord started before the device was unlocked, so Unbound's files cannot be read; "
+            "Unbound sits out this launch rather than mistake them for damage.");
+        return;
     }
 
     if (!preferences::loaderEnabled(settings_))
@@ -528,6 +537,18 @@ void LoaderPipeline::guardLaunch()
     LaunchGuard   guard(updater_.documents());
     PreviousExit  previous = host_->previousExit();
     LaunchVerdict verdict  = guard.begin(previous);
+    if (host_->tracksVisibility() && host_->visibleNow())
+    {
+        noteVisible();
+    }
+    else if (host_->tracksVisibility() && visibleMs_.load() == 0)
+    {
+        guard.markHidden();
+        if (visibleMs_.load() != 0)
+        {
+            guard.markShown();
+        }
+    }
     if (verdict.rollBack && updater_.rollBackToPrevious())
     {
         setBundleState(BundleState::RolledBack);
@@ -552,8 +573,36 @@ void LoaderPipeline::guardLaunch()
     });
 }
 
+bool LoaderPipeline::awaitingVisibility() const
+{
+    return host_->tracksVisibility() && visibleMs_.load() == 0;
+}
+
+void LoaderPipeline::noteVisible()
+{
+    int64_t expected = 0;
+    if (!visibleMs_.compare_exchange_strong(expected, nowMs()))
+    {
+        return;
+    }
+    if (launchGuarded_.load())
+    {
+        LaunchGuard(updater_.documents()).markShown();
+    }
+    host_->runAfter(kHealthySeconds, [this]() {
+        markHealthy();
+    });
+    host_->runAfter(kStuckLaunchSeconds, [this]() {
+        offerHelpIfStuck();
+    });
+}
+
 void LoaderPipeline::offerHelpIfStuck()
 {
+    if (awaitingVisibility())
+    {
+        return;
+    }
     if (rendered_.load() || stuckOffered_.exchange(true))
     {
         return;
@@ -564,7 +613,11 @@ void LoaderPipeline::offerHelpIfStuck()
 
 void LoaderPipeline::markHealthy()
 {
-    int64_t created = runtimeCreatedMs_.load();
+    if (awaitingVisibility())
+    {
+        return;
+    }
+    int64_t created = std::max(runtimeCreatedMs_.load(), visibleMs_.load());
     if (bundleExecutedMs_.load() != 0 && !rendered_.load() && created != 0 &&
         nowMs() - created >= static_cast<int64_t>((kHealthySeconds - 1) * 1000))
     {

@@ -203,6 +203,13 @@ void SettingsStore::load()
     std::lock_guard<std::mutex> lock(mutex_);
 
     std::optional<std::string> contents = readTextFile(path_);
+    unreadable_                         = !contents && fileExists(path_);
+    if (unreadable_)
+    {
+        log(LogLevel::Warning, LOG_CATEGORY_SETTINGS,
+            "settings.json exists but cannot be read, as before the first unlock; leaving it "
+            "untouched.");
+    }
     if (!contents)
     {
         resetLocked();
@@ -275,11 +282,21 @@ void SettingsStore::reload()
     load();
 }
 
+bool SettingsStore::readable() const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return !unreadable_;
+}
+
 bool SettingsStore::save() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    std::vector<CachedStore>    layout;
-    const std::string           text = dumpLocked(layout);
+    if (unreadable_)
+    {
+        return false;
+    }
+    std::vector<CachedStore> layout;
+    const std::string        text = dumpLocked(layout);
     // settings.json first: a crash before the cache is written leaves a cache for other bytes,
     // which the next load ignores.
     if (!writeTextFileAtomically(path_, text))

@@ -53,6 +53,14 @@ public:
     {
         return PreviousExit::Unknown;
     }
+    virtual bool tracksVisibility()
+    {
+        return false;
+    }
+    virtual bool visibleNow()
+    {
+        return false;
+    }
     // Whether the active network is metered (mobile data, a hotspot or Low Data Mode).
     virtual bool onMeteredNetwork()
     {
@@ -118,6 +126,8 @@ public:
     // if one waited for Wi-Fi.
     void onForeground();
     bool onBackground();
+    void noteVisible();
+    bool awaitingVisibility() const;
     bool isCheckingForUpdate() const;
 
     // Delays before retrying a failed update check, before jitter.
@@ -179,5 +189,6 @@ private:
     std::atomic_int64_t           bundleExecutedMs_{0};
     std::atomic_int64_t           renderedMs_{0};
     std::atomic_int64_t           healthyMs_{0};
+    std::atomic_int64_t           visibleMs_{0};
 };
 }

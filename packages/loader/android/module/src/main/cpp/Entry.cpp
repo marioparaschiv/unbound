@@ -117,14 +117,17 @@ static void nativeMarkHealthy(JNIEnv *, jclass)
 
 static void nativeOnForeground(JNIEnv *, jclass)
 {
+    setDiscordVisible(true);
     if (auto loader = currentLoader())
     {
+        loader->onVisible();
         loader->onForeground();
     }
 }
 
 static void nativeOnBackground(JNIEnv *, jclass)
 {
+    setDiscordVisible(false);
     if (auto loader = currentLoader())
     {
         loader->onBackground();

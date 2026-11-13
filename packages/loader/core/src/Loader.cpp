@@ -94,6 +94,16 @@ public:
         return host_->previousExit();
     }
 
+    bool tracksVisibility() override
+    {
+        return host_->tracksVisibility();
+    }
+
+    bool visibleNow() override
+    {
+        return host_->visibleNow();
+    }
+
     bool onMeteredNetwork() override
     {
         return host_->onMeteredNetwork();
@@ -221,6 +231,14 @@ void Loader::onForeground()
     if (pipeline_)
     {
         pipeline_->onForeground();
+    }
+}
+
+void Loader::onVisible()
+{
+    if (pipeline_)
+    {
+        pipeline_->noteVisible();
     }
 }
 

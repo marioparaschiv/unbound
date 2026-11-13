@@ -16,6 +16,7 @@ std::string LaunchGuard::path() const
 struct Marker {
     int  failures = -1;
     bool frozen   = false;
+    bool shown    = true;
 };
 
 static Marker readMarker(const std::optional<std::string> &contents)
@@ -27,10 +28,26 @@ static Marker readMarker(const std::optional<std::string> &contents)
     nlohmann::json parsed   = nlohmann::json::parse(*contents, nullptr, false);
     auto           failures = parsed.is_object() ? parsed.find("failures") : parsed.end();
     auto           frozen   = parsed.is_object() ? parsed.find("frozen") : parsed.end();
+    auto           shown    = parsed.is_object() ? parsed.find("shown") : parsed.end();
     return {failures != parsed.end() && failures->is_number_integer() && *failures >= 0
                 ? failures->get<int>()
                 : 0,
-            frozen != parsed.end() && frozen->is_boolean() && frozen->get<bool>()};
+            frozen != parsed.end() && frozen->is_boolean() && frozen->get<bool>(),
+            shown == parsed.end() || !shown->is_boolean() || shown->get<bool>()};
+}
+
+static nlohmann::json markerJSON(const Marker &marker)
+{
+    nlohmann::json json = {{"failures", marker.failures}};
+    if (marker.frozen)
+    {
+        json["frozen"] = true;
+    }
+    if (!marker.shown)
+    {
+        json["shown"] = false;
+    }
+    return json;
 }
 
 LaunchVerdict LaunchGuard::begin(PreviousExit previous) const
@@ -39,6 +56,19 @@ LaunchVerdict LaunchGuard::begin(PreviousExit previous) const
     LaunchVerdict verdict;
     Marker        marker   = readMarker(readTextFile(path()));
     int           recorded = marker.failures;
+    if (recorded >= 0 && !marker.shown && !marker.frozen)
+    {
+        log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
+            "Discord's previous launch ran only in the background and never showed; it does not "
+            "count.");
+        verdict.failures = recorded;
+        createDirectories(directory_);
+        if (!writeTextFileAtomically(path(), markerJSON({recorded}).dump()))
+        {
+            log(LogLevel::Error, LOG_CATEGORY_DEFAULT, "Failed to arm the launch guard.");
+        }
+        return verdict;
+    }
     if (recorded >= 0 && marker.frozen)
     {
         log(LogLevel::Warning, LOG_CATEGORY_DEFAULT,
@@ -82,8 +112,30 @@ bool LaunchGuard::markFrozen() const
     {
         return false;
     }
-    return writeTextFileAtomically(
-        path(), nlohmann::json{{"failures", marker.failures}, {"frozen", true}}.dump());
+    marker.frozen = true;
+    return writeTextFileAtomically(path(), markerJSON(marker).dump());
+}
+
+bool LaunchGuard::markHidden() const
+{
+    Marker marker = readMarker(readTextFile(path()));
+    if (marker.failures < 0)
+    {
+        return false;
+    }
+    marker.shown = false;
+    return writeTextFileAtomically(path(), markerJSON(marker).dump());
+}
+
+bool LaunchGuard::markShown() const
+{
+    Marker marker = readMarker(readTextFile(path()));
+    if (marker.failures < 0 || marker.shown)
+    {
+        return marker.failures >= 0;
+    }
+    marker.shown = true;
+    return writeTextFileAtomically(path(), markerJSON(marker).dump());
 }
 
 std::string launchRollBackNotice(int failures)

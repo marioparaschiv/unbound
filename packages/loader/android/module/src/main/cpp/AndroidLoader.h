@@ -83,9 +83,14 @@ public:
     void                 crashAlert(const std::string &message) override;
     void                 stuckLaunch(const std::string &message) override;
     loader::PreviousExit previousExit() override;
-    bool                 onMeteredNetwork() override;
-    void                 showUpdateProgress(bool showing) override;
-    void                 reload() override;
+    bool                 tracksVisibility() override
+    {
+        return true;
+    }
+    bool visibleNow() override;
+    bool onMeteredNetwork() override;
+    void showUpdateProgress(bool showing) override;
+    void reload() override;
 
 private:
     void           enqueueRuntime(std::function<void(facebook::jsi::Runtime &)> work,
@@ -111,5 +116,6 @@ private:
 // The running loader and its Android host; both empty before `nativeInitialize`.
 std::shared_ptr<loader::Loader> currentLoader();
 std::shared_ptr<AndroidLoader>  currentHost();
+void                            setDiscordVisible(bool visible);
 void setCurrentLoader(std::shared_ptr<loader::Loader> loader, std::shared_ptr<AndroidLoader> host);
 }
