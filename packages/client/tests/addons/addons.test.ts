@@ -2,6 +2,8 @@ import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
 import type { AddonVersion } from '@unbound-app/contracts/addons';
 import sha256 from '@unbound-app/utils/sha256';
 
+import { CRASH_HOLDS_KEY, type CrashHolds } from '~/addons/crash-holds';
+
 import {
 	FakeAddons,
 	installUnboundNative,
@@ -60,6 +62,11 @@ class GatedAddons extends FakeAddons {
 
 		return this.requirementsMet;
 	}
+
+	/** Records crash holds as if a crash had disabled these addons. */
+	holdCrashed(holds: CrashHolds) {
+		this.settings.set(CRASH_HOLDS_KEY, holds);
+	}
 }
 
 let manager: GatedAddons;
@@ -97,9 +104,7 @@ describe('Addons.installListed', () => {
 	test('an update turns back on an addon a crash disabled at its previous version', async () => {
 		await manager.installListed({ id: ID }, listedVersion('1.0.0'));
 		manager.disable(ID);
-		(
-			manager as unknown as { settings: { set(key: string, value: unknown): void } }
-		).settings.set('crashHolds', { [ID]: '1.0.0' });
+		manager.holdCrashed({ [ID]: '1.0.0' });
 
 		expect(await manager.installListed({ id: ID }, listedVersion('2.0.0'))).toBe(true);
 

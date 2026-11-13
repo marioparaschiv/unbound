@@ -3,8 +3,8 @@ import type { AddonKind } from '@unbound-app/types/addons';
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { Dimensions, View } from 'react-native';
 
-import useOpenListing from '~/ui/marketplace/use-open-listing';
 import MarketplaceList from '~/ui/marketplace/marketplace-list';
+import useOpenListing from '~/ui/marketplace/use-open-listing';
 import BrowseContext from '~/ui/marketplace/browse-context';
 import FilterButton from '~/ui/marketplace/filter-button';
 import { DEFAULT_FILTERS } from '~/marketplace/filters';

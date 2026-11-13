@@ -113,13 +113,9 @@ function preview(value: unknown): ValuePreview {
 			return leaf('nullish', 'undefined');
 		case 'function':
 			return functionPreview(value);
+		case 'object':
+			return value === null ? leaf('nullish', 'null') : objectPreview(value);
 	}
-
-	if (value === null) {
-		return leaf('nullish', 'null');
-	}
-
-	return objectPreview(value as object);
 }
 
 function functionPreview(fn: Function): ValuePreview {
@@ -219,9 +215,8 @@ export function propertyChild<T extends object>(value: T, key: PropertyKey): Ins
 	}
 
 	if (descriptor && !('value' in descriptor) && descriptor.get) {
-		const get = descriptor.get;
-
-		return { key: label, read: () => get.call(value), getter: true, internal: false };
+		// Reads through the owner, which runs the same getter with the owner as `this`.
+		return { key: label, read: () => Reflect.get(value, key), getter: true, internal: false };
 	}
 
 	const current = descriptor?.value;

@@ -8,6 +8,13 @@ import {
 	withAddonAttribution,
 	runAsAddon,
 } from '~/addons/crash-guard';
+import {
+	CRASH_HOLDS_KEY,
+	holdAddon,
+	releaseAddon,
+	updatedSinceHold,
+	type CrashHolds,
+} from '~/addons/crash-holds';
 import type { AddonAttribution, AddonFreeze, RunningAddon } from '~/addons/crash-guard';
 import { parseAddonManifest, resolveManifestCapabilities } from '~/addons/manifest';
 import type { AddonEvents, AddonResolveable, AddonState } from '~/addons/addon';
@@ -16,14 +23,6 @@ import { validateNativeBridgeRequirements } from '~/native/capabilities';
 import { announceFreeze, freezeDisables } from '~/addons/freezes';
 import { crashReportAddon } from '~/diagnostics/crash-report';
 import { disableIfCrashed } from '~/addons/crash-disable';
-import {
-	CRASH_HOLDS_KEY,
-	holdAddon,
-	releaseAddon,
-	updatedSinceHold,
-	type CrashHolds,
-} from '~/addons/crash-holds';
-import { show } from '~/toasts/api';
 import { reportCrash } from '~/diagnostics/crash-reports';
 import { beginNativeStop } from '~/native/plugin-context';
 import type { NativeConsents } from '~/native/consent';
@@ -38,6 +37,7 @@ import { benchSpan } from '~/core/bench-span';
 import { Manager } from '~/addons/manager';
 import { Addon } from '~/addons/addon';
 import storage from '~/storage/api';
+import { show } from '~/toasts/api';
 
 /**
  * @description Runtime lifecycle shared by every addon kind: load/unload, start/stop and freeze/crash

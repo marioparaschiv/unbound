@@ -1,6 +1,9 @@
 /** Each addon a crash or freeze disabled, with the version it was running then. */
 export type CrashHolds = Record<string, string>;
 
+/** An addon at the version it runs. */
+type HeldAddon = { id: string; version: string };
+
 export const CRASH_HOLDS_KEY = 'crashHolds';
 
 /**
@@ -9,7 +12,7 @@ export const CRASH_HOLDS_KEY = 'crashHolds';
  * @param addon The disabled addon.
  * @returns The holds with this one added.
  */
-export function holdAddon(holds: CrashHolds, addon: { id: string; version: string }): CrashHolds {
+export function holdAddon(holds: CrashHolds, addon: HeldAddon): CrashHolds {
 	return { ...holds, [addon.id]: addon.version };
 }
 
@@ -31,10 +34,7 @@ export function releaseAddon(holds: CrashHolds, id: string): CrashHolds {
  * @param addon The addon, at its version now.
  * @returns Whether it is held and now runs a different version.
  */
-export function updatedSinceHold(
-	holds: CrashHolds,
-	addon: { id: string; version: string },
-): boolean {
+export function updatedSinceHold(holds: CrashHolds, addon: HeldAddon): boolean {
 	const held = holds[addon.id];
 
 	return held !== undefined && held !== addon.version;

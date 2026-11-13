@@ -12,6 +12,15 @@ const { weakJava, weakObjC } = await import('~/native/weak-handle');
 
 type Table = Map<string, NativeObjCResult>;
 
+// The weak table keys by the NSString the code under test passes, which the fake receives as a plain string.
+function keyOf(arg: NativeObjCResult): string {
+	if (typeof arg !== 'string') {
+		throw new TypeError(`Expected a string key, got ${typeof arg}`);
+	}
+
+	return arg;
+}
+
 function fakeObjC() {
 	const tables = new Map<NativeObjectHandle, Table>();
 	const calls: string[] = [];
@@ -30,12 +39,12 @@ function fakeObjC() {
 		const table = tables.get(target);
 
 		if (selector === 'setObject:forKey:') {
-			table?.set(String(args[1]), args[0]);
+			table?.set(keyOf(args[1]), args[0]);
 
 			return undefined;
 		}
 
-		return table?.get(String(args[0])) ?? null;
+		return table?.get(keyOf(args[0])) ?? null;
 	}
 
 	return {

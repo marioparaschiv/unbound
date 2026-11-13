@@ -41,28 +41,6 @@ import {
 } from './react-devtools';
 
 export type {
-	ExplorerClass,
-	ExplorerClassesRequest,
-	ExplorerClassesResult,
-	ExplorerError,
-	ExplorerErrorCode,
-	ExplorerImage,
-	ExplorerMember,
-	ExplorerMemberKind,
-	ExplorerMembersRequest,
-	ExplorerMembersResult,
-	ExplorerObject,
-	ExplorerObjectRequest,
-	ExplorerObjectResult,
-	ExplorerRequest,
-	ExplorerResult,
-	ExplorerTarget,
-	ExplorerValue,
-	ExplorerValueKind,
-	ExplorerValuesRequest,
-	ExplorerValuesResult,
-} from './explorer';
-export type {
 	MetroChildrenRequest,
 	MetroChildrenResult,
 	MetroError,
@@ -89,6 +67,28 @@ export type {
 	MetroValue,
 	MetroValueKind,
 } from './metro';
+export type {
+	ExplorerClass,
+	ExplorerClassesRequest,
+	ExplorerClassesResult,
+	ExplorerError,
+	ExplorerErrorCode,
+	ExplorerImage,
+	ExplorerMember,
+	ExplorerMemberKind,
+	ExplorerMembersRequest,
+	ExplorerMembersResult,
+	ExplorerObject,
+	ExplorerObjectRequest,
+	ExplorerObjectResult,
+	ExplorerRequest,
+	ExplorerResult,
+	ExplorerTarget,
+	ExplorerValue,
+	ExplorerValueKind,
+	ExplorerValuesRequest,
+	ExplorerValuesResult,
+} from './explorer';
 export {
 	METRO_CHILDREN_PAGE_SIZE,
 	METRO_MODULES_PAGE_SIZE,

@@ -128,7 +128,9 @@ function readReanimatedVersions(): [unknown, unknown] {
 function reanimatedVersionsBuildingItsModule(): [unknown, unknown] {
 	const versions = readReanimatedVersions();
 
-	if (versions[0] !== undefined) return versions;
+	if (versions[0] !== undefined) {
+		return versions;
+	}
 
 	void LazyReanimatedModule?.ReanimatedModule;
 

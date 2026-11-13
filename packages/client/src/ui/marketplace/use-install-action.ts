@@ -4,11 +4,11 @@ import { createLogger } from '@unbound-app/logger';
 import { useState } from 'react';
 
 import { installsFromManifest } from '~/addons/installs-from-manifest';
+import { CLIENT_VERSION, Screens } from '~/core/constants';
 import type { InstallStatus } from '~/marketplace/catalog';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { AvailableChoice } from '~/addons/versions';
 import { pickInstallVersion } from '~/addons/versions';
-import { CLIENT_VERSION, Screens } from '~/core/constants';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
