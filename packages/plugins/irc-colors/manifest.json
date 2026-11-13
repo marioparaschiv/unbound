@@ -1,0 +1,25 @@
+{
+	"id": "unbound.irc-colors",
+	"name": "IRC Colors",
+	"description": "Gives everyone in chat their own username color, picked from their user id like in IRC clients.",
+	"authors": [
+		{
+			"name": "Grzesiek11",
+			"id": "368475654662127616"
+		},
+		{
+			"name": "jamesbt365",
+			"id": "158567567487795200"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "PaintPaletteIcon",
+	"main": "index.tsx"
+}
