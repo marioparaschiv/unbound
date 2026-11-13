@@ -26,6 +26,7 @@ use unbound_devtools_core::{
 };
 
 pub use history::History;
+pub(crate) use render::link_button;
 use rows::Item;
 
 /// The filter waits for typing to pause before it asks the device again.

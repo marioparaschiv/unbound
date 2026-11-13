@@ -6,13 +6,14 @@ import type {
 	ExplorerRequest,
 	ExplorerResult,
 	LogMessage,
+	MetroResult,
 	ReactDevtoolsFrame,
 	ViewDetailsRequest,
 	ViewDetailsResult,
 	ViewsRequest,
 	ViewsResult,
 } from '@unbound-app/debugger-protocol';
-import { isExplorerRequest, parseMessage } from '@unbound-app/debugger-protocol';
+import { isExplorerRequest, isMetroRequest, parseMessage } from '@unbound-app/debugger-protocol';
 import { createLogger } from '@unbound-app/logger';
 
 import {
@@ -26,6 +27,7 @@ import { CLIENT_VERSION, DEBUGGER_ADDRESS } from '~/core/constants';
 import { endSession, receive } from '~/debugger/react-devtools.dev';
 import { getSetting, isSettingChange } from '~/settings/unbound';
 import { readDebugReport } from '~/diagnostics/read-debug-info';
+import { answerMetro, resetMetro } from '~/debugger/metro.dev';
 import { reloadSummary } from '~/debugger/reload-summary.dev';
 import { createPatcher } from '~/patcher/create-patcher';
 import { currentEnvironment } from '~/core/environment';
@@ -85,6 +87,7 @@ export function stop() {
 	closeSocket();
 	resetViewFinder();
 	resetExplorer();
+	resetMetro();
 	endSession();
 
 	for (const dispose of disposers) dispose();
@@ -138,6 +141,7 @@ function connect(isReconnect = false) {
 		// The frontend starts a fresh session once the socket is back, and explorer refs end with the session.
 		endSession();
 		resetExplorer();
+		resetMetro();
 		scheduleReconnect();
 	});
 
@@ -209,6 +213,12 @@ function handleMessage(raw: string) {
 
 	if (request && isExplorerRequest(request)) {
 		void handleExplorerRequest(request);
+
+		return;
+	}
+
+	if (request && isMetroRequest(request)) {
+		reply(answerMetro(request));
 
 		return;
 	}
@@ -316,6 +326,7 @@ function reply(
 		| ViewsResult
 		| ViewDetailsResult
 		| ExplorerResult
+		| MetroResult
 		| ReactDevtoolsFrame,
 ) {
 	if (ws?.readyState !== WebSocket.OPEN) return;

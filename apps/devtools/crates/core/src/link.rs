@@ -14,7 +14,7 @@ use tokio_tungstenite::tungstenite::Message;
 use crate::bridge::{self, BridgeFrame, DeviceInfo};
 use crate::presets::{BridgeAddr, ConnectTarget};
 use crate::session::{BridgeState, Devtools, Inner};
-use crate::{explorer, views};
+use crate::{explorer, metro, views};
 
 const MIN_BACKOFF: Duration = Duration::from_secs(1);
 const MAX_BACKOFF: Duration = Duration::from_secs(10);
@@ -118,9 +118,10 @@ async fn supervise(inner: Weak<Inner>, generation: u64, target: ConnectTarget) {
 
 		if let Some(inner) = inner.upgrade() {
 			inner.detach_backend(generation);
-			// Dropping the waiters fails each view and explorer request still out with `NotConnected`.
+			// Dropping the waiters fails each view, explorer and Metro request still out with `NotConnected`.
 			inner.views.lock().clear();
 			inner.explorer.lock().clear();
+			inner.metro.lock().clear();
 		}
 
 		let Some(lost) = lost else {
@@ -229,6 +230,13 @@ async fn attach(inner: &Weak<Inner>, generation: u64, target: &ConnectTarget) ->
 					| BridgeFrame::ExplorerMembersResult { .. }
 					| BridgeFrame::ExplorerValuesResult { .. }
 					| BridgeFrame::ExplorerClassesResult { .. }) => explorer::settle(&inner, frame),
+					frame @ (BridgeFrame::MetroModulesResult { .. }
+					| BridgeFrame::MetroLoadResult { .. }
+					| BridgeFrame::MetroLoadAllResult { .. }
+					| BridgeFrame::MetroSearchResult { .. }
+					| BridgeFrame::MetroFilesResult { .. }
+					| BridgeFrame::MetroChildrenResult { .. }
+					| BridgeFrame::MetroReadResult { .. }) => metro::settle(&inner, frame),
 					BridgeFrame::EvalResult { .. } | BridgeFrame::Other => {}
 				}
 			}

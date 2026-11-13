@@ -14,6 +14,7 @@ pub mod explorer;
 pub mod inspect;
 mod link;
 pub mod mcp;
+pub mod metro;
 pub mod operations;
 pub mod presets;
 pub mod protocol;
@@ -34,6 +35,11 @@ pub use explorer::{
 };
 pub use inspect::{Hook, InspectedElement, OwnerRef, Section};
 pub use link::LinkStatus;
+pub use metro::{
+	ChildrenPage, FilesPage, LoadAllBatch, LoadedModule, METRO_CHILDREN_PAGE_SIZE, METRO_MODULES_PAGE_SIZE,
+	METRO_SEARCH_PAGE_SIZE, MetroError, MetroErrorCode, MetroFile, MetroMatch, MetroModule, MetroModuleStatus,
+	MetroTarget, MetroValue, MetroValueKind, ModulesPage, SearchPage,
+};
 pub use presets::{BridgeAddr, ConnectTarget, DevicePreset, PresetError, Presets};
 pub use query::{FindQuery, JqFilter, NameMatch};
 pub use session::{BridgeState, Config, ConnectionState, Devtools, RequestError, Status};

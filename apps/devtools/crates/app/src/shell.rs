@@ -17,6 +17,7 @@ use crate::commands::{CommandPage, nav};
 use crate::empty_state::EmptyState;
 use crate::explorer::classes::ClassBrowser;
 use crate::link::DebuggerLink;
+use crate::metro::MetroBrowser;
 use crate::nav_list::{NavGroup, NavRow};
 use crate::settings_dialog::{self, Closed, SettingsDialog};
 use crate::title_bar::{self, title_bar};
@@ -65,6 +66,7 @@ pub enum Page {
 	Components,
 	Views,
 	Classes,
+	Metro,
 	Command(String),
 }
 
@@ -79,6 +81,7 @@ pub struct Shell {
 	workspace: Entity<Workspace>,
 	views: Entity<ViewFinder>,
 	classes: Entity<ClassBrowser>,
+	metro: Entity<MetroBrowser>,
 	link: Entity<DebuggerLink>,
 	page: Page,
 	catalog: CatalogState,
@@ -110,11 +113,13 @@ impl Shell {
 		];
 		let views = cx.new(|cx| ViewFinder::new(devtools.clone(), window, cx));
 		let classes = cx.new(|cx| ClassBrowser::new(devtools.clone(), window, cx));
+		let metro = cx.new(|cx| MetroBrowser::new(devtools.clone(), window, cx));
 		let mut this = Self {
 			devtools,
 			workspace,
 			views,
 			classes,
+			metro,
 			link,
 			page: Page::Components,
 			catalog: CatalogState::Loading,
@@ -189,6 +194,9 @@ impl Shell {
 		if page == Page::Classes {
 			self.classes.update(cx, |classes, cx| classes.open(cx));
 		}
+		if page == Page::Metro {
+			self.metro.update(cx, |metro, cx| metro.open(cx));
+		}
 		self.page = page;
 		cx.notify();
 	}
@@ -242,7 +250,7 @@ impl Shell {
 				.pages
 				.get(name)
 				.is_some_and(|page| page.read(cx).is_running()),
-			Page::Components | Page::Views | Page::Classes => false,
+			Page::Components | Page::Views | Page::Classes | Page::Metro => false,
 		};
 		NavRow {
 			active: self.page == page,
@@ -280,6 +288,7 @@ impl Shell {
 							"icons/library.svg",
 							cx,
 						),
+						self.row(Page::Metro, nav::METRO_TITLE.into(), "icons/boxes.svg", cx),
 					]
 				});
 				let rows = trees
@@ -465,11 +474,9 @@ impl Shell {
 										"Open Settings",
 										true,
 									)
-									.on_click(cx.listener(
-										|this, _, window, cx| {
-											this.open_settings(&OpenSettings, window, cx)
-										},
-									)),
+									.on_click(cx.listener(|this, _, window, cx| {
+										this.open_settings(&OpenSettings, window, cx)
+									})),
 								),
 						)
 					}),
@@ -506,6 +513,7 @@ impl Render for Shell {
 			Page::Components => self.workspace.clone().into_any_element(),
 			Page::Views => self.views.clone().into_any_element(),
 			Page::Classes => self.classes.clone().into_any_element(),
+			Page::Metro => self.metro.clone().into_any_element(),
 			Page::Command(name) => match self.command_page(&name, window, cx) {
 				Some(page) => page.into_any_element(),
 				None => self.render_catalog_state(cx).into_any_element(),
