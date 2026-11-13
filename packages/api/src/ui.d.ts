@@ -10,7 +10,14 @@ import type {
 } from './_internal';
 import type { Without } from './_types';
 import * as React$1 from 'react';
-import { ComponentProps, ComponentType, FunctionComponent, ReactElement, ReactNode } from 'react';
+import {
+	ComponentProps,
+	ComponentType,
+	Context,
+	FunctionComponent,
+	ReactElement,
+	ReactNode,
+} from 'react';
 import * as RN from 'react-native';
 import { ImageStyle, TextStyle, ViewStyle } from 'react-native';
 /**
@@ -236,7 +243,7 @@ export declare function SegmentedRow({
 }: SegmentedRowProps): React$1.ReactElement;
 /**
  * @description Discord's `TableSliderRow`, as its own settings draw one: the label and live value over the slider
- * with its default mark. A sub-label, which that row cannot show, moves it to a `TableRow` holding the same slider.
+ * with its default mark. A sub-label, which that row cannot show, draws the same layout by hand with it under the label.
  * The value is saved when the drag ends; Android's slider and iOS's take differently named props, so it passes both.
  * @param props The row's label, value, default, range and change handler.
  * @returns The row, or `null` when Discord's slider is unavailable.
