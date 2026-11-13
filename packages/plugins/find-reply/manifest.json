@@ -4,11 +4,15 @@
 	"description": "Jumps from a message to the first reply to it, from its long-press menu.",
 	"authors": [
 		{
+			"name": "newwares",
+			"id": "421405303951851520"
+		},
+		{
 			"name": "adrian",
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"unbound": {
 		"min": "3.0.0"
 	},

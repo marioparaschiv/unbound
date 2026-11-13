@@ -4,11 +4,23 @@
 	"description": "Treats messages that contain your keywords as mentions, so Discord highlights them and counts them like a ping.",
 	"authors": [
 		{
+			"name": "camila314",
+			"id": "738592270617542716"
+		},
+		{
+			"name": "x3rt",
+			"id": "131602100332396544"
+		},
+		{
+			"name": "benjas333",
+			"id": "456577284464443394"
+		},
+		{
 			"name": "adrian",
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"unbound": {
 		"min": "3.0.0"
 	},

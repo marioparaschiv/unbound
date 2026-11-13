@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1] - 2026-11-13
+
+### Changed
+
+- Credits camila314, x3rt, benjas333, who made Equicord's KeywordNotify, which this ports.
+
 ## [1.1.0] - 2026-11-13
 
 ### Added
