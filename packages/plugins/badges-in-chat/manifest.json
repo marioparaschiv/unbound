@@ -1,0 +1,25 @@
+{
+	"id": "unbound.badges-in-chat",
+	"name": "Badges In Chat",
+	"description": "Shows a profile badge next to people's names in chat, where a role icon would go.",
+	"authors": [
+		{
+			"name": "Inbestigator",
+			"id": "761777382041714690"
+		},
+		{
+			"name": "krystalskullofficial",
+			"id": "929208515883569182"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "StarIcon",
+	"main": "index.tsx"
+}
