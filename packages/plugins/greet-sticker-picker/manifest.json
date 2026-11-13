@@ -1,0 +1,21 @@
+{
+	"id": "unbound.greet-sticker-picker",
+	"name": "Greet Sticker Picker",
+	"description": "Lets you pick which sticker 'Wave to say hi!' sends to a new member, instead of a random one.",
+	"authors": [
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "StickerIcon",
+	"main": "index.tsx"
+}
