@@ -78,7 +78,8 @@ public:
     void rejectBundle(const std::string &path);
     void discardFailedBundle(const std::string &path);
     // Puts back the bundle the last promotion replaced; false when there is none to put back.
-    bool rollBackToPrevious();
+    bool                       rollBackToPrevious();
+    std::optional<std::string> previousBundleRevision() const;
 
     const std::string &documents() const;
 

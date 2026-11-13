@@ -327,7 +327,14 @@ static MenuItem gestureToggle(const SettingsStore &settings, preferences::Toolbo
     return item;
 }
 
-static MenuSection bundleSection()
+static std::string previousBundleTitle(const std::string &revision)
+{
+    constexpr size_t kShortRevision = 7;
+    return revision.empty() ? "Use Previous Bundle"
+                            : "Use Previous Bundle (" + revision.substr(0, kShortRevision) + ")";
+}
+
+static MenuSection bundleSection(const MenuOptions &options)
 {
     MenuItem refetch =
         restartingAction("refetch-bundle", "Refetch Bundle", "refetch-bundle", false);
@@ -341,10 +348,19 @@ static MenuSection bundleSection()
         MenuPrompt{"Custom Bundle URL", "Enter the URL to download a custom bundle from",
                    "https://example.com/unbound.bundle", "Download", kCancelText};
 
-    return {"Bundle",
-            {std::move(refetch),
-             restartingAction("delete-bundle", "Delete Bundle", "delete-bundle", true),
-             std::move(custom)}};
+    MenuSection section{"Bundle", {std::move(refetch)}};
+    if (options.previousBundle)
+    {
+        MenuItem previous =
+            restartingAction("previous-bundle", previousBundleTitle(*options.previousBundle),
+                             "previous-bundle", false);
+        previous.failure = kPreviousBundleFailedMessage;
+        section.items.push_back(std::move(previous));
+    }
+    section.items.push_back(
+        restartingAction("delete-bundle", "Delete Bundle", "delete-bundle", true));
+    section.items.push_back(std::move(custom));
+    return section;
 }
 
 static MenuSection addonsSection()
@@ -394,7 +410,7 @@ static MenuSection settingsSection(const SettingsStore &settings, const MenuOpti
 
 std::vector<MenuSection> menu(const SettingsStore &settings, const MenuOptions &options)
 {
-    return {bundleSection(), addonsSection(), utilitiesSection(settings, options),
+    return {bundleSection(options), addonsSection(), utilitiesSection(settings, options),
             settingsSection(settings, options)};
 }
 
@@ -550,6 +566,10 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
         deleteBundle(context.settings, context.updater, context.documents);
         return flag(true);
     }
+    if (action == "previous-bundle")
+    {
+        return flag(context.updater.rollBackToPrevious());
+    }
     if (action == "custom-bundle")
     {
         return flag(useCustomBundle(context.settings, argument));
@@ -629,7 +649,9 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
     }
     if (action == "menu")
     {
-        return menuJSON(context.settings, menuOptions(argument)).dump();
+        MenuOptions options    = menuOptions(argument);
+        options.previousBundle = context.updater.previousBundleRevision();
+        return menuJSON(context.settings, options).dump();
     }
     if (action == "menu-step")
     {

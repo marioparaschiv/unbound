@@ -376,4 +376,21 @@ bool BundleUpdater::rollBackToPrevious()
     }
     return false;
 }
+
+std::optional<std::string> BundleUpdater::previousBundleRevision() const
+{
+    for (const char *extension : kBundleExtensions)
+    {
+        std::string target = bundlePath(extension);
+        std::string backup = target + ".previous";
+        if (!fileExists(target) || !fileExists(backup) || fileSize(backup) == 0)
+        {
+            continue;
+        }
+        std::optional<BundleManifest> manifest = parseBundleManifest(bundleRecordField(
+            parseBundleRecord(readTextFile(backup + kBundleTrustSuffix)), "manifest"));
+        return manifest ? manifest->revision : std::string();
+    }
+    return std::nullopt;
+}
 }

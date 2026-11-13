@@ -62,8 +62,9 @@ struct MenuSection {
 };
 
 struct MenuOptions {
-    bool openAppFolder     = false;
-    bool copyAppFolderPath = false;
+    bool                       openAppFolder     = false;
+    bool                       copyAppFolderPath = false;
+    std::optional<std::string> previousBundle;
 };
 
 struct IssueReport {
@@ -131,6 +132,7 @@ constexpr const char *kDestructiveConfirmation =
     "This cannot be undone. Discord restarts afterwards.";
 constexpr const char *kRefetchProgressMessage      = "Refetching the bundle…";
 constexpr const char *kRefetchFailedMessage        = "The bundle could not be downloaded.";
+constexpr const char *kPreviousBundleFailedMessage = "The previous bundle could not be restored.";
 constexpr const char *kCustomBundleInvalidText     = "Enter an http or https URL.";
 constexpr const char *kIssueFailedMessage          = "The GitHub issue page could not be opened.";
 constexpr unsigned    kThreeFingerHoldMilliseconds = 500;

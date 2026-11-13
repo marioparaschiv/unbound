@@ -234,6 +234,7 @@ static NSString *iconForMenuItem(NSString *identifier)
     dispatch_once(&onceToken, ^{
         icons = @{
             @"refetch-bundle" : @"arrow.triangle.2.circlepath",
+            @"previous-bundle" : @"clock.arrow.circlepath",
             @"delete-bundle" : @"trash",
             @"custom-bundle" : @"link.badge.plus",
             @"wipe-plugins" : @"trash",
