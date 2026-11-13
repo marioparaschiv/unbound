@@ -1,7 +1,7 @@
 {
 	"id": "unbound.fake-profile-themes",
 	"name": "Fake Profile Themes",
-	"description": "Shows profile theme colors hidden in bios with invisible characters, so anyone can theme their profile without Nitro.",
+	"description": "Shows profile theme colors and profile effects hidden in bios with invisible characters, so anyone can customize their profile without Nitro.",
 	"authors": [
 		{
 			"name": "Alyxia Sother",
@@ -12,11 +12,19 @@
 			"id": "335055032204656642"
 		},
 		{
+			"name": "ryan",
+			"id": "479403382994632704"
+		},
+		{
+			"name": "シグマ siguma",
+			"id": "737597276339437578"
+		},
+		{
 			"name": "adrian",
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"unbound": {
 		"min": "3.0.0"
 	},
