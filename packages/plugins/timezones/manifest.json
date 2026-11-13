@@ -1,0 +1,25 @@
+{
+	"id": "unbound.timezones",
+	"name": "Timezones",
+	"description": "Shows each user's local time on their profile and beside their messages, from TimezoneDB or a timezone you set.",
+	"authors": [
+		{
+			"name": "Syncxv",
+			"id": "549244932213309442"
+		},
+		{
+			"name": "creations",
+			"id": "209830981060788225"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "GlobeEarthIcon",
+	"main": "index.tsx"
+}
