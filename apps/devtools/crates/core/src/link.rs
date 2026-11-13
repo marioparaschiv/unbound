@@ -3,21 +3,25 @@
 //! the device's React DevTools backend and view finder over it. A lost bridge is redialled with
 //! backoff, so a restarted bridge or Discord reconnects on its own.
 
+use std::net::SocketAddr;
 use std::sync::{Arc, Weak};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use futures_util::SinkExt;
 use serde::Serialize;
 use tokio::sync::mpsc;
 use tokio_tungstenite::tungstenite::Message;
 
-use crate::bridge::{self, BridgeFrame, DeviceInfo};
+use crate::bridge::{self, BridgeFrame, BridgeInfo, DeviceInfo};
 use crate::presets::{BridgeAddr, ConnectTarget};
 use crate::session::{BridgeState, Devtools, Inner};
 use crate::{explorer, metro, views};
 
 const MIN_BACKOFF: Duration = Duration::from_secs(1);
 const MAX_BACKOFF: Duration = Duration::from_secs(10);
+/// How soon a bridge this app started may be started again, so a launcher that fails is not rerun
+/// on every redial.
+const RELAUNCH_AFTER: Duration = Duration::from_secs(10);
 
 /// What the debugger connection is doing, for the GUI's banner and MCP's `status`.
 #[derive(Clone, Debug, Serialize)]
@@ -31,6 +35,8 @@ pub struct LinkStatus {
 	pub device: Option<DeviceInfo>,
 	/// Why the bridge was lost, until the next attempt succeeds.
 	pub error: Option<String>,
+	/// The pairing code and advertising state, from a bridge this app serves; `ubd`'s sends none.
+	pub bridge_info: Option<BridgeInfo>,
 }
 
 pub(crate) struct Link {
@@ -73,6 +79,7 @@ impl Devtools {
 					state: BridgeState::Unknown,
 					device: None,
 					error: None,
+					bridge_info: None,
 				},
 				target,
 				outbound: None,
@@ -108,10 +115,13 @@ struct Lost {
 	reason: String,
 	/// Whether the bridge accepted the socket first; a working bridge resets the backoff.
 	attached: bool,
+	/// The address nothing answered on, when the dial itself failed.
+	unanswered: Option<SocketAddr>,
 }
 
 async fn supervise(inner: Weak<Inner>, generation: u64, target: ConnectTarget) {
 	let mut backoff = MIN_BACKOFF;
+	let mut launched: Option<Instant> = None;
 
 	loop {
 		let lost = attach(&inner, generation, &target).await;
@@ -132,9 +142,20 @@ async fn supervise(inner: Weak<Inner>, generation: u64, target: ConnectTarget) {
 			backoff = MIN_BACKOFF;
 		}
 
+		let relaunch = launched.is_none_or(|at| at.elapsed() >= RELAUNCH_AFTER);
+
+		if relaunch && let Some(address) = lost.unanswered {
+			launched = Some(Instant::now());
+
+			if launch_bridge(&inner, address).await {
+				continue;
+			}
+		}
+
 		let updated = update(&inner, generation, |link| {
 			link.status.state = BridgeState::Unreachable;
 			link.status.device = None;
+			link.status.bridge_info = None;
 			link.status.error = Some(lost.reason);
 			link.outbound = None;
 		});
@@ -148,6 +169,31 @@ async fn supervise(inner: Weak<Inner>, generation: u64, target: ConnectTarget) {
 	}
 }
 
+/// Starts a bridge for a link to this machine that found none, when the app has a launcher, and
+/// waits for it to listen. `true` once something listens on `address`.
+async fn launch_bridge(inner: &Weak<Inner>, address: SocketAddr) -> bool {
+	if !address.ip().is_loopback() {
+		return false;
+	}
+
+	let Some(launcher) = inner
+		.upgrade()
+		.and_then(|inner| inner.config.bridge_launcher.clone())
+	else {
+		return false;
+	};
+
+	if let Err(error) = bridge::launch::start(&launcher, address.port()) {
+		tracing::warn!(
+			"Failed to start the debugger bridge on port {}: {error}",
+			address.port()
+		);
+		return false;
+	}
+
+	bridge::launch::wait_listening(address).await
+}
+
 /// One controller session. `None` when the link was replaced or the app is gone.
 async fn attach(inner: &Weak<Inner>, generation: u64, target: &ConnectTarget) -> Option<Lost> {
 	let resolved = tokio::net::lookup_host(target.bridge.to_string())
@@ -157,6 +203,7 @@ async fn attach(inner: &Weak<Inner>, generation: u64, target: &ConnectTarget) ->
 		return Some(Lost {
 			reason: format!("cannot resolve the bridge host {}", target.bridge.host()),
 			attached: false,
+			unanswered: None,
 		});
 	};
 	let mut socket = match bridge::dial(address).await {
@@ -165,6 +212,7 @@ async fn attach(inner: &Weak<Inner>, generation: u64, target: &ConnectTarget) ->
 			return Some(Lost {
 				reason: error.to_string(),
 				attached: false,
+				unanswered: Some(address),
 			});
 		}
 	};
@@ -172,6 +220,7 @@ async fn attach(inner: &Weak<Inner>, generation: u64, target: &ConnectTarget) ->
 		Some(Lost {
 			reason: "the bridge closed the connection".to_owned(),
 			attached: true,
+			unanswered: None,
 		})
 	};
 	let (outbound, mut queue) = mpsc::unbounded_channel::<String>();
@@ -209,6 +258,11 @@ async fn attach(inner: &Weak<Inner>, generation: u64, target: &ConnectTarget) ->
 							inner.detach_backend(generation);
 						}
 						device_connected = connected;
+					}
+					BridgeFrame::BridgeInfo(info) => {
+						if !update_with(&inner, generation, |link| link.status.bridge_info = Some(info)) {
+							return None;
+						}
 					}
 					BridgeFrame::ReactDevtools {} => inner.receive(generation, &text),
 					BridgeFrame::ViewsResult { id, ok, nodes, total, error } => {

@@ -1,6 +1,8 @@
+use std::time::Duration;
+
 use gpui::{
-	AnyView, App, BoxShadow, Context, Div, FontWeight, Hsla, Pixels, SharedString, Stateful,
-	StyledText, Svg, TextRun, Window, div, point, prelude::*, px, svg,
+	Animation, AnimationExt, AnyView, App, BoxShadow, Context, Div, FontWeight, Hsla, Pixels,
+	SharedString, Stateful, Svg, Window, div, point, prelude::*, px, svg,
 };
 
 use crate::press::Pressable;
@@ -50,27 +52,57 @@ pub fn badge(text: impl Into<SharedString>, fg: Token) -> Div {
 		.child(text.into())
 }
 
-struct Tooltip(SharedString);
+/// Wide enough for a sentence or two before a wrapped tooltip breaks its lines.
+const WRAPPED_TOOLTIP_WIDTH: f32 = 320.;
+/// Base UI's tooltip enter: 125ms ease-out from 0.97 scale and no opacity.
+const TOOLTIP_ENTER: Duration = Duration::from_millis(125);
+const TOOLTIP_FROM_SCALE: f32 = 0.97;
+
+struct Tooltip(SharedString, bool);
 
 impl Render for Tooltip {
+	/// Grows from its top-left corner, the one gpui pins beside the pointer, so it scales out of
+	/// the trigger. gpui has no transforms, so every length is drawn at the scale.
 	fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+		let wrapped = self.1;
+
 		div()
 			.font_family(theme::ui_font())
-			.text_size(theme::TEXT_SMALL)
 			.text_color(theme::color(theme::TEXT))
-			.px(px(8.))
-			.py(px(4.))
-			.rounded(theme::RADIUS_CONTROL)
 			.bg(theme::color(theme::ELEVATED))
 			.border_1()
 			.border_color(theme::color(theme::BORDER_STRONG))
 			.shadow(float_shadow())
 			.child(self.0.clone())
+			.with_animation(
+				"tooltip-enter",
+				Animation::new(TOOLTIP_ENTER).with_easing(ease_out_cubic),
+				move |tooltip, progress| {
+					let scale = TOOLTIP_FROM_SCALE + (1. - TOOLTIP_FROM_SCALE) * progress;
+
+					tooltip
+						.when(wrapped, |tooltip| {
+							tooltip
+								.w(px(WRAPPED_TOOLTIP_WIDTH * scale))
+								.line_height(px(17. * scale))
+						})
+						.text_size(theme::TEXT_SMALL * scale)
+						.px(px(8. * scale))
+						.py(px(4. * scale))
+						.rounded(theme::RADIUS_CONTROL * scale)
+						.opacity(progress)
+				},
+			)
 	}
 }
 
+/// CSS's `ease-out` family: fast start, gentle landing.
+fn ease_out_cubic(t: f32) -> f32 {
+	1. - (1. - t).powi(3)
+}
+
 pub fn tooltip(text: &'static str) -> impl Fn(&mut Window, &mut App) -> AnyView + 'static {
-	move |_, cx| cx.new(|_| Tooltip(text.into())).into()
+	move |_, cx| cx.new(|_| Tooltip(text.into(), false)).into()
 }
 
 /// A tooltip with text made at runtime, such as a member's full signature.
@@ -78,7 +110,15 @@ pub fn text_tooltip(
 	text: impl Into<SharedString>,
 ) -> impl Fn(&mut Window, &mut App) -> AnyView + 'static {
 	let text = text.into();
-	move |_, cx| cx.new(|_| Tooltip(text.clone())).into()
+	move |_, cx| cx.new(|_| Tooltip(text.clone(), false)).into()
+}
+
+/// A tooltip for a few sentences of detail, wrapped to a fixed width.
+pub fn wrapped_tooltip(
+	text: impl Into<SharedString>,
+) -> impl Fn(&mut Window, &mut App) -> AnyView + 'static {
+	let text = text.into();
+	move |_, cx| cx.new(|_| Tooltip(text.clone(), true)).into()
 }
 
 pub fn icon_button(
@@ -193,8 +233,6 @@ pub fn primary_ledge() -> Hsla {
 pub enum Raised {
 	Primary,
 	Secondary,
-	/// The web's `destructive`: a secondary body with destructive text.
-	Destructive,
 }
 
 /// The web's raised button. Its body is [`theme::CONTROL_HEIGHT`] less the ledge and the ledge
@@ -221,13 +259,6 @@ pub fn raised_button(
 			theme::color(theme::SECONDARY),
 			theme::color(theme::SECONDARY_HOVER),
 			theme::TEXT,
-			theme::hsla(theme::LEDGE_SECONDARY),
-			secondary_highlight,
-		),
-		Raised::Destructive => (
-			theme::color(theme::SECONDARY),
-			theme::color(theme::SECONDARY_HOVER),
-			theme::ERROR,
 			theme::hsla(theme::LEDGE_SECONDARY),
 			secondary_highlight,
 		),
@@ -371,35 +402,6 @@ pub fn eyebrow(text: &str) -> Div {
 		.child(text.to_uppercase())
 }
 
-/// The CLI's help text with its `code` spans in the mono font and their backticks dropped, as
-/// Markdown would show them. Text with an unpaired backtick shows as written.
-pub fn prose(text: &str, color: Token) -> StyledText {
-	let run = |part: &str, code: bool| TextRun {
-		len: part.len(),
-		font: gpui::font(if code {
-			theme::mono_font()
-		} else {
-			theme::ui_font()
-		}),
-		color: theme::hsla(if code { theme::TEXT } else { color }),
-		background_color: None,
-		underline: None,
-		strikethrough: None,
-	};
-	if text.matches('`').count() % 2 == 1 {
-		return StyledText::new(text.to_owned()).with_runs(vec![run(text, false)]);
-	}
-	let parts = text
-		.split('`')
-		.enumerate()
-		.filter(|(_, part)| !part.is_empty());
-	let runs = parts
-		.clone()
-		.map(|(ix, part)| run(part, ix % 2 == 1))
-		.collect();
-	StyledText::new(parts.map(|(_, part)| part).collect::<String>()).with_runs(runs)
-}
-
 pub fn panel_header() -> Div {
 	div()
 		.flex_none()
@@ -438,25 +440,6 @@ pub fn footer_bar() -> Div {
 		.text_size(theme::TEXT_SMALL)
 		.line_height(px(16.))
 		.text_color(theme::color(theme::TEXT_MUTED))
-}
-
-/// A keyboard key, as the web's `Kbd` draws it.
-pub fn kbd(key: impl Into<SharedString>) -> Div {
-	div()
-		.flex_none()
-		.flex()
-		.items_center()
-		.justify_center()
-		.h(px(20.))
-		.min_w(px(20.))
-		.px(px(5.))
-		.rounded(theme::RADIUS_ITEM - px(1.))
-		.bg(theme::color(theme::SECONDARY))
-		.shadow(key_shadow())
-		.text_size(theme::TEXT_EYEBROW)
-		.font_weight(FontWeight::MEDIUM)
-		.text_color(theme::color(theme::TEXT_MUTED))
-		.child(key.into())
 }
 
 /// The bar across the top of every page: a `group / title` breadcrumb on the left, in a column as

@@ -105,20 +105,12 @@ impl SettingsDialog {
 			})
 		};
 		let fields = Fields {
-			cli_command: input(current.cli_command.clone(), "ubd"),
-			project_dir: input(current.project_dir.clone(), "Your home folder"),
 			bridge_port: input(current.bridge_port.to_string(), "9090"),
 			mcp_port: input(current.mcp_port.to_string(), "8098"),
 		};
 		let search = input(String::new(), "Search...");
 		let subscriptions = vec![
 			cx.subscribe(&search, |_, _, _: &InputEvent, cx| cx.notify()),
-			bind(cx, &fields.cli_command, |value, s| {
-				s.cli_command = value.trim().to_owned()
-			}),
-			bind(cx, &fields.project_dir, |value, s| {
-				s.project_dir = value.trim().to_owned()
-			}),
 			bind(
 				cx,
 				&fields.bridge_port,

@@ -23,15 +23,7 @@ impl Devtools {
 		let bridge = self
 			.link_target()
 			.map_or_else(|| self.default_target().bridge, |target| target.bridge);
-		let interfaces = if_addrs::get_if_addrs()
-			.map(|interfaces| {
-				interfaces
-					.into_iter()
-					.map(|interface| (interface.name.clone(), interface.ip()))
-					.collect()
-			})
-			.unwrap_or_default();
-		device_addresses(&bridge, route_address(), interfaces)
+		device_addresses(&bridge, route_address(), interfaces())
 	}
 
 	/// The first of [`Devtools::device_addresses`].
@@ -85,10 +77,50 @@ pub fn device_addresses(
 		.collect()
 }
 
-/// Container and VM bridges only reach guests on this machine, never a phone.
+/// This machine's interfaces as `(name, ip)`; empty when the system won't list them.
+pub(crate) fn interfaces() -> Vec<(String, IpAddr)> {
+	if_addrs::get_if_addrs()
+		.map(|interfaces| {
+			interfaces
+				.into_iter()
+				.map(|interface| (interface.name.clone(), interface.ip()))
+				.collect()
+		})
+		.unwrap_or_default()
+}
+
+/// The one interface a phone on the same network can reach: the default route's when it is a
+/// private LAN, else the first private LAN interface. Never a VPN, container or VM adapter, so the
+/// phone never picks an address it can't dial.
+pub(crate) fn lan_interface(
+	route: Option<IpAddr>,
+	interfaces: Vec<(String, IpAddr)>,
+) -> Option<(String, Ipv4Addr)> {
+	let mut lan: Vec<(String, Ipv4Addr)> = interfaces
+		.into_iter()
+		.filter(|(name, _)| !is_virtual(name))
+		.filter_map(|(name, ip)| match ip {
+			IpAddr::V4(v4) if v4.is_private() => Some((name, v4)),
+			_ => None,
+		})
+		.collect();
+
+	lan.sort_by_key(|(_, ip)| Some(IpAddr::V4(*ip)) != route);
+	lan.into_iter().next()
+}
+
+/// Container and VM bridges only reach guests on this machine, never a phone. `vEthernet` is
+/// Windows' Hyper-V switch, which WSL and Docker Desktop also use.
 fn is_virtual(interface: &str) -> bool {
-	const PREFIXES: [&str; 7] = [
-		"docker", "br-", "veth", "virbr", "vmnet", "vboxnet", "podman",
+	const PREFIXES: [&str; 8] = [
+		"docker",
+		"br-",
+		"veth",
+		"virbr",
+		"vmnet",
+		"vboxnet",
+		"podman",
+		"vEthernet",
 	];
 	PREFIXES.iter().any(|prefix| interface.starts_with(prefix))
 }
@@ -110,7 +142,7 @@ fn network_label(interface: &str, ip: IpAddr) -> String {
 
 /// The address the default route leaves from. Connecting a UDP socket sends nothing; it only picks
 /// the interface.
-fn route_address() -> Option<IpAddr> {
+pub(crate) fn route_address() -> Option<IpAddr> {
 	let socket = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, 0)).ok()?;
 	socket.connect((Ipv4Addr::new(192, 0, 2, 1), 9)).ok()?;
 	let ip = socket.local_addr().ok()?.ip();
@@ -121,7 +153,7 @@ fn route_address() -> Option<IpAddr> {
 mod tests {
 	use std::net::{IpAddr, Ipv4Addr};
 
-	use super::device_addresses;
+	use super::{device_addresses, lan_interface};
 	use crate::presets::BridgeAddr;
 
 	fn ip(a: u8, b: u8, c: u8, d: u8) -> IpAddr {
@@ -157,6 +189,30 @@ mod tests {
 				("Android Emulator", "10.0.2.2:9090"),
 				("This Machine Only", "127.0.0.1:9090"),
 			]
+		);
+	}
+
+	#[test]
+	fn advertises_on_the_routes_lan_and_never_a_vpn_or_vm_adapter() {
+		let interfaces = || {
+			vec![
+				("vEthernet (WSL)".to_owned(), ip(172, 20, 0, 1)),
+				("tailscale0".to_owned(), ip(100, 64, 0, 2)),
+				("Ethernet".to_owned(), ip(10, 0, 0, 5)),
+				("Wi-Fi".to_owned(), ip(192, 168, 1, 20)),
+			]
+		};
+		let wifi = Some(("Wi-Fi".to_owned(), Ipv4Addr::new(192, 168, 1, 20)));
+
+		assert_eq!(lan_interface(Some(ip(192, 168, 1, 20)), interfaces()), wifi);
+		// A full-tunnel VPN carries the route: fall back to the first LAN.
+		assert_eq!(
+			lan_interface(Some(ip(100, 64, 0, 2)), interfaces()),
+			Some(("Ethernet".to_owned(), Ipv4Addr::new(10, 0, 0, 5)))
+		);
+		assert_eq!(
+			lan_interface(None, vec![("lo".to_owned(), ip(127, 0, 0, 1))]),
+			None
 		);
 	}
 

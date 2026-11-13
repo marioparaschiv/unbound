@@ -70,7 +70,10 @@ fn config_dir() {
 
 fn session_with_bridge(bridge: SocketAddr) -> Devtools {
 	config_dir();
-	Devtools::start(Config { bridge })
+	Devtools::start(Config {
+		bridge,
+		bridge_launcher: None,
+	})
 }
 
 #[tokio::test(flavor = "multi_thread")]

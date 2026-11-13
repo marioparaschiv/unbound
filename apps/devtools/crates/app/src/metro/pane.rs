@@ -17,10 +17,10 @@ use super::reveal::{TREE_PAD, flicker, hop};
 use super::tree::{Fetch, Node, Path, Row as TreeRow};
 use super::unfold::Place;
 use super::{Exports, MetroBrowser, Picked};
-use crate::commands::nav;
 use crate::empty::SETUP_STEPS;
 use crate::empty_state::EmptyState;
 use crate::explorer::link_button;
+use crate::nav;
 use crate::smooth_scroll::SmoothScroll;
 use crate::theme::{self, Token};
 use crate::widgets::{

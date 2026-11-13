@@ -25,6 +25,5 @@ tracing.workspace = true
 uuid.workspace = true
 dirs.workspace = true
 if-addrs.workspace = true
-
-[target.'cfg(unix)'.dependencies]
-libc = "0.2"
+mdns-sd.workspace = true
+gethostname.workspace = true

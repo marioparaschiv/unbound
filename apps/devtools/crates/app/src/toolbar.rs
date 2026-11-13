@@ -3,7 +3,7 @@ use gpui_component::input::Input;
 use unbound_devtools_core::ConnectionState;
 
 use crate::app::Workspace;
-use crate::commands::nav;
+use crate::nav;
 use crate::widgets::{field, icon, icon_button, page_header, page_header_end, tooltip};
 use crate::{assets, theme};
 
@@ -92,7 +92,7 @@ impl Workspace {
 
 	pub fn render_toolbar(&self, cx: &mut Context<Self>) -> impl IntoElement {
 		let error = self.search.error.clone().or_else(|| self.banner.clone());
-		let bar = page_header(nav::COMPONENTS_GROUP, "Components")
+		let bar = page_header(nav::COMPONENTS_GROUP, nav::COMPONENTS_TITLE)
 			.child(self.render_search(cx))
 			.child(page_header_end());
 		div()

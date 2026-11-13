@@ -112,6 +112,7 @@ fn session() -> Devtools {
 	config_dir();
 	Devtools::start(Config {
 		bridge: "127.0.0.1:9".parse().expect("addr"),
+		bridge_launcher: None,
 	})
 }
 
