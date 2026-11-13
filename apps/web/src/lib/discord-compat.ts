@@ -10,7 +10,7 @@ import type { Caller } from '~/lib/api/caller';
 import { discordCompat } from '~/db/schema';
 
 /** What the newest compat scan found in one Discord build. */
-export type DiscordCompatResult = { broken: number; fallbacks: number };
+export type DiscordCompatResult = { broken: number; fallbacks: number; build?: string };
 
 /**
  * @description Records what CI's compat scan found in each Discord build it scanned, replacing an earlier scan of the same build.
@@ -62,12 +62,16 @@ export async function findDiscordCompat(
 	version: string,
 ): Promise<DiscordCompatResult | undefined> {
 	const [row] = await ctx.db
-		.select({ broken: discordCompat.broken, fallbacks: discordCompat.fallbacks })
+		.select({
+			broken: discordCompat.broken,
+			fallbacks: discordCompat.fallbacks,
+			build: discordCompat.build,
+		})
 		.from(discordCompat)
 		.where(and(eq(discordCompat.platform, platform), eq(discordCompat.version, version)))
 		.limit(1);
 
-	return row;
+	return row && { broken: row.broken, fallbacks: row.fallbacks, build: row.build ?? undefined };
 }
 
 export default { publishDiscordCompat, findDiscordCompat };

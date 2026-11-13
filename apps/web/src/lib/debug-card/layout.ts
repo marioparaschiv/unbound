@@ -248,9 +248,74 @@ function rows(info: DebugInfo, now: Date, context: DebugCardContext): [string, S
 		['device', [value(info.device)]],
 		['system', [value(`${info.platform} ${info.os}`)]],
 		...(signing ? [['install', installSpans(signing)] as [string, Span[]]] : []),
+		...environmentRows(info.environment),
+		...officialRows(info, context),
 		['react', [value(info.react), dim(` · react native ${info.reactNative}`)]],
 		['hermes', [value(info.hermes), dim(` · bytecode ${info.bytecode}`)]],
 		...diagnosticRows(info, now, context).slice(0, MAX_DIAGNOSTIC_ROWS),
+	];
+}
+
+type DebugCardEnvironment = NonNullable<DebugInfo['environment']>;
+
+function httpsSpans(https: NonNullable<DebugCardEnvironment['https']>): Span[] {
+	if (https.intercepted) {
+		return [warn(`intercepted by ${https.issuer ?? 'an unknown CA'}`)];
+	}
+
+	return https.failure
+		? [dim(`not checked: ${https.failure}`)]
+		: [value('direct'), dim(https.issuer ? ` · ${https.issuer}` : '')];
+}
+
+/**
+ * @description Lays out the loader's environment report: signer, binary, re-sign damage, install, device markers and HTTPS.
+ * @param environment The report, missing on older loaders.
+ * @returns One row per fact the report has.
+ */
+export function environmentRows(environment?: DebugCardEnvironment): [string, Span[]][] {
+	if (!environment) {
+		return [];
+	}
+
+	const candidates: [string, Span[]][] = [
+		['signer', environment.signer ? [value(environment.signer)] : []],
+		['binary', environment.binary ? [value(environment.binary)] : []],
+		[
+			'resign',
+			environment.resign?.length ? [warn(fittedList(environment.resign, VALUE_ROOM))] : [],
+		],
+		['install', environment.install ? [value(environment.install)] : []],
+		[
+			'markers',
+			environment.markers?.length ? [dim(fittedList(environment.markers, VALUE_ROOM))] : [],
+		],
+		['https', environment.https ? httpsSpans(environment.https) : []],
+	];
+
+	return candidates.filter(([, spans]) => spans.length > 0);
+}
+
+/**
+ * @description Compares the device's Discord build with the build the compat scan saw for its version.
+ * @param info The report.
+ * @param context What the server adds to the report.
+ * @returns A `genuine` row, or none when the scan has no build for the version.
+ */
+export function officialRows(info: DebugInfo, context: DebugCardContext): [string, Span[]][] {
+	const official = context.compat?.build;
+
+	if (!official || !info.discordBuild || info.discordBuild === 'unknown') {
+		return [];
+	}
+
+	return [
+		[
+			'genuine',
+			info.discordBuild === official
+				? [value('yes'), dim(` · build ${official}`)]
+				: [warn(`no · build ${info.discordBuild}, official ${official}`)],
+		],
 	];
 }
 

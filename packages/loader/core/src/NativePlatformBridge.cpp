@@ -10,6 +10,7 @@
 #include "LoaderAddonSignature.h"
 #include "LoaderAddons.h"
 #include "LoaderCrashGuard.h"
+#include "LoaderEnvironmentReport.h"
 #include "LoaderFiles.h"
 #include "LoaderFreezeWatchdog.h"
 #include "LoaderJSI.h"
@@ -267,6 +268,22 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
                     stringGetter(runtime, "getAppSource", provider->appSource));
     app.setProperty(runtime, "getInstallDetails",
                     stringGetter(runtime, "getInstallDetails", provider->installDetails));
+    app.setProperty(runtime, "getEnvironment",
+                    native::makeFunction(runtime, "getEnvironment", 0,
+                                         [provider](jsi::Runtime &rt, const jsi::Value &,
+                                                    const jsi::Value *, size_t) -> jsi::Value {
+                                             nlohmann::json environment =
+                                                 provider->environment ? provider->environment()
+                                                                       : nlohmann::json::object();
+                                             nlohmann::json https =
+                                                 environment_report::httpsVerdict(
+                                                     environment_report::currentHttpsCheck());
+                                             if (!https.is_null())
+                                             {
+                                                 environment["https"] = std::move(https);
+                                             }
+                                             return toJSIValue(rt, environment);
+                                         }));
     app.setProperty(runtime, "getFramework",
                     stringGetter(runtime, "getFramework", provider->framework));
     app.setProperty(runtime, "isVerifiedBuild",

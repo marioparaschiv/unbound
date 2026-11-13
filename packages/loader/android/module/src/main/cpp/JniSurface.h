@@ -85,6 +85,7 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
     X(stuckLaunch, "stuckLaunch", "(" UNBOUND_JNI_STRING ")V")                                     \
     X(previousExit, "previousExit", "()I")                                                         \
     X(systemExits, "systemExits", "()" UNBOUND_JNI_STRING)                                         \
+    X(environmentFacts, "environmentFacts", "()" UNBOUND_JNI_STRING)                               \
     X(deviceState, "deviceState", "()" UNBOUND_JNI_STRING)                                         \
     X(isMeteredNetwork, "isMeteredNetwork", "()Z")                                                 \
     X(updateProgress, "updateProgress", "(Z)V")                                                    \
@@ -111,6 +112,7 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
     X("nativeDispatchHookEvent", "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING, \
       nativeDispatchHookEvent)                                                                     \
     X("nativeHermesBytecodeVersion", "([B)I", nativeHermesBytecodeVersion)                         \
+    X("nativeRecordHttpsCheck", "(" UNBOUND_JNI_STRING ")V", nativeRecordHttpsCheck)               \
     X("nativeHookReturnValue",                                                                     \
       "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING,         \
       nativeHookReturnValue)                                                                       \

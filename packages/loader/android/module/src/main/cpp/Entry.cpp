@@ -15,6 +15,7 @@
 #include "LoaderDevOverlay.h"
 #include "LoaderDiagnostics.h"
 #include "LoaderDocuments.h"
+#include "LoaderEnvironmentReport.h"
 #include "LoaderJSI.h"
 #include "LoaderJSON.h"
 #include "LoaderLaunchReport.h"
@@ -237,6 +238,26 @@ static void nativeDrainFrameWork(JNIEnv *, jclass)
     {
         host->drainMainFrameWork();
     }
+}
+
+static void nativeRecordHttpsCheck(JNIEnv *env, jclass, jstring json)
+{
+    nlohmann::json result = nlohmann::json::parse(toStdString(env, json), nullptr, false);
+    if (!result.is_object())
+    {
+        return;
+    }
+    loader::environment_report::HttpsCheck check;
+    check.completed = result.value("completed", false);
+    check.failure   = result.value("failure", std::string());
+    for (const nlohmann::json &issuer : result.value("issuers", nlohmann::json::array()))
+    {
+        if (issuer.is_string())
+        {
+            check.issuers.push_back(issuer.get<std::string>());
+        }
+    }
+    loader::environment_report::recordHttpsCheck(std::move(check));
 }
 
 static jint nativeHermesBytecodeVersion(JNIEnv *env, jclass, jbyteArray header)

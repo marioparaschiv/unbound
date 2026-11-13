@@ -510,6 +510,12 @@ object NativeBridge {
     }.onFailure { Logger.info(LogCategory.UPDATER, "Downloading $url failed: ${downloadFailureReason(it)}") }.getOrNull()
 
     @JvmStatic
+    fun environmentFacts(): String = EnvironmentFacts.collect()
+
+    @JvmStatic
+    external fun nativeRecordHttpsCheck(json: String)
+
+    @JvmStatic
     fun continueDownloadInBackground(url: String, destination: String, headersJSON: String) =
         BackgroundDownloads.start(url, destination, headersJSON)
 
