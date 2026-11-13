@@ -1,18 +1,12 @@
 {
-	"ADD_USER_ID": "Dodaj ID korisnika",
+	"ADD_USER": "Dodaj korisnika",
 	"ADD_USER_ID_SUBTITLE": "Odgovori mogu spominjati ove korisnike kad je iznimka uključena",
-	"CANCEL": "Odustani",
-	"DELETE": "Izbriši",
-	"EDIT": "Uredi",
-	"EDIT_USER_ID": "Uredi ID korisnika",
 	"EXCEPTIONS": "Iznimke",
-	"INVALID_USER_ID": "Unesi brojčani ID Discord korisnika.",
-	"NO_USERS": "Još nema dodanih korisnika.",
+	"NO_USERS_FOUND": "Nema pronađenih korisnika",
 	"ONLY_PING_LISTED": "Spominji samo navedene korisnike",
 	"ONLY_PING_LISTED_OFF": "Odgovori prema zadanim postavkama nikoga ne spominju",
 	"ONLY_PING_LISTED_ON": "Odgovori spominju samo gore navedene korisnike",
-	"PLUGIN_NAME": "Odgovori bez spominjanja",
-	"SAVE": "Spremi",
-	"TAP_TO_EDIT": "Dodirni za uređivanje",
-	"USER_ID_PLACEHOLDER": "ID Discord korisnika"
+	"REMOVE_USER": "Ukloni korisnika",
+	"SEARCH_USERS": "Pretraži ili zalijepi ID korisnika",
+	"UNKNOWN_USER": "Nepoznat korisnik"
 }

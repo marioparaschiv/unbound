@@ -3,38 +3,26 @@
 declare module '@unbound-app/i18n' {
 	/** Every en-US message, read in the user's locale. */
 	export type Messages = {
-		/** Add user ID */
-		readonly ADD_USER_ID: string;
+		/** Add user */
+		readonly ADD_USER: string;
 		/** Replies can mention these users when the exception is enabled */
 		readonly ADD_USER_ID_SUBTITLE: string;
-		/** Cancel */
-		readonly CANCEL: string;
-		/** Delete */
-		readonly DELETE: string;
-		/** Edit */
-		readonly EDIT: string;
-		/** Edit user ID */
-		readonly EDIT_USER_ID: string;
 		/** Exceptions */
 		readonly EXCEPTIONS: string;
-		/** Enter a numeric Discord user ID. */
-		readonly INVALID_USER_ID: string;
-		/** No users added yet. */
-		readonly NO_USERS: string;
+		/** No users found */
+		readonly NO_USERS_FOUND: string;
 		/** Only Ping Listed Users */
 		readonly ONLY_PING_LISTED: string;
 		/** Replies do not mention anyone by default */
 		readonly ONLY_PING_LISTED_OFF: string;
 		/** Replies mention only the users listed above */
 		readonly ONLY_PING_LISTED_ON: string;
-		/** No Reply Mention */
-		readonly PLUGIN_NAME: string;
-		/** Save */
-		readonly SAVE: string;
-		/** Tap to edit */
-		readonly TAP_TO_EDIT: string;
-		/** Discord user ID */
-		readonly USER_ID_PLACEHOLDER: string;
+		/** Remove user */
+		readonly REMOVE_USER: string;
+		/** Search or paste a user ID */
+		readonly SEARCH_USERS: string;
+		/** Unknown user */
+		readonly UNKNOWN_USER: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

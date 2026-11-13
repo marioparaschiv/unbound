@@ -1,18 +1,12 @@
 {
-	"ADD_USER_ID": "Adaugă ID de utilizator",
+	"ADD_USER": "Adaugă utilizator",
 	"ADD_USER_ID_SUBTITLE": "Răspunsurile pot menționa acești utilizatori când excepția este activată",
-	"CANCEL": "Anulează",
-	"DELETE": "Șterge",
-	"EDIT": "Editează",
-	"EDIT_USER_ID": "Editează ID-ul de utilizator",
 	"EXCEPTIONS": "Excepții",
-	"INVALID_USER_ID": "Introdu un ID numeric de utilizator Discord.",
-	"NO_USERS": "Încă nu ai adăugat utilizatori.",
+	"NO_USERS_FOUND": "Nu s-au găsit utilizatori",
 	"ONLY_PING_LISTED": "Menționează doar utilizatorii din listă",
 	"ONLY_PING_LISTED_OFF": "Implicit, răspunsurile nu menționează pe nimeni",
 	"ONLY_PING_LISTED_ON": "Răspunsurile menționează doar utilizatorii de mai sus",
-	"PLUGIN_NAME": "No Reply Mention",
-	"SAVE": "Salvează",
-	"TAP_TO_EDIT": "Atinge pentru a edita",
-	"USER_ID_PLACEHOLDER": "ID de utilizator Discord"
+	"REMOVE_USER": "Elimină utilizatorul",
+	"SEARCH_USERS": "Caută sau lipește un ID de utilizator",
+	"UNKNOWN_USER": "Utilizator necunoscut"
 }

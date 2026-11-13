@@ -1,18 +1,12 @@
 {
-	"ADD_USER_ID": "Legg til bruker-ID",
+	"ADD_USER": "Legg til bruker",
 	"ADD_USER_ID_SUBTITLE": "Svar kan omtale disse brukerne når unntaket er slått på",
-	"CANCEL": "Avbryt",
-	"DELETE": "Slett",
-	"EDIT": "Rediger",
-	"EDIT_USER_ID": "Rediger bruker-ID",
 	"EXCEPTIONS": "Unntak",
-	"INVALID_USER_ID": "Skriv inn en numerisk Discord-bruker-ID.",
-	"NO_USERS": "Ingen brukere lagt til ennå.",
+	"NO_USERS_FOUND": "Fant ingen brukere",
 	"ONLY_PING_LISTED": "Ping bare brukere i listen",
 	"ONLY_PING_LISTED_OFF": "Svar omtaler ingen som standard",
 	"ONLY_PING_LISTED_ON": "Svar omtaler bare brukerne i listen ovenfor",
-	"PLUGIN_NAME": "Ingen omtale i svar",
-	"SAVE": "Lagre",
-	"TAP_TO_EDIT": "Trykk for å redigere",
-	"USER_ID_PLACEHOLDER": "Discord-bruker-ID"
+	"REMOVE_USER": "Fjern bruker",
+	"SEARCH_USERS": "Søk eller lim inn en bruker-ID",
+	"UNKNOWN_USER": "Ukjent bruker"
 }
