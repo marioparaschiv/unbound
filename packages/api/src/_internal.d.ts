@@ -87,6 +87,8 @@ export declare const NATIVE_BRIDGE_CAPABILITIES: readonly [
 	'native.objc.ivars',
 	'native.objc.associations',
 	'native.objc.hooks',
+	'native.objc.blocks',
+	'native.objc.classDefinition',
 	'native.objc.inspect',
 	'native.ffi.symbols',
 	'native.ffi.call',
@@ -136,6 +138,9 @@ export declare const NATIVE_BRIDGE_METHOD_CAPABILITIES: {
 	readonly 'objc.array': 'native.objc.classes';
 	readonly 'objc.data': 'native.objc.classes';
 	readonly 'objc.hook': 'native.objc.hooks';
+	readonly 'objc.block': 'native.objc.blocks';
+	readonly 'objc.callBlock': 'native.objc.blocks';
+	readonly 'objc.defineClass': 'native.objc.classDefinition';
 	readonly 'objc.inspectClass': 'native.objc.inspect';
 	readonly 'objc.inspectMembers': 'native.objc.inspect';
 	readonly 'objc.inspectValues': 'native.objc.inspect';
@@ -201,6 +206,8 @@ export declare const NATIVE_BRIDGE_PLATFORM_CAPABILITIES: {
 		'native.objc.ivars',
 		'native.objc.associations',
 		'native.objc.hooks',
+		'native.objc.blocks',
+		'native.objc.classDefinition',
 		'native.objc.inspect',
 		'native.ffi.symbols',
 		'native.ffi.call',
@@ -4722,6 +4729,30 @@ export type NativeObjCBridge = {
 		handlers: NativeHookHandlers<Receiver>,
 		options?: NativeHookOptions<Receiver>,
 	): NativeHookToken;
+	/**
+	 * Makes an Objective-C block that calls `implementation` on the JavaScript thread, for completion handlers,
+	 * notification observers and enumeration blocks. Needs `native.objc.blocks`.
+	 */
+	block(
+		signature: NativeFFISignature,
+		implementation: (...args: never[]) => NativeObjCResult | void,
+	): NativeObjectHandle;
+	/** Calls a block, such as a completion handler a hook received, with an explicit signature. Needs `native.objc.blocks`. */
+	callBlock(
+		block: NativeObjectHandle,
+		signature: NativeFFISignature,
+		...args: NativeObjCResult[]
+	): NativeObjCResult;
+	/**
+	 * Defines an Objective-C class at runtime whose methods run JavaScript, for delegates, data sources and
+	 * target-action receivers; defining it again replaces its methods. Needs `native.objc.classDefinition`.
+	 */
+	defineClass(
+		name: string,
+		superclass: string,
+		methods: Record<string, NativeObjCMethodDefinition>,
+		protocols?: string[],
+	): NativeClassHandle;
 };
 /** A selector and method signature resolved once by `objc.prepare`, for calling many times without the lookup. */
 export type NativeObjCCallPlan = NativeHandle & {
@@ -4752,6 +4783,11 @@ export type NativeObjCInspector = {
 	inspectImages(page?: NativeInspectPage): NativeInspectedImages;
 	/** Lists one page of the class names an image defines, sorted. */
 	inspectClasses(imagePath: string, page?: NativeInspectPage): NativeInspectedClasses;
+};
+/** One method of a class `objc.defineClass` makes: its signature without `self` and `_cmd`, and what runs. */
+export type NativeObjCMethodDefinition = {
+	signature: NativeFFISignature;
+	implementation: (self: NativeObjectHandle, ...args: never[]) => NativeObjCResult | void;
 };
 /** What an Objective-C call returns: a plain value, a handle to an object, a 64-bit integer, or nothing for `void`. */
 export type NativeObjCResult = NativeSerializable | NativeHandle | bigint | undefined;

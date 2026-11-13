@@ -58,6 +58,13 @@ inline constexpr std::array<std::string_view, 3> kObjcAssociationsMethods = {
 inline constexpr std::array<std::string_view, 1> kObjcHooksMethods = {
     "hook",
 };
+inline constexpr std::array<std::string_view, 2> kObjcBlocksMethods = {
+    "block",
+    "callBlock",
+};
+inline constexpr std::array<std::string_view, 1> kObjcClassDefinitionMethods = {
+    "defineClass",
+};
 inline constexpr std::array<std::string_view, 5> kObjcInspectMethods = {
     "inspectClass",
     "inspectMembers",
@@ -141,7 +148,7 @@ inline constexpr std::array<std::string_view, 1> kDebugEnvironmentMethods = {
     "environment",
 };
 
-inline constexpr std::array<NativeCapabilityBinding, 24> kNativeCapabilityBindings = {{
+inline constexpr std::array<NativeCapabilityBinding, 26> kNativeCapabilityBindings = {{
     {"native.objc.classes", "objc", kObjcClassesMethods},
     {"native.objc.invoke", "objc", kObjcInvokeMethods},
     {"native.objc.invokeAsync", "objc", kObjcInvokeAsyncMethods},
@@ -150,6 +157,8 @@ inline constexpr std::array<NativeCapabilityBinding, 24> kNativeCapabilityBindin
     {"native.objc.ivars", "objc", kObjcIvarsMethods},
     {"native.objc.associations", "objc", kObjcAssociationsMethods},
     {"native.objc.hooks", "objc", kObjcHooksMethods},
+    {"native.objc.blocks", "objc", kObjcBlocksMethods},
+    {"native.objc.classDefinition", "objc", kObjcClassDefinitionMethods},
     {"native.objc.inspect", "objc", kObjcInspectMethods},
     {"native.ffi.symbols", "ffi", kFfiSymbolsMethods},
     {"native.ffi.call", "ffi", kFfiCallMethods},
@@ -168,7 +177,7 @@ inline constexpr std::array<NativeCapabilityBinding, 24> kNativeCapabilityBindin
     {"native.debug.environment", "debug", kDebugEnvironmentMethods},
 }};
 
-inline constexpr std::array<const char *, 16> kIOSNativePluginCapabilities = {
+inline constexpr std::array<const char *, 18> kIOSNativePluginCapabilities = {
     "native.objc.classes",
     "native.objc.invoke",
     "native.objc.invokeAsync",
@@ -177,6 +186,8 @@ inline constexpr std::array<const char *, 16> kIOSNativePluginCapabilities = {
     "native.objc.ivars",
     "native.objc.associations",
     "native.objc.hooks",
+    "native.objc.blocks",
+    "native.objc.classDefinition",
     "native.objc.inspect",
     "native.ffi.symbols",
     "native.ffi.call",

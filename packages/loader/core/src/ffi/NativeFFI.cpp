@@ -363,6 +363,11 @@ jsi::Value lookupSymbol(jsi::Runtime &runtime, const jsi::Value *args, std::size
     return pointerValue(runtime, symbol, true);
 }
 
+Signature signatureFromValue(jsi::Runtime &runtime, const jsi::Value &value)
+{
+    return parseSignature(runtime, value);
+}
+
 jsi::Value callFunction(jsi::Runtime &runtime, const jsi::Value *args, std::size_t count)
 {
     if (count < 2)

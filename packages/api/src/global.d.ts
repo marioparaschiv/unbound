@@ -317,6 +317,7 @@ export type {
 	NativeObjCBridge,
 	NativeObjCCallPlan,
 	NativeObjCInspector,
+	NativeObjCMethodDefinition,
 	NativeObjCResult,
 	NativeObjectHandle,
 	NativePlatformAddons,

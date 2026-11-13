@@ -1,4 +1,6 @@
 import type {
+	NativeFFISignature,
+	NativeObjCResult,
 	NativeFabricSurface,
 	NativeSerializableObject,
 	NativePlatformBridge,
@@ -22,6 +24,7 @@ import {
 	javaReleased,
 	objcPlansDisposed,
 	nativeHandle,
+	nativeCallbacks,
 	manifest,
 	resetNativeFixtures,
 } from '../helpers/native-bridge';
@@ -52,6 +55,32 @@ describe('native bridge capability scopes', () => {
 		expect(() => context.native.objc.invoke(handle, 'description', [])).toThrow(
 			NativeBridgeCapabilityError,
 		);
+	});
+
+	test('stops running block and class callbacks once the plugin is disposed', () => {
+		const context = createPluginContext({
+			...manifest,
+			capabilities: ['native.objc.blocks', 'native.objc.classDefinition'],
+		});
+		const signature: NativeFFISignature = { returnType: 'i32', args: ['i32'] };
+
+		nativeCallbacks.length = 0;
+		context.native.objc.block(signature, (value: number) => value + 1);
+		context.native.objc.defineClass('UnboundTestTarget', 'NSObject', {
+			'double:': { signature, implementation: (_self, value: number) => value * 2 },
+		});
+
+		const [block, method] = nativeCallbacks as ((
+			...args: number[]
+		) => NativeObjCResult | void)[];
+
+		expect(block?.(1)).toBe(2);
+		expect(method?.(0, 3)).toBe(6);
+
+		context.dispose();
+
+		expect(block?.(1)).toBeUndefined();
+		expect(method?.(0, 3)).toBeUndefined();
 	});
 
 	test('disposes hooks owned by a plugin context', () => {

@@ -14,6 +14,8 @@ export const NATIVE_BRIDGE_CAPABILITY_PLATFORMS = {
 	'native.objc.ivars': ['ios'],
 	'native.objc.associations': ['ios'],
 	'native.objc.hooks': ['ios'],
+	'native.objc.blocks': ['ios'],
+	'native.objc.classDefinition': ['ios'],
 	'native.objc.inspect': ['ios'],
 	'native.ffi.symbols': ['ios', 'android'],
 	'native.ffi.call': ['ios', 'android'],

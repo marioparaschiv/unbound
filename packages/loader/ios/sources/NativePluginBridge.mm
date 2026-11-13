@@ -16,6 +16,7 @@
 #import "NativePlatformBridge.h"
 #import "NativePluginAssociations.h"
 #import "NativePluginBatch.h"
+#import "NativePluginBlocks.h"
 #import "NativePluginCallPlans.h"
 #import "NativePluginFFICodecs.h"
 #import "NativePluginFabricAdapter.h"
@@ -457,6 +458,8 @@ static void installObjC(Runtime &runtime, Object &objc)
                      }));
 
     objc.setProperty(runtime, "hook", makeFunction("hook", 3, runtime, makeHook));
+    installObjCBlocks(runtime, objc);
+    installObjCClassDefinition(runtime, objc);
     installInspector(runtime, objc);
     objc.setProperty(runtime, "createUIScope",
                      makeFunction("createUIScope", 1, runtime, createUIScope));

@@ -13,6 +13,7 @@ import type {
 	NativeViewSnapshotOptions,
 } from './native-handles';
 import type { NativeUIScopeFactory } from './native-ui';
+import type { NativeFFISignature } from './native-ffi';
 
 /** What an Objective-C call returns: a plain value, a handle to an object, a 64-bit integer, or nothing for `void`. */
 export type NativeObjCResult = NativeSerializable | NativeHandle | bigint | undefined;
@@ -219,6 +220,36 @@ export type NativeObjCBridge = {
 		handlers: NativeHookHandlers<Receiver>,
 		options?: NativeHookOptions<Receiver>,
 	): NativeHookToken;
+	/**
+	 * Makes an Objective-C block that calls `implementation` on the JavaScript thread, for completion handlers,
+	 * notification observers and enumeration blocks. Needs `native.objc.blocks`.
+	 */
+	block(
+		signature: NativeFFISignature,
+		implementation: (...args: never[]) => NativeObjCResult | void,
+	): NativeObjectHandle;
+	/** Calls a block, such as a completion handler a hook received, with an explicit signature. Needs `native.objc.blocks`. */
+	callBlock(
+		block: NativeObjectHandle,
+		signature: NativeFFISignature,
+		...args: NativeObjCResult[]
+	): NativeObjCResult;
+	/**
+	 * Defines an Objective-C class at runtime whose methods run JavaScript, for delegates, data sources and
+	 * target-action receivers; defining it again replaces its methods. Needs `native.objc.classDefinition`.
+	 */
+	defineClass(
+		name: string,
+		superclass: string,
+		methods: Record<string, NativeObjCMethodDefinition>,
+		protocols?: string[],
+	): NativeClassHandle;
+};
+
+/** One method of a class `objc.defineClass` makes: its signature without `self` and `_cmd`, and what runs. */
+export type NativeObjCMethodDefinition = {
+	signature: NativeFFISignature;
+	implementation: (self: NativeObjectHandle, ...args: never[]) => NativeObjCResult | void;
 };
 
 /** A kind of a class's own members `objc.inspectMembers` lists. */
