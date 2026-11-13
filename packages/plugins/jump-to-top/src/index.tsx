@@ -1,11 +1,13 @@
 import { patcher } from '@unbound-app/api';
 
-import { patchChannelActions } from '~/patches';
+import { forgetFirstMessages } from '~/lib/first-message';
+import { patchJumpToPresent } from '~/patches';
 
 export function start() {
-	patchChannelActions();
+	patchJumpToPresent();
 }
 
 export function stop() {
 	patcher.unpatchAll();
+	forgetFirstMessages();
 }

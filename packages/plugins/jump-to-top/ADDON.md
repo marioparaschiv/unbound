@@ -4,8 +4,7 @@ banner: media/banner.png
 
 ## :sparkle: What it does
 
-- :pointer: An arrow beside the search button in the channel header jumps to the very first message.
-- :circle-info: Forum posts skip the button, as on desktop.
+- :pointer: An up arrow sits above Discord's jump-to-present arrow while you scroll back, and jumps to the very first message.
 - :code-fork: A port of Vencord's JumpToTop.
 
 ## :gear: Settings

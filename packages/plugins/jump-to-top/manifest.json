@@ -1,7 +1,7 @@
 {
 	"id": "unbound.jump-to-top",
 	"name": "Jump To Top",
-	"description": "Adds a button to the channel header that jumps to the first message in the channel.",
+	"description": "Adds a button above Discord's jump-to-present arrow that jumps to the first message in the channel.",
 	"authors": [
 		{
 			"name": "Kaerion",
@@ -12,7 +12,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"unbound": {
 		"min": "3.0.0"
 	},
