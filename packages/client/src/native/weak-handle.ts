@@ -8,6 +8,7 @@ import type {
 
 /** A reference that does not keep its native object alive; `deref` reads `null` once the object is gone. */
 export type NativeWeakHandle<T> = {
+	/** The object while it lives, else `null`. */
 	deref(): T | null;
 };
 

@@ -7,6 +7,7 @@ const TIMEOUT_MS = 30;
 describe('createIdleExit', () => {
 	test('fires when no controller ever attaches', async () => {
 		let idled = 0;
+
 		createIdleExit(TIMEOUT_MS, () => idled++);
 
 		await Bun.sleep(TIMEOUT_MS * 2);

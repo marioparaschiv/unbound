@@ -96,7 +96,9 @@ export function createInlineSurfaces(
 		onNeedsHost(rendered) {
 			const entry = entries.get(rendered);
 
-			if (entry) createGroup(entry);
+			if (entry) {
+				createGroup(entry);
+			}
 		},
 	});
 

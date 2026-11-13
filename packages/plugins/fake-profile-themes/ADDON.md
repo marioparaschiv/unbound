@@ -4,9 +4,9 @@ banner: media/banner.png
 
 ## :sparkle: What it does
 
-- :paint-palette: Profiles whose bio hides theme colors show those colors, from the 3y3 code Vencord's FakeProfileThemes writes or the FPTE code of FakeProfileThemesAndEffects.
+- :palette: Profiles whose bio hides theme colors show those colors, from the 3y3 code Vencord's FakeProfileThemes writes or the FPTE code of FakeProfileThemesAndEffects.
 - :star: Profiles whose bio hides a profile effect play that effect.
-- :copy: Pick colors and an effect in the settings and copy the invisible code to paste at the end of your own bio.
+- :clipboard: Pick colors and an effect in the settings and copy the invisible code to paste at the end of your own bio.
 - :code-fork: A port of Vencord's FakeProfileThemes and FakeProfileThemesAndEffects.
 
 ## :gear: Settings

@@ -4,6 +4,7 @@ import type {
 	NativeJavaHandle,
 	NativeJavaReference,
 	NativeJavaValue,
+	NativeUIArgument,
 	NativeUIBridge,
 } from '@unbound-app/api/native';
 import {
@@ -117,7 +118,7 @@ export function fakeMessageText({ rewrites = true } = {}) {
 		removeRule: 'remove',
 		disposeTextRewrites: 'dispose',
 	};
-	const plainArgument = (arg: unknown): JavaPlain =>
+	const plainArgument = (arg: NativeUIArgument): JavaPlain =>
 		typeof arg === 'object' && arg !== null && !Reflect.has(arg, 'id')
 			? JSON.stringify(arg)
 			: (arg as JavaPlain);

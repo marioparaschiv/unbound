@@ -5,7 +5,7 @@ banner: media/banner.png
 ## :sparkle: What it does
 
 - :star: The GIFs tab opens straight on your favourites.
-- :arrow-left: Going back still shows the usual categories, trending GIFs and search.
+- :undo: Going back still shows the usual categories, trending GIFs and search.
 - :code-fork: A port of Vencord's BetterGifPicker.
 
 ## :gear: Settings

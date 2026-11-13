@@ -3,8 +3,8 @@ import type { AddonKind } from '@unbound-app/types/addons';
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { Dimensions, View } from 'react-native';
 
-import { offerListedInstall } from '~/ui/marketplace/offer-listed-install';
 import MarketplaceList from '~/ui/marketplace/marketplace-list';
+import useOpenListing from '~/ui/marketplace/use-open-listing';
 import BrowseContext from '~/ui/marketplace/browse-context';
 import FilterButton from '~/ui/marketplace/filter-button';
 import { DEFAULT_FILTERS } from '~/marketplace/filters';
@@ -19,9 +19,9 @@ import useStyles from './marketplace.style';
 type MarketplaceParams = {
 	/** Opens on the tab of this manager, e.g. the page the install menu was opened from. */
 	kind?: AddonKind;
-	/** Narrows the search to this addon and offers to install it, e.g. from an `unbound://` link. */
+	/** Narrows the search to this addon and opens its addon page, e.g. from an `unbound://` link. */
 	id?: string;
-	/** Tells one open of `id` from the next, so opening the same link again asks again. */
+	/** Tells one open of `id` from the next, so opening the same link again opens its page again. */
 	request?: number;
 };
 
@@ -42,9 +42,10 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 	const [tab, setTab] = useState(kind ? ADDON_KINDS.indexOf(kind) : 0);
 	const browse = useMemo(() => ({ search, filters }), [search, filters]);
 	const active = ADDON_KINDS[tab] ?? 'plugin';
-	// Read only to offer a linked addon: each tab subscribes on its own, so catalog loads skip re-rendering the page.
+	// Read only to open a linked addon: each tab subscribes on its own, so catalog loads skip re-rendering the page.
 	const catalog = MarketplaceStore((store) => (id ? store.state : undefined));
-	const lastOfferedOpen = useRef<string | undefined>(undefined);
+	const lastOpened = useRef<string | undefined>(undefined);
+	const openListing = useOpenListing();
 
 	useEffect(() => {
 		void MarketplaceStore.getState().load();
@@ -81,14 +82,14 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 	useEffect(() => {
 		const key = `${id}:${request}`;
 
-		if (!id || lastOfferedOpen.current === key || catalog?.status !== 'ready') return;
+		if (!id || lastOpened.current === key || catalog?.status !== 'ready') return;
 
 		const addon = catalog.catalog.addons.find((listed) => listed.id === id);
 
 		if (!addon) return;
 
-		lastOfferedOpen.current = key;
-		void offerListedInstall(addon.type, addon);
+		lastOpened.current = key;
+		openListing(addon, addon.type);
 	}, [id, request, catalog]);
 
 	return (

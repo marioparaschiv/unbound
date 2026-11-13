@@ -29,6 +29,7 @@ const RECONNECT_DELAY_MS = 1_000;
 
 type ControllerOptions = {
 	/** Runs before every dial, such as starting the bridge when none listens; the dial waits for it. */
+	// UNKNOWN: the dial only awaits it and ignores its value.
 	beforeConnect?: () => Promise<unknown>;
 };
 
@@ -41,7 +42,7 @@ export class ControllerClient {
 	private deviceInfo: DeviceInfo | undefined;
 	private closed = false;
 	private readonly url: string;
-	private readonly beforeConnect: (() => Promise<unknown>) | undefined;
+	private readonly beforeConnect: ControllerOptions['beforeConnect'];
 
 	constructor(url: string, { beforeConnect }: ControllerOptions = {}) {
 		this.url = url;

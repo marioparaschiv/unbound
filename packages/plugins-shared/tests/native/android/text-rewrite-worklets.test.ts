@@ -1,27 +1,37 @@
 import { describe, expect, test } from 'bun:test';
 
-const source = await Bun.file(
-	new URL('../../../src/native/android/text-rewrite-worklets.ts', import.meta.url),
-).text();
+const FILES = [
+	'text-rewrite-state.ts',
+	'text-rewrite-spans.ts',
+	'text-rewrite-hosts.ts',
+	'text-rewrite-worklets.ts',
+];
 
-function worklets(): { name: string; body: string }[] {
+type Worklet = { name: string; body: string };
+
+async function worklets(file: string): Promise<Worklet[]> {
+	const source = await Bun.file(
+		new URL(`../../../src/native/android/${file}`, import.meta.url),
+	).text();
+
 	return [...source.matchAll(/^(?:export )?function (\w+)\([\s\S]*?^}/gm)].map((match) => ({
-		name: match[1]!,
+		name: match[1],
 		body: match[0],
 	}));
 }
 
-describe('text rewrite worklets', () => {
-	test('are all worklets', () => {
-		for (const { name, body } of worklets()) {
+describe.each(FILES)('text rewrite worklets in %s', (file) => {
+	test('are all worklets', async () => {
+		for (const { name, body } of await worklets(file)) {
 			expect({ name, worklet: body.includes("'worklet';") }).toEqual({ name, worklet: true });
 		}
 	});
 
-	test('call only worklets defined above them, since a worklet captures its closure where it is defined', () => {
-		const defined = worklets().map((worklet) => worklet.name);
+	test('call only worklets defined above them, since a worklet captures its closure where it is defined', async () => {
+		const found = await worklets(file);
+		const defined = found.map((worklet) => worklet.name);
 
-		for (const [index, { name, body }] of worklets().entries()) {
+		for (const [index, { name, body }] of found.entries()) {
 			const later = defined
 				.slice(index + 1)
 				.filter((other) => new RegExp(`\\b${other}\\(`).test(body));

@@ -5,7 +5,7 @@ banner: media/banner.png
 ## :sparkle: What it does
 
 - :bell: Messages that contain one of your keywords count as mentions of you: Discord highlights them, adds them to your mention badge and notifies you like a ping.
-- :scroll: Older messages you scroll back to are highlighted the same way.
+- :scroll-y: Older messages you scroll back to are highlighted the same way.
 
 ## :gear: Settings
 

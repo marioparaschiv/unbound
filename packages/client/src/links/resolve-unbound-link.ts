@@ -11,7 +11,7 @@ export type LinkTargets = {
 	refresh: () => Promise<boolean>;
 	state: () => MarketplaceState;
 	installedVersion: (kind: AddonKind, addon: ListedAddon) => string | undefined;
-	/** Opens the Marketplace focused on an addon, which asks for confirmation there. */
+	/** Opens the Marketplace focused on an addon, which opens its addon page there. */
 	open: (kind: AddonKind, id: string) => Promise<void>;
 };
 

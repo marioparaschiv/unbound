@@ -82,6 +82,8 @@ export type NativeFFIValue =
 
 /** What `rebind` changed: the original function and how many import slots now point at the replacement. */
 export type NativeFFIRebinding = {
+	/** The function the import slots pointed at before. */
 	original: NativePointer;
+	/** How many import slots now point at the replacement. */
 	slots: number;
 };

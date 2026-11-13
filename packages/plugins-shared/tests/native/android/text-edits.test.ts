@@ -1,5 +1,3 @@
-import { describe, expect, test } from 'bun:test';
-
 import {
 	covers,
 	fits,
@@ -11,6 +9,7 @@ import {
 	stretches,
 	type TextRewriteEdit,
 } from '@unbound-plugins/shared/native/android/text-edits';
+import { describe, expect, test } from 'bun:test';
 
 function edit(overrides: Partial<TextRewriteEdit> = {}) {
 	return normalizeEdit({

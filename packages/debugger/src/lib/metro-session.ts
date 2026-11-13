@@ -1,6 +1,6 @@
 import { failMetroRequest, serializeMessage } from '@unbound-app/debugger-protocol';
-import type { MetroRequest, MetroResult } from '@unbound-app/debugger-protocol';
 import { PendingRequests } from '@unbound-app/debugger-protocol/pending-requests';
+import type { MetroRequest, MetroResult } from '@unbound-app/debugger-protocol';
 
 import type { SocketLike } from './session';
 

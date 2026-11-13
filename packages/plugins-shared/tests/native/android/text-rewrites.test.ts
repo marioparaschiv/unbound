@@ -1,26 +1,42 @@
-import { describe, expect, test } from 'bun:test';
-
+import type {
+	NativeJavaBridge,
+	NativeJavaHandle,
+	NativeJavaHooksBridge,
+	NativeUIArgument,
+	NativeUIBridge,
+} from '@unbound-app/api/native';
 import {
 	connectTextRewrites,
 	supportsTextRewrites,
 	type TextRewriteNative,
 } from '@unbound-plugins/shared/native/android/text-rewrites';
+import { brand, withMissingMembers } from '@unbound-app/api/testing/fakes';
+import { describe, expect, test } from 'bun:test';
 
-type Run = { worklet: string; args: unknown[] };
+type Run = { worklet: string; args: NativeUIArgument[] };
+
+class FakeHandle {
+	readonly id: string;
+
+	constructor(id: string) {
+		this.id = id;
+	}
+}
 
 function connect(apiVersion = '1.4.0') {
 	const runs: Run[] = [];
-	const native = {
+	const native: TextRewriteNative = {
 		apiVersion,
-		java: {},
-		hooks: {},
-		ui: {
+		java: withMissingMembers<NativeJavaBridge>('java', {}),
+		hooks: withMissingMembers<NativeJavaHooksBridge>('hooks', {}),
+		ui: withMissingMembers<NativeUIBridge>('ui', {
 			createScope: () => ({ dispose() {} }),
-			run: (worklet: { name: string }, ...args: unknown[]) =>
-				void runs.push({ worklet: worklet.name, args }),
-			callback: (listener: unknown) => listener,
-		},
-	} as unknown as TextRewriteNative;
+			run(worklet, ...args) {
+				runs.push({ worklet: worklet.name, args });
+			},
+			callback: (listener) => listener,
+		}),
+	};
 
 	return { runs, rewrites: connectTextRewrites(native, 'TextView', { label: 'test' }) };
 }
@@ -36,7 +52,7 @@ describe('text rewrites', () => {
 	test('send JS-thread handles to the UI runtime as tagged handle values', () => {
 		const { runs, rewrites } = connect();
 
-		rewrites!.addHost('group', 'rendered', { id: 'java-7' } as never, {
+		rewrites!.addHost('group', 'rendered', brand<NativeJavaHandle>(new FakeHandle('java-7')), {
 			placeholder: 0,
 			width: 1,
 			height: 1,

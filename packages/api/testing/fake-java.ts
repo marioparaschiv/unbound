@@ -8,7 +8,6 @@ import type {
 	NativeJavaHookEvent,
 	NativeJavaHookOptions,
 	NativeJavaHooksBridge,
-	NativeJavaProxyCall,
 	NativeJavaReference,
 	NativeJavaValue,
 } from '../src/native';
@@ -74,10 +73,16 @@ export type FakeJava = {
 	/** Makes an object of a registered class, with its fields, as the plugin sees it: a tagged `handle` value. */
 	create: (className: string, fields?: Record<string, JavaPlain>) => NativeJavaValue;
 	/** Calls `method` on a proxy made with `hooks.proxy`, as Java would, and returns what its handler returned. */
-	callProxy: (proxy: NativeJavaArgument, method: string, args?: JavaPlain[]) => unknown;
+	callProxy: (
+		proxy: NativeJavaArgument,
+		method: string,
+		args?: JavaPlain[],
+	) => NativeJavaArgument | undefined;
 	/** Forgets every class, object, hook and proxy. */
 	reset: () => void;
 };
+
+type ProxyHandler = Parameters<NativeJavaHooksBridge['proxy']>[1];
 
 type HookEntry = {
 	className: string;
@@ -142,7 +147,7 @@ export function createFakeJava(log: NativeCallLog = createCallLog()): FakeJava {
 	const classes = new Map<string, JavaClassSpec>();
 	const objects = new Map<string, JavaObject>();
 	const hookEntries = new Map<string, HookEntry>();
-	const proxyHandlers = new Map<string, (call: NativeJavaProxyCall) => unknown>();
+	const proxyHandlers = new Map<string, ProxyHandler>();
 	const proxyTokens = new Map<string, string>();
 	let next = 0;
 
@@ -506,10 +511,12 @@ export function createFakeJava(log: NativeCallLog = createCallLog()): FakeJava {
 
 			const object = proxyTokens.get(token.id);
 
-			if (object) {
-				proxyHandlers.delete(object);
-				proxyTokens.delete(token.id);
+			if (!object) {
+				return;
 			}
+
+			proxyHandlers.delete(object);
+			proxyTokens.delete(token.id);
 		},
 		proxy(interfaces, handler) {
 			const object = spawn(interfaces[0] ?? 'java.lang.Object', false);
@@ -532,7 +539,7 @@ export function createFakeJava(log: NativeCallLog = createCallLog()): FakeJava {
 	function callProxy(proxy: NativeJavaArgument, method: string, args: JavaPlain[] = []) {
 		const object = resolve(proxy as NativeJavaReference, 'callProxy');
 
-		return proxyHandlers.get(object.id)?.({ method, args: args.map(tagged) });
+		return proxyHandlers.get(object.id)?.({ method, args: args.map(tagged) }) ?? undefined;
 	}
 
 	return {

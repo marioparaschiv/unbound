@@ -4,7 +4,7 @@ banner: media/banner.png
 
 ## :sparkle: What it does
 
-- :paint-palette: Every author gets a name color worked out from their user id, the same on every device.
+- :palette: Every author gets a name color worked out from their user id, the same on every device.
 - :sparkle: The colors match Vencord's IrcColors with the same seed, lightness and saturation.
 - :code-fork: A port of Vencord's IrcColors.
 
