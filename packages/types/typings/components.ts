@@ -1,6 +1,6 @@
 import type { DesignBarrelComponents } from '@unbound-app/discord-types/design';
+import type { ComponentType, Context, ReactElement, ReactNode } from 'react';
 import type { ImageStyle, TextStyle, ViewStyle } from 'react-native';
-import type { ComponentType, ReactElement, ReactNode } from 'react';
 
 import type { LooseModule } from './loose-props';
 import type { LiteralUnion } from './utils';
@@ -154,6 +154,10 @@ export type DesignHelpers = {
 	TextStyleSheet: Record<TextVariant, TextStyle>;
 	/** Hook that resolves a semantic colour token, such as `Theme.colors.TEXT_DEFAULT`, to a colour for the current theme. */
 	useToken: (token: SemanticColorToken) => string;
+
+	/* Table rows */
+	/** Whether a row sits in a `TableRowGroup`, which then rounds the group's card itself; rows outside one round their own. */
+	TableRowGroupContext: Context<boolean>;
 
 	/* Segmented control */
 	/** Hook that builds the state a `SegmentedControl` and its `SegmentedControlPages` share. */

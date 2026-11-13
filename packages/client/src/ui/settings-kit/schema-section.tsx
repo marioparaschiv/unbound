@@ -1,6 +1,6 @@
 import { useState, type ReactElement } from 'react';
 
-import type { SettingPredicates } from '~/ui/settings-kit/conditions';
+import { evaluateCondition, type SettingPredicates } from '~/ui/settings-kit/conditions';
 import type { LayoutSection } from '~/ui/settings-kit/schema-layout';
 import CollapsibleGroup from '~/ui/components/collapsible-group';
 import useConditions from '~/ui/settings-kit/use-conditions';
@@ -34,11 +34,34 @@ function SchemaSection({
 }: SchemaSectionProps): ReactElement | null {
 	const [open, setOpen] = useState(false);
 	const { visible } = useConditions(settings, section.path, section.labels, predicates);
+
+	// Hidden rows are left out here rather than rendering `null`: a `TableRowGroup` still draws a divider for each child.
+	settings.useVersion(
+		section.blocks.some((block) =>
+			block.items.some((item) => item.field.visibleWhen !== undefined),
+		),
+	);
+
+	const blocks = section.blocks
+		.map((block) => ({
+			...block,
+			items: block.items.filter(
+				(item) =>
+					evaluateCondition(
+						settings,
+						item.path,
+						'visibleWhen',
+						item.field.visibleWhen,
+						predicates,
+					) ?? true,
+			),
+		}))
+		.filter((block) => block.items.length > 0);
 	const title = section.labels.title === undefined ? undefined : translate(section.labels.title);
 	const description =
 		section.labels.subtitle === undefined ? undefined : translate(section.labels.subtitle);
 
-	if (!visible || section.blocks.length === 0) return null;
+	if (!visible || blocks.length === 0) return null;
 
 	const field = (item: LayoutSection['blocks'][number]['items'][number]) => (
 		<SchemaField
@@ -53,7 +76,7 @@ function SchemaSection({
 	);
 
 	if (section.collapsible) {
-		const [first, ...rest] = section.blocks;
+		const [first, ...rest] = blocks;
 		const lead = first?.inline ? first : undefined;
 
 		return (
@@ -67,7 +90,7 @@ function SchemaSection({
 					{lead?.items.map(field)}
 				</CollapsibleGroup>
 				{open
-					? (lead ? rest : section.blocks).map((block, index) =>
+					? (lead ? rest : blocks).map((block, index) =>
 							block.inline ? (
 								<Section key={`${section.path}-${index}`}>
 									{block.items.map(field)}
@@ -84,10 +107,10 @@ function SchemaSection({
 	return (
 		<>
 			{/* A section that opens with a radio group, list or input heads it with a title of its own. */}
-			{title !== undefined && !section.blocks[0]?.inline ? (
+			{title !== undefined && !blocks[0]?.inline ? (
 				<Section title={title} description={description} />
 			) : null}
-			{section.blocks.map((block, index) =>
+			{blocks.map((block, index) =>
 				block.inline ? (
 					<Section
 						key={`${section.path}-${index}`}
