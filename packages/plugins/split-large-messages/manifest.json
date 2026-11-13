@@ -1,0 +1,17 @@
+{
+	"id": "unbound.split-large-messages",
+	"name": "Split Large Messages",
+	"description": "Sends messages over the length limit as several messages instead of refusing them.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ChatDotsIcon",
+	"main": "index.tsx"
+}
