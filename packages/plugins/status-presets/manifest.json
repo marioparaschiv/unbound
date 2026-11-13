@@ -1,0 +1,21 @@
+{
+	"id": "unbound.status-presets",
+	"name": "Status Presets",
+	"description": "Saves custom statuses as presets you can set again with one tap from the Set your status screen.",
+	"authors": [
+		{
+			"name": "i am me",
+			"id": "984392761929256980"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ReactionIcon",
+	"main": "index.tsx"
+}
