@@ -155,6 +155,24 @@ declare module '@unbound-app/settings' {
 		 * Hides the video call buttons in DM headers.
 		 */
 		videoCall: boolean;
+		/**
+		 * Quests button
+		 *
+		 * Hides Quests from the bar on the You screen.
+		 */
+		quests: boolean;
+		/**
+		 * Shop button
+		 *
+		 * Hides the Shop from the bar on the You screen.
+		 */
+		shop: boolean;
+		/**
+		 * Server Boosts row
+		 *
+		 * Hides Server Boosts at the top of a server's channel list.
+		 */
+		serverBoosts: boolean;
 	};
 
 	/** Each setting and section by its dot-separated key. */
@@ -183,6 +201,24 @@ declare module '@unbound-app/settings' {
 		 * Hides the video call buttons in DM headers.
 		 */
 		"videoCall": boolean;
+		/**
+		 * Quests button
+		 *
+		 * Hides Quests from the bar on the You screen.
+		 */
+		"quests": boolean;
+		/**
+		 * Shop button
+		 *
+		 * Hides the Shop from the bar on the You screen.
+		 */
+		"shop": boolean;
+		/**
+		 * Server Boosts row
+		 *
+		 * Hides Server Boosts at the top of a server's channel list.
+		 */
+		"serverBoosts": boolean;
 	};
 
 	/** Every setting and section by its dot-separated key; buttons and notices are not settings. */
@@ -194,7 +230,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "gift" | "voiceMessage" | "voiceCall" | "videoCall";
+	export type BooleanSettingKey = "gift" | "voiceMessage" | "voiceCall" | "videoCall" | "quests" | "shop" | "serverBoosts";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

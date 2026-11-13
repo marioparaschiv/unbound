@@ -19,6 +19,18 @@ declare module '@unbound-app/i18n' {
 		readonly VIDEO_CALL: string;
 		/** Hides the video call buttons in DM headers. */
 		readonly VIDEO_CALL_SUBTITLE: string;
+		/** Quests button */
+		readonly QUESTS: string;
+		/** Hides Quests from the bar on the You screen. */
+		readonly QUESTS_SUBTITLE: string;
+		/** Shop button */
+		readonly SHOP: string;
+		/** Hides the Shop from the bar on the You screen. */
+		readonly SHOP_SUBTITLE: string;
+		/** Server Boosts row */
+		readonly SERVER_BOOSTS: string;
+		/** Hides Server Boosts at the top of a server's channel list. */
+		readonly SERVER_BOOSTS_SUBTITLE: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
