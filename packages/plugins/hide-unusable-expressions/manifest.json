@@ -18,5 +18,14 @@
 	},
 	"icon": "ReactionIcon",
 	"main": "index.tsx",
-	"replaces": ["unbound.hide-unusable-emojis"]
+	"replaces": [
+		"unbound.hide-unusable-emojis"
+	],
+	"bytecode": {
+		"98": "8764cd8ef5c9f9bd6026133c68881e5000d5b7380eb09dd7b663209ee999ea91ccff23cddb4fafd3ac4de532734a092df68189000f1235382cc2ab41e98732af"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "vDVaYSVI0Pk1fqe8Qjm+xVTTypOfvElJSZjOX4zdQJp15hS2mX/ZQSTR22hVtVEYedhFM9vlfNFlsGGLKRHFDQ=="
+	}
 }
