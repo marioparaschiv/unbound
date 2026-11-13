@@ -1,0 +1,49 @@
+{
+	"id": "unbound.fake-nitro",
+	"name": "Fake Nitro",
+	"description": "Sends emojis and stickers you cannot use without Nitro as image links, like Vencord does.",
+	"authors": [
+		{
+			"name": "ArjixWasTaken",
+			"id": "674710789138939916"
+		},
+		{
+			"name": "D3SOX",
+			"id": "201052085641281538"
+		},
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "fawn",
+			"id": "336678828233588736"
+		},
+		{
+			"name": "Captain",
+			"id": "347366054806159360"
+		},
+		{
+			"name": "Nuckyz",
+			"id": "235834946571337729"
+		},
+		{
+			"name": "AutumnVN",
+			"id": "393694671383166998"
+		},
+		{
+			"name": "sadan",
+			"id": "521819891141967883"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "GiftIcon",
+	"main": "index.tsx"
+}
