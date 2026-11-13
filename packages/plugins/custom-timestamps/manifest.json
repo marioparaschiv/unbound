@@ -4,11 +4,27 @@
 	"description": "Writes message times your way, with separate formats for today and older messages.",
 	"authors": [
 		{
+			"name": "rini",
+			"id": "0"
+		},
+		{
+			"name": "nvhhr",
+			"id": "165098921071345666"
+		},
+		{
+			"name": "Suffocate",
+			"id": "772601756776923187"
+		},
+		{
+			"name": "Obsidian",
+			"id": "683171006717755446"
+		},
+		{
 			"name": "adrian",
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"unbound": {
 		"min": "3.0.0"
 	},

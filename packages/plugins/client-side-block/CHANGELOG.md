@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1] - 2026-11-13
+
+### Changed
+
+- Credits Samwich, KamiRu, who made Equicord's ClientSideBlock, which this ports.
+
 ## [1.1.0] - 2026-11-13
 
 ### Changed
