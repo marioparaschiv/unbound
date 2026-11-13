@@ -28,7 +28,7 @@ const APP_ICON_ROWS = 'modules/app_icons/native/AppIconRows.tsx';
 const APP_ICON_ROW = 'modules/app_icons/native/AppIconRow/AppIconRow.tsx';
 
 const ADD_TILE_ID = 'UnboundAddCustomIcon';
-const UNBOUND_ICON_ID = 'UnboundIcon';
+const UNBOUND_ICON_ORDER = ['UnboundIcon', 'UnboundAnimated'];
 
 const Patcher = createPatcher('unbound::app-icons');
 const Logger = createLogger('AppIcons');
@@ -41,6 +41,12 @@ function canAddCustomIcon(): boolean {
 
 function usesHomeScreenIcon(): boolean {
 	return !canSyncAppIcons() && canInstallHomeScreenIcon();
+}
+
+function unboundIconRank(icon: DiscordAppIcon): number {
+	const rank = UNBOUND_ICON_ORDER.indexOf(icon.id);
+
+	return rank === -1 ? UNBOUND_ICON_ORDER.length : rank;
 }
 
 function discordIcons(): DiscordAppIcon[] {
@@ -209,7 +215,7 @@ function patchRows(rows: MetroExport) {
 	Patcher.after(rows, 'default', ({ result }) => {
 		const icons = AppIconStore((state) => state.icons)
 			.map(toDiscordAppIcon)
-			.sort((a, b) => Number(b.id === UNBOUND_ICON_ID) - Number(a.id === UNBOUND_ICON_ID));
+			.sort((a, b) => unboundIconRank(a) - unboundIconRank(b));
 		const leading = canAddCustomIcon() ? [addTile()] : [];
 		const lists = findRows(result as Element);
 		// Discord renders its official icons last, after any limited-time section.
