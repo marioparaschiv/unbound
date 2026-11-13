@@ -5,7 +5,10 @@ import { isHiddenRow } from '~/lib/hidden';
 import { parseIdList } from '@unbound-plugins/shared/entities/id-list';
 
 import {
+	beginRebuild,
 	chat,
+	endRebuild,
+	recordItem,
 	refreshChat,
 	type ChatManagerInstance,
 	type ChatUpdatesQueueInstance,
@@ -22,7 +25,7 @@ type ChatClass<Instance> = { prototype?: Instance };
 
 /**
  * @description Hides the rows of blocked, ignored and hand-picked users and replies to them, and refreshes the open chat so it applies at once.
- * Patches `ChatManager` (`setup`, `createRow`), `RowManager` (`generate`) and `ChatUpdatesQueue` (`add`) once all three
+ * Patches `ChatManager` (`setup`, `createRow`, `createChangeset`), `RowManager` (`generate`) and `ChatUpdatesQueue` (`add`) once all three
  * classes have loaded. The Addon scope removes the patches, but not the hidden rows: `stop` calls `refreshChat`.
  */
 export function patchChatRows(): void {
@@ -57,8 +60,9 @@ function patchRowManager(RowManager: ChatClass<RowManagerInstance>) {
 		return;
 	}
 
-	patcher.before(RowManager.prototype, 'generate', ({ this: self }) => {
+	patcher.before(RowManager.prototype, 'generate', ({ args, this: self }) => {
 		chat.rowManager = self;
+		recordItem(args[0]);
 	});
 }
 
@@ -77,7 +81,11 @@ function patchChatUpdatesQueue(ChatUpdatesQueue: ChatClass<ChatUpdatesQueueInsta
 function patchChatManager(ChatManager: ChatClass<ChatManagerInstance>) {
 	const { prototype } = ChatManager;
 
-	if (typeof prototype?.setup !== 'function' || typeof prototype.createRow !== 'function') {
+	if (
+		typeof prototype?.setup !== 'function' ||
+		typeof prototype.createRow !== 'function' ||
+		typeof prototype.createChangeset !== 'function'
+	) {
 		logger.warn('Client side block skipped: Discord moved ChatManager.createRow.');
 
 		return;
@@ -85,8 +93,9 @@ function patchChatManager(ChatManager: ChatClass<ChatManagerInstance>) {
 
 	patcher.before(prototype, 'setup', ({ args, this: self }) => {
 		chat.chatManager = self;
-		chat.messages = args[0];
+		beginRebuild(args[0]);
 	});
+	patcher.before(prototype, 'createChangeset', () => endRebuild());
 
 	const Relationships = flux.getStore('Relationship') as unknown as RelationshipStore;
 	const rules = {

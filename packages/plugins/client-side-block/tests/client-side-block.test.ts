@@ -7,7 +7,7 @@ const BLOCKED = 2;
 const shown: number[] = [];
 
 class ChatManager {
-	setup(_messages: Iterable<Row>) {}
+	setup(_messages: unknown) {}
 
 	createRow(row: Row) {
 		shown.push(row.type);
@@ -31,7 +31,7 @@ class ChatUpdatesQueue {
 
 const messages: Row[] = [{ type: 0 }, { type: BLOCKED }, { type: 0 }];
 
-// Discord opens a chat by building its rows through these three classes.
+// Discord opens a chat by building its rows through these three classes, ending with a changeset.
 function openChat() {
 	const chatManager = new ChatManager();
 	const rowManager = new RowManager();
@@ -40,6 +40,8 @@ function openChat() {
 	new ChatUpdatesQueue().add({});
 
 	for (const message of messages) chatManager.createRow(rowManager.generate(message));
+
+	chatManager.createChangeset();
 
 	return chatManager;
 }
