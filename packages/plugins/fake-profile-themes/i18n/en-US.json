@@ -1,0 +1,10 @@
+{
+	"NITRO_FIRST": "Prefer Nitro colors",
+	"NITRO_FIRST_SUBTITLE": "When a profile has Nitro theme colors and hidden ones, show the Nitro colors.",
+	"PRIMARY": "Primary color",
+	"ACCENT": "Accent color",
+	"COPY_CODE": "Copy bio code",
+	"COPY_CODE_SUBTITLE": "Paste it at the end of your bio; it is invisible.",
+	"COPIED": "Copied. Paste it at the end of your bio.",
+	"BAD_COLOR": "Both colors need to be #rrggbb."
+}
