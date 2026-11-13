@@ -3959,6 +3959,8 @@ export type NativeDeviceState = {
 	unboundMB?: number;
 	/** The active connection, and whether a VPN, a proxy, a metered plan or Low Data Mode (Data Saver) applies. */
 	network?: NativeNetworkState;
+	/** Other tweaks or modules loaded into Discord: iOS dylib names, Android packages or Magisk modules; older loaders omit it. */
+	injected?: string[];
 };
 /** Calls C functions in images Discord already loaded. An unsigned plugin needs the user's consent to use it. */
 export type NativeFFIBridge = {

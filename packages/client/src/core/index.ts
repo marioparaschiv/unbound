@@ -5,7 +5,13 @@ import '~/metro';
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
-import themes, { designSection, fontAxesSection, fontGroupSection } from '~/themes/builtin';
+import themes, {
+	designSection,
+	fontAxesSection,
+	fontGroupSection,
+	themeColorsSection,
+	themeEditorSection,
+} from '~/themes/builtin';
 import { createSettings, generalSection, panelHostSection } from '~/settings/builtin';
 import { marketplaceSection, addonPageSection } from '~/marketplace/builtin';
 import updater, { updatesSection } from '~/updates/builtin';
@@ -70,6 +76,8 @@ const SECTIONS_IN_OVERVIEW_ORDER: SectionEntry[] = [
 	addonPageSection,
 	fontGroupSection,
 	fontAxesSection,
+	themeEditorSection,
+	themeColorsSection,
 ];
 
 // The account starts first, so its session refresh is already in flight when other built-ins reach unbound.rip.

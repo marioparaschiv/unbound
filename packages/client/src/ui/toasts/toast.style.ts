@@ -35,6 +35,10 @@ export default Discord.createStyles({
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
+	// The faintest text a toast draws, which its surface must keep readable.
+	mutedText: {
+		color: Theme.colors.TEXT_MUTED,
+	},
 	contentContainer: {
 		marginLeft: 12,
 		marginVertical: 8,
