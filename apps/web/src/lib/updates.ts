@@ -173,15 +173,6 @@ async function withdrawnInstalls(
 }
 
 /**
- * @description Resolves the client's update check: per listed addon, the newest live compatible version
- * above the install with the changelogs it skips, below a withdrawn install without them, or the
- * same version rebuilt in place when the installed bundle's SHA-256 differs from it.
- * Each update carries its `reason`; a withdrawn install outranks a newer version.
- * @param ctx The application context.
- * @param request The client version and installed addons.
- * @returns The available updates.
- */
-/**
  * @description Finds the listed addons whose newest live manifest `replaces` an installed id that is no longer listed itself.
  * @param ctx The application context.
  * @param retired The installed ids with no live listed version.
@@ -217,6 +208,15 @@ export async function findRenames(ctx: AppContext, retired: string[]): Promise<A
 
 /**
  *
+ */
+/**
+ * @description Resolves the client's update check: per listed addon, the newest live compatible version
+ * above the install with the changelogs it skips, below a withdrawn install without them, or the
+ * same version rebuilt in place when the installed bundle's SHA-256 differs from it.
+ * Each update carries its `reason`; a withdrawn install outranks a newer version.
+ * @param ctx The application context.
+ * @param request The client version and installed addons.
+ * @returns The available updates, and the installed ids another listed addon replaces.
  */
 export async function findUpdates(
 	ctx: AppContext,
