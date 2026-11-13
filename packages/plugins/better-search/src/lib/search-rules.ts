@@ -2,8 +2,6 @@ import { metro } from '@unbound-app/api';
 
 import { searchRules } from '~/lib/filters';
 
-type Tokenizer = { refreshSearchTokens?: () => void; clearTokenCache?: () => void };
-
 const added = searchRules();
 
 function rulesAndTokenizer() {
@@ -14,15 +12,12 @@ function rulesAndTokenizer() {
 			lazy: false,
 		},
 	);
-	const tokenizer: Tokenizer | undefined = metro.findByProps(
-		'tokenizeQuery',
-		'getSearchQueryFromTokens',
-	);
+	const tokenizer = metro.findByProps('tokenizeQuery', 'getSearchQueryFromTokens');
 
 	return { rules, tokenizer };
 }
 
-function reloadTokens(tokenizer: Tokenizer | undefined): void {
+function reloadTokens(tokenizer: ReturnType<typeof rulesAndTokenizer>['tokenizer']): void {
 	tokenizer?.refreshSearchTokens?.();
 	tokenizer?.clearTokenCache?.();
 }
