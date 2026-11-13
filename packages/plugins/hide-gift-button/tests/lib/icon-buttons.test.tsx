@@ -37,7 +37,7 @@ const header = (
 const keys = (node: ReactNode) =>
 	Children.toArray(
 		isValidElement<{ children?: ReactNode }>(node) ? node.props.children : null,
-	).map((child) => (isValidElement(child) ? String(child.key).replace(/^\.\$/, '') : ''));
+	).map((child) => (isValidElement(child) ? String(child.key).replace(/^(\.\$)+/, '') : ''));
 
 describe('icon buttons', () => {
 	test('removes the header buttons that draw the hidden icons', () => {
