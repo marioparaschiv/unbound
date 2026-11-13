@@ -209,8 +209,16 @@ describe('POST /api/v1/updates', () => {
 
 		try {
 			expect((await check(body, target)).status).toBe(200);
+			clock = new Date(NOW.getTime() + 15_000);
 			expect((await check(body, target)).status).toBe(200);
-			expect(await refused(await check(body, target))).toEqual({
+
+			const limitedResponse = await check(body, target);
+
+			// The window opened at NOW, so it resets 15 seconds short of a full window from here.
+			expect(limitedResponse.headers.get('Retry-After')).toBe(
+				String(target.env.UPDATES_RATE_LIMIT_WINDOW_SECONDS - 15),
+			);
+			expect(await refused(limitedResponse)).toEqual({
 				status: 429,
 				code: 'rate_limited',
 			});

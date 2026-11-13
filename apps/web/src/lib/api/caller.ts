@@ -29,8 +29,24 @@ export function isBanned(target: CallerUser, now: Date): boolean {
 	return !target.banExpires || target.banExpires > now;
 }
 
+// UNKNOWN: Better Auth spreads its error body into the result, so `details` is untyped.
+function readTryAgainInMs({ details }: { code: string; details?: unknown }): number {
+	if (typeof details !== 'object' || !details || !('tryAgainIn' in details)) {
+		return 0;
+	}
+
+	return typeof details.tryAgainIn === 'number' ? details.tryAgainIn : 0;
+}
+
 async function resolveApiKey(ctx: AppContext, key: string): Promise<Caller | undefined> {
 	const result = await ctx.auth.api.verifyApiKey({ body: { key } });
+
+	// A valid key past its budget is refused as `rate_limited`, not as unknown credentials.
+	if (result.error?.code === 'RATE_LIMITED') {
+		throw new ApiError('rate_limited', 'This API key has used its request budget.', {
+			retryAfterSeconds: readTryAgainInMs(result.error) / 1000,
+		});
+	}
 
 	if (!result.valid || !result.key) return;
 
@@ -43,7 +59,7 @@ async function resolveApiKey(ctx: AppContext, key: string): Promise<Caller | und
 
 /**
  * @description Resolves who is calling: an API key header wins, otherwise the session cookie or bearer
- * token. Banned users never resolve.
+ * token. Banned users never resolve; an API key past its rate limit fails with `rate_limited`.
  * @param ctx The application context.
  * @param headers The request headers.
  * @returns The caller, or `undefined` when the request is anonymous or its credentials are invalid.

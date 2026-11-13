@@ -200,6 +200,45 @@ describe('API keys', () => {
 		expect((await meAt(new Date(Date.UTC(2026, 9, 21)))).status).toBe(200);
 	});
 
+	test('a key past API_KEY_RATE_LIMIT_MAX is rate limited until its window resets', async () => {
+		const limited = await createTestContext({ API_KEY_RATE_LIMIT_MAX: '1' });
+
+		try {
+			const { headers } = await signInWithDiscord(limited.ctx, {
+				id: '80351110224678921',
+				name: 'Budgeted',
+				email: 'budgeted@example.com',
+			});
+			const created = await authRequest(limited.ctx, '/api-key/create', {
+				method: 'POST',
+				headers,
+				body: JSON.stringify({ name: 'ci' }),
+			});
+			const { key } = await created.json();
+			const request = () =>
+				me.handle(
+					limited.ctx,
+					new Request(new URL('/api/v1/me', limited.ctx.env.PUBLIC_URL), {
+						headers: { [API_KEY_HEADER]: key },
+					}),
+				);
+
+			expect((await request()).status).toBe(200);
+
+			const refused = await request();
+			const retryAfter = Number(refused.headers.get('Retry-After'));
+
+			expect(refused.status).toBe(429);
+			expect((await refused.json()).error.code).toBe('rate_limited');
+			expect(retryAfter).toBeGreaterThan(0);
+			expect(retryAfter).toBeLessThanOrEqual(
+				limited.ctx.env.API_KEY_RATE_LIMIT_WINDOW_SECONDS,
+			);
+		} finally {
+			await limited.close();
+		}
+	});
+
 	test('an invalid key is unauthorized', async () => {
 		const result = await meRequest(new Headers({ [API_KEY_HEADER]: 'not-a-key' }));
 
