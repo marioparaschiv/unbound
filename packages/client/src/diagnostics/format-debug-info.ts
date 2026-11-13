@@ -38,6 +38,7 @@ export function debugLines(info: DebugInfo): string[] {
 		...(info.disabledAddons?.length
 			? [`- **Disabled:** ${info.disabledAddons.join(' · ')}`]
 			: []),
+		...(info.injected?.length ? [`- **Other tweaks:** ${info.injected.join(' · ')}`] : []),
 		...(launchNotes(info.launch).length
 			? [`- **Launch:** ${launchNotes(info.launch).join(' · ')}`]
 			: []),

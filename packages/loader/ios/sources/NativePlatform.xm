@@ -4,6 +4,7 @@
 #import <Network/Network.h>
 #include <atomic>
 #include <istream>
+#include <mach-o/dyld.h>
 #include <os/proc.h>
 #include <ostream>
 #include <streambuf>
@@ -11,6 +12,7 @@
 #import "CoreConversions.h"
 #import "FileSystem.h"
 #include "JailbreakDetection.h"
+#include "LoaderInjectedLibraries.h"
 #include "NativePlatformBridge.h"
 #import "Utilities+CodeSignature.h"
 #import "Utilities.h"
@@ -142,12 +144,26 @@ static std::string thermalName(NSProcessInfoThermalState state)
     }
 }
 
+static std::vector<std::string> loadedImagePaths()
+{
+    std::vector<std::string> paths;
+    for (uint32_t index = 0, count = _dyld_image_count(); index < count; index++)
+    {
+        if (const char *name = _dyld_get_image_name(index))
+        {
+            paths.emplace_back(name);
+        }
+    }
+    return paths;
+}
+
 static nlohmann::json deviceStateJSON()
 {
     nlohmann::json state = {
         {"availableMB", static_cast<int64_t>(os_proc_available_memory() / (1024 * 1024))},
         {"memoryWarnings", memoryWarnings.load()},
-        {"thermal", thermalName(NSProcessInfo.processInfo.thermalState)}};
+        {"thermal", thermalName(NSProcessInfo.processInfo.thermalState)},
+        {"injected", loader::injectedIOSLibraries(loadedImagePaths())}};
     if (nlohmann::json network = networkJSON(); !network.is_null())
     {
         state["network"] = network;

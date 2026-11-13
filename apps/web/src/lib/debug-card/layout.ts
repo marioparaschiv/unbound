@@ -392,6 +392,7 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 			'issues',
 			info.disabledAddons?.length ? [warn(fittedList(info.disabledAddons, VALUE_ROOM))] : [],
 		],
+		['tweaks', info.injected?.length ? [warn(fittedList(info.injected, VALUE_ROOM))] : []],
 		['errors', errors.length ? [warn(fittedList(errors, VALUE_ROOM))] : []],
 		['launch', launch.length ? [warn(fittedList(launch, VALUE_ROOM))] : []],
 		['memory', memory.length ? [warn(fittedList(memory, VALUE_ROOM))] : []],

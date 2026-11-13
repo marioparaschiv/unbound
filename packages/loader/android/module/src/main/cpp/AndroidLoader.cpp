@@ -8,6 +8,7 @@
 #include "JniCall.h"
 #include "JniEnvironment.h"
 #include "LoaderFiles.h"
+#include "LoaderInjectedLibraries.h"
 #include "LoaderJSON.h"
 #include "LoaderLog.h"
 #include "NativePluginBridge.h"
@@ -58,6 +59,19 @@ static nlohmann::json customAppIcons(const std::string &documents)
         icons.push_back({{"id", id}, {"name", name}, {"image", "file://" + *path}});
     }
     return icons;
+}
+
+static std::string ownPackage()
+{
+    const std::string command = loader::readTextFile("/proc/self/cmdline").value_or("");
+    const std::string process = command.substr(0, command.find('\0'));
+    return process.substr(0, process.find(':'));
+}
+
+static std::vector<std::string> injectedModules()
+{
+    return loader::injectedAndroidModules(loader::readTextFile("/proc/self/maps").value_or(""),
+                                          ownPackage());
 }
 
 static jint milliseconds(double seconds)
@@ -121,7 +135,12 @@ std::shared_ptr<loader::NativePlatformProvider> AndroidLoader::platformProvider(
         nlohmann::json state = nlohmann::json::parse(
             callStaticString(callbacks.bridgeClass, callbacks.deviceState).value_or("{}"), nullptr,
             false);
-        return state.is_object() ? state : nlohmann::json::object();
+        if (!state.is_object())
+        {
+            state = nlohmann::json::object();
+        }
+        state["injected"] = injectedModules();
+        return state;
     };
     provider->isVerifiedBuild = [callbacks]() {
         return callStaticBoolean(callbacks.bridgeClass, callbacks.isVerifiedBuild);

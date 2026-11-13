@@ -226,6 +226,16 @@ function memoryOf(state?: NativeDeviceState): DebugInfo['memory'] {
 	return { availableMB, lowMemory, memoryWarnings, thermal };
 }
 
+const MAX_INJECTED = 32;
+
+function injectedOf(state?: NativeDeviceState): string[] | undefined {
+	const names = state?.injected?.filter((name) => typeof name === 'string' && name.length > 0);
+
+	return names?.length
+		? names.slice(0, MAX_INJECTED).map((name) => name.slice(0, 96))
+		: undefined;
+}
+
 const LEGACY_SIGNATURE = /^Discord's signature$/;
 
 function installDetailsOf(details: string): string {
@@ -288,6 +298,7 @@ export function readDebugInfo(): DebugInfo {
 		bundleChannel: loader?.launch?.channel,
 		memory: attempt(() => memoryOf(state), undefined),
 		network: attempt(() => state?.network, undefined),
+		injected: attempt(() => injectedOf(state), undefined),
 		storage: attempt(() => storageOf(state), undefined),
 		errors: recentErrors(),
 		patches: attempt(patchCounts, undefined),

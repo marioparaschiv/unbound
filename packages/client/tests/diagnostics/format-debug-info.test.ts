@@ -71,4 +71,11 @@ describe('formatDebugInfo', () => {
 			'- **Unbound:** v0.11.0 (`402cbbf6`), loader 1.0.0 (`Unbound.dylib`)',
 		);
 	});
+
+	test('lists other tweaks loaded into Discord', () => {
+		expect(formatDebugInfo({ ...info, injected: ['FLEXing', 'Shadow'] }).split('\n')).toContain(
+			'- **Other tweaks:** FLEXing · Shadow',
+		);
+		expect(formatDebugInfo(info)).not.toContain('Other tweaks');
+	});
 });
