@@ -124,3 +124,37 @@ func TestClangFormatKeepsLogosIntact(t *testing.T) {
 		t.Fatalf("formatting is not idempotent:\n%s\n---\n%s", first, second)
 	}
 }
+
+func TestKotlinFormatterSkipsLocallyWithoutJava(t *testing.T) {
+	noJava := func(string) bool { return false }
+	local := func(string) string { return "" }
+	if kotlinFormatterRuns(local, noJava) {
+		t.Fatal("the Kotlin formatter ran without a Java runtime")
+	}
+	ci := func(name string) string {
+		if name == "CI" {
+			return "true"
+		}
+		return ""
+	}
+	if !kotlinFormatterRuns(ci, noJava) {
+		t.Fatal("CI skipped the Kotlin formatter")
+	}
+}
+
+func TestKotlinFormatterUsesJavaHome(t *testing.T) {
+	var tried string
+	env := func(name string) string {
+		if name == "JAVA_HOME" {
+			return "/opt/jdk"
+		}
+		return ""
+	}
+	kotlinFormatterRuns(env, func(java string) bool {
+		tried = java
+		return true
+	})
+	if tried != filepath.Join("/opt/jdk", "bin", "java") {
+		t.Fatalf("tried %q", tried)
+	}
+}
