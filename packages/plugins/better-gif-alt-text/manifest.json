@@ -1,0 +1,21 @@
+{
+	"id": "unbound.better-gif-alt-text",
+	"name": "Better GIF Alt Text",
+	"description": "Names GIFs in chat for screen readers by their tags or file name, instead of just 'GIF'.",
+	"authors": [
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "GifIcon",
+	"main": "index.tsx"
+}

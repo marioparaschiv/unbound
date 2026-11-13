@@ -1,6 +1,6 @@
 # Plugins
 
-73 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+74 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -11,6 +11,7 @@
 - <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Aussie Mode](https://unbound.rip/addons/adrian.aussie-mode): Discord designed for Aussies.
 - <img src="../../assets/plugins/readme-icons/microphone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Aussie Speech](https://unbound.rip/addons/adrian.aussie-speech): Turns every message into Aussie English before you send it.
 - <img src="../../assets/plugins/readme-icons/user-square-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Avatar Radius](https://unbound.rip/addons/unbound.avatar-radius): Rounds avatars to a corner radius you choose instead of circles.
+- <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better GIF Alt Text](https://unbound.rip/addons/unbound.better-gif-alt-text): Names GIFs in chat for screen readers by their tags or file name, instead of just 'GIF'.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better GIF Picker](https://unbound.rip/addons/unbound.better-gif-picker): Opens the GIF picker on your favourite GIFs instead of the category grid.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Blur NSFW](https://unbound.rip/addons/unbound.blur-nsfw): Blurs attachments and embedded media in age-restricted channels until you tap them.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Channel Typing Indicators](https://unbound.rip/addons/unbound.channel-typing-indicators): Shows animated typing dots and avatars beside channels where people are typing.
