@@ -12,8 +12,8 @@ import (
 // provides it. A bundle built against the API must require that loader, or older loaders refuse it
 // without naming a loader the user can install.
 const (
-	nativeBridgeAPI       = "1.4.0"
-	nativeBridgeAPILoader = "1.3.0"
+	nativeBridgeAPI       = "1.5.0"
+	nativeBridgeAPILoader = "1.4.0"
 )
 
 var nativeBridgeAPIPattern = regexp.MustCompile(`kNativePluginApiVersion\[\]\s*=\s*"([^"]+)"`)

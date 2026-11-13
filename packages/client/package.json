@@ -46,6 +46,6 @@
 		"tests": "parallel"
 	},
 	"unbound": {
-		"minLoaderVersion": "1.3.0"
+		"minLoaderVersion": "1.4.0"
 	}
 }
