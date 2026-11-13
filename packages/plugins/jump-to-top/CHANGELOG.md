@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-14
+
+### Added
+
+- A Jump to top row in the long-press sheets of channels, threads and forum posts opens them at their first message.
+
 ## [1.1.0] - 2026-11-14
 
 ### Changed
