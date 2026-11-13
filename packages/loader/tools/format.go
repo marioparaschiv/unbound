@@ -88,7 +88,7 @@ func runFormat(args []string) error {
 		failures = append(failures, goFiles...)
 	}
 
-	if only == nil || only.hasExtension(map[string]string{".kt": ".kt", ".kts": ".kts"}) {
+	if (only == nil || only.hasExtension(map[string]string{".kt": ".kt", ".kts": ".kts"})) && kotlinFormatterRuns(os.Getenv, javaRuns) {
 		if err := runKotlinFormatter(rootPath, *check, only.withExtensions(".kt", ".kts")); err != nil {
 			failures = append(failures, "Kotlin sources ("+err.Error()+")")
 		}
@@ -447,6 +447,22 @@ func (selection fileSelection) withExtensions(extensions ...string) []string {
 	}
 	sort.Strings(files)
 	return files
+}
+
+func kotlinFormatterRuns(env func(string) string, javaWorks func(string) bool) bool {
+	java := "java"
+	if home := env("JAVA_HOME"); home != "" {
+		java = filepath.Join(home, "bin", "java")
+	}
+	if env("CI") != "" || javaWorks(java) {
+		return true
+	}
+	fmt.Fprintln(os.Stderr, "loader format: skipped the Kotlin sources, no Java runtime starts here; CI still checks them")
+	return false
+}
+
+func javaRuns(java string) bool {
+	return exec.Command(java, "-version").Run() == nil
 }
 
 func runKotlinFormatter(root string, check bool, files []string) error {
