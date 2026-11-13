@@ -82,6 +82,7 @@ android {
                 arguments +=
                     listOf(
                         "-DANDROID_STL=c++_static",
+                        "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
                         "-DUNBOUND_VERSION=$packageVersion",
                         "-DUNBOUND_PR_NUMBER=${pullRequestNumber.trim()}",
                         "-DUNBOUND_BUNDLE_URL=${bundleURL.orEmpty()}",

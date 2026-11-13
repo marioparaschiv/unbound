@@ -270,6 +270,9 @@ jobs:
                   cp android/module/build/outputs/apk/release/module-release.apk "$name"
                   echo "module_filename=$name" >> "$GITHUB_OUTPUT"
 
+            - name: Check 16 KB page alignment
+              run: unbound-tools check-page-alignment --apk android/module/build/outputs/apk/release/module-release.apk
+
             - name: Collect native symbols and build IDs
               run: |
                   set -euo pipefail
