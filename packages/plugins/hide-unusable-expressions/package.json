@@ -1,5 +1,5 @@
 {
-	"name": "hide-unusable-emojis",
+	"name": "hide-unusable-expressions",
 	"private": true,
 	"type": "module",
 	"scripts": {

@@ -3,7 +3,14 @@
 declare module '@unbound-app/i18n' {
 	/** Every en-US message, read in the user's locale. */
 	export type Messages = {
-
+		/** Hide unusable emojis */
+		readonly EMOJIS: string;
+		/** Leave emojis you can't send out of the emoji picker. */
+		readonly EMOJIS_SUBTITLE: string;
+		/** Hide unusable stickers */
+		readonly STICKERS: string;
+		/** Leave stickers you can't send in this channel out of the sticker picker. */
+		readonly STICKERS_SUBTITLE: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
