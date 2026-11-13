@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.7] - 2026-11-13
+
+### Fixed
+
+- On iOS, a message you just sent gets its bubble right away instead of a stray shape at the screen's edge, and bubbles stay around their messages with row spacing on.
+- Bubbles and avatars still slide with the message when you swipe to reply.
+
 ## [1.6.6] - 2026-11-13
 
 ### Changed
