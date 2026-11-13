@@ -1,13 +1,17 @@
 import { flux, metro, patcher } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
 
-import { emojiLink, replaceEmojis, type FakeEmoji } from '~/lib/links';
+import { emojiLink, emojisIn, replaceEmojis, type FakeEmoji } from '~/lib/links';
 import { canUseEmoji } from '~/lib/premium';
 
 type OutgoingMessage = {
 	content?: string;
 	validNonShortcutEmojis?: (FakeEmoji & { guildId?: string })[];
 };
+
+type EditedMessage = { content?: string };
+
+type KnownEmoji = { guildId?: string };
 
 type DisabledReasons = { PREMIUM_LOCKED?: number; DISALLOW_EXTERNAL?: number };
 
@@ -74,6 +78,35 @@ export function patchEmojiSending(): void {
 		);
 		message.validNonShortcutEmojis = message.validNonShortcutEmojis.filter((emoji) =>
 			canUseEmoji(emoji, channel),
+		);
+	});
+}
+
+function withGuild(emoji: FakeEmoji): FakeEmoji & KnownEmoji {
+	const known = flux.getStore('Emoji').getCustomEmojiById(emoji.id) as KnownEmoji | undefined;
+
+	return { ...emoji, guildId: known?.guildId };
+}
+
+/**
+ * @description Links unusable emojis again when the user edits a message that showed them as real emojis.
+ * Patches `editMessage` on Discord's message actions.
+ */
+export function patchEmojiEditing(): void {
+	if (!settings.emojis) return;
+
+	patcher.before(metro.api.Messages, 'editMessage', ({ args }) => {
+		const [channelId, , message] = args as [string, string, EditedMessage | undefined];
+
+		if (!message?.content) return;
+
+		const channel = flux.getStore('Channel').getChannel(channelId);
+
+		message.content = replaceEmojis(
+			message.content,
+			emojisIn(message.content).map(withGuild),
+			(emoji) => canUseEmoji(emoji, channel),
+			(emoji) => emojiLink(emoji, settings.emojiSize, settings.hyperlinks),
 		);
 	});
 }

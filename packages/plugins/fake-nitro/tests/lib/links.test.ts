@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { emojiLink, replaceEmojis, stickerLink } from '~/lib/links';
+import { emojiLink, emojisIn, replaceEmojis, stickerLink } from '~/lib/links';
 
 const odin = { id: '123', name: 'Odin', animated: false };
 const dance = { id: '456', name: 'Dance', animated: true };
@@ -31,5 +31,22 @@ describe('fake emojis and stickers', () => {
 			'https://media.discordapp.net/stickers/9.gif?size=160',
 		);
 		expect(stickerLink({ id: '9', name: 'Hi', format_type: 3 }, 160, false)).toBeUndefined();
+	});
+});
+
+describe('emojis in text', () => {
+	test('reads each custom emoji once, animated or not', () => {
+		expect(
+			emojisIn(
+				'hi <a:wave:123456789012345678> <:ok:223456789012345678> <a:wave:123456789012345678>',
+			),
+		).toEqual([
+			{ id: '123456789012345678', name: 'wave', animated: true },
+			{ id: '223456789012345678', name: 'ok', animated: false },
+		]);
+	});
+
+	test('skips plain text and unicode emojis', () => {
+		expect(emojisIn('plain :smile: 😀')).toEqual([]);
 	});
 });
