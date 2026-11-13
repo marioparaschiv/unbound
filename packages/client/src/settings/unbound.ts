@@ -26,6 +26,7 @@ const DEFAULTS = {
 	'chat-background.blur': 0,
 	'chat-background.opacity': DEFAULT_BACKGROUND_OPACITY,
 	'plugins.showLibraries': false,
+	'marketplace.lastVisit': 0,
 	/** The loader reads it at launch; off keeps the cached bundle until the user refetches. */
 	'updater.auto.client': true,
 	'updater.auto.addons': false,
