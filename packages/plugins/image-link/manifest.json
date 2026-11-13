@@ -1,0 +1,25 @@
+{
+	"id": "unbound.image-link",
+	"name": "Image Link",
+	"description": "Keeps the link in a message that is only an image or video link, instead of showing the embed alone.",
+	"authors": [
+		{
+			"name": "Kyuuhachi",
+			"id": "236588665420251137"
+		},
+		{
+			"name": "Sqaaakoi",
+			"id": "259558259491340288"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "LinkIcon",
+	"main": "index.tsx"
+}
