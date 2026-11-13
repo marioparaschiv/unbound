@@ -22,16 +22,20 @@ import {
 	listViews,
 	resetViewFinder,
 } from '~/debugger/view-finder.dev';
+import { isTrusted, promptToConnect } from '~/debugger/discovery-prompt.dev';
 import { answerExplorer, resetExplorer } from '~/debugger/explorer.dev';
+import type { DiscoveredBridge } from '~/debugger/bridge-service.dev';
 import { CLIENT_VERSION, DEBUGGER_ADDRESS } from '~/core/constants';
 import { endSession, receive } from '~/debugger/react-devtools.dev';
 import { getSetting, isSettingChange } from '~/settings/unbound';
 import { readDebugReport } from '~/diagnostics/read-debug-info';
 import { answerMetro, resetMetro } from '~/debugger/metro.dev';
 import { reloadSummary } from '~/debugger/reload-summary.dev';
+import { browseBridges } from '~/debugger/discovery.dev';
 import { createPatcher } from '~/patcher/create-patcher';
 import { currentEnvironment } from '~/core/environment';
 import { getLoader } from '~/native/unbound-native';
+import type { DialogHandle } from '~/dialogs/api';
 import type { Addon } from '~/addons/addon';
 import { plugins } from '~/plugins/manager';
 import { themes } from '~/themes/manager';
@@ -43,7 +47,8 @@ const Logger = createLogger('Debugger');
 
 // How long to wait before re-dialling the bridge after a drop or failed attempt, so a reloaded app
 // or a restarted bridge reconnects on its own without waiting for the next AppState transition.
-const RECONNECT_DELAY_MS = 2000;
+// Short, since tools start the bridge on demand and wait for the device to dial it.
+const RECONNECT_DELAY_MS = 500;
 const RELOAD_BATCH_MS = 4000;
 
 let ws: WebSocket | null = null;
@@ -51,6 +56,14 @@ let sending = false;
 let stopped = false;
 let backgrounded = false;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+// Dials that failed since the last open; only the first of a run is logged, so retries stay quiet.
+let failedDials = 0;
+// The address of the bridge the user chose from the network, dialled before the build-time fallback.
+let discovered: string | undefined;
+let stopBrowsing: (() => void) | undefined;
+let prompt: { computer: string; handle: DialogHandle } | undefined;
+// Bridges the user said "Not now" to this run, by computer and pairing code, so a restarted bridge asks again.
+const declined = new Set<string>();
 
 const disposers = new Set<() => void>();
 
@@ -85,6 +98,7 @@ export function stop() {
 
 	clearReconnectTimer();
 	closeSocket();
+	stopDiscovery();
 	resetViewFinder();
 	resetExplorer();
 	resetMetro();
@@ -113,47 +127,135 @@ function connect(isReconnect = false) {
 	const address = resolveAddress();
 
 	if (!address) {
-		Logger.error(
-			'No debugger address configured; set `debugger.address` in developer settings.',
-		);
+		// Nothing to dial until a bridge shows up on the network.
+		startDiscovery();
 
 		return;
 	}
 
-	ws = new WebSocket(`ws://${address}`);
+	const socket = new WebSocket(`ws://${address}`);
 
-	ws.addEventListener('open', () => {
+	ws = socket;
+
+	let opened = false;
+
+	socket.addEventListener('open', () => {
+		opened = true;
+		failedDials = 0;
+		stopDiscovery();
 		sayHello();
 		Logger.success(isReconnect ? 'Reconnected' : 'Connected');
 	});
 
 	// Clear the socket and retry on both error and close: on failure RN may fire only one of them,
 	// and leaving `ws` non-null would wedge the `if (ws) return` guard so no future attempt runs.
-	ws.addEventListener('error', (event) => {
-		Logger.error('Socket error:', ('message' in event ? event.message : null) ?? event);
+
+	// A socket dropped for a discovered bridge is no longer `ws`, so its events clear nothing.
+	socket.addEventListener('error', (event) => {
+		if (ws !== socket) return;
+
+		if (!failedDials) {
+			Logger.error('Socket error:', ('message' in event ? event.message : null) ?? event);
+		}
+
+		if (!opened) {
+			failedDials++;
+		}
+
 		ws = null;
+		startDiscovery();
 		scheduleReconnect();
 	});
 
-	ws.addEventListener('close', ({ code }) => {
-		Logger.warn(`Socket closed with code ${code}`);
+	socket.addEventListener('close', ({ code }) => {
+		if (ws !== socket) return;
+
+		if (!failedDials) {
+			Logger.warn(`Socket closed with code ${code}`);
+		}
+
+		if (!opened) {
+			failedDials++;
+		}
+
 		ws = null;
 		// The frontend starts a fresh session once the socket is back, and explorer refs end with the session.
 		endSession();
 		resetExplorer();
 		resetMetro();
+		startDiscovery();
 		scheduleReconnect();
 	});
 
-	ws.addEventListener('message', (message) => {
+	socket.addEventListener('message', (message) => {
 		handleMessage(message.data);
 	});
 }
 
-// Read per attempt so an address edited in settings applies on the next reconnect. The build-time
-// fallback tracks the dev host and is empty in production builds.
+// Read per attempt so an edited address applies on the next reconnect. Then the bridge the user chose
+// from the network; the build-time fallback tracks the dev host and is empty in production builds.
 function resolveAddress() {
-	return getSetting('debugger.address') || DEBUGGER_ADDRESS;
+	return getSetting('debugger.address') || discovered || DEBUGGER_ADDRESS;
+}
+
+// Browses only while disconnected with no address set by hand, so a found bridge can be offered.
+function startDiscovery() {
+	if (stopped || backgrounded || stopBrowsing || getSetting('debugger.address')) return;
+
+	stopBrowsing = browseBridges({ found: onBridgeFound, lost: onBridgeLost });
+}
+
+function stopDiscovery() {
+	stopBrowsing?.();
+	stopBrowsing = undefined;
+	prompt?.handle.dismiss();
+	prompt = undefined;
+}
+
+function onBridgeFound(bridge: DiscoveredBridge) {
+	const key = `${bridge.computer}:${bridge.code}`;
+
+	if (ws?.readyState === WebSocket.OPEN || declined.has(key) || prompt) return;
+
+	if (isTrusted(bridge)) {
+		dialDiscovered(bridge);
+
+		return;
+	}
+
+	const handle = promptToConnect(
+		bridge,
+		() => {
+			prompt = undefined;
+			dialDiscovered(bridge);
+		},
+		() => {
+			prompt = undefined;
+			declined.add(key);
+		},
+	);
+
+	prompt = { computer: bridge.computer, handle };
+}
+
+function onBridgeLost(computer: string) {
+	if (prompt?.computer !== computer) return;
+
+	prompt.handle.dismiss();
+	prompt = undefined;
+}
+
+function dialDiscovered(bridge: DiscoveredBridge) {
+	Logger.info(`Connecting to the bridge on ${bridge.computer} at ${bridge.address}`);
+	discovered = bridge.address;
+
+	// Drop the dial in flight to the fallback address; its handlers see it is no longer `ws`.
+	if (ws?.readyState !== WebSocket.OPEN) {
+		ws?.close();
+		ws = null;
+	}
+
+	connect();
 }
 
 function scheduleReconnect() {
@@ -418,6 +520,7 @@ function listenToAppState() {
 			case 'background':
 				backgrounded = true;
 				clearReconnectTimer();
+				stopDiscovery();
 
 				if (ws?.readyState === WebSocket.OPEN) {
 					ws.close();

@@ -143,7 +143,13 @@ describe('bundle flavours', () => {
 	test('keeps the developer modules in the dev bundle', () => {
 		expect(devModules.filter(isDeveloperModule).map(workspacePath).sort()).toEqual([
 			'packages/client/src/assets/builtin.dev.ts',
+			'packages/client/src/debugger/bridge-service.dev.ts',
 			'packages/client/src/debugger/builtin.dev.ts',
+			'packages/client/src/debugger/discovery-android-worklets.dev.ts',
+			'packages/client/src/debugger/discovery-android.dev.ts',
+			'packages/client/src/debugger/discovery-ios.dev.ts',
+			'packages/client/src/debugger/discovery-prompt.dev.ts',
+			'packages/client/src/debugger/discovery.dev.ts',
 			'packages/client/src/debugger/explorer-android.dev.ts',
 			'packages/client/src/debugger/explorer-errors.dev.ts',
 			'packages/client/src/debugger/explorer-ios.dev.ts',
