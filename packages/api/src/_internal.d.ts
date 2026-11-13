@@ -3957,6 +3957,8 @@ export type NativeDeviceState = {
 	/** Free space on the volume holding Discord's documents, and the size of Unbound's folder there. */
 	freeMB?: number;
 	unboundMB?: number;
+	/** The active connection, and whether a VPN, a proxy, a metered plan or Low Data Mode (Data Saver) applies. */
+	network?: NativeNetworkState;
 };
 /** Calls C functions in images Discord already loaded. An unsigned plugin needs the user's consent to use it. */
 export type NativeFFIBridge = {
@@ -4568,6 +4570,14 @@ export type NativeMainWorkCounts = {
 	maxDrainMs: number;
 	/** The most items one drain ran. */
 	maxDrainItems: number;
+};
+/** The device's active connection. */
+export type NativeNetworkState = {
+	type: 'wifi' | 'cellular' | 'ethernet' | 'other' | 'offline';
+	metered?: boolean;
+	lowData?: boolean;
+	vpn?: boolean;
+	proxy?: boolean;
 };
 /** The iOS bridge to the Objective-C runtime, scoped to the plugin's capabilities. */
 export type NativeObjCBridge = {

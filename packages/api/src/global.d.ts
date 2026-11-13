@@ -313,6 +313,7 @@ export type {
 	NativeJavaValue,
 	NativeMainWaitCounts,
 	NativeMainWorkCounts,
+	NativeNetworkState,
 	NativeObjCBridge,
 	NativeObjCCallPlan,
 	NativeObjCInspector,

@@ -28,10 +28,10 @@ export type CatalogQuery = {
 	sort?: CatalogSort;
 };
 /**
- * `name` sorts alphabetically, `popular` puts the most installed addons first, `updated` the most
- * recently published versions.
+ * `new` puts the most recently listed addons first, `name` sorts alphabetically, `popular` the most
+ * installed addons first, `updated` the most recently published versions.
  */
-export type CatalogSort = 'name' | 'popular' | 'updated';
+export type CatalogSort = 'new' | 'name' | 'popular' | 'updated';
 /** One addon the marketplace lists, at its newest version. */
 export type MarketplaceListing = {
 	/** The addon's id from its manifest, which installs and updates key on. */
