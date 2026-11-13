@@ -15,6 +15,16 @@ declare module '@unbound-app/i18n' {
 		readonly HIDE_REPLIES: string;
 		/** Hides replies to anyone this plugin hides. */
 		readonly HIDE_REPLIES_SUBTITLE: string;
+		/** Add user */
+		readonly ADD_USER: string;
+		/** Search or paste a user ID */
+		readonly SEARCH_USERS: string;
+		/** No users found */
+		readonly NO_USERS_FOUND: string;
+		/** Unknown user */
+		readonly UNKNOWN_USER: string;
+		/** Remove user */
+		readonly REMOVE_USER: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

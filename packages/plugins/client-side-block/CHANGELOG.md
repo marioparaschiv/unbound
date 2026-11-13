@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-13
+
+### Changed
+
+- Hidden users are picked from a searchable list of people, shown with their avatars and names, instead of typed ids.
+
 ## [1.0.1] - 2026-11-13
 
 ### Changed

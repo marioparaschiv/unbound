@@ -17,6 +17,44 @@ declare module '@unbound-app/i18n' {
 		readonly WHOLE_WORDS: string;
 		/** Ignore bots */
 		readonly IGNORE_BOTS: string;
+		/** Ignored users */
+		readonly IGNORE_USERS: string;
+		/** Their messages never count as mentions. */
+		readonly IGNORE_USERS_SUBTITLE: string;
+		/** Ignored channels */
+		readonly IGNORE_CHANNELS: string;
+		/** Keywords in these channels and categories are left alone. */
+		readonly IGNORE_CHANNELS_SUBTITLE: string;
+		/** Ignored servers */
+		readonly IGNORE_GUILDS: string;
+		/** Keywords in these servers are left alone. */
+		readonly IGNORE_GUILDS_SUBTITLE: string;
+		/** Ignored */
+		readonly IGNORED: string;
+		/** Matching */
+		readonly MATCHING: string;
+		/** Add user */
+		readonly ADD_USER: string;
+		/** Add channel */
+		readonly ADD_CHANNEL: string;
+		/** Add server */
+		readonly ADD_SERVER: string;
+		/** Search or paste a user ID */
+		readonly SEARCH_USERS: string;
+		/** Search or paste a channel ID */
+		readonly SEARCH_CHANNELS: string;
+		/** Search or paste a server ID */
+		readonly SEARCH_SERVERS: string;
+		/** Nothing found */
+		readonly NO_RESULTS: string;
+		/** Unknown user */
+		readonly UNKNOWN_USER: string;
+		/** Unknown channel */
+		readonly UNKNOWN_CHANNEL: string;
+		/** Unknown server */
+		readonly UNKNOWN_SERVER: string;
+		/** Remove */
+		readonly REMOVE: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

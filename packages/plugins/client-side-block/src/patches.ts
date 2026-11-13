@@ -2,6 +2,7 @@ import { settings } from '@unbound-app/settings';
 import { flux, metro, patcher } from '@unbound-app/api';
 
 import { isHiddenRow } from '~/lib/hidden';
+import { parseIdList } from '@unbound-plugins/shared/entities/id-list';
 
 import {
 	chat,
@@ -90,7 +91,7 @@ function patchChatManager(ChatManager: ChatClass<ChatManagerInstance>) {
 	const Relationships = flux.getStore('Relationship') as unknown as RelationshipStore;
 	const rules = {
 		isHidden: (userId: string) =>
-			settings.users.some((id) => id === userId) ||
+			parseIdList(settings.users).includes(userId) ||
 			Boolean(settings.ignored && Relationships.isIgnored?.(userId)) ||
 			Boolean(Relationships.isBlocked?.(userId)),
 		get replies() {

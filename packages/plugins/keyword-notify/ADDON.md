@@ -12,3 +12,4 @@ banner: media/banner.png
 - **Keywords**: the words or phrases to watch for.
 - **Regular expressions**, **Match case**, **Whole words only**: how keywords match.
 - **Ignore bots**: leaves bot messages alone.
+- **Ignored users, channels and servers**: picked from your friends and servers; keywords there never count.
