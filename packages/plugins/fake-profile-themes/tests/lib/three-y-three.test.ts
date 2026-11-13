@@ -12,10 +12,7 @@ describe('3y3 theme colors', () => {
 		const code = encodeThemeColors(0x5865f2, 0xeb459e);
 
 		expect(
-			code
-				.trim()
-				.split('')
-				.every((character) => character.codePointAt(0)! >= 0xe0000),
+			Array.from(code.trim()).every((character) => character.codePointAt(0)! >= 0xe0000),
 		).toBe(true);
 		expect(decodeThemeColors(`Hello there${code}`)).toEqual([0x5865f2, 0xeb459e]);
 	});
