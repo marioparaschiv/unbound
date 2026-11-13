@@ -140,6 +140,16 @@ declare module '@unbound-app/settings' {
 		 */
 		priority: "pronoundb" | "discord";
 		/**
+		 * Style
+		 */
+		style: "text" | "pill" | "custom";
+		/**
+		 * Pill color
+		 *
+		 * Android keeps Discord's tag colors.
+		 */
+		pillColor: import('@unbound-app/settings').HexColor;
+		/**
 		 * Show for Yourself
 		 */
 		showSelf: boolean;
@@ -155,6 +165,16 @@ declare module '@unbound-app/settings' {
 		 * Source
 		 */
 		"priority": "pronoundb" | "discord";
+		/**
+		 * Style
+		 */
+		"style": "text" | "pill" | "custom";
+		/**
+		 * Pill color
+		 *
+		 * Android keeps Discord's tag colors.
+		 */
+		"pillColor": import('@unbound-app/settings').HexColor;
 		/**
 		 * Show for Yourself
 		 */
