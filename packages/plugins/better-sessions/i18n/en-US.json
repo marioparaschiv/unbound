@@ -1,0 +1,11 @@
+{
+	"BACKGROUND_CHECK": "Check for new sessions",
+	"BACKGROUND_CHECK_SUBTITLE": "Shows a notice when a new device signs in to your account.",
+	"CHECK_INTERVAL": "Check every (minutes)",
+	"NEW": "NEW",
+	"NEW_SESSION": "New session",
+	"NEW_SESSION_DETAILS": "{name} in {location}",
+	"RENAME_TITLE": "Name this session",
+	"SAVE": "Save",
+	"RESET": "Use the default name"
+}
