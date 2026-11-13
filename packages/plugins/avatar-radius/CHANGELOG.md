@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.11] - 2026-11-13
+
+### Fixed
+
+- On iOS, changing the corner radius no longer freezes Discord.
+
 ## [1.1.10] - 2026-11-11
 
 ### Changed
