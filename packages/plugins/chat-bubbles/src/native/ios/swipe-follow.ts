@@ -10,7 +10,7 @@ function unbox(raw: unknown): Record<string, number> {
 }
 
 /**
- * @description Moves what the plugin's views in a message cell draw by however far swipe to reply moved the cell's content
+ * @description Translates the plugin's views in a message cell by however far swipe to reply moved the cell's content
  * view sideways, so the bubble and the avatar slide with the message and settle back with it.
  * @param objc The Objective-C bridge.
  * @param content The cell's content view.
@@ -34,19 +34,35 @@ export function followSwipe(objc: NativeObjCBridge, content: NativeObjectHandle,
 
 		if (!view || !parent || !objc.call(parent, 'isEqual:', cell)) continue;
 
-		const bounds = unbox(objc.invoke(view, 'bounds', []));
-		const origin = unbox(bounds.origin ?? {});
-		const box = unbox(bounds.size ?? {});
+		const transform = unbox(objc.invoke(view, 'transform', []));
 
-		if (Math.abs(Number(origin.x ?? 0) + shift) < 0.01) continue;
+		if (Math.abs(Number(transform.tx ?? 0) - shift) < 0.01) continue;
 
-		objc.invoke(view, 'setBounds:', [
-			objc.struct('CGRect', {
-				origin: { x: -shift, y: Number(origin.y ?? 0) },
-				size: { width: Number(box.width ?? 0), height: Number(box.height ?? 0) },
-			}),
+		objc.invoke(view, 'setTransform:', [
+			objc.struct('CGAffineTransform', { a: 1, b: 0, c: 0, d: 1, tx: shift, ty: 0 }),
 		]);
 	}
+}
+
+/**
+ * @description Sets a view's frame as if it were untransformed, then puts back the swipe translation `followSwipe` gave it.
+ * @param objc The Objective-C bridge.
+ * @param view The bubble or avatar holder to place.
+ * @param frame The frame to give it.
+ */
+export function placeFollowingSwipe(
+	objc: NativeObjCBridge,
+	view: NativeObjectHandle,
+	frame: unknown,
+) {
+	'worklet';
+	const transform = objc.invoke(view, 'transform', []);
+
+	objc.invoke(view, 'setTransform:', [
+		objc.struct('CGAffineTransform', { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 }),
+	]);
+	objc.invoke(view, 'setFrame:', [frame]);
+	objc.invoke(view, 'setTransform:', [transform]);
 }
 
 export default followSwipe;

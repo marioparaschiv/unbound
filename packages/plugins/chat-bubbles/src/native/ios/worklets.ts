@@ -18,6 +18,7 @@ import {
 	type CellState,
 } from '~/native/ios/ui-cell';
 import { isStandaloneCell } from '~/native/ios/standalone-cell';
+import { placeFollowingSwipe } from '~/native/ios/swipe-follow';
 
 const STATE_KEY = '__unboundChatBubbles';
 const MAX_CACHED = 400;
@@ -400,9 +401,11 @@ function paintBubble(
 	paintFillet(objc, bubble, drawn, 'top', color);
 	paintFillet(objc, bubble, drawn, 'bottom', color);
 
-	objc.invoke(bubble, 'setFrame:', [
+	placeFollowingSwipe(
+		objc,
+		bubble,
 		objc.struct('CGRect', rect(drawn.x, drawn.y, drawn.width, drawn.height)),
-	]);
+	);
 	objc.invoke(bubble, 'setHidden:', [false]);
 
 	return fill;

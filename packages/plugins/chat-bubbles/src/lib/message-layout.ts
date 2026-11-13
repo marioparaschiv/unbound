@@ -50,12 +50,18 @@ export type Heading = {
 	/** How far below the name row's top the name's capitals start, where the platform can read it. */
 	capitalTop?: number;
 	time?: Box;
+	/** The timestamp label's snapshot index, to measure the text it draws past its frame. */
+	timeLabel?: number;
 	/** The reply preview's holder, the view holding its avatar and text, its text label and where that label starts in the cell. */
 	reply?: { container: Box; content: Box; label: number; labelX: number };
 };
 
+function hasSize(node: SnapshotNode): boolean {
+	return node.frame.width > 0 && node.frame.height > 0;
+}
+
 function shows(node: SnapshotNode): boolean {
-	return node.visible && node.frame.width > 0 && node.frame.height > 0;
+	return node.visible && hasSize(node);
 }
 
 function isMedia(node: SnapshotNode): boolean {
@@ -164,8 +170,8 @@ function headingOf(
 
 	if (name === undefined) return;
 
+	const time = childrenOf(nodes, name).find((child) => isLabel(child) && hasSize(nodes[child]!));
 	const parts = childrenOf(nodes, name).filter((child) => shows(nodes[child]!));
-	const time = parts.find(isLabel);
 	const nameWidth = Math.max(
 		0,
 		...parts
@@ -178,7 +184,7 @@ function headingOf(
 	return {
 		name: absolute(nodes, name),
 		nameWidth,
-		...(time === undefined ? {} : { time: absolute(nodes, time) }),
+		...(time === undefined ? {} : { time: absolute(nodes, time), timeLabel: time }),
 		...(label === undefined
 			? {}
 			: {
