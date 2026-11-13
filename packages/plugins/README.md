@@ -1,6 +1,6 @@
 # Plugins
 
-67 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+68 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -28,6 +28,7 @@
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Provider Switcher](https://unbound.rip/addons/unbound.gif-provider-switcher): Search GIFs from Tenor or Giphy instead of Klipy, and switch providers right from the GIF picker.
 - <img src="../../assets/plugins/readme-icons/gift-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Hide Gift Button](https://unbound.rip/addons/unbound.hide-gift-button): Hide the gift button from the chat composer.
 - <img src="../../assets/plugins/readme-icons/eye-icon.svg" width="20" height="20" align="absmiddle" alt=""> [I Love Spam](https://unbound.rip/addons/unbound.i-love-spam): Shows messages from users Discord marks as likely spammers instead of hiding them.
+- <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Image Link](https://unbound.rip/addons/unbound.image-link): Keeps the link in a message that is only an image or video link, instead of showing the embed alone.
 - <img src="../../assets/plugins/readme-icons/forum-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Keep Current Channel](https://unbound.rip/addons/unbound.keep-current-channel): Brings you back to the channel you had open after switching accounts or restarting Discord.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Mention Avatars](https://unbound.rip/addons/unbound.mention-avatars): Shows user avatars and role icons inside mentions.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Latency](https://unbound.rip/addons/unbound.message-latency): Marks messages that took at least the selected threshold to send.
