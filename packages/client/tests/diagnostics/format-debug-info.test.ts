@@ -78,4 +78,10 @@ describe('formatDebugInfo', () => {
 		);
 		expect(formatDebugInfo(info)).not.toContain('Other tweaks');
 	});
+
+	test('lists addon updates waiting', () => {
+		expect(
+			formatDebugInfo({ ...info, addonUpdates: ['Chat Bubbles 1.6.8 → 1.6.9'] }).split('\n'),
+		).toContain('- **Updates waiting:** Chat Bubbles 1.6.8 → 1.6.9');
+	});
 });

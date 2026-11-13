@@ -394,6 +394,22 @@ describe('debug card', () => {
 		).not.toContain('tweaks');
 	});
 
+	test('lists addon updates waiting in the updates row, after the server ones', () => {
+		const report: DebugCardRequest = {
+			...info,
+			addonUpdates: ['Chat Bubbles 1.6.8 → 1.6.9'],
+		};
+		const card = layoutDebugCard(report, new Date(), { loaderUpdate: '1.4.0' });
+		const labels = texts(card)
+			.filter((run) => run.x === 14)
+			.map((run) => run.text);
+
+		expect(labels).toContain('updates');
+		expect(JSON.parse(altJson(report, { loaderUpdate: '1.4.0' }))).toMatchObject({
+			updates: ['loader 1.4.0', 'Chat Bubbles 1.6.8 → 1.6.9'],
+		});
+	});
+
 	test('shows recent errors and low storage', () => {
 		const report: DebugCardRequest = {
 			...info,

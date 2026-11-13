@@ -185,14 +185,16 @@ export function lastCheckSummary(
 }
 
 /**
- * @description Lists the loader and client updates the server knows of.
+ * @description Lists the loader and client updates the server knows of, then the addon updates the client found waiting.
  * @param context What the server adds to the report.
+ * @param addonUpdates The client's pending addon updates, each `name from → to`.
  * @returns One note per available update.
  */
-export function updateNotes(context: DebugCardContext): string[] {
+export function updateNotes(context: DebugCardContext, addonUpdates: string[] = []): string[] {
 	return [
 		context.loaderUpdate && `loader ${context.loaderUpdate}`,
 		context.clientUpdate && `client ${context.clientUpdate}`,
+		...addonUpdates,
 	].filter((note): note is string => typeof note === 'string');
 }
 
@@ -382,12 +384,10 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 	const memory = memoryNotes(info.memory);
 	const errors = errorNotes(info.errors);
 	const storage = lowStorage(info.storage);
+	const updates = updateNotes(context, info.addonUpdates);
 	const candidates: [string, Span[]][] = [
 		['crashes', crashes],
-		[
-			'updates',
-			updateNotes(context).length ? [warn(fittedList(updateNotes(context), VALUE_ROOM))] : [],
-		],
+		['updates', updates.length ? [warn(fittedList(updates, VALUE_ROOM))] : []],
 		[
 			'issues',
 			info.disabledAddons?.length ? [warn(fittedList(info.disabledAddons, VALUE_ROOM))] : [],
