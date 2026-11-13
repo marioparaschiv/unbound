@@ -281,6 +281,32 @@ void rollBackIgnoresAnEmptyBackup()
     assert(!updater.rollBackToPrevious());
     assert(server.activeContents() == "good");
 }
+
+void previousRevisionNamesTheBundleARollbackRestores()
+{
+    bundle_test::Server   server;
+    loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
+    server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "first"}}, {}, "beta",
+                   "1111111abcdef");
+    assert(server.install(updater, std::nullopt));
+    assert(!updater.previousBundleRevision());
+
+    server.publish(kBase, "2026-10-03T00:00:00.000Z", {{kBundle, "second"}}, {}, "beta",
+                   "2222222abcdef");
+    assert(server.install(updater, std::nullopt));
+    assert(updater.previousBundleRevision() == "1111111abcdef");
+
+    assert(updater.rollBackToPrevious());
+    assert(server.activeContents() == "first");
+    assert(!updater.previousBundleRevision());
+}
+
+void previousRevisionIsEmptyWithoutAManifest()
+{
+    bundle_test::Server   server;
+    loader::BundleUpdater updater = installTwice(server);
+    assert(updater.previousBundleRevision() == "");
+}
 }
 
 int main()
@@ -300,5 +326,7 @@ int main()
     promotionWithoutAReplacedRecordLeavesNoBackupRecord();
     unsignedPromotionClearsTheBaseline();
     rollBackIgnoresAnEmptyBackup();
+    previousRevisionNamesTheBundleARollbackRestores();
+    previousRevisionIsEmptyWithoutAManifest();
     return 0;
 }

@@ -112,6 +112,20 @@ int main()
     assert(ids(android[3]).size() == 2);
     assert(loader::toolbox::menuOptions("not json").openAppFolder == false);
 
+    loader::toolbox::MenuOptions withPrevious;
+    withPrevious.previousBundle = "1111111abcdef";
+    const auto previous         = loader::toolbox::menu(settings, withPrevious);
+    assert((ids(previous[0]) == std::vector<std::string>{"refetch-bundle", "previous-bundle",
+                                                         "delete-bundle", "custom-bundle"}));
+    assert(item(previous, "previous-bundle").title == "Use Previous Bundle (1111111)");
+    assert(item(previous, "previous-bundle").failure ==
+           loader::toolbox::kPreviousBundleFailedMessage);
+    assert(item(previous, "previous-bundle").restartsApp);
+    assert(!item(previous, "previous-bundle").destructive);
+    withPrevious.previousBundle = "";
+    assert(item(loader::toolbox::menu(settings, withPrevious), "previous-bundle").title ==
+           "Use Previous Bundle");
+
     const nlohmann::json json = loader::toolbox::menuJSON(settings, {});
     assert(json["title"] == "Unbound Toolbox");
     assert(json["close"] == "Close");
