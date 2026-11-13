@@ -12,6 +12,27 @@ type Channel = { id: string; guild_id?: string | null };
 
 type MessageStore = FluxStore & { getMessage(channelId: string, id: string): Message | undefined };
 
+type ChatInput = { openSystemKeyboard?(): void; focus?(): void };
+
+type ChatInputs = { getBestActiveInputForChannelId?(channelId: string): ChatInput | undefined };
+
+/**
+ * @description Opens the keyboard on a channel's message box when the user asked for it after replies and edits.
+ * @param channelId The channel whose message box to focus.
+ */
+export function openKeyboard(channelId: string): void {
+	if (!settings.openKeyboard) return;
+
+	const inputs = metro.findByProps('getBestActiveInputForChannelId') as ChatInputs | undefined;
+
+	setTimeout(() => {
+		const input = inputs?.getBestActiveInputForChannelId?.(channelId);
+
+		if (input?.openSystemKeyboard) input.openSystemKeyboard();
+		else input?.focus?.();
+	}, 0);
+}
+
 function isOwn(message: Message): boolean {
 	return message.author.id === flux.getStore('User').getCurrentUser()?.id;
 }
@@ -87,9 +108,14 @@ export async function runAction(
 	try {
 		switch (action) {
 			case 'replyOrEdit':
-				return isOwn(message) ? edit(message) : reply(message, channel);
+				if (isOwn(message)) edit(message);
+				else reply(message, channel);
+
+				return openKeyboard(channelId);
 			case 'reply':
-				return reply(message, channel);
+				reply(message, channel);
+
+				return openKeyboard(channelId);
 			case 'react':
 				return await react(message);
 			case 'forward':

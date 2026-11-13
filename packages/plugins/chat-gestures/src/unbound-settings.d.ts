@@ -148,6 +148,12 @@ declare module '@unbound-app/settings' {
 		 */
 		swipe: "discord" | "replyOrEdit" | "reply" | "react" | "forward" | "save" | "copy" | "delete" | "nothing";
 		/**
+		 * Open keyboard after reply or edit
+		 *
+		 * Puts the cursor in the message box when a gesture starts a reply or an edit.
+		 */
+		openKeyboard: boolean;
+		/**
 		 * Reaction emoji
 		 *
 		 * An emoji such as 👍, or a custom one as <:name:id>.
@@ -174,6 +180,12 @@ declare module '@unbound-app/settings' {
 		 */
 		"swipe": "discord" | "replyOrEdit" | "reply" | "react" | "forward" | "save" | "copy" | "delete" | "nothing";
 		/**
+		 * Open keyboard after reply or edit
+		 *
+		 * Puts the cursor in the message box when a gesture starts a reply or an edit.
+		 */
+		"openKeyboard": boolean;
+		/**
 		 * Reaction emoji
 		 *
 		 * An emoji such as 👍, or a custom one as <:name:id>.
@@ -190,7 +202,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = never;
+	export type BooleanSettingKey = "openKeyboard";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

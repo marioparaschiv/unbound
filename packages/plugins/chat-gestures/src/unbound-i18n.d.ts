@@ -45,6 +45,10 @@ declare module '@unbound-app/i18n' {
 		readonly DELETE: string;
 		/** Chat Gestures */
 		readonly PLUGIN: string;
+		/** Open keyboard after reply or edit */
+		readonly OPEN_KEYBOARD: string;
+		/** Puts the cursor in the message box when a gesture starts a reply or an edit. */
+		readonly OPEN_KEYBOARD_SUBTITLE: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
