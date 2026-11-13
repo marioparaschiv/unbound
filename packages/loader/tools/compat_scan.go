@@ -38,6 +38,7 @@ type compatTarget struct {
 	dex       *dexIndex
 	sdk       *iosSDKIndex
 	framework *javaFrameworkIndex
+	system    *objcIndex
 	own       *javaFrameworkIndex
 	shapes    map[string]discordShape
 	resources *androidResources
@@ -82,6 +83,8 @@ func runCompatScan(args []string) error {
 	sourceURL := set.String("source-url", "", "base URL linking report locations to the source")
 	iosSDK := set.String("ios-sdk", "", "iPhoneOS SDK path (found with xcrun when empty)")
 	androidJar := set.String("android-jar", "", "android.jar from the Android SDK (found under ANDROID_HOME when empty)")
+	androidFramework := set.String("android-framework", "", "a full Android framework jar with its hidden classes (Robolectric's android-all, downloaded into --cache when empty)")
+	iosRuntime := set.String("ios-runtime", "", "an iOS simulator RuntimeRoot, for the private classes and selectors iOS ships (found under CoreSimulator when empty)")
 	failOnBreakage := set.Bool("fail-on-breakage", false, "exit with an error when anything is broken or possibly broken")
 	cache := set.String("cache", defaultCompatCache(), "where --channel keeps the Discord builds it downloads")
 	if err := set.Parse(args); err != nil {
@@ -136,6 +139,16 @@ func runCompatScan(args []string) error {
 		} else {
 			fmt.Fprintln(os.Stderr, "compat-scan: no iOS SDK found, members Discord inherits from UIKit stay unverified")
 		}
+		if *iosRuntime == "" {
+			*iosRuntime = discoverIOSRuntime()
+		}
+		if *iosRuntime != "" {
+			if target.system, err = loadIOSRuntimeIndex(*iosRuntime, *cache); err != nil {
+				return fmt.Errorf("iOS runtime: %w", err)
+			}
+		} else {
+			fmt.Fprintln(os.Stderr, "compat-scan: no iOS simulator runtime found, private iOS classes and selectors stay unverified")
+		}
 		targets = append(targets, target)
 	}
 	if len(apks) > 0 {
@@ -153,6 +166,19 @@ func runCompatScan(args []string) error {
 		} else {
 			fmt.Fprintln(os.Stderr, "compat-scan: no android.jar found, members Discord inherits from Android stay unverified")
 		}
+		if *androidFramework == "" {
+			if *androidFramework, err = cachedAndroidFramework(context.Background(), *cache); err != nil {
+				return fmt.Errorf("Android framework: %w", err)
+			}
+		}
+		hidden, err := loadJavaFrameworkIndex(*androidFramework)
+		if err != nil {
+			return fmt.Errorf("Android framework: %w", err)
+		}
+		if target.framework == nil {
+			target.framework = newJavaFrameworkIndex()
+		}
+		mergeJavaFrameworkIndex(target.framework, hidden)
 		if target.own, err = loadOwnJavaIndex(*root); err != nil {
 			return fmt.Errorf("loader sources: %w", err)
 		}

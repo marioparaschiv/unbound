@@ -24,7 +24,7 @@ func evaluateObjCReference(reference *compatReference, target *compatTarget, see
 	key := reference.key()
 	switch reference.Kind {
 	case referenceObjCClass:
-		if objc.Classes[reference.Name] != nil || sdk != nil && sdk.hasClass(reference.Name) {
+		if objc.Classes[reference.Name] != nil || sdk != nil && sdk.hasClass(reference.Name) || target.system != nil && target.system.Classes[reference.Name] != nil {
 			return compatOK, "", true
 		}
 		if reason, ok := compatEnvironmentClasses[reference.Name]; ok {
@@ -39,7 +39,7 @@ func evaluateObjCReference(reference *compatReference, target *compatTarget, see
 		return compatUnverified, "class `" + reference.Name + "` is not in Discord's binaries, assumed to be a system class", true
 	case referenceObjCMethod:
 		if reference.Class == "" {
-			if objc.Selectors[reference.Name] || sdk != nil && sdk.Selectors[reference.Name] {
+			if objc.Selectors[reference.Name] || sdk != nil && sdk.Selectors[reference.Name] || target.system != nil && target.system.Selectors[reference.Name] {
 				return compatOK, "", true
 			}
 			if reason, ok := compatEnvironmentSelectors[reference.Name]; ok {
@@ -55,6 +55,9 @@ func evaluateObjCReference(reference *compatReference, target *compatTarget, see
 			return status, reason, true
 		}
 		if objc.Classes[reference.Class] == nil {
+			if target.systemChainDeclares(reference.Class, reference.Name) {
+				return compatOK, "", true
+			}
 			if sdk == nil || sdk.Classes[reference.Class] == nil {
 				return "", "", true
 			}
@@ -67,7 +70,7 @@ func evaluateObjCReference(reference *compatReference, target *compatTarget, see
 		case objcFound:
 			return compatOK, "", true
 		case objcInheritedExternally:
-			if target.sdkChainDeclares(owner, reference.Name) {
+			if target.sdkChainDeclares(owner, reference.Name) || target.systemChainDeclares(owner, reference.Name) {
 				return compatOK, "", true
 			}
 			if sdk != nil && sdk.Classes[owner] != nil {
@@ -86,7 +89,7 @@ func evaluateObjCReference(reference *compatReference, target *compatTarget, see
 			return compatPossible, "`" + reference.Class + "` does not define `" + reference.Name + "`" + similar, true
 		}
 	case referenceObjCIvar:
-		if objc.Ivars[reference.Name] {
+		if objc.Ivars[reference.Name] || target.system != nil && target.system.Ivars[reference.Name] {
 			return compatOK, "", true
 		}
 		similar := similarNames(reference.Name, setNames(objc.Ivars))

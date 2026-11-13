@@ -903,6 +903,9 @@ func (program *scriptProgram) emitSink(site scriptSite, sink, method string, arg
 	base.Group, base.Alternative, base.Alternatives = file.fallbackAt(site.position)
 	location := site.location()
 	add := func(kind, class, name string, strict bool) {
+		if name == "" {
+			return
+		}
 		reference := base
 		reference.Kind, reference.Class, reference.Name, reference.Strict = kind, class, name, strict
 		program.set.add(reference, location)
