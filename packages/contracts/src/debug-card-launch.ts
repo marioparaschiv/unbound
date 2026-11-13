@@ -27,7 +27,40 @@ export function launchNotes(launch?: DebugCardLaunch): string[] {
 			`first screen ${((launch.firstRenderMs ?? 0) / 1000).toFixed(1)} s`,
 	];
 
-	return notes.filter((note): note is string => typeof note === 'string');
+	return [...notes, ...systemNotes(launch.system)].filter(
+		(note): note is string => typeof note === 'string',
+	);
+}
+
+function counted(count: number | undefined, one: string, many: string): string | undefined {
+	return count ? `${count} ${count === 1 ? one : many}` : undefined;
+}
+
+/**
+ * @description Lists the exits the system forced over the last week, most severe first.
+ * @param system The counts from MetricKit on iOS or exit reasons on Android.
+ * @returns The notes; empty when the system killed nothing.
+ */
+export function systemNotes(system?: DebugCardLaunch['system']): string[] {
+	if (!system) {
+		return [];
+	}
+
+	const longest = system.longestHangMs
+		? ` (longest ${(system.longestHangMs / 1000).toFixed(1)} s)`
+		: '';
+	const hangs = counted(system.hangs, 'hang', 'hangs');
+	const notes = [
+		counted(system.memory, 'out-of-memory kill', 'out-of-memory kills'),
+		counted(system.watchdog, 'watchdog kill', 'watchdog kills'),
+		counted(system.cpu, 'CPU limit kill', 'CPU limit kills'),
+		counted(system.lockedFile, 'locked-file kill', 'locked-file kills'),
+		hangs && `${hangs}${longest}`,
+	];
+
+	return notes
+		.filter((note): note is string => typeof note === 'string')
+		.map((note) => `${note} this week`);
 }
 
 export default launchNotes;

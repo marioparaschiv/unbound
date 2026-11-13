@@ -14,6 +14,8 @@ export const DEBUG_CARD_NETWORKS = ['wifi', 'cellular', 'ethernet', 'other', 'of
 
 const text = (maxLength = 128) => Type.String({ maxLength });
 
+const exitCount = Type.Integer({ minimum: 0, maximum: 10_000 });
+
 const addonCountSchema = Type.Object({
 	enabled: Type.Integer({ minimum: 0, maximum: 100_000 }),
 	installed: Type.Integer({ minimum: 0, maximum: 100_000 }),
@@ -39,6 +41,16 @@ const launchSchema = Type.Object({
 	crashes: Type.Optional(
 		Type.Array(Type.Object({ at: Type.Integer({ minimum: 0 }), crash: text(200) }), {
 			maxItems: 5,
+		}),
+	),
+	system: Type.Optional(
+		Type.Object({
+			memory: Type.Optional(exitCount),
+			watchdog: Type.Optional(exitCount),
+			cpu: Type.Optional(exitCount),
+			lockedFile: Type.Optional(exitCount),
+			hangs: Type.Optional(exitCount),
+			longestHangMs: Type.Optional(Type.Integer({ minimum: 0, maximum: 3_600_000 })),
 		}),
 	),
 });

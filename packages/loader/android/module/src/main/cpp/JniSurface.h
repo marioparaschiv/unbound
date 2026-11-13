@@ -84,6 +84,7 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
     X(crashAlert, "crashAlert", "(" UNBOUND_JNI_STRING ")V")                                       \
     X(stuckLaunch, "stuckLaunch", "(" UNBOUND_JNI_STRING ")V")                                     \
     X(previousExit, "previousExit", "()I")                                                         \
+    X(systemExits, "systemExits", "()" UNBOUND_JNI_STRING)                                         \
     X(deviceState, "deviceState", "()" UNBOUND_JNI_STRING)                                         \
     X(isMeteredNetwork, "isMeteredNetwork", "()Z")                                                 \
     X(updateProgress, "updateProgress", "(Z)V")                                                    \

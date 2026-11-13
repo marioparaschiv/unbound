@@ -13,6 +13,7 @@
 #include "LoaderInjectedLibraries.h"
 #include "LoaderJSON.h"
 #include "LoaderLog.h"
+#include "LoaderSystemExits.h"
 #include "NativePluginBridge.h"
 
 namespace unbound::android {
@@ -537,8 +538,35 @@ void AndroidLoader::stuckLaunch(const std::string &message)
     callStaticVoid(callbacks_.bridgeClass, callbacks_.stuckLaunch, message);
 }
 
+void AndroidLoader::recordSystemExits()
+{
+    nlohmann::json exits = nlohmann::json::parse(
+        callStaticString(callbacks_.bridgeClass, callbacks_.systemExits).value_or("[]"), nullptr,
+        false);
+    if (!exits.is_array())
+    {
+        return;
+    }
+    static const std::map<std::string, loader::system_exits::ExitKind> kinds = {
+        {"memory", loader::system_exits::ExitKind::Memory},
+        {"watchdog", loader::system_exits::ExitKind::Watchdog},
+        {"cpu", loader::system_exits::ExitKind::CPU},
+    };
+    for (const nlohmann::json &exit : exits)
+    {
+        auto kind = kinds.find(exit.value("kind", std::string()));
+        if (kind != kinds.end())
+        {
+            loader::system_exits::recordExit(configuration_.documents,
+                                             exit.value("key", std::string()), kind->second,
+                                             exit.value("at", int64_t{0}));
+        }
+    }
+}
+
 loader::PreviousExit AndroidLoader::previousExit()
 {
+    recordSystemExits();
     switch (callStaticInt(callbacks_.bridgeClass, callbacks_.previousExit).value_or(0))
     {
         case 1:

@@ -122,6 +122,7 @@ function launchOf(launch?: UnboundLaunchReport): DebugInfo['launch'] {
 		pullRequest,
 		lastCheck,
 		settings,
+		system,
 	} = launch;
 
 	return {
@@ -136,6 +137,7 @@ function launchOf(launch?: UnboundLaunchReport): DebugInfo['launch'] {
 		pullRequest,
 		lastCheck,
 		settings,
+		system,
 	};
 }
 
