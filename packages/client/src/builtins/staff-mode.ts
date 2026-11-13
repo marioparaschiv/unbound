@@ -75,9 +75,15 @@ function withStaffMode<T>(operation: () => T): T {
 	}
 }
 
-function refreshStore(Store: MetroExport) {
+function currentUserHandler(Store: MetroExport) {
 	const token = Store.getDispatchToken?.() ?? Store._dispatchToken;
-	const handler = Store._dispatcher?._nodes?.get(token)?.actionHandler?.CURRENT_USER_UPDATE;
+	const nodes = Store._dispatcher?._actionHandlers?._nodes ?? Store._dispatcher?._nodes;
+
+	return nodes?.get(token)?.actionHandler?.CURRENT_USER_UPDATE;
+}
+
+function refreshStore(Store: MetroExport) {
+	const handler = currentUserHandler(Store);
 
 	if (typeof handler === 'function') {
 		withStaffMode(() => handler({ type: 'CURRENT_USER_UPDATE' }));

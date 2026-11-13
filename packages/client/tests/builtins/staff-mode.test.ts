@@ -57,7 +57,7 @@ afterEach(() => {
 });
 
 describe('staff mode', () => {
-	function createStore() {
+	function createStore({ legacyDispatcher = false } = {}) {
 		let isDeveloper = false;
 		let changeCount = 0;
 		const dispatchToken = 'ID_0';
@@ -66,12 +66,13 @@ describe('staff mode', () => {
 			isDeveloper = UserConstants.isStaffEnv(currentUser);
 		}
 
+		const nodes = new Map([
+			[dispatchToken, { actionHandler: { CURRENT_USER_UPDATE: currentUserUpdate } }],
+		]);
 		const store: MetroExport = {
-			_dispatcher: {
-				_nodes: new Map([
-					[dispatchToken, { actionHandler: { CURRENT_USER_UPDATE: currentUserUpdate } }],
-				]),
-			},
+			_dispatcher: legacyDispatcher
+				? { _nodes: nodes }
+				: { _actionHandlers: { _nodes: nodes } },
 			getDispatchToken: () => dispatchToken,
 			initialize() {
 				Object.defineProperty(this, 'isDeveloper', {
@@ -115,6 +116,18 @@ describe('staff mode', () => {
 			type: 'developer',
 			name: 'discord_dev_testing',
 		});
+	});
+
+	test('refreshes a store on the older dispatcher, which keeps its nodes on the dispatcher itself', () => {
+		const store = createStore({ legacyDispatcher: true });
+
+		store.initialize();
+		start();
+		loaded?.(store);
+		enabled = true;
+		settingChanged?.();
+
+		expect(store.isDeveloper).toBe(true);
 	});
 
 	test('refreshes the initialized store when the setting changes', () => {
