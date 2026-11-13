@@ -2,6 +2,7 @@ import { CONTROLLER_ENDPOINT_MARKER, DEFAULT_BRIDGE_PORT } from '@unbound-app/de
 import type { CommandContext } from '@unbound-app/debugger-protocol/registry';
 import { ControllerClient } from '@unbound-app/debugger-protocol/controller';
 
+import { ensureBridge } from '~/lib/bridge-process';
 import { defaulted, Type } from '~/lib/schema';
 
 /** The `port` field of every command that talks to the bridge; the CLI adapter dials the port it holds. */
@@ -10,7 +11,10 @@ export const bridgePortField = defaulted(
 	DEFAULT_BRIDGE_PORT,
 );
 
-/** How long a one-shot command waits for the bridge to report a device before giving up. */
+/**
+ * How long a one-shot command waits for the bridge to report a device before giving up. Covers
+ * starting the bridge and the device's next dial, which it retries every 500ms: under a second.
+ */
 const DEVICE_WAIT_TIMEOUT_MS = 2_000;
 
 const DEVICE_WAIT_POLL_MS = 50;
@@ -28,7 +32,8 @@ export type LazyContext = CommandContext & {
 /**
  * @description Builds a {@link LazyContext} whose controller dials the bridge on the given port on
  * first access to `client`, attaching as a controller through the shared endpoint marker rather than
- * as a device. Commands that never read `client` never connect.
+ * as a device. Each dial starts the bridge first when none listens. Commands that never read
+ * `client` never connect.
  * @param port The port the bridge listens on.
  * @returns A context that connects on demand.
  */
@@ -43,7 +48,7 @@ export function createContext(port: number): LazyContext {
 				return client;
 			}
 
-			client = new ControllerClient(url);
+			client = new ControllerClient(url, { beforeConnect: () => ensureBridge(port) });
 			client.connect();
 
 			return client;

@@ -15,10 +15,10 @@ afterEach(() => {
 	for (const bridge of bridges.splice(0)) void bridge.server.stop(true);
 });
 
-function fakeBridge(): FakeBridge {
+function fakeBridge(port = 0): FakeBridge {
 	const requests: EvalRequest[] = [];
 	const server = Bun.serve({
-		port: 0,
+		port,
 		fetch(request, server) {
 			return server.upgrade(request) ? void 0 : new Response(null, { status: 400 });
 		},
@@ -53,6 +53,26 @@ async function connectedClient(bridge: FakeBridge): Promise<ControllerClient> {
 
 	return client;
 }
+
+describe('ControllerClient.connect', () => {
+	test('dials only once beforeConnect has started the bridge', async () => {
+		const reserved = fakeBridge();
+		const port = Number(reserved.server.port);
+
+		await reserved.server.stop(true);
+
+		const client = new ControllerClient(`ws://127.0.0.1:${port}`, {
+			beforeConnect: async () => void fakeBridge(port),
+		});
+
+		clients.push(client);
+		client.connect();
+		// Well under the 1s reconnect delay, so only a first dial that waited for the hook connects.
+		await Bun.sleep(300);
+
+		expect(client.isDeviceConnected).toBe(true);
+	});
+});
 
 describe('ControllerClient.evaluate', () => {
 	test('sends the requested timeout to the bridge', async () => {

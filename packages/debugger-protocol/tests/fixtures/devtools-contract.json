@@ -1,6 +1,8 @@
 {
 	"defaultBridgePort": 9090,
 	"controllerEndpointMarker": "mcp",
+	"serveBridgeCommand": "serve-bridge",
+	"bridgeService": { "type": "_unbound-bridge._tcp", "protocol": "1" },
 	"addressSetting": { "store": "unbound", "key": "debugger.address" },
 	"frames": {
 		"evalRequest": { "type": "eval", "id": "eval-1", "code": "1 + 1", "timeout": 5000 },
@@ -23,6 +25,19 @@
 			}
 		},
 		"deviceDisconnected": { "type": "device-status", "connected": false },
+		"bridgeInfo": {
+			"type": "bridge-info",
+			"code": "4821",
+			"address": "192.168.1.20:9090",
+			"advertising": true
+		},
+		"bridgeInfoBlocked": {
+			"type": "bridge-info",
+			"code": "4821",
+			"address": "192.168.1.20:9090",
+			"advertising": false,
+			"error": "Nothing was announced on Wi-Fi. A firewall or VPN is likely blocking mDNS: allow UDP port 5353."
+		},
 		"viewsRequest": {
 			"type": "views-request",
 			"id": "views-1",

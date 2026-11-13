@@ -4,6 +4,9 @@ import { describe, expect, test } from 'bun:test';
 
 import {
 	CONTROLLER_ENDPOINT_MARKER,
+	SERVE_BRIDGE_COMMAND,
+	BRIDGE_SERVICE_PROTOCOL,
+	BRIDGE_SERVICE_TYPE,
 	DEFAULT_BRIDGE_PORT,
 	DEFAULT_EVAL_TIMEOUT_MS,
 	MAX_EVAL_TIMEOUT_MS,
@@ -246,9 +249,14 @@ describe('resolveEvalTimeout', () => {
 // The DevTools app (`apps/devtools/crates/core/src/bridge.rs`) reads the same fixture, so a change on
 // either side of the wire fails one of the two suites.
 describe('the DevTools contract', () => {
-	test('names the default port and the controller marker', () => {
+	test('names the default port, the controller marker and the bridge command', () => {
 		expect(contract.defaultBridgePort).toBe(DEFAULT_BRIDGE_PORT);
 		expect(contract.controllerEndpointMarker).toBe(CONTROLLER_ENDPOINT_MARKER);
+		expect(contract.serveBridgeCommand).toBe(SERVE_BRIDGE_COMMAND);
+		expect(contract.bridgeService).toEqual({
+			type: BRIDGE_SERVICE_TYPE,
+			protocol: BRIDGE_SERVICE_PROTOCOL,
+		});
 	});
 
 	test('holds frames the protocol accepts unchanged', () => {

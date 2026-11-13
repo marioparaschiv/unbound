@@ -27,6 +27,11 @@ type AddonPush = {
 
 const RECONNECT_DELAY_MS = 1_000;
 
+type ControllerOptions = {
+	/** Runs before every dial, such as starting the bridge when none listens; the dial waits for it. */
+	beforeConnect?: () => Promise<unknown>;
+};
+
 export class ControllerClient {
 	private ws: WebSocket | null = null;
 	/** Each pending eval keeps the console output seen since its dispatch, so side effects surface too. */
@@ -36,13 +41,30 @@ export class ControllerClient {
 	private deviceInfo: DeviceInfo | undefined;
 	private closed = false;
 	private readonly url: string;
+	private readonly beforeConnect: (() => Promise<unknown>) | undefined;
 
-	constructor(url: string) {
+	constructor(url: string, { beforeConnect }: ControllerOptions = {}) {
 		this.url = url;
+		this.beforeConnect = beforeConnect;
 	}
 
 	/** @description Opens the socket and keeps it open, reconnecting on drop until {@link close}d. */
 	connect() {
+		if (this.closed) return;
+
+		if (!this.beforeConnect) {
+			this.open();
+
+			return;
+		}
+
+		// A failed hook still dials, so the reconnect loop keeps running.
+		void this.beforeConnect()
+			.catch(() => void 0)
+			.then(() => this.open());
+	}
+
+	private open() {
 		if (this.closed) return;
 
 		this.ws = new WebSocket(this.url);
