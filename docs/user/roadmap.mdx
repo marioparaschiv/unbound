@@ -14,19 +14,14 @@ Numbers link to the pull request or issue.
 
 | Feature | Status |
 | --- | --- |
-| Android Manager app that installs the patched Discord or Xposed module, and updates them and itself in the background ([#331](https://github.com/marioparaschiv/unbound/pull/331), [#334](https://github.com/marioparaschiv/unbound/pull/334), [#339](https://github.com/marioparaschiv/unbound/pull/339), [#343](https://github.com/marioparaschiv/unbound/pull/343)) | <Icon icon='clock' color='#E6A700' label='In progress' /> In progress |
-| Every iOS feature on Android | <Icon icon='clock' color='#E6A700' label='In progress' /> In progress |
-| Theme editor with live preview in Discord ([#340](https://github.com/marioparaschiv/unbound/pull/340)) | <Icon icon='clock' color='#E6A700' label='In progress' /> In progress |
-| Keep settings and plugin data across uninstalls ([#51](https://github.com/marioparaschiv/unbound/issues/51)) | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
+| Theme editor with live preview in Discord ([#66](https://github.com/marioparaschiv/unbound/issues/66), [#340](https://github.com/marioparaschiv/unbound/pull/340)) | <Icon icon='clock' color='#E6A700' label='In progress' /> In progress |
 | Adjust corner radius, spacing and other design details without a theme ([#35](https://github.com/marioparaschiv/unbound/issues/35)) | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
-| Translations | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
 
 ### For Developers
 
 | Feature | Status |
 | --- | --- |
 | Typed native calls, such as `UIKit.UIView.animate()`, instead of string class and method names | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
-| Desktop debugger app | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
 | Metro cache viewer on the **Developer** page ([#31](https://github.com/marioparaschiv/unbound/issues/31)) | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
 | `.help` and `.clearhistory` in the terminal debugger | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
 
@@ -34,11 +29,11 @@ Numbers link to the pull request or issue.
 
 | Area | What works |
 | --- | --- |
-| [Addons](/docs/user/marketplace) | Marketplace for plugins, themes and icon packs, with addon pages. Install older versions, from the website or a manifest URL. Libraries install with their plugin and stay hidden. Official plugins such as Chat Bubbles, Avatar Radius, Message Logger and Translate |
+| [Addons](/docs/user/marketplace) | Marketplace for plugins, themes and icon packs, with addon pages. Install older versions, from the website or a manifest URL. Libraries install with their plugin and stay hidden. Sort by popularity or newest. Official plugins such as Chat Bubbles, Avatar Radius, Message Logger and Translate, plus ports of Vencord plugins |
 | [Updates](/docs/user/updating) | Unbound updates in the background for the next launch. Addons update at startup, or by hand with changelogs. New app versions show on **Updates** |
-| [Customization](/docs/user/fonts) | Themes that reach native screens, icon packs, fonts, configurable toasts, Discord's staff settings, and slash commands such as `/reload`, `/recovery` and `/debug` |
-| [Account and Sync](/docs/user/sync) | Discord sign-in. Two-way, download-only or upload-only sync, with a merge choice for new devices. Delete cloud data. $5 a month sponsor badge and role |
-| [Recovery](/docs/user/troubleshooting) | Toolbox by shake or three fingers. Recovery Mode, also from the app icon shortcut. Auto-disable for plugins that crash two launches in a row or freeze. A recovery screen when a screen fails to draw. **Report Bug**. A warning when Discord is older than supported |
+| [Customization](/docs/user/fonts) | Themes that reach native screens, icon packs, fonts including WOFF2 and variable fonts, configurable toasts, Discord's staff settings, and slash commands such as `/reload`, `/recovery` and `/debug`. Unbound speaks every language Discord does |
+| [Account and Sync](/docs/user/sync) | Discord sign-in. Two-way, download-only or upload-only sync, with a merge choice for new devices, so addons and settings return after a reinstall. Delete cloud data. Sponsor badge for $5 a month or $30 once, and a sponsor role while sponsoring |
+| [Recovery](/docs/user/troubleshooting) | Toolbox by shake or three fingers. Recovery Mode, also from the app icon shortcut. Auto-disable for plugins that crash two launches in a row or freeze, turned back on after they update. The Toolbox opens when Discord never draws. A recovery screen when a screen fails to draw. **Report Bug**. A warning when Discord is older than supported |
 | [Privacy](/docs/user/privacy) | Discord analytics blocked. Crash reports opt-in, never with your account. Plugins ask before calling native code. Unbound updates are signature-checked |
 | [iOS Extensions](/docs/user/ios-extensions) | Open Discord links from Safari, share to Discord, passkey login through Safari, Unbound app icon (sideloaded) |
 
@@ -62,7 +57,7 @@ Unbound also builds on Discord's test versions: TestFlight on iOS, Google Play b
 - Components refresh in place without a restart.
 - A `ubd` push is tagged **Dev copy**, skips update checks, and reinstalls from the Marketplace in one tap.
 - The CLI runs code, reads logs and inspects native views. Its MCP server gives AI clients the same.
-- [Debugger](/docs/developer/tools/debugger): terminal REPL inside Discord. Unbound DevTools: desktop React DevTools for macOS, Windows and Linux.
+- [Debugger](/docs/developer/tools/debugger): terminal REPL inside Discord. Unbound DevTools: desktop app for macOS, Windows and Linux with React DevTools, a native view tree, a class explorer and the `ubd` commands.
 - **Developer Mode** adds the debugger, React DevTools, the Asset Browser and a custom bundle URL.
 - Guides for plugins, themes and icon packs, plus an SDK reference per package version.
 
