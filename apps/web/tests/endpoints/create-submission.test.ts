@@ -425,10 +425,15 @@ describe('rate limiting', () => {
 			const { headers } = await signUp(limited.ctx);
 
 			await accepted(await submit(headers, commitAddon('rate.one').request, limited.ctx));
+			limited.advance(60_000);
 			await accepted(await submit(headers, commitAddon('rate.two').request, limited.ctx));
 
 			const response = await submit(headers, commitAddon('rate.three').request, limited.ctx);
 
+			// A slot frees when the first submission, a minute old, leaves the window.
+			expect(response.headers.get('Retry-After')).toBe(
+				String(limited.ctx.env.SUBMISSION_RATE_LIMIT_WINDOW_SECONDS - 60),
+			);
 			expect(await refused(response)).toEqual({ status: 429, code: 'rate_limited' });
 
 			limited.advance(limited.ctx.env.SUBMISSION_RATE_LIMIT_WINDOW_SECONDS * 1000 + 1);

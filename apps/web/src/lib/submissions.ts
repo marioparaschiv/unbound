@@ -9,8 +9,8 @@ import type { ListRepositoryAddonsResponse } from '@unbound-app/contracts/source
 import type { SubmissionPreviewResponse } from '@unbound-app/contracts/review';
 import { openSubmissionStatusSchema } from '@unbound-app/contracts/publish';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
+import { and, count, eq, gte, inArray, min, ne } from 'drizzle-orm';
 import { MAX_SUBMISSION_TAGS } from '@unbound-app/contracts/tags';
-import { and, count, eq, gte, inArray, ne } from 'drizzle-orm';
 
 import { readSubmissionMaintainers, requireSubmissionMaintainers } from '~/lib/maintainers';
 import { addonMaintainer, addonVersion, submission, submissionSource } from '~/db/schema';
@@ -132,15 +132,21 @@ export function toSubmission(row: SourcedSubmissionRow): Submission {
 }
 
 async function checkRateLimit(ctx: AppContext, userId: string, now: Date) {
-	const since = new Date(now.getTime() - ctx.env.SUBMISSION_RATE_LIMIT_WINDOW_SECONDS * 1000);
+	const windowMs = ctx.env.SUBMISSION_RATE_LIMIT_WINDOW_SECONDS * 1000;
+	const since = new Date(now.getTime() - windowMs);
 	const [recent] = await ctx.db
-		.select({ total: count() })
+		.select({ total: count(), oldest: min(submission.createdAt) })
 		.from(submission)
 		.where(and(eq(submission.authorId, userId), gte(submission.createdAt, since)));
 
-	if (recent && recent.total >= ctx.env.SUBMISSION_RATE_LIMIT_MAX) {
-		throw new ApiError('rate_limited', 'Too many submissions. Try again later.');
-	}
+	if (!recent?.oldest || recent.total < ctx.env.SUBMISSION_RATE_LIMIT_MAX) return;
+
+	// A slot frees once the oldest submission in the window leaves it.
+	const retryAfterSeconds = (recent.oldest.getTime() + windowMs - now.getTime()) / 1000;
+
+	throw new ApiError('rate_limited', 'Too many submissions. Try again later.', {
+		retryAfterSeconds,
+	});
 }
 
 async function checkAccountAge(ctx: AppContext, userId: string, now: Date) {

@@ -27,7 +27,8 @@ export type BudgetedRateLimit = {
 
 /**
  * @description Counts a request against a fixed window in the `rate_limit` table Better Auth also
- * stores its limits in, failing with `rate_limited` once the window's budget is spent. One upsert.
+ * stores its limits in, failing with `rate_limited` and the seconds until the window resets once its
+ * budget is spent. One upsert.
  * @param ctx The application context.
  * @param options The bucket key, window length and request budget.
  * @returns Resolves when the request is within budget.
@@ -38,7 +39,7 @@ export async function consumeRateLimit(ctx: AppContext, options: RateLimitOption
 	const expired = sql`${rateLimit.lastRequest} <= ${windowStart}`;
 
 	// ON CONFLICT DO UPDATE locks the key's row, so concurrent requests count one after another.
-	const { count } = one(
+	const { count, lastRequest } = one(
 		await ctx.db
 			.insert(rateLimit)
 			.values({ id: Bun.randomUUIDv7(), key: options.key, count: 1, lastRequest: now })
@@ -49,12 +50,17 @@ export async function consumeRateLimit(ctx: AppContext, options: RateLimitOption
 					lastRequest: sql`case when ${expired} then ${now} else ${rateLimit.lastRequest} end`,
 				},
 			})
-			.returning({ count: rateLimit.count }),
+			.returning({ count: rateLimit.count, lastRequest: rateLimit.lastRequest }),
 	);
 
-	if (count > options.max) {
-		throw new ApiError('rate_limited', 'Too many requests. Try again later.');
-	}
+	if (count <= options.max) return;
+
+	// `lastRequest` holds the window's start, so the window resets one length after it.
+	const retryAfterSeconds = (lastRequest + options.windowSeconds * 1000 - now) / 1000;
+
+	throw new ApiError('rate_limited', 'Too many requests. Try again later.', {
+		retryAfterSeconds,
+	});
 }
 
 /**

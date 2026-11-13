@@ -37,14 +37,23 @@ const API_ERROR_STATUS: Record<ApiErrorCode, number> = {
 	internal_error: 500,
 };
 
+export type ApiErrorOptions = {
+	/** Whole seconds until a retry can succeed, sent as `Retry-After`. */
+	retryAfterSeconds?: number;
+};
+
 /** A failure a `/api/v1` handler reports to the caller; its HTTP status is derived from the code. */
 export class ApiError extends Error {
+	public readonly retryAfterSeconds: number | undefined;
+
 	constructor(
 		public readonly code: ApiErrorCode,
 		message: string,
+		{ retryAfterSeconds }: ApiErrorOptions = {},
 	) {
 		super(message);
 		this.name = 'ApiError';
+		this.retryAfterSeconds = retryAfterSeconds;
 	}
 
 	get status(): number {
@@ -54,7 +63,12 @@ export class ApiError extends Error {
 	toResponse(): Response {
 		const body: ApiErrorResponse = { error: { code: this.code, message: this.message } };
 
-		return Response.json(body, { status: this.status });
+		const headers: HeadersInit =
+			this.retryAfterSeconds === undefined
+				? {}
+				: { 'Retry-After': String(Math.max(1, Math.ceil(this.retryAfterSeconds))) };
+
+		return Response.json(body, { status: this.status, headers });
 	}
 }
 
