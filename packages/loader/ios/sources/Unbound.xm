@@ -5,6 +5,7 @@
 #import <jsi/jsi.h>
 
 #import "AddonsCore.h"
+#import "BackgroundDownloads.h"
 #import "CoreBridge.h"
 #import "CoreConversions.h"
 #import "Discord.h"
@@ -225,6 +226,19 @@ public:
              const loader::DownloadPolicy             &policy) override
     {
         return UnboundDownload(url, destination, headers, policy);
+    }
+
+    void continueDownloadInBackground(const std::string &url, const std::string &destination,
+                                      const std::map<std::string, std::string> &headers) override
+    {
+        NSMutableDictionary *requestHeaders = [NSMutableDictionary dictionary];
+        for (const auto &[key, value] : headers)
+        {
+            requestHeaders[toNSString(key)] = toNSString(value);
+        }
+        [BackgroundDownloads.shared continueDownload:[NSURL URLWithString:toNSString(url)]
+                                                  to:toNSString(destination)
+                                             headers:requestHeaders];
     }
 
     bool isServing(const std::string &url, double timeoutSeconds) override
@@ -523,6 +537,7 @@ static void prepareLoading(id instance)
                    ^{ [CoreBridge prescanAddons]; });
 
     watchNetworkCost();
+    [BackgroundDownloads handleAppEvents];
 
     // Returning after a while checks for a newer bundle; long sessions otherwise never see one.
     [[NSNotificationCenter defaultCenter]

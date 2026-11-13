@@ -69,6 +69,10 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
     X(download, "download",                                                                        \
       "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING "[" UNBOUND_JNI_STRING "[" UNBOUND_JNI_STRING      \
       "III)[" UNBOUND_JNI_STRING)                                                                  \
+    X(continueDownloadInBackground, "continueDownloadInBackground",                                \
+      "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING UNBOUND_JNI_STRING ")V")                           \
+    X(collectBackgroundDownload, "collectBackgroundDownload",                                      \
+      "(" UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING)                                               \
     X(devServerHost, "devServerHost", "()" UNBOUND_JNI_STRING)                                     \
     X(isServing, "isServing", "(" UNBOUND_JNI_STRING "I)Z")                                        \
     X(installHomeScreenIcon, "installHomeScreenIcon",                                              \
