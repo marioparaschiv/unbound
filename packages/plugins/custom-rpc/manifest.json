@@ -1,0 +1,33 @@
+{
+	"id": "unbound.custom-rpc",
+	"name": "Custom RPC",
+	"description": "Shows a Rich Presence of your own on your profile: any name, text, images, timer and buttons.",
+	"authors": [
+		{
+			"name": "Captain",
+			"id": "347366054806159360"
+		},
+		{
+			"name": "AutumnVN",
+			"id": "393694671383166998"
+		},
+		{
+			"name": "nin0dev",
+			"id": "1395533040914141235"
+		},
+		{
+			"name": "c0nnorgg",
+			"id": "1088882977985003620"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "GlobeEarthIcon",
+	"main": "index.tsx"
+}
