@@ -1,11 +1,12 @@
 import type {
+	AddonRename,
 	UpdateReason,
 	UpdatesRequest,
 	UpdatesResponse,
 	VersionChangelog,
 } from '@unbound-app/contracts/updates';
 import { getArtifactKeys, getCdnUrl } from '@unbound-app/contracts/version-layout';
-import { and, desc, eq, gt, inArray, isNotNull, lte, or } from 'drizzle-orm';
+import { and, desc, eq, gt, inArray, isNotNull, lte, or, sql } from 'drizzle-orm';
 import { MAX_UPDATE_CHANGELOGS } from '@unbound-app/contracts/updates';
 
 import { isListedAddon, isLiveVersion } from '~/lib/addon-visibility';
@@ -180,12 +181,49 @@ async function withdrawnInstalls(
  * @param request The client version and installed addons.
  * @returns The available updates.
  */
+/**
+ * @description Finds the listed addons whose newest live manifest `replaces` an installed id that is no longer listed itself.
+ * @param ctx The application context.
+ * @param retired The installed ids with no live listed version.
+ * @returns Each retired id with the addon that replaces it.
+ */
+export async function findRenames(ctx: AppContext, retired: string[]): Promise<AddonRename[]> {
+	if (retired.length === 0) {
+		return [];
+	}
+
+	const rows = await ctx.db
+		.selectDistinctOn([addonVersion.addonId], {
+			addonId: addonVersion.addonId,
+			manifest: addonVersion.manifest,
+		})
+		.from(addonVersion)
+		.innerJoin(addon, eq(addon.id, addonVersion.addonId))
+		.where(
+			and(
+				isLiveVersion(),
+				isListedAddon(),
+				isNotNull(sql`${addonVersion.manifest}->'replaces'`),
+			),
+		)
+		.orderBy(addonVersion.addonId, desc(addonVersion.versionKey));
+
+	return retired.flatMap((from) => {
+		const replacement = rows.find((row) => row.manifest.replaces?.includes(from));
+
+		return replacement ? [{ from, to: replacement.addonId }] : [];
+	});
+}
+
+/**
+ *
+ */
 export async function findUpdates(
 	ctx: AppContext,
 	request: UpdatesRequest,
 ): Promise<UpdatesResponse> {
 	if (request.addons.length === 0) {
-		return { updates: [] };
+		return { updates: [], renamed: [] };
 	}
 
 	const installed = new Map(
@@ -193,6 +231,11 @@ export async function findUpdates(
 	);
 	const digests = new Map(request.addons.map((entry) => [entry.id, entry.sha256]));
 	const rows = await newestCompatibleVersions(ctx, request);
+	const listed = new Set(rows.map((row) => row.addonId));
+	const renamed = await findRenames(
+		ctx,
+		request.addons.map((entry) => entry.id).filter((id) => !listed.has(id)),
+	);
 	const newer: UpdateRange[] = [];
 	const moved: InstalledVersion[] = [];
 	const rebuilt = new Set<string>();
@@ -240,7 +283,7 @@ export async function findUpdates(
 	});
 
 	if (offered.length === 0) {
-		return { updates: [] };
+		return { updates: [], renamed };
 	}
 
 	// Keyed by rows the live filters above already chose, so a withdrawn version's changes never leak.
@@ -273,7 +316,7 @@ export async function findUpdates(
 		};
 	});
 
-	return { updates };
+	return { updates, renamed };
 }
 
-export default { newestCompatibleVersions, findUpdates };
+export default { newestCompatibleVersions, findRenames, findUpdates };

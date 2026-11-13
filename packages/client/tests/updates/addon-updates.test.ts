@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 
 import {
 	autoApplies,
+	fetchUpdates,
 	automaticUpdates,
 	buildUpdatesRequest,
 	toPendingUpdates,
@@ -92,7 +93,7 @@ describe('toPendingUpdates', () => {
 				entry('dev.alpha', '1.0.0', 'plugin', 'Alpha'),
 				entry('dev.alpha', '9.0.0', 'theme', 'Shadowed'),
 			],
-			{ updates: [zeta, alpha] },
+			{ updates: [zeta, alpha], renamed: [] },
 		);
 
 		expect(pending).toEqual([
@@ -103,7 +104,10 @@ describe('toPendingUpdates', () => {
 
 	test('drops updates for addons that are no longer installed', () => {
 		expect(
-			toPendingUpdates([entry('dev.alpha')], { updates: [release('dev.gone', '1.1.0')] }),
+			toPendingUpdates([entry('dev.alpha')], {
+				updates: [release('dev.gone', '1.1.0')],
+				renamed: [],
+			}),
 		).toEqual([]);
 	});
 });
@@ -136,8 +140,29 @@ describe('automaticUpdates', () => {
 		};
 		const pending = toPendingUpdates([entry('dev.held'), entry('dev.free')], {
 			updates: [release('dev.held', '2.0.0'), release('dev.free', '2.0.0')],
+			renamed: [],
 		});
 
 		expect(automaticUpdates(pending, () => manager).map(({ id }) => id)).toEqual(['dev.free']);
+	});
+});
+
+describe('fetchUpdates', () => {
+	test('reports the renames of installed addons only', async () => {
+		const reported: unknown[] = [];
+		const request = (async () => ({
+			updates: [],
+			renamed: [
+				{ from: 'dev.old', to: 'dev.new' },
+				{ from: 'dev.missing', to: 'dev.other' },
+			],
+		})) as never;
+
+		await fetchUpdates([entry('dev.old')], {
+			request,
+			onRenamed: (renames) => reported.push(...renames),
+		});
+
+		expect(reported).toEqual([{ from: 'dev.old', to: 'dev.new' }]);
 	});
 });

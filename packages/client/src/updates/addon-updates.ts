@@ -1,4 +1,9 @@
-import type { AddonUpdate, UpdatesRequest, UpdatesResponse } from '@unbound-app/contracts/updates';
+import type {
+	AddonRename,
+	AddonUpdate,
+	UpdatesRequest,
+	UpdatesResponse,
+} from '@unbound-app/contracts/updates';
 import { isAddonId, isSemver } from '@unbound-app/contracts/manifest-patterns';
 import type { Plugin } from '@unbound-app/types';
 
@@ -29,6 +34,7 @@ export type UpdateCheckOptions = {
 	request?: UpdatesClient;
 	/** The client version the server checks each update's minimum against. */
 	clientVersion?: string;
+	onRenamed?: (renames: AddonRename[]) => void;
 };
 
 /** An installed addon as its manager reports it, before its id and version are validated. */
@@ -136,7 +142,11 @@ export function toPendingUpdates(
  */
 export async function fetchUpdates(
 	entries: InstalledEntry[],
-	{ request = createUnboundClient(), clientVersion = CLIENT_VERSION }: UpdateCheckOptions = {},
+	{
+		request = createUnboundClient(),
+		clientVersion = CLIENT_VERSION,
+		onRenamed,
+	}: UpdateCheckOptions = {},
 ): Promise<PendingUpdate[]> {
 	const body = buildUpdatesRequest(entries, clientVersion);
 
@@ -147,6 +157,12 @@ export async function fetchUpdates(
 	const response = await request('POST /api/v1/updates', {
 		body,
 	});
+	const installed = new Set(entries.map((entry) => entry.id));
+	const renamed = (response.renamed ?? []).filter((rename) => installed.has(rename.from));
+
+	if (renamed.length) {
+		onRenamed?.(renamed);
+	}
 
 	return toPendingUpdates(entries, response);
 }

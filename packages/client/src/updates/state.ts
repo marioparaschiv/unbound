@@ -11,8 +11,10 @@ import { checkDiscordBuilds } from '~/updates/discord-builds';
 import type { DiscordBuilds } from '~/updates/discord-builds';
 import type { PendingUpdate } from '~/updates/addon-updates';
 import type { LoaderCheck } from '~/updates/loader-updates';
+import { moveRenamedAddons } from '~/addons/renames';
 import { getLoader } from '~/native/unbound-native';
 import { BUILD_CHANNEL } from '~/core/constants';
+import { install } from '~/marketplace/api';
 import { Manager } from '~/addons/manager';
 
 const logger = createLogger('Updater');
@@ -56,7 +58,9 @@ function checkInstalled(): Promise<PendingUpdate[]> {
 		Manager.for(kind).listInstalled(),
 	);
 
-	return fetchUpdates(entries);
+	return fetchUpdates(entries, {
+		onRenamed: (renames) => void moveRenamedAddons(renames, { install }),
+	});
 }
 
 /**
