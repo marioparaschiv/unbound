@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-13
+
+### Changed
+
+- Each command opens on its own page from the command list, so editing one no longer stretches the list.
+
 ## [1.0.6] - 2026-11-11
 
 ### Changed

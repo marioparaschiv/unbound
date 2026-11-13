@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-13
+
+### Changed
+
+- Ignored users, channels and servers each have their own page. Pick them from a search instead of typing IDs, or paste an ID to see what it names.
+
 ## [1.1.1] - 2026-11-11
 
 ### Changed
