@@ -16,6 +16,14 @@ import { validateNativeBridgeRequirements } from '~/native/capabilities';
 import { announceFreeze, freezeDisables } from '~/addons/freezes';
 import { crashReportAddon } from '~/diagnostics/crash-report';
 import { disableIfCrashed } from '~/addons/crash-disable';
+import {
+	CRASH_HOLDS_KEY,
+	holdAddon,
+	releaseAddon,
+	updatedSinceHold,
+	type CrashHolds,
+} from '~/addons/crash-holds';
+import { show } from '~/toasts/api';
 import { reportCrash } from '~/diagnostics/crash-reports';
 import { beginNativeStop } from '~/native/plugin-context';
 import type { NativeConsents } from '~/native/consent';
@@ -389,6 +397,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 		if (disable) {
 			this.disable(addon);
+			this.holdAfterCrash(addon);
 		}
 
 		announceFreeze(addon, freeze, count, disable, this.logger);
@@ -440,7 +449,45 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	private disableAfterCrash(addon: Addon<I>): boolean {
 		return disableIfCrashed(addon, this.bucket, this.logger, () => {
 			this.select(addon, false);
+			this.holdAfterCrash(addon);
 			void storage.persist();
+		});
+	}
+
+	private crashHolds(): CrashHolds {
+		return this.settings.get<CrashHolds>(CRASH_HOLDS_KEY, {});
+	}
+
+	private holdAfterCrash(addon: Addon<I>): void {
+		this.settings.set(CRASH_HOLDS_KEY, holdAddon(this.crashHolds(), addon));
+	}
+
+	/**
+	 * @description Forgets that a crash or freeze disabled an addon, once the user turns it back on.
+	 * @param id The addon's id.
+	 */
+	protected releaseCrashHold(id: string): void {
+		if (this.crashHolds()[id] === undefined) return;
+
+		this.settings.set(CRASH_HOLDS_KEY, releaseAddon(this.crashHolds(), id));
+	}
+
+	/**
+	 * @description Turns an addon a crash or freeze disabled back on once it updates to another version, and says so.
+	 * @param addon The addon that just updated.
+	 * @returns Settles once it is back on.
+	 */
+	protected async retryAfterUpdate(addon: Addon<I>): Promise<void> {
+		if (!updatedSinceHold(this.crashHolds(), addon)) return;
+
+		this.releaseCrashHold(addon.id);
+		await this.enable(addon);
+		this.logger.info(
+			`Turned ${addon.name} back on: it updated to ${addon.version} since it crashed.`,
+		);
+		show({
+			title: addon.name,
+			content: `Turned ${addon.name} back on: it updated since it crashed Discord.`,
 		});
 	}
 

@@ -52,6 +52,7 @@ export abstract class AddonSelection<I extends object> extends AddonLifecycle<I>
 	private enableNow(resolved: Addon<I>, consented: boolean): void | Promise<void> {
 		try {
 			this.select(resolved, true);
+			this.releaseCrashHold(resolved.id);
 
 			const activating = this.activate(resolved, consented);
 
