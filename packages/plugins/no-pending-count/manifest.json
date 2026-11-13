@@ -1,0 +1,21 @@
+{
+	"id": "unbound.no-pending-count",
+	"name": "No Pending Count",
+	"description": "Hides the red counts for incoming friend requests and message requests.",
+	"authors": [
+		{
+			"name": "amia",
+			"id": "142007603549962240"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "BellSlashIcon",
+	"main": "index.tsx"
+}

@@ -1,0 +1,25 @@
+{
+	"id": "unbound.i-love-spam",
+	"name": "I Love Spam",
+	"description": "Shows messages from users Discord marks as likely spammers instead of hiding them.",
+	"authors": [
+		{
+			"name": "botato",
+			"id": "440990343899643943"
+		},
+		{
+			"name": "nyako",
+			"id": "118437263754395652"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "EyeIcon",
+	"main": "index.tsx"
+}
