@@ -47,6 +47,7 @@ type ScopedUIBridge = {
 };
 
 const Reanimated = findByProps('runOnJS', 'runOnUI');
+const LazyReanimatedModule = findByProps('ReanimatedModule');
 
 // Reanimated version -> the react-native-worklets version it must run on, or undefined when Reanimated carries its own worklets (3.x).
 const SUPPORTED_WORKLET_RUNTIMES = new Map<string, string | undefined>([
@@ -117,6 +118,23 @@ function createUIScope(
 	return factory.createUIScope(paths);
 }
 
+function readReanimatedVersions(): [unknown, unknown] {
+	return [
+		Reflect.get(globalThis, '_REANIMATED_VERSION_JS'),
+		Reflect.get(globalThis, '_REANIMATED_VERSION_CPP'),
+	];
+}
+
+function reanimatedVersionsBuildingItsModule(): [unknown, unknown] {
+	const versions = readReanimatedVersions();
+
+	if (versions[0] !== undefined) return versions;
+
+	void LazyReanimatedModule?.ReanimatedModule;
+
+	return readReanimatedVersions();
+}
+
 function uiRuntime(): ResolvedUIRuntime {
 	const runtime = Reanimated as UIRuntime | undefined;
 
@@ -124,8 +142,7 @@ function uiRuntime(): ResolvedUIRuntime {
 		throw new NativeBridgeUnavailableError('The UI runtime is unavailable.');
 	}
 
-	const version = Reflect.get(globalThis, '_REANIMATED_VERSION_JS');
-	const nativeVersion = Reflect.get(globalThis, '_REANIMATED_VERSION_CPP');
+	const [version, nativeVersion] = reanimatedVersionsBuildingItsModule();
 
 	if (
 		typeof version !== 'string' ||

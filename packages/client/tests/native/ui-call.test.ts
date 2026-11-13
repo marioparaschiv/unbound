@@ -10,9 +10,18 @@ type Scheduled = () => void;
 const completions: Completion[] = [];
 const scheduled: Scheduled[] = [];
 let schedulingFailure: Error | undefined;
+let builtReanimatedVersion: string | undefined;
 
 mockLookups({
 	findByProps: () => ({
+		get ReanimatedModule() {
+			if (builtReanimatedVersion) {
+				Reflect.set(globalThis, '_REANIMATED_VERSION_JS', builtReanimatedVersion);
+				Reflect.set(globalThis, '_REANIMATED_VERSION_CPP', builtReanimatedVersion);
+			}
+
+			return {};
+		},
 		runOnJS: (callback: Completion) => callback,
 		runOnUI: (worklet: () => void) => () => {
 			if (schedulingFailure) {
@@ -38,6 +47,7 @@ afterEach(() => {
 	completions.length = 0;
 	scheduled.length = 0;
 	schedulingFailure = undefined;
+	builtReanimatedVersion = undefined;
 	jest.useRealTimers();
 	jest.restoreAllMocks();
 
@@ -68,6 +78,27 @@ function useReanimated4(worklets = '0.14.0-main') {
 }
 
 describe('UI calls', () => {
+	test("builds Reanimated's native module when a plugin starts before Discord has", () => {
+		Reflect.deleteProperty(globalThis, '_REANIMATED_VERSION_JS');
+		Reflect.deleteProperty(globalThis, '_REANIMATED_VERSION_CPP');
+		builtReanimatedVersion = '3.19.4';
+		const { bridge, dispose } = createScopedUIBridge([], 'android');
+
+		bridge.run(() => {});
+
+		expect(scheduled).toHaveLength(1);
+		dispose();
+	});
+
+	test('still refuses when building the module sets no versions', () => {
+		Reflect.deleteProperty(globalThis, '_REANIMATED_VERSION_JS');
+		Reflect.deleteProperty(globalThis, '_REANIMATED_VERSION_CPP');
+		const { bridge, dispose } = createScopedUIBridge([], 'android');
+
+		expect(() => bridge.run(() => {})).toThrow('JS undefined, native undefined');
+		dispose();
+	});
+
 	test('refuses an unrecognized worklet runtime before scheduling work', () => {
 		Reflect.set(globalThis, '_REANIMATED_VERSION_JS', '4.0.0');
 		Reflect.set(globalThis, '_REANIMATED_VERSION_CPP', '4.0.0');
