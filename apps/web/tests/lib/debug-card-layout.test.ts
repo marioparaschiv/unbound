@@ -122,6 +122,20 @@ describe('debug card', () => {
 		);
 	});
 
+	test('shortens the expiry instead of cutting off an install line that is too long', () => {
+		const long = texts(
+			layoutDebugCard({
+				...info,
+				installDetails: 'Development (`L988J7YMK5`) · expires 2027-11-13',
+			}),
+		);
+		const short = texts(layoutDebugCard(info));
+
+		expect(long.some((run) => run.text.includes('…'))).toBe(false);
+		expect(long.some((run) => run.text.includes('exp 2027-11-13'))).toBe(true);
+		expect(short.some((run) => run.text.includes('expires 2027-09-16'))).toBe(true);
+	});
+
 	test('writes escaped SVG with the same size', () => {
 		const svg = debugCardSvg(layoutDebugCard({ ...info, device: '<iPad & "mini">' }));
 
