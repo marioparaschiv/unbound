@@ -691,6 +691,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/friends-since": {
+      "name": "friends-since",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/gif-paste": {
       "name": "gif-paste",
       "dependencies": {
@@ -869,6 +883,20 @@
         "@unbound-app/cli": "workspace:*",
         "react-native": "^0.86.0",
         "rollup": "^4.66.0",
+      },
+    },
+    "packages/plugins/mutual-group-dms": {
+      "name": "mutual-group-dms",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
       },
     },
     "packages/plugins/new-guild-settings": {
@@ -3014,6 +3042,7 @@
 
     "get-tsconfig": ["get-tsconfig@4.14.3", "", { "dependencies": { "resolve-pkg-maps": "^1.0.0" } }, "sha512-++QEw4DIY7WGoukz+/+A/8dGYPT9l9yIadnmSgZ8Rjr3YVSVDipQSO9CdnJo9ePqFqUUqh+wk9uIaoiAwsiPkA=="],
 
+    "friends-since": ["friends-since@workspace:packages/plugins/friends-since"],
     "gif-paste": ["gif-paste@workspace:packages/plugins/gif-paste"],
 
     "gif-provider-switcher": ["gif-provider-switcher@workspace:packages/plugins/gif-provider-switcher"],
@@ -3544,6 +3573,7 @@
 
     "nerf-dart": ["nerf-dart@1.0.0", "", {}, "sha512-EZSPZB70jiVsivaBLYDCyntd5eH8NTSMOn3rB+HxwdmKThGELLdYv8qVIMWvZEFy9w8ZZpW9h9OB32l1rGtj7g=="],
 
+    "mutual-group-dms": ["mutual-group-dms@workspace:packages/plugins/mutual-group-dms"],
     "new-guild-settings": ["new-guild-settings@workspace:packages/plugins/new-guild-settings"],
 
     "nextgen-events": ["nextgen-events@1.5.3", "", {}, "sha512-P6qw6kenNXP+J9XlKJNi/MNHUQ+Lx5K8FEcSfX7/w8KJdZan5+BB5MKzuNgL2RTjHG1Svg8SehfseVEp8zAqwA=="],
