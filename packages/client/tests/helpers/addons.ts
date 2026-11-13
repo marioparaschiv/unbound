@@ -72,6 +72,8 @@ mock.module('~/storage/api', () => {
 		},
 		getBucket,
 		useBucket,
+		// No Bucket holds a renamed addon's settings, so `renames.ts` has nothing to move.
+		snapshot: () => ({}),
 	};
 });
 
