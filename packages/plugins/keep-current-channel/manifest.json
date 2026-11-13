@@ -17,5 +17,12 @@
 		"min": "3.0.0"
 	},
 	"icon": "ForumIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "0ecb2bcf18f884ce227850505bf2f60beee6070b362e5aeb71e26484fb828ad766e18e27295e44c51408a19ddc33dc680cc8fef0ff155e04cc767aa8c6fec912"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "J9P76y7/djU2Jmk+zIzg8Jxq1Dtt/yW1GIqLxADzZfxlaPX358HNfz4uSGudqNvVXOhsX1OmUkfVM6BNy6AAAg=="
+	}
 }
