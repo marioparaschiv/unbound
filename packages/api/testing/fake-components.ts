@@ -16,9 +16,12 @@ const BAGS = [
 	'Discord',
 	'FlashList',
 	'Forms',
+	'GorhomSheet',
 	'Media',
 	'Portal',
 	'SafeArea',
+	'SafeAreaContext',
+	'TableRowDividers',
 	'Video',
 ] as const;
 
