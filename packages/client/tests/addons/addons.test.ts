@@ -94,6 +94,19 @@ describe('Addons.installListed', () => {
 		expect(manager.isEnabled(ID)).toBe(false);
 	});
 
+	test('an update turns back on an addon a crash disabled at its previous version', async () => {
+		await manager.installListed({ id: ID }, listedVersion('1.0.0'));
+		manager.disable(ID);
+		(
+			manager as unknown as { settings: { set(key: string, value: unknown): void } }
+		).settings.set('crashHolds', { [ID]: '1.0.0' });
+
+		expect(await manager.installListed({ id: ID }, listedVersion('2.0.0'))).toBe(true);
+
+		expect(manager.isEnabled(ID)).toBe(true);
+		expect(manager.getAddon(ID)?.started).toBe(true);
+	});
+
 	test('holds the version when asked, and a later install without a hold releases it', async () => {
 		await manager.installListed({ id: ID }, listedVersion('1.0.0'), { hold: true });
 

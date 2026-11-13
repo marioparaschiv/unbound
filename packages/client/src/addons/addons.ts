@@ -291,6 +291,7 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 
 			this.releaseStaleHold(resolved.id);
 			this.emit('updated', resolved);
+			await this.retryAfterUpdate(resolved);
 
 			return resolved.version === update.version;
 		} catch (error) {
