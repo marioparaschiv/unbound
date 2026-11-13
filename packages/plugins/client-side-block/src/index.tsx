@@ -2,6 +2,7 @@ import { patcher, storage } from '@unbound-app/api';
 
 import { refreshChat } from '~/lib/chat';
 import { patchChatRows } from '~/patches';
+import SettingsPanel from '~/settings';
 
 let stopRefreshing: (() => void) | undefined;
 
@@ -17,3 +18,5 @@ export function stop() {
 	// Shows hidden messages in the open chat again, once `createRow` is no longer patched.
 	refreshChat();
 }
+
+export { SettingsPanel };

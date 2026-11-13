@@ -4,5 +4,10 @@
 	"HIDE_IGNORED": "Hide ignored users",
 	"HIDE_IGNORED_SUBTITLE": "Also hides messages from users you ignore on Discord.",
 	"HIDE_REPLIES": "Hide replies",
-	"HIDE_REPLIES_SUBTITLE": "Hides replies to anyone this plugin hides."
+	"HIDE_REPLIES_SUBTITLE": "Hides replies to anyone this plugin hides.",
+	"ADD_USER": "Add user",
+	"SEARCH_USERS": "Search or paste a user ID",
+	"NO_USERS_FOUND": "No users found",
+	"UNKNOWN_USER": "Unknown user",
+	"REMOVE_USER": "Remove user"
 }

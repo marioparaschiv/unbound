@@ -1,12 +1,7 @@
 import { defineSettings, setting } from '@unbound-app/settings/schema';
 
 export default defineSettings({
-	users: setting.array({
-		title: 'HIDDEN_USERS',
-		subtitle: 'HIDDEN_USERS_SUBTITLE',
-		of: setting.string(),
-		displayAs: 'user',
-	}),
+	users: setting.string({ default: '', hidden: true }),
 	ignored: setting.boolean({
 		default: true,
 		title: 'HIDE_IGNORED',

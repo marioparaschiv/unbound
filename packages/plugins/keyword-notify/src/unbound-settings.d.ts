@@ -155,6 +155,9 @@ declare module '@unbound-app/settings' {
 		 * Ignore bots
 		 */
 		ignoreBots: boolean;
+		ignoreUsers: string;
+		ignoreChannels: string;
+		ignoreGuilds: string;
 	};
 
 	/** Each setting and section by its dot-separated key. */
@@ -183,6 +186,9 @@ declare module '@unbound-app/settings' {
 		 * Ignore bots
 		 */
 		"ignoreBots": boolean;
+		"ignoreUsers": string;
+		"ignoreChannels": string;
+		"ignoreGuilds": string;
 	};
 
 	/** Every setting and section by its dot-separated key; buttons and notices are not settings. */

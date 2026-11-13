@@ -10,4 +10,7 @@ export default defineSettings({
 	caseSensitive: setting.boolean({ default: false, title: 'CASE_SENSITIVE' }),
 	wholeWords: setting.boolean({ default: true, title: 'WHOLE_WORDS' }),
 	ignoreBots: setting.boolean({ default: true, title: 'IGNORE_BOTS' }),
+	ignoreUsers: setting.string({ default: '', hidden: true }),
+	ignoreChannels: setting.string({ default: '', hidden: true }),
+	ignoreGuilds: setting.string({ default: '', hidden: true }),
 });
