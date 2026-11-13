@@ -43,5 +43,6 @@ std::optional<Certificate> signer(const std::string &cms);
 
 std::string anatomyLine(const Anatomy &anatomy, const std::string &bundlePath);
 std::string signerLine(const Certificate &certificate);
+std::string shortIssuer(std::string issuer);
 std::string versionString(uint32_t packed);
 }

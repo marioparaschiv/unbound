@@ -8,7 +8,6 @@
 #import "CoreConversions.h"
 #include "LoaderBinaryAnatomy.h"
 #include "LoaderEnvironmentReport.h"
-#import "Utilities+CodeSignature.h"
 #import "Utilities.h"
 
 using unbound::ios::toStdString;
@@ -79,60 +78,11 @@ static bool supportsIPad()
     return [families isKindOfClass:NSArray.class] && [families containsObject:@2];
 }
 
-static std::vector<std::string> stringsOf(id value)
-{
-    std::vector<std::string> list;
-    if ([value isKindOfClass:NSArray.class])
-    {
-        for (id item in (NSArray *) value)
-        {
-            if ([item isKindOfClass:NSString.class])
-            {
-                list.push_back(toStdString(item));
-            }
-        }
-    }
-    return list;
-}
-
-static std::vector<std::string> bundledExtensions()
-{
-    NSString                *plugIns = NSBundle.mainBundle.builtInPlugInsPath;
-    std::vector<std::string> names;
-    for (NSString *name in [NSFileManager.defaultManager contentsOfDirectoryAtPath:plugIns
-                                                                             error:nil])
-    {
-        if ([name.pathExtension isEqualToString:@"appex"])
-        {
-            names.push_back(toStdString(name.stringByDeletingPathExtension));
-        }
-    }
-    return names;
-}
-
-static report::ResignFacts resignFacts()
-{
-    NSDictionary       *entitlements = [Utilities getApplicationEntitlements];
-    report::ResignFacts facts;
-    facts.bundleIdentifier = toStdString(NSBundle.mainBundle.bundleIdentifier ?: @"");
-    facts.push             = entitlements[@"aps-environment"] != nil;
-    std::vector<std::string> groups =
-        stringsOf(entitlements[@"com.apple.security.application-groups"]);
-    facts.appGroup =
-        std::find(groups.begin(), groups.end(), report::kDiscordAppGroup) != groups.end();
-    facts.keychainGroups     = stringsOf(entitlements[@"keychain-access-groups"]);
-    facts.extensions         = bundledExtensions();
-    facts.expectedExtensions = {"BroadcastUpload", "LockscreenWidget", "NotificationService",
-                                "Share"};
-    return facts;
-}
-
 static report::AppleDeviceFacts deviceFacts()
 {
     report::AppleDeviceFacts facts;
     facts.developerMode = developerMode();
     facts.lockdownMode  = [NSUserDefaults.standardUserDefaults boolForKey:@"LDMGlobalEnabled"];
-    facts.osBuild       = osBuild();
     facts.iPhoneAppOnIPad =
         UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad && !supportsIPad();
     facts.iOSAppOnMac = NSProcessInfo.processInfo.isiOSAppOnMac;
@@ -163,8 +113,12 @@ nlohmann::json UnboundEnvironmentReport()
     static nlohmann::json  cached;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
-        cached           = binaryReport();
-        cached["resign"] = report::resignNotes(resignFacts());
+        cached            = binaryReport();
+        std::string build = osBuild();
+        if (report::isBetaBuild(build))
+        {
+            cached["osBeta"] = build;
+        }
     });
     nlohmann::json environment = cached;
     environment["markers"]     = report::appleMarkers(deviceFacts());

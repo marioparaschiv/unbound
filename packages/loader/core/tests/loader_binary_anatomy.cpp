@@ -78,7 +78,7 @@ void readsLoadCommands()
     assert(anatomy->sdk == "26.1");
     assert(anatomy->dylibs.size() == 3);
     assert(binary::anatomyLine(*anatomy, "/var/containers/Bundle/Application/X/Discord.app") ==
-           "decrypted · min 15.0 · SDK 26.1 · 3 dylibs (1 added) · UUID A0A1A2A3");
+           "decrypted · min 15.0 · SDK 26.1 · 3 dylibs · 1 injected · UUID A0A1A2A3");
 }
 
 void rejectsOtherFiles()
@@ -96,7 +96,14 @@ void findsTheLeafSigner()
     assert(signer->issuerCommonName == "Test Root CA");
     assert(signer->fingerprint == vectors::kSignerFingerprint);
     assert(binary::signerLine(*signer) ==
-           std::string(vectors::kSignerFingerprint) + " · Apple Development · TEAM123456");
+           std::string("sha256 ") + vectors::kSignerFingerprint + " · Test Root CA");
+}
+
+void shortensAppleIssuers()
+{
+    assert(binary::shortIssuer("Apple Worldwide Developer Relations Certification Authority") ==
+           "Apple WWDR CA");
+    assert(binary::shortIssuer("Test Root CA") == "Test Root CA");
 }
 
 void survivesTruncatedSignatures()
@@ -113,6 +120,7 @@ int main()
     readsLoadCommands();
     rejectsOtherFiles();
     findsTheLeafSigner();
+    shortensAppleIssuers();
     survivesTruncatedSignatures();
     return 0;
 }
