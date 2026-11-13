@@ -21,6 +21,7 @@
 #import "LoaderPipeline.h"
 #import "LoaderShared.h"
 #include "LoaderToolbox.h"
+#import "MetricKitReports.h"
 #import "NativePlatform.h"
 #import "NativePluginBridge.h"
 #import "RCTHost.h"
@@ -538,6 +539,7 @@ static void prepareLoading(id instance)
 
     watchNetworkCost();
     [BackgroundDownloads handleAppEvents];
+    [MetricKitReports start];
 
     // Returning after a while checks for a newer bundle; long sessions otherwise never see one.
     [[NSNotificationCenter defaultCenter]

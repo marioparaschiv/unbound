@@ -71,6 +71,7 @@ public:
          download(const std::string &url, const std::string &destination,
                   const std::map<std::string, std::string> &headers,
                   const loader::DownloadPolicy             &policy) override;
+    void recordSystemExits();
     void collectBackgroundDownload(const std::string &destination) override;
     void continueDownloadInBackground(const std::string &url, const std::string &destination,
                                       const std::map<std::string, std::string> &headers) override;
