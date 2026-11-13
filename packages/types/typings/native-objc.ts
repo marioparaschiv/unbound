@@ -226,11 +226,13 @@ export type NativeInspectKind = 'properties' | 'ivars' | 'methods' | 'classMetho
 
 /** One class of an inspected class chain, from the class itself to its root. */
 export type NativeInspectedClass = {
+	/** The class's name. */
 	name: string;
 	/** The superclass's name, or `null` at the root. */
 	superclass: string | null;
 	/** The path of the image that defines the class, or `null` when unknown. */
 	image: string | null;
+	/** The size of an instance, in bytes. */
 	instanceSize: number;
 	/** How many of each kind of member the class itself declares. */
 	counts: Record<NativeInspectKind, number>;
@@ -238,24 +240,33 @@ export type NativeInspectedClass = {
 
 /** One member of a class; fields that do not apply to its kind are omitted. */
 export type NativeInspectedMember = {
+	/** The member's name, or a method's selector. */
 	name: string;
+	/** The kind of member. */
 	kind: NativeInspectKind;
 	/** The decoded type, such as `NSString *` or `CGRect`. */
 	type?: string;
 	/** The declaration, such as `- (void)setFoo:(id)foo`. */
 	signature?: string;
+	/** A method's decoded return type. */
 	returnType?: string;
+	/** A method's decoded parameter types, in order. */
 	parameters?: string[];
 	/** The raw Objective-C type encoding. */
 	encoding?: string;
 	/** Property attributes, such as `nonatomic`, `strong`, `readonly`, `weak`, `copy` or `class`. */
 	attributes?: string[];
+	/** A property's getter selector. */
 	getter?: string;
+	/** A property's setter selector, absent when it is read-only. */
 	setter?: string;
 	/** The instance variable backing a property. */
 	ivar?: string;
+	/** An instance variable's offset in the object, in bytes. */
 	offset?: number;
+	/** An instance variable's size, in bytes. */
 	size?: number;
+	/** The path of the image that defines a method. */
 	image?: string;
 	/** Whether reading the value runs no code (`auto`), runs a getter (`manual`), or is unsafe (`never`). */
 	read: 'auto' | 'manual' | 'never';
@@ -263,7 +274,9 @@ export type NativeInspectedMember = {
 
 /** One value read by `objc.inspectValues`; `text` describes it for display. */
 export type NativeInspectedValue = {
+	/** The member the value was read from. */
 	name: string;
+	/** What the value is; `skipped` was not read and `error` failed to read. */
 	kind:
 		| 'nil'
 		| 'number'
@@ -281,11 +294,13 @@ export type NativeInspectedValue = {
 	text: string;
 	/** A handle to the value, for `kind: 'object'`. */
 	object?: NativeObjectHandle;
+	/** The class of an object or class value. */
 	className?: string;
 };
 
 /** Narrows a page of inspected members, images or classes. */
 export type NativeInspectPage = {
+	/** How many matches to skip. */
 	offset?: number;
 	/** At most 200. */
 	limit?: number;
@@ -294,16 +309,38 @@ export type NativeInspectPage = {
 };
 
 /** One loaded image that defines Objective-C classes. */
-export type NativeInspectedImage = { path: string; name: string; classCount: number };
+export type NativeInspectedImage = {
+	/** The image's path on the device. */
+	path: string;
+	/** The image's file name. */
+	name: string;
+	/** How many classes the image defines. */
+	classCount: number;
+};
 
 /** One page of a class's members of one kind, and how many match in all. */
-export type NativeInspectedMembers = { total: number; members: NativeInspectedMember[] };
+export type NativeInspectedMembers = {
+	/** How many members match in all. */
+	total: number;
+	/** This page's members. */
+	members: NativeInspectedMember[];
+};
 
 /** One page of loaded images, and how many match in all. */
-export type NativeInspectedImages = { total: number; images: NativeInspectedImage[] };
+export type NativeInspectedImages = {
+	/** How many images match in all. */
+	total: number;
+	/** This page's images. */
+	images: NativeInspectedImage[];
+};
 
 /** One page of an image's class names, and how many match in all. */
-export type NativeInspectedClasses = { total: number; classes: string[] };
+export type NativeInspectedClasses = {
+	/** How many classes match in all. */
+	total: number;
+	/** This page's class names. */
+	classes: string[];
+};
 
 /** Options for `objc.inspectValues`. */
 export type NativeInspectValuesOptions = {
