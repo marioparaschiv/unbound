@@ -27,6 +27,10 @@ declare module '@unbound-app/i18n' {
 		readonly RECEIVE_STICKERS: string;
 		/** Turn messages that are only sticker links, yours included, back into stickers. */
 		readonly RECEIVE_STICKERS_SUBTITLE: string;
+		/** Unlock stream quality */
+		readonly STREAM_QUALITY: string;
+		/** Stream in Nitro's resolutions and frame rates, and upload videos in high quality. */
+		readonly STREAM_QUALITY_SUBTITLE: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

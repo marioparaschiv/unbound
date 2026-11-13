@@ -21,6 +21,11 @@ export default defineSettings({
 		title: 'RECEIVE_STICKERS',
 		subtitle: 'RECEIVE_STICKERS_SUBTITLE',
 	}),
+	streamQuality: setting.boolean({
+		default: true,
+		title: 'STREAM_QUALITY',
+		subtitle: 'STREAM_QUALITY_SUBTITLE',
+	}),
 	hyperlinks: setting.boolean({
 		default: true,
 		title: 'HYPERLINKS',
