@@ -19,6 +19,14 @@ declare module '@unbound-app/i18n' {
 		readonly HYPERLINKS: string;
 		/** Sends [name](link) instead of the bare link. */
 		readonly HYPERLINKS_SUBTITLE: string;
+		/** Show received fake emojis */
+		readonly RECEIVE_EMOJIS: string;
+		/** Turn emoji links others sent with Fake Nitro back into emojis. */
+		readonly RECEIVE_EMOJIS_SUBTITLE: string;
+		/** Show received fake stickers */
+		readonly RECEIVE_STICKERS: string;
+		/** Turn messages that are only sticker links back into stickers. */
+		readonly RECEIVE_STICKERS_SUBTITLE: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

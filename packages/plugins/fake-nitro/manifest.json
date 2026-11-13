@@ -1,7 +1,7 @@
 {
 	"id": "unbound.fake-nitro",
 	"name": "Fake Nitro",
-	"description": "Sends emojis and stickers you cannot use without Nitro as image links, like Vencord does.",
+	"description": "Sends emojis and stickers you cannot use without Nitro as image links, like Vencord does, and shows the ones others send as real emojis and stickers.",
 	"authors": [
 		{
 			"name": "ArjixWasTaken",
@@ -40,7 +40,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"unbound": {
 		"min": "3.0.0"
 	},
