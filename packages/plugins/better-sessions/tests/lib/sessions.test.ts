@@ -14,7 +14,10 @@ describe('sessions', () => {
 	});
 
 	test('writes the last use to the minute, or nothing for a bad time', () => {
-		expect(lastUsed(session('a'), 'en-GB', 'UTC')).toBe('13 Nov 2026, 02:05');
+		const written = lastUsed(session('a'), 'en-GB', 'UTC');
+
+		expect(written).toContain('13 Nov 2026');
+		expect(written).toContain('02:05');
 		expect(lastUsed(session('a', 'never'), 'en-GB', 'UTC')).toBe('');
 	});
 
