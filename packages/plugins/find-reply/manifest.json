@@ -1,0 +1,17 @@
+{
+	"id": "unbound.find-reply",
+	"name": "Find Reply",
+	"description": "Jumps from a message to the first reply to it, from its long-press menu.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ic_swipe_reply_24px",
+	"main": "index.tsx"
+}

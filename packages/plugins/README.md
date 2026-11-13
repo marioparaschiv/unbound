@@ -1,6 +1,6 @@
 # Plugins
 
-93 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+94 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -32,6 +32,7 @@
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Fake Profile Themes](https://unbound.rip/addons/unbound.fake-profile-themes): Shows profile theme colors hidden in bios with invisible characters, so anyone can theme their profile without Nitro.
 - <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Favourite Emoji First](https://unbound.rip/addons/unbound.favourite-emoji-first): Puts your favourite emoji first in the emoji suggestions while you type a colon.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [File Size On Picker](https://unbound.rip/addons/unbound.file-size-on-picker): Shows file sizes on media picker thumbnails.
+- <img src="../../assets/plugins/readme-icons/ic-swipe-reply-24px.svg" width="20" height="20" align="absmiddle" alt=""> [Find Reply](https://unbound.rip/addons/unbound.find-reply): Jumps from a message to the first reply to it, from its long-press menu.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Fix GIF Downloads](https://unbound.rip/addons/unbound.fix-gif-download): Save Discord GIFs as GIF files instead of videos.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Fix Youtube Embeds](https://unbound.rip/addons/unbound.fix-youtube-embeds): Plays YouTube videos that are blocked from playing in Discord, such as music videos from UMG, instead of showing an error.
 - <img src="../../assets/plugins/readme-icons/crown-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Force Owner Crown](https://unbound.rip/addons/unbound.force-owner-crown): Always show the owner crown on the server owner's messages.
