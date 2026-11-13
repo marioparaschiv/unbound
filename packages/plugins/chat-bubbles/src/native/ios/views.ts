@@ -432,10 +432,14 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 		}),
 	);
 
-	ui.run(installRowPadding, scope, IOSClass.messageCell, IOSClass.contentView, [
-		BUBBLE_TAG,
-		AVATAR_TAG,
-	]);
+	ui.run(
+		installRowPadding,
+		scope,
+		IOSClass.messageCell,
+		IOSClass.contentView,
+		IOSClass.swipeToReplyView,
+		[BUBBLE_TAG, AVATAR_TAG],
+	);
 	ui.run(installMovedTaps, scope, IOSClass.messageCell);
 
 	async function setRows(next: { rooms: RowRooms; inset: number; below: number }) {

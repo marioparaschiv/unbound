@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.8] - 2026-11-13
+
+### Fixed
+
+- On iOS, bubbles and avatars slide along when you swipe to reply instead of staying behind the message.
+- On iOS, the time and anything after it in the name line, such as platform symbols, no longer pokes out of the bubble; it hides when the line is full.
+
 ## [1.6.7] - 2026-11-13
 
 ### Fixed

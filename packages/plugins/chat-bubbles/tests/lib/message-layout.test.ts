@@ -50,6 +50,7 @@ describe('message layout', () => {
 				name: { x: 68, y: 16, width: 291, height: 22 },
 				nameWidth: 0,
 				time: { x: 283, y: 20, width: 76, height: 17 },
+				timeLabel: 9,
 			},
 		});
 	});
@@ -78,6 +79,19 @@ describe('message layout', () => {
 		expect(messageLayout(reply)?.header).toEqual([14, 6, 3]);
 	});
 
+	test('keeps the time it hid itself, so measuring again does not show it', () => {
+		const hidden = cell.map((entry, index) =>
+			index === 9 ? node(6, 'DCDLabel', [215, 4, 76, 17], '10/21/26, 18:15', false) : entry,
+		);
+
+		expect(messageLayout(hidden)?.heading?.time).toEqual({
+			x: 283,
+			y: 20,
+			width: 76,
+			height: 17,
+		});
+	});
+
 	test('finds the name row, its time and a reply preview with its text', () => {
 		const reply = [
 			...cell,
@@ -93,6 +107,7 @@ describe('message layout', () => {
 			name: { x: 68, y: 16, width: 291, height: 22 },
 			nameWidth: 50,
 			time: { x: 283, y: 20, width: 76, height: 17 },
+			timeLabel: 9,
 			reply: {
 				container: { x: 0, y: 0, width: 375, height: 16 },
 				content: { x: 52, y: 0, width: 300, height: 14 },

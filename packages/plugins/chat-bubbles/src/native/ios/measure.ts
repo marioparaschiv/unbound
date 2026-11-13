@@ -4,7 +4,7 @@ import type { MeasuredHeading } from '~/lib/cell-paint';
 import type { Box } from '~/lib/geometry';
 import type { createMediaCorners } from '~/native/ios/media-corners';
 import type { createMentionHighlight } from '~/native/ios/mention';
-import { messageLayout, type SnapshotNode } from '~/lib/message-layout';
+import { messageLayout, type Heading, type SnapshotNode } from '~/lib/message-layout';
 import { BubbleLayout, Grouping } from '~/lib/constants';
 import { bubbleFrame, cardFrame } from '~/lib/geometry';
 import { separateFrame } from '~/lib/group';
@@ -14,6 +14,7 @@ import { cardPadding, headingMoves } from '~/lib/style';
 import { currentAppearance } from '~/lib/theme';
 
 const SNAPSHOT = { maxDepth: 12, maxNodes: 512 };
+const UNLIMITED_WIDTH = 10_000;
 
 type MeasureParts = {
 	objc: NativeObjCBridge;
@@ -49,11 +50,25 @@ export function createMeasure({ objc, media, highlight, inset: readInset }: Meas
 		return node?.view ? textWidth(objc, node.view, node.frame.width) : 0;
 	}
 
+	async function drawnHeading(nodes: SnapshotNode[], heading: Heading | undefined) {
+		const label = heading?.timeLabel === undefined ? undefined : nodes[heading.timeLabel];
+
+		if (!heading?.time || !label?.view) return heading;
+
+		const drawn = await textWidth(objc, label.view, UNLIMITED_WIDTH);
+
+		return drawn > heading.time.width
+			? { ...heading, time: { ...heading.time, width: drawn } }
+			: heading;
+	}
+
 	return async function measure(cell: NativeObjectHandle): Promise<Measured | undefined> {
 		const nodes = (await objc.snapshot(cell, SNAPSHOT)) as SnapshotNode[];
-		const layout = messageLayout(nodes);
+		const measured = messageLayout(nodes);
 
-		if (!layout) return;
+		if (!measured) return;
+
+		const layout = { ...measured, heading: await drawnHeading(nodes, measured.heading) };
 
 		const style = currentAppearance();
 		const height = nodes[0]!.frame.height;

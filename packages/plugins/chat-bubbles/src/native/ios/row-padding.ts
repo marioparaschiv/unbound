@@ -128,12 +128,14 @@ function insetContent(objc: NativeObjCBridge, cell: NativeObjectHandle, inset: P
  * @param scope The plugin's UI scope, which removes every hook on dispose.
  * @param messageCell The message cell's class name.
  * @param contentView The class of a table cell's content view.
+ * @param swipeToReplyView The class of the reply arrow Discord lays out each time swipe to reply moves the content view.
  * @param followTags The tags of the plugin's views in the cell, which slide with swipe to reply.
  */
 export function installRowPadding(
 	scope: NativeUIScope,
 	messageCell: string,
 	contentView: string,
+	swipeToReplyView: string,
 	followTags: number[],
 ) {
 	'worklet';
@@ -210,7 +212,13 @@ export function installRowPadding(
 			return result;
 		},
 	});
-	objc.hook(contentView, 'setCenter:', { after: ({ self }) => follow(self) });
+	objc.hook(swipeToReplyView, 'setFrame:', {
+		after: ({ self }) => {
+			const content = objc.invoke(self, 'superview', []) as NativeObjectHandle | null;
+
+			if (content) follow(content);
+		},
+	});
 
 	function follow(content: NativeObjectHandle) {
 		try {
