@@ -1,0 +1,9 @@
+{
+	"KEYWORDS": "Keywords",
+	"KEYWORDS_SUBTITLE": "Messages that contain any of these count as mentions of you.",
+	"REGEX": "Regular expressions",
+	"REGEX_SUBTITLE": "Reads each keyword as a regular expression.",
+	"CASE_SENSITIVE": "Match case",
+	"WHOLE_WORDS": "Whole words only",
+	"IGNORE_BOTS": "Ignore bots"
+}

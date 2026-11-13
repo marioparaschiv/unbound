@@ -1,6 +1,6 @@
 # Plugins
 
-88 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+89 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -45,6 +45,7 @@
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [IRC Colors](https://unbound.rip/addons/unbound.irc-colors): Gives everyone in chat their own username color, picked from their user id like in IRC clients.
 - <img src="../../assets/plugins/readme-icons/chevron-large-right-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Jump To Top](https://unbound.rip/addons/unbound.jump-to-top): Adds a button to the channel header that jumps to the first message in the channel.
 - <img src="../../assets/plugins/readme-icons/forum-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Keep Current Channel](https://unbound.rip/addons/unbound.keep-current-channel): Brings you back to the channel you had open after switching accounts or restarting Discord.
+- <img src="../../assets/plugins/readme-icons/bell-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Keyword Notify](https://unbound.rip/addons/unbound.keyword-notify): Treats messages that contain your keywords as mentions, so Discord highlights them and counts them like a ping.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Member Count](https://unbound.rip/addons/unbound.member-count): Shows a channel's total members beside how many are online, in the channel header.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Mention Avatars](https://unbound.rip/addons/unbound.mention-avatars): Shows user avatars and role icons inside mentions.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Latency](https://unbound.rip/addons/unbound.message-latency): Marks messages that took at least the selected threshold to send.
