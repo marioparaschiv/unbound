@@ -379,6 +379,21 @@ describe('debug card', () => {
 			settings: 'restored',
 		});
 	});
+	test('names other tweaks loaded into Discord', () => {
+		const report: DebugCardRequest = { ...info, injected: ['FLEXing', 'Shadow'] };
+		const card = layoutDebugCard(report, new Date());
+		const labels = texts(card)
+			.filter((run) => run.x === 14)
+			.map((run) => run.text);
+
+		expect(labels).toContain('tweaks');
+		expect(texts(card).some((run) => run.text.includes('FLEXing'))).toBe(true);
+		expect(JSON.parse(altJson(report))).toMatchObject({ tweaks: ['FLEXing', 'Shadow'] });
+		expect(
+			texts(layoutDebugCard({ ...info, injected: [] }, new Date())).map((run) => run.text),
+		).not.toContain('tweaks');
+	});
+
 	test('shows recent errors and low storage', () => {
 		const report: DebugCardRequest = {
 			...info,
