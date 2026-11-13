@@ -1,0 +1,23 @@
+{
+	"SHOW_IN_MESSAGES": "Show in messages",
+	"SHOW_IN_MESSAGES_SUBTITLE": "Adds the author's local time after a message's timestamp, when it differs from yours.",
+	"SHOW_IN_PROFILES": "Show in profiles",
+	"SHOW_OWN": "Show your own local time",
+	"CLOCK": "Clock",
+	"CLOCK_DEVICE": "Like this device",
+	"CLOCK_12": "12-hour",
+	"CLOCK_24": "24-hour",
+	"USE_DATABASE": "Use TimezoneDB",
+	"USE_DATABASE_SUBTITLE": "Looks up the timezone people shared at timezone.creations.works. A timezone you set for someone always wins.",
+	"LOCAL_TIME": "Local time {time}",
+	"LOCAL_TIME_ZONE": "Local time {time} · {zone}",
+	"SET_TIMEZONE": "Set timezone",
+	"SET_TIMEZONE_BODY": "An IANA timezone, such as Europe/Berlin or America/New_York.",
+	"TIMEZONE": "Timezone",
+	"TIMEZONE_PLACEHOLDER": "Europe/Berlin",
+	"INVALID_TIMEZONE": "{zone} is not a timezone this device knows.",
+	"SAVE": "Save",
+	"CLEAR": "Clear",
+	"CANCEL": "Cancel",
+	"THEIR_TIME": "their time {time}"
+}

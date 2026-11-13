@@ -1,6 +1,6 @@
 # Plugins
 
-84 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+85 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -81,6 +81,7 @@
 - <img src="../../assets/plugins/readme-icons/sticker-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Sticker Preview](https://unbound.rip/addons/unbound.sticker-preview): Displays a preview of a selected sticker instead of sending it immediately.
 - <img src="../../assets/plugins/readme-icons/super-reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Super Reaction Tweaks](https://unbound.rip/addons/unbound.super-reaction-tweaks): Opens the reaction picker on Super Reactions and caps how many Super Reaction animations play at once.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Text Replace](https://unbound.rip/addons/unbound.text-replace): Replace text in messages before you send them.
+- <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Timezones](https://unbound.rip/addons/unbound.timezones): Shows each user's local time on their profile and beside their messages, from TimezoneDB or a timezone you set.
 - <img src="../../assets/plugins/readme-icons/language-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Translate](https://unbound.rip/addons/unbound.translate): Translate messages.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Typing Avatars](https://unbound.rip/addons/unbound.typing-avatars): Shows the avatars of people typing in the channel.
 - <img src="../../assets/plugins/readme-icons/embed-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Unsuppress Embeds](https://unbound.rip/addons/unbound.unsuppress-embeds): Adds a message long-press row that brings back suppressed link embeds, or suppresses them.
