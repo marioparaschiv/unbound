@@ -1,11 +1,12 @@
+import { openSheet } from '@unbound-plugins/shared/action-sheets/open-sheet';
 import { Discord } from '@unbound-app/api/metro/components';
 import { assets, metro } from '@unbound-app/api';
 
-import EntityPickerSheet, { type EntityPickerLabels } from './entity-picker-sheet';
-import { openSheet } from '@unbound-plugins/shared/action-sheets/open-sheet';
 import type { EntityKind } from './entity';
-import useEntity from './use-entity';
+
+import EntityPickerSheet, { type EntityPickerLabels } from './entity-picker-sheet';
 import EntityRow from './entity-row';
+import useEntity from './use-entity';
 
 /** The texts of an {@link EntityList}, in the plugin's own language. */
 export type EntityListLabels = EntityPickerLabels & {
@@ -29,7 +30,9 @@ export type EntityListProps = {
 	onChange: (value: string[]) => void;
 };
 
-type ShowProfile = (options: { userId: string }) => void;
+type ProfileOptions = { userId: string };
+
+type ShowProfile = (options: ProfileOptions) => void;
 
 const ProfileSheet = metro.findByFilePath(
 	'modules/user_profile/native/showUserProfileActionSheet.tsx',

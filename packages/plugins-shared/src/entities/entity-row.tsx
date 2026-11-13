@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { Image } from 'react-native';
 
 import type { Entity } from './entity';
+
 import useStyles from './entity-row.style';
 
 type EntityRowProps = {

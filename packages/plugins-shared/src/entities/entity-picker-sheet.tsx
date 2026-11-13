@@ -5,8 +5,8 @@ import { useState } from 'react';
 import { isSnowflake, type EntityKind } from './entity';
 import useStyles from './entity-picker-sheet.style';
 import { searchEntities } from './search';
-import useEntity from './use-entity';
 import EntityRow from './entity-row';
+import useEntity from './use-entity';
 
 /** The texts of an {@link EntityPickerSheet}, in the plugin's own language. */
 export type EntityPickerLabels = {

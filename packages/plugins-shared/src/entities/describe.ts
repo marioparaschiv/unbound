@@ -3,9 +3,11 @@ import { flux, metro } from '@unbound-app/api';
 
 import type { Entity, EntityKind } from './entity';
 
+type GuildIcon = { id: string; icon: string | null; size?: number };
+
 type IconUtils = {
 	getUserAvatarURL(user: FluxUser, canAnimate?: boolean, size?: number): string;
-	getGuildIconURL(guild: { id: string; icon: string | null; size?: number }): string | undefined;
+	getGuildIconURL(guild: GuildIcon): string | undefined;
 };
 
 type GuildChannels = FluxStore & {
@@ -15,6 +17,7 @@ type GuildChannels = FluxStore & {
 type ChannelWithParent = FluxChannel & { parent_id?: string | null };
 
 declare module '@unbound-app/api/flux' {
+	// oxlint-disable-next-line typescript/consistent-type-definitions -- merging needs an interface.
 	interface FluxStores {
 		SortedGuild: FluxStore & { getFlattenedGuildIds(): string[] };
 	}
@@ -38,8 +41,10 @@ export const Guilds = flux.getStore('Guild');
 export const Channels = flux.getStore('Channel');
 export const SortedGuilds = flux.getStore('SortedGuild');
 export const Relationships = flux.getStore('Relationship');
-// The same store as `Channels`, read through a method the SDK does not type.
-export const GuildChannels = flux.getStore('Channel') as unknown as GuildChannels;
+// The channel store, found by a method the SDK does not type.
+export const GuildChannels = metro.findByProps('getMutableGuildChannelsForGuild') as
+	| GuildChannels
+	| undefined;
 
 const Icons = metro.findByProps('getUserAvatarURL', 'getGuildIconURL') as IconUtils | undefined;
 

@@ -48,7 +48,10 @@ const stores = {
 
 void mock.module('@unbound-app/api', () => ({
 	flux: { getStore: (name: keyof typeof stores) => stores[name] },
-	metro: { findByProps: () => undefined },
+	metro: {
+		findByProps: (...props: string[]) =>
+			props.includes('getMutableGuildChannelsForGuild') ? stores.Channel : undefined,
+	},
 }));
 
 const { searchEntities } = await import('~/entities/search');

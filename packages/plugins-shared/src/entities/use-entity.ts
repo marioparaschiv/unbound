@@ -1,10 +1,12 @@
+import type { FluxUser } from '@unbound-app/api/flux';
 import { useEffect, useState } from 'react';
 import { metro } from '@unbound-app/api';
 
-import { describeEntity } from './describe';
 import type { Entity, EntityKind } from './entity';
 
-type UserActions = { getUser(id: string): Promise<unknown> };
+import { describeEntity } from './describe';
+
+type UserActions = { getUser(id: string): Promise<FluxUser | undefined> };
 
 const Actions = metro.findByProps('fetchProfile', 'getUser') as UserActions | undefined;
 

@@ -1,3 +1,5 @@
+import type { Entity, EntityKind } from './entity';
+
 import {
 	describeChannel,
 	describeGuild,
@@ -8,7 +10,6 @@ import {
 	SortedGuilds,
 	Users,
 } from './describe';
-import type { Entity, EntityKind } from './entity';
 
 const LIMIT = 50;
 
@@ -38,7 +39,7 @@ function sortedGuilds(): Entity[] {
 
 function guildChannels(): Entity[] {
 	return sortedGuilds().flatMap(({ id }) =>
-		Object.values(GuildChannels.getMutableGuildChannelsForGuild(id))
+		Object.values(GuildChannels?.getMutableGuildChannelsForGuild(id) ?? {})
 			.filter((channel) => PICKABLE_CHANNELS.has(channel.type))
 			.map(describeChannel),
 	);
@@ -68,13 +69,19 @@ export function searchEntities(kind: EntityKind, query: string, exclude: string[
 	const matches: Entity[] = [];
 
 	for (const entity of candidates(kind)) {
-		if (matches.length >= LIMIT) break;
+		if (matches.length >= LIMIT) {
+			break;
+		}
 
-		if (skipped.has(entity.id)) continue;
+		if (skipped.has(entity.id)) {
+			continue;
+		}
 
 		const haystack = [entity.id, entity.name, entity.detail ?? ''].join('\n').toLowerCase();
 
-		if (!needle || haystack.includes(needle)) matches.push(entity);
+		if (!needle || haystack.includes(needle)) {
+			matches.push(entity);
+		}
 	}
 
 	return matches;
