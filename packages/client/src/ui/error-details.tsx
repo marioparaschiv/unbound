@@ -38,7 +38,12 @@ function ErrorDetails({ error, componentStack }: CaughtError) {
 	const trace = traces[index] ?? traces[0];
 
 	return (
-		<Discord.Card variant='primary' border='subtle' shadow='low' style={styles.card}>
+		<Discord.Card
+			variant='primary'
+			border='subtle'
+			shadow='low'
+			style={[styles.card, styles.fill]}
+		>
 			<Discord.Text variant='text-xs/bold' style={styles.errorName}>
 				{error?.name || 'Error'}
 			</Discord.Text>
