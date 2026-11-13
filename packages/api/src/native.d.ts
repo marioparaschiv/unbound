@@ -75,6 +75,11 @@ import type {
 	NativeBridgeCapability,
 	NativeBridgeMethod,
 	NativeBridgePlatform,
+	NativeJavaBridge,
+	NativeJavaHandleValue,
+	NativeJavaReference,
+	NativeObjCBridge,
+	NativeObjectHandle,
 	NativePlatformBridge,
 	NativeResourceCounts,
 } from './_internal';
@@ -167,6 +172,28 @@ export declare function reload(): Promise<void>;
  * @returns Whether the loader implements it.
  */
 export declare function supports(method: NativeBridgeMethod): boolean;
+/**
+ * @description Holds a Java object weakly, through a `java.lang.ref.WeakReference`, so caching a view does not keep
+ * it alive after Discord drops it.
+ * @param java The plugin's Java bridge.
+ * @param handle The object to hold.
+ * @returns A weak handle whose `deref` gives the object while it lives, then `null`.
+ */
+export declare function weakJava(
+	java: Pick<NativeJavaBridge, 'construct' | 'invoke'>,
+	handle: NativeJavaReference,
+): NativeWeakHandle<NativeJavaHandleValue>;
+/**
+ * @description Holds an Objective-C object weakly, through a `strongToWeakObjectsMapTable`, so caching a view or
+ * controller does not keep it alive after Discord releases it.
+ * @param objc The plugin's Objective-C bridge.
+ * @param handle The object to hold.
+ * @returns A weak handle whose `deref` gives the object while it lives, then `null`.
+ */
+export declare function weakObjC(
+	objc: Pick<NativeObjCBridge, 'getClass' | 'call'>,
+	handle: NativeObjectHandle,
+): NativeWeakHandle<NativeObjectHandle>;
 /** Build and release metadata reported by the native client info module. */
 export type BundleInfoType = {
 	/** Discord's app version, shown in Unbound's settings beside `Build`. */
@@ -268,6 +295,10 @@ export type DeviceInfoType = {
 };
 /** What `HermesInternal.getRuntimeProperties()` reports; empty when the engine is not Hermes. */
 export type HermesRuntimeProperties = ReturnType<HermesInternalObject['getRuntimeProperties']>;
+/** A reference that does not keep its native object alive; `deref` reads `null` once the object is gone. */
+export type NativeWeakHandle<T> = {
+	deref(): T | null;
+};
 /** One Platform handler per platform an addon runs on. */
 export type PlatformHandlers<Handler> = Partial<Record<NativeBridgePlatform, Handler>>;
 /** A native method Discord exposes without documenting what its promise resolves to. */
