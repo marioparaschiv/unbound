@@ -25,6 +25,7 @@ import {
 	objcPlansDisposed,
 	nativeHandle,
 	nativeCallbacks,
+	hookedClasses,
 	manifest,
 	resetNativeFixtures,
 } from '../helpers/native-bridge';
@@ -81,6 +82,26 @@ describe('native bridge capability scopes', () => {
 
 		expect(block?.(1)).toBeUndefined();
 		expect(method?.(0, 3)).toBeUndefined();
+	});
+
+	test('also hooks subclasses that implement the selector, and removes them together', () => {
+		const context = createPluginContext({ ...manifest, capabilities: ['native.objc.hooks'] });
+
+		hookedClasses.length = 0;
+		removed.length = 0;
+
+		const token = context.native.objc.hook(
+			'NSObject',
+			'description',
+			{ after: () => undefined },
+			{ subclasses: true },
+		);
+
+		expect(hookedClasses).toEqual(['NSObject', 'UnboundTestSubclass']);
+
+		token.remove();
+
+		expect(removed).toEqual(['hook', 'hook']);
 	});
 
 	test('disposes hooks owned by a plugin context', () => {

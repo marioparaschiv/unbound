@@ -3,20 +3,16 @@ import type {
 	NativeCancelablePromise,
 	NativeFabricBridge,
 	NativeFabricSurface,
-	NativeFFIBridge,
 	NativeJavaHookEvent,
 	NativeJavaHookOptions,
 	NativeJavaHookRewrite,
 	NativeDebugBridge,
 	NativeJavaHooksBridge,
 	NativeJavaHookToken,
-	NativeHookHandlers,
-	NativeHookOptions,
 	NativeHookToken,
 	NativeObjCBridge,
 	NativeObjCCallPlan,
 	NativeObjectHandle,
-	NativePointer,
 	NativeBridge,
 	NativeBridgeCapability,
 	NativeBridgePlatform,
@@ -25,16 +21,22 @@ import type {
 	NativeRuntimeEventToken,
 	NativeSerializableObject,
 } from '@unbound-app/types';
+import { createLogger } from '@unbound-app/logger';
 
 import { NativeBridgeDisposedError, NativeBridgeUnavailableError } from '~/native/errors';
 import { createScopeGate, type ScopeLifecycle } from '~/native/scope-gate';
+import { retryUntilInstalled, type HookRetry } from '~/native/hook-retry';
 import { createFluxRuntimeBridge } from '~/flux/runtime-bridge';
 import { unavailableNativeBridge } from '~/native/capabilities';
+import { createScopedObjCHook } from '~/native/scope-objc-hook';
 import { createObjectFactory } from '~/native/object-factory';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { createScopedJavaBridge } from '~/native/scope-java';
+import { createScopedFFIBridge } from '~/native/scope-ffi';
 import { createScopedUIBridge } from '~/native/ui';
 import { getNativeBridge } from '~/native/bridge';
+
+const logger = createLogger('Native', 'Hooks');
 
 type AssociationBinding = {
 	handle: NativeObjectHandle;
@@ -313,6 +315,7 @@ export function createScopedNativeBridge(
 		struct: scopeBridgeMethod(objcSource, 'struct', 'objc.struct'),
 		array: scopeBridgeMethod(objcSource, 'array', 'objc.array'),
 		data: scopeBridgeMethod(objcSource, 'data', 'objc.data'),
+		findClasses: scopeBridgeMethod(objcSource, 'findClasses', 'objc.findClasses'),
 		block: (signature, implementation) =>
 			scopeBridgeMethod(
 				objcSource,
@@ -338,107 +341,11 @@ export function createScopedNativeBridge(
 				),
 				protocols,
 			),
-		hook: <Receiver extends boolean = true>(
-			className: string,
-			selector: string,
-			handlers: NativeHookHandlers<Receiver>,
-			options?: NativeHookOptions<Receiver>,
-		) => {
-			if (lifecycle.disposed) {
-				throw new NativeBridgeDisposedError();
-			}
-
-			requireGranted('objc.hook');
-			const token = objcBridge.hook<Receiver>(className, selector, handlers, options);
-
-			tokens.add(token);
-
-			return {
-				get active() {
-					return token.active;
-				},
-				setReturnValue(self, args, value) {
-					if (lifecycle.disposed) {
-						throw new NativeBridgeDisposedError();
-					}
-
-					token.setReturnValue(self, args, value);
-				},
-				removeReturnValue(self, args) {
-					if (lifecycle.disposed) {
-						throw new NativeBridgeDisposedError();
-					}
-
-					token.removeReturnValue(self, args);
-				},
-				clearReturnValues() {
-					if (lifecycle.disposed) {
-						throw new NativeBridgeDisposedError();
-					}
-
-					token.clearReturnValues();
-				},
-				remove() {
-					token.remove();
-					tokens.delete(token);
-				},
-			};
-		},
+		hook: createScopedObjCHook(objcBridge, tokens, lifecycle, requireGranted),
 	};
 
-	const ffiCallbacks = new Set<NativePointer>();
-	const ffiAllocations = new Set<NativePointer>();
-	const ffiRebinds = new Set<string>();
-	const ffi: NativeFFIBridge = {
-		symbol: scopeBridgeMethod(ffiSource, 'symbol', 'ffi.symbol'),
-		call: scopeBridgeMethod(ffiSource, 'call', 'ffi.call'),
-		alloc: (size) => {
-			const pointer = scopeBridgeMethod(ffiSource, 'alloc', 'ffi.alloc')(size);
-
-			ffiAllocations.add(pointer);
-
-			return pointer;
-		},
-		free: (pointer) => {
-			ffiAllocations.delete(pointer);
-
-			return scopeBridgeMethod(ffiSource, 'free', 'ffi.free')(pointer);
-		},
-		read: scopeBridgeMethod(ffiSource, 'read', 'ffi.read'),
-		write: scopeBridgeMethod(ffiSource, 'write', 'ffi.write'),
-		callback: (signature, implementation) => {
-			const pointer = scopeBridgeMethod(
-				ffiSource,
-				'callback',
-				'ffi.callback',
-			)(signature, (...args) => (lifecycle.disposed ? undefined : implementation(...args)));
-
-			ffiCallbacks.add(pointer);
-
-			return pointer;
-		},
-		releaseCallback: (pointer) => {
-			ffiCallbacks.delete(pointer);
-
-			return scopeBridgeMethod(ffiSource, 'releaseCallback', 'ffi.releaseCallback')(pointer);
-		},
-		rebind: (name, replacement) => {
-			const rebinding = scopeBridgeMethod(
-				ffiSource,
-				'rebind',
-				'ffi.rebind',
-			)(name, replacement);
-
-			ffiRebinds.add(name);
-
-			return rebinding;
-		},
-		restore: (name) => {
-			ffiRebinds.delete(name);
-
-			return scopeBridgeMethod(ffiSource, 'restore', 'ffi.restore')(name);
-		},
-	};
+	const scopedFFI = createScopedFFIBridge(ffiSource, scopeBridgeMethod, lifecycle);
+	const ffi = scopedFFI.bridge;
 
 	const fabric: NativeFabricBridge = {
 		mount: (container, moduleName, properties, options) => {
@@ -590,6 +497,10 @@ export function createScopedNativeBridge(
 		environment: scopeBridgeMethod(debugSource, 'environment', 'debug.environment'),
 	};
 
+	const javaSubclassHooks = new Map<string, NativeJavaHookToken[]>();
+	const javaDeferredHooks = new Map<string, NativeJavaHookToken>();
+	const javaHookRetries = new Map<string, HookRetry>();
+	let pendingJavaHooks = 0;
 	const hooks: NativeJavaHooksBridge = {
 		hook: <Receiver extends boolean = true>(
 			className: string,
@@ -603,17 +514,85 @@ export function createScopedNativeBridge(
 			}
 
 			requireGranted('hooks.hook');
-			const token = hooksBridge.hook<Receiver>(
-				className,
-				methodName,
-				parameterTypes,
-				options,
-				listener,
-			);
 
-			javaHookTokens.add(token);
+			const { subclasses, waitForClass, ...nativeOptions } = options ?? {};
 
-			return token;
+			function install(name: string) {
+				const token = hooksBridge.hook<Receiver>(
+					name,
+					methodName,
+					parameterTypes,
+					nativeOptions,
+					listener,
+				);
+
+				javaHookTokens.add(token);
+
+				return token;
+			}
+
+			function hookSubclasses(base: NativeJavaHookToken) {
+				if (!subclasses || !javaSource.findClasses) return;
+
+				void javaSource
+					.findClasses({
+						extends: className,
+						methods: [{ name: methodName, parameters: parameterTypes, declared: true }],
+						limit: 1000,
+					})
+					.then((names) => {
+						if (lifecycle.disposed || !javaHookTokens.has(base)) return;
+
+						const children = names.flatMap((name) => {
+							try {
+								return [install(name)];
+							} catch (error) {
+								logger.warn(`Failed to hook ${name}.${methodName}:`, error);
+
+								return [];
+							}
+						});
+
+						javaSubclassHooks.set(base.id, children);
+					})
+					.catch((error: Error) =>
+						logger.warn(`Failed to find subclasses of ${className}:`, error),
+					);
+			}
+
+			try {
+				const token = install(className);
+
+				hookSubclasses(token);
+
+				return token;
+			} catch (error) {
+				if (!waitForClass) {
+					throw error;
+				}
+
+				const pending: NativeJavaHookToken = { id: `pending-${++pendingJavaHooks}` };
+				const retry = retryUntilInstalled(() => {
+					if (lifecycle.disposed) {
+						return true;
+					}
+
+					try {
+						const token = install(className);
+
+						javaDeferredHooks.set(pending.id, token);
+						hookSubclasses(token);
+
+						return true;
+					} catch {
+						return false;
+					}
+				});
+
+				javaHookRetries.set(pending.id, retry);
+
+				return pending;
+			}
 		},
 		setReturnValue: scopeBridgeMethod(hooksSource, 'setReturnValue', 'hooks.setReturnValue'),
 		removeReturnValue: scopeBridgeMethod(
@@ -627,8 +606,24 @@ export function createScopedNativeBridge(
 			'hooks.clearReturnValues',
 		),
 		remove: (token) => {
-			javaHookTokens.delete(token);
-			removeJavaHook(token);
+			javaHookRetries.get(token.id)?.cancel();
+			javaHookRetries.delete(token.id);
+
+			const installed = javaDeferredHooks.get(token.id) ?? token;
+
+			javaDeferredHooks.delete(token.id);
+
+			for (const child of javaSubclassHooks.get(installed.id) ?? []) {
+				javaHookTokens.delete(child);
+				removeJavaHook(child);
+			}
+
+			javaSubclassHooks.delete(installed.id);
+
+			if (installed.id.startsWith('pending-')) return;
+
+			javaHookTokens.delete(installed);
+			removeJavaHook(installed);
 		},
 		proxy: (interfaces, handler) => {
 			if (lifecycle.disposed) {
@@ -691,17 +686,7 @@ export function createScopedNativeBridge(
 
 			objcPlans.clear();
 
-			for (const name of ffiRebinds) ffiSource.restore?.(name);
-
-			ffiRebinds.clear();
-
-			for (const pointer of ffiCallbacks) ffiSource.releaseCallback?.(pointer);
-
-			ffiCallbacks.clear();
-
-			for (const pointer of ffiAllocations) ffiSource.free?.(pointer);
-
-			ffiAllocations.clear();
+			scopedFFI.dispose();
 
 			scopedJava.dispose();
 

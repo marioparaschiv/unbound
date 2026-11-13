@@ -89,6 +89,7 @@ export declare const NATIVE_BRIDGE_CAPABILITIES: readonly [
 	'native.objc.hooks',
 	'native.objc.blocks',
 	'native.objc.classDefinition',
+	'native.objc.classSearch',
 	'native.objc.inspect',
 	'native.ffi.symbols',
 	'native.ffi.call',
@@ -99,6 +100,7 @@ export declare const NATIVE_BRIDGE_CAPABILITIES: readonly [
 	'native.fabric.async',
 	'native.runtime.events',
 	'native.java.classes',
+	'native.java.classSearch',
 	'native.java.construct',
 	'native.java.fields',
 	'native.java.invoke',
@@ -144,6 +146,7 @@ export declare const NATIVE_BRIDGE_METHOD_CAPABILITIES: {
 	readonly 'objc.block': 'native.objc.blocks';
 	readonly 'objc.callBlock': 'native.objc.blocks';
 	readonly 'objc.defineClass': 'native.objc.classDefinition';
+	readonly 'objc.findClasses': 'native.objc.classSearch';
 	readonly 'objc.inspectClass': 'native.objc.inspect';
 	readonly 'objc.inspectMembers': 'native.objc.inspect';
 	readonly 'objc.inspectValues': 'native.objc.inspect';
@@ -178,6 +181,7 @@ export declare const NATIVE_BRIDGE_METHOD_CAPABILITIES: {
 	readonly 'java.getClass': 'native.java.classes';
 	readonly 'java.className': 'native.java.classes';
 	readonly 'java.describe': 'native.java.classes';
+	readonly 'java.findClasses': 'native.java.classSearch';
 	readonly 'java.construct': 'native.java.construct';
 	readonly 'java.respondsTo': 'native.java.classes';
 	readonly 'java.invoke': 'native.java.invoke';
@@ -219,6 +223,7 @@ export declare const NATIVE_BRIDGE_PLATFORM_CAPABILITIES: {
 		'native.objc.hooks',
 		'native.objc.blocks',
 		'native.objc.classDefinition',
+		'native.objc.classSearch',
 		'native.objc.inspect',
 		'native.ffi.symbols',
 		'native.ffi.call',
@@ -240,6 +245,7 @@ export declare const NATIVE_BRIDGE_PLATFORM_CAPABILITIES: {
 		'native.fabric.async',
 		'native.runtime.events',
 		'native.java.classes',
+		'native.java.classSearch',
 		'native.java.construct',
 		'native.java.fields',
 		'native.java.invoke',
@@ -4232,6 +4238,10 @@ export type NativeHookOptions<Receiver extends boolean = boolean> = {
 	/** Removes the hook after its first call. */
 	once?: boolean;
 	payload?: NativeHookPayload<Receiver>;
+	/** Also hooks every loaded subclass that implements the selector itself. */
+	subclasses?: boolean;
+	/** Waits for a class that is not loaded yet, retrying with backoff for up to ten minutes. */
+	waitForClass?: boolean;
 } & NativeCallOptions;
 /** Trims what a hook sends to JavaScript per call, to cut crossing cost on hot methods. */
 export type NativeHookPayload<Receiver extends boolean = boolean> = {
@@ -4395,6 +4405,11 @@ export type NativeJavaBridge = {
 	getClass(name: string): NativeJavaHandle;
 	/** Lists a class's constructors, methods and fields. */
 	describe(name: string): NativeJavaClassDescription;
+	/**
+	 * Finds Discord's classes by shape, so a lookup survives the obfuscated names changing between builds; results
+	 * are cached per Discord build. Needs `native.java.classSearch`.
+	 */
+	findClasses(query: NativeJavaClassQuery): NativeCancelablePromise<string[]>;
 	/** Runs independent operations in one call on the JavaScript thread and returns every result in order. */
 	batch(operations: NativeJavaBatchOperation[]): NativeJavaValue[];
 	/** Runs the operations like `batch`, on the main thread, so views can be read safely. */
@@ -4482,6 +4497,19 @@ export type NativeJavaClassDescription = {
 	/** The fields the class declares. */
 	fields: NativeJavaFieldDescription[];
 };
+/** What `java.findClasses` matches; library packages are skipped unless `package` names one. */
+export type NativeJavaClassQuery = {
+	/** The class name starts with it, such as `com.discord.`. */
+	package?: string;
+	/** The class inherits from it, directly or further up. */
+	extends?: string;
+	/** The class implements every one, directly or through a superclass. */
+	implements?: string[];
+	methods?: NativeJavaMethodShape[];
+	fields?: NativeJavaFieldShape[];
+	/** At most this many names, 50 by default and 1000 at most. */
+	limit?: number;
+};
 /** One field a Java class declares, from `java.describe`. */
 export type NativeJavaFieldDescription = {
 	/** The field name. */
@@ -4490,6 +4518,12 @@ export type NativeJavaFieldDescription = {
 	type: string;
 	/** Whether the field is static. */
 	static: boolean;
+};
+/** A field a class from `java.findClasses` must declare. */
+export type NativeJavaFieldShape = {
+	name?: string;
+	type?: string;
+	static?: boolean;
 };
 /** A handle to a Java object or class; the plugin scope releases it on dispose. */
 export type NativeJavaHandle = NativeHandle;
@@ -4523,6 +4557,10 @@ export type NativeJavaHookOptions<Receiver extends boolean = boolean> = {
 	rewriteArguments?: boolean;
 	/** Trims the receiver, arguments and phase each event sends, to cut crossing cost on hot methods. */
 	payload?: NativeHookPayload<Receiver>;
+	/** Also hooks every subclass that declares the method itself, found by `java.findClasses` once it answers. */
+	subclasses?: boolean;
+	/** Waits for a class that is not loaded yet, retrying with backoff for up to ten minutes. */
+	waitForClass?: boolean;
 };
 /** What a `rewriteArguments` listener returns to run the hooked method with other arguments, one per parameter. */
 export type NativeJavaHookRewrite = {
@@ -4580,6 +4618,16 @@ export type NativeJavaMethodDescription = {
 	returnType: string;
 	/** Whether the method is static. */
 	static: boolean;
+};
+/** A method a class from `java.findClasses` must have; every given part must match. */
+export type NativeJavaMethodShape = {
+	name?: string;
+	/** The parameter types' fully qualified names, in order. */
+	parameters?: string[];
+	returns?: string;
+	static?: boolean;
+	/** Whether the class itself declares it rather than inheriting it; `true` by default. */
+	declared?: boolean;
 };
 /** A Java object implementing interfaces through a handler; remove its token to stop it answering. */
 export type NativeJavaProxy = {
@@ -4808,6 +4856,8 @@ export type NativeObjCBridge = {
 	 * Defines an Objective-C class at runtime whose methods run JavaScript, for delegates, data sources and
 	 * target-action receivers; defining it again replaces its methods. Needs `native.objc.classDefinition`.
 	 */
+	/** Finds loaded classes by shape, so a lookup survives renamed classes. Needs `native.objc.classSearch`. */
+	findClasses(query: NativeObjCClassQuery): string[];
 	defineClass(
 		name: string,
 		superclass: string,
@@ -4818,6 +4868,25 @@ export type NativeObjCBridge = {
 /** A selector and method signature resolved once by `objc.prepare`, for calling many times without the lookup. */
 export type NativeObjCCallPlan = NativeHandle & {
 	readonly [nativeObjCCallPlan]: true;
+};
+/** What `objc.findClasses` matches; every given part must match, and names come back sorted. */
+export type NativeObjCClassQuery = {
+	/** The class name starts with it. */
+	prefix?: string;
+	/** The path of the image the class is in contains it, such as `Discord.app/Discord`. */
+	image?: string;
+	/** The class inherits from it, directly or further up. */
+	superclass?: string;
+	/** The class conforms to every one. */
+	protocols?: string[];
+	/** The class responds to every instance selector, its own or inherited. */
+	methods?: string[];
+	/** The class itself implements every instance selector. */
+	ownMethods?: string[];
+	/** The class responds to every class selector. */
+	classMethods?: string[];
+	/** At most this many names, 50 by default and 1000 at most. */
+	limit?: number;
 };
 /**
  * The debugger's Objective-C reflection, iOS only and never in a plugin's scope. Needs `native.objc.inspect`.

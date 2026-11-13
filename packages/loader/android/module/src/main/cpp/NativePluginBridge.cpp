@@ -91,6 +91,15 @@ static jsi::Object makeJavaNamespace(jsi::Runtime &runtime, const JavaCallbacks 
                return javaSynchronously(rt, callbacks, callbacks.javaDescribe,
                                         {javaName(rt, args[0])});
            });
+    define(runtime, java, "findClasses", 1,
+           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               requireArguments(count, 1, "A Java class search requires a query");
+               std::vector<std::string> arguments{loader::fromJSIValue(rt, args[0]).dump()};
+               return javaAsynchronously(
+                   rt, callbacks, [callbacks, arguments = std::move(arguments)]() {
+                       return callJavaString(callbacks, callbacks.javaFindClasses, arguments);
+                   });
+           });
     define(runtime, java, "construct", 2,
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                requireArguments(count, 1, "Java construction requires a class name");

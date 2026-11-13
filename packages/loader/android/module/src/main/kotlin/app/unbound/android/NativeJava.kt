@@ -346,6 +346,11 @@ object NativeJava {
 
     fun loadHostClass(name: String): Class<*> = loadClass(name)
 
+    fun findClasses(queryJSON: String): String {
+        val loader = synchronized(this) { pluginClassLoader } ?: NativeJava::class.java.classLoader!!
+        return ClassSearch.find(loader, queryJSON)
+    }
+
     fun resolveType(name: String): Class<*> = primitive(name) ?: loadClass(name)
 
     fun describe(value: Any?): String = serialize(value)
