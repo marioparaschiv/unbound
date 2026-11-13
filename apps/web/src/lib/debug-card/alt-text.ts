@@ -21,6 +21,7 @@ const MAX_ALT_TEXT = 1024;
 
 // Dropped in this order while the packed text is over Discord's limit; what is left is bounded by the request schema.
 const DROP_ORDER = [
+	'experiments',
 	'enabledPlugins',
 	'patches',
 	'native',
@@ -104,6 +105,7 @@ export function debugAltText(
 			patches: info.patches.map((patch) => `${patch.caller} ${patch.count}`),
 		}),
 		...(info.enabledPlugins?.length && { enabledPlugins: info.enabledPlugins }),
+		...(info.experiments?.length && { experiments: info.experiments }),
 		...(info.display && { display: displaySummary(info.display) }),
 		...(info.session && { session: sessionSummary(info.session) }),
 		...(info.native && {

@@ -20,6 +20,7 @@ import { patches } from '~/patcher/api';
 import type { AddonCount, DebugInfo, DiscordSupport } from './format-debug-info';
 
 import { readAppSession } from './app-session';
+import { readExperiments } from './experiments';
 import { recentErrors } from './recent-errors';
 
 const MAX_PATCH_CALLERS = 8;
@@ -292,6 +293,7 @@ export function readDebugInfo(): DebugInfo {
 		patches: attempt(patchCounts, undefined),
 		native: attempt(nativeCounts, undefined),
 		enabledPlugins: attempt(enabledPlugins, undefined),
+		experiments: attempt(readExperiments, undefined),
 		display: attempt(displayOf, undefined),
 		session: readAppSession(),
 		heap: attempt(getHeapUsage, undefined),

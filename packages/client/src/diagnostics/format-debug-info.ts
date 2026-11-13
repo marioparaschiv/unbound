@@ -43,6 +43,7 @@ export function debugLines(info: DebugInfo): string[] {
 			: []),
 		`- **Runtime:** React ${info.react}, React Native ${info.reactNative}, Hermes ${info.hermes} (HBC ${info.bytecode})`,
 		...(info.network ? [`- **Network:** ${networkLine(info.network)}`] : []),
+		...(info.experiments?.length ? [`- **Experiments:** ${info.experiments.join(', ')}`] : []),
 	];
 }
 

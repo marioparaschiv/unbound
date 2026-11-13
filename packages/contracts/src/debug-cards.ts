@@ -118,6 +118,7 @@ export const debugCardRequestSchema = Type.Object({
 		),
 	),
 	enabledPlugins: Type.Optional(Type.Array(text(96), { maxItems: 60 })),
+	experiments: Type.Optional(Type.Array(text(96), { maxItems: 30 })),
 	display: Type.Optional(
 		Type.Object({
 			width: Type.Integer({ minimum: 0, maximum: 100_000 }),
