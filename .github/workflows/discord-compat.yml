@@ -3,6 +3,16 @@ name: Discord compatibility scan
 on:
     schedule:
         - cron: '23 */6 * * *'
+    push:
+        branches: [main]
+        paths:
+            - packages/client/src/**
+            - packages/plugins-shared/src/**
+            - packages/plugins/*/src/**
+            - packages/loader/ios/sources/**
+            - packages/loader/android/module/src/main/**
+            - packages/loader/tools/compat_*.go
+            - .github/workflows/discord-compat.yml
     workflow_dispatch:
         inputs:
             channel:
@@ -16,7 +26,7 @@ permissions:
 
 concurrency:
     group: discord-compat-${{ github.ref }}-${{ inputs.channel || 'all' }}
-    cancel-in-progress: false
+    cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
     scan:
