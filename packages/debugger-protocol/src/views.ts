@@ -160,6 +160,7 @@ export function isViewNode(value: unknown): value is ViewNode {
 	);
 }
 
+// UNKNOWN: it checks a field of a parsed frame, which may hold anything.
 function isOptionalCount(value: unknown): boolean {
 	return (
 		value === undefined || (typeof value === 'number' && Number.isInteger(value) && value >= 0)
@@ -194,6 +195,7 @@ export function isViewDetails(value: unknown): value is ViewDetails {
 		'sections' in value &&
 		Array.isArray(value.sections) &&
 		value.sections.every(
+			// UNKNOWN: each section of a parsed frame may hold anything until checked.
 			(section: unknown) =>
 				isObject(section) &&
 				'title' in section &&

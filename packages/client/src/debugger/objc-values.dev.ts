@@ -21,7 +21,9 @@ function isReference(value: unknown): value is NativeBatchReference {
  * @returns The number, or `undefined` when the result is not one.
  */
 export function asNumber(value: NativeObjCResult): number | undefined {
-	if (typeof value === 'bigint') return Number(value);
+	if (typeof value === 'bigint') {
+		return Number(value);
+	}
 
 	return typeof value === 'number' ? value : undefined;
 }
@@ -89,6 +91,7 @@ export async function onMainThread(
 	const results: NativeObjCResult[] = [];
 
 	for (let start = 0; start < steps.length; start += size) {
+		// UNKNOWN: a step's target and arguments may be any value the bridge accepts, or a batch reference.
 		const rebase = (value: unknown) =>
 			isReference(value) ? { $nativeBatchResult: value.$nativeBatchResult - start } : value;
 		const chunk = steps.slice(start, start + size).map((step) => ({

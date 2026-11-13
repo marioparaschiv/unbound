@@ -129,7 +129,9 @@ export function enumName(names: Record<number, string>, value: number): string {
  * @returns The names joined with `|`, `none` for 0, and unnamed bits in hex.
  */
 export function bitNames(names: Record<number, string>, mask: number): string {
-	if (mask === 0) return 'none';
+	if (mask === 0) {
+		return 'none';
+	}
 
 	const parts: string[] = [];
 	let rest = mask;
@@ -143,7 +145,9 @@ export function bitNames(names: Record<number, string>, mask: number): string {
 		}
 	}
 
-	if (rest) parts.push(`0x${rest.toString(16)}`);
+	if (rest) {
+		parts.push(`0x${rest.toString(16)}`);
+	}
 
 	return parts.join(' | ');
 }

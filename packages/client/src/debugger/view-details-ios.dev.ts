@@ -7,7 +7,6 @@ import type {
 } from '@unbound-app/types';
 import type { ViewDetails, ViewSection } from '@unbound-app/debugger-protocol';
 
-import { asFlag, asNumber, asObject, asStruct, asText } from '~/debugger/objc-values.dev';
 import {
 	bitNames,
 	colorProperty,
@@ -18,6 +17,7 @@ import {
 	uiColorToHex,
 	type PropertyDraft,
 } from '~/debugger/view-properties.dev';
+import { asFlag, asNumber, asObject, asStruct, asText } from '~/debugger/objc-values.dev';
 
 const VIEW_SELECTORS = [
 	'frame',
@@ -182,11 +182,12 @@ export async function readIosDetails(
 	const read: Read = (selector) => values.get(selector);
 	const responds = (selectors: string[]) =>
 		selectors.filter((selector) => objc.respondsTo(view, selector));
-	const isKind = (name: string) => {
+
+	function isKind(name: string) {
 		const type = objc.getClass(name);
 
 		return Boolean(type) && asFlag(objc.call(view, 'isKindOfClass:', type));
-	};
+	}
 	const extras = [
 		...(responds(TEXT_SELECTORS.slice(0, 2)).length === 2 ? responds(TEXT_SELECTORS) : []),
 		...(isKind('UIScrollView') ? SCROLL_SELECTORS : []),
@@ -197,7 +198,9 @@ export async function readIosDetails(
 		? await objc.batch(extras.map((selector) => ({ target: view, selector, args: [] })))
 		: [];
 
-	extras.forEach((selector, index) => values.set(selector, extraResults[index]));
+	for (const [index, selector] of extras.entries()) {
+		values.set(selector, extraResults[index]);
+	}
 
 	const traits = asObject(read('traitCollection'));
 
@@ -205,7 +208,9 @@ export async function readIosDetails(
 	function color(key: string, value: NativeObjCResult) {
 		const object = asObject(value);
 
-		if (!object) return colorProperty(key, null);
+		if (!object) {
+			return colorProperty(key, null);
+		}
 
 		const resolved = traits
 			? asObject(objc.invoke(object, 'resolvedColorWithTraitCollection:', [traits]))
@@ -228,7 +233,9 @@ export async function readIosDetails(
 		while (current && chain.length < MAX_CLASS_CHAIN) {
 			const name = objc.className(current) ?? '';
 
-			if (!name || name === 'NSObject') break;
+			if (!name || name === 'NSObject') {
+				break;
+			}
 
 			chain.push(name);
 			current = asObject(objc.call(current, 'superclass'));
@@ -294,7 +301,7 @@ export async function readIosDetails(
 			color('tintColor', read('tintColor')),
 			property('opaque', flag('isOpaque')),
 			property('clipsToBounds', flag('clipsToBounds')),
-			property('contentMode', enumName({ ...CONTENT_MODES }, number('contentMode'))),
+			property('contentMode', enumName(CONTENT_MODES, number('contentMode'))),
 		]);
 	}
 
@@ -321,7 +328,9 @@ export async function readIosDetails(
 	}
 
 	function text() {
-		if (!has('font')) return undefined;
+		if (!has('font')) {
+			return undefined;
+		}
 
 		const font = asObject(read('font'));
 		const drafts: PropertyDraft[] = [
@@ -332,10 +341,10 @@ export async function readIosDetails(
 			color('textColor', read('textColor')),
 			has('numberOfLines') ? property('numberOfLines', number('numberOfLines')) : undefined,
 			has('textAlignment')
-				? property('textAlignment', enumName({ ...ALIGNMENTS }, number('textAlignment')))
+				? property('textAlignment', enumName(ALIGNMENTS, number('textAlignment')))
 				: undefined,
 			has('lineBreakMode')
-				? property('lineBreakMode', enumName({ ...LINE_BREAKS }, number('lineBreakMode')))
+				? property('lineBreakMode', enumName(LINE_BREAKS, number('lineBreakMode')))
 				: undefined,
 		];
 
@@ -343,7 +352,9 @@ export async function readIosDetails(
 	}
 
 	function scroll() {
-		if (!has('contentOffset')) return undefined;
+		if (!has('contentOffset')) {
+			return undefined;
+		}
 
 		return section('Scroll', [
 			property('contentOffset', structText(read('contentOffset'), POINT), 'pt'),
@@ -364,7 +375,9 @@ export async function readIosDetails(
 	}
 
 	function image() {
-		if (!has('image')) return undefined;
+		if (!has('image')) {
+			return undefined;
+		}
 
 		const object = asObject(read('image'));
 

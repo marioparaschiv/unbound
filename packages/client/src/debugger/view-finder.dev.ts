@@ -115,6 +115,7 @@ export function viewHandle(node: string): ExplorerHandle | undefined {
 	return source?.handle(node);
 }
 
+// UNKNOWN: a catch clause can receive any thrown value.
 function errorText(error: unknown): string {
 	return error instanceof Error ? error.message : String(error);
 }

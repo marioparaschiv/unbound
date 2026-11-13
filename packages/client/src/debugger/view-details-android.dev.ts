@@ -7,6 +7,15 @@ import type {
 import type { ViewDetails, ViewSection } from '@unbound-app/debugger-protocol';
 
 import {
+	argbToHex,
+	colorProperty,
+	enumName,
+	layoutSize,
+	property,
+	round,
+	section,
+} from '~/debugger/view-properties.dev';
+import {
 	byName,
 	calls,
 	handle,
@@ -16,15 +25,6 @@ import {
 	primitive,
 	string,
 } from '~/debugger/java-values.dev';
-import {
-	argbToHex,
-	colorProperty,
-	enumName,
-	layoutSize,
-	property,
-	round,
-	section,
-} from '~/debugger/view-properties.dev';
 
 const VIEW_CALLS = [
 	'getMeasuredWidth',
@@ -130,7 +130,9 @@ export async function readAndroidDetails(
 	function isA(value: NativeJavaValue | undefined, name: string): boolean {
 		const object = handle(value);
 
-		if (!object) return false;
+		if (!object) {
+			return false;
+		}
 
 		let type = classes.get(name);
 
@@ -159,20 +161,26 @@ export async function readAndroidDetails(
 	for (const value of read.values()) {
 		const object = handle(value);
 
-		if (object) borrowed.push(object);
+		if (object) {
+			borrowed.push(object);
+		}
 	}
 
 	// Each call below reads an object a view returned, never the view, so it is safe off the main thread.
 	function call(target: NativeJavaValue | undefined, name: string): NativeJavaValue | undefined {
 		const object = handle(target);
 
-		if (!object) return undefined;
+		if (!object) {
+			return undefined;
+		}
 
 		try {
 			const result = java.invoke(object, name, []);
 			const returned = handle(result);
 
-			if (returned) borrowed.push(returned);
+			if (returned) {
+				borrowed.push(returned);
+			}
 
 			return result;
 		} catch {
@@ -182,7 +190,9 @@ export async function readAndroidDetails(
 	}
 
 	function text(value: NativeJavaValue | undefined): string | null {
-		if (value?.type === 'string') return value.value;
+		if (value?.type === 'string') {
+			return value.value;
+		}
 
 		return handle(value) ? string(call(value, 'toString')) : null;
 	}
@@ -203,7 +213,9 @@ export async function readAndroidDetails(
 		while (handle(current) && chain.length < MAX_CLASS_CHAIN) {
 			const name = string(call(current, 'getName'));
 
-			if (!name || name === 'java.lang.Object') break;
+			if (!name || name === 'java.lang.Object') {
+				break;
+			}
 
 			chain.push(name);
 			current = call(current, 'getSuperclass');
@@ -218,11 +230,12 @@ export async function readAndroidDetails(
 
 	function layout() {
 		const params = read.get('getLayoutParams');
-		const field = (name: string) => {
+
+		function field(name: string) {
 			const object = handle(params);
 
 			return object ? number(java.getField(object, name)) : 0;
-		};
+		}
 		const margins = isA(params, 'android.view.ViewGroup$MarginLayoutParams')
 			? [field('leftMargin'), field('topMargin'), field('rightMargin'), field('bottomMargin')]
 					.map((value) => round(value, density))

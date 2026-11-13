@@ -12,6 +12,7 @@ import { clipText, type PixelRect } from '~/debugger/view-node.dev';
 import { readIosDetails } from '~/debugger/view-details-ios.dev';
 
 type Entry = { view: NativeObjectHandle; rect: PixelRect };
+type Origin = { x: number; y: number };
 type Border = { layer: NativeObjectHandle; width: NativeObjCResult; color: NativeObjCResult };
 type Listed = {
 	view: NativeObjectHandle;
@@ -42,10 +43,7 @@ export function createIosViewSource(objc: LoaderObjCBridge): ViewSource {
 	let overlaid = false;
 
 	/** Reads each view's subview count, alpha and accessibility identifier in batches on the main thread. */
-	async function describeAll(
-		listed: Listed[],
-		origin: { x: number; y: number },
-	): Promise<ViewNode[]> {
+	async function describeAll(listed: Listed[], origin: Origin): Promise<ViewNode[]> {
 		const steps = listed.flatMap(({ view }, index): NativeBatchStep[] => {
 			const base = index * VIEW_STEPS;
 

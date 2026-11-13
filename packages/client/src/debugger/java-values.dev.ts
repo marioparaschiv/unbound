@@ -10,20 +10,45 @@ import type {
 /** The most operations the Java bridge runs in one `batchAsync`. */
 const BATCH_STEPS = 64;
 
+/**
+ * @description Wraps a number as a Java `int` argument, rounded.
+ * @param value The number.
+ * @returns The argument.
+ */
 export const int = (value: number): NativeJavaArgument => ({
 	type: 'int',
 	value: Math.round(value),
 });
 
+/**
+ * @description Reads a Java object handle.
+ * @param value The value.
+ * @returns The handle, or `undefined` when the value is not one.
+ */
 export const handle = (value: NativeJavaValue | undefined): NativeJavaHandleValue | undefined =>
 	value?.type === 'handle' ? value : undefined;
 
+/**
+ * @description Reads a Java number.
+ * @param value The value.
+ * @returns The number, or 0 when the value is not one.
+ */
 export const number = (value: NativeJavaValue | undefined): number =>
 	value && 'value' in value && typeof value.value === 'number' ? value.value : 0;
 
+/**
+ * @description Reads a Java string.
+ * @param value The value.
+ * @returns The string, or `''` when the value is not one.
+ */
 export const string = (value: NativeJavaValue | undefined): string =>
 	value?.type === 'string' ? value.value : '';
 
+/**
+ * @description Reads a Java boolean.
+ * @param value The value.
+ * @returns Whether the value is `true`.
+ */
 export const isTrue = (value: NativeJavaValue | undefined): boolean =>
 	Boolean(value && 'value' in value && value.value === true);
 
