@@ -78,6 +78,20 @@ inline constexpr std::array<std::string_view, 1> kFfiSymbolsMethods = {
 inline constexpr std::array<std::string_view, 1> kFfiCallMethods = {
     "call",
 };
+inline constexpr std::array<std::string_view, 4> kFfiMemoryMethods = {
+    "alloc",
+    "free",
+    "read",
+    "write",
+};
+inline constexpr std::array<std::string_view, 2> kFfiCallbacksMethods = {
+    "callback",
+    "releaseCallback",
+};
+inline constexpr std::array<std::string_view, 2> kFfiRebindMethods = {
+    "rebind",
+    "restore",
+};
 inline constexpr std::array<std::string_view, 7> kFabricMountMethods = {
     "mount",
     "update",
@@ -148,7 +162,7 @@ inline constexpr std::array<std::string_view, 1> kDebugEnvironmentMethods = {
     "environment",
 };
 
-inline constexpr std::array<NativeCapabilityBinding, 26> kNativeCapabilityBindings = {{
+inline constexpr std::array<NativeCapabilityBinding, 29> kNativeCapabilityBindings = {{
     {"native.objc.classes", "objc", kObjcClassesMethods},
     {"native.objc.invoke", "objc", kObjcInvokeMethods},
     {"native.objc.invokeAsync", "objc", kObjcInvokeAsyncMethods},
@@ -162,6 +176,9 @@ inline constexpr std::array<NativeCapabilityBinding, 26> kNativeCapabilityBindin
     {"native.objc.inspect", "objc", kObjcInspectMethods},
     {"native.ffi.symbols", "ffi", kFfiSymbolsMethods},
     {"native.ffi.call", "ffi", kFfiCallMethods},
+    {"native.ffi.memory", "ffi", kFfiMemoryMethods},
+    {"native.ffi.callbacks", "ffi", kFfiCallbacksMethods},
+    {"native.ffi.rebind", "ffi", kFfiRebindMethods},
     {"native.fabric.mount", "fabric", kFabricMountMethods},
     {"native.fabric.async", "fabric", kFabricAsyncMethods},
     {"native.runtime.events", "runtime", kRuntimeEventsMethods},
@@ -177,7 +194,7 @@ inline constexpr std::array<NativeCapabilityBinding, 26> kNativeCapabilityBindin
     {"native.debug.environment", "debug", kDebugEnvironmentMethods},
 }};
 
-inline constexpr std::array<const char *, 18> kIOSNativePluginCapabilities = {
+inline constexpr std::array<const char *, 21> kIOSNativePluginCapabilities = {
     "native.objc.classes",
     "native.objc.invoke",
     "native.objc.invokeAsync",
@@ -191,6 +208,9 @@ inline constexpr std::array<const char *, 18> kIOSNativePluginCapabilities = {
     "native.objc.inspect",
     "native.ffi.symbols",
     "native.ffi.call",
+    "native.ffi.memory",
+    "native.ffi.callbacks",
+    "native.ffi.rebind",
     "native.fabric.mount",
     "native.fabric.async",
     "native.runtime.events",
@@ -198,9 +218,12 @@ inline constexpr std::array<const char *, 18> kIOSNativePluginCapabilities = {
     "native.debug.environment",
 };
 
-inline constexpr std::array<const char *, 14> kAndroidNativePluginCapabilities = {
+inline constexpr std::array<const char *, 17> kAndroidNativePluginCapabilities = {
     "native.ffi.symbols",
     "native.ffi.call",
+    "native.ffi.memory",
+    "native.ffi.callbacks",
+    "native.ffi.rebind",
     "native.fabric.async",
     "native.runtime.events",
     "native.java.classes",
