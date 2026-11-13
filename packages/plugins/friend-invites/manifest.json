@@ -1,0 +1,25 @@
+{
+	"id": "unbound.friend-invites",
+	"name": "Friend Invites",
+	"description": "Creates, lists and revokes your friend invite links with the /friend-invites command.",
+	"authors": [
+		{
+			"name": "afn",
+			"id": "420043923822608384"
+		},
+		{
+			"name": "Dziurwa",
+			"id": "1001086404203389018"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "UserPlusIcon",
+	"main": "index.tsx"
+}
