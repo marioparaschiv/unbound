@@ -42,6 +42,11 @@ public:
     virtual std::optional<DownloadResult>
     download(const std::string &url, const std::string &destination,
              const std::map<std::string, std::string> &headers, const DownloadPolicy &policy) = 0;
+    virtual void collectBackgroundDownload(const std::string &) {}
+    virtual void continueDownloadInBackground(const std::string &, const std::string &,
+                                              const std::map<std::string, std::string> &)
+    {
+    }
     // Whether a dev server answers at `url`.
     virtual bool isServing(const std::string &url, double timeoutSeconds) = 0;
     // The host a virtual device's dev server runs on, when there is one.
@@ -80,6 +85,14 @@ public:
     virtual PreviousExit previousExit()
     {
         return PreviousExit::Unknown;
+    }
+    virtual bool tracksVisibility()
+    {
+        return false;
+    }
+    virtual bool visibleNow()
+    {
+        return false;
     }
     // Whether the active network is metered (mobile data, a hotspot or Low Data Mode).
     virtual bool onMeteredNetwork()

@@ -12,11 +12,14 @@
 #import "LoaderJSIJSON.h"
 #import "NativeEvaluations.h"
 #import "NativeFFI.h"
+#import "NativeFFIExtras.h"
 #import "NativeFabric.h"
 #import "NativePlatformBridge.h"
 #import "NativePluginAssociations.h"
 #import "NativePluginBatch.h"
+#import "NativePluginBlocks.h"
 #import "NativePluginCallPlans.h"
+#import "NativePluginClassSearch.h"
 #import "NativePluginFFICodecs.h"
 #import "NativePluginFabricAdapter.h"
 #import "NativePluginHooks.h"
@@ -457,6 +460,9 @@ static void installObjC(Runtime &runtime, Object &objc)
                      }));
 
     objc.setProperty(runtime, "hook", makeFunction("hook", 3, runtime, makeHook));
+    installObjCBlocks(runtime, objc);
+    installObjCClassDefinition(runtime, objc);
+    installObjCClassSearch(runtime, objc);
     installInspector(runtime, objc);
     objc.setProperty(runtime, "createUIScope",
                      makeFunction("createUIScope", 1, runtime, createUIScope));
@@ -467,6 +473,16 @@ static void installFFI(Runtime &runtime, Object &ffi)
     ffi.setProperty(runtime, "symbol",
                     makeFunction("symbol", 2, runtime, loader::ffi::lookupSymbol));
     ffi.setProperty(runtime, "call", makeFunction("call", 3, runtime, loader::ffi::callFunction));
+    ffi.setProperty(runtime, "alloc", makeFunction("alloc", 1, runtime, loader::ffi::allocate));
+    ffi.setProperty(runtime, "free", makeFunction("free", 1, runtime, loader::ffi::release));
+    ffi.setProperty(runtime, "read", makeFunction("read", 3, runtime, loader::ffi::read));
+    ffi.setProperty(runtime, "write", makeFunction("write", 4, runtime, loader::ffi::write));
+    ffi.setProperty(runtime, "callback",
+                    makeFunction("callback", 2, runtime, loader::ffi::callback));
+    ffi.setProperty(runtime, "releaseCallback",
+                    makeFunction("releaseCallback", 1, runtime, loader::ffi::releaseCallback));
+    ffi.setProperty(runtime, "rebind", makeFunction("rebind", 2, runtime, loader::ffi::rebind));
+    ffi.setProperty(runtime, "restore", makeFunction("restore", 1, runtime, loader::ffi::restore));
 }
 
 static Value environment(Runtime &runtime, const Value *, size_t)

@@ -53,6 +53,7 @@ public:
     // Discord returned to the foreground: checks for a newer bundle if one is due.
     void onForeground();
     bool onBackground();
+    void onVisible();
     bool isCheckingForUpdate() const;
 
     SettingsStore                       &settings();

@@ -9,16 +9,15 @@
 	"HIGHLIGHTING": "Επισήμανση",
 	"THEME": "Θέμα",
 	"THEME_SUBTITLE": "Διάλεξε ένα θέμα του VS Code για τα χρώματα σύνταξης.",
-	"SEARCH_THEMES": "Αναζήτηση θεμάτων",
 	"CUSTOM_THEME_URL": "URL προσαρμοσμένου θέματος",
 	"CUSTOM_THEME_URL_SUBTITLE": "Ένας σύνδεσμος HTTPS σε αρχείο JSON θέματος του VS Code αντικαθιστά το επιλεγμένο θέμα.",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
 	"BACKGROUND_OPACITY": "Αδιαφάνεια φόντου",
 	"LANGUAGE_ICONS": "Εικονίδια γλωσσών",
 	"LANGUAGE_ICONS_SUBTITLE": "Εμφάνιση των σημάτων γλώσσας Devicon στην κεφαλίδα του μπλοκ κώδικα.",
-	"ICONS_DISABLED": "ανενεργά",
-	"ICONS_GREYSCALE": "ασπρόμαυρα",
-	"ICONS_COLORED": "έγχρωμα",
+	"ICONS_DISABLED": "Ανενεργά",
+	"ICONS_GREYSCALE": "Ασπρόμαυρα",
+	"ICONS_COLORED": "Έγχρωμα",
 	"LONG_LINES": "Μεγάλες γραμμές",
 	"LONG_LINES_SUBTITLE": "Επίλεξε ανάμεσα σε αναδίπλωση του κώδικα και οριζόντια κύλιση.",
 	"LONG_LINES_WRAP": "Αναδίπλωση",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "Ποτέ",
 	"HLJS_SECONDARY": "Προτίμηση Shiki",
 	"HLJS_PRIMARY": "Προτίμηση Highlight.js",
-	"HLJS_ALWAYS": "Πάντα Highlight.js"
+	"HLJS_ALWAYS": "Πάντα Highlight.js",
+	"INVALID_THEME_URL": "Εισήγαγε σύνδεσμο HTTPS προς αρχείο .json."
 }

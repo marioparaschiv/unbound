@@ -1,18 +1,12 @@
 {
-	"ADD_USER_ID": "Añadir ID de usuario",
+	"ADD_USER": "Agregar usuario",
 	"ADD_USER_ID_SUBTITLE": "Las respuestas pueden mencionar a estos usuarios cuando la excepción está activada",
-	"CANCEL": "Cancelar",
-	"DELETE": "Eliminar",
-	"EDIT": "Editar",
-	"EDIT_USER_ID": "Editar ID de usuario",
 	"EXCEPTIONS": "Excepciones",
-	"INVALID_USER_ID": "Ingresa un ID de usuario de Discord numérico.",
-	"NO_USERS": "Aún no se añadieron usuarios.",
+	"NO_USERS_FOUND": "No se encontraron usuarios",
 	"ONLY_PING_LISTED": "Mencionar solo a los usuarios de la lista",
 	"ONLY_PING_LISTED_OFF": "De forma predeterminada, las respuestas no mencionan a nadie",
 	"ONLY_PING_LISTED_ON": "Las respuestas mencionan solo a los usuarios de la lista de arriba",
-	"PLUGIN_NAME": "Responder sin mencionar",
-	"SAVE": "Guardar",
-	"TAP_TO_EDIT": "Toca para editar",
-	"USER_ID_PLACEHOLDER": "ID de usuario de Discord"
+	"REMOVE_USER": "Quitar usuario",
+	"SEARCH_USERS": "Busca o pega un ID de usuario",
+	"UNKNOWN_USER": "Usuario desconocido"
 }

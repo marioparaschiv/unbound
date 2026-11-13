@@ -2,7 +2,7 @@
 
 import type { LiteralUnion } from './_types';
 import * as React$1 from 'react';
-import { ComponentType, FunctionComponent, ReactElement, ReactNode } from 'react';
+import { ComponentType, Context, FunctionComponent, ReactElement, ReactNode } from 'react';
 import * as RN from 'react-native';
 import { ImageSourcePropType, ImageStyle, TextStyle, ViewStyle } from 'react-native';
 
@@ -87,13 +87,20 @@ export declare const NATIVE_BRIDGE_CAPABILITIES: readonly [
 	'native.objc.ivars',
 	'native.objc.associations',
 	'native.objc.hooks',
+	'native.objc.blocks',
+	'native.objc.classDefinition',
+	'native.objc.classSearch',
 	'native.objc.inspect',
 	'native.ffi.symbols',
 	'native.ffi.call',
+	'native.ffi.memory',
+	'native.ffi.callbacks',
+	'native.ffi.rebind',
 	'native.fabric.mount',
 	'native.fabric.async',
 	'native.runtime.events',
 	'native.java.classes',
+	'native.java.classSearch',
 	'native.java.construct',
 	'native.java.fields',
 	'native.java.invoke',
@@ -136,6 +143,10 @@ export declare const NATIVE_BRIDGE_METHOD_CAPABILITIES: {
 	readonly 'objc.array': 'native.objc.classes';
 	readonly 'objc.data': 'native.objc.classes';
 	readonly 'objc.hook': 'native.objc.hooks';
+	readonly 'objc.block': 'native.objc.blocks';
+	readonly 'objc.callBlock': 'native.objc.blocks';
+	readonly 'objc.defineClass': 'native.objc.classDefinition';
+	readonly 'objc.findClasses': 'native.objc.classSearch';
 	readonly 'objc.inspectClass': 'native.objc.inspect';
 	readonly 'objc.inspectMembers': 'native.objc.inspect';
 	readonly 'objc.inspectValues': 'native.objc.inspect';
@@ -143,6 +154,14 @@ export declare const NATIVE_BRIDGE_METHOD_CAPABILITIES: {
 	readonly 'objc.inspectClasses': 'native.objc.inspect';
 	readonly 'ffi.symbol': 'native.ffi.symbols';
 	readonly 'ffi.call': 'native.ffi.call';
+	readonly 'ffi.alloc': 'native.ffi.memory';
+	readonly 'ffi.free': 'native.ffi.memory';
+	readonly 'ffi.read': 'native.ffi.memory';
+	readonly 'ffi.write': 'native.ffi.memory';
+	readonly 'ffi.callback': 'native.ffi.callbacks';
+	readonly 'ffi.releaseCallback': 'native.ffi.callbacks';
+	readonly 'ffi.rebind': 'native.ffi.rebind';
+	readonly 'ffi.restore': 'native.ffi.rebind';
 	readonly 'fabric.mount': 'native.fabric.mount';
 	readonly 'fabric.update': 'native.fabric.mount';
 	readonly 'fabric.setSize': 'native.fabric.mount';
@@ -162,6 +181,7 @@ export declare const NATIVE_BRIDGE_METHOD_CAPABILITIES: {
 	readonly 'java.getClass': 'native.java.classes';
 	readonly 'java.className': 'native.java.classes';
 	readonly 'java.describe': 'native.java.classes';
+	readonly 'java.findClasses': 'native.java.classSearch';
 	readonly 'java.construct': 'native.java.construct';
 	readonly 'java.respondsTo': 'native.java.classes';
 	readonly 'java.invoke': 'native.java.invoke';
@@ -201,9 +221,15 @@ export declare const NATIVE_BRIDGE_PLATFORM_CAPABILITIES: {
 		'native.objc.ivars',
 		'native.objc.associations',
 		'native.objc.hooks',
+		'native.objc.blocks',
+		'native.objc.classDefinition',
+		'native.objc.classSearch',
 		'native.objc.inspect',
 		'native.ffi.symbols',
 		'native.ffi.call',
+		'native.ffi.memory',
+		'native.ffi.callbacks',
+		'native.ffi.rebind',
 		'native.fabric.mount',
 		'native.fabric.async',
 		'native.runtime.events',
@@ -213,9 +239,13 @@ export declare const NATIVE_BRIDGE_PLATFORM_CAPABILITIES: {
 	readonly android: readonly [
 		'native.ffi.symbols',
 		'native.ffi.call',
+		'native.ffi.memory',
+		'native.ffi.callbacks',
+		'native.ffi.rebind',
 		'native.fabric.async',
 		'native.runtime.events',
 		'native.java.classes',
+		'native.java.classSearch',
 		'native.java.construct',
 		'native.java.fields',
 		'native.java.invoke',
@@ -1361,6 +1391,8 @@ export type DesignHelpers = {
 	TextStyleSheet: Record<TextVariant, TextStyle>;
 	/** Hook that resolves a semantic colour token, such as `Theme.colors.TEXT_DEFAULT`, to a colour for the current theme. */
 	useToken: (token: SemanticColorToken) => string;
+	/** Whether a row sits in a `TableRowGroup`, which then rounds the group's card itself; rows outside one round their own. */
+	TableRowGroupContext: React$1.Context<boolean>;
 	/** Hook that builds the state a `SegmentedControl` and its `SegmentedControlPages` share. */
 	useSegmentedControlState: (options: SegmentedControlStateOptions) => SegmentedControlState;
 	/** Opens an alert as `openAlert(key, element)`; pass the same key to `dismissAlert` to close it. */
@@ -3959,6 +3991,8 @@ export type NativeDeviceState = {
 	unboundMB?: number;
 	/** The active connection, and whether a VPN, a proxy, a metered plan or Low Data Mode (Data Saver) applies. */
 	network?: NativeNetworkState;
+	/** Other tweaks or modules loaded into Discord: iOS dylib names, Android packages or Magisk modules; older loaders omit it. */
+	injected?: string[];
 };
 /** Calls C functions in images Discord already loaded. An unsigned plugin needs the user's consent to use it. */
 export type NativeFFIBridge = {
@@ -3966,6 +4000,41 @@ export type NativeFFIBridge = {
 	symbol(name: string, image?: string): NativePointer | null;
 	/** Calls a symbol from `symbol` with an explicit signature. */
 	call(pointer: NativePointer, signature: NativeFFISignature, ...args: unknown[]): unknown;
+	/** Allocates zeroed memory for out-parameters and buffers; free it with `free`. Needs `native.ffi.memory`. */
+	alloc(size: number): NativePointer;
+	/** Frees memory from `alloc`; `false` for any other pointer. Needs `native.ffi.memory`. */
+	free(pointer: NativePointer): boolean;
+	/** Reads a value of a type at a pointer, `offset` bytes in, failing safely on an unreadable address. Needs `native.ffi.memory`. */
+	read(pointer: NativePointer, type: NativeFFIType, offset?: number): NativeFFIValue;
+	/** Writes a value of a type into memory from `alloc`, `offset` bytes in. Needs `native.ffi.memory`. */
+	write(
+		pointer: NativePointer,
+		type: NativeFFIType,
+		value: NativeFFIValue,
+		offset?: number,
+	): void;
+	/**
+	 * Makes a C function pointer that runs `implementation` on the JavaScript thread; 32 per return kind live at
+	 * once, so release each with `releaseCallback`. Needs `native.ffi.callbacks`.
+	 */
+	callback(
+		signature: NativeFFISignature,
+		implementation: (...args: never[]) => NativeFFIValue | void,
+	): NativePointer;
+	/** Frees a pointer from `callback`. Needs `native.ffi.callbacks`. */
+	releaseCallback(pointer: NativePointer): boolean;
+	/**
+	 * Points every image's imports of a C function at `replacement`, such as a pointer from `callback`, and returns
+	 * the original to call through; the loader's own calls keep the original. Needs `native.ffi.rebind`.
+	 */
+	rebind(name: string, replacement: NativePointer): NativeFFIRebinding;
+	/** Puts back every import `rebind` changed for a symbol. Needs `native.ffi.rebind`. */
+	restore(name: string): boolean;
+};
+/** What `rebind` changed: the original function and how many import slots now point at the replacement. */
+export type NativeFFIRebinding = {
+	original: NativePointer;
+	slots: number;
 };
 /** A non-variadic C function signature for `ffi.call`. */
 export type NativeFFISignature = {
@@ -3999,6 +4068,15 @@ export type NativeFFITypeName =
 	| 'object'
 	| 'class'
 	| 'selector';
+/** A value an FFI type reads or writes: a number, `BigInt` for 64-bit integers, a boolean, a string or a pointer. */
+export type NativeFFIValue =
+	| number
+	| bigint
+	| boolean
+	| string
+	| NativePointer
+	| NativeStruct
+	| null;
 /** One surface's changes in a `batchAsync` call, applied as properties, then size, then frame. */
 export type NativeFabricBatchMutation = {
 	/** The surface these changes apply to. */
@@ -4160,6 +4238,10 @@ export type NativeHookOptions<Receiver extends boolean = boolean> = {
 	/** Removes the hook after its first call. */
 	once?: boolean;
 	payload?: NativeHookPayload<Receiver>;
+	/** Also hooks every loaded subclass that implements the selector itself. */
+	subclasses?: boolean;
+	/** Waits for a class that is not loaded yet, retrying with backoff for up to ten minutes. */
+	waitForClass?: boolean;
 } & NativeCallOptions;
 /** Trims what a hook sends to JavaScript per call, to cut crossing cost on hot methods. */
 export type NativeHookPayload<Receiver extends boolean = boolean> = {
@@ -4323,6 +4405,11 @@ export type NativeJavaBridge = {
 	getClass(name: string): NativeJavaHandle;
 	/** Lists a class's constructors, methods and fields. */
 	describe(name: string): NativeJavaClassDescription;
+	/**
+	 * Finds Discord's classes by shape, so a lookup survives the obfuscated names changing between builds; results
+	 * are cached per Discord build. Needs `native.java.classSearch`.
+	 */
+	findClasses(query: NativeJavaClassQuery): NativeCancelablePromise<string[]>;
 	/** Runs independent operations in one call on the JavaScript thread and returns every result in order. */
 	batch(operations: NativeJavaBatchOperation[]): NativeJavaValue[];
 	/** Runs the operations like `batch`, on the main thread, so views can be read safely. */
@@ -4410,6 +4497,19 @@ export type NativeJavaClassDescription = {
 	/** The fields the class declares. */
 	fields: NativeJavaFieldDescription[];
 };
+/** What `java.findClasses` matches; library packages are skipped unless `package` names one. */
+export type NativeJavaClassQuery = {
+	/** The class name starts with it, such as `com.discord.`. */
+	package?: string;
+	/** The class inherits from it, directly or further up. */
+	extends?: string;
+	/** The class implements every one, directly or through a superclass. */
+	implements?: string[];
+	methods?: NativeJavaMethodShape[];
+	fields?: NativeJavaFieldShape[];
+	/** At most this many names, 50 by default and 1000 at most. */
+	limit?: number;
+};
 /** One field a Java class declares, from `java.describe`. */
 export type NativeJavaFieldDescription = {
 	/** The field name. */
@@ -4418,6 +4518,12 @@ export type NativeJavaFieldDescription = {
 	type: string;
 	/** Whether the field is static. */
 	static: boolean;
+};
+/** A field a class from `java.findClasses` must declare. */
+export type NativeJavaFieldShape = {
+	name?: string;
+	type?: string;
+	static?: boolean;
 };
 /** A handle to a Java object or class; the plugin scope releases it on dispose. */
 export type NativeJavaHandle = NativeHandle;
@@ -4451,6 +4557,10 @@ export type NativeJavaHookOptions<Receiver extends boolean = boolean> = {
 	rewriteArguments?: boolean;
 	/** Trims the receiver, arguments and phase each event sends, to cut crossing cost on hot methods. */
 	payload?: NativeHookPayload<Receiver>;
+	/** Also hooks every subclass that declares the method itself, found by `java.findClasses` once it answers. */
+	subclasses?: boolean;
+	/** Waits for a class that is not loaded yet, retrying with backoff for up to ten minutes. */
+	waitForClass?: boolean;
 };
 /** What a `rewriteArguments` listener returns to run the hooked method with other arguments, one per parameter. */
 export type NativeJavaHookRewrite = {
@@ -4508,6 +4618,16 @@ export type NativeJavaMethodDescription = {
 	returnType: string;
 	/** Whether the method is static. */
 	static: boolean;
+};
+/** A method a class from `java.findClasses` must have; every given part must match. */
+export type NativeJavaMethodShape = {
+	name?: string;
+	/** The parameter types' fully qualified names, in order. */
+	parameters?: string[];
+	returns?: string;
+	static?: boolean;
+	/** Whether the class itself declares it rather than inheriting it; `true` by default. */
+	declared?: boolean;
 };
 /** A Java object implementing interfaces through a handler; remove its token to stop it answering. */
 export type NativeJavaProxy = {
@@ -4718,10 +4838,55 @@ export type NativeObjCBridge = {
 		handlers: NativeHookHandlers<Receiver>,
 		options?: NativeHookOptions<Receiver>,
 	): NativeHookToken;
+	/**
+	 * Makes an Objective-C block that calls `implementation` on the JavaScript thread, for completion handlers,
+	 * notification observers and enumeration blocks. Needs `native.objc.blocks`.
+	 */
+	block(
+		signature: NativeFFISignature,
+		implementation: (...args: never[]) => NativeObjCResult | void,
+	): NativeObjectHandle;
+	/** Calls a block, such as a completion handler a hook received, with an explicit signature. Needs `native.objc.blocks`. */
+	callBlock(
+		block: NativeObjectHandle,
+		signature: NativeFFISignature,
+		...args: NativeObjCResult[]
+	): NativeObjCResult;
+	/**
+	 * Defines an Objective-C class at runtime whose methods run JavaScript, for delegates, data sources and
+	 * target-action receivers; defining it again replaces its methods. Needs `native.objc.classDefinition`.
+	 */
+	/** Finds loaded classes by shape, so a lookup survives renamed classes. Needs `native.objc.classSearch`. */
+	findClasses(query: NativeObjCClassQuery): string[];
+	defineClass(
+		name: string,
+		superclass: string,
+		methods: Record<string, NativeObjCMethodDefinition>,
+		protocols?: string[],
+	): NativeClassHandle;
 };
 /** A selector and method signature resolved once by `objc.prepare`, for calling many times without the lookup. */
 export type NativeObjCCallPlan = NativeHandle & {
 	readonly [nativeObjCCallPlan]: true;
+};
+/** What `objc.findClasses` matches; every given part must match, and names come back sorted. */
+export type NativeObjCClassQuery = {
+	/** The class name starts with it. */
+	prefix?: string;
+	/** The path of the image the class is in contains it, such as `Discord.app/Discord`. */
+	image?: string;
+	/** The class inherits from it, directly or further up. */
+	superclass?: string;
+	/** The class conforms to every one. */
+	protocols?: string[];
+	/** The class responds to every instance selector, its own or inherited. */
+	methods?: string[];
+	/** The class itself implements every instance selector. */
+	ownMethods?: string[];
+	/** The class responds to every class selector. */
+	classMethods?: string[];
+	/** At most this many names, 50 by default and 1000 at most. */
+	limit?: number;
 };
 /**
  * The debugger's Objective-C reflection, iOS only and never in a plugin's scope. Needs `native.objc.inspect`.
@@ -4748,6 +4913,11 @@ export type NativeObjCInspector = {
 	inspectImages(page?: NativeInspectPage): NativeInspectedImages;
 	/** Lists one page of the class names an image defines, sorted. */
 	inspectClasses(imagePath: string, page?: NativeInspectPage): NativeInspectedClasses;
+};
+/** One method of a class `objc.defineClass` makes: its signature without `self` and `_cmd`, and what runs. */
+export type NativeObjCMethodDefinition = {
+	signature: NativeFFISignature;
+	implementation: (self: NativeObjectHandle, ...args: never[]) => NativeObjCResult | void;
 };
 /** What an Objective-C call returns: a plain value, a handle to an object, a 64-bit integer, or nothing for `void`. */
 export type NativeObjCResult = NativeSerializable | NativeHandle | bigint | undefined;

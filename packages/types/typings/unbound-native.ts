@@ -28,6 +28,21 @@ export type UnboundLaunchReport = {
 	lastCheck?: { at: number; outcome: 'downloaded' | 'current' | 'failed'; detail?: string };
 	/** Set when `settings.json` was corrupt: restored from its last good copy, or reset. */
 	settings?: 'restored' | 'reset';
+	/** What the system killed or caught over the last week: out-of-memory, watchdog, CPU and locked-file exits, and hangs. */
+	system?: UnboundSystemExits;
+};
+
+/**
+ * Counts of the exits the system forced over the last week, from MetricKit on iOS and exit reasons on Android.
+ * @internal
+ */
+export type UnboundSystemExits = {
+	memory?: number;
+	watchdog?: number;
+	cpu?: number;
+	lockedFile?: number;
+	hangs?: number;
+	longestHangMs?: number;
 };
 
 /**

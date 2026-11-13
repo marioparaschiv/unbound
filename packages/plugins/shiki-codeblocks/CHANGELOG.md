@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-13
+
+### Changed
+
+- Themes open in a picker sheet, and language icons and long lines are switched with segmented controls. A custom theme URL that is not an HTTPS link to a JSON file now shows an error.
+
 ## [1.1.6] - 2026-11-11
 
 ### Changed

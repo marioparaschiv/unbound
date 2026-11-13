@@ -9,16 +9,15 @@
 	"HIGHLIGHTING": "Coloration",
 	"THEME": "Thème",
 	"THEME_SUBTITLE": "Choisissez un thème VS Code pour la coloration syntaxique.",
-	"SEARCH_THEMES": "Rechercher des thèmes",
 	"CUSTOM_THEME_URL": "URL de thème personnalisé",
 	"CUSTOM_THEME_URL_SUBTITLE": "Un lien HTTPS vers un fichier JSON de thème VS Code remplace le thème sélectionné.",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
 	"BACKGROUND_OPACITY": "Opacité de l’arrière-plan",
 	"LANGUAGE_ICONS": "Icônes de langage",
 	"LANGUAGE_ICONS_SUBTITLE": "Afficher les logos de langage Devicon dans l’en-tête du bloc de code.",
-	"ICONS_DISABLED": "désactivées",
-	"ICONS_GREYSCALE": "en niveaux de gris",
-	"ICONS_COLORED": "en couleur",
+	"ICONS_DISABLED": "Désactivées",
+	"ICONS_GREYSCALE": "En niveaux de gris",
+	"ICONS_COLORED": "En couleur",
 	"LONG_LINES": "Lignes longues",
 	"LONG_LINES_SUBTITLE": "Choisissez entre le retour à la ligne et le défilement horizontal.",
 	"LONG_LINES_WRAP": "Retour à la ligne",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "Jamais",
 	"HLJS_SECONDARY": "Préférer Shiki",
 	"HLJS_PRIMARY": "Préférer Highlight.js",
-	"HLJS_ALWAYS": "Toujours utiliser Highlight.js"
+	"HLJS_ALWAYS": "Toujours utiliser Highlight.js",
+	"INVALID_THEME_URL": "Saisissez un lien HTTPS vers un fichier .json."
 }

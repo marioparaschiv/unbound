@@ -6,6 +6,7 @@ import { patchMessageRows } from '~/patches/message-rows';
 import { startSaving, stopSaving } from '~/lib/persist';
 import { closeHistorySheet } from '~/lib/sheet';
 import { clearLog } from '~/lib/clear';
+import SettingsPanel from '~/settings';
 
 export function start() {
 	interceptDeletions();
@@ -24,3 +25,5 @@ export function stop() {
 	closeHistorySheet();
 	clearLog();
 }
+
+export { SettingsPanel };

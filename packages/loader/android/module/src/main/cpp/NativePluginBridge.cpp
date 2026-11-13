@@ -28,6 +28,7 @@
 #include "NativeBoundedValue.h"
 #include "NativeEvaluations.h"
 #include "NativeFFI.h"
+#include "NativeFFIExtras.h"
 #include "NativeFabric.h"
 #include "NativeGeometry.h"
 #include "NativeHandleLeases.h"
@@ -89,6 +90,15 @@ static jsi::Object makeJavaNamespace(jsi::Runtime &runtime, const JavaCallbacks 
                requireArguments(count, 1, "Java class descriptions require a class name");
                return javaSynchronously(rt, callbacks, callbacks.javaDescribe,
                                         {javaName(rt, args[0])});
+           });
+    define(runtime, java, "findClasses", 1,
+           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               requireArguments(count, 1, "A Java class search requires a query");
+               std::vector<std::string> arguments{loader::fromJSIValue(rt, args[0]).dump()};
+               return javaAsynchronously(
+                   rt, callbacks, [callbacks, arguments = std::move(arguments)]() {
+                       return callJavaString(callbacks, callbacks.javaFindClasses, arguments);
+                   });
            });
     define(runtime, java, "construct", 2,
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
@@ -248,6 +258,31 @@ static jsi::Object makeFFINamespace(jsi::Runtime &runtime)
     });
     define(runtime, ffi, "call", 3, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
         return loader::ffi::callFunction(rt, args, count);
+    });
+    define(runtime, ffi, "alloc", 1, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+        return loader::ffi::allocate(rt, args, count);
+    });
+    define(runtime, ffi, "free", 1, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+        return loader::ffi::release(rt, args, count);
+    });
+    define(runtime, ffi, "read", 3, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+        return loader::ffi::read(rt, args, count);
+    });
+    define(runtime, ffi, "write", 4, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+        return loader::ffi::write(rt, args, count);
+    });
+    define(runtime, ffi, "callback", 2, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+        return loader::ffi::callback(rt, args, count);
+    });
+    define(runtime, ffi, "releaseCallback", 1,
+           [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               return loader::ffi::releaseCallback(rt, args, count);
+           });
+    define(runtime, ffi, "rebind", 2, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+        return loader::ffi::rebind(rt, args, count);
+    });
+    define(runtime, ffi, "restore", 1, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+        return loader::ffi::restore(rt, args, count);
     });
     return ffi;
 }

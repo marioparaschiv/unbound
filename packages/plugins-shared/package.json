@@ -6,6 +6,8 @@
 	"type": "module",
 	"exports": {
 		"./*.json": "./src/*.json",
+		"./entities/entity-list": "./src/entities/entity-list.tsx",
+		"./entities/entity-list-row": "./src/entities/entity-list-row.tsx",
 		"./*": "./src/*.ts"
 	},
 	"scripts": {

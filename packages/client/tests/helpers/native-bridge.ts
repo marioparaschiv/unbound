@@ -99,6 +99,10 @@ export const javaInvokeFailure = Object.assign(new Error('No method noSuchMethod
 	code: 'NATIVE_BRIDGE_ERROR',
 });
 export const nativeHandle: NativeHandle = Object.create(null);
+
+export const hookedClasses: string[] = [];
+
+export const nativeCallbacks: ((...args: never[]) => NativeObjCResult | void)[] = [];
 const capabilities = [
 	'native.objc.classes',
 	'native.objc.invoke',
@@ -108,12 +112,19 @@ const capabilities = [
 	'native.objc.ivars',
 	'native.objc.associations',
 	'native.objc.hooks',
+	'native.objc.blocks',
+	'native.objc.classDefinition',
+	'native.objc.classSearch',
 	'native.ffi.symbols',
 	'native.ffi.call',
+	'native.ffi.memory',
+	'native.ffi.callbacks',
+	'native.ffi.rebind',
 	'native.fabric.mount',
 	'native.fabric.async',
 	'native.runtime.events',
 	'native.java.classes',
+	'native.java.classSearch',
 	'native.java.construct',
 	'native.java.fields',
 	'native.java.invoke',
@@ -197,8 +208,8 @@ const fakeBridge: LoaderBridge = {
 		findViews: () => cancellable(Promise.resolve([]), 'findViews'),
 		invokeSuper: () => undefined,
 		invokeSuperAsync: () => cancellable(new Promise(() => undefined), 'invokeSuper'),
-		hook: () => ({
-			active: true,
+		hook: (className: string) => ({
+			active: hookedClasses.push(className) > 0,
 			setReturnValue: () => undefined,
 			removeReturnValue: () => undefined,
 			clearReturnValues: () => undefined,
@@ -208,10 +219,31 @@ const fakeBridge: LoaderBridge = {
 		setAssociatedObject: (...args: unknown[]) => cleared.push(args),
 		setIvar: () => undefined,
 		struct: () => Object.assign(Object.create(null), { name: 'NSObject' }),
+		block: (_signature, implementation) => {
+			nativeCallbacks.push(implementation);
+
+			return nativeHandle;
+		},
+		callBlock: () => undefined,
+		findClasses: () => ['UnboundTestSubclass'],
+		defineClass: (_name, _superclass, methods) => {
+			for (const method of Object.values(methods))
+				nativeCallbacks.push(method.implementation);
+
+			return nativeHandle;
+		},
 	},
 	ffi: {
 		call: () => undefined,
 		symbol: () => null,
+		alloc: () => nativeHandle,
+		free: () => true,
+		read: () => 0,
+		write: () => undefined,
+		callback: () => nativeHandle,
+		releaseCallback: () => true,
+		rebind: () => ({ original: nativeHandle, slots: 0 }),
+		restore: () => true,
 	},
 	fabric: {
 		mount: () => nativeHandle,
@@ -248,6 +280,7 @@ const fakeBridge: LoaderBridge = {
 			fields: [],
 		}),
 		construct: () => javaHandle,
+		findClasses: () => cancellable(Promise.resolve([]), 'findClasses'),
 		respondsTo: () => ({ type: 'boolean', value: true }),
 		invoke: (_handle: NativeJavaReference, _name: string, args?: NativeJavaArgument[]) => {
 			javaInvokeArguments.push(args);

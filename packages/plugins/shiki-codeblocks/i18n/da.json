@@ -9,16 +9,15 @@
 	"HIGHLIGHTING": "Fremhævning",
 	"THEME": "Tema",
 	"THEME_SUBTITLE": "Vælg et VS Code-tema til syntaksfarver.",
-	"SEARCH_THEMES": "Søg efter temaer",
 	"CUSTOM_THEME_URL": "URL til brugerdefineret tema",
 	"CUSTOM_THEME_URL_SUBTITLE": "Et HTTPS-link til en JSON-fil med et VS Code-tema tilsidesætter det valgte tema.",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
 	"BACKGROUND_OPACITY": "Baggrundens opacitet",
 	"LANGUAGE_ICONS": "Sprogikoner",
 	"LANGUAGE_ICONS_SUBTITLE": "Vis Devicon-sprogmærker i kodeblokkens overskrift.",
-	"ICONS_DISABLED": "deaktiveret",
-	"ICONS_GREYSCALE": "gråtoner",
-	"ICONS_COLORED": "farvet",
+	"ICONS_DISABLED": "Deaktiveret",
+	"ICONS_GREYSCALE": "Gråtoner",
+	"ICONS_COLORED": "Farvet",
 	"LONG_LINES": "Lange linjer",
 	"LONG_LINES_SUBTITLE": "Vælg mellem linjeombrydning af kode og vandret rulning.",
 	"LONG_LINES_WRAP": "Ombryd",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "Aldrig",
 	"HLJS_SECONDARY": "Foretræk Shiki",
 	"HLJS_PRIMARY": "Foretræk Highlight.js",
-	"HLJS_ALWAYS": "Brug altid Highlight.js"
+	"HLJS_ALWAYS": "Brug altid Highlight.js",
+	"INVALID_THEME_URL": "Angiv et HTTPS-link til en .json-fil."
 }

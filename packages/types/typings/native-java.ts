@@ -68,6 +68,10 @@ export type NativeJavaHookOptions<Receiver extends boolean = boolean> = {
 	rewriteArguments?: boolean;
 	/** Trims the receiver, arguments and phase each event sends, to cut crossing cost on hot methods. */
 	payload?: NativeHookPayload<Receiver>;
+	/** Also hooks every subclass that declares the method itself, found by `java.findClasses` once it answers. */
+	subclasses?: boolean;
+	/** Waits for a class that is not loaded yet, retrying with backoff for up to ten minutes. */
+	waitForClass?: boolean;
 };
 
 /** What a `rewriteArguments` listener returns to run the hooked method with other arguments, one per parameter. */
@@ -196,6 +200,11 @@ export type NativeJavaBridge = {
 	getClass(name: string): NativeJavaHandle;
 	/** Lists a class's constructors, methods and fields. */
 	describe(name: string): NativeJavaClassDescription;
+	/**
+	 * Finds Discord's classes by shape, so a lookup survives the obfuscated names changing between builds; results
+	 * are cached per Discord build. Needs `native.java.classSearch`.
+	 */
+	findClasses(query: NativeJavaClassQuery): NativeCancelablePromise<string[]>;
 	/** Runs independent operations in one call on the JavaScript thread and returns every result in order. */
 	batch(operations: NativeJavaBatchOperation[]): NativeJavaValue[];
 	/** Runs the operations like `batch`, on the main thread, so views can be read safely. */
@@ -263,4 +272,36 @@ export type NativeJavaBridge = {
 	setField(handle: NativeJavaReference, name: string, value: NativeJavaArgument): void;
 	/** Drops the plugin's hold on a handle so the loader can free the object. */
 	release(handle: NativeJavaReference): void;
+};
+
+/** A method a class from `java.findClasses` must have; every given part must match. */
+export type NativeJavaMethodShape = {
+	name?: string;
+	/** The parameter types' fully qualified names, in order. */
+	parameters?: string[];
+	returns?: string;
+	static?: boolean;
+	/** Whether the class itself declares it rather than inheriting it; `true` by default. */
+	declared?: boolean;
+};
+
+/** A field a class from `java.findClasses` must declare. */
+export type NativeJavaFieldShape = {
+	name?: string;
+	type?: string;
+	static?: boolean;
+};
+
+/** What `java.findClasses` matches; library packages are skipped unless `package` names one. */
+export type NativeJavaClassQuery = {
+	/** The class name starts with it, such as `com.discord.`. */
+	package?: string;
+	/** The class inherits from it, directly or further up. */
+	extends?: string;
+	/** The class implements every one, directly or through a superclass. */
+	implements?: string[];
+	methods?: NativeJavaMethodShape[];
+	fields?: NativeJavaFieldShape[];
+	/** At most this many names, 50 by default and 1000 at most. */
+	limit?: number;
 };

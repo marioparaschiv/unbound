@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-13
+
+### Changed
+
+- Exceptions are a list of users with their names and avatars. **Add user** opens a search of the people Discord has loaded, and a pasted user ID shows who it belongs to. Tap a user to open their profile.
+
 ## [1.0.6] - 2026-11-11
 
 ### Changed

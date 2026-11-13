@@ -23,6 +23,7 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
     X(javaGetClass, "javaGetClass", "(" UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING)                 \
     X(javaClassName, "javaClassName", "(" UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING)               \
     X(javaDescribe, "javaDescribe", "(" UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING)                 \
+    X(javaFindClasses, "javaFindClasses", "(" UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING)           \
     X(javaConstruct, "javaConstruct",                                                              \
       "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING)                            \
     X(javaRespondsTo, "javaRespondsTo",                                                            \
@@ -68,6 +69,10 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
     X(download, "download",                                                                        \
       "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING "[" UNBOUND_JNI_STRING "[" UNBOUND_JNI_STRING      \
       "III)[" UNBOUND_JNI_STRING)                                                                  \
+    X(continueDownloadInBackground, "continueDownloadInBackground",                                \
+      "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING UNBOUND_JNI_STRING ")V")                           \
+    X(collectBackgroundDownload, "collectBackgroundDownload",                                      \
+      "(" UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING)                                               \
     X(devServerHost, "devServerHost", "()" UNBOUND_JNI_STRING)                                     \
     X(isServing, "isServing", "(" UNBOUND_JNI_STRING "I)Z")                                        \
     X(installHomeScreenIcon, "installHomeScreenIcon",                                              \
@@ -79,6 +84,7 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
     X(crashAlert, "crashAlert", "(" UNBOUND_JNI_STRING ")V")                                       \
     X(stuckLaunch, "stuckLaunch", "(" UNBOUND_JNI_STRING ")V")                                     \
     X(previousExit, "previousExit", "()I")                                                         \
+    X(systemExits, "systemExits", "()" UNBOUND_JNI_STRING)                                         \
     X(deviceState, "deviceState", "()" UNBOUND_JNI_STRING)                                         \
     X(isMeteredNetwork, "isMeteredNetwork", "()Z")                                                 \
     X(updateProgress, "updateProgress", "(Z)V")                                                    \

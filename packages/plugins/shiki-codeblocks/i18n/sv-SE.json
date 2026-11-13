@@ -9,16 +9,15 @@
 	"HIGHLIGHTING": "Markering",
 	"THEME": "Tema",
 	"THEME_SUBTITLE": "Välj ett VS Code-tema för syntaxfärger.",
-	"SEARCH_THEMES": "Sök teman",
 	"CUSTOM_THEME_URL": "URL till anpassat tema",
 	"CUSTOM_THEME_URL_SUBTITLE": "En HTTPS-länk till en JSON-fil med ett VS Code-tema ersätter det valda temat.",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
 	"BACKGROUND_OPACITY": "Bakgrundens opacitet",
 	"LANGUAGE_ICONS": "Språkikoner",
 	"LANGUAGE_ICONS_SUBTITLE": "Visa Devicon-språkikoner i kodblockets sidhuvud.",
-	"ICONS_DISABLED": "inaktiverade",
-	"ICONS_GREYSCALE": "gråskala",
-	"ICONS_COLORED": "färgade",
+	"ICONS_DISABLED": "Inaktiverade",
+	"ICONS_GREYSCALE": "Gråskala",
+	"ICONS_COLORED": "Färgade",
 	"LONG_LINES": "Långa rader",
 	"LONG_LINES_SUBTITLE": "Välj mellan radbrytning och horisontell rullning.",
 	"LONG_LINES_WRAP": "Radbryt",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "Aldrig",
 	"HLJS_SECONDARY": "Föredra Shiki",
 	"HLJS_PRIMARY": "Föredra Highlight.js",
-	"HLJS_ALWAYS": "Använd alltid Highlight.js"
+	"HLJS_ALWAYS": "Använd alltid Highlight.js",
+	"INVALID_THEME_URL": "Ange en HTTPS-länk till en .json-fil."
 }

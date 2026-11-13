@@ -12,6 +12,7 @@ import android.os.Looper
 import android.os.PowerManager
 import android.view.Choreographer
 import android.widget.Toast
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
@@ -86,6 +87,28 @@ object NativeBridge {
         }
         state.toString()
     }.getOrDefault("{}")
+
+    private const val SYSTEM_EXIT_LOOKBACK = 16
+
+    @JvmStatic
+    fun systemExits(): String = runCatching {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return "[]"
+        val context = Platform.application() ?: return "[]"
+        val manager = context.getSystemService(ActivityManager::class.java) ?: return "[]"
+        val exits = JSONArray()
+        manager.getHistoricalProcessExitReasons(context.packageName, 0, SYSTEM_EXIT_LOOKBACK)
+            .filter { it.processName == context.packageName }
+            .forEach { exit ->
+                val kind = when (exit.reason) {
+                    ApplicationExitInfo.REASON_LOW_MEMORY -> "memory"
+                    ApplicationExitInfo.REASON_ANR -> "watchdog"
+                    ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE -> "cpu"
+                    else -> return@forEach
+                }
+                exits.put(JSONObject().put("key", "android:${exit.pid}:${exit.timestamp}").put("kind", kind).put("at", exit.timestamp))
+            }
+        exits.toString()
+    }.getOrDefault("[]")
 
     @JvmStatic
     fun previousExit(): Int = runCatching {
@@ -362,6 +385,9 @@ object NativeBridge {
     fun javaDescribe(name: String): String = NativeJava.describe(name)
 
     @JvmStatic
+    fun javaFindClasses(queryJSON: String): String = NativeJava.findClasses(queryJSON)
+
+    @JvmStatic
     fun javaConstruct(name: String, argumentsJSON: String): String =
         NativeJava.construct(name, argumentsJSON)
 
@@ -482,6 +508,13 @@ object NativeBridge {
             connection.disconnect()
         }
     }.onFailure { Logger.info(LogCategory.UPDATER, "Downloading $url failed: ${downloadFailureReason(it)}") }.getOrNull()
+
+    @JvmStatic
+    fun continueDownloadInBackground(url: String, destination: String, headersJSON: String) =
+        BackgroundDownloads.start(url, destination, headersJSON)
+
+    @JvmStatic
+    fun collectBackgroundDownload(destination: String): String? = BackgroundDownloads.collect(destination)
 
     fun downloadFailureReason(error: Throwable): String =
         listOfNotNull(error::class.java.simpleName, error.message).joinToString(": ")

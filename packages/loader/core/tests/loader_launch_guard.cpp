@@ -91,6 +91,50 @@ void rollsBackToTheBundleTheLastPromotionReplaced()
     assert(server.activeContents() == "good");
     assert(!updater.rollBackToPrevious());
 }
+
+void ignoresLaunchesThatOnlyRanInTheBackground()
+{
+    bundle_test::Server server;
+    loader::LaunchGuard guard(server.root.string());
+
+    assert(guard.begin().failures == 0);
+    assert(guard.begin().failures == 1);
+    assert(guard.markHidden());
+
+    loader::LaunchVerdict background = guard.begin();
+    assert(background.failures == 1 && !background.rollBack && !background.enterRecovery);
+
+    assert(guard.markHidden());
+    assert(guard.markShown());
+    loader::LaunchVerdict shown = guard.begin();
+    assert(shown.failures == 2 && shown.rollBack);
+}
+
+void neverRepeatsARollBackForABackgroundLaunch()
+{
+    bundle_test::Server server;
+    loader::LaunchGuard guard(server.root.string());
+
+    guard.begin();
+    guard.begin();
+    assert(guard.begin().rollBack);
+    assert(guard.markHidden());
+
+    loader::LaunchVerdict background = guard.begin();
+    assert(background.failures == 2 && !background.rollBack && !background.enterRecovery);
+}
+
+void countsAHiddenLaunchThatFroze()
+{
+    bundle_test::Server server;
+    loader::LaunchGuard guard(server.root.string());
+
+    guard.begin();
+    assert(guard.markHidden());
+    assert(guard.markFrozen());
+    assert(guard.begin().failures == 1);
+}
+
 }
 
 int main()
@@ -99,5 +143,8 @@ int main()
     countsAFrozenLaunchEvenWhenItWasSwipedAway();
     ignoresAnUnreadableMarker();
     rollsBackToTheBundleTheLastPromotionReplaced();
+    ignoresLaunchesThatOnlyRanInTheBackground();
+    neverRepeatsARollBackForABackgroundLaunch();
+    countsAHiddenLaunchThatFroze();
     return 0;
 }

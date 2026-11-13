@@ -1,10 +1,11 @@
 import { Discord } from '@unbound-app/api/metro/components';
 import { format, messages } from '@unbound-app/i18n';
+import { dialogs } from '@unbound-app/api';
 import { useState } from 'react';
 
 import { MAX_ATTACHMENTS, MAX_DESCRIPTION_LENGTH } from '~/lib/constants';
 import { parseTagArguments, validateTag } from '~/lib/tags';
-import { saveTag } from '~/lib/saved-commands';
+import { deleteTag, saveTag } from '~/lib/saved-commands';
 import MediaRow from '~/components/media-row';
 import { notify, notifyError } from '~/lib/notify';
 import { isSaved, pickMedia } from '~/lib/media';
@@ -92,11 +93,22 @@ function CommandForm({ original, tags, onClose }: CommandFormProps) {
 		}
 	}
 
+	async function remove(tag: Tag) {
+		const confirmed = await dialogs.confirm('DELETE_COMMAND', {
+			body: 'DELETE_COMMAND_BODY',
+			bodyVars: { name: tag.name },
+			confirm: 'DELETE',
+			destructive: true,
+		});
+
+		if (!confirmed) return;
+
+		deleteTag(tag);
+		onClose();
+	}
+
 	return (
 		<Discord.Stack spacing={16}>
-			<Discord.TableRowGroupTitle
-				title={original ? messages.EDIT_COMMAND : messages.CREATE_COMMAND}
-			/>
 			<Discord.TextInput
 				label={messages.COMMAND_NAME}
 				placeholder={messages.COMMAND_NAME_PLACEHOLDER}
@@ -161,7 +173,14 @@ function CommandForm({ original, tags, onClose }: CommandFormProps) {
 				}
 				onPress={() => void save()}
 			/>
-			<Discord.Button variant='tertiary' text={messages.CANCEL} onPress={onClose} />
+			{original ? (
+				<Discord.Button
+					variant='destructive'
+					text={messages.DELETE_COMMAND}
+					accessibilityLabel={format('DELETE_COMMAND_LABEL', { name: original.name })}
+					onPress={() => void remove(original)}
+				/>
+			) : null}
 		</Discord.Stack>
 	);
 }

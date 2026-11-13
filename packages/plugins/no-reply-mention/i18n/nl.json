@@ -1,18 +1,12 @@
 {
-	"ADD_USER_ID": "Gebruikers-ID toevoegen",
+	"ADD_USER": "Gebruiker toevoegen",
 	"ADD_USER_ID_SUBTITLE": "Antwoorden kunnen deze gebruikers vermelden wanneer de uitzondering is ingeschakeld",
-	"CANCEL": "Annuleren",
-	"DELETE": "Verwijderen",
-	"EDIT": "Bewerken",
-	"EDIT_USER_ID": "Gebruikers-ID bewerken",
 	"EXCEPTIONS": "Uitzonderingen",
-	"INVALID_USER_ID": "Voer een numerieke Discord-gebruikers-ID in.",
-	"NO_USERS": "Nog geen gebruikers toegevoegd.",
+	"NO_USERS_FOUND": "Geen gebruikers gevonden",
 	"ONLY_PING_LISTED": "Alleen gebruikers in de lijst pingen",
 	"ONLY_PING_LISTED_OFF": "Antwoorden vermelden standaard niemand",
 	"ONLY_PING_LISTED_ON": "Antwoorden vermelden alleen de gebruikers in de lijst hierboven",
-	"PLUGIN_NAME": "No Reply Mention",
-	"SAVE": "Opslaan",
-	"TAP_TO_EDIT": "Tik om te bewerken",
-	"USER_ID_PLACEHOLDER": "Discord-gebruikers-ID"
+	"REMOVE_USER": "Gebruiker verwijderen",
+	"SEARCH_USERS": "Zoek of plak een gebruikers-ID",
+	"UNKNOWN_USER": "Onbekende gebruiker"
 }

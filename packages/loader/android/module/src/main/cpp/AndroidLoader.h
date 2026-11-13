@@ -68,11 +68,15 @@ public:
     uint32_t                   runtimeBytecodeVersion() override;
     std::optional<std::string> fetchText(const std::string &url, double timeoutSeconds) override;
     std::optional<loader::DownloadResult>
-                               download(const std::string &url, const std::string &destination,
-                                        const std::map<std::string, std::string> &headers,
-                                        const loader::DownloadPolicy             &policy) override;
-    bool                       isServing(const std::string &url, double timeoutSeconds) override;
-    std::optional<std::string> devServerHost() override;
+         download(const std::string &url, const std::string &destination,
+                  const std::map<std::string, std::string> &headers,
+                  const loader::DownloadPolicy             &policy) override;
+    void recordSystemExits();
+    void collectBackgroundDownload(const std::string &destination) override;
+    void continueDownloadInBackground(const std::string &url, const std::string &destination,
+                                      const std::map<std::string, std::string> &headers) override;
+    bool isServing(const std::string &url, double timeoutSeconds) override;
+    std::optional<std::string>                  devServerHost() override;
     std::shared_ptr<loader::HotReloadTransport> hotReloadTransport() override;
     nlohmann::json                              systemFonts() override;
     void                                        onFontsChanged() override;
@@ -83,9 +87,14 @@ public:
     void                 crashAlert(const std::string &message) override;
     void                 stuckLaunch(const std::string &message) override;
     loader::PreviousExit previousExit() override;
-    bool                 onMeteredNetwork() override;
-    void                 showUpdateProgress(bool showing) override;
-    void                 reload() override;
+    bool                 tracksVisibility() override
+    {
+        return true;
+    }
+    bool visibleNow() override;
+    bool onMeteredNetwork() override;
+    void showUpdateProgress(bool showing) override;
+    void reload() override;
 
 private:
     void           enqueueRuntime(std::function<void(facebook::jsi::Runtime &)> work,
@@ -111,5 +120,6 @@ private:
 // The running loader and its Android host; both empty before `nativeInitialize`.
 std::shared_ptr<loader::Loader> currentLoader();
 std::shared_ptr<AndroidLoader>  currentHost();
+void                            setDiscordVisible(bool visible);
 void setCurrentLoader(std::shared_ptr<loader::Loader> loader, std::shared_ptr<AndroidLoader> host);
 }

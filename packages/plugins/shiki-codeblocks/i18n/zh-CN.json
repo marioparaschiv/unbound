@@ -9,7 +9,6 @@
 	"HIGHLIGHTING": "高亮",
 	"THEME": "主题",
 	"THEME_SUBTITLE": "选择用于语法着色的 VS Code 主题。",
-	"SEARCH_THEMES": "搜索主题",
 	"CUSTOM_THEME_URL": "自定义主题 URL",
 	"CUSTOM_THEME_URL_SUBTITLE": "指向 VS Code 主题 JSON 文件的 HTTPS 链接，将覆盖所选主题。",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "从不",
 	"HLJS_SECONDARY": "优先使用 Shiki",
 	"HLJS_PRIMARY": "优先使用 Highlight.js",
-	"HLJS_ALWAYS": "始终使用 Highlight.js"
+	"HLJS_ALWAYS": "始终使用 Highlight.js",
+	"INVALID_THEME_URL": "输入指向 .json 文件的 HTTPS 链接。"
 }

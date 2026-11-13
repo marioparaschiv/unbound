@@ -1,4 +1,5 @@
 import type { FormatVars, LocaleStrings } from '~/i18n/locale-strings';
+import { toDiscordEscapes } from '~/i18n/discord-escapes';
 import { findByName } from '~/metro/lookups';
 
 type MessageFormatInstance = {
@@ -34,5 +35,5 @@ export function formatWith(messages: LocaleStrings, key: string, vars?: FormatVa
 		return messages[key];
 	}
 
-	return new Format(messages[key]).format(vars);
+	return new Format(toDiscordEscapes(messages[key])).format(vars);
 }

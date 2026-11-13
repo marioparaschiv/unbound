@@ -1,16 +1,19 @@
 #include "AndroidLoader.h"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <thread>
 
 #include "AndroidHotReload.h"
 #include "JniCall.h"
 #include "JniEnvironment.h"
+#include "LoaderBackgroundDownload.h"
 #include "LoaderFiles.h"
 #include "LoaderInjectedLibraries.h"
 #include "LoaderJSON.h"
 #include "LoaderLog.h"
+#include "LoaderSystemExits.h"
 #include "NativePluginBridge.h"
 
 namespace unbound::android {
@@ -87,6 +90,18 @@ std::shared_ptr<loader::Loader> currentLoader()
 {
     std::lock_guard<std::mutex> lock(gLoaderMutex);
     return gLoader;
+}
+
+static std::atomic_bool gDiscordVisible{false};
+
+void setDiscordVisible(bool visible)
+{
+    gDiscordVisible.store(visible);
+}
+
+bool AndroidLoader::visibleNow()
+{
+    return gDiscordVisible.load();
 }
 
 std::shared_ptr<AndroidLoader> currentHost()
@@ -523,8 +538,35 @@ void AndroidLoader::stuckLaunch(const std::string &message)
     callStaticVoid(callbacks_.bridgeClass, callbacks_.stuckLaunch, message);
 }
 
+void AndroidLoader::recordSystemExits()
+{
+    nlohmann::json exits = nlohmann::json::parse(
+        callStaticString(callbacks_.bridgeClass, callbacks_.systemExits).value_or("[]"), nullptr,
+        false);
+    if (!exits.is_array())
+    {
+        return;
+    }
+    static const std::map<std::string, loader::system_exits::ExitKind> kinds = {
+        {"memory", loader::system_exits::ExitKind::Memory},
+        {"watchdog", loader::system_exits::ExitKind::Watchdog},
+        {"cpu", loader::system_exits::ExitKind::CPU},
+    };
+    for (const nlohmann::json &exit : exits)
+    {
+        auto kind = kinds.find(exit.value("kind", std::string()));
+        if (kind != kinds.end())
+        {
+            loader::system_exits::recordExit(configuration_.documents,
+                                             exit.value("key", std::string()), kind->second,
+                                             exit.value("at", int64_t{0}));
+        }
+    }
+}
+
 loader::PreviousExit AndroidLoader::previousExit()
 {
+    recordSystemExits();
     switch (callStaticInt(callbacks_.bridgeClass, callbacks_.previousExit).value_or(0))
     {
         case 1:
@@ -545,6 +587,31 @@ std::optional<std::string> AndroidLoader::fetchText(const std::string &url, doub
 {
     return callStaticString(callbacks_.bridgeClass, callbacks_.fetchText, url,
                             milliseconds(timeoutSeconds));
+}
+
+void AndroidLoader::collectBackgroundDownload(const std::string &destination)
+{
+    std::optional<std::string> collected =
+        callStaticString(callbacks_.bridgeClass, callbacks_.collectBackgroundDownload, destination);
+    if (!collected)
+    {
+        return;
+    }
+    nlohmann::json download = nlohmann::json::parse(*collected, nullptr, false);
+    if (!download.is_object() || !download["url"].is_string() || !download["path"].is_string())
+    {
+        return;
+    }
+    loader::finishBackgroundDownload(download["url"].get<std::string>(), destination,
+                                     download["path"].get<std::string>());
+}
+
+void AndroidLoader::continueDownloadInBackground(const std::string &url,
+                                                 const std::string &destination,
+                                                 const std::map<std::string, std::string> &headers)
+{
+    callStaticVoid(callbacks_.bridgeClass, callbacks_.continueDownloadInBackground, url,
+                   destination, nlohmann::json(headers).dump());
 }
 
 std::optional<loader::DownloadResult>

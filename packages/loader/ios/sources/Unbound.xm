@@ -5,6 +5,7 @@
 #import <jsi/jsi.h>
 
 #import "AddonsCore.h"
+#import "BackgroundDownloads.h"
 #import "CoreBridge.h"
 #import "CoreConversions.h"
 #import "Discord.h"
@@ -20,6 +21,7 @@
 #import "LoaderPipeline.h"
 #import "LoaderShared.h"
 #include "LoaderToolbox.h"
+#import "MetricKitReports.h"
 #import "NativePlatform.h"
 #import "NativePluginBridge.h"
 #import "RCTHost.h"
@@ -120,6 +122,7 @@ void CompleteBrowserLogin(NSString *token)
 // Whether the current network path is expensive (cellular, a hotspot) or constrained (Low Data
 // Mode), kept current by a path monitor so the loader can ask from any thread without waiting.
 static std::atomic_bool meteredNetwork{false};
+static std::atomic_bool discordActive{false};
 
 static void keepAwakeForUpdateCheck()
 {
@@ -197,6 +200,16 @@ public:
         return [CoreBridge mainBundleBytecodeVersion];
     }
 
+    bool tracksVisibility() override
+    {
+        return true;
+    }
+
+    bool visibleNow() override
+    {
+        return discordActive.load();
+    }
+
     loader::PreviousExit previousExit() override
     {
         std::string documents = toStdString(FileSystem.documents);
@@ -214,6 +227,19 @@ public:
              const loader::DownloadPolicy             &policy) override
     {
         return UnboundDownload(url, destination, headers, policy);
+    }
+
+    void continueDownloadInBackground(const std::string &url, const std::string &destination,
+                                      const std::map<std::string, std::string> &headers) override
+    {
+        NSMutableDictionary *requestHeaders = [NSMutableDictionary dictionary];
+        for (const auto &[key, value] : headers)
+        {
+            requestHeaders[toNSString(key)] = toNSString(value);
+        }
+        [BackgroundDownloads.shared continueDownload:[NSURL URLWithString:toNSString(url)]
+                                                  to:toNSString(destination)
+                                             headers:requestHeaders];
     }
 
     bool isServing(const std::string &url, double timeoutSeconds) override
@@ -512,6 +538,8 @@ static void prepareLoading(id instance)
                    ^{ [CoreBridge prescanAddons]; });
 
     watchNetworkCost();
+    [BackgroundDownloads handleAppEvents];
+    [MetricKitReports start];
 
     // Returning after a while checks for a newer bundle; long sessions otherwise never see one.
     [[NSNotificationCenter defaultCenter]
@@ -523,6 +551,21 @@ static void prepareLoading(id instance)
                     dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0),
                                    ^{ UnboundLoader()->onForeground(); });
                 }];
+
+    [[NSNotificationCenter defaultCenter]
+        addObserverForName:UIApplicationDidBecomeActiveNotification
+                    object:nil
+                     queue:nil
+                usingBlock:^(NSNotification *) {
+                    discordActive.store(true);
+                    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0),
+                                   ^{ UnboundLoader()->onVisible(); });
+                }];
+    [[NSNotificationCenter defaultCenter]
+        addObserverForName:UIApplicationDidEnterBackgroundNotification
+                    object:nil
+                     queue:nil
+                usingBlock:^(NSNotification *) { discordActive.store(false); }];
 
     // iOS ending Discord without a crash (rather than suspending it) is not a failed launch.
     [[NSNotificationCenter defaultCenter]

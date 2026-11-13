@@ -10,9 +10,17 @@ import type {
 } from './_internal';
 import type { Without } from './_types';
 import * as React$1 from 'react';
-import { ComponentProps, ComponentType, FunctionComponent, ReactElement, ReactNode } from 'react';
+import {
+	ComponentProps,
+	ComponentType,
+	Context,
+	FunctionComponent,
+	ReactElement,
+	ReactNode,
+	Ref,
+} from 'react';
 import * as RN from 'react-native';
-import { ImageStyle, TextStyle, ViewStyle } from 'react-native';
+import { ImageStyle, ScrollView, ScrollViewProps, TextStyle, ViewStyle } from 'react-native';
 /**
  * @description A pressable `TableRow` in its settings group, as Discord draws actions such as Log Out; it asks first when
  * `confirmation` is set. `danger` draws the label red behind a red trash icon.
@@ -150,7 +158,7 @@ export declare function NumberRow({
  * inset and a 24px gap between form groups, matching how Discord lays out its own settings screens. Use
  * it as the root of every settings page.
  */
-export declare function Page({ children }: PageProps): React$1.ReactElement;
+export declare function Page({ children, ...scroll }: PageProps): React$1.ReactElement;
 /**
  * @description A row showing the picked option that opens Discord's action sheet listing every option, for choices too many for a radio group.
  * @param props The row's label, picked value, options and change handler.
@@ -236,7 +244,7 @@ export declare function SegmentedRow({
 }: SegmentedRowProps): React$1.ReactElement;
 /**
  * @description Discord's `TableSliderRow`, as its own settings draw one: the label and live value over the slider
- * with its default mark. A sub-label, which that row cannot show, moves it to a `TableRow` holding the same slider.
+ * with its default mark. A sub-label, which that row cannot show, draws the same layout by hand with it under the label.
  * The value is saved when the drag ends; Android's slider and iOS's take differently named props, so it passes both.
  * @param props The row's label, value, default, range and change handler.
  * @returns The row, or `null` when Discord's slider is unavailable.
@@ -471,9 +479,14 @@ export type NumberRowProps = NumberConstraints & {
 	onChange: (value: number) => void;
 };
 /** The props of {@link Page}. */
-export type PageProps = {
+export type PageProps = Pick<
+	ScrollViewProps,
+	'onScrollEndDrag' | 'onMomentumScrollEnd' | 'onContentSizeChange'
+> & {
 	/** The page's form groups, laid out top to bottom with a 24px gap. */
 	children: React$1.ReactNode;
+	/** The page's scroll view, for a page that restores its scroll offset. */
+	ref?: React$1.Ref<ScrollView>;
 };
 /** Props for `PickerRow`. */
 export type PickerRowProps = {

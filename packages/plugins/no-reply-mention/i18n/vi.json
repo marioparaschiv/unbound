@@ -1,18 +1,12 @@
 {
-	"ADD_USER_ID": "Thêm ID người dùng",
+	"ADD_USER": "Thêm người dùng",
 	"ADD_USER_ID_SUBTITLE": "Khi bật ngoại lệ, phản hồi có thể nhắc đến những người dùng này",
-	"CANCEL": "Hủy",
-	"DELETE": "Xóa",
-	"EDIT": "Chỉnh sửa",
-	"EDIT_USER_ID": "Chỉnh sửa ID người dùng",
 	"EXCEPTIONS": "Ngoại lệ",
-	"INVALID_USER_ID": "Hãy nhập ID người dùng Discord dạng số.",
-	"NO_USERS": "Chưa thêm người dùng nào.",
+	"NO_USERS_FOUND": "Không tìm thấy người dùng",
 	"ONLY_PING_LISTED": "Chỉ ping người dùng trong danh sách",
 	"ONLY_PING_LISTED_OFF": "Theo mặc định, phản hồi không nhắc đến ai",
 	"ONLY_PING_LISTED_ON": "Phản hồi chỉ nhắc đến những người dùng trong danh sách trên",
-	"PLUGIN_NAME": "No Reply Mention",
-	"SAVE": "Lưu",
-	"TAP_TO_EDIT": "Chạm để chỉnh sửa",
-	"USER_ID_PLACEHOLDER": "ID người dùng Discord"
+	"REMOVE_USER": "Xóa người dùng",
+	"SEARCH_USERS": "Tìm kiếm hoặc dán ID người dùng",
+	"UNKNOWN_USER": "Người dùng không xác định"
 }

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { idList, isEphemeral, shouldIgnore, type FilterSettings } from '~/lib/filters';
+import { isEphemeral, shouldIgnore, type FilterSettings } from '~/lib/filters';
 
 const settings: FilterSettings = {
 	logDeletes: true,
@@ -13,12 +13,6 @@ const settings: FilterSettings = {
 };
 
 const context = { currentUserId: 'me', channel: { guild_id: 'guild', parent_id: 'category' } };
-
-describe('idList', () => {
-	test('splits on commas, spaces and new lines', () => {
-		expect([...idList('1, 2\n3  4,,')]).toEqual(['1', '2', '3', '4']);
-	});
-});
 
 describe('shouldIgnore', () => {
 	const message = { author: { id: 'user' }, channel_id: 'channel', flags: 0 };

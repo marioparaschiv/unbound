@@ -7,6 +7,9 @@ import type { Addon } from '~/addons/addon';
 const CONSENT_CAPABILITIES: readonly NativeBridgeCapability[] = [
 	'native.ffi.symbols',
 	'native.ffi.call',
+	'native.ffi.memory',
+	'native.ffi.callbacks',
+	'native.ffi.rebind',
 ];
 
 /** The consent the user gave, keyed by addon id: the capabilities it covered, as {@link consentKey} returns. */

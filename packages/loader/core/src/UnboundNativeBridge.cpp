@@ -1,5 +1,6 @@
 #include "UnboundNativeBridge.h"
 
+#include <chrono>
 #include <filesystem>
 #include <memory>
 #include <optional>
@@ -12,6 +13,7 @@
 #include "LoaderJSIJSON.h"
 #include "LoaderLaunchReport.h"
 #include "LoaderRequiredLoader.h"
+#include "LoaderSystemExits.h"
 #include "LoaderVersion.h"
 #include "NativePluginRuntime.h"
 #include "UnboundNativeFonts.h"
@@ -59,6 +61,14 @@ UnboundNativeProvider makeUnboundNativeProvider(const AddonState                
         }
         loader["launch"] =
             launchReportJSON(launchReport(), previousNativeCrash(), readCrashHistory(documents));
+        nlohmann::json exits = system_exits::summary(
+            documents, std::chrono::duration_cast<std::chrono::milliseconds>(
+                           std::chrono::system_clock::now().time_since_epoch())
+                           .count());
+        if (!exits.empty())
+        {
+            loader["launch"]["system"] = std::move(exits);
+        }
         return loader;
     };
     provider.getPlugins = [&addons] {
