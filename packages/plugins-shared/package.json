@@ -6,6 +6,7 @@
 	"type": "module",
 	"exports": {
 		"./*.json": "./src/*.json",
+		"./entities/entity-list": "./src/entities/entity-list.tsx",
 		"./*": "./src/*.ts"
 	},
 	"scripts": {
