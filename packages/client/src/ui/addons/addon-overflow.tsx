@@ -1,6 +1,8 @@
 import { useMemo, memo } from 'react';
 
+import { openThemeEditor } from '~/ui/theme-editor/open-theme-editor';
 import { reinstallFromStore } from '~/updates/addon-updates';
+import { isLocalTheme } from '~/themes/draft';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import type { Addon } from '~/addons/addon';
@@ -29,9 +31,19 @@ function AddonOverflow({ addon, kind, developmentCopy, variant = 'inline' }: Add
 	const styles = useStyles();
 	const inline = variant === 'inline';
 	const manager = Manager.for(kind);
+	const navigation = Discord.useNavigation();
+	const editable = kind === 'theme' && isLocalTheme(addon.id);
 
 	const items = useMemo(
 		() => [
+			...(editable
+				? [
+						{
+							label: messages.UNBOUND_EDIT,
+							action: () => void openThemeEditor(navigation, addon.id),
+						},
+					]
+				: []),
 			...(developmentCopy
 				? [
 						{
@@ -46,7 +58,7 @@ function AddonOverflow({ addon, kind, developmentCopy, variant = 'inline' }: Add
 				action: () => confirmUninstall(manager, addon),
 			},
 		],
-		[manager, addon, kind, developmentCopy],
+		[manager, navigation, editable, addon, kind, developmentCopy],
 	);
 
 	// The menu anchors to the Pressable it renders; wrapping the trigger in a component breaks it.

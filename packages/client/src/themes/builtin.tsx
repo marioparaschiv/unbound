@@ -1,5 +1,5 @@
 import { createLogger } from '@unbound-app/logger';
-import type { ReactNode } from 'react';
+import { cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
 
 import { byFilePath, byFluxStore, byProps } from '~/metro/filters';
 import { clearGuardUnderlay } from '~/themes/clear-guard-underlay';
@@ -13,7 +13,8 @@ import { onModuleLoaded } from '~/metro/wait';
 import { findStore } from '~/metro/lookups';
 import { Screens } from '~/core/constants';
 import { onChange } from '~/storage/api';
-import ThemeStore from '~/themes/state';
+import ThemeStore, { getShownTheme } from '~/themes/state';
+import ThemeEditorStore from '~/themes/editor-state';
 
 const Patcher = createPatcher('unbound::themes');
 const Logger = createLogger('Themes');
@@ -68,7 +69,7 @@ function applyRawColors(raw: Record<string, string>) {
 	restoreRaw?.();
 	restoreRaw = null;
 
-	const theme = ThemeStore.getState().data;
+	const theme = getShownTheme();
 	const overrides = Object.entries(theme?.raw ?? {}).filter(
 		([name, value]) => typeof value === 'string' && name in raw,
 	);
@@ -85,9 +86,9 @@ function applyRawColors(raw: Record<string, string>) {
 }
 
 function syncBackground() {
-	const { data, background, setBackground } = ThemeStore.getState();
+	const { background, setBackground } = ThemeStore.getState();
 	const next =
-		resolveChatBackground(data, {
+		resolveChatBackground(getShownTheme(), {
 			source: getSetting('chat-background.source'),
 			url: getSetting('chat-background.url'),
 			blur: getSetting('chat-background.blur'),
@@ -130,7 +131,11 @@ type DiscordThemeStore = DiscordThemeState & { getState(): DiscordThemeState };
 
 type ThemeContextProps = { enabledExperiments?: string[] };
 
-type ThemeContextModule = { RootThemeContextProvider: (props: ThemeContextProps) => ReactNode };
+type ThemeContextModule = {
+	RootThemeContextProvider: (props: ThemeContextProps) => ReactNode;
+};
+
+type ProviderElement = ReactElement<{ children?: ReactNode }>;
 
 type TaggedExperiments = { id: string; tagged: string[] };
 
@@ -142,7 +147,7 @@ function overrideBaseTheme(store: DiscordThemeStore) {
 
 	Object.defineProperty(store, 'theme', {
 		configurable: true,
-		get: () => ThemeStore.getState().data?.type ?? discordTheme(),
+		get: () => getShownTheme()?.type ?? discordTheme(),
 	});
 
 	// `persist` and the cache snapshot save `getState()`, which reads `theme`; they keep Discord's own.
@@ -172,19 +177,53 @@ function tagExperiments(experiments: string[] = noExperiments, id: string) {
 }
 
 // Two themes on one base share Discord's theme name, so the applied id tags the root theme context instead.
-// The chat background changes the chat colour, so it tags the context too.
+// The chat background and each change to the editor's draft change colours, so they tag the context too.
 function tagThemeContext(mdl: ThemeContextModule) {
 	Patcher.before(mdl, 'RootThemeContextProvider', ({ args }) => {
 		const id = ThemeStore((state) => state.applied);
+		const draft = ThemeStore((state) => (state.preview ? state.revision : 0));
 		const background = ThemeStore((state) => state.background);
 		const [props] = args;
-		const tag = [id, background && `${background.url}@${background.opacity}`]
+		const tag = [
+			id,
+			draft && `draft${draft}`,
+			background && `${background.url}@${background.opacity}`,
+		]
 			.filter(Boolean)
 			.join(':');
 
 		if (!tag) return;
 
 		args[0] = { ...props, enabledExperiments: tagExperiments(props.enabledExperiments, tag) };
+	});
+}
+
+// Shown while a theme edit is open and no editor screen is, so the user can return to it from anywhere.
+function ThemeEditorButtonSlot() {
+	const shown = ThemeEditorStore((state) => state.session !== null && state.mounted === 0);
+
+	if (!shown) return null;
+
+	// Required on render, so startup never evaluates the editor's UI.
+	const { default: ThemeEditorButton } = require('~/ui/theme-editor/theme-editor-button');
+
+	return <ThemeEditorButton />;
+}
+
+// Inside the root theme context, so the button draws with Discord's theme. The slot is always there, so
+// starting an edit never remounts the app below it.
+function mountEditorButton(mdl: ThemeContextModule) {
+	Patcher.after(mdl, 'RootThemeContextProvider', ({ result }) => {
+		if (!isValidElement<ProviderElement['props']>(result)) return result;
+
+		return cloneElement(result, {
+			children: (
+				<>
+					{result.props.children}
+					<ThemeEditorButtonSlot />
+				</>
+			),
+		});
 	});
 }
 
@@ -197,7 +236,10 @@ export function start() {
 	});
 	stopWaitingForProvider = onModuleLoaded(
 		byProps('RootThemeContextProvider', 'DisableCustomTheme'),
-		tagThemeContext,
+		(mdl) => {
+			tagThemeContext(mdl);
+			mountEditorButton(mdl);
+		},
 	);
 	stopWaitingForChat = onModuleLoaded(byFilePath(CHAT_VIEW_PATH), drawChatBackground);
 	stopWaitingForInputScrim = onModuleLoaded(byFilePath(INPUT_SCRIM_PATH), hideInputShadow);
@@ -221,7 +263,8 @@ function recolor(tokens: ColorTokens | undefined) {
 
 	Patcher.instead(resolver, 'resolveSemanticColor', ({ args, original, this: self }) => {
 		const [base, token, options] = args;
-		const { data: theme, background } = ThemeStore.getState();
+		const { background } = ThemeStore.getState();
+		const theme = getShownTheme();
 		const name = resolver.getSemanticColorName(token);
 		// Another base, such as the picker previewing a light theme, keeps Discord's colours: the theme's text
 		// would be unreadable there. A profile theme keeps its owner's colours.
@@ -242,7 +285,7 @@ function recolor(tokens: ColorTokens | undefined) {
 
 	applyRawColors(tokens.unsafe_rawColors);
 	unsubscribe = ThemeStore.subscribe((state, previous) => {
-		if (state.data !== previous.data) {
+		if (state.data !== previous.data || state.preview !== previous.preview) {
 			applyRawColors(tokens.unsafe_rawColors);
 			syncBackground();
 		}
@@ -269,6 +312,7 @@ export function stop() {
 	restoreGuardUnderlay = null;
 	stopFollowingBackground?.();
 	stopFollowingBackground = null;
+	ThemeEditorStore.getState().end();
 	ThemeStore.getState().setBackground(null);
 	restoreBaseTheme?.();
 	restoreBaseTheme = null;
@@ -315,4 +359,36 @@ export const fontAxesSection: SectionEntry = {
 	hidden: true,
 };
 
-export default { start, stop, designSection, fontGroupSection, fontAxesSection };
+/** The theme editor, opened from the Themes tab's install menu, a local theme's Edit, or the floating button. */
+export const themeEditorSection: SectionEntry = {
+	key: Screens.ThemeEditor,
+	titleKey: 'UNBOUND_THEME_EDITOR',
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
+	 */
+	getComponent: () => require('~/ui/theme-editor/theme-editor-page').default,
+	hidden: true,
+};
+
+/** Every Discord colour of one group, opened from the theme editor's All Colors. */
+export const themeColorsSection: SectionEntry = {
+	key: Screens.ThemeColors,
+	titleKey: 'UNBOUND_THEME_ALL_COLORS',
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
+	 */
+	getComponent: () => require('~/ui/theme-editor/theme-colors-page').default,
+	hidden: true,
+};
+
+export default {
+	start,
+	stop,
+	designSection,
+	fontGroupSection,
+	fontAxesSection,
+	themeEditorSection,
+	themeColorsSection,
+};

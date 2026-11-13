@@ -1,10 +1,19 @@
-import type { Theme } from '@unbound-app/types';
+import type { AddonAuthor, AddonManifest, Theme } from '@unbound-app/types';
 
 import { getLoader, getThemes, rescanThemes } from '~/native/unbound-native';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { parseThemeBundle } from '~/themes/bundle';
 import { Addons } from '~/addons/addons';
 import ThemeStore from '~/themes/state';
+import { Users } from '~/metro/stores';
+
+/** The name and description the theme editor saves into a theme's manifest. */
+export type LocalThemeDetails = {
+	name: string;
+	description: string;
+};
+
+const FALLBACK_AUTHOR: AddonAuthor = { name: 'Unbound', id: '0' };
 
 // A hot reload persists the pushed theme, so it rewrites the files on disk like an update.
 const DISK_EVENTS = ['installed', 'updated', 'uninstalled', 'reloaded'] as const;
@@ -59,6 +68,38 @@ export class Themes extends Addons<Theme> {
 	 */
 	protected unapply(): void {
 		ThemeStore.getState().setApplied(null, null);
+	}
+
+	/**
+	 * @description Saves a theme editor draft as an installed theme, then applies it. Saving the same id again overwrites it.
+	 * @param id The theme's local id.
+	 * @param theme The draft, written as the theme's bundle.
+	 * @param details The name and description for its manifest.
+	 * @returns Whether the theme saved and applied.
+	 */
+	async saveLocal(id: string, theme: Theme, details: LocalThemeDetails): Promise<boolean> {
+		const user = Users?.getCurrentUser?.();
+		const manifest: AddonManifest = {
+			version: '1.0.0',
+			authors: [user ? { name: user.username, id: user.id } : FALLBACK_AUTHOR],
+			...this.getAddon(id)?.manifest,
+			id,
+			type: 'theme',
+			name: details.name,
+			description: details.description,
+			main: 'bundle.json',
+		};
+
+		// A failed earlier save would otherwise read as this save's failure.
+		this.errors.delete(id);
+
+		const result = await this.reload(id, JSON.stringify(theme), manifest);
+
+		if (!result.ok) return false;
+
+		await this.enable(id);
+
+		return !this.errors.has(id);
 	}
 
 	/**
