@@ -406,7 +406,7 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 		!containsCode(bridge[superStart:superEnd], "validateNativeScalarArgument(object, scalarType);") {
 		t.Fatal("Objective-C super arguments bypass scalar validation")
 	}
-	for _, required := range []string{"updater_.markBundleAttempted(saved.path)", "updater_.acceptBundle(*path)", "pendingPromotion_ = saved.path", "updater_.rejectBundle(saved.path)"} {
+	for _, required := range []string{"updater_.markBundleAttempted(saved.path)", "updater_.acceptBundle(*path)", "pendingPromotion_ = saved.path", "updater_.discardFailedBundle(saved.path)"} {
 		if !containsCode(string(corePipeline), required) {
 			t.Fatalf("bundle promotion step %q is missing", required)
 		}

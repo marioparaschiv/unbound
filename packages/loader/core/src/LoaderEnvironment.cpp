@@ -101,7 +101,7 @@ std::string signingDetails(const SigningFacts &facts)
     }
     if (facts.profileExpiry && !discord)
     {
-        parts.push_back("expires " + *facts.profileExpiry);
+        parts.push_back("exp " + *facts.profileExpiry);
     }
     if (facts.altStore)
     {

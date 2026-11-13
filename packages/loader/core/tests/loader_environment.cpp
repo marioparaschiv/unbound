@@ -65,7 +65,7 @@ static void checkInstallSources()
     signing.altStore          = true;
     signing.entitlementSource = "kernel";
     assert(signingDetails(signing) ==
-           "Development (`ABCDE12345`) · expires 2026-11-18 · AltStore/SideStore");
+           "Development (`ABCDE12345`) · exp 2026-11-18 · AltStore/SideStore");
     signing.getTaskAllow = false;
     signing.altStore     = false;
     assert(signingDetails(signing).rfind("Ad Hoc (`ABCDE12345`)", 0) == 0);

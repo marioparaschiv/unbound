@@ -46,13 +46,13 @@ describe('formatDebugInfo', () => {
 		const lines = formatDebugInfo({
 			...info,
 			appSource: 'Sideloaded (TestFlight build)',
-			installDetails: 'Development (`ABCDE12345`) · expires 2027-09-16',
+			installDetails: 'Development (`ABCDE12345`) · exp 2027-09-16',
 		}).split('\n');
 
 		expect(lines).toContain(
 			'- **Discord:** 351.0 stable, build 118370 (Sideloaded (TestFlight build))',
 		);
-		expect(lines[4]).toBe('- **Install:** Development (`ABCDE12345`) · expires 2027-09-16');
+		expect(lines[4]).toBe('- **Install:** Development (`ABCDE12345`) · exp 2027-09-16');
 	});
 
 	test('capitalises install details from loaders that send them in lower case', () => {
