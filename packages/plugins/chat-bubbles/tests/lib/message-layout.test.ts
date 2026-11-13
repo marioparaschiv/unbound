@@ -218,3 +218,45 @@ describe('message layout', () => {
 		expect(messageLayout([cell[0]!])).toBeUndefined();
 	});
 });
+
+describe('fitted media', () => {
+	test('ends the body at media scaled down to fit, not at the room Discord laid out for it', () => {
+		const fitted = [
+			node(-1, 'DCDMessageTableViewCell', [0, 0, 375, 360]),
+			node(0, 'UITableViewCellContentView', [0, 0, 375, 360]),
+			node(1, 'UIView', [0, 0, 375, 360]),
+			node(2, 'UIView', [16, 0, 52, 360]),
+			node(2, 'UIView', [68, 0, 291, 360]),
+			node(3, 'DCDAvatarView', [0, 0, 40, 40]),
+			node(4, 'UIView', [0, 0, 291, 22]),
+			node(4, 'UIView', [0, 22, 291, 338]),
+			node(7, 'UIView', [0, 0, 291, 43]),
+			node(7, 'UIView', [0, 43, 263, 295]),
+			node(8, 'DCDAttributedTextView', [0, 0, 263, 43], 'gif link'),
+			node(9, 'DiscordChat.AttachmentView', [0, 4, 263, 263]),
+		];
+
+		expect(messageLayout(fitted)?.body).toEqual({ x: 68, y: 22, width: 291, height: 310 });
+	});
+});
+
+describe('fitted media from an untransformed snapshot', () => {
+	test('scales the media to its holder before trimming the body', () => {
+		const fitted = [
+			node(-1, 'DCDMessageTableViewCell', [0, 0, 375, 360]),
+			node(0, 'UITableViewCellContentView', [0, 0, 375, 360]),
+			node(1, 'UIView', [0, 0, 375, 360]),
+			node(2, 'UIView', [16, 0, 52, 360]),
+			node(2, 'UIView', [68, 0, 291, 360]),
+			node(3, 'DCDAvatarView', [0, 0, 40, 40]),
+			node(4, 'UIView', [0, 0, 291, 22]),
+			node(4, 'UIView', [0, 22, 291, 338]),
+			node(7, 'UIView', [0, 0, 291, 43]),
+			node(7, 'UIView', [0, 43, 263, 295]),
+			node(8, 'DCDAttributedTextView', [0, 0, 263, 43], 'gif link'),
+			node(9, 'DiscordChat.AttachmentView', [0, 4, 291, 291]),
+		];
+
+		expect(messageLayout(fitted)?.body.height).toBe(310);
+	});
+});

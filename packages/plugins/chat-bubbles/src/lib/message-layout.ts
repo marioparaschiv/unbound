@@ -160,6 +160,34 @@ function descendants(nodes: SnapshotNode[], index: number, stop: (node: Snapshot
 }
 
 // The name row is the header view holding the timestamp, a label of its own beside the name's container.
+// Media scaled down to fit a bubble leaves the room Discord laid out for its full height below it, which the body need not keep.
+function trimFittedMedia(nodes: SnapshotNode[], mediaViews: number[], frame: Box): Box {
+	const bottom = frame.y + frame.height;
+	const [lowest] = mediaViews
+		.map((index) => ({ index, box: absolute(nodes, index) }))
+		.sort((a, b) => b.box.y + b.box.height - (a.box.y + a.box.height));
+
+	if (!lowest) return frame;
+
+	const holder = nodes[lowest.index]!.parent;
+	const holderBox = absolute(nodes, holder);
+	// The snapshot may give the media's untransformed size, wider than its holder; `installMediaFit` scales it to the holder.
+	const scale = lowest.box.width > holderBox.width + 0.5 ? holderBox.width / lowest.box.width : 1;
+	const mediaBottom = lowest.box.y + lowest.box.height * scale;
+	const slack = holderBox.y + holderBox.height - mediaBottom;
+	const below = childrenOf(nodes, holder).some((child) => {
+		if (child === lowest.index || !shows(nodes[child]!)) return false;
+
+		const box = absolute(nodes, child);
+
+		return box.y + box.height > mediaBottom + 1;
+	});
+
+	if (slack <= 1 || below || Math.abs(holderBox.y + holderBox.height - bottom) > 1) return frame;
+
+	return { ...frame, height: frame.height - slack };
+}
+
 function headingOf(
 	nodes: SnapshotNode[],
 	headerViews: number[],
@@ -320,6 +348,7 @@ export function messageLayout(nodes: SnapshotNode[]): MessageLayout | undefined 
 		return tiles.length ? tiles : [media];
 	});
 	const mediaBoxes = mediaViews.map((media) => absolute(nodes, media));
+	const trimmed = trimFittedMedia(nodes, mediaViews, frame);
 	const mediaRight = Math.max(0, ...mediaBoxes.map((box) => box.x + box.width - frame.x));
 
 	const rounded = descendants(nodes, body, (node) =>
@@ -328,7 +357,7 @@ export function messageLayout(nodes: SnapshotNode[]): MessageLayout | undefined 
 	const roundedBoxes = rounded.map((index) => absolute(nodes, index));
 
 	return {
-		body: frame,
+		body: trimmed,
 		column: columnFrame,
 		avatar: absolute(nodes, avatar!),
 		...(mediaBoxes.length

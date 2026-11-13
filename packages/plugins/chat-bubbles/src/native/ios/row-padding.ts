@@ -3,6 +3,7 @@ import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbou
 import type { RowRoom, RowRooms } from '~/lib/style';
 import { isStandaloneCell } from '~/native/ios/standalone-cell';
 import { followSwipe } from '~/native/ios/swipe-follow';
+import { fittedLoss } from '~/native/ios/media-fit';
 
 const STATE_KEY = '__unboundChatBubbleRows';
 
@@ -163,10 +164,11 @@ export function installRowPadding(
 
 			const size = sizeOf(original(...args));
 			const room = roomOf(objc, self, state.rooms);
+			const lost = fittedLoss(objc, self);
 
 			return objc.struct('CGSize', {
 				width: size.width,
-				height: size.height + room.top + room.bottom,
+				height: size.height + room.top + room.bottom - lost,
 			});
 		},
 	});

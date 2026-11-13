@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.10] - 2026-11-14
+
+### Fixed
+
+- iOS: large GIFs and images no longer reach past the bubble's right edge; they scale to fit inside its padding, and the row shrinks with them.
+
 ## [1.6.9] - 2026-11-13
 
 ### Fixed
