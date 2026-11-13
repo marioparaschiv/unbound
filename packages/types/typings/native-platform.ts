@@ -26,14 +26,17 @@ export type NativePlatformDevice = {
 
 /** Memory and thermal pressure, as each platform reports it. */
 export type NativeDeviceState = {
+	/** Memory available to apps, in megabytes. */
 	availableMB?: number;
 	/** Android: the system considers itself low on memory. */
 	lowMemory?: boolean;
 	/** iOS: memory warnings Discord received this session. */
 	memoryWarnings?: number;
+	/** How hot the device runs, as the system rates it. */
 	thermal?: 'nominal' | 'fair' | 'serious' | 'critical';
 	/** Free space on the volume holding Discord's documents, and the size of Unbound's folder there. */
 	freeMB?: number;
+	/** The size of Unbound's folder, in megabytes. */
 	unboundMB?: number;
 	/** The active connection, and whether a VPN, a proxy, a metered plan or Low Data Mode (Data Saver) applies. */
 	network?: NativeNetworkState;
@@ -43,10 +46,15 @@ export type NativeDeviceState = {
 
 /** The device's active connection. */
 export type NativeNetworkState = {
+	/** The kind of connection, or `offline` with none. */
 	type: 'wifi' | 'cellular' | 'ethernet' | 'other' | 'offline';
+	/** The connection bills by data. */
 	metered?: boolean;
+	/** Low Data Mode (iOS) or Data Saver (Android) is on. */
 	lowData?: boolean;
+	/** Traffic goes through a VPN. */
 	vpn?: boolean;
+	/** A system HTTP proxy is set. */
 	proxy?: boolean;
 };
 

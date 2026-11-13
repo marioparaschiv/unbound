@@ -3980,14 +3980,17 @@ export type NativeDebugEvaluationLog = {
 };
 /** Memory and thermal pressure, as each platform reports it. */
 export type NativeDeviceState = {
+	/** Memory available to apps, in megabytes. */
 	availableMB?: number;
 	/** Android: the system considers itself low on memory. */
 	lowMemory?: boolean;
 	/** iOS: memory warnings Discord received this session. */
 	memoryWarnings?: number;
+	/** How hot the device runs, as the system rates it. */
 	thermal?: 'nominal' | 'fair' | 'serious' | 'critical';
 	/** Free space on the volume holding Discord's documents, and the size of Unbound's folder there. */
 	freeMB?: number;
+	/** The size of Unbound's folder, in megabytes. */
 	unboundMB?: number;
 	/** The active connection, and whether a VPN, a proxy, a metered plan or Low Data Mode (Data Saver) applies. */
 	network?: NativeNetworkState;
@@ -4054,7 +4057,9 @@ export type NativeFFIBridge = {
 };
 /** What `rebind` changed: the original function and how many import slots now point at the replacement. */
 export type NativeFFIRebinding = {
+	/** The function the import slots pointed at before. */
 	original: NativePointer;
+	/** How many import slots now point at the replacement. */
 	slots: number;
 };
 /** A non-variadic C function signature for `ffi.call`. */
@@ -4526,7 +4531,9 @@ export type NativeJavaClassQuery = {
 	extends?: string;
 	/** The class implements every one, directly or through a superclass. */
 	implements?: string[];
+	/** Methods the class must have, every one matching. */
 	methods?: NativeJavaMethodShape[];
+	/** Fields the class must declare, every one matching. */
 	fields?: NativeJavaFieldShape[];
 	/** At most this many names, 50 by default and 1000 at most. */
 	limit?: number;
@@ -4542,8 +4549,11 @@ export type NativeJavaFieldDescription = {
 };
 /** A field a class from `java.findClasses` must declare. */
 export type NativeJavaFieldShape = {
+	/** The field's name. */
 	name?: string;
+	/** The field type's fully qualified name. */
 	type?: string;
+	/** Whether the field is static. */
 	static?: boolean;
 };
 /** A handle to a Java object or class; the plugin scope releases it on dispose. */
@@ -4642,10 +4652,13 @@ export type NativeJavaMethodDescription = {
 };
 /** A method a class from `java.findClasses` must have; every given part must match. */
 export type NativeJavaMethodShape = {
+	/** The method's name. */
 	name?: string;
 	/** The parameter types' fully qualified names, in order. */
 	parameters?: string[];
+	/** The return type's fully qualified name. */
 	returns?: string;
+	/** Whether the method is static. */
 	static?: boolean;
 	/** Whether the class itself declares it rather than inheriting it; `true` by default. */
 	declared?: boolean;
@@ -4738,10 +4751,15 @@ export type NativeMainWorkCounts = {
 };
 /** The device's active connection. */
 export type NativeNetworkState = {
+	/** The kind of connection, or `offline` with none. */
 	type: 'wifi' | 'cellular' | 'ethernet' | 'other' | 'offline';
+	/** The connection bills by data. */
 	metered?: boolean;
+	/** Low Data Mode (iOS) or Data Saver (Android) is on. */
 	lowData?: boolean;
+	/** Traffic goes through a VPN. */
 	vpn?: boolean;
+	/** A system HTTP proxy is set. */
 	proxy?: boolean;
 };
 /** The iOS bridge to the Objective-C runtime, scoped to the plugin's capabilities. */
@@ -4873,12 +4891,12 @@ export type NativeObjCBridge = {
 		signature: NativeFFISignature,
 		...args: NativeObjCResult[]
 	): NativeObjCResult;
+	/** Finds loaded classes by shape, so a lookup survives renamed classes. Needs `native.objc.classSearch`. */
+	findClasses(query: NativeObjCClassQuery): string[];
 	/**
 	 * Defines an Objective-C class at runtime whose methods run JavaScript, for delegates, data sources and
 	 * target-action receivers; defining it again replaces its methods. Needs `native.objc.classDefinition`.
 	 */
-	/** Finds loaded classes by shape, so a lookup survives renamed classes. Needs `native.objc.classSearch`. */
-	findClasses(query: NativeObjCClassQuery): string[];
 	defineClass(
 		name: string,
 		superclass: string,
@@ -4937,7 +4955,9 @@ export type NativeObjCInspector = {
 };
 /** One method of a class `objc.defineClass` makes: its signature without `self` and `_cmd`, and what runs. */
 export type NativeObjCMethodDefinition = {
+	/** The method's argument and return types, without `self` and `_cmd`. */
 	signature: NativeFFISignature;
+	/** Runs on the JavaScript thread with the receiver and the method's arguments. */
 	implementation: (self: NativeObjectHandle, ...args: never[]) => NativeObjCResult | void;
 };
 /** What an Objective-C call returns: a plain value, a handle to an object, a 64-bit integer, or nothing for `void`. */

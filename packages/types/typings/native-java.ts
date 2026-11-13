@@ -276,10 +276,13 @@ export type NativeJavaBridge = {
 
 /** A method a class from `java.findClasses` must have; every given part must match. */
 export type NativeJavaMethodShape = {
+	/** The method's name. */
 	name?: string;
 	/** The parameter types' fully qualified names, in order. */
 	parameters?: string[];
+	/** The return type's fully qualified name. */
 	returns?: string;
+	/** Whether the method is static. */
 	static?: boolean;
 	/** Whether the class itself declares it rather than inheriting it; `true` by default. */
 	declared?: boolean;
@@ -287,8 +290,11 @@ export type NativeJavaMethodShape = {
 
 /** A field a class from `java.findClasses` must declare. */
 export type NativeJavaFieldShape = {
+	/** The field's name. */
 	name?: string;
+	/** The field type's fully qualified name. */
 	type?: string;
+	/** Whether the field is static. */
 	static?: boolean;
 };
 
@@ -300,7 +306,9 @@ export type NativeJavaClassQuery = {
 	extends?: string;
 	/** The class implements every one, directly or through a superclass. */
 	implements?: string[];
+	/** Methods the class must have, every one matching. */
 	methods?: NativeJavaMethodShape[];
+	/** Fields the class must declare, every one matching. */
 	fields?: NativeJavaFieldShape[];
 	/** At most this many names, 50 by default and 1000 at most. */
 	limit?: number;

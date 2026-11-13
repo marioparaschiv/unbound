@@ -238,12 +238,12 @@ export type NativeObjCBridge = {
 		signature: NativeFFISignature,
 		...args: NativeObjCResult[]
 	): NativeObjCResult;
+	/** Finds loaded classes by shape, so a lookup survives renamed classes. Needs `native.objc.classSearch`. */
+	findClasses(query: NativeObjCClassQuery): string[];
 	/**
 	 * Defines an Objective-C class at runtime whose methods run JavaScript, for delegates, data sources and
 	 * target-action receivers; defining it again replaces its methods. Needs `native.objc.classDefinition`.
 	 */
-	/** Finds loaded classes by shape, so a lookup survives renamed classes. Needs `native.objc.classSearch`. */
-	findClasses(query: NativeObjCClassQuery): string[];
 	defineClass(
 		name: string,
 		superclass: string,
@@ -274,7 +274,9 @@ export type NativeObjCClassQuery = {
 
 /** One method of a class `objc.defineClass` makes: its signature without `self` and `_cmd`, and what runs. */
 export type NativeObjCMethodDefinition = {
+	/** The method's argument and return types, without `self` and `_cmd`. */
 	signature: NativeFFISignature;
+	/** Runs on the JavaScript thread with the receiver and the method's arguments. */
 	implementation: (self: NativeObjectHandle, ...args: never[]) => NativeObjCResult | void;
 };
 
