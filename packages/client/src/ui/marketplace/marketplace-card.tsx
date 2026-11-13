@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import { memo } from 'react';
 
 import { isNewListing } from '~/marketplace/catalog';
+import { newListingsSince } from '~/marketplace/new-since';
 import AddonAuthors from '~/ui/addons/addon-authors';
 import AddonTitle from '~/ui/components/addon-title';
 import AddonIcon from '~/ui/components/addon-icon';
@@ -57,7 +58,11 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 				<View style={styles.heading}>
 					<AddonTitle
 						name={name}
-						tag={isNewListing(addon) ? messages.UNBOUND_MARKETPLACE_NEW : undefined}
+						tag={
+							isNewListing(addon, Date.now(), newListingsSince())
+								? messages.UNBOUND_MARKETPLACE_NEW
+								: undefined
+						}
 						tagVariant='new'
 					/>
 					{manifest.authors.length ? <AddonAuthors authors={manifest.authors} /> : null}
