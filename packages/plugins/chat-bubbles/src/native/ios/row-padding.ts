@@ -2,7 +2,7 @@ import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbou
 
 import type { RowRoom, RowRooms } from '~/lib/style';
 import { isStandaloneCell } from '~/native/ios/standalone-cell';
-import { contentOrigin, keepInCell } from '~/native/ios/host-offset';
+import { followSwipe } from '~/native/ios/swipe-follow';
 
 const STATE_KEY = '__unboundChatBubbleRows';
 
@@ -128,7 +128,7 @@ function insetContent(objc: NativeObjCBridge, cell: NativeObjectHandle, inset: P
  * @param scope The plugin's UI scope, which removes every hook on dispose.
  * @param messageCell The message cell's class name.
  * @param contentView The class of a table cell's content view.
- * @param followTags The tags of the views the plugin adds to the content view, which keep their place when it moves.
+ * @param followTags The tags of the plugin's views in the cell, which slide with swipe to reply.
  */
 export function installRowPadding(
 	scope: NativeUIScope,
@@ -188,7 +188,6 @@ export function installRowPadding(
 	// out of line with its bubble and avatar until the next layout.
 	objc.hook(contentView, 'setFrame:', {
 		replace: ({ self, args, original }) => {
-			const before = contentOrigin(objc, self);
 			let frame: unknown;
 
 			try {
@@ -206,15 +205,23 @@ export function installRowPadding(
 
 			const result = frame ? original(frame) : original(...args);
 
-			try {
-				keepInCell(objc, self, before, followTags);
-			} catch (error) {
-				console.error(`[Chat Bubbles] Failed to keep a bubble in place: ${String(error)}`);
-			}
+			follow(self);
 
 			return result;
 		},
 	});
+	objc.hook(contentView, 'setCenter:', { after: ({ self }) => follow(self) });
+
+	function follow(content: NativeObjectHandle) {
+		try {
+			const cell = objc.invoke(content, 'superview', []) as NativeObjectHandle | null;
+
+			if (cell && objc.className(cell) === messageCell)
+				followSwipe(objc, content, followTags);
+		} catch (error) {
+			console.error(`[Chat Bubbles] Failed to follow a swipe: ${String(error)}`);
+		}
+	}
 }
 
 /**
