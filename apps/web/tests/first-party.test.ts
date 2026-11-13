@@ -8,6 +8,7 @@ import {
 	getVersionDirectory,
 } from '@unbound-app/contracts/version-layout';
 import type { PublishFirstPartyRequest } from '@unbound-app/contracts/publish';
+import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 import { eq } from 'drizzle-orm';
@@ -93,7 +94,7 @@ type BuildOutput = {
 	/** More files of the build commit, relative to the plugin's directory. */
 	files?: FixtureFiles;
 	/** More manifest fields, such as `replaces`. */
-	manifest?: Record<string, unknown>;
+	manifest?: Partial<PublishedManifest>;
 };
 
 function sha512(text: string): string {

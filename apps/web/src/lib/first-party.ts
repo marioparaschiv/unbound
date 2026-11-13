@@ -12,9 +12,9 @@ import { connectGitHubIfLinked } from '~/lib/github';
 import { VERSION_SOURCE } from '~/lib/artifacts';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
+import { writeDelisted } from '~/lib/addons';
 import { ApiError } from '~/lib/api/errors';
 import { addon } from '~/db/schema';
-import { writeDelisted } from '~/lib/addons';
 
 /** CI tags each build commit under this prefix; no other branch or tag of the repository is first-party. */
 const BUILD_TAG_PREFIX = 'plugin-builds/';

@@ -45,8 +45,7 @@ import { show } from '~/toasts/api';
 const Patcher = createPatcher('Debugger');
 const Logger = createLogger('Debugger');
 
-// How long to wait before re-dialling the bridge after a drop or failed attempt, so a reloaded app
-// or a restarted bridge reconnects on its own without waiting for the next AppState transition.
+// Re-dials after a drop or failed attempt, so a reloaded app or restarted bridge reconnects without an AppState change.
 // Short, since tools start the bridge on demand and wait for the device to dial it.
 const RECONNECT_DELAY_MS = 500;
 const RELOAD_BATCH_MS = 4000;
