@@ -3,8 +3,9 @@ import { describe, expect, test } from 'bun:test';
 
 import type { ClassReport, InspectReport, ViewRecord, ViewsReport } from '~/lib/inspect-report';
 import { formatClassReport, formatFoundViews, formatViewTree } from '~/lib/inspect-format';
-import inspectCommand, { runInspect } from '~/commands/debug/inspect';
+import { runInspect } from '~/commands/debug/inspect-handler';
 import { parse, type StaticDecode } from '~/lib/schema';
+import inspectCommand from '~/commands/debug/inspect';
 import type { DeviceClient } from '~/lib/device';
 
 const textView: ClassReport = {
@@ -270,10 +271,16 @@ describe('inspect command', () => {
 			ok: false,
 			text: 'No Android activity is resumed.',
 			data: { error: 'No Android activity is resumed.' },
+			error: { code: 'not-found', message: 'No Android activity is resumed.' },
 		});
 		expect(await run({ what: 'find' }, clientAnswering(textView))).toEqual({
 			ok: false,
 			text: 'Pass the class to look for: ubd debug inspect find <class>.',
+			error: {
+				code: 'invalid-input',
+				message: 'Pass the class to look for: ubd debug inspect find <class>.',
+				field: 'name',
+			},
 		});
 	});
 });

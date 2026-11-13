@@ -1,17 +1,8 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { resolve } from 'node:path';
 
-import {
-	defaultLogFolder,
-	pullAndroidLogs,
-	pullIOSLogs,
-	symbolicatePulledLogs,
-} from '~/lib/log-pull';
-import { createLogPrinter, LOG_LEVELS, parseLogLevel, type LogEvent } from '~/lib/log-lines';
-import { loadFrameRewriter } from '~/lib/log-symbolicator';
-import { openDeviceTarget } from '~/lib/device-target';
-import { tailAndroid, tailIOS } from '~/lib/log-tail';
+import { lazyHandler } from '~/lib/lazy-handler';
 import { defaulted, Type } from '~/lib/schema';
+import { LOG_LEVELS } from '~/lib/log-levels';
 
 const schema = Type.Object({
 	serial: Type.Optional(
@@ -88,87 +79,7 @@ const logsCommand: CommandDefinition<typeof schema> = {
 	summary: "Tail Discord's log, or pull the loader's log files.",
 	mcp: false,
 	schema,
-	async handler({
-		serial,
-		ios,
-		udid,
-		level,
-		grep,
-		since,
-		follow,
-		symbolicate,
-		bundle,
-		pull,
-		out,
-	}) {
-		const target = await openDeviceTarget({ serial, ios, udid });
-
-		if ('error' in target) {
-			return { ok: false, text: target.error };
-		}
-
-		if (pull) {
-			const folder = out ?? defaultLogFolder();
-			const pulled =
-				target.platform === 'ios'
-					? await pullIOSLogs(target, { out: folder })
-					: await pullAndroidLogs(target, { out: folder });
-
-			if (!pulled.ok || !symbolicate) {
-				return pulled;
-			}
-
-			const rewriter = await loadFrameRewriter(bundle);
-
-			if (typeof rewriter !== 'function') {
-				return {
-					ok: false,
-					text: `${pulled.text} Symbolicating them failed: ${rewriter.error}`,
-				};
-			}
-
-			const written = symbolicatePulledLogs(resolve(folder), rewriter);
-
-			return { ok: true, text: `${pulled.text} Symbolicated copies: ${written.join(', ')}.` };
-		}
-
-		const minimum = parseLogLevel(level);
-
-		if (!minimum) {
-			return { ok: false, text: `--level takes one of ${LOG_LEVELS.join(', ')}.` };
-		}
-
-		let pattern: RegExp | undefined;
-
-		try {
-			pattern = grep === void 0 ? void 0 : new RegExp(grep);
-		} catch (error) {
-			return {
-				ok: false,
-				text: `--grep is not a valid regular expression: ${String(error)}`,
-			};
-		}
-
-		const rewriter = symbolicate ? await loadFrameRewriter(bundle) : void 0;
-
-		if (rewriter && typeof rewriter !== 'function') {
-			return { ok: false, text: rewriter.error };
-		}
-
-		const print = createLogPrinter({ level: minimum, grep: pattern, symbolicate: rewriter });
-
-		function emit(event: LogEvent) {
-			const line = print(event);
-
-			if (line !== void 0) {
-				process.stdout.write(`${line}\n`);
-			}
-		}
-
-		return target.platform === 'ios'
-			? tailIOS(target, { since, follow, emit })
-			: tailAndroid(target, { since, follow, emit });
-	},
+	handler: lazyHandler(() => import('./logs-handler')),
 };
 
 export default logsCommand;

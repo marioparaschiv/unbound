@@ -77,6 +77,7 @@ $(BUNDLE_NAME)_RESOURCE_DIRS = "$(RESOURCES_DIR)"
 SUBPROJECTS += bundle-patcher
 SUBPROJECTS += link-helper
 SUBPROJECTS += springboard
+SUBPROJECTS += inspector
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 include $(THEOS_MAKE_PATH)/bundle.mk

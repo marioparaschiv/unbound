@@ -1,11 +1,8 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { bridgePortField, waitForDevice } from '~/lib/context';
-import { resolveAddonTarget } from '~/lib/addon-target';
-import { staleBuildReason } from '~/lib/stale-build';
-import { pushBuiltAddon } from '~/lib/built-addon';
+import { lazyHandler } from '~/lib/lazy-handler';
+import { bridgePortField } from '~/lib/context';
 import { defaulted, Type } from '~/lib/schema';
-import { NOT_CONNECTED } from '~/lib/device';
 
 const schema = Type.Object({
 	addon: defaulted(
@@ -27,32 +24,7 @@ const pushCommand: CommandDefinition<typeof schema> = {
 	mcp: true,
 	schema,
 	cli: { positionals: ['addon'] },
-	async handler({ addon: target, build }, { client }) {
-		const startedAt = Date.now();
-		const resolved = await resolveAddonTarget(target, { build, hot: true });
-
-		if ('error' in resolved) {
-			return { ok: false, text: resolved.error };
-		}
-
-		const stale = staleBuildReason(resolved.addon, build ? startedAt : undefined);
-
-		if (stale) {
-			return { ok: false, text: `Not pushing ${resolved.addon.id}: ${stale}` };
-		}
-
-		await waitForDevice(client);
-
-		if (!client.isDeviceConnected) {
-			return NOT_CONNECTED;
-		}
-
-		const pushed = await pushBuiltAddon(client, resolved.addon);
-
-		return pushed.ok
-			? { ok: true, text: `Pushed ${resolved.addon.id} (${pushed.summary}).` }
-			: { ok: false, text: `Pushing ${resolved.addon.id} failed: ${pushed.error}` };
-	},
+	handler: lazyHandler(() => import('./push-handler')),
 };
 
 export default pushCommand;

@@ -3,6 +3,7 @@ import type { CommandOutput } from '@unbound-app/debugger-protocol/registry';
 import type { EvalResult } from '@unbound-app/debugger-protocol';
 
 import { createDevicePrelude, type DevicePrelude } from '~/lib/device-prelude';
+import { evalFailure, failure } from '~/lib/command-error';
 import { lowerForHermes } from '~/lib/hermes-code';
 import { waitForDevice } from '~/lib/context';
 import { formatResult } from '~/lib/format';
@@ -33,10 +34,14 @@ export function toDeviceCode<A extends Json[], R>(
 }
 
 /** The answer every device command gives when the bridge has no device. */
-export const NOT_CONNECTED: CommandOutput = {
-	ok: false,
-	text: "No device is connected to the debugger. Launch the app so its debugger dials the bridge, then retry. The standard build has no debugger; turn on Developer mode in Unbound's settings.",
-};
+export const NOT_CONNECTED: CommandOutput = failure(
+	'no-device',
+	"No device is connected to the debugger. Launch the app so its debugger dials the bridge, then retry. The standard build has no debugger; turn on Developer mode in Unbound's settings.",
+	{
+		message: 'No device is connected to the debugger.',
+		hint: "Start the bridge with ubd debug start and launch the app so its debugger dials it, then retry. The standard build has no debugger; turn on Developer mode in Unbound's settings.",
+	},
+);
 
 /**
  * @description Waits briefly for a device, then evaluates code on it.
@@ -75,7 +80,9 @@ export async function runOnDevice(
 		return NOT_CONNECTED;
 	}
 
-	return { ok: result.ok, text: formatResult(result), data: result };
+	return result.ok
+		? { ok: true, text: formatResult(result), data: result }
+		: evalFailure(result, formatResult(result), result);
 }
 
 export default { NOT_CONNECTED, RECORDING_GRACE_MS, toDeviceCode, evaluateOnDevice, runOnDevice };

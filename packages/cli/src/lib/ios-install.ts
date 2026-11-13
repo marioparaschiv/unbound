@@ -9,6 +9,7 @@ import type { InstallOptions, PluginPayload } from '~/lib/plugin-install';
 import { ERROR_MARKER, readMarker } from '~/lib/pilot';
 import type { CommandResult } from '~/lib/run-command';
 import type { IOSTarget } from '~/lib/device-target';
+import { failure } from '~/lib/command-error';
 import { logToStderr } from '~/lib/stderr';
 import { createTarGz } from '~/lib/tar';
 
@@ -40,7 +41,7 @@ export async function installOnIOS(
 	);
 
 	if (!transferred.ok) {
-		return { ok: false, text: transferred.error };
+		return failure('tool-failed', transferred.error);
 	}
 
 	const unpacked = await target.shell(unpackScript(plugin.id, staged));
@@ -50,7 +51,7 @@ export async function installOnIOS(
 	if (!destination) {
 		const reason = readMarker(output, ERROR_MARKER) ?? output.trim();
 
-		return { ok: false, text: `Installing ${plugin.id} on ${target.id} failed: ${reason}` };
+		return failure('tool-failed', `Installing ${plugin.id} on ${target.id} failed: ${reason}`);
 	}
 
 	if (!restart) {
@@ -66,10 +67,10 @@ export async function installOnIOS(
 
 	return restarted.ok
 		? { ok: true, text: `Installed ${plugin.id} into ${destination} and restarted Discord.` }
-		: {
-				ok: false,
-				text: `Installed ${plugin.id} into ${destination}, but restarting Discord failed: ${restarted.error}`,
-			};
+		: failure(
+				'tool-failed',
+				`Installed ${plugin.id} into ${destination}, but restarting Discord failed: ${restarted.error}`,
+			);
 }
 
 async function transferArchive(

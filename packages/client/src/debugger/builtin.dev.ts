@@ -3,15 +3,25 @@ import type {
 	PushRequest,
 	PushResult,
 	EvalResult,
+	ExplorerRequest,
+	ExplorerResult,
 	LogMessage,
 	ReactDevtoolsFrame,
+	ViewDetailsRequest,
+	ViewDetailsResult,
 	ViewsRequest,
 	ViewsResult,
 } from '@unbound-app/debugger-protocol';
-import { parseMessage } from '@unbound-app/debugger-protocol';
+import { isExplorerRequest, parseMessage } from '@unbound-app/debugger-protocol';
 import { createLogger } from '@unbound-app/logger';
 
-import { highlightView, listViews, resetViewFinder } from '~/debugger/view-finder.dev';
+import {
+	describeView,
+	highlightView,
+	listViews,
+	resetViewFinder,
+} from '~/debugger/view-finder.dev';
+import { answerExplorer, resetExplorer } from '~/debugger/explorer.dev';
 import { CLIENT_VERSION, DEBUGGER_ADDRESS } from '~/core/constants';
 import { endSession, receive } from '~/debugger/react-devtools.dev';
 import { getSetting, isSettingChange } from '~/settings/unbound';
@@ -74,6 +84,7 @@ export function stop() {
 	clearReconnectTimer();
 	closeSocket();
 	resetViewFinder();
+	resetExplorer();
 	endSession();
 
 	for (const dispose of disposers) dispose();
@@ -124,8 +135,9 @@ function connect(isReconnect = false) {
 	ws.addEventListener('close', ({ code }) => {
 		Logger.warn(`Socket closed with code ${code}`);
 		ws = null;
-		// The frontend starts a fresh session once the socket is back.
+		// The frontend starts a fresh session once the socket is back, and explorer refs end with the session.
 		endSession();
+		resetExplorer();
 		scheduleReconnect();
 	});
 
@@ -189,6 +201,18 @@ function handleMessage(raw: string) {
 		return;
 	}
 
+	if (request?.type === 'view-details-request') {
+		void handleViewDetailsRequest(request);
+
+		return;
+	}
+
+	if (request && isExplorerRequest(request)) {
+		void handleExplorerRequest(request);
+
+		return;
+	}
+
 	if (request?.type === 'view-highlight') {
 		highlightView(request.node);
 
@@ -202,6 +226,14 @@ function handleMessage(raw: string) {
 
 async function handleViewsRequest(request: ViewsRequest) {
 	reply(await listViews(request));
+}
+
+async function handleViewDetailsRequest(request: ViewDetailsRequest) {
+	reply(await describeView(request));
+}
+
+async function handleExplorerRequest(request: ExplorerRequest) {
+	reply(await answerExplorer(request));
 }
 
 async function handleEvalRequest(id: string, code: string) {
@@ -277,7 +309,15 @@ function sayHello() {
 	}
 }
 
-function reply(payload: EvalResult | PushResult | ViewsResult | ReactDevtoolsFrame) {
+function reply(
+	payload:
+		| EvalResult
+		| PushResult
+		| ViewsResult
+		| ViewDetailsResult
+		| ExplorerResult
+		| ReactDevtoolsFrame,
+) {
 	if (ws?.readyState !== WebSocket.OPEN) return;
 
 	try {

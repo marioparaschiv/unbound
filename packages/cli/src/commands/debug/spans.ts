@@ -1,9 +1,8 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { runOnDevice, toDeviceCode } from '~/lib/device';
+import { lazyHandler } from '~/lib/lazy-handler';
 import { bridgePortField } from '~/lib/context';
 import { defaulted, Type } from '~/lib/schema';
-import { textSpans } from '~/lib/probes';
 
 const schema = Type.Object({
 	match: Type.String({ description: 'Text the text views must contain.' }),
@@ -21,9 +20,7 @@ const spansCommand: CommandDefinition<typeof schema> = {
 	mcp: true,
 	schema,
 	cli: { positionals: ['match'] },
-	handler({ match, max }, { client }) {
-		return runOnDevice(client, toDeviceCode(textSpans, match, max));
-	},
+	handler: lazyHandler(() => import('./spans-handler')),
 };
 
 export default spansCommand;

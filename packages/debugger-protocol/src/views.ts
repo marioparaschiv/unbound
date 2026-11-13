@@ -1,7 +1,10 @@
 /**
- * The view finder's frames: a controller asks the device for one level of its native view tree at a
- * time, and names the view the device should outline on screen.
+ * The view finder's frames: a controller asks the device for one page of one level of its native view
+ * tree at a time, for one view's properties when it selects it, and names the view to outline on screen.
  */
+
+/** The most views a device returns for one {@link ViewsRequest}; a longer level is read in pages. */
+export const VIEWS_PAGE_SIZE = 100;
 
 /** A rectangle in screen coordinates, in dp on Android and points on iOS. */
 export type ViewFrame = {
@@ -29,12 +32,19 @@ export type ViewNode = {
 	childCount: number;
 };
 
-/** Controller → bridge → device: list the children of `parent`, or the root views when it is omitted. */
+/**
+ * Controller → bridge → device: list a page of the children of `parent`, or the root views when it is
+ * omitted. Listing the roots renews every id.
+ */
 export type ViewsRequest = {
 	type: 'views-request';
 	/** Correlation id echoed back on the matching {@link ViewsResult}. */
 	id: string;
 	parent?: string;
+	/** The index of the first child to list. Defaults to 0. */
+	offset?: number;
+	/** How many children to list, at most {@link VIEWS_PAGE_SIZE}, which is also the default. */
+	limit?: number;
 };
 
 /** The answer to a {@link ViewsRequest}, sent device → bridge → the controller that asked. */
@@ -42,7 +52,56 @@ export type ViewsResult = {
 	type: 'views-result';
 	/** The `id` of the {@link ViewsRequest} this answers. */
 	id: string;
-} & ({ ok: true; nodes: ViewNode[] } | { ok: false; error: string });
+} & (
+	| {
+			ok: true;
+			nodes: ViewNode[];
+			/** How many children the parent has in all; more pages follow while it exceeds `offset + nodes.length`. */
+			total?: number;
+	  }
+	| { ok: false; error: string }
+);
+
+/** A property value: text, a number, a flag or nothing. A `color` is `#RRGGBBAA`. */
+export type ViewPropertyValue = string | number | boolean | null;
+
+/** One property of a native view, read when the controller selects it. */
+export type ViewProperty = {
+	key: string;
+	value: ViewPropertyValue;
+	/** Draws the value as a colour swatch when `color`. */
+	kind?: 'color';
+	/** The unit a number is in, such as `dp`, `pt` or `px`. */
+	unit?: string;
+};
+
+/** A titled group of properties, such as Layout or Accessibility. */
+export type ViewSection = {
+	title: string;
+	properties: ViewProperty[];
+};
+
+/** What a device reads about one view beyond its {@link ViewNode}, for patching it with the native bridge. */
+export type ViewDetails = {
+	/** The view's class, then each superclass up to the platform's root view class. */
+	classChain: string[];
+	sections: ViewSection[];
+};
+
+/** Controller → bridge → device: read the properties of the listed view `node`. */
+export type ViewDetailsRequest = {
+	type: 'view-details-request';
+	/** Correlation id echoed back on the matching {@link ViewDetailsResult}. */
+	id: string;
+	node: string;
+};
+
+/** The answer to a {@link ViewDetailsRequest}, sent device → bridge → the controller that asked. */
+export type ViewDetailsResult = {
+	type: 'view-details-result';
+	/** The `id` of the {@link ViewDetailsRequest} this answers. */
+	id: string;
+} & ({ ok: true; details: ViewDetails } | { ok: false; error: string });
 
 /** Controller → bridge → device: outline the view with this id on screen, or clear the outline when `null`. */
 export type ViewHighlight = {
@@ -101,14 +160,61 @@ export function isViewNode(value: unknown): value is ViewNode {
 	);
 }
 
+// UNKNOWN: it checks a field of a parsed frame, which may hold anything.
+function isOptionalCount(value: unknown): boolean {
+	return (
+		value === undefined || (typeof value === 'number' && Number.isInteger(value) && value >= 0)
+	);
+}
+
+function isViewProperty(value: unknown): value is ViewProperty {
+	return (
+		isObject(value) &&
+		'key' in value &&
+		typeof value.key === 'string' &&
+		'value' in value &&
+		(isNullableString(value.value) ||
+			typeof value.value === 'number' ||
+			typeof value.value === 'boolean') &&
+		(!('kind' in value) || value.kind === undefined || value.kind === 'color') &&
+		(!('unit' in value) || value.unit === undefined || typeof value.unit === 'string')
+	);
+}
+
+/**
+ * @description Checks that a value has every field {@link ViewDetails} needs.
+ * @param value The parsed value.
+ * @returns Whether it is a view's details.
+ */
+export function isViewDetails(value: unknown): value is ViewDetails {
+	return (
+		isObject(value) &&
+		'classChain' in value &&
+		Array.isArray(value.classChain) &&
+		value.classChain.every((name) => typeof name === 'string') &&
+		'sections' in value &&
+		Array.isArray(value.sections) &&
+		value.sections.every(
+			// UNKNOWN: each section of a parsed frame may hold anything until checked.
+			(section: unknown) =>
+				isObject(section) &&
+				'title' in section &&
+				typeof section.title === 'string' &&
+				'properties' in section &&
+				Array.isArray(section.properties) &&
+				section.properties.every(isViewProperty),
+		)
+	);
+}
+
 /**
  * @description Checks the fields of a view finder frame whose `type` is already known.
  * @param frame The parsed frame.
- * @returns Whether the frame is a valid view request, result or highlight.
+ * @returns Whether the frame is a valid view request, result, details frame or highlight.
  */
 export function isViewFrameMessage(
 	frame: unknown,
-): frame is ViewsRequest | ViewsResult | ViewHighlight {
+): frame is ViewsRequest | ViewsResult | ViewDetailsRequest | ViewDetailsResult | ViewHighlight {
 	if (!isObject(frame) || !('type' in frame)) {
 		return false;
 	}
@@ -120,7 +226,9 @@ export function isViewFrameMessage(
 				typeof frame.id === 'string' &&
 				(!('parent' in frame) ||
 					frame.parent === undefined ||
-					typeof frame.parent === 'string')
+					typeof frame.parent === 'string') &&
+				isOptionalCount('offset' in frame ? frame.offset : undefined) &&
+				isOptionalCount('limit' in frame ? frame.limit : undefined)
 			);
 		case 'views-result':
 			return (
@@ -130,7 +238,24 @@ export function isViewFrameMessage(
 				(frame.ok === true
 					? 'nodes' in frame &&
 						Array.isArray(frame.nodes) &&
-						frame.nodes.every(isViewNode)
+						frame.nodes.every(isViewNode) &&
+						isOptionalCount('total' in frame ? frame.total : undefined)
+					: frame.ok === false && 'error' in frame && typeof frame.error === 'string')
+			);
+		case 'view-details-request':
+			return (
+				'id' in frame &&
+				typeof frame.id === 'string' &&
+				'node' in frame &&
+				typeof frame.node === 'string'
+			);
+		case 'view-details-result':
+			return (
+				'id' in frame &&
+				typeof frame.id === 'string' &&
+				'ok' in frame &&
+				(frame.ok === true
+					? 'details' in frame && isViewDetails(frame.details)
 					: frame.ok === false && 'error' in frame && typeof frame.error === 'string')
 			);
 		case 'view-highlight':

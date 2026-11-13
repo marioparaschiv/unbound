@@ -58,6 +58,13 @@ inline constexpr std::array<std::string_view, 3> kObjcAssociationsMethods = {
 inline constexpr std::array<std::string_view, 1> kObjcHooksMethods = {
     "hook",
 };
+inline constexpr std::array<std::string_view, 5> kObjcInspectMethods = {
+    "inspectClass",
+    "inspectMembers",
+    "inspectValues",
+    "inspectImages",
+    "inspectClasses",
+};
 inline constexpr std::array<std::string_view, 1> kFfiSymbolsMethods = {
     "symbol",
 };
@@ -134,7 +141,7 @@ inline constexpr std::array<std::string_view, 1> kDebugEnvironmentMethods = {
     "environment",
 };
 
-inline constexpr std::array<NativeCapabilityBinding, 23> kNativeCapabilityBindings = {{
+inline constexpr std::array<NativeCapabilityBinding, 24> kNativeCapabilityBindings = {{
     {"native.objc.classes", "objc", kObjcClassesMethods},
     {"native.objc.invoke", "objc", kObjcInvokeMethods},
     {"native.objc.invokeAsync", "objc", kObjcInvokeAsyncMethods},
@@ -143,6 +150,7 @@ inline constexpr std::array<NativeCapabilityBinding, 23> kNativeCapabilityBindin
     {"native.objc.ivars", "objc", kObjcIvarsMethods},
     {"native.objc.associations", "objc", kObjcAssociationsMethods},
     {"native.objc.hooks", "objc", kObjcHooksMethods},
+    {"native.objc.inspect", "objc", kObjcInspectMethods},
     {"native.ffi.symbols", "ffi", kFfiSymbolsMethods},
     {"native.ffi.call", "ffi", kFfiCallMethods},
     {"native.fabric.mount", "fabric", kFabricMountMethods},
@@ -160,7 +168,7 @@ inline constexpr std::array<NativeCapabilityBinding, 23> kNativeCapabilityBindin
     {"native.debug.environment", "debug", kDebugEnvironmentMethods},
 }};
 
-inline constexpr std::array<const char *, 15> kIOSNativePluginCapabilities = {
+inline constexpr std::array<const char *, 16> kIOSNativePluginCapabilities = {
     "native.objc.classes",
     "native.objc.invoke",
     "native.objc.invokeAsync",
@@ -169,6 +177,7 @@ inline constexpr std::array<const char *, 15> kIOSNativePluginCapabilities = {
     "native.objc.ivars",
     "native.objc.associations",
     "native.objc.hooks",
+    "native.objc.inspect",
     "native.ffi.symbols",
     "native.ffi.call",
     "native.fabric.mount",

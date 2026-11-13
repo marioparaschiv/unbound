@@ -304,6 +304,10 @@ describe('installOnIOS', () => {
 		expect(result).toEqual({
 			ok: false,
 			text: `Installing com.example.sample on ${udid} failed: No Discord data container`,
+			error: {
+				code: 'tool-failed',
+				message: `Installing com.example.sample on ${udid} failed: No Discord data container`,
+			},
 		});
 	});
 

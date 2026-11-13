@@ -24,6 +24,7 @@ import type { DevicePlatform, DeviceTarget } from '~/lib/device-target';
 import { ANDROID_TIMEOUTS } from '~/lib/android-target';
 import { ERROR_MARKER, readMarker } from '~/lib/pilot';
 import type { CommandResult } from '~/lib/run-command';
+import { failure } from '~/lib/command-error';
 
 const IOS_PART_BYTES = 2 * 1024 * 1024;
 const RESULT_MARKER = 'UBD_RESULT=';
@@ -330,7 +331,7 @@ export async function resetDevice(
 	const moved = await runScript(target, resetScript(snapshotTarget(target)));
 
 	if (!moved.ok) {
-		return { ok: false, text: `Resetting ${target.id} failed: ${moved.error}` };
+		return failure('tool-failed', `Resetting ${target.id} failed: ${moved.error}`);
 	}
 
 	const where =
@@ -354,10 +355,11 @@ export async function saveSnapshot(
 	options: DeviceStateOptions = {},
 ): Promise<CommandOutput> {
 	if (!isSnapshotName(name)) {
-		return {
-			ok: false,
-			text: 'Name the snapshot with letters, digits, dots, dashes or underscores.',
-		};
+		return failure(
+			'invalid-input',
+			'Name the snapshot with letters, digits, dots, dashes or underscores.',
+			{ field: 'name' },
+		);
 	}
 
 	const owner = await snapshotOwner(target);
@@ -371,7 +373,7 @@ export async function saveSnapshot(
 	);
 
 	if (!archived.ok) {
-		return { ok: false, text: `Archiving Unbound on ${owner} failed: ${archived.error}` };
+		return failure('tool-failed', `Archiving Unbound on ${owner} failed: ${archived.error}`);
 	}
 
 	mkdirSync(directory, { recursive: true });
@@ -382,7 +384,7 @@ export async function saveSnapshot(
 
 	return pulled.ok
 		? { ok: true, text: `Saved ${owner}'s Unbound state as ${name} (${local}).` }
-		: { ok: false, text: `Copying the snapshot from ${owner} failed: ${pulled.error}` };
+		: failure('tool-failed', `Copying the snapshot from ${owner} failed: ${pulled.error}`);
 }
 
 /**
@@ -399,10 +401,11 @@ export async function restoreSnapshot(
 	options: DeviceStateOptions = {},
 ): Promise<CommandOutput> {
 	if (!isSnapshotName(name)) {
-		return {
-			ok: false,
-			text: 'Name the snapshot with letters, digits, dots, dashes or underscores.',
-		};
+		return failure(
+			'invalid-input',
+			'Name the snapshot with letters, digits, dots, dashes or underscores.',
+			{ field: 'name' },
+		);
 	}
 
 	const owner = await snapshotOwner(target);
@@ -412,14 +415,16 @@ export async function restoreSnapshot(
 	);
 
 	if (!existsSync(local)) {
-		return { ok: false, text: `There is no snapshot named ${name} for ${owner}.` };
+		return failure('not-found', `There is no snapshot named ${name} for ${owner}.`, {
+			field: 'name',
+		});
 	}
 
 	const remote = `${target.staging}/ubd-restore-${name}-${crypto.randomUUID()}.tar.gz`;
 	const pushed = await pushArchive(target, local, remote);
 
 	if (!pushed.ok) {
-		return { ok: false, text: `Copying the snapshot to ${owner} failed: ${pushed.error}` };
+		return failure('tool-failed', `Copying the snapshot to ${owner} failed: ${pushed.error}`);
 	}
 
 	const restored = await runScript(
@@ -429,7 +434,7 @@ export async function restoreSnapshot(
 	);
 
 	if (!restored.ok) {
-		return { ok: false, text: `Restoring ${name} on ${owner} failed: ${restored.error}` };
+		return failure('tool-failed', `Restoring ${name} on ${owner} failed: ${restored.error}`);
 	}
 
 	const aside =

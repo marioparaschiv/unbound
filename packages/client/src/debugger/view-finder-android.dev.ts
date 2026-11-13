@@ -16,25 +16,33 @@ import {
 	toPixels,
 	type PixelRect,
 } from '~/debugger/view-node.dev';
-import type { OutlineTarget, ViewSource } from '~/debugger/view-finder.dev';
+import {
+	byName,
+	calls,
+	handle,
+	int,
+	isTrue,
+	number,
+	onMain,
+	string,
+} from '~/debugger/java-values.dev';
+import type { OutlineTarget, ViewPage, ViewSource } from '~/debugger/view-finder.dev';
+import { readAndroidDetails } from '~/debugger/view-details-android.dev';
+import { explorerObjects } from '~/debugger/explorer-objects.dev';
 
 type Entry = { view: NativeJavaHandleValue; rect: PixelRect };
+
+/** What a listing reads about each child, on the main thread in one batch per 64 calls. */
+const CHILD_CALLS = ['getX', 'getY', 'getWidth', 'getHeight', 'getVisibility', 'getAlpha', 'getId'];
 
 // React DevTools' highlight blue: a translucent fill under a solid outline.
 const FILL_COLOR = 0x5561dafb;
 const STROKE_COLOR = 0xff61dafb | 0;
 const STROKE_WIDTH_PX = 4;
 
-const int = (value: number): NativeJavaArgument => ({ type: 'int', value: Math.round(value) });
-const handle = (value: NativeJavaValue): NativeJavaHandleValue | undefined =>
-	value.type === 'handle' ? value : undefined;
-const number = (value: NativeJavaValue) =>
-	'value' in value && typeof value.value === 'number' ? value.value : 0;
-const string = (value: NativeJavaValue) => (value.type === 'string' ? value.value : '');
-const isTrue = (value: NativeJavaValue) => 'value' in value && value.value === true;
-
 /**
- * @description Reads the current activity's Android view tree one level at a time, and outlines a view in the decor view's overlay.
+ * @description Reads the current activity's Android view tree a page of one level at a time, reading views only on the
+ * main thread, and outlines a view in the decor view's overlay.
  * @param java The loader's unscoped Java bridge.
  * @returns The Android view source.
  */
@@ -43,6 +51,7 @@ export function createAndroidViewSource(java: NativeJavaBridge): ViewSource {
 	const group = java.getClass('android.view.ViewGroup');
 	const textView = java.getClass('android.widget.TextView');
 	let decor: NativeJavaHandleValue | undefined;
+	let resources: NativeJavaHandleValue | undefined;
 	let density = 1;
 	let overlay:
 		| { handle: NativeJavaHandleValue; add: NativeJavaCallPlan; remove: NativeJavaCallPlan }
@@ -60,39 +69,70 @@ export function createAndroidViewSource(java: NativeJavaBridge): ViewSource {
 		}
 	}
 
-	function resourceName(view: NativeJavaHandleValue): string | null {
-		const id = number(invoke(view, 'getId'));
-		const resources = isResourceId(id) ? handle(invoke(view, 'getResources')) : undefined;
-
-		return resources
+	// Resources are shared by every view in the activity and are not a view, so they are read off the main thread.
+	function resourceName(id: number): string | null {
+		return isResourceId(id) && resources
 			? string(invoke(resources, 'getResourceEntryName', [int(id)])) || null
 			: null;
 	}
 
-	function text(view: NativeJavaHandleValue): string | null {
-		if (!isTrue(java.invoke(textView, 'isInstance', [view]))) return null;
-
-		const value = invoke(view, 'getText');
+	// A CharSequence is a snapshot of the text, not the view, so it is read off the main thread.
+	function textOf(value: NativeJavaValue | undefined): string | null {
 		const sequence = handle(value);
+		const text = sequence ? string(invoke(sequence, 'toString')) : string(value);
 
-		return clipText(sequence ? string(invoke(sequence, 'toString')) : string(value));
+		if (sequence) {
+			java.release(sequence);
+		}
+
+		return clipText(text);
 	}
 
-	function describe(view: NativeJavaHandleValue, rect: PixelRect): ViewNode {
-		entries.set(view.value, { view, rect });
+	/** Reads a page of views in batches on the main thread: geometry and state, then counts and text by class. */
+	async function describeAll(
+		views: NativeJavaHandleValue[],
+		place: (local: PixelRect) => PixelRect,
+	): Promise<ViewNode[]> {
+		// `isInstance` reads the class, not the view, so it stays on the JavaScript thread.
+		const kinds = views.map((view) => ({
+			group: isTrue(java.invoke(group, 'isInstance', [view])),
+			text: isTrue(java.invoke(textView, 'isInstance', [view])),
+		}));
+		const operations = views.flatMap((view, index) => [
+			...calls(view, CHILD_CALLS),
+			...calls(view, kinds[index]?.group ? ['getChildCount'] : []),
+			...calls(view, kinds[index]?.text ? ['getText'] : []),
+		]);
+		const results = await onMain(java, operations);
+		let cursor = 0;
 
-		return {
-			id: view.value,
-			className: string(java.className(view)),
-			resourceName: resourceName(view),
-			frame: toDp(rect, density),
-			visibility: androidVisibility(number(invoke(view, 'getVisibility'))),
-			alpha: number(invoke(view, 'getAlpha')),
-			text: text(view),
-			childCount: isTrue(java.invoke(group, 'isInstance', [view]))
-				? number(invoke(view, 'getChildCount'))
-				: 0,
-		};
+		return views.map((view, index) => {
+			const kind = kinds[index];
+			const read = byName(CHILD_CALLS, results.slice(cursor, cursor + CHILD_CALLS.length));
+
+			cursor += CHILD_CALLS.length;
+			const childCount = kind?.group ? number(results[cursor++]) : 0;
+			const text = kind?.text ? textOf(results[cursor++]) : null;
+			const rect = place({
+				x: number(read.get('getX')),
+				y: number(read.get('getY')),
+				width: number(read.get('getWidth')),
+				height: number(read.get('getHeight')),
+			});
+
+			entries.set(view.value, { view, rect });
+
+			return {
+				id: view.value,
+				className: string(java.className(view)),
+				resourceName: resourceName(number(read.get('getId'))),
+				frame: toDp(rect, density),
+				visibility: androidVisibility(number(read.get('getVisibility'))),
+				alpha: number(read.get('getAlpha')),
+				text,
+				childCount,
+			};
+		});
 	}
 
 	/** Finds the resumed activity's decor view and the display density, or throws when no activity is resumed. */
@@ -113,7 +153,7 @@ export function createAndroidViewSource(java: NativeJavaBridge): ViewSource {
 			throw new Error('No Android activity is resumed.');
 		}
 
-		const resources = handle(invoke(view, 'getResources'));
+		resources = handle(invoke(view, 'getResources'));
 		const metrics = resources ? handle(invoke(resources, 'getDisplayMetrics')) : undefined;
 
 		density = metrics ? number(java.getField(metrics, 'density')) || 1 : 1;
@@ -122,19 +162,17 @@ export function createAndroidViewSource(java: NativeJavaBridge): ViewSource {
 		return view;
 	}
 
-	async function roots(): Promise<ViewNode[]> {
+	async function roots({ offset }: ViewPage) {
 		await reset();
 
 		const root = attach();
-		const size = {
-			width: number(invoke(root, 'getWidth')),
-			height: number(invoke(root, 'getHeight')),
-		};
+		const nodes =
+			offset > 0 ? [] : await describeAll([root], (local) => ({ ...local, x: 0, y: 0 }));
 
-		return [describe(root, { x: 0, y: 0, ...size })];
+		return { nodes, total: 1 };
 	}
 
-	function children(id: string): ViewNode[] {
+	async function children(id: string, { offset, limit }: ViewPage) {
 		const parent = entries.get(id);
 
 		if (!parent) {
@@ -142,33 +180,44 @@ export function createAndroidViewSource(java: NativeJavaBridge): ViewSource {
 		}
 
 		const { view } = parent;
-		const count = isTrue(java.invoke(group, 'isInstance', [view]))
-			? number(invoke(view, 'getChildCount'))
-			: 0;
-		const scroll = {
-			x: number(invoke(view, 'getScrollX')),
-			y: number(invoke(view, 'getScrollY')),
-		};
-		const nodes: ViewNode[] = [];
 
-		for (let index = 0; index < count; index++) {
-			const child = handle(invoke(view, 'getChildAt', [int(index)]));
-
-			if (!child) {
-				continue;
-			}
-
-			const local = {
-				x: number(invoke(child, 'getX')),
-				y: number(invoke(child, 'getY')),
-				width: number(invoke(child, 'getWidth')),
-				height: number(invoke(child, 'getHeight')),
-			};
-
-			nodes.push(describe(child, placeChild(parent.rect, local, scroll)));
+		if (!isTrue(java.invoke(group, 'isInstance', [view]))) {
+			return { nodes: [], total: 0 };
 		}
 
-		return nodes;
+		const [count, scrollX, scrollY] = await java.batchAsync(
+			calls(view, ['getChildCount', 'getScrollX', 'getScrollY']),
+		);
+		const total = number(count);
+		const end = Math.min(total, offset + limit);
+		const indexes = Array.from(
+			{ length: Math.max(end - offset, 0) },
+			(_, index) => offset + index,
+		);
+		const found = await onMain(
+			java,
+			indexes.map((index) => ({
+				op: 'invoke',
+				handle: view,
+				name: 'getChildAt',
+				args: [int(index)],
+			})),
+		);
+		const views = found.flatMap((value) => handle(value) ?? []);
+		const scroll = { x: number(scrollX), y: number(scrollY) };
+		const nodes = await describeAll(views, (local) => placeChild(parent.rect, local, scroll));
+
+		return { nodes, total };
+	}
+
+	async function details(id: string) {
+		const entry = entries.get(id);
+
+		if (!entry) {
+			throw new Error(`Failed to find view ${id}; refresh the tree.`);
+		}
+
+		return await readAndroidDetails(java, entry.view, density);
 	}
 
 	function prepareOverlay(root: NativeJavaHandleValue) {
@@ -239,6 +288,11 @@ export function createAndroidViewSource(java: NativeJavaBridge): ViewSource {
 		await clearOutline();
 
 		for (const { view } of entries.values()) {
+			// The object explorer's refs outlive a relisting; its handle is released once the explorer drops it.
+			if (explorerObjects.holds(view)) {
+				continue;
+			}
+
 			try {
 				java.release(view);
 			} catch {
@@ -253,11 +307,14 @@ export function createAndroidViewSource(java: NativeJavaBridge): ViewSource {
 
 		entries.clear();
 		decor = undefined;
+		resources = undefined;
 		overlay = undefined;
 	}
 
 	return {
-		list: async (parent) => (parent === undefined ? await roots() : children(parent)),
+		list: (parent, page) => (parent === undefined ? roots(page) : children(parent, page)),
+		details,
+		handle: (id) => entries.get(id)?.view,
 		highlight,
 		reset,
 	};

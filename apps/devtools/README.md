@@ -20,7 +20,11 @@ Linux builds need glibc 2.35 or newer (Ubuntu 22.04, Debian 12). The builds are 
 
 1. When `loader.devtools` is `true`, the loader evaluates `devtools.<bytecode>.bundle` before Discord's bundle. It is react-devtools-core 8's backend, which supports React 19, compiled to Hermes bytecode by the client build (`packages/client/scripts/build/devtools`) and published with the client bundles on builds.unbound.rip. The loader downloads it from wherever its bundle came from, checks it against that build's signed manifest, and caches it.
 2. **Connect device** makes this app a controller on the Unbound debugger bridge. When a device is on the bridge, the app starts a React DevTools session with it. Unbound's client hands the backend's messages to the debugger socket it already has open, and the bridge relays them to this app as `react-devtools` frames. Nothing else listens or dials, so turning on the debugger and `loader.devtools` is all the setup.
-3. The app decodes the backend's messages into the component tree and keeps it live. The **View Tree** page lists the device's native views over the same connection.
+3. The app decodes the backend's messages into the component tree and keeps it live. The **View Tree** page lists the device's native views over the same connection: each level loads when you expand it, 100 views at a time, and selecting a view reads its class chain and properties (layout, state, drawing, accessibility, text) for patching it with `context.native`.
+4. The selected view opens in the **Explorer**. Below its cards, each class in its chain lists its members: properties, ivars, methods, class methods and protocols on iOS, or fields, methods, constructors and interfaces on Android. Members load 100 at a time, and one filter box narrows every open section. Values load only for the rows on screen. A getter that would run code waits until you click it. An object value links to its own page, a class name opens that class, and back and forward walk the history. A row's **Copy as plugin code** gives the `objc` or `java` call that reaches it.
+5. The **Classes** page browses classes without a view. On iOS it lists the loaded images, then each image's classes, 200 at a time. On Android, which has no class list, you open a class by name.
+
+On iOS the Explorer reads classes through `UnboundInspector.dylib`. The loader loads it the first time you inspect something, and only while developer mode or the debugger is on. Otherwise the Explorer shows why and offers **Retry**, and the View Tree keeps working. Android needs nothing extra.
 
 To move to a newer backend, bump `react-devtools-core` in `packages/client/scripts/build/package.json` and in `harness/package.json` together.
 
@@ -82,7 +86,10 @@ blaze test                          # RA_JIT_SANDBOX=off when a test spawns bun
 cargo clippy --workspace --all-targets -- -D warnings
 cd harness && bun install && bun device.mjs 9090   # a fake bridge with a React 19 device on it
 DEPTH=600 WIDTH=2000 bun device.mjs 9090           # a Discord-scale tree
+PLATFORM=ios bun device.mjs 9090                   # a UIKit view tree and Objective-C classes
 ```
+
+The harness also answers the Explorer from `explorer.mjs`. Some cases are built in for testing: `UIView` and `android.view.View` have 300 methods (three pages), the ref `dead:1` answers `stale`, the class `DisabledProbe` answers `disabled`, and on Android the Classes page answers `unsupported`.
 
 `crates/core` has the wire protocol, element store, inspection, jq queries, presets and the MCP server, with no UI dependency. `crates/app` is the gpui window and the CLI.
 

@@ -10,6 +10,7 @@ mod backend;
 pub mod bridge;
 mod connect;
 mod device_address;
+pub mod explorer;
 pub mod inspect;
 mod link;
 pub mod mcp;
@@ -25,6 +26,12 @@ pub mod views;
 
 pub use bridge::DeviceInfo;
 pub use device_address::DeviceAddress;
+pub use explorer::{
+	ClassesPage, EXPLORER_CLASSES_PAGE_SIZE, EXPLORER_MEMBERS_PAGE_SIZE, EXPLORER_VALUES_LIMIT,
+	ExplorerClass, ExplorerError, ExplorerErrorCode, ExplorerImage, ExplorerMember,
+	ExplorerMemberKind, ExplorerObject, ExplorerPlatform, ExplorerRead, ExplorerTarget,
+	ExplorerValue, ExplorerValueKind, MembersPage,
+};
 pub use inspect::{Hook, InspectedElement, OwnerRef, Section};
 pub use link::LinkStatus;
 pub use presets::{BridgeAddr, ConnectTarget, DevicePreset, PresetError, Presets};
@@ -32,7 +39,10 @@ pub use query::{FindQuery, JqFilter, NameMatch};
 pub use session::{BridgeState, Config, ConnectionState, Devtools, RequestError, Status};
 pub use store::{Element, ElementId, ElementKind, RendererId, Row, Store};
 pub use value::{Meta, Path, PathSegment, Value};
-pub use views::{ViewFrame, ViewNode, Visibility};
+pub use views::{
+	PropertyKind, PropertyValue, VIEWS_PAGE_SIZE, ViewDetails, ViewFrame, ViewNode, ViewPage,
+	ViewProperty, ViewSection, Visibility,
+};
 
 /// The Unbound debugger bridge's port (`@unbound-app/debugger-protocol`'s `DEFAULT_BRIDGE_PORT`),
 /// checked against the protocol's contract fixture in `bridge::contract`.

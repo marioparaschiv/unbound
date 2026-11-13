@@ -1,8 +1,9 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
+import { lazyHandler } from '~/lib/lazy-handler';
 import { Type } from '~/lib/schema';
 
-import { pluginField, runI18n } from './run';
+import { pluginField } from './plugin-field';
 
 const schema = Type.Object({
 	plugin: pluginField,
@@ -16,9 +17,7 @@ const unusedCommand: CommandDefinition<typeof schema> = {
 	summary: 'List unused keys, and used keys en-US lacks.',
 	mcp: false,
 	schema,
-	handler({ plugin }) {
-		return runI18n({ plugin, unused: true });
-	},
+	handler: lazyHandler(() => import('./unused-handler')),
 };
 
 export default unusedCommand;

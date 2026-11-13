@@ -21,6 +21,8 @@ var formatSourceRoots = []string{
 	"android/module/src/main/cpp",
 	"ios/sources",
 	"ios/headers",
+	"ios/inspector/sources",
+	"ios/inspector/include",
 }
 
 var formatSourceExtensions = map[string]string{

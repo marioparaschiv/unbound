@@ -6,6 +6,7 @@ mod copy_chip;
 mod copy_glyph;
 mod empty;
 mod empty_state;
+mod explorer;
 mod inspection;
 mod inspector;
 mod link;

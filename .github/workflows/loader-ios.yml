@@ -269,6 +269,14 @@ jobs:
                     test "$binary_uuid" = "$symbols_uuid"
                     cp -R "$bundle" "symbols/${architecture}-Unbound.dylib.dSYM"
                     printf '%s %s\n' "$architecture" "$binary_uuid" >> symbols/uuids.txt
+                    inspector="ios/.theos/obj/${architecture}/UnboundInspector"
+                    inspector_bundle="${inspector}.dSYM"
+                    test -f "$inspector"
+                    test -d "$inspector_bundle"
+                    inspector_uuid=$(dwarfdump --uuid "$inspector" | awk '{print $2}')
+                    test -n "$inspector_uuid"
+                    test "$inspector_uuid" = "$(dwarfdump --uuid "$inspector_bundle" | awk '{print $2}')"
+                    cp -R "$inspector_bundle" "symbols/${architecture}-UnboundInspector.dSYM"
                   done
                   test -s symbols/uuids.txt
                   git rev-parse HEAD > symbols/commit.txt
@@ -453,7 +461,7 @@ jobs:
               uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
               with:
                   path: packages/loader/.tools-cache
-                  key: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-${{ hashFiles('packages/loader/tools/build.go') }}
+                  key: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-${{ hashFiles('packages/loader/tools/build.go', 'packages/loader/tools/build_provision.go') }}
                   restore-keys: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-
 
             - name: Setup Go tools

@@ -1,8 +1,8 @@
 import { DEFAULT_EVAL_TIMEOUT_MS, MAX_EVAL_TIMEOUT_MS } from '@unbound-app/debugger-protocol';
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
+import { lazyHandler } from '~/lib/lazy-handler';
 import { bridgePortField } from '~/lib/context';
-import { runOnDevice } from '~/lib/device';
 import { Type } from '~/lib/schema';
 
 const schema = Type.Object({
@@ -29,9 +29,7 @@ const evalCommand: CommandDefinition<typeof schema> = {
 	mcp: true,
 	schema,
 	cli: { positionals: ['code'] },
-	handler({ code, timeout }, { client }) {
-		return runOnDevice(client, code, timeout);
-	},
+	handler: lazyHandler(() => import('./eval-handler')),
 };
 
 export default evalCommand;

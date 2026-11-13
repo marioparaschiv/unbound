@@ -137,7 +137,14 @@ describe('ubd i18n check', () => {
 		const report = JSON.parse(result.stdout);
 
 		expect(result.exitCode).toBe(1);
-		expect(Object.keys(report).sort()).toEqual(['errors', 'locales', 'ok', 'plugin', 'source']);
+		expect(Object.keys(report).sort()).toEqual([
+			'error',
+			'errors',
+			'locales',
+			'ok',
+			'plugin',
+			'source',
+		]);
 		expect(report).toMatchObject({ ok: false, errors: 4, source: { total: 4, problems: [] } });
 		expect(Object.keys(report.locales[0]).sort()).toEqual([
 			'code',

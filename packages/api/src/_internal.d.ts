@@ -87,6 +87,7 @@ export declare const NATIVE_BRIDGE_CAPABILITIES: readonly [
 	'native.objc.ivars',
 	'native.objc.associations',
 	'native.objc.hooks',
+	'native.objc.inspect',
 	'native.ffi.symbols',
 	'native.ffi.call',
 	'native.fabric.mount',
@@ -135,6 +136,11 @@ export declare const NATIVE_BRIDGE_METHOD_CAPABILITIES: {
 	readonly 'objc.array': 'native.objc.classes';
 	readonly 'objc.data': 'native.objc.classes';
 	readonly 'objc.hook': 'native.objc.hooks';
+	readonly 'objc.inspectClass': 'native.objc.inspect';
+	readonly 'objc.inspectMembers': 'native.objc.inspect';
+	readonly 'objc.inspectValues': 'native.objc.inspect';
+	readonly 'objc.inspectImages': 'native.objc.inspect';
+	readonly 'objc.inspectClasses': 'native.objc.inspect';
 	readonly 'ffi.symbol': 'native.ffi.symbols';
 	readonly 'ffi.call': 'native.ffi.call';
 	readonly 'fabric.mount': 'native.fabric.mount';
@@ -195,6 +201,7 @@ export declare const NATIVE_BRIDGE_PLATFORM_CAPABILITIES: {
 		'native.objc.ivars',
 		'native.objc.associations',
 		'native.objc.hooks',
+		'native.objc.inspect',
 		'native.ffi.symbols',
 		'native.ffi.call',
 		'native.fabric.mount',
@@ -3416,7 +3423,9 @@ export type LoaderNativeBridge = Pick<
 		readonly java?: NativeJavaBridge & NativeUIScopeFactory;
 	};
 /** The `objc` namespace the loader publishes, before the client adds `create` and scopes it to a plugin. */
-export type LoaderObjCBridge = Omit<NativeObjCBridge, 'create'> & NativeUIScopeFactory;
+export type LoaderObjCBridge = Omit<NativeObjCBridge, 'create'> &
+	Partial<NativeObjCInspector> &
+	NativeUIScopeFactory;
 /**
  * Props of `LoadingButtonPill` (function). Exports: LoadingButtonPill.
  * @see design/components/Button/native/ButtonPill.native.tsx
@@ -3836,6 +3845,9 @@ export type NativeBridgeError = {
 };
 /** The stable `code` on an error the native bridge or its plugin scope throws. */
 export type NativeBridgeErrorCode =
+	| 'INSPECTOR_DISABLED'
+	| 'INSPECTOR_UNAVAILABLE'
+	| 'INSPECTOR_UNKNOWN_CLASS'
 	| 'NATIVE_BRIDGE_ERROR'
 	| 'NATIVE_PLUGIN_API_VERSION_UNSUPPORTED'
 	| 'NATIVE_PLUGIN_CALL_CANCELLED'
@@ -3843,10 +3855,12 @@ export type NativeBridgeErrorCode =
 	| 'NATIVE_PLUGIN_CAPABILITY_DENIED'
 	| 'NATIVE_PLUGIN_SCOPE_DISPOSED'
 	| 'NATIVE_PLUGIN_UNAVAILABLE';
-/** A native bridge method by the path a plugin calls it through, such as `objc.invoke`. */
-export type NativeBridgeMethod = {
-	[N in NativeBridgeNamespace]: `${N}.${keyof NativeBridge[N] & string}`;
-}[NativeBridgeNamespace];
+/** A native bridge method by the path a plugin calls it through, such as `objc.invoke`, or the debugger's `objc.inspect*`. */
+export type NativeBridgeMethod =
+	| {
+			[N in NativeBridgeNamespace]: `${N}.${keyof NativeBridge[N] & string}`;
+	  }[NativeBridgeNamespace]
+	| `objc.${keyof NativeObjCInspector}`;
 /** A {@link NativeBridge} namespace whose methods a plugin calls, such as `objc` or `java`. */
 export type NativeBridgeNamespace = Exclude<
 	keyof NativeBridge,
@@ -3931,6 +3945,20 @@ export type NativeDebugEvaluationLog = {
 	level: 1 | 2 | 3;
 	/** The printed text. */
 	message: string;
+};
+/** Memory and thermal pressure, as each platform reports it. */
+export type NativeDeviceState = {
+	availableMB?: number;
+	/** Android: the system considers itself low on memory. */
+	lowMemory?: boolean;
+	/** iOS: memory warnings Discord received this session. */
+	memoryWarnings?: number;
+	thermal?: 'nominal' | 'fair' | 'serious' | 'critical';
+	/** Free space on the volume holding Discord's documents, and the size of Unbound's folder there. */
+	freeMB?: number;
+	unboundMB?: number;
+	/** The active connection, and whether a VPN, a proxy, a metered plan or Low Data Mode (Data Saver) applies. */
+	network?: NativeNetworkState;
 };
 /** Calls C functions in images Discord already loaded. An unsigned plugin needs the user's consent to use it. */
 export type NativeFFIBridge = {
@@ -4154,6 +4182,123 @@ export type NativeHookToken = {
 	clearReturnValues(): void;
 	/** Removes the hook; calling it again does nothing. */
 	remove(): void;
+};
+/** A kind of a class's own members `objc.inspectMembers` lists. */
+export type NativeInspectKind = 'properties' | 'ivars' | 'methods' | 'classMethods' | 'protocols';
+/** Narrows a page of inspected members, images or classes. */
+export type NativeInspectPage = {
+	/** How many matches to skip. */
+	offset?: number;
+	/** At most 200. */
+	limit?: number;
+	/** A case-insensitive substring of the name. */
+	filter?: string;
+};
+/** Options for `objc.inspectValues`. */
+export type NativeInspectValuesOptions = {
+	/** Runs the getters of computed properties, which automatic reads skip. */
+	invokeGetters?: boolean;
+};
+/** One class of an inspected class chain, from the class itself to its root. */
+export type NativeInspectedClass = {
+	/** The class's name. */
+	name: string;
+	/** The superclass's name, or `null` at the root. */
+	superclass: string | null;
+	/** The path of the image that defines the class, or `null` when unknown. */
+	image: string | null;
+	/** The size of an instance, in bytes. */
+	instanceSize: number;
+	/** How many of each kind of member the class itself declares. */
+	counts: Record<NativeInspectKind, number>;
+};
+/** One page of an image's class names, and how many match in all. */
+export type NativeInspectedClasses = {
+	/** How many classes match in all. */
+	total: number;
+	/** This page's class names. */
+	classes: string[];
+};
+/** One loaded image that defines Objective-C classes. */
+export type NativeInspectedImage = {
+	/** The image's path on the device. */
+	path: string;
+	/** The image's file name. */
+	name: string;
+	/** How many classes the image defines. */
+	classCount: number;
+};
+/** One page of loaded images, and how many match in all. */
+export type NativeInspectedImages = {
+	/** How many images match in all. */
+	total: number;
+	/** This page's images. */
+	images: NativeInspectedImage[];
+};
+/** One member of a class; fields that do not apply to its kind are omitted. */
+export type NativeInspectedMember = {
+	/** The member's name, or a method's selector. */
+	name: string;
+	/** The kind of member. */
+	kind: NativeInspectKind;
+	/** The decoded type, such as `NSString *` or `CGRect`. */
+	type?: string;
+	/** The declaration, such as `- (void)setFoo:(id)foo`. */
+	signature?: string;
+	/** A method's decoded return type. */
+	returnType?: string;
+	/** A method's decoded parameter types, in order. */
+	parameters?: string[];
+	/** The raw Objective-C type encoding. */
+	encoding?: string;
+	/** Property attributes, such as `nonatomic`, `strong`, `readonly`, `weak`, `copy` or `class`. */
+	attributes?: string[];
+	/** A property's getter selector. */
+	getter?: string;
+	/** A property's setter selector, absent when it is read-only. */
+	setter?: string;
+	/** The instance variable backing a property. */
+	ivar?: string;
+	/** An instance variable's offset in the object, in bytes. */
+	offset?: number;
+	/** An instance variable's size, in bytes. */
+	size?: number;
+	/** The path of the image that defines a method. */
+	image?: string;
+	/** Whether reading the value runs no code (`auto`), runs a getter (`manual`), or is unsafe (`never`). */
+	read: 'auto' | 'manual' | 'never';
+};
+/** One page of a class's members of one kind, and how many match in all. */
+export type NativeInspectedMembers = {
+	/** How many members match in all. */
+	total: number;
+	/** This page's members. */
+	members: NativeInspectedMember[];
+};
+/** One value read by `objc.inspectValues`; `text` describes it for display. */
+export type NativeInspectedValue = {
+	/** The member the value was read from. */
+	name: string;
+	/** What the value is; `skipped` was not read and `error` failed to read. */
+	kind:
+		| 'nil'
+		| 'number'
+		| 'bool'
+		| 'string'
+		| 'object'
+		| 'class'
+		| 'struct'
+		| 'pointer'
+		| 'selector'
+		| 'other'
+		| 'skipped'
+		| 'error';
+	/** The value as text, strings cut to 500 characters. */
+	text: string;
+	/** A handle to the value, for `kind: 'object'`. */
+	object?: NativeObjectHandle;
+	/** The class of an object or class value. */
+	className?: string;
 };
 /** An argument to a Java call: a tagged value or a handle. */
 export type NativeJavaArgument = NativeJavaValue | NativeJavaHandle;
@@ -4450,6 +4595,14 @@ export type NativeMainWorkCounts = {
 	/** The most items one drain ran. */
 	maxDrainItems: number;
 };
+/** The device's active connection. */
+export type NativeNetworkState = {
+	type: 'wifi' | 'cellular' | 'ethernet' | 'other' | 'offline';
+	metered?: boolean;
+	lowData?: boolean;
+	vpn?: boolean;
+	proxy?: boolean;
+};
 /** The iOS bridge to the Objective-C runtime, scoped to the plugin's capabilities. */
 export type NativeObjCBridge = {
 	/** Looks up a class by name, or returns `null` when none is registered. */
@@ -4570,6 +4723,32 @@ export type NativeObjCBridge = {
 export type NativeObjCCallPlan = NativeHandle & {
 	readonly [nativeObjCCallPlan]: true;
 };
+/**
+ * The debugger's Objective-C reflection, iOS only and never in a plugin's scope. Needs `native.objc.inspect`.
+ * Throws `INSPECTOR_DISABLED` without developer mode or the debugger, `INSPECTOR_UNAVAILABLE` when the library cannot load.
+ */
+export type NativeObjCInspector = {
+	/** Describes a class, or an object's class, and its superclasses; throws `INSPECTOR_UNKNOWN_CLASS` for an unknown name. */
+	inspectClass(target: NativeObjectHandle | string): NativeInspectedClass[];
+	/** Lists one page of one kind of a class's own members. */
+	inspectMembers(
+		className: string,
+		kind: NativeInspectKind,
+		page?: NativeInspectPage,
+	): NativeInspectedMembers;
+	/** Reads up to 50 properties or ivars of an object on the main thread; getters run only with `invokeGetters`. */
+	inspectValues(
+		object: NativeObjectHandle,
+		className: string,
+		kind: 'properties' | 'ivars',
+		names: string[],
+		options?: NativeInspectValuesOptions,
+	): NativeCancelablePromise<NativeInspectedValue[]>;
+	/** Lists one page of the loaded images that define Objective-C classes. */
+	inspectImages(page?: NativeInspectPage): NativeInspectedImages;
+	/** Lists one page of the class names an image defines, sorted. */
+	inspectClasses(imagePath: string, page?: NativeInspectPage): NativeInspectedClasses;
+};
 /** What an Objective-C call returns: a plain value, a handle to an object, a 64-bit integer, or nothing for `void`. */
 export type NativeObjCResult = NativeSerializable | NativeHandle | bigint | undefined;
 /** A retained handle to an Objective-C object. */
@@ -4672,6 +4851,8 @@ export type NativePlatformDevice = {
 	isSystemApp(): boolean;
 	/** Whether Discord runs in a simulator, emulator or virtual machine. */
 	isVirtualDevice(): boolean;
+	/** Memory and thermal pressure right now; empty on loaders older than 1.4.0. */
+	getState?(): NativeDeviceState;
 };
 /** File operations inside the Unbound folder in Discord's documents directory. */
 export type NativePlatformFiles = {

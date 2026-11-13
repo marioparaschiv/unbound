@@ -33,6 +33,17 @@ int main()
     assert(!devOverlayVisible(settings, false, false));
     assert(devOverlayVisible(settings, true, false));
     assert(devOverlayVisible(settings, false, true));
+    assert(!debuggerEnabled(settings));
+    assert(!inspectorEnabled(settings, false));
+    assert(inspectorEnabled(settings, true));
+    settings.set(kStore, "debugger.enabled", true);
+    assert(debuggerEnabled(settings));
+    assert(inspectorEnabled(settings, false));
+    settings.set(kStore, "debugger.enabled", false);
+    settings.set(kStore, "developer-mode", true);
+    assert(!debuggerEnabled(settings));
+    assert(inspectorEnabled(settings, false));
+    settings.set(kStore, "developer-mode", false);
     assert(!hotReloadEnabled(settings));
     assert(appliedThemeId(settings) == std::optional<std::string>("adrian.theme"));
     assert(!activeThemeId(settings));

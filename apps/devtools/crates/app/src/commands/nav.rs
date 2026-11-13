@@ -13,6 +13,8 @@ pub struct Category {
 pub const COMPONENTS_GROUP: &str = "Inspect";
 /// The native view finder's page title; it replaces the `views` command's page.
 pub const VIEWS_TITLE: &str = "View Tree";
+/// The native class browser's page title, under View Tree.
+pub const CLASSES_TITLE: &str = "Classes";
 
 pub const CATEGORIES: &[Category] = &[
 	// What is on screen: the React tree (Components), the native views (View Tree) and their text.

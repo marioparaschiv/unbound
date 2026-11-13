@@ -11,6 +11,10 @@ use tokio::sync::{mpsc, oneshot};
 
 use super::argv::Launcher;
 use super::catalog::{Catalog, CatalogError};
+use super::failure::CommandError;
+
+/// The flag that makes `ubd` print one JSON line, and a failure's reason with it.
+pub const JSON_FLAG: &str = "--json";
 
 /// How long `ubd catalog` may take; `bunx` can be downloading the CLI the first time.
 const CATALOG_TIMEOUT: Duration = Duration::from_secs(60);
@@ -26,6 +30,8 @@ pub enum Stream {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum RunEvent {
 	Line(Stream, String),
+	/// Why a `--json` run failed, read from its last stdout line; sent just before [`RunEvent::Exited`].
+	Error(CommandError),
 	/// The exit code; `None` when a signal ended it, as Stop does.
 	Exited(Option<i32>),
 	/// The program could not start.
@@ -88,23 +94,29 @@ async fn stop_tree(child: &mut tokio::process::Child) -> std::io::Result<std::pr
 	child.wait().await
 }
 
+/// Sends each line as it arrives; returns the last one.
 async fn forward(
 	reader: impl AsyncRead + Unpin,
 	stream: Stream,
 	events: mpsc::UnboundedSender<RunEvent>,
-) {
+) -> Option<String> {
 	let mut lines = BufReader::new(reader).lines();
+	let mut last = None;
 	while let Ok(Some(line)) = lines.next_line().await {
 		// A progress line redraws itself with `\r`; only its last state is worth keeping.
 		let line = line.rsplit('\r').next().unwrap_or_default().to_owned();
+		last = Some(line.clone());
 		if events.send(RunEvent::Line(stream, line)).is_err() {
 			break;
 		}
 	}
+	last
 }
 
-/// Starts `launcher args…` in `cwd` on `runtime`.
+/// Starts `launcher args…` in `cwd` on `runtime`. When `args` hold [`JSON_FLAG`] and the run fails,
+/// its reason arrives as [`RunEvent::Error`].
 pub fn spawn(runtime: &Handle, launcher: &Launcher, args: &[String], cwd: Option<PathBuf>) -> Run {
+	let json = args.iter().any(|arg| arg == JSON_FLAG);
 	let (sender, events) = mpsc::unbounded_channel();
 	let (stop, stopped) = oneshot::channel::<()>();
 	let mut command = command(launcher, args, cwd.as_ref());
@@ -130,10 +142,23 @@ pub fn spawn(runtime: &Handle, launcher: &Launcher, args: &[String], cwd: Option
 		};
 		// Drain what the child printed before it exited, so the exit line comes last. A grandchild
 		// that outlives it can hold the pipes open, so the drain is bounded.
-		for mut task in [stdout, stderr].into_iter().flatten() {
-			if tokio::time::timeout(STOP_GRACE, &mut task).await.is_err() {
-				task.abort();
+		let mut last_stdout = None;
+		for (ix, task) in [stdout, stderr].into_iter().enumerate() {
+			let Some(mut task) = task else { continue };
+			match tokio::time::timeout(STOP_GRACE, &mut task).await {
+				Ok(Ok(last)) if ix == 0 => last_stdout = last,
+				Ok(_) => {}
+				Err(_) => task.abort(),
 			}
+		}
+		let failed = matches!(&status, Ok(status) if status.code().is_some_and(|code| code != 0));
+		if json
+			&& failed
+			&& let Some(error) = last_stdout
+				.as_deref()
+				.and_then(CommandError::from_json_line)
+		{
+			let _ = sender.send(RunEvent::Error(error));
 		}
 		let _ = sender.send(match status {
 			Ok(status) => RunEvent::Exited(status.code()),

@@ -4,6 +4,7 @@ import { DEVELOPMENT_MARKER } from '@unbound-app/contracts/manifest';
 import type { InstallOptions, PluginPayload } from '~/lib/plugin-install';
 import { ANDROID_FILES_DIRECTORY } from '~/lib/device-paths';
 import type { AndroidTarget } from '~/lib/device-target';
+import { failure } from '~/lib/command-error';
 import { logToStderr } from '~/lib/stderr';
 
 export const ANDROID_PLUGINS_DIRECTORY = `${ANDROID_FILES_DIRECTORY}/Unbound/Plugins`;
@@ -29,7 +30,7 @@ export async function installOnAndroid(
 		const pushed = await target.push(file.path, stagingPath(target, plugin, file.name));
 
 		if (!pushed.ok) {
-			return { ok: false, text: pushed.error };
+			return failure('tool-failed', pushed.error);
 		}
 	}
 
@@ -37,7 +38,7 @@ export async function installOnAndroid(
 	const moved = await target.shell(copyIntoPlaceScript(target, plugin, destination));
 
 	if (!moved.ok) {
-		return { ok: false, text: moved.error };
+		return failure('tool-failed', moved.error);
 	}
 
 	if (!restart) {
@@ -53,10 +54,10 @@ export async function installOnAndroid(
 
 	return restarted.ok
 		? { ok: true, text: `Installed ${plugin.id} into ${destination} and restarted Discord.` }
-		: {
-				ok: false,
-				text: `Installed ${plugin.id} into ${destination}, but restarting Discord failed: ${restarted.error}`,
-			};
+		: failure(
+				'tool-failed',
+				`Installed ${plugin.id} into ${destination}, but restarting Discord failed: ${restarted.error}`,
+			);
 }
 
 function stagingPath(target: AndroidTarget, plugin: PluginPayload, name: string): string {

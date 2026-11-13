@@ -5,6 +5,7 @@
 namespace loader::preferences {
 static constexpr const char *kRecovery             = "recovery";
 static constexpr const char *kDeveloperMode        = "developer-mode";
+static constexpr const char *kDebuggerEnabled      = "debugger.enabled";
 static constexpr const char *kHotReload            = "loader.update.hmr";
 static constexpr const char *kLoaderEnabled        = "loader.enabled";
 static constexpr const char *kDevtools             = "loader.devtools";
@@ -76,6 +77,16 @@ bool developerMode(const SettingsStore &settings)
 bool devOverlayVisible(const SettingsStore &settings, bool virtualDevice, bool debugBuild)
 {
     return debugBuild || virtualDevice || developerMode(settings);
+}
+
+bool debuggerEnabled(const SettingsStore &settings)
+{
+    return settings.getBoolean(kStore, kDebuggerEnabled, false);
+}
+
+bool inspectorEnabled(const SettingsStore &settings, bool debugBuild)
+{
+    return debugBuild || developerMode(settings) || debuggerEnabled(settings);
 }
 
 bool hotReloadEnabled(const SettingsStore &settings)

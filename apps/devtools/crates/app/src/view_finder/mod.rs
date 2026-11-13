@@ -1,5 +1,6 @@
-//! The View Tree page: the device's native views as a tree, one level fetched per expand, and the
-//! selected view's properties in cards. Hovering a row outlines its view on the device.
+//! The View Tree page: the device's native views as a tree, one page of a level fetched per expand or
+//! "show more", and the selected view's properties in cards, read from the device on selection.
+//! Hovering a row outlines its view on the device.
 
 mod cards;
 mod rows;
@@ -9,14 +10,17 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use gpui::{
-	Context, ScrollHandle, SharedString, UniformListScrollHandle, Window, div, prelude::*, px,
+	AnyElement, Context, SharedString, UniformListScrollHandle, Window, div, prelude::*, px,
 };
-use unbound_devtools_core::{Devtools, RequestError, ViewNode};
+use unbound_devtools_core::{
+	Devtools, ExplorerTarget, RequestError, VIEWS_PAGE_SIZE, ViewDetails, ViewNode, ViewPage,
+};
 
 use crate::app::on_runtime;
 use crate::commands::nav;
 use crate::empty::SETUP_STEPS;
 use crate::empty_state::EmptyState;
+use crate::explorer::{Entry, Explorer, ExplorerHost};
 use crate::theme;
 use crate::widgets::{Raised, footer_bar, page_header, page_header_end, raised_button, tooltip};
 
@@ -26,8 +30,31 @@ const CHANGE_COALESCING_FRAME: Duration = Duration::from_millis(16);
 /// One parent's children as far as the device has answered; the `None` parent is the roots.
 enum Children {
 	Loading,
-	Loaded(Vec<String>),
+	Loaded(Level),
 	Failed(String),
+}
+
+/// The pages of a level listed so far.
+struct Level {
+	ids: Vec<String>,
+	/// How many children the parent has in all; `None` from a device that sends whole levels.
+	total: Option<u32>,
+	/// The next page, while it loads or after it failed.
+	next: Option<Result<(), String>>,
+}
+
+impl Level {
+	fn remaining(&self) -> u32 {
+		self.total
+			.map_or(0, |total| total.saturating_sub(self.ids.len() as u32))
+	}
+}
+
+/// The selected view's properties as far as the device has answered.
+pub(super) enum Details {
+	Loading,
+	Loaded(Rc<ViewDetails>),
+	Failed(SharedString),
 }
 
 /// One line of the flattened tree.
@@ -44,12 +71,19 @@ enum Row {
 		text: SharedString,
 		error: bool,
 	},
+	/// The rest of a level past its listed pages; clicking lists the next page.
+	More {
+		parent: Option<String>,
+		depth: u32,
+		text: SharedString,
+		loading: bool,
+	},
 }
 
 impl Row {
 	fn depth(&self) -> u32 {
 		match self {
-			Row::View { depth, .. } | Row::Note { depth, .. } => *depth,
+			Row::View { depth, .. } | Row::Note { depth, .. } | Row::More { depth, .. } => *depth,
 		}
 	}
 }
@@ -61,6 +95,8 @@ pub struct ViewFinder {
 	expanded: HashSet<String>,
 	rows: Rc<Vec<Row>>,
 	selected: Option<String>,
+	/// Each selected view's properties, read again on every selection; kept to show while it rereads.
+	details: HashMap<String, Details>,
 	/// The row under the pointer, whose view the device outlines.
 	hovered: Option<String>,
 	/// Whether the debugger connection has a device on it.
@@ -70,12 +106,15 @@ pub struct ViewFinder {
 	/// Bumped whenever the roots are listed again; an answer from an older listing names stale ids.
 	epoch: u64,
 	scroll: UniformListScrollHandle,
-	card_scroll: ScrollHandle,
+	/// The details pane: the selected view's page, and the objects opened from it.
+	explorer: Explorer,
 	_watch: gpui::Task<()>,
 }
 
 impl ViewFinder {
-	pub fn new(devtools: Devtools, cx: &mut Context<Self>) -> Self {
+	pub fn new(devtools: Devtools, window: &mut Window, cx: &mut Context<Self>) -> Self {
+		let mut explorer = Explorer::new(devtools.clone(), window, cx);
+		explorer.set_connected(device_connected(&devtools), cx);
 		let watch = cx.spawn({
 			let mut changes = devtools.changes();
 			async move |this, cx| {
@@ -98,11 +137,12 @@ impl ViewFinder {
 			expanded: HashSet::new(),
 			rows: Rc::default(),
 			selected: None,
+			details: HashMap::new(),
 			hovered: None,
 			opened: false,
 			epoch: 0,
 			scroll: UniformListScrollHandle::new(),
-			card_scroll: ScrollHandle::new(),
+			explorer,
 			_watch: watch,
 		}
 	}
@@ -132,8 +172,10 @@ impl ViewFinder {
 			return;
 		}
 		self.connected = connected;
-		// A device that left or came back numbers its views afresh.
+		// A device that left or came back numbers its views afresh; the explorer keeps its pages
+		// and reads the current one again.
 		self.reset();
+		self.explorer.set_connected(connected, cx);
 		if connected && self.opened {
 			self.list_roots(cx);
 		}
@@ -147,6 +189,8 @@ impl ViewFinder {
 		self.children.clear();
 		self.expanded.clear();
 		self.selected = None;
+		self.details.clear();
+		self.explorer.prelude_changed();
 		self.rebuild_rows();
 	}
 
@@ -155,14 +199,32 @@ impl ViewFinder {
 		self.list(None, cx);
 	}
 
+	/// Lists the first page of a level.
 	fn list(&mut self, parent: Option<String>, cx: &mut Context<Self>) {
 		self.children.insert(parent.clone(), Children::Loading);
+		self.request_page(parent, 0, cx);
+	}
+
+	/// Lists the page after a level's listed ones.
+	fn show_more(&mut self, parent: Option<String>, cx: &mut Context<Self>) {
+		let Some(Children::Loaded(level)) = self.children.get_mut(&parent) else {
+			return;
+		};
+		if level.next == Some(Ok(())) {
+			return;
+		}
+		level.next = Some(Ok(()));
+		let offset = level.ids.len() as u32;
+		self.request_page(parent, offset, cx);
+	}
+
+	fn request_page(&mut self, parent: Option<String>, offset: u32, cx: &mut Context<Self>) {
 		self.rebuild_rows();
 		let epoch = self.epoch;
 		let request = on_runtime(&self.devtools, {
 			let devtools = self.devtools.clone();
 			let parent = parent.clone();
-			async move { devtools.list_views(parent).await }
+			async move { devtools.list_views(parent, offset).await }
 		});
 		cx.spawn(async move |this, cx| {
 			let result = request.await;
@@ -180,26 +242,87 @@ impl ViewFinder {
 	fn settle(
 		&mut self,
 		parent: Option<String>,
-		result: Option<Result<Vec<ViewNode>, RequestError>>,
+		result: Option<Result<ViewPage, RequestError>>,
 		cx: &mut Context<Self>,
 	) {
-		let children = match result {
-			Some(Ok(nodes)) => {
-				let ids = nodes.iter().map(|node| node.id.clone()).collect();
-				self.nodes
-					.extend(nodes.into_iter().map(|node| (node.id.clone(), node)));
-				Children::Loaded(ids)
+		let result = result.unwrap_or_else(|| {
+			Err(RequestError::Device(
+				"Listing the views was cancelled.".into(),
+			))
+		});
+		if let Err(error) = &result {
+			let parent_name = parent.as_deref().unwrap_or("roots");
+			tracing::warn!("Failed to list the views under {parent_name}: {error}");
+		}
+		let level = match (self.children.remove(&parent), result) {
+			// A later page joins the level; a failed one leaves it as listed, with the error.
+			(Some(Children::Loaded(mut level)), Ok(page)) => {
+				level
+					.ids
+					.extend(page.nodes.iter().map(|node| node.id.clone()));
+				level.total = page.total;
+				level.next = None;
+				self.add_nodes(page.nodes);
+				Children::Loaded(level)
 			}
-			Some(Err(error)) => {
-				let parent_name = parent.as_deref().unwrap_or("roots");
-				tracing::warn!("Failed to list the views under {parent_name}: {error}");
-				Children::Failed(error.to_string())
+			(Some(Children::Loaded(mut level)), Err(error)) => {
+				level.next = Some(Err(error.to_string()));
+				Children::Loaded(level)
 			}
-			None => Children::Failed("Listing the views was cancelled.".into()),
+			(_, Ok(page)) => {
+				let ids = page.nodes.iter().map(|node| node.id.clone()).collect();
+				self.add_nodes(page.nodes);
+				Children::Loaded(Level {
+					ids,
+					total: page.total,
+					next: None,
+				})
+			}
+			(_, Err(error)) => Children::Failed(error.to_string()),
 		};
-		self.children.insert(parent, children);
+		self.children.insert(parent, level);
 		self.rebuild_rows();
 		cx.notify();
+	}
+
+	fn add_nodes(&mut self, nodes: Vec<ViewNode>) {
+		self.nodes
+			.extend(nodes.into_iter().map(|node| (node.id.clone(), node)));
+	}
+
+	/// Reads a view's properties from the device, keeping the last ones on show until they arrive.
+	fn read_details(&mut self, id: &str, cx: &mut Context<Self>) {
+		if !matches!(self.details.get(id), Some(Details::Loaded(_))) {
+			self.details.insert(id.to_owned(), Details::Loading);
+		}
+		let epoch = self.epoch;
+		let id = id.to_owned();
+		let request = on_runtime(&self.devtools, {
+			let devtools = self.devtools.clone();
+			let id = id.clone();
+			async move { devtools.view_details(&id).await }
+		});
+		cx.spawn(async move |this, cx| {
+			let result = request.await;
+			this.update(cx, |this, cx| {
+				if this.epoch != epoch {
+					return;
+				}
+				let details = match result {
+					Some(Ok(details)) => Details::Loaded(Rc::new(details)),
+					Some(Err(error)) => {
+						tracing::warn!("Failed to read view {id}: {error}");
+						Details::Failed(error.to_string().into())
+					}
+					None => Details::Failed("Reading the view was cancelled.".into()),
+				};
+				this.details.insert(id, details);
+				this.explorer.prelude_changed();
+				cx.notify();
+			})
+			.ok();
+		})
+		.detach();
 	}
 
 	fn toggle(&mut self, id: &str, cx: &mut Context<Self>) {
@@ -220,7 +343,14 @@ impl ViewFinder {
 
 	fn select(&mut self, id: &str, cx: &mut Context<Self>) {
 		self.selected = Some(id.to_owned());
-		self.card_scroll.set_offset(gpui::point(px(0.), px(0.)));
+		// Selecting a view starts the explorer over at it; its class stands in if it is gone.
+		let entry = Entry::new(
+			ExplorerTarget::Node(id.to_owned()),
+			self.nodes.get(id).map(|node| node.class_name.clone()),
+		);
+		self.explorer.reset(entry, cx);
+		self.read_details(id, cx);
+		self.explorer.prelude_changed();
 		cx.notify();
 	}
 
@@ -249,8 +379,8 @@ impl ViewFinder {
 			Some(Children::Loading | Children::Failed(_)) if parent.is_none() => {}
 			Some(Children::Loading) => rows.push(note("Loading".into(), false)),
 			Some(Children::Failed(error)) => rows.push(note(error.clone().into(), true)),
-			Some(Children::Loaded(ids)) => {
-				for id in ids {
+			Some(Children::Loaded(level)) => {
+				for id in &level.ids {
 					let expanded = self.expanded.contains(id);
 					rows.push(Row::View {
 						id: id.clone(),
@@ -260,6 +390,28 @@ impl ViewFinder {
 					if expanded {
 						self.push_children(Some(id), depth + 1, rows);
 					}
+				}
+				let remaining = level.remaining();
+				if remaining > 0 {
+					let (text, loading) = match &level.next {
+						Some(Ok(())) => ("Loading".to_owned(), true),
+						Some(Err(error)) => (format!("{error} Click to try again."), false),
+						None => (
+							format!("Show {} more", remaining.min(VIEWS_PAGE_SIZE)),
+							false,
+						),
+					};
+					let text = if loading || level.next.is_some() {
+						text
+					} else {
+						format!("{text} · {remaining} not listed")
+					};
+					rows.push(Row::More {
+						parent: parent.map(str::to_owned),
+						depth,
+						text: text.into(),
+						loading,
+					});
 				}
 			}
 		}
@@ -307,14 +459,27 @@ impl ViewFinder {
 	fn render_footer(&self) -> impl IntoElement {
 		// Empty until there is something to report; the sidebar header already says what it waits for.
 		let note = self.connected.then(|| {
-			format!(
-				"{} views listed. Hover a row to outline its view on the device.",
-				self.nodes.len()
-			)
+			let count = self.nodes.len();
+			let noun = if count == 1 { "view" } else { "views" };
+			format!("{count} {noun} listed. Hover a row to outline its view on the device.")
 		});
 		footer_bar()
 			.px(px(theme::GUTTER))
 			.children(note.map(|note| div().min_w_0().truncate().child(note)))
+	}
+}
+
+impl ExplorerHost for ViewFinder {
+	fn explorer(&self) -> &Explorer {
+		&self.explorer
+	}
+
+	fn explorer_mut(&mut self) -> &mut Explorer {
+		&mut self.explorer
+	}
+
+	fn prelude(&self, _: &mut Window, _: &mut Context<Self>) -> Option<AnyElement> {
+		self.view_cards()
 	}
 }
 

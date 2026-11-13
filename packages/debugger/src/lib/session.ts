@@ -5,9 +5,12 @@ import type {
 	EvalResult,
 	EvalRequest,
 	BridgeMessage,
+	ExplorerRequest,
 	PushResult,
 	PushRequest,
 	ReactDevtoolsFrame,
+	ViewDetailsRequest,
+	ViewDetailsResult,
 	ViewHighlight,
 	ViewsRequest,
 	ViewsResult,
@@ -16,10 +19,13 @@ import {
 	DEFAULT_EVAL_TIMEOUT_MS,
 	PUSH_TIMEOUT_MS,
 	REACT_DEVTOOLS_SHUTDOWN_EVENT,
+	isExplorerResult,
 	resolveEvalTimeout,
 	serializeMessage,
 } from '@unbound-app/debugger-protocol';
 import { PendingRequests } from '@unbound-app/debugger-protocol/pending-requests';
+
+import { discardExplorer, failExplorer, requestExplorer, settleExplorer } from './explorer-session';
 
 /**
  * The bridge's transport-agnostic routing core: routes each eval result back to the controller that
@@ -50,6 +56,7 @@ export const state: {
 const pending = new PendingRequests<EvalResult, SocketLike | undefined>();
 const pendingPushes = new PendingRequests<PushResult, SocketLike>();
 const pendingViews = new PendingRequests<ViewsResult, SocketLike>();
+const pendingDetails = new PendingRequests<ViewDetailsResult, SocketLike>();
 const logListeners = new Set<(log: LogMessage) => void>();
 const deviceListeners = new Set<(connected: boolean, device: DeviceInfo | null) => void>();
 const evalListeners = new Set<(code: string) => void>();
@@ -107,6 +114,13 @@ export function detachDevice(socket: SocketLike) {
 		ok: false,
 		error: 'Device disconnected before the views were listed.',
 	}));
+	pendingDetails.failAll((id) => ({
+		type: 'view-details-result',
+		id,
+		ok: false,
+		error: 'Device disconnected before the view was read.',
+	}));
+	failExplorer();
 
 	broadcastDeviceStatus(false);
 }
@@ -130,6 +144,8 @@ export function detachController(socket: SocketLike) {
 	pending.discard((origin) => origin === socket);
 	pendingPushes.discard((origin) => origin === socket);
 	pendingViews.discard((origin) => origin === socket);
+	pendingDetails.discard((origin) => origin === socket);
+	discardExplorer(socket);
 
 	if (state.reactDevtools === socket) {
 		state.reactDevtools = null;
@@ -232,6 +248,50 @@ export function requestViewsForController(socket: SocketLike, request: ViewsRequ
 }
 
 /**
+ * @description Forwards a controller's {@link ViewDetailsRequest} to the device and delivers the
+ * id-correlated {@link ViewDetailsResult} back over that same controller's socket, or an error when no device answers.
+ * @param socket The controller that asked.
+ * @param request The request to forward verbatim; its `id` correlates the result.
+ */
+export function requestViewDetailsForController(socket: SocketLike, request: ViewDetailsRequest) {
+	const deliver = (result: ViewDetailsResult) => socket.send(serializeMessage(result));
+
+	if (!state.device) {
+		deliver({
+			type: 'view-details-result',
+			id: request.id,
+			ok: false,
+			error: 'No device is connected to the debugger.',
+		});
+
+		return;
+	}
+
+	pendingDetails.add(request.id, {
+		settle: deliver,
+		timeoutMs: VIEWS_TIMEOUT_MS,
+		onTimeout: () => ({
+			type: 'view-details-result',
+			id: request.id,
+			ok: false,
+			error: `Reading the view timed out after ${VIEWS_TIMEOUT_MS}ms.`,
+		}),
+		meta: socket,
+	});
+	state.device.send(serializeMessage(request));
+}
+
+/**
+ * @description Forwards a controller's object explorer request to the device and routes its answer back to that
+ * controller, or fails it when no device answers.
+ * @param socket The controller that asked.
+ * @param request The request to forward verbatim; its `id` correlates the result.
+ */
+export function requestExplorerForController(socket: SocketLike, request: ExplorerRequest) {
+	requestExplorer(state.device, socket, request);
+}
+
+/**
  * @description Forwards a controller's {@link ViewHighlight} to the device; it has no answer.
  * @param highlight The view to outline, or `null` to clear the outline.
  */
@@ -321,6 +381,18 @@ export function handleDeviceMessage(message: BridgeMessage) {
 
 	if (message.type === 'views-result') {
 		pendingViews.resolve(message.id, message);
+
+		return;
+	}
+
+	if (message.type === 'view-details-result') {
+		pendingDetails.resolve(message.id, message);
+
+		return;
+	}
+
+	if (isExplorerResult(message)) {
+		settleExplorer(message);
 
 		return;
 	}

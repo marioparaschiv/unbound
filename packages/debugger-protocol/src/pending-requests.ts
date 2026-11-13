@@ -55,10 +55,10 @@ export class PendingRequests<R, M = undefined> {
 
 	/**
 	 * @description Settles every pending request with a failure, so no caller waits forever.
-	 * @param fail Builds each request's failure result from its id.
+	 * @param fail Builds each request's failure result from its id and meta.
 	 */
-	failAll(fail: (id: string) => R) {
-		for (const id of this.entries.keys()) this.resolve(id, fail(id));
+	failAll(fail: (id: string, meta: M) => R) {
+		for (const [id, { meta }] of this.entries) this.resolve(id, fail(id, meta));
 	}
 
 	/**

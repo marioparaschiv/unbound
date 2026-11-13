@@ -1,6 +1,6 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { listSnapshots } from '~/lib/device-state';
+import { lazyHandler } from '~/lib/lazy-handler';
 import { Type } from '~/lib/schema';
 
 const schema = Type.Object({});
@@ -12,9 +12,7 @@ const snapshotsCommand: CommandDefinition<typeof schema> = {
 	summary: 'List the saved snapshots.',
 	mcp: true,
 	schema,
-	async handler() {
-		return listSnapshots();
-	},
+	handler: lazyHandler(() => import('./snapshots-handler')),
 };
 
 export default snapshotsCommand;

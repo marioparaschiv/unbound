@@ -1,6 +1,6 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
-import { launchBridge } from '~/lib/bridge-process';
+import { lazyHandler } from '~/lib/lazy-handler';
 import { bridgePortField } from '~/lib/context';
 import { Type } from '~/lib/schema';
 
@@ -16,9 +16,7 @@ const restartCommand: CommandDefinition<typeof schema> = {
 	summary: 'Restart the debugger bridge on the current code.',
 	mcp: false,
 	schema,
-	handler({ port }) {
-		return launchBridge(port, true);
-	},
+	handler: lazyHandler(() => import('./restart-handler')),
 };
 
 export default restartCommand;

@@ -1,8 +1,9 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
+import { lazyHandler } from '~/lib/lazy-handler';
 import { defaulted, Type } from '~/lib/schema';
 
-import { pluginField, runI18n } from './run';
+import { pluginField } from './plugin-field';
 
 const schema = Type.Object({
 	plugin: pluginField,
@@ -20,9 +21,7 @@ const checkCommand: CommandDefinition<typeof schema> = {
 	summary: 'Report translation coverage and ICU problems.',
 	mcp: false,
 	schema,
-	handler({ plugin, strict }) {
-		return runI18n({ plugin, strict });
-	},
+	handler: lazyHandler(() => import('./check-handler')),
 };
 
 export default checkCommand;
