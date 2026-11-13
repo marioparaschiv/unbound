@@ -25,7 +25,6 @@ impl Scale {
 pub enum Section {
 	Appearance,
 	Device,
-	CommandLine,
 	Agents,
 	About,
 }
@@ -47,7 +46,7 @@ pub const CATEGORIES: &[Category] = &[
 	},
 	Category {
 		label: "Tools",
-		sections: &[Section::CommandLine, Section::Agents],
+		sections: &[Section::Agents],
 	},
 	Category {
 		label: "Application",
@@ -60,7 +59,6 @@ impl Section {
 		match self {
 			Self::Appearance => "Appearance",
 			Self::Device => "Device",
-			Self::CommandLine => "Command Line",
 			Self::Agents => "Agents",
 			Self::About => "About",
 		}
@@ -70,7 +68,6 @@ impl Section {
 		match self {
 			Self::Appearance => "icons/palette.svg",
 			Self::Device => "icons/smartphone.svg",
-			Self::CommandLine => "icons/square-terminal.svg",
 			Self::Agents => "icons/bot.svg",
 			Self::About => "icons/info.svg",
 		}
@@ -79,8 +76,6 @@ impl Section {
 
 /// The text fields the sections edit; the dialog owns them so typing survives a re-render.
 pub struct Fields {
-	pub cli_command: Entity<InputState>,
-	pub project_dir: Entity<InputState>,
 	pub bridge_port: Entity<InputState>,
 	pub mcp_port: Entity<InputState>,
 }
@@ -92,24 +87,9 @@ pub fn render(section: Section, fields: &Fields, s: Scale, cx: &App) -> Vec<Div>
 		Section::Device => vec![card(s, "icons/cable.svg", "Debugger Bridge").child(row(
 			s,
 			"Bridge Port",
-			"The port of the bridge on this machine. React DevTools, the view finder and ubd reach the device through it. Connect device reads it when DevTools starts.",
+			"The port of the bridge on this machine. React DevTools, the view finder and Metro reach the device through it. Connect device reads it when DevTools starts.",
 			port(s, &fields.bridge_port),
 		))],
-		Section::CommandLine => vec![
-			card(s, "icons/terminal.svg", "ubd")
-				.child(stacked(
-					s,
-					"Run ubd With",
-					"The command that starts the CLI, such as ubd or bunx @unbound-app/cli. ubd runs the copy shipped with DevTools when there is one.",
-					text(s, &fields.cli_command),
-				))
-				.child(stacked(
-					s,
-					"Project Folder",
-					"Where commands run: your addon workspace for build, check and dev. Empty is your home folder.",
-					text(s, &fields.project_dir),
-				)),
-		],
 		Section::Agents => vec![
 			card(s, "icons/server.svg", "MCP")
 				.child(row(
@@ -202,20 +182,6 @@ fn row(s: Scale, title: &str, description: &str, control: impl IntoElement) -> D
 		.border_color(theme::color(theme::BORDER))
 		.child(label(s, title, description).flex_1().min_w_0())
 		.child(div().flex_none().child(control))
-}
-
-/// A setting whose field takes the full width under its label.
-fn stacked(s: Scale, title: &str, description: &str, control: impl IntoElement) -> Div {
-	div()
-		.flex()
-		.flex_col()
-		.gap(s.px(10.))
-		.px(s.px(16.))
-		.py(s.px(14.))
-		.border_t_1()
-		.border_color(theme::color(theme::BORDER))
-		.child(label(s, title, description))
-		.child(control)
 }
 
 /// The app's sunk field at the dialog's scale.

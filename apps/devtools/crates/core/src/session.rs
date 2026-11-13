@@ -14,6 +14,7 @@ use serde::Serialize;
 use serde_json::Value as Json;
 use tokio::sync::{mpsc, oneshot, watch};
 
+use crate::bridge::Launcher;
 use crate::explorer::ExplorerOutcome;
 use crate::inspect::{InspectedElement, Section};
 use crate::link::{Link, LinkStatus};
@@ -32,12 +33,16 @@ pub(crate) const EVAL_TIMEOUT_MS: u64 = 10_000;
 pub struct Config {
 	/// The Unbound debugger bridge "This machine" connects to.
 	pub bridge: SocketAddr,
+	/// The program whose `serve-bridge` starts a bridge when a link to this machine finds none
+	/// listening: this app itself. `None` never starts one.
+	pub bridge_launcher: Option<Launcher>,
 }
 
 impl Default for Config {
 	fn default() -> Self {
 		Self {
 			bridge: SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), crate::DEFAULT_BRIDGE_PORT),
+			bridge_launcher: None,
 		}
 	}
 }

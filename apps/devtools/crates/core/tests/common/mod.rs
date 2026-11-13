@@ -32,7 +32,10 @@ pub fn session() -> (Devtools, SocketAddr) {
 	let addr = std::net::TcpListener::bind("127.0.0.1:0")
 		.and_then(|listener| listener.local_addr())
 		.expect("a free port");
-	let devtools = Devtools::start(Config { bridge: addr });
+	let devtools = Devtools::start(Config {
+		bridge: addr,
+		bridge_launcher: None,
+	});
 
 	devtools.link_to(
 		ConnectTarget {

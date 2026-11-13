@@ -112,6 +112,7 @@ async fn linked() -> (Devtools, mpsc::UnboundedReceiver<Json>) {
 	let (bridge, frames) = fake_bridge().await;
 	let devtools = Devtools::start(Config {
 		bridge: "127.0.0.1:9".parse().expect("addr"),
+		bridge_launcher: None,
 	});
 	devtools.link_to(
 		ConnectTarget {
@@ -155,6 +156,7 @@ async fn an_explorer_without_a_link_is_not_connected() {
 	config_dir();
 	let devtools = Devtools::start(Config {
 		bridge: "127.0.0.1:9".parse().expect("addr"),
+		bridge_launcher: None,
 	});
 	let error = devtools
 		.explorer_object(&ExplorerTarget::Node("1".into()))

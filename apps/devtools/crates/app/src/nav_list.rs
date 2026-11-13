@@ -23,8 +23,6 @@ pub struct NavRow {
 	pub label: SharedString,
 	pub icon: &'static str,
 	pub active: bool,
-	/// The page's command is running; the row shows a dot.
-	pub running: bool,
 }
 
 /// A titled run of rows. The sidebar lays groups out in a list, which ignores its own gap, so the
@@ -88,7 +86,6 @@ fn render_row(ix: usize, row: NavRow, shell: WeakEntity<Shell>) -> impl IntoElem
 		label,
 		icon: path,
 		active,
-		running,
 	} = row;
 	// The row keeps its box in the list; the face inside is drawn at `scale`, every length
 	// multiplied, so a press shrinks text and icon about the centre like the web's `scale`.
@@ -120,21 +117,10 @@ fn render_row(ix: usize, row: NavRow, shell: WeakEntity<Shell>) -> impl IntoElem
 			})
 			.child(icon(path, theme::ICON * scale, glyph))
 			.child(div().flex_1().min_w_0().truncate().child(label))
-			.when(running, |item| {
-				item.child(
-					div()
-						.flex_none()
-						.size(px(6. * scale))
-						.rounded_full()
-						.bg(theme::color(theme::WARNING)),
-				)
-			})
 			.into_any_element()
 	};
 	let body = div().h(px(ROW_HEIGHT)).group(ROW_GROUP).cursor_pointer();
-	Pressable::flat(ix, body, face).on_click(move |_, window, cx| {
-		shell
-			.update(cx, |shell, cx| shell.open(page.clone(), window, cx))
-			.ok();
+	Pressable::flat(ix, body, face).on_click(move |_, _, cx| {
+		shell.update(cx, |shell, cx| shell.open(page, cx)).ok();
 	})
 }

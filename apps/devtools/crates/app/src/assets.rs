@@ -15,6 +15,7 @@ pub const CHEVRON_UP: &str = "icons/chevron-up.svg";
 pub const SEARCH: &str = "icons/search.svg";
 pub const X: &str = "icons/x.svg";
 pub const COPY: &str = "icons/copy.svg";
+pub const ARROW_UP_RIGHT: &str = "icons/arrow-up-right.svg";
 pub const CROSSHAIR: &str = "icons/crosshair.svg";
 pub const TERMINAL: &str = "icons/terminal.svg";
 pub const PLUG: &str = "icons/plug.svg";

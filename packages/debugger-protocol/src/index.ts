@@ -41,28 +41,6 @@ import {
 } from './react-devtools';
 
 export type {
-	ExplorerClass,
-	ExplorerClassesRequest,
-	ExplorerClassesResult,
-	ExplorerError,
-	ExplorerErrorCode,
-	ExplorerImage,
-	ExplorerMember,
-	ExplorerMemberKind,
-	ExplorerMembersRequest,
-	ExplorerMembersResult,
-	ExplorerObject,
-	ExplorerObjectRequest,
-	ExplorerObjectResult,
-	ExplorerRequest,
-	ExplorerResult,
-	ExplorerTarget,
-	ExplorerValue,
-	ExplorerValueKind,
-	ExplorerValuesRequest,
-	ExplorerValuesResult,
-} from './explorer';
-export type {
 	MetroChildrenRequest,
 	MetroChildrenResult,
 	MetroError,
@@ -89,6 +67,28 @@ export type {
 	MetroValue,
 	MetroValueKind,
 } from './metro';
+export type {
+	ExplorerClass,
+	ExplorerClassesRequest,
+	ExplorerClassesResult,
+	ExplorerError,
+	ExplorerErrorCode,
+	ExplorerImage,
+	ExplorerMember,
+	ExplorerMemberKind,
+	ExplorerMembersRequest,
+	ExplorerMembersResult,
+	ExplorerObject,
+	ExplorerObjectRequest,
+	ExplorerObjectResult,
+	ExplorerRequest,
+	ExplorerResult,
+	ExplorerTarget,
+	ExplorerValue,
+	ExplorerValueKind,
+	ExplorerValuesRequest,
+	ExplorerValuesResult,
+} from './explorer';
 export {
 	METRO_CHILDREN_PAGE_SIZE,
 	METRO_MODULES_PAGE_SIZE,
@@ -248,6 +248,22 @@ export type DeviceStatus = { type: 'device-status' } & (
 	  }
 );
 
+/**
+ * Bridge → controller, once on attach, from a bridge that advertises itself over Bonjour: the
+ * pairing code its TXT record carries, and how to reach it by hand when discovery fails.
+ */
+export type BridgeInfo = {
+	type: 'bridge-info';
+	/** The four-digit pairing code, also the advertisement's `code`. */
+	code: string;
+	/** `ip:port` on the advertised network, for the Debugger Address setting. */
+	address?: string;
+	/** Whether devices on the network can find the bridge. */
+	advertising: boolean;
+	/** Why it isn't advertising. */
+	error?: string;
+};
+
 /** Every framed message on the wire. */
 export type BridgeMessage =
 	| EvalRequest
@@ -257,6 +273,7 @@ export type BridgeMessage =
 	| LogMessage
 	| DeviceHello
 	| DeviceStatus
+	| BridgeInfo
 	| ViewsRequest
 	| ViewsResult
 	| ViewDetailsRequest
@@ -298,6 +315,25 @@ export function resolveEvalTimeout(requested: number | undefined): number {
 
 /** The query marker a controller appends to its URL so the bridge routes it as a controller, not a device. */
 export const CONTROLLER_ENDPOINT_MARKER = 'mcp';
+
+/** The unlisted `ubd` command that runs the bridge in the foreground; tools that start one run it. */
+export const SERVE_BRIDGE_COMMAND = 'serve-bridge';
+
+/** The Bonjour service type a bridge advertises, so a device on the same network can find it. */
+export const BRIDGE_SERVICE_TYPE = '_unbound-bridge._tcp';
+
+/** The `proto` TXT value of an advertised bridge; a device skips bridges that speak another one. */
+export const BRIDGE_SERVICE_PROTOCOL = '1';
+
+/** What an advertised bridge's TXT record holds, beside its instance name, which names the computer. */
+export type BridgeAdvertisement = {
+	/** The protocol version, {@link BRIDGE_SERVICE_PROTOCOL}. */
+	proto: string;
+	/** The tool that started the bridge. */
+	by: 'devtools' | 'cli';
+	/** The four-digit pairing code the tool also shows, so the user can tell it is their computer. */
+	code: string;
+};
 
 /**
  * @description Safely parses a raw wire frame into a {@link BridgeMessage}, guarding against invalid
@@ -383,6 +419,15 @@ function hasRequiredFields(frame: unknown): frame is BridgeMessage {
 						(!('device' in frame) ||
 							frame.device === undefined ||
 							isDeviceInfo(frame.device))))
+			);
+		case 'bridge-info':
+			return (
+				'code' in frame &&
+				typeof frame.code === 'string' &&
+				'advertising' in frame &&
+				typeof frame.advertising === 'boolean' &&
+				(!('address' in frame) || typeof frame.address === 'string') &&
+				(!('error' in frame) || typeof frame.error === 'string')
 			);
 		case 'views-request':
 		case 'views-result':

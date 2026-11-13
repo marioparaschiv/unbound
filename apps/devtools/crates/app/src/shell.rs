@@ -1,28 +1,22 @@
-//! The window: Unbound's sidebar of pages on the left, the open page on the right. Pages are the
-//! React component tree, the native view tree and one per `ubd` command, grouped as `commands::nav`
-//! says.
-
-use std::collections::HashMap;
+//! The window: Unbound's sidebar of pages on the left, the open page on the right. The pages are
+//! the React component tree, the native view tree and the Metro module explorer.
 
 use gpui::{
-	App, Context, Entity, Focusable, Global, KeyBinding, SharedString, Task, WeakEntity, Window,
-	actions, div, linear_color_stop, linear_gradient, prelude::*, px,
+	App, Context, Entity, Focusable, Global, KeyBinding, WeakEntity, Window, actions, div,
+	linear_color_stop, linear_gradient, prelude::*, px,
 };
 use gpui_component::sidebar::Sidebar;
 use unbound_devtools_core::Devtools;
-use unbound_devtools_core::ubd::{self, Catalog, Launcher};
 
-use crate::app::{Workspace, on_runtime};
-use crate::commands::{CommandPage, nav};
-use crate::empty_state::EmptyState;
-use crate::explorer::classes::ClassBrowser;
+use crate::app::Workspace;
 use crate::link::DebuggerLink;
 use crate::metro::MetroBrowser;
+use crate::nav;
 use crate::nav_list::{NavGroup, NavRow};
 use crate::settings_dialog::{self, Closed, SettingsDialog};
 use crate::title_bar::{self, title_bar};
 use crate::view_finder::ViewFinder;
-use crate::widgets::{Raised, footer_bar, icon_button, page_header, raised_button, tooltip};
+use crate::widgets::{icon_button, tooltip};
 use crate::{appearance, settings, theme};
 
 actions!(shell, [OpenSettings]);
@@ -61,36 +55,21 @@ pub fn bind_keys(cx: &mut App) {
 	});
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Page {
 	Components,
 	Views,
-	Classes,
 	Metro,
-	Command(String),
-}
-
-enum CatalogState {
-	Loading,
-	Ready(Catalog),
-	Failed(String),
 }
 
 pub struct Shell {
-	devtools: Devtools,
 	workspace: Entity<Workspace>,
 	views: Entity<ViewFinder>,
-	classes: Entity<ClassBrowser>,
 	metro: Entity<MetroBrowser>,
 	link: Entity<DebuggerLink>,
 	page: Page,
-	catalog: CatalogState,
-	pages: HashMap<String, Entity<CommandPage>>,
 	/// Open, or playing its exit motion; dropped once that ends.
 	settings: Option<Entity<SettingsDialog>>,
-	/// The CLI and folder the catalog came from; a change to either reloads it.
-	source: (String, String),
-	_load: Option<Task<()>>,
 	_subscriptions: Vec<gpui::Subscription>,
 }
 
@@ -103,96 +82,34 @@ impl Shell {
 		cx: &mut Context<Self>,
 	) -> Self {
 		let subscriptions = vec![
-			cx.observe_global_in::<settings::Store>(window, |this, window, cx| {
+			cx.observe_global_in::<settings::Store>(window, |_, window, cx| {
 				appearance::apply(Some(window), cx);
-				this.reload_if_changed(cx);
 			}),
 			cx.observe_window_appearance(window, |_, window, cx| {
 				appearance::apply(Some(window), cx);
 			}),
 		];
 		let views = cx.new(|cx| ViewFinder::new(devtools.clone(), window, cx));
-		let classes = cx.new(|cx| ClassBrowser::new(devtools.clone(), window, cx));
-		let metro = cx.new(|cx| MetroBrowser::new(devtools.clone(), window, cx));
-		let mut this = Self {
-			devtools,
+		let metro = cx.new(|cx| MetroBrowser::new(devtools, window, cx));
+		let this = Self {
 			workspace,
 			views,
-			classes,
 			metro,
 			link,
 			page: Page::Components,
-			catalog: CatalogState::Loading,
-			pages: HashMap::new(),
 			settings: None,
-			source: Default::default(),
-			_load: None,
 			_subscriptions: subscriptions,
 		};
-		this.load_catalog(cx);
 		cx.set_global(Host(cx.entity().downgrade()));
 		this
 	}
 
-	fn current_source(cx: &App) -> (String, String) {
-		let settings = settings::get(cx);
-		(settings.cli_command.clone(), settings.project_dir.clone())
-	}
-
-	fn reload_if_changed(&mut self, cx: &mut Context<Self>) {
-		if Self::current_source(cx) != self.source {
-			self.load_catalog(cx);
-		}
-	}
-
-	fn load_catalog(&mut self, cx: &mut Context<Self>) {
-		self.source = Self::current_source(cx);
-		self.catalog = CatalogState::Loading;
-		let Some(launcher) = Launcher::resolve(&self.source.0) else {
-			self.catalog = CatalogState::Failed("Set how to run ubd in Settings.".into());
-			cx.notify();
-			return;
-		};
-		let cwd = settings::get(cx).working_dir();
-		let request = on_runtime(&self.devtools, async move {
-			ubd::load_catalog(&launcher, cwd).await
-		});
-		self._load = Some(cx.spawn(async move |this, cx| {
-			let result = request.await;
-			this.update(cx, |this, cx| {
-				this.catalog = match result {
-					Some(Ok(catalog)) => CatalogState::Ready(catalog),
-					Some(Err(error)) => {
-						tracing::warn!("Failed to load the ubd catalog: {error}");
-						CatalogState::Failed(error.to_string())
-					}
-					None => CatalogState::Failed("Loading the commands was cancelled.".into()),
-				};
-				// A page built from the old catalog may show fields the new CLI dropped.
-				this.pages.clear();
-				cx.notify();
-			})
-			.ok();
-		}));
-		cx.notify();
-	}
-
-	pub fn open(&mut self, page: Page, window: &mut Window, cx: &mut Context<Self>) {
-		// The old page's focused element leaves the tree with it, so the new page takes focus and
-		// its shortcuts (run, stop) work without a click first.
-		if let Page::Command(name) = &page
-			&& let Some(command) = self.command_page(name, window, cx)
-		{
-			window.focus(&command.focus_handle(cx), cx);
-		}
+	pub fn open(&mut self, page: Page, cx: &mut Context<Self>) {
 		if self.page == Page::Views && page != Page::Views {
 			self.views.update(cx, |views, _| views.clear_highlight());
 		}
 		if page == Page::Views {
 			self.views.update(cx, |views, cx| views.open(cx));
-		}
-		if page == Page::Classes {
-			self.classes.update(cx, |classes, cx| classes.open(cx));
 		}
 		if page == Page::Metro {
 			self.metro.update(cx, |metro, cx| metro.open(cx));
@@ -223,98 +140,31 @@ impl Shell {
 		cx.notify();
 	}
 
-	fn command_page(
-		&mut self,
-		name: &str,
-		window: &mut Window,
-		cx: &mut Context<Self>,
-	) -> Option<Entity<CommandPage>> {
-		if let Some(page) = self.pages.get(name) {
-			return Some(page.clone());
-		}
-		let CatalogState::Ready(catalog) = &self.catalog else {
-			return None;
-		};
-		let spec = catalog.get(name)?.clone();
-		let runtime = self.devtools.runtime();
-		let page = cx.new(|cx| CommandPage::new(spec, runtime, window, cx));
-		// The sidebar marks a running command, so it repaints when a page does.
-		cx.observe(&page, |_, _, cx| cx.notify()).detach();
-		self.pages.insert(name.to_owned(), page.clone());
-		Some(page)
-	}
-
-	fn row(&self, page: Page, label: String, icon: &'static str, cx: &App) -> NavRow {
-		let running = match &page {
-			Page::Command(name) => self
-				.pages
-				.get(name)
-				.is_some_and(|page| page.read(cx).is_running()),
-			Page::Components | Page::Views | Page::Classes | Page::Metro => false,
-		};
+	fn row(&self, page: Page, label: &'static str, icon: &'static str) -> NavRow {
 		NavRow {
 			active: self.page == page,
 			page,
 			label: label.into(),
 			icon,
-			running,
 		}
 	}
 
 	/// `framed`: the page panel has a top border under the title bar, which the sidebar matches.
 	fn render_sidebar(&self, framed: bool, cx: &mut Context<Self>) -> impl IntoElement {
 		let shell = cx.entity().downgrade();
-		let commands = match &self.catalog {
-			CatalogState::Ready(catalog) => nav::group(catalog),
-			_ => vec![(nav::COMPONENTS_GROUP, Vec::new())],
-		};
-		let groups: Vec<NavGroup> = commands
-			.into_iter()
-			.enumerate()
-			.map(|(ix, (title, commands))| {
-				// Components and View Tree head their group; the trees are the first things to inspect.
-				let trees = (title == nav::COMPONENTS_GROUP).then(|| {
-					[
-						self.row(
-							Page::Components,
-							"Components".into(),
-							"icons/component.svg",
-							cx,
-						),
-						self.row(Page::Views, nav::VIEWS_TITLE.into(), "icons/layers.svg", cx),
-						self.row(
-							Page::Classes,
-							nav::CLASSES_TITLE.into(),
-							"icons/library.svg",
-							cx,
-						),
-						self.row(Page::Metro, nav::METRO_TITLE.into(), "icons/boxes.svg", cx),
-					]
-				});
-				let rows = trees
-					.into_iter()
-					.flatten()
-					.chain(commands.into_iter().map(|command| {
-						self.row(
-							Page::Command(command.name.clone()),
-							nav::title(&command.name),
-							nav::icon(&command.name),
-							cx,
-						)
-					}))
-					.collect();
-				NavGroup {
-					title,
-					rows,
-					first: ix == 0,
-					shell: shell.clone(),
-				}
-			})
-			.collect();
-		let note = match &self.catalog {
-			CatalogState::Ready(_) => None,
-			CatalogState::Loading => Some(("Loading ubd commands", theme::TEXT_MUTED)),
-			CatalogState::Failed(_) => Some(("ubd is unavailable", theme::ERROR)),
+		let group = NavGroup {
+			title: nav::COMPONENTS_GROUP,
+			rows: vec![
+				self.row(
+					Page::Components,
+					nav::COMPONENTS_TITLE,
+					"icons/component.svg",
+				),
+				self.row(Page::Views, nav::VIEWS_TITLE, "icons/layers.svg"),
+				self.row(Page::Metro, nav::METRO_TITLE, "icons/boxes.svg"),
+			],
+			first: true,
+			shell,
 		};
 		div()
 			.flex_none()
@@ -337,32 +187,13 @@ impl Shell {
 							.w_full()
 							.border_0()
 							.collapsible(false)
-							.children(groups),
+							.child(group),
 					)
 					// Rows scrolling under the header or footer fade out instead of being cut at the border.
 					// At rest each fade covers only the list's own padding.
 					.child(scroll_fade(0.).top_0())
 					.child(scroll_fade(180.).bottom_0()),
 			)
-			.children(note.map(|(text, color)| {
-				div()
-					.id("catalog-note")
-					.flex_none()
-					// The rows' inset and padding, so the note's edges and text line up with theirs.
-					.mx(px(theme::INSET))
-					.mb(px(8.))
-					.px(px(theme::GUTTER - theme::INSET))
-					.py(px(8.))
-					.rounded(theme::RADIUS_CONTROL)
-					.bg(theme::alpha(color, 0.1))
-					.text_size(theme::TEXT_SMALL)
-					.text_color(theme::color(color))
-					.cursor_pointer()
-					.child(text)
-					.on_click(cx.listener(|this, _, window, cx| {
-						this.open(Page::Command(String::new()), window, cx)
-					}))
-			}))
 			.child(self.render_settings_row(cx))
 	}
 
@@ -396,100 +227,6 @@ impl Shell {
 					})),
 			)
 	}
-
-	/// What a command page shows while the catalog loads, or why it could not. It keeps the page's
-	/// header and footer, so their edges still meet the sidebar's, and lays out like the empty state.
-	fn render_catalog_state(&self, cx: &mut Context<Self>) -> impl IntoElement {
-		let (icon, tone, title, body, error): (_, _, _, _, Option<SharedString>) =
-			match &self.catalog {
-				CatalogState::Loading => (
-					"icons/terminal.svg",
-					theme::TEXT_FAINT,
-					"Loading ubd's Commands",
-					"Asking the CLI what it can do.",
-					None,
-				),
-				CatalogState::Failed(error) => (
-					"icons/triangle-alert.svg",
-					theme::ERROR,
-					"Can't Run ubd",
-					"Install it with bun add -g @unbound-app/cli, or point Settings at how you run it.",
-					Some(error.clone().into()),
-				),
-				CatalogState::Ready(_) => (
-					"icons/terminal.svg",
-					theme::WARNING,
-					"This Command Is Gone",
-					"The CLI no longer offers it.",
-					None,
-				),
-			};
-		let failed = error.is_some();
-		div()
-			.size_full()
-			.flex()
-			.flex_col()
-			.child(page_header("ubd", "Commands"))
-			.child(
-				EmptyState::new(icon, title)
-					.tone(tone)
-					.body(body)
-					// The same chip as a command page's preview line, in the error colour.
-					.children(error.map(|error| {
-						div()
-							.max_w_full()
-							.px(px(10.))
-							.py(px(6.))
-							.rounded(theme::RADIUS_CONTROL)
-							.bg(theme::color(theme::PANEL))
-							.border_1()
-							.border_color(theme::color(theme::BORDER))
-							.font_family(theme::mono_font())
-							.text_size(theme::TEXT_SMALL)
-							.line_height(px(18.))
-							.text_color(theme::color(theme::ERROR))
-							.child(error)
-					}))
-					.when(failed, |column| {
-						column.child(
-							div()
-								.flex()
-								.gap(px(10.))
-								.mt(px(8.))
-								.child(
-									raised_button(
-										"retry",
-										Raised::Secondary,
-										None,
-										"Try Again",
-										true,
-									)
-									.on_click(cx.listener(|this, _, _, cx| this.load_catalog(cx))),
-								)
-								.child(
-									raised_button(
-										"open-settings",
-										Raised::Primary,
-										None,
-										"Open Settings",
-										true,
-									)
-									.on_click(cx.listener(|this, _, window, cx| {
-										this.open_settings(&OpenSettings, window, cx)
-									})),
-								),
-						)
-					}),
-			)
-			.child(
-				footer_bar().px(px(theme::GUTTER)).child(
-					div()
-						.min_w_0()
-						.truncate()
-						.child(format!("Runs {} in {}", self.source.0, self.source.1)),
-				),
-			)
-	}
 }
 
 /// A strip that fades the panel colour in toward `angle` (0 is up), laid over a scrolling edge.
@@ -509,15 +246,10 @@ fn scroll_fade(angle: f32) -> gpui::Div {
 
 impl Render for Shell {
 	fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-		let content = match self.page.clone() {
+		let content = match self.page {
 			Page::Components => self.workspace.clone().into_any_element(),
 			Page::Views => self.views.clone().into_any_element(),
-			Page::Classes => self.classes.clone().into_any_element(),
 			Page::Metro => self.metro.clone().into_any_element(),
-			Page::Command(name) => match self.command_page(&name, window, cx) {
-				Some(page) => page.into_any_element(),
-				None => self.render_catalog_state(cx).into_any_element(),
-			},
 		};
 		let framed = title_bar::is_drawn(window);
 		div()

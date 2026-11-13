@@ -1,4 +1,5 @@
 import type { CommandOutput } from '@unbound-app/debugger-protocol/registry';
+import { SERVE_BRIDGE_COMMAND } from '@unbound-app/debugger-protocol';
 import { closeSync, openSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { connect } from 'node:net';
@@ -8,11 +9,9 @@ import { join } from 'node:path';
 import { runCommand } from '~/lib/run-command';
 
 const LISTEN_TIMEOUT_MS = 15_000;
-const LISTEN_POLL_MS = 250;
+// Polls a local port, so short: a spawned bridge listens within a few hundred milliseconds.
+const LISTEN_POLL_MS = 20;
 const LOOKUP_TIMEOUT_MS = 5_000;
-
-/** The unlisted command a compiled `ubd` runs the bridge under, since it has no Bun to run it with. */
-export const SERVE_BRIDGE_COMMAND = 'serve-bridge';
 
 function isListening(port: number): Promise<boolean> {
 	return new Promise((resolve) => {
@@ -84,6 +83,22 @@ function startDetached(port: number): string {
 	closeSync(output);
 
 	return log;
+}
+
+/**
+ * @description Starts the debugger bridge in the background when none listens, and waits until one
+ * does. Two tools starting it at once are safe: the second bridge cannot take the port and exits.
+ * @param port The port the bridge listens on.
+ * @returns Whether a bridge listens now.
+ */
+export async function ensureBridge(port: number): Promise<boolean> {
+	if (await isListening(port)) {
+		return true;
+	}
+
+	startDetached(port);
+
+	return waitUntil(port, true);
 }
 
 /**

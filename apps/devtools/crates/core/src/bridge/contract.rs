@@ -6,8 +6,7 @@ fn fixture() -> Value {
 		env!("CARGO_MANIFEST_DIR"),
 		"/../../../../packages/debugger-protocol/tests/fixtures/devtools-contract.json"
 	);
-	let text =
-		std::fs::read_to_string(path).expect("the DevTools contract fixture is readable");
+	let text = std::fs::read_to_string(path).expect("the DevTools contract fixture is readable");
 
 	serde_json::from_str(&text).expect("the DevTools contract fixture is JSON")
 }
@@ -28,6 +27,32 @@ fn names_the_protocol_constants() {
 		contract["controllerEndpointMarker"],
 		CONTROLLER_ENDPOINT_MARKER
 	);
+	assert_eq!(contract["serveBridgeCommand"], launch::SERVE_BRIDGE_COMMAND);
+	assert_eq!(
+		contract["bridgeService"]["type"],
+		crate::bridge_server::advertise::BRIDGE_SERVICE_TYPE
+	);
+	assert_eq!(
+		contract["bridgeService"]["protocol"],
+		crate::bridge_server::advertise::BRIDGE_SERVICE_PROTOCOL
+	);
+}
+
+#[test]
+fn reads_and_sends_the_protocols_bridge_info() {
+	let contract = fixture();
+
+	for name in ["bridgeInfo", "bridgeInfoBlocked"] {
+		let BridgeFrame::BridgeInfo(info) = frame(&contract, name) else {
+			panic!("{name} is a bridge-info frame");
+		};
+
+		assert_eq!(
+			crate::bridge_server::router::info_frame(&info),
+			contract["frames"][name],
+			"{name}"
+		);
+	}
 }
 
 #[test]
@@ -200,8 +225,7 @@ fn sends_the_protocols_explorer_requests() {
 		check(request, &expected);
 	}
 	for expected in frames_of(&contract, "explorer-values-request") {
-		let names: Vec<String> =
-			serde_json::from_value(expected["names"].clone()).expect("names");
+		let names: Vec<String> = serde_json::from_value(expected["names"].clone()).expect("names");
 		let request = values_request(
 			&text(&expected, "object"),
 			&text(&expected, "className"),

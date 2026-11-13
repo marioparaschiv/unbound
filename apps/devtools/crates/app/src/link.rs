@@ -342,6 +342,7 @@ mod tests {
 					client_version: "2.0.0".to_owned(),
 				}),
 				error: None,
+				bridge_info: None,
 			}),
 			elements: 0,
 			roots: 0,

@@ -4269,6 +4269,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "mdns-sd"
+version = "0.21.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6743ed743ff2bada2b8651ef298d3f98addb0b74844f19cdd57137d8bd0219e"
+dependencies = [
+ "fastrand",
+ "flume",
+ "if-addrs",
+ "mio",
+ "socket-pktinfo",
+ "socket2",
+]
+
+[[package]]
 name = "memchr"
 version = "2.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6806,6 +6820,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "socket-pktinfo"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "512f5c35377cf69f350b106df2366c3a1df6bd01b047a7a58c8390b70d28838d"
+dependencies = [
+ "libc",
+ "socket2",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "socket2"
 version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7617,12 +7642,13 @@ name = "unbound-devtools"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "base64 0.22.1",
  "clap",
  "gpui-component",
  "gpui-fast",
  "gpui-fast-platform",
  "gpui-kit-assets",
- "parking_lot",
+ "percent-encoding",
  "serde",
  "serde_json",
  "tokio",
@@ -7639,11 +7665,12 @@ dependencies = [
  "axum",
  "dirs",
  "futures-util",
+ "gethostname",
  "if-addrs",
  "jaq-core",
  "jaq-json",
  "jaq-std",
- "libc",
+ "mdns-sd",
  "parking_lot",
  "regex",
  "rmcp",

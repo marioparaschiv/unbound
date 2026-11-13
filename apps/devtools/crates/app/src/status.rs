@@ -21,7 +21,7 @@ fn plural(n: usize, one: &str, many: &str) -> String {
 }
 
 impl Workspace {
-	pub fn render_status(&self, window: &Window, cx: &mut Context<Self>) -> impl IntoElement {
+	pub fn render_status(&self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
 		let status = &self.status;
 		let connection = self.connection();
 		let counts = (status.elements > 0).then(|| {

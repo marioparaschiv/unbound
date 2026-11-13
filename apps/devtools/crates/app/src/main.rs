@@ -1,7 +1,7 @@
+mod agents;
 mod app;
 mod appearance;
 mod assets;
-mod commands;
 mod copy_chip;
 mod copy_glyph;
 mod empty;
@@ -12,7 +12,9 @@ mod inspector;
 mod link;
 mod mcp_menu;
 mod metro;
+mod nav;
 mod nav_list;
+mod pairing;
 mod press;
 mod scaled;
 mod search;
@@ -30,13 +32,15 @@ mod view_finder;
 mod widgets;
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::time::Duration;
 
 use clap::{Parser, Subcommand};
 use gpui::{
 	App, AppContext, Bounds, QuitMode, WindowBounds, WindowDecorations, WindowOptions, px, size,
 };
 use gpui_component::{Root, TitleBar};
-use unbound_devtools_core::{Config, Devtools, mcp};
+use unbound_devtools_core::bridge::Launcher;
+use unbound_devtools_core::{Config, DEFAULT_BRIDGE_PORT, Devtools, bridge_server, mcp};
 
 use crate::settings::Settings;
 
@@ -63,6 +67,14 @@ struct Cli {
 enum Command {
 	/// Serve MCP over stdio with no window.
 	Mcp,
+	/// Serve the debugger bridge with no window, as "Connect device" starts it when none listens.
+	ServeBridge {
+		#[arg(long, default_value_t = DEFAULT_BRIDGE_PORT)]
+		port: u16,
+		/// Seconds to keep running with no controller attached; 0 never exits.
+		#[arg(long, default_value_t = 60)]
+		idle_timeout: u64,
+	},
 }
 
 impl Cli {
@@ -71,6 +83,11 @@ impl Cli {
 		let bridge = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), bridge_port);
 		Config {
 			bridge: self.bridge.unwrap_or(bridge),
+			// This app serves the bridge itself (`serve-bridge`) when none listens.
+			bridge_launcher: std::env::current_exe().ok().map(|program| Launcher {
+				program: program.to_string_lossy().into_owned(),
+				prefix: Vec::new(),
+			}),
 		}
 	}
 
@@ -92,6 +109,12 @@ fn main() -> anyhow::Result<()> {
 	let settings = settings::load();
 	let config = cli.config(&settings);
 	match cli.command {
+		Some(Command::ServeBridge { port, idle_timeout }) => {
+			let idle_timeout = (idle_timeout > 0).then(|| Duration::from_secs(idle_timeout));
+
+			tokio::runtime::Runtime::new()?.block_on(bridge_server::run(port, idle_timeout))?;
+			Ok(())
+		}
 		Some(Command::Mcp) => {
 			let devtools = Devtools::start(config);
 			devtools
@@ -137,7 +160,6 @@ fn run_gui(settings: Settings, config: Config, mcp_port: Option<u16>) {
 			appearance::init(cx);
 			appearance::apply(None, cx);
 			app::bind_keys(cx);
-			commands::bind_keys(cx);
 			shell::bind_keys(cx);
 			let bounds = Bounds::centered(None, size(px(1360.), px(860.)), cx);
 			// The shell draws its own title bar (`title_bar.rs`), so the system's is hidden: macOS keeps

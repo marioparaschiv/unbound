@@ -43,10 +43,6 @@ impl Appearance {
 #[serde(default, rename_all = "camelCase")]
 pub struct Settings {
 	pub appearance: Appearance,
-	/// How to run the CLI, such as `ubd` or `bunx @unbound-app/cli`.
-	pub cli_command: String,
-	/// Where commands run; the addon workspace for `build`, `check` and `dev`. Empty is the home folder.
-	pub project_dir: String,
 	pub bridge_port: u16,
 	pub mcp_enabled: bool,
 	pub mcp_port: u16,
@@ -56,32 +52,11 @@ impl Default for Settings {
 	fn default() -> Self {
 		Self {
 			appearance: Appearance::System,
-			cli_command: "ubd".into(),
-			project_dir: String::new(),
 			bridge_port: DEFAULT_BRIDGE_PORT,
 			mcp_enabled: true,
 			mcp_port: DEFAULT_MCP_PORT,
 		}
 	}
-}
-
-impl Settings {
-	/// The folder commands run in: the project folder, else the home folder.
-	pub fn working_dir(&self) -> Option<PathBuf> {
-		let dir = self.project_dir.trim();
-		if dir.is_empty() {
-			return dirs_home();
-		}
-		let path = match dir.strip_prefix("~/") {
-			Some(rest) => dirs_home()?.join(rest),
-			None => PathBuf::from(dir),
-		};
-		Some(path)
-	}
-}
-
-fn dirs_home() -> Option<PathBuf> {
-	std::env::var_os(if cfg!(windows) { "USERPROFILE" } else { "HOME" }).map(PathBuf::from)
 }
 
 /// The global the settings live in; observe it to react to a change.
@@ -159,9 +134,11 @@ mod tests {
 
 	#[test]
 	fn missing_keys_take_their_defaults() {
-		let settings: Settings = serde_json::from_str(r#"{"cliCommand":"bunx ubd"}"#).unwrap();
-		assert_eq!(settings.cli_command, "bunx ubd");
-		assert_eq!(settings.bridge_port, Settings::default().bridge_port);
+		// `cliCommand` is a setting older versions saved; it is ignored.
+		let settings: Settings =
+			serde_json::from_str(r#"{"cliCommand":"bunx ubd","bridgePort":9191}"#).unwrap();
+		assert_eq!(settings.bridge_port, 9191);
+		assert_eq!(settings.mcp_port, Settings::default().mcp_port);
 		assert_eq!(settings.appearance, Appearance::System);
 	}
 }

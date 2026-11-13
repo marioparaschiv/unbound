@@ -12,7 +12,7 @@ const startCommand: CommandDefinition<typeof schema> = {
 	name: 'start',
 	description:
 		'Start the debugger bridge in the background when none is listening; a running bridge is kept. ' +
-		'Its log goes to the system temporary directory.',
+		'It exits after 60 seconds with no controller attached. Its log goes to the system temporary directory.',
 	summary: 'Start the debugger bridge in the background.',
 	mcp: false,
 	schema,
