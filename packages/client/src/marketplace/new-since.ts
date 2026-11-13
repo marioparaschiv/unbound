@@ -1,4 +1,7 @@
+import type { ListedAddon } from '@unbound-app/contracts/addons';
+
 import { getSetting, setSetting } from '~/settings/unbound';
+import { isNewListing } from '~/marketplace/catalog';
 
 const DAY_MS = 86_400_000;
 const FIRST_VISIT_DAYS = 3;
@@ -31,4 +34,15 @@ export function resetNewListingsSince(): void {
 	since = undefined;
 }
 
-export default { newListingsSince, resetNewListingsSince };
+/**
+ * @description Tells whether an addon is new to this user: listed since their last marketplace visit and within the New window.
+ * @param addon The listed addon.
+ * @returns Whether its card shows the New badge.
+ */
+export function isNewToUser(addon: ListedAddon): boolean {
+	const now = Date.now();
+
+	return isNewListing(addon, now, newListingsSince(now));
+}
+
+export default { newListingsSince, resetNewListingsSince, isNewToUser };
