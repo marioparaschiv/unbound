@@ -82,6 +82,24 @@ export function patchVoiceMessageButton(): void {
 	patcher.react.instead(VoiceMessageButton, 'default', ({ props, original }) =>
 		settings.voiceMessage ? null : original(props),
 	);
+	keepSendButton();
+}
+
+// An empty composer shows the voice message microphone in the send button's place, so without it the send button stays.
+function keepSendButton(): void {
+	const SendButton = metro.findByFilePath(
+		'modules/chat_input/native/accessories/ChatInputSendButton.tsx',
+	)?.default;
+
+	if (typeof SendButton?.type !== 'function') {
+		logger.warn('Send button fallback skipped: Discord moved ChatInputSendButton.');
+
+		return;
+	}
+
+	patcher.react.before(SendButton, 'type', ({ props }) =>
+		settings.voiceMessage ? { ...(props as object), canSendVoiceMessage: false } : undefined,
+	);
 }
 
 /**
