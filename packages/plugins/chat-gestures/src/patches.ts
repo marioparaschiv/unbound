@@ -2,7 +2,7 @@ import { metro, patcher, utils } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
 import type { ReactNode } from 'react';
 
-import { runAction } from '~/lib/actions';
+import { openKeyboard, runAction } from '~/lib/actions';
 import { createTapCounter, type GestureAction } from '~/lib/gestures';
 
 type GestureEvent = { nativeEvent?: { messageId?: string } };
@@ -62,9 +62,17 @@ function wrap(props: ChatProps): void {
 		onTapMessage?.(event);
 	};
 	props.onInitiateReply = (event) =>
-		perform(settings.swipe as GestureAction, target(event), () => onInitiateReply?.(event));
+		perform(settings.swipe as GestureAction, target(event), () => {
+			onInitiateReply?.(event);
+
+			if (props.channelId) openKeyboard(props.channelId);
+		});
 	props.onInitiateEdit = (event) =>
-		perform(settings.swipe as GestureAction, target(event), () => onInitiateEdit?.(event));
+		perform(settings.swipe as GestureAction, target(event), () => {
+			onInitiateEdit?.(event);
+
+			if (props.channelId) openKeyboard(props.channelId);
+		});
 }
 
 /**

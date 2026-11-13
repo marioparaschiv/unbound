@@ -220,7 +220,10 @@ describe('updatesResponseSchema', () => {
 	};
 
 	test('parses an update entry', () => {
-		expect(parse(updatesResponseSchema, { updates: [update] })).toEqual({ updates: [update] });
+		expect(parse(updatesResponseSchema, { updates: [update] })).toEqual({
+			updates: [update],
+			renamed: [],
+		});
 	});
 
 	test('rejects an update without a reason', () => {

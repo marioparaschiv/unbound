@@ -78,6 +78,11 @@ beforeAll(async () => {
 		reason: '1.1.0 and 1.2.0 crash',
 	});
 
+	await seedApprovedAddon(
+		ctx,
+		ownerId,
+		manifest('up.renamed', '1.0.0', { replaces: ['up.retired'] }),
+	);
 	await seedApprovedAddon(ctx, ownerId, manifest('up.fixed', '1.0.0'));
 	await seedVersion(ctx, ownerId, manifest('up.fixed', '1.1.0'));
 	await serveVersion(ctx, { user: admin, via: 'session' }, 'up.fixed', {
@@ -260,7 +265,7 @@ describe('findUpdates', () => {
 					...request,
 					addons: [{ id: 'up.current', version: '1.0.0' }],
 				}),
-			).toEqual({ updates: [] });
+			).toEqual({ updates: [], renamed: [] });
 			expect(statements).toHaveBeenCalledTimes(1);
 		} finally {
 			statements.mockRestore();
@@ -280,7 +285,7 @@ describe('findUpdates', () => {
 				clientVersion: '2.0.0',
 				addons: [{ id: 'up.current', version: '1.0.0', sha256: live?.sha256 }],
 			}),
-		).toEqual({ updates: [] });
+		).toEqual({ updates: [], renamed: [] });
 
 		const { updates } = await findUpdates(ctx, {
 			clientVersion: '2.0.0',
@@ -329,7 +334,7 @@ describe('findUpdates', () => {
 				addons: [{ id: 'up.rolledback', version }],
 			});
 
-		expect(await request('1.0.0')).toEqual({ updates: [] });
+		expect(await request('1.0.0')).toEqual({ updates: [], renamed: [] });
 		expect(
 			(await request('0.9.0')).updates.map((update) => [
 				update.version,
@@ -364,6 +369,19 @@ describe('findUpdates', () => {
 		expect(fromLive.map((update) => [update.version, update.reason])).toEqual([
 			['1.2.0', 'newer'],
 		]);
+	});
+
+	test('names the listed addon that replaces an installed id the store no longer lists', async () => {
+		const { renamed } = await findUpdates(ctx, {
+			clientVersion: '2.0.0',
+			addons: [
+				{ id: 'up.retired', version: '1.0.4' },
+				{ id: 'up.current', version: '1.0.0' },
+				{ id: 'up.unknown', version: '1.0.0' },
+			],
+		});
+
+		expect(renamed).toEqual([{ from: 'up.retired', to: 'up.renamed' }]);
 	});
 
 	test('reads only the listed addons through an index, never a table scan', async () => {

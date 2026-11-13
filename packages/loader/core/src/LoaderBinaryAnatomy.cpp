@@ -391,13 +391,26 @@ std::optional<Certificate> signer(const std::string &cms)
     return std::nullopt;
 }
 
+std::string shortIssuer(std::string issuer)
+{
+    for (const auto &[from, to] :
+         {std::pair<std::string, std::string>{"Worldwide Developer Relations", "WWDR"},
+          {"Certification Authority", "CA"}})
+    {
+        if (size_t found = issuer.find(from); found != std::string::npos)
+        {
+            issuer.replace(found, from.size(), to);
+        }
+    }
+    return issuer;
+}
+
 std::string signerLine(const Certificate &certificate)
 {
-    std::string kind = certificate.commonName.substr(0, certificate.commonName.find(':'));
-    std::string line =
-        certificate.fingerprint + " · " + (kind.empty() ? "unnamed certificate" : kind);
-    return certificate.organizationalUnit.empty() ? line
-                                                  : line + " · " + certificate.organizationalUnit;
+    std::string line = "sha256 " + certificate.fingerprint;
+    return certificate.issuerCommonName.empty()
+               ? line
+               : line + " · " + shortIssuer(certificate.issuerCommonName);
 }
 
 std::string anatomyLine(const Anatomy &anatomy, const std::string &bundlePath)
@@ -416,8 +429,11 @@ std::string anatomyLine(const Anatomy &anatomy, const std::string &bundlePath)
             return !path.starts_with("/System/") && !path.starts_with("/usr/lib/") &&
                    !path.starts_with("@rpath/") && !path.starts_with(bundlePath);
         });
-    parts.push_back(std::to_string(anatomy.dylibs.size()) + " dylibs" +
-                    (injected ? " (" + std::to_string(injected) + " added)" : ""));
+    parts.push_back(std::to_string(anatomy.dylibs.size()) + " dylibs");
+    if (injected)
+    {
+        parts.push_back(std::to_string(injected) + " injected");
+    }
     if (!anatomy.uuid.empty())
     {
         parts.push_back("UUID " + anatomy.uuid.substr(0, 8));

@@ -12,6 +12,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.security.MessageDigest
+import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
 
 object EnvironmentFacts {
     private const val DISCORD_CERTIFICATE = "3c39d23cf9367849a5c699395647fe0e5bfea5a1f1f40d8c717ddc70f8bfa113"
@@ -35,9 +37,11 @@ object EnvironmentFacts {
     }.onFailure { Logger.error(LogCategory.DEFAULT, "Failed to read the environment facts", it) }.getOrDefault("{}")
 
     private fun install(context: Context): JSONObject {
-        val signer = signerDigest(context)
+        val certificate = signingCertificate(context)
+        val signer = certificate?.let { digest(it.encoded) }
         return JSONObject()
             .put("signer", signer ?: "")
+            .put("signerSubject", certificate?.let { subjectOf(it) } ?: "")
             .put("discordSigned", signer == DISCORD_CERTIFICATE)
             .put("patch", patchMode(context))
             .put("splits", context.applicationInfo.splitNames?.size ?: 0)
@@ -53,11 +57,19 @@ object EnvironmentFacts {
         .put("pageSize", Os.sysconf(OsConstants._SC_PAGESIZE))
         .put("webView", webView(context))
 
-    private fun signerDigest(context: Context): String? = runCatching {
+    private fun signingCertificate(context: Context): X509Certificate? = runCatching {
         val info = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
         val signature = info.signingInfo?.apkContentsSigners?.firstOrNull() ?: return null
-        MessageDigest.getInstance("SHA-256").digest(signature.toByteArray()).joinToString("") { "%02x".format(it) }
+        CertificateFactory.getInstance("X.509").generateCertificate(signature.toByteArray().inputStream()) as X509Certificate
     }.getOrNull()
+
+    private fun digest(bytes: ByteArray): String =
+        MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+
+    private fun subjectOf(certificate: X509Certificate): String {
+        val names = certificate.subjectX500Principal.name.split(',').map { it.trim() }
+        return names.firstOrNull { it.startsWith("O=") } ?: names.firstOrNull { it.startsWith("CN=") } ?: ""
+    }
 
     private fun patchMode(context: Context): String {
         val config = runCatching { context.assets.open(LSPATCH_CONFIG).bufferedReader().use { it.readText() } }.getOrNull()

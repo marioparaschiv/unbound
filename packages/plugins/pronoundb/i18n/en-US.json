@@ -16,5 +16,11 @@
 	"PRONOUN_OTHER": "Other pronouns",
 	"PRONOUN_SHE": "She/Her",
 	"PRONOUN_THEY": "They/Them",
-	"PRONOUN_UNSPECIFIED": "No pronouns specified."
+	"PRONOUN_UNSPECIFIED": "No pronouns specified.",
+	"STYLE": "Style",
+	"STYLE_TEXT": "After the time",
+	"STYLE_PILL": "Pill",
+	"PILL_COLOR": "Pill color",
+	"STYLE_CUSTOM": "Custom pill",
+	"PILL_COLOR_SUBTITLE": "Android keeps Discord's tag colors."
 }

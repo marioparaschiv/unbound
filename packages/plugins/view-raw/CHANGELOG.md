@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.7] - 2026-11-13
+
+### Fixed
+
+- The raw sheet uses Discord's sheet header, buttons and code-block colors and font, and follows the theme.
+
 ## [1.0.6] - 2026-11-11
 
 ### Changed

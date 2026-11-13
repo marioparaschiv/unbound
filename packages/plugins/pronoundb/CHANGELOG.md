@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.1] - 2026-11-13
+
+### Fixed
+
+- The pill keeps its text readable under themes: when a theme makes the pill's text and background too close, the text turns black or white.
+
+## [1.1.0] - 2026-11-13
+
+### Added
+
+- Style: show pronouns in a pill like Discord's OP tag, in Discord's tag colors or a color you pick. Android keeps Discord's tag colors.
+
 ## [1.0.4] - 2026-11-11
 
 ### Changed

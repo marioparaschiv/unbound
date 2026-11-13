@@ -84,15 +84,20 @@ const SORTERS: Record<CatalogSort, (a: ListedAddon, b: ListedAddon) => number> =
 };
 
 /**
- * @description Tells whether an addon was first listed within the last `NEW_LISTING_DAYS` days.
+ * @description Tells whether an addon is new to this user: first listed within the last `NEW_LISTING_DAYS` days and after `since`.
  * @param addon The listed addon.
  * @param now The current time in milliseconds.
+ * @param since When the user last looked, in milliseconds; addons listed before it are no longer new to them.
  * @returns `false` when the catalog predates listing dates.
  */
-export function isNewListing(addon: ListedAddon, now: number = Date.now()): boolean {
+export function isNewListing(
+	addon: ListedAddon,
+	now: number = Date.now(),
+	since: number = Number.NEGATIVE_INFINITY,
+): boolean {
 	const listed = addon.createdAt ? Date.parse(addon.createdAt) : Number.NaN;
 
-	return Number.isFinite(listed) && now - listed < NEW_LISTING_DAYS * DAY_MS;
+	return Number.isFinite(listed) && listed > since && now - listed < NEW_LISTING_DAYS * DAY_MS;
 }
 
 /**

@@ -511,6 +511,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/badges-in-chat": {
+      "name": "badges-in-chat",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/better-gif-alt-text": {
       "name": "better-gif-alt-text",
       "dependencies": {
@@ -679,6 +693,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/custom-timestamps": {
+      "name": "custom-timestamps",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/dearrow": {
       "name": "dearrow",
       "dependencies": {
@@ -764,6 +792,20 @@
     },
     "packages/plugins/file-size-on-picker": {
       "name": "file-size-on-picker",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
+    "packages/plugins/find-reply": {
+      "name": "find-reply",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -900,6 +942,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/hide-unusable-emojis": {
+      "name": "hide-unusable-emojis",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/i-love-spam": {
       "name": "i-love-spam",
       "dependencies": {
@@ -970,6 +1026,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/keyword-notify": {
+      "name": "keyword-notify",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/member-count": {
       "name": "member-count",
       "dependencies": {
@@ -994,6 +1064,20 @@
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
         "@unbound-app/cli": "workspace:*",
+        "rollup": "^4.67.5",
+      },
+    },
+    "packages/plugins/message-colors": {
+      "name": "message-colors",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
         "rollup": "^4.67.5",
       },
     },
@@ -1123,8 +1207,8 @@
         "rollup": "^4.67.5",
       },
     },
-    "packages/plugins/no-blocked-messages": {
-      "name": "no-blocked-messages",
+    "packages/plugins/client-side-block": {
+      "name": "client-side-block",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -1471,6 +1555,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/split-large-messages": {
+      "name": "split-large-messages",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/spotify-listen-along": {
       "name": "spotify-listen-along",
       "dependencies": {
@@ -1529,6 +1627,20 @@
     },
     "packages/plugins/timezones": {
       "name": "timezones",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
+    "packages/plugins/tone-indicators": {
+      "name": "tone-indicators",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -2880,6 +2992,7 @@
 
     "babel-plugin-transform-flow-enums": ["babel-plugin-transform-flow-enums@0.0.2", "", { "dependencies": { "@babel/plugin-syntax-flow": "^7.12.1" } }, "sha512-g4aaCrDDOsWjbm0PUUeVnkcVd6AKJsVc/MbnPhEotEpkeJQP6b8nzewohQi7+QS8UyPehOhGWn0nOwjvWpmMvQ=="],
 
+    "badges-in-chat": ["badges-in-chat@workspace:packages/plugins/badges-in-chat"],
     "bail": ["bail@2.0.2", "", {}, "sha512-0xO6mYd7JB2YesxDKplafRpsiOzPt9V02ddPCLbY1xYGPOX24NTyN50qnUxgCPcSoYMhKpAuBTjQoRZCAkUDRw=="],
 
     "balanced-match": ["balanced-match@4.0.4", "", {}, "sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA=="],
@@ -3054,6 +3167,7 @@
 
     "custom-rpc": ["custom-rpc@workspace:packages/plugins/custom-rpc"],
 
+    "custom-timestamps": ["custom-timestamps@workspace:packages/plugins/custom-timestamps"],
     "cwise-compiler": ["cwise-compiler@1.1.3", "", { "dependencies": { "uniq": "^1.0.0" } }, "sha512-WXlK/m+Di8DMMcCjcWr4i+XzcQra9eCdXIJrgh4TUgh0pIS/yJduLxS9JgefsHJ/YVLdgPtXm9r62W92MvanEQ=="],
 
     "date-fns": ["date-fns@4.4.0", "", {}, "sha512-+1UMbeh68lH1SegH83CGWwpb6OHHbpSgr3+s5Eww5M4CAgswBpoWS0AjTOfEJ33HiYKz1hdj/KTFprzXHmq/6w=="],
@@ -3256,6 +3370,7 @@
 
     "finalhandler": ["finalhandler@2.1.1", "", { "dependencies": { "debug": "^4.4.0", "encodeurl": "^2.0.0", "escape-html": "^1.0.3", "on-finished": "^2.4.1", "parseurl": "^1.3.3", "statuses": "^2.0.1" } }, "sha512-S8KoZgRZN+a5rNwqTxlZZePjT/4cnm0ROV70LedRHZ0p8u9fRID0hJUZQpkKLzro8LfmC8sx23bY6tVNxv8pQA=="],
 
+    "find-reply": ["find-reply@workspace:packages/plugins/find-reply"],
     "find-up": ["find-up@5.0.0", "", { "dependencies": { "locate-path": "^6.0.0", "path-exists": "^4.0.0" } }, "sha512-78/PXT1wlLLDgTzDs7sjq9hzz0vXD+zn+7wypEe4fXQxCmdmqfGsEPQxmiCSQI3ajFV91bVSsvNtrJRiW6nGng=="],
 
     "find-up-simple": ["find-up-simple@1.0.1", "", {}, "sha512-afd4O7zpqHeRyg4PfDQsXmlDe2PfdHtJt6Akt8jOWaApLOZk5JXs6VMR29lz03pRe9mpykrRCYIYxaJYcfpncQ=="],
@@ -3364,6 +3479,7 @@
 
     "hide-buttons": ["hide-buttons@workspace:packages/plugins/hide-buttons"],
 
+    "hide-unusable-emojis": ["hide-unusable-emojis@workspace:packages/plugins/hide-unusable-emojis"],
     "highlight.js": ["highlight.js@11.12.0", "", {}, "sha512-nbfWpyRMcMrPMmDwJB+dhX/eiaPKtc2RB+0QZskqJ3WjRA/FDS0e9hZrx8EC/lbEv8gXy98FcDbNa/dspAaJMg=="],
 
     "hono": ["hono@4.13.16", "", {}, "sha512-AOLOEhvrV+iH92xXCnFr/5+3KjPKcI3xP63XJtX5spAnkznPdHijlIsUTpi7/9EhWqrTCekw5c5zh1K+YsVw7A=="],
@@ -3528,6 +3644,7 @@
 
     "keyv": ["keyv@5.6.0", "", { "dependencies": { "@keyv/serialize": "^1.1.1" } }, "sha512-CYDD3SOtsHtyXeEORYRx2qBtpDJFjRTGXUtmNEMGyzYOKj1TE3tycdlho7kA1Ufx9OYWZzg52QFBGALTirzDSw=="],
 
+    "keyword-notify": ["keyword-notify@workspace:packages/plugins/keyword-notify"],
     "kysely": ["kysely@0.29.8", "", {}, "sha512-ixHU1H4R+LeC5Y0nAhYgiGRFpFRHm2DXKEmJSs/vbes9sKXyssyzxzE/NYiOJX5fY0BL28biCre3GqlCqUwyXQ=="],
 
     "lazyness": ["lazyness@1.2.0", "", {}, "sha512-KenL6EFbwxBwRxG93t0gcUyi0Nw0Ub31FJKN1laA4UscdkL1K1AxUd0gYZdcLU3v+x+wcFi4uQKS5hL+fk500g=="],
@@ -3696,6 +3813,7 @@
 
     "merge-stream": ["merge-stream@2.0.0", "", {}, "sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w=="],
 
+    "message-colors": ["message-colors@workspace:packages/plugins/message-colors"],
     "message-latency": ["message-latency@workspace:packages/plugins/message-latency"],
 
     "message-link-embeds": ["message-link-embeds@workspace:packages/plugins/message-link-embeds"],
@@ -3862,7 +3980,7 @@
 
     "nextgen-events": ["nextgen-events@1.5.3", "", {}, "sha512-P6qw6kenNXP+J9XlKJNi/MNHUQ+Lx5K8FEcSfX7/w8KJdZan5+BB5MKzuNgL2RTjHG1Svg8SehfseVEp8zAqwA=="],
 
-    "no-blocked-messages": ["no-blocked-messages@workspace:packages/plugins/no-blocked-messages"],
+    "client-side-block": ["client-side-block@workspace:packages/plugins/client-side-block"],
 
     "no-pending-count": ["no-pending-count@workspace:packages/plugins/no-pending-count"],
 
@@ -4262,6 +4380,7 @@
 
     "spdx-license-ids": ["spdx-license-ids@3.0.24", "", {}, "sha512-cLS9TtWkIQFyLkJ3/5aFQAOHOSKTlOs/7WDut/XPSdjom1fJhUdkepeJAKXa9Y05+FabHd0sti+Et559vDtkpQ=="],
 
+    "split-large-messages": ["split-large-messages@workspace:packages/plugins/split-large-messages"],
     "split2": ["split2@1.0.0", "", { "dependencies": { "through2": "~2.0.0" } }, "sha512-NKywug4u4pX/AZBB1FCPzZ6/7O+Xhz1qMVbzTvvKvikjO99oPN87SkK08mEY9P63/5lWjK+wgOOgApnTg5r6qg=="],
 
     "spotify-listen-along": ["spotify-listen-along@workspace:packages/plugins/spotify-listen-along"],
@@ -4360,6 +4479,7 @@
 
     "toidentifier": ["toidentifier@1.0.1", "", {}, "sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA=="],
 
+    "tone-indicators": ["tone-indicators@workspace:packages/plugins/tone-indicators"],
     "translate": ["translate@workspace:packages/plugins/translate"],
 
     "traverse": ["traverse@0.6.8", "", {}, "sha512-aXJDbk6SnumuaZSANd21XAo15ucCDE38H4fkqiGsc3MhCK+wOlZvLP9cB/TvpHT0mOyWgC4Z8EwRlzqYSUzdsA=="],

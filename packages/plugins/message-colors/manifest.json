@@ -1,0 +1,21 @@
+{
+	"id": "unbound.message-colors",
+	"name": "Message Colors",
+	"description": "Shows hex, rgb() and hsl() colors in messages as pills tinted with that color.",
+	"authors": [
+		{
+			"name": "Hen",
+			"id": "279266228151779329"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.1",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "PaintPaletteIcon",
+	"main": "index.tsx"
+}

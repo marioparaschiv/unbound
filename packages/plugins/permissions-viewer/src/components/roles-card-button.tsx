@@ -7,12 +7,15 @@ import { openMemberPermissionsSheet } from '~/lib/sheets';
 import { ROW_ICON } from '~/lib/constants';
 import { GuildMemberStore } from '~/lib/modules';
 
+import useStyles from '~/components/permission-icons.style';
+
 type RolesCardButtonProps = {
 	guildId: string;
 	userId: string;
 };
 
 function RolesCardButton({ guildId, userId }: RolesCardButtonProps) {
+	const styles = useStyles();
 	if (!GuildMemberStore.getMember(guildId, userId)) return null;
 
 	const icon = assets.getIdByName(ROW_ICON);
@@ -32,9 +35,7 @@ function RolesCardButton({ guildId, userId }: RolesCardButtonProps) {
 					justifyContent: 'center',
 				}}
 			>
-				{icon != null ? (
-					<Image source={icon} style={{ height: 16, tintColor: '#949ba4', width: 16 }} />
-				) : null}
+				{icon != null ? <Image source={icon} style={[styles.small, styles.muted]} /> : null}
 				<Discord.Text variant='text-sm/semibold' color='text-muted'>
 					{messages.VIEW_PERMISSIONS}
 				</Discord.Text>

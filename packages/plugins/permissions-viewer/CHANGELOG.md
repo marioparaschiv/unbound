@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4] - 2026-11-13
+
+### Fixed
+
+- Allowed, denied, owner and role icons take their colors from the theme.
+
 ## [1.0.3] - 2026-11-11
 
 ### Changed

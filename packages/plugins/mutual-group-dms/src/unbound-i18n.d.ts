@@ -3,9 +3,9 @@
 declare module '@unbound-app/i18n' {
 	/** Every en-US message, read in the user's locale. */
 	export type Messages = {
-		/** {count, plural, one {# mutual group DM} other {# mutual group DMs}} */
+		/** {count, plural, one {# Mutual Group} other {# Mutual Groups}} */
 		readonly MUTUAL_GROUP_DMS: string;
-		/** Mutual group DMs */
+		/** Mutual Groups */
 		readonly MUTUAL_GROUP_DMS_TITLE: string;
 	};
 

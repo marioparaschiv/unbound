@@ -1,95 +1,62 @@
-import { Pressable, Text, View } from 'react-native';
+import { Discord } from '@unbound-app/api/metro/components';
+import { Pressable, View, type ColorValue } from 'react-native';
+import type { ComponentType } from 'react';
+import { metro } from '@unbound-app/api';
 
-import type { ReviewColors } from '~/lib/colors';
+import useStyles from '~/components/review-item.style';
 import type { Vote } from '~/lib/votes';
 
-type VoteButtonProps = {
-	glyph: string;
-	active: boolean;
-	activeColor: string;
-	busy: boolean;
-	colors: ReviewColors;
-	onPress: () => void;
-};
+type IconProps = { size?: string; color?: ColorValue };
 
 type VoteControlsProps = {
 	vote: Vote;
 	score: number;
 	busy: boolean;
-	colors: ReviewColors;
 	onVote: (isUpvote: boolean) => void;
 };
 
-function VoteButton({ glyph, active, activeColor, busy, colors, onPress }: VoteButtonProps) {
-	return (
-		<Pressable
-			disabled={busy}
-			hitSlop={6}
-			onPress={onPress}
-			style={({ pressed }) => ({
-				alignItems: 'center',
-				backgroundColor: active ? `${activeColor}33` : 'transparent',
-				borderRadius: 8,
-				height: 36,
-				justifyContent: 'center',
-				opacity: pressed || busy ? 0.6 : 1,
-				width: 36,
-			})}
-		>
-			<Text
-				style={{
-					color: active ? activeColor : colors.muted,
-					fontSize: 18,
-					fontWeight: '800',
-				}}
-			>
-				{glyph}
-			</Text>
-		</Pressable>
-	);
+function icon(name: string): ComponentType<IconProps> | undefined {
+	return metro.findByProps(name)?.[name] as ComponentType<IconProps> | undefined;
 }
 
-function VoteControls({ vote, score, busy, colors, onVote }: VoteControlsProps) {
+function VoteControls({ vote, score, busy, onVote }: VoteControlsProps) {
+	const styles = useStyles();
+	const Up = icon('ThumbsUpIcon');
+	const Down = icon('ThumbsDownIcon');
+
 	return (
-		<View
-			style={{
-				alignItems: 'center',
-				backgroundColor: colors.surfaceAlt,
-				borderColor: colors.border,
-				borderRadius: 10,
-				borderWidth: 1,
-				flexDirection: 'row',
-				height: 38,
-				overflow: 'hidden',
-			}}
-		>
-			<VoteButton
-				glyph='▲'
-				active={vote === true}
-				activeColor={colors.positive}
-				busy={busy}
-				colors={colors}
+		<View style={styles.footer}>
+			<Pressable
+				accessibilityRole='button'
+				disabled={busy}
+				hitSlop={8}
 				onPress={() => onVote(true)}
-			/>
-			<Text
-				style={{
-					color: colors.text,
-					fontSize: 14,
-					fontWeight: '800',
-					minWidth: 24,
-					textAlign: 'center',
-				}}
+				style={styles.vote}
 			>
-				{score}
-			</Text>
-			<VoteButton
-				glyph='▼'
-				active={vote === false}
-				activeColor={colors.danger}
-				busy={busy}
-				colors={colors}
+				{Up ? (
+					<Up size='xs' color={(vote === true ? styles.upvoted : styles.idle).color} />
+				) : null}
+				<Discord.Text
+					variant='text-sm/semibold'
+					color={vote === true ? 'text-feedback-positive' : 'text-muted'}
+				>
+					{String(score)}
+				</Discord.Text>
+			</Pressable>
+			<Pressable
+				accessibilityRole='button'
+				disabled={busy}
+				hitSlop={8}
 				onPress={() => onVote(false)}
-			/>
+				style={styles.vote}
+			>
+				{Down ? (
+					<Down
+						size='xs'
+						color={(vote === false ? styles.downvoted : styles.idle).color}
+					/>
+				) : null}
+			</Pressable>
 		</View>
 	);
 }

@@ -1,10 +1,19 @@
 {
-	"NITRO_FIRST": "Prefer Nitro colors",
-	"NITRO_FIRST_SUBTITLE": "When a profile has Nitro theme colors and hidden ones, show the Nitro colors.",
+	"NITRO_FIRST": "Prefer Nitro customization",
+	"NITRO_FIRST_SUBTITLE": "When a profile has Nitro theme colors or a Nitro effect as well as hidden ones, show the Nitro ones.",
+	"INCLUDE_COLORS": "Include theme colors",
+	"INCLUDE_COLORS_SUBTITLE": "Turn off to hide only a profile effect in the bio code.",
 	"PRIMARY": "Primary color",
 	"ACCENT": "Accent color",
+	"EFFECT": "Profile effect",
+	"EFFECT_SUBTITLE": "Pick one of Discord's profile effects for the bio code.",
+	"SEARCH_EFFECTS": "Search effects",
+	"NO_EFFECT": "None",
+	"EFFECT_PICKED": "Profile effect set to {effect}. Copy the bio code again.",
+	"EFFECT_CLEARED": "Profile effect removed. Copy the bio code again.",
 	"COPY_CODE": "Copy bio code",
 	"COPY_CODE_SUBTITLE": "Paste it at the end of your bio; it is invisible.",
 	"COPIED": "Copied. Paste it at the end of your bio.",
+	"NOTHING_TO_COPY": "Pick an effect or include the theme colors first.",
 	"BAD_COLOR": "Both colors need to be #rrggbb."
 }

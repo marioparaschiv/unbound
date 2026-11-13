@@ -19,5 +19,7 @@
 	"DELETE_TITLE": "Delete message",
 	"DELETE_BODY": "Delete this message? This cannot be undone.",
 	"DELETE": "Delete",
-	"PLUGIN": "Chat Gestures"
+	"PLUGIN": "Chat Gestures",
+	"OPEN_KEYBOARD": "Open keyboard after reply or edit",
+	"OPEN_KEYBOARD_SUBTITLE": "Puts the cursor in the message box when a gesture starts a reply or an edit."
 }

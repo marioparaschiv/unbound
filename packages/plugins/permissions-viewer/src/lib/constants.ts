@@ -14,5 +14,3 @@ export const ROW_ICON = 'ShieldUserIcon';
 export const ROLES_CARD_PATH = 'modules/user_profile/native/UserProfileRolesCard.tsx';
 
 export const FALLBACK_ROLE_COLOR = '#99aab5';
-export const ALLOWED_COLOR = '#23a55a';
-export const DENIED_COLOR = '#f23f43';

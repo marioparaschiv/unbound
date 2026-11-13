@@ -1,9 +1,9 @@
 import { settings, useSetting } from '@unbound-app/settings';
-import { dialogs, flux, metro, patcher } from '@unbound-app/api';
-import { Discord } from '@unbound-app/api/metro/components';
-import { format, messages } from '@unbound-app/i18n';
-import { cloneElement, useEffect, useState, type ReactElement } from 'react';
-import { Pressable } from 'react-native';
+import { patchAboutCard } from '@unbound-plugins/shared/profile/patch-about-card';
+import { AboutSection } from '@unbound-plugins/shared/profile/about-section';
+import { dialogs, flux } from '@unbound-app/api';
+import { messages } from '@unbound-app/i18n';
+import { useEffect, useState } from 'react';
 
 import TimezoneEditor from '~/components/timezone-editor';
 import { showsFor, timezoneOf } from '~/lib/timezone';
@@ -18,9 +18,7 @@ import {
 
 const TICK_MS = 30_000;
 
-type PrimaryInfoProps = {
-	user?: { id?: string; bot?: boolean };
-};
+type UserStore = { getUser(id: string): { bot?: boolean } | undefined };
 
 function editTimezone(userId: string): void {
 	dialogs.showDialog({
@@ -59,64 +57,40 @@ function LocalTime({ userId }: { userId: string }) {
 	useSetting('discordClock');
 
 	const zone = timezoneOf(userId);
-	const label = zone
-		? format('LOCAL_TIME_ZONE', {
-				time: timeIn(
-					now,
-					zone,
-					twelveHour(settings.clock as Clock, settings.discordClock as SeenClock),
-				),
-				zone,
-			})
-		: messages.SET_TIMEZONE;
+	const time = zone
+		? `${timeIn(now, zone, twelveHour(settings.clock as Clock, settings.discordClock as SeenClock))} · ${zone}`
+		: undefined;
 
 	return (
-		<Pressable
-			accessibilityRole='button'
+		<AboutSection
+			title={messages.LOCAL_TIME_TITLE}
+			icon='ClockIcon'
+			link={!time}
 			onPress={() => editTimezone(userId)}
-			style={{ marginTop: 8 }}
+			accessibilityHint={messages.SET_TIMEZONE}
 		>
-			<Discord.Text variant='text-sm/medium' color='text-muted'>
-				{`🕒 ${label}`}
-			</Discord.Text>
-		</Pressable>
+			{time ?? messages.SET_TIMEZONE}
+		</AboutSection>
 	);
 }
 
 /**
- * @description Shows a user's local time under their name on their profile; tapping it sets their timezone by hand.
+ * @description Adds a Local Time section to a user's About card; tapping it sets their timezone by hand.
  */
 export function patchProfileTime(): void {
-	const UserProfilePrimaryInfo = metro.findByFilePath(
-		'modules/user_profile/native/UserProfilePrimaryInfo.tsx',
-	);
+	const Users = flux.getStore('User') as unknown as UserStore;
+	const found = patchAboutCard({
+		key: 'timezones-local-time',
+		render({ userId }) {
+			const user = Users.getUser(userId);
 
-	if (!UserProfilePrimaryInfo) {
-		logger.warn('Profile time skipped: Discord moved UserProfilePrimaryInfo.');
+			if (!settings.profiles || user?.bot || !showsFor(userId)) return;
 
-		return;
-	}
-
-	patcher.react.after(UserProfilePrimaryInfo, 'default', ({ props, result }) => {
-		const user = (props as PrimaryInfoProps | undefined)?.user;
-
-		if (!settings.profiles || !result || !user?.id || user.bot || !showsFor(user.id)) return;
-
-		const time = <LocalTime key='timezones-local-time' userId={user.id} />;
-		const element = result as ReactElement<{ children?: unknown }>;
-		const children = element.props?.children;
-
-		if (children === undefined) {
-			return (
-				<>
-					{result}
-					{time}
-				</>
-			);
-		}
-
-		return cloneElement(element, { children: [...[children].flat(), time] });
+			return <LocalTime userId={userId} />;
+		},
 	});
+
+	if (!found) logger.warn('Profile time skipped: Discord moved UserProfileAboutMeCard.');
 }
 
 export default { patchProfileTime };

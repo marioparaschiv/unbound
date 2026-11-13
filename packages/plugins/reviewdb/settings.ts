@@ -15,11 +15,6 @@ export default defineSettings(
 			title: 'HIDE_SYSTEM_REVIEWS',
 			subtitle: 'HIDE_SYSTEM_REVIEWS_SUBTITLE',
 		}),
-		themeSheet: setting.boolean({
-			default: false,
-			title: 'THEME_SHEET',
-			subtitle: 'THEME_SHEET_SUBTITLE',
-		}),
 		hideBlockedUsers: setting.boolean({
 			default: true,
 			title: 'HIDE_BLOCKED_USERS',

@@ -39,6 +39,18 @@ declare module '@unbound-app/i18n' {
 		readonly PRONOUN_THEY: string;
 		/** No pronouns specified. */
 		readonly PRONOUN_UNSPECIFIED: string;
+		/** Style */
+		readonly STYLE: string;
+		/** After the time */
+		readonly STYLE_TEXT: string;
+		/** Pill */
+		readonly STYLE_PILL: string;
+		/** Pill color */
+		readonly PILL_COLOR: string;
+		/** Custom pill */
+		readonly STYLE_CUSTOM: string;
+		/** Android keeps Discord's tag colors. */
+		readonly PILL_COLOR_SUBTITLE: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

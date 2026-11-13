@@ -141,6 +141,8 @@ export const addonManifestSchema = superRefine(
 			assets: Type.Optional(addonAssetsSchema),
 			/** Marks a plugin other plugins build on, which the plugin list hides by default. */
 			library: Type.Optional(Type.Boolean()),
+			/** The ids this addon was published under before; clients that still have one move to this addon. */
+			replaces: Type.Optional(Type.Array(addonIdSchema, { maxItems: 8 })),
 			/** The addons this one needs, by id, each with the semver range it accepts. */
 			dependencies: Type.Optional(
 				Type.Record(addonIdSchema, Type.String({ minLength: 1 }), {

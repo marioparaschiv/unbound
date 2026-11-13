@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0] - 2026-11-13
+
+### Changed
+
+- Reviews open from a Reviews section in the profile's About card, styled like Discord's own sections, instead of a button.
+- The reviews sheet uses Discord's sheet header, notices, text area and buttons; reviews read like messages, with thumbs for votes and long-press actions in Discord's action sheet.
+
+### Removed
+
+- Theme reviews with the profile: the sheet follows Discord's theme.
+
 ## [1.1.0] - 2026-11-13
 
 ### Added

@@ -1,5 +1,6 @@
 import { messages } from '@unbound-app/i18n';
-import { Pressable, Text, View } from 'react-native';
+import { Discord } from '@unbound-app/api/metro/components';
+import { View } from 'react-native';
 import { useState } from 'react';
 
 import { getEmojiMarkup, getExpressionLink, type Expression } from '~/lib/expression';
@@ -7,7 +8,7 @@ import { copyText, isFavoriteSticker, setFavoriteSticker } from '~/lib/actions';
 import { closeExpressionSheet, openCloneSheet } from '~/lib/sheets';
 import { notifyError } from '~/lib/notify';
 
-import styles from '~/components/expression-action-bar.style';
+import useStyles from '~/components/expression-action-bar.style';
 
 type ExpressionActionBarProps = {
 	expression: Expression;
@@ -21,20 +22,18 @@ type BarButtonProps = {
 };
 
 function BarButton({ label, onPress, disabled = false }: BarButtonProps) {
+	const styles = useStyles();
+
 	return (
-		<Pressable
-			disabled={disabled}
-			onPress={onPress}
-			style={({ pressed }) => [
-				styles.button,
-				pressed && styles.pressed,
-				disabled && styles.disabled,
-			]}
-		>
-			<Text numberOfLines={1} style={styles.label}>
-				{label}
-			</Text>
-		</Pressable>
+		<View style={styles.button}>
+			<Discord.Button
+				text={label}
+				variant='secondary'
+				size='sm'
+				disabled={disabled}
+				onPress={onPress}
+			/>
+		</View>
 	);
 }
 
@@ -43,6 +42,8 @@ function ExpressionActionBar({ expression, sheetKey }: ExpressionActionBarProps)
 		() => expression.kind === 'sticker' && isFavoriteSticker(expression),
 	);
 	const [updatingFavorite, setUpdatingFavorite] = useState(false);
+
+	const styles = useStyles();
 
 	function close() {
 		closeExpressionSheet(expression, sheetKey);

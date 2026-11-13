@@ -3,19 +3,11 @@ import { settings } from '@unbound-app/settings';
 
 import { realExpressions, type ReceivedMessage } from '~/lib/receive';
 
-type Message = ReceivedMessage & { author?: { id?: string } };
+type MessageAction = { message?: ReceivedMessage };
 
-type MessageAction = { message?: Message };
+type MessagesAction = { messages?: ReceivedMessage[] };
 
-type MessagesAction = { messages?: Message[] };
-
-function fromSomeoneElse(message: Message): boolean {
-	return message.author?.id !== flux.getStore('User').getCurrentUser()?.id;
-}
-
-function turnBack(message: Message): Message {
-	if (!fromSomeoneElse(message)) return message;
-
+function turnBack(message: ReceivedMessage): ReceivedMessage {
 	return (
 		realExpressions(message, {
 			emojis: settings.receiveEmojis,
@@ -25,8 +17,8 @@ function turnBack(message: Message): Message {
 }
 
 /**
- * @description Shows fake emojis and stickers that others sent as links as real ones. Intercepts `MESSAGE_CREATE`,
- * `MESSAGE_UPDATE` and `LOAD_MESSAGES_SUCCESS` to rewrite each message before Discord stores it; your own stay as sent.
+ * @description Shows fake emojis and stickers sent as links, yours included, as real ones. Intercepts `MESSAGE_CREATE`,
+ * `MESSAGE_UPDATE` and `LOAD_MESSAGES_SUCCESS` to rewrite each message before Discord stores it.
  */
 export function interceptReceivedMessages(): void {
 	if (!settings.receiveEmojis && !settings.receiveStickers) return;

@@ -1,4 +1,5 @@
-import { Animated, KeyboardAvoidingView, Pressable, Text, View } from 'react-native';
+import { Animated, KeyboardAvoidingView, Pressable, View } from 'react-native';
+import { Discord } from '@unbound-app/api/metro/components';
 import { useEffect, useRef, useState } from 'react';
 import { format, messages } from '@unbound-app/i18n';
 import { metro } from '@unbound-app/api';
@@ -9,6 +10,7 @@ import type { Sticker } from '~/lib/types';
 import { MAX_PREVIEW_URLS, MESSAGE_ROW_TYPE, Timing } from '~/lib/constants';
 import { createDraftMessage } from '~/lib/draft-message';
 import { applyTextReplace } from '~/lib/text-replace';
+import useStyles from '~/components/preview-overlay.style';
 
 type PreviewOverlayProps = {
 	channelId: string;
@@ -50,6 +52,7 @@ function useLinkEmbeds(content: string): LinkEmbed[] {
 }
 
 function MessagePreview({ channelId, modules, content, stickers, embeds }: MessagePreviewProps) {
+	const styles = useStyles();
 	const { ChatItem, MessageRecord, RowManager } = modules;
 	const { default: Row } = ChatItem;
 
@@ -63,14 +66,19 @@ function MessagePreview({ channelId, modules, content, stickers, embeds }: Messa
 		return <Row rowGenerator={rowGenerator} message={message} />;
 	} catch (error) {
 		return (
-			<Text style={{ color: '#ff7b72', paddingHorizontal: 14 }}>
+			<Discord.Text
+				variant='text-sm/normal'
+				color='text-feedback-critical'
+				style={styles.error}
+			>
 				{format('PREVIEW_FAILED', { reason: (error as Error)?.message })}
-			</Text>
+			</Discord.Text>
 		);
 	}
 }
 
 function PreviewOverlay({ content, onClose, ...props }: PreviewOverlayProps) {
+	const styles = useStyles();
 	const rendered = applyTextReplace(content);
 	const embeds = useLinkEmbeds(rendered);
 	const opacity = useRef(new Animated.Value(0)).current;
@@ -115,24 +123,14 @@ function PreviewOverlay({ content, onClose, ...props }: PreviewOverlayProps) {
 				keyboardVerticalOffset={0}
 				style={{ flex: 1, justifyContent: 'center' }}
 			>
-				<View
-					style={{
-						backgroundColor: '#2b2d31',
-						borderRadius: 14,
-						paddingVertical: 12,
-						maxHeight: '70%',
-					}}
-				>
-					<Text
-						style={{
-							color: '#f2f3f5',
-							fontWeight: '600',
-							paddingHorizontal: 14,
-							paddingBottom: 10,
-						}}
+				<View style={styles.card}>
+					<Discord.Text
+						variant='heading-sm/semibold'
+						color='text-strong'
+						style={styles.title}
 					>
 						{messages.MESSAGE_PREVIEW}
-					</Text>
+					</Discord.Text>
 					<MessagePreview {...props} content={rendered} embeds={embeds} />
 				</View>
 			</KeyboardAvoidingView>

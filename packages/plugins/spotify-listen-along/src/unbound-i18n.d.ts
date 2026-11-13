@@ -11,10 +11,18 @@ declare module '@unbound-app/i18n' {
 		readonly PLAY_SOMETHING: string;
 		/** Listen along with someone else, not yourself. */
 		readonly YOURSELF: string;
-		/** You're already along for this ride. */
-		readonly ALREADY_LISTENING: string;
 		/** Spotify is not detected. */
 		readonly NOT_DETECTED: string;
+		/** Spotify only lets Premium accounts listen along. */
+		readonly PREMIUM_REQUIRED: string;
+		/** Open Spotify on a device, then try again. */
+		readonly NO_DEVICE: string;
+		/** Spotify didn't take the request. Try again. */
+		readonly SYNC_FAILED: string;
+		/** Stopped listening along. */
+		readonly STOPPED_LISTENING: string;
+		/** Stop listening along */
+		readonly STOP_LISTENING: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

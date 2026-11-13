@@ -1,45 +1,33 @@
-import { metro, patcher } from '@unbound-app/api';
-import type { ReactNode } from 'react';
+import { patchAboutCard } from '@unbound-plugins/shared/profile/patch-about-card';
+import { AboutSection } from '@unbound-plugins/shared/profile/about-section';
+import { messages } from '@unbound-app/i18n';
 
-import ReviewsButton from '~/components/reviews-button';
+import { openReviewsSheet } from '~/components/reviews-sheet';
+import { UserStore } from '~/lib/modules';
 
-type ProfileCardProps = {
-	title?: ReactNode;
-	children?: ReactNode;
-};
+function openReviews(userId: string): void {
+	const user = UserStore.getUser(userId);
 
-function findUserId({ title, children }: ProfileCardProps): string | undefined {
-	if (title || !Array.isArray(children)) return;
-
-	for (const child of children) {
-		const userId = child?.props?.userId;
-
-		if (typeof userId === 'string') return userId;
-	}
+	openReviewsSheet(userId, user?.globalName ?? user?.username ?? messages.USER);
 }
 
 /**
- * @description Adds a View Reviews button under the user info card on profiles, by patching the render of `UserProfileCard`.
+ * @description Adds a Reviews section to profiles' About cards; tapping it opens the user's ReviewDB reviews.
  */
 export function patchUserProfileCard(): void {
-	const UserProfileCard = metro.findByFilePath('modules/user_profile/native/UserProfileCard.tsx');
-
-	if (!UserProfileCard) {
-		logger.warn('Reviews button skipped: Discord moved UserProfileCard.');
-
-		return;
-	}
-
-	patcher.react.after(UserProfileCard, 'default', ({ props, result }) => {
-		const userId = findUserId(props as ProfileCardProps);
-
-		if (!userId) return;
-
-		return (
-			<>
-				{result}
-				<ReviewsButton userId={userId} />
-			</>
-		);
+	const found = patchAboutCard({
+		key: 'reviewdb-reviews',
+		render: ({ userId }) => (
+			<AboutSection
+				title={messages.REVIEWS_TITLE}
+				icon='StarIcon'
+				link
+				onPress={() => openReviews(userId)}
+			>
+				{messages.VIEW_REVIEWS}
+			</AboutSection>
+		),
 	});
+
+	if (!found) logger.warn('Reviews section skipped: Discord moved UserProfileAboutMeCard.');
 }

@@ -58,7 +58,7 @@ const launchSchema = Type.Object({
 const environmentSchema = Type.Object({
 	signer: Type.Optional(text(160)),
 	binary: Type.Optional(text(160)),
-	resign: Type.Optional(Type.Array(text(64), { maxItems: 12 })),
+	osBeta: Type.Optional(text(32)),
 	install: Type.Optional(text(200)),
 	markers: Type.Optional(Type.Array(text(64), { maxItems: 16 })),
 	https: Type.Optional(

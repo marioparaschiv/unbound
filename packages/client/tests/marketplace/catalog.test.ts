@@ -128,6 +128,18 @@ describe('queryCatalog', () => {
 		expect(isNewListing(listing('p.c'), now)).toBe(false);
 	});
 
+	test('counts an addon as new only when it was listed after the last visit', () => {
+		const now = Date.parse('2026-11-13T00:00:00.000Z');
+		const since = Date.parse('2026-11-10T00:00:00.000Z');
+
+		expect(
+			isNewListing({ ...listing('p.a'), createdAt: '2026-11-12T00:00:00.000Z' }, now, since),
+		).toBe(true);
+		expect(
+			isNewListing({ ...listing('p.b'), createdAt: '2026-11-05T00:00:00.000Z' }, now, since),
+		).toBe(false);
+	});
+
 	test('does not reorder the stored catalog', () => {
 		const before = addons.map((addon) => addon.id);
 

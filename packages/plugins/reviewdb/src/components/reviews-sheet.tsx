@@ -1,14 +1,13 @@
 import { openSheet, type SheetProps } from '@unbound-plugins/shared/action-sheets/open-sheet';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, View } from 'react-native';
 import { Discord } from '@unbound-app/api/metro/components';
 import { useSetting } from '@unbound-app/settings';
-import { messages } from '@unbound-app/i18n';
+import { format, messages } from '@unbound-app/i18n';
 import { useCallback, useEffect, useState } from 'react';
 
 import ReviewComposer from '~/components/review-composer';
-import ReviewsHeader from '~/components/reviews-header';
-import { profileThemeColors, RelationshipStore, UserStore } from '~/lib/modules';
-import { getReviewColors, themedReviewColors } from '~/lib/colors';
+import useStyles from '~/components/reviews-sheet.style';
+import { RelationshipStore, UserStore } from '~/lib/modules';
 import { ReviewType } from '~/lib/entities';
 import ReviewItem from '~/components/review-item';
 import type { UserReviewsData } from '~/lib/entities';
@@ -21,11 +20,8 @@ type ReviewsSheetProps = {
 } & SheetProps;
 
 function ReviewsSheet({ discordId, name, onClose }: ReviewsSheetProps) {
-	const themeSheet = useSetting('themeSheet');
 	const hideSystemReviews = useSetting('hideSystemReviews');
-	const colors = themeSheet
-		? themedReviewColors(getReviewColors(), profileThemeColors(discordId))
-		: getReviewColors();
+	const styles = useStyles();
 	const [data, setData] = useState<UserReviewsData | null>(null);
 	const [loading, setLoading] = useState(true);
 
@@ -72,98 +68,58 @@ function ReviewsSheet({ discordId, name, onClose }: ReviewsSheetProps) {
 	);
 	const hasOwnReview = reviews.some((review) => review.sender.discordID === myId);
 
+	const systemReviews = (data?.reviews ?? []).filter(
+		(review) => review.type === ReviewType.System && !hideSystemReviews,
+	);
+	const userReviews = reviews.filter((review) => review.type !== ReviewType.System);
+
 	return (
 		<Discord.ActionSheet startExpanded>
-			<ScrollView
-				contentContainerStyle={{
-					backgroundColor: colors.page,
-					gap: 12,
-					padding: 16,
-					paddingBottom: 32,
-				}}
-				keyboardShouldPersistTaps='handled'
-				style={{
-					backgroundColor: colors.page,
-					borderTopLeftRadius: 20,
-					borderTopRightRadius: 20,
-					overflow: 'hidden',
-				}}
-			>
-				<ReviewsHeader
-					name={name}
-					reviewCount={data?.reviewCount ?? reviews.length}
-					authorized={authorized}
-					colors={colors}
-				/>
+			<Discord.BottomSheetTitleHeader
+				title={format('REVIEWS_FOR', { name })}
+				subtitle={format('REVIEW_COUNT', {
+					count: data?.reviewCount ?? userReviews.length,
+				})}
+			/>
+			<ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps='handled'>
+				{systemReviews.map((review) => (
+					<Discord.InlineNotice
+						key={review.id}
+						type='info'
+						title={review.sender.username}
+						message={review.comment}
+					/>
+				))}
 
-				{loading ? (
-					<View
-						style={{
-							alignItems: 'center',
-							backgroundColor: colors.surface,
-							borderColor: colors.border,
-							borderRadius: 16,
-							borderWidth: 1,
-							gap: 8,
-							padding: 28,
-						}}
-					>
-						<ActivityIndicator color={colors.link} />
-						<Text style={{ color: colors.muted, fontSize: 14 }}>
-							{messages.LOADING_REVIEWS}
-						</Text>
-					</View>
-				) : null}
+				{loading ? <ActivityIndicator /> : null}
 
-				{!loading && !reviews.length ? (
-					<View
-						style={{
-							alignItems: 'center',
-							backgroundColor: colors.surface,
-							borderColor: colors.border,
-							borderRadius: 16,
-							borderWidth: 1,
-							gap: 6,
-							padding: 24,
-						}}
-					>
-						<Text style={{ color: colors.text, fontSize: 17, fontWeight: '800' }}>
+				{!loading && !userReviews.length ? (
+					<View style={styles.empty}>
+						<Discord.Text variant='heading-md/semibold' color='text-strong'>
 							{messages.NO_REVIEWS}
-						</Text>
-						<Text style={{ color: colors.muted, fontSize: 14, textAlign: 'center' }}>
+						</Discord.Text>
+						<Discord.Text variant='text-sm/normal' color='text-muted'>
 							{messages.NO_REVIEWS_SUBTITLE}
-						</Text>
+						</Discord.Text>
 					</View>
 				) : null}
 
-				{reviews.map((review) => (
+				{userReviews.map((review) => (
 					<ReviewItem
 						key={review.id}
 						review={review}
 						profileId={discordId}
 						hideTimestamps={hideTimestamps}
-						colors={colors}
 						onChanged={refetch}
 					/>
 				))}
 
 				{data?.hasNextPage && !loading ? (
-					<Pressable
+					<Discord.Button
+						text={messages.LOAD_MORE}
+						variant='secondary'
 						onPress={() => void load(data.reviews.length)}
-						style={({ pressed }) => ({
-							alignItems: 'center',
-							backgroundColor: colors.surfaceAlt,
-							borderColor: colors.border,
-							borderRadius: 12,
-							borderWidth: 1,
-							opacity: pressed ? 0.7 : 1,
-							paddingVertical: 13,
-						})}
-					>
-						<Text style={{ color: colors.link, fontSize: 14, fontWeight: '800' }}>
-							{messages.LOAD_MORE}
-						</Text>
-					</Pressable>
+					/>
 				) : null}
 
 				{!isOwnProfile && authorized ? (
@@ -171,45 +127,22 @@ function ReviewsSheet({ discordId, name, onClose }: ReviewsSheetProps) {
 						discordId={discordId}
 						name={name}
 						isUpdate={hasOwnReview}
-						colors={colors}
 						onSubmitted={refetch}
 					/>
 				) : null}
 
 				{!isOwnProfile && !authorized ? (
-					<Pressable
+					<Discord.Button
+						text={messages.SIGN_IN_TO_REVIEW}
+						variant='secondary'
 						onPress={startSignIn}
-						style={({ pressed }) => ({
-							backgroundColor: colors.surface,
-							borderColor: colors.border,
-							borderRadius: 16,
-							borderWidth: 1,
-							opacity: pressed ? 0.7 : 1,
-							padding: 16,
-						})}
-					>
-						<Text
-							style={{
-								color: colors.link,
-								fontSize: 15,
-								fontWeight: '800',
-								textAlign: 'center',
-							}}
-						>
-							{messages.SIGN_IN_TO_REVIEW}
-						</Text>
-					</Pressable>
+					/>
 				) : null}
 			</ScrollView>
 		</Discord.ActionSheet>
 	);
 }
 
-/**
- * @description Opens the sheet listing a profile's reviews, with a form to leave one.
- * @param discordId The Discord ID of the profile.
- * @param name The name shown in the sheet's title.
- */
 export function openReviewsSheet(discordId: string, name: string): void {
 	openSheet(`unbound-reviewdb-${discordId}-${Date.now()}`, ReviewsSheet, { discordId, name });
 }

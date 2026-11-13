@@ -6,8 +6,14 @@ export type MessageRow = {
 	username?: string;
 	tagText?: string;
 	opTagText?: string;
+	opTagTextColor?: number;
+	opTagBackgroundColor?: number;
 	roleIcon?: object;
 };
+
+export type PronounStyle = 'text' | 'pill';
+
+export type NativePillColors = { background: number; text: number };
 
 // Discord can later expand the name to `name (@username)`, so room is reserved for that.
 function fitsHeader(
@@ -40,12 +46,16 @@ function fitsHeader(
  * @param pronouns The author's pronouns.
  * @param authorUsername The author's username, which Discord may add to the shown name.
  * @param width The window width in points.
+ * @param style `pill` shows them in Discord's tag pill when the header has no OP tag; `text` after the timestamp.
+ * @param colors The pill's colors as native color values; Discord's tag colors when missing.
  */
 export function addPronouns(
 	row: MessageRow,
 	pronouns: string,
 	authorUsername: string | undefined,
 	width: number,
+	style: PronounStyle = 'text',
+	colors?: NativePillColors,
 ): void {
 	if (
 		typeof row.timestampAccessibilityLabel === 'string' &&
@@ -56,9 +66,20 @@ export function addPronouns(
 
 	const label = shortenPronouns(pronouns);
 
-	if (!label || row.timestamp.endsWith(` • ${label}`)) return;
+	if (!label || row.timestamp.endsWith(` • ${label}`) || row.opTagText === label) return;
 
 	if (!fitsHeader(row, label, authorUsername, width)) return;
+
+	if (style === 'pill' && !row.opTagText) {
+		row.opTagText = label;
+
+		if (colors) {
+			row.opTagBackgroundColor = colors.background;
+			row.opTagTextColor = colors.text;
+		}
+
+		return;
+	}
 
 	row.timestamp += ` • ${label}`;
 }

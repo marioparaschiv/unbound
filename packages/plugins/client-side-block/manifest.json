@@ -1,0 +1,38 @@
+{
+	"id": "unbound.client-side-block",
+	"name": "Client Side Block",
+	"description": "Hides messages from blocked, ignored and hand-picked users, and replies to them, without blocking anyone on Discord.",
+	"authors": [
+		{
+			"name": "Samwich",
+			"id": "976176454511509554"
+		},
+		{
+			"name": "KamiRu",
+			"id": "819191621676695563"
+		},
+		{
+			"name": "rushii",
+			"id": "295190422244950017"
+		},
+		{
+			"name": "Samu",
+			"id": "702973430449832038"
+		},
+		{
+			"name": "jamesbt365",
+			"id": "158567567487795200"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.1.1",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "EyeSlashIcon",
+	"main": "index.tsx",
+	"replaces": ["unbound.no-blocked-messages"]
+}

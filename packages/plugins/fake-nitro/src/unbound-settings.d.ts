@@ -154,13 +154,13 @@ declare module '@unbound-app/settings' {
 		/**
 		 * Show received fake emojis
 		 *
-		 * Turn emoji links others sent with Fake Nitro back into emojis.
+		 * Turn emoji links sent with Fake Nitro, yours included, back into emojis.
 		 */
 		receiveEmojis: boolean;
 		/**
 		 * Show received fake stickers
 		 *
-		 * Turn messages that are only sticker links back into stickers.
+		 * Turn messages that are only sticker links, yours included, back into stickers.
 		 */
 		receiveStickers: boolean;
 		/**
@@ -196,13 +196,13 @@ declare module '@unbound-app/settings' {
 		/**
 		 * Show received fake emojis
 		 *
-		 * Turn emoji links others sent with Fake Nitro back into emojis.
+		 * Turn emoji links sent with Fake Nitro, yours included, back into emojis.
 		 */
 		"receiveEmojis": boolean;
 		/**
 		 * Show received fake stickers
 		 *
-		 * Turn messages that are only sticker links back into stickers.
+		 * Turn messages that are only sticker links, yours included, back into stickers.
 		 */
 		"receiveStickers": boolean;
 		/**

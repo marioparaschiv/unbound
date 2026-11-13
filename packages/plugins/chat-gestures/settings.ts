@@ -47,6 +47,11 @@ export default defineSettings({
 			nothing: 'ACTION_NOTHING',
 		},
 	}),
+	openKeyboard: setting.boolean({
+		default: false,
+		title: 'OPEN_KEYBOARD',
+		subtitle: 'OPEN_KEYBOARD_SUBTITLE',
+	}),
 	reactEmoji: setting.string({
 		default: '👍',
 		title: 'REACT_EMOJI',
