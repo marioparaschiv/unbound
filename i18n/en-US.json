@@ -515,5 +515,6 @@
 	"UNBOUND_APP_ICON_ADDED": "Added {name} to your app icons.",
 	"UNBOUND_APP_ICON_REMOVED": "Removed {name}.",
 	"UNBOUND_APP_ICON_PENDING": "{name} is taking longer than usual; reopen the app icon picker in a moment.",
-	"UNBOUND_PATCH_REMOVED": "A patch on {name} kept crashing, so it was turned off."
+	"UNBOUND_PATCH_REMOVED": "A patch on {name} kept crashing, so it was turned off.",
+	"UNBOUND_ADDON_RENAMED_TOAST": "{from} is now {to}, with your settings."
 }
