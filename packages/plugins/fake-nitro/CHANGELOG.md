@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-14
+
+### Added
+
+- Unlock stream quality: Nitro's stream resolutions and frame rates, and high quality video uploads, ported from Livie's StreamQuality.
+
 ## [1.1.1] - 2026-11-14
 
 ### Fixed
