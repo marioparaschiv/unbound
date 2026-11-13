@@ -24,7 +24,7 @@ type CollapsibleGroupProps = {
 
 /**
  * @description A row group whose header row opens or closes the rows under it, animating their height
- * and turning its chevron.
+ * and turning its chevron. The rows render only while open or animating, so a closed group costs its header alone.
  */
 function CollapsibleGroup({
 	label,
@@ -64,14 +64,16 @@ function CollapsibleGroup({
 					style={[styles.body, motion.body]}
 					pointerEvents={expanded ? 'auto' : 'none'}
 				>
-					<View style={styles.rows} onLayout={motion.measure}>
-						{Children.toArray(children).map((row, index) => (
-							<Fragment key={index}>
-								{Divider ? <Divider /> : null}
-								{row}
-							</Fragment>
-						))}
-					</View>
+					{motion.mounted ? (
+						<View style={styles.rows} onLayout={motion.measure}>
+							{Children.toArray(children).map((row, index) => (
+								<Fragment key={index}>
+									{Divider ? <Divider /> : null}
+									{row}
+								</Fragment>
+							))}
+						</View>
+					) : null}
 				</Animated.View>
 			</>
 		</Discord.TableRowGroup>
