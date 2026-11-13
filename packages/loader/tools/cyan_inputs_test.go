@@ -96,8 +96,15 @@ func TestCyanInputsKeepDiscordsIconsAndSchemes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(merge.keys) != 3 {
-		t.Fatalf("merge plist must hold only the icon and URL keys, has %v", merge.keys)
+	if len(merge.keys) != 5 {
+		t.Fatalf("merge plist must hold only the icon, URL and local network keys, has %v", merge.keys)
+	}
+	services := merge.get("NSBonjourServices").valuesOrNil()
+	if len(services) != 1 || services[0].text != unboundBonjourService {
+		t.Fatalf("NSBonjourServices %v must declare %q", services, unboundBonjourService)
+	}
+	if merge.get("NSLocalNetworkUsageDescription").text != unboundLocalNetworkUsage {
+		t.Fatal("the Local Network prompt needs a usage description")
 	}
 	alternates := merge.get("CFBundleIcons").get("CFBundleAlternateIcons")
 	if alternates.get("AngryIcon") == nil || alternates.get(unboundAlternateIcon) == nil {
@@ -117,6 +124,34 @@ func TestCyanInputsKeepDiscordsIconsAndSchemes(t *testing.T) {
 	}
 	if !schemes["discord"] || !schemes[unboundURLScheme] {
 		t.Fatalf("URL schemes %v must keep Discord's and add %q", schemes, unboundURLScheme)
+	}
+}
+
+func TestCyanInputsKeepDiscordsLocalNetworkDeclarations(t *testing.T) {
+	info, err := readPlist([]byte(discordInfoPlist))
+	if err != nil {
+		t.Fatal(err)
+	}
+	info.set("NSBonjourServices", plistStrings("_googlecast._tcp", unboundBonjourService))
+	info.set("NSLocalNetworkUsageDescription", plistText("Discord's own text"))
+	data, err := writePlist(info)
+	if err != nil {
+		t.Fatal(err)
+	}
+	merged, err := mergePlist(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	merge, err := readPlist(merged)
+	if err != nil {
+		t.Fatal(err)
+	}
+	services := merge.get("NSBonjourServices").valuesOrNil()
+	if len(services) != 2 || services[0].text != "_googlecast._tcp" || services[1].text != unboundBonjourService {
+		t.Fatalf("cyan replaces NSBonjourServices whole, so Discord's types must stay and Unbound's appear once: %v", services)
+	}
+	if merge.get("NSLocalNetworkUsageDescription").text != "Discord's own text" {
+		t.Fatal("Discord's usage description must win over Unbound's")
 	}
 }
 
