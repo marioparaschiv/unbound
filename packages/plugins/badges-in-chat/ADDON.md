@@ -4,8 +4,8 @@ banner: media/banner.png
 
 ## :sparkle: What it does
 
-- :medal: People's profile badges, such as HypeSquad or Early Supporter, show next to their name in chat, where Discord puts role icons.
-- :mag: It uses profiles Discord has already loaded, so a badge appears once you've seen someone's profile or Discord fetched it.
+- :award: People's profile badges, such as HypeSquad or Early Supporter, show next to their name in chat, where Discord puts role icons.
+- :circle-user: It uses profiles Discord has already loaded, so a badge appears once you've seen someone's profile or Discord fetched it.
 
 ## :gear: Settings
 

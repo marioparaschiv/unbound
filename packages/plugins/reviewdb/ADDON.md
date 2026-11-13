@@ -18,4 +18,4 @@ banner: media/banner.png
 - :clock: **Hide Timestamps** hides review dates. Off by default.
 - :ban: **Hide Reviews From Blocked Users** hides reviews from people you blocked on Discord. On by default.
 - :eye-slash: **Hide the ReviewDB Notice** hides the warning above every list of reviews. Off by default.
-- :paint-palette: **Theme Reviews With the Profile** tints the reviews sheet with the profile's theme colors, Fake Profile Themes included. Off by default.
+- :palette: **Theme Reviews With the Profile** tints the reviews sheet with the profile's theme colors, Fake Profile Themes included. Off by default.
