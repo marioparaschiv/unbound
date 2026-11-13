@@ -1,7 +1,7 @@
 {
 	"id": "unbound.hide-gift-button",
-	"name": "Hide Gift Button",
-	"description": "Hide the gift button from the chat composer.",
+	"name": "Hide Buttons",
+	"description": "Hides the gift, voice message and call buttons you never use.",
 	"authors": [
 		{
 			"name": "ssense",
@@ -12,7 +12,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.4",
+	"version": "1.1.0",
 	"unbound": {
 		"min": "3.0.0"
 	},

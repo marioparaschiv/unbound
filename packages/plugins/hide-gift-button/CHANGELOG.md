@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-13
+
+### Added
+
+- Now Hide Buttons: switches to also hide the voice message button and the voice and video call buttons in DM headers and on profiles. The gift button stays hidden by default.
+
 ## [1.0.4] - 2026-11-11
 
 ### Changed
