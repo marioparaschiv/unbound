@@ -1,6 +1,6 @@
 # Plugins
 
-87 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+88 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -69,6 +69,7 @@
 - <img src="../../assets/plugins/readme-icons/user-square-icon.svg" width="20" height="20" align="absmiddle" alt=""> [PronounDB](https://unbound.rip/addons/unbound.pronoundb): Adds pronouns to user messages using PronounDB.
 - <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Reaction Avatars](https://unbound.rip/addons/unbound.reaction-avatars): Shows the people who reacted beside each message reaction.
 - <img src="../../assets/plugins/readme-icons/user-minus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Relationship Notifier](https://unbound.rip/addons/unbound.relationship-notifier): Notifies you when a friend, group chat, or server removes you.
+- <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Reverse Image Search](https://unbound.rip/addons/unbound.reverse-image-search): Adds Search image to the media viewer's menu: Google Lens, Yandex, SauceNAO, IQDB, Bing, TinEye or ImgOps.
 - <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [ReviewDB](https://unbound.rip/addons/unbound.reviewdb): Leave reviews on other users' profiles and see what others think of you.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Role Color Everywhere](https://unbound.rip/addons/unbound.role-color-everywhere): Colors mentions, typing names, voice users, reaction users, poll voters, and role headers.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Send Timestamps](https://unbound.rip/addons/unbound.send-timestamps): Turns times like `17:30` in your messages into timestamps everyone sees in their own time zone.

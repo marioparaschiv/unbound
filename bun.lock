@@ -1094,6 +1094,20 @@
         "rollup": "^4.66.0",
       },
     },
+    "packages/plugins/reverse-image-search": {
+      "name": "reverse-image-search",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/reviewdb": {
       "name": "reviewdb",
       "dependencies": {
@@ -3862,6 +3876,7 @@
 
     "resolve-pkg-maps": ["resolve-pkg-maps@1.0.0", "", {}, "sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw=="],
 
+    "reverse-image-search": ["reverse-image-search@workspace:packages/plugins/reverse-image-search"],
     "reviewdb": ["reviewdb@workspace:packages/plugins/reviewdb"],
 
     "role-color-everywhere": ["role-color-everywhere@workspace:packages/plugins/role-color-everywhere"],
