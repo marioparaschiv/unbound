@@ -9,16 +9,15 @@
 	"HIGHLIGHTING": "Підсвічування",
 	"THEME": "Тема",
 	"THEME_SUBTITLE": "Вибери тему VS Code для кольорів синтаксису.",
-	"SEARCH_THEMES": "Пошук тем",
 	"CUSTOM_THEME_URL": "URL власної теми",
 	"CUSTOM_THEME_URL_SUBTITLE": "HTTPS-посилання на JSON-файл теми VS Code замінює вибрану тему.",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
 	"BACKGROUND_OPACITY": "Непрозорість фону",
 	"LANGUAGE_ICONS": "Іконки мов",
 	"LANGUAGE_ICONS_SUBTITLE": "Показувати значки мов Devicon у заголовку блоку коду.",
-	"ICONS_DISABLED": "вимкнено",
-	"ICONS_GREYSCALE": "сірі",
-	"ICONS_COLORED": "кольорові",
+	"ICONS_DISABLED": "Вимкнено",
+	"ICONS_GREYSCALE": "Сірі",
+	"ICONS_COLORED": "Кольорові",
 	"LONG_LINES": "Довгі рядки",
 	"LONG_LINES_SUBTITLE": "Вибери між перенесенням коду та горизонтальним прокручуванням.",
 	"LONG_LINES_WRAP": "Переносити",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "Ніколи",
 	"HLJS_SECONDARY": "Перевага Shiki",
 	"HLJS_PRIMARY": "Перевага Highlight.js",
-	"HLJS_ALWAYS": "Завжди Highlight.js"
+	"HLJS_ALWAYS": "Завжди Highlight.js",
+	"INVALID_THEME_URL": "Введіть HTTPS-посилання на файл .json."
 }

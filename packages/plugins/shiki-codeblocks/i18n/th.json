@@ -9,7 +9,6 @@
 	"HIGHLIGHTING": "การไฮไลต์",
 	"THEME": "ธีม",
 	"THEME_SUBTITLE": "เลือกธีม VS Code สำหรับสีไวยากรณ์",
-	"SEARCH_THEMES": "ค้นหาธีม",
 	"CUSTOM_THEME_URL": "URL ธีมที่กำหนดเอง",
 	"CUSTOM_THEME_URL_SUBTITLE": "ลิงก์ HTTPS ไปยังไฟล์ JSON ของธีม VS Code จะใช้แทนธีมที่เลือก",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "ไม่เลย",
 	"HLJS_SECONDARY": "ใช้ Shiki ก่อน",
 	"HLJS_PRIMARY": "ใช้ Highlight.js ก่อน",
-	"HLJS_ALWAYS": "ใช้ Highlight.js เสมอ"
+	"HLJS_ALWAYS": "ใช้ Highlight.js เสมอ",
+	"INVALID_THEME_URL": "ป้อนลิงก์ HTTPS ไปยังไฟล์ .json"
 }

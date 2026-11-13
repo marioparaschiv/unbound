@@ -9,16 +9,15 @@
 	"HIGHLIGHTING": "Vurgulama",
 	"THEME": "Tema",
 	"THEME_SUBTITLE": "Sözdizimi renkleri için bir VS Code teması seç.",
-	"SEARCH_THEMES": "Temalarda ara",
 	"CUSTOM_THEME_URL": "Özel tema URL’si",
 	"CUSTOM_THEME_URL_SUBTITLE": "Bir VS Code tema JSON dosyasının HTTPS bağlantısı, seçili temanın yerine geçer.",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
 	"BACKGROUND_OPACITY": "Arka plan opaklığı",
 	"LANGUAGE_ICONS": "Dil simgeleri",
 	"LANGUAGE_ICONS_SUBTITLE": "Kod bloğu başlığında Devicon dil simgelerini göster.",
-	"ICONS_DISABLED": "devre dışı",
-	"ICONS_GREYSCALE": "gri tonlamalı",
-	"ICONS_COLORED": "renkli",
+	"ICONS_DISABLED": "Devre dışı",
+	"ICONS_GREYSCALE": "Gri tonlamalı",
+	"ICONS_COLORED": "Renkli",
 	"LONG_LINES": "Uzun satırlar",
 	"LONG_LINES_SUBTITLE": "Kodu alt satıra kaydırma ile yatay kaydırma arasında seçim yap.",
 	"LONG_LINES_WRAP": "Satır kaydır",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "Asla",
 	"HLJS_SECONDARY": "Shiki’yi tercih et",
 	"HLJS_PRIMARY": "Highlight.js’i tercih et",
-	"HLJS_ALWAYS": "Her zaman Highlight.js kullan"
+	"HLJS_ALWAYS": "Her zaman Highlight.js kullan",
+	"INVALID_THEME_URL": "Bir .json dosyasına HTTPS bağlantısı gir."
 }

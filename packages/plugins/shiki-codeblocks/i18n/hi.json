@@ -9,7 +9,6 @@
 	"HIGHLIGHTING": "हाइलाइटिंग",
 	"THEME": "थीम",
 	"THEME_SUBTITLE": "सिंटैक्स के रंगों के लिए कोई VS Code थीम चुनें।",
-	"SEARCH_THEMES": "थीम खोजें",
 	"CUSTOM_THEME_URL": "कस्टम थीम URL",
 	"CUSTOM_THEME_URL_SUBTITLE": "VS Code थीम JSON फ़ाइल का HTTPS लिंक चुनी गई थीम की जगह इस्तेमाल होता है।",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "कभी नहीं",
 	"HLJS_SECONDARY": "Shiki को प्राथमिकता दें",
 	"HLJS_PRIMARY": "Highlight.js को प्राथमिकता दें",
-	"HLJS_ALWAYS": "हमेशा Highlight.js इस्तेमाल करें"
+	"HLJS_ALWAYS": "हमेशा Highlight.js इस्तेमाल करें",
+	"INVALID_THEME_URL": "किसी .json फ़ाइल का HTTPS लिंक डालें।"
 }

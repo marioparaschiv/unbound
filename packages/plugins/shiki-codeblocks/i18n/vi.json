@@ -9,16 +9,15 @@
 	"HIGHLIGHTING": "Tô sáng",
 	"THEME": "Chủ đề",
 	"THEME_SUBTITLE": "Chọn một chủ đề VS Code cho màu cú pháp.",
-	"SEARCH_THEMES": "Tìm chủ đề",
 	"CUSTOM_THEME_URL": "URL chủ đề tùy chỉnh",
 	"CUSTOM_THEME_URL_SUBTITLE": "Liên kết HTTPS tới tệp JSON chủ đề VS Code sẽ ghi đè chủ đề đã chọn.",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
 	"BACKGROUND_OPACITY": "Độ mờ đục của nền",
 	"LANGUAGE_ICONS": "Biểu tượng ngôn ngữ",
 	"LANGUAGE_ICONS_SUBTITLE": "Hiện biểu tượng ngôn ngữ Devicon ở đầu khối mã.",
-	"ICONS_DISABLED": "tắt",
-	"ICONS_GREYSCALE": "thang xám",
-	"ICONS_COLORED": "có màu",
+	"ICONS_DISABLED": "Tắt",
+	"ICONS_GREYSCALE": "Thang xám",
+	"ICONS_COLORED": "Có màu",
 	"LONG_LINES": "Dòng dài",
 	"LONG_LINES_SUBTITLE": "Chọn giữa xuống dòng mã và cuộn ngang.",
 	"LONG_LINES_WRAP": "Xuống dòng",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "Không bao giờ",
 	"HLJS_SECONDARY": "Ưu tiên Shiki",
 	"HLJS_PRIMARY": "Ưu tiên Highlight.js",
-	"HLJS_ALWAYS": "Luôn dùng Highlight.js"
+	"HLJS_ALWAYS": "Luôn dùng Highlight.js",
+	"INVALID_THEME_URL": "Nhập liên kết HTTPS tới tệp .json."
 }

@@ -9,16 +9,15 @@
 	"HIGHLIGHTING": "Paryškinimas",
 	"THEME": "Tema",
 	"THEME_SUBTITLE": "Pasirinkite VS Code temą sintaksės spalvoms.",
-	"SEARCH_THEMES": "Ieškoti temų",
 	"CUSTOM_THEME_URL": "Pasirinktinės temos URL",
 	"CUSTOM_THEME_URL_SUBTITLE": "HTTPS nuoroda į VS Code temos JSON failą pakeičia pasirinktą temą.",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
 	"BACKGROUND_OPACITY": "Fono neskaidrumas",
 	"LANGUAGE_ICONS": "Kalbų piktogramos",
 	"LANGUAGE_ICONS_SUBTITLE": "Rodyti Devicon kalbų ženklus kodo bloko antraštėje.",
-	"ICONS_DISABLED": "išjungta",
-	"ICONS_GREYSCALE": "pilkos",
-	"ICONS_COLORED": "spalvotos",
+	"ICONS_DISABLED": "Išjungta",
+	"ICONS_GREYSCALE": "Pilkos",
+	"ICONS_COLORED": "Spalvotos",
 	"LONG_LINES": "Ilgos eilutės",
 	"LONG_LINES_SUBTITLE": "Pasirinkite, ar kodą laužyti, ar slinkti horizontaliai.",
 	"LONG_LINES_WRAP": "Laužyti",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "Niekada",
 	"HLJS_SECONDARY": "Pirmenybė Shiki",
 	"HLJS_PRIMARY": "Pirmenybė Highlight.js",
-	"HLJS_ALWAYS": "Visada naudoti Highlight.js"
+	"HLJS_ALWAYS": "Visada naudoti Highlight.js",
+	"INVALID_THEME_URL": "Įveskite HTTPS nuorodą į .json failą."
 }

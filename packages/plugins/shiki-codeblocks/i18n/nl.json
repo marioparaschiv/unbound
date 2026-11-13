@@ -9,16 +9,15 @@
 	"HIGHLIGHTING": "Markering",
 	"THEME": "Thema",
 	"THEME_SUBTITLE": "Kies een VS Code-thema voor syntaxiskleuren.",
-	"SEARCH_THEMES": "Thema's zoeken",
 	"CUSTOM_THEME_URL": "URL van aangepast thema",
 	"CUSTOM_THEME_URL_SUBTITLE": "Een HTTPS-link naar een JSON-bestand met een VS Code-thema overschrijft het geselecteerde thema.",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
 	"BACKGROUND_OPACITY": "Dekking van achtergrond",
 	"LANGUAGE_ICONS": "Taalpictogrammen",
 	"LANGUAGE_ICONS_SUBTITLE": "Toon Devicon-taallogo's in de kop van het codeblok.",
-	"ICONS_DISABLED": "uitgeschakeld",
-	"ICONS_GREYSCALE": "grijstinten",
-	"ICONS_COLORED": "gekleurd",
+	"ICONS_DISABLED": "Uitgeschakeld",
+	"ICONS_GREYSCALE": "Grijstinten",
+	"ICONS_COLORED": "Gekleurd",
 	"LONG_LINES": "Lange regels",
 	"LONG_LINES_SUBTITLE": "Kies tussen code laten teruglopen en horizontaal scrollen.",
 	"LONG_LINES_WRAP": "Teruglopen",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "Nooit",
 	"HLJS_SECONDARY": "Voorkeur voor Shiki",
 	"HLJS_PRIMARY": "Voorkeur voor Highlight.js",
-	"HLJS_ALWAYS": "Altijd Highlight.js gebruiken"
+	"HLJS_ALWAYS": "Altijd Highlight.js gebruiken",
+	"INVALID_THEME_URL": "Voer een HTTPS-link naar een .json-bestand in."
 }

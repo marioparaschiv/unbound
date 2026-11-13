@@ -9,16 +9,15 @@
 	"HIGHLIGHTING": "Korostus",
 	"THEME": "Teema",
 	"THEME_SUBTITLE": "Valitse VS Code -teema syntaksin väreille.",
-	"SEARCH_THEMES": "Hae teemoja",
 	"CUSTOM_THEME_URL": "Mukautetun teeman URL",
 	"CUSTOM_THEME_URL_SUBTITLE": "HTTPS-linkki VS Code -teeman JSON-tiedostoon ohittaa valitun teeman.",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
 	"BACKGROUND_OPACITY": "Taustan peittävyys",
 	"LANGUAGE_ICONS": "Kielikuvakkeet",
 	"LANGUAGE_ICONS_SUBTITLE": "Näytä Devicon-kielimerkit koodilohkon otsakkeessa.",
-	"ICONS_DISABLED": "pois käytöstä",
-	"ICONS_GREYSCALE": "harmaasävy",
-	"ICONS_COLORED": "värillinen",
+	"ICONS_DISABLED": "Pois käytöstä",
+	"ICONS_GREYSCALE": "Harmaasävy",
+	"ICONS_COLORED": "Värillinen",
 	"LONG_LINES": "Pitkät rivit",
 	"LONG_LINES_SUBTITLE": "Valitse koodin rivityksen ja vaakavierityksen välillä.",
 	"LONG_LINES_WRAP": "Rivitä",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "Ei koskaan",
 	"HLJS_SECONDARY": "Suosi Shikiä",
 	"HLJS_PRIMARY": "Suosi Highlight.js:ää",
-	"HLJS_ALWAYS": "Käytä aina Highlight.js:ää"
+	"HLJS_ALWAYS": "Käytä aina Highlight.js:ää",
+	"INVALID_THEME_URL": "Anna HTTPS-linkki .json-tiedostoon."
 }
