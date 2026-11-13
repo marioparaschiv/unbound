@@ -1,6 +1,6 @@
 # Plugins
 
-85 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+87 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -34,6 +34,7 @@
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Fix Youtube Embeds](https://unbound.rip/addons/unbound.fix-youtube-embeds): Plays YouTube videos that are blocked from playing in Discord, such as music videos from UMG, instead of showing an error.
 - <img src="../../assets/plugins/readme-icons/crown-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Force Owner Crown](https://unbound.rip/addons/unbound.force-owner-crown): Always show the owner crown on the server owner's messages.
 - <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Friend Invites](https://unbound.rip/addons/unbound.friend-invites): Creates, lists and revokes your friend invite links with the /friend-invites command.
+- <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Friends Since](https://unbound.rip/addons/unbound.friends-since): Shows the date you became friends with someone on their profile.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Paste](https://unbound.rip/addons/unbound.gif-paste): Makes GIF picker selections paste a link into the chat box instead of sending immediately.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Provider Switcher](https://unbound.rip/addons/unbound.gif-provider-switcher): Search GIFs from Tenor or Giphy instead of Klipy, and switch providers right from the GIF picker.
 - <img src="../../assets/plugins/readme-icons/sticker-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Greet Sticker Picker](https://unbound.rip/addons/unbound.greet-sticker-picker): Lets you pick which sticker 'Wave to say hi!' sends to a new member, instead of a random one.
@@ -52,6 +53,7 @@
 - <img src="../../assets/plugins/readme-icons/microphone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Moyai](https://unbound.rip/addons/unbound.moyai): Plays a thud when Moyai appears in the current channel or as a reaction.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Multi Account](https://unbound.rip/addons/unbound.multi-account): Unlocks Discord's built-in multi-account switcher on mobile.
 - <img src="../../assets/plugins/readme-icons/music-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Music Rich Presence](https://unbound.rip/addons/unbound.music-rich-presence): Shows what you are scrobbling on Last.fm or ListenBrainz as your Discord activity.
+- <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Mutual Group DMs](https://unbound.rip/addons/unbound.mutual-group-dms): Shows the group DMs you share with someone on their profile, and opens them from there.
 - <img src="../../assets/plugins/readme-icons/bell-icon.svg" width="20" height="20" align="absmiddle" alt=""> [New Guild Settings](https://unbound.rip/addons/unbound.new-guild-settings): Mutes new servers and applies your notification and channel defaults as soon as you join them.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [No Blocked Messages](https://unbound.rip/addons/unbound.no-blocked-messages): Hides messages from blocked users completely.
 - <img src="../../assets/plugins/readme-icons/bell-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [No Pending Count](https://unbound.rip/addons/unbound.no-pending-count): Hides the red counts for incoming friend requests and message requests.

@@ -1,0 +1,21 @@
+{
+	"id": "unbound.mutual-group-dms",
+	"name": "Mutual Group DMs",
+	"description": "Shows the group DMs you share with someone on their profile, and opens them from there.",
+	"authors": [
+		{
+			"name": "amia",
+			"id": "142007603549962240"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ChatDotsIcon",
+	"main": "index.tsx"
+}

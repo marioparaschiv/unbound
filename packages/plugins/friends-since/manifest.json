@@ -1,0 +1,21 @@
+{
+	"id": "unbound.friends-since",
+	"name": "Friends Since",
+	"description": "Shows the date you became friends with someone on their profile.",
+	"authors": [
+		{
+			"name": "Elvyra",
+			"id": "708275751816003615"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "UserPlusIcon",
+	"main": "index.tsx"
+}
