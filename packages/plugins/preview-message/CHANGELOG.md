@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.6] - 2026-11-13
+
+### Fixed
+
+- The preview button takes the size and color of Discord's other chat input buttons, and the preview card follows the theme.
+
 ## [1.0.5] - 2026-11-11
 
 ### Changed

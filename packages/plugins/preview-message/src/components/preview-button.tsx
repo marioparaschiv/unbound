@@ -8,6 +8,7 @@ import { flux } from '@unbound-app/api';
 import type { Sticker } from '~/lib/types';
 import { DraftStore, Haptics, type PreviewModules } from '~/lib/modules';
 import { Button, CHANNEL_MESSAGE_DRAFT_TYPE, Timing } from '~/lib/constants';
+import useStyles from '~/components/preview-button.style';
 import PreviewOverlay from '~/components/preview-overlay';
 import { dismissKeyboard } from '~/lib/keyboard';
 
@@ -81,6 +82,7 @@ function useSlotAnimation(visible: boolean) {
 }
 
 function PreviewButton({ channelId, icon, modules, trailingGap = 0 }: PreviewButtonProps) {
+	const styles = useStyles();
 	const [open, setOpen] = useState(false);
 	const cancelOpen = useRef<() => void>(undefined);
 	const draft = useDraft(channelId);
@@ -98,9 +100,9 @@ function PreviewButton({ channelId, icon, modules, trailingGap = 0 }: PreviewBut
 		<>
 			<Animated.View
 				style={{
-					width: slotVisible ? Button.size : 0,
+					width: slotVisible ? styles.button.width : 0,
 					marginRight: slotVisible ? trailingGap : -Button.gap,
-					height: Button.size,
+					height: styles.button.height,
 					opacity: visible ? progress : 0,
 					overflow: 'hidden',
 					alignItems: 'center',
@@ -115,30 +117,26 @@ function PreviewButton({ channelId, icon, modules, trailingGap = 0 }: PreviewBut
 						Haptics?.triggerHapticFeedback?.(Haptics.HapticFeedbackTypes?.IMPACT_LIGHT)
 					}
 					hitSlop={8}
-					style={({ pressed }: PressableStateCallbackType) => ({
-						width: Button.size,
-						height: Button.size,
-						alignItems: 'center',
-						justifyContent: 'center',
-						opacity: pressed ? 0.5 : 1,
-						transform: [{ scale: pressed ? 0.86 : 1 }],
-					})}
+					style={({ pressed }: PressableStateCallbackType) => [
+						styles.button,
+						{ opacity: pressed ? 0.5 : 1, transform: [{ scale: pressed ? 0.86 : 1 }] },
+					]}
 				>
 					<Animated.Image
 						source={icon}
-						style={{
-							width: Button.iconSize,
-							height: Button.iconSize,
-							tintColor: '#b5bac1',
-							transform: [
-								{
-									scale: progress.interpolate({
-										inputRange: [0, 1],
-										outputRange: [0.6, 1],
-									}),
-								},
-							],
-						}}
+						style={[
+							styles.icon,
+							{
+								transform: [
+									{
+										scale: progress.interpolate({
+											inputRange: [0, 1],
+											outputRange: [0.6, 1],
+										}),
+									},
+								],
+							},
+						]}
 					/>
 				</Pressable>
 			</Animated.View>

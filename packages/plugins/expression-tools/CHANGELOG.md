@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.7] - 2026-11-13
+
+### Fixed
+
+- The clone sheet, its server list and the action bar use Discord's sheet header, text fields, table rows and buttons, and follow the theme.
+
 ## [1.0.6] - 2026-11-11
 
 ### Changed

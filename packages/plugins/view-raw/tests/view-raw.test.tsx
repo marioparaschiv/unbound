@@ -75,7 +75,7 @@ describe("a server's context menu", () => {
 
 		const sheet = render(opened[0]?.Sheet() as ReactNode);
 
-		expect(sheet.text()).toContain('Raw Guild Data');
+		expect(sheet.find('BottomSheetTitleHeader').props.title).toBe('Raw Guild Data');
 		expect(sheet.find('TextInput').props.value).toBe(
 			JSON.stringify({ id: '1', name: 'Wumpus Club', ownerId: '2' }, null, 4),
 		);
@@ -89,7 +89,7 @@ describe("a server's context menu", () => {
 		await settle();
 
 		const sheet = render(opened[0]?.Sheet() as ReactNode);
-		const copy = sheet.findAll('Pressable').find((button) => button.text() === 'Copy data');
+		const copy = sheet.findAll('Button').find((button) => button.props.text === 'Copy data');
 
 		copy?.props.onPress?.(Object.create(null));
 		await settle();
@@ -222,7 +222,7 @@ describe("a message's action sheet", () => {
 
 		const raw = render(opened[1]?.Sheet() as ReactNode);
 
-		expect(raw.text()).toContain('Raw Message Data');
+		expect(raw.find('BottomSheetTitleHeader').props.title).toBe('Raw Message Data');
 		expect(raw.findAll('TextInput').map((input) => input.props.value)).toEqual([
 			'hello',
 			JSON.stringify(
