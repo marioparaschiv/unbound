@@ -1,5 +1,5 @@
 {
-	"name": "no-blocked-messages",
+	"name": "client-side-block",
 	"private": true,
 	"type": "module",
 	"scripts": {

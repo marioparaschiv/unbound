@@ -48,6 +48,6 @@ describe('refreshChat', () => {
 	});
 
 	test('keeps the chat on globalThis across bundle evaluations', () => {
-		expect(globalThis.__unboundNoBlockedMessagesRuntime).toBe(chat);
+		expect(globalThis.__unboundClientSideBlockRuntime).toBe(chat);
 	});
 });

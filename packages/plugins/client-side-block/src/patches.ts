@@ -1,4 +1,7 @@
-import { metro, patcher } from '@unbound-app/api';
+import { settings } from '@unbound-app/settings';
+import { flux, metro, patcher } from '@unbound-app/api';
+
+import { isHiddenRow } from '~/lib/hidden';
 
 import {
 	chat,
@@ -8,11 +11,16 @@ import {
 	type RowManagerInstance,
 } from '~/lib/chat';
 
+type RelationshipStore = {
+	isBlocked?(userId: string): boolean;
+	isIgnored?(userId: string): boolean;
+};
+
 // Discord's chat classes; the patches check each method at runtime, since a Discord update may drop one.
 type ChatClass<Instance> = { prototype?: Instance };
 
 /**
- * @description Hides the rows that stand in for blocked messages, and refreshes the open chat so it applies at once.
+ * @description Hides the rows of blocked, ignored and hand-picked users and replies to them, and refreshes the open chat so it applies at once.
  * Patches `ChatManager` (`setup`, `createRow`), `RowManager` (`generate`) and `ChatUpdatesQueue` (`add`) once all three
  * classes have loaded. The Addon scope removes the patches, but not the hidden rows: `stop` calls `refreshChat`.
  */
@@ -23,7 +31,7 @@ export function patchChatRows(): void {
 
 	if (!ChatManager || !RowManager || !ChatUpdatesQueue) {
 		logger.warn(
-			'Blocked messages skipped: Discord moved ChatManager, RowManager or ChatUpdatesQueue.',
+			'Client side block skipped: Discord moved ChatManager, RowManager or ChatUpdatesQueue.',
 		);
 
 		return;
@@ -43,7 +51,7 @@ export function patchChatRows(): void {
 
 function patchRowManager(RowManager: ChatClass<RowManagerInstance>) {
 	if (typeof RowManager.prototype?.generate !== 'function') {
-		logger.warn('Blocked messages skipped: Discord moved RowManager.generate.');
+		logger.warn('Client side block skipped: Discord moved RowManager.generate.');
 
 		return;
 	}
@@ -55,7 +63,7 @@ function patchRowManager(RowManager: ChatClass<RowManagerInstance>) {
 
 function patchChatUpdatesQueue(ChatUpdatesQueue: ChatClass<ChatUpdatesQueueInstance>) {
 	if (typeof ChatUpdatesQueue.prototype?.add !== 'function') {
-		logger.warn('Blocked messages skipped: Discord moved ChatUpdatesQueue.add.');
+		logger.warn('Client side block skipped: Discord moved ChatUpdatesQueue.add.');
 
 		return;
 	}
@@ -69,7 +77,7 @@ function patchChatManager(ChatManager: ChatClass<ChatManagerInstance>) {
 	const { prototype } = ChatManager;
 
 	if (typeof prototype?.setup !== 'function' || typeof prototype.createRow !== 'function') {
-		logger.warn('Blocked messages skipped: Discord moved ChatManager.createRow.');
+		logger.warn('Client side block skipped: Discord moved ChatManager.createRow.');
 
 		return;
 	}
@@ -79,9 +87,19 @@ function patchChatManager(ChatManager: ChatClass<ChatManagerInstance>) {
 		chat.messages = args[0];
 	});
 
+	const Relationships = flux.getStore('Relationship') as unknown as RelationshipStore;
+	const rules = {
+		isHidden: (userId: string) =>
+			settings.users.some((id) => id === userId) ||
+			Boolean(settings.ignored && Relationships.isIgnored?.(userId)) ||
+			Boolean(Relationships.isBlocked?.(userId)),
+		get replies() {
+			return settings.replies;
+		},
+	};
+
 	patcher.instead(prototype, 'createRow', ({ args, original }) => {
-		// Row type 2 stands in for a blocked message.
-		if (args[0]?.type === 2) return;
+		if (isHiddenRow(args[0], rules)) return;
 
 		return original(...args);
 	});
