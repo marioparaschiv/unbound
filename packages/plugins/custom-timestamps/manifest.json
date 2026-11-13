@@ -1,0 +1,17 @@
+{
+	"id": "unbound.custom-timestamps",
+	"name": "Custom Timestamps",
+	"description": "Writes message times your way, with separate formats for today and older messages.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TimerIcon",
+	"main": "index.tsx"
+}
