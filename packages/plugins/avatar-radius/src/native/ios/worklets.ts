@@ -365,7 +365,7 @@ export function setAvatarRadius(radius: number) {
 
 	current.radius = radius;
 
-	for (const tracked of current.avatars.values()) {
+	for (const tracked of [...current.avatars.values()]) {
 		guarded(() => roundAvatar(current, tracked.view));
 	}
 
