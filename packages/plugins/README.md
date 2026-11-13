@@ -1,6 +1,6 @@
 # Plugins
 
-97 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+98 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -89,6 +89,7 @@
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Silent Typing](https://unbound.rip/addons/unbound.silent-typing): Hides that you are typing, with a toggle in the chat input to turn it on and off.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Split Large Messages](https://unbound.rip/addons/unbound.split-large-messages): Sends messages over the length limit as several messages instead of refusing them.
 - <img src="../../assets/plugins/readme-icons/headphones-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Spotify Listen Along](https://unbound.rip/addons/unbound.spotify-listen-along): Listen along to someone's Spotify activity and invite a channel to listen along with you.
+- <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Status Presets](https://unbound.rip/addons/unbound.status-presets): Saves custom statuses as presets you can set again with one tap from the Set your status screen.
 - <img src="../../assets/plugins/readme-icons/sticker-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Sticker Preview](https://unbound.rip/addons/unbound.sticker-preview): Displays a preview of a selected sticker instead of sending it immediately.
 - <img src="../../assets/plugins/readme-icons/super-reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Super Reaction Tweaks](https://unbound.rip/addons/unbound.super-reaction-tweaks): Opens the reaction picker on Super Reactions and caps how many Super Reaction animations play at once.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Text Replace](https://unbound.rip/addons/unbound.text-replace): Replace text in messages before you send them.
