@@ -1,0 +1,7 @@
+{
+	"TODAY": "Today",
+	"TODAY_SUBTITLE": "How messages from today show their time.",
+	"OLDER": "Older",
+	"OLDER_SUBTITLE": "How older messages show their date and time.",
+	"FORMAT_HELP": "YYYY year, MM month, MMM month name, DD day, ddd weekday, HH 24-hour, hh 12-hour, mm minutes, ss seconds, A AM/PM. Text in [brackets] stays as written."
+}
