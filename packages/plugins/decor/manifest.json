@@ -1,0 +1,21 @@
+{
+	"id": "unbound.decor",
+	"name": "Decor",
+	"description": "Shows the custom avatar decorations people pick on Decor, in chat and on profiles.",
+	"authors": [
+		{
+			"name": "Fiery",
+			"id": "890228870559698955"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "UserCircleIcon",
+	"main": "index.tsx"
+}

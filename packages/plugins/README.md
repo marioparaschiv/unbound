@@ -1,6 +1,6 @@
 # Plugins
 
-81 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+82 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -23,6 +23,7 @@
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom Commands](https://unbound.rip/addons/unbound.custom-commands): Create slash commands that send saved text, images, and videos.
 - <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom RPC](https://unbound.rip/addons/unbound.custom-rpc): Shows a Rich Presence of your own on your profile: any name, text, images, timer and buttons.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Dearrow](https://unbound.rip/addons/unbound.dearrow): Makes YouTube embed titles and thumbnails less sensationalist, powered by DeArrow.
+- <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Decor](https://unbound.rip/addons/unbound.decor): Shows the custom avatar decorations people pick on Decor, in chat and on profiles.
 - <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Expression Tools](https://unbound.rip/addons/unbound.expression-tools): Useful tools for custom emojis and stickers.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Fake Profile Themes](https://unbound.rip/addons/unbound.fake-profile-themes): Shows profile theme colors hidden in bios with invisible characters, so anyone can theme their profile without Nitro.
 - <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Favourite Emoji First](https://unbound.rip/addons/unbound.favourite-emoji-first): Puts your favourite emoji first in the emoji suggestions while you type a colon.
