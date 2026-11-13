@@ -465,9 +465,11 @@ impl Shell {
 										"Open Settings",
 										true,
 									)
-									.on_click(cx.listener(|this, _, window, cx| {
-										this.open_settings(&OpenSettings, window, cx)
-									})),
+									.on_click(cx.listener(
+										|this, _, window, cx| {
+											this.open_settings(&OpenSettings, window, cx)
+										},
+									)),
 								),
 						)
 					}),

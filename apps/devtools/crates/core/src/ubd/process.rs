@@ -153,9 +153,10 @@ pub fn spawn(runtime: &Handle, launcher: &Launcher, args: &[String], cwd: Option
 		}
 		let failed = matches!(&status, Ok(status) if status.code().is_some_and(|code| code != 0));
 		if json
-			&& failed && let Some(error) = last_stdout
-			.as_deref()
-			.and_then(CommandError::from_json_line)
+			&& failed
+			&& let Some(error) = last_stdout
+				.as_deref()
+				.and_then(CommandError::from_json_line)
 		{
 			let _ = sender.send(RunEvent::Error(error));
 		}
