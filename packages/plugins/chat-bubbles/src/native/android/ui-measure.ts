@@ -18,7 +18,11 @@ export type ViewRead = {
 	height: number;
 	left: number;
 	top: number;
+	reach?: number;
 };
+
+const REACH = { depth: 4, views: 32 };
+const VISIBLE = 0;
 
 /** One consistent read of a laid-out row: every view the measure needs, taken in one pass on the main thread. */
 export type RowRead = {
@@ -54,6 +58,44 @@ function readView(
 		left: javaNumber(java.getField(rect, 'left')) ?? 0,
 		top: javaNumber(java.getField(rect, 'top')) ?? 0,
 	};
+}
+
+function reachOf(
+	java: NativeJavaBridge,
+	row: NativeJavaReference,
+	view: NativeJavaReference,
+	rect: NativeJavaReference,
+	budget: { views: number },
+	depth = 0,
+): number | undefined {
+	'worklet';
+	const read = readView(java, row, view, rect);
+
+	if (read.visibility !== VISIBLE || read.width <= 0 || read.height <= 0) return undefined;
+
+	const own = read.left + read.width;
+	const isGroup = javaFlag(
+		java.invoke(java.getClass('android.view.ViewGroup'), 'isInstance', [view]),
+	);
+	const count = isGroup ? (javaNumber(java.invoke(view, 'getChildCount', [])) ?? 0) : 0;
+
+	if (!count || depth >= REACH.depth) return own;
+
+	let reach: number | undefined;
+
+	for (let index = 0; index < count && budget.views > 0; index++) {
+		const child = javaReference(java.invoke(view, 'getChildAt', [javaInt(index)]));
+
+		budget.views--;
+
+		const right = child ? reachOf(java, row, child, rect, budget, depth + 1) : undefined;
+
+		if (right !== undefined) reach = Math.max(reach ?? 0, right);
+	}
+
+	if (budget.views <= 0) return own;
+
+	return reach ?? read.left;
 }
 
 /**
@@ -100,7 +142,12 @@ export function readRow(
 	for (let index = 0; index < count; index++) {
 		const child = javaReference(java.invoke(accessories, 'getChildAt', [javaInt(index)]));
 
-		if (child) children.push(readView(java, row, child, rect));
+		if (!child) continue;
+
+		const read = readView(java, row, child, rect);
+		const reach = reachOf(java, row, child, rect, { views: REACH.views });
+
+		children.push(reach === undefined ? read : { ...read, reach });
 	}
 
 	return {

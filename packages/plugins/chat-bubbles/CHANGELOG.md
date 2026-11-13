@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.9] - 2026-11-13
+
+### Fixed
+
+- On iOS, bubbles no longer jump between the end of the text and the end of the time when a row is reused; the row is padded before Discord lays it out.
+- On Android, bubbles around stickers, big emoji and messages with an empty embed fit their content instead of spanning the row.
+
 ## [1.6.8] - 2026-11-13
 
 ### Fixed

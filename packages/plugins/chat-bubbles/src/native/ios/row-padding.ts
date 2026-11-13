@@ -145,17 +145,21 @@ export function installRowPadding(
 
 	holder()[STATE_KEY] = state;
 
+	function insetRow(cell: NativeObjectHandle) {
+		if (state.inset === null) return;
+
+		try {
+			insetContent(objc, cell, state.inset);
+		} catch (error) {
+			console.error(`[Chat Bubbles] Failed to inset a message row: ${String(error)}`);
+		}
+	}
+
 	objc.hook(messageCell, 'sizeThatFits:', {
 		replace: ({ self, args, original }) => {
 			if (isStandaloneCell(objc, self)) return original(...args);
 
-			if (state.inset !== null) {
-				try {
-					insetContent(objc, self, state.inset);
-				} catch (error) {
-					console.error(`[Chat Bubbles] Failed to inset a message row: ${String(error)}`);
-				}
-			}
+			insetRow(self);
 
 			const size = sizeOf(original(...args));
 			const room = roomOf(objc, self, state.rooms);
@@ -168,6 +172,9 @@ export function installRowPadding(
 	});
 	// UIKit lays the content view over the whole cell; moving it down by the room above puts the content back between its rooms.
 	objc.hook(messageCell, 'layoutSubviews', {
+		before: ({ self }) => {
+			if (!isStandaloneCell(objc, self)) insetRow(self);
+		},
 		after: ({ self }) => {
 			try {
 				const frame = isStandaloneCell(objc, self)
