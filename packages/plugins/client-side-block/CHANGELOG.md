@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.2] - 2026-11-14
+
+### Fixed
+
+- Messages no longer show twice after the plugin starts or a setting changes: the open chat is rebuilt from the same items Discord built it from.
+
 ## [1.1.1] - 2026-11-13
 
 ### Changed
