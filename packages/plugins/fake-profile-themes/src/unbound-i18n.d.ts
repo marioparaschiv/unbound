@@ -3,26 +3,46 @@
 declare module '@unbound-app/i18n' {
 	/** Every en-US message, read in the user's locale. */
 	export type Messages = {
-		/** Prefer Nitro colors */
+		/** Prefer Nitro customization */
 		readonly NITRO_FIRST: string;
-		/** When a profile has Nitro theme colors and hidden ones, show the Nitro colors. */
+		/** When a profile has Nitro theme colors or a Nitro effect as well as hidden ones, show the Nitro ones. */
 		readonly NITRO_FIRST_SUBTITLE: string;
+		/** Include theme colors */
+		readonly INCLUDE_COLORS: string;
+		/** Turn off to hide only a profile effect in the bio code. */
+		readonly INCLUDE_COLORS_SUBTITLE: string;
 		/** Primary color */
 		readonly PRIMARY: string;
 		/** Accent color */
 		readonly ACCENT: string;
+		/** Profile effect */
+		readonly EFFECT: string;
+		/** Pick one of Discord's profile effects for the bio code. */
+		readonly EFFECT_SUBTITLE: string;
+		/** Search effects */
+		readonly SEARCH_EFFECTS: string;
+		/** None */
+		readonly NO_EFFECT: string;
+		/** Profile effect set to {effect}. Copy the bio code again. */
+		readonly EFFECT_PICKED: string;
+		/** Profile effect removed. Copy the bio code again. */
+		readonly EFFECT_CLEARED: string;
 		/** Copy bio code */
 		readonly COPY_CODE: string;
 		/** Paste it at the end of your bio; it is invisible. */
 		readonly COPY_CODE_SUBTITLE: string;
 		/** Copied. Paste it at the end of your bio. */
 		readonly COPIED: string;
+		/** Pick an effect or include the theme colors first. */
+		readonly NOTHING_TO_COPY: string;
 		/** Both colors need to be #rrggbb. */
 		readonly BAD_COLOR: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
-	export type FormatVars = Record<never, never>;
+	export type FormatVars = {
+		EFFECT_PICKED: { effect: string | number };
+	};
 
 	/** Each message in the user's locale, falling back to en-US. */
 	export const messages: Messages;

@@ -1,9 +1,12 @@
-import { metro, patcher } from '@unbound-app/api';
+import { flux, metro, patcher } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
 
-import { decodeThemeColors, stripThemeColors } from '~/lib/three-y-three';
+import { decodeProfileCode, stripProfileCode, type ProfileCode } from '~/lib/profile-code';
+import '~/lib/types';
 
 type DisplayProfile = { userId?: string; bio?: string | null; themeColors?: number[] | null };
+
+type UserProfile = { bio?: string | null; profileEffect?: { skuId?: string } | null };
 
 type PreviewBio = string | { value?: string } | null | undefined;
 
@@ -11,27 +14,31 @@ const CUSTOMIZATION = 'canUsePremiumProfileCustomization';
 
 let restoreCustomization: (() => void) | undefined;
 
-const decoded = new Map<string, { bio: string; colors: [number, number] | undefined }>();
+const decoded = new Map<string, { bio: string; code: ProfileCode }>();
 
-function hiddenColors({ userId, bio }: DisplayProfile): [number, number] | undefined {
-	if (!userId || !bio) return;
+const fakedEffects = new Map<UserProfile, UserProfile['profileEffect']>();
+
+function hiddenCode(userId: string | undefined, bio: string | null | undefined): ProfileCode {
+	if (!userId || !bio) return {};
 
 	const cached = decoded.get(userId);
 
-	if (cached?.bio === bio) return cached.colors;
+	if (cached?.bio === bio) return cached.code;
 
-	const colors = decodeThemeColors(bio);
+	const code = decodeProfileCode(bio);
 
-	decoded.set(userId, { bio, colors });
+	decoded.set(userId, { bio, code });
 
-	return colors;
+	return code;
 }
 
+const hiddenColors = (profile: DisplayProfile) => hiddenCode(profile.userId, profile.bio).colors;
+
 function stripBio(bio: PreviewBio): PreviewBio {
-	if (typeof bio === 'string') return stripThemeColors(bio);
+	if (typeof bio === 'string') return stripProfileCode(bio);
 
 	return bio && typeof bio.value === 'string'
-		? { ...bio, value: stripThemeColors(bio.value) }
+		? { ...bio, value: stripProfileCode(bio.value) }
 		: bio;
 }
 
@@ -48,6 +55,17 @@ function themeCustomization(prototype: object): (() => void) | undefined {
 	});
 
 	return () => Object.defineProperty(prototype, CUSTOMIZATION, original);
+}
+
+function fakeEffect(profile: UserProfile | undefined, userId: string): void {
+	if (!profile || fakedEffects.has(profile)) return;
+
+	const effect = hiddenCode(userId, profile.bio).effect;
+
+	if (!effect || (settings.nitroFirst && profile.profileEffect?.skuId)) return;
+
+	fakedEffects.set(profile, profile.profileEffect);
+	profile.profileEffect = { skuId: effect };
 }
 
 /**
@@ -95,4 +113,32 @@ export function patchThemeColors(): void {
 export function restoreThemeColors(): void {
 	restoreCustomization?.();
 	restoreCustomization = undefined;
+}
+
+/**
+ * @description Shows the profile effect hidden in a bio, behind a Nitro effect when the setting prefers Nitro.
+ * Patches `getUserProfile` on Discord's `UserProfileStore` and sets the profile's `profileEffect` once per profile.
+ */
+export function patchProfileEffects(): void {
+	const UserProfileStore = flux.getStore('UserProfile');
+
+	if (typeof UserProfileStore?.getUserProfile !== 'function') {
+		logger.warn('Fake profile effects skipped: Discord moved UserProfileStore.getUserProfile.');
+
+		return;
+	}
+
+	patcher.after(UserProfileStore, 'getUserProfile', ({ args: [userId], result }) => {
+		fakeEffect(result as UserProfile | undefined, userId as string);
+	});
+}
+
+/**
+ * @description Puts back the effects profiles had before their hidden ones were shown.
+ */
+export function restoreProfileEffects(): void {
+	for (const [profile, effect] of fakedEffects) profile.profileEffect = effect;
+
+	fakedEffects.clear();
+	decoded.clear();
 }

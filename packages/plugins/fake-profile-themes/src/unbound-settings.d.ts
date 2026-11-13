@@ -132,11 +132,17 @@ declare module '@unbound-app/settings' {
 	/** The plugin's settings: reads apply defaults, and writes are validated and saved to its Bucket. */
 	export type Settings = {
 		/**
-		 * Prefer Nitro colors
+		 * Prefer Nitro customization
 		 *
-		 * When a profile has Nitro theme colors and hidden ones, show the Nitro colors.
+		 * When a profile has Nitro theme colors or a Nitro effect as well as hidden ones, show the Nitro ones.
 		 */
 		nitroFirst: boolean;
+		/**
+		 * Include theme colors
+		 *
+		 * Turn off to hide only a profile effect in the bio code.
+		 */
+		includeColors: boolean;
 		/**
 		 * Primary color
 		 */
@@ -145,16 +151,23 @@ declare module '@unbound-app/settings' {
 		 * Accent color
 		 */
 		accent: import('@unbound-app/settings').HexColor;
+		effect: string;
 	};
 
 	/** Each setting and section by its dot-separated key. */
 	type SettingValues = {
 		/**
-		 * Prefer Nitro colors
+		 * Prefer Nitro customization
 		 *
-		 * When a profile has Nitro theme colors and hidden ones, show the Nitro colors.
+		 * When a profile has Nitro theme colors or a Nitro effect as well as hidden ones, show the Nitro ones.
 		 */
 		"nitroFirst": boolean;
+		/**
+		 * Include theme colors
+		 *
+		 * Turn off to hide only a profile effect in the bio code.
+		 */
+		"includeColors": boolean;
 		/**
 		 * Primary color
 		 */
@@ -163,6 +176,7 @@ declare module '@unbound-app/settings' {
 		 * Accent color
 		 */
 		"accent": import('@unbound-app/settings').HexColor;
+		"effect": string;
 	};
 
 	/** Every setting and section by its dot-separated key; buttons and notices are not settings. */
@@ -175,7 +189,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = Extract<{ [K in keyof Actions]: Actions[K] extends () => void | Promise<void> ? K : never }[keyof Actions], string>;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "nitroFirst";
+	export type BooleanSettingKey = "nitroFirst" | "includeColors";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;
