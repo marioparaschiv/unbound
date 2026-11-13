@@ -1,7 +1,7 @@
 {
-	"id": "unbound.no-blocked-messages",
-	"name": "No Blocked Messages",
-	"description": "Hides messages from blocked users completely.",
+	"id": "unbound.client-side-block",
+	"name": "Client Side Block",
+	"description": "Hides messages from blocked, ignored and hand-picked users, and replies to them, without blocking anyone on Discord.",
 	"authors": [
 		{
 			"name": "rushii",
@@ -20,7 +20,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.4",
+	"version": "1.0.0",
 	"unbound": {
 		"min": "3.0.0"
 	},

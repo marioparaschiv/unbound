@@ -1123,8 +1123,8 @@
         "rollup": "^4.67.5",
       },
     },
-    "packages/plugins/no-blocked-messages": {
-      "name": "no-blocked-messages",
+    "packages/plugins/client-side-block": {
+      "name": "client-side-block",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -3862,7 +3862,7 @@
 
     "nextgen-events": ["nextgen-events@1.5.3", "", {}, "sha512-P6qw6kenNXP+J9XlKJNi/MNHUQ+Lx5K8FEcSfX7/w8KJdZan5+BB5MKzuNgL2RTjHG1Svg8SehfseVEp8zAqwA=="],
 
-    "no-blocked-messages": ["no-blocked-messages@workspace:packages/plugins/no-blocked-messages"],
+    "client-side-block": ["client-side-block@workspace:packages/plugins/client-side-block"],
 
     "no-pending-count": ["no-pending-count@workspace:packages/plugins/no-pending-count"],
 

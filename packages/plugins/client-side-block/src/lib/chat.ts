@@ -25,11 +25,11 @@ type OpenChat = {
 };
 
 declare global {
-	var __unboundNoBlockedMessagesRuntime: OpenChat | undefined;
+	var __unboundClientSideBlockRuntime: OpenChat | undefined;
 }
 
 // Unbound evaluates the bundle again on each start; keeping the chat on `globalThis` lets a restart refresh it.
-export const chat = (globalThis.__unboundNoBlockedMessagesRuntime ??= {
+export const chat = (globalThis.__unboundClientSideBlockRuntime ??= {
 	chatManager: null,
 	rowManager: null,
 	messages: null,
