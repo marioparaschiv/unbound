@@ -54,7 +54,7 @@ async function openSheet(key: string, module: ReturnType<typeof createSheet>, pr
 }
 
 function press(view: ReturnType<typeof render>, label: string) {
-	const button = view.findAll('Pressable').find((node) => node.text() === label);
+	const button = view.findAll('Button').find((node) => node.props.text === label);
 
 	if (!button) throw new Error(`No ${label} button`);
 
@@ -96,7 +96,7 @@ describe('the emoji sheet', () => {
 	test('offers Copy URL, Copy markup and Clone', async () => {
 		const view = await openSheet('EmojiDetailActionSheet', createSheet(), emoji);
 
-		expect(view.findAll('Pressable').map((node) => node.text())).toEqual([
+		expect(view.findAll('Button').map((node) => node.props.text)).toEqual([
 			'Copy URL',
 			'Copy markup',
 			'Clone',
@@ -137,13 +137,13 @@ describe('the sticker sheet', () => {
 		await settle();
 
 		expect(toasts.shown).toMatchObject([{ content: 'wave added to favorites.' }]);
-		expect(view.findAll('Pressable').map((node) => node.text())).toContain('Unfavorite');
+		expect(view.findAll('Button').map((node) => node.props.text)).toContain('Unfavorite');
 	});
 
 	test('adds the buttons to the sheet a message opens, which skips openLazy', () => {
 		const view = render(createElement(stickerSheet.default, sticker));
 
-		expect(view.findAll('Pressable').map((node) => node.text())).toContain('Favorite');
+		expect(view.findAll('Button').map((node) => node.props.text)).toContain('Favorite');
 	});
 });
 
@@ -168,7 +168,7 @@ describe('starting', () => {
 
 		const view = await openSheet('EmojiDetailActionSheet', createSheet(), emoji);
 
-		expect(view.findAll('Pressable')).toHaveLength(3);
+		expect(view.findAll('Button')).toHaveLength(3);
 		expect(logs.entries).toContainEqual({
 			level: 'warn',
 			args: [
@@ -182,6 +182,6 @@ describe('starting', () => {
 
 		const view = await openSheet('EmojiDetailActionSheet', createSheet(), emoji);
 
-		expect(view.findAll('Pressable')).toHaveLength(3);
+		expect(view.findAll('Button')).toHaveLength(3);
 	});
 });

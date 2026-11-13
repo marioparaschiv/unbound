@@ -1,6 +1,6 @@
 import { Discord } from '@unbound-app/api/metro/components';
 import { messages } from '@unbound-app/i18n';
-import { Image, Text, View } from 'react-native';
+import { Image, View } from 'react-native';
 import { useMemo, useState } from 'react';
 
 import { getAssetUrl, type Expression } from '~/lib/expression';
@@ -8,7 +8,7 @@ import { getOwnedGuilds, type Guild } from '~/lib/guilds';
 import { cloneExpression } from '~/lib/clone';
 import { notifyError } from '~/lib/notify';
 
-import styles from '~/components/clone-sheet.style';
+import useStyles from '~/components/clone-sheet.style';
 import GuildRow from '~/components/guild-row';
 
 type CloneSheetProps = {
@@ -17,6 +17,7 @@ type CloneSheetProps = {
 };
 
 function CloneSheet({ expression, onClose }: CloneSheetProps) {
+	const styles = useStyles();
 	const [name, setName] = useState(expression.name);
 	const [query, setQuery] = useState('');
 	const [busy, setBusy] = useState(false);
@@ -42,46 +43,45 @@ function CloneSheet({ expression, onClose }: CloneSheetProps) {
 
 	return (
 		<Discord.ActionSheet>
+			<Discord.BottomSheetTitleHeader
+				title={messages.CLONE_TO_SERVER}
+				subtitle={expression.name}
+			/>
 			<View style={styles.container}>
-				<View style={styles.header}>
-					<Image source={{ uri: getAssetUrl(expression) }} style={styles.preview} />
-					<View style={styles.headerText}>
-						<Text style={styles.title}>{messages.CLONE_TO_SERVER}</Text>
-						<Text numberOfLines={1} style={styles.subtitle}>
-							{expression.name}
-						</Text>
-					</View>
-				</View>
-				<Text style={styles.label}>{messages.NAME}</Text>
+				<Image source={{ uri: getAssetUrl(expression) }} style={styles.preview} />
 				<Discord.TextField
+					label={messages.NAME}
 					value={name}
 					onChange={setName}
 					placeholder={messages.EXPRESSION_NAME_PLACEHOLDER}
 				/>
-				<Text style={[styles.label, styles.spacedLabel]}>{messages.YOUR_SERVERS}</Text>
 				<Discord.TextField
+					label={messages.YOUR_SERVERS}
 					value={query}
 					onChange={setQuery}
 					placeholder={messages.SEARCH_SERVERS}
 					isClearable
 				/>
-				<View style={styles.guilds}>
-					{visibleGuilds.map((guild) => (
-						<GuildRow
-							key={guild.id}
-							guild={guild}
-							busy={busy}
-							disabled={disabled}
-							onPress={() => clone(guild)}
-						/>
-					))}
-					{guilds.length === 0 ? (
-						<Text style={styles.empty}>{messages.NO_OWNED_SERVERS}</Text>
-					) : null}
-					{guilds.length > 0 && visibleGuilds.length === 0 ? (
-						<Text style={styles.empty}>{messages.NO_SERVERS_MATCH}</Text>
-					) : null}
-				</View>
+				{visibleGuilds.length ? (
+					<View>
+						{visibleGuilds.map((guild, index) => (
+							<GuildRow
+								key={guild.id}
+								guild={guild}
+								disabled={disabled}
+								start={index === 0}
+								end={index === visibleGuilds.length - 1}
+								onPress={() => clone(guild)}
+							/>
+						))}
+					</View>
+				) : (
+					<View style={styles.empty}>
+						<Discord.Text variant='text-sm/normal' color='text-muted'>
+							{guilds.length ? messages.NO_SERVERS_MATCH : messages.NO_OWNED_SERVERS}
+						</Discord.Text>
+					</View>
+				)}
 			</View>
 		</Discord.ActionSheet>
 	);

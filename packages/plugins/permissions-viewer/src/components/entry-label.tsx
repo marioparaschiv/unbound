@@ -9,6 +9,8 @@ import RoleDot from '~/components/role-dot';
 import type { Entry } from '~/lib/model';
 import type { GuildRole, User } from '~/lib/types';
 
+import useStyles from '~/components/permission-icons.style';
+
 type EntryLabelProps = {
 	entry: Entry;
 	role: GuildRole | undefined;
@@ -35,14 +37,13 @@ function RoleIconView({ role }: { role: GuildRole }) {
 }
 
 function OwnerLabel() {
+	const styles = useStyles();
 	const crown = assets.getIdByName('CrownIcon');
 
 	return (
 		<View style={{ alignItems: 'center', flexDirection: 'row', gap: 4 }}>
 			<Discord.Text variant='text-sm/medium'>{messages.OWNER_LABEL}</Discord.Text>
-			{crown != null ? (
-				<Image source={crown} style={{ height: 16, tintColor: '#f0b232', width: 16 }} />
-			) : null}
+			{crown != null ? <Image source={crown} style={[styles.small, styles.owner]} /> : null}
 		</View>
 	);
 }
