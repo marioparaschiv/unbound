@@ -96,3 +96,5 @@ export {
 export { NativePlatform, definePlatform } from '~/native/platform';
 export type { PlatformHandlers } from '~/native/platform';
 export { has, supports } from '~/native/capabilities';
+export { weakJava, weakObjC } from '~/native/weak-handle';
+export type { NativeWeakHandle } from '~/native/weak-handle';
