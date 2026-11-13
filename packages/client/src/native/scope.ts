@@ -16,6 +16,7 @@ import type {
 	NativeObjCBridge,
 	NativeObjCCallPlan,
 	NativeObjectHandle,
+	NativePointer,
 	NativeBridge,
 	NativeBridgeCapability,
 	NativeBridgePlatform,
@@ -385,9 +386,58 @@ export function createScopedNativeBridge(
 		},
 	};
 
+	const ffiCallbacks = new Set<NativePointer>();
+	const ffiAllocations = new Set<NativePointer>();
+	const ffiRebinds = new Set<string>();
 	const ffi: NativeFFIBridge = {
 		symbol: scopeBridgeMethod(ffiSource, 'symbol', 'ffi.symbol'),
 		call: scopeBridgeMethod(ffiSource, 'call', 'ffi.call'),
+		alloc: (size) => {
+			const pointer = scopeBridgeMethod(ffiSource, 'alloc', 'ffi.alloc')(size);
+
+			ffiAllocations.add(pointer);
+
+			return pointer;
+		},
+		free: (pointer) => {
+			ffiAllocations.delete(pointer);
+
+			return scopeBridgeMethod(ffiSource, 'free', 'ffi.free')(pointer);
+		},
+		read: scopeBridgeMethod(ffiSource, 'read', 'ffi.read'),
+		write: scopeBridgeMethod(ffiSource, 'write', 'ffi.write'),
+		callback: (signature, implementation) => {
+			const pointer = scopeBridgeMethod(
+				ffiSource,
+				'callback',
+				'ffi.callback',
+			)(signature, (...args) => (lifecycle.disposed ? undefined : implementation(...args)));
+
+			ffiCallbacks.add(pointer);
+
+			return pointer;
+		},
+		releaseCallback: (pointer) => {
+			ffiCallbacks.delete(pointer);
+
+			return scopeBridgeMethod(ffiSource, 'releaseCallback', 'ffi.releaseCallback')(pointer);
+		},
+		rebind: (name, replacement) => {
+			const rebinding = scopeBridgeMethod(
+				ffiSource,
+				'rebind',
+				'ffi.rebind',
+			)(name, replacement);
+
+			ffiRebinds.add(name);
+
+			return rebinding;
+		},
+		restore: (name) => {
+			ffiRebinds.delete(name);
+
+			return scopeBridgeMethod(ffiSource, 'restore', 'ffi.restore')(name);
+		},
 	};
 
 	const fabric: NativeFabricBridge = {
@@ -640,6 +690,18 @@ export function createScopedNativeBridge(
 			}
 
 			objcPlans.clear();
+
+			for (const name of ffiRebinds) ffiSource.restore?.(name);
+
+			ffiRebinds.clear();
+
+			for (const pointer of ffiCallbacks) ffiSource.releaseCallback?.(pointer);
+
+			ffiCallbacks.clear();
+
+			for (const pointer of ffiAllocations) ffiSource.free?.(pointer);
+
+			ffiAllocations.clear();
 
 			scopedJava.dispose();
 
