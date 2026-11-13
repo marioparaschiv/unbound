@@ -1,0 +1,11 @@
+{
+	"LIGHTNESS": "Lightness",
+	"SATURATION": "Saturation",
+	"SEED": "Seed",
+	"SEED_SUBTITLE": "Any text here shuffles everyone's color.",
+	"SEED_PLACEHOLDER": "Leave empty for the default colors",
+	"ONLY_WITHOUT_COLOR": "Only users without a role color",
+	"ONLY_WITHOUT_COLOR_SUBTITLE": "Members with a colored role keep it.",
+	"ONLY_IN_DMS": "Only in DMs",
+	"ONLY_IN_DMS_SUBTITLE": "Leave usernames in servers alone."
+}
