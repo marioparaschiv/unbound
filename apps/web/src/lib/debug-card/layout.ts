@@ -109,14 +109,9 @@ function installParts(details = ''): InstallParts {
 	};
 }
 
-function fittedInstall(details: string): string {
-	const shown = (text: string) => text.replaceAll('`', '').length;
-
-	return shown(details) > VALUE_ROOM ? details.replace(' · expires ', ' · exp ') : details;
-}
-
 function installSpans(details: string): Span[] {
-	return fittedInstall(details)
+	return details
+		.replace(' · expires ', ' · exp ')
 		.split('`')
 		.map((part, index) => (index % 2 ? accent(part) : value(part)))
 		.filter((span) => span.text);

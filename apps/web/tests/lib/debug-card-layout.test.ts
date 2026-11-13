@@ -122,7 +122,7 @@ describe('debug card', () => {
 		);
 	});
 
-	test('shortens the expiry instead of cutting off an install line that is too long', () => {
+	test('writes the expiry short, so a Development install line fits without being cut off', () => {
 		const long = texts(
 			layoutDebugCard({
 				...info,
@@ -133,7 +133,7 @@ describe('debug card', () => {
 
 		expect(long.some((run) => run.text.includes('…'))).toBe(false);
 		expect(long.some((run) => run.text.includes('exp 2027-11-13'))).toBe(true);
-		expect(short.some((run) => run.text.includes('expires 2027-09-16'))).toBe(true);
+		expect(short.some((run) => run.text.includes('exp 2027-09-16'))).toBe(true);
 	});
 
 	test('writes escaped SVG with the same size', () => {
