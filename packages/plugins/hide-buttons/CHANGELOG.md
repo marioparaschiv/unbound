@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1] - 2026-11-14
+
+### Fixed
+
+- With the voice message button hidden, an empty message box shows the send button instead of nothing.
+
 ## [1.2.0] - 2026-11-13
 
 ### Added

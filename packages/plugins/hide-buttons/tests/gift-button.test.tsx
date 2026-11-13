@@ -1,4 +1,5 @@
 import { logs, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { memo, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
@@ -25,6 +26,10 @@ const ChatInputRightActions = memo(({ shouldShowGiftButton }: ActionsProps) => (
 	</View>
 ));
 
+const ChatInputSendButton = memo(({ canSendVoiceMessage }: { canSendVoiceMessage?: boolean }) => (
+	<Text>{canSendVoiceMessage ? 'microphone' : 'send'}</Text>
+));
+
 const folder = 'modules/chat_input/native/action_buttons/';
 
 beforeEach(async () => {
@@ -33,6 +38,10 @@ beforeEach(async () => {
 		`${folder}ChatInputActionButtonGiftOrThread.tsx`,
 	);
 	metro.register({ default: ChatInputRightActions }, `${folder}ChatInputRightActions.tsx`);
+	metro.register(
+		{ default: ChatInputSendButton },
+		'modules/chat_input/native/accessories/ChatInputSendButton.tsx',
+	);
 
 	await startPlugin();
 });
@@ -52,6 +61,20 @@ describe('the composer actions', () => {
 
 	test('leaves the actions alone when no gift shows', () => {
 		expect(render(<ChatInputRightActions />).text()).toBe('expressions');
+	});
+});
+
+describe('the send button', () => {
+	test('takes the place of a hidden microphone', () => {
+		settings.voiceMessage = true;
+
+		expect(render(<ChatInputSendButton canSendVoiceMessage />).text()).toBe('send');
+	});
+
+	test('gives way to the microphone while it shows', () => {
+		settings.voiceMessage = false;
+
+		expect(render(<ChatInputSendButton canSendVoiceMessage />).text()).toBe('microphone');
 	});
 });
 
