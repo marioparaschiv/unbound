@@ -1,6 +1,6 @@
 # Plugins
 
-92 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+93 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -83,6 +83,7 @@
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Show Timeout Duration](https://unbound.rip/addons/unbound.show-timeout-duration): Shows how much longer a user's timeout will last.
 - <img src="../../assets/plugins/readme-icons/bell-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Silent Message Toggle](https://unbound.rip/addons/unbound.silent-message-toggle): Adds a button to the chat input that sends your next messages as silent messages.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Silent Typing](https://unbound.rip/addons/unbound.silent-typing): Hides that you are typing, with a toggle in the chat input to turn it on and off.
+- <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Split Large Messages](https://unbound.rip/addons/unbound.split-large-messages): Sends messages over the length limit as several messages instead of refusing them.
 - <img src="../../assets/plugins/readme-icons/headphones-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Spotify Listen Along](https://unbound.rip/addons/unbound.spotify-listen-along): Listen along to someone's Spotify activity and invite a channel to listen along with you.
 - <img src="../../assets/plugins/readme-icons/sticker-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Sticker Preview](https://unbound.rip/addons/unbound.sticker-preview): Displays a preview of a selected sticker instead of sending it immediately.
 - <img src="../../assets/plugins/readme-icons/super-reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Super Reaction Tweaks](https://unbound.rip/addons/unbound.super-reaction-tweaks): Opens the reaction picker on Super Reactions and caps how many Super Reaction animations play at once.

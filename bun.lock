@@ -1513,6 +1513,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/split-large-messages": {
+      "name": "split-large-messages",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/spotify-listen-along": {
       "name": "spotify-listen-along",
       "dependencies": {
@@ -4321,6 +4335,7 @@
 
     "spdx-license-ids": ["spdx-license-ids@3.0.24", "", {}, "sha512-cLS9TtWkIQFyLkJ3/5aFQAOHOSKTlOs/7WDut/XPSdjom1fJhUdkepeJAKXa9Y05+FabHd0sti+Et559vDtkpQ=="],
 
+    "split-large-messages": ["split-large-messages@workspace:packages/plugins/split-large-messages"],
     "split2": ["split2@1.0.0", "", { "dependencies": { "through2": "~2.0.0" } }, "sha512-NKywug4u4pX/AZBB1FCPzZ6/7O+Xhz1qMVbzTvvKvikjO99oPN87SkK08mEY9P63/5lWjK+wgOOgApnTg5r6qg=="],
 
     "spotify-listen-along": ["spotify-listen-along@workspace:packages/plugins/spotify-listen-along"],
