@@ -1,6 +1,6 @@
 # Plugins
 
-83 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+84 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -19,6 +19,7 @@
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Channel Typing Indicators](https://unbound.rip/addons/unbound.channel-typing-indicators): Shows animated typing dots and avatars beside channels where people are typing.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Character Counter](https://unbound.rip/addons/unbound.character-counter): Shows the current message length and Discord's character limit in the composer.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Chat Bubbles](https://unbound.rip/addons/unbound.chat-bubbles): Draws a rounded bubble behind each message.
+- <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Chat Gestures](https://unbound.rip/addons/unbound.chat-gestures): Choose what double tap, triple tap and swipe do on a message: reply, edit, react, forward, save, copy or delete.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Clear URLs](https://unbound.rip/addons/unbound.clear-urls): Removes tracking garbage from URLs before you send them.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom Commands](https://unbound.rip/addons/unbound.custom-commands): Create slash commands that send saved text, images, and videos.
 - <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom RPC](https://unbound.rip/addons/unbound.custom-rpc): Shows a Rich Presence of your own on your profile: any name, text, images, timer and buttons.
