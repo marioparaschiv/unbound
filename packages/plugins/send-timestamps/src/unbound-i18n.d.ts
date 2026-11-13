@@ -27,10 +27,48 @@ declare module '@unbound-app/i18n' {
 		readonly STYLE_SHORT_FULL: string;
 		/** Weekday, date and time */
 		readonly STYLE_LONG_FULL: string;
+		/** Timestamp picker button */
+		readonly PICKER_SETTING: string;
+		/** Adds a clock to the chat input that picks a date, time and style. */
+		readonly PICKER_SETTING_SUBTITLE: string;
+		/** Pick a timestamp */
+		readonly PICKER_BUTTON: string;
+		/** Timestamp picker */
+		readonly PICKER_NAME: string;
+		/** Pick a date and time */
+		readonly PICKER_TITLE: string;
+		/** Tap a style to insert it */
+		readonly STYLES_TITLE: string;
+		/** Change date and time */
+		readonly CHANGE_TIME: string;
+		/** Copy the {style} timestamp */
+		readonly COPY_STYLE_LABEL: string;
+		/** Copied the timestamp. */
+		readonly COPIED: string;
+		/** Relative */
+		readonly NAME_RELATIVE: string;
+		/** Short time */
+		readonly NAME_SHORT_TIME: string;
+		/** Long time */
+		readonly NAME_LONG_TIME: string;
+		/** Short date */
+		readonly NAME_SHORT_DATE: string;
+		/** Long date */
+		readonly NAME_LONG_DATE: string;
+		/** Date and time */
+		readonly NAME_SHORT_FULL: string;
+		/** Weekday, date and time */
+		readonly NAME_LONG_FULL: string;
+		/** Pick a date */
+		readonly PICK_DATE: string;
+		/** Pick a time */
+		readonly PICK_TIME: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
-	export type FormatVars = Record<never, never>;
+	export type FormatVars = {
+		COPY_STYLE_LABEL: { style: string | number };
+	};
 
 	/** Each message in the user's locale, falling back to en-US. */
 	export const messages: Messages;
