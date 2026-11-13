@@ -4,18 +4,12 @@ import { useEffect, useState } from 'react';
 
 import type { SpotifyActivity } from '~/lib/types';
 import { LOADING_MS } from '~/lib/constants';
+import { toggleListening } from '~/lib/session';
 
 const SpotifyStore = flux.getStore('Spotify');
-const SpotifyProtocolStore = flux.getStore('SpotifyProtocol');
 const UserStore = flux.getStore('User');
 
-/** Discord's Spotify actions, which start playback and sync it to another user's activity. */
-export type SpotifyActions = {
-	play: (activity: SpotifyActivity, userId: string) => unknown;
-	sync: (activity: SpotifyActivity, userId: string) => unknown;
-};
-
-export type DisabledReason = 'YOURSELF' | 'ALREADY_LISTENING' | 'NOT_DETECTED';
+export type DisabledReason = 'YOURSELF' | 'NOT_DETECTED';
 
 export type ListenState = {
 	disabledReason: DisabledReason | null;
@@ -37,17 +31,7 @@ function disabledReason(
 ): DisabledReason | null {
 	if (!userId || userId === UserStore.getCurrentUser?.()?.id) return 'YOURSELF';
 
-	const listening = SpotifyStore.getActivity();
-
-	if (listening?.party?.id && listening.party.id === activity.party?.id) {
-		return 'ALREADY_LISTENING';
-	}
-
-	const canPlay =
-		Boolean(SpotifyStore.getActiveSocketAndDevice()) ||
-		Boolean(SpotifyProtocolStore.isProtocolRegistered());
-
-	if (!SpotifyStore.hasConnectedAccount() || !canPlay) return 'NOT_DETECTED';
+	if (!SpotifyStore.hasConnectedAccount()) return 'NOT_DETECTED';
 
 	return null;
 }
@@ -60,7 +44,7 @@ function disabledReason(
 export function useListenState(activity: SpotifyActivity): ListenState {
 	const userId = partyUserId(activity);
 	const reason = flux.useStore(
-		[SpotifyStore, SpotifyProtocolStore, UserStore],
+		[SpotifyStore, UserStore],
 		() => disabledReason(activity, userId),
 		{ deps: [activity, userId] },
 	);
@@ -87,49 +71,21 @@ export function useLoading(): { loading: boolean; start: () => void } {
 }
 
 function reasonText(reason: DisabledReason | null): string {
-	switch (reason) {
-		case 'ALREADY_LISTENING':
-			return messages.ALREADY_LISTENING;
-		case 'NOT_DETECTED':
-			return messages.NOT_DETECTED;
-		default:
-			return messages.YOURSELF;
-	}
-}
-
-function syncOnNextPlayerState(actions: SpotifyActions, activity: SpotifyActivity, userId: string) {
-	const stop = flux.onAction('SPOTIFY_PLAYER_STATE', () => {
-		stop();
-		actions.sync(activity, userId);
-	});
+	return reason === 'NOT_DETECTED' ? messages.NOT_DETECTED : messages.YOURSELF;
 }
 
 /**
- * @description Starts listening along: syncs to the activity right away when Spotify is already playing, otherwise starts playback and syncs once Spotify reports its player state.
+ * @description Starts listening along with an activity's user, following their track, position and pauses, or stops when you already are.
  * @param state The activity's listen state.
  * @param activity The Spotify activity.
- * @param actions Discord's Spotify actions.
  * @returns Whether listening along started.
  */
-export function listenAlong(
-	state: ListenState,
-	activity: SpotifyActivity,
-	actions: SpotifyActions,
-): boolean {
+export function listenAlong(state: ListenState, activity: SpotifyActivity): boolean {
 	if (state.disabledReason || !state.userId) {
 		toasts.show({ title: addon.name, content: reasonText(state.disabledReason) });
 
 		return false;
 	}
 
-	if (SpotifyStore.getActivity()) {
-		actions.sync(activity, state.userId);
-
-		return true;
-	}
-
-	syncOnNextPlayerState(actions, activity, state.userId);
-	actions.play(activity, state.userId);
-
-	return true;
+	return toggleListening(state.userId, activity);
 }

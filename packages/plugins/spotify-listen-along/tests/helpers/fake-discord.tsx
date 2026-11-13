@@ -6,8 +6,6 @@ export type OverflowButtons = { text: string; disabled?: boolean; onPress: () =>
 
 export const sent: unknown[][] = [];
 export const cleared: unknown[][] = [];
-export const played: unknown[][] = [];
-export const synced: unknown[][] = [];
 
 export const ActivityButtons = {
 	PlayOnSpotifyButton: (_props: { activity?: unknown }): ReactElement => (
@@ -39,12 +37,12 @@ export const MediaKeyboardActions = memo(MediaKeyboardBottomSheetActions);
 
 /** Registers the Discord modules the plugin looks up, each recording what the plugin calls on it. */
 export function registerDiscord() {
-	for (const list of [sent, cleared, played, synced]) list.length = 0;
+	for (const list of [sent, cleared]) list.length = 0;
 
 	metro.register({
-		play: (...args: unknown[]) => played.push(args),
-		sync: (...args: unknown[]) => synced.push(args),
-		getMetadata: () => undefined,
+		getAPIBaseURL: () => 'https://discord.com/api',
+		get: async () => ({ body: { access_token: 'token' } }),
+		put: async () => ({ body: {} }),
 	});
 	metro.register(ActivityButtons);
 	metro.register({ SpotifyPlayButton: (): ReactElement => <Text>Play</Text> });

@@ -5,7 +5,6 @@ import type { ReactElement } from 'react';
 import { currentListenableActivity, sendListenAlongInvite, type InviteActions } from '~/lib/send';
 import type { OverflowButton, SpotifyActivity } from '~/lib/types';
 import { ListenAlongRow } from '~/components/listen-along-row';
-import type { SpotifyActions } from '~/lib/sync';
 
 type ButtonProps = { activity?: SpotifyActivity };
 
@@ -13,49 +12,34 @@ type ActionsProps = { overflowButtons?: OverflowButton[] };
 
 const SpotifyStore = flux.getStore('Spotify');
 
-function withListenAlong(
-	actions: SpotifyActions,
-	props: ButtonProps | undefined,
-	result: ReactElement | null,
-) {
+function withListenAlong(props: ButtonProps | undefined, result: ReactElement | null) {
 	if (!result || !props?.activity?.party?.id) return result;
 
-	return (
-		<ListenAlongRow activity={props.activity} actions={actions}>
-			{result}
-		</ListenAlongRow>
-	);
+	return <ListenAlongRow activity={props.activity}>{result}</ListenAlongRow>;
 }
 
 /**
- * @description Adds a Listen Along button next to Discord's Spotify buttons on activity cards, which syncs your Spotify to the track and position of the person you are looking at.
+ * @description Adds a Listen Along button next to Discord's Spotify buttons on activity cards, which follows the track, position and pauses of the person you are looking at.
  * Patches `PlayOnSpotifyButton` (profile activity cards) and, when this build still has it, `SpotifyPlayButton` (older activity layouts) and wraps their result.
- * Depends on Discord's Spotify actions (`play`, `sync`) and `SpotifyStore`, `SpotifyProtocolStore` and `UserStore`.
+ * Depends on `SpotifyStore` and `UserStore`; playback goes through `~/lib/session`.
  */
 export function patchActivityButtons(): void {
-	const SpotifyActions: SpotifyActions | undefined = metro.findByProps(
-		'play',
-		'sync',
-		'getMetadata',
-	);
 	const ActivityButtons = metro.findByProps('PlayOnSpotifyButton');
 	const SpotifyComponents = metro.findByProps('SpotifyPlayButton');
 
-	if (!ActivityButtons || !SpotifyActions) {
-		logger.warn(
-			'Listen along skipped: Discord moved PlayOnSpotifyButton or the Spotify actions.',
-		);
+	if (!ActivityButtons) {
+		logger.warn('Listen along skipped: Discord moved PlayOnSpotifyButton.');
 
 		return;
 	}
 
 	patcher.react.after(ActivityButtons, 'PlayOnSpotifyButton', ({ props, result }) =>
-		withListenAlong(SpotifyActions, props as ButtonProps, result as ReactElement | null),
+		withListenAlong(props as ButtonProps, result as ReactElement | null),
 	);
 
 	if (SpotifyComponents) {
 		patcher.react.after(SpotifyComponents, 'SpotifyPlayButton', ({ props, result }) =>
-			withListenAlong(SpotifyActions, props as ButtonProps, result as ReactElement | null),
+			withListenAlong(props as ButtonProps, result as ReactElement | null),
 		);
 	}
 }

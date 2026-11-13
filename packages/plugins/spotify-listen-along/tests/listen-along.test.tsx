@@ -1,25 +1,42 @@
 import { logs, metro, render, startPlugin, toasts } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import { ActivityButtons, registerDiscord, synced } from './helpers/fake-discord';
+import { ActivityButtons, registerDiscord } from './helpers/fake-discord';
 
 import type { StoreSeeds } from '@unbound-app/api/testing';
 
-const activity = { party: { id: 'spotify:42' } };
+const activity = {
+	party: { id: 'spotify:42' },
+	sync_id: 'track',
+	timestamps: { start: Date.now() },
+};
+const requests: string[] = [];
 
-function stores(listening: unknown = null, connected = true): StoreSeeds {
+function stores(connected = true): StoreSeeds {
 	return {
 		Spotify: {
-			getActivity: () => listening,
-			getActiveSocketAndDevice: () => ({}),
+			getActivity: () => null,
+			getActiveSocketAndDevice: () => null,
 			hasConnectedAccount: () => connected,
 		},
-		SpotifyProtocol: { isProtocolRegistered: () => true },
+		ConnectedAccounts: { getAccounts: () => [{ id: 'sp', type: 'spotify' }] },
+		Presence: { getActivities: () => [activity] },
 		User: { getCurrentUser: () => ({ id: '1' }) },
 	};
 }
 
-beforeEach(registerDiscord);
+beforeEach(() => {
+	registerDiscord();
+	requests.length = 0;
+	globalThis.fetch = (async (url: string, init?: RequestInit) => {
+		requests.push(`${init?.method ?? 'GET'} ${url.replace('https://api.spotify.com/v1', '')}`);
+
+		return new Response(
+			JSON.stringify({ devices: [{ id: 'phone', is_active: true, is_restricted: false }] }),
+			{ status: 200 },
+		);
+	}) as typeof fetch;
+});
 
 async function renderCard(options: { activity?: unknown; stores?: StoreSeeds } = {}) {
 	await startPlugin();
@@ -47,12 +64,14 @@ describe('Listen Along button', () => {
 		expect(card.findAll('IconButton')).toEqual([]);
 	});
 
-	test('syncs to the other person while you are already playing', async () => {
-		const card = await renderCard({ stores: stores({ party: { id: 'spotify:7' } }) });
+	test('plays their track on your Spotify and turns into a stop button', async () => {
+		const card = await renderCard();
 
 		card.act(() => card.find('IconButton').props.onPress?.());
+		await new Promise((resolve) => setTimeout(resolve, 0));
 
-		expect(synced).toEqual([[activity, '42']]);
+		expect(requests).toEqual(['GET /me/player/devices', 'PUT /me/player/play?device_id=phone']);
+		expect(card.find('IconButton').props.accessibilityLabel).toBe('Stop listening along');
 	});
 
 	test('explains why it refuses to listen along to yourself', async () => {
@@ -65,7 +84,7 @@ describe('Listen Along button', () => {
 		expect(toasts.shown).toMatchObject([
 			{ content: 'Listen along with someone else, not yourself.' },
 		]);
-		expect(synced).toEqual([]);
+		expect(requests).toEqual([]);
 	});
 });
 
@@ -82,9 +101,7 @@ describe('start', () => {
 
 		expect(logs.entries).toContainEqual({
 			level: 'warn',
-			args: [
-				'Listen along skipped: Discord moved PlayOnSpotifyButton or the Spotify actions.',
-			],
+			args: ['Listen along skipped: Discord moved PlayOnSpotifyButton.'],
 		});
 	});
 });

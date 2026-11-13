@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.0] - 2026-11-13
+
+### Fixed
+
+- Listen Along joins at the host's position and stays in sync: it follows track changes and seeks, and pauses and resumes with them, through Spotify's API instead of Discord's desktop-only player sync.
+- When Spotify isn't running, it opens Spotify and waits for your phone to show up, and never plays on an idle speaker or computer.
+
+### Added
+
+- Tap the button again to stop listening along.
 ## [1.0.5] - 2026-11-11
 
 ### Changed
