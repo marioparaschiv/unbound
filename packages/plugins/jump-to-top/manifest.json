@@ -1,0 +1,21 @@
+{
+	"id": "unbound.jump-to-top",
+	"name": "Jump To Top",
+	"description": "Adds a button to the channel header that jumps to the first message in the channel.",
+	"authors": [
+		{
+			"name": "Kaerion",
+			"id": "1409130527973441658"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ChevronLargeRightIcon",
+	"main": "index.tsx"
+}
