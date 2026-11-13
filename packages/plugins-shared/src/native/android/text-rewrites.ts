@@ -1,10 +1,3 @@
-import type {
-	NativeBridge,
-	NativeJavaReference,
-	NativeJavaValue,
-	NativeUIScope,
-} from '@unbound-app/api/native';
-
 import {
 	addHost,
 	disposeTextRewrites,
@@ -19,6 +12,12 @@ import {
 	updateAnchor,
 } from '@unbound-plugins/shared/native/android/text-rewrite-worklets';
 import type {
+	NativeBridge,
+	NativeJavaReference,
+	NativeJavaValue,
+	NativeUIScope,
+} from '@unbound-app/api/native';
+import type {
 	TextRewriteAnchor,
 	TextRewriteEdit,
 } from '@unbound-plugins/shared/native/android/text-edits';
@@ -31,6 +30,13 @@ const MAX_IMAGES = 128;
 let nextConnection = 0;
 
 export type TextRewriteNative = Pick<NativeBridge, 'apiVersion' | 'java' | 'hooks' | 'ui'>;
+
+export type TextRewriteOptions = {
+	/** The plugin's name, for logs. */
+	label: string;
+	/** Called when a shown text has no free group of host views. */
+	onNeedsHost?: (rendered: string) => void;
+};
 
 export type TextRewrites = {
 	put(original: string, rendered: string, edits: TextRewriteEdit[]): boolean;
@@ -62,7 +68,9 @@ export function supportsTextRewrites(apiVersion: string): boolean {
 	for (const [index, minimum] of MINIMUM_API.entries()) {
 		const part = parts[index] ?? 0;
 
-		if (part !== minimum) return part > minimum;
+		if (part !== minimum) {
+			return part > minimum;
+		}
 	}
 
 	return true;
@@ -71,7 +79,9 @@ export function supportsTextRewrites(apiVersion: string): boolean {
 function tagged(reference: NativeJavaReference): NativeJavaValue {
 	const { type, value, id } = reference as { type?: unknown; value?: unknown; id?: unknown };
 
-	if (type === 'handle' && typeof value === 'string') return { type: 'handle', value };
+	if (type === 'handle' && typeof value === 'string') {
+		return { type: 'handle', value };
+	}
 
 	return { type: 'handle', value: String(id) };
 }
@@ -86,7 +96,7 @@ function tagged(reference: NativeJavaReference): NativeJavaValue {
 export function connectTextRewrites(
 	native: TextRewriteNative,
 	watchedClass: string,
-	options: { label: string; onNeedsHost?: (rendered: string) => void },
+	options: TextRewriteOptions,
 ): TextRewrites | null {
 	const { ui } = native;
 
@@ -105,11 +115,15 @@ export function connectTextRewrites(
 
 	return {
 		put(original, rendered, edits) {
-			if (disposed) return false;
+			if (disposed) {
+				return false;
+			}
 
 			const existing = rules.get(original);
 
-			if (existing !== undefined && existing !== rendered) return false;
+			if (existing !== undefined && existing !== rendered) {
+				return false;
+			}
 
 			rules.delete(original);
 			rules.set(original, rendered);
@@ -129,12 +143,12 @@ export function connectTextRewrites(
 			images.set(key, bitmap);
 			ui.run(putImage, stateKey, key, tagged(bitmap));
 
-			if (images.size > MAX_IMAGES) {
-				const oldest = images.keys().next().value!;
+			if (images.size <= MAX_IMAGES) return;
 
-				images.delete(oldest);
-				ui.run(removeImage, stateKey, oldest);
-			}
+			const oldest = images.keys().next().value!;
+
+			images.delete(oldest);
+			ui.run(removeImage, stateKey, oldest);
 		},
 		hasImage: (key) => images.has(key),
 		addHost(groupId, rendered, host, anchor) {
@@ -144,19 +158,29 @@ export function connectTextRewrites(
 			ui.run(addHost, stateKey, groupId, rendered, tagged(host), anchor);
 		},
 		updateAnchor(host, anchor) {
-			if (!disposed) ui.run(updateAnchor, stateKey, tagged(host), anchor);
+			if (!disposed) {
+				ui.run(updateAnchor, stateKey, tagged(host), anchor);
+			}
 		},
 		removeGroup(groupId) {
-			if (!disposed) ui.run(removeGroup, stateKey, groupId);
+			if (!disposed) {
+				ui.run(removeGroup, stateKey, groupId);
+			}
 		},
 		reapply(textView) {
-			if (!disposed) ui.run(reapply, stateKey, tagged(textView));
+			if (!disposed) {
+				ui.run(reapply, stateKey, tagged(textView));
+			}
 		},
 		refresh(rendered) {
-			if (!disposed) ui.run(refresh, stateKey, rendered);
+			if (!disposed) {
+				ui.run(refresh, stateKey, rendered);
+			}
 		},
 		refreshAll() {
-			if (!disposed) ui.run(refresh, stateKey);
+			if (!disposed) {
+				ui.run(refresh, stateKey);
+			}
 		},
 		dispose() {
 			if (disposed) return;
