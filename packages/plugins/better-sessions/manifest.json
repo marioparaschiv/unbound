@@ -1,0 +1,21 @@
+{
+	"id": "unbound.better-sessions",
+	"name": "Better Sessions",
+	"description": "Marks new sessions, shows exactly when each was last used and lets you name them, in Settings > Devices.",
+	"authors": [
+		{
+			"name": "amia",
+			"id": "142007603549962240"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "LaptopPhoneIcon",
+	"main": "index.tsx"
+}
