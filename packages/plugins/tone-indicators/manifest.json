@@ -1,0 +1,17 @@
+{
+	"id": "unbound.tone-indicators",
+	"name": "Tone Indicators",
+	"description": "Turns tone tags such as /j and /srs into pills that spell out what they mean.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ChatDotsIcon",
+	"main": "index.tsx"
+}
