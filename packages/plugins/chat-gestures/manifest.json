@@ -1,0 +1,21 @@
+{
+	"id": "unbound.chat-gestures",
+	"name": "Chat Gestures",
+	"description": "Choose what double tap, triple tap and swipe do on a message: reply, edit, react, forward, save, copy or delete.",
+	"authors": [
+		{
+			"name": "acquitelol",
+			"id": "581573474296791211"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ReactionIcon",
+	"main": "index.tsx"
+}

@@ -1,0 +1,23 @@
+{
+	"DOUBLE_TAP": "Double tap",
+	"TRIPLE_TAP": "Triple tap",
+	"TRIPLE_TAP_SUBTITLE": "While set, a double tap waits a moment to see whether a third tap follows.",
+	"SWIPE": "Swipe",
+	"SWIPE_SUBTITLE": "Discord's swipe on a message, which normally replies, or edits your own.",
+	"REACT_EMOJI": "Reaction emoji",
+	"REACT_EMOJI_SUBTITLE": "An emoji such as 👍, or a custom one as <:name:id>.",
+	"ACTION_DISCORD": "Discord's default",
+	"ACTION_REPLY_OR_EDIT": "Reply, or edit your own",
+	"ACTION_REPLY": "Reply",
+	"ACTION_REACT": "React with the reaction emoji",
+	"ACTION_FORWARD": "Forward",
+	"ACTION_SAVE": "Save for later",
+	"ACTION_COPY": "Copy text",
+	"ACTION_DELETE": "Delete your own message",
+	"ACTION_NOTHING": "Nothing",
+	"COPIED": "Copied the message text.",
+	"DELETE_TITLE": "Delete message",
+	"DELETE_BODY": "Delete this message? This cannot be undone.",
+	"DELETE": "Delete",
+	"PLUGIN": "Chat Gestures"
+}
