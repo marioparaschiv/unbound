@@ -1,0 +1,25 @@
+{
+	"id": "unbound.favourite-emoji-first",
+	"name": "Favourite Emoji First",
+	"description": "Puts your favourite emoji first in the emoji suggestions while you type a colon.",
+	"authors": [
+		{
+			"name": "Syncxv",
+			"id": "549244932213309442"
+		},
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "StarIcon",
+	"main": "index.tsx"
+}
