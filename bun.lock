@@ -442,6 +442,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/always-trust": {
+      "name": "always-trust",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/anonymise-filenames": {
       "name": "anonymise-filenames",
       "dependencies": {
@@ -704,6 +718,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/i-love-spam": {
+      "name": "i-love-spam",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/mention-avatars": {
       "name": "mention-avatars",
       "dependencies": {
@@ -831,6 +859,20 @@
     },
     "packages/plugins/no-blocked-messages": {
       "name": "no-blocked-messages",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
+    "packages/plugins/no-pending-count": {
+      "name": "no-pending-count",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -2438,6 +2480,8 @@
 
     "always-animate": ["always-animate@workspace:packages/plugins/always-animate"],
 
+    "always-trust": ["always-trust@workspace:packages/plugins/always-trust"],
+
     "anonymise-filenames": ["anonymise-filenames@workspace:packages/plugins/anonymise-filenames"],
 
     "anser": ["anser@1.4.10", "", {}, "sha512-hCv9AqTQ8ycjpSd3upOJd7vFwW1JaoYQ7tpham03GJ1ca8/65rqn0RpaWpItOAd6ylW9wAw6luXYPJIyPFVOww=="],
@@ -2968,6 +3012,8 @@
 
     "human-signals": ["human-signals@8.0.1", "", {}, "sha512-eKCa6bwnJhvxj14kZk5NCPc6Hb6BdsU9DZcOnmQKSnO1VKrfV0zCvtttPZUsBvjmNDn8rpcJfpwSYnHBjc95MQ=="],
 
+    "i-love-spam": ["i-love-spam@workspace:packages/plugins/i-love-spam"],
+
     "iconv-lite": ["iconv-lite@0.7.3", "", { "dependencies": { "safer-buffer": ">= 2.1.2 < 3.0.0" } }, "sha512-IKXpvIzjnC9XTAUbVBcMfGS0EPaIXtW6v+zr+RRp+hqULEpo0owZax6wyRwPOJbWbzjYspQwusTsfVr0ifh4uQ=="],
 
     "identifier-regex": ["identifier-regex@1.1.0", "", { "dependencies": { "reserved-identifiers": "^1.0.0" } }, "sha512-SLX4H/vtcYlYnL7XqnuJKHU7Z8517TgsW9nmQiGOgMCjQ8V/deLYu6bEmbGoXe7WMMhc9+EUGyFFneHja8KabA=="],
@@ -3429,6 +3475,8 @@
     "nextgen-events": ["nextgen-events@1.5.3", "", {}, "sha512-P6qw6kenNXP+J9XlKJNi/MNHUQ+Lx5K8FEcSfX7/w8KJdZan5+BB5MKzuNgL2RTjHG1Svg8SehfseVEp8zAqwA=="],
 
     "no-blocked-messages": ["no-blocked-messages@workspace:packages/plugins/no-blocked-messages"],
+
+    "no-pending-count": ["no-pending-count@workspace:packages/plugins/no-pending-count"],
 
     "no-reply-mention": ["no-reply-mention@workspace:packages/plugins/no-reply-mention"],
 
