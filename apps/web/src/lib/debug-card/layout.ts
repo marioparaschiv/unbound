@@ -10,6 +10,12 @@ import { launchNotes } from '@unbound-app/contracts/debug-card-launch';
 
 import type { DebugCardContext } from '~/lib/debug-card/context';
 
+import { accent, COLORS, dim, joined, value, warn, type Span } from './spans';
+import { environmentRows } from './environment-rows';
+import { clipped, wrapped } from './wrap-lines';
+
+export { joined } from './spans';
+
 /** A rounded rectangle, filled or outlined, in the card's points. */
 export type CardRect = {
 	kind: 'rect';
@@ -51,8 +57,6 @@ export type DebugCard = {
 	ops: CardOp[];
 };
 
-type Span = { text: string; color: string };
-
 const WIDTH = 432;
 const SCALE = 3;
 const PADDING = 14;
@@ -68,33 +72,6 @@ const DAY_MS = 86_400_000;
 const CRASH_WINDOW_MS = 7 * DAY_MS;
 const VALUE_ROOM = Math.floor((WIDTH - PADDING * 2) / CHAR_WIDTH) - LABEL_WIDTH;
 const FOOTER_HEIGHT = 52;
-
-const COLORS = {
-	background: '#111214',
-	border: '#2b2d31',
-	titleBar: '#1e1f22',
-	label: '#949ba4',
-	value: '#f2f3f5',
-	accent: '#a78bfa',
-	dim: '#949ba4',
-	good: '#22c55e',
-	warn: '#eab308',
-	bad: '#ef4444',
-};
-
-const value = (text: string): Span => ({ text, color: COLORS.value });
-const dim = (text: string): Span => ({ text, color: COLORS.dim });
-const warn = (text: string): Span => ({ text, color: COLORS.warn });
-const accent = (text: string): Span => ({ text, color: COLORS.accent });
-
-/**
- * @description Joins the parts that are set with the card's ` · ` separator.
- * @param parts The parts; empty and `undefined` ones are skipped.
- * @returns The joined text.
- */
-export function joined(parts: (string | undefined)[]): string {
-	return parts.filter(Boolean).join(' · ');
-}
 
 const SIDELOADERS = new Set(['AltStore/SideStore']);
 
@@ -237,85 +214,20 @@ function rows(info: DebugInfo, now: Date, context: DebugCardContext): [string, S
 				...supportSpans(supportOf(info, context)),
 			],
 		],
+		['source', [value(sideloader ? `Sideloaded (${sideloader})` : info.appSource)]],
+		['device', [value(info.device)]],
 		[
-			'source',
+			'system',
 			[
-				value(
-					sideloader ? info.appSource.replace(/^Sideloaded/, sideloader) : info.appSource,
-				),
+				value(`${info.platform} ${info.os}`),
+				...(info.environment?.osBeta ? [warn(` · beta ${info.environment.osBeta}`)] : []),
 			],
 		],
-		['device', [value(info.device)]],
-		['system', [value(`${info.platform} ${info.os}`)]],
 		...(signing ? [['install', installSpans(signing)] as [string, Span[]]] : []),
 		...environmentRows(info.environment),
-		...officialRows(info, context),
 		['react', [value(info.react), dim(` · react native ${info.reactNative}`)]],
 		['hermes', [value(info.hermes), dim(` · bytecode ${info.bytecode}`)]],
 		...diagnosticRows(info, now, context).slice(0, MAX_DIAGNOSTIC_ROWS),
-	];
-}
-
-type DebugCardEnvironment = NonNullable<DebugInfo['environment']>;
-
-function httpsSpans(https: NonNullable<DebugCardEnvironment['https']>): Span[] {
-	if (https.intercepted) {
-		return [warn(`intercepted by ${https.issuer ?? 'an unknown CA'}`)];
-	}
-
-	return https.failure
-		? [dim(`not checked: ${https.failure}`)]
-		: [value('direct'), dim(https.issuer ? ` · ${https.issuer}` : '')];
-}
-
-/**
- * @description Lays out the loader's environment report: signer, binary, re-sign damage, install, device markers and HTTPS.
- * @param environment The report, missing on older loaders.
- * @returns One row per fact the report has.
- */
-export function environmentRows(environment?: DebugCardEnvironment): [string, Span[]][] {
-	if (!environment) {
-		return [];
-	}
-
-	const candidates: [string, Span[]][] = [
-		['signer', environment.signer ? [value(environment.signer)] : []],
-		['binary', environment.binary ? [value(environment.binary)] : []],
-		[
-			'resign',
-			environment.resign?.length ? [warn(fittedList(environment.resign, VALUE_ROOM))] : [],
-		],
-		['install', environment.install ? [value(environment.install)] : []],
-		[
-			'markers',
-			environment.markers?.length ? [dim(fittedList(environment.markers, VALUE_ROOM))] : [],
-		],
-		['https', environment.https ? httpsSpans(environment.https) : []],
-	];
-
-	return candidates.filter(([, spans]) => spans.length > 0);
-}
-
-/**
- * @description Compares the device's Discord build with the build the compat scan saw for its version.
- * @param info The report.
- * @param context What the server adds to the report.
- * @returns A `genuine` row, or none when the scan has no build for the version.
- */
-export function officialRows(info: DebugInfo, context: DebugCardContext): [string, Span[]][] {
-	const official = context.compat?.build;
-
-	if (!official || !info.discordBuild || info.discordBuild === 'unknown') {
-		return [];
-	}
-
-	return [
-		[
-			'genuine',
-			info.discordBuild === official
-				? [value('yes'), dim(` · build ${official}`)]
-				: [warn(`no · build ${info.discordBuild}, official ${official}`)],
-		],
 	];
 }
 
@@ -467,30 +379,6 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 	return candidates.filter(([, spans]) => spans.length > 0);
 }
 
-function clipped(spans: Span[], room: number): Span[] {
-	const kept: Span[] = [];
-	let left = room;
-
-	for (const span of spans) {
-		if (left <= 0) {
-			break;
-		}
-
-		if (span.text.length <= left) {
-			kept.push(span);
-			left -= span.text.length;
-		} else {
-			kept.push({
-				...span,
-				text: `${span.text.slice(0, Math.max(0, left - 1))}…`,
-			});
-			left = 0;
-		}
-	}
-
-	return kept;
-}
-
 function addonSummaries({ plugins, themes }: DebugInfo): string[] {
 	const counts: [string, AddonCount | undefined][] = [
 		['plugins', plugins],
@@ -573,10 +461,9 @@ export function layoutDebugCard(
 	const room = Math.floor((WIDTH - PADDING * 2) / CHAR_WIDTH);
 	const valueRoom = room - LABEL_WIDTH;
 	const valueX = PADDING + LABEL_WIDTH * CHAR_WIDTH;
-	const lines = rows(info, now, context).map(([label, spans]) => ({
-		label,
-		line: clipped(spans, valueRoom),
-	}));
+	const lines = rows(info, now, context).flatMap(([label, spans]) =>
+		wrapped(spans, valueRoom).map((line, index) => ({ label: index ? '' : label, line })),
+	);
 	const footerTop = TITLE_HEIGHT + PADDING + lines.length * LINE_HEIGHT + PADDING / 2;
 	const height = footerTop + FOOTER_HEIGHT;
 	const footerBaseline = footerTop + FOOTER_HEIGHT / 2 + 4;

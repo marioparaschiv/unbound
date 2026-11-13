@@ -23,11 +23,6 @@ namespace {
         "R10",        "R11",
     };
 
-    bool contains(const std::vector<std::string> &list, const std::string &value)
-    {
-        return std::find(list.begin(), list.end(), value) != list.end();
-    }
-
     bool isPublicIssuer(const std::string &issuer)
     {
         return std::any_of(kPublicRoots.begin(), kPublicRoots.end(), [&](const std::string &root) {
@@ -47,45 +42,6 @@ namespace {
         }
         return text;
     }
-}
-
-std::vector<std::string> resignNotes(const ResignFacts &facts)
-{
-    std::vector<std::string> notes;
-    if (!facts.bundleIdentifier.empty() && facts.bundleIdentifier != kDiscordBundleIdentifier)
-    {
-        notes.push_back("bundle id " + facts.bundleIdentifier);
-    }
-    if (!facts.push)
-    {
-        notes.emplace_back("no push");
-    }
-    if (!facts.appGroup)
-    {
-        notes.emplace_back("no app group");
-    }
-    bool discordKeychain = std::any_of(facts.keychainGroups.begin(), facts.keychainGroups.end(),
-                                       [](const std::string &group) {
-                                           return group.ends_with(".com.hammerandchisel.discord");
-                                       });
-    if (!facts.keychainGroups.empty() && !discordKeychain)
-    {
-        notes.emplace_back("keychain group changed");
-    }
-    std::vector<std::string> missing;
-    for (const std::string &extension : facts.expectedExtensions)
-    {
-        if (!contains(facts.extensions, extension))
-        {
-            missing.push_back(extension);
-        }
-    }
-    if (!missing.empty())
-    {
-        notes.push_back("no " + joinedWith(missing, ", ") +
-                        (missing.size() == 1 ? " extension" : " extensions"));
-    }
-    return notes;
 }
 
 bool isBetaBuild(const std::string &build)
@@ -115,10 +71,6 @@ std::vector<std::string> appleMarkers(const AppleDeviceFacts &facts)
     if (facts.lockdownMode)
     {
         markers.emplace_back("Lockdown Mode");
-    }
-    if (isBetaBuild(facts.osBuild))
-    {
-        markers.push_back("beta OS " + facts.osBuild);
     }
     if (facts.iPhoneAppOnIPad)
     {
@@ -194,29 +146,26 @@ std::string androidInstallLine(const nlohmann::json &facts)
     std::string              signer = facts.value("signer", std::string());
     if (!signer.empty())
     {
-        parts.push_back(facts.value("discordSigned", false) ? "Discord's key"
-                                                            : "re-signed " + signer.substr(0, 16));
+        parts.push_back("APK cert " + signer.substr(0, 16));
+        parts.push_back(facts.value("signerSubject", std::string()));
+        if (!facts.value("discordSigned", false))
+        {
+            parts.emplace_back("re-signed");
+        }
     }
     parts.push_back(facts.value("patch", std::string()));
-    std::string framework = facts.value("framework", std::string());
-    if (!framework.empty())
+    parts.push_back(facts.value("framework", std::string()));
+    nlohmann::json missing    = facts.value("missingSplits", nlohmann::json::array());
+    bool           incomplete = false;
+    for (const nlohmann::json &name : missing)
     {
-        parts.push_back(framework);
-    }
-    nlohmann::json missing = facts.value("missingSplits", nlohmann::json::array());
-    if (missing.is_array() && !missing.empty())
-    {
-        std::vector<std::string> names;
-        for (const nlohmann::json &name : missing)
+        if (name.is_string())
         {
-            if (name.is_string())
-            {
-                names.push_back(name.get<std::string>());
-            }
+            parts.push_back("missing " + name.get<std::string>());
+            incomplete = true;
         }
-        parts.push_back("missing " + joinedWith(names, ", "));
     }
-    else if (facts.value("splits", 0) > 0)
+    if (!incomplete && facts.value("splits", 0) > 0)
     {
         parts.push_back(std::to_string(facts.value("splits", 0)) + " splits");
     }

@@ -292,15 +292,15 @@ export type NativePlatformBridge = {
  * @internal
  */
 export type NativeEnvironmentReport = {
-	/** iOS: the signing certificate's kind, team and fingerprint. */
+	/** iOS: the signing certificate's SHA-256 prefix and issuer. */
 	signer?: string;
 	/** iOS: encryption, UUID, minimum OS, SDK and dylib count of Discord's executable. */
 	binary?: string;
-	/** iOS: what a re-sign broke, such as `no push` or `no Share extension`. */
-	resign?: string[];
 	/** Android: the APK signer, patch mode, splits and profile. */
 	install?: string;
 	markers?: string[];
+	/** iOS: the OS build number when it is a beta. */
+	osBeta?: string;
 	/** Whether Discord's HTTPS traffic reaches a certificate from a known public CA. */
 	https?: { intercepted: boolean; issuer?: string; failure?: string };
 };
