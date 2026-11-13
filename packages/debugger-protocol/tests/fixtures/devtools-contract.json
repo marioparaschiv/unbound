@@ -214,6 +214,149 @@
 					"classCount": 5120
 				}
 			]
+		},
+		"metroModulesRequest": {
+			"type": "metro-modules-request",
+			"id": "metro-1",
+			"filter": "user",
+			"status": "loaded",
+			"offset": 0,
+			"limit": 200
+		},
+		"metroModulesOk": {
+			"type": "metro-modules-result",
+			"id": "metro-1",
+			"ok": true,
+			"total": 2,
+			"loaded": 4312,
+			"count": 21034,
+			"modules": [
+				{
+					"id": 1544,
+					"status": "loaded",
+					"label": "modules/user_profile/UserProfileStore.tsx"
+				},
+				{ "id": 1545, "status": "unloaded", "label": null }
+			]
+		},
+		"metroLoadRequest": { "type": "metro-load-request", "id": "metro-2", "module": 1545 },
+		"metroLoadOk": {
+			"type": "metro-load-result",
+			"id": "metro-2",
+			"ok": true,
+			"loaded": 4318,
+			"module": { "id": 1545, "status": "failed", "label": null }
+		},
+		"metroChildrenRequest": {
+			"type": "metro-children-request",
+			"id": "metro-3",
+			"target": { "module": 1544 },
+			"offset": 0,
+			"limit": 100
+		},
+		"metroChildrenOk": {
+			"type": "metro-children-result",
+			"id": "metro-3",
+			"ok": true,
+			"value": {
+				"key": "module.exports",
+				"kind": "object",
+				"text": "Object {…}",
+				"ref": "m4x2:1"
+			},
+			"total": 3,
+			"children": [
+				{ "key": "__esModule", "kind": "boolean", "text": "true" },
+				{
+					"key": "default",
+					"kind": "object",
+					"text": "UserProfileStore {…}",
+					"ref": "m4x2:2"
+				},
+				{ "key": "useProfile", "kind": "getter", "text": "(…)", "ref": "m4x2:3" }
+			],
+			"internal": [
+				{
+					"key": "[[Prototype]]",
+					"kind": "object",
+					"text": "Object.prototype {…}",
+					"ref": "m4x2:4",
+					"internal": true
+				}
+			]
+		},
+		"metroChildrenStale": {
+			"type": "metro-children-result",
+			"id": "metro-4",
+			"ok": false,
+			"error": "That value is gone; reopen the module.",
+			"code": "stale"
+		},
+		"metroReadRequest": { "type": "metro-read-request", "id": "metro-5", "ref": "m4x2:3" },
+		"metroReadOk": {
+			"type": "metro-read-result",
+			"id": "metro-5",
+			"ok": true,
+			"value": {
+				"key": "useProfile",
+				"kind": "function",
+				"text": "ƒ useProfile()",
+				"ref": "m4x2:5"
+			}
+		},
+		"metroLoadAllRequest": { "type": "metro-load-all-request", "id": "metro-6" },
+		"metroLoadAllOk": {
+			"type": "metro-load-all-result",
+			"id": "metro-6",
+			"ok": true,
+			"attempted": 812,
+			"failed": 3,
+			"remaining": 15904,
+			"loaded": 5121,
+			"count": 21034
+		},
+		"metroFilesRequest": { "type": "metro-files-request", "id": "metro-8" },
+		"metroFilesOk": {
+			"type": "metro-files-result",
+			"id": "metro-8",
+			"ok": true,
+			"unloaded": 15904,
+			"count": 21034,
+			"files": [
+				{ "id": 1544, "path": "modules/user_profile/UserProfileStore.tsx" },
+				{ "id": 1601, "path": "modules/user_profile/native/UserProfile.tsx" }
+			]
+		},
+		"metroSearchRequest": {
+			"type": "metro-search-request",
+			"id": "metro-7",
+			"query": "getuser",
+			"cursor": 0,
+			"limit": 50
+		},
+		"metroSearchOk": {
+			"type": "metro-search-result",
+			"id": "metro-7",
+			"ok": true,
+			"cursor": 1302,
+			"searched": 1302,
+			"total": 4312,
+			"matches": [
+				{
+					"module": {
+						"id": 1544,
+						"status": "loaded",
+						"label": "modules/user_profile/UserProfileStore.tsx"
+					},
+					"path": ["default", "[[Prototype]]", "getUserProfile"],
+					"value": {
+						"key": "getUserProfile",
+						"kind": "function",
+						"text": "ƒ getUserProfile()",
+						"ref": "m4x2:9"
+					}
+				}
+			]
 		}
 	},
 	"commandErrorCodes": [

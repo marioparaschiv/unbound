@@ -92,12 +92,62 @@ pub fn on_wheel(
 	})
 }
 
+/// A request to glide until the content span at `y`, `height` tall, sits mid-viewport. Each new
+/// `token` starts one glide; repeating a token does nothing, so it can be passed every frame.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct GlideTo {
+	pub token: u64,
+	pub y: Pixels,
+	pub height: Pixels,
+}
+
+/// How long a [`GlideTo`] takes. Ease-out expo covers ~90% of the way in the first third, then
+/// lands softly, so long and short trips both read as one quick move.
+const GLIDE_TO_DURATION: Duration = Duration::from_millis(700);
+
+/// Ease-out exponential: fast start, long soft landing; exactly 0 at `t = 0` and 1 at `t >= 1`.
+pub fn ease_out_expo(t: f32) -> f32 {
+	if t >= 1. {
+		1.
+	} else {
+		1. - 2f32.powf(-10. * t.max(0.))
+	}
+}
+
+/// A [`GlideTo`] in flight: from `from` to `to` on [`ease_out_expo`], and the offset it last set,
+/// so a wheel, drag or keyboard scroll in between cancels it.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Tween {
+	from: f32,
+	to: f32,
+	started: Instant,
+	at: f32,
+}
+
+impl Tween {
+	/// The offset at `now`, and whether the tween has landed.
+	fn sample(&self, now: Instant) -> (f32, bool) {
+		let t = now.saturating_duration_since(self.started).as_secs_f32()
+			/ GLIDE_TO_DURATION.as_secs_f32();
+		(
+			self.from + (self.to - self.from) * ease_out_expo(t),
+			t >= 1.,
+		)
+	}
+}
+
+/// The offset that centres a span at `y`, held inside the scroll range (0 to `-max`).
+pub fn centre_offset(y: f32, height: f32, viewport: f32, max: f32) -> f32 {
+	-(y - (viewport - height) / 2.).clamp(0., max)
+}
+
 /// Wraps a scroll view so its notched-wheel steps glide. `handle` must be the child's scroll
 /// handle; everything else (pixel deltas, keyboard, scrollbar drags) stays the child's.
 pub struct SmoothScroll {
 	id: ElementId,
 	handle: Rc<dyn ScrollbarHandle>,
 	child: AnyElement,
+	glide_to: Option<GlideTo>,
 }
 
 impl SmoothScroll {
@@ -110,7 +160,14 @@ impl SmoothScroll {
 			id: id.into(),
 			handle: Rc::new(handle.clone()),
 			child: child.into_any_element(),
+			glide_to: None,
 		}
+	}
+
+	/// Scrolls to `to` once per token on an ease-out expo curve; reduced motion jumps instead.
+	pub fn glide_to(mut self, to: Option<GlideTo>) -> Self {
+		self.glide_to = to;
+		self
 	}
 }
 
@@ -118,6 +175,9 @@ impl SmoothScroll {
 struct State {
 	glide: Option<Glide>,
 	sampled_at: Option<Instant>,
+	/// The last [`GlideTo`] token started.
+	applied: Option<u64>,
+	tween: Option<Tween>,
 }
 
 impl State {
@@ -209,10 +269,49 @@ impl Element for SmoothScroll {
 					window.request_animation_frame();
 				}
 			}
+
+			let tween = state.tween.filter(|tween| tween.at == offset.y.as_f32());
+			state.tween = tween.and_then(|tween| {
+				let (at, landed) = tween.sample(cx.background_executor().now());
+				offset.y = px(at);
+				self.handle.set_offset(offset);
+				if landed {
+					return None;
+				}
+				window.request_animation_frame();
+				Some(Tween { at, ..tween })
+			});
 		}
 
 		let hitbox = window.insert_hitbox(bounds, HitboxBehavior::Normal);
 		self.child.prepaint(window, cx);
+
+		// After the child's prepaint, so the content size counts rows added this frame.
+		if let Some(to) = self.glide_to {
+			let mut state = state.borrow_mut();
+			if state.applied != Some(to.token) {
+				state.applied = Some(to.token);
+				let max = max_offset(self.handle.as_ref());
+				let viewport = self.handle.viewport_bounds().size.height.as_f32();
+				let target = centre_offset(to.y.as_f32(), to.height.as_f32(), viewport, max);
+				let mut offset = self.handle.offset();
+				state.glide = None;
+				if cx.reduce_motion() {
+					offset.y = px(target);
+					self.handle.set_offset(offset);
+					state.tween = None;
+				} else {
+					let from = offset.y.as_f32();
+					state.tween = Some(Tween {
+						from,
+						to: target,
+						started: cx.background_executor().now(),
+						at: from,
+					});
+				}
+				window.request_animation_frame();
+			}
+		}
 
 		SmoothScrollPrepaint { state, hitbox }
 	}
@@ -243,6 +342,8 @@ impl Element for SmoothScroll {
 			}
 
 			let mut state = state.borrow_mut();
+			// The user's scroll takes over from a GlideTo in flight.
+			state.tween = None;
 			let offset = handle.offset().y;
 			let running = state.glide(offset);
 			let glide = on_wheel(
@@ -306,6 +407,22 @@ mod tests {
 		}
 
 		positions
+	}
+
+	#[test]
+	fn expo_easing_is_quick_then_lands_exactly() {
+		assert_eq!(ease_out_expo(0.), 0.);
+		assert!(ease_out_expo(1. / 3.) > 0.9);
+		assert!(ease_out_expo(0.9) < 1.);
+		assert_eq!(ease_out_expo(1.), 1.);
+		assert_eq!(ease_out_expo(2.), 1.);
+	}
+
+	#[test]
+	fn centring_stays_inside_the_scroll_range() {
+		assert_eq!(centre_offset(500., 20., 200., 1000.), -410.);
+		assert_eq!(centre_offset(10., 20., 200., 1000.), 0.);
+		assert_eq!(centre_offset(1190., 20., 200., 1000.), -1000.);
 	}
 
 	#[test]

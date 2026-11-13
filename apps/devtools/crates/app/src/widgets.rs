@@ -23,6 +23,18 @@ pub fn chevron(expanded: bool) -> Svg {
 	icon(path, theme::CHEVRON, theme::TEXT_MUTED)
 }
 
+/// A chevron `turn` of the way from pointing right (0) to pointing down (1), for an open that animates.
+pub fn turning_chevron(turn: f32) -> Svg {
+	icon(
+		crate::assets::CHEVRON_RIGHT,
+		theme::CHEVRON,
+		theme::TEXT_MUTED,
+	)
+	.with_transformation(gpui::Transformation::rotate(gpui::radians(
+		turn * std::f32::consts::FRAC_PI_2,
+	)))
+}
+
 pub fn badge(text: impl Into<SharedString>, fg: Token) -> Div {
 	div()
 		.flex_none()

@@ -6,6 +6,7 @@ import type {
 	EvalRequest,
 	BridgeMessage,
 	ExplorerRequest,
+	MetroRequest,
 	PushResult,
 	PushRequest,
 	ReactDevtoolsFrame,
@@ -20,12 +21,14 @@ import {
 	PUSH_TIMEOUT_MS,
 	REACT_DEVTOOLS_SHUTDOWN_EVENT,
 	isExplorerResult,
+	isMetroResult,
 	resolveEvalTimeout,
 	serializeMessage,
 } from '@unbound-app/debugger-protocol';
 import { PendingRequests } from '@unbound-app/debugger-protocol/pending-requests';
 
 import { discardExplorer, failExplorer, requestExplorer, settleExplorer } from './explorer-session';
+import { discardMetro, failMetro, requestMetro, settleMetro } from './metro-session';
 
 /**
  * The bridge's transport-agnostic routing core: routes each eval result back to the controller that
@@ -121,6 +124,7 @@ export function detachDevice(socket: SocketLike) {
 		error: 'Device disconnected before the view was read.',
 	}));
 	failExplorer();
+	failMetro();
 
 	broadcastDeviceStatus(false);
 }
@@ -146,6 +150,7 @@ export function detachController(socket: SocketLike) {
 	pendingViews.discard((origin) => origin === socket);
 	pendingDetails.discard((origin) => origin === socket);
 	discardExplorer(socket);
+	discardMetro(socket);
 
 	if (state.reactDevtools === socket) {
 		state.reactDevtools = null;
@@ -292,6 +297,16 @@ export function requestExplorerForController(socket: SocketLike, request: Explor
 }
 
 /**
+ * @description Forwards a controller's Metro request to the device and routes its answer back to that
+ * controller, or fails it when no device answers.
+ * @param socket The controller that asked.
+ * @param request The request to forward verbatim; its `id` correlates the result.
+ */
+export function requestMetroForController(socket: SocketLike, request: MetroRequest) {
+	requestMetro(state.device, socket, request);
+}
+
+/**
  * @description Forwards a controller's {@link ViewHighlight} to the device; it has no answer.
  * @param highlight The view to outline, or `null` to clear the outline.
  */
@@ -393,6 +408,12 @@ export function handleDeviceMessage(message: BridgeMessage) {
 
 	if (isExplorerResult(message)) {
 		settleExplorer(message);
+
+		return;
+	}
+
+	if (isMetroResult(message)) {
+		settleMetro(message);
 
 		return;
 	}

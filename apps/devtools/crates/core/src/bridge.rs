@@ -18,6 +18,7 @@ use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, connect_async};
 use crate::explorer::{
 	ExplorerErrorCode, ExplorerImage, ExplorerMember, ExplorerObject, ExplorerValue,
 };
+use crate::metro::{MetroErrorCode, MetroFile, MetroMatch, MetroModule, MetroValue};
 use crate::views::{ViewDetails, ViewNode};
 
 pub(crate) type Socket = WebSocketStream<MaybeTlsStream<TcpStream>>;
@@ -128,6 +129,95 @@ pub(crate) enum BridgeFrame {
 		error: Option<String>,
 		code: Option<ExplorerErrorCode>,
 	},
+	MetroModulesResult {
+		id: String,
+		ok: bool,
+		#[serde(default)]
+		modules: Vec<MetroModule>,
+		#[serde(default)]
+		total: Option<u32>,
+		#[serde(default)]
+		loaded: Option<u32>,
+		#[serde(default)]
+		count: Option<u32>,
+		error: Option<String>,
+		code: Option<MetroErrorCode>,
+	},
+	MetroLoadResult {
+		id: String,
+		ok: bool,
+		#[serde(default)]
+		module: Option<MetroModule>,
+		#[serde(default)]
+		loaded: Option<u32>,
+		error: Option<String>,
+		code: Option<MetroErrorCode>,
+	},
+	MetroLoadAllResult {
+		id: String,
+		ok: bool,
+		#[serde(default)]
+		attempted: Option<u32>,
+		#[serde(default)]
+		failed: Option<u32>,
+		#[serde(default)]
+		remaining: Option<u32>,
+		#[serde(default)]
+		loaded: Option<u32>,
+		#[serde(default)]
+		count: Option<u32>,
+		error: Option<String>,
+		code: Option<MetroErrorCode>,
+	},
+	MetroSearchResult {
+		id: String,
+		ok: bool,
+		#[serde(default)]
+		matches: Vec<MetroMatch>,
+		/// `None` once every loaded module is searched.
+		#[serde(default)]
+		cursor: Option<u32>,
+		#[serde(default)]
+		searched: Option<u32>,
+		#[serde(default)]
+		total: Option<u32>,
+		error: Option<String>,
+		code: Option<MetroErrorCode>,
+	},
+	MetroFilesResult {
+		id: String,
+		ok: bool,
+		#[serde(default)]
+		files: Vec<MetroFile>,
+		#[serde(default)]
+		unloaded: Option<u32>,
+		#[serde(default)]
+		count: Option<u32>,
+		error: Option<String>,
+		code: Option<MetroErrorCode>,
+	},
+	MetroChildrenResult {
+		id: String,
+		ok: bool,
+		#[serde(default)]
+		value: Option<MetroValue>,
+		#[serde(default)]
+		children: Vec<MetroValue>,
+		#[serde(default)]
+		total: Option<u32>,
+		#[serde(default)]
+		internal: Vec<MetroValue>,
+		error: Option<String>,
+		code: Option<MetroErrorCode>,
+	},
+	MetroReadResult {
+		id: String,
+		ok: bool,
+		#[serde(default)]
+		value: Option<MetroValue>,
+		error: Option<String>,
+		code: Option<MetroErrorCode>,
+	},
 	#[serde(other)]
 	Other,
 }
@@ -193,8 +283,7 @@ pub async fn eval(bridge: SocketAddr, code: &str, timeout_ms: u64) -> anyhow::Re
 				value,
 				error,
 				code,
-			} = frame
-				&& reply_id == id
+			} = frame && reply_id == id
 			{
 				let text = if ok { value } else { error };
 				return Ok(EvalOutcome {
@@ -248,289 +337,4 @@ where
 /// Checks this client against `@unbound-app/debugger-protocol`'s DevTools contract fixture, which
 /// the protocol's own tests check against its TypeScript side.
 #[cfg(test)]
-mod contract {
-	use super::*;
-	use serde_json::Value;
-
-	fn fixture() -> Value {
-		let path = concat!(
-			env!("CARGO_MANIFEST_DIR"),
-			"/../../../../packages/debugger-protocol/tests/fixtures/devtools-contract.json"
-		);
-		let text =
-			std::fs::read_to_string(path).expect("the DevTools contract fixture is readable");
-
-		serde_json::from_str(&text).expect("the DevTools contract fixture is JSON")
-	}
-
-	fn frame(contract: &Value, name: &str) -> BridgeFrame {
-		serde_json::from_value(contract["frames"][name].clone()).expect("the frame deserializes")
-	}
-
-	#[test]
-	fn names_the_protocol_constants() {
-		let contract = fixture();
-
-		assert_eq!(
-			contract["defaultBridgePort"],
-			u64::from(crate::DEFAULT_BRIDGE_PORT)
-		);
-		assert_eq!(
-			contract["controllerEndpointMarker"],
-			CONTROLLER_ENDPOINT_MARKER
-		);
-	}
-
-	#[test]
-	fn sends_the_protocols_eval_request() {
-		let contract = fixture();
-		let expected = &contract["frames"]["evalRequest"];
-		let request = eval_request(
-			expected["id"].as_str().unwrap(),
-			expected["code"].as_str().unwrap(),
-			expected["timeout"].as_u64().unwrap(),
-		);
-		let sent: Value = serde_json::from_str(request.to_text().expect("the request is text"))
-			.expect("the request is JSON");
-
-		assert_eq!(&sent, expected);
-	}
-
-	#[test]
-	fn reads_the_protocols_reply_frames() {
-		let contract = fixture();
-
-		assert!(matches!(
-			frame(&contract, "evalOk"),
-			BridgeFrame::EvalResult {
-				ok: true,
-				value: Some(_),
-				..
-			}
-		));
-		assert!(matches!(
-			frame(&contract, "evalError"),
-			BridgeFrame::EvalResult {
-				ok: false,
-				error: Some(_),
-				code: Some(code),
-				..
-			} if code == "timeout"
-		));
-		assert!(matches!(
-			frame(&contract, "deviceConnected"),
-			BridgeFrame::DeviceStatus {
-				connected: true,
-				..
-			}
-		));
-		assert!(matches!(
-			frame(&contract, "deviceDisconnected"),
-			BridgeFrame::DeviceStatus {
-				connected: false,
-				..
-			}
-		));
-	}
-
-	#[test]
-	fn sends_the_protocols_view_requests() {
-		let contract = fixture();
-		let with_id = |mut request: Value, expected: &Value| {
-			request["id"] = expected["id"].clone();
-			request
-		};
-		let page = &contract["frames"]["viewsRequest"];
-		let details = &contract["frames"]["viewDetailsRequest"];
-		let offset = u32::try_from(page["offset"].as_u64().unwrap()).unwrap();
-
-		assert_eq!(
-			&with_id(
-				crate::views::views_request(page["parent"].as_str().map(str::to_owned), offset),
-				page
-			),
-			page
-		);
-		assert_eq!(
-			&with_id(
-				crate::views::view_details_request(details["node"].as_str().unwrap()),
-				details
-			),
-			details
-		);
-	}
-
-	#[test]
-	fn reads_the_protocols_view_replies() {
-		let contract = fixture();
-
-		let BridgeFrame::ViewsResult {
-			ok: true,
-			nodes,
-			total: Some(240),
-			..
-		} = frame(&contract, "viewsPage")
-		else {
-			panic!("a page of views with its total");
-		};
-		assert_eq!(nodes.len(), 1);
-
-		let BridgeFrame::ViewDetailsResult {
-			ok: true,
-			details: Some(details),
-			..
-		} = frame(&contract, "viewDetailsOk")
-		else {
-			panic!("a view's details");
-		};
-		let properties = &details.sections[0].properties;
-		assert_eq!(details.class_chain[0], "UILabel");
-		assert_eq!(
-			properties[0].value,
-			crate::views::PropertyValue::Number(16.0)
-		);
-		assert_eq!(properties[0].unit.as_deref(), Some("pt"));
-		assert_eq!(properties[1].kind, Some(crate::views::PropertyKind::Color));
-		assert_eq!(
-			properties[2].value,
-			crate::views::PropertyValue::Bool(false)
-		);
-		assert_eq!(properties[3].value, crate::views::PropertyValue::Null);
-
-		assert!(matches!(
-			frame(&contract, "viewDetailsError"),
-			BridgeFrame::ViewDetailsResult {
-				ok: false,
-				error: Some(_),
-				..
-			}
-		));
-	}
-
-	/// The fixture's frames of one `type`, whatever their keys are named.
-	fn frames_of(contract: &Value, kind: &str) -> Vec<Value> {
-		let frames = contract["frames"]
-			.as_object()
-			.expect("the fixture has frames");
-		let found: Vec<Value> = frames
-			.values()
-			.filter(|frame| frame["type"] == kind)
-			.cloned()
-			.collect();
-		assert!(!found.is_empty(), "the fixture has a {kind} frame");
-		found
-	}
-
-	#[test]
-	fn sends_the_protocols_explorer_requests() {
-		use crate::explorer::{
-			ExplorerMemberKind, classes_request, members_request, object_request, values_request,
-		};
-		let contract = fixture();
-		let text = |frame: &Value, key: &str| frame[key].as_str().unwrap_or_default().to_owned();
-		let offset = |frame: &Value| u32::try_from(frame["offset"].as_u64().unwrap_or(0)).unwrap();
-		let kind = |frame: &Value| -> ExplorerMemberKind {
-			serde_json::from_value(frame["kind"].clone()).expect("a member kind")
-		};
-		let check = |mut sent: Value, expected: &Value| {
-			sent["id"] = expected["id"].clone();
-			assert_eq!(&sent, expected);
-		};
-
-		for expected in frames_of(&contract, "explorer-object-request") {
-			let target = serde_json::from_value(expected["target"].clone()).expect("a target");
-			check(object_request(&target), &expected);
-		}
-		for expected in frames_of(&contract, "explorer-members-request") {
-			let request = members_request(
-				&text(&expected, "className"),
-				kind(&expected),
-				offset(&expected),
-				&text(&expected, "filter"),
-			);
-			check(request, &expected);
-		}
-		for expected in frames_of(&contract, "explorer-values-request") {
-			let names: Vec<String> =
-				serde_json::from_value(expected["names"].clone()).expect("names");
-			let request = values_request(
-				&text(&expected, "object"),
-				&text(&expected, "className"),
-				kind(&expected),
-				&names,
-				expected["invokeGetters"] == true,
-			);
-			check(request, &expected);
-		}
-		for expected in frames_of(&contract, "explorer-classes-request") {
-			let request = classes_request(
-				expected["image"].as_str(),
-				&text(&expected, "filter"),
-				offset(&expected),
-			);
-			check(request, &expected);
-		}
-	}
-
-	#[test]
-	fn reads_the_protocols_explorer_replies() {
-		let contract = fixture();
-		let parse = |frame: Value| -> BridgeFrame {
-			serde_json::from_value(frame).expect("the explorer frame deserializes")
-		};
-
-		for frame in frames_of(&contract, "explorer-object-result") {
-			let ok = frame["ok"] == true;
-			let BridgeFrame::ExplorerObjectResult {
-				object,
-				error,
-				code,
-				..
-			} = parse(frame)
-			else {
-				panic!("an explorer object result");
-			};
-			if ok {
-				assert!(!object.expect("an object").chain.is_empty());
-			} else {
-				assert!(error.is_some() && code.is_some());
-			}
-		}
-		for frame in frames_of(&contract, "explorer-members-result") {
-			let ok = frame["ok"] == true;
-			let BridgeFrame::ExplorerMembersResult {
-				members,
-				total,
-				error,
-				..
-			} = parse(frame)
-			else {
-				panic!("an explorer members result");
-			};
-			assert!(!ok || (!members.is_empty() && total.is_some()));
-			assert!(ok || error.is_some());
-		}
-		for frame in frames_of(&contract, "explorer-values-result") {
-			let ok = frame["ok"] == true;
-			let BridgeFrame::ExplorerValuesResult { values, error, .. } = parse(frame) else {
-				panic!("an explorer values result");
-			};
-			assert!(!ok || !values.is_empty());
-			assert!(ok || error.is_some());
-		}
-		for frame in frames_of(&contract, "explorer-classes-result") {
-			let ok = frame["ok"] == true;
-			let BridgeFrame::ExplorerClassesResult {
-				images,
-				classes,
-				error,
-				..
-			} = parse(frame)
-			else {
-				panic!("an explorer classes result");
-			};
-			assert!(!ok || images.is_some() || classes.is_some());
-			assert!(ok || error.is_some());
-		}
-	}
-}
+mod contract;

@@ -1,6 +1,7 @@
 import {
 	CONTROLLER_ENDPOINT_MARKER,
 	isExplorerRequest,
+	isMetroRequest,
 	parseMessage,
 	type DeviceInfo,
 } from '@unbound-app/debugger-protocol';
@@ -249,6 +250,12 @@ function handleControllerMessage(ws: session.SocketLike, raw: string) {
 
 	if (message && isExplorerRequest(message)) {
 		session.requestExplorerForController(ws, message);
+
+		return;
+	}
+
+	if (message && isMetroRequest(message)) {
+		session.requestMetroForController(ws, message);
 
 		return;
 	}

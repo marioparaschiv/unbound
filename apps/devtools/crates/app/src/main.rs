@@ -11,6 +11,7 @@ mod inspection;
 mod inspector;
 mod link;
 mod mcp_menu;
+mod metro;
 mod nav_list;
 mod press;
 mod scaled;

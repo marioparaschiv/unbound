@@ -15,6 +15,8 @@ pub const COMPONENTS_GROUP: &str = "Inspect";
 pub const VIEWS_TITLE: &str = "View Tree";
 /// The native class browser's page title, under View Tree.
 pub const CLASSES_TITLE: &str = "Classes";
+/// The Metro module explorer's page title, under Classes.
+pub const METRO_TITLE: &str = "Metro";
 
 pub const CATEGORIES: &[Category] = &[
 	// What is on screen: the React tree (Components), the native views (View Tree) and their text.

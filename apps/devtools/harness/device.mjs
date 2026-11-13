@@ -4,11 +4,13 @@
 // DEPTH nests the app n components deep (function, memo, host View in turn) and WIDTH adds n sibling
 // rows at the bottom, to mimic Discord-scale trees. `views-request` and `view-details-request` frames
 // get a spoofed native view tree from `views.mjs`, Android's or, with PLATFORM=ios, UIKit's.
-// `explorer-*-request` frames get spoofed classes, members and values from `explorer.mjs`.
+// `explorer-*-request` frames get spoofed classes, members and values from `explorer.mjs`, and
+// `metro-*-request` frames the client's own answers over a fake module registry from `metro.mjs`.
 import { createRequire } from 'node:module';
 import { WebSocketServer } from 'ws';
 
 import { answerExplorer } from './explorer.mjs';
+import { answerMetroFrame } from './metro.mjs';
 import { answerDetails, answerViews, platform } from './views.mjs';
 
 // Explorer answers arrive a moment late, as the device's bridge calls make them.
@@ -189,7 +191,7 @@ server.on('connection', (socket) => {
 			socket.send(JSON.stringify(answerDetails(frame)));
 		}
 
-		const explored = answerExplorer(frame);
+		const explored = answerExplorer(frame) ?? answerMetroFrame(frame);
 
 		if (explored) {
 			setTimeout(() => socket.send(JSON.stringify(explored)), EXPLORER_DELAY_MS);

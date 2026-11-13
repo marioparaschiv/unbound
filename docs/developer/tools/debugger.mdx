@@ -148,6 +148,20 @@ A controller can:
 | `explorer-values-result` | Device to the controller that asked | `id`, `ok`, `values` of `{ name, kind, text, object?, className? }`, one per name, or `error` and `code` |
 | `explorer-classes-request` | Controller to device | `id`, `image` (omit to list images), `filter`, `offset`, `limit` (at most `EXPLORER_CLASSES_PAGE_SIZE`, 200) |
 | `explorer-classes-result` | Device to the controller that asked | `id`, `ok`, `total` and `images` (`{ path, name, classCount }`) or `classes` (names), or `error` and `code` |
+| `metro-modules-request` | Controller to device | `id`, `filter` (an id prefix or part of a label), `status` (`loaded`, `unloaded` or `failed`), `offset`, `limit` (at most `METRO_MODULES_PAGE_SIZE`, 200) |
+| `metro-modules-result` | Device to the controller that asked | `id`, `ok`, `modules` of `{ id, status, label }`, `total` (matches), `loaded` and `count` (the whole registry), or `error` and `code` |
+| `metro-load-request` | Controller to device | `id`, `module`, an id to run the factory of |
+| `metro-load-result` | Device to the controller that asked | `id`, `ok`, `module` afterwards (`failed` when its factory threw) and `loaded`, or `error` and `code` |
+| `metro-load-all-request` | Controller to device | `id`; runs the next batch of modules that have not loaded, skipping the blacklist of modules that threw |
+| `metro-load-all-result` | Device to the controller that asked | `id`, `ok`, `attempted` and `failed` (this batch), `remaining` (0 when done), `loaded` and `count`, or `error` and `code` |
+| `metro-search-request` | Controller to device | `id`, `query` (text a key or function name contains, any case), `cursor` (the loaded module to start from), `limit` (at most `METRO_SEARCH_PAGE_SIZE`, 50) |
+| `metro-search-result` | Device to the controller that asked | `id`, `ok`, `matches` of `{ module, path, value }`, `cursor` (`null` when every loaded module is searched), `searched` and `total`, or `error` and `code` |
+| `metro-files-request` | Controller to device | `id`; lists the file path each loaded module reported, complete once every module has loaded |
+| `metro-files-result` | Device to the controller that asked | `id`, `ok`, `files` of `{ id, path }` sorted by path, `unloaded` (modules whose path is not known yet) and `count`, or `error` and `code` |
+| `metro-children-request` | Controller to device | `id`, `target`: `{ module }` (its exports) or `{ ref }`, `offset`, `limit` (at most `METRO_CHILDREN_PAGE_SIZE`, 100) |
+| `metro-children-result` | Device to the controller that asked | `id`, `ok`, `value`, `children` and `total` (its own properties), `internal` (`[[Entries]]`, `[[Prototype]]`), or `error` and `code` |
+| `metro-read-request` | Controller to device | `id`, `ref` of a `getter` value |
+| `metro-read-result` | Device to the controller that asked | `id`, `ok`, `value` the getter returned (an `error` value if it threw), or `error` and `code` |
 | `react-devtools` | Controller to device, device to the controller that last sent one | React DevTools' `event` and `payload`. The device sends `unbound:backend-status` with `{ connected, error? }` when its session starts or cannot start. |
 
 A result echoes its request's `id`, which routes it back to the right controller.
@@ -164,6 +178,8 @@ A failed explorer result carries a `code`:
 | `failed` | Anything else. `error` says what. |
 
 Values come back for the rows asked for, and each one fails on its own as `kind: "error"`. A value that holds an object includes an `object` ref, which you can open with another `explorer-object-request`. On iOS, reading a property only runs code when its getter is computed and the request sets `invokeGetters`. Until then the value comes back as `skipped`. Getters and ivars that are known to be unsafe always come back as `skipped`.
+
+A Metro value is `{ key, kind, text, ref?, internal? }`. A `ref` lists an object's or function's children, and the same object always gets the same ref, so a controller spots a circular value by finding its ref among its ancestors'. A getter comes back as `kind: "getter"` and runs only on a `metro-read-request`. Load All and a search each answer in batches of about 200 ms of device time, ending at a module's end, so Discord stays responsive; the controller repeats the request until `remaining` is 0 or `cursor` is `null`. A search walks each loaded module's own properties and prototypes four levels deep without running getters, and leaves objects another module exports, such as `React.Component.prototype`, to that module. A failed Metro result's `code` is `stale` (the ref is gone), `unknown-module`, `unloaded` (no exports to list yet) or `failed`.
 
 ## Troubleshooting
 

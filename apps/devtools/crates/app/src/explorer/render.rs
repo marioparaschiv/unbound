@@ -48,7 +48,7 @@ pub(super) fn note(
 }
 
 /// A small text button inside a note or a row, such as Retry or Read.
-pub(super) fn link_button(
+pub(crate) fn link_button(
 	id: impl Into<gpui::ElementId>,
 	label: &'static str,
 ) -> gpui::Stateful<gpui::Div> {

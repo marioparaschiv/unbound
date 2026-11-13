@@ -13,6 +13,18 @@ import {
 	type ExplorerResult,
 } from './explorer';
 import {
+	METRO_CHILDREN_PAGE_SIZE,
+	METRO_MODULES_PAGE_SIZE,
+	METRO_RESULT_TYPES,
+	METRO_SEARCH_PAGE_SIZE,
+	failMetroRequest,
+	isMetroFrame,
+	isMetroRequest,
+	isMetroResult,
+	type MetroRequest,
+	type MetroResult,
+} from './metro';
+import {
 	VIEWS_PAGE_SIZE,
 	isViewFrameMessage,
 	type ViewDetailsRequest,
@@ -50,6 +62,42 @@ export type {
 	ExplorerValuesRequest,
 	ExplorerValuesResult,
 } from './explorer';
+export type {
+	MetroChildrenRequest,
+	MetroChildrenResult,
+	MetroError,
+	MetroErrorCode,
+	MetroFile,
+	MetroFilesRequest,
+	MetroFilesResult,
+	MetroLoadAllRequest,
+	MetroLoadAllResult,
+	MetroLoadRequest,
+	MetroLoadResult,
+	MetroMatch,
+	MetroModule,
+	MetroModuleStatus,
+	MetroModulesRequest,
+	MetroModulesResult,
+	MetroReadRequest,
+	MetroReadResult,
+	MetroRequest,
+	MetroResult,
+	MetroSearchRequest,
+	MetroSearchResult,
+	MetroTarget,
+	MetroValue,
+	MetroValueKind,
+} from './metro';
+export {
+	METRO_CHILDREN_PAGE_SIZE,
+	METRO_MODULES_PAGE_SIZE,
+	METRO_RESULT_TYPES,
+	METRO_SEARCH_PAGE_SIZE,
+	failMetroRequest,
+	isMetroRequest,
+	isMetroResult,
+};
 export { VIEWS_PAGE_SIZE };
 export type {
 	ViewDetails,
@@ -216,6 +264,8 @@ export type BridgeMessage =
 	| ViewHighlight
 	| ExplorerRequest
 	| ExplorerResult
+	| MetroRequest
+	| MetroResult
 	| ReactDevtoolsFrame;
 
 /** The default port the bridge listens on and controllers dial. */
@@ -349,6 +399,21 @@ function hasRequiredFields(frame: unknown): frame is BridgeMessage {
 		case 'explorer-classes-request':
 		case 'explorer-classes-result':
 			return isExplorerFrame(frame);
+		case 'metro-modules-request':
+		case 'metro-modules-result':
+		case 'metro-load-request':
+		case 'metro-load-result':
+		case 'metro-load-all-request':
+		case 'metro-load-all-result':
+		case 'metro-search-request':
+		case 'metro-search-result':
+		case 'metro-files-request':
+		case 'metro-files-result':
+		case 'metro-children-request':
+		case 'metro-children-result':
+		case 'metro-read-request':
+		case 'metro-read-result':
+			return isMetroFrame(frame);
 		case 'react-devtools':
 			return isReactDevtoolsFrame(frame);
 		default:
