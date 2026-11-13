@@ -1,6 +1,6 @@
 # Plugins
 
-89 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+91 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -48,6 +48,7 @@
 - <img src="../../assets/plugins/readme-icons/bell-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Keyword Notify](https://unbound.rip/addons/unbound.keyword-notify): Treats messages that contain your keywords as mentions, so Discord highlights them and counts them like a ping.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Member Count](https://unbound.rip/addons/unbound.member-count): Shows a channel's total members beside how many are online, in the channel header.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Mention Avatars](https://unbound.rip/addons/unbound.mention-avatars): Shows user avatars and role icons inside mentions.
+- <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Colors](https://unbound.rip/addons/unbound.message-colors): Shows hex, rgb() and hsl() colors in messages as pills tinted with that color.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Latency](https://unbound.rip/addons/unbound.message-latency): Marks messages that took at least the selected threshold to send.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Link Embeds](https://unbound.rip/addons/unbound.message-link-embeds): Adds previews to messages that link to other Discord messages.
 - <img src="../../assets/plugins/readme-icons/eye-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Logger](https://unbound.rip/addons/unbound.message-logger): Keeps deleted and edited messages in the chat.
@@ -86,6 +87,7 @@
 - <img src="../../assets/plugins/readme-icons/super-reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Super Reaction Tweaks](https://unbound.rip/addons/unbound.super-reaction-tweaks): Opens the reaction picker on Super Reactions and caps how many Super Reaction animations play at once.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Text Replace](https://unbound.rip/addons/unbound.text-replace): Replace text in messages before you send them.
 - <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Timezones](https://unbound.rip/addons/unbound.timezones): Shows each user's local time on their profile and beside their messages, from TimezoneDB or a timezone you set.
+- <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Tone Indicators](https://unbound.rip/addons/unbound.tone-indicators): Turns tone tags such as /j and /srs into pills that spell out what they mean.
 - <img src="../../assets/plugins/readme-icons/language-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Translate](https://unbound.rip/addons/unbound.translate): Translate messages.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Typing Avatars](https://unbound.rip/addons/unbound.typing-avatars): Shows the avatars of people typing in the channel.
 - <img src="../../assets/plugins/readme-icons/embed-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Unsuppress Embeds](https://unbound.rip/addons/unbound.unsuppress-embeds): Adds a message long-press row that brings back suppressed link embeds, or suppresses them.
