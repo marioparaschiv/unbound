@@ -1,6 +1,6 @@
 # Plugins
 
-79 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+80 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -80,6 +80,7 @@
 - <img src="../../assets/plugins/readme-icons/language-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Translate](https://unbound.rip/addons/unbound.translate): Translate messages.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Typing Avatars](https://unbound.rip/addons/unbound.typing-avatars): Shows the avatars of people typing in the channel.
 - <img src="../../assets/plugins/readme-icons/embed-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Unsuppress Embeds](https://unbound.rip/addons/unbound.unsuppress-embeds): Adds a message long-press row that brings back suppressed link embeds, or suppresses them.
+- <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [USRBG](https://unbound.rip/addons/unbound.usrbg): Shows the banners people set on USRBG, so anyone can have a profile banner without Nitro.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [View Icons](https://unbound.rip/addons/unbound.view-icons): View user avatars, banners, server icons, server banners, and group DM icons.
 - <img src="../../assets/plugins/readme-icons/chevron-large-right-icon.svg" width="20" height="20" align="absmiddle" alt=""> [View Raw](https://unbound.rip/addons/unbound.view-raw): View and copy raw data for messages, channels, guilds, and user profiles.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Youtube Adblock](https://unbound.rip/addons/unbound.youtube-adblock): Blocks ads in YouTube videos played inside Discord and in the Watch Together activity, using AdGuard's YouTube ad blocker.

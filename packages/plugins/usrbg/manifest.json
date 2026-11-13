@@ -1,0 +1,33 @@
+{
+	"id": "unbound.usrbg",
+	"name": "USRBG",
+	"description": "Shows the banners people set on USRBG, so anyone can have a profile banner without Nitro.",
+	"authors": [
+		{
+			"name": "AutumnVN",
+			"id": "393694671383166998"
+		},
+		{
+			"name": "katlyn",
+			"id": "250322741406859265"
+		},
+		{
+			"name": "pylix",
+			"id": "492949202121261067"
+		},
+		{
+			"name": "TheKodeToad",
+			"id": "706152404072267788"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ImageIcon",
+	"main": "index.tsx"
+}
