@@ -144,6 +144,18 @@ declare module '@unbound-app/settings' {
 		 */
 		hideTimestamps: boolean;
 		/**
+		 * Hide the ReviewDB notice
+		 *
+		 * Hides the warning ReviewDB shows above every list of reviews.
+		 */
+		hideSystemReviews: boolean;
+		/**
+		 * Theme reviews with the profile
+		 *
+		 * Tints the reviews sheet, its text box and send button with the profile's theme colors, including Fake Profile Themes.
+		 */
+		themeSheet: boolean;
+		/**
 		 * Hide Reviews From Blocked Users
 		 *
 		 * Hide reviews from users you have blocked on Discord
@@ -176,6 +188,18 @@ declare module '@unbound-app/settings' {
 		 */
 		"hideTimestamps": boolean;
 		/**
+		 * Hide the ReviewDB notice
+		 *
+		 * Hides the warning ReviewDB shows above every list of reviews.
+		 */
+		"hideSystemReviews": boolean;
+		/**
+		 * Theme reviews with the profile
+		 *
+		 * Tints the reviews sheet, its text box and send button with the profile's theme colors, including Fake Profile Themes.
+		 */
+		"themeSheet": boolean;
+		/**
 		 * Hide Reviews From Blocked Users
 		 *
 		 * Hide reviews from users you have blocked on Discord
@@ -201,7 +225,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = Extract<{ [K in keyof Actions]: Actions[K] extends () => void | Promise<void> ? K : never }[keyof Actions], string>;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "notifyReviews" | "hideTimestamps" | "hideBlockedUsers";
+	export type BooleanSettingKey = "notifyReviews" | "hideTimestamps" | "hideSystemReviews" | "themeSheet" | "hideBlockedUsers";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

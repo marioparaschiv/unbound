@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0] - 2026-11-13
+
+### Added
+
+- Hide the ReviewDB notice: hides the warning above every list of reviews.
+- Theme reviews with the profile: tints the reviews sheet, its text box and send button with the profile's theme colors, including ones from Fake Profile Themes.
+
 ## [1.0.6] - 2026-11-11
 
 ### Changed
