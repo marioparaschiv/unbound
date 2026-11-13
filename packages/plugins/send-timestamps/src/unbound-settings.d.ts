@@ -137,6 +137,12 @@ declare module '@unbound-app/settings' {
 		 * Turns times in backticks, such as `17:30`, into timestamps when you send.
 		 */
 		replace: boolean;
+		/**
+		 * Timestamp picker button
+		 *
+		 * Adds a clock to the chat input that picks a date, time and style.
+		 */
+		pickerButton: boolean;
 	};
 
 	/** Each setting and section by its dot-separated key. */
@@ -147,6 +153,12 @@ declare module '@unbound-app/settings' {
 		 * Turns times in backticks, such as `17:30`, into timestamps when you send.
 		 */
 		"replace": boolean;
+		/**
+		 * Timestamp picker button
+		 *
+		 * Adds a clock to the chat input that picks a date, time and style.
+		 */
+		"pickerButton": boolean;
 	};
 
 	/** Every setting and section by its dot-separated key; buttons and notices are not settings. */
@@ -158,7 +170,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "replace";
+	export type BooleanSettingKey = "replace" | "pickerButton";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

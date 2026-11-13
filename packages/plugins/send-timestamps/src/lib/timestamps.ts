@@ -3,6 +3,8 @@ const BACKTICKED_TIME = /`\d{1,2}:\d{2} ?(?:AM|PM)?`/gi;
 
 export type TimestampStyle = 'R' | 't' | 'T' | 'd' | 'D' | 'f' | 'F';
 
+export const TIMESTAMP_STYLES: TimestampStyle[] = ['R', 't', 'T', 'd', 'D', 'f', 'F'];
+
 function clockTime(text: string, now: Date): Date | undefined {
 	const match = TIME.exec(text.trim());
 
