@@ -47,24 +47,10 @@ export default defineSettings(
 			title: 'IGNORE_SELF',
 			subtitle: 'IGNORE_SELF_SUBTITLE',
 		}),
-		ignoreUsers: setting.string({
-			default: '',
-			title: 'IGNORE_USERS',
-			subtitle: 'IGNORE_USERS_SUBTITLE',
-			placeholder: 'ID_PLACEHOLDER',
-		}),
-		ignoreChannels: setting.string({
-			default: '',
-			title: 'IGNORE_CHANNELS',
-			subtitle: 'IGNORE_CHANNELS_SUBTITLE',
-			placeholder: 'ID_PLACEHOLDER',
-		}),
-		ignoreGuilds: setting.string({
-			default: '',
-			title: 'IGNORE_GUILDS',
-			subtitle: 'IGNORE_GUILDS_SUBTITLE',
-			placeholder: 'ID_PLACEHOLDER',
-		}),
+		// The ignore lists store ids separated by commas; src/settings.tsx draws each as a page of picked entities.
+		ignoreUsers: setting.string({ default: '', hidden: true }),
+		ignoreChannels: setting.string({ default: '', hidden: true }),
+		ignoreGuilds: setting.string({ default: '', hidden: true }),
 	},
 	{ title: 'PREFERENCES' },
 );

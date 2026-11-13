@@ -4,7 +4,14 @@ export type { DesignComponentName, DesignModule } from '../_internal';
 export { DESIGN_COMPONENTS } from '../_internal';
 import type { DesignComponentName, DesignModule } from '../_internal';
 import * as React$1 from 'react';
-import { ComponentProps, ComponentType, ElementType, FunctionComponent, ReactNode } from 'react';
+import {
+	ComponentProps,
+	ComponentType,
+	Context,
+	ElementType,
+	FunctionComponent,
+	ReactNode,
+} from 'react';
 import * as RN from 'react-native';
 import { ColorValue, ImageStyle, TextStyle, ViewStyle } from 'react-native';
 

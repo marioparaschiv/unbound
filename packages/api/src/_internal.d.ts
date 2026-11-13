@@ -2,7 +2,7 @@
 
 import type { LiteralUnion } from './_types';
 import * as React$1 from 'react';
-import { ComponentType, FunctionComponent, ReactElement, ReactNode } from 'react';
+import { ComponentType, Context, FunctionComponent, ReactElement, ReactNode } from 'react';
 import * as RN from 'react-native';
 import { ImageSourcePropType, ImageStyle, TextStyle, ViewStyle } from 'react-native';
 
@@ -1361,6 +1361,8 @@ export type DesignHelpers = {
 	TextStyleSheet: Record<TextVariant, TextStyle>;
 	/** Hook that resolves a semantic colour token, such as `Theme.colors.TEXT_DEFAULT`, to a colour for the current theme. */
 	useToken: (token: SemanticColorToken) => string;
+	/** Whether a row sits in a `TableRowGroup`, which then rounds the group's card itself; rows outside one round their own. */
+	TableRowGroupContext: React$1.Context<boolean>;
 	/** Hook that builds the state a `SegmentedControl` and its `SegmentedControlPages` share. */
 	useSegmentedControlState: (options: SegmentedControlStateOptions) => SegmentedControlState;
 	/** Opens an alert as `openAlert(key, element)`; pass the same key to `dismissAlert` to close it. */

@@ -9,16 +9,15 @@
 	"HIGHLIGHTING": "Realce",
 	"THEME": "Tema",
 	"THEME_SUBTITLE": "Escolha um tema do VS Code para as cores da sintaxe.",
-	"SEARCH_THEMES": "Buscar temas",
 	"CUSTOM_THEME_URL": "URL de tema personalizado",
 	"CUSTOM_THEME_URL_SUBTITLE": "Um link HTTPS para um arquivo JSON de tema do VS Code substitui o tema selecionado.",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
 	"BACKGROUND_OPACITY": "Opacidade do fundo",
 	"LANGUAGE_ICONS": "Ícones de linguagem",
 	"LANGUAGE_ICONS_SUBTITLE": "Mostra os ícones de linguagem do Devicon no cabeçalho do bloco de código.",
-	"ICONS_DISABLED": "desativados",
-	"ICONS_GREYSCALE": "em tons de cinza",
-	"ICONS_COLORED": "coloridos",
+	"ICONS_DISABLED": "Desativados",
+	"ICONS_GREYSCALE": "Em tons de cinza",
+	"ICONS_COLORED": "Coloridos",
 	"LONG_LINES": "Linhas longas",
 	"LONG_LINES_SUBTITLE": "Escolha entre quebrar o código em linhas ou rolar na horizontal.",
 	"LONG_LINES_WRAP": "Quebrar linhas",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "Nunca",
 	"HLJS_SECONDARY": "Preferir Shiki",
 	"HLJS_PRIMARY": "Preferir Highlight.js",
-	"HLJS_ALWAYS": "Sempre usar Highlight.js"
+	"HLJS_ALWAYS": "Sempre usar Highlight.js",
+	"INVALID_THEME_URL": "Insira um link HTTPS para um arquivo .json."
 }

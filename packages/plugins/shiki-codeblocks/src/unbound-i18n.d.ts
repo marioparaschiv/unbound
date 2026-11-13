@@ -23,8 +23,6 @@ declare module '@unbound-app/i18n' {
 		readonly THEME: string;
 		/** Choose a VS Code theme for syntax colors. */
 		readonly THEME_SUBTITLE: string;
-		/** Search themes */
-		readonly SEARCH_THEMES: string;
 		/** Custom theme URL */
 		readonly CUSTOM_THEME_URL: string;
 		/** An HTTPS link to a VS Code theme JSON file overrides the selected theme. */
@@ -37,11 +35,11 @@ declare module '@unbound-app/i18n' {
 		readonly LANGUAGE_ICONS: string;
 		/** Show Devicon language marks in the code-block header. */
 		readonly LANGUAGE_ICONS_SUBTITLE: string;
-		/** disabled */
+		/** Disabled */
 		readonly ICONS_DISABLED: string;
-		/** greyscale */
+		/** Greyscale */
 		readonly ICONS_GREYSCALE: string;
-		/** colored */
+		/** Colored */
 		readonly ICONS_COLORED: string;
 		/** Long lines */
 		readonly LONG_LINES: string;
@@ -63,6 +61,8 @@ declare module '@unbound-app/i18n' {
 		readonly HLJS_PRIMARY: string;
 		/** Always use Highlight.js */
 		readonly HLJS_ALWAYS: string;
+		/** Enter an HTTPS link to a .json file. */
+		readonly INVALID_THEME_URL: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

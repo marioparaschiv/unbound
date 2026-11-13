@@ -9,7 +9,6 @@
 	"HIGHLIGHTING": "ハイライト",
 	"THEME": "テーマ",
 	"THEME_SUBTITLE": "構文の色に使うVS Codeのテーマを選びます。",
-	"SEARCH_THEMES": "テーマを検索",
 	"CUSTOM_THEME_URL": "カスタムテーマのURL",
 	"CUSTOM_THEME_URL_SUBTITLE": "VS CodeテーマのJSONファイルへのHTTPSリンクを指定すると、選択中のテーマより優先されます。",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "使用しない",
 	"HLJS_SECONDARY": "Shikiを優先",
 	"HLJS_PRIMARY": "Highlight.jsを優先",
-	"HLJS_ALWAYS": "常にHighlight.jsを使用"
+	"HLJS_ALWAYS": "常にHighlight.jsを使用",
+	"INVALID_THEME_URL": ".json ファイルへの HTTPS リンクを入力してください。"
 }

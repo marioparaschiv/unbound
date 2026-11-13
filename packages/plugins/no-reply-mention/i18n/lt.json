@@ -1,18 +1,12 @@
 {
-	"ADD_USER_ID": "Pridėti naudotojo ID",
+	"ADD_USER": "Pridėti naudotoją",
 	"ADD_USER_ID_SUBTITLE": "Kai išimtis įjungta, atsakymuose šie naudotojai gali būti paminėti",
-	"CANCEL": "Atšaukti",
-	"DELETE": "Ištrinti",
-	"EDIT": "Redaguoti",
-	"EDIT_USER_ID": "Redaguoti naudotojo ID",
 	"EXCEPTIONS": "Išimtys",
-	"INVALID_USER_ID": "Įveskite skaitinį Discord naudotojo ID.",
-	"NO_USERS": "Naudotojų dar nepridėta.",
+	"NO_USERS_FOUND": "Naudotojų nerasta",
 	"ONLY_PING_LISTED": "Paminėti tik sąraše esančius",
 	"ONLY_PING_LISTED_OFF": "Pagal numatytuosius atsakymuose niekas neminimas",
 	"ONLY_PING_LISTED_ON": "Atsakymuose minimi tik aukščiau išvardyti naudotojai",
-	"PLUGIN_NAME": "No Reply Mention",
-	"SAVE": "Išsaugoti",
-	"TAP_TO_EDIT": "Bakstelėkite, kad redaguotumėte",
-	"USER_ID_PLACEHOLDER": "Discord naudotojo ID"
+	"REMOVE_USER": "Pašalinti naudotoją",
+	"SEARCH_USERS": "Ieškokite arba įklijuokite naudotojo ID",
+	"UNKNOWN_USER": "Nežinomas naudotojas"
 }

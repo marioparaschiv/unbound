@@ -9,14 +9,16 @@ declare module '@unbound-app/i18n' {
 		readonly ATTACHMENT_COUNT: string;
 		/** Attach media */
 		readonly ATTACH_MEDIA: string;
-		/** Cancel */
-		readonly CANCEL: string;
 		/** Command name */
 		readonly COMMAND_NAME: string;
 		/** greet */
 		readonly COMMAND_NAME_PLACEHOLDER: string;
+		/** This command no longer exists. */
+		readonly COMMAND_NOT_FOUND: string;
 		/** Saved /{name}. */
 		readonly COMMAND_SAVED: string;
+		/** /{name} */
+		readonly COMMAND_TITLE: string;
 		/** Create command */
 		readonly CREATE_COMMAND: string;
 		/** Send the {name} command */
@@ -37,10 +39,6 @@ declare module '@unbound-app/i18n' {
 		readonly DESCRIPTION_TOO_LONG: string;
 		/** A command with this name already exists. */
 		readonly DUPLICATE_NAME: string;
-		/** Edit */
-		readonly EDIT: string;
-		/** Edit command */
-		readonly EDIT_COMMAND: string;
 		/** Edit {name} */
 		readonly EDIT_COMMAND_LABEL: string;
 		/** Add a response or at least one image or video. */
@@ -67,8 +65,6 @@ declare module '@unbound-app/i18n' {
 		readonly NAME_TAKEN_BY_DISCORD: string;
 		/** Choose an image or video attachment. */
 		readonly NOT_IMAGE_OR_VIDEO: string;
-		/** No custom commands yet. */
-		readonly NO_COMMANDS: string;
 		/** Opening Photos… */
 		readonly OPENING_PHOTOS: string;
 		/** The media picker is unavailable on this Discord build. */
@@ -110,6 +106,7 @@ declare module '@unbound-app/i18n' {
 		ARGUMENTS: { names: string | number };
 		ATTACHMENT_COUNT: { count: number };
 		COMMAND_SAVED: { name: string | number };
+		COMMAND_TITLE: { name: string | number };
 		DEFAULT_DESCRIPTION: { name: string | number };
 		DELETE_COMMAND_BODY: { name: string | number };
 		DELETE_COMMAND_LABEL: { name: string | number };

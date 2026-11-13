@@ -9,7 +9,6 @@
 	"HIGHLIGHTING": "語法醒目提示",
 	"THEME": "主題",
 	"THEME_SUBTITLE": "選擇用於語法顏色的 VS Code 主題。",
-	"SEARCH_THEMES": "搜尋主題",
 	"CUSTOM_THEME_URL": "自訂主題網址",
 	"CUSTOM_THEME_URL_SUBTITLE": "指向 VS Code 主題 JSON 檔案的 HTTPS 連結，會覆寫所選的主題。",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "永不",
 	"HLJS_SECONDARY": "優先使用 Shiki",
 	"HLJS_PRIMARY": "優先使用 Highlight.js",
-	"HLJS_ALWAYS": "一律使用 Highlight.js"
+	"HLJS_ALWAYS": "一律使用 Highlight.js",
+	"INVALID_THEME_URL": "輸入指向 .json 檔案的 HTTPS 連結。"
 }

@@ -9,16 +9,15 @@
 	"HIGHLIGHTING": "Подсветка",
 	"THEME": "Тема",
 	"THEME_SUBTITLE": "Выберите тему VS Code для подсветки синтаксиса.",
-	"SEARCH_THEMES": "Поиск тем",
 	"CUSTOM_THEME_URL": "URL своей темы",
 	"CUSTOM_THEME_URL_SUBTITLE": "HTTPS-ссылка на JSON-файл темы VS Code заменяет выбранную тему.",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
 	"BACKGROUND_OPACITY": "Непрозрачность фона",
 	"LANGUAGE_ICONS": "Иконки языков",
 	"LANGUAGE_ICONS_SUBTITLE": "Показывать значки языков Devicon в заголовке блока кода.",
-	"ICONS_DISABLED": "выкл.",
-	"ICONS_GREYSCALE": "серые",
-	"ICONS_COLORED": "цветные",
+	"ICONS_DISABLED": "Выкл.",
+	"ICONS_GREYSCALE": "Серые",
+	"ICONS_COLORED": "Цветные",
 	"LONG_LINES": "Длинные строки",
 	"LONG_LINES_SUBTITLE": "Переносить код или прокручивать его по горизонтали.",
 	"LONG_LINES_WRAP": "Переносить",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "Никогда",
 	"HLJS_SECONDARY": "Предпочитать Shiki",
 	"HLJS_PRIMARY": "Предпочитать Highlight.js",
-	"HLJS_ALWAYS": "Всегда Highlight.js"
+	"HLJS_ALWAYS": "Всегда Highlight.js",
+	"INVALID_THEME_URL": "Введите HTTPS-ссылку на файл .json."
 }

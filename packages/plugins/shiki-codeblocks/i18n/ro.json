@@ -9,16 +9,15 @@
 	"HIGHLIGHTING": "Evidențiere",
 	"THEME": "Temă",
 	"THEME_SUBTITLE": "Alege o temă VS Code pentru culorile sintaxei.",
-	"SEARCH_THEMES": "Caută teme",
 	"CUSTOM_THEME_URL": "URL de temă personalizată",
 	"CUSTOM_THEME_URL_SUBTITLE": "Un link HTTPS către un fișier JSON de temă VS Code înlocuiește tema selectată.",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
 	"BACKGROUND_OPACITY": "Opacitatea fundalului",
 	"LANGUAGE_ICONS": "Pictograme de limbaj",
 	"LANGUAGE_ICONS_SUBTITLE": "Afișează siglele Devicon ale limbajului în antetul blocului de cod.",
-	"ICONS_DISABLED": "dezactivate",
-	"ICONS_GREYSCALE": "alb-negru",
-	"ICONS_COLORED": "colorate",
+	"ICONS_DISABLED": "Dezactivate",
+	"ICONS_GREYSCALE": "Alb-negru",
+	"ICONS_COLORED": "Colorate",
 	"LONG_LINES": "Rânduri lungi",
 	"LONG_LINES_SUBTITLE": "Alege între încadrarea codului și derularea pe orizontală.",
 	"LONG_LINES_WRAP": "Încadrare",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "Niciodată",
 	"HLJS_SECONDARY": "Preferă Shiki",
 	"HLJS_PRIMARY": "Preferă Highlight.js",
-	"HLJS_ALWAYS": "Folosește mereu Highlight.js"
+	"HLJS_ALWAYS": "Folosește mereu Highlight.js",
+	"INVALID_THEME_URL": "Introdu un link HTTPS către un fișier .json."
 }

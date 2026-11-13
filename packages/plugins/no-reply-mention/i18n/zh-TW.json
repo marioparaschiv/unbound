@@ -1,18 +1,12 @@
 {
-	"ADD_USER_ID": "新增使用者 ID",
+	"ADD_USER": "新增使用者",
 	"ADD_USER_ID_SUBTITLE": "啟用例外時，回覆可以提及這些使用者",
-	"CANCEL": "取消",
-	"DELETE": "刪除",
-	"EDIT": "編輯",
-	"EDIT_USER_ID": "編輯使用者 ID",
 	"EXCEPTIONS": "例外",
-	"INVALID_USER_ID": "請輸入數字格式的 Discord 使用者 ID。",
-	"NO_USERS": "尚未新增任何使用者。",
+	"NO_USERS_FOUND": "找不到使用者",
 	"ONLY_PING_LISTED": "只提及清單中的使用者",
 	"ONLY_PING_LISTED_OFF": "回覆預設不會提及任何人",
 	"ONLY_PING_LISTED_ON": "回覆只會提及上方列出的使用者",
-	"PLUGIN_NAME": "回覆不提及",
-	"SAVE": "儲存",
-	"TAP_TO_EDIT": "輕觸以編輯",
-	"USER_ID_PLACEHOLDER": "Discord 使用者 ID"
+	"REMOVE_USER": "移除使用者",
+	"SEARCH_USERS": "搜尋或貼上使用者 ID",
+	"UNKNOWN_USER": "未知使用者"
 }

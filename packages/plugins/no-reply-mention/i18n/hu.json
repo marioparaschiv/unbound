@@ -1,18 +1,12 @@
 {
-	"ADD_USER_ID": "Felhasználói azonosító hozzáadása",
+	"ADD_USER": "Felhasználó hozzáadása",
 	"ADD_USER_ID_SUBTITLE": "A válaszok megemlíthetik ezeket a felhasználókat, ha a kivétel be van kapcsolva",
-	"CANCEL": "Mégse",
-	"DELETE": "Törlés",
-	"EDIT": "Szerkesztés",
-	"EDIT_USER_ID": "Felhasználói azonosító szerkesztése",
 	"EXCEPTIONS": "Kivételek",
-	"INVALID_USER_ID": "Adj meg egy számokból álló Discord-felhasználóazonosítót.",
-	"NO_USERS": "Még nincsenek hozzáadott felhasználók.",
+	"NO_USERS_FOUND": "Nincs találat",
 	"ONLY_PING_LISTED": "Csak a listán szereplők pingelése",
 	"ONLY_PING_LISTED_OFF": "A válaszok alapértelmezetten senkit sem említenek meg",
 	"ONLY_PING_LISTED_ON": "A válaszok csak a fent felsorolt felhasználókat említik meg",
-	"PLUGIN_NAME": "Említés nélküli válasz",
-	"SAVE": "Mentés",
-	"TAP_TO_EDIT": "Koppints a szerkesztéshez",
-	"USER_ID_PLACEHOLDER": "Discord-felhasználóazonosító"
+	"REMOVE_USER": "Felhasználó eltávolítása",
+	"SEARCH_USERS": "Keress, vagy illessz be egy felhasználói azonosítót",
+	"UNKNOWN_USER": "Ismeretlen felhasználó"
 }

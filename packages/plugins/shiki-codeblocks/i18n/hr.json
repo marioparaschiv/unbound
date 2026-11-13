@@ -9,16 +9,15 @@
 	"HIGHLIGHTING": "Isticanje sintakse",
 	"THEME": "Tema",
 	"THEME_SUBTITLE": "Odaberi VS Code temu za boje sintakse.",
-	"SEARCH_THEMES": "Pretraži teme",
 	"CUSTOM_THEME_URL": "URL prilagođene teme",
 	"CUSTOM_THEME_URL_SUBTITLE": "HTTPS poveznica na JSON datoteku VS Code teme nadjačava odabranu temu.",
 	"CUSTOM_THEME_URL_PLACEHOLDER": "https://example.com/theme.json",
 	"BACKGROUND_OPACITY": "Neprozirnost pozadine",
 	"LANGUAGE_ICONS": "Ikone jezika",
 	"LANGUAGE_ICONS_SUBTITLE": "Prikaži Devicon oznake jezika u zaglavlju bloka koda.",
-	"ICONS_DISABLED": "isključeno",
-	"ICONS_GREYSCALE": "sivo",
-	"ICONS_COLORED": "u boji",
+	"ICONS_DISABLED": "Isključeno",
+	"ICONS_GREYSCALE": "Sivo",
+	"ICONS_COLORED": "U boji",
 	"LONG_LINES": "Dugi retci",
 	"LONG_LINES_SUBTITLE": "Odaberi između prelamanja koda i vodoravnog pomicanja.",
 	"LONG_LINES_WRAP": "Prelamanje",
@@ -28,5 +27,6 @@
 	"HLJS_NEVER": "Nikad",
 	"HLJS_SECONDARY": "Prednost Shikiju",
 	"HLJS_PRIMARY": "Prednost Highlight.js-u",
-	"HLJS_ALWAYS": "Uvijek koristi Highlight.js"
+	"HLJS_ALWAYS": "Uvijek koristi Highlight.js",
+	"INVALID_THEME_URL": "Unesi HTTPS poveznicu na .json datoteku."
 }

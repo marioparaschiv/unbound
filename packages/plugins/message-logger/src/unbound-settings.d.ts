@@ -185,23 +185,8 @@ declare module '@unbound-app/settings' {
 		 * Do not log your own messages.
 		 */
 		ignoreSelf: boolean;
-		/**
-		 * Ignored users
-		 *
-		 * User IDs whose messages are not logged. Separate IDs with commas or spaces.
-		 */
 		ignoreUsers: string;
-		/**
-		 * Ignored channels
-		 *
-		 * Channel or category IDs that are not logged. Separate IDs with commas or spaces.
-		 */
 		ignoreChannels: string;
-		/**
-		 * Ignored servers
-		 *
-		 * Server IDs that are not logged. Separate IDs with commas or spaces.
-		 */
 		ignoreGuilds: string;
 	};
 
@@ -261,23 +246,8 @@ declare module '@unbound-app/settings' {
 		 * Do not log your own messages.
 		 */
 		"ignoreSelf": boolean;
-		/**
-		 * Ignored users
-		 *
-		 * User IDs whose messages are not logged. Separate IDs with commas or spaces.
-		 */
 		"ignoreUsers": string;
-		/**
-		 * Ignored channels
-		 *
-		 * Channel or category IDs that are not logged. Separate IDs with commas or spaces.
-		 */
 		"ignoreChannels": string;
-		/**
-		 * Ignored servers
-		 *
-		 * Server IDs that are not logged. Separate IDs with commas or spaces.
-		 */
 		"ignoreGuilds": string;
 	};
 

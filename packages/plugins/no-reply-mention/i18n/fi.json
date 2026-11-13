@@ -1,18 +1,12 @@
 {
-	"ADD_USER_ID": "Lisää käyttäjätunnus",
+	"ADD_USER": "Lisää käyttäjä",
 	"ADD_USER_ID_SUBTITLE": "Vastaukset voivat mainita nämä käyttäjät, kun poikkeus on käytössä",
-	"CANCEL": "Peruuta",
-	"DELETE": "Poista",
-	"EDIT": "Muokkaa",
-	"EDIT_USER_ID": "Muokkaa käyttäjätunnusta",
 	"EXCEPTIONS": "Poikkeukset",
-	"INVALID_USER_ID": "Anna numeerinen Discord-käyttäjätunnus.",
-	"NO_USERS": "Käyttäjiä ei ole vielä lisätty.",
+	"NO_USERS_FOUND": "Käyttäjiä ei löytynyt",
 	"ONLY_PING_LISTED": "Mainitse vain luetellut käyttäjät",
 	"ONLY_PING_LISTED_OFF": "Vastaukset eivät oletuksena mainitse ketään",
 	"ONLY_PING_LISTED_ON": "Vastaukset mainitsevat vain yllä luetellut käyttäjät",
-	"PLUGIN_NAME": "No Reply Mention",
-	"SAVE": "Tallenna",
-	"TAP_TO_EDIT": "Muokkaa napauttamalla",
-	"USER_ID_PLACEHOLDER": "Discord-käyttäjätunnus"
+	"REMOVE_USER": "Poista käyttäjä",
+	"SEARCH_USERS": "Hae tai liitä käyttäjätunnus",
+	"UNKNOWN_USER": "Tuntematon käyttäjä"
 }
