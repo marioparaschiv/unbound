@@ -1,5 +1,39 @@
 # Changelog
 
+## [1.4.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.3.0...loader-v1.4.0) (2026-11-13)
+
+
+### Features
+
+* **client:** add errors, log, storage and patches to /debug ([#1163](https://github.com/marioparaschiv/unbound/issues/1163)) ([1cc9625](https://github.com/marioparaschiv/unbound/commit/1cc9625ccecde514a8923d57e66e2e17fd19a339))
+* **client:** add network context to /debug ([#1204](https://github.com/marioparaschiv/unbound/issues/1204)) ([6fc2287](https://github.com/marioparaschiv/unbound/commit/6fc22878df442f8c0e7b0e8712cad1da3c6b1280))
+* **client:** list other tweaks loaded into Discord in /debug ([#1250](https://github.com/marioparaschiv/unbound/issues/1250)) ([dd8c109](https://github.com/marioparaschiv/unbound/commit/dd8c1091d6d94c7776b1d2b2477df47694f91493))
+* **devtools:** add an object explorer and structured ubd errors ([#1206](https://github.com/marioparaschiv/unbound/issues/1206)) ([cf37e2b](https://github.com/marioparaschiv/unbound/commit/cf37e2beccf364eb3d4a22842d5c1538c8a5c683))
+* **loader:** check for a bundle each time Discord backgrounds ([#1201](https://github.com/marioparaschiv/unbound/issues/1201)) ([67bb22d](https://github.com/marioparaschiv/unbound/commit/67bb22d7c8ae04a2bbf288cbb7f78e63e71a7644))
+* **loader:** heal a damaged saved bundle at launch ([#1200](https://github.com/marioparaschiv/unbound/issues/1200)) ([a9056c0](https://github.com/marioparaschiv/unbound/commit/a9056c0e5444d739a73be9b24dc8e9f90c67ddc2))
+* **loader:** leave auto Recovery Mode after a fix, check space ([#1173](https://github.com/marioparaschiv/unbound/issues/1173)) ([f5d43df](https://github.com/marioparaschiv/unbound/commit/f5d43df25c00ab89805a9e15dc704fe4e8b732b4))
+* **loader:** name the Android root manager and bridge failures ([#1150](https://github.com/marioparaschiv/unbound/issues/1150)) ([aa68889](https://github.com/marioparaschiv/unbound/commit/aa68889f9085501378b1d5e4b09728fe6ef12edc))
+* **loader:** name the crashing addon in Android tombstones ([#1165](https://github.com/marioparaschiv/unbound/issues/1165)) ([55a6c98](https://github.com/marioparaschiv/unbound/commit/55a6c983a520c81579b350652d33267a7e8880bd))
+* **loader:** offer the previous client bundle in the Toolbox ([#1249](https://github.com/marioparaschiv/unbound/issues/1249)) ([7699805](https://github.com/marioparaschiv/unbound/commit/76998054425a6cc1a6b4524bf36491a3c1ad0fe7))
+* **loader:** offer the Toolbox when Discord never renders ([#1202](https://github.com/marioparaschiv/unbound/issues/1202)) ([1918924](https://github.com/marioparaschiv/unbound/commit/19189247b40c3e36f752e6e48066d3e770d3f16d))
+* **loader:** record Android ANRs with the main thread's stack ([#1203](https://github.com/marioparaschiv/unbound/issues/1203)) ([33917dd](https://github.com/marioparaschiv/unbound/commit/33917dd413427f8398859b4a2319572c8c6a16f9))
+* **loader:** report bundle state, launches and native crashes ([#1148](https://github.com/marioparaschiv/unbound/issues/1148)) ([f0a0e86](https://github.com/marioparaschiv/unbound/commit/f0a0e8625bfce64c1bbb6133ff154bb5eabee047))
+* **loader:** report update checks, bundle source and settings ([#1162](https://github.com/marioparaschiv/unbound/issues/1162)) ([fdbe58d](https://github.com/marioparaschiv/unbound/commit/fdbe58da281df988197c52f0f560bc428d8478fd))
+* **loader:** resume interrupted bundle downloads ([#1166](https://github.com/marioparaschiv/unbound/issues/1166)) ([85af3ea](https://github.com/marioparaschiv/unbound/commit/85af3ea154cc275d187ab0731f1c599df760ec99))
+* **loader:** skip failed builds, report crashes and pressure ([#1158](https://github.com/marioparaschiv/unbound/issues/1158)) ([dd7f6dd](https://github.com/marioparaschiv/unbound/commit/dd7f6ddc44ede8e26c5cbeeb8d07faac8c4c7d3f))
+* **loader:** stamp crash stacks with the image's build ID ([#1179](https://github.com/marioparaschiv/unbound/issues/1179)) ([fbcd97b](https://github.com/marioparaschiv/unbound/commit/fbcd97b80e66d1fed2e4dec1cf4af54595804885))
+* **loader:** tell how the previous iOS launch ended ([#1149](https://github.com/marioparaschiv/unbound/issues/1149)) ([c8d17e8](https://github.com/marioparaschiv/unbound/commit/c8d17e823875b04b9c8973d67d85b81ef5979b44))
+
+
+### Bug Fixes
+
+* **loader:** find Magisk where Discord can see it ([#1153](https://github.com/marioparaschiv/unbound/issues/1153)) ([122c4ea](https://github.com/marioparaschiv/unbound/commit/122c4eaa14dde1d701aef928c8251f5ecd4ff79f))
+* **loader:** load the Android library on 16 KB page devices ([#1246](https://github.com/marioparaschiv/unbound/issues/1246)) ([4fcab52](https://github.com/marioparaschiv/unbound/commit/4fcab521d4dd4f4e38be62bfd13a750ace67f197))
+* **loader:** read hidden Android and private iOS APIs in the compat scan ([#1238](https://github.com/marioparaschiv/unbound/issues/1238)) ([99d0e4c](https://github.com/marioparaschiv/unbound/commit/99d0e4cf543ad1197cd04eedd8e2d57a998dc936))
+* **loader:** skip Kotlin formatting locally when Java won't start ([#1247](https://github.com/marioparaschiv/unbound/issues/1247)) ([b8131ff](https://github.com/marioparaschiv/unbound/commit/b8131ffbb9c7958ecdcff16b34cbe6eff15d11b6))
+* **loader:** treat UIKit's private effectWithBlurRadius: as external ([#1155](https://github.com/marioparaschiv/unbound/issues/1155)) ([90805d8](https://github.com/marioparaschiv/unbound/commit/90805d8991be3b8774934478a85e7fe18b4441d5))
+* **loader:** write the profile expiry as exp ([#1224](https://github.com/marioparaschiv/unbound/issues/1224)) ([f659a0f](https://github.com/marioparaschiv/unbound/commit/f659a0f6e5fb1da4f7b45c1adaa7b9a8011ba163))
+
 ## [1.3.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.2.0...loader-v1.3.0) (2026-11-12)
 
 
