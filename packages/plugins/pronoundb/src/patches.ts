@@ -10,7 +10,8 @@ import {
 
 import { cleanProfilePronouns, pickPronouns } from '~/lib/format';
 import { createLookup, type PronounLookup } from '~/lib/lookup';
-import { addPronouns, type MessageRow as HeaderRow } from '~/lib/header';
+import { addPronouns, type MessageRow as HeaderRow, type NativePillColors } from '~/lib/header';
+import { pillColors } from '~/lib/pill';
 
 const UserProfileStore = flux.getStore('UserProfile');
 const ChannelStore = flux.getStore('Channel');
@@ -18,6 +19,17 @@ const MessageStore = flux.getStore('Message');
 const UserStore = flux.getStore('User');
 
 let pronounLookup: PronounLookup | undefined;
+
+function nativePillColors(color: string): NativePillColors | undefined {
+	const colors = pillColors(color);
+	const { processColor } = metro.common.ReactNative;
+	const background = colors && processColor(colors.background);
+	const text = colors && processColor(colors.text);
+
+	return typeof background === 'number' && typeof text === 'number'
+		? { background, text }
+		: undefined;
+}
 
 // Default (0) and reply (19) messages; other types, such as poll results, have no author header.
 function isChatMessage(message: RowMessage) {
@@ -76,6 +88,8 @@ export function patchMessageRows(): void {
 				pronouns,
 				username,
 				metro.common.ReactNative.Dimensions.get('window').width,
+				settings.style === 'text' ? 'text' : 'pill',
+				settings.style === 'custom' ? nativePillColors(settings.pillColor) : undefined,
 			);
 		},
 	});

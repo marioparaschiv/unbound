@@ -60,3 +60,34 @@ test('does not add the pronouns twice when the row is generated again', () => {
 	expect(row.timestamp).toBe('21:02 • he/him');
 	expect(row.timestampAccessibilityLabel).toBe('21:02 • he/him');
 });
+
+test('shows the pronouns in Discord tag pill once, with the chosen colors', () => {
+	const row: Parameters<typeof addPronouns>[0] = {
+		username: 'adrián',
+		timestamp: '10/5/26, 19:05',
+	};
+	const colors = { background: 0xffff4d6d, text: 0xffffffff };
+
+	addPronouns(row, 'he/him', undefined, IPHONE_WIDTH, 'pill', colors);
+	addPronouns(row, 'he/him', undefined, IPHONE_WIDTH, 'pill', colors);
+
+	expect(row).toMatchObject({
+		timestamp: '10/5/26, 19:05',
+		opTagText: 'he/him',
+		opTagBackgroundColor: colors.background,
+		opTagTextColor: colors.text,
+	});
+});
+
+test('falls back to text when the header already has an OP tag', () => {
+	const row: Parameters<typeof addPronouns>[0] = {
+		username: 'adrián',
+		opTagText: 'OP',
+		timestamp: '10/5/26, 19:05',
+	};
+
+	addPronouns(row, 'he/him', undefined, IPHONE_WIDTH, 'pill');
+
+	expect(row.opTagText).toBe('OP');
+	expect(row.timestamp).toBe('10/5/26, 19:05 • he/him');
+});
