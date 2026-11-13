@@ -1,5 +1,5 @@
 {
-	"id": "unbound.hide-gift-button",
+	"id": "unbound.hide-buttons",
 	"name": "Hide Buttons",
 	"description": "Hides the gift, voice message and call buttons you never use.",
 	"authors": [
