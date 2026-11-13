@@ -159,7 +159,11 @@ export function createMeasure(
 			]),
 		);
 		const items = snapshot.children
-			.map((child) => ({ ...placed(child, scale), className: child.className }))
+			.map((child) => ({
+				...placed(child, scale),
+				className: child.className,
+				reach: child.reach === undefined ? undefined : child.reach / scale + moved,
+			}))
 			.filter((item) => item.shown)
 			.map((item) => ({ ...item, box: { ...item.box, x: item.box.x + moved } }));
 		const reactions = items.find((item) => item.className === REACTIONS);
@@ -175,10 +179,10 @@ export function createMeasure(
 
 		if (!body) return;
 
-		const rights = content.map(({ view, box }) =>
+		const rights = content.map(({ view, box, reach }) =>
 			javaFlag(java.invoke(contentClass, 'isInstance', [view]))
 				? box.x + textRight(view, box.width * scale) / scale
-				: box.x + box.width,
+				: Math.min(reach ?? box.x + box.width, box.x + box.width),
 		);
 		const header = views.get('header');
 		const name = views.get('author_name');
