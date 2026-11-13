@@ -312,6 +312,31 @@ export function createScopedNativeBridge(
 		struct: scopeBridgeMethod(objcSource, 'struct', 'objc.struct'),
 		array: scopeBridgeMethod(objcSource, 'array', 'objc.array'),
 		data: scopeBridgeMethod(objcSource, 'data', 'objc.data'),
+		block: (signature, implementation) =>
+			scopeBridgeMethod(
+				objcSource,
+				'block',
+				'objc.block',
+			)(signature, (...args) => (lifecycle.disposed ? undefined : implementation(...args))),
+		callBlock: scopeBridgeMethod(objcSource, 'callBlock', 'objc.callBlock'),
+		defineClass: (name, superclass, methods, protocols) =>
+			scopeBridgeMethod(objcSource, 'defineClass', 'objc.defineClass')(
+				name,
+				superclass,
+				Object.fromEntries(
+					Object.entries(methods).map(([selector, method]) => [
+						selector,
+						{
+							signature: method.signature,
+							implementation: (self, ...args) =>
+								lifecycle.disposed
+									? undefined
+									: method.implementation(self, ...args),
+						},
+					]),
+				),
+				protocols,
+			),
 		hook: <Receiver extends boolean = true>(
 			className: string,
 			selector: string,

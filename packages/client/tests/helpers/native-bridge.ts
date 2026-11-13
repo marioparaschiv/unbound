@@ -99,6 +99,8 @@ export const javaInvokeFailure = Object.assign(new Error('No method noSuchMethod
 	code: 'NATIVE_BRIDGE_ERROR',
 });
 export const nativeHandle: NativeHandle = Object.create(null);
+
+export const nativeCallbacks: ((...args: never[]) => NativeObjCResult | void)[] = [];
 const capabilities = [
 	'native.objc.classes',
 	'native.objc.invoke',
@@ -108,6 +110,8 @@ const capabilities = [
 	'native.objc.ivars',
 	'native.objc.associations',
 	'native.objc.hooks',
+	'native.objc.blocks',
+	'native.objc.classDefinition',
 	'native.ffi.symbols',
 	'native.ffi.call',
 	'native.fabric.mount',
@@ -208,6 +212,18 @@ const fakeBridge: LoaderBridge = {
 		setAssociatedObject: (...args: unknown[]) => cleared.push(args),
 		setIvar: () => undefined,
 		struct: () => Object.assign(Object.create(null), { name: 'NSObject' }),
+		block: (_signature, implementation) => {
+			nativeCallbacks.push(implementation);
+
+			return nativeHandle;
+		},
+		callBlock: () => undefined,
+		defineClass: (_name, _superclass, methods) => {
+			for (const method of Object.values(methods))
+				nativeCallbacks.push(method.implementation);
+
+			return nativeHandle;
+		},
 	},
 	ffi: {
 		call: () => undefined,
