@@ -1,0 +1,29 @@
+{
+	"id": "unbound.member-count",
+	"name": "Member Count",
+	"description": "Shows a channel's total members beside how many are online, in the channel header.",
+	"authors": [
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "Commandtechno",
+			"id": "296776625432035328"
+		},
+		{
+			"name": "Apexo",
+			"id": "228548952687902720"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "UserCircleIcon",
+	"main": "index.tsx"
+}
