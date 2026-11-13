@@ -1,0 +1,14 @@
+{
+	"ENGINE": "Search engine",
+	"ENGINE_ASK": "Ask each time",
+	"ENGINE_ASK_SUBTITLE": "Pick an engine whenever you search an image.",
+	"ENGINE_GOOGLE": "Google Lens",
+	"ENGINE_YANDEX": "Yandex",
+	"ENGINE_SAUCENAO": "SauceNAO",
+	"ENGINE_IQDB": "IQDB",
+	"ENGINE_BING": "Bing",
+	"ENGINE_TINEYE": "TinEye",
+	"ENGINE_IMGOPS": "ImgOps",
+	"SEARCH_IMAGE": "Search image",
+	"SEARCH_WITH": "Search with {engine}"
+}

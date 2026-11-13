@@ -1,0 +1,25 @@
+{
+	"id": "unbound.reverse-image-search",
+	"name": "Reverse Image Search",
+	"description": "Adds Search image to the media viewer's menu: Google Lens, Yandex, SauceNAO, IQDB, Bing, TinEye or ImgOps.",
+	"authors": [
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "Nuckyz",
+			"id": "235834946571337729"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ImageIcon",
+	"main": "index.tsx"
+}
