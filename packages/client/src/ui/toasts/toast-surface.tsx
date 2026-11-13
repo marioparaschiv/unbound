@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { useUnboundSettings } from '~/settings/unbound';
 import { BackdropFilters } from '~/metro/components';
 
-import { unitToHex, withoutOpacity } from './color';
+import { readableSurface, unitToHex, withoutOpacity } from './color';
 import useStyles from './toast.style';
 
 type ToastSurfaceProps = {
@@ -24,15 +24,32 @@ function ToastSurface({ children, style, onLayout }: ToastSurfaceProps) {
 	const styles = useStyles();
 
 	const opacity = settings.get('toasts.opacity');
-	const background = withoutOpacity(styles.container.backgroundColor) + unitToHex(opacity);
+	// A theme can pair a surface with text that does not read on it; the toast keeps its text readable regardless.
+	const surface = readableSurface(
+		withoutOpacity(styles.container.backgroundColor),
+		withoutOpacity(styles.mutedText.color),
+	);
+	const background = surface + unitToHex(opacity);
+	const blurred = opacity !== 1;
 
 	return (
 		<View
-			style={[styles.container, styles.toastShadow, { backgroundColor: background }, style]}
+			style={[
+				styles.container,
+				styles.toastShadow,
+				{ backgroundColor: blurred ? 'transparent' : background },
+				style,
+			]}
 			onLayout={onLayout}
 		>
-			{opacity !== 1 ? (
-				<BackdropFilters.BackgroundBlurFill blurAmount={settings.get('toasts.blur')} />
+			{/* The surface colour tints the blur from above. Discord's own tint and Android fallback are a dark scrim that
+				drowns a light theme's text, so both are replaced. */}
+			{blurred ? (
+				<BackdropFilters.BackgroundBlurFill
+					blurAmount={settings.get('toasts.blur')}
+					tintColor={background}
+					android_fallbackColor={background}
+				/>
 			) : null}
 			{children}
 		</View>
