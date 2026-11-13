@@ -1,15 +1,11 @@
 import { logs, render, stopPlugin } from '@unbound-app/api/testing';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
-import { type CardProps, startReviewdb } from './helpers/start-reviewdb';
-
-function UserInfo(_: { userId: string }) {
-	return null;
-}
+import { type AboutCardProps, startReviewdb } from './helpers/start-reviewdb';
 
 let card: Awaited<ReturnType<typeof startReviewdb>>;
 
-function renderCard(props: CardProps) {
+function renderCard(props: AboutCardProps) {
 	return render(<card.default {...props} />, { stores: { User: { getUser: () => undefined } } });
 }
 
@@ -18,20 +14,21 @@ beforeEach(async () => {
 });
 afterEach(stopPlugin);
 
-describe('a user profile card', () => {
-	test('gets a View Reviews button under the user info', () => {
-		const view = renderCard({ children: [<UserInfo key='info' userId='42' />, 'info'] });
+describe('a profile About card', () => {
+	test('gets a Reviews section before the policy links', () => {
+		const view = renderCard({ userId: '42' });
+		const texts = view.findAll('Text').map((text) => text.props.children);
 
-		expect(view.find('Button').props.text).toBe('View Reviews');
+		expect(texts).toEqual(['bio', 'Reviews', 'View reviews', 'policy']);
 	});
 
-	test('stays as Discord drew it when the card has no user info', () => {
-		const view = renderCard({ children: ['nothing'] });
+	test('stays as Discord drew it without a user', () => {
+		const view = renderCard({});
 
-		expect(view.findAll('Button')).toEqual([]);
+		expect(view.findAll('Text').map((text) => text.props.children)).toEqual(['bio', 'policy']);
 	});
 
-	test('starts without a warning once the profile card patch applies', () => {
+	test('starts without a warning once the About card patch applies', () => {
 		expect(logs.entries.filter(({ level }) => level !== 'info')).toEqual([]);
 	});
 });

@@ -9,8 +9,6 @@
 	"CLOCK_24": "24-hour",
 	"USE_DATABASE": "Use TimezoneDB",
 	"USE_DATABASE_SUBTITLE": "Looks up the timezone people shared at timezone.creations.works. A timezone you set for someone always wins.",
-	"LOCAL_TIME": "Local time {time}",
-	"LOCAL_TIME_ZONE": "Local time {time} · {zone}",
 	"SET_TIMEZONE": "Set timezone",
 	"SET_TIMEZONE_BODY": "An IANA timezone, such as Europe/Berlin or America/New_York.",
 	"TIMEZONE": "Timezone",
@@ -19,5 +17,6 @@
 	"SAVE": "Save",
 	"CLEAR": "Clear",
 	"CANCEL": "Cancel",
-	"THEIR_TIME": "their time {time}"
+	"THEIR_TIME": "their time {time}",
+	"LOCAL_TIME_TITLE": "Local Time"
 }

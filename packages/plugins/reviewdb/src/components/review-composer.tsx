@@ -1,8 +1,9 @@
-import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
+import { Discord } from '@unbound-app/api/metro/components';
 import { format, messages } from '@unbound-app/i18n';
+import { View } from 'react-native';
 import { useState } from 'react';
 
-import type { ReviewColors } from '~/lib/colors';
+import useStyles from '~/components/reviews-sheet.style';
 import { COMMENT_MAX_LENGTH } from '~/lib/constants';
 import { addReview } from '~/lib/api';
 
@@ -11,15 +12,14 @@ type ReviewComposerProps = {
 	name: string;
 	/** Whether the viewer already reviewed this profile, so posting replaces that review. */
 	isUpdate: boolean;
-	colors: ReviewColors;
 	onSubmitted: () => void;
 };
 
-function ReviewComposer({ discordId, name, isUpdate, colors, onSubmitted }: ReviewComposerProps) {
+function ReviewComposer({ discordId, name, isUpdate, onSubmitted }: ReviewComposerProps) {
+	const styles = useStyles();
 	const [comment, setComment] = useState('');
 	const [submitting, setSubmitting] = useState(false);
 	const trimmed = comment.trim();
-	const disabled = !trimmed || submitting;
 
 	async function submit() {
 		if (!trimmed) return;
@@ -37,73 +37,25 @@ function ReviewComposer({ discordId, name, isUpdate, colors, onSubmitted }: Revi
 	}
 
 	return (
-		<View
-			style={{
-				backgroundColor: colors.surface,
-				borderColor: colors.border,
-				borderRadius: 16,
-				borderWidth: 1,
-				gap: 10,
-				padding: 14,
-			}}
-		>
-			<View style={{ gap: 4 }}>
-				<Text style={{ color: colors.text, fontSize: 17, fontWeight: '800' }}>
-					{isUpdate ? messages.UPDATE_YOUR_REVIEW : messages.LEAVE_A_REVIEW}
-				</Text>
-				<Text style={{ color: colors.muted, fontSize: 13, lineHeight: 18 }}>
-					{isUpdate ? messages.UPDATE_REPLACES : format('SHARE_FEEDBACK', { name })}
-				</Text>
-			</View>
-			<TextInput
-				maxLength={COMMENT_MAX_LENGTH}
-				multiline
-				onChangeText={setComment}
+		<View style={styles.composer}>
+			<Discord.TextArea
+				label={isUpdate ? messages.UPDATE_YOUR_REVIEW : messages.LEAVE_A_REVIEW}
+				description={isUpdate ? messages.UPDATE_REPLACES : undefined}
 				placeholder={
 					isUpdate
 						? format('UPDATE_PLACEHOLDER', { name })
 						: format('REVIEW_PLACEHOLDER', { name })
 				}
-				placeholderTextColor={colors.muted}
-				style={{
-					backgroundColor: colors.input,
-					borderColor: colors.border,
-					borderRadius: 12,
-					borderWidth: 1,
-					color: colors.text,
-					fontSize: 15,
-					minHeight: 92,
-					paddingHorizontal: 12,
-					paddingVertical: 11,
-					textAlignVertical: 'top',
-				}}
+				maxLength={COMMENT_MAX_LENGTH}
 				value={comment}
+				onChangeText={setComment}
 			/>
-			<View style={{ alignItems: 'center', flexDirection: 'row', gap: 10 }}>
-				<Text style={{ color: colors.muted, flex: 1, fontSize: 12 }}>
-					{comment.length}/{COMMENT_MAX_LENGTH}
-				</Text>
-				<Pressable
-					disabled={disabled}
-					onPress={() => void submit()}
-					style={({ pressed }) => ({
-						backgroundColor: colors.accent,
-						borderRadius: 11,
-						minHeight: 44,
-						justifyContent: 'center',
-						opacity: disabled ? 0.45 : pressed ? 0.75 : 1,
-						paddingHorizontal: 16,
-					})}
-				>
-					{submitting ? (
-						<ActivityIndicator color={colors.accentText} />
-					) : (
-						<Text style={{ color: colors.accentText, fontSize: 14, fontWeight: '800' }}>
-							{isUpdate ? messages.UPDATE_REVIEW : messages.SUBMIT_REVIEW}
-						</Text>
-					)}
-				</Pressable>
-			</View>
+			<Discord.Button
+				text={isUpdate ? messages.UPDATE_REVIEW : messages.SUBMIT_REVIEW}
+				disabled={!trimmed}
+				loading={submitting}
+				onPress={() => void submit()}
+			/>
 		</View>
 	);
 }

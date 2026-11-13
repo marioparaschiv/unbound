@@ -3,14 +3,12 @@
 declare module '@unbound-app/i18n' {
 	/** Every en-US message, read in the user's locale. */
 	export type Messages = {
-		/** Friends since {date} */
-		readonly FRIENDS_SINCE: string;
+		/** Friends Since */
+		readonly FRIENDS_SINCE_TITLE: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
-	export type FormatVars = {
-		FRIENDS_SINCE: { date: string | number };
-	};
+	export type FormatVars = Record<never, never>;
 
 	/** Each message in the user's locale, falling back to en-US. */
 	export const messages: Messages;

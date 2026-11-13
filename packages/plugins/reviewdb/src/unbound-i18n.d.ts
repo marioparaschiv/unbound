@@ -43,7 +43,7 @@ declare module '@unbound-app/i18n' {
 		readonly YOU: string;
 		/** User */
 		readonly USER: string;
-		/** View Reviews */
+		/** View reviews */
 		readonly VIEW_REVIEWS: string;
 		/** Network error: Failed to connect to ReviewDB. */
 		readonly NETWORK_ERROR: string;
@@ -71,8 +71,6 @@ declare module '@unbound-app/i18n' {
 		readonly AUTHORIZATION_FAILED: string;
 		/** You have new reviews on your profile! */
 		readonly NEW_REVIEWS: string;
-		/** SYSTEM */
-		readonly SYSTEM: string;
 		/** BLOCKED */
 		readonly BLOCKED: string;
 		/** Show less */
@@ -81,30 +79,18 @@ declare module '@unbound-app/i18n' {
 		readonly READ_MORE: string;
 		/** You cannot vote on your own review. */
 		readonly OWN_REVIEW_VOTE: string;
-		/** REVIEW ACTIONS */
-		readonly REVIEW_ACTIONS: string;
 		/** Report */
 		readonly REPORT: string;
 		/** Unblock user */
 		readonly UNBLOCK_USER: string;
 		/** Block user */
 		readonly BLOCK_USER: string;
-		/** Confirm delete */
-		readonly CONFIRM_DELETE: string;
 		/** Delete review */
 		readonly DELETE_REVIEW: string;
-		/** Close */
-		readonly CLOSE: string;
 		/** Reviews for @{name} */
 		readonly REVIEWS_FOR: string;
-		/** Community feedback shared through ReviewDB. */
-		readonly COMMUNITY_FEEDBACK: string;
 		/** {count, plural, one {# review} other {# reviews}} */
 		readonly REVIEW_COUNT: string;
-		/** ReviewDB connected */
-		readonly CONNECTED: string;
-		/** Loading reviews… */
-		readonly LOADING_REVIEWS: string;
 		/** No reviews yet */
 		readonly NO_REVIEWS: string;
 		/** Be the first person to leave feedback. */
@@ -119,8 +105,6 @@ declare module '@unbound-app/i18n' {
 		readonly LEAVE_A_REVIEW: string;
 		/** Your new text will replace your existing review. */
 		readonly UPDATE_REPLACES: string;
-		/** Share helpful feedback about @{name}. */
-		readonly SHARE_FEEDBACK: string;
 		/** Update review for @{name} */
 		readonly UPDATE_PLACEHOLDER: string;
 		/** Review @{name} */
@@ -139,10 +123,10 @@ declare module '@unbound-app/i18n' {
 		readonly HIDE_SYSTEM_REVIEWS: string;
 		/** Hides the warning ReviewDB shows above every list of reviews. */
 		readonly HIDE_SYSTEM_REVIEWS_SUBTITLE: string;
-		/** Theme reviews with the profile */
-		readonly THEME_SHEET: string;
-		/** Tints the reviews sheet, its text box and send button with the profile's theme colors, including Fake Profile Themes. */
-		readonly THEME_SHEET_SUBTITLE: string;
+		/** Reviews */
+		readonly REVIEWS_TITLE: string;
+		/** This removes your review for everyone. You can write a new one later. */
+		readonly DELETE_REVIEW_BODY: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
@@ -150,7 +134,6 @@ declare module '@unbound-app/i18n' {
 		REQUEST_FAILED: { status: string | number };
 		REVIEWS_FOR: { name: string | number };
 		REVIEW_COUNT: { count: number };
-		SHARE_FEEDBACK: { name: string | number };
 		UPDATE_PLACEHOLDER: { name: string | number };
 		REVIEW_PLACEHOLDER: { name: string | number };
 	};

@@ -1,6 +1,7 @@
-import { Image, Pressable, Text, View } from 'react-native';
+import { Discord } from '@unbound-app/api/metro/components';
+import { assets, dialogs, toasts } from '@unbound-app/api';
+import { Image, Pressable, View } from 'react-native';
 import { messages } from '@unbound-app/i18n';
-import { toasts } from '@unbound-app/api';
 import { useState } from 'react';
 
 import {
@@ -10,65 +11,27 @@ import {
 	setReviewVote,
 	setUserBlocked,
 } from '~/lib/api';
-import { getReviewColors, type ReviewColors } from '~/lib/colors';
-import { ReviewType, UserType, type Review } from '~/lib/entities';
-import { UserStore } from '~/lib/modules';
-import ReviewActions from '~/components/review-actions';
+import { UserType, type Review } from '~/lib/entities';
+import useStyles from '~/components/review-item.style';
 import VoteControls from '~/components/vote-controls';
 import { getReviewPermissions } from '~/lib/permissions';
 import { COMMENT_PREVIEW_LENGTH } from '~/lib/constants';
 import { changeVote, type Vote } from '~/lib/votes';
-
-type BadgeProps = {
-	label: string;
-	color: string;
-	colors: ReviewColors;
-};
+import { UserStore } from '~/lib/modules';
 
 type ReviewItemProps = {
-	colors?: ReviewColors;
 	review: Review;
 	profileId: string;
 	hideTimestamps: boolean;
 	onChanged: () => void;
 };
 
-function Badge({ label, color, colors }: BadgeProps) {
-	return (
-		<View
-			style={{
-				backgroundColor: color,
-				borderRadius: 6,
-				paddingHorizontal: 7,
-				paddingVertical: 3,
-			}}
-		>
-			<Text
-				style={{
-					color: colors.accentText,
-					fontSize: 11,
-					fontWeight: '800',
-					letterSpacing: 0.4,
-				}}
-			>
-				{label}
-			</Text>
-		</View>
-	);
-}
-
-function ReviewItem({
-	review,
-	profileId,
-	hideTimestamps,
-	colors = getReviewColors(),
-	onChanged,
-}: ReviewItemProps) {
+function ReviewItem({ review, profileId, hideTimestamps, onChanged }: ReviewItemProps) {
+	const styles = useStyles();
 	const [expanded, setExpanded] = useState(false);
 	const [busy, setBusy] = useState(false);
 	const [vote, setVote] = useState<Vote>(review.userVote ?? null);
 	const [score, setScore] = useState(review.score ?? 0);
-	const [actionsVisible, setActionsVisible] = useState(false);
 
 	const myId = UserStore.getCurrentUser()?.id;
 	const account = getCurrentUser();
@@ -81,8 +44,7 @@ function ReviewItem({
 
 	const comment = review.comment ?? '';
 	const isLong = comment.length > COMMENT_PREVIEW_LENGTH;
-	const showTimestamp =
-		!hideTimestamps && review.type !== ReviewType.System && review.timestamp > 0;
+	const showTimestamp = !hideTimestamps && review.timestamp > 0;
 
 	async function run(action: () => Promise<void>) {
 		if (busy) return;
@@ -113,145 +75,86 @@ function ReviewItem({
 		});
 	}
 
-	function handleDelete() {
-		void run(async () => {
-			if (await deleteReview(review.id)) {
-				onChanged();
-			}
+	async function confirmDelete() {
+		const confirmed = await dialogs.confirm('DELETE_REVIEW', {
+			body: 'DELETE_REVIEW_BODY',
+			confirm: 'DELETE_REVIEW',
+			destructive: true,
 		});
-	}
 
-	function handleReport() {
-		void run(() => reportReview(review.id));
-	}
-
-	function handleToggleBlock() {
-		void run(async () => {
-			await setUserBlocked(author, !isAuthorBlocked);
-			onChanged();
-		});
+		if (confirmed && (await deleteReview(review.id))) onChanged();
 	}
 
 	function openActions() {
-		if (!can.delete && !can.report && !can.block) return;
+		const options = [
+			can.report && {
+				label: messages.REPORT,
+				icon: assets.getIdByName('FlagIcon'),
+				onPress: () => void run(() => reportReview(review.id)),
+			},
+			can.block && {
+				label: isAuthorBlocked ? messages.UNBLOCK_USER : messages.BLOCK_USER,
+				icon: assets.getIdByName('DenyIcon'),
+				onPress: () =>
+					void run(async () => {
+						await setUserBlocked(author, !isAuthorBlocked);
+						onChanged();
+					}),
+			},
+			can.delete && {
+				label: messages.DELETE_REVIEW,
+				icon: assets.getIdByName('TrashIcon'),
+				isDestructive: true,
+				onPress: () => void run(confirmDelete),
+			},
+		].filter(Boolean);
 
-		setActionsVisible(true);
+		if (!options.length) return;
+
+		Discord.showSimpleActionSheet({
+			key: 'reviewdb-review-actions',
+			header: { title: review.sender.username },
+			options,
+		});
 	}
 
 	return (
-		<View style={{ gap: 8 }}>
-			<Pressable
-				delayLongPress={350}
-				onLongPress={openActions}
-				style={({ pressed }) => ({
-					backgroundColor: colors.surface,
-					borderColor: colors.border,
-					borderRadius: 16,
-					borderWidth: 1,
-					opacity: pressed ? 0.82 : 1,
-					padding: 14,
-				})}
-			>
-				<View style={{ flexDirection: 'row', gap: 11 }}>
-					<Image
-						source={{ uri: review.sender.profilePhoto }}
-						style={{
-							backgroundColor: colors.surfaceAlt,
-							borderRadius: 22,
-							height: 44,
-							width: 44,
-						}}
-					/>
-					<View style={{ flex: 1, gap: 7 }}>
-						<View
-							style={{
-								alignItems: 'center',
-								flexDirection: 'row',
-								flexWrap: 'wrap',
-								gap: 6,
-							}}
-						>
-							<Text
-								style={{
-									color: colors.text,
-									flexShrink: 1,
-									fontSize: 16,
-									fontWeight: '800',
-								}}
-								numberOfLines={1}
-							>
-								{review.sender.username}
-							</Text>
-							{review.type === ReviewType.System ? (
-								<Badge
-									color={colors.accent}
-									colors={colors}
-									label={messages.SYSTEM}
-								/>
-							) : null}
-							{isAuthorBlocked ? (
-								<Badge
-									color={colors.danger}
-									colors={colors}
-									label={messages.BLOCKED}
-								/>
-							) : null}
-						</View>
-						{showTimestamp ? (
-							<Text style={{ color: colors.muted, fontSize: 12 }}>
-								{new Intl.DateTimeFormat().format(review.timestamp * 1000)}
-							</Text>
-						) : null}
-					</View>
-					{can.vote ? (
-						<VoteControls
-							vote={vote}
-							score={score}
-							busy={busy}
-							colors={colors}
-							onVote={handleVote}
-						/>
+		<Pressable delayLongPress={350} onLongPress={openActions} style={styles.row}>
+			<Image source={{ uri: review.sender.profilePhoto }} style={styles.avatar} />
+			<View style={styles.body}>
+				<View style={styles.header}>
+					<Discord.Text
+						variant='text-md/semibold'
+						color='text-strong'
+						numberOfLines={1}
+						style={styles.name}
+					>
+						{review.sender.username}
+					</Discord.Text>
+					{isAuthorBlocked ? <Discord.Badge type={{ text: messages.BLOCKED }} /> : null}
+					{showTimestamp ? (
+						<Discord.Text variant='text-xs/medium' color='text-muted'>
+							{new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(
+								review.timestamp * 1000,
+							)}
+						</Discord.Text>
 					) : null}
 				</View>
-
-				<View
-					style={{
-						backgroundColor: colors.border,
-						height: 1,
-						marginTop: 13,
-						opacity: 0.55,
-					}}
-				/>
-				<Text style={{ color: colors.text, fontSize: 15, lineHeight: 22, paddingTop: 12 }}>
-					{isLong && !expanded
-						? `${comment.slice(0, COMMENT_PREVIEW_LENGTH)}...`
-						: comment}
-				</Text>
+				<Discord.Text variant='text-md/normal' color='text-default'>
+					{isLong && !expanded ? `${comment.slice(0, COMMENT_PREVIEW_LENGTH)}…` : comment}
+				</Discord.Text>
 				{isLong ? (
-					<Pressable
-						hitSlop={6}
-						onPress={() => setExpanded((value) => !value)}
-						style={{ alignSelf: 'flex-start', marginTop: 6 }}
-					>
-						<Text style={{ color: colors.link, fontSize: 13, fontWeight: '700' }}>
+					<Pressable hitSlop={6} onPress={() => setExpanded((value) => !value)}>
+						<Discord.Text variant='text-sm/semibold' color='text-link'>
 							{expanded ? messages.SHOW_LESS : messages.READ_MORE}
-						</Text>
+						</Discord.Text>
 					</Pressable>
 				) : null}
-			</Pressable>
-
-			{actionsVisible ? (
-				<ReviewActions
-					can={can}
-					isAuthorBlocked={isAuthorBlocked}
-					colors={colors}
-					onReport={handleReport}
-					onToggleBlock={handleToggleBlock}
-					onDelete={handleDelete}
-					onClose={() => setActionsVisible(false)}
-				/>
-			) : null}
-		</View>
+				{can.vote ? (
+					<VoteControls vote={vote} score={score} busy={busy} onVote={handleVote} />
+				) : null}
+			</View>
+		</Pressable>
 	);
 }
 

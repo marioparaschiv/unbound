@@ -1,4 +1,4 @@
 {
-	"MUTUAL_GROUP_DMS": "{count, plural, one {# mutual group DM} other {# mutual group DMs}}",
-	"MUTUAL_GROUP_DMS_TITLE": "Mutual group DMs"
+	"MUTUAL_GROUP_DMS": "{count, plural, one {# Mutual Group} other {# Mutual Groups}}",
+	"MUTUAL_GROUP_DMS_TITLE": "Mutual Groups"
 }
