@@ -12,7 +12,9 @@ let since: number | undefined;
  * @returns The time addons must be listed after to count as new; three days ago on the first visit ever.
  */
 export function newListingsSince(now: number = Date.now()): number {
-	if (since !== undefined) return since;
+	if (since !== undefined) {
+		return since;
+	}
 
 	const last = getSetting('marketplace.lastVisit');
 

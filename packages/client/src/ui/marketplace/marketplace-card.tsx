@@ -3,8 +3,8 @@ import type { AddonKind } from '@unbound-app/types/addons';
 import { View } from 'react-native';
 import { memo } from 'react';
 
-import { isNewListing } from '~/marketplace/catalog';
 import { newListingsSince } from '~/marketplace/new-since';
+import { isNewListing } from '~/marketplace/catalog';
 import AddonAuthors from '~/ui/addons/addon-authors';
 import AddonTitle from '~/ui/components/addon-title';
 import AddonIcon from '~/ui/components/addon-icon';
