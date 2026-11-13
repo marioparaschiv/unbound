@@ -33,6 +33,23 @@ pub struct DeviceInfo {
 	pub client_version: String,
 }
 
+/// What this app's bridge tells controllers about itself (`BridgeInfo` in the protocol): the pairing
+/// code its Bonjour advertisement carries, and how a phone reaches it by hand when discovery fails.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BridgeInfo {
+	/// Four digits, also in the advertisement's TXT record, so the phone's prompt shows the same.
+	pub code: String,
+	/// `ip:port` on the advertised LAN interface, for typing into Unbound's Debugger Address.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub address: Option<String>,
+	/// Whether phones on the network can find this bridge.
+	pub advertising: bool,
+	/// Why it isn't advertising, such as a blocked mDNS socket.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub error: Option<String>,
+}
+
 #[derive(Debug)]
 pub struct EvalOutcome {
 	pub ok: bool,
@@ -73,6 +90,7 @@ pub(crate) enum BridgeFrame {
 		#[serde(default)]
 		code: Option<String>,
 	},
+	BridgeInfo(BridgeInfo),
 	/// One React DevTools frame; `protocol::parse` reads it from the frame's text.
 	ReactDevtools {},
 	ViewsResult {
@@ -333,6 +351,10 @@ where
 
 	None
 }
+
+pub(crate) mod launch;
+
+pub use launch::Launcher;
 
 /// Checks this client against `@unbound-app/debugger-protocol`'s DevTools contract fixture, which
 /// the protocol's own tests check against its TypeScript side.

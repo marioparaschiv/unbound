@@ -1,10 +1,9 @@
 //! The native object explorer: one object or class per page, with back and forward, its class chain
 //! as collapsible groups and each group's members by kind, loaded a page at a time and filtered on
 //! the device. The values of the members on screen are read once scrolling settles. A host view (the
-//! View Tree's details pane, the Classes page) owns an [`Explorer`] and draws it with
+//! View Tree's details pane) owns an [`Explorer`] and draws it with
 //! [`Explorer::render`]; the host's own cards go above the sections.
 
-pub mod classes;
 mod history;
 mod load;
 mod render;

@@ -5,8 +5,8 @@ use std::time::Duration;
 
 use gpui::{
 	App, Context, Entity, FocusHandle, Focusable, KeyBinding, MouseButton, MouseMoveEvent,
-	MouseUpEvent, ScrollHandle, ScrollStrategy, Task, UniformListScrollHandle, Window, actions,
-	div, prelude::*, px,
+	MouseUpEvent, ScrollHandle, ScrollStrategy, SharedString, Task, UniformListScrollHandle,
+	Window, actions, div, prelude::*, px,
 };
 use unbound_devtools_core::{Devtools, ElementId, Row, Status};
 
@@ -78,12 +78,13 @@ pub struct Workspace {
 	pub resizing: bool,
 	pub renderer: Option<String>,
 	pub banner: Option<String>,
-	pub copied: bool,
+	/// What the MCP button says for a moment after an action, such as `Copied`.
+	pub mcp_note: Option<SharedString>,
 	pub mcp_menu: bool,
 	pub highlighted: Option<ElementId>,
 	reinspect: Option<Task<()>>,
 	banner_reset: Option<Task<()>>,
-	copied_reset: Option<Task<()>>,
+	mcp_note_reset: Option<Task<()>>,
 	_watch: Task<()>,
 }
 
@@ -138,12 +139,12 @@ impl Workspace {
 			resizing: false,
 			renderer: None,
 			banner: None,
-			copied: false,
+			mcp_note: None,
 			mcp_menu: false,
 			highlighted: None,
 			reinspect: None,
 			banner_reset: None,
-			copied_reset: None,
+			mcp_note_reset: None,
 			_watch: watch,
 		};
 		this.revision_changed(cx);
@@ -349,13 +350,25 @@ impl Workspace {
 	/// Copies text and has the MCP button say so for a moment.
 	pub fn copy_text(&mut self, text: String, cx: &mut Context<Self>) {
 		cx.write_to_clipboard(gpui::ClipboardItem::new_string(text));
-		self.copied = true;
-		self.copied_reset = Some(cx.spawn(async move |this, cx| {
+		self.flash_mcp("Copied".into(), cx);
+	}
+
+	/// Has the MCP button say `note` until the next note.
+	pub fn hold_mcp(&mut self, note: SharedString, cx: &mut Context<Self>) {
+		self.mcp_note = Some(note);
+		self.mcp_note_reset = None;
+		cx.notify();
+	}
+
+	/// Has the MCP button say `note` for a moment.
+	pub fn flash_mcp(&mut self, note: SharedString, cx: &mut Context<Self>) {
+		self.mcp_note = Some(note);
+		self.mcp_note_reset = Some(cx.spawn(async move |this, cx| {
 			cx.background_executor()
-				.timer(Duration::from_millis(1200))
+				.timer(Duration::from_millis(1600))
 				.await;
 			this.update(cx, |this, cx| {
-				this.copied = false;
+				this.mcp_note = None;
 				cx.notify();
 			})
 			.ok();

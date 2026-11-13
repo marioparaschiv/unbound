@@ -1,3 +1,4 @@
+import { SERVE_BRIDGE_COMMAND } from '@unbound-app/debugger-protocol';
 import { cli } from 'cleye';
 
 import {
@@ -9,7 +10,6 @@ import {
 	type CommandGroup,
 } from '~/registry';
 import { renderMenu, type Menu, type MenuEntry } from '~/lib/menu';
-import { SERVE_BRIDGE_COMMAND } from '~/lib/bridge-process';
 import { mcpCommand, mcpMenuEntry } from '~/commands/mcp';
 import { toCleyeCommand } from '~/adapters/cleye';
 import { buildCatalog } from '~/lib/catalog';

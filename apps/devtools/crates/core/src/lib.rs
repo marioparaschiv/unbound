@@ -8,6 +8,7 @@
 
 mod backend;
 pub mod bridge;
+pub mod bridge_server;
 mod connect;
 mod device_address;
 pub mod explorer;
@@ -21,11 +22,10 @@ pub mod protocol;
 pub mod query;
 mod session;
 pub mod store;
-pub mod ubd;
 pub mod value;
 pub mod views;
 
-pub use bridge::DeviceInfo;
+pub use bridge::{BridgeInfo, DeviceInfo};
 pub use device_address::DeviceAddress;
 pub use explorer::{
 	ClassesPage, EXPLORER_CLASSES_PAGE_SIZE, EXPLORER_MEMBERS_PAGE_SIZE, EXPLORER_VALUES_LIMIT,

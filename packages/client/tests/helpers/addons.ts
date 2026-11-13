@@ -72,7 +72,7 @@ mock.module('~/storage/api', () => {
 		},
 		getBucket,
 		useBucket,
-		// Every test Bucket shares one flat store, so none is reported by name.
+		// No Bucket holds a renamed addon's settings, so `renames.ts` has nothing to move.
 		snapshot: () => ({}),
 	};
 });

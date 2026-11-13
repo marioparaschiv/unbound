@@ -92,6 +92,8 @@ type BuildOutput = {
 	digests?: Record<string, string>;
 	/** More files of the build commit, relative to the plugin's directory. */
 	files?: FixtureFiles;
+	/** More manifest fields, such as `replaces`. */
+	manifest?: Record<string, unknown>;
 };
 
 function sha512(text: string): string {
@@ -111,6 +113,7 @@ function buildTag(
 		'unbound.config.json': JSON.stringify({ addons: ['plugins/*'] }),
 		[`${path}/manifest.json`]: JSON.stringify({
 			...manifest(id, version),
+			...output.manifest,
 			main: 'src/index.ts',
 		}),
 		[`${path}/package.json`]: JSON.stringify({ scripts: { build: 'bun build' } }),
@@ -141,6 +144,7 @@ function buildTag(
 				? {
 						[`${path}/manifest.json`]: JSON.stringify({
 							...manifest(id, version),
+							...output.manifest,
 							main: 'src/index.ts',
 							bytecode: digests,
 						}),
@@ -387,6 +391,32 @@ describe('POST /api/v1/first-party/publish', () => {
 			(await liveSha256(reviewed.ctx, 'fp.same', '1.0.0')) ?? '',
 		);
 		expect(await liveSha256(ctx, 'fp.same', '1.0.0')).toBe(trustedResult.sha256);
+	});
+});
+
+describe('renamed first-party addons', () => {
+	test('publishing the new id delists the first-party ids it replaces, and no other repository', async () => {
+		const owner = await signUp(ctx);
+
+		await publish(ciKey, buildTag(fixture, 'fp.old-name'));
+		await seedApprovedAddon(ctx, owner.userId, manifest('fp.foreign'));
+		await ctx.db
+			.update(addon)
+			.set({ repository: THIRD_PARTY })
+			.where(eq(addon.id, 'fp.foreign'));
+		await publish(
+			ciKey,
+			buildTag(fixture, 'fp.new-name', '1.0.0', FIRST_PARTY, {
+				manifest: { replaces: ['fp.old-name', 'fp.foreign'] },
+			}),
+		);
+
+		const delisted = async (id: string) =>
+			(await ctx.db.query.addon.findFirst({ where: { id } }))?.delistedAt !== null;
+
+		expect(await delisted('fp.old-name')).toBe(true);
+		expect(await delisted('fp.foreign')).toBe(false);
+		expect(await delisted('fp.new-name')).toBe(false);
 	});
 });
 

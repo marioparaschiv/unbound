@@ -37,6 +37,12 @@ pub fn copied_state(id: &str, window: &mut Window, cx: &mut App) -> Entity<Copie
 /// Both glyphs on one spot, each springing between shown (1) and gone (0), so a swap animates the
 /// leaving glyph out as the other comes in, in either direction.
 pub fn copy_glyphs(id: &str, size: f32, color: Token, showing: bool) -> Div {
+	tick_glyphs(id, assets::COPY, size, color, showing)
+}
+
+/// [`copy_glyphs`] resting on `path` instead of the copy glyph, for a control that does something
+/// other than copy.
+pub fn tick_glyphs(id: &str, path: &'static str, size: f32, color: Token, showing: bool) -> Div {
 	let glyph = |part: &str, path: &'static str, color, shown: bool, rest: f32| {
 		div()
 			.absolute()
@@ -61,7 +67,7 @@ pub fn copy_glyphs(id: &str, size: f32, color: Token, showing: bool) -> Div {
 		.flex_none()
 		.relative()
 		.size(px(size))
-		.child(glyph("copy", assets::COPY, color, !showing, 1.))
+		.child(glyph("copy", path, color, !showing, 1.))
 		.child(glyph(
 			"tick",
 			"icons/check.svg",
@@ -80,28 +86,34 @@ pub fn copy_on_click(
 ) -> impl Fn(&ClickEvent, &mut Window, &mut App) + 'static {
 	move |_, _, cx| {
 		cx.write_to_clipboard(ClipboardItem::new_string(text.to_string()));
-		let generation = state.update(cx, |copied, _| {
-			copied.generation += 1;
-			copied.showing = true;
-			copied.generation
-		});
-		cx.notify(view);
-		let state = state.clone();
-		cx.spawn(async move |cx| {
-			cx.background_executor().timer(COPIED_FOR).await;
-			cx.update(|cx| {
-				let reverted = state.update(cx, |copied, _| {
-					let current = copied.generation == generation;
-					if current {
-						copied.showing = false;
-					}
-					current
-				});
-				if reverted {
-					cx.notify(view);
-				}
-			});
-		})
-		.detach();
+		show_tick(&state, view, cx);
 	}
+}
+
+/// Shows the tick and swaps back after [`COPIED_FOR`], for a control that copies or finishes some
+/// other way. `view` is the view that draws the control.
+pub fn show_tick(state: &Entity<Copied>, view: EntityId, cx: &mut App) {
+	let generation = state.update(cx, |copied, _| {
+		copied.generation += 1;
+		copied.showing = true;
+		copied.generation
+	});
+	cx.notify(view);
+	let state = state.clone();
+	cx.spawn(async move |cx| {
+		cx.background_executor().timer(COPIED_FOR).await;
+		cx.update(|cx| {
+			let reverted = state.update(cx, |copied, _| {
+				let current = copied.generation == generation;
+				if current {
+					copied.showing = false;
+				}
+				current
+			});
+			if reverted {
+				cx.notify(view);
+			}
+		});
+	})
+	.detach();
 }

@@ -9,6 +9,7 @@ import { terminal, stripEscapeSequences } from 'terminal-kit';
 import os from 'node:os';
 
 import { abortCurrentReplInput, setupReplListeners, takeReplInput } from './repl';
+import { createIdleExit } from './idle-exit';
 import { formatLog } from './format-log';
 import { printBanner } from './banner';
 import * as session from './session';
@@ -196,6 +197,17 @@ export function setupWebSocket() {
 		system('pink', label);
 		takeReplInput();
 	});
+
+	// A bridge spawned in the background exits once every controller has left, so closing the last
+	// tool leaves nothing running. A terminal REPL is a controller of its own, so it never idles.
+	if (argv.flags.idleTimeout > 0 && !process.stdin.isTTY) {
+		const onControllerCount = createIdleExit(argv.flags.idleTimeout * 1000, () => {
+			system('gray', `No controller for ${argv.flags.idleTimeout}s, exiting`);
+			process.exit(0);
+		});
+
+		session.onController((_connected, count) => onControllerCount(count));
+	}
 
 	const localAddress = getLocalAddress();
 

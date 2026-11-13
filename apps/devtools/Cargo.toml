@@ -39,6 +39,10 @@ jaq-std = "3.0"
 jaq-json = "2.0"
 dirs = "5"
 if-addrs = "0.15"
+mdns-sd = { version = "0.21", default-features = false, features = ["async"] }
+gethostname = "1"
+base64 = "0.22"
+percent-encoding = "2"
 regex = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

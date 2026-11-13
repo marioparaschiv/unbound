@@ -3,6 +3,7 @@ use unbound_devtools_core::{BridgeState, ConnectionState};
 
 use crate::app::Workspace;
 use crate::empty_state::EmptyState;
+use crate::pairing::pairing;
 use crate::theme;
 
 /// How to get Discord talking to this app, named as Unbound's settings name them.
@@ -33,7 +34,7 @@ impl Workspace {
 				"icons/unplug.svg",
 				theme::ERROR,
 				"The Debugger Isn't Running",
-				"Start it with bunx @unbound-app/debugger. This app connects as soon as it's up.".into(),
+				"This app starts the bridge on this machine itself. On another machine, run unbound-devtools serve-bridge there; this app connects as soon as it's up.".into(),
 			),
 			ConnectionState::Waiting => (
 				"icons/smartphone.svg",
@@ -48,6 +49,17 @@ impl Workspace {
 				"A device is connected. Its React tree appears here as soon as it renders.".into(),
 			),
 		};
-		EmptyState::new(icon, title).tone(tone).body(body)
+		// Only while no device is attached: the code is for pairing one.
+		let info = self
+			.status
+			.link
+			.as_ref()
+			.filter(|link| matches!(link.state, BridgeState::NoDevice))
+			.and_then(|link| link.bridge_info.as_ref());
+
+		EmptyState::new(icon, title)
+			.tone(tone)
+			.body(body)
+			.children(info.map(pairing))
 	}
 }

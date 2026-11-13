@@ -20,6 +20,10 @@ const (
 	unboundAlternateIcon = "UnboundIcon"
 	unboundURLScheme     = "unbound"
 	unboundURLName       = "app.unbound.rip"
+	// The debugger bridge's Bonjour type; iOS refuses to browse a type the app does not declare.
+	unboundBonjourService = "_unbound-bridge._tcp"
+	// Shown in iOS's Local Network prompt, unless Discord declares its own text.
+	unboundLocalNetworkUsage = "Unbound's debugger finds and connects to the debugger bridge on your computer over the local network."
 )
 
 func cyanInputs(ipa, dir string) ([]string, []string, error) {
@@ -77,8 +81,12 @@ func mergePlist(data []byte) ([]byte, error) {
 	setAlternateIcon(info, "CFBundleIcons", "UnboundIcon60x60")
 	setAlternateIcon(info, "CFBundleIcons~ipad", "UnboundIcon60x60", "UnboundIcon76x76")
 	addURLScheme(info)
+	addBonjourService(info)
+	if info.get("NSLocalNetworkUsageDescription") == nil {
+		info.set("NSLocalNetworkUsageDescription", plistText(unboundLocalNetworkUsage))
+	}
 	merge := newPlistDict()
-	for _, key := range []string{"CFBundleIcons", "CFBundleIcons~ipad", "CFBundleURLTypes"} {
+	for _, key := range []string{"CFBundleIcons", "CFBundleIcons~ipad", "CFBundleURLTypes", "NSBonjourServices", "NSLocalNetworkUsageDescription"} {
 		merge.set(key, info.get(key))
 	}
 	return writePlist(merge)
@@ -149,6 +157,21 @@ func addURLScheme(root *plistNode) {
 	scheme.set("CFBundleURLName", plistText(unboundURLName))
 	scheme.set("CFBundleURLSchemes", plistStrings(unboundURLScheme))
 	types.values = append(types.values, scheme)
+}
+
+// Appends the bridge's type to Discord's own, since cyan replaces the array whole.
+func addBonjourService(root *plistNode) {
+	services := root.get("NSBonjourServices")
+	if services == nil || services.kind != plistArrayKind {
+		services = &plistNode{kind: plistArrayKind}
+		root.set("NSBonjourServices", services)
+	}
+	for _, service := range services.values {
+		if service.text == unboundBonjourService {
+			return
+		}
+	}
+	services.values = append(services.values, plistText(unboundBonjourService))
 }
 
 func (node *plistNode) valuesOrNil() []*plistNode {

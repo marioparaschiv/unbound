@@ -3,6 +3,7 @@ import { patcher } from '@unbound-app/api';
 import { interceptReceivedMessages } from '~/flux/interceptors';
 import { patchEmojiEditing, patchEmojiSending, patchEmojiUnlocks } from '~/patches/emojis';
 import { patchStickerSending, patchStickerUnlocks } from '~/patches/stickers';
+import { patchStreamQuality } from '~/patches/streaming';
 
 export function start() {
 	patchEmojiUnlocks();
@@ -11,6 +12,7 @@ export function start() {
 	patchStickerUnlocks();
 	patchStickerSending();
 	interceptReceivedMessages();
+	patchStreamQuality();
 }
 
 export function stop() {

@@ -17,10 +17,10 @@ use unbound_devtools_core::{
 };
 
 use crate::app::on_runtime;
-use crate::commands::nav;
 use crate::empty::SETUP_STEPS;
 use crate::empty_state::EmptyState;
 use crate::explorer::{Entry, Explorer, ExplorerHost};
+use crate::nav;
 use crate::theme;
 use crate::widgets::{Raised, footer_bar, page_header, page_header_end, raised_button, tooltip};
 

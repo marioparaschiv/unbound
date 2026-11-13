@@ -39,7 +39,7 @@ export const NOT_CONNECTED: CommandOutput = failure(
 	"No device is connected to the debugger. Launch the app so its debugger dials the bridge, then retry. The standard build has no debugger; turn on Developer mode in Unbound's settings.",
 	{
 		message: 'No device is connected to the debugger.',
-		hint: "Start the bridge with ubd debug start and launch the app so its debugger dials it, then retry. The standard build has no debugger; turn on Developer mode in Unbound's settings.",
+		hint: "Launch the app so its debugger dials the bridge, which starts on demand, then retry. Check debugger.address points at this machine. The standard build has no debugger; turn on Developer mode in Unbound's settings.",
 	},
 );
 

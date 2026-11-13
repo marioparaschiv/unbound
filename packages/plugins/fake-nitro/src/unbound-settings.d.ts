@@ -164,6 +164,12 @@ declare module '@unbound-app/settings' {
 		 */
 		receiveStickers: boolean;
 		/**
+		 * Unlock stream quality
+		 *
+		 * Stream in Nitro's resolutions and frame rates, and upload videos in high quality.
+		 */
+		streamQuality: boolean;
+		/**
 		 * Hide links behind names
 		 *
 		 * Sends [name](link) instead of the bare link.
@@ -206,6 +212,12 @@ declare module '@unbound-app/settings' {
 		 */
 		"receiveStickers": boolean;
 		/**
+		 * Unlock stream quality
+		 *
+		 * Stream in Nitro's resolutions and frame rates, and upload videos in high quality.
+		 */
+		"streamQuality": boolean;
+		/**
 		 * Hide links behind names
 		 *
 		 * Sends [name](link) instead of the bare link.
@@ -222,7 +234,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "emojis" | "stickers" | "receiveEmojis" | "receiveStickers" | "hyperlinks";
+	export type BooleanSettingKey = "emojis" | "stickers" | "receiveEmojis" | "receiveStickers" | "streamQuality" | "hyperlinks";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

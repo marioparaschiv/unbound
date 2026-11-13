@@ -13,6 +13,8 @@ const DEFAULTS = {
 	'crash-reports': false,
 	'debugger.enabled': false,
 	'debugger.address': '',
+	/** Computers whose advertised bridge the device connects to without asking. */
+	'debugger.trusted': [] as string[],
 	'error-boundary.enabled': true,
 	'toasts.enabled': true,
 	'toasts.animations': true,
