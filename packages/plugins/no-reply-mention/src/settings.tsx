@@ -1,9 +1,8 @@
+import { formatIdList, parseIdList } from '@unbound-plugins/shared/entities/id-list';
 import EntityList from '@unbound-plugins/shared/entities/entity-list';
 import { settings, useSetting } from '@unbound-app/settings';
 import { messages } from '@unbound-app/i18n';
 import { ui } from '@unbound-app/api';
-
-import { formatUserList, parseUserList } from '~/lib/user-list';
 
 function SettingsPanel() {
 	const userList = useSetting('userList');
@@ -15,7 +14,7 @@ function SettingsPanel() {
 				kind='user'
 				title={messages.EXCEPTIONS}
 				description={messages.ADD_USER_ID_SUBTITLE}
-				value={parseUserList(userList)}
+				value={parseIdList(userList)}
 				labels={{
 					add: messages.ADD_USER,
 					title: messages.ADD_USER,
@@ -25,7 +24,7 @@ function SettingsPanel() {
 					remove: messages.REMOVE_USER,
 				}}
 				onChange={(ids) => {
-					settings.userList = formatUserList(ids);
+					settings.userList = formatIdList(ids);
 				}}
 			/>
 			<ui.Section>

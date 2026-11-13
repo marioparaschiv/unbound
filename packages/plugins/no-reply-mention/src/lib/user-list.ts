@@ -1,16 +1,4 @@
-/**
- * @description Reads the stored exception list, which separates IDs with commas, spaces or newlines.
- * @param value The stored `userList` setting.
- * @returns The unique user IDs, in stored order, or none when the setting is not a string.
- */
-export function parseUserList(
-	// UNKNOWN: the store returns whatever was saved under `userList`, which may not be a string.
-	value: unknown,
-): string[] {
-	if (typeof value !== 'string') return [];
-
-	return [...new Set(value.split(/[\s,]+/).filter(Boolean))];
-}
+import { parseIdList } from '@unbound-plugins/shared/entities/id-list';
 
 /**
  * @description Decides whether a new reply mentions the author of the message it replies to.
@@ -24,16 +12,7 @@ export function shouldMention(
 	userList: string,
 	pingListed: boolean,
 ): boolean {
-	return pingListed && authorId !== undefined && parseUserList(userList).includes(authorId);
+	return pingListed && authorId !== undefined && parseIdList(userList).includes(authorId);
 }
 
-/**
- * @description Writes user IDs in the stored exception list's format.
- * @param userIds The IDs, in order.
- * @returns The setting value, one unique ID per line.
- */
-export function formatUserList(userIds: string[]): string {
-	return [...new Set(userIds.map((id) => id.trim()).filter(Boolean))].join('\n');
-}
-
-export default { parseUserList, shouldMention, formatUserList };
+export default shouldMention;

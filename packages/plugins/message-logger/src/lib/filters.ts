@@ -1,3 +1,5 @@
+import { parseIdList } from '@unbound-plugins/shared/entities/id-list';
+
 import { EPHEMERAL_FLAG } from '~/lib/constants';
 
 export type FilterSettings = {
@@ -26,22 +28,8 @@ export type FilterContext = {
 	channel: FilteredChannel | undefined;
 };
 
-/**
- * @description Reads a list of IDs typed with commas, spaces or new lines between them.
- * @param value The typed list.
- * @returns The IDs.
- */
-export function idList(value: string): Set<string> {
-	return new Set(value.split(/[\s,]+/).filter(Boolean));
-}
-
-/**
- * @description Writes IDs in the format {@link idList} reads, as the ignore lists store them.
- * @param ids The IDs, in order.
- * @returns The unique IDs, separated by commas.
- */
-export function formatIdList(ids: string[]): string {
-	return [...new Set(ids)].join(', ');
+function idList(value: string): Set<string> {
+	return new Set(parseIdList(value));
 }
 
 /**

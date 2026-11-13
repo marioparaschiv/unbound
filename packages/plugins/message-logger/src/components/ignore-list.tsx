@@ -1,10 +1,8 @@
+import { formatIdList, parseIdList } from '@unbound-plugins/shared/entities/id-list';
 import EntityList from '@unbound-plugins/shared/entities/entity-list';
 import type { EntityKind } from '@unbound-plugins/shared/entities/entity';
 import { settings, useSetting } from '@unbound-app/settings';
 import { messages } from '@unbound-app/i18n';
-import { ui } from '@unbound-app/api';
-
-import { formatIdList, idList } from '~/lib/filters';
 
 /** A setting that stores ignored ids. */
 export type IgnoreListKey = 'ignoreUsers' | 'ignoreChannels' | 'ignoreGuilds';
@@ -58,35 +56,33 @@ export const IGNORE_LISTS: Record<IgnoreListKey, IgnoreList> = {
 };
 
 /**
- * @description The sub-page of one ignore list: the ignored users, channels or servers, an add row and a remove button each.
+ * @description One ignore list: the ignored users, channels or servers, an add row and a remove button each.
  * @param props The setting that stores the list.
- * @returns The page.
+ * @returns The list.
  */
-function IgnoreListPage({ setting }: { setting: IgnoreListKey }) {
+function IgnoreList({ setting }: { setting: IgnoreListKey }) {
 	const { kind, texts } = IGNORE_LISTS[setting];
 	const { description, add, search, unknown } = texts();
 	const value = useSetting(setting);
 
 	return (
-		<ui.Page>
-			<EntityList
-				kind={kind}
-				description={description}
-				value={[...idList(value)]}
-				labels={{
-					add,
-					title: add,
-					search,
-					noResults: messages.NO_RESULTS,
-					unknown,
-					remove: messages.REMOVE,
-				}}
-				onChange={(ids) => {
-					settings[setting] = formatIdList(ids);
-				}}
-			/>
-		</ui.Page>
+		<EntityList
+			kind={kind}
+			description={description}
+			value={parseIdList(value)}
+			labels={{
+				add,
+				title: add,
+				search,
+				noResults: messages.NO_RESULTS,
+				unknown,
+				remove: messages.REMOVE,
+			}}
+			onChange={(ids) => {
+				settings[setting] = formatIdList(ids);
+			}}
+		/>
 	);
 }
 
-export default IgnoreListPage;
+export default IgnoreList;

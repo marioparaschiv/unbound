@@ -1,11 +1,10 @@
-import { openPage } from '@unbound-plugins/shared/navigation/open-page';
+import EntityListRow from '@unbound-plugins/shared/entities/entity-list-row';
+import { parseIdList } from '@unbound-plugins/shared/entities/id-list';
 import { resetSettings, settings, useSetting } from '@unbound-app/settings';
-import { Discord } from '@unbound-app/api/metro/components';
 import { messages } from '@unbound-app/i18n';
 import { ui } from '@unbound-app/api';
 
-import IgnoreListPage, { IGNORE_LISTS, type IgnoreListKey } from '~/components/ignore-list-page';
-import { idList } from '~/lib/filters';
+import IgnoreList, { IGNORE_LISTS, type IgnoreListKey } from '~/components/ignore-list';
 
 type SwitchKey =
 	| 'redText'
@@ -42,16 +41,14 @@ function SwitchRow({
 }
 
 function IgnoreListRow({ setting }: { setting: IgnoreListKey }) {
-	const navigation = Discord.useNavigation();
-	const count = idList(useSetting(setting)).size;
+	const count = parseIdList(useSetting(setting)).length;
 	const { title } = IGNORE_LISTS[setting].texts();
 
 	return (
-		<ui.Row
+		<EntityListRow
 			label={title}
-			trailing={<Discord.TableRow.TrailingText text={String(count)} />}
-			arrow
-			onPress={() => openPage(navigation, title, () => <IgnoreListPage setting={setting} />)}
+			count={count}
+			renderList={() => <IgnoreList setting={setting} />}
 		/>
 	);
 }
