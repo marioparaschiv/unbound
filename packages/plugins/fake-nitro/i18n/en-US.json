@@ -1,0 +1,10 @@
+{
+	"EMOJIS": "Fake emojis",
+	"EMOJIS_SUBTITLE": "Send emojis you cannot use as links to their image.",
+	"EMOJI_SIZE": "Emoji size",
+	"STICKERS": "Fake stickers",
+	"STICKERS_SUBTITLE": "Send stickers you cannot use as links to their image.",
+	"STICKER_SIZE": "Sticker size",
+	"HYPERLINKS": "Hide links behind names",
+	"HYPERLINKS_SUBTITLE": "Sends [name](link) instead of the bare link."
+}
