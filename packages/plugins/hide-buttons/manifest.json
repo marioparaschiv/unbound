@@ -1,7 +1,7 @@
 {
 	"id": "unbound.hide-buttons",
 	"name": "Hide Buttons",
-	"description": "Hides the gift, voice message and call buttons you never use.",
+	"description": "Hides the gift, voice message, call, Quests, Shop and Server Boosts buttons you never use.",
 	"authors": [
 		{
 			"name": "ssense",
@@ -12,7 +12,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"unbound": {
 		"min": "3.0.0"
 	},

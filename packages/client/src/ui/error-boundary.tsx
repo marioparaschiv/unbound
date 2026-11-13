@@ -56,12 +56,15 @@ function ErrorFallback({
 
 	return (
 		<ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-			<SafeArea.SafeAreaPaddingView top bottom>
-				<Discord.Stack spacing={12}>
+			<SafeArea.SafeAreaPaddingView top bottom style={styles.fill}>
+				<Discord.Stack spacing={12} style={styles.fill}>
 					<Animated.View entering={FadeInDown.duration(320)}>
 						<ErrorHeader />
 					</Animated.View>
-					<Animated.View entering={FadeInDown.delay(60).duration(320)}>
+					<Animated.View
+						entering={FadeInDown.delay(60).duration(320)}
+						style={styles.fill}
+					>
 						<ErrorDetails error={error} componentStack={componentStack} />
 					</Animated.View>
 					<Animated.View entering={FadeInDown.delay(120).duration(320)}>

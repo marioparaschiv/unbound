@@ -17,4 +17,11 @@ export default defineSettings({
 		title: 'VIDEO_CALL',
 		subtitle: 'VIDEO_CALL_SUBTITLE',
 	}),
+	quests: setting.boolean({ default: false, title: 'QUESTS', subtitle: 'QUESTS_SUBTITLE' }),
+	shop: setting.boolean({ default: false, title: 'SHOP', subtitle: 'SHOP_SUBTITLE' }),
+	serverBoosts: setting.boolean({
+		default: false,
+		title: 'SERVER_BOOSTS',
+		subtitle: 'SERVER_BOOSTS_SUBTITLE',
+	}),
 });
