@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1] - 2026-11-13
+
+### Fixed
+
+- The pill keeps its text readable under themes: when a theme makes the pill's text and background too close, the text turns black or white.
+
 ## [1.1.0] - 2026-11-13
 
 ### Added
