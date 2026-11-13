@@ -3,7 +3,7 @@ import type {
 	PublishFirstPartyRequest,
 	PublishFirstPartyResponse,
 } from '@unbound-app/contracts/publish';
-import { sql } from 'drizzle-orm';
+import { and, inArray, isNull, sql } from 'drizzle-orm';
 
 import { isSameRepository, publish } from '~/lib/publish-version';
 import { readAddonSource } from '~/lib/addon-source';
@@ -13,6 +13,8 @@ import { VERSION_SOURCE } from '~/lib/artifacts';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { ApiError } from '~/lib/api/errors';
+import { addon } from '~/db/schema';
+import { writeDelisted } from '~/lib/addons';
 
 /** CI tags each build commit under this prefix; no other branch or tag of the repository is first-party. */
 const BUILD_TAG_PREFIX = 'plugin-builds/';
@@ -33,9 +35,42 @@ function requireFirstPartyRepository(ctx: AppContext, caller: Caller): string {
 	return repository;
 }
 
+// A renamed first-party addon names its old ids in `replaces`; delisting them moves installs over and off the marketplace.
+async function retireReplaced(
+	ctx: AppContext,
+	caller: Caller,
+	repository: string,
+	addonId: string,
+	replaces: readonly string[],
+): Promise<void> {
+	const ids = replaces.filter((id) => id !== addonId);
+
+	if (ids.length === 0) return;
+
+	const at = ctx.now();
+
+	await ctx.db.transaction(async (tx) => {
+		const rows = await tx
+			.select()
+			.from(addon)
+			.where(
+				and(
+					inArray(addon.id, ids),
+					isNull(addon.delistedAt),
+					sql`lower(${addon.repository}) = lower(${repository}::text)`,
+				),
+			);
+
+		for (const row of rows) {
+			await writeDelisted(tx, row, true, { actorId: caller.user.id, at });
+		}
+	});
+}
+
 /**
  * @description Publishes a first-party addon from a build commit of `FIRST_PARTY_REPOSITORY` without
- * review, read from GitHub exactly as a submission is. Only an API key with `firstParty: ['publish']` may.
+ * review, read from GitHub exactly as a submission is, and delists the first-party addons its manifest
+ * `replaces`. Only an API key with `firstParty: ['publish']` may.
  * @param ctx The application context.
  * @param caller The caller; must use an API key.
  * @param request The repository, addon path, build tag and its commit.
@@ -75,6 +110,8 @@ export async function publishFirstParty(
 		caller,
 		repository,
 	});
+
+	await retireReplaced(ctx, caller, repository, manifest.id, manifest.replaces ?? []);
 
 	return { status, addonId: manifest.id, version: manifest.version, sha256 };
 }
