@@ -1,6 +1,6 @@
 # Plugins
 
-78 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+79 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -13,6 +13,7 @@
 - <img src="../../assets/plugins/readme-icons/user-square-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Avatar Radius](https://unbound.rip/addons/unbound.avatar-radius): Rounds avatars to a corner radius you choose instead of circles.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better GIF Alt Text](https://unbound.rip/addons/unbound.better-gif-alt-text): Names GIFs in chat for screen readers by their tags or file name, instead of just 'GIF'.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better GIF Picker](https://unbound.rip/addons/unbound.better-gif-picker): Opens the GIF picker on your favourite GIFs instead of the category grid.
+- <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better Search](https://unbound.rip/addons/unbound.better-search): Adds search filters Discord supports but doesn't offer, such as embedType:, repliedToUserId: and includeNsfw:.
 - <img src="../../assets/plugins/readme-icons/laptop-phone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better Sessions](https://unbound.rip/addons/unbound.better-sessions): Marks new sessions, shows exactly when each was last used and lets you name them, in Settings > Devices.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Blur NSFW](https://unbound.rip/addons/unbound.blur-nsfw): Blurs attachments and embedded media in age-restricted channels until you tap them.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Channel Typing Indicators](https://unbound.rip/addons/unbound.channel-typing-indicators): Shows animated typing dots and avatars beside channels where people are typing.

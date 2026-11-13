@@ -1,0 +1,21 @@
+{
+	"id": "unbound.better-search",
+	"name": "Better Search",
+	"description": "Adds search filters Discord supports but doesn't offer, such as embedType:, repliedToUserId: and includeNsfw:.",
+	"authors": [
+		{
+			"name": "theo",
+			"id": "1081551899397992509"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TextIcon",
+	"main": "index.tsx"
+}
