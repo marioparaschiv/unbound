@@ -1,16 +1,28 @@
 import { metro, startPlugin } from '@unbound-app/api/testing';
-import type { ReactNode } from 'react';
-import { Text } from 'react-native';
+import { Text, View } from 'react-native';
 
-export type CardProps = { title?: ReactNode; children?: ReactNode };
+export type AboutCardProps = { userId?: string };
 
-/** Registers a new profile card the plugin patches at start, as Discord has it, then starts the plugin. Returns the card. */
+function Bio() {
+	return <Text>bio</Text>;
+}
+
+function PolicyLinks() {
+	return <Text>policy</Text>;
+}
+
+/** Registers Discord's About card the plugin patches at start, with a bio and policy links, then starts the plugin. Returns the card. */
 export async function startReviewdb() {
 	const card = {
-		default: ({ title, children }: CardProps) => <Text>{title ?? children}</Text>,
+		default: (_: AboutCardProps) => (
+			<View>
+				<Bio />
+				<PolicyLinks />
+			</View>
+		),
 	};
 
-	metro.register(card, 'modules/user_profile/native/UserProfileCard.tsx');
+	metro.register(card, 'modules/user_profile/native/UserProfileAboutMeCard.tsx');
 	await startPlugin();
 
 	return card;

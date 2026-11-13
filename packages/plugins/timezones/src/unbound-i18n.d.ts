@@ -23,10 +23,6 @@ declare module '@unbound-app/i18n' {
 		readonly USE_DATABASE: string;
 		/** Looks up the timezone people shared at timezone.creations.works. A timezone you set for someone always wins. */
 		readonly USE_DATABASE_SUBTITLE: string;
-		/** Local time {time} */
-		readonly LOCAL_TIME: string;
-		/** Local time {time} · {zone} */
-		readonly LOCAL_TIME_ZONE: string;
 		/** Set timezone */
 		readonly SET_TIMEZONE: string;
 		/** An IANA timezone, such as Europe/Berlin or America/New_York. */
@@ -45,12 +41,12 @@ declare module '@unbound-app/i18n' {
 		readonly CANCEL: string;
 		/** their time {time} */
 		readonly THEIR_TIME: string;
+		/** Local Time */
+		readonly LOCAL_TIME_TITLE: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
 	export type FormatVars = {
-		LOCAL_TIME: { time: string | number };
-		LOCAL_TIME_ZONE: { time: string | number; zone: string | number };
 		INVALID_TIMEZONE: { zone: string | number };
 		THEIR_TIME: { time: string | number };
 	};

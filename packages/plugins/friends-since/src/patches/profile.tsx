@@ -1,66 +1,38 @@
-import { flux, metro, patcher } from '@unbound-app/api';
-import { Discord } from '@unbound-app/api/metro/components';
-import { format } from '@unbound-app/i18n';
-import { cloneElement, type ReactElement } from 'react';
+import { patchAboutCard } from '@unbound-plugins/shared/profile/patch-about-card';
+import { AboutSection } from '@unbound-plugins/shared/profile/about-section';
+import { messages } from '@unbound-app/i18n';
+import { flux } from '@unbound-app/api';
 
 import { friendsSinceDate } from '~/lib/since';
-
-type PrimaryInfoProps = {
-	user?: { id?: string; bot?: boolean };
-};
 
 type RelationshipStore = {
 	isFriend(id: string): boolean;
 	getSince(id: string): string | undefined;
 };
 
-function FriendsSince({ date }: { date: string }) {
-	return (
-		<Discord.Text variant='text-sm/medium' color='text-muted' style={{ marginTop: 8 }}>
-			{format('FRIENDS_SINCE', { date })}
-		</Discord.Text>
-	);
-}
+const DISCORD_SECTION = 'FriendsSinceDate';
 
 /**
- * @description Shows the date a friendship began under a friend's name on their profile, from `RelationshipStore.getSince`.
+ * @description Adds a Friends Since section to a friend's About card, from `RelationshipStore.getSince`, unless Discord already draws its own.
  */
 export function patchProfile(): void {
-	const UserProfilePrimaryInfo = metro.findByFilePath(
-		'modules/user_profile/native/UserProfilePrimaryInfo.tsx',
-	);
 	const Relationships = flux.getStore('Relationship') as unknown as RelationshipStore;
+	const found = patchAboutCard({
+		key: 'friends-since',
+		render({ userId, sections }) {
+			if (sections.includes(DISCORD_SECTION) || !Relationships.isFriend(userId)) return;
 
-	if (!UserProfilePrimaryInfo) {
-		logger.warn('Friends since skipped: Discord moved UserProfilePrimaryInfo.');
+			const date = friendsSinceDate(Relationships.getSince(userId));
 
-		return;
-	}
-
-	patcher.react.after(UserProfilePrimaryInfo, 'default', ({ props, result }) => {
-		const userId = (props as PrimaryInfoProps | undefined)?.user?.id;
-
-		if (!result || !userId || !Relationships.isFriend(userId)) return;
-
-		const date = friendsSinceDate(Relationships.getSince(userId));
-
-		if (!date) return;
-
-		const since = <FriendsSince key='friends-since' date={date} />;
-		const element = result as ReactElement<{ children?: unknown }>;
-		const children = element.props?.children;
-
-		if (children === undefined) {
-			return (
-				<>
-					{result}
-					{since}
-				</>
-			);
-		}
-
-		return cloneElement(element, { children: [...[children].flat(), since] });
+			return date ? (
+				<AboutSection title={messages.FRIENDS_SINCE_TITLE} icon='FriendsIcon'>
+					{date}
+				</AboutSection>
+			) : undefined;
+		},
 	});
+
+	if (!found) logger.warn('Friends since skipped: Discord moved UserProfileAboutMeCard.');
 }
 
 export default { patchProfile };
