@@ -39,6 +39,9 @@ export function debugLines(info: DebugInfo): string[] {
 			? [`- **Disabled:** ${info.disabledAddons.join(' · ')}`]
 			: []),
 		...(info.injected?.length ? [`- **Other tweaks:** ${info.injected.join(' · ')}`] : []),
+		...(info.addonUpdates?.length
+			? [`- **Updates waiting:** ${info.addonUpdates.join(' · ')}`]
+			: []),
 		...(launchNotes(info.launch).length
 			? [`- **Launch:** ${launchNotes(info.launch).join(' · ')}`]
 			: []),

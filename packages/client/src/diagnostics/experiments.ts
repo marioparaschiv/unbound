@@ -5,11 +5,15 @@ const CONTROL = 0;
 
 type ApexAssignment = { variantId?: number; isOverride?: boolean };
 
+type ApexEvaluation = { assignments?: Record<string, ApexAssignment> };
+
 type ApexState = {
 	evaluatedExperiments?: {
-		user?: Record<string, { assignments?: Record<string, ApexAssignment> }>;
+		user?: Record<string, ApexEvaluation>;
 	};
 };
+
+type LegacyOverride = { bucket?: number };
 
 type ApexDefinition = { kind?: string };
 
@@ -19,7 +23,7 @@ export type ExperimentSources = {
 	apexAssignments: Record<string, ApexAssignment>;
 	hashOf: (name: string) => number | string;
 	legacyAssignments: Record<string, number>;
-	legacyOverrides: Record<string, unknown>;
+	legacyOverrides: Record<string, LegacyOverride>;
 };
 
 const ApexStore = findStore('ApexExperiment');
@@ -37,8 +41,9 @@ export function offDefaultExperiments(sources: ExperimentSources): string[] {
 			const assignment = sources.apexAssignments[String(sources.hashOf(name))];
 			const variant = assignment?.variantId;
 
-			if (variant === undefined || (variant === CONTROL && !assignment?.isOverride))
+			if (variant === undefined || (variant === CONTROL && !assignment?.isOverride)) {
 				return [];
+			}
 
 			return [`${name}=${variant}${assignment?.isOverride ? '*' : ''}`];
 		});

@@ -13,14 +13,15 @@ import { getHeapUsage } from '~/native/runtime';
 import type { Addons } from '~/addons/addons';
 import { icons } from '~/icon-packs/manager';
 import { plugins } from '~/plugins/manager';
+import UpdatesStore from '~/updates/state';
 import { getLocale } from '~/i18n/locale';
 import { themes } from '~/themes/manager';
 import { patches } from '~/patcher/api';
 
 import type { AddonCount, DebugInfo, DiscordSupport } from './format-debug-info';
 
-import { readAppSession } from './app-session';
 import { readExperiments } from './experiments';
+import { readAppSession } from './app-session';
 import { recentErrors } from './recent-errors';
 
 const MAX_PATCH_CALLERS = 8;
@@ -226,6 +227,20 @@ function memoryOf(state?: NativeDeviceState): DebugInfo['memory'] {
 	return { availableMB, lowMemory, memoryWarnings, thermal };
 }
 
+const MAX_ADDON_UPDATES = 64;
+
+function addonUpdates(): string[] | undefined {
+	const { state } = UpdatesStore.getState();
+
+	if (state.status !== 'ready' || !state.updates.length) {
+		return undefined;
+	}
+
+	return state.updates
+		.slice(0, MAX_ADDON_UPDATES)
+		.map(({ name, from, update }) => `${name} ${from} → ${update.version}`.slice(0, 128));
+}
+
 const MAX_INJECTED = 32;
 
 function injectedOf(state?: NativeDeviceState): string[] | undefined {
@@ -304,6 +319,7 @@ export function readDebugInfo(): DebugInfo {
 		patches: attempt(patchCounts, undefined),
 		native: attempt(nativeCounts, undefined),
 		enabledPlugins: attempt(enabledPlugins, undefined),
+		addonUpdates: attempt(addonUpdates, undefined),
 		experiments: attempt(readExperiments, undefined),
 		display: attempt(displayOf, undefined),
 		session: readAppSession(),

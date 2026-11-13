@@ -79,7 +79,9 @@ export function debugAltText(
 		bytecode: info.bytecode,
 		state: info.flags,
 		...(supportOf(info, context) && { support: supportOf(info, context) }),
-		...(updateNotes(context).length && { updates: updateNotes(context) }),
+		...(updateNotes(context, info.addonUpdates).length && {
+			updates: updateNotes(context, info.addonUpdates),
+		}),
 		...(launchNotes(info.launch).length && { launch: launchNotes(info.launch) }),
 		...(info.disabledAddons?.length && { disabled: info.disabledAddons }),
 		...(info.locale && { locale: info.locale }),
