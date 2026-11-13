@@ -64,5 +64,9 @@
 	"SUBMIT_REVIEW": "Submit review",
 	"BLOCKED_USERS": "Blocked Users",
 	"NO_BLOCKED_USERS": "No blocked users.",
-	"UNBLOCK": "Unblock"
+	"UNBLOCK": "Unblock",
+	"HIDE_SYSTEM_REVIEWS": "Hide the ReviewDB notice",
+	"HIDE_SYSTEM_REVIEWS_SUBTITLE": "Hides the warning ReviewDB shows above every list of reviews.",
+	"THEME_SHEET": "Theme reviews with the profile",
+	"THEME_SHEET_SUBTITLE": "Tints the reviews sheet, its text box and send button with the profile's theme colors, including Fake Profile Themes."
 }

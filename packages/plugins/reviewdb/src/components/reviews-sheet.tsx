@@ -7,8 +7,9 @@ import { useCallback, useEffect, useState } from 'react';
 
 import ReviewComposer from '~/components/review-composer';
 import ReviewsHeader from '~/components/reviews-header';
-import { RelationshipStore, UserStore } from '~/lib/modules';
-import { getReviewColors } from '~/lib/colors';
+import { profileThemeColors, RelationshipStore, UserStore } from '~/lib/modules';
+import { getReviewColors, themedReviewColors } from '~/lib/colors';
+import { ReviewType } from '~/lib/entities';
 import ReviewItem from '~/components/review-item';
 import type { UserReviewsData } from '~/lib/entities';
 import { getReviews } from '~/lib/api';
@@ -20,7 +21,11 @@ type ReviewsSheetProps = {
 } & SheetProps;
 
 function ReviewsSheet({ discordId, name, onClose }: ReviewsSheetProps) {
-	const colors = getReviewColors();
+	const themeSheet = useSetting('themeSheet');
+	const hideSystemReviews = useSetting('hideSystemReviews');
+	const colors = themeSheet
+		? themedReviewColors(getReviewColors(), profileThemeColors(discordId))
+		: getReviewColors();
 	const [data, setData] = useState<UserReviewsData | null>(null);
 	const [loading, setLoading] = useState(true);
 
@@ -61,7 +66,9 @@ function ReviewsSheet({ discordId, name, onClose }: ReviewsSheetProps) {
 
 	// Optional: without the relationship store, nobody counts as blocked.
 	const reviews = (data?.reviews ?? []).filter(
-		(review) => !hideBlockedUsers || !RelationshipStore.isBlocked?.(review.sender.discordID),
+		(review) =>
+			(!hideBlockedUsers || !RelationshipStore.isBlocked?.(review.sender.discordID)) &&
+			(!hideSystemReviews || review.type !== ReviewType.System),
 	);
 	const hasOwnReview = reviews.some((review) => review.sender.discordID === myId);
 
@@ -135,6 +142,7 @@ function ReviewsSheet({ discordId, name, onClose }: ReviewsSheetProps) {
 						review={review}
 						profileId={discordId}
 						hideTimestamps={hideTimestamps}
+						colors={colors}
 						onChanged={refetch}
 					/>
 				))}

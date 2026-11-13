@@ -135,6 +135,14 @@ declare module '@unbound-app/i18n' {
 		readonly NO_BLOCKED_USERS: string;
 		/** Unblock */
 		readonly UNBLOCK: string;
+		/** Hide the ReviewDB notice */
+		readonly HIDE_SYSTEM_REVIEWS: string;
+		/** Hides the warning ReviewDB shows above every list of reviews. */
+		readonly HIDE_SYSTEM_REVIEWS_SUBTITLE: string;
+		/** Theme reviews with the profile */
+		readonly THEME_SHEET: string;
+		/** Tints the reviews sheet, its text box and send button with the profile's theme colors, including Fake Profile Themes. */
+		readonly THEME_SHEET_SUBTITLE: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

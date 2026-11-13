@@ -26,6 +26,7 @@ type BadgeProps = {
 };
 
 type ReviewItemProps = {
+	colors?: ReviewColors;
 	review: Review;
 	profileId: string;
 	hideTimestamps: boolean;
@@ -56,8 +57,13 @@ function Badge({ label, color, colors }: BadgeProps) {
 	);
 }
 
-function ReviewItem({ review, profileId, hideTimestamps, onChanged }: ReviewItemProps) {
-	const colors = getReviewColors();
+function ReviewItem({
+	review,
+	profileId,
+	hideTimestamps,
+	colors = getReviewColors(),
+	onChanged,
+}: ReviewItemProps) {
 	const [expanded, setExpanded] = useState(false);
 	const [busy, setBusy] = useState(false);
 	const [vote, setVote] = useState<Vote>(review.userVote ?? null);
