@@ -5,12 +5,13 @@ import {
 	type PressableStateCallbackType,
 	type ViewStyle,
 } from 'react-native';
-import { assets, metro } from '@unbound-app/api';
-import { createElement } from 'react';
 import { definePlatform } from '@unbound-app/api/native';
+import { assets } from '@unbound-app/api';
+import { createElement } from 'react';
 
 import { patchSendButton as android } from './android/input-toggle';
 import { patchRightActions as ios } from './ios/input-toggle';
+import useStyles from './input-button.style';
 
 export type InputButtonOptions = {
 	key: string;
@@ -26,11 +27,8 @@ type ButtonProps = InputButtonOptions & {
 	trailingGap: number;
 };
 
-const BUTTON = { size: 32, iconSize: 22 };
-const FALLBACK_COLOR = '#b5bac1';
-
 function ActionButton({ channelId, label, onPress, assetId, trailingGap }: ButtonProps) {
-	const { Theme } = metro.common;
+	const styles = useStyles();
 
 	return createElement(
 		View,
@@ -42,22 +40,14 @@ function ActionButton({ channelId, label, onPress, assetId, trailingGap }: Butto
 				accessibilityLabel: label(),
 				onPress: () => onPress(channelId),
 				hitSlop: 8,
-				style: ({ pressed }: PressableStateCallbackType): ViewStyle => ({
-					width: BUTTON.size,
-					height: BUTTON.size,
-					alignItems: 'center',
-					justifyContent: 'center',
-					opacity: pressed ? 0.5 : 1,
-					transform: [{ scale: pressed ? 0.86 : 1 }],
-				}),
+				style: ({ pressed }: PressableStateCallbackType): ViewStyle[] => [
+					styles.button,
+					{ opacity: pressed ? 0.5 : 1, transform: [{ scale: pressed ? 0.86 : 1 }] },
+				],
 			},
 			createElement(Image, {
 				source: assetId,
-				style: {
-					width: BUTTON.iconSize,
-					height: BUTTON.iconSize,
-					tintColor: Theme.colors?.INTERACTIVE_ICON_DEFAULT ?? FALLBACK_COLOR,
-				},
+				style: styles.icon,
 			}),
 		),
 	);

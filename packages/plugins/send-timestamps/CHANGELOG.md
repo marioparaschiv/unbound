@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1] - 2026-11-13
+
+### Fixed
+
+- The chat input clock is the same size and colour as Discord's emoji and voice buttons.
+
 ## [1.1.0] - 2026-11-13
 
 ### Added
