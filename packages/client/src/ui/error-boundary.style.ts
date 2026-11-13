@@ -7,7 +7,12 @@ export default Discord.createStyles({
 		backgroundColor: Theme.colors.BACKGROUND_BASE_LOW,
 	},
 	content: {
+		flexGrow: 1,
 		padding: 16,
+	},
+	// Carries the screen's height down to the error card, so its trace takes the space left over.
+	fill: {
+		flex: 1,
 	},
 	card: {
 		gap: 12,
@@ -33,7 +38,8 @@ export default Discord.createStyles({
 		color: Theme.colors.TEXT_FEEDBACK_CRITICAL,
 	},
 	code: {
-		maxHeight: 320,
+		flex: 1,
+		minHeight: 200,
 		borderRadius: Radius.Radius.md,
 		backgroundColor: Theme.colors.BACKGROUND_BASE_LOWER,
 	},
