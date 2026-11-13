@@ -119,6 +119,7 @@ export const IOSClass = {
 	ephemeral: 'DiscordChat.EphemeralView',
 	button: 'UIButton',
 	mosaic: 'DiscordChat.MediaMosaicView',
+	attachment: 'DiscordChat.AttachmentView',
 };
 
 export const MEDIA_VIEW_CLASSES = [

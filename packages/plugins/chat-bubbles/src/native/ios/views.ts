@@ -32,6 +32,7 @@ import {
 } from '~/lib/style';
 import { resizeRows } from '~/native/ios/resize-rows';
 import { installMovedTaps } from '~/native/ios/moved-taps';
+import { installMediaFit, unfitMedia } from '~/native/ios/media-fit';
 import { packInset, removeContentInsets } from '~/native/ios/content-inset';
 import { currentAppearance } from '~/lib/theme';
 import { messageAuthor, messageOwnership } from '~/lib/author';
@@ -441,6 +442,29 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 		[BUBBLE_TAG, AVATAR_TAG],
 	);
 	ui.run(installMovedTaps, scope, IOSClass.messageCell);
+	let resizeQueued = false;
+
+	ui.run(
+		installMediaFit,
+		scope,
+		[IOSClass.attachment, IOSClass.mosaic],
+		IOSClass.messageCell,
+		ui.callback(() => {
+			if (resizeQueued || disposed) return;
+
+			resizeQueued = true;
+			setTimeout(() => {
+				resizeQueued = false;
+
+				if (disposed) return;
+
+				resizeRows(objc).catch((error) => {
+					if (!isCancellation(error))
+						logger.error('Failed to resize rows for fitted media:', error);
+				});
+			}, 50);
+		}),
+	);
 
 	async function setRows(next: { rooms: RowRooms; inset: number; below: number }) {
 		if (JSON.stringify(next) === JSON.stringify(rows)) return;
@@ -609,6 +633,7 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 			await removeContentInsets(objc, cells);
 			ui.run(restoreCells, [...cells, ...[...bubbles.values()].map(({ cell }) => cell)]);
 			ui.run(forgetBubbles);
+			ui.run(unfitMedia, scope);
 			await removeUntracked().catch(() => undefined);
 			scope.dispose();
 
