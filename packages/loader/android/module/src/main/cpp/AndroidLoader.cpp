@@ -8,6 +8,7 @@
 #include "AndroidHotReload.h"
 #include "JniCall.h"
 #include "JniEnvironment.h"
+#include "LoaderBackgroundDownload.h"
 #include "LoaderFiles.h"
 #include "LoaderInjectedLibraries.h"
 #include "LoaderJSON.h"
@@ -558,6 +559,31 @@ std::optional<std::string> AndroidLoader::fetchText(const std::string &url, doub
 {
     return callStaticString(callbacks_.bridgeClass, callbacks_.fetchText, url,
                             milliseconds(timeoutSeconds));
+}
+
+void AndroidLoader::collectBackgroundDownload(const std::string &destination)
+{
+    std::optional<std::string> collected =
+        callStaticString(callbacks_.bridgeClass, callbacks_.collectBackgroundDownload, destination);
+    if (!collected)
+    {
+        return;
+    }
+    nlohmann::json download = nlohmann::json::parse(*collected, nullptr, false);
+    if (!download.is_object() || !download["url"].is_string() || !download["path"].is_string())
+    {
+        return;
+    }
+    loader::finishBackgroundDownload(download["url"].get<std::string>(), destination,
+                                     download["path"].get<std::string>());
+}
+
+void AndroidLoader::continueDownloadInBackground(const std::string &url,
+                                                 const std::string &destination,
+                                                 const std::map<std::string, std::string> &headers)
+{
+    callStaticVoid(callbacks_.bridgeClass, callbacks_.continueDownloadInBackground, url,
+                   destination, nlohmann::json(headers).dump());
 }
 
 std::optional<loader::DownloadResult>

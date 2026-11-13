@@ -68,11 +68,14 @@ public:
     uint32_t                   runtimeBytecodeVersion() override;
     std::optional<std::string> fetchText(const std::string &url, double timeoutSeconds) override;
     std::optional<loader::DownloadResult>
-                               download(const std::string &url, const std::string &destination,
-                                        const std::map<std::string, std::string> &headers,
-                                        const loader::DownloadPolicy             &policy) override;
-    bool                       isServing(const std::string &url, double timeoutSeconds) override;
-    std::optional<std::string> devServerHost() override;
+         download(const std::string &url, const std::string &destination,
+                  const std::map<std::string, std::string> &headers,
+                  const loader::DownloadPolicy             &policy) override;
+    void collectBackgroundDownload(const std::string &destination) override;
+    void continueDownloadInBackground(const std::string &url, const std::string &destination,
+                                      const std::map<std::string, std::string> &headers) override;
+    bool isServing(const std::string &url, double timeoutSeconds) override;
+    std::optional<std::string>                  devServerHost() override;
     std::shared_ptr<loader::HotReloadTransport> hotReloadTransport() override;
     nlohmann::json                              systemFonts() override;
     void                                        onFontsChanged() override;

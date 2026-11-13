@@ -1,5 +1,6 @@
 #include "Loader.h"
 
+#include "LoaderBackgroundDownload.h"
 #include "LoaderFiles.h"
 #include "LoaderFonts.h"
 #include "LoaderJSON.h"
@@ -172,11 +173,20 @@ void Loader::start()
         [host = host_](const std::string &url, double timeout) {
             return host->fetchText(url, timeout);
         },
-        [host = host_](const std::string &url, const std::string &destination,
-                       const std::map<std::string, std::string> &headers,
-                       const DownloadPolicy                     &policy) {
-            return host->download(url, destination, headers, policy);
-        });
+        withBackgroundHandoff(
+            [host = host_](const std::string &url, const std::string &destination,
+                           const std::map<std::string, std::string> &headers,
+                           const DownloadPolicy                     &policy) {
+                return host->download(url, destination, headers, policy);
+            },
+            BackgroundDownloader{[host = host_](const std::string &destination) {
+                                     host->collectBackgroundDownload(destination);
+                                 },
+                                 [host = host_](const std::string &url,
+                                                const std::string &destination,
+                                                const std::map<std::string, std::string> &headers) {
+                                     host->continueDownloadInBackground(url, destination, headers);
+                                 }}));
     pipeline_ = std::make_unique<LoaderPipeline>(std::make_shared<Pipeline>(weak, host_), settings_,
                                                  *updater_);
 
