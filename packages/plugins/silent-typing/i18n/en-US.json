@@ -1,0 +1,9 @@
+{
+	"SHOW_BUTTON": "Show button",
+	"SHOW_BUTTON_SUBTITLE": "Shows the toggle in the chat input. Without it, typing is always hidden.",
+	"SILENT_TYPING": "Silent Typing",
+	"TOGGLED_ON": "Your typing is hidden.",
+	"TOGGLED_OFF": "Your typing shows again.",
+	"ENABLE_SILENT_TYPING": "Hide that you are typing",
+	"DISABLE_SILENT_TYPING": "Show that you are typing"
+}

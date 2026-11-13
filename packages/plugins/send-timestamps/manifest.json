@@ -1,0 +1,29 @@
+{
+	"id": "unbound.send-timestamps",
+	"name": "Send Timestamps",
+	"description": "Turns times like `17:30` in your messages into timestamps everyone sees in their own time zone.",
+	"authors": [
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "GGTyler",
+			"id": "143117463788191746"
+		},
+		{
+			"name": "Grzesiek11",
+			"id": "368475654662127616"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TimerIcon",
+	"main": "index.tsx"
+}

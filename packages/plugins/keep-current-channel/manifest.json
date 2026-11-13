@@ -1,0 +1,21 @@
+{
+	"id": "unbound.keep-current-channel",
+	"name": "Keep Current Channel",
+	"description": "Brings you back to the channel you had open after switching accounts or restarting Discord.",
+	"authors": [
+		{
+			"name": "Nuckyz",
+			"id": "235834946571337729"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ForumIcon",
+	"main": "index.tsx"
+}

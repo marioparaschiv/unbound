@@ -1,0 +1,14 @@
+{
+	"REPLACE": "Replace times in messages",
+	"REPLACE_SUBTITLE": "Turns times in backticks, such as `17:30`, into timestamps when you send.",
+	"TIMESTAMP_DESC": "Send a date and time as a timestamp",
+	"TIME_DESC": "A time such as 17:30, or a date and time such as 2026-12-24 18:00",
+	"STYLE_DESC": "How the timestamp shows",
+	"STYLE_RELATIVE": "Relative (in 2 hours)",
+	"STYLE_SHORT_TIME": "Short time (17:30)",
+	"STYLE_LONG_TIME": "Long time (17:30:00)",
+	"STYLE_SHORT_DATE": "Short date (24/12/2026)",
+	"STYLE_LONG_DATE": "Long date (24 December 2026)",
+	"STYLE_SHORT_FULL": "Date and time",
+	"STYLE_LONG_FULL": "Weekday, date and time"
+}

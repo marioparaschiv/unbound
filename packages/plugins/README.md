@@ -1,6 +1,6 @@
 # Plugins
 
-63 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+67 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -23,10 +23,12 @@
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Fix GIF Downloads](https://unbound.rip/addons/unbound.fix-gif-download): Save Discord GIFs as GIF files instead of videos.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Fix Youtube Embeds](https://unbound.rip/addons/unbound.fix-youtube-embeds): Plays YouTube videos that are blocked from playing in Discord, such as music videos from UMG, instead of showing an error.
 - <img src="../../assets/plugins/readme-icons/crown-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Force Owner Crown](https://unbound.rip/addons/unbound.force-owner-crown): Always show the owner crown on the server owner's messages.
+- <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Friend Invites](https://unbound.rip/addons/unbound.friend-invites): Creates, lists and revokes your friend invite links with the /friend-invites command.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Paste](https://unbound.rip/addons/unbound.gif-paste): Makes GIF picker selections paste a link into the chat box instead of sending immediately.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Provider Switcher](https://unbound.rip/addons/unbound.gif-provider-switcher): Search GIFs from Tenor or Giphy instead of Klipy, and switch providers right from the GIF picker.
 - <img src="../../assets/plugins/readme-icons/gift-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Hide Gift Button](https://unbound.rip/addons/unbound.hide-gift-button): Hide the gift button from the chat composer.
 - <img src="../../assets/plugins/readme-icons/eye-icon.svg" width="20" height="20" align="absmiddle" alt=""> [I Love Spam](https://unbound.rip/addons/unbound.i-love-spam): Shows messages from users Discord marks as likely spammers instead of hiding them.
+- <img src="../../assets/plugins/readme-icons/forum-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Keep Current Channel](https://unbound.rip/addons/unbound.keep-current-channel): Brings you back to the channel you had open after switching accounts or restarting Discord.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Mention Avatars](https://unbound.rip/addons/unbound.mention-avatars): Shows user avatars and role icons inside mentions.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Latency](https://unbound.rip/addons/unbound.message-latency): Marks messages that took at least the selected threshold to send.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Link Embeds](https://unbound.rip/addons/unbound.message-link-embeds): Adds previews to messages that link to other Discord messages.
@@ -51,12 +53,14 @@
 - <img src="../../assets/plugins/readme-icons/user-minus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Relationship Notifier](https://unbound.rip/addons/unbound.relationship-notifier): Notifies you when a friend, group chat, or server removes you.
 - <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [ReviewDB](https://unbound.rip/addons/unbound.reviewdb): Leave reviews on other users' profiles and see what others think of you.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Role Color Everywhere](https://unbound.rip/addons/unbound.role-color-everywhere): Colors mentions, typing names, voice users, reaction users, poll voters, and role headers.
+- <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Send Timestamps](https://unbound.rip/addons/unbound.send-timestamps): Turns times like `17:30` in your messages into timestamps everyone sees in their own time zone.
 - <img src="../../assets/plugins/readme-icons/settings-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Settings Demo](https://unbound.rip/addons/unbound.settings-demo): Shows every generated settings row.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Shiki Codeblocks](https://unbound.rip/addons/unbound.shiki-codeblocks): Highlights code blocks with VS Code-style syntax colors.
 - <img src="../../assets/plugins/readme-icons/eye-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Show Hidden Things](https://unbound.rip/addons/unbound.show-hidden-things): Displays hidden and moderator-only features regardless of permissions.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Show Me Your Name](https://unbound.rip/addons/unbound.show-me-your-name): Display usernames next to display names, or show usernames only.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Show Timeout Duration](https://unbound.rip/addons/unbound.show-timeout-duration): Shows how much longer a user's timeout will last.
 - <img src="../../assets/plugins/readme-icons/bell-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Silent Message Toggle](https://unbound.rip/addons/unbound.silent-message-toggle): Adds a button to the chat input that sends your next messages as silent messages.
+- <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Silent Typing](https://unbound.rip/addons/unbound.silent-typing): Hides that you are typing, with a toggle in the chat input to turn it on and off.
 - <img src="../../assets/plugins/readme-icons/headphones-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Spotify Listen Along](https://unbound.rip/addons/unbound.spotify-listen-along): Listen along to someone's Spotify activity and invite a channel to listen along with you.
 - <img src="../../assets/plugins/readme-icons/sticker-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Sticker Preview](https://unbound.rip/addons/unbound.sticker-preview): Displays a preview of a selected sticker instead of sending it immediately.
 - <img src="../../assets/plugins/readme-icons/super-reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Super Reaction Tweaks](https://unbound.rip/addons/unbound.super-reaction-tweaks): Opens the reaction picker on Super Reactions and caps how many Super Reaction animations play at once.

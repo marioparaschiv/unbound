@@ -1,0 +1,29 @@
+{
+	"id": "unbound.silent-typing",
+	"name": "Silent Typing",
+	"description": "Hides that you are typing, with a toggle in the chat input to turn it on and off.",
+	"authors": [
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "rini",
+			"id": "0"
+		},
+		{
+			"name": "Im_Banana",
+			"id": "635250116688871425"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "KeyboardIcon",
+	"main": "index.tsx"
+}
