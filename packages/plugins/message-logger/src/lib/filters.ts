@@ -36,6 +36,15 @@ export function idList(value: string): Set<string> {
 }
 
 /**
+ * @description Writes IDs in the format {@link idList} reads, as the ignore lists store them.
+ * @param ids The IDs, in order.
+ * @returns The unique IDs, separated by commas.
+ */
+export function formatIdList(ids: string[]): string {
+	return [...new Set(ids)].join(', ');
+}
+
+/**
  * @description Tells whether a message is an ephemeral one, which only exists on this device.
  * @param message The message.
  * @returns `true` for an ephemeral message.

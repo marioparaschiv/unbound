@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
-import { idList, isEphemeral, shouldIgnore, type FilterSettings } from '~/lib/filters';
+import {
+	formatIdList,
+	idList,
+	isEphemeral,
+	shouldIgnore,
+	type FilterSettings,
+} from '~/lib/filters';
 
 const settings: FilterSettings = {
 	logDeletes: true,
@@ -17,6 +23,15 @@ const context = { currentUserId: 'me', channel: { guild_id: 'guild', parent_id: 
 describe('idList', () => {
 	test('splits on commas, spaces and new lines', () => {
 		expect([...idList('1, 2\n3  4,,')]).toEqual(['1', '2', '3', '4']);
+	});
+});
+
+describe('formatIdList', () => {
+	test('writes unique ids that idList reads back in order', () => {
+		const stored = formatIdList(['2', '1', '2']);
+
+		expect(stored).toBe('2, 1');
+		expect([...idList(stored)]).toEqual(['2', '1']);
 	});
 });
 
