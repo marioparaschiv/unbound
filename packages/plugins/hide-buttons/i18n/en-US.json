@@ -6,5 +6,11 @@
 	"VOICE_CALL": "Voice call buttons",
 	"VOICE_CALL_SUBTITLE": "Hides the call buttons in DM headers and on profiles.",
 	"VIDEO_CALL": "Video call buttons",
-	"VIDEO_CALL_SUBTITLE": "Hides the video call buttons in DM headers."
+	"VIDEO_CALL_SUBTITLE": "Hides the video call buttons in DM headers.",
+	"QUESTS": "Quests button",
+	"QUESTS_SUBTITLE": "Hides Quests from the bar on the You screen.",
+	"SHOP": "Shop button",
+	"SHOP_SUBTITLE": "Hides the Shop from the bar on the You screen.",
+	"SERVER_BOOSTS": "Server Boosts row",
+	"SERVER_BOOSTS_SUBTITLE": "Hides Server Boosts at the top of a server's channel list."
 }

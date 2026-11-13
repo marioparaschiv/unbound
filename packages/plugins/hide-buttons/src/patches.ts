@@ -3,9 +3,11 @@ import { settings } from '@unbound-app/settings';
 
 import { withoutGiftItem } from '~/lib/gift-item';
 import { withoutIconButtons } from '~/lib/icon-buttons';
+import { SERVER_BOOSTS_ROW, iconName, withoutRows } from '~/lib/upsells';
 
 type GiftOrThreadProps = { hideGiftButton?: boolean };
 type RightActionsProps = { shouldShowGiftButton?: boolean };
+type YouIconProps = { IconComponent?: unknown };
 
 const folder = 'modules/chat_input/native/action_buttons/';
 
@@ -118,5 +120,50 @@ export function patchProfileContactButtons(): void {
 
 	patcher.react.after(ContactButtons, 'default', ({ result }) =>
 		withoutIconButtons(result, callIcons()),
+	);
+}
+
+function hiddenYouIcons(): Set<string> {
+	return new Set([
+		...(settings.quests ? ['QuestsIcon'] : []),
+		...(settings.shop ? ['ShopIcon'] : []),
+	]);
+}
+
+/**
+ * @description Hides the Quests and Shop buttons from the bar on the You screen, by patching the render of Discord's `YouScreenNavIcon`.
+ */
+export function patchYouScreenButtons(): void {
+	const YouScreenNavIcon = metro.findByFilePath(
+		'modules/main_tabs_v2/native/tabs/you/YouScreenNavIcon.tsx',
+	);
+
+	if (!YouScreenNavIcon) {
+		logger.warn('Quests and Shop buttons skipped: Discord moved YouScreenNavIcon.');
+
+		return;
+	}
+
+	patcher.react.instead(YouScreenNavIcon, 'default', ({ props, original }) => {
+		const name = iconName((props as YouIconProps | undefined)?.IconComponent);
+
+		return name && hiddenYouIcons().has(name) ? null : original(props);
+	});
+}
+
+/**
+ * @description Hides the Server Boosts row at the top of a server's channel list, by patching Discord's `useGuildActionRows`.
+ */
+export function patchGuildActionRows(): void {
+	const GuildActionRows = metro.findByFilePath('modules/guild_sidebar/useGuildActionRows.tsx');
+
+	if (!GuildActionRows) {
+		logger.warn('Server Boosts row skipped: Discord moved useGuildActionRows.');
+
+		return;
+	}
+
+	patcher.after(GuildActionRows, 'default', ({ result }) =>
+		settings.serverBoosts ? withoutRows(result, new Set([SERVER_BOOSTS_ROW])) : result,
 	);
 }

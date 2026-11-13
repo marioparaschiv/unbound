@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-13
+
+### Added
+
+- Switches to hide the Quests and Shop buttons on the You screen and the Server Boosts row at the top of a server's channel list.
+
 ## [1.1.0] - 2026-11-13
 
 ### Added
