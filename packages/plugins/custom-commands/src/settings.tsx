@@ -1,51 +1,37 @@
-import { Keyboard, TextInput, View, type GestureResponderEvent } from 'react-native';
 import { Discord } from '@unbound-app/api/metro/components';
 import { messages } from '@unbound-app/i18n';
 import { storage, ui } from '@unbound-app/api';
-import { useState } from 'react';
 
 import CommandList from '~/components/command-list';
-import CommandForm from '~/components/command-form';
+import CommandPage from '~/components/command-page';
 import { getTags } from '~/lib/saved-commands';
-import type { Tag } from '~/lib/tags';
+import { openCommand } from '~/lib/navigation';
 
-// The multiline response field can cover Save and Cancel, so a tap anywhere else closes the keyboard.
-function dismissKeyboardOutsideInput({ target }: GestureResponderEvent) {
-	const focused = TextInput.State.currentlyFocusedInput();
+type SettingsPanelProps = {
+	/** Draws only this command's page, by its name, instead of the list. */
+	command?: string;
+};
 
-	if (!focused || target === focused) return;
-
-	if (Number(target) === TextInput.State.currentlyFocusedField()) return;
-
-	Keyboard.dismiss();
-}
-
-function SettingsPanel() {
+/**
+ * @description The plugin's settings: its saved commands, each opening its own sub-page; `command` draws one alone.
+ * @param props The command to draw alone, if any.
+ * @returns The page.
+ */
+function SettingsPanel({ command }: SettingsPanelProps) {
 	storage.useBucket(addon.id);
 
-	const tags = getTags();
-	const [editing, setEditing] = useState<Tag | 'new' | null>(null);
+	const navigation = Discord.useNavigation();
+
+	if (command !== undefined) {
+		return <CommandPage name={command} />;
+	}
 
 	return (
 		<ui.Page>
-			<View style={{ gap: 24 }} onTouchStart={dismissKeyboardOutsideInput}>
-				<Discord.Text variant='text-md/normal' color='text-muted'>
-					{messages.SETTINGS_INTRO}
-				</Discord.Text>
-				{editing ? (
-					<CommandForm
-						original={editing === 'new' ? null : editing}
-						tags={tags}
-						onClose={() => setEditing(null)}
-					/>
-				) : (
-					<CommandList
-						tags={tags}
-						onCreate={() => setEditing('new')}
-						onEdit={setEditing}
-					/>
-				)}
-			</View>
+			<Discord.Text variant='text-md/normal' color='text-muted'>
+				{messages.SETTINGS_INTRO}
+			</Discord.Text>
+			<CommandList tags={getTags()} onOpen={(name) => openCommand(navigation, name)} />
 		</ui.Page>
 	);
 }
