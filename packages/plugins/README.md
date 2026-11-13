@@ -1,11 +1,12 @@
 # Plugins
 
-60 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+63 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Add Attachments](https://unbound.rip/addons/unbound.add-attachments): Adds attachments to messages you already sent, while you edit them or from the message menu.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Always Animate](https://unbound.rip/addons/unbound.always-animate): Animates anything that can be animated: avatars, decorations, nameplates, profile effects, server icons, emojis, stickers and GIFs.
+- <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Always Trust](https://unbound.rip/addons/unbound.always-trust): Opens links and downloads without asking whether you trust the site or the file first.
 - <img src="../../assets/plugins/readme-icons/file-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Anonymise File Names](https://unbound.rip/addons/unbound.anonymise-filenames): Replaces the names of files you upload with random characters, a fixed name or a timestamp, keeping the extension.
 - <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Aussie Mode](https://unbound.rip/addons/adrian.aussie-mode): Discord designed for Aussies.
 - <img src="../../assets/plugins/readme-icons/microphone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Aussie Speech](https://unbound.rip/addons/adrian.aussie-speech): Turns every message into Aussie English before you send it.
@@ -25,6 +26,7 @@
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Paste](https://unbound.rip/addons/unbound.gif-paste): Makes GIF picker selections paste a link into the chat box instead of sending immediately.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Provider Switcher](https://unbound.rip/addons/unbound.gif-provider-switcher): Search GIFs from Tenor or Giphy instead of Klipy, and switch providers right from the GIF picker.
 - <img src="../../assets/plugins/readme-icons/gift-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Hide Gift Button](https://unbound.rip/addons/unbound.hide-gift-button): Hide the gift button from the chat composer.
+- <img src="../../assets/plugins/readme-icons/eye-icon.svg" width="20" height="20" align="absmiddle" alt=""> [I Love Spam](https://unbound.rip/addons/unbound.i-love-spam): Shows messages from users Discord marks as likely spammers instead of hiding them.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Mention Avatars](https://unbound.rip/addons/unbound.mention-avatars): Shows user avatars and role icons inside mentions.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Latency](https://unbound.rip/addons/unbound.message-latency): Marks messages that took at least the selected threshold to send.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Link Embeds](https://unbound.rip/addons/unbound.message-link-embeds): Adds previews to messages that link to other Discord messages.
@@ -35,6 +37,7 @@
 - <img src="../../assets/plugins/readme-icons/music-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Music Rich Presence](https://unbound.rip/addons/unbound.music-rich-presence): Shows what you are scrobbling on Last.fm or ListenBrainz as your Discord activity.
 - <img src="../../assets/plugins/readme-icons/bell-icon.svg" width="20" height="20" align="absmiddle" alt=""> [New Guild Settings](https://unbound.rip/addons/unbound.new-guild-settings): Mutes new servers and applies your notification and channel defaults as soon as you join them.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [No Blocked Messages](https://unbound.rip/addons/unbound.no-blocked-messages): Hides messages from blocked users completely.
+- <img src="../../assets/plugins/readme-icons/bell-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [No Pending Count](https://unbound.rip/addons/unbound.no-pending-count): Hides the red counts for incoming friend requests and message requests.
 - <img src="../../assets/plugins/readme-icons/ic-swipe-reply-24px.svg" width="20" height="20" align="absmiddle" alt=""> [No Reply Mention](https://unbound.rip/addons/unbound.no-reply-mention): Disable reply mentions by default.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [No Typing Animation](https://unbound.rip/addons/unbound.no-typing-animation): Stops the typing dots from animating, so they sit still wherever someone is typing.
 - <img src="../../assets/plugins/readme-icons/bell-z-icon.svg" width="20" height="20" align="absmiddle" alt=""> [One Ping Per DM](https://unbound.rip/addons/unbound.one-ping-per-dm): Plays the in-app message sound only for the first unread message in a DM, until you read it.

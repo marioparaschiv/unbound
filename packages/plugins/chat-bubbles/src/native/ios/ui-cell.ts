@@ -5,7 +5,6 @@ import type { BubbleColor } from '~/lib/style';
 import { lastAvatarFrame } from '~/native/ios/last-avatar';
 import { messageIdOf } from '~/native/ios/message-id';
 import { ReplyIcon } from '~/lib/constants';
-import { hostOffset } from '~/native/ios/host-offset';
 
 export const AVATAR_TAG = 0x0b0b26;
 const PICTURE_TAG = 0x0b0b27;
@@ -471,11 +470,7 @@ function pictureView(objc: NativeObjCBridge, cell: NativeObjectHandle): NativeOb
 		objc.invoke(holder, 'addSubview:', [decoration]);
 	}
 
-	objc.invoke(
-		(objc.invoke(cell, 'contentView', []) as NativeObjectHandle | null) ?? cell,
-		'addSubview:',
-		[holder],
-	);
+	objc.invoke(cell, 'addSubview:', [holder]);
 
 	return holder;
 }
@@ -498,11 +493,7 @@ function showPicture(
 
 	const frame = lastAvatarFrame(bubble, picture.avatar);
 	const layer = objc.invoke(view, 'layer', []) as NativeObjectHandle;
-	const offset = hostOffset(objc, holder);
-
-	objc.invoke(holder, 'setFrame:', [
-		cgRect(objc, { ...frame, x: frame.x - offset.x, y: frame.y - offset.y }),
-	]);
+	objc.invoke(holder, 'setFrame:', [cgRect(objc, frame)]);
 	objc.invoke(view, 'setFrame:', [
 		cgRect(objc, { x: 0, y: 0, width: frame.width, height: frame.height }),
 	]);

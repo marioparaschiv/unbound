@@ -1,0 +1,25 @@
+{
+	"id": "unbound.always-trust",
+	"name": "Always Trust",
+	"description": "Opens links and downloads without asking whether you trust the site or the file first.",
+	"authors": [
+		{
+			"name": "zt",
+			"id": "289556910426816513"
+		},
+		{
+			"name": "trey",
+			"id": "354427199023218689"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "LinkIcon",
+	"main": "index.tsx"
+}

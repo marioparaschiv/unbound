@@ -18,7 +18,6 @@ import {
 	type CellState,
 } from '~/native/ios/ui-cell';
 import { isStandaloneCell } from '~/native/ios/standalone-cell';
-import { hostOffset } from '~/native/ios/host-offset';
 
 const STATE_KEY = '__unboundChatBubbles';
 const MAX_CACHED = 400;
@@ -132,11 +131,7 @@ function bubbleIn(
 
 	objc.invoke(bubble, 'setTag:', [tag]);
 	objc.invoke(bubble, 'setUserInteractionEnabled:', [false]);
-	objc.invoke(
-		(objc.invoke(cell, 'contentView', []) as NativeObjectHandle | null) ?? cell,
-		'insertSubview:atIndex:',
-		[bubble, 0],
-	);
+	objc.invoke(cell, 'insertSubview:atIndex:', [bubble, 0]);
 
 	return bubble;
 }
@@ -405,13 +400,8 @@ function paintBubble(
 	paintFillet(objc, bubble, drawn, 'top', color);
 	paintFillet(objc, bubble, drawn, 'bottom', color);
 
-	const offset = hostOffset(objc, bubble);
-
 	objc.invoke(bubble, 'setFrame:', [
-		objc.struct(
-			'CGRect',
-			rect(drawn.x - offset.x, drawn.y - offset.y, drawn.width, drawn.height),
-		),
+		objc.struct('CGRect', rect(drawn.x, drawn.y, drawn.width, drawn.height)),
 	]);
 	objc.invoke(bubble, 'setHidden:', [false]);
 
@@ -426,8 +416,9 @@ function removeDuplicates(
 ) {
 	'worklet';
 	const tag = String(objc.invoke(bubble, 'tag', []));
+	const host = (objc.invoke(bubble, 'superview', []) as NativeObjectHandle | null) ?? cell;
 	// UNKNOWN: `subviews` comes back as a JS array or an `NSArray` handle.
-	const list = objc.invoke(cell, 'subviews', []) as unknown;
+	const list = objc.invoke(host, 'subviews', []) as unknown;
 	const subviews = (
 		Array.isArray(list) ? list : list ? objc.array(list as NativeObjectHandle) : []
 	) as NativeObjectHandle[];

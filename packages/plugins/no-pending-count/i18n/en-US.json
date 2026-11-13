@@ -1,0 +1,6 @@
+{
+	"FRIEND_REQUESTS": "Hide friend request count",
+	"FRIEND_REQUESTS_SUBTITLE": "Incoming friend requests add no red count.",
+	"MESSAGE_REQUESTS": "Hide message request count",
+	"MESSAGE_REQUESTS_SUBTITLE": "Message and spam requests add no red count."
+}
