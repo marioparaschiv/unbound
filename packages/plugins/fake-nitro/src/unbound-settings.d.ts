@@ -152,6 +152,18 @@ declare module '@unbound-app/settings' {
 		 */
 		stickerSize: number;
 		/**
+		 * Show received fake emojis
+		 *
+		 * Turn emoji links others sent with Fake Nitro back into emojis.
+		 */
+		receiveEmojis: boolean;
+		/**
+		 * Show received fake stickers
+		 *
+		 * Turn messages that are only sticker links back into stickers.
+		 */
+		receiveStickers: boolean;
+		/**
 		 * Hide links behind names
 		 *
 		 * Sends [name](link) instead of the bare link.
@@ -182,6 +194,18 @@ declare module '@unbound-app/settings' {
 		 */
 		"stickerSize": number;
 		/**
+		 * Show received fake emojis
+		 *
+		 * Turn emoji links others sent with Fake Nitro back into emojis.
+		 */
+		"receiveEmojis": boolean;
+		/**
+		 * Show received fake stickers
+		 *
+		 * Turn messages that are only sticker links back into stickers.
+		 */
+		"receiveStickers": boolean;
+		/**
 		 * Hide links behind names
 		 *
 		 * Sends [name](link) instead of the bare link.
@@ -198,7 +222,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "emojis" | "stickers" | "hyperlinks";
+	export type BooleanSettingKey = "emojis" | "stickers" | "receiveEmojis" | "receiveStickers" | "hyperlinks";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

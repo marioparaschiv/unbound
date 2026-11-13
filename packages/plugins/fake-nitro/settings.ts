@@ -11,6 +11,16 @@ export default defineSettings({
 		step: 32,
 		title: 'STICKER_SIZE',
 	}),
+	receiveEmojis: setting.boolean({
+		default: true,
+		title: 'RECEIVE_EMOJIS',
+		subtitle: 'RECEIVE_EMOJIS_SUBTITLE',
+	}),
+	receiveStickers: setting.boolean({
+		default: true,
+		title: 'RECEIVE_STICKERS',
+		subtitle: 'RECEIVE_STICKERS_SUBTITLE',
+	}),
 	hyperlinks: setting.boolean({
 		default: true,
 		title: 'HYPERLINKS',

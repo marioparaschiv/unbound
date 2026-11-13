@@ -6,5 +6,9 @@
 	"STICKERS_SUBTITLE": "Send stickers you cannot use as links to their image.",
 	"STICKER_SIZE": "Sticker size",
 	"HYPERLINKS": "Hide links behind names",
-	"HYPERLINKS_SUBTITLE": "Sends [name](link) instead of the bare link."
+	"HYPERLINKS_SUBTITLE": "Sends [name](link) instead of the bare link.",
+	"RECEIVE_EMOJIS": "Show received fake emojis",
+	"RECEIVE_EMOJIS_SUBTITLE": "Turn emoji links others sent with Fake Nitro back into emojis.",
+	"RECEIVE_STICKERS": "Show received fake stickers",
+	"RECEIVE_STICKERS_SUBTITLE": "Turn messages that are only sticker links back into stickers."
 }
