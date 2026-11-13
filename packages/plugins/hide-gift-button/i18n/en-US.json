@@ -1,0 +1,10 @@
+{
+	"GIFT": "Gift button",
+	"GIFT_SUBTITLE": "Hides the gift button in the chat input.",
+	"VOICE_MESSAGE": "Voice message button",
+	"VOICE_MESSAGE_SUBTITLE": "Hides the microphone that records a voice message.",
+	"VOICE_CALL": "Voice call buttons",
+	"VOICE_CALL_SUBTITLE": "Hides the call buttons in DM headers and on profiles.",
+	"VIDEO_CALL": "Video call buttons",
+	"VIDEO_CALL_SUBTITLE": "Hides the video call buttons in DM headers."
+}
