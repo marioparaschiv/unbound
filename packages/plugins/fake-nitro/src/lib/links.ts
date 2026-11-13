@@ -46,6 +46,21 @@ export function stickerLink(
 }
 
 /**
+ * @description Reads the custom emojis written into a message's text.
+ * @param content The message text.
+ * @returns Each distinct emoji, in the order it first appears.
+ */
+export function emojisIn(content: string): FakeEmoji[] {
+	const found = new Map<string, FakeEmoji>();
+
+	for (const [, animated, name, id] of content.matchAll(/<(a?):([^:>]+):(\d{17,20})>/g)) {
+		if (!found.has(id)) found.set(id, { id, name, animated: animated === 'a' });
+	}
+
+	return [...found.values()];
+}
+
+/**
  * @description Replaces each emoji the sender cannot use with a link to its image.
  * @param content The message text.
  * @param emojis The custom emojis the text uses.

@@ -8,7 +8,7 @@
 	"HYPERLINKS": "Hide links behind names",
 	"HYPERLINKS_SUBTITLE": "Sends [name](link) instead of the bare link.",
 	"RECEIVE_EMOJIS": "Show received fake emojis",
-	"RECEIVE_EMOJIS_SUBTITLE": "Turn emoji links others sent with Fake Nitro back into emojis.",
+	"RECEIVE_EMOJIS_SUBTITLE": "Turn emoji links sent with Fake Nitro, yours included, back into emojis.",
 	"RECEIVE_STICKERS": "Show received fake stickers",
-	"RECEIVE_STICKERS_SUBTITLE": "Turn messages that are only sticker links back into stickers."
+	"RECEIVE_STICKERS_SUBTITLE": "Turn messages that are only sticker links, yours included, back into stickers."
 }

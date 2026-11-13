@@ -21,11 +21,11 @@ declare module '@unbound-app/i18n' {
 		readonly HYPERLINKS_SUBTITLE: string;
 		/** Show received fake emojis */
 		readonly RECEIVE_EMOJIS: string;
-		/** Turn emoji links others sent with Fake Nitro back into emojis. */
+		/** Turn emoji links sent with Fake Nitro, yours included, back into emojis. */
 		readonly RECEIVE_EMOJIS_SUBTITLE: string;
 		/** Show received fake stickers */
 		readonly RECEIVE_STICKERS: string;
-		/** Turn messages that are only sticker links back into stickers. */
+		/** Turn messages that are only sticker links, yours included, back into stickers. */
 		readonly RECEIVE_STICKERS_SUBTITLE: string;
 	};
 

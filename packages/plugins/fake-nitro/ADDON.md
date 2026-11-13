@@ -14,5 +14,5 @@ banner: media/banner.png
 
 - **Fake emojis** and **Emoji size:** send locked emojis as image links, at this size.
 - **Fake stickers** and **Sticker size:** the same for stickers.
-- **Show received fake emojis** and **Show received fake stickers:** turn others' emoji and sticker links back into emojis and stickers. Your own messages stay as sent.
+- **Show received fake emojis** and **Show received fake stickers:** turn emoji and sticker links back into emojis and stickers, in your own messages too. Editing such a message links the emojis again.
 - **Hide links behind names:** sends `[name](link)` instead of the bare link.
