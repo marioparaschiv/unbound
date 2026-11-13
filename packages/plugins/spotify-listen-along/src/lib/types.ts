@@ -2,6 +2,8 @@ import type { FluxStore } from '@unbound-app/api/flux';
 
 export type SpotifyActivity = {
 	party?: { id?: string };
+	sync_id?: string;
+	timestamps?: { start?: number };
 };
 
 export type OverflowButton = {
@@ -18,15 +20,8 @@ declare module '@unbound-app/api/flux' {
 			getActiveSocketAndDevice(): unknown;
 			hasConnectedAccount(): boolean;
 		};
-		SpotifyProtocol: FluxStore & {
-			isProtocolRegistered(): boolean;
-		};
 		Draft: FluxStore & {
 			getDraft(channelId: string, draftType: number): string;
 		};
-	}
-
-	interface FluxActions {
-		SPOTIFY_PLAYER_STATE: Record<string, unknown>;
 	}
 }
