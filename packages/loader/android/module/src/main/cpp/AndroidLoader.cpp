@@ -1,6 +1,7 @@
 #include "AndroidLoader.h"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <thread>
 
@@ -87,6 +88,18 @@ std::shared_ptr<loader::Loader> currentLoader()
 {
     std::lock_guard<std::mutex> lock(gLoaderMutex);
     return gLoader;
+}
+
+static std::atomic_bool gDiscordVisible{false};
+
+void setDiscordVisible(bool visible)
+{
+    gDiscordVisible.store(visible);
+}
+
+bool AndroidLoader::visibleNow()
+{
+    return gDiscordVisible.load();
 }
 
 std::shared_ptr<AndroidLoader> currentHost()

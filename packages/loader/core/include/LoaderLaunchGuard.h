@@ -39,6 +39,8 @@ public:
     // Disarms the marker once this launch has run long enough to count as healthy.
     bool succeed() const;
     bool markFrozen() const;
+    bool markHidden() const;
+    bool markShown() const;
 
 private:
     std::string path() const;

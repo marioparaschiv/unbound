@@ -215,6 +215,31 @@ void saveFailsWhenTheDirectoryIsAFile(const std::filesystem::path &root)
     assert(store.get("a", "x") == nlohmann::json(1));
     assert(loader::readTextFile(blocker.string()) == "file");
 }
+
+void unreadableSettingsAreNeverOverwritten(const std::filesystem::path &root)
+{
+    const std::string path     = settingsPath(root);
+    const std::string original = R"({"a":{"x":1}})";
+    assert(loader::writeTextFileAtomically(path, original));
+    std::filesystem::permissions(path, std::filesystem::perms::none);
+
+    loader::SettingsStore store(path);
+    store.load();
+    if (loader::readTextFile(path))
+    {
+        std::filesystem::permissions(path, std::filesystem::perms::owner_all);
+        return;
+    }
+    assert(!store.readable());
+    store.set("a", "x", 2);
+    assert(!store.save());
+
+    std::filesystem::permissions(path, std::filesystem::perms::owner_all);
+    assert(loader::readTextFile(path) == original);
+    store.load();
+    assert(store.readable());
+    assert(store.get("a", "x") == nlohmann::json(1));
+}
 }
 
 int main()
@@ -237,6 +262,7 @@ int main()
     run("external", writesPickUpExternalEditsFirst);
     run("reload", reloadSkipsAnUnchangedFile);
     run("blocked", saveFailsWhenTheDirectoryIsAFile);
+    run("unreadable", unreadableSettingsAreNeverOverwritten);
 
     std::filesystem::remove_all(root);
     return 0;

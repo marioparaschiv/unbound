@@ -120,6 +120,7 @@ void CompleteBrowserLogin(NSString *token)
 // Whether the current network path is expensive (cellular, a hotspot) or constrained (Low Data
 // Mode), kept current by a path monitor so the loader can ask from any thread without waiting.
 static std::atomic_bool meteredNetwork{false};
+static std::atomic_bool discordActive{false};
 
 static void keepAwakeForUpdateCheck()
 {
@@ -195,6 +196,16 @@ public:
     uint32_t runtimeBytecodeVersion() override
     {
         return [CoreBridge mainBundleBytecodeVersion];
+    }
+
+    bool tracksVisibility() override
+    {
+        return true;
+    }
+
+    bool visibleNow() override
+    {
+        return discordActive.load();
     }
 
     loader::PreviousExit previousExit() override
@@ -523,6 +534,21 @@ static void prepareLoading(id instance)
                     dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0),
                                    ^{ UnboundLoader()->onForeground(); });
                 }];
+
+    [[NSNotificationCenter defaultCenter]
+        addObserverForName:UIApplicationDidBecomeActiveNotification
+                    object:nil
+                     queue:nil
+                usingBlock:^(NSNotification *) {
+                    discordActive.store(true);
+                    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0),
+                                   ^{ UnboundLoader()->onVisible(); });
+                }];
+    [[NSNotificationCenter defaultCenter]
+        addObserverForName:UIApplicationDidEnterBackgroundNotification
+                    object:nil
+                     queue:nil
+                usingBlock:^(NSNotification *) { discordActive.store(false); }];
 
     // iOS ending Discord without a crash (rather than suspending it) is not a failed launch.
     [[NSNotificationCenter defaultCenter]

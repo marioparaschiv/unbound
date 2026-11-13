@@ -81,6 +81,14 @@ public:
     {
         return PreviousExit::Unknown;
     }
+    virtual bool tracksVisibility()
+    {
+        return false;
+    }
+    virtual bool visibleNow()
+    {
+        return false;
+    }
     // Whether the active network is metered (mobile data, a hotspot or Low Data Mode).
     virtual bool onMeteredNetwork()
     {
