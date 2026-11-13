@@ -24,8 +24,7 @@ type Applied = { original: NameColors; argb: number };
 
 const cache = new Map<string, number>();
 
-// Discord reuses message objects across row generations, so keep the colors it set to restore or re-check them.
-const applied = new WeakMap<ChatRowMessage, Applied>();
+const colorsBeforeIrc = new WeakMap<ChatRowMessage, Applied>();
 
 function cachedArgb(userId: string): number {
 	const key = `${userId}:${settings.seed}:${settings.lightness}:${settings.saturation}`;
@@ -41,7 +40,7 @@ function cachedArgb(userId: string): number {
 }
 
 function originalColors(message: ChatRowMessage): NameColors {
-	const previous = applied.get(message);
+	const previous = colorsBeforeIrc.get(message);
 
 	if (previous && previous.argb === message.roleColor) return previous.original;
 
@@ -65,7 +64,7 @@ function colorRow(row: ChatRow | undefined): void {
 
 	if (!shouldColor(message, original)) {
 		Object.assign(message, original);
-		applied.delete(message);
+		colorsBeforeIrc.delete(message);
 
 		return;
 	}
@@ -78,7 +77,7 @@ function colorRow(row: ChatRow | undefined): void {
 		usernameColor: argb,
 		colorString: argb,
 	});
-	applied.set(message, { original, argb });
+	colorsBeforeIrc.set(message, { original, argb });
 }
 
 /**
