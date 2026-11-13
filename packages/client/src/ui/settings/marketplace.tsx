@@ -42,7 +42,8 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 	const [tab, setTab] = useState(kind ? ADDON_KINDS.indexOf(kind) : 0);
 	const browse = useMemo(() => ({ search, filters }), [search, filters]);
 	const active = ADDON_KINDS[tab] ?? 'plugin';
-	const catalog = MarketplaceStore((store) => store.state);
+	// Read only to offer a linked addon: each tab subscribes on its own, so catalog loads skip re-rendering the page.
+	const catalog = MarketplaceStore((store) => (id ? store.state : undefined));
 	const lastOfferedOpen = useRef<string | undefined>(undefined);
 
 	useEffect(() => {
@@ -80,7 +81,7 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 	useEffect(() => {
 		const key = `${id}:${request}`;
 
-		if (!id || lastOfferedOpen.current === key || catalog.status !== 'ready') return;
+		if (!id || lastOfferedOpen.current === key || catalog?.status !== 'ready') return;
 
 		const addon = catalog.catalog.addons.find((listed) => listed.id === id);
 

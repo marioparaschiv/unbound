@@ -75,11 +75,13 @@ function layerMarkup({
 		return rows.map((row) => {
 			const [y, height = layerHeight, width = layerWidth] = row.split(',');
 
-			return `<rect x="${x}" y="${y}" width="${width}" height="${height}"/>`;
+			return `M${x} ${y}h${width}v${height}h-${width}z`;
 		});
 	});
 
-	return `<g fill="${fill}" fill-opacity="${opacity}">${shapes.join('')}</g>`;
+	// One path per layer: react-native-svg mounts a native view per element, and the logo has 747 rectangles.
+	// A layer's rectangles never overlap, so its fill opacity draws the same.
+	return `<path fill="${fill}" fill-opacity="${opacity}" d="${shapes.join('')}"/>`;
 }
 
 /**
