@@ -10,6 +10,7 @@
 #include <streambuf>
 
 #import "CoreConversions.h"
+#import "EnvironmentReport.h"
 #import "FileSystem.h"
 #include "JailbreakDetection.h"
 #include "LoaderInjectedLibraries.h"
@@ -217,6 +218,9 @@ std::shared_ptr<NativePlatformProvider> makeNativePlatformProvider(void)
     };
     provider->installDetails = []() {
         return toStdString([Utilities getInstallDetails]);
+    };
+    provider->environment = []() {
+        return UnboundEnvironmentReport();
     };
     provider->isVirtualDevice = []() {
         return static_cast<bool>([Utilities isVPhone]);

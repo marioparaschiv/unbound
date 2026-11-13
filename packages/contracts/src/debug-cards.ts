@@ -55,6 +55,21 @@ const launchSchema = Type.Object({
 	),
 });
 
+const environmentSchema = Type.Object({
+	signer: Type.Optional(text(160)),
+	binary: Type.Optional(text(160)),
+	resign: Type.Optional(Type.Array(text(64), { maxItems: 12 })),
+	install: Type.Optional(text(200)),
+	markers: Type.Optional(Type.Array(text(64), { maxItems: 16 })),
+	https: Type.Optional(
+		Type.Object({
+			intercepted: Type.Boolean(),
+			issuer: Type.Optional(text(96)),
+			failure: Type.Optional(text(96)),
+		}),
+	),
+});
+
 const memorySchema = Type.Object({
 	availableMB: Type.Optional(Type.Integer({ minimum: 0, maximum: 10_000_000 })),
 	lowMemory: Type.Optional(Type.Boolean()),
@@ -88,6 +103,7 @@ export const debugCardRequestSchema = Type.Object({
 	discordSupport: Type.Optional(Type.Enum(DEBUG_CARD_SUPPORT)),
 	appSource: text(),
 	installDetails: Type.Optional(text(256)),
+	environment: Type.Optional(environmentSchema),
 	react: text(64),
 	reactNative: text(64),
 	hermes: text(64),

@@ -295,6 +295,7 @@ export function readDebugInfo(): DebugInfo {
 		installDetails: android
 			? ''
 			: installDetailsOf(attempt(() => platform?.app.getInstallDetails?.(), '')),
+		environment: attempt(() => platform?.app.getEnvironment?.(), undefined),
 		framework: attempt(() => platform?.app.getFramework(), ''),
 		jailbreak: attempt(() => platform?.device.getJailbreak?.(), ''),
 		react: React.version,

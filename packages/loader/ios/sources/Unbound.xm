@@ -9,6 +9,7 @@
 #import "CoreBridge.h"
 #import "CoreConversions.h"
 #import "Discord.h"
+#import "EnvironmentReport.h"
 #import "HomeScreenIcon.h"
 #import "HotReload.h"
 #import "IconIPA.h"
@@ -540,6 +541,7 @@ static void prepareLoading(id instance)
     watchNetworkCost();
     [BackgroundDownloads handleAppEvents];
     [MetricKitReports start];
+    UnboundStartHttpsCheck();
 
     // Returning after a while checks for a newer bundle; long sessions otherwise never see one.
     [[NSNotificationCenter defaultCenter]

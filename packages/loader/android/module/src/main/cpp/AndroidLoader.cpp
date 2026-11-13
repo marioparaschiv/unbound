@@ -9,6 +9,7 @@
 #include "JniCall.h"
 #include "JniEnvironment.h"
 #include "LoaderBackgroundDownload.h"
+#include "LoaderEnvironmentReport.h"
 #include "LoaderFiles.h"
 #include "LoaderInjectedLibraries.h"
 #include "LoaderJSON.h"
@@ -156,6 +157,31 @@ std::shared_ptr<loader::NativePlatformProvider> AndroidLoader::platformProvider(
         }
         state["injected"] = injectedModules();
         return state;
+    };
+    provider->environment = [callbacks]() {
+        nlohmann::json facts = nlohmann::json::parse(
+            callStaticString(callbacks.bridgeClass, callbacks.environmentFacts).value_or("{}"),
+            nullptr, false);
+        nlohmann::json environment = nlohmann::json::object();
+        if (!facts.is_object())
+        {
+            return environment;
+        }
+        environment["install"] = loader::environment_report::androidInstallLine(
+            facts.value("install", nlohmann::json()));
+        nlohmann::json device = facts.value("device", nlohmann::json::object());
+        loader::environment_report::AndroidDeviceFacts markers;
+        if (device["selinux"].is_boolean())
+        {
+            markers.selinuxEnforcing = device["selinux"].get<bool>();
+        }
+        markers.verifiedBootState = device.value("verifiedBoot", std::string());
+        markers.buildTags         = device.value("buildTags", std::string());
+        markers.customROM         = device.value("rom", std::string());
+        markers.pageSize          = device.value("pageSize", 0L);
+        markers.webView           = device.value("webView", std::string());
+        environment["markers"]    = loader::environment_report::androidMarkers(markers);
+        return environment;
     };
     provider->isVerifiedBuild = [callbacks]() {
         return callStaticBoolean(callbacks.bridgeClass, callbacks.isVerifiedBuild);

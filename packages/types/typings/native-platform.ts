@@ -137,6 +137,8 @@ export type NativePlatformApp = {
 	getAppSource(): string;
 	/** How an iOS install was signed: certificate kind, team, profile expiry, sideload tool marker and entitlement source. */
 	getInstallDetails?(): string;
+	/** What the loader read about the install, the binary and the device for `/debug`; missing on older loaders. */
+	getEnvironment?(): NativeEnvironmentReport;
 	/** The framework that injected the loader, such as Vector or LSPosed on Android and ElleKit on iOS, or an empty string. */
 	getFramework(): string;
 	/** Whether the loader's embedded attestation verified against Unbound's pinned key. False for development builds. */
@@ -283,4 +285,22 @@ export type NativePlatformBridge = {
 	readonly ios?: NativePlatformIOSBridge;
 	/** Android-only helpers; missing on iOS and on loaders without the in-app installer. */
 	readonly android?: NativePlatformAndroidBridge;
+};
+
+/**
+ * The install, binary, device and network facts `/debug` shows, each already a display string.
+ * @internal
+ */
+export type NativeEnvironmentReport = {
+	/** iOS: the signing certificate's kind, team and fingerprint. */
+	signer?: string;
+	/** iOS: encryption, UUID, minimum OS, SDK and dylib count of Discord's executable. */
+	binary?: string;
+	/** iOS: what a re-sign broke, such as `no push` or `no Share extension`. */
+	resign?: string[];
+	/** Android: the APK signer, patch mode, splits and profile. */
+	install?: string;
+	markers?: string[];
+	/** Whether Discord's HTTPS traffic reaches a certificate from a known public CA. */
+	https?: { intercepted: boolean; issuer?: string; failure?: string };
 };
