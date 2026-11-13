@@ -1,0 +1,6 @@
+{
+	"AUTO_COLLAPSE": "Close other folders",
+	"AUTO_COLLAPSE_SUBTITLE": "Opening a server folder closes the ones that are open.",
+	"HIDE_ICONS": "Hide server icons on closed folders",
+	"HIDE_ICONS_SUBTITLE": "A closed folder shows a folder icon in its color instead of its servers."
+}

@@ -1,0 +1,33 @@
+{
+	"id": "unbound.better-folders",
+	"name": "Better Folders",
+	"description": "Collapses your other server folders when you open one, and can show a folder icon instead of server icons on closed folders.",
+	"authors": [
+		{
+			"name": "Juby210",
+			"id": "324622488644616195"
+		},
+		{
+			"name": "AutumnVN",
+			"id": "393694671383166998"
+		},
+		{
+			"name": "Nuckyz",
+			"id": "235834946571337729"
+		},
+		{
+			"name": "fres",
+			"id": "843448897737064448"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "FolderIcon",
+	"main": "index.tsx"
+}

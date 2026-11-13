@@ -1,0 +1,14 @@
+---
+banner: media/banner.png
+---
+
+## :sparkle: What it does
+
+- :folder: Opening a server folder closes the other open ones, so the server list stays short.
+- :eye-slash: Optionally, closed folders show a folder icon in their color instead of the servers inside.
+- :code-fork: A port of Vencord's BetterFolders, after fres's BetterFolders for Vendetta.
+
+## :gear: Settings
+
+- **Close other folders:** opening a folder closes the ones that are open.
+- **Hide server icons on closed folders:** a closed folder shows a folder icon in its color.
