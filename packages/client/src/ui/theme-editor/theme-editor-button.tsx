@@ -5,8 +5,8 @@ import { Screens } from '~/metro/common';
 import { messages } from '~/i18n/api';
 import { icons } from '~/assets/api';
 
-import { resumeThemeEditor } from './open-theme-editor';
 import useStyles, { BUTTON_OFFSET } from './theme-editor-button.style';
+import { resumeThemeEditor } from './open-theme-editor';
 
 /**
  * @description The floating button shown while a theme edit is open and no editor screen is: it reopens settings on the

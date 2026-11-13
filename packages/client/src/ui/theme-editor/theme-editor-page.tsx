@@ -1,5 +1,5 @@
-import type { Theme } from '@unbound-app/types';
 import { useEffect, useMemo, useState } from 'react';
+import type { Theme } from '@unbound-app/types';
 
 import ThemeEditorStore from '~/themes/editor-state';
 import ButtonRow from '~/ui/settings-kit/button-row';
@@ -7,8 +7,8 @@ import PickerRow from '~/ui/settings-kit/picker-row';
 import InputRow from '~/ui/settings-kit/input-row';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
-import { themes } from '~/themes/manager';
 import { Screens } from '~/core/constants';
+import { themes } from '~/themes/manager';
 import ThemeStore from '~/themes/state';
 import Page from '~/ui/components/page';
 import { show } from '~/toasts/api';
@@ -16,9 +16,9 @@ import { show } from '~/toasts/api';
 import { BASIC_CATEGORIES, availableColors } from './token-groups';
 import useEditorScreen from './use-editor-screen';
 import ThemeColorRow from './theme-color-row';
+import ThemeFileRows from './theme-file-rows';
 import EditorActions from './editor-actions';
 import { tokenNames } from './token-colors';
-import ThemeFileRows from './theme-file-rows';
 
 const BASES: { value: Theme['type']; label: string }[] = [
 	{ value: 'light', label: messages.UNBOUND_THEME_BASE_LIGHT },
@@ -81,9 +81,9 @@ function ThemeEditorPage() {
 	}
 
 	useEffect(() => {
-		navigation.setOptions({
-			headerRight: () => <EditorActions saving={saving} onSave={() => void save()} />,
-		});
+		const actions = <EditorActions saving={saving} onSave={() => void save()} />;
+
+		navigation.setOptions({ headerRight: () => actions });
 	}, [saving]);
 
 	if (!session || !draft) return null;

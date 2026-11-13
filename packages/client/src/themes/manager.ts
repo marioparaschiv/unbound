@@ -95,7 +95,9 @@ export class Themes extends Addons<Theme> {
 
 		const result = await this.reload(id, JSON.stringify(theme), manifest);
 
-		if (!result.ok) return false;
+		if (!result.ok) {
+			return false;
+		}
 
 		await this.enable(id);
 

@@ -1,5 +1,5 @@
-import type { ReactElement, ReactNode, Ref } from 'react';
 import { ScrollView, type ScrollViewProps } from 'react-native';
+import type { ReactElement, ReactNode, Ref } from 'react';
 
 import { Discord, SafeArea } from '~/metro/components';
 

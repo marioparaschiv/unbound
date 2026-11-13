@@ -1,3 +1,4 @@
+import type { SemanticColorToken } from '@unbound-app/types/components';
 import type { Theme as ThemeBundle } from '@unbound-app/types';
 
 import { parseColor, type ParsedColor } from '~/themes/draft';
@@ -6,13 +7,19 @@ import { Theme } from '~/metro/common';
 
 const BASES: readonly ThemeBundle['type'][] = ['light', 'dark', 'darker', 'midnight'];
 
+// The editor lists and resolves every token by name; nothing here is a style.
+function colorTokens(): Record<string, SemanticColorToken> {
+	// oxlint-disable-next-line unbound/no-inline-styles -- reads token names, not a style.
+	return Theme?.colors ?? {};
+}
+
 /**
  * @description Reads the colour Discord draws a token with now, the editor's draft included.
  * @param name The token's name.
  * @returns The colour, or `undefined` for a token this build lacks or a colour in another form.
  */
 export function readTokenColor(name: string): ParsedColor | undefined {
-	const token = Theme?.colors?.[name];
+	const token = colorTokens()[name];
 
 	if (!token) return;
 
@@ -29,7 +36,7 @@ export function readTokenColor(name: string): ParsedColor | undefined {
  * @returns The token names.
  */
 export function tokenNames(): string[] {
-	return Object.keys(Theme?.colors ?? {});
+	return Object.keys(colorTokens());
 }
 
 /**

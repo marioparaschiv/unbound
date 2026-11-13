@@ -2,8 +2,8 @@ import { useMemo, memo } from 'react';
 
 import { openThemeEditor } from '~/ui/theme-editor/open-theme-editor';
 import { reinstallFromStore } from '~/updates/addon-updates';
-import { isLocalTheme } from '~/themes/draft';
 import { messages, format } from '~/i18n/api';
+import { isLocalTheme } from '~/themes/draft';
 import { Discord } from '~/metro/components';
 import type { Addon } from '~/addons/addon';
 import { Manager } from '~/addons/manager';

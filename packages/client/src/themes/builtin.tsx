@@ -1,20 +1,20 @@
+import { cloneElement, isValidElement, type ReactNode } from 'react';
 import { createLogger } from '@unbound-app/logger';
-import { cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
 
 import { byFilePath, byFluxStore, byProps } from '~/metro/filters';
 import { clearGuardUnderlay } from '~/themes/clear-guard-underlay';
 import { resolveChatBackground } from '~/themes/chat-background';
 import { resolveThemeColor, withOpacity } from '~/themes/colors';
 import { clearDMGreeting } from '~/themes/clear-dm-greeting';
+import ThemeStore, { getShownTheme } from '~/themes/state';
 import { createPatcher } from '~/patcher/create-patcher';
 import type { SectionEntry } from '~/settings/section';
+import ThemeEditorStore from '~/themes/editor-state';
 import { getSetting } from '~/settings/unbound';
 import { onModuleLoaded } from '~/metro/wait';
 import { findStore } from '~/metro/lookups';
 import { Screens } from '~/core/constants';
 import { onChange } from '~/storage/api';
-import ThemeStore, { getShownTheme } from '~/themes/state';
-import ThemeEditorStore from '~/themes/editor-state';
 
 const Patcher = createPatcher('unbound::themes');
 const Logger = createLogger('Themes');
@@ -135,7 +135,7 @@ type ThemeContextModule = {
 	RootThemeContextProvider: (props: ThemeContextProps) => ReactNode;
 };
 
-type ProviderElement = ReactElement<{ children?: ReactNode }>;
+type ProviderProps = { children?: ReactNode };
 
 type TaggedExperiments = { id: string; tagged: string[] };
 
@@ -177,7 +177,7 @@ function tagExperiments(experiments: string[] = noExperiments, id: string) {
 }
 
 // Two themes on one base share Discord's theme name, so the applied id tags the root theme context instead.
-// The chat background and each change to the editor's draft change colours, so they tag the context too.
+// The chat background and each draft change recolour too, so they tag it as well.
 function tagThemeContext(mdl: ThemeContextModule) {
 	Patcher.before(mdl, 'RootThemeContextProvider', ({ args }) => {
 		const id = ThemeStore((state) => state.applied);
@@ -214,7 +214,9 @@ function ThemeEditorButtonSlot() {
 // starting an edit never remounts the app below it.
 function mountEditorButton(mdl: ThemeContextModule) {
 	Patcher.after(mdl, 'RootThemeContextProvider', ({ result }) => {
-		if (!isValidElement<ProviderElement['props']>(result)) return result;
+		if (!isValidElement<ProviderProps>(result)) {
+			return result;
+		}
 
 		return cloneElement(result, {
 			children: (
