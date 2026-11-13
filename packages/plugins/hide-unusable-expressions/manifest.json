@@ -1,0 +1,22 @@
+{
+	"id": "unbound.hide-unusable-expressions",
+	"name": "Hide Unusable Expressions",
+	"description": "Leaves emojis and stickers you can't send out of the pickers, instead of showing them locked.",
+	"authors": [
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.1.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ReactionIcon",
+	"main": "index.tsx",
+	"replaces": ["unbound.hide-unusable-emojis"]
+}
