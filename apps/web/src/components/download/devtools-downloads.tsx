@@ -105,8 +105,8 @@ function DevToolsDownloads() {
 				</h2>
 				<p className='text-muted-foreground text-sm'>
 					A desktop app for building on Unbound: inspect components, browse native views
-					and Metro modules, and let an agent join over MCP. Each download is an archive
-					with the app inside.
+					and Metro modules, and let an agent query the tree and run JavaScript over MCP.
+					Each download is an archive with the app inside.
 				</p>
 			</div>
 			{/* Column-first on wide screens: Windows on the left, macOS then Linux on the right. */}
