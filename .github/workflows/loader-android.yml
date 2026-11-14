@@ -89,7 +89,7 @@ on:
                 description: 'Download URL for the LSPatch-patched Discord artifact'
                 value: ${{ jobs.patch-discord.outputs.patched_url }}
             module_artifact_id:
-                description: 'Artifact ID of the Xposed module; calls in one run share artifact names, so downloads take the ID'
+                description: 'Artifact ID of the Xposed module. Beta and alpha names carry the channel: download-artifact keeps one artifact per name, even by ID'
                 value: ${{ jobs.build-module.outputs.module_artifact_id }}
             symbols_artifact_id:
                 description: 'Artifact ID of the Android native symbols'
@@ -315,7 +315,7 @@ jobs:
               id: upload-symbols
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
-                  name: android symbols
+                  name: android symbols${{ inputs.discord_channel != 'stable' && format(' {0}', inputs.discord_channel) || '' }}
                   path: packages/loader/android-symbols/
                   if-no-files-found: error
                   retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
@@ -324,7 +324,7 @@ jobs:
               id: upload-module
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
-                  name: android module
+                  name: android module${{ inputs.discord_channel != 'stable' && format(' {0}', inputs.discord_channel) || '' }}
                   path: packages/loader/${{ steps.collect.outputs.module_filename }}
                   retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
 
@@ -551,7 +551,7 @@ jobs:
               id: upload-patched
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
-                  name: patched discord
+                  name: patched discord${{ inputs.discord_channel != 'stable' && format(' {0}', inputs.discord_channel) || '' }}
                   path: packages/loader/${{ steps.patch.outputs.patched_filename }}
                   retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
 
@@ -565,7 +565,7 @@ jobs:
               id: upload-emulator
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
-                  name: patched discord emulator split
+                  name: patched discord emulator split${{ inputs.discord_channel != 'stable' && format(' {0}', inputs.discord_channel) || '' }}
                   path: packages/loader/emulator/*.apk
                   if-no-files-found: error
                   retention-days: 1

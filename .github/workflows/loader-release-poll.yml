@@ -247,6 +247,10 @@ jobs:
         timeout-minutes: 5
         permissions:
             actions: write
+        # No checkout, so packages/loader does not exist.
+        defaults:
+            run:
+                working-directory: .
         steps:
             - name: Publish the bundle that waited for these releases
               env:

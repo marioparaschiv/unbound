@@ -20,6 +20,15 @@ var androidArtifactIDs = map[string]string{
 	"${{ needs.patch-discord.outputs.emulator_artifact_id }}": "patched discord emulator split",
 }
 
+// androidChannelSuffix ends the names of beta and alpha Android artifacts: download-artifact keeps one artifact
+// per name, even when it downloads by ID, so each channel's build in one run needs its own names.
+const androidChannelSuffix = "${{ inputs.discord_channel != 'stable' && format(' {0}', inputs.discord_channel) || '' }}"
+
+// uploadedArtifact names the artifact an upload step makes, as a stable build names it.
+func uploadedArtifact(step workflowStep) string {
+	return strings.TrimSuffix(step.With["name"], androidChannelSuffix)
+}
+
 // downloadedArtifact names the artifact a download step takes, by name or by an Android build's artifact ID.
 func downloadedArtifact(step workflowStep) string {
 	if name := step.With["name"]; name != "" {
@@ -71,8 +80,8 @@ func TestParsedAndroidArtifactIDsNameTheirUploads(t *testing.T) {
 				upload = step
 			}
 		}
-		if !strings.HasPrefix(upload.Uses, "actions/upload-artifact@") || upload.With["name"] != artifact {
-			t.Fatalf("%s must be the ID of the %q upload, step %s uploads %q", expression, artifact, match[1], upload.With["name"])
+		if !strings.HasPrefix(upload.Uses, "actions/upload-artifact@") || upload.With["name"] != artifact+androidChannelSuffix {
+			t.Fatalf("%s must be the ID of the %q upload named per channel, step %s uploads %q", expression, artifact, match[1], upload.With["name"])
 		}
 	}
 }
