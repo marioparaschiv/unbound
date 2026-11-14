@@ -27,6 +27,8 @@ func run(args []string) error {
 		return runFetch(args[1:])
 	case "ipa-info":
 		return runIPAInfo(args[1:])
+	case "app-source-check":
+		return runAppSourceCheck(args[1:])
 	case "ipa-icons":
 		return runIPAIcons(args[1:])
 	case "discord-version":
