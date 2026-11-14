@@ -11,5 +11,7 @@
 	"SPEED_075": "0.75×",
 	"SPEED_1": "1×",
 	"SPEED_15": "1.5×",
-	"SPEED_2": "2×"
+	"SPEED_2": "2×",
+	"SPEED_ROW": "Playback Speed: {speed}",
+	"SPEED_CHANGED": "Voice messages now play at {speed}."
 }

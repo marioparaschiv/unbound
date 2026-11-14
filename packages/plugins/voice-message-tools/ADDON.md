@@ -4,7 +4,7 @@ banner: media/banner.png
 
 ## :sparkle: What it does
 
-- :media-fast-forward: Voice messages and audio files play at the speed you pick, 0.75× to 2×; videos keep theirs.
+- :media-fast-forward: Voice messages and audio files play at the speed you pick, 0.75× to 2×; videos keep theirs. Long-press a voice message and tap **Playback Speed** to change it on the spot.
 - :microphone: Attach only audio files to a message and it goes out as a voice message, with a player instead of a file.
 - :eye: Optionally, audio files others send play in the voice message player.
 - :download: Long-press a voice message and pick **Download Voice Message** to keep its audio.
