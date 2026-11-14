@@ -64,7 +64,9 @@ export function start() {
 
 	// A check from the updates page can stage the next bundle well after launch.
 	unsubscribe = UpdatesStore.subscribe(({ state }) => {
-		if (state.status === 'ready' && state.client === 'staged') announceStagedBundle();
+		if (state.status === 'ready' && state.client === 'staged') {
+			announceStagedBundle();
+		}
 	});
 
 	stagedCheck = setTimeout(announceStagedBundle, STAGED_CHECK_DELAY);

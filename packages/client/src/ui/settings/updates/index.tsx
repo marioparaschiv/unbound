@@ -1,8 +1,8 @@
 import { describeRequiredLoader } from '~/updates/describe-required-loader';
-import { automaticUpdates } from '~/updates/addon-updates';
-import { readInstallKind } from '~/updates/install-kind';
-import { hasStagedBundle } from '~/native/unbound-native';
 import type { ClientUpdate } from '~/updates/client-update';
+import { automaticUpdates } from '~/updates/addon-updates';
+import { hasStagedBundle } from '~/native/unbound-native';
+import { readInstallKind } from '~/updates/install-kind';
 import { useUnboundSettings } from '~/settings/unbound';
 import NoticeRow from '~/ui/settings-kit/notice-row';
 import { Discord } from '~/metro/components';

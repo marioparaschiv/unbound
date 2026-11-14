@@ -85,7 +85,9 @@ export function hasStagedBundle(): boolean {
 export async function checkForBundleUpdate(): Promise<boolean> {
 	const bridge = globalThis.UnboundNative;
 
-	if (!bridge?.checkForBundleUpdate) return false;
+	if (!bridge?.checkForBundleUpdate) {
+		return false;
+	}
 
 	return bridge.checkForBundleUpdate();
 }
@@ -97,7 +99,9 @@ export async function checkForBundleUpdate(): Promise<boolean> {
 export async function updateBundle(): Promise<boolean> {
 	const bridge = globalThis.UnboundNative;
 
-	if (!bridge?.updateBundle) return hasStagedBundle();
+	if (!bridge?.updateBundle) {
+		return hasStagedBundle();
+	}
 
 	return bridge.updateBundle();
 }

@@ -65,8 +65,8 @@ describe('UnboundNative', () => {
 			checkForBundleUpdate: () => Promise.reject(new Error('offline')),
 			updateBundle: () => Promise.reject(new Error('offline')),
 		};
-		await expect(checkForBundleUpdate()).rejects.toThrow('offline');
-		await expect(updateBundle()).rejects.toThrow('offline');
+		expect(await checkForBundleUpdate().catch((error: Error) => error.message)).toBe('offline');
+		expect(await updateBundle().catch((error: Error) => error.message)).toBe('offline');
 	});
 
 	test('a throwing getter reads as empty', () => {

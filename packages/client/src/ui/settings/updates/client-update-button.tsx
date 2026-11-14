@@ -2,8 +2,8 @@ import { createLogger } from '@unbound-app/logger';
 
 import { CLIENT_UPDATE_ID } from '~/updates/client-update';
 import { Discord } from '~/metro/components';
-import { reload } from '~/native/runtime';
 import UpdatesStore from '~/updates/state';
+import { reload } from '~/native/runtime';
 import { messages } from '~/i18n/api';
 
 const logger = createLogger('Updater', 'Client');
