@@ -139,6 +139,8 @@
 	"UNBOUND_UPDATES_LOADER_IPA": "IPA",
 	"UNBOUND_UPDATES_DOWNLOAD": "Download",
 	"UNBOUND_UPDATES_DOWNLOAD_VERSION": "Download v{version}",
+	"UNBOUND_UPDATES_INSTALL_WITH": "Install with {app}",
+	"UNBOUND_UPDATES_DOWNLOAD_IPA": "Download the IPA",
 	"UNBOUND_INSTALL_FAILED": "Couldn't install {name}.",
 	"UNBOUND_UPDATES_STATUS_UP_TO_DATE": "Up to Date",
 	"UNBOUND_UPDATES_STATUS_FAILED": "Couldn't Check for Updates",

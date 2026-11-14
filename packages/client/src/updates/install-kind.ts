@@ -63,3 +63,13 @@ export function readInstallKind(): InstallKind | undefined {
 			attempt(() => discordInstaller()?.status().availability, 'unpatched') !== 'unpatched',
 	});
 }
+
+/**
+ * @description Reads how the loader describes the install's signing, such as `Development · AltStore/SideStore`.
+ * @returns The description, or an empty string without a native platform bridge.
+ */
+export function readInstallDetails(): string {
+	const platform = globalThis.NativePlatform;
+
+	return platform ? attempt(() => platform.app.getInstallDetails?.(), '') : '';
+}
