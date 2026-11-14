@@ -82,9 +82,10 @@ private:
     void                  parseAllLocked() const;
     std::string           dumpLocked(std::vector<CachedStore> &layout) const;
     const nlohmann::json *findLocked(const std::string &store, const std::string &key) const;
-    void setLocked(const std::string &store, const std::string &key, nlohmann::json value);
-    void removeLocked(const std::string &store, const std::string &key);
-    void applyLocked(const nlohmann::json &changes);
+    void setLocked(const std::string &store, const std::string &key, nlohmann::json value) const;
+    void removeLocked(const std::string &store, const std::string &key) const;
+    void applyLocked(const nlohmann::json &changes) const;
+    void mergeExternalEditsLocked() const;
 
     std::string            path_;
     mutable nlohmann::json data_ = nlohmann::json::object();
@@ -92,9 +93,13 @@ private:
     mutable std::map<std::string, RawStore> raw_;
     mutable FileStamp                       stamp_;
     // Hash of settings.json as last read or written, and whether the cache beside it is behind.
-    mutable uint64_t                              jsonHash_   = 0;
-    mutable bool                                  cacheStale_ = true;
-    mutable bool                                  dirty_      = false;
+    mutable uint64_t jsonHash_   = 0;
+    mutable bool     cacheStale_ = true;
+    mutable bool     dirty_      = false;
+    // The changes made since the last save, replayed over settings.json when something else
+    // edited it meanwhile; `replaced_` means the whole file was replaced and nothing merges.
+    mutable std::vector<nlohmann::json>           journal_;
+    mutable bool                                  replaced_   = false;
     mutable bool                                  unreadable_ = false;
     mutable std::mutex                            mutex_;
     std::chrono::milliseconds                     diskRecheck_;
