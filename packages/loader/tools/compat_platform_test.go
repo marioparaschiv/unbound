@@ -241,6 +241,7 @@ func TestEvaluateCompatAgainstSDKs(t *testing.T) {
 		{Kind: referenceObjCClass, Name: "LCAppInfo", Component: "loader-ios", Locations: location},
 		{Kind: referenceObjCClass, Name: "UIPlaceholderColor", Component: "loader-ios", Locations: location},
 		{Kind: referenceObjCMethod, Name: "effectWithBlurRadius:", Component: "plugin:demo", Locations: location},
+		{Kind: referenceObjCMethod, Name: "_imageWithCGSVGDocument:scale:orientation:", Component: "plugin:demo", Locations: location},
 		{Kind: referenceObjCMethod, Class: "UIView", Name: "layoutSubviews", Component: "plugin:demo", Locations: location},
 		{Kind: referenceJavaMethod, Class: "com.discord.View", Name: "onSizeChanged", Parameters: []string{"int", "int", "int", "int"}, Component: "plugin:demo", Locations: location},
 		{Kind: referenceJavaClass, Name: "app.unbound.android.ActivityTracker", Component: "plugin:demo", Locations: location},
@@ -268,6 +269,7 @@ func TestEvaluateCompatAgainstSDKs(t *testing.T) {
 	expect("ios", referenceObjCClass, "LCAppInfo", compatExternal)
 	expect("ios", referenceObjCClass, "UIPlaceholderColor", compatExternal)
 	expect("ios", referenceObjCMethod, "effectWithBlurRadius:", compatExternal)
+	expect("ios", referenceObjCMethod, "_imageWithCGSVGDocument:scale:orientation:", compatExternal)
 	expect("android", referenceJavaMethod, "onSizeChanged", compatOK)
 	expect("android", referenceJavaClass, "app.unbound.android.ActivityTracker", compatOK)
 	expect("android", referenceJavaClass, "app.unbound.android.Gone", compatBroken)
@@ -280,7 +282,7 @@ func TestEvaluateCompatAgainstSDKs(t *testing.T) {
 	expect("android", referenceJavaField, "mOuterRadii", compatExternal)
 
 	report := renderCompatReport(results)
-	if !strings.Contains(report, "Outside Discord and the SDKs (9)") {
+	if !strings.Contains(report, "Outside Discord and the SDKs (10)") {
 		t.Fatalf("environment-only classes must be listed:\n%s", report)
 	}
 }
