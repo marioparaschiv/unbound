@@ -7,7 +7,6 @@ import {
 	filterCatalog,
 	listAuthors,
 	listTags,
-	pickFeatured,
 } from '~/marketplace/filters';
 import type { MarketplaceFilters } from '~/marketplace/filters';
 
@@ -15,7 +14,6 @@ type ListingOptions = {
 	type?: AddonType;
 	authors?: [`${number}`, string][];
 	publishedAt?: string;
-	iconSvg?: string;
 	tags?: string[];
 };
 
@@ -26,14 +24,12 @@ function listing(id: string, options: ListingOptions = {}): ListedAddon {
 		type = 'plugin',
 		authors = [['1', 'Mario']],
 		publishedAt = '2026-11-08T00:00:00.000Z',
-		iconSvg,
 		tags,
 	} = options;
 
 	return {
 		id,
 		type,
-		iconSvg,
 		tags: tags?.map((tag) => ({ id: tag, label: tag.toUpperCase(), color: '#fff' })),
 		latestVersion: {
 			version: '1.0.0',
@@ -127,30 +123,5 @@ describe('listTags', () => {
 			{ id: 'privacy', label: 'PRIVACY', color: '#fff', count: 1 },
 		]);
 		expect(listTags([listing('a.bare')], 'plugin')).toEqual([]);
-	});
-});
-
-describe('pickFeatured', () => {
-	const many = Array.from({ length: 14 }, (_, index) =>
-		listing(`a.plugin${index}`, { iconSvg: index < 12 ? '<svg/>' : undefined }),
-	);
-
-	test('picks up to ten addons with an icon, the same all day', () => {
-		const picks = pickFeatured(many, 'plugin', NOW);
-
-		expect(picks).toHaveLength(10);
-		expect(picks.every((addon) => addon.iconSvg)).toBe(true);
-		expect(pickFeatured(many, 'plugin', NOW + 3_600_000)).toEqual(picks);
-	});
-
-	test('changes its order on another day', () => {
-		const today = pickFeatured(many, 'plugin', NOW).map((addon) => addon.id);
-		const tomorrow = pickFeatured(many, 'plugin', NOW + 86_400_000).map((addon) => addon.id);
-
-		expect(tomorrow).not.toEqual(today);
-	});
-
-	test('shows no shelf for a kind with few addons', () => {
-		expect(pickFeatured(addons, 'plugin', NOW)).toEqual([]);
 	});
 });

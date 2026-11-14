@@ -32,6 +32,7 @@ import { staggerStyle } from '~/components/motion/reveal-style';
 import FilterBar from '~/components/addon-filters/filter-bar';
 import { listingQuery } from '~/queries/marketplace/listing';
 import SortMenu from '~/components/addon-filters/sort-menu';
+import FeaturedShelf from '~/components/featured-shelf';
 import PageHeader from '~/components/page-header';
 import AddonCard from '~/components/addon-card';
 import { Button } from '~/components/ui/button';
@@ -229,6 +230,7 @@ function AddonListing({ type, search }: AddonListingProps) {
 	return (
 		<div className='flex flex-col flex-1 gap-6'>
 			<PageHeader title={copy.title} description={copy.description} />
+			<FeaturedShelf type={type} />
 			<div className='flex flex-col flex-1 gap-6'>
 				<FilterBar
 					type={type}
