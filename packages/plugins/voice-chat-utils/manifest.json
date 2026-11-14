@@ -1,0 +1,25 @@
+{
+	"id": "unbound.voice-chat-utils",
+	"name": "Voice Chat Utils",
+	"description": "Disconnects, mutes, deafens or moves everyone in a voice channel at once, from the channel's long-press menu, when you have the permissions.",
+	"authors": [
+		{
+			"name": "D3SOX",
+			"id": "201052085641281538"
+		},
+		{
+			"name": "nickwoah",
+			"id": "644298972420374528"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "VoiceNormalIcon",
+	"main": "index.tsx"
+}
