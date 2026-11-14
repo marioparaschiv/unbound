@@ -1,5 +1,4 @@
 {
-	"DOWNLOAD": "Download Voice Message",
 	"DOWNLOADING": "Downloading {name}…",
 	"DOWNLOAD_FAILED": "Couldn't download the voice message.",
 	"SEND_AUDIO": "Send audio files as voice messages",
@@ -11,7 +10,5 @@
 	"SPEED_075": "0.75×",
 	"SPEED_1": "1×",
 	"SPEED_15": "1.5×",
-	"SPEED_2": "2×",
-	"SPEED_ROW": "Playback Speed: {speed}",
-	"SPEED_CHANGED": "Voice messages now play at {speed}."
+	"SPEED_2": "2×"
 }

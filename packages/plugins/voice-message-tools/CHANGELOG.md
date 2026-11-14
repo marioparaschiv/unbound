@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.4.0] - 2026-11-14
+
+### Changed
+
+- Speed and download buttons sit inside the voice message player, on iOS and Android. Tap the speed to step through 1×, 1.5×, 2× and 0.75×; tap the arrow to save the audio.
+
+### Removed
+
+- The Download Voice Message and Playback Speed rows in the long-press menu; the player's buttons replace them.
+
 ## [1.3.0] - 2026-11-14
 
 ### Added
