@@ -1,0 +1,16 @@
+{
+	"name": "@react-native/virtualized-lists",
+	"version": "0.86.3",
+	"exports": {
+		".": {
+			"react-native-strict-api": "./types_generated/index.d.ts",
+			"types": "./index.d.ts",
+			"default": "./index.js"
+		},
+		"./*": {
+			"types": null,
+			"default": "./*.js"
+		},
+		"./package.json": "./package.json"
+	}
+}

@@ -1,0 +1,4 @@
+# tsrs, the console's TypeScript checker, needs Rust 1.99 or newer.
+[toolchain]
+channel = "1.100.0"
+components = ["clippy", "rustfmt"]
