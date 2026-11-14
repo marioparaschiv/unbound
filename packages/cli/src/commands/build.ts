@@ -18,6 +18,12 @@ const schema = Type.Object({
 		}),
 		false,
 	),
+	shard: Type.Optional(
+		Type.String({
+			description:
+				'Build one part of the workspace, such as 2/3, so a large workspace can build in several processes.',
+		}),
+	),
 	verbose: defaulted(
 		Type.Boolean({
 			description:
