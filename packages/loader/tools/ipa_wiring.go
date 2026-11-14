@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"debug/macho"
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -19,7 +20,7 @@ func plistValue(data []byte, key string) (string, error) {
 	return "", nil
 }
 
-func bundleIdentifier(entries map[string]*zip.File, infoPath string) (string, error) {
+func plistValueOf(entries map[string]*zip.File, infoPath, key string) (string, error) {
 	file := entries[infoPath]
 	if file == nil {
 		return "", fmt.Errorf("final IPA has no %s", infoPath)
@@ -28,7 +29,32 @@ func bundleIdentifier(entries map[string]*zip.File, infoPath string) (string, er
 	if err != nil {
 		return "", err
 	}
-	return plistValue(data, "CFBundleIdentifier")
+	return plistValue(data, key)
+}
+
+func bundleIdentifier(entries map[string]*zip.File, infoPath string) (string, error) {
+	return plistValueOf(entries, infoPath, "CFBundleIdentifier")
+}
+
+func appGroupsOf(entries map[string]*zip.File, executable string) ([]string, error) {
+	file := entries[executable]
+	if file == nil {
+		return nil, nil
+	}
+	data, err := readZipEntry(file)
+	if err != nil {
+		return nil, err
+	}
+	return machoAppGroups(data), nil
+}
+
+func missingAppGroup(extension, app []string) string {
+	for _, group := range extension {
+		if !slices.Contains(app, group) {
+			return group
+		}
+	}
+	return ""
 }
 
 func loadsGroupRemap(data []byte) bool {
@@ -39,8 +65,9 @@ func loadsGroupRemap(data []byte) bool {
 	return machoLoadsDylib(file, groupRemapInstall)
 }
 
-// validateIPAExtensionWiring checks every extension lives under the app's bundle id, and that Discord's own extensions
-// load UnboundGroups.dylib, without which they cannot reach a sideloader's renamed app group.
+// validateIPAExtensionWiring checks every extension lives under the app's bundle id, that Discord's own extensions
+// load UnboundGroups.dylib, without which they cannot reach a sideloader's renamed app group, and that they ask only
+// for app groups the app also has, since sideloaders rename and register the groups of each signed binary.
 func validateIPAExtensionWiring(path string) error {
 	archive, err := zip.OpenReader(path)
 	if err != nil {
@@ -61,6 +88,14 @@ func validateIPAExtensionWiring(path string) error {
 	}
 	if entries[app+groupRemapFramework] == nil {
 		return fmt.Errorf("final IPA has no %s", groupRemapFramework)
+	}
+	appExecutable, err := plistValueOf(entries, app+"Info.plist", "CFBundleExecutable")
+	if err != nil {
+		return err
+	}
+	appGroups, err := appGroupsOf(entries, app+appExecutable)
+	if err != nil {
+		return err
 	}
 	for _, file := range archive.File {
 		rest, ok := strings.CutPrefix(file.Name, app+"PlugIns/")
@@ -85,6 +120,9 @@ func validateIPAExtensionWiring(path string) error {
 		}
 		if !loadsGroupRemap(data) {
 			return fmt.Errorf("%s does not load UnboundGroups.dylib, so it cannot reach a renamed app group", parts[0])
+		}
+		if group := missingAppGroup(machoAppGroups(data), appGroups); group != "" {
+			return fmt.Errorf("%s uses app group %s, which the app does not, so a sideloader cannot share it", parts[0], group)
 		}
 	}
 	return nil
