@@ -52,7 +52,7 @@ export function installSpeedHook(scope: NativeUIScope, speed: number) {
 			java.invoke(params, 'setSpeed', [javaFloat(chosen)]);
 			java.invoke(track, 'setPlaybackParams', [params]);
 		} catch (error) {
-			console.error(`[Voice Messages] Failed to set a track's speed: ${String(error)}`);
+			console.error(`[Voice Message Tools] Failed to set a track's speed: ${String(error)}`);
 		}
 	});
 }

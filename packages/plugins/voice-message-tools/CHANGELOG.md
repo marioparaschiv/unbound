@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-14
+
+### Changed
+
+- Renamed from Voice Messages; the old plugin moves over by itself.
+
 ## [1.1.0] - 2026-11-14
 
 ### Added
