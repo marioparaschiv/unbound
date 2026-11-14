@@ -1,0 +1,30 @@
+{
+	"id": "unbound.declutter",
+	"name": "Declutter",
+	"description": "Hides buttons, upsells and profile decorations you never use: gift and call buttons, Quests, Nitro, avatar decorations, server tags and more.",
+	"authors": [
+		{
+			"name": "Benjii",
+			"id": "463702169443368970"
+		},
+		{
+			"name": "kmmiio99o",
+			"id": "0"
+		},
+		{
+			"name": "ssense",
+			"id": "0"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "EyeSlashIcon",
+	"main": "index.tsx",
+	"replaces": ["unbound.hide-buttons", "unbound.hide-gift-button"]
+}

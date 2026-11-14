@@ -9,7 +9,10 @@ import {
 	patchProfileContactButtons,
 	patchVoiceMessageButton,
 	patchYouScreenButtons,
-} from '~/patches';
+} from '~/patches/buttons';
+import { patchMessageContent, patchPremiumSettings, patchProfileTabs } from '~/patches/upsells';
+import { patchBlankTargets } from '~/patches/blank';
+import { stopWaiting } from '~/lib/when-loaded';
 
 export function start() {
 	patchGiftOrThreadButton();
@@ -20,8 +23,13 @@ export function start() {
 	patchProfileContactButtons();
 	patchYouScreenButtons();
 	patchGuildActionRows();
+	patchBlankTargets();
+	patchMessageContent();
+	patchPremiumSettings();
+	patchProfileTabs();
 }
 
 export function stop() {
+	stopWaiting();
 	patcher.unpatchAll();
 }

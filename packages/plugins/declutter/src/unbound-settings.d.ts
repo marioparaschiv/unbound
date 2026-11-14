@@ -179,6 +179,126 @@ declare module '@unbound-app/settings' {
 		 * Hides Server Boosts at the top of a server's channel list.
 		 */
 		serverBoosts: boolean;
+		/**
+		 * Nitro button
+		 *
+		 * Hides Nitro from the bar on the You screen.
+		 */
+		nitroButton: boolean;
+		/**
+		 * Orbs balance
+		 *
+		 * Hides the Orbs balance on the You screen.
+		 */
+		orbsBalance: boolean;
+		/**
+		 * Quest dock
+		 *
+		 * Hides the floating Quest bar.
+		 */
+		questDock: boolean;
+		/**
+		 * Boost goal bar
+		 *
+		 * Hides the boost goal at the top of a server's channel list.
+		 */
+		boostGoal: boolean;
+		/**
+		 * Avatar decorations
+		 *
+		 * Hides decorations around avatars in chat and on profiles.
+		 */
+		avatarDecorations: boolean;
+		/**
+		 * Nameplates
+		 *
+		 * Hides the nameplates behind names in the member and DM lists.
+		 */
+		nameplates: boolean;
+		/**
+		 * Profile effects
+		 *
+		 * Hides animated effects on profiles.
+		 */
+		profileEffects: boolean;
+		/**
+		 * Profile frames
+		 *
+		 * Hides frames around profile avatars.
+		 */
+		profileFrames: boolean;
+		/**
+		 * Profile badges
+		 *
+		 * Hides the badges on profiles.
+		 */
+		badges: boolean;
+		/**
+		 * Server tags
+		 *
+		 * Hides server tags beside names in chat, voice and on profiles.
+		 */
+		serverTags: boolean;
+		/**
+		 * Display name styles
+		 *
+		 * Shows display names in the plain font and colour.
+		 */
+		displayNameStyles: boolean;
+		/**
+		 * Wishlist and activity tabs
+		 *
+		 * Hides the Wishlist, Board and Activity tabs on profiles.
+		 */
+		wishlist: boolean;
+		/**
+		 * Server themes
+		 *
+		 * Shows servers in your own theme instead of their server theme.
+		 */
+		serverThemes: boolean;
+		/**
+		 * Activity cards in DMs
+		 *
+		 * Hides the Happening Now cards above your DM list.
+		 */
+		dmActivityCards: boolean;
+		/**
+		 * Nitro settings
+		 *
+		 * Hides the Nitro pages in User Settings.
+		 */
+		paymentNitro: boolean;
+		/**
+		 * Shop settings
+		 *
+		 * Hides the Shop page in User Settings.
+		 */
+		paymentShop: boolean;
+		/**
+		 * Quests settings
+		 *
+		 * Hides the Quests page in User Settings.
+		 */
+		paymentQuests: boolean;
+		/**
+		 * Subscriptions settings
+		 *
+		 * Hides Manage Subscriptions and server subscriptions in User Settings.
+		 */
+		paymentSubscriptions: boolean;
+		/**
+		 * Server Boost settings
+		 *
+		 * Hides the Server Boost page in User Settings.
+		 */
+		paymentBoosts: boolean;
+		/**
+		 * Gift Inventory settings
+		 *
+		 * Hides the Gift Inventory page in User Settings.
+		 */
+		paymentGifts: boolean;
 	};
 
 	/** Each setting and section by its dot-separated key. */
@@ -231,6 +351,126 @@ declare module '@unbound-app/settings' {
 		 * Hides Server Boosts at the top of a server's channel list.
 		 */
 		"serverBoosts": boolean;
+		/**
+		 * Nitro button
+		 *
+		 * Hides Nitro from the bar on the You screen.
+		 */
+		"nitroButton": boolean;
+		/**
+		 * Orbs balance
+		 *
+		 * Hides the Orbs balance on the You screen.
+		 */
+		"orbsBalance": boolean;
+		/**
+		 * Quest dock
+		 *
+		 * Hides the floating Quest bar.
+		 */
+		"questDock": boolean;
+		/**
+		 * Boost goal bar
+		 *
+		 * Hides the boost goal at the top of a server's channel list.
+		 */
+		"boostGoal": boolean;
+		/**
+		 * Avatar decorations
+		 *
+		 * Hides decorations around avatars in chat and on profiles.
+		 */
+		"avatarDecorations": boolean;
+		/**
+		 * Nameplates
+		 *
+		 * Hides the nameplates behind names in the member and DM lists.
+		 */
+		"nameplates": boolean;
+		/**
+		 * Profile effects
+		 *
+		 * Hides animated effects on profiles.
+		 */
+		"profileEffects": boolean;
+		/**
+		 * Profile frames
+		 *
+		 * Hides frames around profile avatars.
+		 */
+		"profileFrames": boolean;
+		/**
+		 * Profile badges
+		 *
+		 * Hides the badges on profiles.
+		 */
+		"badges": boolean;
+		/**
+		 * Server tags
+		 *
+		 * Hides server tags beside names in chat, voice and on profiles.
+		 */
+		"serverTags": boolean;
+		/**
+		 * Display name styles
+		 *
+		 * Shows display names in the plain font and colour.
+		 */
+		"displayNameStyles": boolean;
+		/**
+		 * Wishlist and activity tabs
+		 *
+		 * Hides the Wishlist, Board and Activity tabs on profiles.
+		 */
+		"wishlist": boolean;
+		/**
+		 * Server themes
+		 *
+		 * Shows servers in your own theme instead of their server theme.
+		 */
+		"serverThemes": boolean;
+		/**
+		 * Activity cards in DMs
+		 *
+		 * Hides the Happening Now cards above your DM list.
+		 */
+		"dmActivityCards": boolean;
+		/**
+		 * Nitro settings
+		 *
+		 * Hides the Nitro pages in User Settings.
+		 */
+		"paymentNitro": boolean;
+		/**
+		 * Shop settings
+		 *
+		 * Hides the Shop page in User Settings.
+		 */
+		"paymentShop": boolean;
+		/**
+		 * Quests settings
+		 *
+		 * Hides the Quests page in User Settings.
+		 */
+		"paymentQuests": boolean;
+		/**
+		 * Subscriptions settings
+		 *
+		 * Hides Manage Subscriptions and server subscriptions in User Settings.
+		 */
+		"paymentSubscriptions": boolean;
+		/**
+		 * Server Boost settings
+		 *
+		 * Hides the Server Boost page in User Settings.
+		 */
+		"paymentBoosts": boolean;
+		/**
+		 * Gift Inventory settings
+		 *
+		 * Hides the Gift Inventory page in User Settings.
+		 */
+		"paymentGifts": boolean;
 	};
 
 	/** Every setting and section by its dot-separated key; buttons and notices are not settings. */
@@ -242,7 +482,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "gift" | "emptySend" | "voiceMessage" | "voiceCall" | "videoCall" | "quests" | "shop" | "serverBoosts";
+	export type BooleanSettingKey = "gift" | "emptySend" | "voiceMessage" | "voiceCall" | "videoCall" | "quests" | "shop" | "serverBoosts" | "nitroButton" | "orbsBalance" | "questDock" | "boostGoal" | "avatarDecorations" | "nameplates" | "profileEffects" | "profileFrames" | "badges" | "serverTags" | "displayNameStyles" | "wishlist" | "serverThemes" | "dmActivityCards" | "paymentNitro" | "paymentShop" | "paymentQuests" | "paymentSubscriptions" | "paymentBoosts" | "paymentGifts";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

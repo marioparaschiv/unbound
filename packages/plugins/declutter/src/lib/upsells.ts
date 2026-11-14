@@ -3,6 +3,9 @@ type IconComponent = { displayName?: string; name?: string };
 /** The guild action row Discord shows for Server Boosts. */
 export const SERVER_BOOSTS_ROW = 'guild-boosts';
 
+/** The guild action row Discord shows for the server's boost goal. */
+export const BOOST_GOAL_ROW = 'guild-premium-progress-bar';
+
 /**
  * @description Names the icon a You screen button draws, which tells the buttons apart in every language.
  * @param icon The button's `IconComponent`.
@@ -30,4 +33,4 @@ export function withoutRows<T>(rows: T, hidden: ReadonlySet<string>): T {
 	return (kept.length === rows.length ? rows : kept) as T;
 }
 
-export default { SERVER_BOOSTS_ROW, iconName, withoutRows };
+export default { SERVER_BOOSTS_ROW, BOOST_GOAL_ROW, iconName, withoutRows };
