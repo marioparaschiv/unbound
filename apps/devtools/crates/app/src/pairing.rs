@@ -22,7 +22,7 @@ pub fn pairing(info: &BridgeInfo) -> impl IntoElement {
 			theme::TEXT_MUTED,
 			"Discord on the same network will ask to connect",
 			format!(
-				"Check the code Discord shows matches this one. If it never asks, a firewall or VPN may be blocking mDNS (UDP 5353); type {address} in Unbound's Debugger Address instead."
+				"Check that Discord shows this code. If it never asks, a firewall or VPN may be blocking mDNS (UDP 5353). Enter {address} in Unbound's Debugger Address instead."
 			),
 		)
 	} else {
@@ -30,7 +30,7 @@ pub fn pairing(info: &BridgeInfo) -> impl IntoElement {
 			theme::WARNING,
 			"Phones can't find this computer",
 			format!(
-				"{} Type {address} in Unbound's Debugger Address instead.",
+				"{} Enter {address} in Unbound's Debugger Address instead.",
 				info.error.as_deref().unwrap_or("mDNS is unavailable.")
 			),
 		)

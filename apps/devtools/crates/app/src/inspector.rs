@@ -170,9 +170,9 @@ impl Workspace {
 			.child(
 				icon_button("highlight", assets::CROSSHAIR, highlighted)
 					.tooltip(tooltip(if highlighted {
-						"Stop highlighting on device"
+						"Stop highlighting on the device"
 					} else {
-						"Highlight on device"
+						"Highlight on the device"
 					}))
 					.on_click(cx.listener(move |this, _, _, cx| this.toggle_highlight(id, cx))),
 			)

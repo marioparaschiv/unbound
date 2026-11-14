@@ -181,7 +181,7 @@ impl McpButton {
 		cx.write_to_clipboard(ClipboardItem::new_string(text));
 		toast::show(
 			Toast {
-				title: format!("Couldn't add to {name}").into(),
+				title: format!("Couldn't Add to {name}").into(),
 				message: message.into(),
 				action: None,
 				stays: false,
@@ -241,7 +241,7 @@ impl McpButton {
 					.pb(px(6. * s))
 					.text_size(theme::TEXT_SMALL * s)
 					.text_color(theme::color(theme::TEXT_MUTED))
-					.child("Add this app to an agent"),
+					.child("Add DevTools to an agent"),
 			)
 			.children(rows)
 			.into_any_element()
@@ -260,7 +260,7 @@ impl Render for McpButton {
 			.h(px(28.))
 			.when(open, |button| button.bg(theme::color(theme::HOVER)))
 			.when(!open, |button| {
-				button.tooltip(tooltip("Add this app to an agent"))
+				button.tooltip(tooltip("Add DevTools to an agent"))
 			})
 			.on_click(cx.listener(move |this, _, _, cx| this.set_menu(!open, cx)));
 		let backdrop = open.then(|| self.render_backdrop(window, cx).into_any_element());

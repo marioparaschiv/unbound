@@ -67,8 +67,8 @@ impl Mode {
 
 	fn placeholder(self) -> &'static str {
 		match self {
-			Self::Modules => "Filter by id, path or export name",
-			Self::Keys => "Search keys, methods and function names",
+			Self::Modules => "Filter by ID, path or export name",
+			Self::Keys => "Search keys and function names",
 			Self::Files => "Filter by file path",
 		}
 	}

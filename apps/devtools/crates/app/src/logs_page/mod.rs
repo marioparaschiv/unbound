@@ -222,13 +222,13 @@ impl LogsPage {
 			(
 				"icons/list-filter.svg",
 				"No Matching Lines",
-				"No line from this source has come in yet. Pick another source.".into(),
+				"Nothing from this source yet. Pick another one.".into(),
 			)
 		} else if self.connected {
 			(
 				"icons/scroll-text.svg",
 				"Waiting for Logs",
-				"A device is connected. Its log lines appear here as it writes them.".into(),
+				"A device is connected. Its log lines appear here as they're written.".into(),
 			)
 		} else {
 			(
@@ -287,7 +287,7 @@ impl Render for LogsPage {
 							"Clear",
 							any,
 						)
-						.tooltip(tooltip("Clear the lines shown here"))
+						.tooltip(tooltip("Clear all lines"))
 						.when(any, |button| {
 							button.on_click(cx.listener(|this, _, _, cx| this.clear(cx)))
 						}),

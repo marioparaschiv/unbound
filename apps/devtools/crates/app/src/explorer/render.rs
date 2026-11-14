@@ -228,7 +228,7 @@ impl Explorer {
 			Some(Load::Loaded(_)) if self.fell_back => (
 				theme::WARNING,
 				"Object Gone After Reload",
-				"Showing its class; values are off until you select it again.".into(),
+				"Its class is shown. Select it again to read values.".into(),
 				false,
 			),
 			_ => (

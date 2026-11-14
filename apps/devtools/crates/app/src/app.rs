@@ -95,7 +95,7 @@ impl Workspace {
 	) -> Self {
 		let search_input = cx.new(|cx| {
 			InputState::new(window, cx)
-				.placeholder("Search components, or a jq filter like .name == \"View\"")
+				.placeholder("Search components or use a jq filter like .name == \"View\"")
 		});
 		cx.subscribe(
 			&search_input,

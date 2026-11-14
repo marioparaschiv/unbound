@@ -146,7 +146,7 @@ impl Explorer {
 					SharedString::from(format!("explorer-read-{class}-{name}")),
 					"Read",
 				)
-				.tooltip(tooltip("Runs the getter on the device"))
+				.tooltip(tooltip("Run the getter on the device"))
 				.on_click(cx.listener(move |host: &mut H, _, _, cx| {
 					host.explorer_mut().read_value(&class, kind, &name, cx);
 				}))
@@ -188,9 +188,9 @@ impl Explorer {
 				note(id, 2, "None", theme::TEXT_FAINT).into_any_element()
 			}
 			Some(Load::Loaded(_)) => {
-				note(id, 2, "No matches", theme::TEXT_FAINT).into_any_element()
+				note(id, 2, "Nothing Matches", theme::TEXT_FAINT).into_any_element()
 			}
-			_ => note(id, 2, "Loading", theme::TEXT_FAINT).into_any_element(),
+			_ => note(id, 2, "Loading…", theme::TEXT_FAINT).into_any_element(),
 		}
 	}
 
@@ -206,11 +206,11 @@ impl Explorer {
 		};
 		let remaining = section.total.saturating_sub(section.members.len() as u32);
 		let (text, tone, loading) = match &section.next {
-			Some(Ok(())) => ("Loading".to_owned(), theme::TEXT_FAINT, true),
+			Some(Ok(())) => ("Loading…".to_owned(), theme::TEXT_FAINT, true),
 			Some(Err(error)) => (format!("{error} Click to try again."), theme::ERROR, false),
 			None => (
 				format!(
-					"Show {} more · {remaining} not listed",
+					"Show {} More · {remaining} Not Listed",
 					remaining.min(EXPLORER_MEMBERS_PAGE_SIZE)
 				),
 				theme::ACCENT_HOVER,
