@@ -1,5 +1,5 @@
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { ScrollView } from 'react-native';
+import { View } from 'react-native';
 import { useState } from 'react';
 
 import { bugReportURL, crashDiagnostics, pluginsLine } from '~/ui/error-fallback';
@@ -55,7 +55,7 @@ function ErrorFallback({
 	}
 
 	return (
-		<ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+		<View style={styles.screen}>
 			<SafeArea.SafeAreaPaddingView top bottom style={styles.fill}>
 				<Discord.Stack spacing={12} style={styles.fill}>
 					<Animated.View entering={FadeInDown.duration(320)}>
@@ -116,7 +116,7 @@ function ErrorFallback({
 					</Animated.View>
 				</Discord.Stack>
 			</SafeArea.SafeAreaPaddingView>
-		</ScrollView>
+		</View>
 	);
 }
 
