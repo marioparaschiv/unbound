@@ -85,7 +85,7 @@ func TestStageAndroidBuildDescribesEverySplit(t *testing.T) {
 		if hex.EncodeToString(digest[:]) != split.SHA256 || int64(len(apk)) != split.Size || int64(len(compressed)) != split.CompressedSize {
 			t.Fatalf("split %s does not describe its file", split.Name)
 		}
-		if split.Key != "android/stable/352017/"+testBuildCommit+"/"+split.Name+".apk.gz" {
+		if split.Key != "android/stable/352017/"+testBuildCommit+"/"+split.Name+"-"+split.SHA256[:16]+".apk.gz" {
 			t.Fatalf("split %s key = %s", split.Name, split.Key)
 		}
 	}
@@ -136,7 +136,7 @@ func (bucket *fakeBucket) ServeHTTP(writer http.ResponseWriter, request *http.Re
 	}
 }
 
-func TestUploadAndroidBuildWritesTheRecordLastAndNeverOverwrites(t *testing.T) {
+func TestUploadAndroidBuildWritesTheRecordLastAndSkipsUploadedSplits(t *testing.T) {
 	directory := t.TempDir()
 	record, err := stageAndroidBuild(writeTestPatchedBuild(t, directory), nil, directory, "beta", testBuildCommit)
 	if err != nil {
@@ -152,9 +152,18 @@ func TestUploadAndroidBuildWritesTheRecordLastAndNeverOverwrites(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	prefix := "android/beta/352017/" + testBuildCommit + "/"
-	want := []string{prefix + "base.apk.gz", prefix + "config.arm64_v8a.apk.gz", prefix + "build.json"}
+	recordKey := "android/beta/352017/" + testBuildCommit + "/build.json"
+	want := []string{record.Splits[0].Key, record.Splits[1].Key, recordKey, recordKey}
 	if strings.Join(fake.puts, ",") != strings.Join(want, ",") {
 		t.Fatalf("puts = %v", fake.puts)
+	}
+}
+
+func TestAndroidSplitKeysDifferWhenTheirContentDoes(t *testing.T) {
+	record := androidBuildRecord{Channel: "stable", DiscordVersionCode: 353011, Commit: testBuildCommit}
+	first := androidSplitKey(record, androidBuildSplit{Name: "base", SHA256: strings.Repeat("a", 64)})
+	second := androidSplitKey(record, androidBuildSplit{Name: "base", SHA256: strings.Repeat("b", 64)})
+	if first == second {
+		t.Fatalf("both builds share %s", first)
 	}
 }
