@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.2] - 2026-11-14
+
+### Fixed
+
+- Installs of Hide Gift Button move over to Hide Buttons, and the old listing leaves the store.
+
 ## [1.2.1] - 2026-11-14
 
 ### Fixed

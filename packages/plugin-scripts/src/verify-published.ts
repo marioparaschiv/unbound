@@ -10,6 +10,12 @@ import { PLUGINS_DIR, REPO_ROOT } from './paths';
 import { Type, parse } from '@unbound-app/contracts/schema';
 
 const UNINSTALLED_VERSION = '0.0.0';
+const FIRST_PARTY_PREFIX = 'unbound.';
+const LISTING_PAGE = 50;
+const listingSchema = Type.Object({
+	addons: Type.Array(Type.Object({ id: Type.String() })),
+	nextCursor: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+});
 const clientPackageSchema = Type.Object({ version: Type.String() });
 
 type FirstPartyPlugin = { id: string };
@@ -126,11 +132,60 @@ export async function checkRelease(release: PublishedRelease, fetcher: Fetcher):
 	return problems;
 }
 
+async function listedPluginIds(apiUrl: string, fetcher: Fetcher): Promise<string[]> {
+	const ids: string[] = [];
+	let cursor: string | null | undefined;
+
+	do {
+		const query = new URLSearchParams({ type: 'plugin', limit: String(LISTING_PAGE) });
+
+		if (cursor) {
+			query.set('cursor', cursor);
+		}
+
+		const response = await fetcher(`${apiUrl}/api/v1/addons?${query}`);
+
+		if (!response.ok) {
+			throw new Error(`Failed to list marketplace plugins: ${response.status}`);
+		}
+
+		const page = parse(listingSchema, await response.json());
+
+		ids.push(...page.addons.map((addon) => addon.id));
+		cursor = page.nextCursor;
+	} while (cursor);
+
+	return ids;
+}
+
+/**
+ * @description Names the first-party plugins the marketplace still lists although no plugin in the repository has their id,
+ * which happens when a renamed plugin forgets to name its old id in `replaces`.
+ * @param apiUrl The Unbound backend's base URL.
+ * @param plugins The first-party plugins in the repository.
+ * @param fetcher The fetch implementation.
+ * @returns One problem per orphaned listing.
+ */
+export async function orphanedListings(
+	apiUrl: string,
+	plugins: FirstPartyPlugin[],
+	fetcher: Fetcher,
+): Promise<string[]> {
+	const local = new Set(plugins.map((plugin) => plugin.id));
+
+	return (await listedPluginIds(apiUrl, fetcher))
+		.filter((id) => id.startsWith(FIRST_PARTY_PREFIX) && !local.has(id))
+		.map(
+			(id) =>
+				`${id} is still listed but no plugin has that id; name it in its replacement's \`replaces\` and bump that plugin's version`,
+		);
+}
+
 /**
  * @description Verifies every published first-party plugin and reports what a client would fail to install.
  * @param apiUrl The Unbound backend's base URL.
  * @param fetcher The fetch implementation.
- * @returns The problems found, and which first-party plugins the store does not publish.
+ * @returns The problems found, including listings no plugin owns, and which first-party plugins the store does not publish.
  */
 export async function verifyPublished(
 	apiUrl: string,
@@ -140,7 +195,10 @@ export async function verifyPublished(
 	const releases = await publishedReleases(apiUrl, plugins, fetcher);
 	const published = new Set(releases.map((release) => release.id));
 	const problems = (
-		await Promise.all(releases.map((release) => checkRelease(release, fetcher)))
+		await Promise.all([
+			...releases.map((release) => checkRelease(release, fetcher)),
+			orphanedListings(apiUrl, plugins, fetcher),
+		])
 	).flat();
 
 	return {

@@ -12,10 +12,11 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.2.1",
+	"version": "1.2.2",
 	"unbound": {
 		"min": "3.0.0"
 	},
 	"icon": "GiftIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"replaces": ["unbound.hide-gift-button"]
 }

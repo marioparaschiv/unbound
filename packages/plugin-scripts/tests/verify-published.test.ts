@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { checkRelease, digestOf } from '~/verify-published';
+import { checkRelease, digestOf, orphanedListings } from '~/verify-published';
 
 const encoder = new TextEncoder();
 
@@ -62,5 +62,30 @@ describe('checkRelease', () => {
 		expect(problems).toContain(
 			'bytecode 99 bundle at https://cdn.test/sample/index.99.hbc answered 404',
 		);
+	});
+});
+
+describe('orphanedListings', () => {
+	test('names first-party listings no plugin owns, across pages', async () => {
+		const fetcher = served({
+			'https://api.test/api/v1/addons?type=plugin&limit=50': JSON.stringify({
+				addons: [{ id: 'unbound.hide-buttons' }, { id: 'unbound.hide-gift-button' }],
+				nextCursor: 'next',
+			}),
+			'https://api.test/api/v1/addons?type=plugin&limit=50&cursor=next': JSON.stringify({
+				addons: [{ id: 'someone.other' }, { id: 'unbound.gone' }],
+				nextCursor: null,
+			}),
+		});
+
+		const problems = await orphanedListings(
+			'https://api.test',
+			[{ id: 'unbound.hide-buttons' }],
+			fetcher,
+		);
+
+		expect(problems).toHaveLength(2);
+		expect(problems[0]).toStartWith('unbound.hide-gift-button is still listed');
+		expect(problems[1]).toStartWith('unbound.gone is still listed');
 	});
 });
