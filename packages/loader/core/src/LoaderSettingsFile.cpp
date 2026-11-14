@@ -233,8 +233,36 @@ void SettingsStore::load()
         keepLastGoodLocked(*contents);
     }
 
-    stamp_ = stampOnDisk();
-    dirty_ = false;
+    stamp_    = stampOnDisk();
+    dirty_    = false;
+    replaced_ = false;
+    journal_.clear();
+}
+
+// Something else wrote settings.json while changes were pending: start from its contents and
+// replay those changes, so keys only the other writer touched survive the save.
+void SettingsStore::mergeExternalEditsLocked() const
+{
+    if (replaced_ || !stamp_.exists)
+    {
+        return;
+    }
+    const FileStamp current = stampOnDisk();
+    if (!current.exists || current == stamp_)
+    {
+        return;
+    }
+    std::optional<std::string> contents = readTextFile(path_);
+    if (!contents || !adoptLocked(*contents))
+    {
+        return;
+    }
+    std::vector<nlohmann::json> journal = std::move(journal_);
+    journal_.clear();
+    applyLocked(nlohmann::json(journal));
+    stamp_ = current;
+    log(LogLevel::Info, LOG_CATEGORY_SETTINGS,
+        "settings.json changed on disk while changes were pending; merged them.");
 }
 
 std::string SettingsStore::lastGoodPath() const
@@ -295,6 +323,7 @@ bool SettingsStore::save() const
     {
         return false;
     }
+    mergeExternalEditsLocked();
     std::vector<CachedStore> layout;
     const std::string        text = dumpLocked(layout);
     // settings.json first: a crash before the cache is written leaves a cache for other bytes,
@@ -303,8 +332,10 @@ bool SettingsStore::save() const
     {
         return false;
     }
-    stamp_     = stampOnDisk();
-    dirty_     = false;
+    stamp_    = stampOnDisk();
+    dirty_    = false;
+    replaced_ = false;
+    journal_.clear();
     jsonHash_  = settingsHash(text);
     bool whole = true;
     for (const CachedStore &store : layout)

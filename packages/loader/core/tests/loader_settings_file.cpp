@@ -190,6 +190,48 @@ void writesPickUpExternalEditsFirst(const std::filesystem::path &root)
     assert(reader.getBoolean("b", "external", false));
 }
 
+void savesKeepExternalEditsMadeWhileChangesWerePending(const std::filesystem::path &root)
+{
+    const std::string path = settingsPath(root);
+    assert(loader::writeTextFileAtomically(path, R"({"a":{"x":1,"y":1}})"));
+    loader::SettingsStore store(path, std::chrono::hours(1));
+    store.load();
+    assert(store.set("a", "x", 2));
+    store.remove("a", "y");
+
+    assert(loader::writeTextFileAtomically(path,
+                                           R"({"a":{"x":9,"y":1,"z":3},"b":{"external":true}})"));
+    touchLater(path);
+    assert(store.set("c", "late", true));
+    assert(store.save());
+
+    loader::SettingsStore reader(path);
+    reader.load();
+    assert(reader.get("a", "x") == nlohmann::json(2));
+    assert(!reader.get("a", "y"));
+    assert(reader.get("a", "z") == nlohmann::json(3));
+    assert(reader.getBoolean("b", "external", false));
+    assert(reader.getBoolean("c", "late", false));
+}
+
+void replacingIgnoresExternalEdits(const std::filesystem::path &root)
+{
+    const std::string path = settingsPath(root);
+    assert(loader::writeTextFileAtomically(path, R"({"a":{"x":1}})"));
+    loader::SettingsStore store(path, std::chrono::hours(1));
+    store.load();
+    assert(store.replace(R"({"r":{"only":true}})"));
+
+    assert(loader::writeTextFileAtomically(path, R"({"b":{"external":true}})"));
+    touchLater(path);
+    assert(store.save());
+
+    loader::SettingsStore reader(path);
+    reader.load();
+    assert(reader.getBoolean("r", "only", false));
+    assert(!reader.get("b", "external"));
+}
+
 void reloadSkipsAnUnchangedFile(const std::filesystem::path &root)
 {
     const std::string path = settingsPath(root);
@@ -260,6 +302,8 @@ int main()
     run("partial", saveLeavesTheCacheToRefreshWhenAStoreWasNeverDecoded);
     run("recheck", readsWaitForTheRecheckInterval);
     run("external", writesPickUpExternalEditsFirst);
+    run("pending", savesKeepExternalEditsMadeWhileChangesWerePending);
+    run("replaced", replacingIgnoresExternalEdits);
     run("reload", reloadSkipsAnUnchangedFile);
     run("blocked", saveFailsWhenTheDirectoryIsAFile);
     run("unreadable", unreadableSettingsAreNeverOverwritten);

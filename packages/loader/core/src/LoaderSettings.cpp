@@ -53,7 +53,9 @@ bool SettingsStore::replace(const std::string &json)
     std::lock_guard<std::mutex> lock(mutex_);
     data_ = std::move(parsed);
     raw_.clear();
-    dirty_ = true;
+    dirty_    = true;
+    replaced_ = true;
+    journal_.clear();
     return true;
 }
 
@@ -204,7 +206,7 @@ bool SettingsStore::flush()
     return save();
 }
 
-void SettingsStore::applyLocked(const nlohmann::json &changes)
+void SettingsStore::applyLocked(const nlohmann::json &changes) const
 {
     for (const nlohmann::json &change : changes)
     {
@@ -218,6 +220,10 @@ void SettingsStore::applyLocked(const nlohmann::json &changes)
             bool               erased = data_.erase(store) > 0;
             erased                    = raw_.erase(store) > 0 || erased;
             dirty_                    = erased || dirty_;
+            if (erased)
+            {
+                journal_.push_back({{"store", store}, {"clear", true}});
+            }
             continue;
         }
         if (!change.contains("key") || !change["key"].is_string())
@@ -241,9 +247,10 @@ void SettingsStore::applyLocked(const nlohmann::json &changes)
 }
 
 void SettingsStore::setLocked(const std::string &store, const std::string &key,
-                              nlohmann::json value)
+                              nlohmann::json value) const
 {
     dirty_ = true;
+    journal_.push_back({{"store", store}, {"key", key}, {"value", value}});
     parseStoreLocked(store);
 
     nlohmann::json &payload = data_[store];
@@ -267,7 +274,7 @@ void SettingsStore::setLocked(const std::string &store, const std::string &key,
     (*current)[parts.back()] = std::move(value);
 }
 
-void SettingsStore::removeLocked(const std::string &store, const std::string &key)
+void SettingsStore::removeLocked(const std::string &store, const std::string &key) const
 {
     parseStoreLocked(store);
     auto payload = data_.find(store);
@@ -293,6 +300,7 @@ void SettingsStore::removeLocked(const std::string &store, const std::string &ke
         return;
     }
     dirty_ = true;
+    journal_.push_back({{"store", store}, {"key", key}, {"remove", true}});
 
     for (size_t index = parents.size() - 1; index > 0; index--)
     {
