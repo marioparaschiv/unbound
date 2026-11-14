@@ -2,7 +2,13 @@ import { unpackDebugAltText } from '@unbound-app/contracts/debug-card-alt-text';
 import type { DebugCardRequest } from '@unbound-app/contracts/debug-cards';
 import { describe, expect, test } from 'bun:test';
 
-import { clockNote, dnsNote, powerNote, pushNote } from '~/lib/debug-card/device-notes';
+import {
+	clockNote,
+	dnsNote,
+	gatewayNote,
+	powerNote,
+	pushNote,
+} from '~/lib/debug-card/device-notes';
 import { layoutDebugCard, type CardText } from '~/lib/debug-card/layout';
 import { debugAltText } from '~/lib/debug-card/alt-text';
 
@@ -46,6 +52,12 @@ describe('device notes', () => {
 			'local · private NextDNS',
 		);
 		expect(dnsNote({ resolver: 'AdGuard' })).toBe('AdGuard');
+		expect(
+			gatewayNote({ state: 'session established', latencyMs: 130, identifies: 2 }),
+		).toBeUndefined();
+		expect(gatewayNote({ state: 'will reconnect', latencyMs: 2400, failedAttempts: 3 })).toBe(
+			'will reconnect · 2400 ms heartbeat · 3 failed connects',
+		);
 	});
 
 	test('put a skewed clock on the card and every fact in the alt text', () => {

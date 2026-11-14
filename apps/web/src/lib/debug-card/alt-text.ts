@@ -15,7 +15,13 @@ import {
 	supportOf,
 	updateNotes,
 } from '~/lib/debug-card/layout';
-import { clockSummary, dnsSummary, powerSummary, pushSummary } from '~/lib/debug-card/device-notes';
+import {
+	clockSummary,
+	dnsSummary,
+	gatewaySummary,
+	powerSummary,
+	pushSummary,
+} from '~/lib/debug-card/device-notes';
 import type { DebugCardContext } from '~/lib/debug-card/context';
 import { cleanNames } from '~/lib/debug-card/spans';
 
@@ -33,6 +39,7 @@ const DROP_ORDER = [
 	'memory',
 	'dns',
 	'power',
+	'gateway',
 	'iconPack',
 	'theme',
 	'locale',
@@ -128,6 +135,7 @@ export function debugAltText(
 		...(info.power && { power: powerSummary(info.power) }),
 		...(info.clock && { clock: clockSummary(info.clock) }),
 		...(info.push && { push: pushSummary(info.push) }),
+		...(info.gateway && { gateway: gatewaySummary(info.gateway) }),
 		...(info.heap && { heap: `${info.heap.heapMB} MB · gc ${info.heap.gcMs} ms` }),
 		...(info.launch?.crashes?.length && {
 			crashes: info.launch.crashes.map(
