@@ -220,6 +220,8 @@ std::string formatSampledStack(const std::vector<std::string> &frames)
 static JavaScriptProfiler hermesProfiler()
 {
 #if defined(__APPLE__)
+    (void) kSamplingHz;
+    (void) &rootAPI;
     return {};
 #else
     return {
