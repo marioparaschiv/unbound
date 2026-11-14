@@ -13,5 +13,12 @@
 		"min": "3.0.0"
 	},
 	"icon": "BellIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "bb93f89db0e3a36763e2d2a7800d308c9738f0c25457eb2a4e37d1905b48f4fc5f300d01e0c81674e706bb18709209a96d13312cd1d898af038ced318d437620"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "ETE1kY4kCF2qReCpeQQFflEYXJ1EBuk99BYvCUvUNb+SD/8HThrewAEU22A4hFCiFgDNqyGXFC2lBMWDkFlwAA=="
+	}
 }

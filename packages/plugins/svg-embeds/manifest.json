@@ -18,5 +18,32 @@
 	},
 	"icon": "ImageIcon",
 	"main": "index.tsx",
-	"replaces": ["unbound.svg-viewer"]
+	"replaces": [
+		"unbound.svg-viewer"
+	],
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.ffi.call",
+				"native.ffi.symbols",
+				"native.objc.classes",
+				"native.objc.invoke"
+			]
+		},
+		"android": {
+			"capabilities": [
+				"native.java.classes",
+				"native.java.construct",
+				"native.java.fields",
+				"native.java.invoke"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "9b0c38092694b817989b433dfc47d05e7531fdb578a080688dad15d95e64fe8766849fd9d19eb5c25903ae1754ef9cf5bf864ecfdc72c0f7f79fdf96da87a6af"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "CSEeO95n5q41dRC/YGx6rzozAQqpn/xP/iZNcHankanK27yb7/dmGi9jEJ4h9WD7vVQQOnwcWoGN9KjifTWJCA=="
+	}
 }
