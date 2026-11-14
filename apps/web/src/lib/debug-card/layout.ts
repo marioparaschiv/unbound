@@ -10,7 +10,7 @@ import { launchNotes } from '@unbound-app/contracts/debug-card-launch';
 
 import type { DebugCardContext } from '~/lib/debug-card/context';
 
-import { accent, COLORS, dim, joined, value, warn, type Span } from './spans';
+import { accent, cleanNames, COLORS, dim, joined, value, warn, type Span } from './spans';
 import { environmentRows } from './environment-rows';
 import { clipped, wrapped } from './wrap-lines';
 
@@ -362,6 +362,7 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 	const errors = errorNotes(info.errors);
 	const storage = lowStorage(info.storage);
 	const updates = updateNotes(context, info.addonUpdates);
+	const tweaks = cleanNames(info.injected ?? []);
 	const candidates: [string, Span[]][] = [
 		['crashes', crashes],
 		['updates', updates.length ? [warn(fittedList(updates, VALUE_ROOM))] : []],
@@ -369,7 +370,7 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 			'issues',
 			info.disabledAddons?.length ? [warn(fittedList(info.disabledAddons, VALUE_ROOM))] : [],
 		],
-		['tweaks', info.injected?.length ? [warn(fittedList(info.injected, VALUE_ROOM))] : []],
+		['tweaks', tweaks.length ? [warn(fittedList(tweaks, VALUE_ROOM))] : []],
 		[
 			'extensions',
 			info.missingExtensions?.length

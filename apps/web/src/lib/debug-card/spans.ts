@@ -58,3 +58,14 @@ export function accent(text: string): Span {
 export function joined(parts: (string | undefined)[]): string {
 	return parts.filter(Boolean).join(' · ');
 }
+
+const EDGE_BLANKS = /^[\s\p{Cc}\p{Cf}]+|[\s\p{Cc}\p{Cf}]+$/gu;
+
+/**
+ * @description Strips whitespace and invisible characters from the ends of reported names, dropping names left empty.
+ * @param names The names, as a device reported them.
+ * @returns The names to show.
+ */
+export function cleanNames(names: readonly string[]): string[] {
+	return names.map((name) => name.replace(EDGE_BLANKS, '')).filter(Boolean);
+}

@@ -329,7 +329,7 @@ describe('debug card', () => {
 			},
 		});
 
-		expect(texts(card).some((run) => run.text === 'first screen 7.2 s')).toBe(true);
+		expect(texts(card).some((run) => run.text === 'first screen 7.2s')).toBe(true);
 	});
 	test('marks broken or scanned Discord builds and flags updates from the server context', () => {
 		const alpha = { ...info, discordSupport: 'untested' as const };
@@ -392,6 +392,14 @@ describe('debug card', () => {
 		expect(
 			texts(layoutDebugCard({ ...info, injected: [] }, new Date())).map((run) => run.text),
 		).not.toContain('tweaks');
+		expect(
+			texts(
+				layoutDebugCard(
+					{ ...info, injected: ['\u200b Crane', ' ', 'CopyLogDaemon\t'] },
+					new Date(),
+				),
+			).map((run) => run.text),
+		).toContain('Crane · CopyLogDaemon');
 	});
 
 	test('warns about share or Safari extensions a sideloaded install is missing', () => {

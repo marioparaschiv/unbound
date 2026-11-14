@@ -14,7 +14,7 @@ describe('systemNotes', () => {
 		expect(systemNotes({ memory: 2, watchdog: 1, hangs: 3, longestHangMs: 4200 })).toEqual([
 			'2 out-of-memory kills this week',
 			'1 watchdog kill this week',
-			'3 hangs (longest 4.2 s) this week',
+			'3 hangs (longest 4.2s) this week',
 		]);
 	});
 

@@ -24,7 +24,7 @@ export function launchNotes(launch?: DebugCardLaunch): string[] {
 		launch.lastCheck?.outcome === 'failed' && 'update check failed',
 		launch.settings && `settings ${launch.settings}`,
 		(launch.firstRenderMs ?? 0) > SLOW_FIRST_RENDER_MS &&
-			`first screen ${((launch.firstRenderMs ?? 0) / 1000).toFixed(1)} s`,
+			`first screen ${((launch.firstRenderMs ?? 0) / 1000).toFixed(1)}s`,
 	];
 
 	return [...notes, ...systemNotes(launch.system)].filter(
@@ -47,7 +47,7 @@ export function systemNotes(system?: DebugCardLaunch['system']): string[] {
 	}
 
 	const longest = system.longestHangMs
-		? ` (longest ${(system.longestHangMs / 1000).toFixed(1)} s)`
+		? ` (longest ${(system.longestHangMs / 1000).toFixed(1)}s)`
 		: '';
 	const hangs = counted(system.hangs, 'hang', 'hangs');
 	const notes = [
