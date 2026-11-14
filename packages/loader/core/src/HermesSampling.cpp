@@ -219,6 +219,9 @@ std::string formatSampledStack(const std::vector<std::string> &frames)
 
 static JavaScriptProfiler hermesProfiler()
 {
+#if defined(__APPLE__)
+    return {};
+#else
     return {
         [] {
             HermesRootAPI *api = rootAPI();
@@ -236,6 +239,7 @@ static JavaScriptProfiler hermesProfiler()
             return trace.str();
         },
     };
+#endif
 }
 
 static std::mutex         gProfilerMutex;
