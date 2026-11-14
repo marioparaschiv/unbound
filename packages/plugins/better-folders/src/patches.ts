@@ -1,15 +1,40 @@
-import { flux, metro, patcher, utils } from '@unbound-app/api';
-import { settings } from '@unbound-app/settings';
-import { isValidElement, type ReactElement } from 'react';
+import type {} from '@unbound-plugins/shared/entities/describe';
+import { flux, metro, patcher, toasts, utils } from '@unbound-app/api';
+import { settings, useSetting } from '@unbound-app/settings';
+import { messages } from '@unbound-app/i18n';
+import { createElement, isValidElement, type ReactElement, type ReactNode } from 'react';
+import { Image } from 'react-native';
 
+import { parseFolderIcons, withCustomIcon } from '~/lib/folder-icons';
 import { othersToClose, withFolderIcon, type FolderItem } from '~/lib/folders';
+import { pickFolderIcon } from '~/lib/pick-icon';
 import '~/lib/types';
 
 type FolderAction = { folderId?: number | string; expanded?: boolean };
 
 type FolderProps = { id?: number | string; expanded?: boolean; color?: number | null };
 
-type ItemsElement = ReactElement<{ items: FolderItem[] }>;
+type RenderItem = (state: unknown, item: FolderItem, ...rest: unknown[]) => ReactNode;
+
+type ItemsElement = ReactElement<{ items: FolderItem[]; renderItem?: RenderItem }>;
+
+type MenuItem = {
+	label?: string;
+	IconComponent?: unknown;
+	action?: () => void;
+};
+
+type ContextMenu = {
+	key?: unknown;
+	items?: MenuItem[];
+};
+
+type ContextMenuHost = {
+	showContextMenu: (menu?: ContextMenu) => void;
+	hideContextMenu: () => void;
+};
+
+const CUSTOM_ICON = 'better-folders-icon';
 
 const isItemsElement = (node: unknown): node is ItemsElement =>
 	isValidElement(node) && Array.isArray((node.props as { items?: unknown }).items);
@@ -43,13 +68,27 @@ export function listenForOpenedFolders(): void {
 	});
 }
 
+function showCustomIcon(content: ItemsElement, uri: string): void {
+	const renderItem = content.props.renderItem;
+
+	if (!renderItem) return;
+
+	content.props.items = [{ type: CUSTOM_ICON }];
+	content.props.renderItem = (state, item, ...rest) =>
+		item.type === CUSTOM_ICON
+			? createElement(Image, {
+					key: CUSTOM_ICON,
+					source: { uri },
+					style: { width: '100%', height: '100%' },
+				})
+			: renderItem(state, item, ...rest);
+}
+
 /**
- * @description Shows a folder icon in the folder's color instead of its servers on closed folders. Patches the render of
- * Discord's `GuildsBarGuildFolder` and swaps the server preview item for the icon item an open folder uses.
+ * @description Draws closed folders with their custom icon, or with a folder icon in their color instead of their
+ * servers. Patches the render of Discord's `GuildsBarGuildFolder`, reading the settings as hooks so a change redraws it.
  */
 export function patchClosedFolders(): void {
-	if (!settings.hideIcons) return;
-
 	const Folder = metro.findByFilePath(
 		'modules/guilds_bar/native/GuildsBarGuildFolder.tsx',
 	)?.default;
@@ -61,7 +100,9 @@ export function patchClosedFolders(): void {
 	}
 
 	patcher.react.after(Folder, 'type', ({ props, result }) => {
-		const { expanded, color } = props as FolderProps;
+		const { id, expanded, color } = props as FolderProps;
+		const folderIcons = useSetting('folderIcons');
+		const hideIcons = useSetting('hideIcons');
 
 		if (expanded) return result;
 
@@ -69,8 +110,88 @@ export function patchClosedFolders(): void {
 
 		if (!content) return result;
 
-		content.props.items = withFolderIcon(content.props.items, color);
+		const icon = id == null ? undefined : parseFolderIcons(folderIcons)[String(id)];
+
+		if (icon) showCustomIcon(content, icon);
+		else if (hideIcons) content.props.items = withFolderIcon(content.props.items, color);
 
 		return result;
+	});
+}
+
+function saveFolderIcon(folderId: string, uri: string | undefined): void {
+	settings.folderIcons = withCustomIcon(settings.folderIcons, folderId, uri);
+}
+
+async function setFolderIcon(folderId: string): Promise<void> {
+	try {
+		const uri = await pickFolderIcon();
+
+		if (uri) saveFolderIcon(folderId, uri);
+	} catch (error) {
+		logger.error(`Failed to set folder icon ${folderId}:`, error);
+		toasts.show({ title: addon.name, content: messages.FOLDER_ICON_FAILED });
+	}
+}
+
+function folderMenuId(menu: ContextMenu): string | undefined {
+	const key = menu.key;
+
+	if (typeof key !== 'string' && typeof key !== 'number') return undefined;
+
+	const folders = flux.getStore('SortedGuild').getGuildFolders();
+
+	return folders.some(
+		(folder) => folder.folderId != null && String(folder.folderId) === String(key),
+	)
+		? String(key)
+		: undefined;
+}
+
+/**
+ * @description Adds Set Folder Icon and Remove Folder Icon to a server folder's long-press menu, by patching
+ * `showContextMenu` for menus keyed by a folder id in `SortedGuildStore.getGuildFolders()`.
+ */
+export function patchFolderMenus(): void {
+	const ContextMenus: ContextMenuHost | undefined = metro.findByProps(
+		'showContextMenu',
+		'hideContextMenu',
+	);
+	const ImageIcon = metro.findByProps('ImageIcon')?.ImageIcon;
+	const TrashIcon = metro.findByProps('TrashIcon')?.TrashIcon;
+
+	if (!ContextMenus || !ImageIcon || !TrashIcon) {
+		logger.warn(
+			'Folder icon items skipped: Discord moved showContextMenu, ImageIcon or TrashIcon.',
+		);
+
+		return;
+	}
+
+	patcher.before(ContextMenus, 'showContextMenu', ({ args: [menu] }) => {
+		const folderId = menu && Array.isArray(menu.items) ? folderMenuId(menu) : undefined;
+
+		if (!menu?.items || !folderId) return;
+		if (menu.items.some((item) => item.label === messages.SET_FOLDER_ICON)) return;
+
+		menu.items.push({
+			label: messages.SET_FOLDER_ICON,
+			IconComponent: ImageIcon,
+			action: () => {
+				ContextMenus.hideContextMenu();
+				void setFolderIcon(folderId);
+			},
+		});
+
+		if (!parseFolderIcons(settings.folderIcons)[folderId]) return;
+
+		menu.items.push({
+			label: messages.REMOVE_FOLDER_ICON,
+			IconComponent: TrashIcon,
+			action: () => {
+				ContextMenus.hideContextMenu();
+				saveFolderIcon(folderId, undefined);
+			},
+		});
 	});
 }

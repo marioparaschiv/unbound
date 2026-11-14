@@ -143,6 +143,7 @@ declare module '@unbound-app/settings' {
 		 * A closed folder shows a folder icon in its color instead of its servers.
 		 */
 		hideIcons: boolean;
+		folderIcons: string;
 	};
 
 	/** Each setting and section by its dot-separated key. */
@@ -159,6 +160,7 @@ declare module '@unbound-app/settings' {
 		 * A closed folder shows a folder icon in its color instead of its servers.
 		 */
 		"hideIcons": boolean;
+		"folderIcons": string;
 	};
 
 	/** Every setting and section by its dot-separated key; buttons and notices are not settings. */

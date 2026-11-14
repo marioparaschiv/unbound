@@ -23,6 +23,7 @@ declare module '@unbound-app/api/flux' {
 			getFlattenedGuildIds(): string[];
 			getGuildsTree(): object;
 			getFastListGuildFolders(): readonly object[];
+			getGuildFolders(): { folderId?: number | string | null; folderName?: string | null }[];
 		};
 	}
 }
