@@ -13,7 +13,7 @@ export const BubbleStyle = {
 	mentionTint: 12,
 	/** How wide a mention's outline is, in points; 0 draws none. */
 	mentionWidth: 0.5,
-	/** Discord's mention yellow, shown in settings while the user keeps Discord's color. */
+	/** Discord's mention yellow, used while the theme's mention color cannot be read. */
 	mentionColor: '#F0B232',
 	tailSize: 8,
 	/** How much darker than the chat's background the default bubble is, as a share of full lightness. */

@@ -14,6 +14,9 @@ import { Theme, ThemeStore } from '~/lib/modules';
 /** The semantic color Discord paints the chat with, then an older name for the same surface. */
 const CHAT_BACKGROUND_TOKENS = ['CHANNEL_BACKGROUND_DEFAULT', 'BACKGROUND_BASE_LOWER'];
 
+/** The raw color Discord paints the bar beside a mentioning message with, in every theme. */
+const MENTION_BAR_COLOR = 'YELLOW_300';
+
 function readSetting(key: string): unknown {
 	return Reflect.get(settings, key);
 }
@@ -48,6 +51,19 @@ export function themeBubbleColor(): Omit<BubbleColor, 'alpha'> {
 }
 
 /**
+ * @description Works out the default mention color: the bar Discord draws beside a mentioning message, as recolored by a custom theme.
+ * @returns The color's channels from 0 to 1, Discord's mention yellow without the theme module.
+ */
+export function themeMentionColor(): Omit<BubbleColor, 'alpha'> {
+	const raw = Theme.unsafe_rawColors as Record<string, string> | undefined;
+
+	return (
+		parseHexColor(raw?.[MENTION_BAR_COLOR]?.slice(0, 7)) ??
+		parseHexColor(BubbleStyle.mentionColor)!
+	);
+}
+
+/**
  * @description Reads the bubble's look for the theme Discord is showing.
  * @returns The radius, padding and color from the plugin's settings.
  */
@@ -70,4 +86,4 @@ export function watchAppearance(listener: () => void): () => void {
 	};
 }
 
-export default { currentAppearance, themeBubbleColor, watchAppearance };
+export default { currentAppearance, themeBubbleColor, themeMentionColor, watchAppearance };
