@@ -1,0 +1,17 @@
+{
+	"id": "unbound.doom",
+	"name": "DOOM",
+	"description": "Plays the DOOM shareware episode inside Discord, from /doom or this plugin's settings, with on-screen controls.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ChatDotsIcon",
+	"main": "index.tsx"
+}
