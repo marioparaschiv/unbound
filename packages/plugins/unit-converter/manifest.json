@@ -1,0 +1,21 @@
+{
+	"id": "unbound.unit-converter",
+	"name": "Unit Converter",
+	"description": "Adds metric or imperial conversions next to measurements in messages, like 5 ft (≈ 1.52 m).",
+	"authors": [
+		{
+			"name": "sadan",
+			"id": "521819891141967883"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ArrowsLeftRightIcon",
+	"main": "index.tsx"
+}
