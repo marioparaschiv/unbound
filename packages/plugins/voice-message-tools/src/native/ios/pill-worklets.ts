@@ -7,11 +7,15 @@ const PLAYER = 'DiscordChatComponentsSwift.AudioPlayerView';
 const MESSAGE_CELL = 'DCDMessageTableViewCell';
 const SPEED_TAG = 0x5b1d;
 const DOWNLOAD_TAG = 0x5b1e;
-const SPEED_WIDTH = 36;
+const SPEED_WIDTH = 34;
+const TIME_GAP = 6;
+const TITLE_PADDING = 4;
+const SPEED_CHAR_WIDTH = 7.4;
+const ALIGN_LEFT = 1;
 const DOWNLOAD_WIDTH = 28;
 const DOWNLOAD_POINT_SIZE = 18;
 const ASPECT_FIT = 1;
-const GAP = 2;
+const GAP = 6;
 const END_PADDING = 10;
 const CONTROLS_WIDTH = SPEED_WIDTH + DOWNLOAD_WIDTH + GAP + END_PADDING;
 const CONTROL_HEIGHT = 28;
@@ -129,6 +133,7 @@ function createControl(
 	const target = objc.call(objc.getClass('UIView')!, 'new') as NativeObjectHandle;
 
 	objc.invoke(button, 'setTag:', [tag]);
+	if (action === 'speed') objc.invoke(button, 'setContentHorizontalAlignment:', [ALIGN_LEFT]);
 	styleLike(objc, button, player);
 
 	if (action === 'speed') {
@@ -200,30 +205,70 @@ function control(
 	return createControl(objc, player, tag, action, onAction);
 }
 
+function timeEnd(objc: NativeObjCBridge, player: NativeObjectHandle): number | undefined {
+	'worklet';
+	const children = (objc.invoke(player, 'subviews', []) as NativeObjectHandle[] | null) ?? [];
+	const playback = children.find((child) =>
+		(objc.className(child) ?? '').includes('PlaybackLabel'),
+	);
+
+	if (!playback) return undefined;
+
+	const box = rectOf(objc.invoke(playback, 'frame', []));
+	const labels = (objc.invoke(playback, 'subviews', []) as NativeObjectHandle[] | null) ?? [];
+	const label = labels.find((child) => objc.className(child) === 'UILabel');
+
+	if (box.width <= 0) return undefined;
+	if (!label) return box.x + box.width;
+
+	const text = rectOf(objc.invoke(label, 'frame', []));
+	const size = objc.invoke(label, 'intrinsicContentSize', []) as {
+		value?: { width?: number };
+		width?: number;
+	} | null;
+	const width = Number(size?.value?.width ?? size?.width ?? text.width);
+
+	return box.x + text.x + Math.min(width, text.width);
+}
+
+function titleWidth(speed: number): number {
+	'worklet';
+
+	return Math.ceil(speedLabel(speed).length * SPEED_CHAR_WIDTH) + TITLE_PADDING;
+}
+
 function placeControls(
 	objc: NativeObjCBridge,
 	player: NativeObjectHandle,
 	frame: Rect,
 	onAction: (action: PillAction, messageId: string) => void,
-) {
+): number {
 	'worklet';
 	const y = frame.height / 2 - CONTROL_HEIGHT / 2;
 	const speed = control(objc, player, SPEED_TAG, 'speed', onAction);
 	const download = control(objc, player, DOWNLOAD_TAG, 'download', onAction);
-	const speedX = frame.width - END_PADDING - DOWNLOAD_WIDTH - GAP - SPEED_WIDTH;
+	objc.invoke(speed, 'setTitle:forState:', [speedLabel(state().speed), 0]);
+
+	const speedWidth = titleWidth(state().speed);
+	const end = timeEnd(objc, player);
+	const speedX =
+		end === undefined
+			? frame.width - END_PADDING - DOWNLOAD_WIDTH - GAP - speedWidth
+			: end + TIME_GAP;
 
 	objc.invoke(speed, 'setFrame:', [
-		struct(objc, { x: speedX, y, width: SPEED_WIDTH, height: CONTROL_HEIGHT }),
+		struct(objc, { x: speedX, y, width: speedWidth, height: CONTROL_HEIGHT }),
 	]);
 	objc.invoke(download, 'setFrame:', [
 		struct(objc, {
-			x: speedX + SPEED_WIDTH + GAP,
+			x: speedX + speedWidth + GAP,
 			y,
 			width: DOWNLOAD_WIDTH,
 			height: CONTROL_HEIGHT,
 		}),
 	]);
-	objc.invoke(speed, 'setTitle:forState:', [speedLabel(state().speed), 0]);
+
+	return speedX + speedWidth + GAP + DOWNLOAD_WIDTH + END_PADDING;
 }
 
 function inEmbed(objc: NativeObjCBridge, player: NativeObjectHandle): boolean {
@@ -304,7 +349,21 @@ export function installPillControls(
 			if (frame.width <= CONTROLS_WIDTH || inEmbed(objc, self)) return;
 
 			try {
-				placeControls(objc, self, frame, onAction);
+				const needed = placeControls(objc, self, frame, onAction);
+				const current = state();
+
+				if (Math.abs(needed - frame.width) > 0.5 && !current.widening) {
+					const fitted = { ...frame, width: needed };
+
+					current.widening = true;
+
+					try {
+						objc.invoke(self, 'setFrame:', [struct(objc, fitted)]);
+						fitContainers(objc, self, fitted);
+					} finally {
+						current.widening = false;
+					}
+				}
 			} catch (error) {
 				console.error(
 					`[Voice Message Tools] Failed to place voice message controls: ${String(error)}`,
@@ -327,6 +386,10 @@ export function showPillSpeed(scope: NativeUIScope, speed: number) {
 
 	for (const button of current.buttons) {
 		objc.invoke(button, 'setTitle:forState:', [speedLabel(speed), 0]);
+
+		const player = objc.invoke(button, 'superview', []) as NativeObjectHandle | null;
+
+		if (player) objc.invoke(player, 'setNeedsLayout', []);
 	}
 }
 
