@@ -18,6 +18,7 @@ on:
             - main
         paths:
             - packages/client/src/**
+            - packages/loader/core/src/LoaderBundlePatch.cpp
             - packages/client/scripts/build/**
             - packages/rollup-plugin-hermes/src/**
     repository_dispatch:
@@ -58,6 +59,9 @@ jobs:
                   revisions="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow build-bundle.yml --branch main --status success --limit 8 --json headSha --jq '[.[].headSha] | join(",")' || true)"
                   echo "revisions=$revisions" >> "$GITHUB_OUTPUT"
 
+            - name: Build the loader's bundle patch checker
+              run: packages/loader/core/tools/build-bundle-patch-check.sh "$RUNNER_TEMP/bundle_patch_check"
+
             - name: Build the client
               run: bun run --cwd packages/client build
               env:
@@ -66,6 +70,7 @@ jobs:
                   UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}
                   UNBOUND_PATCH_BASE_URL: ${{ vars.CDN_URL && format('{0}/unbound/beta', vars.CDN_URL) || '' }}
                   UNBOUND_PATCH_REVISIONS: ${{ steps.patch-bases.outputs.revisions }}
+                  UNBOUND_PATCH_VERIFIER: ${{ runner.temp }}/bundle_patch_check
 
             - name: Check every bundle and the manifest are signed
               run: bun run --cwd packages/client verify-signatures
