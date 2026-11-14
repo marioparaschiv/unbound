@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.4] - 2026-11-14
+
+### Changed
+
+- The audio file check moved to the shared plugin code. The plugin works the same as before.
+
 ## [1.4.3] - 2026-11-14
 
 ### Fixed

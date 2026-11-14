@@ -1,6 +1,7 @@
 import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
 
-import { isAudioAttachment } from '~/lib/speed';
+import { isAudioAttachment } from '@unbound-plugins/shared/media/audio-attachment';
+import { playerURL } from '@unbound-plugins/shared/native/ios/player-url';
 
 const STATE_KEY = '__unboundVoiceMessageSpeed';
 
@@ -11,18 +12,6 @@ function state(): SpeedState {
 	const holder = globalThis as unknown as Record<typeof STATE_KEY, SpeedState | undefined>;
 
 	return (holder[STATE_KEY] ??= { speed: 1, applying: false });
-}
-
-function itemURL(objc: NativeObjCBridge, player: NativeObjectHandle): string {
-	'worklet';
-	const item = objc.invoke(player, 'currentItem', []) as NativeObjectHandle | null;
-	const asset = item && (objc.invoke(item, 'asset', []) as NativeObjectHandle | null);
-
-	if (!asset || objc.className(asset) !== 'AVURLAsset') return '';
-
-	const url = objc.invoke(asset, 'URL', []) as NativeObjectHandle | null;
-
-	return url ? String(objc.invoke(url, 'absoluteString', [])) : '';
 }
 
 /**
@@ -46,7 +35,7 @@ export function installSpeedHook(scope: NativeUIScope, speed: number) {
 			if (Number(args[0]) !== 1 || current.speed === 1 || current.applying) return result;
 
 			try {
-				if (!isAudioAttachment(itemURL(objc, self))) return result;
+				if (!isAudioAttachment(playerURL(objc, self))) return result;
 
 				current.applying = true;
 				objc.invoke(self, 'setRate:', [current.speed]);

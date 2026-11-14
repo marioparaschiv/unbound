@@ -1,0 +1,21 @@
+{
+	"id": "unbound.background-voice-messages",
+	"name": "Background Voice Messages",
+	"description": "Keeps voice messages and audio files playing when you leave Discord or lock your phone.",
+	"authors": [
+		{
+			"name": "ELJoOker",
+			"id": "605894319408283678"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "HeadphonesIcon",
+	"main": "index.tsx"
+}
