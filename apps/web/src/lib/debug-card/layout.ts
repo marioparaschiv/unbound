@@ -116,7 +116,10 @@ function fittedList(items: string[], room: number): string {
 		}
 	}
 
-	return `${items.length} addons`;
+	const more = items.length > 1 ? ` · +${items.length - 1} more` : '';
+	const first = items[0] ?? '';
+
+	return `${first.slice(0, Math.max(0, room - more.length - 1))}…${more}`;
 }
 
 /**
@@ -377,7 +380,7 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 		],
 		['tweaks', tweaks.length ? [warn(fittedList(tweaks, VALUE_ROOM))] : []],
 		[
-			'extensions',
+			'appex',
 			extensionNotes(info).length ? [warn(fittedList(extensionNotes(info), VALUE_ROOM))] : [],
 		],
 		['errors', errors.length ? [warn(fittedList(errors, VALUE_ROOM))] : []],
@@ -396,14 +399,12 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 /**
  * @description Lists what is wrong with the app's extensions: ones a sideloader stripped, and ones signed without the app group.
  * @param info The report.
- * @returns One note per problem.
+ * @returns One note per extension and problem.
  */
 export function extensionNotes(info: DebugInfo): string[] {
 	return [
-		...(info.missingExtensions?.length ? [`missing ${info.missingExtensions.join(', ')}`] : []),
-		...(info.isolatedExtensions?.length
-			? [`no app group ${info.isolatedExtensions.join(', ')}`]
-			: []),
+		...(info.missingExtensions ?? []).map((name) => `${name} missing`),
+		...(info.isolatedExtensions ?? []).map((name) => `${name} no app group`),
 	];
 }
 

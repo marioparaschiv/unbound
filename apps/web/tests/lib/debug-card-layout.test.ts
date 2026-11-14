@@ -411,11 +411,39 @@ describe('debug card', () => {
 			.filter((run) => run.x === 14)
 			.map((run) => run.text);
 
-		expect(labels).toContain('extensions');
-		expect(texts(card).some((run) => run.text.includes('missing Share'))).toBe(true);
+		expect(labels).toContain('appex');
+		expect(texts(card).some((run) => run.text.includes('Share missing'))).toBe(true);
 		expect(texts(layoutDebugCard(info, new Date())).map((run) => run.text)).not.toContain(
-			'extensions',
+			'appex',
 		);
+	});
+
+	test('fits every row label inside the label column', () => {
+		const card = layoutDebugCard(
+			{
+				...info,
+				missingExtensions: ['Share'],
+				isolatedExtensions: ['NotificationService', 'BroadcastUploadExtension'],
+				addonUpdates: ['Chat Bubbles 1.6.8 → 1.6.9'],
+			},
+			new Date(),
+		);
+		const labels = texts(card)
+			.filter((run) => run.x === 14)
+			.map((run) => run.text);
+
+		expect(labels.every((label) => label.length < 9)).toBe(true);
+	});
+
+	test('shortens an extension note that does not fit instead of counting addons', () => {
+		const card = layoutDebugCard(
+			{ ...info, isolatedExtensions: ['A'.repeat(60), 'NotificationService'] },
+			new Date(),
+		);
+		const runs = texts(card).map((run) => run.text);
+
+		expect(runs.some((text) => text.includes('addons'))).toBe(false);
+		expect(runs.some((text) => text.endsWith('+1 more') && text.includes('…'))).toBe(true);
 	});
 
 	test('lists addon updates waiting in the updates row, after the server ones', () => {

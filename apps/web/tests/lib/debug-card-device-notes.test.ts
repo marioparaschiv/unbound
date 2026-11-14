@@ -74,7 +74,7 @@ describe('device notes', () => {
 				missingExtensions: ['Safari'],
 				isolatedExtensions: ['BroadcastUpload'],
 			}),
-		).toEqual(['missing Safari', 'no app group BroadcastUpload']);
+		).toEqual(['Safari missing', 'BroadcastUpload no app group']);
 		expect(extensionNotes(info)).toEqual([]);
 	});
 });
