@@ -362,31 +362,72 @@ void SetAlternateIconName(NSString *iconName, void (^completion)(NSError *error)
     });
 }
 
+static NSString *signedAppGroup(void)
+{
+    static NSString       *group;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        id groups =
+            [Utilities getApplicationEntitlements][@"com.apple.security.application-groups"];
+        if ([groups isKindOfClass:[NSArray class]])
+        {
+            for (id candidate in (NSArray *) groups)
+            {
+                if ([candidate isKindOfClass:[NSString class]])
+                {
+                    group = candidate;
+                    break;
+                }
+            }
+        }
+    });
+    return group;
+}
+
+static NSString *remappedAppGroup(NSString *identifier)
+{
+    NSString *group = signedAppGroup();
+    return group && [identifier isEqualToString:@"group.com.hammerandchisel.discord"] ? group
+                                                                                      : identifier;
+}
+
+%hook NSUserDefaults
+- (instancetype)initWithSuiteName:(NSString *)suiteName
+{
+    return %orig(remappedAppGroup(suiteName));
+}
+%end
+
 %hook NSFileManager
 - (NSURL *)containerURLForSecurityApplicationGroupIdentifier:(NSString *)identifier
 {
-    if (identifier != nil)
+    if (identifier == nil)
     {
-        NSError *error;
-
-        NSFileManager *manager = [NSFileManager defaultManager];
-        NSURL         *url     = [manager URLForDirectory:NSDocumentDirectory
-                                                 inDomain:NSUserDomainMask
-                                        appropriateForURL:nil
-                                                   create:YES
-                                                    error:&error];
-
-        if (error)
-        {
-            [Logger error:LOG_CATEGORY_DEFAULT
-                   format:@"Failed getting documents directory: %@", error];
-            return %orig(identifier);
-        }
-
-        return url;
+        return %orig(identifier);
     }
 
-    return %orig(identifier);
+    if (signedAppGroup())
+    {
+        NSURL *shared = %orig(remappedAppGroup(identifier));
+        if (shared)
+        {
+            return shared;
+        }
+    }
+
+    NSError *error;
+    NSURL   *url = [[NSFileManager defaultManager] URLForDirectory:NSDocumentDirectory
+                                                          inDomain:NSUserDomainMask
+                                                 appropriateForURL:nil
+                                                            create:YES
+                                                             error:&error];
+    if (error)
+    {
+        [Logger error:LOG_CATEGORY_DEFAULT format:@"Failed getting documents directory: %@", error];
+        return %orig(identifier);
+    }
+
+    return url;
 }
 %end
 
