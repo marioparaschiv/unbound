@@ -1,5 +1,4 @@
 import { BottomSheets } from '~/metro/components';
-import { format } from '~/i18n/api';
 
 export type ShareDestination = {
 	channelId: string;
@@ -10,19 +9,19 @@ export type ShareDestination = {
 
 type ShareDestinationSheetProps = {
 	destinations: ShareDestination[];
-	count: number;
+	title: string;
 	onSelect: (destination: ShareDestination) => void;
 };
 
 /**
- * @description An action sheet of recent channels and DMs that shared files can go to.
+ * @description An action sheet of recent channels and DMs that shared files and text can go to.
  */
-function ShareDestinationSheet({ destinations, count, onSelect }: ShareDestinationSheetProps) {
+function ShareDestinationSheet({ destinations, title, onSelect }: ShareDestinationSheetProps) {
 	const { ActionSheet, ActionSheetRow, BottomSheetTitleHeader } = BottomSheets;
 
 	return (
 		<ActionSheet>
-			<BottomSheetTitleHeader title={format('UNBOUND_SHARE_PICK', { count })} />
+			<BottomSheetTitleHeader title={title} />
 			<ActionSheetRow.Group>
 				{destinations.map((destination) => (
 					<ActionSheetRow

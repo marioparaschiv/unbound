@@ -17,11 +17,11 @@ function extensionLink(paths: string[], scheme = 'discord') {
 
 describe('share links', () => {
 	test('reads every file the extension sends, decoding its double encoding', () => {
-		const files = parseShareLink(
+		const shared = parseShareLink(
 			extensionLink(['/private/var/mobile/tmp/a b.png', '/var/mobile/Media/clip.MOV']),
 		);
 
-		expect(files).toEqual([
+		expect(shared?.files).toEqual([
 			{
 				uri: 'file:///private/var/mobile/tmp/a%20b.png',
 				path: '/private/var/mobile/tmp/a b.png',
@@ -38,7 +38,7 @@ describe('share links', () => {
 	});
 
 	test('accepts the unbound scheme and single encoding', () => {
-		expect(parseShareLink('unbound://share?url=file%3A%2F%2F%2Ftmp%2Fdoc.pdf')).toEqual([
+		expect(parseShareLink('unbound://share?url=file%3A%2F%2F%2Ftmp%2Fdoc.pdf')?.files).toEqual([
 			{
 				uri: 'file:///tmp/doc.pdf',
 				path: '/tmp/doc.pdf',
@@ -55,16 +55,33 @@ describe('share links', () => {
 			parseShareLink(
 				'discord://share?url=https%3A%2F%2Fexample.com%2Fa.png&url=file%3A%2F%2F%2Ftmp%2F..%2Fetc%2Fpasswd&url=file%3A%2F%2F%2Ftmp%2F&name=x',
 			),
-		).toEqual([]);
-		expect(parseShareLink('discord://share')).toEqual([]);
+		).toEqual({ files: [] });
+		expect(parseShareLink('discord://share')).toEqual({ files: [] });
 	});
 
 	test('drops duplicates and stops at ten files', () => {
 		const paths = Array.from({ length: 12 }, (_, index) => `/tmp/${index}.jpg`);
-		const files = parseShareLink(extensionLink(['/tmp/0.jpg', ...paths]));
+		const shared = parseShareLink(extensionLink(['/tmp/0.jpg', ...paths]));
 
-		expect(files?.map((file) => file.filename)).toEqual(
+		expect(shared?.files.map((file) => file.filename)).toEqual(
 			paths.slice(0, 10).map((path) => path.slice(5)),
 		);
+	});
+
+	test('reads shared text and links next to files', () => {
+		const text = encodeURIComponent('Look at this https://example.com/a?b=c&d=e');
+
+		expect(parseShareLink(`discord://share?text=${text}`)).toEqual({
+			files: [],
+			text: 'Look at this https://example.com/a?b=c&d=e',
+		});
+		expect(
+			parseShareLink(`discord://share?url=file%3A%2F%2F%2Ftmp%2Fa.png&text=${text}`)?.files,
+		).toHaveLength(1);
+	});
+
+	test('keeps the first text, trimmed, and drops empty text', () => {
+		expect(parseShareLink('discord://share?text=%20hi%20&text=bye')?.text).toBe('hi');
+		expect(parseShareLink('discord://share?text=%20')).toEqual({ files: [] });
 	});
 });

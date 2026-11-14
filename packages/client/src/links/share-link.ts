@@ -5,9 +5,16 @@ export type SharedFile = {
 	mimeType: string;
 };
 
+/** What a share extension hands over: local files, and the text or links that were shared with them. */
+export type SharedContent = {
+	files: SharedFile[];
+	text?: string;
+};
+
 const SHARE_LINK = /^(?:discord|unbound):\/\/share\/?(?:\?(.*))?$/i;
 const MAX_DECODES = 4;
 const MAX_SHARED_FILES = 10;
+const MAX_SHARED_TEXT = 4000;
 
 const MIME_TYPES: Record<string, string> = {
 	aac: 'audio/aac',
@@ -73,23 +80,41 @@ function sharedFile(uri: string): SharedFile | undefined {
 	};
 }
 
+function sharedText(value: string): string | undefined {
+	const text = decode(value)?.trim();
+
+	return text ? text.slice(0, MAX_SHARED_TEXT) : undefined;
+}
+
 /**
- * @description Reads the files a share extension handed over in a `discord://share?url=…` (or `unbound://share`) link.
+ * @description Reads what a share extension handed over in a `discord://share?url=…&text=…` (or `unbound://share`) link:
+ * local files as `url`, shared text and web links as `text`.
  * @param url The opened URL.
- * @returns The shared local files, or `undefined` when the URL is not a share link.
+ * @returns The shared files and text, or `undefined` when the URL is not a share link.
  */
-export function parseShareLink(url: string): SharedFile[] | undefined {
+export function parseShareLink(url: string): SharedContent | undefined {
 	const match = SHARE_LINK.exec(url.trim());
 
 	if (!match) return;
 
 	const files: SharedFile[] = [];
+	let text: string | undefined;
 
 	for (const pair of (match[1] ?? '').split('&')) {
 		const separator = pair.indexOf('=');
-		const name = separator < 0 ? pair : pair.slice(0, separator);
+		const name = separator < 0 ? pair : decode(pair.slice(0, separator));
 
-		if (decode(name) !== 'url' || separator < 0) {
+		if (separator < 0) {
+			continue;
+		}
+
+		if (name === 'text') {
+			text ??= sharedText(pair.slice(separator + 1));
+
+			continue;
+		}
+
+		if (name !== 'url' || files.length === MAX_SHARED_FILES) {
 			continue;
 		}
 
@@ -99,13 +124,9 @@ export function parseShareLink(url: string): SharedFile[] | undefined {
 		if (file && !files.some((existing) => existing.uri === file.uri)) {
 			files.push(file);
 		}
-
-		if (files.length === MAX_SHARED_FILES) {
-			break;
-		}
 	}
 
-	return files;
+	return text ? { files, text } : { files };
 }
 
 export default parseShareLink;

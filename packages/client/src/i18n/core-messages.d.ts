@@ -88,6 +88,7 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_FFI_CONSENT_BODY: { name: string | number };
 		UNBOUND_SHARE_PICK: { count: number };
 		UNBOUND_SHARE_ADDED: { count: number; destination: string | number };
+		UNBOUND_SHARE_TEXT_ADDED: { destination: string | number };
 		UNBOUND_REINSTALLED: { name: string | number };
 		UNBOUND_REINSTALL_UNCHANGED: { name: string | number };
 		UNBOUND_SHOW_LIBRARIES: { count: number };
