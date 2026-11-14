@@ -1,6 +1,6 @@
 # Plugins
 
-98 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+99 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -101,4 +101,5 @@
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [USRBG](https://unbound.rip/addons/unbound.usrbg): Shows the banners people set on USRBG, so anyone can have a profile banner without Nitro.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [View Icons](https://unbound.rip/addons/unbound.view-icons): View user avatars, banners, server icons, server banners, and group DM icons.
 - <img src="../../assets/plugins/readme-icons/chevron-large-right-icon.svg" width="20" height="20" align="absmiddle" alt=""> [View Raw](https://unbound.rip/addons/unbound.view-raw): View and copy raw data for messages, channels, guilds, and user profiles.
+- <img src="../../assets/plugins/readme-icons/microphone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Voice Messages](https://unbound.rip/addons/unbound.voice-messages): Sends audio files as voice messages, can show audio files as voice messages, and saves voice messages from their long-press menu.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Youtube Adblock](https://unbound.rip/addons/unbound.youtube-adblock): Blocks ads in YouTube videos played inside Discord and in the Watch Together activity, using AdGuard's YouTube ad blocker.

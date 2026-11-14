@@ -1,0 +1,17 @@
+---
+banner: media/banner.png
+---
+
+## :sparkle: What it does
+
+- :microphone: Attach only audio files to a message and it goes out as a voice message, with a player instead of a file.
+- :eye: Optionally, audio files others send play in the voice message player.
+- :download: Long-press a voice message and pick **Download Voice Message** to keep its audio.
+- :android: On Android it lands in Downloads, with the system's download notification.
+- :apple: On iOS the share sheet opens; **Save to Files** keeps it.
+- :code-fork: After Vencord's VoiceDownload and the Custom Voice Messages plugin for Revenge.
+
+## :gear: Settings
+
+- **Send audio files as voice messages:** a message that is only audio files goes out as a voice message.
+- **Show audio files as voice messages:** audio files others send play in the voice message player.

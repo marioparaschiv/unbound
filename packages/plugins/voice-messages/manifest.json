@@ -1,0 +1,29 @@
+{
+	"id": "unbound.voice-messages",
+	"name": "Voice Messages",
+	"description": "Sends audio files as voice messages, can show audio files as voice messages, and saves voice messages from their long-press menu.",
+	"authors": [
+		{
+			"name": "Dziurwa",
+			"id": "1034579679526526976"
+		},
+		{
+			"name": "シグマ siguma",
+			"id": "737597276339437578"
+		},
+		{
+			"name": "puv",
+			"id": "469441552251355137"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "MicrophoneIcon",
+	"main": "index.tsx"
+}
