@@ -69,7 +69,7 @@
 		"loader:test:hermes": "go -C packages/loader run ./tools core-test --hermes",
 		"client:test": "bun test --parallel packages/client",
 		"plugins:test": "bun test --parallel packages/plugins-shared packages/plugin-scripts && bun packages/plugin-scripts/src/test-plugins.ts",
-		"plugins:lint": "bun run --filter @unbound-app/plugins --filter @unbound-app/plugin-scripts lint",
+		"plugins:lint": "bun run --filter @unbound-app/plugins --filter @unbound-plugins/shared --filter @unbound-app/plugin-scripts lint",
 		"plugins:typecheck": "bun packages/plugin-scripts/src/typecheck-plugins.ts",
 		"plugins:build": "cd packages/plugins && bun run build",
 		"plugins:banners": "bun packages/plugin-scripts/src/generate-plugin-banners.ts",

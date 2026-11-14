@@ -23,6 +23,7 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_UPDATES_LOADER_REQUIRED_DESC: { required: string | number; installed: string | number };
 		UNBOUND_UPDATES_UPDATE_TO: { version: string | number };
 		UNBOUND_UPDATES_DOWNLOAD_VERSION: { version: string | number };
+		UNBOUND_UPDATES_INSTALL_WITH: { app: string | number };
 		UNBOUND_INSTALL_FAILED: { name: string | number };
 		UNBOUND_UPDATES_VERSION_PAUSED: { version: string | number };
 		UNBOUND_UPDATES_ADDONS_COUNT: { count: number };
