@@ -5,7 +5,7 @@ import type { patcher } from '@unbound-app/api';
 type Cleanup = () => void;
 type Patcher = typeof patcher;
 // UNKNOWN: a component may render any node.
-type RenderFunction = (...args: never[]) => unknown;
+type RenderFunction = ((...args: never[]) => unknown) & { displayName?: string };
 // UNKNOWN: an action sheet may render any node.
 type SheetVisitor = (result: unknown) => void;
 
@@ -43,6 +43,7 @@ export function createSheetRenderer(
 
 		if (!wrapper) {
 			wrapper = (...args) => render(type(...args), depth + 1);
+			wrapper.displayName = type.displayName ?? type.name;
 			wrappers.set(type, wrapper);
 			wrapped.add(wrapper);
 		}
