@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
 internal object LauncherIconHook {
-    val LAUNCHERS = setOf("com.google.android.apps.nexuslauncher", "com.android.launcher3")
+    val LAUNCHERS = LauncherPackages.HOOKED
     private const val DISCORD = Unbound.DISCORD_PACKAGE
     private const val RECONCILE_DELAY_MS = 2_000L
 
