@@ -1,0 +1,27 @@
+<package>
+	<id>app.unbound.ios</id>
+	<name>Unbound</name>
+	<version>1.4.0</version>
+	<compatibility>
+		<firmware>
+			<miniOS>15.0</miniOS>
+		</firmware>
+	</compatibility>
+	<dependencies>
+		<package>ellekit</package>
+	</dependencies>
+	<shortDescription>A client modification for Discord on mobile.</shortDescription>
+	<descriptionlist>
+		<description>A client modification for Discord on mobile. Install plugins, themes, fonts, and icon packs on the official Discord app.</description>
+	</descriptionlist>
+	<changelog>
+		<change>See the GitHub releases page for the full changelog.</change>
+	</changelog>
+	<links>
+		<link>
+			<name>Source Code</name>
+		<url>https://github.com/marioparaschiv/unbound</url>
+			<iconclass>fa-brands fa-github</iconclass>
+		</link>
+	</links>
+</package>

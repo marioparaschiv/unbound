@@ -1,0 +1,75 @@
+{
+  "name": "Unbound App Repo",
+  "identifier": "app.unbound.ios.repo",
+  "iconURL": "https://builds.unbound.rip/repo/icon.png",
+  "apps": [
+    {
+      "name": "Unbound",
+      "bundleIdentifier": "com.hammerandchisel.discord",
+      "developerName": "Unbound Team",
+      "iconURL": "https://builds.unbound.rip/repo/icon.png",
+      "localizedDescription": "A client modification for Discord on mobile. Install plugins, themes, fonts, and icon packs on the official Discord app.",
+      "subtitle": "A client modification for Discord on mobile.",
+      "tintColor": "aa454d",
+      "category": "social",
+      "versions": [
+        {
+          "version": "353.0",
+          "date": "2026-11-13T17:59:59Z",
+          "size": 100758657,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-353.0-ios/Unbound.ipa",
+          "localizedDescription": "Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience."
+        }
+      ]
+    },
+    {
+      "name": "Unbound (TestFlight)",
+      "bundleIdentifier": "com.hammerandchisel.discord.testflight",
+      "developerName": "Unbound Team",
+      "beta": true,
+      "iconURL": "https://builds.unbound.rip/repo/icon.png",
+      "localizedDescription": "A client modification for Discord on mobile, built on Discord's TestFlight beta. Install plugins, themes, fonts, and icon packs on the official Discord app.",
+      "subtitle": "A client modification for Discord on mobile (TestFlight builds).",
+      "tintColor": "aa454d",
+      "category": "social",
+      "versions": [
+        {
+          "version": "355.0",
+          "buildVersion": "123227",
+          "date": "2026-11-14T10:38:22Z",
+          "size": 65621600,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-355.0_123227-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Discord 355.0 (123227) with Unbound loader 1.4.0."
+        },
+        {
+          "version": "355.0",
+          "date": "2026-11-13T18:24:04Z",
+          "size": 65579749,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-355.0_123057-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience."
+        },
+        {
+          "version": "355.0",
+          "date": "2026-11-12T18:49:17Z",
+          "size": 68882573,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-355.0_122874-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience."
+        },
+        {
+          "version": "355.0",
+          "date": "2026-11-10T15:30:44Z",
+          "size": 83368482,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-355.0_122459-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience."
+        },
+        {
+          "version": "353.0",
+          "date": "2026-11-04",
+          "size": 102789592,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-353.0_119349-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience."
+        }
+      ]
+    }
+  ]
+}
