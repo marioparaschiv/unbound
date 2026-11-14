@@ -4,15 +4,19 @@ import { searchPreview } from '~/lib/itunes';
 /** A preview clip an embed plays, with the song it is from. */
 export type Clip = { url: string; title: string; contentType: string };
 
-const SPOTIFY_CLIP = 'https://p.scdn.co/';
+const MP3_HOSTS = [
+	'https://p.scdn.co/',
+	'https://cdnt-preview.dzcdn.net/',
+	'https://cdns-preview-',
+];
 
 /**
- * @description Names a clip's audio type from where it is hosted: Spotify serves MP3, iTunes serves AAC in MP4.
+ * @description Names a clip's audio type from where it is hosted: Spotify and Deezer serve MP3, iTunes serves AAC in MP4.
  * @param url The clip.
  * @returns The MIME type.
  */
 export function clipType(url: string): string {
-	return url.startsWith(SPOTIFY_CLIP) ? 'audio/mpeg' : 'audio/mp4';
+	return MP3_HOSTS.some((host) => url.startsWith(host)) ? 'audio/mpeg' : 'audio/mp4';
 }
 
 /**

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-14
+
+### Added
+
+- Deezer songs, albums and playlists, and Tidal songs, with iTunes clips for songs that have none.
+
 ## [1.1.0] - 2026-11-14
 
 ### Changed

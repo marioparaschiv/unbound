@@ -76,7 +76,7 @@ function load(url: string, channelId: string, messageId: string): void {
 }
 
 /**
- * @description Plays Spotify and Apple Music previews inside their link embeds, like desktop. Hooks Discord's chat row
+ * @description Plays Spotify, Apple Music, Deezer and Tidal previews inside their link embeds, like desktop. Hooks Discord's chat row
  * builder and turns each music embed into an audio embed holding its preview clip, which Discord draws with its native
  * audio player; clips not loaded yet are fetched and the message's row is built again.
  */
