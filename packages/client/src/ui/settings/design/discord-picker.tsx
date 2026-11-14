@@ -107,7 +107,11 @@ function DiscordPicker({ kind }: DiscordPickerProps) {
 	useSaveIntercept();
 
 	if (!connected || !NavigationCore) {
-		return <Empty>{messages.UNBOUND_EMPTY_RESULTS}</Empty>;
+		return (
+			<Empty icon='WarningIcon' tone='warning'>
+				{messages.UNBOUND_PICKER_UNAVAILABLE}
+			</Empty>
+		);
 	}
 
 	// Discord's picker reads its first swatch unguarded, so with no icon packs it gets none and keeps the install menu.

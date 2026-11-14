@@ -55,6 +55,16 @@ function PluginsPage({ route }: PluginsPageProps) {
 		setFilter(next);
 	}
 
+	// Without a search, an empty list means the enabled filter left nothing, so say which.
+	const empty = query.trim()
+		? messages.UNBOUND_EMPTY_RESULTS
+		: format(
+				filter === 'disabled' ? 'UNBOUND_NO_DISABLED_ADDONS' : 'UNBOUND_NO_ENABLED_ADDONS',
+				{
+					type: messages.UNBOUND_PLUGINS_NOUN,
+				},
+			);
+
 	const labels = {
 		all: messages.UNBOUND_FILTER_ALL,
 		enabled: messages.UNBOUND_FILTER_ENABLED,
@@ -120,7 +130,9 @@ function PluginsPage({ route }: PluginsPageProps) {
 				<SafeArea.SafeAreaPaddingView bottom style={styles.empty}>
 					<View style={styles.center}>
 						{listed.length ? (
-							<Empty>{messages.UNBOUND_EMPTY_RESULTS}</Empty>
+							<Empty icon={query.trim() ? undefined : 'FiltersHorizontalIcon'}>
+								{empty}
+							</Empty>
 						) : (
 							<NoAddons kind='plugin' />
 						)}
