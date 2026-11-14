@@ -110,6 +110,7 @@ export function debugAltText(
 		...(info.enabledPlugins?.length && { enabledPlugins: info.enabledPlugins }),
 		...(info.experiments?.length && { experiments: info.experiments }),
 		...(info.injected?.length && { tweaks: info.injected }),
+		...(info.missingExtensions?.length && { missingExtensions: info.missingExtensions }),
 		...(info.display && { display: displaySummary(info.display) }),
 		...(info.session && { session: sessionSummary(info.session) }),
 		...(info.native && {

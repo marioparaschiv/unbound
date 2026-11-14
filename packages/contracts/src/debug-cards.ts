@@ -148,6 +148,7 @@ export const debugCardRequestSchema = Type.Object({
 	enabledPlugins: Type.Optional(Type.Array(text(96), { maxItems: 60 })),
 	experiments: Type.Optional(Type.Array(text(96), { maxItems: 30 })),
 	injected: Type.Optional(Type.Array(text(96), { maxItems: 32 })),
+	missingExtensions: Type.Optional(Type.Array(text(32), { maxItems: 4 })),
 	addonUpdates: Type.Optional(Type.Array(text(128), { maxItems: 64 })),
 	display: Type.Optional(
 		Type.Object({

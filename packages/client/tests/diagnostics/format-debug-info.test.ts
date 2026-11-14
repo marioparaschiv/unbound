@@ -79,6 +79,13 @@ describe('formatDebugInfo', () => {
 		expect(formatDebugInfo(info)).not.toContain('Other tweaks');
 	});
 
+	test('lists missing app extensions', () => {
+		expect(formatDebugInfo({ ...info, missingExtensions: ['Share'] }).split('\n')).toContain(
+			'- **Missing extensions:** Share',
+		);
+		expect(formatDebugInfo(info)).not.toContain('Missing extensions');
+	});
+
 	test('lists addon updates waiting', () => {
 		expect(
 			formatDebugInfo({ ...info, addonUpdates: ['Chat Bubbles 1.6.8 → 1.6.9'] }).split('\n'),

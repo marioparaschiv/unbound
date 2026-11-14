@@ -1,5 +1,6 @@
 import type { NativeDeviceState, UnboundLaunchReport } from '@unbound-app/types';
 
+import missingExtensions from '~/diagnostics/missing-extensions';
 import { NativeBridgeCapabilityError, NativeBridgeVersionError } from '~/native/errors';
 import { DeviceInfo, getNativeResources, getRuntimeProperties } from '~/native/native';
 import { CLIENT_VERSION, MINIMUM_DISCORD_VERSIONS, VERSION } from '~/core/constants';
@@ -317,6 +318,9 @@ export function readDebugInfo(): DebugInfo {
 		memory: attempt(() => memoryOf(state), undefined),
 		network: attempt(() => state?.network, undefined),
 		injected: attempt(() => injectedOf(state), undefined),
+		missingExtensions: android
+			? undefined
+			: attempt(() => missingExtensions(appSource), undefined),
 		storage: attempt(() => storageOf(state), undefined),
 		errors: recentErrors(),
 		patches: attempt(patchCounts, undefined),
