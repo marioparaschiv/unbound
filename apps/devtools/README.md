@@ -8,11 +8,11 @@ It runs on macOS, Windows and Linux.
 
 The latest release. Older versions are on the [releases page](https://github.com/marioparaschiv/unbound/releases?q=devtools-v&expanded=true).
 
-| Platform | ARM64                                                                                                                            | x64                                                                                                                  |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| macOS    | [Apple silicon](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-macos-arm64.tar.gz) |                                                                                                                      |
-| Windows  | [ARM64](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-windows-arm64.zip)          | [x64](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-windows-x64.zip)  |
-| Linux    | [ARM64](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-linux-arm64.tar.gz)         | [x64](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-linux-x64.tar.gz) |
+| Platform | ARM64                                                                                                                            | x64                                                                                                                    |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| macOS    | [Apple silicon](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-macos-arm64.tar.gz) | [Intel](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-macos-x64.tar.gz) |
+| Windows  | [ARM64](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-windows-arm64.zip)          | [x64](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-windows-x64.zip)    |
+| Linux    | [ARM64](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-linux-arm64.tar.gz)         | [x64](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-linux-x64.tar.gz)   |
 
 Linux builds need glibc 2.35 or newer (Ubuntu 22.04, Debian 12). The macOS download is `Unbound DevTools.app`; move it to Applications. The builds are not notarized, so on macOS run `xattr -dr com.apple.quarantine "/Applications/Unbound DevTools.app"` once. Updates replace the whole `.app`.
 

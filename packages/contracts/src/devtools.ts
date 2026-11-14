@@ -6,6 +6,7 @@ import { semverSchema } from './manifest';
 /** The `<os>-<arch>` builds CI makes of the DevTools app, matching its release asset names. */
 export const DEVTOOLS_TARGETS = [
 	'macos-arm64',
+	'macos-x64',
 	'windows-x64',
 	'windows-arm64',
 	'linux-x64',

@@ -132,6 +132,10 @@ jobs:
                     - os: macos-26
                       target: aarch64-apple-darwin
                       asset: unbound-devtools-macos-arm64.tar.gz
+                    # Intel Macs: cross-compiled on the Apple silicon runner.
+                    - os: macos-26
+                      target: x86_64-apple-darwin
+                      asset: unbound-devtools-macos-x64.tar.gz
                     - os: windows-2025
                       target: x86_64-pc-windows-msvc
                       asset: unbound-devtools-windows-x64.zip
