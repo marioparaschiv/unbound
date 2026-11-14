@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.8] - 2026-11-14
+
+### Fixed
+
+- Opening a channel no longer stalls: tag colours only follow labels inside a tag, and detached tags are swept at most twice a second instead of on every layout.
+
 ## [1.3.7] - 2026-11-14
 
 ### Fixed

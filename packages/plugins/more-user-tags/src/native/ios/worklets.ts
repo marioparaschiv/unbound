@@ -23,6 +23,7 @@ const SHEEN_FROM = [0, 0.1, 0.2, 0.3, 0.4];
 const SHEEN_TO = [0.6, 0.7, 0.8, 0.9, 1];
 const MAX_COLORS = 256;
 const MAX_UNMATCHED = 128;
+const SWEEP_INTERVAL_MS = 500;
 
 export type TagAppearance = {
 	colors: string[];
@@ -69,6 +70,8 @@ type TagState = {
 	records: Map<string, TagRecord>;
 	updating: Set<string>;
 	unmatched: Map<string, Unmatched>;
+	tagView: NativeObjectHandle | null;
+	sweptAt: number;
 };
 
 type Unmatched = {
@@ -513,6 +516,13 @@ function isDetached(current: TagState, record: TagRecord): boolean {
 
 function sweepDetached(current: TagState) {
 	'worklet';
+	const now = Date.now();
+
+	if (now - current.sweptAt < SWEEP_INTERVAL_MS) {
+		return;
+	}
+
+	current.sweptAt = now;
 	const detached: [string, TagRecord][] = [];
 
 	current.records.forEach((record, id) => {
@@ -579,6 +589,15 @@ function updateLabel(current: TagState, label: NativeObjectHandle) {
 	} finally {
 		current.updating.delete(id);
 	}
+}
+
+function isInTagView(current: TagState, label: NativeObjectHandle): boolean {
+	'worklet';
+	const parent = current.objc.invoke(label, 'superview', []) as NativeObjectHandle | null;
+
+	return Boolean(
+		parent && current.tagView && current.objc.call(parent, 'isKindOfClass:', current.tagView),
+	);
 }
 
 function updateTagView(current: TagState, view: NativeObjectHandle) {
@@ -657,11 +676,17 @@ export function installTagGradients(scope: NativeUIScope, settings: TagSettings)
 		records: new Map(),
 		updating: new Set(),
 		unmatched: new Map(),
+		tagView: objc.getClass(TAG_VIEW_CLASS),
+		sweptAt: 0,
 	};
 
 	holder()[STATE_KEY] = current;
 
 	const onLabel = ({ self }: { self: NativeObjectHandle }) => {
+		if (!isInTagView(current, self)) {
+			return;
+		}
+
 		if (hasAppearances(current)) {
 			updateLabel(current, self);
 
