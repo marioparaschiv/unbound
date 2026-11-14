@@ -12,6 +12,7 @@ import type {
 	MeasuredMedia,
 } from '@unbound-app/contracts/addon-page';
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { findUnknownPageIcons } from '@unbound-app/contracts/addon-page-icons';
 import { listPageMediaPaths } from '@unbound-app/contracts/addon-page-paths';
 import { safeParse } from '@unbound-app/contracts/schema';
 import type { Token, Tokens } from 'marked';
@@ -96,6 +97,14 @@ export async function readPage(dir: string, limits: MediaLimits): Promise<PageRe
 	}
 
 	issues.push(...lintPageBody(split.body).map(error));
+
+	for (const { name, line } of findUnknownPageIcons(source)) {
+		issues.push(
+			warning(
+				`${ADDON_PAGE_FILENAME}:${line} uses :${name}:, which is not a page icon, so the store shows it as text; pick one from https://unbound.rip/docs/developer/publishing/page-icons.`,
+			),
+		);
+	}
 
 	const paths = listPageMediaPaths(frontmatter, split.body);
 	const measurements = await Promise.all(

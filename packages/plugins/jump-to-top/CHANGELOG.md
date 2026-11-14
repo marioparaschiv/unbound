@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1] - 2026-11-14
+
+### Fixed
+
+- The store page shows the long-press row's icon instead of its name.
+
 ## [1.2.0] - 2026-11-14
 
 ### Added

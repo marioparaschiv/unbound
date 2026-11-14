@@ -63,6 +63,17 @@ test('reports a whitespace-only ADDON.md', () => {
 	expect(validatePluginDocs(directory, '1.0.0')).toEqual(['ADDON.md is empty']);
 });
 
+test('reports ADDON.md shortcodes the store cannot draw', () => {
+	const directory = createPlugin({
+		addon: '## :gear: Settings\n\n- :forward: Faster.\n',
+		changelog: validChangelog,
+	});
+	const errors = validatePluginDocs(directory, '1.0.0');
+
+	expect(errors).toHaveLength(1);
+	expect(errors[0]).toStartWith('ADDON.md:3: :forward: is not a page icon');
+});
+
 test('reports a missing CHANGELOG.md', () => {
 	const directory = createPlugin({ addon: '# Example\n' });
 

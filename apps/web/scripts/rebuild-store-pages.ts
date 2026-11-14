@@ -1,5 +1,5 @@
-// Writes `store-page.json` beside each published ADDON.md that has none yet, from ADDON.md and `page.json`.
-// Usage: bun scripts/backfill-store-page-files.ts
+// Rewrites each missing or outdated published `store-page.json`, e.g. after adding a page icon.
+// Usage: bun scripts/rebuild-store-pages.ts
 import {
 	ADDON_PAGE_FILENAME,
 	MEASURED_PAGE_FILENAME,
@@ -16,7 +16,7 @@ import { createStorage } from '~/lib/storage';
 import { addonVersion } from '~/db/schema';
 import { parseEnv } from '~/lib/env';
 
-const logger = createLogger('Web', 'StorePageFiles');
+const logger = createLogger('Web', 'StorePages');
 const env = parseEnv();
 const db = createDatabase(env.DATABASE_DIRECT_URL);
 const bucket = createStorage(env).public;
@@ -37,23 +37,29 @@ for (const { addonId, version } of versions) {
 
 	try {
 		const page = bucket.file(`${directory}/${ADDON_PAGE_FILENAME}`);
-		const target = `${directory}/${STORE_PAGE_FILENAME}`;
+		const target = bucket.file(`${directory}/${STORE_PAGE_FILENAME}`);
 
-		if (!(await page.exists()) || (await bucket.file(target).exists())) {
+		if (!(await page.exists())) {
 			continue;
 		}
 
-		const [addonMd, measured] = await Promise.all([
+		const [addonMd, measured, current] = await Promise.all([
 			page.text(),
 			readMeasured(`${directory}/${MEASURED_PAGE_FILENAME}`),
+			target.exists().then((exists) => (exists ? target.text() : null)),
 		]);
+		const file = buildStorePageFile(addonMd, measured);
 
-		await bucket.write(target, buildStorePageFile(addonMd, measured), {
+		if (file === current) {
+			continue;
+		}
+
+		await bucket.write(`${directory}/${STORE_PAGE_FILENAME}`, file, {
 			type: 'application/json',
 		});
 		written += 1;
 	} catch (error) {
-		logger.error(`Failed to backfill store-page.json of ${addonId}@${version}:`, error);
+		logger.error(`Failed to rebuild store-page.json of ${addonId}@${version}:`, error);
 	}
 }
 
