@@ -1,0 +1,25 @@
+{
+	"id": "unbound.clean-channel-names",
+	"name": "Clean Channel Names",
+	"description": "Shows channel names without dashes, emoji and decorative letters, as plain words.",
+	"authors": [
+		{
+			"name": "sapphire",
+			"id": "757982547861962752"
+		},
+		{
+			"name": "AutumnVN",
+			"id": "393694671383166998"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TextIcon",
+	"main": "index.tsx"
+}
