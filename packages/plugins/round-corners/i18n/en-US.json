@@ -1,0 +1,19 @@
+{
+	"SERVER_ICONS": "Server icons",
+	"SERVER_ICONS_SUBTITLE": "Every server picture and initials icon round, in the server list and everywhere else.",
+	"SELECTED_SHAPE": "Selected server",
+	"SELECTED_CLASSIC": "Rounded square, like older Discord",
+	"SELECTED_ROUND": "Round, like every other server",
+	"SERVER_BAR_BUTTONS": "Server bar buttons",
+	"SERVER_BAR_BUTTONS_SUBTITLE": "Home, Create and Discover round like the servers beside them.",
+	"YOU_BAR": "You bar",
+	"YOU_BAR_SUBTITLE": "The bar at the bottom as a pill, with round buttons.",
+	"CHAT_BUTTONS": "Chat bar buttons",
+	"CHAT_BUTTONS_SUBTITLE": "Send, emoji, media, gift and apps buttons as circles.",
+	"CHAT_INPUT": "Message box",
+	"CHAT_INPUT_SUBTITLE": "The message box as a pill.",
+	"YOU_NAV": "Quests, Shop and Settings bar",
+	"YOU_NAV_SUBTITLE": "The floating bar on the You tab as a pill, with round buttons.",
+	"OTHER_CORNERS": "Everything else",
+	"OTHER_CORNERS_SUBTITLE": "Folders, channel rows, inputs and buttons fully round, and cards and rows back to their older corners."
+}

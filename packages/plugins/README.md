@@ -1,6 +1,6 @@
 # Plugins
 
-123 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+124 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -96,6 +96,7 @@
 - <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [ReviewDB](https://unbound.rip/addons/unbound.reviewdb): Leave reviews on other users' profiles and see what others think of you.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Role Color Everywhere](https://unbound.rip/addons/unbound.role-color-everywhere): Colors mentions, typing names, voice users, reaction users, poll voters, and role headers.
 - <img src="../../assets/plugins/readme-icons/shield-user-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Role Tools](https://unbound.rip/addons/unbound.role-tools): Long-press a role on a profile to copy its color or see its members.
+- <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Round Corners](https://unbound.rip/addons/unbound.round-corners): Undoes the redesign's squares: round server icons and buttons, a pill You bar and message box, and the older corners elsewhere.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Send Timestamps](https://unbound.rip/addons/unbound.send-timestamps): Turns times like `17:30` in your messages into timestamps everyone sees in their own time zone.
 - <img src="../../assets/plugins/readme-icons/settings-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Settings Demo](https://unbound.rip/addons/unbound.settings-demo): Shows every generated settings row.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Shiki Codeblocks](https://unbound.rip/addons/unbound.shiki-codeblocks): Highlights code blocks with VS Code-style syntax colors.

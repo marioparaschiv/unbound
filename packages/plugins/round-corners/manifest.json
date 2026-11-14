@@ -1,0 +1,21 @@
+{
+	"id": "unbound.round-corners",
+	"name": "Round Corners",
+	"description": "Undoes the redesign's squares: round server icons and buttons, a pill You bar and message box, and the older corners elsewhere.",
+	"authors": [
+		{
+			"name": "bleelblep",
+			"id": "0"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "UserCircleIcon",
+	"main": "index.tsx"
+}
