@@ -1,0 +1,21 @@
+{
+	"id": "unbound.message-burst",
+	"name": "Message Burst",
+	"description": "Merges messages you send in quick succession into your previous message, as an edit, while nobody else has replied in between.",
+	"authors": [
+		{
+			"name": "port",
+			"id": "1318383159645311009"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ChatDotsIcon",
+	"main": "index.tsx"
+}

@@ -1,6 +1,6 @@
 # Plugins
 
-118 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+119 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -63,6 +63,7 @@
 - <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Media Favorites](https://unbound.rip/addons/unbound.media-favorites): Lets you favorite any image or video from the media viewer, so it shows up with your favorite GIFs.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Member Count](https://unbound.rip/addons/unbound.member-count): Shows a channel's total members beside how many are online, in the channel header.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Mention Avatars](https://unbound.rip/addons/unbound.mention-avatars): Shows user avatars and role icons inside mentions.
+- <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Burst](https://unbound.rip/addons/unbound.message-burst): Merges messages you send in quick succession into your previous message, as an edit, while nobody else has replied in between.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Colors](https://unbound.rip/addons/unbound.message-colors): Shows hex, rgb() and hsl() colors in messages as pills tinted with that color.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Latency](https://unbound.rip/addons/unbound.message-latency): Marks messages that took at least the selected threshold to send.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Link Embeds](https://unbound.rip/addons/unbound.message-link-embeds): Adds previews to messages that link to other Discord messages.
