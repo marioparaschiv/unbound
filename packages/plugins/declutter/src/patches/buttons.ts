@@ -5,7 +5,7 @@ import { settings } from '@unbound-app/settings';
 
 import { withoutGiftItem } from '~/lib/gift-item';
 import { withoutIconButtons } from '~/lib/icon-buttons';
-import { SERVER_BOOSTS_ROW, iconName, withoutRows } from '~/lib/upsells';
+import { BOOST_GOAL_ROW, SERVER_BOOSTS_ROW, iconName, withoutRows } from '~/lib/upsells';
 
 type GiftOrThreadProps = { hideGiftButton?: boolean };
 type RightActionsProps = { shouldShowGiftButton?: boolean };
@@ -172,6 +172,7 @@ function hiddenYouIcons(): Set<string> {
 	return new Set([
 		...(settings.quests ? ['QuestsIcon'] : []),
 		...(settings.shop ? ['ShopIcon'] : []),
+		...(settings.nitroButton ? ['NitroWheelIcon'] : []),
 	]);
 }
 
@@ -197,7 +198,7 @@ export function patchYouScreenButtons(): void {
 }
 
 /**
- * @description Hides the Server Boosts row at the top of a server's channel list, by patching Discord's `useGuildActionRows`.
+ * @description Hides the Server Boosts row and the boost goal bar at the top of a server's channel list, by patching Discord's `useGuildActionRows`.
  */
 export function patchGuildActionRows(): void {
 	const GuildActionRows = metro.findByFilePath('modules/guild_sidebar/useGuildActionRows.tsx');
@@ -209,6 +210,12 @@ export function patchGuildActionRows(): void {
 	}
 
 	patcher.after(GuildActionRows, 'default', ({ result }) =>
-		settings.serverBoosts ? withoutRows(result, new Set([SERVER_BOOSTS_ROW])) : result,
+		withoutRows(
+			result,
+			new Set([
+				...(settings.serverBoosts ? [SERVER_BOOSTS_ROW] : []),
+				...(settings.boostGoal ? [BOOST_GOAL_ROW] : []),
+			]),
+		),
 	);
 }

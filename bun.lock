@@ -156,7 +156,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "3.4.0",
+      "version": "3.4.0-eed7c0a0588c02fc2332476755a3fc201a783614e7ae9dbe2b499a149205739f",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -790,6 +790,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/declutter": {
+      "name": "declutter",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/decor": {
       "name": "decor",
       "dependencies": {
@@ -1014,20 +1028,6 @@
     },
     "packages/plugins/greet-sticker-picker": {
       "name": "greet-sticker-picker",
-      "dependencies": {
-        "@unbound-plugins/shared": "workspace:*",
-      },
-      "devDependencies": {
-        "@types/bun": "latest",
-        "@types/react": "^19.2.7",
-        "@unbound-app/api": "workspace:*",
-        "@unbound-app/cli": "workspace:*",
-        "react-native": "^0.86.0",
-        "rollup": "^4.67.5",
-      },
-    },
-    "packages/plugins/hide-buttons": {
-      "name": "hide-buttons",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -3552,6 +3552,8 @@
 
     "debug": ["debug@4.4.3", "", { "dependencies": { "ms": "^2.1.3" }, "peerDependencies": { "supports-color": "*" }, "optionalPeers": ["supports-color"] }, "sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA=="],
 
+    "declutter": ["declutter@workspace:packages/plugins/declutter"],
+
     "decode-named-character-reference": ["decode-named-character-reference@1.3.0", "", { "dependencies": { "character-entities": "^2.0.0" } }, "sha512-GtpQYB283KrPp6nRw50q3U9/VfOutZOe103qlN7BPP6Ad27xYnOIWv4lPzo8HCAL+mMZofJ9KEy30fq6MfaK6Q=="],
 
     "decor": ["decor@workspace:packages/plugins/decor"],
@@ -3857,8 +3859,6 @@
     "hermes-estree": ["hermes-estree@0.36.0", "", {}, "sha512-A1+8zn5oss2CFP7pKsOaxorQG6FNIz1WU1VDqruLPPZl3LVgeE2C5xfFg8Ow6/Ow4mSslLLtYP1J3n38eKyW9w=="],
 
     "hermes-parser": ["hermes-parser@0.36.0", "", { "dependencies": { "hermes-estree": "0.36.0" } }, "sha512-GdpwMmH5x6IpC1cijvcvYnlPB60Mh6kTSF/NFdYV/j56gYdi+0RIakYs+eqOV+bbO0SW7mgVVGSsTJxyPQfo3w=="],
-
-    "hide-buttons": ["hide-buttons@workspace:packages/plugins/hide-buttons"],
 
     "hide-servers": ["hide-servers@workspace:packages/plugins/hide-servers"],
 
