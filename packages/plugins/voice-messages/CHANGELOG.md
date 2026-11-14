@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-14
+
+### Added
+
+- Playback speed: voice messages and audio files play at 0.75×, 1×, 1.5× or 2×; videos keep their speed.
+
 ## [1.0.0] - 2026-11-14
 
 ### Added

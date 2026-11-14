@@ -1,7 +1,7 @@
 {
 	"id": "unbound.voice-messages",
 	"name": "Voice Messages",
-	"description": "Sends audio files as voice messages, can show audio files as voice messages, and saves voice messages from their long-press menu.",
+	"description": "Plays voice messages faster or slower, saves them from their long-press menu, and sends audio files as voice messages.",
 	"authors": [
 		{
 			"name": "Dziurwa",
@@ -20,7 +20,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"unbound": {
 		"min": "3.0.0"
 	},

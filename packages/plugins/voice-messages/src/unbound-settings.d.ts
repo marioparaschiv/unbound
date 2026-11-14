@@ -138,6 +138,12 @@ declare module '@unbound-app/settings' {
 		 */
 		sendAudio: boolean;
 		/**
+		 * Playback speed
+		 *
+		 * How fast voice messages and audio files play.
+		 */
+		speed: "1" | "2" | "0.75" | "1.5";
+		/**
 		 * Show audio files as voice messages
 		 *
 		 * Audio files others send play in the voice message player.
@@ -153,6 +159,12 @@ declare module '@unbound-app/settings' {
 		 * A message that is only audio files goes out as a voice message, with a player instead of a file.
 		 */
 		"sendAudio": boolean;
+		/**
+		 * Playback speed
+		 *
+		 * How fast voice messages and audio files play.
+		 */
+		"speed": "1" | "2" | "0.75" | "1.5";
 		/**
 		 * Show audio files as voice messages
 		 *

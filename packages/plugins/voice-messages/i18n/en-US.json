@@ -5,5 +5,11 @@
 	"SEND_AUDIO": "Send audio files as voice messages",
 	"SEND_AUDIO_SUBTITLE": "A message that is only audio files goes out as a voice message, with a player instead of a file.",
 	"SHOW_AUDIO": "Show audio files as voice messages",
-	"SHOW_AUDIO_SUBTITLE": "Audio files others send play in the voice message player."
+	"SHOW_AUDIO_SUBTITLE": "Audio files others send play in the voice message player.",
+	"SPEED": "Playback speed",
+	"SPEED_SUBTITLE": "How fast voice messages and audio files play.",
+	"SPEED_075": "0.75×",
+	"SPEED_1": "1×",
+	"SPEED_15": "1.5×",
+	"SPEED_2": "2×"
 }

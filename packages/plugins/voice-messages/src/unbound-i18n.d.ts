@@ -17,6 +17,18 @@ declare module '@unbound-app/i18n' {
 		readonly SHOW_AUDIO: string;
 		/** Audio files others send play in the voice message player. */
 		readonly SHOW_AUDIO_SUBTITLE: string;
+		/** Playback speed */
+		readonly SPEED: string;
+		/** How fast voice messages and audio files play. */
+		readonly SPEED_SUBTITLE: string;
+		/** 0.75× */
+		readonly SPEED_075: string;
+		/** 1× */
+		readonly SPEED_1: string;
+		/** 1.5× */
+		readonly SPEED_15: string;
+		/** 2× */
+		readonly SPEED_2: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
