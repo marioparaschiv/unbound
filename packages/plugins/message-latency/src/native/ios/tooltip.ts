@@ -87,8 +87,9 @@ export function createTooltips({ objc, fabric }: Native): TooltipController | nu
 
 		try {
 			dismissHook = objc.hook('UIWindow', 'sendEvent:', {
+				// Removing a hook from inside its own callback can crash the app, so the dismiss waits for the next turn.
 				after: () => {
-					if (current === generation) track(dismiss());
+					if (current === generation) setTimeout(() => track(dismiss()), 0);
 				},
 			});
 		} catch {
