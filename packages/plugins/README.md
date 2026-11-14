@@ -1,6 +1,6 @@
 # Plugins
 
-134 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+135 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -97,6 +97,7 @@
 - <img src="../../assets/plugins/readme-icons/eye-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Preview Message](https://unbound.rip/addons/unbound.preview-message): Preview a message before sending it.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Privacy Screen](https://unbound.rip/addons/unbound.privacy-screen): Hides your chats in the app switcher: a blur on iOS, a blank preview on Android, which also blocks screenshots there.
 - <img src="../../assets/plugins/readme-icons/user-square-icon.svg" width="20" height="20" align="absmiddle" alt=""> [PronounDB](https://unbound.rip/addons/unbound.pronoundb): Adds pronouns to user messages using PronounDB.
+- <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [QR Codes](https://unbound.rip/addons/unbound.qr-codes): Adds Show QR Code to a link's long-press menu, so another phone can scan it.
 - <img src="../../assets/plugins/readme-icons/trash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Quick Delete](https://unbound.rip/addons/unbound.quick-delete): Deletes messages straight away, without the confirmation.
 - <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Reaction Avatars](https://unbound.rip/addons/unbound.reaction-avatars): Shows the people who reacted beside each message reaction.
 - <img src="../../assets/plugins/readme-icons/checkmark-large-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Read All Notifications](https://unbound.rip/addons/unbound.read-all-notifications): Adds a button to your server list that marks every server as read at once.
