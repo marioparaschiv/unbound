@@ -8,6 +8,7 @@ import IgnoreList, { IGNORE_LISTS, type IgnoreListKey } from '~/components/ignor
 
 type SwitchKey =
 	| 'redText'
+	| 'deletedHighlight'
 	| 'deletedMarker'
 	| 'inlineEdits'
 	| 'logDeletes'
@@ -40,6 +41,53 @@ function SwitchRow({
 	);
 }
 
+function HighlightRows() {
+	const enabled = useSetting('deletedHighlight');
+	const background = useSetting('highlightBackground');
+	const bar = useSetting('highlightBar');
+
+	if (!enabled) return null;
+
+	return (
+		<>
+			<ui.ColorRow
+				label={messages.HIGHLIGHT_BACKGROUND}
+				color={background || undefined}
+				fallbackColor='#f23f4326'
+				fallbackLabel={messages.HIGHLIGHT_BACKGROUND_FALLBACK}
+				onChange={(value) => {
+					settings.highlightBackground = value ?? '';
+				}}
+			/>
+			<ui.ColorRow
+				label={messages.HIGHLIGHT_BAR}
+				color={bar || undefined}
+				fallbackColor='#f23f43'
+				fallbackLabel={messages.HIGHLIGHT_BAR_FALLBACK}
+				onChange={(value) => {
+					settings.highlightBar = value ?? '';
+				}}
+			/>
+		</>
+	);
+}
+
+function EditedTextRow() {
+	const value = useSetting('editedText');
+
+	return (
+		<ui.InputRow
+			label={messages.EDITED_TEXT}
+			subLabel={messages.EDITED_TEXT_SUBTITLE}
+			value={value}
+			placeholder={messages.EDITED_SUFFIX.trim()}
+			onChange={(next: string) => {
+				settings.editedText = next;
+			}}
+		/>
+	);
+}
+
 function IgnoreListRow({ setting }: { setting: IgnoreListKey }) {
 	const count = parseIdList(useSetting(setting)).length;
 	const { title } = IGNORE_LISTS[setting].texts();
@@ -64,6 +112,12 @@ function SettingsPanel() {
 					subLabel={messages.RED_TEXT_SUBTITLE}
 				/>
 				<SwitchRow
+					setting='deletedHighlight'
+					label={messages.DELETED_HIGHLIGHT}
+					subLabel={messages.DELETED_HIGHLIGHT_SUBTITLE}
+				/>
+				<HighlightRows />
+				<SwitchRow
 					setting='deletedMarker'
 					label={messages.DELETED_MARKER}
 					subLabel={messages.DELETED_MARKER_SUBTITLE}
@@ -73,6 +127,7 @@ function SettingsPanel() {
 					label={messages.INLINE_EDITS}
 					subLabel={messages.INLINE_EDITS_SUBTITLE}
 				/>
+				<EditedTextRow />
 				<SwitchRow
 					setting='logDeletes'
 					label={messages.LOG_DELETES}

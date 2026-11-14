@@ -138,6 +138,15 @@ declare module '@unbound-app/settings' {
 		 */
 		redText: boolean;
 		/**
+		 * Highlight deleted messages
+		 *
+		 * Draws deleted messages with a highlight and a bar at their side, like mentions.
+		 */
+		deletedHighlight: boolean;
+		highlightBackground: string;
+		highlightBar: string;
+		editedText: string;
+		/**
 		 * Deleted marker
 		 *
 		 * Show “This message was deleted” under deleted messages, with a Dismiss link.
@@ -198,6 +207,15 @@ declare module '@unbound-app/settings' {
 		 * Show the text of deleted messages in red.
 		 */
 		"redText": boolean;
+		/**
+		 * Highlight deleted messages
+		 *
+		 * Draws deleted messages with a highlight and a bar at their side, like mentions.
+		 */
+		"deletedHighlight": boolean;
+		"highlightBackground": string;
+		"highlightBar": string;
+		"editedText": string;
 		/**
 		 * Deleted marker
 		 *
@@ -260,7 +278,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "redText" | "deletedMarker" | "inlineEdits" | "logDeletes" | "logEdits" | "persistLog" | "logDeletedAttachments" | "ignoreBots" | "ignoreSelf";
+	export type BooleanSettingKey = "redText" | "deletedHighlight" | "deletedMarker" | "inlineEdits" | "logDeletes" | "logEdits" | "persistLog" | "logDeletedAttachments" | "ignoreBots" | "ignoreSelf";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

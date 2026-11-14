@@ -1,4 +1,5 @@
 import { settings } from '@unbound-app/settings';
+import { messages } from '@unbound-app/i18n';
 import { patcher } from '@unbound-app/api';
 import { processColor } from 'react-native';
 
@@ -9,6 +10,7 @@ import {
 	EPHEMERAL_FLAG,
 } from '~/lib/constants';
 import { asEditedSubtext, decorateRow, type ChatRow, type ContentNode } from '~/lib/decorate';
+import { deletedHighlight, editedLabel } from '~/lib/highlight';
 import { MessageStore, findChatModules } from '~/lib/modules';
 import { messageLog as log } from '~/lib/log';
 
@@ -88,7 +90,10 @@ function patchRowManager(RowManager: ChatModules['RowManager']): void {
 						versionContent(
 							self as RowGenerator,
 							input as RowInput,
-							asEditedSubtext(edit.content),
+							asEditedSubtext(
+								edit.content,
+								editedLabel(settings.editedText, messages.EDITED_SUFFIX),
+							),
 						),
 					)
 					.filter((content): content is ContentNode[] => content !== null)
@@ -99,6 +104,10 @@ function patchRowManager(RowManager: ChatModules['RowManager']): void {
 			redText: settings.redText,
 			deletedMarker: settings.deletedMarker,
 			deletedColor: typeof color === 'number' ? color : null,
+			deletedHighlight:
+				deleted && settings.deletedHighlight
+					? deletedHighlight(settings.highlightBackground, settings.highlightBar)
+					: null,
 			dismissTarget:
 				deleted && channelId
 					? dismissTarget(MessageStore.getMessage(channelId, messageId))

@@ -21,8 +21,12 @@ export type RowMessage = {
 	attachments?: RowAttachment[];
 };
 
+/** The mention-style highlight Discord draws behind a row: a tint and a bar at its side, as ARGB colours. */
+export type RowHighlight = { backgroundColor: number; gutterColor: number };
+
 export type ChatRow = {
 	message?: RowMessage;
+	backgroundHighlight?: RowHighlight | null;
 };
 
 export type RowDecoration = {
@@ -30,6 +34,7 @@ export type RowDecoration = {
 	redText: boolean;
 	deletedMarker: boolean;
 	deletedColor: number | null;
+	deletedHighlight: RowHighlight | null;
 	dismissTarget: object | null;
 	previousVersions: readonly ContentNode[][];
 	deletedAttachmentIds: ReadonlySet<string>;
@@ -57,18 +62,19 @@ function deletedIndication(dismissTarget: object | null) {
 /**
  * @description Builds the markdown an earlier version of a message shows: each line of its text as small subtext, the last one ending with the edited suffix, with no blank lines.
  * @param content The earlier version's text.
+ * @param label What follows the last line, Discord's ` (edited)` unless the user picked their own.
  * @returns The text to draw, such as `-# Hello (edited)`.
  */
-export function asEditedSubtext(content: string): string {
+export function asEditedSubtext(content: string, label: string = messages.EDITED_SUFFIX): string {
 	const lines = content
 		.split('\n')
 		.map((line) => line.trim())
 		.filter(Boolean)
 		.map((line) => `-# ${line}`);
 
-	if (!lines.length) return `-#${messages.EDITED_SUFFIX}`;
+	if (!lines.length) return `-#${label}`;
 
-	lines[lines.length - 1] += messages.EDITED_SUFFIX;
+	lines[lines.length - 1] += label;
 
 	return lines.join('\n');
 }
@@ -108,6 +114,10 @@ export function decorateRow(row: ChatRow, decoration: RowDecoration): void {
 
 		if (decoration.deletedMarker) {
 			message.ephemeralIndication = deletedIndication(decoration.dismissTarget);
+		}
+
+		if (decoration.deletedHighlight) {
+			row.backgroundHighlight = { ...decoration.deletedHighlight };
 		}
 	}
 
