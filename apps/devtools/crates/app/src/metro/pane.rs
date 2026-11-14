@@ -178,7 +178,7 @@ impl MetroBrowser {
 							.child(text),
 					)
 					.when(circular, |row| row.child(badge("Circular", theme::WARNING)))
-					.when(getter, |row| row.tooltip(text_tooltip("Run this getter")))
+					.when(getter, |row| row.tooltip(text_tooltip("Run This Getter")))
 					.on_click(cx.listener(move |this, _, _, cx| {
 						if getter {
 							this.read(path.clone(), cx);
@@ -305,7 +305,7 @@ impl MetroBrowser {
 							"metro-load-picked",
 							Raised::Primary,
 							None,
-							if loading { "Loading" } else { "Load Module" },
+							if loading { "Loading…" } else { "Load Module" },
 							!loading,
 						)
 						.when(!loading, |button| {
@@ -317,7 +317,7 @@ impl MetroBrowser {
 			}
 			(_, MetroModuleStatus::Failed) => pane_message(
 				format!("Module {} Threw While Loading", picked.module.id),
-				"Its factory failed, so it has no exports.",
+				"Its factory threw, so it has no exports.",
 				theme::ERROR,
 			)
 			.into_any_element(),

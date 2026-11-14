@@ -294,8 +294,10 @@ export async function logSize(vphone: Vphone, paths: DevicePaths): Promise<numbe
 	);
 }
 
+// Error lines in both formats: an older loader's plain ` E [` and the JSON lines' `"lvl":"error"`.
 const LAUNCH_LINES = [
 	' [EF] \\[',
+	'"lvl":"error"',
 	'RCTHost didInitializeRuntime',
 	'Loaded [0-9]+ plugins?\\.',
 	'Attempting to execute bundle',
@@ -322,7 +324,8 @@ export async function readLaunchLog(
 	const logs = quote(`${paths.unbound}/Logs`);
 	const read = `cd ${logs}; n=$(wc -c < unbound.log); if [ "$n" -lt ${offset} ]; then tail -c +${offset + 1} unbound.1.log; cat unbound.log; else tail -c +${offset + 1} unbound.log; fi`;
 
-	return vphone.shell(`(${read}) | grep -E '${LAUNCH_LINES.join('|')}' | cut -c1-400; true`);
+	// No `cut`: a JSON line cut short no longer parses. `parseLaunchLog` shortens what it keeps.
+	return vphone.shell(`(${read}) | grep -E '${LAUNCH_LINES.join('|')}'; true`);
 }
 
 /**

@@ -18,6 +18,7 @@ use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, connect_async};
 use crate::explorer::{
 	ExplorerErrorCode, ExplorerImage, ExplorerMember, ExplorerObject, ExplorerValue,
 };
+use crate::logs::LogLine;
 use crate::metro::{MetroErrorCode, MetroFile, MetroMatch, MetroModule, MetroValue};
 use crate::views::{ViewDetails, ViewNode};
 
@@ -91,6 +92,8 @@ pub(crate) enum BridgeFrame {
 		code: Option<String>,
 	},
 	BridgeInfo(BridgeInfo),
+	/// One device log line.
+	Log(LogLine),
 	/// One React DevTools frame; `react_protocol::parse` reads it from the frame's text.
 	ReactDevtools {},
 	ViewsResult {

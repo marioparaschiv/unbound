@@ -14,6 +14,7 @@ import type {
 	ViewsResult,
 } from '@unbound-app/debugger-protocol';
 import { isExplorerRequest, isMetroRequest, parseMessage } from '@unbound-app/debugger-protocol';
+import type { UnboundLogEntry, UnboundLogLevel } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
 
 import {
@@ -60,6 +61,8 @@ let failedDials = 0;
 // The address of the bridge the user chose from the network, dialled before the build-time fallback.
 let discovered: string | undefined;
 let stopBrowsing: (() => void) | undefined;
+// Ends the loader's live log stream to the open socket; set only while one is subscribed.
+let stopLogStream: (() => void) | undefined;
 let prompt: { computer: string; handle: DialogHandle } | undefined;
 // Bridges the user said "Not now" to this run, by computer and pairing code, so a restarted bridge asks again.
 const declined = new Set<string>();
@@ -73,7 +76,11 @@ export function start() {
 	stopped = false;
 	Reflect.set(globalThis, DEBUG_REPORT_GLOBAL, readDebugReport);
 
-	patchLoggingHook();
+	// A loader with `UnboundNative.logs` streams console output with every other source, so the hook is only
+	// patched on older loaders.
+	if (!globalThis.UnboundNative?.logs) {
+		patchLoggingHook();
+	}
 
 	// start() is re-entered by the settings listener on toggle; the disposers already registered mean
 	// the subscriptions below are live, and stacking a second set would fire every toast twice.
@@ -143,6 +150,7 @@ function connect(isReconnect = false) {
 		failedDials = 0;
 		stopDiscovery();
 		sayHello();
+		streamLogs(socket);
 		Logger.success(isReconnect ? 'Reconnected' : 'Connected');
 	});
 
@@ -276,6 +284,8 @@ function clearReconnectTimer() {
 }
 
 function closeSocket() {
+	endLogStream();
+
 	if (!ws) return;
 
 	if (ws.readyState === WebSocket.OPEN) {
@@ -483,6 +493,63 @@ function logFrame(message: unknown, level: unknown): LogMessage {
 		level: level === 2 || level === 3 ? level : 1,
 		message: inspect(message),
 	};
+}
+
+const LOG_LEVELS: Record<UnboundLogLevel, LogMessage['level']> = {
+	debug: 1,
+	info: 1,
+	warn: 2,
+	error: 3,
+};
+
+/**
+ * @description Builds the bridge's log frame for one line from the loader's log stream.
+ * @param entry The line, as `UnboundNative.logs` delivered it.
+ * @returns A frame carrying the line's source, scope and time.
+ */
+function entryFrame(entry: UnboundLogEntry): LogMessage {
+	return {
+		type: 'log',
+		level: LOG_LEVELS[entry.lvl] ?? 1,
+		message: entry.msg,
+		source: entry.src,
+		scope: entry.scope,
+		at: entry.t,
+	};
+}
+
+// Subscribed only while `socket` is open: the loader buffers nothing for a stream no one reads.
+function streamLogs(socket: WebSocket) {
+	const logs = globalThis.UnboundNative?.logs;
+
+	if (!logs) return;
+
+	endLogStream();
+
+	try {
+		const unsubscribe = logs.subscribe((entries) => {
+			if (socket.readyState !== WebSocket.OPEN) return;
+
+			try {
+				for (const entry of entries) socket.send(JSON.stringify(entryFrame(entry)));
+			} catch {
+				// Swallow: the line logging this failure would come straight back through this stream.
+			}
+		});
+
+		stopLogStream = unsubscribe;
+		socket.addEventListener('close', () => stopLogStream === unsubscribe && endLogStream());
+		socket.addEventListener('error', () => stopLogStream === unsubscribe && endLogStream());
+	} catch (error) {
+		Logger.error('Failed to subscribe to the loader logs:', error);
+	}
+}
+
+function endLogStream() {
+	const unsubscribe = stopLogStream;
+
+	stopLogStream = undefined;
+	unsubscribe?.();
 }
 
 function patchLoggingHook() {

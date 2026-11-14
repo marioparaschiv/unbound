@@ -269,8 +269,9 @@ Keys built at run time, such as `messages[name]`, are not found. The report coun
 | `--grep` | Only lines matching a regular expression. |
 | `--since` | Print history from a duration (`5m`), a time (`14:30`) or a date, then exit. iOS history holds only notices, errors and faults. |
 | `--follow` | Keep printing new lines after the `--since` history. On by default without `--since`; `--follow=false` prints the buffered history and exits. |
+| `--native` | iOS: also read the loader's `native.log`, React Native's and the native runtime's output, which the unified log does not carry. |
 | `--symbolicate` | Map Hermes frames of the client bundle to source with the maps in `packages/client/dist`. `--bundle` picks the bundle. |
-| `--pull` | Copy the loader's own log files off the device instead. They survive restarts and include the console. `--out` sets the folder. |
+| `--pull` | Copy the loader's own log files, `unbound.log` and `native.log`, off the device instead. They survive restarts and include the console. `--out` sets the folder. |
 
 `ubd device save`, `restore`, `snapshots` and `reset` keep Discord's Unbound state, to test from a known start:
 

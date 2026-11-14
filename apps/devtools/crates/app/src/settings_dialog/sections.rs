@@ -110,14 +110,16 @@ pub fn render(section: Section, fields: &Fields, s: Scale, cx: &App) -> Vec<Div>
 		Section::Device => vec![setting(
 			s,
 			"Bridge Port",
-			"The port of the bridge on this machine. React DevTools, the view finder and Metro reach the device through it. Connect device reads it when DevTools starts.",
+			&format!(
+				"The bridge's port on this machine. Every page reaches the device through it. {RESTART}"
+			),
 			port(s, &fields.bridge_port),
 		)],
 		Section::Agents => vec![
 			setting(
 				s,
 				"Serve MCP",
-				&format!("Let an agent inspect the same component tree over HTTP. {RESTART}"),
+				&format!("Lets an agent inspect the component tree over HTTP. {RESTART}"),
 				Switch::new("mcp-enabled")
 					.checked(settings::get(cx).mcp_enabled)
 					.on_click(|on, _, cx| settings::update(cx, |s| s.mcp_enabled = *on)),
@@ -134,7 +136,7 @@ pub fn render(section: Section, fields: &Fields, s: Scale, cx: &App) -> Vec<Div>
 			setting(
 				s,
 				"Check Automatically",
-				"Look for a new version each time DevTools starts, and show a notification when one is out.",
+				"Check for a new version each time DevTools starts.",
 				Switch::new("check-for-updates")
 					.checked(settings::get(cx).check_for_updates)
 					.on_click(|on, _, cx| settings::update(cx, |s| s.check_for_updates = *on)),
@@ -143,7 +145,7 @@ pub fn render(section: Section, fields: &Fields, s: Scale, cx: &App) -> Vec<Div>
 		Section::About => vec![setting(
 			s,
 			"Version",
-			"Settings and saved devices live in the unbound-devtools folder of your config directory.",
+			"Settings and saved devices are in the unbound-devtools folder of your config directory.",
 			div()
 				.font_family(theme::mono_font())
 				.text_size(s.px(12.))
@@ -162,24 +164,22 @@ fn updates_row(s: Scale, cx: &App) -> Div {
 		),
 		Status::Checking => (
 			format!("Version {VERSION}"),
-			"Checking for updates...".to_owned(),
+			"Checking for updates…".to_owned(),
 		),
 		Status::Current => (
 			format!("Version {VERSION}"),
 			"DevTools is up to date.".to_owned(),
 		),
 		Status::Available(found) => (
-			format!("Version {} is available", found.version),
-			format!(
-				"You have {VERSION}. Updating downloads it and replaces this copy of DevTools."
-			),
+			format!("Version {} Is Available", found.version),
+			format!("You have {VERSION}. Updating replaces this copy of DevTools."),
 		),
 		Status::Installing(found) => (
 			format!("Installing {}", found.version),
-			"Downloading and checking the update...".to_owned(),
+			"Downloading and verifying the update…".to_owned(),
 		),
 		Status::Installed(version) => (
-			format!("Version {version} is installed"),
+			format!("Version {version} Is Installed"),
 			"Restart DevTools to use it.".to_owned(),
 		),
 		Status::Failed(error) => (
@@ -204,13 +204,9 @@ fn updates_row(s: Scale, cx: &App) -> Div {
 			true,
 		)
 		.on_click(|_, _, cx| update::restart(cx)),
-		Status::Checking | Status::Installing(_) => raised_button(
-			"check-updates",
-			Raised::Secondary,
-			None,
-			"Working...",
-			false,
-		),
+		Status::Checking | Status::Installing(_) => {
+			raised_button("check-updates", Raised::Secondary, None, "Working…", false)
+		}
 		Status::Idle | Status::Current | Status::Failed(_) => raised_button(
 			"check-updates",
 			Raised::Secondary,
@@ -315,7 +311,7 @@ fn theme_choice(s: Scale, cx: &App) -> Div {
 		.child(label(
 			s,
 			"Theme",
-			"Light or dark. Match the System follows your operating system as it changes.",
+			"Match the System follows your OS as it changes.",
 		))
 		.child(options)
 }

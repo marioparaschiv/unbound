@@ -1,9 +1,10 @@
 import { discordDataContainer, PILOT, pilotShell, type PilotTarget } from '~/lib/pilot';
 import { parseLoaderLogLine, type LogEntry, type LogEvent } from '~/lib/log-lines';
+import type { LoaderLogStem } from '~/lib/loader-log-line';
 import { parseJson } from '~/lib/parse-json';
 import { Type } from '~/lib/schema';
 
-const LOADER_LOG_PATH = 'Documents/Unbound/Logs/unbound.log';
+const LOADER_LOG_DIRECTORY = 'Documents/Unbound/Logs';
 const LOG_FILE_POLL_MS = 1_000;
 const LOG_FILE_CHUNK_BYTES = 65_536;
 const LOG_FILE_TAIL_LINES = 200;
@@ -13,15 +14,17 @@ const fileReadSchema = Type.Object({ data: Type.Optional(Type.String()), size: T
 
 export type LoaderLogFileOptions = PilotTarget & {
 	emit: (event: LogEvent) => void;
+	/** The file to follow; `unbound` when left out. */
+	stem?: LoaderLogStem;
 	since?: number;
 	polls?: number;
 	intervalMs?: number;
 };
 
-async function loaderLogPath(target: PilotTarget): Promise<string | { error: string }> {
+async function loaderLogDirectory(target: PilotTarget): Promise<string | { error: string }> {
 	const container = await discordDataContainer(target, PILOT_TIMEOUT_MS);
 
-	return typeof container === 'string' ? `${container}/${LOADER_LOG_PATH}` : container;
+	return typeof container === 'string' ? `${container}/${LOADER_LOG_DIRECTORY}` : container;
 }
 
 async function shellOutput(target: PilotTarget, script: string): Promise<string | undefined> {
@@ -38,36 +41,44 @@ function quote(path: string): string {
  * @description Reads the history in the loader's own log files on a jailbroken iPhone through jb-p1lot, for when the log archive holds nothing: the entries since a time, from the rotated file and the current one, or else the current file's last lines.
  * @param target The device, and the jb-p1lot binary and runner.
  * @param start The time the history starts at, or `undefined` for the last lines.
+ * @param stems The files to read, merged by time; `unbound.log` alone when left out.
  * @returns The entries, oldest first, or why the files cannot be read.
  */
 export async function readLoaderLogHistory(
 	target: PilotTarget,
 	start?: number,
+	stems: LoaderLogStem[] = ['unbound'],
 ): Promise<LogEntry[] | { error: string }> {
-	const path = await loaderLogPath(target);
+	const directory = await loaderLogDirectory(target);
 
-	if (typeof path !== 'string') {
-		return path;
+	if (typeof directory !== 'string') {
+		return directory;
 	}
 
-	const rotated = path.replace(/\.log$/, '.1.log');
-	// A missing log file means Unbound has not written one yet: an empty log, not a failed read.
-	const command =
-		start === void 0
-			? `tail -n ${LOG_FILE_TAIL_LINES} ${quote(path)} 2>/dev/null; true`
-			: `cat ${quote(rotated)} ${quote(path)} 2>/dev/null; true`;
-	const read = await pilotShell(target, command, { timeoutMs: PILOT_TIMEOUT_MS });
+	const entries: LogEntry[] = [];
 
-	if (!read.ok) {
-		return { error: read.error };
+	for (const stem of stems) {
+		const path = `${directory}/${stem}.log`;
+		const rotated = `${directory}/${stem}.1.log`;
+		// A missing log file means Unbound has not written one yet: an empty log, not a failed read.
+		const command =
+			start === void 0
+				? `tail -n ${LOG_FILE_TAIL_LINES} ${quote(path)} 2>/dev/null; true`
+				: `cat ${quote(rotated)} ${quote(path)} 2>/dev/null; true`;
+		const read = await pilotShell(target, command, { timeoutMs: PILOT_TIMEOUT_MS });
+
+		if (!read.ok) {
+			return { error: read.error };
+		}
+
+		for (const entry of read.output.split('\n').map(parseLoaderLogLine)) {
+			if (entry && (start === void 0 || entry.epochMs >= start)) {
+				entries.push(entry);
+			}
+		}
 	}
 
-	return read.output
-		.split('\n')
-		.map(parseLoaderLogLine)
-		.filter(
-			(entry): entry is LogEntry => !!entry && (start === void 0 || entry.epochMs >= start),
-		);
+	return stems.length > 1 ? entries.sort((a, b) => a.epochMs - b.epochMs) : entries;
 }
 
 type LogFileRange = { data: Buffer; size: number };
@@ -152,18 +163,21 @@ export async function logFileReader(target: PilotTarget, path: string): Promise<
 }
 
 /**
- * @description Follows the loader's own log file on a jailbroken iPhone through jb-p1lot, for when the unified log does not stream. It holds Unbound's native log and the JavaScript console, not Discord's own lines or crash reports.
- * @param options The device, the jb-p1lot binary and runner, where each entry goes, the time before which entries are skipped, and how many polls to make (unlimited when left out).
+ * @description Follows one of the loader's log files on a jailbroken iPhone through jb-p1lot. `unbound.log` holds Unbound's lines and the JavaScript console, for when the unified log does not stream; `native.log` holds React Native's and the native runtime's output. Neither holds Discord's own lines or crash reports.
+ * @param options The device, the jb-p1lot binary and runner, the file, where each entry goes, the time before which entries are skipped, and how many polls to make (unlimited when left out).
  * @returns When the polls are done, or once the file cannot be found.
  */
 export async function followLoaderLogFile(options: LoaderLogFileOptions): Promise<void> {
-	const path = await loaderLogPath(options);
+	const directory = await loaderLogDirectory(options);
 
-	if (typeof path !== 'string') {
-		options.emit({ kind: 'notice', message: path.error });
+	if (typeof directory !== 'string') {
+		options.emit({ kind: 'notice', message: directory.error });
 
 		return;
 	}
+
+	const stem = options.stem ?? 'unbound';
+	const path = `${directory}/${stem}.log`;
 
 	const reader = await logFileReader(options, path);
 	const { read } = reader;
@@ -180,7 +194,7 @@ export async function followLoaderLogFile(options: LoaderLogFileOptions): Promis
 		}
 
 		if (range.size < offset) {
-			options.emit({ kind: 'notice', message: 'The log file rotated.' });
+			options.emit({ kind: 'notice', message: `${stem}.log rotated.` });
 			offset = 0;
 			pending = Buffer.alloc(0);
 			range = await read(0);

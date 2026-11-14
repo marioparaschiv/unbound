@@ -1,6 +1,7 @@
 import { CRASH_REPORT_LOG_LIMIT } from '@unbound-app/contracts/crash-report-limits';
 import type { CrashReport } from '@unbound-app/contracts/crash-reports';
 
+import { readableLogLine } from '~/logs/entry';
 import type { Addon } from '~/addons/addon';
 
 /** The addon a report is about. */
@@ -69,8 +70,8 @@ export function scrubLogLine(line: string): string {
 }
 
 /**
- * @description Takes the newest lines of the loader's log that fit in a report, scrubbed and trimmed.
- * @param log The log file's contents.
+ * @description Takes the newest lines of the loader's log that fit in a report, as readable text, scrubbed and trimmed.
+ * @param log The log file's contents: JSON lines, or plain text from older loaders.
  * @returns The excerpt, oldest line first, or `undefined` when there is nothing to send.
  */
 export function crashLogExcerpt(log: string): string | undefined {
@@ -79,7 +80,7 @@ export function crashLogExcerpt(log: string): string | undefined {
 	const lines = log.split('\n').filter((line) => line.trim() !== '');
 
 	for (let index = lines.length - 1; index >= 0; index--) {
-		const line = scrubLogLine(lines[index] ?? '').slice(0, LOG_LINE_LIMIT);
+		const line = scrubLogLine(readableLogLine(lines[index] ?? '')).slice(0, LOG_LINE_LIMIT);
 
 		if (size + line.length + 1 > CRASH_REPORT_LOG_LIMIT) {
 			break;

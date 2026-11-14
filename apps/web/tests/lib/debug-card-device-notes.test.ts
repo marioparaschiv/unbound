@@ -3,8 +3,8 @@ import type { DebugCardRequest } from '@unbound-app/contracts/debug-cards';
 import { describe, expect, test } from 'bun:test';
 
 import { dnsNote, gatewayNote, powerNote, pushNote } from '~/lib/debug-card/device-notes';
-import { extensionNotes, layoutDebugCard, type CardText } from '~/lib/debug-card/layout';
 import { debugAltText } from '~/lib/debug-card/alt-text';
+import { extensionNotes } from '~/lib/debug-card/layout';
 
 const info: DebugCardRequest = {
 	client: 'v3.0.0',
@@ -59,7 +59,6 @@ describe('device notes', () => {
 			power: { lowPower: false, battery: 70 },
 			dns: { resolver: 'Cloudflare' },
 		};
-		const runs = layoutDebugCard(report).ops.filter((op): op is CardText => op.kind === 'text');
 
 		expect(JSON.parse(unpackDebugAltText(debugAltText(report)) ?? '')).toMatchObject({
 			push: 'granted · production',

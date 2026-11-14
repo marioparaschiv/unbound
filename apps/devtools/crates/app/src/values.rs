@@ -312,7 +312,7 @@ impl<'a> Rows<'a> {
 						.child(chevron(false, false))
 						.font_family(theme::ui_font())
 						.text_color(theme::color(theme::TEXT_FAINT))
-						.child("Loading")
+						.child("Loading…")
 						.into_any_element(),
 				);
 			}

@@ -21,7 +21,7 @@ impl Workspace {
 				let detail = self.renderer.clone().or_else(|| {
 					backend_version
 						.as_ref()
-						.map(|version| format!("backend {version}"))
+						.map(|version| format!("Backend {version}"))
 				});
 				let label = match detail {
 					Some(detail) => format!("Connected to {detail}"),
@@ -32,11 +32,9 @@ impl Workspace {
 			// The sidebar header already says what it waits for.
 			ConnectionState::Waiting => (String::new(), false),
 			ConnectionState::UnsupportedRenderer => {
-				("Unsupported React renderer".to_string(), true)
+				("Unsupported React Renderer".to_string(), true)
 			}
-			ConnectionState::Unavailable { .. } => {
-				("React DevTools is off on the device".to_string(), true)
-			}
+			ConnectionState::Unavailable { .. } => ("React DevTools Is Off".to_string(), true),
 		};
 		Connection { label, failed }
 	}
@@ -66,13 +64,13 @@ impl Workspace {
 					.child(
 						icon_button("match-prev", assets::CHEVRON_UP, false)
 							.size(px(22.))
-							.tooltip(tooltip("Previous match  ⇧↵"))
+							.tooltip(tooltip("Previous Match  ⇧↵"))
 							.on_click(cx.listener(|this, _, _, cx| this.step_match(false, cx))),
 					)
 					.child(
 						icon_button("match-next", assets::CHEVRON_DOWN, false)
 							.size(px(22.))
-							.tooltip(tooltip("Next match  ↵"))
+							.tooltip(tooltip("Next Match  ↵"))
 							.on_click(cx.listener(|this, _, _, cx| this.step_match(true, cx))),
 					)
 			});

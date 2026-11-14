@@ -2,6 +2,8 @@ import { createLogger } from '@unbound-app/logger';
 
 import { Messages as MessageActions } from '~/metro/api';
 import { findByProps, findStore } from '~/metro/lookups';
+import { readLogLines } from '~/logs/tail';
+import { LOG_FILES } from '~/logs/files';
 import { messages } from '~/i18n/api';
 import { show } from '~/toasts/api';
 import fs from '~/native/fs';
@@ -32,7 +34,6 @@ type SendResult = { ok?: boolean; status?: number } | undefined;
 
 const ENTITLEMENTS_PATH = 'Unbound/cache/debug/Entitlements.xml';
 const LOG_PATH = 'Unbound/cache/debug/unbound.log';
-const LOADER_LOG = 'Unbound/Logs/unbound.log';
 const CARD_DIRECTORY = 'Unbound/cache/debug';
 const UPLOAD_ORIGIN_FILE = 1;
 const UPLOAD_PLATFORM_REACT_NATIVE = 0;
@@ -104,9 +105,18 @@ async function uploadEntitlements(channelId: string): Promise<CloudUpload | unde
 	});
 }
 
+// The excerpt keeps only the newest lines that fit a report, so more than this never shows.
+const LOG_LINES = 500;
+
+async function logSection(path: string): Promise<string | undefined> {
+	const excerpt = crashLogExcerpt((await readLogLines(path, LOG_LINES)).join('\n'));
+
+	return excerpt && `== ${path.slice(path.lastIndexOf('/') + 1)} ==\n${excerpt}`;
+}
+
 async function uploadLog(channelId: string): Promise<CloudUpload | undefined> {
-	const log = (await fs.exists(LOADER_LOG)) ? await fs.readFile(LOADER_LOG) : '';
-	const excerpt = crashLogExcerpt(log);
+	const sections = await Promise.all(LOG_FILES.map(logSection));
+	const excerpt = sections.filter(Boolean).join('\n\n');
 
 	if (!excerpt) {
 		return undefined;
@@ -222,7 +232,7 @@ function uploadQuietly(what: string, run: () => Promise<CloudUpload | undefined>
  * @description Sends the debug report as a rendered card whose alt text carries it as JSON, with the user's note; falls back to the text report when the card cannot be drawn.
  * @param channelId The channel the command ran in, or the open channel when it is not known.
  * @param note Text the user added to the command, sent as the message.
- * @param options `log` attaches the newest loader log lines, scrubbed of secrets; `entitlements` attaches the app's Entitlements.xml on iOS.
+ * @param options `log` attaches the newest lines of both loader logs, scrubbed of secrets; `entitlements` attaches the app's Entitlements.xml on iOS.
  * @returns The text for Discord to send when nothing could be attached, otherwise nothing once it is sent.
  */
 export async function sendDebugReport(

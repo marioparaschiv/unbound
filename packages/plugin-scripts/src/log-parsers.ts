@@ -1,4 +1,12 @@
+import {
+	plainLoaderLogLines,
+	plainLoaderLogText,
+	readLoaderLogLine,
+} from '@unbound-app/cli/loader-log-line';
+
 import { SELF_TEST_MARKER } from './loader-self-test';
+
+// The patterns read an older loader's plain lines; each parser first renders the JSON lines current loaders write that way.
 
 const OFF_MAIN_WARNING = /^(\S+) W \[plugins\] (.+?) called (.+?) off the main thread\./;
 const HOOK_FAILURE = /^(\S+) E \[plugins\] Native plugin (?:hook|callback) failed in (.+?): (.*)$/;
@@ -8,7 +16,7 @@ const REPEAT_SUFFIX = / \[repeated \d+ times\]$/;
 const SKIPPED_HOOK =
 	/^(\S+) \w \[plugins\] Native plugin hook skipped in (.+?): the JavaScript thread did not answer the (\S+) hook/;
 const TOAST_LINE =
-	/^(\S+) \w \[console\] .*\[Toasts\]'?,? ?'?(Showing a toast:|Ignored a (?:Discord )?toast[^']*)'?,? ?'?([^']*)/;
+	/^(\S+) \w \[console\] .*\[Toasts\]'?,? ?'?(Showing a toast:|Ignored a (?:Discord )?toast with nothing to show)'?,? ?'?([^']*)/;
 const STACK_FRAME = /\bat ([\w$.]+) \(/g;
 const TOAST_FRAMES = new Set(['Error', 'showToast', 'addToast', 'open', 'instead']);
 
@@ -30,7 +38,7 @@ function errorText(text: string): string {
 export function parsePluginErrors(lines: string[], since: string): Map<string, string[]> {
 	const errors = new Map<string, Set<string>>();
 
-	for (const line of lines) {
+	for (const line of plainLoaderLogLines(lines)) {
 		const match = HOOK_FAILURE.exec(line) ?? CONSOLE_ERROR.exec(line);
 
 		if (!match || match[1]! < since) continue;
@@ -51,7 +59,7 @@ export function parsePluginErrors(lines: string[], since: string): Map<string, s
 export function parseOffMainWarnings(lines: string[], since: string): Map<string, string[]> {
 	const calls = new Map<string, Set<string>>();
 
-	for (const line of lines) {
+	for (const line of plainLoaderLogLines(lines)) {
 		const match = OFF_MAIN_WARNING.exec(line);
 
 		if (!match || match[1]! < since) continue;
@@ -68,7 +76,7 @@ export function parseOffMainWarnings(lines: string[], since: string): Map<string
 export function parseSkippedHooks(lines: string[], since: string): Map<string, string[]> {
 	const skipped = new Map<string, Set<string>>();
 
-	for (const line of lines) {
+	for (const line of plainLoaderLogLines(lines)) {
 		const match = SKIPPED_HOOK.exec(line);
 
 		if (!match || match[1]! < since) continue;
@@ -83,7 +91,8 @@ export function parseSkippedHooks(lines: string[], since: string): Map<string, s
 }
 
 export function parseToastLines(lines: string[], since: string): string[] {
-	return lines.flatMap((line) => {
+	// Unsplit, so the stack logged after an empty toast stays on its line.
+	return lines.map(plainText).flatMap((line) => {
 		const match = TOAST_LINE.exec(line);
 
 		if (!match || match[1]! < since) return [];
@@ -94,6 +103,12 @@ export function parseToastLines(lines: string[], since: string): string[] {
 
 		return [caller ? `empty toast from ${caller}` : 'empty toast'];
 	});
+}
+
+function plainText(line: string): string {
+	const entry = line.startsWith('{') ? readLoaderLogLine(line) : undefined;
+
+	return entry ? plainLoaderLogText(entry) : line;
 }
 
 export function toastCaller(stack: string): string | undefined {

@@ -35,7 +35,7 @@ export type LaunchLog = {
 /**
  * @description Reads one launch's milestones from the loader log written since the launch began. When the text
  * holds several launches (a crash relaunch, or a rotated log read whole), the last runtime start wins.
- * @param text The loader log lines written since the launch was requested.
+ * @param text The loader log lines written since the launch was requested, as JSON lines or an older loader's plain text.
  * @returns Each milestone in milliseconds after the runtime was created, what is missing, and the error lines.
  */
 export function parseLaunchLog(text: string): LaunchLog {
@@ -66,7 +66,7 @@ export function parseLaunchLog(text: string): LaunchLog {
 		}
 
 		if (entry.level === 'error' || entry.level === 'fatal') {
-			failures.push(`[${entry.tag}] ${entry.message}`.slice(0, FAILURE_LENGTH));
+			failures.push(`${entry.tag}: ${entry.message}`.slice(0, FAILURE_LENGTH));
 		}
 
 		for (const [milestone, marker] of Object.entries(MARKERS) as [Milestone, RegExp][]) {

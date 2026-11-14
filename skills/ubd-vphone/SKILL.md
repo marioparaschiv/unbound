@@ -22,14 +22,14 @@ Anything wrong: `scripts/doctor.sh --fix`. `scripts/relaunch` handles terminate 
 
 ## Scripts
 
-| Script                               | Does                                                                                                                                   |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `vphone <action> [k=v ...]`          | Any vphone tool action from the shell; `vphone help` lists actions and args; also `vphone pid`, `vphone shot`                          |
-| `crashes`                            | Explains Discord's newest crash: verdict, termination, suspect images (Unbound.dylib), top frames, and that run's `unbound.log` errors |
-| `unbound-log`                        | The current run's `unbound.log`: deduplicated errors and warnings without network noise, then the last lines; `--all` for every line   |
-| `ubd <cmd>`                          | The repo CLI against this machine's bridge: `eval`, `reload`, `mcp open`, `mcp route`, `push <plugin>`                                 |
-| `ready.sh [--fresh]`                 | Blocks until Unbound runs (`--fresh`: this checkout's build)                                                                           |
-| `up.sh`, `fetch-ipa`, `patch-ats.py` | Servers in tmux; IPAs from dkrypt; ATS patch for a fresh IPA                                                                           |
+| Script                               | Does                                                                                                                                                              |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vphone <action> [k=v ...]`          | Any vphone tool action from the shell; `vphone help` lists actions and args; also `vphone pid`, `vphone shot`                                                     |
+| `crashes`                            | Explains Discord's newest crash: verdict, termination, suspect images (Unbound.dylib), top frames, and that run's `unbound.log` and `native.log` errors           |
+| `unbound-log`                        | The current run's `unbound.log`: deduplicated errors and warnings without network noise, then the last lines; `--all` for every line, `--native` for `native.log` |
+| `ubd <cmd>`                          | The repo CLI against this machine's bridge: `eval`, `reload`, `mcp open`, `mcp route`, `push <plugin>`                                                            |
+| `ready.sh [--fresh]`                 | Blocks until Unbound runs (`--fresh`: this checkout's build)                                                                                                      |
+| `up.sh`, `fetch-ipa`, `patch-ats.py` | Servers in tmux; IPAs from dkrypt; ATS patch for a fresh IPA                                                                                                      |
 
 Device CLI commands live in `packages/cli/src/commands/`, registered in `packages/cli/src/registry.ts`.
 

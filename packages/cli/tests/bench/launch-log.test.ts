@@ -46,8 +46,41 @@ describe('parseLaunchLog', () => {
 
 		expect(log.failures).toHaveLength(1);
 		expect(log.failures[0]).toStartWith(
-			"[console] '»', '[Themes]', 'Failed to load addon local--adda99dac9ad4b49:'",
+			"js: '»', '[Themes]', 'Failed to load addon local--adda99dac9ad4b49:'",
 		);
+	});
+
+	test('reads the JSON lines current loaders write', () => {
+		const start = Date.parse('2026-11-01T03:43:57.021Z');
+		const line = (t: number, src: string, lvl: string, scope: string[], msg: string) =>
+			JSON.stringify({ t: start + t, src, lvl, scope, msg });
+		const log = parseLaunchLog(
+			[
+				line(
+					0,
+					'unbound',
+					'info',
+					['Loader', 'runtime'],
+					'RCTHost didInitializeRuntime reached.',
+				),
+				line(39, 'unbound', 'info', ['Loader', 'plugins'], 'Loaded 2 plugins.'),
+				line(300, 'unbound', 'error', ['Themes'], 'Failed to load addon x:'),
+				line(460, 'unbound', 'info', ['Core'], 'Unbound initialized'),
+				line(
+					461,
+					'unbound',
+					'info',
+					['Loader', 'runtime'],
+					"Unbound's bundle was successfully executed.",
+				),
+			].join('\n'),
+		);
+
+		expect(log.runtimeEpochMs).toBe(start);
+		expect(log.pluginsLoaded).toBe(2);
+		expect(log.milestones).toEqual({ pluginsRead: 39, initialized: 460, bundleExecuted: 461 });
+		expect(log.missing).toEqual([]);
+		expect(log.failures).toEqual(['unbound [Themes]: Failed to load addon x:']);
 	});
 
 	test('reads only the last launch when a rotated log holds an earlier one', () => {

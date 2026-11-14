@@ -26,7 +26,8 @@
 		"./rollup": "./src/rollup/index.ts",
 		"./oxlint": "./src/oxlint/plugin.ts",
 		"./settings/schema": "./src/settings/schema.ts",
-		"./hermes-code": "./src/lib/hermes-code.ts"
+		"./hermes-code": "./src/lib/hermes-code.ts",
+		"./loader-log-line": "./src/lib/loader-log-line.ts"
 	},
 	"scripts": {
 		"build": "tsdown",

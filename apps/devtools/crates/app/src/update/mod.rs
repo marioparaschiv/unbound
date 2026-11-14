@@ -69,8 +69,8 @@ pub fn check(quiet: bool, cx: &mut App) {
 					if !quiet {
 						toast::show(
 							note(
-								"No updates",
-								format!("DevTools {VERSION} is the newest version."),
+								"Up to Date",
+								format!("DevTools {VERSION} is the latest version."),
 							),
 							cx,
 						);
@@ -81,7 +81,7 @@ pub fn check(quiet: bool, cx: &mut App) {
 					tracing::warn!("Failed to check for DevTools updates: {error:#}");
 					let message = SharedString::from(format!("{error:#}"));
 					if !quiet {
-						toast::show(note("Couldn't check for updates", message.clone()), cx);
+						toast::show(note("Couldn't Check for Updates", message.clone()), cx);
 					}
 					Status::Failed(message)
 				}
@@ -101,7 +101,7 @@ pub fn install(cx: &mut App) {
 	toast::show(
 		Toast {
 			title: "Updating".into(),
-			message: format!("Downloading DevTools {}...", update.version).into(),
+			message: format!("Downloading DevTools {}…", update.version).into(),
 			action: None,
 			// Stays until the install's outcome takes its place.
 			stays: true,
@@ -122,7 +122,7 @@ pub fn install(cx: &mut App) {
 			Err(error) => {
 				tracing::error!("Failed to install DevTools {}: {error:#}", update.version);
 				let message = format!("{error:#}");
-				toast::show(note("Couldn't install the update", message), cx);
+				toast::show(note("Couldn't Install the Update", message), cx);
 				// Back to available, so Update can be retried.
 				set(Status::Available(update), cx);
 			}
@@ -137,14 +137,14 @@ pub fn restart(cx: &mut App) {
 		Ok(()) => cx.quit(),
 		Err(error) => {
 			tracing::error!("Failed to restart DevTools: {error:#}");
-			toast::show(note("Couldn't restart DevTools", format!("{error:#}")), cx);
+			toast::show(note("Couldn't Restart DevTools", format!("{error:#}")), cx);
 		}
 	}
 }
 
 fn available(update: &Update) -> Toast {
 	Toast {
-		title: "Update available".into(),
+		title: "Update Available".into(),
 		message: format!(
 			"DevTools {} is available. You have {VERSION}.",
 			update.version
@@ -162,7 +162,7 @@ fn available(update: &Update) -> Toast {
 
 fn installed(version: &str) -> Toast {
 	Toast {
-		title: "Update installed".into(),
+		title: "Update Installed".into(),
 		message: format!("DevTools {version} is installed. Restart to use it.").into(),
 		action: Some(Action {
 			id: "restart-update",

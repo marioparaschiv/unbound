@@ -421,7 +421,23 @@ pub(crate) fn info_frame(info: &BridgeInfo) -> Json {
 	frame
 }
 
-/// The protocol's `log` shape: a level of 1, 2 or 3 and a string message.
+/// The protocol's `log` shape: a level of 1, 2 or 3 and a string message, then an optional known
+/// `source`, string-array `scope` and numeric `at`.
 fn is_log(frame: &Json) -> bool {
-	matches!(frame["level"].as_u64(), Some(1..=3)) && frame["message"].is_string()
+	let optional = |key: &str, valid: fn(&Json) -> bool| frame.get(key).is_none_or(valid);
+
+	matches!(frame["level"].as_u64(), Some(1..=3))
+		&& frame["message"].is_string()
+		&& optional("source", |source| {
+			matches!(
+				source.as_str(),
+				Some("unbound" | "js" | "react-native" | "native")
+			)
+		})
+		&& optional("scope", |scope| {
+			scope
+				.as_array()
+				.is_some_and(|parts| parts.iter().all(Json::is_string))
+		})
+		&& optional("at", Json::is_number)
 }

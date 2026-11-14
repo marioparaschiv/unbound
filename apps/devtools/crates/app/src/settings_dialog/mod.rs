@@ -108,7 +108,7 @@ impl SettingsDialog {
 			bridge_port: input(current.bridge_port.to_string(), "9090"),
 			mcp_port: input(current.mcp_port.to_string(), "8098"),
 		};
-		let search = input(String::new(), "Search...");
+		let search = input(String::new(), "Search…");
 		let subscriptions = vec![
 			cx.subscribe(&search, |this, _, _: &InputEvent, cx| {
 				this.follow_search(cx)

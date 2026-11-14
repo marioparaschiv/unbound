@@ -1,5 +1,6 @@
 import pc from 'picocolors';
 
+import { loaderLogLabel, readLoaderLogLine } from './loader-log-line';
 import { LOG_LEVELS, type LogLevel } from './log-levels';
 
 export { LOG_LEVELS, type LogLevel };
@@ -38,33 +39,25 @@ export type PrinterOptions = {
 	colors?: boolean;
 };
 
-const LOADER_LOG_LINE = /^(\d{4}-\d\d-\d\dT[\d:.]+Z) ([DIWE]) \[([^\]]+)\] (.*)$/;
-const LOADER_LOG_LEVELS: Record<string, LogLevel> = {
-	D: 'debug',
-	I: 'info',
-	W: 'warn',
-	E: 'error',
-};
-
 /**
- * @description Reads one line of the loader's own log file, `Unbound/Logs/unbound.log`.
- * @param line The line, such as `2026-10-29T17:38:51.031Z W [plugins] message`.
- * @returns The entry, tagged with its category, or `undefined` for a line in another format.
+ * @description Reads one line of the loader's log files, `Unbound/Logs/unbound.log` or `native.log`: a JSON line, or an older loader's plain text.
+ * @param line The line, such as `{"t":1793050000000,"src":"js","lvl":"warn","scope":[],"msg":"message"}`.
+ * @returns The entry, tagged with its source and scope, or `undefined` for a line in another format.
  */
 export function parseLoaderLogLine(line: string): LogEntry | undefined {
-	const match = LOADER_LOG_LINE.exec(line);
+	const entry = readLoaderLogLine(line);
 
-	if (!match) {
+	if (!entry) {
 		return;
 	}
 
 	return {
 		kind: 'entry',
-		epochMs: Date.parse(match[1]!),
-		level: LOADER_LOG_LEVELS[match[2]!] ?? 'info',
-		tag: match[3]!,
+		epochMs: entry.t,
+		level: entry.lvl,
+		tag: loaderLogLabel(entry),
 		pid: 0,
-		message: match[4]!,
+		message: entry.msg,
 	};
 }
 
@@ -415,7 +408,7 @@ function iosTag(record: SyslogRecord): string | undefined {
 }
 
 /**
- * @description Turns a console line React Native printed from several arguments, such as `'»', '[Core]', 'Ready'`, back into the text the arguments spell. Any other message is returned as it is.
+ * @description Turns a console line React Native printed from several arguments, such as `'[Core]', 'Ready'`, back into the text the arguments spell. Any other message is returned as it is.
  * @param message The logged message.
  * @returns The arguments joined by spaces, unquoted, or the message unchanged.
  */

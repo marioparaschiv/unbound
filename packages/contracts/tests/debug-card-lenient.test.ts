@@ -32,7 +32,9 @@ describe('parseDebugCardLeniently', () => {
 		});
 
 		expect(result.success).toBe(true);
+
 		if (!result.success) return;
+
 		expect(result.dropped.sort()).toEqual(['power']);
 		expect(result.data.network).toEqual({ type: 'wifi' });
 		expect('clock' in result.data).toBe(false);

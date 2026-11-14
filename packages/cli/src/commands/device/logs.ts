@@ -42,6 +42,13 @@ const schema = Type.Object({
 				'Keep printing new lines. On by default without --since; --since alone prints the history and exits.',
 		}),
 	),
+	native: defaulted(
+		Type.Boolean({
+			description:
+				"Also read the loader's native.log on an iPhone: React Native's and the native runtime's output, which the unified log does not carry. Android's logcat already holds it.",
+		}),
+		false,
+	),
 	symbolicate: defaulted(
 		Type.Boolean({
 			description:
@@ -58,7 +65,7 @@ const schema = Type.Object({
 	pull: defaulted(
 		Type.Boolean({
 			description:
-				"Copy the loader's own log files off the device instead of tailing; they survive restarts and hold the JavaScript console too.",
+				"Copy the loader's own log files (unbound.log and native.log, as JSON lines) off the device instead of tailing; they survive restarts and hold the JavaScript console too.",
 		}),
 		false,
 	),
