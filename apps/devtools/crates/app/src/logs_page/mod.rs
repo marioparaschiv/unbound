@@ -1,5 +1,5 @@
-//! The Logs page: the device's log lines live as they arrive, filtered like Unbound's own Logs page
-//! by source (All, JS, React Native, Native) and to Unbound's lines alone. It follows the newest line
+//! The Logs page: the device's log lines live as they arrive, filtered by source
+//! (All, JS, React Native, Native) and to Unbound's lines alone. It follows the newest line
 //! while scrolled to the bottom.
 
 mod rows;

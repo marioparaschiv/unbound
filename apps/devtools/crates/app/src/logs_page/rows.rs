@@ -47,7 +47,7 @@ fn first_line(message: &str) -> String {
 	}
 }
 
-/// The whole line as the device's own Logs page copies it.
+/// The whole line, as clicking it copies it.
 fn copy_text(entry: &LogEntry) -> String {
 	let line = &entry.line;
 	let scope = if line.scope.is_empty() {

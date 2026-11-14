@@ -103,8 +103,11 @@ async function uploadEntitlements(channelId: string): Promise<CloudUpload | unde
 	});
 }
 
+// The excerpt keeps only the newest lines that fit a report, so more than this never shows.
+const LOG_LINES = 500;
+
 async function logSection(path: string): Promise<string | undefined> {
-	const excerpt = crashLogExcerpt((await readLogLines(path)).join('\n'));
+	const excerpt = crashLogExcerpt((await readLogLines(path, LOG_LINES)).join('\n'));
 
 	return excerpt && `== ${path.slice(path.lastIndexOf('/') + 1)} ==\n${excerpt}`;
 }

@@ -1,11 +1,6 @@
-import type { UnboundLogEntry } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
 
 import fs from '~/native/fs';
-
-import { LOG_LIMIT, mergeLogEntries } from './merge';
-import { parseLogLine } from './entry';
-import { LOG_FILES } from './files';
 
 const Logger = createLogger('Logs', 'Tail');
 
@@ -15,7 +10,7 @@ const Logger = createLogger('Logs', 'Tail');
  * @param count How many lines to keep.
  * @returns The lines, oldest first; none when the file is missing or unreadable.
  */
-export async function readLogLines(path: string, count: number = LOG_LIMIT): Promise<string[]> {
+export async function readLogLines(path: string, count: number): Promise<string[]> {
 	try {
 		if (!(await fs.exists(path))) {
 			return [];
@@ -29,22 +24,4 @@ export async function readLogLines(path: string, count: number = LOG_LIMIT): Pro
 
 		return [];
 	}
-}
-
-/**
- * @description Reads the newest lines of both log files as entries, merged by time.
- * @param count How many entries to keep.
- * @returns The entries, oldest first.
- */
-export async function readLogTail(count: number = LOG_LIMIT): Promise<UnboundLogEntry[]> {
-	const files = await Promise.all(LOG_FILES.map((path) => readLogLines(path, count)));
-	const lists = files.map((lines) =>
-		lines.flatMap((line) => {
-			const entry = parseLogLine(line);
-
-			return entry ? [entry] : [];
-		}),
-	);
-
-	return mergeLogEntries(lists, count);
 }

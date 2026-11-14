@@ -1,13 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import sha256 from '@unbound-app/utils/sha256';
 
-import {
-	getLoader,
-	getNativeFonts,
-	getNativeLogs,
-	getPlugins,
-	getSha256,
-} from '~/native/unbound-native';
+import { getLoader, getNativeFonts, getPlugins, getSha256 } from '~/native/unbound-native';
 
 afterEach(() => {
 	globalThis.UnboundNative = undefined;
@@ -18,7 +12,6 @@ describe('UnboundNative', () => {
 		expect(getLoader()).toBeUndefined();
 		expect(getPlugins()).toEqual([]);
 		expect(getNativeFonts()).toBeUndefined();
-		expect(getNativeLogs()).toBeUndefined();
 	});
 
 	test('reads the bridge installed after import', () => {

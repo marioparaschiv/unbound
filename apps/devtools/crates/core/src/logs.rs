@@ -85,7 +85,7 @@ impl LogEntry {
 	}
 }
 
-/// The Logs page's segments, the same as the device's own Logs page.
+/// The Logs page's segments.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum LogView {
 	#[default]

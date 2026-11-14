@@ -35,7 +35,6 @@ import sync, { syncSection } from '~/sync/builtin';
 import { builtins } from '~/builtins/registry';
 import staffMode from '~/builtins/staff-mode';
 import { icons } from '~/icon-packs/manager';
-import { logsSection } from '~/logs/builtin';
 import nativeConsent from '~/native/builtin';
 import { plugins } from '~/plugins/manager';
 import { Manager } from '~/addons/manager';
@@ -72,7 +71,6 @@ const SECTIONS_IN_OVERVIEW_ORDER: SectionEntry[] = [
 	marketplaceSection,
 	updatesSection,
 	...(import.meta.env.DEV_TOOLS ? [developerSection] : []),
-	logsSection,
 	toastsSection,
 	syncSection,
 	...(import.meta.env.DEV_TOOLS ? [assetsSection] : []),
