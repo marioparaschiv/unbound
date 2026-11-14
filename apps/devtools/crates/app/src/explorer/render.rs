@@ -321,7 +321,7 @@ impl Explorer {
 			.collect::<Vec<_>>()
 			.join(" · ");
 		let summary = if summary.is_empty() {
-			"declares nothing".to_owned()
+			"Declares Nothing".to_owned()
 		} else {
 			summary
 		};
@@ -394,7 +394,7 @@ impl Explorer {
 						false,
 					)
 					.size(px(22.))
-					.tooltip(tooltip("Open this class"))
+					.tooltip(tooltip("Open This Class"))
 					.on_click(cx.listener(move |host: &mut H, _, _, cx| {
 						cx.stop_propagation();
 						host.explorer_mut()

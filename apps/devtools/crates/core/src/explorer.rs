@@ -77,14 +77,14 @@ impl ExplorerMemberKind {
 	/// `count` members of this kind in words, such as `1 property` or `3 class methods`.
 	pub fn count(self, count: u32) -> String {
 		let (one, many) = match self {
-			Self::Properties => ("property", "properties"),
-			Self::Ivars => ("ivar", "ivars"),
-			Self::Methods => ("method", "methods"),
-			Self::ClassMethods => ("class method", "class methods"),
-			Self::Protocols => ("protocol", "protocols"),
-			Self::Fields => ("field", "fields"),
-			Self::Constructors => ("constructor", "constructors"),
-			Self::Interfaces => ("interface", "interfaces"),
+			Self::Properties => ("Property", "Properties"),
+			Self::Ivars => ("Ivar", "Ivars"),
+			Self::Methods => ("Method", "Methods"),
+			Self::ClassMethods => ("Class Method", "Class Methods"),
+			Self::Protocols => ("Protocol", "Protocols"),
+			Self::Fields => ("Field", "Fields"),
+			Self::Constructors => ("Constructor", "Constructors"),
+			Self::Interfaces => ("Interface", "Interfaces"),
 		};
 		format!("{count} {}", if count == 1 { one } else { many })
 	}
@@ -596,9 +596,9 @@ mod tests {
 
 	#[test]
 	fn a_count_names_one_member_in_the_singular() {
-		assert_eq!(ExplorerMemberKind::Properties.count(1), "1 property");
-		assert_eq!(ExplorerMemberKind::Properties.count(0), "0 properties");
-		assert_eq!(ExplorerMemberKind::ClassMethods.count(2), "2 class methods");
+		assert_eq!(ExplorerMemberKind::Properties.count(1), "1 Property");
+		assert_eq!(ExplorerMemberKind::Properties.count(0), "0 Properties");
+		assert_eq!(ExplorerMemberKind::ClassMethods.count(2), "2 Class Methods");
 	}
 
 	#[test]

@@ -260,7 +260,7 @@ impl Render for McpButton {
 			.h(px(28.))
 			.when(open, |button| button.bg(theme::color(theme::HOVER)))
 			.when(!open, |button| {
-				button.tooltip(tooltip("Add DevTools to an agent"))
+				button.tooltip(tooltip("Add DevTools to an Agent"))
 			})
 			.on_click(cx.listener(move |this, _, _, cx| this.set_menu(!open, cx)));
 		let backdrop = open.then(|| self.render_backdrop(window, cx).into_any_element());
@@ -304,7 +304,7 @@ fn render_agent(
 	let (subtitle, glyph, glyph_size): (SharedString, _, _) = match &agent.install {
 		Install::Cli { .. } => (agent.text.clone().into(), assets::PLAY, GLYPH),
 		Install::Link(_) => (
-			format!("Opens {} to confirm", agent.name).into(),
+			format!("Opens {} to Confirm", agent.name).into(),
 			assets::ARROW_UP_RIGHT,
 			ARROW_GLYPH,
 		),

@@ -531,7 +531,7 @@ impl Render for ViewFinder {
 							"Refresh",
 							connected,
 						)
-						.tooltip(tooltip("Reload the device's views"))
+						.tooltip(tooltip("Reload the Device's Views"))
 						.when(connected, |button| {
 							button.on_click(cx.listener(|this, _, _, cx| this.list_roots(cx)))
 						}),

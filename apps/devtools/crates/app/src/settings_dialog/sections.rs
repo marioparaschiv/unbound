@@ -171,7 +171,7 @@ fn updates_row(s: Scale, cx: &App) -> Div {
 			"DevTools is up to date.".to_owned(),
 		),
 		Status::Available(found) => (
-			format!("Version {} is available", found.version),
+			format!("Version {} Is Available", found.version),
 			format!("You have {VERSION}. Updating replaces this copy of DevTools."),
 		),
 		Status::Installing(found) => (
@@ -179,7 +179,7 @@ fn updates_row(s: Scale, cx: &App) -> Div {
 			"Downloading and verifying the update…".to_owned(),
 		),
 		Status::Installed(version) => (
-			format!("Version {version} is installed"),
+			format!("Version {version} Is Installed"),
 			"Restart DevTools to use it.".to_owned(),
 		),
 		Status::Failed(error) => (

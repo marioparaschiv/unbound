@@ -64,13 +64,13 @@ impl Workspace {
 					.child(
 						icon_button("match-prev", assets::CHEVRON_UP, false)
 							.size(px(22.))
-							.tooltip(tooltip("Previous match  ⇧↵"))
+							.tooltip(tooltip("Previous Match  ⇧↵"))
 							.on_click(cx.listener(|this, _, _, cx| this.step_match(false, cx))),
 					)
 					.child(
 						icon_button("match-next", assets::CHEVRON_DOWN, false)
 							.size(px(22.))
-							.tooltip(tooltip("Next match  ↵"))
+							.tooltip(tooltip("Next Match  ↵"))
 							.on_click(cx.listener(|this, _, _, cx| this.step_match(true, cx))),
 					)
 			});

@@ -179,7 +179,7 @@ impl MetroBrowser {
 							.child(text),
 					)
 					.when(circular, |row| row.child(badge("Circular", theme::WARNING)))
-					.when(getter, |row| row.tooltip(text_tooltip("Run this getter")))
+					.when(getter, |row| row.tooltip(text_tooltip("Run This Getter")))
 					.on_click(cx.listener(move |this, _, _, cx| {
 						if getter {
 							this.read(path.clone(), cx);

@@ -137,7 +137,7 @@ pub fn restart(cx: &mut App) {
 		Ok(()) => cx.quit(),
 		Err(error) => {
 			tracing::error!("Failed to restart DevTools: {error:#}");
-			toast::show(note("Couldn't restart DevTools", format!("{error:#}")), cx);
+			toast::show(note("Couldn't Restart DevTools", format!("{error:#}")), cx);
 		}
 	}
 }

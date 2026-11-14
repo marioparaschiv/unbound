@@ -287,7 +287,7 @@ impl Render for LogsPage {
 							"Clear",
 							any,
 						)
-						.tooltip(tooltip("Clear all lines"))
+						.tooltip(tooltip("Clear All Lines"))
 						.when(any, |button| {
 							button.on_click(cx.listener(|this, _, _, cx| this.clear(cx)))
 						}),
