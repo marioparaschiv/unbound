@@ -1,0 +1,17 @@
+{
+	"id": "unbound.mention-haptics",
+	"name": "Mention Haptics",
+	"description": "Taps your phone when a new message mentions you or arrives in a DM while Discord is open.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "BellIcon",
+	"main": "index.tsx"
+}

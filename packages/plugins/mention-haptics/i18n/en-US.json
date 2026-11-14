@@ -1,0 +1,10 @@
+{
+	"STRENGTH": "Strength",
+	"STRENGTH_LIGHT": "Light",
+	"STRENGTH_MEDIUM": "Medium",
+	"STRENGTH_HEAVY": "Heavy",
+	"DIRECT_MESSAGES": "Direct messages",
+	"DIRECT_MESSAGES_SUBTITLE": "Also taps for every new message in a DM or group DM.",
+	"OPEN_CHANNEL": "In the open channel",
+	"OPEN_CHANNEL_SUBTITLE": "Also taps for messages in the channel you are looking at."
+}
