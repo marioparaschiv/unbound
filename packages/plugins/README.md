@@ -1,6 +1,6 @@
 # Plugins
 
-115 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+116 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -58,6 +58,7 @@
 - <img src="../../assets/plugins/readme-icons/forum-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Keep Current Channel](https://unbound.rip/addons/unbound.keep-current-channel): Brings you back to the channel you had open after switching accounts or restarting Discord.
 - <img src="../../assets/plugins/readme-icons/bell-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Keyword Notify](https://unbound.rip/addons/unbound.keyword-notify): Treats messages that contain your keywords as mentions, so Discord highlights them and counts them like a ping.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Last Message Date](https://unbound.rip/addons/unbound.last-message-date): Shows when someone last sent a message in this server or your DMs, on their profile.
+- <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Math Notation](https://unbound.rip/addons/unbound.math-notation): Shows TeX math in messages, written between dollar signs or \( and \), as readable symbols such as x² + √y ≤ π.
 - <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Media Favorites](https://unbound.rip/addons/unbound.media-favorites): Lets you favorite any image or video from the media viewer, so it shows up with your favorite GIFs.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Member Count](https://unbound.rip/addons/unbound.member-count): Shows a channel's total members beside how many are online, in the channel header.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Mention Avatars](https://unbound.rip/addons/unbound.mention-avatars): Shows user avatars and role icons inside mentions.
