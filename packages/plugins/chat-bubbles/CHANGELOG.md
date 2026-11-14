@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.14] - 2026-11-14
+
+### Fixed
+
+- Android: bubbles fit what media and stickers draw, not the larger view holding them.
+- Android: the reply icon no longer shows on recycled rows whose message replies to nothing.
+
 ## [1.6.13] - 2026-11-14
 
 ### Fixed

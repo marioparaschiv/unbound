@@ -19,7 +19,12 @@ export type ViewRead = {
 	left: number;
 	top: number;
 	reach?: number;
+	/** The union of the visible leaf views it draws, in row pixels, which can be smaller or larger than the view itself. */
+	extent?: Extent;
 };
+
+/** A box in row pixels, as edges. */
+export type Extent = { left: number; top: number; right: number; bottom: number };
 
 const REACH = { depth: 4, views: 32 };
 const VISIBLE = 0;
@@ -60,20 +65,38 @@ function readView(
 	};
 }
 
-function reachOf(
+function joinExtents(first: Extent | undefined, second: Extent): Extent {
+	'worklet';
+
+	return first
+		? {
+				left: Math.min(first.left, second.left),
+				top: Math.min(first.top, second.top),
+				right: Math.max(first.right, second.right),
+				bottom: Math.max(first.bottom, second.bottom),
+			}
+		: second;
+}
+
+function extentOf(
 	java: NativeJavaBridge,
 	row: NativeJavaReference,
 	view: NativeJavaReference,
 	rect: NativeJavaReference,
 	budget: { views: number },
 	depth = 0,
-): number | undefined {
+): Extent | undefined {
 	'worklet';
 	const read = readView(java, row, view, rect);
 
 	if (read.visibility !== VISIBLE || read.width <= 0 || read.height <= 0) return undefined;
 
-	const own = read.left + read.width;
+	const own = {
+		left: read.left,
+		top: read.top,
+		right: read.left + read.width,
+		bottom: read.top + read.height,
+	};
 	const isGroup = javaFlag(
 		java.invoke(java.getClass('android.view.ViewGroup'), 'isInstance', [view]),
 	);
@@ -81,21 +104,27 @@ function reachOf(
 
 	if (!count || depth >= REACH.depth) return own;
 
-	let reach: number | undefined;
+	let extent: Extent | undefined;
 
 	for (let index = 0; index < count && budget.views > 0; index++) {
 		const child = javaReference(java.invoke(view, 'getChildAt', [javaInt(index)]));
 
 		budget.views--;
 
-		const right = child ? reachOf(java, row, child, rect, budget, depth + 1) : undefined;
+		const inner = child ? extentOf(java, row, child, rect, budget, depth + 1) : undefined;
 
-		if (right !== undefined) reach = Math.max(reach ?? 0, right);
+		if (inner) extent = joinExtents(extent, inner);
 	}
 
 	if (budget.views <= 0) return own;
 
-	return reach ?? read.left;
+	// A group that draws nothing visible adds nothing; at the top it collapses to its corner.
+	return (
+		extent ??
+		(depth === 0
+			? { left: read.left, top: read.top, right: read.left, bottom: read.top }
+			: undefined)
+	);
 }
 
 /**
@@ -145,9 +174,9 @@ export function readRow(
 		if (!child) continue;
 
 		const read = readView(java, row, child, rect);
-		const reach = reachOf(java, row, child, rect, { views: REACH.views });
+		const extent = extentOf(java, row, child, rect, { views: REACH.views });
 
-		children.push(reach === undefined ? read : { ...read, reach });
+		children.push(extent === undefined ? read : { ...read, reach: extent.right, extent });
 	}
 
 	return {
