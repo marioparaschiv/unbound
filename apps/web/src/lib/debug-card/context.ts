@@ -4,19 +4,21 @@ import { desc, eq } from 'drizzle-orm';
 
 import { findDiscordCompat, type DiscordCompatResult } from '~/lib/discord-compat';
 import { newerLoaderReleases } from '~/lib/loader-releases';
+import { toVersionKey } from '~/lib/version-key';
 import type { AppContext } from '~/lib/context';
 import { bundleRelease } from '~/db/schema';
 
 /** What the server knows that the device does not: the compat scan of its Discord and whether it is behind. */
 export type DebugCardContext = {
 	compat?: DiscordCompatResult;
-	/** The newest bundle's short commit on the client's channel, when the client runs an older one. */
+	/** The newest bundle on the client's channel that its loader runs, when the client runs an older published one. */
 	clientUpdate?: string;
 	/** The newest loader release for the platform, when the installed loader is older. */
 	loaderUpdate?: string;
 };
 
 const SHORT_COMMIT_LENGTH = 9;
+const RECENT_BUNDLES = 100;
 
 function platformOf(info: DebugCardRequest): DiscordCompatPlatform | undefined {
 	const platform = info.platform.toLowerCase();
@@ -24,23 +26,55 @@ function platformOf(info: DebugCardRequest): DiscordCompatPlatform | undefined {
 	return platform === 'ios' || platform === 'android' ? platform : undefined;
 }
 
+type PublishedBundle = { version: string; minLoaderVersion: string; publishedAt: Date };
+
+/**
+ * @description Picks the bundle a client should be on instead of its own: published after it, and runnable on its loader.
+ * @param bundles The channel's recent bundles, newest first.
+ * @param commit The client's short commit.
+ * @param loader The installed loader's version, or anything else when it is not a release.
+ * @returns The newer bundle's short commit, or `undefined` when the client runs the newest it can, or a build the channel never published.
+ */
+export function newerBundle(
+	bundles: readonly PublishedBundle[],
+	commit: string,
+	loader: string,
+): string | undefined {
+	const installed = commit
+		? bundles.find((bundle) => bundle.version.startsWith(commit))
+		: undefined;
+
+	if (!installed) {
+		return undefined;
+	}
+
+	const loaderKey = /^\d+\.\d+\.\d+/.test(loader) ? toVersionKey(loader) : undefined;
+	const newest = bundles.find(
+		(bundle) =>
+			bundle.publishedAt > installed.publishedAt &&
+			(!loaderKey || toVersionKey(bundle.minLoaderVersion) <= loaderKey),
+	);
+
+	return newest?.version.slice(0, commit.length || SHORT_COMMIT_LENGTH);
+}
+
 async function clientUpdate(ctx: AppContext, info: DebugCardRequest): Promise<string | undefined> {
 	if (info.bundleChannel !== 'stable' && info.bundleChannel !== 'beta') {
 		return undefined;
 	}
 
-	const [newest] = await ctx.db
-		.select({ version: bundleRelease.version })
+	const bundles = await ctx.db
+		.select({
+			version: bundleRelease.version,
+			minLoaderVersion: bundleRelease.minLoaderVersion,
+			publishedAt: bundleRelease.publishedAt,
+		})
 		.from(bundleRelease)
 		.where(eq(bundleRelease.channel, info.bundleChannel))
 		.orderBy(desc(bundleRelease.publishedAt))
-		.limit(1);
+		.limit(RECENT_BUNDLES);
 
-	if (!newest || !info.commit || newest.version.startsWith(info.commit)) {
-		return undefined;
-	}
-
-	return newest.version.slice(0, info.commit.length || SHORT_COMMIT_LENGTH);
+	return newerBundle(bundles, info.commit ?? '', info.loader);
 }
 
 async function loaderUpdate(ctx: AppContext, info: DebugCardRequest): Promise<string | undefined> {
