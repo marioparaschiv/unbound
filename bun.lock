@@ -1068,6 +1068,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/last-message-date": {
+      "name": "last-message-date",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/member-count": {
       "name": "member-count",
       "dependencies": {
@@ -3733,6 +3747,7 @@
     "keyword-notify": ["keyword-notify@workspace:packages/plugins/keyword-notify"],
     "kysely": ["kysely@0.29.8", "", {}, "sha512-ixHU1H4R+LeC5Y0nAhYgiGRFpFRHm2DXKEmJSs/vbes9sKXyssyzxzE/NYiOJX5fY0BL28biCre3GqlCqUwyXQ=="],
 
+    "last-message-date": ["last-message-date@workspace:packages/plugins/last-message-date"],
     "lazyness": ["lazyness@1.2.0", "", {}, "sha512-KenL6EFbwxBwRxG93t0gcUyi0Nw0Ub31FJKN1laA4UscdkL1K1AxUd0gYZdcLU3v+x+wcFi4uQKS5hL+fk500g=="],
 
     "lefthook": ["lefthook@2.2.2", "", { "optionalDependencies": { "lefthook-android-arm64": "2.2.2", "lefthook-darwin-arm64": "2.2.2", "lefthook-darwin-x64": "2.2.2", "lefthook-freebsd-arm64": "2.2.2", "lefthook-freebsd-x64": "2.2.2", "lefthook-linux-arm64": "2.2.2", "lefthook-linux-x64": "2.2.2", "lefthook-openbsd-arm64": "2.2.2", "lefthook-openbsd-x64": "2.2.2", "lefthook-windows-arm64": "2.2.2", "lefthook-windows-x64": "2.2.2" }, "bin": { "lefthook": "bin/index.js" } }, "sha512-37fYHAhL12r1twaEV0PA5TwoIT491eTGGYjhhXxlYNMq3DSkiGZBQ++Jfk5maXj0vq52NRauLtMikBKtbNJs3Q=="],

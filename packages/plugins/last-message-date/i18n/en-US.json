@@ -1,0 +1,13 @@
+{
+	"TITLE": "Last Message",
+	"IN_SERVER": "{when} in #{channel}",
+	"IN_DMS": "{when} in your DMs",
+	"JUMP_HINT": "Jumps to the message",
+	"AGO_NOW": "just now",
+	"AGO_MINUTE": "{count, plural, one {# minute} other {# minutes}} ago",
+	"AGO_HOUR": "{count, plural, one {# hour} other {# hours}} ago",
+	"AGO_DAY": "{count, plural, one {# day} other {# days}} ago",
+	"AGO_WEEK": "{count, plural, one {# week} other {# weeks}} ago",
+	"AGO_MONTH": "{count, plural, one {# month} other {# months}} ago",
+	"AGO_YEAR": "{count, plural, one {# year} other {# years}} ago"
+}
