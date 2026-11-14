@@ -2,10 +2,13 @@ package app.unbound.android
 
 import android.app.ActivityManager
 import android.app.ApplicationExitInfo
+import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.fonts.SystemFonts
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.os.BatteryManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -85,6 +88,9 @@ object NativeBridge {
             val power = context.getSystemService(PowerManager::class.java)
             power?.let { state.put("thermal", Platform.thermalName(it.currentThermalStatus)) }
         }
+        powerState(context)?.let { state.put("power", it) }
+        dnsState(context)?.let { state.put("dns", it) }
+        pushState(context)?.let { state.put("push", it) }
         state.toString()
     }.getOrDefault("{}")
 
@@ -150,6 +156,39 @@ object NativeBridge {
             .put("vpn", capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true)
             .put("proxy", network?.let { connectivity.getLinkProperties(it)?.httpProxy } != null)
     }.getOrNull()
+
+    private fun powerState(context: Context): JSONObject? = runCatching {
+        val power = context.getSystemService(PowerManager::class.java)
+        val battery = context.getSystemService(BatteryManager::class.java)
+        val level = battery?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY) ?: -1
+        JSONObject()
+            .put("lowPower", power?.isPowerSaveMode == true)
+            .apply { if (level in 0..100) put("battery", level) }
+            .apply { battery?.let { put("charging", it.isCharging) } }
+    }.getOrNull()
+
+    private fun dnsState(context: Context): JSONObject? = runCatching {
+        val connectivity = context.getSystemService(ConnectivityManager::class.java) ?: return null
+        val links = connectivity.activeNetwork?.let { connectivity.getLinkProperties(it) } ?: return null
+        val servers = JSONArray()
+        links.dnsServers.mapNotNull { it.hostAddress }.forEach { servers.put(it) }
+        JSONObject()
+            .put("servers", servers)
+            .put("privateDns", links.isPrivateDnsActive)
+            .apply { links.privateDnsServerName?.let { put("privateDnsHost", it) } }
+    }.getOrNull()
+
+    private fun pushState(context: Context): JSONObject? = runCatching {
+        val notifications = context.getSystemService(NotificationManager::class.java)
+        val playServices = runCatching {
+            context.packageManager.getApplicationInfo(PLAY_SERVICES, 0).enabled
+        }.getOrElse { if (it is PackageManager.NameNotFoundException) false else throw it }
+        JSONObject()
+            .put("permission", if (notifications?.areNotificationsEnabled() == true) "granted" else "denied")
+            .put("playServices", playServices)
+    }.getOrNull()
+
+    private const val PLAY_SERVICES = "com.google.android.gms"
 
     private fun readTrace(exit: ApplicationExitInfo): ByteArray? = exit.traceInputStream?.use { stream ->
         val buffer = java.io.ByteArrayOutputStream()

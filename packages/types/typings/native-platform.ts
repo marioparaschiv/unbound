@@ -42,6 +42,42 @@ export type NativeDeviceState = {
 	network?: NativeNetworkState;
 	/** Other tweaks or modules loaded into Discord: iOS dylib names, Android packages or Magisk modules; older loaders omit it. */
 	injected?: string[];
+	/** Low Power Mode (Battery Saver), the battery level and whether it charges; older loaders omit it. */
+	power?: NativePowerState;
+	/** The resolvers the active connection uses; older loaders omit it. */
+	dns?: NativeDnsState;
+	/** Whether Discord may show notifications and can receive pushes; older loaders omit it. */
+	push?: NativePushState;
+};
+
+/** The device's power state. */
+export type NativePowerState = {
+	/** Low Power Mode (iOS) or Battery Saver (Android) is on. */
+	lowPower: boolean;
+	/** The battery level, from 0 to 100. */
+	battery?: number;
+	/** The battery is charging or full on power. */
+	charging?: boolean;
+};
+
+/** The DNS resolvers in use; the client reduces them to a provider name and never sends the addresses. */
+export type NativeDnsState = {
+	/** The resolver addresses of the default route. */
+	servers: string[];
+	/** Android: Private DNS encrypts lookups. */
+	privateDns?: boolean;
+	/** Android: the Private DNS hostname set in Settings. */
+	privateDnsHost?: string;
+};
+
+/** Notification permission and push readiness. */
+export type NativePushState = {
+	/** Whether the person allowed notifications. */
+	permission: 'granted' | 'denied' | 'provisional' | 'not asked';
+	/** iOS: the app holds an APNs registration. */
+	registered?: boolean;
+	/** Android: Google Play services, which delivers pushes, is installed and enabled. */
+	playServices?: boolean;
 };
 
 /** The device's active connection. */

@@ -1,10 +1,10 @@
 import type { NativeDeviceState, UnboundLaunchReport } from '@unbound-app/types';
 
-import missingExtensions from '~/diagnostics/missing-extensions';
 import { NativeBridgeCapabilityError, NativeBridgeVersionError } from '~/native/errors';
 import { DeviceInfo, getNativeResources, getRuntimeProperties } from '~/native/native';
 import { CLIENT_VERSION, MINIMUM_DISCORD_VERSIONS, VERSION } from '~/core/constants';
 import { isOlderThanSupported, discordChannel } from '~/core/discord-support';
+import missingExtensions from '~/diagnostics/missing-extensions';
 import { readBundleInfo } from '~/native/read-bundle-info';
 import { currentEnvironment } from '~/core/environment';
 import { crashedAddons } from '~/addons/crash-guard';
@@ -21,9 +21,12 @@ import { patches } from '~/patcher/api';
 
 import type { AddonCount, DebugInfo, DiscordSupport } from './format-debug-info';
 
+import { privateDnsName, resolverName } from './dns-provider';
+import { readClockSkew, utcOffset } from './clock';
 import { readExperiments } from './experiments';
 import { readAppSession } from './app-session';
 import { recentErrors } from './recent-errors';
+import { pushStateOf } from './push-state';
 
 const MAX_PATCH_CALLERS = 8;
 const MAX_LISTED_PLUGINS = 60;
@@ -230,6 +233,37 @@ function memoryOf(state?: NativeDeviceState): DebugInfo['memory'] {
 	return { availableMB, lowMemory, memoryWarnings, thermal };
 }
 
+function powerOf(state?: NativeDeviceState): DebugInfo['power'] {
+	const power = state?.power;
+
+	if (typeof power?.lowPower !== 'boolean') {
+		return undefined;
+	}
+
+	return { lowPower: power.lowPower, battery: power.battery, charging: power.charging };
+}
+
+function dnsOf(state?: NativeDeviceState): DebugInfo['dns'] {
+	const dns = state?.dns;
+
+	if (!dns) {
+		return undefined;
+	}
+
+	const resolver = resolverName(dns.servers ?? []);
+	const privateDns = privateDnsName(dns.privateDns, dns.privateDnsHost);
+
+	return resolver || privateDns ? { resolver, privateDns } : undefined;
+}
+
+function pushOf(state: NativeDeviceState | undefined, android: boolean): DebugInfo['push'] {
+	const entitlements = android
+		? undefined
+		: attempt(() => globalThis.NativePlatform?.ios?.getEntitlements(), undefined);
+
+	return pushStateOf(state?.push, entitlements);
+}
+
 const MAX_ADDON_UPDATES = 64;
 
 function addonUpdates(): string[] | undefined {
@@ -322,6 +356,10 @@ export function readDebugInfo(): DebugInfo {
 		bundleChannel: loader?.launch?.channel,
 		memory: attempt(() => memoryOf(state), undefined),
 		network: attempt(() => state?.network, undefined),
+		power: attempt(() => powerOf(state), undefined),
+		clock: attempt(() => ({ utcOffset: utcOffset() }), undefined),
+		dns: attempt(() => dnsOf(state), undefined),
+		push: attempt(() => pushOf(state, android), undefined),
 		injected: attempt(() => injectedOf(state), undefined),
 		missingExtensions: android
 			? undefined
@@ -345,10 +383,13 @@ export function readDebugInfo(): DebugInfo {
  */
 export async function readDebugReport(): Promise<DebugInfo> {
 	const info = readDebugInfo();
+	const [accessibility, skewS] = await Promise.all([readAccessibility(), readClockSkew()]);
 
-	return info.display
-		? { ...info, display: { ...info.display, ...(await readAccessibility()) } }
-		: info;
+	return {
+		...info,
+		...(info.display && { display: { ...info.display, ...accessibility } }),
+		...(info.clock && { clock: { ...info.clock, skewS } }),
+	};
 }
 
 /**

@@ -4,6 +4,7 @@ import type {
 	DebugCardSupport,
 } from '@unbound-app/contracts/debug-cards';
 import { launchNotes } from '@unbound-app/contracts/debug-card-launch';
+import { skewPhrase } from '@unbound-app/contracts/debug-card-clock';
 
 /** How many addons of one kind are installed and enabled. */
 export type AddonCount = DebugCardAddonCount;
@@ -49,21 +50,50 @@ export function debugLines(info: DebugInfo): string[] {
 			? [`- **Launch:** ${launchNotes(info.launch).join(' · ')}`]
 			: []),
 		`- **Runtime:** React ${info.react}, React Native ${info.reactNative}, Hermes ${info.hermes} (HBC ${info.bytecode})`,
-		...(info.network ? [`- **Network:** ${networkLine(info.network)}`] : []),
+		...(info.network ? [`- **Network:** ${networkLine(info.network, info.dns)}`] : []),
+		...(info.power ? [`- **Power:** ${powerLine(info.power)}`] : []),
+		...(info.clock ? [`- **Clock:** ${clockLine(info.clock)}`] : []),
+		...(info.push ? [`- **Notifications:** ${pushLine(info.push)}`] : []),
 		...(info.experiments?.length ? [`- **Experiments:** ${info.experiments.join(', ')}`] : []),
 	];
 }
 
-function networkLine(network: NonNullable<DebugInfo['network']>): string {
-	return [
+function joinedParts(parts: (string | false | undefined)[]): string {
+	return parts.filter(Boolean).join(' · ');
+}
+
+function networkLine(network: NonNullable<DebugInfo['network']>, dns?: DebugInfo['dns']): string {
+	return joinedParts([
 		network.type === 'wifi' ? 'Wi-Fi' : sentenceCase(network.type),
-		network.metered && network.type !== 'cellular' ? 'metered' : undefined,
-		network.lowData ? 'Low Data Mode' : undefined,
-		network.vpn ? 'VPN' : undefined,
-		network.proxy ? 'proxy' : undefined,
-	]
-		.filter(Boolean)
-		.join(' · ');
+		network.metered && network.type !== 'cellular' && 'metered',
+		network.lowData && 'Low Data Mode',
+		network.vpn && 'VPN',
+		network.proxy && 'proxy',
+		dns?.resolver && dns.resolver !== 'local' && `DNS ${dns.resolver}`,
+		dns?.privateDns && `Private DNS ${dns.privateDns}`,
+	]);
+}
+
+function powerLine(power: NonNullable<DebugInfo['power']>): string {
+	return joinedParts([
+		power.lowPower ? 'Low Power Mode' : 'normal',
+		power.battery !== undefined && `battery ${power.battery}%`,
+		power.charging && 'charging',
+	]);
+}
+
+function clockLine(clock: NonNullable<DebugInfo['clock']>): string {
+	return joinedParts([clock.utcOffset, clock.skewS !== undefined && skewPhrase(clock.skewS)]);
+}
+
+function pushLine(push: NonNullable<DebugInfo['push']>): string {
+	return joinedParts([
+		push.permission === 'not asked' ? 'never asked' : push.permission,
+		push.registered === false && 'not registered for pushes',
+		push.playServices === false && 'no Google Play services',
+		push.environment === 'missing' && 'no push entitlement',
+		push.environment === 'development' && 'development pushes',
+	]);
 }
 
 /**

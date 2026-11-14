@@ -91,4 +91,24 @@ describe('formatDebugInfo', () => {
 			formatDebugInfo({ ...info, addonUpdates: ['Chat Bubbles 1.6.8 → 1.6.9'] }).split('\n'),
 		).toContain('- **Updates waiting:** Chat Bubbles 1.6.8 → 1.6.9');
 	});
+
+	test('adds DNS to the network line and lists power, clock and notifications', () => {
+		const lines = formatDebugInfo({
+			...info,
+			network: { type: 'wifi', vpn: true },
+			dns: { resolver: 'Cloudflare', privateDns: 'NextDNS' },
+			power: { lowPower: true, battery: 14, charging: false },
+			clock: { utcOffset: 'UTC+01:00', skewS: 300 },
+			push: { permission: 'granted', registered: false, environment: 'missing' },
+		}).split('\n');
+
+		expect(lines).toContain(
+			'- **Network:** Wi-Fi · VPN · DNS Cloudflare · Private DNS NextDNS',
+		);
+		expect(lines).toContain('- **Power:** Low Power Mode · battery 14%');
+		expect(lines).toContain('- **Clock:** UTC+01:00 · 5 min ahead');
+		expect(lines).toContain(
+			'- **Notifications:** granted · not registered for pushes · no push entitlement',
+		);
+	});
 });

@@ -2,6 +2,8 @@
 
 #import <CFNetwork/CFNetwork.h>
 #import <Network/Network.h>
+#import <UserNotifications/UserNotifications.h>
+#include <arpa/inet.h>
 #include <atomic>
 #include <istream>
 #include <mach-o/dyld.h>
@@ -130,6 +132,155 @@ static nlohmann::json networkJSON()
             {"proxy", static_cast<bool>(proxied)}};
 }
 
+static std::atomic<int> notificationStatus{-1};
+static std::atomic<int> pushRegistered{-1};
+static std::atomic<int> batteryPercent{-1};
+static std::atomic<int> batteryCharging{-1};
+
+static void readMainThreadState()
+{
+    UIDevice *device                = UIDevice.currentDevice;
+    device.batteryMonitoringEnabled = YES;
+    float level                     = device.batteryLevel;
+    batteryPercent.store(level < 0 ? -1 : static_cast<int>(level * 100 + 0.5f));
+    UIDeviceBatteryState battery = device.batteryState;
+    batteryCharging.store(battery == UIDeviceBatteryStateUnknown
+                              ? -1
+                              : (battery == UIDeviceBatteryStateUnplugged ? 0 : 1));
+    if (UIApplication *application = UIApplication.sharedApplication)
+    {
+        pushRegistered.store(application.isRegisteredForRemoteNotifications ? 1 : 0);
+    }
+}
+
+static void refreshDeviceState()
+{
+    dispatch_async(dispatch_get_main_queue(), ^{ readMainThreadState(); });
+    [UNUserNotificationCenter.currentNotificationCenter
+        getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings *settings) {
+            notificationStatus.store(static_cast<int>(settings.authorizationStatus));
+        }];
+}
+
+static void watchDeviceState()
+{
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        [[NSNotificationCenter defaultCenter]
+            addObserverForName:UIApplicationDidBecomeActiveNotification
+                        object:nil
+                         queue:nil
+                    usingBlock:^(NSNotification *) { refreshDeviceState(); }];
+    });
+}
+
+static nlohmann::json powerJSON()
+{
+    nlohmann::json power = {
+        {"lowPower", static_cast<bool>(NSProcessInfo.processInfo.lowPowerModeEnabled)}};
+    if (int percent = batteryPercent.load(); percent >= 0)
+    {
+        power["battery"] = percent;
+    }
+    if (int charging = batteryCharging.load(); charging >= 0)
+    {
+        power["charging"] = charging == 1;
+    }
+    return power;
+}
+
+static std::string notificationPermissionName(int status)
+{
+    switch (status)
+    {
+        case UNAuthorizationStatusNotDetermined:
+            return "not asked";
+        case UNAuthorizationStatusDenied:
+            return "denied";
+        case UNAuthorizationStatusProvisional:
+            return "provisional";
+        default:
+            return "granted";
+    }
+}
+
+static nlohmann::json pushJSON()
+{
+    int status = notificationStatus.load();
+    if (status < 0)
+    {
+        return nullptr;
+    }
+    nlohmann::json push = {{"permission", notificationPermissionName(status)}};
+    if (int registered = pushRegistered.load(); registered >= 0)
+    {
+        push["registered"] = registered == 1;
+    }
+    return push;
+}
+
+#pragma pack(push, 4)
+struct UnboundDNSResolver {
+    char             *domain;
+    int32_t           nameserverCount;
+    struct sockaddr **nameservers;
+};
+
+struct UnboundDNSConfig {
+    int32_t                     resolverCount;
+    struct UnboundDNSResolver **resolvers;
+};
+#pragma pack(pop)
+
+extern "C" {
+struct UnboundDNSConfig *dns_configuration_copy(void);
+void                     dns_configuration_free(struct UnboundDNSConfig *config);
+}
+
+static std::string addressText(const struct sockaddr *address)
+{
+    char text[INET6_ADDRSTRLEN] = {0};
+    if (address->sa_family == AF_INET)
+    {
+        inet_ntop(AF_INET, &reinterpret_cast<const sockaddr_in *>(address)->sin_addr, text,
+                  sizeof(text));
+    }
+    else if (address->sa_family == AF_INET6)
+    {
+        inet_ntop(AF_INET6, &reinterpret_cast<const sockaddr_in6 *>(address)->sin6_addr, text,
+                  sizeof(text));
+    }
+    return text;
+}
+
+static nlohmann::json dnsJSON()
+{
+    UnboundDNSConfig *config = dns_configuration_copy();
+    if (!config)
+    {
+        return nullptr;
+    }
+    nlohmann::json servers = nlohmann::json::array();
+    for (int32_t index = 0; index < config->resolverCount; index++)
+    {
+        UnboundDNSResolver *resolver = config->resolvers[index];
+        if (!resolver || resolver->domain)
+        {
+            continue;
+        }
+        for (int32_t server = 0; server < resolver->nameserverCount; server++)
+        {
+            if (std::string text = addressText(resolver->nameservers[server]); !text.empty())
+            {
+                servers.push_back(text);
+            }
+        }
+        break;
+    }
+    dns_configuration_free(config);
+    return {{"servers", servers}};
+}
+
 static std::string thermalName(NSProcessInfoThermalState state)
 {
     switch (state)
@@ -169,6 +320,16 @@ static nlohmann::json deviceStateJSON()
     {
         state["network"] = network;
     }
+    state["power"] = powerJSON();
+    if (nlohmann::json push = pushJSON(); !push.is_null())
+    {
+        state["push"] = push;
+    }
+    if (nlohmann::json dns = dnsJSON(); !dns.is_null())
+    {
+        state["dns"] = dns;
+    }
+    refreshDeviceState();
     return state;
 }
 
@@ -196,6 +357,7 @@ std::shared_ptr<NativePlatformProvider> makeNativePlatformProvider(void)
     provider->jailbreak = detectedJailbreak;
     countMemoryWarnings();
     watchNetwork();
+    watchDeviceState();
     provider->deviceState = deviceStateJSON;
     provider->isSystemApp = []() {
         return static_cast<bool>([Utilities isSystemApp]);
