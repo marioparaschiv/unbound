@@ -3,11 +3,10 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"debug/macho"
 	"fmt"
 	"strings"
 )
-
-const shareAppGroup = "group.com.hammerandchisel.discord"
 
 func plistValue(data []byte, key string) (string, error) {
 	info, err := readPlist(data)
@@ -20,6 +19,28 @@ func plistValue(data []byte, key string) (string, error) {
 	return "", nil
 }
 
+func bundleIdentifier(entries map[string]*zip.File, infoPath string) (string, error) {
+	file := entries[infoPath]
+	if file == nil {
+		return "", fmt.Errorf("final IPA has no %s", infoPath)
+	}
+	data, err := readZipEntry(file)
+	if err != nil {
+		return "", err
+	}
+	return plistValue(data, "CFBundleIdentifier")
+}
+
+func loadsGroupRemap(data []byte) bool {
+	file, err := macho.NewFile(bytes.NewReader(data))
+	if err != nil {
+		return false
+	}
+	return machoLoadsDylib(file, groupRemapInstall)
+}
+
+// validateIPAExtensionWiring checks every extension lives under the app's bundle id, and that Discord's own extensions
+// load UnboundGroups.dylib, without which they cannot reach a sideloader's renamed app group.
 func validateIPAExtensionWiring(path string) error {
 	archive, err := zip.OpenReader(path)
 	if err != nil {
@@ -27,60 +48,43 @@ func validateIPAExtensionWiring(path string) error {
 	}
 	defer archive.Close()
 	entries := make(map[string]*zip.File, len(archive.File))
-	appInfo := ""
 	for _, file := range archive.File {
 		entries[file.Name] = file
-		parts := strings.Split(file.Name, "/")
-		if len(parts) == 3 && parts[0] == "Payload" && strings.HasSuffix(parts[1], ".app") && parts[2] == "Info.plist" {
-			appInfo = file.Name
-		}
 	}
-	if appInfo == "" {
-		return fmt.Errorf("final IPA has no app Info.plist")
-	}
-	appData, err := readZipEntry(entries[appInfo])
+	app, err := ipaAppDirectory(archive.File)
 	if err != nil {
 		return err
 	}
-	appID, err := plistValue(appData, "CFBundleIdentifier")
+	appID, err := bundleIdentifier(entries, app+"Info.plist")
 	if err != nil || appID == "" {
 		return fmt.Errorf("could not read the app's bundle identifier: %v", err)
 	}
-	appDir := strings.TrimSuffix(appInfo, "Info.plist")
-	for _, name := range []string{"Share", "OpenInDiscord"} {
-		extensionDir := appDir + "PlugIns/" + name + ".appex/"
-		info := entries[extensionDir+"Info.plist"]
-		if info == nil {
-			return fmt.Errorf("final IPA is missing %s.appex", name)
-		}
-		data, err := readZipEntry(info)
-		if err != nil {
-			return err
-		}
-		id, err := plistValue(data, "CFBundleIdentifier")
-		if err != nil {
-			return fmt.Errorf("could not read %s.appex's bundle identifier: %w", name, err)
-		}
-		if !strings.HasPrefix(id, appID+".") {
-			return fmt.Errorf("%s.appex has bundle identifier %q, which iOS ignores outside %s", name, id, appID)
-		}
-		if name != "Share" {
+	if entries[app+groupRemapFramework] == nil {
+		return fmt.Errorf("final IPA has no %s", groupRemapFramework)
+	}
+	for _, file := range archive.File {
+		rest, ok := strings.CutPrefix(file.Name, app+"PlugIns/")
+		parts := strings.Split(rest, "/")
+		if !ok || len(parts) != 2 || parts[1] != "Info.plist" || !strings.HasSuffix(parts[0], ".appex") {
 			continue
 		}
-		scheme, err := plistValue(data, "URLScheme")
-		if err != nil || scheme == "" {
-			return fmt.Errorf("Share.appex names no URL scheme to open Discord with")
-		}
-		executable, err := plistValue(data, "CFBundleExecutable")
-		if err != nil || entries[extensionDir+executable] == nil {
-			return fmt.Errorf("could not find Share.appex's executable")
-		}
-		binary, err := readZipEntry(entries[extensionDir+executable])
+		id, err := bundleIdentifier(entries, file.Name)
 		if err != nil {
 			return err
 		}
-		if !bytes.Contains(binary, []byte(shareAppGroup)) {
-			return fmt.Errorf("Share.appex is not signed with the %s app group, so Discord cannot read shared files", shareAppGroup)
+		if !strings.HasPrefix(id, appID+".") {
+			return fmt.Errorf("%s has bundle identifier %q, which iOS ignores outside %s", parts[0], id, appID)
+		}
+		executable := app + "PlugIns/" + parts[0] + "/" + strings.TrimSuffix(parts[0], ".appex")
+		if !stockExtensionExecutable(executable, app) || entries[executable] == nil {
+			continue
+		}
+		data, err := readZipEntry(entries[executable])
+		if err != nil {
+			return err
+		}
+		if !loadsGroupRemap(data) {
+			return fmt.Errorf("%s does not load UnboundGroups.dylib, so it cannot reach a renamed app group", parts[0])
 		}
 	}
 	return nil

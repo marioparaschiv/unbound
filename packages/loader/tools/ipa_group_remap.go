@@ -15,7 +15,7 @@ const (
 	groupRemapInstall   = "@rpath/UnboundGroups.dylib"
 )
 
-var ownExtensions = map[string]bool{"OpenInDiscord.appex": true, "Share.appex": true}
+var ownExtensions = map[string]bool{"OpenInDiscord.appex": true}
 
 func buildGroupRemap(options buildOptions, work string, runner commandRunner) (string, error) {
 	source := filepath.Join(iosRoot(options.root), "groups", "UnboundGroups.m")

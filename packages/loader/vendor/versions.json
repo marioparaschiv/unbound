@@ -58,11 +58,5 @@
 		"name": "OpenInDiscord",
 		"license": "NOASSERTION",
 		"url": "https://github.com/castdrian/OpenInDiscord"
-	},
-	{
-		"path": "ios/extensions/ShareToDiscord",
-		"name": "ShareToDiscord",
-		"license": "NOASSERTION",
-		"url": "https://github.com/castdrian/ShareToDiscord"
 	}
 ]

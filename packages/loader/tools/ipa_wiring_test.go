@@ -3,7 +3,9 @@ package main
 import (
 	"archive/zip"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -42,32 +44,56 @@ func writeIPA(t *testing.T, files map[string]string) string {
 	return path
 }
 
-func wiredIPA(shareID, scheme, binary string) map[string]string {
+func extensionBinary(t *testing.T, withRemap bool) string {
+	t.Helper()
+	if runtime.GOOS != "darwin" {
+		t.Skip("needs clang")
+	}
+	dir := t.TempDir()
+	source := filepath.Join(dir, "main.c")
+	binary := filepath.Join(dir, "Share")
+	if err := os.WriteFile(source, []byte("int main(void) { return 0; }\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if output, err := exec.Command("xcrun", "clang", "-arch", "arm64", "-Wl,-headerpad,0x100", "-o", binary, source).CombinedOutput(); err != nil {
+		t.Skipf("clang unavailable: %v %s", err, output)
+	}
+	if withRemap {
+		if err := addWeakDylib(binary, groupRemapInstall); err != nil {
+			t.Fatal(err)
+		}
+	}
+	data, err := os.ReadFile(binary)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
+}
+
+func wiredIPA(shareID, binary string) map[string]string {
+	app := "Payload/Discord.app/"
 	return map[string]string{
-		"Payload/Discord.app/Info.plist": infoPlist(map[string]string{"CFBundleIdentifier": "com.hammerandchisel.discord"}),
-		"Payload/Discord.app/PlugIns/Share.appex/Info.plist": infoPlist(map[string]string{
-			"CFBundleIdentifier": shareID,
-			"CFBundleExecutable": "Share",
-			"URLScheme":          scheme,
-		}),
-		"Payload/Discord.app/PlugIns/Share.appex/Share": binary,
-		"Payload/Discord.app/PlugIns/OpenInDiscord.appex/Info.plist": infoPlist(map[string]string{
+		app + "Info.plist":                     infoPlist(map[string]string{"CFBundleIdentifier": "com.hammerandchisel.discord"}),
+		app + groupRemapFramework:              "dylib",
+		app + "PlugIns/Share.appex/Info.plist": infoPlist(map[string]string{"CFBundleIdentifier": shareID}),
+		app + "PlugIns/Share.appex/Share":      binary,
+		app + "PlugIns/OpenInDiscord.appex/Info.plist": infoPlist(map[string]string{
 			"CFBundleIdentifier": "com.hammerandchisel.discord.OpenInDiscord",
 		}),
 	}
 }
 
 func TestValidateIPAExtensionWiring(t *testing.T) {
-	signed := "macho" + shareAppGroup + "signature"
+	loaded := extensionBinary(t, true)
+	plain := extensionBinary(t, false)
 	for _, test := range []struct {
 		name    string
 		files   map[string]string
 		wantErr string
 	}{
-		{"wired", wiredIPA("com.hammerandchisel.discord.Share", "unbound", signed), ""},
-		{"foreign bundle id", wiredIPA("com.example.Share", "unbound", signed), "bundle identifier"},
-		{"no scheme", wiredIPA("com.hammerandchisel.discord.Share", "", signed), "URL scheme"},
-		{"no app group", wiredIPA("com.hammerandchisel.discord.Share", "unbound", "macho"), "app group"},
+		{"wired", wiredIPA("com.hammerandchisel.discord.Share", loaded), ""},
+		{"foreign bundle id", wiredIPA("com.example.Share", loaded), "bundle identifier"},
+		{"no group remap", wiredIPA("com.hammerandchisel.discord.Share", plain), "UnboundGroups"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			err := validateIPAExtensionWiring(writeIPA(t, test.files))
