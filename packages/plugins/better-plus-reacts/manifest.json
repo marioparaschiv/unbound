@@ -1,0 +1,21 @@
+{
+	"id": "unbound.better-plus-reacts",
+	"name": "Better Plus Reacts",
+	"description": "Lets +:emoji: react to earlier messages too: each extra plus goes one message further back, so ++:fire: reacts to the second-last message.",
+	"authors": [
+		{
+			"name": "Joona",
+			"id": "297410829589020673"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ReactionIcon",
+	"main": "index.tsx"
+}

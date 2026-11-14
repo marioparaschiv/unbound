@@ -581,6 +581,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/better-plus-reacts": {
+      "name": "better-plus-reacts",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/better-search": {
       "name": "better-search",
       "dependencies": {
@@ -3295,6 +3309,8 @@
     "better-gif-alt-text": ["better-gif-alt-text@workspace:packages/plugins/better-gif-alt-text"],
 
     "better-gif-picker": ["better-gif-picker@workspace:packages/plugins/better-gif-picker"],
+
+    "better-plus-reacts": ["better-plus-reacts@workspace:packages/plugins/better-plus-reacts"],
 
     "better-search": ["better-search@workspace:packages/plugins/better-search"],
 
