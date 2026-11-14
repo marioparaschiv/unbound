@@ -103,6 +103,8 @@
 	"UNBOUND_INSTALL_FROM_URL": "Install from URL",
 	"UNBOUND_BROWSE_MARKETPLACE": "Browse Marketplace",
 	"UNBOUND_INSTALLED": "Installed",
+	"UNBOUND_ONLY_ON_PLATFORM": "{platform} only",
+	"UNBOUND_ONLY_ON_PLATFORM_DESC": "{name} runs only on {platform}.",
 	"UNBOUND_UPDATE": "Update",
 	"UNBOUND_UPDATES": "Updates",
 	"UNBOUND_UPDATES_CHECK": "Check for Updates",

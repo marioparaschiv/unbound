@@ -3992,6 +3992,10 @@ export type NativeDeviceState = {
 	freeMB?: number;
 	/** The size of Unbound's folder, in megabytes. */
 	unboundMB?: number;
+	/** The size of Discord's whole data folder, caches included, in megabytes. */
+	discordMB?: number;
+	/** The size of Discord's caches and temporary files, in megabytes. */
+	cacheMB?: number;
 	/** The active connection, and whether a VPN, a proxy, a metered plan or Low Data Mode (Data Saver) applies. */
 	network?: NativeNetworkState;
 	/** Other tweaks or modules loaded into Discord: iOS dylib names, Android packages or Magisk modules; older loaders omit it. */
@@ -5149,6 +5153,10 @@ export type NativePushState = {
 	registered?: boolean;
 	/** Android: Google Play services, which delivers pushes, is installed and enabled. */
 	playServices?: boolean;
+	/** iOS: Scheduled Summary holds Discord's notifications back until the summary. */
+	summary?: boolean;
+	/** A Focus (Do Not Disturb on Android) silences notifications; iOS reports it only once Discord may read Focus. */
+	focus?: boolean;
 };
 /** How many native resources the loader holds across every plugin. */
 export type NativeResourceCounts = {
