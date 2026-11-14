@@ -9,7 +9,8 @@
 		"./entities/entity-list": "./src/entities/entity-list.tsx",
 		"./entities/entity-list-row": "./src/entities/entity-list-row.tsx",
 		"./entities/entity-row": "./src/entities/entity-row.tsx",
-		"./*": "./src/*.ts"
+		"./*": "./src/*.ts",
+		"./lifecycle/chat-rows": "./src/lifecycle/chat-rows.ts"
 	},
 	"scripts": {
 		"test": "bun test",
