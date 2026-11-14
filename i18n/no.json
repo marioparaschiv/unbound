@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "Ubegrenset viser alle varsler samtidig. Ubegrenset tid beholder et varsel til du lukker det.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Kobler til en feilsøker på datamaskinen din ved oppstart.",
 	"UNBOUND_LOADER": "Loader",
-	"UNBOUND_LOADER_RESTART_HINT": "Loaderen leser disse ved oppstart. Start på nytt fra Generelt for å ta dem i bruk.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "Egendefinert bundle-URL",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Last inn Unbound fra denne URL-en i stedet for det offisielle bygget. Tilbakestill for å gå tilbake til det offisielle bygget.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Skriv inn en http- eller https-URL.",

@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "Obegränsat visar alla popup-meddelanden samtidigt. Tills vidare behåller ett popup-meddelande tills du stänger det.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Ansluter till en felsökare på din dator vid start.",
 	"UNBOUND_LOADER": "Loader",
-	"UNBOUND_LOADER_RESTART_HINT": "Loadern läser dessa vid start. Starta om från Allmänt för att tillämpa dem.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "Anpassad bundle-URL",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Läs in Unbound från den här URL:en i stället för release-bygget. Återställ för att gå tillbaka till release-bygget.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Ange en http- eller https-URL.",

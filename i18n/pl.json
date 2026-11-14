@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "„Bez limitu” pokazuje wszystkie powiadomienia naraz. „Bezterminowo” pozostawia powiadomienie na ekranie, dopóki go nie zamkniesz.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Przy uruchomieniu łączy się z debugerem na twoim komputerze.",
 	"UNBOUND_LOADER": "Loader",
-	"UNBOUND_LOADER_RESTART_HINT": "Loader odczytuje te ustawienia przy uruchomieniu. Aby je zastosować, uruchom ponownie aplikację w sekcji Ogólne.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "Własny URL pakietu",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Wczytuj Unbound z tego adresu URL zamiast z wersji wydanej. Zresetuj, aby wrócić do wersji wydanej.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Wpisz adres URL http lub https.",

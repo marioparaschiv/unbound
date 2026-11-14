@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "Không giới hạn sẽ hiện mọi thông báo nổi cùng lúc. Vô thời hạn giữ thông báo nổi cho đến khi bạn đóng nó.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Kết nối tới trình gỡ lỗi trên máy tính của bạn khi khởi động.",
 	"UNBOUND_LOADER": "Loader",
-	"UNBOUND_LOADER_RESTART_HINT": "Loader đọc các cài đặt này khi khởi động. Hãy khởi động lại từ mục Chung để áp dụng.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "URL bundle tùy chỉnh",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Tải Unbound từ URL này thay vì bản phát hành. Đặt lại để quay về bản phát hành.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Hãy nhập URL http hoặc https.",

@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "Ubegrænset viser alle pop op-beskeder på én gang. Uendelig beholder en pop op-besked, indtil du lukker den.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Opretter forbindelse til en debugger på din computer ved opstart.",
 	"UNBOUND_LOADER": "Loader",
-	"UNBOUND_LOADER_RESTART_HINT": "Loaderen læser disse ved opstart. Genstart fra Generelt for at anvende dem.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "Brugerdefineret bundle-URL",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Indlæs Unbound fra denne URL i stedet for udgivelsesbuildet. Nulstil for at vende tilbage til udgivelsesbuildet.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Indtast en http- eller https-URL.",

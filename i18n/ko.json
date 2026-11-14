@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "‘제한 없음’은 모든 토스트 알림을 한꺼번에 표시해요. ‘계속 표시’는 직접 닫을 때까지 토스트 알림을 계속 띄워 둬요.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "실행 시 컴퓨터의 디버거에 연결해요.",
 	"UNBOUND_LOADER": "로더",
-	"UNBOUND_LOADER_RESTART_HINT": "로더는 실행 시 이 값을 읽어요. 적용하려면 일반에서 다시 시작하세요.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "사용자 지정 번들 URL",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "릴리스 빌드 대신 이 URL에서 Unbound를 불러와요. 릴리스 빌드로 돌아가려면 초기화하세요.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "http 또는 https URL을 입력하세요.",
