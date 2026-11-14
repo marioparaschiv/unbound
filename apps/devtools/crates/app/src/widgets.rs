@@ -245,24 +245,7 @@ pub fn raised_button(
 	label: impl Into<SharedString>,
 	enabled: bool,
 ) -> Pressable {
-	// The web's `--highlight`: strong on the brand colour, faint on the neutral body.
-	let secondary_highlight = if theme::is_dark() { 0.09 } else { 0.6 };
-	let (bg, hover, fg, ledge, highlight) = match kind {
-		Raised::Primary => (
-			theme::color(theme::ACCENT),
-			gpui::rgb(0xBC4753),
-			theme::ON_ACCENT,
-			primary_ledge(),
-			0.18,
-		),
-		Raised::Secondary => (
-			theme::color(theme::SECONDARY),
-			theme::color(theme::SECONDARY_HOVER),
-			theme::TEXT,
-			theme::hsla(theme::LEDGE_SECONDARY),
-			secondary_highlight,
-		),
-	};
+	let (bg, hover, fg, ledge, highlight) = raised_palette(kind);
 	let body = div()
 		.flex_none()
 		.flex()
@@ -289,6 +272,52 @@ pub fn raised_button(
 		.children(path.map(|path| icon(path, theme::ICON, fg)))
 		.child(label.into());
 	Pressable::new(id, body, ledge, highlight, enabled)
+}
+
+/// A raised button holding only an icon, its glyph larger than a labelled button's. Body and ledge
+/// together make a square at the control height. Pair it with a tooltip naming the action.
+pub fn raised_icon_button(
+	id: impl Into<gpui::ElementId>,
+	kind: Raised,
+	path: &'static str,
+) -> Pressable {
+	let (bg, hover, fg, ledge, highlight) = raised_palette(kind);
+	let body = div()
+		.flex_none()
+		.flex()
+		.items_center()
+		.justify_center()
+		.w(theme::CONTROL_HEIGHT)
+		.h(theme::CONTROL_HEIGHT - theme::LEDGE)
+		.mb(theme::LEDGE)
+		.rounded(theme::RADIUS_CONTROL)
+		.bg(bg)
+		.cursor_pointer()
+		.hover(move |button| button.bg(hover))
+		.child(icon(path, px(18.), fg));
+	Pressable::new(id, body, ledge, highlight, true)
+}
+
+/// A raised variant's body, hover, glyph and ledge colours, and its top highlight's strength.
+fn raised_palette(kind: Raised) -> (gpui::Rgba, gpui::Rgba, Token, Hsla, f32) {
+	// The web's `--highlight`: strong on the brand colour, faint on the neutral body.
+	let secondary_highlight = if theme::is_dark() { 0.09 } else { 0.6 };
+	match kind {
+		Raised::Primary => (
+			theme::color(theme::ACCENT),
+			gpui::rgb(0xBC4753),
+			theme::ON_ACCENT,
+			primary_ledge(),
+			0.18,
+		),
+		Raised::Secondary => (
+			theme::color(theme::SECONDARY),
+			theme::color(theme::SECONDARY_HOVER),
+			theme::TEXT,
+			theme::hsla(theme::LEDGE_SECONDARY),
+			secondary_highlight,
+		),
+	}
 }
 
 /// The web's `field` utility on a gpui-component input: a well sunk into the panel with an inner

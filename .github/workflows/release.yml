@@ -178,3 +178,5 @@ jobs:
         uses: ./.github/workflows/devtools.yml
         with:
             version: ${{ needs.release.outputs.devtools-version }}
+        secrets:
+            UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}

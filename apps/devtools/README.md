@@ -42,7 +42,7 @@ Flags override the settings for one run.
 | `--bridge`                | `127.0.0.1:<bridge port, UNBOUND_BRIDGE_PORT>` | Debugger bridge used by **Connect device**  |
 | `--mcp-port` / `--no-mcp` | MCP port `8098`, Serve MCP                     | MCP endpoint at `http://127.0.0.1:8098/mcp` |
 
-**Settings** (the sidebar footer, or Ctrl+, / Cmd+,) holds the theme, the bridge port and the MCP port. They are stored in `settings.json`, and the **Connect device** menu's presets (a name and a bridge `host:port`) in `devices.json`, both in the platform config directory (`UNBOUND_DEVTOOLS_CONFIG_DIR` overrides it).
+**Settings** (the sidebar footer, or Ctrl+, / Cmd+,) holds the theme, the bridge port, the MCP port and updates. At startup the app asks `GET /api/v1/devtools/updates` for a newer release built for its platform and shows a notification when one is out; **Update** downloads the archive, checks its SHA-256, swaps the executable in place and offers **Restart**. The release workflow registers each release's archives with `POST /api/v1/devtools/releases`. `UNBOUND_API_URL` points the check at another server. They are stored in `settings.json`, and the **Connect device** menu's presets (a name and a bridge `host:port`) in `devices.json`, both in the platform config directory (`UNBOUND_DEVTOOLS_CONFIG_DIR` overrides it).
 
 ## Pages
 

@@ -1,0 +1,237 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "f5e274b2-53bf-463d-8d11-8552abab0134",
+  "prevIds": [
+    "a9c85ea5-3f40-484b-9b30-41e9e31c3dd5"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "devtools_release"
+      ],
+      "writes": [
+        "s|tbl|public.devtools_release",
+        "n|tbl|public.devtools_release",
+        "e|tbl|public.devtools_release",
+        "n|rel|public.devtools_release",
+        "n|type|public.devtools_release",
+        "n|rel|public.devtools_release_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "devtools_release",
+        "devtools_release_versionKey_idx"
+      ],
+      "writes": [
+        "s|idx|public.devtools_release_versionKey_idx",
+        "n|idx|public.devtools_release_versionKey_idx",
+        "e|idx|public.devtools_release_versionKey_idx",
+        "n|rel|public.devtools_release_versionKey_idx"
+      ],
+      "reads": [
+        "n|tbl|public.devtools_release",
+        "n|sch|public",
+        "n|col|public.devtools_release.version_key"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "devtools_release"
+      ],
+      "writes": [
+        "s|fk|public.devtools_release.devtools_release_published_by_user_id_fkey",
+        "n|fk|public.devtools_release.devtools_release_published_by_user_id_fkey",
+        "e|fk|public.devtools_release.devtools_release_published_by_user_id_fkey",
+        "n|con|public.devtools_release.devtools_release_published_by_user_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.devtools_release",
+        "n|sch|public",
+        "n|tbl|public.user",
+        "n|sch|public",
+        "n|col|public.devtools_release.published_by",
+        "n|col|public.user.id",
+        "e|uniqueness|public.user.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "devtools_release",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "devtools_release",
+        "name": "version",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "devtools_release",
+        "name": "version_key",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "devtools_release",
+        "name": "assets",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "devtools_release",
+        "name": "changelog",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "devtools_release",
+        "name": "published_by",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "devtools_release",
+        "name": "published_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "devtools_release",
+        "name": "devtools_release_versionKey_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "version_key",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "devtools_release",
+        "name": "devtools_release_published_by_user_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "published_by"
+        ],
+        "schemaTo": "public",
+        "tableTo": "user",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "devtools_release",
+        "name": "devtools_release_pkey",
+        "columns": [
+          "version"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

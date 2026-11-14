@@ -12,12 +12,11 @@ use crate::app::Workspace;
 use crate::link::DebuggerLink;
 use crate::metro::MetroBrowser;
 use crate::nav;
-use crate::nav_list::{NavGroup, NavRow};
+use crate::nav_list::{NavGroup, NavRow, action_row};
 use crate::settings_dialog::{self, Closed, SettingsDialog};
 use crate::title_bar::{self, title_bar};
 use crate::view_finder::ViewFinder;
-use crate::widgets::{icon_button, tooltip};
-use crate::{appearance, settings, theme};
+use crate::{appearance, settings, theme, update};
 
 actions!(shell, [OpenSettings]);
 
@@ -88,6 +87,7 @@ impl Shell {
 			cx.observe_window_appearance(window, |_, window, cx| {
 				appearance::apply(Some(window), cx);
 			}),
+			cx.observe_global::<update::toast::Toasts>(|_, cx| cx.notify()),
 		];
 		let views = cx.new(|cx| ViewFinder::new(devtools.clone(), window, cx));
 		let metro = cx.new(|cx| MetroBrowser::new(devtools, window, cx));
@@ -197,34 +197,24 @@ impl Shell {
 			.child(self.render_settings_row(cx))
 	}
 
-	/// Settings at the right edge behind a rule; the left stays free for future controls. The icon
-	/// button pads its glyph by 6px, so the row pads 6px less to end it on the rows' gutter.
+	/// Settings as a full-width row in the page list's style, on the same inset as the rows above.
 	fn render_settings_row(&self, cx: &mut Context<Self>) -> impl IntoElement {
 		// The footer height, so its top border meets the pages' bottom bars in one line.
 		div()
 			.flex_none()
 			.h(theme::FOOTER_HEIGHT)
 			.flex()
-			.items_center()
-			.gap(px(8.))
-			.pl(px(theme::GUTTER))
-			.pr(px(theme::GUTTER - 6.))
+			.flex_col()
+			.justify_center()
+			.px(px(12.))
 			.border_t_1()
 			.border_color(theme::color(theme::BORDER))
-			.child(div().flex_1())
 			.child(
-				div()
-					.flex_none()
-					.w(px(1.))
-					.h(px(16.))
-					.bg(theme::color(theme::BORDER)),
-			)
-			.child(
-				icon_button("settings", "icons/settings.svg", false)
-					.tooltip(tooltip("Settings"))
-					.on_click(cx.listener(|this, _, window, cx| {
+				action_row("settings", "Settings", "icons/settings.svg").on_click(
+					cx.listener(|this, _, window, cx| {
 						this.open_settings(&OpenSettings, window, cx)
-					})),
+					}),
+				),
 			)
 	}
 }
@@ -287,5 +277,7 @@ impl Render for Shell {
 					),
 			)
 			.children(self.settings.clone())
+			// Over the settings too, so an update started there shows its progress.
+			.children(update::toast::render(window, cx))
 	}
 }

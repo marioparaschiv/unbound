@@ -1,4 +1,5 @@
 export * from './crash-reports';
+export * from './devtools';
 export * from './sponsors';
 export * from './discord';
 export * from './sources';

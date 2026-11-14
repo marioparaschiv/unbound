@@ -87,6 +87,36 @@ fn render_row(ix: usize, row: NavRow, shell: WeakEntity<Shell>) -> impl IntoElem
 		icon: path,
 		active,
 	} = row;
+	row_body(ix, label, path, active, text, glyph).on_click(move |_, _, cx| {
+		shell.update(cx, |shell, cx| shell.open(page, cx)).ok();
+	})
+}
+
+/// A row in the list's style that runs an action instead of opening a page, such as Settings in
+/// the sidebar footer.
+pub fn action_row(
+	id: impl Into<gpui::ElementId>,
+	label: impl Into<SharedString>,
+	path: &'static str,
+) -> Pressable {
+	row_body(
+		id,
+		label.into(),
+		path,
+		false,
+		theme::TEXT_SECONDARY,
+		theme::TEXT_MUTED,
+	)
+}
+
+fn row_body(
+	id: impl Into<gpui::ElementId>,
+	label: SharedString,
+	path: &'static str,
+	active: bool,
+	text: theme::Token,
+	glyph: theme::Token,
+) -> Pressable {
 	// The row keeps its box in the list; the face inside is drawn at `scale`, every length
 	// multiplied, so a press shrinks text and icon about the centre like the web's `scale`.
 	let face = move |scale: f32| {
@@ -120,7 +150,5 @@ fn render_row(ix: usize, row: NavRow, shell: WeakEntity<Shell>) -> impl IntoElem
 			.into_any_element()
 	};
 	let body = div().h(px(ROW_HEIGHT)).group(ROW_GROUP).cursor_pointer();
-	Pressable::flat(ix, body, face).on_click(move |_, _, cx| {
-		shell.update(cx, |shell, cx| shell.open(page, cx)).ok();
-	})
+	Pressable::flat(id, body, face)
 }

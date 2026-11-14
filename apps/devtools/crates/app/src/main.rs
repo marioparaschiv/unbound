@@ -27,6 +27,7 @@ mod theme;
 mod title_bar;
 mod toolbar;
 mod tree;
+mod update;
 mod values;
 mod view_finder;
 mod widgets;
@@ -106,6 +107,7 @@ fn main() -> anyhow::Result<()> {
 				.unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
 		)
 		.init();
+	update::clean_up();
 	let settings = settings::load();
 	let config = cli.config(&settings);
 	match cli.command {
@@ -129,14 +131,26 @@ fn main() -> anyhow::Result<()> {
 	}
 }
 
+const MCP_BIND_ATTEMPTS: u32 = 8;
+
 fn serve_mcp(devtools: &Devtools, port: u16) {
 	let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), port);
 	devtools.set_mcp_url(Some(format!("http://{addr}/mcp")));
 	let server = devtools.clone();
 	devtools.runtime().spawn(async move {
-		if let Err(error) = mcp::serve_http(server.clone(), addr).await {
-			tracing::error!("MCP server on {addr} stopped: {error:#}");
-			server.set_mcp_url(None);
+		// After an update restart, the old process may hold the port for a moment while it quits.
+		for attempt in 1.. {
+			match mcp::serve_http(server.clone(), addr).await {
+				Ok(_) => return,
+				Err(_) if attempt < MCP_BIND_ATTEMPTS => {
+					tokio::time::sleep(Duration::from_millis(250)).await;
+				}
+				Err(error) => {
+					tracing::error!("MCP server on {addr} stopped: {error:#}");
+					server.set_mcp_url(None);
+					return;
+				}
+			}
 		}
 	});
 }
@@ -157,6 +171,7 @@ fn run_gui(settings: Settings, config: Config, mcp_port: Option<u16>) {
 				tracing::error!("Could not load the bundled fonts: {error:#}");
 			}
 			settings::init(settings, cx);
+			update::init(cx);
 			appearance::init(cx);
 			appearance::apply(None, cx);
 			app::bind_keys(cx);
@@ -185,5 +200,8 @@ fn run_gui(settings: Settings, config: Config, mcp_port: Option<u16>) {
 				return;
 			}
 			cx.activate(true);
+			if settings::get(cx).check_for_updates {
+				update::check(true, cx);
+			}
 		});
 }

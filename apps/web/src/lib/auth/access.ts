@@ -11,6 +11,7 @@ export const statements = {
 	update: ['create', 'review'],
 	addon: ['delist', 'transfer', 'rollback', 'edit'],
 	loader: ['publish'],
+	devtools: ['publish'],
 	firstParty: ['publish'],
 	// `claim` sets up sponsor perks without a sponsorship.
 	perk: ['revoke', 'claim'],
@@ -40,9 +41,10 @@ export const moderator = ac.newRole({
 	note: ['read', 'write'],
 });
 
-/** A CI account's role; its API key can publish native loader releases and first-party addons, and nothing else. */
+/** A CI account's role; its API key can publish native loader and DevTools releases and first-party addons, and nothing else. */
 export const ci = ac.newRole({
 	loader: ['publish'],
+	devtools: ['publish'],
 	firstParty: ['publish'],
 });
 

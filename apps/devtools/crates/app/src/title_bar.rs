@@ -33,6 +33,15 @@ pub fn is_drawn(window: &Window) -> bool {
 		|| matches!(window.window_decorations(), Decorations::Client { .. })
 }
 
+/// How far the bar reaches down the window; 0 when the system draws its own above the window.
+pub fn height(window: &Window) -> gpui::Pixels {
+	if is_drawn(window) {
+		px(TITLE_BAR_HEIGHT)
+	} else {
+		px(0.)
+	}
+}
+
 /// The bar itself. gpui-component's `TitleBar` drags the window, maximises on double click, opens
 /// the window menu on right click on Linux, and draws the minimise, maximise and close buttons the
 /// window manager supports on Linux and Windows.
