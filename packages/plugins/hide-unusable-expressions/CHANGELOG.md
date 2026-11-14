@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1] - 2026-11-14
+
+### Fixed
+
+- Hide Unusable Emojis leaves the store, and its installs move over.
+
 ## [1.1.0] - 2026-11-14
 
 ### Added
