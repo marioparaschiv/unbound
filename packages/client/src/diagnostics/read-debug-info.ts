@@ -245,7 +245,8 @@ function addonUpdates(): string[] | undefined {
 }
 
 const MAX_INJECTED = 32;
-const EDGE_BLANKS = /^[\s\p{Cc}\p{Cf}]+|[\s\p{Cc}\p{Cf}]+$/gu;
+const EDGE_BLANKS =
+	/^[\s\p{Cc}\p{Cf}\u115F\u1160\u2800\u3164\uFFA0]+|[\s\p{Cc}\p{Cf}\u115F\u1160\u2800\u3164\uFFA0]+$/gu;
 
 function injectedOf(state?: NativeDeviceState): string[] | undefined {
 	const names = state?.injected
