@@ -1,12 +1,12 @@
 import hermes from '@unbound-app/client-build/hermes.json' with { type: 'json' };
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { basename, dirname, resolve } from 'node:path';
+import { readFileSync, realpathSync } from 'node:fs';
 import type { Plugin, RollupOptions } from 'rollup';
 import { minify, swc } from 'rollup-plugin-swc3';
 import commonjs from '@rollup/plugin-commonjs';
 import { fileURLToPath } from 'node:url';
 import json from '@rollup/plugin-json';
-import { readFileSync } from 'node:fs';
 import iife from 'rollup-plugin-iife';
 
 import type { BudgetOptions } from './build-report.ts';
@@ -75,7 +75,7 @@ export function pluginConfig(
 	options: PluginConfigOptions = {},
 ): RollupOptions {
 	const { lazyModules: deferred = [], bytecode = true, budget } = options;
-	const pluginRoot = dirname(fileURLToPath(pluginUrl));
+	const pluginRoot = realpathSync(dirname(fileURLToPath(pluginUrl)));
 	const sourceRoot = resolve(pluginRoot, 'src');
 	const input = findFile(resolve(sourceRoot, 'index')) ?? void 0;
 	const external = externalFor(globals);

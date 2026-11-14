@@ -207,6 +207,7 @@
 		"packages/cli/templates/**",
 		"packages/cli/tests/fixtures/migrate-entry/**",
 		"packages/plugins/**",
+		"packages/plugins-shared/**",
 		"packages/plugin-scripts/**",
 		"packages/loader/bootstrap/devtools.js",
 		"packages/loader/tools/smoke_scripts/**",

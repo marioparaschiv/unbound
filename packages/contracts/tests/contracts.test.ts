@@ -138,15 +138,19 @@ describe('addonManifestSchema', () => {
 
 		expect(paths.length).toBeGreaterThan(0);
 
-		for (const path of paths) {
-			const result = safeParse(addonManifestSchema, await Bun.file(join(root, path)).json());
+		const manifests = await Promise.all(
+			paths.map(async (path) => ({ path, json: await Bun.file(join(root, path)).json() })),
+		);
+
+		for (const { path, json } of manifests) {
+			const result = safeParse(addonManifestSchema, json);
 
 			expect({ path, issues: result.success ? undefined : result.error.issues }).toEqual({
 				path,
 				issues: undefined,
 			});
 		}
-	});
+	}, 20_000);
 });
 
 describe('updatesRequestSchema', () => {

@@ -13,6 +13,7 @@
 		"./lifecycle/chat-rows": "./src/lifecycle/chat-rows.ts"
 	},
 	"scripts": {
+		"lint": "oxlint --config ../plugins/.oxlintrc.json .",
 		"test": "bun test",
 		"typecheck": "tsc --noEmit -p ."
 	},

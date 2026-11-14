@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync, realpathSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -59,7 +59,7 @@ export function withoutProgress(stderr: string): string {
  * @returns The directory and a function that deletes it.
  */
 export function createTempDir(files: Record<string, string> = {}): TempDir {
-	const path = mkdtempSync(join(tmpdir(), 'ubd-test-'));
+	const path = realpathSync(mkdtempSync(join(tmpdir(), 'ubd-test-')));
 
 	for (const [name, content] of Object.entries(files)) {
 		mkdirSync(dirname(join(path, name)), { recursive: true });
