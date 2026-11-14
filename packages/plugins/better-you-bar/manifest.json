@@ -1,0 +1,25 @@
+{
+	"id": "unbound.better-you-bar",
+	"name": "Better You Bar",
+	"description": "Adds Favorites and Settings shortcuts to the You bar, and can keep favorite channels past Discord's limit on this device.",
+	"authors": [
+		{
+			"name": "j",
+			"id": "1356632712861192242"
+		},
+		{
+			"name": "Benjii",
+			"id": "463702169443368970"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "StarIcon",
+	"main": "index.tsx"
+}
