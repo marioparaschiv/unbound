@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <stdexcept>
 
+#include "LoaderBundlePatch.h"
 #include "LoaderBundleRecord.h"
 #include "LoaderDigestCache.h"
 #include "LoaderFiles.h"
@@ -302,6 +303,10 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
     plan.manifestText      = *manifestText;
     plan.manifestSignature = *signature;
     plan.expectedSha512    = hash->second;
+    if (auto patches = manifest->patches.find(hash->first); patches != manifest->patches.end())
+    {
+        plan.patchBases = patches->second;
+    }
     return plan;
 }
 
@@ -484,6 +489,21 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
         throw BundleUpdateError(BundleUpdateFailure::Storage, *problem);
     }
 
+    if (isVerified && !forceUpdate && activeFile == urlFileName(url))
+    {
+        if (std::optional<std::string> record = patchedCandidate(plan, targetPath, candidatePath))
+        {
+            if (writeTextFileAtomically(candidatePath + kBundleTrustSuffix, *record) &&
+                writeTextFileAtomically(candidatePath + ".etag", ""))
+            {
+                log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+                    "Bundle candidate is ready for validation, patched from the active bundle.");
+                return candidatePath;
+            }
+            removeFile(candidatePath);
+        }
+    }
+
     std::optional<DownloadResult> response =
         download_ ? download_(url, candidatePath, headers, kBundleDownloadPolicy) : std::nullopt;
     if (!response)
@@ -529,6 +549,55 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
 
     log(LogLevel::Info, LOG_CATEGORY_UPDATER, "Bundle candidate is ready for validation.");
     return candidatePath;
+}
+
+// A patch turns the active bundle into the new one; any failure leaves the full download to run.
+std::optional<std::string> BundleUpdater::patchedCandidate(const DownloadPlan &plan,
+                                                           const std::string  &targetPath,
+                                                           const std::string  &candidatePath) const
+{
+    if (plan.patchBases.empty() || !download_)
+    {
+        return std::nullopt;
+    }
+    std::optional<std::string> active = readTextFile(targetPath);
+    if (!active)
+    {
+        return std::nullopt;
+    }
+    std::optional<std::string> base = patchBaseFor(plan.patchBases, sha512Hex(*active));
+    if (!base)
+    {
+        return std::nullopt;
+    }
+
+    std::string patchURL  = plan.source + bundlePatchPath(urlFileName(plan.url), *base);
+    std::string patchPath = candidatePath + ".patch";
+    std::optional<DownloadResult> response =
+        download_(patchURL, patchPath, {}, kBundleDownloadPolicy);
+    std::optional<std::string> patch =
+        response && response->status == 200 ? readTextFile(patchPath) : std::nullopt;
+    removeFile(patchPath);
+    std::optional<std::string> patched = patch ? applyBundlePatch(*active, *patch) : std::nullopt;
+    if (!patched || !writeTextFileAtomically(candidatePath, *patched))
+    {
+        log(LogLevel::Warning, LOG_CATEGORY_UPDATER,
+            "Could not patch the active bundle from " + patchURL + "; downloading it whole.");
+        return std::nullopt;
+    }
+
+    std::optional<std::string> record = verifiedRecord(plan, candidatePath);
+    if (!record)
+    {
+        removeFile(candidatePath);
+        log(LogLevel::Warning, LOG_CATEGORY_UPDATER,
+            "The patched bundle did not match the signed manifest; downloading it whole.");
+        return std::nullopt;
+    }
+    log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+        "Patched the bundle with " + std::to_string(patch->size()) + " bytes instead of " +
+            std::to_string(patched->size()) + ".");
+    return record;
 }
 
 const std::string &BundleUpdater::documents() const

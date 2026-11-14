@@ -23,8 +23,10 @@ struct BundleManifest {
     std::optional<int64_t>             buildTimeMilliseconds;
     std::vector<uint32_t>              bytecodeVersions;
     std::map<std::string, std::string> sha512;
-    std::string                        nativeBridgeApi;
-    std::string                        nativeBridgeAbi;
+    // Per bundle file, the SHA-512s of earlier bundles a patch in `patches/` turns into it.
+    std::map<std::string, std::vector<std::string>> patches;
+    std::string                                     nativeBridgeApi;
+    std::string                                     nativeBridgeAbi;
     // The oldest loader that runs this bundle; empty when any loader does.
     std::string minLoaderVersion;
 

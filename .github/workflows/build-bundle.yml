@@ -26,6 +26,7 @@ on:
 
 permissions:
     contents: write
+    actions: read
 
 jobs:
     build:
@@ -48,12 +49,23 @@ jobs:
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
 
+            # Loaders patch their bundle from any of these earlier builds instead of downloading it whole.
+            - name: List the earlier builds to patch from
+              id: patch-bases
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  revisions="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow build-bundle.yml --branch main --status success --limit 8 --json headSha --jq '[.[].headSha] | join(",")' || true)"
+                  echo "revisions=$revisions" >> "$GITHUB_OUTPUT"
+
             - name: Build the client
               run: bun run --cwd packages/client build
               env:
                   TMPDIR: ${{ runner.temp }}
                   UNBOUND_CHANNEL: beta
                   UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}
+                  UNBOUND_PATCH_BASE_URL: ${{ vars.CDN_URL && format('{0}/unbound/beta', vars.CDN_URL) || '' }}
+                  UNBOUND_PATCH_REVISIONS: ${{ steps.patch-bases.outputs.revisions }}
 
             - name: Check every bundle and the manifest are signed
               run: bun run --cwd packages/client verify-signatures

@@ -156,6 +156,25 @@ std::optional<BundleManifest> parseBundleManifest(const std::string &text)
             }
         }
     }
+
+    auto patches = json.find("patches");
+    if (patches != json.end() && patches->is_object())
+    {
+        for (const auto &[file, bases] : patches->items())
+        {
+            if (!bases.is_array())
+            {
+                continue;
+            }
+            for (const auto &base : bases)
+            {
+                if (base.is_string() && isSha512Hex(base.get<std::string>()))
+                {
+                    manifest.patches[file].push_back(base.get<std::string>());
+                }
+            }
+        }
+    }
     return manifest;
 }
 
