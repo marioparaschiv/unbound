@@ -1,11 +1,13 @@
 import type { LoaderUpdate } from '@unbound-app/contracts/loader';
 
+import { readInstallDetails, readInstallKind } from '~/updates/install-kind';
 import type { DiscordBuilds } from '~/updates/discord-builds';
 import { loaderDownloadUrl } from '~/updates/loader-download';
-import { readInstallKind } from '~/updates/install-kind';
+import { sideloaderLinks } from '~/updates/sideloader-links';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Linking } from '~/metro/api';
+import { icons } from '~/assets/api';
 
 import useDiscordInstall from './use-discord-install';
 import { isSameBuild } from './describe-install';
@@ -18,9 +20,28 @@ type LoaderUpdateButtonProps = {
 	size: 'sm' | 'lg';
 };
 
+function chooseSideloader(ipa: string, version: string) {
+	Discord.showSimpleActionSheet({
+		key: 'unbound-loader-sideloaders',
+		header: { title: format('UNBOUND_UPDATES_DOWNLOAD_VERSION', { version }) },
+		options: [
+			...sideloaderLinks(ipa, readInstallDetails()).map((app) => ({
+				label: format('UNBOUND_UPDATES_INSTALL_WITH', { app: app.name }),
+				icon: icons.DownloadIcon,
+				onPress: () => void Linking.openURL(app.url),
+			})),
+			{
+				label: messages.UNBOUND_UPDATES_DOWNLOAD_IPA,
+				icon: icons.LinkIcon,
+				onPress: () => void Linking.openURL(ipa),
+			},
+		],
+	});
+}
+
 /**
  * @description Gets a newer loader the way this device installed it: installs the newest patched Discord in
- * place, or downloads the IPA, `.deb`, patched APKs or Xposed module.
+ * place, opens a sideloader on the IPA, or downloads the `.deb`, patched APKs or Xposed module.
  */
 function LoaderUpdateButton({ update, discord, size }: LoaderUpdateButtonProps) {
 	const { install } = useDiscordInstall();
@@ -31,10 +52,15 @@ function LoaderUpdateButton({ update, discord, size }: LoaderUpdateButtonProps) 
 		!isSameBuild(newest, discord.installed);
 
 	function apply() {
+		const kind = readInstallKind();
+		const url = loaderDownloadUrl(update.url, kind);
+
 		if (inApp) {
 			void install(newest, discord.status.versionName);
+		} else if (kind === 'ipa') {
+			chooseSideloader(url, update.version);
 		} else {
-			void Linking.openURL(loaderDownloadUrl(update.url, readInstallKind()));
+			void Linking.openURL(url);
 		}
 	}
 
