@@ -267,8 +267,8 @@ pub fn segmented(
 }
 
 impl Segmented {
-	/// Stretches the control across its parent. Every item grows by the same amount, so each
-	/// label keeps even padding on both sides.
+	/// Stretches the control across its parent, split into equal items; none narrower than its
+	/// padded label.
 	pub fn fill(mut self) -> Self {
 		self.fill = true;
 		self
@@ -366,7 +366,7 @@ impl RenderOnce for Segmented {
 					.id(ix)
 					.map(|item| {
 						if fill {
-							item.flex_grow(1.).flex_basis(px(width))
+							item.flex_1().min_w(px(width))
 						} else {
 							item.flex_none().w(px(width))
 						}
