@@ -76,9 +76,10 @@ static void skipsTagsCapturedElsewhere()
 
 static void classifiesReactNativeTags()
 {
-    for (const char *tag : {"ReactNative", "ReactNativeJNI", "unknown:ReactNative", "ReactHost",
-                            "unknown:ReactHost", "FabricUIManager", "Fabric", "SoLoader",
-                            "HermesVM", "hermes", "unknown:BridgelessReact", "MountingManager"})
+    for (const char *tag :
+         {"ReactNative", "ReactNativeJNI", "unknown:ReactNative", "ReactHost", "unknown:ReactHost",
+          "FabricUIManager", "Fabric", "SoLoader", "HermesVM", "hermes", "unknown:BridgelessReact",
+          "MountingManager", "unknown:ViewManagerPropertyUpdater", "jni_lib_merge"})
     {
         assert(loader::logcatTagSource(tag) == loader::LogSource::ReactNative);
     }

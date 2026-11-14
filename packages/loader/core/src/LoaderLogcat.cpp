@@ -39,10 +39,17 @@ std::optional<LogSource> logcatTagSource(std::string_view tag)
     {
         return std::nullopt;
     }
-    // FLog writes React Native's Java tags as `unknown:<tag>`.
-    std::string_view name = startsWith(tag, "unknown:") ? tag.substr(8) : tag;
-    static constexpr std::array<std::string_view, 5> kReactNativeTags = {
-        "SoLoader", "BridgelessReact", "MountingManager", "SurfaceMountingManager", "UIManager"};
+    // FLog, React Native's Java logger, writes every tag as `unknown:<tag>`.
+    if (startsWith(tag, "unknown:"))
+    {
+        return LogSource::ReactNative;
+    }
+    std::string_view name = tag;
+    // Seen on a Discord launch; `jni_lib_merge` is SoLoader loading React Native's merged
+    // libraries.
+    static constexpr std::array<std::string_view, 6> kReactNativeTags = {
+        "SoLoader",  "BridgelessReact", "MountingManager", "SurfaceMountingManager",
+        "UIManager", "jni_lib_merge"};
     for (std::string_view known : kReactNativeTags)
     {
         if (name == known)
