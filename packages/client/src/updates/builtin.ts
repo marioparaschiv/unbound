@@ -4,6 +4,7 @@ import { AppState } from 'react-native';
 import { notifyClientUpdated, notifyStagedBundle, notifyUpdates } from '~/updates/notify';
 import { CLIENT_VERSION, Screens } from '~/core/constants';
 import { hasStagedBundle } from '~/native/unbound-native';
+import { compareVersions } from '~/core/versions';
 import type { SectionEntry } from '~/settings/section';
 import { getSetting } from '~/settings/unbound';
 import UpdatesStore from '~/updates/state';
@@ -48,7 +49,9 @@ function announceClient() {
 
 	getBucket(CORE_BUCKET).remove(LEGACY_LAST_CLIENT_VERSION);
 
-	if (previous === CLIENT_VERSION) return;
+	// Keeps the newest version seen: the loader runs the previous bundle again when it discards an update that
+	// closed before it was healthy, and the retried update must not announce itself a second time.
+	if (previous && compareVersions(CLIENT_VERSION, previous) <= 0) return;
 
 	if (getSetting('updater.notify.client')) {
 		notifyClientUpdated(previous, CLIENT_VERSION);
