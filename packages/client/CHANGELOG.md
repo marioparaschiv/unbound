@@ -1,5 +1,26 @@
 # Changelog
 
+## [3.4.0](https://github.com/marioparaschiv/unbound/compare/client-v3.3.0...client-v3.4.0) (2026-11-14)
+
+
+### Features
+
+* **client:** send native crashes with opt-in crash reports ([#1403](https://github.com/marioparaschiv/unbound/issues/1403)) ([c3b7f91](https://github.com/marioparaschiv/unbound/commit/c3b7f916ce070ffa1d64e0860ab5dae2f5660396))
+* **client:** warn when the signing profile is about to expire ([#1398](https://github.com/marioparaschiv/unbound/issues/1398)) ([6114156](https://github.com/marioparaschiv/unbound/commit/6114156f3e90931d744209985f374a5716cf7303))
+* **loader:** patch the bundle instead of downloading it whole ([#1401](https://github.com/marioparaschiv/unbound/issues/1401)) ([b041041](https://github.com/marioparaschiv/unbound/commit/b04104115928d635cdec4722b86b42227a7a553a))
+* **loader:** trust every listed bundle signing key ([#1399](https://github.com/marioparaschiv/unbound/issues/1399)) ([7dbb25a](https://github.com/marioparaschiv/unbound/commit/7dbb25aef9ec29f3dda2a3a70674e257e0fd0dc5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.4.0
+    * @unbound-app/debugger-protocol bumped to 2.1.2
+    * @unbound-app/types bumped to 1.4.0
+    * @unbound-app/utils bumped to 1.0.4
+    * @unbound-app/web bumped to 2.4.0
+
 ## [3.3.0](https://github.com/marioparaschiv/unbound/compare/client-v3.2.0...client-v3.3.0) (2026-11-14)
 
 

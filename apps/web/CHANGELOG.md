@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.4.0](https://github.com/marioparaschiv/unbound/compare/web-v2.3.0...web-v2.4.0) (2026-11-14)
+
+
+### Features
+
+* **client:** send native crashes with opt-in crash reports ([#1403](https://github.com/marioparaschiv/unbound/issues/1403)) ([c3b7f91](https://github.com/marioparaschiv/unbound/commit/c3b7f916ce070ffa1d64e0860ab5dae2f5660396))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.4.0
+    * @unbound-app/utils bumped to 1.0.4
+
 ## [2.3.0](https://github.com/marioparaschiv/unbound/compare/web-v2.2.0...web-v2.3.0) (2026-11-14)
 
 

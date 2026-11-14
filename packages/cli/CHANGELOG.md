@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.1.2](https://github.com/marioparaschiv/unbound/compare/cli-v3.1.1...cli-v3.1.2) (2026-11-14)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger bumped to 1.1.2
+    * @unbound-app/debugger-protocol bumped to 2.1.2
+  * devDependencies
+    * @unbound-app/api bumped to 3.4.0
+    * @unbound-app/contracts bumped to 2.4.0
+    * @unbound-app/types bumped to 1.4.0
+    * @unbound-app/utils bumped to 1.0.4
+    * @unbound-app/web bumped to 2.4.0
+
 ## [3.1.1](https://github.com/marioparaschiv/unbound/compare/cli-v3.1.0...cli-v3.1.1) (2026-11-14)
 
 

@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.4.0](https://github.com/marioparaschiv/unbound/compare/api-v3.3.0...api-v3.4.0) (2026-11-14)
+
+
+### Miscellaneous Chores
+
+* **api:** Synchronize client versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 3.4.0
+    * @unbound-app/sdk-generator bumped to 1.0.4
+
 ## [3.3.0](https://github.com/marioparaschiv/unbound/compare/api-v3.2.0...api-v3.3.0) (2026-11-14)
 
 
