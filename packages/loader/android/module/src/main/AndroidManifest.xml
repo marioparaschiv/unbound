@@ -3,10 +3,25 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <queries>
+        <package android:name="com.discord" />
+    </queries>
+
     <application android:label="Unbound">
         <meta-data
             android:name="xposeddescription"
             android:value="Bridges Unbound into Discord's native layer." />
+
+        <activity
+            android:name=".StatusActivity"
+            android:exported="true"
+            android:label="Unbound"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="de.robv.android.xposed.category.MODULE_SETTINGS" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>
