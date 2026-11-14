@@ -14,8 +14,6 @@ type SheetProps = { message?: SheetMessage };
 
 type ChangeInput = { message?: { id?: string } };
 
-type ChatManagerClass = { prototype?: { determineChangeType?: (input: ChangeInput) => number } };
-
 const CHANGE_TYPE_NONE = 0;
 const CHANGE_TYPE_UPDATE = 2;
 
@@ -48,22 +46,20 @@ export function patchMessageRows(): void {
  * see as unchanged. Patches `determineChangeType` on Discord's `ChatManager`.
  */
 export function patchChangeType(): void {
-	metro.onModuleLoaded(metro.filters.byName('ChatManager'), (ChatManager: ChatManagerClass) => {
-		if (typeof ChatManager.prototype?.determineChangeType !== 'function') {
-			logger.warn(
-				'Instant local edits skipped: Discord moved ChatManager.determineChangeType.',
-			);
+	const ChatManager = metro.findByName('ChatManager');
 
-			return;
-		}
+	if (typeof ChatManager?.prototype?.determineChangeType !== 'function') {
+		logger.warn('Instant local edits skipped: Discord moved ChatManager.determineChangeType.');
 
-		patcher.after(ChatManager.prototype, 'determineChangeType', ({ args: [input], result }) => {
-			const messageId = (input as ChangeInput | undefined)?.message?.id;
+		return;
+	}
 
-			if (result !== CHANGE_TYPE_NONE || !messageId || !takeRedraw(messageId)) return;
+	patcher.after(ChatManager.prototype, 'determineChangeType', ({ args: [input], result }) => {
+		const messageId = (input as ChangeInput | undefined)?.message?.id;
 
-			return CHANGE_TYPE_UPDATE;
-		});
+		if (result !== CHANGE_TYPE_NONE || !messageId || !takeRedraw(messageId)) return;
+
+		return CHANGE_TYPE_UPDATE;
 	});
 }
 
