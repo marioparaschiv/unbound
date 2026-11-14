@@ -651,6 +651,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/channel-badges": {
+      "name": "channel-badges",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/channel-typing-indicators": {
       "name": "channel-typing-indicators",
       "dependencies": {
@@ -3497,6 +3511,8 @@
     "chalk": ["chalk@5.6.2", "", {}, "sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA=="],
 
     "change-case": ["change-case@5.4.4", "", {}, "sha512-HRQyTk2/YPEkt9TnUPbOpr64Uw3KOicFWPVBb+xiHvd6eBx/qPr9xqfBFDT8P2vWsvvz4jbEkfDe71W3VyNu2w=="],
+
+    "channel-badges": ["channel-badges@workspace:packages/plugins/channel-badges"],
 
     "channel-typing-indicators": ["channel-typing-indicators@workspace:packages/plugins/channel-typing-indicators"],
 

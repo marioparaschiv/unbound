@@ -2,8 +2,11 @@ import { cloneElement, type ReactElement, type ReactNode } from 'react';
 import { metro, patcher } from '@unbound-app/api';
 
 import ThreadChannelInfo from '~/components/thread-channel-info';
-import { findThreadChannelSlot, type RenderNode } from '~/lib/row-layout';
-import { replaceChild } from '~/lib/elements';
+import {
+	findThreadChannelSlot,
+	type RenderNode,
+} from '@unbound-plugins/shared/channels/row-layout';
+import { replaceChild } from '@unbound-plugins/shared/react/element-children';
 import type { ChannelRowProps } from '~/lib/types';
 import { INDICATOR_KEY } from '~/lib/constants';
 
@@ -18,7 +21,7 @@ type HookedRenderer = {
 function addIndicator(result: RenderNode, { channel, muted }: ChannelRowProps) {
 	if (!channel?.id) return;
 
-	const slot = findThreadChannelSlot(result, channel.id);
+	const slot = findThreadChannelSlot(result, channel.id, INDICATOR_KEY);
 
 	if (!slot) return;
 

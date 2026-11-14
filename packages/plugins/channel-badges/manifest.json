@@ -1,0 +1,25 @@
+{
+	"id": "unbound.channel-badges",
+	"name": "Channel Badges",
+	"description": "Labels channels in the channel list with badges for NSFW, locked and rules channels, and optionally their type.",
+	"authors": [
+		{
+			"name": "creations",
+			"id": "209830981060788225"
+		},
+		{
+			"name": "thororen",
+			"id": "848339671629299742"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TextIcon",
+	"main": "index.tsx"
+}

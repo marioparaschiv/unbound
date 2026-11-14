@@ -1,6 +1,6 @@
 # Plugins
 
-126 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+127 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -21,6 +21,7 @@
 - <img src="../../assets/plugins/readme-icons/laptop-phone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better Sessions](https://unbound.rip/addons/unbound.better-sessions): Marks new sessions, shows exactly when each was last used and lets you name them, in Settings > Devices.
 - <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better You Bar](https://unbound.rip/addons/unbound.better-you-bar): Adds Favorites and Settings shortcuts to the You bar, and can keep favorite channels past Discord's limit on this device.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Blur NSFW](https://unbound.rip/addons/unbound.blur-nsfw): Blurs attachments and embedded media in age-restricted channels until you tap them.
+- <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Channel Badges](https://unbound.rip/addons/unbound.channel-badges): Labels channels in the channel list with badges for NSFW, locked and rules channels, and optionally their type.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Channel Typing Indicators](https://unbound.rip/addons/unbound.channel-typing-indicators): Shows animated typing dots and avatars beside channels where people are typing.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Character Counter](https://unbound.rip/addons/unbound.character-counter): Shows the current message length and Discord's character limit in the composer.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Chat Bubbles](https://unbound.rip/addons/unbound.chat-bubbles): Draws a rounded bubble behind each message.

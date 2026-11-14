@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.6] - 2026-11-14
+
+### Changed
+
+- Reads channel rows with the shared row helpers that Channel Badges also uses; nothing changes on screen.
+
 ## [1.0.5] - 2026-11-11
 
 ### Changed
