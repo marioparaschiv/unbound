@@ -17,9 +17,10 @@ import { signIn } from '~/lib/login';
 type ReviewsSheetProps = {
 	discordId: string;
 	name: string;
+	server?: boolean;
 } & SheetProps;
 
-function ReviewsSheet({ discordId, name, onClose }: ReviewsSheetProps) {
+function ReviewsSheet({ discordId, name, server = false, onClose }: ReviewsSheetProps) {
 	const hideSystemReviews = useSetting('hideSystemReviews');
 	const styles = useStyles();
 	const [data, setData] = useState<UserReviewsData | null>(null);
@@ -76,7 +77,7 @@ function ReviewsSheet({ discordId, name, onClose }: ReviewsSheetProps) {
 	return (
 		<Discord.ActionSheet startExpanded>
 			<Discord.BottomSheetTitleHeader
-				title={format('REVIEWS_FOR', { name })}
+				title={format(server ? 'SERVER_REVIEWS_FOR' : 'REVIEWS_FOR', { name })}
 				subtitle={format('REVIEW_COUNT', {
 					count: data?.reviewCount ?? userReviews.length,
 				})}
@@ -143,8 +144,12 @@ function ReviewsSheet({ discordId, name, onClose }: ReviewsSheetProps) {
 	);
 }
 
-export function openReviewsSheet(discordId: string, name: string): void {
-	openSheet(`unbound-reviewdb-${discordId}-${Date.now()}`, ReviewsSheet, { discordId, name });
+export function openReviewsSheet(discordId: string, name: string, server = false): void {
+	openSheet(`unbound-reviewdb-${discordId}-${Date.now()}`, ReviewsSheet, {
+		discordId,
+		name,
+		server,
+	});
 }
 
 export default ReviewsSheet;

@@ -89,6 +89,8 @@ declare module '@unbound-app/i18n' {
 		readonly DELETE_REVIEW: string;
 		/** Reviews for @{name} */
 		readonly REVIEWS_FOR: string;
+		/** Reviews for {name} */
+		readonly SERVER_REVIEWS_FOR: string;
 		/** {count, plural, one {# review} other {# reviews}} */
 		readonly REVIEW_COUNT: string;
 		/** No reviews yet */
@@ -127,12 +129,15 @@ declare module '@unbound-app/i18n' {
 		readonly REVIEWS_TITLE: string;
 		/** This removes your review for everyone. You can write a new one later. */
 		readonly DELETE_REVIEW_BODY: string;
+		/** Server Reviews */
+		readonly SERVER_REVIEWS: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
 	export type FormatVars = {
 		REQUEST_FAILED: { status: string | number };
 		REVIEWS_FOR: { name: string | number };
+		SERVER_REVIEWS_FOR: { name: string | number };
 		REVIEW_COUNT: { count: number };
 		UPDATE_PLACEHOLDER: { name: string | number };
 		REVIEW_PLACEHOLDER: { name: string | number };
