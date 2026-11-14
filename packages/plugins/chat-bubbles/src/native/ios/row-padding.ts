@@ -63,7 +63,15 @@ function roomOf(objc: NativeObjCBridge, cell: NativeObjectHandle, rooms: RowRoom
 }
 
 // The content sits between the row's rooms; `undefined` when the row has none.
-function paddedFrame(objc: NativeObjCBridge, cell: NativeObjectHandle, rooms: RowRooms) {
+function originX(raw: unknown): number {
+	'worklet';
+	const boxed = raw as { value?: { origin?: { x?: number } }; origin?: { x?: number } } | null;
+	const x = Number((boxed?.value ?? boxed)?.origin?.x ?? 0);
+
+	return Number.isFinite(x) ? x : 0;
+}
+
+function paddedFrame(objc: NativeObjCBridge, cell: NativeObjectHandle, rooms: RowRooms, x = 0) {
 	'worklet';
 	const room = roomOf(objc, cell, rooms);
 
@@ -74,7 +82,7 @@ function paddedFrame(objc: NativeObjCBridge, cell: NativeObjectHandle, rooms: Ro
 	const bounds = sizeOf(objc.invoke(cell, 'bounds', []));
 
 	return objc.struct('CGRect', {
-		origin: { x: 0, y: room.top },
+		origin: { x, y: room.top },
 		size: {
 			width: bounds.width,
 			height: Math.max(0, bounds.height - room.top - room.bottom),
@@ -179,17 +187,17 @@ export function installRowPadding(
 		},
 		after: ({ self }) => {
 			try {
+				const content = objc.invoke(self, 'contentView', []) as NativeObjectHandle;
 				const frame = isStandaloneCell(objc, self)
 					? undefined
-					: paddedFrame(objc, self, state.rooms);
+					: paddedFrame(
+							objc,
+							self,
+							state.rooms,
+							originX(objc.invoke(content, 'frame', [])),
+						);
 
-				if (frame) {
-					objc.invoke(
-						objc.invoke(self, 'contentView', []) as NativeObjectHandle,
-						'setFrame:',
-						[frame],
-					);
-				}
+				if (frame) objc.invoke(content, 'setFrame:', [frame]);
 			} catch (error) {
 				console.error(`[Chat Bubbles] Failed to centre a message row: ${String(error)}`);
 			}
@@ -206,7 +214,7 @@ export function installRowPadding(
 
 				frame =
 					cell && objc.className(cell) === messageCell && !isStandaloneCell(objc, cell)
-						? paddedFrame(objc, cell, state.rooms)
+						? paddedFrame(objc, cell, state.rooms, originX(args[0]))
 						: undefined;
 			} catch (error) {
 				console.error(
