@@ -1,5 +1,10 @@
 {
 	"type": "dark",
+	"background": {
+		"url": "https://raw.githubusercontent.com/marioparaschiv/unbound/main/assets/themes/rosie-pink.png",
+		"blur": 0,
+		"opacity": 1
+	},
 	"semantic": {
 		"ACTIVITY_TIMEBAR_PROGRESS_BACKGROUND": {
 			"type": "raw",
