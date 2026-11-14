@@ -5,6 +5,7 @@ import {
 } from '@unbound-app/contracts/addon-conventions';
 import { validateAddonCapabilities } from '@unbound-app/contracts/manifest';
 import { formatChangelogIssues, parseChangelog } from '@unbound-app/contracts/changelog';
+import { findUnknownPageIcons } from '@unbound-app/contracts/addon-page-icons';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
@@ -49,7 +50,19 @@ export function validatePluginFolder(folder: string, manifest: unknown): string[
 }
 
 /**
- * @description Checks that a plugin ships an ADDON.md and a CHANGELOG.md with an entry for its version.
+ * @description Flags ADDON.md shortcodes the store cannot draw, so they never ship as `:name:` text.
+ * @param addonMd The ADDON.md text.
+ * @returns One message per unknown shortcode.
+ */
+export function validatePageIcons(addonMd: string): string[] {
+	return findUnknownPageIcons(addonMd).map(
+		({ name, line }) =>
+			`ADDON.md:${line}: :${name}: is not a page icon; pick one from docs/developer/publishing/page-icons.mdx or add it to ADDON_PAGE_ICON_NAMES in packages/contracts/src/addon-page-icons.ts`,
+	);
+}
+
+/**
+ * @description Checks that a plugin ships an ADDON.md with known page icons and a CHANGELOG.md with an entry for its version.
  * @param pluginDirectory The plugin's folder.
  * @param version The manifest's version, or `undefined` when the manifest has none.
  * @returns Every problem found, empty when the docs are in order.
@@ -59,8 +72,11 @@ export function validatePluginDocs(pluginDirectory: string, version: string | un
 	const addonPath = join(pluginDirectory, 'ADDON.md');
 	const changelogPath = join(pluginDirectory, 'CHANGELOG.md');
 
-	if (!existsSync(addonPath)) errors.push('ADDON.md is missing');
-	else if (!readFileSync(addonPath, 'utf8').trim()) errors.push('ADDON.md is empty');
+	const addonMd = existsSync(addonPath) ? readFileSync(addonPath, 'utf8') : undefined;
+
+	if (addonMd === undefined) errors.push('ADDON.md is missing');
+	else if (!addonMd.trim()) errors.push('ADDON.md is empty');
+	else errors.push(...validatePageIcons(addonMd));
 
 	if (!existsSync(changelogPath)) return [...errors, 'CHANGELOG.md is missing'];
 

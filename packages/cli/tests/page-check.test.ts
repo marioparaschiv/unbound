@@ -228,6 +228,18 @@ describe('ubd build measures ADDON.md media', () => {
 		expect(result.stderr).toContain('ADDON.md  ADDON.md has no frontmatter');
 		expect(existsSync(result.output)).toBe(false);
 	});
+
+	test('an unknown page icon warns and still writes page.json', async () => {
+		const result = await build({
+			page: page('banner: media/banner.png', '- :gear: Known.\n- :forward: Unknown.\n'),
+			images: { 'media/banner.png': BANNER },
+		});
+
+		expect(result.exitCode).toBe(0);
+		expect(result.stderr).toContain('ADDON.md:6 uses :forward:, which is not a page icon');
+		expect(result.stderr).not.toContain(':gear:');
+		expect(existsSync(result.output)).toBe(true);
+	});
 });
 
 type Rejection = {

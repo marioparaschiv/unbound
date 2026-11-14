@@ -2,6 +2,7 @@ import {
 	IconAccessibility,
 	IconApple,
 	IconArrowDown,
+	IconArrowRight,
 	IconArrowRotateAnticlockwise,
 	IconArrowRotateClockwise,
 	IconArrowUp,
@@ -61,6 +62,7 @@ import {
 	IconGradient,
 	IconGrid,
 	IconHammer,
+	IconHand2,
 	IconHeadphones,
 	IconHeart,
 	IconHourglass,
@@ -77,7 +79,9 @@ import {
 	IconMagnifier,
 	IconMagnifierPlus,
 	IconMap,
+	IconMediaFastForward,
 	IconMicrochip,
+	IconMicrophone,
 	IconMobile,
 	IconMsg,
 	IconMsgArrowRight,
@@ -157,12 +161,15 @@ import {
 import type { AddonPageIconName } from '@unbound-app/contracts/addon-page-icons';
 
 import { IconEyeSlash } from '~/lib/icon-eye-slash';
+import { IconAndroid } from '~/lib/icon-android';
 
 /** The `nucleo-micro-bold` component behind each icon name an ADDON.md may use. */
 export const ADDON_PAGE_ICONS: Record<AddonPageIconName, typeof IconGear> = {
 	accessibility: IconAccessibility,
+	android: IconAndroid,
 	apple: IconApple,
 	'arrow-down': IconArrowDown,
+	'arrow-right': IconArrowRight,
 	'arrow-rotate-anticlockwise': IconArrowRotateAnticlockwise,
 	'arrow-rotate-clockwise': IconArrowRotateClockwise,
 	'arrow-up': IconArrowUp,
@@ -223,6 +230,7 @@ export const ADDON_PAGE_ICONS: Record<AddonPageIconName, typeof IconGear> = {
 	gradient: IconGradient,
 	grid: IconGrid,
 	hammer: IconHammer,
+	'hand-2': IconHand2,
 	headphones: IconHeadphones,
 	heart: IconHeart,
 	hourglass: IconHourglass,
@@ -239,7 +247,9 @@ export const ADDON_PAGE_ICONS: Record<AddonPageIconName, typeof IconGear> = {
 	magnifier: IconMagnifier,
 	'magnifier-plus': IconMagnifierPlus,
 	map: IconMap,
+	'media-fast-forward': IconMediaFastForward,
 	microchip: IconMicrochip,
+	microphone: IconMicrophone,
 	mobile: IconMobile,
 	msg: IconMsg,
 	'msg-arrow-right': IconMsgArrowRight,

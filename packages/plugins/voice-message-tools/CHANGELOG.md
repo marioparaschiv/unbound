@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1] - 2026-11-14
+
+### Fixed
+
+- The store page shows its fast-forward, microphone, Android and arrow icons instead of their names.
+
 ## [1.2.0] - 2026-11-14
 
 ### Changed

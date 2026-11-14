@@ -1,8 +1,13 @@
-/** Every icon an ADDON.md may name as `:name:`: `nucleo-micro-bold` names without `Icon`, in kebab case. */
+/**
+ * Every icon an ADDON.md may name as `:name:`: `nucleo-micro-bold` names without `Icon`, in kebab case.
+ * Adding one: map it in `apps/web/src/lib/page-icons.ts`, deploy, then run `scripts/rebuild-store-pages.ts` there.
+ */
 export const ADDON_PAGE_ICON_NAMES = [
 	'accessibility',
+	'android',
 	'apple',
 	'arrow-down',
+	'arrow-right',
 	'arrow-rotate-anticlockwise',
 	'arrow-rotate-clockwise',
 	'arrow-up',
@@ -63,6 +68,7 @@ export const ADDON_PAGE_ICON_NAMES = [
 	'gradient',
 	'grid',
 	'hammer',
+	'hand-2',
 	'headphones',
 	'heart',
 	'hourglass',
@@ -79,7 +85,9 @@ export const ADDON_PAGE_ICON_NAMES = [
 	'magnifier',
 	'magnifier-plus',
 	'map',
+	'media-fast-forward',
 	'microchip',
+	'microphone',
 	'mobile',
 	'msg',
 	'msg-arrow-right',
@@ -159,4 +167,46 @@ export const ADDON_PAGE_ICON_NAMES = [
 
 export type AddonPageIconName = (typeof ADDON_PAGE_ICON_NAMES)[number];
 
-export default { ADDON_PAGE_ICON_NAMES };
+/** A shortcode found in an ADDON.md that names no page icon. */
+export type UnknownPageIcon = {
+	name: string;
+	/** 1-based line in the text searched. */
+	line: number;
+};
+
+const NAMES = new Set<string>(ADDON_PAGE_ICON_NAMES);
+const FENCE = /^\s*(?:```|~~~)/;
+const CODE_SPAN = /`[^`\n]*`/g;
+// Starts with a letter so times and ratios such as `10:30:45` are not read as shortcodes.
+const SHORTCODE = /:(?=([a-z][a-z0-9]*(?:-[a-z0-9]+)*):)/g;
+
+/**
+ * @description Finds `:name:` shortcodes outside code that name no page icon, which the store would show as text.
+ * @param markdown ADDON.md, frontmatter included or not.
+ * @returns Each unknown shortcode with its line, in order.
+ */
+export function findUnknownPageIcons(markdown: string): UnknownPageIcon[] {
+	const unknown: UnknownPageIcon[] = [];
+	let fenced = false;
+
+	for (const [index, line] of markdown.split('\n').entries()) {
+		if (FENCE.test(line)) {
+			fenced = !fenced;
+			continue;
+		}
+
+		if (fenced) {
+			continue;
+		}
+
+		for (const [, name = ''] of line.replace(CODE_SPAN, '').matchAll(SHORTCODE)) {
+			if (!NAMES.has(name)) {
+				unknown.push({ name, line: index + 1 });
+			}
+		}
+	}
+
+	return unknown;
+}
+
+export default { ADDON_PAGE_ICON_NAMES, findUnknownPageIcons };
