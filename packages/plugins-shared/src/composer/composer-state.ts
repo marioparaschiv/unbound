@@ -1,4 +1,5 @@
 import { Dimensions } from 'react-native';
+import { useRef } from 'react';
 import type { FluxStore } from '@unbound-app/api/flux';
 import { flux } from '@unbound-app/api';
 
@@ -45,7 +46,16 @@ export function useComposerState(channelId: string, buttonCount = 0): ComposerSt
 		{ deps: [channelId] },
 	);
 
-	return composerState(draft, uploads, charactersPerLine(buttonCount));
+	const previous = useRef<ComposerState | undefined>(undefined);
+
+	previous.current = composerState(
+		draft,
+		uploads,
+		charactersPerLine(buttonCount),
+		previous.current,
+	);
+
+	return previous.current;
 }
 
 export type { ComposerState };
