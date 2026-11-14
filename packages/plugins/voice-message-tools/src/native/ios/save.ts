@@ -4,7 +4,6 @@ import { Share } from 'react-native';
 
 import { toBase64, type VoiceFile } from '~/lib/voice-message';
 
-// iOS: written to the documents folder and offered in the share sheet, whose Save to Files keeps it.
 export async function saveOnIOS(_native: NativeBridge, file: VoiceFile): Promise<void> {
 	const response = await fetch(file.url);
 

@@ -52,7 +52,6 @@ const emptyChat = (): OpenChat => ({
 
 const runtime = (globalThis.__unboundClientSideBlockRuntime ??= emptyChat());
 
-// An update applied without restarting Discord finds the older version's object, so fields it lacks are filled in.
 export const chat = Object.assign(runtime, { ...emptyChat(), ...runtime });
 
 /**

@@ -77,8 +77,6 @@ function setScale(objc: NativeObjCBridge, view: NativeObjectHandle, scale: numbe
 	]);
 }
 
-// Discord sizes attachments to the whole column, so inside a padded bubble they reach past their holder's right edge.
-// Returns whether the height the cell's media lost changed.
 function fitToHolder(objc: NativeObjCBridge, view: NativeObjectHandle, cellClass: string): boolean {
 	'worklet';
 	const holder = objc.invoke(view, 'superview', []) as NativeObjectHandle | null;
@@ -129,7 +127,6 @@ export function installMediaFit(
 	'worklet';
 	const objc = scope.objc as NativeObjCBridge;
 
-	// A reused cell starts without media until Discord lays its new message out.
 	objc.hook(cellClass, 'prepareForReuse', {
 		after: ({ self }) => {
 			losses().delete(cellKey(objc, self));
