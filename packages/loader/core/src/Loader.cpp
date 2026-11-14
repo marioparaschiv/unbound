@@ -254,6 +254,7 @@ void Loader::onVisible()
 
 bool Loader::onBackground()
 {
+    settings_.flush();
     return pipeline_ && pipeline_->onBackground();
 }
 
