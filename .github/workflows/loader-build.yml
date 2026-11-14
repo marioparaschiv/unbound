@@ -747,21 +747,24 @@ jobs:
               if: inputs.is_testflight != true
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: android module
+                  artifact-ids: ${{ needs.android.outputs.module_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/release-assets
 
             - name: Download patched Android Discord package
               if: inputs.is_testflight != true
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: patched discord
+                  artifact-ids: ${{ needs.android.outputs.patched_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/release-assets
 
             - name: Download Android native symbols
               if: inputs.is_testflight != true
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: android symbols
+                  artifact-ids: ${{ needs.android.outputs.symbols_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/release-assets/android-symbols
 
             - name: Package native symbols
@@ -938,19 +941,22 @@ jobs:
             - name: Download Android Xposed module
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: android module
+                  artifact-ids: ${{ needs.android.outputs.module_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/release-assets
 
             - name: Download patched Android Discord package
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: patched discord
+                  artifact-ids: ${{ needs.android.outputs.patched_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/release-assets
 
             - name: Download Android native symbols
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: android symbols
+                  artifact-ids: ${{ needs.android.outputs.symbols_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/release-assets/android-symbols
 
             - name: Package native symbols
@@ -995,13 +1001,15 @@ jobs:
             - name: Download patched Android Discord package
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: patched discord
+                  artifact-ids: ${{ needs.android.outputs.patched_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/android-build
 
             - name: Download the emulator split
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: patched discord emulator split
+                  artifact-ids: ${{ needs.android.outputs.emulator_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/android-build/emulator
 
             - name: Note the unconfigured public bucket
@@ -1088,7 +1096,8 @@ jobs:
             - name: Download Android Xposed module
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: android module
+                  artifact-ids: ${{ needs.android.outputs.module_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/loader-build
 
             - name: Note the unconfigured public bucket
