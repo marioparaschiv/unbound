@@ -1,0 +1,21 @@
+{
+	"id": "unbound.media-favorites",
+	"name": "Media Favorites",
+	"description": "Lets you favorite any image or video from the media viewer, so it shows up with your favorite GIFs.",
+	"authors": [
+		{
+			"name": "mantikafasi",
+			"id": "287555395151593473"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "StarIcon",
+	"main": "index.tsx"
+}
