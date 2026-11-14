@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.5] - 2026-11-14
+
+### Fixed
+
+- The chat input's plugin buttons fold behind one button once the draft spans lines or leaves no room, instead of jumping into a grid while you type.
+
 ## [1.0.4] - 2026-11-11
 
 ### Changed
