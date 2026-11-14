@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { isHiddenRow, type ChatRow } from '~/lib/hidden';
+import { isHiddenMessage, isHiddenRow, type ChatRow } from '~/lib/hidden';
 
 const hidden = new Set(['7']);
 const rules = { isHidden: (id: string) => hidden.has(id), replies: true };
@@ -61,6 +61,42 @@ describe('hidden rows', () => {
 				},
 				withKeywords,
 			),
+		).toBe(true);
+	});
+});
+
+describe('hidden gateway messages', () => {
+	test('drops messages from hidden authors and replies to them', () => {
+		expect(isHiddenMessage({ author: { id: '7' }, content: 'hi' }, rules, '1')).toBe(true);
+		expect(
+			isHiddenMessage(
+				{ author: { id: '2' }, referenced_message: { author: { id: '7' } } },
+				rules,
+				'1',
+			),
+		).toBe(true);
+		expect(isHiddenMessage({ author: { id: '2' }, content: 'hi' }, rules, '1')).toBe(false);
+	});
+
+	test('keeps the signed-in user and replies when replies stay', () => {
+		expect(isHiddenMessage({ author: { id: '7' } }, rules, '7')).toBe(false);
+		expect(
+			isHiddenMessage(
+				{ author: { id: '2' }, referenced_message: { author: { id: '7' } } },
+				{ ...rules, replies: false },
+				'1',
+			),
+		).toBe(false);
+	});
+
+	test('drops messages with a hidden keyword', () => {
+		const keywords = {
+			...rules,
+			hidesContent: (content: string) => content.includes('spoiler'),
+		};
+
+		expect(
+			isHiddenMessage({ author: { id: '2' }, content: 'big spoiler' }, keywords, '1'),
 		).toBe(true);
 	});
 });
