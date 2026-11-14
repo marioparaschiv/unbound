@@ -14,7 +14,7 @@ The latest release. Older versions are on the [releases page](https://github.com
 | Windows  | [ARM64](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-windows-arm64.zip)          | [x64](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-windows-x64.zip)  |
 | Linux    | [ARM64](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-linux-arm64.tar.gz)         | [x64](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-linux-x64.tar.gz) |
 
-Linux builds need glibc 2.35 or newer (Ubuntu 22.04, Debian 12). The builds are unsigned. On macOS, run `xattr -d com.apple.quarantine unbound-devtools` once after extracting.
+Linux builds need glibc 2.35 or newer (Ubuntu 22.04, Debian 12). The macOS download is `Unbound DevTools.app`; move it to Applications. The builds are not notarized, so on macOS run `xattr -dr com.apple.quarantine "/Applications/Unbound DevTools.app"` once. Updates replace the whole `.app`.
 
 ## How it connects
 

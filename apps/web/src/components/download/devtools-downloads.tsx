@@ -76,11 +76,12 @@ function DevToolsDownloads() {
 					</h2>
 					<p className='text-muted-foreground text-sm'>
 						A desktop app for inspecting Discord's React tree on a connected device. It
-						updates itself. Builds are unsigned; on macOS, run{' '}
+						updates itself. Builds are not notarized; on macOS, move the app to
+						Applications and run{' '}
 						<code className='font-mono text-xs'>
-							xattr -d com.apple.quarantine unbound-devtools
+							xattr -dr com.apple.quarantine "/Applications/Unbound DevTools.app"
 						</code>{' '}
-						once after extracting.
+						once.
 					</p>
 				</div>
 				<a
