@@ -58,6 +58,14 @@ func (index *objcIndex) lookupMethod(className, selector string) (objcLookup, st
 	return objcMissing, ""
 }
 
+type objcMemory interface {
+	readPointer(address uint64) (machoPointer, bool)
+	readCString(address uint64) string
+	readUint32(address uint64) (uint32, bool)
+	pointerList(name string) []machoPointer
+	relativeSelectorBase() uint64
+}
+
 type machoImage struct {
 	file          *macho.File
 	data          []byte
@@ -78,7 +86,8 @@ func addMachOToIndex(index *objcIndex, data []byte) error {
 	if err := image.readChainedFixups(); err != nil {
 		return err
 	}
-	return image.collect(index)
+	collectObjC(image, index)
+	return nil
 }
 
 func openMachOSlice(data []byte) (*macho.File, error) {
@@ -259,6 +268,10 @@ func (image *machoImage) readPointer(address uint64) (machoPointer, bool) {
 	}
 }
 
+func (image *machoImage) relativeSelectorBase() uint64 {
+	return 0
+}
+
 func (image *machoImage) readCString(address uint64) string {
 	offset, ok := image.fileOffset(address)
 	if !ok {
@@ -293,7 +306,7 @@ func (image *machoImage) pointerList(name string) []machoPointer {
 	return pointers
 }
 
-func (image *machoImage) collect(index *objcIndex) error {
+func collectObjC(image objcMemory, index *objcIndex) {
 	for _, pointer := range image.pointerList("__objc_selrefs") {
 		if pointer.address != 0 {
 			if name := image.readCString(pointer.address); name != "" {
@@ -306,7 +319,7 @@ func (image *machoImage) collect(index *objcIndex) error {
 		if pointer.address == 0 {
 			continue
 		}
-		class := image.readClass(pointer.address, index)
+		class := readClass(image, pointer.address, index)
 		if class == nil {
 			continue
 		}
@@ -321,10 +334,9 @@ func (image *machoImage) collect(index *objcIndex) error {
 
 	for _, pointer := range image.pointerList("__objc_catlist") {
 		if pointer.address != 0 {
-			image.readCategory(pointer.address, index)
+			readCategory(image, pointer.address, index)
 		}
 	}
-	return nil
 }
 
 func externalClassName(symbol string) string {
@@ -336,7 +348,7 @@ func externalClassName(symbol string) string {
 	return symbol
 }
 
-func (image *machoImage) readClass(address uint64, index *objcIndex) *objcClass {
+func readClass(image objcMemory, address uint64, index *objcIndex) *objcClass {
 	data, ok := image.readPointer(address + 32)
 	if !ok || data.address == 0 {
 		return nil
@@ -361,22 +373,22 @@ func (image *machoImage) readClass(address uint64, index *objcIndex) *objcClass 
 			class.Super = externalClassName(super.external)
 			class.SuperExternal = true
 		case super.address != 0:
-			class.Super = image.classNameAt(super.address)
+			class.Super = classNameAt(image, super.address)
 		}
 	}
 
-	image.readMethods(readOnly+32, class.Methods, index)
-	image.readIvars(readOnly+48, class.Ivars, index)
+	readMethods(image, readOnly+32, class.Methods, index)
+	readIvars(image, readOnly+48, class.Ivars, index)
 
 	if meta, ok := image.readPointer(address); ok && meta.address != 0 {
 		if metaData, ok := image.readPointer(meta.address + 32); ok && metaData.address != 0 {
-			image.readMethods((metaData.address&^7)+32, class.Methods, index)
+			readMethods(image, (metaData.address&^7)+32, class.Methods, index)
 		}
 	}
 	return class
 }
 
-func (image *machoImage) classNameAt(address uint64) string {
+func classNameAt(image objcMemory, address uint64) string {
 	data, ok := image.readPointer(address + 32)
 	if !ok || data.address == 0 {
 		return ""
@@ -388,7 +400,7 @@ func (image *machoImage) classNameAt(address uint64) string {
 	return demangleObjCClassName(image.readCString(namePointer.address))
 }
 
-func (image *machoImage) readCategory(address uint64, index *objcIndex) {
+func readCategory(image objcMemory, address uint64, index *objcIndex) {
 	classPointer, ok := image.readPointer(address + 8)
 	if !ok {
 		return
@@ -398,7 +410,7 @@ func (image *machoImage) readCategory(address uint64, index *objcIndex) {
 	case classPointer.external != "":
 		className = externalClassName(classPointer.external)
 	case classPointer.address != 0:
-		className = image.classNameAt(classPointer.address)
+		className = classNameAt(image, classPointer.address)
 	}
 	if className == "" {
 		return
@@ -412,20 +424,49 @@ func (image *machoImage) readCategory(address uint64, index *objcIndex) {
 			index.Classes[className] = class
 		}
 	}
-	image.readMethods(address+16, class.Methods, index)
-	image.readMethods(address+24, class.Methods, index)
+	readMethods(image, address+16, class.Methods, index)
+	readMethods(image, address+24, class.Methods, index)
 }
 
-func (image *machoImage) readMethods(field uint64, methods map[string]bool, index *objcIndex) {
+func readMethods(image objcMemory, field uint64, methods map[string]bool, index *objcIndex) {
 	list, ok := image.readPointer(field)
 	if !ok || list.address == 0 {
 		return
 	}
-	header, ok := image.readUint32(list.address)
+	if list.address&relativeListListFlag != 0 {
+		readMethodListList(image, list.address&^relativeListListFlag, methods, index)
+		return
+	}
+	readMethodList(image, list.address, methods, index)
+}
+
+func readMethodListList(image objcMemory, address uint64, methods map[string]bool, index *objcIndex) {
+	entrySize, ok := image.readUint32(address)
+	if !ok || entrySize < 8 {
+		return
+	}
+	count, ok := image.readUint32(address + 4)
+	if !ok || count > 1<<12 {
+		return
+	}
+	for entry := uint64(0); entry < uint64(count); entry++ {
+		entryAddress := address + 8 + entry*uint64(entrySize)
+		low, okLow := image.readUint32(entryAddress)
+		high, okHigh := image.readUint32(entryAddress + 4)
+		if !okLow || !okHigh {
+			continue
+		}
+		offset := int64(uint64(high)<<32|uint64(low)) >> 16
+		readMethodList(image, uint64(int64(entryAddress)+offset), methods, index)
+	}
+}
+
+func readMethodList(image objcMemory, address uint64, methods map[string]bool, index *objcIndex) {
+	header, ok := image.readUint32(address)
 	if !ok {
 		return
 	}
-	count, ok := image.readUint32(list.address + 4)
+	count, ok := image.readUint32(address + 4)
 	if !ok || count > 1<<16 {
 		return
 	}
@@ -435,30 +476,38 @@ func (image *machoImage) readMethods(field uint64, methods map[string]bool, inde
 		return
 	}
 	for entry := uint64(0); entry < uint64(count); entry++ {
-		address := list.address + 8 + entry*entrySize
-		var name string
-		if relative {
-			offset, ok := image.readUint32(address)
-			if !ok {
-				continue
-			}
-			target := uint64(int64(address) + int64(int32(offset)))
-			if header&0x40000000 != 0 {
-				name = image.readCString(target)
-			} else if selector, ok := image.readPointer(target); ok && selector.address != 0 {
-				name = image.readCString(selector.address)
-			}
-		} else if pointer, ok := image.readPointer(address); ok && pointer.address != 0 {
-			name = image.readCString(pointer.address)
-		}
-		if name != "" {
+		if name := methodName(image, address+8+entry*entrySize, header, relative); name != "" {
 			methods[name] = true
 			index.Selectors[name] = true
 		}
 	}
 }
 
-func (image *machoImage) readIvars(field uint64, ivars map[string]bool, index *objcIndex) {
+func methodName(image objcMemory, address uint64, header uint32, relative bool) string {
+	if !relative {
+		if pointer, ok := image.readPointer(address); ok && pointer.address != 0 {
+			return image.readCString(pointer.address)
+		}
+		return ""
+	}
+	offset, ok := image.readUint32(address)
+	if !ok {
+		return ""
+	}
+	if header&0x40000000 != 0 {
+		if base := image.relativeSelectorBase(); base != 0 {
+			return image.readCString(uint64(int64(base) + int64(int32(offset))))
+		}
+		return image.readCString(uint64(int64(address) + int64(int32(offset))))
+	}
+	target := uint64(int64(address) + int64(int32(offset)))
+	if selector, ok := image.readPointer(target); ok && selector.address != 0 {
+		return image.readCString(selector.address)
+	}
+	return ""
+}
+
+func readIvars(image objcMemory, field uint64, ivars map[string]bool, index *objcIndex) {
 	list, ok := image.readPointer(field)
 	if !ok || list.address == 0 {
 		return
