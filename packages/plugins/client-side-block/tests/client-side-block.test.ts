@@ -48,8 +48,6 @@ function openChat() {
 beforeEach(() => {
 	shown.length = 0;
 	metro.register(ChatManager);
-	metro.register(RowManager);
-	metro.register(ChatUpdatesQueue);
 });
 
 describe('blocked messages', () => {
@@ -66,11 +64,10 @@ describe('blocked messages', () => {
 		expect(logs.entries.filter((entry) => entry.level === 'warn')).toEqual([]);
 	});
 
-	test('shows them again in the open chat when the plugin stops', async () => {
+	test('shows them again once the plugin stops and the chat updates', async () => {
 		await startPlugin();
-		openChat();
-		shown.length = 0;
 		await stopPlugin();
+		openChat();
 
 		expect(shown).toEqual([0, BLOCKED, 0]);
 	});

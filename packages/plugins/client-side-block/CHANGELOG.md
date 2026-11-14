@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.4] - 2026-11-14
+
+### Fixed
+
+- Messages no longer show twice: the plugin no longer rebuilds the open chat itself, which could add every row a second time. Hiding someone now applies at the chat's next update, as when a message arrives or you reopen it.
+
 ## [1.1.3] - 2026-11-14
 
 ### Fixed
