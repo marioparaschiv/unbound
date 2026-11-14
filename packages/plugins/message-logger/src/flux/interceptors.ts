@@ -1,5 +1,5 @@
 import { settings } from '@unbound-app/settings';
-import { flux } from '@unbound-app/api';
+import { flux, metro, patcher } from '@unbound-app/api';
 
 import { keepRemovedAttachments, type AttachmentLike } from '~/lib/attachments';
 import { MessageStore, UserStore, findChatModules } from '~/lib/modules';
@@ -8,6 +8,7 @@ import { messageLog } from '~/lib/log';
 import { shouldIgnore } from '~/lib/filters';
 import { redrawMessage } from '~/lib/redraw';
 import { CLEARING_FLAG } from '~/lib/clear';
+import { ownDeletions } from '~/lib/own-deletions';
 
 type DeleteAction = {
 	id?: string;
@@ -38,6 +39,10 @@ function keepDeleted(channelId: string, messageId: string): boolean {
 		return false;
 	}
 
+	if (ownDeletions.has(messageId)) {
+		return false;
+	}
+
 	const message = MessageStore.getMessage(channelId, messageId);
 
 	if (!message || shouldIgnore(message, settings, filterContext(channelId), false)) {
@@ -51,7 +56,7 @@ function keepDeleted(channelId: string, messageId: string): boolean {
 }
 
 /**
- * @description Keeps deleted messages in the chat by dropping the deletions the log records. A second deletion of a logged message, such as Dismiss message, goes through.
+ * @description Keeps deleted messages in the chat by dropping the deletions the log records. A second deletion of a logged message, such as Dismiss message, goes through, and so do messages the user deleted themselves.
  * Intercepts `MESSAGE_DELETE` and `MESSAGE_DELETE_BULK`.
  */
 export function interceptDeletions(): void {
@@ -157,5 +162,22 @@ export function trackNonces(): void {
 		if (previous?.state === 'SENT' && previous.id !== message.id) delete message.nonce;
 
 		return false;
+	});
+}
+
+/**
+ * @description Marks the messages the user deletes, so their deletion is never logged. Patches `deleteMessage` on Discord's `MessageActions`.
+ */
+export function trackOwnDeletions(): void {
+	const Messages = metro.api.Messages;
+
+	if (typeof Messages?.deleteMessage !== 'function') {
+		logger.warn('Own deletions skipped: Discord moved deleteMessage.');
+
+		return;
+	}
+
+	patcher.before(Messages, 'deleteMessage', ({ args: [, messageId] }) => {
+		if (typeof messageId === 'string') ownDeletions.mark(messageId);
 	});
 }

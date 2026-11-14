@@ -73,12 +73,20 @@ export function generateRow(fields: Partial<typeof message> = {}) {
  * Registers the Discord modules the plugin needs (with the given action sheets, when a test brings its own), seeds the stores it reads and starts the plugin.
  * Empties the plugin's log first, which outlives a test that never stops the plugin.
  */
+/** The `MessageActions` module `metro.api.Messages` finds, with the delete Message Logger watches. */
+export const MessageActions = {
+	sendMessage: () => {},
+	receiveMessage: () => {},
+	deleteMessage: (_channelId: string, _messageId: string) => {},
+};
+
 export async function startLogger(
 	sheets: object = { openLazy: () => {}, hideActionSheet: () => {} },
 ) {
 	metro.register(RowManager);
 	metro.register(ChatManager);
 	metro.register(sheets);
+	metro.register(MessageActions);
 	flux.seed({
 		Message: {
 			getMessage: (_channel: string, id: string) => (id === message.id ? message : undefined),
