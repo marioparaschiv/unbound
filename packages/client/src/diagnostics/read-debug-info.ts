@@ -267,6 +267,19 @@ function pushOf(state: NativeDeviceState | undefined, android: boolean): DebugIn
 	return pushStateOf(state?.push, entitlements);
 }
 
+const MAX_ISOLATED_EXTENSIONS = 8;
+
+function isolatedExtensionsOf(state?: NativeDeviceState): string[] | undefined {
+	const isolated = (state?.extensions ?? [])
+		.filter(
+			(extension) => typeof extension?.name === 'string' && extension.sharesGroup === false,
+		)
+		.map((extension) => extension.name.slice(0, 64))
+		.slice(0, MAX_ISOLATED_EXTENSIONS);
+
+	return isolated.length ? isolated : undefined;
+}
+
 const MAX_ADDON_UPDATES = 64;
 
 function addonUpdates(): string[] | undefined {
@@ -369,6 +382,9 @@ export function readDebugInfo(): DebugInfo {
 		missingExtensions: android
 			? undefined
 			: attempt(() => missingExtensions(appSource), undefined),
+		isolatedExtensions: android
+			? undefined
+			: attempt(() => isolatedExtensionsOf(state), undefined),
 		storage: attempt(() => storageOf(state), undefined),
 		errors: recentErrors(),
 		patches: attempt(patchCounts, undefined),

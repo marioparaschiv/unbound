@@ -124,6 +124,7 @@ export function debugAltText(
 		...(info.experiments?.length && { experiments: info.experiments }),
 		...(cleanNames(info.injected ?? []).length && { tweaks: cleanNames(info.injected ?? []) }),
 		...(info.missingExtensions?.length && { missingExtensions: info.missingExtensions }),
+		...(info.isolatedExtensions?.length && { isolatedExtensions: info.isolatedExtensions }),
 		...(info.display && { display: displaySummary(info.display) }),
 		...(info.session && { session: sessionSummary(info.session) }),
 		...(info.native && {

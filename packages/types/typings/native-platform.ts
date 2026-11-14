@@ -48,6 +48,12 @@ export type NativeDeviceState = {
 	dns?: NativeDnsState;
 	/** Whether Discord may show notifications and can receive pushes; older loaders omit it. */
 	push?: NativePushState;
+	extensions?: NativeExtensionState[];
+};
+
+export type NativeExtensionState = {
+	name: string;
+	sharesGroup: boolean;
 };
 
 /** The device's power state. */

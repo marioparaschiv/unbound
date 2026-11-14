@@ -71,6 +71,18 @@ static NSDictionary *kernelEntitlements()
     return signatureInfo[@"entitlements"] ?: @{};
 }
 
++ (NSDictionary *)entitlementsOfExecutable:(NSString *)path
+{
+    for (const std::string &blob : loader::codesign::entitlementBlobs(toStdString(path)))
+    {
+        if (NSDictionary *entitlements = entitlementsPlist(std::optional<std::string>(blob)))
+        {
+            return entitlements;
+        }
+    }
+    return @{};
+}
+
 + (NSDictionary *)getApplicationSignatureInfo
 {
     if (NSDictionary *entitlements = kernelEntitlements())
