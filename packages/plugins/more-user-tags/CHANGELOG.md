@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.6] - 2026-11-14
+
+### Fixed
+
+- On iOS, a tag colour no longer stays behind after Discord hides or moves the tag, where it could show through another pill such as PronounDB's.
+
 ## [1.3.5] - 2026-11-11
 
 ### Changed
