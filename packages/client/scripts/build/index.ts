@@ -42,6 +42,7 @@ import { buildDevtools } from './devtools';
 import worklets from './plugins/worklets';
 import libraries from './shim-libraries';
 import refresh from './plugins/refresh';
+import createPatches from './patches';
 import signBundles from './sign';
 
 /** What the dev engine reports after a source change. */
@@ -297,6 +298,14 @@ async function build() {
 
 		if (problem) {
 			throw new Error(problem);
+		}
+
+		if (process.env.UNBOUND_PATCH_BASE_URL && process.env.UNBOUND_PATCH_REVISIONS) {
+			await createPatches({
+				dir: join(root, 'dist'),
+				baseUrl: process.env.UNBOUND_PATCH_BASE_URL,
+				revisions: process.env.UNBOUND_PATCH_REVISIONS.split(/[\s,]+/).filter(Boolean),
+			});
 		}
 
 		signBundles(join(root, 'dist'));

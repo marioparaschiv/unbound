@@ -103,6 +103,7 @@ endif()
 
 add_library(unbound_core STATIC ${UNBOUND_CORE_SOURCES})
 target_link_libraries(unbound_core PRIVATE unbound_bearssl unbound_woff2)
+target_include_directories(unbound_core PRIVATE ${UNBOUND_VENDOR_DIR}/brotli/c/include)
 if(UNBOUND_CORE_FFI_TARGET)
     target_link_libraries(unbound_core PUBLIC ${UNBOUND_CORE_FFI_TARGET})
 endif()

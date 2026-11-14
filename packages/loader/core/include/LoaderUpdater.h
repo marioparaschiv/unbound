@@ -99,15 +99,19 @@ private:
     std::optional<std::string> spaceProblem() const;
 
     struct DownloadPlan {
-        std::string url;
-        std::string source;
-        std::string exemption;
-        std::string manifestText;
-        std::string manifestSignature;
-        std::string expectedSha512;
-        bool        unchanged = false;
+        std::string              url;
+        std::string              source;
+        std::string              exemption;
+        std::string              manifestText;
+        std::string              manifestSignature;
+        std::string              expectedSha512;
+        std::vector<std::string> patchBases;
+        bool                     unchanged = false;
     };
 
+    std::optional<std::string> patchedCandidate(const DownloadPlan &plan,
+                                                const std::string  &targetPath,
+                                                const std::string  &candidatePath) const;
     std::string                bundlePath(const std::string &extension) const;
     BundleSource               bundleSource(const std::optional<std::string> &updateURL) const;
     std::optional<std::string> fetch(const std::string &url) const;
