@@ -18,5 +18,14 @@
 	},
 	"icon": "GiftIcon",
 	"main": "index.tsx",
-	"replaces": ["unbound.hide-gift-button"]
+	"replaces": [
+		"unbound.hide-gift-button"
+	],
+	"bytecode": {
+		"98": "ba454251ca88fdfa827dc5035aee2c4f792986c9a204d74fcd84654945c05bf0d45a67b3cf477e06a7ca303603b4794d016c62b7befc40b0df556fbefa185f9b"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "QKnMZdzzfN3BEsOr3Y0Z5/aOxFirBHKzXIRNPX9a1LC+GgC4dnXCAXSc6DMc+2BNl+5hIYaA7ngP72V/7g1BBw=="
+	}
 }
