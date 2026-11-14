@@ -1,5 +1,3 @@
-import { INDICATOR_KEY } from '~/lib/constants';
-
 export type RenderNode = {
 	key?: string | null;
 	props?: {
@@ -37,24 +35,21 @@ function isChannelPart(node: RenderNode | null | undefined, channelId: string): 
 	return node?.props?.channel?.id === channelId;
 }
 
-/**
- * @description Tells whether an element is one the plugin inserted.
- * @param node A rendered element.
- * @returns Whether the element carries the plugin's key.
- */
-function isIndicator(node: RenderNode | null | undefined): boolean {
-	return node?.key === INDICATOR_KEY;
+function hasKey(node: RenderNode | null | undefined, key: string): boolean {
+	return node?.key === key;
 }
 
 /**
- * @description Finds where a text channel row shows its channel info, which the indicator goes before.
+ * @description Finds where a text channel row shows its channel info, which a plugin's element goes beside.
  * @param result The rendered text channel row.
  * @param channelId The row's channel ID.
+ * @param key The key of the element the plugin adds, which marks a row it already patched.
  * @returns The row, its content, and the info's index, or nothing for an unfamiliar or already patched row.
  */
 export function findTextChannelSlot(
 	result: RenderNode,
 	channelId: string,
+	key: string,
 ): TextChannelSlot | undefined {
 	const row = childrenOf(result)?.find((child) => child?.props?.accessibilityRole === 'button');
 	const content = childrenOf(row)?.find((child) =>
@@ -62,7 +57,7 @@ export function findTextChannelSlot(
 	);
 	const parts = childrenOf(content);
 
-	if (!row || !content || !parts || parts.some(isIndicator)) return;
+	if (!row || !content || !parts || parts.some((part) => hasKey(part, key))) return;
 
 	return {
 		row,
@@ -73,14 +68,16 @@ export function findTextChannelSlot(
 }
 
 /**
- * @description Finds the thread row button whose `channelInfo` the indicator joins.
+ * @description Finds the thread row button whose `channelInfo` a plugin's element joins.
  * @param result The rendered thread channel row.
  * @param channelId The thread's channel ID.
+ * @param key The key of the element the plugin adds, which marks a row it already patched.
  * @returns The row and its container, or nothing for an unfamiliar or already patched row.
  */
 export function findThreadChannelSlot(
 	result: RenderNode,
 	channelId: string,
+	key: string,
 ): ThreadChannelSlot | undefined {
 	for (const container of childrenOf(result) ?? []) {
 		const row = childrenOf(container)?.find(
@@ -92,8 +89,8 @@ export function findThreadChannelSlot(
 			continue;
 		}
 
-		return isIndicator(row.props?.channelInfo) ? undefined : { container, row };
+		return hasKey(row.props?.channelInfo, key) ? undefined : { container, row };
 	}
 }
 
-export default { childrenOf, isIndicator, findTextChannelSlot, findThreadChannelSlot };
+export default { childrenOf, findTextChannelSlot, findThreadChannelSlot };

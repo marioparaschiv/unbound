@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import type { ReactNode } from 'react';
 
-import type { RenderNode } from '~/lib/row-layout';
+import type { RenderNode } from '@unbound-plugins/shared/channels/row-layout';
 import type { Channel } from '~/lib/types';
 
 import ChannelTypingIndicator from '~/components/channel-typing-indicator';

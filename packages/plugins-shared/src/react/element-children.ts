@@ -1,6 +1,6 @@
 import { cloneElement, type ReactElement, type ReactNode } from 'react';
 
-import { childrenOf, type RenderNode } from '~/lib/row-layout';
+import { childrenOf, type RenderNode } from '@unbound-plugins/shared/channels/row-layout';
 
 type Child = RenderNode | ReactNode;
 

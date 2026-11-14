@@ -1,8 +1,8 @@
 import { metro, patcher } from '@unbound-app/api';
 
 import ChannelTypingIndicator from '~/components/channel-typing-indicator';
-import { replaceChild, withChildren } from '~/lib/elements';
-import { findTextChannelSlot, type RenderNode } from '~/lib/row-layout';
+import { replaceChild, withChildren } from '@unbound-plugins/shared/react/element-children';
+import { findTextChannelSlot, type RenderNode } from '@unbound-plugins/shared/channels/row-layout';
 import type { ChannelRowProps } from '~/lib/types';
 import { INDICATOR_KEY } from '~/lib/constants';
 
@@ -31,7 +31,7 @@ export function patchTextChannel(): void {
 
 		if (!channel?.id) return;
 
-		const slot = findTextChannelSlot(result, channel.id);
+		const slot = findTextChannelSlot(result, channel.id, INDICATOR_KEY);
 
 		if (!slot) return;
 

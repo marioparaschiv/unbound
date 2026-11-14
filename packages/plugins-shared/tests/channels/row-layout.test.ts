@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
-import { findTextChannelSlot, findThreadChannelSlot, type RenderNode } from '~/lib/row-layout';
-import { INDICATOR_KEY } from '~/lib/constants';
+import { findTextChannelSlot, findThreadChannelSlot, type RenderNode } from '~/channels/row-layout';
+
+const KEY = 'plugin-element';
 
 function textRow(channelId: string, parts: RenderNode[] = []) {
 	const info = { props: { channel: { id: channelId } } };
@@ -21,7 +22,7 @@ function threadRow(channelId: string, channelInfo: RenderNode | null = null) {
 describe('findTextChannelSlot', () => {
 	test('finds the channel info inside the row button', () => {
 		const { result, row, content } = textRow('channel');
-		const slot = findTextChannelSlot(result, 'channel');
+		const slot = findTextChannelSlot(result, 'channel', KEY);
 
 		expect(slot?.row).toBe(row);
 		expect(slot?.content).toBe(content);
@@ -30,30 +31,30 @@ describe('findTextChannelSlot', () => {
 
 	test('leaves an unfamiliar row alone', () => {
 		expect(
-			findTextChannelSlot({ props: { children: ['unchanged'] } }, 'channel'),
+			findTextChannelSlot({ props: { children: ['unchanged'] } }, 'channel', KEY),
 		).toBeUndefined();
-		expect(findTextChannelSlot(textRow('other').result, 'channel')).toBeUndefined();
+		expect(findTextChannelSlot(textRow('other').result, 'channel', KEY)).toBeUndefined();
 	});
 
 	test('leaves a row that already shows the indicator alone', () => {
-		const { result } = textRow('channel', [{ key: INDICATOR_KEY }]);
+		const { result } = textRow('channel', [{ key: KEY }]);
 
-		expect(findTextChannelSlot(result, 'channel')).toBeUndefined();
+		expect(findTextChannelSlot(result, 'channel', KEY)).toBeUndefined();
 	});
 });
 
 describe('findThreadChannelSlot', () => {
 	test('finds the thread row button and its container', () => {
 		const { result, row, container } = threadRow('thread');
-		const slot = findThreadChannelSlot(result, 'thread');
+		const slot = findThreadChannelSlot(result, 'thread', KEY);
 
 		expect(slot?.row).toBe(row);
 		expect(slot?.container).toBe(container);
 	});
 
 	test('leaves a thread row that already shows the indicator alone', () => {
-		const { result } = threadRow('thread', { key: INDICATOR_KEY });
+		const { result } = threadRow('thread', { key: KEY });
 
-		expect(findThreadChannelSlot(result, 'thread')).toBeUndefined();
+		expect(findThreadChannelSlot(result, 'thread', KEY)).toBeUndefined();
 	});
 });
