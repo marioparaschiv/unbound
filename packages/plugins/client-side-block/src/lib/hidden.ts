@@ -52,4 +52,34 @@ export function isHiddenRow(row: ChatRow | undefined, rules: HideRules): boolean
 	return Boolean(rules.replies && repliedTo && rules.isHidden(repliedTo));
 }
 
-export default { isHiddenRow };
+/** A message as the gateway sends it in `MESSAGE_CREATE`. */
+export type GatewayMessage = {
+	author?: { id?: string };
+	content?: string;
+	referenced_message?: { author?: { id?: string } } | null;
+};
+
+/**
+ * @description Decides whether a new message from the gateway never reaches Discord, so it is not counted unread or given room in the chat.
+ * @param message The message.
+ * @param rules Who is hidden, and whether replies to them go too.
+ * @param currentUserId The signed-in user, whose own messages always arrive.
+ * @returns Whether to drop the message.
+ */
+export function isHiddenMessage(
+	message: GatewayMessage | undefined,
+	rules: HideRules,
+	currentUserId: string | undefined,
+): boolean {
+	const author = message?.author?.id;
+
+	if (!message || !author || author === currentUserId) return false;
+	if (rules.isHidden(author)) return true;
+	if (message.content && rules.hidesContent?.(message.content)) return true;
+
+	const repliedTo = message.referenced_message?.author?.id;
+
+	return Boolean(rules.replies && repliedTo && rules.isHidden(repliedTo));
+}
+
+export default { isHiddenRow, isHiddenMessage };

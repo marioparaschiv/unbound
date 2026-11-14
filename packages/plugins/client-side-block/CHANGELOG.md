@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1] - 2026-11-14
+
+### Fixed
+
+- A new message from someone hidden no longer marks the channel unread or leaves an empty space at the bottom of the chat.
+
 ## [1.2.0] - 2026-11-14
 
 ### Added
