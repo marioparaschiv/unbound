@@ -66,6 +66,24 @@ describe('verify-signatures', () => {
 		expect(verifyBuild({ dir: dist, pullRequest: 0 }, keys).status).toBe('verified');
 	});
 
+	test('accepts a build signed with any production key listed during a rotation', () => {
+		const { dist, keys } = makeBuild();
+		const current = makeKey();
+		const next = makeKey();
+
+		writeFileSync(
+			join(keys, 'bundle-signing.pub'),
+			`${current.publicKeyBase64}\n${next.publicKeyBase64}\n`,
+		);
+		signBundles(dist, next.pem);
+
+		expect(verifyBuild({ dir: dist, pullRequest: 0 }, keys).status).toBe('verified');
+
+		writeFileSync(join(keys, 'bundle-signing.pub'), `${current.publicKeyBase64}\n`);
+
+		expect(verifyBuild({ dir: dist, pullRequest: 0 }, keys).status).toBe('failed');
+	});
+
 	test('checks a pull request build against the pull request key and its number', () => {
 		const { dist, keys } = makeBuild();
 		const production = makeKey();

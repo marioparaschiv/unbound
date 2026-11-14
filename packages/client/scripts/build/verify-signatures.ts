@@ -47,7 +47,7 @@ export function parseVerifyArguments(argv: string[], base = root): VerifyArgumen
 }
 
 /**
- * @description Checks a build against the committed public key: the production key, or the pull request key bound to its number.
+ * @description Checks a build against the committed public keys: any production key listed, one per line, or the pull request key bound to its number.
  * @param options The build directory and pull request.
  * @param keysDir The directory holding `bundle-signing.pub` and `pr-bundle-signing.pub`.
  * @returns Whether the build verified, failed, or was skipped because the key is not committed.
@@ -60,15 +60,14 @@ export function verifyBuild(options: VerifyArguments, keysDir = KEYS_DIR): Verif
 		return { status: 'skipped', keyPath };
 	}
 
-	const problems = findUnsignedBundles(
-		options.dir,
-		readFileSync(keyPath, 'utf8'),
-		options.pullRequest,
-	);
+	const keys = readFileSync(keyPath, 'utf8').split(/\s+/).filter(Boolean);
+	const attempts = keys.map((key) => findUnsignedBundles(options.dir, key, options.pullRequest));
 
-	return problems.length
-		? { status: 'failed', keyPath, problems }
-		: { status: 'verified', keyPath };
+	if (attempts.some((problems) => problems.length === 0)) {
+		return { status: 'verified', keyPath };
+	}
+
+	return { status: 'failed', keyPath, problems: attempts[0] ?? [`${keyPath} lists no keys`] };
 }
 
 if (import.meta.main) {
