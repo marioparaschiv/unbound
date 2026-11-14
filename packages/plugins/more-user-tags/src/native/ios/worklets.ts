@@ -521,7 +521,9 @@ function updateLabel(current: TagState, label: NativeObjectHandle) {
 
 		if (
 			record &&
-			(record.labelName !== match.labelName || record.primaryColor !== match.primaryColor)
+			(record.labelName !== match.labelName ||
+				record.primaryColor !== match.primaryColor ||
+				isDetached(current, record))
 		) {
 			removeRecord(current, id, record);
 			record = undefined;
@@ -545,8 +547,43 @@ function updateLabel(current: TagState, label: NativeObjectHandle) {
 	}
 }
 
+function isDetached(current: TagState, record: TagRecord): boolean {
+	'worklet';
+	const { objc } = current;
+	const parent = objc.invoke(record.label, 'superview', []) as NativeObjectHandle | null;
+
+	if (
+		!parent ||
+		objc.invoke(record.label, 'isHidden', []) ||
+		!objc.invoke(record.label, 'window', [])
+	) {
+		return true;
+	}
+
+	const parentLayer = objc.invoke(parent, 'layer', []) as NativeObjectHandle | null;
+	const superlayer = objc.invoke(record.layer, 'superlayer', []) as NativeObjectHandle | null;
+
+	return !parentLayer || !superlayer || keyOf(objc, parentLayer) !== keyOf(objc, superlayer);
+}
+
+function sweepDetached(current: TagState) {
+	'worklet';
+	const detached: [string, TagRecord][] = [];
+
+	current.records.forEach((record, id) => {
+		if (isDetached(current, record)) {
+			detached.push([id, record]);
+		}
+	});
+
+	for (const [id, record] of detached) {
+		removeRecord(current, id, record);
+	}
+}
+
 function updateTagView(current: TagState, view: NativeObjectHandle) {
 	'worklet';
+	sweepDetached(current);
 	const subviews = current.objc.invoke(view, 'subviews', []);
 
 	for (const child of Array.isArray(subviews) ? subviews : []) {
