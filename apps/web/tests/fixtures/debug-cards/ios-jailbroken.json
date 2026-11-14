@@ -1,0 +1,263 @@
+{
+	"client": "v3.4.0",
+	"commit": "3e4e4dce5",
+	"loader": "1.4.0",
+	"loaderOrigin": "Unbound.dylib",
+	"discord": "352.1",
+	"discordChannel": "Stable",
+	"discordBuild": "120918",
+	"discordSupport": "supported",
+	"appSource": "App Store",
+	"installDetails": "Distribution (`ABCDE12345`)",
+	"environment": {
+		"binary": "encrypted · min 16.0 · SDK 27.1 · 107 dylibs · UUID 01234567",
+		"https": {
+			"intercepted": false,
+			"issuer": "GTS Root R4"
+		},
+		"markers": ["Developer Mode on"],
+		"signer": "sha256 0123456789abcdef · Apple iPhone CA"
+	},
+	"framework": "ElleKit 1.2",
+	"jailbreak": "Dopamine 3.0.9",
+	"react": "19.2.3",
+	"reactNative": "0.86.0",
+	"hermes": "250829098.0.15",
+	"bytecode": "98",
+	"platform": "iOS",
+	"os": "26.0.1 (23A355)",
+	"device": "iPhone SE (2nd generation)",
+	"flags": ["Jailbroken", "unverified build"],
+	"plugins": {
+		"enabled": 49,
+		"installed": 112
+	},
+	"themes": {
+		"enabled": 0,
+		"installed": 0
+	},
+	"disabledAddons": [],
+	"locale": "en-US",
+	"theme": "",
+	"iconPack": "default",
+	"launch": {
+		"bundle": "active",
+		"earlyCloses": 0,
+		"recovery": false,
+		"previousExit": "unknown",
+		"firstRenderMs": 596,
+		"crashes": [
+			{
+				"at": 1794595628000,
+				"crash": "SIGBUS in Chat Bubbles"
+			},
+			{
+				"at": 1794626059000,
+				"crash": "SIGSEGV"
+			},
+			{
+				"at": 1794626222000,
+				"crash": "SIGSEGV"
+			},
+			{
+				"at": 1794662455000,
+				"crash": "SIGSEGV"
+			},
+			{
+				"at": 1794662503000,
+				"crash": "SIGSEGV"
+			}
+		],
+		"source": "dev",
+		"lastCheck": {
+			"at": 1794684422085,
+			"outcome": "downloaded"
+		}
+	},
+	"memory": {
+		"availableMB": 1495,
+		"memoryWarnings": 0,
+		"thermal": "nominal"
+	},
+	"network": {
+		"lowData": false,
+		"metered": false,
+		"proxy": false,
+		"type": "wifi",
+		"vpn": false
+	},
+	"power": {
+		"lowPower": false,
+		"battery": 80,
+		"charging": true
+	},
+	"dns": {
+		"resolver": "local"
+	},
+	"push": {
+		"permission": "denied",
+		"registered": true,
+		"environment": "production"
+	},
+	"gateway": {
+		"state": "session established",
+		"latencyMs": 119,
+		"connectedS": 3019,
+		"identifies": 2,
+		"failedAttempts": 0
+	},
+	"storage": {
+		"freeMB": 27917,
+		"unboundMB": 107
+	},
+	"errors": [],
+	"patches": [
+		{
+			"caller": "unbound.round-corners",
+			"count": 41
+		},
+		{
+			"caller": "unbound.fake-nitro",
+			"count": 12
+		},
+		{
+			"caller": "unbound::themes",
+			"count": 6
+		},
+		{
+			"caller": "unbound::tracking",
+			"count": 6
+		},
+		{
+			"caller": "unbound.hide-servers",
+			"count": 6
+		},
+		{
+			"caller": "unbound.no-pending-count",
+			"count": 6
+		},
+		{
+			"caller": "unbound.better-you-bar",
+			"count": 6
+		},
+		{
+			"caller": "unbound.permissions-viewer",
+			"count": 6
+		}
+	],
+	"native": {
+		"hooks": 42,
+		"surfaces": 0,
+		"handles": 1232
+	},
+	"enabledPlugins": [
+		"adrian.aussie-speech@1.2.1",
+		"unbound.always-trust@1.0.0",
+		"unbound.avatar-radius@1.1.10",
+		"unbound.background-voice-messages@1.0.0",
+		"unbound.better-folders@1.0.0",
+		"unbound.better-gif-alt-text@1.0.0",
+		"unbound.better-gif-picker@1.0.0",
+		"unbound.better-search@1.0.0",
+		"unbound.better-sessions@1.0.0",
+		"unbound.chat-bubbles@1.6.11",
+		"unbound.chat-gestures@1.1.0",
+		"unbound.clean-channel-names@1.0.1",
+		"unbound.clear-urls@1.0.4",
+		"unbound.client-side-block@1.2.1",
+		"unbound.decor@1.0.0",
+		"unbound.fake-nitro@1.2.0",
+		"unbound.fake-profile-themes@1.0.0",
+		"unbound.favourite-emoji-first@1.0.0",
+		"unbound.gif-collections@1.0.0",
+		"unbound.greet-sticker-picker@1.0.0",
+		"unbound.hide-buttons@1.2.2",
+		"unbound.hide-servers@1.0.1",
+		"unbound.i-love-spam@1.0.0",
+		"unbound.image-link@1.0.0",
+		"unbound.irc-colors@1.0.0",
+		"unbound.jump-to-top@1.1.0",
+		"unbound.media-favorites@1.0.0",
+		"unbound.member-count@1.0.0",
+		"unbound.message-latency@1.2.8",
+		"unbound.message-logger@1.1.0",
+		"unbound.more-user-tags@1.3.6",
+		"unbound.music-previews@1.1.0",
+		"unbound.no-pending-count@1.0.0",
+		"unbound.no-unblock-to-jump@1.0.0",
+		"unbound.permissions-viewer@1.0.5",
+		"unbound.preview-message@1.1.0",
+		"unbound.pronoundb@1.1.2",
+		"unbound.reaction-avatars@1.2.7",
+		"unbound.read-all-notifications@1.0.0",
+		"unbound.reviewdb@2.1.0",
+		"unbound.round-corners@1.0.0",
+		"unbound.send-timestamps@1.2.0",
+		"unbound.silent-message-toggle@1.1.1",
+		"unbound.silent-typing@1.1.1",
+		"unbound.unit-converter@1.0.0",
+		"unbound.usrbg@1.0.0",
+		"unbound.vc-narrator@1.0.0",
+		"unbound.voice-message-tools@1.4.2",
+		"unbound.better-you-bar@1.0.0"
+	],
+	"addonUpdates": [
+		"Add Attachments 1.0.4 → 1.0.5",
+		"Always Animate 1.0.2 → 1.0.3",
+		"Anonymise File Names 1.0.1 → 1.0.2",
+		"Aussie Mode 1.1.0 → 1.2.0",
+		"Blur NSFW 1.0.1 → 1.0.2",
+		"Channel Typing Indicators 1.0.4 → 1.0.5",
+		"Character Counter 1.0.4 → 1.0.5",
+		"Clear URLs 1.0.4 → 1.0.6",
+		"Custom Commands 1.0.5 → 1.1.0",
+		"Dearrow 1.0.1 → 1.0.2",
+		"File Size On Picker 1.0.8 → 1.0.9",
+		"Fix GIF Downloads 1.0.4 → 1.0.5",
+		"Fix Youtube Embeds 1.0.0 → 1.0.1",
+		"Force Owner Crown 1.0.4 → 1.0.6",
+		"GIF Paste 1.0.4 → 1.0.5",
+		"GIF Provider Switcher 1.0.1 → 1.0.2",
+		"Mention Avatars 1.0.9 → 1.1.0",
+		"Message Link Embeds 1.1.3 → 1.1.6",
+		"Moyai 1.0.4 → 1.0.5",
+		"Multi Account 1.0.4 → 1.0.6",
+		"Music Rich Presence 1.0.1 → 1.0.2",
+		"New Guild Settings 1.0.1 → 1.0.3",
+		"No Reply Mention 1.0.5 → 1.1.0",
+		"No Typing Animation 1.0.0 → 1.0.1",
+		"Override Forum Defaults 1.0.1 → 1.0.2",
+		"Picture In Picture 1.0.1 → 1.0.2",
+		"Platform Indicators 1.0.1 → 1.0.2",
+		"Relationship Notifier 1.0.0 → 1.0.1",
+		"Role Color Everywhere 1.2.5 → 1.2.7",
+		"Shiki Codeblocks 1.1.5 → 1.2.1",
+		"Show Hidden Things 1.0.4 → 1.0.5",
+		"Show Me Your Name 1.0.3 → 1.0.4",
+		"Show Timeout Duration 1.0.3 → 1.0.4",
+		"Sticker Preview 1.0.3 → 1.0.4",
+		"Super Reaction Tweaks 1.0.0 → 1.0.1",
+		"Text Replace 1.0.4 → 1.0.5",
+		"Typing Avatars 1.0.2 → 1.0.3",
+		"Unsuppress Embeds 1.0.1 → 1.0.2",
+		"Youtube Adblock 1.0.0 → 1.0.1"
+	],
+	"experiments": ["1021310444167778364:2025-08_portkey_enabled=1"],
+	"display": {
+		"width": 375,
+		"height": 667,
+		"scale": 2,
+		"fontScale": 1,
+		"reduceMotion": false,
+		"boldText": false
+	},
+	"session": {
+		"uptimeS": 3027,
+		"backgrounded": 0
+	},
+	"heap": {
+		"heapMB": 352,
+		"gcMs": 12590
+	},
+	"entitlements": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>application-identifier</key>\n\t<string>ABCDE12345.com.hammerandchisel.discord</string>\n\t<key>aps-environment</key>\n\t<string>production</string>\n\t<key>com.apple.developer.associated-domains</key>\n\t<array>\n\t\t<string>applinks:discord.com</string>\n\t\t<string>applinks:discordapp.com</string>\n\t\t<string>applinks:discord.gg</string>\n\t\t<string>applinks:discord.new</string>\n\t\t<string>applinks:discord.gift</string>\n\t\t<string>applinks:discord.gifts</string>\n\t\t<string>applinks:discord.co</string>\n\t\t<string>applinks:*.discord.com</string>\n\t\t<string>applinks:*.discordapp.com</string>\n\t\t<string>applinks:*.discord.gg</string>\n\t\t<string>applinks:*.discord.new</string>\n\t\t<string>applinks:*.discord.gift</string>\n\t\t<string>applinks:*.discord.gifts</string>\n\t\t<string>applinks:*.discord.co</string>\n\t\t<string>applinks:l.discord.com</string>\n\t\t<string>applinks:discordapp.onelink.me</string>\n\t\t<string>webcredentials:discord.com</string>\n\t\t<string>webcredentials:*.discord.com</string>\n\t</array>\n\t<key>com.apple.developer.avfoundation.multitasking-camera-access</key>\n\t<true/>\n\t<key>com.apple.developer.declared-age-range</key>\n\t<true/>\n\t<key>com.apple.developer.devicecheck.appattest-environment</key>\n\t<string>production</string>\n\t<key>com.apple.developer.networking.carrier-constrained.appcategory</key>\n\t<array>\n\t\t<string>messaging-8001</string>\n\t\t<string>voip-8006</string>\n\t</array>\n\t<key>com.apple.developer.storekit.request-data</key>\n\t<true/>\n\t<key>com.apple.developer.team-identifier</key>\n\t<string>ABCDE12345</string>\n\t<key>com.apple.developer.usernotifications.communication</key>\n\t<true/>\n\t<key>com.apple.security.application-groups</key>\n\t<array>\n\t\t<string>group.com.hammerandchisel.discord</string>\n\t</array>\n</dict>\n</plist>\n"
+}

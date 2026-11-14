@@ -1,0 +1,197 @@
+{
+	"client": "v3.4.0",
+	"commit": "b1d5f62c4",
+	"loader": "1.4.0",
+	"loaderOrigin": "libunbound.so",
+	"discord": "352.10",
+	"discordChannel": "Stable",
+	"discordBuild": "352110",
+	"discordSupport": "supported",
+	"appSource": "Sideloaded",
+	"installDetails": "",
+	"environment": {
+		"https": {
+			"intercepted": false,
+			"issuer": "GlobalSign Root CA"
+		},
+		"install": "APK cert 3c39d23cf9367849 · O=Hammer and Chisel · Xposed module · 3 splits",
+		"markers": ["SELinux permissive", "dev-keys", "WebView com.google.android.webview 124"]
+	},
+	"framework": "Vector 2.2",
+	"jailbreak": "Magisk",
+	"react": "19.2.3",
+	"reactNative": "0.86.0",
+	"hermes": "250829098.0.15",
+	"bytecode": "98",
+	"platform": "Android",
+	"os": "15 (SDK 35)",
+	"device": "Android Emulator (sdk_gphone64_arm64)",
+	"flags": ["Rooted", "verified build", "emulator"],
+	"plugins": {
+		"enabled": 41,
+		"installed": 100
+	},
+	"themes": {
+		"enabled": 0,
+		"installed": 0
+	},
+	"disabledAddons": [],
+	"locale": "en-US",
+	"theme": "",
+	"iconPack": "default",
+	"launch": {
+		"bundle": "active",
+		"earlyCloses": 0,
+		"recovery": false,
+		"previousExit": "ended",
+		"firstRenderMs": 2287,
+		"crashes": [
+			{
+				"at": 1794597527000,
+				"crash": "SIGSEGV in Chat Bubbles"
+			}
+		],
+		"source": "dev",
+		"lastCheck": {
+			"at": 1794686922682,
+			"outcome": "downloaded"
+		}
+	},
+	"memory": {
+		"availableMB": 2077,
+		"lowMemory": false,
+		"thermal": "nominal"
+	},
+	"network": {
+		"lowData": false,
+		"metered": false,
+		"proxy": false,
+		"type": "wifi",
+		"vpn": false
+	},
+	"power": {
+		"lowPower": false,
+		"battery": 100,
+		"charging": true
+	},
+	"dns": {
+		"resolver": "local"
+	},
+	"push": {
+		"permission": "granted",
+		"playServices": true
+	},
+	"gateway": {
+		"state": "session established",
+		"latencyMs": 120,
+		"connectedS": 622,
+		"identifies": 1,
+		"failedAttempts": 0
+	},
+	"storage": {
+		"freeMB": 3642,
+		"unboundMB": 25
+	},
+	"errors": [],
+	"patches": [
+		{
+			"caller": "unbound.always-animate",
+			"count": 34
+		},
+		{
+			"caller": "unbound.declutter",
+			"count": 21
+		},
+		{
+			"caller": "unbound::themes",
+			"count": 6
+		},
+		{
+			"caller": "unbound::tracking",
+			"count": 6
+		},
+		{
+			"caller": "unbound.fake-nitro",
+			"count": 6
+		},
+		{
+			"caller": "unbound.no-pending-count",
+			"count": 6
+		},
+		{
+			"caller": "unbound::commands",
+			"count": 5
+		},
+		{
+			"caller": "unbound.decor",
+			"count": 4
+		}
+	],
+	"native": {
+		"hooks": 6,
+		"surfaces": 0,
+		"handles": 70
+	},
+	"enabledPlugins": [
+		"unbound.always-animate@1.0.1",
+		"unbound.always-trust@1.0.0",
+		"unbound.anonymise-filenames@1.0.0",
+		"unbound.avatar-radius@1.1.10",
+		"unbound.better-gif-alt-text@1.0.0",
+		"unbound.better-gif-picker@1.0.0",
+		"unbound.better-search@1.0.0",
+		"unbound.better-sessions@1.0.0",
+		"unbound.dearrow@1.0.0",
+		"unbound.declutter@1.0.0",
+		"unbound.decor@1.0.0",
+		"unbound.fake-nitro@1.2.0",
+		"unbound.fake-profile-themes@1.1.0",
+		"unbound.favourite-emoji-first@1.0.0",
+		"unbound.fix-youtube-embeds@1.0.0",
+		"unbound.friend-invites@1.0.0",
+		"unbound.gif-paste@1.0.5",
+		"unbound.greet-sticker-picker@1.0.0",
+		"unbound.hide-servers@1.0.0",
+		"unbound.i-love-spam@1.0.0",
+		"unbound.image-link@1.0.0",
+		"unbound.irc-colors@1.0.0",
+		"unbound.jump-to-top@1.1.0",
+		"unbound.keep-current-channel@1.0.0",
+		"unbound.member-count@1.0.0",
+		"unbound.message-logger@1.2.3",
+		"unbound.no-pending-count@1.0.0",
+		"unbound.permissions-viewer@1.0.1",
+		"unbound.picture-in-picture@1.0.0",
+		"unbound.preview-message@1.0.6",
+		"unbound.read-all-notifications@1.0.0",
+		"unbound.reviewdb@2.0.0",
+		"unbound.send-timestamps@1.1.1",
+		"unbound.silent-message-toggle@1.1.0",
+		"unbound.silent-typing@1.1.0",
+		"unbound.split-large-messages@1.0.1",
+		"unbound.unsuppress-embeds@1.0.0",
+		"unbound.userpfp@1.0.0",
+		"unbound.usrbg@1.0.0",
+		"unbound.voice-message-tools@1.3.0",
+		"unbound.youtube-adblock@1.0.0"
+	],
+	"experiments": [
+		"709061970078335027:2025-08_portkey_enabled=1",
+		"709061970078335027:2026-02_game_claim_coachmark=1"
+	],
+	"display": {
+		"width": 411,
+		"height": 914,
+		"scale": 2.625,
+		"fontScale": 1,
+		"reduceMotion": false
+	},
+	"session": {
+		"uptimeS": 625,
+		"backgrounded": 0
+	},
+	"heap": {
+		"heapMB": 116,
+		"gcMs": 1353
+	}
+}
