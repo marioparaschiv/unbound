@@ -7,6 +7,7 @@ import { messages } from '~/i18n/api';
 import { icons } from '~/assets/api';
 
 import TextSettingRow from './text-setting-row.dev';
+import confirmRestart from './confirm-restart';
 
 /** The loader reads the same rule: an http or https URL with a host. */
 function isBundleURL(value: string): boolean {
@@ -38,6 +39,12 @@ function DeveloperPage() {
 		// The loader's toolbox pairs a custom bundle with a forced fetch, so it is not served stale.
 		settings.set('loader.update.url', url);
 		settings.set('loader.update.force', Boolean(url));
+	}
+
+	// The loader connects to React DevTools only at launch, so the switch applies after a restart.
+	function toggleDevtools() {
+		settings.toggle('loader.devtools');
+		confirmRestart();
 	}
 
 	return (
@@ -88,7 +95,8 @@ function DeveloperPage() {
 					label={messages.UNBOUND_LOADER_DEVTOOLS}
 					subLabel={messages.UNBOUND_LOADER_DEVTOOLS_DESC}
 					icon={<Discord.TableRowIcon source={icons.WrenchIcon} />}
-					{...switchProps('loader.devtools')}
+					value={settings.get('loader.devtools')}
+					onValueChange={toggleDevtools}
 				/>
 			</Discord.TableRowGroup>
 
