@@ -1,0 +1,7 @@
+{
+	"DOOM": "DOOM",
+	"DOOM_DESC": "Play DOOM",
+	"PLAY": "Play DOOM",
+	"PLAY_SUBTITLE": "Opens the shareware episode with on-screen controls. Closing the page stops it.",
+	"NO_WEBVIEW": "This Discord build has no web view to run DOOM in."
+}
