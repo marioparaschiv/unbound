@@ -1,0 +1,17 @@
+{
+	"id": "unbound.better-status-indicators",
+	"name": "Better Status Indicators",
+	"description": "Draws a ring in the status colour around avatars, so online, idle, do not disturb and streaming read at a glance.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "UserPlusIcon",
+	"main": "index.tsx"
+}

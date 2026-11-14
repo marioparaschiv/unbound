@@ -1,0 +1,8 @@
+{
+	"KEEP_DOT": "Keep the status dot",
+	"KEEP_DOT_SUBTITLE": "Shows Discord's dot as well as the ring.",
+	"THICKNESS": "Ring thickness",
+	"THICKNESS_SUBTITLE": "How wide the ring around avatars is, in points.",
+	"OFFLINE": "Ring offline users",
+	"OFFLINE_SUBTITLE": "Gives offline and invisible users a grey ring too."
+}
