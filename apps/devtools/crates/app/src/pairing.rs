@@ -20,7 +20,7 @@ pub fn pairing(info: &BridgeInfo) -> impl IntoElement {
 	let (tone, line, details) = if info.advertising {
 		(
 			theme::TEXT_MUTED,
-			"Discord on the same network will ask to connect",
+			"Discord on This Network Will Ask to Connect",
 			format!(
 				"Check that Discord shows this code. If it never asks, a firewall or VPN may be blocking mDNS (UDP 5353). Enter {address} in Unbound's Debugger Address instead."
 			),
@@ -28,7 +28,7 @@ pub fn pairing(info: &BridgeInfo) -> impl IntoElement {
 	} else {
 		(
 			theme::WARNING,
-			"Phones can't find this computer",
+			"Phones Can't Find This Computer",
 			format!(
 				"{} Enter {address} in Unbound's Debugger Address instead.",
 				info.error.as_deref().unwrap_or("mDNS is unavailable.")

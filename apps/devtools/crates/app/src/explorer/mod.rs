@@ -146,7 +146,7 @@ impl Explorer {
 		window: &mut Window,
 		cx: &mut Context<H>,
 	) -> Self {
-		let filter_input = cx.new(|cx| InputState::new(window, cx).placeholder("Filter members"));
+		let filter_input = cx.new(|cx| InputState::new(window, cx).placeholder("Filter Members"));
 		cx.subscribe(&filter_input, |host: &mut H, _, event: &InputEvent, cx| {
 			if matches!(event, InputEvent::Change) {
 				host.explorer_mut().filter_typed(cx);

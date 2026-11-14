@@ -241,7 +241,7 @@ impl McpButton {
 					.pb(px(6. * s))
 					.text_size(theme::TEXT_SMALL * s)
 					.text_color(theme::color(theme::TEXT_MUTED))
-					.child("Add DevTools to an agent"),
+					.child("Add to an Agent"),
 			)
 			.children(rows)
 			.into_any_element()
