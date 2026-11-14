@@ -1,6 +1,6 @@
 # Plugins
 
-113 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+114 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -31,6 +31,7 @@
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom Timestamps](https://unbound.rip/addons/unbound.custom-timestamps): Writes message times your way, with separate formats for today and older messages.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Dearrow](https://unbound.rip/addons/unbound.dearrow): Makes YouTube embed titles and thumbnails less sensationalist, powered by DeArrow.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Decor](https://unbound.rip/addons/unbound.decor): Shows the custom avatar decorations people pick on Decor, in chat and on profiles.
+- <img src="../../assets/plugins/readme-icons/pencil-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Edit Messages Locally](https://unbound.rip/addons/unbound.edit-messages-locally): Changes what any message says on your device only, from its long-press menu, without editing it on Discord.
 - <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Expression Tools](https://unbound.rip/addons/unbound.expression-tools): Useful tools for custom emojis and stickers.
 - <img src="../../assets/plugins/readme-icons/gift-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Fake Nitro](https://unbound.rip/addons/unbound.fake-nitro): Sends locked emojis and stickers as image links, shows the ones others send as the real thing, and unlocks Nitro stream quality.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Fake Profile Themes](https://unbound.rip/addons/unbound.fake-profile-themes): Shows profile theme colors and profile effects hidden in bios with invisible characters, so anyone can customize their profile without Nitro.

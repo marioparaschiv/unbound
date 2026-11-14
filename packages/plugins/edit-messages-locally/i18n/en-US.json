@@ -1,0 +1,9 @@
+{
+	"EDIT_LOCALLY": "Edit Locally",
+	"EDIT_LOCALLY_TITLE": "Edit locally",
+	"EDIT_LOCALLY_HELP": "Only you see this text, and only on this device. The message stays the same on Discord.",
+	"SAVE": "Save",
+	"RESTORE": "Restore Original",
+	"SAVED": "Saved your local edit.",
+	"RESTORED": "Restored the original message."
+}
