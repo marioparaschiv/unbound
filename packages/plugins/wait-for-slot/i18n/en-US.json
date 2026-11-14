@@ -1,0 +1,11 @@
+{
+	"WAIT_DESC": "Join a full voice channel as soon as a slot opens",
+	"WAIT_CHANNEL_DESC": "The voice channel to wait for",
+	"STOP_DESC": "Stop waiting for a voice slot",
+	"WAITING": "Waiting for a slot in {name}. You'll join as soon as someone leaves.",
+	"NOT_FULL": "{name} has room, so you joined right away.",
+	"NO_LIMIT": "{name} has no user limit, so there is nothing to wait for.",
+	"JOINED": "A slot opened in {name}, so you joined.",
+	"STOPPED": "Stopped waiting for {name}.",
+	"NOT_WAITING": "You are not waiting for a voice slot."
+}
