@@ -186,6 +186,7 @@ object NativeBridge {
         JSONObject()
             .put("permission", if (notifications?.areNotificationsEnabled() == true) "granted" else "denied")
             .put("playServices", playServices)
+            .apply { notifications?.let { put("focus", it.currentInterruptionFilter > NotificationManager.INTERRUPTION_FILTER_ALL) } }
     }.getOrNull()
 
     private const val PLAY_SERVICES = "com.google.android.gms"

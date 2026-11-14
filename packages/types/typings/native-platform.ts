@@ -92,6 +92,10 @@ export type NativePushState = {
 	registered?: boolean;
 	/** Android: Google Play services, which delivers pushes, is installed and enabled. */
 	playServices?: boolean;
+	/** iOS: Scheduled Summary holds Discord's notifications back until the summary. */
+	summary?: boolean;
+	/** A Focus (Do Not Disturb on Android) silences notifications; iOS reports it only once Discord may read Focus. */
+	focus?: boolean;
 };
 
 /** The device's active connection. */

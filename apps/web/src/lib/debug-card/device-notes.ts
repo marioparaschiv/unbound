@@ -48,6 +48,8 @@ function pushProblems(push: DebugCardPush): string[] {
 		push.registered === false && 'not registered for pushes',
 		push.playServices === false && 'no Play services',
 		push.environment === 'missing' && 'no push entitlement',
+		push.focus === true && 'Focus on',
+		push.summary === true && 'in Scheduled Summary',
 	];
 
 	return problems.filter((problem): problem is string => typeof problem === 'string');

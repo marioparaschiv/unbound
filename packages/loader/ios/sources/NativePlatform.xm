@@ -7,6 +7,7 @@
 #include <atomic>
 #include <istream>
 #include <mach-o/dyld.h>
+#import <objc/message.h>
 #include <os/proc.h>
 #include <ostream>
 #include <streambuf>
@@ -134,6 +135,8 @@ static nlohmann::json networkJSON()
 
 static std::atomic<int> notificationStatus{-1};
 static std::atomic<int> pushRegistered{-1};
+static std::atomic<int> scheduledSummary{-1};
+static std::atomic<int> focused{-1};
 static std::atomic<int> batteryPercent{-1};
 static std::atomic<int> batteryCharging{-1};
 
@@ -153,13 +156,42 @@ static void readMainThreadState()
     }
 }
 
+static void readFocus()
+{
+    constexpr NSInteger kFocusAuthorized = 3;
+    Class               center           = NSClassFromString(@"INFocusStatusCenter");
+    id                  shared           = [center respondsToSelector:@selector(defaultCenter)]
+                                               ? [center performSelector:@selector(defaultCenter)]
+                                               : nil;
+    if (!shared || ![shared respondsToSelector:@selector(authorizationStatus)] ||
+        reinterpret_cast<NSInteger (*)(id, SEL)>(objc_msgSend)(
+            shared, @selector(authorizationStatus)) != kFocusAuthorized)
+    {
+        return;
+    }
+    id status    = [shared performSelector:@selector(focusStatus)];
+    id isFocused = [status respondsToSelector:@selector(isFocused)]
+                       ? [status performSelector:@selector(isFocused)]
+                       : nil;
+    if ([isFocused isKindOfClass:NSNumber.class])
+    {
+        focused.store([isFocused boolValue] ? 1 : 0);
+    }
+}
+
 static void refreshDeviceState()
 {
     dispatch_async(dispatch_get_main_queue(), ^{ readMainThreadState(); });
     [UNUserNotificationCenter.currentNotificationCenter
         getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings *settings) {
             notificationStatus.store(static_cast<int>(settings.authorizationStatus));
+            if (@available(iOS 15.0, *))
+            {
+                scheduledSummary.store(
+                    settings.scheduledDeliverySetting == UNNotificationSettingEnabled ? 1 : 0);
+            }
         }];
+    readFocus();
 }
 
 static void watchDeviceState()
@@ -215,6 +247,14 @@ static nlohmann::json pushJSON()
     if (int registered = pushRegistered.load(); registered >= 0)
     {
         push["registered"] = registered == 1;
+    }
+    if (int summary = scheduledSummary.load(); summary >= 0)
+    {
+        push["summary"] = summary == 1;
+    }
+    if (int focus = focused.load(); focus >= 0)
+    {
+        push["focus"] = focus == 1;
     }
     return push;
 }

@@ -119,6 +119,8 @@ const pushSchema = Type.Object({
 	permission: Type.Enum(DEBUG_CARD_NOTIFICATION_PERMISSIONS),
 	registered: Type.Optional(Type.Boolean()),
 	playServices: Type.Optional(Type.Boolean()),
+	summary: Type.Optional(Type.Boolean()),
+	focus: Type.Optional(Type.Boolean()),
 	environment: Type.Optional(Type.Enum(DEBUG_CARD_PUSH_ENVIRONMENTS)),
 });
 
