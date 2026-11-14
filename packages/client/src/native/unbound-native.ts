@@ -4,6 +4,7 @@ import type {
 	UnboundLoaderInfo,
 	UnboundNativeBridge,
 	UnboundNativeFonts,
+	UnboundNativeLogs,
 	UnboundPluginBundle,
 } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
@@ -122,6 +123,14 @@ export function rescanThemes(): void {
  */
 export function getNativeFonts(): UnboundNativeFonts | undefined {
 	return globalThis.UnboundNative?.fonts;
+}
+
+/**
+ * @description Reads the loader's live log stream.
+ * @returns `UnboundNative.logs`, or `undefined` on a loader from before it.
+ */
+export function getNativeLogs(): UnboundNativeLogs | undefined {
+	return globalThis.UnboundNative?.logs;
 }
 
 /**

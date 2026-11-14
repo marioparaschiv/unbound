@@ -513,5 +513,18 @@
 	"UNBOUND_APP_ICON_REMOVED": "Removed {name}.",
 	"UNBOUND_APP_ICON_PENDING": "{name} is taking longer than usual; reopen the app icon picker in a moment.",
 	"UNBOUND_PATCH_REMOVED": "A patch on {name} kept crashing, so it was turned off.",
-	"UNBOUND_ADDON_RENAMED_TOAST": "{from} is now {to}, with your settings."
+	"UNBOUND_ADDON_RENAMED_TOAST": "{from} is now {to}, with your settings.",
+	"UNBOUND_LOGS": "Logs",
+	"UNBOUND_LOGS_ALL": "All",
+	"UNBOUND_LOGS_JS": "JS",
+	"UNBOUND_LOGS_REACT_NATIVE": "React Native",
+	"UNBOUND_LOGS_NATIVE": "Native",
+	"UNBOUND_LOGS_UNBOUND_ONLY": "Unbound only",
+	"UNBOUND_LOGS_PAUSE": "Pause",
+	"UNBOUND_LOGS_RESUME": "Resume",
+	"UNBOUND_LOGS_COPY": "Copy logs",
+	"UNBOUND_LOGS_COPIED": "Copied {count} log lines.",
+	"UNBOUND_LOGS_SHARE": "Share logs",
+	"UNBOUND_LOGS_EMPTY": "No log lines yet. New ones appear here as they are written.",
+	"UNBOUND_LOGS_UNSUPPORTED": "This version of the Unbound loader cannot stream logs. Update the loader to see them here."
 }

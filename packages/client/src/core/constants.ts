@@ -51,6 +51,7 @@ export const Screens = {
 	Marketplace: 'UNBOUND_MARKETPLACE',
 	AddonPage: 'UNBOUND_STORE_PAGE',
 	Updates: 'UNBOUND_UPDATES',
+	Logs: 'UNBOUND_LOGS',
 	PanelHost: 'UNBOUND_CUSTOM',
 } as const;
 

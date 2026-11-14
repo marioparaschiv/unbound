@@ -3,6 +3,9 @@ dist
 
 # Logs
 logs
+!packages/client/src/logs/
+!packages/client/src/ui/settings/logs/
+!packages/client/tests/logs/
 *.log
 !packages/cli/tests/fixtures/**/*.log
 npm-debug.log*

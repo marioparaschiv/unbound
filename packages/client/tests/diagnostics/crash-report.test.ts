@@ -80,6 +80,18 @@ describe('crash report logs', () => {
 		expect(crashLogExcerpt('\n\n')).toBeUndefined();
 	});
 
+	test('read JSON lines as text beside plain text from older loaders', () => {
+		const t = Date.UTC(2026, 4, 1, 12, 30, 5, 42);
+		const log = [
+			'2026-05-01T12:30:04.000Z I [loader] Started',
+			`{"t":${t},"src":"unbound","lvl":"error","scope":["Plugins"],"msg":"boom ${token}"}`,
+		].join('\n');
+
+		expect(crashLogExcerpt(log)).toBe(
+			'2026-05-01T12:30:04.000Z I [loader] Started\n2026-05-01T12:30:05.042Z E unbound [Plugins] boom [redacted]',
+		);
+	});
+
 	test('travel in the report scrubbed', () => {
 		const report = buildCrashReport(
 			{ kind: 'crash' },

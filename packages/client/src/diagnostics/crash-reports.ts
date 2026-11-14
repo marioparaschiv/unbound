@@ -4,13 +4,12 @@ import { buildCrashReport } from '~/diagnostics/crash-report';
 import type { CrashEvent } from '~/diagnostics/crash-report';
 import { currentEnvironment } from '~/core/environment';
 import { getSetting } from '~/settings/unbound';
+import { UNBOUND_LOG } from '~/logs/files';
 import fs from '~/native/fs';
 
 export type { CrashEvent, CrashReportAddon } from '~/diagnostics/crash-report';
 
 const logger = createLogger('Crash Reports');
-
-const LOG_FILE = 'Unbound/Logs/unbound.log';
 
 /**
  * @description Reads whether the user turned crash reporting on. It is off until they do.
@@ -22,7 +21,7 @@ function crashReportsEnabled(): boolean {
 
 async function readLoaderLog(): Promise<string | undefined> {
 	try {
-		return (await fs.exists(LOG_FILE)) ? await fs.readFile(LOG_FILE) : undefined;
+		return (await fs.exists(UNBOUND_LOG)) ? await fs.readFile(UNBOUND_LOG) : undefined;
 	} catch {
 		return undefined;
 	}
