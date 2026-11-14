@@ -433,9 +433,11 @@ fn is_log(frame: &Json) -> bool {
 				source.as_str(),
 				Some("unbound" | "js" | "react-native" | "native")
 			)
-		}) && optional("scope", |scope| {
-		scope
-			.as_array()
-			.is_some_and(|parts| parts.iter().all(Json::is_string))
-	}) && optional("at", Json::is_number)
+		})
+		&& optional("scope", |scope| {
+			scope
+				.as_array()
+				.is_some_and(|parts| parts.iter().all(Json::is_string))
+		})
+		&& optional("at", Json::is_number)
 }
