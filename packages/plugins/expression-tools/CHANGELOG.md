@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.8] - 2026-11-14
+
+### Changed
+
+- Credits eternal as an author.
+
 ## [1.0.7] - 2026-11-13
 
 ### Fixed
