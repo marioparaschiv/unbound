@@ -149,6 +149,16 @@ function idField(java: NativeJavaBridge, from: NativeJavaReference, name: string
 	}
 }
 
+// Discord reuses its message row outside the chat, such as in the in-app notification banner, which gets no bubble.
+// The banner's host holds that one row, while the chat list holds its rows and spacers. A row bound before it is
+// attached has no parent yet and counts as the chat's; its layout checks again.
+function inChatList(java: NativeJavaBridge, row: NativeJavaReference): boolean {
+	'worklet';
+	const parent = javaReference(java.invoke(row, 'getParent', []));
+
+	return !parent || (javaNumber(java.invoke(parent, 'getChildCount', [])) ?? 0) > 1;
+}
+
 // Rows draw their bubbles past their own bounds, into the room of the rows around them.
 function unclipList(current: BubbleState, row: NativeJavaReference) {
 	'worklet';
@@ -376,7 +386,7 @@ export function installRowHooks(
 		(event: { self?: NativeJavaValue; args?: NativeJavaValue[] }) => {
 			const row = javaReference(event.self);
 
-			if (!row) return;
+			if (!row || !inChatList(java, row)) return;
 
 			try {
 				const id = javaText(java.getField(row, current.config.idField));
@@ -411,7 +421,7 @@ export function installRowHooks(
 				const row = javaReference(java.invoke(accessories, 'getParent', []));
 				const id = row ? javaText(java.getField(row, current.config.idField)) : undefined;
 
-				if (!row || !id) return;
+				if (!row || !id || !inChatList(java, row)) return;
 
 				const paint = current.paints.get(id);
 				const height = javaNumber(java.invoke(row, 'getHeight', [])) ?? 0;
