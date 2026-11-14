@@ -46,7 +46,7 @@ Flags override the settings for one run.
 
 ## Pages
 
-The sidebar has three pages: **Components** (the React tree), **View Tree** (the native views, with an object explorer for the one picked) and **Metro** (the loaded and unloaded Metro modules). The app needs no `ubd`: it serves its own bridge, and the CLI's commands stay in the CLI.
+The sidebar has four pages: **Components** (the React tree), **View Tree** (the native views, with an object explorer for the one picked), **Metro** (the loaded and unloaded Metro modules) and **Logs** (the device's log lines as they arrive, the newest 10,000 kept, filtered like Unbound's own Logs page: All, JS (Discord's console and Unbound), React Native or Native, and **Unbound only**; clicking a line copies it). The app needs no `ubd`: it serves its own bridge, and the CLI's commands stay in the CLI.
 
 ## Search
 

@@ -265,6 +265,7 @@ async fn attach(inner: &Weak<Inner>, generation: u64, target: &ConnectTarget) ->
 						}
 					}
 					BridgeFrame::ReactDevtools {} => inner.receive(generation, &text),
+					BridgeFrame::Log(line) => inner.receive_log(line),
 					BridgeFrame::ViewsResult { id, ok, nodes, total, error } => {
 						let reply = if ok {
 							Ok(views::ViewReply::Page(views::ViewPage { nodes, total }))
