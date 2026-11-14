@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0] - 2026-11-14
+
+### Added
+
+- Long-press a voice message and tap **Playback Speed** to step through 1×, 1.5×, 2× and 0.75× without opening settings.
+
 ## [1.2.1] - 2026-11-14
 
 ### Fixed
