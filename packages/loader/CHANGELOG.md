@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.6.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.5.0...loader-v1.6.0) (2026-11-14)
+
+
+### Features
+
+* **loader:** name the loader in the sideloaded IPA's version ([#1492](https://github.com/marioparaschiv/unbound/issues/1492)) ([f36ae6e](https://github.com/marioparaschiv/unbound/commit/f36ae6e8bde132aec63c37b8cd81fcd9098e7392))
+* **loader:** name the plugins that froze Discord in the debug card ([#1480](https://github.com/marioparaschiv/unbound/issues/1480)) ([05d135e](https://github.com/marioparaschiv/unbound/commit/05d135eb6e7e05e1cf0e15fbe49319033073b3a1))
+* **loader:** report Discord's data and cache size in the debug card ([#1482](https://github.com/marioparaschiv/unbound/issues/1482)) ([b1d5f62](https://github.com/marioparaschiv/unbound/commit/b1d5f62c46840b764709b81ea07a46d7f71ebc28))
+* **loader:** report Focus and Scheduled Summary in the debug card ([#1486](https://github.com/marioparaschiv/unbound/issues/1486)) ([c2160a8](https://github.com/marioparaschiv/unbound/commit/c2160a8794a03c075b511ae73420ad72f4282d2d))
+
+
+### Bug Fixes
+
+* **loader:** name in-app Android splits by content ([#1500](https://github.com/marioparaschiv/unbound/issues/1500)) ([94e3c39](https://github.com/marioparaschiv/unbound/commit/94e3c39f826880238f52126f05c39fcb52ac3086))
+
 ## [1.5.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.4.0...loader-v1.5.0) (2026-11-14)
 
 
