@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.3] - 2026-11-14
+
+### Fixed
+
+- On iOS the speed and download buttons sit right after the timer, with the speed sized to its label, instead of leaving a wide gap.
+
 ## [1.4.2] - 2026-11-14
 
 ### Fixed
