@@ -58,9 +58,9 @@ impl LogLine {
 
 	pub fn level_label(&self) -> &'static str {
 		match self.level {
-			3 => "error",
-			2 => "warn",
-			_ => "log",
+			3 => "Error",
+			2 => "Warn",
+			_ => "Log",
 		}
 	}
 }

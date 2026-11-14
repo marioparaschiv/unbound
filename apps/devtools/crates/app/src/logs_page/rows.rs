@@ -112,6 +112,7 @@ impl LogsPage {
 				div()
 					.flex_none()
 					.w(px(LEVEL_WIDTH))
+					.font_family(theme::mono_font())
 					.text_color(theme::color(level_tone(line.level)))
 					.child(line.level_label()),
 			)
