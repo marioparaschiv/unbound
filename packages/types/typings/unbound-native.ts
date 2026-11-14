@@ -278,6 +278,16 @@ export type UnboundNativeBridge = {
 	 */
 	hasStagedBundle?(): boolean;
 	/**
+	 * Whether a newer client bundle is published than the one running or staged, downloading nothing. Resolves `false`
+	 * while client updates are paused; rejects with what failed. Missing on a loader from before it.
+	 */
+	checkForBundleUpdate?(): Promise<boolean>;
+	/**
+	 * Downloads the newer client bundle for the next restart, skipping the Wi-Fi wait but not paused client updates.
+	 * Resolves whether one is staged; rejects with what failed. Missing on a loader from before it.
+	 */
+	updateBundle?(): Promise<boolean>;
+	/**
 	 * Tells the loader Discord's first screen rendered, so it counts the launch as healthy shortly after rather than
 	 * waiting out its fallback timer. Missing on a loader from before it.
 	 */

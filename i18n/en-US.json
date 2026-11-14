@@ -144,6 +144,7 @@
 	"UNBOUND_UPDATES_STATUS_FAILED": "Couldn't Check for Updates",
 	"UNBOUND_UPDATES_CLIENT": "Client",
 	"UNBOUND_UPDATES_VERSION_PAUSED": "v{version} · Paused",
+	"UNBOUND_UPDATES_VERSION_STAGED": "v{version} · Restart to update",
 	"UNBOUND_UPDATES_ADDONS": "Addons",
 	"UNBOUND_UPDATES_PAUSED": "Paused",
 	"UNBOUND_UPDATES_SETTINGS": "Update Settings",

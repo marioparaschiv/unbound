@@ -78,6 +78,31 @@ export function hasStagedBundle(): boolean {
 }
 
 /**
+ * @description Asks the loader whether a newer client bundle is published, downloading nothing.
+ * @returns Whether one is, `false` while client updates are paused or on a loader from before it. Rejects with what
+ * failed.
+ */
+export async function checkForBundleUpdate(): Promise<boolean> {
+	const bridge = globalThis.UnboundNative;
+
+	if (!bridge?.checkForBundleUpdate) return false;
+
+	return bridge.checkForBundleUpdate();
+}
+
+/**
+ * @description Has the loader download the newer client bundle for the next restart.
+ * @returns Whether a staged bundle waits; on a loader from before it, whether one already does. Rejects with what failed.
+ */
+export async function updateBundle(): Promise<boolean> {
+	const bridge = globalThis.UnboundNative;
+
+	if (!bridge?.updateBundle) return hasStagedBundle();
+
+	return bridge.updateBundle();
+}
+
+/**
  * @description Tells the loader Discord's first screen rendered, so it counts this launch as healthy.
  */
 export function markRendered(): void {

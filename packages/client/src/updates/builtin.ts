@@ -18,6 +18,7 @@ const LEGACY_LAST_CLIENT_VERSION = 'updater.lastClientVersion';
 
 let stagedCheck: ReturnType<typeof setTimeout> | undefined;
 let appState: ReturnType<typeof AppState.addEventListener> | undefined;
+let unsubscribe: (() => void) | undefined;
 let stagedAnnounced = false;
 
 function announceStagedBundle() {
@@ -61,6 +62,11 @@ function announceClient() {
 export function start() {
 	announceClient();
 
+	// A check from the updates page can stage the next bundle well after launch.
+	unsubscribe = UpdatesStore.subscribe(({ state }) => {
+		if (state.status === 'ready' && state.client === 'staged') announceStagedBundle();
+	});
+
 	stagedCheck = setTimeout(announceStagedBundle, STAGED_CHECK_DELAY);
 	appState = AppState.addEventListener('change', (state) => {
 		if (state !== 'active') return;
@@ -82,6 +88,8 @@ export function afterAddons() {
 
 /** Cancels the staged bundle check. */
 export function stop() {
+	unsubscribe?.();
+	unsubscribe = undefined;
 	clearTimeout(stagedCheck);
 	appState?.remove();
 	appState = undefined;

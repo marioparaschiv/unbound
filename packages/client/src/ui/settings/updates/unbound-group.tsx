@@ -4,6 +4,7 @@ import type { DiscordBuilds } from '~/updates/discord-builds';
 import { CLIENT_VERSION, VERSION } from '~/core/constants';
 import { readInstallKind } from '~/updates/install-kind';
 import { useUnboundSettings } from '~/settings/unbound';
+import type { ClientUpdate } from '~/updates/client-update';
 import { getLoader } from '~/native/unbound-native';
 import LogoRowIcon from '~/ui/icons/logo-row-icon';
 import { loaderName } from '~/updates/loader-name';
@@ -11,6 +12,7 @@ import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { icons } from '~/assets/api';
 
+import ClientUpdateButton from './client-update-button';
 import LoaderUpdateRow from './loader-update-row';
 import CheckingIcon from './checking-icon';
 import StatusIcon from './status-icon';
@@ -27,14 +29,46 @@ type UnboundGroupProps = {
 	/** The loader version the newest client needs while the installed loader is older. */
 	requiredLoader: string | null;
 	discord: DiscordBuilds | null;
+	/** Where the client stands: current, a newer one published, or one downloaded for a restart. */
+	client: ClientUpdate;
 };
 
 /** @description Unbound itself: the client and the native loader, each its own row. */
-function UnboundGroup({ checked, checking, loader, requiredLoader, discord }: UnboundGroupProps) {
+function UnboundGroup({
+	checked,
+	checking,
+	loader,
+	requiredLoader,
+	discord,
+	client,
+}: UnboundGroupProps) {
 	const settings = useUnboundSettings();
 	// With automatic updates off, the loader keeps the cached client until the user refetches it.
 	const clientManual = !settings.get('updater.auto.client');
 	const installed = getLoader()?.version;
+
+	function clientLabel() {
+		if (client === 'staged') {
+			return format('UNBOUND_UPDATES_VERSION_STAGED', { version: CLIENT_BUILD });
+		}
+
+		return clientManual
+			? format('UNBOUND_UPDATES_VERSION_PAUSED', { version: CLIENT_BUILD })
+			: `v${CLIENT_BUILD}`;
+	}
+
+	function clientTrailing() {
+		// A newer client found before updates were paused stays put until they resume.
+		if (client === 'staged' || (client === 'available' && !clientManual)) {
+			return <ClientUpdateButton staged={client === 'staged'} />;
+		}
+
+		return checking && !clientManual ? (
+			<CheckingIcon />
+		) : (
+			<StatusIcon variant={clientStatus()} />
+		);
+	}
 
 	function clientStatus() {
 		if (clientManual) {
@@ -48,19 +82,9 @@ function UnboundGroup({ checked, checking, loader, requiredLoader, discord }: Un
 		<Discord.TableRowGroup>
 			<Discord.TableRow
 				label={messages.UNBOUND_UPDATES_CLIENT}
-				subLabel={
-					clientManual
-						? format('UNBOUND_UPDATES_VERSION_PAUSED', { version: CLIENT_BUILD })
-						: `v${CLIENT_BUILD}`
-				}
+				subLabel={clientLabel()}
 				icon={<LogoRowIcon />}
-				trailing={
-					checking && !clientManual ? (
-						<CheckingIcon />
-					) : (
-						<StatusIcon variant={clientStatus()} />
-					)
-				}
+				trailing={clientTrailing()}
 			/>
 			{loader ? (
 				<LoaderUpdateRow update={loader} discord={discord} />

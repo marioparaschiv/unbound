@@ -58,6 +58,7 @@ test('leaves an addon deleted after the update check deleted when updates apply'
 			loader: null,
 			requiredLoader: null,
 			discord: null,
+			client: 'current',
 		},
 	});
 
@@ -67,6 +68,42 @@ test('leaves an addon deleted after the update check deleted when updates apply'
 
 	expect(plugins.getAddon(ID)).toBeUndefined();
 	expect(writes).toEqual([]);
+});
+
+test('stages the client update the loader downloads, and keeps it available when that fails', async () => {
+	const outcomes = [false, true];
+
+	globalThis.UnboundNative = {
+		getLoader: () => ({ origin: 'test', version: '2.0.0', bytecodeVersion: 96 }),
+		getPlugins: () => [],
+		getThemes: () => [],
+		getSha256: () => 'native',
+		downloadFile: async () => undefined,
+		updateBundle: async () => outcomes.shift() ?? false,
+	};
+	UpdatesStore.setState({
+		state: {
+			status: 'ready',
+			checkedAt: new Date().toISOString(),
+			updates: [],
+			loader: null,
+			requiredLoader: null,
+			discord: null,
+			client: 'available',
+		},
+		applying: {},
+	});
+
+	try {
+		expect(await UpdatesStore.getState().applyClient()).toBe(false);
+		expect(UpdatesStore.getState().applying['unbound::client']).toBe('failed');
+
+		expect(await UpdatesStore.getState().applyClient()).toBe(true);
+		expect(UpdatesStore.getState().applying['unbound::client']).toBeUndefined();
+		expect(UpdatesStore.getState().state).toMatchObject({ client: 'staged' });
+	} finally {
+		globalThis.UnboundNative = undefined;
+	}
 });
 
 test('installs a listed release only when its bundle matches the digest', async () => {
