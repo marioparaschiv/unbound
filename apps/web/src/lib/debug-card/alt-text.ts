@@ -15,6 +15,7 @@ import {
 	supportOf,
 	updateNotes,
 } from '~/lib/debug-card/layout';
+import { cleanNames } from '~/lib/debug-card/spans';
 import type { DebugCardContext } from '~/lib/debug-card/context';
 
 const MAX_ALT_TEXT = 1024;
@@ -109,7 +110,7 @@ export function debugAltText(
 		}),
 		...(info.enabledPlugins?.length && { enabledPlugins: info.enabledPlugins }),
 		...(info.experiments?.length && { experiments: info.experiments }),
-		...(info.injected?.length && { tweaks: info.injected }),
+		...(cleanNames(info.injected ?? []).length && { tweaks: cleanNames(info.injected ?? []) }),
 		...(info.missingExtensions?.length && { missingExtensions: info.missingExtensions }),
 		...(info.display && { display: displaySummary(info.display) }),
 		...(info.session && { session: sessionSummary(info.session) }),

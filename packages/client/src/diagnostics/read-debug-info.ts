@@ -245,9 +245,13 @@ function addonUpdates(): string[] | undefined {
 }
 
 const MAX_INJECTED = 32;
+const EDGE_BLANKS = /^[\s\p{Cc}\p{Cf}]+|[\s\p{Cc}\p{Cf}]+$/gu;
 
 function injectedOf(state?: NativeDeviceState): string[] | undefined {
-	const names = state?.injected?.filter((name) => typeof name === 'string' && name.length > 0);
+	const names = state?.injected
+		?.filter((name) => typeof name === 'string')
+		.map((name) => name.replace(EDGE_BLANKS, ''))
+		.filter((name) => name.length > 0);
 
 	return names?.length
 		? names.slice(0, MAX_INJECTED).map((name) => name.slice(0, 96))
