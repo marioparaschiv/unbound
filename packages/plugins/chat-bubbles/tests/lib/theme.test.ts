@@ -2,7 +2,7 @@ import { flux } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { settings } from '@unbound-app/settings';
 
-import { currentAppearance, watchAppearance } from '~/lib/theme';
+import { currentAppearance, themeMentionColor, watchAppearance } from '~/lib/theme';
 
 beforeEach(() => {
 	flux.seed({ Theme: { theme: 'dark' } });
@@ -67,6 +67,16 @@ describe('the bubble appearance', () => {
 		settings.radius = 500;
 
 		expect(currentAppearance().radius).toBe(32);
+	});
+});
+
+describe('the default mention color', () => {
+	test("falls back to Discord's mention yellow without the theme module", () => {
+		expect(themeMentionColor()).toEqual({
+			red: 0xf0 / 255,
+			green: 0xb2 / 255,
+			blue: 0x32 / 255,
+		});
 	});
 });
 

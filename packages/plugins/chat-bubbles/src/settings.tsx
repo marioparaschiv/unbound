@@ -17,7 +17,7 @@ import {
 	ReplyStyle,
 } from '~/lib/constants';
 import { bubbleLayout, choice, parseHexColor, replyStyle } from '~/lib/style';
-import { themeBubbleColor } from '~/lib/theme';
+import { themeBubbleColor, themeMentionColor } from '~/lib/theme';
 import { hexColor } from '~/lib/shade';
 import { matchingPreset, PRESETS, type Look, type PresetName } from '~/presets';
 import ChatPreview from '~/preview/chat-preview';
@@ -464,7 +464,7 @@ function MentionsSection() {
 			<ui.ColorRow
 				label={messages.MENTION_COLOR}
 				color={mentionColor}
-				fallbackColor={BubbleStyle.mentionColor}
+				fallbackColor={hexColor(themeMentionColor())}
 				fallbackLabel={messages.MENTION_COLOR_FALLBACK}
 				onChange={(value) => {
 					settings.mentionColor = value ?? '';

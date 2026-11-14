@@ -7,7 +7,7 @@ import PreviewMessage, { type Size } from '~/preview/preview-message';
 import { previewPaints, type PreviewBubble } from '~/preview/preview-paint';
 import { bubbleAppearance, type BubbleAppearance } from '~/lib/style';
 import useStyles from '~/preview/chat-preview.style';
-import { themeBubbleColor } from '~/lib/theme';
+import { themeBubbleColor, themeMentionColor } from '~/lib/theme';
 import { Grouping } from '~/lib/constants';
 
 type Sample = { own: boolean; mention: boolean; text: string };
@@ -61,7 +61,13 @@ const LOOK_KEYS: (keyof Settings)[] = [
 function useAppearance(): BubbleAppearance {
 	const look = Object.fromEntries(LOOK_KEYS.map((key) => [key, useSetting(key)]));
 
-	return bubbleAppearance((key) => look[key], themeBubbleColor());
+	const style = bubbleAppearance((key) => look[key], themeBubbleColor());
+
+	// The chat reads the theme's mention color off Discord's bar; the preview has no bar, so it asks the theme.
+	return {
+		...style,
+		mention: { ...style.mention, color: style.mention.color ?? themeMentionColor() },
+	};
 }
 
 function sameSize(a: Size | undefined, b: Size): boolean {

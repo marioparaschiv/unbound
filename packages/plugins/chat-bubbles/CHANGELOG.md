@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.13] - 2026-11-14
+
+### Fixed
+
+- After resetting the mention color, the settings swatch, the preview and Android's fallback show the theme's mention color again instead of a fixed yellow.
+
 ## [1.6.12] - 2026-11-14
 
 ### Fixed
