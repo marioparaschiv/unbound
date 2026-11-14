@@ -10,9 +10,10 @@ use super::search::path_prefix;
 use super::unfold::{Fold, Place};
 use super::{MetroBrowser, Mode, Row};
 use crate::explorer::link_button;
+use crate::segmented::segmented;
 use crate::smooth_scroll::SmoothScroll;
 use crate::theme;
-use crate::widgets::{badge, field, icon, panel_header, segmented};
+use crate::widgets::{badge, field, icon, panel_header};
 
 const ID_WIDTH: f32 = 52.;
 

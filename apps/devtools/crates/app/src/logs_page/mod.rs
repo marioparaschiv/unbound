@@ -20,10 +20,9 @@ use crate::empty::SETUP_STEPS;
 use crate::empty_state::EmptyState;
 use crate::mcp_menu::McpButton;
 use crate::nav;
+use crate::segmented::segmented;
 use crate::theme;
-use crate::widgets::{
-	Raised, footer_bar, page_header, page_header_end, raised_button, segmented, tooltip,
-};
+use crate::widgets::{Raised, footer_bar, page_header, page_header_end, raised_button, tooltip};
 
 /// Lines come in batches; one redraw per frame is plenty.
 const CHANGE_COALESCING_FRAME: Duration = Duration::from_millis(16);

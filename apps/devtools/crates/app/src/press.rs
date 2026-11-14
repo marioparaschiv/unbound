@@ -14,11 +14,11 @@ use crate::theme;
 use crate::widgets::ledge_with_highlight;
 
 /// Down is quick and firm so the press registers at once; the web's `PRESS`.
-const PRESS: SpringConfig = SpringConfig::new(900., 40., 1.);
+pub(crate) const PRESS: SpringConfig = SpringConfig::new(900., 40., 1.);
 /// Release overshoots a touch, like a key; the web's `RELEASE`.
-const RELEASE: SpringConfig = SpringConfig::new(520., 22., 1.);
+pub(crate) const RELEASE: SpringConfig = SpringConfig::new(520., 22., 1.);
 /// A flat control's scale while pressed; the web's `press-flat`.
-const FLAT_SCALE: f32 = 0.96;
+pub(crate) const FLAT_SCALE: f32 = 0.96;
 
 /// Draws a flat control's face at a scale.
 type Face = Box<dyn FnOnce(f32) -> AnyElement>;
