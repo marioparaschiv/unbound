@@ -301,7 +301,8 @@ pub async fn eval(bridge: SocketAddr, code: &str, timeout_ms: u64) -> anyhow::Re
 				value,
 				error,
 				code,
-			} = frame && reply_id == id
+			} = frame
+				&& reply_id == id
 			{
 				let text = if ok { value } else { error };
 				return Ok(EvalOutcome {
