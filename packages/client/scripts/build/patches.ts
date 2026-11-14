@@ -1,8 +1,9 @@
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { brotliCompressSync, constants, type BrotliOptions } from 'node:zlib';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { safeParse, Type } from '@unbound-app/contracts/schema';
 import Logger from '@unbound-app/logger';
 import { createHash } from 'node:crypto';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { MANIFEST_FILE } from './sign';
@@ -30,7 +31,32 @@ export type PatchOptions = {
 	baseUrl: string;
 	revisions: string[];
 	fetcher?: Fetcher;
+	verifier?: string;
 };
+
+function verifyPatch(
+	verifier: string,
+	base: Uint8Array,
+	patchFile: string,
+	targetFile: string,
+): void {
+	const work = mkdtempSync(join(tmpdir(), 'unbound-patch-base-'));
+	const baseFile = join(work, 'base');
+
+	try {
+		writeFileSync(baseFile, base);
+
+		const result = Bun.spawnSync([verifier, baseFile, patchFile, targetFile]);
+
+		if (result.exitCode !== 0) {
+			throw new Error(
+				`The loader's decoder rejected ${patchFile}: ${result.stderr.toString().trim()}`,
+			);
+		}
+	} finally {
+		rmSync(work, { recursive: true, force: true });
+	}
+}
 
 /**
  * @description Names the file holding the patch from one bundle to the current build's.
@@ -98,8 +124,9 @@ async function fetchBase(
 
 /**
  * @description Writes a patch from each recent build's bundles to this build's into `patches/`, and lists their base hashes
- * in the manifest's `patches`, before the build is signed. A patch over half its bundle's size is left out.
- * @param options The build directory, the URL the earlier builds live under, and their revisions.
+ * in the manifest's `patches`, before the build is signed. A patch over half its bundle's size is left out. With a
+ * verifier, each patch must also rebuild the bundle through the loader's own decoder, or the build fails.
+ * @param options The build directory, the URL the earlier builds live under, their revisions, and the loader's patch checker.
  * @returns How many patches were written.
  */
 export async function createPatches({
@@ -107,6 +134,7 @@ export async function createPatches({
 	baseUrl,
 	revisions,
 	fetcher = fetch,
+	verifier,
 }: PatchOptions): Promise<number> {
 	const manifestPath = join(dir, MANIFEST_FILE);
 	const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
@@ -159,6 +187,11 @@ export async function createPatches({
 
 			mkdirSync(join(path, '..'), { recursive: true });
 			writeFileSync(path, patch);
+
+			if (verifier) {
+				verifyPatch(verifier, base, path, join(dir, file));
+			}
+
 			(patches[file] ??= []).push(baseHash);
 			written++;
 		}
