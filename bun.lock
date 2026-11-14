@@ -1347,6 +1347,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/mention-haptics": {
+      "name": "mention-haptics",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/message-burst": {
       "name": "message-burst",
       "dependencies": {
@@ -4367,6 +4381,8 @@
     "memoize-one": ["memoize-one@5.2.1", "", {}, "sha512-zYiwtZUcYyXKo/np96AGZAckk+FWWsUdJ3cHGGmld7+AhvcWmQyGCYUh1hc4Q/pkOhb65dQR/pqCyK0cOaHz4Q=="],
 
     "mention-avatars": ["mention-avatars@workspace:packages/plugins/mention-avatars"],
+
+    "mention-haptics": ["mention-haptics@workspace:packages/plugins/mention-haptics"],
 
     "meow": ["meow@13.2.0", "", {}, "sha512-pxQJQzB6djGPXh08dacEloMFopsOqGVRKFPYvPOt9XDZ1HasbgDZA74CJGreSU4G3Ak7EFJGoiH2auq+yXISgA=="],
 
