@@ -29,6 +29,7 @@ const DATE_FORMAT = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', time
 
 const STANDING_LABELS: Record<SponsorOverview['standing'], StandingLabel> = {
 	none: { label: 'Not sponsoring', variant: 'default' },
+	processing: { label: 'Processing', variant: 'default' },
 	active: { label: 'Active', variant: 'primary' },
 	grace: { label: 'Ending', variant: 'warning' },
 	lapsed: { label: 'Ended', variant: 'default' },
@@ -79,6 +80,13 @@ function SponsorshipDetails({ sponsor, sponsorship }: SponsorshipDetailsProps) {
 				</Text>
 			) : null}
 
+			{sponsor.standing === 'processing' ? (
+				<Text variant='text-xs' color='muted'>
+					GitHub is still processing your payment. Perks unlock once it clears, which can
+					take a few days.
+				</Text>
+			) : null}
+
 			{sponsor.graceUntil ? (
 				<Text variant='text-xs' color='muted'>
 					Your sponsorship has ended. Perks stay until{' '}
@@ -86,7 +94,7 @@ function SponsorshipDetails({ sponsor, sponsorship }: SponsorshipDetailsProps) {
 				</Text>
 			) : null}
 
-			{sponsor.standing === 'active' ? null : (
+			{sponsor.standing === 'active' || sponsor.standing === 'processing' ? null : (
 				<SponsorCta url={sponsor.sponsorUrl} label='Sponsor again on GitHub' />
 			)}
 		</div>
@@ -96,6 +104,7 @@ function SponsorshipDetails({ sponsor, sponsorship }: SponsorshipDetailsProps) {
 function SponsorshipCard() {
 	const { sponsor } = useSuspenseQuery(accountOverviewQuery()).data;
 	const active = sponsor.standing === 'active';
+	const sponsoring = active || sponsor.standing === 'processing';
 
 	return (
 		<Card className='shine-border gap-5'>
@@ -105,7 +114,7 @@ function SponsorshipCard() {
 						<IconHeart size={16} />
 					</span>
 					<CardTitle>
-						{active ? 'Thanks for sponsoring Unbound' : 'Support Unbound'}
+						{sponsoring ? 'Thanks for sponsoring Unbound' : 'Support Unbound'}
 					</CardTitle>
 				</div>
 				<Text
@@ -115,7 +124,9 @@ function SponsorshipCard() {
 				>
 					{active
 						? 'Your sponsorship keeps Unbound free and built in the open. Your perks are active on your Discord profile.'
-						: 'Unbound is free and built in the open. Sponsor it on GitHub to keep it going, and from $5 a month, or $30 once for good, get your own badge on your Discord profile, shown to everyone using Unbound.'}
+						: sponsoring
+							? 'Your sponsorship keeps Unbound free and built in the open. Your perks unlock on your Discord profile once GitHub clears the payment.'
+							: 'Unbound is free and built in the open. Sponsor it on GitHub to keep it going, and from $5 a month, or $30 once for good, get your own badge on your Discord profile, shown to everyone using Unbound.'}
 				</Text>
 			</CardHeader>
 			<CardContent className='flex flex-col gap-3'>
@@ -125,7 +136,7 @@ function SponsorshipCard() {
 					<>
 						<Text variant='text-xs' color='muted' className='leading-relaxed'>
 							{sponsor.githubLinked
-								? 'No sponsorship from your GitHub account yet. It shows up here a few moments after you sponsor.'
+								? 'No sponsorship from your GitHub account yet. It shows up here within an hour of sponsoring.'
 								: 'Link your GitHub account above so a sponsorship from it reaches this account.'}
 						</Text>
 						<SponsorCta url={sponsor.sponsorUrl} label='Sponsor on GitHub' />

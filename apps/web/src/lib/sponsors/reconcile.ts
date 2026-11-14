@@ -4,16 +4,21 @@ import { createLogger } from '@unbound-app/logger';
 import { lt } from 'drizzle-orm';
 
 import type { SponsorshipLifecycle, SponsorshipValues } from '~/lib/sponsors/sponsorships';
+import { graceMs, upsertSponsorship } from '~/lib/sponsors/sponsorships';
+import { isSponsoring, standingOf } from '~/lib/sponsors/standing';
 import { sponsorship, sponsorWebhookDelivery } from '~/db/schema';
-import { upsertSponsorship } from '~/lib/sponsors/sponsorships';
 import type { Sponsorship } from '~/lib/sponsors/standing';
 import { startPeriodicJob, type Job } from '~/lib/jobs';
 import type { AppContext } from '~/lib/context';
+import { DAY_MS } from '~/lib/calendar-date';
 import type { Env } from '~/lib/env';
 
 const logger = createLogger('Web', 'Sponsors');
 
 const DELIVERY_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+
+// GitHub lists a sponsorship as inactive until its payment settles, which takes up to a few days.
+const PROCESSING_WINDOW_MS = 7 * DAY_MS;
 
 const SPONSORSHIPS_QUERY = `query ($login: String!, $after: String) {
 	repositoryOwner(login: $login) {
@@ -87,6 +92,8 @@ type SponsorshipsPage = Static<
 export type RemoteSponsorship = SponsorshipValues &
 	Pick<Sponsorship, 'largestOneTimeCents'> & {
 		active: boolean;
+		/** Inactive but younger than the processing window, so its payment has not settled yet. */
+		processing: boolean;
 	};
 
 export type ReconcileResult = {
@@ -135,10 +142,14 @@ async function fetchPage(config: SponsorsConfig, after: string | null): Promise<
  * @description Reads every sponsorship of the sponsored account, past ones included, page by page.
  * Any failed or malformed page fails the whole read.
  * @param env The validated environment, with the Sponsors login and token set.
- * @returns The sponsorships by sponsor GitHub id; an active one wins over an inactive one, and each
- * carries the sponsor's largest one-time payment across all of theirs.
+ * @param now The current time, which tells a processing sponsorship from a past one.
+ * @returns The sponsorships by sponsor GitHub id; an active one wins over a processing one, which wins
+ * over a past one, and each carries the sponsor's largest settled one-time payment across all of theirs.
  */
-export async function fetchRemoteSponsorships(env: Env): Promise<Map<string, RemoteSponsorship>> {
+export async function fetchRemoteSponsorships(
+	env: Env,
+	now: Date,
+): Promise<Map<string, RemoteSponsorship>> {
 	const config = sponsorsConfig(env);
 
 	if (!config) {
@@ -159,12 +170,15 @@ export async function fetchRemoteSponsorships(env: Env): Promise<Map<string, Rem
 
 			const githubId = String(node.sponsorEntity.databaseId);
 			const previous = remote.get(githubId);
+			const since = new Date(node.createdAt);
+			const processing =
+				!node.isActive && now.getTime() - since.getTime() < PROCESSING_WINDOW_MS;
 			const largestOneTimeCents = Math.max(
 				previous?.largestOneTimeCents ?? 0,
-				node.isOneTimePayment ? (node.tier?.monthlyPriceInCents ?? 0) : 0,
+				node.isOneTimePayment && !processing ? (node.tier?.monthlyPriceInCents ?? 0) : 0,
 			);
 
-			if (previous?.active) {
+			if (previous?.active || (previous?.processing && !node.isActive)) {
 				remote.set(githubId, { ...previous, largestOneTimeCents });
 				continue;
 			}
@@ -176,9 +190,10 @@ export async function fetchRemoteSponsorships(env: Env): Promise<Map<string, Rem
 				monthlyPriceCents: node.tier?.monthlyPriceInCents ?? 0,
 				oneTime: node.isOneTimePayment,
 				isPublic: node.privacyLevel === 'PUBLIC',
-				since: new Date(node.createdAt),
+				since,
 				largestOneTimeCents,
 				active: node.isActive,
+				processing,
 			});
 		}
 
@@ -203,6 +218,10 @@ function nextLifecycle(
 		return { state: 'active', endsAt: null };
 	}
 
+	if (remote?.processing) {
+		return { state: 'processing', endsAt: null };
+	}
+
 	if (!current) {
 		// A past one-time payment is stored anyway, since the perks it unlocks are permanent.
 		return remote?.largestOneTimeCents
@@ -212,6 +231,11 @@ function nextLifecycle(
 
 	if (current.state === 'cancelled') {
 		return { state: current.state, endsAt: current.endsAt };
+	}
+
+	// A payment that never settled ends where it began, so it leaves no grace period behind.
+	if (current.state === 'processing') {
+		return { state: 'cancelled', endsAt: current.since };
 	}
 
 	return { state: 'cancelled', endsAt: current.endsAt ?? now };
@@ -231,12 +255,26 @@ function isSameSponsorship(current: Sponsorship, next: Sponsorship): boolean {
 	);
 }
 
+// GitHub lags behind a `created` webhook, and a new payment must not hide a sponsorship still in grace.
+function keepsCurrent(
+	current: Sponsorship,
+	reported: RemoteSponsorship,
+	now: Date,
+	grace: number,
+): boolean {
+	return (
+		current.state !== 'processing' &&
+		(current.since >= reported.since || isSponsoring(standingOf(current, now, grace)))
+	);
+}
+
 /**
  * @description Works out which stored sponsorships differ from what GitHub reports.
  * @param local Every stored sponsorship.
  * @param remote GitHub's sponsorships by sponsor id.
  * @param now The current time.
  * @param startedAt When the remote read began; rows written since then came from a webhook and win.
+ * @param grace How long perks outlast a sponsorship, in milliseconds.
  * @returns The rows to write.
  */
 export function planReconcile(
@@ -244,6 +282,7 @@ export function planReconcile(
 	remote: Map<string, RemoteSponsorship>,
 	now: Date,
 	startedAt: Date,
+	grace: number,
 ): Sponsorship[] {
 	const stored = new Map(local.map((row) => [row.githubId, row]));
 	const ids = new Set([...stored.keys(), ...remote.keys()]);
@@ -254,6 +293,10 @@ export function planReconcile(
 		const reported = remote.get(id);
 
 		if (current && current.updatedAt > startedAt) {
+			continue;
+		}
+
+		if (current && reported?.processing && keepsCurrent(current, reported, now, grace)) {
 			continue;
 		}
 
@@ -298,11 +341,17 @@ export function planReconcile(
  */
 export async function reconcileSponsorships(ctx: AppContext): Promise<ReconcileResult> {
 	const startedAt = ctx.now();
-	const remote = await fetchRemoteSponsorships(ctx.env);
+	const remote = await fetchRemoteSponsorships(ctx.env, startedAt);
 	const now = ctx.now();
 
 	const updated = await ctx.db.transaction(async (tx) => {
-		const writes = planReconcile(await tx.select().from(sponsorship), remote, now, startedAt);
+		const writes = planReconcile(
+			await tx.select().from(sponsorship),
+			remote,
+			now,
+			startedAt,
+			graceMs(ctx.env),
+		);
 
 		for (const row of writes) {
 			await upsertSponsorship(tx, row);

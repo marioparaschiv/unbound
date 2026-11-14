@@ -28,6 +28,10 @@ function tierNote(perk: PerkStatus, sponsor: SponsorOverview): string {
 	const once = formatPrice(perk.minimumOneTimeCents);
 	const current = sponsor.sponsorship;
 
+	if (sponsor.standing === 'processing') {
+		return `GitHub is still processing your sponsorship. Once the payment clears, ${tier} or more unlocks this, or ${once} once unlocks it for good.`;
+	}
+
 	if (sponsor.standing === 'active' && current && !current.oneTime) {
 		return `Thanks for sponsoring ${formatMonthlyPrice(current.monthlyPriceCents)}. Moving to ${tier} unlocks this, or ${once} once unlocks it for good.`;
 	}

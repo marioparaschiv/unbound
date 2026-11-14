@@ -31,6 +31,8 @@ type GraphQLRequest = {
 };
 
 const NOW = new Date('2026-03-01T00:00:00Z');
+// Within the processing window before NOW.
+const RECENT = '2026-02-28T00:00:00Z';
 const PAGE_SIZE = 2;
 const TOKEN = 'sponsors-token';
 
@@ -217,6 +219,61 @@ describe('reconcileSponsorships', () => {
 			largestOneTimeCents: 10_000,
 		});
 		expect((await storedSponsorship(ctx, '71'))?.largestOneTimeCents).toBe(2500);
+	});
+
+	test('a recent inactive payment is processing, unlocks nothing, then settles', async () => {
+		const ctx = await setup();
+
+		remote.nodes = [{ id: 80, active: false, oneTime: true, cents: 10_000, createdAt: RECENT }];
+
+		await reconcileSponsorships(ctx);
+
+		expect(await storedSponsorship(ctx, '80')).toMatchObject({
+			state: 'processing',
+			endsAt: null,
+			largestOneTimeCents: 0,
+		});
+
+		remote.nodes = [{ id: 80, active: true, oneTime: true, cents: 10_000, createdAt: RECENT }];
+
+		await reconcileSponsorships(ctx);
+
+		expect(await storedSponsorship(ctx, '80')).toMatchObject({
+			state: 'active',
+			largestOneTimeCents: 10_000,
+		});
+	});
+
+	test('a payment that never settles ends where it began', async () => {
+		const ctx = await setup();
+		const since = new Date('2026-02-01T00:00:00Z');
+
+		await seed(ctx, { githubId: '81', state: 'processing', since });
+		remote.nodes = [{ id: 81, active: false, createdAt: since.toISOString() }];
+
+		await reconcileSponsorships(ctx);
+
+		expect(await storedSponsorship(ctx, '81')).toMatchObject({
+			state: 'cancelled',
+			endsAt: since,
+		});
+	});
+
+	test('a processing payment hides neither a webhook-settled nor an in-grace sponsorship', async () => {
+		const ctx = await setup();
+
+		await seed(ctx, { githubId: '82', since: new Date(RECENT) });
+		await seed(ctx, {
+			githubId: '83',
+			state: 'cancelled',
+			endsAt: new Date('2026-02-27T00:00:00Z'),
+		});
+		remote.nodes = [
+			{ id: 82, active: false, createdAt: RECENT },
+			{ id: 83, active: false, createdAt: RECENT },
+		];
+
+		expect(await reconcileSponsorships(ctx)).toEqual({ fetched: 2, updated: 0 });
 	});
 
 	test('a privacy change alone is written, both ways', async () => {
