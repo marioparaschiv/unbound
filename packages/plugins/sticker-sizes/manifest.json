@@ -1,0 +1,21 @@
+{
+	"id": "unbound.sticker-sizes",
+	"name": "Sticker Sizes",
+	"description": "Shows stickers in chat at the size you pick.",
+	"authors": [
+		{
+			"name": "rushii",
+			"id": "295190422244950017"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "StickerIcon",
+	"main": "index.tsx"
+}

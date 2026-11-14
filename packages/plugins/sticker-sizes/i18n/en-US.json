@@ -1,0 +1,8 @@
+{
+	"SCALE": "Sticker size",
+	"SCALE_SUBTITLE": "How large stickers show in chat, against Discord's own size.",
+	"SCALE_50": "50%",
+	"SCALE_75": "75%",
+	"SCALE_125": "125%",
+	"SCALE_150": "150%"
+}
