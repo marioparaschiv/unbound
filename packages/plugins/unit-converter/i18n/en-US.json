@@ -1,0 +1,13 @@
+{
+	"CONVERSIONS": "Conversions",
+	"CONVERT_TO": "Convert to",
+	"CONVERT_TO_SUBTITLE": "Applies to messages as they load.",
+	"SYSTEM_AUTO": "Your region's units",
+	"SYSTEM_AUTO_SUBTITLE": "Imperial in the US, Liberia and Myanmar; metric everywhere else.",
+	"SYSTEM_METRIC": "Metric",
+	"SYSTEM_METRIC_SUBTITLE": "Feet, pounds, mph and °F get metric values.",
+	"SYSTEM_IMPERIAL": "Imperial",
+	"SYSTEM_IMPERIAL_SUBTITLE": "Metres, kilograms, km/h and °C get imperial values.",
+	"SYSTEM_BOTH": "Both ways",
+	"SYSTEM_BOTH_SUBTITLE": "Every measurement gets the other system's value."
+}
