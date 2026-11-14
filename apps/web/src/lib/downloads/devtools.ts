@@ -33,11 +33,11 @@ const asset = (
 	contents,
 });
 
-/** The archives devtools.yml attaches to each release, matching its build matrix. */
+/** The archives devtools.yml attaches to each release, most common system first. */
 export const DEVTOOLS_ASSETS: DevToolsAsset[] = [
-	asset('macos', 'arm64', 'Apple silicon', '.tar.gz', 'Unbound DevTools.app'),
 	asset('windows', 'x64', 'x64', '.zip', 'unbound-devtools.exe'),
 	asset('windows', 'arm64', 'ARM64', '.zip', 'unbound-devtools.exe'),
+	asset('macos', 'arm64', 'Apple silicon', '.tar.gz', 'Unbound DevTools.app'),
 	asset('linux', 'x64', 'x64', '.tar.gz', 'unbound-devtools'),
 	asset('linux', 'arm64', 'ARM64', '.tar.gz', 'unbound-devtools'),
 ];
