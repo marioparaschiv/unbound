@@ -76,9 +76,11 @@ export function patchEmptySendButton(): void {
 	}
 
 	patcher.react.after(SendButton, 'default', ({ props, result }) => {
+		if (!settings.emptySend || !result) return;
+
 		const channelId = channelOf(props ?? {});
 
-		if (!settings.emptySend || !channelId || !result) return;
+		if (!channelId) return;
 
 		return hideTargetWhileEmpty(result, channelId);
 	});
