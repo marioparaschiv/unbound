@@ -1,0 +1,18 @@
+{
+	"id": "unbound.privacy-screen",
+	"name": "Privacy Screen",
+	"description": "Hides your chats in the app switcher: a blur on iOS, a blank preview on Android, which also blocks screenshots there.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "EyeSlashIcon",
+	"minNativeBridgeApi": "1.0.0",
+	"main": "index.tsx"
+}
