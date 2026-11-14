@@ -3,8 +3,6 @@
 declare module '@unbound-app/i18n' {
 	/** Every en-US message, read in the user's locale. */
 	export type Messages = {
-		/** Download Voice Message */
-		readonly DOWNLOAD: string;
 		/** Downloading {name}… */
 		readonly DOWNLOADING: string;
 		/** Couldn't download the voice message. */
@@ -29,17 +27,11 @@ declare module '@unbound-app/i18n' {
 		readonly SPEED_15: string;
 		/** 2× */
 		readonly SPEED_2: string;
-		/** Playback Speed: {speed} */
-		readonly SPEED_ROW: string;
-		/** Voice messages now play at {speed}. */
-		readonly SPEED_CHANGED: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
 	export type FormatVars = {
 		DOWNLOADING: { name: string | number };
-		SPEED_ROW: { speed: string | number };
-		SPEED_CHANGED: { speed: string | number };
 	};
 
 	/** Each message in the user's locale, falling back to en-US. */

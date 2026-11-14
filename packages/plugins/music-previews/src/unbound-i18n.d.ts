@@ -3,20 +3,8 @@
 declare module '@unbound-app/i18n' {
 	/** Every en-US message, read in the user's locale. */
 	export type Messages = {
-		/** Open in Spotify */
-		readonly OPEN_IN_SPOTIFY: string;
-		/** Loading previews… */
-		readonly LOADING: string;
-		/** No preview */
-		readonly NO_PREVIEW: string;
-		/** Couldn't load this from Spotify. */
-		readonly LOAD_FAILED: string;
-		/** Play preview */
-		readonly PLAY: string;
-		/** Stop preview */
-		readonly PAUSE: string;
-		/** Open in Apple Music */
-		readonly OPEN_IN_APPLE_MUSIC: string;
+		/** Preview */
+		readonly PREVIEW: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
