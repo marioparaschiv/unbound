@@ -26,5 +26,31 @@
 	},
 	"icon": "MicrophoneIcon",
 	"main": "index.tsx",
-	"replaces": ["unbound.voice-messages"]
+	"replaces": [
+		"unbound.voice-messages"
+	],
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.objc.classes",
+				"native.objc.hooks",
+				"native.objc.invoke"
+			]
+		},
+		"android": {
+			"capabilities": [
+				"native.java.classes",
+				"native.java.construct",
+				"native.java.hooks",
+				"native.java.invoke"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "f72420449f05fddf7fc2530a33681a59cc4148bbe1579fb09172bd0b1070e6bd888064b73a97061dc2e0280b76f31fbe54dd37cdb5e3d93c24af1a189e12911d"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "g3mCh+mLQnfMTaDOgDha/OWDTZcOfeO/dOEtdHa0mXDH5X+ot1M3qAlfTQJnoICREvLpjiw0mqe8LEy1SXYOBQ=="
+	}
 }
