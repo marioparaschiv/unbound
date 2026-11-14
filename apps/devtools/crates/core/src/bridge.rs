@@ -91,7 +91,7 @@ pub(crate) enum BridgeFrame {
 		code: Option<String>,
 	},
 	BridgeInfo(BridgeInfo),
-	/// One React DevTools frame; `protocol::parse` reads it from the frame's text.
+	/// One React DevTools frame; `react_protocol::parse` reads it from the frame's text.
 	ReactDevtools {},
 	ViewsResult {
 		id: String,

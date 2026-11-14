@@ -10,7 +10,7 @@ use crate::value::{Path, PathSegment};
 
 /// Backend → frontend, the events this frontend acts on.
 #[derive(Debug)]
-pub enum Inbound {
+pub enum ReactInbound {
 	Operations(Vec<i64>),
 	InspectedElement(InspectedElementPayload),
 	BackendVersion(String),
@@ -52,7 +52,7 @@ pub enum InspectedKind {
 
 /// Frontend → backend.
 #[derive(Debug, Clone)]
-pub enum Outbound {
+pub enum ReactOutbound {
 	GetBridgeProtocol,
 	GetBackendVersion,
 	GetIfHasUnsupportedRendererVersion,
@@ -63,12 +63,38 @@ pub enum Outbound {
 		path: Option<Path>,
 		force_full_data: bool,
 	},
+	/// `value: None` sets `undefined`. Hook paths start with the hook id, as for every edit below.
 	OverrideValueAtPath {
 		target: OverrideTarget,
 		id: ElementId,
 		renderer: RendererId,
 		path: Path,
-		value: Json,
+		value: Option<Json>,
+	},
+	DeletePath {
+		target: OverrideTarget,
+		id: ElementId,
+		renderer: RendererId,
+		path: Path,
+	},
+	RenamePath {
+		target: OverrideTarget,
+		id: ElementId,
+		renderer: RendererId,
+		old_path: Path,
+		new_path: Path,
+	},
+	/// Shows a Suspense boundary's fallback, or lets it show its children again.
+	OverrideSuspense {
+		id: ElementId,
+		renderer: RendererId,
+		force_fallback: bool,
+	},
+	/// Puts an error boundary into its errored state, or clears it.
+	OverrideError {
+		id: ElementId,
+		renderer: RendererId,
+		force_error: bool,
 	},
 	HighlightHostInstance {
 		id: ElementId,
@@ -142,11 +168,11 @@ struct RawInspected {
 	message: Option<String>,
 }
 
-pub fn parse(text: &str) -> Result<Inbound, serde_json::Error> {
+pub fn parse(text: &str) -> Result<ReactInbound, serde_json::Error> {
 	let Frame { event, payload } = serde_json::from_str(text)?;
 
 	Ok(match event.as_str() {
-		"operations" => Inbound::Operations(serde_json::from_value(payload)?),
+		"operations" => ReactInbound::Operations(serde_json::from_value(payload)?),
 		"inspectedElement" => {
 			let raw: RawInspected = serde_json::from_value(payload)?;
 			let kind = match raw.kind.as_str() {
@@ -161,7 +187,7 @@ pub fn parse(text: &str) -> Result<Inbound, serde_json::Error> {
 				},
 			};
 
-			Inbound::InspectedElement(InspectedElementPayload {
+			ReactInbound::InspectedElement(InspectedElementPayload {
 				id: raw.id,
 				response_id: raw.response_id,
 				kind,
@@ -169,32 +195,32 @@ pub fn parse(text: &str) -> Result<Inbound, serde_json::Error> {
 				path: raw.path,
 			})
 		}
-		"backendVersion" => Inbound::BackendVersion(serde_json::from_value(payload)?),
-		"bridgeProtocol" => Inbound::BridgeProtocol(payload),
-		"backendInitialized" => Inbound::BackendInitialized,
-		"unsupportedRendererVersion" => Inbound::UnsupportedRendererVersion,
+		"backendVersion" => ReactInbound::BackendVersion(serde_json::from_value(payload)?),
+		"bridgeProtocol" => ReactInbound::BridgeProtocol(payload),
+		"backendInitialized" => ReactInbound::BackendInitialized,
+		"unsupportedRendererVersion" => ReactInbound::UnsupportedRendererVersion,
 		"selectElement" | "selectFiber" => match payload.as_i64() {
-			Some(id) => Inbound::SelectElement(ElementId(id)),
-			None => Inbound::Other { event },
+			Some(id) => ReactInbound::SelectElement(ElementId(id)),
+			None => ReactInbound::Other { event },
 		},
-		"shutdown" | "shutdownBackend" => Inbound::ShutdownBackend,
+		"shutdown" | "shutdownBackend" => ReactInbound::ShutdownBackend,
 		STATUS_EVENT => {
 			let RawStatus { connected, error } = serde_json::from_value(payload)?;
-			Inbound::BackendStatus { connected, error }
+			ReactInbound::BackendStatus { connected, error }
 		}
-		_ => Inbound::Other { event },
+		_ => ReactInbound::Other { event },
 	})
 }
 
 /// The bridge frame for `message`, ready to send on the debugger connection.
-pub fn encode(message: &Outbound) -> String {
+pub fn encode(message: &ReactOutbound) -> String {
 	let (event, payload) = match message {
-		Outbound::GetBridgeProtocol => ("getBridgeProtocol", Json::Null),
-		Outbound::GetBackendVersion => ("getBackendVersion", Json::Null),
-		Outbound::GetIfHasUnsupportedRendererVersion => {
+		ReactOutbound::GetBridgeProtocol => ("getBridgeProtocol", Json::Null),
+		ReactOutbound::GetBackendVersion => ("getBackendVersion", Json::Null),
+		ReactOutbound::GetIfHasUnsupportedRendererVersion => {
 			("getIfHasUnsupportedRendererVersion", Json::Null)
 		}
-		Outbound::InspectElement {
+		ReactOutbound::InspectElement {
 			id,
 			renderer,
 			request_id,
@@ -210,34 +236,87 @@ pub fn encode(message: &Outbound) -> String {
 				"requestID": request_id,
 			}),
 		),
-		Outbound::OverrideValueAtPath {
+		ReactOutbound::OverrideValueAtPath {
 			target,
 			id,
 			renderer,
 			path,
 			value,
 		} => {
-			// Hook overrides address the hook by `hookID` and the path inside its value.
-			let (hook_id, path) = match (target, path.split_first()) {
-				(OverrideTarget::Hooks, Some((PathSegment::Index(hook), rest))) => {
-					(Some(*hook), rest)
-				}
-				_ => (None, path.as_slice()),
-			};
+			let (hook_id, path) = split_hook(*target, path);
+			let mut payload = json!({
+				"hookID": hook_id,
+				"id": id,
+				"path": path,
+				"rendererID": renderer,
+				"type": target,
+			});
+
+			// JSON has no `undefined`: a payload without `value` reads as undefined on device.
+			if let Some(value) = value {
+				payload["value"] = value.clone();
+			}
+
+			("overrideValueAtPath", payload)
+		}
+		ReactOutbound::DeletePath {
+			target,
+			id,
+			renderer,
+			path,
+		} => {
+			let (hook_id, path) = split_hook(*target, path);
 
 			(
-				"overrideValueAtPath",
+				"deletePath",
 				json!({
 					"hookID": hook_id,
 					"id": id,
 					"path": path,
 					"rendererID": renderer,
 					"type": target,
-					"value": value,
 				}),
 			)
 		}
-		Outbound::HighlightHostInstance {
+		ReactOutbound::RenamePath {
+			target,
+			id,
+			renderer,
+			old_path,
+			new_path,
+		} => {
+			let (hook_id, old_path) = split_hook(*target, old_path);
+			let (_, new_path) = split_hook(*target, new_path);
+
+			(
+				"renamePath",
+				json!({
+					"hookID": hook_id,
+					"id": id,
+					"newPath": new_path,
+					"oldPath": old_path,
+					"rendererID": renderer,
+					"type": target,
+				}),
+			)
+		}
+		ReactOutbound::OverrideSuspense {
+			id,
+			renderer,
+			force_fallback,
+		} => (
+			"overrideSuspense",
+			json!({ "forceFallback": force_fallback, "id": id, "rendererID": renderer }),
+		),
+		ReactOutbound::OverrideError {
+			id,
+			renderer,
+			force_error,
+		} => (
+			"overrideError",
+			json!({ "forceError": force_error, "id": id, "rendererID": renderer }),
+		),
+		ReactOutbound::HighlightHostInstance {
 			id,
 			renderer,
 			display_name,
@@ -252,8 +331,8 @@ pub fn encode(message: &Outbound) -> String {
 				"scrollIntoView": false,
 			}),
 		),
-		Outbound::ClearHostInstanceHighlight => ("clearHostInstanceHighlight", Json::Null),
-		Outbound::UpdateComponentFilters(filters) => (
+		ReactOutbound::ClearHostInstanceHighlight => ("clearHostInstanceHighlight", Json::Null),
+		ReactOutbound::UpdateComponentFilters(filters) => (
 			"updateComponentFilters",
 			filters
 				.iter()
@@ -266,7 +345,7 @@ pub fn encode(message: &Outbound) -> String {
 				})
 				.collect(),
 		),
-		Outbound::StoreAsGlobal {
+		ReactOutbound::StoreAsGlobal {
 			id,
 			renderer,
 			path,
@@ -283,4 +362,12 @@ pub fn encode(message: &Outbound) -> String {
 	};
 
 	frame.to_string()
+}
+
+/// Hook edits address the hook by `hookID` and the path inside its value; other paths pass through.
+fn split_hook(target: OverrideTarget, path: &[PathSegment]) -> (Option<usize>, &[PathSegment]) {
+	match (target, path.split_first()) {
+		(OverrideTarget::Hooks, Some((PathSegment::Index(hook), rest))) => (Some(*hook), rest),
+		_ => (None, path),
+	}
 }

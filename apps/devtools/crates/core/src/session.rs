@@ -11,16 +11,15 @@ use std::time::{Duration, SystemTime};
 
 use parking_lot::{Mutex, RwLock, RwLockReadGuard};
 use serde::Serialize;
-use serde_json::Value as Json;
 use tokio::sync::{mpsc, oneshot, watch};
 
 use crate::bridge::Launcher;
 use crate::explorer::ExplorerOutcome;
-use crate::inspect::{InspectedElement, Section};
+use crate::inspect::InspectedElement;
 use crate::link::{Link, LinkStatus};
 use crate::metro::MetroOutcome;
-use crate::protocol::{
-	ComponentFilter, InspectedElementPayload, InspectedKind, Outbound, OverrideTarget,
+use crate::react_protocol::{
+	ComponentFilter, InspectedElementPayload, InspectedKind, ReactOutbound,
 };
 use crate::store::{ElementId, ElementKind, RendererId, Store};
 use crate::value::{Path, PathSegment, Value};
@@ -157,13 +156,13 @@ impl Inner {
 			.send_modify(|revision| *revision = revision.wrapping_add(1));
 	}
 
-	pub(crate) fn send(&self, message: &Outbound) -> bool {
+	pub(crate) fn send(&self, message: &ReactOutbound) -> bool {
 		let state = self.state.lock();
 
 		state.backend.as_ref().is_some_and(|backend| {
 			backend
 				.outbound
-				.send(crate::protocol::encode(message))
+				.send(crate::react_protocol::encode(message))
 				.is_ok()
 		})
 	}
@@ -293,7 +292,7 @@ impl Devtools {
 	pub async fn inspect(&self, id: ElementId) -> Result<InspectedElement, RequestError> {
 		let renderer = self.renderer_of(id)?;
 		let payload = self
-			.request(move |request_id| Outbound::InspectElement {
+			.request(move |request_id| ReactOutbound::InspectElement {
 				id,
 				renderer,
 				request_id,
@@ -310,7 +309,7 @@ impl Devtools {
 		let renderer = self.renderer_of(id)?;
 		let request_path = path.clone();
 		let payload = self
-			.request(move |request_id| Outbound::InspectElement {
+			.request(move |request_id| ReactOutbound::InspectElement {
 				id,
 				renderer,
 				request_id,
@@ -336,52 +335,13 @@ impl Devtools {
 			.ok_or_else(|| RequestError::Invalid(format!("no value at {}", path_text(&path))))
 	}
 
-	/// Edits a prop, state key, hook value or context value on device. For hooks, `path` starts
-	/// with the hook id.
-	pub async fn override_value(
-		&self,
-		id: ElementId,
-		section: Section,
-		path: Path,
-		value: Json,
-	) -> Result<(), RequestError> {
-		let renderer = self.renderer_of(id)?;
-
-		if section == Section::Hooks && !matches!(path.first(), Some(PathSegment::Index(_))) {
-			return Err(RequestError::Invalid(
-				"a hook override's path starts with the hook id, e.g. [0] for the first useState"
-					.to_owned(),
-			));
-		}
-
-		let target = match section {
-			Section::Props => OverrideTarget::Props,
-			Section::State => OverrideTarget::State,
-			Section::Hooks => OverrideTarget::Hooks,
-			Section::Context => OverrideTarget::Context,
-		};
-
-		if !self.inner.send(&Outbound::OverrideValueAtPath {
-			target,
-			id,
-			renderer,
-			path,
-			value,
-		}) {
-			return Err(RequestError::NotConnected);
-		}
-
-		self.inner.inspections.lock().remove(&id);
-		Ok(())
-	}
-
 	/// Highlights the element's host view on device; `None` clears it.
 	pub fn highlight(&self, id: Option<ElementId>) {
 		let message = id.and_then(|id| {
 			let store = self.inner.store.read();
 			let element = store.get(id)?;
 
-			Some(Outbound::HighlightHostInstance {
+			Some(ReactOutbound::HighlightHostInstance {
 				id,
 				renderer: element.renderer,
 				display_name: element.name.to_string(),
@@ -389,7 +349,7 @@ impl Devtools {
 		});
 
 		self.inner
-			.send(&message.unwrap_or(Outbound::ClearHostInstanceHighlight));
+			.send(&message.unwrap_or(ReactOutbound::ClearHostInstanceHighlight));
 	}
 
 	/// Toggles the host-component filter; the backend remounts the tree with new ids.
@@ -411,7 +371,8 @@ impl Devtools {
 		self.inner.state.lock().filters.clone_from(&filters);
 		// The remount reassigns ids; its own remove ops empty the store.
 		self.inner.inspections.lock().clear();
-		self.inner.send(&Outbound::UpdateComponentFilters(filters));
+		self.inner
+			.send(&ReactOutbound::UpdateComponentFilters(filters));
 		self.inner.bump();
 	}
 
@@ -427,7 +388,7 @@ impl Devtools {
 			count
 		};
 
-		if !self.inner.send(&Outbound::StoreAsGlobal {
+		if !self.inner.send(&ReactOutbound::StoreAsGlobal {
 			id,
 			renderer,
 			path,
@@ -439,7 +400,7 @@ impl Devtools {
 		Ok(format!("$reactTemp{count}"))
 	}
 
-	fn renderer_of(&self, id: ElementId) -> Result<RendererId, RequestError> {
+	pub(crate) fn renderer_of(&self, id: ElementId) -> Result<RendererId, RequestError> {
 		self.inner
 			.store
 			.read()
@@ -458,7 +419,7 @@ impl Devtools {
 
 	async fn request(
 		&self,
-		build: impl FnOnce(u64) -> Outbound,
+		build: impl FnOnce(u64) -> ReactOutbound,
 	) -> Result<InspectedElementPayload, RequestError> {
 		let request_id = self.inner.next_request.fetch_add(1, Ordering::Relaxed) + 1;
 		let (reply, response) = oneshot::channel();
