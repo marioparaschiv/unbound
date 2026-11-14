@@ -7,7 +7,7 @@ func TestStockExtensionExecutable(t *testing.T) {
 	for name, want := range map[string]bool{
 		app + "PlugIns/BroadcastUpload.appex/BroadcastUpload":         true,
 		app + "PlugIns/NotificationService.appex/NotificationService": true,
-		app + "PlugIns/Share.appex/Share":                             false,
+		app + "PlugIns/Share.appex/Share":                             true,
 		app + "PlugIns/OpenInDiscord.appex/OpenInDiscord":             false,
 		app + "PlugIns/BroadcastUpload.appex/Info.plist":              false,
 		app + "Discord": false,

@@ -10,13 +10,7 @@
 			"name": "loader-ios",
 			"path": "ios",
 			"kind": "platform-runtime",
-			"dependencies": [
-				"loader-core",
-				"loader-bootstrap",
-				"libffi",
-				"open-in-discord",
-				"share-to-discord"
-			]
+			"dependencies": ["loader-core", "loader-bootstrap", "libffi", "open-in-discord"]
 		},
 		{
 			"name": "loader-android",
@@ -43,11 +37,6 @@
 		{
 			"name": "open-in-discord",
 			"path": "ios/extensions/OpenInDiscord",
-			"kind": "ios-extension"
-		},
-		{
-			"name": "share-to-discord",
-			"path": "ios/extensions/ShareToDiscord",
 			"kind": "ios-extension"
 		}
 	]
