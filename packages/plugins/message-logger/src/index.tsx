@@ -1,7 +1,13 @@
 import { chatRowsSelfTest, trackChatRows } from '@unbound-plugins/shared/lifecycle/chat-rows';
 import { patcher } from '@unbound-app/api';
 
-import { interceptDeletions, interceptEdits, trackNonces } from '~/flux/interceptors';
+import {
+	interceptDeletions,
+	interceptEdits,
+	trackNonces,
+	trackOwnDeletions,
+} from '~/flux/interceptors';
+import { ownDeletions } from '~/lib/own-deletions';
 import { patchMessageActions } from '~/patches/message-actions';
 import { patchMessageRows } from '~/patches/message-rows';
 import { startSaving, stopSaving } from '~/lib/persist';
@@ -10,9 +16,11 @@ import { clearLog } from '~/lib/clear';
 import SettingsPanel from '~/settings';
 
 export function start() {
+	ownDeletions.clear();
 	interceptDeletions();
 	interceptEdits();
 	trackNonces();
+	trackOwnDeletions();
 	patchMessageRows();
 	patchMessageActions();
 	startSaving();
@@ -26,6 +34,7 @@ export function stop() {
 	stopSaving();
 	closeHistorySheet();
 	clearLog();
+	ownDeletions.clear();
 }
 
 export function selfTest() {

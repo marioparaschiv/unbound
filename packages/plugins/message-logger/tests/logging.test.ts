@@ -3,7 +3,15 @@ import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { flux } from '@unbound-app/api';
 
-import { ME, dispatch, generateRow, message, startLogger, type Action } from './helpers/discord';
+import {
+	ME,
+	MessageActions,
+	dispatch,
+	generateRow,
+	message,
+	startLogger,
+	type Action,
+} from './helpers/discord';
 
 let reached: Action[];
 
@@ -33,6 +41,14 @@ describe('a deleted message', () => {
 
 		expect(reached).toEqual([]);
 		expect(isMarkedDeleted()).toBe(true);
+	});
+
+	test('goes straight through when you deleted it yourself', async () => {
+		MessageActions.deleteMessage('c1', 'm1');
+		await del();
+
+		expect(reached).toMatchObject([{ type: 'MESSAGE_DELETE', id: 'm1' }]);
+		expect(isMarkedDeleted()).toBe(false);
 	});
 
 	test('goes through the second time, as with Dismiss message', async () => {

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.3] - 2026-11-14
+
+### Fixed
+
+- Messages you delete yourself are no longer logged, so they stop flashing as deleted before they disappear.
+
 ## [1.2.2] - 2026-11-14
 
 ### Fixed
