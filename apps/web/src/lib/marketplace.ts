@@ -5,6 +5,7 @@ import { Type } from '@unbound-app/contracts/schema';
 
 import { loadMarketplacePage, type MarketplacePage } from '~/lib/marketplace-listing';
 import { loadAddonPage, type MarketplaceAddonDetails } from '~/lib/marketplace-page';
+import { loadFeaturedAddons, type FeaturedAddon } from '~/lib/marketplace-featured';
 import { searchAuthors, type AuthorPage } from '~/lib/authors/directory';
 import { listTags, type TagOption } from '~/lib/addon-tags';
 import { schemaValidator } from '~/lib/schema-validator';
@@ -28,6 +29,14 @@ const authorSearchSchema = Type.Object({
 export const fetchMarketplacePage = createServerFn({ method: 'GET' })
 	.validator(schemaValidator(listAddonsQuerySchema))
 	.handler(({ data }): Promise<MarketplacePage> => loadMarketplacePage(getApp(), data));
+
+/**
+ * @description Loads today's Featured picks for one `/addons` tab.
+ * @returns Up to ten cards, or none when the type lists too few addons.
+ */
+export const fetchFeaturedAddons = createServerFn({ method: 'GET' })
+	.validator(schemaValidator(addonTypeSchema))
+	.handler(({ data }): Promise<FeaturedAddon[]> => loadFeaturedAddons(getApp(), data));
 
 /**
  * @description Lists every tag with how many listed addons of the type carry it, for the Tags filter.
@@ -63,6 +72,7 @@ export const fetchMarketplaceAddon = createServerFn({ method: 'GET' })
 
 export default {
 	fetchMarketplacePage,
+	fetchFeaturedAddons,
 	fetchMarketplaceTags,
 	fetchMarketplaceAuthors,
 	fetchMarketplaceAddon,

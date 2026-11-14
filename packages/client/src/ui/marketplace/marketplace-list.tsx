@@ -1,9 +1,10 @@
+import { pickFeatured } from '@unbound-app/contracts/featured-addons';
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 import { memo, useContext, useMemo, useState } from 'react';
 import type { AddonKind } from '@unbound-app/types/addons';
 import { RefreshControl, View } from 'react-native';
 
-import { countActiveFilters, filterCatalog, pickFeatured } from '~/marketplace/filters';
+import { countActiveFilters, filterCatalog } from '~/marketplace/filters';
 import { queryCatalog } from '~/marketplace/catalog';
 import MarketplaceStore from '~/marketplace/state';
 import FlashList from '~/ui/components/flash-list';

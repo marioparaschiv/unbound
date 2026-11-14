@@ -403,11 +403,12 @@ export async function listAddons(
 /**
  * @description Loads every listed addon with its newest version, ordered by id.
  * @param ctx The application context.
+ * @param type Only addons of this type; every type when omitted.
  * @returns The listed addons.
  */
-export async function listListedAddons(ctx: AppContext): Promise<ListedAddon[]> {
+export async function listListedAddons(ctx: AppContext, type?: AddonType): Promise<ListedAddon[]> {
 	const rows = await ctx.db.query.addon.findMany({
-		where: LISTED_ADDONS,
+		where: { ...LISTED_ADDONS, type: type ?? EmptyFilter },
 		with: WITH_SERVED_VERSION,
 		orderBy: { id: 'asc' },
 	});

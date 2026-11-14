@@ -5,6 +5,7 @@ import type { QueryClient } from '@tanstack/react-query';
 
 import { sortOrder, splitList, type MarketplaceSearch } from '~/lib/addon-filters';
 import { pickedAuthorsQuery } from '~/queries/marketplace/authors';
+import { featuredQuery } from '~/queries/marketplace/featured';
 import { fetchMarketplacePage } from '~/lib/marketplace';
 import { tagsQuery } from '~/queries/marketplace/tags';
 import { marketplaceKey } from '~/queries/keys';
@@ -42,7 +43,7 @@ export function listingQuery(type: AddonType, search: MarketplaceSearch) {
  * @param type The listing's addon type.
  * @param search The URL's search, filters and sort.
  * @param cause Why the route loads; `stay` is a search changed on the page.
- * @returns Resolves once the results and tags are cached, or at once for a search changed on the page.
+ * @returns Resolves once the results, tags and Featured picks are cached, or at once for a search changed on the page.
  */
 export async function prefetchListing(
 	queryClient: QueryClient,
@@ -66,6 +67,7 @@ export async function prefetchListing(
 	await Promise.all([
 		queryClient.ensureInfiniteQueryData(listingQuery(type, search)),
 		queryClient.ensureQueryData(tagsQuery(type)),
+		queryClient.ensureQueryData(featuredQuery(type)),
 		picked.length > 0 ? queryClient.ensureQueryData(pickedAuthorsQuery(picked)) : undefined,
 	]);
 }
