@@ -129,6 +129,17 @@ void leavesPausedClientUpdatesAlone()
     assert(!loader::fileExists(launch.server.candidate()));
 }
 
+void reportsNoUpdateFromASourceWithoutAManifestToCompare()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    launch.pipeline.prepare();
+    launch.server.settings.set("unbound", "loader.update.unsigned", true);
+
+    assert(!launch.pipeline.isBundleUpdateAvailable());
+}
+
 void spacesRetriesWithJitter()
 {
     using loader::LoaderPipeline;
@@ -150,6 +161,7 @@ int main()
     retriesAFailedCheckWhenTheServerSaysWhen();
     checksThenStagesABundleTheClientAsksForEvenOnAMeteredNetwork();
     leavesPausedClientUpdatesAlone();
+    reportsNoUpdateFromASourceWithoutAManifestToCompare();
     spacesRetriesWithJitter();
     return 0;
 }

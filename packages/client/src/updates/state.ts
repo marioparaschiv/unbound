@@ -4,16 +4,16 @@ import toError from '@unbound-app/utils/to-error';
 import { Platform } from 'react-native';
 import { create } from 'zustand';
 
+import { CLIENT_UPDATE_ID, findClientUpdate, stageClientUpdate } from '~/updates/client-update';
 import { fetchLoaderUpdate, resolveRequiredLoader } from '~/updates/loader-updates';
 import { automaticUpdates, fetchUpdates } from '~/updates/addon-updates';
 import { installsFromManifest } from '~/addons/installs-from-manifest';
 import { checkDiscordBuilds } from '~/updates/discord-builds';
 import type { DiscordBuilds } from '~/updates/discord-builds';
 import type { PendingUpdate } from '~/updates/addon-updates';
+import type { ClientUpdate } from '~/updates/client-update';
 import type { LoaderCheck } from '~/updates/loader-updates';
 import { moveRenamedAddons } from '~/addons/renames';
-import { CLIENT_UPDATE_ID, findClientUpdate, stageClientUpdate } from '~/updates/client-update';
-import type { ClientUpdate } from '~/updates/client-update';
 import { getLoader } from '~/native/unbound-native';
 import { BUILD_CHANNEL } from '~/core/constants';
 import { install } from '~/marketplace/api';
@@ -162,23 +162,23 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 			return pending;
 		},
 		async applyClient() {
-			if (get().applying[CLIENT_UPDATE_ID] === 'updating') return false;
+			if (get().applying[CLIENT_UPDATE_ID] === 'updating') {
+				return false;
+			}
 
 			setApplying(CLIENT_UPDATE_ID, 'updating');
 
-			const staged = await stageClientUpdate();
+			const client = await stageClientUpdate();
 
-			setApplying(CLIENT_UPDATE_ID, staged ? undefined : 'failed');
+			setApplying(CLIENT_UPDATE_ID, client ? undefined : 'failed');
 
-			if (staged) {
+			if (client) {
 				set((prev) =>
-					prev.state.status === 'ready'
-						? { state: { ...prev.state, client: 'staged' } }
-						: {},
+					prev.state.status === 'ready' ? { state: { ...prev.state, client } } : {},
 				);
 			}
 
-			return staged;
+			return client === 'staged';
 		},
 		async apply(id) {
 			const { state, applying } = get();

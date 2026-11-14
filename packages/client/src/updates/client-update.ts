@@ -16,13 +16,17 @@ export const CLIENT_UPDATE_ID = 'unbound::client';
  * @returns Where the client stands; `current` when the check failed.
  */
 export async function findClientUpdate(): Promise<ClientUpdate> {
-	if (hasStagedBundle()) return 'staged';
+	if (hasStagedBundle()) {
+		return 'staged';
+	}
 
 	try {
 		const available = await checkForBundleUpdate();
 
 		// The loader's own check, which the native one waits out, may have staged it meanwhile.
-		if (hasStagedBundle()) return 'staged';
+		if (hasStagedBundle()) {
+			return 'staged';
+		}
 
 		return available ? 'available' : 'current';
 	} catch (error) {
@@ -34,14 +38,15 @@ export async function findClientUpdate(): Promise<ClientUpdate> {
 
 /**
  * @description Has the loader download the newer client for the next restart.
- * @returns Whether it now waits for a restart; `false` when the download failed or client updates are paused.
+ * @returns `staged` once it waits for a restart, `current` when nothing newer came or client updates are paused, and
+ * `undefined` when the download failed.
  */
-export async function stageClientUpdate(): Promise<boolean> {
+export async function stageClientUpdate(): Promise<Exclude<ClientUpdate, 'available'> | undefined> {
 	try {
-		return await updateBundle();
+		return (await updateBundle()) ? 'staged' : 'current';
 	} catch (error) {
 		logger.error('Failed to download the client update:', error);
 
-		return false;
+		return undefined;
 	}
 }

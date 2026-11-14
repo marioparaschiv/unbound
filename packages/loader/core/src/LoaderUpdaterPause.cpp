@@ -92,6 +92,9 @@ bool BundleUpdater::isUpdateAvailable(const std::string                &preferre
     {
         return false;
     }
-    return !planDownload(updateURL, bytecodeVersion).unchanged;
+    // An unsigned source, such as the dev server, has no manifest to compare; only a download
+    // tells, so the check reports none rather than an update that may turn out unchanged.
+    DownloadPlan plan = planDownload(updateURL, bytecodeVersion);
+    return plan.exemption.empty() && !plan.unchanged;
 }
 }

@@ -11,7 +11,7 @@ export function check(): Promise<void> {
 /**
  * @description Downloads the newer client found by the last {@link check}, for the next restart. Does nothing while
  * client updates are paused.
- * @returns Whether the new client waits for a restart.
+ * @returns Whether the new client waits for a restart; `false` when nothing newer came or the download failed.
  */
 export function applyClient(): Promise<boolean> {
 	return UpdatesStore.getState().applyClient();

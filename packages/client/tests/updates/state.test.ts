@@ -71,7 +71,7 @@ test('leaves an addon deleted after the update check deleted when updates apply'
 });
 
 test('stages the client update the loader downloads, and keeps it available when that fails', async () => {
-	const outcomes = [false, true];
+	const outcomes = [() => Promise.reject(new Error('offline')), async () => true];
 
 	globalThis.UnboundNative = {
 		getLoader: () => ({ origin: 'test', version: '2.0.0', bytecodeVersion: 96 }),
@@ -79,7 +79,7 @@ test('stages the client update the loader downloads, and keeps it available when
 		getThemes: () => [],
 		getSha256: () => 'native',
 		downloadFile: async () => undefined,
-		updateBundle: async () => outcomes.shift() ?? false,
+		updateBundle: () => (outcomes.shift() ?? (async () => false))(),
 	};
 	UpdatesStore.setState({
 		state: {
@@ -101,6 +101,14 @@ test('stages the client update the loader downloads, and keeps it available when
 		expect(await UpdatesStore.getState().applyClient()).toBe(true);
 		expect(UpdatesStore.getState().applying['unbound::client']).toBeUndefined();
 		expect(UpdatesStore.getState().state).toMatchObject({ client: 'staged' });
+
+		// Nothing newer came, so the row shows the client as current rather than a failure.
+		UpdatesStore.setState((prev) =>
+			prev.state.status === 'ready' ? { state: { ...prev.state, client: 'available' } } : {},
+		);
+		expect(await UpdatesStore.getState().applyClient()).toBe(false);
+		expect(UpdatesStore.getState().applying['unbound::client']).toBeUndefined();
+		expect(UpdatesStore.getState().state).toMatchObject({ client: 'current' });
 	} finally {
 		globalThis.UnboundNative = undefined;
 	}
