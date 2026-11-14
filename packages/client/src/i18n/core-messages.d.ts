@@ -13,6 +13,8 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_SEARCH: { type: string | number };
 		UNBOUND_NO_ADDONS: { type: string | number };
 		UNBOUND_NO_ADDONS_BODY: { type: string | number };
+		UNBOUND_NO_ENABLED_ADDONS: { type: string | number };
+		UNBOUND_NO_DISABLED_ADDONS: { type: string | number };
 		UNBOUND_UPDATES_CHECKED: { date: string | number };
 		UNBOUND_UPDATES_CHECK_FAILED: { error: string | number };
 		UNBOUND_UPDATES_ALL: { count: string | number };
@@ -45,6 +47,7 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_VERSION_FAILED: { name: string | number; version: string | number };
 		UNBOUND_VERSION_HELD_TOAST: { name: string | number; version: string | number };
 		UNBOUND_MARKETPLACE_EMPTY: { type: string | number };
+		UNBOUND_MARKETPLACE_NO_MATCH: { type: string | number };
 		UNBOUND_MARKETPLACE_INSTALLS: { value: string | number; count: number };
 		UNBOUND_MARKETPLACE_ALL: { type: string | number };
 		UNBOUND_FILTER_ALL_OF: { value: string | number };
