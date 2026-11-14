@@ -91,3 +91,42 @@ test('falls back to text when the header already has an OP tag', () => {
 	expect(row.opTagText).toBe('OP');
 	expect(row.timestamp).toBe('10/5/26, 19:05 • he/him');
 });
+
+test('falls back to text when the header already has a user tag, which shares the pill', () => {
+	const row: Parameters<typeof addPronouns>[0] = {
+		username: 'adrián',
+		tagText: 'Owner',
+		timestamp: '10/5/26, 19:05',
+	};
+
+	addPronouns(row, 'he/him', undefined, IPHONE_WIDTH, 'pill');
+
+	expect(row.opTagText).toBeUndefined();
+	expect(row.timestamp).toBe('10/5/26, 19:05 • he/him');
+});
+
+test('falls back to text next to a connections role tag', () => {
+	const row: Parameters<typeof addPronouns>[0] = {
+		username: 'adrián',
+		connectionsRoleTag: {},
+		timestamp: '10/5/26, 19:05',
+	};
+
+	addPronouns(row, 'he/him', undefined, IPHONE_WIDTH, 'pill');
+
+	expect(row.opTagText).toBeUndefined();
+	expect(row.timestamp).toBe('10/5/26, 19:05 • he/him');
+});
+
+test('counts a server tag toward the header width', () => {
+	const row: Parameters<typeof addPronouns>[0] = {
+		username: 'adrián castro',
+		clanTag: '말랑볼살',
+		timestamp: '10/5/26, 19:05',
+	};
+
+	addPronouns(row, 'he/him', undefined, IPHONE_WIDTH, 'pill');
+
+	expect(row.opTagText).toBeUndefined();
+	expect(row.timestamp).toBe('10/5/26, 19:05');
+});
