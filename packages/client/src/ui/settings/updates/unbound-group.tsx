@@ -1,10 +1,10 @@
 import type { LoaderUpdate } from '@unbound-app/contracts/loader';
 
 import type { DiscordBuilds } from '~/updates/discord-builds';
+import type { ClientUpdate } from '~/updates/client-update';
 import { CLIENT_VERSION, VERSION } from '~/core/constants';
 import { readInstallKind } from '~/updates/install-kind';
 import { useUnboundSettings } from '~/settings/unbound';
-import type { ClientUpdate } from '~/updates/client-update';
 import { getLoader } from '~/native/unbound-native';
 import LogoRowIcon from '~/ui/icons/logo-row-icon';
 import { loaderName } from '~/updates/loader-name';
@@ -48,10 +48,6 @@ function UnboundGroup({
 	const installed = getLoader()?.version;
 
 	function clientLabel() {
-		if (client === 'staged') {
-			return format('UNBOUND_UPDATES_VERSION_STAGED', { version: CLIENT_BUILD });
-		}
-
 		return clientManual
 			? format('UNBOUND_UPDATES_VERSION_PAUSED', { version: CLIENT_BUILD })
 			: `v${CLIENT_BUILD}`;

@@ -25,7 +25,6 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_UPDATES_DOWNLOAD_VERSION: { version: string | number };
 		UNBOUND_INSTALL_FAILED: { name: string | number };
 		UNBOUND_UPDATES_VERSION_PAUSED: { version: string | number };
-		UNBOUND_UPDATES_VERSION_STAGED: { version: string | number };
 		UNBOUND_UPDATES_ADDONS_COUNT: { count: number };
 		UNBOUND_UPDATES_PENDING: { count: number };
 		UNBOUND_UPDATES_VERSION_UNLISTED: { version: string | number };
