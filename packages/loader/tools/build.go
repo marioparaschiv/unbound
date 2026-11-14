@@ -280,6 +280,13 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 	if err := validateIPAInspector(options.output); err != nil {
 		return err
 	}
+	groups, err := buildGroupRemap(options, work, runner)
+	if err != nil {
+		return err
+	}
+	if err := addGroupRemapToIPA(options.output, groups, work); err != nil {
+		return err
+	}
 	finalEntries, err := zipList(options.output, runner, options.root)
 	if err != nil {
 		return err
