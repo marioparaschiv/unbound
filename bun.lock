@@ -2003,6 +2003,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/userpfp": {
+      "name": "userpfp",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/usrbg": {
       "name": "usrbg",
       "dependencies": {
@@ -4999,6 +5013,8 @@
     "use-sidecar": ["use-sidecar@1.1.3", "", { "dependencies": { "detect-node-es": "^1.1.0", "tslib": "^2.0.0" }, "peerDependencies": { "@types/react": "*", "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react"] }, "sha512-Fedw0aZvkhynoPYlA5WXrMCAMm+nSWdZt6lzJQ7Ok8S6Q+VsHmHpRWndVRJ8Be0ZbkfPc5LRYH+5XrzXcEeLRQ=="],
 
     "use-sync-external-store": ["use-sync-external-store@1.7.0", "", { "peerDependencies": { "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-6L+EeigHMQhdaIPNIFUKwfWJSwWFQ8gJbJ2DLOs5sDIegTwR9fRxvnM3uciHKjIZhFz+KAv2emhWMRvDmMcY8A=="],
+
+    "userpfp": ["userpfp@workspace:packages/plugins/userpfp"],
 
     "usrbg": ["usrbg@workspace:packages/plugins/usrbg"],
 

@@ -1,6 +1,6 @@
 # Plugins
 
-122 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+123 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -118,6 +118,7 @@
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Typing Avatars](https://unbound.rip/addons/unbound.typing-avatars): Shows the avatars of people typing in the channel.
 - <img src="../../assets/plugins/readme-icons/arrows-left-right-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Unit Converter](https://unbound.rip/addons/unbound.unit-converter): Adds metric or imperial conversions next to measurements in messages, like 5 ft (≈ 1.52 m).
 - <img src="../../assets/plugins/readme-icons/embed-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Unsuppress Embeds](https://unbound.rip/addons/unbound.unsuppress-embeds): Adds a message long-press row that brings back suppressed link embeds, or suppresses them.
+- <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [UserPFP](https://unbound.rip/addons/unbound.userpfp): Shows the avatars people set on UserPFP, so anyone can have an animated profile picture without Nitro.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [USRBG](https://unbound.rip/addons/unbound.usrbg): Shows the banners people set on USRBG, so anyone can have a profile banner without Nitro.
 - <img src="../../assets/plugins/readme-icons/headphones-icon.svg" width="20" height="20" align="absmiddle" alt=""> [VC Narrator](https://unbound.rip/addons/unbound.vc-narrator): Says out loud when people join, leave or move in your voice channel.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [View Icons](https://unbound.rip/addons/unbound.view-icons): View user avatars, banners, server icons, server banners, and group DM icons.
