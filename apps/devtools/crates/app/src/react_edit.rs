@@ -64,7 +64,8 @@ pub fn permissions(element: &InspectedElement, path: &[PathSegment]) -> Permissi
 		edit,
 		delete: edit && delete && !tail.is_empty(),
 		rename: edit
-			&& rename && tail.len() >= rename_depth
+			&& rename
+			&& tail.len() >= rename_depth
 			&& matches!(tail.last(), Some(PathSegment::Key(_))),
 	}
 }
