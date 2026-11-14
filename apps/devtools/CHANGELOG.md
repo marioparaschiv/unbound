@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.1.0...devtools-v1.2.0) (2026-11-14)
+
+
+### Features
+
+* **devtools:** mcp button on every page and base ui popouts ([#1392](https://github.com/marioparaschiv/unbound/issues/1392)) ([aed8af8](https://github.com/marioparaschiv/unbound/commit/aed8af8722f886209cc4455a52ef6e358780accb))
+
 ## [1.1.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.0.0...devtools-v1.1.0) (2026-11-14)
 
 

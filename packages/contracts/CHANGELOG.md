@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.3.0](https://github.com/marioparaschiv/unbound/compare/contracts-v2.2.0...contracts-v2.3.0) (2026-11-14)
+
+
+### Features
+
+* **client:** report gateway health in /debug ([#1395](https://github.com/marioparaschiv/unbound/issues/1395)) ([b7abfc8](https://github.com/marioparaschiv/unbound/commit/b7abfc89a9817c554c23b9bc7e232e635b66da0a))
+* **client:** report power, clock, DNS and notifications in /debug ([#1393](https://github.com/marioparaschiv/unbound/issues/1393)) ([1a9227f](https://github.com/marioparaschiv/unbound/commit/1a9227fa96802e73efd2293ec850db477f2355a4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/types bumped to 1.3.0
+
 ## [2.2.0](https://github.com/marioparaschiv/unbound/compare/contracts-v2.1.0...contracts-v2.2.0) (2026-11-14)
 
 
