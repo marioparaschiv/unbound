@@ -19,7 +19,11 @@ type ChannelWithParent = FluxChannel & { parent_id?: string | null };
 declare module '@unbound-app/api/flux' {
 	// oxlint-disable-next-line typescript/consistent-type-definitions -- merging needs an interface.
 	interface FluxStores {
-		SortedGuild: FluxStore & { getFlattenedGuildIds(): string[] };
+		SortedGuild: FluxStore & {
+			getFlattenedGuildIds(): string[];
+			getGuildsTree(): object;
+			getFastListGuildFolders(): readonly object[];
+		};
 	}
 }
 
