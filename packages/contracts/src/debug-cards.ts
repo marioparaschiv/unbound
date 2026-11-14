@@ -167,6 +167,7 @@ export const debugCardRequestSchema = Type.Object({
 	dns: Type.Optional(dnsSchema),
 	push: Type.Optional(pushSchema),
 	gateway: Type.Optional(gatewaySchema),
+	crashReport: Type.Optional(text(64)),
 	heap: Type.Optional(heapSchema),
 	storage: Type.Optional(
 		Type.Object({

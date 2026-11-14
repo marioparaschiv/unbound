@@ -4,7 +4,7 @@ import { Type, type StaticDecode } from './schema';
 
 export { CRASH_REPORT_LOG_LIMIT } from './crash-report-limits';
 
-export const CRASH_REPORT_KINDS = ['crash', 'freeze', 'start-failure'] as const;
+export const CRASH_REPORT_KINDS = ['crash', 'freeze', 'start-failure', 'native-crash'] as const;
 
 export const CRASH_REPORT_PLATFORMS = ['ios', 'android'] as const;
 

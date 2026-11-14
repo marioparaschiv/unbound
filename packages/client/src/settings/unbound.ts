@@ -11,6 +11,8 @@ const DEFAULTS = {
 	'developer-mode': false,
 	'staff-mode': false,
 	'crash-reports': false,
+	'crash-reports.nativeAt': 0,
+	'crash-reports.lastId': '',
 	'debugger.enabled': false,
 	'debugger.address': '',
 	/** Computers whose advertised bridge the device connects to without asking. */

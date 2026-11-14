@@ -255,6 +255,8 @@ std::string describeNativeCrash(const std::string &stack)
     return described;
 }
 
+constexpr size_t kCrashStackLimit = 16000;
+
 nlohmann::json launchReportJSON(const LaunchReport &report, const std::string &nativeCrash,
                                 const std::vector<NativeCrashRecord> &history)
 {
@@ -264,7 +266,8 @@ nlohmann::json launchReportJSON(const LaunchReport &report, const std::string &n
                         {"previousExit", previousExitName(report.previousExit)}};
     if (std::string headline = nativeCrashHeadline(nativeCrash); !headline.empty())
     {
-        json["lastCrash"] = headline;
+        json["lastCrash"]  = headline;
+        json["crashStack"] = nativeCrash.substr(0, kCrashStackLimit);
     }
     if (report.firstRenderMs > 0)
     {
