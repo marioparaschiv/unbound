@@ -1,3 +1,4 @@
+import { chatRowsSelfTest, trackChatRows } from '@unbound-plugins/shared/lifecycle/chat-rows';
 import { patcher } from '@unbound-app/api';
 
 import { interceptDeletions, interceptEdits, trackNonces } from '~/flux/interceptors';
@@ -15,6 +16,7 @@ export function start() {
 	patchMessageRows();
 	patchMessageActions();
 	startSaving();
+	trackChatRows();
 }
 
 // Saving stops before the log clears, so the saved file keeps it. The row patches go first, so the cleared rows draw plain;
@@ -24,6 +26,10 @@ export function stop() {
 	stopSaving();
 	closeHistorySheet();
 	clearLog();
+}
+
+export function selfTest() {
+	return chatRowsSelfTest();
 }
 
 export { SettingsPanel };

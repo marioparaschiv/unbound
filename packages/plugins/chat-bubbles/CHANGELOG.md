@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.11] - 2026-11-14
+
+### Added
+
+- The device check fails when the open chat shows a message twice, so a Discord update that changes how chat rows rebuild is caught before users see duplicates.
+
 ## [1.6.10] - 2026-11-14
 
 ### Fixed
