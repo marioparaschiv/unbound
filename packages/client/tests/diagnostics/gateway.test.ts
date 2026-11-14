@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { mockLookups } from '../helpers/lookups';
 
-mockLookups({ findStore: () => undefined });
+mockLookups({ findByProps: () => undefined });
 
 const { gatewayHealth, readGateway } = await import('~/diagnostics/gateway');
 
