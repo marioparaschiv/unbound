@@ -74,8 +74,8 @@ export function readGateway(): DebugInfo['gateway'] {
 
 	return gatewayHealth(
 		socket,
-		Boolean(GatewayConnectionStore.isConnected?.()),
-		Number(GatewayConnectionStore.lastTimeConnectedChanged?.() ?? 0),
+		Boolean(GatewayConnectionStore?.isConnected?.()),
+		Number(GatewayConnectionStore?.lastTimeConnectedChanged?.() ?? 0),
 	);
 }
 
