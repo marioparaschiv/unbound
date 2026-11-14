@@ -174,6 +174,25 @@ downloadFunction(jsi::Runtime                                                 &r
         });
 }
 
+// A function returning a promise of `work`'s result, run off the JS thread.
+static jsi::Function backgroundFlagFunction(jsi::Runtime &runtime, const char *name,
+                                            std::function<bool()> work)
+{
+    return native::makeFunction(runtime, name, 0,
+                                [work = std::move(work)](jsi::Runtime &rt, const jsi::Value &,
+                                                         const jsi::Value *, size_t) -> jsi::Value {
+                                    auto flag = std::make_shared<bool>(false);
+                                    return native::executeBackgroundAsynchronously(
+                                        rt,
+                                        [work, flag] {
+                                            *flag = work();
+                                        },
+                                        [flag](jsi::Runtime &) {
+                                            return jsi::Value(*flag);
+                                        });
+                                });
+}
+
 static jsi::Function buildIconIPAFunction(jsi::Runtime &runtime, std::function<std::string()> build)
 {
     return native::makeFunction(
@@ -214,6 +233,18 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
         bridge.setProperty(runtime, "hasStagedBundle",
                            getter(runtime, "hasStagedBundle", std::move(provider.hasStagedBundle),
                                   nlohmann::json(false)));
+    }
+    if (provider.checkForBundleUpdate)
+    {
+        bridge.setProperty(runtime, "checkForBundleUpdate",
+                           backgroundFlagFunction(runtime, "checkForBundleUpdate",
+                                                  std::move(provider.checkForBundleUpdate)));
+    }
+    if (provider.updateBundle)
+    {
+        bridge.setProperty(
+            runtime, "updateBundle",
+            backgroundFlagFunction(runtime, "updateBundle", std::move(provider.updateBundle)));
     }
     if (provider.markRendered)
     {

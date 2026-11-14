@@ -21,6 +21,12 @@ struct UnboundNativeProvider {
     std::function<nlohmann::json()> getAppIcons;
     // Whether a newer bundle downloaded this launch and runs at the next restart.
     std::function<nlohmann::json()> hasStagedBundle;
+    // Whether a newer bundle is published, honouring paused client updates. Runs off the JS thread;
+    // throws what failed.
+    std::function<bool()> checkForBundleUpdate;
+    // Downloads the newer bundle for the next restart, honouring paused client updates. Runs off
+    // the JS thread; returns whether one waits for the restart and throws what failed.
+    std::function<bool()> updateBundle;
     // Discord's first screen rendered; the loader counts the launch as healthy shortly after.
     std::function<void()> markRendered;
     // Rereads the installed themes and reapplies the selected one; left out of the bridge when

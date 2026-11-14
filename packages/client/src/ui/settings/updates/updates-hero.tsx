@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 
+import type { ClientUpdate } from '~/updates/client-update';
 import type { UpdatesState } from '~/updates/state';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
@@ -20,16 +21,23 @@ type UpdatesHeroProps = {
 	automatic: number;
 	/** Whether client updates run but the newest client needs a newer loader. */
 	blocked: boolean;
+	/** Where the client stands; a newer one counts as a waiting update. */
+	client: ClientUpdate;
 };
 
 /**
  * @description The status header at the top of the updates page: a coloured badge for where things stand,
  * when it was checked, what is waiting, and the actions that check again and update everything.
  */
-function UpdatesHero({ state, pending, automatic, blocked }: UpdatesHeroProps) {
+function UpdatesHero({ state, pending, automatic, blocked, client }: UpdatesHeroProps) {
 	const styles = useStyles();
 	const { check, applyAll } = UpdatesStore.getState();
-	const hero = describeHero(state, pending.length, blocked);
+	const hero = describeHero(
+		state,
+		pending.length + (client === 'available' ? 1 : 0),
+		blocked,
+		client === 'staged',
+	);
 	const checking = state.status === 'checking';
 
 	return (

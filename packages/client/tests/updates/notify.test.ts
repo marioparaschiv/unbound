@@ -58,6 +58,7 @@ function ready(requiredLoader: string | null, updates = 0): UpdatesState {
 		loader: null,
 		requiredLoader,
 		discord: null,
+		client: 'current',
 	};
 }
 

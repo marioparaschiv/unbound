@@ -1,7 +1,14 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import sha256 from '@unbound-app/utils/sha256';
 
-import { getLoader, getNativeFonts, getPlugins, getSha256 } from '~/native/unbound-native';
+import {
+	checkForBundleUpdate,
+	getLoader,
+	getNativeFonts,
+	getPlugins,
+	getSha256,
+	updateBundle,
+} from '~/native/unbound-native';
 
 afterEach(() => {
 	globalThis.UnboundNative = undefined;
@@ -26,6 +33,40 @@ describe('UnboundNative', () => {
 		expect(getLoader()?.bytecodeVersion).toBe(96);
 		// A loader from before the font store has no `fonts`; the UI asks for an update.
 		expect(getNativeFonts()).toBeUndefined();
+	});
+
+	test('checks and updates the client bundle natively, or only reads the staged one on an older loader', async () => {
+		const base = {
+			getLoader: () => ({ origin: 'test', version: '2.0.0', bytecodeVersion: 96 }),
+			getPlugins: () => [],
+			getThemes: () => [],
+			getSha256: () => 'native',
+			downloadFile: async () => undefined,
+		};
+
+		expect(await checkForBundleUpdate()).toBe(false);
+		expect(await updateBundle()).toBe(false);
+
+		globalThis.UnboundNative = { ...base, hasStagedBundle: () => true };
+		expect(await checkForBundleUpdate()).toBe(false);
+		expect(await updateBundle()).toBe(true);
+
+		globalThis.UnboundNative = {
+			...base,
+			hasStagedBundle: () => false,
+			checkForBundleUpdate: async () => true,
+			updateBundle: async () => true,
+		};
+		expect(await checkForBundleUpdate()).toBe(true);
+		expect(await updateBundle()).toBe(true);
+
+		globalThis.UnboundNative = {
+			...base,
+			checkForBundleUpdate: () => Promise.reject(new Error('offline')),
+			updateBundle: () => Promise.reject(new Error('offline')),
+		};
+		expect(await checkForBundleUpdate().catch((error: Error) => error.message)).toBe('offline');
+		expect(await updateBundle().catch((error: Error) => error.message)).toBe('offline');
 	});
 
 	test('a throwing getter reads as empty', () => {

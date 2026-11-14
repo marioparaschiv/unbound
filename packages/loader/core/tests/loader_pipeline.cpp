@@ -9,109 +9,15 @@
 #include "LoaderLog.h"
 #include "LoaderPipeline.h"
 #include "LoaderVersion.h"
-#include "bundle_test_server.h"
+#include "PipelineFixtures.h"
 
 namespace {
-const std::string kBase   = "https://builds.unbound.rip/";
-const std::string kBundle = "unbound.98.bundle";
-const std::string kDev    = "unbound-dev.98.bundle";
-
-class CountingHost : public loader::PipelineHost
-{
-public:
-    int                      addonPreparations = 0;
-    int                      reloads           = 0;
-    std::vector<std::string> events;
-
-    void runInBackground(std::function<void()> work) override
-    {
-        work();
-    }
-
-    void runAfter(double seconds, std::function<void()> work) override
-    {
-        delays.push_back(seconds);
-        delayed.push_back(std::move(work));
-    }
-
-    loader::PreviousExit previousExit() override
-    {
-        return exit;
-    }
-
-    bool onMeteredNetwork() override
-    {
-        return metered;
-    }
-
-    std::vector<double>  delays;
-    loader::PreviousExit exit    = loader::PreviousExit::Unknown;
-    bool                 metered = false;
-
-    std::vector<std::function<void()>> delayed;
-
-    std::optional<std::string> resource(const std::string &) override
-    {
-        return std::nullopt;
-    }
-
-    std::optional<std::string> resolveUpdateURL() override
-    {
-        return std::nullopt;
-    }
-
-    uint32_t runtimeBytecodeVersion() override
-    {
-        return 98;
-    }
-
-    loader::UnboundNativeProvider unboundNativeProvider() override
-    {
-        return {};
-    }
-
-    void installNativeModules(facebook::jsi::Runtime &) override {}
-
-    void onAddonsPrepared() override
-    {
-        addonPreparations++;
-        events.push_back("addons prepared");
-    }
-
-    void reload() override
-    {
-        reloads++;
-    }
-
-    void alert(const std::string &message) override
-    {
-        alerts.push_back(message);
-    }
-
-    void stuckLaunch(const std::string &message) override
-    {
-        stuck.push_back(message);
-    }
-
-    std::vector<std::string> alerts;
-    std::vector<std::string> stuck;
-};
-
-// Marks the running loader as having checked before, so a launch models a loader that was not just
-// updated.
-bool checkedBy(bundle_test::Server &server, const std::string &version)
-{
-    server.settings.set("unbound", "loader.update.checkedBy", version);
-    return true;
-}
-
-struct Launch {
-    bundle_test::Server           server;
-    bool                          checked = checkedBy(server, loader::loaderVersion());
-    loader::BundleUpdater         updater = server.updater(bundle_test::productionTrust());
-    std::shared_ptr<CountingHost> host    = std::make_shared<CountingHost>();
-    loader::LoaderPipeline        pipeline{host, server.settings, updater};
-};
+using pipeline_test::checkedBy;
+using pipeline_test::CountingHost;
+using pipeline_test::kBase;
+using pipeline_test::kBundle;
+using pipeline_test::kDev;
+using pipeline_test::Launch;
 
 void leavesAFirstDownloadForTheRuntime()
 {
@@ -448,96 +354,6 @@ void staysQuietWhenDiscordRendered()
     assert(launch.host->stuck.empty());
 }
 
-void waitsForWifiBeforeABackgroundUpdate()
-{
-    Launch launch;
-    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
-    assert(launch.server.install(launch.updater, std::nullopt));
-    launch.server.publish(kBase, "2026-10-03T00:00:00.000Z", {{kBundle, "next"}});
-    launch.host->metered = true;
-    int downloads        = launch.server.downloads;
-
-    launch.pipeline.prepare();
-    assert(launch.server.downloads == downloads);
-    assert(!launch.pipeline.hasStagedBundle());
-
-    // Still metered: returning to the foreground keeps waiting.
-    launch.pipeline.onForeground();
-    assert(launch.server.downloads == downloads);
-
-    launch.host->metered = false;
-    launch.pipeline.onForeground();
-    assert(loader::readTextFile(launch.server.candidate()) == "next");
-    assert(launch.pipeline.hasStagedBundle());
-}
-
-void checksWhenGoingToTheBackgroundOnlyWhenDue()
-{
-    Launch launch;
-    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
-    assert(launch.server.install(launch.updater, std::nullopt));
-    launch.server.publish(kBase, "2026-10-03T00:00:00.000Z", {{kBundle, "next"}});
-    launch.host->metered = true;
-    launch.pipeline.prepare();
-    int downloads = launch.server.downloads;
-
-    launch.host->metered = false;
-    Launch fresh;
-    fresh.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
-    assert(fresh.server.install(fresh.updater, std::nullopt));
-    fresh.pipeline.prepare();
-    int freshDownloads = fresh.server.downloads;
-    assert(!fresh.pipeline.onBackground());
-    assert(fresh.server.downloads == freshDownloads);
-
-    launch.pipeline.onBackground();
-    assert(launch.server.downloads > downloads);
-    assert(loader::readTextFile(launch.server.candidate()) == "next");
-    assert(!launch.pipeline.isCheckingForUpdate());
-}
-
-void checksInTheForegroundOnlyOnceTheLastCheckIsOld()
-{
-    Launch launch;
-    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
-    assert(launch.server.install(launch.updater, std::nullopt));
-    launch.pipeline.prepare();
-    int downloads = launch.server.downloads;
-
-    launch.pipeline.onForeground();
-
-    assert(launch.server.downloads == downloads);
-}
-
-void retriesAFailedCheckWhenTheServerSaysWhen()
-{
-    Launch launch;
-    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
-    assert(launch.server.install(launch.updater, std::nullopt));
-    launch.server.publish(kBase, "2026-10-03T00:00:00.000Z", {{kBundle, "next"}});
-    launch.server.failNext = loader::DownloadResult{503, "", "7"};
-
-    launch.pipeline.prepare();
-    assert(!launch.pipeline.hasStagedBundle());
-
-    auto retry = std::find(launch.host->delays.begin(), launch.host->delays.end(), 7.0);
-    assert(retry != launch.host->delays.end());
-    launch.host->delayed[retry - launch.host->delays.begin()]();
-    assert(loader::readTextFile(launch.server.candidate()) == "next");
-    assert(launch.pipeline.hasStagedBundle());
-}
-
-void spacesRetriesWithJitter()
-{
-    using loader::LoaderPipeline;
-    assert(LoaderPipeline::retryDelay(0, std::nullopt, 0.0) == 30 * 0.8);
-    assert(LoaderPipeline::retryDelay(1, std::nullopt, 0.5) == 120);
-    assert(LoaderPipeline::retryDelay(9, std::nullopt, 0.0) == 600 * 0.8);
-    assert(LoaderPipeline::retryDelay(0, 99999.0, 0.0) == LoaderPipeline::kMaxRetryAfterSeconds);
-    assert(loader::retryAfterSeconds("120") == 120.0);
-    assert(!loader::retryAfterSeconds("Wed, 21 Oct 2026 07:28:00 GMT"));
-    assert(!loader::retryAfterSeconds(""));
-}
 }
 
 int main()
@@ -562,10 +378,5 @@ int main()
     turnsOnRecoveryModeAfterRepeatedFailedLaunches();
     ignoresAnEarlyExitThatWasNotACrash();
     countsTheLaunchHealthyShortlyAfterTheFirstRender();
-    waitsForWifiBeforeABackgroundUpdate();
-    checksWhenGoingToTheBackgroundOnlyWhenDue();
-    checksInTheForegroundOnlyOnceTheLastCheckIsOld();
-    retriesAFailedCheckWhenTheServerSaysWhen();
-    spacesRetriesWithJitter();
     return 0;
 }
