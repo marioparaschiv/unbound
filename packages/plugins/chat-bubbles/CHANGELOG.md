@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.12] - 2026-11-14
+
+### Fixed
+
+- On iOS, swiping a message to reply or edit slides it again: keeping the row centred no longer resets the content's sideways position.
+
 ## [1.6.11] - 2026-11-14
 
 ### Added
