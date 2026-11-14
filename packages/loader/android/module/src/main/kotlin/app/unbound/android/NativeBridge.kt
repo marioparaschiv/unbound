@@ -2,10 +2,10 @@ package app.unbound.android
 
 import android.app.ActivityManager
 import android.app.ApplicationExitInfo
-import android.content.Context
-import android.graphics.fonts.SystemFonts
 import android.app.NotificationManager
+import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.fonts.SystemFonts
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.BatteryManager
