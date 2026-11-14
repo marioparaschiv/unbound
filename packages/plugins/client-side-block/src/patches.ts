@@ -62,7 +62,7 @@ function patchRowManager(RowManager: ChatClass<RowManagerInstance>) {
 
 	patcher.before(RowManager.prototype, 'generate', ({ args, this: self }) => {
 		chat.rowManager = self;
-		recordItem(args[0]);
+		recordItem(args[0], self);
 	});
 }
 

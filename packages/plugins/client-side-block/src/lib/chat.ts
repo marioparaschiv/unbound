@@ -1,5 +1,7 @@
 type Row = {
 	type?: number;
+	id?: unknown;
+	content?: { id?: unknown } | null;
 };
 
 export type ChatManagerInstance = {
@@ -28,6 +30,8 @@ type OpenChat = {
 	recording: boolean;
 	/** Whether `refreshChat` is replaying the items, so its own calls are not recorded. */
 	refreshing: boolean;
+	/** The row manager whose items the rebuild records; another chat's manager can generate rows in between. */
+	recordingManager: RowManagerInstance | null;
 };
 
 declare global {
@@ -43,6 +47,7 @@ const emptyChat = (): OpenChat => ({
 	items: [],
 	recording: false,
 	refreshing: false,
+	recordingManager: null,
 });
 
 const runtime = (globalThis.__unboundClientSideBlockRuntime ??= emptyChat());
@@ -59,15 +64,34 @@ export function beginRebuild(messages: unknown): void {
 
 	chat.messages = messages;
 	chat.items = [];
+	chat.recordingManager = null;
 	chat.recording = true;
 }
 
+function itemKey(item: Row): unknown {
+	const id = item.content?.id ?? item.id;
+
+	return id === undefined ? item : `${item.type}:${String(id)}`;
+}
+
 /**
- * @description Records a channel stream item Discord turns into a row during its rebuild.
+ * @description Records a channel stream item Discord turns into a row during its rebuild, once, and only from the row
+ * manager that started generating for it.
  * @param item The item `generate` received.
+ * @param manager The row manager generating it.
  */
-export function recordItem(item: Row): void {
-	if (chat.recording && !chat.refreshing) chat.items.push(item);
+export function recordItem(item: Row, manager: RowManagerInstance): void {
+	if (!chat.recording || chat.refreshing) return;
+
+	chat.recordingManager ??= manager;
+
+	if (manager !== chat.recordingManager) return;
+
+	const key = itemKey(item);
+
+	if (chat.items.some((recorded) => itemKey(recorded) === key)) return;
+
+	chat.items.push(item);
 }
 
 /**
@@ -82,7 +106,8 @@ export function endRebuild(): void {
  * or showing blocked messages applies without reopening it.
  */
 export function refreshChat() {
-	const { chatManager, rowManager, messages, updatesQueue, items } = chat;
+	const { chatManager, messages, updatesQueue, items } = chat;
+	const rowManager = chat.recordingManager ?? chat.rowManager;
 
 	if (!chatManager || !rowManager || !updatesQueue || !items.length || chat.recording) return;
 

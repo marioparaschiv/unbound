@@ -34,7 +34,7 @@ function discordRebuild(items: Row[]) {
 	chat.chatManager!.setup(MESSAGES);
 
 	for (const item of items) {
-		recordItem(item);
+		recordItem(item, chat.rowManager!);
 		chat.chatManager!.createRow(chat.rowManager!.generate(item));
 	}
 
@@ -49,6 +49,7 @@ beforeEach(() => {
 	chat.items = [];
 	chat.recording = false;
 	chat.refreshing = false;
+	chat.recordingManager = null;
 });
 
 describe('refreshChat', () => {
@@ -79,9 +80,23 @@ describe('refreshChat', () => {
 
 		discordRebuild([{ type: 0 }, { type: 1 }]);
 		discordRebuild([{ type: 2 }]);
-		recordItem({ type: 9 });
+		recordItem({ type: 9 }, chat.rowManager!);
 
 		expect(chat.items).toEqual([{ type: 2 }]);
+	});
+
+	test('records each item once, and only from the manager that started', () => {
+		openChat();
+		chat.chatManager!.setup(MESSAGES);
+
+		const message = { type: 0, content: { id: '1' } };
+		const other = { generate: (item: Row) => item };
+
+		recordItem(message, chat.rowManager!);
+		recordItem({ type: 0, content: { id: '1' } }, chat.rowManager!);
+		recordItem({ type: 0, content: { id: '2' } }, other);
+
+		expect(chat.items).toEqual([message]);
 	});
 
 	test('does nothing until a chat has been seen', () => {
