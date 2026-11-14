@@ -1,0 +1,22 @@
+{
+	"ANNOUNCE": "Announce",
+	"JOINS": "Joins",
+	"JOINS_SUBTITLE": "When someone joins your voice channel.",
+	"LEAVES": "Leaves",
+	"LEAVES_SUBTITLE": "When someone leaves your voice channel.",
+	"MOVES": "Moves",
+	"MOVES_SUBTITLE": "When someone moves into or out of your voice channel.",
+	"YOURSELF": "Yourself",
+	"YOURSELF_SUBTITLE": "When you join, leave or switch voice channels.",
+	"VOICE": "Voice",
+	"SPEECH_RATE": "Speech rate",
+	"RATE_SLOW": "Slow",
+	"RATE_NORMAL": "Normal",
+	"RATE_FAST": "Fast",
+	"JOINED": "{user} joined",
+	"LEFT": "{user} left",
+	"MOVED": "{user} moved to {channel}",
+	"YOU_JOINED": "You joined {channel}",
+	"YOU_LEFT": "You left {channel}",
+	"YOU_MOVED": "You moved to {channel}"
+}
