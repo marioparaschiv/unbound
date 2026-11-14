@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import type { RefObject } from 'react';
+import { useEffect } from 'react';
 
 type AutoScrollOptions = {
 	/** Drift speed in pixels per second. */
@@ -34,33 +34,41 @@ function useAutoScroll(
 		// Kept as a float, since `scrollLeft` rounds and sub-pixel steps would never add up.
 		let position = element.scrollLeft;
 		let frame = 0;
+		// Narrowed once here, since the function declarations below are hoisted past the guard.
+		const scroller = element;
 
-		const tick = (now: number) => {
+		function tick(now: number) {
 			frame = requestAnimationFrame(tick);
 
-			const max = element.scrollWidth - element.clientWidth;
+			const max = scroller.scrollWidth - scroller.clientWidth;
 			const elapsed = now - last;
+
 			last = now;
 
 			// Picks up from wherever the user left it.
 			if (max <= 0 || reducedMotion.matches || hovered || focused || now < restUntil) {
-				position = element.scrollLeft;
+				position = scroller.scrollLeft;
+
 				return;
 			}
 
 			position = Math.min(Math.max(position + (direction * speed * elapsed) / 1000, 0), max);
-			element.scrollLeft = position;
+			scroller.scrollLeft = position;
 
-			if ((direction > 0 && position >= max) || (direction < 0 && position <= 0)) {
-				direction = -direction;
-				restUntil = now + pause;
+			if (!((direction > 0 && position >= max) || (direction < 0 && position <= 0))) {
+				return;
 			}
-		};
+
+			direction = -direction;
+			restUntil = now + pause;
+		}
 
 		frame = requestAnimationFrame(tick);
 
 		function onPointerEnter(event: PointerEvent) {
-			if (event.pointerType === 'mouse') hovered = true;
+			if (event.pointerType === 'mouse') {
+				hovered = true;
+			}
 		}
 
 		function onPointerLeave(event: PointerEvent) {

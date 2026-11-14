@@ -54,6 +54,7 @@ function FeaturedCard({ addon, index }: FeaturedCardProps) {
 // Its own component so the scroll shadow's observers attach once the row exists.
 function FeaturedRow({ addons }: FeaturedRowProps) {
 	const { ref, canScrollStart, canScrollEnd, onScroll } = useScrollShadow('x');
+
 	useAutoScroll(ref);
 
 	// No scroll snapping: it would pull the slow drift back to the nearest card every frame.
