@@ -1,6 +1,6 @@
 //! The Logs page: the device's log lines live as they arrive, filtered by source
-//! (All, JS, React Native, Native) and to Unbound's lines alone, sorted by when the device wrote
-//! them, oldest or newest first. It follows the newest line while scrolled to its end.
+//! (All, Unbound, JS, React Native, Native) and sorted by when the device wrote them, oldest or
+//! newest first. It follows the newest line while scrolled to its end.
 
 mod rows;
 
@@ -12,9 +12,8 @@ use gpui::{
 	Context, Entity, ScrollStrategy, SharedString, UniformListScrollHandle, Window, div,
 	prelude::*, px,
 };
-use gpui_component::switch::Switch;
 use unbound_devtools_core::{
-	Devtools, LOG_CAPACITY, LogEntry, LogFilter, LogOrder, LogView, insert_by_time, sort_by_time,
+	Devtools, LOG_CAPACITY, LogEntry, LogOrder, LogView, insert_by_time, sort_by_time,
 };
 
 use crate::empty::SETUP_STEPS;
@@ -28,7 +27,7 @@ use crate::widgets::{
 
 /// Lines come in batches; one redraw per frame is plenty.
 const CHANGE_COALESCING_FRAME: Duration = Duration::from_millis(16);
-const SEGMENTS_WIDTH: f32 = 380.;
+const SEGMENTS_WIDTH: f32 = 470.;
 const ORDER_WIDTH: f32 = 220.;
 
 pub struct LogsPage {
@@ -39,7 +38,7 @@ pub struct LogsPage {
 	read: u64,
 	/// The kept lines the filter shows, sorted by when the device wrote them, oldest first.
 	rows: VecDeque<Arc<LogEntry>>,
-	filter: LogFilter,
+	view: LogView,
 	order: LogOrder,
 	/// Whether the debugger connection has a device on it.
 	connected: bool,
@@ -84,7 +83,7 @@ impl LogsPage {
 			entries: VecDeque::new(),
 			read: 0,
 			rows: VecDeque::new(),
-			filter: LogFilter::default(),
+			view: LogView::default(),
 			order: LogOrder::default(),
 			scroll: UniformListScrollHandle::new(),
 			mcp,
@@ -112,7 +111,7 @@ impl LogsPage {
 		// Read before the list grows: a reader scrolled away from the newest line keeps their place.
 		let follow = self.at_newest();
 		for entry in fresh {
-			if self.filter.matches(&entry.line) {
+			if self.view.matches(&entry.line) {
 				insert_by_time(&mut self.rows, entry.clone());
 			}
 			self.entries.push_back(entry);
@@ -155,15 +154,15 @@ impl LogsPage {
 		cx.notify();
 	}
 
-	fn set_filter(&mut self, filter: LogFilter, cx: &mut Context<Self>) {
-		if filter == self.filter {
+	fn set_view(&mut self, view: LogView, cx: &mut Context<Self>) {
+		if view == self.view {
 			return;
 		}
-		self.filter = filter;
+		self.view = view;
 		self.rows = self
 			.entries
 			.iter()
-			.filter(|entry| filter.matches(&entry.line))
+			.filter(|entry| view.matches(&entry.line))
 			.cloned()
 			.collect();
 		sort_by_time(&mut self.rows);
@@ -183,9 +182,7 @@ impl LogsPage {
 			.iter()
 			.map(|view| view.label().to_owned())
 			.collect();
-		let selected = LogView::ALL
-			.iter()
-			.position(|view| *view == self.filter.view);
+		let selected = LogView::ALL.iter().position(|view| *view == self.view);
 		let orders: Vec<String> = LogOrder::ALL
 			.iter()
 			.map(|order| order.label().to_owned())
@@ -207,27 +204,11 @@ impl LogsPage {
 					selected,
 					cx.listener(|this, picked: &usize, _, cx| {
 						if let Some(view) = LogView::ALL.get(*picked) {
-							let filter = LogFilter {
-								view: *view,
-								..this.filter
-							};
-							this.set_filter(filter, cx);
+							this.set_view(*view, cx);
 						}
 					}),
 				)
 				.w(px(SEGMENTS_WIDTH)),
-			)
-			.child(
-				Switch::new("log-unbound-only")
-					.checked(self.filter.unbound_only)
-					.label("Unbound only")
-					.on_click(cx.listener(|this, on: &bool, _, cx| {
-						let filter = LogFilter {
-							unbound_only: *on,
-							..this.filter
-						};
-						this.set_filter(filter, cx);
-					})),
 			)
 			.child(div().flex_1())
 			.child(
@@ -250,8 +231,7 @@ impl LogsPage {
 			(
 				"icons/list-filter.svg",
 				"No Matching Lines",
-				"No line from this source has come in yet. Pick another source or turn off Unbound only."
-					.into(),
+				"No line from this source has come in yet. Pick another source.".into(),
 			)
 		} else if self.connected {
 			(

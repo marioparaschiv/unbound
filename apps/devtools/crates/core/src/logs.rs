@@ -85,11 +85,13 @@ impl LogEntry {
 	}
 }
 
-/// The Logs page's segments.
+/// The Logs page's segments: which lines it shows.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum LogView {
 	#[default]
 	All,
+	/// Unbound's own lines alone.
+	Unbound,
 	/// Discord's JS console and Unbound.
 	Js,
 	ReactNative,
@@ -97,8 +99,9 @@ pub enum LogView {
 }
 
 impl LogView {
-	pub const ALL: [LogView; 4] = [
+	pub const ALL: [LogView; 5] = [
 		LogView::All,
+		LogView::Unbound,
 		LogView::Js,
 		LogView::ReactNative,
 		LogView::Native,
@@ -107,31 +110,19 @@ impl LogView {
 	pub fn label(self) -> &'static str {
 		match self {
 			LogView::All => "All",
+			LogView::Unbound => "Unbound",
 			LogView::Js => "JS",
 			LogView::ReactNative => "React Native",
 			LogView::Native => "Native",
 		}
 	}
-}
 
-/// Which lines the Logs page shows.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct LogFilter {
-	pub view: LogView,
-	/// Only Unbound's own lines, within the view.
-	pub unbound_only: bool,
-}
-
-impl LogFilter {
-	pub fn matches(&self, line: &LogLine) -> bool {
+	pub fn matches(self, line: &LogLine) -> bool {
 		let source = line.source();
 
-		if self.unbound_only && source != LogSource::Unbound {
-			return false;
-		}
-
-		match self.view {
+		match self {
 			LogView::All => true,
+			LogView::Unbound => source == LogSource::Unbound,
 			LogView::Js => matches!(source, LogSource::Js | LogSource::Unbound),
 			LogView::ReactNative => source == LogSource::ReactNative,
 			LogView::Native => source == LogSource::Native,
@@ -259,7 +250,7 @@ mod tests {
 		}
 	}
 
-	fn shown(filter: LogFilter) -> Vec<Option<LogSource>> {
+	fn shown(view: LogView) -> Vec<Option<LogSource>> {
 		[
 			None,
 			Some(LogSource::Unbound),
@@ -268,39 +259,20 @@ mod tests {
 			Some(LogSource::Native),
 		]
 		.into_iter()
-		.filter(|source| filter.matches(&line(*source)))
+		.filter(|source| view.matches(&line(*source)))
 		.collect()
 	}
 
 	#[test]
 	fn filters_by_view_with_js_holding_unbound() {
-		let view = |view| LogFilter {
-			view,
-			unbound_only: false,
-		};
-
-		assert_eq!(shown(view(LogView::All)).len(), 5);
+		assert_eq!(shown(LogView::All).len(), 5);
+		assert_eq!(shown(LogView::Unbound), [Some(LogSource::Unbound)]);
 		assert_eq!(
-			shown(view(LogView::Js)),
+			shown(LogView::Js),
 			[None, Some(LogSource::Unbound), Some(LogSource::Js)]
 		);
-		assert_eq!(
-			shown(view(LogView::ReactNative)),
-			[Some(LogSource::ReactNative)]
-		);
-		assert_eq!(shown(view(LogView::Native)), [Some(LogSource::Native)]);
-	}
-
-	#[test]
-	fn unbound_only_keeps_unbound_lines_within_the_view() {
-		let unbound = |view| LogFilter {
-			view,
-			unbound_only: true,
-		};
-
-		assert_eq!(shown(unbound(LogView::All)), [Some(LogSource::Unbound)]);
-		assert_eq!(shown(unbound(LogView::Js)), [Some(LogSource::Unbound)]);
-		assert!(shown(unbound(LogView::Native)).is_empty());
+		assert_eq!(shown(LogView::ReactNative), [Some(LogSource::ReactNative)]);
+		assert_eq!(shown(LogView::Native), [Some(LogSource::Native)]);
 	}
 
 	#[test]
