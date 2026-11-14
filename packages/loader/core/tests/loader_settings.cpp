@@ -315,5 +315,17 @@ int main()
         }
     }
 
+    const auto            stagedPath = (root / "staged.json").string();
+    loader::SettingsStore staged(stagedPath);
+    staged.load();
+    assert(staged.stage(
+        nlohmann::json::array({{{"store", "plugin"}, {"key", "speed"}, {"value", "1.5"}}})));
+    assert(loader::readTextFile(stagedPath).value() == "{}");
+    assert(staged.flush());
+    loader::SettingsStore flushed(stagedPath);
+    flushed.load();
+    assert(flushed.getString("plugin", "speed", "") == "1.5");
+    assert(staged.flush());
+
     return 0;
 }
