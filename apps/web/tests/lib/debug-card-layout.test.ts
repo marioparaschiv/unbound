@@ -297,8 +297,8 @@ describe('debug card', () => {
 			.filter((run) => run.x === 14)
 			.map((run) => run.text);
 
-		expect(texts(card).find((run) => run.text.startsWith('2 in 24 h'))?.text).toBe(
-			'2 in 24 h · SIGSEGV in Chat Bubbles',
+		expect(texts(card).find((run) => run.text.startsWith('2 in 24h'))?.text).toBe(
+			'2 in 24h · SIGSEGV in Chat Bubbles',
 		);
 		expect(labels).toContain('crashes');
 		expect(labels).toContain('issues');

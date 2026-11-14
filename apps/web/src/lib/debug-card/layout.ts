@@ -242,7 +242,7 @@ function crashSummary(crashes: DebugCardCrash[], now: Date): Span[] {
 
 	const recent = crashes.filter((crash) => now.getTime() - crash.at <= DAY_MS).length;
 	const when = recent
-		? `${recent} in 24 h`
+		? `${recent} in 24h`
 		: `${Math.ceil((now.getTime() - newest.at) / DAY_MS)} d ago`;
 
 	return [{ text: `${when} · ${newest.crash}`, color: recent ? COLORS.bad : COLORS.warn }];
