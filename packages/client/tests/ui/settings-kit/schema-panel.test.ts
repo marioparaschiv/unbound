@@ -32,6 +32,7 @@ mock.module('~/metro/components', () => ({
 }));
 mockLookups({});
 mock.module('~/metro/api', () => ({ ActionSheets: undefined }));
+mock.module('~/metro/common', () => ({ Theme: { colors: {} } }));
 mock.module('~/assets/api', () => ({ icons: named }));
 // Loads Reanimated, which has no test runtime; these tests never render it.
 mock.module('~/ui/components/collapsible-group', () => ({ default: () => null }));
@@ -47,6 +48,7 @@ mock.module('~/dialogs/api', () => ({
 mock.module('~/native/runtime', () => ({ reload: async () => {} }));
 mock.module('react-native', () => ({
 	Dimensions: { get: () => ({ width: 390, height: 844 }) },
+	Image: 'Image',
 	Pressable: 'Pressable',
 	ScrollView: 'ScrollView',
 	View: 'View',
