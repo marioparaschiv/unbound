@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.9] - 2026-11-14
+
+### Fixed
+
+- On iOS, the tooltip's close-on-touch hook no longer removes itself from inside its own callback, a possible cause of crashes when tapping the indicator.
+
 ## [1.2.8] - 2026-11-11
 
 ### Changed
