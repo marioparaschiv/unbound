@@ -1710,6 +1710,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/qr-codes": {
+      "name": "qr-codes",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/quick-delete": {
       "name": "quick-delete",
       "dependencies": {
@@ -4753,6 +4767,8 @@
     "punycode.js": ["punycode.js@2.3.1", "", {}, "sha512-uxFIHU0YlHYhDQtV4R9J6a52SLx28BCjT+4ieh7IGbgwVJWO+km431c4yRlREUAsAmt/uMjQUyQHNEPf0M39CA=="],
 
     "qified": ["qified@0.10.1", "", { "dependencies": { "hookified": "^2.1.1" } }, "sha512-+Owyggi9IxT1ePKGafcI87ubSmxol6smwJ+RAHDQlx9+9cPwFWDiKFFCPuWhr9ignlGpZ9vDQLw67N4dcTVFEA=="],
+
+    "qr-codes": ["qr-codes@workspace:packages/plugins/qr-codes"],
 
     "qs": ["qs@6.17.1", "", { "dependencies": { "es-define-property": "^1.0.1", "side-channel": "^1.1.1" } }, "sha512-jd3COkaKVgGUW+ZHyEHCG9bH7RoaaiWuMgzsIBjUMVjLAaWGWpoUAVwljVvBHxRu/2qEHnadLGZrkutYUBPQJA=="],
 
