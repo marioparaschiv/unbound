@@ -2536,6 +2536,7 @@ dependencies = [
  "core-foundation 0.10.1",
  "core-foundation-sys",
  "core-graphics 0.24.0",
+ "core-text",
  "dispatch2",
  "etagere",
  "futures",
@@ -2549,14 +2550,17 @@ dependencies = [
  "objc2 0.6.5",
  "objc2-core-foundation",
  "objc2-core-graphics",
+ "objc2-core-text",
  "objc2-core-video",
  "objc2-foundation 0.3.2",
  "objc2-metal 0.3.2",
  "objc2-quartz-core 0.3.2",
  "objc2-security",
  "parking_lot",
+ "pathfinder_geometry",
  "smallvec",
  "thiserror 2.0.21",
+ "zed-font-kit",
 ]
 
 [[package]]

@@ -53,7 +53,9 @@ uuid = { version = "1", features = ["v4"] }
 gpui = { package = "gpui-fast", version = "0.1.14" }
 gpui-component = { version = "0.9.1", features = ["gpui-fast"] }
 gpui-kit-assets = { version = "0.9.1", features = ["gpui-fast"] }
+# Without font-kit, the macOS build draws no text.
 gpui_platform = { package = "gpui-fast-platform", version = "0.1.14", features = [
+	"font-kit",
 	"x11",
 	"wayland",
 ] }
