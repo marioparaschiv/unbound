@@ -120,9 +120,7 @@ function PluginsPage({ route }: PluginsPageProps) {
 				<SafeArea.SafeAreaPaddingView bottom style={styles.empty}>
 					<View style={styles.center}>
 						{listed.length ? (
-							<Empty image='sticker_search_empty'>
-								{messages.UNBOUND_EMPTY_RESULTS}
-							</Empty>
+							<Empty>{messages.UNBOUND_EMPTY_RESULTS}</Empty>
 						) : (
 							<NoAddons kind='plugin' />
 						)}
