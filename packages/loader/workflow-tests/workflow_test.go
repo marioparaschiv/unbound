@@ -469,7 +469,7 @@ func TestParsedLoaderArtifactsExpireOnlyOnPullRequests(t *testing.T) {
 				if !strings.HasPrefix(step.Uses, "actions/upload-artifact@") {
 					continue
 				}
-				artifact, retention := step.With["name"], step.With["retention-days"]
+				artifact, retention := uploadedArtifact(step), step.With["retention-days"]
 				uploaded[artifact] = retention
 				if diagnostics[artifact] {
 					if retention != "14" || step.If != "${{ !cancelled() }}" {
@@ -542,7 +542,7 @@ func TestParsedReleasesAttachNativeSymbols(t *testing.T) {
 		t.Fatal("Android prereleases must attach their native symbols")
 	}
 	module := loadWorkflow(t, "loader-android.yml").job(t, "build-module")
-	if upload := module.step(t, "Upload native symbols"); upload.With["name"] != "android symbols" || upload.With["if-no-files-found"] != "error" {
+	if upload := module.step(t, "Upload native symbols"); uploadedArtifact(upload) != "android symbols" || upload.With["if-no-files-found"] != "error" {
 		t.Fatalf("the module build must upload its native symbols, got %+v", upload.With)
 	}
 }
