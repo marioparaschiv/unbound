@@ -26,10 +26,10 @@ pub enum LogSource {
 impl LogSource {
 	pub fn label(self) -> &'static str {
 		match self {
-			LogSource::Unbound => "unbound",
-			LogSource::Js => "js",
-			LogSource::ReactNative => "react-native",
-			LogSource::Native => "native",
+			LogSource::Unbound => "Unbound",
+			LogSource::Js => "JS",
+			LogSource::ReactNative => "React Native",
+			LogSource::Native => "Native",
 		}
 	}
 }

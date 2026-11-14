@@ -99,7 +99,14 @@ impl LogsPage {
 				div()
 					.flex_none()
 					.w(px(SOURCE_WIDTH))
-					.child(badge(line.source().label(), source_tone(line.source()))),
+					.flex()
+					.items_center()
+					// Every tag spans the column with its label centred, so the tags line up as one.
+					.child(
+						badge(line.source().label(), source_tone(line.source()))
+							.w_full()
+							.justify_center(),
+					),
 			)
 			.child(
 				div()
