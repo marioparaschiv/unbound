@@ -92,6 +92,23 @@ static void browserLoginStartFlow(void)
         }];
 }
 
+static void openSafariExtensionSettings(NSString *identifier) API_AVAILABLE(ios(26.2))
+{
+    [SFSafariSettings
+        openExtensionsSettingsForIdentifiers:@[ identifier ]
+                           completionHandler:^(NSError *error) {
+                               if (!error)
+                               {
+                                   return;
+                               }
+                               [Logger
+                                    error:LOG_CATEGORY_DEFAULT
+                                   format:@"Failed to open Safari extension settings: %@.", error];
+                               [Utilities alert:@"Open Settings, then Apps, Safari, Extensions."
+                                          title:@"Could Not Open Settings"];
+                           }];
+}
+
 static void browserLoginStart(void)
 {
     if (![Utilities hasAppExtension:@(loader::diagnostics::kSafariExtensionName)])
@@ -135,9 +152,22 @@ static void browserLoginStart(void)
                                         [Logger info:LOG_CATEGORY_DEFAULT
                                               format:@"Safari extension is disabled."];
                                         [Utilities
-                                            alert:@"Enable the Safari extension "
-                                                  @"in Settings, then try browser login again."
-                                            title:@"Safari Extension Disabled"];
+                                              alert:@"Enable the Safari extension "
+                                                    @"in Settings, then try browser login again."
+                                              title:@"Safari Extension Disabled"
+                                            buttons:@[
+                                                [UIAlertAction
+                                                    actionWithTitle:@"Open Settings"
+                                                              style:UIAlertActionStyleDefault
+                                                            handler:^(UIAlertAction *action) {
+                                                                openSafariExtensionSettings(
+                                                                    identifier);
+                                                            }],
+                                                [UIAlertAction
+                                                    actionWithTitle:@"Cancel"
+                                                              style:UIAlertActionStyleCancel
+                                                            handler:nil],
+                                            ]];
                                         return;
                                     }
 
