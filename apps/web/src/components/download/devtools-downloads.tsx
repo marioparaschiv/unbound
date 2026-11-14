@@ -41,15 +41,10 @@ function DevToolsTile({ asset }: DevToolsTileProps) {
 			<span className='flex justify-center items-center bg-accent shadow-key rounded-full size-10 text-foreground shrink-0'>
 				<info.icon size={16} aria-hidden />
 			</span>
-			<span className='flex flex-col gap-0.5 min-w-0 grow'>
-				<span className='flex items-center gap-2 font-semibold text-foreground text-sm'>
-					{info.label}
-					<span className='font-normal text-muted-foreground'>{asset.arch}</span>
-					<Tag>{asset.extension}</Tag>
-				</span>
-				<span className='text-muted-foreground text-xs truncate'>
-					Contains <span className='font-mono'>{asset.contents}</span>
-				</span>
+			<span className='flex items-center gap-2 min-w-0 font-semibold text-foreground text-sm grow'>
+				{info.label}
+				<span className='font-normal text-muted-foreground'>{asset.arch}</span>
+				<Tag>{asset.extension}</Tag>
 			</span>
 			<span
 				aria-hidden
@@ -82,7 +77,7 @@ function DevToolsDownloads() {
 					<p className='text-muted-foreground text-sm'>
 						A desktop app for building on Unbound: inspect components, browse native
 						views and Metro modules, and let an agent query the tree and run JavaScript
-						over MCP. Each download is an archive with the app inside.
+						over MCP.
 					</p>
 				</div>
 				<a
