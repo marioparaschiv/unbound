@@ -1,4 +1,4 @@
-import { findStore } from '~/metro/lookups';
+import { findByProps } from '~/metro/lookups';
 
 import type { DebugInfo } from './format-debug-info';
 
@@ -11,7 +11,7 @@ export type GatewaySocket = {
 	failedConnectAttempts?: unknown;
 };
 
-const GatewayConnectionStore = findStore('GatewayConnection');
+const GatewayConnectionStore = findByProps('getSocket', 'isConnected', 'lastTimeConnectedChanged');
 
 function isCount(value: unknown): value is number {
 	return typeof value === 'number' && Number.isInteger(value) && value >= 0;

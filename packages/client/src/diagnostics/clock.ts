@@ -1,4 +1,4 @@
-const CLOCK_URL = 'https://discord.com/api/v9/gateway';
+const CLOCK_URL = 'https://discord.com/api/v9/users/@me';
 const CLOCK_TIMEOUT_MS = 3000;
 const DATE_HEADER_RESOLUTION_MS = 500;
 
@@ -38,7 +38,7 @@ export function clockSkew(
 }
 
 /**
- * @description Measures the device clock against Discord's, since a wrong clock breaks TLS and signature checks.
+ * @description Measures the device clock against Discord's, from an uncached request, since a wrong clock breaks TLS and signature checks.
  * @returns Seconds the device runs ahead (negative when behind), or `undefined` when Discord cannot be reached in time.
  */
 export async function readClockSkew(): Promise<number | undefined> {
@@ -47,7 +47,11 @@ export async function readClockSkew(): Promise<number | undefined> {
 	const sentAt = Date.now();
 
 	try {
-		const response = await fetch(CLOCK_URL, { method: 'GET', signal: controller.signal });
+		const response = await fetch(CLOCK_URL, {
+			method: 'HEAD',
+			cache: 'no-store',
+			signal: controller.signal,
+		});
 
 		return clockSkew(sentAt, Date.now(), response.headers.get('date'));
 	} catch {

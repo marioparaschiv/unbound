@@ -28,6 +28,7 @@ import { readAppSession } from './app-session';
 import { recentErrors } from './recent-errors';
 import { pushStateOf } from './push-state';
 import { readGateway } from './gateway';
+import { redactReport } from './redact';
 
 const MAX_PATCH_CALLERS = 8;
 const MAX_LISTED_PLUGINS = 60;
@@ -306,7 +307,7 @@ function installDetailsOf(details: string): string {
 
 /**
  * @description Reads everything `/debug` reports: Unbound, the loader, Discord, React Native, the device and the addons.
- * @returns The details, each already a display string except the addon counts.
+ * @returns The details, each already a display string except the addon counts, with IDs, tokens and addresses scrubbed.
  */
 export function readDebugInfo(): DebugInfo {
 	const platform = globalThis.NativePlatform;
@@ -324,7 +325,7 @@ export function readDebugInfo(): DebugInfo {
 		? `${Platform.constants.Release} (SDK ${Platform.Version})`
 		: (environment?.osVersion ?? String(Platform.Version));
 
-	return {
+	return redactReport({
 		client: `v${CLIENT_VERSION}`,
 		commit: loader?.launch?.revision || String(VERSION),
 		loader: environment?.loaderVersion ?? 'unknown',
@@ -376,7 +377,7 @@ export function readDebugInfo(): DebugInfo {
 		display: attempt(displayOf, undefined),
 		session: readAppSession(),
 		heap: attempt(getHeapUsage, undefined),
-	};
+	});
 }
 
 /**
