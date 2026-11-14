@@ -50,7 +50,12 @@ function ErrorDetails({ error, componentStack }: CaughtError) {
 			<Discord.Text variant='text-md/semibold' color='mobile-text-heading-primary' selectable>
 				{error?.message ?? String(error)}
 			</Discord.Text>
-			{traces.length > 1 ? <Discord.SegmentedControl state={state} /> : null}
+			{traces.length > 1 ? (
+				// Discord's control grows into free height; its own row holds it to its content.
+				<View>
+					<Discord.SegmentedControl state={state} />
+				</View>
+			) : null}
 			{trace ? (
 				<View style={styles.code}>
 					<ScrollView nestedScrollEnabled contentContainerStyle={styles.codeContent}>

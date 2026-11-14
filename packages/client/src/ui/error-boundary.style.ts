@@ -2,13 +2,11 @@ import { Constants, Radius, Theme } from '~/metro/common';
 import { Discord } from '~/metro/components';
 
 export default Discord.createStyles({
+	// Bound to the screen's height and never scrolls; only the trace inside the error card scrolls.
 	screen: {
 		flex: 1,
-		backgroundColor: Theme.colors.BACKGROUND_BASE_LOW,
-	},
-	content: {
-		flexGrow: 1,
 		padding: 16,
+		backgroundColor: Theme.colors.BACKGROUND_BASE_LOW,
 	},
 	// Carries the screen's height down to the error card, so its trace takes the space left over.
 	fill: {
@@ -39,7 +37,6 @@ export default Discord.createStyles({
 	},
 	code: {
 		flex: 1,
-		minHeight: 200,
 		borderRadius: Radius.Radius.md,
 		backgroundColor: Theme.colors.BACKGROUND_BASE_LOWER,
 	},
