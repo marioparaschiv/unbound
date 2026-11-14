@@ -9,6 +9,7 @@ use gpui_component::sidebar::Sidebar;
 use unbound_devtools_core::Devtools;
 
 use crate::app::Workspace;
+use crate::console::Console;
 use crate::link::DebuggerLink;
 use crate::logs_page::LogsPage;
 use crate::mcp_menu::McpButton;
@@ -62,6 +63,7 @@ pub enum Page {
 	Views,
 	Metro,
 	Logs,
+	Console,
 }
 
 pub struct Shell {
@@ -69,6 +71,7 @@ pub struct Shell {
 	views: Entity<ViewFinder>,
 	metro: Entity<MetroBrowser>,
 	logs: Entity<LogsPage>,
+	console: Entity<Console>,
 	link: Entity<DebuggerLink>,
 	page: Page,
 	/// Open, or playing its exit motion; dropped once that ends.
@@ -96,12 +99,14 @@ impl Shell {
 		];
 		let views = cx.new(|cx| ViewFinder::new(devtools.clone(), mcp.clone(), window, cx));
 		let metro = cx.new(|cx| MetroBrowser::new(devtools.clone(), mcp.clone(), window, cx));
-		let logs = cx.new(|cx| LogsPage::new(devtools, mcp, cx));
+		let logs = cx.new(|cx| LogsPage::new(devtools.clone(), mcp.clone(), cx));
+		let console = cx.new(|cx| Console::new(devtools, mcp, window, cx));
 		let this = Self {
 			workspace,
 			views,
 			metro,
 			logs,
+			console,
 			link,
 			page: Page::Components,
 			settings: None,
@@ -111,7 +116,7 @@ impl Shell {
 		this
 	}
 
-	pub fn open(&mut self, page: Page, cx: &mut Context<Self>) {
+	pub fn open(&mut self, page: Page, window: &mut Window, cx: &mut Context<Self>) {
 		if self.page == Page::Views && page != Page::Views {
 			self.views.update(cx, |views, _| views.clear_highlight());
 		}
@@ -120,6 +125,10 @@ impl Shell {
 		}
 		if page == Page::Metro {
 			self.metro.update(cx, |metro, cx| metro.open(cx));
+		}
+		if page == Page::Console {
+			self.console
+				.update(cx, |console, cx| console.focus(window, cx));
 		}
 		self.page = page;
 		cx.notify();
@@ -170,6 +179,7 @@ impl Shell {
 				self.row(Page::Views, nav::VIEWS_TITLE, "icons/layers.svg"),
 				self.row(Page::Metro, nav::METRO_TITLE, "icons/boxes.svg"),
 				self.row(Page::Logs, nav::LOGS_TITLE, "icons/scroll-text.svg"),
+				self.row(Page::Console, nav::CONSOLE_TITLE, "icons/terminal.svg"),
 			],
 			first: true,
 			shell,
@@ -249,6 +259,7 @@ impl Render for Shell {
 			Page::Views => self.views.clone().into_any_element(),
 			Page::Metro => self.metro.clone().into_any_element(),
 			Page::Logs => self.logs.clone().into_any_element(),
+			Page::Console => self.console.clone().into_any_element(),
 		};
 		let framed = title_bar::is_drawn(window);
 		div()

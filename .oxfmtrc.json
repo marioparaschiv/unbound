@@ -21,6 +21,7 @@
 		"docs/**/*.mdx",
 		"packages/loader/bootstrap/devtools.js",
 		"apps/devtools/target/**",
+		"apps/devtools/crates/repl/types/**",
 		"packages/loader/vendor/**",
 		"packages/loader/apt-repo/**",
 		"packages/loader/ios/.theos/**",

@@ -10,3 +10,5 @@ pub const VIEWS_TITLE: &str = "View Tree";
 pub const METRO_TITLE: &str = "Metro";
 /// The device log page's title.
 pub const LOGS_TITLE: &str = "Logs";
+/// The TypeScript console's page title.
+pub const CONSOLE_TITLE: &str = "Console";

@@ -11,6 +11,8 @@ path = "src/main.rs"
 
 [dependencies]
 unbound-devtools-core.workspace = true
+unbound-devtools-repl.workspace = true
+lsp-types.workspace = true
 anyhow.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
