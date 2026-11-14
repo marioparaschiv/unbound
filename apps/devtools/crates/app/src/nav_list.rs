@@ -95,8 +95,10 @@ fn render_row(ix: usize, row: NavRow, shell: WeakEntity<Shell>) -> impl IntoElem
 		icon: path,
 		active,
 	} = row;
-	row_body(ix, label, path, active, text, glyph).on_click(move |_, _, cx| {
-		shell.update(cx, |shell, cx| shell.open(page, cx)).ok();
+	row_body(ix, label, path, active, text, glyph).on_click(move |_, window, cx| {
+		shell
+			.update(cx, |shell, cx| shell.open(page, window, cx))
+			.ok();
 	})
 }
 

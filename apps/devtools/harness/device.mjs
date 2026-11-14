@@ -5,10 +5,12 @@
 // rows at the bottom, to mimic Discord-scale trees. `views-request` and `view-details-request` frames
 // get a spoofed native view tree from `views.mjs`, Android's or, with PLATFORM=ios, UIKit's.
 // `explorer-*-request` frames get spoofed classes, members and values from `explorer.mjs`, and
-// `metro-*-request` frames the client's own answers over a fake module registry from `metro.mjs`.
+// `metro-*-request` frames the client's own answers over a fake module registry from `metro.mjs`,
+// and `eval` frames run against `console.mjs`'s stand-in for Unbound's global.
 import { createRequire } from 'node:module';
 import { WebSocketServer } from 'ws';
 
+import { answerEval } from './console.mjs';
 import { answerExplorer } from './explorer.mjs';
 import { answerMetroFrame } from './metro.mjs';
 import { answerDetails, answerViews, platform } from './views.mjs';
@@ -181,6 +183,10 @@ server.on('connection', (socket) => {
 		if (frame.type === 'react-devtools') {
 			frontend = socket;
 			receive(frame);
+		}
+
+		if (frame.type === 'eval') {
+			answerEval(frame).then((result) => socket.send(JSON.stringify(result)));
 		}
 
 		if (frame.type === 'views-request') {

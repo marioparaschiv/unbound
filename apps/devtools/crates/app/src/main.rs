@@ -2,6 +2,7 @@ mod agents;
 mod app;
 mod appearance;
 mod assets;
+mod console;
 mod copy_chip;
 mod copy_glyph;
 mod empty;
