@@ -21,5 +21,7 @@ export function nextSpeed(current: string): StoredSpeed {
  * @returns The label, such as `1.5×`.
  */
 export function speedLabel(speed: number): string {
+	'worklet';
+
 	return `${speed}×`;
 }
