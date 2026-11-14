@@ -88,6 +88,18 @@ on:
             patched_url:
                 description: 'Download URL for the LSPatch-patched Discord artifact'
                 value: ${{ jobs.patch-discord.outputs.patched_url }}
+            module_artifact_id:
+                description: 'Artifact ID of the Xposed module. Beta and alpha names carry the channel: download-artifact keeps one artifact per name, even by ID'
+                value: ${{ jobs.build-module.outputs.module_artifact_id }}
+            symbols_artifact_id:
+                description: 'Artifact ID of the Android native symbols'
+                value: ${{ jobs.build-module.outputs.symbols_artifact_id }}
+            patched_artifact_id:
+                description: 'Artifact ID of the LSPatch-patched Discord split APKs'
+                value: ${{ jobs.patch-discord.outputs.patched_artifact_id }}
+            emulator_artifact_id:
+                description: 'Artifact ID of the patched Discord emulator split'
+                value: ${{ jobs.patch-discord.outputs.emulator_artifact_id }}
             attested:
                 description: 'Whether the module is attested, so the smoke test ran and gated the build'
                 value: ${{ jobs.build-module.outputs.attested }}
@@ -160,6 +172,8 @@ jobs:
         outputs:
             module_filename: ${{ steps.collect.outputs.module_filename }}
             module_url: ${{ steps.upload-module.outputs.artifact-url }}
+            module_artifact_id: ${{ steps.upload-module.outputs.artifact-id }}
+            symbols_artifact_id: ${{ steps.upload-symbols.outputs.artifact-id }}
             attested: ${{ steps.attestation-key.outputs.present }}
         steps:
             - name: Checkout code
@@ -298,9 +312,10 @@ jobs:
                   git rev-parse HEAD > android-symbols/commit.txt
 
             - name: Upload native symbols
+              id: upload-symbols
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
-                  name: android symbols
+                  name: android symbols${{ inputs.discord_channel != 'stable' && format(' {0}', inputs.discord_channel) || '' }}
                   path: packages/loader/android-symbols/
                   if-no-files-found: error
                   retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
@@ -309,7 +324,7 @@ jobs:
               id: upload-module
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
-                  name: android module
+                  name: android module${{ inputs.discord_channel != 'stable' && format(' {0}', inputs.discord_channel) || '' }}
                   path: packages/loader/${{ steps.collect.outputs.module_filename }}
                   retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
 
@@ -332,6 +347,8 @@ jobs:
         outputs:
             patched_filename: ${{ steps.patch.outputs.patched_filename }}
             patched_url: ${{ steps.upload-patched.outputs.artifact-url }}
+            patched_artifact_id: ${{ steps.upload-patched.outputs.artifact-id }}
+            emulator_artifact_id: ${{ steps.upload-emulator.outputs.artifact-id }}
         env:
             LSPATCH_VERSION: v1.2
             LSPATCH_JAR: lspatch-v1.2-487-release.jar
@@ -370,7 +387,8 @@ jobs:
             - name: Download module
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: android module
+                  artifact-ids: ${{ needs.build-module.outputs.module_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/module
 
             - name: Download LSPatch
@@ -533,7 +551,7 @@ jobs:
               id: upload-patched
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
-                  name: patched discord
+                  name: patched discord${{ inputs.discord_channel != 'stable' && format(' {0}', inputs.discord_channel) || '' }}
                   path: packages/loader/${{ steps.patch.outputs.patched_filename }}
                   retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
 
@@ -544,9 +562,10 @@ jobs:
                   subject-path: packages/loader/${{ steps.patch.outputs.patched_filename }}
 
             - name: Upload the emulator split
+              id: upload-emulator
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
-                  name: patched discord emulator split
+                  name: patched discord emulator split${{ inputs.discord_channel != 'stable' && format(' {0}', inputs.discord_channel) || '' }}
                   path: packages/loader/emulator/*.apk
                   if-no-files-found: error
                   retention-days: 1
@@ -586,7 +605,8 @@ jobs:
               continue-on-error: true
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: patched discord
+                  artifact-ids: ${{ needs.patch-discord.outputs.patched_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/smoke/package
 
             - name: Download the emulator split
@@ -594,7 +614,8 @@ jobs:
               continue-on-error: true
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: patched discord emulator split
+                  artifact-ids: ${{ needs.patch-discord.outputs.emulator_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/smoke/apks
 
             - name: Wait before downloading again
@@ -607,14 +628,16 @@ jobs:
               if: steps.download-patched.outcome == 'failure' || steps.download-split.outcome == 'failure'
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: patched discord
+                  artifact-ids: ${{ needs.patch-discord.outputs.patched_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/smoke/package
 
             - name: Download the emulator split again
               if: steps.download-patched.outcome == 'failure' || steps.download-split.outcome == 'failure'
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: patched discord emulator split
+                  artifact-ids: ${{ needs.patch-discord.outputs.emulator_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/smoke/apks
 
             - name: Unpack patched Discord

@@ -16,7 +16,6 @@ import {
 	updateNotes,
 } from '~/lib/debug-card/layout';
 import {
-	clockSummary,
 	dnsSummary,
 	gatewaySummary,
 	powerSummary,
@@ -45,7 +44,6 @@ const DROP_ORDER = [
 	'locale',
 	'session',
 	'display',
-	'clock',
 	'push',
 	'errors',
 	'disabled',
@@ -124,6 +122,7 @@ export function debugAltText(
 		...(info.experiments?.length && { experiments: info.experiments }),
 		...(cleanNames(info.injected ?? []).length && { tweaks: cleanNames(info.injected ?? []) }),
 		...(info.missingExtensions?.length && { missingExtensions: info.missingExtensions }),
+		...(info.isolatedExtensions?.length && { isolatedExtensions: info.isolatedExtensions }),
 		...(info.display && { display: displaySummary(info.display) }),
 		...(info.session && { session: sessionSummary(info.session) }),
 		...(info.native && {
@@ -133,9 +132,9 @@ export function debugAltText(
 		...(info.network && { network: networkSummary(info.network) }),
 		...(info.dns && { dns: dnsSummary(info.dns) }),
 		...(info.power && { power: powerSummary(info.power) }),
-		...(info.clock && { clock: clockSummary(info.clock) }),
 		...(info.push && { push: pushSummary(info.push) }),
 		...(info.gateway && { gateway: gatewaySummary(info.gateway) }),
+		...(info.crashReport && { crashReport: info.crashReport }),
 		...(info.heap && { heap: `${info.heap.heapMB} MB · gc ${info.heap.gcMs} ms` }),
 		...(info.launch?.crashes?.length && {
 			crashes: info.launch.crashes.map(

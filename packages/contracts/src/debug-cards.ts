@@ -100,11 +100,6 @@ const powerSchema = Type.Object({
 	charging: Type.Optional(Type.Boolean()),
 });
 
-const clockSchema = Type.Object({
-	utcOffset: text(8),
-	skewS: Type.Optional(Type.Integer({ minimum: -100_000_000, maximum: 100_000_000 })),
-});
-
 const dnsSchema = Type.Object({
 	resolver: Type.Optional(text(32)),
 	privateDns: Type.Optional(text(32)),
@@ -163,10 +158,10 @@ export const debugCardRequestSchema = Type.Object({
 	memory: Type.Optional(memorySchema),
 	network: Type.Optional(networkSchema),
 	power: Type.Optional(powerSchema),
-	clock: Type.Optional(clockSchema),
 	dns: Type.Optional(dnsSchema),
 	push: Type.Optional(pushSchema),
 	gateway: Type.Optional(gatewaySchema),
+	crashReport: Type.Optional(text(64)),
 	heap: Type.Optional(heapSchema),
 	storage: Type.Optional(
 		Type.Object({
@@ -194,6 +189,7 @@ export const debugCardRequestSchema = Type.Object({
 	experiments: Type.Optional(Type.Array(text(96), { maxItems: 30 })),
 	injected: Type.Optional(Type.Array(text(96), { maxItems: 32 })),
 	missingExtensions: Type.Optional(Type.Array(text(32), { maxItems: 4 })),
+	isolatedExtensions: Type.Optional(Type.Array(text(64), { maxItems: 8 })),
 	addonUpdates: Type.Optional(Type.Array(text(128), { maxItems: 64 })),
 	display: Type.Optional(
 		Type.Object({
@@ -245,8 +241,6 @@ export type DebugCardMemory = StaticDecode<typeof memorySchema>;
 export type DebugCardNetwork = StaticDecode<typeof networkSchema>;
 
 export type DebugCardPower = StaticDecode<typeof powerSchema>;
-
-export type DebugCardClock = StaticDecode<typeof clockSchema>;
 
 export type DebugCardDns = StaticDecode<typeof dnsSchema>;
 

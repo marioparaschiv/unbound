@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "”Rajoittamaton” näyttää kaikki ilmoitukset kerralla. ”Toistaiseksi” pitää ilmoituksen näkyvissä, kunnes suljet sen.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Yhdistää käynnistyksessä tietokoneesi debuggeriin.",
 	"UNBOUND_LOADER": "Lataaja",
-	"UNBOUND_LOADER_RESTART_HINT": "Lataaja lukee nämä käynnistyksessä. Ota ne käyttöön käynnistämällä uudelleen Yleiset-osiosta.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "Mukautetun paketin URL",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Lataa Unbound tästä URL-osoitteesta julkaisuversion sijaan. Palaa julkaisuversioon palauttamalla.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Anna http- tai https-URL.",

@@ -110,6 +110,33 @@ struct OverrideParams {
 }
 
 #[derive(Deserialize, JsonSchema)]
+struct DeletePathParams {
+	id: i64,
+	/// `props`, `state`, `hooks` or `context`.
+	section: String,
+	/// Path of the key or array item to remove, as for override.
+	path: Path,
+}
+
+#[derive(Deserialize, JsonSchema)]
+struct RenamePathParams {
+	id: i64,
+	/// `props`, `state`, `hooks` or `context`.
+	section: String,
+	/// The key's current path, as for override.
+	old_path: Path,
+	/// Its new path; for hooks, with the same hook id first.
+	new_path: Path,
+}
+
+#[derive(Deserialize, JsonSchema)]
+struct ToggleParams {
+	id: i64,
+	/// `true` forces the state on, `false` clears it.
+	on: bool,
+}
+
+#[derive(Deserialize, JsonSchema)]
 struct FiltersParams {
 	/// Show host components (View, Text, ...) in the tree. Off by default.
 	show_host_components: bool,
@@ -393,19 +420,92 @@ impl DevtoolsServer {
 		&self,
 		Parameters(params): Parameters<OverrideParams>,
 	) -> Result<String, String> {
-		let section = Section::from_label(&params.section).ok_or_else(|| {
-			format!(
-				"section must be props, state, hooks or context, not {:?}",
-				params.section
-			)
-		})?;
+		let section = section(&params.section)?;
 
 		self.devtools
-			.override_value(ElementId(params.id), section, params.path, params.value)
+			.override_value(
+				ElementId(params.id),
+				section,
+				params.path,
+				Some(params.value),
+			)
 			.await
 			.map_err(|error| error.to_string())?;
 
 		Ok("Sent. Inspect the element again to see the new value.".into())
+	}
+
+	#[tool(
+		description = "Remove a key or array item from a prop, state, hook or context value \
+		on device. Paths as for override. Example: {id, section: \"state\", path: [\"label\"]}."
+	)]
+	async fn delete_path(
+		&self,
+		Parameters(params): Parameters<DeletePathParams>,
+	) -> Result<String, String> {
+		let section = section(&params.section)?;
+
+		self.devtools
+			.delete_path(ElementId(params.id), section, params.path)
+			.await
+			.map_err(|error| error.to_string())?;
+
+		Ok("Sent. Inspect the element again to see the change.".into())
+	}
+
+	#[tool(
+		description = "Rename a key in a prop, state, hook or context value on device. \
+		Example: {id, section: \"state\", old_path: [\"label\"], new_path: [\"title\"]}."
+	)]
+	async fn rename_path(
+		&self,
+		Parameters(params): Parameters<RenamePathParams>,
+	) -> Result<String, String> {
+		let section = section(&params.section)?;
+
+		self.devtools
+			.rename_path(
+				ElementId(params.id),
+				section,
+				params.old_path,
+				params.new_path,
+			)
+			.await
+			.map_err(|error| error.to_string())?;
+
+		Ok("Sent. Inspect the element again to see the change.".into())
+	}
+
+	#[tool(
+		description = "Force a Suspense boundary to show its fallback (on: true) or its \
+		children again (on: false). Works when inspect reports canToggleSuspense."
+	)]
+	async fn toggle_suspense(
+		&self,
+		Parameters(params): Parameters<ToggleParams>,
+	) -> Result<String, String> {
+		self.devtools
+			.override_suspense(ElementId(params.id), params.on)
+			.await
+			.map_err(|error| error.to_string())?;
+
+		Ok("Sent. The boundary's children remount, so find them again.".into())
+	}
+
+	#[tool(
+		description = "Force an error boundary into its errored state (on: true) or clear \
+		it (on: false). Works when inspect reports canToggleError."
+	)]
+	async fn toggle_error(
+		&self,
+		Parameters(params): Parameters<ToggleParams>,
+	) -> Result<String, String> {
+		self.devtools
+			.override_error(ElementId(params.id), params.on)
+			.await
+			.map_err(|error| error.to_string())?;
+
+		Ok("Sent. The boundary's children remount, so find them again.".into())
 	}
 
 	#[tool(description = "Flash the element's native view on the device screen; no id clears it.")]
@@ -463,6 +563,11 @@ impl DevtoolsServer {
 
 		Ok(format::cap(text, MAX_OUTPUT_CHARS))
 	}
+}
+
+fn section(label: &str) -> Result<Section, String> {
+	Section::from_label(label)
+		.ok_or_else(|| format!("section must be props, state, hooks or context, not {label:?}"))
 }
 
 #[tool_handler]

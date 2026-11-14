@@ -94,7 +94,7 @@ pub(crate) enum BridgeFrame {
 	BridgeInfo(BridgeInfo),
 	/// One device log line.
 	Log(LogLine),
-	/// One React DevTools frame; `protocol::parse` reads it from the frame's text.
+	/// One React DevTools frame; `react_protocol::parse` reads it from the frame's text.
 	ReactDevtools {},
 	ViewsResult {
 		id: String,

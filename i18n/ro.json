@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "Nelimitat afișează toate notificările deodată. Permanent păstrează o notificare până o închizi.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Se conectează la pornire la un debugger de pe computerul tău.",
 	"UNBOUND_LOADER": "Loader",
-	"UNBOUND_LOADER_RESTART_HINT": "Loaderul citește aceste setări la pornire. Repornește din General pentru a le aplica.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "URL personalizat pentru bundle",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Încarcă Unbound de la acest URL în locul versiunii oficiale. Resetează pentru a reveni la versiunea oficială.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Introdu un URL http sau https.",

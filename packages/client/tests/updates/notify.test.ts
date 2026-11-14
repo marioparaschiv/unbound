@@ -112,9 +112,10 @@ describe('notifyUpdates', () => {
 });
 
 describe('notifyClientUpdated', () => {
-	test('announces a new client version, but not the first launch or a relaunch', () => {
+	test('announces a newer client version, but not the first launch, a relaunch or an older bundle', () => {
 		notifyClientUpdated('', '1.1.0');
 		notifyClientUpdated('1.1.0', '1.1.0');
+		notifyClientUpdated('1.1.0', '1.0.0');
 		expect(toasts).toHaveLength(0);
 
 		notifyClientUpdated('1.0.0', '1.1.0');

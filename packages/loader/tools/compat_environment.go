@@ -12,7 +12,8 @@ var compatEnvironmentClasses = map[string]string{
 }
 
 var compatEnvironmentSelectors = map[string]string{
-	"effectWithBlurRadius:": "a private class method of UIKit's `UIBlurEffect` that the iOS SDK leaves out; it ships with iOS, not Discord, so a Discord update cannot remove it",
+	"effectWithBlurRadius:":                      "a private class method of UIKit's `UIBlurEffect` that the iOS SDK leaves out; it ships with iOS, not Discord, so a Discord update cannot remove it",
+	"_imageWithCGSVGDocument:scale:orientation:": "a private class method of UIKit's `UIImage` that draws a CoreSVG document; it ships with iOS, not Discord, so a Discord update cannot remove it",
 }
 
 var compatEnvironmentFields = map[string]string{

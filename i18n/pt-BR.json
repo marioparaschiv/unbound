@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "Ilimitado mostra todos os avisos de uma vez. Indefinido mantém o aviso até você fechá-lo.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Conecta a um depurador no seu computador ao iniciar.",
 	"UNBOUND_LOADER": "Loader",
-	"UNBOUND_LOADER_RESTART_HINT": "O loader lê estas opções ao iniciar. Reinicie em Geral para aplicá-las.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "URL de bundle personalizado",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Carrega o Unbound desta URL em vez da build de lançamento. Redefina para voltar à build de lançamento.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Digite uma URL http ou https.",

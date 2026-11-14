@@ -1,0 +1,8 @@
+{
+	"PREVIEW_FILE": "Show Files in {name}",
+	"LOADING": "Loading…",
+	"LOAD_FAILED": "Could not load this file.",
+	"NOT_A_ZIP": "This file is not a zip archive it can read.",
+	"EMPTY_ZIP": "This archive is empty.",
+	"FILE_COUNT": "{count, plural, one {# file} other {# files}}"
+}

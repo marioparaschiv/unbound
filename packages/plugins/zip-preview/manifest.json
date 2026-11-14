@@ -1,0 +1,21 @@
+{
+	"id": "unbound.zip-preview",
+	"name": "Zip Preview",
+	"description": "Lists the files inside zip archives, such as .zip, .jar, .apk and .ipa, from the message's long-press menu, without downloading them.",
+	"authors": [
+		{
+			"name": "justjxke",
+			"id": "852558183087472640"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "FolderIcon",
+	"main": "index.tsx"
+}

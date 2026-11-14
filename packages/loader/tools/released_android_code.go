@@ -15,11 +15,12 @@ import (
 
 const releasedAndroidPageLimit = 10
 
-// releasedAndroidTags matches the tags release-names gives each Android channel's releases.
+// releasedAndroidTags matches the tags release-names gives each Android channel's releases; tags from before
+// the loader version joined them have no `-loader-` suffix.
 var releasedAndroidTags = map[string]*regexp.Regexp{
-	"stable": regexp.MustCompile(`^discord-([0-9]+)\.([0-9]+)-android$`),
-	"beta":   regexp.MustCompile(`^discord-([0-9]+)\.([0-9]+)-android-beta$`),
-	"alpha":  regexp.MustCompile(`^discord-([0-9]+)\.([0-9]+)-android-alpha$`),
+	"stable": regexp.MustCompile(`^discord-([0-9]+)\.([0-9]+)-android(?:-loader-[0-9A-Za-z.+-]+)?$`),
+	"beta":   regexp.MustCompile(`^discord-([0-9]+)\.([0-9]+)-android-beta(?:-loader-[0-9A-Za-z.+-]+)?$`),
+	"alpha":  regexp.MustCompile(`^discord-([0-9]+)\.([0-9]+)-android-alpha(?:-loader-[0-9A-Za-z.+-]+)?$`),
 }
 
 type githubReleaseSummary struct {

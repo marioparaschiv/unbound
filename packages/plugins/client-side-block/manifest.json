@@ -1,7 +1,7 @@
 {
 	"id": "unbound.client-side-block",
 	"name": "Client Side Block",
-	"description": "Hides messages from blocked, ignored and hand-picked users, and replies to them, without blocking anyone on Discord.",
+	"description": "Hides messages from blocked, ignored and hand-picked users, replies to them, and messages with keywords you pick, without blocking anyone on Discord.",
 	"authors": [
 		{
 			"name": "Samwich",
@@ -24,11 +24,19 @@
 			"id": "158567567487795200"
 		},
 		{
+			"name": "catcraft",
+			"id": "290162449213292546"
+		},
+		{
+			"name": "secp192k1",
+			"id": "477497542205243392"
+		},
+		{
 			"name": "adrian",
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.1.5",
+	"version": "1.2.0",
 	"unbound": {
 		"min": "3.0.0"
 	},

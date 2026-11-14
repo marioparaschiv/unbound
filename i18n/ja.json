@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "「無制限」ではすべてのトースト通知を同時に表示します。「無期限」では閉じるまでトースト通知を表示し続けます。",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "起動時に、パソコン上のデバッガーに接続します。",
 	"UNBOUND_LOADER": "ローダー",
-	"UNBOUND_LOADER_RESTART_HINT": "ローダーはこれらを起動時に読み込みます。適用するには「一般」から再起動してください。",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "カスタムバンドルのURL",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "リリースビルドの代わりにこのURLからUnboundを読み込みます。リリースビルドに戻すにはリセットしてください。",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "http または https のURLを入力してください。",

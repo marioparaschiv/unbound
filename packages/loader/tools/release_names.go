@@ -31,6 +31,12 @@ func releaseTag(discordVersion, platform string) string {
 	return "discord-" + discordVersion + "-" + platform
 }
 
+// androidReleaseTag names an Android release by its loader too: Obtainium tracks the tag, so a new loader on the
+// same Discord needs a new tag before users see the update.
+func androidReleaseTag(tag, loaderVersion string) string {
+	return tag + "-loader-" + loaderVersion
+}
+
 func releaseTitle(loaderVersion, discordVersion, build, label string) string {
 	if build != "" {
 		discordVersion += " (" + build + ")"
@@ -56,13 +62,14 @@ func nameLoaderReleases(releaseVersion, loaderVersion, androidVersion string) (l
 		}
 		return loaderReleaseNames{
 			IOS:     &loaderRelease{releaseTag(discordVersion, "ios"), releaseTitle(loaderVersion, discordVersion, "", "iOS")},
-			Android: &loaderRelease{releaseTag(androidVersion, "android"), releaseTitle(loaderVersion, androidVersion, "", "Android")},
+			Android: &loaderRelease{androidReleaseTag(releaseTag(androidVersion, "android"), loaderVersion), releaseTitle(loaderVersion, androidVersion, "", "Android")},
 		}, nil
 	}
 	release := &loaderRelease{"discord-" + releaseVersion, releaseTitle(loaderVersion, discordVersion, build, releaseChannelLabels[channel])}
 	if strings.HasPrefix(channel, "ios-") {
 		return loaderReleaseNames{IOS: release}, nil
 	}
+	release.Tag = androidReleaseTag(release.Tag, loaderVersion)
 	return loaderReleaseNames{Android: release}, nil
 }
 

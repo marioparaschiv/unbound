@@ -49,10 +49,11 @@ const releasedAndroidFixture = `[
 	{"tag_name":"discord-353.0-android","draft":true},
 	{"tag_name":"loader-latest","draft":false},
 	{"tag_name":"discord-353.7-android-beta","draft":false},
-	{"tag_name":"discord-353.10-android-beta","draft":false},
+	{"tag_name":"discord-353.10-android-beta-loader-1.4.0","draft":false},
 	{"tag_name":"discord-354.0-android-alpha","draft":false},
 	{"tag_name":"discord-353.5-android-alpha","draft":false},
 	{"tag_name":"discord-352.9-android","draft":false},
+	{"tag_name":"discord-352.17-android-loader-1.4.0","draft":false},
 	{"tag_name":"discord-353.0_119349-ios-testflight","draft":false}
 ]`
 

@@ -11,7 +11,7 @@ import { launchNotes } from '@unbound-app/contracts/debug-card-launch';
 import type { DebugCardContext } from '~/lib/debug-card/context';
 
 import { accent, cleanNames, COLORS, dim, joined, value, warn, type Span } from './spans';
-import { clockNote, dnsNote, gatewayNote, powerNote, pushNote } from './device-notes';
+import { dnsNote, gatewayNote, powerNote, pushNote } from './device-notes';
 import { environmentRows } from './environment-rows';
 import { clipped, wrapped } from './wrap-lines';
 
@@ -364,7 +364,6 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 	const storage = lowStorage(info.storage);
 	const updates = updateNotes(context, info.addonUpdates);
 	const tweaks = cleanNames(info.injected ?? []);
-	const clock = clockNote(info.clock);
 	const push = pushNote(info.push);
 	const power = powerNote(info.power);
 	const dns = dnsNote(info.dns);
@@ -379,12 +378,9 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 		['tweaks', tweaks.length ? [warn(fittedList(tweaks, VALUE_ROOM))] : []],
 		[
 			'extensions',
-			info.missingExtensions?.length
-				? [warn(`missing ${fittedList(info.missingExtensions, VALUE_ROOM)}`)]
-				: [],
+			extensionNotes(info).length ? [warn(fittedList(extensionNotes(info), VALUE_ROOM))] : [],
 		],
 		['errors', errors.length ? [warn(fittedList(errors, VALUE_ROOM))] : []],
-		['clock', clock ? [{ text: clock, color: COLORS.bad }] : []],
 		['launch', launch.length ? [warn(fittedList(launch, VALUE_ROOM))] : []],
 		['gateway', gateway ? [warn(fittedList([gateway], VALUE_ROOM))] : []],
 		['push', push ? [warn(fittedList([push], VALUE_ROOM))] : []],
@@ -395,6 +391,20 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 	];
 
 	return candidates.filter(([, spans]) => spans.length > 0);
+}
+
+/**
+ * @description Lists what is wrong with the app's extensions: ones a sideloader stripped, and ones signed without the app group.
+ * @param info The report.
+ * @returns One note per problem.
+ */
+export function extensionNotes(info: DebugInfo): string[] {
+	return [
+		...(info.missingExtensions?.length ? [`missing ${info.missingExtensions.join(', ')}`] : []),
+		...(info.isolatedExtensions?.length
+			? [`no app group ${info.isolatedExtensions.join(', ')}`]
+			: []),
+	];
 }
 
 function addonSummaries({ plugins, themes }: DebugInfo): string[] {

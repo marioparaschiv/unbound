@@ -1,6 +1,7 @@
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { brotliDecompressSync, type BrotliOptions } from 'node:zlib';
 import { describe, expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -97,4 +98,49 @@ describe('createPatches', () => {
 		).toBeUndefined();
 		expect(existsSync(join(dir, 'patches'))).toBe(false);
 	});
+
+	test("checks each patch with the loader's own decoder", async () => {
+		const verifier = join(mkdtempSync(join(tmpdir(), 'patch-check-')), 'bundle_patch_check');
+		const built = spawnSync(
+			join(import.meta.dir, '../../../../loader/core/tools/build-bundle-patch-check.sh'),
+			[verifier],
+		);
+
+		expect(built.status).toBe(0);
+
+		const dir = build();
+		const fetcher = served({
+			'https://cdn.test/beta/old/manifest.json': JSON.stringify({
+				sha512: { 'unbound.98.bundle': sha512(oldBundle) },
+			}),
+			'https://cdn.test/beta/old/unbound.98.bundle': oldBundle,
+		});
+
+		expect(
+			await createPatches({
+				dir,
+				baseUrl: 'https://cdn.test/beta',
+				revisions: ['old'],
+				fetcher,
+				verifier,
+			}),
+		).toBe(1);
+
+		const failing = join(mkdtempSync(join(tmpdir(), 'patch-check-')), 'fails');
+
+		writeFileSync(failing, '#!/bin/sh\necho broken >&2\nexit 1\n', { mode: 0o755 });
+
+		const rejected = await createPatches({
+			dir: build(),
+			baseUrl: 'https://cdn.test/beta',
+			revisions: ['old'],
+			fetcher,
+			verifier: failing,
+		}).then(
+			() => '',
+			(error: Error) => error.message,
+		);
+
+		expect(rejected).toContain("The loader's decoder rejected");
+	}, 120_000);
 });

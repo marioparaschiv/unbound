@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "“无限制”会同时显示所有提示。“无限期”会让提示一直显示，直到您将其关闭。",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "启动时连接到您电脑上的调试器。",
 	"UNBOUND_LOADER": "加载器",
-	"UNBOUND_LOADER_RESTART_HINT": "加载器会在启动时读取这些设置。请在“常规”中重启以应用。",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "自定义包 URL",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "从此 URL 加载 Unbound，而非正式版本。重置即可恢复为正式版本。",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "请输入 http 或 https URL。",

@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "«Без обмежень» показує всі сповіщення одночасно. «Безстроково» залишає сповіщення, доки ти його не закриєш.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Під час запуску підключається до налагоджувача на твоєму комп’ютері.",
 	"UNBOUND_LOADER": "Завантажувач",
-	"UNBOUND_LOADER_RESTART_HINT": "Завантажувач зчитує ці параметри під час запуску. Щоб застосувати їх, перезапусти застосунок у розділі «Загальні».",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "URL власного бандла",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Завантажувати Unbound із цього URL замість релізної збірки. Скинь, щоб повернутися до релізної збірки.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Введи URL з http або https.",

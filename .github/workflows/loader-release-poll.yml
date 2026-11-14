@@ -237,3 +237,22 @@ jobs:
             DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
             GPG_KEY: ${{ secrets.GPG_KEY }}
             GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+    # A bundle whose minLoaderVersion waited for these releases publishes now; build-bundle.yml checks every
+    # Android channel's release carries that loader first.
+    bundles:
+        needs: [stable-release, testflight-release, android-beta-release, android-alpha-release]
+        if: ${{ !cancelled() && contains(needs.*.result, 'success') }}
+        runs-on: ubuntu-26.04
+        timeout-minutes: 5
+        permissions:
+            actions: write
+        # No checkout, so packages/loader does not exist.
+        defaults:
+            run:
+                working-directory: .
+        steps:
+            - name: Publish the bundle that waited for these releases
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: gh workflow run build-bundle.yml --repo "$GITHUB_REPOSITORY" --ref main

@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "「無限制」會同時顯示所有通知。「無限期」會讓通知一直顯示到你關閉為止。",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "啟動時連線至你電腦上的偵錯工具。",
 	"UNBOUND_LOADER": "載入器",
-	"UNBOUND_LOADER_RESTART_HINT": "載入器會在啟動時讀取這些設定。請從「一般」重新啟動以套用。",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "自訂套件包網址",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "從此網址載入 Unbound，而非正式版組建。重設即可回到正式版組建。",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "請輸入 http 或 https 網址。",

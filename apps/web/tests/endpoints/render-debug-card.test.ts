@@ -33,9 +33,9 @@ const info: DebugCardRequest = {
 	flags: ['Jailbroken', 'verified build'],
 };
 
-type SentCard = Omit<DebugCardRequest, 'device'> & { device?: string };
+type SentCard = Omit<DebugCardRequest, 'device'> & { device?: string; [field: string]: unknown };
 
-function send(body: SentCard, ip: string) {
+function send(body: SentCard | Record<string, unknown>, ip: string) {
 	return renderDebugCardEndpoint.handle(
 		ctx,
 		new Request(new URL('/api/v1/debug-cards', ctx.env.PUBLIC_URL), {
@@ -59,6 +59,26 @@ describe('debug cards', () => {
 			unbound: '3.0.0',
 			loader: '1.3.0',
 		});
+	});
+
+	test('still draws a card when an optional field does not validate', async () => {
+		const response = await send(
+			{
+				...info,
+				clock: { utcOffset: 'UTC+01:00' },
+				power: { lowPower: 'yes' },
+				network: { type: 'wifi' },
+			},
+			'203.0.113.23',
+		);
+
+		expect(response.status).toBe(200);
+
+		const card = parse(debugCardResponseSchema, await response.json());
+		const alt = JSON.parse(unpackDebugAltText(card.altText) ?? '');
+
+		expect(alt).toMatchObject({ network: 'wifi' });
+		expect(alt.power).toBeUndefined();
 	});
 
 	test('refuses malformed and oversized reports', async () => {

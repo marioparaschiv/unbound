@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "Tanpa batas menampilkan semua toast sekaligus. Tanpa batas waktu mempertahankan toast sampai kamu menutupnya.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Terhubung ke debugger di komputermu saat aplikasi dibuka.",
 	"UNBOUND_LOADER": "Loader",
-	"UNBOUND_LOADER_RESTART_HINT": "Loader membaca pengaturan ini saat aplikasi dibuka. Mulai ulang dari Umum untuk menerapkannya.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "URL Bundle Kustom",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Muat Unbound dari URL ini, bukan dari build rilis. Atur ulang untuk kembali ke build rilis.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Masukkan URL http atau https.",
