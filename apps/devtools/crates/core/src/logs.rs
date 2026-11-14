@@ -139,6 +139,48 @@ impl LogFilter {
 	}
 }
 
+/// Which end of the Logs page the newest line sits at.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum LogOrder {
+	#[default]
+	OldestFirst,
+	NewestFirst,
+}
+
+impl LogOrder {
+	pub const ALL: [LogOrder; 2] = [LogOrder::OldestFirst, LogOrder::NewestFirst];
+
+	pub fn label(self) -> &'static str {
+		match self {
+			LogOrder::OldestFirst => "Oldest First",
+			LogOrder::NewestFirst => "Newest First",
+		}
+	}
+
+	/// The position in time-sorted `rows` of the `ix`th row shown, of `len`.
+	pub fn row(self, ix: usize, len: usize) -> usize {
+		match self {
+			LogOrder::OldestFirst => ix,
+			LogOrder::NewestFirst => len.saturating_sub(ix + 1),
+		}
+	}
+}
+
+/// Inserts `entry` into `rows` sorted by when the device wrote each line, arrival breaking ties.
+/// Lines mostly arrive in order, so this is usually a push to the back.
+pub fn insert_by_time(rows: &mut VecDeque<Arc<LogEntry>>, entry: Arc<LogEntry>) {
+	let key = (entry.time(), entry.seq);
+	let at = rows.partition_point(|row| (row.time(), row.seq) <= key);
+
+	rows.insert(at, entry);
+}
+
+/// Sorts `rows` by when the device wrote each line, arrival breaking ties.
+pub fn sort_by_time(rows: &mut VecDeque<Arc<LogEntry>>) {
+	rows.make_contiguous()
+		.sort_by_key(|row| (row.time(), row.seq));
+}
+
 /// The kept lines and the number the next one gets.
 #[derive(Default)]
 pub(crate) struct LogBuffer {
@@ -275,6 +317,45 @@ mod tests {
 		assert_eq!(new.source(), LogSource::ReactNative);
 		assert_eq!(new.scope, ["A", "B"]);
 		assert_eq!(new.at, Some(1_700_000_000_000.));
+	}
+
+	fn entry(seq: u64, at: f64) -> Arc<LogEntry> {
+		Arc::new(LogEntry {
+			seq,
+			received: SystemTime::UNIX_EPOCH,
+			line: LogLine {
+				at: Some(at),
+				..line(None)
+			},
+		})
+	}
+
+	fn seqs(rows: &VecDeque<Arc<LogEntry>>) -> Vec<u64> {
+		rows.iter().map(|row| row.seq).collect()
+	}
+
+	#[test]
+	fn keeps_rows_in_time_order_with_arrival_breaking_ties() {
+		let mut rows = VecDeque::new();
+
+		for (seq, at) in [(1, 10.), (2, 30.), (3, 20.), (4, 30.), (5, 5.)] {
+			insert_by_time(&mut rows, entry(seq, at));
+		}
+		assert_eq!(seqs(&rows), [5, 1, 3, 2, 4]);
+
+		let mut unsorted: VecDeque<_> = [(1, 10.), (2, 30.), (3, 20.)]
+			.into_iter()
+			.map(|(seq, at)| entry(seq, at))
+			.collect();
+		sort_by_time(&mut unsorted);
+		assert_eq!(seqs(&unsorted), [1, 3, 2]);
+	}
+
+	#[test]
+	fn newest_first_reads_rows_from_the_back() {
+		assert_eq!(LogOrder::OldestFirst.row(0, 3), 0);
+		assert_eq!(LogOrder::NewestFirst.row(0, 3), 2);
+		assert_eq!(LogOrder::NewestFirst.row(2, 3), 0);
 	}
 
 	#[test]

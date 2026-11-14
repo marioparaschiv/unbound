@@ -66,7 +66,7 @@ fn copy_text(entry: &LogEntry) -> String {
 
 impl LogsPage {
 	fn render_row(&self, ix: usize, cx: &mut Context<Self>) -> Option<AnyElement> {
-		let entry = self.rows.get(ix)?.clone();
+		let entry = self.rows.get(self.order.row(ix, self.rows.len()))?.clone();
 		let line = &entry.line;
 		let message_tone = match line.level {
 			3 => theme::ERROR,

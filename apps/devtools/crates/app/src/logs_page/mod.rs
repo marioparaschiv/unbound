@@ -1,6 +1,6 @@
 //! The Logs page: the device's log lines live as they arrive, filtered by source
-//! (All, JS, React Native, Native) and to Unbound's lines alone. It follows the newest line
-//! while scrolled to the bottom.
+//! (All, JS, React Native, Native) and to Unbound's lines alone, sorted by when the device wrote
+//! them, oldest or newest first. It follows the newest line while scrolled to its end.
 
 mod rows;
 
@@ -8,9 +8,14 @@ use std::collections::VecDeque;
 use std::sync::Arc;
 use std::time::Duration;
 
-use gpui::{Context, Entity, SharedString, UniformListScrollHandle, Window, div, prelude::*, px};
+use gpui::{
+	Context, Entity, ScrollStrategy, SharedString, UniformListScrollHandle, Window, div,
+	prelude::*, px,
+};
 use gpui_component::switch::Switch;
-use unbound_devtools_core::{Devtools, LOG_CAPACITY, LogEntry, LogFilter, LogView};
+use unbound_devtools_core::{
+	Devtools, LOG_CAPACITY, LogEntry, LogFilter, LogOrder, LogView, insert_by_time, sort_by_time,
+};
 
 use crate::empty::SETUP_STEPS;
 use crate::empty_state::EmptyState;
@@ -24,6 +29,7 @@ use crate::widgets::{
 /// Lines come in batches; one redraw per frame is plenty.
 const CHANGE_COALESCING_FRAME: Duration = Duration::from_millis(16);
 const SEGMENTS_WIDTH: f32 = 380.;
+const ORDER_WIDTH: f32 = 220.;
 
 pub struct LogsPage {
 	devtools: Devtools,
@@ -31,9 +37,10 @@ pub struct LogsPage {
 	entries: VecDeque<Arc<LogEntry>>,
 	/// The newest line read from the core.
 	read: u64,
-	/// The kept lines the filter shows, oldest first.
+	/// The kept lines the filter shows, sorted by when the device wrote them, oldest first.
 	rows: VecDeque<Arc<LogEntry>>,
 	filter: LogFilter,
+	order: LogOrder,
 	/// Whether the debugger connection has a device on it.
 	connected: bool,
 	scroll: UniformListScrollHandle,
@@ -78,6 +85,7 @@ impl LogsPage {
 			read: 0,
 			rows: VecDeque::new(),
 			filter: LogFilter::default(),
+			order: LogOrder::default(),
 			scroll: UniformListScrollHandle::new(),
 			mcp,
 			_watch: [lines, status],
@@ -101,24 +109,49 @@ impl LogsPage {
 			return;
 		};
 		self.read = last.seq;
-		// Read before the list grows: a reader scrolled up keeps their place.
-		let follow = self.scroll.is_scrolled_to_end().unwrap_or(true);
+		// Read before the list grows: a reader scrolled away from the newest line keeps their place.
+		let follow = self.at_newest();
 		for entry in fresh {
 			if self.filter.matches(&entry.line) {
-				self.rows.push_back(entry.clone());
+				insert_by_time(&mut self.rows, entry.clone());
 			}
 			self.entries.push_back(entry);
 		}
 		let overflow = self.entries.len().saturating_sub(LOG_CAPACITY);
-		self.entries.drain(..overflow);
-		if let Some(first) = self.entries.front().map(|entry| entry.seq) {
-			while self.rows.front().is_some_and(|row| row.seq < first) {
-				self.rows.pop_front();
+		if overflow > 0 {
+			self.entries.drain(..overflow);
+			// Rows are in time order, so the dropped ones can sit anywhere among them.
+			if let Some(first) = self.entries.front().map(|entry| entry.seq) {
+				self.rows.retain(|row| row.seq >= first);
 			}
 		}
 		if follow {
-			self.scroll.scroll_to_bottom();
+			self.scroll_to_newest();
 		}
+		cx.notify();
+	}
+
+	/// Whether the list sits at its newest end: the bottom oldest first, the top newest first.
+	fn at_newest(&self) -> bool {
+		match self.order {
+			LogOrder::OldestFirst => self.scroll.is_scrolled_to_end().unwrap_or(true),
+			LogOrder::NewestFirst => self.scroll.0.borrow().base_handle.offset().y >= px(0.),
+		}
+	}
+
+	fn scroll_to_newest(&self) {
+		match self.order {
+			LogOrder::OldestFirst => self.scroll.scroll_to_bottom(),
+			LogOrder::NewestFirst => self.scroll.scroll_to_item(0, ScrollStrategy::Top),
+		}
+	}
+
+	fn set_order(&mut self, order: LogOrder, cx: &mut Context<Self>) {
+		if order == self.order {
+			return;
+		}
+		self.order = order;
+		self.scroll_to_newest();
 		cx.notify();
 	}
 
@@ -133,7 +166,8 @@ impl LogsPage {
 			.filter(|entry| filter.matches(&entry.line))
 			.cloned()
 			.collect();
-		self.scroll.scroll_to_bottom();
+		sort_by_time(&mut self.rows);
+		self.scroll_to_newest();
 		cx.notify();
 	}
 
@@ -152,6 +186,11 @@ impl LogsPage {
 		let selected = LogView::ALL
 			.iter()
 			.position(|view| *view == self.filter.view);
+		let orders: Vec<String> = LogOrder::ALL
+			.iter()
+			.map(|order| order.label().to_owned())
+			.collect();
+		let order = LogOrder::ALL.iter().position(|order| *order == self.order);
 		div()
 			.flex_none()
 			.flex()
@@ -189,6 +228,20 @@ impl LogsPage {
 						};
 						this.set_filter(filter, cx);
 					})),
+			)
+			.child(div().flex_1())
+			.child(
+				segmented(
+					"log-order",
+					&orders,
+					order,
+					cx.listener(|this, picked: &usize, _, cx| {
+						if let Some(order) = LogOrder::ALL.get(*picked) {
+							this.set_order(*order, cx);
+						}
+					}),
+				)
+				.w(px(ORDER_WIDTH)),
 			)
 	}
 

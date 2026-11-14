@@ -36,7 +36,10 @@ pub use explorer::{
 };
 pub use inspect::{Hook, InspectedElement, OwnerRef, Section};
 pub use link::LinkStatus;
-pub use logs::{LOG_CAPACITY, LogEntry, LogFilter, LogLine, LogSource, LogView};
+pub use logs::{
+	LOG_CAPACITY, LogEntry, LogFilter, LogLine, LogOrder, LogSource, LogView, insert_by_time,
+	sort_by_time,
+};
 pub use metro::{
 	ChildrenPage, FilesPage, LoadAllBatch, LoadedModule, METRO_CHILDREN_PAGE_SIZE,
 	METRO_MODULES_PAGE_SIZE, METRO_SEARCH_PAGE_SIZE, MetroError, MetroErrorCode, MetroFile,
