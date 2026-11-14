@@ -1,5 +1,6 @@
 import { formatReport, isOverBudget } from '~/lib/report-format';
 import type { BuildReport } from '~/rollup/build-report-schema';
+import { buildConcurrency } from '~/lib/build-concurrency';
 import type { CommandHandler } from '~/lib/lazy-handler';
 import { createCheckCache } from '~/lib/check/check';
 import { buildChecks } from '~/lib/build-checks';
@@ -34,33 +35,37 @@ const handler: CommandHandler<typeof buildCommand.schema> = async ({
 	const cache = createCheckCache();
 
 	// Each build is its own process, so a few run at once.
-	const results = await mapInParallel(addons, async (addon): Promise<BuiltAddonReport> => {
-		// Progress goes to stderr, so stdout holds only the reports, or the JSON under `--json`.
-		process.stderr.write(
-			addon.static ? `Checking ${addon.id} (static addon)…\n` : `Building ${addon.id}…\n`,
-		);
-
-		const { ok, report } = await buildAddon(addon, {
-			command: resolved.config.build,
-			verbose,
-			checks,
-			cache,
-			report: true,
-		});
-		const passed = ok && !(strictBudget && report && isOverBudget(report));
-
-		if (passed) {
-			process.stderr.write(`Built ${addon.id}.\n`);
-		} else {
+	const results = await mapInParallel(
+		addons,
+		async (addon): Promise<BuiltAddonReport> => {
+			// Progress goes to stderr, so stdout holds only the reports, or the JSON under `--json`.
 			process.stderr.write(
-				ok
-					? `Failed to build ${addon.id}: it is over a size budget.\n`
-					: `Failed to build ${addon.id}.\n`,
+				addon.static ? `Checking ${addon.id} (static addon)…\n` : `Building ${addon.id}…\n`,
 			);
-		}
 
-		return { id: addon.id, ok: passed, report: report ?? null };
-	});
+			const { ok, report } = await buildAddon(addon, {
+				command: resolved.config.build,
+				verbose,
+				checks,
+				cache,
+				report: true,
+			});
+			const passed = ok && !(strictBudget && report && isOverBudget(report));
+
+			if (passed) {
+				process.stderr.write(`Built ${addon.id}.\n`);
+			} else {
+				process.stderr.write(
+					ok
+						? `Failed to build ${addon.id}: it is over a size budget.\n`
+						: `Failed to build ${addon.id}.\n`,
+				);
+			}
+
+			return { id: addon.id, ok: passed, report: report ?? null };
+		},
+		buildConcurrency(),
+	);
 
 	const tables = results.flatMap(({ report }) =>
 		report ? [formatReport(report, { verbose, strict: strictBudget })] : [],

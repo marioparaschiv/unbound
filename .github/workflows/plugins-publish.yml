@@ -51,6 +51,8 @@ jobs:
             - name: Test plugins
               run: bun run plugins:test
             - name: Build plugins
+              env:
+                  UNBOUND_BUILD_CONCURRENCY: '2'
               run: bun run plugins:build
             - name: Configure git identity
               run: |
