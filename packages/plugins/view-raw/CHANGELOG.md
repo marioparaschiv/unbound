@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.8] - 2026-11-14
+
+### Fixed
+
+- Its rows show in action sheets alongside other plugins' rows, including iOS server and profile sheets.
+
 ## [1.0.7] - 2026-11-13
 
 ### Fixed
