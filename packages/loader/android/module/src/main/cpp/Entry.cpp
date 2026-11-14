@@ -7,6 +7,7 @@
 #include "AndroidHermesSampler.h"
 #include "AndroidHotReload.h"
 #include "AndroidLoader.h"
+#include "AndroidLogcat.h"
 #include "HermesBytecodeHeader.h"
 #include "JniEnvironment.h"
 #include "JniSurface.h"
@@ -77,6 +78,7 @@ static void nativeInitialize(JNIEnv *env, jclass, jstring documents, jstring boo
     LoaderConfiguration configuration;
     configuration.documents = toStdString(env, documents);
     loader::openLogFile(configuration.documents);
+    startLogcatCapture();
     configuration.bootstrapScripts =
         nlohmann::json::parse(toStdString(env, bootstrapScripts), nullptr, false);
     configuration.origin          = toStdString(env, origin);
