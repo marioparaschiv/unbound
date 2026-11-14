@@ -747,7 +747,9 @@ jobs:
                   set -euo pipefail
                   APP_FILE=$(find . -maxdepth 1 -type f -name '*.ipa' -print -quit)
                   IPA_INFO=$(unbound-tools ipa-info --ipa "$APP_FILE")
+                  # The IPA's short version names the loader (353.0_1.5.0) so sideloaders show loader updates; tags use Discord's.
                   VERSION=$(printf '%s\n' "$IPA_INFO" | jq -r '.version')
+                  DISCORD=$(printf '%s\n' "$IPA_INFO" | jq -r '.discordVersion')
 
                   if [ "${{ inputs.only_app_repo }}" == true ]; then
                     if [[ "$VERSION_SELECTOR" == *_* ]]; then
@@ -760,9 +762,9 @@ jobs:
                   fi
 
                   BUILD=$(printf '%s\n' "$IPA_INFO" | jq -r '.build')
-                  DISCORD_VERSION="$VERSION"
+                  DISCORD_VERSION="$DISCORD"
                   if [[ "$IS_TESTFLIGHT" == true ]]; then
-                    DISCORD_VERSION="${VERSION}_${BUILD}"
+                    DISCORD_VERSION="${DISCORD}_${BUILD}"
                     APP_INDEX=1
                   else
                     APP_INDEX=0
@@ -774,8 +776,8 @@ jobs:
                     LOADER_VERSION=$(for deb in ipa-deb/*.deb; do dpkg-deb -f "$deb" Version; done | sort -V | tail -n 1)
                   fi
                   rm -rf ipa-deb
-                  DESCRIPTION="Discord $VERSION ($BUILD)."
-                  if [ -n "$LOADER_VERSION" ]; then DESCRIPTION="Discord $VERSION ($BUILD) with Unbound loader $LOADER_VERSION."; fi
+                  DESCRIPTION="Discord $DISCORD ($BUILD)."
+                  if [ -n "$LOADER_VERSION" ]; then DESCRIPTION="Discord $DISCORD ($BUILD) with Unbound loader $LOADER_VERSION."; fi
 
                   DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
                   IPA_SIZE=$(stat -c%s "$APP_FILE")

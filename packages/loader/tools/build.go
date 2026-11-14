@@ -230,12 +230,13 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 	if err != nil {
 		return err
 	}
-	var unboundArgs, unboundFiles []string
-	if options.channel != "testflight" {
-		unboundArgs, unboundFiles, err = cyanInputs(input, work)
-		if err != nil {
-			return fmt.Errorf("preparing the Unbound Info.plist failed: %w", err)
-		}
+	loader, err := loaderVersion(options.root)
+	if err != nil {
+		return err
+	}
+	unboundArgs, unboundFiles, err := cyanInputs(input, work, loader, options.channel != "testflight")
+	if err != nil {
+		return fmt.Errorf("preparing the Unbound Info.plist failed: %w", err)
 	}
 	patched := input
 	if err := rejectInjectedIPA(patched, work, runner); err != nil {

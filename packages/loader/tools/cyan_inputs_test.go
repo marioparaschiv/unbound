@@ -13,6 +13,8 @@ const discordInfoPlist = `<?xml version="1.0" encoding="UTF-8"?>
 <dict>
 	<key>CFBundleIdentifier</key>
 	<string>com.hammerandchisel.discord</string>
+	<key>CFBundleShortVersionString</key>
+	<string>353.0</string>
 	<key>CFBundleIcons</key>
 	<dict>
 		<key>CFBundlePrimaryIcon</key>
@@ -78,7 +80,7 @@ func writeTestIPA(t *testing.T, info string) string {
 
 func TestCyanInputsKeepDiscordsIconsAndSchemes(t *testing.T) {
 	dir := t.TempDir()
-	args, icons, err := cyanInputs(writeTestIPA(t, discordInfoPlist), dir)
+	args, icons, err := cyanInputs(writeTestIPA(t, discordInfoPlist), dir, "1.5.0", true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,8 +98,8 @@ func TestCyanInputsKeepDiscordsIconsAndSchemes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(merge.keys) != 6 {
-		t.Fatalf("merge plist must hold only the icon, URL, local network and animated icon keys, has %v", merge.keys)
+	if len(merge.keys) != 8 {
+		t.Fatalf("merge plist must hold only the version, icon, URL, local network and animated icon keys, has %v", merge.keys)
 	}
 	services := merge.get("NSBonjourServices").valuesOrNil()
 	if len(services) != 1 || services[0].text != unboundBonjourService {
@@ -138,7 +140,7 @@ func TestCyanInputsKeepDiscordsLocalNetworkDeclarations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	merged, err := mergePlist(data)
+	merged, err := mergePlist(data, "1.5.0", true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +159,7 @@ func TestCyanInputsKeepDiscordsLocalNetworkDeclarations(t *testing.T) {
 
 func TestCyanInputsAddAnAlternateIconPerAnimatedFrame(t *testing.T) {
 	dir := t.TempDir()
-	args, files, err := cyanInputs(writeTestIPA(t, discordInfoPlist), dir)
+	args, files, err := cyanInputs(writeTestIPA(t, discordInfoPlist), dir, "1.5.0", true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -206,7 +208,48 @@ func TestCyanInputsRejectArchivesWithoutAnApp(t *testing.T) {
 		t.Fatal(err)
 	}
 	file.Close()
-	if _, _, err := cyanInputs(path, t.TempDir()); err == nil {
+	if _, _, err := cyanInputs(path, t.TempDir(), "1.5.0", true); err == nil {
 		t.Fatal("an archive without an app was accepted")
+	}
+}
+
+func TestCyanInputsNameTheLoaderInTheVersion(t *testing.T) {
+	for _, branding := range []bool{true, false} {
+		args, files, err := cyanInputs(writeTestIPA(t, discordInfoPlist), t.TempDir(), "1.5.0", branding)
+		if err != nil {
+			t.Fatal(err)
+		}
+		data, err := os.ReadFile(args[1])
+		if err != nil {
+			t.Fatal(err)
+		}
+		merge, err := readPlist(data)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if version := merge.get("CFBundleShortVersionString").text; version != "353.0_1.5.0" {
+			t.Fatalf("branding %v: sideloaders must see the loader in the version, got %q", branding, version)
+		}
+		if discord := merge.get(discordVersionKey).text; discord != "353.0" {
+			t.Fatalf("branding %v: the loader restores Discord's version from %s, got %q", branding, discordVersionKey, discord)
+		}
+		if !branding && (len(args) != 2 || len(files) != 0 || len(merge.keys) != 2) {
+			t.Fatalf("TestFlight keeps Discord's name and icons: args %v, files %v, keys %v", args, files, merge.keys)
+		}
+	}
+}
+
+func TestCyanInputsRejectAnIPAThatAlreadyNamesALoader(t *testing.T) {
+	info, err := readPlist([]byte(discordInfoPlist))
+	if err != nil {
+		t.Fatal(err)
+	}
+	info.set("CFBundleShortVersionString", plistText("353.0_1.4.0"))
+	data, err := writePlist(info)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := mergePlist(data, "1.5.0", true); err == nil {
+		t.Fatal("a version that already names a loader was extended again")
 	}
 }
