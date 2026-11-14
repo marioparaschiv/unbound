@@ -22,6 +22,7 @@ import (
 )
 
 const (
+	androidSplitHashLength  = 16
 	androidBuildsPath       = "/api/v1/loader/android-builds"
 	androidBuildRecordName  = "build.json"
 	lspatchOriginEntry      = "assets/lspatch/origin.apk"
@@ -147,9 +148,15 @@ func stageAndroidBuild(apks string, extras []string, directory, channel, commit 
 	}
 	sort.Slice(record.Splits, func(left, right int) bool { return record.Splits[left].Name < record.Splits[right].Name })
 	for index := range record.Splits {
-		record.Splits[index].Key = androidBuildPrefix(record) + "/" + record.Splits[index].Name + ".apk.gz"
+		record.Splits[index].Key = androidSplitKey(record, record.Splits[index])
 	}
 	return record, nil
+}
+
+// androidSplitKey names a split by its content, since two builds of one commit differ byte for byte: a later
+// upload never replaces a file an earlier record points at.
+func androidSplitKey(record androidBuildRecord, split androidBuildSplit) string {
+	return fmt.Sprintf("%s/%s-%s.apk.gz", androidBuildPrefix(record), split.Name, split.SHA256[:androidSplitHashLength])
 }
 
 func androidBuildPrefix(record androidBuildRecord) string {
@@ -266,23 +273,25 @@ func gzipSplit(source, destination string) (androidBuildSplit, error) {
 	return androidBuildSplit{SHA256: hex.EncodeToString(hash.Sum(nil)), Size: size, CompressedSize: info.Size(), path: destination}, nil
 }
 
-// uploadAndroidBuild uploads every split, then build.json, so a build only looks complete once its splits are in place. A build already published is left alone.
+// uploadAndroidBuild uploads every split the bucket lacks, then build.json, so a build only looks complete once its
+// splits are in place. Split keys carry their hashes, so a split already uploaded is the same file and is skipped,
+// and the record posted afterwards always points at files that match it.
 func uploadAndroidBuild(ctx context.Context, bucket s3Bucket, record androidBuildRecord, directory string, encoded []byte) error {
-	recordKey := androidBuildPrefix(record) + "/" + androidBuildRecordName
-	published, err := bucket.exists(ctx, recordKey)
-	if err != nil {
-		return err
-	}
-	if published {
-		fmt.Println(recordKey, "is already published; builds are never overwritten")
-		return nil
-	}
 	for _, split := range record.Splits {
+		present, err := bucket.exists(ctx, split.Key)
+		if err != nil {
+			return err
+		}
+		if present {
+			fmt.Println(split.Key, "is already uploaded")
+			continue
+		}
 		if err := bucket.putFile(ctx, split.Key, split.path, androidBuildContentType); err != nil {
 			return fmt.Errorf("Failed to upload split %s: %w", split.Name, err)
 		}
 		fmt.Println("uploaded", split.Key)
 	}
+	recordKey := androidBuildPrefix(record) + "/" + androidBuildRecordName
 	recordPath := filepath.Join(directory, androidBuildRecordName)
 	if err := os.WriteFile(recordPath, encoded, 0o644); err != nil {
 		return err
@@ -294,7 +303,6 @@ func uploadAndroidBuild(ctx context.Context, bucket s3Bucket, record androidBuil
 	return nil
 }
 
-// postAndroidBuild records the build with the backend so clients can list it. Posting the same build again replaces it.
 func postAndroidBuild(ctx context.Context, client *http.Client, endpoint, apiKey string, encoded []byte) error {
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(encoded))
 	if err != nil {
