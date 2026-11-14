@@ -29,7 +29,7 @@ jobs:
         if: github.repository == 'marioparaschiv/unbound' && github.ref == 'refs/heads/main'
         runs-on: ubuntu-26.04
         # Publishing every plugin after a release-wide bump takes longer than a few minutes.
-        timeout-minutes: 30
+        timeout-minutes: 45
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -51,8 +51,6 @@ jobs:
             - name: Test plugins
               run: bun run plugins:test
             - name: Build plugins
-              env:
-                  UNBOUND_BUILD_CONCURRENCY: '2'
               run: bun run plugins:build
             - name: Configure git identity
               run: |
