@@ -394,6 +394,22 @@ describe('debug card', () => {
 		).not.toContain('tweaks');
 	});
 
+	test('warns about share or Safari extensions a sideloaded install is missing', () => {
+		const card = layoutDebugCard(
+			{ ...info, missingExtensions: ['Share', 'Safari'] },
+			new Date(),
+		);
+		const labels = texts(card)
+			.filter((run) => run.x === 14)
+			.map((run) => run.text);
+
+		expect(labels).toContain('extensions');
+		expect(texts(card).some((run) => run.text.includes('missing Share'))).toBe(true);
+		expect(texts(layoutDebugCard(info, new Date())).map((run) => run.text)).not.toContain(
+			'extensions',
+		);
+	});
+
 	test('lists addon updates waiting in the updates row, after the server ones', () => {
 		const report: DebugCardRequest = {
 			...info,
