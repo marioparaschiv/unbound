@@ -34,5 +34,14 @@
 	},
 	"icon": "EyeSlashIcon",
 	"main": "index.tsx",
-	"replaces": ["unbound.no-blocked-messages"]
+	"replaces": [
+		"unbound.no-blocked-messages"
+	],
+	"bytecode": {
+		"98": "0c46be4c7acdf83ed3121e8378e5636c10d1e5e9256f8800c997e58fcdde8d4f370bbabf6fb3b589ab5291cd98f47bedbcc4a27749a2f3109969b12f47c64cb7"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "KE7zM5aVNnR2KAjFdvNzN3FTukU696dtgpjZbclfDZ9dL0RGKuoNKZo0z8uua44DDHOmQf5xyGrtTHbXtv+4CA=="
+	}
 }
