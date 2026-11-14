@@ -984,6 +984,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/highlight-replies": {
+      "name": "highlight-replies",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/i-love-spam": {
       "name": "i-love-spam",
       "dependencies": {
@@ -3594,6 +3608,7 @@
     "hide-buttons": ["hide-buttons@workspace:packages/plugins/hide-buttons"],
 
     "hide-unusable-expressions": ["hide-unusable-expressions@workspace:packages/plugins/hide-unusable-expressions"],
+    "highlight-replies": ["highlight-replies@workspace:packages/plugins/highlight-replies"],
     "highlight.js": ["highlight.js@11.12.0", "", {}, "sha512-nbfWpyRMcMrPMmDwJB+dhX/eiaPKtc2RB+0QZskqJ3WjRA/FDS0e9hZrx8EC/lbEv8gXy98FcDbNa/dspAaJMg=="],
 
     "hono": ["hono@4.13.16", "", {}, "sha512-AOLOEhvrV+iH92xXCnFr/5+3KjPKcI3xP63XJtX5spAnkznPdHijlIsUTpi7/9EhWqrTCekw5c5zh1K+YsVw7A=="],

@@ -1,0 +1,21 @@
+{
+	"id": "unbound.highlight-replies",
+	"name": "Highlight Replies",
+	"description": "Highlights replies to your messages like mentions, even when the reply didn't ping you.",
+	"authors": [
+		{
+			"name": "mantikafasi",
+			"id": "287555395151593473"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ic_swipe_reply_24px",
+	"main": "index.tsx"
+}

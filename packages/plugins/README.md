@@ -1,6 +1,6 @@
 # Plugins
 
-104 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+105 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -46,6 +46,7 @@
 - <img src="../../assets/plugins/readme-icons/sticker-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Greet Sticker Picker](https://unbound.rip/addons/unbound.greet-sticker-picker): Lets you pick which sticker 'Wave to say hi!' sends to a new member, instead of a random one.
 - <img src="../../assets/plugins/readme-icons/gift-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Hide Buttons](https://unbound.rip/addons/unbound.hide-buttons): Hides the gift, voice message, call, Quests, Shop and Server Boosts buttons you never use.
 - <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Hide Unusable Expressions](https://unbound.rip/addons/unbound.hide-unusable-expressions): Leaves emojis and stickers you can't send out of the pickers, instead of showing them locked.
+- <img src="../../assets/plugins/readme-icons/ic-swipe-reply-24px.svg" width="20" height="20" align="absmiddle" alt=""> [Highlight Replies](https://unbound.rip/addons/unbound.highlight-replies): Highlights replies to your messages like mentions, even when the reply didn't ping you.
 - <img src="../../assets/plugins/readme-icons/eye-icon.svg" width="20" height="20" align="absmiddle" alt=""> [I Love Spam](https://unbound.rip/addons/unbound.i-love-spam): Shows messages from users Discord marks as likely spammers instead of hiding them.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Image Link](https://unbound.rip/addons/unbound.image-link): Keeps the link in a message that is only an image or video link, instead of showing the embed alone.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [IRC Colors](https://unbound.rip/addons/unbound.irc-colors): Gives everyone in chat their own username color, picked from their user id like in IRC clients.
