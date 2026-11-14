@@ -1,6 +1,6 @@
 # Plugins
 
-119 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+120 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -109,6 +109,7 @@
 - <img src="../../assets/plugins/readme-icons/sticker-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Sticker Preview](https://unbound.rip/addons/unbound.sticker-preview): Displays a preview of a selected sticker instead of sending it immediately.
 - <img src="../../assets/plugins/readme-icons/sticker-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Sticker Sizes](https://unbound.rip/addons/unbound.sticker-sizes): Shows stickers in chat at the size you pick.
 - <img src="../../assets/plugins/readme-icons/super-reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Super Reaction Tweaks](https://unbound.rip/addons/unbound.super-reaction-tweaks): Opens the reaction picker on Super Reactions and caps how many Super Reaction animations play at once.
+- <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [SVG Viewer](https://unbound.rip/addons/unbound.svg-viewer): Shows SVG attachments as pictures from the message's long-press menu, instead of as a file of code.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Text Replace](https://unbound.rip/addons/unbound.text-replace): Replace text in messages before you send them.
 - <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Timezones](https://unbound.rip/addons/unbound.timezones): Shows each user's local time on their profile and beside their messages, from TimezoneDB or a timezone you set.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Tone Indicators](https://unbound.rip/addons/unbound.tone-indicators): Turns tone tags such as /j and /srs into pills that spell out what they mean.
