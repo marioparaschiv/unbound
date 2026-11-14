@@ -6,6 +6,7 @@ import { View } from 'react-native';
 import type { ReactNode } from 'react';
 
 let channelId = 'a';
+let draft = 'hello';
 
 const sent: unknown[][] = [];
 const Messages = {
@@ -43,7 +44,11 @@ function register({ brokenMessages = false } = {}) {
 	);
 	metro.register(sendButton, 'modules/chat_input/native/accessories/ChatInputSendButton.tsx');
 	metro.register({ colors: {}, internal: {} });
-	flux.seed({ SelectedChannel: { getChannelId: () => channelId } });
+	flux.seed({
+		SelectedChannel: { getChannelId: () => channelId },
+		Draft: { getDraft: () => draft },
+		UploadAttachment: { getUploadCount: () => 0 },
+	});
 }
 
 function pressToggle(view: ReturnType<typeof render>) {
@@ -58,6 +63,7 @@ function send(text: string, channel = 'a') {
 
 beforeEach(() => {
 	channelId = 'a';
+	draft = 'hello';
 	sent.length = 0;
 });
 
@@ -116,6 +122,19 @@ describe('the silent toggle on iOS', () => {
 		flux.emit('SelectedChannel');
 
 		expect(send('hi', 'c')?.[2]).toEqual({ flags: 4096 });
+	});
+});
+
+describe('the silent toggle in an empty chat input', () => {
+	test('hides until there is a draft', async () => {
+		native.setPlatform('ios');
+		draft = '';
+		register();
+		await startPlugin();
+
+		expect(
+			render(<rightActions.default channel={{ id: 'a' }} />).findAll('Pressable'),
+		).toHaveLength(0);
 	});
 });
 

@@ -1,4 +1,4 @@
-import { logs, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { flux, logs, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { memo, type ReactNode } from 'react';
@@ -75,6 +75,32 @@ describe('the send button', () => {
 		settings.voiceMessage = false;
 
 		expect(render(<ChatInputSendButton canSendVoiceMessage />).text()).toBe('microphone');
+	});
+
+	test('hides while the chat input is empty when asked to', () => {
+		settings.voiceMessage = true;
+		settings.emptySend = true;
+		flux.seed({
+			SelectedChannel: { getChannelId: () => '1' },
+			Draft: { getDraft: () => '' },
+			UploadAttachment: { getUploadCount: () => 0 },
+		});
+
+		expect(render(<ChatInputSendButton canSendVoiceMessage />).text()).toBe('');
+		settings.emptySend = false;
+	});
+
+	test('shows once there is a draft', () => {
+		settings.voiceMessage = true;
+		settings.emptySend = true;
+		flux.seed({
+			SelectedChannel: { getChannelId: () => '1' },
+			Draft: { getDraft: () => 'hi' },
+			UploadAttachment: { getUploadCount: () => 0 },
+		});
+
+		expect(render(<ChatInputSendButton canSendVoiceMessage />).text()).toBe('send');
+		settings.emptySend = false;
 	});
 });
 
