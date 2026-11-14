@@ -1,0 +1,21 @@
+{
+	"id": "unbound.svg-viewer",
+	"name": "SVG Viewer",
+	"description": "Shows SVG attachments as pictures from the message's long-press menu, instead of as a file of code.",
+	"authors": [
+		{
+			"name": "Cynosphere",
+			"id": "150745989836308480"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ImageIcon",
+	"main": "index.tsx"
+}

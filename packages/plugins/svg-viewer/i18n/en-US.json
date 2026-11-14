@@ -1,0 +1,5 @@
+{
+	"VIEW_SVG": "View {name}",
+	"LOADING": "Loading…",
+	"LOAD_FAILED": "Could not draw this SVG."
+}
