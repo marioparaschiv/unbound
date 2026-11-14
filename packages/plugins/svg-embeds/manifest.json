@@ -1,7 +1,7 @@
 {
-	"id": "unbound.svg-viewer",
-	"name": "SVG Viewer",
-	"description": "Shows SVG attachments as pictures from the message's long-press menu, instead of as a file of code.",
+	"id": "unbound.svg-embeds",
+	"name": "SVG Embeds",
+	"description": "Shows SVG attachments in chat as pictures, like any other image, instead of as a file.",
 	"authors": [
 		{
 			"name": "Cynosphere",
@@ -17,5 +17,6 @@
 		"min": "3.0.0"
 	},
 	"icon": "ImageIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"replaces": ["unbound.svg-viewer"]
 }

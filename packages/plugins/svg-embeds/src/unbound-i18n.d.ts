@@ -3,18 +3,11 @@
 declare module '@unbound-app/i18n' {
 	/** Every en-US message, read in the user's locale. */
 	export type Messages = {
-		/** View {name} */
-		readonly VIEW_SVG: string;
-		/** Loading… */
-		readonly LOADING: string;
-		/** Could not draw this SVG. */
-		readonly LOAD_FAILED: string;
+
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
-	export type FormatVars = {
-		VIEW_SVG: { name: string | number };
-	};
+	export type FormatVars = Record<never, never>;
 
 	/** Each message in the user's locale, falling back to en-US. */
 	export const messages: Messages;

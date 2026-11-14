@@ -1,5 +1,13 @@
 /** An attachment as Discord stores it on a message. */
-export type Attachment = { filename?: string; url?: string; size?: number; content_type?: string };
+export type Attachment = {
+	filename?: string;
+	url?: string;
+	proxy_url?: string;
+	size?: number;
+	content_type?: string;
+	width?: number;
+	height?: number;
+};
 
 /** The largest SVG the viewer draws. */
 export const MAX_SVG_BYTES = 2 * 1024 * 1024;
