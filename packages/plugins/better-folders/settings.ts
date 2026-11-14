@@ -11,4 +11,5 @@ export default defineSettings({
 		title: 'HIDE_ICONS',
 		subtitle: 'HIDE_ICONS_SUBTITLE',
 	}),
+	folderIcons: setting.string({ default: '', hidden: true }),
 });

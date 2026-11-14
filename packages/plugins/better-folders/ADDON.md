@@ -6,7 +6,8 @@ banner: media/banner.png
 
 - :folder: Opening a server folder closes the other open ones, so the server list stays short.
 - :eye-slash: Optionally, closed folders show a folder icon in their color instead of the servers inside.
-- :code-fork: A port of Vencord's BetterFolders, after fres's BetterFolders for Vendetta.
+- :photo: Long-press a folder and pick **Set Folder Icon** to show a photo on it when it is closed; **Remove Folder Icon** brings the servers back.
+- :code-fork: A port of Vencord's BetterFolders, after fres's BetterFolders for Vendetta, with Equicord's CustomFolderIcons.
 
 ## :gear: Settings
 

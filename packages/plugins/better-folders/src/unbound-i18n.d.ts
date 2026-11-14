@@ -11,6 +11,12 @@ declare module '@unbound-app/i18n' {
 		readonly HIDE_ICONS: string;
 		/** A closed folder shows a folder icon in its color instead of its servers. */
 		readonly HIDE_ICONS_SUBTITLE: string;
+		/** Set Folder Icon */
+		readonly SET_FOLDER_ICON: string;
+		/** Remove Folder Icon */
+		readonly REMOVE_FOLDER_ICON: string;
+		/** Couldn't set the folder icon. */
+		readonly FOLDER_ICON_FAILED: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
