@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-14
+
+### Changed
+
+- The toggle hides while the message box is empty unless it is on, and moves into a grid above the send button once a draft runs long.
+
 ## [1.0.3] - 2026-11-12
 
 ### Changed

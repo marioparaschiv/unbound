@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0] - 2026-11-14
+
+### Added
+
+- A **Send button while empty** option hides the send button until you type something or attach a file.
+
 ## [1.2.2] - 2026-11-14
 
 ### Fixed

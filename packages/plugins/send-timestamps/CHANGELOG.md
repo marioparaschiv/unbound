@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-14
+
+### Changed
+
+- The timestamp button hides while the message box is empty, and moves into a grid above the send button once a draft runs long.
+
 ## [1.1.1] - 2026-11-13
 
 ### Fixed

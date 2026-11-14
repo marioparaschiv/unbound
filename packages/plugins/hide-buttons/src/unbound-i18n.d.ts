@@ -7,6 +7,10 @@ declare module '@unbound-app/i18n' {
 		readonly GIFT: string;
 		/** Hides the gift button in the chat input. */
 		readonly GIFT_SUBTITLE: string;
+		/** Send button while empty */
+		readonly EMPTY_SEND: string;
+		/** Hides the send button until you type something or attach a file. */
+		readonly EMPTY_SEND_SUBTITLE: string;
 		/** Voice message button */
 		readonly VOICE_MESSAGE: string;
 		/** Hides the microphone that records a voice message. */

@@ -10,6 +10,7 @@ import { createElement, useSyncExternalStore } from 'react';
 import { definePlatform } from '@unbound-app/api/native';
 
 import type { ChannelToggle } from './channel-toggle';
+import { useComposerState } from './composer-state';
 
 import { patchSendButton as android } from './android/input-toggle';
 import { patchRightActions as ios } from './ios/input-toggle';
@@ -36,6 +37,8 @@ export type InputToggleOptions = {
 	usePersist: () => boolean;
 	/** Reads the labels when the button renders, so they follow the language. */
 	labels: () => ToggleLabels;
+	/** Hides the toggle while the input holds no text or attachments, for toggles that only matter once there is a draft. */
+	hideWhenEmpty?: boolean;
 };
 
 type ToggleIcons = { on: number; off: number };
@@ -66,13 +69,17 @@ function ToggleButton({
 	assetIds,
 	haptics,
 	trailingGap,
+	hideWhenEmpty = false,
 }: ButtonProps) {
 	const persist = usePersist();
 	const active = useSyncExternalStore(toggle.subscribe, () =>
 		toggle.isActive(channelId, persist),
 	);
+	const empty = useComposerState(channelId) === 'empty';
 	const { Theme } = metro.common;
 	const text = labels();
+
+	if (hideWhenEmpty && empty && !active) return null;
 
 	function press() {
 		const enabled = toggle.toggle(channelId, persist);

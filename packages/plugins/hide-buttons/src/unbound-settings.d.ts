@@ -138,6 +138,12 @@ declare module '@unbound-app/settings' {
 		 */
 		gift: boolean;
 		/**
+		 * Send button while empty
+		 *
+		 * Hides the send button until you type something or attach a file.
+		 */
+		emptySend: boolean;
+		/**
 		 * Voice message button
 		 *
 		 * Hides the microphone that records a voice message.
@@ -183,6 +189,12 @@ declare module '@unbound-app/settings' {
 		 * Hides the gift button in the chat input.
 		 */
 		"gift": boolean;
+		/**
+		 * Send button while empty
+		 *
+		 * Hides the send button until you type something or attach a file.
+		 */
+		"emptySend": boolean;
 		/**
 		 * Voice message button
 		 *
@@ -230,7 +242,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "gift" | "voiceMessage" | "voiceCall" | "videoCall" | "quests" | "shop" | "serverBoosts";
+	export type BooleanSettingKey = "gift" | "emptySend" | "voiceMessage" | "voiceCall" | "videoCall" | "quests" | "shop" | "serverBoosts";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

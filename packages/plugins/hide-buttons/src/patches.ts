@@ -1,3 +1,5 @@
+import { hideTargetWhileEmpty } from '@unbound-plugins/shared/composer/composer-stack';
+import { channelOf } from '@unbound-plugins/shared/composer/toggle-channel';
 import { metro, patcher } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
 
@@ -55,6 +57,30 @@ export function patchChatInputRightActions(): void {
 		if (!settings.gift || !shouldShowGiftButton) return;
 
 		return withoutGiftItem(result);
+	});
+}
+
+/**
+ * @description Hides the send button while the chat input holds no text or attachments, by patching the render of
+ * Discord's `ChatInputSendButton`.
+ */
+export function patchEmptySendButton(): void {
+	const SendButton = metro.findByFilePath(
+		'modules/chat_input/native/accessories/ChatInputSendButton.tsx',
+	);
+
+	if (!SendButton) {
+		logger.warn('Send button skipped: Discord moved ChatInputSendButton.');
+
+		return;
+	}
+
+	patcher.react.after(SendButton, 'default', ({ props, result }) => {
+		const channelId = channelOf(props ?? {});
+
+		if (!settings.emptySend || !channelId || !result) return;
+
+		return hideTargetWhileEmpty(result, channelId);
 	});
 }
 

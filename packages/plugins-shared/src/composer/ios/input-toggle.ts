@@ -1,12 +1,12 @@
-import { Children, cloneElement, isValidElement, type ReactNode } from 'react';
+import { isValidElement } from 'react';
 import { metro, patcher } from '@unbound-app/api';
 
 import { channelOf, type ToggleButtonFactory } from '../toggle-channel';
-
-type ParentProps = { children?: ReactNode };
+import { withComposerButton } from '../composer-stack';
 
 /**
- * @description Prepends the toggle to `ChatInputRightActions`, which stays on screen while typing.
+ * @description Prepends the toggle to `ChatInputRightActions`, which stays on screen while typing; a crowded draft stacks it
+ * above the emoji and send buttons instead.
  * @param button Draws the toggle for a channel.
  * @param name What log lines call the toggle.
  */
@@ -24,14 +24,14 @@ export function patchRightActions(button: ToggleButtonFactory, name: string): vo
 	patcher.react.after(RightActions, 'default', ({ props, result }) => {
 		const channelId = channelOf(props);
 
-		if (!channelId || !isValidElement<ParentProps>(result)) return;
+		if (!channelId || !isValidElement(result)) return;
 
-		return cloneElement(
-			result,
-			undefined,
-			button(channelId, 0),
-			...Children.toArray(result.props.children),
-		);
+		return withComposerButton(result, {
+			channelId,
+			draw: (gap: number) => button(channelId, gap),
+			inline: 'prepend',
+			rowGap: 0,
+		});
 	});
 }
 

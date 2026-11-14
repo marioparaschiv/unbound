@@ -2,6 +2,11 @@ import { defineSettings, setting } from '@unbound-app/settings/schema';
 
 export default defineSettings({
 	gift: setting.boolean({ default: true, title: 'GIFT', subtitle: 'GIFT_SUBTITLE' }),
+	emptySend: setting.boolean({
+		default: false,
+		title: 'EMPTY_SEND',
+		subtitle: 'EMPTY_SEND_SUBTITLE',
+	}),
 	voiceMessage: setting.boolean({
 		default: false,
 		title: 'VOICE_MESSAGE',

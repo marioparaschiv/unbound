@@ -20,6 +20,7 @@ export function patchChatInput(): void {
 		icons: { on: 'LanguageIcon', off: 'LanguageIcon' },
 		toggle: aussieToggle,
 		usePersist: () => useSetting('persistState'),
+		hideWhenEmpty: true,
 		labels: () => ({
 			name: messages.AUSSIE_SPEECH,
 			toggledOn: messages.TOGGLED_ON,
