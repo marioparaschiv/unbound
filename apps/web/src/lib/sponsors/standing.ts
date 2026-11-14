@@ -14,10 +14,14 @@ export type SponsoringStanding =
 
 export type SponsorStanding =
 	| { kind: 'none' }
+	| { kind: 'processing'; sponsorship: Sponsorship }
 	| SponsoringStanding
 	| { kind: 'lapsed'; sponsorship: Sponsorship };
 
-const ENDS_AT: Record<SponsorshipState, (row: Sponsorship) => Date | null> = {
+const ENDS_AT: Record<
+	Exclude<SponsorshipState, 'processing'>,
+	(row: Sponsorship) => Date | null
+> = {
 	active: () => null,
 	pending_cancellation: (row) => row.endsAt,
 	cancelled: (row) => row.endsAt ?? row.updatedAt,
@@ -46,6 +50,10 @@ export function standingOf(
 ): SponsorStanding {
 	if (!row) {
 		return { kind: 'none' };
+	}
+
+	if (row.state === 'processing') {
+		return { kind: 'processing', sponsorship: row };
 	}
 
 	const endsAt = ENDS_AT[row.state](row);

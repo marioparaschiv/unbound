@@ -104,8 +104,16 @@ export const badgeClaimResponseSchema = Type.Object({
 	claim: Type.Union([badgeClaimSchema, Type.Null()]),
 });
 
-/** `pending_cancellation` sponsors stay active until the cancellation takes effect. */
-export const sponsorshipStateSchema = Type.Enum(['active', 'pending_cancellation', 'cancelled']);
+/**
+ * `processing` sponsorships wait for GitHub to settle the payment and unlock nothing yet;
+ * `pending_cancellation` sponsors stay active until the cancellation takes effect.
+ */
+export const sponsorshipStateSchema = Type.Enum([
+	'processing',
+	'active',
+	'pending_cancellation',
+	'cancelled',
+]);
 
 export const revokeBadgeRequestSchema = Type.Object({
 	reason: trimmedString(

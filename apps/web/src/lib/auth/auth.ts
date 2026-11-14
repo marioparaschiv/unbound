@@ -52,7 +52,7 @@ export type Session = Auth['$Infer']['Session'];
  * linked to an existing session, and the CLI authenticates through device authorization or API keys.
  * Banning a user cancels their open submissions and deletes their staged files, and bans, unbans and
  * role changes are recorded as moderation events. Linking Discord grants the staff role the team
- * snapshot names. Only the admin plugin endpoints the site uses are open, and no one sets their own role.
+ * snapshot names; linking GitHub runs a sponsorship reconcile. Only the admin plugin endpoints the site uses are open, and no one sets their own role.
  * @param ctx The context its hooks run with; they read its clock when they run.
  * @returns The configured Better Auth instance.
  */
@@ -116,6 +116,13 @@ export function createAuth(ctx: AuthHookContext): Auth {
 				create: {
 					// Staff get their role on first sign-in instead of at the next team sync.
 					after: async (created) => {
+						// A sponsorship still processing has no row until a reconcile sees it, so linking runs one.
+						if (created.providerId === 'github') {
+							ctx.jobs.kick('sponsors');
+
+							return;
+						}
+
 						if (created.providerId !== 'discord') return;
 
 						try {
