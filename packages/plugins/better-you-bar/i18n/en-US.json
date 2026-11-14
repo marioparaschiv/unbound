@@ -1,0 +1,10 @@
+{
+	"SHOW_FAVORITES": "Favorites button",
+	"SHOW_FAVORITES_SUBTITLE": "A star in the You bar that opens your favorite channels.",
+	"SHOW_SETTINGS": "Settings button",
+	"SHOW_SETTINGS_SUBTITLE": "A gear in the You bar that opens User Settings.",
+	"LOCAL_FAVORITES": "Favorites past the limit",
+	"LOCAL_FAVORITES_SUBTITLE": "Keeps the favorite channels you add on this device, with no limit, instead of on your account.",
+	"FAVORITES": "Favorites",
+	"SETTINGS": "Settings"
+}

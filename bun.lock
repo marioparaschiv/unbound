@@ -623,6 +623,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/better-you-bar": {
+      "name": "better-you-bar",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/blur-nsfw": {
       "name": "blur-nsfw",
       "dependencies": {
@@ -3413,6 +3427,8 @@
     "better-search": ["better-search@workspace:packages/plugins/better-search"],
 
     "better-sessions": ["better-sessions@workspace:packages/plugins/better-sessions"],
+
+    "better-you-bar": ["better-you-bar@workspace:packages/plugins/better-you-bar"],
 
     "blur-nsfw": ["blur-nsfw@workspace:packages/plugins/blur-nsfw"],
 
