@@ -35,7 +35,12 @@ export type UpdateCheckOptions = {
 	/** The client version the server checks each update's minimum against. */
 	clientVersion?: string;
 	onRenamed?: (renames: AddonRename[]) => void;
+	/** Called with each installed addon whose installed version the store withdrew, and its kind. */
+	onWithdrawn?: (withdrawn: WithdrawnEntry[]) => void;
 };
+
+/** An installed addon whose installed version the store withdrew. */
+export type WithdrawnEntry = { kind: UpdatableKind; id: string; version: string };
 
 /** An installed addon as its manager reports it, before its id and version are validated. */
 export type InstalledEntry = {
@@ -146,6 +151,7 @@ export async function fetchUpdates(
 		request = createUnboundClient(),
 		clientVersion = CLIENT_VERSION,
 		onRenamed,
+		onWithdrawn,
 	}: UpdateCheckOptions = {},
 ): Promise<PendingUpdate[]> {
 	const body = buildUpdatesRequest(entries, clientVersion);
@@ -164,7 +170,32 @@ export async function fetchUpdates(
 		onRenamed?.(renamed);
 	}
 
+	const withdrawn = withdrawnEntries(entries, response.withdrawn ?? []);
+
+	if (withdrawn.length) {
+		onWithdrawn?.(withdrawn);
+	}
+
 	return toPendingUpdates(entries, response);
+}
+
+/**
+ * @description Matches the withdrawn versions the store reported to the installed addons that still run them.
+ * @param entries The installed addons the check asked about.
+ * @param withdrawn The withdrawn installs the store reported.
+ * @returns Each installed addon at a withdrawn version, with its kind.
+ */
+export function withdrawnEntries(
+	entries: InstalledEntry[],
+	withdrawn: readonly { id: string; version: string }[],
+): WithdrawnEntry[] {
+	return withdrawn.flatMap(({ id, version }) => {
+		const entry = entries.find(
+			(installed) => installed.id === id && installed.version === version,
+		);
+
+		return entry ? [{ kind: entry.kind, id, version }] : [];
+	});
 }
 
 /**

@@ -7,6 +7,7 @@ import {
 	automaticUpdates,
 	buildUpdatesRequest,
 	toPendingUpdates,
+	withdrawnEntries,
 } from '~/updates/addon-updates';
 import type { InstalledEntry, UpdatableManager } from '~/updates/addon-updates';
 import type { UpdatableKind } from '~/addons/manager-of';
@@ -93,7 +94,7 @@ describe('toPendingUpdates', () => {
 				entry('dev.alpha', '1.0.0', 'plugin', 'Alpha'),
 				entry('dev.alpha', '9.0.0', 'theme', 'Shadowed'),
 			],
-			{ updates: [zeta, alpha], renamed: [] },
+			{ updates: [zeta, alpha], renamed: [], withdrawn: [] },
 		);
 
 		expect(pending).toEqual([
@@ -107,6 +108,7 @@ describe('toPendingUpdates', () => {
 			toPendingUpdates([entry('dev.alpha')], {
 				updates: [release('dev.gone', '1.1.0')],
 				renamed: [],
+				withdrawn: [],
 			}),
 		).toEqual([]);
 	});
@@ -141,6 +143,7 @@ describe('automaticUpdates', () => {
 		const pending = toPendingUpdates([entry('dev.held'), entry('dev.free')], {
 			updates: [release('dev.held', '2.0.0'), release('dev.free', '2.0.0')],
 			renamed: [],
+			withdrawn: [],
 		});
 
 		expect(automaticUpdates(pending, () => manager).map(({ id }) => id)).toEqual(['dev.free']);
@@ -164,5 +167,20 @@ describe('fetchUpdates', () => {
 		});
 
 		expect(reported).toEqual([{ from: 'dev.old', to: 'dev.new' }]);
+	});
+});
+
+describe('withdrawnEntries', () => {
+	test('matches withdrawn versions to the installs that still run them', () => {
+		expect(
+			withdrawnEntries(
+				[entry('dev.alpha', '1.0.0', 'plugin'), entry('dev.beta', '2.0.0', 'theme')],
+				[
+					{ id: 'dev.alpha', version: '1.0.0' },
+					{ id: 'dev.beta', version: '1.0.0' },
+					{ id: 'dev.gone', version: '1.0.0' },
+				],
+			),
+		).toEqual([{ kind: 'plugin', id: 'dev.alpha', version: '1.0.0' }]);
 	});
 });

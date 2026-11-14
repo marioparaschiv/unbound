@@ -213,7 +213,8 @@ export async function findRenames(ctx: AppContext, retired: string[]): Promise<A
  * @description Resolves the client's update check: per listed addon, the newest live compatible version
  * above the install with the changelogs it skips, below a withdrawn install without them, or the
  * same version rebuilt in place when the installed bundle's SHA-256 differs from it.
- * Each update carries its `reason`; a withdrawn install outranks a newer version.
+ * Each update carries its `reason`; a withdrawn install outranks a newer version. `withdrawn` lists every
+ * installed version a rollback withdrew, even one with no live version to roll back to, so the client turns it off.
  * @param ctx The application context.
  * @param request The client version and installed addons.
  * @returns The available updates, and the installed ids another listed addon replaces.
@@ -223,7 +224,7 @@ export async function findUpdates(
 	request: UpdatesRequest,
 ): Promise<UpdatesResponse> {
 	if (request.addons.length === 0) {
-		return { updates: [], renamed: [] };
+		return { updates: [], renamed: [], withdrawn: [] };
 	}
 
 	const installed = new Map(
@@ -237,8 +238,8 @@ export async function findUpdates(
 		request.addons.map((entry) => entry.id).filter((id) => !listed.has(id)),
 	);
 	const newer: UpdateRange[] = [];
-	const moved: InstalledVersion[] = [];
 	const rebuilt = new Set<string>();
+	const current = new Set<string>();
 
 	for (const { addonId, versionKey, sha256 } of rows) {
 		const from = installed.get(addonId) ?? '';
@@ -250,18 +251,27 @@ export async function findUpdates(
 
 		if (versionKey > from) {
 			newer.push({ addonId, from, to: versionKey });
-			moved.push({ addonId, key: from });
-		} else if (versionKey < from) {
-			moved.push({ addonId, key: from });
-		} else if (installedDigest && installedDigest !== sha256) {
-			rebuilt.add(addonId);
+		} else if (versionKey === from) {
+			current.add(addonId);
+
+			if (installedDigest && installedDigest !== sha256) {
+				rebuilt.add(addonId);
+			}
 		}
 	}
 
+	const withdrawnCandidates: InstalledVersion[] = [...installed]
+		.filter(([addonId]) => !current.has(addonId))
+		.map(([addonId, key]) => ({ addonId, key }));
 	const [skipped, withdrawn] = await Promise.all([
 		newer.length > 0 ? skippedVersions(ctx, newer) : new Map<string, SkippedVersion[]>(),
-		moved.length > 0 ? withdrawnInstalls(ctx, moved) : new Set<string>(),
+		withdrawnCandidates.length > 0
+			? withdrawnInstalls(ctx, withdrawnCandidates)
+			: new Set<string>(),
 	]);
+	const withdrawnVersions = request.addons
+		.filter((entry) => withdrawn.has(entry.id))
+		.map((entry) => ({ id: entry.id, version: entry.version }));
 	const newerIds = new Set(newer.map((range) => range.addonId));
 
 	function reasonOf(addonId: string): UpdateReason | undefined {
@@ -283,7 +293,7 @@ export async function findUpdates(
 	});
 
 	if (offered.length === 0) {
-		return { updates: [], renamed };
+		return { updates: [], renamed, withdrawn: withdrawnVersions };
 	}
 
 	// Keyed by rows the live filters above already chose, so a withdrawn version's changes never leak.
@@ -316,7 +326,7 @@ export async function findUpdates(
 		};
 	});
 
-	return { updates, renamed };
+	return { updates, renamed, withdrawn: withdrawnVersions };
 }
 
 export default { newestCompatibleVersions, findRenames, findUpdates };

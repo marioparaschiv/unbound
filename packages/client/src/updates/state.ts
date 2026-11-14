@@ -65,6 +65,10 @@ function checkInstalled(): Promise<PendingUpdate[]> {
 
 	return fetchUpdates(entries, {
 		onRenamed: (renames) => void moveRenamedAddons(renames, { install }),
+		onWithdrawn: (withdrawn) => {
+			for (const entry of withdrawn)
+				Manager.for(entry.kind).turnOffWithdrawn(entry.id, entry.version);
+		},
 	});
 }
 

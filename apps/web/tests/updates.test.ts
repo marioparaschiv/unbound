@@ -265,7 +265,7 @@ describe('findUpdates', () => {
 					...request,
 					addons: [{ id: 'up.current', version: '1.0.0' }],
 				}),
-			).toEqual({ updates: [], renamed: [] });
+			).toEqual({ updates: [], renamed: [], withdrawn: [] });
 			expect(statements).toHaveBeenCalledTimes(1);
 		} finally {
 			statements.mockRestore();
@@ -285,7 +285,7 @@ describe('findUpdates', () => {
 				clientVersion: '2.0.0',
 				addons: [{ id: 'up.current', version: '1.0.0', sha256: live?.sha256 }],
 			}),
-		).toEqual({ updates: [], renamed: [] });
+		).toEqual({ updates: [], renamed: [], withdrawn: [] });
 
 		const { updates } = await findUpdates(ctx, {
 			clientVersion: '2.0.0',
@@ -334,7 +334,7 @@ describe('findUpdates', () => {
 				addons: [{ id: 'up.rolledback', version }],
 			});
 
-		expect(await request('1.0.0')).toEqual({ updates: [], renamed: [] });
+		expect(await request('1.0.0')).toEqual({ updates: [], renamed: [], withdrawn: [] });
 		expect(
 			(await request('0.9.0')).updates.map((update) => [
 				update.version,
