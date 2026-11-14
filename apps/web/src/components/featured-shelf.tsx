@@ -58,16 +58,16 @@ function FeaturedRow({ addons }: FeaturedRowProps) {
 	useAutoScroll(ref);
 
 	// No scroll snapping: it would pull the slow drift back to the nearest card every frame.
-	// Bleeds into the page gutter, so cards fade out at the gutter's outer edge rather than its inner one.
+	// Phones bleed it to the screen's edge; wider, it lines up with the toolbar.
 	return (
 		<div
 			ref={ref}
 			onScroll={onScroll}
 			data-fade-start={canScrollStart ? '' : undefined}
 			data-fade-end={canScrollEnd ? '' : undefined}
-			className='-mx-(--page-gutter) -my-1 overflow-x-auto overflow-y-hidden overscroll-x-contain hide-scrollbar scroll-fade-x'
+			className='-mx-(--page-gutter) sm:mx-0 -my-1 overflow-x-auto overflow-y-hidden overscroll-x-contain hide-scrollbar scroll-fade-x'
 		>
-			<ul className='flex gap-3 px-(--page-gutter) py-1 w-max'>
+			<ul className='flex gap-3 px-(--page-gutter) sm:px-0 py-1 w-max'>
 				{addons.map((addon, index) => (
 					<FeaturedCard key={addon.id} addon={addon} index={index} />
 				))}
