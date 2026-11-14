@@ -1,5 +1,81 @@
 # Changelog
 
+## [3.2.0](https://github.com/marioparaschiv/unbound/compare/client-v3.1.0...client-v3.2.0) (2026-11-14)
+
+
+### Features
+
+* **cli:** add ubd debug report ([#1182](https://github.com/marioparaschiv/unbound/issues/1182)) ([b66397a](https://github.com/marioparaschiv/unbound/commit/b66397a9dbea1b365d28c1454988a5d6ce026b26))
+* **client:** add Discord experiments to /debug ([#1237](https://github.com/marioparaschiv/unbound/issues/1237)) ([d2f4622](https://github.com/marioparaschiv/unbound/commit/d2f46220f9034b50ee0568e2447b5ad9a9ae60f5))
+* **client:** add errors, log, storage and patches to /debug ([#1163](https://github.com/marioparaschiv/unbound/issues/1163)) ([1cc9625](https://github.com/marioparaschiv/unbound/commit/1cc9625ccecde514a8923d57e66e2e17fd19a339))
+* **client:** add network context to /debug ([#1204](https://github.com/marioparaschiv/unbound/issues/1204)) ([6fc2287](https://github.com/marioparaschiv/unbound/commit/6fc22878df442f8c0e7b0e8712cad1da3c6b1280))
+* **client:** add plugin versions, display and session to /debug ([#1175](https://github.com/marioparaschiv/unbound/issues/1175)) ([8ece009](https://github.com/marioparaschiv/unbound/commit/8ece009861b7ad241ab3feb9753fd63417e228cd))
+* **client:** add weak native handles for plugins ([#1264](https://github.com/marioparaschiv/unbound/issues/1264)) ([7760379](https://github.com/marioparaschiv/unbound/commit/776037991e5b9186edca445dc00f227401c4678f))
+* **client:** attach entitlements to /debug only on request ([#1186](https://github.com/marioparaschiv/unbound/issues/1186)) ([2095869](https://github.com/marioparaschiv/unbound/commit/20958695f1fe68ad271c19eea7d9e2d1d48858e6))
+* **client:** finish the theme editor ([#1257](https://github.com/marioparaschiv/unbound/issues/1257)) ([a83193b](https://github.com/marioparaschiv/unbound/commit/a83193b3fcf4a31e75e9bac6cbb1b7bbf76c119c))
+* **client:** list other tweaks loaded into Discord in /debug ([#1250](https://github.com/marioparaschiv/unbound/issues/1250)) ([dd8c109](https://github.com/marioparaschiv/unbound/commit/dd8c1091d6d94c7776b1d2b2477df47694f91493))
+* **client:** move installs of renamed addons to their replacement ([#1281](https://github.com/marioparaschiv/unbound/issues/1281)) ([39a3d4b](https://github.com/marioparaschiv/unbound/commit/39a3d4b7c3882f1b3c1f1fa5ef3795217a6387fa))
+* **client:** open the installed addon from its Installed button ([#1188](https://github.com/marioparaschiv/unbound/issues/1188)) ([f314f4c](https://github.com/marioparaschiv/unbound/commit/f314f4c34d2c3a770dfa46266e90d35d7c347ff9))
+* **client:** open the store page from addon install links ([#1312](https://github.com/marioparaschiv/unbound/issues/1312)) ([1e34e63](https://github.com/marioparaschiv/unbound/commit/1e34e63a0fc664f808646b81d66fefba8b45f8b2))
+* **client:** reconnect a closed gateway on app resume ([#1326](https://github.com/marioparaschiv/unbound/issues/1326)) ([d42e7ba](https://github.com/marioparaschiv/unbound/commit/d42e7baadd98514ff5a155d14fb17dd8949228b6))
+* **client:** report missing app extensions in /debug ([#1355](https://github.com/marioparaschiv/unbound/issues/1355)) ([a64b857](https://github.com/marioparaschiv/unbound/commit/a64b857dce2a8d6444c9514af99bdd0988f8c4a0))
+* **client:** restart prompt for React DevTools, crash screen fits the screen ([#1380](https://github.com/marioparaschiv/unbound/issues/1380)) ([9e49f5e](https://github.com/marioparaschiv/unbound/commit/9e49f5e75583d7fe336e663af79eca02c1cc7860))
+* **client:** share text and links to Discord ([#1353](https://github.com/marioparaschiv/unbound/issues/1353)) ([1e23d41](https://github.com/marioparaschiv/unbound/commit/1e23d41f3de3f162037a9e990c0fd3bea9ae32d6))
+* **client:** show addon updates waiting in /debug ([#1251](https://github.com/marioparaschiv/unbound/issues/1251)) ([6d11933](https://github.com/marioparaschiv/unbound/commit/6d11933f2cdaf3f1e3fc4ac041b925828249eec0))
+* **client:** sort the marketplace by newest and badge new addons ([#1205](https://github.com/marioparaschiv/unbound/issues/1205)) ([9205847](https://github.com/marioparaschiv/unbound/commit/920584795d56cb98baca8f9b48b48875739a2aaa))
+* **client:** turn crash-disabled plugins back on after an update ([#1236](https://github.com/marioparaschiv/unbound/issues/1236)) ([5ebf64d](https://github.com/marioparaschiv/unbound/commit/5ebf64d586f90730649e2e0d03da0d3a698b06a2))
+* **devtools:** add a Metro page to browse, load and search modules ([#1273](https://github.com/marioparaschiv/unbound/issues/1273)) ([2e9eb6b](https://github.com/marioparaschiv/unbound/commit/2e9eb6b6d76577a9539b30040aa73ad0e58b5897))
+* **devtools:** add an object explorer and structured ubd errors ([#1206](https://github.com/marioparaschiv/unbound/issues/1206)) ([cf37e2b](https://github.com/marioparaschiv/unbound/commit/cf37e2beccf364eb3d4a22842d5c1538c8a5c683))
+* **devtools:** find the bridge over Bonjour and add MCP to agents ([#1309](https://github.com/marioparaschiv/unbound/issues/1309)) ([03f4c20](https://github.com/marioparaschiv/unbound/commit/03f4c2016c7064fabb25c853ea766f0f1f9c962d))
+* **discord-bot:** diagnose notifications from /debug reports ([#1197](https://github.com/marioparaschiv/unbound/issues/1197)) ([2d540e1](https://github.com/marioparaschiv/unbound/commit/2d540e1e98dc53fe9181ed47470a07d10a3613ae))
+* **loader:** add FFI memory, C callbacks and import rebinding ([#1266](https://github.com/marioparaschiv/unbound/issues/1266)) ([5965be8](https://github.com/marioparaschiv/unbound/commit/5965be8306b61099675305e629e79d2fd160b203))
+* **loader:** find classes by shape and hook subclasses or late classes ([#1267](https://github.com/marioparaschiv/unbound/issues/1267)) ([c0347ac](https://github.com/marioparaschiv/unbound/commit/c0347ace0a3a57e226b32f88ef3eb25fe3070f8b))
+* **loader:** let plugins make Objective-C blocks and classes ([#1265](https://github.com/marioparaschiv/unbound/issues/1265)) ([f23f69b](https://github.com/marioparaschiv/unbound/commit/f23f69b7aa52db68878fd0d06a14b7400a3ba0a4))
+* **loader:** report MetricKit hangs and system kills in /debug ([#1271](https://github.com/marioparaschiv/unbound/issues/1271)) ([8a8137a](https://github.com/marioparaschiv/unbound/commit/8a8137ab67e52076ef105555308a6b79bb342f23))
+* **loader:** report signer, binary, re-sign, device and HTTPS facts ([#1274](https://github.com/marioparaschiv/unbound/issues/1274)) ([4bb2629](https://github.com/marioparaschiv/unbound/commit/4bb2629210d6cfb5fcd9defdbb89c52fc3178cf7))
+* **loader:** report update checks, bundle source and settings ([#1162](https://github.com/marioparaschiv/unbound/issues/1162)) ([fdbe58d](https://github.com/marioparaschiv/unbound/commit/fdbe58da281df988197c52f0f560bc428d8478fd))
+* **loader:** skip failed builds, report crashes and pressure ([#1158](https://github.com/marioparaschiv/unbound/issues/1158)) ([dd7f6dd](https://github.com/marioparaschiv/unbound/commit/dd7f6ddc44ede8e26c5cbeeb8d07faac8c4c7d3f))
+* **loader:** use Discord's own share extension ([#1367](https://github.com/marioparaschiv/unbound/issues/1367)) ([7f33394](https://github.com/marioparaschiv/unbound/commit/7f33394f23d09da4a5d841e98fc7df0ed5c777ba))
+* **plugins:** pick users, channels and servers in settings ([#1259](https://github.com/marioparaschiv/unbound/issues/1259)) ([2de0aa6](https://github.com/marioparaschiv/unbound/commit/2de0aa6db1e861408f973894cf0df17d4be3ff2b))
+* **web:** mark scanned Discord builds and updates on /debug ([#1160](https://github.com/marioparaschiv/unbound/issues/1160)) ([b9344cd](https://github.com/marioparaschiv/unbound/commit/b9344cdb12ed71f19603069007a6cd76d290502d))
+* **web:** show the Featured shelf atop the addon listings ([#1339](https://github.com/marioparaschiv/unbound/issues/1339)) ([117e6f2](https://github.com/marioparaschiv/unbound/commit/117e6f26825b2a96f597efdb91270b6c4d25a2db))
+
+
+### Bug Fixes
+
+* **client:** build Reanimated's module before checking its version ([#1222](https://github.com/marioparaschiv/unbound/issues/1222)) ([d1cd985](https://github.com/marioparaschiv/unbound/commit/d1cd985d483d820515c0855815c7321f41e9188d))
+* **client:** centre install count icon on iOS ([#1170](https://github.com/marioparaschiv/unbound/issues/1170)) ([8d47245](https://github.com/marioparaschiv/unbound/commit/8d4724556392e003edca4ecd8f380866dc8fa82b))
+* **client:** draw empty states with Unbound's hero badge ([#1333](https://github.com/marioparaschiv/unbound/issues/1333)) ([54e39e5](https://github.com/marioparaschiv/unbound/commit/54e39e57a4256e7e062823f9a685d109e777cd47))
+* **client:** find the staff experiment handler on Discord's dispatcher ([#1216](https://github.com/marioparaschiv/unbound/issues/1216)) ([7484d81](https://github.com/marioparaschiv/unbound/commit/7484d81dcba31675d5ae5f1dd70cfe33337a6083))
+* **client:** hide font groups that duplicate Body ([#1181](https://github.com/marioparaschiv/unbound/issues/1181)) ([5c7c227](https://github.com/marioparaschiv/unbound/commit/5c7c227f6e3ff147a69910ff7ac692cf53dff0b5))
+* **client:** log which shared files Discord cannot open ([#1330](https://github.com/marioparaschiv/unbound/issues/1330)) ([d856474](https://github.com/marioparaschiv/unbound/commit/d8564743c1d656eab235f9de689d034e9aa33ea4))
+* **client:** mark marketplace addons new only since the last visit ([#1287](https://github.com/marioparaschiv/unbound/issues/1287)) ([2e51988](https://github.com/marioparaschiv/unbound/commit/2e51988347dc89ad3775e15a9aae5d6c173583b2))
+* **client:** read the clock outside the marketplace card render ([#1289](https://github.com/marioparaschiv/unbound/issues/1289)) ([be1620b](https://github.com/marioparaschiv/unbound/commit/be1620b49dcb550bd6833f8729d27234027bb513))
+* **client:** satisfy lint in the new-badge change ([#1288](https://github.com/marioparaschiv/unbound/issues/1288)) ([171b636](https://github.com/marioparaschiv/unbound/commit/171b636b2e1cc2b897bdbf5135cb9b2d2ba47348))
+* **client:** say which filter left a list empty instead of no results ([#1336](https://github.com/marioparaschiv/unbound/issues/1336)) ([55bb8df](https://github.com/marioparaschiv/unbound/commit/55bb8df6c3f8e12a71ed60c3cb91af106bc86d69))
+* **client:** serve the dev flavour from the hot build ([#1183](https://github.com/marioparaschiv/unbound/issues/1183)) ([ef25fe7](https://github.com/marioparaschiv/unbound/commit/ef25fe761462cee1568df1bcacf3b6e656962ce9))
+* **client:** stamp dev rebuilds with the current revision ([#1161](https://github.com/marioparaschiv/unbound/issues/1161)) ([e7e5e90](https://github.com/marioparaschiv/unbound/commit/e7e5e90e7cccce0f5727b5c9c1fc6005c047e027))
+* **client:** stretch the crash screen to full height ([#1256](https://github.com/marioparaschiv/unbound/issues/1256)) ([6a8ce0e](https://github.com/marioparaschiv/unbound/commit/6a8ce0e1a96904e446154668c4ecbf4b735452c4))
+* **loader:** write the profile expiry as exp ([#1224](https://github.com/marioparaschiv/unbound/issues/1224)) ([f659a0f](https://github.com/marioparaschiv/unbound/commit/f659a0f6e5fb1da4f7b45c1adaa7b9a8011ba163))
+* **web:** strip blank filler characters from tweak names ([#1362](https://github.com/marioparaschiv/unbound/issues/1362)) ([fda92e6](https://github.com/marioparaschiv/unbound/commit/fda92e67874899a52cbefebc7b878ccea6a2bf01))
+* **web:** tidy tweak names and seconds on the debug card ([#1358](https://github.com/marioparaschiv/unbound/issues/1358)) ([c1eba58](https://github.com/marioparaschiv/unbound/commit/c1eba58b0dd65814e852c0c6b61366f4546f90c1))
+
+
+### Performance Improvements
+
+* **client:** skip hidden accordion rows and cut settings page renders ([#1258](https://github.com/marioparaschiv/unbound/issues/1258)) ([923dc6c](https://github.com/marioparaschiv/unbound/commit/923dc6c9091b4032180efd53739143d745c1157a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.2.0
+    * @unbound-app/debugger-protocol bumped to 2.1.0
+    * @unbound-app/types bumped to 1.2.0
+    * @unbound-app/utils bumped to 1.0.2
+    * @unbound-app/web bumped to 2.2.0
+
 ## [3.1.0](https://github.com/marioparaschiv/unbound/compare/client-v3.0.0...client-v3.1.0) (2026-11-12)
 
 

@@ -1,5 +1,33 @@
 # Changelog
 
+## [3.1.0](https://github.com/marioparaschiv/unbound/compare/cli-v3.0.1...cli-v3.1.0) (2026-11-14)
+
+
+### Features
+
+* **cli:** add ubd debug report ([#1182](https://github.com/marioparaschiv/unbound/issues/1182)) ([b66397a](https://github.com/marioparaschiv/unbound/commit/b66397a9dbea1b365d28c1454988a5d6ce026b26))
+* **devtools:** add an object explorer and structured ubd errors ([#1206](https://github.com/marioparaschiv/unbound/issues/1206)) ([cf37e2b](https://github.com/marioparaschiv/unbound/commit/cf37e2beccf364eb3d4a22842d5c1538c8a5c683))
+* **devtools:** find the bridge over Bonjour and add MCP to agents ([#1309](https://github.com/marioparaschiv/unbound/issues/1309)) ([03f4c20](https://github.com/marioparaschiv/unbound/commit/03f4c2016c7064fabb25c853ea766f0f1f9c962d))
+
+
+### Bug Fixes
+
+* **plugins:** draw every ADDON.md page icon and flag unknown ones ([#1335](https://github.com/marioparaschiv/unbound/issues/1335)) ([cc6642c](https://github.com/marioparaschiv/unbound/commit/cc6642c50ecb6167dd9defbbdb551859526e2a5e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger bumped to 1.1.0
+    * @unbound-app/debugger-protocol bumped to 2.1.0
+  * devDependencies
+    * @unbound-app/api bumped to 3.2.0
+    * @unbound-app/contracts bumped to 2.2.0
+    * @unbound-app/types bumped to 1.2.0
+    * @unbound-app/utils bumped to 1.0.2
+    * @unbound-app/web bumped to 2.2.0
+
 ## [3.0.1](https://github.com/marioparaschiv/unbound/compare/cli-v3.0.0...cli-v3.0.1) (2026-11-12)
 
 
