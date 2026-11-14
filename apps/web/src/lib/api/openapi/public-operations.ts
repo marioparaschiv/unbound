@@ -3,7 +3,10 @@ import type { Api } from '~/api';
 /** The HTTP reference's sections, in the order the docs and the OpenAPI document list them. */
 export const OPERATION_TAGS = [
 	{ name: 'Addons', description: 'Read the addon store: listings, versions and maintainers.' },
-	{ name: 'Updates', description: 'Check installed addons and the native loader for updates.' },
+	{
+		name: 'Updates',
+		description: 'Check installed addons, the native loader and DevTools for updates.',
+	},
 	{ name: 'Users', description: 'Read what a user shows on their profile.' },
 	{
 		name: 'Fonts',
@@ -92,6 +95,16 @@ export const PUBLIC_OPERATIONS = {
 			"A channel's patched Discord builds with each gzipped split's URL, newest Discord first. Rate limited per IP.",
 		parameters: {
 			channel: 'The Google Play channel the builds were made from.',
+		},
+	},
+	'GET /api/v1/devtools/updates': {
+		tag: 'Updates',
+		summary: 'Check for DevTools updates',
+		description:
+			"The newest DevTools release built for `target`, with that target's archive and its SHA-256, or `null` when current. Rate limited per IP.",
+		parameters: {
+			target: 'The operating system and architecture the app runs on.',
+			version: 'The installed DevTools version.',
 		},
 	},
 	'GET /api/v1/users/$id/badges': {

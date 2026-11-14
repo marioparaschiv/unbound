@@ -28,6 +28,8 @@ const cases: Case[] = [
 	['developer', { note: ['read'] }, false],
 	['ci', { loader: ['publish'] }, true],
 	['ci', { firstParty: ['publish'] }, true],
+	['ci', { devtools: ['publish'] }, true],
+	['moderator', { devtools: ['publish'] }, false],
 	['developer', { firstParty: ['publish'] }, false],
 	['moderator', { firstParty: ['publish'] }, false],
 	['admin', { firstParty: ['publish'] }, true],

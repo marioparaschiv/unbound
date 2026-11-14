@@ -18,7 +18,7 @@ use crate::scaled::rem_scaled;
 use crate::settings::{self, Settings};
 use crate::smooth_scroll::SmoothScroll;
 use crate::widgets::{field, float_shadow, icon};
-use crate::{assets, theme};
+use crate::{assets, theme, update};
 
 const CONTEXT: &str = "SettingsDialog";
 const OPEN: Duration = Duration::from_millis(150);
@@ -110,7 +110,9 @@ impl SettingsDialog {
 		};
 		let search = input(String::new(), "Search...");
 		let subscriptions = vec![
-			cx.subscribe(&search, |_, _, _: &InputEvent, cx| cx.notify()),
+			cx.subscribe(&search, |this, _, _: &InputEvent, cx| {
+				this.follow_search(cx)
+			}),
 			bind(
 				cx,
 				&fields.bridge_port,
@@ -123,6 +125,7 @@ impl SettingsDialog {
 			),
 			// The theme radio and MCP switch write the store directly; redraw to show the change.
 			cx.observe_global::<settings::Store>(|_, cx| cx.notify()),
+			cx.observe_global::<update::Updater>(|_, cx| cx.notify()),
 		];
 		Self {
 			section: Section::Appearance,
@@ -135,6 +138,22 @@ impl SettingsDialog {
 			_close: None,
 			_subscriptions: subscriptions,
 		}
+	}
+
+	/// Opens the first section the search finds when the open one no longer matches, so typing a
+	/// setting's name shows its page as you type.
+	fn follow_search(&mut self, cx: &mut Context<Self>) {
+		let visible: Vec<Section> = self
+			.visible_categories(cx)
+			.into_iter()
+			.flat_map(|(_, sections)| sections)
+			.collect();
+		if !visible.contains(&self.section)
+			&& let Some(first) = visible.first()
+		{
+			self.section = *first;
+		}
+		cx.notify();
 	}
 
 	pub fn is_closing(&self) -> bool {
@@ -174,7 +193,7 @@ impl SettingsDialog {
 					.sections
 					.iter()
 					.copied()
-					.filter(|section| section.label().to_lowercase().contains(&query))
+					.filter(|section| section.matches(&query))
 					.collect::<Vec<_>>();
 				(category.label, sections)
 			})

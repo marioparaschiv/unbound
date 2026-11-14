@@ -60,6 +60,8 @@ import { Route as SiteDocsSdkIndexRouteImport } from './routes/_site/docs/sdk/in
 import { Route as SiteDocsSdkVersionRouteRouteImport } from './routes/_site/docs/sdk/$version/route'
 import { Route as SiteDocsUserSplatRouteImport } from './routes/_site/docs/user/$'
 import { Route as ApiV1AuthDiscordRouteImport } from './routes/api/v1/auth/discord'
+import { Route as ApiV1DevtoolsReleasesRouteImport } from './routes/api/v1/devtools/releases'
+import { Route as ApiV1DevtoolsUpdatesRouteImport } from './routes/api/v1/devtools/updates'
 import { Route as ApiV1FirstPartyAddonsRouteImport } from './routes/api/v1/first-party/addons'
 import { Route as ApiV1FirstPartyPublishRouteImport } from './routes/api/v1/first-party/publish'
 import { Route as ApiV1FontsResolveRouteImport } from './routes/api/v1/fonts/resolve'
@@ -350,6 +352,16 @@ const ApiV1AuthDiscordRoute = ApiV1AuthDiscordRouteImport.update({
   path: '/api/v1/auth/discord',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1DevtoolsReleasesRoute = ApiV1DevtoolsReleasesRouteImport.update({
+  id: '/api/v1/devtools/releases',
+  path: '/api/v1/devtools/releases',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1DevtoolsUpdatesRoute = ApiV1DevtoolsUpdatesRouteImport.update({
+  id: '/api/v1/devtools/updates',
+  path: '/api/v1/devtools/updates',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1FirstPartyAddonsRoute = ApiV1FirstPartyAddonsRouteImport.update({
   id: '/api/v1/first-party/addons',
   path: '/api/v1/first-party/addons',
@@ -576,6 +588,8 @@ export interface FileRoutesByFullPath {
   '/docs/developer/$': typeof SiteDocsDeveloperSplatRoute
   '/docs/user/$': typeof SiteDocsUserSplatRoute
   '/api/v1/auth/discord': typeof ApiV1AuthDiscordRoute
+  '/api/v1/devtools/releases': typeof ApiV1DevtoolsReleasesRoute
+  '/api/v1/devtools/updates': typeof ApiV1DevtoolsUpdatesRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/fonts/resolve': typeof ApiV1FontsResolveRoute
@@ -658,6 +672,8 @@ export interface FileRoutesByTo {
   '/docs/developer/$': typeof SiteDocsDeveloperSplatRoute
   '/docs/user/$': typeof SiteDocsUserSplatRoute
   '/api/v1/auth/discord': typeof ApiV1AuthDiscordRoute
+  '/api/v1/devtools/releases': typeof ApiV1DevtoolsReleasesRoute
+  '/api/v1/devtools/updates': typeof ApiV1DevtoolsUpdatesRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/fonts/resolve': typeof ApiV1FontsResolveRoute
@@ -746,6 +762,8 @@ export interface FileRoutesById {
   '/_site/docs/developer/$': typeof SiteDocsDeveloperSplatRoute
   '/_site/docs/user/$': typeof SiteDocsUserSplatRoute
   '/api/v1/auth/discord': typeof ApiV1AuthDiscordRoute
+  '/api/v1/devtools/releases': typeof ApiV1DevtoolsReleasesRoute
+  '/api/v1/devtools/updates': typeof ApiV1DevtoolsUpdatesRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/fonts/resolve': typeof ApiV1FontsResolveRoute
@@ -833,6 +851,8 @@ export interface FileRouteTypes {
     | '/docs/developer/$'
     | '/docs/user/$'
     | '/api/v1/auth/discord'
+    | '/api/v1/devtools/releases'
+    | '/api/v1/devtools/updates'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/fonts/resolve'
@@ -915,6 +935,8 @@ export interface FileRouteTypes {
     | '/docs/developer/$'
     | '/docs/user/$'
     | '/api/v1/auth/discord'
+    | '/api/v1/devtools/releases'
+    | '/api/v1/devtools/updates'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/fonts/resolve'
@@ -1002,6 +1024,8 @@ export interface FileRouteTypes {
     | '/_site/docs/developer/$'
     | '/_site/docs/user/$'
     | '/api/v1/auth/discord'
+    | '/api/v1/devtools/releases'
+    | '/api/v1/devtools/updates'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/fonts/resolve'
@@ -1061,6 +1085,8 @@ export interface RootRouteChildren {
   ApiV1UpdatesRoute: typeof ApiV1UpdatesRoute
   ApiWebhooksGithubSponsorsRoute: typeof ApiWebhooksGithubSponsorsRoute
   ApiV1AuthDiscordRoute: typeof ApiV1AuthDiscordRoute
+  ApiV1DevtoolsReleasesRoute: typeof ApiV1DevtoolsReleasesRoute
+  ApiV1DevtoolsUpdatesRoute: typeof ApiV1DevtoolsUpdatesRoute
   ApiV1FirstPartyAddonsRoute: typeof ApiV1FirstPartyAddonsRoute
   ApiV1FirstPartyPublishRoute: typeof ApiV1FirstPartyPublishRoute
   ApiV1FontsResolveRoute: typeof ApiV1FontsResolveRoute
@@ -1433,6 +1459,20 @@ declare module '@tanstack/react-router' {
       path: '/api/v1/auth/discord'
       fullPath: '/api/v1/auth/discord'
       preLoaderRoute: typeof ApiV1AuthDiscordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/devtools/releases': {
+      id: '/api/v1/devtools/releases'
+      path: '/api/v1/devtools/releases'
+      fullPath: '/api/v1/devtools/releases'
+      preLoaderRoute: typeof ApiV1DevtoolsReleasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/devtools/updates': {
+      id: '/api/v1/devtools/updates'
+      path: '/api/v1/devtools/updates'
+      fullPath: '/api/v1/devtools/updates'
+      preLoaderRoute: typeof ApiV1DevtoolsUpdatesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/v1/first-party/addons': {
@@ -1927,6 +1967,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiV1UpdatesRoute: ApiV1UpdatesRoute,
   ApiWebhooksGithubSponsorsRoute: ApiWebhooksGithubSponsorsRoute,
   ApiV1AuthDiscordRoute: ApiV1AuthDiscordRoute,
+  ApiV1DevtoolsReleasesRoute: ApiV1DevtoolsReleasesRoute,
+  ApiV1DevtoolsUpdatesRoute: ApiV1DevtoolsUpdatesRoute,
   ApiV1FirstPartyAddonsRoute: ApiV1FirstPartyAddonsRoute,
   ApiV1FirstPartyPublishRoute: ApiV1FirstPartyPublishRoute,
   ApiV1FontsResolveRoute: ApiV1FontsResolveRoute,

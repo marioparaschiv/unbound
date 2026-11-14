@@ -1,6 +1,7 @@
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { IconArrowUpRight, IconBook } from 'nucleo-micro-bold';
 
+import DevToolsDownloads from '~/components/download/devtools-downloads';
 import DownloadChannels from '~/components/download/download-channels';
 import { fetchDownloads } from '~/lib/downloads/download-functions';
 import { staggerStyle } from '~/components/motion/reveal-style';
@@ -57,6 +58,8 @@ function DownloadPage() {
 			</div>
 
 			<DownloadChannels downloads={downloads} />
+
+			<DevToolsDownloads />
 
 			<p className='text-muted-foreground text-sm text-center'>
 				Stuck? See the{' '}

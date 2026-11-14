@@ -2,7 +2,8 @@ name: DevTools
 
 # Pull requests that touch the devtools run the checks. Release binaries are built only when
 # release.yml releases the devtools component (or by hand for an existing tag): they are attached
-# to devtools-v{version} and to the rolling devtools-latest release the README links to.
+# to devtools-v{version} and to the rolling devtools-latest release the README links to, then
+# registered with the API (vars.UNBOUND_API_URL, secrets.UNBOUND_API_KEY) so the app's updater offers them.
 #
 # Caching: rust-cache keys each job by target, rustc version, Cargo.lock and the manifests, and
 # keeps only dependency artifacts (workspace crates rebuild anyway).
@@ -19,19 +20,26 @@ on:
                 description: The devtools release version to build and attach binaries to.
                 type: string
                 required: true
+        secrets:
+            UNBOUND_API_KEY:
+                required: false
     workflow_dispatch:
         inputs:
             version:
-                description: An existing devtools release version (without the devtools-v prefix).
+                description: An existing devtools release version (without the devtools-v prefix) to rebuild and publish.
                 type: string
-                required: true
+                required: false
+            ref:
+                description: A branch or commit to build as downloadable artifacts only, publishing nothing.
+                type: string
+                required: false
 
 permissions:
     contents: read
 
 # A newer push cancels a pull request's checks; a release build is never cancelled.
 concurrency:
-    group: devtools-${{ inputs.version || github.ref }}
+    group: devtools-${{ inputs.version || inputs.ref || github.ref }}
     cancel-in-progress: ${{ !inputs.version }}
 
 env:
@@ -50,7 +58,7 @@ defaults:
 jobs:
     check:
         name: Check (${{ matrix.os }})
-        if: ${{ !inputs.version }}
+        if: ${{ !inputs.version && !inputs.ref }}
         runs-on: ${{ matrix.os }}
         timeout-minutes: 40
         strategy:
@@ -107,7 +115,7 @@ jobs:
 
     build:
         name: Build (${{ matrix.target }})
-        if: ${{ inputs.version }}
+        if: ${{ inputs.version || inputs.ref }}
         runs-on: ${{ matrix.os }}
         timeout-minutes: 40
         strategy:
@@ -134,7 +142,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
-                  ref: devtools-v${{ inputs.version }}
+                  ref: ${{ inputs.ref || format('devtools-v{0}', inputs.version) }}
                   fetch-depth: 1
                   persist-credentials: false
 
@@ -182,6 +190,7 @@ jobs:
     publish:
         name: Publish v${{ inputs.version }}
         needs: build
+        if: ${{ inputs.version }}
         runs-on: ubuntu-26.04
         timeout-minutes: 10
         permissions:
@@ -219,3 +228,39 @@ jobs:
                     --notes "The most recent devtools release, currently devtools-v$VERSION." \
                     --latest=false \
                     release-assets/*
+
+            # Registers the release so `GET /api/v1/devtools/updates` offers it; each asset carries the
+            # archive's SHA-256, which the app checks before it replaces itself. Posting again is safe.
+            - name: Register the release with the API
+              if: ${{ vars.UNBOUND_API_URL != '' }}
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
+                  UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
+                  VERSION: ${{ inputs.version }}
+              run: |
+                  set -euo pipefail
+                  : "${UNBOUND_API_KEY:?UNBOUND_API_KEY is required to register the release}"
+                  base="https://github.com/$GITHUB_REPOSITORY/releases/download/devtools-v$VERSION"
+                  assets='[]'
+                  for file in release-assets/*; do
+                      name=$(basename "$file")
+                      # unbound-devtools-<os>-<arch>.<ext> -> <os>-<arch>, the API's target.
+                      target=${name#unbound-devtools-}
+                      target=${target%.tar.gz}
+                      target=${target%.zip}
+                      sha=$(sha256sum "$file" | cut -d' ' -f1)
+                      assets=$(jq -c --arg target "$target" --arg url "$base/$name" --arg sha "$sha" \
+                          '. + [{target: $target, url: $url, sha256: $sha}]' <<< "$assets")
+                  done
+                  notes=$(gh release view "devtools-v$VERSION" --repo "$GITHUB_REPOSITORY" --json body --jq .body)
+                  jq -n \
+                      --arg version "$VERSION" \
+                      --arg notes "$notes" \
+                      --argjson assets "$assets" \
+                      '{version: $version, assets: $assets, changelog: (if $notes == "" then null else $notes[0:10000] end)}' \
+                  | curl --fail-with-body --silent --show-error --request POST \
+                      --header 'Content-Type: application/json' \
+                      --header "X-API-Key: $UNBOUND_API_KEY" \
+                      --data @- \
+                      "${UNBOUND_API_URL%/}/api/v1/devtools/releases"

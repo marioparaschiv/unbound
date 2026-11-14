@@ -7,7 +7,8 @@ use gpui_component::switch::Switch;
 
 use crate::settings::{self, Appearance};
 use crate::theme;
-use crate::widgets::{field, icon};
+use crate::update::{self, Status, VERSION};
+use crate::widgets::{Raised, field, raised_button};
 
 const RESTART: &str = "Takes effect the next time DevTools starts.";
 
@@ -26,6 +27,7 @@ pub enum Section {
 	Appearance,
 	Device,
 	Agents,
+	Updates,
 	About,
 }
 
@@ -50,7 +52,7 @@ pub const CATEGORIES: &[Category] = &[
 	},
 	Category {
 		label: "Application",
-		sections: &[Section::About],
+		sections: &[Section::Updates, Section::About],
 	},
 ];
 
@@ -60,8 +62,27 @@ impl Section {
 			Self::Appearance => "Appearance",
 			Self::Device => "Device",
 			Self::Agents => "Agents",
+			Self::Updates => "Updates",
 			Self::About => "About",
 		}
+	}
+
+	/// The settings on the section's page, so the sidebar search finds a section by what it holds.
+	fn settings(self) -> &'static [&'static str] {
+		match self {
+			Self::Appearance => &["Theme", "Match the System", "Dark", "Light"],
+			Self::Device => &["Bridge Port", "Debugger"],
+			Self::Agents => &["Serve MCP", "MCP Port"],
+			Self::Updates => &["Check Now", "Check Automatically", "Version"],
+			Self::About => &["Version", "Config Directory"],
+		}
+	}
+
+	/// Whether `query` (lowercase) names the section or one of its settings.
+	pub fn matches(self, query: &str) -> bool {
+		std::iter::once(self.label())
+			.chain(self.settings().iter().copied())
+			.any(|text| text.to_lowercase().contains(query))
 	}
 
 	pub fn icon(self) -> &'static str {
@@ -69,6 +90,7 @@ impl Section {
 			Self::Appearance => "icons/palette.svg",
 			Self::Device => "icons/smartphone.svg",
 			Self::Agents => "icons/bot.svg",
+			Self::Updates => "icons/refresh-cw.svg",
 			Self::About => "icons/info.svg",
 		}
 	}
@@ -80,74 +102,125 @@ pub struct Fields {
 	pub mcp_port: Entity<InputState>,
 }
 
-/// The cards of `section`, top to bottom.
+/// The settings of `section`, top to bottom. They stand on the page without cards: the section's
+/// title already names what they are about.
 pub fn render(section: Section, fields: &Fields, s: Scale, cx: &App) -> Vec<Div> {
 	match section {
-		Section::Appearance => vec![card(s, "icons/sun-moon.svg", "Theme").child(theme_choice(s, cx))],
-		Section::Device => vec![card(s, "icons/cable.svg", "Debugger Bridge").child(row(
+		Section::Appearance => vec![theme_choice(s, cx)],
+		Section::Device => vec![setting(
 			s,
 			"Bridge Port",
 			"The port of the bridge on this machine. React DevTools, the view finder and Metro reach the device through it. Connect device reads it when DevTools starts.",
 			port(s, &fields.bridge_port),
-		))],
+		)],
 		Section::Agents => vec![
-			card(s, "icons/server.svg", "MCP")
-				.child(row(
-					s,
-					"Serve MCP",
-					&format!("Let an agent inspect the same component tree over HTTP. {RESTART}"),
-					Switch::new("mcp-enabled")
-						.checked(settings::get(cx).mcp_enabled)
-						.on_click(|on, _, cx| settings::update(cx, |s| s.mcp_enabled = *on)),
-				))
-				.child(row(
-					s,
-					"MCP Port",
-					&format!("Serves http://127.0.0.1:<port>/mcp. {RESTART}"),
-					port(s, &fields.mcp_port),
-				)),
+			setting(
+				s,
+				"Serve MCP",
+				&format!("Let an agent inspect the same component tree over HTTP. {RESTART}"),
+				Switch::new("mcp-enabled")
+					.checked(settings::get(cx).mcp_enabled)
+					.on_click(|on, _, cx| settings::update(cx, |s| s.mcp_enabled = *on)),
+			),
+			setting(
+				s,
+				"MCP Port",
+				&format!("Serves http://127.0.0.1:<port>/mcp. {RESTART}"),
+				port(s, &fields.mcp_port),
+			),
 		],
-		Section::About => vec![
-			card(s, "icons/info.svg", "Unbound DevTools")
-				.child(row(
-					s,
-					"Version",
-					"Settings and saved devices live in the unbound-devtools folder of your config directory.",
-					div()
-						.font_family(theme::mono_font())
-						.text_size(s.px(12.))
-						.text_color(theme::color(theme::TEXT_SECONDARY))
-						.child(env!("CARGO_PKG_VERSION")),
-				)),
+		Section::Updates => vec![
+			updates_row(s, cx),
+			setting(
+				s,
+				"Check Automatically",
+				"Look for a new version each time DevTools starts, and show a notification when one is out.",
+				Switch::new("check-for-updates")
+					.checked(settings::get(cx).check_for_updates)
+					.on_click(|on, _, cx| settings::update(cx, |s| s.check_for_updates = *on)),
+			),
 		],
+		Section::About => vec![setting(
+			s,
+			"Version",
+			"Settings and saved devices live in the unbound-devtools folder of your config directory.",
+			div()
+				.font_family(theme::mono_font())
+				.text_size(s.px(12.))
+				.text_color(theme::color(theme::TEXT_SECONDARY))
+				.child(VERSION),
+		)],
 	}
 }
 
-/// Telecord's settings card: a tinted title strip over a body of rows, each below a rule.
-fn card(s: Scale, path: &'static str, title: &'static str) -> Div {
-	let strip = div()
-		.flex()
-		.items_center()
-		.gap(s.px(8.))
-		.px(s.px(16.))
-		.py(s.px(12.))
-		.bg(theme::alpha(theme::HOVER, 0.45))
-		.child(icon(path, s.px(16.), theme::TEXT_MUTED))
-		.child(
-			div()
-				.text_size(s.px(13.))
-				.font_weight(FontWeight::MEDIUM)
-				.child(title),
-		);
-	div()
-		.flex()
-		.flex_col()
-		.rounded(s.px(12.))
-		.border_1()
-		.border_color(theme::color(theme::BORDER))
-		.bg(theme::color(theme::PANEL))
-		.overflow_hidden()
-		.child(strip)
+/// The update state in words, and the one action it allows.
+fn updates_row(s: Scale, cx: &App) -> Div {
+	let (title, description) = match update::status(cx) {
+		Status::Idle => (
+			format!("Version {VERSION}"),
+			"Not checked for updates yet.".to_owned(),
+		),
+		Status::Checking => (
+			format!("Version {VERSION}"),
+			"Checking for updates...".to_owned(),
+		),
+		Status::Current => (
+			format!("Version {VERSION}"),
+			"DevTools is up to date.".to_owned(),
+		),
+		Status::Available(found) => (
+			format!("Version {} is available", found.version),
+			format!(
+				"You have {VERSION}. Updating downloads it and replaces this copy of DevTools."
+			),
+		),
+		Status::Installing(found) => (
+			format!("Installing {}", found.version),
+			"Downloading and checking the update...".to_owned(),
+		),
+		Status::Installed(version) => (
+			format!("Version {version} is installed"),
+			"Restart DevTools to use it.".to_owned(),
+		),
+		Status::Failed(error) => (
+			format!("Version {VERSION}"),
+			format!("The last check failed: {error}"),
+		),
+	};
+	let control = match update::status(cx) {
+		Status::Available(_) => raised_button(
+			"install-update",
+			Raised::Primary,
+			Some("icons/download.svg"),
+			"Update",
+			true,
+		)
+		.on_click(|_, _, cx| update::install(cx)),
+		Status::Installed(_) => raised_button(
+			"restart-update",
+			Raised::Primary,
+			Some("icons/rotate-cw.svg"),
+			"Restart",
+			true,
+		)
+		.on_click(|_, _, cx| update::restart(cx)),
+		Status::Checking | Status::Installing(_) => raised_button(
+			"check-updates",
+			Raised::Secondary,
+			None,
+			"Working...",
+			false,
+		),
+		Status::Idle | Status::Current | Status::Failed(_) => raised_button(
+			"check-updates",
+			Raised::Secondary,
+			Some("icons/refresh-cw.svg"),
+			"Check Now",
+			true,
+		)
+		.on_click(|_, _, cx| update::check(false, cx)),
+	};
+	setting(s, &title, &description, control)
 }
 
 fn label(s: Scale, title: &str, description: &str) -> Div {
@@ -171,15 +244,11 @@ fn label(s: Scale, title: &str, description: &str) -> Div {
 }
 
 /// A setting with its control on the right.
-fn row(s: Scale, title: &str, description: &str, control: impl IntoElement) -> Div {
+fn setting(s: Scale, title: &str, description: &str, control: impl IntoElement) -> Div {
 	div()
 		.flex()
 		.items_center()
 		.gap(s.px(24.))
-		.px(s.px(16.))
-		.py(s.px(14.))
-		.border_t_1()
-		.border_color(theme::color(theme::BORDER))
 		.child(label(s, title, description).flex_1().min_w_0())
 		.child(div().flex_none().child(control))
 }
@@ -197,17 +266,13 @@ fn port(s: Scale, state: &Entity<InputState>) -> impl IntoElement {
 	div().w(s.px(120.)).child(text(s, state))
 }
 
-/// Telecord's theme radio group: one row per palette, the chosen one's ring filled.
+/// Telecord's theme radio group under its label: one row per palette, the chosen one's ring filled.
 fn theme_choice(s: Scale, cx: &App) -> Div {
 	let current = settings::get(cx).appearance;
-	div()
+	let options = div()
 		.flex()
 		.flex_col()
 		.gap(s.px(12.))
-		.px(s.px(16.))
-		.py(s.px(16.))
-		.border_t_1()
-		.border_color(theme::color(theme::BORDER))
 		.children(Appearance::ALL.into_iter().map(|appearance| {
 			let chosen = appearance == current;
 			div()
@@ -242,5 +307,29 @@ fn theme_choice(s: Scale, cx: &App) -> Div {
 				)
 				.child(appearance.label())
 				.on_click(move |_, _, cx| settings::update(cx, |s| s.appearance = appearance))
-		}))
+		}));
+	div()
+		.flex()
+		.flex_col()
+		.gap(s.px(14.))
+		.child(label(
+			s,
+			"Theme",
+			"Light or dark. Match the System follows your operating system as it changes.",
+		))
+		.child(options)
+}
+
+#[cfg(test)]
+mod tests {
+	use super::Section;
+
+	#[test]
+	fn search_finds_a_section_by_its_settings() {
+		assert!(Section::Agents.matches("mcp port"));
+		assert!(Section::Appearance.matches("dark"));
+		assert!(Section::Updates.matches("automatic"));
+		assert!(Section::Device.matches("device"));
+		assert!(!Section::Device.matches("mcp"));
+	}
 }

@@ -13,8 +13,8 @@ const FILE_NAME: &str = "settings.json";
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Appearance {
-	#[default]
 	System,
+	#[default]
 	Dark,
 	Light,
 }
@@ -46,15 +46,18 @@ pub struct Settings {
 	pub bridge_port: u16,
 	pub mcp_enabled: bool,
 	pub mcp_port: u16,
+	/// Look for a newer release when DevTools starts.
+	pub check_for_updates: bool,
 }
 
 impl Default for Settings {
 	fn default() -> Self {
 		Self {
-			appearance: Appearance::System,
+			appearance: Appearance::Dark,
 			bridge_port: DEFAULT_BRIDGE_PORT,
 			mcp_enabled: true,
 			mcp_port: DEFAULT_MCP_PORT,
+			check_for_updates: true,
 		}
 	}
 }
@@ -139,6 +142,7 @@ mod tests {
 			serde_json::from_str(r#"{"cliCommand":"bunx ubd","bridgePort":9191}"#).unwrap();
 		assert_eq!(settings.bridge_port, 9191);
 		assert_eq!(settings.mcp_port, Settings::default().mcp_port);
-		assert_eq!(settings.appearance, Appearance::System);
+		assert_eq!(settings.appearance, Appearance::Dark);
+		assert!(settings.check_for_updates);
 	}
 }
