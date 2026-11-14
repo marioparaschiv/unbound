@@ -8,3 +8,5 @@ pub const COMPONENTS_TITLE: &str = "Components";
 pub const VIEWS_TITLE: &str = "View Tree";
 /// The Metro module explorer's page title.
 pub const METRO_TITLE: &str = "Metro";
+/// The device log page's title.
+pub const LOGS_TITLE: &str = "Logs";

@@ -446,3 +446,22 @@ fn reads_the_protocols_metro_replies() {
 	};
 	assert_eq!(files[1].path, "modules/user_profile/native/UserProfile.tsx");
 }
+
+#[test]
+fn reads_the_protocols_log_lines() {
+	use crate::logs::LogSource;
+
+	let contract = fixture();
+
+	let BridgeFrame::Log(old) = frame(&contract, "log") else {
+		panic!("a log line without a source");
+	};
+	assert_eq!((old.level, old.source(), old.at), (2, LogSource::Js, None));
+
+	let BridgeFrame::Log(sourced) = frame(&contract, "logSourced") else {
+		panic!("a log line with its source");
+	};
+	assert_eq!(sourced.source, Some(LogSource::Unbound));
+	assert_eq!(sourced.scope, ["Loader", "themes"]);
+	assert_eq!(sourced.at, Some(1_700_000_000_000.));
+}

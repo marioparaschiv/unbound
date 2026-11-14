@@ -10,6 +10,7 @@ mod explorer;
 mod inspection;
 mod inspector;
 mod link;
+mod logs_page;
 mod mcp_menu;
 mod metro;
 mod nav;
