@@ -11,6 +11,7 @@ import { launchNotes } from '@unbound-app/contracts/debug-card-launch';
 import type { DebugCardContext } from '~/lib/debug-card/context';
 
 import { accent, cleanNames, COLORS, dim, joined, value, warn, type Span } from './spans';
+import { clockNote, dnsNote, powerNote, pushNote } from './device-notes';
 import { environmentRows } from './environment-rows';
 import { clipped, wrapped } from './wrap-lines';
 
@@ -363,6 +364,10 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 	const storage = lowStorage(info.storage);
 	const updates = updateNotes(context, info.addonUpdates);
 	const tweaks = cleanNames(info.injected ?? []);
+	const clock = clockNote(info.clock);
+	const push = pushNote(info.push);
+	const power = powerNote(info.power);
+	const dns = dnsNote(info.dns);
 	const candidates: [string, Span[]][] = [
 		['crashes', crashes],
 		['updates', updates.length ? [warn(fittedList(updates, VALUE_ROOM))] : []],
@@ -378,9 +383,13 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 				: [],
 		],
 		['errors', errors.length ? [warn(fittedList(errors, VALUE_ROOM))] : []],
+		['clock', clock ? [{ text: clock, color: COLORS.bad }] : []],
 		['launch', launch.length ? [warn(fittedList(launch, VALUE_ROOM))] : []],
+		['push', push ? [warn(fittedList([push], VALUE_ROOM))] : []],
 		['memory', memory.length ? [warn(fittedList(memory, VALUE_ROOM))] : []],
 		['storage', storage ? [warn(storage)] : []],
+		['power', power ? [warn(power)] : []],
+		['dns', dns ? [warn(dns)] : []],
 	];
 
 	return candidates.filter(([, spans]) => spans.length > 0);

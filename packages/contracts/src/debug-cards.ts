@@ -12,6 +12,15 @@ export const DEBUG_CARD_THERMAL = ['nominal', 'fair', 'serious', 'critical'] as 
 
 export const DEBUG_CARD_NETWORKS = ['wifi', 'cellular', 'ethernet', 'other', 'offline'] as const;
 
+export const DEBUG_CARD_NOTIFICATION_PERMISSIONS = [
+	'granted',
+	'denied',
+	'provisional',
+	'not asked',
+] as const;
+
+export const DEBUG_CARD_PUSH_ENVIRONMENTS = ['production', 'development', 'missing'] as const;
+
 const text = (maxLength = 128) => Type.String({ maxLength });
 
 const exitCount = Type.Integer({ minimum: 0, maximum: 10_000 });
@@ -85,6 +94,29 @@ const networkSchema = Type.Object({
 	proxy: Type.Optional(Type.Boolean()),
 });
 
+const powerSchema = Type.Object({
+	lowPower: Type.Boolean(),
+	battery: Type.Optional(Type.Integer({ minimum: 0, maximum: 100 })),
+	charging: Type.Optional(Type.Boolean()),
+});
+
+const clockSchema = Type.Object({
+	utcOffset: text(8),
+	skewS: Type.Optional(Type.Integer({ minimum: -100_000_000, maximum: 100_000_000 })),
+});
+
+const dnsSchema = Type.Object({
+	resolver: Type.Optional(text(32)),
+	privateDns: Type.Optional(text(32)),
+});
+
+const pushSchema = Type.Object({
+	permission: Type.Enum(DEBUG_CARD_NOTIFICATION_PERMISSIONS),
+	registered: Type.Optional(Type.Boolean()),
+	playServices: Type.Optional(Type.Boolean()),
+	environment: Type.Optional(Type.Enum(DEBUG_CARD_PUSH_ENVIRONMENTS)),
+});
+
 const heapSchema = Type.Object({
 	heapMB: Type.Number({ minimum: 0, maximum: 1_000_000 }),
 	gcMs: Type.Number({ minimum: 0, maximum: 1_000_000_000 }),
@@ -122,6 +154,10 @@ export const debugCardRequestSchema = Type.Object({
 	bundleChannel: Type.Optional(text(16)),
 	memory: Type.Optional(memorySchema),
 	network: Type.Optional(networkSchema),
+	power: Type.Optional(powerSchema),
+	clock: Type.Optional(clockSchema),
+	dns: Type.Optional(dnsSchema),
+	push: Type.Optional(pushSchema),
 	heap: Type.Optional(heapSchema),
 	storage: Type.Optional(
 		Type.Object({
@@ -199,6 +235,14 @@ export type DebugCardMemory = StaticDecode<typeof memorySchema>;
 
 export type DebugCardNetwork = StaticDecode<typeof networkSchema>;
 
+export type DebugCardPower = StaticDecode<typeof powerSchema>;
+
+export type DebugCardClock = StaticDecode<typeof clockSchema>;
+
+export type DebugCardDns = StaticDecode<typeof dnsSchema>;
+
+export type DebugCardPush = StaticDecode<typeof pushSchema>;
+
 export default {
 	DEBUG_CARD_ALT_TEXT_LIMIT,
 	DEBUG_CARD_SUPPORT,
@@ -206,6 +250,8 @@ export default {
 	DEBUG_CARD_EXITS,
 	DEBUG_CARD_THERMAL,
 	DEBUG_CARD_NETWORKS,
+	DEBUG_CARD_NOTIFICATION_PERMISSIONS,
+	DEBUG_CARD_PUSH_ENVIRONMENTS,
 	debugCardRequestSchema,
 	debugCardResponseSchema,
 };
