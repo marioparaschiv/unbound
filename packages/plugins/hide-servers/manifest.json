@@ -1,0 +1,29 @@
+{
+	"id": "unbound.hide-servers",
+	"name": "Hide Servers",
+	"description": "Hides the servers you pick from your server list, without leaving them.",
+	"authors": [
+		{
+			"name": "nexpid",
+			"id": "853550207039832084"
+		},
+		{
+			"name": "bep",
+			"id": "0"
+		},
+		{
+			"name": "Panniku",
+			"id": "703634705152606318"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "EyeSlashIcon",
+	"main": "index.tsx"
+}

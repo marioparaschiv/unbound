@@ -970,6 +970,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/hide-servers": {
+      "name": "hide-servers",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/hide-unusable-expressions": {
       "name": "hide-unusable-expressions",
       "dependencies": {
@@ -3607,6 +3621,7 @@
 
     "hide-buttons": ["hide-buttons@workspace:packages/plugins/hide-buttons"],
 
+    "hide-servers": ["hide-servers@workspace:packages/plugins/hide-servers"],
     "hide-unusable-expressions": ["hide-unusable-expressions@workspace:packages/plugins/hide-unusable-expressions"],
     "highlight-replies": ["highlight-replies@workspace:packages/plugins/highlight-replies"],
     "highlight.js": ["highlight.js@11.12.0", "", {}, "sha512-nbfWpyRMcMrPMmDwJB+dhX/eiaPKtc2RB+0QZskqJ3WjRA/FDS0e9hZrx8EC/lbEv8gXy98FcDbNa/dspAaJMg=="],

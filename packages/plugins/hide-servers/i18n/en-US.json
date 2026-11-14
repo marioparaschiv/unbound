@@ -1,0 +1,11 @@
+{
+	"HIDE_SERVER": "Hide Server",
+	"HIDDEN_SERVER": "{name} is hidden. Unhide it in Hide Servers' settings.",
+	"HIDDEN": "Hidden servers",
+	"HIDDEN_SUBTITLE": "Servers left out of your server list. You stay in them and still get their notifications.",
+	"ADD_SERVER": "Hide a server",
+	"SEARCH_SERVERS": "Search servers or paste an ID",
+	"NO_SERVERS": "No servers found",
+	"UNKNOWN_SERVER": "Unknown server",
+	"REMOVE_SERVER": "Unhide server"
+}
