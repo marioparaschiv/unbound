@@ -3,6 +3,8 @@ name = "unbound-devtools-repl"
 description = "The DevTools console's engine: TypeScript checking in-process with tsrs, type stripping with oxc, and the device-side result preview."
 version.workspace = true
 edition.workspace = true
+# tsrs needs Rust 1.99 or newer.
+rust-version = "1.99"
 license.workspace = true
 
 [dependencies]
