@@ -667,7 +667,7 @@ jobs:
               if: inputs.only_apt_repo == true || inputs.only_app_repo == true
               run: |
                   mkdir -p apt-repo/repo/debs
-                  LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 100 --json tagName,isPrerelease --jq '[.[] | select((.tagName | startswith("discord-")) and (.tagName | endswith("-ios")) and (.isPrerelease | not))][0].tagName')
+                  LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 1000 --exclude-drafts --exclude-pre-releases --json tagName --jq '[.[] | select(.tagName | test("^discord-[0-9.]+-ios$"))][0].tagName')
                   gh release download "$LATEST_TAG" --repo "${{ github.repository }}" --pattern '*arm64.deb' --dir apt-repo/repo/debs --clobber
 
             - name: Capture new deb filename
@@ -689,7 +689,7 @@ jobs:
               run: |
                   set -euo pipefail
                   if [ -z "$VERSION_SELECTOR" ]; then
-                    LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 100 --json tagName,isPrerelease --jq '[.[] | select((.tagName | startswith("discord-")) and (.tagName | endswith("-ios")) and (.isPrerelease | not))][0].tagName')
+                    LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 1000 --exclude-drafts --exclude-pre-releases --json tagName --jq '[.[] | select(.tagName | test("^discord-[0-9.]+-ios$"))][0].tagName')
                     gh release download "$LATEST_TAG" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber
                   else
                     selector="${VERSION_SELECTOR#v}"
