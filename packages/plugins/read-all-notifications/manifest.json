@@ -1,0 +1,21 @@
+{
+	"id": "unbound.read-all-notifications",
+	"name": "Read All Notifications",
+	"description": "Adds a button to your server list that marks every server as read at once.",
+	"authors": [
+		{
+			"name": "kemo",
+			"id": "715746190813298788"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "CheckmarkLargeIcon",
+	"main": "index.tsx"
+}
