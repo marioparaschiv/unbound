@@ -259,7 +259,8 @@ val copyAnimatedIcon = tasks.register<Sync>("copyAnimatedIcon") {
     }
     into(layout.buildDirectory.dir("generated/animated-icon-assets/animated-icon"))
 }
-tasks.matching { it.name.matches(Regex("(merge|generate)\\w*Assets")) }.configureEach { dependsOn(copyAnimatedIcon) }
+// Lint reads the generated assets directory too, so its model tasks must run after the copy.
+tasks.matching { it.name.matches(Regex("(merge|generate)\\w*Assets|\\w*[Ll]int\\w*")) }.configureEach { dependsOn(copyAnimatedIcon) }
 
 val copyBootstrapResources = tasks.register<CopyBootstrapResources>("copyBootstrapResources") {
     scripts.from(fileTree(repositoryRoot.resolve("bootstrap")) { include("*.js") })
