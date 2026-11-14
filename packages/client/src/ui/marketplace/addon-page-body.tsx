@@ -36,7 +36,9 @@ function AddonPageBody({ resource, name }: AddonPageBodyProps) {
 	if (state.status === 'failed') {
 		return (
 			<View style={styles.inset}>
-				<Empty>{messages.UNBOUND_STORE_PAGE_FAILED}</Empty>
+				<Empty icon='CircleXIcon' tone='critical'>
+					{messages.UNBOUND_STORE_PAGE_FAILED}
+				</Empty>
 				<Discord.Button
 					text={messages.UNBOUND_UPDATES_RETRY}
 					variant='secondary'

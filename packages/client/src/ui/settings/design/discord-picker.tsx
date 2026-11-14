@@ -114,7 +114,7 @@ function DiscordPicker({ kind }: DiscordPickerProps) {
 	if (!themes.length) {
 		return (
 			<View style={styles.page}>
-				<Empty>
+				<Empty icon='PuzzlePieceIcon'>
 					{format('UNBOUND_NO_ADDONS', {
 						type: messages[Manager.for(kind).noun],
 					})}

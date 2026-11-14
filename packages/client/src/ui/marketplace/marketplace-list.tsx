@@ -103,17 +103,18 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 	const plural = messages[manager.label];
 
 	if (!addons.length) {
-		const message =
-			state.status === 'failed'
-				? messages.UNBOUND_MARKETPLACE_ERROR
-				: browsing
-					? format('UNBOUND_MARKETPLACE_EMPTY', { type: messages[manager.noun] })
-					: messages.UNBOUND_EMPTY_RESULTS;
+		const failed = state.status === 'failed';
+		const message = failed
+			? messages.UNBOUND_MARKETPLACE_ERROR
+			: browsing
+				? format('UNBOUND_MARKETPLACE_EMPTY', { type: messages[manager.noun] })
+				: messages.UNBOUND_EMPTY_RESULTS;
+		const icon = failed ? 'CircleXIcon' : browsing ? 'ShopIcon' : undefined;
 
 		return (
 			// Fills the space under the controls without scrolling, so the empty state sits in its centre.
 			<SafeArea.SafeAreaPaddingView bottom style={styles.empty}>
-				<Empty image={browsing ? 'empty_permission' : 'sticker_search_empty'}>
+				<Empty icon={icon} tone={failed ? 'critical' : 'neutral'}>
 					{message}
 				</Empty>
 			</SafeArea.SafeAreaPaddingView>

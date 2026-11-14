@@ -1,64 +1,32 @@
-import type { ImageSourcePropType, StyleProp, ViewStyle } from 'react-native';
-import type { ComponentType } from 'react';
-import { createElement } from 'react';
+import { View } from 'react-native';
 
-import { isRenderable } from '~/metro/components';
-import { findByName } from '~/metro/lookups';
-import { icons } from '~/assets/api';
+import type { HeroTone } from '~/ui/settings/updates/describe-hero';
+import HeroBadge from '~/ui/settings/updates/hero-badge';
+import { Discord } from '~/metro/components';
 
-import FallbackEmptyState from './fallback-empty-state';
 import useStyles from './empty-state.style';
-
-/** The props of Discord's `design/void/EmptyState`, which the design barrel does not export. */
-type DiscordEmptyStateProps = {
-	title?: string;
-	body?: string;
-	lightSource?: ImageSourcePropType;
-	darkSource?: ImageSourcePropType;
-	style?: StyleProp<ViewStyle>;
-};
 
 type EmptyStateProps = {
 	children: string;
-	/** The illustration's asset name; the generic empty-state image when omitted. */
-	image?: string;
+	/** The badge's icon asset name; a magnifying glass when omitted. */
+	icon?: string;
+	tone?: HeroTone;
 };
 
-// `null` once looked up and missing, so builds without it search only once.
-let discordEmptyState: ComponentType<DiscordEmptyStateProps> | null | undefined;
-
-function readDiscordEmptyState() {
-	if (discordEmptyState === undefined) {
-		const found: ComponentType<DiscordEmptyStateProps> | undefined = findByName('EmptyState', {
-			lazy: false,
-		});
-
-		discordEmptyState = isRenderable(found) ? found : null;
-	}
-
-	return discordEmptyState;
-}
-
 /**
- * @description A centered illustration and message: Discord's `EmptyState`, or Unbound's on builds without it.
+ * @description A centered badge and message, laid out like the updates hero and the no-addons page.
  */
-function EmptyState({ children, image = 'empty_state_image' }: EmptyStateProps) {
+function EmptyState({ children, icon = 'MagnifyingGlassIcon', tone = 'neutral' }: EmptyStateProps) {
 	const styles = useStyles();
-	const DiscordEmptyState = readDiscordEmptyState();
 
-	if (!DiscordEmptyState) {
-		return <FallbackEmptyState image={image}>{children}</FallbackEmptyState>;
-	}
-
-	const source = icons[image] ?? 0;
-
-	// The component is looked up once and cached, so it keeps its identity across renders.
-	return createElement(DiscordEmptyState, {
-		body: children,
-		lightSource: source,
-		darkSource: source,
-		style: styles.container,
-	});
+	return (
+		<View style={styles.container}>
+			<HeroBadge tone={tone} icon={icon} spinning={false} />
+			<Discord.Text variant='text-md/medium' color='text-muted' style={styles.text}>
+				{children}
+			</Discord.Text>
+		</View>
+	);
 }
 
 export default EmptyState;

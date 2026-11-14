@@ -89,7 +89,7 @@ function AssetsPage() {
 				renderItem={renderRow}
 				estimatedItemSize={48}
 				ListEmptyComponent={
-					<Empty image={search ? 'sticker_search_empty' : 'empty_permission'}>
+					<Empty icon={search ? undefined : 'ImageIcon'}>
 						{search ? messages.UNBOUND_EMPTY_RESULTS : messages.UNBOUND_NO_ASSETS}
 					</Empty>
 				}
