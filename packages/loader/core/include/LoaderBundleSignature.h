@@ -4,6 +4,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace loader {
 constexpr const char *kBundleSignatureSuffix = ".sig";
@@ -13,8 +14,9 @@ struct BundleTrust {
     std::string pullRequestKey;
     uint32_t    pullRequestNumber = 0;
 
-    bool isEnabled() const;
-    bool trustsPullRequestKey() const;
+    bool                     isEnabled() const;
+    bool                     trustsPullRequestKey() const;
+    std::vector<std::string> productionKeys() const;
 };
 
 std::optional<std::string> decodeBase64(std::string_view encoded);

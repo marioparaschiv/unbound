@@ -28,12 +28,34 @@ static_assert(UNBOUND_PR_NUMBER >= 0 && UNBOUND_PR_NUMBER <= UINT32_MAX,
 
 bool BundleTrust::isEnabled() const
 {
-    return !productionKey.empty() || trustsPullRequestKey();
+    return !productionKeys().empty() || trustsPullRequestKey();
 }
 
 bool BundleTrust::trustsPullRequestKey() const
 {
     return pullRequestNumber > 0 && !pullRequestKey.empty();
+}
+
+std::vector<std::string> BundleTrust::productionKeys() const
+{
+    std::vector<std::string> keys;
+    size_t                   start = 0;
+    while (start <= productionKey.size())
+    {
+        size_t      end = productionKey.find(',', start);
+        std::string key =
+            productionKey.substr(start, end == std::string::npos ? std::string::npos : end - start);
+        if (!key.empty())
+        {
+            keys.push_back(key);
+        }
+        if (end == std::string::npos)
+        {
+            break;
+        }
+        start = end + 1;
+    }
+    return keys;
 }
 
 static int base64Value(char character)
@@ -155,10 +177,12 @@ bool verifyBundleSignature(const std::string &bundle, const std::string &signatu
 TrustedSigner verifyTrustedSignature(const std::string &message, const std::string &signatureBase64,
                                      const BundleTrust &trust)
 {
-    if (!trust.productionKey.empty() &&
-        verifyBundleSignature(message, signatureBase64, trust.productionKey))
+    for (const std::string &key : trust.productionKeys())
     {
-        return TrustedSigner::Production;
+        if (verifyBundleSignature(message, signatureBase64, key))
+        {
+            return TrustedSigner::Production;
+        }
     }
     if (trust.trustsPullRequestKey() &&
         verifyBundleSignature(pullRequestSigningContext(trust.pullRequestNumber) + message,

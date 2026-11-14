@@ -30,7 +30,7 @@ VENDOR_DIR := $(REPO_ROOT)/vendor
 RESOURCES_DIR := $(REPO_ROOT)/bootstrap
 ATTESTATION_ENABLED := $(if $(filter 1,$(DEBUG)),0,1)
 BUNDLE_SIGNING_KEY_FILE ?= $(CORE_DIR)/keys/bundle-signing.pub
-BUNDLE_SIGNING_KEY := $(shell cat "$(BUNDLE_SIGNING_KEY_FILE)" 2>/dev/null | LC_ALL=C tr -cd 'A-Za-z0-9+/=')
+BUNDLE_SIGNING_KEY := $(shell cat "$(BUNDLE_SIGNING_KEY_FILE)" 2>/dev/null | LC_ALL=C tr -s '\n\r\t ' ',' | LC_ALL=C tr -cd 'A-Za-z0-9+/=,')
 $(if $(filter 0,$(MAKELEVEL)),$(if $(BUNDLE_SIGNING_KEY),$(info Bundle signature verification: on, key from $(BUNDLE_SIGNING_KEY_FILE)),$(info Bundle signature verification: off, $(BUNDLE_SIGNING_KEY_FILE) does not exist)))
 UNBOUND_PR_NUMBER ?=
 PR_BUNDLE_SIGNING_KEY_FILE ?= $(CORE_DIR)/keys/pr-bundle-signing.pub

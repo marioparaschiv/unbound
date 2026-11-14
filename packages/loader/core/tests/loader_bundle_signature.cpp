@@ -104,6 +104,27 @@ static void bindsPullRequestSignaturesToTheirNumber()
     assert(!loader::BundleTrust{}.isEnabled());
 }
 
+static void trustsEveryListedProductionKeyDuringARotation()
+{
+    using bundle_test::foreignKey;
+    using bundle_test::productionKey;
+    using loader::TrustedSigner;
+
+    const std::string         message = "bundle bytes";
+    const loader::BundleTrust rotating{
+        productionKey().publicKey + "," + foreignKey().publicKey + ",", "", 0};
+
+    assert(rotating.productionKeys().size() == 2);
+    assert(loader::verifyTrustedSignature(message, productionKey().sign(message), rotating) ==
+           TrustedSigner::Production);
+    assert(loader::verifyTrustedSignature(message, foreignKey().sign(message), rotating) ==
+           TrustedSigner::Production);
+    assert(loader::verifyTrustedSignature(message, foreignKey().sign(message),
+                                          bundle_test::productionTrust()) == TrustedSigner::None);
+    const loader::BundleTrust separatorsOnly{",,", "", 0};
+    assert(!separatorsOnly.isEnabled());
+}
+
 static void compilesTheProductionTrust()
 {
     const loader::BundleTrust compiled = loader::compiledBundleTrust();
@@ -118,6 +139,7 @@ int main()
     recognisesDevelopmentServers();
     hashesWithSha512();
     bindsPullRequestSignaturesToTheirNumber();
+    trustsEveryListedProductionKeyDuringARotation();
     compilesTheProductionTrust();
     return 0;
 }

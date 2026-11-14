@@ -309,3 +309,27 @@ func TestCommittedBundleSigningKeyIsAnEd25519PublicKey(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestBundleKeyVerifyAcceptsAnyKeyListedDuringARotation(t *testing.T) {
+	_, current, currentPublic := generatedKey(t)
+	_, next, nextPublic := generatedKey(t)
+	keyFile := filepath.Join(t.TempDir(), "bundle-signing.pub")
+	listed := base64.StdEncoding.EncodeToString(currentPublic) + "\n" + base64.StdEncoding.EncodeToString(nextPublic) + "\n"
+	if err := os.WriteFile(keyFile, []byte(listed), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, private := range []ed25519.PrivateKey{current, next} {
+		var output bytes.Buffer
+		if err := bundleKeyVerifyCommand([]string{"--dir", signedBuild(t, private, 0), "--public-key", keyFile}, &output); err != nil {
+			t.Fatalf("a build signed with a listed key failed: %v", err)
+		}
+	}
+	_, foreign, _ := generatedKey(t)
+	var output bytes.Buffer
+	if err := bundleKeyVerifyCommand([]string{"--dir", signedBuild(t, foreign, 0), "--public-key", keyFile}, &output); err == nil {
+		t.Fatal("a build signed with an unlisted key passed")
+	}
+	if _, err := parseBundleSigningPublicKeys("\n\n"); err == nil {
+		t.Fatal("an empty key file parsed")
+	}
+}

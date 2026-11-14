@@ -133,6 +133,33 @@ func generateNamedBundleSigningKey(directory, name string, entropy io.Reader) (s
 	return privatePath, publicPath, nil
 }
 
+func parseBundleSigningPublicKeys(text string) ([]ed25519.PublicKey, error) {
+	var keys []ed25519.PublicKey
+	for _, line := range strings.Fields(text) {
+		key, err := parseBundleSigningPublicKey(line)
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, key)
+	}
+	if len(keys) == 0 {
+		return nil, errors.New("the bundle signing public key file lists no keys")
+	}
+	return keys, nil
+}
+
+func verifySignedBuildWithAny(directory string, keys []ed25519.PublicKey, pullRequest uint64) ([]string, error) {
+	var lastErr error
+	for _, key := range keys {
+		files, err := verifySignedBuild(directory, key, pullRequest)
+		if err == nil {
+			return files, nil
+		}
+		lastErr = err
+	}
+	return nil, lastErr
+}
+
 func parseBundleSigningPublicKey(text string) (ed25519.PublicKey, error) {
 	decoded, err := base64.StdEncoding.DecodeString(strings.TrimSpace(text))
 	if err != nil {
@@ -266,7 +293,7 @@ func verifySignedBuild(directory string, public ed25519.PublicKey, pullRequest u
 func bundleKeyVerifyCommand(args []string, output io.Writer) error {
 	set := flag.NewFlagSet("bundle-key verify", flag.ContinueOnError)
 	directory := set.String("dir", "", "client build directory holding the bundles, manifest.json and manifest.json.sig")
-	publicKeyPath := set.String("public-key", "", "base64 Ed25519 public key file; defaults to the committed key for the build kind")
+	publicKeyPath := set.String("public-key", "", "file of base64 Ed25519 public keys, one per line; defaults to the committed keys for the build kind")
 	pullRequest := set.Uint64("pr", 0, "pull request number the build was signed for with the PR key")
 	if err := set.Parse(args); err != nil {
 		return err
@@ -285,11 +312,11 @@ func bundleKeyVerifyCommand(args []string, output io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("read bundle signing public key: %w", err)
 	}
-	public, err := parseBundleSigningPublicKey(string(raw))
+	keys, err := parseBundleSigningPublicKeys(string(raw))
 	if err != nil {
 		return err
 	}
-	files, err := verifySignedBuild(*directory, public, *pullRequest)
+	files, err := verifySignedBuildWithAny(*directory, keys, *pullRequest)
 	if err != nil {
 		return err
 	}
