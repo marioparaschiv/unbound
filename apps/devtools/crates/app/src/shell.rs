@@ -10,6 +10,7 @@ use unbound_devtools_core::Devtools;
 
 use crate::app::Workspace;
 use crate::link::DebuggerLink;
+use crate::mcp_menu::McpButton;
 use crate::metro::MetroBrowser;
 use crate::nav;
 use crate::nav_list::{NavGroup, NavRow, action_row};
@@ -77,6 +78,7 @@ impl Shell {
 		devtools: Devtools,
 		workspace: Entity<Workspace>,
 		link: Entity<DebuggerLink>,
+		mcp: Entity<McpButton>,
 		window: &mut Window,
 		cx: &mut Context<Self>,
 	) -> Self {
@@ -89,8 +91,8 @@ impl Shell {
 			}),
 			cx.observe_global::<update::toast::Toasts>(|_, cx| cx.notify()),
 		];
-		let views = cx.new(|cx| ViewFinder::new(devtools.clone(), window, cx));
-		let metro = cx.new(|cx| MetroBrowser::new(devtools, window, cx));
+		let views = cx.new(|cx| ViewFinder::new(devtools.clone(), mcp.clone(), window, cx));
+		let metro = cx.new(|cx| MetroBrowser::new(devtools, mcp, window, cx));
 		let this = Self {
 			workspace,
 			views,

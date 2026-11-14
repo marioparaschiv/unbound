@@ -15,6 +15,7 @@ pub const CHEVRON_UP: &str = "icons/chevron-up.svg";
 pub const SEARCH: &str = "icons/search.svg";
 pub const X: &str = "icons/x.svg";
 pub const COPY: &str = "icons/copy.svg";
+pub const PLAY: &str = "icons/play.svg";
 pub const ARROW_UP_RIGHT: &str = "icons/arrow-up-right.svg";
 pub const CROSSHAIR: &str = "icons/crosshair.svg";
 pub const TERMINAL: &str = "icons/terminal.svg";
@@ -37,6 +38,7 @@ const FILES: &[(&str, &[u8])] = &[
 	(SEARCH, include_bytes!("../assets/icons/search.svg")),
 	(X, include_bytes!("../assets/icons/x.svg")),
 	(COPY, include_bytes!("../assets/icons/copy.svg")),
+	(PLAY, include_bytes!("../assets/icons/play.svg")),
 	(CROSSHAIR, include_bytes!("../assets/icons/crosshair.svg")),
 	(TERMINAL, include_bytes!("../assets/icons/terminal.svg")),
 	(PLUG, include_bytes!("../assets/icons/plug.svg")),

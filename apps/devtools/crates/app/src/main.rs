@@ -15,6 +15,7 @@ mod metro;
 mod nav;
 mod nav_list;
 mod pairing;
+mod popout;
 mod press;
 mod scaled;
 mod search;
@@ -190,8 +191,11 @@ fn run_gui(settings: Settings, config: Config, mcp_port: Option<u16>) {
 			let opened = cx.open_window(options, |window, cx| {
 				appearance::apply(Some(window), cx);
 				let link = cx.new(|cx| link::DebuggerLink::new(devtools.clone(), cx));
-				let workspace = cx.new(|cx| app::Workspace::new(devtools.clone(), window, cx));
-				let shell = cx.new(|cx| shell::Shell::new(devtools, workspace, link, window, cx));
+				let mcp = cx.new(|cx| mcp_menu::McpButton::new(devtools.clone(), cx));
+				let workspace =
+					cx.new(|cx| app::Workspace::new(devtools.clone(), mcp.clone(), window, cx));
+				let shell =
+					cx.new(|cx| shell::Shell::new(devtools, workspace, link, mcp, window, cx));
 				cx.new(|cx| Root::new(shell, window, cx))
 			});
 			if let Err(error) = opened {

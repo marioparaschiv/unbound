@@ -10,7 +10,7 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use gpui::{
-	AnyElement, Context, SharedString, UniformListScrollHandle, Window, div, prelude::*, px,
+	AnyElement, Context, Entity, SharedString, UniformListScrollHandle, Window, div, prelude::*, px,
 };
 use unbound_devtools_core::{
 	Devtools, ExplorerTarget, RequestError, VIEWS_PAGE_SIZE, ViewDetails, ViewNode, ViewPage,
@@ -20,6 +20,7 @@ use crate::app::on_runtime;
 use crate::empty::SETUP_STEPS;
 use crate::empty_state::EmptyState;
 use crate::explorer::{Entry, Explorer, ExplorerHost};
+use crate::mcp_menu::McpButton;
 use crate::nav;
 use crate::theme;
 use crate::widgets::{Raised, footer_bar, page_header, page_header_end, raised_button, tooltip};
@@ -108,11 +109,17 @@ pub struct ViewFinder {
 	scroll: UniformListScrollHandle,
 	/// The details pane: the selected view's page, and the objects opened from it.
 	explorer: Explorer,
+	mcp: Entity<McpButton>,
 	_watch: gpui::Task<()>,
 }
 
 impl ViewFinder {
-	pub fn new(devtools: Devtools, window: &mut Window, cx: &mut Context<Self>) -> Self {
+	pub fn new(
+		devtools: Devtools,
+		mcp: Entity<McpButton>,
+		window: &mut Window,
+		cx: &mut Context<Self>,
+	) -> Self {
 		let mut explorer = Explorer::new(devtools.clone(), window, cx);
 		explorer.set_connected(device_connected(&devtools), cx);
 		let watch = cx.spawn({
@@ -143,6 +150,7 @@ impl ViewFinder {
 			epoch: 0,
 			scroll: UniformListScrollHandle::new(),
 			explorer,
+			mcp,
 			_watch: watch,
 		}
 	}
@@ -463,9 +471,12 @@ impl ViewFinder {
 			let noun = if count == 1 { "view" } else { "views" };
 			format!("{count} {noun} listed. Hover a row to outline its view on the device.")
 		});
+		// The MCP button pads its label by 8px, so the bar pads 8px less to end on the gutter.
 		footer_bar()
-			.px(px(theme::GUTTER))
-			.children(note.map(|note| div().min_w_0().truncate().child(note)))
+			.pl(px(theme::GUTTER))
+			.pr(px(theme::GUTTER - 8.))
+			.child(div().flex_1().min_w_0().truncate().children(note))
+			.child(self.mcp.clone())
 	}
 }
 

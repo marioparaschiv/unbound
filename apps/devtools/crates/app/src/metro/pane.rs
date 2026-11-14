@@ -436,9 +436,12 @@ impl Render for MetroBrowser {
 			.child(page_header(nav::COMPONENTS_GROUP, nav::METRO_TITLE))
 			.child(body)
 			.child(
+				// The MCP button pads its label by 8px, so the bar pads 8px less to end on the gutter.
 				footer_bar()
-					.px(px(theme::GUTTER))
-					.child(div().min_w_0().truncate().child(note)),
+					.pl(px(theme::GUTTER))
+					.pr(px(theme::GUTTER - 8.))
+					.child(div().flex_1().min_w_0().truncate().child(note))
+					.child(self.mcp.clone()),
 			)
 	}
 }
