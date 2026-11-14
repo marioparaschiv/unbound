@@ -62,9 +62,12 @@ scroll position itself; browsers without scroll-driven animations ease it in fro
 	}
 
 	@supports (animation-timeline: scroll()) {
-		animation:
-			fade-start-grow linear both,
-			fade-end-shrink linear both;
+		/* Longhands with `auto` duration: the minifier expands the `animation` shorthand to a `0s` duration, which
+		pins both fades at full size whatever the scroll position. */
+		animation-name: fade-start-grow, fade-end-shrink;
+		animation-duration: auto;
+		animation-timing-function: linear;
+		animation-fill-mode: both;
 		animation-timeline: scroll(self inline);
 		animation-range:
 			0 var(--fade-size),
