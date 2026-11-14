@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/marioparaschiv/unbound/compare/types-v1.3.0...types-v1.4.0) (2026-11-14)
+
+
+### Features
+
+* **client:** send native crashes with opt-in crash reports ([#1403](https://github.com/marioparaschiv/unbound/issues/1403)) ([c3b7f91](https://github.com/marioparaschiv/unbound/commit/c3b7f916ce070ffa1d64e0860ab5dae2f5660396))
+
 ## [1.3.0](https://github.com/marioparaschiv/unbound/compare/types-v1.2.0...types-v1.3.0) (2026-11-14)
 
 

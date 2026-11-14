@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.2.0...devtools-v1.3.0) (2026-11-14)
+
+
+### Features
+
+* **devtools:** show the pairing code on every page without a device ([#1404](https://github.com/marioparaschiv/unbound/issues/1404)) ([1fd9f90](https://github.com/marioparaschiv/unbound/commit/1fd9f90e942dd5aa0d47e3bd25b61878bf9d64c3))
+
 ## [1.2.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.1.0...devtools-v1.2.0) (2026-11-14)
 
 
