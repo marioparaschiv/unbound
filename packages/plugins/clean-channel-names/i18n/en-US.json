@@ -1,0 +1,11 @@
+{
+	"SPACES": "Dashes as spaces",
+	"SPACES_SUBTITLE": "Show text channel names with spaces between words instead of dashes.",
+	"KEPT": "Keep original names",
+	"KEPT_SUBTITLE": "Channels that keep their names as their server set them.",
+	"ADD_CHANNEL": "Add channel",
+	"SEARCH_CHANNELS": "Search channels or paste an ID",
+	"NO_CHANNELS": "No channels found",
+	"UNKNOWN_CHANNEL": "Unknown channel",
+	"REMOVE_CHANNEL": "Remove channel"
+}
