@@ -4,6 +4,7 @@ import Logger from '~/logger';
 
 afterEach(() => {
 	Logger.setInspector(null);
+	Reflect.deleteProperty(globalThis, 'UnboundNative');
 });
 
 function loggedLine(log: (logger: Logger) => void): string {
@@ -15,7 +16,7 @@ function loggedLine(log: (logger: Logger) => void): string {
 	try {
 		log(logger);
 
-		return spy.mock.calls[0].slice(2).join(' ');
+		return spy.mock.calls[0].slice(1).join(' ');
 	} finally {
 		spy.mockRestore();
 	}
@@ -49,14 +50,45 @@ test('writes each level through its console method with the caller prefix', () =
 		const written = spies.map((spy) => spy.mock.calls.map((call) => call.join(' ')));
 
 		expect(written).toEqual([
-			['» [Plugins → Loader] a'],
-			['» [Plugins → Loader] b'],
-			['» [Plugins → Loader] c', '» [Plugins → Loader] f'],
-			['» [Plugins → Loader] d'],
-			['» [Plugins → Loader] e'],
+			['[Plugins → Loader] a'],
+			['[Plugins → Loader] b'],
+			['[Plugins → Loader] c', '[Plugins → Loader] f'],
+			['[Plugins → Loader] d'],
+			['[Plugins → Loader] e'],
 		]);
 	} finally {
 		for (const spy of spies) spy.mockRestore();
+	}
+});
+
+test('hands each line to the native log instead of the console when the loader provides one', () => {
+	const lines: unknown[][] = [];
+	const spy = spyOn(console, 'error').mockImplementation(() => {});
+
+	Reflect.set(globalThis, 'UnboundNative', {
+		log: (...args: unknown[]) => void lines.push(args),
+	});
+
+	try {
+		const logger = Logger.create('Plugins', 'Loader');
+
+		Logger.setInspector(null);
+		logger.error('Failed to start', { id: 'demo' });
+		logger.success('done');
+		logger.log('plain');
+		logger.debug('detail');
+		logger.warn('careful');
+
+		expect(lines).toEqual([
+			['error', ['Plugins', 'Loader'], 'Failed to start {"id":"demo"}'],
+			['info', ['Plugins', 'Loader'], 'done'],
+			['info', ['Plugins', 'Loader'], 'plain'],
+			['debug', ['Plugins', 'Loader'], 'detail'],
+			['warn', ['Plugins', 'Loader'], 'careful'],
+		]);
+		expect(spy).not.toHaveBeenCalled();
+	} finally {
+		spy.mockRestore();
 	}
 });
 

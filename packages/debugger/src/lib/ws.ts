@@ -9,8 +9,8 @@ import { terminal, stripEscapeSequences } from 'terminal-kit';
 import os from 'node:os';
 
 import { abortCurrentReplInput, setupReplListeners, takeReplInput } from './repl';
+import { formatLogLine } from './format-log';
 import { createIdleExit } from './idle-exit';
-import { formatLog } from './format-log';
 import { printBanner } from './banner';
 import * as session from './session';
 import argv from './cli';
@@ -151,7 +151,7 @@ export function setupWebSocket() {
 		// The client colours its own log lines, so strip the embedded ANSI — the level colour below is
 		// the terminal's, and the raw escapes would otherwise render as literal `[...` noise.
 		MESSAGE_LEVELS[log.level](
-			`${timestamp()} « ${formatLog(stripEscapeSequences(log.message))}\n`,
+			`${timestamp()} « ${formatLogLine({ ...log, message: stripEscapeSequences(log.message) })}\n`,
 		);
 		takeReplInput();
 	});

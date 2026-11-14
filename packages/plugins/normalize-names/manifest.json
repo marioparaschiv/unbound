@@ -1,0 +1,21 @@
+{
+	"id": "unbound.normalize-names",
+	"name": "Normalize Names",
+	"description": "Shows names written in fancy Unicode, such as 𝓯𝓪𝓷𝓬𝔂, ｗｉｄｅ or ᴛɪɴʏ letters, as plain letters in chat.",
+	"authors": [
+		{
+			"name": "rushii",
+			"id": "295190422244950017"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TextIcon",
+	"main": "index.tsx"
+}

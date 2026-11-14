@@ -21,6 +21,7 @@ export function patchChatInput(): void {
 		icons: Icons,
 		toggle: silentToggle,
 		usePersist: () => useSetting('persistState'),
+		hideWhenEmpty: true,
 		labels: () => ({
 			name: messages.SILENT_MESSAGE_TOGGLE,
 			toggledOn: messages.TOGGLED_ON,

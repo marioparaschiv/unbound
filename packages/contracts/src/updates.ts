@@ -61,9 +61,13 @@ export const addonUpdateSchema = Type.Object({
 export const addonRenameSchema = Type.Object({ from: addonIdSchema, to: addonIdSchema });
 
 /** Only addons with a newer approved version compatible with `clientVersion` are listed. */
+/** An installed version a rollback withdrew, which the client turns off until a different version installs. */
+export const withdrawnInstallSchema = Type.Object({ id: addonIdSchema, version: semverSchema });
+
 export const updatesResponseSchema = Type.Object({
 	updates: Type.Array(addonUpdateSchema),
 	renamed: Type.Array(addonRenameSchema, { default: [] }),
+	withdrawn: Type.Array(withdrawnInstallSchema, { default: [] }),
 });
 
 export type UpdatesRequest = StaticDecode<typeof updatesRequestSchema>;
@@ -73,6 +77,7 @@ export type UpdateReason = StaticDecode<typeof updateReasonSchema>;
 export type AddonUpdate = StaticDecode<typeof addonUpdateSchema>;
 export type UpdatesResponse = StaticDecode<typeof updatesResponseSchema>;
 export type AddonRename = StaticDecode<typeof addonRenameSchema>;
+export type WithdrawnInstall = StaticDecode<typeof withdrawnInstallSchema>;
 
 export default {
 	MAX_UPDATE_CHANGELOGS,
@@ -83,5 +88,6 @@ export default {
 	updateReasonSchema,
 	addonUpdateSchema,
 	addonRenameSchema,
+	withdrawnInstallSchema,
 	updatesResponseSchema,
 };

@@ -216,12 +216,23 @@ export type PushResult = {
 	  }
 );
 
-/** A `console.*` / `nativeLoggingHook` line, streamed device → bridge → all controllers. */
+/** Who wrote a log line: Unbound, Discord's JS console, React Native's native logging, or other native output. */
+export type LogSource = 'unbound' | 'js' | 'react-native' | 'native';
+
+/**
+ * A device log line, streamed device → bridge → all controllers. `source`, `scope` and `at` come from a loader
+ * with `UnboundNative.logs`; a line from an older one, sent through `nativeLoggingHook`, has none of them.
+ */
 export type LogMessage = {
 	type: 'log';
-	/** 1 = log/gray, 2 = warn/yellow, 3 = error/red. */
+	/** 1 = debug/info/log, 2 = warn, 3 = error. */
 	level: 1 | 2 | 3;
 	message: string;
+	source?: LogSource;
+	/** The logger's scope, outermost first, such as `['Loader', 'themes']`; empty for console output. */
+	scope?: string[];
+	/** Milliseconds since the epoch, when the line was written. */
+	at?: number;
 };
 
 /** What a device reports about itself when it connects. */
@@ -364,7 +375,10 @@ function hasRequiredFields(frame: unknown): frame is BridgeMessage {
 				'message' in frame &&
 				typeof frame.message === 'string' &&
 				'level' in frame &&
-				(frame.level === 1 || frame.level === 2 || frame.level === 3)
+				(frame.level === 1 || frame.level === 2 || frame.level === 3) &&
+				(!('source' in frame) || isLogSource(frame.source)) &&
+				(!('scope' in frame) || isStringArray(frame.scope)) &&
+				(!('at' in frame) || (typeof frame.at === 'number' && Number.isFinite(frame.at)))
 			);
 		case 'eval':
 			return (
@@ -490,6 +504,21 @@ function isDeviceInfo(value: unknown): value is DeviceInfo {
 		'clientVersion' in value &&
 		typeof value.clientVersion === 'string'
 	);
+}
+
+const LOG_SOURCES: readonly unknown[] = [
+	'unbound',
+	'js',
+	'react-native',
+	'native',
+] satisfies LogSource[];
+
+function isLogSource(value: unknown): value is LogSource {
+	return LOG_SOURCES.includes(value);
+}
+
+function isStringArray(value: unknown): value is string[] {
+	return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
 }
 
 function isStringRecord(value: unknown): value is Record<string, string> {

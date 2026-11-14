@@ -2,17 +2,17 @@ use std::collections::HashSet;
 
 use serde_json::Value as Json;
 use unbound_devtools_core::inspect::InspectedElement;
-use unbound_devtools_core::protocol::{self, Inbound, InspectedKind};
 use unbound_devtools_core::query;
+use unbound_devtools_core::react_protocol::{self, InspectedKind, ReactInbound};
 use unbound_devtools_core::{
 	ElementId, ElementKind, FindQuery, JqFilter, NameMatch, PathSegment, Store, Value, operations,
 };
 
-fn inbound_frames() -> Vec<Inbound> {
+fn inbound_frames() -> Vec<ReactInbound> {
 	include_str!("fixtures/session-v8.jsonl")
 		.lines()
 		.filter(|line| line.contains(r#""dir":"in""#))
-		.map(|line| protocol::parse(line).expect("every recorded frame parses"))
+		.map(|line| react_protocol::parse(line).expect("every recorded frame parses"))
 		.collect()
 }
 
@@ -20,7 +20,7 @@ fn replayed_store() -> Store {
 	let mut store = Store::default();
 
 	for frame in inbound_frames() {
-		if let Inbound::Operations(raw) = frame {
+		if let ReactInbound::Operations(raw) = frame {
 			let batch = operations::decode(&raw).expect("batch decodes");
 			store.apply(&batch).expect("batch applies");
 		}
@@ -258,7 +258,7 @@ fn inspected(response_id: u64) -> (Json, Option<Vec<PathSegment>>, InspectedKind
 	inbound_frames()
 		.into_iter()
 		.find_map(|frame| match frame {
-			Inbound::InspectedElement(payload) if payload.response_id == response_id => {
+			ReactInbound::InspectedElement(payload) if payload.response_id == response_id => {
 				Some((payload.value, payload.path, payload.kind))
 			}
 			_ => None,

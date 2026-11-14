@@ -31,7 +31,6 @@ const VERBATIM_KEYS = new Set<PropertyKey>([
 	'entitlements',
 	'enabledPlugins',
 	'experiments',
-	'utcOffset',
 ]);
 
 /**

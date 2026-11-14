@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "„Unbegrenzt“ zeigt alle Toasts gleichzeitig. „Dauerhaft“ behält einen Toast, bis du ihn schließt.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Verbindet sich beim Start mit einem Debugger auf deinem Computer.",
 	"UNBOUND_LOADER": "Loader",
-	"UNBOUND_LOADER_RESTART_HINT": "Der Loader liest diese Werte beim Start. Starte unter „Allgemein“ neu, um sie anzuwenden.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "Eigene Bundle-URL",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Lädt Unbound von dieser URL statt vom Release-Build. Setze sie zurück, um zum Release-Build zurückzukehren.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Gib eine http- oder https-URL ein.",

@@ -25,11 +25,13 @@ export function formatResult(result: EvalResult): string {
 /**
  * @description Renders a single {@link LogMessage} as a level-tagged line for the console transcript.
  * @param log The captured log line.
- * @returns The `[level] message` line.
+ * @returns The `[level] message` line, with the source and `[scope]` between when the device sent them.
  */
 export function formatLog(log: LogMessage): string {
 	const label = log.level === 3 ? 'error' : log.level === 2 ? 'warn' : 'log';
+	const source = log.source ? ` ${log.source}` : '';
+	const scope = log.scope?.length ? ` [${log.scope.join(' → ')}]` : '';
 
-	return `[${label}] ${log.message}`;
+	return `[${label}]${source}${scope} ${log.message}`;
 }
 export default { formatResult, formatLog };

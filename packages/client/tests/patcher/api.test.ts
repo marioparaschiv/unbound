@@ -185,3 +185,58 @@ describe('patcher', () => {
 		await Promise.resolve();
 	});
 });
+
+describe('instead chains', () => {
+	test('runs the original once under two instead patches', () => {
+		let calls = 0;
+		const target = {
+			send: (text: string) => {
+				calls += 1;
+
+				return text;
+			},
+		};
+
+		instead(target, 'send', (ctx) => ctx.original(`${ctx.args[0]}!`));
+		instead(target, 'send', (ctx) => ctx.original(`${ctx.args[0]}?`));
+
+		expect(target.send('hi')).toBe('hi!?');
+		expect(calls).toBe(1);
+	});
+
+	test('lets an outer instead skip the original for every later one', () => {
+		let calls = 0;
+		const target = {
+			send: () => {
+				calls += 1;
+
+				return 'sent';
+			},
+		};
+
+		instead(target, 'send', () => 'pasted');
+		instead(target, 'send', (ctx) => ctx.original());
+
+		expect(target.send()).toBe('pasted');
+		expect(calls).toBe(0);
+	});
+
+	test('keeps the remaining instead working after another is removed', () => {
+		let calls = 0;
+		const target = {
+			send: (text: string) => {
+				calls += 1;
+
+				return text;
+			},
+		};
+
+		const unpatch = instead(target, 'send', (ctx) => ctx.original(`${ctx.args[0]}!`));
+
+		instead(target, 'send', (ctx) => ctx.original(`${ctx.args[0]}?`));
+		unpatch();
+
+		expect(target.send('hi')).toBe('hi?');
+		expect(calls).toBe(1);
+	});
+});

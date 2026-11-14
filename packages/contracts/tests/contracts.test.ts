@@ -223,6 +223,7 @@ describe('updatesResponseSchema', () => {
 		expect(parse(updatesResponseSchema, { updates: [update] })).toEqual({
 			updates: [update],
 			renamed: [],
+			withdrawn: [],
 		});
 	});
 

@@ -43,17 +43,11 @@ import { colorFromArgb, findHighlightPainter } from '~/native/android/highlight'
 import { cellFallback } from '~/lib/cell-paint';
 import { bubbleProblem } from '~/lib/geometry';
 import { createRowGroups } from '~/lib/row-groups';
-import {
-	accessoryGap,
-	parseHexColor,
-	rowInset,
-	rowRooms,
-	type BubbleAppearance,
-} from '~/lib/style';
-import { currentAppearance } from '~/lib/theme';
+import { accessoryGap, rowInset, rowRooms, type BubbleAppearance } from '~/lib/style';
+import { currentAppearance, themeMentionColor } from '~/lib/theme';
 import { messageAuthor, isOwnMessage } from '~/lib/author';
 import { MessageStore, SelectedChannelStore } from '~/lib/modules';
-import { AndroidClass, BubbleStyle, ReplyIcon } from '~/lib/constants';
+import { AndroidClass, ReplyIcon } from '~/lib/constants';
 
 type AndroidNative = {
 	java: NativeJavaBridge;
@@ -65,7 +59,6 @@ const BUBBLE_LAYER_ID = 0x0b0b1e;
 const REPLY_ICON_ID = 0x0b0b1f;
 const PLACEMENT_WORKERS = 4;
 const MAX_TRACKED = 256;
-const MENTION_BAR = { ...parseHexColor(BubbleStyle.mentionColor)!, alpha: 1 };
 
 function bounded<T>(map: Map<string, T>, key: string, value: T) {
 	map.delete(key);
@@ -215,7 +208,7 @@ export function drawAndroidBubbles({ java, ui }: AndroidNative) {
 		const message = channelId ? MessageStore.getMessage?.(channelId, id) : undefined;
 
 		return (message as { mentioned?: boolean } | undefined)?.mentioned
-			? MENTION_BAR
+			? { ...themeMentionColor(), alpha: 1 }
 			: undefined;
 	}
 

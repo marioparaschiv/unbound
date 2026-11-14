@@ -17,6 +17,7 @@ const Message = ({ content }: { content: string }) => <Text>{content}</Text>;
 function stores(draft: string): StoreSeeds {
 	return {
 		Draft: { getDraft: () => draft },
+		UploadAttachment: { getUploadCount: () => 0 },
 		SelectedChannel: { getChannelId: () => '1' },
 		User: { getCurrentUser: () => ({ id: '1', username: 'wumpus' }) },
 	};

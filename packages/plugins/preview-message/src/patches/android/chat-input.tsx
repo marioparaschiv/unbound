@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { withComposerButton } from '@unbound-plugins/shared/composer/composer-stack';
 import { metro, patcher } from '@unbound-app/api';
 
 import { SelectedChannelStore, type PreviewModules } from '~/lib/modules';
@@ -10,7 +10,7 @@ type SendButtonProps = {
 };
 
 /**
- * @description Adds the preview button in front of the send button, where Android keeps it while a draft is typed; Android collapses the right-hand actions as soon as there is text.
+ * @description Adds the preview button in front of the send button, where Android keeps it while a draft is typed; Android collapses the right-hand actions as soon as there is text. A crowded draft stacks it above the send button.
  * Patches the render of `ChatInputSendButton`, and reads the channel from `SelectedChannelStore`.
  * @param icon The eye icon's asset id.
  * @param modules The modules the preview draws with.
@@ -34,17 +34,19 @@ export function patchChatInputSendButton(icon: number, modules: PreviewModules):
 
 		if (!channelId) return;
 
-		return (
-			<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+		return withComposerButton(result, {
+			channelId,
+			draw: (gap) => (
 				<PreviewButton
 					key='unbound-preview-message'
 					channelId={channelId}
 					icon={icon}
 					modules={modules}
-					trailingGap={Button.gap}
+					trailingGap={gap}
 				/>
-				{result}
-			</View>
-		);
+			),
+			inline: 'row',
+			rowGap: Button.gap,
+		});
 	});
 }

@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "Neomezeně zobrazí všechny toasty najednou. Trvale nechá toast zobrazený, dokud ho nezavřeš.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Při spuštění se připojí k debuggeru na tvém počítači.",
 	"UNBOUND_LOADER": "Loader",
-	"UNBOUND_LOADER_RESTART_HINT": "Loader je načítá při spuštění. Změny použiješ restartem v sekci Obecné.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "Vlastní URL bundlu",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Načte Unbound z této URL místo vydaného buildu. Resetováním se vrátíš k vydanému buildu.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Zadej URL s http nebo https.",

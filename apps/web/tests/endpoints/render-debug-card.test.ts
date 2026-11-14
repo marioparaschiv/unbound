@@ -33,7 +33,12 @@ const info: DebugCardRequest = {
 	flags: ['Jailbroken', 'verified build'],
 };
 
-type SentCard = Omit<DebugCardRequest, 'device'> & { device?: string };
+// What tests send: a card, or one with fields the schema rejects or does not know.
+type SentCard = Omit<DebugCardRequest, 'device' | 'power'> & {
+	device?: string;
+	power?: Record<string, string | number | boolean>;
+	clock?: { utcOffset: string };
+};
 
 function send(body: SentCard, ip: string) {
 	return renderDebugCardEndpoint.handle(
@@ -59,6 +64,26 @@ describe('debug cards', () => {
 			unbound: '3.0.0',
 			loader: '1.3.0',
 		});
+	});
+
+	test('still draws a card when an optional field does not validate', async () => {
+		const response = await send(
+			{
+				...info,
+				clock: { utcOffset: 'UTC+01:00' },
+				power: { lowPower: 'yes' },
+				network: { type: 'wifi' },
+			},
+			'203.0.113.23',
+		);
+
+		expect(response.status).toBe(200);
+
+		const card = parse(debugCardResponseSchema, await response.json());
+		const alt = JSON.parse(unpackDebugAltText(card.altText) ?? '');
+
+		expect(alt).toMatchObject({ network: 'wifi' });
+		expect(alt.power).toBeUndefined();
 	});
 
 	test('refuses malformed and oversized reports', async () => {

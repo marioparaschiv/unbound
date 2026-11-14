@@ -246,7 +246,7 @@ fn detail_cards(details: Option<&Details>) -> Vec<AnyElement> {
 		Some(Details::Loading) => vec![card(
 			"Properties",
 			vec![text_block(
-				"Reading the view on the device…",
+				"Reading the View on the Device…",
 				theme::TEXT_FAINT,
 			)],
 		)],

@@ -12,7 +12,13 @@ export declare function apply(id: string): Promise<boolean>;
  */
 export declare function applyAll(): Promise<void>;
 /**
- * @description Checks every installed addon and the loader for updates. Concurrent calls share one check.
+ * @description Downloads the newer client found by the last {@link check}, for the next restart. Does nothing while
+ * client updates are paused.
+ * @returns Whether the new client waits for a restart; `false` when nothing newer came or the download failed.
+ */
+export declare function applyClient(): Promise<boolean>;
+/**
+ * @description Checks the client, every installed addon and the loader for updates. Concurrent calls share one check.
  * @returns A promise that settles once the check finished.
  */
 export declare function check(): Promise<void>;

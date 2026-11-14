@@ -4,14 +4,14 @@ import type { AddonKind } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
 import { navigationReady } from '~/core/navigation-ready';
-import { findByProps } from '~/metro/lookups';
 import { createPatcher } from '~/patcher/create-patcher';
-import { Linking } from '~/metro/api';
 import MarketplaceStore from '~/marketplace/state';
 import { getNativeModule } from '~/native/runtime';
 import { messages, format } from '~/i18n/api';
+import { findByProps } from '~/metro/lookups';
 import { Manager } from '~/addons/manager';
 import { Screens } from '~/core/constants';
+import { Linking } from '~/metro/api';
 import { show } from '~/toasts/api';
 
 import type { LinkOutcome, LinkTargets } from './resolve-unbound-link';

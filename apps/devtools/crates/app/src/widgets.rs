@@ -374,55 +374,6 @@ pub fn key_shadow() -> Vec<BoxShadow> {
 	]
 }
 
-/// The admin dashboard's Segmented control: equal items on a ringed track, the chosen one on a
-/// raised pill. `on_pick` gets the clicked item's index.
-pub fn segmented(
-	id: impl Into<gpui::ElementId>,
-	items: &[String],
-	selected: Option<usize>,
-	on_pick: impl Fn(&usize, &mut Window, &mut App) + 'static,
-) -> Stateful<Div> {
-	let on_pick = std::rc::Rc::new(on_pick);
-	let id = id.into();
-	div()
-		.id(id.clone())
-		.flex()
-		.gap(px(2.))
-		.h(theme::CONTROL_HEIGHT)
-		.p(px(3.))
-		.rounded(theme::RADIUS_CONTROL)
-		.bg(theme::color(theme::ELEVATED))
-		.border_1()
-		.border_color(hairline())
-		.children(items.iter().enumerate().map(|(ix, label)| {
-			let active = selected == Some(ix);
-			let on_pick = on_pick.clone();
-			div()
-				.id(ix)
-				.flex_1()
-				.flex()
-				.items_center()
-				.justify_center()
-				// Concentric: the track radius less its border and padding.
-				.rounded(theme::RADIUS_CONTROL - px(4.))
-				.cursor_pointer()
-				.text_size(theme::TEXT_UI)
-				.font_weight(FontWeight::SEMIBOLD)
-				.map(|item| {
-					if active {
-						item.bg(theme::color(theme::SECONDARY_HOVER))
-							.shadow(key_shadow())
-							.text_color(theme::color(theme::TEXT))
-					} else {
-						item.text_color(theme::color(theme::TEXT_MUTED))
-							.hover(|item| item.text_color(theme::color(theme::TEXT)))
-					}
-				})
-				.child(label.clone())
-				.on_click(move |_, window, cx| on_pick(&ix, window, cx))
-		}))
-}
-
 pub fn eyebrow(text: &str) -> Div {
 	div()
 		.text_size(theme::TEXT_EYEBROW)

@@ -17,8 +17,7 @@ use super::reveal::{TREE_PAD, flicker, hop};
 use super::tree::{Fetch, Node, Path, Row as TreeRow};
 use super::unfold::Place;
 use super::{Exports, MetroBrowser, Picked};
-use crate::empty::SETUP_STEPS;
-use crate::empty_state::EmptyState;
+use crate::empty::no_device;
 use crate::explorer::link_button;
 use crate::nav;
 use crate::smooth_scroll::SmoothScroll;
@@ -179,7 +178,7 @@ impl MetroBrowser {
 							.child(text),
 					)
 					.when(circular, |row| row.child(badge("Circular", theme::WARNING)))
-					.when(getter, |row| row.tooltip(text_tooltip("Run this getter")))
+					.when(getter, |row| row.tooltip(text_tooltip("Run This Getter")))
 					.on_click(cx.listener(move |this, _, _, cx| {
 						if getter {
 							this.read(path.clone(), cx);
@@ -306,7 +305,7 @@ impl MetroBrowser {
 							"metro-load-picked",
 							Raised::Primary,
 							None,
-							if loading { "Loading" } else { "Load Module" },
+							if loading { "Loading…" } else { "Load Module" },
 							!loading,
 						)
 						.when(!loading, |button| {
@@ -318,7 +317,7 @@ impl MetroBrowser {
 			}
 			(_, MetroModuleStatus::Failed) => pane_message(
 				format!("Module {} Threw While Loading", picked.module.id),
-				"Its factory failed, so it has no exports.",
+				"Its factory threw, so it has no exports.",
 				theme::ERROR,
 			)
 			.into_any_element(),
@@ -418,9 +417,7 @@ impl Render for MetroBrowser {
 				.child(self.render_pane(cx))
 				.into_any_element()
 		} else {
-			EmptyState::new("icons/unplug.svg", "No Device Connected")
-				.body(SETUP_STEPS)
-				.into_any_element()
+			no_device(self.link.as_ref()).into_any_element()
 		};
 		let mut note = match self.counts {
 			Some((loaded, count)) => format!("{loaded} of {count} modules loaded"),

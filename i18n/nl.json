@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "Onbeperkt toont alle toastmeldingen tegelijk. Blijvend houdt een toastmelding in beeld totdat je hem sluit.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Maakt bij het opstarten verbinding met een debugger op je computer.",
 	"UNBOUND_LOADER": "Loader",
-	"UNBOUND_LOADER_RESTART_HINT": "De loader leest deze bij het opstarten. Start opnieuw op via Algemeen om ze toe te passen.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "Aangepaste bundel-URL",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Laad Unbound vanaf deze URL in plaats van de releasebuild. Reset om terug te gaan naar de releasebuild.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Voer een http- of https-URL in.",

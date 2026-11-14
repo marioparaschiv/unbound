@@ -31,6 +31,7 @@ static void checkReport()
     assert(launchReportLine(quiet, "").empty());
     assert(launchReportJSON(quiet, "")["bundle"] == "active");
     assert(!launchReportJSON(quiet, "").contains("lastCrash"));
+    assert(!launchReportJSON(quiet, "").contains("crashStack"));
 
     LaunchReport troubled{BundleState::RolledBack, 2, true, PreviousExit::Crashed};
     assert(launchReportLine(troubled, kStack) ==
@@ -40,6 +41,7 @@ static void checkReport()
     assert(json["previousExit"] == "crashed");
     assert(json["earlyCloses"] == 2);
     assert(json["lastCrash"] == "SIGSEGV in Chat Bubbles");
+    assert(json["crashStack"].get<std::string>().starts_with("Signal"));
 }
 
 static void checkState()

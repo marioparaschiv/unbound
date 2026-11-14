@@ -13,8 +13,13 @@ export function duplicatedMessages(rows: readonly ChatRow[]): string[] {
 	for (const row of rows) {
 		const id = row.message?.id;
 
-		if (typeof id !== 'string') continue;
-		if (seen.has(id)) duplicated.add(id);
+		if (typeof id !== 'string') {
+			continue;
+		}
+
+		if (seen.has(id)) {
+			duplicated.add(id);
+		}
 
 		seen.add(id);
 	}

@@ -469,7 +469,7 @@ func TestParsedLoaderArtifactsExpireOnlyOnPullRequests(t *testing.T) {
 				if !strings.HasPrefix(step.Uses, "actions/upload-artifact@") {
 					continue
 				}
-				artifact, retention := step.With["name"], step.With["retention-days"]
+				artifact, retention := uploadedArtifact(step), step.With["retention-days"]
 				uploaded[artifact] = retention
 				if diagnostics[artifact] {
 					if retention != "14" || step.If != "${{ !cancelled() }}" {
@@ -495,12 +495,12 @@ func TestParsedLoaderArtifactsExpireOnlyOnPullRequests(t *testing.T) {
 			if !strings.HasPrefix(step.Uses, "actions/download-artifact@") {
 				continue
 			}
-			retention, ok := uploaded[step.With["name"]]
+			retention, ok := uploaded[downloadedArtifact(step)]
 			if !ok {
-				t.Fatalf("%s downloads %q, which no loader job uploads", jobName, step.With["name"])
+				t.Fatalf("%s downloads %q, which no loader job uploads", jobName, downloadedArtifact(step))
 			}
 			if retention != pullRequestRetention {
-				t.Fatalf("%s needs %q, which must keep the default retention outside pull requests, got %q", jobName, step.With["name"], retention)
+				t.Fatalf("%s needs %q, which must keep the default retention outside pull requests, got %q", jobName, downloadedArtifact(step), retention)
 			}
 		}
 	}
@@ -510,7 +510,7 @@ func TestParsedReleasesAttachNativeSymbols(t *testing.T) {
 	build := loadWorkflow(t, "loader-build.yml")
 	release := build.job(t, "release")
 	for step, artifact := range map[string]string{"Download iOS tweak symbols": "tweak symbols", "Download Android native symbols": "android symbols"} {
-		if download := release.step(t, step); download.With["name"] != artifact || !strings.HasSuffix(download.With["path"], "-symbols") {
+		if download := release.step(t, step); downloadedArtifact(download) != artifact || !strings.HasSuffix(download.With["path"], "-symbols") {
 			t.Fatalf("the release must download %s into its own directory, got %+v", artifact, download.With)
 		}
 	}
@@ -538,11 +538,11 @@ func TestParsedReleasesAttachNativeSymbols(t *testing.T) {
 		t.Fatal("the stable Android release must attach only Android assets")
 	}
 	prerelease := build.job(t, "android-prerelease")
-	if prerelease.step(t, "Download Android native symbols").With["name"] != "android symbols" || !strings.Contains(prerelease.step(t, "Publish Android prerelease").With["files"], "release-assets/unbound-android-symbols.zip") {
+	if downloadedArtifact(prerelease.step(t, "Download Android native symbols")) != "android symbols" || !strings.Contains(prerelease.step(t, "Publish Android prerelease").With["files"], "release-assets/unbound-android-symbols.zip") {
 		t.Fatal("Android prereleases must attach their native symbols")
 	}
 	module := loadWorkflow(t, "loader-android.yml").job(t, "build-module")
-	if upload := module.step(t, "Upload native symbols"); upload.With["name"] != "android symbols" || upload.With["if-no-files-found"] != "error" {
+	if upload := module.step(t, "Upload native symbols"); uploadedArtifact(upload) != "android symbols" || upload.With["if-no-files-found"] != "error" {
 		t.Fatalf("the module build must upload its native symbols, got %+v", upload.With)
 	}
 }
@@ -575,7 +575,7 @@ func TestParsedAndroidSmokeTestGatesTheAndroidBuild(t *testing.T) {
 			t.Fatalf("%q must download the build's own patched Discord", name)
 		}
 	}
-	if smoke.step(t, "Download patched Discord").With["name"] != "patched discord" || smoke.step(t, "Download the emulator split").With["name"] != "patched discord emulator split" {
+	if downloadedArtifact(smoke.step(t, "Download patched Discord")) != "patched discord" || downloadedArtifact(smoke.step(t, "Download the emulator split")) != "patched discord emulator split" {
 		t.Fatal("the smoke test must install the patched Discord this run built")
 	}
 }
@@ -929,22 +929,16 @@ func TestParsedLoaderReleasesPublishTheLoaderAndEveryChannelsInAppBuild(t *testi
 	if stable.Uses != "./.github/workflows/loader-build.yml" || stable.With["loader_publish_only"] != "true" || stable.With["android_channel"] != "" || stable.With["android_publish_only"] != "" {
 		t.Fatalf("the stable job must run loader-build's loader publish, which builds the deb and module once and the stable in-app build, got %+v", stable)
 	}
-	previous := "stable"
-	for _, channel := range []string{"beta", "alpha"} {
-		job := publish.job(t, channel)
-		if job.Uses != "./.github/workflows/loader-build.yml" || job.With["android_channel"] != channel || job.With["android_publish_only"] != "true" {
-			t.Fatalf("the %s job must run loader-build's publish-only mode for its channel, got %+v", channel, job)
-		}
-		if !slices.Equal(job.Needs, []string{previous}) || !strings.Contains(job.If, "!cancelled()") {
-			t.Fatalf("calls share artifact names, so %s must run after %s whatever its result, needs %v if %q", channel, previous, job.Needs, job.If)
-		}
-		previous = channel
+	if stable.With["release"] != "" || stable.With["version"] != "" || stable.With["android_code"] != "" || !strings.Contains(stable.If, "github.repository == 'marioparaschiv/unbound'") {
+		t.Fatalf("the stable job must run only upstream, create no release and build against the released Discord, got if %q with %+v", stable.If, stable.With)
 	}
-	for _, name := range []string{"stable", "beta", "alpha"} {
-		job := publish.job(t, name)
-		if job.With["release"] != "" || job.With["version"] != "" || job.With["android_code"] != "" || !strings.Contains(job.If, "github.repository == 'marioparaschiv/unbound'") {
-			t.Fatalf("the %s job must run only upstream, create no release and build against the released Discord, got if %q with %+v", name, job.If, job.With)
-		}
+	// Obtainium tracks Android release tags, which carry the loader, so the poll releases every Android channel for it.
+	releases := publish.job(t, "android-releases")
+	if !slices.Equal(releases.Needs, []string{"stable"}) || !strings.Contains(releases.If, "needs.stable.result == 'success'") {
+		t.Fatalf("only a published loader may release the Android channels, needs %v if %q", releases.Needs, releases.If)
+	}
+	if run := releases.step(t, "Release every Android channel with this loader").Run; !strings.Contains(run, "gh workflow run loader-release-poll.yml") {
+		t.Fatalf("a published loader must start the release poll, runs %q", run)
 	}
 	source := publish.job(t, "testflight-source")
 	if !slices.Equal(source.Needs, []string{"stable"}) || !strings.Contains(source.If, "needs.stable.result == 'success'") || !strings.Contains(source.step(t, "Find the newest TestFlight release").Run, "-ios-testflight$") {
@@ -954,8 +948,8 @@ func TestParsedLoaderReleasesPublishTheLoaderAndEveryChannelsInAppBuild(t *testi
 	if testflight.Uses != "./.github/workflows/loader-build.yml" || testflight.With["release"] != "true" || testflight.With["is_testflight"] != "true" || testflight.With["version"] != "${{ needs.testflight-source.outputs.version }}" {
 		t.Fatalf("the testflight job must rebuild the newest TestFlight release with this loader, got %+v", testflight)
 	}
-	if !slices.Equal(testflight.Needs, []string{"testflight-source", "alpha"}) || !strings.Contains(testflight.If, "!cancelled()") {
-		t.Fatalf("calls share artifact names, so testflight must run after alpha whatever its result, needs %v if %q", testflight.Needs, testflight.If)
+	if !slices.Equal(testflight.Needs, []string{"testflight-source"}) || !strings.Contains(testflight.If, "!cancelled()") {
+		t.Fatalf("calls share artifact names, so testflight must run after stable, needs %v if %q", testflight.Needs, testflight.If)
 	}
 	poll := string(mustReadWorkflow(t, "loader-release-poll.yml"))
 	if strings.Contains(poll, "android_publish_only") || strings.Contains(poll, "loader_publish_only") {
@@ -989,7 +983,7 @@ func TestParsedInAppAndroidBuildsPublishOnlySignedSmokeTestedMainBuilds(t *testi
 	if !strings.Contains(run, `if [ "$GITHUB_REF" != refs/heads/main ]; then`) || !strings.Contains(run, `publish-android-build "${dry_run[@]}"`) {
 		t.Fatalf("only main may publish in-app builds, runs %q", run)
 	}
-	if strings.Contains(run, "gh release") || publish.stepUsing(t, "actions/download-artifact@").With["name"] != "patched discord" {
+	if strings.Contains(run, "gh release") || downloadedArtifact(publish.stepUsing(t, "actions/download-artifact@")) != "patched discord" {
 		t.Fatal("the publisher must upload this run's splits and touch no release")
 	}
 	android := loadWorkflow(t, "loader-android.yml")

@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "Korlátlan beállítással minden értesítés egyszerre látszik. Határozatlan ideig beállítással az értesítés addig marad, amíg be nem zárod.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Indításkor csatlakozik a számítógépeden futó hibakeresőhöz.",
 	"UNBOUND_LOADER": "Betöltő",
-	"UNBOUND_LOADER_RESTART_HINT": "A betöltő ezeket indításkor olvassa be. Az érvényesítésükhöz indítsd újra az alkalmazást az Általános menüből.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "Egyéni csomag URL-je",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Az Unbound betöltése erről az URL-ről a kiadási build helyett. A kiadási buildhez a visszaállítással térhetsz vissza.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Adj meg egy http vagy https URL-t.",

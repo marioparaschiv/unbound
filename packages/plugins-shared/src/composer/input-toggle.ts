@@ -10,6 +10,8 @@ import { createElement, useSyncExternalStore } from 'react';
 import { definePlatform } from '@unbound-app/api/native';
 
 import type { ChannelToggle } from './channel-toggle';
+import { useComposerState } from './composer-state';
+import useStyles from './input-toggle.style';
 
 import { patchSendButton as android } from './android/input-toggle';
 import { patchRightActions as ios } from './ios/input-toggle';
@@ -36,6 +38,8 @@ export type InputToggleOptions = {
 	usePersist: () => boolean;
 	/** Reads the labels when the button renders, so they follow the language. */
 	labels: () => ToggleLabels;
+	/** Hides the toggle while the input holds no text or attachments, for toggles that only matter once there is a draft. */
+	hideWhenEmpty?: boolean;
 };
 
 type ToggleIcons = { on: number; off: number };
@@ -55,9 +59,6 @@ type ButtonProps = InputToggleOptions & {
 	trailingGap: number;
 };
 
-const BUTTON = { size: 32, iconSize: 22 };
-const FALLBACK_COLORS = { on: '#5865f2', off: '#b5bac1' };
-
 function ToggleButton({
 	channelId,
 	toggle,
@@ -66,13 +67,17 @@ function ToggleButton({
 	assetIds,
 	haptics,
 	trailingGap,
+	hideWhenEmpty = false,
 }: ButtonProps) {
 	const persist = usePersist();
 	const active = useSyncExternalStore(toggle.subscribe, () =>
 		toggle.isActive(channelId, persist),
 	);
-	const { Theme } = metro.common;
+	const empty = useComposerState(channelId) === 'empty';
+	const styles = useStyles();
 	const text = labels();
+
+	if (hideWhenEmpty && empty && !active) return null;
 
 	function press() {
 		const enabled = toggle.toggle(channelId, persist);
@@ -93,24 +98,14 @@ function ToggleButton({
 				onPressIn: () =>
 					haptics?.triggerHapticFeedback?.(haptics.HapticFeedbackTypes?.IMPACT_LIGHT),
 				hitSlop: 8,
-				style: ({ pressed }: PressableStateCallbackType): ViewStyle => ({
-					width: BUTTON.size,
-					height: BUTTON.size,
-					alignItems: 'center',
-					justifyContent: 'center',
-					opacity: pressed ? 0.5 : 1,
-					transform: [{ scale: pressed ? 0.86 : 1 }],
-				}),
+				style: ({ pressed }: PressableStateCallbackType): ViewStyle[] => [
+					styles.button,
+					{ opacity: pressed ? 0.5 : 1, transform: [{ scale: pressed ? 0.86 : 1 }] },
+				],
 			},
 			createElement(Image, {
 				source: active ? assetIds.on : assetIds.off,
-				style: {
-					width: BUTTON.iconSize,
-					height: BUTTON.iconSize,
-					tintColor: active
-						? (Theme.colors?.TEXT_BRAND ?? FALLBACK_COLORS.on)
-						: (Theme.colors?.INTERACTIVE_ICON_DEFAULT ?? FALLBACK_COLORS.off),
-				},
+				style: active ? styles.iconActive : styles.icon,
 			}),
 		),
 	);

@@ -289,7 +289,7 @@ func (target *deviceSmokeTarget) streamLogs(ctx context.Context) (io.ReadCloser,
 			if err == nil && chunk != "" {
 				complete := strings.LastIndex(chunk, "\n") + 1
 				if complete > 0 {
-					if _, err := io.WriteString(writer, chunk[:complete]); err != nil {
+					if _, err := io.WriteString(writer, deviceLogChunk(chunk[:complete])); err != nil {
 						return
 					}
 					offset += int64(complete)

@@ -1,4 +1,4 @@
-import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
+import type { NativeObjCBridge, NativeUIScope } from '@unbound-app/api/native';
 
 import { isAudioAttachment } from '@unbound-plugins/shared/media/audio-attachment';
 import { playerURL } from '@unbound-plugins/shared/native/ios/player-url';

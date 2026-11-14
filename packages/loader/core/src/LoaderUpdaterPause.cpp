@@ -1,6 +1,7 @@
 #include "HermesBytecodeHeader.h"
 #include "LoaderBundleRecord.h"
 #include "LoaderFiles.h"
+#include "LoaderLog.h"
 #include "LoaderPreferences.h"
 #include "LoaderUpdater.h"
 #include "LoaderVersion.h"
@@ -56,5 +57,44 @@ std::optional<std::string> BundleUpdater::pauseProblem(const std::string        
         return "the cached bundle cannot run here, as " + *outdated;
     }
     return nativeBridgeProblem(*manifest, kNativePluginApiVersion, kNativePluginAbiVersion);
+}
+
+std::optional<std::string> BundleUpdater::pausedBundle(const std::string &preferredPath,
+                                                       const std::optional<std::string> &updateURL,
+                                                       uint32_t bytecodeVersion)
+{
+    if (preferences::autoClientUpdates(settings_))
+    {
+        return std::nullopt;
+    }
+    std::string cachedPath = preferredPath.empty() ? resolveBundlePath() : preferredPath;
+    std::optional<std::string> problem = pauseProblem(cachedPath, updateURL, bytecodeVersion);
+    if (problem)
+    {
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+            "Automatic client updates are off, but " + *problem + "; checking for a bundle.");
+        return std::nullopt;
+    }
+    log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+        "Automatic client updates are off; keeping the cached bundle.");
+    return cachedPath;
+}
+
+bool BundleUpdater::isUpdateAvailable(const std::string                &preferredPath,
+                                      const std::optional<std::string> &updateURL,
+                                      uint32_t                          bytecodeVersion)
+{
+    if (preferredPath.ends_with(kBundleCandidateSuffix) && fileExists(preferredPath))
+    {
+        return false;
+    }
+    if (pausedBundle(preferredPath, updateURL, bytecodeVersion))
+    {
+        return false;
+    }
+    // An unsigned source, such as the dev server, has no manifest to compare; only a download
+    // tells, so the check reports none rather than an update that may turn out unchanged.
+    DownloadPlan plan = planDownload(updateURL, bytecodeVersion);
+    return plan.exemption.empty() && !plan.unchanged;
 }
 }

@@ -132,6 +132,7 @@ declare module '@unbound-app/settings' {
 	/** The plugin's settings: reads apply defaults, and writes are validated and saved to its Bucket. */
 	export type Settings = {
 		users: string;
+		keywords: string;
 		/**
 		 * Hide ignored users
 		 *
@@ -149,6 +150,7 @@ declare module '@unbound-app/settings' {
 	/** Each setting and section by its dot-separated key. */
 	type SettingValues = {
 		"users": string;
+		"keywords": string;
 		/**
 		 * Hide ignored users
 		 *

@@ -305,6 +305,7 @@ async function build() {
 				dir: join(root, 'dist'),
 				baseUrl: process.env.UNBOUND_PATCH_BASE_URL,
 				revisions: process.env.UNBOUND_PATCH_REVISIONS.split(/[\s,]+/).filter(Boolean),
+				verifier: process.env.UNBOUND_PATCH_VERIFIER || undefined,
 			});
 		}
 

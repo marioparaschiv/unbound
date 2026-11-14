@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "“असीमित” चुनने पर सभी टोस्ट एक साथ दिखते हैं। “अनिश्चित काल तक” चुनने पर टोस्ट तब तक रहता है जब तक आप उसे बंद न करें।",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "लॉन्च होने पर आपके कंप्यूटर के डीबगर से कनेक्ट करता है।",
 	"UNBOUND_LOADER": "लोडर",
-	"UNBOUND_LOADER_RESTART_HINT": "लोडर इन्हें लॉन्च के समय पढ़ता है। लागू करने के लिए सामान्य से रीस्टार्ट करें।",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "कस्टम बंडल URL",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "रिलीज़ बिल्ड के बजाय इस URL से Unbound लोड करें। रिलीज़ बिल्ड पर वापस जाने के लिए रीसेट करें।",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "http या https URL डालें।",

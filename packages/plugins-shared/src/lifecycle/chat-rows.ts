@@ -17,10 +17,12 @@ export function trackChatRows(): void {
 		if (!prototype || !('getPreviousRows' in prototype)) return;
 
 		patcher.after(
-			prototype as { getPreviousRows: () => unknown },
+			prototype as { getPreviousRows: () => ChatRow[] | undefined },
 			'getPreviousRows',
 			({ result }) => {
-				if (Array.isArray(result)) lastRows = result as ChatRow[];
+				if (Array.isArray(result)) {
+					lastRows = result;
+				}
 			},
 		);
 	});
@@ -32,7 +34,9 @@ export function trackChatRows(): void {
  * @returns `ok` when no message repeats, or when no chat was built since the plugin started.
  */
 export function chatRowsSelfTest(): PluginSelfTestResult {
-	if (!lastRows) return { ok: true, detail: 'no chat rows built yet' };
+	if (!lastRows) {
+		return { ok: true, detail: 'no chat rows built yet' };
+	}
 
 	const duplicated = duplicatedMessages(lastRows);
 

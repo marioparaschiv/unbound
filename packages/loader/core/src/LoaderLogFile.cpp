@@ -1,23 +1,24 @@
 #include "LoaderLogFile.h"
 
 #include <algorithm>
-#include <chrono>
-#include <cstdio>
-#include <ctime>
 #include <filesystem>
 #include <jsi/jsi.h>
+#include <optional>
+#include <utility>
 #include <vector>
 
+#include "LoaderLogStream.h"
 #include "NativePluginRuntime.h"
 
 namespace loader {
 namespace jsi = facebook::jsi;
 
-static const char *const kConsoleCategory = "console";
+static const char *const kLoaderScope = "Loader";
 
-RotatingLogFile::RotatingLogFile(std::size_t maximumSize, std::size_t filesKept,
+RotatingLogFile::RotatingLogFile(std::string name, std::size_t maximumSize, std::size_t filesKept,
                                  std::size_t linesBuffered)
-    : maximumSize_(maximumSize), filesKept_(filesKept), linesBuffered_(linesBuffered)
+    : name_(std::move(name)), maximumSize_(maximumSize), filesKept_(filesKept),
+      linesBuffered_(linesBuffered)
 {
 }
 
@@ -25,23 +26,20 @@ std::string RotatingLogFile::path(std::size_t generation) const
 {
     if (generation == 0)
     {
-        return directory_ + "/" + kLogFileName;
+        return directory_ + "/" + name_ + ".log";
     }
-    return directory_ + "/unbound." + std::to_string(generation) + ".log";
+    return directory_ + "/" + name_ + "." + std::to_string(generation) + ".log";
 }
 
-// The end of the log as the previous launch left it, read before this launch writes, so a crash
-// report can show what led up to the crash.
-static std::string &previousTail()
+// A JSON line as plain text; a line that is not one, such as an older loader's, stays as it is.
+static std::string readableLine(const std::string &line)
 {
-    static std::string tail;
-    return tail;
-}
-
-static std::mutex &previousTailMutex()
-{
-    static std::mutex mutex;
-    return mutex;
+    nlohmann::json value = nlohmann::json::parse(line, nullptr, false);
+    if (std::optional<LogEntry> entry = logEntryFromJSON(value))
+    {
+        return formatLogEntry(*entry);
+    }
+    return line;
 }
 
 static std::string lastLines(const std::string &text, std::size_t count)
@@ -54,7 +52,7 @@ static std::string lastLines(const std::string &text, std::size_t count)
         end             = end == std::string::npos ? text.size() : end;
         if (end > begin)
         {
-            lines.push_back(text.substr(begin, end - begin));
+            lines.push_back(readableLine(text.substr(begin, end - begin)));
         }
         begin = end + 1;
     }
@@ -67,10 +65,10 @@ static std::string lastLines(const std::string &text, std::size_t count)
     return tail;
 }
 
-std::string previousLaunchLogTail(std::size_t lines)
+std::string RotatingLogFile::previousTail()
 {
-    std::lock_guard<std::mutex> lock(previousTailMutex());
-    return lastLines(previousTail(), lines);
+    std::lock_guard<std::mutex> lock(mutex_);
+    return previousTail_;
 }
 
 void RotatingLogFile::open(const std::string &directory)
@@ -89,8 +87,7 @@ void RotatingLogFile::open(const std::string &directory)
             previous.seekg(start);
             previous.read(tail.data(), static_cast<std::streamsize>(tail.size()));
         }
-        std::lock_guard<std::mutex> tailLock(previousTailMutex());
-        previousTail() = std::move(tail);
+        previousTail_ = std::move(tail);
     }
     stream_.open(path(0), std::ios::app | std::ios::binary);
     size_ = static_cast<std::size_t>(std::filesystem::file_size(path(0), error));
@@ -151,36 +148,19 @@ void RotatingLogFile::rotate()
 
 static RotatingLogFile &sharedLogFile()
 {
-    static RotatingLogFile file(kLogFileMaximumSize, kLogFilesKept, kLogLinesBuffered);
+    static RotatingLogFile file("unbound", kLogFileMaximumSize, kLogFilesKept, kLogLinesBuffered);
     return file;
 }
 
-static char levelLetter(LogLevel level)
+std::string previousLaunchLogTail(std::size_t lines)
 {
-    switch (level)
-    {
-        case LogLevel::Debug:
-            return 'D';
-        case LogLevel::Warning:
-            return 'W';
-        case LogLevel::Error:
-            return 'E';
-        default:
-            return 'I';
-    }
+    return lastLines(sharedLogFile().previousTail(), lines);
 }
 
-std::string logFileLine(LogLevel level, const std::string &category, const std::string &message,
-                        long long epochMilliseconds)
+static RotatingLogFile &nativeLogFile()
 {
-    std::time_t seconds = static_cast<std::time_t>(epochMilliseconds / 1000);
-    std::tm     time{};
-    gmtime_r(&seconds, &time);
-    char stamp[32];
-    std::snprintf(stamp, sizeof(stamp), "%04d-%02d-%02dT%02d:%02d:%02d.%03lldZ",
-                  time.tm_year + 1900, time.tm_mon + 1, time.tm_mday, time.tm_hour, time.tm_min,
-                  time.tm_sec, epochMilliseconds % 1000);
-    return std::string(stamp) + " " + levelLetter(level) + " [" + category + "] " + message + "\n";
+    static RotatingLogFile file("native", kLogFileMaximumSize, kLogFilesKept, kLogLinesBuffered);
+    return file;
 }
 
 std::string logFileDirectory(const std::string &documents)
@@ -191,14 +171,19 @@ std::string logFileDirectory(const std::string &documents)
 void openLogFile(const std::string &documents)
 {
     sharedLogFile().open(logFileDirectory(documents));
+    nativeLogFile().open(logFileDirectory(documents));
+}
+
+void appendLogEntry(LogEntry entry)
+{
+    bool native = entry.source == LogSource::ReactNative || entry.source == LogSource::Native;
+    (native ? nativeLogFile() : sharedLogFile()).append(logEntryLine(entry));
+    logStream().publish(entry);
 }
 
 void appendLogFile(LogLevel level, const std::string &category, const std::string &message)
 {
-    long long now = std::chrono::duration_cast<std::chrono::milliseconds>(
-                        std::chrono::system_clock::now().time_since_epoch())
-                        .count();
-    sharedLogFile().append(logFileLine(level, category, message, now));
+    appendLogEntry({logNow(), LogSource::Unbound, level, {kLoaderScope, category}, message});
 }
 
 static LogLevel consoleLevel(double level)
@@ -234,8 +219,11 @@ void installConsoleCapture(jsi::Runtime &runtime)
             if (count > 0 && arguments[0].isString())
             {
                 double level = count > 1 && arguments[1].isNumber() ? arguments[1].getNumber() : 1;
-                appendLogFile(consoleLevel(level), kConsoleCategory,
-                              arguments[0].getString(rt).utf8(rt));
+                appendLogEntry({logNow(),
+                                LogSource::JS,
+                                consoleLevel(level),
+                                {},
+                                arguments[0].getString(rt).utf8(rt)});
             }
             if (forward->isObject() && forward->getObject(rt).isFunction(rt))
             {
@@ -252,4 +240,19 @@ extern "C" void UnboundAppendLogFile(int level, const char *category, const char
 {
     loader::appendLogFile(loader::logLevelFromIndex(level),
                           category ? category : LOG_CATEGORY_DEFAULT, message ? message : "");
+}
+
+extern "C" void UnboundAppendNativeLog(int source, int level, const char *scope,
+                                       const char *message)
+{
+    loader::LogSource        kind = source == static_cast<int>(loader::LogSource::ReactNative)
+                                        ? loader::LogSource::ReactNative
+                                        : loader::LogSource::Native;
+    std::vector<std::string> parts;
+    if (scope && *scope)
+    {
+        parts.emplace_back(scope);
+    }
+    loader::appendLogEntry({loader::logNow(), kind, loader::logLevelFromIndex(level),
+                            std::move(parts), message ? message : ""});
 }

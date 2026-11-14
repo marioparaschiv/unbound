@@ -63,6 +63,7 @@ android {
     ndkVersion = "27.3.13750724"
 
     sourceSets.getByName("main").assets.srcDir(repositoryRoot.resolve("tools/assets/android-icons"))
+    sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/animated-icon-assets").get().asFile)
 
     defaultConfig {
         applicationId = "app.unbound.android"
@@ -252,6 +253,15 @@ val generateDiscordShapes = tasks.register<GenerateDiscordShapes>("generateDisco
     shapes.set(repositoryRoot.resolve("android/discord-shapes.json"))
 }
 
+val copyAnimatedIcon = tasks.register<Sync>("copyAnimatedIcon") {
+    from(repositoryRoot.resolve("tools/assets/ipa-icons/animated")) {
+        include("*60x60@3x.png", "UnboundAnimated.gif", "frames.json")
+    }
+    into(layout.buildDirectory.dir("generated/animated-icon-assets/animated-icon"))
+}
+// Lint reads the generated assets directory too, so its model tasks must run after the copy.
+tasks.matching { it.name.matches(Regex("(merge|generate)\\w*Assets|\\w*[Ll]int\\w*")) }.configureEach { dependsOn(copyAnimatedIcon) }
+
 val copyBootstrapResources = tasks.register<CopyBootstrapResources>("copyBootstrapResources") {
     scripts.from(fileTree(repositoryRoot.resolve("bootstrap")) { include("*.js") })
 }
@@ -271,6 +281,7 @@ kotlin {
 
 dependencies {
     compileOnly("io.github.libxposed:api:102.0.0")
+    implementation("io.github.libxposed:service:101.0.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.17")
 }

@@ -6,6 +6,7 @@ import {
 	createManualRemovals,
 	findOfflineRemovals,
 	keepUnconfirmedGuilds,
+	looksUnloaded,
 	relationshipRemovalKind,
 } from '~/lib/removals';
 import type { Snapshot } from '~/lib/snapshot';
@@ -155,5 +156,28 @@ describe('createManualRemovals', () => {
 describe('the settings', () => {
 	test('report every removal, offline ones too, in notifications that fade, until the user changes them', () => {
 		expect({ ...settings }).toEqual(ALL_ON);
+	});
+});
+
+describe('looksUnloaded', () => {
+	const many: Snapshot = {
+		guilds: Array.from({ length: 10 }, (_, index) => ({
+			id: `g${index}`,
+			name: `Guild ${index}`,
+		})),
+		groups: [],
+		friends: Array.from({ length: 20 }, (_, index) => `u${index}`),
+		requests: [],
+	};
+	const none = { groups: [], guilds: [], friends: [], requests: [] };
+
+	test('flags a check that would report most friends or servers at once', () => {
+		expect(looksUnloaded(many, { ...none, friends: many.friends })).toBe(true);
+		expect(looksUnloaded(many, { ...none, guilds: many.guilds.slice(0, 5) })).toBe(true);
+	});
+
+	test('lets a few real removals through', () => {
+		expect(looksUnloaded(many, { ...none, friends: ['u1', 'u2'] })).toBe(false);
+		expect(looksUnloaded(previous, { ...none, friends: ['u1', 'u2'] })).toBe(false);
 	});
 });

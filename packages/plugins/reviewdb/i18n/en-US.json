@@ -42,6 +42,7 @@
 	"BLOCK_USER": "Block user",
 	"DELETE_REVIEW": "Delete review",
 	"REVIEWS_FOR": "Reviews for @{name}",
+	"SERVER_REVIEWS_FOR": "Reviews for {name}",
 	"REVIEW_COUNT": "{count, plural, one {# review} other {# reviews}}",
 	"NO_REVIEWS": "No reviews yet",
 	"NO_REVIEWS_SUBTITLE": "Be the first person to leave feedback.",
@@ -60,5 +61,6 @@
 	"HIDE_SYSTEM_REVIEWS": "Hide the ReviewDB notice",
 	"HIDE_SYSTEM_REVIEWS_SUBTITLE": "Hides the warning ReviewDB shows above every list of reviews.",
 	"REVIEWS_TITLE": "Reviews",
-	"DELETE_REVIEW_BODY": "This removes your review for everyone. You can write a new one later."
+	"DELETE_REVIEW_BODY": "This removes your review for everyone. You can write a new one later.",
+	"SERVER_REVIEWS": "Server Reviews"
 }

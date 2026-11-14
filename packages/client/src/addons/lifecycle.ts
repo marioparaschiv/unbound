@@ -22,6 +22,7 @@ import { needsConsent, NativeConsentRequiredError } from '~/native/consent';
 import { validateNativeBridgeRequirements } from '~/native/capabilities';
 import { announceFreeze, freezeDisables } from '~/addons/freezes';
 import { crashReportAddon } from '~/diagnostics/crash-report';
+import { turnOffWithdrawnAddon } from '~/addons/withdrawn';
 import { disableIfCrashed } from '~/addons/crash-disable';
 import { reportCrash } from '~/diagnostics/crash-reports';
 import { beginNativeStop } from '~/native/plugin-context';
@@ -454,6 +455,24 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		});
 	}
 
+	/**
+	 * @description Turns off an addon whose installed version the store withdrew, holding it until a different version installs.
+	 * @param id The addon's id.
+	 * @param version The withdrawn version; an addon that already runs another one is left alone.
+	 */
+	turnOffWithdrawn(id: string, version: string): void {
+		const addon = this.resolve(id);
+
+		if (!addon || addon.version !== version || !this.isEnabled(id)) return;
+
+		turnOffWithdrawnAddon(addon, this.logger, () => {
+			void this.stop(addon);
+			this.select(addon, false);
+			this.holdAfterCrash(addon);
+			void storage.persist();
+		});
+	}
+
 	private crashHolds(): CrashHolds {
 		return this.settings.get<CrashHolds>(CRASH_HOLDS_KEY, {});
 	}
@@ -482,12 +501,10 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 		this.releaseCrashHold(addon.id);
 		await this.enable(addon);
-		this.logger.info(
-			`Turned ${addon.name} back on: it updated to ${addon.version} since it crashed.`,
-		);
+		this.logger.info(`Turned ${addon.name} back on: it updated to ${addon.version}.`);
 		show({
 			title: addon.name,
-			content: `Turned ${addon.name} back on: it updated since it crashed Discord.`,
+			content: `Turned ${addon.name} back on: it updated to a new version.`,
 		});
 	}
 

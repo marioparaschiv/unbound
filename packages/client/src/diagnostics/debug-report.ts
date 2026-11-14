@@ -2,10 +2,13 @@ import { createLogger } from '@unbound-app/logger';
 
 import { Messages as MessageActions } from '~/metro/api';
 import { findByProps, findStore } from '~/metro/lookups';
+import { readLogLines } from '~/logs/tail';
+import { LOG_FILES } from '~/logs/files';
 import { messages } from '~/i18n/api';
 import { show } from '~/toasts/api';
 import fs from '~/native/fs';
 
+import { rejectedField, withoutRejectedField } from './rejected-field';
 import formatDebugInfo, { type DebugInfo } from './format-debug-info';
 import { readDebugReport, readEntitlements } from './read-debug-info';
 import { crashLogExcerpt } from './crash-report';
@@ -31,10 +34,10 @@ type SendResult = { ok?: boolean; status?: number } | undefined;
 
 const ENTITLEMENTS_PATH = 'Unbound/cache/debug/Entitlements.xml';
 const LOG_PATH = 'Unbound/cache/debug/unbound.log';
-const LOADER_LOG = 'Unbound/Logs/unbound.log';
 const CARD_DIRECTORY = 'Unbound/cache/debug';
 const UPLOAD_ORIGIN_FILE = 1;
 const UPLOAD_PLATFORM_REACT_NATIVE = 0;
+const MAX_CARD_ATTEMPTS = 8;
 
 const CloudUploader = findByProps('CloudUpload');
 const SelectedChannelStore = findStore('SelectedChannel');
@@ -102,9 +105,18 @@ async function uploadEntitlements(channelId: string): Promise<CloudUpload | unde
 	});
 }
 
+// The excerpt keeps only the newest lines that fit a report, so more than this never shows.
+const LOG_LINES = 500;
+
+async function logSection(path: string): Promise<string | undefined> {
+	const excerpt = crashLogExcerpt((await readLogLines(path, LOG_LINES)).join('\n'));
+
+	return excerpt && `== ${path.slice(path.lastIndexOf('/') + 1)} ==\n${excerpt}`;
+}
+
 async function uploadLog(channelId: string): Promise<CloudUpload | undefined> {
-	const log = (await fs.exists(LOADER_LOG)) ? await fs.readFile(LOADER_LOG) : '';
-	const excerpt = crashLogExcerpt(log);
+	const sections = await Promise.all(LOG_FILES.map(logSection));
+	const excerpt = sections.filter(Boolean).join('\n\n');
 
 	if (!excerpt) {
 		return undefined;
@@ -119,17 +131,77 @@ async function uploadLog(channelId: string): Promise<CloudUpload | undefined> {
 	});
 }
 
+function requiredOnly(info: DebugInfo): DebugInfo {
+	const {
+		client,
+		commit,
+		loader,
+		loaderOrigin,
+		framework,
+		discord,
+		discordChannel,
+		discordBuild,
+	} = info;
+	const { appSource, react, reactNative, hermes, bytecode, platform, os, device, flags } = info;
+
+	return {
+		client,
+		commit,
+		loader,
+		loaderOrigin,
+		framework,
+		discord,
+		discordChannel,
+		discordBuild,
+		appSource,
+		react,
+		reactNative,
+		hermes,
+		bytecode,
+		platform,
+		os,
+		device,
+		flags,
+	};
+}
+
+async function drawCard(info: DebugInfo) {
+	const { createUnboundClient } = await import('~/account/client');
+	// The plist goes to the server alone, which reduces it to JSON in the alt text.
+	const entitlements = readEntitlements() || undefined;
+	const request = createUnboundClient();
+	const required = new Set(Object.keys(requiredOnly(info)));
+	let body: DebugInfo & { entitlements?: string } = { ...info, entitlements };
+
+	for (let attempt = 0; attempt < MAX_CARD_ATTEMPTS; attempt++) {
+		try {
+			return await request('POST /api/v1/debug-cards', { body });
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			const next = withoutRejectedField(body, message, required);
+
+			Logger.warn(
+				`Failed to draw the debug card with ${rejectedField(message) ?? 'every field'}:`,
+				error,
+			);
+
+			if (!next) {
+				break;
+			}
+
+			body = next;
+		}
+	}
+
+	return request('POST /api/v1/debug-cards', { body: requiredOnly(info) });
+}
+
 async function uploadCard(
 	channelId: string,
 	info: DebugInfo,
 	path: string,
 ): Promise<CloudUpload | undefined> {
-	const { createUnboundClient } = await import('~/account/client');
-	// The plist goes to the server alone, which reduces it to JSON in the alt text.
-	const entitlements = readEntitlements() || undefined;
-	const card = await createUnboundClient()('POST /api/v1/debug-cards', {
-		body: { ...info, entitlements },
-	});
+	const card = await drawCard(info);
 
 	await fs.writeFile(path, card.image, 'base64');
 
@@ -160,7 +232,7 @@ function uploadQuietly(what: string, run: () => Promise<CloudUpload | undefined>
  * @description Sends the debug report as a rendered card whose alt text carries it as JSON, with the user's note; falls back to the text report when the card cannot be drawn.
  * @param channelId The channel the command ran in, or the open channel when it is not known.
  * @param note Text the user added to the command, sent as the message.
- * @param options `log` attaches the newest loader log lines, scrubbed of secrets; `entitlements` attaches the app's Entitlements.xml on iOS.
+ * @param options `log` attaches the newest lines of both loader logs, scrubbed of secrets; `entitlements` attaches the app's Entitlements.xml on iOS.
  * @returns The text for Discord to send when nothing could be attached, otherwise nothing once it is sent.
  */
 export async function sendDebugReport(

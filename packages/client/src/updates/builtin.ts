@@ -5,6 +5,7 @@ import { notifyClientUpdated, notifyStagedBundle, notifyUpdates } from '~/update
 import { CLIENT_VERSION, Screens } from '~/core/constants';
 import { hasStagedBundle } from '~/native/unbound-native';
 import type { SectionEntry } from '~/settings/section';
+import { compareVersions } from '~/core/versions';
 import { getSetting } from '~/settings/unbound';
 import UpdatesStore from '~/updates/state';
 import { getBucket } from '~/storage/api';
@@ -18,6 +19,7 @@ const LEGACY_LAST_CLIENT_VERSION = 'updater.lastClientVersion';
 
 let stagedCheck: ReturnType<typeof setTimeout> | undefined;
 let appState: ReturnType<typeof AppState.addEventListener> | undefined;
+let unsubscribe: (() => void) | undefined;
 let stagedAnnounced = false;
 
 function announceStagedBundle() {
@@ -48,7 +50,9 @@ function announceClient() {
 
 	getBucket(CORE_BUCKET).remove(LEGACY_LAST_CLIENT_VERSION);
 
-	if (previous === CLIENT_VERSION) return;
+	// Keeps the newest version seen: the loader runs the previous bundle again when it discards an update that
+	// closed before it was healthy, and the retried update must not announce itself a second time.
+	if (previous && compareVersions(CLIENT_VERSION, previous) <= 0) return;
 
 	if (getSetting('updater.notify.client')) {
 		notifyClientUpdated(previous, CLIENT_VERSION);
@@ -60,6 +64,13 @@ function announceClient() {
 /** Toasts a newly updated client, and offers a restart once the loader stages the next bundle. */
 export function start() {
 	announceClient();
+
+	// A check from the updates page can stage the next bundle well after launch.
+	unsubscribe = UpdatesStore.subscribe(({ state }) => {
+		if (state.status === 'ready' && state.client === 'staged') {
+			announceStagedBundle();
+		}
+	});
 
 	stagedCheck = setTimeout(announceStagedBundle, STAGED_CHECK_DELAY);
 	appState = AppState.addEventListener('change', (state) => {
@@ -82,6 +93,8 @@ export function afterAddons() {
 
 /** Cancels the staged bundle check. */
 export function stop() {
+	unsubscribe?.();
+	unsubscribe = undefined;
 	clearTimeout(stagedCheck);
 	appState?.remove();
 	appState = undefined;

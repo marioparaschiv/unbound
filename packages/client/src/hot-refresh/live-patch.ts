@@ -19,6 +19,7 @@ import type { Decision, Fiber, FiberType } from '~/hot-refresh/refresh';
 import type { Instance, Layout } from '~/hot-refresh/instances';
 import { currentAddonAttribution } from '~/addons/crash-guard';
 import type { AddonAttribution } from '~/addons/crash-guard';
+import { chainInstead } from '~/patcher/instead-chain';
 import type { Budget } from '~/hot-refresh/hooks';
 
 type LivePatch = {
@@ -146,11 +147,12 @@ export function patch(
 	options: PatchOptions = {},
 ): () => void {
 	const attribution = currentAddonAttribution();
+	const chained = phase === PatchType.Instead ? chainInstead(parent, method, callback) : callback;
 	const live: LivePatch = {
 		phase,
 		parent,
 		method,
-		callback: attribution ? attributedCallback(callback, attribution) : callback,
+		callback: attribution ? attributedCallback(chained, attribution) : chained,
 		once: Boolean(options.once),
 		untrackedCounts: [],
 	};

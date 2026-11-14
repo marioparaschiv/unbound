@@ -4,12 +4,14 @@ import toError from '@unbound-app/utils/to-error';
 import { Platform } from 'react-native';
 import { create } from 'zustand';
 
+import { CLIENT_UPDATE_ID, findClientUpdate, stageClientUpdate } from '~/updates/client-update';
 import { fetchLoaderUpdate, resolveRequiredLoader } from '~/updates/loader-updates';
 import { automaticUpdates, fetchUpdates } from '~/updates/addon-updates';
 import { installsFromManifest } from '~/addons/installs-from-manifest';
 import { checkDiscordBuilds } from '~/updates/discord-builds';
 import type { DiscordBuilds } from '~/updates/discord-builds';
 import type { PendingUpdate } from '~/updates/addon-updates';
+import type { ClientUpdate } from '~/updates/client-update';
 import type { LoaderCheck } from '~/updates/loader-updates';
 import { moveRenamedAddons } from '~/addons/renames';
 import { getLoader } from '~/native/unbound-native';
@@ -35,6 +37,7 @@ export type UpdatesState =
 			requiredLoader: string | null;
 			/** The patched Discord's installable builds; `null` where Discord cannot install them. */
 			discord: DiscordBuilds | null;
+			client: ClientUpdate;
 	  }
 	| { status: 'error'; checkedAt: string; error: string };
 
@@ -45,6 +48,8 @@ type UpdatesStore = {
 	state: UpdatesState;
 	applying: Record<string, ApplyStatus>;
 	check: () => Promise<void>;
+	/** Downloads the newer client for the next restart. Resolves whether it now waits for one. */
+	applyClient: () => Promise<boolean>;
 	/** Applies one pending update. Resolves whether the addon now runs the new version. */
 	apply: (id: string) => Promise<boolean>;
 	/** Applies every pending update except newer versions of held addons. */
@@ -60,6 +65,10 @@ function checkInstalled(): Promise<PendingUpdate[]> {
 
 	return fetchUpdates(entries, {
 		onRenamed: (renames) => void moveRenamedAddons(renames, { install }),
+		onWithdrawn: (withdrawn) => {
+			for (const entry of withdrawn)
+				Manager.for(entry.kind).turnOffWithdrawn(entry.id, entry.version);
+		},
 	});
 }
 
@@ -119,10 +128,11 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 				const minimum = new Promise((resolve) => setTimeout(resolve, MIN_CHECK_MS));
 
 				try {
-					const [updates, loader, discord] = await Promise.all([
+					const [updates, loader, discord, client] = await Promise.all([
 						checkInstalled(),
 						findLoaderUpdate(),
 						findDiscordBuilds(),
+						findClientUpdate(),
 					]);
 
 					await minimum;
@@ -135,6 +145,7 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 							loader: loader.update,
 							requiredLoader: loader.requiredVersion,
 							discord,
+							client,
 						},
 					});
 				} catch (error) {
@@ -153,6 +164,25 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 			});
 
 			return pending;
+		},
+		async applyClient() {
+			if (get().applying[CLIENT_UPDATE_ID] === 'updating') {
+				return false;
+			}
+
+			setApplying(CLIENT_UPDATE_ID, 'updating');
+
+			const client = await stageClientUpdate();
+
+			setApplying(CLIENT_UPDATE_ID, client ? undefined : 'failed');
+
+			if (client) {
+				set((prev) =>
+					prev.state.status === 'ready' ? { state: { ...prev.state, client } } : {},
+				);
+			}
+
+			return client === 'staged';
 		},
 		async apply(id) {
 			const { state, applying } = get();

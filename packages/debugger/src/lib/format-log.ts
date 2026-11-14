@@ -1,3 +1,20 @@
+import type { LogMessage } from '@unbound-app/debugger-protocol';
+
+/**
+ * @description Renders a device log line for the terminal: its source and scope when the device sent them, then
+ * the message, cleaned of Hermes' argument join only when it came from the JS console.
+ * @param log The device's log line, its message already stripped of escape sequences.
+ * @returns The line to print after the timestamp.
+ */
+export function formatLogLine(log: LogMessage): string {
+	const fromConsole = !log.source || log.source === 'js';
+	const message = fromConsole ? formatLog(log.message) : log.message;
+	const source = log.source ? `${log.source} ` : '';
+	const scope = log.scope?.length ? `[${log.scope.join(' → ')}] ` : '';
+
+	return `${source}${scope}${message}`;
+}
+
 // Hermes joins `console.*` args with `, ` and quotes strings (`'a', 'b', { x: 1 }`). Only what parses
 // cleanly as that join is rewritten; anything else is left exactly as received, never mangled.
 

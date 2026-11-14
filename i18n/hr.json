@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "„Neograničeno” prikazuje sve obavijesti odjednom. „Bez isteka” zadržava obavijest dok je ne zatvoriš.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Pri pokretanju se povezuje s debuggerom na tvom računalu.",
 	"UNBOUND_LOADER": "Loader",
-	"UNBOUND_LOADER_RESTART_HINT": "Loader ih čita pri pokretanju. Ponovno pokreni iz odjeljka Općenito da ih primijeniš.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "Prilagođeni URL paketa",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Učitaj Unbound s ovog URL-a umjesto izdanja. Poništi za povratak na izdanje.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Unesi http ili https URL.",

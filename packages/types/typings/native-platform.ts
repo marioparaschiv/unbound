@@ -48,6 +48,16 @@ export type NativeDeviceState = {
 	dns?: NativeDnsState;
 	/** Whether Discord may show notifications and can receive pushes; older loaders omit it. */
 	push?: NativePushState;
+	/** iOS: the app extensions in the bundle; older loaders omit it. */
+	extensions?: NativeExtensionState[];
+};
+
+/** An app extension bundled with Discord. */
+export type NativeExtensionState = {
+	/** The `.appex` file name, without the extension. */
+	name: string;
+	/** Whether the extension is signed with one of Discord's app groups. */
+	sharesGroup: boolean;
 };
 
 /** The device's power state. */

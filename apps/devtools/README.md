@@ -46,7 +46,16 @@ Flags override the settings for one run.
 
 ## Pages
 
-The sidebar has three pages: **Components** (the React tree), **View Tree** (the native views, with an object explorer for the one picked) and **Metro** (the loaded and unloaded Metro modules). The app needs no `ubd`: it serves its own bridge, and the CLI's commands stay in the CLI.
+The sidebar has four pages: **Components** (the React tree), **View Tree** (the native views, with an object explorer for the one picked), **Metro** (the loaded and unloaded Metro modules) and **Logs** (the device's log lines as they arrive, the newest 10,000 kept, filtered by source: All, Unbound, JS (Discord's console and Unbound), React Native or Native, sorted by when the device wrote them, oldest or newest first; clicking a line copies it). The app needs no `ubd`: it serves its own bridge, and the CLI's commands stay in the CLI.
+
+## Editing
+
+The Components inspector edits what React DevTools does, with its rules per section: props when the backend allows it (always on class components), state on class components, context on class and function components, and stateful hooks.
+
+- **Values:** click a string, number, `null` or `undefined` to edit it as JSON (`'single quotes'` and `undefined` work too); Enter or leaving the field sends it, Escape cancels. Click a boolean to flip it.
+- **Keys:** click a key to rename it; clearing it deletes the entry. Hover a row for its delete button.
+- **New entries:** an expanded object ends with **Add entry** (key, then value), an array with **Add item**, and props with **Add entry** at the top level.
+- **Boundaries:** the header's buttons force an error boundary into its errored state, or a Suspense boundary to its fallback, and back.
 
 ## Search
 
@@ -73,7 +82,8 @@ The window serves MCP over streamable HTTP. An agent attached there shares your 
 | `query`                                                          | Any jq program over the tree as JSON                                                                                     |
 | `inspect`                                                        | Props, state, hooks, context, owners and source; `path` expands nested values                                            |
 | `select`, `selected`                                             | Move or read the window's selection                                                                                      |
-| `override`                                                       | Edit a prop, state key, hook or context value on device                                                                  |
+| `override`, `delete_path`, `rename_path`                         | Set, add, delete or rename a prop, state key, hook or context value on device                                            |
+| `toggle_suspense`, `toggle_error`                                | Force a Suspense boundary's fallback or an error boundary's errored state, and clear it                                  |
 | `highlight`, `filters`                                           | Flash a view on device; show or hide host components                                                                     |
 | `store_global`, `eval`                                           | Expose a value as `$reactTemp<n>` and run JavaScript against it                                                          |
 

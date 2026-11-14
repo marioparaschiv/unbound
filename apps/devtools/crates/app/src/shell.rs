@@ -1,5 +1,5 @@
 //! The window: Unbound's sidebar of pages on the left, the open page on the right. The pages are
-//! the React component tree, the native view tree and the Metro module explorer.
+//! the React component tree, the native view tree, the Metro module explorer and the device's logs.
 
 use gpui::{
 	App, Context, Entity, Focusable, Global, KeyBinding, WeakEntity, Window, actions, div,
@@ -11,6 +11,7 @@ use unbound_devtools_core::Devtools;
 use crate::app::Workspace;
 use crate::console::Console;
 use crate::link::DebuggerLink;
+use crate::logs_page::LogsPage;
 use crate::mcp_menu::McpButton;
 use crate::metro::MetroBrowser;
 use crate::nav;
@@ -61,6 +62,7 @@ pub enum Page {
 	Components,
 	Views,
 	Metro,
+	Logs,
 	Console,
 }
 
@@ -68,6 +70,7 @@ pub struct Shell {
 	workspace: Entity<Workspace>,
 	views: Entity<ViewFinder>,
 	metro: Entity<MetroBrowser>,
+	logs: Entity<LogsPage>,
 	console: Entity<Console>,
 	link: Entity<DebuggerLink>,
 	page: Page,
@@ -96,11 +99,13 @@ impl Shell {
 		];
 		let views = cx.new(|cx| ViewFinder::new(devtools.clone(), mcp.clone(), window, cx));
 		let metro = cx.new(|cx| MetroBrowser::new(devtools.clone(), mcp.clone(), window, cx));
+		let logs = cx.new(|cx| LogsPage::new(devtools.clone(), mcp.clone(), cx));
 		let console = cx.new(|cx| Console::new(devtools, mcp, window, cx));
 		let this = Self {
 			workspace,
 			views,
 			metro,
+			logs,
 			console,
 			link,
 			page: Page::Components,
@@ -173,6 +178,7 @@ impl Shell {
 				),
 				self.row(Page::Views, nav::VIEWS_TITLE, "icons/layers.svg"),
 				self.row(Page::Metro, nav::METRO_TITLE, "icons/boxes.svg"),
+				self.row(Page::Logs, nav::LOGS_TITLE, "icons/scroll-text.svg"),
 				self.row(Page::Console, nav::CONSOLE_TITLE, "icons/terminal.svg"),
 			],
 			first: true,
@@ -252,6 +258,7 @@ impl Render for Shell {
 			Page::Components => self.workspace.clone().into_any_element(),
 			Page::Views => self.views.clone().into_any_element(),
 			Page::Metro => self.metro.clone().into_any_element(),
+			Page::Logs => self.logs.clone().into_any_element(),
 			Page::Console => self.console.clone().into_any_element(),
 		};
 		let framed = title_bar::is_drawn(window);

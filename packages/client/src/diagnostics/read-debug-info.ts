@@ -11,6 +11,7 @@ import { crashedAddons } from '~/addons/crash-guard';
 import { React, ReactNative } from '~/metro/common';
 import { getLoader } from '~/native/unbound-native';
 import { getHeapUsage } from '~/native/runtime';
+import { getSetting } from '~/settings/unbound';
 import type { Addons } from '~/addons/addons';
 import { icons } from '~/icon-packs/manager';
 import { plugins } from '~/plugins/manager';
@@ -22,7 +23,6 @@ import { patches } from '~/patcher/api';
 import type { AddonCount, DebugInfo, DiscordSupport } from './format-debug-info';
 
 import { privateDnsName, resolverName } from './dns-provider';
-import { readClockSkew, utcOffset } from './clock';
 import { readExperiments } from './experiments';
 import { readAppSession } from './app-session';
 import { recentErrors } from './recent-errors';
@@ -266,6 +266,19 @@ function pushOf(state: NativeDeviceState | undefined, android: boolean): DebugIn
 	return pushStateOf(state?.push, entitlements);
 }
 
+const MAX_ISOLATED_EXTENSIONS = 8;
+
+function isolatedExtensionsOf(state?: NativeDeviceState): string[] | undefined {
+	const isolated = (state?.extensions ?? [])
+		.filter(
+			(extension) => typeof extension?.name === 'string' && extension.sharesGroup === false,
+		)
+		.map((extension) => extension.name.slice(0, 64))
+		.slice(0, MAX_ISOLATED_EXTENSIONS);
+
+	return isolated.length ? isolated : undefined;
+}
+
 const MAX_ADDON_UPDATES = 64;
 
 function addonUpdates(): string[] | undefined {
@@ -359,14 +372,17 @@ export function readDebugInfo(): DebugInfo {
 		memory: attempt(() => memoryOf(state), undefined),
 		network: attempt(() => state?.network, undefined),
 		power: attempt(() => powerOf(state), undefined),
-		clock: attempt(() => ({ utcOffset: utcOffset() }), undefined),
 		dns: attempt(() => dnsOf(state), undefined),
 		push: attempt(() => pushOf(state, android), undefined),
 		gateway: attempt(readGateway, undefined),
+		crashReport: attempt(() => getSetting('crash-reports.lastId'), '') || undefined,
 		injected: attempt(() => injectedOf(state), undefined),
 		missingExtensions: android
 			? undefined
 			: attempt(() => missingExtensions(appSource), undefined),
+		isolatedExtensions: android
+			? undefined
+			: attempt(() => isolatedExtensionsOf(state), undefined),
 		storage: attempt(() => storageOf(state), undefined),
 		errors: recentErrors(),
 		patches: attempt(patchCounts, undefined),
@@ -386,12 +402,11 @@ export function readDebugInfo(): DebugInfo {
  */
 export async function readDebugReport(): Promise<DebugInfo> {
 	const info = readDebugInfo();
-	const [accessibility, skewS] = await Promise.all([readAccessibility(), readClockSkew()]);
+	const accessibility = await readAccessibility();
 
 	return {
 		...info,
 		...(info.display && { display: { ...info.display, ...accessibility } }),
-		...(info.clock && { clock: { ...info.clock, skewS } }),
 	};
 }
 

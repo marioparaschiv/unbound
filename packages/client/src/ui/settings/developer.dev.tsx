@@ -65,10 +65,7 @@ function DeveloperPage() {
 				/>
 			</Discord.TableRowGroup>
 
-			<Discord.TableRowGroup
-				title={messages.UNBOUND_LOADER}
-				helperText={messages.UNBOUND_LOADER_RESTART_HINT}
-			>
+			<Discord.TableRowGroup title={messages.UNBOUND_LOADER}>
 				<TextSettingRow
 					label={messages.UNBOUND_LOADER_CUSTOM_BUNDLE}
 					description={messages.UNBOUND_LOADER_CUSTOM_BUNDLE_DESC}

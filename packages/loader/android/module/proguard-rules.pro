@@ -7,3 +7,6 @@
 -keepclasseswithmembernames class * { native <methods>; }
 -keep class app.unbound.android.ActivityTracker { *; }
 -keep class app.unbound.android.HermesSampler { *; }
+-keep class io.github.libxposed.service.** { *; }
+# libxposed-service annotates with androidx.annotation, which is compile-only and absent from the APK.
+-dontwarn androidx.annotation.**

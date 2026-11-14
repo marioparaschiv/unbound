@@ -87,6 +87,7 @@
 							"packages/client/src/dialogs",
 							"packages/client/src/diagnostics",
 							"packages/client/src/links",
+							"packages/client/src/logs",
 							"packages/client/src/utils"
 						],
 						"deny": ["~/ui"],

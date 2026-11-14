@@ -10,9 +10,10 @@ use super::search::path_prefix;
 use super::unfold::{Fold, Place};
 use super::{MetroBrowser, Mode, Row};
 use crate::explorer::link_button;
+use crate::segmented::segmented;
 use crate::smooth_scroll::SmoothScroll;
 use crate::theme;
-use crate::widgets::{badge, field, icon, panel_header, segmented};
+use crate::widgets::{badge, field, icon, panel_header};
 
 const ID_WIDTH: f32 = 52.;
 
@@ -323,33 +324,39 @@ impl MetroBrowser {
 					.gap(px(8.))
 					.px(px(10.))
 					.py(px(8.))
-					.child(segmented(
-						"metro-mode",
-						&modes,
-						mode,
-						cx.listener(|this, picked: &usize, window, cx| {
-							if let Some(mode) = Mode::ALL.get(*picked) {
-								this.set_mode(*mode, window, cx);
-							}
-						}),
-					))
+					.child(
+						segmented(
+							"metro-mode",
+							&modes,
+							mode,
+							cx.listener(|this, picked: &usize, window, cx| {
+								if let Some(mode) = Mode::ALL.get(*picked) {
+									this.set_mode(*mode, window, cx);
+								}
+							}),
+						)
+						.fill(),
+					)
 					.child(field(
 						Input::new(&self.search)
 							.prefix(icon(crate::assets::SEARCH, theme::ICON, theme::TEXT_MUTED))
 							.cleanable(true),
 					))
 					.when(self.mode == Mode::Modules, |column| {
-						column.child(segmented(
-							"metro-status",
-							&statuses,
-							Some(selected),
-							cx.listener(|this, picked: &usize, _, cx| {
-								let status = picked
-									.checked_sub(1)
-									.and_then(|ix| MetroModuleStatus::ALL.get(ix).copied());
-								this.set_status(status, cx);
-							}),
-						))
+						column.child(
+							segmented(
+								"metro-status",
+								&statuses,
+								Some(selected),
+								cx.listener(|this, picked: &usize, _, cx| {
+									let status = picked
+										.checked_sub(1)
+										.and_then(|ix| MetroModuleStatus::ALL.get(ix).copied());
+									this.set_status(status, cx);
+								}),
+							)
+							.fill(),
+						)
 					}),
 			)
 			.child(

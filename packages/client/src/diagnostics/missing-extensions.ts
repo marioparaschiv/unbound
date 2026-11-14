@@ -14,7 +14,9 @@ const STORE_SOURCES = /app ?store|testflight|trollstore/i;
 export function missingExtensions(appSource: string): string[] | undefined {
 	const objc = getNativeBridge()?.objc;
 
-	if (!objc || STORE_SOURCES.test(appSource)) return undefined;
+	if (!objc || STORE_SOURCES.test(appSource)) {
+		return undefined;
+	}
 
 	const bundleClass = objc.getClass('NSBundle');
 	const managerClass = objc.getClass('NSFileManager');
@@ -22,7 +24,9 @@ export function missingExtensions(appSource: string): string[] | undefined {
 	const path = bundle && objc.call(bundle as never, 'builtInPlugInsPath');
 	const manager = managerClass && objc.call(managerClass, 'defaultManager');
 
-	if (typeof path !== 'string' || !manager) return undefined;
+	if (typeof path !== 'string' || !manager) {
+		return undefined;
+	}
 
 	return Object.entries(EXTENSIONS)
 		.filter(

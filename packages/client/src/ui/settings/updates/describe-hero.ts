@@ -20,9 +20,15 @@ export type Hero = {
  * @param state The last check.
  * @param pending How many updates are waiting, counting the loader only while its updates run.
  * @param blocked Whether client updates run but the newest client needs a newer loader.
+ * @param staged Whether a newer client downloaded and waits for a restart.
  * @returns The card's tone, icon, title and subtitle.
  */
-export function describeHero(state: UpdatesState, pending: number, blocked: boolean): Hero {
+export function describeHero(
+	state: UpdatesState,
+	pending: number,
+	blocked: boolean,
+	staged: boolean,
+): Hero {
 	switch (state.status) {
 		case 'idle':
 			return {
@@ -59,6 +65,15 @@ export function describeHero(state: UpdatesState, pending: number, blocked: bool
 			icon: 'DownloadIcon',
 			title: format('UNBOUND_UPDATES_NOTIFY_TITLE', { count: pending }),
 			subtitle,
+		};
+	}
+
+	if (staged) {
+		return {
+			tone: 'brand',
+			icon: 'DownloadIcon',
+			title: messages.UNBOUND_UPDATES_STAGED,
+			subtitle: messages.UNBOUND_UPDATES_STAGED_DESC,
 		};
 	}
 

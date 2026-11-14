@@ -14,12 +14,14 @@ mod device_address;
 pub mod explorer;
 pub mod inspect;
 mod link;
+pub mod logs;
 pub mod mcp;
 pub mod metro;
 pub mod operations;
 pub mod presets;
-pub mod protocol;
 pub mod query;
+mod react_edit;
+pub mod react_protocol;
 mod session;
 pub mod store;
 pub mod value;
@@ -35,6 +37,9 @@ pub use explorer::{
 };
 pub use inspect::{Hook, InspectedElement, OwnerRef, Section};
 pub use link::LinkStatus;
+pub use logs::{
+	LOG_CAPACITY, LogEntry, LogLine, LogOrder, LogSource, LogView, insert_by_time, sort_by_time,
+};
 pub use metro::{
 	ChildrenPage, FilesPage, LoadAllBatch, LoadedModule, METRO_CHILDREN_PAGE_SIZE,
 	METRO_MODULES_PAGE_SIZE, METRO_SEARCH_PAGE_SIZE, MetroError, MetroErrorCode, MetroFile,

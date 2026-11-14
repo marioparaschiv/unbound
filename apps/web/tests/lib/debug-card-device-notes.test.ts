@@ -2,15 +2,9 @@ import { unpackDebugAltText } from '@unbound-app/contracts/debug-card-alt-text';
 import type { DebugCardRequest } from '@unbound-app/contracts/debug-cards';
 import { describe, expect, test } from 'bun:test';
 
-import {
-	clockNote,
-	dnsNote,
-	gatewayNote,
-	powerNote,
-	pushNote,
-} from '~/lib/debug-card/device-notes';
-import { layoutDebugCard, type CardText } from '~/lib/debug-card/layout';
+import { dnsNote, gatewayNote, powerNote, pushNote } from '~/lib/debug-card/device-notes';
 import { debugAltText } from '~/lib/debug-card/alt-text';
+import { extensionNotes } from '~/lib/debug-card/layout';
 
 const info: DebugCardRequest = {
 	client: 'v3.0.0',
@@ -39,8 +33,6 @@ describe('device notes', () => {
 		expect(powerNote({ lowPower: true, battery: 60, charging: true })).toBe(
 			'low power · battery 60% · charging',
 		);
-		expect(clockNote({ utcOffset: 'UTC+01:00', skewS: 30 })).toBeUndefined();
-		expect(clockNote({ utcOffset: 'UTC+01:00', skewS: -7200 })).toBe('clock 2 h behind');
 		expect(
 			pushNote({ permission: 'granted', registered: true, environment: 'production' }),
 		).toBe(undefined);
@@ -60,22 +52,29 @@ describe('device notes', () => {
 		);
 	});
 
-	test('put a skewed clock on the card and every fact in the alt text', () => {
+	test('put every fact in the alt text', () => {
 		const report: DebugCardRequest = {
 			...info,
-			clock: { utcOffset: 'UTC+01:00', skewS: 600 },
 			push: { permission: 'granted', registered: true, environment: 'production' },
 			power: { lowPower: false, battery: 70 },
 			dns: { resolver: 'Cloudflare' },
 		};
-		const runs = layoutDebugCard(report).ops.filter((op): op is CardText => op.kind === 'text');
 
-		expect(runs.map((run) => run.text)).toContain('clock 10 min ahead');
 		expect(JSON.parse(unpackDebugAltText(debugAltText(report)) ?? '')).toMatchObject({
-			clock: 'UTC+01:00 · 10 min ahead',
 			push: 'granted · production',
 			power: 'battery 70%',
 			dns: 'Cloudflare',
 		});
+	});
+
+	test('notes stripped extensions and ones without the app group together', () => {
+		expect(
+			extensionNotes({
+				...info,
+				missingExtensions: ['Safari'],
+				isolatedExtensions: ['BroadcastUpload'],
+			}),
+		).toEqual(['Safari missing', 'BroadcastUpload no app group']);
+		expect(extensionNotes(info)).toEqual([]);
 	});
 });

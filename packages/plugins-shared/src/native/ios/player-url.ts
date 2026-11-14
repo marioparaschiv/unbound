@@ -11,11 +11,14 @@ export function playerURL(objc: NativeObjCBridge, player: NativeObjectHandle): s
 	const item = objc.invoke(player, 'currentItem', []) as NativeObjectHandle | null;
 	const asset = item && (objc.invoke(item, 'asset', []) as NativeObjectHandle | null);
 
-	if (!asset || objc.className(asset) !== 'AVURLAsset') return '';
+	if (!asset || objc.className(asset) !== 'AVURLAsset') {
+		return '';
+	}
 
 	const url = objc.invoke(asset, 'URL', []) as NativeObjectHandle | null;
+	const text = url && objc.invoke(url, 'absoluteString', []);
 
-	return url ? String(objc.invoke(url, 'absoluteString', [])) : '';
+	return typeof text === 'string' ? text : '';
 }
 
 export default playerURL;

@@ -17,6 +17,7 @@
 #include "LoaderVersion.h"
 #include "NativePluginRuntime.h"
 #include "UnboundNativeFonts.h"
+#include "UnboundNativeLogs.h"
 
 namespace loader {
 namespace jsi = facebook::jsi;
@@ -173,6 +174,25 @@ downloadFunction(jsi::Runtime                                                 &r
         });
 }
 
+// A function returning a promise of `work`'s result, run off the JS thread.
+static jsi::Function backgroundFlagFunction(jsi::Runtime &runtime, const char *name,
+                                            std::function<bool()> work)
+{
+    return native::makeFunction(runtime, name, 0,
+                                [work = std::move(work)](jsi::Runtime &rt, const jsi::Value &,
+                                                         const jsi::Value *, size_t) -> jsi::Value {
+                                    auto flag = std::make_shared<bool>(false);
+                                    return native::executeBackgroundAsynchronously(
+                                        rt,
+                                        [work, flag] {
+                                            *flag = work();
+                                        },
+                                        [flag](jsi::Runtime &) {
+                                            return jsi::Value(*flag);
+                                        });
+                                });
+}
+
 static jsi::Function buildIconIPAFunction(jsi::Runtime &runtime, std::function<std::string()> build)
 {
     return native::makeFunction(
@@ -214,6 +234,18 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
                            getter(runtime, "hasStagedBundle", std::move(provider.hasStagedBundle),
                                   nlohmann::json(false)));
     }
+    if (provider.checkForBundleUpdate)
+    {
+        bridge.setProperty(runtime, "checkForBundleUpdate",
+                           backgroundFlagFunction(runtime, "checkForBundleUpdate",
+                                                  std::move(provider.checkForBundleUpdate)));
+    }
+    if (provider.updateBundle)
+    {
+        bridge.setProperty(
+            runtime, "updateBundle",
+            backgroundFlagFunction(runtime, "updateBundle", std::move(provider.updateBundle)));
+    }
     if (provider.markRendered)
     {
         bridge.setProperty(
@@ -248,6 +280,7 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
         bridge.setProperty(runtime, "fonts", makeFontsBridge(runtime, std::move(provider.fonts)));
     }
     bridge.setProperty(runtime, "getSha256", sha256Function(runtime));
+    installLogBridge(runtime, bridge);
     bridge.setProperty(runtime, "downloadFile",
                        downloadFunction(runtime, std::move(provider.downloadFile)));
     runtime.global().setProperty(runtime, "UnboundNative", std::move(bridge));

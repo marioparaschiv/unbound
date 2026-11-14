@@ -1,15 +1,21 @@
 import { findRenderTarget } from '@unbound-plugins/shared/react/render-target';
-import { isElementNode } from '@unbound-plugins/shared/react/find-element';
+import { getElementName, isElementNode } from '@unbound-plugins/shared/react/find-element';
 import type { patcher } from '@unbound-app/api';
 
 type Cleanup = () => void;
 type Patcher = typeof patcher;
 // UNKNOWN: a component may render any node.
-type RenderFunction = (...args: never[]) => unknown;
+type RenderFunction = ((...args: never[]) => unknown) & { displayName?: string };
 // UNKNOWN: an action sheet may render any node.
 type SheetVisitor = (result: unknown) => void;
 
 const MAX_DEPTH = 15;
+
+// Profile and server sheets render their row group inside these sections, which render after the sheet itself.
+const SHEET_SECTIONS = new Set([
+	'GuildActionSheetSecondaryActions',
+	'UserProfileActionSheetActions',
+]);
 
 export type SheetRenderer = {
 	// UNKNOWN: an action sheet may render any node.
@@ -37,11 +43,51 @@ export function createSheetRenderer(
 
 		if (!wrapper) {
 			wrapper = (...args) => render(type(...args), depth + 1);
+			wrapper.displayName = type.displayName ?? type.name;
 			wrappers.set(type, wrapper);
 			wrapped.add(wrapper);
 		}
 
 		return wrapper;
+	}
+
+	// UNKNOWN: an action sheet may render any node.
+	function follow(element: unknown, depth: number) {
+		if (!isElementNode(element) || Array.isArray(element)) return;
+
+		if (typeof element.type === 'function') {
+			if (!wrapped.has(element.type)) {
+				element.type = wrap(element.type, depth);
+			}
+
+			return;
+		}
+
+		const target = findRenderTarget(element, 'type');
+
+		if (!target || patchedOwners.has(target.holder)) return;
+
+		patchedOwners.add(target.holder);
+		unpatches.push(
+			Patcher.after(target.holder, target.key, (context) =>
+				render(context.result, depth + 1),
+			),
+		);
+	}
+
+	// UNKNOWN: an action sheet may render any node.
+	function followSections(node: unknown, depth: number) {
+		if (depth >= MAX_DEPTH || !isElementNode(node)) return;
+
+		if (Array.isArray(node)) {
+			for (const child of node) followSections(child, depth + 1);
+
+			return;
+		}
+
+		if (SHEET_SECTIONS.has(getElementName(node) ?? '')) follow(node, depth);
+
+		followSections(node.props?.children, depth + 1);
 	}
 
 	// UNKNOWN: an action sheet may render any node.
@@ -52,26 +98,8 @@ export function createSheetRenderer(
 			return result;
 		}
 
-		if (typeof result.type === 'function') {
-			if (!wrapped.has(result.type)) {
-				result.type = wrap(result.type, depth);
-			}
-
-			return result;
-		}
-
-		const target = findRenderTarget(result, 'type');
-
-		if (!target || patchedOwners.has(target.holder)) {
-			return result;
-		}
-
-		patchedOwners.add(target.holder);
-		unpatches.push(
-			Patcher.after(target.holder, target.key, (context) =>
-				render(context.result, depth + 1),
-			),
-		);
+		follow(result, depth);
+		followSections(result.props?.children, depth + 1);
 
 		return result;
 	}

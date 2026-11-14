@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.1.1] - 2026-11-14
+
+### Fixed
+
+- Its rows show in action sheets alongside other plugins' rows, including iOS server and profile sheets.
+
+## [2.1.0] - 2026-11-14
+
+### Added
+
+- Server reviews: a **Server Reviews** row in a server's long-press menu or sheet opens that server's ReviewDB reviews, where you can read and leave reviews like on profiles.
+
 ## [2.0.0] - 2026-11-13
 
 ### Changed

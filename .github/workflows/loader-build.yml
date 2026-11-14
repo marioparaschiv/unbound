@@ -269,7 +269,7 @@ jobs:
                     fi
                     # Test the loader against the Discord the latest Unbound releases use, as the in-app Android builds do.
                     if [ -z "$INPUT_VERSION" ]; then
-                      ios_tag=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --exclude-drafts --exclude-pre-releases --json tagName --jq '[.[] | select(.tagName | test("^discord-[0-9]+\\.[0-9]+-ios$"))][0].tagName // empty')
+                      ios_tag=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 1000 --exclude-drafts --exclude-pre-releases --json tagName --jq '[.[] | select(.tagName | test("^discord-[0-9]+\\.[0-9]+-ios$"))][0].tagName // empty')
                       if [ -z "$ios_tag" ]; then echo "::error::$GITHUB_REPOSITORY has no published iOS release to test the loader against"; exit 1; fi
                       INPUT_VERSION=${ios_tag#discord-}
                       INPUT_VERSION=${INPUT_VERSION%-ios}
@@ -747,21 +747,24 @@ jobs:
               if: inputs.is_testflight != true
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: android module
+                  artifact-ids: ${{ needs.android.outputs.module_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/release-assets
 
             - name: Download patched Android Discord package
               if: inputs.is_testflight != true
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: patched discord
+                  artifact-ids: ${{ needs.android.outputs.patched_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/release-assets
 
             - name: Download Android native symbols
               if: inputs.is_testflight != true
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: android symbols
+                  artifact-ids: ${{ needs.android.outputs.symbols_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/release-assets/android-symbols
 
             - name: Package native symbols
@@ -813,7 +816,7 @@ jobs:
 
             - name: Publish stable iOS release
               if: needs.resolve-source.outputs.is_testflight != 'true' && inputs.release_dry_run != true
-              uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+              uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
               with:
                   tag_name: ${{ needs.resolve-source.outputs.ios_release_tag }}
                   name: ${{ needs.resolve-source.outputs.ios_release_title }}
@@ -830,7 +833,7 @@ jobs:
 
             - name: Publish stable Android release
               if: needs.resolve-source.outputs.is_testflight != 'true' && inputs.release_dry_run != true
-              uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+              uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
               with:
                   tag_name: ${{ needs.resolve-source.outputs.android_release_tag }}
                   name: ${{ needs.resolve-source.outputs.android_release_title }}
@@ -868,7 +871,7 @@ jobs:
 
             - name: Publish TestFlight prerelease
               if: needs.resolve-source.outputs.is_testflight == 'true' && inputs.release_dry_run != true
-              uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+              uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
               with:
                   tag_name: ${{ needs.resolve-source.outputs.ios_release_tag }}
                   name: ${{ needs.resolve-source.outputs.ios_release_title }}
@@ -938,19 +941,22 @@ jobs:
             - name: Download Android Xposed module
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: android module
+                  artifact-ids: ${{ needs.android.outputs.module_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/release-assets
 
             - name: Download patched Android Discord package
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: patched discord
+                  artifact-ids: ${{ needs.android.outputs.patched_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/release-assets
 
             - name: Download Android native symbols
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: android symbols
+                  artifact-ids: ${{ needs.android.outputs.symbols_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/release-assets/android-symbols
 
             - name: Package native symbols
@@ -958,7 +964,7 @@ jobs:
               run: zip -qr ../unbound-android-symbols.zip .
 
             - name: Publish Android prerelease
-              uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+              uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
               with:
                   tag_name: ${{ needs.resolve-source.outputs.android_release_tag }}
                   name: ${{ needs.resolve-source.outputs.android_release_title }}
@@ -995,13 +1001,15 @@ jobs:
             - name: Download patched Android Discord package
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: patched discord
+                  artifact-ids: ${{ needs.android.outputs.patched_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/android-build
 
             - name: Download the emulator split
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: patched discord emulator split
+                  artifact-ids: ${{ needs.android.outputs.emulator_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/android-build/emulator
 
             - name: Note the unconfigured public bucket
@@ -1088,7 +1096,8 @@ jobs:
             - name: Download Android Xposed module
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: android module
+                  artifact-ids: ${{ needs.android.outputs.module_artifact_id }}
+                  merge-multiple: true
                   path: packages/loader/loader-build
 
             - name: Note the unconfigured public bucket

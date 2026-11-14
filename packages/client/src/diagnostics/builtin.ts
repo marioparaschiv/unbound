@@ -15,6 +15,7 @@ let previousHandler: ErrorHandler | undefined;
 export function start() {
 	setRejectionTracker();
 	startAppSession();
+	void import('./crash-reports').then(({ reportNativeCrash }) => reportNativeCrash());
 
 	if (typeof ErrorUtils === 'undefined') {
 		return;

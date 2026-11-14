@@ -1,0 +1,8 @@
+{
+	"SECONDS": "Burst length",
+	"SECONDS_SUBTITLE": "How many seconds after your last message a new one still merges into it.",
+	"ATTACHMENTS": "Merge into messages with attachments",
+	"ATTACHMENTS_SUBTITLE": "Also adds to a previous message that has files or images.",
+	"SPACE": "Join with a space",
+	"SPACE_SUBTITLE": "Puts a space between the merged messages instead of a new line."
+}

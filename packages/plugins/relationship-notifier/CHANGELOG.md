@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2] - 2026-11-14
+
+### Fixed
+
+- No more notifications that every friend and server removed you: a check that runs before Discord finishes loading them after a reconnect is skipped, and keeps the last good snapshot.
+
 ## [1.0.1] - 2026-11-10
 
 ### Changed

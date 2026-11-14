@@ -1,5 +1,7 @@
 import { describeRequiredLoader } from '~/updates/describe-required-loader';
+import type { ClientUpdate } from '~/updates/client-update';
 import { automaticUpdates } from '~/updates/addon-updates';
+import { hasStagedBundle } from '~/native/unbound-native';
 import { readInstallKind } from '~/updates/install-kind';
 import { useUnboundSettings } from '~/settings/unbound';
 import NoticeRow from '~/ui/settings-kit/notice-row';
@@ -36,6 +38,8 @@ function UpdatesPage() {
 	const loader = ready ? state.loader : null;
 	const discord = ready ? state.discord : null;
 	const requiredLoader = ready ? state.requiredLoader : null;
+	// The loader also stages bundles on its own, after the last check.
+	const client: ClientUpdate = hasStagedBundle() ? 'staged' : ready ? state.client : 'current';
 	// Paused client updates keep the cached client, so the newer one's loader requirement doesn't block it.
 	const blocked = Boolean(requiredLoader) && settings.get('updater.auto.client');
 	// Held addons keep their own Update button but sit out Update all.
@@ -55,6 +59,7 @@ function UpdatesPage() {
 				pending={listPendingItems(updates, loader, discord)}
 				automatic={automatic.length}
 				blocked={blocked}
+				client={client}
 			/>
 
 			<UnboundGroup
@@ -63,6 +68,7 @@ function UpdatesPage() {
 				loader={loader}
 				requiredLoader={requiredLoader}
 				discord={discord}
+				client={client}
 			/>
 
 			{addons.length ? (
