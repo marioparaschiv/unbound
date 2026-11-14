@@ -31,6 +31,7 @@ struct Response {
 pub fn target() -> Option<&'static str> {
 	match (std::env::consts::OS, std::env::consts::ARCH) {
 		("macos", "aarch64") => Some("macos-arm64"),
+		("macos", "x86_64") => Some("macos-x64"),
 		("windows", "x86_64") => Some("windows-x64"),
 		("windows", "aarch64") => Some("windows-arm64"),
 		("linux", "x86_64") => Some("linux-x64"),
@@ -95,11 +96,12 @@ mod tests {
 
 	#[test]
 	fn names_every_released_target() {
-		// CI builds these five; any other host has no release to move to.
+		// CI builds these six; any other host has no release to move to.
 		if let Some(target) = target() {
 			assert!(
 				[
 					"macos-arm64",
+					"macos-x64",
 					"windows-x64",
 					"windows-arm64",
 					"linux-x64",

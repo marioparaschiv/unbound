@@ -1,6 +1,5 @@
 import {
 	IconApple,
-	IconArchive,
 	IconArrowUpRight,
 	IconDownload,
 	IconTerminal,
@@ -30,15 +29,6 @@ const OS_INFO: Record<DevToolsOs, OsInfo> = {
 // Stagger slots after the loader downloads' heading.
 const FIRST_SLOT = 6;
 
-const WINDOWS = DEVTOOLS_ASSETS.filter((asset) => asset.os === 'windows');
-const OTHERS = DEVTOOLS_ASSETS.filter((asset) => asset.os !== 'windows');
-
-const TILE =
-	'group/file flex items-center gap-3.5 p-3.5 border rounded-surface outline-none focus-visible:ring-[3px] focus-visible:ring-halo transition-colors press-flat';
-
-const BADGE =
-	'flex justify-center items-center bg-accent shadow-key rounded-full size-10 text-foreground shrink-0';
-
 function DevToolsTile({ asset }: DevToolsTileProps) {
 	const info = OS_INFO[asset.os];
 
@@ -46,9 +36,9 @@ function DevToolsTile({ asset }: DevToolsTileProps) {
 		<a
 			href={asset.url}
 			download
-			className={`${TILE} bg-card hover:bg-accent/40 shadow-surface`}
+			className='group/file flex items-center gap-3.5 bg-card hover:bg-accent/40 p-3.5 border rounded-surface outline-none focus-visible:ring-[3px] focus-visible:ring-halo shadow-surface transition-colors press-flat'
 		>
-			<span className={BADGE}>
+			<span className='flex justify-center items-center bg-accent shadow-key rounded-full size-10 text-foreground shrink-0'>
 				<info.icon size={16} aria-hidden />
 			</span>
 			<span className='flex flex-col gap-0.5 min-w-0 grow'>
@@ -74,63 +64,43 @@ function DevToolsTile({ asset }: DevToolsTileProps) {
 	);
 }
 
-// Fills the Windows column's third row, so both columns end level.
-function OlderVersionsTile() {
-	return (
-		<a
-			href={DEVTOOLS_RELEASES_URL}
-			target='_blank'
-			rel='noopener noreferrer'
-			className={`${TILE} border-dashed hover:bg-accent/40`}
-		>
-			<span className={BADGE}>
-				<IconArchive size={16} aria-hidden />
-			</span>
-			<span className='font-semibold text-foreground text-sm grow'>Older versions</span>
-			<IconArrowUpRight size={14} className='text-muted-foreground shrink-0' aria-hidden />
-		</a>
-	);
-}
-
 /**
- * @description The DevTools desktop app's newest archive for each system, in a Windows column and a macOS and Linux column.
+ * @description The DevTools desktop app's newest archive for each system: Windows beside macOS, Linux below.
  * @returns The DevTools download section.
  */
 function DevToolsDownloads() {
 	return (
 		<section aria-labelledby='devtools-heading' className='flex flex-col gap-6 pt-8 border-t'>
-			<div className='flex flex-col gap-1 animate-reveal' style={staggerStyle(FIRST_SLOT)}>
-				<h2 id='devtools-heading' className='font-semibold text-foreground text-xl'>
-					DevTools
-				</h2>
-				<p className='text-muted-foreground text-sm'>
-					A desktop app for building on Unbound: inspect components, browse native views
-					and Metro modules, and let an agent query the tree and run JavaScript over MCP.
-					Each download is an archive with the app inside.
-				</p>
+			<div
+				className='flex flex-wrap justify-between items-end gap-3 animate-reveal'
+				style={staggerStyle(FIRST_SLOT)}
+			>
+				<div className='flex flex-col gap-1 max-w-2xl'>
+					<h2 id='devtools-heading' className='font-semibold text-foreground text-xl'>
+						DevTools
+					</h2>
+					<p className='text-muted-foreground text-sm'>
+						A desktop app for building on Unbound: inspect components, browse native
+						views and Metro modules, and let an agent query the tree and run JavaScript
+						over MCP. Each download is an archive with the app inside.
+					</p>
+				</div>
+				<a
+					href={DEVTOOLS_RELEASES_URL}
+					target='_blank'
+					rel='noopener noreferrer'
+					className='inline-flex items-center gap-0.5 text-link text-sm underline-offset-4 hover:underline'
+				>
+					Older versions
+					<IconArrowUpRight size={12} aria-hidden />
+				</a>
 			</div>
-			{/* Column-first on wide screens: Windows on the left, macOS then Linux on the right. */}
-			<div className='gap-3 grid sm:grid-cols-2 sm:grid-rows-3 sm:grid-flow-col'>
-				{WINDOWS.map((asset, index) => (
+			<div className='gap-3 grid sm:grid-cols-2'>
+				{DEVTOOLS_ASSETS.map((asset, index) => (
 					<div
 						key={asset.url}
 						className='grid animate-reveal'
 						style={staggerStyle(FIRST_SLOT + 1 + index)}
-					>
-						<DevToolsTile asset={asset} />
-					</div>
-				))}
-				<div
-					className='grid order-last sm:order-none animate-reveal'
-					style={staggerStyle(FIRST_SLOT + 1 + DEVTOOLS_ASSETS.length)}
-				>
-					<OlderVersionsTile />
-				</div>
-				{OTHERS.map((asset, index) => (
-					<div
-						key={asset.url}
-						className='grid animate-reveal'
-						style={staggerStyle(FIRST_SLOT + 1 + WINDOWS.length + index)}
 					>
 						<DevToolsTile asset={asset} />
 					</div>
