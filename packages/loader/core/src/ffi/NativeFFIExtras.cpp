@@ -414,8 +414,7 @@ namespace {
                                                               info->dlpi_phdr[index].p_vaddr);
             }
         }
-        if (!dynamic || !info->dlpi_name || !info->dlpi_name[0] ||
-            std::strstr(info->dlpi_name, "vdso") != nullptr)
+        if (!dynamic || (info->dlpi_name && std::strstr(info->dlpi_name, "vdso") != nullptr))
         {
             return 0;
         }
