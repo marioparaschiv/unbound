@@ -507,10 +507,36 @@ func buildExtensions(options buildOptions, work string, runner commandRunner) ([
 		path := filepath.Join(buildDir, extension.product+".appex")
 		if extension.name == "ShareToDiscord" {
 			path = filepath.Join(buildDir, "Share.appex")
+			if err := signWithAppGroup(runner, work, filepath.Join(path, "Share")); err != nil {
+				return nil, err
+			}
 		}
 		paths = append(paths, path)
 	}
 	return paths, nil
+}
+
+const shareEntitlements = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.hammerandchisel.discord</string>
+	</array>
+</dict>
+</plist>
+`
+
+func signWithAppGroup(runner commandRunner, work, binary string) error {
+	entitlements := filepath.Join(work, "share-entitlements.plist")
+	if err := os.WriteFile(entitlements, []byte(shareEntitlements), 0o644); err != nil {
+		return err
+	}
+	if err := runner(work, "ldid", []string{"-S" + entitlements, binary}, os.Environ(), os.Stdout, os.Stderr); err != nil {
+		return fmt.Errorf("signing the share extension with its app group failed: %w", err)
+	}
+	return nil
 }
 
 func xcbeautifyArguments(ci bool) []string {
