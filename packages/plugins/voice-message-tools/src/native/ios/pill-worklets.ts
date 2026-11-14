@@ -18,6 +18,8 @@ const SEMIBOLD = 0.3;
 const SYSTEM_BUTTON = 1;
 const CELL_SEARCH_DEPTH = 12;
 const CONTAINER_DEPTH = 3;
+const EMBED_SEARCH_DEPTH = 6;
+const EMBED_VIEW = 'DiscordChat.EmbedView';
 
 type Rect = { x: number; y: number; width: number; height: number };
 
@@ -214,6 +216,19 @@ function placeControls(
 	objc.invoke(speed, 'setTitle:forState:', [speedLabel(state().speed), 0]);
 }
 
+function inEmbed(objc: NativeObjCBridge, player: NativeObjectHandle): boolean {
+	'worklet';
+	let current = objc.invoke(player, 'superview', []) as NativeObjectHandle | null;
+
+	for (let level = 0; current && level < EMBED_SEARCH_DEPTH; level++) {
+		if (objc.className(current) === EMBED_VIEW) return true;
+
+		current = objc.invoke(current, 'superview', []) as NativeObjectHandle | null;
+	}
+
+	return false;
+}
+
 function fitContainers(objc: NativeObjCBridge, player: NativeObjectHandle, frame: Rect) {
 	'worklet';
 	let child = frame;
@@ -255,7 +270,7 @@ export function installPillControls(
 			const result = original(...args);
 			const frame = rectOf(args[0]);
 
-			if (current.widening || frame.width <= 0) return result;
+			if (current.widening || frame.width <= 0 || inEmbed(objc, self)) return result;
 
 			const widened = { ...frame, width: frame.width + CONTROLS_WIDTH };
 
@@ -276,7 +291,7 @@ export function installPillControls(
 		after: ({ self }) => {
 			const frame = rectOf(objc.invoke(self, 'frame', []));
 
-			if (frame.width <= CONTROLS_WIDTH) return;
+			if (frame.width <= CONTROLS_WIDTH || inEmbed(objc, self)) return;
 
 			try {
 				placeControls(objc, self, frame, onAction);

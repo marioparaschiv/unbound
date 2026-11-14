@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.1] - 2026-11-14
+
+### Fixed
+
+- The speed and download buttons stay out of audio players inside link embeds.
+
 ## [1.4.0] - 2026-11-14
 
 ### Changed

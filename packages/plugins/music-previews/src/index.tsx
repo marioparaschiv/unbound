@@ -1,12 +1,12 @@
 import { patcher } from '@unbound-app/api';
 
-import { patchMusicLinks, stopPreviews } from '~/patches';
+import { clearClips, patchMusicEmbeds } from '~/patches';
 
 export function start() {
-	patchMusicLinks();
+	patchMusicEmbeds();
 }
 
 export function stop() {
 	patcher.unpatchAll();
-	stopPreviews();
+	clearClips();
 }
