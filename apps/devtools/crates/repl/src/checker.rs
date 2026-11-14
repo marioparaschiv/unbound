@@ -40,6 +40,9 @@ struct Inner {
 	pending: Mutex<HashMap<i64, Sender<Value>>>,
 	next_id: AtomicI64,
 	documents: Mutex<HashMap<&'static str, Document>>,
+	/// Held from syncing the buffer until its answer arrives, so a concurrent query with other
+	/// text can't swap the buffer in between.
+	query: Mutex<()>,
 }
 
 /// The console's TypeScript checker: completions, hovers and errors for the buffer, with every
@@ -142,6 +145,7 @@ impl Checker {
 				pending: Mutex::new(HashMap::new()),
 				next_id: AtomicI64::new(1),
 				documents: Mutex::new(HashMap::new()),
+				query: Mutex::new(()),
 			}),
 		};
 		checker.spawn_reader(client_in)?;
@@ -285,6 +289,7 @@ impl Checker {
 		buffer: &str,
 		position: Position,
 	) -> anyhow::Result<CompletionResponse> {
+		let _query = self.inner.query.lock();
 		self.sync(BUFFER, buffer);
 		let result = self.request(
 			"textDocument/completion",
@@ -313,6 +318,7 @@ impl Checker {
 
 	/// The type and docs of what is at `position` in `buffer`.
 	pub fn hover(&self, buffer: &str, position: Position) -> anyhow::Result<Option<Hover>> {
+		let _query = self.inner.query.lock();
 		self.sync(BUFFER, buffer);
 		let result = self.request(
 			"textDocument/hover",
@@ -328,6 +334,7 @@ impl Checker {
 
 	/// The buffer's type errors, less the ones the console's rewriting causes.
 	pub fn diagnostics(&self, buffer: &str) -> anyhow::Result<Vec<Diagnostic>> {
+		let _query = self.inner.query.lock();
 		self.sync(BUFFER, buffer);
 		let mut result = self.request(
 			"textDocument/diagnostic",
