@@ -4,6 +4,7 @@ banner: media/banner.png
 
 ## :sparkle: What it does
 
+- :forward: Voice messages and audio files play at the speed you pick, 0.75× to 2×; videos keep theirs.
 - :microphone: Attach only audio files to a message and it goes out as a voice message, with a player instead of a file.
 - :eye: Optionally, audio files others send play in the voice message player.
 - :download: Long-press a voice message and pick **Download Voice Message** to keep its audio.
@@ -13,5 +14,6 @@ banner: media/banner.png
 
 ## :gear: Settings
 
+- **Playback speed:** how fast voice messages and audio files play.
 - **Send audio files as voice messages:** a message that is only audio files goes out as a voice message.
 - **Show audio files as voice messages:** audio files others send play in the voice message player.
