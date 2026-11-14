@@ -4,7 +4,6 @@ import type {
 	DebugCardSupport,
 } from '@unbound-app/contracts/debug-cards';
 import { launchNotes } from '@unbound-app/contracts/debug-card-launch';
-import { skewPhrase } from '@unbound-app/contracts/debug-card-clock';
 
 /** How many addons of one kind are installed and enabled. */
 export type AddonCount = DebugCardAddonCount;
@@ -55,7 +54,6 @@ export function debugLines(info: DebugInfo): string[] {
 		`- **Runtime:** React ${info.react}, React Native ${info.reactNative}, Hermes ${info.hermes} (HBC ${info.bytecode})`,
 		...(info.network ? [`- **Network:** ${networkLine(info.network, info.dns)}`] : []),
 		...(info.power ? [`- **Power:** ${powerLine(info.power)}`] : []),
-		...(info.clock ? [`- **Clock:** ${clockLine(info.clock)}`] : []),
 		...(info.push ? [`- **Notifications:** ${pushLine(info.push)}`] : []),
 		...(info.gateway ? [`- **Gateway:** ${gatewayLine(info.gateway)}`] : []),
 		...(info.crashReport ? [`- **Crash report:** \`${info.crashReport}\``] : []),
@@ -85,10 +83,6 @@ function powerLine(power: NonNullable<DebugInfo['power']>): string {
 		power.battery !== undefined && `battery ${power.battery}%`,
 		power.charging && 'charging',
 	]);
-}
-
-function clockLine(clock: NonNullable<DebugInfo['clock']>): string {
-	return joinedParts([clock.utcOffset, clock.skewS !== undefined && skewPhrase(clock.skewS)]);
 }
 
 function gatewayLine(gateway: NonNullable<DebugInfo['gateway']>): string {

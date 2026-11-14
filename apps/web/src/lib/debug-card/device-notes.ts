@@ -1,11 +1,9 @@
 import type {
-	DebugCardClock,
 	DebugCardDns,
 	DebugCardGateway,
 	DebugCardPower,
 	DebugCardPush,
 } from '@unbound-app/contracts/debug-cards';
-import { CLOCK_SKEW_NOTICE_S, skewPhrase } from '@unbound-app/contracts/debug-card-clock';
 
 import { joined } from './spans';
 
@@ -41,31 +39,6 @@ export function powerNote(power?: DebugCardPower): string | undefined {
 	const flat = power.battery !== undefined && power.battery <= LOW_BATTERY && !power.charging;
 
 	return power.lowPower || flat ? powerSummary(power) : undefined;
-}
-
-/**
- * @description Summarises the UTC offset and how far the clock is off.
- * @param clock The clock report.
- * @returns The summary, such as `UTC+01:00 · 5 min ahead`.
- */
-export function clockSummary(clock: DebugCardClock): string {
-	return joined([
-		clock.utcOffset,
-		clock.skewS === undefined ? undefined : skewPhrase(clock.skewS),
-	]);
-}
-
-/**
- * @description Flags a clock a minute or more off, which breaks TLS and signature checks.
- * @param clock The clock report.
- * @returns The note, or `undefined` when the clock is close enough or unmeasured.
- */
-export function clockNote(clock?: DebugCardClock): string | undefined {
-	if (clock?.skewS === undefined || Math.abs(clock.skewS) < CLOCK_SKEW_NOTICE_S) {
-		return undefined;
-	}
-
-	return `clock ${skewPhrase(clock.skewS)}`;
 }
 
 function pushProblems(push: DebugCardPush): string[] {

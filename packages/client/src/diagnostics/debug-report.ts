@@ -119,17 +119,64 @@ async function uploadLog(channelId: string): Promise<CloudUpload | undefined> {
 	});
 }
 
+function requiredOnly(info: DebugInfo): DebugInfo {
+	const {
+		client,
+		commit,
+		loader,
+		loaderOrigin,
+		framework,
+		discord,
+		discordChannel,
+		discordBuild,
+	} = info;
+	const { appSource, react, reactNative, hermes, bytecode, platform, os, device, flags } = info;
+
+	return {
+		client,
+		commit,
+		loader,
+		loaderOrigin,
+		framework,
+		discord,
+		discordChannel,
+		discordBuild,
+		appSource,
+		react,
+		reactNative,
+		hermes,
+		bytecode,
+		platform,
+		os,
+		device,
+		flags,
+	};
+}
+
+async function drawCard(info: DebugInfo) {
+	const { createUnboundClient } = await import('~/account/client');
+	// The plist goes to the server alone, which reduces it to JSON in the alt text.
+	const entitlements = readEntitlements() || undefined;
+	const request = createUnboundClient();
+
+	try {
+		return await request('POST /api/v1/debug-cards', { body: { ...info, entitlements } });
+	} catch (error) {
+		Logger.warn(
+			'Failed to draw the full debug card, retrying with the required fields only:',
+			error,
+		);
+
+		return request('POST /api/v1/debug-cards', { body: requiredOnly(info) });
+	}
+}
+
 async function uploadCard(
 	channelId: string,
 	info: DebugInfo,
 	path: string,
 ): Promise<CloudUpload | undefined> {
-	const { createUnboundClient } = await import('~/account/client');
-	// The plist goes to the server alone, which reduces it to JSON in the alt text.
-	const entitlements = readEntitlements() || undefined;
-	const card = await createUnboundClient()('POST /api/v1/debug-cards', {
-		body: { ...info, entitlements },
-	});
+	const card = await drawCard(info);
 
 	await fs.writeFile(path, card.image, 'base64');
 
