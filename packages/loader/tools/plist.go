@@ -88,6 +88,9 @@ func (node *plistNode) dict(key string) *plistNode {
 
 func readPlist(data []byte) (*plistNode, error) {
 	if bytes.HasPrefix(data, []byte(binaryPlists)) {
+		if node, err := decodeBinaryPlist(data); err == nil {
+			return node, nil
+		}
 		converted, err := convertBinaryPlist(data)
 		if err != nil {
 			return nil, err

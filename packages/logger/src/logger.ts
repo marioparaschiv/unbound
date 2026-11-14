@@ -32,16 +32,22 @@ type LoggedValue =
 
 type ConsoleMethod = 'log' | 'error' | 'info' | 'warn' | 'debug';
 
-type LevelStyle = { color: Color; write: ConsoleMethod };
+/** The levels the native loader's log files record. */
+type NativeLevel = 'debug' | 'info' | 'warn' | 'error';
 
-// Each level's color and the console method it writes through; `success` writes as `info`.
+type LevelStyle = { color: Color; write: ConsoleMethod; native: NativeLevel };
+
+/** `UnboundNative.log` as the loader installs it; declared here so the logger needs no client types. */
+type NativeLog = (level: NativeLevel, scope: string[], message: string) => void;
+
+// Each level's color, the console method it writes through and the level the loader records; `success` writes as `info`.
 const LEVELS = {
-	log: { color: 'gray', write: 'log' },
-	error: { color: 'red', write: 'error' },
-	success: { color: 'green', write: 'info' },
-	warn: { color: 'yellow', write: 'warn' },
-	debug: { color: 'gray', write: 'debug' },
-	info: { color: 'cyan', write: 'info' },
+	log: { color: 'gray', write: 'log', native: 'info' },
+	error: { color: 'red', write: 'error', native: 'error' },
+	success: { color: 'green', write: 'info', native: 'info' },
+	warn: { color: 'yellow', write: 'warn', native: 'warn' },
+	debug: { color: 'gray', write: 'debug', native: 'debug' },
+	info: { color: 'cyan', write: 'info', native: 'info' },
 } satisfies Record<string, LevelStyle>;
 
 type LogLevel = keyof typeof LEVELS;
@@ -50,9 +56,24 @@ function revealErrors(_key: string, value: LoggedValue) {
 	return value instanceof Error ? describeError(value) : value;
 }
 
+// UNKNOWN: whatever the loader installed as `UnboundNative.log`.
+function isNativeLog(value: unknown): value is NativeLog {
+	return typeof value === 'function';
+}
+
+// Read on every write: the loader may install `UnboundNative` after a logger is created.
+function nativeLog(): NativeLog | undefined {
+	// UNKNOWN: only the native loader installs the global, and the logger also runs in Node.
+	const bridge: unknown = Reflect.get(globalThis, 'UnboundNative');
+	const log: unknown =
+		typeof bridge === 'object' && bridge !== null && 'log' in bridge ? bridge.log : undefined;
+
+	return isNativeLog(log) ? log : undefined;
+}
+
 /**
- * @description A scoped console logger that prefixes every line with its caller chain, tinting
- * output per log level when the environment supports ANSI colors.
+ * @description A scoped logger. Inside Discord it hands each line to the native loader's log; elsewhere it writes to
+ * the console, prefixed with its caller chain and tinted per level when the environment supports ANSI colors.
  */
 class Logger {
 	private static inspector: InspectorFn | null = null;
@@ -147,10 +168,16 @@ class Logger {
 
 	// UNKNOWN: log arguments are arbitrary caller values.
 	private _write(level: LogLevel, args: unknown[]) {
-		const { color, write } = LEVELS[level];
+		const { color, write, native } = LEVELS[level];
+		const log = nativeLog();
+
+		if (log) {
+			log(native, this.caller, args.map((arg) => this._inspect(arg)).join(' '));
+
+			return;
+		}
 
 		console[write](
-			'»',
 			this._getPrefix(level),
 			...args.map((arg) => this._paint(this._inspect(arg), color)),
 		);

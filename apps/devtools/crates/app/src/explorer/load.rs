@@ -337,7 +337,7 @@ impl Explorer {
 								.entry((class.clone(), kind, name))
 								.and_modify(|state| {
 									if matches!(state, ValueState::Loading) {
-										*state = ValueState::Failed("No value".into());
+										*state = ValueState::Failed("No Value".into());
 									}
 								});
 						}

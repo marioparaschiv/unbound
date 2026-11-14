@@ -8,6 +8,7 @@ import {
 import { readInstallKind } from '~/updates/install-kind';
 import navigationReady from '~/core/navigation-ready';
 import type { UpdatesState } from '~/updates/state';
+import { compareVersions } from '~/core/versions';
 import { messages, format } from '~/i18n/api';
 import { Screens } from '~/core/constants';
 import { reload } from '~/native/runtime';
@@ -80,12 +81,12 @@ export function notifyUpdates(
 }
 
 /**
- * @description Shows a toast when this launch runs a newer client than the last one did.
- * @param previous The client version that last ran; empty on the first launch, which stays quiet.
- * @param current The client version running now.
+ * @description Shows a toast when this launch runs a newer client than any before it.
+ * @param previous The newest client version that ran before; empty on the first launch, which stays quiet.
+ * @param current The client version running now. An equal or older one, as after a discarded update, stays quiet.
  */
 export function notifyClientUpdated(previous: string, current: string) {
-	if (!previous || previous === current) return;
+	if (!previous || compareVersions(current, previous) <= 0) return;
 
 	show({
 		id: CLIENT_TOAST_ID,

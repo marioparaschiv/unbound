@@ -23,6 +23,7 @@
 #import "LoaderShared.h"
 #include "LoaderToolbox.h"
 #import "MetricKitReports.h"
+#import "NativeLogCapture.h"
 #import "NativePlatform.h"
 #import "NativePluginBridge.h"
 #import "RCTHost.h"
@@ -526,6 +527,7 @@ static void prepareLoading(id instance)
     [CoreBridge installLogging];
     [FileSystem init];
     [CoreBridge openLogFile];
+    UnboundStartNativeLogCapture();
     [Settings init];
 
     if (![Utilities isRNNewArchEnabled])

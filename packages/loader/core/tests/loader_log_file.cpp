@@ -1,6 +1,8 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <nlohmann/json.hpp>
+#include <optional>
 #include <sstream>
 #include <string>
 
@@ -21,17 +23,64 @@ static std::string scratchDirectory(const char *name)
     return directory.string();
 }
 
-static void formatsLinesWithUTCMillisecondsLevelAndCategory()
+static void writesEntriesAsJSONLines()
 {
-    std::string line =
-        loader::logFileLine(loader::LogLevel::Warning, "plugins", "slow start", 1793134800123LL);
-    assert(line == "2026-10-27T21:00:00.123Z W [plugins] slow start\n");
+    loader::LogEntry entry{1793134800123LL,
+                           loader::LogSource::ReactNative,
+                           loader::LogLevel::Warning,
+                           {"Plugins", "Start"},
+                           "slow \"start\""};
+    assert(loader::logEntryLine(entry) ==
+           "{\"t\":1793134800123,\"src\":\"react-native\",\"lvl\":\"warn\","
+           "\"scope\":[\"Plugins\",\"Start\"],\"msg\":\"slow \\\"start\\\"\"}\n");
+    std::optional<loader::LogEntry> parsed =
+        loader::logEntryFromJSON(nlohmann::json::parse(loader::logEntryLine(entry)));
+    assert(parsed && parsed->time == entry.time && parsed->source == entry.source &&
+           parsed->level == entry.level && parsed->scope == entry.scope &&
+           parsed->message == entry.message);
+    assert(!loader::logEntryFromJSON(nlohmann::json::parse("{\"msg\":\"no time\"}")));
+}
+
+static void replacesInvalidUTF8InsteadOfThrowing()
+{
+    loader::LogEntry entry{0,
+                           loader::LogSource::Native,
+                           loader::LogLevel::Info,
+                           {},
+                           "a\xff"
+                           "z"};
+    assert(loader::logEntryLine(entry).find("a\xEF\xBF\xBDz") != std::string::npos);
+}
+
+static void formatsEntriesAsPlainText()
+{
+    loader::LogEntry entry{1793134800123LL,
+                           loader::LogSource::Unbound,
+                           loader::LogLevel::Warning,
+                           {"Loader", "plugins"},
+                           "slow start"};
+    assert(loader::formatLogEntry(entry) ==
+           "2026-10-27T21:00:00.123Z W unbound [Loader/plugins] slow start");
+    entry.scope.clear();
+    entry.source = loader::LogSource::JS;
+    assert(loader::formatLogEntry(entry) == "2026-10-27T21:00:00.123Z W js slow start");
+}
+
+static void namesEachFileAfterItsStem()
+{
+    std::string             directory = scratchDirectory("unbound-log-names");
+    loader::RotatingLogFile file("native", 10, 3, 8);
+    file.open(directory);
+    file.append("aaaaaaaa\n");
+    file.append("bbbbbbbb\n");
+    assert(file.path(0) == directory + "/native.log");
+    assert(read(directory + "/native.1.log") == "aaaaaaaa\n");
 }
 
 static void buffersLinesUntilOpened()
 {
     std::string             directory = scratchDirectory("unbound-log-buffer");
-    loader::RotatingLogFile file(1024, 3, 2);
+    loader::RotatingLogFile file("unbound", 1024, 3, 2);
     file.append("first\n");
     file.append("second\n");
     file.append("third\n");
@@ -43,7 +92,7 @@ static void buffersLinesUntilOpened()
 static void rotatesAndKeepsOnlyTheNewestFiles()
 {
     std::string             directory = scratchDirectory("unbound-log-rotate");
-    loader::RotatingLogFile file(10, 3, 8);
+    loader::RotatingLogFile file("unbound", 10, 3, 8);
     file.open(directory);
     for (const char *line : {"aaaaaaaa\n", "bbbbbbbb\n", "cccccccc\n", "dddddddd\n"})
     {
@@ -59,11 +108,11 @@ static void appendsToAnExistingFileAcrossLaunches()
 {
     std::string directory = scratchDirectory("unbound-log-reopen");
     {
-        loader::RotatingLogFile file(1024, 3, 8);
+        loader::RotatingLogFile file("unbound", 1024, 3, 8);
         file.open(directory);
         file.append("launch one\n");
     }
-    loader::RotatingLogFile file(1024, 3, 8);
+    loader::RotatingLogFile file("unbound", 1024, 3, 8);
     file.open(directory);
     file.append("launch two\n");
     assert(read(file.path(0)) == "launch one\nlaunch two\n");
@@ -77,7 +126,10 @@ static void placesLogsBesideTheOtherUnboundFiles()
 
 int main()
 {
-    formatsLinesWithUTCMillisecondsLevelAndCategory();
+    writesEntriesAsJSONLines();
+    replacesInvalidUTF8InsteadOfThrowing();
+    formatsEntriesAsPlainText();
+    namesEachFileAfterItsStem();
     buffersLinesUntilOpened();
     rotatesAndKeepsOnlyTheNewestFiles();
     appendsToAnExistingFileAcrossLaunches();

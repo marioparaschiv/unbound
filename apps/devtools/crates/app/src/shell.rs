@@ -1,5 +1,5 @@
 //! The window: Unbound's sidebar of pages on the left, the open page on the right. The pages are
-//! the React component tree, the native view tree and the Metro module explorer.
+//! the React component tree, the native view tree, the Metro module explorer and the device's logs.
 
 use gpui::{
 	App, Context, Entity, Focusable, Global, KeyBinding, WeakEntity, Window, actions, div,
@@ -10,6 +10,7 @@ use unbound_devtools_core::Devtools;
 
 use crate::app::Workspace;
 use crate::link::DebuggerLink;
+use crate::logs_page::LogsPage;
 use crate::mcp_menu::McpButton;
 use crate::metro::MetroBrowser;
 use crate::nav;
@@ -60,12 +61,14 @@ pub enum Page {
 	Components,
 	Views,
 	Metro,
+	Logs,
 }
 
 pub struct Shell {
 	workspace: Entity<Workspace>,
 	views: Entity<ViewFinder>,
 	metro: Entity<MetroBrowser>,
+	logs: Entity<LogsPage>,
 	link: Entity<DebuggerLink>,
 	page: Page,
 	/// Open, or playing its exit motion; dropped once that ends.
@@ -92,11 +95,13 @@ impl Shell {
 			cx.observe_global::<update::toast::Toasts>(|_, cx| cx.notify()),
 		];
 		let views = cx.new(|cx| ViewFinder::new(devtools.clone(), mcp.clone(), window, cx));
-		let metro = cx.new(|cx| MetroBrowser::new(devtools, mcp, window, cx));
+		let metro = cx.new(|cx| MetroBrowser::new(devtools.clone(), mcp.clone(), window, cx));
+		let logs = cx.new(|cx| LogsPage::new(devtools, mcp, cx));
 		let this = Self {
 			workspace,
 			views,
 			metro,
+			logs,
 			link,
 			page: Page::Components,
 			settings: None,
@@ -164,6 +169,7 @@ impl Shell {
 				),
 				self.row(Page::Views, nav::VIEWS_TITLE, "icons/layers.svg"),
 				self.row(Page::Metro, nav::METRO_TITLE, "icons/boxes.svg"),
+				self.row(Page::Logs, nav::LOGS_TITLE, "icons/scroll-text.svg"),
 			],
 			first: true,
 			shell,
@@ -242,6 +248,7 @@ impl Render for Shell {
 			Page::Components => self.workspace.clone().into_any_element(),
 			Page::Views => self.views.clone().into_any_element(),
 			Page::Metro => self.metro.clone().into_any_element(),
+			Page::Logs => self.logs.clone().into_any_element(),
 		};
 		let framed = title_bar::is_drawn(window);
 		div()

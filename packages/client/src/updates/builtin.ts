@@ -5,6 +5,7 @@ import { notifyClientUpdated, notifyStagedBundle, notifyUpdates } from '~/update
 import { CLIENT_VERSION, Screens } from '~/core/constants';
 import { hasStagedBundle } from '~/native/unbound-native';
 import type { SectionEntry } from '~/settings/section';
+import { compareVersions } from '~/core/versions';
 import { getSetting } from '~/settings/unbound';
 import UpdatesStore from '~/updates/state';
 import { getBucket } from '~/storage/api';
@@ -49,7 +50,9 @@ function announceClient() {
 
 	getBucket(CORE_BUCKET).remove(LEGACY_LAST_CLIENT_VERSION);
 
-	if (previous === CLIENT_VERSION) return;
+	// Keeps the newest version seen: the loader runs the previous bundle again when it discards an update that
+	// closed before it was healthy, and the retried update must not announce itself a second time.
+	if (previous && compareVersions(CLIENT_VERSION, previous) <= 0) return;
 
 	if (getSetting('updater.notify.client')) {
 		notifyClientUpdated(previous, CLIENT_VERSION);

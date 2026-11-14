@@ -17,6 +17,7 @@ use crate::bridge::Launcher;
 use crate::explorer::ExplorerOutcome;
 use crate::inspect::InspectedElement;
 use crate::link::{Link, LinkStatus};
+use crate::logs::LogBuffer;
 use crate::metro::MetroOutcome;
 use crate::react_protocol::{
 	ComponentFilter, InspectedElementPayload, InspectedKind, ReactOutbound,
@@ -130,6 +131,8 @@ pub(crate) struct Inner {
 	pub(crate) store: RwLock<Store>,
 	pub(crate) state: Mutex<State>,
 	pub(crate) changes: watch::Sender<u64>,
+	pub(crate) logs: Mutex<LogBuffer>,
+	pub(crate) log_changes: watch::Sender<u64>,
 	pub(crate) pending: Mutex<HashMap<u64, oneshot::Sender<InspectedElementPayload>>>,
 	pub(crate) inspections: Mutex<HashMap<ElementId, InspectedElement>>,
 	pub(crate) views: Mutex<HashMap<String, oneshot::Sender<ViewsReply>>>,
@@ -228,6 +231,8 @@ impl Devtools {
 				link: None,
 			}),
 			changes: watch::channel(0).0,
+			logs: Mutex::new(LogBuffer::default()),
+			log_changes: watch::channel(0).0,
 			pending: Mutex::new(HashMap::new()),
 			inspections: Mutex::new(HashMap::new()),
 			views: Mutex::new(HashMap::new()),

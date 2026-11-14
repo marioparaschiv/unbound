@@ -395,7 +395,7 @@ impl ViewFinder {
 			None => {}
 			// The roots' loading and failure fill the whole page instead.
 			Some(Children::Loading | Children::Failed(_)) if parent.is_none() => {}
-			Some(Children::Loading) => rows.push(note("Loading".into(), false)),
+			Some(Children::Loading) => rows.push(note("Loading…".into(), false)),
 			Some(Children::Failed(error)) => rows.push(note(error.clone().into(), true)),
 			Some(Children::Loaded(level)) => {
 				for id in &level.ids {
@@ -412,10 +412,10 @@ impl ViewFinder {
 				let remaining = level.remaining();
 				if remaining > 0 {
 					let (text, loading) = match &level.next {
-						Some(Ok(())) => ("Loading".to_owned(), true),
+						Some(Ok(())) => ("Loading…".to_owned(), true),
 						Some(Err(error)) => (format!("{error} Click to try again."), false),
 						None => (
-							format!("Show {} more", remaining.min(VIEWS_PAGE_SIZE)),
+							format!("Show {} More", remaining.min(VIEWS_PAGE_SIZE)),
 							false,
 						),
 					};
@@ -534,7 +534,7 @@ impl Render for ViewFinder {
 							"Refresh",
 							connected,
 						)
-						.tooltip(tooltip("List the device's views again"))
+						.tooltip(tooltip("Reload the Device's Views"))
 						.when(connected, |button| {
 							button.on_click(cx.listener(|this, _, _, cx| this.list_roots(cx)))
 						}),

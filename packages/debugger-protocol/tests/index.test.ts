@@ -14,6 +14,7 @@ import {
 	serializeMessage,
 	parseMessage,
 	type EvalRequest,
+	type LogMessage,
 	type PushRequest,
 	type PushResult,
 } from '~/index';
@@ -141,6 +142,28 @@ describe('parseMessage rejection', () => {
 		const log = { type: 'log', level: 2, message: 'hi' } as const;
 
 		expect(parseMessage(JSON.stringify(log))).toEqual(log);
+	});
+
+	test('accepts a log line with its source, scope and time', () => {
+		const log: LogMessage = {
+			type: 'log',
+			level: 1,
+			message: 'Theme updated.',
+			source: 'unbound',
+			scope: ['Loader', 'themes'],
+			at: 1_700_000_000_000,
+		};
+
+		expect(parseMessage(JSON.stringify(log))).toEqual(log);
+	});
+
+	test('rejects a log line whose source, scope or time is malformed', () => {
+		const log = { type: 'log', level: 1, message: 'x' } as const;
+
+		expect(parseMessage(JSON.stringify({ ...log, source: 'kernel' }))).toBeUndefined();
+		expect(parseMessage(JSON.stringify({ ...log, scope: 'Loader' }))).toBeUndefined();
+		expect(parseMessage(JSON.stringify({ ...log, scope: ['Loader', 1] }))).toBeUndefined();
+		expect(parseMessage(JSON.stringify({ ...log, at: '1700000000000' }))).toBeUndefined();
 	});
 });
 

@@ -286,9 +286,9 @@ impl Workspace {
 			.child(
 				icon_button("host", assets::LAYERS, show_host)
 					.tooltip(tooltip(if show_host {
-						"Hide host components"
+						"Hide Host Components"
 					} else {
-						"Show host components"
+						"Show Host Components"
 					}))
 					.on_click(
 						cx.listener(move |this, _, _, _| this.set_show_host_components(!show_host)),

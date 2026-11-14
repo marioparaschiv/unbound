@@ -23,6 +23,7 @@ const handler: CommandHandler<typeof logsCommand.schema> = async ({
 	grep,
 	since,
 	follow,
+	native,
 	symbolicate,
 	bundle,
 	pull,
@@ -96,7 +97,7 @@ const handler: CommandHandler<typeof logsCommand.schema> = async ({
 	}
 
 	return target.platform === 'ios'
-		? tailIOS(target, { since, follow, emit })
+		? tailIOS(target, { since, follow, native, emit })
 		: tailAndroid(target, { since, follow, emit });
 };
 

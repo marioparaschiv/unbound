@@ -25,6 +25,15 @@
 			}
 		},
 		"deviceDisconnected": { "type": "device-status", "connected": false },
+		"log": { "type": "log", "level": 2, "message": "Slow render" },
+		"logSourced": {
+			"type": "log",
+			"level": 1,
+			"message": "Theme updated.",
+			"source": "unbound",
+			"scope": ["Loader", "themes"],
+			"at": 1700000000000
+		},
 		"bridgeInfo": {
 			"type": "bridge-info",
 			"code": "4821",

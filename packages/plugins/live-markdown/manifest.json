@@ -1,0 +1,17 @@
+{
+	"id": "unbound.live-markdown",
+	"name": "Live Markdown",
+	"description": "Shows markdown as you type it in the message box: bold, italics, underline, strikethrough, code, spoilers, headings and quotes.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TextIcon",
+	"main": "index.tsx"
+}

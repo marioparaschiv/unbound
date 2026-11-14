@@ -297,6 +297,15 @@ export async function summarise(vphone: Vphone, report: Report, withLog = true):
 		}));
 
 		lines.push('unbound.log for that run:', summariseLog(window));
+
+		// React Native's and the native runtime's output; older loaders wrote none.
+		const native = await readWindow(vphone, toIso(launched), toIso(died), 'native').catch(
+			() => undefined,
+		);
+
+		if (native?.entries.length) {
+			lines.push('native.log for that run:', summariseLog(native));
+		}
 	}
 
 	lines.push(`full report: scripts/crashes --path ${report.path}`);

@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.2.0](https://github.com/marioparaschiv/unbound/compare/debugger-v1.1.1...debugger-v1.2.0) (2026-11-14)
+
+
+### Features
+
+* **devtools:** stream device logs into DevTools ([#1431](https://github.com/marioparaschiv/unbound/issues/1431)) ([4225450](https://github.com/marioparaschiv/unbound/commit/42254507717a6e18052f7d1b2d125cc6c4831f31))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger-protocol bumped to 2.2.0
+
 ## [1.1.1](https://github.com/marioparaschiv/unbound/compare/debugger-v1.1.0...debugger-v1.1.1) (2026-11-14)
 
 

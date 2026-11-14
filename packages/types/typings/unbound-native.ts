@@ -311,4 +311,43 @@ export type UnboundNativeBridge = {
 	 * cross to JS as base64. Rejects on a path that leaves the folder or a status other than 200.
 	 */
 	downloadFile(url: string, path: string): Promise<void>;
+	/**
+	 * Appends an Unbound line to `Logs/unbound.log` and hands it to `logs` subscribers. Missing on a loader from
+	 * before it; the logger falls back to `console` there.
+	 */
+	log?(level: UnboundLogLevel, scope: string[], message: string): void;
+	/** Live log lines from every source; missing on a loader from before it. */
+	logs?: UnboundNativeLogs;
+};
+
+/** @internal */
+export type UnboundLogLevel = 'debug' | 'info' | 'warn' | 'error';
+
+/**
+ * Who wrote a log line: Unbound (client and loader), Discord's JS console, React Native's native logging, or other
+ * native output. Unbound and JS lines live in `Logs/unbound.log`, the rest in `Logs/native.log`.
+ * @internal
+ */
+export type UnboundLogSource = 'unbound' | 'js' | 'react-native' | 'native';
+
+/**
+ * One log line, the same shape as each JSON line in the loader's log files.
+ * @internal
+ */
+export type UnboundLogEntry = {
+	/** Milliseconds since the epoch. */
+	t: number;
+	src: UnboundLogSource;
+	lvl: UnboundLogLevel;
+	scope: string[];
+	msg: string;
+};
+
+/** @internal */
+export type UnboundNativeLogs = {
+	/**
+	 * Calls `callback` on the JS thread with each batch of new lines, about every 100 ms, until the returned function
+	 * runs. Lines written before subscribing are only in the files; nothing is buffered while no one subscribes.
+	 */
+	subscribe(callback: (entries: UnboundLogEntry[]) => void): () => void;
 };

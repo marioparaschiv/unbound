@@ -3,7 +3,7 @@ resolver = "3"
 members = ["crates/core", "crates/app"]
 
 [workspace.package]
-version = "1.2.0"
+version = "1.3.0"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/marioparaschiv/unbound"
@@ -50,6 +50,7 @@ clap = { version = "4", features = ["derive", "env"] }
 ureq = "3.5"
 sha2 = "0.10"
 uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
 gpui = { package = "gpui-fast", version = "0.1.14" }
 gpui-component = { version = "0.9.1", features = ["gpui-fast"] }
 gpui-kit-assets = { version = "0.9.1", features = ["gpui-fast"] }

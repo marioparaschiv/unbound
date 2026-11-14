@@ -200,15 +200,15 @@ impl Workspace {
 			.child(
 				icon_button("highlight", assets::CROSSHAIR, highlighted)
 					.tooltip(tooltip(if highlighted {
-						"Stop highlighting on device"
+						"Stop Highlighting on the Device"
 					} else {
-						"Highlight on device"
+						"Highlight on the Device"
 					}))
 					.on_click(cx.listener(move |this, _, _, cx| this.toggle_highlight(id, cx))),
 			)
 			.child(
 				icon_button("log", assets::TERMINAL, false)
-					.tooltip(tooltip("Log to the device console"))
+					.tooltip(tooltip("Log to the Device Console"))
 					.on_click(cx.listener(move |this, _, _, cx| this.log_to_console(id, cx))),
 			)
 	}

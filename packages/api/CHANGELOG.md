@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.4.0](https://github.com/marioparaschiv/unbound/compare/api-v3.3.0...api-v3.4.0) (2026-11-14)
+
+
+### Bug Fixes
+
+* **client:** regenerate the SDK and fix lint errors on main ([#1419](https://github.com/marioparaschiv/unbound/issues/1419)) ([7125b2e](https://github.com/marioparaschiv/unbound/commit/7125b2e016d0dd30b8401fb86050c21b4ac4bf2c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 3.4.0
+    * @unbound-app/sdk-generator bumped to 1.0.4
+
 ## [3.3.0](https://github.com/marioparaschiv/unbound/compare/api-v3.2.0...api-v3.3.0) (2026-11-14)
 
 

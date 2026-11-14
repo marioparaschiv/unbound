@@ -12,8 +12,10 @@ import (
 )
 
 type ipaMetadata struct {
-	Version string `json:"version"`
-	Build   string `json:"build"`
+	Version      string         `json:"version"`
+	Build        string         `json:"build"`
+	MinOSVersion string         `json:"minOSVersion,omitempty"`
+	Permissions  ipaPermissions `json:"permissions"`
 }
 
 func runIPAInfo(args []string) error {
@@ -27,6 +29,9 @@ func runIPAInfo(args []string) error {
 	}
 	metadata, err := readIPAMetadata(*path)
 	if err != nil {
+		return err
+	}
+	if metadata.Permissions, err = readIPAPermissions(*path); err != nil {
 		return err
 	}
 	return printJSON(metadata)
@@ -74,7 +79,8 @@ func parseIPAMetadata(file *zip.File) (ipaMetadata, error) {
 	if err != nil {
 		return ipaMetadata{}, err
 	}
-	return ipaMetadata{Version: version, Build: build}, nil
+	minOS, _ := plistString(data, "MinimumOSVersion")
+	return ipaMetadata{Version: version, Build: build, MinOSVersion: minOS}, nil
 }
 
 func plistString(data []byte, key string) (string, error) {

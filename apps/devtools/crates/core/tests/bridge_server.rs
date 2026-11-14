@@ -249,6 +249,22 @@ async fn relays_requests_and_answers_to_the_asker() {
 		device.send(&log).await;
 		assert_eq!(asker.next().await, log, "{name}");
 		assert_eq!(other.next().await, log, "{name}");
+
+		// A malformed source is dropped; a line with its source, scope and time goes through whole.
+		device
+			.send(&json!({ "type": "log", "level": 1, "message": "x", "source": "kernel" }))
+			.await;
+		let sourced = json!({
+			"type": "log",
+			"level": 1,
+			"message": "Theme updated.",
+			"source": "unbound",
+			"scope": ["Loader", "themes"],
+			"at": 1_700_000_000_000u64
+		});
+		device.send(&sourced).await;
+		assert_eq!(asker.next().await, sourced, "{name}");
+		assert_eq!(other.next().await, sourced, "{name}");
 		other.quiet().await;
 	}
 }
