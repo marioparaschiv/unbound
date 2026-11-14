@@ -22,5 +22,12 @@
 	},
 	"icon": "StarIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"bytecode": {
+		"98": "d875f1963b7000395db71883433a3745e7eb2aa0526183cc742d21f5838e240ff6061227b82c08cd8a0faf9c3197d50a982555e35a1a0c982df3eae4deb6fd25"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "VSQWPlq/oWOGkxGWd6CPKSTpqen3VosfQY614C46aV9Vk023xUXguHiVcMimZlmDP+tpu3e4+haGdigrPDeOCw=="
+	}
 }
