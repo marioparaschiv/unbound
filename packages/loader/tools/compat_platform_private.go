@@ -22,7 +22,7 @@ import (
 const (
 	androidFrameworkVersion = "17-robolectric-16653203"
 	androidFrameworkURL     = "https://repo1.maven.org/maven2/org/robolectric/android-all/" + androidFrameworkVersion + "/android-all-" + androidFrameworkVersion + ".jar"
-	iosRuntimeIndexVersion  = "2"
+	iosRuntimeIndexVersion  = "3"
 )
 
 var iosRuntimeLibraries = []string{
@@ -224,15 +224,7 @@ func loadIOSRuntimeIndex(root, cache string) (*objcIndex, error) {
 	if index, err := readObjCIndexCache(cachePath); err == nil {
 		return index, nil
 	}
-	libraries := root
-	if !hasPlainFrameworks(root) {
-		libraries = filepath.Join(cache, "ios-runtime", stamp+"-extracted")
-		defer os.RemoveAll(libraries)
-		if err := extractSharedCache(sharedCachePath(root), libraries); err != nil {
-			return nil, err
-		}
-	}
-	index, err := indexIOSRuntime(libraries)
+	index, err := indexIOSRuntimeRoot(root, filepath.Join(cache, "ios-runtime", stamp+"-extracted"))
 	if err != nil {
 		return nil, err
 	}
@@ -240,6 +232,22 @@ func loadIOSRuntimeIndex(root, cache string) (*objcIndex, error) {
 		fmt.Fprintln(os.Stderr, "compat-scan: could not cache the iOS runtime index:", err)
 	}
 	return index, nil
+}
+
+func indexIOSRuntimeRoot(root, extracted string) (*objcIndex, error) {
+	if hasPlainFrameworks(root) {
+		return indexIOSRuntime(root)
+	}
+	index, err := indexSharedCache(sharedCachePath(root))
+	if err == nil {
+		return index, nil
+	}
+	fmt.Fprintln(os.Stderr, "compat-scan: could not read the shared cache directly, extracting it:", err)
+	defer os.RemoveAll(extracted)
+	if err := extractSharedCache(sharedCachePath(root), extracted); err != nil {
+		return nil, err
+	}
+	return indexIOSRuntime(extracted)
 }
 
 func iosRuntimeStamp(root string) (string, error) {
