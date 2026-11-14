@@ -623,6 +623,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/better-status-indicators": {
+      "name": "better-status-indicators",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/better-you-bar": {
       "name": "better-you-bar",
       "dependencies": {
@@ -3481,6 +3495,8 @@
     "better-search": ["better-search@workspace:packages/plugins/better-search"],
 
     "better-sessions": ["better-sessions@workspace:packages/plugins/better-sessions"],
+
+    "better-status-indicators": ["better-status-indicators@workspace:packages/plugins/better-status-indicators"],
 
     "better-you-bar": ["better-you-bar@workspace:packages/plugins/better-you-bar"],
 
