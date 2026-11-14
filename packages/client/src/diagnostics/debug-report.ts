@@ -6,6 +6,7 @@ import { messages } from '~/i18n/api';
 import { show } from '~/toasts/api';
 import fs from '~/native/fs';
 
+import { rejectedField, withoutRejectedField } from './rejected-field';
 import formatDebugInfo, { type DebugInfo } from './format-debug-info';
 import { readDebugReport, readEntitlements } from './read-debug-info';
 import { crashLogExcerpt } from './crash-report';
@@ -35,6 +36,7 @@ const LOADER_LOG = 'Unbound/Logs/unbound.log';
 const CARD_DIRECTORY = 'Unbound/cache/debug';
 const UPLOAD_ORIGIN_FILE = 1;
 const UPLOAD_PLATFORM_REACT_NATIVE = 0;
+const MAX_CARD_ATTEMPTS = 8;
 
 const CloudUploader = findByProps('CloudUpload');
 const SelectedChannelStore = findStore('SelectedChannel');
@@ -158,17 +160,30 @@ async function drawCard(info: DebugInfo) {
 	// The plist goes to the server alone, which reduces it to JSON in the alt text.
 	const entitlements = readEntitlements() || undefined;
 	const request = createUnboundClient();
+	const required = new Set(Object.keys(requiredOnly(info)));
+	let body: DebugInfo & { entitlements?: string } = { ...info, entitlements };
 
-	try {
-		return await request('POST /api/v1/debug-cards', { body: { ...info, entitlements } });
-	} catch (error) {
-		Logger.warn(
-			'Failed to draw the full debug card, retrying with the required fields only:',
-			error,
-		);
+	for (let attempt = 0; attempt < MAX_CARD_ATTEMPTS; attempt++) {
+		try {
+			return await request('POST /api/v1/debug-cards', { body });
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			const next = withoutRejectedField(body, message, required);
 
-		return request('POST /api/v1/debug-cards', { body: requiredOnly(info) });
+			Logger.warn(
+				`Failed to draw the debug card with ${rejectedField(message) ?? 'every field'}:`,
+				error,
+			);
+
+			if (!next) {
+				break;
+			}
+
+			body = next;
+		}
 	}
+
+	return request('POST /api/v1/debug-cards', { body: requiredOnly(info) });
 }
 
 async function uploadCard(
