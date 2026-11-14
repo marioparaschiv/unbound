@@ -290,6 +290,9 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 	if err := validateIPAExtensionExecutables(options.output); err != nil {
 		return err
 	}
+	if err := validateIPAExtensionWiring(options.output); err != nil {
+		return err
+	}
 	if options.configuration == "release" {
 		if _, _, keyErr := attestationKeys(); keyErr == nil {
 			if err := verifyIPA(options.output, work, runner); err != nil {
@@ -533,7 +536,7 @@ func signWithAppGroup(runner commandRunner, work, binary string) error {
 	if err := os.WriteFile(entitlements, []byte(shareEntitlements), 0o644); err != nil {
 		return err
 	}
-	if err := runner(work, "ldid", []string{"-S" + entitlements, binary}, os.Environ(), os.Stdout, os.Stderr); err != nil {
+	if err := runner(work, "codesign", []string{"--force", "--sign", "-", "--entitlements", entitlements, binary}, os.Environ(), os.Stdout, os.Stderr); err != nil {
 		return fmt.Errorf("signing the share extension with its app group failed: %w", err)
 	}
 	return nil
