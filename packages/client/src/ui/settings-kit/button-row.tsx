@@ -1,10 +1,13 @@
 import type { ReactElement } from 'react';
+import { Image } from 'react-native';
 
 import { confirmText } from '~/dialogs/feedback';
 import { Discord } from '~/metro/components';
 import { showDialog } from '~/dialogs/api';
 import { messages } from '~/i18n/api';
 import { icons } from '~/assets/api';
+
+import useStyles from './button-row.style';
 
 /** Props for `ButtonRow`. */
 export type ButtonRowProps = {
@@ -36,6 +39,8 @@ function ButtonRow({
 	disabled = false,
 	onPress,
 }: ButtonRowProps): ReactElement {
+	const styles = useStyles();
+
 	async function press() {
 		if (
 			confirmation &&
@@ -59,7 +64,7 @@ function ButtonRow({
 			variant={variant === 'danger' ? 'danger' : undefined}
 			icon={
 				variant === 'danger' ? (
-					<Discord.TableRowIcon source={icons.TrashIcon} variant='danger' />
+					<Image source={icons.TrashIcon} style={styles.dangerIcon} />
 				) : undefined
 			}
 			disabled={disabled}
