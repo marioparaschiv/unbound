@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.4.0](https://github.com/marioparaschiv/unbound/compare/types-v1.3.0...types-v1.4.0) (2026-11-14)
+
+
+### Features
+
+* **client:** name extensions without the app group in /debug ([#1414](https://github.com/marioparaschiv/unbound/issues/1414)) ([250a704](https://github.com/marioparaschiv/unbound/commit/250a7042326d496f5452d3dfa733fe376fba7697))
+* **client:** send native crashes with opt-in crash reports ([#1403](https://github.com/marioparaschiv/unbound/issues/1403)) ([c3b7f91](https://github.com/marioparaschiv/unbound/commit/c3b7f916ce070ffa1d64e0860ab5dae2f5660396))
+* **devtools:** stream device logs into DevTools ([#1431](https://github.com/marioparaschiv/unbound/issues/1431)) ([4225450](https://github.com/marioparaschiv/unbound/commit/42254507717a6e18052f7d1b2d125cc6c4831f31))
+
+
+### Bug Fixes
+
+* **client:** regenerate the SDK and fix lint errors on main ([#1419](https://github.com/marioparaschiv/unbound/issues/1419)) ([7125b2e](https://github.com/marioparaschiv/unbound/commit/7125b2e016d0dd30b8401fb86050c21b4ac4bf2c))
+
 ## [1.3.0](https://github.com/marioparaschiv/unbound/compare/types-v1.2.0...types-v1.3.0) (2026-11-14)
 
 

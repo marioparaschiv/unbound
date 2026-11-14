@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/sdk-generator",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"private": true,
 	"type": "module",
 	"module": "src/index.ts",

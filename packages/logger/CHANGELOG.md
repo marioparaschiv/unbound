@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/marioparaschiv/unbound/compare/logger-v1.0.0...logger-v1.1.0) (2026-11-14)
+
+
+### Features
+
+* **devtools:** stream device logs into DevTools ([#1431](https://github.com/marioparaschiv/unbound/issues/1431)) ([4225450](https://github.com/marioparaschiv/unbound/commit/42254507717a6e18052f7d1b2d125cc6c4831f31))
+
 ## [1.0.0](https://github.com/marioparaschiv/unbound/compare/logger-v0.7.3...logger-v1.0.0) (2026-11-11)
 
 

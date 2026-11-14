@@ -1,5 +1,26 @@
 # Changelog
 
+## [3.2.0](https://github.com/marioparaschiv/unbound/compare/cli-v3.1.1...cli-v3.2.0) (2026-11-14)
+
+
+### Features
+
+* **devtools:** stream device logs into DevTools ([#1431](https://github.com/marioparaschiv/unbound/issues/1431)) ([4225450](https://github.com/marioparaschiv/unbound/commit/42254507717a6e18052f7d1b2d125cc6c4831f31))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger bumped to 1.2.0
+    * @unbound-app/debugger-protocol bumped to 2.2.0
+  * devDependencies
+    * @unbound-app/api bumped to 3.4.0
+    * @unbound-app/contracts bumped to 2.4.0
+    * @unbound-app/types bumped to 1.4.0
+    * @unbound-app/utils bumped to 1.0.4
+    * @unbound-app/web bumped to 2.4.0
+
 ## [3.1.1](https://github.com/marioparaschiv/unbound/compare/cli-v3.1.0...cli-v3.1.1) (2026-11-14)
 
 
