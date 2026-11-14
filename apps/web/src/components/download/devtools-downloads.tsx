@@ -104,8 +104,9 @@ function DevToolsDownloads() {
 					DevTools
 				</h2>
 				<p className='text-muted-foreground text-sm'>
-					Inspect Discord's React tree on a connected device. Each download is an archive
-					with the app inside.
+					A desktop app for building on Unbound: inspect and edit components, browse
+					native views and Metro modules, and let an agent join over MCP. Each download is
+					an archive with the app inside.
 				</p>
 			</div>
 			{/* Column-first on wide screens: Windows on the left, macOS then Linux on the right. */}
