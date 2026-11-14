@@ -17,6 +17,7 @@
 #include "LoaderVersion.h"
 #include "NativePluginRuntime.h"
 #include "UnboundNativeFonts.h"
+#include "UnboundNativeLogs.h"
 
 namespace loader {
 namespace jsi = facebook::jsi;
@@ -248,6 +249,7 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
         bridge.setProperty(runtime, "fonts", makeFontsBridge(runtime, std::move(provider.fonts)));
     }
     bridge.setProperty(runtime, "getSha256", sha256Function(runtime));
+    installLogBridge(runtime, bridge);
     bridge.setProperty(runtime, "downloadFile",
                        downloadFunction(runtime, std::move(provider.downloadFile)));
     runtime.global().setProperty(runtime, "UnboundNative", std::move(bridge));

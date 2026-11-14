@@ -48,12 +48,15 @@ int main()
     {
         lines += "line " + std::to_string(index) + "\n";
     }
+    lines += loader::logEntryLine(
+        {1793134800123LL, loader::LogSource::JS, loader::LogLevel::Error, {}, "json line"});
     assert(loader::writeTextFileAtomically(
         loader::logFileDirectory(directory) + "/" + loader::kLogFileName, lines));
     loader::openLogFile(directory);
     loader::appendLogFile(loader::LogLevel::Info, "test", "this launch");
     std::string tail = loader::previousLaunchLogTail(3);
-    assert(tail == "line 47\nline 48\nline 49\n");
+    // Lines from an older loader stay as written; JSON lines read as plain text.
+    assert(tail == "line 48\nline 49\n2026-10-27T21:00:00.123Z E js json line\n");
     std::filesystem::remove_all(directory);
     return 0;
 }
