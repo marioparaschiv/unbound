@@ -1,0 +1,16 @@
+{
+	"frontmatter": {
+		"banner": "media/banner.png",
+		"media": []
+	},
+	"media": [
+		{
+			"path": "media/banner.png",
+			"kind": "image",
+			"width": 1200,
+			"height": 400,
+			"thumbhash": "vAeCAoAAh4d4h394iA8AAFhniIdwetc=",
+			"bytes": 31347
+		}
+	]
+}
