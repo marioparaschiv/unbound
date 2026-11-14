@@ -5,6 +5,7 @@
 @interface Utilities (CodeSignature)
 
 + (NSDictionary *)getApplicationEntitlements;
++ (NSDictionary *)entitlementsOfExecutable:(NSString *)path;
 + (NSDictionary *)getApplicationSignatureInfo;
 + (NSString *)getInstallDetails;
 + (NSString *)formatEntitlementsAsPlist:(NSDictionary *)entitlements;

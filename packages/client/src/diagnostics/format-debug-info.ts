@@ -43,6 +43,9 @@ export function debugLines(info: DebugInfo): string[] {
 		...(info.missingExtensions?.length
 			? [`- **Missing extensions:** ${info.missingExtensions.join(' · ')}`]
 			: []),
+		...(info.isolatedExtensions?.length
+			? [`- **Extensions without the app group:** ${info.isolatedExtensions.join(' · ')}`]
+			: []),
 		...(info.addonUpdates?.length
 			? [`- **Updates waiting:** ${info.addonUpdates.join(' · ')}`]
 			: []),
