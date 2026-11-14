@@ -1,5 +1,42 @@
 # Changelog
 
+## [3.4.0](https://github.com/marioparaschiv/unbound/compare/client-v3.3.0...client-v3.4.0) (2026-11-14)
+
+
+### Features
+
+* **client:** name extensions without the app group in /debug ([#1414](https://github.com/marioparaschiv/unbound/issues/1414)) ([250a704](https://github.com/marioparaschiv/unbound/commit/250a7042326d496f5452d3dfa733fe376fba7697))
+* **client:** send native crashes with opt-in crash reports ([#1403](https://github.com/marioparaschiv/unbound/issues/1403)) ([c3b7f91](https://github.com/marioparaschiv/unbound/commit/c3b7f916ce070ffa1d64e0860ab5dae2f5660396))
+* **client:** warn when the signing profile is about to expire ([#1398](https://github.com/marioparaschiv/unbound/issues/1398)) ([6114156](https://github.com/marioparaschiv/unbound/commit/6114156f3e90931d744209985f374a5716cf7303))
+* **devtools:** stream device logs into DevTools ([#1431](https://github.com/marioparaschiv/unbound/issues/1431)) ([4225450](https://github.com/marioparaschiv/unbound/commit/42254507717a6e18052f7d1b2d125cc6c4831f31))
+* **loader:** patch the bundle instead of downloading it whole ([#1401](https://github.com/marioparaschiv/unbound/issues/1401)) ([b041041](https://github.com/marioparaschiv/unbound/commit/b04104115928d635cdec4722b86b42227a7a553a))
+* **loader:** trust every listed bundle signing key ([#1399](https://github.com/marioparaschiv/unbound/issues/1399)) ([7dbb25a](https://github.com/marioparaschiv/unbound/commit/7dbb25aef9ec29f3dda2a3a70674e257e0fd0dc5))
+
+
+### Bug Fixes
+
+* **client:** announce a client update only once ([#1429](https://github.com/marioparaschiv/unbound/issues/1429)) ([ba16c56](https://github.com/marioparaschiv/unbound/commit/ba16c563c3e0dfe75103c1e2d00b872c611105c3))
+* **client:** drop fields the server rejects from the debug card ([#1432](https://github.com/marioparaschiv/unbound/issues/1432)) ([2d5a504](https://github.com/marioparaschiv/unbound/commit/2d5a50431105674396dedabdcf616319f8d6541d))
+* **client:** keep the debug card drawing when a field does not fit ([#1425](https://github.com/marioparaschiv/unbound/issues/1425)) ([247612d](https://github.com/marioparaschiv/unbound/commit/247612d3d7cc12e38374d453e3ec0306b596805d))
+* **client:** regenerate the SDK and fix lint errors on main ([#1419](https://github.com/marioparaschiv/unbound/issues/1419)) ([7125b2e](https://github.com/marioparaschiv/unbound/commit/7125b2e016d0dd30b8401fb86050c21b4ac4bf2c))
+
+
+### Continuous Integration
+
+* **client:** check bundle patches with the loader's decoder ([#1412](https://github.com/marioparaschiv/unbound/issues/1412)) ([34f7ae6](https://github.com/marioparaschiv/unbound/commit/34f7ae608f286c016992860ac84863f96bcc590b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.4.0
+    * @unbound-app/debugger-protocol bumped to 2.2.0
+    * @unbound-app/logger bumped to 1.1.0
+    * @unbound-app/types bumped to 1.4.0
+    * @unbound-app/utils bumped to 1.0.4
+    * @unbound-app/web bumped to 2.4.0
+
 ## [3.3.0](https://github.com/marioparaschiv/unbound/compare/client-v3.2.0...client-v3.3.0) (2026-11-14)
 
 

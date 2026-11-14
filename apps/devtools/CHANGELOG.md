@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.3.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.2.0...devtools-v1.3.0) (2026-11-14)
+
+
+### Features
+
+* **devtools:** edit inspected values with React DevTools parity ([#1411](https://github.com/marioparaschiv/unbound/issues/1411)) ([dd239b2](https://github.com/marioparaschiv/unbound/commit/dd239b2a679d988013b70eac00ffecb446c0eba4))
+* **devtools:** show the pairing code on every page without a device ([#1404](https://github.com/marioparaschiv/unbound/issues/1404)) ([1fd9f90](https://github.com/marioparaschiv/unbound/commit/1fd9f90e942dd5aa0d47e3bd25b61878bf9d64c3))
+* **devtools:** stream device logs into DevTools ([#1431](https://github.com/marioparaschiv/unbound/issues/1431)) ([4225450](https://github.com/marioparaschiv/unbound/commit/42254507717a6e18052f7d1b2d125cc6c4831f31))
+
 ## [1.2.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.1.0...devtools-v1.2.0) (2026-11-14)
 
 
