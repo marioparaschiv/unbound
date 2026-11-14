@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-14
+
+### Added
+
+- Hidden keywords: messages containing any of them disappear. One per line, and a line wrapped in slashes is a regular expression.
+
 ## [1.1.5] - 2026-11-14
 
 ### Added
