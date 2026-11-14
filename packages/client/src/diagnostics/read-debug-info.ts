@@ -27,6 +27,7 @@ import { readExperiments } from './experiments';
 import { readAppSession } from './app-session';
 import { recentErrors } from './recent-errors';
 import { pushStateOf } from './push-state';
+import { readGateway } from './gateway';
 
 const MAX_PATCH_CALLERS = 8;
 const MAX_LISTED_PLUGINS = 60;
@@ -360,6 +361,7 @@ export function readDebugInfo(): DebugInfo {
 		clock: attempt(() => ({ utcOffset: utcOffset() }), undefined),
 		dns: attempt(() => dnsOf(state), undefined),
 		push: attempt(() => pushOf(state, android), undefined),
+		gateway: attempt(readGateway, undefined),
 		injected: attempt(() => injectedOf(state), undefined),
 		missingExtensions: android
 			? undefined

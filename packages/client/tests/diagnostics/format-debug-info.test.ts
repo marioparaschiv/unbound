@@ -111,4 +111,21 @@ describe('formatDebugInfo', () => {
 			'- **Notifications:** granted · not registered for pushes · no push entitlement',
 		);
 	});
+
+	test('describes the gateway connection', () => {
+		const lines = formatDebugInfo({
+			...info,
+			gateway: {
+				state: 'session established',
+				latencyMs: 130,
+				connectedS: 600,
+				identifies: 3,
+				failedAttempts: 1,
+			},
+		}).split('\n');
+
+		expect(lines).toContain(
+			'- **Gateway:** session established · 130 ms · connected 10 min · identified 3× · 1 failed attempts',
+		);
+	});
 });

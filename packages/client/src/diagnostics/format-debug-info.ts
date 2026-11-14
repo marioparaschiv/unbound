@@ -54,6 +54,7 @@ export function debugLines(info: DebugInfo): string[] {
 		...(info.power ? [`- **Power:** ${powerLine(info.power)}`] : []),
 		...(info.clock ? [`- **Clock:** ${clockLine(info.clock)}`] : []),
 		...(info.push ? [`- **Notifications:** ${pushLine(info.push)}`] : []),
+		...(info.gateway ? [`- **Gateway:** ${gatewayLine(info.gateway)}`] : []),
 		...(info.experiments?.length ? [`- **Experiments:** ${info.experiments.join(', ')}`] : []),
 	];
 }
@@ -84,6 +85,28 @@ function powerLine(power: NonNullable<DebugInfo['power']>): string {
 
 function clockLine(clock: NonNullable<DebugInfo['clock']>): string {
 	return joinedParts([clock.utcOffset, clock.skewS !== undefined && skewPhrase(clock.skewS)]);
+}
+
+function gatewayLine(gateway: NonNullable<DebugInfo['gateway']>): string {
+	return joinedParts([
+		gateway.state,
+		gateway.latencyMs !== undefined && `${gateway.latencyMs} ms`,
+		gateway.connectedS !== undefined && `connected ${durationOf(gateway.connectedS)}`,
+		(gateway.identifies ?? 0) > 1 && `identified ${gateway.identifies}×`,
+		(gateway.failedAttempts ?? 0) > 0 && `${gateway.failedAttempts} failed attempts`,
+	]);
+}
+
+function durationOf(seconds: number): string {
+	if (seconds < 120) {
+		return `${seconds} s`;
+	}
+
+	if (seconds < 7200) {
+		return `${Math.round(seconds / 60)} min`;
+	}
+
+	return `${Math.round(seconds / 3600)} h`;
 }
 
 function pushLine(push: NonNullable<DebugInfo['push']>): string {

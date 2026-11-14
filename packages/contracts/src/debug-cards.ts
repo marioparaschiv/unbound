@@ -117,6 +117,14 @@ const pushSchema = Type.Object({
 	environment: Type.Optional(Type.Enum(DEBUG_CARD_PUSH_ENVIRONMENTS)),
 });
 
+const gatewaySchema = Type.Object({
+	state: text(32),
+	latencyMs: Type.Optional(Type.Integer({ minimum: 0, maximum: 3_600_000 })),
+	connectedS: Type.Optional(Type.Integer({ minimum: 0 })),
+	identifies: Type.Optional(Type.Integer({ minimum: 0, maximum: 1_000_000 })),
+	failedAttempts: Type.Optional(Type.Integer({ minimum: 0, maximum: 1_000_000 })),
+});
+
 const heapSchema = Type.Object({
 	heapMB: Type.Number({ minimum: 0, maximum: 1_000_000 }),
 	gcMs: Type.Number({ minimum: 0, maximum: 1_000_000_000 }),
@@ -158,6 +166,7 @@ export const debugCardRequestSchema = Type.Object({
 	clock: Type.Optional(clockSchema),
 	dns: Type.Optional(dnsSchema),
 	push: Type.Optional(pushSchema),
+	gateway: Type.Optional(gatewaySchema),
 	heap: Type.Optional(heapSchema),
 	storage: Type.Optional(
 		Type.Object({
@@ -242,6 +251,8 @@ export type DebugCardClock = StaticDecode<typeof clockSchema>;
 export type DebugCardDns = StaticDecode<typeof dnsSchema>;
 
 export type DebugCardPush = StaticDecode<typeof pushSchema>;
+
+export type DebugCardGateway = StaticDecode<typeof gatewaySchema>;
 
 export default {
 	DEBUG_CARD_ALT_TEXT_LIMIT,

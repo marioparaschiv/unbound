@@ -1,6 +1,7 @@
 import type {
 	DebugCardClock,
 	DebugCardDns,
+	DebugCardGateway,
 	DebugCardPower,
 	DebugCardPush,
 } from '@unbound-app/contracts/debug-cards';
@@ -9,6 +10,9 @@ import { CLOCK_SKEW_NOTICE_S, skewPhrase } from '@unbound-app/contracts/debug-ca
 import { joined } from './spans';
 
 const LOW_BATTERY = 15;
+const SLOW_HEARTBEAT_MS = 1000;
+const MANY_IDENTIFIES = 3;
+const HEALTHY_GATEWAY = new Set(['session established', 'ready']);
 const FILTERING_RESOLVERS = new Set(['AdGuard', 'NextDNS', 'Control D', 'OpenDNS']);
 
 /**
@@ -118,4 +122,43 @@ export function dnsNote(dns?: DebugCardDns): string | undefined {
 	const filtering = dns.resolver !== undefined && FILTERING_RESOLVERS.has(dns.resolver);
 
 	return filtering || dns.privateDns ? dnsSummary(dns) : undefined;
+}
+
+/**
+ * @description Summarises the gateway connection: its state, heartbeat latency, identifies and failed attempts.
+ * @param gateway The gateway report.
+ * @returns The summary, such as `session established · 130 ms`.
+ */
+export function gatewaySummary(gateway: DebugCardGateway): string {
+	return joined([
+		gateway.state,
+		gateway.latencyMs === undefined ? undefined : `${gateway.latencyMs} ms`,
+		gateway.connectedS === undefined ? undefined : `up ${gateway.connectedS} s`,
+		gateway.identifies ? `identified ${gateway.identifies}x` : undefined,
+		gateway.failedAttempts ? `${gateway.failedAttempts} failed` : undefined,
+	]);
+}
+
+/**
+ * @description Flags a gateway that is not connected, answers heartbeats slowly, or keeps reconnecting.
+ * @param gateway The gateway report.
+ * @returns The note, or `undefined` for a healthy connection.
+ */
+export function gatewayNote(gateway?: DebugCardGateway): string | undefined {
+	if (!gateway) {
+		return undefined;
+	}
+
+	const notes = [
+		HEALTHY_GATEWAY.has(gateway.state) ? undefined : gateway.state,
+		(gateway.latencyMs ?? 0) > SLOW_HEARTBEAT_MS
+			? `${gateway.latencyMs} ms heartbeat`
+			: undefined,
+		(gateway.identifies ?? 0) > MANY_IDENTIFIES
+			? `identified ${gateway.identifies}x`
+			: undefined,
+		gateway.failedAttempts ? `${gateway.failedAttempts} failed connects` : undefined,
+	];
+
+	return notes.some(Boolean) ? joined(notes) : undefined;
 }
