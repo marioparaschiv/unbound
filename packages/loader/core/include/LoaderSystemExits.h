@@ -16,6 +16,7 @@ enum class ExitKind
     CPU,
     LockedFile,
     Hang,
+    Freeze,
 };
 
 std::string exitKindName(ExitKind kind);
@@ -26,6 +27,8 @@ void recordMetricKitMetrics(const std::string &documents, const std::string &pay
 void recordMetricKitDiagnostics(const std::string &documents, const std::string &payloadJSON);
 void recordExit(const std::string &documents, const std::string &key, ExitKind kind, int64_t at,
                 int64_t durationMs = 0);
+void recordFreeze(const std::string &documents, const std::string &addon, int64_t at,
+                  int64_t durationMs);
 
 nlohmann::json summary(const std::string &documents, int64_t now);
 }

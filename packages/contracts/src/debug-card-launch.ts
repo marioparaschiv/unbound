@@ -58,9 +58,16 @@ export function systemNotes(system?: DebugCardLaunch['system']): string[] {
 		hangs && `${hangs}${longest}`,
 	];
 
-	return notes
+	return [...notes, ...freezeNotes(system.freezes)]
 		.filter((note): note is string => typeof note === 'string')
 		.map((note) => `${note} this week`);
+}
+
+function freezeNotes(freezes: NonNullable<DebugCardLaunch['system']>['freezes'] = []): string[] {
+	return freezes.map(
+		({ name, count, longestMs }) =>
+			`${name} froze Discord ${count === 1 ? 'once' : `${count} times`} (longest ${(longestMs / 1000).toFixed(1)}s)`,
+	);
 }
 
 export default launchNotes;

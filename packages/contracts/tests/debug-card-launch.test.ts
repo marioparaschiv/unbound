@@ -18,6 +18,23 @@ describe('systemNotes', () => {
 		]);
 	});
 
+	test('names the plugins that froze Discord', () => {
+		expect(
+			systemNotes({
+				hangs: 1,
+				longestHangMs: 9000,
+				freezes: [
+					{ name: 'Clean Channel Names', count: 3, longestMs: 8200 },
+					{ name: 'Message Logger', count: 1, longestMs: 6100 },
+				],
+			}),
+		).toEqual([
+			'1 hang (longest 9.0s) this week',
+			'Clean Channel Names froze Discord 3 times (longest 8.2s) this week',
+			'Message Logger froze Discord once (longest 6.1s) this week',
+		]);
+	});
+
 	test('says nothing without exits', () => {
 		expect(systemNotes()).toEqual([]);
 		expect(systemNotes({})).toEqual([]);

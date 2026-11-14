@@ -12,6 +12,7 @@
 #include "LoaderCrashGuard.h"
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
+#include "LoaderSystemExits.h"
 #include "NativeCallActivity.h"
 #include "NativePluginRuntime.h"
 
@@ -76,6 +77,8 @@ static void watch(const std::shared_ptr<FreezeWatchdog::State> &state)
                 log(LogLevel::Warning, LOG_CATEGORY_PLUGINS,
                     current.name + " froze Discord for " + std::to_string(current.seconds) +
                         " seconds.");
+                system_exits::recordFreeze(state->directory, current.name, sentAt,
+                                           answered - sentAt);
                 state->listener(current);
                 reported = false;
             }

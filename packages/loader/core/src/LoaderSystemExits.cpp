@@ -12,8 +12,9 @@
 
 namespace loader::system_exits {
 namespace {
-    constexpr size_t kMaximumEvents = 400;
-    constexpr size_t kMaximumSeen   = 200;
+    constexpr size_t kMaximumEvents       = 400;
+    constexpr size_t kMaximumSeen         = 200;
+    constexpr size_t kMaximumFrozenAddons = 5;
 
     std::mutex fileMutex;
 
@@ -136,6 +137,8 @@ std::string exitKindName(ExitKind kind)
             return "lockedFile";
         case ExitKind::Hang:
             return "hang";
+        case ExitKind::Freeze:
+            return "freeze";
     }
     return "unknown";
 }
@@ -249,6 +252,66 @@ void recordExit(const std::string &documents, const std::string &key, ExitKind k
     writeStore(documents, store);
 }
 
+void recordFreeze(const std::string &documents, const std::string &addon, int64_t at,
+                  int64_t durationMs)
+{
+    if (addon.empty())
+    {
+        return;
+    }
+    std::lock_guard<std::mutex> lock(fileMutex);
+    nlohmann::json              store = readStore(documents);
+    addEvent(store, ExitKind::Freeze, at, durationMs);
+    store["events"].back()["addon"] = addon;
+    writeStore(documents, store);
+}
+
+namespace {
+    struct FrozenAddon {
+        std::string name;
+        int64_t     count     = 0;
+        int64_t     longestMs = 0;
+    };
+
+    nlohmann::json frozenAddonsJSON(std::vector<FrozenAddon> addons)
+    {
+        std::stable_sort(addons.begin(), addons.end(),
+                         [](const FrozenAddon &left, const FrozenAddon &right) {
+                             return left.count > right.count;
+                         });
+        if (addons.size() > kMaximumFrozenAddons)
+        {
+            addons.resize(kMaximumFrozenAddons);
+        }
+        nlohmann::json list = nlohmann::json::array();
+        for (const FrozenAddon &addon : addons)
+        {
+            list.push_back(
+                {{"name", addon.name}, {"count", addon.count}, {"longestMs", addon.longestMs}});
+        }
+        return list;
+    }
+
+    void countFreeze(std::vector<FrozenAddon> &addons, const nlohmann::json &event)
+    {
+        std::string name = event.value("addon", std::string());
+        if (name.empty())
+        {
+            return;
+        }
+        auto found = std::find_if(addons.begin(), addons.end(), [&name](const FrozenAddon &addon) {
+            return addon.name == name;
+        });
+        if (found == addons.end())
+        {
+            addons.push_back({name});
+            found = addons.end() - 1;
+        }
+        found->count++;
+        found->longestMs = std::max(found->longestMs, event.value("ms", int64_t{0}));
+    }
+}
+
 nlohmann::json summary(const std::string &documents, int64_t now)
 {
     nlohmann::json store;
@@ -256,8 +319,9 @@ nlohmann::json summary(const std::string &documents, int64_t now)
         std::lock_guard<std::mutex> lock(fileMutex);
         store = readStore(documents);
     }
-    nlohmann::json counts        = nlohmann::json::object();
-    int64_t        longestHangMs = 0;
+    nlohmann::json           counts        = nlohmann::json::object();
+    int64_t                  longestHangMs = 0;
+    std::vector<FrozenAddon> frozen;
     for (const nlohmann::json &event : store["events"])
     {
         if (!event.is_object() || now - event.value("at", int64_t{0}) > kSummaryWindowMs)
@@ -265,6 +329,11 @@ nlohmann::json summary(const std::string &documents, int64_t now)
             continue;
         }
         std::string kind = event.value("kind", std::string());
+        if (kind == "freeze")
+        {
+            countFreeze(frozen, event);
+            continue;
+        }
         std::string name = kind == "hang" ? "hangs" : kind;
         counts[name]     = counts.value(name, 0) + 1;
         longestHangMs    = std::max(longestHangMs, event.value("ms", int64_t{0}));
@@ -272,6 +341,10 @@ nlohmann::json summary(const std::string &documents, int64_t now)
     if (longestHangMs > 0)
     {
         counts["longestHangMs"] = longestHangMs;
+    }
+    if (!frozen.empty())
+    {
+        counts["freezes"] = frozenAddonsJSON(std::move(frozen));
     }
     return counts;
 }

@@ -89,6 +89,23 @@ void recordsPlatformExitsByKey()
     assert(summary["memory"] == 1);
     assert(summary["watchdog"] == 1);
 }
+
+void namesThePluginsThatFroze()
+{
+    std::string directory = documents();
+    exits::recordFreeze(directory, "Message Logger", dayAfter(), 6100);
+    exits::recordFreeze(directory, "Clean Channel Names", dayAfter(), 7000);
+    exits::recordFreeze(directory, "Clean Channel Names", dayAfter(), 8200);
+    exits::recordFreeze(directory, "", dayAfter(), 9000);
+    nlohmann::json summary = exits::summary(directory, dayAfter());
+    nlohmann::json freezes = summary["freezes"];
+    assert(freezes.size() == 2);
+    assert(freezes[0]["name"] == "Clean Channel Names");
+    assert(freezes[0]["count"] == 2);
+    assert(freezes[0]["longestMs"] == 8200);
+    assert(freezes[1]["name"] == "Message Logger");
+    assert(!summary.contains("longestHangMs"));
+}
 }
 
 int main()
@@ -97,5 +114,6 @@ int main()
     summarisesMetricsAndHangsOnce();
     forgetsOldExits();
     recordsPlatformExitsByKey();
+    namesThePluginsThatFroze();
     return 0;
 }

@@ -44,7 +44,14 @@ export type UnboundSystemExits = {
 	lockedFile?: number;
 	hangs?: number;
 	longestHangMs?: number;
+	freezes?: UnboundPluginFreeze[];
 };
+
+/**
+ * How often one plugin froze Discord's JavaScript thread over the last week, from the loader's freeze watchdog.
+ * @internal
+ */
+export type UnboundPluginFreeze = { name: string; count: number; longestMs: number };
 
 /**
  * The native loader's origin and version.
