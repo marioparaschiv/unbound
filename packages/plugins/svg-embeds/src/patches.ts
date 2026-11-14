@@ -5,12 +5,12 @@ import {
 	type MessageRow,
 	type RowMessage,
 } from '@unbound-plugins/shared/metro/message-rows';
+import { SVG_FOLDER } from '~/lib/folder';
 
 import { entryFor, fileNameFor, setEntry } from '~/lib/cache';
 import { rasterizeSvg } from '~/native/rasterize';
 import { cleanSvg, isSvg, type Attachment } from '~/lib/svg';
 
-const FOLDER = 'Unbound/Cache/svg-embeds';
 const FILE_PREFIX = 'file://';
 const CHANGE_TYPE_NONE = 0;
 const CHANGE_TYPE_UPDATE = 2;
@@ -85,10 +85,14 @@ async function draw(native: NativeBridge, url: string): Promise<void> {
 
 		const name = fileNameFor(url);
 
-		await fs.writeFile(`${FOLDER}/${name}.svg`, markup);
+		await fs.writeFile(`${SVG_FOLDER}/${name}.svg`, markup);
 
-		const png = `${fs.documentsPath}/${FOLDER}/${name}.png`;
-		const raster = rasterizeSvg(native, `${fs.documentsPath}/${FOLDER}/${name}.svg`, png);
+		const png = `${fs.documentsPath}/${SVG_FOLDER}/${name}.png`;
+		const raster = await rasterizeSvg(
+			native,
+			`${fs.documentsPath}/${SVG_FOLDER}/${name}.svg`,
+			png,
+		);
 
 		setEntry(url, raster ? { state: 'ready', png, ...raster } : { state: 'failed' });
 
@@ -155,7 +159,9 @@ export function patchMessageRows(native: NativeBridge): void {
 		},
 		after({ row }) {
 			for (const attachment of row?.attachments ?? []) {
-				if (attachment.url?.startsWith(`${FILE_PREFIX}${fs.documentsPath}/${FOLDER}/`)) {
+				if (
+					attachment.url?.startsWith(`${FILE_PREFIX}${fs.documentsPath}/${SVG_FOLDER}/`)
+				) {
 					attachment.isAnimated = false;
 					attachment.srcIsAnimated = false;
 				}

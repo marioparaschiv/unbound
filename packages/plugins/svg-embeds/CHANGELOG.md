@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0] - 2026-11-14
+
+### Added
+
+- Android: SVG attachments show as pictures too, drawn in an off-screen web view.
+- A self-test that draws a sample SVG.
+
 ## [1.0.0] - 2026-11-14
 
 ### Added

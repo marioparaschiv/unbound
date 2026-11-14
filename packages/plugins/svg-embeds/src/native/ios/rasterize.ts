@@ -17,11 +17,11 @@ const MAX_SIDE = 1024;
  * @param pngPath The absolute path to write the PNG to.
  * @returns The picture's size in points, or `undefined` when CoreSVG cannot read the file.
  */
-export function rasterizeSvgIOS(
+export async function rasterizeSvgIOS(
 	native: NativeBridge,
 	svgPath: string,
 	pngPath: string,
-): Raster | undefined {
+): Promise<Raster | undefined> {
 	const { objc, ffi } = native;
 	const createDocument = ffi.symbol('CGSVGDocumentCreateFromURL', CORE_SVG);
 	const releaseDocument = ffi.symbol('CGSVGDocumentRelease', CORE_SVG);
