@@ -207,6 +207,10 @@ export type GetStoreOptions = {
  */
 // oxlint-disable-next-line typescript/consistent-type-definitions -- declaration merging needs an interface
 export interface FluxActions {
+	/** Discord moved to the front, the background, or in between, as React Native's `AppState` reports it. */
+	APP_STATE_UPDATE: {
+		state: 'active' | 'background' | 'inactive';
+	};
 	/** A message arrived or was sent; `optimistic` is `true` for the local copy before Discord confirms it. */
 	MESSAGE_CREATE: {
 		channelId: string;

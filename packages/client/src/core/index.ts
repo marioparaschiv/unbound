@@ -14,6 +14,7 @@ import themes, {
 } from '~/themes/builtin';
 import { createSettings, generalSection, panelHostSection } from '~/settings/builtin';
 import { marketplaceSection, addonPageSection } from '~/marketplace/builtin';
+import gatewayReconnect from '~/builtins/gateway-reconnect';
 import updater, { updatesSection } from '~/updates/builtin';
 import { developerSection } from '~/settings/builtin.dev';
 import { themes as themeManager } from '~/themes/manager';
@@ -91,6 +92,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	// Developer tooling ships only in the dev bundle; the hot refresh client also needs a local dev build.
 	...(import.meta.env.DEV_TOOLS ? ([['debug', debug]] as BuiltInEntry[]) : []),
 	...(import.meta.env.DEV ? ([['hotRefresh', hotRefresh]] as BuiltInEntry[]) : []),
+	['gatewayReconnect', gatewayReconnect],
 	['i18n', i18n],
 	['links', links],
 	['nativeConsent', nativeConsent],

@@ -73,6 +73,10 @@ export declare function useStore<const S extends FluxStore | readonly FluxStore[
  * `declare module '@unbound-app/api/flux' { interface FluxActions { MY_ACTION: { id: string } } }`.
  */
 export interface FluxActions {
+	/** Discord moved to the front, the background, or in between, as React Native's `AppState` reports it. */
+	APP_STATE_UPDATE: {
+		state: 'active' | 'background' | 'inactive';
+	};
 	/** A message arrived or was sent; `optimistic` is `true` for the local copy before Discord confirms it. */
 	MESSAGE_CREATE: {
 		channelId: string;
