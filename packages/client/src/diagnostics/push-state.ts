@@ -34,6 +34,8 @@ export function pushStateOf(
 		permission: push.permission,
 		registered: push.registered,
 		playServices: push.playServices,
+		summary: push.summary,
+		focus: push.focus,
 		environment: environmentOf(entitlements),
 	};
 }

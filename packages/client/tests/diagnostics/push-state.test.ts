@@ -19,6 +19,13 @@ describe('pushStateOf', () => {
 		).toBeUndefined();
 	});
 
+	test('passes on Focus and Scheduled Summary', () => {
+		expect(pushStateOf({ permission: 'granted', focus: true, summary: false })).toMatchObject({
+			focus: true,
+			summary: false,
+		});
+	});
+
 	test('reports nothing for older loaders', () => {
 		expect(pushStateOf(undefined)).toBeUndefined();
 	});
