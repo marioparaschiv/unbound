@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.15] - 2026-11-14
+
+### Fixed
+
+- Android: the in-app notification banner no longer gets a bubble, whose blur covered its message.
+- Android: no reply icon errors on reply previews that have not expanded yet.
+
 ## [1.6.14] - 2026-11-14
 
 ### Fixed

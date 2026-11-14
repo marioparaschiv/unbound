@@ -1,5 +1,6 @@
 import type { NativeJavaBridge, NativeJavaReference } from '@unbound-app/api/native';
 import {
+	javaFlag,
 	javaFloat,
 	javaInt,
 	javaNumber,
@@ -38,6 +39,10 @@ function replyIconIn(
 	const found = findView(java, preview, id);
 
 	if (found || !create || !drawable) return found;
+
+	// An unexpanded reply preview is still a ViewStub placeholder, which holds no children.
+	if (!javaFlag(java.invoke(java.getClass('android.view.ViewGroup'), 'isInstance', [preview])))
+		return null;
 
 	const context = javaReference(java.invoke(preview, 'getContext', []));
 
