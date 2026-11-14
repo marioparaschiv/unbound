@@ -42,6 +42,7 @@ const DEFAULTS = {
 	'loader.update.unsigned': false,
 	'loader.devtools': false,
 	'discord-support.warned': '',
+	'profile-expiry.warned': '',
 };
 
 /** The value type of every core setting. */

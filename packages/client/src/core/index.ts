@@ -24,6 +24,7 @@ import discordSupport from '~/builtins/discord-support';
 import type { BuiltInEntry } from '~/builtins/registry';
 import type { SectionEntry } from '~/settings/section';
 import errorBoundary from '~/builtins/error-boundary';
+import profileExpiry from '~/builtins/profile-expiry';
 import sponsorBadges from '~/builtins/sponsor-badges';
 import promiseRejections from '~/diagnostics/builtin';
 import { assetsSection } from '~/assets/builtin.dev';
@@ -88,6 +89,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	['commands', commands],
 	['coreCommands', coreCommands],
 	['discordSupport', discordSupport],
+	['profileExpiry', profileExpiry],
 	['errorBoundary', errorBoundary],
 	// Developer tooling ships only in the dev bundle; the hot refresh client also needs a local dev build.
 	...(import.meta.env.DEV_TOOLS ? ([['debug', debug]] as BuiltInEntry[]) : []),
