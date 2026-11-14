@@ -66,6 +66,29 @@ export function findOfflineRemovals(
 	};
 }
 
+const IMPLAUSIBLE_SHARE = 0.5;
+const IMPLAUSIBLE_MINIMUM = 4;
+
+function implausible(previous: number, missing: number): boolean {
+	return missing >= IMPLAUSIBLE_MINIMUM && missing >= previous * IMPLAUSIBLE_SHARE;
+}
+
+/**
+ * @description Tells a real loss from a snapshot taken before Discord finished loading: right after a connection opens, the
+ * relationship and guild stores can still be filling, so most friends or servers look removed at once.
+ * @param previous The snapshot saved before.
+ * @param removals What the check would report.
+ * @returns Whether any list lost at least half of a sizeable count, which no single offline stretch explains.
+ */
+export function looksUnloaded(previous: Snapshot, removals: OfflineRemovals): boolean {
+	return (
+		implausible(previous.friends.length, removals.friends.length) ||
+		implausible(previous.guilds.length, removals.guilds.length) ||
+		implausible(previous.groups.length, removals.groups.length) ||
+		implausible(previous.requests.length, removals.requests.length)
+	);
+}
+
 /**
  * @description Keeps guilds that are missing only because of an outage, or because this build cannot tell, in the snapshot to save, so a later check can still report them.
  * @param previous The snapshot saved before.

@@ -10,7 +10,12 @@ import {
 	type DiscordUser,
 } from '~/lib/discord';
 import { notify, notifyAboutUser } from '~/lib/notify';
-import { findOfflineRemovals, keepUnconfirmedGuilds, type OfflineRemovals } from '~/lib/removals';
+import {
+	findOfflineRemovals,
+	keepUnconfirmedGuilds,
+	looksUnloaded,
+	type OfflineRemovals,
+} from '~/lib/removals';
 import { messages, uniqueUsername } from '~/lib/messages';
 import { loadSnapshot } from '~/lib/snapshot-file';
 import { flushSave, getSession, scheduleSave, type Session } from '~/lib/session';
@@ -46,23 +51,30 @@ async function check(session: Session): Promise<void> {
 	if (!session.active || currentUserId() !== userId) return;
 
 	const current = readSnapshot(userId);
+	const removals = previous
+		? findOfflineRemovals(previous, current, { settings, isGuildUnavailable, relationshipType })
+		: undefined;
 
 	session.userId = userId;
+	session.checked = true;
+
+	if (previous && removals && looksUnloaded(previous, removals)) {
+		logger.info(
+			'Skipped the offline check: Discord has not finished loading friends and servers.',
+		);
+		session.snapshot = previous;
+
+		return;
+	}
+
 	session.snapshot = previous
 		? keepUnconfirmedGuilds(previous, current, isGuildUnavailable)
 		: current;
-	session.checked = true;
 	scheduleSave(session);
 
-	if (!previous || !session.active) return;
+	if (!removals || !session.active) return;
 
-	await report(
-		findOfflineRemovals(previous, current, {
-			settings,
-			isGuildUnavailable,
-			relationshipType,
-		}),
-	);
+	await report(removals);
 }
 
 /**
