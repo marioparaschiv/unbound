@@ -6,7 +6,6 @@ import { parsePlist } from '@unbound-app/contracts/plist';
 import {
 	displaySummary,
 	errorNotes,
-	joined,
 	lastCheckSummary,
 	memorySummary,
 	networkSummary,
@@ -22,6 +21,7 @@ import {
 	pushSummary,
 } from '~/lib/debug-card/device-notes';
 import type { DebugCardContext } from '~/lib/debug-card/context';
+import { storageSummary } from '~/lib/debug-card/storage';
 import { cleanNames } from '~/lib/debug-card/spans';
 
 const MAX_ALT_TEXT = 1024;
@@ -107,14 +107,7 @@ export function debugAltText(
 		}),
 		...(info.launch?.settings && { settings: info.launch.settings }),
 		...(info.errors?.length && { errors: errorNotes(info.errors) }),
-		...(info.storage && {
-			storage: joined([
-				info.storage.freeMB === undefined ? undefined : `${info.storage.freeMB} MB free`,
-				info.storage.unboundMB === undefined
-					? undefined
-					: `unbound ${info.storage.unboundMB} MB`,
-			]),
-		}),
+		...(storageSummary(info.storage) && { storage: storageSummary(info.storage) }),
 		...(info.patches?.length && {
 			patches: info.patches.map((patch) => `${patch.caller} ${patch.count}`),
 		}),

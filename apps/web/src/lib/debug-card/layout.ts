@@ -12,6 +12,7 @@ import type { DebugCardContext } from '~/lib/debug-card/context';
 
 import { accent, cleanNames, COLORS, dim, joined, value, warn, type Span } from './spans';
 import { dnsNote, gatewayNote, powerNote, pushNote } from './device-notes';
+import { storageMatters, storageSummary } from './storage';
 import { environmentRows } from './environment-rows';
 import { clipped, wrapped } from './wrap-lines';
 
@@ -68,7 +69,6 @@ const CHAR_WIDTH = FONT_SIZE * 0.6;
 const LABEL_WIDTH = 9;
 const BADGE_CLEARANCE = 66;
 const MAX_DIAGNOSTIC_ROWS = 2;
-const LOW_STORAGE_MB = 500;
 const DAY_MS = 86_400_000;
 const CRASH_WINDOW_MS = 7 * DAY_MS;
 const VALUE_ROOM = Math.floor((WIDTH - PADDING * 2) / CHAR_WIDTH) - LABEL_WIDTH;
@@ -348,23 +348,12 @@ export function errorNotes(errors: DebugInfo['errors'] = []): string[] {
 		.map((error) => (error.addon ? `${error.addon}: ${error.message}` : error.message));
 }
 
-function lowStorage(storage: DebugInfo['storage']): string | undefined {
-	if (storage?.freeMB === undefined || storage.freeMB >= LOW_STORAGE_MB) {
-		return undefined;
-	}
-
-	return joined([
-		`${storage.freeMB} MB free`,
-		storage.unboundMB === undefined ? undefined : `unbound ${storage.unboundMB} MB`,
-	]);
-}
-
 function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): [string, Span[]][] {
 	const crashes = crashSummary(info.launch?.crashes ?? [], now);
 	const launch = launchNotes(info.launch);
 	const memory = memoryNotes(info.memory);
 	const errors = errorNotes(info.errors);
-	const storage = lowStorage(info.storage);
+	const storage = storageMatters(info.storage) ? storageSummary(info.storage) : undefined;
 	const updates = updateNotes(context, info.addonUpdates);
 	const tweaks = cleanNames(info.injected ?? []);
 	const push = pushNote(info.push);
