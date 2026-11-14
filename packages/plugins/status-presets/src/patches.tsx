@@ -20,7 +20,6 @@ type Parent = ReactElement<{ children?: ReactNode }>;
 
 const PRESETS_KEY = 'unbound-status-presets';
 
-// The screen's groups sit in one column several views deep; elements are frozen, so the path to it is copied.
 function withPresets(node: ReactNode, onClose: (() => void) | undefined, depth = 0): ReactNode {
 	if (!isValidElement(node) || depth > 6) return node;
 
@@ -50,7 +49,6 @@ type ScreenComponent = (props: ScreenProps) => ReactNode;
 
 const wrappers = new WeakMap<ScreenComponent, ComponentType<ScreenProps>>();
 
-// One wrapper per screen component, so the screen keeps its state across renders.
 function wrapped(Screen: ScreenComponent): ComponentType<ScreenProps> {
 	const existing = wrappers.get(Screen);
 

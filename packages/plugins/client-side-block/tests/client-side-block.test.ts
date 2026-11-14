@@ -31,7 +31,6 @@ class ChatUpdatesQueue {
 
 const messages: Row[] = [{ type: 0 }, { type: BLOCKED }, { type: 0 }];
 
-// Discord opens a chat by building its rows through these three classes, ending with a changeset.
 function openChat() {
 	const chatManager = new ChatManager();
 	const rowManager = new RowManager();

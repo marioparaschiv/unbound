@@ -9,7 +9,6 @@ import type { VoiceFile } from '~/lib/voice-message';
 
 const VISIBLE_NOTIFY_COMPLETED = 1;
 
-// Android: the system download manager saves it to Downloads and shows its own progress notification.
 export async function saveOnAndroid({ java }: NativeBridge, file: VoiceFile): Promise<void> {
 	const uri = javaReference(
 		java.invoke(java.getClass('android.net.Uri'), 'parse', [javaString(file.url)]),

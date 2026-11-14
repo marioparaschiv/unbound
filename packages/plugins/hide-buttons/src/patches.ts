@@ -85,7 +85,6 @@ export function patchVoiceMessageButton(): void {
 	keepSendButton();
 }
 
-// An empty composer shows the voice message microphone in the send button's place, so without it the send button stays.
 function keepSendButton(): void {
 	const SendButton = metro.findByFilePath(
 		'modules/chat_input/native/accessories/ChatInputSendButton.tsx',

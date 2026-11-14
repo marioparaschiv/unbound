@@ -35,7 +35,6 @@ function requireFirstPartyRepository(ctx: AppContext, caller: Caller): string {
 	return repository;
 }
 
-// A renamed first-party addon names its old ids in `replaces`; delisting them moves installs over and off the marketplace.
 async function retireReplaced(
 	ctx: AppContext,
 	caller: Caller,
