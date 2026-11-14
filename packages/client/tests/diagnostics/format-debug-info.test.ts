@@ -128,4 +128,10 @@ describe('formatDebugInfo', () => {
 			'- **Gateway:** session established · 130 ms · connected 10 min · identified 3× · 1 failed attempts',
 		);
 	});
+
+	test('names extensions signed without the app group', () => {
+		expect(
+			formatDebugInfo({ ...info, isolatedExtensions: ['BroadcastUpload'] }).split('\n'),
+		).toContain('- **Extensions without the app group:** BroadcastUpload');
+	});
 });

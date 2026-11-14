@@ -167,6 +167,7 @@ export const debugCardRequestSchema = Type.Object({
 	dns: Type.Optional(dnsSchema),
 	push: Type.Optional(pushSchema),
 	gateway: Type.Optional(gatewaySchema),
+	crashReport: Type.Optional(text(64)),
 	heap: Type.Optional(heapSchema),
 	storage: Type.Optional(
 		Type.Object({
@@ -194,6 +195,7 @@ export const debugCardRequestSchema = Type.Object({
 	experiments: Type.Optional(Type.Array(text(96), { maxItems: 30 })),
 	injected: Type.Optional(Type.Array(text(96), { maxItems: 32 })),
 	missingExtensions: Type.Optional(Type.Array(text(32), { maxItems: 4 })),
+	isolatedExtensions: Type.Optional(Type.Array(text(64), { maxItems: 8 })),
 	addonUpdates: Type.Optional(Type.Array(text(128), { maxItems: 64 })),
 	display: Type.Optional(
 		Type.Object({

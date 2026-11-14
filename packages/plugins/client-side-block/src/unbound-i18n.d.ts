@@ -25,6 +25,12 @@ declare module '@unbound-app/i18n' {
 		readonly UNKNOWN_USER: string;
 		/** Remove user */
 		readonly REMOVE_USER: string;
+		/** Hidden keywords */
+		readonly HIDDEN_KEYWORDS: string;
+		/** Messages containing any of these disappear. One per line; wrap a line in slashes for a regular expression. */
+		readonly HIDDEN_KEYWORDS_SUBTITLE: string;
+		/** spoiler /\bfree nitro\b/ */
+		readonly HIDDEN_KEYWORDS_PLACEHOLDER: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

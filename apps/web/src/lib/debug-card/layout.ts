@@ -379,9 +379,7 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 		['tweaks', tweaks.length ? [warn(fittedList(tweaks, VALUE_ROOM))] : []],
 		[
 			'extensions',
-			info.missingExtensions?.length
-				? [warn(`missing ${fittedList(info.missingExtensions, VALUE_ROOM)}`)]
-				: [],
+			extensionNotes(info).length ? [warn(fittedList(extensionNotes(info), VALUE_ROOM))] : [],
 		],
 		['errors', errors.length ? [warn(fittedList(errors, VALUE_ROOM))] : []],
 		['clock', clock ? [{ text: clock, color: COLORS.bad }] : []],
@@ -395,6 +393,20 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 	];
 
 	return candidates.filter(([, spans]) => spans.length > 0);
+}
+
+/**
+ * @description Lists what is wrong with the app's extensions: ones a sideloader stripped, and ones signed without the app group.
+ * @param info The report.
+ * @returns One note per problem.
+ */
+export function extensionNotes(info: DebugInfo): string[] {
+	return [
+		...(info.missingExtensions?.length ? [`missing ${info.missingExtensions.join(', ')}`] : []),
+		...(info.isolatedExtensions?.length
+			? [`no app group ${info.isolatedExtensions.join(', ')}`]
+			: []),
+	];
 }
 
 function addonSummaries({ plugins, themes }: DebugInfo): string[] {

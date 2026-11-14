@@ -281,6 +281,42 @@ static nlohmann::json dnsJSON()
     return {{"servers", servers}};
 }
 
+static NSSet<NSString *> *appGroupsOf(NSDictionary *entitlements)
+{
+    NSArray *groups = entitlements[@"com.apple.security.application-groups"];
+    return [groups isKindOfClass:NSArray.class] ? [NSSet setWithArray:groups] : [NSSet set];
+}
+
+static nlohmann::json extensionsJSON()
+{
+    static nlohmann::json  extensions = nlohmann::json::array();
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        NSSet    *appGroups = appGroupsOf([Utilities getApplicationEntitlements]);
+        NSString *plugIns   = NSBundle.mainBundle.builtInPlugInsPath;
+        for (NSString *name in [NSFileManager.defaultManager contentsOfDirectoryAtPath:plugIns
+                                                                                 error:nil])
+        {
+            if (![name hasSuffix:@".appex"])
+            {
+                continue;
+            }
+            NSBundle *extension =
+                [NSBundle bundleWithPath:[plugIns stringByAppendingPathComponent:name]];
+            NSString *executable = extension.executablePath;
+            if (!executable)
+            {
+                continue;
+            }
+            NSSet *groups = appGroupsOf([Utilities entitlementsOfExecutable:executable]);
+            extensions.push_back(
+                {{"name", toStdString(name.stringByDeletingPathExtension)},
+                 {"sharesGroup", static_cast<bool>([groups intersectsSet:appGroups])}});
+        }
+    });
+    return extensions;
+}
+
 static std::string thermalName(NSProcessInfoThermalState state)
 {
     switch (state)
@@ -321,6 +357,10 @@ static nlohmann::json deviceStateJSON()
         state["network"] = network;
     }
     state["power"] = powerJSON();
+    if (nlohmann::json extensions = extensionsJSON(); !extensions.empty())
+    {
+        state["extensions"] = extensions;
+    }
     if (nlohmann::json push = pushJSON(); !push.is_null())
     {
         state["push"] = push;

@@ -18,7 +18,7 @@ use std::time::Duration;
 use gpui::{AppContext, Context, Entity, Task, UniformListScrollHandle, Window};
 use gpui_component::input::{InputEvent, InputState};
 use unbound_devtools_core::{
-	Devtools, LoadedModule, MetroError, MetroErrorCode, MetroModule, MetroModuleStatus,
+	Devtools, LinkStatus, LoadedModule, MetroError, MetroErrorCode, MetroModule, MetroModuleStatus,
 	MetroTarget, ModulesPage,
 };
 
@@ -118,6 +118,8 @@ impl Picked {
 pub struct MetroBrowser {
 	devtools: Devtools,
 	connected: bool,
+	/// The debugger connection, for the pairing state while no device is attached.
+	link: Option<LinkStatus>,
 	opened: bool,
 	search: Entity<InputState>,
 	query: String,
@@ -147,11 +149,8 @@ pub struct MetroBrowser {
 	_watch: Task<()>,
 }
 
-fn is_connected(devtools: &Devtools) -> bool {
-	devtools
-		.status()
-		.link
-		.is_some_and(|link| link.device.is_some())
+fn is_connected(link: Option<&LinkStatus>) -> bool {
+	link.is_some_and(|link| link.device.is_some())
 }
 
 fn tree_rows(exports: &Exports) -> Vec<TreeRow> {
@@ -197,8 +196,10 @@ impl MetroBrowser {
 				}
 			}
 		});
+		let link = devtools.status().link;
 		Self {
-			connected: is_connected(&devtools),
+			connected: is_connected(link.as_ref()),
+			link,
 			devtools,
 			opened: false,
 			search,
@@ -234,8 +235,13 @@ impl MetroBrowser {
 	}
 
 	fn status_changed(&mut self, cx: &mut Context<Self>) {
-		let connected = is_connected(&self.devtools);
+		self.link = self.devtools.status().link;
+		let connected = is_connected(self.link.as_ref());
 		if connected == self.connected {
+			// The pairing state shows the bridge's code and reachability, which change on their own.
+			if !connected {
+				cx.notify();
+			}
 			return;
 		}
 		self.connected = connected;

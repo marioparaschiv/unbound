@@ -1,0 +1,17 @@
+{
+	"id": "unbound.math-notation",
+	"name": "Math Notation",
+	"description": "Shows TeX math in messages, written between dollar signs or \\( and \\), as readable symbols such as x² + √y ≤ π.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TextIcon",
+	"main": "index.tsx"
+}

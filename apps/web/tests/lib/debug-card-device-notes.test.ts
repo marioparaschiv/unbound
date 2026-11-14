@@ -9,7 +9,7 @@ import {
 	powerNote,
 	pushNote,
 } from '~/lib/debug-card/device-notes';
-import { layoutDebugCard, type CardText } from '~/lib/debug-card/layout';
+import { extensionNotes, layoutDebugCard, type CardText } from '~/lib/debug-card/layout';
 import { debugAltText } from '~/lib/debug-card/alt-text';
 
 const info: DebugCardRequest = {
@@ -77,5 +77,16 @@ describe('device notes', () => {
 			power: 'battery 70%',
 			dns: 'Cloudflare',
 		});
+	});
+
+	test('notes stripped extensions and ones without the app group together', () => {
+		expect(
+			extensionNotes({
+				...info,
+				missingExtensions: ['Safari'],
+				isolatedExtensions: ['BroadcastUpload'],
+			}),
+		).toEqual(['missing Safari', 'no app group BroadcastUpload']);
+		expect(extensionNotes(info)).toEqual([]);
 	});
 });

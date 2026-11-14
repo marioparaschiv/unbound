@@ -124,6 +124,7 @@ export function debugAltText(
 		...(info.experiments?.length && { experiments: info.experiments }),
 		...(cleanNames(info.injected ?? []).length && { tweaks: cleanNames(info.injected ?? []) }),
 		...(info.missingExtensions?.length && { missingExtensions: info.missingExtensions }),
+		...(info.isolatedExtensions?.length && { isolatedExtensions: info.isolatedExtensions }),
 		...(info.display && { display: displaySummary(info.display) }),
 		...(info.session && { session: sessionSummary(info.session) }),
 		...(info.native && {
@@ -136,6 +137,7 @@ export function debugAltText(
 		...(info.clock && { clock: clockSummary(info.clock) }),
 		...(info.push && { push: pushSummary(info.push) }),
 		...(info.gateway && { gateway: gatewaySummary(info.gateway) }),
+		...(info.crashReport && { crashReport: info.crashReport }),
 		...(info.heap && { heap: `${info.heap.heapMB} MB · gc ${info.heap.gcMs} ms` }),
 		...(info.launch?.crashes?.length && {
 			crashes: info.launch.crashes.map(
