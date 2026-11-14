@@ -1,0 +1,21 @@
+{
+	"id": "unbound.edit-messages-locally",
+	"name": "Edit Messages Locally",
+	"description": "Changes what any message says on your device only, from its long-press menu, without editing it on Discord.",
+	"authors": [
+		{
+			"name": "mantikafasi",
+			"id": "287555395151593473"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "PencilIcon",
+	"main": "index.tsx"
+}
