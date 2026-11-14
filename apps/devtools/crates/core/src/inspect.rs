@@ -25,6 +25,18 @@ pub struct InspectedElement {
 	pub renderer: Option<String>,
 	pub can_edit_hooks: bool,
 	pub can_edit_props: bool,
+	pub can_delete_hook_paths: bool,
+	pub can_rename_hook_paths: bool,
+	pub can_delete_prop_paths: bool,
+	pub can_rename_prop_paths: bool,
+	/// An error boundary the backend can force into its errored state.
+	pub can_toggle_error: bool,
+	/// A Suspense boundary the backend can force to its fallback.
+	pub can_toggle_suspense: bool,
+	pub is_errored: bool,
+	pub is_suspended: bool,
+	/// `context` is a class component's legacy `contextTypes` context.
+	pub has_legacy_context: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -114,8 +126,20 @@ impl InspectedElement {
 			errors: messages(value, "errors"),
 			warnings: messages(value, "warnings"),
 			renderer,
+			// A class's props are always editable; the flags speak for function components.
 			can_edit_hooks: flag("canEditHooks"),
 			can_edit_props: kind == ElementKind::Class || flag("canEditFunctionProps"),
+			can_delete_hook_paths: flag("canEditHooksAndDeletePaths"),
+			can_rename_hook_paths: flag("canEditHooksAndRenamePaths"),
+			can_delete_prop_paths: kind == ElementKind::Class
+				|| flag("canEditFunctionPropsDeletePaths"),
+			can_rename_prop_paths: kind == ElementKind::Class
+				|| flag("canEditFunctionPropsRenamePaths"),
+			can_toggle_error: flag("canToggleError"),
+			can_toggle_suspense: flag("canToggleSuspense"),
+			is_errored: flag("isErrored"),
+			is_suspended: flag("isSuspended"),
+			has_legacy_context: flag("hasLegacyContext"),
 		})
 	}
 
@@ -183,6 +207,15 @@ impl InspectedElement {
 			"renderer": self.renderer,
 			"canEditHooks": self.can_edit_hooks,
 			"canEditProps": self.can_edit_props,
+			"canDeleteHookPaths": self.can_delete_hook_paths,
+			"canRenameHookPaths": self.can_rename_hook_paths,
+			"canDeletePropPaths": self.can_delete_prop_paths,
+			"canRenamePropPaths": self.can_rename_prop_paths,
+			"canToggleError": self.can_toggle_error,
+			"canToggleSuspense": self.can_toggle_suspense,
+			"isErrored": self.is_errored,
+			"isSuspended": self.is_suspended,
+			"hasLegacyContext": self.has_legacy_context,
 		})
 	}
 }

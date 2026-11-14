@@ -167,6 +167,36 @@ impl Workspace {
 					.text_color(theme::color(theme::TEXT_FAINT))
 					.child(format!("#{}", id.0)),
 			)
+			.when(element.can_toggle_error, |row| {
+				let errored = element.is_errored;
+				row.child(
+					icon_button("toggle-error", "icons/circle-alert.svg", errored)
+						.tooltip(tooltip(if errored {
+							"Clear the forced error"
+						} else {
+							"Force this error boundary into its errored state"
+						}))
+						.on_click(
+							cx.listener(move |this, _, _, cx| this.toggle_error(id, !errored, cx)),
+						),
+				)
+			})
+			.when(element.can_toggle_suspense || element.is_suspended, |row| {
+				let suspended = element.is_suspended;
+				let button = icon_button("toggle-suspense", "icons/hourglass.svg", suspended)
+					.tooltip(tooltip(match (suspended, element.can_toggle_suspense) {
+						(false, _) => "Suspend: show this boundary's fallback",
+						(true, true) => "Unsuspend: show this boundary's children",
+						(true, false) => "This boundary is still suspended",
+					}));
+				row.child(if element.can_toggle_suspense {
+					button.on_click(
+						cx.listener(move |this, _, _, cx| this.toggle_suspense(id, !suspended, cx)),
+					)
+				} else {
+					button.opacity(0.5).cursor_default()
+				})
+			})
 			.child(
 				icon_button("highlight", assets::CROSSHAIR, highlighted)
 					.tooltip(tooltip(if highlighted {
@@ -273,7 +303,8 @@ impl Workspace {
 		] {
 			let mut rows = Rows::new(inspection, element);
 			if let Some(value) = value {
-				rows.push_entries(value, vec![key(section)], cx);
+				// React DevTools adds entries at the top level of props only.
+				rows.push_entries(value, vec![key(section)], section == "props", cx);
 			}
 			let count = entry_count(value.as_ref());
 			sections.extend(self.render_section(title, count, rows.out, cx));
@@ -288,7 +319,7 @@ impl Workspace {
 
 		let mut context = Rows::new(inspection, element);
 		if let Some(value) = &element.context {
-			context.push_entries(value, vec![key("context")], cx);
+			context.push_entries(value, vec![key("context")], false, cx);
 		}
 		let count = entry_count(element.context.as_ref());
 		sections.extend(self.render_section("Context", count, context.out, cx));

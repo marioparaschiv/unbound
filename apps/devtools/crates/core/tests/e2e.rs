@@ -56,7 +56,7 @@ async fn inspects_edits_and_filters_a_live_backend() {
 	assert_eq!(count(&before), Some(Value::Number(1.0)));
 
 	devtools
-		.override_value(counter, Section::State, vec![key("count")], json!(42))
+		.override_value(counter, Section::State, vec![key("count")], Some(json!(42)))
 		.await
 		.expect("override sends");
 	let after = devtools
@@ -66,7 +66,7 @@ async fn inspects_edits_and_filters_a_live_backend() {
 	assert_eq!(count(&after), Some(Value::Number(42.0)));
 
 	let hook_override = devtools
-		.override_value(row, Section::Hooks, vec![key("x")], json!(1))
+		.override_value(row, Section::Hooks, vec![key("x")], Some(json!(1)))
 		.await;
 	assert!(
 		hook_override.is_err(),
@@ -174,7 +174,7 @@ async fn a_hook_override_rerenders_with_the_new_state() {
 			row,
 			Section::Hooks,
 			vec![PathSegment::Index(0)],
-			json!(true),
+			Some(json!(true)),
 		)
 		.await
 		.expect("override sends");
@@ -194,4 +194,59 @@ async fn a_hook_override_rerenders_with_the_new_state() {
 		);
 		tokio::time::sleep(Duration::from_millis(50)).await;
 	}
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn adds_renames_and_deletes_state_keys() {
+	let Some((devtools, _device)) = connected_session().await else {
+		return;
+	};
+	let counter = find_one(&devtools, "Counter", None);
+	let keys = |element: &unbound_devtools_core::InspectedElement| -> Vec<String> {
+		match &element.state {
+			Some(Value::Object(entries)) => entries.iter().map(|(key, _)| key.clone()).collect(),
+			_ => Vec::new(),
+		}
+	};
+	let inspected = devtools.inspect(counter).await.expect("Counter inspects");
+	assert!(inspected.can_delete_prop_paths && inspected.can_rename_prop_paths);
+
+	devtools
+		.override_value(counter, Section::State, vec![key("extra")], None)
+		.await
+		.expect("add sends");
+	devtools
+		.rename_path(
+			counter,
+			Section::State,
+			vec![key("label")],
+			vec![key("title")],
+		)
+		.await
+		.expect("rename sends");
+	devtools
+		.delete_path(counter, Section::State, vec![key("count")])
+		.await
+		.expect("delete sends");
+
+	let after = devtools.inspect(counter).await.expect("re-inspects");
+	let mut after_keys = keys(&after);
+	after_keys.sort();
+	assert_eq!(after_keys, ["extra", "title"]);
+	let state = after.state.as_ref().expect("state");
+	assert_eq!(state.get(&[key("extra")]), Some(&Value::Undefined));
+	assert_eq!(
+		state.get(&[key("title")]),
+		Some(&Value::String("clicks".into()))
+	);
+
+	let renamed_hook = devtools
+		.rename_path(
+			counter,
+			Section::Hooks,
+			vec![PathSegment::Index(0), key("a")],
+			vec![PathSegment::Index(1), key("b")],
+		)
+		.await;
+	assert!(renamed_hook.is_err(), "a hook rename keeps its hook id");
 }

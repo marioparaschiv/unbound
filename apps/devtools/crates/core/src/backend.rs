@@ -7,7 +7,7 @@ use std::time::SystemTime;
 use tokio::sync::mpsc;
 
 use crate::operations;
-use crate::protocol::{self, Inbound, Outbound};
+use crate::react_protocol::{self, ReactInbound, ReactOutbound};
 use crate::session::{Backend, ConnectionState, Inner};
 
 impl Inner {
@@ -32,10 +32,10 @@ impl Inner {
 
 		// The first frame starts the device's session; the filter update makes it send every root.
 		for message in [
-			Outbound::GetBridgeProtocol,
-			Outbound::GetBackendVersion,
-			Outbound::GetIfHasUnsupportedRendererVersion,
-			Outbound::UpdateComponentFilters(filters),
+			ReactOutbound::GetBridgeProtocol,
+			ReactOutbound::GetBackendVersion,
+			ReactOutbound::GetIfHasUnsupportedRendererVersion,
+			ReactOutbound::UpdateComponentFilters(filters),
 		] {
 			self.send(&message);
 		}
@@ -82,7 +82,7 @@ impl Inner {
 			return;
 		}
 
-		let inbound = match protocol::parse(text) {
+		let inbound = match react_protocol::parse(text) {
 			Ok(inbound) => inbound,
 			Err(error) => {
 				tracing::warn!(%error, "unparseable frame from the backend");
@@ -91,13 +91,13 @@ impl Inner {
 		};
 
 		match inbound {
-			Inbound::Operations(raw) => self.apply_operations(&raw),
-			Inbound::InspectedElement(payload) => {
+			ReactInbound::Operations(raw) => self.apply_operations(&raw),
+			ReactInbound::InspectedElement(payload) => {
 				if let Some(waiter) = self.pending.lock().remove(&payload.response_id) {
 					let _ = waiter.send(payload);
 				}
 			}
-			Inbound::BackendVersion(version) => {
+			ReactInbound::BackendVersion(version) => {
 				if let ConnectionState::Connected {
 					backend_version, ..
 				} = &mut self.state.lock().connection
@@ -107,21 +107,21 @@ impl Inner {
 
 				self.bump();
 			}
-			Inbound::UnsupportedRendererVersion => {
+			ReactInbound::UnsupportedRendererVersion => {
 				self.state.lock().connection = ConnectionState::UnsupportedRenderer;
 				self.bump();
 			}
-			Inbound::SelectElement(id) => {
+			ReactInbound::SelectElement(id) => {
 				if self.store.read().get(id).is_some() {
 					self.state.lock().selected = Some(id);
 					self.bump();
 				}
 			}
-			Inbound::ShutdownBackend => {
+			ReactInbound::ShutdownBackend => {
 				self.reset_tree(&mut self.state.lock());
 				self.bump();
 			}
-			Inbound::BackendStatus {
+			ReactInbound::BackendStatus {
 				connected: false,
 				error: Some(error),
 			} => {
@@ -133,10 +133,10 @@ impl Inner {
 				drop(state);
 				self.bump();
 			}
-			Inbound::BackendStatus { .. }
-			| Inbound::BackendInitialized
-			| Inbound::BridgeProtocol(_)
-			| Inbound::Other { .. } => {}
+			ReactInbound::BackendStatus { .. }
+			| ReactInbound::BackendInitialized
+			| ReactInbound::BridgeProtocol(_)
+			| ReactInbound::Other { .. } => {}
 		}
 	}
 
@@ -159,7 +159,7 @@ impl Inner {
 				self.reset_tree(&mut state);
 				state.filters.clone()
 			};
-			self.send(&Outbound::UpdateComponentFilters(filters));
+			self.send(&ReactOutbound::UpdateComponentFilters(filters));
 		}
 
 		{

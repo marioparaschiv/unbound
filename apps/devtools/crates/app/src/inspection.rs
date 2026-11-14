@@ -1,12 +1,10 @@
 use std::collections::HashSet;
 
 use gpui::{Context, Task};
-use serde_json::Value as Json;
-use unbound_devtools_core::{
-	ElementId, ElementKind, Hook, InspectedElement, Path, PathSegment, Section, Value,
-};
+use unbound_devtools_core::{ElementId, Hook, InspectedElement, Path, PathSegment, Value};
 
 use crate::app::{Workspace, on_runtime};
+use crate::value_editor::Editor;
 
 pub struct Inspection {
 	pub id: ElementId,
@@ -14,6 +12,8 @@ pub struct Inspection {
 	pub error: Option<String>,
 	pub expanded: HashSet<Path>,
 	pub loading: HashSet<Path>,
+	/// The one inline editor open in the inspector, if any.
+	pub editor: Option<Editor>,
 	task: Option<Task<()>>,
 }
 
@@ -25,6 +25,7 @@ impl Inspection {
 			error: None,
 			expanded: HashSet::new(),
 			loading: HashSet::new(),
+			editor: None,
 			task: None,
 		}
 	}
@@ -40,7 +41,7 @@ pub fn child(path: &Path, segment: PathSegment) -> Path {
 	path
 }
 
-fn hook_at<'a, 'p>(
+pub fn hook_at<'a, 'p>(
 	hooks: &'a [Hook],
 	path: &'p [PathSegment],
 ) -> Option<(&'a Hook, &'p [PathSegment])> {
@@ -70,7 +71,7 @@ fn hook_at_mut<'a, 'p>(
 	}
 }
 
-fn split_value(rest: &[PathSegment]) -> Option<&[PathSegment]> {
+pub fn split_value(rest: &[PathSegment]) -> Option<&[PathSegment]> {
 	match rest {
 		[PathSegment::Key(value), tail @ ..] if value == "value" => Some(tail),
 		_ => None,
@@ -93,7 +94,7 @@ pub fn value_at<'a>(element: &'a InspectedElement, path: &[PathSegment]) -> Opti
 	}
 }
 
-fn splice(element: &mut InspectedElement, path: &[PathSegment], value: Value) {
+pub fn splice(element: &mut InspectedElement, path: &[PathSegment], value: Value) {
 	let [PathSegment::Key(section), rest @ ..] = path else {
 		return;
 	};
@@ -119,28 +120,6 @@ fn splice(element: &mut InspectedElement, path: &[PathSegment], value: Value) {
 
 fn needs_hydration(value: Option<&Value>) -> bool {
 	matches!(value, Some(Value::Dehydrated(meta)) if meta.inspectable)
-}
-
-fn override_target(element: &InspectedElement, path: &[PathSegment]) -> Option<(Section, Path)> {
-	let [PathSegment::Key(section), rest @ ..] = path else {
-		return None;
-	};
-	match section.as_str() {
-		"props" if element.can_edit_props => Some((Section::Props, rest.to_vec())),
-		"state" if element.kind == ElementKind::Class => Some((Section::State, rest.to_vec())),
-		"hooks" if element.can_edit_hooks => {
-			let (hook, rest) = hook_at(&element.hooks, rest)?;
-			let id = hook.id.filter(|_| hook.editable)?;
-			let mut target = vec![PathSegment::Index(id as usize)];
-			target.extend_from_slice(split_value(rest)?);
-			Some((Section::Hooks, target))
-		}
-		_ => None,
-	}
-}
-
-pub fn is_editable(element: &InspectedElement, path: &[PathSegment]) -> bool {
-	override_target(element, path).is_some()
 }
 
 impl Workspace {
@@ -274,41 +253,6 @@ impl Workspace {
 		if hydrate {
 			self.hydrate(id, path, cx);
 		}
-		cx.notify();
-	}
-
-	pub fn toggle_bool(&mut self, path: Path, cx: &mut Context<Self>) {
-		let Some(inspection) = self.inspection.as_mut() else {
-			return;
-		};
-		let Some(element) = inspection.element.as_mut() else {
-			return;
-		};
-		let Some(Value::Bool(current)) = value_at(element, &path).cloned() else {
-			return;
-		};
-		let Some((section, target)) = override_target(element, &path) else {
-			return;
-		};
-		splice(element, &path, Value::Bool(!current));
-		let id = inspection.id;
-		let devtools = self.devtools.clone();
-		let request = on_runtime(&self.devtools, async move {
-			devtools
-				.override_value(id, section, target, Json::Bool(!current))
-				.await
-		});
-		cx.spawn(async move |this, cx| {
-			let result = request.await;
-			this.update(cx, |this, cx| {
-				if let Some(Err(error)) = result {
-					this.show_error(format!("Edit failed: {error}"), cx);
-				}
-				this.inspect(id, cx);
-			})
-			.ok();
-		})
-		.detach();
 		cx.notify();
 	}
 
