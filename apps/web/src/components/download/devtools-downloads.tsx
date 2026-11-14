@@ -11,6 +11,8 @@ import type { DevToolsAsset, DevToolsOs } from '~/lib/downloads/devtools';
 import { staggerStyle } from '~/components/motion/reveal-style';
 import Tag from '~/components/tag';
 
+import DevToolsUpdates from './devtools-updates';
+
 type DevToolsTileProps = {
 	asset: DevToolsAsset;
 };
@@ -41,10 +43,15 @@ function DevToolsTile({ asset }: DevToolsTileProps) {
 			<span className='flex justify-center items-center bg-accent shadow-key rounded-full size-10 text-foreground shrink-0'>
 				<info.icon size={16} aria-hidden />
 			</span>
-			<span className='flex items-center gap-2 min-w-0 font-semibold text-foreground text-sm grow'>
-				{info.label}
-				<span className='font-normal text-muted-foreground'>{asset.arch}</span>
-				<Tag>{asset.extension}</Tag>
+			<span className='flex flex-col gap-0.5 min-w-0 grow'>
+				<span className='flex items-center gap-2 font-semibold text-foreground text-sm'>
+					{info.label}
+					<span className='font-normal text-muted-foreground'>{asset.arch}</span>
+					<Tag>{asset.extension}</Tag>
+				</span>
+				<span className='text-muted-foreground text-xs truncate'>
+					Unpacks to <span className='font-mono'>{asset.contents}</span>
+				</span>
 			</span>
 			<span
 				aria-hidden
@@ -60,7 +67,7 @@ function DevToolsTile({ asset }: DevToolsTileProps) {
 }
 
 /**
- * @description The DevTools desktop app's newest archive for each system, for plugin developers.
+ * @description The DevTools desktop app's newest archive for each system, for plugin developers, and how it updates.
  * @returns The DevTools download section.
  */
 function DevToolsDownloads() {
@@ -75,13 +82,14 @@ function DevToolsDownloads() {
 						DevTools
 					</h2>
 					<p className='text-muted-foreground text-sm'>
-						A desktop app for inspecting Discord's React tree on a connected device. It
-						updates itself. Builds are not notarized; on macOS, move the app to
-						Applications and run{' '}
+						A desktop app for inspecting Discord's React tree on a connected device.
+						Each download is an archive: unpack it, then open the app inside. On macOS
+						that is <span className='font-mono text-xs'>Unbound DevTools.app</span>;
+						move it to Applications first. Builds are not notarized, so run{' '}
 						<code className='font-mono text-xs'>
 							xattr -dr com.apple.quarantine "/Applications/Unbound DevTools.app"
 						</code>{' '}
-						once.
+						once before opening it.
 					</p>
 				</div>
 				<a
@@ -104,6 +112,12 @@ function DevToolsDownloads() {
 						<DevToolsTile asset={asset} />
 					</div>
 				))}
+			</div>
+			<div
+				className='animate-reveal'
+				style={staggerStyle(FIRST_SLOT + 1 + DEVTOOLS_ASSETS.length)}
+			>
+				<DevToolsUpdates />
 			</div>
 		</section>
 	);
