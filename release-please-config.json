@@ -50,7 +50,7 @@
 				{
 					"type": "toml",
 					"path": "Cargo.lock",
-					"jsonpath": "$.package[?(@.name.value==='unbound-devtools' || @.name.value==='unbound-devtools-core')].version"
+					"jsonpath": "$.package[?(@.name.value==='unbound-devtools' || @.name.value==='unbound-devtools-core' || @.name.value==='unbound-devtools-repl')].version"
 				}
 			]
 		}
