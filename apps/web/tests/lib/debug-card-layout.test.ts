@@ -395,7 +395,7 @@ describe('debug card', () => {
 		expect(
 			texts(
 				layoutDebugCard(
-					{ ...info, injected: ['\u200b Crane', ' ', 'CopyLogDaemon\t'] },
+					{ ...info, injected: ['\u3164\u200b Crane', '\u2800', 'CopyLogDaemon\t'] },
 					new Date(),
 				),
 			).map((run) => run.text),
