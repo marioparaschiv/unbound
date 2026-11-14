@@ -78,7 +78,11 @@ export function paintReplySpine(
 	{ active, quoted }: { active: boolean; quoted: boolean },
 ) {
 	'worklet';
-	const showIcon = active && !quoted;
+	// A recycled row keeps its preview after Discord empties it for a message that replies to nothing.
+	const isReply =
+		numberOf(java, preview, 'getVisibility') === VISIBLE &&
+		(numberOf(java, preview, 'getHeight') ?? 0) > 0;
+	const showIcon = active && !quoted && isReply;
 
 	if (spine) java.invoke(spine, 'setAlpha', [javaFloat(active ? 0 : 1)]);
 

@@ -163,18 +163,28 @@ export function createMeasure(
 				...placed(child, scale),
 				className: child.className,
 				reach: child.reach === undefined ? undefined : child.reach / scale + moved,
+				drawn: child.extent && {
+					left: child.extent.left / scale + moved,
+					top: child.extent.top / scale,
+					right: child.extent.right / scale + moved,
+					bottom: child.extent.bottom / scale,
+				},
 			}))
 			.filter((item) => item.shown)
 			.map((item) => ({ ...item, box: { ...item.box, x: item.box.x + moved } }));
 		const reactions = items.find((item) => item.className === REACTIONS);
 		const content = items.filter((item) => item !== reactions);
 		const body = union(
-			content.map(({ box }) => ({
-				left: box.x,
-				top: box.y,
-				right: box.x + box.width,
-				bottom: box.y + box.height,
-			})),
+			content.map(({ view, box, drawn }) =>
+				drawn && !javaFlag(java.invoke(contentClass, 'isInstance', [view]))
+					? drawn
+					: {
+							left: box.x,
+							top: box.y,
+							right: box.x + box.width,
+							bottom: box.y + box.height,
+						},
+			),
 		);
 
 		if (!body) return;
