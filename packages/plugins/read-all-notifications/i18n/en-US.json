@@ -1,0 +1,5 @@
+{
+	"READ_ALL": "Read All",
+	"MARKED_READ": "{count, plural, one {Marked # server as read.} other {Marked # servers as read.}}",
+	"NOTHING_UNREAD": "Every server is already read."
+}

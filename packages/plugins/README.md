@@ -1,6 +1,6 @@
 # Plugins
 
-106 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+107 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -80,6 +80,7 @@
 - <img src="../../assets/plugins/readme-icons/user-square-icon.svg" width="20" height="20" align="absmiddle" alt=""> [PronounDB](https://unbound.rip/addons/unbound.pronoundb): Adds pronouns to user messages using PronounDB.
 - <img src="../../assets/plugins/readme-icons/trash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Quick Delete](https://unbound.rip/addons/unbound.quick-delete): Deletes messages straight away, without the confirmation.
 - <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Reaction Avatars](https://unbound.rip/addons/unbound.reaction-avatars): Shows the people who reacted beside each message reaction.
+- <img src="../../assets/plugins/readme-icons/checkmark-large-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Read All Notifications](https://unbound.rip/addons/unbound.read-all-notifications): Adds a button to your server list that marks every server as read at once.
 - <img src="../../assets/plugins/readme-icons/user-minus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Relationship Notifier](https://unbound.rip/addons/unbound.relationship-notifier): Notifies you when a friend, group chat, or server removes you.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Reverse Image Search](https://unbound.rip/addons/unbound.reverse-image-search): Adds Search image to the media viewer's menu: Google Lens, Yandex, SauceNAO, IQDB, Bing, TinEye or ImgOps.
 - <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [ReviewDB](https://unbound.rip/addons/unbound.reviewdb): Leave reviews on other users' profiles and see what others think of you.
