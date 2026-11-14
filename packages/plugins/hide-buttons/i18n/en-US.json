@@ -1,6 +1,8 @@
 {
 	"GIFT": "Gift button",
 	"GIFT_SUBTITLE": "Hides the gift button in the chat input.",
+	"EMPTY_SEND": "Send button while empty",
+	"EMPTY_SEND_SUBTITLE": "Hides the send button until you type something or attach a file.",
 	"VOICE_MESSAGE": "Voice message button",
 	"VOICE_MESSAGE_SUBTITLE": "Hides the microphone that records a voice message.",
 	"VOICE_CALL": "Voice call buttons",

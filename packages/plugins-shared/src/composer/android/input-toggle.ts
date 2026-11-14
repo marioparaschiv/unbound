@@ -1,13 +1,13 @@
 import { metro, patcher } from '@unbound-app/api';
-import { createElement } from 'react';
-import { View } from 'react-native';
 
 import { channelOf, type ToggleButtonFactory } from '../toggle-channel';
+import { withComposerButton } from '../composer-stack';
 
 const BUTTON_GAP = 8;
 
 /**
- * @description Puts the toggle in front of `ChatInputSendButton`, since Android collapses the right-hand actions once there is text.
+ * @description Puts the toggle in front of `ChatInputSendButton`, since Android collapses the right-hand actions once there is text;
+ * a crowded draft stacks it above the send button instead.
  * @param button Draws the toggle for a channel.
  * @param name What log lines call the toggle.
  */
@@ -27,12 +27,12 @@ export function patchSendButton(button: ToggleButtonFactory, name: string): void
 
 		if (!channelId || !result) return;
 
-		return createElement(
-			View,
-			{ style: { flexDirection: 'row', alignItems: 'center' } },
-			button(channelId, BUTTON_GAP),
-			result,
-		);
+		return withComposerButton(result, {
+			channelId,
+			draw: (gap: number) => button(channelId, gap),
+			inline: 'row',
+			rowGap: BUTTON_GAP,
+		});
 	});
 }
 

@@ -2,6 +2,7 @@ import { patcher } from '@unbound-app/api';
 
 import {
 	patchChatInputRightActions,
+	patchEmptySendButton,
 	patchGiftOrThreadButton,
 	patchGuildActionRows,
 	patchPrivateChannelButtons,
@@ -13,6 +14,7 @@ import {
 export function start() {
 	patchGiftOrThreadButton();
 	patchChatInputRightActions();
+	patchEmptySendButton();
 	patchVoiceMessageButton();
 	patchPrivateChannelButtons();
 	patchProfileContactButtons();

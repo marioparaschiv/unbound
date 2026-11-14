@@ -12,6 +12,7 @@ import { createElement } from 'react';
 import { patchSendButton as android } from './android/input-toggle';
 import { patchRightActions as ios } from './ios/input-toggle';
 import useStyles from './input-button.style';
+import { useComposerState } from './composer-state';
 
 export type InputButtonOptions = {
 	key: string;
@@ -29,6 +30,9 @@ type ButtonProps = InputButtonOptions & {
 
 function ActionButton({ channelId, label, onPress, assetId, trailingGap }: ButtonProps) {
 	const styles = useStyles();
+	const state = useComposerState(channelId);
+
+	if (state === 'empty') return null;
 
 	return createElement(
 		View,
@@ -57,7 +61,7 @@ const drawButton = definePlatform({ ios, android });
 
 /**
  * @description Adds a button to the chat input, where the input's toggles go: in front of `ChatInputRightActions` on iOS
- * and of `ChatInputSendButton` on Android.
+ * and of `ChatInputSendButton` on Android. It hides while the input is empty, since it acts on the draft.
  * @param options The button's key, icon, label and what it does.
  */
 export function patchChatInputButton(options: InputButtonOptions): void {
