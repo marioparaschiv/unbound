@@ -1,0 +1,21 @@
+{
+	"id": "unbound.music-previews",
+	"name": "Music Previews",
+	"description": "Tapping a Spotify or Apple Music link plays 30-second previews in a sheet instead of leaving Discord.",
+	"authors": [
+		{
+			"name": "fres",
+			"id": "843448897737064448"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "PlayIcon",
+	"main": "index.tsx"
+}

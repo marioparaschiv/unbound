@@ -1,6 +1,6 @@
 # Plugins
 
-108 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+109 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -65,6 +65,7 @@
 - <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [More User Tags](https://unbound.rip/addons/unbound.more-user-tags): Adds tags for webhooks and moderative roles.
 - <img src="../../assets/plugins/readme-icons/microphone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Moyai](https://unbound.rip/addons/unbound.moyai): Plays a thud when Moyai appears in the current channel or as a reaction.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Multi Account](https://unbound.rip/addons/unbound.multi-account): Unlocks Discord's built-in multi-account switcher on mobile.
+- <img src="../../assets/plugins/readme-icons/play-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Music Previews](https://unbound.rip/addons/unbound.music-previews): Tapping a Spotify or Apple Music link plays 30-second previews in a sheet instead of leaving Discord.
 - <img src="../../assets/plugins/readme-icons/music-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Music Rich Presence](https://unbound.rip/addons/unbound.music-rich-presence): Shows what you are scrobbling on Last.fm or ListenBrainz as your Discord activity.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Mutual Group DMs](https://unbound.rip/addons/unbound.mutual-group-dms): Shows the group DMs you share with someone on their profile, and opens them from there.
 - <img src="../../assets/plugins/readme-icons/bell-icon.svg" width="20" height="20" align="absmiddle" alt=""> [New Guild Settings](https://unbound.rip/addons/unbound.new-guild-settings): Mutes new servers and applies your notification and channel defaults as soon as you join them.

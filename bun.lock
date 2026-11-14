@@ -1249,6 +1249,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/music-previews": {
+      "name": "music-previews",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/music-rich-presence": {
       "name": "music-rich-presence",
       "dependencies": {
@@ -4126,6 +4140,7 @@
 
     "multi-account": ["multi-account@workspace:packages/plugins/multi-account"],
 
+    "music-previews": ["music-previews@workspace:packages/plugins/music-previews"],
     "music-rich-presence": ["music-rich-presence@workspace:packages/plugins/music-rich-presence"],
 
     "mutual-group-dms": ["mutual-group-dms@workspace:packages/plugins/mutual-group-dms"],
