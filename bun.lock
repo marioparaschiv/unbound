@@ -156,7 +156,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "3.5.0",
+      "version": "3.5.0-0109250d3b2e09b67a8ae99bb370192dcf5434bd7ab1fbfd914e9693f5dc3ae7",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -1001,6 +1001,20 @@
     },
     "packages/plugins/fix-youtube-embeds": {
       "name": "fix-youtube-embeds",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
+    "packages/plugins/follow-voice-user": {
+      "name": "follow-voice-user",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -3905,6 +3919,8 @@
     "flow-estree": ["flow-estree@0.327.0", "", {}, "sha512-f9vK751YUzD0qaHSpKc5/qQM6gqOlgGS+4ZRqTNcZOpVqn3mC55yEQ6dUG2K1eaVm5FbKkz9CFWe6XNvrkQFQg=="],
 
     "flow-parser": ["flow-parser@0.327.0", "", { "dependencies": { "flow-estree": "0.327.0" } }, "sha512-/MYZ5hXWf5ozpbdfUDmazMgQXviLxWEiRLH3MppEGDdW0itRVqmB5UaU7QX+SBCDNiq+gEesSVn8nlxmPDyDkw=="],
+
+    "follow-voice-user": ["follow-voice-user@workspace:packages/plugins/follow-voice-user"],
 
     "force-owner-crown": ["force-owner-crown@workspace:packages/plugins/force-owner-crown"],
 

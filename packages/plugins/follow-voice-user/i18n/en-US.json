@@ -1,0 +1,13 @@
+{
+	"ONLY_IN_VOICE": "Only while you are in voice",
+	"ONLY_IN_VOICE_SUBTITLE": "Follows them only when you are already in a voice channel.",
+	"LEAVE_WITH_THEM": "Leave when they leave",
+	"LEAVE_WITH_THEM_SUBTITLE": "Disconnects you when they leave voice.",
+	"FOLLOW_DESC": "Join a friend's voice channel whenever they move",
+	"FOLLOW_USER_DESC": "The friend to follow",
+	"UNFOLLOW_DESC": "Stop following in voice",
+	"FOLLOWING": "Following {name} in voice.",
+	"NOT_A_FRIEND": "You can only follow friends.",
+	"UNFOLLOWED": "Stopped following {name}.",
+	"NOT_FOLLOWING": "You are not following anyone."
+}

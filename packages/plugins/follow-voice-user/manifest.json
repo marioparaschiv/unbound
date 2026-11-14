@@ -1,0 +1,21 @@
+{
+	"id": "unbound.follow-voice-user",
+	"name": "Follow Voice User",
+	"description": "Follows a friend from voice channel to voice channel: /follow them, and you join wherever they go.",
+	"authors": [
+		{
+			"name": "TheArmagan",
+			"id": "707309693449535599"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "HeadphonesIcon",
+	"main": "index.tsx"
+}
