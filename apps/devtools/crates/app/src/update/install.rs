@@ -181,7 +181,7 @@ pub fn relaunch() -> anyhow::Result<()> {
 
 #[cfg(test)]
 mod tests {
-	use super::{BINARY, archive_name, replace, unpack, verify};
+	use super::{BINARY, archive_name, replace, verify};
 
 	#[test]
 	fn names_the_archive_after_the_url() {
@@ -213,7 +213,7 @@ mod tests {
 			assert!(status.success());
 			let unpacked = dir.join("unpacked");
 			std::fs::create_dir_all(&unpacked).unwrap();
-			unpack(&archive, &unpacked).unwrap();
+			super::unpack(&archive, &unpacked).unwrap();
 			replace(&exe, &unpacked.join(BINARY)).unwrap();
 		}
 		#[cfg(windows)]
