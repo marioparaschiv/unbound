@@ -17,5 +17,21 @@
 		"min": "3.0.0"
 	},
 	"icon": "HeadphonesIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.objc.classes",
+				"native.objc.hooks",
+				"native.objc.invoke"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "3c08a58c48729dd42c705f076ba671a230bafde7a6f5404a7a7efa8cedd3a27c68e60dcefdbb13f862a61a10c35c0467dcfe9f58a557560e2c3548cd23511628"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "0tbkwvCm15HEJ18zbnAMMnJlhll7h6VYP7ljd3yopJFn+8X0MewCZtaTAx8c1iRhxgs/1uDqdFADlIeW88kaBg=="
+	}
 }
