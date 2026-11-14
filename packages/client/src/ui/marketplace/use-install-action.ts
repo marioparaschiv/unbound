@@ -1,9 +1,11 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonKind } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
+import { Platform } from 'react-native';
 import { useState } from 'react';
 
 import { installsFromManifest } from '~/addons/installs-from-manifest';
+import { onlyOnOtherPlatform } from '~/marketplace/platform-support';
 import { CLIENT_VERSION, Screens } from '~/core/constants';
 import type { InstallStatus } from '~/marketplace/catalog';
 import type { UpdatableKind } from '~/addons/manager-of';
@@ -38,6 +40,8 @@ export type InstallAction = {
 
 const logger = createLogger('Marketplace', 'Install');
 
+const PLATFORM_NAMES: Partial<Record<string, string>> = { ios: 'iOS', android: 'Android' };
+
 const ACTIONS: Record<InstallStatus, StatusAction> = {
 	install: {
 		label: () => messages.UNBOUND_INSTALL,
@@ -55,7 +59,8 @@ const ACTIONS: Record<InstallStatus, StatusAction> = {
 /**
  * @description Drives a listed addon's Install, Update or Installed button, judged against the installed
  * copy. A tap installs the newest version this client runs, or opens the installed copy's settings page once
- * installed; holding offers it or a picker of every version, except for fonts.
+ * installed; holding offers it or a picker of every version, except for fonts. An addon limited to another platform
+ * says so instead of installing.
  * @param kind The manager the addon belongs to.
  * @param addon The listed addon.
  * @returns The button's label, variant, loading state and handlers.
@@ -66,8 +71,15 @@ function useInstallAction(kind: AddonKind, addon: ListedAddon): InstallAction {
 	// Holds the pressed action until it settles, so the label doesn't flip while the button spins.
 	const [pending, setPending] = useState<InstallStatus | null>(null);
 	const { manifest, version: latest } = addon.latestVersion;
-	const action = ACTIONS[pending ?? status];
-	const updatable = installsFromManifest(kind) ? kind : undefined;
+	const elsewhere = status === 'install' ? onlyOnOtherPlatform(manifest, Platform.OS) : undefined;
+	const platformName = elsewhere && (PLATFORM_NAMES[elsewhere] ?? elsewhere);
+	const action = platformName
+		? {
+				label: () => format('UNBOUND_ONLY_ON_PLATFORM', { platform: platformName }),
+				variant: 'secondary' as const,
+			}
+		: ACTIONS[pending ?? status];
+	const updatable = installsFromManifest(kind) && !platformName ? kind : undefined;
 
 	async function run(install: () => Promise<boolean>): Promise<boolean> {
 		setPending(status);
@@ -96,6 +108,17 @@ function useInstallAction(kind: AddonKind, addon: ListedAddon): InstallAction {
 
 	async function press() {
 		if (pending) return;
+
+		if (platformName) {
+			fail(
+				format('UNBOUND_ONLY_ON_PLATFORM_DESC', {
+					name: manifest.name,
+					platform: platformName,
+				}),
+			);
+
+			return;
+		}
 
 		if (!action.offer) {
 			openInstalled();
