@@ -187,11 +187,20 @@ export async function readAccessibility(): Promise<
 }
 
 function storageOf(state?: NativeDeviceState): DebugInfo['storage'] {
-	if (state?.freeMB === undefined && state?.unboundMB === undefined) {
+	if (
+		state?.freeMB === undefined &&
+		state?.unboundMB === undefined &&
+		state?.discordMB === undefined
+	) {
 		return undefined;
 	}
 
-	return { freeMB: state.freeMB, unboundMB: state.unboundMB };
+	return {
+		freeMB: state.freeMB,
+		unboundMB: state.unboundMB,
+		discordMB: state.discordMB,
+		cacheMB: state.cacheMB,
+	};
 }
 
 function patchCounts(): DebugInfo['patches'] {

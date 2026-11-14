@@ -177,6 +177,8 @@ export const debugCardRequestSchema = Type.Object({
 		Type.Object({
 			freeMB: Type.Optional(Type.Integer({ minimum: 0, maximum: 100_000_000 })),
 			unboundMB: Type.Optional(Type.Integer({ minimum: 0, maximum: 100_000_000 })),
+			discordMB: Type.Optional(Type.Integer({ minimum: 0, maximum: 100_000_000 })),
+			cacheMB: Type.Optional(Type.Integer({ minimum: 0, maximum: 100_000_000 })),
 		}),
 	),
 	errors: Type.Optional(

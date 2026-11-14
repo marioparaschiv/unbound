@@ -394,6 +394,39 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
     runtime.global().setProperty(runtime, "NativePlatform", std::move(platform));
 }
 
+static uintmax_t directoryBytes(const std::filesystem::path &directory)
+{
+    uintmax_t       bytes = 0;
+    std::error_code walkError;
+    for (std::filesystem::recursive_directory_iterator entry(
+             directory, std::filesystem::directory_options::skip_permission_denied, walkError),
+         end;
+         !walkError && entry != end; entry.increment(walkError))
+    {
+        std::error_code sizeError;
+        if (entry->is_regular_file(sizeError))
+        {
+            bytes += entry->file_size(sizeError);
+        }
+    }
+    return bytes;
+}
+
+static uintmax_t cacheBytes(const std::filesystem::path &appData)
+{
+    constexpr const char *kCacheDirectories[] = {"Library/Caches", "tmp", "cache", "code_cache"};
+    uintmax_t             bytes               = 0;
+    for (const char *name : kCacheDirectories)
+    {
+        std::error_code error;
+        if (std::filesystem::is_directory(appData / name, error))
+        {
+            bytes += directoryBytes(appData / name);
+        }
+    }
+    return bytes;
+}
+
 nlohmann::json storageState(const std::string &documents)
 {
     constexpr uintmax_t kMegabyte = 1024 * 1024;
@@ -408,21 +441,11 @@ nlohmann::json storageState(const std::string &documents)
     {
         state["freeMB"] = space.available / kMegabyte;
     }
-    uintmax_t       bytes = 0;
-    std::error_code walkError;
-    for (std::filesystem::recursive_directory_iterator
-             entry(std::filesystem::path(documents),
-                   std::filesystem::directory_options::skip_permission_denied, walkError),
-         end;
-         !walkError && entry != end; entry.increment(walkError))
-    {
-        std::error_code sizeError;
-        if (entry->is_regular_file(sizeError))
-        {
-            bytes += entry->file_size(sizeError);
-        }
-    }
-    state["unboundMB"] = bytes / kMegabyte;
+    std::filesystem::path unbound(documents);
+    std::filesystem::path appData = unbound.parent_path().parent_path();
+    state["unboundMB"]            = directoryBytes(unbound) / kMegabyte;
+    state["discordMB"]            = directoryBytes(appData) / kMegabyte;
+    state["cacheMB"]              = cacheBytes(appData) / kMegabyte;
     return state;
 }
 

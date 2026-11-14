@@ -485,6 +485,31 @@ describe('debug card', () => {
 			native: '2 hooks · 0 surfaces · 5 handles',
 		});
 	});
+	test('shows storage once the Discord data grows large', () => {
+		const report: DebugCardRequest = {
+			...info,
+			storage: { freeMB: 40_000, unboundMB: 41, discordMB: 3_200, cacheMB: 2_100 },
+		};
+		const labels = texts(layoutDebugCard(report, new Date()))
+			.filter((run) => run.x === 14)
+			.map((run) => run.text);
+
+		expect(labels).toContain('storage');
+		expect(JSON.parse(altJson(report))).toMatchObject({
+			storage: '40000 MB free · Discord 3200 MB (cache 2100 MB) · unbound 41 MB',
+		});
+		expect(
+			texts(
+				layoutDebugCard(
+					{ ...report, storage: { freeMB: 40_000, discordMB: 900 } },
+					new Date(),
+				),
+			)
+				.filter((run) => run.x === 14)
+				.map((run) => run.text),
+		).not.toContain('storage');
+	});
+
 	test('adds plugin versions, display and session to the alt text, dropping the plugin list first', () => {
 		const report: DebugCardRequest = {
 			...info,
