@@ -1,5 +1,38 @@
 # Changelog
 
+## [1.4.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.4.0...loader-v1.4.0) (2026-11-14)
+
+
+### Features
+
+* **client:** report power, clock, DNS and notifications in /debug ([#1393](https://github.com/marioparaschiv/unbound/issues/1393)) ([1a9227f](https://github.com/marioparaschiv/unbound/commit/1a9227fa96802e73efd2293ec850db477f2355a4))
+* **client:** send native crashes with opt-in crash reports ([#1403](https://github.com/marioparaschiv/unbound/issues/1403)) ([c3b7f91](https://github.com/marioparaschiv/unbound/commit/c3b7f916ce070ffa1d64e0860ab5dae2f5660396))
+* **client:** share text and links to Discord ([#1353](https://github.com/marioparaschiv/unbound/issues/1353)) ([1e23d41](https://github.com/marioparaschiv/unbound/commit/1e23d41f3de3f162037a9e990c0fd3bea9ae32d6))
+* **devtools:** find the bridge over Bonjour and add MCP to agents ([#1309](https://github.com/marioparaschiv/unbound/issues/1309)) ([03f4c20](https://github.com/marioparaschiv/unbound/commit/03f4c2016c7064fabb25c853ea766f0f1f9c962d))
+* **loader:** add FFI memory, C callbacks and import rebinding ([#1266](https://github.com/marioparaschiv/unbound/issues/1266)) ([5965be8](https://github.com/marioparaschiv/unbound/commit/5965be8306b61099675305e629e79d2fd160b203))
+* **loader:** find classes by shape and hook subclasses or late classes ([#1267](https://github.com/marioparaschiv/unbound/issues/1267)) ([c0347ac](https://github.com/marioparaschiv/unbound/commit/c0347ace0a3a57e226b32f88ef3eb25fe3070f8b))
+* **loader:** finish bundle downloads in the background ([#1270](https://github.com/marioparaschiv/unbound/issues/1270)) ([c003e0e](https://github.com/marioparaschiv/unbound/commit/c003e0e8d414c6e0fe41f0955496230d3c0c233a))
+* **loader:** let plugins make Objective-C blocks and classes ([#1265](https://github.com/marioparaschiv/unbound/issues/1265)) ([f23f69b](https://github.com/marioparaschiv/unbound/commit/f23f69b7aa52db68878fd0d06a14b7400a3ba0a4))
+* **loader:** open Safari extension settings from the disabled alert ([#1332](https://github.com/marioparaschiv/unbound/issues/1332)) ([0a19732](https://github.com/marioparaschiv/unbound/commit/0a19732609d5889085717c320439ffdacaf348be))
+* **loader:** patch the bundle instead of downloading it whole ([#1401](https://github.com/marioparaschiv/unbound/issues/1401)) ([b041041](https://github.com/marioparaschiv/unbound/commit/b04104115928d635cdec4722b86b42227a7a553a))
+* **loader:** report MetricKit hangs and system kills in /debug ([#1271](https://github.com/marioparaschiv/unbound/issues/1271)) ([8a8137a](https://github.com/marioparaschiv/unbound/commit/8a8137ab67e52076ef105555308a6b79bb342f23))
+* **loader:** report signer, binary, re-sign, device and HTTPS facts ([#1274](https://github.com/marioparaschiv/unbound/issues/1274)) ([4bb2629](https://github.com/marioparaschiv/unbound/commit/4bb2629210d6cfb5fcd9defdbb89c52fc3178cf7))
+* **loader:** trust every listed bundle signing key ([#1399](https://github.com/marioparaschiv/unbound/issues/1399)) ([7dbb25a](https://github.com/marioparaschiv/unbound/commit/7dbb25aef9ec29f3dda2a3a70674e257e0fd0dc5))
+* **loader:** use Discord's own share extension ([#1367](https://github.com/marioparaschiv/unbound/issues/1367)) ([7f33394](https://github.com/marioparaschiv/unbound/commit/7f33394f23d09da4a5d841e98fc7df0ed5c777ba))
+
+
+### Bug Fixes
+
+* **loader:** build the iOS tweak with the sampler off ([#1365](https://github.com/marioparaschiv/unbound/issues/1365)) ([7493d11](https://github.com/marioparaschiv/unbound/commit/7493d118a0cc16013ccdd87ba1b597a8ec3f2482))
+* **loader:** hand shared files to Discord through the app group ([#1331](https://github.com/marioparaschiv/unbound/issues/1331)) ([d3d740d](https://github.com/marioparaschiv/unbound/commit/d3d740d752109056728af4bfe5d99e7c22dc6dcd))
+* **loader:** keep outside settings edits made while changes are pending ([#1370](https://github.com/marioparaschiv/unbound/issues/1370)) ([73468c8](https://github.com/marioparaschiv/unbound/commit/73468c8d10c10249558c939215ff21bee7bf3405))
+* **loader:** keep the Hermes sampler off on iOS ([#1357](https://github.com/marioparaschiv/unbound/issues/1357)) ([625684e](https://github.com/marioparaschiv/unbound/commit/625684eb689f54fdfe35ce3473b693f3057134ab))
+* **loader:** leave background and locked launches out of the guard ([#1261](https://github.com/marioparaschiv/unbound/issues/1261)) ([566aa86](https://github.com/marioparaschiv/unbound/commit/566aa860622f98ef8b6a2a464d6ec32cc3edaae0))
+* **loader:** save staged settings when Discord backgrounds ([#1356](https://github.com/marioparaschiv/unbound/issues/1356)) ([6727ded](https://github.com/marioparaschiv/unbound/commit/6727ded4e235c89655afac58d4357ff746a7d9a4))
+* **loader:** share the app group with extensions when sideloaded ([#1366](https://github.com/marioparaschiv/unbound/issues/1366)) ([911134e](https://github.com/marioparaschiv/unbound/commit/911134e74dace20f10013b9a2648f062a8b3c2e5))
+* **loader:** sign the share extension with codesign ([#1354](https://github.com/marioparaschiv/unbound/issues/1354)) ([664fe0e](https://github.com/marioparaschiv/unbound/commit/664fe0e5a96a6f5c2b005c4cb223d4c3d708b8ba))
+* **web:** wrap /debug rows and tighten the environment rows ([#1275](https://github.com/marioparaschiv/unbound/issues/1275)) ([5dbf2db](https://github.com/marioparaschiv/unbound/commit/5dbf2db8edb1b6766a165fa4c5521340a6d6e868))
+
 ## [1.4.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.3.0...loader-v1.4.0) (2026-11-13)
 
 
