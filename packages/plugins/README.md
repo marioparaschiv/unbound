@@ -1,6 +1,6 @@
 # Plugins
 
-100 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+102 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -75,11 +75,13 @@
 - <img src="../../assets/plugins/readme-icons/laptop-phone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Platform Indicators](https://unbound.rip/addons/unbound.platform-indicators): Shows which platforms users are online on, such as desktop, mobile, web, console or VR, in the member list, profiles and messages.
 - <img src="../../assets/plugins/readme-icons/eye-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Preview Message](https://unbound.rip/addons/unbound.preview-message): Preview a message before sending it.
 - <img src="../../assets/plugins/readme-icons/user-square-icon.svg" width="20" height="20" align="absmiddle" alt=""> [PronounDB](https://unbound.rip/addons/unbound.pronoundb): Adds pronouns to user messages using PronounDB.
+- <img src="../../assets/plugins/readme-icons/trash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Quick Delete](https://unbound.rip/addons/unbound.quick-delete): Deletes messages straight away, without the confirmation.
 - <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Reaction Avatars](https://unbound.rip/addons/unbound.reaction-avatars): Shows the people who reacted beside each message reaction.
 - <img src="../../assets/plugins/readme-icons/user-minus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Relationship Notifier](https://unbound.rip/addons/unbound.relationship-notifier): Notifies you when a friend, group chat, or server removes you.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Reverse Image Search](https://unbound.rip/addons/unbound.reverse-image-search): Adds Search image to the media viewer's menu: Google Lens, Yandex, SauceNAO, IQDB, Bing, TinEye or ImgOps.
 - <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [ReviewDB](https://unbound.rip/addons/unbound.reviewdb): Leave reviews on other users' profiles and see what others think of you.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Role Color Everywhere](https://unbound.rip/addons/unbound.role-color-everywhere): Colors mentions, typing names, voice users, reaction users, poll voters, and role headers.
+- <img src="../../assets/plugins/readme-icons/shield-user-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Role Tools](https://unbound.rip/addons/unbound.role-tools): Long-press a role on a profile to copy its color or see its members.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Send Timestamps](https://unbound.rip/addons/unbound.send-timestamps): Turns times like `17:30` in your messages into timestamps everyone sees in their own time zone.
 - <img src="../../assets/plugins/readme-icons/settings-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Settings Demo](https://unbound.rip/addons/unbound.settings-demo): Shows every generated settings row.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Shiki Codeblocks](https://unbound.rip/addons/unbound.shiki-codeblocks): Highlights code blocks with VS Code-style syntax colors.

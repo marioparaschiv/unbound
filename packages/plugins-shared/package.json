@@ -8,6 +8,7 @@
 		"./*.json": "./src/*.json",
 		"./entities/entity-list": "./src/entities/entity-list.tsx",
 		"./entities/entity-list-row": "./src/entities/entity-list-row.tsx",
+		"./entities/entity-row": "./src/entities/entity-row.tsx",
 		"./*": "./src/*.ts"
 	},
 	"scripts": {

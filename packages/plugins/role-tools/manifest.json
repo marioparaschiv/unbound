@@ -1,0 +1,25 @@
+{
+	"id": "unbound.role-tools",
+	"name": "Role Tools",
+	"description": "Long-press a role on a profile to copy its color or see its members.",
+	"authors": [
+		{
+			"name": "MSMA",
+			"id": "307215253811363843"
+		},
+		{
+			"name": "nin0dev",
+			"id": "1395533040914141235"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ShieldUserIcon",
+	"main": "index.tsx"
+}

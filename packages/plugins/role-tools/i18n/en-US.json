@@ -1,0 +1,10 @@
+{
+	"COPY_COLOR": "Copy Role Color",
+	"COPIED_COLOR": "Copied {color}.",
+	"NO_COLOR": "This role has no color.",
+	"VIEW_MEMBERS": "View Members",
+	"MEMBERS_TITLE": "Members with {role}",
+	"LOADING_MEMBERS": "Loading members…",
+	"NO_MEMBERS": "No members loaded with this role.",
+	"LOADED_ONLY": "Large servers only show the members Discord has loaded."
+}

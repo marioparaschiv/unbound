@@ -1,0 +1,21 @@
+{
+	"id": "unbound.quick-delete",
+	"name": "Quick Delete",
+	"description": "Deletes messages straight away, without the confirmation.",
+	"authors": [
+		{
+			"name": "The Sun",
+			"id": "406028027768733696"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TrashIcon",
+	"main": "index.tsx"
+}
