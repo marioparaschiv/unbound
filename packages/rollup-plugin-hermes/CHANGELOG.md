@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1](https://github.com/marioparaschiv/unbound/compare/rollup-plugin-hermes-v3.0.0...rollup-plugin-hermes-v3.0.1) (2026-11-14)
+
+
+### Build System
+
+* **deps:** bump the minor-and-patch group with 27 updates ([#1209](https://github.com/marioparaschiv/unbound/issues/1209)) ([4cb51d9](https://github.com/marioparaschiv/unbound/commit/4cb51d94289c9fffbed94fc97d0988326d828118))
+
 ## [3.0.0](https://github.com/marioparaschiv/unbound/compare/rollup-plugin-hermes-v2.0.0...rollup-plugin-hermes-v3.0.0) (2026-11-11)
 
 

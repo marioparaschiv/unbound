@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.0](https://github.com/marioparaschiv/unbound/compare/types-v1.4.0...types-v1.5.0) (2026-11-14)
+
+
+### Features
+
+* **client:** update the client from the updates page ([#1434](https://github.com/marioparaschiv/unbound/issues/1434)) ([820958e](https://github.com/marioparaschiv/unbound/commit/820958e906360f243b46f0c627d18e652ec20fc5))
+* **loader:** name the plugins that froze Discord in the debug card ([#1480](https://github.com/marioparaschiv/unbound/issues/1480)) ([05d135e](https://github.com/marioparaschiv/unbound/commit/05d135eb6e7e05e1cf0e15fbe49319033073b3a1))
+* **loader:** report Discord's data and cache size in the debug card ([#1482](https://github.com/marioparaschiv/unbound/issues/1482)) ([b1d5f62](https://github.com/marioparaschiv/unbound/commit/b1d5f62c46840b764709b81ea07a46d7f71ebc28))
+* **loader:** report Focus and Scheduled Summary in the debug card ([#1486](https://github.com/marioparaschiv/unbound/issues/1486)) ([c2160a8](https://github.com/marioparaschiv/unbound/commit/c2160a8794a03c075b511ae73420ad72f4282d2d))
+
 ## [1.4.0](https://github.com/marioparaschiv/unbound/compare/types-v1.3.0...types-v1.4.0) (2026-11-14)
 
 

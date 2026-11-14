@@ -1,5 +1,37 @@
 # Changelog
 
+## [2.5.0](https://github.com/marioparaschiv/unbound/compare/web-v2.4.0...web-v2.5.0) (2026-11-14)
+
+
+### Features
+
+* **client:** turn off addon versions the store withdraws ([#1453](https://github.com/marioparaschiv/unbound/issues/1453)) ([8a47d11](https://github.com/marioparaschiv/unbound/commit/8a47d116ff8615ff18e1befe203ffe6e948e425d))
+* **loader:** report Discord's data and cache size in the debug card ([#1482](https://github.com/marioparaschiv/unbound/issues/1482)) ([b1d5f62](https://github.com/marioparaschiv/unbound/commit/b1d5f62c46840b764709b81ea07a46d7f71ebc28))
+* **loader:** report Focus and Scheduled Summary in the debug card ([#1486](https://github.com/marioparaschiv/unbound/issues/1486)) ([c2160a8](https://github.com/marioparaschiv/unbound/commit/c2160a8794a03c075b511ae73420ad72f4282d2d))
+
+
+### Bug Fixes
+
+* **web:** correct the debug card's extensions and updates rows ([#1460](https://github.com/marioparaschiv/unbound/issues/1460)) ([d40cd72](https://github.com/marioparaschiv/unbound/commit/d40cd724bf1e9df3ff4f32ab60a2ef77bcbc1c51))
+
+
+### Build System
+
+* **deps:** bump the minor-and-patch group with 27 updates ([#1209](https://github.com/marioparaschiv/unbound/issues/1209)) ([4cb51d9](https://github.com/marioparaschiv/unbound/commit/4cb51d94289c9fffbed94fc97d0988326d828118))
+
+
+### Tests
+
+* **web:** draw debug cards from real iOS and Android payloads ([#1485](https://github.com/marioparaschiv/unbound/issues/1485)) ([0144aad](https://github.com/marioparaschiv/unbound/commit/0144aad954e709b39bc7894652e185d886f62c9c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.5.0
+    * @unbound-app/utils bumped to 1.0.5
+
 ## [2.4.0](https://github.com/marioparaschiv/unbound/compare/web-v2.3.0...web-v2.4.0) (2026-11-14)
 
 

@@ -70,7 +70,7 @@
     },
     "apps/sdk-generator": {
       "name": "@unbound-app/sdk-generator",
-      "version": "1.0.4",
+      "version": "1.0.5",
       "dependencies": {
         "@unbound-app/contracts": "workspace:*",
         "@unbound-app/logger": "workspace:*",
@@ -85,7 +85,7 @@
     },
     "apps/web": {
       "name": "@unbound-app/web",
-      "version": "2.4.0",
+      "version": "2.5.0",
       "dependencies": {
         "@base-ui/react": "^1.9.0",
         "@better-auth/api-key": "1.7.21",
@@ -156,7 +156,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "3.4.0-eed7c0a0588c02fc2332476755a3fc201a783614e7ae9dbe2b499a149205739f",
+      "version": "3.5.0",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -170,7 +170,7 @@
     },
     "packages/cli": {
       "name": "@unbound-app/cli",
-      "version": "3.2.0",
+      "version": "3.2.1",
       "bin": {
         "ubd": "src/index.ts",
       },
@@ -227,7 +227,7 @@
     },
     "packages/client": {
       "name": "@unbound-app/client",
-      "version": "3.4.0",
+      "version": "3.5.0",
       "dependencies": {
         "@unbound-app/contracts": "workspace:*",
         "@unbound-app/debugger-protocol": "workspace:*",
@@ -301,7 +301,7 @@
     },
     "packages/contracts": {
       "name": "@unbound-app/contracts",
-      "version": "2.4.0",
+      "version": "2.5.0",
       "dependencies": {
         "@unbound-app/types": "workspace:*",
         "marked": "^18.2.0",
@@ -319,7 +319,7 @@
     },
     "packages/debugger": {
       "name": "@unbound-app/debugger",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "bin": {
         "ub-debugger": "src/index.ts",
       },
@@ -339,7 +339,7 @@
     },
     "packages/debugger-protocol": {
       "name": "@unbound-app/debugger-protocol",
-      "version": "2.2.0",
+      "version": "2.2.1",
       "dependencies": {
         "typebox": "^1.4.6",
       },
@@ -2173,7 +2173,7 @@
     },
     "packages/rollup-plugin-hermes": {
       "name": "@unbound-app/rollup-plugin-hermes",
-      "version": "3.0.0",
+      "version": "3.0.1",
       "devDependencies": {
         "@types/bun": "catalog:",
         "tsdown": "^0.23.7",
@@ -2184,7 +2184,7 @@
     },
     "packages/types": {
       "name": "@unbound-app/types",
-      "version": "1.4.0",
+      "version": "1.5.0",
       "dependencies": {
         "@unbound-app/discord-types": "workspace:*",
         "possess": "catalog:",
@@ -2198,7 +2198,7 @@
     },
     "packages/utils": {
       "name": "@unbound-app/utils",
-      "version": "1.0.4",
+      "version": "1.0.5",
       "dependencies": {
         "@unbound-app/types": "workspace:*",
       },

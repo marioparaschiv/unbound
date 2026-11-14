@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.5.0](https://github.com/marioparaschiv/unbound/compare/api-v3.4.0...api-v3.5.0) (2026-11-14)
+
+
+### Features
+
+* **client:** update the client from the updates page ([#1434](https://github.com/marioparaschiv/unbound/issues/1434)) ([820958e](https://github.com/marioparaschiv/unbound/commit/820958e906360f243b46f0c627d18e652ec20fc5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 3.5.0
+    * @unbound-app/sdk-generator bumped to 1.0.5
+
 ## [3.4.0](https://github.com/marioparaschiv/unbound/compare/api-v3.3.0...api-v3.4.0) (2026-11-14)
 
 

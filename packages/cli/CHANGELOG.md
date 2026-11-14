@@ -1,5 +1,27 @@
 # Changelog
 
+## [3.2.1](https://github.com/marioparaschiv/unbound/compare/cli-v3.2.0...cli-v3.2.1) (2026-11-14)
+
+
+### Build System
+
+* **deps:** bump the minor-and-patch group with 27 updates ([#1209](https://github.com/marioparaschiv/unbound/issues/1209)) ([4cb51d9](https://github.com/marioparaschiv/unbound/commit/4cb51d94289c9fffbed94fc97d0988326d828118))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger bumped to 1.2.1
+    * @unbound-app/debugger-protocol bumped to 2.2.1
+    * @unbound-app/rollup-plugin-hermes bumped to 3.0.1
+  * devDependencies
+    * @unbound-app/api bumped to 3.5.0
+    * @unbound-app/contracts bumped to 2.5.0
+    * @unbound-app/types bumped to 1.5.0
+    * @unbound-app/utils bumped to 1.0.5
+    * @unbound-app/web bumped to 2.5.0
+
 ## [3.2.0](https://github.com/marioparaschiv/unbound/compare/cli-v3.1.1...cli-v3.2.0) (2026-11-14)
 
 
