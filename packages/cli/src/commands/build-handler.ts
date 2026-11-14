@@ -3,6 +3,7 @@ import type { BuildReport } from '~/rollup/build-report-schema';
 import { buildConcurrency } from '~/lib/build-concurrency';
 import type { CommandHandler } from '~/lib/lazy-handler';
 import { createCheckCache } from '~/lib/check/check';
+import { inShard, parseShard } from '~/lib/shard';
 import { buildChecks } from '~/lib/build-checks';
 import { discoverAddons } from '~/lib/discovery';
 import { buildAddon } from '~/lib/build-addon';
@@ -17,6 +18,7 @@ type BuiltAddonReport = { id: string; ok: boolean; report: BuildReport | null };
 const handler: CommandHandler<typeof buildCommand.schema> = async ({
 	declaredCapabilities,
 	strictBudget,
+	shard,
 	verbose,
 }) => {
 	const resolved = loadConfig();
@@ -25,7 +27,13 @@ const handler: CommandHandler<typeof buildCommand.schema> = async ({
 		return { ok: false, text: resolved.error };
 	}
 
-	const addons = await discoverAddons(resolved);
+	const part = parseShard(shard);
+
+	if (shard && !part) {
+		return { ok: false, text: `"${shard}" is not a shard; use index/count, such as 2/3.` };
+	}
+
+	const addons = inShard(await discoverAddons(resolved), part);
 
 	if (addons.length === 0) {
 		return { ok: true, text: 'No addons found.' };
