@@ -15,17 +15,32 @@ internal object AndroidAppIcons {
     private const val ICON_DESTINATION = "Unbound/AppIcons/unbound-icon.webp"
     private const val ICON_INSTALLED = "appIconInstalled"
 
+    private const val ANIMATED_PREVIEW = "Unbound/AppIcons/unbound-animated.gif"
+
     /**
      * [packaged] says whether Discord's APK carries the icon marker, when the caller already knows; [cache] skips
-     * copying an icon this module version already installed.
+     * copying an icon this module version already installed; [launcherIcons] adds the animated icon, which needs the launcher hook.
      */
     fun describe(
         moduleInfo: ApplicationInfo,
         appInfo: ApplicationInfo,
         packaged: Boolean? = null,
         cache: StartupCache? = null,
-    ): JSONArray = try {
-        if (!(packaged ?: hasPackagedIcon(appInfo.sourceDir))) return JSONArray()
+        launcherIcons: Boolean = false,
+    ): JSONArray {
+        val icons = JSONArray()
+        packagedIcon(moduleInfo, appInfo, packaged, cache)?.let(icons::put)
+        if (launcherIcons) animatedIcon(moduleInfo, appInfo)?.let(icons::put)
+        return icons
+    }
+
+    private fun packagedIcon(
+        moduleInfo: ApplicationInfo,
+        appInfo: ApplicationInfo,
+        packaged: Boolean?,
+        cache: StartupCache?,
+    ): JSONObject? = try {
+        if (!(packaged ?: hasPackagedIcon(appInfo.sourceDir))) return null
 
         val image = File(appInfo.dataDir, "files/$ICON_DESTINATION")
         val moduleAPK = File(moduleInfo.sourceDir)
@@ -34,16 +49,27 @@ internal object AndroidAppIcons {
             cache?.put(ICON_INSTALLED, moduleAPK, "1")
         }
 
-        JSONArray().put(
-            JSONObject()
-                .put("id", ICON_ID)
-                .put("pickerId", PICKER_ID)
-                .put("name", "Unbound")
-                .put("image", Uri.fromFile(image).toString()),
-        )
+        JSONObject()
+            .put("id", ICON_ID)
+            .put("pickerId", PICKER_ID)
+            .put("name", "Unbound")
+            .put("image", Uri.fromFile(image).toString())
     } catch (error: Exception) {
         Logger.error(LogCategory.DEFAULT, "Failed to load the packaged Unbound app icon", error)
-        JSONArray()
+        null
+    }
+
+    private fun animatedIcon(moduleInfo: ApplicationInfo, appInfo: ApplicationInfo): JSONObject? = try {
+        val preview = AnimatedIconFrames.extractPreview(moduleInfo.sourceDir, File(appInfo.dataDir, "files/$ANIMATED_PREVIEW"))
+        preview?.let {
+            JSONObject()
+                .put("id", AnimatedIconFrames.ID)
+                .put("name", AnimatedIconFrames.NAME)
+                .put("image", Uri.fromFile(it).toString())
+        }
+    } catch (error: Exception) {
+        Logger.error(LogCategory.DEFAULT, "Failed to load the animated Unbound app icon", error)
+        null
     }
 
     private fun hasPackagedIcon(apkPath: String): Boolean = ZipFile(apkPath).use { archive ->

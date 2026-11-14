@@ -5,6 +5,7 @@
 #import <jsi/jsi.h>
 
 #import "AddonsCore.h"
+#import "AnimatedIcon.h"
 #import "BackgroundDownloads.h"
 #import "CoreBridge.h"
 #import "CoreConversions.h"
@@ -295,6 +296,20 @@ public:
         return "";
     }
 
+    static std::string animatedIconImageURL(NSDictionary *animated)
+    {
+        NSString *preview = animated[@"Preview"];
+        NSString *path =
+            [preview isKindOfClass:NSString.class]
+                ? [NSBundle.mainBundle.bundlePath stringByAppendingPathComponent:preview]
+                : nil;
+        if (path && [NSFileManager.defaultManager fileExistsAtPath:path])
+        {
+            return toStdString([NSURL fileURLWithPath:path].absoluteString);
+        }
+        return animated ? iconImageURL(@[ animated[@"Rest"] ]) : "";
+    }
+
     static NSDictionary *installedInfo()
     {
         NSString *path =
@@ -319,9 +334,11 @@ public:
         NSDictionary  *info      = installedInfo();
         NSDictionary  *alternate = info[@"CFBundleIcons"][@"CFBundleAlternateIcons"];
         NSDictionary  *names     = info[@"UnboundIconNames"];
+        NSDictionary  *animated  = UBAnimatedIconInfo();
+        NSArray       *frames    = animated[@"Frames"] ?: @[];
         for (NSString *iconId in [alternate.allKeys sortedArrayUsingSelector:@selector(compare:)])
         {
-            if (![iconId hasPrefix:@"Unbound"])
+            if (![iconId hasPrefix:@"Unbound"] || [frames containsObject:iconId])
             {
                 continue;
             }
@@ -333,6 +350,13 @@ public:
             icons.push_back({{"id", toStdString(iconId)},
                              {"name", toStdString(iconName(iconId, names))},
                              {"image", image}});
+        }
+        std::string preview = animatedIconImageURL(animated);
+        if (!preview.empty())
+        {
+            icons.push_back({{"id", toStdString(UBAnimatedIconId)},
+                             {"name", toStdString(animated[@"Name"] ?: @"Unbound (Animated)")},
+                             {"image", preview}});
         }
         return icons;
     }

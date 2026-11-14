@@ -96,8 +96,8 @@ func TestCyanInputsKeepDiscordsIconsAndSchemes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(merge.keys) != 5 {
-		t.Fatalf("merge plist must hold only the icon, URL and local network keys, has %v", merge.keys)
+	if len(merge.keys) != 6 {
+		t.Fatalf("merge plist must hold only the icon, URL, local network and animated icon keys, has %v", merge.keys)
 	}
 	services := merge.get("NSBonjourServices").valuesOrNil()
 	if len(services) != 1 || services[0].text != unboundBonjourService {
@@ -152,6 +152,47 @@ func TestCyanInputsKeepDiscordsLocalNetworkDeclarations(t *testing.T) {
 	}
 	if merge.get("NSLocalNetworkUsageDescription").text != "Discord's own text" {
 		t.Fatal("Discord's usage description must win over Unbound's")
+	}
+}
+
+func TestCyanInputsAddAnAlternateIconPerAnimatedFrame(t *testing.T) {
+	dir := t.TempDir()
+	args, files, err := cyanInputs(writeTestIPA(t, discordInfoPlist), dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(args[1])
+	if err != nil {
+		t.Fatal(err)
+	}
+	merge, err := readPlist(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	animated := merge.get(animatedIconKey)
+	frames := animated.get("Frames").valuesOrNil()
+	durations := animated.get("Durations").valuesOrNil()
+	if len(frames) == 0 || len(frames) != len(durations) {
+		t.Fatalf("the animated icon lists %d frames and %d durations", len(frames), len(durations))
+	}
+	written := map[string]bool{}
+	for _, file := range files {
+		written[filepath.Base(file)] = true
+	}
+	for _, frame := range frames {
+		for _, key := range []string{"CFBundleIcons", "CFBundleIcons~ipad"} {
+			if merge.get(key).get("CFBundleAlternateIcons").get(frame.text) == nil {
+				t.Fatalf("%s has no alternate icon for frame %s", key, frame.text)
+			}
+		}
+		for _, suffix := range []string{"60x60@2x.png", "60x60@3x.png", "76x76@2x~ipad.png"} {
+			if !written[frame.text+suffix] {
+				t.Fatalf("frame image %s%s was not written", frame.text, suffix)
+			}
+		}
+	}
+	if !written[animated.get("Preview").text] {
+		t.Fatal("the animated icon's preview was not written")
 	}
 }
 

@@ -5,6 +5,7 @@ import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.os.Handler
 import android.os.Looper
+import android.os.PersistableBundle
 import android.widget.Toast
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.ExceptionMode
@@ -21,11 +22,15 @@ internal object LauncherIconSelection {
     private const val ICON_DIRECTORY = "AppIcons"
     private const val MANIFEST = "custom.json"
     private const val SELECTION = "launcher-icon"
+    private const val ANIMATED_REST_FRAME = "unbound-animated-rest.png"
     private const val UNSUPPORTED_LAUNCHER_PINNED =
         "Your launcher can't change Discord's icon, so Unbound added a Home Screen shortcut with it instead."
     private const val UNSUPPORTED_LAUNCHER = "Your launcher can't change Discord's icon, and Unbound couldn't add a shortcut with it."
 
+    @Volatile private var moduleAPK: String? = null
+
     fun install(xposed: XposedInterface, classLoader: ClassLoader) {
+        moduleAPK = runCatching { xposed.moduleApplicationInfo.sourceDir }.getOrNull()
         val module = classLoader.loadClass(APP_ICON_MODULE)
         val promise = classLoader.loadClass(REACT_PROMISE)
         val resolve = promise.getMethod("resolve", Any::class.java)
@@ -35,7 +40,7 @@ internal object LauncherIconSelection {
             .setExceptionMode(ExceptionMode.PROTECTIVE)
             .intercept { chain ->
                 val id = chain.getArg(0) as? String
-                if (id?.startsWith(CUSTOM_PREFIX) == true) {
+                if (id?.startsWith(CUSTOM_PREFIX) == true || id == AnimatedIconFrames.ID) {
                     select(id)
                     resolve.invoke(chain.getArg(1), null)
                     null
@@ -62,22 +67,30 @@ internal object LauncherIconSelection {
     }
 
     fun selectedId(): String? = selectionFile().takeIf { it.isFile }?.readText()?.trim()?.takeIf { id ->
-        customIconFile(id) != null
+        iconImage(id) != null
+    }
+
+    private fun iconImage(id: String): File? = if (id == AnimatedIconFrames.ID) animatedRestFrame() else customIconFile(id)
+
+    private fun animatedRestFrame(): File? = moduleAPK?.let { apk ->
+        runCatching { AnimatedIconFrames.extractRestFrame(apk, File(iconDirectory(), ANIMATED_REST_FRAME)) }.getOrNull()
     }
 
     private fun select(id: String) {
         val context = ActivityTracker.application() ?: return
-        val image = customIconFile(id)
+        val image = iconImage(id)
         val icon = image?.let(AdaptiveIcon::fromFile)
         val launch = context.packageManager.getLaunchIntentForPackage(context.packageName)
         if (icon == null || launch == null) {
             Logger.error(LogCategory.DEFAULT, "Failed to read custom launcher icon $id")
             return
         }
+        val extras = PersistableBundle().apply { putBoolean(AnimatedIconFrames.EXTRA, id == AnimatedIconFrames.ID) }
         val shortcut = ShortcutInfo.Builder(context, SHORTCUT_ID)
             .setShortLabel("Discord")
             .setIcon(icon)
             .setIntent(launch)
+            .setExtras(extras)
             .build()
         runCatching { shortcuts(context)?.addDynamicShortcuts(listOf(shortcut)) }
             .onSuccess { selectionFile().writeText(id) }
@@ -98,7 +111,8 @@ internal object LauncherIconSelection {
         }
     }
 
-    private fun customIconName(id: String): String? = manifestEntry(id)?.optString("name")?.takeIf { it.isNotEmpty() }
+    private fun customIconName(id: String): String? =
+        if (id == AnimatedIconFrames.ID) AnimatedIconFrames.NAME else manifestEntry(id)?.optString("name")?.takeIf { it.isNotEmpty() }
 
     private fun clear() {
         val context = ActivityTracker.application() ?: return
