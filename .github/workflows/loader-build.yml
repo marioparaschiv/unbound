@@ -269,7 +269,7 @@ jobs:
                     fi
                     # Test the loader against the Discord the latest Unbound releases use, as the in-app Android builds do.
                     if [ -z "$INPUT_VERSION" ]; then
-                      ios_tag=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --exclude-drafts --exclude-pre-releases --json tagName --jq '[.[] | select(.tagName | test("^discord-[0-9]+\\.[0-9]+-ios$"))][0].tagName // empty')
+                      ios_tag=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 1000 --exclude-drafts --exclude-pre-releases --json tagName --jq '[.[] | select(.tagName | test("^discord-[0-9]+\\.[0-9]+-ios$"))][0].tagName // empty')
                       if [ -z "$ios_tag" ]; then echo "::error::$GITHUB_REPOSITORY has no published iOS release to test the loader against"; exit 1; fi
                       INPUT_VERSION=${ios_tag#discord-}
                       INPUT_VERSION=${INPUT_VERSION%-ios}
