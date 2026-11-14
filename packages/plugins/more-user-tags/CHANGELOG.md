@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.7] - 2026-11-14
+
+### Fixed
+
+- On iOS, tags are coloured again: 1.3.6 threw on every tag update because a new helper was defined after the code that calls it.
+
 ## [1.3.6] - 2026-11-14
 
 ### Fixed

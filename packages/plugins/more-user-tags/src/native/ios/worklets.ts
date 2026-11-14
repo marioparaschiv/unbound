@@ -492,6 +492,40 @@ function createRecord(
 	return record;
 }
 
+function isDetached(current: TagState, record: TagRecord): boolean {
+	'worklet';
+	const { objc } = current;
+	const parent = objc.invoke(record.label, 'superview', []) as NativeObjectHandle | null;
+
+	if (
+		!parent ||
+		objc.invoke(record.label, 'isHidden', []) ||
+		!objc.invoke(record.label, 'window', [])
+	) {
+		return true;
+	}
+
+	const parentLayer = objc.invoke(parent, 'layer', []) as NativeObjectHandle | null;
+	const superlayer = objc.invoke(record.layer, 'superlayer', []) as NativeObjectHandle | null;
+
+	return !parentLayer || !superlayer || keyOf(objc, parentLayer) !== keyOf(objc, superlayer);
+}
+
+function sweepDetached(current: TagState) {
+	'worklet';
+	const detached: [string, TagRecord][] = [];
+
+	current.records.forEach((record, id) => {
+		if (isDetached(current, record)) {
+			detached.push([id, record]);
+		}
+	});
+
+	for (const [id, record] of detached) {
+		removeRecord(current, id, record);
+	}
+}
+
 function updateLabel(current: TagState, label: NativeObjectHandle) {
 	'worklet';
 	const { objc } = current;
@@ -544,40 +578,6 @@ function updateLabel(current: TagState, label: NativeObjectHandle) {
 		console.error(`[More User Tags] ${String(error)}`);
 	} finally {
 		current.updating.delete(id);
-	}
-}
-
-function isDetached(current: TagState, record: TagRecord): boolean {
-	'worklet';
-	const { objc } = current;
-	const parent = objc.invoke(record.label, 'superview', []) as NativeObjectHandle | null;
-
-	if (
-		!parent ||
-		objc.invoke(record.label, 'isHidden', []) ||
-		!objc.invoke(record.label, 'window', [])
-	) {
-		return true;
-	}
-
-	const parentLayer = objc.invoke(parent, 'layer', []) as NativeObjectHandle | null;
-	const superlayer = objc.invoke(record.layer, 'superlayer', []) as NativeObjectHandle | null;
-
-	return !parentLayer || !superlayer || keyOf(objc, parentLayer) !== keyOf(objc, superlayer);
-}
-
-function sweepDetached(current: TagState) {
-	'worklet';
-	const detached: [string, TagRecord][] = [];
-
-	current.records.forEach((record, id) => {
-		if (isDetached(current, record)) {
-			detached.push([id, record]);
-		}
-	});
-
-	for (const [id, record] of detached) {
-		removeRecord(current, id, record);
 	}
 }
 
