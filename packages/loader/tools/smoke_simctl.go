@@ -63,7 +63,11 @@ func runIOSSmoke(args []string) error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	version, err := runSmokeCommand(ctx, time.Minute, "plutil", "-extract", "CFBundleShortVersionString", "raw", filepath.Join(*app, "Info.plist"))
+	// A sideloaded build's short version names the loader too; Discord's own sits under discordVersionKey.
+	version, err := runSmokeCommand(ctx, time.Minute, "plutil", "-extract", discordVersionKey, "raw", filepath.Join(*app, "Info.plist"))
+	if err != nil {
+		version, err = runSmokeCommand(ctx, time.Minute, "plutil", "-extract", "CFBundleShortVersionString", "raw", filepath.Join(*app, "Info.plist"))
+	}
 	if err != nil {
 		return err
 	}

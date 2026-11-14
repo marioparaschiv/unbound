@@ -39,18 +39,23 @@ const (
 	unboundLocalNetworkUsage = "Unbound's debugger finds and connects to the debugger bridge on your computer over the local network."
 )
 
-func cyanInputs(ipa, dir string) ([]string, []string, error) {
+// cyanInputs writes the Info.plist keys cyan merges into the IPA: the loader version for every channel, and
+// Unbound's name, icons and local network keys unless branding is off (TestFlight keeps Discord's).
+func cyanInputs(ipa, dir, loader string, branding bool) ([]string, []string, error) {
 	info, err := readIPAInfoPlist(ipa)
 	if err != nil {
 		return nil, nil, err
 	}
-	merge, err := mergePlist(info)
+	merge, err := mergePlist(info, loader, branding)
 	if err != nil {
 		return nil, nil, err
 	}
 	plistPath := filepath.Join(dir, "merge.plist")
 	if err := os.WriteFile(plistPath, merge, 0o644); err != nil {
 		return nil, nil, err
+	}
+	if !branding {
+		return []string{"-l", plistPath}, nil, nil
 	}
 	icons, err := writeIPAIcons(dir)
 	if err != nil {
@@ -83,13 +88,20 @@ func readIPAInfoPlist(ipa string) ([]byte, error) {
 	return nil, errors.New("IPA contains no application Info.plist")
 }
 
-func mergePlist(data []byte) ([]byte, error) {
+func mergePlist(data []byte, loader string, branding bool) ([]byte, error) {
 	info, err := readPlist(data)
 	if err != nil {
 		return nil, err
 	}
 	if info.kind != plistDictKind {
 		return nil, errors.New("Info.plist is not a dictionary")
+	}
+	merge := newPlistDict()
+	if err := setSideloadVersion(info, merge, loader); err != nil {
+		return nil, err
+	}
+	if !branding {
+		return writePlist(merge)
 	}
 	setAlternateIcon(info, "CFBundleIcons", unboundAlternateIcon, "UnboundIcon60x60")
 	setAlternateIcon(info, "CFBundleIcons~ipad", unboundAlternateIcon, "UnboundIcon60x60", "UnboundIcon76x76")
@@ -107,7 +119,6 @@ func mergePlist(data []byte) ([]byte, error) {
 	if info.get("NSLocalNetworkUsageDescription") == nil {
 		info.set("NSLocalNetworkUsageDescription", plistText(unboundLocalNetworkUsage))
 	}
-	merge := newPlistDict()
 	for _, key := range []string{"CFBundleIcons", "CFBundleIcons~ipad", "CFBundleURLTypes", "NSBonjourServices", "NSLocalNetworkUsageDescription"} {
 		merge.set(key, info.get(key))
 	}

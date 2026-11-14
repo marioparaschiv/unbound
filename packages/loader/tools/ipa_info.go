@@ -12,10 +12,12 @@ import (
 )
 
 type ipaMetadata struct {
-	Version      string         `json:"version"`
-	Build        string         `json:"build"`
-	MinOSVersion string         `json:"minOSVersion,omitempty"`
-	Permissions  ipaPermissions `json:"permissions"`
+	Version string `json:"version"`
+	// Discord's own short version: Version without the loader suffix a sideloaded IPA carries.
+	DiscordVersion string         `json:"discordVersion"`
+	Build          string         `json:"build"`
+	MinOSVersion   string         `json:"minOSVersion,omitempty"`
+	Permissions    ipaPermissions `json:"permissions"`
 }
 
 func runIPAInfo(args []string) error {
@@ -79,8 +81,12 @@ func parseIPAMetadata(file *zip.File) (ipaMetadata, error) {
 	if err != nil {
 		return ipaMetadata{}, err
 	}
+	discord, err := plistString(data, discordVersionKey)
+	if err != nil {
+		discord = version
+	}
 	minOS, _ := plistString(data, "MinimumOSVersion")
-	return ipaMetadata{Version: version, Build: build, MinOSVersion: minOS}, nil
+	return ipaMetadata{Version: version, DiscordVersion: discord, Build: build, MinOSVersion: minOS}, nil
 }
 
 func plistString(data []byte, key string) (string, error) {
