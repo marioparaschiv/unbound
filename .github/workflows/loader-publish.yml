@@ -106,7 +106,7 @@ jobs:
 
     # Rebuilds that TestFlight Discord's IPA with this loader and replaces its prerelease's assets. It runs last: calls share artifact names.
     testflight:
-        needs: testflight-source
+        needs: [testflight-source]
         if: ${{ !cancelled() && needs.testflight-source.outputs.version != '' && github.repository == 'marioparaschiv/unbound' }}
         permissions:
             contents: write
