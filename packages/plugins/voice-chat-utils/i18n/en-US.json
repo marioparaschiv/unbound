@@ -1,0 +1,14 @@
+{
+	"DISCONNECT_ALL": "Disconnect Everyone",
+	"MUTE_ALL": "Server Mute Everyone",
+	"UNMUTE_ALL": "Server Unmute Everyone",
+	"DEAFEN_ALL": "Server Deafen Everyone",
+	"UNDEAFEN_ALL": "Server Undeafen Everyone",
+	"MOVE_ALL": "Move Everyone",
+	"MOVE_TO": "Move everyone to…",
+	"CONFIRM_TITLE": "{action}?",
+	"CONFIRM_BODY": "This applies to {count, plural, one {# person} other {# people}} in {channel}, not you.",
+	"CONFIRM": "Do It",
+	"DONE": "Done: {count, plural, one {# person} other {# people}}.",
+	"PARTLY_DONE": "Done for {done} of {count}; Discord refused the rest."
+}
