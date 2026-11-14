@@ -1,5 +1,5 @@
 {
-	"name": "svg-viewer",
+	"name": "svg-embeds",
 	"private": true,
 	"type": "module",
 	"scripts": {

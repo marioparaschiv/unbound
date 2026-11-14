@@ -1877,8 +1877,8 @@
         "rollup": "^4.66.0",
       },
     },
-    "packages/plugins/svg-viewer": {
-      "name": "svg-viewer",
+    "packages/plugins/svg-embeds": {
+      "name": "svg-embeds",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -4810,7 +4810,7 @@
 
     "supports-preserve-symlinks-flag": ["supports-preserve-symlinks-flag@1.0.0", "", {}, "sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w=="],
 
-    "svg-viewer": ["svg-viewer@workspace:packages/plugins/svg-viewer"],
+    "svg-embeds": ["svg-embeds@workspace:packages/plugins/svg-embeds"],
 
     "tagged-tag": ["tagged-tag@1.0.0", "", {}, "sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng=="],
 

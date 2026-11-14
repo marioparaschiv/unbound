@@ -7,6 +7,7 @@ import type { FeaturedAddon } from '~/lib/marketplace-featured';
 import { featuredQuery } from '~/queries/marketplace/featured';
 import useScrollShadow from '~/hooks/use-scroll-shadow';
 import useAutoScroll from '~/hooks/use-auto-scroll';
+import useDragScroll from '~/hooks/use-drag-scroll';
 import AddonIcon from '~/components/addon-icon';
 import Text from '~/components/ui/text';
 
@@ -38,6 +39,8 @@ function FeaturedCard({ addon, index }: FeaturedCardProps) {
 					<Link
 						to='/addons/$id'
 						params={{ id: addon.id }}
+						// The browser's own link drag would cancel the row's drag scroll.
+						draggable={false}
 						className='after:absolute after:inset-0 after:rounded-surface'
 					>
 						{addon.name}
@@ -54,6 +57,7 @@ function FeaturedCard({ addon, index }: FeaturedCardProps) {
 // Its own component so the scroll shadow's observers attach once the row exists.
 function FeaturedRow({ addons }: FeaturedRowProps) {
 	const { ref, canScrollStart, canScrollEnd, onScroll } = useScrollShadow('x');
+	const dragScroll = useDragScroll();
 
 	useAutoScroll(ref);
 
@@ -63,11 +67,12 @@ function FeaturedRow({ addons }: FeaturedRowProps) {
 		<div
 			ref={ref}
 			onScroll={onScroll}
+			{...dragScroll}
 			data-fade-start={canScrollStart ? '' : undefined}
 			data-fade-end={canScrollEnd ? '' : undefined}
-			className='-mx-(--page-gutter) sm:mx-0 -my-1 overflow-x-auto overflow-y-hidden overscroll-x-contain hide-scrollbar scroll-fade-x'
+			className='-mx-(--page-gutter) sm:mx-0 -my-1 overflow-x-auto overflow-y-hidden overscroll-x-contain hide-scrollbar scroll-fade-x cursor-grab data-dragging:cursor-grabbing select-none [-webkit-touch-callout:none]'
 		>
-			<ul className='flex gap-3 px-(--page-gutter) sm:px-0 py-1 w-max'>
+			<ul className='flex [--gap:--spacing(3)] gap-(--gap) px-(--page-gutter) sm:px-0 py-1 w-max drag-scroll-room'>
 				{addons.map((addon, index) => (
 					<FeaturedCard key={addon.id} addon={addon} index={index} />
 				))}
@@ -78,7 +83,7 @@ function FeaturedRow({ addons }: FeaturedRowProps) {
 
 /**
  * @description The Featured shelf atop a listing tab: today's picks as compact cards in a row that scrolls
- * sideways, drifting slowly to its end and back, fading out at an edge with more past it. Renders nothing without picks.
+ * sideways, by touch, trackpad or a mouse drag, drifting slowly to its end and back, fading out at an edge with more past it. Renders nothing without picks.
  * @param props The tab's addon type.
  * @returns The shelf, or `null`.
  */
