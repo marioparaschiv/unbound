@@ -55,6 +55,7 @@ export function debugLines(info: DebugInfo): string[] {
 		...(info.clock ? [`- **Clock:** ${clockLine(info.clock)}`] : []),
 		...(info.push ? [`- **Notifications:** ${pushLine(info.push)}`] : []),
 		...(info.gateway ? [`- **Gateway:** ${gatewayLine(info.gateway)}`] : []),
+		...(info.crashReport ? [`- **Crash report:** \`${info.crashReport}\``] : []),
 		...(info.experiments?.length ? [`- **Experiments:** ${info.experiments.join(', ')}`] : []),
 	];
 }

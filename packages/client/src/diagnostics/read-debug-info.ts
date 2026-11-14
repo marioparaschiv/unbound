@@ -11,6 +11,7 @@ import { crashedAddons } from '~/addons/crash-guard';
 import { React, ReactNative } from '~/metro/common';
 import { getLoader } from '~/native/unbound-native';
 import { getHeapUsage } from '~/native/runtime';
+import { getSetting } from '~/settings/unbound';
 import type { Addons } from '~/addons/addons';
 import { icons } from '~/icon-packs/manager';
 import { plugins } from '~/plugins/manager';
@@ -363,6 +364,7 @@ export function readDebugInfo(): DebugInfo {
 		dns: attempt(() => dnsOf(state), undefined),
 		push: attempt(() => pushOf(state, android), undefined),
 		gateway: attempt(readGateway, undefined),
+		crashReport: attempt(() => getSetting('crash-reports.lastId'), '') || undefined,
 		injected: attempt(() => injectedOf(state), undefined),
 		missingExtensions: android
 			? undefined
