@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.5] - 2026-11-14
+
+### Fixed
+
+- On iOS, the View Permissions row can show in the server sheet, which keeps its rows in a nested section.
+
 ## [1.0.4] - 2026-11-13
 
 ### Fixed
