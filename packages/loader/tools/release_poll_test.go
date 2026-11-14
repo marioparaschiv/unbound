@@ -294,12 +294,12 @@ func TestLoaderReleaseTagsNameEachPlatformsOwnVersion(t *testing.T) {
 		candidate releaseCandidate
 		want      string
 	}{
-		"stable":        {releaseCandidate{Version: "352.0", AndroidCode: 351011}, "discord-352.0-ios discord-351.11-android"},
+		"stable":        {releaseCandidate{Version: "352.0", AndroidCode: 351011}, "discord-352.0-ios discord-351.11-android-loader-1.4.0"},
 		"testflight":    {releaseCandidate{Version: "352.0_118977"}, "discord-352.0_118977-ios-testflight"},
-		"android-beta":  {releaseCandidate{Version: "351.12-android-beta", AndroidCode: 351112}, "discord-351.12-android-beta"},
-		"android-alpha": {releaseCandidate{Version: "352.8-android-alpha", AndroidCode: 352208}, "discord-352.8-android-alpha"},
+		"android-beta":  {releaseCandidate{Version: "351.12-android-beta", AndroidCode: 351112}, "discord-351.12-android-beta-loader-1.4.0"},
+		"android-alpha": {releaseCandidate{Version: "352.8-android-alpha", AndroidCode: 352208}, "discord-352.8-android-alpha-loader-1.4.0"},
 	} {
-		tags, err := loaderReleaseTags(channel, test.candidate)
+		tags, err := loaderReleaseTags(channel, "1.4.0", test.candidate)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -315,10 +315,11 @@ func TestUnreleasedLoaderTagsReleaseWhenEitherPlatformIsNew(t *testing.T) {
 		released []string
 		want     string
 	}{
-		{name: "both new", want: "discord-352.0-ios discord-351.11-android"},
-		{name: "new Android only", released: []string{"discord-352.0-ios"}, want: "discord-351.11-android"},
-		{name: "new iOS only", released: []string{"discord-351.11-android"}, want: "discord-352.0-ios"},
-		{name: "both released", released: []string{"discord-352.0-ios", "discord-351.11-android"}, want: ""},
+		{name: "both new", want: "discord-352.0-ios discord-351.11-android-loader-1.4.0"},
+		{name: "new Android only", released: []string{"discord-352.0-ios"}, want: "discord-351.11-android-loader-1.4.0"},
+		{name: "new iOS only", released: []string{"discord-351.11-android-loader-1.4.0"}, want: "discord-352.0-ios"},
+		{name: "new loader only", released: []string{"discord-352.0-ios", "discord-351.11-android", "discord-351.11-android-loader-1.3.0"}, want: "discord-351.11-android-loader-1.4.0"},
+		{name: "both released", released: []string{"discord-352.0-ios", "discord-351.11-android-loader-1.4.0"}, want: ""},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -331,7 +332,7 @@ func TestUnreleasedLoaderTagsReleaseWhenEitherPlatformIsNew(t *testing.T) {
 				writer.WriteHeader(http.StatusNotFound)
 			}))
 			defer server.Close()
-			config := releasePollConfig{channel: "stable", githubAPIURL: server.URL, githubRepository: "owner/repo", githubToken: "token", httpClient: server.Client()}
+			config := releasePollConfig{channel: "stable", loaderVersion: "1.4.0", githubAPIURL: server.URL, githubRepository: "owner/repo", githubToken: "token", httpClient: server.Client()}
 			unreleased, err := unreleasedLoaderTags(context.Background(), config, releaseCandidate{Version: "352.0", AndroidCode: 351011})
 			if err != nil {
 				t.Fatal(err)

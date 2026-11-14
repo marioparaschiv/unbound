@@ -603,8 +603,8 @@ func TestLoaderReleasesUseTheirOwnTagNamespace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(poll), `return []string{"discord-" + candidate.Version}, nil`) {
-		t.Fatal("the release poll must look for discord-<version>-<platform> releases")
+	if !strings.Contains(string(poll), `return []string{androidReleaseTag("discord-"+candidate.Version, loader)}, nil`) {
+		t.Fatal("the release poll must look for discord-<version>-<platform>-loader-<loader> releases")
 	}
 }
 

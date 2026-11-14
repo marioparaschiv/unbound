@@ -33,6 +33,7 @@ type releasePollConfig struct {
 	githubAPIURL      string
 	githubRepository  string
 	resolvedVersion   string
+	loaderVersion     string
 	githubToken       string
 	httpClient        *http.Client
 	now               func() time.Time
@@ -81,6 +82,7 @@ func runReleaseCandidate(args []string) error {
 	resolvedVersion := set.String("version", "", "version the dkrypt action resolved: TestFlight version_build, or the App Store version")
 	githubAPIURL := set.String("github-api-url", defaultGithubAPI, "GitHub API base URL")
 	githubRepository := set.String("github-repository", os.Getenv("GITHUB_REPOSITORY"), "GitHub owner/repository")
+	root := set.String("root", ".", "loader root, whose version.json names the loader Android releases must carry")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
@@ -89,6 +91,10 @@ func runReleaseCandidate(args []string) error {
 	}
 	if *githubRepository == "" || os.Getenv("GITHUB_TOKEN") == "" {
 		return errors.New("GITHUB_REPOSITORY and GITHUB_TOKEN are required")
+	}
+	currentLoader, err := loaderVersion(*root)
+	if err != nil {
+		return err
 	}
 
 	config := releasePollConfig{
@@ -100,6 +106,7 @@ func runReleaseCandidate(args []string) error {
 		githubAPIURL:      strings.TrimRight(*githubAPIURL, "/"),
 		githubRepository:  *githubRepository,
 		resolvedVersion:   strings.TrimSpace(*resolvedVersion),
+		loaderVersion:     currentLoader,
 		githubToken:       os.Getenv("GITHUB_TOKEN"),
 		httpClient:        lookupClient(releasePollRequestLimit),
 		now:               time.Now,
@@ -153,22 +160,24 @@ func newestAppStoreVersion(itunesVersion, resolvedVersion string) string {
 	return resolvedVersion
 }
 
-func loaderReleaseTags(channel string, candidate releaseCandidate) ([]string, error) {
+// loaderReleaseTags names the releases a candidate needs. Android tags carry the loader version, so a loader
+// release with no new Discord still rebuilds every Android channel; the sideloaded IPA is refreshed in place.
+func loaderReleaseTags(channel, loader string, candidate releaseCandidate) ([]string, error) {
 	switch channel {
 	case "stable":
 		androidVersion, err := discordVersionForAndroidCode(candidate.AndroidCode)
 		if err != nil {
 			return nil, err
 		}
-		return []string{releaseTag(candidate.Version, "ios"), releaseTag(androidVersion, "android")}, nil
+		return []string{releaseTag(candidate.Version, "ios"), androidReleaseTag(releaseTag(androidVersion, "android"), loader)}, nil
 	case "testflight":
 		return []string{releaseTag(candidate.Version, "ios-testflight")}, nil
 	}
-	return []string{"discord-" + candidate.Version}, nil
+	return []string{androidReleaseTag("discord-"+candidate.Version, loader)}, nil
 }
 
 func unreleasedLoaderTags(ctx context.Context, config releasePollConfig, candidate releaseCandidate) ([]string, error) {
-	tags, err := loaderReleaseTags(config.channel, candidate)
+	tags, err := loaderReleaseTags(config.channel, config.loaderVersion, candidate)
 	if err != nil {
 		return nil, err
 	}

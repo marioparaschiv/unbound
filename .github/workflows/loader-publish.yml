@@ -35,7 +35,7 @@ concurrency:
     cancel-in-progress: false
 
 jobs:
-    # The calls run one after another: calls in one run share artifact names, and a download takes the newest artifact of a name.
+    # The calls run one after another: calls in one run share artifact names.
     # contents: write only satisfies loader-build's release jobs, which GitHub checks before skipping them; publish-only modes create no release.
     # The stable call builds the deb and the module once for the loader publish and publishes the in-app Android stable build from the same run.
     stable:
@@ -63,35 +63,10 @@ jobs:
             GPG_KEY: ${{ secrets.GPG_KEY }}
             GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-    beta:
-        needs: stable
-        if: ${{ !cancelled() && github.repository == 'marioparaschiv/unbound' }}
-        permissions:
-            contents: write
-            id-token: write
-            attestations: write
-            artifact-metadata: write
-            actions: read
-        uses: ./.github/workflows/loader-build.yml
-        with:
-            android_channel: beta
-            android_publish_only: true
-            skip_core: true
-        secrets:
-            ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
-            ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
-            ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
-            ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
-            UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
-            S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
-            S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
-            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
-            DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
-            GPG_KEY: ${{ secrets.GPG_KEY }}
-            GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-
-    # Bundles that waited for this loader publish now; build-bundle.yml checks the loader is out first.
-    bundles:
+    # Every Android channel's GitHub release, which Obtainium installs from, carries the loader in its tag, so the
+    # release poll rebuilds stable, beta and alpha Android for this loader in its own run, then publishes the bundle
+    # that waited for it. The poll's schedule retries any channel this run misses.
+    android-releases:
         needs: stable
         if: ${{ needs.stable.result == 'success' && github.repository == 'marioparaschiv/unbound' }}
         runs-on: ubuntu-26.04
@@ -99,37 +74,10 @@ jobs:
         permissions:
             actions: write
         steps:
-            - name: Publish the bundle that needs this loader
+            - name: Release every Android channel with this loader
               env:
                   GH_TOKEN: ${{ github.token }}
-              run: gh workflow run build-bundle.yml --repo "$GITHUB_REPOSITORY" --ref main
-
-    alpha:
-        needs: beta
-        if: ${{ !cancelled() && github.repository == 'marioparaschiv/unbound' }}
-        permissions:
-            contents: write
-            id-token: write
-            attestations: write
-            artifact-metadata: write
-            actions: read
-        uses: ./.github/workflows/loader-build.yml
-        with:
-            android_channel: alpha
-            android_publish_only: true
-            skip_core: true
-        secrets:
-            ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
-            ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
-            ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
-            ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
-            UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
-            S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
-            S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
-            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
-            DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
-            GPG_KEY: ${{ secrets.GPG_KEY }}
-            GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+              run: gh workflow run loader-release-poll.yml --repo "$GITHUB_REPOSITORY" --ref main
 
     # The TestFlight IPA carries the loader too, and the release poll only builds a TestFlight Discord it has not released.
     testflight-source:
@@ -158,7 +106,7 @@ jobs:
 
     # Rebuilds that TestFlight Discord's IPA with this loader and replaces its prerelease's assets. It runs last: calls share artifact names.
     testflight:
-        needs: [testflight-source, alpha]
+        needs: testflight-source
         if: ${{ !cancelled() && needs.testflight-source.outputs.version != '' && github.repository == 'marioparaschiv/unbound' }}
         permissions:
             contents: write
