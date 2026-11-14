@@ -228,17 +228,19 @@ async function receiveShare(files: SharedFile[]) {
 		await navigationReady();
 
 		const usable = await readable(files);
+		const unreadable = files.filter((file) => !usable.includes(file)).map((file) => file.path);
+
+		if (unreadable.length) {
+			ShareLogger.warn(
+				`Failed to read shared files ${unreadable.join(', ')}:`,
+				'Discord cannot open them.',
+			);
+		}
 
 		if (usable.length === 0) {
 			failed(messages.UNBOUND_SHARE_UNREADABLE);
 
 			return;
-		}
-
-		if (usable.length < files.length) {
-			ShareLogger.warn(
-				`Discord cannot read ${files.length - usable.length} of the shared files.`,
-			);
 		}
 
 		const choices = destinations();
