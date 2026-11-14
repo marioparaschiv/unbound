@@ -14,6 +14,7 @@ import {
 import { followLoaderLogFile, readLoaderLogHistory } from '~/lib/loader-log-file';
 import type { AdbCommand, AndroidTarget, IOSTarget } from '~/lib/device-target';
 import { runCommand, spawnGroup, type CommandRunner } from '~/lib/run-command';
+import type { LoaderLogStem } from '~/lib/loader-log-line';
 import { DISCORD_PACKAGE } from '~/lib/device-paths';
 import { safeParse, Type } from '~/lib/schema';
 
@@ -25,6 +26,8 @@ export type TailOptions = {
 };
 
 export type IOSTailOptions = TailOptions & {
+	/** Also read the loader's `native.log`, which iOS's unified log does not carry. */
+	native?: boolean;
 	/** Runs the host's log tools, for reading the log archive. */
 	run?: CommandRunner;
 	syslog?: string;
@@ -177,8 +180,10 @@ export async function tailIOS(target: IOSTarget, options: IOSTailOptions): Promi
 		emit,
 		run = runCommand,
 		syslog = IDEVICESYSLOG,
+		native = false,
 	} = options;
 	const { udid } = target;
+	const stems: LoaderLogStem[] = native ? ['unbound', 'native'] : ['unbound'];
 
 	const start = since === void 0 ? void 0 : parseSince(since, Date.now());
 
@@ -211,13 +216,25 @@ export async function tailIOS(target: IOSTarget, options: IOSTailOptions): Promi
 
 		historyEnd = records.at(-1)?.epochMs ?? historyEnd;
 
+		if (records.length && native) {
+			emit({ kind: 'notice', message: "Reading Unbound's native.log…" });
+
+			const entries = await readLoaderLogHistory(target.pilot, start, ['native']);
+
+			if ('error' in entries) {
+				return { ok: false, text: `native.log could not be read: ${entries.error}` };
+			}
+
+			emitAll(entries, emit);
+		}
+
 		if (!records.length) {
 			emit({
 				kind: 'notice',
 				message: `${'error' in history ? `The log archive could not be read (${history.error})` : 'The log archive held nothing'}; reading Unbound's log files instead.`,
 			});
 
-			const entries = await readLoaderLogHistory(target.pilot, start);
+			const entries = await readLoaderLogHistory(target.pilot, start, stems);
 
 			if ('error' in entries) {
 				return {
@@ -233,7 +250,7 @@ export async function tailIOS(target: IOSTarget, options: IOSTailOptions): Promi
 
 	if (!live) {
 		if (start === void 0) {
-			const entries = await readLoaderLogHistory(target.pilot);
+			const entries = await readLoaderLogHistory(target.pilot, void 0, stems);
 
 			if ('error' in entries) {
 				return {
@@ -266,6 +283,10 @@ export async function tailIOS(target: IOSTarget, options: IOSTailOptions): Promi
 	}
 
 	emit({ kind: 'notice', message: `Following Discord on ${udid}.` });
+
+	if (native) {
+		void followLoaderLogFile({ ...target.pilot, emit, since: historyEnd, stem: 'native' });
+	}
 
 	for (const line of buffered.splice(0)) {
 		forward(line);

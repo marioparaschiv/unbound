@@ -326,10 +326,12 @@ function logLines(path: string, needles: string[]) {
 
 const LOG_PATH = 'Unbound/Logs/unbound.log';
 
+// Needles match both an older loader's plain lines (` E [`) and current JSON lines (`"lvl":"error"`).
 export function pluginLogScript(): string {
 	return deviceScript(logLines, LOG_PATH, [
 		'off the main thread',
 		' E [',
+		'"lvl":"error"',
 		'Native plugin hook skipped in',
 	]);
 }
@@ -359,5 +361,5 @@ export function restoreScript(id: string): string {
 }
 
 export function toastLogScript(): string {
-	return deviceScript(logLines, LOG_PATH, ['[Toasts]']);
+	return deviceScript(logLines, LOG_PATH, ['[Toasts]', '"scope":["Toasts"']);
 }

@@ -1,14 +1,20 @@
 #!/usr/bin/env bun
-// The important part of the loader's own log (unbound.log) for one Discord run.
+// The important part of the loader's own log (unbound.log, or native.log) for one Discord run.
 import { appPaths, DISCORD, processes, type Vphone } from './vphone.ts';
+import { logCategory, readLogLine } from './log-line.ts';
 import { connectVphone } from './session.ts';
 
 /** Printed by --help and on a bad argument. */
 const USAGE = `The important part of the loader's own log for one Discord run: errors and warnings, deduplicated with counts
-and network noise dropped, then the last lines. The log is Documents/Unbound/Logs/unbound.log, rotated at 1 MB
-into unbound.1.log and unbound.2.log; lines read \`2026-11-05T12:42:04.270Z E [category] message\`, in UTC.
-  unbound-log [--since <ISO|epoch s>] [--until <ISO|epoch s>] [--tail <n>] [--all]
-Default window: the running Discord's start to now. \`--all\` prints every line of the window.`;
+and network noise dropped, then the last lines. The log is Documents/Unbound/Logs/unbound.log (Unbound and the JS
+console), rotated at 1 MB into unbound.1.log and unbound.2.log; native.log holds React Native's and the native
+runtime's output the same way. Lines are JSON, \`{"t":<epoch ms>,"src","lvl","scope":[...],"msg"}\`; older loaders
+wrote \`2026-11-05T12:42:04.270Z E [category] message\`. Both print as the latter, in UTC.
+  unbound-log [--since <ISO|epoch s>] [--until <ISO|epoch s>] [--tail <n>] [--all] [--native]
+Default window: the running Discord's start to now. \`--all\` prints every line of the window; \`--native\` reads native.log.`;
+
+/** The loader's log files by stem. */
+export type LogFile = 'unbound' | 'native';
 
 /** One log entry; lines without a timestamp continue the entry above them. */
 export type LogEntry = {
@@ -19,8 +25,8 @@ export type LogEntry = {
 	extra: string[];
 };
 
-/** The entries of a window, and the oldest time still on disk (an older window has rotated out). */
-export type LogWindow = { entries: LogEntry[]; oldest: string | undefined };
+/** The entries of a window, the oldest time still on disk (an older window has rotated out), and the file read. */
+export type LogWindow = { entries: LogEntry[]; oldest: string | undefined; file?: LogFile };
 
 type Counted = { entry: LogEntry; count: number };
 
@@ -50,36 +56,61 @@ export function toIso(value: string): string {
  * @param vphone The session.
  * @param since The window's start, an ISO time.
  * @param until The window's end, an ISO time.
+ * @param file The file to read: `unbound.log` or `native.log`.
  * @returns The window's entries and the oldest time on disk.
  */
-export async function readWindow(vphone: Vphone, since: string, until: string): Promise<LogWindow> {
+export async function readWindow(
+	vphone: Vphone,
+	since: string,
+	until: string,
+	file: LogFile = 'unbound',
+): Promise<LogWindow> {
 	const folder = `/rootfs${(await appPaths(vphone, DISCORD)).documentsPath}/Unbound/Logs`;
-	// Oldest file first; the first output line names the oldest time on disk.
-	const filter = `'NR == 1 { print "oldest " $1 } /^[0-9]{4}-[0-9]{2}-[0-9]{2}T/ { keep = ($1 >= s && $1 <= u) } keep'`;
-	const command = `cd '${folder}' 2>/dev/null || exit 0; cat unbound.2.log unbound.1.log unbound.log 2>/dev/null | awk -v s='${since}' -v u='${until}' ${filter}`;
+	// Oldest file first; the first output line names the oldest time on disk. JSON lines filter on `t`
+	// (13-digit epoch ms), plain lines on their ISO time, continuation lines with the line above.
+	const filter = [
+		`'NR == 1 { print "oldest " (/^[{]"t":/ ? substr($0, 6, 13) : $1) }`,
+		`/^[{]"t":[0-9]/ { t = substr($0, 6, 13) + 0; keep = (t >= sm && t <= um) }`,
+		`/^[0-9]{4}-[0-9]{2}-[0-9]{2}T/ { keep = ($1 >= s && $1 <= u) }`,
+		`keep'`,
+	].join(' ');
+	const files = [2, 1].map((generation) => `${file}.${generation}.log`).join(' ');
+	const command = `cd '${folder}' 2>/dev/null || exit 0; cat ${files} ${file}.log 2>/dev/null | awk -v s='${since}' -v u='${until}' -v sm=${Date.parse(since)} -v um=${Date.parse(until)} ${filter}`;
 	const [first = '', ...lines] = (await vphone.text('shell', { command, root: true })).split(
 		'\n',
 	);
 	const entries: LogEntry[] = [];
 
 	for (const line of lines) {
-		const match = /^(\S+) ([DIWE]) \[([^\]]*)\] (.*)$/.exec(line);
+		const entry = readLogLine(line);
 		const last = entries.at(-1);
 
-		if (match) {
+		if (entry) {
+			const [message = '', ...extra] = entry.msg.split('\n');
+
 			entries.push({
-				time: match[1],
-				level: match[2],
-				category: match[3],
-				message: match[4],
-				extra: [],
+				time: new Date(entry.t).toISOString(),
+				level: entry.lvl[0].toUpperCase(),
+				category: logCategory(entry),
+				message,
+				extra,
 			});
 		} else if (line.trim() && last) {
 			last.extra.push(line);
 		}
 	}
 
-	return { entries, oldest: first.startsWith('oldest ') ? first.slice(7) : undefined };
+	return { entries, oldest: readOldest(first), file };
+}
+
+function readOldest(line: string): string | undefined {
+	if (!line.startsWith('oldest ')) {
+		return;
+	}
+
+	const value = line.slice(7);
+
+	return /^\d{13}$/.test(value) ? new Date(Number(value)).toISOString() : value;
 }
 
 const clip = (text: string, max = 220) => (text.length > max ? `${text.slice(0, max)}…` : text);
@@ -107,12 +138,12 @@ function listed(label: string, items: Counted[]): string[] {
  * @returns The summary, indented for nesting under a heading.
  */
 export function summariseLog(window: LogWindow, tail = 12): string {
-	const { entries, oldest } = window;
+	const { entries, oldest, file = 'unbound' } = window;
 
 	if (!entries.length) {
 		return oldest
 			? `  no lines in this window: the log has rotated past it (oldest line ${oldest})`
-			: '  no unbound.log on the device';
+			: `  no ${file}.log on the device`;
 	}
 
 	const counts = new Map<string, Counted>();
@@ -152,6 +183,7 @@ async function main(argv: string[]) {
 	let until = new Date(Date.now() + 60_000).toISOString();
 	let tail = 12;
 	let all = false;
+	let file: LogFile = 'unbound';
 
 	for (let i = 0; i < argv.length; i++) {
 		if (argv[i] === '--since') {
@@ -162,6 +194,8 @@ async function main(argv: string[]) {
 			tail = Number(argv[++i]);
 		} else if (argv[i] === '--all') {
 			all = true;
+		} else if (argv[i] === '--native') {
+			file = 'native';
 		} else {
 			throw new Error(`Unexpected argument ${argv[i]}\n\n${USAGE}`);
 		}
@@ -182,7 +216,7 @@ async function main(argv: string[]) {
 			);
 		}
 
-		const window = await readWindow(vphone, since, until);
+		const window = await readWindow(vphone, since, until, file);
 		const full = window.entries.map((entry) =>
 			[
 				`${entry.time} ${entry.level} [${entry.category}] ${entry.message}`,
@@ -191,7 +225,7 @@ async function main(argv: string[]) {
 		);
 
 		console.log(
-			all ? full.join('\n') : `unbound.log, this run:\n${summariseLog(window, tail)}`,
+			all ? full.join('\n') : `${file}.log, this run:\n${summariseLog(window, tail)}`,
 		);
 	} finally {
 		vphone.close();
