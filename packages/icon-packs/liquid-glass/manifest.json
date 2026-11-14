@@ -1,0 +1,6185 @@
+{
+	"id": "unbound.liquid-glass",
+	"name": "Liquid Glass",
+	"description": "Discord's icons redrawn as frosted glass, after dor4a's Liquid Glass pack.",
+	"authors": [
+		{
+			"name": "eternal",
+			"id": "263689920210534400"
+		},
+		{
+			"name": "dor4a",
+			"id": "455513497288310785"
+		}
+	],
+	"version": "1.0.1",
+	"icon": "ImageIcon",
+	"main": "icons.json",
+	"type": "icon-pack",
+	"assets": {
+		"design/components/Icon/native/redesign/generated/images/AccessibilityIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "560c3ab8f90fc878551974862c2ff2b643c278e12aac52529e1de09471cbf186"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/AchievementsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "712d16b5f367c064a0005c81e87564a613ee5512503ba48288e10b544fd73166"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ActivitiesIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "247c24f71ce14bb8f8bb3670a4669e7d7cf6f95d3e847475ae0f5b435fc1c686"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/AnalyticsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "57898dffb5897ef15453e042328e545e0cfaa49fe75c1522acad2e4931e15b7f"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/AnnouncementsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e14527791c7c1d40359d2c0e06c9de73fdf9127630b489920b61d94c2f9dfe2f"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/AnnouncementsLockIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c5dfe5f1b9fd5771a0d77fff5acd74e824bdf53608be3ffa3c910d1c4474fa76"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/AnnouncementsSpoilerIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "88dd4f1aebb0bea0aaa84465d9d8fce6c5af355e45f66e3b76d2ed61cff17336"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/AnnouncementsWarningIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "740cda019e8ddb6675035be5bd7d1ac76bba1f8da31f6162548f6ac78fd21dd6"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/AppleNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4fed3d779002822e7ab6270bb627b1cf3b343bdd3d61d5b26fd2d9c94bda0ce3"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/AppsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "67f5762eb5949701502dfaebfc8bedc90a70c404f27725e52b441a5ded2f9c36"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/AppsLockIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2df103e4b592c062993b6fd9bae8d5df5ea968ed577a162fcd91a15b85bc4513"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/AppsSpoilerIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "198a2551f34154ad8ceadd2246c23cd326db75657f1c8b44670d23df7efd584b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/AppsWarningIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2436d9cbd2bacd25c8438a95600621951dfc0588873a50e294456c4208163ce7"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ArrowAngleLeftUpIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a88a55381b21bf6aae67ee58ebca4cd527ad8a66b501ba4d6ba3a8c97946609c"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ArrowAngleRightUpIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2ee6a6f2d4fe410269e324bdf28fc32c117f4f75ba3ae52f3bc57b4310991838"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ArrowLargeDownIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6292e53d9fdb5a419fe0c18052b5dd8cbb3f0fda5f0416c4db8ca2d39c8811b9"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ArrowLargeLeftIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5ae7516eeac9deadff1a1131a3717046d524d6c8654ee28db517cf4334a95ed1"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ArrowLargeRightIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "86628f4620b04e8b741b6e28ebb20bb9e3d7c2fb528346bfc6bdbd564a48b5f8"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ArrowLargeUpIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5da14b86adfba34057fbfb8da9ed174c5282fead7811cea3e9012ec4cfb9b140"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ArrowSmallDownIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "83435f5d6b245d8389af20de01a609eb1e3ff0ca3cacab959d4544756caeae4d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ArrowSmallLeftIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0796db5acad4d42655464db08377390e43ca6d241a0b439f5ccbf811a3ae7d17"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ArrowSmallRightIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "82d1e12e15676314255879aee2f37e0e74ffe7d9aae51fa281c5ed8e746c0d7e"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ArrowSmallUpIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "aaa490c5c5ab686c8a4c574d54eb33a821786a0f5ad6d38a43c2c5aec771ba71"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ArrowsLeftRightIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0dc6b1f4ed158e04de1b8e410d7b11990637effa3b79777e1e329dea6ff129e2"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ArrowsUpDownIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1af42edd54fad803386a30752393c031c098cb170b2171b73b45edef5a761d48"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/AtIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8a513497ca43a7bf80ab951da11cb3f12295b8b9afc226a1a7240d57b82a5ea9"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/AttachmentIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2753239b0f9f24324c00c8d35e90519818692545256f931b88310dd7bd4e2c7d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BackspaceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c99fd692d6f72ea17cc6f5429c3f9920bf607c418435d67703dde4a15333f845"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BadgeIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c36a06ed74aed8402d612a5816faeb2b18c1a17d21efefaa36b59dad82626d9b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BeakerIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "86ca13514eb195c966c51d645c342a0103074005e56bb6ef903f84b9dfc65ac0"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BellIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e08f415d803e4c10f0b9441b6ff52c046b0d77c10d1ea3253a4148e146dd9154"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BellSlashIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "416c88f5de9f5b5d97ade5c0890fb780d9c9e1e7219b966dcbbb2712118b5d49"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BellZIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6826b8d5bebde82e2ef2e1f23331d304a5c3a538b08565a95fb3a58834e33fa7"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BicycleIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c0753767bd830f42458b0ea612a59cc379eda08c45f74ccdd5996c367eda3b4d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BillIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6b414a4fce80f410fa151cbff23d0aedc7f05fb1b0bc9f1282807205f072a56e"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BlueskyNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5c4303eaf751597cc301e78941d6946a92c634a64a61b4eab906cfc3c385fdb8"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BlurBackgroundIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "aec4d3ba0d10cdb14ccc75a80632ccc094fe88f3b8de2dabf14474f4356d26f6"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BookCheckIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "49f4da4f21acca089a4917faa87a259d831bb8cbfe99247633cb2222f181f3e8"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BookmarkIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "814a4098b7d0c5e62531365b5f39b6df1bb87382fd276251fba7dad72282b834"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BookmarkOutlineIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "814a4098b7d0c5e62531365b5f39b6df1bb87382fd276251fba7dad72282b834"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BoostGemIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a6c7bab8f2d944f3f592ea7a2799eab297f720aea49fe41b59cdd5ddf96d0fea"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BoostGemOutlineIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "552222112ef84b34164162f1e91e07341060e218edf036e4a361886691bc8138"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BoostGemSlashIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "32dc38d1883ac889687b692b6d768775c0e1cc5fe3dbcfb8783b084ab112e95d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BoostSlashIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f040d0d31c1fe31811f87748c8c43fcf3d8ae761f4a99c48013d60b9de41d658"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BoostTier1Icon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4965aba5dfa1bc8178c27f44eeb2f6d91588612eef5befdff8d75dbf8e2d3054"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BoostTier2Icon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "808363fa81a957e41440424cbaf71f9e3cbdc528a4370713a67d285cce84cceb"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BoostTier3Icon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d6f6716a3c8b9d4cc8082d5a3d7a777a6526116d1f5babbef5f6bf2a83738ce2"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BrowserIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0fe29c88f616e89b1ec929f117cec41a639cac48730e5d57fffe916edde2c85d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BugIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6c7df0bed539ef098671cb6b3034746d3a8b95170bb734d5189423b11362e238"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/BurgerIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "cf92cf24597259afd4888dd2f191e4fe254f90d596c888dbdf546e4f60ebe963"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CalendarIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "49114270777e21488f0fc361e59f9a5d6849b98f5326bb73f9d4d2b663059cc3"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CalendarMinusIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5502dd341852997e2030a6f5dd01dd4041acfa28eb37bb489991eed447f458fd"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CalendarPlusIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "b8ea68b2209a431f2947ce8deed04e6a03c183f369c5f034f7479cfa7e526e4a"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CameraIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5483b87976bac67a619b3f620ac0a9ef076693bd6b00ea502e5946938530659c"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CameraSwapIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f20f67bf430459dda86494dc9fbfdd3f76a68c0218bcf9de3e70dde5fe9ae794"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CandyIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "934fd1c1b521d84866bcf9bf10dbc31ecbec55db9afd31e96ebd263a11cb16ec"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CarIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0acc06ed2e6f0600ccc753c4602d5dd61ccf72da97bea71a79813afbe47451bf"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChannelListIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6550b99d6f284687a63447ff84f1a9483fb0b66f6c6d76eebcf42341d0f68e00"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChannelListMagnifyingGlassIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "66a6aa6d70bd834d4f78763f1e46e4c2096192f0c36782c255b756e37528332d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChannelListPlusIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1519ce026befe1180c02cbff51d10e6cc97003898662be2cb243278a4c13837a"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChannelNotificationIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ee1794228b9454dcbc23a2c87caf0d58f30905ceb6abe792c9c52842633ce2b2"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChannelsFollowedIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "77cc9282db77377b8797c278fae49c3db5682ae1f636a2c6fa8d3ddd764dc2ba"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChatArrowRightIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "cfe33860f2e8aa41c20ef185f73d5dc603cdb861413aba45fdf7715740ee1c11"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChatCheckIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ed47c5f63e5da9b573dbae3e4148e590f2440f2683eaa7e98e35acf5026e6953"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChatDotsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "302a5bb64552f74303903672141333d48a5edafb4db1bf9b48ad76a7dd0d0f9d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChatIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2dc1a31ef66caa355af90f0c1a2c7e374235de38a9b991d153a30326452ebd62"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChatMarkUnreadIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "7957815e8c63aa3adaaf6331a31c04a830b32c688c652dbdcda7b62c769be2e8"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChatPlusIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "54362831d59bd47aa467e21a97e26642399960a1a96ba045e9fcbaa23c3bb547"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChatShieldIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2dd40c8f2074b847385a96142bfe3dbe29e2bc50b7bb52e6f180e6c7856eb9b2"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChatSmileIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "67abf5df43fd448caf167cd7f8dd7a59e4f4d42705695f37c17c3a4176b3a1d0"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChatWarningIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "752f6f9cc08573ba54b3bad7a4fd0ae8cafe9ce0da84088dd5d3bb1bd9db7603"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChatXIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a99eca2b825b5cca616b8d79772ba5525e29a002001e647e3fc231a852cb3fb8"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CheckmarkLargeBoldIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5a920e2472e3e7735dbddff4f5090ec307ca0a64a411f6d42392b7a244ebead8"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CheckmarkLargeIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5a920e2472e3e7735dbddff4f5090ec307ca0a64a411f6d42392b7a244ebead8"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CheckmarkSmallBoldIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "422b85d4e95bc5b2bf84869e3c215d8bc91de5880267ce9435b892d93f1393a0"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CheckmarkSmallIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "422b85d4e95bc5b2bf84869e3c215d8bc91de5880267ce9435b892d93f1393a0"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChevronLargeDownIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "176531274f1f7cadafabc3a00a527f9de5647789f323b5c79101b8fe50358e74"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChevronLargeLeftIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6ad9fa4380f7955f85d64f0515346a5ea4b75458034e1a99b01e559ad7899163"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChevronLargeRightIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "fa0fe1e6a8fefd7056ef005093979b524ae9c3a33c58c7ea0b221098eaa37e2c"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChevronLargeUpIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "7432d9f6561ad8c455e28570fad645ee173f60dead1651de8f9da829b2851157"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChevronSmallDownIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f4a6d171397407943a8198661aca627c1ff6e41b4e59c7073a823817221a39be"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChevronSmallLeftIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1398004317a6881988d0e07bb85e78e9a651b44ce830f10795bcf1afd0656ac4"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChevronSmallRightIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4e427e18f1d246519cf6076f4e0c7afe97a10ca729b7361bd1e308ef2f71c1d4"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ChevronSmallUpIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2a65e5ee07d0696a943d587d3adb5bd9b9c1796ed189b5d208a25fbd45e141aa"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CircleCheckIcon-primary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "561a820cc4f286bba183b2f6b7a4024d3ad3d0f11b65c836f5e83c36072183f8"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CircleCheckIcon-secondary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "35325ae93019df079a7f5d4a167fd6a76ba2791a5aebf865a8d6ddf88a88fe1b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CircleCheckIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "561a820cc4f286bba183b2f6b7a4024d3ad3d0f11b65c836f5e83c36072183f8"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CircleErrorIcon-primary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "01d44ad934e8cad7d42da39a6d9aee980a72469adc9fc0cc807727cc64880452"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CircleErrorIcon-secondary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "35325ae93019df079a7f5d4a167fd6a76ba2791a5aebf865a8d6ddf88a88fe1b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CircleErrorIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "01d44ad934e8cad7d42da39a6d9aee980a72469adc9fc0cc807727cc64880452"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CircleInformationIcon-primary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a7dee2108f526534998f759d28e67497f45b23641c110f084f7b716489c20629"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CircleInformationIcon-secondary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "35325ae93019df079a7f5d4a167fd6a76ba2791a5aebf865a8d6ddf88a88fe1b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CircleInformationIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a7dee2108f526534998f759d28e67497f45b23641c110f084f7b716489c20629"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CircleMinusIcon-primary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "fffed252ae62763899f93fb137a313c26268ab526f74e493a2410242ab851cac"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CircleMinusIcon-secondary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "35325ae93019df079a7f5d4a167fd6a76ba2791a5aebf865a8d6ddf88a88fe1b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CirclePlayIcon-primary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "599a16d9f4909a46853a8bd829f381091972df4151fe98979f28dfc70a8dca4f"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CirclePlayIcon-secondary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "35325ae93019df079a7f5d4a167fd6a76ba2791a5aebf865a8d6ddf88a88fe1b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CirclePlusIcon-primary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c42102cb63981e2a32bbac252c2800f5714509851d0a50a42d9a9d29bec9a914"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CirclePlusIcon-secondary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "35325ae93019df079a7f5d4a167fd6a76ba2791a5aebf865a8d6ddf88a88fe1b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CircleQuestionIcon-primary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1ffad124ad78968d0d4b3f8cd6ae5c620b9f1eb310566dccc2cf91092a1ac96a"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CircleQuestionIcon-secondary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "35325ae93019df079a7f5d4a167fd6a76ba2791a5aebf865a8d6ddf88a88fe1b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CircleQuestionIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1ffad124ad78968d0d4b3f8cd6ae5c620b9f1eb310566dccc2cf91092a1ac96a"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CircleXIcon-primary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "17cf524bb73d548696eca4eb883fd3bdf43edba4873820e51c45dbf11df03fdd"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CircleXIcon-secondary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "35325ae93019df079a7f5d4a167fd6a76ba2791a5aebf865a8d6ddf88a88fe1b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CircleXIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "17cf524bb73d548696eca4eb883fd3bdf43edba4873820e51c45dbf11df03fdd"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ClipboardCheckIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ee0aedb172b90bf1744279cf3e6c12847ef9848eb08822802cb5fb49db3b9754"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ClipboardListIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "09bc4694952d4a23ec320067a7836b03148077b5dd2051da969b295b8ec2c765"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ClipsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "bec06d192436a96398d59ef1dfa642980e7fa04139adf5d71c44acfc50bb994c"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ClockIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d55c20f424d33d18ff22de9f32a7a387173f8de127f32811cf0daefd4e444e65"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ClockWarningIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "81239eb61dbb9aedcf1fd0d7e3ed9b1e87ab73be67a71aad713769b8c416178c"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ClockXIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "cd8fc6e4c3058d21f823cecc1867e1fafbacf73ff4bb60b5bfe99c88658c7364"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ClosedCaptionsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "9b244c27926af2a79b9ce359bcfce98aaeb7f28873c1ba11578c1e821db2e054"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ClosedCaptionsOutlineIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0f53e5898ca7d93fe5b11f5a9d4b55ec09ed48623c9ec1ac20038ce61fbd2e38"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CloudDownloadIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "69c93b626b6d87357264f653fc2ed23250ae80aa1ad9d75645792cdf267ac8db"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CloudIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "00e5859eafc24306862870369563e2a4663f2c481cc40759e1049485e859805d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ClydeIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a27bf3f23758f4bf76b8b080bfbb3976fa3f7dc41d2a156169bdafd256155dd0"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CompassIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5bcf711918b622f3bd6079edc92b1e64286451fc8b7fdfaba88175ac6c0d0c1f"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ConnectionAverageIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "094743a597737ead0be80dc6f1b6fc6d07326ccb5d25db66b761a4946acde1b3"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ConnectionBadIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "157d264f3389914820308cb92c4e98afeb2e9de0bf75ac088c79677d9582279c"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ConnectionFineIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1770557ba9943b88a93c612d82dd662348ffdaaeab984b7cc3a8509d3ee72489"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ConnectionUnknownIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "80f73e9ebe9a3aced70ac02257f3f31e0aac3d42c5fa9fb6c8a958d64fc8e18d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CopyIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5f01d46ce90e61f947bdb03de8a81f86e6bd995c95a97facbc3dca0875749f1d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CreditCardIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8ebd9a934ac05c5013bb010b3cb8b5fd7edfe13779e6730205ee7b809b36ac44"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/CrownIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4ab77b1539873d3856bb61146c370613c189fc94a26b15d91314790cc7c9e54f"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/DenyIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "7de39e4ab150c8b649b1308c0b6882892b452b4c3d8b3f017a2ee4499b7245c5"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/DiceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c0baade2c6855190a94fce93405ae13be095da058cf15c8ed0d40b028cb0b896"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/DoorExitIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4829fe2b2df6d7347cc19a6055178d71d703d82e246dfc6300c712ac24035230"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/DoubleCheckmarkIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "79cea4134f6d8bbf251cca47c2ab15ee8c18a95e2fa10ed65bd02594254a9bb0"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/DoubleChevronSmallRightIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5831e8e6187d87729ac6ff6f9786d6f158205c46fae27fb67cdc7c9d4d1823c8"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/DownloadIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "692bddca455a82ba32d4a4bdb513c7fe30f55e15aa44aa2bbb9a66b05ff16370"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/DragIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "fc72a63d99a7463bd471a81a8cac74cb22b3fe9bed5958a3965260df61db822f"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EducationIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5229f80c37c5d855e29d61dea4f937970b8146c11dbd0496246be0d50b31a02e"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmbedIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "65b9a4de4e2ba4ba2cd8fcc3440e988005f64c5af1682c66a33864050e61ab8a"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiAngryFaceWithHornsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6ba4bb97b289384423d1901b01e30ef296829b213924acef78d7dcd0c2c321ad"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiColdFaceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8ace8cb03d258ef43b4111e4f16a42d75b1d6f6e6762795e648e6e346c10efe1"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiCowboyHatFaceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0a27214ef083b264e4615858dd54eb6755edf075286dca6ecd8c78d5d0fd7cee"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiCryingFaceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "74dfcf4812ce497f8163fa5cb0c9891d496d0f5c47773db698508466333a314e"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiDisguisedFaceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "fe2ec05ad2bf493d236eb7023f530eef0b38d27bcc9256d58be49204bb7cb400"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiFaceVomitingIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ad25c3942c0cdf5426f1f97bc1ac68c0ae282af761b2b8d592a0871892988039"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiFaceWithMonocleIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6912d2045557fa2f4a6f5971f0fc496610f7b9c88b4a00372497e0f4a0846200"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiFaceWithSpiralEyesIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "54cb0329d7cc9251cb85d4fc77097a8ce9071aaa28a14a35bed1314a8c89cc0b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiFrowningFaceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "9f4e18d4d17806b34bd125d16c320b6a8f62bff58a87d94632310cf4db757c11"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiMeltingFaceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "af793e155d1221bfec8996236f8adf33c6b497b30921d56b1fce2a3c07a66cb4"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiMoneyMouthFaceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "140955d553b7f5fb8a9fb6d53461179751da9c53338dd92a3d9da4cb24dbdff6"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiNerdFaceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "65db32edb2f54920eb094eb2bbec78b6576ba6c5a6fec01b863db7a3eb1b1535"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiPartyingFaceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "676cc0a617b0498a7e07ccd69a61b8b7841b3284a48830864482bf6c6ad0fab9"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiRollingOnTheFloorLaughingIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "bdb9d716d0c513a90b9e6e77686160800ad32e975c362bc3803cf5d809388990"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiSalutingFaceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f75d44080c61ccc953d3a308b3600c7b70ec8b14c74c9b8377ddf4254e349e65"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiSkullIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "cddce8ad051212c7863d0f285b646268d2719aececcecf8e3af8dd1abca149ae"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiSlightlySmilingFaceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5392215d5da7909eabcbe989de5465322845d34040f6b5812a1b92d66c939178"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiSmilingFaceWithHeartsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ec780634908a50ea62aeefa065b28de1e1d13a4579ada6244658a9691bbc8dbb"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiSmilingFaceWithHornsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a687b112ee3218e3ad23945c773130d0112b93091e2a867fcb399b1503abddd2"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiSmilingFaceWithSunglassesIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "28bba828f7444ab937afa66cd61738a1e10944bcc20cb01928324897cc3caf46"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiSquintingFaceWithTongueIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f6908c65f06b8b3b258ae575bbcc53e378b8401dc922fe95f8093ab73840a426"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiUpsideDownFaceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "078ebc5dd89f5f1df26af2e2b414e85fa13c9e7cd501aba1964909898c55e7f3"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiWoozyFaceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f1c3cdb63282d1dfb13f9b24ca3cf49285a466fcded36c891703d257dc5cf8fd"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EmojiZanyFaceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "dbe200802d9e9d94afce767c42b66c68bea17f177b687d92faf88e1345087896"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EnvelopeIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "769ebab6843670cf80d1b99b08ff11fb3019263fad82086cce15d34307168b98"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ExperimentalCheckpointIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "50e2301a79869324cc52caf450c330d5439cf5571c232d15c1d2ab1c3320987f"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ExperimentalCommonIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e201cae33fc7a5431dd5bc3f4cc5e338ac9ee60fa0df1273a30a66b31858f7fd"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ExperimentalDirectSelectIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0c1563e75a5e0633bead263f862eb51b72d98e4907ccdfc6a5341a55068b2921"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ExperimentalEpicIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "761d5ba6b2388094768c9685af16a643ab67d5830a7df7c09be499e84400cdef"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ExperimentalGameControllerLinkIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "44e200e6bd3d7e63bbcb283146794956e25afdd39517511dd159c924b53e961e"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ExperimentalLfgIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "bbe9ebbff1807aaa6150b248393b6b8990593babdffc36f96de78c83e1590cc4"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ExperimentalLfgLockIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d20bc060c9ed676ce76bd85c9ce068486d625fa6fa23d82aad0c52c1384b5f65"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ExperimentalMythicIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "484142a964a0843b7c1a3f8664da21fca39ee4b868e94721422ec21f626a23e6"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ExperimentalRareIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "734a5ada24d55abeaf23a17903207c7a9d433b52ce8105cb2f06548057543219"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ExperimentalWebBadgeIcon-primary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8230531d8905140818181f90da41f19fcbdfdfa985aa83b4dd75b3220faa652f"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ExperimentalWebBadgeIcon-secondary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5552f6d99e0d2382bb5e15f548a8d23124bac7a9557127e444e05931d0dcaf85"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ExperimentalWebBadgeIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4bb5eeeea4ffb2bc207eb690d9909f631451fe6734bd77ec4e0eb6fc7e9556ee"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ExperimentalWebIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a35d92447165e9ae4e495ec02a04875221f0b44c4ee8da7d0eac3dce8b3c3682"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EyeDropperIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "eded6993c798cee4b834fbea71806b4161612636478beb47a2fdb2c9d901c456"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EyeIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "42044242da638d2a29e68a7318d0cb8af106d48d0b4f9e889e0404b35c0b2a03"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/EyeSlashIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "bb55c11cf095e3d97c1a05c354e75b2c6a35da5c1ee6dd4c74cf72903a005ae8"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/FacebookNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "79318773e4577b7afe63150ed4418b9f122d74a2ec5d033b462ea88e7be28597"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/FileIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "b458b1ad9a0f383491010b4ca2903b6234b86c8bd235fb3e6e6b4bd4af86620b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/FileUpIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c2a46a42efc3235391de1ee862aa7711858c8251ef04b2013aaf8a724962a3a8"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/FileWarningIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f7148c247c25c6fd798a6082c0673c08cad915dfac86d6b807763ad2da130ba1"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/FiltersHorizontalIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e63e500c9f4732f4f9217a92dc7e2c44c4933c0978de54b63dcc69c62e96774b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/FireIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "21fb1d67835fef542643639c45cbf30506693dff37e6dffff8cd9568fe463b56"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/FlagIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "fedb3e310d088ec6f618c3f096720ec4f2b90a2d90e1d736d67f802ef76098de"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/FlashIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "19da28aebf0156fe1cc07fbded156d7295fdfee02397b5ecaa3a705489d74e21"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/FolderIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "26ce37e5d517c541b5049bc6599e9cdecae4c963b6ddad3bcc3d0af94593a081"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/FolderPlusIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "af31e3f54108905203ba8592670c3d57ceca9413285e378d8639964b2196c141"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/FoodIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f10a87eef34a16f91526b8c609fab5e39a559f906811abbd810f945a6c4e7c11"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ForumIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "82b8fac97f422429d6149272fa4ca3254e2f1a6628e460c856f390d6d7061e23"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ForumLockIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6bedee4dbde5b4c991bb191d3e2ee652246122dbccc9e8937b59965ebd473b04"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ForumSpoilerIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6caf2deccdecb40af71f872f908b3d619d4a7d6567008f1c81f2045f9d78b968"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ForumWarningIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ff4fed1c883b1cce65aaf17febe18d4068f9d6c258205ca7faefc11e56bbb6ba"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/FriendsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d362d2227892e92e9888d0c0247304402eed7af0ba5c382e69afb3056d3097d7"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/FullscreenEnterIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ac9feb809658d4737aac4c9de43e11d63b13a1530916a7d0b981efa85a4038da"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/GameControllerIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "87ce3c48907299e1c3d5c48d67a16c1f41c6b2b61a40bdcd486aa70bf7735ec6"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/GifIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2bfd84a11b55c7d930d56161969d1170d37021407059f216e4e08fcca9c64d20"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/GiftIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e80881838850e8a69dbb833925c532d00441d30496ed56ad42f56a3e3aa306ca"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/GlobeEarthIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4bf41a92b4c1f9f89bb92bf3b396e6a19a5f7aaeee50b755e92d5e0f1a5efbe8"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/GoogleNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f0d0f9edc3729b5736c4a0df252e00fcdd5eaa440137e63251095317566e8c37"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/GooglePlayNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0bd106625436ae650e03fa9cf2254533755e26a53d29a69130829ddf19ca79ad"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/GridSquareIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0d491e1bf2086e821c15d833105c88c1e449c9f9dd1029836fc7c451a6a3a709"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/GroupArrowDownIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2bca9cbf47adc6216923482cc0421eccb48f5838137101f4f052fa1e87044715"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/GroupIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d5d254733207594275e923ae4fd93e93e2cfe0f81cfdf5d7d1b1952d2d22eca2"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/GroupPlusIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "199dcc5a7b2a37133da94b026604abf58a64495d3e1e3bb2b7b529ea8e74b16d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/HammerIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "28b75f9dda3096c8b7c8189593c7ff5dc601eb74f3d6cd28d11b0c0dd28ec801"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/HandRequestDenyIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "24fce8ff4f1184b0e7dca28ab731a977027757ac333b85152506f2955802c1d1"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/HandRequestSpeakIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "7bee77eccb959ec493963247f202e1b2022c532a7edd00926cc1f5a0de0fc5d1"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/HandRequestSpeakListIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4f457c70a68176aa1a34c25aad71473ab42db591adc6ee9c02994a0e90997dc3"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/HashmarkIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ef9f2c717d88431a899745db9b34f603dc40947d9f50a3403d695d0067a7daf5"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/HeadphonesDenyIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c21a2ef83a81b0482172bf37f9e82db59715e2bf8de2592c2e6c0bbfd9c6dcf3"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/HeadphonesIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "870aa587200a931b1bca33c4b23c7ab1e397797834cfd550411402926a162e3e"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/HeadphonesSlashIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d5325518ac334152ab5236e7a079541393d3800971b091564441bae950921d3f"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/HeartIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "3cc17bb334e3e4218c0eeb05879002b9a3986506a49c80d0a873c38081672959"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/HeartOutlineIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "78e02cd1e4844e40ccf3f21dcdde642f1a0239597c98e3593810f714c83d19e2"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/HomeIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e8ac58cb384b791dd5bab57756000e58deadcc7589cb472578f430b03579ed39"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/HourglassIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d8f5fbb11ec6848cd76be803a3324c75715488438b9febb32550793e6b2b462a"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/HubIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "58b1fb50e3458169a24b8468169a14938a42d2f294e6eca594004ef7adec0b7d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/IdCardIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "31ef75a6a0b78f87bc4fca1936039a6d0c625422de2e34973205991185a7295c"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/IdIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e1618c302f930740f5a898958ac4ae7d97c8ff0fea83b22d90d5a1e7eed45180"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ImageBrokenIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c81f1bacc74a650303fac81e3c1f1ed0d49ad70fc68ae8d002914c4ab80bbd0a"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ImageFileIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c0ff0935ccbf04e3b133ef1ee083ef68c5f9627c2e6026ebca9a07b569cf9775"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ImageIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e409b4d3e16ebd4e8dff0e72696cee0c84101ab668d8fb14dccc3d0f4007fbba"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ImageLockIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "42de02d8d537aa22c15c18c50db6d1a318156346eea5507322efbdf0a8cdd8fa"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ImagePlusIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "55927fd3064bdabf321c68a4d536a3ab0da21792b1b435646107a2dd8b2fa504"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ImageSparkleIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "bb16083fcfab1ead6c43240f28f9b67eb3b3d41b585ff6a557c929cc919cd0be"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ImageTextIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "84426829084fe1fff673ac682d10d89be50baf31a38afc74bad7458c2505764b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ImageWarningIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d136904310e3565aaab624e8cc717c5bd0f6e134a38b89e5dc9c8f76c667a45b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ImagesIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f884e6b5e8b114a75b6fe4da75d5661f3a79f14c65ecc0ac2931a9452b4b83c2"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/InboxIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e96326c1ba569638aeb824850ef7f05470df6aedd421d05232298481bd8a8ba6"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/InstagramNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e35fc24d6315bc6f265bccd3a5acf642d49715eba826ab8b771896d7b27569c9"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/InventoryIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "49cf71b9a2717bafca007e978f41599b2ada3c95c097887b2147ca63fff966e0"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ItchNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6d411c09174db49c9e6698cb33faf40be3fa9da5d6505d28e1c64c160f32dc03"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/KeyIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "589491992c68544e77c1c0dda1f553e81103163b6c6a1c237a64039756aab8fe"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/KeyboardIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5b6627ac456ebb9f55ce7b83c2b8f7a236d2b59dfcc18003462d83d646d789f0"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/LanguageIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "58ba6185ea35f088cafbd1b84a7138beae493ff664b06f172251120f7b57076a"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/LaptopPhoneIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0ae8a2129ab3910af2093a06b6c6c36a3e020c394e76436cd2205801a638991f"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/LettersIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d450a7172b1cdc92fa8bfdbbe0756f12dc83b61b717453edf0d4d033234ae579"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/LightbulbIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1a586b84c2a680333852c4ad288eda386344dadf4269d2815b0e32f6c4177ad0"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/LinkExternalMediumIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "52897328367e24ec685caea58a3667afe3c73fde95185a85b48e3ae2d58aa0e8"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/LinkExternalSmallIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "87661cb64729384907d490d8fd50204e55b34a693a85d9fb0a87d3ef74b0f506"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/LinkIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5156cc0b2a81448261865df1208a616cebbdb52957a22fa9964737ee728bdb1f"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/LinkPlusIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1b8de09bb23a597a515460d56c6e46bb783c7a21fbcd30d0900902960d30eb67"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ListBulletsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6550b99d6f284687a63447ff84f1a9483fb0b66f6c6d76eebcf42341d0f68e00"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ListNumberedIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "cf573445707f7e25263ffb8e127b7e23333225d2e7770b2a8e257c4ef1c34895"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ListViewIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6550b99d6f284687a63447ff84f1a9483fb0b66f6c6d76eebcf42341d0f68e00"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/LocationIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0c19ad2b2681ee1c8ab36d475f5bd5e51a175317cce9fe6c063762de47860c32"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/LockIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c3a65a1d519e83d6e4d4b3354737a23ce724386a4e44425c7a75c952d6943662"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/LockUnlockedIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "3f1ad0432a2f33c103c5e3ac58213667bf5101708d1ae8e4f3490d7a83773e0e"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MagicDoorIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e71bb9978c537cc9b5c271edd67a39d9f38b901b62222a84b029d445fcacc420"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MagicWandIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "faed7b1d73e774dfeb880cfc24c2ef132830511e0c37102d90a14043ff06e212"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MagnifyingGlassIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "05c110535f61602bbe16118d585fe6eb7cb0a0cfcc48ff8382c198cca3cfb2a4"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MaximizeIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8adc5b18f4416efedb11ca991273de2d932e85ce45ec6ae7357de7460fb2d448"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MedalIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0ce54116c35e7db52a17cd2aa62dfaeea7b6a2cf78d4517142abb15d3e5f6a90"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MenuIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1117003698c055d9346614f97906e56d6feddcd78593cad53a6f9d2919a52245"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MicrophoneArrowRightIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "73461585ecdcb20408dbbdd3e27c470d89a39a4c633b1939628ece3431a16a35"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MicrophoneDenyIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "bdce9e5679714930f26792f5040608921bd87db004cba81a786e3f288f6ce0cb"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MicrophoneIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ec774981019217f9392729ceb9b3df502f0220342f75c3a49115fd056647b6d6"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MicrophoneSlashIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5aaca8a516793ece3ebcdc324d9645f16987a1e617c08958c22d5b85c18e2eba"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MinecraftNeutralIcon-primary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c71a7fa28dad779b78ef1df88e8115e6b293916e8a53e5ccd2e1c26cd8e58a07"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MinecraftNeutralIcon-secondary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "b799a511c9ba5f487a1f839d0a43983bd17bad5c97e0d58fb330edb0b780e280"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MinecraftNeutralIcon-tertiary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "b799a511c9ba5f487a1f839d0a43983bd17bad5c97e0d58fb330edb0b780e280"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MobilePhoneDenyIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "afa24fc1351f96fc9c1b4694a7f5df395976843ddf85b0e64631c581184a8f79"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MobilePhoneIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e37cb0bef30aac2bc191991d1434c09436c6c60aee3dfac930734d709e8778ef"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MobilePhoneSettingsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "7fbe07622e35a6d389d827405d386e66979d3192276ecaae153c4762a149d0a4"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MobilePhoneShareIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "029441f343b181da6bf8b9901779ddbcbeb77ed5674ee9d83a8d5b8d1821e770"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MobilePhoneXIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e471bb7ff867d5160d1791b5a8bedeec38b169d8870cf4d6df8649e62e4f79cf"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ModerationIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c0c7d071d85c76732b5f0a0148d09b5dc40c1e94f579a58cb65b1c7a5467f95d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MoreHorizontalIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a07401075dbdc56bfb60e23535afd60534e893643c2a8d60f8b720f61e455192"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MoreVerticalIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "627c4f5c9c6ee7b59494d5217ab7a89baad0ebf99dbe856179b2a56126f9c468"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MusicIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "29250a52b7ceb81d85349b89f28c8be5c0b3db580eab16c5ea18614f77e23314"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/MusicSlashIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "de0e9b941bc286f759c8eb15f71b02a6cfe3155e5732d3e833cdb39625931ddf"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/NatureIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8341f67c90a63cd311c8f57fa6f07aa17cfcd74ab110a521b791a5d03ae5abfd"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/NewUserIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "13794d199139764e83ac045346db689bd044152a7b13ad4a382ada9ada9109d4"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/NewUserSimpleIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "715c53c4a3e4b2994b21f87a5df96cdda91a796eef09a05891799b93b9a8bbb9"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/NintendoSwitchNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4b60b090255586ac93b94dbc235a61f5124602a61720faf743d3d5031fe65d19"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/NitroWheelIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "dd6e359b100fe847e3607afa219119f7a0b49ada7aca2fdb690da3fc4ec830ca"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ObjectIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "eb334be2eaaf02103de4633b04a2f2c4fcc92795f1f60359d1d94f41ac155776"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/OrbsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "85f37d120870bf6104b98d90be25de40d553fa07772a72ee78bb11ab110541a2"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PaintPaletteIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "be7d81905399dff287d89914dd502f91361629f229a7eb40d702a2f60569686a"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PaintbrushThinIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "dfdfcf79855b39655663f4afa3e1e9c3f55847f7de3145c3fcd06693a67ec9f5"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PaperIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "9950619ed3584507ff54b4178b215216475534c4c770dcb685956ea4c89f12e7"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PaperPlusIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "282a9e3387c5cd1594005f11102711275751a255a9e0dad84a6a16c5bc36ed14"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PauseIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f728d88a71973d4bfb38b843da3d8b07fb6d93dea4226478bdb18b16950eba3b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PawPrintIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4da3f95808456c0b1ac554efebda61095d24893dc621a52bcfa30d2fcea1587c"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PencilIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5fb9d43237d4b4897d0a377a2323341dcafa7fccc38c9cfefc91c7fc0ec15614"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PencilSparkleIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "bc071f75019ad2427bddbd116cdf12b11e58e55c5097b7f36effed2a124a4635"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PhoneCallIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "96665131fa7cb743f5a37622083aeddc8ede1a837fd50358a5e4553314388549"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PhoneHangUpIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e81d02c5247d5610d78a7bb28a16ee7ac85da9d41cb83f0515c9d8065a1a4aae"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PhoneIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "794e7d1a7a23601aae0ec44d143ec29e0b59e9dd470c760519e98adc019710bb"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PiggyBankIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "b4eaddb01602b870adbcf22ce133f7f01a98132343dbecae013874f666bedd7b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PinIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "cde86b30f8287187cf9b76b4a6d1eb3d8705d05a2691264813b60380ce172a0d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PinUprightSlashIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "600202b5564a05804adff26c3b86a2f0dac11cb45b1a4110009a542339fb923e"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PlayIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e80b2ff277922ac8cdb9b8eec15563bee7ed928e7d83a148171d6646ce35ab6c"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PlusLargeIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c0f6009a2c5fee720ed1b86e2b99da5c310f71a179c3c7bc2f827c60ea9cd0c0"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PlusMediumIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "82f7d8bd3a420dae076ede7e40dfc1a361a981491628f5b3def4ea74111a9076"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PlusSmallIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "922b2123a903de928243cb1f954974eb885a7132a5771088762757ef61b32a53"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PollsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "cc6bdeb32d70e2843d44102b6a910920b3facb841cdcfb125a2c4e0213e90ef2"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/PuzzlePieceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a9f96355642d104b610b84f071dc45553d6277c11fb9eea359e8602d405fe603"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/QrCodeIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "7c1fe9451a54c4e2175233d17b008b495359a44bb4afc15d2e9b771f4b02a677"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/QuestsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "9a037f1d0f22fbd40f0d9627dd0319437822d627aaa2ab63b46894ae569b8993"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/QuoteIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "101c9dc26ba7247a4d239bc17b0391e4c23e7fe9df2743d53979171c6e38a6c7"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ReactionIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "17b502132f19f5a1d821b50f8973910c53b06ba5d3256fdb9f1a74119c0dea2e"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/RecordPlayerIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c4b52ec88c721d723e8e365def9b7e7edc285f77c2cd8da0ee41db8e64657b8e"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/RedditNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "9cf3aa66fb573269d6d4f229037cf24b1cba505f94f4f0712396c391f2ea0681"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/RedoIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "31650a37b1cde748bd0e954df20b4b03a9007c4b60182cc7193610cb561d2b71"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/RefreshIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8e0e50f288faaf33694516e6c1839604e55ab971c2c2d748cd4edf6260f7009f"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/RemixIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2c826cd467d34ea4098c59375866e7f9d661fe5eeae8b7b66a93006e41402b47"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/RetryIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "69e2383bb0ea3ba53b6273083b3064368c17e94ef7e1cd297348e931f1b0736f"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/RibbonIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "27e0aad6fc105de395c2dc3b7ffec9f4e18ab89c54864a30aa91b8ac9fcc2db0"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/RobloxNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1d65fcdc2cfae5ad9aeee1dbf58d7d80c012b486676387f2817d3144be87c2ed"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/RobotIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2460fbf2207943edcf7d4b534366591fc348dac6b9e1247e7724aed2a512ded2"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SaveIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8072738b29db578223714a278e7f99cabf70eac11137bdc2deeb9b893f6db7b7"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ScienceIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "be2b5536f64fe891a4fccb2a4d3d55124afd30c59a9e6b37252c5231c9059800"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ScreenArrowIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8918c6ecbf9f183d1755c05598dbab3a9c2e7543276ba753ca75b0feb736504d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ScreenIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "cd1aeb63deb01413265a0cd3bf8d82357ca4b723ddb79a2f1f08d3b2bf8d76bc"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ScreenStreamIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4ddaf27730e0a1bfb5f130437bf6b28bf02964d7f665894d8ea28403a14c9813"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ScreenXIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "245484e1ad63589c401fe4e142c4d5892be97889d0ed6290ff9c751c853e45c7"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SendMessageIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6b00ce15ce970561e42adb060ea8442d0c8e2b7fc31b8f512d8cfdb181d338c7"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ServerGridIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0d491e1bf2086e821c15d833105c88c1e449c9f9dd1029836fc7c451a6a3a709"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ServerIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ff54bf28fe3a45766c1971e81e0bfd3c1796c1d91ef2082c9b7c184880c2795b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SettingsCircleIcon-primary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d5da966e94b427a747efd241bc9e531dd0e7a45e017f2f92b9a7f4a309316b07"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SettingsCircleIcon-secondary": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8719362212129b1606bc4ebe5225da273c1e221c99881f3ebaa397c37513c04e"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SettingsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "099743e5b9837a6b7ab81f28428061cb9a675c4f0e3a9edb6dd8732974f20ca0"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SettingsInfoIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6308e22382299ae260684d696fd7cc2465aa5d9cfe6f6407de9f0160c5a83cf2"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ShareIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "67113338308ca2d0092d0282983683b15a1db89dcbadfbd12f89f70f2cebfd0e"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ShieldIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "7d328798d9359a8a731491d275352537c3dcc6419ce801d16908a000eabeb3ac"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ShieldLockIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1b6944840e9d558fc564e56c537a63fcb6cdfed5d76ebd1baac98915084e6346"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ShieldUserIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "726eab03bb2b3073940a1fb407b29e57d7c843250220d5442ecd9c93c0215cc5"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ShopIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "057707d29f64e5d307fb9ae76210ae8dcbbdeee3ad7016daf5d341bf91817ccc"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ShopSparkleIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d935bb00941c4f6bf1c647d69535a4ec9087f7f8444ddefc095eb208b8ecd2b1"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SignPostIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ffd4a6cec97a3d2d37d6893912a0909bd8ea7aa7de24df238eff9ed4e41120bb"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SkullIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a756175ab6ed5587bbd03ee1c3b06ec1a3eacda54cdc4e0f388cf2093e020609"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SlashBoxIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e0ed8e08dcc58ed3f99c14a67ee2be34c86043ee84f66077ab3bc0ad738bf531"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SlashIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "9e56d8f7267ad05c94cb3dddfc0da95469bd2f5b79c0e6f67a8049dbcc67eeb8"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SoundboardIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1ca39a73f51d878133b820dcc51eb2439ff80fc1a6bcdca2d93a38434a43d3d1"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SoundboardSlashIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ffb2d5bed96ec3239680be2fee248de5fe53b69aabd9002ad2a4c93a9a3ccc4d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SparklesIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "11804ebce50c848680162ea6bc3efe6e993ce23d7c6a1412ba3d5dc265c0e58e"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SpeedometerIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "60e367fcea77c2c23d080c998938b74d950ee5f8745890ad564e1b6114f12116"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SpoilerIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "79371be49245b80cf267f1211134afb104dbf73122a752909a91c047313fa423"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SpotifyNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a031fe9236f38f0feb0876c5f6af29dd296e694e3bcb5f2cde567d79cafe7d52"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/StaffBadgeIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c0c7d071d85c76732b5f0a0148d09b5dc40c1e94f579a58cb65b1c7a5467f95d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/StageIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "35cc791e6831ab4ab202bcd58f73101fdc8ede6f7c7b350ff464667418cb7db6"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/StageLockIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4064b017ca3eb118bd14d7dd13a692f15d67a3149c68780b426b9b7c299d86ef"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/StageModeratorIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a900f601f6e3d637718e68ef63d4331dbedc8c26e27025da50f27de81be3ad22"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/StampIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "7e4f83a30ffbf27ff1a5bc43cbf20db680fec203108bf79c6fb35befd4ede5ca"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/StampXIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "3b36c880f1714e5be4bda7db81ed25140256b4199f2124f8964b4f315599ad5f"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/StarIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1ae1c0def965ab77ac1e7044bb2b5d3bef715fbbfe0a44205157c761376969db"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/StarOutlineIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "b7d3a6924e20fd2da4f909ae3fc05f8dbca43767c0d45bab1d8ae9486b135541"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SteamNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e0f1a9a5471928665333e8b8b62350bb77255ab517623960ecacb2a12450797a"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/StickerIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "73564444a61915deea8fc269ee1b2f26934e7eebd0a1e2f2ca6024a8ee64d65b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/StickerPlusIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "16d3aa1eea3b2a9afb2734b95fc6b95cf5ecaacb32526f69a34a9b45ad81aeca"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/StopIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "cdca0c552396a7701a2db2874db3e3e53e91c9923505ba54f08e0335408087fc"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SubscriptionIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ad2b96ce1ec5f754b4d7b5b0c06167597ccfeeb2040353857b005d421ac16d4b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/SuperReactionIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "318cf77d8fb4c8287f28feb91a9ad32f8d2ca78ef0bcba365fbe676d6a9c0a5c"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TagIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d1a2084dde25b3e0bc972acbf7ad8f7223ebd50efe2ddefa49c4f5714f62741d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TagsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c4ca5e92405b926a1c4aa43c87b328647758cdbe1ab75e26ff89aafb014e0b39"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TeacupIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1ac6b837f306a0ebb81a27c933e32a4b9c8e8fe6d443100ca2212af9e7eaa661"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TextControllerIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "81b555edd44ee9f08626b1c09f6394c84d9ee45d1f1fd3ea9aeee53fa04beb33"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TextIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8e32be3a6a796c9373d9fb39906f014975afcbc23dc1fc7409dfc9dda51fffd0"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TextLockIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "91889dcda634d772187813c6633313c611fb1fb6cdd3f4185474d79dbb3285fd"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TextSpoilerIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "dc1db6b4a1e25e87cd01472a4e95cf82458c9b48edcd2f2a6864f8b746ff3342"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TextWarningIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4b233310a6dd5848ec80b63eb95794bbc46c0cf14fec3dc87ec4b6cb1629a880"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ThemeDarkIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c0c50effffa11f96868242fbd4a0279594edc088bd2332fff2f7cef5809f6973"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ThemeGrayIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "cf14797bb07acc40a631603a9ffd986031472bde723aa0466a2a5fd01f291cbd"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ThemeLightIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8cdc4e34c1c43d87e5d215ee0717e5d85955bc64ca05658946351a58823afdea"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ThemeMidnightIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "df45d6d7221dfe8a8209c2df6f1eae73b2cc8504b13028ca7d894f8208adbc08"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ThreadIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5f4ba95b24bf609a5acb22425bc40e0b2d4c0ed5bb9f3a6cb06e1c464079398d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ThreadLockIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4d3afd381b42fd29ca2bc72643db9829212a06f42aec90b12dc647fcc12613b3"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ThreadMinusIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "30336dfe34a748e0e3c81c7671468fec7096629aa5a5b3e5c3f2d354335f98ad"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ThreadPlusIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "b3e53b31c4067e4ca4579e31b65c915a85ee0a1d6000ece09d984528a08074f2"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ThumbsDownIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "57367d9dc6672ed5cf79df5af2f2cb2fe1587c8ae2bd402866c71fc1912a6819"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/ThumbsUpIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6d3638a1155e88264ff687fc90542df2300992c38c730162388c511dd3ce3552"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TicketIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4da69f6aadc618dd5a8b9b3ea759254471dc11c62ad5b9ded5b631490828e796"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TiktokNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "04ee3582c54fbc88ef986ab982946a90f1685e600ca8cf0d5ef0b9984bdcff05"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TimerIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c5ffbbbaa7876fbd7c7e40f5a1000c41303a6cb0e2a1ee3f2246e0ff99a56160"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TopicsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "23d4bea2fb960625e22900101229a1f2e42e9fefe5eb16e6d104fd3828c6d381"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TrainIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ace8477026be5fb628bdcf3632666a1c66893b78321af013e777261a392269da"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TranscriptOutlineIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5a8cbf4859e40a93df5f8eab4c4a7a5a97fac3cb34fa6519dd2e0ec07dbb0e97"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TrashIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "9ac7f0f7ef1298f2157995cb30cab38e72708d03d821d18c22662392111aa942"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TreehouseIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4770d29cfbd88342a7e430cc379bdd74732970527b89ed2137d3a5b4d60ae8d6"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TrophyIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "dee93a3e76ad4696ba5649811d61c343d6d26585805bbfd85d93b6f957637630"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TvIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5d716d3f320c61a8053ff13c1f40cc3de715493a5db03f3ed9f934974b65e2a1"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TwitchNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a4d1b4ee61458860dba4f0e2a11dcdcfed55dece8437d2da833dd56801e7468e"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/TwitterNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "912d0ce60430e055eea5d234c98dbba15d0c52cceed8256cd5149d0b08dfd558"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/UndoIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "87938f86de150ea9f35117e81fea64579407e18424abb48557fdc29420acbaea"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/UnknownGameIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "39eb696c10c6ec7482989c57af335c13075ae4ee99a6c0f860d81fed805bb999"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/UnsendIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "b6c912a3170e36c4f8ede63eac7bea926c677aee808f859709d0798350cd452f"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/UploadIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "3f7061f681d345207ba182c0e980889770d757361bd90344cf8a551afd3d8a49"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/UserCheckIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f2fdeb2694b083bcec930e61840969988f21030d8f6f395fcd397971412a86c1"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/UserCircleIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0c63b4effd45e064e7ddb4890540d42094d56ee9a558e91022b7fbc6d6afab62"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/UserClockIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "bad793c5d568cb896264e11419677e7fec213906fad9ae45f2640a0dfddfd1a8"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/UserIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "987ccfd13f616f3c851cd6af5eda722be0dc8dbf4032674fe6f2ef892333f830"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/UserMinusIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0b24a0fc5a37c6959f5ccd8052a6d79da59426ec8c55694e7eb91b97f9d395a7"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/UserPlatformIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f89a1464c2d82dc30cff01550dfab34d1b63d11ee237b7424536a72b0f231fcc"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/UserPlusIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f737c4596cb5f7137a45a95893daefdbb73acb4c5c297a51c27be3599d4ac0e0"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/UserSquareIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "fd0e0b6498aab496c4633786d57f8a8b5303a754cc89e2c747ae96589544ade4"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/VideoDenyIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "aba3923f733f028cbbf64a697499b8ecf90985e19907f94d94629fed06d22c11"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/VideoIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "be1b71c674d137a47c2f9aaa49ccc3d8661ab2bb10d49fe5a714a8cc98c69f47"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/VideoSelfieIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5c8836723bb243ab576e89c69d9fead0db9032197fa0400bd95a5f46883d97c8"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/VideoSlashIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5cd095c6c2a46c2ab41d4a960293644dcf00fc1528a0799b18050b79d6e95b9c"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/VoiceLockIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f613dfcf4d60882e6a26e7abc0fb3a46fef74c36043de280d85c1abdae227484"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/VoiceNormalIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ac2bbe5122bd038eefd1580b54fd634215a5a37a38f7927b0f974818e225f434"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/VoiceNormalSpoilerIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f476ac8716b7e5a3cd1a23f5da07fb90161a9f25fe5d702aeab3c3704f08e154"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/VoiceWarningIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "45334f4af9666b1f074feb9e4a92f91218156e74e45049ee22059dc75b64e363"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/VoiceXIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "b7474fe66b722aac29c87da9f5a212c87620a5b4b8e6fc39b104375035b33794"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/VrHeadsetIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2b5fbb481cd2ea26ba44b0efa1d5b9763e0d4fd3fd6c937db826ab14fa12449d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/WalletIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "251bd8a283d0027e58e28197915c10a0fafe3126c330b9370fc72ba58a9b5758"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/WarningIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "79bb1b0ae5c4c1851cc21cf964138aea3d6ed9fa3bf9c375ed825a0a86c6694b"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/WaveformIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "b3fea0d947ca306d687e9745a8d4ade2b5ec3a1bdd552ef9d9d31072a5a17e26"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/WaveformSlashIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d6bcbf7aa917d01a1e1b8dd53c1a80ef9b2a9a5fbe21f6082a118fbccfb93928"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/WebhookIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "72f34df872b7f0283677a1a34d8cd04b8420dac693832cdad4d04fa672ca7cdc"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/WebhookPlusIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "fd8a1da38371648edc3bf1ff438437817d7d282f76f8b01b42ca841c52346791"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/WidgetsIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "80af21ccd6e2e8da200b57068d1a7258fb1f6ec379821c839251a53c63bab4ab"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/WindowLaunchIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "93e2e4b0095f09d68ecd9bc2c756def11ead40fe7efb84a9c6bdf176ad38142f"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/WindowTopIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "24c33745b476f15f44ca0059f931bee416b6008f8085931877d037dc404b8f1d"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/WrenchIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "476fd805182ba75c53b1ee2bd76d9b72299cfacd37c9146a7b5c366aeb453f63"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/XLargeBoldIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4548d2b0998e2b7086b0413f0c511cdb22e5900dc60f48b03959b72594f7e526"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/XLargeIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4548d2b0998e2b7086b0413f0c511cdb22e5900dc60f48b03959b72594f7e526"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/XNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c8bc764bcdbe731d3fd62e4a1b455cae8ac95c3bc06c6200bea1579567254540"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/XSmallBoldIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0f679644dc9e5df488395b4e6b9274554f4b50ad62ee1d7806a6d1383c578ea3"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/XSmallIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0f679644dc9e5df488395b4e6b9274554f4b50ad62ee1d7806a6d1383c578ea3"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/XboxNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "7994d1f6b43c80ffba7b173d23b4cbd11d2d82ac94c5c65a11da78b01596b06a"
+			}
+		},
+		"design/components/Icon/native/redesign/generated/images/YoutubeNeutralIcon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "582e4438543a3c40b7d868bbae2ba4d8c2e027ef09dbeb6a32336bebb9e100c5"
+			}
+		},
+		"images/group_dms/circle": {
+			"type": "png",
+			"width": 32,
+			"height": 32,
+			"scales": {
+				"3": "0e85c913e476531c24813bb7765898a78668d4cc924d6a05cf50aa96f1b8aa10"
+			}
+		},
+		"images/group_dms/icon0": {
+			"type": "png",
+			"width": 96,
+			"height": 96,
+			"scales": {
+				"1": "b3aae8875f76a6c55a0afb63590acd6c90122e639a0f9a9a294bc2fed2bc2fe7"
+			}
+		},
+		"images/group_dms/icon1": {
+			"type": "png",
+			"width": 96,
+			"height": 96,
+			"scales": {
+				"1": "a0221d7981262b7cc94b993c9c01fb9813fbc0e0223fc771dc2dd7b9c6bb1d72"
+			}
+		},
+		"images/group_dms/icon2": {
+			"type": "png",
+			"width": 96,
+			"height": 96,
+			"scales": {
+				"1": "ccad22021e2e10ea4b121114bda0ca6afca29ae9fc8ac2a0063f02772f749b9f"
+			}
+		},
+		"images/group_dms/icon3": {
+			"type": "png",
+			"width": 96,
+			"height": 96,
+			"scales": {
+				"1": "1b66a4b0301d0bec285f07bc86157f1f031ea879b57298ad387234b3430e37e8"
+			}
+		},
+		"images/group_dms/icon4": {
+			"type": "png",
+			"width": 96,
+			"height": 96,
+			"scales": {
+				"1": "0c24c77eb49822e49c43e7414ec9a8b58fe44f0e41e9468a20102cce6bce949c"
+			}
+		},
+		"images/group_dms/icon5": {
+			"type": "png",
+			"width": 96,
+			"height": 96,
+			"scales": {
+				"1": "c78c296608f0b5dab71a1e497dd6611d3991e338aeef485a108e6812eb30b0a5"
+			}
+		},
+		"images/group_dms/icon6": {
+			"type": "png",
+			"width": 96,
+			"height": 96,
+			"scales": {
+				"1": "6279a3be983f4717bd4df6038f0e23457a1c523651b2d861094c181d6682cbca"
+			}
+		},
+		"images/group_dms/icon7": {
+			"type": "png",
+			"width": 96,
+			"height": 96,
+			"scales": {
+				"1": "2948446e036b55449c0d5bf5bd3bd1eca85bbdf3f66c06f7358a7b829b16b163"
+			}
+		},
+		"images/native/audit_logs/ic_audit_create_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c0cdbed27ef9ca70406eee20f7c7780f4b347a80abba91680953f1d365989dfa"
+			}
+		},
+		"images/native/audit_logs/ic_audit_delete_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4de6d379800d6f77f03e6690224741287abed61136dae3d5f2249216318bf565"
+			}
+		},
+		"images/native/audit_logs/ic_audit_update_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "86291ef0a4d59a808b0abfb12f6aeef268c1598633b4af739dc51599b6e1e6d9"
+			}
+		},
+		"images/native/auto_moderation/ic_auto_moderation_shield": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "24de68a3769abca280388fd459ebdc8c4422ea129b230b0aa455fc79f9cacc6d"
+			}
+		},
+		"images/native/auto_moderation/ic_closed_lock": {
+			"type": "png",
+			"width": 12,
+			"height": 12,
+			"scales": {
+				"3": "f570bc0b01bd2264f409146c6b6a50d2d1f92c72109c8eea9a76597c14f514ad"
+			}
+		},
+		"images/native/avatars/circle": {
+			"type": "png",
+			"width": 85,
+			"height": 85,
+			"scales": {
+				"3": "ca38041b725aa389da91fc633624c210b684f8b5199b77125cca466810d9f75e"
+			}
+		},
+		"images/native/avatars/default_avatar_0": {
+			"type": "png",
+			"width": 256,
+			"height": 256,
+			"scales": {
+				"1": "e047d0dad5d0a49ce56195e92d163188ad90c6db82ee9556a6ff3a9860f761e7"
+			}
+		},
+		"images/native/avatars/default_avatar_1": {
+			"type": "png",
+			"width": 256,
+			"height": 256,
+			"scales": {
+				"1": "2dd49d796b1821eacd364ae15e7ca97f6d46303a406573ca486e5d63bf27a7bd"
+			}
+		},
+		"images/native/avatars/default_avatar_2": {
+			"type": "png",
+			"width": 256,
+			"height": 256,
+			"scales": {
+				"1": "1333aafef1832194b81148ab4c919c98d930245bdf8dfc231ee2992ecd4d9826"
+			}
+		},
+		"images/native/avatars/default_avatar_3": {
+			"type": "png",
+			"width": 256,
+			"height": 256,
+			"scales": {
+				"1": "9f3a5b726e7e9294163d6fa5a15b232166c0c85ed8691b59f3fae34b1d3a8d47"
+			}
+		},
+		"images/native/avatars/default_avatar_4": {
+			"type": "png",
+			"width": 256,
+			"height": 256,
+			"scales": {
+				"1": "522b8b146d59628e156bf529303d7d31f8cfe9ad6496c4183eb71b84259ca7b6"
+			}
+		},
+		"images/native/avatars/default_avatar_5": {
+			"type": "png",
+			"width": 256,
+			"height": 256,
+			"scales": {
+				"1": "31699abce27db448d2023a2af42f89ec0e508cdc38a0cc690ee55ff04d21fc5b"
+			}
+		},
+		"images/native/badge/ic_badge_nitro": {
+			"type": "png",
+			"width": 30,
+			"height": 30,
+			"scales": {
+				"3": "69b766ba79df52b1f09ab01f4463b42e5941cd58ece34aae75ef8b1eead15372"
+			}
+		},
+		"images/native/badge/ic_badge_staff": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1028c2f6430bb67f935d84ccbede407be929eb985d190479e778c0425e0ed276"
+			}
+		},
+		"images/native/badge/ic_profile_badge_active_developer": {
+			"type": "png",
+			"width": 30,
+			"height": 30,
+			"scales": {
+				"3": "7fa6064631697c846b1d8adf8d50241245bf34f4c60564e2af7de22d727d3a89"
+			}
+		},
+		"images/native/chat_sidebar/ic_notif": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "effced47e3321e0da24542528e5a777e8099d8033001c8f3fa3842bea664dc02"
+			}
+		},
+		"images/native/chat_sidebar/ic_notif_off": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f483f90a4080fef4d45daa1611d880192a38e09bdb7747255d611871e227b0e7"
+			}
+		},
+		"images/native/chat_sidebar/ic_pins": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "cde86b30f8287187cf9b76b4a6d1eb3d8705d05a2691264813b60380ce172a0d"
+			}
+		},
+		"images/native/chat_sidebar/ic_settings": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "099743e5b9837a6b7ab81f28428061cb9a675c4f0e3a9edb6dd8732974f20ca0"
+			}
+		},
+		"images/native/community/ic-application-rejected": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "6a5b105a81ec70062a49376039f022d941b7d7ce6dcb180e7a84aca19219cdf9"
+			}
+		},
+		"images/native/community/ic-application-required": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "345cf5e9dc1788cb69e9dff5a316c13b00fa9e6ff5840184384d4b671915375b"
+			}
+		},
+		"images/native/community/ic-application-submitted": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "cc1904ffd7e5640c7280660e313d9ae2e87ca743e407ba9d255ab676ede7105c"
+			}
+		},
+		"images/native/emoji/ic_emoji_recent_color_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d55c20f424d33d18ff22de9f32a7a387173f8de127f32811cf0daefd4e444e65"
+			}
+		},
+		"images/native/empties/img_app_crash_dark": {
+			"type": "png",
+			"width": 251,
+			"height": 147,
+			"scales": {
+				"3": "c1782ab1e60babbd89e283ed5be63de89578730c9ba3af9f21021e1f4423eb32"
+			}
+		},
+		"images/native/empties/img_app_crash_light": {
+			"type": "png",
+			"width": 251,
+			"height": 147,
+			"scales": {
+				"3": "c1782ab1e60babbd89e283ed5be63de89578730c9ba3af9f21021e1f4423eb32"
+			}
+		},
+		"images/native/guild_sidebar/img_create_guild": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "7ca7f9724c9b2c1a37cfdd4733b5450b4732a271cf639757a096870cb8671a8c"
+			}
+		},
+		"images/native/guild_sidebar/img_guild_folder": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "3d351e01b1d8edb765f8fad9003fbe74f0391f60d4d4ebf3766a6c7b3ac74dcd"
+			}
+		},
+		"images/native/guild_sidebar/img_help_icon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6b0ee672f13fc7e8ef9619a458c876a8f06d9ed84259923e664d949805d03b34"
+			}
+		},
+		"images/native/ic_add_reaction_v2": {
+			"type": "png",
+			"width": 18,
+			"height": 18,
+			"scales": {
+				"3": "70d4f7796145e1b61b7a69f8bf3c6f7522dc6d3da1430eff93ae4e32b97d1d56"
+			}
+		},
+		"images/native/ic_add_super_reaction": {
+			"type": "png",
+			"width": 18,
+			"height": 18,
+			"scales": {
+				"3": "edcb3513b2d32ed85ba1a264407e4d7e35131f84cd1d9d7f09dd6a09d9fee094"
+			}
+		},
+		"images/native/ic_arrow_right": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d0739914ca062f440c9130b93237f00d813a0d729024e4cddc1b17271e0c4119"
+			}
+		},
+		"images/native/ic_browse_channel": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "7ce08b4195fee7f2ab1ddc33605fbdb9956d2d7744d2ec74f63566345dcaf134"
+			}
+		},
+		"images/native/ic_call_status_green_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c3e8235f848818f22b437101be7563139569eb509937d23e26bcf5800b0bf1f4"
+			}
+		},
+		"images/native/ic_call_status_red_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8bafc20c7cc7f20934c510a79a9f7e2f0af8dda7f7d54baa35c14f5049bbc24f"
+			}
+		},
+		"images/native/ic_call_status_unknown_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "b088f5006eb56d4234d68150f6d468a97ec3ef6318d7eab34d3d20bcd35ebe7f"
+			}
+		},
+		"images/native/ic_call_status_yellow_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2c9bdaf48c4204c6f343369788be49f3b9b443144c6a1052b38962b58861de13"
+			}
+		},
+		"images/native/ic_drag_icon_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "41d5dedaf0e0dbb7d196de00dade46713ff588e426d059ce4d8dd9108672b064"
+			}
+		},
+		"images/native/ic_expand_more_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d3e7fdc417087690e3a71a756e4c3d756d6cd3a4118e103f211e43ef7d6b058a"
+			}
+		},
+		"images/native/ic_flower_star_18px": {
+			"type": "png",
+			"width": 18,
+			"height": 18,
+			"scales": {
+				"3": "781873abf281c71ff4740ef6913065b119b81868edd8f9061690697c24a4394d"
+			}
+		},
+		"images/native/ic_flower_star_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1b9dd9579a84750d8c7885bc2d06a8c846356ab76437d087b173c4b57df3219f"
+			}
+		},
+		"images/native/ic_invite": {
+			"type": "png",
+			"width": 21,
+			"height": 18,
+			"scales": {
+				"3": "625afe14c91d5605afc6dca7bacb6d839336b9bce17abbe8657143486b134b86"
+			}
+		},
+		"images/native/ic_launch": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "542f7d4ce7fd1bd177bfc9c707c5df62a4d971a5de3fdce9f6d6c25902157935"
+			}
+		},
+		"images/native/ic_message_retry": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "149780bcf39e1c3bb4c65649e93c0890c63dca35840a1e1a4e21c8bc7b42fec0"
+			}
+		},
+		"images/native/ic_reaction_smile": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4fa2ce56b9d63b8fa30ccfcb6784571615ebc0773751b465d1e37f30cbf239fc"
+			}
+		},
+		"images/native/ic_report_message": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2bfee8803fedf8f55d3f3bf0dbce9156de4aded17b79848ddfe3cfb681f30826"
+			}
+		},
+		"images/native/ic_selection_none_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e2ce09e69b97f5c695f5b9256b0a41eb8269c44edcf80fa045d0f7847a72b1c6"
+			}
+		},
+		"images/native/ic_table_arrow_right": {
+			"type": "png",
+			"width": 8,
+			"height": 13,
+			"scales": {
+				"3": "88bf7f922a85ee008ed1df9fab7ec9cc626e456b05c9793940ba777a1176dd68"
+			}
+		},
+		"images/native/ic_upload": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "eb60a6eb8e752427497d88a797e55ad9f192f6b5727354e7ad23c564dae089b6"
+			}
+		},
+		"images/native/ic_verified_check_18px": {
+			"type": "png",
+			"width": 18,
+			"height": 18,
+			"scales": {
+				"3": "362fb28a5b63188ec3b6801ec085e20ee6767492411fae410510ba77c95b53be"
+			}
+		},
+		"images/native/ic_verified_check_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e836d2d4ad993fd46ecfd97721e3f499dce0fa6ea5d9a2665300bfcad35e2378"
+			}
+		},
+		"images/native/icons/Check": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "7796f96a4181704bd6b556f17b977a3f8885c41d29f00ec587884e4fdd19a57f"
+			}
+		},
+		"images/native/icons/Share": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e831cd6b84cabb97d62fb0e5b9a914a537be2c7e011f1863d454238d8c08447b"
+			}
+		},
+		"images/native/icons/Small": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "0cac9fed08afcdb7d59d2749595070b592f0478f09021c318d78c12919358372"
+			}
+		},
+		"images/native/icons/add_white": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "97d17064dd3acdceb5176935458412a97f06caf77de602a639e3d0c3b0841a43"
+			}
+		},
+		"images/native/icons/camera_upload": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5483b87976bac67a619b3f620ac0a9ef076693bd6b00ea502e5946938530659c"
+			}
+		},
+		"images/native/icons/camera_upload_light": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "b4887a5444a6d13437bf4bd82d2fdec216af8ae44889f0655f9323f0d65e8390"
+			}
+		},
+		"images/native/icons/empty_channel/add_friend_32px": {
+			"type": "png",
+			"width": 32,
+			"height": 32,
+			"scales": {
+				"3": "fd4766b7507b8a68c699f10f1a8ce4a2889e2e04d6029217cd516c1d1b333c0f"
+			}
+		},
+		"images/native/icons/empty_channel/personalize_32px": {
+			"type": "png",
+			"width": 32,
+			"height": 32,
+			"scales": {
+				"3": "c45eb24f63823e17b7af475a348366462f1a449ff2e988d603b844edd1d1c01c"
+			}
+		},
+		"images/native/icons/empty_channel/send_message_32px": {
+			"type": "png",
+			"width": 48,
+			"height": 48,
+			"scales": {
+				"3": "5bd54de56451d469788536c4b50a600a179d3f755cefc329fd7cecd0ba1fad44"
+			}
+		},
+		"images/native/icons/header_arrow_right": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "954efc8c3def4910b7a2fb5a4c5b52cae77f96b93fd7bb3bb655256fd52d79d6"
+			}
+		},
+		"images/native/icons/ic_activity_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "247c24f71ce14bb8f8bb3670a4669e7d7cf6f95d3e847475ae0f5b435fc1c686"
+			}
+		},
+		"images/native/icons/ic_add_18px": {
+			"type": "png",
+			"width": 18,
+			"height": 18,
+			"scales": {
+				"3": "246f89fe1debe1ed01f95d3c5c3b53be366d0ea4dc8df5b1b7d8583481809c39"
+			}
+		},
+		"images/native/icons/ic_add_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c0f6009a2c5fee720ed1b86e2b99da5c310f71a179c3c7bc2f827c60ea9cd0c0"
+			}
+		},
+		"images/native/icons/ic_add_circle": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d7fcaf3cbdbed9988cac3f297cf072ffda62c2c1be02ce326aaed07cafea262b"
+			}
+		},
+		"images/native/icons/ic_add_text": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "84426829084fe1fff673ac682d10d89be50baf31a38afc74bad7458c2505764b"
+			}
+		},
+		"images/native/icons/ic_alert": {
+			"type": "png",
+			"width": 36,
+			"height": 36,
+			"scales": {
+				"2": "01d44ad934e8cad7d42da39a6d9aee980a72469adc9fc0cc807727cc64880452"
+			}
+		},
+		"images/native/icons/ic_analytics_bubble_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "b6353dabae5467fca5062b9d963f2c60bf73fecf9587fc7e7511c2c1400563fb"
+			}
+		},
+		"images/native/icons/ic_application_command_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6ffc80dd6605754c56621a72ffae334256bd7d3ab5d9083beb97d5e0be03c4fe"
+			}
+		},
+		"images/native/icons/ic_application_command_built_in": {
+			"type": "png",
+			"width": 64,
+			"height": 64,
+			"scales": {
+				"3": "09e77520b21adce9c6236d2a377fe8fed6f07871a4b9ae3b25424a04fab5aa91"
+			}
+		},
+		"images/native/icons/ic_archived_thread_embed_16px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d55c20f424d33d18ff22de9f32a7a387173f8de127f32811cf0daefd4e444e65"
+			}
+		},
+		"images/native/icons/ic_arrow_back_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5ae7516eeac9deadff1a1131a3717046d524d6c8654ee28db517cf4334a95ed1"
+			}
+		},
+		"images/native/icons/ic_arrow_down": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5e57f0af1a1b140bd1a556d503fcba46e737a967eb1a83808545ab3037fe4b2d"
+			}
+		},
+		"images/native/icons/ic_arrow_forward_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "86628f4620b04e8b741b6e28ebb20bb9e3d7c2fb528346bfc6bdbd564a48b5f8"
+			}
+		},
+		"images/native/icons/ic_at": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8a513497ca43a7bf80ab951da11cb3f12295b8b9afc226a1a7240d57b82a5ea9"
+			}
+		},
+		"images/native/icons/ic_big_arrow_down": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d954a65f578aa1de3f8273d473d4f460ef21f03e0c12d720065f1472f11f6ad4"
+			}
+		},
+		"images/native/icons/ic_camera_white": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5483b87976bac67a619b3f620ac0a9ef076693bd6b00ea502e5946938530659c"
+			}
+		},
+		"images/native/icons/ic_caret_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0d81d6f4b3e042fdc79f92e981e15f58e14ed2ac9fa8fd5d467c4334995f85b4"
+			}
+		},
+		"images/native/icons/ic_category_16px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d130440abcb5c5839ed86f8a8c0a494553c44fb52d131224b77256e631e14b46"
+			}
+		},
+		"images/native/icons/ic_channel_arrow": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5e57f0af1a1b140bd1a556d503fcba46e737a967eb1a83808545ab3037fe4b2d"
+			}
+		},
+		"images/native/icons/ic_channel_arrow_collapsed_24px": {
+			"type": "png",
+			"width": 19,
+			"height": 19,
+			"scales": {
+				"3": "a984766548315a33d9a6b523ac070c3a3de235bbb15e49f904f60db2bbfe5995"
+			}
+		},
+		"images/native/icons/ic_chat_bubble_32px": {
+			"type": "png",
+			"width": 32,
+			"height": 32,
+			"scales": {
+				"3": "48e43f462e26e5102d8ca87fb81dd2c10b0e39a2f6ef5e31bd50cc4f02b2fc8b"
+			}
+		},
+		"images/native/icons/ic_check_18px": {
+			"type": "png",
+			"width": 18,
+			"height": 18,
+			"scales": {
+				"3": "916ea893bd80bf90666bf3defc4ebf29e050c1374c239e456e37c9326c37010a"
+			}
+		},
+		"images/native/icons/ic_check_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5a920e2472e3e7735dbddff4f5090ec307ca0a64a411f6d42392b7a244ebead8"
+			}
+		},
+		"images/native/icons/ic_checkmark": {
+			"type": "png",
+			"width": 40,
+			"height": 40,
+			"scales": {
+				"3": "b147468785b03d1c87526f1962b5c450f65afec2d520ed12669f0ef266d5d3ae"
+			}
+		},
+		"images/native/icons/ic_close": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4548d2b0998e2b7086b0413f0c511cdb22e5900dc60f48b03959b72594f7e526"
+			}
+		},
+		"images/native/icons/ic_close_16px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4548d2b0998e2b7086b0413f0c511cdb22e5900dc60f48b03959b72594f7e526"
+			}
+		},
+		"images/native/icons/ic_close_18px": {
+			"type": "png",
+			"width": 18,
+			"height": 18,
+			"scales": {
+				"3": "ad9bdcf8073619c2715ba74b9ca89fe473b01c727b0890dc6ce2c6252f02485a"
+			}
+		},
+		"images/native/icons/ic_close_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4548d2b0998e2b7086b0413f0c511cdb22e5900dc60f48b03959b72594f7e526"
+			}
+		},
+		"images/native/icons/ic_close_circle": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "fbed4fd84b7490b86fd90318d045b061765727b05b4a3e6151384f8b4cfdfa3c"
+			}
+		},
+		"images/native/icons/ic_close_circle_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "17cf524bb73d548696eca4eb883fd3bdf43edba4873820e51c45dbf11df03fdd"
+			}
+		},
+		"images/native/icons/ic_community_guild_badge_dark_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f56c2b740f442811ff65efbbeb6382e91c7f96f1cf9a57a70501bb8129e4323c"
+			}
+		},
+		"images/native/icons/ic_community_guild_badge_light_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "02bb96eefef9873b12595e6372be788c394168ff724c8a6032b4a34b39692bff"
+			}
+		},
+		"images/native/icons/ic_community_guild_badge_premium_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "154bd53af019d7c9af2ea025eb02339f09d8256ed836be6a22c9a19df9c1d1fc"
+			}
+		},
+		"images/native/icons/ic_controller_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f63a92bca10cade41139f14056ada606422868135d080d274fafedcb1ddef108"
+			}
+		},
+		"images/native/icons/ic_crown_16px": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "543e12362ca5ecb9aa66f0d43de9ce0a27cf39c1e59c52f7904b34776708ca7c"
+			}
+		},
+		"images/native/icons/ic_download_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "3157e83a12d95f4be098b4561923a9710686e196626d2a82780b2af803faec5d"
+			}
+		},
+		"images/native/icons/ic_feedback": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c270e06875764afdd80c0490ca0d842204e8bd07dcd31cc847ba9c2af2d2b295"
+			}
+		},
+		"images/native/icons/ic_feedback_dark": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c34a35ec1be1149db77a1f1c26fa8f3d804c7dec490d631e54a9991cbf6cffe8"
+			}
+		},
+		"images/native/icons/ic_file_small_acrobat": {
+			"type": "png",
+			"width": 24,
+			"height": 32,
+			"scales": {
+				"3": "828eca8090c9d478857beb72b7bc5b28a2edd94ea20081fb58724e7c4cff2e3a"
+			}
+		},
+		"images/native/icons/ic_file_small_ae": {
+			"type": "png",
+			"width": 24,
+			"height": 32,
+			"scales": {
+				"3": "ba3a33fae036cebbca6b261d50add6408dafefead41e334d13a673f61226b3d1"
+			}
+		},
+		"images/native/icons/ic_file_small_ai": {
+			"type": "png",
+			"width": 24,
+			"height": 32,
+			"scales": {
+				"3": "761674040c8ec1c1d0fea151f0ee998cdb69c76d5ecf5fd07e210b8e176de465"
+			}
+		},
+		"images/native/icons/ic_file_small_archive": {
+			"type": "png",
+			"width": 24,
+			"height": 32,
+			"scales": {
+				"3": "56304e152b192bbd43321bc1e2de9085fba7b457ed895db13a67a470b0e26ec5"
+			}
+		},
+		"images/native/icons/ic_file_small_audio": {
+			"type": "png",
+			"width": 24,
+			"height": 32,
+			"scales": {
+				"3": "448d82596d5ecd86dcd7bc418cb836eee6af0c829ee06d5f056060a933c57620"
+			}
+		},
+		"images/native/icons/ic_file_small_code": {
+			"type": "png",
+			"width": 24,
+			"height": 32,
+			"scales": {
+				"3": "95ab57efa8d07ee392ea82553ee2086274a581792d1f78aaa66ec6d0b8d57517"
+			}
+		},
+		"images/native/icons/ic_file_small_document": {
+			"type": "png",
+			"width": 24,
+			"height": 32,
+			"scales": {
+				"3": "54ec4f38dee35b950c940662bb8cc8f78c9b0062933b5c01b37785ec768f8878"
+			}
+		},
+		"images/native/icons/ic_file_small_image": {
+			"type": "png",
+			"width": 24,
+			"height": 32,
+			"scales": {
+				"3": "7f78cee62fe07094fc9db4762c95be0970bca13af921fd86ec2e62766f7055e8"
+			}
+		},
+		"images/native/icons/ic_file_small_ps": {
+			"type": "png",
+			"width": 24,
+			"height": 32,
+			"scales": {
+				"3": "33d71b08d971c35c7d77dc52e9687204159d203f7fdf953220d6baccb332894d"
+			}
+		},
+		"images/native/icons/ic_file_small_sketch": {
+			"type": "png",
+			"width": 24,
+			"height": 32,
+			"scales": {
+				"3": "c87d02d46be54e0741bda53e2feb61fe6ed3a524871ec22c671a817d095a255e"
+			}
+		},
+		"images/native/icons/ic_file_small_spreadsheet": {
+			"type": "png",
+			"width": 24,
+			"height": 32,
+			"scales": {
+				"3": "71ac9d88dce32da178fd4fe497aa20e1b4c15bc2372b76a312dca9f40ab0313d"
+			}
+		},
+		"images/native/icons/ic_file_small_unknown": {
+			"type": "png",
+			"width": 24,
+			"height": 32,
+			"scales": {
+				"3": "02893427913bf415c8ee3cae7c80fda79a3a0fed868411d78bab7b5906de2427"
+			}
+		},
+		"images/native/icons/ic_file_small_video": {
+			"type": "png",
+			"width": 24,
+			"height": 32,
+			"scales": {
+				"3": "5948c4bcc3ed4cd79f7220cf567c08cbc2ff519610e37bf62301933a65b8222d"
+			}
+		},
+		"images/native/icons/ic_file_small_webcode": {
+			"type": "png",
+			"width": 24,
+			"height": 32,
+			"scales": {
+				"3": "12d47bccf14216a7f544b8190778c99fcbbf88a726b6738198d593df0e484524"
+			}
+		},
+		"images/native/icons/ic_friend_wave_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "9b4ec99fb8959544961465a9c0a5f7404bc488d517c05147ff495ea230c54bab"
+			}
+		},
+		"images/native/icons/ic_gear": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c8d606fc93eefd785de445bd933ab8cd9dcd026d4f39ae3b7d59f12e335d29fd"
+			}
+		},
+		"images/native/icons/ic_gift": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "ae7479104c2964d4d753fd508cce2b1fbe54687079a595fa78cffbfc9151a361"
+			}
+		},
+		"images/native/icons/ic_group_dm": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "077f6db7e66e98ace2895616591e97364bd089ffb0591366707d8ed7da66c8ac"
+			}
+		},
+		"images/native/icons/ic_guild_grid_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "7e01432d6c20c5dc35e01196d7b681d7c5f9b577364d444a93e7c961ca0508db"
+			}
+		},
+		"images/native/icons/ic_guild_video_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "50a24a4418a552469b5080434c5114f186cd318e3136fe48b63bb138ca32efc4"
+			}
+		},
+		"images/native/icons/ic_guild_voice_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "7de025b9c46b11855b7e12d06ab4da2bcd93aaf4bd2e67081c09317c7be1f7bb"
+			}
+		},
+		"images/native/icons/ic_header_members_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f1c97c8b626369b4763d64c80c5ccf51f9e53e34aac61ab4fbf93772c59e6843"
+			}
+		},
+		"images/native/icons/ic_headset_deafened_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "cf6d2617891769af35cde37bbaabe313c81bf9a137edf15762bf3ac6755d9ded"
+			}
+		},
+		"images/native/icons/ic_headset_deafened_dark_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2bf45371bfd3700303814cdc199617d9a81a6d86c64e5ef01d813bd291398d96"
+			}
+		},
+		"images/native/icons/ic_headset_neutral": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c95d7a5bec60e5e9534e7a854d9711f1fa5c6edc3659659f336da64a40a7b7e9"
+			}
+		},
+		"images/native/icons/ic_hide_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6943d1c4462092257c7533cac84bd00cdaa934ccc68ec001b71c8b57c9ae1369"
+			}
+		},
+		"images/native/icons/ic_home": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "3bf542a988a2a183ef5f9b49502a99ef1f6b76fe72c2fb98ccb0bf52ed0ceb3e"
+			}
+		},
+		"images/native/icons/ic_icon_upload": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "b3c20eb56cc4a787ee913f024a9b8f15d760976aa0b22c56eb00d595538d6e95"
+			}
+		},
+		"images/native/icons/ic_image": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "1efd1142642a5394713ac7894ed6c1e3c18fef666cf7571c77cc98499e2e6d76"
+			}
+		},
+		"images/native/icons/ic_image_upload": {
+			"type": "png",
+			"width": 32,
+			"height": 32,
+			"scales": {
+				"3": "3c69ceca21b746ef4e2ba693cd4a2f15ea66c0010533c392f6f70cb1f48a6d06"
+			}
+		},
+		"images/native/icons/ic_information_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1f45a4619e6cb477435abc6696ec805c5c64a31548336af535d015ec8ea40832"
+			}
+		},
+		"images/native/icons/ic_information_filled_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e3873ef2d59cf80ccb77909780ea0cbe401e11a2045edcc283f2618ac76f379e"
+			}
+		},
+		"images/native/icons/ic_input_clear_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a87c897f5da56516922059830d7c4b81bef8b5535a09da99d6ea7ed98c6c787d"
+			}
+		},
+		"images/native/icons/ic_leave_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "105fc56d5ded1dd563693b1fb681d75c03957e36ec78f31388a43a29d7ce217c"
+			}
+		},
+		"images/native/icons/ic_link_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c0ac38ca7b6be90e926c028d1444f38f43fa6243ea82ca21f5e755ad0fa1e69f"
+			}
+		},
+		"images/native/icons/ic_loading_emoji_dark": {
+			"type": "png",
+			"width": 30,
+			"height": 30,
+			"scales": {
+				"3": "2273eccf7b0d28790c0e9c01030475ec72583775f31c89e873be8adcf6b724ce"
+			}
+		},
+		"images/native/icons/ic_loading_emoji_light": {
+			"type": "png",
+			"width": 30,
+			"height": 30,
+			"scales": {
+				"3": "9db80af69748abbd677941d45e41df6b1172c0171d385d0075fdaa478d09d619"
+			}
+		},
+		"images/native/icons/ic_lock": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "fe8f8bd439bb6faff34fb7286f6f2434036560f8b497946536eb59b746cff973"
+			}
+		},
+		"images/native/icons/ic_lock_short_16px": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "40837bb8ec060ebdb35d20db8b70b7fc6407775bd0f76c9792565daa607a5af5"
+			}
+		},
+		"images/native/icons/ic_mail": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a5ad0e9cef29d4d4c6cea9b85d1bc90d86c1c8782b7e0d8ad71a70271b82e472"
+			}
+		},
+		"images/native/icons/ic_members": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0af37d2972036923a9d1239f206134c36331b9d2cc3624785d94c76185ed6bce"
+			}
+		},
+		"images/native/icons/ic_members_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d5eabf6180ba61be37d92053a70b7b270d7ed9a1cc0277817d201f66a0e9d112"
+			}
+		},
+		"images/native/icons/ic_mention_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "317a6d9dd9d267fb1438f8618e26a3fce5589ed5101623480390e0f1729a41bb"
+			}
+		},
+		"images/native/icons/ic_message": {
+			"type": "png",
+			"width": 40,
+			"height": 23,
+			"scales": {
+				"2": "14b953ecb23bf90aab13ee263782194ef6b57ea6f72bb95bbae616f4952e11d9"
+			}
+		},
+		"images/native/icons/ic_messages": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "fdfd9525a162a22f780c35fe5e9de96b1ce2547cfd9d4baac074b57d4d9081cc"
+			}
+		},
+		"images/native/icons/ic_mic_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "dc1da2095975020b5c415f57a53a2d12a9d4a18594481f5e07cb6a5d5366a41b"
+			}
+		},
+		"images/native/icons/ic_mic_muted_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "028a2f746d69c03147aec4912f622699e58ff5a35bb43c2907f8f7d7c74f97d3"
+			}
+		},
+		"images/native/icons/ic_mic_muted_dark_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "fc14f6cdb51c2a06d225f305d62f471174e180cd6bbaefd487b48f7e9a896f17"
+			}
+		},
+		"images/native/icons/ic_mic_muted_light_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "7d62b74d056467dfca45d1b1dc6b1af57cac96648c7d4149fc5abbb3450fc57b"
+			}
+		},
+		"images/native/icons/ic_mic_neutral": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "10d01ceaeaa002854a50d6dc7c823b327b58b7ca8655539bc094979ccb860983"
+			}
+		},
+		"images/native/icons/ic_minus_circle_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f6dbe8f5c8ebb26ac924bebd8380328557516a511b2f7e49bf18c9309132dc8c"
+			}
+		},
+		"images/native/icons/ic_mobile_device": {
+			"type": "png",
+			"width": 32,
+			"height": 32,
+			"scales": {
+				"3": "d713cf4d634cc8702d6b73d4e0f18f4c1e8e3a60d4d1c1e7e6b550fed791e75a"
+			}
+		},
+		"images/native/icons/ic_mobile_status": {
+			"type": "png",
+			"width": 9,
+			"height": 13,
+			"scales": {
+				"3": "0e84a9f8785decc586c6b240f34fb49e845b2e395669ae7b2131b48d58b2597e"
+			}
+		},
+		"images/native/icons/ic_monitor": {
+			"type": "png",
+			"width": 32,
+			"height": 32,
+			"scales": {
+				"3": "646a5238a1ee53733baba7827f191bff006a21a38e8cd4f4759a84ae732d5199"
+			}
+		},
+		"images/native/icons/ic_more_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "53356fed5782f2d86e1e46d34df966a0b20dca1095bfcf386420adf9edc7c397"
+			}
+		},
+		"images/native/icons/ic_more_android": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8733a6d67dc62dc7f718997304350cd6fba66639911735a573edae0dd3f9e91a"
+			}
+		},
+		"images/native/icons/ic_mute_channel_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "78df12399f0a9630a8e2f3fe513721006e1357a712015cc453f1d371eb094647"
+			}
+		},
+		"images/native/icons/ic_nitro_basic_wheel_gradient": {
+			"type": "png",
+			"width": 48,
+			"height": 48,
+			"scales": {
+				"3": "272066bd37b8f031ea004f1891c3fea2be8bf7f1c4b4a423bf787c2f4ee03665"
+			}
+		},
+		"images/native/icons/ic_nitro_wheel": {
+			"type": "png",
+			"width": 12,
+			"height": 12,
+			"scales": {
+				"3": "3a030aa523e0184f6177d234224d31f69b6d397db8d254f1dd7daa87db3ba956"
+			}
+		},
+		"images/native/icons/ic_nitro_wheel_gradient_purple": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "8f5207f8dc762f5ffc58ed927dd535a18e3d5a27c5e5988f3462e1b197cc8ae7"
+			}
+		},
+		"images/native/icons/ic_overflow_android": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5c606f182b255f112e2249c91b1bcd2bc4b2c0f3e118de7099f7f267956e8912"
+			}
+		},
+		"images/native/icons/ic_paperclip_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f8cae9d646706cc77c377c7e164744dc41d89ed516fedfa211eccd9831eaedc1"
+			}
+		},
+		"images/native/icons/ic_partnered_guild_icon_black_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "daec6915771b6de81daf50a1afd631dd90bdecbcdad7a283173d011d431825af"
+			}
+		},
+		"images/native/icons/ic_partnered_guild_icon_blurple_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4de5114c0f69354f414e2112f72c5410d282a7a58174834d4e0271435dbe656c"
+			}
+		},
+		"images/native/icons/ic_person_shield": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "b32fa76a1177000b3b69a4473ed45f36f511c64d4a00162c1ac7bb3d5a12f668"
+			}
+		},
+		"images/native/icons/ic_person_waving": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "f259f9e7b6ee82cd1a5713c436bc60a2434f25666b0facb1022c67bd2bac495b"
+			}
+		},
+		"images/native/icons/ic_play": {
+			"type": "png",
+			"width": 18,
+			"height": 18,
+			"scales": {
+				"3": "dbf30f6e8f234eea34ea654ece9322eae545ba233282b313c159f6fa6bfa3b4f"
+			}
+		},
+		"images/native/icons/ic_play_dark": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "94aff8e3272a6a07a35534484cee313d92a16cd69442b1e978a3b2ac42a9598c"
+			}
+		},
+		"images/native/icons/ic_public": {
+			"type": "png",
+			"width": 13,
+			"height": 13,
+			"scales": {
+				"3": "ec9dc86e5861fe12032a8a80042760081613b6fe058da762e7ce3463c50acadd"
+			}
+		},
+		"images/native/icons/ic_radio_circle": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4ace061946f9bdb9f6fbb731ea0936bc3d899978c446e2a0f59b9cec4d18259e"
+			}
+		},
+		"images/native/icons/ic_radio_circle_checked_green": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "3a4d3f51a10d18d3264e6ff0a0e35fede8604bd63f101d3a6cf60c90ad3beda1"
+			}
+		},
+		"images/native/icons/ic_radio_square_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c15d196e5f6ade52b26304d24d3ff00ee186d835d689d0bc1b2caf936ce58585"
+			}
+		},
+		"images/native/icons/ic_radio_square_checked_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "85a2bdadd98788bc025fda30188b9a39721fc91f77f16ca1034cd183dd24b7dd"
+			}
+		},
+		"images/native/icons/ic_rulebook": {
+			"type": "png",
+			"width": 32,
+			"height": 32,
+			"scales": {
+				"3": "d4a2f15c8d901c67e57f589775c6c49d029312fdefd9c31c28833ad92174d427"
+			}
+		},
+		"images/native/icons/ic_rulebook_16px": {
+			"type": "png",
+			"width": 18,
+			"height": 18,
+			"scales": {
+				"2": "f8ff21f506f8bac369ab29fe87ae58da67e3a67525dca2eb935059ebf748d519"
+			}
+		},
+		"images/native/icons/ic_send": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "df5cd2183821695b3043601f8a06a98740221e53d0d01515521eb0c10625601b"
+			}
+		},
+		"images/native/icons/ic_share_android": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "197238b3ca5104b4ffba3872dd4eb6c82c57cc294a794f3c3ecf8fe9be9739bd"
+			}
+		},
+		"images/native/icons/ic_share_ios": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e90e1a9d46df53846e2a0c190dfc62bb6b15e268f56127860810296cd656371c"
+			}
+		},
+		"images/native/icons/ic_shield_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ebb43438699f5210a02846165ac95d527123e3de8ce6ba04d38c475249c29983"
+			}
+		},
+		"images/native/icons/ic_show_password": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e3e045bad299ed3fc18514de89b9fdda6b37c55f4220c9af0b2b66eb1c30b61c"
+			}
+		},
+		"images/native/icons/ic_sparkle2": {
+			"type": "png",
+			"width": 6,
+			"height": 6,
+			"scales": {
+				"3": "395cd8746856f2e49a1a751f27b587299a9fadda691a5d830e4b2b94aeece9a4"
+			}
+		},
+		"images/native/icons/ic_sparkle": {
+			"type": "png",
+			"width": 12,
+			"height": 12,
+			"scales": {
+				"3": "251ee862ed46ef54da100fccdc27d6da041974cfca9b773bc81e0cd964db1509"
+			}
+		},
+		"images/native/icons/ic_star_filled": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "3229bca82fabc5a8a30a7ec8bffeb718b7e63796f466b4ffcf30a1713f6bd81f"
+			}
+		},
+		"images/native/icons/ic_sticker_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "36e93e3477929d9bd3dcd446630ca98a7aba265a83bd023acd93ccf9fed20844"
+			}
+		},
+		"images/native/icons/ic_stop_stream_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "38d1ca7750782eb19a9019a97687de437859743569d0640e96c96e0f12d1be61"
+			}
+		},
+		"images/native/icons/ic_swipe_reply_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0603e8f67b875bfe5ed2bdb952cee98ad407b83aba787e565714c258ef82806a"
+			}
+		},
+		"images/native/icons/ic_switch_accounts": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "86bbecd8f0e9d340958a1ef73c838bb273e30039032518167238b6de111aa172"
+			}
+		},
+		"images/native/icons/ic_sync_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c43213ad4a00c0df4193627103babbd9d531c8c20cbd26f3da6e4462b6a25f34"
+			}
+		},
+		"images/native/icons/ic_text_channel_16px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "587cd2f1ec0a4151a3425334dfbbab65f0af8da080611198f3d09855902ad78f"
+			}
+		},
+		"images/native/icons/ic_text_in_voice_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e05cf216f1c3a06675900e53d6425043ac708969f2267f7cfa2e1325a797d8f1"
+			}
+		},
+		"images/native/icons/ic_thread_normal_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e9d30698a47ea3f459453af35b33482626b52f0e96a1d4b70fe2ac7195529039"
+			}
+		},
+		"images/native/icons/ic_trash_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f598b225975af07f0d50ed26a2854ccc972dde04dcd32a55e4fa75f738646362"
+			}
+		},
+		"images/native/icons/ic_unmute_channel_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d8bd2f649192ce3accae89cd381a3552f8e92831f67200ecf9c5047a5c7031dd"
+			}
+		},
+		"images/native/icons/ic_update_profile": {
+			"type": "png",
+			"width": 23,
+			"height": 29,
+			"scales": {
+				"2": "c51b36940cb0119fd891a1466a05a82283b9dcb9dca8ac8d601d9ccb67f7b51e"
+			}
+		},
+		"images/native/icons/ic_upload": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "36843a654b366827bc9bd094d7abfb9d27cf5edd9fa493d01f5a1698cae24452"
+			}
+		},
+		"images/native/icons/ic_upload_image_40px": {
+			"type": "png",
+			"width": 40,
+			"height": 40,
+			"scales": {
+				"3": "9617c75ca3188043e649107a19dfe15ced5cf511b6d7aea61fde53c6bdcd355e"
+			}
+		},
+		"images/native/icons/ic_verified_guild_icon_black_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 23,
+			"scales": {
+				"3": "e356219fa5e3848f03c9a45539066585c756fa6a553084daad9d425e433e3412"
+			}
+		},
+		"images/native/icons/ic_verified_guild_icon_green_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "29d6a052e29d4db09a52a91809fa62f95b3c4d799f9afed465ab5624da432bec"
+			}
+		},
+		"images/native/icons/ic_verified_icon_white_16px": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "0920bdd3e909a0c6d2f7e4a816c1b1b579bdc6f575802ecfd6e36338b3277751"
+			}
+		},
+		"images/native/icons/ic_video": {
+			"type": "png",
+			"width": 12,
+			"height": 12,
+			"scales": {
+				"3": "b9e09c799202cb1662ba480b4da8181cb60533189081841c2d1ea8385cceefa9"
+			}
+		},
+		"images/native/icons/ic_voice_channel_16px": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "70962526da9d23c1d7fd292e9ed37b0e485283b0d674319ef6c1f9a505b995c1"
+			}
+		},
+		"images/native/icons/ic_voice_channel_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0322c1f0acca32fc61e8c68ce5a5b6cea16b3f30ecc0d6e4ee50795c6f5fae15"
+			}
+		},
+		"images/native/icons/ic_volume": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "7313f853e9167cef190c9fd294653dba0362cc41460282247bc8dde0ac9f9f79"
+			}
+		},
+		"images/native/icons/ic_volume_locked": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8c8f0ed79002f6245760e7a092472fda623ba8caaf1f964a27071024f245d829"
+			}
+		},
+		"images/native/icons/ic_volume_mute": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1ac454bcea795973ce02cbad7e6a3e867f61da1a7e76c2adc5e328cf21de08de"
+			}
+		},
+		"images/native/icons/ic_vr_headset_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1842ac2f29665d6487dfad267bb4e9c3977ddf10bc8a03fb0c861c44ac719ce5"
+			}
+		},
+		"images/native/icons/ic_wand": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "afbb551c581873c7e9d98fe4c8524f0e2424d444829e912ba7982710fff62937"
+			}
+		},
+		"images/native/icons/ic_warning_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "073253fa0934a258e2f70d5a358545b7a48ed56b88c42df60e1e385f350b2697"
+			}
+		},
+		"images/native/icons/ic_xbox_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2984b5c21e07459d0c7e53597a06ccad78aa30991ac1901af329612d19312c9f"
+			}
+		},
+		"images/native/icons/settings/ic_qr_code_24px": {
+			"type": "png",
+			"width": 33,
+			"height": 33,
+			"scales": {
+				"3": "efd00ef7ad4fc136512a486e0bb8977fcc9d1816a396aaa4623212f9f9aa201e"
+			}
+		},
+		"images/native/icons/user_profile/ic_arrow": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0d81d6f4b3e042fdc79f92e981e15f58e14ed2ac9fa8fd5d467c4334995f85b4"
+			}
+		},
+		"images/native/icons/user_profile/ic_clock": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d55c20f424d33d18ff22de9f32a7a387173f8de127f32811cf0daefd4e444e65"
+			}
+		},
+		"images/native/icons/user_profile/ic_video_disabled": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "740af954b12db606627ec20d9176732dccb7fee0ae0b33e27c9ea6398d29b47c"
+			}
+		},
+		"images/native/icons/user_profile/ic_video_disabled_dark": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "9cdec7af2a2a48a09141e2ee13cfba69bd5529f0c1aa96d2849df1fdca2e77b2"
+			}
+		},
+		"images/native/icons/user_profile/ic_video_disabled_white": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2329724d0a9a055367a08b0926410ce836e8e9966f93bf615d1657e8f9ae0844"
+			}
+		},
+		"images/native/icons/voice_calls/dark_theme/voice_bar_mute_on": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d7706feb12aa408a92facf3d480966003c4ca43ba09c8af1e5ae5a2f10507913"
+			}
+		},
+		"images/native/icons/voice_calls/light_theme/voice_bar_deafen_off": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "870aa587200a931b1bca33c4b23c7ab1e397797834cfd550411402926a162e3e"
+			}
+		},
+		"images/native/icons/voice_calls/light_theme/voice_bar_deafen_on": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "196a1d20354c05afb4f056bee2961a710ace79f5d8dcba08dd3a8c586e515b57"
+			}
+		},
+		"images/native/icons/voice_calls/light_theme/voice_bar_mute_off": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "110a5c49001d6e81f5e09e07ae24ee5f3e11a5ceda72f942c00b54371a6b3e06"
+			}
+		},
+		"images/native/icons/voice_calls/light_theme/voice_bar_mute_on": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d4a5ece03ff52f146a46dfb93d2910fe9285e9a183266428cff9092baa8d6692"
+			}
+		},
+		"images/native/icons/voice_calls/nav_header_disconnect": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "cada21932bc8c34d5544dba249066cb005b27c94f1b1f2c08bf463d4d972b8b3"
+			}
+		},
+		"images/native/icons/voice_calls/screenshare": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "95b36e454c03912f63cc9e43d69441e68ba341801155bb7598b258372f0612c4"
+			}
+		},
+		"images/native/icons/voice_calls/screenshare_end": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "9a7ec4b7acf813ce5058bc9a2d63c4801786d28d70b8842266ed5cc487e9afa8"
+			}
+		},
+		"images/native/icons/voice_calls/video": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "be1b71c674d137a47c2f9aaa49ccc3d8661ab2bb10d49fe5a714a8cc98c69f47"
+			}
+		},
+		"images/native/icons/voice_calls/voice_bar_bluetooth": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "889991e235a835005e5386b28f24547885abf2f90c1f8d968e442cca7714342d"
+			}
+		},
+		"images/native/icons/voice_calls/voice_bar_phone": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e37cb0bef30aac2bc191991d1434c09436c6c60aee3dfac930734d709e8778ef"
+			}
+		},
+		"images/native/icons/voice_calls/voice_bar_speaker_new": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ac2bbe5122bd038eefd1580b54fd634215a5a37a38f7927b0f974818e225f434"
+			}
+		},
+		"images/native/main_tabs/NotificationCenter": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c2404553046e6eb4b37022af395ff0bacdadeb5b23b34f4d0bbb35ecebaf646a"
+			}
+		},
+		"images/native/premium/guild_boosting/member_list_badge_16px": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "be84002d5efde062bc9a89481c38031fc0d8f324014f2e2143f7e1a835e6f6b2"
+			}
+		},
+		"images/native/premium/guild_boosting/perks/audio": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d74852c476b917db090ef2612093411b7f935d9ec5b4ebaff90488e00b51fbdb"
+			}
+		},
+		"images/native/premium/guild_boosting/perks/emoji": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f2535f52afaa23c239c2300b91af98c2ecfe906d063ff49c5530f26775b3149f"
+			}
+		},
+		"images/native/premium/guild_boosting/perks/member_list_icon": {
+			"type": "png",
+			"width": 30,
+			"height": 30,
+			"scales": {
+				"3": "e9d43e36ae2ac444524b809fb0ae40aa0c165a3fa2b2df7728233bb8c0225cc4"
+			}
+		},
+		"images/native/premium/guild_boosting/perks/role": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "1be12b133fad5d1f35ca693b6c5ac277d544a27fb66cc1b960a1ed82624a3ce7"
+			}
+		},
+		"images/native/premium/guild_boosting/perks/role_2": {
+			"type": "png",
+			"width": 30,
+			"height": 30,
+			"scales": {
+				"3": "f40f266b87f04fcfa61d20eb5a664df10105a6142e23394843fb54d647d78b85"
+			}
+		},
+		"images/native/premium/guild_boosting/perks/star": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "4b9258e3810d6b36b99198b85b6aea6b2fab896105947b09152f5dfef2617674"
+			}
+		},
+		"images/native/premium/guild_boosting/perks/sticker": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "52b9ce85166f44fb3cf29e9e85b5e52eaf491600d16f3dc7d5a6c4e07847977a"
+			}
+		},
+		"images/native/premium/guild_boosting/perks/support": {
+			"type": "png",
+			"width": 26,
+			"height": 23,
+			"scales": {
+				"3": "6d3156f31574ddfa42678b65a736d4cd05edb916090c98f5b4d34aafd215def8"
+			}
+		},
+		"images/native/premium/guild_boosting/perks/upload": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e0f214b3120a503cdf4e8df225659e05f84493b5e0e2ca221b1ec1550ac34c8e"
+			}
+		},
+		"images/native/premium/guild_boosting/tier_icons/colored/tier_1_32px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "79e01d8052b2609d4751ff97dadf8d5114035b51fd2f648d4e8cc9068f5269b7"
+			}
+		},
+		"images/native/premium/guild_boosting/tier_icons/colored/tier_2_32px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2aafd79559d8cf09cf70f4c05079a6674bfb99b305dd64a19d9b69a111d4a59b"
+			}
+		},
+		"images/native/premium/guild_boosting/tier_icons/colored/tier_3_32px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "c046d1b16764055faff153e6e44b62e1e4a4560863f71e19c502cb5809c382c9"
+			}
+		},
+		"images/native/premium/guild_boosting/tier_icons/flower_star/dark/tier_0_24px": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "bd392bfcff1b3018c00ae7050ab6d51e3d1d8831a95d25089e05071e8531d14e"
+			}
+		},
+		"images/native/premium/guild_boosting/tier_icons/flower_star/light/tier_0_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1bbf7cca99d24146506faf371f0185a4c3366be5983b3abd341e05c2f579cacd"
+			}
+		},
+		"images/native/premium/guild_boosting/tier_icons/simple/tier_1_32px": {
+			"type": "png",
+			"width": 32,
+			"height": 32,
+			"scales": {
+				"3": "f77e0ae87fab77593add5f3c4149502a2956b30d44abecaff3d45b8bdc119df7"
+			}
+		},
+		"images/native/premium/guild_boosting/tier_icons/simple/tier_2_32px": {
+			"type": "png",
+			"width": 32,
+			"height": 32,
+			"scales": {
+				"3": "63a9c62e143ecb54d7d78c38ceeae1978f910c98432115406d922e8065ac05bd"
+			}
+		},
+		"images/native/premium/guild_boosting/tier_icons/simple/tier_3_32px": {
+			"type": "png",
+			"width": 32,
+			"height": 32,
+			"scales": {
+				"3": "f3b2bfe033981356285eb968c066a5054a1791835d3561eb0b6a3be6e600d70b"
+			}
+		},
+		"images/native/premium/nitro_icons/img_nitro_icon_filled": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "1328bb156a0d06f5116d95d8ad007f096c1974acd387d404d3805a5f2535912f"
+			}
+		},
+		"images/native/premium/perks/img_nitro_misc_perks_20px": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "e775ba4be140fce44161c550d5fe3e5cf58ededf45f25ee675743c519eafdcdb"
+			}
+		},
+		"images/native/premium/perks/img_nitro_premium_guilds_20px": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "5dae3132e03c6d17709caeaf0c7c000444fc4b23bd1d43df179ed8e48221db10"
+			}
+		},
+		"images/native/premium/perks/img_nitro_sticker_yellow_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "22c3f01fc654259c3c58dc97f933c1a8425efc924979434fce64f53a50a8a801"
+			}
+		},
+		"images/native/uikit/ic_settings_grey_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0e65dfda81cf75afcbbeee7958e81e13d53e81f37fedd40b658a382af6798e91"
+			}
+		},
+		"images/native/uikit/ic_settings_white_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "faaaeb98b519635d500aa44758408e870999d55208ce5fd65d4bdc2ee2622e1d"
+			}
+		},
+		"images/native/yellow-alert": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "56e94b1827fc05fd0cb34d37ab24124dedd3cd596b102d3675d6dd12c8d7da11"
+			}
+		},
+		"modules/collectibles/native/images/img_collectibles_shop": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "6938f14fff9a850ac16b0654321b921d1a45d57c1986cdf479d1386a5b25dd04"
+			}
+		},
+		"modules/collectibles/native/images/img_none": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4597dc6375952d3abb3d9c41d84e200d624b9b6114c7a8310f0e6c1d630baf47"
+			}
+		},
+		"modules/emoji_picker/native/images/alert": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "caf1a55bc47a494dc26fa4a43dc4e9034a423461e4687f624aa9459c8e876b81"
+			}
+		},
+		"modules/guild_automod/images/ic_blocked_chat_bubble_icon": {
+			"type": "png",
+			"width": 32,
+			"height": 32,
+			"scales": {
+				"3": "d0190908885b2648ffd7d2723bafd9f1237bde07a3df1f1d14f2337cdf2232bf"
+			}
+		},
+		"modules/guild_automod/native/images/ic_emoji_zipper_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d2b12d6a1d6c23086c51863c6c667b7eff69e3d9f52d32c6cef1f1fca4b09af6"
+			}
+		},
+		"modules/guild_boosting/native/images/sparkle_star_pointed": {
+			"type": "png",
+			"width": 18,
+			"height": 15,
+			"scales": {
+				"3": "e4b747dd9dc6ff5e579546e012d7b24ba6a7c026cb1834a48bc601894ea01b77"
+			}
+		},
+		"modules/guild_home/native/images/ic_feed_more": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "d6421e764356a5729d255c8309fc1d7fab0b4e5c130ac0a1193d0c8335e93e3c"
+			}
+		},
+		"modules/guild_profile/native/images/boost": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "354c47a23ea647892fef65af817178aa60d9ca1497b2d79e231977b3fdf9992f"
+			}
+		},
+		"modules/guild_role_subscriptions/native/images/arrow": {
+			"type": "png",
+			"width": 18,
+			"height": 18,
+			"scales": {
+				"3": "a41d2175ffdcee65c13ad770189a567d635f48dbed556dde8f2e585476d30228"
+			}
+		},
+		"modules/guild_role_subscriptions/native/images/ic_emoji_picker_20px": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "a3e160c3dac0cf891ff7445e41ae245c4e10157d8b8eed4fc36ffb935e12fc73"
+			}
+		},
+		"modules/guild_role_subscriptions/native/images/ic_full_server_gating_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "9fec5b6f92896c9b65082aea2befb0b94ece88685ad70a802fd8fce2f42e1a75"
+			}
+		},
+		"modules/guild_role_subscriptions/native/images/ic_money_emoji_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "cd71ea290898b1ebd874d06b264d939d8f19860094251bf08826cfdc7a15977c"
+			}
+		},
+		"modules/guild_role_subscriptions/native/images/ic_premium_channel_16px": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "554ee2902f56fc45aa84866ab4c17e144d76a2cd760ea70825e85af6870a56cc"
+			}
+		},
+		"modules/guild_role_subscriptions/native/images/ic_premium_info_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "93d2b3b912ace98978801610ae6466dff1c7d5bf61c88adfe318c230f259ba3e"
+			}
+		},
+		"modules/guild_role_subscriptions/native/images/ic_premium_tiers_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ce1f80a2f1985c7cc4e950e98dde7d9cfe91d84b66f38c220105ac15a88f409e"
+			}
+		},
+		"modules/guild_role_subscriptions/native/images/ic_select_all_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "96332029b166257ff1052ddc3d901eb6505473a3f954cce575cd1856431df02e"
+			}
+		},
+		"modules/guild_role_subscriptions/native/images/ic_select_manually_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "5261121f7055bbb5e75e7e01eb6f821700195efe39aa0835d2f0b5bf0f12ed33"
+			}
+		},
+		"modules/guild_role_subscriptions/native/images/partner_icon": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8dc6c78ee3ecbdd14bd384f0ff31cc1b436c81c77114b45ebcf114001c92eefc"
+			}
+		},
+		"modules/guild_scheduled_events/native/images/ic-location": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "235bd80f25179149aa3717417cc607f2621118eeb2234ede1158936f2bc1f3f5"
+			}
+		},
+		"modules/guild_scheduled_events/native/images/ic_clock": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "aebf16d7d9670ac8356e7ec7b30417105780aaab15b11d74500d50518b7d8098"
+			}
+		},
+		"modules/guild_scheduled_events/native/images/ic_event_calendar": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "6939da0bc67a3ccaae86defada896b6b295c51873ed3097653d721bfcb0c1316"
+			}
+		},
+		"modules/guild_templates/native/images/ic_guild_template": {
+			"type": "png",
+			"width": 32,
+			"height": 32,
+			"scales": {
+				"3": "a745dfd65e3f9c70e0fc171952ac5e924bea35012c9f9db6cc6fab9d5ff66ef4"
+			}
+		},
+		"modules/icymi/native/images/emoji-negative": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8381de89a41c83ae28c0821e85bd707527c3e36be7d0e3834ace63c769c5a940"
+			}
+		},
+		"modules/icymi/native/images/emoji-neutral": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "89d2198e7fed1e8bba2a1820e7ae88875c61ed204185c1ab2dbcd0083ec2c3bd"
+			}
+		},
+		"modules/icymi/native/images/emoji-positive": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f37337e51215dd4c2318a43bec8c0d5aaa5fccc1b450ed2f608a0bf504a977a9"
+			}
+		},
+		"modules/instant_invite/native/images/copy": {
+			"type": "png",
+			"width": 32,
+			"height": 32,
+			"scales": {
+				"3": "ef86551eb064bd32d17a9041f2de211e593b6851ab46881ec18d5560e3f1544a"
+			}
+		},
+		"modules/instant_invite/native/images/gmail": {
+			"type": "png",
+			"width": 52,
+			"height": 52,
+			"scales": {
+				"3": "344c8392c9afdba9949465b31a5814ce104dfd7bd7e5c72a696f62740c7d8387"
+			}
+		},
+		"modules/instant_invite/native/images/line": {
+			"type": "png",
+			"width": 52,
+			"height": 52,
+			"scales": {
+				"3": "0222a3caeb165066ba23db860e4fd391fcf3fd812c504d2807b09712d25bfee2"
+			}
+		},
+		"modules/instant_invite/native/images/mail": {
+			"type": "png",
+			"width": 52,
+			"height": 52,
+			"scales": {
+				"3": "37f4ef8243ee8a7222fe96b278719d10da691cf19d202521bc4d680b3641e1b2"
+			}
+		},
+		"modules/instant_invite/native/images/messages": {
+			"type": "png",
+			"width": 52,
+			"height": 52,
+			"scales": {
+				"3": "b4b6509ecd197fb2b0da2e675d79e46a977c12b048671ad784eb0aae9ec18c30"
+			}
+		},
+		"modules/instant_invite/native/images/messenger": {
+			"type": "png",
+			"width": 52,
+			"height": 52,
+			"scales": {
+				"3": "1723fa9038d2537d136e6cfd1a7c74962b8980b7aeda1ebf4843371355503bf0"
+			}
+		},
+		"modules/instant_invite/native/images/share": {
+			"type": "png",
+			"width": 32,
+			"height": 32,
+			"scales": {
+				"3": "b8d4b2b1434b9bbd3cd3c46d7271ec475935a1b0fa603776d02e8aac5396a231"
+			}
+		},
+		"modules/instant_invite/native/images/telegram": {
+			"type": "png",
+			"width": 52,
+			"height": 52,
+			"scales": {
+				"3": "521a5559087cf9c898b3e1b6cc36b8a1a8dc186f11966b7af69f456407483c7e"
+			}
+		},
+		"modules/instant_invite/native/images/twitter": {
+			"type": "png",
+			"width": 52,
+			"height": 52,
+			"scales": {
+				"3": "b94a4260ca9ac22c390a8bed30514f59c101bf83219c96b1f4ad220d24a2b8c6"
+			}
+		},
+		"modules/instant_invite/native/images/whatsapp": {
+			"type": "png",
+			"width": 52,
+			"height": 52,
+			"scales": {
+				"3": "5af7cf6e1da110879e0f27025d5615a95d77fc4bf21fa8a97c853c588209c2ec"
+			}
+		},
+		"modules/main_tabs_v2/native/channel/header/images/icon-search": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "98c922099bd232439f18669ea7b3259a9f3df34fc3ccb71be0ab9618e706bbd7"
+			}
+		},
+		"modules/main_tabs_v2/native/images/arrow-right": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "2f6b9103145f0c674aab5d1bbb7f2a3f9f64b608e7ebd5c817171244d3c656e8"
+			}
+		},
+		"modules/main_tabs_v2/native/images/arrow-sm-down": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "fb72c169adbfc125b739a20202d6d50dd5ce4ef7415ff17d7689411caa6a3e93"
+			}
+		},
+		"modules/main_tabs_v2/native/images/stack-nav-back": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "e9fb4d58b308a8ab3012685d9fcbff31ae674a54bb03c949aed7dc312f17eeba"
+			}
+		},
+		"modules/main_tabs_v2/native/images/stack-nav-close": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "38b5b0534b7abf3b4c228346f2ca138e18db0ec51bd5178704e6c2bae900697e"
+			}
+		},
+		"modules/main_tabs_v2/native/shared_components/user_list/images/icon-new-group": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a37b89981f8c129bd83d468b357d0a0732c1b7e64de7f4f5c246eace52558322"
+			}
+		},
+		"modules/main_tabs_v2/native/shared_components/user_list/images/icon-settings": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8f1f4dee0d1412429abf58072c342c465efe5349a581c764dcbeb13f9ef2e059"
+			}
+		},
+		"modules/main_tabs_v2/native/sidebar/images/icon-call": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8aa75b156506b8ce7acd64f2550c50ab072d8facc0ecb72708c91a2ed6973a09"
+			}
+		},
+		"modules/media_viewer/native/images/ic_eye": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "0e70f0f197026e37c1a8fb32205ffb6ab5c8147ffb40708783ab76469a86447a"
+			}
+		},
+		"modules/media_viewer/native/images/ic_eye_hidden": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1a655885a67dbd9fcfb53cb3fe9602f705e47c959fdcc8d35e0ef9e9c269126a"
+			}
+		},
+		"modules/media_viewer/native/images/scrubber": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "c3f58b324f3b2a169067ff106f68d166c54484cf3d7a8aa2423c126a1f3183fc"
+			}
+		},
+		"modules/notification_center/native/images/ic_highlight": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4cae26bb5eda8d02ba9ac10d14a7fe286e7be41a775090d461323720bb6ce701"
+			}
+		},
+		"modules/notifications/images/ic_bell_on": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"1": "457382e8b50f554caa8d89986ea1a255e16deab6e31b03ded49c6a7926f58296"
+			}
+		},
+		"modules/parent_tools/images/family_center_chat_check_icon": {
+			"type": "png",
+			"width": 76,
+			"height": 76,
+			"scales": {
+				"1": "5929e465b12c7d72e4f443a0d5a9630a0eac9c92c91c769ee746e18ff0dc16e9"
+			}
+		},
+		"modules/parent_tools/images/ic_eye": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "3e18cb07a24f705455c2851377f1b96ae966bf077832d92dc19d5a7f6c38044e"
+			}
+		},
+		"modules/polls/native/images/ic_polls": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "3c38cbc5dcf31ebd224c5ac3224f350d547ca7bcff577f69d5d3b16c76b16fb6"
+			}
+		},
+		"modules/quests/native/images/ic_wreath": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "3f2389d2d235da69d8e246cd6b88b524b2b70180b4e556c2f429ba61e5fc814d"
+			}
+		},
+		"modules/self_mod/stranger_danger/images/ic_thumbsdown": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "a5a97bd1e20d67d613c84aaaf5cdb9e78d260bb5e9d36aee8dd265f092730dfd"
+			}
+		},
+		"modules/self_mod/stranger_danger/images/ic_thumbsup": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "050adf87c458c7c8a4b4536af2a25fb857fab79f6d3dd9ccc183c442e75819b9"
+			}
+		},
+		"modules/stage_channels/native/images/ic_block": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "7c3d5f89bba269fce65d3bf776064d8b2a7d59984931cb858c0f7e18c439c90f"
+			}
+		},
+		"modules/stage_channels/native/images/ic_group": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "3d3678824ece7ed407cf99bf1875f17bfb5a4c982618d8b5b8fe600cae4e0c01"
+			}
+		},
+		"modules/stage_channels/native/images/ic_leave_stage": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "f4c559dbbf64a61aace99d9c9e36f2da96b90ec8f269fa10ed220379d19005d8"
+			}
+		},
+		"modules/stage_channels/native/images/ic_minimize": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "6b22d530ce31e0120a11d2e306c2dbbc6d532fdf61349a501186d99793e7b798"
+			}
+		},
+		"modules/stage_channels/native/images/ic_moderator": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "e14135148f65ff729b0911c8cfaf893424c0cf7e06591d3b57b91422e96f45dd"
+			}
+		},
+		"modules/stage_channels/native/images/ic_move_to_audience": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "3a22ed446eb0f570889aa82d0175d04ea5c5f6df0752f40e9b8e8cd718576d85"
+			}
+		},
+		"modules/stage_channels/native/images/ic_move_to_speaker": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "dbf1996f9ff5195b77babb457445786e98fa694b987a3cde6d614ddd91b3a23d"
+			}
+		},
+		"modules/stage_channels/native/images/ic_raised_hand": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "eac0d5d8662596bcdd1c02d1210bbd094ad694f2d6548b99e7629ca284d34415"
+			}
+		},
+		"modules/stage_channels/native/images/ic_raised_hand_list": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "fdf175c0b785c71a20f79cfe69e6d5894c954f9e36fa7a282f2f1c8c02a66f1b"
+			}
+		},
+		"modules/stage_channels/native/images/ic_stage_channel_24px": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6346dff061d65ac236ed6d5f30c4088438d0aa75d8253f3ca36ef43300fceabb"
+			}
+		},
+		"modules/stage_channels/native/images/ic_stage_channel_32px": {
+			"type": "png",
+			"width": 32,
+			"height": 32,
+			"scales": {
+				"3": "7935c7362c75828a993fee1a42eda2e28816ac87a455237d197de644faae745f"
+			}
+		},
+		"modules/stage_channels/native/images/ic_stage_music": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "daf90916808bfc2e1d0c84d22c81fc89a236e9627501a8d1cc6ce1ca94a6c961"
+			}
+		},
+		"modules/stage_channels/native/images/ic_stage_music_disabled": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "fe173100407f06201e86a54b8516379c4833da555f0b4495619ca2d8177efb57"
+			}
+		},
+		"modules/stickers/native/images/alert": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "558eb86d8c77125f7787202af8dda396e742f43769b2b3fbb0fc9de40205b437"
+			}
+		},
+		"modules/stickers/native/images/history": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "18b5222fd6ad91f0d34a3712ba2798ae95c7a94df0b516400ee7e98b62549d12"
+			}
+		},
+		"modules/video_calls/native/images/add": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "8ebb07917fb37e7ada55e62579f22bae2d7673bbf45448a97e819c016afc92ff"
+			}
+		},
+		"modules/video_calls/native/images/camera": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "ed07d1668609ca86cdfcbf1071ce86ff66637945fd022463607426ef0971c862"
+			}
+		},
+		"modules/video_calls/native/images/camera_swap": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "90b9642f10592e32ccb8fea048833d4df0e014ceb8fef838a2d31ea0d2e6d7c6"
+			}
+		},
+		"modules/video_calls/native/images/debug": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "6e3961eb908be28c2ebb7884d15799d1dfb2f3f4ea90e61b27a10e0a0e6b92e3"
+			}
+		},
+		"modules/video_calls/native/images/fullscreen": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "3ab33c3e653c1c18cfaedd62557ef6677ca0fce9b54c86b7e40fee90389b142d"
+			}
+		},
+		"modules/video_calls/native/images/grid": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "07038db7fd6948c5b6a0936cc3482925385dcd8b7dd0582b0e2bae5eeb069587"
+			}
+		},
+		"modules/video_calls/native/images/report": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "cb6150e19cb50a5acab825db19c21a358568fbc35655527f08b54357a7112509"
+			}
+		},
+		"modules/video_calls/native/images/settings": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "4354004ae6ec0f7ab7d9cd05eb6cd4c165e5f816cd8d7eacda1908d1bbe4e006"
+			}
+		},
+		"modules/video_calls/native/images/speaker": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1a9ab3763c9079d9d99f949485fa9cc5a6e2b447648d64c0d5b6d51baa80a0d8"
+			}
+		},
+		"modules/video_calls/native/images/spectator": {
+			"type": "png",
+			"width": 16,
+			"height": 16,
+			"scales": {
+				"3": "27be08315773649b840d5713d0d56253a8516bc47ebbd35fa20cba3e9195c7ac"
+			}
+		},
+		"modules/video_calls/native/images/watch": {
+			"type": "png",
+			"width": 18,
+			"height": 18,
+			"scales": {
+				"3": "39947c278c81bd87aa1b24a2fbe8f4d5588f88a729a069380740c7e77966c5cb"
+			}
+		},
+		"modules/voice_panel/native/images/activity": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a2f321c1c26cd303c78f18453a44b284b1b69fa064aaed38cdaabc7b46d07eeb"
+			}
+		},
+		"modules/voice_panel/native/images/airplay": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "3cda8be6efcdbb8e957474be7b3568e0866b0799c981ae690c0ac58ceb8d7d07"
+			}
+		},
+		"modules/voice_panel/native/images/badconnection": {
+			"type": "png",
+			"width": 12,
+			"height": 12,
+			"scales": {
+				"3": "022919c6b8bfc10e5e93b555c9382e82d493aee2ceb335f078a776c107f0e5cf"
+			}
+		},
+		"modules/voice_panel/native/images/camera-swap": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "55447d238be73be9bba421402344a4eece425f3f481998a2acb1820397692458"
+			}
+		},
+		"modules/voice_panel/native/images/close": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "b92d32efe0124b1e50284873fc4b342144b24efda6d36897a5382515a2a8ad6b"
+			}
+		},
+		"modules/voice_panel/native/images/deafen": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "3e05c60a98a4ef06aee063fb5f31be481e0db1fd1adee72fe2a6b58ad1c8eccf"
+			}
+		},
+		"modules/voice_panel/native/images/maximize": {
+			"type": "png",
+			"width": 20,
+			"height": 20,
+			"scales": {
+				"3": "8f1672e1ec9c9ae3b8fae3ab686ecd8b5d946a9d4b51b383bddb538fc1349d71"
+			}
+		},
+		"modules/voice_panel/native/images/stream": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "a5325c41c6ed51e9ff57927c56f84bd9d595886bb20fc0baa62a3ac67d007ea4"
+			}
+		},
+		"modules/voice_panel/native/images/video": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "1901c53fc422d2363b09a44a27469efdbf79b0c56fad8ec6e59e3553eddb8b14"
+			}
+		},
+		"modules/voice_panel/native/images/vr": {
+			"type": "png",
+			"width": 24,
+			"height": 24,
+			"scales": {
+				"3": "768bc79fc0740d9a9d50fea89b62749e3c96f18d6ea04eb730f7b2d56d138f0c"
+			}
+		}
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "2Xq8ePFCGknbRhg6flJ5bHQG88IEc1cpdhbqjL/W1zRdyrK+aoHuwWKKJmUnyWFdZ7EhrwS5hYiseg3nFhwqCg=="
+	}
+}
