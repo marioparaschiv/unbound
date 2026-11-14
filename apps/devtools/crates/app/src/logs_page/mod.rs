@@ -26,8 +26,6 @@ use crate::widgets::{Raised, footer_bar, page_header, page_header_end, raised_bu
 
 /// Lines come in batches; one redraw per frame is plenty.
 const CHANGE_COALESCING_FRAME: Duration = Duration::from_millis(16);
-const SEGMENTS_WIDTH: f32 = 470.;
-const ORDER_WIDTH: f32 = 220.;
 
 pub struct LogsPage {
 	devtools: Devtools,
@@ -196,33 +194,27 @@ impl LogsPage {
 			.py(px(8.))
 			.border_b_1()
 			.border_color(theme::color(theme::BORDER))
-			.child(
-				segmented(
-					"log-view",
-					&views,
-					selected,
-					cx.listener(|this, picked: &usize, _, cx| {
-						if let Some(view) = LogView::ALL.get(*picked) {
-							this.set_view(*view, cx);
-						}
-					}),
-				)
-				.w(px(SEGMENTS_WIDTH)),
-			)
+			.child(segmented(
+				"log-view",
+				&views,
+				selected,
+				cx.listener(|this, picked: &usize, _, cx| {
+					if let Some(view) = LogView::ALL.get(*picked) {
+						this.set_view(*view, cx);
+					}
+				}),
+			))
 			.child(div().flex_1())
-			.child(
-				segmented(
-					"log-order",
-					&orders,
-					order,
-					cx.listener(|this, picked: &usize, _, cx| {
-						if let Some(order) = LogOrder::ALL.get(*picked) {
-							this.set_order(*order, cx);
-						}
-					}),
-				)
-				.w(px(ORDER_WIDTH)),
-			)
+			.child(segmented(
+				"log-order",
+				&orders,
+				order,
+				cx.listener(|this, picked: &usize, _, cx| {
+					if let Some(order) = LogOrder::ALL.get(*picked) {
+						this.set_order(*order, cx);
+					}
+				}),
+			))
 	}
 
 	fn render_state(&self) -> gpui::AnyElement {

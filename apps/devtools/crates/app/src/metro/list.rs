@@ -324,33 +324,40 @@ impl MetroBrowser {
 					.gap(px(8.))
 					.px(px(10.))
 					.py(px(8.))
-					.child(segmented(
-						"metro-mode",
-						&modes,
-						mode,
-						cx.listener(|this, picked: &usize, window, cx| {
-							if let Some(mode) = Mode::ALL.get(*picked) {
-								this.set_mode(*mode, window, cx);
-							}
-						}),
-					))
+					.child(
+						segmented(
+							"metro-mode",
+							&modes,
+							mode,
+							cx.listener(|this, picked: &usize, window, cx| {
+								if let Some(mode) = Mode::ALL.get(*picked) {
+									this.set_mode(*mode, window, cx);
+								}
+							}),
+						)
+						// As wide as its items, not the column.
+						.self_start(),
+					)
 					.child(field(
 						Input::new(&self.search)
 							.prefix(icon(crate::assets::SEARCH, theme::ICON, theme::TEXT_MUTED))
 							.cleanable(true),
 					))
 					.when(self.mode == Mode::Modules, |column| {
-						column.child(segmented(
-							"metro-status",
-							&statuses,
-							Some(selected),
-							cx.listener(|this, picked: &usize, _, cx| {
-								let status = picked
-									.checked_sub(1)
-									.and_then(|ix| MetroModuleStatus::ALL.get(ix).copied());
-								this.set_status(status, cx);
-							}),
-						))
+						column.child(
+							segmented(
+								"metro-status",
+								&statuses,
+								Some(selected),
+								cx.listener(|this, picked: &usize, _, cx| {
+									let status = picked
+										.checked_sub(1)
+										.and_then(|ix| MetroModuleStatus::ALL.get(ix).copied());
+									this.set_status(status, cx);
+								}),
+							)
+							.self_start(),
+						)
 					}),
 			)
 			.child(
