@@ -13,6 +13,7 @@ use unbound_devtools_core::{
 
 use crate::copy_chip::{copy_chip, natural_width};
 use crate::copy_glyph::{copied_state, copy_glyphs, copy_on_click, element_id};
+use crate::popout::{Frame, Popout};
 use crate::theme::{self, Token};
 use crate::widgets::float_shadow;
 
@@ -36,7 +37,7 @@ pub struct DebuggerLink {
 	addresses: Vec<DeviceAddress>,
 	/// The pointer is over the copy button, over its menu.
 	hovered: (bool, bool),
-	menu_open: bool,
+	menu: Popout,
 	closing: Option<Task<()>>,
 	_watch: Task<()>,
 }
@@ -72,7 +73,7 @@ impl DebuggerLink {
 			addresses: devtools.device_addresses(),
 			devtools,
 			hovered: (false, false),
-			menu_open: false,
+			menu: Popout::default(),
 			closing: None,
 			_watch: watch,
 		}
@@ -92,10 +93,10 @@ impl DebuggerLink {
 		);
 		if self.hovered.0 || self.hovered.1 {
 			self.closing = None;
-			if !self.menu_open {
+			if !self.menu.is_open() {
 				// Interfaces come and go (VPNs, Wi-Fi); list them as the menu opens.
 				self.addresses = self.devtools.device_addresses();
-				self.menu_open = true;
+				self.menu.set(true);
 				cx.notify();
 			}
 			return;
@@ -103,7 +104,7 @@ impl DebuggerLink {
 		self.closing = Some(cx.spawn(async move |this, cx| {
 			cx.background_executor().timer(CLOSE_DELAY).await;
 			this.update(cx, |this, cx| {
-				this.menu_open = false;
+				this.menu.set(false);
 				cx.notify();
 			})
 			.ok();
@@ -129,7 +130,7 @@ impl DebuggerLink {
 			.justify_center()
 			.rounded(theme::RADIUS_CONTROL)
 			.cursor_pointer()
-			.when(self.menu_open, |button| {
+			.when(self.menu.is_open(), |button| {
 				button.bg(theme::color(theme::HOVER))
 			})
 			.hover(|button| button.bg(theme::color(theme::HOVER)))
@@ -145,9 +146,16 @@ impl DebuggerLink {
 			.on_click(copy_on_click(state, view, first))
 	}
 
-	/// Each address as a label over a copy chip, both starting on the header's text line.
-	fn render_menu(&self, window: &Window, cx: &mut Context<Self>) -> impl IntoElement {
+	/// Each address as a label over a copy chip, both starting on the header's text line. Every
+	/// length is drawn at `frame`'s scale, as gpui has no transforms.
+	fn render_menu(
+		&self,
+		frame: Frame,
+		window: &Window,
+		cx: &mut Context<Self>,
+	) -> impl IntoElement {
 		// One width for every chip: the column under the header's glyph, or the widest address.
+		let s = frame.scale;
 		let chip_width = self
 			.addresses
 			.iter()
@@ -158,29 +166,31 @@ impl DebuggerLink {
 				.flex()
 				.flex_col()
 				.items_start()
-				.gap(px(6.))
-				.px(px(theme::INSET))
-				.py(px(6.))
+				.gap(px(6. * s))
+				.px(px(theme::INSET * s))
+				.py(px(6. * s))
 				.child(
 					div()
-						.text_size(theme::TEXT_SMALL)
+						.text_size(theme::TEXT_SMALL * s)
 						.text_color(theme::color(theme::TEXT_MUTED))
 						.child(SharedString::from(choice.label.clone())),
 				)
 				.child(
 					copy_chip(format!("{ADDRESS_ID}-{ix}"), choice.address.clone())
-						.min_width(chip_width),
+						.min_width(chip_width)
+						.scale(s),
 				)
 		});
 		div()
 			.id("address-menu")
-			.min_w(px(MENU_WIDTH))
-			.p(px(MENU_PADDING))
-			.rounded(theme::RADIUS_SURFACE)
+			.min_w(px(MENU_WIDTH * s))
+			.p(px(MENU_PADDING * s))
+			.rounded(theme::RADIUS_SURFACE * s)
 			.bg(theme::color(theme::ELEVATED))
 			.border_1()
 			.border_color(theme::color(theme::BORDER_STRONG))
 			.shadow(float_shadow())
+			.opacity(frame.opacity)
 			.font_family(theme::ui_font())
 			.font_weight(FontWeight::NORMAL)
 			.occlude()
@@ -189,10 +199,10 @@ impl DebuggerLink {
 			)
 			.child(
 				div()
-					.px(px(theme::INSET))
-					.pt(px(6.))
-					.pb(px(2.))
-					.text_size(theme::TEXT_UI)
+					.px(px(theme::INSET * s))
+					.pt(px(6. * s))
+					.pb(px(2. * s))
+					.text_size(theme::TEXT_UI * s)
 					.font_weight(FontWeight::MEDIUM)
 					.text_color(theme::color(theme::TEXT))
 					.child("Debugger Address"),
@@ -205,6 +215,7 @@ impl Render for DebuggerLink {
 	fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
 		let first = self.addresses.first().map(|choice| choice.address.as_str());
 		let indicator = indicator(&self.status, first.unwrap_or_default());
+		let frame = self.menu.frame(window);
 		// Shares the page header's height, so the borders meet across the window.
 		div()
 			.relative()
@@ -254,7 +265,9 @@ impl Render for DebuggerLink {
 			)
 			.child(self.render_copy(window, cx))
 			// Hangs from the header rather than the button, so its text starts on the header's line.
-			.when(self.menu_open, |header| {
+			// It grows from Base UI's origin for a start-aligned popup: its left edge at the header's
+			// bottom, so the 4px it tucks under the header scales too.
+			.when_some(frame, |header, frame| {
 				header.child(
 					div()
 						.absolute()
@@ -264,9 +277,9 @@ impl Render for DebuggerLink {
 							deferred(
 								anchored()
 									.anchor(Anchor::TopLeft)
-									.offset(point(px(0.), px(-4.)))
+									.offset(point(px(0.), px(-4. * frame.scale)))
 									.snap_to_window_with_margin(px(8.))
-									.child(self.render_menu(window, cx)),
+									.child(self.render_menu(frame, window, cx)),
 							)
 							.with_priority(1),
 						),

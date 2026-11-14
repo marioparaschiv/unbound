@@ -129,7 +129,18 @@ fn vscode_link(url: &str) -> String {
 /// Runs an agent's CLI through the user's login shell, so it finds programs a GUI app's `PATH`
 /// misses (Homebrew, `~/.local/bin`, npm's global folder).
 pub async fn run(program: &'static str, args: Vec<String>) -> Outcome {
-	let mut command = shell_command(program, &args);
+	finish(program, shell_command(program, &args)).await
+}
+
+/// Opens an editor's install link with the system's URL handler. A spawned opener rather than the
+/// window's `open_url`, which on macOS waits on Launch Services while the editor starts.
+pub async fn open(link: String) -> Outcome {
+	let (program, command) = open_command(&link);
+	finish(program, command).await
+}
+
+/// Runs `command` to its end, or to [`RUN_TIMEOUT`], and reads how it went.
+async fn finish(program: &str, mut command: Command) -> Outcome {
 	let output = command
 		.stdin(Stdio::null())
 		.stdout(Stdio::piped())
@@ -180,6 +191,22 @@ fn shell_command(program: &str, args: &[String]) -> Command {
 
 	command.arg("/C").arg(program).args(args);
 	command
+}
+
+/// The system's URL opener with `link` as one argument, and its name for messages.
+fn open_command(link: &str) -> (&'static str, Command) {
+	let (program, args): (&str, &[&str]) = if cfg!(target_os = "macos") {
+		("open", &[])
+	} else if cfg!(windows) {
+		// `rundll32` takes the link verbatim; `cmd /C start` would expand the `%` escapes in it.
+		("rundll32", &["url.dll,FileProtocolHandler"])
+	} else {
+		("xdg-open", &[])
+	};
+	let mut command = Command::new(program);
+
+	command.args(args).arg(link);
+	(program, command)
 }
 
 #[cfg(test)]

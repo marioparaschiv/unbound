@@ -1,5 +1,5 @@
 //! The sidebar's page list. gpui-component's `Sidebar` scrolls it; the rows are drawn here on the
-//! app's own metrics (13px text, 14px icons, the 20px icon line) instead of its rem-sized menu.
+//! app's own metrics (14px text, 16px icons, the 20px icon line) instead of its rem-sized menu.
 
 use gpui::{App, FontWeight, SharedString, WeakEntity, Window, div, prelude::*, px, relative};
 use gpui_component::Collapsible;
@@ -10,7 +10,13 @@ use crate::shell::{Page, Shell};
 use crate::theme;
 use crate::widgets::{eyebrow, icon};
 
-const ROW_HEIGHT: f32 = 28.;
+const ROW_HEIGHT: f32 = 34.;
+/// The eyebrow's line above the rows.
+const TITLE_HEIGHT: f32 = 28.;
+/// Space between rows, so each reads as its own target.
+const ROW_GAP: f32 = 4.;
+const TEXT: f32 = 14.;
+const ICON: f32 = 16.;
 /// The sidebar insets its list by 12px; 8 more puts icons and labels on the window's 20px line.
 const ROW_INSET: f32 = 8.;
 /// Lets a row's scaled face answer hover over the row's whole, unscaled box.
@@ -62,16 +68,18 @@ impl SidebarItem for NavGroup {
 			.when(!self.first, |group| group.pt(px(12.)))
 			.child(
 				div()
-					.h(px(ROW_HEIGHT))
+					.h(px(TITLE_HEIGHT))
 					.flex()
 					.items_center()
 					.px(px(ROW_INSET))
 					.child(eyebrow(self.title)),
 			)
-			.children(self.rows.into_iter().enumerate().map(move |(ix, row)| {
-				let shell = shell.clone();
-				render_row(ix, row, shell)
-			}))
+			.child(div().flex().flex_col().gap(px(ROW_GAP)).children(
+				self.rows.into_iter().enumerate().map(move |(ix, row)| {
+					let shell = shell.clone();
+					render_row(ix, row, shell)
+				}),
+			))
 	}
 }
 
@@ -129,10 +137,10 @@ fn row_body(
 			.right(inset)
 			.flex()
 			.items_center()
-			.gap(px(8. * scale))
+			.gap(px(10. * scale))
 			.px(px(ROW_INSET * scale))
 			.rounded(theme::RADIUS_ITEM * scale)
-			.text_size(theme::TEXT_UI * scale)
+			.text_size(px(TEXT * scale))
 			.text_color(theme::color(text))
 			.map(|item| {
 				if active {
@@ -145,7 +153,7 @@ fn row_body(
 					})
 				}
 			})
-			.child(icon(path, theme::ICON * scale, glyph))
+			.child(icon(path, px(ICON * scale), glyph))
 			.child(div().flex_1().min_w_0().truncate().child(label))
 			.into_any_element()
 	};

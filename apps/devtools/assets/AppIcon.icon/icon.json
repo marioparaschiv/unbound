@@ -1,0 +1,74 @@
+{
+	"fill-specializations": [
+		{
+			"value": {
+				"linear-gradient": [
+					"extended-srgb:0.82353,0.26667,0.33333,1.00000",
+					"extended-srgb:0.47451,0.16078,0.19608,1.00000"
+				]
+			}
+		},
+		{
+			"appearance": "dark",
+			"value": "system-dark"
+		}
+	],
+	"groups": [
+		{
+			"layers": [
+				{
+					"blend-mode": "normal",
+					"glass": false,
+					"hidden-specializations": [
+						{
+							"value": false
+						},
+						{
+							"appearance": "dark",
+							"value": true
+						}
+					],
+					"image-name": "scanlines.svg",
+					"name": "scanlines"
+				}
+			],
+			"name": "Background",
+			"shadow": {
+				"kind": "none",
+				"opacity": 0
+			},
+			"specular": false,
+			"translucency": {
+				"enabled": false,
+				"value": 0
+			}
+		},
+		{
+			"layers": [
+				{
+					"blend-mode": "normal",
+					"glass": false,
+					"hidden": false,
+					"image-name": "unbound-logo.svg",
+					"name": "unbound-logo",
+					"position": {
+						"scale": 0.85,
+						"translation-in-points": [0, 0]
+					}
+				}
+			],
+			"name": "Glyph",
+			"shadow": {
+				"kind": "neutral",
+				"opacity": 0.6
+			},
+			"translucency": {
+				"enabled": true,
+				"value": 0.2
+			}
+		}
+	],
+	"supported-platforms": {
+		"squares": ["macOS"]
+	}
+}

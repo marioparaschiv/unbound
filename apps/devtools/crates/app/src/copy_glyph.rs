@@ -1,4 +1,4 @@
-//! What every copy control shares: the copy glyph that shrinks away as a tick pops in over it and
+//! What every copy control shares: the copy glyph that shrinks away as a tick grows in over it and
 //! trades back after a moment, and the click that copies and starts that swap.
 
 use std::time::Duration;
@@ -14,8 +14,9 @@ use crate::widgets::icon;
 
 /// How long the tick stays before the copy glyph returns.
 const COPIED_FOR: Duration = Duration::from_millis(1400);
-/// The press release's spring: it overshoots a touch, so a glyph pops rather than fades.
-const POP: SpringConfig = SpringConfig::new(520., 22., 1.);
+/// Critically damped (`2 * sqrt(520)`), so a glyph settles in about 200ms, like the web's
+/// `ease-out`, without overshooting its size.
+const SWAP: SpringConfig = SpringConfig::new(520., 46., 1.);
 
 /// Whether the tick shows. `generation` counts clicks, so a timer from an earlier click cannot
 /// revert a later one.
@@ -53,7 +54,7 @@ pub fn tick_glyphs(id: &str, path: &'static str, size: f32, color: Token, showin
 			.child(
 				icon(path, px(size), color).with_spring(
 					element_id(id, part),
-					SpringAnimation::new(POP)
+					SpringAnimation::new(SWAP)
 						.to(if shown { 1. } else { 0. })
 						.from(rest),
 					move |svg, value: f32| {

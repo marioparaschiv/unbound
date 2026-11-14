@@ -1,4 +1,4 @@
-use gpui::{Context, Window, div, prelude::*, px};
+use gpui::{div, prelude::*, px};
 
 use crate::app::Workspace;
 use crate::theme;
@@ -21,7 +21,7 @@ fn plural(n: usize, one: &str, many: &str) -> String {
 }
 
 impl Workspace {
-	pub fn render_status(&self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+	pub fn render_status(&self) -> impl IntoElement {
 		let status = &self.status;
 		let connection = self.connection();
 		let counts = (status.elements > 0).then(|| {
@@ -30,8 +30,7 @@ impl Workspace {
 				plural(status.roots, "root", "roots"),
 			]
 		});
-		let mcp = self.render_mcp(window, cx);
-		// The ghost button pads its label by 8px, so the bar pads 8px less to end on the gutter.
+		// The MCP button pads its label by 8px, so the bar pads 8px less to end on the gutter.
 		footer_bar()
 			.pl(px(theme::GUTTER))
 			.pr(px(theme::GUTTER - 8.))
@@ -51,7 +50,7 @@ impl Workspace {
 					.flatten()
 					.map(|count| div().flex_none().child(count)),
 			)
-			.children(mcp)
+			.child(self.mcp.clone())
 	}
 }
 

@@ -20,6 +20,7 @@ pub struct CopyChip {
 	id: SharedString,
 	text: SharedString,
 	min_width: f32,
+	scale: f32,
 }
 
 impl CopyChip {
@@ -27,6 +28,12 @@ impl CopyChip {
 	/// stays at the right.
 	pub fn min_width(mut self, width: f32) -> Self {
 		self.min_width = width;
+		self
+	}
+
+	/// Draws every length at `scale`, for a chip inside a popout that grows open.
+	pub fn scale(mut self, scale: f32) -> Self {
+		self.scale = scale;
 		self
 	}
 }
@@ -37,6 +44,7 @@ pub fn copy_chip(id: impl Into<SharedString>, text: impl Into<SharedString>) -> 
 		id: id.into(),
 		text: text.into(),
 		min_width: 0.,
+		scale: 1.,
 	}
 }
 
@@ -68,17 +76,19 @@ impl RenderOnce for CopyChip {
 		let state = copied_state(&id, window, cx);
 		let showing = state.read(cx).showing;
 		// The pressable keeps the chip's unscaled box in the layout; its face scales inside it.
-		let width = natural_width(window, &self.text).max(self.min_width);
+		let s = self.scale;
+		let width = natural_width(window, &self.text).max(self.min_width) * s;
 		let body = div()
 			.flex_none()
 			.w(px(width))
-			.h(px(HEIGHT))
+			.h(px(HEIGHT * s))
 			.group(GROUP)
 			.cursor_pointer();
 		let text = self.text.clone();
 		let press = element_id(&id, "press");
-		let face = move |scale: f32| {
-			let inset = relative((1. - scale) / 2.);
+		let face = move |press: f32| {
+			let inset = relative((1. - press) / 2.);
+			let scale = press * s;
 			div()
 				.absolute()
 				.top(inset)

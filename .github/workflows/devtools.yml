@@ -179,7 +179,8 @@ jobs:
               run: tar -czf '${{ matrix.asset }}' unbound-devtools
 
             # A .app gives the app its Dock name and icon. Ad-hoc signed so the bundle's seal holds; the
-            # updater swaps the whole bundle.
+            # updater swaps the whole bundle. actool compiles the Icon Composer icon into Assets.car, which
+            # macOS 26 draws per appearance (the bare glyph in dark mode), and an AppIcon.icns for older macOS.
             - name: Package app (macOS)
               if: runner.os == 'macOS'
               working-directory: apps/devtools/target/${{ matrix.target }}/release
@@ -191,13 +192,21 @@ jobs:
                   app='Unbound DevTools.app'
                   mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
                   cp unbound-devtools "$app/Contents/MacOS/"
-                  iconset="$RUNNER_TEMP/AppIcon.iconset"
-                  mkdir -p "$iconset"
-                  for size in 16 32 128 256 512; do
-                      sips -z "$size" "$size" "$GITHUB_WORKSPACE/assets/logo.png" --out "$iconset/icon_${size}x${size}.png" > /dev/null
-                      sips -z $((size * 2)) $((size * 2)) "$GITHUB_WORKSPACE/assets/logo.png" --out "$iconset/icon_${size}x${size}@2x.png" > /dev/null
-                  done
-                  iconutil -c icns "$iconset" -o "$app/Contents/Resources/AppIcon.icns"
+                  catalog="$RUNNER_TEMP/Empty.xcassets"
+                  mkdir -p "$catalog"
+                  echo '{"info":{"author":"xcode","version":1}}' > "$catalog/Contents.json"
+                  xcrun actool "$GITHUB_WORKSPACE/apps/devtools/assets/AppIcon.icon" "$catalog" \
+                      --compile "$app/Contents/Resources" \
+                      --output-format human-readable-text --notices --warnings \
+                      --output-partial-info-plist "$RUNNER_TEMP/AppIcon.plist" \
+                      --app-icon AppIcon \
+                      --enable-on-demand-resources NO \
+                      --development-region en \
+                      --target-device mac \
+                      --minimum-deployment-target 11.0 \
+                      --platform macosx
+                  test -f "$app/Contents/Resources/Assets.car"
+                  test -f "$app/Contents/Resources/AppIcon.icns"
                   cat > "$app/Contents/Info.plist" <<EOF
                   <?xml version="1.0" encoding="UTF-8"?>
                   <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -208,6 +217,7 @@ jobs:
                       <key>CFBundleIdentifier</key><string>rip.unbound.devtools</string>
                       <key>CFBundleExecutable</key><string>unbound-devtools</string>
                       <key>CFBundleIconFile</key><string>AppIcon</string>
+                      <key>CFBundleIconName</key><string>AppIcon</string>
                       <key>CFBundlePackageType</key><string>APPL</string>
                       <key>CFBundleShortVersionString</key><string>$version</string>
                       <key>CFBundleVersion</key><string>$version</string>

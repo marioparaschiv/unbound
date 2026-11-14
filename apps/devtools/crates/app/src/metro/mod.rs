@@ -23,6 +23,7 @@ use unbound_devtools_core::{
 };
 
 use crate::app::on_runtime;
+use crate::mcp_menu::McpButton;
 use crate::smooth_scroll::GlideTo;
 use files::Files;
 use load_all::LoadAll;
@@ -142,6 +143,7 @@ pub struct MetroBrowser {
 	epoch: u64,
 	tree_epoch: u64,
 	search_task: Option<Task<()>>,
+	mcp: Entity<McpButton>,
 	_watch: Task<()>,
 }
 
@@ -167,7 +169,12 @@ fn cancelled() -> MetroError {
 }
 
 impl MetroBrowser {
-	pub fn new(devtools: Devtools, window: &mut Window, cx: &mut Context<Self>) -> Self {
+	pub fn new(
+		devtools: Devtools,
+		mcp: Entity<McpButton>,
+		window: &mut Window,
+		cx: &mut Context<Self>,
+	) -> Self {
 		let search =
 			cx.new(|cx| InputState::new(window, cx).placeholder(Mode::Modules.placeholder()));
 		cx.subscribe(&search, |this, _, event: &InputEvent, cx| {
@@ -213,6 +220,7 @@ impl MetroBrowser {
 			epoch: 0,
 			tree_epoch: 0,
 			search_task: None,
+			mcp,
 			_watch: watch,
 		}
 	}
