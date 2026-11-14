@@ -1,0 +1,14 @@
+{
+	"KAOMOJI_DISSATISFACTION": "Appends ＞﹏＜ to your message",
+	"KAOMOJI_SMUG": "Appends ಠ_ಠ to your message",
+	"KAOMOJI_HAPPY": "Appends ヽ(´▽`)/ to your message",
+	"KAOMOJI_CRYING": "Appends ಥ_ಥ to your message",
+	"KAOMOJI_ANGRY": "Appends ヽ(｀Д´)ﾉ to your message",
+	"KAOMOJI_ANGER": "Appends ヽ(ｏ`皿′ｏ)ﾉ to your message",
+	"KAOMOJI_JOY": "Appends <(￣︶￣)> to your message",
+	"KAOMOJI_BLUSH": "Appends ૮ ˶ᵔ ᵕ ᵔ˶ ა to your message",
+	"KAOMOJI_CONFUSED": "Appends (•ิ_•ิ)? to your message",
+	"KAOMOJI_SLEEPING": "Appends (ᴗ_ᴗ) to your message",
+	"KAOMOJI_LAUGHING": "Appends o(≧▽≦)o to your message",
+	"MESSAGE_DESC": "The message to send before the kaomoji"
+}
