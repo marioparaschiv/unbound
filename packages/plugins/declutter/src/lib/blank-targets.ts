@@ -25,7 +25,6 @@ export type BlankSetting =
 	| 'serverThemes'
 	| 'dmActivityCards'
 	| 'questDock'
-	| 'nitroButton'
 	| 'orbsBalance';
 
 /** Every module Declutter blanks, keyed by the setting that turns it on. Ported from Benjii's Declutter for Revenge. */
@@ -127,15 +126,6 @@ export const BLANK_TARGETS: readonly BlankTarget[] = [
 	{
 		setting: 'questDock',
 		module: { path: 'modules/quests/native/QuestDock/QuestDock.tsx' },
-		methods: ['default'],
-		value: null,
-		component: true,
-	},
-	{
-		setting: 'nitroButton',
-		module: {
-			path: 'modules/main_tabs_v2/native/tabs/you/YouScreenNavIconNitroSubscriber.tsx',
-		},
 		methods: ['default'],
 		value: null,
 		component: true,

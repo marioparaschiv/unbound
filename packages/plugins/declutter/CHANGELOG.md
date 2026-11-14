@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.1] - 2026-11-14
+
+### Fixed
+
+- Dropped a lookup for a module Discord does not have; the Nitro button is hidden by its icon, as before.
+
 ## [1.0.0] - 2026-11-14
 
 ### Added
