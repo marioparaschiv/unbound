@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.2] - 2026-11-14
+
+### Fixed
+
+- The pill no longer covers another tag in the header, such as a server role tag: those headers show the pronouns after the timestamp instead.
+
 ## [1.1.1] - 2026-11-13
 
 ### Fixed

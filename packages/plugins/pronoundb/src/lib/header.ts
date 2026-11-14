@@ -8,12 +8,18 @@ export type MessageRow = {
 	opTagText?: string;
 	opTagTextColor?: number;
 	opTagBackgroundColor?: number;
+	clanTag?: string;
+	connectionsRoleTag?: object;
 	roleIcon?: object;
 };
 
 export type PronounStyle = 'text' | 'pill';
 
 export type NativePillColors = { background: number; text: number };
+
+function hasOtherTag(row: MessageRow) {
+	return Boolean(row.opTagText || row.tagText || row.connectionsRoleTag);
+}
 
 // Discord can later expand the name to `name (@username)`, so room is reserved for that.
 function fitsHeader(
@@ -34,6 +40,8 @@ function fitsHeader(
 		row.timestamp.length +
 		label.length +
 		4 +
+		(row.clanTag ? row.clanTag.length + 3 : 0) +
+		(row.connectionsRoleTag ? 3 : 0) +
 		(row.roleIcon ? 3 : 0);
 
 	// About 8pt per character after the 55pt avatar column.
@@ -46,7 +54,7 @@ function fitsHeader(
  * @param pronouns The author's pronouns.
  * @param authorUsername The author's username, which Discord may add to the shown name.
  * @param width The window width in points.
- * @param style `pill` shows them in Discord's tag pill when the header has no OP tag; `text` after the timestamp.
+ * @param style `pill` shows them in Discord's tag pill when the header has no other tag; `text` after the timestamp.
  * @param colors The pill's colors as native color values; Discord's tag colors when missing.
  */
 export function addPronouns(
@@ -70,7 +78,7 @@ export function addPronouns(
 
 	if (!fitsHeader(row, label, authorUsername, width)) return;
 
-	if (style === 'pill' && !row.opTagText) {
+	if (style === 'pill' && !hasOtherTag(row)) {
 		row.opTagText = label;
 
 		if (colors) {
