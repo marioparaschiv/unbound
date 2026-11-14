@@ -1,6 +1,6 @@
 # Plugins
 
-112 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+113 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -42,6 +42,7 @@
 - <img src="../../assets/plugins/readme-icons/crown-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Force Owner Crown](https://unbound.rip/addons/unbound.force-owner-crown): Always show the owner crown on the server owner's messages.
 - <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Friend Invites](https://unbound.rip/addons/unbound.friend-invites): Creates, lists and revokes your friend invite links with the /friend-invites command.
 - <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Friends Since](https://unbound.rip/addons/unbound.friends-since): Shows the date you became friends with someone on their profile.
+- <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Collections](https://unbound.rip/addons/unbound.gif-collections): Sort GIFs into your own collections and open them from the GIF picker.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Paste](https://unbound.rip/addons/unbound.gif-paste): Makes GIF picker selections paste a link into the chat box instead of sending immediately.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Provider Switcher](https://unbound.rip/addons/unbound.gif-provider-switcher): Search GIFs from Tenor or Giphy instead of Klipy, and switch providers right from the GIF picker.
 - <img src="../../assets/plugins/readme-icons/sticker-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Greet Sticker Picker](https://unbound.rip/addons/unbound.greet-sticker-picker): Lets you pick which sticker 'Wave to say hi!' sends to a new member, instead of a random one.
