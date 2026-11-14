@@ -5,11 +5,17 @@ import { Link } from '@tanstack/react-router';
 import { staggerStyle } from '~/components/motion/reveal-style';
 import type { FeaturedAddon } from '~/lib/marketplace-featured';
 import { featuredQuery } from '~/queries/marketplace/featured';
+import useScrollShadow from '~/hooks/use-scroll-shadow';
+import useAutoScroll from '~/hooks/use-auto-scroll';
 import AddonIcon from '~/components/addon-icon';
 import Text from '~/components/ui/text';
 
 type FeaturedShelfProps = {
 	type: AddonType;
+};
+
+type FeaturedRowProps = {
+	addons: FeaturedAddon[];
 };
 
 type FeaturedCardProps = {
@@ -20,7 +26,7 @@ type FeaturedCardProps = {
 function FeaturedCard({ addon, index }: FeaturedCardProps) {
 	return (
 		<li
-			className='relative flex items-center gap-3 bg-card shadow-surface p-3 border rounded-surface w-64 sm:w-auto text-card-foreground transition-[translate,box-shadow] animate-reveal duration-(--press-duration) ease-spring hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:shadow-float shrink-0 snap-start'
+			className='relative flex items-center gap-3 bg-card shadow-surface p-3 border rounded-surface w-64 text-card-foreground transition-[translate,box-shadow] animate-reveal duration-(--press-duration) ease-spring hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:shadow-float shrink-0'
 			style={staggerStyle(index)}
 		>
 			<div className='flex justify-center items-center bg-accent rounded-control size-10 shrink-0'>
@@ -45,9 +51,33 @@ function FeaturedCard({ addon, index }: FeaturedCardProps) {
 	);
 }
 
+// Its own component so the scroll shadow's observers attach once the row exists.
+function FeaturedRow({ addons }: FeaturedRowProps) {
+	const { ref, canScrollStart, canScrollEnd, onScroll } = useScrollShadow('x');
+	useAutoScroll(ref);
+
+	// No scroll snapping: it would pull the slow drift back to the nearest card every frame.
+	// Bleeds into the page gutter, so cards fade out at the gutter's outer edge rather than its inner one.
+	return (
+		<div
+			ref={ref}
+			onScroll={onScroll}
+			data-fade-start={canScrollStart ? '' : undefined}
+			data-fade-end={canScrollEnd ? '' : undefined}
+			className='-mx-(--page-gutter) -my-1 overflow-x-auto overflow-y-hidden overscroll-x-contain hide-scrollbar scroll-fade-x'
+		>
+			<ul className='flex gap-3 px-(--page-gutter) py-1 w-max'>
+				{addons.map((addon, index) => (
+					<FeaturedCard key={addon.id} addon={addon} index={index} />
+				))}
+			</ul>
+		</div>
+	);
+}
+
 /**
- * @description The Featured shelf atop a listing tab: today's picks as compact cards, a row that scrolls
- * sideways to the screen's edges on phones and a grid on wider screens. Renders nothing without picks.
+ * @description The Featured shelf atop a listing tab: today's picks as compact cards in a row that scrolls
+ * sideways, drifting slowly to its end and back, fading out at an edge with more past it. Renders nothing without picks.
  * @param props The tab's addon type.
  * @returns The shelf, or `null`.
  */
@@ -64,11 +94,7 @@ function FeaturedShelf({ type }: FeaturedShelfProps) {
 			<Text as='h2' id='featured-heading' variant='heading-sm'>
 				Featured
 			</Text>
-			<ul className='sm:grid sm:grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] flex gap-3 -mx-(--page-gutter) sm:mx-0 -my-1 sm:my-0 px-(--page-gutter) sm:px-0 py-1 sm:py-0 overflow-x-auto sm:overflow-visible scroll-px-(--page-gutter) snap-x snap-mandatory hide-scrollbar'>
-				{addons.map((addon, index) => (
-					<FeaturedCard key={addon.id} addon={addon} index={index} />
-				))}
-			</ul>
+			<FeaturedRow addons={addons} />
 		</section>
 	);
 }
