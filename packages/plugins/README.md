@@ -1,6 +1,6 @@
 # Plugins
 
-117 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+118 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -78,6 +78,7 @@
 - <img src="../../assets/plugins/readme-icons/ic-swipe-reply-24px.svg" width="20" height="20" align="absmiddle" alt=""> [No Reply Mention](https://unbound.rip/addons/unbound.no-reply-mention): Disable reply mentions by default.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [No Typing Animation](https://unbound.rip/addons/unbound.no-typing-animation): Stops the typing dots from animating, so they sit still wherever someone is typing.
 - <img src="../../assets/plugins/readme-icons/chevron-large-right-icon.svg" width="20" height="20" align="absmiddle" alt=""> [No Unblock To Jump](https://unbound.rip/addons/unbound.no-unblock-to-jump): Jumps to messages from blocked or ignored users and likely spammers without asking you to unblock them.
+- <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Normalize Names](https://unbound.rip/addons/unbound.normalize-names): Shows names written in fancy Unicode, such as 𝓯𝓪𝓷𝓬𝔂, ｗｉｄｅ or ᴛɪɴʏ letters, as plain letters in chat.
 - <img src="../../assets/plugins/readme-icons/bell-z-icon.svg" width="20" height="20" align="absmiddle" alt=""> [One Ping Per DM](https://unbound.rip/addons/unbound.one-ping-per-dm): Plays the in-app message sound only for the first unread message in a DM, until you read it.
 - <img src="../../assets/plugins/readme-icons/forum-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Override Forum Defaults](https://unbound.rip/addons/unbound.override-forum-defaults): Sets your own default layout and sort order for forum channels. You can still change them per channel.
 - <img src="../../assets/plugins/readme-icons/shield-user-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Permissions Viewer](https://unbound.rip/addons/unbound.permissions-viewer): View the permissions a member or channel has, and the roles of a server.
