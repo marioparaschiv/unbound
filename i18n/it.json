@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "Con Illimitati vengono mostrati tutti i toast insieme. Con Indefinita un toast resta finché non lo chiudi.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "All’avvio si connette a un debugger sul tuo computer.",
 	"UNBOUND_LOADER": "Loader",
-	"UNBOUND_LOADER_RESTART_HINT": "Il loader legge queste impostazioni all’avvio. Riavvia da Generali per applicarle.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "URL del bundle personalizzato",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Carica Unbound da questo URL invece che dalla build di rilascio. Ripristina per tornare alla build di rilascio.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Inserisci un URL http o https.",

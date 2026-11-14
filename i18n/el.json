@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "Το «Απεριόριστα» εμφανίζει όλα τα μηνύματα ταυτόχρονα. Το «Αόριστη» κρατά ένα μήνυμα μέχρι να το κλείσεις.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Συνδέεται σε έναν debugger στον υπολογιστή σου κατά την εκκίνηση.",
 	"UNBOUND_LOADER": "Loader",
-	"UNBOUND_LOADER_RESTART_HINT": "Ο loader τις διαβάζει κατά την εκκίνηση. Κάνε επανεκκίνηση από τις Γενικές για να εφαρμοστούν.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "Προσαρμοσμένο URL bundle",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Φόρτωση του Unbound από αυτό το URL αντί για το επίσημο build. Κάνε επαναφορά για να επιστρέψεις στο επίσημο build.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Εισήγαγε ένα URL http ή https.",

@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "ไม่จำกัด จะแสดงป๊อปอัปทั้งหมดพร้อมกัน ไม่มีกำหนด จะแสดงป๊อปอัปค้างไว้จนกว่าคุณจะปิด",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "เชื่อมต่อกับดีบักเกอร์บนคอมพิวเตอร์ของคุณเมื่อเปิดแอป",
 	"UNBOUND_LOADER": "ตัวโหลด",
-	"UNBOUND_LOADER_RESTART_HINT": "ตัวโหลดจะอ่านค่าเหล่านี้เมื่อเปิดแอป รีสตาร์ทจากหน้าทั่วไปเพื่อใช้การตั้งค่า",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "URL บันเดิลที่กำหนดเอง",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "โหลด Unbound จาก URL นี้แทนบิลด์รีลีส รีเซ็ตเพื่อกลับไปใช้บิลด์รีลีส",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "ใส่ URL แบบ http หรือ https",

@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "Sınırsız, tüm bildirimleri aynı anda gösterir. Süresiz, bir bildirimi sen kapatana kadar ekranda tutar.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Açılışta bilgisayarındaki bir hata ayıklayıcıya bağlanır.",
 	"UNBOUND_LOADER": "Yükleyici",
-	"UNBOUND_LOADER_RESTART_HINT": "Yükleyici bunları açılışta okur. Uygulamak için Genel bölümünden yeniden başlat.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "Özel Paket URL’si",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Unbound’u sürüm derlemesi yerine bu URL’den yükle. Sürüm derlemesine dönmek için sıfırla.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Bir http veya https URL’si gir.",

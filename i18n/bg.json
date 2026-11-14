@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "„Неограничено“ показва всички известия наведнъж. „Безсрочно“ задържа известието, докато не го затвориш.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Свързва се с дебъгер на компютъра ти при стартиране.",
 	"UNBOUND_LOADER": "Лоудър",
-	"UNBOUND_LOADER_RESTART_HINT": "Лоудърът чете тези настройки при стартиране. Рестартирай от „Общи“, за да ги приложиш.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "URL на персонализиран пакет",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Зарежда Unbound от този URL вместо от официалната версия. Нулирай, за да се върнеш към официалната версия.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Въведи http или https URL.",

@@ -380,7 +380,6 @@
 	"UNBOUND_TOASTS_BEHAVIOR_HINT": "„Neribota“ rodo visus pranešimus vienu metu. „Neribotai“ palieka pranešimą, kol jį uždarysite.",
 	"UNBOUND_DEBUGGER_ENABLED_DESC": "Paleidžiant prisijungia prie derintuvės jūsų kompiuteryje.",
 	"UNBOUND_LOADER": "Įkėliklis",
-	"UNBOUND_LOADER_RESTART_HINT": "Įkėliklis juos nuskaito paleidžiant. Kad jie įsigaliotų, paleiskite iš naujo skiltyje „Bendra“.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE": "Pasirinktinio paketo URL",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_DESC": "Įkelti Unbound iš šio URL vietoj oficialios versijos. Atkurkite, kad grįžtumėte prie oficialios versijos.",
 	"UNBOUND_LOADER_CUSTOM_BUNDLE_INVALID": "Įveskite http arba https URL.",
