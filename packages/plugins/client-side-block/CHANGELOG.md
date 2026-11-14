@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.3] - 2026-11-14
+
+### Fixed
+
+- Messages no longer show twice on Discord 353: the chat is rebuilt from each item once, and only from the open chat's own rows.
+
 ## [1.1.2] - 2026-11-14
 
 ### Fixed
