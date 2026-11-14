@@ -6,6 +6,7 @@
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
+use gpui::prelude::FluentBuilder;
 use gpui::{
 	AnimationExt, App, Div, ElementId, FontWeight, InteractiveElement, IntoElement, MouseButton,
 	ParentElement, RenderOnce, Rgba, SharedString, SpringAnimation, Stateful,
@@ -106,7 +107,7 @@ impl Tween {
 }
 
 /// Where an item sits on the track, in pixels from the track's inner left edge.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 struct Span {
 	left: f32,
 	width: f32,
@@ -146,10 +147,12 @@ impl Pill {
 		}
 	}
 
+	/// Slides to item `on`; a new span for the same item, from a resize, is taken at once.
 	fn retarget(&mut self, on: usize, span: Span, reduce_motion: bool) {
+		let snap = reduce_motion || on == self.on;
 		self.on = on;
-		self.left.retarget(span.left, PILL, reduce_motion);
-		self.width.retarget(span.width, PILL, reduce_motion);
+		self.left.retarget(span.left, PILL, snap);
+		self.width.retarget(span.width, PILL, snap);
 	}
 
 	fn span(&self) -> Span {
@@ -173,14 +176,22 @@ struct Motion {
 	pill: Option<Pill>,
 	/// Each label's colour, 0 muted to 1 full.
 	lit: Vec<Tween>,
+	/// A filling control's items as last laid out; their widths are only known after layout.
+	laid_out: Vec<Span>,
 }
 
 impl Motion {
 	/// Points the pill and labels at the current hover and choice; returns whether any still moves.
-	fn retarget(&mut self, spans: &[Span], selected: Option<usize>, reduce_motion: bool) -> bool {
-		let count = spans.len();
+	/// `spans` is empty while a filling control waits for its first layout.
+	fn retarget(
+		&mut self,
+		count: usize,
+		spans: &[Span],
+		selected: Option<usize>,
+		reduce_motion: bool,
+	) -> bool {
 		self.hovered = self.hovered.filter(|ix| *ix < count);
-		let target = self.hovered.or(selected).filter(|ix| *ix < count);
+		let target = self.hovered.or(selected).filter(|ix| *ix < spans.len());
 		let lit = |ix: usize| f32::from(u8::from(selected == Some(ix) || self.hovered == Some(ix)));
 		// A pill with nowhere to slide from appears in place, as on the web.
 		self.pill = target.map(|ix| {
@@ -229,6 +240,7 @@ pub struct Segmented {
 	items: Vec<SharedString>,
 	selected: Option<usize>,
 	on_pick: OnPick,
+	fill: bool,
 }
 
 /// @description The web's Segmented control: label-sized items on a ringed track with a sliding pill.
@@ -250,6 +262,16 @@ pub fn segmented(
 		items: items.iter().map(|item| item.clone().into()).collect(),
 		selected,
 		on_pick: Rc::new(on_pick),
+		fill: false,
+	}
+}
+
+impl Segmented {
+	/// Stretches the control across its parent. Every item grows by the same amount, so each
+	/// label keeps even padding on both sides.
+	pub fn fill(mut self) -> Self {
+		self.fill = true;
+		self
 	}
 }
 
@@ -266,11 +288,20 @@ impl RenderOnce for Segmented {
 			.iter()
 			.map(|label| item_width(window, label))
 			.collect();
-		let layout = spans(&widths);
+		let fill = self.fill;
+		let count = widths.len();
 		let reduce_motion = cx.reduce_motion();
 		let state = window.use_keyed_state(self.id.clone(), cx, |_, _| Motion::default());
 		let moving = state.update(cx, |motion, _| {
-			motion.retarget(&layout, self.selected, reduce_motion)
+			let layout = if !fill {
+				spans(&widths)
+			} else if motion.laid_out.len() == count {
+				motion.laid_out.clone()
+			} else {
+				// Not laid out yet, or the items changed: no pill until the next layout.
+				Vec::new()
+			};
+			motion.retarget(count, &layout, self.selected, reduce_motion)
 		});
 		if moving {
 			window.request_animation_frame();
@@ -280,6 +311,7 @@ impl RenderOnce for Segmented {
 		let pill = motion.pill.map(|pill| (pill.on, pill.span()));
 		let lit: Vec<f32> = motion.lit.iter().map(|tween| tween.value(COLOUR)).collect();
 		let view = window.current_view();
+		let laid_out_state = state.clone();
 		let update = move |change: Box<dyn Fn(&mut Motion) -> bool>| {
 			let state = state.clone();
 			move |cx: &mut App| {
@@ -332,8 +364,13 @@ impl RenderOnce for Segmented {
 				let colour = mix(muted, full, lit.get(ix).copied().unwrap_or(0.));
 				div()
 					.id(ix)
-					.flex_none()
-					.w(px(width))
+					.map(|item| {
+						if fill {
+							item.flex_grow(1.).flex_basis(px(width))
+						} else {
+							item.flex_none().w(px(width))
+						}
+					})
 					.h_full()
 					.flex()
 					.items_center()
@@ -357,8 +394,42 @@ impl RenderOnce for Segmented {
 					.on_click(move |_, window, cx| on_pick(&ix, window, cx))
 			});
 
+		let inner = div()
+			.relative()
+			.h_full()
+			.when(fill, |inner| inner.w_full())
+			.flex()
+			.gap(px(GAP))
+			.children(pill)
+			.children(items)
+			// A filling control's items are as wide as layout makes them: keep their spans for the
+			// pill, and redraw when they change.
+			.when(fill, |inner| {
+				inner.on_children_prepainted(move |bounds, _, cx| {
+					let items = &bounds[bounds.len().saturating_sub(count)..];
+					let Some(origin) = items.first().map(|item| item.origin.x) else {
+						return;
+					};
+					let laid_out: Vec<Span> = items
+						.iter()
+						.map(|item| Span {
+							left: f32::from(item.origin.x - origin),
+							width: f32::from(item.size.width),
+						})
+						.collect();
+					let changed = laid_out_state.update(cx, |motion, _| {
+						let changed = motion.laid_out != laid_out;
+						motion.laid_out = laid_out;
+						changed
+					});
+					if changed {
+						cx.notify(view);
+					}
+				})
+			});
+
 		self.track
-			.flex_none()
+			.when(!fill, |track| track.flex_none())
 			.flex()
 			.h(theme::CONTROL_HEIGHT)
 			.font_family(theme::ui_font())
@@ -372,14 +443,6 @@ impl RenderOnce for Segmented {
 					leave(cx);
 				}
 			})
-			.child(
-				div()
-					.relative()
-					.h_full()
-					.flex()
-					.gap(px(GAP))
-					.children(pill)
-					.children(items),
-			)
+			.child(inner)
 	}
 }

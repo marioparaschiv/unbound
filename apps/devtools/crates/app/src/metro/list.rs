@@ -335,8 +335,7 @@ impl MetroBrowser {
 								}
 							}),
 						)
-						// As wide as its items, not the column.
-						.self_start(),
+						.fill(),
 					)
 					.child(field(
 						Input::new(&self.search)
@@ -356,7 +355,7 @@ impl MetroBrowser {
 									this.set_status(status, cx);
 								}),
 							)
-							.self_start(),
+							.fill(),
 						)
 					}),
 			)
