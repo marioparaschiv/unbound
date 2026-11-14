@@ -2,6 +2,7 @@ import { defineSettings, setting } from '@unbound-app/settings/schema';
 
 export default defineSettings({
 	users: setting.string({ default: '', hidden: true }),
+	keywords: setting.string({ default: '', hidden: true }),
 	ignored: setting.boolean({
 		default: true,
 		title: 'HIDE_IGNORED',

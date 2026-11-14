@@ -9,5 +9,8 @@
 	"SEARCH_USERS": "Search or paste a user ID",
 	"NO_USERS_FOUND": "No users found",
 	"UNKNOWN_USER": "Unknown user",
-	"REMOVE_USER": "Remove user"
+	"REMOVE_USER": "Remove user",
+	"HIDDEN_KEYWORDS": "Hidden keywords",
+	"HIDDEN_KEYWORDS_SUBTITLE": "Messages containing any of these disappear. One per line; wrap a line in slashes for a regular expression.",
+	"HIDDEN_KEYWORDS_PLACEHOLDER": "spoiler\n/\\bfree nitro\\b/"
 }

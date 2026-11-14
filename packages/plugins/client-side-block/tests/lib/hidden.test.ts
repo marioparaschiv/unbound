@@ -31,4 +31,36 @@ describe('hidden rows', () => {
 		expect(isHiddenRow(undefined, rules)).toBe(false);
 		expect(isHiddenRow({ type: 3 }, rules)).toBe(false);
 	});
+
+	test('hides messages whose content has a hidden keyword', () => {
+		const withKeywords = {
+			...rules,
+			hidesContent: (content: string) => content.includes('spoiler'),
+		};
+
+		expect(
+			isHiddenRow(
+				{ type: 1, message: { authorId: '8', content: 'big spoiler' } },
+				withKeywords,
+			),
+		).toBe(true);
+		expect(
+			isHiddenRow({ type: 1, message: { authorId: '8', content: 'hello' } }, withKeywords),
+		).toBe(false);
+		expect(
+			isHiddenRow(
+				{
+					type: 1,
+					message: {
+						authorId: '8',
+						content: [
+							{ type: 'strong', content: [{ type: 'text', content: 'spoil' }] },
+							{ type: 'text', content: 'er!' },
+						],
+					},
+				},
+				withKeywords,
+			),
+		).toBe(true);
+	});
 });

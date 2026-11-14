@@ -2,6 +2,7 @@ import { parseIdList } from '@unbound-plugins/shared/entities/id-list';
 import { settings } from '@unbound-app/settings';
 import { flux, metro, patcher } from '@unbound-app/api';
 
+import { keywordMatcher } from '~/lib/keywords';
 import { isHiddenRow } from '~/lib/hidden';
 
 type RelationshipStore = {
@@ -35,11 +36,22 @@ export function patchChatRows(): void {
 		}
 
 		const Relationships = flux.getStore('Relationship') as unknown as RelationshipStore;
+		let keywords = { text: '', matches: keywordMatcher('') };
 		const rules = {
 			isHidden: (userId: string) =>
 				parseIdList(settings.users).includes(userId) ||
 				Boolean(settings.ignored && Relationships.isIgnored?.(userId)) ||
 				Boolean(Relationships.isBlocked?.(userId)),
+			hidesContent: (content: string) => {
+				if (keywords.text !== settings.keywords) {
+					keywords = {
+						text: settings.keywords,
+						matches: keywordMatcher(settings.keywords),
+					};
+				}
+
+				return keywords.matches(content);
+			},
 			get replies() {
 				return settings.replies;
 			},
