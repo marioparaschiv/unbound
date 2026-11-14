@@ -1,0 +1,18 @@
+{
+	"id": "unbound.copy-image",
+	"name": "Copy Image",
+	"description": "Adds Copy Image to the media viewer's share menu, which copies the picture itself as a PNG that any app can paste.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ChatDotsIcon",
+	"minNativeBridgeApi": "1.0.0",
+	"main": "index.tsx"
+}
