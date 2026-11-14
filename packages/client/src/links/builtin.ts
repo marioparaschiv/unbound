@@ -17,7 +17,7 @@ import { show } from '~/toasts/api';
 import fs from '~/native/fs';
 
 import type { LinkOutcome, LinkTargets } from './resolve-unbound-link';
-import type { SharedFile } from './share-link';
+import type { SharedContent, SharedFile } from './share-link';
 
 import resolveUnboundLink from './resolve-unbound-link';
 import parseShareLink from './share-link';
@@ -55,9 +55,13 @@ const SHEET_KEY = 'unbound-share-destinations';
 const MAX_DESTINATIONS = 12;
 const MAX_RECENT_DMS = 8;
 const DRAFT_CHANNEL_MESSAGE = 0;
+const COMPOSER_SETTLE_MS = 400;
+const COMPOSER_ATTEMPTS = 15;
 const UPLOAD_PLATFORM_REACT_NATIVE = 0;
 
 const Uploads = findByProps('addFiles', 'popFirstFile');
+const Drafts = findByProps('changeDraft', 'clearDraft');
+const ChatInputs = findByProps('getBestActiveInputForChannelId');
 const Router = findByProps('transitionToGuild');
 const Constants = findByProps('Permissions', 'ChannelTypes');
 const GuildStore = findByProps('getGuild', 'getGuilds');
@@ -182,7 +186,32 @@ async function readable(files: SharedFile[]): Promise<SharedFile[]> {
 	return files.filter((_, index) => checks[index]);
 }
 
-async function stage(destination: ShareDestination, files: SharedFile[]) {
+function stageText(destination: ShareDestination, text: string | undefined) {
+	if (!text) return;
+
+	if (!Drafts) {
+		ShareLogger.warn('Shared text skipped: Discord moved changeDraft.');
+
+		return;
+	}
+
+	Drafts.changeDraft(destination.channelId, text, DRAFT_CHANNEL_MESSAGE);
+	fillComposer(destination.channelId, text, COMPOSER_ATTEMPTS);
+}
+
+function fillComposer(channelId: string, text: string, attempts: number) {
+	setTimeout(() => {
+		const input = ChatInputs?.getBestActiveInputForChannelId(channelId);
+
+		if (input?.getText?.() === text) return;
+
+		input?.setText?.(text);
+
+		if (attempts > 1) fillComposer(channelId, text, attempts - 1);
+	}, COMPOSER_SETTLE_MS);
+}
+
+async function stage(destination: ShareDestination, { files, text }: SharedContent) {
 	if (!Router || !Uploads) {
 		ShareLogger.warn('Sharing skipped: Discord moved transitionToGuild or addFiles.');
 		failed(messages.UNBOUND_SHARE_FAILED);
@@ -190,7 +219,19 @@ async function stage(destination: ShareDestination, files: SharedFile[]) {
 		return;
 	}
 
+	stageText(destination, text);
 	Router.transitionToGuild(destination.guildId, destination.channelId);
+
+	if (!files.length) {
+		show({
+			title: messages.UNBOUND_SHARE_TITLE,
+			content: format('UNBOUND_SHARE_TEXT_ADDED', { destination: destination.label }),
+			icon: 'CircleCheckIcon',
+		});
+
+		return;
+	}
+
 	Uploads.addFiles({
 		channelId: destination.channelId,
 		draftType: DRAFT_CHANNEL_MESSAGE,
@@ -215,7 +256,7 @@ function failed(content: string) {
 	show({ title: messages.UNBOUND_SHARE_TITLE, content, icon: 'CircleXIcon' });
 }
 
-async function receiveShare(files: SharedFile[]) {
+async function receiveShare({ files, text }: SharedContent) {
 	if (sharing) {
 		ShareLogger.warn('Dropped shared files while others are being shared.');
 
@@ -237,7 +278,7 @@ async function receiveShare(files: SharedFile[]) {
 			);
 		}
 
-		if (usable.length === 0) {
+		if (usable.length === 0 && !text) {
 			failed(messages.UNBOUND_SHARE_UNREADABLE);
 
 			return;
@@ -256,10 +297,12 @@ async function receiveShare(files: SharedFile[]) {
 
 		ActionSheets.openLazy(Promise.resolve({ default: ShareDestinationSheet }), SHEET_KEY, {
 			destinations: choices,
-			count: usable.length,
+			title: usable.length
+				? format('UNBOUND_SHARE_PICK', { count: usable.length })
+				: messages.UNBOUND_SHARE_PICK_TEXT,
 			onSelect: (destination: ShareDestination) => {
 				ActionSheets.hideActionSheet(SHEET_KEY);
-				stage(destination, usable).catch((error) => {
+				stage(destination, { files: usable, text }).catch((error) => {
 					ShareLogger.error('Failed to attach the shared files:', error);
 					failed(messages.UNBOUND_SHARE_FAILED);
 				});
