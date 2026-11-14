@@ -425,24 +425,15 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
         return preferredPath;
     }
 
-    bool paused = !preferences::autoClientUpdates(settings_);
-    if (paused && ignorePause)
+    if (ignorePause && !preferences::autoClientUpdates(settings_))
     {
         log(LogLevel::Info, LOG_CATEGORY_UPDATER,
             "Automatic client updates are off, but a manual refetch checks anyway.");
     }
-    else if (paused)
+    else if (std::optional<std::string> cachedPath =
+                 pausedBundle(preferredPath, updateURL, bytecodeVersion))
     {
-        std::string cachedPath = preferredPath.empty() ? resolveBundlePath() : preferredPath;
-        std::optional<std::string> problem = pauseProblem(cachedPath, updateURL, bytecodeVersion);
-        if (!problem)
-        {
-            log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-                "Automatic client updates are off; keeping the cached bundle.");
-            return cachedPath;
-        }
-        log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-            "Automatic client updates are off, but " + *problem + "; checking for a bundle.");
+        return *cachedPath;
     }
 
     std::string  storedEtag = preferences::bundleEtag(settings_);

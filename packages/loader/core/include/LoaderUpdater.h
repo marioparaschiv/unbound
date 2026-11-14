@@ -64,6 +64,11 @@ public:
                                const std::optional<std::string> &updateURL,
                                uint32_t bytecodeVersion, bool ignorePause = false);
     std::string downloadURL(const std::optional<std::string> &updateURL, uint32_t bytecodeVersion);
+    // Whether a newer bundle than the one at `preferredPath` is published, verifying its manifest
+    // without downloading the bundle. False while client updates are paused and the cached bundle
+    // can stay, or while a downloaded candidate waits.
+    bool isUpdateAvailable(const std::string                &preferredPath,
+                           const std::optional<std::string> &updateURL, uint32_t bytecodeVersion);
 
     // The DevTools backend the bundle at `bundlePath` was built with, verified against that
     // bundle's manifest and cached beside it; downloads it on first use.
@@ -128,6 +133,10 @@ private:
     std::optional<std::string> pauseProblem(const std::string                &path,
                                             const std::optional<std::string> &updateURL,
                                             uint32_t bytecodeVersion) const;
+    // The cached bundle paused client updates keep, or nothing when updates run or it can't stay.
+    std::optional<std::string> pausedBundle(const std::string                &preferredPath,
+                                            const std::optional<std::string> &updateURL,
+                                            uint32_t                          bytecodeVersion);
     void                       recordBaseline(const std::string &record);
 
     std::string    documents_;

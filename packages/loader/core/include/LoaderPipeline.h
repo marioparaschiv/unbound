@@ -101,6 +101,13 @@ public:
     bool isBundleReady() const;
     // Whether a newer bundle downloaded this launch and runs at the next restart.
     bool hasStagedBundle() const;
+    // For the client's update page. Each runs on the calling thread once any running check
+    // finishes, honours paused client updates and throws what failed. Whether a newer bundle than
+    // the saved or staged one is published; downloads nothing.
+    bool isBundleUpdateAvailable();
+    // Downloads the newer bundle, skipping the Wi-Fi wait; returns whether one waits for the next
+    // restart.
+    bool updateBundleNow();
 
     // Seconds Discord must run after a launch, or after a new bundle runs, to count as healthy.
     static constexpr double kHealthySeconds = 15.0;
