@@ -4,6 +4,7 @@ import {
 	SPONSORED_LOGIN,
 	WEBHOOK_SECRET,
 	deliver,
+	seedSponsorship,
 	sign,
 	sponsorshipPayload,
 	storedSponsorship,
@@ -206,6 +207,31 @@ describe('webhook events', () => {
 			{ id: 'order-3' },
 		);
 
+		expect(await storedSponsorship(ctx, id)).toMatchObject({ state: 'active', endsAt: null });
+	});
+
+	test('a one-time payment the reconcile stored as cancelled turns active once it settles', async () => {
+		const id = '550';
+		const since = new Date('2026-01-01T00:00:00Z');
+
+		await seedSponsorship(ctx, {
+			githubId: id,
+			state: 'cancelled',
+			tierName: '$100 one time',
+			monthlyPriceCents: 10_000,
+			oneTime: true,
+			largestOneTimeCents: 10_000,
+			since,
+			endsAt: since,
+		});
+
+		const response = await deliver(
+			ctx,
+			sponsorshipPayload({ action: 'created', sponsorId: id, cents: 10_000, oneTime: true }),
+			{ id: 'settle-1' },
+		);
+
+		expect(await statusOf(response)).toEqual({ code: 200, body: { status: 'applied' } });
 		expect(await storedSponsorship(ctx, id)).toMatchObject({ state: 'active', endsAt: null });
 	});
 

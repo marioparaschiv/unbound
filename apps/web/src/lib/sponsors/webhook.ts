@@ -69,7 +69,15 @@ function keepState(_event: SponsorshipEvent, current: Sponsorship | undefined) {
 
 // Delivery ids stop replays, not reordering: a `created` older than a stored cancellation is stale.
 function isStaleCreation(event: SponsorshipEvent, current: Sponsorship | undefined): boolean {
-	return current?.state === 'cancelled' && event.values.since <= current.since;
+	if (current?.state !== 'cancelled') {
+		return false;
+	}
+
+	const since = event.values.since.getTime();
+	const storedSince = current.since.getTime();
+
+	// The reconcile stores an unsettled one-time payment as cancelled; its later `created` still applies.
+	return since < storedSince || (since === storedSince && !event.values.oneTime);
 }
 
 const TRANSITIONS: Record<SponsorshipAction, Transition> = {
