@@ -1,0 +1,21 @@
+{
+	"id": "unbound.userpfp",
+	"name": "UserPFP",
+	"description": "Shows the avatars people set on UserPFP, so anyone can have an animated profile picture without Nitro.",
+	"authors": [
+		{
+			"name": "nexpid",
+			"id": "853550207039832084"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ImageIcon",
+	"main": "index.tsx"
+}
