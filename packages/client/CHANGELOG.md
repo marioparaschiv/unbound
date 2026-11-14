@@ -1,5 +1,38 @@
 # Changelog
 
+## [3.5.0](https://github.com/marioparaschiv/unbound/compare/client-v3.4.0...client-v3.5.0) (2026-11-14)
+
+
+### Features
+
+* **client:** turn off addon versions the store withdraws ([#1453](https://github.com/marioparaschiv/unbound/issues/1453)) ([8a47d11](https://github.com/marioparaschiv/unbound/commit/8a47d116ff8615ff18e1befe203ffe6e948e425d))
+* **client:** update sideloaded installs through their sideloader ([#1454](https://github.com/marioparaschiv/unbound/issues/1454)) ([d497260](https://github.com/marioparaschiv/unbound/commit/d4972608067d47fe1a9dd2789c32378e5f58f198))
+* **client:** update the client from the updates page ([#1434](https://github.com/marioparaschiv/unbound/issues/1434)) ([820958e](https://github.com/marioparaschiv/unbound/commit/820958e906360f243b46f0c627d18e652ec20fc5))
+* **loader:** add an animated Unbound app icon on iOS and Android ([#1193](https://github.com/marioparaschiv/unbound/issues/1193)) ([a0429a5](https://github.com/marioparaschiv/unbound/commit/a0429a50181fd4c282648e0e13ae9bcb1cffb773))
+* **loader:** report Discord's data and cache size in the debug card ([#1482](https://github.com/marioparaschiv/unbound/issues/1482)) ([b1d5f62](https://github.com/marioparaschiv/unbound/commit/b1d5f62c46840b764709b81ea07a46d7f71ebc28))
+* **loader:** report Focus and Scheduled Summary in the debug card ([#1486](https://github.com/marioparaschiv/unbound/issues/1486)) ([c2160a8](https://github.com/marioparaschiv/unbound/commit/c2160a8794a03c075b511ae73420ad72f4282d2d))
+
+
+### Bug Fixes
+
+* **client:** chain instead patches so the original runs once ([#1456](https://github.com/marioparaschiv/unbound/issues/1456)) ([ed221bc](https://github.com/marioparaschiv/unbound/commit/ed221bc5344c5a6f7608739ea9c3a93a94a0e79e))
+
+
+### Build System
+
+* **deps:** bump the minor-and-patch group with 27 updates ([#1209](https://github.com/marioparaschiv/unbound/issues/1209)) ([4cb51d9](https://github.com/marioparaschiv/unbound/commit/4cb51d94289c9fffbed94fc97d0988326d828118))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.5.0
+    * @unbound-app/debugger-protocol bumped to 2.2.1
+    * @unbound-app/types bumped to 1.5.0
+    * @unbound-app/utils bumped to 1.0.5
+    * @unbound-app/web bumped to 2.5.0
+
 ## [3.4.0](https://github.com/marioparaschiv/unbound/compare/client-v3.3.0...client-v3.4.0) (2026-11-14)
 
 

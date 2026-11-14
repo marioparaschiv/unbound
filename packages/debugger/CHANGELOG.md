@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.2.1](https://github.com/marioparaschiv/unbound/compare/debugger-v1.2.0...debugger-v1.2.1) (2026-11-14)
+
+
+### Build System
+
+* **deps:** bump the minor-and-patch group with 27 updates ([#1209](https://github.com/marioparaschiv/unbound/issues/1209)) ([4cb51d9](https://github.com/marioparaschiv/unbound/commit/4cb51d94289c9fffbed94fc97d0988326d828118))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger-protocol bumped to 2.2.1
+
 ## [1.2.0](https://github.com/marioparaschiv/unbound/compare/debugger-v1.1.1...debugger-v1.2.0) (2026-11-14)
 
 

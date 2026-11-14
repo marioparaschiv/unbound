@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.5.0](https://github.com/marioparaschiv/unbound/compare/contracts-v2.4.0...contracts-v2.5.0) (2026-11-14)
+
+
+### Features
+
+* **client:** turn off addon versions the store withdraws ([#1453](https://github.com/marioparaschiv/unbound/issues/1453)) ([8a47d11](https://github.com/marioparaschiv/unbound/commit/8a47d116ff8615ff18e1befe203ffe6e948e425d))
+* **loader:** name the plugins that froze Discord in the debug card ([#1480](https://github.com/marioparaschiv/unbound/issues/1480)) ([05d135e](https://github.com/marioparaschiv/unbound/commit/05d135eb6e7e05e1cf0e15fbe49319033073b3a1))
+* **loader:** report Discord's data and cache size in the debug card ([#1482](https://github.com/marioparaschiv/unbound/issues/1482)) ([b1d5f62](https://github.com/marioparaschiv/unbound/commit/b1d5f62c46840b764709b81ea07a46d7f71ebc28))
+* **loader:** report Focus and Scheduled Summary in the debug card ([#1486](https://github.com/marioparaschiv/unbound/issues/1486)) ([c2160a8](https://github.com/marioparaschiv/unbound/commit/c2160a8794a03c075b511ae73420ad72f4282d2d))
+
+
+### Build System
+
+* **deps:** bump the minor-and-patch group with 27 updates ([#1209](https://github.com/marioparaschiv/unbound/issues/1209)) ([4cb51d9](https://github.com/marioparaschiv/unbound/commit/4cb51d94289c9fffbed94fc97d0988326d828118))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/types bumped to 1.5.0
+
 ## [2.4.0](https://github.com/marioparaschiv/unbound/compare/contracts-v2.3.0...contracts-v2.4.0) (2026-11-14)
 
 

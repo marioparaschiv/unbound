@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.3.0...devtools-v1.4.0) (2026-11-14)
+
+
+### Features
+
+* **devtools:** add a typescript console ([#1457](https://github.com/marioparaschiv/unbound/issues/1457)) ([b9b954e](https://github.com/marioparaschiv/unbound/commit/b9b954e4dcbe141fd84a5e50dbc38cfe1b6c7841))
+
 ## [1.3.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.2.0...devtools-v1.3.0) (2026-11-14)
 
 
