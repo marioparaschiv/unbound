@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.1.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.0.0...devtools-v1.1.0) (2026-11-14)
+
+
+### Features
+
+* **client:** open the store page from addon install links ([#1312](https://github.com/marioparaschiv/unbound/issues/1312)) ([1e34e63](https://github.com/marioparaschiv/unbound/commit/1e34e63a0fc664f808646b81d66fefba8b45f8b2))
+* **devtools:** add a Metro page to browse, load and search modules ([#1273](https://github.com/marioparaschiv/unbound/issues/1273)) ([2e9eb6b](https://github.com/marioparaschiv/unbound/commit/2e9eb6b6d76577a9539b30040aa73ad0e58b5897))
+* **devtools:** add an object explorer and structured ubd errors ([#1206](https://github.com/marioparaschiv/unbound/issues/1206)) ([cf37e2b](https://github.com/marioparaschiv/unbound/commit/cf37e2beccf364eb3d4a22842d5c1538c8a5c683))
+* **devtools:** build for Intel Macs ([#1385](https://github.com/marioparaschiv/unbound/issues/1385)) ([9d928ea](https://github.com/marioparaschiv/unbound/commit/9d928ea3cb9ffc3611add9ae9db66db96d23c89d))
+* **devtools:** find the bridge over Bonjour and add MCP to agents ([#1309](https://github.com/marioparaschiv/unbound/issues/1309)) ([03f4c20](https://github.com/marioparaschiv/unbound/commit/03f4c2016c7064fabb25c853ea766f0f1f9c962d))
+* **devtools:** ship macOS as an .app, explain updates on the install page ([#1337](https://github.com/marioparaschiv/unbound/issues/1337)) ([04bc525](https://github.com/marioparaschiv/unbound/commit/04bc5258661988a4d8601ff4ec41dc914c29f72b))
+* **devtools:** update the app in place and list its downloads ([#1325](https://github.com/marioparaschiv/unbound/issues/1325)) ([0848279](https://github.com/marioparaschiv/unbound/commit/084827906167b0991b86104dfa376b244e4e238f))
+
+
+### Bug Fixes
+
+* **web:** describe everything DevTools does ([#1382](https://github.com/marioparaschiv/unbound/issues/1382)) ([e3e31f7](https://github.com/marioparaschiv/unbound/commit/e3e31f7a07ebb676047f450ef6ea85bd1bf70af4))
+
 ## [1.0.0](https://github.com/marioparaschiv/unbound/compare/devtools-v0.3.0...devtools-v1.0.0) (2026-11-11)
 
 

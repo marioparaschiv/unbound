@@ -1,5 +1,73 @@
 # Changelog
 
+## [2.2.0](https://github.com/marioparaschiv/unbound/compare/web-v2.1.0...web-v2.2.0) (2026-11-14)
+
+
+### Features
+
+* **client:** add Discord experiments to /debug ([#1237](https://github.com/marioparaschiv/unbound/issues/1237)) ([d2f4622](https://github.com/marioparaschiv/unbound/commit/d2f46220f9034b50ee0568e2447b5ad9a9ae60f5))
+* **client:** add errors, log, storage and patches to /debug ([#1163](https://github.com/marioparaschiv/unbound/issues/1163)) ([1cc9625](https://github.com/marioparaschiv/unbound/commit/1cc9625ccecde514a8923d57e66e2e17fd19a339))
+* **client:** add network context to /debug ([#1204](https://github.com/marioparaschiv/unbound/issues/1204)) ([6fc2287](https://github.com/marioparaschiv/unbound/commit/6fc22878df442f8c0e7b0e8712cad1da3c6b1280))
+* **client:** add plugin versions, display and session to /debug ([#1175](https://github.com/marioparaschiv/unbound/issues/1175)) ([8ece009](https://github.com/marioparaschiv/unbound/commit/8ece009861b7ad241ab3feb9753fd63417e228cd))
+* **client:** list other tweaks loaded into Discord in /debug ([#1250](https://github.com/marioparaschiv/unbound/issues/1250)) ([dd8c109](https://github.com/marioparaschiv/unbound/commit/dd8c1091d6d94c7776b1d2b2477df47694f91493))
+* **client:** move installs of renamed addons to their replacement ([#1281](https://github.com/marioparaschiv/unbound/issues/1281)) ([39a3d4b](https://github.com/marioparaschiv/unbound/commit/39a3d4b7c3882f1b3c1f1fa5ef3795217a6387fa))
+* **client:** open the store page from addon install links ([#1312](https://github.com/marioparaschiv/unbound/issues/1312)) ([1e34e63](https://github.com/marioparaschiv/unbound/commit/1e34e63a0fc664f808646b81d66fefba8b45f8b2))
+* **client:** report missing app extensions in /debug ([#1355](https://github.com/marioparaschiv/unbound/issues/1355)) ([a64b857](https://github.com/marioparaschiv/unbound/commit/a64b857dce2a8d6444c9514af99bdd0988f8c4a0))
+* **client:** show addon updates waiting in /debug ([#1251](https://github.com/marioparaschiv/unbound/issues/1251)) ([6d11933](https://github.com/marioparaschiv/unbound/commit/6d11933f2cdaf3f1e3fc4ac041b925828249eec0))
+* **client:** sort the marketplace by newest and badge new addons ([#1205](https://github.com/marioparaschiv/unbound/issues/1205)) ([9205847](https://github.com/marioparaschiv/unbound/commit/920584795d56cb98baca8f9b48b48875739a2aaa))
+* **devtools:** build for Intel Macs ([#1385](https://github.com/marioparaschiv/unbound/issues/1385)) ([9d928ea](https://github.com/marioparaschiv/unbound/commit/9d928ea3cb9ffc3611add9ae9db66db96d23c89d))
+* **devtools:** ship macOS as an .app, explain updates on the install page ([#1337](https://github.com/marioparaschiv/unbound/issues/1337)) ([04bc525](https://github.com/marioparaschiv/unbound/commit/04bc5258661988a4d8601ff4ec41dc914c29f72b))
+* **devtools:** update the app in place and list its downloads ([#1325](https://github.com/marioparaschiv/unbound/issues/1325)) ([0848279](https://github.com/marioparaschiv/unbound/commit/084827906167b0991b86104dfa376b244e4e238f))
+* **discord-bot:** diagnose notifications from /debug reports ([#1197](https://github.com/marioparaschiv/unbound/issues/1197)) ([2d540e1](https://github.com/marioparaschiv/unbound/commit/2d540e1e98dc53fe9181ed47470a07d10a3613ae))
+* **loader:** report signer, binary, re-sign, device and HTTPS facts ([#1274](https://github.com/marioparaschiv/unbound/issues/1274)) ([4bb2629](https://github.com/marioparaschiv/unbound/commit/4bb2629210d6cfb5fcd9defdbb89c52fc3178cf7))
+* **loader:** report update checks, bundle source and settings ([#1162](https://github.com/marioparaschiv/unbound/issues/1162)) ([fdbe58d](https://github.com/marioparaschiv/unbound/commit/fdbe58da281df988197c52f0f560bc428d8478fd))
+* **loader:** skip failed builds, report crashes and pressure ([#1158](https://github.com/marioparaschiv/unbound/issues/1158)) ([dd7f6dd](https://github.com/marioparaschiv/unbound/commit/dd7f6ddc44ede8e26c5cbeeb8d07faac8c4c7d3f))
+* **web:** add load skeletons and infinite scroll to add-on pages ([#1177](https://github.com/marioparaschiv/unbound/issues/1177)) ([bd2478b](https://github.com/marioparaschiv/unbound/commit/bd2478bc56f204ced6c2ac4c2ecc32df750a51f4))
+* **web:** allow badges per sponsor tier ([#1168](https://github.com/marioparaschiv/unbound/issues/1168)) ([f93e012](https://github.com/marioparaschiv/unbound/commit/f93e01205034df265379d7aa82a75cbb30f9b348))
+* **web:** even DevTools download columns, shorter copy ([#1381](https://github.com/marioparaschiv/unbound/issues/1381)) ([12fc670](https://github.com/marioparaschiv/unbound/commit/12fc670c227cdd949d3f34183c415e971bfd5f71))
+* **web:** give hide-unusable-expressions a website icon ([#1310](https://github.com/marioparaschiv/unbound/issues/1310)) ([5ed92f6](https://github.com/marioparaschiv/unbound/commit/5ed92f64f2806e45450dcb77d5d37c5d65056975))
+* **web:** give the new first-party plugins website icons ([#1308](https://github.com/marioparaschiv/unbound/issues/1308)) ([897c51d](https://github.com/marioparaschiv/unbound/commit/897c51df88b85b72c5d4906f32ce9c76b387cb90))
+* **web:** mark scanned Discord builds and updates on /debug ([#1160](https://github.com/marioparaschiv/unbound/issues/1160)) ([b9344cd](https://github.com/marioparaschiv/unbound/commit/b9344cdb12ed71f19603069007a6cd76d290502d))
+* **web:** scroll the Featured shelf sideways with a slow drift ([#1387](https://github.com/marioparaschiv/unbound/issues/1387)) ([def4e24](https://github.com/marioparaschiv/unbound/commit/def4e244c8ad218bf3404e64a7c8c53bdb96dff7))
+* **web:** show the Featured shelf atop the addon listings ([#1339](https://github.com/marioparaschiv/unbound/issues/1339)) ([117e6f2](https://github.com/marioparaschiv/unbound/commit/117e6f26825b2a96f597efdb91270b6c4d25a2db))
+* **web:** unlock the badge for good with a one-time sponsorship of $30 ([#1164](https://github.com/marioparaschiv/unbound/issues/1164)) ([5aa23cd](https://github.com/marioparaschiv/unbound/commit/5aa23cd689c857ca2d8d56bc6feb3cbc1dd8a06a))
+
+
+### Bug Fixes
+
+* **loader:** write the profile expiry as exp ([#1224](https://github.com/marioparaschiv/unbound/issues/1224)) ([f659a0f](https://github.com/marioparaschiv/unbound/commit/f659a0f6e5fb1da4f7b45c1adaa7b9a8011ba163))
+* **plugins:** draw every ADDON.md page icon and flag unknown ones ([#1335](https://github.com/marioparaschiv/unbound/issues/1335)) ([cc6642c](https://github.com/marioparaschiv/unbound/commit/cc6642c50ecb6167dd9defbbdb551859526e2a5e))
+* **web:** delist addons a renamed first-party addon replaces ([#1314](https://github.com/marioparaschiv/unbound/issues/1314)) ([f8aad17](https://github.com/marioparaschiv/unbound/commit/f8aad173c5c2a6c58a0e02e8ec117c0b4eedd079))
+* **web:** describe everything DevTools does ([#1382](https://github.com/marioparaschiv/unbound/issues/1382)) ([e3e31f7](https://github.com/marioparaschiv/unbound/commit/e3e31f7a07ebb676047f450ef6ea85bd1bf70af4))
+* **web:** drop component editing from the DevTools blurb ([#1383](https://github.com/marioparaschiv/unbound/issues/1383)) ([004629e](https://github.com/marioparaschiv/unbound/commit/004629ed30828c720b56b850bbb9f18e69122510))
+* **web:** drop edge fades at a scroller's start and end ([#1390](https://github.com/marioparaschiv/unbound/issues/1390)) ([f21f5d0](https://github.com/marioparaschiv/unbound/commit/f21f5d0976e6612d10b35488ca29d82c0bbc96fe))
+* **web:** fade addon card tags when they overflow ([#1178](https://github.com/marioparaschiv/unbound/issues/1178)) ([bf907eb](https://github.com/marioparaschiv/unbound/commit/bf907ebfa92a10ab642a88efed6a1311e4549134))
+* **web:** fit long install lines on the debug card ([#1223](https://github.com/marioparaschiv/unbound/issues/1223)) ([843e481](https://github.com/marioparaschiv/unbound/commit/843e4815a9ccfeb2487dc7e5e88ddeb8d21144f3))
+* **web:** give updates their own /debug row ([#1169](https://github.com/marioparaschiv/unbound/issues/1169)) ([c4a7f0e](https://github.com/marioparaschiv/unbound/commit/c4a7f0e57ab7cde3750166f8f8cdb20e247566e6))
+* **web:** line the Featured shelf up with the toolbar on wider screens ([#1389](https://github.com/marioparaschiv/unbound/issues/1389)) ([c7ff72c](https://github.com/marioparaschiv/unbound/commit/c7ff72c080bb8fb03a139958acaaa034ded29ef3))
+* **web:** mention MCP eval in the DevTools blurb ([#1384](https://github.com/marioparaschiv/unbound/issues/1384)) ([b282b6e](https://github.com/marioparaschiv/unbound/commit/b282b6e0d85b07f83460c52849f2e9c2fd7214c8))
+* **web:** restore the update check's JSDoc ([#1282](https://github.com/marioparaschiv/unbound/issues/1282)) ([9d75319](https://github.com/marioparaschiv/unbound/commit/9d753197269978bcdf0ff00f0221b8205bbfb495))
+* **web:** send Retry-After on 429s and rate limit exhausted API keys ([#1244](https://github.com/marioparaschiv/unbound/issues/1244)) ([1078b32](https://github.com/marioparaschiv/unbound/commit/1078b3250430f5d5f4dd5a4861f1ab81465201c2))
+* **web:** show sponsorships GitHub is still processing ([#1379](https://github.com/marioparaschiv/unbound/issues/1379)) ([380900b](https://github.com/marioparaschiv/unbound/commit/380900b8642c382402bd4d059290b893a13d6938))
+* **web:** strip blank filler characters from tweak names ([#1362](https://github.com/marioparaschiv/unbound/issues/1362)) ([fda92e6](https://github.com/marioparaschiv/unbound/commit/fda92e67874899a52cbefebc7b878ccea6a2bf01))
+* **web:** tidy tweak names and seconds on the debug card ([#1358](https://github.com/marioparaschiv/unbound/issues/1358)) ([c1eba58](https://github.com/marioparaschiv/unbound/commit/c1eba58b0dd65814e852c0c6b61366f4546f90c1))
+* **web:** trim DevTools download tiles ([#1391](https://github.com/marioparaschiv/unbound/issues/1391)) ([527347a](https://github.com/marioparaschiv/unbound/commit/527347a3e7dfd4aa5aa86debfc7a1b1339667baa))
+* **web:** wrap /debug rows and tighten the environment rows ([#1275](https://github.com/marioparaschiv/unbound/issues/1275)) ([5dbf2db](https://github.com/marioparaschiv/unbound/commit/5dbf2db8edb1b6766a165fa4c5521340a6d6e868))
+* **web:** write the crash window as 24h on the debug card ([#1360](https://github.com/marioparaschiv/unbound/issues/1360)) ([2b41d3a](https://github.com/marioparaschiv/unbound/commit/2b41d3a1d089dfadf3e95e52d6fa30a21ea27090))
+
+
+### Tests
+
+* **web:** render the busiest /debug card and guard its layout ([#1176](https://github.com/marioparaschiv/unbound/issues/1176)) ([e8f8184](https://github.com/marioparaschiv/unbound/commit/e8f8184faf721570270d9b13ee59004b6caf864b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.2.0
+    * @unbound-app/utils bumped to 1.0.2
+
 ## [2.1.0](https://github.com/marioparaschiv/unbound/compare/web-v2.0.0...web-v2.1.0) (2026-11-12)
 
 

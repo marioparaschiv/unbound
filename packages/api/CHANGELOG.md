@@ -1,5 +1,28 @@
 # Changelog
 
+## [3.2.0](https://github.com/marioparaschiv/unbound/compare/api-v3.1.0...api-v3.2.0) (2026-11-14)
+
+
+### Features
+
+* **client:** add weak native handles for plugins ([#1264](https://github.com/marioparaschiv/unbound/issues/1264)) ([7760379](https://github.com/marioparaschiv/unbound/commit/776037991e5b9186edca445dc00f227401c4678f))
+* **client:** finish the theme editor ([#1257](https://github.com/marioparaschiv/unbound/issues/1257)) ([a83193b](https://github.com/marioparaschiv/unbound/commit/a83193b3fcf4a31e75e9bac6cbb1b7bbf76c119c))
+* **client:** open the store page from addon install links ([#1312](https://github.com/marioparaschiv/unbound/issues/1312)) ([1e34e63](https://github.com/marioparaschiv/unbound/commit/1e34e63a0fc664f808646b81d66fefba8b45f8b2))
+* **client:** reconnect a closed gateway on app resume ([#1326](https://github.com/marioparaschiv/unbound/issues/1326)) ([d42e7ba](https://github.com/marioparaschiv/unbound/commit/d42e7baadd98514ff5a155d14fb17dd8949228b6))
+* **devtools:** add an object explorer and structured ubd errors ([#1206](https://github.com/marioparaschiv/unbound/issues/1206)) ([cf37e2b](https://github.com/marioparaschiv/unbound/commit/cf37e2beccf364eb3d4a22842d5c1538c8a5c683))
+* **loader:** add FFI memory, C callbacks and import rebinding ([#1266](https://github.com/marioparaschiv/unbound/issues/1266)) ([5965be8](https://github.com/marioparaschiv/unbound/commit/5965be8306b61099675305e629e79d2fd160b203))
+* **loader:** find classes by shape and hook subclasses or late classes ([#1267](https://github.com/marioparaschiv/unbound/issues/1267)) ([c0347ac](https://github.com/marioparaschiv/unbound/commit/c0347ace0a3a57e226b32f88ef3eb25fe3070f8b))
+* **loader:** let plugins make Objective-C blocks and classes ([#1265](https://github.com/marioparaschiv/unbound/issues/1265)) ([f23f69b](https://github.com/marioparaschiv/unbound/commit/f23f69b7aa52db68878fd0d06a14b7400a3ba0a4))
+* **plugins:** pick users, channels and servers in settings ([#1259](https://github.com/marioparaschiv/unbound/issues/1259)) ([2de0aa6](https://github.com/marioparaschiv/unbound/commit/2de0aa6db1e861408f973894cf0df17d4be3ff2b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 3.2.0
+    * @unbound-app/sdk-generator bumped to 1.0.2
+
 ## [3.1.0](https://github.com/marioparaschiv/unbound/compare/api-v3.0.0...api-v3.1.0) (2026-11-12)
 
 
