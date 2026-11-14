@@ -1,6 +1,6 @@
 {
-	"id": "unbound.voice-messages",
-	"name": "Voice Messages",
+	"id": "unbound.voice-message-tools",
+	"name": "Voice Message Tools",
 	"description": "Plays voice messages faster or slower, saves them from their long-press menu, and sends audio files as voice messages.",
 	"authors": [
 		{
@@ -20,10 +20,11 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"unbound": {
 		"min": "3.0.0"
 	},
 	"icon": "MicrophoneIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"replaces": ["unbound.voice-messages"]
 }

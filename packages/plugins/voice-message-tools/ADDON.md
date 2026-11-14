@@ -10,6 +10,7 @@ banner: media/banner.png
 - :download: Long-press a voice message and pick **Download Voice Message** to keep its audio.
 - :android: On Android it lands in Downloads, with the system's download notification.
 - :apple: On iOS the share sheet opens; **Save to Files** keeps it.
+- :arrow-right: Replaces Voice Messages, which moves over by itself.
 - :code-fork: After Vencord's VoiceDownload and the Custom Voice Messages plugin for Revenge.
 
 ## :gear: Settings

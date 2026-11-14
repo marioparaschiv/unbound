@@ -51,7 +51,9 @@ export function installSpeedHook(scope: NativeUIScope, speed: number) {
 				current.applying = true;
 				objc.invoke(self, 'setRate:', [current.speed]);
 			} catch (error) {
-				console.error(`[Voice Messages] Failed to speed up a player: ${String(error)}`);
+				console.error(
+					`[Voice Message Tools] Failed to speed up a player: ${String(error)}`,
+				);
 			} finally {
 				current.applying = false;
 			}

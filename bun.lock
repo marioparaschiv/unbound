@@ -1765,8 +1765,8 @@
         "rollup": "^4.67.5",
       },
     },
-    "packages/plugins/voice-messages": {
-      "name": "voice-messages",
+    "packages/plugins/voice-message-tools": {
+      "name": "voice-message-tools",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -4656,7 +4656,7 @@
 
     "vlq": ["vlq@1.0.1", "", {}, "sha512-gQpnTgkubC6hQgdIcRdYGDSDc+SaujOdyesZQMv6JlfQee/9Mp0Qhnys6WxDWvQnL5WZdT7o2Ul187aSt0Rq+w=="],
 
-    "voice-messages": ["voice-messages@workspace:packages/plugins/voice-messages"],
+    "voice-message-tools": ["voice-message-tools@workspace:packages/plugins/voice-message-tools"],
     "walker": ["walker@1.0.8", "", { "dependencies": { "makeerror": "1.0.12" } }, "sha512-ts/8E8l5b7kY0vlWLewOkDXMmPdLcVV4GmOQLyxuSswIJsweeFZtAsMF7k1Nszz+TYBQrlYRmzOnr398y1JemQ=="],
 
     "web-worker": ["web-worker@1.5.0", "", {}, "sha512-RiMReJrTAiA+mBjGONMnjVDP2u3p9R1vkcGz6gDIrOMT3oGuYwX2WRMYI9ipkphSuE5XKEhydbhNEJh4NY9mlw=="],
