@@ -13,11 +13,12 @@ use gpui::{
 	AnyElement, Context, Entity, SharedString, UniformListScrollHandle, Window, div, prelude::*, px,
 };
 use unbound_devtools_core::{
-	Devtools, ExplorerTarget, RequestError, VIEWS_PAGE_SIZE, ViewDetails, ViewNode, ViewPage,
+	Devtools, ExplorerTarget, LinkStatus, RequestError, VIEWS_PAGE_SIZE, ViewDetails, ViewNode,
+	ViewPage,
 };
 
 use crate::app::on_runtime;
-use crate::empty::SETUP_STEPS;
+use crate::empty::no_device;
 use crate::empty_state::EmptyState;
 use crate::explorer::{Entry, Explorer, ExplorerHost};
 use crate::mcp_menu::McpButton;
@@ -102,6 +103,8 @@ pub struct ViewFinder {
 	hovered: Option<String>,
 	/// Whether the debugger connection has a device on it.
 	connected: bool,
+	/// The debugger connection, for the pairing state while no device is attached.
+	link: Option<LinkStatus>,
 	/// The page has been shown, so a device that connects gets its roots listed.
 	opened: bool,
 	/// Bumped whenever the roots are listed again; an answer from an older listing names stale ids.
@@ -121,7 +124,8 @@ impl ViewFinder {
 		cx: &mut Context<Self>,
 	) -> Self {
 		let mut explorer = Explorer::new(devtools.clone(), window, cx);
-		explorer.set_connected(device_connected(&devtools), cx);
+		let link = devtools.status().link;
+		explorer.set_connected(device_connected(link.as_ref()), cx);
 		let watch = cx.spawn({
 			let mut changes = devtools.changes();
 			async move |this, cx| {
@@ -137,7 +141,8 @@ impl ViewFinder {
 			}
 		});
 		Self {
-			connected: device_connected(&devtools),
+			connected: device_connected(link.as_ref()),
+			link,
 			devtools,
 			nodes: HashMap::new(),
 			children: HashMap::new(),
@@ -175,8 +180,13 @@ impl ViewFinder {
 	}
 
 	fn status_changed(&mut self, cx: &mut Context<Self>) {
-		let connected = device_connected(&self.devtools);
+		self.link = self.devtools.status().link;
+		let connected = device_connected(self.link.as_ref());
 		if connected == self.connected {
+			// The pairing state shows the bridge's code and reachability, which change on their own.
+			if !connected {
+				cx.notify();
+			}
 			return;
 		}
 		self.connected = connected;
@@ -426,31 +436,27 @@ impl ViewFinder {
 	}
 
 	fn render_state(&self, cx: &mut Context<Self>) -> gpui::AnyElement {
-		let (icon, tone, title, body, retry): (_, _, _, SharedString, _) = if !self.connected {
-			(
-				"icons/unplug.svg",
-				theme::TEXT_FAINT,
-				"No Device Connected",
-				SETUP_STEPS.into(),
-				false,
-			)
-		} else if let Some(Children::Failed(error)) = self.children.get(&None) {
-			(
-				"icons/triangle-alert.svg",
-				theme::ERROR,
-				"Can't List the Views",
-				error.clone().into(),
-				true,
-			)
-		} else {
-			(
-				"icons/layers.svg",
-				theme::TEXT_FAINT,
-				"Listing the Views",
-				"Asking the device for its windows.".into(),
-				false,
-			)
-		};
+		if !self.connected {
+			return no_device(self.link.as_ref()).into_any_element();
+		}
+		let (icon, tone, title, body, retry): (_, _, _, SharedString, _) =
+			if let Some(Children::Failed(error)) = self.children.get(&None) {
+				(
+					"icons/triangle-alert.svg",
+					theme::ERROR,
+					"Can't List the Views",
+					error.clone().into(),
+					true,
+				)
+			} else {
+				(
+					"icons/layers.svg",
+					theme::TEXT_FAINT,
+					"Listing the Views",
+					"Asking the device for its windows.".into(),
+					false,
+				)
+			};
 		EmptyState::new(icon, title)
 			.tone(tone)
 			.body(body)
@@ -494,11 +500,8 @@ impl ExplorerHost for ViewFinder {
 	}
 }
 
-fn device_connected(devtools: &Devtools) -> bool {
-	devtools
-		.status()
-		.link
-		.is_some_and(|link| link.device.is_some())
+fn device_connected(link: Option<&LinkStatus>) -> bool {
+	link.is_some_and(|link| link.device.is_some())
 }
 
 impl Render for ViewFinder {
