@@ -64,7 +64,7 @@ class Unbound : XposedModule() {
         val lsPatched = Platform.isLSPatched(appInfo, param.classLoader)
         val launcherIcons = !lsPatched
         val platformInfo = Platform.describe(appInfo, Platform.frameworkLabel(frameworkName, frameworkVersion, lsPatched))
-        platformInfo.put("appIcons", AndroidAppIcons.describe(moduleInfo, appInfo, packagedIcon, cache))
+        platformInfo.put("appIcons", AndroidAppIcons.describe(moduleInfo, appInfo, packagedIcon, cache, launcherIcons))
             .put("launcherIcons", launcherIcons)
         val bootstrapScripts = cache.value(BOOTSTRAP_SCRIPTS, File(moduleInfo.sourceDir)) {
             readBootstrapScripts(moduleInfo.sourceDir)?.toString()
