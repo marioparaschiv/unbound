@@ -1,0 +1,14 @@
+{
+	"ADD_TO_COLLECTION": "Add to Collection",
+	"COLLECTIONS": "Collections",
+	"NEW_COLLECTION": "New collection",
+	"CREATE": "Create",
+	"GIF_COUNT": "{count, plural, one {# GIF} other {# GIFs}}",
+	"ADDED_TO": "Added to {name}",
+	"REMOVED_FROM": "Removed from {name}",
+	"DELETE_COLLECTION": "Delete {name}?",
+	"DELETE_COLLECTION_BODY": "Its GIFs stay in your favourites and other collections.",
+	"DELETE": "Delete",
+	"NO_COLLECTIONS": "Name a collection below to start one with this GIF.",
+	"HOLD_TO_DELETE": "Hold a collection to delete it."
+}

@@ -1,0 +1,21 @@
+{
+	"id": "unbound.gif-collections",
+	"name": "GIF Collections",
+	"description": "Sort GIFs into your own collections and open them from the GIF picker.",
+	"authors": [
+		{
+			"name": "creations",
+			"id": "209830981060788225"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "GifIcon",
+	"main": "index.tsx"
+}
