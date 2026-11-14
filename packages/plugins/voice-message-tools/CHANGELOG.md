@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.2] - 2026-11-14
+
+### Fixed
+
+- The download button in the iOS player is round again instead of squeezed.
+
 ## [1.4.1] - 2026-11-14
 
 ### Fixed

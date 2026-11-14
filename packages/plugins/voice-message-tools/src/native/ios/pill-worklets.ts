@@ -8,7 +8,9 @@ const MESSAGE_CELL = 'DCDMessageTableViewCell';
 const SPEED_TAG = 0x5b1d;
 const DOWNLOAD_TAG = 0x5b1e;
 const SPEED_WIDTH = 36;
-const DOWNLOAD_WIDTH = 22;
+const DOWNLOAD_WIDTH = 28;
+const DOWNLOAD_POINT_SIZE = 18;
+const ASPECT_FIT = 1;
 const GAP = 2;
 const END_PADDING = 10;
 const CONTROLS_WIDTH = SPEED_WIDTH + DOWNLOAD_WIDTH + GAP + END_PADDING;
@@ -140,13 +142,21 @@ function createControl(
 
 		if (title) objc.invoke(title, 'setFont:', [font]);
 	} else {
+		const configuration = objc.call(
+			objc.getClass('UIImageSymbolConfiguration')!,
+			'configurationWithPointSize:',
+			DOWNLOAD_POINT_SIZE,
+		);
 		const image = objc.call(
 			objc.getClass('UIImage')!,
-			'systemImageNamed:',
+			'systemImageNamed:withConfiguration:',
 			'arrow.down.circle',
+			configuration,
 		);
+		const imageView = objc.invoke(button, 'imageView', []) as NativeObjectHandle | null;
 
 		if (image) objc.invoke(button, 'setImage:forState:', [image, 0]);
+		if (imageView) objc.invoke(imageView, 'setContentMode:', [ASPECT_FIT]);
 	}
 
 	objc.invoke(button, 'addTarget:action:forControlEvents:', [
