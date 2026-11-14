@@ -1,6 +1,6 @@
 # Plugins
 
-114 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+115 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -118,3 +118,4 @@
 - <img src="../../assets/plugins/readme-icons/chevron-large-right-icon.svg" width="20" height="20" align="absmiddle" alt=""> [View Raw](https://unbound.rip/addons/unbound.view-raw): View and copy raw data for messages, channels, guilds, and user profiles.
 - <img src="../../assets/plugins/readme-icons/microphone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Voice Message Tools](https://unbound.rip/addons/unbound.voice-message-tools): Plays voice messages faster or slower and saves them from buttons in the player, and sends audio files as voice messages.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Youtube Adblock](https://unbound.rip/addons/unbound.youtube-adblock): Blocks ads in YouTube videos played inside Discord and in the Watch Together activity, using AdGuard's YouTube ad blocker.
+- <img src="../../assets/plugins/readme-icons/folder-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Zip Preview](https://unbound.rip/addons/unbound.zip-preview): Lists the files inside zip archives, such as .zip, .jar, .apk and .ipa, from the message's long-press menu, without downloading them.
