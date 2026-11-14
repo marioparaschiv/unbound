@@ -6,9 +6,9 @@ import {
 	describeRequiredLoaderTitle,
 } from '~/updates/describe-required-loader';
 import { readInstallKind } from '~/updates/install-kind';
-import { compareVersions } from '~/core/versions';
 import navigationReady from '~/core/navigation-ready';
 import type { UpdatesState } from '~/updates/state';
+import { compareVersions } from '~/core/versions';
 import { messages, format } from '~/i18n/api';
 import { Screens } from '~/core/constants';
 import { reload } from '~/native/runtime';

@@ -33,9 +33,14 @@ const info: DebugCardRequest = {
 	flags: ['Jailbroken', 'verified build'],
 };
 
-type SentCard = Omit<DebugCardRequest, 'device'> & { device?: string; [field: string]: unknown };
+// What tests send: a card, or one with fields the schema rejects or does not know.
+type SentCard = Omit<DebugCardRequest, 'device' | 'power'> & {
+	device?: string;
+	power?: Record<string, string | number | boolean>;
+	clock?: { utcOffset: string };
+};
 
-function send(body: SentCard | Record<string, unknown>, ip: string) {
+function send(body: SentCard, ip: string) {
 	return renderDebugCardEndpoint.handle(
 		ctx,
 		new Request(new URL('/api/v1/debug-cards', ctx.env.PUBLIC_URL), {
