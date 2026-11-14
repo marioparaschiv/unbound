@@ -347,6 +347,44 @@ test('lists the toasts shown or dropped after the scroll started', () => {
 	]);
 });
 
+test('reads plugin errors, off-main calls and toasts from JSON lines', () => {
+	const line = (time: string, src: string, lvl: string, scope: string[], msg: string) =>
+		JSON.stringify({ t: Date.parse(time), src, lvl, scope, msg });
+	const lines = [
+		line(
+			'2026-10-29T18:00:01.000Z',
+			'unbound',
+			'error',
+			['Loader', 'plugins'],
+			'Native plugin hook failed in Chat Bubbles: boom\n    at frame',
+		),
+		line(
+			'2026-10-29T18:00:02.000Z',
+			'unbound',
+			'warn',
+			['Loader', 'plugins'],
+			'Avatar Radius called setFrame: off the main thread.',
+		),
+		line('2026-10-29T18:00:03.000Z', 'unbound', 'error', ['More User Tags'], 'Failed to paint'),
+		line('2026-10-29T18:00:04.000Z', 'unbound', 'info', ['Toasts'], 'Showing a toast: Copied'),
+		line(
+			'2026-10-29T18:00:05.000Z',
+			'unbound',
+			'warn',
+			['Toasts'],
+			'Ignored a toast with nothing to show Error\n    at showToast (unbound:1:4)\n    at copyLink (unbound:1:9)',
+		),
+	];
+	const since = '2026-10-29T18:00:00.000Z';
+
+	expect([...parsePluginErrors(lines, since)]).toEqual([
+		['Chat Bubbles', ['boom']],
+		['More User Tags', ['Failed to paint']],
+	]);
+	expect([...parseOffMainWarnings(lines, since)]).toEqual([['Avatar Radius', ['setFrame:']]]);
+	expect(parseToastLines(lines, since)).toEqual(['Copied', 'empty toast from copyLink']);
+});
+
 test('collects the hooks each plugin had skipped since the run began', () => {
 	const lines = [
 		'2026-10-29T17:59:00.000Z W [plugins] Native plugin hook skipped in Chat Bubbles: the JavaScript thread did not answer the layoutSubviews hook within 100 ms, so it did not run',
