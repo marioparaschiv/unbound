@@ -1681,6 +1681,20 @@
         "rollup": "^4.67.5",
       },
     },
+    "packages/plugins/sticker-sizes": {
+      "name": "sticker-sizes",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.67.5",
+      },
+    },
     "packages/plugins/super-reaction-tweaks": {
       "name": "super-reaction-tweaks",
       "dependencies": {
@@ -4499,6 +4513,7 @@
 
     "sticker-preview": ["sticker-preview@workspace:packages/plugins/sticker-preview"],
 
+    "sticker-sizes": ["sticker-sizes@workspace:packages/plugins/sticker-sizes"],
     "stream-combiner2": ["stream-combiner2@1.1.1", "", { "dependencies": { "duplexer2": "~0.1.0", "readable-stream": "^2.0.2" } }, "sha512-3PnJbYgS56AeWgtKF5jtJRT6uFJe56Z0Hc5Ngg/6sI6rIt8iiMBTa9cvdyFfpMQjaVHr8dusbNeFGIIonxOvKw=="],
 
     "string-kit": ["string-kit@0.19.5", "", {}, "sha512-MqNWtQQw6xMFbOSa26HfyS5uyDu1tR4OEPz44VDP6JWa/S0E0N11uw8CXrPt5hme/tBXRp5AmoIvFl5B9lt7PA=="],
