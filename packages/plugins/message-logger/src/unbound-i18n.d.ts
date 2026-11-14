@@ -9,6 +9,22 @@ declare module '@unbound-app/i18n' {
 		readonly RED_TEXT: string;
 		/** Show the text of deleted messages in red. */
 		readonly RED_TEXT_SUBTITLE: string;
+		/** Highlight deleted messages */
+		readonly DELETED_HIGHLIGHT: string;
+		/** Draws deleted messages with a highlight and a bar at their side, like mentions. */
+		readonly DELETED_HIGHLIGHT_SUBTITLE: string;
+		/** Highlight colour */
+		readonly HIGHLIGHT_BACKGROUND: string;
+		/** Red tint */
+		readonly HIGHLIGHT_BACKGROUND_FALLBACK: string;
+		/** Bar colour */
+		readonly HIGHLIGHT_BAR: string;
+		/** Red */
+		readonly HIGHLIGHT_BAR_FALLBACK: string;
+		/** Edited label */
+		readonly EDITED_TEXT: string;
+		/** Shown after each earlier version of an edited message, instead of (edited). */
+		readonly EDITED_TEXT_SUBTITLE: string;
 		/** Deleted marker */
 		readonly DELETED_MARKER: string;
 		/** Show “This message was deleted” under deleted messages, with a Dismiss link. */

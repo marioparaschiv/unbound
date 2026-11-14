@@ -7,6 +7,7 @@ const none: RowDecoration = {
 	redText: true,
 	deletedMarker: true,
 	deletedColor: 0xfff23f42,
+	deletedHighlight: null,
 	dismissTarget: null,
 	previousVersions: [],
 	deletedAttachmentIds: new Set(),
@@ -94,5 +95,28 @@ describe('decorateRow', () => {
 		decorateRow(target, none);
 
 		expect(target).toEqual(row());
+	});
+});
+
+describe('deleted highlight and edited label', () => {
+	test('highlights a deleted row like a mention', () => {
+		const highlighted = row();
+		const highlight = { backgroundColor: 1, gutterColor: 2 };
+
+		decorateRow(highlighted, { ...none, deleted: true, deletedHighlight: highlight });
+
+		expect(highlighted.backgroundHighlight).toEqual(highlight);
+	});
+
+	test('leaves a live row unhighlighted', () => {
+		const live = row();
+
+		decorateRow(live, { ...none, deletedHighlight: { backgroundColor: 1, gutterColor: 2 } });
+
+		expect(live.backgroundHighlight).toBeUndefined();
+	});
+
+	test('ends an earlier version with the custom label', () => {
+		expect(asEditedSubtext('hello', ' [was edited]')).toBe('-# hello [was edited]');
 	});
 });

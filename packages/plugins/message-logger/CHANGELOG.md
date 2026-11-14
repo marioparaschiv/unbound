@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0] - 2026-11-14
+
+### Added
+
+- **Highlight deleted messages:** draws deleted messages with a highlight and a side bar like mentions, in colours you pick.
+- **Edited label:** replace the (edited) after each earlier version of an edited message with your own text.
+
 ## [1.2.3] - 2026-11-14
 
 ### Fixed

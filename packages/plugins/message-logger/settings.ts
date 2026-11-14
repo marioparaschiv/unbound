@@ -7,6 +7,14 @@ export default defineSettings(
 			title: 'RED_TEXT',
 			subtitle: 'RED_TEXT_SUBTITLE',
 		}),
+		deletedHighlight: setting.boolean({
+			default: false,
+			title: 'DELETED_HIGHLIGHT',
+			subtitle: 'DELETED_HIGHLIGHT_SUBTITLE',
+		}),
+		highlightBackground: setting.string({ default: '', hidden: true }),
+		highlightBar: setting.string({ default: '', hidden: true }),
+		editedText: setting.string({ default: '', hidden: true }),
 		deletedMarker: setting.boolean({
 			default: true,
 			title: 'DELETED_MARKER',
