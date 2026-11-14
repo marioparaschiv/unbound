@@ -23,7 +23,6 @@ import { patches } from '~/patcher/api';
 import type { AddonCount, DebugInfo, DiscordSupport } from './format-debug-info';
 
 import { privateDnsName, resolverName } from './dns-provider';
-import { readClockSkew, utcOffset } from './clock';
 import { readExperiments } from './experiments';
 import { readAppSession } from './app-session';
 import { recentErrors } from './recent-errors';
@@ -373,7 +372,6 @@ export function readDebugInfo(): DebugInfo {
 		memory: attempt(() => memoryOf(state), undefined),
 		network: attempt(() => state?.network, undefined),
 		power: attempt(() => powerOf(state), undefined),
-		clock: attempt(() => ({ utcOffset: utcOffset() }), undefined),
 		dns: attempt(() => dnsOf(state), undefined),
 		push: attempt(() => pushOf(state, android), undefined),
 		gateway: attempt(readGateway, undefined),
@@ -404,12 +402,11 @@ export function readDebugInfo(): DebugInfo {
  */
 export async function readDebugReport(): Promise<DebugInfo> {
 	const info = readDebugInfo();
-	const [accessibility, skewS] = await Promise.all([readAccessibility(), readClockSkew()]);
+	const accessibility = await readAccessibility();
 
 	return {
 		...info,
 		...(info.display && { display: { ...info.display, ...accessibility } }),
-		...(info.clock && { clock: { ...info.clock, skewS } }),
 	};
 }
 

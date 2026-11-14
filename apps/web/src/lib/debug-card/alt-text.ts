@@ -16,7 +16,6 @@ import {
 	updateNotes,
 } from '~/lib/debug-card/layout';
 import {
-	clockSummary,
 	dnsSummary,
 	gatewaySummary,
 	powerSummary,
@@ -45,7 +44,6 @@ const DROP_ORDER = [
 	'locale',
 	'session',
 	'display',
-	'clock',
 	'push',
 	'errors',
 	'disabled',
@@ -134,7 +132,6 @@ export function debugAltText(
 		...(info.network && { network: networkSummary(info.network) }),
 		...(info.dns && { dns: dnsSummary(info.dns) }),
 		...(info.power && { power: powerSummary(info.power) }),
-		...(info.clock && { clock: clockSummary(info.clock) }),
 		...(info.push && { push: pushSummary(info.push) }),
 		...(info.gateway && { gateway: gatewaySummary(info.gateway) }),
 		...(info.crashReport && { crashReport: info.crashReport }),
