@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { filterLogEntries, type LogFilter } from '~/logs/filter';
 
-const entry = (src: UnboundLogSource, msg = src, scope: string[] = []): UnboundLogEntry => ({
+const entry = (src: UnboundLogSource, msg: string, scope: string[] = []): UnboundLogEntry => ({
 	t: 0,
 	src,
 	lvl: 'info',
