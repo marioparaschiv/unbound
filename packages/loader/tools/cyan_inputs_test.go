@@ -111,8 +111,12 @@ func TestCyanInputsKeepDiscordsIconsAndSchemes(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(merge.keys) != 8 {
-		t.Fatalf("merge plist must hold only the version, icon, URL, local network and animated icon keys, has %v", merge.keys)
+	if len(merge.keys) != 9 {
+		t.Fatalf("merge plist must hold only the version, speech, icon, URL, local network and animated icon keys, has %v", merge.keys)
+	}
+
+	if merge.get("NSSpeechRecognitionUsageDescription").text != unboundSpeechUsage {
+		t.Fatal("speech recognition needs a usage description, or iOS stops the app when a plugin asks")
 	}
 
 	services := merge.get("NSBonjourServices").valuesOrNil()
@@ -278,7 +282,7 @@ func TestCyanInputsNameTheLoaderInTheVersion(t *testing.T) {
 			t.Fatalf("branding %v: the loader restores Discord's version from %s, got %q", branding, discordVersionKey, discord)
 		}
 
-		if !branding && (len(args) != 2 || len(files) != 0 || len(merge.keys) != 2) {
+		if !branding && (len(args) != 2 || len(files) != 0 || len(merge.keys) != 3) {
 			t.Fatalf("TestFlight keeps Discord's name and icons: args %v, files %v, keys %v", args, files, merge.keys)
 		}
 	}
