@@ -37,11 +37,11 @@ describe('device notes', () => {
 			pushNote({ permission: 'granted', registered: true, environment: 'production' }),
 		).toBe(undefined);
 		expect(pushNote({ permission: 'denied', playServices: false })).toBe(
-			'notifications off · no Play services',
+			'perm denied · no GMS',
 		);
 		expect(
 			pushNote({ permission: 'granted', registered: true, focus: true, summary: true }),
-		).toBe('Focus on · in Scheduled Summary');
+		).toBe('focus · summary');
 		expect(pushNote({ permission: 'granted', focus: false, summary: false })).toBe(undefined);
 		expect(dnsNote({ resolver: 'Cloudflare' })).toBeUndefined();
 		expect(dnsNote({ resolver: 'local', privateDns: 'NextDNS' })).toBe(

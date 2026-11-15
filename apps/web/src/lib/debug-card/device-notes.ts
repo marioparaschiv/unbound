@@ -43,13 +43,13 @@ export function powerNote(power?: DebugCardPower): string | undefined {
 
 function pushProblems(push: DebugCardPush): string[] {
 	const problems = [
-		push.permission === 'denied' && 'notifications off',
-		push.permission === 'not asked' && 'notifications never asked',
-		push.registered === false && 'not registered for pushes',
-		push.playServices === false && 'no Play services',
-		push.environment === 'missing' && 'no push entitlement',
-		push.focus === true && 'Focus on',
-		push.summary === true && 'in Scheduled Summary',
+		push.permission === 'denied' && 'perm denied',
+		push.permission === 'not asked' && 'perm unasked',
+		push.registered === false && 'no token',
+		push.playServices === false && 'no GMS',
+		push.environment === 'missing' && 'no aps-env',
+		push.focus === true && 'focus',
+		push.summary === true && 'summary',
 	];
 
 	return problems.filter((problem): problem is string => typeof problem === 'string');
