@@ -25,15 +25,19 @@ func deviceLogText(line string) string {
 	if !strings.HasPrefix(line, "{") {
 		return line
 	}
+
 	var entry deviceLogEntry
 	if json.Unmarshal([]byte(line), &entry) != nil || entry.Time == nil || entry.Message == nil {
 		return line
 	}
+
 	letter, ok := deviceLogLevelLetters[entry.Level]
 	if !ok {
 		letter = "I"
 	}
+
 	stamp := time.UnixMilli(*entry.Time).UTC().Format("2006-01-02T15:04:05.000Z") + " " + letter
+
 	message := *entry.Message
 	switch {
 	case entry.Source == "js":
@@ -43,13 +47,16 @@ func deviceLogText(line string) string {
 		if category == "" {
 			category = "Loader"
 		}
+
 		return stamp + " [" + category + "] " + message
 	case entry.Source == "unbound":
 		if len(entry.Scope) > 0 {
 			message = "[" + strings.Join(entry.Scope, " → ") + "] " + message
 		}
+
 		return stamp + " [console] " + message
 	}
+
 	return stamp + " [" + strings.Join(append([]string{entry.Source}, entry.Scope...), "/") + "] " + message
 }
 
@@ -59,5 +66,6 @@ func deviceLogChunk(chunk string) string {
 	for index, line := range lines {
 		lines[index] = deviceLogText(line)
 	}
+
 	return strings.Join(lines, "\n") + "\n"
 }

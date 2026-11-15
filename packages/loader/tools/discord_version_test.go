@@ -15,6 +15,7 @@ func TestAndroidCodeForDiscordVersion(t *testing.T) {
 		if err != nil {
 			t.Fatalf("version %q failed: %v", test.version, err)
 		}
+
 		if code != test.code {
 			t.Fatalf("version %q mapped to %d, want %d", test.version, code, test.code)
 		}
@@ -34,6 +35,7 @@ func TestDiscordVersionForAndroidCode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if version != "350.8" {
 		t.Fatalf("version code mapped to %q, want %q", version, "350.8")
 	}

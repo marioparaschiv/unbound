@@ -17,19 +17,26 @@ func scriptReferences(t *testing.T, path, source string) []*compatReference {
 
 func scriptProgramReferences(t *testing.T, sources map[string]string) *compatSourceSet {
 	t.Helper()
+
 	set := newCompatSourceSet()
+
 	paths := make([]string, 0, len(sources))
 	for path := range sources {
 		paths = append(paths, path)
 	}
+
 	sort.Strings(paths)
+
 	var files []*scriptFile
+
 	for _, path := range paths {
 		component, _ := compatComponent(path)
 		file := compatSourceFile{path: path, component: component, platform: compatPlatform(path)}
 		files = append(files, newScriptFile(file, scriptSourceRoot(path), tokenizeScript(sources[path])))
 	}
+
 	analyzeScripts(set, files)
+
 	return set
 }
 
@@ -39,6 +46,7 @@ func findReference(references []*compatReference, kind, name string) *compatRefe
 			return reference
 		}
 	}
+
 	return nil
 }
 
@@ -61,28 +69,36 @@ const label = 'don\'t match this';
 	if reference := findReference(references, referenceProps, "transitionToGuild,selectChannel"); reference == nil || reference.Platform != "android" {
 		t.Fatalf("props lookup was not extracted for Android: %+v", reference)
 	}
+
 	if findReference(references, referenceStore, "UserStore") == nil {
 		t.Fatal("findStore must append Store")
 	}
+
 	if findReference(references, referenceStore, "PermissionStore") == nil || findReference(references, referenceStore, "PermissionStoreStore") != nil {
 		t.Fatal("short: false must keep the store name")
 	}
+
 	if findReference(references, referenceModulePath, "modules/messages/native/long_press/Sheet.tsx") == nil {
 		t.Fatal("module path was not extracted")
 	}
+
 	hook := findReference(references, referenceJavaMethod, "onSizeChanged")
 	if hook == nil || hook.Class != "com.discord.chat.presentation.message.MessageView" || strings.Join(hook.Parameters, ",") != "int,int,int,int" {
 		t.Fatalf("hook was not resolved through constants: %+v", hook)
 	}
+
 	if reference := findReference(references, referenceJavaClass, "com.discord.chat.presentation.message.MessageView"); reference == nil || !reference.Strict {
 		t.Fatal("a hooked class must be recorded as strict")
 	}
+
 	if objc := findReference(references, referenceObjCMethod, "setAttributedText:"); objc == nil || objc.Class != "DCDLabel" {
 		t.Fatalf("objc hook was not extracted: %+v", objc)
 	}
+
 	if findReference(references, referenceJavaMethod, "getId-3Eiw7ao") == nil {
 		t.Fatal("java.invoke method name was not extracted")
 	}
+
 	if findReference(references, referenceModulePath, "@unbound-app/api/metro") != nil {
 		t.Fatal("import specifiers must be ignored")
 	}
@@ -93,22 +109,28 @@ func TestPictureInPictureAndroidModulePathIsPlatformScoped(t *testing.T) {
 	if !ok {
 		t.Fatal("could not locate test source")
 	}
+
 	root := filepath.Join(filepath.Dir(filename), "..", "..", "..")
+
 	sources, err := collectCompatReferences(root)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	found := false
+
 	for _, reference := range sources.sorted() {
 		if reference.Kind != referenceModulePath || reference.Name != "modules/external_pip/ExternalPipView.android.tsx" {
 			continue
 		}
+
 		found = true
+
 		if reference.Platform != "android" {
 			t.Fatalf("Android-only PiP module path has platform %q at %+v", reference.Platform, reference.Locations)
 		}
 	}
+
 	if !found {
 		t.Fatal("Android PiP module path was not extracted")
 	}
@@ -140,12 +162,15 @@ func TestCompatLogosExtraction(t *testing.T) {
 	if reference := findReference(references, referenceObjCMethod, "application:didFinishLaunchingWithOptions:"); reference == nil || reference.Class != "AppDelegate" {
 		t.Fatalf("multi-line selector was not joined: %+v", references)
 	}
+
 	if findReference(references, referenceObjCMethod, "layoutSubviews") == nil {
 		t.Fatal("zero-argument selector was not extracted")
 	}
+
 	if reference := findReference(references, referenceObjCClass, "AppDelegate"); reference == nil || !reference.Strict {
 		t.Fatal("hooked class must be strict")
 	}
+
 	if reference := findReference(references, referenceObjCClass, "DCDThemeColor"); reference == nil || reference.Strict {
 		t.Fatal("NSClassFromString lookup must be recorded without strictness")
 	}
@@ -153,11 +178,13 @@ func TestCompatLogosExtraction(t *testing.T) {
 
 func buildHermesBundle(entries []string, identifiers int) []byte {
 	var storage []byte
+
 	small := make([]uint32, len(entries))
 	for index, entry := range entries {
 		small[index] = uint32(len(storage))<<1 | uint32(len(entry))<<24
 		storage = append(storage, entry...)
 	}
+
 	kinds := []uint32{1<<31 | uint32(identifiers), uint32(len(entries) - identifiers)}
 
 	data := make([]byte, 128)
@@ -167,18 +194,22 @@ func buildHermesBundle(entries []string, identifiers int) []byte {
 	binary.LittleEndian.PutUint32(data[48:], uint32(identifiers))
 	binary.LittleEndian.PutUint32(data[52:], uint32(len(entries)))
 	binary.LittleEndian.PutUint32(data[60:], uint32(len(storage)))
+
 	appendWord := func(value uint32) {
 		data = binary.LittleEndian.AppendUint32(data, value)
 	}
 	for _, kind := range kinds {
 		appendWord(kind)
 	}
+
 	for index := 0; index < identifiers; index++ {
 		appendWord(0)
 	}
+
 	for _, entry := range small {
 		appendWord(entry)
 	}
+
 	return append(data, storage...)
 }
 
@@ -187,12 +218,15 @@ func TestParseHermesStrings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if !table.has("UserStore") || !table.has("modules/a.tsx") || table.has("missing") {
 		t.Fatal("string table was not decoded")
 	}
+
 	if !table.isIdentifier("transitionToGuild") || table.isIdentifier("UserStore") {
 		t.Fatal("string kinds were not applied")
 	}
+
 	if _, err := parseHermesStrings([]byte("not hermes")); err == nil {
 		t.Fatal("non-Hermes input must fail")
 	}
@@ -202,12 +236,15 @@ func TestCompatDescriptorsAndNames(t *testing.T) {
 	if got := javaParameterDescriptors([]string{"int", "java.lang.String", "byte[]", "android.text.Spannable$Factory"}); got != "ILjava/lang/String;[BLandroid/text/Spannable$Factory;" {
 		t.Fatalf("unexpected descriptors %q", got)
 	}
+
 	if got := demangleObjCClassName("_TtC6Sentry9SentrySDK"); got != "Sentry.SentrySDK" {
 		t.Fatalf("unexpected demangled name %q", got)
 	}
+
 	if got := demangleObjCClassName("DCDLabel"); got != "DCDLabel" {
 		t.Fatalf("plain names must stay unchanged, got %q", got)
 	}
+
 	if !isAppleClassName("UIApplication") || !isAppleClassName("NSError") || isAppleClassName("DCDTheme") || isAppleClassName("SentrySDK") {
 		t.Fatal("Apple class detection is wrong")
 	}
@@ -224,6 +261,7 @@ func compatTestTargets() []*compatTarget {
 	dex := newDexIndex()
 	dex.Classes["com.discord.View"] = &dexClass{Name: "com.discord.View", Super: "android.view.View", Methods: map[string][]string{"setMessage": {"Lcom/discord/Message;"}}, Fields: map[string]bool{}}
 	dex.MethodNames["setMessage"] = true
+
 	return []*compatTarget{
 		{Platform: "ios", Version: "1", hermes: hermes, objc: objc},
 		{Platform: "android", Version: "1", hermes: hermes, dex: dex},
@@ -237,6 +275,7 @@ func statusOf(results *compatResults, platform, kind, name string) compatFinding
 			return finding
 		}
 	}
+
 	return compatFinding{}
 }
 
@@ -257,6 +296,7 @@ func TestEvaluateCompat(t *testing.T) {
 
 	expect := func(platform, kind, name, status string) {
 		t.Helper()
+
 		if got := statusOf(results, platform, kind, name); got.Status != status {
 			t.Fatalf("%s %s %s: got %q (%s), want %q", platform, kind, name, got.Status, got.Reason, status)
 		}
@@ -275,6 +315,7 @@ func TestEvaluateCompat(t *testing.T) {
 		"android": {Seen: []string{references[8].key()}, Statuses: map[string]string{references[8].key(): compatOK}},
 	}}
 	regressed := evaluateCompat(references, compatTestTargets(), baseline)
+
 	finding := statusOf(regressed, "android", referenceJavaField, "currentEmojiId")
 	if finding.Status != compatBroken || !finding.New {
 		t.Fatalf("a field seen before must regress to new and broken, got %+v", finding)
@@ -286,6 +327,7 @@ func TestEvaluateCompat(t *testing.T) {
 			t.Fatalf("report is missing %q:\n%s", expected, report)
 		}
 	}
+
 	if !compatHasProblems(regressed) {
 		t.Fatal("problems were not detected")
 	}
@@ -304,25 +346,31 @@ func TestEvaluateCompatScansASinglePlatformBuild(t *testing.T) {
 		"ios": {Seen: []string{references[1].key()}, Statuses: map[string]string{references[1].key(): compatOK}},
 	}}
 	results := evaluateCompat(references, []*compatTarget{android}, baseline)
+
 	results.Channel = "alpha"
 	if _, scanned := results.Platforms["ios"]; scanned || results.Platforms["android"] == nil {
 		t.Fatalf("an Android-only scan must only record Android state, got %v", results.Platforms)
 	}
+
 	for _, finding := range results.Findings {
 		if finding.Platform != "android" {
 			t.Fatalf("an Android-only scan reported %+v", finding)
 		}
 	}
+
 	if compatHasProblems(results) {
 		t.Fatalf("an Android-only scan must not inherit iOS problems: %+v", results.Findings)
 	}
+
 	report := renderCompatReport(results)
 	if !strings.Contains(report, "## Discord compatibility scan (alpha)\n\nAndroid 352.8\n") || strings.Contains(report, "| iOS |") {
 		t.Fatalf("the report must only describe the Android build:\n%s", report)
 	}
+
 	if versions := compatIssueVersions(results); versions != "Android 352.8" {
 		t.Fatalf("issue versions are %q, want Android 352.8", versions)
 	}
+
 	if plan := planCompatIssue(nil, "alpha", compatIssueVersions(results), true); plan.Title != "Discord compatibility (alpha): Android 352.8" {
 		t.Fatalf("issue title is %q", plan.Title)
 	}

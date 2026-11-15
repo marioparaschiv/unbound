@@ -14,10 +14,12 @@ func TestUIScopeNamespaceIdentityAndDisposal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	engine, err := exec.LookPath("bun")
 	if err != nil {
 		t.Skip("Bun is unavailable")
 	}
+
 	script := "const createCache = () => " + strings.TrimSuffix(strings.TrimSpace(string(source)), ";") + `;
 const cache = createCache();
 const check = (condition, message) => { if (!condition) throw new Error(message); };
@@ -53,12 +55,15 @@ func TestBootstrapScriptsAvoidLoopBlockBindings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	loop := regexp.MustCompile(`\bfor\s*\(\s*(const|let)\b`)
+
 	for _, script := range scripts {
 		source, err := os.ReadFile(script)
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		for index, line := range strings.Split(string(source), "\n") {
 			if loop.MatchString(line) {
 				t.Errorf("%s:%d declares a loop binding with const or let; Hermes compiles bootstrap source with one binding per function, so closures created in the loop all see its last value. Use forEach or a helper function instead.", filepath.Base(script), index+1)

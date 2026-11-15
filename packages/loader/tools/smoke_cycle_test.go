@@ -22,6 +22,7 @@ func TestCycleProblemsFlagFailedSlowAndLeakyPlugins(t *testing.T) {
 		before: &smokeResources{Hooks: 12, Surfaces: 1, Handles: 60},
 		after:  &smokeResources{Hooks: 14, Surfaces: 2, Handles: 400},
 	}
+
 	problems := strings.Join(cycleProblems(cycle), "\n")
 	for _, expected := range []string{
 		"unbound.thrown failed its stop and start cycle: boom",
@@ -39,6 +40,7 @@ func TestCycleProblemsFlagFailedSlowAndLeakyPlugins(t *testing.T) {
 			t.Fatalf("missing %q in:\n%s", expected, problems)
 		}
 	}
+
 	if strings.Contains(problems, "unbound.good") {
 		t.Fatalf("a clean plugin was flagged:\n%s", problems)
 	}
@@ -53,6 +55,7 @@ func TestCycleProblemsAcceptAStableCycle(t *testing.T) {
 	if problems := cycleProblems(cycle); len(problems) != 0 {
 		t.Fatalf("a stable cycle was flagged: %v", problems)
 	}
+
 	if report := renderSmokeCycle(cycle); !strings.Contains(report, "Stopped, restarted and updated 1 plugins") || !strings.Contains(report, "| Native handles | 60 | 90 |") {
 		t.Fatalf("cycle report missing:\n%s", report)
 	}

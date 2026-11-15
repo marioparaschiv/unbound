@@ -129,6 +129,7 @@ func runSmoke(args []string) error {
 	if len(args) == 0 {
 		return errors.New("usage: smoke <android|ios|ios-prewarm|ios-device> [flags]")
 	}
+
 	switch args[0] {
 	case "android":
 		return runAndroidSmoke(args[1:])
@@ -157,6 +158,7 @@ func registerSmokeFlags(set *flag.FlagSet) *smokeOptions {
 	set.DurationVar(&options.budget.bundle, "bundle-budget", 0, "longest Discord may take from launch to executing Unbound's bundle; 0 only reports it")
 	set.DurationVar(&options.budget.plugins, "plugins-budget", 0, "longest Discord may take from launch to loading every plugin; 0 only reports it")
 	set.DurationVar(&options.budget.pluginStart, "plugin-start-budget", 0, "longest any single plugin may take to start; 0 only reports it")
+
 	return options
 }
 
@@ -165,12 +167,15 @@ func discoverSmokePlugins(directory, platform string) ([]smokePlugin, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var plugins []smokePlugin
+
 	for _, manifestPath := range manifests {
 		data, err := os.ReadFile(manifestPath)
 		if err != nil {
 			return nil, err
 		}
+
 		var manifest struct {
 			ID        string                     `json:"id"`
 			Main      string                     `json:"main"`
@@ -179,35 +184,46 @@ func discoverSmokePlugins(directory, platform string) ([]smokePlugin, error) {
 		if err := json.Unmarshal(data, &manifest); err != nil {
 			return nil, fmt.Errorf("%s: %w", manifestPath, err)
 		}
+
 		if !smokePluginID.MatchString(manifest.ID) {
 			return nil, fmt.Errorf("%s has an unusable plugin id %q", manifestPath, manifest.ID)
 		}
+
 		if _, listed := manifest.Platforms[platform]; manifest.Platforms != nil && !listed {
 			continue
 		}
+
 		dist := filepath.Dir(manifestPath)
 		if manifest.Main == "" {
 			return nil, fmt.Errorf("%s has no main entry", manifestPath)
 		}
+
 		if _, err := os.Stat(filepath.Join(dist, manifest.Main)); err != nil {
 			return nil, fmt.Errorf("%s is not built: %w", manifest.ID, err)
 		}
+
 		entries, err := os.ReadDir(dist)
 		if err != nil {
 			return nil, err
 		}
+
 		plugin := smokePlugin{id: manifest.ID, directory: dist}
+
 		for _, entry := range entries {
 			if entry.Type().IsRegular() {
 				plugin.files = append(plugin.files, entry.Name())
 			}
 		}
+
 		plugins = append(plugins, plugin)
 	}
+
 	if len(plugins) == 0 {
 		return nil, fmt.Errorf("%s has no built %s plugins; run bun run plugins:build first", directory, platform)
 	}
+
 	sort.Slice(plugins, func(i, j int) bool { return plugins[i].id < plugins[j].id })
+
 	return plugins, nil
 }
 
@@ -224,6 +240,7 @@ func smokeSettings(plugins []smokePlugin, debuggerAddress, bundleURL string) ([]
 	if bundleURL != "" {
 		unbound["loader"] = map[string]any{"update": map[string]any{"url": bundleURL}}
 	}
+
 	return json.MarshalIndent(map[string]any{
 		"unbound": unbound,
 		"plugins": map[string]any{"states": states},
@@ -235,14 +252,18 @@ func unsupportedDiscordReason(repository, platform, version string) (string, err
 	if err != nil {
 		return "", err
 	}
+
 	minimum := policy.Minimum[platform]
+
 	order, err := compareDiscordVersions(version, minimum)
 	if err != nil {
 		return "", fmt.Errorf("read the Discord version of the build: %w", err)
 	}
+
 	if order >= 0 {
 		return "", nil
 	}
+
 	return fmt.Sprintf("Skipped: this build patches Discord %s, older than %s, the oldest %s version Unbound supports (compat-policy.json), so the loader is not expected to inject into it. Builds of a supported Discord, such as main pushes and releases, run the smoke test.", version, minimum, platform), nil
 }
 
@@ -250,16 +271,20 @@ func skipSmokeTest(platform string, options *smokeOptions, reason string) error 
 	if err := os.MkdirAll(options.artifacts, 0o755); err != nil {
 		return err
 	}
+
 	title := map[string]string{"android": "Android", "ios": "iOS"}[platform]
 	report := fmt.Sprintf("## %s smoke test\n\n%s\n\n", title, reason)
 	fmt.Print(report)
+
 	_ = os.WriteFile(filepath.Join(options.artifacts, "report.md"), []byte(report), 0o644)
 	if options.summary != "" {
 		if file, err := os.OpenFile(options.summary, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644); err == nil {
 			defer file.Close()
+
 			_, _ = file.WriteString(report)
 		}
 	}
+
 	return nil
 }
 
@@ -267,10 +292,12 @@ func runSmokeTest(ctx context.Context, platform string, options *smokeOptions, t
 	if err := os.MkdirAll(options.artifacts, 0o755); err != nil {
 		return err
 	}
+
 	plugins, err := discoverSmokePlugins(options.plugins, platform)
 	if err != nil {
 		return err
 	}
+
 	result := &smokeResult{platform: platform, plugins: plugins, loaded: map[string]bool{}, failures: map[string][]string{}, budget: options.budget}
 	defer func() {
 		target.collect(context.Background(), options.artifacts)
@@ -278,14 +305,17 @@ func runSmokeTest(ctx context.Context, platform string, options *smokeOptions, t
 	}()
 
 	bundleURL := ""
+
 	if options.client != "" {
 		server, err := serveSmokeBundle(options.client, options.bundlePort, filepath.Join(options.artifacts, "bundle-requests.txt"))
 		if err != nil {
 			return err
 		}
 		defer server.Close()
+
 		bundleURL = fmt.Sprintf("http://%s:%d/", target.hostAddress(), options.bundlePort)
 	}
+
 	bridge, err := startSmokeBridge(options.repository, options.bridgePort, filepath.Join(options.artifacts, "debugger-bridge.txt"))
 	if err != nil {
 		return err
@@ -296,9 +326,11 @@ func runSmokeTest(ctx context.Context, platform string, options *smokeOptions, t
 	if err != nil {
 		return err
 	}
+
 	if err := os.WriteFile(filepath.Join(options.artifacts, "settings.json"), settings, 0o644); err != nil {
 		return err
 	}
+
 	if err := target.prepare(ctx, plugins, settings); err != nil {
 		return result.fail(fmt.Errorf("prepare %s: %w", target.name(), err))
 	}
@@ -308,63 +340,81 @@ func runSmokeTest(ctx context.Context, platform string, options *smokeOptions, t
 		return result.fail(fmt.Errorf("stream %s logs: %w", target.name(), err))
 	}
 	defer stopLogs()
+
 	logFile, err := os.Create(filepath.Join(options.artifacts, platform+"-log.txt"))
 	if err != nil {
 		return err
 	}
 	defer logFile.Close()
+
 	watcher := newSmokeLogWatcher(target)
 	go watcher.consume(logs, logFile)
 
 	watcher.markLaunch()
+
 	if err := target.launch(ctx); err != nil {
 		return result.fail(fmt.Errorf("launch Discord: %w", err))
 	}
+
 	deadline := time.Now().Add(options.timeout)
 	waitForSmokeLoads(ctx, target, watcher, plugins, deadline)
+
 	if crash := watcher.takeCrashBeforeLoads(); crash != "" {
 		result.relaunch = crash
 		fmt.Printf("::warning::Discord crashed on the first launch and was relaunched once: %s\n", crash)
 		watcher.markLaunch()
+
 		if err := target.launch(ctx); err != nil {
 			return result.fail(fmt.Errorf("relaunch Discord: %w", err))
 		}
+
 		waitForSmokeLoads(ctx, target, watcher, plugins, deadline)
 	}
-	var statuses []smokePluginStatus
-	var evalErr error
+
+	var (
+		statuses []smokePluginStatus
+		evalErr  error
+	)
 	if watcher.crashed() {
 		evalErr = errors.New("skipped because Discord crashed")
 	} else {
 		statuses, evalErr = evaluateSmokeStatuses(ctx, target, watcher, options, deadline)
 	}
+
 	if evalErr == nil {
 		result.resources = measureSmokeResources(ctx, options)
 		if !options.quick {
 			result.cycle = cycleSmokePlugins(ctx, options, result.resources)
 		}
 	}
+
 	settle := time.Now().Add(5 * time.Second)
 	for time.Now().Before(settle) && ctx.Err() == nil {
 		time.Sleep(time.Second)
 	}
+
 	if bridgeLog, err := os.ReadFile(filepath.Join(options.artifacts, "debugger-bridge.txt")); err == nil {
 		for _, line := range strings.Split(string(bridgeLog), "\n") {
 			watcher.observeFailures(line)
 		}
 	}
+
 	watcher.snapshot(result)
+
 	if evalErr == nil && !watcher.crashed() && !options.quick {
 		result.faults = runSmokeFaults(ctx, target, options, result.startup.runtime)
 	}
+
 	result.statuses = statuses
 	if evalErr != nil {
 		result.evalError = evalErr.Error()
 	}
+
 	result.problems = smokeProblems(result)
 	if len(result.problems) > 0 {
 		return fmt.Errorf("%s smoke test failed:\n- %s", platform, strings.Join(result.problems, "\n- "))
 	}
+
 	return nil
 }
 
@@ -378,10 +428,12 @@ func waitForSmokeLoads(ctx context.Context, target smokeTarget, watcher *smokeLo
 		if watcher.loadedAll(plugins) || watcher.crashed() {
 			return
 		}
+
 		if !discordRunning(ctx, target, watcher) {
 			watcher.recordCrash("Discord exited before the loader logged every plugin")
 			return
 		}
+
 		time.Sleep(smokePollInterval)
 	}
 }
@@ -391,38 +443,48 @@ func discordRunning(ctx context.Context, target smokeTarget, watcher *smokeLogWa
 	if target.running(ctx) {
 		return true
 	}
+
 	return watcher.takeReload() && target.attach(ctx) == nil
 }
 
 func evaluateSmokeStatuses(ctx context.Context, target smokeTarget, watcher *smokeLogWatcher, options *smokeOptions, deadline time.Time) ([]smokePluginStatus, error) {
 	lastErr := errSmokeNotConnected
+
 	for time.Now().Before(deadline) && ctx.Err() == nil {
 		if !discordRunning(ctx, target, watcher) {
 			return nil, errors.New("Discord exited before the debugger connected")
 		}
+
 		statuses, err := evaluateSmokeStatusesOnce(ctx, options)
 		if err == nil {
 			return statuses, nil
 		}
+
 		lastErr = err
 		if !errors.Is(err, errSmokeNotConnected) && !errors.Is(err, errSmokeEvalTimedOut) {
 			return nil, err
 		}
+
 		time.Sleep(smokePollInterval)
 	}
+
 	return nil, lastErr
 }
 
 func evaluateSmokeStatusesOnce(ctx context.Context, options *smokeOptions) ([]smokePluginStatus, error) {
 	cli := filepath.Join(options.repository, "packages", "cli", "src", "index.ts")
+
 	evalCtx, cancel := context.WithTimeout(ctx, 90*time.Second)
 	defer cancel()
+
 	command := exec.CommandContext(evalCtx, "bun", cli, "eval", "--json", "--port", strconv.Itoa(options.bridgePort), "--timeout", "30000", smokeStatusExpression)
 	output, err := command.Output()
+
 	var exit *exec.ExitError
 	if errors.As(err, &exit) && exit.ExitCode() == 2 {
 		return nil, errSmokeNotConnected
 	}
+
 	return parseSmokeEvalOutput(output, err)
 }
 
@@ -437,22 +499,28 @@ func parseSmokeEvalOutput(output []byte, runErr error) ([]smokePluginStatus, err
 		if runErr != nil {
 			return nil, fmt.Errorf("debugger eval failed: %v: %s", runErr, strings.TrimSpace(string(output)))
 		}
+
 		return nil, fmt.Errorf("unreadable debugger eval output %q: %w", strings.TrimSpace(string(output)), err)
 	}
+
 	if !result.OK {
 		message := result.Error
 		if message == "" {
 			message = result.Text
 		}
+
 		if strings.Contains(message, "Evaluation timed out") {
 			return nil, fmt.Errorf("%w: %s", errSmokeEvalTimedOut, message)
 		}
+
 		return nil, fmt.Errorf("the plugin status check threw on the device: %s", message)
 	}
+
 	var statuses []smokePluginStatus
 	if err := json.Unmarshal([]byte(result.Value), &statuses); err != nil {
 		return nil, fmt.Errorf("unreadable plugin statuses %q: %w", result.Value, err)
 	}
+
 	return statuses, nil
 }
 
@@ -463,6 +531,7 @@ func lastJSONLine(output []byte) []byte {
 			return []byte(line)
 		}
 	}
+
 	return output
 }
 
@@ -470,11 +539,14 @@ func serveSmokeBundle(directory string, port int, requestLog string) (*http.Serv
 	if _, err := os.Stat(filepath.Join(directory, "manifest.json")); err != nil {
 		return nil, fmt.Errorf("%s is not a built client: %w", directory, err)
 	}
+
 	logFile, err := os.Create(requestLog)
 	if err != nil {
 		return nil, err
 	}
+
 	var mu sync.Mutex
+
 	files := http.FileServer(http.Dir(directory))
 	server := &http.Server{
 		ReadHeaderTimeout: 10 * time.Second,
@@ -485,13 +557,16 @@ func serveSmokeBundle(directory string, port int, requestLog string) (*http.Serv
 			files.ServeHTTP(writer, request)
 		}),
 	}
+
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		logFile.Close()
 		return nil, err
 	}
+
 	server.RegisterOnShutdown(func() { logFile.Close() })
 	go func() { _ = server.Serve(listener) }()
+
 	return server, nil
 }
 
@@ -500,13 +575,16 @@ func startSmokeBridge(repository string, port int, logPath string) (*exec.Cmd, e
 	if err != nil {
 		return nil, err
 	}
+
 	command := exec.Command("bun", filepath.Join(repository, "packages", "debugger", "src", "index.ts"), "--port", strconv.Itoa(port))
 	command.Stdout = logFile
+
 	command.Stderr = logFile
 	if err := command.Start(); err != nil {
 		logFile.Close()
 		return nil, fmt.Errorf("start the debugger bridge: %w", err)
 	}
+
 	address := fmt.Sprintf("127.0.0.1:%d", port)
 	for attempt := 0; attempt < 60; attempt++ {
 		connection, err := net.DialTimeout("tcp", address, time.Second)
@@ -514,9 +592,12 @@ func startSmokeBridge(repository string, port int, logPath string) (*exec.Cmd, e
 			connection.Close()
 			return command, nil
 		}
+
 		time.Sleep(500 * time.Millisecond)
 	}
+
 	stopSmokeProcess(command)
+
 	return nil, fmt.Errorf("the debugger bridge never listened on %s", address)
 }
 
@@ -524,6 +605,7 @@ func stopSmokeProcess(command *exec.Cmd) {
 	if command == nil || command.Process == nil {
 		return
 	}
+
 	_ = command.Process.Kill()
 	_ = command.Wait()
 }
@@ -531,19 +613,23 @@ func stopSmokeProcess(command *exec.Cmd) {
 func runSmokeCommand(ctx context.Context, timeout time.Duration, name string, args ...string) (string, error) {
 	commandCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
+
 	output, err := exec.CommandContext(commandCtx, name, args...).CombinedOutput()
 	if err != nil {
 		return string(output), fmt.Errorf("%s %s: %w: %s", name, strings.Join(args, " "), err, strings.TrimSpace(string(output)))
 	}
+
 	return string(output), nil
 }
 
 func saveSmokeOutput(ctx context.Context, path string, timeout time.Duration, name string, args ...string) {
 	commandCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
+
 	output, err := exec.CommandContext(commandCtx, name, args...).Output()
 	if err != nil && len(output) == 0 {
 		output = []byte(err.Error() + "\n")
 	}
+
 	_ = os.WriteFile(path, output, 0o644)
 }

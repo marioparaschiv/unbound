@@ -24,12 +24,16 @@ const smokeCrashFixtureID = "smoke.fault.crashes"
 func smokeScript(name string) string {
 	helpers, err := smokeScriptFiles.ReadFile("smoke_scripts/fault-helpers.js")
 	if err != nil {
+		// The scripts are embedded at build time, so a missing one is a broken build.
 		panic(err)
 	}
+
 	script, err := smokeScriptFiles.ReadFile("smoke_scripts/" + name)
 	if err != nil {
+		// The scripts are embedded at build time, so a missing one is a broken build.
 		panic(err)
 	}
+
 	return strings.Replace(string(script), "__FAULT_HELPERS__", strings.TrimSpace(string(helpers)), 1)
 }
 
@@ -45,10 +49,12 @@ func runSmokeFault(ctx context.Context, options *smokeOptions, expression string
 	if err != nil {
 		return smokeFaultResult{Problem: "the fault check could not run: " + err.Error()}
 	}
+
 	var result smokeFaultResult
 	if err := json.Unmarshal([]byte(value), &result); err != nil {
 		return smokeFaultResult{Problem: fmt.Sprintf("unreadable fault result %q", value)}
 	}
+
 	return result
 }
 
@@ -71,6 +77,7 @@ func runSmokeFaults(ctx context.Context, target smokeTarget, options *smokeOptio
 			Observed: fmt.Sprintf("skipped: Discord's runtime took %s to start here, and the check needs up to %d relaunches", roundStartup(runtimeStart), smokeCrashRelaunches),
 		})
 	}
+
 	return append(faults, runSmokeCrashFault(ctx, target, options))
 }
 
@@ -79,9 +86,11 @@ func runSmokeCrashFault(ctx context.Context, target smokeTarget, options *smokeO
 	if problem := armSmokeCrashFixture(evaluateSmokeExpressionWithin(ctx, options, smokeCrashArmExpression, 20*time.Second)); problem != "" {
 		return smokeFaultResult{Name: name, Problem: problem}
 	}
+
 	if !waitUntil(ctx, smokeCrashStopWait, func() bool { return !target.running(ctx) }) {
 		return smokeFaultResult{Name: name, Problem: "the fixture that calls abort() while starting did not crash Discord"}
 	}
+
 	for launch := 1; launch <= smokeCrashRelaunches; launch++ {
 		if err := target.launch(ctx); errors.Is(err, errSmokeNotStarted) {
 			// The fixture can crash Discord before the first poll sees it: count that launch as a crash.
@@ -89,13 +98,17 @@ func runSmokeCrashFault(ctx context.Context, target smokeTarget, options *smokeO
 		} else if err != nil {
 			return smokeFaultResult{Name: name, Problem: "relaunch Discord: " + err.Error()}
 		}
+
 		if !waitForSmokeDebugger(ctx, target, options) {
 			continue
 		}
+
 		result := runSmokeFault(ctx, options, smokeCrashCheckExpression, 30*time.Second)
 		result.Observed = fmt.Sprintf("%s, on launch %d after the crash", result.Observed, launch)
+
 		return result
 	}
+
 	return smokeFaultResult{Name: name, Problem: fmt.Sprintf("Discord kept crashing for %d relaunches, so the loader never disabled the plugin that crashed it", smokeCrashRelaunches)}
 }
 
@@ -106,26 +119,32 @@ func armSmokeCrashFixture(value string, err error) string {
 	case err == nil && value != "armed":
 		return fmt.Sprintf("the crash fixture could not be armed: the device answered %q", value)
 	}
+
 	return ""
 }
 
 func waitForSmokeDebugger(ctx context.Context, target smokeTarget, options *smokeOptions) bool {
 	answered := false
 	stoppedSince := time.Time{}
+
 	waitUntil(ctx, smokeCrashRelaunchWait, func() bool {
 		if _, err := evaluateSmokeExpression(ctx, options, "1"); err == nil {
 			answered = true
 			return true
 		}
+
 		if target.running(ctx) {
 			stoppedSince = time.Time{}
 			return false
 		}
+
 		if stoppedSince.IsZero() {
 			stoppedSince = time.Now()
 		}
+
 		return time.Since(stoppedSince) > smokeCrashStoppedGrace
 	})
+
 	return answered
 }
 
@@ -135,22 +154,27 @@ func waitUntil(ctx context.Context, limit time.Duration, done func() bool) bool 
 		if done() {
 			return true
 		}
+
 		time.Sleep(smokePollInterval)
 	}
+
 	return false
 }
 
 func faultProblems(faults []smokeFaultResult) []string {
 	problems := []string{}
+
 	for _, fault := range faults {
 		if fault.Problem != "" {
 			name := fault.Name
 			if name == "" {
 				name = "fault check"
 			}
+
 			problems = append(problems, name+": "+fault.Problem)
 		}
 	}
+
 	return problems
 }
 
@@ -158,15 +182,20 @@ func renderSmokeFaults(faults []smokeFaultResult) string {
 	if len(faults) == 0 {
 		return ""
 	}
+
 	var report strings.Builder
 	report.WriteString("| Fault check | Result |\n| --- | --- |\n")
+
 	for _, fault := range faults {
 		result := fault.Observed
 		if fault.Problem != "" {
 			result = "**" + fault.Problem + "**"
 		}
+
 		fmt.Fprintf(&report, "| %s | %s |\n", fault.Name, result)
 	}
+
 	report.WriteString("\n")
+
 	return report.String()
 }

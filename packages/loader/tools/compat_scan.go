@@ -73,6 +73,7 @@ func runCompatScan(args []string) error {
 	set := flag.NewFlagSet("compat-scan", flag.ContinueOnError)
 	root := set.String("root", "../..", "monorepo root")
 	ipa := set.String("ipa", "", "decrypted Discord IPA")
+
 	var apks stringList
 	set.Var(&apks, "apk", "Discord APK (repeatable for splits)")
 	androidVersion := set.String("android-version", "", "Discord Android version")
@@ -86,21 +87,26 @@ func runCompatScan(args []string) error {
 	androidFramework := set.String("android-framework", "", "a full Android framework jar with its hidden classes (Robolectric's android-all, downloaded into --cache when empty)")
 	iosRuntime := set.String("ios-runtime", "", "an iOS simulator RuntimeRoot, for the private classes and selectors iOS ships (found under CoreSimulator when empty)")
 	failOnBreakage := set.Bool("fail-on-breakage", false, "exit with an error when anything is broken or possibly broken")
+
 	cache := set.String("cache", defaultCompatCache(), "where --channel keeps the Discord builds it downloads")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
+
 	if *ipa == "" && len(apks) == 0 && discordAndroidChannelRank(*channel) < 0 {
 		return errNoCompatTarget
 	}
+
 	if discordAndroidChannelRank(*channel) >= 0 && (*ipa == "" || len(apks) == 0) {
 		builds, err := fetchCompatBuilds(context.Background(), *channel, *cache, compatFetch{android: len(apks) == 0, ios: *ipa == ""})
 		if err != nil {
 			return err
 		}
+
 		if *ipa == "" {
 			*ipa = builds.ipa
 		}
+
 		if len(apks) == 0 {
 			apks = stringList{builds.apk}
 			if *androidVersion == "" {
@@ -113,25 +119,31 @@ func runCompatScan(args []string) error {
 	if err != nil {
 		return err
 	}
+
 	bytecode, err := loadClientBytecodeReference(*root)
 	if err != nil {
 		return err
 	}
+
 	references := append([]*compatReference{bytecode}, sources.sorted()...)
+
 	policy, err := loadCompatPolicy(*root)
 	if err != nil {
 		return err
 	}
 
 	var targets []*compatTarget
+
 	if *ipa != "" {
 		target, err := loadIOSTarget(*ipa)
 		if err != nil {
 			return fmt.Errorf("iOS: %w", err)
 		}
+
 		if *iosSDK == "" {
 			*iosSDK = discoverIOSSDK()
 		}
+
 		if *iosSDK != "" {
 			if target.sdk, err = loadIOSSDKIndex(*iosSDK); err != nil {
 				return fmt.Errorf("iOS SDK: %w", err)
@@ -139,9 +151,11 @@ func runCompatScan(args []string) error {
 		} else {
 			fmt.Fprintln(os.Stderr, "compat-scan: no iOS SDK found, members Discord inherits from UIKit stay unverified")
 		}
+
 		if *iosRuntime == "" {
 			*iosRuntime = discoverIOSRuntime()
 		}
+
 		if *iosRuntime != "" {
 			if target.system, err = loadIOSRuntimeIndex(*iosRuntime, *cache); err != nil {
 				return fmt.Errorf("iOS runtime: %w", err)
@@ -149,16 +163,20 @@ func runCompatScan(args []string) error {
 		} else {
 			fmt.Fprintln(os.Stderr, "compat-scan: no iOS simulator runtime found, private iOS classes and selectors stay unverified")
 		}
+
 		targets = append(targets, target)
 	}
+
 	if len(apks) > 0 {
 		target, err := loadAndroidTarget(apks, *androidVersion)
 		if err != nil {
 			return fmt.Errorf("Android: %w", err)
 		}
+
 		if *androidJar == "" {
 			*androidJar = discoverAndroidJar()
 		}
+
 		if *androidJar != "" {
 			if target.framework, err = loadJavaFrameworkIndex(*androidJar); err != nil {
 				return fmt.Errorf("android.jar: %w", err)
@@ -166,25 +184,32 @@ func runCompatScan(args []string) error {
 		} else {
 			fmt.Fprintln(os.Stderr, "compat-scan: no android.jar found, members Discord inherits from Android stay unverified")
 		}
+
 		if *androidFramework == "" {
 			if *androidFramework, err = cachedAndroidFramework(context.Background(), *cache); err != nil {
 				return fmt.Errorf("Android framework: %w", err)
 			}
 		}
+
 		hidden, err := loadJavaFrameworkIndex(*androidFramework)
 		if err != nil {
 			return fmt.Errorf("Android framework: %w", err)
 		}
+
 		if target.framework == nil {
 			target.framework = newJavaFrameworkIndex()
 		}
+
 		mergeJavaFrameworkIndex(target.framework, hidden)
+
 		if target.own, err = loadOwnJavaIndex(*root); err != nil {
 			return fmt.Errorf("loader sources: %w", err)
 		}
+
 		if target.shapes, err = loadDiscordShapes(*root); err != nil {
 			return err
 		}
+
 		targets = append(targets, target)
 	}
 
@@ -192,6 +217,7 @@ func runCompatScan(args []string) error {
 	if err != nil {
 		return err
 	}
+
 	results := evaluateCompat(references, targets, baseline)
 	results.Channel = *channel
 	results.Dynamic = sources.dynamic
@@ -208,23 +234,28 @@ func runCompatScan(args []string) error {
 	} else {
 		fmt.Print(report)
 	}
+
 	if *resultsPath != "" {
 		encoded, err := json.MarshalIndent(results, "", "  ")
 		if err != nil {
 			return err
 		}
+
 		if err := os.WriteFile(*resultsPath, encoded, 0o644); err != nil {
 			return err
 		}
 	}
+
 	if *failOnBreakage {
 		return compatBreakageError(results)
 	}
+
 	return nil
 }
 
 func compatBreakageError(results *compatResults) error {
 	broken, possible := 0, 0
+
 	for _, finding := range results.Findings {
 		switch finding.Status {
 		case compatBroken:
@@ -233,13 +264,16 @@ func compatBreakageError(results *compatResults) error {
 			possible++
 		}
 	}
+
 	if broken == 0 && possible == 0 {
 		return nil
 	}
+
 	summary := compatTargetSummary(results)
 	if bytecode := compatBytecodeFindings(results, compatBroken); len(bytecode) > 0 {
 		summary += ": " + bytecode[0].Reason
 	}
+
 	return fmt.Errorf("%s: %d broken and %d possibly broken lookups", summary, broken, possible)
 }
 
@@ -247,17 +281,21 @@ func readCompatBaseline(path string) (*compatResults, error) {
 	if path == "" {
 		return nil, nil
 	}
+
 	data, err := os.ReadFile(path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}
+
 	var baseline compatResults
 	if err := json.Unmarshal(data, &baseline); err != nil {
 		return nil, fmt.Errorf("baseline: %w", err)
 	}
+
 	return &baseline, nil
 }
 
@@ -266,59 +304,76 @@ func loadIOSTarget(path string) (*compatTarget, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	target := &compatTarget{Platform: "ios", Version: metadata.Version, Build: metadata.Build, objc: newObjCIndex()}
+
 	archive, err := zip.OpenReader(path)
 	if err != nil {
 		return nil, err
 	}
 	defer archive.Close()
+
 	bundlePattern := regexp.MustCompile(`^Payload/[^/]+\.app/main\.jsbundle$`)
+
 	for _, file := range archive.File {
 		if !strings.HasPrefix(file.Name, "Payload/") || file.FileInfo().IsDir() {
 			continue
 		}
+
 		if bundlePattern.MatchString(file.Name) {
 			data, err := readZipEntry(file)
 			if err != nil {
 				return nil, err
 			}
+
 			target.readHermesBundle(file.Name, data)
+
 			continue
 		}
+
 		if file.UncompressedSize64 < 4096 || strings.Contains(file.Name, ".appex/") {
 			continue
 		}
+
 		reader, err := file.Open()
 		if err != nil {
 			return nil, err
 		}
+
 		header := make([]byte, 4)
 		_, readErr := io.ReadFull(reader, header)
 		reader.Close()
+
 		if readErr != nil || !isMachO(header) {
 			continue
 		}
+
 		data, err := readZipEntry(file)
 		if err != nil {
 			return nil, err
 		}
+
 		if err := addMachOToIndex(target.objc, data); err != nil {
 			return nil, fmt.Errorf("%s: %w", file.Name, err)
 		}
 	}
+
 	if target.bundle == "" {
 		return nil, errors.New("the IPA has no Hermes bundle")
 	}
+
 	return target, nil
 }
 
 func loadAndroidTarget(paths []string, version string) (*compatTarget, error) {
 	target := &compatTarget{Platform: "android", Version: version, dex: newDexIndex()}
+
 	for _, path := range paths {
 		archive, err := zip.OpenReader(path)
 		if err != nil {
 			return nil, err
 		}
+
 		for _, file := range archive.File {
 			switch {
 			case file.Name == "assets/index.android.bundle":
@@ -327,6 +382,7 @@ func loadAndroidTarget(paths []string, version string) (*compatTarget, error) {
 					archive.Close()
 					return nil, err
 				}
+
 				target.readHermesBundle(file.Name, data)
 			case file.Name == "resources.arsc" && target.resources == nil:
 				data, err := readZipEntry(file)
@@ -334,6 +390,7 @@ func loadAndroidTarget(paths []string, version string) (*compatTarget, error) {
 					archive.Close()
 					return nil, err
 				}
+
 				if target.resources, err = parseResourceTable(data); err != nil {
 					archive.Close()
 					return nil, fmt.Errorf("resources.arsc: %w", err)
@@ -344,17 +401,21 @@ func loadAndroidTarget(paths []string, version string) (*compatTarget, error) {
 					archive.Close()
 					return nil, err
 				}
+
 				if err := addDexToIndex(target.dex, data); err != nil {
 					archive.Close()
 					return nil, fmt.Errorf("%s: %w", file.Name, err)
 				}
 			}
 		}
+
 		archive.Close()
 	}
+
 	if target.bundle == "" {
 		return nil, errors.New("the APK has no Hermes bundle")
 	}
+
 	return target, nil
 }
 
@@ -370,6 +431,7 @@ func isAppleClassName(name string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -381,6 +443,7 @@ func isSystemJavaClass(name string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -390,14 +453,17 @@ func similarClassNames(name string, classes []string) string {
 
 func similarTerms(terms []string, candidates func(yield func(string) bool)) string {
 	var parts []string
+
 	for _, term := range terms {
 		if names := nearestNames(term, candidates); len(names) > 0 {
 			parts = append(parts, "`"+term+"` → "+describeTerms(names))
 		}
 	}
+
 	if len(parts) == 0 {
 		return ""
 	}
+
 	return " (similar: " + strings.Join(parts, "; ") + ")"
 }
 
@@ -408,6 +474,7 @@ func sortedObjCClassNames(index *objcIndex) []string {
 			names = append(names, name)
 		}
 	}
+
 	return names
 }
 
@@ -416,6 +483,7 @@ func sortedDexClassNames(index *dexIndex) []string {
 	for name := range index.Classes {
 		names = append(names, name)
 	}
+
 	return names
 }
 
@@ -424,12 +492,14 @@ func isSystemReference(reference *compatReference, target *compatTarget) bool {
 	if reference.Kind == referenceObjCClass || reference.Kind == referenceJavaClass {
 		owner = reference.Name
 	}
+
 	switch reference.Kind {
 	case referenceObjCClass, referenceObjCMethod:
 		return target.sdk == nil && owner != "" && isAppleClassName(owner)
 	case referenceJavaClass, referenceJavaMethod:
 		return target.framework == nil && owner != "" && isSystemJavaClass(owner)
 	}
+
 	return false
 }
 
@@ -438,6 +508,7 @@ func describeTerms(terms []string) string {
 	for index, term := range terms {
 		quoted[index] = "`" + term + "`"
 	}
+
 	return strings.Join(quoted, ", ")
 }
 
@@ -447,6 +518,7 @@ func evaluateReference(reference *compatReference, target *compatTarget, seen ma
 		if seen[key] {
 			return compatBroken, reason + ", but it was found in an earlier Discord build"
 		}
+
 		return compatUnverified, reason
 	}
 
@@ -464,9 +536,11 @@ func evaluateReference(reference *compatReference, target *compatTarget, seen ma
 		if target.hermes.has(reference.Name) {
 			return compatOK, ""
 		}
+
 		return compatBroken, "`" + reference.Name + "` is not in the Hermes bundle" + similarNames(reference.Name, setNames(target.hermes.identifiers))
 	case referenceProps, referencePrototypes:
 		var missing, plain []string
+
 		for _, term := range reference.Terms {
 			switch {
 			case !target.hermes.has(term):
@@ -475,22 +549,27 @@ func evaluateReference(reference *compatReference, target *compatTarget, seen ma
 				plain = append(plain, term)
 			}
 		}
+
 		if len(missing) > 0 {
 			return compatBroken, describeTerms(missing) + " not in the Hermes bundle" + similarTerms(missing, setNames(target.hermes.identifiers))
 		}
+
 		if len(plain) > 0 {
 			return compatPossible, describeTerms(plain) + " only appears as a string, never as a property name"
 		}
+
 		return compatOK, ""
 	case referenceJavaShape:
 		if target.dex == nil {
 			return "", ""
 		}
+
 		return evaluateShapeReference(reference, target)
 	case referenceResource:
 		if target.dex == nil {
 			return "", ""
 		}
+
 		return evaluateResourceReference(reference, target)
 	}
 
@@ -499,11 +578,13 @@ func evaluateReference(reference *compatReference, target *compatTarget, seen ma
 			return status, reason
 		}
 	}
+
 	if target.dex != nil {
 		if status, reason, ok := evaluateJavaReference(reference, target, unlessSeen); ok {
 			return status, reason
 		}
 	}
+
 	return "", ""
 }
 
@@ -514,49 +595,63 @@ func evaluateCompat(references []*compatReference, targets []*compatTarget, base
 		if baseline != nil && baseline.Platforms[target.Platform] != nil {
 			previous = baseline.Platforms[target.Platform]
 		}
+
 		seen := map[string]bool{}
 		for _, key := range previous.Seen {
 			seen[key] = true
 		}
+
 		state := &compatPlatformState{Version: target.Version, Statuses: map[string]string{}}
 
 		var findings []compatFinding
+
 		for _, reference := range references {
 			applies := false
 			for _, platform := range reference.platforms() {
 				applies = applies || platform == target.Platform
 			}
+
 			if !applies || isSystemReference(reference, target) || target.own == nil && (isOwnJavaName(reference.Name) || isOwnJavaName(reference.Class)) {
 				continue
 			}
+
 			status, reason := evaluateReference(reference, target, seen)
 			if status == "" {
 				continue
 			}
+
 			if status == compatOK {
 				seen[reference.key()] = true
 			}
+
 			findings = append(findings, compatFinding{Reference: reference, Platform: target.Platform, Status: status, Reason: reason})
 		}
+
 		resolveFallbacks(findings)
 		resolveLegacy(findings)
+
 		for _, finding := range findings {
 			key := finding.Reference.key()
 			if worse(finding.Status, state.Statuses[key]) {
 				state.Statuses[key] = finding.Status
 			}
+
 			if finding.Status == compatBroken || finding.Status == compatPossible {
 				before, known := previous.Statuses[key]
 				finding.New = known && before != finding.Status && before != compatBroken
 			}
+
 			results.Findings = append(results.Findings, finding)
 		}
+
 		for key := range seen {
 			state.Seen = append(state.Seen, key)
 		}
+
 		sort.Strings(state.Seen)
 		results.Platforms[target.Platform] = state
 	}
+
 	return results
 }
 
@@ -567,36 +662,45 @@ func resolves(status string) bool {
 func resolveFallbacks(findings []compatFinding) {
 	alternatives := map[string]map[int][]int{}
 	counts := map[string]int{}
+
 	var groups []string
+
 	for index, finding := range findings {
 		group := finding.Reference.Group
 		if group == "" {
 			continue
 		}
+
 		if alternatives[group] == nil {
 			alternatives[group] = map[int][]int{}
 			groups = append(groups, group)
 		}
+
 		alternatives[group][finding.Reference.Alternative] = append(alternatives[group][finding.Reference.Alternative], index)
 		counts[group] = max(counts[group], finding.Reference.Alternatives)
 	}
+
 	for _, group := range groups {
 		used := -1
+
 		for alternative := range counts[group] {
 			if _, looksUp := alternatives[group][alternative]; !looksUp {
 				used = alternative
 				break
 			}
 		}
+
 		for alternative, members := range alternatives[group] {
 			complete := true
 			for _, member := range members {
 				complete = complete && resolves(findings[member].Status)
 			}
+
 			if complete && (used < 0 || alternative < used) {
 				used = alternative
 			}
 		}
+
 		if used < 0 {
 			for _, members := range alternatives[group] {
 				for _, member := range members {
@@ -605,21 +709,26 @@ func resolveFallbacks(findings []compatFinding) {
 					}
 				}
 			}
+
 			continue
 		}
+
 		var covering []string
 		for _, member := range alternatives[group][used] {
 			covering = append(covering, describeCompatReference(findings[member].Reference))
 		}
+
 		if len(covering) == 0 {
 			covering = append(covering, "Unbound's own implementation in the same lookup")
 		}
+
 		for _, members := range alternatives[group] {
 			for _, member := range members {
 				finding := &findings[member]
 				if finding.Status != compatBroken && finding.Status != compatPossible {
 					continue
 				}
+
 				finding.Status = compatFallback
 				finding.Reason += "; " + strings.Join(covering, " and ") + " resolves instead"
 			}
@@ -629,19 +738,23 @@ func resolveFallbacks(findings []compatFinding) {
 
 func resolveLegacy(findings []compatFinding) {
 	legacy := map[string]bool{}
+
 	for _, finding := range findings {
 		if finding.Reference.Legacy {
 			legacy[finding.Reference.Component+"#"+finding.Reference.Name] = true
 		}
 	}
+
 	for index := range findings {
 		finding := &findings[index]
 		if finding.Status != compatBroken && finding.Status != compatPossible && finding.Status != compatUnverified {
 			continue
 		}
+
 		if !legacy[finding.Reference.Component+"#"+finding.Reference.Name] {
 			continue
 		}
+
 		finding.Status = compatFallback
 		finding.Reason += "; only older Discord builds have it, and its lookup finds the replacement structurally"
 	}
@@ -658,6 +771,7 @@ func compatSeverity(status string) int {
 	case compatOK, compatExternal, compatFallback, compatWarning:
 		return 0
 	}
+
 	return -1
 }
 

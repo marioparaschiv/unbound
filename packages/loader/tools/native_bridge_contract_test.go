@@ -12,37 +12,48 @@ import (
 
 func iosNativeBridgeSource(t *testing.T, root string) string {
 	t.Helper()
+
 	paths, err := filepath.Glob(filepath.Join(root, "ios", "sources", "NativePlugin*.mm"))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if len(paths) == 0 {
 		t.Fatal("the iOS native bridge sources are missing")
 	}
+
 	sort.Strings(paths)
+
 	var source strings.Builder
+
 	for _, path := range paths {
 		contents, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		source.Write(contents)
 		source.WriteString("\n")
 	}
+
 	return source.String()
 }
 
 func androidNativeBridgeSource(t *testing.T, root string) string {
 	t.Helper()
+
 	var source strings.Builder
+
 	for _, name := range []string{"NativePluginBridge.cpp", "AndroidJavaValues.cpp", "AndroidHookListeners.cpp", "AndroidFabricAdapter.cpp"} {
 		contents, err := os.ReadFile(filepath.Join(root, "android", "module", "src", "main", "cpp", name))
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		source.Write(contents)
 		source.WriteString("\n")
 	}
+
 	return source.String()
 }
 
@@ -51,25 +62,33 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 	if !ok {
 		t.Fatal("could not locate test source")
 	}
+
 	root := filepath.Dir(filepath.Dir(filename))
+
 	header, err := os.ReadFile(filepath.Join(root, "core", "include", "NativePluginVersion.h"))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	headerText := string(header)
+
 	sourceText := iosNativeBridgeSource(t, root)
 	if !containsCode(headerText, `kNativePluginApiVersion[] = "1.5.0"`) {
 		t.Fatal("native plugin API version does not report native.objc.inspect (1.5.0)")
 	}
+
 	if !containsCode(headerText, `kNativePluginAbiVersion[] = "1.0.0"`) {
 		t.Fatal("native plugin ABI version is not v1")
 	}
+
 	if !containsCode(sourceText, "loader::native::NativePluginRootBuilder bridge(runtime, loader::native::NativePluginPlatform::IOS);") {
 		t.Fatal("the iOS bridge does not advertise the shared iOS capability list")
 	}
+
 	if !containsCode(sourceText, "loader::native::onRuntimeGenerationChanged(invalidateRuntimeResources);") {
 		t.Fatal("the iOS bridge does not release hooks and surfaces when the runtime is replaced")
 	}
+
 	for _, symbol := range []string{
 		"ffi_closure_alloc",
 		"ffi_prep_closure_loc",
@@ -97,80 +116,102 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 			t.Fatalf("native hook symbol %q is missing from the loader", symbol)
 		}
 	}
+
 	if !containsCode(sourceText, "Native hook closure is unavailable on this device") {
 		t.Fatal("native hook closure fail-closed diagnostic is missing from the loader")
 	}
+
 	if !containsCode(sourceText, `fallbackHook<void, int64_t>("void", {"i64"})`) ||
 		!containsCode(sourceText, `{"u64", "i64"}`) {
 		t.Fatal("native unsigned 64-bit argument hooks do not have a precompiled fallback")
 	}
+
 	if !containsCode(sourceText, "class NativeDataBuffer") ||
 		!containsCode(sourceText, "[value isKindOfClass:[NSData class]]") {
 		t.Fatal("native Objective-C data results are not converted to JavaScript byte arrays")
 	}
+
 	if !containsCode(sourceText, "Value objcHandleResult(Runtime &runtime, id value)") ||
 		!containsCode(sourceText, "return objcHandleResult(rt, [[cls alloc] init]);") {
 		t.Fatal("native Objective-C allocation does not always return a native handle")
 	}
+
 	dataHandler := codeIndex(sourceText, `objc.setProperty(runtime, "data", makeFunction(`)
 	if dataHandler < 0 {
 		t.Fatal("native Objective-C data constructor is missing")
 	}
+
 	dataHandlerEnd := codeIndex(sourceText[dataHandler:], `objc.setProperty(runtime, "hook",`)
 	if dataHandlerEnd < 0 ||
 		!containsCode(sourceText[dataHandler:dataHandler+dataHandlerEnd], "return objcHandleResult(rt, data);") {
 		t.Fatal("native Objective-C data constructor does not return an NSData handle")
 	}
+
 	if !containsCode(sourceText, "NATIVE_BRIDGE_ERROR") ||
 		!containsCode(sourceText, "return loader::native::makeFunction(runtime, name, argCount, std::move(translated));") {
 		t.Fatal("native bridge exceptions are missing structured error codes")
 	}
+
 	rawFunctionHandler := codeIndex(sourceText, "Value (*handler)(Runtime &, const Value *, size_t)")
 	if rawFunctionHandler < 0 ||
 		!containsCode(sourceText[rawFunctionHandler:], "return makeFunction(name, argCount, runtime, wrappedHandler);") {
 		t.Fatal("raw native bridge handlers bypass structured error wrapping")
 	}
+
 	if !containsCode(sourceText, `fallbackHook<id, id>("object", {"object"})`) {
 		t.Fatal("native object-return hooks do not have a precompiled fallback")
 	}
+
 	if !containsCode(sourceText, `{"bool", "i8"}`) {
 		t.Fatal("native boolean hooks do not share the i8 precompiled fallbacks")
 	}
+
 	if !containsCode(sourceText, "Native hook original() cannot cross runtime threads") {
 		t.Fatal("native hook original thread safety diagnostic is missing from the loader")
 	}
+
 	if containsCode(sourceText, "originalRequested") {
 		t.Fatal("native hook original invocation still uses deferred return semantics")
 	}
+
 	if !containsCode(sourceText, "state->instanceTarget == object") {
 		t.Fatal("native hook instance targets are not filtered before JavaScript dispatch")
 	}
+
 	if !containsCode(sourceText, "method_getImplementation(method) == dispatcher->original") {
 		t.Fatal("native hook dispatchers are not restored when their original IMP is current")
 	}
+
 	if containsCode(sourceText, "method_setImplementation") {
 		t.Fatal("native hook dispatchers bypass the shared hook framework")
 	}
+
 	if !containsCode(sourceText, "MSHookMessageEx(cls, selector, (IMP) dispatcher->code, &dispatcher->original)") {
 		t.Fatal("native hook dispatchers are not installed through the shared hook framework")
 	}
+
 	if !containsCode(sourceText, "MSHookMessageEx(dispatcher->cls, dispatcher->selector,") {
 		t.Fatal("native hook dispatchers are not restored through the shared hook framework")
 	}
+
 	if !containsCode(sourceText, "current == (IMP) dispatcher->code || current == dispatcher->original") {
 		t.Fatal("native hook dispatchers are not retained while external IMPs may chain through them")
 	}
+
 	registration := codeIndex(sourceText, "dispatcher = iterator->second;")
 	if registration < 0 {
 		t.Fatal("native hook registration branch is missing")
 	}
+
 	registrationEnd := codeIndex(sourceText[registration:], "auto state = std::make_shared<HookState>();")
 	if registrationEnd < 0 {
 		t.Fatal("native hook registration branch is missing")
 	}
+
 	if containsCode(sourceText[registration:registration+registrationEnd], "dispatcher->original = method_getImplementation(method)") {
 		t.Fatal("native hook registration can wrap an external IMP that already chains through its dispatcher")
 	}
+
 	for _, shared := range []string{
 		`makeFunction("symbol", 2, runtime, loader::ffi::lookupSymbol)`,
 		`makeFunction("call", 3, runtime, loader::ffi::callFunction)`,
@@ -185,11 +226,13 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 			t.Fatalf("the iOS bridge does not use the shared core FFI through %q", shared)
 		}
 	}
+
 	for _, duplicate := range []string{"class PointerHost", "ffi_prep_cif(", "static Value ffiResult(", "NativePluginFFI.h"} {
 		if containsCode(sourceText, duplicate) {
 			t.Fatalf("the iOS bridge still carries its own FFI implementation (%q)", duplicate)
 		}
 	}
+
 	for _, installation := range []string{
 		`bridge.addNamespace("debug", std::move(debug));`,
 		`loader::native::makeRecordEvaluationFunction(runtime)`,
@@ -199,10 +242,12 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 			t.Fatalf("native debug function %q is not installed on the bridge", installation)
 		}
 	}
+
 	evaluations, err := os.ReadFile(filepath.Join(root, "core", "src", "NativeEvaluations.cpp"))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	recordFunction := codeIndex(string(evaluations), "jsi::Function makeRecordEvaluationFunction(")
 	if recordFunction < 0 ||
 		!containsCode(string(evaluations)[recordFunction:], "catch (...)") ||
@@ -216,7 +261,9 @@ func TestAndroidNativeBridgeContractIsSynchronized(t *testing.T) {
 	if !ok {
 		t.Fatal("could not locate test source")
 	}
+
 	root := filepath.Dir(filepath.Dir(filename))
+
 	sourceText := androidNativeBridgeSource(t, root)
 	for _, contract := range []string{
 		"loader::native::NativePluginRootBuilder bridge(runtime, loader::native::NativePluginPlatform::Android);",
@@ -259,6 +306,7 @@ func TestAndroidNativeBridgeContractIsSynchronized(t *testing.T) {
 			t.Fatalf("Android native bridge contract %q is missing", contract)
 		}
 	}
+
 	for _, unsupported := range []string{
 		"native.objc.",
 		"__nativeFailure",
@@ -275,32 +323,41 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 	if !ok {
 		t.Fatal("could not locate test source")
 	}
+
 	root := filepath.Dir(filepath.Dir(filename))
 	bridge := iosNativeBridgeSource(t, root)
+
 	loader, err := os.ReadFile(filepath.Join(root, "ios", "sources", "Unbound.xm"))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	filesystem, err := os.ReadFile(filepath.Join(root, "ios", "sources", "FileSystem.mm"))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	var updater []byte
+
 	for _, path := range []string{"include/LoaderUpdater.h", "src/LoaderUpdater.cpp", "src/LoaderUpdaterCandidates.cpp"} {
 		source, err := os.ReadFile(filepath.Join(root, "core", path))
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		updater = append(updater, source...)
 	}
+
 	coreFFI, err := os.ReadFile(filepath.Join(root, "core", "src", "ffi", "NativeFFI.cpp"))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	addressValidation, err := os.ReadFile(filepath.Join(root, "core", "src", "NativeAddressValidation.cpp"))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	for _, required := range []string{
 		"ffi.call requires an executable symbol pointer",
 		"!isCallableSymbolAddress(host->value())",
@@ -309,6 +366,7 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 			t.Fatalf("shared FFI safety guard %q is missing", required)
 		}
 	}
+
 	for _, required := range []string{
 		"bool isCallableSymbolAddress(void *address)",
 		"return isExecutableAddress(address) && isInstructionSectionAddress(address);",
@@ -320,6 +378,7 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 			t.Fatalf("shared callable address guard %q is missing", required)
 		}
 	}
+
 	for _, required := range []string{
 		"Native value exceeds conversion limits",
 		"dispatcher->closure && isExecutableAddress(dispatcher->code)",
@@ -342,14 +401,18 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 			t.Fatalf("native bridge safety guard %q is missing", required)
 		}
 	}
+
 	var argumentGuards []byte
+
 	for _, path := range []string{"src/NativeBatchReferences.cpp", "src/NativeArgumentValidation.cpp"} {
 		source, err := os.ReadFile(filepath.Join(root, "core", path))
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		argumentGuards = append(argumentGuards, source...)
 	}
+
 	for _, required := range []string{
 		"Native batch can only reference earlier results",
 		"Native batch method argument type is unsupported",
@@ -361,10 +424,12 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 			t.Fatalf("shared native argument guard %q is missing", required)
 		}
 	}
+
 	runtimeSource, err := os.ReadFile(filepath.Join(root, "core", "src", "NativePluginRuntime.cpp"))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	for _, required := range []string{
 		"Native async invocation was cancelled",
 		"__NativePluginPendingInvocations",
@@ -376,46 +441,58 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 			t.Fatalf("native runtime safety guard %q is missing", required)
 		}
 	}
+
 	if !containsCode(bridge, "loader::native::setExecutor(std::make_shared<IOSNativePluginExecutor>());") {
 		t.Fatal("the iOS bridge does not run on the shared native runtime executor")
 	}
+
 	if containsCode(bridge, "result = invokeObject(runtime, target, selector, arguments)") {
 		t.Fatal("Objective-C invocation still creates JSI values on the main thread")
 	}
+
 	for _, required := range []string{"[HotReload observe];", "UnboundLoader()->prepare()", "UnboundLoader()->onRuntimeCreated(runtime)"} {
 		if !containsCode(string(loader), required) {
 			t.Fatalf("loader lifecycle guard %q is missing", required)
 		}
 	}
+
 	corePipeline, err := os.ReadFile(filepath.Join(root, "core", "src", "LoaderPipeline.cpp"))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	firstDownload := codeIndex(string(corePipeline), "LoaderPipeline::awaitFirstDownload(")
+
 	firstWait := codeIndex(string(corePipeline), "wait_for(")
 	if firstDownload < 0 || firstWait < firstDownload || strings.Count(string(corePipeline), "wait_for(") != 1 ||
 		containsCode(string(corePipeline), "condition_variable") {
 		t.Fatal("the shared loader pipeline may only block the JS thread for the first download, when no saved bundle exists")
 	}
+
 	if containsCode(bridge, "dispatch_sync(dispatch_get_main_queue()") {
 		t.Fatal("native bridge still uses an unbounded synchronous main-thread dispatch")
 	}
+
 	superStart := codeIndex(bridge, "static void setSuperFFIArgument(")
+
 	superEnd := codeIndex(bridge, "Value invokeSuperObject(")
 	if superStart < 0 || superEnd <= superStart ||
 		!containsCode(bridge[superStart:superEnd], "validateNativeScalarArgument(object, scalarType);") {
 		t.Fatal("Objective-C super arguments bypass scalar validation")
 	}
+
 	for _, required := range []string{"updater_.markBundleAttempted(saved.path)", "updater_.acceptBundle(*path)", "pendingPromotion_ = saved.path", "updater_.discardFailedBundle(saved.path)"} {
 		if !containsCode(string(corePipeline), required) {
 			t.Fatalf("bundle promotion step %q is missing", required)
 		}
 	}
+
 	for _, required := range []string{".candidate", "Downloaded bundle candidate is unavailable", "promoteNativeBundle(path.c_str()", "restoreNativeBundle(backup.c_str()", ".promoting"} {
 		if !containsCode(string(updater), required) {
 			t.Fatalf("transactional bundle step %q is missing", required)
 		}
 	}
+
 	for _, required := range []string{"DownloadTimedOut", "DownloadWriteFailed"} {
 		if !containsCode(string(filesystem), required) {
 			t.Fatalf("bundle download guard %q is missing", required)
@@ -437,9 +514,11 @@ func codeIndex(source, snippet string) int {
 		pattern.WriteString(regexp.QuoteMeta(string(character)))
 		pattern.WriteString(`\s*`)
 	}
+
 	location := regexp.MustCompile(pattern.String()).FindStringIndex(source)
 	if location == nil {
 		return -1
 	}
+
 	return location[0]
 }

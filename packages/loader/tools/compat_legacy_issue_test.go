@@ -63,6 +63,7 @@ func TestPlanCompatLegacyIssue(t *testing.T) {
 	}
 
 	done := planCompatLegacyIssue(open, "351.0", false)
+
 	comment := legacyKeptComment("351.0")
 	if done.Create || done.Update != 0 || !reflect.DeepEqual(done.Close, []compatIssueClose{{Number: 34, Comment: comment}, {Number: 30, Comment: comment}}) {
 		t.Fatalf("nothing to remove must close every cleanup issue: %+v", done)
@@ -86,6 +87,7 @@ func TestPlanCompatLegacyIssue(t *testing.T) {
 	if _, err := applyCompatIssuePlan(fake, "unbound-app/unbound", compatLegacyLabel, "body.md", fresh); err != nil {
 		t.Fatal(err)
 	}
+
 	if want := []string{"create Legacy Discord names to remove (Android 351.0) [discord-compat-cleanup]"}; !reflect.DeepEqual(fake.actions, want) {
 		t.Fatalf("got %v, want %v", fake.actions, want)
 	}

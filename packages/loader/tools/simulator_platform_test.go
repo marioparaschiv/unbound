@@ -12,13 +12,16 @@ import (
 
 func writeIPhoneOSDylib(t *testing.T, path string, command uint32) {
 	t.Helper()
+
 	var file bytes.Buffer
 	for _, value := range []uint32{0xfeedfacf, 0x0100000c, 0, 6, 1, 16, 0, 0, command, 16, 0x000b0000, 0x00110000} {
 		binary.Write(&file, binary.LittleEndian, value)
 	}
+
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := os.WriteFile(path, file.Bytes(), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -29,10 +32,13 @@ func TestRetargetLegacyFrameworksConvertsIPhoneOSBinaries(t *testing.T) {
 	legacy := filepath.Join(app, "Frameworks", "CydiaSubstrate.framework", "CydiaSubstrate")
 	writeIPhoneOSDylib(t, legacy, loadCommandVersionMinIPhoneOS)
 	writeIPhoneOSDylib(t, filepath.Join(app, "Frameworks", "Modern.framework", "Modern"), 0x32)
+
 	if err := os.WriteFile(filepath.Join(app, "Frameworks", "CydiaSubstrate.framework", "Info.plist"), []byte("<plist/>"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+
 	var calls [][]string
+
 	runner := func(root, name string, args []string, env []string, stdout, stderr io.Writer) error {
 		calls = append(calls, append([]string{name}, args...))
 		return nil
@@ -40,6 +46,7 @@ func TestRetargetLegacyFrameworksConvertsIPhoneOSBinaries(t *testing.T) {
 	if err := retargetLegacyFrameworks(app, runner, t.TempDir()); err != nil {
 		t.Fatal(err)
 	}
+
 	expected := [][]string{{"xcrun", "vtool", "-set-build-version", "7", "11.0", "17.0", "-replace", "-output", legacy, legacy}}
 	if !reflect.DeepEqual(calls, expected) {
 		t.Fatalf("only the iPhoneOS-only binary must be retargeted, ran %v", calls)

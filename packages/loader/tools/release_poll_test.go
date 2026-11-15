@@ -17,6 +17,7 @@ func TestDiscoverStableCandidateSelectsLatestAndroidVersion(t *testing.T) {
 			if request.URL.Query().Get("bundleId") != defaultBundleID || request.URL.Query().Get("country") != "us" {
 				t.Fatalf("unexpected iTunes Lookup query: %s", request.URL.RawQuery)
 			}
+
 			fmt.Fprint(writer, `{"resultCount":1,"results":[{"bundleId":"com.hammerandchisel.discord","trackId":985746746,"version":"350.9"}]}`)
 		case "/tracker/index":
 			fmt.Fprint(writer, `{"latest":{"stable":350008}}`)
@@ -24,6 +25,7 @@ func TestDiscoverStableCandidateSelectsLatestAndroidVersion(t *testing.T) {
 			if request.Header.Get("Range") != "bytes=0-0" {
 				t.Fatalf("expected a ranged package availability check, got %q", request.Header.Get("Range"))
 			}
+
 			writer.WriteHeader(http.StatusPartialContent)
 			fmt.Fprint(writer, "x")
 		default:
@@ -39,10 +41,12 @@ func TestDiscoverStableCandidateSelectsLatestAndroidVersion(t *testing.T) {
 		androidTrackerURL: server.URL + "/tracker",
 		httpClient:        server.Client(),
 	}
+
 	candidate, err := discoverReleaseCandidate(context.Background(), config)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if candidate.Version != "350.9" || candidate.AndroidCode != 350008 {
 		t.Fatalf("selected %+v, want iOS 350.9 with Android 350008", candidate)
 	}
@@ -71,10 +75,12 @@ func TestDiscoverStableCandidateSelectsLatestOfEachWhenAndroidIsAhead(t *testing
 		androidTrackerURL: server.URL + "/tracker",
 		httpClient:        server.Client(),
 	}
+
 	candidate, err := discoverReleaseCandidate(context.Background(), config)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if candidate.Version != "350.8" || candidate.AndroidCode != 350009 {
 		t.Fatalf("selected %+v, want iOS 350.8 with Android 350009", candidate)
 	}
@@ -102,10 +108,12 @@ func TestDiscoverStableCandidateSkipsUnavailableAndroidVersion(t *testing.T) {
 		androidTrackerURL: server.URL + "/tracker",
 		httpClient:        server.Client(),
 	}
+
 	candidate, err := discoverReleaseCandidate(context.Background(), config)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	version := candidate.Version
 	if version != "" {
 		t.Fatalf("selected version %q, want no candidate", version)
@@ -137,10 +145,12 @@ func TestDiscoverStableCandidatePrefersANewerDkryptVersionOverAStaleItunesLookup
 			resolvedVersion:   resolved,
 			httpClient:        server.Client(),
 		}
+
 		candidate, err := discoverReleaseCandidate(context.Background(), config)
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		if candidate.Version != want {
 			t.Fatalf("dkrypt %q: selected %q, want %q", resolved, candidate.Version, want)
 		}
@@ -149,10 +159,12 @@ func TestDiscoverStableCandidatePrefersANewerDkryptVersionOverAStaleItunesLookup
 
 func TestTestflightCandidateUsesTheVersionTheActionResolved(t *testing.T) {
 	config := releasePollConfig{channel: "testflight", resolvedVersion: "352.0_118977"}
+
 	candidate, err := discoverReleaseCandidate(context.Background(), config)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if candidate.Version != "352.0_118977" {
 		t.Fatalf("selected version %q, want 352.0_118977", candidate.Version)
 	}
@@ -172,10 +184,12 @@ func TestGithubReleaseExistsHandlesFoundAndMissingTags(t *testing.T) {
 		if request.Header.Get("Authorization") != "Bearer github-token" {
 			t.Fatalf("missing GitHub authorization header")
 		}
+
 		if strings.HasSuffix(request.URL.Path, "/v1.0_12") {
 			writer.WriteHeader(http.StatusOK)
 			return
 		}
+
 		writer.WriteHeader(http.StatusNotFound)
 	}))
 	defer server.Close()
@@ -188,6 +202,7 @@ func TestGithubReleaseExistsHandlesFoundAndMissingTags(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		if exists != test.exists {
 			t.Fatalf("release %s exists=%t, want %t", test.tag, exists, test.exists)
 		}
@@ -199,13 +214,16 @@ func TestWriteReleaseCandidateOutput(t *testing.T) {
 	if err := os.WriteFile(path, []byte("previous=value\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := writeReleaseCandidateOutput(path, releaseCandidate{Version: "350.8_102"}); err != nil {
 		t.Fatal(err)
 	}
+
 	contents, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if string(contents) != "previous=value\nversion=350.8_102\n" {
 		t.Fatalf("unexpected output contents %q", contents)
 	}
@@ -232,10 +250,12 @@ func TestDiscoverAndroidChannelCandidateTagsTheChannelBuild(t *testing.T) {
 		sniffURL:          server.URL + "/sniff",
 		httpClient:        server.Client(),
 	}
+
 	candidate, err := discoverReleaseCandidate(context.Background(), config)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if candidate != (releaseCandidate{Version: "351.12-android-beta", AndroidCode: 351112}) {
 		t.Fatalf("selected %+v, want 351.12-android-beta at 351112", candidate)
 	}
@@ -263,10 +283,12 @@ func TestDiscoverAndroidChannelCandidateSkipsUndownloadableBuilds(t *testing.T) 
 		sniffURL:          server.URL + "/sniff",
 		httpClient:        server.Client(),
 	}
+
 	candidate, err := discoverReleaseCandidate(context.Background(), config)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if candidate != (releaseCandidate{}) {
 		t.Fatalf("selected %+v for a build nobody serves", candidate)
 	}
@@ -277,13 +299,16 @@ func TestWriteReleaseCandidateOutputIncludesTheAndroidCode(t *testing.T) {
 	if err := os.WriteFile(path, nil, 0o600); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := writeReleaseCandidateOutput(path, releaseCandidate{Version: "352.8-android-alpha", AndroidCode: 352208}); err != nil {
 		t.Fatal(err)
 	}
+
 	contents, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if string(contents) != "version=352.8-android-alpha\nandroid_code=352208\n" {
 		t.Fatalf("unexpected output contents %q", contents)
 	}
@@ -303,6 +328,7 @@ func TestLoaderReleaseTagsNameEachPlatformsOwnVersion(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		if got := strings.Join(tags, " "); got != test.want {
 			t.Fatalf("%s release tags are %s, want %s", channel, got, test.want)
 		}
@@ -329,14 +355,18 @@ func TestUnreleasedLoaderTagsReleaseWhenEitherPlatformIsNew(t *testing.T) {
 						return
 					}
 				}
+
 				writer.WriteHeader(http.StatusNotFound)
 			}))
 			defer server.Close()
+
 			config := releasePollConfig{channel: "stable", loaderVersion: "1.4.0", githubAPIURL: server.URL, githubRepository: "owner/repo", githubToken: "token", httpClient: server.Client()}
+
 			unreleased, err := unreleasedLoaderTags(context.Background(), config, releaseCandidate{Version: "352.0", AndroidCode: 351011})
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			if got := strings.Join(unreleased, " "); got != test.want {
 				t.Fatalf("unreleased tags are %q, want %q", got, test.want)
 			}
@@ -346,6 +376,7 @@ func TestUnreleasedLoaderTagsReleaseWhenEitherPlatformIsNew(t *testing.T) {
 
 func stableCandidateFor(t *testing.T, itunesVersion, androidStable string, downloadable bool) releaseCandidate {
 	t.Helper()
+
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		switch request.URL.Path {
 		case "/lookup":
@@ -357,6 +388,7 @@ func stableCandidateFor(t *testing.T, itunesVersion, androidStable string, downl
 				writer.WriteHeader(http.StatusNotFound)
 				return
 			}
+
 			writer.WriteHeader(http.StatusPartialContent)
 			fmt.Fprint(writer, "x")
 		default:
@@ -364,6 +396,7 @@ func stableCandidateFor(t *testing.T, itunesVersion, androidStable string, downl
 		}
 	}))
 	defer server.Close()
+
 	candidate, err := discoverReleaseCandidate(context.Background(), releasePollConfig{
 		channel:           "stable",
 		bundleID:          defaultBundleID,
@@ -374,6 +407,7 @@ func stableCandidateFor(t *testing.T, itunesVersion, androidStable string, downl
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	return candidate
 }
 

@@ -16,10 +16,13 @@ func setSideloadVersion(info, merge *plistNode, loader string) error {
 	if discord == nil || discord.text == "" {
 		return errors.New("Info.plist has no CFBundleShortVersionString")
 	}
+
 	if strings.Contains(discord.text, "_") {
 		return errors.New("Info.plist already carries a loader version: " + discord.text)
 	}
+
 	merge.set("CFBundleShortVersionString", plistText(discord.text+"_"+loader))
 	merge.set(discordVersionKey, plistText(discord.text))
+
 	return nil
 }

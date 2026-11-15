@@ -44,17 +44,21 @@ const (
 
 func (index *objcIndex) lookupMethod(className, selector string) (objcLookup, string) {
 	visited := map[string]bool{}
+
 	current := index.Classes[className]
 	for current != nil && !visited[current.Name] {
 		visited[current.Name] = true
 		if current.Methods[selector] {
 			return objcFound, current.Name
 		}
+
 		if current.SuperExternal {
 			return objcInheritedExternally, current.Super
 		}
+
 		current = index.Classes[current.Super]
 	}
+
 	return objcMissing, ""
 }
 
@@ -79,14 +83,18 @@ func addMachOToIndex(index *objcIndex, data []byte) error {
 	if err != nil {
 		return err
 	}
+
 	image := &machoImage{file: file, data: data}
 	if text := file.Segment("__TEXT"); text != nil {
 		image.base = text.Addr
 	}
+
 	if err := image.readChainedFixups(); err != nil {
 		return err
 	}
+
 	collectObjC(image, index)
+
 	return nil
 }
 
@@ -97,11 +105,14 @@ func openMachOSlice(data []byte) (*macho.File, error) {
 				return arch.File, nil
 			}
 		}
+
 		if len(fat.Arches) > 0 {
 			return fat.Arches[0].File, nil
 		}
+
 		return nil, errors.New("empty universal binary")
 	}
+
 	return macho.NewFile(bytes.NewReader(data))
 }
 
@@ -109,11 +120,13 @@ func isMachO(data []byte) bool {
 	if len(data) < 4 {
 		return false
 	}
+
 	magic := binary.BigEndian.Uint32(data)
 	switch magic {
 	case 0xCFFAEDFE, 0xCEFAEDFE, 0xCAFEBABE, 0xFEEDFACF:
 		return true
 	}
+
 	return false
 }
 
@@ -123,16 +136,19 @@ func (image *machoImage) fileOffset(address uint64) (uint64, bool) {
 			return segment.Offset + address - segment.Addr, true
 		}
 	}
+
 	return 0, false
 }
 
 func (image *machoImage) segments() []*macho.Segment {
 	var segments []*macho.Segment
+
 	for _, load := range image.file.Loads {
 		if segment, ok := load.(*macho.Segment); ok {
 			segments = append(segments, segment)
 		}
 	}
+
 	return segments
 }
 
@@ -142,13 +158,17 @@ func (image *machoImage) readChainedFixups() error {
 		if len(raw) < 16 || image.file.ByteOrder.Uint32(raw) != loadCommandChainedFixups {
 			continue
 		}
+
 		offset := uint64(image.file.ByteOrder.Uint32(raw[8:]))
+
 		size := uint64(image.file.ByteOrder.Uint32(raw[12:]))
 		if offset+size > uint64(len(image.data)) {
 			return errors.New("chained fixups out of range")
 		}
+
 		return image.parseChainedFixups(image.data[offset : offset+size])
 	}
+
 	return nil
 }
 
@@ -156,6 +176,7 @@ func (image *machoImage) parseChainedFixups(blob []byte) error {
 	if len(blob) < 28 {
 		return errors.New("chained fixups header is truncated")
 	}
+
 	order := binary.LittleEndian
 	startsOffset := uint64(order.Uint32(blob[4:]))
 	importsOffset := uint64(order.Uint32(blob[8:]))
@@ -168,10 +189,12 @@ func (image *machoImage) parseChainedFixups(blob []byte) error {
 		if start >= uint64(len(blob)) {
 			return ""
 		}
+
 		end := bytes.IndexByte(blob[start:], 0)
 		if end < 0 {
 			return ""
 		}
+
 		return string(blob[start : start+uint64(end)])
 	}
 
@@ -195,19 +218,24 @@ func (image *machoImage) parseChainedFixups(blob []byte) error {
 	if startsOffset+4 > uint64(len(blob)) {
 		return nil
 	}
+
 	segmentCount := uint64(order.Uint32(blob[startsOffset:]))
 	for index := uint64(0); index < segmentCount; index++ {
 		infoOffset := uint64(order.Uint32(blob[startsOffset+4+4*index:]))
 		if infoOffset == 0 {
 			continue
 		}
+
 		start := startsOffset + infoOffset
 		if start+8 > uint64(len(blob)) {
 			continue
 		}
+
 		image.pointerFormat = order.Uint16(blob[start+6:])
+
 		break
 	}
+
 	return nil
 }
 
@@ -221,10 +249,12 @@ func (image *machoImage) readPointer(address uint64) (machoPointer, bool) {
 	if !ok || offset+8 > uint64(len(image.data)) {
 		return machoPointer{}, false
 	}
+
 	raw := binary.LittleEndian.Uint64(image.data[offset:])
 	if raw == 0 {
 		return machoPointer{}, true
 	}
+
 	if image.imports == nil {
 		return machoPointer{address: raw}, true
 	}
@@ -233,37 +263,46 @@ func (image *machoImage) readPointer(address uint64) (machoPointer, bool) {
 		if ordinal < uint64(len(image.imports)) {
 			return machoPointer{external: image.imports[ordinal]}
 		}
+
 		return machoPointer{external: "?"}
 	}
 
 	switch image.pointerFormat {
 	case 1, 9, 12:
 		isAuth := raw>>63 == 1
+
 		isBind := (raw>>62)&1 == 1
 		if isBind {
 			mask := uint64(0xFFFF)
 			if image.pointerFormat == 12 {
 				mask = 0xFFFFFF
 			}
+
 			return bindName(raw & mask), true
 		}
+
 		if isAuth {
 			return machoPointer{address: image.base + raw&0xFFFFFFFF}, true
 		}
+
 		target := raw & 0x7FFFFFFFFFF
 		if image.pointerFormat != 1 {
 			target += image.base
 		}
+
 		return machoPointer{address: target}, true
 	default:
 		if raw>>63 == 1 {
 			return bindName(raw & 0xFFFFFF), true
 		}
+
 		target := raw & 0xFFFFFFFFF
 		high := (raw >> 36) & 0xFF
+
 		if image.pointerFormat == 6 {
 			target += image.base
 		}
+
 		return machoPointer{address: target | high<<56}, true
 	}
 }
@@ -277,10 +316,12 @@ func (image *machoImage) readCString(address uint64) string {
 	if !ok {
 		return ""
 	}
+
 	end := bytes.IndexByte(image.data[offset:], 0)
 	if end < 0 {
 		return ""
 	}
+
 	return string(image.data[offset : offset+uint64(end)])
 }
 
@@ -289,6 +330,7 @@ func (image *machoImage) readUint32(address uint64) (uint32, bool) {
 	if !ok || offset+4 > uint64(len(image.data)) {
 		return 0, false
 	}
+
 	return binary.LittleEndian.Uint32(image.data[offset:]), true
 }
 
@@ -297,12 +339,15 @@ func (image *machoImage) pointerList(name string) []machoPointer {
 	if section == nil {
 		return nil
 	}
+
 	var pointers []machoPointer
+
 	for address := section.Addr; address+8 <= section.Addr+section.Size; address += 8 {
 		if pointer, ok := image.readPointer(address); ok {
 			pointers = append(pointers, pointer)
 		}
 	}
+
 	return pointers
 }
 
@@ -319,16 +364,20 @@ func collectObjC(image objcMemory, index *objcIndex) {
 		if pointer.address == 0 {
 			continue
 		}
+
 		class := readClass(image, pointer.address, index)
 		if class == nil {
 			continue
 		}
+
 		if existing := index.Classes[class.Name]; existing != nil {
 			for method := range class.Methods {
 				existing.Methods[method] = true
 			}
+
 			continue
 		}
+
 		index.Classes[class.Name] = class
 	}
 
@@ -345,6 +394,7 @@ func externalClassName(symbol string) string {
 			return demangleObjCClassName(strings.TrimPrefix(symbol, prefix))
 		}
 	}
+
 	return symbol
 }
 
@@ -353,11 +403,14 @@ func readClass(image objcMemory, address uint64, index *objcIndex) *objcClass {
 	if !ok || data.address == 0 {
 		return nil
 	}
+
 	readOnly := data.address &^ 7
+
 	namePointer, ok := image.readPointer(readOnly + 24)
 	if !ok || namePointer.address == 0 {
 		return nil
 	}
+
 	class := &objcClass{
 		Name:    demangleObjCClassName(image.readCString(namePointer.address)),
 		Methods: map[string]bool{},
@@ -385,6 +438,7 @@ func readClass(image objcMemory, address uint64, index *objcIndex) *objcClass {
 			readMethods(image, (metaData.address&^7)+32, class.Methods, index)
 		}
 	}
+
 	return class
 }
 
@@ -393,10 +447,12 @@ func classNameAt(image objcMemory, address uint64) string {
 	if !ok || data.address == 0 {
 		return ""
 	}
+
 	namePointer, ok := image.readPointer((data.address &^ 7) + 24)
 	if !ok || namePointer.address == 0 {
 		return ""
 	}
+
 	return demangleObjCClassName(image.readCString(namePointer.address))
 }
 
@@ -405,16 +461,20 @@ func readCategory(image objcMemory, address uint64, index *objcIndex) {
 	if !ok {
 		return
 	}
+
 	var className string
+
 	switch {
 	case classPointer.external != "":
 		className = externalClassName(classPointer.external)
 	case classPointer.address != 0:
 		className = classNameAt(image, classPointer.address)
 	}
+
 	if className == "" {
 		return
 	}
+
 	class := index.Classes[className]
 	if class == nil {
 		class = &objcClass{Name: className, Methods: map[string]bool{}, Ivars: map[string]bool{}, SuperExternal: true}
@@ -424,6 +484,7 @@ func readCategory(image objcMemory, address uint64, index *objcIndex) {
 			index.Classes[className] = class
 		}
 	}
+
 	readMethods(image, address+16, class.Methods, index)
 	readMethods(image, address+24, class.Methods, index)
 }
@@ -433,10 +494,12 @@ func readMethods(image objcMemory, field uint64, methods map[string]bool, index 
 	if !ok || list.address == 0 {
 		return
 	}
+
 	if list.address&relativeListListFlag != 0 {
 		readMethodListList(image, list.address&^relativeListListFlag, methods, index)
 		return
 	}
+
 	readMethodList(image, list.address, methods, index)
 }
 
@@ -445,17 +508,21 @@ func readMethodListList(image objcMemory, address uint64, methods map[string]boo
 	if !ok || entrySize < 8 {
 		return
 	}
+
 	count, ok := image.readUint32(address + 4)
 	if !ok || count > 1<<12 {
 		return
 	}
+
 	for entry := uint64(0); entry < uint64(count); entry++ {
 		entryAddress := address + 8 + entry*uint64(entrySize)
 		low, okLow := image.readUint32(entryAddress)
+
 		high, okHigh := image.readUint32(entryAddress + 4)
 		if !okLow || !okHigh {
 			continue
 		}
+
 		offset := int64(uint64(high)<<32|uint64(low)) >> 16
 		readMethodList(image, uint64(int64(entryAddress)+offset), methods, index)
 	}
@@ -466,15 +533,19 @@ func readMethodList(image objcMemory, address uint64, methods map[string]bool, i
 	if !ok {
 		return
 	}
+
 	count, ok := image.readUint32(address + 4)
 	if !ok || count > 1<<16 {
 		return
 	}
+
 	relative := header&0x80000000 != 0
+
 	entrySize := uint64(header & 0xFFFC)
 	if entrySize == 0 {
 		return
 	}
+
 	for entry := uint64(0); entry < uint64(count); entry++ {
 		if name := methodName(image, address+8+entry*entrySize, header, relative); name != "" {
 			methods[name] = true
@@ -488,22 +559,28 @@ func methodName(image objcMemory, address uint64, header uint32, relative bool) 
 		if pointer, ok := image.readPointer(address); ok && pointer.address != 0 {
 			return image.readCString(pointer.address)
 		}
+
 		return ""
 	}
+
 	offset, ok := image.readUint32(address)
 	if !ok {
 		return ""
 	}
+
 	if header&0x40000000 != 0 {
 		if base := image.relativeSelectorBase(); base != 0 {
 			return image.readCString(uint64(int64(base) + int64(int32(offset))))
 		}
+
 		return image.readCString(uint64(int64(address) + int64(int32(offset))))
 	}
+
 	target := uint64(int64(address) + int64(int32(offset)))
 	if selector, ok := image.readPointer(target); ok && selector.address != 0 {
 		return image.readCString(selector.address)
 	}
+
 	return ""
 }
 
@@ -512,14 +589,17 @@ func readIvars(image objcMemory, field uint64, ivars map[string]bool, index *obj
 	if !ok || list.address == 0 {
 		return
 	}
+
 	entrySize, ok := image.readUint32(list.address)
 	if !ok || entrySize < 24 {
 		return
 	}
+
 	count, ok := image.readUint32(list.address + 4)
 	if !ok || count > 1<<16 {
 		return
 	}
+
 	for entry := uint64(0); entry < uint64(count); entry++ {
 		address := list.address + 8 + entry*uint64(entrySize)
 		if pointer, ok := image.readPointer(address + 8); ok && pointer.address != 0 {
@@ -535,32 +615,41 @@ func demangleObjCClassName(name string) string {
 	if !strings.HasPrefix(name, "_TtC") && !strings.HasPrefix(name, "_TtGC") {
 		return name
 	}
+
 	rest := strings.TrimPrefix(strings.TrimPrefix(name, "_TtGC"), "_TtC")
 	if strings.HasPrefix(rest, "s") && len(rest) > 1 && rest[1] >= '0' && rest[1] <= '9' {
 		rest = "5Swift" + rest[1:]
 	}
+
 	var parts []string
+
 	for len(rest) > 0 {
 		if rest[0] == 'C' || rest[0] == 'V' || rest[0] == 'O' {
 			rest = rest[1:]
 			continue
 		}
+
 		digits := 0
 		for digits < len(rest) && rest[digits] >= '0' && rest[digits] <= '9' {
 			digits++
 		}
+
 		if digits == 0 {
 			break
 		}
+
 		length, err := strconv.Atoi(rest[:digits])
 		if err != nil || digits+length > len(rest) {
 			return name
 		}
+
 		parts = append(parts, rest[digits:digits+length])
 		rest = rest[digits+length:]
 	}
+
 	if len(parts) < 2 {
 		return name
 	}
+
 	return strings.Join(parts, ".")
 }

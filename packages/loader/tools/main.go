@@ -12,6 +12,7 @@ func main() {
 		if errors.Is(err, flag.ErrHelp) {
 			return
 		}
+
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -22,6 +23,7 @@ func run(args []string) error {
 		printUsage()
 		return nil
 	}
+
 	switch args[0] {
 	case "fetch":
 		return runFetch(args[1:])
@@ -71,6 +73,7 @@ func run(args []string) error {
 		if len(args) > 1 && args[1] == "--hermes" {
 			return runHermesCoreTests(".", defaultRunner)
 		}
+
 		return runCoreTests(".", defaultRunner)
 	case "validate":
 		return runValidate(args[1:])

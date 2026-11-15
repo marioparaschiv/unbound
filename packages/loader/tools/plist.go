@@ -37,6 +37,7 @@ func plistStrings(values ...string) *plistNode {
 	for _, value := range values {
 		array.values = append(array.values, plistText(value))
 	}
+
 	return array
 }
 
@@ -48,11 +49,13 @@ func (node *plistNode) get(key string) *plistNode {
 	if node == nil || node.kind != plistDictKind {
 		return nil
 	}
+
 	for index, candidate := range node.keys {
 		if candidate == key {
 			return node.values[index]
 		}
 	}
+
 	return nil
 }
 
@@ -63,6 +66,7 @@ func (node *plistNode) set(key string, value *plistNode) {
 			return
 		}
 	}
+
 	node.keys = append(node.keys, key)
 	node.values = append(node.values, value)
 }
@@ -72,6 +76,7 @@ func (node *plistNode) remove(key string) {
 		if candidate == key {
 			node.keys = append(node.keys[:index], node.keys[index+1:]...)
 			node.values = append(node.values[:index], node.values[index+1:]...)
+
 			return
 		}
 	}
@@ -81,8 +86,10 @@ func (node *plistNode) dict(key string) *plistNode {
 	if existing := node.get(key); existing != nil && existing.kind == plistDictKind {
 		return existing
 	}
+
 	created := newPlistDict()
 	node.set(key, created)
+
 	return created
 }
 
@@ -91,22 +98,27 @@ func readPlist(data []byte) (*plistNode, error) {
 		if node, err := decodeBinaryPlist(data); err == nil {
 			return node, nil
 		}
+
 		converted, err := convertBinaryPlist(data)
 		if err != nil {
 			return nil, err
 		}
+
 		data = converted
 	}
+
 	decoder := xml.NewDecoder(bytes.NewReader(data))
 	for {
 		token, err := decoder.Token()
 		if err != nil {
 			return nil, fmt.Errorf("could not parse plist: %w", err)
 		}
+
 		start, ok := token.(xml.StartElement)
 		if !ok || start.Name.Local == "plist" {
 			continue
 		}
+
 		return decodePlistValue(decoder, start)
 	}
 }
@@ -117,17 +129,21 @@ func convertBinaryPlist(data []byte) ([]byte, error) {
 		return nil, err
 	}
 	defer os.Remove(file.Name())
+
 	if _, err := file.Write(data); err != nil {
 		file.Close()
 		return nil, err
 	}
+
 	if err := file.Close(); err != nil {
 		return nil, err
 	}
+
 	output, err := exec.Command("plutil", "-convert", "xml1", "-o", "-", file.Name()).Output()
 	if err != nil {
 		return nil, fmt.Errorf("could not convert binary plist (plutil is required): %w", err)
 	}
+
 	return output, nil
 }
 
@@ -144,6 +160,7 @@ func decodePlistValue(decoder *xml.Decoder, start xml.StartElement) (*plistNode,
 		if err := decoder.DecodeElement(&node.text, &start); err != nil {
 			return nil, fmt.Errorf("could not parse plist %s: %w", node.kind, err)
 		}
+
 		return node, nil
 	default:
 		return nil, fmt.Errorf("unsupported plist element %q", node.kind)
@@ -156,11 +173,13 @@ func decodePlistDict(decoder *xml.Decoder, node *plistNode) error {
 		if err != nil {
 			return fmt.Errorf("could not parse plist dict: %w", err)
 		}
+
 		switch element := token.(type) {
 		case xml.EndElement:
 			if len(node.keys) != len(node.values) {
 				return errors.New("plist dict has a key without a value")
 			}
+
 			return nil
 		case xml.StartElement:
 			if element.Name.Local == "key" {
@@ -168,19 +187,25 @@ func decodePlistDict(decoder *xml.Decoder, node *plistNode) error {
 				if err := decoder.DecodeElement(&key, &element); err != nil {
 					return fmt.Errorf("could not parse plist key: %w", err)
 				}
+
 				if len(node.keys) != len(node.values) {
 					return errors.New("plist dict has a key without a value")
 				}
+
 				node.keys = append(node.keys, key)
+
 				continue
 			}
+
 			if len(node.keys) != len(node.values)+1 {
 				return errors.New("plist dict has a value without a key")
 			}
+
 			value, err := decodePlistValue(decoder, element)
 			if err != nil {
 				return err
 			}
+
 			node.values = append(node.values, value)
 		}
 	}
@@ -192,6 +217,7 @@ func decodePlistArray(decoder *xml.Decoder, node *plistNode) error {
 		if err != nil {
 			return fmt.Errorf("could not parse plist array: %w", err)
 		}
+
 		switch element := token.(type) {
 		case xml.EndElement:
 			return nil
@@ -200,6 +226,7 @@ func decodePlistArray(decoder *xml.Decoder, node *plistNode) error {
 			if err != nil {
 				return err
 			}
+
 			node.values = append(node.values, value)
 		}
 	}
@@ -209,54 +236,70 @@ func writePlist(root *plistNode) ([]byte, error) {
 	var buffer bytes.Buffer
 	buffer.WriteString(plistHeader)
 	buffer.WriteString(`<plist version="1.0">` + "\n")
+
 	if err := encodePlistValue(&buffer, root, 0); err != nil {
 		return nil, err
 	}
+
 	buffer.WriteString("</plist>\n")
+
 	return buffer.Bytes(), nil
 }
 
 func encodePlistValue(writer *bytes.Buffer, node *plistNode, depth int) error {
 	indent := strings.Repeat("\t", depth)
+
 	switch node.kind {
 	case plistDictKind:
 		if len(node.keys) == 0 {
 			writer.WriteString(indent + "<dict/>\n")
 			return nil
 		}
+
 		writer.WriteString(indent + "<dict>\n")
+
 		for index, key := range node.keys {
 			writer.WriteString(indent + "\t<key>")
+
 			if err := escapePlistText(writer, key); err != nil {
 				return err
 			}
+
 			writer.WriteString("</key>\n")
+
 			if err := encodePlistValue(writer, node.values[index], depth+1); err != nil {
 				return err
 			}
 		}
+
 		writer.WriteString(indent + "</dict>\n")
 	case plistArrayKind:
 		if len(node.values) == 0 {
 			writer.WriteString(indent + "<array/>\n")
 			return nil
 		}
+
 		writer.WriteString(indent + "<array>\n")
+
 		for _, value := range node.values {
 			if err := encodePlistValue(writer, value, depth+1); err != nil {
 				return err
 			}
 		}
+
 		writer.WriteString(indent + "</array>\n")
 	case plistTrueKind, plistFalseKind:
 		writer.WriteString(indent + "<" + node.kind + "/>\n")
 	default:
 		writer.WriteString(indent + "<" + node.kind + ">")
+
 		if err := escapePlistText(writer, node.text); err != nil {
 			return err
 		}
+
 		writer.WriteString("</" + node.kind + ">\n")
 	}
+
 	return nil
 }
 

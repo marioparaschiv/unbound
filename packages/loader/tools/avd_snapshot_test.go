@@ -11,20 +11,25 @@ import (
 
 func writeGzipTar(t *testing.T, file string, entries map[string]string) {
 	t.Helper()
+
 	handle, err := os.Create(file)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	compressed := gzip.NewWriter(handle)
+
 	writer := tar.NewWriter(compressed)
 	for name, content := range entries {
 		if err := writer.WriteHeader(&tar.Header{Name: name, Mode: 0o600, Size: int64(len(content)), Typeflag: tar.TypeReg}); err != nil {
 			t.Fatal(err)
 		}
+
 		if _, err := writer.Write([]byte(content)); err != nil {
 			t.Fatal(err)
 		}
 	}
+
 	for _, closer := range []func() error{writer.Close, compressed.Close, handle.Close} {
 		if err := closer(); err != nil {
 			t.Fatal(err)
@@ -36,11 +41,14 @@ func TestEnsureNoDiscordTokenRefusesTokenShapedContent(t *testing.T) {
 	directory := t.TempDir()
 	clean := filepath.Join(directory, "clean.tgz")
 	leaked := filepath.Join(directory, "leaked.tgz")
+
 	writeGzipTar(t, clean, map[string]string{"Unbound/Plugins/a/bundle.js": "console.log('plugin')"})
 	writeGzipTar(t, leaked, map[string]string{"adb/magisk.db": "token=" + strings.Repeat("M", 26) + "." + strings.Repeat("G", 6) + "." + strings.Repeat("x", 38)})
+
 	if err := ensureNoDiscordToken(clean); err != nil {
 		t.Fatalf("clean archive was refused: %v", err)
 	}
+
 	err := ensureNoDiscordToken(clean, leaked)
 	if err == nil || !strings.Contains(err.Error(), "adb/magisk.db") {
 		t.Fatalf("expected the token-bearing entry to be named, got %v", err)
@@ -51,6 +59,7 @@ func TestContainsDiscordTokenMatchesMFATokens(t *testing.T) {
 	if !containsDiscordToken([]byte("mfa." + strings.Repeat("a", 84))) {
 		t.Fatal("mfa token was not detected")
 	}
+
 	if containsDiscordToken([]byte("unbound.bundle.trust sha256 0123456789abcdef")) {
 		t.Fatal("ordinary content was flagged")
 	}
@@ -60,9 +69,11 @@ func TestUnboundArchiveCommandLeavesSettingsOutByDefault(t *testing.T) {
 	if strings.Contains(unboundArchiveCommand(false), "settings.json") {
 		t.Fatal("settings.json must be opt-in")
 	}
+
 	if !strings.Contains(unboundArchiveCommand(true), "Unbound/settings.json") {
 		t.Fatal("--with-settings should include settings.json")
 	}
+
 	for _, store := range []string{"mmkv", "kv-storage", "shared_prefs", "databases"} {
 		if strings.Contains(unboundArchiveCommand(true), store) {
 			t.Fatalf("snapshot must never read Discord's %s", store)
@@ -91,35 +102,44 @@ func TestSnapshotTarRoundTripRejectsEscapingEntries(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(source, "apks", "com.discord"), 0o755); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := os.WriteFile(filepath.Join(source, "apks", "com.discord", "base.apk"), []byte("apk"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+
 	archive := filepath.Join(t.TempDir(), "snapshot.tar")
 	if err := writeTarDirectory(source, archive); err != nil {
 		t.Fatal(err)
 	}
+
 	target := t.TempDir()
 	if err := extractTarFile(archive, target); err != nil {
 		t.Fatal(err)
 	}
+
 	if data, err := os.ReadFile(filepath.Join(target, "apks", "com.discord", "base.apk")); err != nil || string(data) != "apk" {
 		t.Fatalf("round trip lost the apk: %v", err)
 	}
 
 	hostile := filepath.Join(t.TempDir(), "hostile.tar")
+
 	handle, err := os.Create(hostile)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	writer := tar.NewWriter(handle)
 	if err := writer.WriteHeader(&tar.Header{Name: "../escape", Mode: 0o644, Size: 1, Typeflag: tar.TypeReg}); err != nil {
 		t.Fatal(err)
 	}
+
 	if _, err := writer.Write([]byte("x")); err != nil {
 		t.Fatal(err)
 	}
+
 	writer.Close()
 	handle.Close()
+
 	if err := extractTarFile(hostile, t.TempDir()); err == nil {
 		t.Fatal("escaping entry was extracted")
 	}
@@ -132,13 +152,16 @@ func TestPublishableSnapshotsLeaveDiscordOut(t *testing.T) {
 			t.Fatal("a snapshot without Discord must not pull its APKs")
 		}
 	}
+
 	if len(names) != len(avdSnapshotPackages)-1 || len(snapshotPackageNames(false)) != len(avdSnapshotPackages) {
 		t.Fatalf("unexpected package lists %v", names)
 	}
+
 	without := avdSnapshotManifest{Packages: map[string][]string{"app.unbound.android": {"base.apk"}}}
 	if !strings.Contains(describeSnapshotDiscord(without), "restore downloads") {
 		t.Fatalf("unexpected description %q", describeSnapshotDiscord(without))
 	}
+
 	with := avdSnapshotManifest{DiscordVersion: "352.10", Packages: map[string][]string{discordPackage: {"base.apk"}}}
 	if describeSnapshotDiscord(with) != "Discord 352.10" {
 		t.Fatalf("unexpected description %q", describeSnapshotDiscord(with))
