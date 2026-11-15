@@ -3,6 +3,9 @@ import { Theme } from '~/metro/common';
 
 // Laid out like the Plugins page (`~/ui/settings/plugins/plugins.style`).
 export default Discord.createStyles({
+	page: {
+		flex: 1,
+	},
 	content: {
 		padding: 16,
 	},
