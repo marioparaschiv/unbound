@@ -1,0 +1,240 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "b138a7b8-a911-45e2-b24d-ca6645eb276b",
+  "prevIds": [
+    "a12cb649-334b-4db5-a32d-5121ff20240c"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "bot",
+        "api_release_post"
+      ],
+      "writes": [
+        "s|tbl|bot.api_release_post",
+        "n|tbl|bot.api_release_post",
+        "e|tbl|bot.api_release_post",
+        "n|rel|bot.api_release_post",
+        "n|type|bot.api_release_post",
+        "n|rel|bot.api_release_post_pkey"
+      ],
+      "reads": [
+        "n|sch|bot"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "bot",
+        "bundle_post"
+      ],
+      "writes": [
+        "s|tbl|bot.bundle_post",
+        "n|tbl|bot.bundle_post",
+        "e|tbl|bot.bundle_post",
+        "n|rel|bot.bundle_post",
+        "n|type|bot.bundle_post",
+        "n|rel|bot.bundle_post_pkey"
+      ],
+      "reads": [
+        "n|sch|bot"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "name": "api_release_post",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "name": "bundle_post",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "api_release_post",
+        "name": "version",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "api_release_post",
+        "name": "channel_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "api_release_post",
+        "name": "message_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "api_release_post",
+        "name": "posted_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "bundle_post",
+        "name": "bundle_channel",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "bundle_post",
+        "name": "version",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "bundle_post",
+        "name": "channel_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "bundle_post",
+        "name": "message_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "bundle_post",
+        "name": "posted_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "bundle_post",
+        "name": "bundle_post_pkey",
+        "columns": [
+          "bundle_channel",
+          "version"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "api_release_post",
+        "name": "api_release_post_pkey",
+        "columns": [
+          "version"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

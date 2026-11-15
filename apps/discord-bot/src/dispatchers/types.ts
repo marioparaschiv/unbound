@@ -6,6 +6,7 @@ import type { Database } from '~/db/database';
 export const NOTIFY_CHANNELS = [
 	'addon_changed',
 	'audit_event',
+	'bundle_release',
 	'loader_release',
 	'member_changed',
 ] as const;
@@ -22,7 +23,8 @@ export type DispatcherContext = {
 
 export type Dispatcher = {
 	name: string;
-	channel: NotifyChannel;
+	/** Unset for a dispatcher whose source has no table to wake it; it runs on the timer alone. */
+	channel?: NotifyChannel;
 	/** Brings every Discord message in line with the web's data; runs on each (re)connect and on a timer. */
 	reconcile: (context: DispatcherContext) => Promise<void>;
 	/** Brings the Discord message of the subject a NOTIFY payload names in line with the web's data. */

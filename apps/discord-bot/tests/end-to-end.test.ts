@@ -34,7 +34,7 @@ import { testConfig } from './helpers/config';
 import { signUp } from './helpers/web';
 
 const CHANNELS: AddonChannels = { plugin: '11', theme: '12', 'icon-pack': '13' };
-const RELEASES: ReleaseTarget = { channelId: '21', roleId: '31' };
+const RELEASES: ReleaseTarget = { channelId: '21' };
 const ROLE_IDS = {
 	CONTRIBUTOR_ROLE_ID: 'r-c',
 	ADDON_DEVELOPER_ROLE_ID: 'r-a',

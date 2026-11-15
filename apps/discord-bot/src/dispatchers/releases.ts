@@ -1,7 +1,6 @@
 import type { LoaderPlatform } from '@unbound-app/contracts/loader';
 import type { RESTPostAPIChannelMessageJSONBody } from 'discord.js';
 import type { Release, ReleaseKey } from '@unbound-app/web/bot';
-import { ButtonStyle, ComponentType } from 'discord.js';
 import { createLogger } from '@unbound-app/logger';
 import { and, eq } from 'drizzle-orm';
 
@@ -11,14 +10,13 @@ import {
 	type DesiredPost,
 	type LedgerRow,
 } from '~/lib/post-ledger';
+import { renderReleaseMessage, REPOSITORY_URL } from '~/lib/release-message';
 import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
 import type { MessageGateway } from '~/lib/discord-messages';
 import { releasePost } from '~/db/schema';
-import { COLOURS } from '~/lib/constants';
 
 export type ReleaseTarget = {
 	channelId: string;
-	roleId: string;
 };
 
 export type ReleasesOptions = ReleaseTarget & {
@@ -30,7 +28,7 @@ export type ReleasesOptions = ReleaseTarget & {
 const logger = createLogger('Bot', 'Releases');
 
 const PLATFORM_NAMES: Record<LoaderPlatform, string> = { ios: 'iOS', android: 'Android' };
-// An older release is never announced, or a first deploy would ping the role once per historic release.
+// An older release is never announced, or a first deploy would post once per historic release.
 const RELEASE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 function isPlatform(value: string): value is LoaderPlatform {
@@ -59,37 +57,17 @@ function releaseTitle(release: ReleaseKey) {
 }
 
 /**
- * @description Renders a compact loader release announcement that links out to the changelog and pings only the releases role.
+ * @description Renders a compact loader release post that links out to the loader's GitHub release notes.
  * @param release The release.
- * @param roleId The role to ping.
  * @returns The message body to post.
  */
-export function renderRelease(release: Release, roleId: string): RESTPostAPIChannelMessageJSONBody {
-	return {
-		content: `<@&${roleId}>`,
-		embeds: [
-			{
-				title: releaseTitle(release),
-				url: release.url,
-				color: COLOURS.brand,
-				timestamp: release.publishedAt.toISOString(),
-			},
-		],
-		components: [
-			{
-				type: ComponentType.ActionRow,
-				components: [
-					{
-						type: ComponentType.Button,
-						style: ButtonStyle.Link,
-						label: 'View changelog',
-						url: release.url,
-					},
-				],
-			},
-		],
-		allowed_mentions: { parse: [], roles: [roleId] },
-	};
+export function renderRelease(release: Release): RESTPostAPIChannelMessageJSONBody {
+	return renderReleaseMessage({
+		title: releaseTitle(release),
+		detail: 'Loader',
+		changelogUrl: `${REPOSITORY_URL}/releases/tag/loader-v${release.version}`,
+		publishedAt: release.publishedAt,
+	});
 }
 
 function ledgerRow(row: typeof releasePost.$inferSelect): LedgerRow {
@@ -133,14 +111,13 @@ const RELEASE_ROWS: AppendOnlyRows = {
 };
 
 /**
- * @description Creates the dispatcher that announces each fresh loader release once, pinging the releases role.
- * @param options The channel and role, the bot's Discord messages and the clock.
+ * @description Creates the dispatcher that announces each fresh loader release once.
+ * @param options The channel, the bot's Discord messages and the clock.
  * @returns The `loader_release` dispatcher.
  */
 export function createReleasesDispatcher(options: ReleasesOptions): Dispatcher {
-	const { messages, now, channelId, roleId } = options;
-	// Once posted, a release is never edited or reposted, even if its message was deleted by hand:
-	// a repost would ping the role a second time.
+	const { messages, now, channelId } = options;
+	// Once posted, a release is never edited or reposted, even if its message was deleted by hand.
 	const ledger = createPostLedger({
 		messages,
 		label: 'release',
@@ -149,7 +126,7 @@ export function createReleasesDispatcher(options: ReleasesOptions): Dispatcher {
 	});
 
 	function desiredPost(release: Release): DesiredPost {
-		return { channelId, render: async () => ({ body: renderRelease(release, roleId) }) };
+		return { channelId, render: async () => ({ body: renderRelease(release) }) };
 	}
 
 	// Announces the release a `platform:version` payload names unless it was announced already.

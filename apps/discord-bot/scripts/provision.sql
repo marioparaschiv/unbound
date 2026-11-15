@@ -64,7 +64,7 @@ BEGIN
 
 	SELECT array_agg(name) INTO missing
 	FROM unnest(ARRAY['addon', 'addon_version', 'addon_maintainer', 'account', 'user', 'sponsorship',
-		'moderation_event', 'loader_release', 'submission']) AS name
+		'moderation_event', 'loader_release', 'bundle_release', 'submission']) AS name
 	WHERE NOT EXISTS (
 		SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = name AND tableowner = web_role
 	);
@@ -114,7 +114,7 @@ BEGIN
 END $$;
 
 REVOKE TRIGGER ON public.addon, public.addon_version, public.addon_maintainer, public.account,
-	public.sponsorship, public.moderation_event, public.loader_release FROM :"bot_role";
+	public.sponsorship, public.moderation_event, public.loader_release, public.bundle_release FROM :"bot_role";
 -- A schema named after another role sits first on that role's default search_path and could shadow
 -- built-in functions in its sessions, so the bot may create schemas only while it migrates.
 REVOKE CREATE ON DATABASE :"database" FROM :"bot_role";
@@ -135,7 +135,7 @@ GRANT USAGE ON SCHEMA public TO :"bot_role";
 -- Converge to exactly the list below; a table REVOKE clears that table's column grants too.
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM :"bot_role";
 GRANT SELECT ON public.addon, public.addon_version, public.addon_maintainer, public.sponsorship,
-	public.moderation_event, public.loader_release TO :"bot_role";
+	public.moderation_event, public.loader_release, public.bundle_release TO :"bot_role";
 -- Links, names and avatars only, never tokens, emails or sessions.
 GRANT SELECT (user_id, provider_id, account_id) ON public.account TO :"bot_role";
 GRANT SELECT (id, name, image) ON public."user" TO :"bot_role";
@@ -146,7 +146,7 @@ GRANT SELECT (id, author_id, manifest, repository) ON public.submission TO :"bot
 GRANT SELECT (submission_id, path, commit_sha, page) ON public.submission_source TO :"bot_role";
 -- Lets the bot's migrations install or replace its notify triggers until the lock phase takes it back.
 GRANT TRIGGER ON public.addon, public.addon_version, public.addon_maintainer, public.account,
-	public.sponsorship, public.moderation_event, public.loader_release TO :"bot_role";
+	public.sponsorship, public.moderation_event, public.loader_release, public.bundle_release TO :"bot_role";
 
 -- Gives back trigger functions a previous lock took, so CREATE OR REPLACE can change them.
 DO $$

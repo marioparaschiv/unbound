@@ -15,8 +15,9 @@ import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from '../he
 import { createFakeDiscord, type FakeDiscord } from '../helpers/fake-discord-rest';
 import { createFakeReads, RELEASE, type FakeReads } from '../helpers/fake-reads';
 
-const TARGET: ReleaseTarget = { channelId: '21', roleId: '31' };
+const TARGET: ReleaseTarget = { channelId: '21' };
 const NOW = Date.parse('2026-10-02T00:00:00.000Z');
+const CHANGELOG = 'https://github.com/marioparaschiv/unbound/releases/tag/loader-v1.2.3';
 
 const ANDROID: Release = {
 	platform: 'android',
@@ -84,20 +85,21 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 		return discord.requests.filter((request) => request.method === 'POST');
 	}
 
-	test('a release is announced once, pinging only the releases role', async () => {
+	test('a release is announced once, pinging no one', async () => {
 		ingest(RELEASE);
 		await handle(RELEASE);
 
 		const [message, ...extra] = discord.messages('21');
 
 		expect(extra).toHaveLength(0);
-		expect(message?.content).toContain('<@&31>');
-		expect(message?.allowed_mentions).toEqual({ parse: [], roles: ['31'] });
+		expect(message?.content).toBeFalsy();
+		expect(message?.allowed_mentions).toEqual({ parse: [] });
 		expect(message?.embeds).toEqual([
 			{
 				title: 'Unbound for iOS 1.2.3',
-				url: RELEASE.url,
+				url: CHANGELOG,
 				color: 0xc8_41_51,
+				footer: { text: 'Loader' },
 				timestamp: RELEASE.publishedAt.toISOString(),
 			},
 		]);
@@ -113,14 +115,14 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 		expect(discord.messages('21')).toHaveLength(0);
 	});
 
-	test('an announcement links out to the changelog instead of inlining it', () => {
-		const body = renderRelease({ ...RELEASE, changelog: 'c'.repeat(10_000) }, '31');
+	test("an announcement links out to the loader's GitHub release instead of inlining its changelog", () => {
+		const body = renderRelease({ ...RELEASE, changelog: 'c'.repeat(10_000) });
 
 		expect(JSON.stringify(body)).not.toContain('ccc');
 		expect(body.components).toEqual([
 			{
 				type: 1,
-				components: [{ type: 2, style: 5, label: 'View changelog', url: RELEASE.url }],
+				components: [{ type: 2, style: 5, label: 'View changelog', url: CHANGELOG }],
 			},
 		]);
 	});
@@ -160,7 +162,7 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 
 	test('a release Discord rejects is logged and skipped, and the next reconcile announces it', async () => {
 		ingest(RELEASE, ANDROID);
-		discord.rejectPost = (body) => body.embeds?.[0]?.url === ANDROID.url;
+		discord.rejectPost = (body) => body.embeds?.[0]?.title === 'Unbound for Android 1.2.4';
 		await reconcile();
 
 		expect((await rowOf(RELEASE))?.messageId).toBeDefined();
@@ -201,7 +203,7 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 		expect(posts()).toHaveLength(1);
 	});
 
-	test('a post retried after a timeout pings the role once', async () => {
+	test('a post retried after a timeout posts once', async () => {
 		await discord.stop();
 		discord = createFakeDiscord({ retries: 1, timeout: 100 });
 		discord.beforePostResponse = async () => {

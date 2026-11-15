@@ -47,19 +47,12 @@ describe('createDispatchers', () => {
 	}
 
 	test('a dispatcher missing an id is not built and is named in one warning', () => {
-		const dispatchers = build(
-			withIds({ RELEASES_CHANNEL_ID: undefined, RELEASES_ROLE_ID: undefined }),
-		);
+		const dispatchers = build(withIds({ LOADER_RELEASES_CHANNEL_ID: undefined }));
 
-		expect(dispatchers.map((dispatcher) => dispatcher.name)).toEqual([
-			'addons',
-			'audit',
-			'review-notices',
-			'roles',
-		]);
+		expect(dispatchers.map((dispatcher) => dispatcher.name)).not.toContain('releases');
 		expect(warnings()).toHaveLength(1);
 		expect(warnings()[0]).toContain(
-			'Not starting releases: RELEASES_CHANNEL_ID, RELEASES_ROLE_ID are still unset in src/lib/config.ts.',
+			'Not starting releases: LOADER_RELEASES_CHANNEL_ID is still unset in src/lib/config.ts.',
 		);
 	});
 
@@ -72,32 +65,22 @@ describe('createDispatchers', () => {
 		);
 	});
 
-	test('builds every dispatcher whose ids the real constants set, each on its channel', () => {
-		const set = withIds({ RELEASES_ROLE_ID: '3' });
+	test('the real constants build every dispatcher, each on its channel', () => {
 		const channels = Object.fromEntries(
-			build(set).map((dispatcher) => [dispatcher.name, dispatcher.channel]),
+			build().map((dispatcher) => [dispatcher.name, dispatcher.channel ?? 'timer only']),
 		);
 
 		expect(channels).toEqual({
 			addons: 'addon_changed',
 			releases: 'loader_release',
+			bundles: 'bundle_release',
+			// The API docs live on the CDN, which no trigger can watch.
+			'api-releases': 'timer only',
 			// Two cursors over one stream: each audit event wakes both.
 			audit: 'audit_event',
 			'review-notices': 'audit_event',
 			roles: 'member_changed',
 		});
 		expect(warnings()).toEqual([]);
-	});
-
-	test('the real constants start everything but releases, whose role is still unset', () => {
-		expect(build().map((dispatcher) => dispatcher.name)).toEqual([
-			'addons',
-			'audit',
-			'review-notices',
-			'roles',
-		]);
-		expect(warnings()).toEqual([
-			expect.stringContaining('Not starting releases: RELEASES_ROLE_ID is still unset'),
-		]);
 	});
 });
