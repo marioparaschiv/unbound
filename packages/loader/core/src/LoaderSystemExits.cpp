@@ -7,8 +7,11 @@
 #include <utility>
 #include <vector>
 
+#include "LoaderCrashHandler.h"
 #include "LoaderFiles.h"
+#include "LoaderLaunchReport.h"
 #include "LoaderLog.h"
+#include "LoaderMetricKitCrash.h"
 
 namespace loader::system_exits {
 namespace {
@@ -227,6 +230,33 @@ void recordMetricKitMetrics(const std::string &documents, const std::string &pay
     writeStore(documents, store);
 }
 
+static void recordHangs(nlohmann::json &store, const nlohmann::json &payload, int64_t at)
+{
+    auto hangs = payload.find("hangDiagnostics");
+    if (hangs == payload.end() || !hangs->is_array())
+    {
+        return;
+    }
+
+    for (const nlohmann::json &hang : *hangs)
+    {
+        nlohmann::json metadata = hang.value("diagnosticMetaData", nlohmann::json::object());
+        addEvent(store, ExitKind::Hang, at,
+                 parseMetricKitDuration(stringMember(metadata, "hangDuration")));
+    }
+}
+
+static std::optional<std::string> latestCrashStack(const nlohmann::json &payload)
+{
+    auto crashes = payload.find("crashDiagnostics");
+    if (crashes == payload.end() || !crashes->is_array() || crashes->empty())
+    {
+        return std::nullopt;
+    }
+
+    return metricKitCrashStack(crashes->back());
+}
+
 void recordMetricKitDiagnostics(const std::string &documents, const std::string &payloadJSON)
 {
     nlohmann::json payload = parsePayload(payloadJSON);
@@ -236,26 +266,25 @@ void recordMetricKitDiagnostics(const std::string &documents, const std::string 
         return;
     }
 
-    std::lock_guard<std::mutex> lock(fileMutex);
-    nlohmann::json store = readStore(documents);
-    if (!markSeen(store, "diagnostics:" + end))
-    {
-        return;
-    }
-
     int64_t at = parseMetricKitTimestamp(end);
-    auto hangs = payload.find("hangDiagnostics");
-    if (hangs != payload.end() && hangs->is_array())
+    std::optional<std::string> crash;
     {
-        for (const nlohmann::json &hang : *hangs)
+        std::lock_guard<std::mutex> lock(fileMutex);
+        nlohmann::json store = readStore(documents);
+        if (!markSeen(store, "diagnostics:" + end))
         {
-            nlohmann::json metadata = hang.value("diagnosticMetaData", nlohmann::json::object());
-            addEvent(store, ExitKind::Hang, at,
-                     parseMetricKitDuration(stringMember(metadata, "hangDuration")));
+            return;
         }
+
+        crash = latestCrashStack(payload);
+        recordHangs(store, payload, at);
+        writeStore(documents, store);
     }
 
-    writeStore(documents, store);
+    if (crash && adoptPreviousNativeCrash(*crash))
+    {
+        recordCrash(documents, *crash, at);
+    }
 }
 
 void recordExit(const std::string &documents, const std::string &key, ExitKind kind, int64_t at,
