@@ -1,4 +1,13 @@
-import { createElement, useCallback, useContext, useEffect, useMemo, useRef } from 'react';
+import {
+	createElement,
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import type { LayoutChangeEvent } from 'react-native';
 import noop from '@unbound-app/utils/noop';
 import { View } from 'react-native';
 
@@ -29,6 +38,8 @@ type DiscordPickerProps = {
 	kind: PickerKind;
 };
 
+type Size = { width: number; height: number };
+
 /**
  * @description Discord's own App Theme picker, fed Unbound's themes or icon packs: its live preview and
  * carousel, an icon pack shown by its icons, saving on selection, with saving routed to the addon instead of Discord's theme, plus the
@@ -52,6 +63,7 @@ function DiscordPicker({ kind }: DiscordPickerProps) {
 		[addons, clearable, discordTheme],
 	);
 	const connected = useMemo(() => loadThemePicker(), []);
+	const [size, setSize] = useState<Size>();
 	const addon = usePreviewedAddon(
 		addons,
 		addons.find((entry) => entry.id === applied) ?? (clearable ? undefined : addons[0]),
@@ -131,28 +143,38 @@ function DiscordPicker({ kind }: DiscordPickerProps) {
 	// Called inline so its hooks run as this component's: it only resolves Discord's inner `ThemePicker`.
 	const screen = connected({ themeSelector: 'nitro' });
 
+	function measure({ nativeEvent: { layout } }: LayoutChangeEvent) {
+		setSize({ width: layout.width, height: layout.height });
+	}
+
 	return (
-		<View style={styles.page}>
+		<View style={styles.page} onLayout={measure}>
 			<NavigationCore.NavigationContext.Provider value={reporting}>
-				{createElement(screen.type, {
-					...screen.props,
-					// The picker reads `defaultIndex` once and saves its swatch when the page closes, so one applied
-					// elsewhere remounts it on that swatch rather than being saved over.
-					key: revision,
-					mobileThemes: themes,
-					defaultIndex: Math.max(
-						0,
-						themes.findIndex((theme) => theme.unboundAddonId === applied),
-					),
-					isPreview: false,
-					isSynced: false,
-					mode: null,
-					// Without its Done button the picker saves each swatch as it is selected.
-					hasSaveButton: false,
-					hasOnyxNux: false,
-					headerTitle: messages.UNBOUND_DESIGN,
-					onSaveTheme: noop,
-				})}
+				{size
+					? createElement(screen.type, {
+							...screen.props,
+							// The picker reads `defaultIndex` once and saves its swatch when the page closes, so one applied
+							// elsewhere remounts it on that swatch rather than being saved over.
+							key: revision,
+							mobileThemes: themes,
+							defaultIndex: Math.max(
+								0,
+								themes.findIndex((theme) => theme.unboundAddonId === applied),
+							),
+							isPreview: false,
+							isSynced: false,
+							mode: null,
+							// Without its Done button the picker saves each swatch as it is selected.
+							hasSaveButton: false,
+							hasOnyxNux: false,
+							headerTitle: messages.UNBOUND_DESIGN,
+							onSaveTheme: noop,
+							// The screen passes the window's size, which picks a side-by-side landscape layout and a window-wide
+							// carousel; on iPad the page sits in a narrower settings sheet, so it lays out in the page's own size.
+							deviceWidth: size.width,
+							deviceHeight: size.height,
+						})
+					: null}
 			</NavigationCore.NavigationContext.Provider>
 			<PickerActions kind={kind} addon={addon} />
 		</View>
