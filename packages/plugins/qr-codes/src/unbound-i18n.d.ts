@@ -7,6 +7,14 @@ declare module '@unbound-app/i18n' {
 		readonly SHOW_QR_CODE: string;
 		/** QR Code */
 		readonly QR_CODE: string;
+		/** Scan QR Code */
+		readonly SCAN_QR_CODE: string;
+		/** No QR code found in this image. */
+		readonly NO_QR_CODE: string;
+		/** Copied the QR code's text. */
+		readonly QR_TEXT_COPIED: string;
+		/** Could not scan this image. */
+		readonly SCAN_FAILED: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

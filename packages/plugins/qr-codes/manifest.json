@@ -1,14 +1,14 @@
 {
 	"id": "unbound.qr-codes",
 	"name": "QR Codes",
-	"description": "Adds Show QR Code to a link's long-press menu, so another phone can scan it.",
+	"description": "Shows links as QR codes from their long-press menu, and reads QR codes in pictures from the image viewer.",
 	"authors": [
 		{
 			"name": "adrian",
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"unbound": {
 		"min": "3.0.0"
 	},
