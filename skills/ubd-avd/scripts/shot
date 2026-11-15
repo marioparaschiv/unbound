@@ -16,6 +16,14 @@ adb_avd exec-out screencap -p >"$out"
 [[ -s $out ]] || { echo "FAIL screencap wrote nothing; is $AVD_SERIAL attached? scripts/up.sh emu" >&2; exit 1; }
 echo "saved $out"
 
+windows=$(adb_avd shell dumpsys window windows 2>/dev/null || true)
+if awk '/Window #/ { w = $0 } /fl=/ && w ~ /com\.discord/ && /SECURE/ { found = 1 } END { exit !found }' <<<"$windows"; then
+	echo "WARN Discord's window is secure (FLAG_SECURE, e.g. Privacy Screen), so the PNG is black; the text below still comes from the view tree" >&2
+fi
+if adb_avd shell dumpsys input_method 2>/dev/null | grep -q 'mInputShown=true'; then
+	echo "WARN the keyboard is open and covers the lower screen; taps there hit keys (adb shell input keyevent 111 closes it)" >&2
+fi
+
 adb_avd shell uiautomator dump /sdcard/ubd-avd-ui.xml >/dev/null 2>&1
 xml=$(adb_avd shell cat /sdcard/ubd-avd-ui.xml 2>/dev/null)
 
