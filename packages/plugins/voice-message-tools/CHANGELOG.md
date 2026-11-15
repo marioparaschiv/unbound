@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.0] - 2026-11-15
+
+### Added
+
+- The speed button remembers a speed per chat, on by default; other chats keep their own or the default speed.
+
 ## [1.4.5] - 2026-11-14
 
 ### Changed

@@ -27,6 +27,10 @@ declare module '@unbound-app/i18n' {
 		readonly SPEED_15: string;
 		/** 2× */
 		readonly SPEED_2: string;
+		/** Remember speed per chat */
+		readonly PER_CHAT: string;
+		/** The speed button sets the speed for the chat you are in; other chats keep their own or the speed above. */
+		readonly PER_CHAT_SUBTITLE: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
