@@ -59,7 +59,7 @@ if (releaseSigningValues.any { !it.isNullOrBlank() } && !hasReleaseSigning) {
 
 android {
     namespace = "app.unbound.android"
-    compileSdk = 36
+    compileSdk = 37
     ndkVersion = "27.3.13750724"
 
     sourceSets.getByName("main").assets.srcDir(repositoryRoot.resolve("tools/assets/android-icons"))
