@@ -34,6 +34,7 @@ const keyOf = (addon: ListedAddon) => addon.id;
  * kind, the search and the filters, as a virtualised list of cards. The shelf steps aside while anything
  * narrows the list, and an empty state replaces the list when nothing matches.
  * Pulling down refreshes the catalog; a failed refresh keeps the stored copy and says so.
+ * The list mounts after its page lays out: on Android, one mounted with the pager's first page never shows its rows.
  */
 function MarketplaceList({ kind }: MarketplaceListProps) {
 	const styles = useStyles();
@@ -43,6 +44,7 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 	const [pulling, setPulling] = useState(false);
 	// Read once per mount: the Updated window and the day's Featured picks hold still while the page is open.
 	const [now] = useState(Date.now);
+	const [pageReady, setPageReady] = useState(false);
 
 	const browsing = !search.trim() && countActiveFilters(filters) === 0;
 
@@ -133,33 +135,37 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 	}
 
 	return (
-		<FlashList
-			data={addons}
-			keyExtractor={keyOf}
-			renderItem={renderCard}
-			estimatedItemSize={160}
-			ListHeaderComponent={
-				featured.length ? (
-					<View style={styles.header}>
-						<FeaturedShelf addons={featured} kind={kind} />
-						<SectionTitle>
-							{format('UNBOUND_MARKETPLACE_ALL', { type: plural })}
-						</SectionTitle>
-					</View>
-				) : undefined
-			}
-			// The bottom inset pads the end of the list, so the cards scroll under the home indicator, as on the Plugins page.
-			ListFooterComponent={<SafeArea.SafeAreaPaddingView bottom />}
-			keyboardDismissMode='on-drag'
-			contentContainerStyle={styles.content}
-			refreshControl={
-				<RefreshControl
-					refreshing={pulling}
-					onRefresh={pull}
-					tintColor={styles.spinner.color}
+		<View style={styles.page} onLayout={() => setPageReady(true)}>
+			{pageReady ? (
+				<FlashList
+					data={addons}
+					keyExtractor={keyOf}
+					renderItem={renderCard}
+					estimatedItemSize={160}
+					ListHeaderComponent={
+						featured.length ? (
+							<View style={styles.header}>
+								<FeaturedShelf addons={featured} kind={kind} />
+								<SectionTitle>
+									{format('UNBOUND_MARKETPLACE_ALL', { type: plural })}
+								</SectionTitle>
+							</View>
+						) : undefined
+					}
+					// The bottom inset pads the end of the list, so the cards scroll under the home indicator, as on the Plugins page.
+					ListFooterComponent={<SafeArea.SafeAreaPaddingView bottom />}
+					keyboardDismissMode='on-drag'
+					contentContainerStyle={styles.content}
+					refreshControl={
+						<RefreshControl
+							refreshing={pulling}
+							onRefresh={pull}
+							tintColor={styles.spinner.color}
+						/>
+					}
 				/>
-			}
-		/>
+			) : null}
+		</View>
 	);
 }
 
