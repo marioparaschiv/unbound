@@ -1,6 +1,7 @@
 import type { DebugCardRequest } from '@unbound-app/contracts/debug-cards';
 
 import { dim, joined, value, warn, type Span } from './spans';
+import { shownMarkers } from './markers';
 
 type DebugCardEnvironment = NonNullable<DebugCardRequest['environment']>;
 
@@ -24,11 +25,12 @@ export function environmentRows(environment?: DebugCardEnvironment): [string, Sp
 		return [];
 	}
 
+	const markers = shownMarkers(environment.markers ?? []);
 	const candidates: [string, Span[]][] = [
 		['signer', environment.signer ? [value(environment.signer)] : []],
 		['binary', environment.binary ? [value(environment.binary)] : []],
 		['install', environment.install ? [value(environment.install)] : []],
-		['markers', environment.markers?.length ? [dim(joined(environment.markers))] : []],
+		['markers', markers.length ? [dim(joined(markers))] : []],
 		['https', environment.https ? httpsSpans(environment.https) : []],
 	];
 

@@ -8,7 +8,6 @@
 namespace loader::environment_report {
 
 struct AppleDeviceFacts {
-    std::optional<bool> developerMode;
     bool lockdownMode    = false;
     bool iPhoneAppOnIPad = false;
     bool iOSAppOnMac     = false;

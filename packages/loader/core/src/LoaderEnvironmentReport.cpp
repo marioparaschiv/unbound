@@ -68,11 +68,6 @@ bool isBetaBuild(const std::string &build)
 std::vector<std::string> appleMarkers(const AppleDeviceFacts &facts)
 {
     std::vector<std::string> markers;
-    if (facts.developerMode)
-    {
-        markers.emplace_back(*facts.developerMode ? "Developer Mode on" : "Developer Mode off");
-    }
-
     if (facts.lockdownMode)
     {
         markers.emplace_back("Lockdown Mode");

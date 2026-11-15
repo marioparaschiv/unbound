@@ -57,18 +57,6 @@ static const int64_t kHttpsCheckDelayNs = 20 * NSEC_PER_SEC;
 
 @end
 
-static std::optional<bool> developerMode()
-{
-    int status  = 0;
-    size_t size = sizeof(status);
-    if (sysctlbyname("security.mac.amfi.developer_mode_status", &status, &size, nullptr, 0) != 0)
-    {
-        return std::nullopt;
-    }
-
-    return status != 0;
-}
-
 static std::string osBuild()
 {
     char build[32] = {0};
@@ -85,8 +73,7 @@ static bool supportsIPad()
 static report::AppleDeviceFacts deviceFacts()
 {
     report::AppleDeviceFacts facts;
-    facts.developerMode = developerMode();
-    facts.lockdownMode  = [NSUserDefaults.standardUserDefaults boolForKey:@"LDMGlobalEnabled"];
+    facts.lockdownMode = [NSUserDefaults.standardUserDefaults boolForKey:@"LDMGlobalEnabled"];
     facts.iPhoneAppOnIPad =
         UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad && !supportsIPad();
     facts.iOSAppOnMac = NSProcessInfo.processInfo.isiOSAppOnMac;
