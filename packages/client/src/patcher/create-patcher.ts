@@ -6,6 +6,7 @@ import { patchWhenLoaded, unpatchKeepingReplacement } from '~/patcher/apply';
 import type { ReactPatcher, PatchPlace } from '~/patcher/react';
 import type { after, before, instead } from '~/patcher/api';
 import { createReactPatcher } from '~/patcher/react';
+import { assignValue } from '~/patcher/assign';
 import { patch } from '~/hot-refresh/live-patch';
 
 /** The patcher `createPatcher` returns. */
@@ -14,6 +15,7 @@ export type PatcherInstance = {
 	instead: typeof instead;
 	after: typeof after;
 	react: ReactPatcher;
+	assign: typeof assignValue;
 	unpatchAll: () => void;
 };
 
@@ -77,6 +79,18 @@ export function createPatcher(defaultOptions: string | PatchOptions): PatcherIns
 		instead: scoped(Possess.PatchType.Instead) as typeof instead,
 		after: scoped(Possess.PatchType.After) as typeof after,
 		react: createReactPatcher(patchAt),
+		assign(parent, key, value) {
+			const restore = assignValue(parent, key, value);
+
+			function remove() {
+				unpatches.delete(remove);
+				restore();
+			}
+
+			unpatches.add(remove);
+
+			return remove;
+		},
 		unpatchAll(): void {
 			for (const unpatch of unpatches) unpatch();
 		},

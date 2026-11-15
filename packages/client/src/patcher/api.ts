@@ -123,6 +123,8 @@ export type AfterCallback<Args extends unknown[], Res, Self> = (
 ) => Res | void;
 
 /** Every module the patcher has patched, with its live patches. */
+export { assignValue as assign } from '~/patcher/assign';
+
 export const patches = Possess.patches;
 
 /** The symbol a patched method carries, pointing at its patch state. */

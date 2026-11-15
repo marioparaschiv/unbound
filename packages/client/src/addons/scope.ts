@@ -110,6 +110,7 @@ export function createAddonScope(addon: Addon<Plugin>, directory: string): Addon
 		instead: tagged.instead,
 		after: tagged.after,
 		react: tagged.react,
+		assign: tagged.assign,
 		unpatchAll: tagged.unpatchAll,
 	};
 

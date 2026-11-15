@@ -35,7 +35,8 @@ Every function is on `patcher`, from `@unbound-app/api`. Each returns a function
 | `patcher.instead(parent, key, callback, options?)` | In place of the original | `{ args, original, this }` | The result |
 | `patcher.after(parent, key, callback, options?)` | After the original | `{ args, result, this }` | New `result`, or nothing |
 | `patcher.react.before\|instead\|after(...)` | The same, for a render | See [Patching Components](/docs/developer/plugins/react-patching#reference) | |
-| `patcher.unpatchAll()` | | | Removes every patch your plugin made |
+| `patcher.assign(parent, key, value)` | Sets a value, such as a list or constant on a module | | A function that puts the original back |
+| `patcher.unpatchAll()` | | | Removes every patch your plugin made, and puts back every value it assigned |
 
 `this` is the object the function was called on. The only option is `once: true`, which removes the patch after one run. Full signatures: [`patcher`](/docs/sdk/latest/patcher) in the SDK reference.
 
@@ -123,6 +124,18 @@ unpatch();
 <Warning>
 	If `stop` makes Discord redraw, such as by calling `emitChange`, call `unpatch()` first. Patches are removed only after `stop` returns. See [Unpatch Before Redrawing](/docs/developer/getting-started/lifecycle#unpatch-before-redrawing).
 </Warning>
+
+## Changing a Value
+
+To change a value rather than a function, such as a list of options a module exports, use `patcher.assign`. The Addon scope puts the original back when your plugin stops or hot reloads, so a reload never mistakes your changed value for Discord's.
+
+```ts
+import { metro, patcher } from '@unbound-app/api';
+
+const Constants = metro.findByFilePath('modules/custom_status/Constants.tsx', { interop: false });
+
+patcher.assign(Constants, 'ClearAfterOptions', [...Constants.ClearAfterOptions, 900_000]);
+```
 
 ## Unloaded Modules
 
