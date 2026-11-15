@@ -54,6 +54,10 @@ export type NativeDeviceState = {
 	push?: NativePushState;
 	/** iOS: the app extensions in the bundle; older loaders omit it. */
 	extensions?: NativeExtensionState[];
+	/** iOS: whether a libffi closure ran when probed at launch; without it, hooks need a prebuilt trampoline. Older loaders omit it. */
+	ffiClosures?: boolean;
+	/** iOS: the launch probe's outcome, `ok` or the step that failed, such as `not-executable`. Older loaders omit it. */
+	ffiClosureProbe?: string;
 };
 
 /** An app extension bundled with Discord. */

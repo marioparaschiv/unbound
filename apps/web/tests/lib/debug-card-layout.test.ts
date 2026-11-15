@@ -510,6 +510,18 @@ describe('debug card', () => {
 		});
 	});
 
+	test('flags libffi closures that failed the launch probe', () => {
+		const report: DebugCardRequest = {
+			...info,
+			ffiClosures: false,
+			ffiClosureProbe: 'not-executable',
+		};
+
+		expect(JSON.parse(altJson(report))).toMatchObject({
+			hooks: ['libffi closures blocked (not-executable)'],
+		});
+	});
+
 	test('shows storage once the Discord data grows large', () => {
 		const report: DebugCardRequest = {
 			...info,

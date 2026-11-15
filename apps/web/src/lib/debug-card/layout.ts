@@ -377,7 +377,7 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 	const launch = launchNotes(info.launch);
 	const memory = memoryNotes(info.memory);
 	const errors = errorNotes(info.errors);
-	const hooks = hookNotes(info.hookFailures);
+	const hooks = hookNotes(info);
 	const storage = storageMatters(info.storage) ? storageSummary(info.storage) : undefined;
 	const updates = updateNotes(context, info.addonUpdates);
 	const tweaks = cleanNames(info.injected ?? []);

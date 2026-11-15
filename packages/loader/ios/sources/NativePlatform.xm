@@ -17,6 +17,7 @@
 #import "FileSystem.h"
 #include "JailbreakDetection.h"
 #include "LoaderInjectedLibraries.h"
+#include "NativeFFIClosureProbe.h"
 #include "NativePlatformBridge.h"
 #import "Utilities+CodeSignature.h"
 #import "Utilities.h"
@@ -415,7 +416,9 @@ static nlohmann::json deviceStateJSON()
         {"availableMB", static_cast<int64_t>(os_proc_available_memory() / (1024 * 1024))},
         {"memoryWarnings", memoryWarnings.load()},
         {"thermal", thermalName(NSProcessInfo.processInfo.thermalState)},
-        {"injected", loader::injectedIOSLibraries(loadedImagePaths())}};
+        {"injected", loader::injectedIOSLibraries(loadedImagePaths())},
+        {"ffiClosures", loader::ffi::closuresExecutable()},
+        {"ffiClosureProbe", loader::ffi::closureProbe()}};
     if (nlohmann::json network = networkJSON(); !network.is_null())
     {
         state["network"] = network;
@@ -464,6 +467,7 @@ std::shared_ptr<NativePlatformProvider> makeNativePlatformProvider(void)
     };
     provider->jailbreak = detectedJailbreak;
     countMemoryWarnings();
+    loader::ffi::closuresExecutable();
     watchNetwork();
     watchDeviceState();
     provider->deviceState = deviceStateJSON;
