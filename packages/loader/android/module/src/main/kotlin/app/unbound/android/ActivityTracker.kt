@@ -13,6 +13,9 @@ object ActivityTracker : Application.ActivityLifecycleCallbacks {
     private var current: WeakReference<Activity>? = null
 
     @Volatile
+    private var last: WeakReference<Activity>? = null
+
+    @Volatile
     private var knownApplication: Application? = null
 
     @Volatile
@@ -34,6 +37,8 @@ object ActivityTracker : Application.ActivityLifecycleCallbacks {
 
     fun currentActivity(): Activity? = current?.get()
 
+    fun lastActivity(): Activity? = last?.get()
+
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
 
     override fun onActivityStarted(activity: Activity) = Unit
@@ -43,6 +48,7 @@ object ActivityTracker : Application.ActivityLifecycleCallbacks {
         val previous = current?.get()
         if (previous !== activity) generation++
         current = WeakReference(activity)
+        last = current
     }
 
     override fun onActivityPaused(activity: Activity) {
@@ -55,5 +61,6 @@ object ActivityTracker : Application.ActivityLifecycleCallbacks {
 
     override fun onActivityDestroyed(activity: Activity) {
         if (current?.get() === activity) current = null
+        if (last?.get() === activity) last = null
     }
 }
