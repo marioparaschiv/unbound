@@ -1,4 +1,8 @@
 {
 	"SHOW_QR_CODE": "Show QR Code",
-	"QR_CODE": "QR Code"
+	"QR_CODE": "QR Code",
+	"SCAN_QR_CODE": "Scan QR Code",
+	"NO_QR_CODE": "No QR code found in this image.",
+	"QR_TEXT_COPIED": "Copied the QR code's text.",
+	"SCAN_FAILED": "Could not scan this image."
 }

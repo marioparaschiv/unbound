@@ -1,12 +1,18 @@
+import type { PluginContext } from '@unbound-app/api/native';
 import { metro, patcher } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
 
 import { sheetLink, withOption, type LinkSheetProps } from '~/lib/sheet';
 import { openQrPage } from '~/qr-page';
+import { patchScanAction } from '~/scan-action';
 
 const LINK_SHEET = 'LongPressUrl';
 
-export function start() {
+let stopWaiting: (() => void) | undefined;
+
+export function start(context: PluginContext) {
+	stopWaiting = patchScanAction(context.native);
+
 	const { ActionSheets } = metro.api;
 
 	if (!ActionSheets?.openLazy) {
@@ -34,5 +40,7 @@ export function start() {
 }
 
 export function stop() {
+	stopWaiting?.();
+	stopWaiting = undefined;
 	patcher.unpatchAll();
 }
