@@ -1,5 +1,6 @@
 import type { NativeJavaBridge, NativeJavaReference } from '@unbound-app/api/native';
 import {
+	javaBoolean,
 	javaFlag,
 	javaFloat,
 	javaInt,
@@ -10,6 +11,7 @@ import {
 const VISIBLE = 0;
 const GONE = 8;
 const NO_ACCESSIBILITY = 2;
+const CENTER_VERTICAL = 16;
 
 /** The reply icon's drawable, 0 when Discord has none, its view id, and its size and gap before the preview's avatar, in pixels. */
 export type ReplyIconConfig = { drawable: number; id: number; size: number; gap: number };
@@ -28,21 +30,63 @@ function findView(java: NativeJavaBridge, parent: NativeJavaReference, id: numbe
 	return javaReference(java.invoke(parent, 'findViewById', [javaInt(id)]));
 }
 
+function isInstance(java: NativeJavaBridge, className: string, view: NativeJavaReference) {
+	'worklet';
+
+	return javaFlag(java.invoke(java.getClass(className), 'isInstance', [view]));
+}
+
+function addBeforeLeading(
+	java: NativeJavaBridge,
+	{ size, gap }: ReplyIconConfig,
+	preview: NativeJavaReference,
+	leading: NativeJavaReference,
+	icon: NativeJavaReference,
+) {
+	'worklet';
+	const params = java.construct('android.widget.LinearLayout$LayoutParams', [
+		javaInt(size),
+		javaInt(size),
+	]);
+
+	java.setField(params, 'gravity', javaInt(CENTER_VERTICAL));
+	java.invoke(params, 'setMarginStart', [javaInt(-(size + gap))]);
+	java.invoke(params, 'setMarginEnd', [javaInt(gap)]);
+	java.invoke(leading, 'addView', [icon, javaInt(0), params]);
+	java.invoke(leading, 'setClipToPadding', [javaBoolean(false)]);
+	java.invoke(leading, 'setClipChildren', [javaBoolean(false)]);
+	java.invoke(preview, 'setClipChildren', [javaBoolean(false)]);
+}
+
+function addToPreview(
+	java: NativeJavaBridge,
+	{ size }: ReplyIconConfig,
+	preview: NativeJavaReference,
+	icon: NativeJavaReference,
+) {
+	'worklet';
+	java.invoke(preview, 'addView', [
+		icon,
+		java.construct('android.view.ViewGroup$LayoutParams', [javaInt(size), javaInt(size)]),
+	]);
+	// A view added outside a layout pass draws nothing until the preview next measures, so it takes its size now.
+	java.invoke(icon, 'layout', [javaInt(0), javaInt(0), javaInt(size), javaInt(size)]);
+}
+
 function replyIconIn(
 	java: NativeJavaBridge,
 	config: ReplyIconConfig,
-	preview: NativeJavaReference,
+	{ preview, leading }: ReplyViews,
 	create: boolean,
 ) {
 	'worklet';
-	const { id, drawable, size } = config;
+	const { id, drawable } = config;
 	const found = findView(java, preview, id);
 
 	if (found || !create || !drawable) return found;
 
 	// An unexpanded reply preview is still a ViewStub placeholder, which holds no children.
-	if (!javaFlag(java.invoke(java.getClass('android.view.ViewGroup'), 'isInstance', [preview])))
-		return null;
+	if (!isInstance(java, 'android.view.ViewGroup', preview)) return null;
 
 	const context = javaReference(java.invoke(preview, 'getContext', []));
 
@@ -53,12 +97,12 @@ function replyIconIn(
 	java.invoke(icon, 'setId', [javaInt(id)]);
 	java.invoke(icon, 'setImportantForAccessibility', [javaInt(NO_ACCESSIBILITY)]);
 	java.invoke(icon, 'setImageResource', [javaInt(drawable)]);
-	java.invoke(preview, 'addView', [
-		icon,
-		java.construct('android.view.ViewGroup$LayoutParams', [javaInt(size), javaInt(size)]),
-	]);
-	// A view added outside a layout pass draws nothing until the preview next measures, so it takes its size now.
-	java.invoke(icon, 'layout', [javaInt(0), javaInt(0), javaInt(size), javaInt(size)]);
+
+	if (leading && isInstance(java, 'android.widget.LinearLayout', leading)) {
+		addBeforeLeading(java, config, preview, leading, icon);
+	} else {
+		addToPreview(java, config, preview, icon);
+	}
 
 	return icon;
 }
@@ -67,6 +111,21 @@ function numberOf(java: NativeJavaBridge, view: NativeJavaReference | null, gett
 	'worklet';
 
 	return view ? javaNumber(java.invoke(view, getter, [])) : undefined;
+}
+
+function placeInPreview(
+	java: NativeJavaBridge,
+	{ size, gap }: ReplyIconConfig,
+	leading: NativeJavaReference | null,
+	icon: NativeJavaReference,
+) {
+	'worklet';
+	const left = numberOf(java, leading, 'getLeft') ?? 0;
+	const top = numberOf(java, leading, 'getTop') ?? 0;
+	const height = numberOf(java, leading, 'getHeight') ?? size;
+
+	java.invoke(icon, 'setTranslationX', [javaFloat(left - gap - size)]);
+	java.invoke(icon, 'setTranslationY', [javaFloat(top + (height - size) / 2)]);
 }
 
 /**
@@ -79,19 +138,20 @@ function numberOf(java: NativeJavaBridge, view: NativeJavaReference | null, gett
 export function paintReplySpine(
 	java: NativeJavaBridge,
 	config: ReplyIconConfig,
-	{ preview, spine, leading, text }: ReplyViews,
+	views: ReplyViews,
 	{ active, quoted }: { active: boolean; quoted: boolean },
 ) {
 	'worklet';
+	const { preview, spine, leading, text } = views;
 	// A recycled row keeps its preview after Discord empties it for a message that replies to nothing.
 	const isReply =
 		numberOf(java, preview, 'getVisibility') === VISIBLE &&
-		(numberOf(java, preview, 'getHeight') ?? 0) > 0;
+		numberOf(java, leading, 'getVisibility') === VISIBLE;
 	const showIcon = active && !quoted && isReply;
 
 	if (spine) java.invoke(spine, 'setAlpha', [javaFloat(active ? 0 : 1)]);
 
-	const icon = replyIconIn(java, config, preview, showIcon);
+	const icon = replyIconIn(java, config, views, showIcon);
 
 	if (!icon) return;
 
@@ -99,17 +159,16 @@ export function paintReplySpine(
 
 	if (!showIcon) return;
 
-	const { size, gap } = config;
-	const left = numberOf(java, leading, 'getLeft') ?? 0;
-	const top = numberOf(java, leading, 'getTop') ?? 0;
-	const height = numberOf(java, leading, 'getHeight') ?? size;
 	const color = numberOf(java, text, 'getCurrentTextColor');
 
-	// The icon takes the reply text's muted color, and centres on the preview's avatar.
+	// The icon takes the reply text's muted color.
 	if (color !== undefined) java.invoke(icon, 'setColorFilter', [javaInt(color)]);
 
-	java.invoke(icon, 'setTranslationX', [javaFloat(left - gap - size)]);
-	java.invoke(icon, 'setTranslationY', [javaFloat(top + (height - size) / 2)]);
+	const parent = javaReference(java.invoke(icon, 'getParent', []));
+
+	if (parent && javaFlag(java.invoke(preview, 'equals', [parent]))) {
+		placeInPreview(java, config, leading, icon);
+	}
 }
 
 export default { paintReplySpine };

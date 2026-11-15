@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.16] - 2026-11-15
+
+### Fixed
+
+- Android: messages that aren't replies no longer show a reply icon, or an empty gap above them, after scrolling or switching channels.
+- Android: replies show their icon on first load instead of drawing it off screen.
+
 ## [1.6.15] - 2026-11-14
 
 ### Fixed
