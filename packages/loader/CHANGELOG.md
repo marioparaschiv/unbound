@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/marioparaschiv/unbound/compare/loader-v1.6.0...loader-v1.6.1) (2026-11-15)
+
+
+### Bug Fixes
+
+* **loader:** keep the running bundle, overlap first download ([#1513](https://github.com/marioparaschiv/unbound/issues/1513)) ([2457330](https://github.com/marioparaschiv/unbound/commit/2457330abb67f4e0ab1739d6ceb57fcc1f1707d4))
+
 ## [1.6.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.5.0...loader-v1.6.0) (2026-11-14)
 
 
